@@ -1,0 +1,373 @@
+
+                    THE COMPLETE DOCUMENTATION ABOUT
+                           GENESIS ROM FORMAT
+
+                             Version 1.1
+
+
+  Release history
+  ^^^^^^^^^^^^^^^
+  Version 1.0 (December, 1997)
+   - Initial Release
+
+  Version 1.1 (January, 1998)
+   - Splitted rom format explained!
+   - New company codes
+   - New errors in copyright interpreting found <sigh>
+   - Month interpreting (in copyright)
+
+     
+  In this document you will find everything you need to know about
+the information embedded within a Genesis ROM. You will also find
+how to read all this information from the different ROM formats
+(BIN, SMD and MD).
+  The information in this document was hacked by Volker Oth (dOnut)
+and by me with help from technical documents found on internet.
+The primary document from the internet that we used was gentech.txt.
+  If you want to change this document to add any important info about
+the Genesis ROMs, do it freely but I would like to receive a copy of
+the updated document. Then, I'll add your name in it and post it on my
+homepage. Don't be a lamer and keep all names mentioned here!
+  Note that all numbers with a "H" in the left are in hexadecimal, and
+the first byte of a file is the ZERO position. All information is
+provided based on the BIN file-format because of the nature of this
+format(see sections about each rom format).
+  *This document should be downloaded from my homepage. Any other site
+may contain outdated material!*
+  If you use this information for anything, please give the proper
+credits to the all these names listed below! I would thank you if you 
+include a link to our homepages and emails, too!
+  
+Felipe XnaK: 
+  http://www.classicgaming.com/launchtool
+  felipe@ComPorts.com
+Volker Oth (dOnut):
+  http://members.aol.com/~volkeroth
+  volkeroth@aol.com
+
+
+  THE BASIC INFORMATION:
+  ^^^^^^^^^^^^^^^^^^^^^
+
+H100:    'SEGA MEGA DRIVE'                                   1
+H110:    '(C)SEGA 1988.JUL'                                  2
+H120:    GAME NAME (DOMESTIC)                                3
+H150:    GAME NAME (OVERSEAS)                                4
+H180:    'XX'                                                5
+H182:    'XXXXXXX-XX'                                        6
+H18E:    XXXX                                                7
+H190:    'XXXXXXXXXXXXXXXX'                                  8
+H1A0:    00000000, XXXXXXXX                                  9
+H1A8:    RAM                                                10
+H1BC:    MODEM DATA                                         11
+H1C8:    MEMO                                               12
+H1F0:    Country in which the product                       13
+         can be released.
+
+1:  This is just the console name. It can be 'SEGA MEGA DRIVE' or
+  'SEGA GENESIS' depending on the console's country of origin.
+
+2:  Copyright notice. There SHOULD be 4 characters for the company
+code, a space and then the date in yyyy.mmm format; however, there are
+variations.
+    For a listing of company codes, see "TABLE OF COMPANY CODES".
+For a listing of month abbreviations, se "TABLE OF MONTH ABBREVIATIONS".
+When the company uses a number as a company code, the copyright has
+(in most cases!) this format: '(C)T-XX 1988.JUL', where XX is the
+company code. If the company code has three digits, it should use the
+space between the code and the date.
+       Some wrong copyrights i've found:
+   * The year is written as '199X' or '19XX', or doen't include the
+    millenium and the century.
+   * The company name is '00' or 'XX'
+   * Some companies that use a number for company code overwrite the
+    hiphen, not the space.
+   * Some companies doesn't include the '(C)' in the beginning and
+    others include just their name; some just include the the year
+   * Some copyrights have the year and month separated by ',','/', '-',
+    space or null character (H00). I'd found one that hasn't any separator
+    at all!
+   -- Good luck! --
+
+3:  This is the so-called "Domestic game name". Is the name the game has
+in its country of origin. This field is 48 bytes long...
+
+4:  ... and this is the so-called "Overseas game name". This is the name
+the game has worldwide. 48 bytes long too.
+
+5:  Type of product. This is 2 bytes long. Known values:
+  GM = Game
+  Al = Education
+
+6:  Product code and Version number:
+   * The first 7 characters are the product code 
+   * The 2 characters after the hiphen is the version number. This will
+   vary depending on the the type of ROM or software version
+
+7:  Check sum, a two-bytes value (see "Calculating the Checksum")
+
+8:  I/0 support: (this is 16 bytes long)
+      J = Joypad                4 = Team Play
+      6 = 6-button Joypad       0 = Joystick for MS
+      K = Keyboard              R = Serial RS232C
+      P = Printer               T = Tablet
+      B = Control Ball          V = Paddle Controller
+      F = Floppy Disk Drive     C = CD-ROM
+      L = Activator             M = Mega Mouse
+
+9:  ROM capacity. Here you will find the start and end address of the rom,
+respectively. The start address in most cases is 0 and the end address is 
+the size of rom in BYTES. Note that these values don't include the headers
+that some rom images have (discussed later). Each address is 4-bytes long.
+
+10:  There is a lot of information here that I can't help you with. What
+I can say is that you can get the start and end positions of the backup
+RAM at offset H1B4. Like in ROM addresses, you first acquire the start,
+then the end address. Remember, these addresses are four bytes each.
+
+11:  If the rom has no support for MODEM, fill this with spaces. If it has
+support for MODEM, then fill in this format:  'MOxxxxyy.z', where:
+     xxxx  Firm name the same as in 2
+     yy    MODEM NO.
+     z     Version
+
+12: I don't know what the heck it is! But by it's name and considering
+all roms that I investigated, it seems that you can write whatever you want
+in this field...
+
+13:  Countries where the game can be released. What is most interesting
+here is that changing this info in some games has different behaviour.
+Streets of Rage, for example, automatically changes it's name for Bare
+Knuckle if you set the game for Japan. The "official" codes are:
+       E = Europe
+       J = Japan
+       U = USA
+    I've found some others as well(I do not guarantee this is correct!)        
+       A = Asia
+       B = Brazil
+       4 = Brazil
+       F = France
+       8 = Hong Kong
+     This field can only contain three countries. This isn't really a
+problem because all "unofficial" codes run as Europe! Don't forget to
+set spaces to fill the bytes you don't use in this field.
+
+
+  TABLE OF COMPANY CODES:
+  ^^^^^^^^^^^^^^^^^^^^^^
+
+  This table was compiled by myself by just getting the company code
+in the ROM and writing the license that appears on the tittle screen.
+In other words, it probably contains errors and is missing a lot of
+companies.
+  When two comp1anies use the same code and are different companies
+(at least to my knownledge) the names are separeted by an "or". If the
+companies are the same (like Acclain and Flying Edge), they're separated
+by a backslash (/).
+
+  CODE                  COMPANY
+
+ ACLD                Ballistic
+ ASCI                Asciiware  
+ RSI                 Razorsoft
+ SEGA                SEGA
+ TREC                Treco
+ VRGN                Virgin Games
+ WSTN                Westone
+ 10                  Takara
+ 11                  Taito or Accolade
+ 12                  Capcom
+ 13                  Data East
+ 14                  Namco or Tengen
+ 15                  Sunsoft
+ 16                  Bandai
+ 17                  Dempa
+ 18                  Technosoft
+ 19                  Technosoft
+ 20                  Asmik
+ 22                  Micronet
+ 23                  Vic Tokai
+ 24                  American Sammy
+ 29                  Kyugo
+ 32                  Wolfteam
+ 33                  Kaneko
+ 35                  Toaplan
+ 36                  Tecmo
+ 40                  Toaplan
+ 42                  UFL Company Limited
+ 43                  Human
+ 45                  Game Arts
+ 47                  Sage's Creation
+ 48                  Tengen
+ 49                  Renovation or Telenet
+ 50                  Eletronic Arts
+ 56                  Razorsoft
+ 58                  Mentrix
+ 60                  Victor Musical Industries
+ 69                  Arena
+ 70                  Virgin
+ 73                  Soft Vision
+ 74                  Palsoft
+ 76                  Koei
+ 79                  U.S. Gold
+ 81                  Acclaim/Flying Edge 
+ 83                  Gametek
+ 86                  Absolute
+ 93                  Sony
+ 95                  Konami
+ 97                  Tradewest
+ 100                 T*HQ Software
+ 101                 Tecmagik
+ 112                 Designer Software
+ 113                 Psygnosis
+ 119                 Accolade
+ 120                 Code Masters
+ 125                 Interplay
+ 130                 Activision
+ 132                 Shiny & Playmates
+ 144                 Atlus
+ 151                 Infogrames
+ 161                 Fox Interactive
+ 239                 Disney Interactive
+
+- SPECIAL CASES:
+
+  In "Smurfs II" the copyright is just '(C) INFOGRAMES'
+ In "Baby's day out" rom, the copyright is: '(C) T-SNK 95-FEB',
+but the company name is "HI-TECH entertainment" <sigh>
+
+
+  TABLE OF MONTH ABBREVIATIONS:
+  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+ABBREVIATIONS        MONTH
+
+ JAN                 January
+ FEB                 February
+ MAR                 March
+ APR or APL          April
+ MAY                 May
+ JUN                 June
+ JUL                 July
+ AUG or 08           August
+ SEP or SEPT         September
+ OCT                 October
+ NOV                 November
+ DEC                 December
+
+
+  CALCULATING THE CHECKSUM:
+  ^^^^^^^^^^^^^^^^^^^^^^^^
+
+  Genesis checksum is simple enough... All you need to do is:
+1) Checksum starts as zero
+2) Skip the first 512 bytes of the ROM
+3) Read a byte from the rom and multiply its ascii value by 256, then sum
+  it to the checksum
+4) Read the next byte from the rom and just sum it to the checksum
+5) If you're not in the end of file, goto step 3
+6) Get the first 16 bits from the resulting checksum and discard the higher
+  bits
+7) That's your checksum!
+
+
+  Super Magic Drive Binary file-format (.BIN):
+  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+  This rom file-format is a simple rom dump. Nothing more to add!
+
+
+  Super Magic Drive Interleaved file-format (.SMD):
+  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+  This is a much more complex file-format. It have a 512 bytes header
+and is interleaved in 16KB blocks. These blocks have their even bytes
+at the beginning and the odd bytes at the end of them.
+
+  WHAT YOU FIND IN THE 512 BYTES HEADER:
+
+0: Number of blocks                           1
+1: H03                                        *
+2: SPLIT?                                     2
+8: HAA                                        *
+9: HBB                                        *
+ALL OTHER BYTES: H00
+
+1: This first byte should have the number of 16KB blocks the rom has.
+The header isn't part of the formula, so this number is:
+            [size of rom-512]/16386
+   If the size is more than 255, the value should be H00.
+
+2: This byte indicates if the ROM is a part of a splitted rom series. If
+the rom is the last part of the series (or isn't a splitted rom at all),
+this byte should be H00. In other cases should be H40. See "CREATING
+SPLITTED ROMS" for details on this format.
+
+*: Fixed values
+
+
+  THE DE-INTERLEAVING CODE (how to convert a SMD to a BIN):
+
+1) Skip the 512 bytes header
+2) Get 16KB from the ROM (16384 bytes)
+3) Decode the block
+4) Write the decoded block to the BIN file
+
+  DECODING A SMD BLOCK (stating byte is 0):
+
+1) Get Middlepoint (8192)
+2) Get a byte from the block 
+3) If the byte position is equal or smaller than middlepoint, put it
+in the first unused EVEN position of the decoded buffer
+4) If the byte position is greater than middlepoint, put it in the
+first unused ODD position of the decoded buffer
+
+  To convert a BIN to a SMD, just create a header (as explained before) and
+then do the reverse process! 
+
+
+  Multi Game Doctor file-format (.MD):
+  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+  The MD file format also doesn't have a header. The interleaving it uses
+is equal to the SMD, but without the division in blocks! (Even bytes in
+the end of file, odd bytes in the beginning).
+  
+  THE DECODING A MD (how to convert a MD to a BIN):
+
+1) Get middlepoint ([size of rom]/2)
+2) Get a byte from the ROM
+3) If the byte position is equal or smaller than the middlepoint put the
+byte in [byte position]*2 of the destination buffer
+4) If the byte position is greater than the middlepoint, put the byte in 
+([byte position]*2) - [size of rom] -1
+
+
+  CREATING SPLITTED ROMS:
+  ^^^^^^^^^^^^^^^^^^^^^^^
+
+  Splitted ROMs are a SMD divided into pieces. Knowing this, you may
+guess that you first need to convert your ROM to a SMD! :)
+  To have a splitted ROM created all you need is divide your SMD in
+several pieces, usually all with the same size (with the exception of
+the last one). After doing that, you need to add a SMD header to all
+these pieces. About these SMD headers:
+  1) The number of blocks embedded in them should be relative to the
+piece, not to the joined ROM.
+  2) As stated before, with the exception of the last piece, all roms
+should have their SPLIT byte set.
+
+
+  HOW YOU CAN HELP ME WITH THIS DOCUMENT:
+  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+ - Telling me the intricacies of a MGD ROM image. I never found one, but
+I do believe it's equal to MD format.
+ - I'm trying to find out how the sprites are saved in Genesis ROMs. If
+you have this info, I would like to have it!
+ - I never had a rom with modem support. If you have one, please test if
+the information about it is correct in this documentation (I got it from
+gentech). If you find it's correct, please explain me!!!
+
+  If you have any of this information, send it with your addresses (e-mail,
+homepage, etc) so I can add this to the document!

@@ -1,0 +1,6 @@
+In order to compile genesis plus with actual libogc, you need to:
+
+1/ download last libogc source (04-02-2007)
+2/ replace gu_psasm.S in /LIBBOGC directory located in root libogc source directory by the one included with this release
+3/ recompile and reinstall libogc in your devkitPP environment (type 'make' then 'make install')
+4/ compile genplus source (type 'make' in genplus folder)

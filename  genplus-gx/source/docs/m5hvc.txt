@@ -1,0 +1,40 @@
+
+ VDP timing for an NTSC Genesis in display mode 5.
+ Version 0.4 (11/29/00)
+
+ by Charles MacDonald
+ WWW: http://cgfm2.emuviews.com
+
+ Unpublished work Copyright 2000 Charles MacDonald
+
+ Description            32-cell         40-cell
+ ----------------------------------------------------------------------------
+ Range                  00-93, E9-FF    00-B6, E4-FF
+ Display area           00-7F           00-9F
+ V counter increment    84, 85          A4, A5
+ V-blanking in          86, 87          A7, A8
+ V-blanking out         86, 87          A7, A8
+ H-blanking in          93, E9          B2, E4
+ H-blanking out         06, 07          06, 07
+
+ Comma seperated values show the H counter value before an event occurs,
+ and then the H counter value immediately after.
+
+ These values shouldn't be considered 100% accurate, they are probably
+ off by one or two.
+
+ Each H counter unit is equivalent to two pixels.
+
+ The gaps at 93-E9 and B6-E4 are where the H counter 'jumps' ahead.
+ The H counter will never actually be set to the values 94-E8 or B7-E3.
+ Perhaps this is the horizontal retrace period.
+
+ Interestingly enough, the timing values for the 32-cell display mode
+ are identical to that of the SMS.
+
+ It would appear that in 40-cell mode, the horizontal blanking period
+ is shorter as the active display period takes more time.
+
+ The V-blanking flag can also be forcibly set by disabling the display
+ through bit 6 of register #1.
+
