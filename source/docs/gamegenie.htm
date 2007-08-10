@@ -1,0 +1,235 @@
+<HTML>
+<HEAD>
+	<TITLE>GameGenie patches</TITLE>
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FEFEF4">
+<BASEFONT FACE="MS Sans Serif" SIZE="-1">
+
+<BR>
+<CENTER><H1>GameGenie Patching</H1></CENTER>
+<BR>
+<P>&nbsp;&nbsp;GameGenie was a device created by codemasters and galoob that
+let you make cheats for games. It was plugged in the console like a normal
+cartridge, and in its top the desired cartridge was plugged. These cheats are
+possible because what GameGenie do is edit the RAM that stores values used by
+the ROMs, setting these values to a constant that can be, for example, the
+number of lifes you have!</P>
+<P>&nbsp;&nbsp;Genecyst was the first Genesis emulator to have support 
+for GameGenie then, with Kgen98, Steve Snake started to use this neat feature
+in his great emulator. No ROM image of a GameGenie is necessary, as some may 
+imagine, to use them with console emulators, these programs themselves have a
+built-in feature that acts like a GameGenie, writing the codes in the emulated
+RAM.</P>
+<P>&nbsp;&nbsp;The GameGenie code consists of a eight-bytes long string, and 
+the valid characters are A, B, C, D, E, F, G, H, J, K, L, M, N, P, R, S, T, V,
+W, X, Y, Z, 0, 1, 2, 3, 4, 5, 6, 7, 8 and 9, all in uppercase. Each character
+have a binary repressentation, which is 5-bits long.</P>
+
+<TABLE WIDTH="70%" BORDER="0" ALIGN="CENTER">
+<TR>
+<TD>
+<TABLE BORDER="1" ALIGN="CENTER">
+<TR>
+  <TH>Char</TH>
+  <TH>Value</TH>
+</TR>
+<TR>
+  <TD ALIGN="CENTER">A</TD><TD>00000</TD>
+</TR>
+<TR>
+  <TD ALIGN="CENTER">B</TD><TD>00001</TD>
+</TR>
+<TR>
+  <TD ALIGN="CENTER">C</TD><TD>00010</TD>
+</TR>
+<TR>
+  <TD ALIGN="CENTER">D</TD><TD>00011</TD>
+</TR>
+<TR>
+  <TD ALIGN="CENTER">E</TD><TD>00100</TD>
+</TR>
+<TR>
+  <TD ALIGN="CENTER">F</TD><TD>00101</TD>
+</TR>
+<TR>
+  <TD ALIGN="CENTER">G</TD><TD>00110</TD>
+</TR>
+<TR>
+  <TD ALIGN="CENTER">H</TD><TD>00111</TD>
+</TR>
+<TR>
+  <TD ALIGN="CENTER">J</TD><TD>01000</TD>
+</TR>
+<TR>
+  <TD ALIGN="CENTER">K</TD><TD>01001</TD>
+</TR>
+<TR>
+  <TD ALIGN="CENTER">L</TD><TD>01010</TD>
+</TR>
+</TABLE>
+</TD>
+<TD VALIGN="TOP">
+<TABLE BORDER="1" ALIGN="CENTER">
+<TR>
+  <TH>Char</TH>
+  <TH>Value</TH>
+</TR>
+<TR>
+  <TD ALIGN="CENTER">M</TD><TD>01011</TD>
+</TR>
+<TR>
+  <TD ALIGN="CENTER">N</TD><TD>01100</TD>
+</TR>
+<TR>
+  <TD ALIGN="CENTER">P</TD><TD>01101</TD>
+</TR>
+<TR>
+  <TD ALIGN="CENTER">R</TD><TD>01110</TD>
+</TR>
+<TR>
+  <TD ALIGN="CENTER">S</TD><TD>01111</TD>
+</TR>
+<TR>
+  <TD ALIGN="CENTER">T</TD><TD>10000</TD>
+</TR>
+<TR>
+  <TD ALIGN="CENTER">V</TD><TD>10001</TD>
+</TR>
+<TR>
+  <TD ALIGN="CENTER">W</TD><TD>10010</TD>
+</TR>
+<TR>
+  <TD ALIGN="CENTER">X</TD><TD>10011</TD>
+</TR>
+<TR>
+  <TD ALIGN="CENTER">Y</TD><TD>10100</TD>
+</TR>
+<TR>
+  <TD ALIGN="CENTER">Z</TD><TD>10101</TD>
+</TR>
+</TABLE>
+</TD>
+<TD VALIGN="TOP">
+<TABLE BORDER="1" ALIGN="CENTER">
+<TR>
+  <TH>Char</TH>
+  <TH>Value</TH>
+</TR>
+<TR>
+  <TD ALIGN="CENTER">0</TD><TD>10110</TD>
+</TR>
+<TR>
+  <TD ALIGN="CENTER">1</TD><TD>10111</TD>
+</TR>
+<TR>
+  <TD ALIGN="CENTER">2</TD><TD>11000</TD>
+</TR>
+<TR>
+  <TD ALIGN="CENTER">3</TD><TD>11001</TD>
+</TR>
+<TR>
+  <TD ALIGN="CENTER">4</TD><TD>11010</TD>
+</TR>
+<TR>
+  <TD ALIGN="CENTER">5</TD><TD>11011</TD>
+</TR>
+<TR>
+  <TD ALIGN="CENTER">6</TD><TD>11100</TD>
+</TR>
+<TR>
+  <TD ALIGN="CENTER">7</TD><TD>11101</TD>
+</TR>
+<TR>
+  <TD ALIGN="CENTER">8</TD><TD>11110</TD>
+</TR>
+<TR>
+  <TD ALIGN="CENTER">9</TD><TD>11111</TD>
+</TR>
+</TABLE>
+</TD>
+</TR>
+</TABLE>
+<BR>
+<P>&nbsp;&nbsp;The cheat code should be firstly converted directly using the
+table above, and then the bits should be reordered. For example, the GameGenie
+code SCRA-BJX0 is translated to:</P>
+<FONT FACE="Courier">
+<TABLE BORDER="0" ALIGN="CENTER">
+<TR>
+  <TD>
+  <TABLE BORDER="0" ALIGN="CENTER">
+    <TR><TD ALIGN="RIGHT" VALIGN="MIDDLE">Code:</TD></TR>
+	<TR><TD ALIGN="RIGHT" VALIGN="MIDDLE">Bits:</TD></TR>
+	<TR><TD ALIGN="RIGHT" VALIGN="MIDDLE">Id:</TD></TR>
+  </TABLE>
+  </TD>
+  <TD>
+  <TABLE BORDER="1" ALIGN="CENTER">
+  <TR ALIGN="CENTER">
+   <TD>S</TD><TD>C</TD><TD>R</TD><TD>A</TD>
+  </TR>
+  <TR ALIGN="CENTER">
+   <TD>01111</TD><TD>00010</TD><TD>01110</TD><TD>00000</TD>
+  </TR>
+  <TR ALIGN="CENTER">
+   <TD>ijklm</TD><TD>nopIJ</TD><TD>KLMNO</TD><TD>PABCD</TD>
+  </TR> 
+  </TABLE>
+  </TD>
+  <TD>
+  <TABLE BORDER="0" ALIGN="CENTER">
+    <TR><TD ALIGN="RIGHT" VALIGN="MIDDLE">-</TD></TR>
+	<TR><TD ALIGN="RIGHT" VALIGN="MIDDLE">-</TD></TR>
+	<TR><TD ALIGN="RIGHT" VALIGN="MIDDLE">-</TD></TR>
+  </TABLE>
+  </TD>
+  <TD>
+  <TABLE BORDER="1" ALIGN="CENTER">
+    <TR ALIGN="CENTER"><TD>B</TD><TD>J</TD><TD>X</TD><TD>0</TD></TR>
+    <TR ALIGN="CENTER"><TD>00001</TD><TD>01000</TD><TD>10011</TD><TD>10110</TD></TR>
+    <TR ALIGN="CENTER"><TD>EFGHd</TD><TD>efgha</TD><TD>bcQRS</TD><TD>TUVWX</TD></TR>
+  </TABLE>
+  </TD>  
+</TR>
+</TABLE>
+</FONT>
+<P>&nbsp;&nbsp;Then rearrange (using the id) as...</P>
+<FONT FACE="Courier">
+<TABLE BORDER="0" ALIGN="CENTER">
+<TR>
+  <TD>
+  <TABLE BORDER="0" ALIGN="CENTER">
+	<TR><TD ALIGN="RIGHT" VALIGN="MIDDLE">Bits:</TD></TR>
+	<TR><TD ALIGN="RIGHT" VALIGN="MIDDLE">Id:</TD></TR>
+  </TABLE>
+  </TD>
+  <TD>
+  <TABLE BORDER="1" ALIGN="CENTER">
+  <TR>
+    <TD>00000000</TD><TD>10011100</TD><TD>01110110</TD>
+  </TR>
+  <TR ALIGN="CENTER">
+    <TD>ABCDEFGH</TD><TD>IJKLMNOP</TD><TD>QRSTUVWX</TD>
+  </TR>
+  </TABLE>
+  </TD>
+  <TD>
+  <TABLE BORDER="0" ALIGN="CENTER">
+	<TR><TD ALIGN="RIGHT" VALIGN="MIDDLE">:</TD></TR>
+	<TR><TD ALIGN="RIGHT" VALIGN="MIDDLE">:</TD></TR>
+  </TABLE>
+  </TD>
+  <TD>
+  <TABLE BORDER="1">
+    <TR ALIGN="CENTER"><TD>01010100</TD> <TD>01111000</TD></TR>
+    <TR ALIGN="CENTER"><TD>abcdefgh</TD><TD>ijklmnop</TD></TR>
+  </TABLE>
+  </TD>
+</TR>
+</TABLE>
+</FONT>
+<BR>
+<P>&nbsp;&nbsp;Which give us, in hexa, <B>009C76:5478</B>. This means that
+<B>H5478</B> will be written at <B>H009C76</B> memory offset.</P>
+</BODY>
+</HTML>
