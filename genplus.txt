@@ -154,22 +154,15 @@ IMPORTANT: When putting roms either on DVD or SDCARD, it is recommended to use s
 
     VDP Latency is used to be more accurate in term of VRAM write timing, 
     it is required by some games (Chaos Engine...) to be displayed properly
-    (OFF by default, automatically set when specific roms are detected)
+    (ON by default)
 
     DMA Timing is used to be more accurate in term of DMA copy to V-RAM timing,
     it is required by some games (Legend of Galahad...) to be displayed properly
     (ON by default)
 
-    ALT. timing let you modify the line rendering timing. This is used in some games
-    (Road Rash series, Legend of Galahad) which have single line display glitch
-    (OFF by default, automatically set when specific roms are detected)
-
-    NOTE: These options are now automatically set when loading a game which need special timing fixes.
-          These fixes are also now automatically desactivated when the current game doesn't need them.
-          For your information, games that actually need special timings to run properly are:
-		.Legend of Galahad & Road Rash series (single line not rendered properly)
-		.Sesame Street Counting Cafe (don't boot)
-		.Chaos Engine/Soldiers of Fortune (graphic glitches when scrolling)
+    ALT. timing let you modify the line rendering timing. This is needed by some games
+    (Lotus 2 RECS) to prevent display glitches
+    (OFF by default, automatically set when specific rom is detected)
 
     CPU Mode let you force the CPU speed for the game:
       * AUTO: orignal CPU speed is automatically detected 

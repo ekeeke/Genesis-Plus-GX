@@ -87,8 +87,7 @@ uint8 vdp_rate = 60;        /* CPU speed (60Hz by default)*/
 void (*color_update) (int index, uint16 data);
 
 uint8 dmatiming = 1;
-uint8 vdptiming = 0;
-uint8 irqtiming = 0;
+uint8 vdptiming = 1;
 
 /*--------------------------------------------------------------------------*/
 /* Init, reset, shutdown functions                                          */

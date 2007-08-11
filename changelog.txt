@@ -17,8 +17,9 @@ used in a few games (now use game database) as backup RAM. This should fix SRAM 
 - corrected pixel sprite limit emulation
 - corrected sprite collision detection
 - added 9bits (RGB333) pixelcolor extrapolation to support fullcolor range (0-65535) when using 16bits rendering (RGB 565)
-- completely rewrote interrupt (VINT/HINT) handling: Sesame's Street Counting Cafe now works without any hacks
-- corrected H-Counters value again: Road Rash games (I,II,III) don't need any timing hacks anymore
+- completely rewrote interrupt (VINT/HINT) handling: Sesame's Street Counting Cafe now works without any hacks,
+no other timing sensitive game seems to be broken
+- corrected Hcounter table: Road Rash games (I,II,III) don't need any timing hacks anymore
 - corrected VDP latency so it does not interfere with DMA timings anymore
 
 

@@ -249,13 +249,11 @@ int system_frame (int do_skip)
 			{
 				h_counter = reg[10];
 				hint_pending = 1;
-			  	if (alttiming) m68k_run(aim_m68k - 456); /* fix Legend of Galahad */
 			}
 		}
 
-
-		/* Render a line of the display if needed */
-	  	if (do_skip == 0)
+	  	/* hack for Lotus 2 Recs */
+	  	if (alttiming && !do_skip)
 		{
 			if (v_counter < frame_end) render_line(v_counter);
 			if (v_counter < (frame_end-1)) parse_satb(0x81 + v_counter);
@@ -266,6 +264,12 @@ int system_frame (int do_skip)
 		m68k_run(aim_m68k - 404);
 		status &= 0xFFFB; // HBlank = 0
 
+		if (!alttiming && !do_skip)
+		{
+			if (v_counter < frame_end) render_line(v_counter);
+	        if (v_counter < (frame_end-1)) parse_satb(0x81 + v_counter);
+	    }
+	  
 		if (v_counter == frame_end)
 		{
 			/* V Retrace */

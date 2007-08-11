@@ -83,24 +83,12 @@ void genesis_set_region ()
  * set specific timings for some games
  */
  extern uint8 alttiming;
- extern uint8 irqtiming;
  extern uint8 sys_type[2];
 
- void patch_game()
+ void detect_game()
  {
-	 if ((strstr(rominfo.product,"T-50406")  != NULL) ||	/* Legend of Galahad */
-		 (strstr(rominfo.product,"MK-1079")  != NULL) ||	/* Sonic the Hedgehog 3 (JUE) */
-		 (strstr(rominfo.product,"MK-1563")  != NULL) ||	/* Sonic & Knuckes + Sonic the Hedgehog 3 (JUE) */
-		 (strstr(rominfo.product,"T-50116")  != NULL) ||	/* Road Rash */
-		 (strstr(rominfo.product,"T-50496")  != NULL) ||	/* Road Rash 2 (UE) */
-         (strstr(rominfo.product,"T-106143") != NULL) ||	/* Road Rash 2 (J) */
-		 (strstr(rominfo.product,"T-50966")  != NULL)		/* Road Rash 3 (UE) */
-		) alttiming = 1;
+	 if (strstr(rominfo.product,"T-50746")  != NULL) alttiming = 1;
 	 else alttiming = 0;
-
-	 /* Sesame's Street Counting Cafe */
-	 if (strstr(rominfo.product,"T-50896") != NULL) irqtiming = 1;
-     else irqtiming = 0;
 
 	 /* Menacer 6-in-1 Pack */
 	 if (strstr(rominfo.product,"MK-1658") != NULL)
@@ -189,7 +177,7 @@ void reloadrom ()
     SRAM_Init ();			/* SRAM Infos from ROM header */
     getrominfo (cart_rom);	/* Other Infos from ROM Header */
     genesis_set_region ();	/* Region Detection */
-	patch_game();			/* game special patches */
+	detect_game();			/* game special patches */
 
 	system_init ();
 	audio_init(48000);
