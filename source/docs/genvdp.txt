@@ -1,0 +1,1654 @@
+
+ Sega Genesis VDP documentation
+ Version 1.5f (08/10/00)
+
+ by Charles MacDonald
+ WWW: http://cgfm2.emuviews.com
+
+ Unpublished work Copyright 2000 Charles MacDonald
+
+
+ This document is very preliminary and subject to change.
+
+
+ Changes from the last version:
+
+ (v1.5f)
+ - Minor update on 68k -> VDP DMA transfers. (section 11)
+ (v1.5e)
+ - More information on VDP register sets.
+ - Added preliminary section numbers and table of contents.
+ - Revised todo list.
+ (v1.5d)
+ - Fixed sprite size byte layout.
+ - Listed a few games that overlap low and high priority sprites.
+ - Mentioned game problems regarding data port access.
+ (v1.5c)
+ - Verified DMA transfer wrapping.
+ - Fixed MSB/LSB mixup in DMA fill description.
+ - Added zero length DMA behavior.
+ - Mentioned results of writing during fills.
+ - Added VRAM address register wrapping.
+ (v1.5)
+ - Added shadow / hilight info.
+ - Added HV counter information.
+ - Added notes on odd byte access.
+ - Expanded register list.
+ - Rewrote DMA section.
+ - Did a little work on priority and patterns.
+ (v1.4)
+ - Described 8-bit port writes.
+ - Expanded VDP register programming section.
+ - Rewrote description of external interrupts.
+ - Removed 8-bit VRAM fill section.
+ - Added VDP pinout.
+ - Changed introduction and overview sections.
+ - Removed display size list.
+ - Added interrupts description.
+ (v1.3)
+ - Fixed sprite limitation count.
+ - Added details on blanking flags in status register.
+ - Added status register section.
+ - Added notes on VSRAM/CRAM fills.
+ - Added scrolling section.
+ - Added description of backdrop color register.
+ - Added description of mode set #3 register.
+ (v1.2)
+ - Completed most of the DMA section.
+ - Added sprite masking information.
+ - Verified bits 5-0 of reg 23 have no effect on VRAM fills.
+ - Fixed CD4 description.
+ (v1.1)
+ - Verified CD4 does not affect a 68K->VDP DMA transfer.
+ - Verified code and address registers retain their state after half of
+   a command word is written to the control port.
+ - Added display mode list.
+ - Added specific VDP RAM type info.
+ - Added sprite section.
+ - Verified register writes reset the pending flag.
+ - Added VDP port map.
+ - Verified byteswap behavior for VRAM writes.
+ - Verified no illegal codes allowed for CRAM writes.
+ - Verified A15-A7 of VSRAM address is ignored.
+ - Verified A0 of CRAM address is ignored.
+ - Verified A0 of VSRAM address is ignored.
+ - Verified writing to 'extra' VSRAM addresses has no effect.
+ - Verified ignored command word bits.
+ - Finalized info on palette control bit.
+ - Started basic control port decoding section.
+ - Added register #0, #1 descriptions.
+ - Mentioned plane A clipping in window register descriptions.
+ (v1.0)
+ - Initial draft.
+
+ Disclaimer:
+
+ If you use any information from this document, please credit me
+ (Charles MacDonald) and optionally provide a link to my webpage
+ (http://cgfm2.emuviews.com/) so interested parties can access it.
+
+ The credit text should be present in the accompanying documentation of
+ whatever project which used the information, or even in the program
+ itself (e.g. an about box)
+
+ ----------------------------------------------------------------------------
+ Table of Contents
+ ----------------------------------------------------------------------------
+
+  0.) Introduction
+  1.) Overview
+  2.) Display Modes
+  3.) VDP port map
+  4.) Interrupts
+  5.) HV Counter
+  6.) Status Register
+  7.) VDP ports
+  8.) VRAM
+  9.) CRAM
+ 10.) VSRAM
+ 11.) DMA
+ 12.) Patterns
+ 13.) Background Layers
+ 14.) Priority
+ 15.) Sprites
+ 16.) Shadow / Hilight mode
+ 17.) VDP registers
+ 18.) VDP Pinout
+
+
+ ----------------------------------------------------------------------------
+ 0.) Introduction
+ ----------------------------------------------------------------------------
+
+ This is a compilation of my notes on the Sega Genesis video display
+ processor.
+
+ I wanted to write this because the existing information on the VDP is
+ very inadequate. Many of the subtle quirks and bugs are not explained.
+
+ I'd like to thank the following people in alphabetical order for
+ providing information and being helpful:
+
+    Bart Trzynadlowski
+    Christian Schiller
+    Flavio Morsoletto
+    Omar Cornut
+    Stephane Dallongeville
+
+ Also thanks to Sardu and Steve Snake for genecyst and KGen98, which
+ were both used for devloping test programs.
+
+ I am interested in finding somebody who has a Sega Genesis copier and
+ would be willing to run some test programs and report the results.
+
+ ----------------------------------------------------------------------------
+ 1.) Overview
+ ----------------------------------------------------------------------------
+
+ The Genesis VDP is derived from the Master System VDP, which in turn
+ was derived from the Texas Instruments TMS9918. As a result, the VDP is
+ programmed much like it's earlier counterparts.
+
+ Interestingly enough, none of the Sega produced VDP's are similar to the
+ later VDP models made by Yamaha, which were also based upon the TMS9918.
+
+ ----------------------------------------------------------------------------
+ 2.) Display Modes
+ ----------------------------------------------------------------------------
+
+ To clarify naming conventions, here is a list of display modes used by
+ the various video chips mentioned:
+
+ Mode 0 - TMS9918 specific
+ Mode 1 - TMS9918 specific
+ Mode 2 - TMS9918 specific
+ Mode 3 - TMS9918 specific
+ Mode 4 - SMS mode
+ Mode 5 - Genesis mode
+
+ Supported mode list:
+
+ TMS9918    - Modes 0, 1, 2, 3
+ SMS        - Modes 0, 1, 2, 3, 4
+ Genesis    - Modes 4, 5 (possibly 0 and others as well)
+
+ If anybody has some information about how the Game Gear would fit into
+ this list, let me know. I assume it's identical to the SMS, but I don't
+ know about the TMS9918 compatability. (if any)
+
+ ----------------------------------------------------------------------------
+ 3.) VDP port map
+ ----------------------------------------------------------------------------
+
+ The VDP occupies addresses C00000h to C0001Fh.
+
+ C00000h    -   Data port (8=r/w, 16=r/w)
+ C00002h    -   Data port (mirror)
+ C00004h    -   Control port (8=r/w, 16=r/w)
+ C00006h    -   Control port (mirror)
+ C00008h    -   HV counter (8/16=r/o)
+ C0000Ah    -   HV counter (mirror)
+ C0000Ch    -   HV counter (mirror)
+ C0000Eh    -   HV counter (mirror)
+ C00011h    -   SN76489 PSG (8=w/o)
+ C00013h    -   SN76489 PSG (mirror)
+ C00015h    -   SN76489 PSG (mirror)
+ C00017h    -   SN76489 PSG (mirror)
+
+ ----------------------------------------------------------------------------
+ 4.) Interrupts
+ ----------------------------------------------------------------------------
+
+ The VDP generates all interrupts for the 68000. The only hardware
+ interrupts available are 2, 4, and 6.
+
+ Vertical interrupts
+ -------------------
+
+ If bit 5 (IE0) of register #1 is set, then a level 6 interrupt will occur
+ when the V counter is at line E0h, roughly at H counter cycle 08h. At this
+ point in time, the vertical interrupt occurance flag (bit 7) will be set
+ in the status register.
+
+ Line interrupts
+ ---------------
+
+ The VDP has a counter that is decremented on every line. When the counter
+ has expired, and if bit 4 (IE1) of register #0 is set, then a level 4
+ interrupt will occur.
+
+ The counter is loaded with the contents of register #10 in the following
+ situations:
+
+ - Line zero of the frame.
+ - When the counter has expired.
+ - Lines 225 through 261. (note that line 224 is not included)
+
+ The counter is *not* loaded when register #10 is written to.
+
+ Note that line interrupts are processed *before* vertical interrupts
+ within a scanline. If you trigger a line interrupt to occur on line E0h,
+ then the level 4 line interrupt will be taken by the 68000, not the
+ level 6 vertical interrupt.
+
+ External interrupts
+ -------------------
+
+ Pin 7 of each of the three I/O ports is called the TH pin. It is connected
+ to the VDP. When the state of TH is changed, the following events happen:
+
+ - If bit 7 of the control register for the associated I/O port is set,
+   and bit 3 of register #11 (IE2) is set, then the VDP will generate
+   a level 2 interrupt.
+
+ - If bit 1 of VDP register #0 is set, the contents of the HV counter will
+   be latched.
+
+ A common use for these features are in a light gun game. The light gun
+ can change the state of TH, which will freeze the HV counter, and then
+ the level 2 interrupt subroutine can read the HV counter and also
+ communicate with the light gun to get information like what buttons
+ were pressed. This is pretty much how Sega's 'Menacer' device works.
+ The Konami 'Justifier' light gun works on similar principles.
+
+ I don't know if the HV counter resumes normal operation after the first
+ read, or if the HV counter latch bit has to be cleared and set again.
+
+ Some games will enable the HV counter latch and never read the HV counter,
+ let alone use any special peripherals. (Shadow of the Beast II)
+
+ You cannot force an external interrupt by changing the state of TH
+ through software. (e.g. in the normal sequence of reading the gamepad,
+ TH is set and cleared - this does not cause an interrupt if interrupts
+ are enabled)
+
+ The data direction for TH (which corresponds to bit 6 of the data and
+ control registers) must be configured as an input for a peripheral
+ to cause an interrupt.
+
+ ----------------------------------------------------------------------------
+ 5.) HV Counter
+ ----------------------------------------------------------------------------
+
+ The HV counter returns the vertical and horizontal position of the
+ television's raster beam.
+
+ Reading the HV counter will return the following data:
+
+    VC7 VC6 VC5 VC4 VC3 VC2 VC1 VC0     (D15-D08)
+    HC8 HC7 HC6 HC5 HC4 HC3 HC2 HC1     (D07-D00)
+
+ VCx = Vertical position in lines.
+ HCx = Horizontal position in pixels.
+
+ According to the manual, VC0 is replaced with VC8 when in interlace mode 2.
+
+ For 8-bit reads, the even byte (e.g. C00008h) returns the V counter, and
+ the odd byte (e.g. C00009h) returns the H counter.
+
+ The V counter counts up from 00h to EAh, then it jumps back to E5h and
+ continues counting up to FFh. This allows it to cover the entire 262 line
+ display.
+
+ The H counter counts up from 00h to E9h, then it jumps back to 93h and
+ continues counting up to FFh. This allows it to cover an entire 342 pixel
+ line.
+
+ The H counter description is based upon known information about the SMS
+ VDP's H counter. The SMS has a 256x192 display, and each line consists of
+ 342 pixels. (that includes blanking, retrace, etc.) The description
+ *could* be accurate for the Genesis' 32-cell display mode. This is not
+ the case for the 40-cell display, where I would assume the H counter jumps
+ back farther at a later point in the count-up.
+
+ In terms of emulation, I have found that turning the elapsed 68000 cycle
+ count into a pixel offset for the current scan line seems to provide a
+ reasonable return value for the H counter. However, I am quite positive
+ a single scanline consists of more pixels than just 256 or 320, and
+ in addition the 'jump-back' described above is not taken into account.
+ In all honesty this is a hack, not a solution.
+
+ I would appreciate any additional information on the HV counter.
+ 
+ ----------------------------------------------------------------------------
+ 6.) Status Register
+ ----------------------------------------------------------------------------
+
+ Reading the control port returns a 16-bit word that allows you to observe
+ various states of the VDP and physical display.
+
+ d15 - Always 0
+ d14 - Always 0
+ d13 - Always 1
+ d12 - Always 1
+ d11 - Always 0
+ d10 - Always 1
+ d9  - FIFO Empty
+ d8  - FIFO Full
+ d7  - Vertical interrupt pending
+ d6  - Sprite overflow on current scan line
+ d5  - Sprite collision
+ d4  - Odd frame
+ d3  - Vertical blanking
+ d2  - Horizontal blanking
+ d1  - DMA in progress
+ d0  - PAL mode flag
+
+ Presumably bit 0 is set when the system display is PAL; however this same
+ information can be read from the version register (part of the I/O
+ register group - not the VDP), so maybe this bit reflects the state of
+ having a 240-line display enabled.
+
+ Bit 1 is set for the duration of a DMA operation. This is only useful for
+ fills and copies, since the 68000 is frozen during 68k -> VDP transfers.
+
+ Bit 2 returns the real-time status of the horizontal blanking signal.
+ It is set at H counter cycle E4h and cleared at H counter cycle 08h.
+
+ Bit 3 returns the real-time status of the vertical blanking signal.
+ It is set on line E0h, at H counter cycle AAh, and cleared on line FFh,
+ at H counter cycle AAh.
+
+ (Note: For both blanking flag descriptions, the H counter values are
+ very likely different for 32-cell and interlaced displays; they were
+ taken from a test with a 40-cell screen.)
+
+ Bit 4 is set when the display is interlaced, and in the odd frame,
+ otherwise it is cleared in the even frame. This applies to both
+ interlace modes.
+
+ Bit 5 is set when any sprites have non-transparent pixels overlapping one
+ another. This may hold true for sprites outside of the display area too.
+ This bit is most likely cleared at the end of the frame.
+
+ Bit 6 is set when too many sprites are on the current scan line, meaning
+ when the VDP parses the 21st sprite in 40-cell mode or the 17th sprite in
+ 32-cell mode from the sprite list.
+ This bit is most likely cleared at the end of the frame.
+
+ Bit 7 is set when a vertical interrupt occurs. This happens at line E0h,
+ roughly after H counter cycle 08h. I do not know under what conditions
+ it is cleared, presumably at the end of the frame. Reading the control
+ port does not clear this bit. (this could be incorrect)
+
+ Bit 8 and 9 (FULL and EMPTY flags, respectively) are related to the FIFO;
+ here's what Flavio Morsoletto has to say about their use:
+
+    "The FIFO can hold up to four 16-bit words while the VDP's busy
+    parsing data from VRAM. Once the 68K has written the fourth word,
+    FULL is raised. If the processor attempts to write one more time, it
+    will be frozen (/DTACK high) until the FIFO unit manages to deliver
+    the first stacked word to its rightful owner. EMPTY only goes 1 when
+    there is nothing on the stack. The intermediate state is signaled by
+    both of them showing 0."
+
+ This situation only occurs during the active display period, as the
+ data port can be written to as many times as needed during blanking.
+
+ I've noticed most emulators keep the EMPTY flag set, so it appears as
+ if the FIFO was always empty instead of being in the neutral state. This
+ is probably for games that would normally check and find the FIFO in a
+ neutral state, then write data and expect to poll the FULL flag afterwards.
+
+ ----------------------------------------------------------------------------
+ 7.) VDP ports
+ ----------------------------------------------------------------------------
+
+ The VDP is programmed entirely through the control and data ports.
+ Data written to the control port is formatted, so the VDP will know
+ how to interpret the data it recieves.
+
+ You can divide control port data into two categories; 16-bit register sets
+ and 32-bit command words.
+
+ Programming VDP registers
+ -------------------------
+
+ Any one of the 23 VDP registers can be programmed by writing 16 bits of
+ data to the control port. The data written has the following format:
+
+     1   0   ?  R04 R03 R02 R01 R00     (D15-D8)
+    D07 D06 D05 D04 D03 D02 D01 D00     (D7-D0)
+
+    Rxx = VDP register select (00-1F)
+    Dxx = VDP register data (00-FF)
+
+ Writing to non-existant VDP registers has no effect.
+
+ Bits 15 and 14 must be set to 1 and 0 respectively, otherwise the write
+ will be treated as the first half of a command word. The state of bit 13
+ does not matter.
+
+ Here's an example of programming one register:
+
+    ; Set border color to palette $3, index $F
+    move.w #$873F, $00C00004
+
+ Since the 68000 treats 32-bit memory access as two 16-bit operations,
+ you can program two registers at once:
+
+    ; Set split point bits for both window registers
+    move.w  #$91809280, $00C00004
+
+ Accessing VDP RAM
+ -----------------
+
+ You can access VRAM, CRAM, or VSRAM by writing a 32-bit command word to
+ the control port. The data written has the following format:
+
+    CD1 CD0 A13 A12 A11 A10 A09 A08     (D31-D24)
+    A07 A06 A05 A04 A03 A02 A01 A00     (D23-D16)
+     ?   ?   ?   ?   ?   ?   ?   ?      (D15-D8)
+    CD5 CD4 CD3 CD2  ?   ?  A15 A14     (D7-D0)
+
+    CDx = VDP code (0-3F)
+    Axx = VDP address (00-FFFF)
+
+ The state of D15 through D8, D3, and D2 are ignored.
+
+ The VDP has an address and code register. They are used in conjunction to
+ handle data port accesses. The address register provides an offset into
+ VDP RAM to write or read data from. The code register specifies if
+ data port accesses will be reads or writes, and the kind of VDP RAM
+ to perform these operations on.
+
+ In order for the VDP to know if the first or second 16-bit half of the
+ command word has been written to the control port, it maintains an internal
+ write-pending flag. This flag is updated when these conditions are met:
+
+ - It is set when the first half of the command word is written.
+ - It is cleared when the second half of the command word is written.
+ - It is cleared when the data port is written to or read from.
+ - It is cleared when the control port is read.
+
+ It is perfectly valid to write the first half of the command word only.
+ In this case, _only_ A13-A00 and CD1-CD0 are updated to reflect the new
+ values, while the remaining address and code bits _retain_ their former
+ value.
+
+ You cannot write to a VDP register if the pending flag is set to one,
+ since the VDP is expecting the 2nd half of a command word.
+
+ Writing to a VDP register will clear the code register. Games that rely
+ on this are Golden Axe II (will display missing SEGA logo) and Sonic 3D.
+ (will show intro movie in wrong colors for a few frames) It is not known
+ if the address register is cleared as well, but the TMS9918 manual
+ indicates that this is so, perhaps it applies to the Genesis as well.
+
+ Here is a table of code register settings:
+
+ Bits CD3-CD0
+ 0000b : VRAM read
+ 0001b : VRAM write
+ 0011b : CRAM write
+ 0100b : VSRAM read
+ 0101b : VSRAM write
+ 1000b : CRAM read
+
+ You cannot write data after setting up a read operation, or read data
+ after setting up a write operation. The write or read is ignored.
+
+ CD4 is only set for the the VRAM copy DMA mode.
+ For data port accesses and 68k to VDP DMA, the state of CD4 is ignored.
+
+ Setting CD5 will trigger a DMA operation.
+
+ 8-bit port access
+ -----------------
+
+ Doing an 8-bit write to the control or data port is interpreted by
+ the VDP as a 16-bit word, with the data written used for both halfs
+ of the word.
+
+ For instance, the following code writes 87h to VDP register #7:
+
+        ; VDP sees data as 8787h
+        move.b  #$87, $00C00004
+
+ This also applies to the data port. The following code sets CRAM entry
+ zero to pink:
+
+        ; VDP sees data as 0E0Eh
+        move.l #$C0000000, $00C00004
+        move.b #$0E, $00C00000
+
+ It's important to realize that a distinction between 8-bit and 16-bit VRAM
+ fills do not exist. There is only one type of fill, and depending on how
+ you write to the data port will determine the kind of data used in the fill.
+
+ Odd addresses (e.g. C00007h, C00001h) function identically to even addresses
+ in the case of 8-bit writes. For instance, writing data to anywhere within
+ C00004h-C00007h would go to the control port.
+
+ Miscellaneous
+ -------------
+
+ I've found that some games will write VDP register data to the data port,
+ after the code and address registers have been set to zero. I've confirmed
+ that this is simply a bug on the programmer's behalf, you cannot program
+ the VDP registers in this way.
+
+ Games that do this include Alien Soldier and Eternal Champions.
+
+ Some games also set up VRAM reads and try to write to VRAM; this is
+ also pointless as data written after a VRAM read command is issued
+ is ignored by the VDP. The unlicensed version of Populous does
+ this, along with Golden Axe II.
+
+ ----------------------------------------------------------------------------
+ 8.) VRAM
+ ----------------------------------------------------------------------------
+
+ The VDP is connected to 64K of video RAM. It is accessed as 65535 8-bit
+ bytes or 32768 16-bit words through the data port.
+
+ VRAM is multipurpose; it can store pattern data, horizontal scroll data,
+ sprite tables, and background name tables.
+
+ When writing 16-bit data to VRAM, having address bit 0 set will swap
+ the upper and lower bytes of the data written.
+
+ The address register wraps past address FFFFh.
+
+ ----------------------------------------------------------------------------
+ 9.) CRAM
+ ----------------------------------------------------------------------------
+
+ The VDP has 64x9 bits of on-chip color RAM. It is accessed as 64 16-bit
+ words through the data port. Each word has the following format:
+
+ ----bbb-ggg-rrr-
+
+ r = Red component (0-7)
+ g = Green component (0-7)
+ b = Blue component (0-7)
+
+ This allows for a total of 512 possible colors, with 64 colors stored
+ in CRAM at any given time.
+
+ When accessing CRAM, only address bits 6 through 1 are valid. The high-order
+ address bits are ignored. Since CRAM is word-wide, address bit zero has
+ no effect.
+
+ The address register wraps past address 7Fh.
+
+ ----------------------------------------------------------------------------
+ 10.) VSRAM
+ ----------------------------------------------------------------------------
+
+ The VDP has 40x10 bits of on-chip vertical scroll RAM. It is accessed as
+ 40 16-bit words through the data port. Each word has the following format:
+
+ ------yyyyyyyyyy
+
+ y = Vertical scroll factor (0-3FFh)
+
+ When accessing VSRAM, only address bits 6 through 1 are valid.
+ The high-order address bits are ignored. Since VSRAM is word-wide, address
+ bit zero has no effect.
+
+ Even though there are 40 words of VSRAM, the address register will wrap
+ when it passes 7Fh. Writes to the addresses beyond 50h are ignored.
+
+ ----------------------------------------------------------------------------
+ 11.) DMA
+ ----------------------------------------------------------------------------
+
+ The VDP can be programmed to move data into, copy, and fill sections of
+ VDP RAM, meaning VRAM, CRAM, and VSRAM. These functions are referred to
+ as Direct Memory Access. (DMA)
+
+ Overview
+ --------
+
+ Bits 7 and 6 of register #23 select the type of DMA operation:
+
+    D7  D6
+     0   ?  :   68K -> VDP RAM transfer (D6 is bit 24 of source address)
+     1   0  :   VRAM fill
+     1   1  :   VRAM copy
+
+ Bit 4 of register #1 will enable DMA operations when set.
+
+ Some games will attempt to do DMA when it is disabled, including Phelios
+ and Rocket Knight Adventures.
+
+ When doing 68K -> VDP RAM transfers, the 68000 is frozen. For VRAM fills
+ and copies, the 68000 runs normally, but you can only read the control
+ port, HV counter, and write to the PSG register.
+
+ Writing to the control or data port during a VRAM fill seems to corrupt
+ the VDP registers and VRAM.
+
+ When the length field is set to zero, the length is treated as FFFFh.
+
+ 68000 to VDP RAM
+ ----------------
+
+ This is used to transfer data out of the 68000's address space into VRAM,
+ CRAM, or VSRAM.
+
+ Registers 19, 20, specify how many 16-bit words to transfer:
+
+ #19: L07 L06 L05 L04 L03 L02 L01 L00
+ #20: L15 L14 L13 L12 L11 L10 L08 L08
+
+ Note that a length of 7FFFh equals FFFFh bytes transferred, and a length
+ of FFFFh = 1FFFF bytes transferred.
+
+ Registers 21, 22, 23 specify the source address on the 68000 side:
+
+ #21: S08 S07 S06 S05 S04 S03 S02 S01
+ #22: S16 S15 S14 S13 S12 S11 S10 S09
+ #23:  0  S23 S22 S21 S20 S19 S18 S17
+
+ If the source address goes past FFFFFFh, it wraps to FF0000h.
+ (Actually, it probably wraps at E00000h, but there's no way to tell as
+  the two addresses are functionally equivelant)
+
+ When doing a transfer to CRAM, the operation is aborted once the address
+ register is larger than 7Fh. The only known game that requires this is
+ Batman & Robin, which will have palette corruption in levels 1 and 3
+ otherwise. This rule may possibly apply to VSRAM transfers as well.
+
+ A transfer is started when the following command word is written:
+
+    CD1 CD0 A13 A12 A11 A10 A09 A08     (D31-D24)
+    A07 A06 A05 A04 A03 A02 A01 A00     (D23-D16)
+     ?   ?   ?   ?   ?   ?   ?   ?      (D15-D8)
+     1   0   0  CD2  ?   ?  A15 A14     (D7-D0)
+
+ CD2-CD0 specify the type of VDP RAM to write to:
+ 
+ 001b - VRAM
+ 011b - CRAM
+ 101b - VSRAM
+
+ The following events occur after the command word is written:
+
+ - 68000 is frozen.
+ - VDP reads a word from source address.
+ - Source address is incremented by 2.
+ - VDP writes word to VRAM, CRAM, or VSRAM.
+   (For VRAM, the data is byteswapped if the address register has bit 0 set)
+ - Address register is incremented by the value in register #15.
+ - Repeat until length counter has expired.
+ - 68000 resumes operation.
+
+ When a transfer is done out of the ROM area ($000000-3FFFFF), the machine
+ will lock up unless the write that triggers the DMA operation is done
+ using RAM.
+
+ Usually this means putting the command word or the latter half of the
+ command word in RAM and moving that into the control port, putting
+ the command word on the stack and moving that into the control port,
+ or having the instruction that moves the command word into the control
+ port execute out of RAM.
+
+ VRAM fill
+ ---------
+
+ VRAM fills are used to repeatedly write a given data value to multiple
+ sequential addresses in VRAM.
+
+ Registers 19, 20, specify how many 8-bit bytes to fill:
+
+ #19: L07 L06 L05 L04 L03 L02 L01 L00
+ #20: L15 L14 L13 L12 L11 L10 L08 L08
+
+ The address bits in registers 21, 22, 23 are ignored:
+
+ #21:  ?   ?   ?   ?   ?   ?   ?   ? 
+ #22:  ?   ?   ?   ?   ?   ?   ?   ?
+ #23:  1   0   ?   ?   ?   ?   ?   ?
+
+ A VRAM fill is started when the following command word is written:
+
+     0   1  A13 A12 A11 A10 A09 A08     (D31-D24)
+    A07 A06 A05 A04 A03 A02 A01 A00     (D23-D16)
+     ?   ?   ?   ?   ?   ?   ?   ?      (D15-D8)
+     1   0   0   0   ?   ?  A15 A14     (D7-D0)
+
+ Any write to the data port will then start a VRAM fill. The LSB of the
+ data is written to the address specified, then the MSB is written to
+ the adjacent address. The address register is incremented by the value
+ in VDP register 15, and the upper 8 bits are written again to the next
+ adjacent address, and so on.
+
+ Here is some "C" pseudocode to illustrate a VRAM fill:
+
+ void vram_fill(int data)
+ {
+    /* Write lower byte to address specified */
+    vram[address] = (data >> 0) & 0xFF;
+
+    do {
+        /* Write upper byte to adjacent address */
+        vram[address ^ 1] = (data >> 8) & 0xFF;
+
+        /* Increment address register */
+        address += vdp_reg[15];
+    } while(--length)
+ }
+
+ Games that require accurate VRAM fill emulation include Thunder Force IV,
+ Contra Hard Corps, Revenge of Shinobi, Taiga Drama, and Sword of Vermillion.
+
+ VRAM copy
+ ---------
+
+ VRAM copies are used to copy blocks of VRAM data.
+
+ Registers 19, 20, specify how many 8-bit bytes to copy:
+
+ #19: L07 L06 L05 L04 L03 L02 L01 L00
+ #20: L15 L14 L13 L12 L11 L10 L08 L08
+    
+ The address bits in register 23 are ignored.
+ Registers 21, 22 specify the source address in VRAM:
+
+ #21: S07 S06 S05 S04 S03 S02 S01 S00
+ #22: S15 S14 S13 S12 S11 S10 S09 S08
+ #23:  1   1   ?   ?   ?   ?   ?   ? 
+
+ A VRAM copy is started when the following command word is written:
+
+     0   0  A13 A12 A11 A10 A09 A08     (D31-D24)
+    A07 A06 A05 A04 A03 A02 A01 A00     (D23-D16)
+     ?   ?   ?   ?   ?   ?   ?   ?      (D15-D8)
+     1   1   0   0   ?   ?  A15 A14     (D7-D0)
+
+ The VDP will read a byte from the source address which is then incremented
+ by one. The data will then be written to the destination address, which
+ is incremented by register #15.
+
+ Games that use VRAM copies include Aleste, Bad Omen, and Viewpoint.
+
+ Transfer capacity
+ -----------------
+
+ The VDP can access memory a certain number of times on each line of the
+ display. This is severely limited during the active display period, since
+ the VDP also needs to update the screen, leaving less memory accesses
+ left for DMA.
+
+ According to the manual, here's a table that describes the transfer
+ rates of each of the three DMA types:
+
+    DMA Mode      Width       Display      Transfer Count
+    -----------------------------------------------------
+    68K > VDP     32-cell     Active       16
+                              Blanking     167
+                  40-cell     Active       18
+                              Blanking     205
+    VRAM Fill     32-cell     Active       15
+                              Blanking     166
+                  40-cell     Active       17
+                              Blanking     204
+    VRAM Copy     32-cell     Active       8
+                              Blanking     83
+                  40-cell     Active       9
+                              Blanking     102
+
+ 'Active' is the active display period, 'Blanking' is either the vertical
+ blanking period or when the display is forcibly blanked via register #1.
+
+ The above transfer counts are all in bytes, unless the destination is
+ CRAM or VSRAM for a 68K > VDP transfer, in which case it is in words.
+
+ Miscellaneous
+ -------------
+
+ I don't know if the source address register and length counter are actually
+ updated during a DMA operation. I doubt it, but in theory you could have
+ a sequence like this:
+
+        move.l  #$94109300, $00C00004   ; length = 4k words
+        move.l  #$96009500, $00C00004
+        move.l  #$97708F02, $00C00004   ; src = E00000h, inc = 02h
+        move.w  #$40000003, $00C00004   ; VRAM write to C000h
+        ; 8k is transferred to VRAM C000h from RAM E00000h
+
+        move.w  #$60000003, $00C00004   ; VRAM write to E000h
+        ; 8k is transferred to VRAM E000h from RAM E02000h
+
+ You can make VRAM fills affect CRAM or VSRAM by changing the CD2-CD0 bits
+ to the appropriate RAM type, just like how 68K -> VDP transfers work.
+ Due to the limited way this was tested, I can't say how exactly the fill
+ data is written; CRAM and VSRAM are word-wide, while VRAM is byte-wide,
+ to there's bound to be some differences. I'd assume the results are
+ the same as normal byte-wide data port access, where both the LSB and
+ MSB of each word are set to the same 8-bit data written.
+
+ In the case of a VRAM fill, the CD2-CD0 bits are set to the same value
+ required for a VRAM write. In the same vein, VRAM copies have the code
+ bits set to the same setting as a VRAM read. Maybe changing the code
+ register would allow copies within CRAM and VSRAM? Or perhaps the code
+ bits only select the source address? (Not that a CRAM > VRAM copy is
+ particularly useful, but there you go.)
+ 
+ ----------------------------------------------------------------------------
+ 12.) Patterns
+ ----------------------------------------------------------------------------
+
+ All background and sprite graphics are made up of patterns. A pattern is
+ an 8x8 or 8x16 (interlace mode 2 only) pixel block that is made up of
+ fifteen colors.
+
+ Patterns are stored in VRAM. Each pixel is represented by four bits,
+ meaning there are four bytes (4 bits * 8 pixels = 4 bytes) per line of
+ the pattern, and 32 or 64 bytes per pattern, depending if the pattern
+ is 8x8 or 8x16.
+
+ Unlike other VRAM data that is stored in a specific table, patterns can
+ be placed anywhere. Even in the parts of other tables that aren't being
+ used, like a name table or sprite attribute table.
+
+ A pixel within a pattern that uses value zero isn't shown. It acts as a
+ transparency indicator.
+
+ ----------------------------------------------------------------------------
+ 13.) Background Layers
+ ----------------------------------------------------------------------------
+
+ The VDP manages two background layers, called plane A and plane B.
+
+ Name Tables
+ -----------
+
+ There are three tables stored in video RAM that define the layout for
+ planes A, B, and W.
+
+ Each table is a matrix of 16-bit words. Each word has the following format:
+
+    pccvhnnnnnnnnnnn
+
+    p = Priority flag
+    c = Palette select
+    v = Vertical flip
+    h = Horizontal flip
+    n = Pattern name
+ 
+ The pattern name is the upper 11 bits of the physical address of pattern
+ in video RAM. Bit zero of the name is ignored in interlace mode 2.
+
+ The vertical and horizontal flip flags tell the VDP to draw the pattern
+ flipped in either direction.
+
+ The palette select allows the pattern to be shown in one of four
+ 16-color palettes.
+
+ The priority flag is described later.
+
+ The name tables for plane A and B share the same dimensions. The name
+ table size cannot exceed 8192 bytes, so while a 64x64 or 128x32 name
+ table is allowed, a size of 128x128 or 64x128 is invalid.
+
+ The name table for plane W is 32x32 in 32-cell mode, and 64x32 in 40-cell
+ mode. This size is fixed and is entirely dependant on the display width.
+
+ Window
+ ------
+
+ The window plane operates differently from plane A or B. It can be thought
+ of a 'replacement' for plane A which is used under certain conditions.
+ That said, plane A cannot be displayed in any area where plane W is
+ located, it is impossible for them to overlap.
+
+ Registers 17 and 18 define an area which the window is restricted to.
+
+ In terms of priority and intensity calculation for shadow / hilight mode,
+ plane W is treated _exactly_ the same as plane A.
+
+ Horizontal Scrolling
+ --------------------
+
+ The horizontal scroll table holds the scroll value for every line of
+ both planes A and B, that can be positioned anywhere within video RAM.
+
+ Each entry of the scroll table is a 16-bit word. It has the following
+ format:
+
+ ------xxxxxxxxxx
+
+ x = Horizontal scroll value (0-3FFh)
+
+ Bits D15 through D10 are ignored by the VDP.
+
+ The lower three bits of the scroll value provide a pixel offset into each
+ column comprised of one pattern. The upper seven bits provide an offset
+ into each column of the name table (0-127).
+
+ When the scroll value is larger than the width of the playfield, the
+ display wraps horizontally.
+
+ Scroll values for planes A and B are stored in an interleaved fashion.
+ Entry #0 of the table is for plane A, entry #1 is for plane B, and this
+ repeats for the entire length of the table.
+
+ The manual says the scroll table is 960 bytes in size,
+ and this seems like an accurate figure, considering the scroll table
+ address bits suggest the table can be 1024 bytes.
+
+ However, I do not know what happens in double-resolution interlace
+ mode. To provide a scroll entry for both planes on every line, a total
+ of 1920 bytes would be needed. (480 lines x 2 planes x 2 bytes per line)
+
+ Here is some "C" pseudocode to illustrate how the VDP reads the scroll
+ table depnding on the settings of bits 0 and 1 of register #11:
+
+ void get_scroll(int line, int *scroll_a, int *scroll_b)
+ {
+    switch(vdp_reg[11] & 3)
+    {
+        case 0x00: /* Full screen */
+            *scroll_a = *(word *)vram[hscb + 0];
+            *scroll_b = *(word *)vram[hscb + 2];
+            break;
+
+        case 0x01: /* First eight lines */
+            *scroll_a = *(word *)vram[hscb + ((line & 7) * 2) + 0];
+            *scroll_b = *(word *)vram[hscb + ((line & 7) * 2) + 2];
+            break;
+
+        case 0x02: /* Every row */
+            *scroll_a = *(word *)vram[hscb + ((line & ~7) * 2) + 0];
+            *scroll_b = *(word *)vram[hscb + ((line & ~7) * 2) + 2];
+            break;
+
+        case 0x03: /* Every line */
+            *scroll_a = *(word *)vram[hscb + (line * 2) + 0];
+            *scroll_b = *(word *)vram[hscb + (line * 2) + 2];
+            break;
+    }
+ }
+
+ A scroll mode setting of 01b is not valid; however the unlicensed version
+ of Populous uses it. This mode is identical to per-line scrolling, however
+ the VDP will only read the first sixteen entries in the scroll table for
+ every line of the display.
+
+ ----------------------------------------------------------------------------
+ 14.) Priority
+ ----------------------------------------------------------------------------
+
+ The VDP manages a fairly complex system of priorities between the two
+ background layers and sprites. The basic ordering is:
+
+
+ (back)                                         (front)
+        A  >  B  >  C  >  D  >  E' >  F' >  G'
+
+ ' = Denotes high priority
+ A = Backdrop color
+ B = Low priority plane B
+ C = Low priority plane A
+ D = Low priority sprites
+ E = High priority plane B
+ F = High priority plane A
+ G = High priority sprites
+
+ The sprite priority bit does not affect inter-sprite priority, only the
+ relation between background data. Low priority sprites *can* overlap high
+ priority sprites. Games that do this to mask other sprites include
+ Castlevania Bloodlines, Raiden Trad, and Alien Soldier.
+
+ ----------------------------------------------------------------------------
+ 15.) Sprites
+ ----------------------------------------------------------------------------
+
+ The Genesis can display a total of eighty 32x32 15-color sprites.
+ There are of course various restrictions on the display capacity, based
+ on current configuration of the VDP.
+
+ Sprite Attribute Table
+ ----------------------
+
+ All sprite data is stored in a region of VRAM called sprite attribute table.
+ The table is 640 bytes in size. Each 8-byte entry has the following format:
+
+ Index + 0  :   ------yy yyyyyyyy
+ Index + 2  :   ----hhvv
+ Index + 3  :   -lllllll
+ Index + 4  :   pccvhnnn nnnnnnnn
+ Index + 6  :   ------xx xxxxxxxx
+
+ y = Vertical coordinate of sprite
+ h = Horizontal size in cells (00b=1 cell, 11b=4 cells)
+ v = Vertical size in cells (00b=1 cell, 11b=4 cells)
+ l = Link field
+ p = Priority
+ c = Color palette
+ v = Vertical flip
+ h = Horizontal flip
+ n = Sprite pattern start index
+ x = Horizontal coordinate of sprite
+
+ Linking
+ -------
+
+ The VDP draws sprites in a front-to-back order, starting with sprite zero.
+ The 7-bit link field in each list entry is an index to the next entry of
+ the sprite that will be drawn. If the link field is zero, then no more
+ sprites will be drawn after the current sprite. Here's an example:
+
+     Sprite #00 has a link field of 2
+     Sprite #01 has a link field of 7
+     Sprite #02 has a link field of 4
+     Sprite #03 has a link field of 0
+     Sprite #04 has a link field of 3
+     Sprite #05 has a link field of 2
+ 
+ In this case, sprites #00, #02, #04, #03 will be drawn, in that order.
+
+ Coordinate System
+ -----------------
+
+ Sprites are positioned in a virtual 512x512 space. The display starts at
+ coordinate 128, 128, and takes up a space equal to the size of the physical
+ display. (usually 256x224 or 320x224) This system is convenient for
+ programmers; unwanted sprites can easily be hidden off screen, and sprites
+ can be shown partially at the top and left screen edges.
+
+ Sprite masking, mode 1
+ ----------------------
+
+ If a sprite has an X coordinate of zero, and has a Y coordinate that
+ is within range of the display, then all sprites of lower priority
+ will not be displayed on the lines which the sprite takes up.
+
+ The height of the sprite is determined by the vertical size bits in
+ the sprite attributes; other factors like horizontal size, pattern data
+ used, priority bit, and color palette have no effect.
+
+ For instance, an 8x32 sprite at coordinates 0, 128, that was sprite #4
+ in the list would stop all sprites onwards for lines zero to 31 from
+ being shown. However, sprites #0 through #3 could still be displayed
+ in this area.
+
+ Sprite masking, mode 2
+ ----------------------
+
+ If a sprite has an X coordinate of one, the former rule is invalid. Low
+ priority sprites will only be masked if a sprite with an X coordinate of
+ zero _also_ has a sprite with an X coordinate of one on the _same_ line.
+
+ This 'mode' is enabled when the VDP first parses a sprite with an X
+ coordinate of one. It is reset at the end of the frame.
+
+ To my knowledge, the only game which uses this masking mode is Galaxy
+ Force II. Because of this, I cannot ensure my description is accurate for
+ other games which may use it.
+
+ Sprite Drawing Limitations
+ --------------------------
+
+ The VDP will stop drawing sprites under the following conditions:
+
+ - The 80th sprite has been drawn in 40-cell mode.
+ - The 64th sprite has been drawn in 32-cell mode.
+ - Twenty sprites on the same scanline have been drawn in 40 cell mode.
+ - Sixteen sprites on the same scanline have been drawn in 32 cell mode.
+ - 320 pixels worth of sprite data has been drawn on the same scanline
+   in 40 cell mode.
+ - 256 pixels worth of sprite data has been drawn on the same scanline
+   in 32 cell mode.
+ - The currently drawn sprite has a link field of zero.
+
+ Sprites that are outside of the physical display area are still taken
+ into account.
+
+ Link settings that create an 'infinite loop' or that have self-referencing
+ will not cause any unforseen problem, these kinds of loops will be broken
+ out of when the above sprite limitations are eventually reached.
+
+ Because so many sprites can be shown on a single line, some games will
+ fill the entire display with sprites for a 'fake' third background layer.
+ Games that do this include 'Red Zone' by Zyrinx.
+
+ ----------------------------------------------------------------------------
+ 16.) Shadow / Hilight mode
+ ----------------------------------------------------------------------------
+
+ Shadow / hilight mode allows more colors to be displayed on screen.
+
+ These additional colors are selected based upon the priority settings
+ for a background tile or sprite, and when certain kinds of sprite pixels
+ overlap background pixels.
+
+ Background
+ ----------
+
+ Background tiles are shown at half intensity, or at normal intensity
+ if their priority bit is set.
+
+ In the latter case, this affects all other graphics elements in the
+ region (usually 8x8) that the tile takes up, regardless of the tile
+ containing opaque pixels or not. Meaning that the backdrop color, other
+ background plane, and sprites will be forcibly shown at normal intensity
+ in a given area if a background tile has it's priority bit set.
+
+ For instance, Ranger-X has both background layers and all sprites set
+ to low priority. A column in plane A uses high priority transparent
+ tiles. The result is that any sprites passing within that column, as
+ well as the plane B tiles that scroll behind it, are all shown at
+ normal intensity.
+
+ Sprites
+ -------
+
+ Depending on the priority setting, sprites are shown at normal or half
+ intensity just like background tiles.
+
+ Colors 0Eh, 1Eh, 2Eh, are always shown at normal intensity regardless of
+ priority. I'd say this a bug rather than a feature.
+
+ Any pixel in a sprite that uses colors 3Eh or 3Fh is treated specially:
+
+ Pixels with color 3Eh are not drawn. Instead, the underlying pixel
+ (from the backdrop or background) will be shown at half intensity.
+
+ If the pixel to be overwritten is already at half intensity, then
+ nothing will happen.
+
+ Pixels with color 3Fh are not drawn. Instead, the underlying pixel
+ (from the backdrop or background) will be shown at double intensity.
+
+ Backdrop
+ --------
+
+ The backdrop is shown at half intensity, while the overscan region outside
+ of the display area is always shown at normal intensity.
+
+ If a background tile has high priority, then the corresponding 8x8 block
+ of the backdrop color will be shown at normal intensity. It does not matter
+ if the background tile is fully opaque or not.
+
+ Operator sprites will affect the backdrop color as well.
+
+ Details
+ -------
+
+ It isn't known exactly how the colors are generated in shadow / hilight
+ mode. Currently all emulators make the half and double intensity colors
+ exactly half and double brightness of the current palette.
+
+ This is not correct. At least the double intensity palette is actually
+ not much brighter than the normal palette. You can see a good example
+ of this by running any game using hilight sprites in an emulator
+ side-by-side to the same game running on a real Genesis.
+
+ However, I haven't been able to figure out the colors exactly. In
+ particular, the introduction screen for Sonic 3D will only look correct
+ if the colors are exactly half and double, while this is certainly wrong
+ for other games.
+
+ I've verified that the contents of CRAM entries 3Eh and 3Fh do not
+ affect the intensity of shadow and hilight pixels used in sprites.
+
+ Any information on the colors used in shadow / hilight mode would be
+ appreciated.
+ 
+ ----------------------------------------------------------------------------
+ 17.) VDP registers
+ ----------------------------------------------------------------------------
+
+ All the register names are taken from the manual.
+
+ $00 - Mode Set Register No. 1
+ -----------------------------
+
+ d7 - No effect  
+ d6 - No effect
+ d5 - No effect
+ d4 - IE1 (Horizontal interrupt enable)
+ d3 - 1= Invalid display setting
+ d2 - Palette select
+ d1 - M3 (HV counter latch enable)
+ d0 - Display disable
+
+ Bit 4 will enable horizontal interrupts when set.
+
+ When bit 2 is cleared, only bits 1, 5, and 9 are taken into account
+ when the VDP generates color data from each word of CRAM. (meaning
+ the LSB of each RGB component is the only bit used) This reduces the
+ available color palette from 512 to 8 colors.
+
+ Bit 1 will cause the HV counter to be latched when a level 2 interrupt
+ is generated. The HV counter will resume normal operation when this bit
+ is cleared. (untested, need more info)
+
+ Setting bit 0 actually turns off all display generation, as opposed to the
+ screen blanking feature which simply shows the backdrop color.
+
+ $01 - Mode Set Register No. 2
+ -----------------------------
+
+ d7 - TMS9918 / Genesis display select
+ d6 - DISP (Display Enable)
+ d5 - IE0 (Vertical Interrupt Enable)
+ d4 - M1 (DMA Enable)
+ d3 - M2 (PAL / NTSC)
+ d2 - SMS / Genesis display select
+ d1 - 0 (No effect)
+ d0 - 0 (See notes)
+
+ Bit 7 seemingly puts the display in a TMS9918-like state when set, similar
+ to one of it's text display modes. Each 8x8 block is filled with a solid
+ color from the palette, and has no pattern data. The sprites seem to be
+ active. I couldn't select any of the other TMS9918 modes through the
+ usual TMS9918 mode bits. It would appear all the colors are actually
+ affected by CRAM, instead of using a fixed color set.
+
+ Bit 6 will blank the display when cleared. Any line that is blanked is
+ filled with the backdrop color. During this time, you can freely access
+ VDP memory with no limitations on the number of writes per line.
+
+ Bit 5 will enable vertical blanking interrupts when set.
+
+ Bit 4 will enable DMA operations when set. Otherwise, nothing will happen
+ when a DMA command is sent to the VDP.
+
+ Bit 3 will select between a PAL (240) and NTSC (224 lines) display.
+
+ Bit 2 toggles between the Master System (mode 4) and Genesis (mode 5)
+ display modes. While in mode 4, none of the registers which normally
+ affect the Genesis work; and the unused registers (8, 9 - can't test 6) now
+ function. The mode bits which select TMS9918 modes on a real SMS have
+ no function here. (This is why the SMS game F16 Fighter will not work
+ with a Power Base Converter, it uses some of the TMS9918 modes in-game)
+
+ The one exception is register $0C. You can set up a 320x192 display,
+ but the leftmost eight columns read 'garbage' data for the name table
+ attributes. Enabling interlace makes the display unstable. (and this
+ is partially true for a 320x192 picture, which shakes slightly) I'd
+ advise you set $0C to zero to enable a 256x192 display, which is the
+ normal SMS resolution. The Genesis always generates a 224 line picture;
+ the 192 lines in SMS mode are centered in the middle of the screen.
+
+ I could not get the top row or right column lock features to work while
+ in SMS mode. Apart from this bit, the M3 pin on the cartridge connector
+ also puts the machine into SMS mode, which may fully enable all video
+ features.
+
+ Bit 0 has an interesting effect; horizontal scrolling is disabled, and
+ it would almost seem like the horizontal scroll value modifies the
+ horizontal retrace / blanking / sync start and end positions around; the
+ middle of the display is blanked out, and will scroll left or right.
+ (note the blanked area scrolls - not the background) Moving too far in
+ one direction, so the blanked area is offscreen, totally corrupts the
+ display.
+
+ Combining bits 7 (TMS9918 mode) and 2 (SMS mode) have no effect.
+
+ $02 - Pattern Name Table Address for Scroll A
+ ---------------------------------------------
+
+ Bits 5-3 of this register correspond to bits A15-A13 of the name table
+ address for plane A.
+
+ $03 - Pattern Name Table Address for Window
+ ---------------------------------------------
+
+ Bits 5-1 of this register correspond to bits A15-A11 of the name table
+ address for the window.
+
+ In 40-cell mode, A11 is always forced to zero.
+
+ $04 - Pattern Name Table Address for Scroll B
+ ---------------------------------------------
+
+ Bits 2-0 of this register correspond to bits A15-A11 of the name table
+ address for plane B.
+
+ $05 - Sprite Attribute Table Base Address
+ -----------------------------------------
+
+ Bits 6-0 of this register correspond to bits A15-A09 of the sprite
+ attribute table.
+
+ In 40-cell mode, A09 is always forced to zero.
+
+ $07 - Backdrop Color
+ --------------------
+
+ Bits 5-0 of this register select a palette entry to be used as the
+ backdrop color.
+
+ The backdrop color is displayed in the following places:
+
+ - The overscan area around the physical display
+ - Any line where the display enable bit has been cleared
+
+ You can think of the display being filled with the backdrop color, and
+ then everything else being drawn over it. Any gaps where no pixels were
+ drawn will show the backdrop color.
+
+ Even though palette entries 00h, 10h, 20h, and 30h cannot be used by
+ any patterns, these entries can be used for the backdrop color.
+
+ $0A - H Interrupt Register
+ --------------------------
+
+ Bits 7-0 specify the value to be loaded in the counter; for complete
+ details see the "Interrupts" section.
+
+ $0B - Mode Set Register No. 3
+ -----------------------------
+
+ d7 - 0 (No effect)
+ d6 - 0 (No effect)
+ d5 - 0 (No effect)
+ d4 - 0 (No effect)
+ d3 - IE2
+ d2 - VSCR
+ d1 - HSCR
+ d0 - LSCR
+
+ Bit 3 will enable external interrupts, caused by the TH pin being set
+ to input mode and having the TH interrupt enable bit set. (Both of these
+ are controlled by the Genesis' I/O registers)
+
+ Bit 2 selects between full screen vertical scrolling when clear, and
+ 2-cell column based vertical scrolling when set. 
+
+ Bits 1 and 0 determine how the VDP will parse the horizontal scroll table
+ when it is rendering display lines:
+
+ HSCR LSCR
+  0    0    - Full screen scroll
+  0    1    - Line scroll
+  1    0    - Cell scroll
+  1    1    - Line scroll
+
+ $0C - Mode Set Register No. 4
+ -----------------------------
+
+ d7 - RS0
+ d6 - 0 (No effect)
+ d5 - ? (See notes)
+ d4 - 0 (No effect)
+ d3 - S/TE
+ d2 - LSM1
+ d1 - LSM0
+ d0 - RS1
+
+ LSMx table:
+ 00 : No interlace
+ 01 : Interlace (Normal resolution)
+ 10 : No interlace
+ 11 : Interlace (Double resolution)
+
+ RSx table:
+ 00 : Display is 32 cells wide
+ 01 : Display is 40 cells wide
+ 10 : Invalid display setting
+ 11 : Display is 40 cells wide
+
+ Changes made to LSM0, LSM1 do not take effect until the display is no
+ longer in the active scan period.
+
+ All other bits can be modified with changes taking effect immediately at
+ any point in the display frame.
+
+ You should normally set the RSx bits to 00b or 11b. The unlicensed version
+ of Populous sets up a 40 cell display with a setting of 01b - technically
+ valid, but the display is distorted a bit.
+
+ Bit 5 seems to affect the display when used in conjunction with RS0, but
+ only in the same way as the display appears when using a setting of 01b.
+ I've tried every combination of bit 6 along with the RSx bits, and the
+ physical width of the display was never different from 32 or 40 cells.
+
+ $0D - H Scroll Data Table Base Address
+ --------------------------------------
+
+ Bits 5-0 of this register correspond to bits A15-A10 of the horizontal
+ scroll data table address.
+
+ $0F - Auto Increment Data
+ -------------------------
+
+ Bits 7-0 specify the value to be added to the VDP's address register
+ after every read or write to the data port.
+
+ A setting of zero means the address register is not incremented.
+
+ $10 - Scroll Size
+ -----------------
+
+ d7 - 0 (No effect)
+ d6 - 0 (No effect)
+ d5 - VSZ1
+ d4 - VSZ0
+ d3 - 0 (No effect)
+ d2 - 0 (No effect)
+ d1 - HSZ1
+ d0 - HSZ0
+
+ This register defines the size of the name tables for planes A and B.
+ Both fields can be set to the following values:
+
+    0   0   32 cells
+    0   1   64 cells
+    1   0   Invalid
+    1   1   128 cells
+
+ If the HSZ bits are set to 10b (invalid), then the first row of the name
+ table is shown for every line of the display.
+
+ 
+ $11 - Window H Position
+ -----------------------
+
+ d7 - RIGT
+ d6 - 0 (No effect)
+ d5 - 0 (No effect)
+ d4 - WHP5
+ d3 - WHP4
+ d2 - WHP3
+ d1 - WHP2
+ d0 - WHP1
+
+ This register will affect the window shown on the current line, if
+ the current line does not fall into the vertical range specified by
+ register $12.
+
+ The WHP field defines the horizontal range of the window, in units
+ of two cells. (16 pixels)
+
+ Setting the WHP field to zero disables the window.
+ Any nonzero value indicates how many 2-cell columns wide the window
+ plane is. (0=no window, 1=2 cells, 2=4 cells, 3=6 cells, etc.)
+
+ When RIGT=0, the window is shown from column zero to the column
+ specified by the WHP field.
+
+ For instance, if RIGT=0 and WHP=4, the window is displayed on columns
+ zero up to (and including) column seven.
+
+ When RIGHT=1, the window is shown from the column specified in the WHP
+ field up to the last column in the display meaning column 31 or 39
+ depending on the screen width setting.
+
+ For instance, if RIGT=1 and WHP=4, the window is displayed on columns
+ eight up to (and including) column 31 or 39.
+
+ Having WHP set to zero and RIGHT=1 is a legal setting; it means the
+ window is shown from column zero up to the last column in the display,
+ meaning the entire line is taken up by the window plane.
+
+ There is a bug in the window processing. This occurs when the window is
+ showing partially on the left side of the screen, specifically when
+ the VDP is drawing the 2-cell column from plane A that immediately proceeds
+ the last column the window was drawn on. (i.e. WHP+1)
+
+ If the lower four bits of the horizontal scroll value for the current
+ scan line are zero, then the name table attribute data for the current
+ column are fetched correctly.
+
+ If the lower four bits of the horizontal scroll value for the current
+ scan line are nonzero, the name table attribute data are fetched from
+ next column. (WHP+2)
+
+ In effect, you'll have N columns of the window plane, 1 column that has
+ identical patterns as the next column, then the remainder of the display
+ is drawn correctly.
+
+ Here's a diagram to illustrate this:
+ w   = window tiles
+ abc = tile columns
+
+ D3-D0 of scroll value == 0
+ wwwwwwwwwwwwwwwwaabbccddeeffgghh
+
+ D3-D0 of scroll value != 0
+ wwwwwwwwwwwwwwwwbbbbccddeeffgghh
+
+ This register can be modified with changes taking effect immediately at
+ any point in the display frame.
+
+ Plane A is not shown in any column where plane W is shown; they cannot
+ overlap.
+
+ $12 - Window V Position
+ -----------------------
+
+ d7 - DOWN
+ d6 - 0 (No effect)
+ d5 - 0 (No effect)
+ d4 - WVP4
+ d3 - WVP3
+ d2 - WVP2
+ d1 - WVP1
+ d0 - WVP0
+
+ If the current scanline does not fall within the range specified by
+ register $12, then register $11 determines where the window is shown
+ for the remainder of the display.
+
+ The WVP field defines the vertical range of the window, in units
+ of eight lines.
+
+ Setting the WVP field to zero disables the window.
+ Any nonzero value indicates a vertical range for the window to appear
+ in. (0=no window, 1=lines 0-$7, 2= lines 0-$F, 3= lines 0-$17, etc.)
+
+ When DOWN=0, the window is shown from line zero to the line specified
+ by the WVP field.
+
+ For instance, if DOWN=0 and WVP=4, the window is displayed on lines
+ zero up to (and including) line $1F.
+
+ When DOWN=1, the window is shown from the line specified in the WVP
+ field up to the last line in the display.
+
+ For instance, if DOWN=1 and WVP=4, the window is displayed on lines $1F
+ up to (and including) the last line in the display.
+
+ Having WVP set to zero and DOWN=1 is a legal setting; it means the
+ window is shown from line zero up to the last line in the display,
+ meaning the entire screen is taken up by the window plane.
+
+ Plane A is not shown in any line where plane W is shown; they cannot
+ overlap.
+
+ ----------------------------------------------------------------------------
+ 18.) VDP Pinout
+ ----------------------------------------------------------------------------
+
+ This is applicable to the 315-5313 chip used in the early versions of
+ the original Genesis model.
+
+ 1-8   - SD0-SD7  (VRAM data bus)
+ 10    - SE0      (VRAM)
+ 11    - SC       (VRAM)
+ 12    - RAS      (VRAM)
+ 13    - CAS      (VRAM)
+ 15    - WE0      (VRAM)
+ 16    - OE       (VRAM)
+ 17    - GND
+ 26    - AGC
+ 27    - R        (Red video output)
+ 28    - G        (Green video output)
+ 29    - B        (Blue video output)
+ 30    - AVC
+ 31-38 - AD0-AD7  (VRAM address bus)
+ 39    - YS
+ 40    - SPA/8
+ 41    - VSYNC    (Vertical sync)
+ 42    - C-SYNC   (Composite sync)
+ 43    - HSYNC    (Horizontal sync)
+ 44    - HL       (from control port HL pin)
+ 45    - SEL0     (from M3 on cartridge connector - forces mode 4 graphics)
+ 46    - PAL      (PAL / NTSC select)
+ 47    - RESET    (68000)
+ 49    - CLK1     (68000)
+ 48    - SEL1     (?)
+ 50    - SBCR
+ 51    - CLK0
+ 52    - MCLK     (53.64165 MHz)
+ 53    - EDCLK
+ 54    - VDD
+ 54-70 - CD0-CD15 (68000 data bus)
+ 71-93 - CA0-CA22 (68000 address bus (A23-A1))
+ 94    - AVS
+ 95    - PSG      (SN76489 PSG sound output)
+ 97    - GND
+ 98    - INT
+ 99    - BR
+ 100   - BGAK
+ 101   - BG
+ 102   - MRE0
+ 103   - INTAK
+ 104   - IPL1     (68000)
+ 105   - IPL2     (68000)
+ 106   - IREQ
+ 107   - RD       (68000)
+ 108   - WR       (68000)
+ 109   - MI
+ 110   - AS       (68000)
+ 111   - UDS      (68000)
+ 112   - LDS      (68000)
+ 113   - R/W      
+ 114   - DTAK     (68000)
+ 115   - UWR      (68000)
+ 116   - LWR      (68000)
+ 118   - CAS0     (VRAM)
+ 117   - OE0      (VRAM)
+ 119   - RAS0     (VRAM)
+ 128   - VDD
+
+ ============================================================================
+
+ To-do test list
+
+ - Last column wrapping (40 cell mode only?)
+ - Columns being offset by the horizontal scroll value (d3-d0)
+ - How line scrolling is managed in interlace mode 2
+ - How sprite Y positions and VSRAM values are used in interlace mode 2
+ - Vertical interrupt supression via line interrupts
+ - Reverse sprite stage in CV
+ - Mid frame sprite table changes (can't be done I think; sprite table
+   changes aren't seen by VDP, though changing the sprite table address
+   will cause a switch)
+ - Large sprite pattern overflow
+ - Result of copy and fill operations overflowing
+ - Result of copy operations overlapping
+ - Use of HV counter latch in the 6-in-1 pak.
+ - Source and length registers being updated during DMA
+ - Confirm invalid code use
+ - Default status flag settings
+ - Sprite collisions and overflows outside of the physical display area
+ - How many times a sprite collision and overflow can occur (per line/frame?)
+
+ And for timing, based on the HV counter:
+
+ - Vertical counter increment
+ - Horizontal blanking flag clear and set
+ - Vertical blank flag clear and set
+ - Horizontal interrupt occurance
+ - Vertical interrupt occurance
+ - Invalid periods for vertical counter
+ - Invalid periods for horizontal counter (test with 6-in-1 pak)
+ - Start/stop of physical display (use sprite collision on either edge)
