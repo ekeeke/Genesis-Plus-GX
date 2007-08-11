@@ -26,7 +26,7 @@ INCLUDES	:=	source source/m68k source/cpu source/sound \
 #---------------------------------------------------------------------------------
 MACHDEP	= -DGEKKO -mcpu=750 -meabi -mhard-float 
 CFLAGS  = -g -O2 -Wall $(MACHDEP) $(INCLUDE) \
-	  -DGENESIS_HACKS="1" \
+	  -DNGC="1" -DGENESIS_HACKS="1" \
 
 LDFLAGS	=	$(MACHDEP) -mogc -Wl,-Map,$(notdir $@).map -Wl,--cref
 

@@ -224,7 +224,7 @@ int getcompany ()
   ***************************************************************************/
 void getrominfo (char *romheader)
 {
-  int i;
+  int i,j;
 
   memset (&rominfo, 0, sizeof (ROMINFO));
 
@@ -251,9 +251,8 @@ void getrominfo (char *romheader)
   peripherals = 0;
 
   for (i = 0; i < 14; i++)
-  {
-	  if (rominfo.io_support[i] == peripheralinfo[i].pID[0]) peripherals |= (1 << i);
-  }
+	for (j=0; j < 14; j++)
+		if (rominfo.io_support[i] == peripheralinfo[j].pID[0]) peripherals |= (1 << j);
 
   if (peripherals & P6BUTTONS) pad_type = DEVICE_6BUTTON;
   else pad_type = DEVICE_3BUTTON;
@@ -283,6 +282,7 @@ void showrominfo ()
   char msg[128];
   short p;
   signed char a;
+  char pName[14][21];
   uint16 realchecksum = GetRealChecksum (((uint8 *) cart_rom) + 0x200, genromsize - 0x200);
 
   quit = 0;
@@ -295,7 +295,11 @@ void showrominfo ()
   max = 14;
   for (i = 0; i < 14; i++)
   {
-	  if ((char) rominfo.io_support[i] == peripheralinfo[i].pID[0]) max ++;
+	  if (peripherals & (1 << i))
+	  {
+		  sprintf(pName[max-14],"%s", peripheralinfo[i].pName);
+		  max ++;
+	  }
   }
 
  
@@ -361,7 +365,7 @@ void showrominfo ()
 					else if (region_code == REGION_JAPAN_PAL) sprintf (msg, "Region - %s (JPAL)", rominfo.country);
 					break;
 				default:
-					sprintf (msg, "Supports - %s", peripheralinfo[i+j-14].pName);
+					sprintf (msg, "Supports - %s", pName[i+j-14]);
 					break;
 			}
 

@@ -7,6 +7,7 @@
 #include <gccore.h>
 #include <ogcsys.h>
 #include <sdcard.h>
+#include <gcaram.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
