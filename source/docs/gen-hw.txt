@@ -1,0 +1,715 @@
+
+ Sega Genesis hardware notes
+ Version 0.8 (03/02/01)
+
+ by Charles MacDonald
+ WWW: http://cgfm2.emuviews.com
+
+ Unpublished work Copyright 2000, 2001 Charles MacDonald
+
+ Here is a compilation of some notes I've written up on the Sega Genesis
+ hardware. Everything described herein has been checked on the real thing,
+ though that doesn't necessarily mean my testing methods were flawless. :)
+
+ Version history
+ ---------------
+ [0.8]
+ - Added information on the SVP chip used in Virtua Racing. (section 4.2)
+ - Added information on EEPROM storage. (section 4.1)
+ - Changed miscellaneous section around.
+ [0.7]
+ - Added more information about access to the Z80 bus. (section 2.2)
+ - Updated the VDP register information, and removed some things
+   that were specific to VDP programming. (section 1.1)
+ - Added some background about the PSG. (section 4)
+ [0.6]
+ - Rewrote the 68000 memory map description. (section 1)
+ - Rewrote the Z80 memory map description. (section 2.1)
+ - Added memory access section. (section 1.2)
+ - Added a few miscellaneous topics. (section 4)
+ [0.5]
+ - Added more Z80 banking information.
+ - Added unused VDP address return values from the Z80 side.
+ - Added example of how to start up the Z80 on power-up.
+ - Added information on Phantasy Star 4 from Jeff Quinn.
+ - Added list of consoles that support Mark-III compatibility mode.
+ - Fixed a few typos.
+ [0.4]
+ - Added more details on 68000 and Z80 memory map.
+ - Added more information on VDP addresses.
+ - Added some thoughts on Phantasy Star 4.
+ [0.3]
+ - Added more information on I/O registers. (section 3)
+ - Fixed a few typos pointed out by Tim Meekins.
+ [0.2]
+ - Added section on I/O port programming and gamepads
+ [0.1]
+ - Initial release
+
+ Table of Contents
+
+ 1.) 68000 memory map
+ 1.1) VDP registers
+ 1.2) Memory access quirks
+ 1.3) Clock speeds
+ 2.) Sound hardware overview
+ 2.1) Z80 memory map
+ 2.2) RESET and BUSREQ registers
+ 2.3) Banking
+ 2.4) Interrupts
+ 3.) Input and Output
+ 3.1) Programming I/O ports
+ 3.2) Gamepad specifics
+ 4.) Miscellaneous
+ 4.1) EEPROM
+ 4.2) Virtua Racing
+ 4.3) Phantasy Star 4
+ 4.4) Other topics
+ 5.) Credits
+ 6.) Disclaimer
+
+
+ 1.) 68000 memory map
+
+ 000000-3FFFFFh : ROM
+ 400000-7FFFFFh : Unused (1)
+ 800000-9FFFFFh : Unused (2)
+ A00000-A0FFFFh : Z80 address space (3)
+ A10000-A1001Fh : I/O
+ A10020-BFFFFFh : Internal registers and expansion (4)
+ C00000-DFFFFFh : VDP (5)
+ E00000-FFFFFFh : RAM (6)
+
+ 1. Reads return the MSB of the next instruction to be fetched, with the
+    LSB set to zero. Writes do nothing.
+
+ 2. Reading or writing any address will lock up the machine.
+    This area is used for the 32X adapter.
+
+ 3. Addresses A08000-A0FFFFh mirror A00000-A07FFFh, so the 68000 cannot
+    access it's own banked memory. All addresses are valid except for
+    the VDP which is at A07F00-A07FFFh and A0FF00-A0FFFFh, writing or
+    reading those addresses will lock up the machine.
+
+ 4. Reading some addresses lock up the machine, others return the MSB
+    of the next instruction to be fetched with the LSB is set to zero.
+
+    The latter applies when reading A11100h (except for bit 0 reflects
+    the state of the bus request) and A11200h.
+
+    Valid addresses in this area change depending on the peripherals
+    and cartridges being used; the 32X, Sega CD, and games like Super
+    Street Fighter II and Phantasy Star 4 use addresses within this range.
+
+ 5. The VDP is mirrored at certain locations from C00000h to DFFFFFh. In
+    order to explain what addresses are valid, here is a layout of each
+    address bit:
+
+    MSB                       LSB
+    110n n000 nnnn nnnn 000m mmmm
+
+    '1' - This bit must be 1.
+    '0' - This bit must be 0.
+    'n' - This bit can have any value.
+    'm' - VDP addresses (00-1Fh)
+
+    For example, you could read the status port at D8FF04h or C0A508h,
+    but not D00084h or CF00008h. Accessing invalid addresses will
+    lock up the machine.
+
+ 6. The RAM is 64K in size and is repeatedly mirrored throughout the entire
+    range it appears in. Most games only access it at FF0000-FFFFFFh.
+
+ 1.1) VDP registers
+
+ The lower five bits of the address specify what memory mapped VDP register
+ to access:
+
+ 00h : Data port
+ 02h : Data port
+ 04h : Control port (1)
+ 06h : Control port
+ 08h : HV counter (2)
+ 0Ah : HV counter
+ 0Ch : HV counter
+ 0Eh : HV counter
+ 11h : SN76489 PSG (3)
+ 13h : SN76489 PSG
+ 15h : SN76489 PSG
+ 17h : SN76489 PSG
+ 18h : Unused (4)
+ 1Ah : Unused
+ 1Ch : Unused
+ 1Eh : Unused
+
+ 1. For reads, the upper six bits of the status flags are set to the
+    value of the next instruction to be fetched. Bit 6 is always zero.
+    For example:
+
+    move.w $C00004, d0  ; Next word is $4E71
+    nop                 ; d0 = -1-- 11?? ?0?? ????
+
+    When reading the status flags through the Z80's banked memory area,
+    the upper six bits are set to one.
+
+ 2. Writing to the HV counter will cause the machine to lock up.
+
+ 3. Reading the PSG addresses will cause the machine to lock up.
+
+    Doing byte-wide writes to even PSG addresses has no effect.
+
+    If you want to write to the PSG via word-wide writes, the data
+    must be in the LSB. For instance:
+
+    move.b      (a4)+, d0       ; PSG data in LSB
+    move.w      d0, $C00010     ; Write to PSG
+
+ 4. Reading the unused addresses returns the next instruction to be fetched.
+    For example:
+
+    move.w $C00018, d0  ; Next word is $4E71
+    nop                 ; d0 = $4E71
+
+    When reading these addresses through the Z80's banked memory area,
+    the value returned is always FFh.
+
+    Writing to C00018h and C0001Ah has no effect.
+
+    Writing to C0001Ch and C0001Eh seem to corrupt the internal state
+    of the VDP. Here's what each bit does: (assuming word-wide writes)
+
+    8E9Fh : These bits cause brief flicker in the current 8 pixels
+            being drawn when the write occurs.
+
+    5040h : These bits blank the display like bit 6 of register #1 when set.
+
+    2000h : This bit makes every line show the same random garbage data.
+
+    0100h : This bit makes random pattern data appear in the upper eight
+            and lower ten lines of the display, with the normal 224 lines
+            in the middle untouched. For those of you interested, the
+            display is built up like so:
+
+            224 lines for the active display
+             10 lines unused (can show pattern data here with above bit)
+              3 lines vertical blank (no border color shown)
+              3 lines vertical retrace (no picture shown at all)
+             13 lines vertical blank (no border color shown)
+              8 lines unused (can show pattern data here with above bit)
+
+            I know that comes up to 261 lines and not 262. But that's
+            all my monitor shows.
+
+            Turning the display off makes the screen roll vertically,
+            and random pattern data is displayed in all lines when
+            this bit is set.
+
+    0020h : This bit causes the name table and pattern data shown to
+            become corrupt. Not sure if the VRAM is bad or the VDP is
+            just showing the wrong data.
+
+ 1.2) Memory access quirks
+
+ Byte-wide writes
+
+ Writing to the VDP control or data ports is interpreted as a 16-bit
+ write, with the LSB duplicated in the MSB. This is regardless of writing
+ to an even or odd address:
+
+ move.w #$A5, $C00003   ; Same as 'move.w #$A5A5, $C00002'
+ move.w #$87, $C00004   ; Same as 'move.w #$8787, $C00004'
+
+ Byte-wide reads
+
+ Reading from even VDP addresses returns the MSB of the 16-bit data,
+ and reading from odd address returns the LSB:
+
+ move.b $C00008, d0     ; D0 = V counter
+ move.b $C00001, d0     ; D0 = LSB of current VDP data word
+ move.b $C0001F, d0     ; D0 = $71
+ nop
+ move.b $C00004, d0     ; D0 = MSB of status flags
+
+ Word-wide writes
+
+ When doing word-wide writes to Z80 RAM, only the MSB is written, and
+ the LSB is ignored:
+
+ 0000: AA BB CC DD              ; Z80 memory
+ move.w #$1234, $A00000         ; do a word-wide write
+ 0000: 12 BB CC DD              ; result
+
+ Word-wide reads
+
+ A word-wide read from Z80 RAM has the LSB of the data duplicated in the MSB.
+
+ 0000: AA BB CC DD              ; Z80 memory
+ move.w $A00000, d0             ; do a word-wide read
+ d0 = $AAAA                     ; result
+
+ 1.3) Clock speeds
+
+ These are for an NTSC Sega Genesis console.
+
+ 680000  = 7.67 MHz
+ YM2612  = 7.67 MHz
+ Z80     = 3.58 MHz
+ SN76489 = 3.58 MHz
+
+ If anyone has information about timing for PAL consoles, please let me know.
+
+ 2) Sound hardware overview
+
+ The following components used for sound generation:
+
+ - Zilog Z80 CPU 
+ - 8k static RAM
+ - Yamaha YM2612 FM sound generator
+ - SN76489 PSG
+
+ 2.1) Z80 memory map
+
+ 0000-1FFFh : RAM
+ 2000-3FFFh : RAM (mirror)
+ 4000-5FFFh : YM2612 (1)
+ 6000-60FFh : Bank address register (2)
+ 6100-7EFFh : Unused (3)
+ 7F00-7FFFh : VDP (4)
+ 8000-FFFFh : Bank area
+
+ 1. The YM2612 has two address lines, so it is available at 4000-4003h and
+    is mirrored repeatedly up to 5FFFh.
+
+ 2. Writes go to the bank address register, reads return FFh.
+    The value returned applies to both the 68000 and Z80.
+
+ 3. Writes are ignored, reads return FFh.
+    The value returned applies to both the 68000 and Z80.
+
+ 4. Only addresses 7F00-7F1Fh are valid, writes to 7F20-7FFFh will
+    lock up the machine.
+
+    Z80 access to the VDP has the same results as doing byte-wide reads
+    and writes as described in section 1.2. So only the HV counter and
+    PSG can be used effectively.
+
+ All I/O ports return FFh, and writing to them has no effect. The Thunder
+ Force games read port BFh in the IRQ subroutine, this would appear to be
+ a misunderstanding on the programmer's behalf.
+
+ The 68000 can write to A06000h to set up the bank address.
+
+ 2.2) RESET and BUSREQ registers
+
+ Bit 0 of A11100h (byte access) or bit 8 of A11100h (word access) controls
+ the Z80's /BUSREQ line.
+
+ Writing 1 to this bit will request the Z80 bus. You can then release
+ the bus later on by writing 0.
+
+ Reading this bit will return 0 if the bus can be accessed by the 68000,
+ or 1 if the Z80 is still busy.
+
+ If the Z80 is reset, or if it is running (meaning the 68000 does not
+ have the bus) it will also return 1. The only time it will switch from
+ 1 to 0 is right after the bus is requested, and if the Z80 is still
+ busy accessing memory or not.
+                      
+ Bit 0 of A11200h (byte access) or bit 8 of A11200h (word access) controls
+ the Z80's /RESET line.
+
+ Writing 0 to this bit will start the reset process. The Z80 manual says you
+ have to assert the /RESET line for three Z80 clock cycles as a reset does
+ not happen instantly.
+
+ Writing 1 to this bit will stop the reset process. At this point, the Z80
+ will start executing from address 0000h onwards.
+
+ The /RESET line is shared with the YM2612. For as long as the Z80 is reset,
+ the YM2612 cannot be used.
+
+ The Z80 bus can only be accessed by the 68000 when the Z80 is running
+ and the 68000 has the bus. (as opposed to the Z80 being reset, and/or
+ having the bus itself)
+
+ Otherwise, reading $A00000-A0FFFF will return the MSB of the next
+ instruction to be fetched, and the LSB will be set to zero. Writes
+ are ignored. This even applies to the VDP area that would normally
+ lock up the machine.
+
+ Interestingly enough, you can still access $A10000-A1001F during this
+ time, which seems to be contradictory to some documentation which says
+ you can only access the I/O region when the 68000 has the bus.
+
+ On power-up, the Z80 will be reset and will have the bus.
+ If you want to load a Z80 program and run it, do the following:
+
+ - Stop the reset process
+ - Request bus
+ - Load Z80 program
+ - Start the reset process
+ - Release bus
+ - Stop the reset process
+
+ 2.3) Banking
+
+ The Z80 can access the 68000's address space through a banking mechanism
+ which maps 32k pages to 8000-FFFFh on the Z80 side.
+
+ Most games do this to get at large data chunks like YM2612 DAC samples.
+ However, you can access anything else the 68000 can. (I've tried reading
+ the version register and setting the VDP border color this way with
+ success - in fact some 32X sample code shows the PWM sound generator
+ programmed by the Z80 through banking)
+
+ To specify which 32k section you want to access, write the upper nine
+ bits of the complete 24-bit address into bit 0 of the bank address
+ register, which is at 6000h (Z80) or A06000h (68000), starting with
+ bit 15 and ending with bit 23.
+
+ For example:
+
+        ld      ix, $6000       ;
+        xor     a               ;
+        ld      (ix), a         ; Bit 15 = 0
+        ld      (ix), a         ; Bit 16 = 0
+        ld      (ix), a         ; Bit 17 = 0
+        ld      (ix), a         ; Bit 18 = 0
+        ld      (ix), a         ; Bit 19 = 0
+        ld      (ix), a         ; Bit 20 = 0
+        ld      (ix), a         ; Bit 21 = 0
+        inc     a               ;
+        ld      (ix), a         ; Bit 22 = 1
+        ld      (ix), a         ; Bit 23 = 1
+
+ After this routine executes, Z80 addresses 8000-FFFFh now correspond
+ to 68000 addresses C00000-C07FFFh.
+
+ In my own tests, I've been unable to do the following:
+
+ - Read banked 68000 RAM. (returns FFh)
+ - Find result of partial writes to the bank address register.
+ - Have the Z80 read A00000-A0FFFF through the banked memory area.
+   (locks up the machine)
+
+ Steve Snake informed me that reading 68000 RAM is possible, but is not
+ a recommended practice by Sega. Perhaps only some models of the Genesis
+ allow for it.
+
+ 2.4) Interrupts
+
+ The Z80 runs in interrupt mode 1, where an interrupt causes a RST 38h.
+ However, interrupt mode 0 can be used as well, since FFh will be read
+ off the bus.
+
+ The Z80 will recieve an IRQ from the VDP on scanline E0h. This happens
+ once per frame, every frame, regardless of frame interrupts being
+ disabled by the 68000.
+
+ If the Z80 has interrupts disabled when the frame interrupt is supposed
+ to occur, it will be missed, rather than made pending.
+
+ There is no way to trigger an NMI unless the Genesis has been switched
+ into Mark 3 compatability mode, and this only means the NMI line is
+ mapped to the cartridge port, it's not controllable through software.
+
+ 3.0) Input and Output
+
+ The Genesis has three general purpose I/O ports. Devices like gamepads,
+ modems, light guns, etc. can be used with them.
+
+ Here's a read-out of the I/O registers in their default state. Each
+ one can be read at an even address (e.g. A1000Dh == A1000Ch) as well.
+
+    A10001h = A0         Version register
+
+    A10003h = 7F         Data register for port A
+    A10005h = 7F         Data register for port B
+    A10007h = 7F         Data register for port C
+
+    A10009h = 00         Ctrl register for port A
+    A1000Bh = 00         Ctrl register for port B
+    A1000Dh = 00         Ctrl register for port C
+
+    A1000Fh = FF         TxData register for port A
+    A10011h = 00         RxData register for port A
+    A10013h = 00         S-Ctrl register for port A
+
+    A10015h = FF         TxData register for port B
+    A10017h = 00         RxData register for port B
+    A10019h = 00         S-Ctrl register for port B
+
+    A1001Bh = FF         TxData register for port C
+    A1001Dh = 00         RxData register for port C
+    A1001Fh = 00         S-Ctrl register for port C
+
+ Bit 7 of the Data registers can be read or written.
+ Any bit that is set as an input will return '1'.
+ Any bit that is set as an output will return the value last written.
+
+ Bits 7-0 of the Ctrl registers can be read or written.
+
+ Bits 7-0 of the TxData registers can be read or written.
+
+ The RxData register will always return zero.
+
+ Bits 7-4 of the S-Ctrl registers can be read or written.
+
+ 3.1) Programming I/O ports
+
+ In the context of this description, I'll assume the device plugged in is a
+ gamepad. However, other periperhals like multi-taps, modems, mice, light
+ guns, etc, exist.
+
+ Here's a pin-out of the connector:
+
+ Pin 1 - UP
+ Pin 2 - DOWN
+ Pin 3 - LEFT
+ Pin 4 - RIGHT
+ Pin 5 - Vcc
+ Pin 6 - TL
+ Pin 7 - TH
+ Pin 8 - GND
+ Pin 9 - TR
+
+ Each I/O port has several associated registers. I'll only cover the
+ data and control registers, as the others are used for serial and
+ parallel communication.
+
+ The data register corresponds to the I/O port pins like so:
+
+ Bit 7 - (Not connected)
+ Bit 6 - TH
+ Bit 5 - TL
+ Bit 4 - TR
+ Bit 3 - RIGHT
+ Bit 2 - LEFT
+ Bit 1 - DOWN
+ Bit 0 - UP
+
+ A '0' means a button has been pressed, and '1' means a button has been
+ released.
+
+ Bit 7 isn't connected to any pin on the I/O port. It will latch a value
+ written to it, as shown:
+
+    move.b $A10003, d0      ; D0 = $7F
+    move.b #$80, $A10003    ; Bit 7 = 1
+    move.b $A10003, d0      ; D0 = $FF
+    move.b #$00, $A10003    ; Bit 7 = 0
+    move.b $A10003, d0      ; D0 = $7F
+
+ Bits 6-0 of the control register define what bits of the data register
+ are inputs or outputs. Gamepads use TH as an output and the remaining
+ pins as input, so a value of $40 would be written to the control register.
+
+ 3.2) Gamepad specifics
+
+ A gamepad maps the directional pad to the pins mentioned earlier
+ (left, right, up, down), and multiplexes the four buttons (A, B, C, Start)
+ through the TL and TR pins.
+
+ The TH pin controls which pairs of buttons (either A, Start or C, B) are
+ output through TL and TR by the multiplexer chip.
+
+ In order to read all the buttons, A program will set TH = 1, read the data
+ port, set TH = 0, and read the port again. The data returned is as follows:
+
+ TH = 0 : ?0SA00DU
+ TH = 1 : ?1CBRLDU
+
+ ? = Whatever was last written to bit 7.
+ S = Start
+ A = Button A
+ B = Button B
+ C = Button C
+ U = Up
+ D = Down
+ L = Left
+ R = Right
+
+ A 6-button gamepad allows the extra buttons to be read based on how
+ many times TH is switched from 1 to 0 (and not 0 to 1). Observe the
+ following sequence:
+
+ TH = 1 : ?1CBRLDU    3-button pad return value
+ TH = 0 : ?0SA00DU    3-button pad return value
+ TH = 1 : ?1CBRLDU    3-button pad return value
+ TH = 0 : ?0SA0000    D3-0 are forced to '0'
+ TH = 1 : ?1CBMXYZ    Extra buttons returned in D3-0
+ TH = 0 : ?0SA1111    D3-0 are forced to '1'
+
+ M = Mode
+ X = Button X
+ Y = Button Y
+ Z = Button Z
+
+ From this point on, the standard 3-button pad values will be returned
+ if any further TH transitions are done.
+
+ If TH isn't modified in about 8192 (probably less than that) 68000 CPU
+ cycles, a 'time-out' will occur and the sequence to read 6-button values
+ can be done again. Games usually poll the gamepad once per frame,
+ which is always enough for the time-out to occur.
+
+ I believe checking if D3-D0 are all set or clear (as shown in the list
+ above) would be another method to verify if 6-button or 3-button pad data
+ was being returned.
+
+ Some games may access the gamepad in a way that causes 6-button values
+ to be returned when 3-button values are expected. To get around this,
+ the MODE button can be held down when powering-up the console, and
+ the 6-button gamepad will respond like a 3-button one.
+
+ 4.) Miscellaneous
+
+ The following are miscellaneous topics.
+
+ 4.1) EEPROM
+
+ Some cartridges use a Xicor X24C01 EEPROM chip. The chip is programmed
+ in a serial fashion (it has only two wires), and has 128 8-bit bytes
+ of storage.
+
+ Games using EEPROM have the backup data string at offset $1B0 in the
+ cartridge header area formatted like so:
+
+ 0001B0: 52 41 E8 40 00 20 00 01 00 20 00 01
+
+ The Sega manual describes how the above data should be interpreted.
+ In this case, it corresponds to a device mapped to odd memory addresses,
+ occupying the byte at $200001.
+
+ The only games I know of which use an EEPROM chip are:
+
+ - Wonderboy 3 / Monster World IV
+ - Rockman Megaworld
+ - Megaman: The Wily Wars
+
+ 4.2) Virtua Racing
+
+ The Virtua Racing cartridge has 2MB ROM, 128K RAM, and a custom DSP chip
+ called the 'Sega Virtua Processor' (SVP), which is manufactured by Sega.
+ To the best of my knowledge, the SVP chip has internal ROM and possibly
+ internal RAM.
+
+ The main purpose of the SVP is to render polygons as 8x8 patterns, which
+ the game program transfers to VRAM from the 128K RAM area using DMA.
+
+ The VR cartridge has the following memory map:
+
+ 000000-1FFFFFh : Program ROM (2MB)
+ 200000-2FFFFFh : Unused
+ 300000-31FFFFh : On-cart RAM (128K)
+ 320000-3FFFFFh : (?)
+ 390000-39FFFFh : (?)
+ 3A0000-3AFFFFh : (?)
+
+ The SVP chip has registers mapped in the I/O space:
+
+ A15000.w - Can read and write commands
+ A15005.b - Reading bit 0 acts like a status flag (SVP busy?)
+ A15006.w - Unknown ($0000, $0001, $000A written)
+ A15008.w - Unknown ($0000, $0001, $0000 written)
+
+ Commands are two bytes in size, and are read and written to A15000h.
+
+ FFFFh - Command reset (?) (done before any access)
+ 'SV'  - Command init (?) (written before SVP communication)
+ 'OK'  - Command OK (?) (written after 'SV')
+ 'Tx'  - Where 'x' equals the following value based on the command
+         selected in the test menu:
+         0 - "DSP ROM RD" and
+             "DSP RAM OVER WRITE"
+         1 - "DSP DRAM R/W"
+         2 - "DSP IRAM R/W"
+         4 - "DSP POINTER"
+
+ To emulate the SVP chip, somebody needs to figure out how to dump the
+ internal ROM (the test menu shows that it has a DSP ROM reading option,
+ perhaps sending a certain command to the SVP makes it map it's internal
+ ROM within the $300000-$3FFFFF area) and figure out how the DSP works.
+
+ All of the above information came from physically examining a VR cartridge,
+ and from disassembling the test menu code. (found at $1B000 for those
+ of you who are interested)
+
+ 4.3) Phantasy Star 4
+
+ Phantasy Star 4 is a 24 megabit game with 16k of battery backed RAM
+ mapped to $200001-$203FFF. (odd addresses used) It has ROM in the same
+ area where the RAM is. I've observed that the game will always write
+ $01 to $A130F1 before accessing the RAM, and then write $00 when
+ done. It could be that bit 0 of $A130F1 controls ROM/RAM banking at
+ that location.
+
+ Jeff Quinn has tested this and confirmed it to work, and also reported
+ an area of the game where supporting banked SRAM is important; when
+ your characters encounter a GEROTLUX below the town of Tyler on Dezolis,
+ the game will try to access the ROM data that is obscured by SRAM.
+
+ 4.4) Other topics
+
+ - The 68000 RESET instruction has no effect.
+
+ - If the VDP is not accessed often enough, it will (appear) to lock up.
+   I'm not sure what the cause is, but any control port access is enough
+   to keep it going. Maybe some of the internal VDP memory is composed
+   of DRAM cells that lose their data after a while. This happens in
+   the Mark III compatability mode as well as mode 4 and mode 5.
+
+ - The status of the YM2612 can be read at any of it's four addresses.
+   Since only address zero is documented as valid, it could be that the
+   other addresses may return an incorrect result in some situations.
+
+ - The PSG is compatible with the Texas Instruments SN76489. It is actually
+   on the same physical chip as the VDP, and it's output comes directly
+   out of the VDP to be mixed with the YM2612. Sega did the same thing
+   with the System C2 (possibly System 18) and SMS VDPs as well.
+
+ Can anyone contribute some information about the Genesis security
+ and operating system ROM features? I know of a few:
+
+ - Games must write the text 'SEGA' to A14000h if the lower four
+   bits of the version register return 01h.
+ - Writing 01h to A14101h disables the OS ROM and swaps in the cart ROM.
+ - The OS ROM checks for 'SEGA' or ' SEGA' at offset 100h in the cart ROM.
+
+ Here's a list of consoles that support the Mark III compatability mode.
+
+ - Sega Mega Drive
+ - Sega Mega Drive 2
+ - Sega Genesis
+ - Sega Genesis 2
+
+ And ones that do not:
+
+ - Genesis 3 (Majesco)
+
+ If anyone has tested this with the Nomad, CDX, MegaJet, etc., please
+ let me know.
+
+ 5.) Credits
+
+ I would like to thank the following people for contributing information:
+
+ Bart Trzynadlowski, Christian Schiller, Flavio Morsoletto, Jeff Quinn,
+ Mike Gordon, Naflign, Omar Cornut, Steve Snake, and Tim Meekins.
+
+ Contributors to the Sega Programming FAQ.
+ Gringoz for the Genesis schematics.
+
+ 6.) Disclaimer
+
+ If you use any information from this document, please credit me
+ (Charles MacDonald) and optionally provide a link to my webpage
+ (http://cgfm2.emuviews.com/) so interested parties can access it.
+
+ The credit text should be present in the accompanying documentation of
+ whatever project which used the information, or even in the program
+ itself (e.g. an about box)
+
+ Regarding distribution, you cannot put this document on another
+ website, nor link directly to it.
+
