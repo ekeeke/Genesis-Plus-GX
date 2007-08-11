@@ -1,0 +1,190 @@
+
+                   ---------------------------------------
+                     SSFII GENESIS TECHNICAL INFORMATION
+                        Second Edition (July 26, 2000)
+                              Bart Trzynadlowski
+                   ---------------------------------------
+
+
+The purpose of this document is to discuss the workings of the Genesis port of
+Capcom's "Super Street Fighter II The New Challengers". Virtually all of this
+information was originally found by others' efforts.
+        Please credit "those who contributed information" rather than me if
+you use any of this information. You may pass this document around freely, but
+please keep it unaltered. If you see any errors or have more info, contact me.
+I can be reached at trzy@powernet.net.
+
+        Second Edition: July 26, 2000
+                - Major update with correct information thanks to Tim Meekins
+        First Edition:  July 21, 2000
+                - Initial release
+
+
+0. THE SSFII CHALLENGE
+
+The challenge behind getting "Super Street Fighter II The New Challengers"
+(SSFII) to work on a Genesis emulator lies primarily in the fact that the game
+is stored on a 40 megabit (5 megabyte) cartridge.
+        The Sega Genesis maps ROM from 0x000000 to 0x3FFFFF which means that
+the CPU can only see 4 megabytes of cartridge ROM. SSFII needed more space for
+the backgrounds and thus Capcom opted for a special 5 megabyte cartridge with
+bankswitching in order to access the area of ROM outside of normal range.
+
+
+1. THE BANKSWITCHING MECHANISM
+
+The bankswitching mechanism probably resides on the cartridge. I'm 99% sure of
+this. Sega documentation does offer a description of the mechanism, though,
+which led me to suspect for a moment that perhaps the mechanism was on the
+Genesis itself.
+        The idea is unlikely though, as that range of registers is used by the
+32X for an entirely different purpose. I have been informed that that range
+(which is marked as "SEGA RESERVED" in the Genesis developer's manual) can be
+used for extra devices which may be present on the cartridge.
+
+The bankswitching mechanism is very simple. It views the addressable 4 mega-
+bytes of ROM as 8 512KB regions. The first area, 0x000000-0x07FFFF is fixed
+and cannot be remapped because that is where the vector table resides.       
+        The banking registers on the cartridge work by allocating the 512KB
+chunk to a given part of the addressable 4MB ROM space. Below are the
+registers and what range they correspond to. The value written to a register
+will cause the specified 512KB page to be mapped to that region. A page is
+specified with 6 bits (bits 7 and 6 are always 0) thus allowing a possible 64
+pages (SSFII only has 10, though.)
+
+        0xA130F3:       0x080000 - 0x0FFFFF
+        0xA130F5:       0x100000 - 0x17FFFF
+        0xA130F7:       0x180000 - 0x1FFFFF
+        0xA130F9:       0x200000 - 0x27FFFF
+        0xA130FB:       0x280000 - 0x2FFFFF
+        0xA130FD:       0x300000 - 0x37FFFF
+        0xA130FF:       0x380000 - 0x3FFFFF
+
+The registers are accessed through byte writes. I haven't seen SSFII try to
+read any of the registers, so I don't know if it's possible or not. I don't
+emulate anything besides byte writes in my emulator.
+        There is also a register 0xA130F1. Apparently the regions specified by
+0xA130F9-0xA130FF (0x200000-0x3FFFFF) can be either ROM or RAM and can be
+write-protected. Here is the layout of the register as far as I know:
+
+          7  6  5  4  3  2  1  0
+        +-----------------------+
+        |??|??|??|??|??|??|WP|MD|
+        +-----------------------+
+
+        MD:     Mode -- 0 = ROM, 1 = RAM
+        WP:     Write protect -- 0 = writable, 1 = not writable
+
+Emulation of the 0xA130F1 register is not necessary, SSFII initializes it at
+start-up by writing 0 I believe, which signifies ROM and no write protection
+to the regions at 0x200000-0x3FFFFF (ROM isn't writable anyway, there isn't a
+need for protection.) 
+
+Examples:
+
+        If 0x01 is written to register 0xA130FF, 0x080000-0x0FFFFF is visible
+        at 0x380000-0x3FFFFF.
+        If 0x08 is written to register 0xA130F9, the first 512KB of the
+        normally invisible upper 1MB of ROM is now visible at 0x200000-
+        0x27FFFF.
+
+The registers simply represent address ranges in the 4MB ROM area and you can
+page in data to these ranges by specifying the bank # -- it's that simple!
+
+
+2. CHECKSUM
+
+SSFII contains a checksum routine which calculates the checksum of the first
+4MB of the ROM; it then pages in the last 1MB of ROM to 0x300000-0x3FFFFF.
+It does this by writing to the bank registers. The following code is taken
+directly from the US ROM dumped by Genesis Power:
+
+        ... Checksum first 4MB of ROM (0x000000-0x3FFFFF) ...
+        0x003BEC:       move.b  #$08, ($A130FD)
+        0x003BF4:       move.b  #$09, ($A130FF)
+        0x003BFC:       lea     ($300000), a0
+        ... Checksum uppper 1MB of ROM now mapped at 0x300000-0x3FFFFF ...
+
+The bankswitching hardware must be properly emulated before the game starts
+working. If it is not, the checksum will fail and the game will hang with a
+red screen.
+        In the Genesis Power US dump, you can jump to 0x003C3C to avoid the
+checksum routine, this is where program flow transfers to if the checksum was
+found to be valid. The game doesn't do anything important before the checksum
+code as far as emulation is concerned. It writes the SEGA message to the
+Trademark Security System register and does some joypad init stuff.
+
+
+3. EMULATING SSFII
+
+SSFII is fairly straightforward to emulate. All you need to do is detect the
+game, load up all 5MB, and emulate the banking registers. The easiest way to
+do it, in my opinion, is to keep a second copy of the ROM and do memcpy()s
+from that second copy to the ROM being emulated.
+
+For example, here is how Genital does it... I've got genesis.rom which is the
+buffer where ROMs are loaded and executed. There is also genesis.rom_ssf2
+which is another 5MB buffer where I load the SSFII ROM to as well.
+        The bankswitching register emulation is done in my IOWriteByte()
+function (which handles byte writes to the 0xA00000-0xBFFFFF range). The
+following is the code I use:
+
+if (addr >= 0xa130f3 && config.ssf2_emu)
+{
+        switch (addr & 0xf)
+        {
+        case 0x3:                    /* 080000-0FFFFF */
+                memcpy((genesis.rom + 0x080000), (genesis.rom_ssf2 + (data * 0x80000)), 0x80000);
+                break;
+        case 0x5:                    /* 100000-17FFFF */
+                memcpy((genesis.rom + 0x100000), (genesis.rom_ssf2 + (data * 0x80000)), 0x80000);
+                break;
+        case 0x7:                    /* 180000-1FFFFF */
+                memcpy((genesis.rom + 0x180000), (genesis.rom_ssf2 + (data * 0x80000)), 0x80000);
+                break;
+        case 0x9:                    /* 200000-27FFFF */
+                memcpy((genesis.rom + 0x200000), (genesis.rom_ssf2 + (data * 0x80000)), 0x80000);
+                break;
+        case 0xb:                    /* 280000-2FFFFF */
+                memcpy((genesis.rom + 0x280000), (genesis.rom_ssf2 + (data * 0x80000)), 0x80000);
+                break;
+        case 0xd:                    /* 300000-37FFFF */
+                memcpy((genesis.rom + 0x300000), (genesis.rom_ssf2 + (data * 0x80000)), 0x80000);
+                break;
+        case 0xf:                    /* 380000-3FFFFF */
+                memcpy((genesis.rom + 0x380000), (genesis.rom_ssf2 + (data * 0x80000)), 0x80000);
+                break;
+        default:
+                break;
+        }
+        return;
+}        
+
+Pardon the bad formatting, it just wouldn't fit correctly in the 80 columns
+that the rest of the document sticks to.
+        The first line checks whether the address is 0xA130F3 or above (notice
+how 0xA130F1 is ignored, SSFII doesn't really use it) and if SSFII emulation
+is enabled (in Genital, I have a flag -- config.ssf2_emu -- which is set to 1
+to indicate SSFII emulation should occur.) The remainder of the code is a
+switch () statement which handles the register emulation.
+        Since 0x80000 = 512KB, and the data variable holds the byte written to
+the register, data * 0x80000 yields the offset into the ROM that has been
+requested to be mapped.
+        At first glance, memcpy()s may seem inefficient and slow. Although it
+is true, this doesn't apply to emulating SSFII since the game doesn't do much
+(if any) bankswitching during gameplay. No slowdown due to the memcpy()s is
+noticable.
+
+If you are using an emulator like Starscream which requires the ROMs to be
+byteswapped, make certain both ROM images are byteswapped. If you don't use
+2 copies of the ROM, you will find the game will still have several glitches
+because the memcpy()s will be destroying the data they write over.
+
+
+4. CONCLUSION
+
+That's all there is to it. This should be sufficient information for anyone
+wishing to implement SSFII support in their Sega Genesis emulator. If you have
+any questions at all (I'm not great at making things clear) feel free to email
+me at trzy@powernet.net. 
+

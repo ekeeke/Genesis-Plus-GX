@@ -1,0 +1,458 @@
+******************************************************
+* Sega Genesis Technical Notes by Bart Trzynadlowski *
+*                                   and many others! *
+******************************************************
+
+
+Second Edition: February 7, 2000
+        - Current
+        - Made a table of contents
+        - Added tile information and Scroll layer name table information
+        - Added info on Genesis security system and "do nots" courtesy of 
+          Flavio. He also found a mistake in the joypad notes.
+	- Added SMD ROM stuff
+First Edition: February 3, 2000
+        - Initial release
+
+
+This document is intended to be used as a reference alongside sega2.doc or any
+other complete Sega Genesis technical documentation, it is not intended as a
+standalone resource for learning about the Sega Genesis game console. 
+        There is also some information here pertaining to specific situations
+such as using the Starscream 68000 CPU core in an emulator project.
+        I wrote this document while working on a Genesis emulator. I felt some
+things needed more description than was available. This document is intended
+for emulator developers and Genesis programmers.
+        Feel free to pass this document around freely. If you use any parts of
+it that were contributed by people other than me, it would be a good idea to
+give them credit. 
+        Any useful feedback is very much appreciated, especially corrections
+and new entries. Do not ask about ROMs or anything stupid. trzy@powernet.net
+Check my page at: http://www.powernet.net/~trzy as well.
+	Much thanks to Joe Groff, Steve Snake, nyef, ATani, and Flavio for 
+the invaluable help. 
+
+
+-- Table of Contents --
+        0. Control Port Write Modes
+        1. Auto-Increment
+        2. VRAM Address Decoding (for Writing)
+        3. Tiles
+        4. Scroll Layer Name Tables
+        5. Scroll Layers and Video Resolution
+        6. Joypads
+        7. Crash Course on the Genesis Security System and Common Don'ts
+        8. Emulating RAM and ROM w/ Starscream
+	9. SMD ROM Format
+
+
+-- 0. Control Port Write Modes --
+
+The VDP control port, 0xC00004, has two write modes: "Register Set" (write1)
+and "Address Set" (write2). The VDP is able to distinguish between which mode
+you want to use by looking at bits 15 and 14 of the word you write to the
+control port.
+
+        10: Write1      Otherwise: Write2
+
+For write2, bits 15 and 14 are CD1 and CD0 so the concern of conflict arises.
+If you look at the possible access modes which are specified by the 6 CD bits
+you will not find any that have 10 in CD1 and CD0.
+
+
+-- 1. Auto-Increment --
+
+The auto-increment value (in register #15) is apparently set to 2 by default.
+
+
+-- 2. VRAM Address Decoding (for Writing) --
+
+For words and longwords, the VRAM address decoding process is not as
+straightforward as some would have you believe. The A0 address bit is not used
+in decoding, what this apparently means is that it is treated as 0 (thus
+preventing misaligned word writes).
+        A0 is used to test wether or not the bytes in a word should be swapped
+or not. If A0 = 1, they are swapped, if it is 0, then bytes are not swapped.
+A0 is also used when adding the auto-increment value to the VRAM address after
+some data is written.
+
+        C example of emulating this:
+
+        if (addr & 1)
+                data = ByteSwap(data);
+        *((unsigned short int *) (vram + (addr & 0xfffe))) = data;
+        addr += auto_inc;
+
+
+-- 3. Tiles --
+
+The Genesis tile format is quite simple. Each pixel is represented by 4 bits
+thus allowing 16 colors per every tile. Tiles are 8x8. The Genesis allows for
+up to 64 colors to be displayed: 16 per palette, with 4 palettes. Palettes are
+not specified in the tile bitmap, that information is elsewhere and beyond the
+scope of this note.
+
+        Example of a bitmap for the letter "A". We use the color 0xa for each
+        of the pixels. Remember, color 0 is _always_ transparent in any
+        palette:
+
+        dc.l    $00077000
+        dc.l    $07700770
+        dc.l    $07700770
+        dc.l    $07777770
+        dc.l    $07700770
+        dc.l    $07700770
+        dc.l    $00000000
+        dc.l    $00000000
+
+
+-- 4. Scroll Layer Name Tables --
+
+Scroll layers (who's addresses and sizes are specified in VDP registers) are
+"name tables" where each entry contains an index to a specific 8x8 tile. These
+entries are arranged in a linear fashion.
+        Each entry is a word in size. Here is the format for an entry:
+
+         15  14  13  12  11  10  9   8   7   6   5   4   3   2   1   0
+        +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
+        |PRI|PL1|PL0|VFP|HFP|I10|I9 |I8 |I7 |I6 |I5 |I4 |I3 |I2 |I1 |I0 |
+        +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
+
+        PRI             Priority (1 = highest, on top; 0 = lowest, on bottom)
+        PL1-PL0         Palette (0, 1, 2, or 3)
+        VFP             Vertical flipping (1 = true)
+        HFP             Horizontal flipping (1 = true)
+        I10-I0          Index of 8x8 tile in pattern area (VRAM $0000).
+                        Multiply this by 32 to get offset in VRAM of the tile
+                        bitmap
+
+The information here applies to both Scroll A and Scroll B, please refer to
+more complete documentation for information on how to set Scroll layer
+addresses and what-not.
+
+
+-- 5. Scroll Layers and Video Resolution --
+
+The Genesis supports two video modes: 32x28 cell and 40x28 cell (which in
+pixels are 256x224 and 320x224.) The video resolution is how many 8x8 tiles
+are displayed on-screen. The vertical portion differs with PAL I believe, but
+it that is not relevant.
+        Scroll A and Scroll B can have a number of different sizes which
+obviously often cannot be all shown on-screen: 32x32, 32x64, 32x128, 64x32,
+64x64, and 128x32. The Sega Programming FAQ says that 128x128 is possible, but
+I don't think it is since that would take up 32KB of VRAM which would not 
+leave room for the other Scroll layer, the Window, or the patterns.
+
+Only a portion of the Scroll layer is visible on the screen. How it is
+displayed can be represented by the following diagram:
+
+** Assuming the Scroll size is 64x64 and the screen 40x28, everything is
+   addressed in cell units (obviously not to scale) **
+
+        - = Scroll layer
+        * = Visible portion
+
+         H0                                     H39                 H63
+        +****************************************--------------------+
+    V0  |* V0                                   *                    |
+        |*                                      *                    |
+        |*                                      *                    |
+        |*                                      *                    |
+        |*                                      *                    |
+        |* V27                                  *                    |
+        |****************************************                    |
+        |                                                            |
+        |                                                            |
+        |                                                            |
+        |                                                            |
+        |                                                            | 
+        |                                                            |
+    V63 |                                                            |
+        +------------------------------------------------------------+
+
+Thus you can see that there are tiles beyond the right limit of the visible
+screen, and below as well. This method of having the layer larger than can be
+displayed is for scrolling. The above is what would occur if one set the
+Scroll size to 64x64 and the resolution to 40x28 without scrolling the screen
+or anything.
+        If you are having problems emulating Scroll layers because everything
+is shifted over you are probably forgetting to render the invisible parts of
+the Scroll or to skip over them and on to the next visible row. I hope that
+made sense.
+
+
+-- 6. Joypads --
+
+** Begin Email **
+From: Joe Groff
+To: Bart Trzynadlowski
+Date: Sat, 15 Jan 2000 23:06:49 -0800 (PST)
+Subject: Re: DGen/SDL 
+
+> is there any good info anywhere on control pad interfacing?
+
+As far as I can tell, this is how the controller works. There are two one-byte
+data sets:
+    v & 0x40: always set
+    v & 0x20: C
+    v & 0x10: B
+    v & 0x08: right
+    v & 0x04: left
+    v & 0x02: down
+    v & 0x01: up
+and:
+    v & 0x40: always clear
+    v & 0x20: START
+    v & 0x10: A
+    v & 0x08: right
+    v & 0x04: left
+    v & 0x02: down
+    v & 0x01: up
+By reading a word from 0xA10002 (for first controller) or 0xA10004 (for
+second), the word will have one of the above bitmasks written to both bytes.
+If you write a byte to 0xA10003(for 1st) or 0xA10005(for 2nd) with the 0x40
+bit set, you'll get the first set, otherwise you'll get the second.
+
+Example:
+  Player 1 is pressing left and the A and B buttons simultaneously. Player 2
+  is pressing B, C, and START. As the game, in order to probe controller 1:
+  - I send byte 0x00 to 0xA10003 (or word 0x0000 to 0xA10002 :)
+  - I read a word from 0xA10002, which gives me 0x1414. From the lower table,
+    I see A and left are being pressed.
+  - I send byte 0x40 to 0xA10003.
+  - I read another word from 0xA10002. This time I get 0x5454, which from the
+    upper table means B and left are being pressed.
+  Similarly, to probe controller 2:
+  - I send byte 0x00 to 0xA10005.
+  - I read from 0xA10004, and get 0x2020. So START is being depressed.
+    of the controller!
+  - I send byte 0x40 to 0xA10005.
+  - I read from 0xA10004 again, get 0x7070, so B and C are being pressed.
+
+There's also a lot of odd code to handle 6-button controllers in DGen, but
+as it's getting a bit late, I can't quite understand it. Hopefully this is
+accurate and clear enough to at least get you started.
+** End Email **
+ 
+** Begin Email **
+From: ATani
+To: Bart Trzynadlowski 
+Date: Sat, 15 Jan 2000 23:06:43 -0800
+Subject: Re: genesis tech question post
+
+Ok, Well on the genesis the joysticks are read in by the z80 and passed to
+the 68000 chip via memory addresses: A10003 & A10005.
+
+If bit 6 of the Stored Controller 1 information is set then you return the
+following information when reading Address: A10003 (Byte mode):
+
+Bit:        Description:
+0           Up
+1           Down
+2           Left
+3           Right
+4           B
+5           C
+
+If Bit 6 is not set return the following:
+Bit:        Description:
+4           A
+5           Start
+
+Address A10005 is the same except values returned are for joystick port 2.
+
+The Stored data are in reference to the byte values written to A10003 and
+A10005 (joystick port 1 and joystick port 2)
+** End Email **
+
+Flavio points out the information from ATani's email may be somewhat faulty:
+
+"The Z80 has nothing to do with joypad reading. Actually, I believe the Z80 
+banker thingy will go wacko, should you attempt such a stunt. Gotta test 
+that."
+
+
+-- 7. Crash Course on the Genesis Security System and Common Don'ts --
+
+** The following information is courtesy of Flavio **
+
+Crash course in Genesis security:
+
+1) There must be either 'SEGA' or ' SEGA' in ASCII at offset 0x100 (256
+decimal.)
+
+2) If the four least significant bits of 0xA10001 are higher than zero, the
+poor programmer must write 'SEGA' to 0xA14000.
+Example:
+MOVE.B $A10001, D0
+ANDI.B #$F, D0
+BEQ.S NO_VDP_LOCK
+MOVE.L #'SEGA', $A14000.
+NO_VDP_LOCK:
+[Yer code here]
+
+Yes, I know many of you can't read 68K ASM yet, but I don't know how to do
+this on Paul Lee's C compiler (or any other for that matter.) :/
+
+A list of common Caveat Gennyptor's follows:
+
+- Be careful not to access forbidden addresses (see SEGA2.DOC), as the Genny
+locks up instantly if you dare to touch them.
+- Don't read from the VDP data port (C00000) if you have sent a
+"VRAM/CRAM/VSRAM write" command (and vice versa.)
+- The FM doesn't work if the Z80 is reset (their reset lines are wired
+together.)
+- Always have the Z80 busreq'ed before reading the joyports.
+- Never attempt to read PSG ports.
+- DMA transfers should be controlled by code placed at the Genny's work RAM
+(0xFF0000-0xFFFFFF.)
+- Don't attempt to transfer data to/from the VDP if a DMA is in progress.
+- Z80 RAM _must_ be accessed in byte units.
+- Don't toggle the joystick's select line more than four times per vertical
+refresh, to ensure 6-button joypad compatibility.
+- It takes at least 16 68K clock ticks for the joyport readouts to become
+really stable, after you have toggled the aforementioned select line.
+
+Flavio has also pointed out one more important thing not to attempt:
+
+CLR, ST, and TAS cannot be used to access the C000xx range. (It's a
+derivative of the "don't read with the VDP set to write" commandment.)
+
+
+-- 8. Emulating RAM and ROM w/ Starscream --
+
+Often times, Genesis games do some odd tricks that can be buggers to emulate.
+One of these is jumping backwards (which causes the 24-bit address to wrap
+around to 0xFFFFFF) into work RAM to execute code. Since Starscream uses
+32-bit data to handle addresses, this sort of maneuver would wrap around to
+0xFFFFFFFF (32-bit) which is out of the Genesis address space.
+        Below is part of a Starscream context for emulating the Genesis work
+RAM and ROM. I have also included the code for the handlers (Joe Groff helped
+with this -- thanks Joe!) The dummy handlers are for regions of the address
+space where accesses are ignored (I have removed all references to VDP and I/O
+stuff since it would just clutter the example.) In reality, the data items
+rom and ram would be dynamically allocated and would have to be added to these
+structures during initialization time. They would be seen here as (unsigned)
+NULL or (void *) NULL.
+
+struct STARSCREAM_PROGRAMREGION fetch_instructions[] =
+{
+        { 0x000000, 0x3fffff, (unsigned) rom },
+        { 0xff0000, 0xffffff, (unsigned) ram - 0xff0000 },
+        { 0xff000000, 0xff3fffff, (unsigned) ram - 0xff000000 },
+        { 0xfff00000, 0xffffffff, (unsigned) ram - 0xfff00000 },
+        { -1, -1, NULL }
+};
+struct STARSCREAM_DATAREGION    read_data_byte[] =
+{
+        { 0x000000, 0x3fffff, NULL, (void *) rom },
+        { 0x400000, 0xffffff, StarscreamReadRAMByte, NULL },
+        { -1, -1, NULL, NULL }
+};
+struct STARSCREAM_DATAREGION    read_data_word[] =
+{
+        { 0x000000, 0x3fffff, NULL, (void *) rom },
+        { 0x400000, 0xdfffff, StarscreamFakeRead, NULL },        
+        { 0xe00000, 0xffffff, StarscreamReadRAMWord, NULL },
+        { -1, -1, NULL, NULL }
+};
+struct STARSCREAM_DATAREGION    write_data_byte[] =
+{
+        { 0x000000, 0xdfffff, StarscreamFakeWrite, NULL },
+        { 0xe00000, 0xffffff, StarscreamWriteRAMByte, NULL },
+        { -1, -1, NULL, NULL }
+};
+struct STARSCREAM_DATAREGION    write_data_word[] =
+{
+        { 0x000000, 0xdfffff, StarscreamFakeWrite, NULL },
+        { 0xe00000, 0xffffff, StarscreamWriteRAMWord, NULL },
+        { -1, -1, NULL, NULL }
+};
+
+unsigned StarscreamReadRAMByte(unsigned address)
+{
+        return ram[(address ^ 1) & 0xffff];
+}
+        
+unsigned StarscreamReadRAMWord(unsigned address)
+{
+        return *((unsigned short *) (ram + (address & 0xfffe)));
+}
+
+void StarscreamWriteRAMByte(unsigned address, unsigned data)
+{
+        ram[(address ^ 1) & 0xffff] = data;       
+}
+
+void StarscreamWriteRAMWord(unsigned address, unsigned data)
+{
+        *((unsigned short *) (ram + (address & 0xfffe))) = data;
+}
+
+unsigned StarscreamFakeRead(unsigned address)
+{
+        return 0;
+}
+
+void StarscreamFakeWrite(unsigned address, unsigned data)
+{       
+}
+
+RAM is at 0xff0000-0xffffff and is mirrored every 64KB at 0xe00000-0xfeffff.
+
+Please see the Starscream documentation for information on how the core works.
+At the time of this writing, Neill Corlett's page is at:
+        http://www4.ncsu.edu/~nscorlet/
+
+
+-- 9. SMD ROM Format --
+
+The SMD ROM format consists of a 512 byte header and the actual ROM image in
+16KB chunks with the odd bytes at the beginning, and the even bytes at the 
+end.
+
+	Header offsets:
+	0x00:	Number of 16KB blocks. This number is often incorrect and it 
+		is wise to calculate it manually: (sizeof(file) - 512) / 16384
+	0x02:	If 0, the ROM is standalone or the last part of a series. 
+		Otherwise it is part of a split ROM set.
+	0x08:	0xaa
+	0x09:	0xbb
+
+Note: Most ROMs have 0xaa and 0xbb at 0x08 and 0x09 but a very small percentage 
+(about 1.28% by my calculations) do not conform to this. Those offsets are 
+useful for checking wether a ROM is in SMD format but be aware that they are 
+not always correct.
+
+	Decoding a 16KB SMD blocke: (thanks to XnaK and Kuwanger)
+        1. If the byte offset in the block is less than 8192, copy the byte
+           from the SMD block to the first unused odd offset in the decode
+           buffer.
+        2. Otherwise, put it in the first unused even offset in the decode
+           buffer.
+
+	Example block-decoding C function: (from my own GROM v0.75)
+	
+	void smd_bin(unsigned char *bin_block, unsigned char *smd_block)
+	{
+		int	i, o = 1, e = 0;
+		
+		/* convert 16KB of SMD to BIN */
+		for (i = 0; i < 8192; i++)
+		{
+			bin_block[o] = smd_block[i];
+			bin_block[e] = smd_block[i + 8192];
+			o += 2;
+			e += 2;
+		}
+	}	
+		
+Get GROM at: 
+	http://www.powernet.net/~trzy
+	http://www.zophar.net
+	http://eidolon.psp.net		
+	http://www.vintagegaming.com
+		...or...
+	If all else fails, email me.
+
+

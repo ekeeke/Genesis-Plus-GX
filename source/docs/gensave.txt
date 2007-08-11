@@ -1,0 +1,312 @@
+                ----------------------------------------------
+                  SEGA GENESIS EMULATOR SAVE STATE REFERENCE
+                       Third Edition (February 23, 2002)
+                              Bart Trzynadlowski
+                ----------------------------------------------
+                        
+
+---------
+  About
+---------
+
+The aim of this reference is to document the save state and backup RAM formats
+of the various Sega Genesis emulators out there. Distribute this document
+freely, but please keep it unmodified. If you use any of this information,
+give credit to the contributors and me.
+
+The following people contributed directly and/or indirectly:
+
+    - Charles MacDonald (supplied most of the Genecyst save state information)
+    - Jeffrey Quinn (found the SSP and USP in Genecyst states)
+    - Steve Snake (contributed Genecyst and KGen98 information)
+    - Langoustator (supplied YM2612 register information and some KGen98 data)
+
+More information on any of the formats, especially the KGen format, would be
+appreciated. You can reach me at bart@dynarec.com or visit my web site at
+http://www.dynarec.com/~bart.
+
+A "byte" is considered to be 8 bits, a "word" is 16 bits, and a "double word"
+is 32 bits.
+
+    Change History
+    --------------
+
+    February 12, 2002: Second Edition
+                    - Added some Genecyst and KGen save state information
+                      supplied by Steve Snake
+                    - Corrected some typos
+
+    April 11, 2001: First Edition
+                    - Initial public release
+
+
+------------------------------
+  Genecyst Save State Format
+------------------------------
+
+The Genecyst save state format (GST) is used by various emulators. The files
+use the extensions GS0-GS9 depending on the save slot. The information in this
+section has been validated against Genecyst v0.32b. I believe Version X.XX is
+very similar, if not the same, but I would appreciate confirmation.
+
+    Offset Range:       Description:
+    -------------       ------------
+    0x00000-0x00002     Signature: "GST"
+    0x00006             0xE0, apparently used to validate file integrity
+    0x00007             0x40, apparently used to validate file integrity
+    0x00080-0x0009F     68K registers D0-D7
+    0x000A0-0x000BF     68K registers A0-A7
+    0x000C8-0x000CB     68K PC
+    0x000D0-0x000D1     68K SR
+    0x000D2-0x000D5     68K USP
+    0x000D6-0x000D9     68K SSP
+    0x000FA-0x00112     VDP registers (0-23, 1 byte each)
+    0x00112-0x00191     CRAM
+    0x00192-0x001E1     VSRAM
+    0x001E4-0x003E3     YM2612 registers
+    0x00404-0x00437     Z80 registers: AF, BC, DE, HL, IX, IY, PC, SP, AF',
+                        BC', DE', HL', I (stored as a double word each.) R is
+                        not supported and IM is presumed to be 1
+    0x00438             Z80 IFF1 (IFF2 is assumed to be the same)
+    0x00439             Z80 status (0 = stopped, 1 = running), probably has
+                        something to do with BUSREQ
+    0x0043C-0x0043F     Z80 window bank
+    0x00474-0x002473    Z80 RAM
+    0x02478-0x12477     68K RAM
+    0x12478-0x22477     VRAM
+
+    Steve Snake sent me word that 0x00434 (byte) is the Z80 I register and
+    0x00437 (byte) is the Z80 interrupt mode. This conflicts with my data
+    which says 0x00434 is a double word where I is stored. I'm not sure which
+    is correct.
+
+All data is in little endian format except for 68K RAM, VSRAM, and VRAM, which
+are in big endian format. Areas not mentioned should be kept 0.
+
+Locations 0x00006 and 0x00007 are not completely understood. Genecyst expects
+them to be 0xE0 and 0x40, respectively. This has been observed in Genecyst
+v0.20, v0.32b, and vX.XX. Many emulators avoid saving these bytes and Genecyst
+refuses to load their states.
+
+The USP and SSP are tricky. If the supervisor bit in SR is set, only the USP
+is saved at 0x000D2, the SSP at 0x000D6 is set to 0. If the supervisor bit is
+cleared, both the USP at 0x000D2 and the SSP at 0x000D6 are saved. A7 is also
+the current stack pointer (SSP if supervisor mode, USP if user mode.)
+
+Information on the YM2612 registers was sent to me by Langoustator who says it
+is valid for Gens save states and is assumed to be valid for true Genecyst
+states as well. None of it has been verified by me, but I'll assume it is
+correct:
+
+    - 0x001E4-0x00205:  Apparently unused
+    - 0x00206-0x00213:  General registers (not channel specific.) There are
+                        only 9 registers at: 0x206, 0x208, 0x209, 0x20A,
+                        0x20B, 0x20C, 0x20E, and 0x20F.
+    - 0x00214-0x002E3:  Channel-specific registers for channels 1-3. They are
+                        stored in 4 byte groups with each group layed out like
+                        this:
+
+                        First byte = Channel 1
+                        Second byte = Channel 2
+                        Third byte = Channel 3
+                        Fourth byte = Unused (0)
+
+                        The registers only appear to end at 0x0029B and the
+                        rest of the area (from 0x0029C-0x002E3) is unused.
+
+    - 0x002E4-0x00313:  Apparently unused
+    - 0x00314-0x003E3:  Channel-specific registers for channels 4-6. They are
+                        stored in 4 byte groups like the channel 1-3 registers.
+                        They end at 0x0039B and the rest of the area (from
+                        0x0039C-0x003E3) is unused.
+
+More information is needed, especially on (but not limited to) the following:
+
+    - PSG state
+    - Internal VDP information (control port status, VDP RAM pointer, etc.)
+
+
+------------------------------
+  Genecyst Backup RAM Format
+------------------------------
+
+Genecyst saves backup RAM in files with the GSV extension. They simply contain
+the backup RAM in little endian format. The files do not always have an even
+number of bytes.
+
+Even if backup RAM only appears in the odd or even addresses, Genital saves
+the unused bytes (which should be 0.)
+
+Those emulators which keep the 68K address space in little endian format can
+support GSV files easily: simply copy the contents of the files unmodified to
+the backup RAM area.
+
+A few emulators, including Genital, use the GSV format.
+
+
+----------
+  KGen98
+----------
+
+There is no official information on KGen's save state format, so I decided to
+take it upon myself to try reverse engineering the format. Due to a lack of
+time, I have not been able to learn more than is shown here. It might be
+enough to load states, but isn't enough to save them.
+
+The below information applies to KGen98 v0.4b, I do not know if it applies to
+other versions of KGen and KGen98. Any more information is most welcome.
+
+    Offset Range:       Description:
+    -------------       ------------
+    0x00000-0x00002     Signature: "KSS"
+    0x00003             Must be 0x1, also part of the signature
+    0x00004-0x00005     ROM checksum, word sized
+    0x00008-0x00096     Path to ROM (zero terminated), when path is at maximum
+                        length, 0x96 contains the last character of the path
+    0x00097             Always 0
+    0x00098-0x02097     Z80 RAM
+    0x02098-0x12097     68K RAM
+    0x12098-0x22097     VRAM
+    0x22098-0x22117     CRAM
+    0x22298-0x222E7     VSRAM
+    0x2235C-0x2237B     68K registers D0-D7
+    0x2237C-0x2239B     68K registers A0-A7
+    0x2239C-0x2239F     68K SP (if supervisor mode: USP, if user mode: SSP)
+    0x223A0-0x223A3     68K PC
+    0x223A4-0x223A7     68K SR
+    0x223A8-0x223AB     Previous SR value (Steve says only the high byte is
+                        necessary), used to detect changes between privilege
+                        levels
+    0x223AE-0x223C5     VDP registers (0-23, 1 byte each)
+    0x2273E-0x227??     Data written to VDP control port
+    0x22742-0x22743     Control port half: if only one word of a 2-word
+                        command was written, it is stored here
+    0x22748-0x22749     Current VDP RAM address
+
+The checksum, 68K RAM, VRAM, CRAM, and VSRAM are stored in big endian format.
+Everything else is in little endian format.
+
+I believe location 0x2273E is a little endian double word. There is plenty of
+important internal VDP and FM data kept at the end of the file. I haven't
+found the meaning of all of it. Also, the path to the save state's ROM file is
+saved near the beginning of the file.
+
+
+-----------------
+  Genital v1.2+
+-----------------
+
+Starting with Version 1.2, Genital save state files use a version numbering 
+system independent from Genital itself. Save states with different major
+version numbers are not compatible. The minor version number indicates changes
+in the format which do not affect backwards compatibility.
+
+Version 1.0 of this new GNS format is described below:
+
+    Offset Range:       Description:
+    -------------       ------------
+    0x00000-0x00002     Signature: "GNS"
+    0x00003             Format major version
+    0x00004             Format minor version
+    0x00005-0x00007     Reserved (always keep 0)
+    0x00008-0x00057     68K registers and status (from Genital68K context)
+    0x00058-0x00077     68K pending interrupts (from Genital68K context)
+    0x00078-0x10077     68K RAM
+    0x10078-0x20077     VRAM
+    0x20078-0x200F7     CRAM
+    0x200F8-0x20147     VSRAM
+    0x20148-0x201A7     VDP registers (0-23; double word each)
+    0x201A8-0x201BF     VDP internal status data (taken directly from VDP
+                        context: ctrlport_mode, access_mode, addr, addr_top,
+                        dma_mode, and status_register; double word each)
+    0x201C0-0x201C3     VDP horizontal interrupt timer
+    0x201C4-0x201C7     Reserved (always keep 0)
+    0x201C8-0x201CB     Z80 BUSREQ
+    0x201CC-0x201EB     Z80 registers (word each: AF, BC, DE, HL, IX, IY, PC, SP,
+                        AF', BC', DE', HL', IR, IM, IFF1, IFF2)
+    0x201EC-0x221EB     Z80 RAM
+
+Everything is stored in little endian format.
+
+The 68K registers and status come directly from the Genital68K context, occupy
+a double word each, and are ordered:
+
+    D0-D7, A0-A7, SP, SR, PC, status
+
+The "SP" relies on the privilege mode. If in supervisor mode, this is the USP
+(and the SSP is in A7.) If in user mode, this is the SSP (and the USP is in
+A7.) Please read the Genital68K (now Turbo68K) documentation for information
+on what the "status" is (http://www.dynarec.com/~bart/turbo68k.)
+
+The first 7 elements pending interrupt array correspond to interrupt levels
+1-7. Each element, a double word in size, contains the vector of the interrupt
+that is pending. The eighth element is the number of interrupts pending.
+Again, see the Genital68K documentation for more information.
+
+The VDP internal status comes directly from Genital's VDP context. The
+"ctrlport_mode" indicates which part of a command the control port expects. If
+0, it expects the first part, otherwise the second. The access_mode is just
+the VDP's CD bits which indicate VRAM write, CRAM write, VSRAM write, VRAM
+read, etc. The VDP RAM current address is stored in the "addr" element. Bits
+15 and 14 of the VDP RAM address are stored in bits 1 and 0 of "addr_top."
+These are used to emulate a peculiar feature of the VDP. The "dma_mode" stores
+the DMA mode bits. The "status_register" is the VDP Status Register.
+
+The "horizontal interrupt timer" is the count-down timer which triggers
+horizontal interrupts.
+
+
+---------------------------
+  Genital (v1.0 and v1.1)
+---------------------------
+
+The Genital save state format (GNS) was introduced in Genital v1.0 and was
+completely changed by v1.2. Versions 1.0 and 1.1 used the format described
+below.
+
+    Offset Range:       Description:
+    -------------       ------------
+    0x00000-0x0FFFF     68K RAM
+    0x10000-0x1FFFF     VDP VRAM
+    0x20000-0x21FFF     Z80 RAM
+    0x22000-0x2207F     VDP CRAM
+    0x22080-0x220CF     VDP VSRAM
+    0x220D0-0x220EF     68K registers A0-A7
+    0x220F0-0x220F3     68K SP (if supervisor mode: USP, if user: SSP)
+    0x220F4-0x22113     68K registers D0-D7
+    0x22114-0x22117     68K SR
+    0x22118-0x2211B     68K PC
+    0x2211C-0x2214F     Z80 registers: AF, BC, DE, HL, IX, IY, PC, SP, AF', 
+                        BC', DE', HL', IR (stored as a double word each)
+    0x22150-0x22153     Z80 BUSREQ
+    0x22154-0x221B3     VDP registers (0-23, double word each)
+    0x221B4-0x221B7     VDP control port mode
+    0x221B8-0x221BB     VDP RAM address pointer
+    0x221BC-0x221BF     VDP RAM access mode
+    0x221C0-0x221C3     VDP DMA mode
+    0x221C4-0x221C7     VDP Status Register
+    0x221C8-0x221CB     VDP HV counter
+    0x221CC-0x221CF     VDP Horizontal Interrupt timer
+    0x221D0-0x221D3     VDP Control Port A15, A14
+    0x221D4-0x221DA     Reserved (7 bytes; should be 0)
+    0x221DB             Major version number of Genital
+    0x221DC             Minor version number of Genital
+    0x221DD-0x221DF     Signature: "GNS"
+
+The 68K RAM, VRAM, CRAM, and VSRAM are stored in big endian format. Everything
+else is in little endian format.
+
+The VDP RAM address pointer is the current VRAM, CRAM, or VSRAM address. The
+VDP RAM access mode is just the CD bits in a VDP command which indicate
+whether the VDP is in VRAM write mode, VRAM read mode, CRAM write mode, etc.
+
+The VDP Control Port mode indicates which part of the command the VDP is
+expecting. This is the "pending flag" described by Charles MacDonald's VDP
+document. The A15, A14 bits are those last written to the control port. When
+the first word of an address set command is written, these bits are used to
+fill in A15, A14. They are stored in bits 1 and 0 of the GNS double word.   
+
+The major and minor version numbers reflect the version of Genital which
+produced the save state. For example, if the state was created with Genital
+v1.0, the major version would be 1 and the minor would be 0. The signature
+must be "GNS" in ASCII or the save state will be deemed corrupt.

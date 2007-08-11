@@ -1,0 +1,238 @@
+-------------------------------------------------------
+ACCLAIM (81)
+-------------------------------------------------------
+
+NBA Jam (UE)
+NBA Jam (J)
+------------
+T-081326
+T-81033
+header OK ($200001-$200001)
+
+TYPE: 8BITS WORD ADDRESS
+SIZE_MASK: 0xFF (24C02)
+PAGE_MASK: 0x03
+SDA_IN : 0x200000 (0)
+SDA_OUT: 0x200000 (1)
+SCL : 0x200000 (1)
+
+Note: this game uses a different EEPROM mapper than other Accolade games.
+
+
+Blockbuster World Video Game Championship II (U)
+NBA Jam Tournament Edition (JUE)
+------------------------------------------------
+T-81406
+header KO
+
+TYPE: TYPE: 8BITS WORD ADDRESS
+SIZE_MASK: 0xFF (24C02)
+PAGE_MASK: 0x03
+SDA_IN : 0x200001 (0)
+SDA_OUT: 0x200001 (0)
+SCL : 0x200000 (0)
+
+Note: Rev 00 of the game has buggy eeprom support (incorrect data written), game backup only work with Rev01 version (released apparently in 2002, eight years later !)
+
+
+NFL Quarterback Club (JUE)
+-----------------------------
+T-081276
+header OK ($200000-$200001)
+
+TYPE: TYPE: 8BITS WORD ADDRESS
+SIZE_MASK: 0xFF (24C02)
+PAGE_MASK: 0x03
+SDA_IN : 0x200001 (0)
+SDA_OUT: 0x200001 (0)
+SCL : 0x200000 (0)
+
+
+NFL Quarterback Club 96 (UE)
+-----------------------------
+T-081586
+header OK ($200000-$200001)
+
+TYPE: TYPE: 8BITS WORD ADDRESS
+SIZE_MASK: 0x7FF (24C16)
+PAGE_MASK: 0x07
+SDA_IN : 0x200001 (0)
+SDA_OUT: 0x200001 (0)
+SCL : 0x200000 (0)
+
+
+College Slam (U)
+----------------
+T-81576
+header OK ($200001-$200001)
+
+TYPE: 16BITS WORD ADDRESS
+SIZE_MASK: 0x1FFF (24C64)
+PAGE_MASK: 0x07
+SDA_IN : 0x200001 (0)
+SDA_OUT: 0x200001 (0)
+SCL : 0x200000 (0)
+
+
+Frank Thomas Big Hurt Baseball (UE)
+----------------
+T-81476
+header OK ($200000-$200001)
+
+TYPE: 16BITS WORD ADDRESS
+SIZE_MASK: 0x1FFF (24C64)
+PAGE_MASK: 0x07
+SDA_IN : 0x200001 (0)
+SDA_OUT: 0x200001 (0)
+SCL : 0x200000 (0)
+
+
+
+-------------------------------------------------------
+CAPCOM (12)
+-------------------------------------------------------
+
+Megaman - The Wily Wars (E)
+Rockman Mega World (J) [alt]
+----------------
+T-12046
+T-12053 (checksum = 0xEA80)
+header OK ($200001-$200001)
+
+TYPE: 7BITS WORD ADDRESS
+SIZE_MASK: 0x7F (24C01)
+PAGE_MASK: 0x03
+SDA_IN : 0x200001 (0)
+SDA_OUT: 0x200001 (0)
+SCL : 0x200001 (1)
+
+NOTE: the original version of Rockman Mega World (J) uses traditional SRAM, header gives $200000-$203FFF range
+the alternate version uses a 128bytes serial EEPROM (X24C01)
+the two versions share the same GAME NAME and PRODUCT ID
+
+
+
+-------------------------------------------------------
+Electronic Arts (50)
+-------------------------------------------------------
+
+NHLPA Hockey 93 (UE)
+----------------
+T-50396
+header KO
+
+TYPE: 7BITS WORD ADDRESS
+SIZE_MASK: 0x7F (24C01)
+PAGE_MASK: 0x03
+SDA_IN : 0x200000 (7)
+SDA_OUT: 0x200000 (7)
+SCL : 0x200000 (6)
+
+
+Rings of Power (UE)
+----------------
+T-50176
+header KO
+
+TYPE: 7BITS WORD ADDRESS
+SIZE_MASK: 0x7F (24C01)
+PAGE_MASK: 0x03
+SDA_IN : 0x200000 (7)
+SDA_OUT: 0x200000 (7)
+SCL : 0x200000 (6)
+
+
+
+-------------------------------------------------------
+SEGA
+-------------------------------------------------------
+
+Evander 'Real Deal' Holyfield's Boxing (JUE)
+----------------------------------
+MK-1215
+header OK ($200001-$200001)
+
+TYPE: 7BITS WORD ADDRESS
+SIZE_MASK: 0x7F (24C01)
+PAGE_MASK: 0x03
+SDA_IN : 0x200001 (0)
+SDA_OUT: 0x200001 (0)
+SCL : 0x200001 (1)
+
+
+Greatest Heavyweights of the Ring (U)
+Greatest Heavyweights of the Ring (J)
+Greatest Heavyweights of the Ring (E)
+-----------------------------
+MK-1228
+G-5538
+PR-1993
+header OK ($200001-$200001)
+
+TYPE: 7BITS WORD ADDRESS
+SIZE_MASK: 0x7F (24C01)
+PAGE_MASK: 0x03
+SDA_IN : 0x200001 (0)
+SDA_OUT: 0x200001 (0)
+SCL : 0x200001 (1)
+
+
+Wonder Boy in Monster World (UE)
+Wonder Boy V - Monster World III (J)
+----------------
+G-4060
+header OK ($200001-$200001)
+
+TYPE: 7BITS WORD ADDRESS
+SIZE_MASK: 0x7F (24C01)
+PAGE_MASK: 0x03
+SDA_IN : 0x200001 (0)
+SDA_OUT: 0x200001 (0)
+SCL : 0x200001 (1)
+
+
+
+-------------------------------------------------------
+CODEMASTERS
+-------------------------------------------------------
+
+Micro Machines 2 - Turbo Tournament (E) (J-Cart)
+------------------------------------------------
+T-120096-50
+header KO
+
+TYPE: TYPE: 8BITS WORD ADDRESS
+SIZE_MASK: 0x3FF (24C08)
+PAGE_MASK: 0x0F
+SDA_IN : 0x300000 (0)
+SDA_OUT: 0x380001 (7)
+SCL : 0x300000 (1)
+
+Note: this game needs the EEPROM to be initially fullfilled with the string
+"PETETEST01234567" otherwise it won't initialize memory with correct data.
+
+
+Micro Machines Military (E) (J-Cart)
+------------------------------------
+00000000-00 (checksum = 0x168B or 0xCEE0)
+header KO
+
+TYPE: TYPE: 8BITS WORD ADDRESS
+SIZE_MASK: 0x3FF (24C08)
+PAGE_MASK: 0x0F
+SDA_IN : 0x300000 (0)
+SDA_OUT: 0x380001 (7)
+SCL : 0x300000 (1)
+
+
+Micro Machines Turbo Tournament 96 (E) (J-Cart)
+------------------------------------------------
+00000000-00 (checksum = 0x165E or 0x2C41)
+header KO
+
+TYPE: TYPE: 8BITS WORD ADDRESS
+SIZE_MASK: 0x7FF (24C16)
+PAGE_MASK: 0xF
+SDA_IN : 0x300000 (0)
+SDA_OUT: 0x380001 (7)
+SCL : 0x300000 (1) 
