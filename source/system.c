@@ -40,11 +40,18 @@ uint8 alttiming = 0;
 
 void m68k_run (int cyc) 
 {
-	int cyc_do = cyc - count_m68k; /* cycles remaining to run for the line */
+	/* cycles remaining to run for the line */
+	int cyc_do = cyc - count_m68k;
+
+	/* 68k is not frozen */
 	if (cyc_do > 0)
 	{
-		m68k_execute(cyc_do);
+		/* interrupt handling */
+		if (vint_pending && (reg[1] & 0x20)) m68k_set_irq(6);
+		else if (hint_pending && (reg[0] & 0x10)) m68k_set_irq(4);
+		if (cyc_do > 0) m68k_execute(cyc_do);
 		count_m68k += cyc_do;
+		vint_pending = 0;
 	}
 }
 
@@ -64,7 +71,7 @@ void m68k_freeze(int cycles)
 		/* end of 68k execution */
 		m68ki_remaining_cycles = 0;
 
-		/* extra cycles are burned at next execution */
+		/* extra cycles to be burned at next execution */
 		count_m68k += extra_cycles; 
 	}
 	else m68ki_remaining_cycles -= cycles; /* we burn some 68k cycles */
@@ -242,12 +249,13 @@ int system_frame (int do_skip)
 			{
 				h_counter = reg[10];
 				hint_pending = 1;
-				if(reg[0] & 0x10) m68k_set_irq(4);
+			  	if (alttiming) m68k_run(aim_m68k - 456); /* fix Legend of Galahad */
 			}
 		}
 
+
 		/* Render a line of the display if needed */
-		if (do_skip == 0 && !alttiming)
+	  	if (do_skip == 0)
 		{
 			if (v_counter < frame_end) render_line(v_counter);
 			if (v_counter < (frame_end-1)) parse_satb(0x81 + v_counter);
@@ -258,12 +266,6 @@ int system_frame (int do_skip)
 		m68k_run(aim_m68k - 404);
 		status &= 0xFFFB; // HBlank = 0
 
-		if (do_skip == 0 && alttiming) /* hack for Legend of Galahad and Road Rash serie (one-line glitch)*/
-		{
-			if (v_counter < frame_end) render_line(v_counter);
-			if (v_counter < (frame_end-1)) parse_satb(0x81 + v_counter);
-		}
-
 		if (v_counter == frame_end)
 		{
 			/* V Retrace */
@@ -273,9 +275,8 @@ int system_frame (int do_skip)
 			else count_z80 = aim_z80 - 168;
 
 			/* V Int */
+		  	vint_pending = 1;
 			status |= 0x0080;
-			vint_pending = 1;
-		    if (reg[1] & 0x20) m68k_set_irq(6);
 
 			/* Z Int */
 			if (zreset == 1 && zbusreq == 0)

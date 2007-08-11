@@ -167,18 +167,3 @@ int z80_irq_callback (int param)
 	z80_set_irq_line (0, CLEAR_LINE);
 	return 0xFF;
 }
-
-int vdp_int_ack_callback (int int_level)
-{
-	switch (int_level)
-	{
-		case 4:
-			hint_pending = 0;
-			vint_pending = 0;
-			break;
-		case 6:
-			vint_pending = 0;
-			break;
-	}
-	return M68K_INT_ACK_AUTOVECTOR;
-}

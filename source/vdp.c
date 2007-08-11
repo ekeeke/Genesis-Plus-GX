@@ -470,21 +470,10 @@ void vdp_reg_w (uint8 r, uint8 d)
   switch (r)
   {
     case 0x00:			/* CTRL #1 */
-      if (vint_pending && (reg[1] & 0x20)) m68k_set_irq (6);
-	  else if (hint_pending && (d & 0x10)) m68k_set_irq (4);
-	  else m68k_set_irq (0);
 	  if (!(d & 0x02)) hc_latch = -1;
-
 	  break;
 
     case 0x01:			/* CTRL #2 */
-      if (vint_pending && (d & 0x20))
-	  {
-		  if (irqtiming) m68k_run(count_m68k + 24); /* hack for Sesame's Street */
-		  m68k_set_irq (6);
-	  }
-	  else if (hint_pending && (reg[0] & 0x10)) m68k_set_irq (4); /* fix Lemmings status bar */
-	  else m68k_set_irq (0);
 	  
 	  /* Change the frame timing */
       frame_end = (d & 8) ? 0xF0 : 0xE0;
@@ -598,3 +587,11 @@ uint16 vdp_hvc_r (void)
 
 void vdp_test_w (uint16 value)
 {}
+
+int vdp_int_ack_callback (int int_level)
+{
+	if (vint_pending) vint_pending = 0;
+	else hint_pending = 0;
+	if (!hint_pending && !vint_pending) m68k_set_irq(0);
+    return M68K_INT_ACK_AUTOVECTOR;
+}
