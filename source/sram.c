@@ -39,6 +39,7 @@ T_SRAM sram;
 void SRAM_Init ()
 {
   memset (&sram, 0, sizeof (T_SRAM));
+  memset (&sram.sram[0], 0xFF, 0x10000);
   sram.crc = crc32 (0, &sram.sram[0], 0x10000);
 
   if ((cart_rom[0x1b0] == 0x52) && (cart_rom[0x1b1] == 0x41))

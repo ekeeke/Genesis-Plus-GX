@@ -75,32 +75,6 @@ void EEPROM_Init()
 				sram.on = 1;
 				sram.write = 1;
 				memcpy(&eeprom.type, &database[i].type, sizeof(T_EEPROM_TYPE));
-
-				/* Micromachines II need initialized values in RAM */
-				if (i == 16)
-				{
-					int j=0;
-					while (j<0x400)
-					{
-						/* memory array is filled with "PETETEST01234567" */
-						sram.sram[j++] = 0x50;
-						sram.sram[j++] = 0x45;
-						sram.sram[j++] = 0x54;
-						sram.sram[j++] = 0x45;
-						sram.sram[j++] = 0x54;
-						sram.sram[j++] = 0x45;
-						sram.sram[j++] = 0x53;
-						sram.sram[j++] = 0x54;
-						sram.sram[j++] = 0x30;
-						sram.sram[j++] = 0x31;
-						sram.sram[j++] = 0x32;
-						sram.sram[j++] = 0x33;
-						sram.sram[j++] = 0x34;
-						sram.sram[j++] = 0x35;
-						sram.sram[j++] = 0x36;
-						sram.sram[j++] = 0x37;
-					}
-				}
 			}
 		}
 		i++;

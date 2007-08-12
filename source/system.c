@@ -262,7 +262,6 @@ int system_frame (int do_skip)
 		/* H retrace */
 		status |= 0x0004; // HBlank = 1
 		m68k_run(aim_m68k - 404);
-		status &= 0xFFFB; // HBlank = 0
 
 		if (!alttiming && !do_skip)
 		{
@@ -289,6 +288,8 @@ int system_frame (int do_skip)
 				z80_set_irq_line(0, ASSERT_LINE);  
 			} 
 		}
+
+	  status &= 0xFFFB; // HBlank = 0
 
 		/* Process end of line */
 		m68k_run(aim_m68k);

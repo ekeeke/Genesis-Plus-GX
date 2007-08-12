@@ -87,8 +87,14 @@ void genesis_set_region ()
 
  void detect_game()
  {
+	 /* Lotus 2 RECS */
 	 if (strstr(rominfo.product,"T-50746")  != NULL) alttiming = 1;
 	 else alttiming = 0;
+
+	 /* Chaos Engine / Soldier of Fortune */
+	 if ((strstr(rominfo.product,"T-104066") != NULL) ||
+		 (strstr(rominfo.product,"T-124016") != NULL)) vdptiming = 1;
+	 else vdptiming = 0;
 
 	 /* Menacer 6-in-1 Pack */
 	 if (strstr(rominfo.product,"MK-1658") != NULL)

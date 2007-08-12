@@ -87,7 +87,7 @@ uint8 vdp_rate = 60;        /* CPU speed (60Hz by default)*/
 void (*color_update) (int index, uint16 data);
 
 uint8 dmatiming = 1;
-uint8 vdptiming = 1;
+uint8 vdptiming = 0;
 
 /*--------------------------------------------------------------------------*/
 /* Init, reset, shutdown functions                                          */
@@ -130,7 +130,7 @@ void vdp_reset (void)
   frame_end = 0xE0;
   dma_endCycles = 0;
   
-  status = 0x200; /* fifo empty - all other flags clear */
+  status = 0x3600; /* fifo empty */
 
   /* Initialize viewport */
   bitmap.viewport.x = 0x20;
@@ -473,7 +473,6 @@ void vdp_reg_w (uint8 r, uint8 d)
 	  break;
 
     case 0x01:			/* CTRL #2 */
-	  
 	  /* Change the frame timing */
       frame_end = (d & 8) ? 0xF0 : 0xE0;
 

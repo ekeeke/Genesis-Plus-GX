@@ -147,6 +147,7 @@ unsigned int m68k_read_memory_8 (unsigned int address)
 					case 0x40:	/* TMSS */
 					case 0x41:	/* BOOTROM */
 					case 0x50:	/* SVP REGISTERS */
+					case 0x30:	/* TIME */
 						return (m68k_read_bus_8 (address));
 
 					default:		/* Unused */
@@ -319,6 +320,7 @@ unsigned int m68k_read_memory_16 (unsigned int address)
 					case 0x40:	/* TMSS */
 					case 0x41:	/* BOOTROM */
 					case 0x50:	/* SVP REGISTERS */
+					case 0x30:	/* TIME */
 						return (m68k_read_bus_16 (address));
 
 					default:	/* Unused */
