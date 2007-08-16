@@ -18,7 +18,7 @@ extern void *myFM;
 void sound_init(void)
 {
 	/* Timers run at half the YM2612 input clock */
-	float clock = ((CPU_Clock / 1000000.0) / 7.0) / 2.0;
+	float clock = ((Master_Clock / 1000000.0) / 7.0) / 2.0;
 	int i;
 
 	/* Make Timer A table */

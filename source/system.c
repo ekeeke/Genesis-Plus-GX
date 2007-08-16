@@ -32,7 +32,7 @@ uint32 count_z80  = 0;
 uint16 misc68Kcycles   = 488;
 uint16 miscZ80cycles   = 228;
 uint16 lines_per_frame = 262;
-double CPU_Clock    = (double)CLOCK_NTSC;
+double Master_Clock    = (double)CLOCK_NTSC;
 void *myFM = NULL;
 static int sound_tbl[312];
 static int sound_inc[312];
@@ -81,8 +81,8 @@ extern uint8 hq_fm;
 int audio_init (int rate)
 {
 	int i;
-	int vclk = (int)(CPU_Clock / 7.0);  /* 68000 and YM2612 clock */
-	int zclk = (int)(CPU_Clock / 15.0); /* Z80 and SN76489 clock  */
+	int vclk = (int)(Master_Clock / 7.0);  /* 68000 and YM2612 clock */
+	int zclk = (int)(Master_Clock / 15.0); /* Z80 and SN76489 clock  */
 
 	/* Clear the sound data context */
 	memset (&snd, 0, sizeof (snd));
@@ -146,9 +146,9 @@ void system_init (void)
 	/* PAL or NTSC timings */
 	vdp_rate        = (vdp_pal) ? 50 : 60;
 	lines_per_frame = (vdp_pal) ? 313 : 262;
-	CPU_Clock = (vdp_pal) ? (double)CLOCK_PAL : (double)CLOCK_NTSC;
-	miscZ80cycles = (vdp_pal) ? 227 : 228;
-	misc68Kcycles = (vdp_pal) ? 487 : 488;
+	Master_Clock = (vdp_pal) ? (double)CLOCK_PAL : (double)CLOCK_NTSC;
+	miscZ80cycles = (vdp_pal) ? 227 : 228; /* Master_Clock / 13 / vdp_rate / lines_per_frame */
+	misc68Kcycles = (vdp_pal) ? 486 : 488; /* Master_Clock / 7  / vdp_rate / lines_per_frame */
 
 	gen_init ();
 	vdp_init ();
@@ -289,7 +289,7 @@ int system_frame (int do_skip)
 			} 
 		}
 
-	  status &= 0xFFFB; // HBlank = 0
+	    status &= 0xFFFB; // HBlank = 0
 
 		/* Process end of line */
 		m68k_run(aim_m68k);
