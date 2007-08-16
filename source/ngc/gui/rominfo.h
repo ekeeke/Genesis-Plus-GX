@@ -29,8 +29,8 @@ typedef struct
   char copyright[18];		/* Copyright message */
   char domestic[50];		/* Domestic name of ROM */
   char international[50];	/* International name of ROM */
-  char ROMType[4];
-  char product[14];		/* Product type and serial number */
+  char ROMType[4];			/* Educational or Game */
+  char product[14];			/* Product serial number */
   unsigned short checksum;	/* Checksum */
   char io_support[18];		/* Actually 16 chars :) */
   unsigned int romstart;

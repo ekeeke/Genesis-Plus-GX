@@ -131,6 +131,7 @@ int SD_ManageFile(char *filename, int direction, int filetype)
 				return 0;
 			}
 			
+			if (filetype) sram.crc = crc32 (0, &sram.sram[0], 0x10000);
 			sprintf (filename, "Saved %d bytes successfully", filesize);
 			WaitPrompt (filename);
 			return 1;

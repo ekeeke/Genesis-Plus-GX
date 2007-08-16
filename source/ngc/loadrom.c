@@ -180,11 +180,11 @@ extern uint8 autoload;
 void reloadrom ()
 {
 	load_memrom (genromsize);
-    SRAM_Init ();			/* SRAM Infos from ROM header */
     getrominfo (cart_rom);	/* Other Infos from ROM Header */
     genesis_set_region ();	/* Region Detection */
 	detect_game();			/* game special patches */
-
+	SRAM_Init ();			/* SRAM Infos from ROM header */
+    
 	system_init ();
 	audio_init(48000);
 	ClearGGCodes ();		/* Game Genie */

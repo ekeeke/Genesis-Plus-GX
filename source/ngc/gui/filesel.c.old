@@ -24,9 +24,6 @@
 #include "iso9660.h"
 #include "font.h"
 #include "unzip.h"
-#include "diskio.h"
-#include "vfat.h"
-
 
 #define PAGESIZE 12
 #define PADCAL 70
@@ -35,15 +32,13 @@ static int maxfiles;
 u8 havedir   = 0;
 u8 haveSDdir = 0;
 u8 UseSDCARD = 0;
+sd_file *filehandle;
 char rootSDdir[SDCARD_MAX_PATH_LEN];
 int LoadFile (unsigned char *buffer);
 int offset = 0;
 int selection = 0;
 int old_selection = 0;
 int old_offset = 0;
-VFATFS fs;
-FSDIRENTRY f;
-
 
 extern void reloadrom ();
 
@@ -53,16 +48,16 @@ extern void reloadrom ();
 static void ShowFiles (int offset, int selection) 
 {
   int i, j;
-  char text[MAX_LONG_NAME+2];
+  char text[MAXJOLIET+2];
 
   ClearScreen ();
   j = 0;
 
   for (i = offset; i < (offset + PAGESIZE) && (i < maxfiles); i++)
   {
-	  memset(text,0,MAX_LONG_NAME+2);
-	  if (filelist[i].flags) sprintf(text, "[%s]", filelist[i].displayname + filelist[i].filename_offset);
-	  else sprintf (text, "%s", filelist[i].displayname + filelist[i].filename_offset);
+	  memset(text,0,MAXJOLIET+2);
+	  if (filelist[i].flags) sprintf(text, "[%s]", filelist[i].filename + filelist[i].filename_offset);
+	  else sprintf (text, "%s", filelist[i].filename + filelist[i].filename_offset);
 
       if (j == (selection - offset)) WriteCentre_HL ((j * fheight) + 120, text);
       else WriteCentre ((j * fheight) + 120, text);
@@ -80,31 +75,48 @@ int updateSDdirname()
   char *test;
   char temp[1024];
 
+   /* current directory doesn't change */
+   if (strcmp(filelist[selection].filename,".") == 0) return 0; 
    
    /* go up to parent directory */
-   if (strcmp(filelist[selection].filename,"..") == 0) 
+   else if (strcmp(filelist[selection].filename,"..") == 0) 
    {
      /* determine last subdirectory namelength */
      sprintf(temp,"%s",rootSDdir);
-     test= strtok(temp,"/");
+     test= strtok(temp,"\\");
      while (test != NULL)
      { 
        size = strlen(test);
-       test = strtok(NULL,"/");
+       test = strtok(NULL,"\\");
      }
   
      /* remove last subdirectory name */
      size = strlen(rootSDdir) - size - 1;
      rootSDdir[size] = 0;
 
+	 /* handles root name */
+	 if (strcmp(rootSDdir,"dev0:") == 0) sprintf(rootSDdir,"dev0:\\genplus\\..");
+	 
      return 1;
    }
    else
    {
+     /* test new directory namelength */
+     if ((strlen(rootSDdir)+1+strlen(filelist[selection].filename)) < SDCARD_MAX_PATH_LEN) 
+     {
+       /* handles root name */
+	   if (strcmp(rootSDdir,"dev0:\\genplus\\..") == 0) sprintf(rootSDdir,"dev0:");
+	 
 	   /* update current directory name */
-       sprintf(rootSDdir, "%s/%s",rootSDdir, filelist[selection].filename);
+       sprintf(rootSDdir, "%s\\%s",rootSDdir, filelist[selection].filename);
        return 1;
      }
+     else
+     {
+         WaitPrompt ("Dirname is too long !"); 
+         return -1;
+     }
+    } 
 }
 
 /***************************************************************************
@@ -112,26 +124,30 @@ int updateSDdirname()
  ***************************************************************************/ 
 int parseSDdirectory()
 {
+  int entries = 0;
   int nbfiles = 0;
-  FSDIRENTRY fsdir;
+  DIR *sddir = NULL;
 
   /* Get a list of files from the actual root directory */ 
-  int res = VFAT_opendir(0, &fsdir, rootSDdir);
+  entries = SDCARD_ReadDir (rootSDdir, &sddir);
   
-  if (res == FS_SUCCESS)
-  {
-	  while ( VFAT_readdir(&fsdir) == FS_SUCCESS )
+  if (entries < 0) entries = 0;   
+  if (entries > MAXFILES) entries = MAXFILES;
+    
+  /* Move to DVD structure - this is required for the file selector */ 
+  while (entries)
   {
       memset (&filelist[nbfiles], 0, sizeof (FILEENTRIES));
-		  strcpy(filelist[nbfiles].displayname, fsdir.longname);
-		  strcpy(filelist[nbfiles].filename, fsdir.shortname);
-		  filelist[nbfiles].length = fsdir.fsize;
-		  filelist[nbfiles].flags = fsdir.dirent.attribute & ATTR_DIRECTORY;
+      strncpy(filelist[nbfiles].filename,sddir[nbfiles].fname,MAXJOLIET);
+      filelist[nbfiles].filename[MAXJOLIET-1] = 0;
+	  filelist[nbfiles].length = sddir[nbfiles].fsize;
+	  filelist[nbfiles].flags = (char)(sddir[nbfiles].fattr & SDCARD_ATTR_DIR);
       nbfiles++;
+      entries--;
   }
   
-	  VFAT_closedir(&fsdir);
-  }
+  /*** Release memory ***/
+  free(sddir);
   
   return nbfiles;
 }
@@ -243,7 +259,7 @@ void FileSelector ()
 		{
 			filelist[selection].filename_offset = 0;
 			if (((!UseSDCARD) && (basedir == rootdir)) ||
-				(UseSDCARD && strcmp(rootSDdir,"/") == 0)) return;
+				(UseSDCARD && strcmp(rootSDdir,"dev0:\\genplus\\..") == 0)) return;
 			go_up = 1;
 		}
 
@@ -261,14 +277,13 @@ void FileSelector ()
 			if (go_up)
 			{
 				go_up = 0;
-				selection = UseSDCARD ? 0 : 1;
+				selection = 1;
 			}
 
 			/*** This is directory ***/
 			if (filelist[selection].flags)
 			{
-				/* SDCARD directory handler */
-				if (UseSDCARD)
+				if (UseSDCARD) /* SDCARD directory handler */
 				{
 					/* update current directory */
 					int status = updateSDdirname();
@@ -293,6 +308,7 @@ void FileSelector ()
 							offset = 0;
 						}
 						
+
 						/* set new entry list */
 						maxfiles = parseSDdirectory();
 						if (!maxfiles)
@@ -310,8 +326,7 @@ void FileSelector ()
 						haveSDdir = 0;
 					}
 				}
-				/* DVD directory handler */
-				else 
+				else /* DVD directory handler */
 				{
 					/* move to a new directory */
 					if (selection != 0)
@@ -402,7 +417,6 @@ void OpenDVD ()
 int OpenSD () 
 {
   UseSDCARD = 1;
-  char msg[20];
   
   if (haveSDdir == 0)
   {
@@ -413,18 +427,10 @@ int OpenSD ()
 	 old_selection = selection = offset = old_offset = 0;
 	
 	 /* Reset SDCARD root directory */
-     sprintf(rootSDdir,"/genplus/roms");
+     sprintf(rootSDdir,"dev0:\\genplus\\roms");
  
 	 /* Parse initial root directory and get entries list */
      ShowAction("Reading Directory ...");
-	 int res = VFAT_mount(FS_SLOTA, &fs);
-	 if ( res != FS_TYPE_FAT16 )
-	 {
-		 sprintf(msg,"Error mounting SDCARD: %d", res);
-		 WaitPrompt (msg);
-		 return 0;
-	 }
-
 	 if ((maxfiles = parseSDdirectory ()))
 	 {
        /* Select an entry */
@@ -436,7 +442,7 @@ int OpenSD ()
 	 else
 	 {
 		/* no entries found */
-		WaitPrompt ("Error reading /genplus/roms");
+		WaitPrompt ("Error reading dev0:\\genplus\\roms");
 		return 0;
 	 }
   }
@@ -455,14 +461,22 @@ void GetSDInfo ()
   rootdirlength = 0;
  
   /* Check filename length */
-  sprintf(fname, "%s/%s",rootSDdir,filelist[selection].filename); 
+  if ((strlen(rootSDdir)+1+strlen(filelist[selection].filename)) < SDCARD_MAX_PATH_LEN)
+     sprintf(fname, "%s\\%s",rootSDdir,filelist[selection].filename); 
+  
+  else
+  {
+    WaitPrompt ("Maximum Filename Length reached !"); 
+    haveSDdir = 0; // reset everything before next access
+  }
 
-  int res = VFAT_fopen(0, &f, fname, FS_READ);
-  if (res != FS_SUCCESS )
+  filehandle = SDCARD_OpenFile (fname, "rb");
+  if (filehandle == NULL)
   {
       WaitPrompt ("Unable to open file!");
       return;
   }
+  rootdirlength = SDCARD_GetFileSize (filehandle);
 }
 
 /****************************************************************************
@@ -493,16 +507,16 @@ int LoadFile (unsigned char *buffer)
   discoffset = rootdir;
   ShowAction ("Loading ... Wait");
   
-  if (UseSDCARD) VFAT_fread(&f, readbuffer, 2048);
+  if (UseSDCARD) SDCARD_ReadFile (filehandle, &readbuffer, 2048);
   else dvd_read (&readbuffer, 2048, discoffset);
   
   if (!IsZipFile ((char *) readbuffer))
   {
-      if (UseSDCARD) VFAT_fseek(&f, 0, SEEK_SET);
+      if (UseSDCARD) SDCARD_SeekFile (filehandle, 0, SDCARD_SEEK_SET);
 
       for (i = 0; i < blocks; i++)
       {
-	      if (UseSDCARD) VFAT_fread (&f, readbuffer, 2048);
+	      if (UseSDCARD) SDCARD_ReadFile (filehandle, &readbuffer, 2048);
 	  	  else dvd_read(readbuffer, 2048, discoffset);
 	      memcpy (buffer + offset, readbuffer, 2048);
 	      offset += 2048;
@@ -513,14 +527,14 @@ int LoadFile (unsigned char *buffer)
 	  if (rootdirlength % 2048)
 	  {
 	     i = rootdirlength % 2048;
-	     if (UseSDCARD) VFAT_fread (&f, readbuffer,  i);
+	     if (UseSDCARD) SDCARD_ReadFile (filehandle, &readbuffer, i);
 	     else dvd_read (readbuffer, 2048, discoffset);
 	     memcpy (buffer + offset, readbuffer, i);
 	  }
   }
   else return UnZipBuffer (buffer, discoffset, rootdirlength);
   
-  if (UseSDCARD) VFAT_fclose(&f);
+  if (UseSDCARD) SDCARD_CloseFile (filehandle);
 
   return rootdirlength;
 }

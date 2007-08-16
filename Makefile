@@ -17,15 +17,15 @@
 TARGET		:=	genplus
 BUILD		:=	build
 SOURCES		:=	source source/m68k source/cpu source/sound \
-			source/ngc source/ngc/gui
+			source/ngc source/ngc/gui source/ngc/vfat 
 INCLUDES	:=	source source/m68k source/cpu source/sound \
-			source/ngc source/ngc/gui
+			source/ngc source/ngc/gui source/ngc/vfat 
 
 #---------------------------------------------------------------------------------
 # options for code generation
 #---------------------------------------------------------------------------------
 MACHDEP	= -DGEKKO -mcpu=750 -meabi -mhard-float 
-CFLAGS  = -g -O2 -Wall $(MACHDEP) $(INCLUDE) \
+CFLAGS  = -g -O2 -Wall $(MACHDEP) $(INCLUDE) -DWORDS_BIGENDIAN \
 	  -DNGC="1" -DGENESIS_HACKS="1" \
 
 LDFLAGS	=	$(MACHDEP) -mogc -Wl,-Map,$(notdir $@).map -Wl,--cref

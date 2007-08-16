@@ -32,8 +32,7 @@
 #define ROMCOPYRIGHT 	272
 #define ROMDOMESTIC		288
 #define ROMWORLD		336
-#define ROMTYPE0		384
-#define ROMTYPE1		385
+#define ROMTYPE 		384
 #define ROMPRODUCT		386
 #define ROMCHECKSUM		398
 #define ROMIOSUPPORT	400
@@ -232,7 +231,7 @@ void getrominfo (char *romheader)
   memcpy (&rominfo.copyright, romheader + ROMCOPYRIGHT, 16);
   memcpy (&rominfo.domestic, romheader + ROMDOMESTIC, 48);
   memcpy (&rominfo.international, romheader + ROMWORLD, 48);
-  memcpy (&rominfo.ROMType, romheader + ROMTYPE0, 2);
+  memcpy (&rominfo.ROMType, romheader + ROMTYPE, 2);
   memcpy (&rominfo.product, romheader + ROMPRODUCT, 12);
   memcpy (&rominfo.checksum, romheader + ROMCHECKSUM, 2);
   memcpy (&rominfo.io_support, romheader + ROMIOSUPPORT, 16);
@@ -302,7 +301,6 @@ void showrominfo ()
 	  }
   }
 
- 
   while (quit == 0)
   {
       if (redraw)
@@ -348,15 +346,19 @@ void showrominfo ()
 					sprintf (msg, "Checksum - %04x (%04x) (%s)", rominfo.checksum, realchecksum, rominfo.checksum == realchecksum ? "Good" : "Bad");
 					break;
 				case 10:
-					sprintf (msg, "ROM end: 0x%06X", rominfo.romend);
+					sprintf (msg, "ROM end: $%06X", rominfo.romend);
 					break;
 				case 11:
-					if (sram.detected) sprintf (msg, "External RAM start: 0x%06X", rominfo.ramstart);
-					else sprintf (msg, "External RAM start: UNDETECTED");
+					if (sram.custom) sprintf (msg, "EEPROM(%dK) - $%06X", ((eeprom.type.size_mask+1)* 8) /1024, (unsigned int)sram.start);
+					else if (sram.detected) sprintf (msg, "SRAM Start  - $%06X", rominfo.ramstart);
+					else sprintf (msg, "External RAM undetected");
+						 
 					break;
 				case 12:
-					if (sram.detected) sprintf (msg, "External RAM end : 0x%06X", rominfo.ramend);
-					else sprintf (msg, "External RAM end : UNDETECTED");
+					if (sram.custom) sprintf (msg, "EEPROM(%dK) - $%06X", ((eeprom.type.size_mask+1)* 8) /1024, (unsigned int)sram.end);
+					else if (sram.detected) sprintf (msg, "SRAM End   - $%06X", rominfo.ramend);
+					else if (sram.on) sprintf (msg, "Default SRAM activated ");
+					else sprintf (msg, "SRAM is disactivated  ");
 					break;
 				case 13:
 					if (region_code == REGION_USA) sprintf (msg, "Region - %s (USA)", rominfo.country);

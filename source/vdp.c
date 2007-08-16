@@ -351,7 +351,7 @@ uint16 vdp_ctrl_r (void)
   pending = 0;
   
   /* reset status */
-  status ^= 0xFF00;     /* toggle FIFO status & new word on bus */
+  status ^= 0x0300;     /* toggle FIFO status */
   status &= 0xFF9F;		/* clear sprite overflow  & sprite collision */
   if (!(status & 8)) status &= ~0x0080; /* not in VBLANK: clear vint flag */
   

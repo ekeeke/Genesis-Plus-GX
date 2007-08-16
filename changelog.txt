@@ -3,23 +3,25 @@ The Genesis Plus Project
 
 CHANGELOG:
 
-- completely rewrote EEPROM emulation: added support for all known EEPROM types (24C01-24C65) and mappers (Sega, Acclaim, EA, Codemasters)
+- completely rewrote EEPROM emulation: now support all known EEPROM types (24C01-24C65) and mappers (Sega, Acclaim, EA, Codemasters)
 used in a few games (now use game database) as backup RAM. This should fix SRAM load/save support in the following games:
 
 	. NBA Jam (alternate Acclaim mapper)
-	. College Slam, Frank Thomas Big Hurt Baseball (24C016 type)
+	. College Slam, Frank Thomas Big Hurt Baseball (24C65 type)
 	. NHLPA Hockey 93, Rings of Power (EA mapper)
 	. Micromachines games (Codemasters mapper)
 
 - SRAM data is now initialized with 0xFF: fix Micromachines 2, Dino Dini Soccer and maybe more
 - corrected 16-bits SRAM read/write: fix some Sega Sports and EA Sports games (NFL95, NBA Action 95, NL97, NHL98,...)
-- modified WRITE_xxx & READ_xxx macros for better multiple endianness support
+- modified WRITE_xxx & READ_xxx macros for portability
 - rewrote BIG ENDIAN support in render.c and vdp.c: should be a little faster (no more useless word swapping)
 - fixed leftmost Window/PlaneA column render and implemented window bug (see gen-vdp.txt)
 - sprite limit emulation and sprite collision detection should be now a little more accurate
-- added 9bits (RGB333) pixel color extrapolation to support fullcolor range (0-65535) when using 16bits rendering (RGB 565)
+- corrected test before CRAM writes
+- removed redundant "color_update()" calls
+- added 9bits (RGB333) pixel color extrapolation to cover each color full range (0-31;0-63) in 16bits mode (RGB 565)
 - completely rewrote interrupt (VINT/HINT) handling: Sesame's Street Counting Cafe now works without any hacks,
-other timing sensitive games seem to be ok
+other timing sensitive games are ok
 - modified Hcounter tables: Road Rash games (I,II,III) don't need any timing hacks anymore
 - corrected VDP latency so it does not interfere with DMA timings anymore
 
@@ -130,10 +132,10 @@ For your information, games that are actually detected and need special timings 
 - modified cpu execution timings, with more correct hblank and interrupts timing  (fix ISS Deluxe, Double Dragon 2 and certainly more) (Based on Gens code)
 - modified busreq mechanism: better synchro between z80 & 68k (no need to dejitter anymore) (Based on Gens code)
 - added sprite collision detection (fix Strider 2)
-- modified dma fill operation according to correct endianness (fix Contra Hardcorps gfx garbage)
+- modified dma fill operation for big endian platform (fix Contra Hardcorps gfx garbage)
 
 
-???
+Based on Softdev's initial releases
 
 
 WIP1.2	unzip.c

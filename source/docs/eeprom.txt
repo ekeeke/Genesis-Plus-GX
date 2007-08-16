@@ -1,3 +1,10 @@
+This is the result of testing EEPROM support under Genesis Plus.
+Following games use custom external RAM (serial EEPROM) for backup.
+It seems that different EEPROM Mapper have been used, depending upon companies.
+
+Eke~Eke - July 2007
+
+
 -------------------------------------------------------
 ACCLAIM (81)
 -------------------------------------------------------
@@ -16,7 +23,7 @@ SDA_IN : 0x200000 (0)
 SDA_OUT: 0x200000 (1)
 SCL : 0x200000 (1)
 
-Note: this game uses a different EEPROM mapper than other Accolade games.
+Note: this game uses a different EEPROM mapper than other Acclaim games.
 
 
 Blockbuster World Video Game Championship II (U)
