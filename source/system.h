@@ -57,7 +57,7 @@ extern uint32 count_z80;
 extern uint16 misc68Kcycles;
 extern uint16 miscZ80cycles;
 extern uint16 lines_per_frame;
-extern double CPU_Clock;
+extern double Master_Clock;
 
 /* Function prototypes */
 void system_init (void);
