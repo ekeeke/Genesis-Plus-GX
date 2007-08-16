@@ -11,19 +11,18 @@ used in a few games (now use game database) as backup RAM. This should fix SRAM 
 	. NHLPA Hockey 93, Rings of Power (EA mapper)
 	. Micromachines games (Codemasters mapper)
 
-- SRAM data is now initialized with 0xFF: fix Micromachines 2, Dino Dini Soccer and maybe more
-- corrected 16-bits SRAM read/write: fix some Sega Sports and EA Sports games (NFL95, NBA Action 95, NL97, NHL98,...)
+- modified SRAM initialization with 0xFF data: fix Micromachines 2, Dino Dini Soccer
+- fixed SRAM word read/write handler: fix some Sega Sports and EA Sports games (NFL95, NBA Action 95, NL97, NHL98,...) which previously hang
 - modified WRITE_xxx & READ_xxx macros for portability
-- rewrote BIG ENDIAN support in render.c and vdp.c: should be a little faster (no more useless word swapping)
-- fixed leftmost Window/PlaneA column render and implemented window bug (see gen-vdp.txt)
-- sprite limit emulation and sprite collision detection should be now a little more accurate
-- corrected test before CRAM writes
+- rewrote BIG ENDIAN support in render.c and vdp.c: it should be a little faster now (no more useless swapping)
+- fixed leftmost Window/PlaneA column render and implemented Window bug (as described in gen-vdp.txt)
+- improved Sprite Limit emulation and Sprite Collision detection
+- fixed test made before CRAM writes
 - removed redundant "color_update()" calls
-- added 9bits (RGB333) pixel color extrapolation to cover each color full range (0-31;0-63) in 16bits mode (RGB 565)
-- completely rewrote interrupt (VINT/HINT) handling: Sesame's Street Counting Cafe now works without any hacks,
-other timing sensitive games are ok
+- added 9bits (RGB333) pixel color extrapolation to cover full color range (0-31;0-63) in 16-bit rendering mode (RGB565)
+- rewrote Interrupts handling: Sesame's Street Counting Cafe now works without any hacks, other timing sensitive games seems not to be affected
 - modified Hcounter tables: Road Rash games (I,II,III) don't need any timing hacks anymore
-- corrected VDP latency so it does not interfere with DMA timings anymore
+- fixed VDP latency so it does not interfere with DMA timings anymore
 
 
 
