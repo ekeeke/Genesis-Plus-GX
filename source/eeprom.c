@@ -1,7 +1,7 @@
 /****************************************************************************
  *  Serial EEPROM support for Sega Genesis games
  *
- *  Copyright (C) 2007 EkeEKe
+ *  Copyright (C) 2007 EkeEke
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by

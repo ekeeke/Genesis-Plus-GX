@@ -18,7 +18,7 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  *
- *  Freeze State support (added by EkeEke for the Gamecube's port - Feb,2007)
+ *  Freeze State support (added by EkeEke for Gamecube's port - Feb,2007)
  *
  ***************************************************************************/
 #include "shared.h"
