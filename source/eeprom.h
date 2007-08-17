@@ -1,4 +1,38 @@
+/****************************************************************************
+ *  Serial EEPROM support for Sega Genesis games
+ *
+ *  Copyright (C) 2007 EkeEKe
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ ***************************************************************************/
+
+typedef enum
+{
+	STAND_BY = 0,
+	WAIT_STOP,
+	GET_SLAVE_ADR,
+	GET_WORD_ADR_7BITS,
+	GET_WORD_ADR_HIGH,
+	GET_WORD_ADR_LOW,
+	WRITE_DATA,
+	READ_DATA,
+
+} T_EEPROM_STATE;
+
 /* this defines the type of EEPROM inside the game cartridge as Backup RAM
+ *
  * Here are some notes from 8BitWizard (http://www.spritesmind.net/_GenDev/forum):
  *
  * Mode 1 (7-bit) - the chip takes a single byte with a 7-bit memory address and a R/W bit (24C01)
@@ -15,43 +49,32 @@
 
 typedef struct
 {
-	uint8 address_bits;		/* number of bits needed to address the array: 7, 8 or 16 */
-	uint16 size_mask;		/* size of the array (in bytes) - 1 */
-	uint16 pagewrite_mask;	/* maximal number of bytes that can be written in a single write cycle - 1*/
-	uint32 sda_in_adr;		/* 68k address used by SDA_IN signal */
-	uint32 sda_out_adr;		/* 68k address used by SDA_OUT signal  */
-	uint32 scl_adr;			/* address used by SCL signal  */
-	uint8 sda_in_bit;		/* position of the SDA_IN bit */
-	uint8 sda_out_bit;		/* position of the SDA_OUT bit */
-	uint8 scl_bit;			/* position of the SCL bit */
+	uint8 address_bits;		/* number of bits needed to address memory: 7, 8 or 16 */
+	uint16 size_mask;		/* depends on the max size of the memory (in bytes) */
+	uint16 pagewrite_mask;	/* depends on the maximal number of bytes that can be written in a single write cycle */
+	uint32 sda_in_adr;		/* 68000 memory address mapped to SDA_IN */
+	uint32 sda_out_adr;		/* 68000 memory address mapped to SDA_OUT */
+	uint32 scl_adr;			/* 68000 memory address mapped to SCL */
+	uint8 sda_in_bit;		/* bit offset for SDA_IN */
+	uint8 sda_out_bit;		/* bit offset for SDA_OUT */
+	uint8 scl_bit;			/* bit offset for SCL */
 
 } T_EEPROM_TYPE;
 
-typedef enum
-{
-	STAND_BY = 0,
-	WAIT_STOP,
-	GET_SLAVE_ADR,
-	GET_WORD_ADR_7BITS,
-	GET_WORD_ADR_HIGH,
-	GET_WORD_ADR_LOW,
-	WRITE_DATA,
-	READ_DATA,
-
-} T_EEPROM_STATE;
 
 typedef struct
 {
-	uint8 sda;
-	uint8 scl;
-	uint8 old_sda;
-	uint8 old_scl;
-	uint8 cycles;
-	uint8 rw;
-	uint16 slave_mask;
-	uint16 word_address;
-	T_EEPROM_STATE state;
-	T_EEPROM_TYPE type;
+	uint8 sda;				/* current /SDA line state */
+	uint8 scl;				/* current /SCL line state */
+	uint8 old_sda;			/* previous /SDA line state */
+	uint8 old_scl;			/* previous /SCL line state */
+	uint8 cycles;			/* current operation cycle number (0-9) */
+	uint8 rw;				/* operation type (1:READ, 0:WRITE) */
+	uint16 slave_mask;		/* device address (shifted by the memory address width)*/
+	uint16 word_address;	/* memory address */
+	T_EEPROM_STATE state;	/* current operation state */
+	T_EEPROM_TYPE type;		/* EEPROM characteristics for this game */
+
 } T_EEPROM;
 
 /* global variables */

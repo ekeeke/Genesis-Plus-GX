@@ -16,7 +16,8 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 /*
-	NGC port (June 2007): Added various Peripherals emulation (Eke-Eke)
+	02/2007: fixed 6BUTTONS gamepad emulation (Eke-Eke)
+	06/2007: Added TEAMPLAYER/4WAYPLAY/MENACER emulation (Eke-Eke)
 */
 
 #include "shared.h"

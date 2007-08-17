@@ -83,6 +83,7 @@ void genesis_set_region ()
  * set specific timings for some games
  */
  extern uint8 alttiming;
+ extern uint8 vdptiming;
  extern uint8 sys_type[2];
 
  void detect_game()
