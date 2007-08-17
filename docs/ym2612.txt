@@ -1,0 +1,26 @@
+Here's the format of the YM2612 test register ($21), as best as I can
+tell:
+
+bit 7 - If bit 6 set, select 0=LSB, 1=MSB of serial data
+bit 6 - If set, reading status returns serial data LSB or MSB instead of
+status flags
+bit 5 - If set, only the attack phase and possibly decay occur, there is
+no sustain o release. It sounds like each channel was keyed-on rapidly.
+When the bit is cleared, the channels resume their original position
+within the envelope so this bit doesn't have any lasting change on
+them.       
+bit 4 - Data sent to DAC is inverted - this is *really* loud, so turn
+down the volume before using this bit. ;)
+bit 3 - Audio output is muted, (the PSG still works of course) bits 4,5
+will make sound faintly audible when set in conjunction.
+bit 2 - Timer A and B run 24 times faster. 
+bits 1,0 - No effect.
+
+Bits 7, 6 allow you to read the serial data sent from the YM2612 to the
+DAC. (the other chip, YM3012 - not the DAC at $2A/$2B) I'm unsure of the
+exact format, it's probably similar to the YM2151. Bit 4 inverts the
+data sent to the DAC, but not the data read from the status register.
+Compared to the YM2151 test register documented in MAME, the last 3 bits
+may have something to do with the LFO. And I'm also not entirely sure
+about the MSB/LSB order for bit 6. Other than that the two work in a
+mostly identical way.
