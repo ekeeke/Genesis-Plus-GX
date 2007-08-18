@@ -1,4 +1,4 @@
-The Genesis Plus Project
+Genesis Plus for Gamecube
 ------------------------------
 
 CHANGELOG:
@@ -11,7 +11,7 @@ used in a few games (now use game database) as backup RAM. This should fix SRAM 
 	. NHLPA Hockey 93, Rings of Power (EA mapper)
 	. Micromachines games (Codemasters mapper)
 
-- modified SRAM initialization with 0xFF data: fix Micromachines 2, Dino Dini Soccer
+- SRAM is now initialized with 0xFF data: fix Micromachines 2, Dino Dini Soccer
 - fixed SRAM word read/write handler: fix some Sega Sports and EA Sports games (NFL95, NBA Action 95, NL97, NHL98,...) which previously hang
 - modified WRITE_xxx & READ_xxx macros for portability
 - rewrote BIG ENDIAN support in render.c and vdp.c: it should be a little faster now (no more useless swapping)
