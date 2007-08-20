@@ -1,6 +1,6 @@
 /*
     sound.c
-    YM2612 and SN76489 handler
+    YM2612 and SN76489 emulation
 */
 
 #include "shared.h"
@@ -84,7 +84,7 @@ void fm_reset(void)
 	fm_status = 0;
 }
 
-void fm_write(int address, int data)
+void fm_write(uint8 cpu, int address, int data)
 {
 	int a0 = (address & 1);
 	int a1 = (address >> 1) & 1;
@@ -141,8 +141,12 @@ void fm_write(int address, int data)
 		fm_latch[a1] = data;
 	}
 
-	if(snd.enabled)
+	if (snd.enabled)
 	{
+
+		if (cpu) snd.fm.curStage = (count_z80 + current_z80 - z80_ICount) / z80cyc_per_sample;	/* write from Z80 */
+		else snd.fm.curStage = (count_m68k + m68k_cycles_run()) / m68cyc_per_sample;			/* write from 68000 */
+		
 		if(snd.fm.curStage - snd.fm.lastStage > 0)
 		{
 			if (FM_GENS)
@@ -159,6 +163,7 @@ void fm_write(int address, int data)
 				tempBuffer[1] = snd.fm.buffer[1] + snd.fm.lastStage;
 				YM2612UpdateOne(myFM, tempBuffer, snd.fm.curStage - snd.fm.lastStage);
 			}
+
 			snd.fm.lastStage = snd.fm.curStage;
 		}
 
@@ -205,10 +210,13 @@ void fm_update_timers(int inc)
 	}
 }
 
-void psg_write(int data)
+void psg_write(uint8 cpu, int data)
 {
 	if(snd.enabled)
 	{
+		if (cpu) snd.psg.curStage = (count_z80 + current_z80 - z80_ICount) / z80cyc_per_sample;	/* write from Z80 */
+		else snd.psg.curStage = (count_m68k + m68k_cycles_run()) / m68cyc_per_sample;			/* write from 68000 */
+		
 		if(snd.psg.curStage - snd.psg.lastStage > 0)
 		{
 			int16 *tempBuffer;

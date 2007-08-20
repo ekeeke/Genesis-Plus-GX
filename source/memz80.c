@@ -42,7 +42,7 @@ void cpu_writemem16(unsigned int address, unsigned int data)
             return;
 
         case 2: /* YM2612 */
-            fm_write(address & 3, data);
+            fm_write(1, address & 3, data);
             return;
 
         case 3: /* Bank register and VDP */
@@ -164,7 +164,7 @@ void z80_vdp_w(int address, int data)
         case 0x13:
         case 0x15:
         case 0x17:
-            psg_write(data);
+            psg_write(1, data);
             return;
 
         case 0x10: /* Unused */

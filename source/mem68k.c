@@ -442,7 +442,7 @@ void m68k_write_memory_8 (unsigned int address, unsigned int value)
 					case 0x13:
 					case 0x15:
 					case 0x17:
-						psg_write (value);
+						psg_write (0, value);
 						return;
 
 					case 0x18:		/* Unused */
@@ -481,7 +481,7 @@ void m68k_write_memory_8 (unsigned int address, unsigned int value)
 							return;
 
 						case 0x4000:
-							fm_write (address & 3, value);
+							fm_write (0, address & 3, value);
 							return;
 
 						case 0x6000:
@@ -619,7 +619,7 @@ void m68k_write_memory_16 (unsigned int address, unsigned int value)
 
 					case 0x10:		/* PSG */
 					case 0x14:		/* PSG */
-						psg_write (value & 0xFF);
+						psg_write (0, value & 0xFF);
 						return;
 
 					case 0x18:		/* Unused */
@@ -654,7 +654,7 @@ void m68k_write_memory_16 (unsigned int address, unsigned int value)
 						return;
 
 					case 0x4000:	/* YM2612 */
-						fm_write (address & 3, (value >> 8) & 0xFF);
+						fm_write (0, address & 3, (value >> 8) & 0xFF);
 						return;
 
 					case 0x6000:	/* Bank register and VDP */
@@ -676,10 +676,10 @@ void m68k_write_memory_16 (unsigned int address, unsigned int value)
 				}
 			}
 			else if (address <= 0xA1001F) /* I/O */
-				{
-					io_write ((address >> 1) & 0x0F, value & 0x00FF);
-					return;
-				}
+			{
+				io_write ((address >> 1) & 0x0F, value & 0x00FF);
+				return;
+			}
 			else if (address <= 0xA1FFFF) /* CONTROL */
 	    	{				
 				switch ((address >> 8) & 0xFF)

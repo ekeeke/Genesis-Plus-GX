@@ -21,9 +21,9 @@ extern t_timer timer[2];
 void sound_init (void);
 void fm_reset (void);
 void fm_restore(void);
-void fm_write (int address, int data);
+void fm_write (uint8 cpu, int address, int data);
 int fm_read (int address);
 void fm_update_timers (int inc);
-void psg_write (int data);
+void psg_write (uint8 cpu, int data);
 
 #endif /* _SOUND_H_ */

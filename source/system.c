@@ -24,18 +24,19 @@
 
 t_bitmap bitmap;
 t_snd snd;
-uint32 aim_m68k   = 0;
+uint32 aim_m68k = 0;
 uint32 count_m68k = 0;
-uint32 dma_m68k   = 0;
-uint32 aim_z80    = 0;
-uint32 count_z80  = 0;
-uint16 misc68Kcycles   = 488;
-uint16 miscZ80cycles   = 228;
+uint32 dma_m68k = 0;
+uint32 aim_z80 = 0;
+uint32 count_z80 = 0;
+int32 current_z80 = 0;
+uint16 misc68Kcycles = 488;
+uint16 miscZ80cycles = 228;
 uint16 lines_per_frame = 262;
-double Master_Clock    = (double)CLOCK_NTSC;
+uint16 m68cyc_per_sample = 160;
+uint16 z80cyc_per_sample =  75;
+double Master_Clock = (double)CLOCK_NTSC;
 void *myFM = NULL;
-static int sound_tbl[312];
-static int sound_inc[312];
 uint8 alttiming = 0;
 
 void m68k_run (int cyc) 
@@ -57,8 +58,8 @@ void m68k_run (int cyc)
 
 void z80_run (int cyc) 
 {
-	int cyc_do = cyc - count_z80;
-	if (cyc_do > 0) count_z80 += z80_execute(cyc_do);
+	current_z80 = cyc - count_z80;
+	if (current_z80 > 0) count_z80 += z80_execute(current_z80);
 }
 
 void m68k_freeze(int cycles)
@@ -77,12 +78,12 @@ void m68k_freeze(int cycles)
 	else m68ki_remaining_cycles -= cycles; /* we burn some 68k cycles */
 }
 
-extern uint8 hq_fm;
 int audio_init (int rate)
 {
-	int i;
+	double sample_cyc;
 	int vclk = (int)(Master_Clock / 7.0);  /* 68000 and YM2612 clock */
 	int zclk = (int)(Master_Clock / 15.0); /* Z80 and SN76489 clock  */
+	extern uint8 hq_fm;
 
 	/* Clear the sound data context */
 	memset (&snd, 0, sizeof (snd));
@@ -130,14 +131,19 @@ int audio_init (int rate)
 	if (FM_GENS) YM2612_Init(vclk, rate, hq_fm);
 	else if (!myFM) myFM = YM2612Init (0, 0, vclk, rate, 0, 0);
 
-	/* Make sound table */
-	for (i = 0; i < lines_per_frame; i++)
-	{
-		float p = (snd.buffer_size * i) / lines_per_frame;
-		float q = (snd.buffer_size * (i+1)) / lines_per_frame;
-		sound_tbl[i] = p;
-		sound_inc[i] = ((q - p) * 1000000) / snd.sample_rate;
-	}
+	/*
+		CYCLE-ACCURATE SAMPLES GENERATION:
+	
+		We calculate number of cpu cycles between each new sound sample generation.
+		Since both 68000 and Z80 can write to the sound chips, we need the cycles step for both CPU:
+		At 48kHz, one sample is produced each 160 (NTSC) or 158 (PAL) 68k cycles
+		which is equivalent to 75 (NTSC) or 74 (PAL) Z80 cycles
+	*/
+	sample_cyc = Master_Clock / 7.0 / ((double) rate);
+	m68cyc_per_sample = (sample_cyc - (double)(int)sample_cyc) > 0.5 ? (int)(sample_cyc + 1) : (int)(sample_cyc);
+	sample_cyc = Master_Clock / 15.0 / ((double) rate);
+	z80cyc_per_sample = (sample_cyc - (double)(int)sample_cyc) > 0.5 ? (int)(sample_cyc + 1) : (int)(sample_cyc);
+
 	return (0);
 }
 
@@ -158,7 +164,7 @@ void system_init (void)
 
 void system_reset (void)
 {
-	aim_m68k = 0;
+	aim_m68k   = 0;
 	count_m68k = 0;
 	dma_m68k   = 0;
 	aim_z80    = 0;
@@ -296,10 +302,8 @@ int system_frame (int do_skip)
 		if (zreset == 1 && zbusreq == 0) z80_run(aim_z80);
 		else count_z80 = aim_z80;
 
-		/* Update sound buffers and timers */
-		fm_update_timers (sound_inc[v_counter]);
-		snd.fm.curStage = sound_tbl[v_counter];
-		snd.psg.curStage = sound_tbl[v_counter];
+		/* Update FM timers (one raster takes approx. 63.7 us) */
+		fm_update_timers (64);
 	}
 
 	if (snd.enabled) audio_update ();

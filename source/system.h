@@ -54,9 +54,12 @@ extern uint32 count_m68k;
 extern uint32 dma_m68k;
 extern uint32 aim_z80;
 extern uint32 count_z80;
+extern int32 current_z80;
 extern uint16 misc68Kcycles;
 extern uint16 miscZ80cycles;
 extern uint16 lines_per_frame;
+extern uint16 m68cyc_per_sample;
+extern uint16 z80cyc_per_sample;
 extern double Master_Clock;
 
 /* Function prototypes */
