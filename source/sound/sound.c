@@ -1,6 +1,6 @@
 /*
     sound.c
-    YM2612 and SN76489 emulation
+    YM2612 and SN76489 handler
 */
 
 #include "shared.h"
