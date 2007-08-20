@@ -121,7 +121,7 @@ void gen_busreq_w (int state)
 			/* Z80 stopped */
 			/* z80 was ON during the last 68k cycles */
 			/* we execute the appropriate number of z80 cycles */
-			z80_cycles_to_run = aim_z80 - cpu_sync[aim_m68k - count_m68k -m68k_cycles_run()];
+			z80_cycles_to_run = aim_z80 - cpu_sync[aim_m68k - count_m68k - m68k_cycles_run()];
 			if (z80_cycles_to_run > 0) z80_run(z80_cycles_to_run);
 		}
 	}
