@@ -22,16 +22,17 @@
  * This is not intended as a complete guide to ISO9660.
  * Here I use the bare minimum!
  ***************************************************************************/
-
-#define MAXJOLIET 256
+#include "vfat.h"
 #define MAXFILES 1000			/** Restrict to 1000 files per dir **/
+#define MAXJOLIET 256
 
 typedef struct
 {
   u64 offset;
   unsigned int length;
   char flags;
-  char filename[MAXJOLIET];
+  char filename[13];
+  char displayname[MAX_LONG_NAME];
   u16 filename_offset;
 } FILEENTRIES;
 
