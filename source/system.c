@@ -50,6 +50,7 @@ void m68k_run (int cyc)
 		/* interrupt handling */
 		if (vint_pending && (reg[1] & 0x20)) m68k_set_irq(6);
 		else if (hint_pending && (reg[0] & 0x10)) m68k_set_irq(4);
+		else  m68k_set_irq(0);
 		if (cyc_do > 0) m68k_execute(cyc_do);
 		count_m68k += cyc_do;
 		vint_pending = 0;
