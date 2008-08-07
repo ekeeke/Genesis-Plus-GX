@@ -2,6 +2,7 @@
 #include "osd.h"
 
 t_option option;
+t_config config;
 
 void do_config(char *file)
 {
@@ -73,7 +74,7 @@ void set_option_defaults(void)
     option.video_height = 240;
     option.video_depth  = 8;
 
-    option.remap        = 0;
+    option.remap        = 1;
     option.scanlines    = 0;
     option.scale        = 0;
 
@@ -83,12 +84,44 @@ void set_option_defaults(void)
 
     option.sound        = 0;
     option.sndcard      = -1;
-    option.sndrate      = 44100;
+    option.sndrate      = 48000;
     option.swap         = 0;
 
-    option.joy_driver   = JOY_TYPE_AUTODETECT;
+    option.joy_driver   = JOY_TYPE_NONE;
 }
 
+/* additional options */
+void set_config_default()
+{
+  /* sound options */
+  config.psg_preamp   = 1.5;
+  config.fm_preamp    = 1.0;
+  config.boost        = 1;
+  config.hq_fm        = 1;
+  config.fm_core      = 0;
+  config.ssg_enabled  = 0;
+
+  /* system options */
+  config.freeze_auto    = -1;
+  config.sram_auto      = -1;
+  config.region_detect  = 0;
+  config.force_dtack    = 0;
+  config.bios_enabled   = 0;
+
+  /* display options */
+  config.xshift   = 0;
+  config.yshift   = 0;
+  config.xscale   = 320;
+  config.yscale   = 240;
+  config.aspect   = 1;
+  config.overscan = 1;
+  config.render   = 0;
+
+  /* controllers options */
+  config.sys_type[0] = 0;
+  config.sys_type[1] = 0;
+  config.crosshair = 1;
+}
 
 void print_options(void)
 {
@@ -200,7 +233,7 @@ void parse_args(int argc, char **argv)
         }
     }
 
-    if(option.remap) option.video_depth = 8;
+   //if(option.remap) option.video_depth = 8;
 }
 
 

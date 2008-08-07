@@ -14,5 +14,7 @@
 #include "error.h"
 #include "shared.h"
 #include "main.h"
+#include "unzip.h"
+#include "fileio.h"
 
 #endif /* _OSD_H_ */

@@ -25,14 +25,28 @@
 #ifndef OSD_CPU_H
 #define OSD_CPU_H
 
+#ifndef NGC
+#ifndef DOS
+#include "basetsd.h"
+#endif
+#undef TRUE
+#undef FALSE
+#define TRUE 1
+#define FALSE 0
+#endif
+
 typedef unsigned char						UINT8;
 typedef unsigned short						UINT16;
+//#ifdef DOS
 typedef unsigned int                        UINT32;
 __extension__ typedef unsigned long long    UINT64;
+//#endif
 typedef signed char 						INT8;
 typedef signed short						INT16;
+//#ifdef DOS
 typedef signed int                          INT32;
 __extension__ typedef signed long long      INT64;
+//#endif
 
 /* Combine two 32-bit integers into a 64-bit integer */
 #define COMBINE_64_32_32(A,B)     ((((UINT64)(A))<<32) | (UINT32)(B))

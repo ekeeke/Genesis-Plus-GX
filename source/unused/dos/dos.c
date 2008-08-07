@@ -3,16 +3,18 @@
     DOS interface code for the emulator
 */
 
+#include "shared.h"
 #include "osd.h"
 
 #define FRAMES_PER_SECOND   60
+#define MSG_LEN     1024
 
 RGB vdp_palette[3][0x200];
 PALETTE gen_pal;
 BITMAP *gen_bmp;
 
 volatile int frame_skip      = 1;
-volatile int frame_count     = 0;
+int frame_count     = 0;
 volatile int frames_rendered = 0;
 volatile int frame_rate      = 0;
 volatile int tick_count      = 0;
@@ -20,6 +22,31 @@ volatile int old_tick_count  = 0;
 volatile int skip            = 0;
 
 int quit = 0;
+unsigned char buf[0x26000];
+
+uint8 log_error = 1;
+uint8 debug_on = 0;
+
+void msg_print(int x, int y, char *fmt, ...)
+{
+    int i = bitmap.viewport.x;
+    int j = bitmap.viewport.y;
+    va_list ap;
+    char token[MSG_LEN];
+    char str[MSG_LEN];
+
+    strcpy(str, "\0");
+    va_start(ap, fmt);
+    vsprintf(token, fmt, ap);
+    strcat(str, token);
+    va_end(ap);
+
+    textprintf_ex(gen_bmp, font, i+x+1, j+y  , 0x00, -1, "%s", str);
+    textprintf_ex(gen_bmp, font, i+x-1, j+y  , 0x00, -1, "%s", str);
+    textprintf_ex(gen_bmp, font, i+x  , j+y+1, 0x00, -1, "%s", str);
+    textprintf_ex(gen_bmp, font, i+x  , j+y-1, 0x00, -1, "%s", str);
+    textprintf_ex(gen_bmp, font, i+x  , j+y  , 0xffff, -1, "%s", str);
+}
 
 int main (int argc, char *argv[])
 {
@@ -36,44 +63,90 @@ int main (int argc, char *argv[])
         print_options();
         return (0);
     }
-    
+    error_init();
+
+    cart_rom = malloc(0xA00000);
+    memset(cart_rom, 0, 0xA00000);
+
+    set_config_default();
+
     if(!load_rom(argv[1]))
     {
         printf("File `%s' not found.\n", argv[1]);
         return (0);
     }
 
-    init_machine();
 
-    error_init();
-    system_init();
-
-    if(option.sound)
-    {
-        audio_init(option.sndrate);
+	memset(bios_rom, 0, sizeof(bios_rom));
+	FILE *f = fopen("./BIOS.bin", "rb");
+	if (f!=NULL)
+	{
+		fread(&bios_rom, 0x800,1,f);
+		fclose(f);
+		int i;
+		for(i = 0; i < 0x800; i += 2)
+		{
+			uint8 temp = bios_rom[i];
+			bios_rom[i] = bios_rom[i+1];
+			bios_rom[i+1] = temp;
+		}
+		config.bios_enabled = 3;
     }
+	else config.bios_enabled = 0;
 
-    system_reset();
+	init_machine();
+ 	set_config_default();
+  	input.system[0] = SYSTEM_GAMEPAD;
+	input.system[1] = SYSTEM_GAMEPAD;
 
+  system_init();
+
+	int buf_len = (option.sndrate * 4) / vdp_rate;
+	snd.buffer[0] = malloc (buf_len/2);
+	snd.buffer[1] = malloc (buf_len/2);
+	memset (snd.buffer[0], 0, buf_len/2);
+  memset (snd.buffer[1], 0, buf_len/2);
+  audio_init(option.sndrate);
+
+	f = fopen("./game.srm", "rb");
+	if (f!=NULL)
+	{
+    	fread(&sram.sram,0x10000,1, f);
+		fclose(f);
+	}
+
+
+  system_reset();
 
     for(;;)
     {
         frame_count += 1;
         if(quit) break;
-        dos_update_input();
         if(frame_count % frame_skip == 0)
         {
             system_frame(0);
-            dos_update_video();
+            frames_rendered++;
+			dos_update_video();
         }
         else
         {
             system_frame(1);
         }
         if(option.sound) dos_update_audio();
+
+		//error("%d\n", frame_rate);
+	}
+
+	f = fopen("./game.srm", "wb");
+    if (f!=NULL)
+    {
+		fwrite(&sram.sram, 0x10000,1,f);
+		fclose(f);
+		
     }
 
-    trash_machine();
+
+	trash_machine();
     system_shutdown();
     error_shutdown();
     return (0);
@@ -110,85 +183,196 @@ int save_file(char *filename, char *buf, int size)
     return (1);
 }
 
-
+static int joynum = 0;
+uint8 delay = 36;
 void dos_update_input(void)
 {
-    if(key[KEY_ESC] || key[KEY_END])
-    {
-        quit = 1;
-    }
+  FILE *f;
 
-    input.pad[0] = 0;
+	if(key[KEY_ESC] || key[KEY_END])
+  {
+    quit = 1;
+  }
 
-    /* Is the joystick being used ? */
-    if(option.joy_driver != JOY_TYPE_NONE)
-    {
-        poll_joystick();
+  while (input.dev[joynum] == NO_DEVICE)
+	{
+    joynum ++;
+    if (joynum > MAX_DEVICES - 1) joynum = 0;
+	}
+	
+	input.pad[joynum] = 0;
 
-        /* Check player 1 joystick */
-        if(joy[0].stick[0].axis[1].d1) input.pad[0] |= INPUT_UP;
-        else
-        if(joy[0].stick[0].axis[1].d2) input.pad[0] |= INPUT_DOWN;
+  /* Is the joystick being used ? */
+  if(option.joy_driver != JOY_TYPE_NONE)
+  {
+    poll_joystick();
 
-        if(joy[0].stick[0].axis[0].d1) input.pad[0] |= INPUT_LEFT;
-        else
-        if(joy[0].stick[0].axis[0].d2) input.pad[0] |= INPUT_RIGHT;
-
-        if(joy[0].button[0].b)  input.pad[0] |= INPUT_A;
-        if(joy[0].button[1].b)  input.pad[0] |= INPUT_B;
-        if(joy[0].button[2].b)  input.pad[0] |= INPUT_C;
-        if(joy[0].button[3].b)  input.pad[0] |= INPUT_START;
-        if(joy[0].button[4].b)  input.pad[0] |= INPUT_X;
-        if(joy[0].button[5].b)  input.pad[0] |= INPUT_Y;
-        if(joy[0].button[6].b)  input.pad[0] |= INPUT_Z;
-        if(joy[0].button[7].b)  input.pad[0] |= INPUT_MODE;
-
-        /* More than one joystick supported ? */
-        if(num_joysticks > 2)
-        {
-            /* Check player 2 joystick */
-            if(joy[1].stick[0].axis[1].d1) input.pad[1] |= INPUT_UP;
-            else
-            if(joy[1].stick[0].axis[1].d2) input.pad[1] |= INPUT_DOWN;
-
-            if(joy[1].stick[0].axis[0].d1) input.pad[1] |= INPUT_LEFT;
-            else
-            if(joy[1].stick[0].axis[0].d1) input.pad[1] |= INPUT_RIGHT;
-
-            if(joy[1].button[0].b)  input.pad[1] |= INPUT_A;
-            if(joy[1].button[1].b)  input.pad[1] |= INPUT_B;
-            if(joy[1].button[2].b)  input.pad[1] |= INPUT_C;
-            if(joy[1].button[3].b)  input.pad[1] |= INPUT_START;
-            if(joy[1].button[4].b)  input.pad[1] |= INPUT_X;
-            if(joy[1].button[5].b)  input.pad[1] |= INPUT_Y;
-            if(joy[1].button[6].b)  input.pad[1] |= INPUT_Z;
-            if(joy[1].button[7].b)  input.pad[1] |= INPUT_MODE;
-        }
-    }
-
-    if(key[KEY_UP])     input.pad[0] |= INPUT_UP;
+    /* Check player 1 joystick */
+    if(joy[0].stick[0].axis[1].d1) input.pad[0] |= INPUT_UP;
     else
-    if(key[KEY_DOWN])   input.pad[0] |= INPUT_DOWN;
-    if(key[KEY_LEFT])   input.pad[0] |= INPUT_LEFT;
+    if(joy[0].stick[0].axis[1].d2) input.pad[0] |= INPUT_DOWN;
+
+    if(joy[0].stick[0].axis[0].d1) input.pad[0] |= INPUT_LEFT;
     else
-    if(key[KEY_RIGHT])  input.pad[0] |= INPUT_RIGHT;
+    if(joy[0].stick[0].axis[0].d2) input.pad[0] |= INPUT_RIGHT;
 
-    if(key[KEY_A])      input.pad[0] |= INPUT_A;
-    if(key[KEY_S])      input.pad[0] |= INPUT_B;
-    if(key[KEY_D])      input.pad[0] |= INPUT_C;
-    if(key[KEY_F])      input.pad[0] |= INPUT_START;
-    if(key[KEY_Z])      input.pad[0] |= INPUT_X;
-    if(key[KEY_X])      input.pad[0] |= INPUT_Y;
-    if(key[KEY_C])      input.pad[0] |= INPUT_Z;
-    if(key[KEY_V])      input.pad[0] |= INPUT_MODE;
+    if(joy[0].button[0].b)  input.pad[0] |= INPUT_A;
+    if(joy[0].button[1].b)  input.pad[0] |= INPUT_B;
+    if(joy[0].button[2].b)  input.pad[0] |= INPUT_C;
+    if(joy[0].button[3].b)  input.pad[0] |= INPUT_START;
+    if(joy[0].button[4].b)  input.pad[0] |= INPUT_X;
+    if(joy[0].button[5].b)  input.pad[0] |= INPUT_Y;
+    if(joy[0].button[6].b)  input.pad[0] |= INPUT_Z;
+    if(joy[0].button[7].b)  input.pad[0] |= INPUT_MODE;
 
-    if(check_key(KEY_TAB))
-        system_reset();
+    /* More than one joystick supported ? */
+    if(num_joysticks > 2)
+    {
+      /* Check player 2 joystick */
+      if(joy[1].stick[0].axis[1].d1) input.pad[1] |= INPUT_UP;
+      else
+      if(joy[1].stick[0].axis[1].d2) input.pad[1] |= INPUT_DOWN;
 
-    if(check_key(KEY_F1)) frame_skip = 1;
-    if(check_key(KEY_F2)) frame_skip = 2;
-    if(check_key(KEY_F3)) frame_skip = 3;
-    if(check_key(KEY_F4)) frame_skip = 4;
+      if(joy[1].stick[0].axis[0].d1) input.pad[1] |= INPUT_LEFT;
+      else
+      if(joy[1].stick[0].axis[0].d1) input.pad[1] |= INPUT_RIGHT;
+
+      if(joy[1].button[0].b)  input.pad[1] |= INPUT_A;
+      if(joy[1].button[1].b)  input.pad[1] |= INPUT_B;
+      if(joy[1].button[2].b)  input.pad[1] |= INPUT_C;
+      if(joy[1].button[3].b)  input.pad[1] |= INPUT_START;
+      if(joy[1].button[4].b)  input.pad[1] |= INPUT_X;
+      if(joy[1].button[5].b)  input.pad[1] |= INPUT_Y;
+      if(joy[1].button[6].b)  input.pad[1] |= INPUT_Z;
+      if(joy[1].button[7].b)  input.pad[1] |= INPUT_MODE;
+    }
+  }
+	/* keyboard */
+	if(key[KEY_UP])    input.pad[joynum] |= INPUT_UP;
+	else
+  if(key[KEY_DOWN])  input.pad[joynum] |= INPUT_DOWN;
+
+	if(key[KEY_LEFT])  input.pad[joynum] |= INPUT_LEFT;
+	else
+  if(key[KEY_RIGHT]) input.pad[joynum] |= INPUT_RIGHT;
+
+	if(key[KEY_A])     input.pad[joynum] |= INPUT_A;
+	if(key[KEY_S])     input.pad[joynum] |= INPUT_B;
+	if(key[KEY_D])     input.pad[joynum] |= INPUT_C;
+  if(key[KEY_Z])     input.pad[joynum] |= INPUT_X;
+	if(key[KEY_X])     input.pad[joynum] |= INPUT_Y;
+	if(key[KEY_C])     input.pad[joynum] |= INPUT_Z;
+	if(key[KEY_V])     input.pad[joynum] |= INPUT_MODE;
+
+	if(key[KEY_F])
+  {
+    input.pad[joynum] |= INPUT_START;
+    error("start pressed\n");
+  }
+  
+  if (input.dev[joynum] == DEVICE_LIGHTGUN)
+  {
+    /* Poll mouse if necessary */
+    if(mouse_needs_poll() == TRUE)
+      poll_mouse();
+
+    /* Calculate X Y axis values */
+    input.analog[joynum - 4][0] = (mouse_x * bitmap.viewport.w) / SCREEN_W;
+    input.analog[joynum - 4][1] = (mouse_y * bitmap.viewport.h) / SCREEN_H;
+
+    /* Map mouse buttons to player #1 inputs */
+    if(mouse_b & 4) input.pad[joynum] |= INPUT_B;
+    if(mouse_b & 2) input.pad[joynum] |= INPUT_C;
+    if(mouse_b & 1) input.pad[joynum] |= INPUT_A;
+  }
+
+  else if (system_hw == SYSTEM_PICO)
+  {
+    /* Poll mouse if necessary */
+    if(mouse_needs_poll() == TRUE)
+      poll_mouse();
+
+    /* Calculate X Y axis values */
+    input.analog[0][0] = 0x3c  + (mouse_x * (0x17c-0x03c+1)) / SCREEN_W;
+    input.analog[0][1] = 0x1fc + (mouse_y * (0x2f7-0x1fc+1)) / SCREEN_H;
+
+    /* Map mouse buttons to player #1 inputs */
+    if(mouse_b & 4) input.pad[joynum] |= INPUT_START;
+    if(mouse_b & 2) input.pad[joynum] |= INPUT_A;
+    if(mouse_b & 1) input.pad[joynum] |= INPUT_B;
+  }
+
+	if(check_key(KEY_F1)) frame_skip = 1;
+  if(check_key(KEY_F2)) frame_skip = 2;
+  if(check_key(KEY_F3)) frame_skip = 3;
+  if(check_key(KEY_F4)) frame_skip = 4;
+
+	if(check_key(KEY_F5)) log_error ^= 1;
+	if(check_key(KEY_F6)) debug_on ^= 1;
+	
+	if(check_key(KEY_F7))
+	{
+		f = fopen("game.gpz","r+b");
+		if (f)
+		{
+			int len = 0;
+      fread(&len, 4, 1, f);
+      fclose(f);
+      fopen("game.gpz","r+b");
+      fread(&buf, len+4, 1, f);
+			state_load(buf);
+			fclose(f);
+		}
+	}
+
+	if(check_key(KEY_F8))
+	{
+		f = fopen("game.gpz","w+b");
+		if (f)
+		{
+			int size = state_save(buf);
+			fwrite(&buf, size, 1, f);
+			fclose(f);
+		}
+  }
+
+	if(check_key(KEY_F9))
+	{
+		vdp_pal ^= 1;
+		system_init();
+		audio_init(option.sndrate);
+		fm_restore();
+    vctab = (vdp_pal) ? ((reg[1] & 8) ? vc_pal_240 : vc_pal_224) : vc_ntsc_224;
+    hctab = (reg[12] & 1) ? cycle2hc40 : cycle2hc32;
+
+    /* reinitialize overscan area */
+    bitmap.viewport.x = config.overscan ? ((reg[12] & 1) ? 16 : 12) : 0;
+    bitmap.viewport.y = config.overscan ? (((reg[1] & 8) ? 0 : 8) + (vdp_pal ? 24 : 0)) : 0;
+    bitmap.viewport.changed = 1;
+	}
+
+	if(check_key(KEY_F10))
+    system_reset();
+
+	if(check_key(KEY_F11))
+	{
+	  joynum ++;
+		if (joynum > MAX_DEVICES - 1) joynum = 0;
+		while (input.dev[joynum] == NO_DEVICE)
+		{
+			joynum ++;
+			if (joynum > MAX_DEVICES - 1) joynum = 0;
+		}
+	}
+
+  if(check_key(KEY_F12))
+  {
+    input.x_offset ++;
+    if (input.x_offset > 0xff) input.x_offset = 0;
+  }
+
+	if(check_key(KEY_TAB))
+    resetline = (int) ((double) (lines_per_frame - 1) * rand() / (RAND_MAX + 1.0));
 }
 
 void dos_update_audio(void)
@@ -197,7 +381,7 @@ void dos_update_audio(void)
     osd_play_streamed_sample_16(option.swap ^ 1, snd.buffer[1], snd.buffer_size * 2, option.sndrate, FRAMES_PER_SECOND,  100);
 }
 
-void dos_update_palette(void)
+/*void dos_update_palette(void)
 {
     if(is_border_dirty)
     {
@@ -255,12 +439,12 @@ void dos_update_palette(void)
             }
         }
     }
-}
+}*/
 
 void dos_update_video(void)
 {
-    int width = (reg[12] & 1) ? 320 : 256;
-    int height = (reg[1] & 8) ? 240 : 224;
+    int width = (bitmap.viewport.w + 2 * bitmap.viewport.x);
+    int height = (bitmap.viewport.h + 2 * bitmap.viewport.y) << (interlaced ? 1:0);
     int center_x = (SCREEN_W - width) / 2;
     int center_y = (SCREEN_H / (option.scanlines ? 4 : 2)) - (height / 2);
 
@@ -280,24 +464,28 @@ void dos_update_video(void)
         }
     }
 
-    if(bitmap.remap == 0)
+    /*if(bitmap.remap == 0)
     {
         dos_update_palette();
-    }
+    }*/
 
 
-    if(option.scanlines)
+    msg_print(2, 2, "%d fps", frame_rate);
+	
+	if(option.scanlines)
     {
         int y;
         for(y = 0; y < height; y += 1)
         {
-            blit(gen_bmp, screen, 0x20, y, center_x, (center_y + y) << 1, width, 1);
+            blit(gen_bmp, screen, 0x0, y, center_x, (center_y + y) << 1, width, 1);
         }
     }
     else
     {
 
-        blit(gen_bmp, screen, 0x20, 0, center_x, center_y, width, height);
+        //blit(gen_bmp, screen, 0x0, 0, center_x, center_y, width, height);
+		stretch_blit(gen_bmp, screen, 0, 0, width, height, (SCREEN_W-352)/2, (SCREEN_H-240)/2, 352,240);
+
     }
 }
 
@@ -311,6 +499,7 @@ void init_machine(void)
     }
 
     allegro_init();
+    install_mouse();
     install_keyboard();
     install_joystick(option.joy_driver);
 
@@ -321,7 +510,7 @@ void init_machine(void)
     install_int_ex(tick_handler, BPS_TO_TIMER(FRAMES_PER_SECOND));
 
     set_color_depth(option.video_depth);
-    gen_bmp = create_bitmap(512, 512);
+    gen_bmp = create_bitmap(360, 576);
     clear(gen_bmp);
 
     memset(&bitmap, 0, sizeof(bitmap));
@@ -347,7 +536,7 @@ void init_machine(void)
     bitmap.pitch = (bitmap.width * bitmap.granularity);
     bitmap.viewport.w = 256;
     bitmap.viewport.h = 224;
-    bitmap.viewport.x = 0x20;
+    bitmap.viewport.x = 0x00;
     bitmap.viewport.y = 0x00;
     bitmap.remap = 0;
     if(option.remap) bitmap.remap = 1;

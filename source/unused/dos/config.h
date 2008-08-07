@@ -48,8 +48,34 @@ typedef struct
     int softres;            /* 1= Allow RUN+SELECT */
 } t_option;
 
+typedef struct 
+{
+  double psg_preamp;
+  double fm_preamp;
+  uint8 boost;
+  uint8 hq_fm;
+  uint8 fm_core;
+  uint8 ssg_enabled;
+  int8 sram_auto;
+  int8 freeze_auto;
+  uint8 region_detect;
+  uint8 force_dtack;
+  uint8 bios_enabled;
+  int16 xshift;
+  int16 yshift;
+  int16 xscale;
+  int16 yscale;
+  uint8 tv_mode;
+  uint8 aspect;
+  uint8 overscan;
+  uint8 render;
+  uint8 sys_type[2];
+  uint8 crosshair;
+} t_config;
+
 /* Global variables */
 extern t_option option;
+extern t_config config;
 extern t_strint video_driver_table[];
 extern t_strint joy_driver_table[];
 
@@ -60,6 +86,7 @@ void parse_args(int argc, char **argv);
 void print_options(void);
 int check_bool(char *token);
 void set_option_defaults(void);
+void set_config_default(void);
 
 #endif /* _CONFIG_H_ */
 

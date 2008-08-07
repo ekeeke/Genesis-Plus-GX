@@ -1,20 +1,45 @@
-#ifndef _INPUT_H_
-#define _INPUT_H_
-#include "types.h"
+/***************************************************************************************
+ *  Genesis Plus 1.2a
+ *  Peripheral Input Support
+ *
+ *  Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003  Charles Mac Donald (original code)
+ *  modified by Eke-Eke (compatibility fixes & additional code), GC/Wii port
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ ****************************************************************************************/
+
+#ifndef _INPUT_HW_H_
+#define _INPUT_HW_H_
+
+/* Available inputs */
+#ifdef HW_DOL
+#define MAX_INPUTS 4
+#else
+#define MAX_INPUTS 8
+#endif
 
 /* Input devices */
-#ifdef NGC
-#define MAX_INPUTS          (4)     
-#else
-#define MAX_INPUTS          (8)     
-#endif
-#define MAX_DEVICES         (8)
+#define MAX_DEVICES (8)
+
 #define DEVICE_3BUTTON      (0x00)	/* 3-button gamepad */
 #define DEVICE_6BUTTON      (0x01)	/* 6-button gamepad */
-#define DEVICE_MOUSE	    (0x02)	/* Sega Mouse (not supported) */
-#define DEVICE_LIGHTGUN     (0x03)	/* Sega Menacer */
+#define DEVICE_LIGHTGUN     (0x02)	/* Sega Menacer */
+#define DEVICE_MOUSE	    	(0x03)	/* Sega Mouse (not supported) */
 #define DEVICE_2BUTTON      (0x04)	/* 2-button gamepad (not supported) */
-#define NO_DEVICE		    (0x0F)	/* unconnected */
+#define NO_DEVICE						(0x0F)	/* unconnected */
 
 /* Input bitmasks */
 #define INPUT_MODE      (0x00000800)
@@ -31,33 +56,60 @@
 #define INPUT_UP        (0x00000001)
 
 /* System bitmasks */
-#define SYSTEM_GAMEPAD    (0)	/* Single Gamepad */
-#define SYSTEM_TEAMPLAYER (1)	/* Sega TeamPlayer (1~8 players) */
-#define SYSTEM_WAYPLAY    (2)	/* EA 4-Way Play (1~4 players) */
-#define SYSTEM_MENACER    (3)	/* SEGA Menacer Lightgun */
-#define NO_SYSTEM         (4)	/* Unconnected Port*/
+#define NO_SYSTEM           (0) /* Unconnected Port*/
+#define SYSTEM_GAMEPAD      (1) /* Single Gamepad */
+#define SYSTEM_MENACER      (2)	/* Sega Lightgun */
+#define SYSTEM_JUSTIFIER    (3)	/* Konami Lightgun */
+#define SYSTEM_TEAMPLAYER   (4)	/* Sega TeamPlayer */
+#define SYSTEM_WAYPLAY      (5)	/* EA 4-Way Play (use both ports) */
+
+/* Players Inputs */
+#define PLAYER_1A   (0)
+#define PLAYER_1B   (1)
+#define PLAYER_1C   (2)
+#define PLAYER_1D   (3)
+#define PLAYER_2A   (4)
+#define PLAYER_2B   (5)
+#define PLAYER_2C   (6)
+#define PLAYER_2D   (7)
 
 typedef struct
 {
-  uint8 dev[MAX_DEVICES];	/* Can be any of the DEVICE_* values */
-  uint32 pad[MAX_DEVICES];	/* Can be any of the INPUT_* bitmasks */
-  uint8 system[2];			/* Can be any of the SYSTEM_* bitmasks (PORTA & PORTB) */
-  uint8 max;				/* maximum number of connected devices */
+  uint8   dev[MAX_DEVICES];     /* Can be any of the DEVICE_* values */
+  uint32  pad[MAX_DEVICES];     /* Can be any of the INPUT_* bitmasks */
+  uint8   padtype[MAX_DEVICES]; /* 3BUTTONS or 6BUTTONS gamepad */
+  uint8   system[2];            /* Can be any of the SYSTEM_* bitmasks */
+  uint8   max;                  /* maximum number of connected devices */
+  uint8   current;              /* current PAD number (4WAYPLAY) */
+  int     analog[2][2];         /* analog device */
+  int     x_offset;
+  int     y_offset;
 } t_input;
 
-/* global variables */
+/* Global variables */
 extern t_input input;
-extern uint8 j_cart;
 
 /* Function prototypes */
-extern void input_reset (int padtype);
+extern void input_reset (void);
 extern void input_update(void);
 extern void input_raz(void);
-extern void lightgun_set (void);
-extern uint8 lightgun_read (void);
-extern uint8 gamepad_read (uint8 i);
-extern void gamepad_write (uint8 i, uint8 data);
-extern uint8 multitap_read (uint8 port);
-extern void multitap_write (uint8 port, uint8 data);
+
+/* Peripherals specific */
+extern unsigned int menacer_read (void);
+extern unsigned int justifier_read (void);
+extern unsigned int gamepad_1_read (void);
+extern unsigned int gamepad_2_read (void);
+extern void gamepad_1_write (unsigned int data);
+extern void gamepad_2_write (unsigned int data);
+extern unsigned int wayplay_1_read (void);
+extern unsigned int wayplay_2_read (void);
+extern void wayplay_1_write (unsigned int data);
+extern void wayplay_2_write (unsigned int data);
+extern unsigned int teamplayer_1_read (void);
+extern unsigned int teamplayer_2_read (void);
+extern void teamplayer_1_write (unsigned int data);
+extern void teamplayer_2_write (unsigned int data);
+extern unsigned int jcart_read(void);
+extern void jcart_write(unsigned int data);
 
 #endif

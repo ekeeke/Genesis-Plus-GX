@@ -19,13 +19,14 @@
     - Removed SN76489_GetValues().
     - Removed some unused variables.
 
-   25/04/07 Eke-Eke
-   Modified for use with GenesisPlus Gamecube's port:
-   - made SN76489_Update outputs 16bits mono samples
-   - replaced volume table with VGM plugin's one
+    25/04/07 Eke-Eke
+    Modified for use with GenesisPlus Gamecube's port:
+    - made SN76489_Update outputs 16bits mono samples
+    - replaced volume table with VGM plugin's one
 */
 
-#include "sn76489.h"
+#include "shared.h"
+
 #include <float.h> // for FLT_MIN
 #include <string.h> // for memcpy
 

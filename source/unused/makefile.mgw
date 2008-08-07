@@ -1,0 +1,107 @@
+# Genesis Plus - Sega Mega Drive emulator
+# (c) 1999, 2000, 2001, 2002, 2003  Charles MacDonald
+
+# -DLSB_FIRST - Leave undefined for big-endian processors.
+# -DDEBUG     - Enable debugging code
+# -DX86_ASM   - Enable inline x86 assembly code in Z80 emulator
+
+CC	=	gcc
+AS	=	nasm -f coff
+LDFLAGS	=	
+FLAGS	=	-I. -Icpu -Im68k -Iwin -Isound -Icart_hw -Icart_hw\svp \
+		-Ic:/SDL/include/SDL \
+		-Werror -Wall \
+		-DLSB_FIRST -DX86_ASM \
+		-O6 -march=pentium -fomit-frame-pointer
+
+LIBS	=	-lz -lm -lmingw32 -Ld:/sdl/lib -lSDLmain -lSDL obj/m68k.oa
+
+OBJ	=       obj/z80.oa	\
+		obj/genesis.o	\
+		obj/vdp.o	\
+		obj/render.o	\
+		obj/system.o    \
+		obj/io.o	\
+		obj/input.o	\
+		obj/mem68k.o	\
+		obj/memz80.o	\
+		obj/membnk.o	\
+		obj/memvdp.o	\
+		obj/state.o     
+		
+OBJ	+=      obj/sound.o	\
+		obj/fm.o	\
+		obj/sn76489.o   \
+		obj/ym2612.o    
+
+OBJ	+=      obj/sram.o      \
+		obj/eeprom.o    \
+		obj/svp.o	\
+		obj/ssp16.o	\
+		obj/cart_hw.o	
+		
+OBJ	+=	obj/main.o	\
+		obj/error.o	\
+		obj/fileio.o	\
+		obj/unzip.o     \
+		obj/loadrom.o	
+
+EXE	=	gen.exe
+
+all	:	$(EXE)
+
+$(EXE)	:	$(OBJ) shared.h
+		$(CC) -o $(EXE) $(OBJ) $(LIBS) $(LDFLAGS)
+	        
+obj/%.oa :	cpu/%.c cpu/%.h
+		$(CC) -c $< -o $@ $(FLAGS)
+
+obj/%.o : 	%.c %.h
+		$(CC) -c $< -o $@ $(FLAGS)
+	        
+obj/%.o :	win/%.s
+		$(AS) $< -o $@
+	        
+obj/%.o :	sound/%.c sound/%.h	        
+		$(CC) -c $< -o $@ $(FLAGS)
+	        
+obj/%.o :	cpu/%.c cpu/%.h	        
+		$(CC) -c $< -o $@ $(FLAGS)
+
+obj/%.o :	win/%.c win/%.h	        
+		$(CC) -c $< -o $@ $(FLAGS)
+
+obj/%.o :	cart_hw/%.c cart_hw/%.h	        
+		$(CC) -c $< -o $@ $(FLAGS)
+
+obj/%.o :	cart_hw/svp/%.c      
+		$(CC) -c $< -o $@ $(FLAGS)
+
+obj/%.o :	cart_hw/svp/%.c cart_hw/svp/%.h	        
+		$(CC) -c $< -o $@ $(FLAGS)
+
+
+pack	:
+		strip $(EXE)
+		upx -1 $(EXE)	        
+
+clean	:	        
+		rm -f obj/*.o
+		rm -f *.bak
+		rm -f *.exe
+		rm -f *.log
+		rm -f *.wav
+		rm -f *.zip
+cleancpu :		
+		rm -f obj/z80.oa
+
+makedir :
+		mkdir obj
+	        
+archive:	        
+		pk -add -max -excl=bak -excl=out \
+		-excl=test -excl=obj mdsrc.zip -dir=current
+	        
+#
+# end of makefile
+#

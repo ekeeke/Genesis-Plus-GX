@@ -1,17 +1,26 @@
-
+/***************************************************************************************
+ *  Genesis Plus 1.2a
+ *  Z80 memory handler
+ *
+ *  Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003  Charles Mac Donald (original code)
+ *  modified by Eke-Eke (compatibility fixes & additional code), GC/Wii port
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ ****************************************************************************************/
 #ifndef _MEMZ80_H_
 #define _MEMZ80_H_
-
-/* Function prototypes */
-unsigned int cpu_readmem16 (unsigned int address);
-void cpu_writemem16 (unsigned int address, unsigned int data);
-unsigned int cpu_readport16 (unsigned int port);
-void cpu_writeport16 (unsigned int port, unsigned int data);
-void z80_unused_w (int address, int data);
-int z80_unused_r (int address);
-void z80_lockup_w (int address, int data);
-int z80_lockup_r (int address);
-int z80_vdp_r (int address);
-void z80_vdp_w (int address, int data);
 
 #endif /* _MEMZ80_H_ */

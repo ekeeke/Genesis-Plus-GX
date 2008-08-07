@@ -22,9 +22,10 @@
 
 #include "shared.h"
 #include "font.h"
-#include "rominfo.h"
 
 #define MAXCODES 8
+
+extern char menutitle[60];
 
 typedef struct
 {
@@ -39,7 +40,6 @@ int ggrow = 0;
 int editing = 0;
 char ggvalidchars[] = "ABCDEFGHJKLMNPRSTVWXYZ0123456789*";
 GGPATCH ggpatch[8];
-extern char menutitle[];
 
 /****************************************************************************
  * Decode Game Genie entries to memory patches
@@ -112,7 +112,7 @@ void decode_ggcodes ()
   j = 0;
   for (i = 0; i < 8; i++)
   {
-	  if (strcmp (ggcodes[i], "AAAA-AAAA"))
+	  if (strcmp ((char *)ggcodes[i], "AAAA-AAAA"))
 	  {
 		  /*** Move the code into thiscode ***/
 		  memcpy (&thiscode, &ggcodes[i], 4);
@@ -128,19 +128,12 @@ void decode_ggcodes ()
   {
 	  for (i = 0; i < j; i++)
 	  {
-		  if (ggpatch[i].address < rominfo.romend)
+		  if (ggpatch[i].address < 0x400000)
 		  {
-			  /*** Patching ROM space ***/
-			  cart_rom[ggpatch[i].address] = ggpatch[i].data & 0x0ff;
-			  cart_rom[ggpatch[i].address + 1] = (ggpatch[i].data & 0xff00) >> 8;
-		  }
-		  else
-		  {
-			  /*** Patching 68K memory ***/
-			  m68k_write_memory_16 (ggpatch[i].address, ggpatch[i].data);
-		  }
+			  /*** Patching ROM space ONLY (Game Genie does NOT have access to other memory areas) ***/
+        if (cart_rom) *(uint16 *)(cart_rom + ggpatch[i].address) = ggpatch[i].data & 0xffff;
       }
-	  /* TODO : Fix Checksum  */
+    }
   }
 }
 
@@ -155,7 +148,7 @@ void ClearGGCodes ()
 
   for (i = 0; i < MAXCODES; i++)
   {
-	  strcpy (ggcodes[i], "AAAA-AAAA");
+	  strcpy ((char *)ggcodes[i], "AAAA-AAAA");
 	  gghpos[i] = 0;
   }
   ggrow = 0;
@@ -179,26 +172,26 @@ void DrawGGCodes ()
 	  if (i == ggrow)
 	  {
 		  /*** Highlight selected ***/
-		  WriteCentre_HL (i * fheight + 224, ggcodes[i]);
+		  WriteCentre_HL (i * fheight + 224, (char *)ggcodes[i]);
 
 		  /*** If editing, highlight the current character ***/
 		  if (editing)
 		  {
 			  int hpos = 0;
 
-  			  for (j=0; j<strlen (ggcodes[i]); j++) hpos += font_size[ggcodes[i][j]];
+        for (j=0; j<strlen ((char *)ggcodes[i]); j++) hpos += font_size[ggcodes[i][j]];
 			  hpos = ((640 - hpos) >> 1);
 			  for (j=0; j<gghpos[i]; j++) hpos += font_size[ggcodes[i][j]];
 
 			  c[0] = ggcodes[i][gghpos[i]];
 			  fntDrawBoxFilled (hpos, (i * fheight) + 224, hpos + font_size[c[0]],
-								((i + 1) * fheight) + 224, COLOR_YELLOW);
+                          ((i + 1) * fheight) + 224, COLOR_YELLOW);
 			  setfontcolour (COLOR_BLUE);
-			  write_font (hpos, (i * fheight) + 224, c);
+			  write_font (hpos, (i * fheight) + 224, (char *)c);
 			  setfontcolour (COLOR_WHITE);
 		  }
 	  }
-	  else WriteCentre ((i * fheight) + 224, ggcodes[i]);
+	  else WriteCentre ((i * fheight) + 224, (char *)ggcodes[i]);
   }
   SetScreen ();
 }
@@ -216,14 +209,11 @@ void GGEditLine ()
   char c[2] = { 0, 0 };
   char *v;
   int redraw = 1;
-  signed char x, y;
-
-  /** Lose any previous A press **/
-  while (PAD_ButtonsDown (0) & PAD_BUTTON_A);
+  int quit = 0;
 
   editing = 1;
 
-  while (!(PAD_ButtonsDown (0) & PAD_BUTTON_A))
+  while (quit == 0)
   {
 	  if (redraw)
 	  {
@@ -231,11 +221,9 @@ void GGEditLine ()
 		  redraw = 0;
 	  }
 
-	  p = PAD_ButtonsDown (0);
-	  x = PAD_StickX (0);
-	  y = PAD_StickY (0);
+	  p = ogc_input__getMenuButtons();
 
-	  if ((p & PAD_BUTTON_UP) || (y > 70))
+	  if (p & PAD_BUTTON_UP)
 	  {
 		  /*** Increment the entry ***/
 		  redraw = 1;
@@ -246,7 +234,7 @@ void GGEditLine ()
 		  else ggcodes[ggrow][gghpos[ggrow]] = *v;
 	  }
 
-	  if ((p & PAD_BUTTON_DOWN) || (y < -70))
+	  if (p & PAD_BUTTON_DOWN)
 	  {
 		  /*** Decrement entry ***/
 		  redraw = 1;
@@ -260,14 +248,14 @@ void GGEditLine ()
 		  }
 	  }
 
-	  if ((p & PAD_BUTTON_LEFT) || (x < -70))
+	  if (p & PAD_BUTTON_LEFT)
 	  {
 		  redraw = 1;
 		  gghpos[ggrow]--;
 		  if (gghpos[ggrow] == 4) gghpos[ggrow]--;
 	  }
 
-	  if ((p & PAD_BUTTON_RIGHT) || (x > 70))
+	  if (p & PAD_BUTTON_RIGHT)
 	  {
 		  redraw = 1;
 		  gghpos[ggrow]++;
@@ -276,10 +264,9 @@ void GGEditLine ()
 
 	  if (gghpos[ggrow] < 0) gghpos[ggrow] = 8;
 	  if (gghpos[ggrow] > 8) gghpos[ggrow] = 0;
-  }
 
-  /** Lose any previous A press **/
-  while (PAD_ButtonsDown (0) & PAD_BUTTON_A);
+    if (p & PAD_BUTTON_A) quit = 1;
+  }
 
   editing = 0;
 }
@@ -294,13 +281,12 @@ void GGSelectLine ()
   int redraw = 1;
   int quit = 0;
   short j;
-  signed char y;
 
   /*** To select a line, just move up or down.
 		Pressing A will enter edit mode.
 		Pressing B will exit to caller.   ***/
 
-  while (!(PAD_ButtonsDown (0) & PAD_BUTTON_B) && (quit == 0))
+  while (quit == 0)
   {
 	  if (redraw)
 	  {
@@ -308,16 +294,15 @@ void GGSelectLine ()
 		  redraw = 0;
 	  }
 
-	  j = PAD_ButtonsDown (0);
-	  y = PAD_StickY (0);
+	  j = ogc_input__getMenuButtons();
 
-	  if ((j & PAD_BUTTON_UP) || (y > 70))
+	  if (j & PAD_BUTTON_UP)
 	  {
 		  ggrow--;
 		  redraw = 1;
 	  }
 
-	  if ((j & PAD_BUTTON_DOWN) || (y < -70))
+	  if (j & PAD_BUTTON_DOWN)
 	  {
 		  ggrow++;
 		  redraw = 1;
@@ -332,6 +317,14 @@ void GGSelectLine ()
 	  {
 		  GGEditLine ();
 		  redraw = 1;
+	  }
+
+    if (j & PAD_TRIGGER_Z)
+	  {
+		  /* reset code */
+      strcpy ((char *)ggcodes[ggrow], "AAAA-AAAA");
+      gghpos[ggrow] = 0;
+      redraw = 1;
 	  }
   }
 }
@@ -348,4 +341,7 @@ void GetGGEntries ()
   editing = 0;
   strcpy (menutitle, "Game Genie Entry");
   GGSelectLine ();
+
+  /* Apply Game Genie patches */
+  decode_ggcodes (); 
 }

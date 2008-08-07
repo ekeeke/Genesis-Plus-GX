@@ -1,24 +1,23 @@
 /****************************************************************************
- *  Genesis Plus 1.2a
+ * Nintendo Gamecube DVD Reading Library
  *
- *  Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003  Charles Mac Donald
+ * This is NOT a complete DVD library, in that it works for reading 
+ * ISO9660 discs only.
  *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
+ * If you need softmod drivecodes etc, look elsewhere.
+ * There are known issues with libogc dvd handling, so these work
+ * outside of it ,if you will.
  *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
+ * This is ideal for using with a gc-linux self booting DVD only.
+ * Go http://www.gc-linux.org for further information and the tools
+ * for your platform.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * To keep libOGC stable, make sure you call DVD_Init before using
+ * these functions.
  ***************************************************************************/
 
 extern int dvd_read (void *dst, unsigned int len, u64 offset);
 extern void uselessinquiry ();
 extern void dvd_motor_off ();
-extern int dvd_inquiry();
+extern void dvd_drive_detect();
+

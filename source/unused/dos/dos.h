@@ -2,6 +2,8 @@
 #ifndef _DOS_H_
 #define _DOS_H_
 
+#define LOGERROR 1
+
 /* Function prototypes */
 int load_file(char *filename, char *buf, int size);
 int save_file(char *filename, char *buf, int size);
@@ -15,5 +17,8 @@ void make_vdp_palette(void);
 void dos_change_mode(void);
 int check_key(int code);
 
+extern uint8 debug_on;
+extern uint8 log_error;
+extern int frame_count;
 #endif /* _DOS_H_ */
 

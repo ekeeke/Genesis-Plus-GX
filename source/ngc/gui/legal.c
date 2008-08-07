@@ -22,9 +22,6 @@
 #include "font.h"
 #include "dkpro.h"
 
-extern u32 *xfb[2];
-extern int whichfb;
-
 /*
  * Unpack the devkit pro logo
  */
@@ -37,7 +34,7 @@ int dkunpack ()
   inbytes = dkpro_COMPRESSED;
   outbytes = dkpro_RAW;
   dkproraw = malloc (dkpro_RAW + 16);
-  res = uncompress ((char *) dkproraw, &outbytes, (char *) &dkpro[0], inbytes);
+  res = uncompress ((Bytef *) dkproraw, &outbytes, (Bytef *) &dkpro[0], inbytes);
   if (res == Z_OK) return 1;
   free (dkproraw);
   return 0;
@@ -93,7 +90,10 @@ void legal ()
       free (dkproraw);
   }
   else WriteCentre (ypos, "Developed with DevkitPPC and libOGC");
-
+#ifdef HW_RVL
+  SetScreen ();
+  sleep(1);
+#endif
   WriteCentre (ypos, "Press A to continue");
   SetScreen ();
   WaitButtonA ();

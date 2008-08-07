@@ -1,9 +1,17 @@
+/***********************************************************
+ *                                                         *
+ * YM2612.C : YM2612 emulator                              *
+ *                                                         *
+ * Almost constantes are taken from the MAME core          *
+ *                                                         *
+ * This source is a part of Gens project                   *
+ * Written by Stéphane Dallongeville (gens@consolemul.com) *
+ * Copyright (c) 2002 by Stéphane Dallongeville            *
+ *                                                         *
+ ***********************************************************/
+
 #ifndef _YM2612_H_
 #define _YM2612_H_
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 // Change it if you need to do long update
 #define	MAX_UPDATE_LENGHT   2000
@@ -95,77 +103,11 @@ typedef struct ym2612__ {
 						// cela nous rend le débuggage plus facile
 } ym2612_;
 
-/* Gens */
 
-extern int YM2612_Enable;
-extern int YM2612_Improv;
-extern int DAC_Enable;
-extern int *YM_Buf[2];
-extern int YM_Len;
-
-/* end */
-
-int YM2612_Init(int clock, int rate, int interpolation);
-int YM2612_End(void);
-int YM2612_Reset(void);
-int YM2612_Read(void);
-int YM2612_Write(unsigned char adr, unsigned char data);
-void YM2612_Update(int **buf, int length);
-int YM2612_Save(unsigned char SAVE[0x200]);
-int YM2612_Restore(unsigned char SAVE[0x200]);
-
-
-void YM2612_Special_Update(void);
-void YM2612TimerAOver(void);
-
-/* end */
-
-// used for foward...
-void Update_Chan_Algo0(channel_ *CH, int **buf, int lenght);
-void Update_Chan_Algo1(channel_ *CH, int **buf, int lenght);
-void Update_Chan_Algo2(channel_ *CH, int **buf, int lenght);
-void Update_Chan_Algo3(channel_ *CH, int **buf, int lenght);
-void Update_Chan_Algo4(channel_ *CH, int **buf, int lenght);
-void Update_Chan_Algo5(channel_ *CH, int **buf, int lenght);
-void Update_Chan_Algo6(channel_ *CH, int **buf, int lenght);
-void Update_Chan_Algo7(channel_ *CH, int **buf, int lenght);
-
-void Update_Chan_Algo0_LFO(channel_ *CH, int **buf, int lenght);
-void Update_Chan_Algo1_LFO(channel_ *CH, int **buf, int lenght);
-void Update_Chan_Algo2_LFO(channel_ *CH, int **buf, int lenght);
-void Update_Chan_Algo3_LFO(channel_ *CH, int **buf, int lenght);
-void Update_Chan_Algo4_LFO(channel_ *CH, int **buf, int lenght);
-void Update_Chan_Algo5_LFO(channel_ *CH, int **buf, int lenght);
-void Update_Chan_Algo6_LFO(channel_ *CH, int **buf, int lenght);
-void Update_Chan_Algo7_LFO(channel_ *CH, int **buf, int lenght);
-
-void Update_Chan_Algo0_Int(channel_ *CH, int **buf, int lenght);
-void Update_Chan_Algo1_Int(channel_ *CH, int **buf, int lenght);
-void Update_Chan_Algo2_Int(channel_ *CH, int **buf, int lenght);
-void Update_Chan_Algo3_Int(channel_ *CH, int **buf, int lenght);
-void Update_Chan_Algo4_Int(channel_ *CH, int **buf, int lenght);
-void Update_Chan_Algo5_Int(channel_ *CH, int **buf, int lenght);
-void Update_Chan_Algo6_Int(channel_ *CH, int **buf, int lenght);
-void Update_Chan_Algo7_Int(channel_ *CH, int **buf, int lenght);
-
-void Update_Chan_Algo0_LFO_Int(channel_ *CH, int **buf, int lenght);
-void Update_Chan_Algo1_LFO_Int(channel_ *CH, int **buf, int lenght);
-void Update_Chan_Algo2_LFO_Int(channel_ *CH, int **buf, int lenght);
-void Update_Chan_Algo3_LFO_Int(channel_ *CH, int **buf, int lenght);
-void Update_Chan_Algo4_LFO_Int(channel_ *CH, int **buf, int lenght);
-void Update_Chan_Algo5_LFO_Int(channel_ *CH, int **buf, int lenght);
-void Update_Chan_Algo6_LFO_Int(channel_ *CH, int **buf, int lenght);
-void Update_Chan_Algo7_LFO_Int(channel_ *CH, int **buf, int lenght);
-
-// used for foward...
-void Env_Attack_Next(slot_ *SL);
-void Env_Decay_Next(slot_ *SL);
-void Env_Substain_Next(slot_ *SL);
-void Env_Release_Next(slot_ *SL);
-void Env_NULL_Next(slot_ *SL);
-
-#ifdef __cplusplus
-};
-#endif
+extern int YM2612_Init(int clock, int rate, int interpolation);
+extern int YM2612_Reset(void);
+extern int YM2612_Read(void);
+extern int YM2612_Write(unsigned char adr, unsigned char data);
+extern void YM2612_Update(int **buf, int length);
 
 #endif

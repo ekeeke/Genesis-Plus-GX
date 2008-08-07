@@ -1,533 +1,735 @@
+/***************************************************************************************
+ *  Genesis Plus 1.2a
+ *  68k memory handlers
+ *
+ *  Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003  Charles Mac Donald (original code)
+ *  modified by Eke-Eke (compatibility fixes & additional code), GC/Wii port
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ ****************************************************************************************/
+
+#include "m68kcpu.h"
 #include "shared.h"
 
-static uint16 next_int = 1;
-static uint8 prot_bytes[2]; /* simple protection faking (from Picodrive) */
+uint8 m68k_readmap_8[32];
+uint8 m68k_readmap_16[32];
+uint8 m68k_writemap_8[32];
+uint8 m68k_writemap_16[32];
 
-unsigned int m68k_read_bus_8(unsigned int address)
+
+uint8 pico_current;
+static uint8 pico_page[7] = {0x00,0x01,0x03,0x07,0x0F,0x1F,0x3F};
+
+
+static inline unsigned int m68k_read_bus_8(unsigned int address)
 {
-   uint16 temp = m68k_read_bus_16(address);
-   return ((address & 1) ? (temp & 0xFF) : (temp >> 8));
+#ifdef LOGERROR
+	if ((address != 0xa11100) && (address != 0xc00004)  && (address != 0xc00006))
+	{
+		error("Unused read8 %08X (%08X)\n", address, m68k_get_reg (NULL, M68K_REG_PC));
+		error("D0 = %x \n", m68k_get_reg (NULL, M68K_REG_D0));
+		error("D1 = %x \n", m68k_get_reg (NULL, M68K_REG_D1));
+		error("D2 = %x \n", m68k_get_reg (NULL, M68K_REG_D2));
+		error("D3 = %x \n", m68k_get_reg (NULL, M68K_REG_D3));
+		error("D4 = %x \n", m68k_get_reg (NULL, M68K_REG_D4));
+		error("D5 = %x \n", m68k_get_reg (NULL, M68K_REG_D5));
+		error("D6 = %x \n", m68k_get_reg (NULL, M68K_REG_D6));
+		error("D7 = %x \n", m68k_get_reg (NULL, M68K_REG_D7));
+		error("A0 = %x \n", m68k_get_reg (NULL, M68K_REG_A0));
+		error("A1 = %x \n", m68k_get_reg (NULL, M68K_REG_A1));
+		error("A2 = %x \n", m68k_get_reg (NULL, M68K_REG_A2));
+		error("A3 = %x \n", m68k_get_reg (NULL, M68K_REG_A3));
+		error("A4 = %x \n", m68k_get_reg (NULL, M68K_REG_A4));
+		error("A5 = %x \n", m68k_get_reg (NULL, M68K_REG_A5));
+		error("A6 = %x \n", m68k_get_reg (NULL, M68K_REG_A6));
+		error("A7 = %x \n", m68k_get_reg (NULL, M68K_REG_A7));
+	}
+#endif
+  int bus_addr = (REG_PC & 0xffffe) | (address & 1);
+ 	int offset = bus_addr >> 19;
+
+	if (offset > 8) return READ_BYTE(work_ram, bus_addr & 0xffff);
+	else return READ_BYTE(rom_readmap[offset], bus_addr & 0x7ffff);
 }
 
-unsigned int m68k_read_bus_16(unsigned int address)
+static inline unsigned int m68k_read_bus_16(unsigned int address)
 {
-   next_int ^= 0xFFFF;
-   return next_int;
+#ifdef LOGERROR
+	if ((address != 0xa11100) && (address != 0xc00004)  && (address != 0xc00006))
+	{
+		error("Unused read16 %08X (%08X)\n", address, m68k_get_reg (NULL, M68K_REG_PC));
+		error("D0 = %x \n", m68k_get_reg (NULL, M68K_REG_D0));
+		error("D1 = %x \n", m68k_get_reg (NULL, M68K_REG_D1));
+		error("D2 = %x \n", m68k_get_reg (NULL, M68K_REG_D2));
+		error("D3 = %x \n", m68k_get_reg (NULL, M68K_REG_D3));
+		error("D4 = %x \n", m68k_get_reg (NULL, M68K_REG_D4));
+		error("D5 = %x \n", m68k_get_reg (NULL, M68K_REG_D5));
+		error("D6 = %x \n", m68k_get_reg (NULL, M68K_REG_D6));
+		error("D7 = %x \n", m68k_get_reg (NULL, M68K_REG_D7));
+		error("A0 = %x \n", m68k_get_reg (NULL, M68K_REG_A0));
+		error("A1 = %x \n", m68k_get_reg (NULL, M68K_REG_A1));
+		error("A2 = %x \n", m68k_get_reg (NULL, M68K_REG_A2));
+		error("A3 = %x \n", m68k_get_reg (NULL, M68K_REG_A3));
+		error("A4 = %x \n", m68k_get_reg (NULL, M68K_REG_A4));
+		error("A5 = %x \n", m68k_get_reg (NULL, M68K_REG_A5));
+		error("A6 = %x \n", m68k_get_reg (NULL, M68K_REG_A6));
+		error("A7 = %x \n", m68k_get_reg (NULL, M68K_REG_A7));
+	}
+#endif
+  int bus_addr = REG_PC & 0xfffffe;
+ 	int offset = bus_addr >> 19;
+ 	
+  if (offset > 8) return *(uint16 *)(work_ram + (bus_addr & 0xffff));
+  else return *(uint16 *)(rom_readmap[offset] + (bus_addr & 0x7ffff));
 }
 
 
-void m68k_unused_w (unsigned int address, unsigned int value)
+static inline void m68k_unused_8_w (unsigned int address, unsigned int value)
 {
-	error("Unused 3 %08X = %08X \n", address, value);
+#ifdef LOGERROR
+	error("Unused write8 %08X = %02X (%08X)\n", address, value, m68k_get_reg (NULL, M68K_REG_PC));
+#endif
 }
 
-void m68k_unused_8_w (unsigned int address, unsigned int value)
+static inline void m68k_unused_16_w (unsigned int address, unsigned int value)
 {
-	error("Unused 2 %08X = %02X \n", address, value);
-}
-
-void m68k_unused_16_w (unsigned int address, unsigned int value)
-{
-	error("Unused 1 %08X = %04X \n", address, value);
+#ifdef LOGERROR
+	error("Unused write16 %08X = %04X (%08X)\n", address, value, m68k_get_reg (NULL, M68K_REG_PC));
+#endif
 }
 
 /*
-    Functions to handle memory accesses which cause the Genesis to halt
-    either temporarily (press RESET button to restart) or unrecoverably
-    (cycle power to restart).
+  Functions to handle memory accesses which cause the Genesis to halt
+  either temporarily (press RESET button to restart) or unrecoverably
+  (cycle power to restart).
 */
 
-void m68k_lockup_w_8 (unsigned int address, unsigned int value)
+static inline void m68k_lockup_w_8 (unsigned int address, unsigned int value)
 {
+#ifdef LOGERROR
 	error ("Lockup %08X = %02X (%08X)\n", address, value, m68k_get_reg (NULL, M68K_REG_PC));
-	gen_running = 0;
-	m68k_end_timeslice ();
+#endif
+	gen_running = config.force_dtack;
+	if (!gen_running) m68k_end_timeslice ();
 }
 
-void m68k_lockup_w_16 (unsigned int address, unsigned int value)
+static inline void m68k_lockup_w_16 (unsigned int address, unsigned int value)
 {
+#ifdef LOGERROR
 	error ("Lockup %08X = %04X (%08X)\n", address, value, m68k_get_reg (NULL, M68K_REG_PC));
-	gen_running = 0;
-	m68k_end_timeslice ();
+#endif
+	gen_running = config.force_dtack;
+	if (!gen_running) m68k_end_timeslice ();
 }
 
-unsigned int m68k_lockup_r_8 (unsigned int address)
+static inline unsigned int m68k_lockup_r_8 (unsigned int address)
 { 
+#ifdef LOGERROR
 	error ("Lockup %08X.b (%08X)\n", address, m68k_get_reg (NULL, M68K_REG_PC));
-	gen_running = 0;
-	m68k_end_timeslice ();
+#endif
+	gen_running = config.force_dtack;
+	if (!gen_running) m68k_end_timeslice ();
 	return -1;
 }
 
-unsigned int m68k_lockup_r_16 (unsigned int address)
+static inline unsigned int m68k_lockup_r_16 (unsigned int address)
 {
+#ifdef LOGERROR
 	error ("Lockup %08X.w (%08X)\n", address, m68k_get_reg (NULL, M68K_REG_PC));
-	gen_running = 0;
-	m68k_end_timeslice ();
+#endif
+	gen_running = config.force_dtack;
+	if (!gen_running) m68k_end_timeslice ();
 	return -1;
 }
-
 
 /*--------------------------------------------------------------------------*/
 /* 68000 memory handlers                                                    */
 /*--------------------------------------------------------------------------*/
-
-unsigned int m68k_read_memory_8 (unsigned int address)
+unsigned int m68k_read_memory_8(unsigned int address)
 {
-	switch ((address >> 21) & 7)
-    {
-		case 0:		/* ROM Cartridge*/
-		case 1:
-			/* SRAM */
-      		if (sram.on)
-			{
-				if (address >= sram.start && address <= sram.end)
+	int offset = address >> 19;
+
+	switch (m68k_readmap_8[offset])
+	{
+		case WRAM:
+      return READ_BYTE(work_ram, address & 0xffff);
+
+		case SYSTEM_IO:
+		{
+			unsigned int base = address >> 8;
+
+			/* Z80 */
+			if (base <= 0xa0ff) 
+      {
+				/* Z80 controls Z bus ? */
+				if (zbusack) return m68k_read_bus_8(address);
+	  			
+				/* Read data from Z bus */
+				switch (base & 0x60)
 				{
-	   				if (sram.custom) return (EEPROM_Read(address)&0xffff);
-					return READ_BYTE(sram.sram, (address - sram.start) & 0xffff);
+					case 0x40: /* YM2612 */
+						return fm_read(0, address & 3);
+
+					case 0x60: /* VDP */
+						if (base == 0xa07f) return m68k_lockup_r_8(address);
+						return (m68k_read_bus_8(address) | 0xff);
+
+					default: /* ZRAM */
+					   return zram[address & 0x1fff];
 				}
 			}
-
-			/* ROM data */
-			if (address < genromsize) return READ_BYTE(cart_rom, address);
-			
-			/* default */
-			return 0x00;
-
-		case 7:		/* RAM */
-      		return READ_BYTE(work_ram, address & 0xFFFF);
-
-		case 5:		/* Z80 & I/O */
-			if (address <= 0xA0FFFF) /* Z80 area */
+						
+			/* I/O & CONTROL registers */
+			if (base <= 0xa1ff)
 			{
-				/* Z80 controls Z bus */
-				if (zbusack == 1) return (m68k_read_bus_8 (address));
-				else
+				switch (base & 0xff)
 				{
-					/* Read data from Z bus */
-					switch (address & 0x6000)
-					{
-						case 0x0000:	/* RAM */
-						case 0x2000:
-							return (zram[(address & 0x1FFF)]);
+					case 0x00:	/* I/O chip */
+						if (address & 0xe0) return m68k_read_bus_8(address);
+						return (io_read((address >> 1) & 0x0f));
 
-						case 0x4000:	/* YM2612 */
-							return (fm_read (address & 3));
+					case 0x11:	/* BUSACK */
+						return (zbusack | (address & 1) | (m68k_read_bus_8(address) & 0xFE));
 
-						case 0x6000:	/* Unused */
-							switch (address & 0xFF00)
-							{
-								case 0x7F00:	/* VDP */
-									m68k_lockup_r_8 (address);
+					case 0x30:	/* TIME */
+						if (cart_hw.time_r) return cart_hw.time_r(address);
+						else return m68k_read_bus_8(address);
 
-								default:	/* Unused */
-									return (0xFF);
-							}
-							break;
-					}
-				}
-			}
-      		else if (address <= 0xA1001F) 
-			{		  		
-				/* I/O */
-				return (io_read((address >> 1) & 0x0F));
-			}
-			else if (address <= 0xA1FFFF) /* CONTROL */
-			{
-				switch ((address >> 8) & 0xFF)
-				{
-					case 0x11:		/* BUSACK */
-						if ((address & 1) == 0) return (gen_busack_r () | (m68k_read_bus_8 (address) & 0xFE));
-						else return (m68k_read_bus_8 (address));
-
-					case 0x00:	/* UNKNOWN (BallZ) */
 					case 0x10:	/* MEMORY MODE */
-					case 0x12:	/* RESET */
-				    case 0x20:	/* MEGA-CD */
+				  case 0x12:	/* RESET */
+				  case 0x20:	/* MEGA-CD */
 					case 0x40:	/* TMSS */
 					case 0x41:	/* BOOTROM */
+					case 0x44:	/* RADICA */
 					case 0x50:	/* SVP REGISTERS */
-					case 0x30:	/* TIME */
-						return (m68k_read_bus_8 (address));
-
-					default:		/* Unused */
-						return (m68k_lockup_r_8 (address));
-				}
+						return m68k_read_bus_8(address);
+	
+		    	default:	/* Invalid address */
+		      	return m68k_lockup_r_8(address);
+		    }
 			}
-			else
+			
+			/* Invalid address */
+		  return m68k_lockup_r_8(address);
+    }
+		
+		case VDP:
+
+			/* Valid VDP addresses */
+			if (((address >> 16) & 0x07) == 0) 
 			{
-				/* Unused */
-		      	return (m68k_lockup_r_8 (address));
-			}
+				switch (address & 0xff)
+			  {
+				  case 0x00:		/* DATA */
+				  case 0x02:
+				   	return (vdp_data_r() >> 8);
+			
+				  case 0x01:		/* DATA */
+				  case 0x03:
+				  	return (vdp_data_r() & 0xff);
+			
+				  case 0x04:		/* CTRL */
+				  case 0x06:
+				    return ((m68k_read_bus_8(address) & 0xfc) | ((vdp_ctrl_r() >> 8) & 3));
 
-			break;
+				  case 0x05:		/* CTRL */
+				  case 0x07:
+				   	return (vdp_ctrl_r() & 0xff);
+			
+				  case 0x08:		/* HVC */
+				  case 0x0a:
+				  case 0x0c:
+				  case 0x0e:
+				   	return (vdp_hvc_r() >> 8);
+			
+				  case 0x09:		/* HVC */
+				  case 0x0b:
+				  case 0x0d:
+				  case 0x0f:
+				   	return (vdp_hvc_r() & 0xff);
 
-		case 6: 	/* VDP */
-			if ((address & 0xE700E0) == 0xC00000)
-			{
-				switch (address & 0x1F)
-				{
-					case 0x00:		/* DATA */
-					case 0x02:
-						return (vdp_data_r () >> 8);
-
-					case 0x01:		/* DATA */
-					case 0x03:
-						return (vdp_data_r () & 0xFF);
-
-					case 0x04:		/* CTRL */
-					case 0x06:
-						return ((m68k_read_bus_8 (address) & 0xFC) | (vdp_ctrl_r () >> 8));
-
-					case 0x05:		/* CTRL */
-					case 0x07:
-						return (vdp_ctrl_r () & 0xFF);
-
-					case 0x08:		/* HVC */
-					case 0x0A:
-					case 0x0C:
-					case 0x0E:
-						return (vdp_hvc_r () >> 8);
-
-					case 0x09:		/* HVC */
-					case 0x0B:
-					case 0x0D:
-					case 0x0F:
-						return (vdp_hvc_r () & 0xFF);
-
-					case 0x10:		/* PSG */
-					case 0x11:
-					case 0x12:
-					case 0x13:
-					case 0x14:
-					case 0x15:
-					case 0x16:
-					case 0x17:
-						return (m68k_lockup_r_8 (address));
-
-					case 0x18:		/* Unused */
+					case 0x18:
 					case 0x19:
-					case 0x1A:
-					case 0x1B:
-					case 0x1C:
-					case 0x1D:
-					case 0x1E:
-					case 0x1F:
-						return (m68k_read_bus_8 (address));
+					case 0x1a:
+					case 0x1b:
+					case 0x1c:
+					case 0x1d:
+					case 0x1e:
+					case 0x1f:	/* Unused */
+				   	return m68k_read_bus_8(address);
+
+					default:	/* Invalid address */
+						return m68k_lockup_r_8(address);
 				}
 			}
-			else
-			{
-				/* Unused */
-				return (m68k_lockup_r_8 (address));
-			}
-			break;
 
-		case 2: /* Unused */
-			/* Some unlicensed games have a simple protection device mapped here */
-			return prot_bytes[(address>>2)&1];
-
-		case 3: /* Unused */
-			return (m68k_read_bus_8 (address));
-
-		case 4:	 	/* Unused */
+			/* Invalid address */
 			return (m68k_lockup_r_8 (address));
-	}
 
-	return -1;
+	 	case SRAM:
+			if (address <= sram.end) return READ_BYTE(sram.sram, address - sram.start);
+			return READ_BYTE(rom_readmap[offset], address & 0x7ffff);
+
+		case EEPROM:
+			if (address == eeprom.type.sda_out_adr) return eeprom_read(address, 0);
+			return READ_BYTE(rom_readmap[offset], address & 0x7ffff);
+
+		case CART_HW:
+			return cart_hw.regs_r(address);
+
+		case UNUSED:
+			return m68k_read_bus_8(address);
+
+		case ILLEGAL:
+			return m68k_lockup_r_8(address);
+
+		case UMK3_HACK:
+			return READ_BYTE(&cart_rom[offset<<19], address & 0x7ffff);
+
+ 		case PICO_HW:
+      switch (address & 0xff)
+      {
+        case 0x01:  /* VERSION register */
+          return (0x40);
+
+        case 0x03:  /* IO register */
+        {
+          uint8 retval = 0xff;
+          if (input.pad[0] & INPUT_B)     retval &= ~0x80;
+          if (input.pad[0] & INPUT_A)     retval &= ~0x10;
+          if (input.pad[0] & INPUT_UP)    retval &= ~0x01;
+          if (input.pad[0] & INPUT_DOWN)  retval &= ~0x02;
+          if (input.pad[0] & INPUT_LEFT)  retval &= ~0x04;
+          if (input.pad[0] & INPUT_RIGHT) retval &= ~0x08;
+          retval &= ~0x20;
+          retval &= ~0x40;
+          return retval;
+        }
+
+        case 0x05:  /* MSB PEN X coordinate */
+          return (input.analog[0][0] >> 8);
+
+        case 0x07:  /* LSB PEN X coordinate */
+          return (input.analog[0][0] & 0xff);
+
+        case 0x09:  /* MSB PEN Y coordinate */
+          return (input.analog[0][1] >> 8);
+
+        case 0x0b:  /* LSB PEN Y coordinate */
+          return (input.analog[0][1] & 0xff);
+
+        case 0x0d:  /* PAGE register */
+          return pico_page[pico_current]; /* TODO */
+
+        case 0x10:  /* PCM registers */
+        case 0x11:
+        case 0x12:
+        case 0x13:
+          return 0x80; /* TODO */
+        
+  		  default:
+			    return m68k_read_bus_8(address);
+    }
+
+    default:	/* ROM */
+			return READ_BYTE(rom_readmap[offset], address & 0x7ffff);
+  }
 }
 
 
 unsigned int m68k_read_memory_16 (unsigned int address)
 {
-	switch ((address >> 21) & 7)
-    {
-		case 0:		/* ROM Cartridge */
-		case 1:
-			/* SRAM */
-      		if (sram.on)
+	int offset = address >> 19;
+
+	switch (m68k_readmap_16[offset])
+	{
+    case WRAM:
+      return *(uint16 *)(work_ram + (address & 0xffff));
+
+		case SVP_DRAM:
+			return *(uint16 *)(svp->dram + (address & 0x1fffe));
+			
+		case SVP_CELL:
+			switch (address >> 16)
 			{
-				if (address >= sram.start && address <= sram.end)
-				{
-	   				if (sram.custom) return (EEPROM_Read(address) & 0xffff);
-					return *(uint16 *)(sram.sram + ((address - sram.start) & 0xffff));
-				}
+				case 0x39:
+					address >>= 1;
+					address = (address & 0x7001) | ((address & 0x3e) << 6) | ((address & 0xfc0) >> 5);
+					return *(uint16 *)(svp->dram + (address & 0x1fffe));
+				
+				case 0x3A:
+					address >>= 1;
+					address = (address & 0x7801) | ((address & 0x1e) << 6) | ((address & 0x7e0) >> 4);
+					return *(uint16 *)(svp->dram + (address & 0x1fffe));
+				
+				default:
+					return m68k_read_bus_16(address);
 			}
 
-			/* ROM Data */
-			if (address < genromsize) return *(uint16 *)(cart_rom + address);
-			
-			/* j-CART */
-			if (j_cart && ((address == 0x3FFFFE) || (address == 0x38FFFE)))
-				return (gamepad_read(5) | (gamepad_read(6) << 8));	
-			
-			/* Virtua Racing SVP */
-			if (address == 0x30fe02) return 0x01;
-			
-			/* default */
-			return 0x00;	
+    case SYSTEM_IO:
+		{
+		  unsigned int base = address >> 8;
 
-		case 7:		/* RAM */
-      		return *(uint16 *)(work_ram + (address & 0xffff));
-
-		case 5:		/* Z80 & I/O */
-			if (address <= 0xA0FFFF) /* Z80 area */
-			{
-				if (zbusack == 1) return (m68k_read_bus_16 (address));
-				else
+		  /* Z80 */
+		  if (base <= 0xa0ff) 
+	    {
+			  /* Z80 controls Z bus ? */
+			  if (zbusack) return m68k_read_bus_16(address);
+	  			
+				/* Read data from Z bus */
+				switch (base & 0x60)
 				{
-					uint8 temp;
-					switch (address & 0x6000)
+					case 0x40: /* YM2612 */
 					{
-						case 0x0000:	/* RAM */
-						case 0x2000:
-							temp = zram[address & 0x1FFF];
-							return (temp << 8 | temp);
+						int temp = fm_read(0, address & 3);
+					  return (temp << 8 | temp);
+					}
 
-						case 0x4000:	/* YM2612 */
-							temp = fm_read (address & 3);
-							return (temp << 8 | temp);
+					case 0x60: /* VDP */
+						if (base == 0xa07f) return m68k_lockup_r_16(address);
+						return (m68k_read_bus_16(address) | 0xffff);
 
-						case 0x6000:
-							switch (address & 0xFF00)
-							{
-								case 0x7F00:	/* VDP */
-									m68k_lockup_r_16 (address);
-
-								default:	/* Unused */
-									return (0xFFFF);
-							}
-							break;
+					default: /* ZRAM */
+					{
+						int temp = zram[address & 0x1fff];
+					  return (temp << 8 | temp);
 					}
 				}
 			}
-      		else if (address <= 0xA1001F)	/* I/O */
-				{
-					uint8 temp = io_read ((address >> 1) & 0x0F);
-					return (temp << 8 | temp);
-				}
-			else if (address <= 0xA1FFFF)	/* CONTROL */
-			{
-				switch ((address >> 8) & 0xFF)
-				{
-					case 0x11:	/* BUSACK */
-						return ((m68k_read_bus_16 (address) & 0xFEFF) | (gen_busack_r () << 8));
 
-					case 0x00:	/* UNKNOWN (BallZ) */
+			/* CONTROL registers */
+			if (base <= 0xa1ff)
+			{
+				switch (base & 0xff)
+				{
+					case 0x00:	/* I/O chip */
+					{
+						if (address & 0xe0) return m68k_read_bus_16(address);
+	    			int temp = io_read((address >> 1) & 0x0f);
+	      		return (temp << 8 | temp);
+					}
+
+					case 0x11:	/* BUSACK */
+						return ((m68k_read_bus_16(address) & 0xfeff) | (zbusack << 8));
+
+					case 0x50:	/* SVP */
+						if (svp)
+            {
+              switch (address & 0xff)
+              {
+                case 0:
+                case 2:
+                  return svp->ssp1601.gr[SSP_XST].h;
+
+                case 4:
+                {
+                  unsigned int temp = svp->ssp1601.gr[SSP_PM0].h;
+                  svp->ssp1601.gr[SSP_PM0].h &= ~1;
+                  return temp;
+                }
+              }
+						}
+            return m68k_read_bus_16(address);
+
+					case 0x30:	/* TIME */
+						if (cart_hw.time_r) return cart_hw.time_r(address);
+						else return m68k_read_bus_16(address);
+
 					case 0x10:	/* MEMORY MODE */
 					case 0x12:	/* RESET */
 					case 0x20:	/* MEGA-CD */
 					case 0x40:	/* TMSS */
 					case 0x41:	/* BOOTROM */
-					case 0x50:	/* SVP REGISTERS */
-					case 0x30:	/* TIME */
-						return (m68k_read_bus_16 (address));
-
-					default:	/* Unused */
-						return (m68k_lockup_r_16 (address));
+					case 0x44:	/* RADICA */
+						return m68k_read_bus_16(address);
+		
+					default:	/* Invalid address */
+						return m68k_lockup_r_16(address);
 				}
-			}
-			else
+      }
+
+			/* Invalid address */
+			return m68k_lockup_r_16 (address);
+		}
+
+		case VDP:
+
+			/* Valid VDP addresses */
+			if (((address >> 16) & 0x07) == 0) 
 			{
-				/* Unused */
-				return (m68k_lockup_r_16 (address));
+				switch (address & 0xfc)
+			  {
+				  case 0x00:	/* DATA */
+				   	return vdp_data_r();
+				
+				  case 0x04:	/* CTRL */
+				   	return ((vdp_ctrl_r() & 0x3FF) | (m68k_read_bus_16(address) & 0xFC00));
+			
+				  case 0x08:	/* HVC */
+				  case 0x0c:
+				   	return vdp_hvc_r();
+			
+					case 0x18:	/* Unused */
+				  case 0x1c:
+				   	return m68k_read_bus_16(address);
+
+					default:
+				   	return m68k_lockup_r_16(address);
+			  }
 			}
 
-			break;
+			/* Invalid address */
+			return m68k_lockup_r_16 (address);
+		
+		case SRAM:
+			if (address <= sram.end) return *(uint16 *)(sram.sram + (address - sram.start));
+			return *(uint16 *)(rom_readmap[offset] + (address & 0x7ffff));
+		
+		case EEPROM:
+      if (address == (eeprom.type.sda_out_adr & 0xfffffe)) return eeprom_read(address, 1);
+			return *(uint16 *)(rom_readmap[offset] + (address & 0x7ffff));
 
-		case 6: 	/* VDP */
-			if ((address & 0xE700E0) == 0xC00000)
-			{
-				switch (address & 0x1F)
-				{
-					case 0x00:		/* DATA */
-					case 0x02:
-						return (vdp_data_r ());
+		case J_CART:
+			return jcart_read();
+			
+		case REALTEC_ROM:
+			return *(uint16 *)(&cart_rom[0x7e000] + (address & 0x1fff));
 
-					case 0x04:		/* CTRL */
-					case 0x06:
-						return (vdp_ctrl_r () | (m68k_read_bus_16 (address) & 0xFC00));
+		case UNUSED:
+			return m68k_read_bus_16(address);
 
-					case 0x08:		/* HVC */
-					case 0x0A:
-					case 0x0C:
-					case 0x0E:
-						return (vdp_hvc_r ());
+		case ILLEGAL:
+			return m68k_lockup_r_16(address);
 
-					case 0x10:		/* PSG */
-					case 0x12:
-					case 0x14:
-					case 0x16:
-						return (m68k_lockup_r_16 (address));
+		case UMK3_HACK:
+			return *(uint16 *)(&cart_rom[offset << 19] + (address & 0x7ffff));
 
-					case 0x18:		/* Unused */
-					case 0x1A:
-					case 0x1C:
-					case 0x1E:
-						return (m68k_read_bus_16 (address));
-				}
-			}
-			else
-			{
-				return (m68k_lockup_r_16 (address));
-			}
-			break;
+ 		case PICO_HW:
+      switch (address & 0xff)
+      {
+        case 0x00:  /* VERSION register */
+          return (0x40);
 
-		case 2:
-		case 3:
-			return (m68k_read_bus_16 (address));
+        case 0x02:  /* IO register */
+        {
+          uint8 retval = 0xff;
+          if (input.pad[0] & INPUT_B)     retval &= ~0x80;
+          if (input.pad[0] & INPUT_A)     retval &= ~0x10;
+          if (input.pad[0] & INPUT_UP)    retval &= ~0x01;
+          if (input.pad[0] & INPUT_DOWN)  retval &= ~0x02;
+          if (input.pad[0] & INPUT_LEFT)  retval &= ~0x04;
+          if (input.pad[0] & INPUT_RIGHT) retval &= ~0x08;
+          retval &= ~0x20;
+          retval &= ~0x40;
+          return retval;
+        }
 
-		case 4:
-			return (m68k_lockup_r_16 (address));
-	}
+        case 0x04:  /* MSB PEN X coordinate */
+          return (input.analog[0][0] >> 8);
 
-	return (0xA5A5);
+        case 0x06:  /* LSB PEN X coordinate */
+          return (input.analog[0][0] & 0xff);
+
+        case 0x08:  /* MSB PEN Y coordinate */
+          return (input.analog[0][1] >> 8);
+
+        case 0x0a:  /* LSB PEN Y coordinate */
+          return (input.analog[0][1] & 0xff);
+
+        case 0x0c:  /* PAGE register */
+          return pico_page[pico_current]; /* TODO */
+
+        case 0x10:  /* PCM data register */
+          return 0x8000; /* TODO */
+
+        case 0x12:  /* PCM control registe */
+          return 0x8000; /* TODO */
+
+       default:
+          return m68k_read_bus_16(address);
+      }
+
+    default:	/* ROM */
+			return *(uint16 *)(rom_readmap[offset] + (address & 0x7ffff));
+  }
 }
 
 
-unsigned int m68k_read_memory_32 (unsigned int address)
+unsigned int m68k_read_memory_32(unsigned int address)
 {
-	/* Split into 2 reads */
-	return (m68k_read_memory_16 (address + 0) << 16 |
-			m68k_read_memory_16 (address + 2));
+  /* Split into 2 reads */
+	return ((m68k_read_memory_16 (address) << 16) |
+	  		  (m68k_read_memory_16 ((address+ 2)&0xffffff)));
 }
 
 
-void m68k_write_memory_8 (unsigned int address, unsigned int value)
+void m68k_write_memory_8(unsigned int address, unsigned int value)
 {
-	switch ((address >> 21) & 7)
-	{
-		case 7:		/* RAM */
-      		WRITE_BYTE(work_ram, address & 0xFFFF, value);
-			return;
+	int offset = address >> 19;
 
-		case 6:		/* VDP */
-			if ((address & 0xE700E0) == 0xC00000)
+  switch (m68k_writemap_8[offset])
+  {
+		case VDP:
+			/* Valid VDP addresses */
+			if (((address >> 16) & 0x07) == 0) 
 			{
-				switch (address & 0x1F)
+				switch (address & 0xff)
 				{
-					case 0x00:		/* DATA */
+					case 0x00:	/* Data port */
 					case 0x01:
 					case 0x02:
 					case 0x03:
-						vdp_data_w (value << 8 | value);
+						vdp_data_w(value << 8 | value);
 						return;
 
-					case 0x04:		/* CTRL */
+					case 0x04:	/* Control port */
 					case 0x05:
 					case 0x06:
 					case 0x07:
-						vdp_ctrl_w (value << 8 | value);
+						vdp_ctrl_w(value << 8 | value);
 						return;
 
-					case 0x08:		/* HVC */
-					case 0x09:
-					case 0x0A:
-					case 0x0B:
-					case 0x0C:
-					case 0x0D:
-					case 0x0E:
-					case 0x0F:
-						m68k_lockup_w_8 (address, value);
-						return;
-
-					case 0x10:		/* PSG */
+					case 0x10:	/* Unused */
 					case 0x12:
 					case 0x14:
 					case 0x16:
-						m68k_unused_8_w (address, value);
+						m68k_unused_8_w(address, value);
 						return;
-
-					case 0x11:		/* PSG */
+					
+					case 0x11:	/* PSG */
 					case 0x13:
 					case 0x15:
 					case 0x17:
-						psg_write (0, value);
+						psg_write(0, value);
 						return;
 
-					case 0x18:		/* Unused */
+					case 0x18: /* Unused */
 					case 0x19:
-					case 0x1A:
-					case 0x1B:
-					case 0x1C:
-					case 0x1D:
-					case 0x1E:
-					case 0x1F:
-						m68k_unused_8_w (address, value);
+					case 0x1a:
+					case 0x1b:
+						m68k_unused_8_w(address, value);
+						return;
+
+					case 0x1c:  /* Test register */
+					case 0x1d:
+					case 0x1e:
+					case 0x1f:
+						vdp_test_w(value << 8 | value);
+						return;
+
+					default:	/* Invalid address */
+						m68k_lockup_w_8(address, value);
 						return;
 				}
 			}
-			else
-			{
-				m68k_lockup_w_8 (address, value);
-				return;
+
+			/* Invalid address */
+			m68k_lockup_w_8(address, value);
+			return;
+
+
+		case SYSTEM_IO:
+		{
+			unsigned int base = address >> 8;
+
+			/* Z80 */
+			if (base <= 0xa0ff) 
+	    {
+			 	/* Writes are ignored when the Z80 hogs the Z-bus */
+			 	if (zbusack)
+			  {
+			   	m68k_unused_8_w (address, value);
+			   	return;
+			  }
+           
+				/* Read data from Z bus */
+				switch (base & 0x60)
+				{
+					case 0x40: /* YM2612 */
+						fm_write(0, address & 3, value);
+						return;
+
+					case 0x60:
+						switch (base & 0x7f)
+						{
+							case 0x60:	/* Bank register */
+								gen_bank_w(value & 1);
+								return;
+
+							case 0x7f:	/* VDP */
+								m68k_lockup_w_8(address, value);
+								return;
+
+							default:
+								m68k_unused_8_w(address, value);
+								return;
+						}
+
+					default: /* ZRAM */
+						zram[address & 0x1fff] = value;
+            count_m68k ++;
+						return;
+				}
 			}
 
-		case 5: /* Z80 & IO */
-			if (address <= 0xA0FFFF) /* Z80 area */
-			{
-				if (zbusack == 1)
-				{
-					m68k_unused_8_w (address, value);
-					return;
-				}
-				else
-				{
-					switch (address & 0x6000)
-					{
-						case 0x0000:
-						case 0x2000:
-							zram[(address & 0x1FFF)] = value;
-							return;
-
-						case 0x4000:
-							fm_write (0, address & 3, value);
-							return;
-
-						case 0x6000:
-							switch (address & 0xFF00)
-							{
-								case 0x6000:	/* BANK */
-									gen_bank_w (value & 1);
-									return;
-
-								case 0x7F00:	/* VDP */
-									m68k_lockup_w_8 (address, value);
-									return;
-
-								default:	/* Unused */
-									m68k_unused_8_w (address, value);
-									return;
-							}
-							break;
-					}
-				}
-			}
-			else if (address <= 0xA1001F) /* I/O */
-				{
-					/* I/O chip only gets /LWR */
-					if (address & 1) io_write ((address >> 1) & 0x0F, value);
-					return;
-				}
-			else if (address <= 0xA1FFFF) /* CONTROL */
+			/* CONTROL registers */
+			if (base <= 0xa1ff)
 			{  			
-				switch ((address >> 8) & 0xFF)
+				switch (base & 0xff)
 				{
+					case 0x00:	/* I/O chip (only gets /LWR) */
+						if ((address & 0xe1) == 0x01) io_write((address >> 1) & 0x0f, value);
+						else m68k_unused_8_w(address, value);
+		  				return;
+
 					case 0x11:	/* BUSREQ */
-						if ((address & 1) == 0) gen_busreq_w (value & 1);
-						else m68k_unused_8_w (address, value);
-						return;
+						if (address & 1) m68k_unused_8_w(address, value);
+						else gen_busreq_w(value & 1);
+		  				return;
 
 					case 0x12:	/* RESET */
-						gen_reset_w (value & 1);
-						return;
+						if (address & 1) m68k_unused_8_w(address, value);
+					  	else gen_reset_w(value & 1);
+					  	return;
 
 					case 0x30:	/* TIME */
-					 	if (SSF2TNC) ssf2bankrom (address, value & 0xf); /* banked ROM */
-						else if (address == 0xA130F1) /* banked SRAM */
+						if (cart_hw.time_w) cart_hw.time_w(address, value);
+						else m68k_unused_8_w(address, value);
+						return;
+
+					case 0x41:	/* BOOTROM */
+						if (address & 1)
 						{
-							sram.on = value & 1;
-							sram.write = (value & 2) ? 0 : 1;
+    					if (value & 1)
+    					{
+    						rom_readmap[0] = &cart_rom[0];
+    						rom_size = genromsize;
+    					}
+    					else
+    					{
+    						rom_readmap[0] = &bios_rom[0];
+    						rom_size = 0x800;
+    					}
+    
+    					if (!(config.bios_enabled & 2))
+    					{
+    						config.bios_enabled |= 2;
+    						memcpy(bios_rom, cart_rom, 0x800);
+    						memset(cart_rom, 0, 0x500000);
+    					}
 						}
 						else m68k_unused_8_w (address, value);
 						return;
@@ -535,244 +737,295 @@ void m68k_write_memory_8 (unsigned int address, unsigned int value)
 					case 0x10:	/* MEMORY MODE */
 					case 0x20:	/* MEGA-CD */
 					case 0x40:	/* TMSS */
-					case 0x41:	/* BOOTROM */
+					case 0x44:	/* RADICA */
 					case 0x50:  /* SVP REGISTERS */
-						m68k_unused_8_w (address, value);
+						m68k_unused_8_w(address, value);
 					  	return;
 
-					default:
-							m68k_lockup_w_8 (address, value);
-							return;
+					default:	/* Invalid address */
+					  	m68k_lockup_w_8(address, value);
+					  	return;
 				}
 			}
-			else
-			{
-				/* Unused */
-				m68k_lockup_w_8 (address, value);
-				return;
-			}
-			break;
 
-		case 0:		/* ROM Cartridge */
-		case 1:
-	  
-			/* external SRAM */
-			if (sram.on && sram.write)
-			{
-				if (address >= sram.start && address <= sram.end)
-				{
-					/* serial EEPROM */
-					if (sram.custom)
-					{
-						EEPROM_Write(address, value);
-						return;
-					}
-					
-					/* normal SRAM */
-					WRITE_BYTE(sram.sram, (address - sram.start) & 0xffff, value & 0xff);
-					return;
-				}
-			}
-			m68k_unused_8_w (address, value);
+			/* Invalid address */
+			m68k_lockup_w_8(address, value);
 			return;
+		}
 
-		case 2:		/* Unused */
-			/* Some unlicensed games have a simple protection device mapped here */
-			prot_bytes[(address>>2)&1] = value;
+		case ROM:			
+			WRITE_BYTE(rom_readmap[offset], address & 0x7ffff, value);
 			return;
-		case 3:
-			m68k_unused_8_w (address, value);
+			
+		case SRAM:
+			if (address <= sram.end) WRITE_BYTE(sram.sram, address - sram.start, value);
+			else m68k_unused_8_w(address, value);
 			return;
+		
+		case EEPROM:
+      if ((address == eeprom.type.sda_in_adr) || (address == eeprom.type.scl_adr)) eeprom_write(address, value, 0);
+			else m68k_unused_8_w(address, value);
+			return;
+			
+    	case CART_HW:
+			cart_hw.regs_w(address, value);
+			return;
+		
+		case UNUSED: 
+			m68k_unused_8_w(address, value);
+	    return;
 
-		case 4:		/* Unused */
-			m68k_lockup_w_8 (address, value);
-			return;
-	}
+		case ILLEGAL: 
+      m68k_lockup_w_8(address, value);
+      return;
+
+ 		case PICO_HW:
+      switch (address & 0xff)
+      {
+        case 0x19:
+        case 0x1b:
+        case 0x1d:
+        case 0x1f:  /* TMSS register */
+          return;
+        
+        default:
+          m68k_unused_8_w(address, value);
+          return;
+      }
+
+		default:	/* WRAM */
+			WRITE_BYTE(work_ram, address & 0xffff, value);
+      return;
+  }
 }
 
 
 void m68k_write_memory_16 (unsigned int address, unsigned int value)
 {
-	switch ((address >> 21) & 7)
+	int offset = address >> 19;
+
+	switch (m68k_writemap_16[offset])
 	{
-		case 7:	 /* Work RAM */
-      		*(uint16 *)(work_ram + (address& 0xFFFF)) = value & 0xffff;
-		  	return;
-
-		case 6:		/* VDP */
-			if ((address & 0xE700E0) == 0xC00000)
+		case SVP_DRAM:
+			*(uint16 *)(svp->dram + (address & 0x1fffe)) = value;
+			if ((address == 0x30fe06) && value) svp->ssp1601.emu_status &= ~SSP_WAIT_30FE06;
+			if ((address == 0x30fe08) && value) svp->ssp1601.emu_status &= ~SSP_WAIT_30FE08;
+			return;
+		
+   	case VDP:
+			/* Valid VDP addresses */
+			if (((address >> 16) & 0x07) == 0)
 			{
-				switch (address & 0x1C)
+				switch (address & 0xfc)
 				{
-					case 0x00:		/* DATA */
-						vdp_data_w (value);
-						return;
+			    case 0x00:	/* DATA */
+				   	vdp_data_w(value);
+		      	return;
+		
+			    case 0x04:	/* CTRL */
+			    	vdp_ctrl_w(value);
+			    	return;
+		
+				  case 0x10:	/* PSG */
+				  case 0x14:
+						psg_write(0, value & 0xff);
+			    	return;
+		
+				  case 0x18:	/* Unused */
+				   	m68k_unused_16_w(address, value);
+				   	return;
 
-					case 0x04:		/* CTRL */
-						vdp_ctrl_w (value);
-						return;
+				  case 0x1c:	/* Test register */
+					  vdp_test_w(value);
+					  return;
 
-					case 0x08:		/* HV counter */
-					case 0x0C:		/* HV counter */
+					default:	/* Invalid address */
 						m68k_lockup_w_16 (address, value);
 						return;
-
-					case 0x10:		/* PSG */
-					case 0x14:		/* PSG */
-						psg_write (0, value & 0xFF);
-						return;
-
-					case 0x18:		/* Unused */
-					case 0x1C:		/* Unused */
-						m68k_unused_8_w (address, value);
-						return;
 				}
 			}
-			else
-			{
-				/* Invalid address */
-				m68k_lockup_w_16 (address, value);
-			}
-			break;
 
-		case 5:		/* Z80 area, I/O chip, miscellaneous. */
-			if (address <= 0xA0FFFF) /* Z80 area */
-			{
-				/* Writes are ignored when the Z80 hogs the Z-bus */
-				if (zbusack == 1)
-				{
-					m68k_unused_8_w (address, value);
+			/* Invalid address */
+			m68k_lockup_w_16 (address, value);
+			return;
+
+
+    case SYSTEM_IO:
+		{
+			unsigned int base = address >> 8;
+
+			/* Z80 */
+			if (base <= 0xa0ff) 
+	    {
+			 	/* Writes are ignored when the Z80 hogs the Z-bus */
+			 	if (zbusack)
+			  {
+			   	m68k_unused_16_w (address, value);
 					return;
-				}
-
-				/* Write into Z80 address space */
-				switch (address & 0x6000)
+			  }
+		
+			 	/* Write into Z80 address space */
+				switch (base & 0x60)
 				{
-					case 0x0000:	/* Work RAM */
-					case 0x2000:	/* Work RAM */
-						zram[(address & 0x1FFF)] = (value >> 8) & 0xFF;
+					case 0x40: /* YM2612 */
+						fm_write (0, address & 3, value >> 8);
 						return;
 
-					case 0x4000:	/* YM2612 */
-						fm_write (0, address & 3, (value >> 8) & 0xFF);
-						return;
-
-					case 0x6000:	/* Bank register and VDP */
-						switch (address & 0x7F00)
+					case 0x60:
+						switch (base & 0x7f)
 						{
-							case 0x6000:	/* Bank register */
+							case 0x60:	/* Bank register */
 								gen_bank_w ((value >> 8) & 1);
 								return;
 
-							case 0x7F00:	/* VDP registers */
-								m68k_lockup_w_16 (address, value);
+							case 0x7f:	/* VDP */
+								m68k_lockup_w_16(address, value);
 								return;
 
-							default:	/* Unused */
-								m68k_unused_8_w (address, value);
+							default:
+								m68k_unused_16_w(address, value);
 								return;
 						}
-						break;
+
+					default: /* ZRAM */
+						zram[address & 0x1fff] = value >> 8;
+						return;
 				}
 			}
-			else if (address <= 0xA1001F) /* I/O */
-			{
-				io_write ((address >> 1) & 0x0F, value & 0x00FF);
-				return;
-			}
-			else if (address <= 0xA1FFFF) /* CONTROL */
-	    	{				
-				switch ((address >> 8) & 0xFF)
+			
+			/* CONTROL registers */
+			if (base <= 0xa1ff)
+	    {				
+				switch (base & 0xff)
 				{
+					case 0x00:	/* I/O chip */
+						if (address & 0xe0) m68k_unused_16_w (address, value);
+						else io_write ((address >> 1) & 0x0f, value & 0xff);
+	      		return;
+	    	
 					case 0x11:	/* BUSREQ */
-						gen_busreq_w ((value >> 8) & 1);
-						return;
-
+					  gen_busreq_w ((value >> 8) & 1);
+					  return;
+				
 					case 0x12:	/* RESET */
-						gen_reset_w ((value >> 8) & 1);
-						return;
+					  gen_reset_w ((value >> 8) & 1);
+					  return;
+						
+					case 0x50:  /* SVP REGISTERS */
+						if (svp && ((address & 0xfd) == 0))
+						{
+								/* just guessing here (Notaz) */
+								svp->ssp1601.gr[SSP_XST].h = value;
+								svp->ssp1601.gr[SSP_PM0].h |= 2;
+								svp->ssp1601.emu_status &= ~SSP_WAIT_PM0;
+								return;
+            }
+            m68k_unused_16_w(address, value);
+            return;
 
 					case 0x30:	/* TIME */
-						if (SSF2TNC) ssf2bankrom (address, value & 0xf); /* banked ROM */
-						else if (address == 0xA130F1) /* banked SRAM */
+						if (cart_hw.time_w)
 						{
-							sram.on = value & 1;
-							sram.write = (value & 2) ? 0 : 1;
+							cart_hw.time_w(address & 0xfe, value >> 8);
+							cart_hw.time_w(address, value & 0xff);
 						}
 						else m68k_unused_16_w (address, value);
 						return;
-
+					
+					case 0x41:	/* BOOTROM */
+						if (value & 1)
+						{
+							rom_readmap[0] = &cart_rom[0];
+							rom_size = genromsize;
+						}
+						else
+						{
+							rom_readmap[0] = &bios_rom[0];
+							rom_size = 0x800;
+						}
+								
+						if (!(config.bios_enabled & 2))
+						{
+							config.bios_enabled |= 2;
+							memcpy(bios_rom, cart_rom, 0x800);
+							memset(cart_rom, 0, 0x500000);
+						}
+						return;
+					
 					case 0x10:	/* MEMORY MODE */
 					case 0x20:	/* MEGA-CD */
 					case 0x40:	/* TMSS */
-					case 0x41:	/* BOOTROM */
-					case 0x50:  /* SVP REGISTERS */
-					  	m68k_unused_16_w (address, value);
-					  	return;
-				
+					case 0x44:	/* RADICA */
+					  m68k_unused_16_w (address, value);
+					  return;
+						
 					default:	/* Unused */
-						m68k_lockup_w_16 (address, value);
-						return;
-				}
-			}
-			else
-			{
-				m68k_lockup_w_16 (address, value);
-				return;
+					  m68k_lockup_w_16 (address, value);
+					  return;
+	    	}
 			}
 
-			break;
-
-		case 0:		/* Cartridge ROM */
-		case 1:
-			/* J-CART extension (TH signal) */
-			if ((address == 0x3FFFFE) || (address == 0x38FFFE)) 
-			{
-				if (!j_cart)
-				{
-					j_cart = 1;
-					input_reset(pad_type);
-				}
-				gamepad_write(5, (value&1) <<6 );
-				gamepad_write(6, (value&1) <<6);
-				return;
-			}
-
-			/* external SRAM */
-			if (sram.on && sram.write) 
-			{
-				if (address >= sram.start && address <= sram.end)
-				{
-					/* serial EEPROM */
-					if (sram.custom)
-					{
-						EEPROM_Write(address, value);
-						return;
-					}
-					
-					/* normal SRAM */
-					*(uint16 *)(sram.sram + ((address - sram.start) & 0xffff)) = value & 0xffff;
-					return;
-				}
-			}
-			m68k_unused_16_w (address, value);
-			return;
-
-		case 2:		/* Unused */
-		case 3:
-			m68k_unused_16_w (address, value);
-			return;
-
-		case 4:		/* Unused */
+			/* Invalid address */
 			m68k_lockup_w_16 (address, value);
 			return;
+		}
+
+		case ROM:
+			*(uint16 *)(rom_readmap[offset] + (address & 0x7ffff)) = value;
+			return;
+
+		case SRAM:
+			if (address <= sram.end) *(uint16 *)(sram.sram + (address - sram.start)) = value;
+			else m68k_unused_16_w (address, value);
+			return;
+
+		case EEPROM:
+      if ((address == (eeprom.type.sda_in_adr&0xfffffe)) || (address == (eeprom.type.scl_adr&0xfffffe)))
+        eeprom_write(address, value, 1);
+			else m68k_unused_16_w (address, value);
+			return;
+		
+		case J_CART:
+			jcart_write(value);
+			return;
+
+		case UNUSED:
+      m68k_unused_16_w (address, value);
+      return;
+
+		case ILLEGAL: 
+			m68k_lockup_w_16 (address, value);
+      return;
+
+ 		case PICO_HW:
+      switch (address & 0xff)
+      {
+        case 0x10:  /* PCM data register */
+          return; /* TODO */
+        
+        case 0x12:  /* PCM control resiter */
+          return; /* TODO */
+          
+        case 0x18:
+        case 0x1a:
+        case 0x1c:
+        case 0x1e:  /* TMSS register */
+          return;
+        
+        default:
+          m68k_unused_16_w(address, value);
+          return;
+      }
+
+		default:	/* WRAM */
+			*(uint16 *)(work_ram + (address & 0xffff)) = value;
+      return;
 	}
 }
 
-
 void m68k_write_memory_32 (unsigned int address, unsigned int value)
 {
-	/* Split into 2 writes */
-	m68k_write_memory_16 (address, (value >> 16) & 0xFFFF);
-	m68k_write_memory_16 (address + 2, value & 0xFFFF);
+  /* Split into 2 writes */
+  m68k_write_memory_16 (address, value >> 16);
+  m68k_write_memory_16 ((address+2) & 0xffffff, value & 0xffff);
 }

@@ -1,9 +1,35 @@
+/* 
+    SN76489 emulation
+    by Maxim in 2001 and 2002
+    converted from my original Delphi implementation
+
+    I'm a C newbie so I'm sure there are loads of stupid things
+    in here which I'll come back to some day and redo
+
+    Includes:
+    - Super-high quality tone channel "oversampling" by calculating fractional positions on transitions
+    - Noise output pattern reverse engineered from actual SMS output
+    - Volume levels taken from actual SMS output
+
+    07/08/04  Charles MacDonald
+    Modified for use with SMS Plus:
+    - Added support for multiple PSG chips.
+    - Added reset/config/update routines.
+    - Added context management routines.
+    - Removed SN76489_GetValues().
+    - Removed some unused variables.
+
+   25/04/07 Eke-Eke
+   Modified for use with GenesisPlus Gamecube's port:
+   - made SN76489_Update outputs 16bits mono samples
+   - replaced volume table with VGM plugin's one
+*/
 
 #ifndef _SN76489_H_
 #define _SN76489_H_
 
 #define MAX_SN76489     4
-#include "shared.h"
+
 /*
     More testing is needed to find and confirm feedback patterns for
     SN76489 variants and compatible chips.
@@ -64,28 +90,15 @@ typedef struct
 } SN76489_Context;
 
 /* Function prototypes */
-void SN76489_Init(int which, int PSGClockValue, int SamplingRate);
-void SN76489_Reset(int which);
-void SN76489_Shutdown(void);
-void SN76489_Config(int which, int mute, int volume, int feedback, int sw_width, int boost_noise);
-void SN76489_SetContext(int which, uint8 *data);
-void SN76489_GetContext(int which, uint8 *data);
-uint8 *SN76489_GetContextPtr(int which);
-int SN76489_GetContextSize(void);
-void SN76489_Write(int which, int data);
-/*void SN76489_GGStereoWrite(int which, int data);*/
-void SN76489_Update(int which, INT16 *buffer, int length);
-
-/* Non-standard getters and setters */
-int  SN76489_GetMute(int which);
-void SN76489_SetMute(int which, int val);
-int  SN76489_GetVolType(int which);
-void SN76489_SetVolType(int which, int val);
-
-void SN76489_SetPanning(int which, int ch0, int ch1, int ch2, int ch3);
-
-/* and a non-standard data getter */
-/*void SN76489_UpdateOne(int which, int *l, int *r);*/
+extern void SN76489_Init(int which, int PSGClockValue, int SamplingRate);
+extern void SN76489_Reset(int which);
+extern void SN76489_Config(int which, int mute, int volume, int feedback, int sw_width, int boost_noise);
+extern void SN76489_SetContext(int which, uint8 *data);
+extern void SN76489_GetContext(int which, uint8 *data);
+extern uint8 *SN76489_GetContextPtr(int which);
+extern int SN76489_GetContextSize(void);
+extern void SN76489_Write(int which, int data);
+extern void SN76489_Update(int which, INT16 *buffer, int length);
 
 #endif /* _SN76489_H_ */
 
