@@ -23,6 +23,7 @@
 **  - modified EG rates and frequency, tested by Nemesis on real hardware
 **  - fixed EG attenuation level on KEY ON (Ecco 2 splash sound)
 **  - fixed LFO phase update for CH3 special mode (Warlock, Alladin), thanks to AamirM
+**  - fixed Attack rate refresh (fix Batman&Robin introduction)
 **
 ** 03-08-2003 Jarek Burczynski:
 **  - fixed YM2608 initial values (after the reset)
@@ -799,19 +800,16 @@ INLINE void set_ar_ksr(FM_CH *CH,FM_SLOT *SLOT,int v)
 		CH->SLOT[SLOT1].Incr=-1;
 	}
 
-	//else /* fix Batman&Robin */
+	/* refresh Attack rate */
+	if ((SLOT->ar + SLOT->ksr) < 94 /*32+62*/)
 	{
-		/* refresh Attack rate */
-		if ((SLOT->ar + SLOT->ksr) < 94 /*32+62*/)
-		{
-			SLOT->eg_sh_ar  = eg_rate_shift [SLOT->ar  + SLOT->ksr ];
-			SLOT->eg_sel_ar = eg_rate_select[SLOT->ar  + SLOT->ksr ];
-		}
-		else
-		{
-			SLOT->eg_sh_ar  = 0;
-			SLOT->eg_sel_ar = 17*RATE_STEPS;
-		}
+		SLOT->eg_sh_ar  = eg_rate_shift [SLOT->ar  + SLOT->ksr ];
+		SLOT->eg_sel_ar = eg_rate_select[SLOT->ar  + SLOT->ksr ];
+	}
+	else
+	{
+		SLOT->eg_sh_ar  = 0;
+		SLOT->eg_sel_ar = 17*RATE_STEPS;
 	}
 }
 
