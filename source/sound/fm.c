@@ -658,6 +658,7 @@ INLINE void FM_KEYON(FM_CH *CH , int s )
 	{
 		SLOT->key = 1;
 		SLOT->phase = 0;		/* restart Phase Generator */
+
 		if ((SLOT->ar + SLOT->ksr) < 94 /*32+62*/)
 		{
 		  SLOT->state = EG_ATT;	/* phase -> Attack */
@@ -665,7 +666,7 @@ INLINE void FM_KEYON(FM_CH *CH , int s )
     }
     else
     {
-      /* directly switch to Decay */
+      /* Attack Rate is maximal: directly switch to Decay */
       SLOT->state = EG_DEC;
       SLOT->volume = MIN_ATT_INDEX;
     }
@@ -1225,7 +1226,7 @@ INLINE void refresh_fc_eg_slot(FM_SLOT *SLOT , int fc , int kc )
 		SLOT->ksr = ksr;
 
 		/* calculate envelope generator rates */
-		if ((SLOT->ar + SLOT->ksr) < 94/*32+62*/)
+		if ((SLOT->ar + SLOT->ksr) < 94 /*32+62*/)
 		{
 			SLOT->eg_sh_ar  = eg_rate_shift [SLOT->ar  + SLOT->ksr ];
 			SLOT->eg_sel_ar = eg_rate_select[SLOT->ar  + SLOT->ksr ];
@@ -1392,7 +1393,7 @@ static int init_tables(void)
 /* CSM Key Controll */
 INLINE void CSMKeyControll(FM_CH *CH)
 {
-	/* this is wrong, atm */
+  /* correct implementation (credits to Nemesis) */
 
 	/* all key on */
 	FM_KEYON(CH,SLOT1);
@@ -1400,7 +1401,7 @@ INLINE void CSMKeyControll(FM_CH *CH)
 	FM_KEYON(CH,SLOT3);
 	FM_KEYON(CH,SLOT4);
 
-	/* all key off (credits to Nemesis) --> do not work properly atm */
+	/* all key off */
 	FM_KEYOFF(CH,SLOT1);
 	FM_KEYOFF(CH,SLOT2);
 	FM_KEYOFF(CH,SLOT3);
