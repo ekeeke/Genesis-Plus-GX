@@ -198,8 +198,7 @@ void cart_hw_init()
 					SVP CHIP 
 	***********************************************/
 	svp = NULL;
-	if ((strstr(rominfo.product,"MK-1229") != NULL) ||
-		(strstr(rominfo.product,"G-7001") != NULL))
+	if (strstr(rominfo.international,"Virtua Racing") != NULL)
 	{
 		svp_init();
 		m68k_readmap_16[6]	= SVP_DRAM;
@@ -211,10 +210,10 @@ void cart_hw_init()
 	/**********************************************
 					SEGA MENACER 
 	***********************************************/
-  input.x_offset = 0;
-  input.y_offset = 0;
+  input.x_offset = 0x00;
+  input.y_offset = 0x00;
 
-	if (strstr(rominfo.product,"MK-1658") != NULL)    /* Menacer 6-in-1 pack */
+  if (strstr(rominfo.international,"MENACER") != NULL)
 	{
 		/* save current setting */
     if (old_system[0] == -1) old_system[0] = input.system[0];
@@ -222,32 +221,40 @@ void cart_hw_init()
      
     input.system[0] = NO_SYSTEM;
     input.system[1] = SYSTEM_MENACER;
-
-    /* specific game adjustment */
     input.x_offset = 0x52;
+    input.y_offset = 0x00;
 	}
-	else if (strstr(rominfo.product,"T-081156") != NULL)    /* T2: Arcade Game */
+	else if (strstr(rominfo.international,"T2 ; THE ARCADE GAME") != NULL)
   {
     input.system[0] = SYSTEM_GAMEPAD;
     input.system[1] = SYSTEM_MENACER;
-
-    /* specific game adjustment */
     input.x_offset = 0x84;
-    input.y_offset = 8;
+    input.y_offset = 0x08;
 	}
-	else if (strstr(rominfo.product,"T-95136") != NULL)    /* Lethal Enforcers II */
+	else if (strstr(rominfo.international,"BODY COUNT") != NULL)
   {
-    input.system[0] = SYSTEM_GAMEPAD;
-    input.system[1] = SYSTEM_JUSTIFIER;
+    input.system[0] = SYSTEM_MOUSE;
+    input.system[1] = SYSTEM_MENACER;
+    input.x_offset = 0x44;
+    input.y_offset = 0x18;
+	}
 
-    /* specific game adjustment */
-  input.x_offset = 0x18;
-	}
-	else if ((strstr(rominfo.product,"T-95096") != NULL) ||   /* Lethal Enforcers (USA,Europe) */
-           (strstr(rominfo.product,"T-95073") != NULL))     /* Lethal Enforcers (J)*/
+	/**********************************************
+					KONAMI JUSTIFIER 
+	***********************************************/
+	if (strstr(rominfo.international,"LETHAL ENFORCERS II") != NULL)
   {
     input.system[0] = SYSTEM_GAMEPAD;
     input.system[1] = SYSTEM_JUSTIFIER;
+  input.x_offset = 0x18;
+    input.y_offset = 0x00;
+	}
+	else if (strstr(rominfo.international,"LETHAL ENFORCERS") != NULL)
+  {
+    input.system[0] = SYSTEM_GAMEPAD;
+    input.system[1] = SYSTEM_JUSTIFIER;
+    input.x_offset = 0x00;
+    input.y_offset = 0x00;
   }
 
 	/**********************************************

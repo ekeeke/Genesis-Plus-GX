@@ -413,7 +413,7 @@ void ConfigureJoypads ()
 	int i = 0;
   int quit = 0;
 	int prevmenu = menu;
-  char padmenu[7][20];
+  char padmenu[8][20];
 
   int player = 0;
 #ifdef HW_RVL
@@ -430,6 +430,11 @@ void ConfigureJoypads ()
     if (input.system[0] == SYSTEM_GAMEPAD)
     {
       sprintf (padmenu[0], "Port 1: GAMEPAD");
+      max_players ++;
+    }
+    else if (input.system[0] == SYSTEM_MOUSE)
+    {
+      sprintf (padmenu[0], "Port 1: MOUSE");
       max_players ++;
     }
     else if (input.system[0] == SYSTEM_WAYPLAY)
@@ -487,29 +492,30 @@ void ConfigureJoypads ()
       player = 0;
     }
 
-    sprintf (padmenu[2], "Gun Cursor: %s", config.crosshair ? " ON":"OFF");
-    sprintf (padmenu[3], "Set Player: %d%s", player + 1, (j_cart && (player > 1)) ? "-JCART" : "");
+    sprintf (padmenu[2], "Gun Cursor: %s", config.gun_cursor ? "Y":"N");
+    sprintf (padmenu[3], "Invert Mouse: %s", config.gun_cursor ? "Y":"N");
+    sprintf (padmenu[4], "Set Player: %d%s", player + 1, (j_cart && (player > 1)) ? "-JCART" : "");
 
     if (config.input[player].device == 0)
-      sprintf (padmenu[4], "Device: GAMECUBE %d", config.input[player].port + 1);
+      sprintf (padmenu[5], "Device: GAMECUBE %d", config.input[player].port + 1);
 #ifdef HW_RVL
     else if (config.input[player].device == 1)
-      sprintf (padmenu[4], "Device: WIIMOTE %d", config.input[player].port + 1);
+      sprintf (padmenu[5], "Device: WIIMOTE %d", config.input[player].port + 1);
     else if (config.input[player].device == 2)
-      sprintf (padmenu[4], "Device: NUNCHUK %d", config.input[player].port + 1);
+      sprintf (padmenu[5], "Device: NUNCHUK %d", config.input[player].port + 1);
     else if (config.input[player].device == 3)
-      sprintf (padmenu[4], "Device: CLASSIC %d", config.input[player].port + 1);
+      sprintf (padmenu[5], "Device: CLASSIC %d", config.input[player].port + 1);
 #endif
     else
-      sprintf (padmenu[4], "Device: NONE");
+      sprintf (padmenu[5], "Device: NONE");
 
     /* when using wiimote, force to 3Buttons pad */
     if (config.input[player].device == 1) input.padtype[player] = DEVICE_3BUTTON;
-    sprintf (padmenu[5], "%s", (input.padtype[player] == DEVICE_3BUTTON) ? "Type: 3BUTTONS":"Type: 6BUTTONS");
+    sprintf (padmenu[6], "%s", (input.padtype[player] == DEVICE_3BUTTON) ? "Type: 3BUTTONS":"Type: 6BUTTONS");
 
-    sprintf (padmenu[6], "Configure Input");
+    sprintf (padmenu[7], "Configure Input");
 
-    ret = domenu (&padmenu[0], 7,0);
+    ret = domenu (&padmenu[0], 8,0);
 
 		switch (ret)
 		{
@@ -538,6 +544,7 @@ void ConfigureJoypads ()
           break;
         }
         input.system[1] ++;
+        if (input.system[1] == SYSTEM_MOUSE) input.system[0] ++;
         if (input.system[1] == SYSTEM_WAYPLAY) input.system[0] = SYSTEM_WAYPLAY;
         if (input.system[1] > SYSTEM_WAYPLAY)
         {
@@ -547,10 +554,14 @@ void ConfigureJoypads ()
 			  break;
 
       case 2:
-        config.crosshair ^= 1;
+        config.gun_cursor ^= 1;
         break;
 
       case 3:
+        config.invert_mouse ^= 1;
+        break;
+
+      case 4:
         /* remove duplicate assigned inputs */
         for (i=0; i<8; i++)
         {
@@ -563,7 +574,7 @@ void ConfigureJoypads ()
         player = (player + 1) % max_players;
         break;
 
-      case 4:
+      case 5:
 #ifdef HW_RVL
         if (config.input[player].device == 1)
         {
@@ -622,19 +633,19 @@ void ConfigureJoypads ()
         }
 #else
         config.input[player].device ++;
-        if (config.input[player].device > 3)
+        if (config.input[player].device > 0)
         {
           config.input[player].device = 0;
         }
 #endif
         break;
     
-			case 5:
+			case 6:
         if (config.input[player].device == 1) break;
         input.padtype[player] ^= 1;
         break;
 
-      case 6:
+      case 7:
         ogc_input__config(config.input[player].port, config.input[player].device, input.padtype[player]);
         break;
 

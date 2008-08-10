@@ -36,7 +36,7 @@ unsigned int vdp_dma_r(unsigned int address)
 		case UMK3_HACK:
 			return *(uint16 *)(&cart_rom[offset << 19] + (address & 0x7ffff));
 
-    	case SVP_DRAM:
+    case SVP_DRAM:
 			address -= 2;
 			return *(uint16 *)(svp->dram + (address & 0x1fffe));
 			
@@ -79,14 +79,13 @@ unsigned int vdp_dma_r(unsigned int address)
 		case SRAM:
 			if (address <= sram.end) return *(uint16 *)(sram.sram + (address - sram.start));
 			return *(uint16 *)(rom_readmap[address >> 19] + (address & 0x7ffff));
-		
+				
 		case EEPROM:
-			if (address == eeprom.type.sda_out_adr) return eeprom_read(address);
+      if (address == (eeprom.type.sda_out_adr & 0xfffffe)) return eeprom_read(address, 1);
 			return *(uint16 *)(rom_readmap[address >> 19] + (address & 0x7ffff));
 
 		case J_CART:
-			if (address == eeprom.type.sda_out_adr) return eeprom_read(address); /* some games also have EEPROM mapped here */
-			else return jcart_read();
+			return jcart_read();
 
 		default:
 			return *(uint16 *)(work_ram + (address & 0xffff));

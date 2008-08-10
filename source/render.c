@@ -687,7 +687,7 @@ void render_line(int line, uint8 odd_frame)
 	}
 
   /* LightGun mark */
-  if ((input.dev[4] == DEVICE_LIGHTGUN) && (config.crosshair))
+  if ((input.dev[4] == DEVICE_LIGHTGUN) && (config.gun_cursor))
   {
     int dy = v_counter - input.analog[0][1];
 

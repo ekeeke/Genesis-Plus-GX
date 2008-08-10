@@ -89,7 +89,6 @@ static inline void lightgun_update(int num)
       else
         hc_latch = hc_256[(input.analog[num][0] / 2 + input.x_offset)%171];
 		}			
-
 	}
 }			
 	
@@ -97,10 +96,10 @@ static inline void lightgun_update(int num)
 unsigned int menacer_read()
 {
   int retval = 0x70;
-	if ((input.pad[4] & INPUT_B))     retval |= 0x01;
-	if ((input.pad[4] & INPUT_A))     retval |= 0x02;
-  if ((input.pad[4] & INPUT_C))     retval |= 0x04;
-	if ((input.pad[4] & INPUT_START)) retval |= 0x08;
+	if (input.pad[4] & INPUT_B)     retval |= 0x01;
+	if (input.pad[4] & INPUT_A)     retval |= 0x02;
+  if (input.pad[4] & INPUT_C)     retval |= 0x04;
+	if (input.pad[4] & INPUT_START) retval |= 0x08;
 
   return retval;
 }
@@ -118,19 +117,121 @@ unsigned int justifier_read()
       return 0x30;
 
     case 0x00:  /* gun #1 enabled */
-      if ((input.pad[4] & INPUT_A))     retval &= ~0x01;
-      if ((input.pad[4] & INPUT_START)) retval &= ~0x02;
+      if (input.pad[4] & INPUT_A)     retval &= ~0x01;
+      if (input.pad[4] & INPUT_START) retval &= ~0x02;
       return retval;
 
     case 0x20:  /* gun #2 enabled */
-      if ((input.pad[5] & INPUT_A))     retval &= ~0x01;
-      if ((input.pad[5] & INPUT_START)) retval &= ~0x02;
+      if (input.pad[5] & INPUT_A)     retval &= ~0x01;
+      if (input.pad[5] & INPUT_START) retval &= ~0x02;
       return retval;
 
     default:  /* guns disabled */
   return retval;
 }
 }
+
+/*****************************************************************************
+ * SEGA MOUSE specific functions
+ *
+ *****************************************************************************/
+struct mega_mouse
+{
+  uint8 State;
+  uint8 Counter;
+} mouse;
+
+static inline void mouse_reset()
+{
+	mouse.State   = 0x60;
+	mouse.Counter = 0;
+}
+
+void mouse_write(unsigned int data)
+{
+  if (mouse.Counter == 0)
+  {
+    /* TH 1->0 transition */
+    if ((mouse.State&0x40) && !(data&0x40))
+    {
+      /* start acquisition */
+      mouse.Counter = 1;
+    }
+  }
+  else
+  {
+    /* TR transition */
+    if ((mouse.State&0x20) != (data&0x20))
+    {
+      mouse.Counter ++; /* increment phase */
+      if (mouse.Counter > 9) mouse.Counter = 9;
+    }
+  }
+
+  /* end of acquisition (TH=1) */
+  if (data&0x40) mouse.Counter = 0;
+
+  /* update internal state */
+  mouse.State = data;
+}
+
+unsigned int mouse_read()
+{
+  int temp = 0x00;
+
+  switch (mouse.Counter)
+  {
+    case 0:     /* initial */
+      temp = 0x00;
+      break;
+
+    case 1:     /* xxxx1011 */
+      temp = 0x0B;
+      break;
+
+    case 2:     /* xxxx1111 */
+      temp = 0x0F;
+      break;
+
+    case 3:     /* xxxx1111 */
+      temp = 0x0F;
+      break;
+
+    case 4:   /* Axis sign and overflow */
+      if (input.analog[2][0] < 0) temp |= 0x01;
+      if (input.analog[2][1] < 0) temp |= 0x02;
+      break;
+
+    case 5:   /* Buttons state */
+      if (input.pad[0] & INPUT_B)     temp |= 0x01;
+      if (input.pad[0] & INPUT_A)     temp |= 0x02;
+      if (input.pad[0] & INPUT_C)     temp |= 0x04;
+      if (input.pad[0] & INPUT_START) temp |= 0x08;
+      break;
+
+    case 6:   /* X Axis MSB */
+      temp = (input.analog[2][0] >> 4) & 0x0f;
+      break;
+      
+    case 7:   /* X Axis LSB */
+      temp = (input.analog[2][0] & 0x0f);
+      break;
+
+    case 8:   /* Y Axis MSB */
+      temp = (input.analog[2][1] >> 4) & 0x0f;
+      break;
+      
+    case 9:  /* Y Axis LSB */
+      temp = (input.analog[2][1] & 0x0f);
+      break;
+  }
+
+  /* TR-TL handshaking */
+  if (mouse.State & 0x20) temp |= 0x10;
+
+  return temp;
+}
+
 
 /*****************************************************************************
  * GAMEPAD specific functions (2PLAYERS/4WAYPLAY) 
@@ -519,6 +620,13 @@ void input_reset ()
         gamepad_reset(i*4);
         break;
       
+		  case SYSTEM_MOUSE:
+        if (input.max == MAX_INPUTS) return;
+        input.dev[i*4] = DEVICE_MOUSE;
+        input.max ++;
+        mouse_reset();
+        break;
+
       case SYSTEM_WAYPLAY:
         for (j=i*4; j< i*4+4; j++)
         {

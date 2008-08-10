@@ -166,13 +166,8 @@ static void pad_update(s8 num, u8 i)
   s8 x  = PAD_StickX (num);
   s8 y  = PAD_StickY (num);
   u16 p = PAD_ButtonsHeld(num);
-  
-  /* update keys */
-  if ((p & PAD_BUTTON_UP)         || (y >  70)) input.pad[i] |= INPUT_UP;
-  else if ((p & PAD_BUTTON_DOWN)  || (y < -70)) input.pad[i] |= INPUT_DOWN;
-  if ((p & PAD_BUTTON_LEFT)       || (x < -60)) input.pad[i] |= INPUT_LEFT;
-  else if ((p & PAD_BUTTON_RIGHT) || (x >  60)) input.pad[i] |= INPUT_RIGHT;
-
+  u8 sensitivity = 60;
+ 
   /* get current key config */
   u16 pad_keymap[MAX_KEYS];
   memcpy(pad_keymap, config.pad_keymap[num], MAX_KEYS * sizeof(u16));
@@ -201,40 +196,44 @@ static void pad_update(s8 num, u8 i)
     ConfigRequested = 1;
   }
 
-  int temp;
+  /* LIGHTGUN screen position (x,y) */
   if (input.dev[i] == DEVICE_LIGHTGUN)
   {
-    temp = input.analog[i-4][0];
-    if ((input.pad[i] & INPUT_RIGHT)) temp ++;
-    else if ((input.pad[i] & INPUT_LEFT)) temp --;
-    if (temp < 0) temp = 0;
-    else if (temp > bitmap.viewport.w) temp = bitmap.viewport.w;
-    input.analog[i-4][0] = temp;
-
-    temp = input.analog[i-4][1];
-    if ((input.pad[i] & INPUT_UP)) temp --;
-    if ((input.pad[i] & INPUT_DOWN)) temp ++;
-    if (temp < 0) temp = 0;
-    else if (temp > bitmap.viewport.h) temp = bitmap.viewport.h;
-    input.analog[i-4][1] = temp;
-  }	
-  else if ((system_hw == SYSTEM_PICO) && (i == 0))
-  {
-    temp = input.analog[0][0];
-    if ((input.pad[i] & INPUT_RIGHT)) temp ++;
-    else if ((input.pad[i] & INPUT_LEFT)) temp --;
-    if (temp < 0x17c) temp = 0x17c;
-    else if (temp > 0x3c) temp = 0x3c;
-    input.analog[0][0] = temp;
-
-    temp = input.analog[0][1];
-    if ((input.pad[i] & INPUT_UP)) temp --;
-    if ((input.pad[i] & INPUT_DOWN)) temp ++;
-    if (temp < 0x1fc) temp = 0x1fc;
-    else if (temp > 0x3f3) temp = 0x3f3;
-    input.analog[0][1] = temp;
+    input.analog[i-4][0] += x / sensitivity;
+    input.analog[i-4][1] += y / sensitivity;
+    if (input.analog[i-4][0] < 0) input.analog[i-4][0] = 0;
+    else if (input.analog[i-4][0] > bitmap.viewport.w) input.analog[i-4][0] = bitmap.viewport.w;
+    if (input.analog[i-4][1] < 0) input.analog[i-4][1] = 0;
+    else if (input.analog[i-4][1] > bitmap.viewport.h) input.analog[i-4][1] = bitmap.viewport.h;
   }
 
+  /* PEN tablet position (x,y) */
+  else if ((system_hw == SYSTEM_PICO) && (i == 0))
+  {
+    input.analog[0][0] += x / sensitivity;
+    input.analog[0][1] += y / sensitivity;
+    if (input.analog[0][0] < 0x17c) input.analog[0][0] = 0x17c;
+    else if (input.analog[0][0] > 0x3c) input.analog[0][0] = 0x3c;
+    if (input.analog[0][1] < 0x1fc) input.analog[0][1] = 0x1fc;
+    else if (input.analog[0][1] > 0x3f3) input.analog[0][1] = 0x3f3;
+  }
+
+  /* MOUSE quantity of movement (-256,256) */
+  else if (input.dev[i] == DEVICE_MOUSE)
+  {
+    input.analog[2][0] = x * 2;
+    input.analog[2][1] = y * 2;
+    if (config.invert_mouse) input.analog[2][1] = 0 - input.analog[2][1];
+  }
+
+  /* GAMEPAD directional buttons */
+  else
+  {
+    if ((p & PAD_BUTTON_UP)         || (y >  sensitivity)) input.pad[i] |= INPUT_UP;
+    else if ((p & PAD_BUTTON_DOWN)  || (y < -sensitivity)) input.pad[i] |= INPUT_DOWN;
+    if ((p & PAD_BUTTON_LEFT)       || (x < -sensitivity)) input.pad[i] |= INPUT_LEFT;
+    else if ((p & PAD_BUTTON_RIGHT) || (x >  sensitivity)) input.pad[i] |= INPUT_RIGHT;
+  }
 }
 
 /*******************************
@@ -400,6 +399,7 @@ static void wpad_update(s8 num, u8 i, u32 exp)
   u32 p = WPAD_ButtonsHeld(num);
 
   /* get analog sticks values */
+  u8 sensitivity = 60;
   s8 x = 0;
   s8 y = 0;
   if (exp != WPAD_EXP_NONE)
@@ -407,12 +407,6 @@ static void wpad_update(s8 num, u8 i, u32 exp)
     x = WPAD_StickX(num,0);
     y = WPAD_StickY(num,0);
   }
-
-  /* update directional key input */
-  if ((p & wpad_dirmap[exp][PAD_UP])          || (y >  70)) input.pad[i] |= INPUT_UP;
-  else if ((p & wpad_dirmap[exp][PAD_DOWN])   || (y < -70)) input.pad[i] |= INPUT_DOWN;
-  if ((p & wpad_dirmap[exp][PAD_LEFT])        || (x < -60)) input.pad[i] |= INPUT_LEFT;
-  else if ((p & wpad_dirmap[exp][PAD_RIGHT])  || (x >  60)) input.pad[i] |= INPUT_RIGHT;
 
   /* retrieve current key mapping */
   u32 *wpad_keymap = config.wpad_keymap[exp + (3 * num)];
@@ -426,29 +420,81 @@ static void wpad_update(s8 num, u8 i, u32 exp)
   if (p & wpad_keymap[KEY_BUTTONZ]) input.pad[i]  |= INPUT_Z;
   if (p & wpad_keymap[KEY_START])   input.pad[i]  |= INPUT_START;
 
-  /* MODE Button */
-  if ((p & WPAD_CLASSIC_BUTTON_MINUS) || (p & WPAD_BUTTON_MINUS)) input.pad[i]  |= INPUT_MODE;
+  /* MODE Button (FIXED) */
+  if (((exp == WPAD_EXP_CLASSIC) && (p & WPAD_CLASSIC_BUTTON_MINUS)) ||
+      ((exp != WPAD_EXP_CLASSIC) && (p & WPAD_BUTTON_MINUS)))
+    input.pad[i]  |= INPUT_MODE;
 
-  /* ANALOG Device (use IR pointing by default) */
+  /* LIGHTGUN screen position (X,Y) */
   if (input.dev[i] == DEVICE_LIGHTGUN)
   {
-    struct ir_t ir;
-    WPAD_IR(num, &ir);
-    if (ir.valid)
+    if (x || y)
     {
-      input.analog[i-4][0] = (ir.x * bitmap.viewport.w) / 640;
-      input.analog[i-4][1] = (ir.y * bitmap.viewport.h) / 480;
+      /* analog stick */
+      input.analog[i-4][0] += x / sensitivity;
+      input.analog[i-4][1] += y / sensitivity;
+      if (input.analog[i-4][0] < 0) input.analog[i-4][0] = 0;
+      else if (input.analog[i-4][0] > bitmap.viewport.w) input.analog[i-4][0] = bitmap.viewport.w;
+      if (input.analog[i-4][1] < 0) input.analog[i-4][1] = 0;
+      else if (input.analog[i-4][1] > bitmap.viewport.h) input.analog[i-4][1] = bitmap.viewport.h;
+    }
+
+    if (exp != WPAD_EXP_CLASSIC)
+    {
+      /* wiimote IR */
+      struct ir_t ir;
+      WPAD_IR(num, &ir);
+      if (ir.valid)
+      {
+        input.analog[i-4][0] = (ir.x * bitmap.viewport.w) / 640;
+        input.analog[i-4][1] = (ir.y * bitmap.viewport.h) / 480;
+      }
     }
   }
+
+  /* PEN tablet position (x,y) */
   else if ((system_hw == SYSTEM_PICO) && (i == 0))
   {
-    struct ir_t ir;
-    WPAD_IR(num, &ir);
-    if (ir.valid)
+    if (x || y)
     {
-      input.analog[0][0] = 0x3c  + (ir.x * (0x17c - 0x3c  + 1)) / 640;
-      input.analog[0][1] = 0x1fc + (ir.y * (0x3f3 - 0x1fc + 1)) / 480;
+      /* analog stick */
+      input.analog[0][0] += x / sensitivity;
+      input.analog[0][1] += y / sensitivity;
+      if (input.analog[0][0] < 0x17c) input.analog[0][0] = 0x17c;
+      else if (input.analog[0][0] > 0x3c) input.analog[0][0] = 0x3c;
+      if (input.analog[0][1] < 0x1fc) input.analog[0][1] = 0x1fc;
+      else if (input.analog[0][1] > 0x3f3) input.analog[0][1] = 0x3f3;
     }
+
+    if (exp != WPAD_EXP_CLASSIC)
+    {
+      /* wiimote IR */
+      struct ir_t ir;
+      WPAD_IR(num, &ir);
+      if (ir.valid)
+      {
+        input.analog[0][0] = 0x3c  + (ir.x * (0x17c - 0x3c  + 1)) / 640;
+        input.analog[0][1] = 0x1fc + (ir.y * (0x3f3 - 0x1fc + 1)) / 480;
+      }
+    }
+  }
+
+  /* MOUSE quantity of movement (-256,256) */
+  else if (input.dev[i] == DEVICE_MOUSE)
+  {
+    /* analog stick */
+    input.analog[2][0] = x * 2;
+    input.analog[2][1] = y * 2;
+    if (config.invert_mouse) input.analog[2][1] = 0 - input.analog[2][1];
+  }
+
+  /* GAMEPAD directional buttons */
+  else
+  {
+    if ((p & wpad_dirmap[exp][PAD_UP])          || (y >  sensitivity)) input.pad[i] |= INPUT_UP;
+    else if ((p & wpad_dirmap[exp][PAD_DOWN])   || (y < -sensitivity)) input.pad[i] |= INPUT_DOWN;
+    if ((p & wpad_dirmap[exp][PAD_LEFT])        || (x < -sensitivity)) input.pad[i] |= INPUT_LEFT;
+    else if ((p & wpad_dirmap[exp][PAD_RIGHT])  || (x >  sensitivity)) input.pad[i] |= INPUT_RIGHT;
   }
 
   /* SOFTRESET */

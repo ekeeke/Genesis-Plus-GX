@@ -213,9 +213,9 @@ void z80_write_banked_memory (unsigned int address, unsigned int data)
 			if (address <= sram.end) WRITE_BYTE(sram.sram, address - sram.start, data);
 			else z80bank_unused_w(address, data);
 			return;
-		
-		case EEPROM:
-			if ((address == eeprom.type.sda_in_adr) || (address == eeprom.type.scl_adr)) eeprom_write(address, data);
+
+    case EEPROM:
+			if ((address == eeprom.type.sda_in_adr) || (address == eeprom.type.scl_adr)) eeprom_write(address, data, 0);
 			else z80bank_unused_w(address, data);
 			return;
 			
@@ -345,7 +345,7 @@ unsigned int z80_read_banked_memory(unsigned int address)
 			return READ_BYTE(rom_readmap[offset], address & 0x7ffff);
 
 		case EEPROM:
-      		if (address == eeprom.type.sda_out_adr) return eeprom_read(address);
+      if (address == eeprom.type.sda_out_adr) return eeprom_read(address, 0);
 			return READ_BYTE(rom_readmap[offset], address & 0x7ffff);
 
 		case CART_HW:

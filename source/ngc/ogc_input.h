@@ -21,6 +21,13 @@
 #ifndef _GC_INPUT_H_
 #define _GC_INPUT_H_
 
+/* max. supported inputs */
+#ifdef HW_DOL
+#define MAX_INPUTS 4
+#else
+#define MAX_INPUTS 8
+#endif
+
 /* number of configurable keys */
 #define MAX_KEYS 8
 

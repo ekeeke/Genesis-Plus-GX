@@ -60,6 +60,11 @@ void io_reset(void)
       port[0].data_r = gamepad_1_read;
       break;
 
+    case SYSTEM_MOUSE:
+      port[0].data_w = mouse_write;
+      port[0].data_r = mouse_read;
+      break;
+
     case SYSTEM_WAYPLAY:
 			port[0].data_w = wayplay_1_write;  
 			port[0].data_r = wayplay_1_read;

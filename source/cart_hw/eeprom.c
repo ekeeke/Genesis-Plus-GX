@@ -150,8 +150,6 @@ static inline void Detect_STOP()
 
 void eeprom_write(uint32 address, uint32 value, uint32 word_access)
 {
-   error("eeprom write%d 0x%x = 0x%x (0x%x)\n", 8*(1+word_access), address, value, m68k_get_reg (NULL, M68K_REG_PC));
-
 	/* decode SCL and SDA value */
   if (word_access)
   {
@@ -166,11 +164,11 @@ void eeprom_write(uint32 address, uint32 value, uint32 word_access)
   }
   else
   {
-	if (eeprom.type.sda_in_adr == address) eeprom.sda = (value >> eeprom.type.sda_in_bit) & 1;
-	else eeprom.sda = eeprom.old_sda;
+    if (eeprom.type.sda_in_adr == address) eeprom.sda = (value >> eeprom.type.sda_in_bit) & 1;
+    else eeprom.sda = eeprom.old_sda;
 
-	if (eeprom.type.scl_adr == address) eeprom.scl = (value >> eeprom.type.scl_bit) & 1;
-	else eeprom.scl = eeprom.old_scl;
+    if (eeprom.type.scl_adr == address) eeprom.scl = (value >> eeprom.type.scl_bit) & 1;
+    else eeprom.scl = eeprom.old_scl;
   }
 	
 	/* EEPROM current state */
@@ -418,7 +416,6 @@ void eeprom_write(uint32 address, uint32 value, uint32 word_access)
 
 uint32 eeprom_read(uint32 address, uint32 word_access)
 {
-   error("eeprom read%d 0x%x (0x%x)\n", 8*(1+word_access), address, m68k_get_reg (NULL, M68K_REG_PC));
 	uint8 sda_out = eeprom.sda;
 
 	/* EEPROM state */
