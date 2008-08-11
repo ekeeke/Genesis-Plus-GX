@@ -14,10 +14,12 @@ current:
 - added support for some more unlicensed games: Pocket Monster, King of Fighter 98, Soul Blade (credits to Haze)
 - improved Menacer emulation: fix lightgun support in Body Count & T2: The Arcade Game
 - implemented Konami Justifier emulation: fix lightgun support in Lethal Enforcers 1 & 2
-- implemented Sega Mouse emulation
+- implemented Sega Mouse emulation (Populous 2, Body Count, Shangai 2...)
 
 [Wii]
-- added Wiimote IR support for lightgun (Menacer/Justifier) controls
+- added lightgun support (Menacer/Justifier) through Wiimote IR 
+- added "Gun cursor" option to enable/disable gun position display
+- added "Invert Mouse" option to invert Sega Mouse vertical axe (required by some games)
 
 16/07/2008:
 -----------

@@ -95,7 +95,8 @@ static inline void lightgun_update(int num)
 /* Sega Menacer specific */
 unsigned int menacer_read()
 {
-  int retval = 0x70;
+  /* pins should return 0 by default (fix Body Count when mouse is enabled) */
+  int retval = 0x00;
 	if (input.pad[4] & INPUT_B)     retval |= 0x01;
 	if (input.pad[4] & INPUT_A)     retval |= 0x02;
   if (input.pad[4] & INPUT_C)     retval |= 0x04;
@@ -139,12 +140,16 @@ struct mega_mouse
 {
   uint8 State;
   uint8 Counter;
+  uint8 Wait;
+  uint8 Port;
 } mouse;
 
 static inline void mouse_reset()
 {
 	mouse.State   = 0x60;
 	mouse.Counter = 0;
+  mouse.Wait = 0;
+  mouse.Port = (input.system[0] == SYSTEM_MOUSE) ? 0 : 4;
 }
 
 void mouse_write(unsigned int data)
@@ -164,6 +169,8 @@ void mouse_write(unsigned int data)
     if ((mouse.State&0x20) != (data&0x20))
     {
       mouse.Counter ++; /* increment phase */
+      mouse.Wait = 1;   /* mouse latency */
+
       if (mouse.Counter > 9) mouse.Counter = 9;
     }
   }
@@ -203,10 +210,10 @@ unsigned int mouse_read()
       break;
 
     case 5:   /* Buttons state */
-      if (input.pad[0] & INPUT_B)     temp |= 0x01;
-      if (input.pad[0] & INPUT_A)     temp |= 0x02;
-      if (input.pad[0] & INPUT_C)     temp |= 0x04;
-      if (input.pad[0] & INPUT_START) temp |= 0x08;
+      if (input.pad[mouse.Port] & INPUT_B)     temp |= 0x01;
+      if (input.pad[mouse.Port] & INPUT_A)     temp |= 0x02;
+      if (input.pad[mouse.Port] & INPUT_C)     temp |= 0x04;
+      if (input.pad[mouse.Port] & INPUT_START) temp |= 0x08;
       break;
 
     case 6:   /* X Axis MSB */
@@ -227,7 +234,19 @@ unsigned int mouse_read()
   }
 
   /* TR-TL handshaking */
-  if (mouse.State & 0x20) temp |= 0x10;
+  if (mouse.Wait)
+  {
+    /* wait before ACK, fix some buggy mouse routine (Shangai 2, Wack World,...) */
+    mouse.Wait = 0;
+
+    /* TL = !TR */
+    temp |= (~mouse.State & 0x20) >> 1;
+  }
+  else
+  {
+    /* TL = TR */
+    temp |= (mouse.State & 0x20) >> 1;
+  }
 
   return temp;
 }

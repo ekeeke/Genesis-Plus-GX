@@ -88,6 +88,11 @@ void io_reset(void)
       port[1].data_r = gamepad_2_read;
       break;
 
+    case SYSTEM_MOUSE:
+      port[1].data_w = mouse_write;
+      port[1].data_r = mouse_read;
+      break;
+
     case SYSTEM_MENACER:
       port[1].data_w = NULL;
       port[1].data_r = menacer_read;

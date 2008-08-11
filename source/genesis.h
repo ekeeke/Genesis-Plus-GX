@@ -1,6 +1,6 @@
 /***************************************************************************************
  *  Genesis Plus 1.2a
- *  Genesis internals & Bus arbitration
+ *  Genesis internals & Bus controller
  *
  *  Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003  Charles Mac Donald (original code)
  *  modified by Eke-Eke (compatibility fixes & additional code), GC/Wii port
