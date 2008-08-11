@@ -223,7 +223,7 @@ static void pad_update(s8 num, u8 i)
   {
     input.analog[2][0] = x * 2;
     input.analog[2][1] = y * 2;
-    if (config.invert_mouse) input.analog[2][1] = 0 - input.analog[2][1];
+    if (!config.invert_mouse) input.analog[2][1] = 0 - input.analog[2][1];
   }
 
   /* GAMEPAD directional buttons */
@@ -485,7 +485,7 @@ static void wpad_update(s8 num, u8 i, u32 exp)
     /* analog stick */
     input.analog[2][0] = x * 2;
     input.analog[2][1] = y * 2;
-    if (config.invert_mouse) input.analog[2][1] = 0 - input.analog[2][1];
+    if (!config.invert_mouse) input.analog[2][1] = 0 - input.analog[2][1];
   }
 
   /* GAMEPAD directional buttons */

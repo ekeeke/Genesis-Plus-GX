@@ -455,6 +455,11 @@ void ConfigureJoypads ()
       sprintf (padmenu[1], "Port 2: GAMEPAD");
       max_players ++;
     }
+    else if (input.system[0] == SYSTEM_MOUSE)
+    {
+      sprintf (padmenu[0], "Port 1: MOUSE");
+      max_players ++;
+    }
     else if (input.system[1] == SYSTEM_WAYPLAY)
     {
       sprintf (padmenu[1], "Port 2: 4-WAYPLAY");
@@ -472,7 +477,7 @@ void ConfigureJoypads ()
     else if (input.system[1] == SYSTEM_JUSTIFIER)
     {
       sprintf (padmenu[1], "Port 2: JUSTIFIERS");
-      max_players += 1;
+      max_players += 2;
     }
     else
       sprintf (padmenu[1], "Port 2: NONE");
@@ -526,11 +531,10 @@ void ConfigureJoypads ()
           break;
         }
         input.system[0] ++;
-        if (input.system[0] == SYSTEM_MENACER) input.system[0] ++;
-        if (input.system[0] == SYSTEM_JUSTIFIER) input.system[0] ++;
-
-        if (input.system[0] == SYSTEM_WAYPLAY) input.system[1] = SYSTEM_WAYPLAY;
-        if (input.system[0] > SYSTEM_WAYPLAY)
+        if (input.system[0] == SYSTEM_MENACER) input.system[0] = SYSTEM_TEAMPLAYER;
+        else if ((input.system[0] == SYSTEM_MOUSE) && (input.system[1] == SYSTEM_MOUSE)) input.system[1] ++;
+        else if (input.system[0] == SYSTEM_WAYPLAY) input.system[1] = SYSTEM_WAYPLAY;
+        else if (input.system[0] > SYSTEM_WAYPLAY)
         {
           input.system[0] = NO_SYSTEM;
           input.system[1] = SYSTEM_GAMEPAD;
@@ -544,9 +548,9 @@ void ConfigureJoypads ()
           break;
         }
         input.system[1] ++;
-        if (input.system[1] == SYSTEM_MOUSE) input.system[0] ++;
-        if (input.system[1] == SYSTEM_WAYPLAY) input.system[0] = SYSTEM_WAYPLAY;
-        if (input.system[1] > SYSTEM_WAYPLAY)
+        if ((input.system[1] == SYSTEM_MOUSE) && (input.system[0] == SYSTEM_MOUSE)) input.system[0] ++;
+        else if (input.system[1] == SYSTEM_WAYPLAY) input.system[0] = SYSTEM_WAYPLAY;
+        else if (input.system[1] > SYSTEM_WAYPLAY)
         {
           input.system[1] = NO_SYSTEM;
           input.system[0] = SYSTEM_GAMEPAD;
@@ -576,7 +580,7 @@ void ConfigureJoypads ()
 
       case 5:
 #ifdef HW_RVL
-        if (config.input[player].device == 1)
+        if (config.input[player].device > 0)
         {
           config.input[player].port ++;
         }
@@ -592,7 +596,58 @@ void ConfigureJoypads ()
           if (config.input[player].port<4)
           {
             WPAD_Probe(config.input[player].port,&exp);
-            if ((exp == WPAD_EXP_NONE) && (config.input[player].port == (player % 4))) exp = WPAD_EXP_CLASSIC;
+            if (exp == WPAD_EXP_NUNCHUK) exp = 4;
+          }
+
+          while ((config.input[player].port<4) && (exp == 4))
+          {
+            config.input[player].port ++;
+            if (config.input[player].port<4)
+            {
+              exp = 4;
+              WPAD_Probe(config.input[player].port,&exp);
+              if (exp == WPAD_EXP_NUNCHUK) exp = 4;
+            }
+          }
+
+          if (config.input[player].port >= 4)
+          {
+            config.input[player].port = 0;
+            config.input[player].device = 2;
+          }
+        }
+
+        if (config.input[player].device == 2)
+        {
+          exp = 4;
+          if (config.input[player].port<4)
+          {
+            WPAD_Probe(config.input[player].port,&exp);
+          }
+
+          while ((config.input[player].port<4) && (exp != WPAD_EXP_NUNCHUK))
+          {
+            config.input[player].port ++;
+            if (config.input[player].port<4)
+            {
+              exp = 4;
+              WPAD_Probe(config.input[player].port,&exp);
+            }
+          }
+
+          if (config.input[player].port >= 4)
+          {
+            config.input[player].port = 0;
+            config.input[player].device = 3;
+          }
+        }
+
+        if (config.input[player].device == 3)
+        {
+          exp = 4;
+          if (config.input[player].port<4)
+          {
+            WPAD_Probe(config.input[player].port,&exp);
           }
 
           while ((config.input[player].port<4) && (exp != WPAD_EXP_CLASSIC))
@@ -602,41 +657,17 @@ void ConfigureJoypads ()
             {
               exp = 4;
               WPAD_Probe(config.input[player].port,&exp);
-              if ((exp == WPAD_EXP_NONE) && (config.input[player].port == (player % 4))) exp = WPAD_EXP_CLASSIC;
             }
           }
 
           if (config.input[player].port >= 4)
           {
             config.input[player].port = player % 4;
-            config.input[player].device = 2;
+            config.input[player].device = 0;
           }
         }
-
-        if (config.input[player].device == 2)
-        {
-          exp = 4;
-          WPAD_Probe(config.input[player].port,&exp);
-          if (exp != WPAD_EXP_NUNCHUK) config.input[player].device ++;
-        }
-
-        if (config.input[player].device == 3)
-        {
-          exp = 4;
-          WPAD_Probe(config.input[player].port,&exp);
-          if (exp != WPAD_EXP_CLASSIC) config.input[player].device ++;
-        }
-
-        if (config.input[player].device > 3)
-        {
-          config.input[player].device = 0;
-        }
 #else
-        config.input[player].device ++;
-        if (config.input[player].device > 0)
-        {
-          config.input[player].device = 0;
-        }
+        config.input[player].device = 0;
 #endif
         break;
     

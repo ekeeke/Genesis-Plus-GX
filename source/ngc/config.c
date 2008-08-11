@@ -64,6 +64,6 @@ void set_config_defaults(void)
   /* controllers options */
   ogc_input__set_defaults();
   config.gun_cursor   = 1;
-  config.invert_mouse = 1;
+  config.invert_mouse = 0;
 }
 

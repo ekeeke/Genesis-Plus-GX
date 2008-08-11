@@ -51,8 +51,8 @@
 
 /* System IO ports */
 #define NO_SYSTEM           (0) /* Unconnected Port*/
-#define SYSTEM_GAMEPAD      (1) /* Single Gamepad */
-#define SYSTEM_MOUSE        (2) /* Sega Mouse */
+#define SYSTEM_MOUSE        (1) /* Sega Mouse */
+#define SYSTEM_GAMEPAD      (2) /* Single Gamepad */
 #define SYSTEM_MENACER      (3)	/* Sega Menacer (port 2) */
 #define SYSTEM_JUSTIFIER    (4)	/* Konami Justifier (port 2) */
 #define SYSTEM_TEAMPLAYER   (5)	/* Sega TeamPlayer */

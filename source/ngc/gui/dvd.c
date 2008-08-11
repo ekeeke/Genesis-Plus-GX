@@ -17,24 +17,22 @@
  ***************************************************************************/
 
 #include "shared.h"
-#ifdef WII_DVD
-#include "wdvd.h"
-#endif
+
+#ifdef HW_DOL
 #include "dvd.h"
 
+u64 DvdMaxOffset = 0x57057C00;
+
 /** DVD I/O Address base **/
-#ifndef HW_RVL
 static vu32* const dvd = (u32*)0xCC006000;
 static unsigned char *inquiry=(unsigned char *)0x80000004;
-#endif
 
 /** Due to lack of memory, we'll use this little 2k keyhole for all DVD operations **/
 unsigned char DVDreadbuffer[2048] ATTRIBUTE_ALIGN (32);
 
-#ifdef HW_RVL
-u64 DvdMaxOffset = 0x118244F00LL;
 #else
-u64 DvdMaxOffset = 0x57057C00; // default
+#include "wdvd.h"
+u64 DvdMaxOffset = 0x118244F00LL;
 #endif
 
 /***************************************************************************
@@ -44,37 +42,41 @@ u64 DvdMaxOffset = 0x57057C00; // default
  ***************************************************************************/
 int dvd_read (void *dst, unsigned int len, u64 offset)
 {
-#ifndef HW_RVL
-  //unsigned char *buffer = (unsigned char *) (unsigned int) DVDreadbuffer;
-  
- // if (len > 2048) return 1; /*** We only allow 2k reads **/
- /* DCInvalidateRange((void *)buffer, len);
+  /*** We only allow 2k reads **/
+  if (len > 2048) return 0;
 
+  /*** Let's not read past end of DVD ***/
   if(offset < DvdMaxOffset)
   {
-      dvd[0] = 0x2E;
-      dvd[1] = 0;
-      dvd[2] = 0xA8000000;
-      dvd[3] = (u32)(offset >> 2);
-      dvd[4] = len;
-      dvd[5] = (u32) buffer;
-      dvd[6] = len;
-      dvd[7] = 3; *//*** Enable reading with DMA ***/
-   //   while (dvd[7] & 1);
-    //  memcpy (dst, buffer, len);
- // }
- // else return 1; // Let's not read past end of DVD
-   
-//  if (dvd[0] & 0x4) return 0; /* Ensure it has completed */
-  if (DVD_LowRead(dst,len,offset,NULL) == 1)
-    return 0;
-#elif WII_DVD
 
-  if (WDVD_LowUnencryptedRead((unsigned char **)&dst, len, (u32)(offset >> 2)) == 1)
-    return 0;
+#ifdef HW_DOL
+    unsigned char *buffer = (unsigned char *) (unsigned int) DVDreadbuffer;
+    DCInvalidateRange((void *)buffer, len);
+  /*dvd[0] = 0x2E;
+    dvd[1] = 0;
+    dvd[2] = 0xA8000000;
+    dvd[3] = (u32)(offset >> 2);
+    dvd[4] = len;
+    dvd[5] = (u32) buffer;
+    dvd[6] = len;
+    dvd[7] = 3; */
+
+    /*** Enable reading with DMA ***/
+    DVD_LowRead(buffer,len,offset,NULL);
+    while (dvd[7] & 1);
+    memcpy (dst, buffer, len);
+
+    /*** Ensure it has completed ***/
+    if (dvd[0] & 0x4) return 0;
+    
+    return 1;
+
+#elif WII_DVD
+    return WDVD_LowUnencryptedRead((unsigned char **)&dst, len, (u32)(offset >> 2));
 #endif
- 
-  return 1;
+  }
+
+  return 0; 
 }
 
 /****************************************************************************
@@ -86,11 +88,10 @@ int dvd_read (void *dst, unsigned int len, u64 offset)
  *
  * libOGC tends to foul up if you don't, and sometimes does if you do!
  ****************************************************************************/
-#ifndef HW_RVL
+#ifdef HW_DOL
 void uselessinquiry ()
 {
   dvddrvinfo drive_info;
-
   DVD_LowInquiry(&drive_info,NULL);
 
 /*
@@ -114,7 +115,7 @@ void uselessinquiry ()
  *
  * This can be used to prevent the Disc from spinning during playtime
  ****************************************************************************/
-#ifndef HW_RVL
+#ifdef HW_DOL
 void dvd_motor_off( )
 {
 
@@ -143,7 +144,7 @@ void dvd_motor_off( )
  * Detect the DVD Drive Type
  *
  ****************************************************************************/
-#ifndef HW_RVL
+#ifdef HW_DOL
 void dvd_drive_detect()
 {
   /*dvd[0] = 0x2e;
