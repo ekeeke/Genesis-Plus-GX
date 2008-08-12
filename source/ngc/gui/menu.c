@@ -183,6 +183,10 @@ void soundmenu ()
 
 			case 4:
 				config.ssg_enabled ^= 1;
+				if (genromsize) 
+				{
+					fm_restore();
+				}
 				break;
 			
 			case 5:
@@ -497,8 +501,8 @@ void ConfigureJoypads ()
       player = 0;
     }
 
-    sprintf (padmenu[2], "Gun Cursor: %s", config.gun_cursor ? "Y":"N");
-    sprintf (padmenu[3], "Invert Mouse: %s", config.gun_cursor ? "Y":"N");
+    sprintf (padmenu[2], "Gun Cursor: %s", config.gun_cursor ? " ON":"OFF");
+    sprintf (padmenu[3], "Invert Mouse: %s", config.invert_mouse ? " ON":"OFF");
     sprintf (padmenu[4], "Set Player: %d%s", player + 1, (j_cart && (player > 1)) ? "-JCART" : "");
 
     if (config.input[player].device == 0)
