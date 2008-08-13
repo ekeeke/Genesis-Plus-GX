@@ -658,11 +658,12 @@ INLINE void FM_KEYON(FM_CH *CH , int s )
 	{
 		SLOT->key = 1;
 		SLOT->phase = 0;		/* restart Phase Generator */
+    SLOT->ssgn = (SLOT->ssg & 0x04) >> 1;
 
 		if ((SLOT->ar + SLOT->ksr) < 94 /*32+62*/)
 		{
 		  SLOT->state = EG_ATT;	/* phase -> Attack */
-      SLOT->volume = MAX_ATT_INDEX;	/* fix Ecco 2 splash sound */
+      SLOT->volume = 511;	/* fix Ecco 2 splash sound */
     }
     else
     {
@@ -682,7 +683,7 @@ INLINE void FM_KEYOFF(FM_CH *CH , int s )
 		if (SLOT->state>EG_REL)
 		{
       SLOT->state = EG_REL; /* phase -> Release */
-      SLOT->ssgn = 0;       /* reset Invert Flag (from Nemesis) */
+      //SLOT->ssgn = 0;       /* reset Invert Flag (from Nemesis) */
 	  }
   }
 }
@@ -996,7 +997,7 @@ INLINE void advance_eg_channel(FM_SLOT *SLOT)
 								SLOT->phase = 0; //Alone Coder
 
 								/* phase -> Attack */
-						   		SLOT->volume = 511; //Alone Coder
+						   	SLOT->volume = 511; //Alone Coder
 								SLOT->state = EG_ATT;
 
 								swap_flag = (SLOT->ssg&0x02); /* bit 1 = alternate */
@@ -1023,10 +1024,14 @@ INLINE void advance_eg_channel(FM_SLOT *SLOT)
 			case EG_REL:	/* release phase */
 				if ( !(ym2612.OPN.eg_cnt & ((1<<SLOT->eg_sh_rr)-1) ) )
 				{
-          			if (SLOT->ssg&0x08)
-						SLOT->volume += 6 * eg_inc[SLOT->eg_sel_rr + ((ym2612.OPN.eg_cnt>>SLOT->eg_sh_rr)&7)]; /* from Nemesis */
-          			else
-						SLOT->volume += eg_inc[SLOT->eg_sel_rr + ((ym2612.OPN.eg_cnt>>SLOT->eg_sh_rr)&7)];
+          if (SLOT->ssg&0x08)
+          {
+            SLOT->volume += 6 * eg_inc[SLOT->eg_sel_rr + ((ym2612.OPN.eg_cnt>>SLOT->eg_sh_rr)&7)]; /* from Nemesis */
+          }
+          else
+					{
+            SLOT->volume += eg_inc[SLOT->eg_sel_rr + ((ym2612.OPN.eg_cnt>>SLOT->eg_sh_rr)&7)];
+          }
 
 					if ( SLOT->volume >= MAX_ATT_INDEX )
 					{
@@ -1040,8 +1045,9 @@ INLINE void advance_eg_channel(FM_SLOT *SLOT)
 
 		out = SLOT->tl + ((UINT32)SLOT->volume);
 
-		if ((SLOT->ssg&0x08) && (SLOT->ssgn&2) && (SLOT->state != EG_OFF/*Alone Coder*/))	/* negate output (changes come from alternate bit, init comes from attack bit) */
-			out ^= 511/*Alone Coder*/; //((1<<ENV_BITS)-1); /* 1023 */
+		/* negate output (changes come from alternate bit, init comes from attack bit) */
+    if ((SLOT->ssg&0x08) && (SLOT->ssgn&2) && ((SLOT->state == EG_DEC) || (SLOT->state == EG_SUS)))
+			out ^= 511 /* Alone Coder*/; //((1<<ENV_BITS)-1); /* 1023 */
 
 		/* we need to store the result here because we are going to change ssgn
             in next instruction */

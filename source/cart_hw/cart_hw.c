@@ -226,6 +226,10 @@ void cart_hw_init()
 	}
 	else if (strstr(rominfo.international,"T2 ; THE ARCADE GAME") != NULL)
   {
+		/* save current setting */
+    if (old_system[0] == -1) old_system[0] = input.system[0];
+    if (old_system[1] == -1) old_system[1] = input.system[1];
+
     input.system[0] = SYSTEM_GAMEPAD;
     input.system[1] = SYSTEM_MENACER;
     input.x_offset = 0x84;
@@ -233,6 +237,10 @@ void cart_hw_init()
 	}
 	else if (strstr(rominfo.international,"BODY COUNT") != NULL)
   {
+		/* save current setting */
+    if (old_system[0] == -1) old_system[0] = input.system[0];
+    if (old_system[1] == -1) old_system[1] = input.system[1];
+
     input.system[0] = SYSTEM_MOUSE;
     input.system[1] = SYSTEM_MENACER;
     input.x_offset = 0x44;
@@ -244,13 +252,21 @@ void cart_hw_init()
 	***********************************************/
 	if (strstr(rominfo.international,"LETHAL ENFORCERS II") != NULL)
   {
+		/* save current setting */
+    if (old_system[0] == -1) old_system[0] = input.system[0];
+    if (old_system[1] == -1) old_system[1] = input.system[1];
+
     input.system[0] = SYSTEM_GAMEPAD;
     input.system[1] = SYSTEM_JUSTIFIER;
-  input.x_offset = 0x18;
+    input.x_offset = 0x18;
     input.y_offset = 0x00;
 	}
 	else if (strstr(rominfo.international,"LETHAL ENFORCERS") != NULL)
   {
+		/* save current setting */
+    if (old_system[0] == -1) old_system[0] = input.system[0];
+    if (old_system[1] == -1) old_system[1] = input.system[1];
+
     input.system[0] = SYSTEM_GAMEPAD;
     input.system[1] = SYSTEM_JUSTIFIER;
     input.x_offset = 0x00;

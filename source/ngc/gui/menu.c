@@ -459,9 +459,9 @@ void ConfigureJoypads ()
       sprintf (padmenu[1], "Port 2: GAMEPAD");
       max_players ++;
     }
-    else if (input.system[0] == SYSTEM_MOUSE)
+    else if (input.system[1] == SYSTEM_MOUSE)
     {
-      sprintf (padmenu[0], "Port 1: MOUSE");
+      sprintf (padmenu[1], "Port 2: MOUSE");
       max_players ++;
     }
     else if (input.system[1] == SYSTEM_WAYPLAY)
@@ -535,10 +535,11 @@ void ConfigureJoypads ()
           break;
         }
         input.system[0] ++;
-        if (input.system[0] == SYSTEM_MENACER) input.system[0] = SYSTEM_TEAMPLAYER;
-        else if ((input.system[0] == SYSTEM_MOUSE) && (input.system[1] == SYSTEM_MOUSE)) input.system[1] ++;
-        else if (input.system[0] == SYSTEM_WAYPLAY) input.system[1] = SYSTEM_WAYPLAY;
-        else if (input.system[0] > SYSTEM_WAYPLAY)
+        if (input.system[0] == SYSTEM_MENACER) input.system[0] ++;
+        if (input.system[0] == SYSTEM_JUSTIFIER) input.system[0] ++;
+        if ((input.system[0] == SYSTEM_MOUSE) && (input.system[1] == SYSTEM_MOUSE)) input.system[0] ++;
+        if (input.system[0] == SYSTEM_WAYPLAY) input.system[1] = SYSTEM_WAYPLAY;
+        if (input.system[0] > SYSTEM_WAYPLAY)
         {
           input.system[0] = NO_SYSTEM;
           input.system[1] = SYSTEM_GAMEPAD;
@@ -552,9 +553,9 @@ void ConfigureJoypads ()
           break;
         }
         input.system[1] ++;
-        if ((input.system[1] == SYSTEM_MOUSE) && (input.system[0] == SYSTEM_MOUSE)) input.system[0] ++;
-        else if (input.system[1] == SYSTEM_WAYPLAY) input.system[0] = SYSTEM_WAYPLAY;
-        else if (input.system[1] > SYSTEM_WAYPLAY)
+        if ((input.system[0] == SYSTEM_MOUSE) && (input.system[1] == SYSTEM_MOUSE)) input.system[1] ++;
+        if (input.system[1] == SYSTEM_WAYPLAY) input.system[0] = SYSTEM_WAYPLAY;
+        if (input.system[1] > SYSTEM_WAYPLAY)
         {
           input.system[1] = NO_SYSTEM;
           input.system[0] = SYSTEM_GAMEPAD;

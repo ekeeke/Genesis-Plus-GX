@@ -166,7 +166,7 @@ static void pad_update(s8 num, u8 i)
   s8 x  = PAD_StickX (num);
   s8 y  = PAD_StickY (num);
   u16 p = PAD_ButtonsHeld(num);
-  u8 sensitivity = 60;
+  u8 sensitivity = 30;
  
   /* get current key config */
   u16 pad_keymap[MAX_KEYS];
@@ -221,8 +221,8 @@ static void pad_update(s8 num, u8 i)
   /* MOUSE quantity of movement (-256,256) */
   else if (input.dev[i] == DEVICE_MOUSE)
   {
-    input.analog[2][0] = x * 2;
-    input.analog[2][1] = y * 2;
+    input.analog[2][0] =  (x / sensitivity) * 2;
+    input.analog[2][1] =  (x / sensitivity) * 2;
     if (!config.invert_mouse) input.analog[2][1] = 0 - input.analog[2][1];
   }
 
@@ -393,13 +393,16 @@ static void wpad_config(u8 num, u8 exp, u8 padtype)
   }
 }
 
+float old_x = 0.0;
+float old_y = 0.0;
+
 static void wpad_update(s8 num, u8 i, u32 exp)
 {
   /* get buttons status */
   u32 p = WPAD_ButtonsHeld(num);
 
   /* get analog sticks values */
-  u8 sensitivity = 60;
+  u8 sensitivity = 30;
   s8 x = 0;
   s8 y = 0;
   if (exp != WPAD_EXP_NONE)
@@ -483,9 +486,52 @@ static void wpad_update(s8 num, u8 i, u32 exp)
   else if (input.dev[i] == DEVICE_MOUSE)
   {
     /* analog stick */
-    input.analog[2][0] = x * 2;
-    input.analog[2][1] = y * 2;
+    input.analog[2][0] = x * 2 / sensitivity;
+    input.analog[2][1] = y * 2 / sensitivity;
+ 
+    if (exp != WPAD_EXP_CLASSIC)
+    {
+      /* wiimote IR */
+      struct ir_t ir;
+      WPAD_IR(num, &ir);
+     //if (ir.valid)
+      {
+        input.analog[2][0] = ir.x - old_x;
+        if (input.analog[2][0] > 256)
+        {
+          input.analog[2][0] = 256;
+          old_x += 256;
+        }
+        else if (input.analog[2][0] < -256)
+        {
+          input.analog[2][0] = -256;
+          old_x -= 256;
+        }
+        else
+        {
+          old_x = ir.x;
+        }
+
+        input.analog[2][1] = ir.y - old_y;
+        if (input.analog[2][1] > 256)
+        {
+          input.analog[2][1] = 256;
+          old_y += 256;
+        }
+        else if (input.analog[2][1] < -256)
+        {
+          input.analog[2][1] = -256;
+          old_y -= 256;
+        }
+        else
+        {
+          old_y = ir.y;
+        }
+      }
+    }
+
     if (!config.invert_mouse) input.analog[2][1] = 0 - input.analog[2][1];
+
   }
 
   /* GAMEPAD directional buttons */
