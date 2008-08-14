@@ -494,7 +494,7 @@ static void wpad_update(s8 num, u8 i, u32 exp)
       /* wiimote IR */
       struct ir_t ir;
       WPAD_IR(num, &ir);
-     //if (ir.valid)
+      if (ir.valid)
       {
         input.analog[2][0] = ir.x - old_x;
         if (input.analog[2][0] > 256)

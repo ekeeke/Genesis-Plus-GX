@@ -925,6 +925,9 @@ INLINE void advance_eg_channel(FM_SLOT *SLOT)
 	i = 4; /* four operators per channel */
 	do
 	{
+    /* reset swap_flag (EkeEke) */
+    swap_flag = 0;
+
 		switch(SLOT->state)
 		{
 			case EG_ATT:		/* attack phase */
@@ -950,9 +953,9 @@ INLINE void advance_eg_channel(FM_SLOT *SLOT)
 						//SLOT->volume += 4 * eg_inc[SLOT->eg_sel_d1r + ((ym2612.OPN.eg_cnt>>SLOT->eg_sh_d1r)&7)];
 						SLOT->volume += 6 * eg_inc[SLOT->eg_sel_d1r + ((ym2612.OPN.eg_cnt>>SLOT->eg_sh_d1r)&7)]; /* from Nemesis */
 
-					if ( SLOT->volume >= (INT32)(SLOT->sl) )
+					  if ( SLOT->volume >= (INT32)(SLOT->sl) )
 							SLOT->state = EG_SUS;
-					}
+				  }
 				}
 				else
 				{
@@ -960,9 +963,9 @@ INLINE void advance_eg_channel(FM_SLOT *SLOT)
 					{
 						SLOT->volume += eg_inc[SLOT->eg_sel_d1r + ((ym2612.OPN.eg_cnt>>SLOT->eg_sh_d1r)&7)];
 
-					if ( SLOT->volume >= (INT32)(SLOT->sl) )
-							SLOT->state = EG_SUS;
-					}
+					  if ( SLOT->volume >= (INT32)(SLOT->sl) )
+              SLOT->state = EG_SUS;
+  				}
 				}
 				break;
 
@@ -1004,12 +1007,12 @@ INLINE void advance_eg_channel(FM_SLOT *SLOT)
 							}
 						}
 					}
-				}
+        }
 				else
 				{
 					if ( !(ym2612.OPN.eg_cnt & ((1<<SLOT->eg_sh_d2r)-1) ) )
 					{
-            			SLOT->volume += eg_inc[SLOT->eg_sel_d2r + ((ym2612.OPN.eg_cnt>>SLOT->eg_sh_d2r)&7)];
+            SLOT->volume += eg_inc[SLOT->eg_sel_d2r + ((ym2612.OPN.eg_cnt>>SLOT->eg_sh_d2r)&7)];
 
 						if ( SLOT->volume >= MAX_ATT_INDEX )
 						{
@@ -1040,7 +1043,7 @@ INLINE void advance_eg_channel(FM_SLOT *SLOT)
 					}
 				}
 				break;
-
+      
 		}
 
 		out = SLOT->tl + ((UINT32)SLOT->volume);
@@ -1053,7 +1056,8 @@ INLINE void advance_eg_channel(FM_SLOT *SLOT)
             in next instruction */
 		SLOT->vol_out = out;
 
-		SLOT->ssgn ^= swap_flag;
+		/* reverse SLOT inversion flag if required */
+    SLOT->ssgn ^= swap_flag;
 
 		SLOT++;
 		i--;
