@@ -22,6 +22,7 @@
  ****************************************************************************************/
 
 #include "shared.h"
+#include "samplerate.h"
 
 /* generic functions */
 int  (*_YM2612_Write)(unsigned char adr, unsigned char data);
@@ -29,19 +30,32 @@ int  (*_YM2612_Read)(void);
 void (*_YM2612_Update)(int **buf, int length);
 int (*_YM2612_Reset)(void);
 
-static double m68cycles_per_sample;
-static double z80cycles_per_sample;
+static double m68cycles_per_sample[2];
+static double z80cycles_per_sample[2];
+
+static float fm_buffer_48kHz[960*2];
+static float fm_buffer_53kHz[1060*2];
+
+static int fm_buffer[2][1060];
+
+static SRC_DATA data;
 
 /* YM2612 data */
-int fm_reg[2][0x100];		/* Register arrays (2x256) */
+int fm_reg[2][0x100];		      /* Register arrays (2x256) */
 double fm_timera_tab[0x400];	/* Precalculated timer A values (in usecs) */
 double fm_timerb_tab[0x100];	/* Precalculated timer B values (in usecs) */
 
 /* return the number of samples that should have been rendered so far */
-static inline uint32 sound_sample_cnt(uint8 is_z80)
+static inline uint32 fm_sample_cnt(uint8 is_z80)
 {
-	if (is_z80) return (uint32) ((double)(count_z80 + current_z80 - z80_ICount) / z80cycles_per_sample);
-	else return (uint32) ((double) count_m68k / m68cycles_per_sample);
+	if (is_z80) return (uint32) ((double)(count_z80 + current_z80 - z80_ICount) / z80cycles_per_sample[0]);
+	else return (uint32) ((double) count_m68k / m68cycles_per_sample[0]);
+}
+
+static inline uint32 psg_sample_cnt(uint8 is_z80)
+{
+	if (is_z80) return (uint32) ((double)(count_z80 + current_z80 - z80_ICount) / z80cycles_per_sample[1]);
+	else return (uint32) ((double) count_m68k / m68cycles_per_sample[1]);
 }
 
 /* update FM samples */
@@ -49,10 +63,19 @@ static inline void fm_update()
 {
 	if(snd.fm.curStage - snd.fm.lastStage > 1)
 	{
-        //error("%d(%d): FM update (%d) %d from %d samples (%08x)\n", v_counter, count_z80 + current_z80 - z80_ICount, cpu, snd.fm.curStage , snd.fm.lastStage, m68k_get_reg (NULL, M68K_REG_PC));
-		int *tempBuffer[2];       
-		tempBuffer[0] = snd.fm.buffer[0] + snd.fm.lastStage;
-		tempBuffer[1] = snd.fm.buffer[1] + snd.fm.lastStage;
+		int *tempBuffer[2];
+    
+    if (config.hq_fm && !config.fm_core)
+    {
+      tempBuffer[0] = fm_buffer[0] + snd.fm.lastStage;
+		  tempBuffer[1] = fm_buffer[1] + snd.fm.lastStage;
+    }
+    else
+    {
+      tempBuffer[0] = snd.fm.buffer[0] + snd.fm.lastStage;
+		  tempBuffer[1] = snd.fm.buffer[1] + snd.fm.lastStage;
+    }
+
 		_YM2612_Update(tempBuffer, snd.fm.curStage - snd.fm.lastStage);
 		snd.fm.lastStage = snd.fm.curStage;
 	}
@@ -83,9 +106,28 @@ void sound_init(int rate)
 	/* Formula is "time(us) = 16 * (256 - B) * 144 * 1000000 / clock" */
 	for(i = 0; i < 256; i += 1) fm_timerb_tab[i] = ((double)((256 - i) * 16 * 144) * 1000000.0 / vclk);
 
-	/* Cycle-Accurate sample generation */
-	m68cycles_per_sample = ((double)m68cycles_per_line * (double)lines_per_frame) / (double) (rate / vdp_rate);
-	z80cycles_per_sample = ((double)z80cycles_per_line * (double)lines_per_frame) / (double) (rate / vdp_rate);
+	/* cycle-accurate FM samples */
+  if (config.hq_fm && !config.fm_core)
+  {
+    m68cycles_per_sample[0] = 144;
+    z80cycles_per_sample[0] = (144 * 7) / 15;
+
+    /* set samplerate converter data */
+    data.data_in  = fm_buffer_53kHz;
+    data.data_out = fm_buffer_48kHz;
+    data.input_frames   = vdp_pal ? 1060 : 888;
+    data.output_frames  = vdp_pal ? 960 : 800;
+    data.src_ratio = 48000.0 / (vdp_pal ? 52781.0 : 53267.0);
+  }
+  else
+  {
+    m68cycles_per_sample[0] = ((double)m68cycles_per_line * (double)lines_per_frame) / (double) (rate / vdp_rate);
+	  z80cycles_per_sample[0] = ((double)z80cycles_per_line * (double)lines_per_frame) / (double) (rate / vdp_rate);
+  }
+
+  /* cycle-accurate PSG samples */
+  m68cycles_per_sample[1] = ((double)m68cycles_per_line * (double)lines_per_frame) / (double) (rate / vdp_rate);
+  z80cycles_per_sample[1] = ((double)z80cycles_per_line * (double)lines_per_frame) / (double) (rate / vdp_rate);
 
 	/* initialize sound chips */
 	SN76489_Init(0, (int)zclk, rate);
@@ -119,7 +161,59 @@ void sound_update(void)
 	fm_update();
 	psg_update();
 
-	/* reset samples count */
+  /* Resampling */
+  if (config.hq_fm && !config.fm_core)
+  {
+    double scaled_value ;
+    int len = vdp_pal ? 1060 : 888;
+
+	  /* this is basically libsamplerate "src_int_to_float_array" function, adapted to interlace samples */
+    while (len)
+	  {
+      len -- ;
+		  fm_buffer_53kHz [len*2]      = (float) (fm_buffer[0] [len] / (8.0 * 0x10000000)) ;
+		  fm_buffer_53kHz [len*2 + 1]  = (float) (fm_buffer[1] [len] / (8.0 * 0x10000000)) ;
+		}
+
+    /* samplerate conversion */
+    src_simple (&data, SRC_SINC_FASTEST, 2);
+
+	  /* this is basically libsamplerate "src_float_to_int_array" function, adapted to interlace samples */
+    len = vdp_pal ? 960 : 800;
+    while (len)
+    {
+      len -- ;
+      scaled_value = fm_buffer_48kHz [len*2] * (8.0 * 0x10000000);
+      if (scaled_value >= (1.0 * 0x7FFFFFFF))
+      {
+        snd.fm.buffer[0][len] = 0x7fffffff;
+      }
+      else if (scaled_value <= (-8.0 * 0x10000000))
+      {
+        snd.fm.buffer[0][len] = -1 - 0x7fffffff;
+      }
+      else
+      {
+        snd.fm.buffer[0][len] = (long)scaled_value;
+      }
+
+      scaled_value = fm_buffer_48kHz [len*2+1] * (8.0 * 0x10000000);
+      if (scaled_value >= (1.0 * 0x7FFFFFFF))
+      {
+        snd.fm.buffer[1][len] = 0x7fffffff;
+      }
+      else if (scaled_value <= (-8.0 * 0x10000000))
+      {
+        snd.fm.buffer[1][len] = -1 - 0x7fffffff;
+      }
+      else
+      {
+        snd.fm.buffer[1][len] = (long)scaled_value;
+      }
+    }
+  }
+
+  /* reset samples count */
 	snd.fm.curStage   = 0;
 	snd.fm.lastStage  = 0;
 	snd.psg.curStage  = 0;
@@ -147,7 +241,7 @@ void fm_restore(void)
 /* write FM chip */
 void fm_write(unsigned int cpu, unsigned int address, unsigned int data)
 {
-	snd.fm.curStage = sound_sample_cnt(cpu);
+	snd.fm.curStage = fm_sample_cnt(cpu);
 	fm_update();
 	_YM2612_Write(address & 3, data);
 }
@@ -155,7 +249,7 @@ void fm_write(unsigned int cpu, unsigned int address, unsigned int data)
 /* read FM status */
 unsigned int fm_read(unsigned int cpu, unsigned int address)
 {
-	snd.fm.curStage = sound_sample_cnt(cpu);
+	snd.fm.curStage = fm_sample_cnt(cpu);
 	fm_update();
 	return (_YM2612_Read() & 0xff);
 }
@@ -164,7 +258,7 @@ unsigned int fm_read(unsigned int cpu, unsigned int address)
 /* PSG write */
 void psg_write(unsigned int cpu, unsigned int data)
 {
-	snd.psg.curStage = sound_sample_cnt(cpu);
+	snd.psg.curStage = psg_sample_cnt(cpu);
 	psg_update();
 	SN76489_Write(0, data);
 }

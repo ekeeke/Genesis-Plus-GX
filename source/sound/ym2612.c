@@ -280,15 +280,15 @@ INLINE void CALC_FINC_SL(slot_ *SL, int finc, int kc)
 	
 	SL->Finc = (finc + SL->DT[kc]) * SL->MUL;
 
-  	/* YM2612 Detune Bug (discovered by Nemesis) */
-  	if (SL->Finc < 0)
-  	{
-    	/* Phase overflow (best result with BLOCK = 5) */
-    	finc = (int)((double)FINC_TAB[0x7FF] / YM2612.Frequence) >> 2;
-    	SL->Finc = (finc + SL->DT[kc]) * SL->MUL; 
-	  }
+  /* YM2612 Detune Bug (discovered by Nemesis) */
+  if (SL->Finc < 0)
+  {
+    /* Phase overflow (best result with BLOCK = 5) */
+    finc = (int)((double)FINC_TAB[0x7FF] / YM2612.Frequence) >> 2;
+    SL->Finc = (finc + SL->DT[kc]) * SL->MUL; 
+  }
   
-  	ksr = kc >> SL->KSR_S;	// keycode atténuation
+  ksr = kc >> SL->KSR_S;	// keycode atténuation
 
 #if YM_DEBUG_LEVEL > 1
 	fprintf(debug_file, "FINC = %d  SL->Finc = %d\n", finc, SL->Finc);
@@ -575,7 +575,7 @@ int CHANNEL_SET(int Adr, unsigned char data)
 			CH->FOCT[0] = (data & 0x38) >> 3;
 			CH->KC[0] = (CH->FOCT[0] << 2) | FKEY_TAB[CH->FNUM[0] >> 7];
 
-			//CH->SLOT[0].Finc = -1;
+			CH->SLOT[0].Finc = -1;
 
 #if YM_DEBUG_LEVEL > 1
 			fprintf(debug_file, "CHANNEL[%d] part2 FNUM = %d  FOCT = %d  KC = %d\n", num, CH->FNUM[0], CH->FOCT[0], CH->KC[0]);
@@ -611,7 +611,7 @@ int CHANNEL_SET(int Adr, unsigned char data)
 				YM2612.CHANNEL[2].FOCT[num] = (data & 0x38) >> 3;
 				YM2612.CHANNEL[2].KC[num] = (YM2612.CHANNEL[2].FOCT[num] << 2) | FKEY_TAB[YM2612.CHANNEL[2].FNUM[num] >> 7];
 
-				//YM2612.CHANNEL[2].SLOT[0].Finc = -1;
+				YM2612.CHANNEL[2].SLOT[0].Finc = -1;
 
 #if YM_DEBUG_LEVEL > 1
 				fprintf(debug_file, "CHANNEL[2] part2 FNUM[%d] = %d  FOCT[%d] = %d  KC[%d] = %d\n", num, YM2612.CHANNEL[2].FNUM[num], num, YM2612.CHANNEL[2].FOCT[num], num, YM2612.CHANNEL[2].KC[num]);

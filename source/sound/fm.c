@@ -120,7 +120,7 @@
 
 /* globals */
 #define FREQ_SH			16  /* 16.16 fixed point (frequency calculations) */
-#define EG_SH			16  /* 16.16 fixed point (envelope generator timing) */
+#define EG_SH			  16  /* 16.16 fixed point (envelope generator timing) */
 #define LFO_SH			24  /*  8.24 fixed point (LFO calculations)       */
 #define TIMER_SH		16  /* 16.16 fixed point (timers calculations)    */
 
@@ -146,8 +146,8 @@
 #define TL_RES_LEN		(256) /* 8 bits addressing (real chip) */
 
 
-#define MAXOUT		(+16383)
-#define MINOUT		(-16384)
+#define MAXOUT		(+32767)
+#define MINOUT		(-32768)
 
 
 /*  TL_TAB_LEN is calculated as:
@@ -550,8 +550,8 @@ typedef struct
 	/* local time tables */
 	INT32	dt_tab[8][32];/* DeTune table       */
 
-  UINT32 Inter_Cnt;			// Interpolation Counter
-	UINT32 Inter_Step;		// Interpolation Step
+ // UINT32 Inter_Cnt;			// Interpolation Counter
+//	UINT32 Inter_Step;		// Interpolation Step
 
 } FM_ST;
 
@@ -1456,25 +1456,30 @@ static void OPNSetPres(int pres)
 {
 	int i;
 
-	/* frequency base */
-	ym2612.OPN.ST.freqbase = ((double) ym2612.OPN.ST.clock / (double) ym2612.OPN.ST.rate) / ((double) pres);
-
-	/* timer increment in usecs (timers are incremented after each updated samples) */
-	ym2612.OPN.ST.TimerBase = 1000000.0 / (double)ym2612.OPN.ST.rate;
-
   if (config.hq_fm)
   {
-    ym2612.OPN.ST.Inter_Step = (unsigned int) ((1.0 / ym2612.OPN.ST.freqbase) * (double) (0x4000));
-    ym2612.OPN.ST.Inter_Cnt = 0;
-    ym2612.OPN.ST.freqbase = 1.0;
-  }
-  else
-  {
-		ym2612.OPN.ST.Inter_Step = 0x4000;
-		ym2612.OPN.ST.Inter_Cnt = 0;
-  }
+    //ym2612.OPN.ST.Inter_Step = (unsigned int) ((1.0 / ym2612.OPN.ST.freqbase) * (double) (0x4000));
+    //ym2612.OPN.ST.Inter_Cnt = 0;
+    //ym2612.OPN.ST.freqbase = 1.0;
+    ym2612.OPN.ST.rate = ym2612.OPN.ST.clock / pres;
 
-	ym2612.OPN.eg_timer_add  = (UINT32)((1<<EG_SH)  *  ym2612.OPN.ST.freqbase);
+  }
+  //else
+  //{
+		//ym2612.OPN.ST.Inter_Step = 0x4000;
+		//ym2612.OPN.ST.Inter_Cnt = 0;
+  //}
+
+
+  /* frequency base */
+	ym2612.OPN.ST.freqbase = ((double) ym2612.OPN.ST.clock / (double) ym2612.OPN.ST.rate) / ((double) pres);
+
+
+  /* timer increment in usecs (timers are incremented after each updated samples) */
+	ym2612.OPN.ST.TimerBase = 1000000.0 / (double)ym2612.OPN.ST.rate;
+
+
+  ym2612.OPN.eg_timer_add  = (UINT32)((1<<EG_SH)  *  ym2612.OPN.ST.freqbase);
 	//ym2612.OPN.eg_timer_overflow = ( 3 ) * (1<<EG_SH);
 	ym2612.OPN.eg_timer_overflow =  (351 * (1<<EG_SH)) / 144; /* correct frequency (Nemesis: tested on real HW) */
 
@@ -1748,7 +1753,7 @@ static void OPNWriteReg(int r, int v)
 
 /* Generate 32bits samples for ym2612 */
 static long dac;
-int int_cnt;								// Interpolation calculation
+//int int_cnt;								// Interpolation calculation
 
 void YM2612UpdateOne(int **buffer, int length)
 {
@@ -1781,7 +1786,7 @@ void YM2612UpdateOne(int **buffer, int length)
 	refresh_fc_eg_chan(&ym2612.CH[4]);
 	refresh_fc_eg_chan(&ym2612.CH[5]);
 
-  int_cnt = ym2612.OPN.ST.Inter_Cnt;
+  //int_cnt = ym2612.OPN.ST.Inter_Cnt;
 
 	/* buffering */
 	for(i=0; i < length ; i++)
@@ -1829,6 +1834,7 @@ void YM2612UpdateOne(int **buffer, int length)
 		}
 		else chan_calc(&ym2612.CH[5]);
 
+#if 0
     if (config.hq_fm)
 		{
       if ((int_cnt += ym2612.OPN.ST.Inter_Step) & 0x04000)
@@ -1875,6 +1881,7 @@ void YM2612UpdateOne(int **buffer, int length)
       old_out_fm[5] = out_fm[5];
 		}
     else
+#endif
     {
 			lt  = ((out_fm[0]>>0) & ym2612.OPN.pan[0]);
 			rt  = ((out_fm[0]>>0) & ym2612.OPN.pan[1]);
@@ -1904,7 +1911,7 @@ void YM2612UpdateOne(int **buffer, int length)
 
   INTERNAL_TIMER_B(length);
 
-  ym2612.OPN.ST.Inter_Cnt = int_cnt;
+  //ym2612.OPN.ST.Inter_Cnt = int_cnt;
 
 }
 
