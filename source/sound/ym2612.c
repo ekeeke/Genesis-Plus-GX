@@ -524,16 +524,13 @@ int SLOT_SET(int Adr, unsigned char data)
 			// Al = Altern
 			// H  = Hold
 */
-			if (config.ssg_enabled)
-			{
-			   if (data & 0x08) SL->SEG = data & 0x0F;
-			   else SL->SEG = 0;
+	    if (data & 0x08) SL->SEG = data & 0x0F;
+      else SL->SEG = 0;
 
 #if YM_DEBUG_LEVEL > 1
 			fprintf(debug_file, "CHANNEL[%d], SLOT[%d] SSG-EG = %.2X\n", nch, nsl, data);
 #endif
-            }
-			break;
+      break;
 	}
 
 	return 0;
@@ -841,8 +838,6 @@ void Env_Decay_Next(slot_ *SL)
 
 void Env_Substain_Next(slot_ *SL)
 {
-  if (config.ssg_enabled)
-  {
 	if (SL->SEG & 8)	// SSG envelope type
 	{
 		if (SL->SEG & 1)
@@ -870,13 +865,6 @@ void Env_Substain_Next(slot_ *SL)
 		SL->Einc = 0;
 		SL->Ecmp = ENV_END + 1;
 	}
-  }
-  else
-  {
-    SL->Ecnt = ENV_END;
-    SL->Einc = 0;
-    SL->Ecmp = ENV_END + 1;
-  }
 }
 
 

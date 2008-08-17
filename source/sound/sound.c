@@ -33,11 +33,10 @@ int (*_YM2612_Reset)(void);
 static double m68cycles_per_sample[2];
 static double z80cycles_per_sample[2];
 
-static float fm_buffer_48kHz[960*2];
-static float fm_buffer_53kHz[1060*2];
-
-static int fm_buffer[2][1060];
-
+/* libsamplerate buffers */
+static float fm_buffer_48kHz[1000*2];
+static float fm_buffer_53kHz[1061*2];
+static int fm_buffer[2][1061];
 static SRC_DATA data;
 
 /* YM2612 data */
@@ -61,7 +60,7 @@ static inline uint32 psg_sample_cnt(uint8 is_z80)
 /* update FM samples */
 static inline void fm_update()
 {
-	if(snd.fm.curStage - snd.fm.lastStage > 1)
+	if(snd.fm.curStage - snd.fm.lastStage > 0)
 	{
 		int *tempBuffer[2];
     
@@ -84,7 +83,7 @@ static inline void fm_update()
 /* update PSG samples */
 static inline void psg_update()
 {
-	if(snd.psg.curStage - snd.psg.lastStage > 1)
+	if(snd.psg.curStage - snd.psg.lastStage > 0)
 	{
 		int16 *tempBuffer = snd.psg.buffer + snd.psg.lastStage;
 		SN76489_Update (0, tempBuffer, snd.psg.curStage - snd.psg.lastStage);
@@ -109,15 +108,15 @@ void sound_init(int rate)
 	/* cycle-accurate FM samples */
   if (config.hq_fm && !config.fm_core)
   {
-    m68cycles_per_sample[0] = 144;
-    z80cycles_per_sample[0] = (144 * 7) / 15;
+    m68cycles_per_sample[0] = 144.0;
+    z80cycles_per_sample[0] = (144.0 * 7.0) / 15.0;
 
-    /* set samplerate converter data */
-    data.data_in  = fm_buffer_53kHz;
-    data.data_out = fm_buffer_48kHz;
-    data.input_frames   = vdp_pal ? 1060 : 888;
-    data.output_frames  = vdp_pal ? 960 : 800;
-    data.src_ratio = 48000.0 / (vdp_pal ? 52781.0 : 53267.0);
+    /* initialize samplerate converter data */
+    data.data_in        = fm_buffer_53kHz;
+    data.data_out       = fm_buffer_48kHz;
+    data.input_frames   = vdp_pal ? 1061 : 888;
+    data.output_frames  = 1000;
+    data.src_ratio      = vdp_pal ? (960.0/1061.0) : (800.0/888.0);
   }
   else
   {
@@ -154,7 +153,7 @@ void sound_init(int rate)
 void sound_update(void)
 {
 	/* finalize sound buffers */
-	snd.fm.curStage  = snd.buffer_size;
+	snd.fm.curStage  = (config.hq_fm && !config.fm_core) ? data.input_frames : snd.buffer_size;
 	snd.psg.curStage = snd.buffer_size;
 
 	/* update last samples (if needed) */
@@ -165,7 +164,7 @@ void sound_update(void)
   if (config.hq_fm && !config.fm_core)
   {
     double scaled_value ;
-    int len = vdp_pal ? 1060 : 888;
+    int len = data.input_frames;
 
 	  /* this is basically libsamplerate "src_int_to_float_array" function, adapted to interlace samples */
     while (len)
@@ -176,7 +175,7 @@ void sound_update(void)
 		}
 
     /* samplerate conversion */
-    src_simple (&data, SRC_SINC_FASTEST, 2);
+    src_simple (&data, 5 - config.hq_fm, 2);
 
 	  /* this is basically libsamplerate "src_float_to_int_array" function, adapted to interlace samples */
     len = vdp_pal ? 960 : 800;

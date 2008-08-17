@@ -16,15 +16,12 @@ uint8 overscan		= 1;
 uint8 use_480i		= 1;
 uint8 FM_GENS		= 1;
 uint8 hq_fm			= 1;
-uint8 ssg_enabled	= 0;
 double psg_preamp	= 0.5;
 double fm_preamp	= 1.0;
 uint8 boost			= 1;
 uint8 region_detect	= 0;
 uint8 sys_type[2]	= {0,0};
 uint8 force_dtack	= 0;
-uint8 dmatiming		= 1;
-uint8 vdptiming		= 1;
 
 uint8 log_error = 1;
 uint8 debug_on = 0;

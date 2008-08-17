@@ -99,7 +99,6 @@ void set_config_default()
   config.boost        = 1;
   config.hq_fm        = 1;
   config.fm_core      = 0;
-  config.ssg_enabled  = 0;
 
   /* system options */
   config.freeze_auto    = -1;

@@ -55,7 +55,7 @@ int main( int argc, char *argv[] )
 	
 	if ( argc != 4 )
 	{
-		printf("Usage : %s genplus.dol genesisrom.smd output.dol\n", argv[0]);
+		printf("Usage : %s genplus.dol filename_of_your_rom.bin (or .smd) output.dol\n", argv[0]);
 		return 1;
 	}
 	

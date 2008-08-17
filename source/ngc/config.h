@@ -8,12 +8,12 @@
  ****************************************************************************/
 typedef struct 
 {
+  char version[15];
   double psg_preamp;
   double fm_preamp;
   uint8 boost;
   uint8 hq_fm;
   uint8 fm_core;
-  uint8 ssg_enabled;
   int8 sram_auto;
   int8 freeze_auto;
   uint8 region_detect;

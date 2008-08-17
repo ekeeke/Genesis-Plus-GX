@@ -4,6 +4,8 @@
 #include <fat.h>
 #include <sys/dir.h>
 
+#define CONFIG_VERSION "GENPLUS 1.2.1 "
+
 t_config config;
 
 void config_save()
@@ -25,25 +27,34 @@ void config_save()
 
 void config_load()
 {
+  char version[15];
+  
   /* open file for writing */
   FILE *fp = fopen("/genplus/genplus.ini", "rb");
   if (fp == NULL) return;
 
-  /* read file */
-  fread(&config, sizeof(config), 1, fp);
+  /* read version */
+  fread(version, 15, 1, fp); 
+  fclose(fp);
+  if (strcmp(version,CONFIG_VERSION)) return;
 
+  /* read file */
+  fp = fopen("/genplus/genplus.ini", "rb");
+  fread(&config, sizeof(config), 1, fp);
   fclose(fp);
 }
 
 void set_config_defaults(void)
 {
+  /* version TAG */
+  strncpy(config.version,CONFIG_VERSION,15);
+  
   /* sound options */
   config.psg_preamp   = 1.5;
   config.fm_preamp    = 1.0;
   config.boost        = 1;
   config.hq_fm        = 1;
   config.fm_core      = 0;
-  config.ssg_enabled  = 0;
 
   /* system options */
   config.freeze_auto    = -1;

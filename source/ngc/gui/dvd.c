@@ -52,17 +52,16 @@ int dvd_read (void *dst, unsigned int len, u64 offset)
 #ifdef HW_DOL
     unsigned char *buffer = (unsigned char *) (unsigned int) DVDreadbuffer;
     DCInvalidateRange((void *)buffer, len);
-  /*dvd[0] = 0x2E;
+    dvd[0] = 0x2E;
     dvd[1] = 0;
     dvd[2] = 0xA8000000;
     dvd[3] = (u32)(offset >> 2);
     dvd[4] = len;
     dvd[5] = (u32) buffer;
     dvd[6] = len;
-    dvd[7] = 3; */
+    dvd[7] = 3; 
 
     /*** Enable reading with DMA ***/
-    DVD_LowRead(buffer,len,offset,NULL);
     while (dvd[7] & 1);
     memcpy (dst, buffer, len);
 
@@ -91,10 +90,6 @@ int dvd_read (void *dst, unsigned int len, u64 offset)
 #ifdef HW_DOL
 void uselessinquiry ()
 {
-  dvddrvinfo drive_info;
-  DVD_LowInquiry(&drive_info,NULL);
-
-/*
   dvd[0] = 0;
   dvd[1] = 0;
   dvd[2] = 0x12000000;
@@ -104,7 +99,7 @@ void uselessinquiry ()
   dvd[6] = 0x20;
   dvd[7] = 1;
 
-  while (dvd[7] & 1);*/
+  while (dvd[7] & 1);
 }
 #endif
 
@@ -118,10 +113,6 @@ void uselessinquiry ()
 #ifdef HW_DOL
 void dvd_motor_off( )
 {
-
-  DVD_LowStopMotor(NULL);
-
-  /*
 	dvd[0] = 0x2e;
 	dvd[1] = 0;
 	dvd[2] = 0xe3000000;
@@ -130,11 +121,11 @@ void dvd_motor_off( )
 	dvd[5] = 0;
 	dvd[6] = 0;
 	dvd[7] = 1; // Do immediate
-	while (dvd[7] & 1);*/
+	while (dvd[7] & 1);
 
 	/*** PSO Stops blackscreen at reload ***/
-/*	dvd[0] = 0x14;
-	dvd[1] = 0;*/
+	dvd[0] = 0x14;
+	dvd[1] = 0;
 }
 #endif
 
@@ -147,7 +138,7 @@ void dvd_motor_off( )
 #ifdef HW_DOL
 void dvd_drive_detect()
 {
-  /*dvd[0] = 0x2e;
+  dvd[0] = 0x2e;
   dvd[1] = 0;
   dvd[2] = 0x12000000;
   dvd[3] = 0;
@@ -156,14 +147,9 @@ void dvd_drive_detect()
   dvd[6] = 0x20;
   dvd[7] = 3;
   while( dvd[7] & 1 );
-  DCFlushRange((void *)0x80000000, 32);*/
+  DCFlushRange((void *)0x80000000, 32);
 
-  dvddrvinfo drive_info;
-
-  DVD_LowInquiry(&drive_info,NULL);
-
-  //int driveid = (int)inquiry[2];
-  int driveid = drive_info.dev_code;
+  int driveid = (int)inquiry[2];
   
   if ((driveid == 4) || (driveid == 6) || (driveid == 8))
   {

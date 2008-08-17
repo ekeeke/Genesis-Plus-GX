@@ -18,18 +18,18 @@ include $(DEVKITPPC)/gamecube_rules
 TARGET		:=	genplus_cube
 BUILD		:=	build_cube
 SOURCES		:=	source source/m68k source/cpu source/sound source/cart_hw \
-			source/cart_hw/svp source/ngc source/ngc/gui
+			source/cart_hw/svp source/ngc source/ngc/gui source/sound/SRC
 INCLUDES	:=	source source/m68k source/cpu source/sound source/cart_hw \
-			source/cart_hw/svp source/ngc source/ngc/gui
+			source/cart_hw/svp source/ngc source/ngc/gui source/sound/SRC
 
 #---------------------------------------------------------------------------------
 # options for code generation
 #---------------------------------------------------------------------------------
 
-CFLAGS	= -g -fno-strict-aliasing -O2 -Wall $(MACHDEP) $(INCLUDE) -DWORDS_BIGENDIAN -DNGC="1" -DHW_DOL
+CFLAGS	= -fno-strict-aliasing -O2 -Wall $(MACHDEP) $(INCLUDE) -DWORDS_BIGENDIAN -DNGC="1" -DHW_DOL
 CXXFLAGS	=	$(CFLAGS)
 
-LDFLAGS	=	-g $(MACHDEP) -Wl,-Map,$(notdir $@).map
+LDFLAGS	=	$(MACHDEP) -Wl,-Map,$(notdir $@).map
 
 #---------------------------------------------------------------------------------
 # any extra libraries we wish to link with the project

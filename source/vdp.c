@@ -91,10 +91,6 @@ static uint16 sat_addr_mask;	/* Index bits of SAT */
 static uint32 dma_endCycles;  /* 68k cycles to DMA end */
 static uint8 dma_type;        /* Type of DMA */
 
-/* TODO: set as default */
-static uint8 dmatiming = 1;
-static uint8 vdptiming = 1;
-
 /* DMA Timings
 
  According to the manual, here's a table that describes the transfer
@@ -252,21 +248,9 @@ void vdp_restore(uint8 *vdp_regs)
 	bitmap.viewport.y = config.overscan ? (((reg[1] & 8) ? 0 : 8) + (vdp_pal ? 24 : 0)) : 0;
 	bitmap.viewport.changed = 1;
 
-	/* restore VDP FIFO timings */
-	if (vdptiming)
-	{
-		/* VDP timings:
-       ------------
-        HDISP is 256*10/7 = approx. 366 cycles (same for both modes)
-        this gives:
-         H32: 16 accesses --> 366/16 = 23 cycles per access
-         H40: 20 accesses --> 366/20 = 18 cycles per access
-
-        VRAM access are byte wide --> VRAM writes takes 2x CPU cycles
-    */
-		fifo_latency = (reg[12] & 1) ? 27 : 30;
-		if ((code & 0x0F) == 0x01) fifo_latency = fifo_latency * 2;
-	}
+	/* restore VDP timings */
+  fifo_latency = (reg[12] & 1) ? 27 : 30;
+  if ((code & 0x0F) == 0x01) fifo_latency = fifo_latency * 2;
 	
 	/* remake cache */
 	for (i=0;i<0x800;i++) 
@@ -291,8 +275,6 @@ void dma_update()
 	int32 left_cycles;
 	uint32 dma_cycles, dma_bytes;
 	uint8 index = 0;
-
-	if (!dmatiming) return; 
 
 	/* get the appropriate tranfer rate (bytes/line) for this DMA operation */
 	if ((status&8) || !(reg[1] & 0x40)) index = 2; /* VBLANK or Display OFF */
@@ -570,21 +552,17 @@ void vdp_ctrl_w(unsigned int data)
 		}
 	}
 
-	/* FIFO emulation */
-	if (vdptiming)
-	{
-		/* VDP timings:
-       ------------
-        HDISP is 256*10/7 = approx. 366 cycles (same for both modes)
-        this gives:
-         H32: 16 accesses --> 366/16 = 23 cycles per access
-         H40: 20 accesses --> 366/20 = 18 cycles per access
+	/* FIFO emulation:
+     ---------------
+    HDISP is 256*10/7 = approx. 366 cycles (same for both modes)
+    this gives:
+      H32: 16 accesses --> 366/16 = 23 cycles per access
+      H40: 20 accesses --> 366/20 = 18 cycles per access
 
-        VRAM access are byte wide --> VRAM writes takes 2x CPU cycles
-    */
-		fifo_latency = (reg[12] & 1) ? 27 : 30;
-		if ((code & 0x0F) == 0x01) fifo_latency = fifo_latency * 2;
-	}
+    VRAM access are byte wide --> VRAM writes takes 2x CPU cycles
+  */
+  fifo_latency = (reg[12] & 1) ? 27 : 30;
+  if ((code & 0x0F) == 0x01) fifo_latency = fifo_latency * 2;
 }
 
 
@@ -607,15 +585,12 @@ unsigned int vdp_ctrl_r(void)
      * 10 - 15	Next word on bus
      */
 
-  	/* update FIFO flags */
-	if (vdptiming)
-	{
-		fifo_update();
-		if (fifo_write_cnt < 4)
-		{
-			status &= 0xFEFF;							
-			if (fifo_write_cnt == 0) status |= 0x200; 
-		}
+  /* update FIFO flags */
+  fifo_update();
+  if (fifo_write_cnt < 4)
+  {
+    status &= 0xFEFF;							
+    if (fifo_write_cnt == 0) status |= 0x200; 
 	}
 	else status ^= 0x200;
 
@@ -651,26 +626,28 @@ void vdp_data_w(unsigned int data)
 		return;
 	}
   
-	/* VDP latency (Chaos Engine, Soldiers of Fortune) */
-	if (vdptiming && !(status&8) && (reg[1]&0x40))
-	{
-		fifo_update();
-		if (fifo_write_cnt == 0)
-		{
-			fifo_lastwrite = count_m68k; /* reset cycle counter */
-			status &= 0xFDFF;	/* FIFO is not empty anymore */
-		}
+	/* FIFO emulation */
+  fifo_update();
+  if (fifo_write_cnt == 0)
+  {
+    /* reset cycle counter */
+    fifo_lastwrite = count_m68k;
+    
+	  /* FIFO is not empty anymore */
+    status &= 0xFDFF;
+  }
 
-		/* increase write counter */
-		fifo_write_cnt ++;
+  /* increase write counter */
+  fifo_write_cnt ++;
 		
-		/* is FIFO full ? */
-		if (fifo_write_cnt >= 4)
-		{
-			status |= 0x100; 
-      if (fifo_write_cnt > 4) count_m68k = fifo_lastwrite + fifo_latency;
-    }
-	}
+  /* is FIFO full ? */
+  if (fifo_write_cnt >= 4)
+  {
+    status |= 0x100; 
+
+    /* VDP latency (Chaos Engine, Soldiers of Fortune, Double Clutch) */
+	  if (fifo_write_cnt > 4) count_m68k = fifo_lastwrite + fifo_latency;
+  }
 
 	/* write data */
 	data_write(data);

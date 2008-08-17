@@ -14,7 +14,7 @@
 #include "dvd.h"
 #include "iso9660.h"
 #include "font.h"
-#include "unzip.h"
+#include "fileio.h"
 #include "history.h"
 
 #define PAGESIZE 12
@@ -558,13 +558,12 @@ void OpenHistory()
  ****************************************************************************/ 
 static int LoadFile (unsigned char *buffer) 
 {
-  int readoffset;
-  int blocks;
-  int i;
   u64 discoffset = 0;
   char readbuffer[2048];
   char fname[MAXPATHLEN];
  
+  if (rootdirlength == 0) return 0;
+
   /* SDCard access */ 
   if (UseSDCARD)
   {
@@ -578,11 +577,6 @@ static int LoadFile (unsigned char *buffer)
       return 0;
     }
   }
-
-  /* How many 2k blocks to read */
-  if (rootdirlength == 0) return 0;
-  blocks = rootdirlength / 2048;
-  readoffset = 0;
   
   ShowAction ("Loading ... Wait");
   
@@ -600,46 +594,44 @@ static int LoadFile (unsigned char *buffer)
   /* determine file type */
   if (!IsZipFile ((char *) readbuffer))
   {
-    /* go back to file start */
     if (UseSDCARD)
     {
+      /* go back to file start and read file */
       fseek(sdfile, 0, SEEK_SET);
+      fread(buffer, 1, rootdirlength, sdfile);
+      fclose(sdfile);
   	}
-
-    /* read data chunks */
-    for (i = 0; i < blocks; i++)
+    else
     {
-      if (UseSDCARD)
-      {
-        fread(readbuffer, 1, 2048, sdfile);
-      }
-      else
+      /* How many 2k blocks to read */
+      int blocks = rootdirlength / 2048;
+      int readoffset = 0;
+      int i;
+
+      /* read data chunks */
+      for (i = 0; i < blocks; i++)
       {
         dvd_read(readbuffer, 2048, discoffset);
         discoffset += 2048;
+        memcpy (buffer + readoffset, readbuffer, 2048);
+        readoffset += 2048;
       }
 
-      memcpy (buffer + readoffset, readbuffer, 2048);
-      readoffset += 2048;
-    }
-
-    /* final read */ 
-    i = rootdirlength % 2048;
-    if (i)
-    {
-      if (UseSDCARD) fread(readbuffer, 1, i, sdfile);
-      else dvd_read (readbuffer, 2048, discoffset);
-      memcpy (buffer + readoffset, readbuffer, i);
+      /* final read */ 
+      i = rootdirlength % 2048;
+      if (i)
+      {
+        dvd_read (readbuffer, 2048, discoffset);
+        memcpy (buffer + readoffset, readbuffer, i);
+      }
     }
   }
   else
   {
     /* unzip file */
-    return UnZipBuffer (buffer, discoffset, rootdirlength, UseSDCARD);
+    if (UseSDCARD) return UnZipSDCARD (buffer, fname);
+    else return UnZipDVD (buffer, discoffset, rootdirlength);
   }
   
-  /* close SD file */
-  if (UseSDCARD) fclose(sdfile);
-
   return rootdirlength;
 }

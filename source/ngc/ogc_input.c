@@ -200,7 +200,7 @@ static void pad_update(s8 num, u8 i)
   if (input.dev[i] == DEVICE_LIGHTGUN)
   {
     input.analog[i-4][0] += x / sensitivity;
-    input.analog[i-4][1] += y / sensitivity;
+    input.analog[i-4][1] -= y / sensitivity;
     if (input.analog[i-4][0] < 0) input.analog[i-4][0] = 0;
     else if (input.analog[i-4][0] > bitmap.viewport.w) input.analog[i-4][0] = bitmap.viewport.w;
     if (input.analog[i-4][1] < 0) input.analog[i-4][1] = 0;
@@ -211,7 +211,7 @@ static void pad_update(s8 num, u8 i)
   else if ((system_hw == SYSTEM_PICO) && (i == 0))
   {
     input.analog[0][0] += x / sensitivity;
-    input.analog[0][1] += y / sensitivity;
+    input.analog[0][1] -= y / sensitivity;
     if (input.analog[0][0] < 0x17c) input.analog[0][0] = 0x17c;
     else if (input.analog[0][0] > 0x3c) input.analog[0][0] = 0x3c;
     if (input.analog[0][1] < 0x1fc) input.analog[0][1] = 0x1fc;
@@ -222,8 +222,8 @@ static void pad_update(s8 num, u8 i)
   else if (input.dev[i] == DEVICE_MOUSE)
   {
     input.analog[2][0] =  (x / sensitivity) * 2;
-    input.analog[2][1] =  (x / sensitivity) * 2;
-    if (!config.invert_mouse) input.analog[2][1] = 0 - input.analog[2][1];
+    input.analog[2][1] =  (y / sensitivity) * 2;
+    if (config.invert_mouse) input.analog[2][1] = 0 - input.analog[2][1];
   }
 
   /* GAMEPAD directional buttons */
@@ -435,7 +435,7 @@ static void wpad_update(s8 num, u8 i, u32 exp)
     {
       /* analog stick */
       input.analog[i-4][0] += x / sensitivity;
-      input.analog[i-4][1] += y / sensitivity;
+      input.analog[i-4][1] -= y / sensitivity;
       if (input.analog[i-4][0] < 0) input.analog[i-4][0] = 0;
       else if (input.analog[i-4][0] > bitmap.viewport.w) input.analog[i-4][0] = bitmap.viewport.w;
       if (input.analog[i-4][1] < 0) input.analog[i-4][1] = 0;
@@ -462,7 +462,7 @@ static void wpad_update(s8 num, u8 i, u32 exp)
     {
       /* analog stick */
       input.analog[0][0] += x / sensitivity;
-      input.analog[0][1] += y / sensitivity;
+      input.analog[0][1] -= y / sensitivity;
       if (input.analog[0][0] < 0x17c) input.analog[0][0] = 0x17c;
       else if (input.analog[0][0] > 0x3c) input.analog[0][0] = 0x3c;
       if (input.analog[0][1] < 0x1fc) input.analog[0][1] = 0x1fc;
@@ -487,7 +487,7 @@ static void wpad_update(s8 num, u8 i, u32 exp)
   {
     /* analog stick */
     input.analog[2][0] = x * 2 / sensitivity;
-    input.analog[2][1] = y * 2 / sensitivity;
+    input.analog[2][1] = 0 - y * 2 / sensitivity;
  
     if (exp != WPAD_EXP_CLASSIC)
     {
@@ -527,6 +527,11 @@ static void wpad_update(s8 num, u8 i, u32 exp)
         {
           old_y = ir.y;
         }
+      }
+      else
+      {
+        old_x -= input.analog[2][0];
+        old_y -= input.analog[2][1];
       }
     }
 

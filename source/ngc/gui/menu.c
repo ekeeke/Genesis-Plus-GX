@@ -133,8 +133,8 @@ void soundmenu ()
 	int ret;
 	int quit = 0;
 	int prevmenu = menu;
-	int count = 6;
-	char items[6][20];
+	int count = 5;
+	char items[5][20];
 
 	strcpy (menutitle, "Press B to return");
 
@@ -144,9 +144,24 @@ void soundmenu ()
 		sprintf (items[0], "PSG Volume: %1.2f", config.psg_preamp);
 		sprintf (items[1], "FM Volume: %1.2f", config.fm_preamp);
 		sprintf (items[2], "Volume Boost: %dX", config.boost);
-		sprintf (items[3], "HQ YM2612: %s", config.hq_fm ? "Y" : "N");
-		sprintf (items[4], "SSG-EG: %s", config.ssg_enabled ? "ON" : "OFF");
-		sprintf (items[5], "FM core: %s", config.fm_core ? "GENS" : "MAME");
+		if (config.hq_fm == 0)        sprintf (items[3], "HQ YM2612: OFF");
+		else if (config.fm_core)
+    {
+      /* GENS core only got linear resampling */
+      sprintf (items[3], "HQ YM2612: LINEAR");
+    }
+    else
+    {
+      /* MAME core uses libsamplerate */
+      if (config.hq_fm == 1)      sprintf (items[3], "HQ YM2612: LINEAR");
+      else if (config.hq_fm == 2) sprintf (items[3], "HQ YM2612: LOW");
+      else if (config.hq_fm == 3) sprintf (items[3], "HQ YM2612: FAST");
+		  else if (config.hq_fm == 4) sprintf (items[3], "HQ YM2612: MEDIUM");
+#ifdef USE_SINC_BEST
+		  else if (config.hq_fm == 5) sprintf (items[3], "HQ YM2612: BEST");
+#endif
+    }
+		sprintf (items[4], "FM core: %s", config.fm_core ? "GENS" : "MAME");
 
 		ret = domenu (&items[0], count, 1);
 		switch (ret)
@@ -173,8 +188,12 @@ void soundmenu ()
 				break;
 			
 			case 3:
-				config.hq_fm ^= 1;
-				if (genromsize) 
+#ifdef USE_SINC_BEST
+				config.hq_fm = (config.hq_fm + 1) % (config.fm_core ? 2 : 6);
+#else
+				config.hq_fm = (config.hq_fm + 1) % (config.fm_core ? 2 : 5);
+#endif
+        if (genromsize) 
 				{
 					audio_init(48000);
 					fm_restore();
@@ -182,14 +201,6 @@ void soundmenu ()
 				break;
 
 			case 4:
-				config.ssg_enabled ^= 1;
-				if (genromsize) 
-				{
-					fm_restore();
-				}
-				break;
-			
-			case 5:
 				config.fm_core ^= 1;
 				config.psg_preamp = config.fm_core ? 2.5 : 1.5;
 				config.fm_preamp  = 1.0;
