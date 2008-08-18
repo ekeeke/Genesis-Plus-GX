@@ -18,7 +18,7 @@
 **	- removed unused multichip support and YMxxx support
 **	- fixed CH3 CSM mode (credits to Nemesis)
 **  - implemented PG overflow, aka "detune bug" (Ariel, Comix Zone, Shaq Fu, Spiderman,...), credits to Nemesis
-**  - fixed SSG-EG support, credits to Nemesis and additional fixes from Alone Coder
+**  - fixed SSG-EG support, credits to Nemesis
 **  - modified EG rates and frequency, tested by Nemesis on real hardware
 **  - fixed EG attenuation level on KEY ON (Ecco 2 splash sound)
 **  - fixed LFO phase update for CH3 special mode (Warlock, Alladin), thanks to AamirM
@@ -264,10 +264,15 @@ O(16),O(16),O(16),O(16),O(16),O(16),O(16),O(16)
 #define O(a) (a*1)
 static const UINT8 eg_rate_shift[32+64+32]={	/* Envelope Generator counter shifts (32 + 64 rates + 32 RKS) */
 /* 32 infinite time rates */
+/*O(0),O(0),O(0),O(0),O(0),O(0),O(0),O(0),
 O(0),O(0),O(0),O(0),O(0),O(0),O(0),O(0),
 O(0),O(0),O(0),O(0),O(0),O(0),O(0),O(0),
-O(0),O(0),O(0),O(0),O(0),O(0),O(0),O(0),
-O(0),O(0),O(0),O(0),O(0),O(0),O(0),O(0),
+O(0),O(0),O(0),O(0),O(0),O(0),O(0),O(0),*/
+
+O(11),O(11),O(11),O(11),O(11),O(11),O(11),O(11),
+O(11),O(11),O(11),O(11),O(11),O(11),O(11),O(11),
+O(11),O(11),O(11),O(11),O(11),O(11),O(11),O(11),
+O(11),O(11),O(11),O(11),O(11),O(11),O(11),O(11),
 
 /* rates 00-11 */
 O(11),O(11),O(11),O(11),
@@ -648,10 +653,8 @@ INLINE void set_timers(int v )
 INLINE void FM_KEYON(FM_CH *CH , int s )
 {
 	FM_SLOT *SLOT = &CH->SLOT[s];
-	//if( !SLOT->key )
 	if(SLOT->state <= EG_REL)
   {
-		//SLOT->key = 1;
 		SLOT->phase = 0;		/* restart Phase Generator */
     SLOT->ssgn = (SLOT->ssg & 0x04) >> 1;
 
@@ -672,15 +675,12 @@ INLINE void FM_KEYON(FM_CH *CH , int s )
 INLINE void FM_KEYOFF(FM_CH *CH , int s )
 {
 	FM_SLOT *SLOT = &CH->SLOT[s];
-	//if( SLOT->key )
-  //{
-		//SLOT->key = 0;
+
 		if (SLOT->state>EG_REL)
 		{
       SLOT->state = EG_REL; /* phase -> Release */
       SLOT->ssgn = 0;       /* reset Invert Flag (from Nemesis) */
 	  }
- // }
 }
 
 /* set algorithm connection */
@@ -1013,13 +1013,9 @@ INLINE void advance_eg_channel(FM_SLOT *SLOT)
 				if ( !(ym2612.OPN.eg_cnt & ((1<<SLOT->eg_sh_rr)-1) ) )
 				{
           if (SLOT->ssg&0x08)
-          {
-            SLOT->volume += 6 * eg_inc[SLOT->eg_sel_rr + ((ym2612.OPN.eg_cnt>>SLOT->eg_sh_rr)&7)]; /* from Nemesis */
-          }
+             SLOT->volume += 6 * eg_inc[SLOT->eg_sel_rr + ((ym2612.OPN.eg_cnt>>SLOT->eg_sh_rr)&7)]; /* from Nemesis */
           else
-					{
             SLOT->volume += eg_inc[SLOT->eg_sel_rr + ((ym2612.OPN.eg_cnt>>SLOT->eg_sh_rr)&7)];
-          }
 
 					if ( SLOT->volume >= MAX_ATT_INDEX )
 					{
@@ -1031,7 +1027,7 @@ INLINE void advance_eg_channel(FM_SLOT *SLOT)
       
 		}
 
-		out = /*SLOT->tl +*/ ((UINT32)SLOT->volume);
+		out = (UINT32)SLOT->volume;
 
 		/* negate output (changes come from alternate bit, init comes from attack bit) */
     if ((SLOT->ssg&0x08) && (SLOT->ssgn&2))

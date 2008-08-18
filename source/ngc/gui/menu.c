@@ -555,6 +555,7 @@ void ConfigureJoypads ()
           input.system[0] = NO_SYSTEM;
           input.system[1] = SYSTEM_GAMEPAD;
         }
+        io_reset();
 			  break;
 		
 			case 1:
@@ -571,6 +572,7 @@ void ConfigureJoypads ()
           input.system[1] = NO_SYSTEM;
           input.system[0] = SYSTEM_GAMEPAD;
         }
+        io_reset();
 			  break;
 
       case 2:
@@ -690,6 +692,7 @@ void ConfigureJoypads ()
 			case 6:
         if (config.input[player].device == 1) break;
         input.padtype[player] ^= 1;
+        io_reset();
         break;
 
       case 7:
@@ -712,7 +715,6 @@ void ConfigureJoypads ()
 	}
 
 	menu = prevmenu;
-  io_reset();
 }
 
 /****************************************************************************

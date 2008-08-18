@@ -249,8 +249,8 @@ void vdp_restore(uint8 *vdp_regs)
 	bitmap.viewport.changed = 1;
 
 	/* restore VDP timings */
-  fifo_latency = (reg[12] & 1) ? 27 : 30;
-  if ((code & 0x0F) == 0x01) fifo_latency = fifo_latency * 2;
+  	fifo_latency = (reg[12] & 1) ? 27 : 30;
+  	if ((code & 0x0F) == 0x01) fifo_latency = fifo_latency * 2;
 	
 	/* remake cache */
 	for (i=0;i<0x800;i++) 
