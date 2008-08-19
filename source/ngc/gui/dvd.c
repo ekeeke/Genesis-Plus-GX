@@ -15,32 +15,31 @@
  * To keep libOGC stable, make sure you call DVD_Init before using
  * these functions.
  ***************************************************************************/
-
 #include "shared.h"
+#ifdef HW_RVL
+#include "di/di.h"
+#endif
 
-#ifdef HW_DOL
-#include "dvd.h"
 
-u64 DvdMaxOffset = 0x57057C00;
-
-/** DVD I/O Address base **/
-static vu32* const dvd = (u32*)0xCC006000;
-static unsigned char *inquiry=(unsigned char *)0x80000004;
-
-/** Due to lack of memory, we'll use this little 2k keyhole for all DVD operations **/
-unsigned char DVDreadbuffer[2048] ATTRIBUTE_ALIGN (32);
+#ifndef HW_RVL
+static u64 DvdMaxOffset = 0x57057C00;              /* 1.4 GB max. */
+static vu32* const dvd = (u32*)0xCC006000;  /* DVD I/O Address base */
+static u8 *inquiry=(unsigned char *)0x80000004;
 
 #else
-#include "wdvd.h"
-u64 DvdMaxOffset = 0x118244F00LL;
+static u64 DvdMaxOffset = 0x118244F00LL;           /* 4.7 GB max. */
 #endif
+
+/* 2k buffer for all DVD operations */
+u8 DVDreadbuffer[2048] ATTRIBUTE_ALIGN (32);
+
 
 /***************************************************************************
  * dvd_read
  *
  * Read DVD disc sectors
  ***************************************************************************/
-int dvd_read (void *dst, unsigned int len, u64 offset)
+u32 dvd_read (void *dst, u32 len, u64 offset)
 {
   /*** We only allow 2k reads **/
   if (len > 2048) return 0;
@@ -48,10 +47,10 @@ int dvd_read (void *dst, unsigned int len, u64 offset)
   /*** Let's not read past end of DVD ***/
   if(offset < DvdMaxOffset)
   {
-
-#ifdef HW_DOL
     unsigned char *buffer = (unsigned char *) (unsigned int) DVDreadbuffer;
     DCInvalidateRange((void *)buffer, len);
+
+#ifndef HW_RVL
     dvd[0] = 0x2E;
     dvd[1] = 0;
     dvd[2] = 0xA8000000;
@@ -63,45 +62,28 @@ int dvd_read (void *dst, unsigned int len, u64 offset)
 
     /*** Enable reading with DMA ***/
     while (dvd[7] & 1);
-    memcpy (dst, buffer, len);
 
     /*** Ensure it has completed ***/
     if (dvd[0] & 0x4) return 0;
-    
-    return 1;
 
-#elif WII_DVD
-    return WDVD_LowUnencryptedRead((unsigned char **)&dst, len, (u32)(offset >> 2));
+#else
+    int ret = DI_ReadDVD(buffer, len , (u32)(offset >> 2));
+    if (ret)
+    {
+      char msg[50];
+			u32 val;
+      DI_GetError(&val);
+			sprintf(msg, "DI Read Error: 0x%08X\n",val);
+      return 0;
+    }
 #endif
+
+    memcpy (dst, buffer, len);
+    return 1;
   }
 
   return 0; 
 }
-
-/****************************************************************************
- * uselessinquiry
- *
- * As the name suggests, this function is quite useless.
- * It's only purpose is to stop any pending DVD interrupts while we use the
- * memcard interface.
- *
- * libOGC tends to foul up if you don't, and sometimes does if you do!
- ****************************************************************************/
-#ifdef HW_DOL
-void uselessinquiry ()
-{
-  dvd[0] = 0;
-  dvd[1] = 0;
-  dvd[2] = 0x12000000;
-  dvd[3] = 0;
-  dvd[4] = 0x20;
-  dvd[5] = 0x80000000;
-  dvd[6] = 0x20;
-  dvd[7] = 1;
-
-  while (dvd[7] & 1);
-}
-#endif
 
 /****************************************************************************
  * dvd_motor_off
@@ -110,9 +92,9 @@ void uselessinquiry ()
  *
  * This can be used to prevent the Disc from spinning during playtime
  ****************************************************************************/
-#ifdef HW_DOL
 void dvd_motor_off( )
 {
+#ifndef HW_RVL
 	dvd[0] = 0x2e;
 	dvd[1] = 0;
 	dvd[2] = 0xe3000000;
@@ -126,8 +108,35 @@ void dvd_motor_off( )
 	/*** PSO Stops blackscreen at reload ***/
 	dvd[0] = 0x14;
 	dvd[1] = 0;
-}
+
+#else
+  DI_StopMotor();
 #endif
+}
+
+#ifndef HW_RVL
+/****************************************************************************
+ * uselessinquiry
+ *
+ * As the name suggests, this function is quite useless.
+ * It's only purpose is to stop any pending DVD interrupts while we use the
+ * memcard interface.
+ *
+ * libOGC tends to foul up if you don't, and sometimes does if you do!
+ ****************************************************************************/
+void uselessinquiry ()
+{
+  dvd[0] = 0;
+  dvd[1] = 0;
+  dvd[2] = 0x12000000;
+  dvd[3] = 0;
+  dvd[4] = 0x20;
+  dvd[5] = 0x80000000;
+  dvd[6] = 0x20;
+  dvd[7] = 1;
+
+  while (dvd[7] & 1);
+}
 
 /****************************************************************************
  * dvd_drive_detect()
@@ -135,7 +144,6 @@ void dvd_motor_off( )
  * Detect the DVD Drive Type
  *
  ****************************************************************************/
-#ifdef HW_DOL
 void dvd_drive_detect()
 {
   dvd[0] = 0x2e;

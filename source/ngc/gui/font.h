@@ -4,6 +4,8 @@
  * Based on Qoob MP3 Player Font
  * Added IPL font extraction
  *****************************************************************************/
+#ifndef _FONT_H
+#define _FONT_H
 
 extern void init_font(void);
 extern void WriteCentre_HL( int y, char *string);
@@ -21,3 +23,5 @@ extern int fheight;
 extern int font_size[256];
 extern u16 back_framewidth;
 extern u8 SILENT;
+
+#endif

@@ -11,11 +11,14 @@
  *
  ***************************************************************************/
 #include "shared.h"
-#include "dvd.h"
 #include "iso9660.h"
 #include "font.h"
 #include "fileio.h"
 #include "history.h"
+#include "dvd.h"
+#ifdef HW_RVL
+#include "di/di.h"
+#endif
 
 #define PAGESIZE 12
 
@@ -31,12 +34,8 @@ static u8 UseSDCARD = 0;
 static u8 UseHistory = 0;
 static int LoadFile (unsigned char *buffer);
 
-/* globals */
-FILE *sdfile;
-
-
 /***************************************************************************
- * FileSortCallback
+ * FileSortCallback (Marty Disibio)
  *
  * Quick sort callback to sort file entries with the following order:
  *   .
@@ -416,10 +415,23 @@ void OpenDVD ()
   
   if (!getpvd())
   {
-		ShowAction("Mounting DVD ... Wait");
+		/* mount DVD */
+    ShowAction("Mounting DVD ... Wait");
+
 #ifndef HW_RVL
 		DVD_Mount();
-#endif
+#else
+	  DI_Mount();
+	  while(DI_GetStatus() & DVD_INIT);
+    if (!(DI_GetStatus() & DVD_READY))
+    {
+      char msg[50];
+      sprintf(msg, "DI Status Error: 0x%08X\n",DI_GetStatus());
+      WaitPrompt(msg);
+      return;
+    }
+#endif      
+          
     haveDVDdir = 0;
 		if (!getpvd())
 		{
@@ -494,6 +506,11 @@ int OpenSD ()
   return 1;
 }
   
+/****************************************************************************
+ * OpenHistory
+ *
+ * Function to load a recent file from SDCARD (Marty Disibio)
+ ****************************************************************************/ 
 void OpenHistory()
 {
 	int i;
@@ -501,19 +518,15 @@ void OpenHistory()
 	UseSDCARD = 1;
 	UseHistory = 1;
 
-  /* don't mess with SD entries */
-  haveSDdir = 0;
+  /* don't mess with other entries */
+  haveSDdir   = 0;
+  haveDVDdir  = 0;
 
   /* reinit selector */
   old_selection = selection = offset = old_offset = 0;
 
-    /* Reset SDCARD root directory */
-	/* Make this empty because the history */
-	/* entry will contain the entire path. */
-    /*sprintf (rootSDdir, "");*/
-	
-	/* Recreate the file listing from the history
-     * as if all of the roms were in the same directory. */
+  /* Recreate the file listing from the history
+   * as if all of the roms were in the same directory. */
 	ShowAction("Reading Files ...");
 
 	maxfiles = 0;
@@ -561,6 +574,7 @@ static int LoadFile (unsigned char *buffer)
   u64 discoffset = 0;
   char readbuffer[2048];
   char fname[MAXPATHLEN];
+  FILE *sdfile = NULL;
  
   if (rootdirlength == 0) return 0;
 

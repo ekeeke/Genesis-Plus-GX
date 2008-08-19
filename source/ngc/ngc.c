@@ -19,12 +19,12 @@
  ***************************************************************************/
 #include "shared.h"
 #include "gcaram.h"
-#include "dvd.h"
 #include "font.h"
 #include "history.h"
-
-#ifdef WII_DVD
-#include "wdvd.h"
+#ifndef HW_RVL
+#include "dvd.h"
+#else
+#include "di/di.h"
 #endif
 
 /***************************************************************************
@@ -46,6 +46,13 @@ static void load_bios()
 
   /* update BIOS flags */
   config.bios_enabled |= 2;
+
+  if (config.bios_enabled == 3)
+  {
+    /* initialize system */
+    system_init ();
+    audio_init(48000);
+  }
 }
 
 static void init_machine()
@@ -53,9 +60,6 @@ static void init_machine()
   /* Allocate cart_rom here */
   cart_rom = memalign(32, 0xA00000);
 
-  /* BIOS support */
-  load_bios();
-  
   /* allocate global work bitmap */
   memset (&bitmap, 0, sizeof (bitmap));
   bitmap.width  = 360;
@@ -73,6 +77,9 @@ static void init_machine()
   /* default system */
   input.system[0] = SYSTEM_GAMEPAD;
   input.system[1] = SYSTEM_GAMEPAD;
+
+  /* BIOS support */
+  load_bios();
 }
 
 /**************************************************
@@ -96,35 +103,25 @@ int frameticker = 0;
 
 int main (int argc, char *argv[])
 {
+#ifdef HW_RVL
+	/* initialize Wii DVD interface first */
+  DI_Init();
+#endif
+
   u16 usBetweenFrames;
   long long now, prev;
   int RenderedFrameCount = 0;
   int FrameCount = 0;
   
-  /* load hacked IOS with full access to DVD interface (WIP) */
-#ifdef WII_DVD
-	IOS_ReloadIOS(5);
-#endif
-
   /* Initialize OGC subsystems */
   ogc_video__init();
   ogc_input__init();
   ogc_audio__init();
 
-  /* Initialize DVD interface */
 #ifndef HW_RVL
+  /* Initialize GC DVD interface */
   DVD_Init ();
   dvd_drive_detect();
-
-#elif WII_DVD
-  if (WDVD_Init())
-  {
-    if (WDVD_Reset())
-    {
-      u64 id;
-      WDVD_LowReadDiskId(&id);
-	  }
-	}
 #endif
 
   /* Initialize SDCARD Interface (LibFAT) */

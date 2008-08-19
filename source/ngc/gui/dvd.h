@@ -15,9 +15,15 @@
  * To keep libOGC stable, make sure you call DVD_Init before using
  * these functions.
  ***************************************************************************/
+#ifndef _DVD_H_
+#define _DVD_H_
 
-extern int dvd_read (void *dst, unsigned int len, u64 offset);
-extern void uselessinquiry ();
+extern u32 dvd_read (void *dst, u32 len, u64 offset);
 extern void dvd_motor_off ();
-extern void dvd_drive_detect();
 
+#ifndef HW_RVL
+extern void uselessinquiry ();
+extern void dvd_drive_detect();
+#endif
+
+#endif

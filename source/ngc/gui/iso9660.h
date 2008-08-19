@@ -5,8 +5,8 @@
  * This is not intended as a complete guide to ISO9660.
  * Here I use the bare minimum!
  ***************************************************************************/
- #ifndef _ISO9660_H
- #define _ISO9660_H
+#ifndef _ISO9660_H
+#define _ISO9660_H
 
 #define MAXJOLIET 256
 #define MAXFILES 1000			/** Restrict to 1000 files per dir **/
