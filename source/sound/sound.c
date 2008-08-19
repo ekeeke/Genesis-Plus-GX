@@ -41,8 +41,6 @@ static SRC_DATA data;
 
 /* YM2612 data */
 int fm_reg[2][0x100];		      /* Register arrays (2x256) */
-double fm_timera_tab[0x400];	/* Precalculated timer A values (in usecs) */
-double fm_timerb_tab[0x100];	/* Precalculated timer B values (in usecs) */
 
 /* return the number of samples that should have been rendered so far */
 static inline uint32 fm_sample_cnt(uint8 is_z80)
@@ -93,17 +91,8 @@ static inline void psg_update()
 
 void sound_init(int rate)
 {
-	int i;
 	double vclk = Master_Clock / 7.0;  /* 68000 and YM2612 clock */
 	double zclk = Master_Clock / 15.0; /* Z80 and SN76489 clock  */
-
-	/* Make Timer A table */
-	/* Formula is "time(us) = (1024 - A) * 144 * 1000000 / clock" */
-	for(i = 0; i < 1024; i += 1) fm_timera_tab[i] = ((double)((1024 - i) * 144) * 1000000.0 / vclk);
-
-	/* Make Timer B table */
-	/* Formula is "time(us) = 16 * (256 - B) * 144 * 1000000 / clock" */
-	for(i = 0; i < 256; i += 1) fm_timerb_tab[i] = ((double)((256 - i) * 16 * 144) * 1000000.0 / vclk);
 
 	/* cycle-accurate FM samples */
   if (config.hq_fm && !config.fm_core)

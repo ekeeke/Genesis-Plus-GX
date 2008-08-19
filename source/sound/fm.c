@@ -540,17 +540,17 @@ typedef struct
 	int		clock;		/* master clock  (Hz)   */
 	int		rate;		/* sampling rate (Hz)   */
 	double	freqbase;	/* frequency base       */
-	int	    TimerBase;	/* Timer base time      */
 	UINT8	address[2];	/* address register     */
 	UINT8	status;		/* status flag          */
 	UINT32	mode;		/* mode  CSM / 3SLOT    */
 	UINT8	fn_h;		/* freq latch           */
+	int  TimerBase;	/* Timer base time      */
 	int	TA;			/* timer a value        */
-	double	TAL;		/* timer a base		    */
-	double	TAC;		/* timer a counter      */
+	int	TAL;		/* timer a base		    */
+	int	TAC;		/* timer a counter      */
 	int	TB;			/* timer b              */
-	double	TBL;		/* timer b base		    */
-	double	TBC;		/* timer b counter      */
+	int	TBL;		/* timer b base		    */
+	int	TBC;		/* timer b counter      */
 	/* local time tables */
 	INT32	dt_tab[8][32];/* DeTune table       */
 
@@ -1065,10 +1065,10 @@ INLINE void update_phase_lfo_slot(FM_SLOT *SLOT , INT32 pms, UINT32 block_fnum)
     /* keyscale code */
     int kc = (blk<<2) | opn_fktable[fn >> 8];
 
-    /* phase increment counter */
+    /* (frequency) phase increment counter */
     int fc = (ym2612.OPN.fn_table[fn]>>(7-blk)) + SLOT->DT[kc];
       
-    /* detects frequency overflow (credits to Nemesis) */
+    /* (frequency) phase overflow (credits to Nemesis) */
     if (fc < 0) fc += fn_max;
 
     /* update phase */
@@ -1097,10 +1097,10 @@ INLINE void update_phase_lfo_channel(FM_CH *CH)
     /* keyscale code */
 		int kc = (blk<<2) | opn_fktable[fn >> 8];
 
- 		/* phase increment counter */
+ 		/* (frequency) phase increment counter */
     int fc = (ym2612.OPN.fn_table[fn]>>(7-blk));
 
-    /* detects frequency overflow (credits to Nemesis) */
+    /* (frequency) phase overflow (credits to Nemesis) */
     int finc = fc + CH->SLOT[SLOT1].DT[kc];
     if (finc < 0) finc += fn_max;
     CH->SLOT[SLOT1].phase += (finc*CH->SLOT[SLOT1].mul) >> 1;
@@ -1206,7 +1206,7 @@ INLINE void refresh_fc_eg_slot(FM_SLOT *SLOT , int fc , int kc )
 
   fc += SLOT->DT[kc];
 
-  /* detects frequency overflow (credits to Nemesis) */
+  /* (frequency) phase overflow (credits to Nemesis) */
   if (fc < 0) fc += fn_max;
 
   /* (frequency) phase increment counter */
@@ -1421,7 +1421,7 @@ static void INTERNAL_TIMER_B(int step)
 {
 	if (ym2612.OPN.ST.mode & 0x02)
 	{
-		if ((ym2612.OPN.ST.TBC -= (ym2612.OPN.ST.TimerBase * (double)step)) <= 0)
+		if ((ym2612.OPN.ST.TBC -= (ym2612.OPN.ST.TimerBase * step)) <= 0)
 		{
 			/* set status (if enabled) */
 			if (ym2612.OPN.ST.mode & 0x08) ym2612.OPN.ST.status |= 0x02;
@@ -1437,28 +1437,25 @@ static void OPNSetPres(int pres)
 {
 	int i;
 
-  if (config.hq_fm)
-  {
-    ym2612.OPN.ST.rate = ym2612.OPN.ST.clock / pres;
-  }
-
   /* frequency base */
-	ym2612.OPN.ST.freqbase = ((double) ym2612.OPN.ST.clock / (double) ym2612.OPN.ST.rate) / ((double) pres);
+  ym2612.OPN.ST.freqbase = ((double) ym2612.OPN.ST.clock / (double) ym2612.OPN.ST.rate) / ((double) pres);
+
+  /* YM2612 running at original frequency (~53 kHz) */
+  if (config.hq_fm) ym2612.OPN.ST.freqbase  = 1.0;
 
   /* timer increment in usecs (timers are incremented after each updated samples) */
-	ym2612.OPN.ST.TimerBase = 1000000.0 / (double)ym2612.OPN.ST.rate;
+	ym2612.OPN.ST.TimerBase = (int) (ym2612.OPN.ST.freqbase * 4096.0);
 
   ym2612.OPN.eg_timer_add  = (UINT32)((1<<EG_SH)  *  ym2612.OPN.ST.freqbase);
 
 	//ym2612.OPN.eg_timer_overflow = ( 3 ) * (1<<EG_SH);
 	ym2612.OPN.eg_timer_overflow =  (351 * (1<<EG_SH)) / 144; /* correct frequency (Nemesis: tested on real HW) */
 
-
 	/* make time tables */
 	init_timetables(dt_tab);
 
 	/* there are 2048 FNUMs that can be generated using FNUM/BLK registers
-        but LFO works with one more bit of a precision so we really need 4096 elements */
+      but LFO works with one more bit of a precision so we really need 4096 elements */
 	/* calculate fnumber -> increment counter table */
 	for(i = 0; i < 4096; i++)
 	{
@@ -1503,15 +1500,15 @@ static void OPNWriteMode(int r, int v)
 			break;
 		case 0x24:	/* timer A High 8*/
 			ym2612.OPN.ST.TA = (ym2612.OPN.ST.TA & 0x03)|(((int)v)<<2);
-			ym2612.OPN.ST.TAL = fm_timera_tab[ym2612.OPN.ST.TA];
+			ym2612.OPN.ST.TAL = (1024 - ym2612.OPN.ST.TA) << 12;
 			break;
 		case 0x25:	/* timer A Low 2*/
 			ym2612.OPN.ST.TA = (ym2612.OPN.ST.TA & 0x3fc)|(v&3);
-			ym2612.OPN.ST.TAL = fm_timera_tab[ym2612.OPN.ST.TA];
+			ym2612.OPN.ST.TAL = (1024 - ym2612.OPN.ST.TA) << 12;
       break;
 		case 0x26:	/* timer B */
 			ym2612.OPN.ST.TB = v;
-      ym2612.OPN.ST.TBL = fm_timerb_tab[ym2612.OPN.ST.TB];
+      ym2612.OPN.ST.TBL = (256 - ym2612.OPN.ST.TB) << 16;
       break;
 		case 0x27:	/* mode, timer control */
 			set_timers(v);

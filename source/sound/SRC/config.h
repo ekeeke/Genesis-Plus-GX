@@ -49,10 +49,10 @@
 #undef HAVE_LIBM
 
 /* Define if you have C99's lrint function. */
-#define HAVE_LRINT    0
+#define HAVE_LRINT    1
 
 /* Define if you have C99's lrintf function. */
-#define HAVE_LRINTF   0
+#define HAVE_LRINTF   1
 
 /* Define to 1 if you have the `malloc' function. */
 #undef HAVE_MALLOC
