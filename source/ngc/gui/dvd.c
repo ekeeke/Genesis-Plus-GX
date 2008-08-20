@@ -22,16 +22,15 @@
 
 
 #ifndef HW_RVL
-static u64 DvdMaxOffset = 0x57057C00;              /* 1.4 GB max. */
-static vu32* const dvd = (u32*)0xCC006000;  /* DVD I/O Address base */
-static u8 *inquiry=(unsigned char *)0x80000004;
-
+static u64 DvdMaxOffset = 0x57057C00;                 /* 1.4 GB max. */
+static vu32* const dvd = (u32*)0xCC006000;            /* DVD I/O Address base */
+static u8 *inquiry=(unsigned char *)0x80000004;       /* pointer to drive ID */
 #else
-static u64 DvdMaxOffset = 0x118244F00LL;           /* 4.7 GB max. */
+static u64 DvdMaxOffset = 0x118244F00LL;              /* 4.7 GB max. */
 #endif
 
-/* 2k buffer for all DVD operations */
-u8 DVDreadbuffer[2048] ATTRIBUTE_ALIGN (32);
+static u8 DVDreadbuffer[2048] ATTRIBUTE_ALIGN (32);   /* data buffer for all DVD operations */
+
 
 
 /***************************************************************************
@@ -67,17 +66,8 @@ u32 dvd_read (void *dst, u32 len, u64 offset)
     if (dvd[0] & 0x4) return 0;
 
 #else
-    int ret = DI_ReadDVD(buffer, len , (u32)(offset >> 2));
-    if (ret)
-    {
-      char msg[50];
-			u32 val;
-      DI_GetError(&val);
-			sprintf(msg, "DI Read Error: 0x%08X\n",val);
-      return 0;
-    }
+    if (DI_ReadDVD(buffer, len >> 11, (u32)(offset >> 11))) return 0;
 #endif
-
     memcpy (dst, buffer, len);
     return 1;
   }

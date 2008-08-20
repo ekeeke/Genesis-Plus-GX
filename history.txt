@@ -20,7 +20,8 @@ current:
 (IO) implemented Sega Mouse emulation (Populous 2, Body Count, Shangai 2, Fun'n Games, ...)
 
 [Wii only]
-- added lightgun & mouse support through Wiimote IR 
+- added lightgun & mouse support through Wiimote IR
+- added DVD support thanks to libDI (no modchip required)
 
 [NGC/Wii]
 - added "Gun cursor" option to enable/disable gun position display

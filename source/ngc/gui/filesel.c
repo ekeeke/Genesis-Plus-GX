@@ -191,7 +191,7 @@ static void FileSelected()
 	}
 
 	/* Add/move the file to the top of the history. */
-	history_add_file(rootSDdir, filelist[selection].filename);
+	if (UseSDCARD) history_add_file(rootSDdir, filelist[selection].filename);
 	
 	rootdir = filelist[selection].offset;
 	rootdirlength = filelist[selection].length;
@@ -396,7 +396,7 @@ static void FileSelector ()
 			else /*** This is a file ***/
 			{
 				FileSelected();
-			  	haverom = 1;
+        haverom = 1;
 			}
 			redraw = 1;
 		}
@@ -408,7 +408,7 @@ static void FileSelector ()
  *
  * Function to load a DVD directory and display to user.
  ****************************************************************************/ 
-void OpenDVD () 
+int OpenDVD () 
 {
   UseSDCARD = 0;
   UseHistory = 0;
@@ -421,6 +421,14 @@ void OpenDVD ()
 #ifndef HW_RVL
 		DVD_Mount();
 #else
+		u32 val;
+    DI_GetCoverRegister(&val);	
+
+		if(val & 0x1)
+    {
+      WaitPrompt("No Disc inserted !");
+			return 0;
+    }
 	  DI_Mount();
 	  while(DI_GetStatus() & DVD_INIT);
     if (!(DI_GetStatus() & DVD_READY))
@@ -428,7 +436,7 @@ void OpenDVD ()
       char msg[50];
       sprintf(msg, "DI Status Error: 0x%08X\n",DI_GetStatus());
       WaitPrompt(msg);
-      return;
+      return 0;
     }
 #endif      
           
@@ -436,7 +444,7 @@ void OpenDVD ()
 		if (!getpvd())
 		{
 			WaitPrompt ("Failed to mount DVD");
-      return;
+      return 0;
     }
   }
   
@@ -456,6 +464,8 @@ void OpenDVD ()
     }
   }
   else FileSelector ();
+
+  return 1;
 }
  
 /****************************************************************************
@@ -511,7 +521,7 @@ int OpenSD ()
  *
  * Function to load a recent file from SDCARD (Marty Disibio)
  ****************************************************************************/ 
-void OpenHistory()
+int OpenHistory()
 {
 	int i;
 
@@ -553,10 +563,11 @@ void OpenHistory()
 	if(!maxfiles)
 	{
 		WaitPrompt ("No recent files");
-		return;
+		return 0;
 	}
 	
 	FileSelector();
+  return 1;
 }
   
 

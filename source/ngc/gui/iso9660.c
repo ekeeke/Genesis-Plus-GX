@@ -26,7 +26,7 @@ int rootdirlength = 0;
 
 /** Global file entry table **/
 FILEENTRIES filelist[MAXFILES];
-static char dvdbuffer[2048];
+static char dvdbuffer[2048] ATTRIBUTE_ALIGN (32);
 
 /****************************************************************************
  * Primary Volume Descriptor
@@ -49,7 +49,7 @@ int getpvd ()
 		{
 			if (memcmp (&dvdbuffer, "\2CD001\1", 8) == 0)
 			{
-				memcpy(&rootdir32, &dvdbuffer[PVDROOT + EXTENT], 4);
+        memcpy(&rootdir32, &dvdbuffer[PVDROOT + EXTENT], 4);
 				basedir = (u64)rootdir32;
 				memcpy (&rootdirlength, &dvdbuffer[PVDROOT + FILE_LENGTH], 4);
 				basedir <<= 11;
@@ -61,8 +61,8 @@ int getpvd ()
 		sector++;
 	}
 
-	if (IsJoliet > 0) return 1; /*** Joliet PVD Found ? ***/
-  
+  if (IsJoliet > 0) return 1; /*** Joliet PVD Found ? ***/
+
 	/*** Look for standard ISO9660 PVD ***/
 	sector = 16;
 	while (sector < 32)
@@ -82,8 +82,8 @@ int getpvd ()
 		else return 0; /*** Can't read sector! ***/
 	    sector++;
 	}
-	
-	return (IsJoliet == 0);
+
+  return (IsJoliet == 0);
 }
 
 /****************************************************************************
