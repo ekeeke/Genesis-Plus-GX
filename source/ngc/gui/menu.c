@@ -907,15 +907,8 @@ void loadmenu ()
 				break;
 
       case 2:	 /*** Load from DVD ***/
-#ifndef HW_RVL
         OpenDVD();
 				quit = 1;
-#elif WII_DVD
-        OpenDVD();
-				quit = 1;
-#else
-        WaitPrompt("Not implemented... yet ;)");
-#endif
         break;
 		}
 	}
