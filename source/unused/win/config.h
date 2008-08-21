@@ -28,17 +28,12 @@ typedef struct
   uint8 aspect;
   uint8 overscan;
   uint8 render;
-  uint16 pad_keymap[4][MAX_KEYS];
-  uint32 wpad_keymap[4*3][MAX_KEYS];
-  t_input_config input[MAX_DEVICES];
   uint8 gun_cursor;
   uint8 invert_mouse;
 } t_config;
 
+/* Global variables */
 extern t_config config;
-extern void config_save();
-extern void config_load();
-extern void set_config_defaults(void);
 
 #endif /* _CONFIG_H_ */
 

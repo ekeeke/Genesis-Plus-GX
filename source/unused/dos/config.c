@@ -1,6 +1,8 @@
 
 #include "osd.h"
 
+#define CONFIG_VERSION "GENPLUS 1.2.1 "
+
 t_option option;
 t_config config;
 
@@ -70,9 +72,9 @@ int check_bool(char *token)
 void set_option_defaults(void)
 {
     option.video_driver = GFX_AUTODETECT;
-    option.video_width  = 320;
-    option.video_height = 240;
-    option.video_depth  = 8;
+    option.video_width  = 640;
+    option.video_height = 480;
+    option.video_depth  = 16;
 
     option.remap        = 1;
     option.scanlines    = 0;
@@ -90,13 +92,16 @@ void set_option_defaults(void)
     option.joy_driver   = JOY_TYPE_NONE;
 }
 
-/* additional options */
-void set_config_default()
+void set_config_defaults(void)
 {
+  /* version TAG */
+  strncpy(config.version,CONFIG_VERSION,15);
+  
   /* sound options */
   config.psg_preamp   = 1.5;
   config.fm_preamp    = 1.0;
   config.boost        = 1;
+  config.filter       = 0;
   config.hq_fm        = 1;
   config.fm_core      = 0;
 
@@ -110,16 +115,15 @@ void set_config_default()
   /* display options */
   config.xshift   = 0;
   config.yshift   = 0;
-  config.xscale   = 320;
-  config.yscale   = 240;
+  config.xscale   = 0;
+  config.yscale   = 0;
   config.aspect   = 1;
   config.overscan = 1;
   config.render   = 0;
 
   /* controllers options */
-  config.sys_type[0] = 0;
-  config.sys_type[1] = 0;
-  config.crosshair = 1;
+  config.gun_cursor   = 1;
+  config.invert_mouse = 0;
 }
 
 void print_options(void)
@@ -232,7 +236,7 @@ void parse_args(int argc, char **argv)
         }
     }
 
-   //if(option.remap) option.video_depth = 8;
+   if(option.remap) option.video_depth = 8;
 }
 
 

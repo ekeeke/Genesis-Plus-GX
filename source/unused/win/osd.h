@@ -8,12 +8,13 @@
 #include <time.h>
 #include <conio.h>
 
-#include "SDL.h"
+#include <SDL.h>
 #include <stdlib.h>
 
-#include "error.h"
 #include "shared.h"
 #include "main.h"
+#include "config.h"
+#include "error.h"
 #include "unzip.h"
 #include "fileio.h"
 

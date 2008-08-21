@@ -2373,11 +2373,8 @@ void YM2612_Update(int **buf, int length)
 	{
 		for(i = 0; i < length; i++)
 		{
-			long dac = (YM2612.DACdata << 15) - dac_highpass;
-			dac_highpass += dac >> 9;
-			dac >>= 15;
-			buf[0][i] += dac & YM2612.CHANNEL[5].LEFT;
-			buf[1][i] += dac & YM2612.CHANNEL[5].RIGHT;
+			buf[0][i] += YM2612.DACdata & YM2612.CHANNEL[5].LEFT;
+			buf[1][i] += YM2612.DACdata & YM2612.CHANNEL[5].RIGHT;
 		}
 	}
 

@@ -16,9 +16,6 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-#ifndef _TYPES_H_
-#define _TYPES_H_
-
 #undef uint8
 #undef uint16
 #undef uint32
@@ -30,4 +27,3 @@
 #define int16 signed short
 #define int32 signed long int	
 
-#endif /* _TYPES_H_ */

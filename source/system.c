@@ -337,7 +337,8 @@ static void audio_update (void)
   int l, r;
   double psg_preamp = config.psg_preamp;
   double fm_preamp  = config.fm_preamp;
-  uint8 boost = config.boost;
+  int boost  = config.boost;
+  int filter = config.filter;
 
 #ifdef NGC
 	int16 *sb = (int16 *) soundbuffer[mixbuffer];
@@ -357,8 +358,13 @@ static void audio_update (void)
 		snd.psg.buffer[i] = 0;
 
     /* single-pole low-pass filter (6 dB/octave) */
-		ll = (ll + l) >> 1;
-		rr = (rr + r) >> 1;
+		if (filter)
+		{
+      l = (ll + l) >> 1;
+		  r = (rr + r) >> 1;
+      ll = l;
+      rr = r;
+    }
 
     /* boost volume if asked*/
 		l = ll * boost;
@@ -374,7 +380,7 @@ static void audio_update (void)
 #ifdef NGC
 		*sb++ = r; // RIGHT channel comes first
 		*sb++ = l;
-#else
+#elif DOS
 		snd.buffer[0][i] = l;
 		snd.buffer[1][i] = r;
 #endif

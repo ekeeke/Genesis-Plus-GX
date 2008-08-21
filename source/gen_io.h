@@ -21,8 +21,8 @@
  *
  ****************************************************************************************/
 
-#ifndef _IO_H_
-#define _IO_H_
+#ifndef _GEN_IO_H_
+#define _GEN_IO_H_
 
 #define REGION_USA			0x80
 #define REGION_JAPAN_NTSC	0x00

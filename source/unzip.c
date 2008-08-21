@@ -161,7 +161,7 @@ local int unzlocal_getShort (fin,pX)
     uLong *pX;
 {
     uLong x ;
-    int i;
+    int i = 0;
     int err;
 
     err = unzlocal_getByte(fin,&i);
@@ -183,7 +183,7 @@ local int unzlocal_getLong (fin,pX)
     uLong *pX;
 {
     uLong x ;
-    int i;
+    int i = 0;
     int err;
 
     err = unzlocal_getByte(fin,&i);

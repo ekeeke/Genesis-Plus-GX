@@ -21,8 +21,8 @@
  *
  ****************************************************************************************/
 
-#ifndef _INPUT_HW_H_
-#define _INPUT_HW_H_
+#ifndef _GEN_INPUT_H_
+#define _GEN_INPUT_H_
 
 /* Max. number of devices */
 #define MAX_DEVICES (8)

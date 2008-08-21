@@ -787,11 +787,28 @@ INLINE void set_tl(FM_CH *CH,FM_SLOT *SLOT , int v)
 /* set attack rate & key scale  */
 INLINE void set_ar_ksr(FM_CH *CH,FM_SLOT *SLOT,int v)
 {
-	SLOT->ar = (v&0x1f) ? (32 + ((v&0x1f)<<1)) : 0;
+	UINT8 old_KSR = SLOT->KSR;
+
+	SLOT->ar = (v&0x1f) ? 32 + ((v&0x1f)<<1) : 0;
 
 	SLOT->KSR = 3-(v>>6);
-	CH->SLOT[SLOT1].Incr=-1;
-}
+	if (SLOT->KSR != old_KSR)
+	{
+		CH->SLOT[SLOT1].Incr=-1;
+	}
+
+		/* refresh Attack rate */
+		if ((SLOT->ar + SLOT->ksr) < 94 /*32+62*/)
+		{
+			SLOT->eg_sh_ar  = eg_rate_shift [SLOT->ar  + SLOT->ksr ];
+			SLOT->eg_sel_ar = eg_rate_select[SLOT->ar  + SLOT->ksr ];
+		}
+		else
+		{
+			SLOT->eg_sh_ar  = 0;
+			SLOT->eg_sel_ar = 17*RATE_STEPS;
+		}
+	}
 
 /* set decay rate */
 INLINE void set_dr(FM_SLOT *SLOT,int v)

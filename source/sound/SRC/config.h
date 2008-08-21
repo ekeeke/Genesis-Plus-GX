@@ -49,7 +49,11 @@
 #undef HAVE_LIBM
 
 /* Define if you have C99's lrint function. */
+#ifdef DOS
+#define HAVE_LRINT    0
+#else
 #define HAVE_LRINT    1
+#endif
 
 /* Define if you have C99's lrintf function. */
 #define HAVE_LRINTF   1

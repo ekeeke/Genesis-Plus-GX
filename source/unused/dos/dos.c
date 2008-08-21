@@ -14,7 +14,7 @@ PALETTE gen_pal;
 BITMAP *gen_bmp;
 
 volatile int frame_skip      = 1;
-int frame_count     = 0;
+volatile int frame_count     = 0;
 volatile int frames_rendered = 0;
 volatile int frame_rate      = 0;
 volatile int tick_count      = 0;
@@ -22,7 +22,7 @@ volatile int old_tick_count  = 0;
 volatile int skip            = 0;
 
 int quit = 0;
-unsigned char buf[0x26000];
+unsigned char buf[0x24000];
 
 uint8 log_error = 1;
 uint8 debug_on = 0;
@@ -50,35 +50,42 @@ void msg_print(int x, int y, char *fmt, ...)
 
 int main (int argc, char *argv[])
 {
-    if(argc < 2) {
-        printf("Genesis Plus - Sega Mega Drive emulator (v1.0)\n");
-        printf("(C) 1999, 2000, 2001, 2002, 2003  Charles MacDonald\n");
-        printf("Usage %s file.[bin|smd|zip] [-options]\n", argv[0]);
-        printf("Type `%s -help' for a list of options.\n", argv[0]);
-        exit(1);
-    };
+  if(argc < 2)
+  {
+    printf("Genesis Plus - Sega Mega Drive emulator (v1.0)\n");
+    printf("(C) 1999, 2000, 2001, 2002, 2003  Charles MacDonald\n");
+    printf("Usage %s file.[bin|smd|zip] [-options]\n", argv[0]);
+    printf("Type `%s -help' for a list of options.\n", argv[0]);
+    exit(1);
+  };
 
-    if(stricmp(argv[1], "-help") == 0)
-    {
-        print_options();
-        return (0);
-    }
-    error_init();
+  if(stricmp(argv[1], "-help") == 0)
+  {
+    print_options();
+    return (0);
+  }
+  error_init();
 
-    cart_rom = malloc(0xA00000);
-    memset(cart_rom, 0, 0xA00000);
+  cart_rom = malloc(0xA00000);
+	memset(cart_rom, 0, 0xA00000);
 
-    set_config_default();
+	if(!load_rom(argv[1]))
+  {
+    printf("File `%s' not found.\n", argv[1]);
+    return (0);
+  }
 
-    if(!load_rom(argv[1]))
-    {
-        printf("File `%s' not found.\n", argv[1]);
-        return (0);
-    }
+	/* load SRAM */
+	FILE *f = fopen("./game.srm", "rb");
+	if (f!=NULL)
+	{
+    fread(&sram.sram,0x10000,1, f);
+		fclose(f);
+	}
 
-
-	memset(bios_rom, 0, sizeof(bios_rom));
-	FILE *f = fopen("./BIOS.bin", "rb");
+	/* load BIOS */
+  memset(bios_rom, 0, sizeof(bios_rom));
+	f = fopen("./BIOS.bin", "rb");
 	if (f!=NULL)
 	{
 		fread(&bios_rom, 0x800,1,f);
@@ -91,65 +98,58 @@ int main (int argc, char *argv[])
 			bios_rom[i+1] = temp;
 		}
 		config.bios_enabled = 3;
-    }
+  }
 	else config.bios_enabled = 0;
 
-	init_machine();
- 	set_config_default();
-  	input.system[0] = SYSTEM_GAMEPAD;
-	input.system[1] = SYSTEM_GAMEPAD;
+	/* initialize genesis VM */
+  init_machine();
+  
+  /* default config */
+  set_config_defaults();
+  input.system[0] = SYSTEM_GAMEPAD;
+  input.system[1] = SYSTEM_GAMEPAD;
 
-  system_init();
-
+	/* initialize emulation */
 	int buf_len = (option.sndrate * 4) / vdp_rate;
 	snd.buffer[0] = malloc (buf_len/2);
 	snd.buffer[1] = malloc (buf_len/2);
 	memset (snd.buffer[0], 0, buf_len/2);
   memset (snd.buffer[1], 0, buf_len/2);
+  system_init();
   audio_init(option.sndrate);
-
-	f = fopen("./game.srm", "rb");
-	if (f!=NULL)
-	{
-    	fread(&sram.sram,0x10000,1, f);
-		fclose(f);
-	}
-
-
   system_reset();
 
-    for(;;)
+  /* emulation loop */
+  for(;;)
+  {
+    frame_count += 1;
+    if(quit) break;
+    if(frame_count % frame_skip == 0)
     {
-        frame_count += 1;
-        if(quit) break;
-        if(frame_count % frame_skip == 0)
-        {
-            system_frame(0);
-            frames_rendered++;
+      system_frame(0);
+      frames_rendered++;
 			dos_update_video();
-        }
-        else
-        {
-            system_frame(1);
-        }
-        if(option.sound) dos_update_audio();
+    }
+    else
+    {
+      system_frame(1);
+    }
+    if(option.sound) dos_update_audio();
 
 		//error("%d\n", frame_rate);
 	}
 
 	f = fopen("./game.srm", "wb");
-    if (f!=NULL)
-    {
-		fwrite(&sram.sram, 0x10000,1,f);
-		fclose(f);
-		
-    }
-
+  if (f!=NULL)
+  {
+    fwrite(&sram.sram, 0x10000,1,f);
+    fclose(f);
+	}
 
 	trash_machine();
-    system_shutdown();
-    error_shutdown();
-    return (0);
+  system_shutdown();
+  error_shutdown();
+  return (0);
 }
 
 /* Timer handler */
@@ -185,127 +185,176 @@ int save_file(char *filename, char *buf, int size)
 
 static int joynum = 0;
 uint8 delay = 36;
+int gun_offset = 0;
+
+int old_mouse_x = 0;
+int old_mouse_y = 0;
+
 void dos_update_input(void)
 {
-  FILE *f;
+    FILE *f;
 
 	if(key[KEY_ESC] || key[KEY_END])
-  {
-    quit = 1;
-  }
+    {
+        quit = 1;
+    }
 
   while (input.dev[joynum] == NO_DEVICE)
 	{
-    joynum ++;
-    if (joynum > MAX_DEVICES - 1) joynum = 0;
+			joynum ++;
+			if (joynum > MAX_DEVICES - 1) joynum = 0;
 	}
 	
+	if(check_key(KEY_F12))
+  {
+    input.x_offset ++;
+    if (input.x_offset > 0xff) input.x_offset = 0;
+  }    
+  if(check_key(KEY_F11))
+	{
+		
+		joynum ++;
+		if (joynum > MAX_DEVICES - 1) joynum = 0;
+
+		while (input.dev[joynum] == NO_DEVICE)
+		{
+			joynum ++;
+			if (joynum > MAX_DEVICES - 1) joynum = 0;
+		}
+	}
+
 	input.pad[joynum] = 0;
 
-  /* Is the joystick being used ? */
-  if(option.joy_driver != JOY_TYPE_NONE)
-  {
-    poll_joystick();
-
-    /* Check player 1 joystick */
-    if(joy[0].stick[0].axis[1].d1) input.pad[0] |= INPUT_UP;
-    else
-    if(joy[0].stick[0].axis[1].d2) input.pad[0] |= INPUT_DOWN;
-
-    if(joy[0].stick[0].axis[0].d1) input.pad[0] |= INPUT_LEFT;
-    else
-    if(joy[0].stick[0].axis[0].d2) input.pad[0] |= INPUT_RIGHT;
-
-    if(joy[0].button[0].b)  input.pad[0] |= INPUT_A;
-    if(joy[0].button[1].b)  input.pad[0] |= INPUT_B;
-    if(joy[0].button[2].b)  input.pad[0] |= INPUT_C;
-    if(joy[0].button[3].b)  input.pad[0] |= INPUT_START;
-    if(joy[0].button[4].b)  input.pad[0] |= INPUT_X;
-    if(joy[0].button[5].b)  input.pad[0] |= INPUT_Y;
-    if(joy[0].button[6].b)  input.pad[0] |= INPUT_Z;
-    if(joy[0].button[7].b)  input.pad[0] |= INPUT_MODE;
-
-    /* More than one joystick supported ? */
-    if(num_joysticks > 2)
+    /* Is the joystick being used ? */
+    if(option.joy_driver != JOY_TYPE_NONE)
     {
-      /* Check player 2 joystick */
-      if(joy[1].stick[0].axis[1].d1) input.pad[1] |= INPUT_UP;
-      else
-      if(joy[1].stick[0].axis[1].d2) input.pad[1] |= INPUT_DOWN;
+        poll_joystick();
 
-      if(joy[1].stick[0].axis[0].d1) input.pad[1] |= INPUT_LEFT;
-      else
-      if(joy[1].stick[0].axis[0].d1) input.pad[1] |= INPUT_RIGHT;
+        /* Check player 1 joystick */
+        if(joy[0].stick[0].axis[1].d1) input.pad[0] |= INPUT_UP;
+        else
+        if(joy[0].stick[0].axis[1].d2) input.pad[0] |= INPUT_DOWN;
 
-      if(joy[1].button[0].b)  input.pad[1] |= INPUT_A;
-      if(joy[1].button[1].b)  input.pad[1] |= INPUT_B;
-      if(joy[1].button[2].b)  input.pad[1] |= INPUT_C;
-      if(joy[1].button[3].b)  input.pad[1] |= INPUT_START;
-      if(joy[1].button[4].b)  input.pad[1] |= INPUT_X;
-      if(joy[1].button[5].b)  input.pad[1] |= INPUT_Y;
-      if(joy[1].button[6].b)  input.pad[1] |= INPUT_Z;
-      if(joy[1].button[7].b)  input.pad[1] |= INPUT_MODE;
+        if(joy[0].stick[0].axis[0].d1) input.pad[0] |= INPUT_LEFT;
+        else
+        if(joy[0].stick[0].axis[0].d2) input.pad[0] |= INPUT_RIGHT;
+
+        if(joy[0].button[0].b)  input.pad[0] |= INPUT_A;
+        if(joy[0].button[1].b)  input.pad[0] |= INPUT_B;
+        if(joy[0].button[2].b)  input.pad[0] |= INPUT_C;
+        if(joy[0].button[3].b)  input.pad[0] |= INPUT_START;
+        if(joy[0].button[4].b)  input.pad[0] |= INPUT_X;
+        if(joy[0].button[5].b)  input.pad[0] |= INPUT_Y;
+        if(joy[0].button[6].b)  input.pad[0] |= INPUT_Z;
+        if(joy[0].button[7].b)  input.pad[0] |= INPUT_MODE;
+
+        /* More than one joystick supported ? */
+        if(num_joysticks > 2)
+        {
+            /* Check player 2 joystick */
+            if(joy[1].stick[0].axis[1].d1) input.pad[1] |= INPUT_UP;
+            else
+            if(joy[1].stick[0].axis[1].d2) input.pad[1] |= INPUT_DOWN;
+
+            if(joy[1].stick[0].axis[0].d1) input.pad[1] |= INPUT_LEFT;
+            else
+            if(joy[1].stick[0].axis[0].d1) input.pad[1] |= INPUT_RIGHT;
+
+            if(joy[1].button[0].b)  input.pad[1] |= INPUT_A;
+            if(joy[1].button[1].b)  input.pad[1] |= INPUT_B;
+            if(joy[1].button[2].b)  input.pad[1] |= INPUT_C;
+            if(joy[1].button[3].b)  input.pad[1] |= INPUT_START;
+            if(joy[1].button[4].b)  input.pad[1] |= INPUT_X;
+            if(joy[1].button[5].b)  input.pad[1] |= INPUT_Y;
+            if(joy[1].button[6].b)  input.pad[1] |= INPUT_Z;
+            if(joy[1].button[7].b)  input.pad[1] |= INPUT_MODE;
+        }
     }
-  }
-	/* keyboard */
-	if(key[KEY_UP])    input.pad[joynum] |= INPUT_UP;
-	else
-  if(key[KEY_DOWN])  input.pad[joynum] |= INPUT_DOWN;
+	
 
-	if(key[KEY_LEFT])  input.pad[joynum] |= INPUT_LEFT;
-	else
-  if(key[KEY_RIGHT]) input.pad[joynum] |= INPUT_RIGHT;
 
-	if(key[KEY_A])     input.pad[joynum] |= INPUT_A;
-	if(key[KEY_S])     input.pad[joynum] |= INPUT_B;
-	if(key[KEY_D])     input.pad[joynum] |= INPUT_C;
-  if(key[KEY_Z])     input.pad[joynum] |= INPUT_X;
+	if(key[KEY_Z])     input.pad[joynum] |= INPUT_X;
 	if(key[KEY_X])     input.pad[joynum] |= INPUT_Y;
 	if(key[KEY_C])     input.pad[joynum] |= INPUT_Z;
 	if(key[KEY_V])     input.pad[joynum] |= INPUT_MODE;
-
-	if(key[KEY_F])
-  {
+	if(key[KEY_UP])    input.pad[joynum] |= INPUT_UP;
+	else
+	if(key[KEY_DOWN])  input.pad[joynum] |= INPUT_DOWN;
+	if(key[KEY_LEFT])  input.pad[joynum] |= INPUT_LEFT;
+	else
+	if(key[KEY_RIGHT]) input.pad[joynum] |= INPUT_RIGHT;
+	if(check_key(KEY_A)) error("ButtonA pressed\n");
+  if(key[KEY_A])      {
+    input.pad[joynum] |= INPUT_A;
+	}
+	if(key[KEY_S])     input.pad[joynum] |= INPUT_B;
+	if(key[KEY_D])     input.pad[joynum] |= INPUT_C;
+	if(check_key(KEY_F)) error("start pressed\n");
+  if(key[KEY_F])   {
+   
     input.pad[joynum] |= INPUT_START;
-    error("start pressed\n");
-  }
-  
+	}
+
+  extern uint8 pico_current;
   if (input.dev[joynum] == DEVICE_LIGHTGUN)
   {
     /* Poll mouse if necessary */
     if(mouse_needs_poll() == TRUE)
       poll_mouse();
 
-    /* Calculate X Y axis values */
-    input.analog[joynum - 4][0] = (mouse_x * bitmap.viewport.w) / SCREEN_W;
-    input.analog[joynum - 4][1] = (mouse_y * bitmap.viewport.h) / SCREEN_H;
+    /* Calculate X axis value */
+    input.analog[joynum-4][0] = (mouse_x * bitmap.viewport.w)/SCREEN_W;;
+
+    /* Calculate Y axis value */
+    input.analog[joynum-4][1] = (mouse_y * bitmap.viewport.h)/SCREEN_H;;
 
     /* Map mouse buttons to player #1 inputs */
-    if(mouse_b & 4) input.pad[joynum] |= INPUT_B;
-    if(mouse_b & 2) input.pad[joynum] |= INPUT_C;
+    if(mouse_b & 4) input.pad[joynum] |= INPUT_C;
+    if(mouse_b & 2) input.pad[joynum] |= INPUT_B;
     if(mouse_b & 1) input.pad[joynum] |= INPUT_A;
+    if(key[KEY_F]) input.pad[joynum] |= INPUT_START;
   }
+  else if (input.dev[joynum] == DEVICE_MOUSE)
+  {
+        /* Poll mouse if necessary */
+        if(mouse_needs_poll() == TRUE)
+            poll_mouse();
 
+        get_mouse_mickeys(&input.analog[2][0], &input.analog[2][1]);
+        input.analog[2][0] = (input.analog[2][0] * 256) / SCREEN_W;
+        input.analog[2][1] = (input.analog[2][1] * 256) / SCREEN_H;
+        if (config.invert_mouse) input.analog[2][1] = 0 - input.analog[2][1];
+        
+        /* Map mouse buttons to player #1 inputs */
+        if(mouse_b & 4) input.pad[joynum] |= INPUT_C;
+        if(mouse_b & 1) input.pad[joynum] |= INPUT_B;
+        if(mouse_b & 2) input.pad[joynum] |= INPUT_A;
+     if(key[KEY_F]) input.pad[joynum] |= INPUT_START;
+ }
   else if (system_hw == SYSTEM_PICO)
   {
-    /* Poll mouse if necessary */
-    if(mouse_needs_poll() == TRUE)
-      poll_mouse();
+     /* Poll mouse if necessary */
+        if(mouse_needs_poll() == TRUE)
+            poll_mouse();
 
-    /* Calculate X Y axis values */
-    input.analog[0][0] = 0x3c  + (mouse_x * (0x17c-0x03c+1)) / SCREEN_W;
-    input.analog[0][1] = 0x1fc + (mouse_y * (0x2f7-0x1fc+1)) / SCREEN_H;
+        /* Calculate X axis value */
+        input.analog[0][0] = 0x3c + (mouse_x * (0x17c - 0x3c + 1) / SCREEN_W);
 
-    /* Map mouse buttons to player #1 inputs */
-    if(mouse_b & 4) input.pad[joynum] |= INPUT_START;
-    if(mouse_b & 2) input.pad[joynum] |= INPUT_A;
-    if(mouse_b & 1) input.pad[joynum] |= INPUT_B;
+        /* Calculate Y axis value */
+        input.analog[0][1] = 0x1fc + (mouse_y* (0x3f3 - 0x1fc + 1) / SCREEN_H);
+
+        /* Map mouse buttons to player #1 inputs */
+        if(mouse_b & 2) input.pad[0] |= INPUT_B;
+        if(mouse_b & 1) input.pad[0] |= INPUT_A;
+        if(mouse_b & 4)  pico_current++;
+        if (pico_current > 6) pico_current = 0;
   }
 
-	if(check_key(KEY_F1)) frame_skip = 1;
-  if(check_key(KEY_F2)) frame_skip = 2;
-  if(check_key(KEY_F3)) frame_skip = 3;
-  if(check_key(KEY_F4)) frame_skip = 4;
+	
+    if(check_key(KEY_F1)) frame_skip = 1;
+    if(check_key(KEY_F2)) frame_skip = 2;
+    if(check_key(KEY_F3)) frame_skip = 3;
+    if(check_key(KEY_F4)) frame_skip = 4;
 
 	if(check_key(KEY_F5)) log_error ^= 1;
 	if(check_key(KEY_F6)) debug_on ^= 1;
@@ -315,11 +364,7 @@ void dos_update_input(void)
 		f = fopen("game.gpz","r+b");
 		if (f)
 		{
-			int len = 0;
-      fread(&len, 4, 1, f);
-      fclose(f);
-      fopen("game.gpz","r+b");
-      fread(&buf, len+4, 1, f);
+			fread(&buf, 0x23000, 1, f);
 			state_load(buf);
 			fclose(f);
 		}
@@ -330,18 +375,22 @@ void dos_update_input(void)
 		f = fopen("game.gpz","w+b");
 		if (f)
 		{
-			int size = state_save(buf);
-			fwrite(&buf, size, 1, f);
+			state_save(buf);
+			fwrite(&buf, 0x23000, 1, f);
 			fclose(f);
 		}
   }
 
-	if(check_key(KEY_F9))
-	{
-		vdp_pal ^= 1;
-		system_init();
-		audio_init(option.sndrate);
-		fm_restore();
+	if(check_key(KEY_F9)) 
+  {
+    vdp_pal ^= 1;
+
+    /* reinitialize timings */
+    system_init ();
+    audio_init(48000);
+    fm_restore();
+									
+    /* reinitialize HVC tables */
     vctab = (vdp_pal) ? ((reg[1] & 8) ? vc_pal_240 : vc_pal_224) : vc_ntsc_224;
     hctab = (reg[12] & 1) ? cycle2hc40 : cycle2hc32;
 
@@ -349,30 +398,13 @@ void dos_update_input(void)
     bitmap.viewport.x = config.overscan ? ((reg[12] & 1) ? 16 : 12) : 0;
     bitmap.viewport.y = config.overscan ? (((reg[1] & 8) ? 0 : 8) + (vdp_pal ? 24 : 0)) : 0;
     bitmap.viewport.changed = 1;
-	}
-
-	if(check_key(KEY_F10))
-    system_reset();
-
-	if(check_key(KEY_F11))
-	{
-	  joynum ++;
-		if (joynum > MAX_DEVICES - 1) joynum = 0;
-		while (input.dev[joynum] == NO_DEVICE)
-		{
-			joynum ++;
-			if (joynum > MAX_DEVICES - 1) joynum = 0;
-		}
-	}
-
-  if(check_key(KEY_F12))
-  {
-    input.x_offset ++;
-    if (input.x_offset > 0xff) input.x_offset = 0;
   }
+	if(check_key(KEY_F10)) 
+	{
+		system_reset();
+	}
 
-	if(check_key(KEY_TAB))
-    resetline = (int) ((double) (lines_per_frame - 1) * rand() / (RAND_MAX + 1.0));
+	if(check_key(KEY_TAB)) set_softreset();
 }
 
 void dos_update_audio(void)
@@ -470,7 +502,7 @@ void dos_update_video(void)
     }*/
 
 
-    msg_print(2, 2, "%d fps", frame_rate);
+    msg_print(2, 2, "offset = 0x%x", hc_latch/*frame_rate*/);
 	
 	if(option.scanlines)
     {

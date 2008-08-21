@@ -17,6 +17,5 @@
 #include "unzip.h"
 #include "fileio.h"
 
-#define update_input()  dos_update_input()
-
+volatile int frame_count;
 #endif /* _OSD_H_ */
