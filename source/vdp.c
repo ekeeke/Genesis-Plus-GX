@@ -626,7 +626,9 @@ void vdp_data_w(unsigned int data)
 		return;
 	}
   
-	/* FIFO emulation */
+	/* update VDP FIFO (during HDISPLAY only) */
+	if (!(status&8) && (reg[1]&0x40))
+  {
   fifo_update();
   if (fifo_write_cnt == 0)
   {
@@ -647,6 +649,7 @@ void vdp_data_w(unsigned int data)
 
     /* VDP latency (Chaos Engine, Soldiers of Fortune, Double Clutch) */
 	  if (fifo_write_cnt > 4) count_m68k = fifo_lastwrite + fifo_latency;
+  }
   }
 
 	/* write data */

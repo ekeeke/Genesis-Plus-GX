@@ -7,6 +7,7 @@
 
 extern uint8 debug_on;
 extern uint8 log_error;
+extern int frame_count;
 
 
 #endif /* _MAIN_H_ */

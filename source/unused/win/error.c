@@ -1,3 +1,7 @@
+/*
+    error.c --
+    Error logging 
+*/
 
 #include "osd.h"
 

@@ -17,8 +17,8 @@ void set_config_defaults(void)
   config.boost        = 1;
   config.filter       = 0;
 
-  config.hq_fm        = 1;
-  config.fm_core      = 0;
+  config.hq_fm        = 0;
+  config.fm_core      = 1;
 
   /* system options */
   config.freeze_auto    = -1;

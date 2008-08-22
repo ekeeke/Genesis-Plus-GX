@@ -12,20 +12,20 @@
 CC	=	gcc 
 AS	=	nasm -f coff
 LDFLAGS	=	
-FLAGS	=	-I. -I.. -I../cpu -I../m68k -I../dos -I../sound -I../sound/SRC -I../cart_hw -I../cart_hw/svp  \
-		-Wall -g \
-		-O6 -march=i686 -fomit-frame-pointer \
-		-DLSB_FIRST -DX86_ASM -DDOS
+FLAGS	=	-I. -I.. -I../z80 -I../m68k -I../dos -I../sound -I../sound/SRC -I../cart_hw -I../cart_hw/svp  \
+		    -Wall -g \
+		    -O6 -march=i686 -fomit-frame-pointer \
+		    -DLSB_FIRST -DX86_ASM -DDOS
 
 LIBS	=	-lalleg -laudio -lz -lm
 
-OBJ	=       obj/z80.o	
+OBJ	=   obj/z80.o	
 
-OBJ	+=     	obj/m68kcpu.o	\
+OBJ	+=  obj/m68kcpu.o	\
 		obj/m68kops.o	
 
 
-OBJ	+=     	obj/genesis.o	\
+OBJ	+=  obj/genesis.o	\
 		obj/vdp.o	\
 		obj/render.o	\
 		obj/system.o    \
@@ -37,7 +37,7 @@ OBJ	+=     	obj/genesis.o	\
 		obj/memvdp.o	\
 		obj/state.o     
 		
-OBJ	+=      obj/sound.o	\
+OBJ	+=  obj/sound.o	\
 		obj/fm.o	\
 		obj/sn76489.o   \
 		obj/ym2612.o    
@@ -48,7 +48,7 @@ OBJ	+=	obj/samplerate.o \
 		obj/src_sinc.o   \
 		obj/src_zoh.o    \
 
-OBJ	+=      obj/sram.o      \
+OBJ	+=  obj/sram.o      \
 		obj/eeprom.o    \
 		obj/svp.o	\
 		obj/ssp16.o	\
@@ -94,7 +94,7 @@ obj/%.o :	../cart_hw/svp/%.c
 obj/%.o :	../cart_hw/svp/%.c ../cart_hw/svp/%.h	        
 		$(CC) -c $< -o $@ $(FLAGS)
 
-obj/%.o :	../cpu/%.c ../cpu/%.h	        
+obj/%.o :	../z80/%.c ../z80/%.h	        
 		$(CC) -c $< -o $@ $(FLAGS)
 
 obj/%.o :	../m68k/%.c ../m68k/%.h	        

@@ -75,13 +75,6 @@ int main (int argc, char *argv[])
     return (0);
   }
 
-	/* load SRAM */
-	FILE *f = fopen("./game.srm", "rb");
-	if (f!=NULL)
-	{
-    fread(&sram.sram,0x10000,1, f);
-		fclose(f);
-	}
 
 	/* load BIOS */
   memset(bios_rom, 0, sizeof(bios_rom));
@@ -117,6 +110,15 @@ int main (int argc, char *argv[])
   memset (snd.buffer[1], 0, buf_len/2);
   system_init();
   audio_init(option.sndrate);
+
+	f = fopen("./game.srm", "rb");
+	if (f!=NULL)
+	{
+    	fread(&sram.sram,0x10000,1, f);
+		fclose(f);
+	}
+
+
   system_reset();
 
   /* emulation loop */
@@ -146,7 +148,7 @@ int main (int argc, char *argv[])
     fclose(f);
 	}
 
-	trash_machine();
+  trash_machine();
   system_shutdown();
   error_shutdown();
   return (0);
@@ -184,11 +186,6 @@ int save_file(char *filename, char *buf, int size)
 }
 
 static int joynum = 0;
-uint8 delay = 36;
-int gun_offset = 0;
-
-int old_mouse_x = 0;
-int old_mouse_y = 0;
 
 void dos_update_input(void)
 {
@@ -205,11 +202,6 @@ void dos_update_input(void)
 			if (joynum > MAX_DEVICES - 1) joynum = 0;
 	}
 	
-	if(check_key(KEY_F12))
-  {
-    input.x_offset ++;
-    if (input.x_offset > 0xff) input.x_offset = 0;
-  }    
   if(check_key(KEY_F11))
 	{
 		
@@ -270,30 +262,26 @@ void dos_update_input(void)
             if(joy[1].button[7].b)  input.pad[1] |= INPUT_MODE;
         }
     }
-	
 
-
-	if(key[KEY_Z])     input.pad[joynum] |= INPUT_X;
-	if(key[KEY_X])     input.pad[joynum] |= INPUT_Y;
-	if(key[KEY_C])     input.pad[joynum] |= INPUT_Z;
-	if(key[KEY_V])     input.pad[joynum] |= INPUT_MODE;
+	/* keyboard */
 	if(key[KEY_UP])    input.pad[joynum] |= INPUT_UP;
 	else
 	if(key[KEY_DOWN])  input.pad[joynum] |= INPUT_DOWN;
+
 	if(key[KEY_LEFT])  input.pad[joynum] |= INPUT_LEFT;
 	else
 	if(key[KEY_RIGHT]) input.pad[joynum] |= INPUT_RIGHT;
-	if(check_key(KEY_A)) error("ButtonA pressed\n");
-  if(key[KEY_A])      {
-    input.pad[joynum] |= INPUT_A;
-	}
+
+	if(key[KEY_A])     input.pad[joynum] |= INPUT_A;
 	if(key[KEY_S])     input.pad[joynum] |= INPUT_B;
 	if(key[KEY_D])     input.pad[joynum] |= INPUT_C;
-	if(check_key(KEY_F)) error("start pressed\n");
-  if(key[KEY_F])   {
+  if(key[KEY_Z])     input.pad[joynum] |= INPUT_X;
+	if(key[KEY_X])     input.pad[joynum] |= INPUT_Y;
+	if(key[KEY_C])     input.pad[joynum] |= INPUT_Z;
+	if(key[KEY_V])     input.pad[joynum] |= INPUT_MODE;
    
-    input.pad[joynum] |= INPUT_START;
-	}
+	if(key[KEY_F]) input.pad[joynum] |= INPUT_START;
+	
 
   extern uint8 pico_current;
   if (input.dev[joynum] == DEVICE_LIGHTGUN)
@@ -302,17 +290,14 @@ void dos_update_input(void)
     if(mouse_needs_poll() == TRUE)
       poll_mouse();
 
-    /* Calculate X axis value */
-    input.analog[joynum-4][0] = (mouse_x * bitmap.viewport.w)/SCREEN_W;;
-
-    /* Calculate Y axis value */
-    input.analog[joynum-4][1] = (mouse_y * bitmap.viewport.h)/SCREEN_H;;
+    /* Calculate X Y axis values */
+    input.analog[joynum - 4][0] = (mouse_x * bitmap.viewport.w) / SCREEN_W;
+    input.analog[joynum - 4][1] = (mouse_y * bitmap.viewport.h) / SCREEN_H;
 
     /* Map mouse buttons to player #1 inputs */
     if(mouse_b & 4) input.pad[joynum] |= INPUT_C;
     if(mouse_b & 2) input.pad[joynum] |= INPUT_B;
     if(mouse_b & 1) input.pad[joynum] |= INPUT_A;
-    if(key[KEY_F]) input.pad[joynum] |= INPUT_START;
   }
   else if (input.dev[joynum] == DEVICE_MOUSE)
   {
@@ -320,16 +305,20 @@ void dos_update_input(void)
         if(mouse_needs_poll() == TRUE)
             poll_mouse();
 
+    /* Get X & Y quantity of movement */
         get_mouse_mickeys(&input.analog[2][0], &input.analog[2][1]);
+
+    /* Sega Mouse range is -256;+256 */
         input.analog[2][0] = (input.analog[2][0] * 256) / SCREEN_W;
         input.analog[2][1] = (input.analog[2][1] * 256) / SCREEN_H;
-        if (config.invert_mouse) input.analog[2][1] = 0 - input.analog[2][1];
+
+    /* Vertical movement is upsidedown */
+    if (!config.invert_mouse) input.analog[2][1] = 0 - input.analog[2][1];
         
         /* Map mouse buttons to player #1 inputs */
         if(mouse_b & 4) input.pad[joynum] |= INPUT_C;
         if(mouse_b & 1) input.pad[joynum] |= INPUT_B;
         if(mouse_b & 2) input.pad[joynum] |= INPUT_A;
-     if(key[KEY_F]) input.pad[joynum] |= INPUT_START;
  }
   else if (system_hw == SYSTEM_PICO)
   {
@@ -337,11 +326,9 @@ void dos_update_input(void)
         if(mouse_needs_poll() == TRUE)
             poll_mouse();
 
-        /* Calculate X axis value */
-        input.analog[0][0] = 0x3c + (mouse_x * (0x17c - 0x3c + 1) / SCREEN_W);
-
-        /* Calculate Y axis value */
-        input.analog[0][1] = 0x1fc + (mouse_y* (0x3f3 - 0x1fc + 1) / SCREEN_H);
+    /* Calculate X Y axis values */
+    input.analog[0][0] = 0x3c  + (mouse_x * (0x17c-0x03c+1)) / SCREEN_W;
+    input.analog[0][1] = 0x1fc + (mouse_y * (0x2f7-0x1fc+1)) / SCREEN_H;
 
         /* Map mouse buttons to player #1 inputs */
         if(mouse_b & 2) input.pad[0] |= INPUT_B;
@@ -387,7 +374,7 @@ void dos_update_input(void)
 
     /* reinitialize timings */
     system_init ();
-    audio_init(48000);
+	audio_init(option.sndrate);
     fm_restore();
 									
     /* reinitialize HVC tables */
@@ -399,10 +386,10 @@ void dos_update_input(void)
     bitmap.viewport.y = config.overscan ? (((reg[1] & 8) ? 0 : 8) + (vdp_pal ? 24 : 0)) : 0;
     bitmap.viewport.changed = 1;
   }
+
 	if(check_key(KEY_F10)) 
-	{
 		system_reset();
-	}
+	
 
 	if(check_key(KEY_TAB)) set_softreset();
 }
@@ -516,7 +503,7 @@ void dos_update_video(void)
     {
 
         //blit(gen_bmp, screen, 0x0, 0, center_x, center_y, width, height);
-		stretch_blit(gen_bmp, screen, 0, 0, width, height, (SCREEN_W-352)/2, (SCREEN_H-240)/2, 352,240);
+		stretch_blit(gen_bmp, screen, 0, 0, width, height, (SCREEN_W-352)/2, (SCREEN_H-240)/2, 352,240 << (interlaced ? 1:0));
 
     }
 }

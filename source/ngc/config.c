@@ -4,7 +4,7 @@
 #include <fat.h>
 #include <sys/dir.h>
 
-#define CONFIG_VERSION "GENPLUS 1.2.1 "
+#define CONFIG_VERSION "GENPLUS 1.2.2 "
 
 t_config config;
 
@@ -54,6 +54,7 @@ void set_config_defaults(void)
   config.fm_preamp    = 1.0;
   config.boost        = 1;
   config.hq_fm        = 1;
+  config.filter       = 1;
   config.fm_core      = 0;
 
   /* system options */

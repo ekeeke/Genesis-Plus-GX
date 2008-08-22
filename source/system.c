@@ -177,7 +177,11 @@ int system_frame (int do_skip)
   /* increment frame counter */
   frame_cnt ++;
 
-	if (!gen_running) return 0;
+	if (!gen_running)
+  {
+    update_input();
+    return 0;
+  }
 
   /* Clear VBLANK & DMA BUSY flags */
   status &= 0xFFF5;
@@ -367,8 +371,8 @@ static void audio_update (void)
     }
 
     /* boost volume if asked*/
-		l = ll * boost;
-		r = rr * boost;
+		l = l * boost;
+		r = r * boost;
 
 		/* clipping */
 		if (l > 32767) l = 32767;

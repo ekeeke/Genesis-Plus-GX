@@ -18,4 +18,5 @@
 #include "fileio.h"
 
 volatile int frame_count;
+
 #endif /* _OSD_H_ */

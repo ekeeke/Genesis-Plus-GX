@@ -8,12 +8,12 @@
 # LSB_FIRST : for little endian systems.
 # X86_ASM   : enable x86 assembly optimizations
 
-NAME	  = gp_sdl
+NAME	  = gp_sdl.exe
 
 CC        = gcc
 CFLAGS    = `sdl-config --cflags` -O6 -march=i686 -fomit-frame-pointer
 DEFINES   = -DLSB_FIRST -DX86_ASM
-INCLUDES  = -I. -I.. -I../cpu -I../m68k -I../dos -I../sound -I../sound/SRC -I../cart_hw -I../cart_hw/svp 
+INCLUDES  = -I. -I.. -I../z80 -I../m68k -I../dos -I../sound -I../sound/SRC -I../cart_hw -I../cart_hw/svp 
 LIBS	  = `sdl-config --libs` -lz -lm
 
 OBJECTS	=       obj/z80.o	
@@ -88,7 +88,7 @@ obj/%.o :	../cart_hw/svp/%.c
 obj/%.o :	../cart_hw/svp/%.c ../cart_hw/svp/%.h	        
 		$(CC) -c $(CFLAGS) $(INCLUDES) $(DEFINES) $< -o $@
 
-obj/%.o :	../cpu/%.c ../cpu/%.h	        
+obj/%.o :	../z80/%.c ../z80/%.h	        
 		$(CC) -c $(CFLAGS) $(INCLUDES) $(DEFINES) $< -o $@
 
 obj/%.o :	../m68k/%.c ../m68k/%.h	        
@@ -98,8 +98,8 @@ obj/%.o :	./%.c ./%.h
 		$(CC) -c $(CFLAGS) $(INCLUDES) $(DEFINES) $< -o $@
 	        
 pack	:
-		strip $(EXE)
-		upx -1 $(EXE)	        
+		strip $(NAME)
+		upx -9 $(NAME)	        
 
 clean:
 	rm -f $(OBJECTS) $(NAME)
