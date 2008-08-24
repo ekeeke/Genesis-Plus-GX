@@ -75,10 +75,9 @@ int main (int argc, char *argv[])
     return (0);
   }
 
-
 	/* load BIOS */
   memset(bios_rom, 0, sizeof(bios_rom));
-	f = fopen("./BIOS.bin", "rb");
+	FILE *f = fopen("./BIOS.bin", "rb");
 	if (f!=NULL)
 	{
 		fread(&bios_rom, 0x800,1,f);
@@ -90,7 +89,7 @@ int main (int argc, char *argv[])
 			bios_rom[i] = bios_rom[i+1];
 			bios_rom[i+1] = temp;
 		}
-		config.bios_enabled = 3;
+		config.bios_enabled |= 2;
   }
 	else config.bios_enabled = 0;
 
@@ -103,11 +102,6 @@ int main (int argc, char *argv[])
   input.system[1] = SYSTEM_GAMEPAD;
 
 	/* initialize emulation */
-	int buf_len = (option.sndrate * 4) / vdp_rate;
-	snd.buffer[0] = malloc (buf_len/2);
-	snd.buffer[1] = malloc (buf_len/2);
-	memset (snd.buffer[0], 0, buf_len/2);
-  memset (snd.buffer[1], 0, buf_len/2);
   system_init();
   audio_init(option.sndrate);
 
@@ -117,8 +111,8 @@ int main (int argc, char *argv[])
     	fread(&sram.sram,0x10000,1, f);
 		fclose(f);
 	}
-
-
+	
+  /* reset emulation */
   system_reset();
 
   /* emulation loop */
@@ -137,8 +131,6 @@ int main (int argc, char *argv[])
       system_frame(1);
     }
     if(option.sound) dos_update_audio();
-
-		//error("%d\n", frame_rate);
 	}
 
 	f = fopen("./game.srm", "wb");
@@ -151,6 +143,8 @@ int main (int argc, char *argv[])
   trash_machine();
   system_shutdown();
   error_shutdown();
+  free(cart_rom);
+
   return (0);
 }
 
@@ -279,10 +273,8 @@ void dos_update_input(void)
 	if(key[KEY_X])     input.pad[joynum] |= INPUT_Y;
 	if(key[KEY_C])     input.pad[joynum] |= INPUT_Z;
 	if(key[KEY_V])     input.pad[joynum] |= INPUT_MODE;
-   
-	if(key[KEY_F]) input.pad[joynum] |= INPUT_START;
+	if(key[KEY_F])     input.pad[joynum] |= INPUT_START;
 	
-
   extern uint8 pico_current;
   if (input.dev[joynum] == DEVICE_LIGHTGUN)
   {
@@ -301,8 +293,8 @@ void dos_update_input(void)
   }
   else if (input.dev[joynum] == DEVICE_MOUSE)
   {
-        /* Poll mouse if necessary */
-        if(mouse_needs_poll() == TRUE)
+    /* Poll mouse if necessary */
+     if(mouse_needs_poll() == TRUE)
             poll_mouse();
 
     /* Get X & Y quantity of movement */
@@ -387,10 +379,7 @@ void dos_update_input(void)
     bitmap.viewport.changed = 1;
   }
 
-	if(check_key(KEY_F10)) 
-		system_reset();
-	
-
+	if(check_key(KEY_F10)) system_reset();
 	if(check_key(KEY_TAB)) set_softreset();
 }
 
@@ -400,7 +389,8 @@ void dos_update_audio(void)
     osd_play_streamed_sample_16(option.swap ^ 1, snd.buffer[1], snd.buffer_size * 2, option.sndrate, FRAMES_PER_SECOND,  100);
 }
 
-/*void dos_update_palette(void)
+#if 0
+void dos_update_palette(void)
 {
     if(is_border_dirty)
     {
@@ -458,7 +448,8 @@ void dos_update_audio(void)
             }
         }
     }
-}*/
+}
+#endif
 
 void dos_update_video(void)
 {
@@ -483,11 +474,12 @@ void dos_update_video(void)
         }
     }
 
-    /*if(bitmap.remap == 0)
+#if 0
+    if(bitmap.remap == 0)
     {
         dos_update_palette();
-    }*/
-
+    }
+#endif
 
     msg_print(2, 2, "offset = 0x%x", hc_latch/*frame_rate*/);
 	
@@ -501,10 +493,7 @@ void dos_update_video(void)
     }
     else
     {
-
-        //blit(gen_bmp, screen, 0x0, 0, center_x, center_y, width, height);
-		stretch_blit(gen_bmp, screen, 0, 0, width, height, (SCREEN_W-352)/2, (SCREEN_H-240)/2, 352,240 << (interlaced ? 1:0));
-
+		  stretch_blit(gen_bmp, screen, 0, 0, width, height, (SCREEN_W-352)/2, (SCREEN_H-240)/2, 352,240 << (interlaced ? 1:0));
     }
 }
 

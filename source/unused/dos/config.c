@@ -76,7 +76,7 @@ void set_option_defaults(void)
     option.video_height = 480;
     option.video_depth  = 16;
 
-    option.remap        = 1;
+    option.remap        = 0;
     option.scanlines    = 0;
     option.scale        = 0;
 

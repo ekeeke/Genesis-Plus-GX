@@ -3,6 +3,8 @@
 #include <SDL.h>
 #include "shared.h"
 
+#define SOUND_FREQUENCY    48000
+
 int timer_count = 0;
 int old_timer_count = 0;
 int paused = 0;
@@ -14,9 +16,35 @@ int update_input(void);
 unsigned char *keystate;
 unsigned char buf[0x24000];
 
-uint8 log_error   = 0;
-uint8 debug_on = 0;
+SDL_AudioSpec audio;
+static uint8 soundbuffer[2][3840];
+static uint8 mixbuffer[16000];
+static int mixhead = 0;
+static int mixtail = 0;
+static int whichab = 0;
+
+uint8 log_error   = 1;
+uint8 debug_on    = 0;
 uint8 turbo_mode  = 0;
+
+static int mixercollect( uint8 *outbuffer, int len )
+{
+  uint32 *dst = (uint32 *)outbuffer;
+  uint32 *src = (uint32 *)mixbuffer;
+  int done = 0;
+
+  /*** Always clear output buffer ***/
+  memset(outbuffer, 0, len);
+
+  while ( ( mixtail != mixhead ) && ( done < len ) )
+  {
+    *dst++ = src[mixtail++];
+    if (mixtail == 4000) mixtail = 0;
+    done += 4;
+  }
+
+  return done;
+}
 
 Uint32 fps_callback(Uint32 interval)
 {
@@ -39,6 +67,48 @@ Uint32 fps_callback(Uint32 interval)
 	return 1000/vdp_rate;
 }
 
+static void sdl_sound_callback(void *userdata, Uint8 *stream, int len)
+{
+  int actuallen = mixercollect( soundbuffer[whichab], len );
+
+  memcpy(stream, soundbuffer[whichab], len);
+  whichab ^= 1;
+}
+
+int sdl_sound_init()
+{
+  	SDL_InitSubSystem(SDL_INIT_AUDIO);
+
+  SDL_AudioSpec as;
+  
+  as.freq = SOUND_FREQUENCY;
+  as.format = AUDIO_S16;
+  as.channels = 2;
+  as.samples = SOUND_FREQUENCY/vdp_rate;
+  as.callback = sdl_sound_callback;
+
+  if(SDL_OpenAudio(&as, 0) == -1) {
+		char caption[256];
+		sprintf(caption, "can't open audio");
+		MessageBox(NULL, caption, "Error", 0);
+    return 0;
+  }
+  return 1;
+}
+
+static void sdl_sound_update()
+{
+  int i;
+ // SDL_LockAudio();
+  uint32 *dst = (uint32 *)mixbuffer;
+
+  for(i = 0; i < snd.buffer_size; ++i)
+  {
+    dst[mixhead++] =  (snd.buffer[0][i] << 16) | snd.buffer[1][i];
+    if (mixhead == 4000) mixhead = 0;
+  }
+ // SDL_UnlockAudio();
+}
 
 int main (int argc, char **argv)
 {
@@ -85,32 +155,36 @@ int main (int argc, char **argv)
 			bios_rom[i] = bios_rom[i+1];
 			bios_rom[i+1] = temp;
 		}
-		config.bios_enabled = 3;
+		config.bios_enabled |= 2;
   }
 	else config.bios_enabled = 0;
 
   /* initialize SDL */
-  viewport.x = 0;
-  viewport.y = 0;
-  viewport.w = 640;
-  viewport.h = 480;
-  src.x = 0;
-  src.y = 0;
-  src.w = viewport.w;
-  src.h = viewport.h;
-
   if(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) < 0)
   {
+		char caption[256];
+		sprintf(caption, "SDL initialization failed");
+		MessageBox(NULL, caption, "Error", 0);
     exit(1);
   }
+
   SDL_WM_SetCaption("Genesis Plus/SDL", NULL);
-  screen = SDL_SetVideoMode(viewport.w, viewport.h, 16, SDL_HWSURFACE);
-  viewport.x = 0;
-  viewport.y = 0;
+  SDL_ShowCursor(0);
 
+  /* initialize SDL video */
+  viewport.w = 640;
+  viewport.h = 480;
+  screen = SDL_SetVideoMode(viewport.w, viewport.h, 16,  SDL_ANYFORMAT | SDL_HWPALETTE | SDL_HWSURFACE/* | SDL_FULLSCREEN*/);
   bmp = SDL_CreateRGBSurface(SDL_SWSURFACE, 360, 576, 16, 0xF800, 0x07E0, 0x001F, 0x0000);
+  if (!bmp || !screen)
+  {
+		char caption[256];
+		sprintf(caption, "Video initialization failed");
+		MessageBox(NULL, caption, "Error", 0);
+		exit(1);
+  }
 
-  /* initialize Genesis screen */
+  /* initialize Genesis display */
   memset(&bitmap, 0, sizeof(t_bitmap));
   bitmap.width  = 360;
   bitmap.height = 576;
@@ -124,36 +198,32 @@ int main (int argc, char **argv)
   bitmap.viewport.y = 0;
   bitmap.remap = 1;
 
-  /* default config */
+  /* set default config */
   set_config_defaults();
   input.system[0] = SYSTEM_GAMEPAD;
   input.system[1] = SYSTEM_GAMEPAD;
 
-  /* initialize emulation */
+	/* initialize emulation */
   system_init();
-  int buf_len = (48000 * 4) / vdp_rate;
-  snd.buffer[0] = malloc (buf_len/2);
-  snd.buffer[1] = malloc (buf_len/2);
-  memset (snd.buffer[0], 0, buf_len/2);
-  memset (snd.buffer[1], 0, buf_len/2);
-  audio_init(48000);
+  audio_init(SOUND_FREQUENCY);
+
+  /* initialize SDL audio */
+  //sdl_sound_init();
 
   /* load SRAM */
   f = fopen("./game.srm", "rb");
   if (f!=NULL)
   {
     fread(&sram.sram,0x10000,1, f);
-	fclose(f);
+	  fclose(f);
   }
 
   /* reset emulation */
   system_reset();
 
-  /* emulation loop */
+  /* start emulation loop */
   SDL_SetTimer(1000/vdp_rate, fps_callback);
-  SDL_ShowCursor(0);
-  int now, prev = SDL_GetTicks();
-
+  //SDL_PauseAudio(1);
 
 	while(running)
 	{
@@ -169,6 +239,7 @@ int main (int argc, char **argv)
 					if(event.active.state & (SDL_APPINPUTFOCUS | SDL_APPACTIVE))
 					{
 						paused = !event.active.gain;
+            //SDL_PauseAudio(paused);
 					}
 					break;
 
@@ -176,8 +247,8 @@ int main (int argc, char **argv)
           sym = event.key.keysym.sym;
 
           if(sym == SDLK_TAB)    system_reset();
-          if(sym == SDLK_F5)     log_error ^=1;
-          if(sym == SDLK_F6)
+          else if(sym == SDLK_F5)     log_error ^=1;
+          else if(sym == SDLK_F6)
           {
             turbo_mode ^=1;
             frameticker = 0;
@@ -208,7 +279,7 @@ int main (int argc, char **argv)
 
             /* reinitialize timings */
             system_init ();
-            audio_init(48000);
+            audio_init(audio.freq);
             fm_restore();
                             
             /* reinitialize HVC tables */
@@ -243,11 +314,11 @@ int main (int argc, char **argv)
 
 				default:
 					break;
-			}
-		}
+		  }
+	  }
 
-		if(!paused)
-		{
+    if(!paused)
+    {
       if (frameticker > 1)
       {
         /* Frame skipping */
@@ -257,39 +328,42 @@ int main (int argc, char **argv)
       else
       {
         /* Delay */
-        while (!frameticker && !turbo_mode) SDL_Delay(1);
-        
+        while (!frameticker && !turbo_mode) SDL_Delay(0);
+         
         system_frame (0);
-		  frame_count++;
+        frame_count++;
       }
 
       frameticker--;
 
-          if(bitmap.viewport.changed)
-          {
-            bitmap.viewport.changed = 0;
-            src.w = (bitmap.viewport.w + 2 * bitmap.viewport.x);
-        src.h = (bitmap.viewport.w + 2*bitmap.viewport.x) << ((config.render && interlaced) ? 1:0);
+      if(bitmap.viewport.changed)
+      {
+         bitmap.viewport.changed = 0;
+         src.w = (bitmap.viewport.w + 2 * bitmap.viewport.x);
+         src.h = (bitmap.viewport.h + 2 * bitmap.viewport.y) << ((config.render && interlaced) ? 1:0);
+         viewport.w = bitmap.viewport.w + 2*bitmap.viewport.x;
+         viewport.h = bitmap.viewport.h + 2*bitmap.viewport.y;
+         viewport.x = (640 - viewport.w)/2;
+         viewport.y = ((480 - viewport.h)/2);
+      }
 
-        viewport.w = bitmap.viewport.w + 2*bitmap.viewport.x;
-        viewport.h = bitmap.viewport.h + 2*bitmap.viewport.y;
-        viewport.x = (640 - viewport.w)/2;
-        viewport.y = ((480 - viewport.h)/2);
-          }
-
-          SDL_BlitSurface(bmp, &src, screen, &viewport);
+      sdl_sound_update();
+      SDL_BlitSurface(bmp, &src, screen, &viewport);
       //SDL_Flip(screen);
-          SDL_UpdateRect(screen, viewport.x, viewport.y, viewport.w, viewport.h);
-        }
+      SDL_UpdateRect(screen, viewport.x, viewport.y, viewport.w, viewport.h);
     }
-  
-    system_shutdown();
+  }
+
+  system_shutdown();
+  SDL_PauseAudio(1);
+  SDL_CloseAudio();
   SDL_FreeSurface(bmp);
   SDL_FreeSurface(screen);
-    SDL_Quit();
-    error_shutdown();
+  SDL_Quit();
+  error_shutdown();
+  free(cart_rom);
 
-    return 0;
+  return 0;
 }
 
 int update_input(void)
@@ -297,7 +371,7 @@ int update_input(void)
   keystate = SDL_GetKeyState(NULL);
 
   while (input.dev[joynum] == NO_DEVICE)
-  {
+{
     joynum ++;
     if (joynum > MAX_DEVICES - 1) joynum = 0;
   }
@@ -312,7 +386,7 @@ int update_input(void)
   if(keystate[SDLK_LEFT])   input.pad[joynum] |= INPUT_LEFT;
   else
   if(keystate[SDLK_RIGHT])  input.pad[joynum] |= INPUT_RIGHT;
- 
+
   if(keystate[SDLK_a])      input.pad[joynum] |= INPUT_A;
   if(keystate[SDLK_s])      input.pad[joynum] |= INPUT_B;
   if(keystate[SDLK_d])      input.pad[joynum] |= INPUT_C;
@@ -339,7 +413,7 @@ int update_input(void)
     if(state & SDL_BUTTON_LMASK) input.pad[joynum] |= INPUT_A;
   }
   else if (input.dev[joynum] == DEVICE_MOUSE)
-  {
+{
     /* get mouse (relative values) */
     int x,y;
     int state = SDL_GetRelativeMouseState(&x,&y);
@@ -365,7 +439,7 @@ int update_input(void)
     /* Calculate X Y axis values */
     input.analog[0][0] = 0x3c  + (x * (0x17c-0x03c+1)) / 640;
     input.analog[0][1] = 0x1fc + (y * (0x2f7-0x1fc+1)) / 480;
-
+ 
     /* Map mouse buttons to player #1 inputs */
     if(state & SDL_BUTTON_MMASK) pico_current++;
     if(state & SDL_BUTTON_RMASK) input.pad[joynum] |= INPUT_A;
