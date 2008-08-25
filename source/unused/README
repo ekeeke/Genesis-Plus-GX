@@ -6,14 +6,38 @@
  by Charles Mac Donald
  WWW: http://cgfm2.emuviews.com
 
+ additional code by Eke-Eke
+ WWW: http://gxdev.wordpress.com/
+
+
  What's New
  ----------
 
- [06/22/03]
- - Modified rendering code for portability
- - Modified memory handling to fix banked PSG access
- [05/13/03]
- - Initial release
+ see CHANGELOG
+
+
+ Features (NEW!)
+ ---------
+
+    * cycle-accurate CPUs emulation & synchronization (68000, Z80, YM2612, SN76489)
+    * cycle-accurate VDP emulation (DMA, FIFO, HV interrupts, HBLANK,…)
+    * original frequency YM2612 emulation (High Quality FM)
+    * basic hardware latency emulation
+    * full overscan area (horizontal & vertical colored borders) emulation
+    * TMSS BIOS support
+    * PICO hardware support (experimental) 
+    * 3-buttons & 6-buttons controllers
+    * Sega Team Player & EA 4-Way Play multitap adapters (up to 8players !)
+    * Sega Menacer & Konami Justifier lightguns
+    * Sega Mouse & Sega Mega Mouse 
+    * SVP DSP (Virtua Racing)
+    * J-Cart
+    * backup RAM (parallel SRAM/FRAM and serial EEPROM)
+    * ROM bankswitch (Super Street Fighter 2)
+    * SRAM switch (Phantasy Star 4, Legend of Thor, Sonic the Hedgehog 3)
+    * ROM mappers & copy protection devices used in many unlicensed/pirate cartridges
+
+
 
  Usage
  -----
@@ -28,17 +52,33 @@
 
  Arrow Keys -   Directional pad
  A,S,D,F    -   1P gamepad, buttons A, B, C, Start
- Tab        -   Reset
+ Tab        -   Hard Reset 
  Esc        -   Exit program
+
+ F7	    -	Load Savestate (game.gpz)
+ F8	    -	Save Savestate (game.gpz)
+ F9	    -	Toggle CPU clock: PAL(50hz)/NTSC(60hz)
+ F10	    -   Soft Reset
+ F11        -   Toggle Player # (keyboard/mouse)
 
  DOS only:
 
  End        -   Exit program
  F1-F4      -   Set frameskip level (F1 = no skip ... F4 = skip 3 frames)
- F8         -   Make PCX screen snapshot
- F9         -   Toggle VSync
- F10        -   Toggle speed throttling
- F11        -   Toggle FPS meter
+ F5	    -	Log 68k memory access (for debug ONLY)
+ F6	    -	Log messages (for debug ONLY)
+
+ WIndows only:
+
+ End        -   Exit program
+ F1-F4      -   Set frameskip level (F1 = no skip ... F4 = skip 3 frames)
+ F5	    -	Log messages (for debug ONLY)
+ F6	    -   Toggle Turbo mode
+
+
+ The mouse can be used for lightgun games, PICO games and when the Sega Mouse is activated.
+
+ A SRAM file (game.srm) is automatically saved on exit and loaded on startup.
 
  DOS details:
 
@@ -90,15 +130,30 @@
  suggestions that have made Genesis Plus a better program.
  (http://www.bannister.org)
 
+ Extra features, emulation accuracy & game compatibility improvments  by Eke-Eke
+ (from the Gamecube/Wii port: http://code.google.com/p/genplus-gx )
+
  The Genesis emulator authors: Bart Trzynadlowski, Quintesson, Steve Snake,
- James Ponder, Stef, Gerrie, Sardu.
+ James Ponder, Stef, Gerrie, Sardu, Haze, Notaz, Nemesis, AamirM
 
  The regular people and many lurkers at segadev.
 
+ People from SpritesMind.net forums
+
  The MAME team for the CPU and sound chip emulators.
 
- Everyone who has contributed, donated, and submitted information to help
- out Genesis Plus and my efforts documenting the Genesis hardware.
+ Maxim for his SN76489 emulator
+
+ Stef (again) for his alternate YM2612 emulator
+ 
+ Notaz for his SVP emulator
+
+ Tasco Deluxe for his documentation of Realtec mapper
+
+ Erik de Castro Lopo for his "Secret Rabbit Code" library aka libsamplerate
+
+ Jean-Loup Gailly and Mark Adler for their useful zip library
+
 
  Contact
  -------
@@ -106,6 +161,10 @@
  Charles MacDonald
  E-mail: cgfm2@hotmail.com
  WWW: http://cgfm2.emuviews.com
+
+ Eke-Eke
+ E-mail: eke_eke31@yahoo.fr
+ WWW: http://gxdev.wordpress.com/
 
  Legal
  -----
@@ -115,8 +174,7 @@
  The source code is distributed under the terms of the GNU General Public
  License.
 
- The Z80 CPU emulator, 68K CPU emulator, and the PSG, YM2612 emulation code
+ The Z80 CPU emulator, 68K CPU emulator, and the YM2612 emulation code
  are taken from the MAME project, and terms of their use are covered under
- the MAME license.
- (http://www.mame.net)
+ the MAME license. (http://www.mame.net)
 

@@ -97,6 +97,7 @@ int main (int argc, char *argv[])
   init_machine();
   
   /* default config */
+  do_config("genplus.cfg");
   set_config_defaults();
   input.system[0] = SYSTEM_GAMEPAD;
   input.system[1] = SYSTEM_GAMEPAD;
@@ -379,8 +380,8 @@ void dos_update_input(void)
     bitmap.viewport.changed = 1;
   }
 
-	if(check_key(KEY_F10)) system_reset();
-	if(check_key(KEY_TAB)) set_softreset();
+	if(check_key(KEY_F10)) set_softreset();
+	if(check_key(KEY_TAB)) system_reset();
 }
 
 void dos_update_audio(void)

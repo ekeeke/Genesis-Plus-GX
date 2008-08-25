@@ -8,22 +8,15 @@
  ****************************************************************************/
 typedef struct 
 {
-  char version[15];
   double psg_preamp;
   double fm_preamp;
   uint8 boost;
   uint8 filter;
   uint8 hq_fm;
   uint8 fm_core;
-  int8 sram_auto;
-  int8 freeze_auto;
   uint8 region_detect;
   uint8 force_dtack;
   uint8 bios_enabled;
-  int16 xshift;
-  int16 yshift;
-  int16 xscale;
-  int16 yscale;
   uint8 tv_mode;
   uint8 aspect;
   uint8 overscan;

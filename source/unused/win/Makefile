@@ -8,7 +8,7 @@
 # LSB_FIRST : for little endian systems.
 # X86_ASM   : enable x86 assembly optimizations
 
-NAME	  = gp_sdl.exe
+NAME	  = ../gen_sdl.exe
 
 CC        = gcc
 CFLAGS    = `sdl-config --cflags` -O6 -march=i686 -fomit-frame-pointer

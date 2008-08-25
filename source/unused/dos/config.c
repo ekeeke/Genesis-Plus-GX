@@ -94,9 +94,6 @@ void set_option_defaults(void)
 
 void set_config_defaults(void)
 {
-  /* version TAG */
-  strncpy(config.version,CONFIG_VERSION,15);
-  
   /* sound options */
   config.psg_preamp   = 1.5;
   config.fm_preamp    = 1.0;

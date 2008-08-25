@@ -62,7 +62,7 @@ OBJ	+=	obj/dos.o	\
 		obj/fileio.o	\
 		obj/loadrom.o	
 
-EXE	=	gen.exe
+EXE	=	../gen.exe
 
 all	:	$(EXE)
 

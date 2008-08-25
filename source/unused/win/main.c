@@ -16,16 +16,16 @@ int update_input(void);
 unsigned char *keystate;
 unsigned char buf[0x24000];
 
-SDL_AudioSpec audio;
 static uint8 soundbuffer[2][3840];
 static uint8 mixbuffer[16000];
 static int mixhead = 0;
 static int mixtail = 0;
 static int whichab = 0;
 
-uint8 log_error   = 1;
+uint8 log_error   = 0;
 uint8 debug_on    = 0;
 uint8 turbo_mode  = 0;
+uint8 use_sound   = 1;    /* NOT WORKING */
 
 static int mixercollect( uint8 *outbuffer, int len )
 {
@@ -33,7 +33,6 @@ static int mixercollect( uint8 *outbuffer, int len )
   uint32 *src = (uint32 *)mixbuffer;
   int done = 0;
 
-  /*** Always clear output buffer ***/
   memset(outbuffer, 0, len);
 
   while ( ( mixtail != mixhead ) && ( done < len ) )
@@ -59,7 +58,7 @@ Uint32 fps_callback(Uint32 interval)
     if (region_code == REGION_USA) sprintf(region,"USA");
     else if (region_code == REGION_EUROPE) sprintf(region,"EUR");
     else sprintf(region,"JAP");
-    sprintf(caption, "Genesis Plus/SDL - %s (%s) - %d fps (%d)", rominfo.international, region, fps, turbo_mode);
+    sprintf(caption, "Genesis Plus/SDL - %s (%s) - %d fps", rominfo.international, region, fps);
 		SDL_WM_SetCaption(caption, NULL);
 		frame_count = 0;
     
@@ -77,19 +76,20 @@ static void sdl_sound_callback(void *userdata, Uint8 *stream, int len)
 
 int sdl_sound_init()
 {
-  	SDL_InitSubSystem(SDL_INIT_AUDIO);
+  SDL_InitSubSystem(SDL_INIT_AUDIO);
 
   SDL_AudioSpec as;
   
   as.freq = SOUND_FREQUENCY;
   as.format = AUDIO_S16;
   as.channels = 2;
-  as.samples = SOUND_FREQUENCY/vdp_rate;
+  as.samples = snd.buffer_size;
   as.callback = sdl_sound_callback;
 
-  if(SDL_OpenAudio(&as, 0) == -1) {
+  if(SDL_OpenAudio(&as, 0) == -1)
+  {
 		char caption[256];
-		sprintf(caption, "can't open audio");
+		sprintf(caption, "SDL open audio failed");
 		MessageBox(NULL, caption, "Error", 0);
     return 0;
   }
@@ -99,7 +99,6 @@ int sdl_sound_init()
 static void sdl_sound_update()
 {
   int i;
- // SDL_LockAudio();
   uint32 *dst = (uint32 *)mixbuffer;
 
   for(i = 0; i < snd.buffer_size; ++i)
@@ -107,7 +106,6 @@ static void sdl_sound_update()
     dst[mixhead++] =  (snd.buffer[0][i] << 16) | snd.buffer[1][i];
     if (mixhead == 4000) mixhead = 0;
   }
- // SDL_UnlockAudio();
 }
 
 int main (int argc, char **argv)
@@ -115,7 +113,7 @@ int main (int argc, char **argv)
 	int running = 1;
   int sym;
 
-  SDL_Rect viewport, src;
+  SDL_Rect viewport, display;
   SDL_Surface *bmp, *screen;
   SDL_Event event;
 
@@ -125,7 +123,7 @@ int main (int argc, char **argv)
 	if(argc < 2)
 	{
 		char caption[256];
-    sprintf(caption, "Genesis Plus\nby Charles MacDonald\nWWW: http://cgfm2.emuviews.com\nusage: %s gamename\n", argv[0]);
+    sprintf(caption, "Genesis Plus\SDL by Charles MacDonald\nWWW: http://cgfm2.emuviews.com\nusage: %s gamename\n", argv[0]);
     MessageBox(NULL, caption, "Information", 0);
 		exit(1);
 	}
@@ -172,10 +170,18 @@ int main (int argc, char **argv)
   SDL_ShowCursor(0);
 
   /* initialize SDL video */
+	viewport.x = 0;
+	viewport.y = 0;
   viewport.w = 640;
   viewport.h = 480;
-  screen = SDL_SetVideoMode(viewport.w, viewport.h, 16,  SDL_ANYFORMAT | SDL_HWPALETTE | SDL_HWSURFACE/* | SDL_FULLSCREEN*/);
+
+  display.x = 0;
+  display.y = 0;
+	display.w = 256;
+	display.h = 224;
+
   bmp = SDL_CreateRGBSurface(SDL_SWSURFACE, 360, 576, 16, 0xF800, 0x07E0, 0x001F, 0x0000);
+  screen = SDL_SetVideoMode(viewport.w, viewport.h, 16,  SDL_SWSURFACE);
   if (!bmp || !screen)
   {
 		char caption[256];
@@ -205,10 +211,10 @@ int main (int argc, char **argv)
 
 	/* initialize emulation */
   system_init();
-  audio_init(SOUND_FREQUENCY);
+  audio_init(48000);
 
   /* initialize SDL audio */
-  //sdl_sound_init();
+  if (use_sound) sdl_sound_init();
 
   /* load SRAM */
   f = fopen("./game.srm", "rb");
@@ -223,7 +229,7 @@ int main (int argc, char **argv)
 
   /* start emulation loop */
   SDL_SetTimer(1000/vdp_rate, fps_callback);
-  //SDL_PauseAudio(1);
+  if (use_sound) SDL_PauseAudio(1);
 
 	while(running)
 	{
@@ -239,7 +245,7 @@ int main (int argc, char **argv)
 					if(event.active.state & (SDL_APPINPUTFOCUS | SDL_APPACTIVE))
 					{
 						paused = !event.active.gain;
-            //SDL_PauseAudio(paused);
+            if (use_sound) SDL_PauseAudio(paused);
 					}
 					break;
 
@@ -279,7 +285,7 @@ int main (int argc, char **argv)
 
             /* reinitialize timings */
             system_init ();
-            audio_init(audio.freq);
+            audio_init(48000);
             fm_restore();
                             
             /* reinitialize HVC tables */
@@ -328,7 +334,7 @@ int main (int argc, char **argv)
       else
       {
         /* Delay */
-        while (!frameticker && !turbo_mode) SDL_Delay(0);
+        while (!frameticker && !turbo_mode) SDL_Delay(1);
          
         system_frame (0);
         frame_count++;
@@ -339,19 +345,26 @@ int main (int argc, char **argv)
       if(bitmap.viewport.changed)
       {
          bitmap.viewport.changed = 0;
-         src.w = (bitmap.viewport.w + 2 * bitmap.viewport.x);
-         src.h = (bitmap.viewport.h + 2 * bitmap.viewport.y) << ((config.render && interlaced) ? 1:0);
-         viewport.w = bitmap.viewport.w + 2*bitmap.viewport.x;
-         viewport.h = bitmap.viewport.h + 2*bitmap.viewport.y;
+        display.w = (bitmap.viewport.w + 2*bitmap.viewport.x);
+        display.h = (bitmap.viewport.h + 2 * bitmap.viewport.y) << ((config.render && interlaced) ? 1:0);
+        viewport.w = bitmap.viewport.w;
+        viewport.h = bitmap.viewport.h;
          viewport.x = (640 - viewport.w)/2;
-         viewport.y = ((480 - viewport.h)/2);
+        viewport.y = (480 - viewport.h)/2;
       }
 
-      sdl_sound_update();
-      SDL_BlitSurface(bmp, &src, screen, &viewport);
-      //SDL_Flip(screen);
+      if (use_sound) sdl_sound_update();
+      SDL_BlitSurface(bmp, &display, screen, &viewport);
       SDL_UpdateRect(screen, viewport.x, viewport.y, viewport.w, viewport.h);
     }
+  }
+
+  /* save SRAM */
+  f = fopen("./game.srm", "wb");
+  if (f!=NULL)
+  {
+    fwrite(&sram.sram,0x10000,1, f);
+	  fclose(f);
   }
 
   system_shutdown();

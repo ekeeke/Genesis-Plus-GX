@@ -13,7 +13,6 @@
 ** History:
 **
 ** 2006-2008 Eke-Eke (Gamecube/Wii genesis plus port): 
-**	- added DAC filtering
 **	- fixed internal FM timer emulation
 **	- removed unused multichip support and YMxxx support
 **	- fixed CH3 CSM mode (credits to Nemesis)
@@ -920,7 +919,7 @@ INLINE void advance_eg_channel(FM_SLOT *SLOT)
 	i = 4; /* four operators per channel */
 	do
 	{
-    /* reset swap_flag (EkeEke) */
+    /* reset SSG-EG swap flag (Eke-Eke) */
     swap_flag = 0;
 
 		switch(SLOT->state)
