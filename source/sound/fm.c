@@ -144,8 +144,8 @@
 #define TL_RES_LEN		(256) /* 8 bits addressing (real chip) */
 
 
-#define MAXOUT		(+32767)
-#define MINOUT		(-32768)
+#define MAXOUT		(+16383)
+#define MINOUT		(-16384)
 
 
 /*  TL_TAB_LEN is calculated as:
@@ -263,15 +263,10 @@ O(16),O(16),O(16),O(16),O(16),O(16),O(16),O(16)
 #define O(a) (a*1)
 static const UINT8 eg_rate_shift[32+64+32]={	/* Envelope Generator counter shifts (32 + 64 rates + 32 RKS) */
 /* 32 infinite time rates */
-/*O(0),O(0),O(0),O(0),O(0),O(0),O(0),O(0),
 O(0),O(0),O(0),O(0),O(0),O(0),O(0),O(0),
 O(0),O(0),O(0),O(0),O(0),O(0),O(0),O(0),
-O(0),O(0),O(0),O(0),O(0),O(0),O(0),O(0),*/
-
-O(11),O(11),O(11),O(11),O(11),O(11),O(11),O(11),
-O(11),O(11),O(11),O(11),O(11),O(11),O(11),O(11),
-O(11),O(11),O(11),O(11),O(11),O(11),O(11),O(11),
-O(11),O(11),O(11),O(11),O(11),O(11),O(11),O(11),
+O(0),O(0),O(0),O(0),O(0),O(0),O(0),O(0),
+O(0),O(0),O(0),O(0),O(0),O(0),O(0),O(0),
 
 /* rates 00-11 */
 O(11),O(11),O(11),O(11),
@@ -652,8 +647,9 @@ INLINE void set_timers(int v )
 INLINE void FM_KEYON(FM_CH *CH , int s )
 {
 	FM_SLOT *SLOT = &CH->SLOT[s];
-	if(SLOT->state <= EG_REL)
+	if( !SLOT->key )
   {
+		SLOT->key = 1;
 		SLOT->phase = 0;		/* restart Phase Generator */
     SLOT->ssgn = (SLOT->ssg & 0x04) >> 1;
 
@@ -664,9 +660,9 @@ INLINE void FM_KEYON(FM_CH *CH , int s )
     }
     else
     {
-      /* Attack Rate is maximal: directly switch to Decay */
-      SLOT->state = EG_DEC;
+      /* directly switch to Decay */
       SLOT->volume = MIN_ATT_INDEX;
+      SLOT->state = EG_DEC;
     }
 	}
 }
@@ -674,12 +670,15 @@ INLINE void FM_KEYON(FM_CH *CH , int s )
 INLINE void FM_KEYOFF(FM_CH *CH , int s )
 {
 	FM_SLOT *SLOT = &CH->SLOT[s];
-
+	if( SLOT->key )
+	{
+		SLOT->key = 0;
 		if (SLOT->state>EG_REL)
 		{
       SLOT->state = EG_REL; /* phase -> Release */
       SLOT->ssgn = 0;       /* reset Invert Flag (from Nemesis) */
 	  }
+  }
 }
 
 /* set algorithm connection */
@@ -812,7 +811,7 @@ INLINE void set_ar_ksr(FM_CH *CH,FM_SLOT *SLOT,int v)
 /* set decay rate */
 INLINE void set_dr(FM_SLOT *SLOT,int v)
 {
-	SLOT->d1r = (v&0x1f) ? (32 + ((v&0x1f)<<1)) : 0;
+	SLOT->d1r = (v&0x1f) ? 32 + ((v&0x1f)<<1) : 0;
 
 	SLOT->eg_sh_d1r = eg_rate_shift [SLOT->d1r + SLOT->ksr];
 	SLOT->eg_sel_d1r= eg_rate_select[SLOT->d1r + SLOT->ksr];
@@ -822,7 +821,7 @@ INLINE void set_dr(FM_SLOT *SLOT,int v)
 /* set sustain rate */
 INLINE void set_sr(FM_SLOT *SLOT,int v)
 {
-	SLOT->d2r = (v&0x1f) ? (32 + ((v&0x1f)<<1)) : 0;
+	SLOT->d2r = (v&0x1f) ? 32 + ((v&0x1f)<<1) : 0;
 
 	SLOT->eg_sh_d2r = eg_rate_shift [SLOT->d2r + SLOT->ksr];
 	SLOT->eg_sel_d2r= eg_rate_select[SLOT->d2r + SLOT->ksr];
@@ -1176,7 +1175,7 @@ INLINE void chan_calc(FM_CH *CH)
 			CH->op1_out[1] = op_calc1(CH->SLOT[SLOT1].phase, eg_out, (out<<CH->FB) );
 		}
 	}
-
+ 
 	eg_out = volume_calc(&CH->SLOT[SLOT3]);
 	if( eg_out < ENV_QUIET )		/* SLOT 3 */
 		*CH->connect3 += op_calc(CH->SLOT[SLOT3].phase, eg_out, m2);
@@ -1713,7 +1712,7 @@ static void OPNWriteReg(int r, int v)
 					int feedback = (v>>3)&7;
 					CH->ALGO = v&7;
 					CH->FB   = feedback ? feedback+6 : 0;
-					setup_connection( CH, c );
+          setup_connection( CH, c );
 				}
 					break;				
 				case 1:		/* 0xb4-0xb6 : L , R , AMS , PMS (ym2612/YM2610B/YM2610/YM2608) */
@@ -1895,7 +1894,7 @@ int YM2612Write(unsigned char a, unsigned char v)
 {
 	int addr;
 
-	//v &= 0xff;	/* adjust to 8 bit bus */
+	v &= 0xff;	/* adjust to 8 bit bus */
 
 	switch( a&3 )
 	{

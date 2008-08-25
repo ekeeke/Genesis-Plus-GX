@@ -58,6 +58,7 @@ OBJECTS	+=	obj/main.o	\
 		obj/fileio.o	\
 		obj/loadrom.o	
 
+OBJECTS	+=	obj/icon.o
 
 all: $(NAME)
 
@@ -97,6 +98,9 @@ obj/%.o :	../m68k/%.c ../m68k/%.h
 obj/%.o :	./%.c ./%.h	        
 		$(CC) -c $(CFLAGS) $(INCLUDES) $(DEFINES) $< -o $@
 	        
+obj/icon.o :	
+		windres icon.rc $@
+
 pack	:
 		strip $(NAME)
 		upx -9 $(NAME)	        

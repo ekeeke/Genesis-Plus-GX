@@ -103,17 +103,11 @@ void set_config_defaults(void)
   config.fm_core      = 0;
 
   /* system options */
-  config.freeze_auto    = -1;
-  config.sram_auto      = -1;
   config.region_detect  = 0;
   config.force_dtack    = 0;
   config.bios_enabled   = 0;
 
   /* display options */
-  config.xshift   = 0;
-  config.yshift   = 0;
-  config.xscale   = 0;
-  config.yscale   = 0;
   config.aspect   = 1;
   config.overscan = 1;
   config.render   = 0;

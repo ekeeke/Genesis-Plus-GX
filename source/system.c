@@ -47,9 +47,6 @@ uint8 interlaced;
 uint32 frame_cnt;
 uint8 system_hw;
 
-/* Function prototypes */
-static void audio_update (void);
-
 /****************************************************************
  * CPU execution managment
  ****************************************************************/
@@ -304,23 +301,44 @@ int system_frame (int do_skip)
  ****************************************************************/
 int audio_init (int rate)
 {
+	/* Shutdown first */
+  audio_shutdown();
+
 	/* Clear the sound data context */
 	memset (&snd, 0, sizeof (snd));
 
 	/* Make sure the requested sample rate is valid */
-	if (!rate || ((rate < 8000) | (rate > 48000))) return (0);
+	if (!rate || ((rate < 8000) | (rate > 48000))) return (-1);
 	snd.sample_rate = rate;
 	
 	/* Calculate the sound buffer size (for one frame) */
 	snd.buffer_size = (rate / vdp_rate);
 
-	/* (re)allocate sound buffers */
-	snd.fm.buffer[0] = realloc (snd.fm.buffer[0], snd.buffer_size * sizeof (int));
-	snd.fm.buffer[1] = realloc (snd.fm.buffer[1], snd.buffer_size * sizeof (int));
+#ifndef NGC
+  /* output buffers */
+  snd.buffer[0] = (int16 *) malloc(SND_SIZE);
+	snd.buffer[1] = (int16 *) malloc(SND_SIZE);
+	if (!snd.buffer[0] || !snd.buffer[1]) return (-1);
+	memset (snd.buffer[0], 0, SND_SIZE);
+	memset (snd.buffer[1], 0, SND_SIZE);
+#endif
+
+  /* YM2612 stream buffers */
+  snd.fm.buffer[0] = (int *)malloc (SND_SIZE*2);
+	snd.fm.buffer[1] = (int *)malloc (SND_SIZE*2);
 	if (!snd.fm.buffer[0] || !snd.fm.buffer[1]) return (-1);
 	memset (snd.fm.buffer[0], 0, SND_SIZE*2);
 	memset (snd.fm.buffer[1], 0, SND_SIZE*2);
-	snd.psg.buffer = realloc (snd.psg.buffer, SND_SIZE);
+
+  /* SRC buffers */
+  if (config.hq_fm && !config.fm_core)
+  {
+    snd.fm.src_out = (float *) malloc(snd.buffer_size*2*sizeof(float));
+    if (!snd.fm.src_out) return (-1);
+  }
+
+	/* SN76489 stream buffers */
+  snd.psg.buffer = (int16 *)malloc (SND_SIZE);
 	if (!snd.psg.buffer) return (-1);
 	memset (snd.psg.buffer, 0, SND_SIZE);
 
@@ -333,9 +351,20 @@ int audio_init (int rate)
 	return (0);
 }
 
+void audio_shutdown(void)
+{
+	/* free sound buffers */
+  if (snd.buffer[0])    free(snd.buffer[0]);
+  if (snd.buffer[1])    free(snd.buffer[1]);
+  if (snd.fm.buffer[0]) free(snd.fm.buffer[0]);
+  if (snd.fm.buffer[1]) free(snd.fm.buffer[1]);
+  if (snd.fm.src_out)   free(snd.fm.src_out);
+  if (snd.psg.buffer)   free(snd.psg.buffer);
+}
+
 static int ll, rr;
 
-static void audio_update (void)
+void audio_update (void)
 {
 	int i;
   int l, r;
@@ -384,7 +413,7 @@ static void audio_update (void)
 #ifdef NGC
 		*sb++ = r; // RIGHT channel comes first
 		*sb++ = l;
-#elif DOS
+#else
 		snd.buffer[0][i] = l;
 		snd.buffer[1][i] = r;
 #endif

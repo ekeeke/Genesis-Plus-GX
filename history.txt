@@ -5,30 +5,28 @@ current:
 ---------
 [Genesis]
 
-(MAME YM2612) fixed LFO phase update for CH3 special mode: fix sound effects in Warlock & Aladdin (thanks to AamirM)
-(MAME YM2612) fixed enveloppe attenuation level on "KEY ON": fix Ecco 2's splash sound
-(MAME YM2612) minor fixes on SSG-EG emulation
-(MAME YM2612) added libsamplerate (Secret Rabbit Code) support for better FM resampling (HQ mode) 
-(VDP) implemented cycle-accurate HINT timings: every timing sensitive games/demos are now *finally* working fine
-(VDP) fixed a bug affecting CRAM/VSRAM DMA timings
-(VDP) fixed Sprite Attribute Table address mask for VRAM writes 
-(CPU) improved accuracy of 68k access to Z80: fix music in Pacman 2 when entering PAUSE menu
-(CPU) disabled "Address Error" emulation when UMK3 hack is loaded: fix game crashing after a round ends up
-(CART) added support for some more unlicensed games: Pocket Monster, King of Fighter 98, Soul Blade (credits to Haze)
-(IO) improved Menacer emulation: fix lightgun support in Body Count & T2: The Arcade Game
-(IO) implemented Konami Justifier emulation: fix lightgun support in Lethal Enforcers 1 & 2
-(IO) implemented Sega Mouse emulation (Populous 2, Body Count, Shangai 2, Fun'n Games, ...)
-
-[Wii only]
-- added lightgun & mouse support through Wiimote IR
-- added DVD support thanks to libDI (no modchip required)
+- YM2612(MAME): fixed LFO phase update for CH3 special mode: fix sound effects in Warlock & Aladdin (thanks to AamirM)
+- YM2612(MAME): fixed EG attenuation level on "KEY ON": fix Ecco 2's splash sound
+- YM2612(MAME): fixed SSG-EG emulation: fix Bubba'n Stix (Track 5) and many others
+- YM2612(MAME): replaced sample interpolation with libsamplerate support, High Quality mode is now more accurate
+- implemented cycle-accurate HINT timings: every timing sensitive games/demos are now *finally* working fine
+- fixed a bug affecting CRAM/VSRAM DMA timings
+- fixed Sprite Attribute Table address mask for VRAM writes 
+- improved accuracy of 68k access to Z80: fix music in Pacman 2 when entering PAUSE menu
+- disabled "Address Error" emulation when UMK3 hack is loaded: fix game crashing after a round ends up
+- added support for some more unlicensed games: Pocket Monster, King of Fighter 98, Soul Blade (credits to Haze)
+- improved Menacer emulation: fix lightgun support in Body Count & T2: The Arcade Game
+- added Konami Justifier emulation: fix lightgun support in Lethal Enforcers 1 & 2
+- added Sega Mouse emulation (Populous 2, Body Count, Shangai 2, Fun'n Games, ...)
 
 [NGC/Wii]
+- added Wiimote support for Menacer/Justifier/Mouse
+- added DVD support in Wii mode (no modchip required)
 - added "Gun cursor" option to enable/disable gun position display
 - added "Invert Mouse" option to invert Sega Mouse vertical axe (required by some games)
 - improved Controller options: Wiimote/Nunchuk and Classical Controllers can now be affected separately to ANY player
-- faster zipped ROM loading from SDCARD
-- reduced binaries size using Dollz3
+
+
 
 
 16/07/2008:

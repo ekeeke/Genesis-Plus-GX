@@ -1122,6 +1122,8 @@ void MainMenu ()
 
 			case 6:  /*** SD/PSO/TP Reload ***/
         memfile_autosave();
+        system_shutdown();
+        audio_shutdown();
         VIDEO_ClearFrameBuffer(vmode, xfb[whichfb], COLOR_BLACK);
         VIDEO_Flush();
         VIDEO_WaitVSync();
@@ -1133,6 +1135,8 @@ void MainMenu ()
 
 			case 7:  /*** Return to Wii System Menu ***/
         memfile_autosave();
+        system_shutdown();
+        audio_shutdown();
         VIDEO_ClearFrameBuffer(vmode, xfb[whichfb], COLOR_BLACK);
         VIDEO_Flush();
         VIDEO_WaitVSync();

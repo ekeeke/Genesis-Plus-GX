@@ -11,7 +11,9 @@ struct {
 
 void error_init(void)
 {
+#ifdef LOG_ERROR
   error_log = fopen("error.log","w");
+#endif
 }
 
 void error_shutdown(void)

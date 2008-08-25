@@ -30,17 +30,17 @@ int  (*_YM2612_Read)(void);
 void (*_YM2612_Update)(int **buf, int length);
 int (*_YM2612_Reset)(void);
 
+/* cycle-accurate samples */
 static double m68cycles_per_sample[2];
 static double z80cycles_per_sample[2];
 
-/* libsamplerate buffers */
-static float fm_buffer_48kHz[1000*2];
-static float fm_buffer_53kHz[1061*2];
-static int fm_buffer[2][1061];
-static SRC_DATA data;
+/* libsamplerate buffers (max. is 488 cycles per line x 313 lines / 144) */
+static SRC_DATA src_data;
+static float src_in[1061*2];
+static int src_buffer[2][1061];
 
-/* YM2612 data */
-int fm_reg[2][0x100];		      /* Register arrays (2x256) */
+/* YM2612 register arrays */
+int fm_reg[2][0x100];
 
 /* return the number of samples that should have been rendered so far */
 static inline uint32 fm_sample_cnt(uint8 is_z80)
@@ -64,8 +64,8 @@ static inline void fm_update()
     
     if (config.hq_fm && !config.fm_core)
     {
-      tempBuffer[0] = fm_buffer[0] + snd.fm.lastStage;
-		  tempBuffer[1] = fm_buffer[1] + snd.fm.lastStage;
+      tempBuffer[0] = src_buffer[0] + snd.fm.lastStage;
+		  tempBuffer[1] = src_buffer[1] + snd.fm.lastStage;
     }
     else
     {
@@ -101,11 +101,11 @@ void sound_init(int rate)
     z80cycles_per_sample[0] = (144.0 * 7.0) / 15.0;
 
     /* initialize samplerate converter data */
-    data.data_in        = fm_buffer_53kHz;
-    data.data_out       = fm_buffer_48kHz;
-    data.input_frames   = vdp_pal ? 1061 : 888;
-    data.output_frames  = 1000;
-    data.src_ratio      = vdp_pal ? (960.0/1061.0) : (800.0/888.0);
+    src_data.data_in        = src_in;
+    src_data.data_out       = snd.fm.src_out;
+    src_data.input_frames   = (int)(((double)m68cycles_per_line * (double)lines_per_frame / 144.0) + 0.5);
+    src_data.output_frames  = rate / vdp_rate;
+    src_data.src_ratio      = (double)src_data.output_frames  / (double)src_data.input_frames;
   }
   else
   {
@@ -142,7 +142,7 @@ void sound_init(int rate)
 void sound_update(void)
 {
 	/* finalize sound buffers */
-	snd.fm.curStage  = (config.hq_fm && !config.fm_core) ? data.input_frames : snd.buffer_size;
+	snd.fm.curStage  = (config.hq_fm && !config.fm_core) ? src_data.input_frames : snd.buffer_size;
 	snd.psg.curStage = snd.buffer_size;
 
 	/* update last samples (if needed) */
@@ -153,53 +153,42 @@ void sound_update(void)
   if (config.hq_fm && !config.fm_core)
   {
     double scaled_value ;
-    int len = data.input_frames;
+    int len = src_data.input_frames;
 
 	  /* this is basically libsamplerate "src_int_to_float_array" function, adapted to interlace samples */
     while (len)
 	  {
       len -- ;
-		  fm_buffer_53kHz [len*2]      = (float) (fm_buffer[0] [len] / (8.0 * 0x10000000)) ;
-		  fm_buffer_53kHz [len*2 + 1]  = (float) (fm_buffer[1] [len] / (8.0 * 0x10000000)) ;
+		  src_in[len*2]      = (float) (src_buffer[0] [len] / (8.0 * 0x10000000));
+		  src_in[len*2 + 1]  = (float) (src_buffer[1] [len] / (8.0 * 0x10000000));
 		}
 
     /* samplerate conversion */
-    src_simple (&data, 5 - config.hq_fm, 2);
+    src_simple (&src_data, SRC_LINEAR + 1 - config.hq_fm, 2);
 
 	  /* this is basically libsamplerate "src_float_to_int_array" function, adapted to interlace samples */
-    len = vdp_pal ? 960 : 800;
+    len = snd.buffer_size;
     while (len)
     {
       len -- ;
-      scaled_value = fm_buffer_48kHz [len*2] * (8.0 * 0x10000000);
-      if (scaled_value >= (1.0 * 0x7FFFFFFF))
-      {
-        snd.fm.buffer[0][len] = 0x7fffffff;
-      }
-      else if (scaled_value <= (-8.0 * 0x10000000))
-      {
-        snd.fm.buffer[0][len] = -1 - 0x7fffffff;
-      }
-      else
-      {
-        snd.fm.buffer[0][len] = (long)scaled_value;
-      }
 
-      scaled_value = fm_buffer_48kHz [len*2+1] * (8.0 * 0x10000000);
+      scaled_value = snd.fm.src_out[len*2] * (8.0 * 0x10000000);
       if (scaled_value >= (1.0 * 0x7FFFFFFF))
-      {
-        snd.fm.buffer[1][len] = 0x7fffffff;
-      }
+        snd.fm.buffer[0][len] = 0x7fffffff;
       else if (scaled_value <= (-8.0 * 0x10000000))
-      {
-        snd.fm.buffer[1][len] = -1 - 0x7fffffff;
-      }
+        snd.fm.buffer[0][len] = -1 - 0x7fffffff;
       else
-      {
+        snd.fm.buffer[0][len] = (long)scaled_value;
+
+      scaled_value = snd.fm.src_out[len*2+1] * (8.0 * 0x10000000);
+      if (scaled_value >= (1.0 * 0x7FFFFFFF))
+        snd.fm.buffer[1][len] = 0x7fffffff;
+      else if (scaled_value <= (-8.0 * 0x10000000))
+        snd.fm.buffer[1][len] = -1 - 0x7fffffff;
+      else
         snd.fm.buffer[1][len] = (long)scaled_value;
       }
     }
-  }
 
   /* reset samples count */
 	snd.fm.curStage   = 0;

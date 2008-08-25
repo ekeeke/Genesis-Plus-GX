@@ -61,6 +61,7 @@ typedef struct
     int curStage;
     int lastStage;
     int *buffer[2];
+    float *src_out;   /* SRC conversion buffer */
   } fm;
   struct
   {
@@ -95,8 +96,10 @@ extern void system_init (void);
 extern void system_reset (void);
 extern void system_shutdown (void);
 extern int system_frame(int skip);
-extern void z80_run (int cyc);
 extern int audio_init (int rate);
+extern void audio_shutdown (void);
+extern void audio_update (void);
+extern void z80_run (int cyc);
 
 #endif /* _SYSTEM_H_ */
 

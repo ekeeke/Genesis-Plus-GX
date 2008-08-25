@@ -14,7 +14,6 @@ typedef struct
   uint8 boost;
   uint8 filter;
   uint8 hq_fm;
-  uint8 filter;
   uint8 fm_core;
   int8 sram_auto;
   int8 freeze_auto;
