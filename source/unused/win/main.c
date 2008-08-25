@@ -3,7 +3,7 @@
 #include <SDL.h>
 #include "shared.h"
 
-#define SOUND_FREQUENCY    48000
+#define SOUND_FREQUENCY    44100
 
 int timer_count = 0;
 int old_timer_count = 0;
@@ -16,8 +16,8 @@ int update_input(void);
 unsigned char *keystate;
 unsigned char buf[0x24000];
 
-static uint8 soundbuffer[2][3840];
-static uint8 mixbuffer[16000];
+static uint8 *soundbuffer;
+static uint8 *mixbuffer;
 static int mixhead = 0;
 static int mixtail = 0;
 static int whichab = 0;
@@ -38,7 +38,7 @@ static int mixercollect( uint8 *outbuffer, int len )
   while ( ( mixtail != mixhead ) && ( done < len ) )
   {
     *dst++ = src[mixtail++];
-    if (mixtail == 4000) mixtail = 0;
+    if (mixtail == whichab) mixtail = 0;
     done += 4;
   }
 
@@ -68,10 +68,9 @@ Uint32 fps_callback(Uint32 interval)
 
 static void sdl_sound_callback(void *userdata, Uint8 *stream, int len)
 {
-  int actuallen = mixercollect( soundbuffer[whichab], len );
+  int actuallen = mixercollect( soundbuffer, len);
 
-  memcpy(stream, soundbuffer[whichab], len);
-  whichab ^= 1;
+  memcpy(stream, soundbuffer, len);
 }
 
 int sdl_sound_init()
@@ -85,6 +84,7 @@ int sdl_sound_init()
   as.channels = 2;
   as.samples = snd.buffer_size;
   as.callback = sdl_sound_callback;
+  char caption[256];
 
   if(SDL_OpenAudio(&as, 0) == -1)
   {
@@ -93,6 +93,11 @@ int sdl_sound_init()
 		MessageBox(NULL, caption, "Error", 0);
     return 0;
   }
+
+  soundbuffer = (uint8 *)malloc(as.size);
+  mixbuffer = (uint8 *)malloc(as.size * 4);
+  whichab = as.size;
+
   return 1;
 }
 
@@ -103,8 +108,8 @@ static void sdl_sound_update()
 
   for(i = 0; i < snd.buffer_size; ++i)
   {
-    dst[mixhead++] =  (snd.buffer[0][i] << 16) | snd.buffer[1][i];
-    if (mixhead == 4000) mixhead = 0;
+    dst[mixhead++] =  (snd.buffer[0][i] & 0xffff) | ((snd.buffer[1][i] & 0xffff) <<16);
+    if (mixhead == whichab) mixhead = 0;
   }
 }
 
@@ -123,7 +128,7 @@ int main (int argc, char **argv)
 	if(argc < 2)
 	{
 		char caption[256];
-    sprintf(caption, "Genesis Plus\SDL by Charles MacDonald\nWWW: http://cgfm2.emuviews.com\nusage: %s gamename\n", argv[0]);
+    sprintf(caption, "Genesis Plus\\SDL by Charles MacDonald\nWWW: http://cgfm2.emuviews.com\nusage: %s gamename\n", argv[0]);
     MessageBox(NULL, caption, "Information", 0);
 		exit(1);
 	}
@@ -180,8 +185,8 @@ int main (int argc, char **argv)
 	display.w = 256;
 	display.h = 224;
 
-  bmp = SDL_CreateRGBSurface(SDL_SWSURFACE, 360, 576, 16, 0xF800, 0x07E0, 0x001F, 0x0000);
-  screen = SDL_SetVideoMode(viewport.w, viewport.h, 16,  SDL_SWSURFACE);
+  bmp = SDL_CreateRGBSurface(SDL_HWSURFACE, 360, 576, 16, 0xF800, 0x07E0, 0x001F, 0x0000);
+  screen = SDL_SetVideoMode(viewport.w, viewport.h, 16,  SDL_HWSURFACE);
   if (!bmp || !screen)
   {
 		char caption[256];
@@ -211,7 +216,7 @@ int main (int argc, char **argv)
 
 	/* initialize emulation */
   system_init();
-  audio_init(48000);
+  audio_init(SOUND_FREQUENCY);
 
   /* initialize SDL audio */
   if (use_sound) sdl_sound_init();
@@ -229,7 +234,7 @@ int main (int argc, char **argv)
 
   /* start emulation loop */
   SDL_SetTimer(1000/vdp_rate, fps_callback);
-  if (use_sound) SDL_PauseAudio(1);
+  if (use_sound) SDL_PauseAudio(0);
 
 	while(running)
 	{
@@ -285,7 +290,7 @@ int main (int argc, char **argv)
 
             /* reinitialize timings */
             system_init ();
-            audio_init(48000);
+            audio_init(SOUND_FREQUENCY);
             fm_restore();
                             
             /* reinitialize HVC tables */
@@ -344,18 +349,18 @@ int main (int argc, char **argv)
 
       if(bitmap.viewport.changed)
       {
-         bitmap.viewport.changed = 0;
+        bitmap.viewport.changed = 0;
         display.w = (bitmap.viewport.w + 2*bitmap.viewport.x);
         display.h = (bitmap.viewport.h + 2 * bitmap.viewport.y) << ((config.render && interlaced) ? 1:0);
-        viewport.w = bitmap.viewport.w;
-        viewport.h = bitmap.viewport.h;
-         viewport.x = (640 - viewport.w)/2;
+        viewport.w = bitmap.viewport.w + 2*bitmap.viewport.x;
+        viewport.h = bitmap.viewport.h + 2*bitmap.viewport.y;
+        viewport.x = (640 - viewport.w)/2;
         viewport.y = (480 - viewport.h)/2;
       }
 
-      if (use_sound) sdl_sound_update();
       SDL_BlitSurface(bmp, &display, screen, &viewport);
       SDL_UpdateRect(screen, viewport.x, viewport.y, viewport.w, viewport.h);
+      if (use_sound) sdl_sound_update();
     }
   }
 
