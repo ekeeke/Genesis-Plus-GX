@@ -84,7 +84,6 @@ static int SD_ManageFile(char *filename, int direction, int filetype)
   char pathname[MAXPATHLEN];
   int done = 0;
   int filesize;
-  unsigned long inbytes,outbytes;
 
   /* first check if directory exist */
   DIR_ITER *dir = diropen("/genplus/saves");
@@ -109,12 +108,9 @@ static int SD_ManageFile(char *filename, int direction, int filetype)
 
 			if (filetype) /* SRAM */
 			{
-				inbytes  = 0x10000;
-				outbytes = 0x24000;
-				compress2 ((Bytef *)(savebuffer + 4), &outbytes, (Bytef *)(sram.sram), inbytes, 9);
-				memcpy(savebuffer, &outbytes, 4);
-				filesize = outbytes + 4;
+				memcpy(savebuffer, sram.sram, 0x10000);
 				sram.crc = crc32 (0, sram.sram, 0x10000);
+        filesize = 0x10000;
 			}
 			else filesize = state_save(savebuffer); /* STATE */
 
@@ -151,9 +147,7 @@ static int SD_ManageFile(char *filename, int direction, int filetype)
 
 			if (filetype) /* SRAM */
 			{
-				memcpy(&inbytes, savebuffer, 4);
-				outbytes = 0x10000;
-				uncompress ((Bytef *)(sram.sram), &outbytes, (Bytef *)(savebuffer + 4), inbytes);
+				memcpy(sram.sram, savebuffer, filesize);
 				sram.crc = crc32 (0, sram.sram, 0x10000);
 				system_reset ();
 			}

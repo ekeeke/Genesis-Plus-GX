@@ -113,8 +113,7 @@ T_CART_ENTRY rom_database[CART_CNT] =
 /* current cart hardware */
 T_CART_HW cart_hw;
 uint8 j_cart;
-
-static int old_system[2] = {-1,-1};
+int old_system[2] = {-1,-1};
 
 /************************************************************
 					Cart Hardware initialization 
@@ -207,12 +206,13 @@ void cart_hw_init()
 		m68k_writemap_16[7]	= SVP_CELL;
 	}
 
-	/**********************************************
-					SEGA MENACER 
-	***********************************************/
+  /* default GUN settings */
   input.x_offset = 0x00;
   input.y_offset = 0x00;
 
+	/**********************************************
+					SEGA MENACER 
+	***********************************************/
   if (strstr(rominfo.international,"MENACER") != NULL)
 	{
 		/* save current setting */

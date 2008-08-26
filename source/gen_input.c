@@ -210,8 +210,8 @@ unsigned int mouse_read()
       break;
 
     case 5:   /* Buttons state */
-      if (input.pad[mouse.Port] & INPUT_B)     temp |= 0x01;
-      if (input.pad[mouse.Port] & INPUT_A)     temp |= 0x02;
+      if (input.pad[mouse.Port] & INPUT_A)     temp |= 0x01;
+      if (input.pad[mouse.Port] & INPUT_B)     temp |= 0x02;
       if (input.pad[mouse.Port] & INPUT_C)     temp |= 0x04;
       if (input.pad[mouse.Port] & INPUT_START) temp |= 0x08;
       break;

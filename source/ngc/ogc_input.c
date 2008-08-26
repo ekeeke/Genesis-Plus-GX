@@ -451,6 +451,7 @@ static void wpad_update(s8 num, u8 i, u32 exp)
       {
         input.analog[i-4][0] = (ir.x * bitmap.viewport.w) / 640;
         input.analog[i-4][1] = (ir.y * bitmap.viewport.h) / 480;
+        if (p & WPAD_BUTTON_B) input.pad[i]  |= INPUT_B;
       }
     }
   }
@@ -478,6 +479,7 @@ static void wpad_update(s8 num, u8 i, u32 exp)
       {
         input.analog[0][0] = 0x3c  + (ir.x * (0x17c - 0x3c  + 1)) / 640;
         input.analog[0][1] = 0x1fc + (ir.y * (0x3f3 - 0x1fc + 1)) / 480;
+        if (p & WPAD_BUTTON_B) input.pad[i]  |= INPUT_B;
       }
     }
   }
@@ -527,6 +529,8 @@ static void wpad_update(s8 num, u8 i, u32 exp)
         {
           old_y = ir.y;
         }
+
+        if (p & WPAD_BUTTON_B) input.pad[i]  |= INPUT_B;
       }
       else
       {

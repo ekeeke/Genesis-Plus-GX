@@ -428,6 +428,7 @@ void dispmenu ()
 /****************************************************************************
  * ConfigureJoypads
  ****************************************************************************/
+extern int old_system[2];
 void ConfigureJoypads ()
 {
 	int ret, max_players;
@@ -562,6 +563,8 @@ void ConfigureJoypads ()
           input.system[1] = SYSTEM_GAMEPAD;
         }
         io_reset();
+        old_system[0] = input.system[0];
+        old_system[1] = input.system[1];
 			  break;
 		
 			case 1:
@@ -579,6 +582,8 @@ void ConfigureJoypads ()
           input.system[0] = SYSTEM_GAMEPAD;
         }
         io_reset();
+        old_system[0] = input.system[0];
+        old_system[1] = input.system[1];
 			  break;
 
       case 2:
@@ -702,6 +707,8 @@ void ConfigureJoypads ()
         break;
 
       case 7:
+        /* special case: wiimote controls lightgun */
+        
         ogc_input__config(config.input[player].port, config.input[player].device, input.padtype[player]);
         break;
 

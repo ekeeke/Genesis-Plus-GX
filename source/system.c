@@ -314,7 +314,7 @@ int audio_init (int rate)
 	/* Calculate the sound buffer size (for one frame) */
 	snd.buffer_size = (rate / vdp_rate);
 
-#ifndef NGC
+#ifdef DOS
   /* output buffers */
   snd.buffer[0] = (int16 *) malloc(SND_SIZE);
 	snd.buffer[1] = (int16 *) malloc(SND_SIZE);
@@ -373,7 +373,7 @@ void audio_update (void)
   int boost  = config.boost;
   int filter = config.filter;
 
-#ifdef NGC
+#ifndef DOS
 	int16 *sb = (int16 *) soundbuffer[mixbuffer];
 #endif
 
@@ -410,16 +410,19 @@ void audio_update (void)
 		else if (r < -32768) r = -32768;
 
 		/* update sound buffer */
-#ifdef NGC
-		*sb++ = r; // RIGHT channel comes first
-		*sb++ = l;
-#else
+#ifdef DOS
 		snd.buffer[0][i] = l;
 		snd.buffer[1][i] = r;
+#elif LSB_FIRST
+		*sb++ = l;
+		*sb++ = r;
+#else
+    *sb++ = r;
+		*sb++ = l;
 #endif
 	}
 
-#ifdef NGC
+#ifndef DOS
 	mixbuffer++;
 	mixbuffer &= 0xf;
 #endif

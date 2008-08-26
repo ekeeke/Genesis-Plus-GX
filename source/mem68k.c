@@ -308,8 +308,8 @@ unsigned int m68k_read_memory_8(unsigned int address)
         case 0x03:  /* IO register */
         {
           uint8 retval = 0xff;
-          if (input.pad[0] & INPUT_B)     retval &= ~0x80;
-          if (input.pad[0] & INPUT_A)     retval &= ~0x10;
+          if (input.pad[0] & INPUT_B)     retval &= ~0x10;
+          if (input.pad[0] & INPUT_A)     retval &= ~0x80;
           if (input.pad[0] & INPUT_UP)    retval &= ~0x01;
           if (input.pad[0] & INPUT_DOWN)  retval &= ~0x02;
           if (input.pad[0] & INPUT_LEFT)  retval &= ~0x04;
@@ -526,8 +526,8 @@ unsigned int m68k_read_memory_16 (unsigned int address)
         case 0x02:  /* IO register */
         {
           uint8 retval = 0xff;
-          if (input.pad[0] & INPUT_B)     retval &= ~0x80;
-          if (input.pad[0] & INPUT_A)     retval &= ~0x10;
+          if (input.pad[0] & INPUT_B)     retval &= ~0x10;
+          if (input.pad[0] & INPUT_A)     retval &= ~0x80;
           if (input.pad[0] & INPUT_UP)    retval &= ~0x01;
           if (input.pad[0] & INPUT_DOWN)  retval &= ~0x02;
           if (input.pad[0] & INPUT_LEFT)  retval &= ~0x04;
