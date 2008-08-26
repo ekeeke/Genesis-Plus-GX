@@ -1,9 +1,9 @@
-
 #include <windows.h>
 #include <SDL.h>
+
 #include "shared.h"
 
-#define SOUND_FREQUENCY    44100
+#define SOUND_FREQUENCY    48000
 
 int timer_count = 0;
 int old_timer_count = 0;
@@ -13,37 +13,19 @@ int frameticker = 0;
 int joynum = 0;
 
 int update_input(void);
-unsigned char *keystate;
-unsigned char buf[0x24000];
+uint8 *keystate;
+uint8 buf[0x24000];
 
-static uint8 *soundbuffer;
-static uint8 *mixbuffer;
-static int mixhead = 0;
-static int mixtail = 0;
-static int whichab = 0;
+uint8 soundbuffer[16][3840];
+int mixbuffer   = 0;
+int playbuffer  = 0;
 
 uint8 log_error   = 0;
 uint8 debug_on    = 0;
 uint8 turbo_mode  = 0;
-uint8 use_sound   = 1;    /* NOT WORKING */
+uint8 use_sound   = 1;
 
-static int mixercollect( uint8 *outbuffer, int len )
-{
-  uint32 *dst = (uint32 *)outbuffer;
-  uint32 *src = (uint32 *)mixbuffer;
-  int done = 0;
-
-  memset(outbuffer, 0, len);
-
-  while ( ( mixtail != mixhead ) && ( done < len ) )
-  {
-    *dst++ = src[mixtail++];
-    if (mixtail == whichab) mixtail = 0;
-    done += 4;
-  }
-
-  return done;
-}
+int audio_len;
 
 Uint32 fps_callback(Uint32 interval)
 {
@@ -58,7 +40,7 @@ Uint32 fps_callback(Uint32 interval)
     if (region_code == REGION_USA) sprintf(region,"USA");
     else if (region_code == REGION_EUROPE) sprintf(region,"EUR");
     else sprintf(region,"JAP");
-    sprintf(caption, "Genesis Plus/SDL - %s (%s) - %d fps", rominfo.international, region, fps);
+    sprintf(caption, "Genesis Plus/SDL - %s (%s) - %d fps - %d bytes", rominfo.international, region, fps, audio_len);
 		SDL_WM_SetCaption(caption, NULL);
 		frame_count = 0;
     
@@ -68,49 +50,49 @@ Uint32 fps_callback(Uint32 interval)
 
 static void sdl_sound_callback(void *userdata, Uint8 *stream, int len)
 {
-  int actuallen = mixercollect( soundbuffer, len);
+  audio_len = len;
+  memcpy(stream, soundbuffer[playbuffer], len);
 
-  memcpy(stream, soundbuffer, len);
+  /* increment soundbuffers index */
+  playbuffer++;
+  playbuffer &= 0xf;
+  if (playbuffer == mixbuffer)
+  {
+    playbuffer--;
+    if ( playbuffer < 0 ) playbuffer = 15;
+  }
 }
 
-int sdl_sound_init()
+static int sdl_sound_init()
 {
-  SDL_InitSubSystem(SDL_INIT_AUDIO);
-
-  SDL_AudioSpec as;
+  SDL_AudioSpec audio;
   
-  as.freq = SOUND_FREQUENCY;
-  as.format = AUDIO_S16;
-  as.channels = 2;
-  as.samples = snd.buffer_size;
-  as.callback = sdl_sound_callback;
-  char caption[256];
-
-  if(SDL_OpenAudio(&as, 0) == -1)
+  if(SDL_Init(SDL_INIT_AUDIO) < 0)
   {
-		char caption[256];
-		sprintf(caption, "SDL open audio failed");
+    char caption[256];
+		sprintf(caption, "SDL audio can't initialize");
 		MessageBox(NULL, caption, "Error", 0);
     return 0;
   }
 
-  soundbuffer = (uint8 *)malloc(as.size);
-  mixbuffer = (uint8 *)malloc(as.size * 4);
-  whichab = as.size;
+  audio.freq      = SOUND_FREQUENCY;
+  audio.format    = AUDIO_S16LSB;
+  audio.channels  = 2;
+  audio.samples   = snd.buffer_size;
+  audio.callback  = sdl_sound_callback;
 
-  return 1;
-}
-
-static void sdl_sound_update()
-{
-  int i;
-  uint32 *dst = (uint32 *)mixbuffer;
-
-  for(i = 0; i < snd.buffer_size; ++i)
+  if(SDL_OpenAudio(&audio, NULL) == -1)
   {
-    dst[mixhead++] =  (snd.buffer[0][i] & 0xffff) | ((snd.buffer[1][i] & 0xffff) <<16);
-    if (mixhead == whichab) mixhead = 0;
+    char caption[256];
+		sprintf(caption, "SDL can't open audio");
+		MessageBox(NULL, caption, "Error", 0);
+    return 0;
   }
+
+	memset(soundbuffer, 0, 16 * 3840);
+  mixbuffer = 0;
+  playbuffer = 0;
+  return 1;
 }
 
 int main (int argc, char **argv)
@@ -212,14 +194,14 @@ int main (int argc, char **argv)
   /* set default config */
   set_config_defaults();
   input.system[0] = SYSTEM_GAMEPAD;
-  input.system[1] = SYSTEM_GAMEPAD;
+  input.system[1] = SYSTEM_MOUSE;
 
 	/* initialize emulation */
   system_init();
   audio_init(SOUND_FREQUENCY);
 
   /* initialize SDL audio */
-  if (use_sound) sdl_sound_init();
+  if (use_sound) use_sound = sdl_sound_init();
 
   /* load SRAM */
   f = fopen("./game.srm", "rb");
@@ -360,7 +342,6 @@ int main (int argc, char **argv)
 
       SDL_BlitSurface(bmp, &display, screen, &viewport);
       SDL_UpdateRect(screen, viewport.x, viewport.y, viewport.w, viewport.h);
-      if (use_sound) sdl_sound_update();
     }
   }
 
@@ -372,12 +353,12 @@ int main (int argc, char **argv)
 	  fclose(f);
   }
 
-  system_shutdown();
   SDL_PauseAudio(1);
   SDL_CloseAudio();
   SDL_FreeSurface(bmp);
   SDL_FreeSurface(screen);
   SDL_Quit();
+  system_shutdown();
   error_shutdown();
   free(cart_rom);
 
@@ -445,8 +426,8 @@ int update_input(void)
 
     /* Map mouse buttons to player #1 inputs */
     if(state & SDL_BUTTON_MMASK) input.pad[joynum] |= INPUT_C;
-    if(state & SDL_BUTTON_RMASK) input.pad[joynum] |= INPUT_A;
-    if(state & SDL_BUTTON_LMASK) input.pad[joynum] |= INPUT_B;
+    if(state & SDL_BUTTON_RMASK) input.pad[joynum] |= INPUT_B;
+    if(state & SDL_BUTTON_LMASK) input.pad[joynum] |= INPUT_A;
   }
   else if (system_hw == SYSTEM_PICO)
   {
@@ -460,8 +441,8 @@ int update_input(void)
  
     /* Map mouse buttons to player #1 inputs */
     if(state & SDL_BUTTON_MMASK) pico_current++;
-    if(state & SDL_BUTTON_RMASK) input.pad[joynum] |= INPUT_A;
-    if(state & SDL_BUTTON_LMASK) input.pad[joynum] |= INPUT_B;
+    if(state & SDL_BUTTON_RMASK) input.pad[joynum] |= INPUT_B;
+    if(state & SDL_BUTTON_LMASK) input.pad[joynum] |= INPUT_A;
   }
 
 
