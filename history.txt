@@ -1,8 +1,8 @@
 Genesis Plus for Gamecube
 ------------------------------
 
-current:
----------
+26/08/2008:
+-----------
 [Genesis]
 
 - YM2612(MAME): fixed LFO phase update for CH3 special mode: fix sound effects in Warlock & Aladdin (thanks to AamirM)

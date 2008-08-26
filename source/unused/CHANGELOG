@@ -3,7 +3,7 @@ Genesis Plus History
 
 Note: All recent changes directly come from the Gamecube/Wii port, coded by Eke-Eke.
 
- [Current] (Eke-Eke)
+ [08/26/08] (Eke-Eke)
 - YM2612(MAME): fixed LFO phase update for CH3 special mode: fix sound effects in Warlock & Aladdin (thanks to AamirM)
 - YM2612(MAME): fixed EG attenuation level on "KEY ON": fix Ecco 2's splash sound
 - YM2612(MAME): fixed SSG-EG emulation: fix Bubba'n Stix (Track 5) and many others
