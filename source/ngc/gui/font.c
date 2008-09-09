@@ -924,18 +924,8 @@ void ClearScreen ()
 void WaitButtonA ()
 {
   s16 p = ogc_input__getMenuButtons();
-
-  while (p & PAD_BUTTON_A)
-  {
-    VIDEO_WaitVSync();
-    p = ogc_input__getMenuButtons();
-  }
-
-  while (!(p & PAD_BUTTON_A))
-  {
-    VIDEO_WaitVSync();
-    p = ogc_input__getMenuButtons();
-  }
+  while (p & PAD_BUTTON_A)    p = ogc_input__getMenuButtons();
+  while (!(p & PAD_BUTTON_A)) p = ogc_input__getMenuButtons();
 }
 
 void WaitPrompt (char *msg)

@@ -42,6 +42,20 @@ void config_load()
   fp = fopen("/genplus/genplus.ini", "rb");
   fread(&config, sizeof(config), 1, fp);
   fclose(fp);
+
+#ifndef HW_RVL
+  /* check some specific Wii-version options */
+  int i;
+  for (i=0; i<MAX_DEVICES; i++)
+  {
+    if (config.input[i].device > 0)
+    {
+      config.input[i].device = 0;
+      config.input[i].port = i%4;
+    }
+  }
+#endif
+
 }
 
 void set_config_defaults(void)

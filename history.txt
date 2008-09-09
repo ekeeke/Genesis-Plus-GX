@@ -1,6 +1,12 @@
 Genesis Plus for Gamecube
 ------------------------------
 
+CURRENT:
+---------
+[NGC/Wii]
+- improved menu scrolling using Wiimote D-PAD
+
+
 26/08/2008:
 -----------
 [Genesis]
