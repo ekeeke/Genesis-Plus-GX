@@ -212,7 +212,7 @@ void vdp_reset(void)
 	/* reset border area */
 	bitmap.viewport.x = config.overscan ? 12 : 0;
 	bitmap.viewport.y = config.overscan ? (vdp_pal ? 32 : 8) : 0;
-  	bitmap.viewport.changed = 1;
+  bitmap.viewport.changed = 1;
 
 	/* initialize some registers (normally set by BIOS) */
 	if (config.bios_enabled != 3)
@@ -223,8 +223,8 @@ void vdp_reset(void)
 		vdp_reg_w(15, 0x02);	/* auto increment */
 	}
 
-  	/* default latency */
-  	fifo_latency = 27;
+  /* default latency */
+  fifo_latency = 27;
 }
 
 void vdp_shutdown(void)

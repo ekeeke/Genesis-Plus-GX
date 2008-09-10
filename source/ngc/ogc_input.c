@@ -71,7 +71,7 @@ static const u16 pad_keys[8] =
 #define PAD_LEFT  2
 #define PAD_RIGHT 3
 
-#define MAX_HELD_CNT 100
+#define MAX_HELD_CNT 10
 static u32 held_cnt = 0;
 
 static u32 wpad_dirmap[3][4] =

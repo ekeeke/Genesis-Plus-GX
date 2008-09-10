@@ -382,19 +382,19 @@ static void gxScale(void)
 {
 	int xscale, yscale, xshift, yshift, i;
   
+  /* borders are emulated */
   if (config.overscan)
 	{
     if (config.aspect)
     {
-		  /* borders are emulated */
-      xscale = (reg[12] & 1) ? 360 : 358;
+		  xscale = (reg[12] & 1) ? 360 : 358;
       if (gc_pal) xscale -= 1;
       yscale = (gc_pal && !config.render) ? (vdp_pal ? 144:143) : (vdp_pal ? 121:120);
     }
     else
     {
       /* fullscreen stretch */
-      xscale = gc_pal ? 354 : 367;
+      xscale = bitmap.viewport.w + 2*bitmap.viewport.x;
       yscale = (gc_pal && !config.render) ? (vdp_pal ? (268*144 / bitmap.viewport.h):143) : (vdp_pal ? (224*144 / bitmap.viewport.h):120);
     }
     
@@ -413,8 +413,8 @@ static void gxScale(void)
 		}
     else
     {
-      /* fullscreen stretch */
-      xscale = gc_pal ? 321 : 334;
+      /* fit screen */
+      xscale = 320;
       yscale = (gc_pal && !config.render) ? 134 : 112;
     }
     

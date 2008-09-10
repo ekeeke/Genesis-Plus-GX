@@ -21,7 +21,9 @@
 **  - modified EG rates and frequency, tested by Nemesis on real hardware
 **  - fixed EG attenuation level on KEY ON (Ecco 2 splash sound)
 **  - fixed LFO phase update for CH3 special mode (Warlock, Alladin), thanks to AamirM
-**  - fixed Attack rate refresh (fix Batman&Robin introduction)
+**  - fixed Attack rate refresh (fix Batman&Robin introduction)$
+**  - fixed attenuation level when starting Substain Phase (Gynoug ?)
+**  - fixed Enveloppe Generator updates in some specific cases (AR maximal and/or Susbstain Level minimal)
 **
 ** 03-08-2003 Jarek Burczynski:
 **  - fixed YM2608 initial values (after the reset)
@@ -660,9 +662,9 @@ INLINE void FM_KEYON(FM_CH *CH , int s )
     }
     else
     {
-      /* directly switch to Decay */
+      /* directly switch to Decay (or Substain) */
       SLOT->volume = MIN_ATT_INDEX;
-      SLOT->state = EG_DEC;
+      SLOT->state = (SLOT->sl == MIN_ATT_INDEX) ? EG_SUS : EG_DEC;
     }
 	}
 }
@@ -933,7 +935,7 @@ INLINE void advance_eg_channel(FM_SLOT *SLOT)
 					if (SLOT->volume <= MIN_ATT_INDEX)
 					{
 						SLOT->volume = MIN_ATT_INDEX;
-						SLOT->state = EG_DEC;
+						SLOT->state = (SLOT->sl == MIN_ATT_INDEX) ? EG_SUS : EG_DEC;
 					}
 				}
 				break;
@@ -947,7 +949,10 @@ INLINE void advance_eg_channel(FM_SLOT *SLOT)
 						SLOT->volume += 6 * eg_inc[SLOT->eg_sel_d1r + ((ym2612.OPN.eg_cnt>>SLOT->eg_sh_d1r)&7)]; /* from Nemesis */
 
 					  if ( SLOT->volume >= (INT32)(SLOT->sl) )
-							SLOT->state = EG_SUS;
+						{
+              SLOT->volume = (INT32)(SLOT->sl);
+              SLOT->state = EG_SUS;
+            }
 				  }
 				}
 				else
@@ -957,7 +962,10 @@ INLINE void advance_eg_channel(FM_SLOT *SLOT)
 						SLOT->volume += eg_inc[SLOT->eg_sel_d1r + ((ym2612.OPN.eg_cnt>>SLOT->eg_sh_d1r)&7)];
 
 					  if ( SLOT->volume >= (INT32)(SLOT->sl) )
+						{
+              SLOT->volume = (INT32)(SLOT->sl);
               SLOT->state = EG_SUS;
+            }
   				}
 				}
 				break;
@@ -993,14 +1001,14 @@ INLINE void advance_eg_channel(FM_SLOT *SLOT)
 
                 if ((SLOT->ar + SLOT->ksr) < 94 /*32+62*/)
                 {
-                  SLOT->state = EG_ATT;	/* phase -> Attack */
                   SLOT->volume = MAX_ATT_INDEX;
+                  SLOT->state = EG_ATT;	/* phase -> Attack */
                 }
                 else
                 {
                   /* Attack Rate is maximal: directly switch to Decay */
-                  SLOT->state = EG_DEC;
                   SLOT->volume = MIN_ATT_INDEX;
+						      SLOT->state = (SLOT->sl == MIN_ATT_INDEX) ? EG_SUS : EG_DEC;
                 }
 
 								swap_flag = (SLOT->ssg&0x02); /* bit 1 = alternate */

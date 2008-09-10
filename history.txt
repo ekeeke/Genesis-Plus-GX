@@ -3,8 +3,13 @@ Genesis Plus for Gamecube
 
 CURRENT:
 ---------
+[Genesis]
+- YM2612(MAME): improved Enveloppe Generator accuracy: fix tracks #3 and #9 in Mega Turrican
+
+
 [NGC/Wii]
 - improved menu scrolling using Wiimote D-PAD
+- fixed config file incompatibility between GC and Wii versions
 
 
 26/08/2008:
