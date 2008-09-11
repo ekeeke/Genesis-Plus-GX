@@ -5,7 +5,7 @@ CURRENT:
 ---------
 [Genesis]
 - YM2612(MAME): improved Enveloppe Generator accuracy: fix tracks #3 and #9 in Mega Turrican
-
+- YM2612(MAME): fixed SSG-EG emulation bug: fix Level 1 music in Alisia Dragoon
 
 [NGC/Wii]
 - improved menu scrolling using Wiimote D-PAD

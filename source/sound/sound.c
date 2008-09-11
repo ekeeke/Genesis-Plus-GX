@@ -218,9 +218,12 @@ void fm_restore(void)
 /* write FM chip */
 void fm_write(unsigned int cpu, unsigned int address, unsigned int data)
 {
+  if (address & 1)
+  {
 	snd.fm.curStage = fm_sample_cnt(cpu);
 	fm_update();
-	_YM2612_Write(address & 3, data);
+  }
+  _YM2612_Write(address & 3, data);
 }
 
 /* read FM status */

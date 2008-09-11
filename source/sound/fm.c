@@ -18,12 +18,12 @@
 **	- fixed CH3 CSM mode (credits to Nemesis)
 **  - implemented PG overflow, aka "detune bug" (Ariel, Comix Zone, Shaq Fu, Spiderman,...), credits to Nemesis
 **  - fixed SSG-EG support, credits to Nemesis
-**  - modified EG rates and frequency, tested by Nemesis on real hardware
+**  - modified EG rates, tested by Nemesis on real hardware
 **  - fixed EG attenuation level on KEY ON (Ecco 2 splash sound)
 **  - fixed LFO phase update for CH3 special mode (Warlock, Alladin), thanks to AamirM
 **  - fixed Attack rate refresh (fix Batman&Robin introduction)$
-**  - fixed attenuation level when starting Substain Phase (Gynoug ?)
-**  - fixed Enveloppe Generator updates in some specific cases (AR maximal and/or Susbstain Level minimal)
+**  - fixed attenuation level at the start of Substain (Gynoug ?)
+**  - fixed EG updates in some specific cases (AR maximal and/or Susbstain Level minimal)
 **
 ** 03-08-2003 Jarek Burczynski:
 **  - fixed YM2608 initial values (after the reset)
@@ -654,7 +654,7 @@ INLINE void FM_KEYON(FM_CH *CH , int s )
 		SLOT->key = 1;
 		SLOT->phase = 0;		/* restart Phase Generator */
     SLOT->ssgn = (SLOT->ssg & 0x04) >> 1;
-
+    
 		if ((SLOT->ar + SLOT->ksr) < 94 /*32+62*/)
 		{
 		  SLOT->state = EG_ATT;	/* phase -> Attack */
@@ -928,10 +928,7 @@ INLINE void advance_eg_channel(FM_SLOT *SLOT)
 			case EG_ATT:		/* attack phase */
 				if (!(ym2612.OPN.eg_cnt & ((1<<SLOT->eg_sh_ar)-1)))
 				{
-					SLOT->volume += (~SLOT->volume *
-									 (eg_inc[SLOT->eg_sel_ar + ((ym2612.OPN.eg_cnt>>SLOT->eg_sh_ar)&7)])
-									)>>4;
-
+					SLOT->volume += (~SLOT->volume * (eg_inc[SLOT->eg_sel_ar + ((ym2612.OPN.eg_cnt>>SLOT->eg_sh_ar)&7)]))>>4;
 					if (SLOT->volume <= MIN_ATT_INDEX)
 					{
 						SLOT->volume = MIN_ATT_INDEX;
@@ -1053,7 +1050,7 @@ INLINE void advance_eg_channel(FM_SLOT *SLOT)
 		out = (UINT32)SLOT->volume;
 
 		/* negate output (changes come from alternate bit, init comes from attack bit) */
-    if ((SLOT->ssg&0x08) && (SLOT->ssgn&2))
+    if ((SLOT->ssg&0x08) && (SLOT->ssgn&2) && (SLOT->state > EG_REL))
 			out ^= MAX_ATT_INDEX;
 
 		/* we need to store the result here because we are going to change ssgn
@@ -1206,10 +1203,10 @@ INLINE void chan_calc(FM_CH *CH)
 		/* add support for 3 slot mode */
     if ((ym2612.OPN.ST.mode & 0xC0) && (CH == &ym2612.CH[2]))
     {
-      update_phase_lfo_slot(&ym2612.CH[2].SLOT[SLOT1], ym2612.CH[2].pms, ym2612.OPN.SL3.block_fnum[1]);
-      update_phase_lfo_slot(&ym2612.CH[2].SLOT[SLOT2], ym2612.CH[2].pms, ym2612.OPN.SL3.block_fnum[2]);
-      update_phase_lfo_slot(&ym2612.CH[2].SLOT[SLOT3], ym2612.CH[2].pms, ym2612.OPN.SL3.block_fnum[0]);
-      update_phase_lfo_slot(&ym2612.CH[2].SLOT[SLOT4], ym2612.CH[2].pms, ym2612.CH[2].block_fnum);
+      update_phase_lfo_slot(&ym2612.CH[2].SLOT[SLOT1], CH->pms, ym2612.OPN.SL3.block_fnum[1]);
+      update_phase_lfo_slot(&ym2612.CH[2].SLOT[SLOT2], CH->pms, ym2612.OPN.SL3.block_fnum[2]);
+      update_phase_lfo_slot(&ym2612.CH[2].SLOT[SLOT3], CH->pms, ym2612.OPN.SL3.block_fnum[0]);
+      update_phase_lfo_slot(&ym2612.CH[2].SLOT[SLOT4], CH->pms, CH->block_fnum);
     }
     else update_phase_lfo_channel(CH);
 	}
@@ -1404,22 +1401,33 @@ static int init_tables(void)
 }
 
 
-/* CSM Key Controll */
+/* CSM Key Controll (correct implementation, credits to Nemesis) */
 INLINE void CSMKeyControll(FM_CH *CH)
 {
-  /* correct implementation (credits to Nemesis) */
+	/* all key on/off */
+  if (CH->SLOT[SLOT1].state == EG_REL)
+  {
+  	FM_KEYON(CH,SLOT1);
+	  FM_KEYOFF(CH,SLOT1);
+	}
 
-	/* all key on */
-	FM_KEYON(CH,SLOT1);
+  if (CH->SLOT[SLOT2].state == EG_REL)
+  {
 	FM_KEYON(CH,SLOT2);
-	FM_KEYON(CH,SLOT3);
-	FM_KEYON(CH,SLOT4);
+	  FM_KEYOFF(CH,SLOT2);
+	}
 
-	/* all key off */
-	FM_KEYOFF(CH,SLOT1);
-	FM_KEYOFF(CH,SLOT2);
-	FM_KEYOFF(CH,SLOT3);
+  if (CH->SLOT[SLOT3].state == EG_REL)
+  {
+	FM_KEYON(CH,SLOT3);
+	  FM_KEYOFF(CH,SLOT3);
+	}
+
+  if (CH->SLOT[SLOT4].state == EG_REL)
+  {
+	FM_KEYON(CH,SLOT4);
 	FM_KEYOFF(CH,SLOT4);
+	}
 }
 
 static void INTERNAL_TIMER_A()
@@ -1466,13 +1474,13 @@ static void OPNSetPres(int pres)
   /* YM2612 running at original frequency (~53 kHz) */
   if (config.hq_fm) ym2612.OPN.ST.freqbase  = 1.0;
 
+  ym2612.OPN.eg_timer_add  = (UINT32)((1<<EG_SH)  *  ym2612.OPN.ST.freqbase);
+  ym2612.OPN.eg_timer_overflow = ( 3 ) * (1<<EG_SH);
+
   /* timer increment in usecs (timers are incremented after each updated samples) */
 	ym2612.OPN.ST.TimerBase = (int) (ym2612.OPN.ST.freqbase * 4096.0);
 
-  ym2612.OPN.eg_timer_add  = (UINT32)((1<<EG_SH)  *  ym2612.OPN.ST.freqbase);
 
-	//ym2612.OPN.eg_timer_overflow = ( 3 ) * (1<<EG_SH);
-	ym2612.OPN.eg_timer_overflow =  (351 * (1<<EG_SH)) / 144; /* correct frequency (Nemesis: tested on real HW) */
 
 	/* make time tables */
 	init_timetables(dt_tab);
@@ -1785,21 +1793,6 @@ void YM2612UpdateOne(int **buffer, int length)
 		out_fm[4] = 0;
 		out_fm[5] = 0;
 
-		/* advance envelope generator */
-		ym2612.OPN.eg_timer += ym2612.OPN.eg_timer_add;
-		while (ym2612.OPN.eg_timer >= ym2612.OPN.eg_timer_overflow)
-		{
-			ym2612.OPN.eg_timer -= ym2612.OPN.eg_timer_overflow;
-			ym2612.OPN.eg_cnt++;
-
-			advance_eg_channel(&ym2612.CH[0].SLOT[SLOT1]);
-			advance_eg_channel(&ym2612.CH[1].SLOT[SLOT1]);
-			advance_eg_channel(&ym2612.CH[2].SLOT[SLOT1]);
-			advance_eg_channel(&ym2612.CH[3].SLOT[SLOT1]);
-			advance_eg_channel(&ym2612.CH[4].SLOT[SLOT1]);
-			advance_eg_channel(&ym2612.CH[5].SLOT[SLOT1]);
-		}
-
 		/* calculate FM */
 		chan_calc(&ym2612.CH[0]);
 		chan_calc(&ym2612.CH[1]);
@@ -1813,6 +1806,21 @@ void YM2612UpdateOne(int **buffer, int length)
 			*(ym2612.CH[5].connect4) += ym2612.dacout;
 		}
 		else chan_calc(&ym2612.CH[5]);
+
+    /* advance envelope generator */
+		ym2612.OPN.eg_timer += ym2612.OPN.eg_timer_add;
+		while (ym2612.OPN.eg_timer >= ym2612.OPN.eg_timer_overflow)
+		{
+			ym2612.OPN.eg_timer -= ym2612.OPN.eg_timer_overflow;
+			ym2612.OPN.eg_cnt++;
+
+			advance_eg_channel(&ym2612.CH[0].SLOT[SLOT1]);
+			advance_eg_channel(&ym2612.CH[1].SLOT[SLOT1]);
+			advance_eg_channel(&ym2612.CH[2].SLOT[SLOT1]);
+			advance_eg_channel(&ym2612.CH[3].SLOT[SLOT1]);
+			advance_eg_channel(&ym2612.CH[4].SLOT[SLOT1]);
+			advance_eg_channel(&ym2612.CH[5].SLOT[SLOT1]);
+		}
 
 		lt  = ((out_fm[0]>>0) & ym2612.OPN.pan[0]);
 		rt  = ((out_fm[0]>>0) & ym2612.OPN.pan[1]);
