@@ -4,8 +4,10 @@ Genesis Plus for Gamecube
 CURRENT:
 ---------
 [Genesis]
-- YM2612(MAME): improved Enveloppe Generator accuracy: fix tracks #3 and #9 in Mega Turrican
-- YM2612(MAME): fixed SSG-EG emulation bug: fix Level 1 music in Alisia Dragoon
+- YM2612(MAME): improved Enveloppe Generator accuracy, fix tracks #3 and #9 in Mega Turrican
+- YM2612(MAME): fixed a bug in SSG-EG emulation code, fix Level 1 music in Alisia Dragoon
+- YM2612(MAME): improved Detune overflow accuracy, fix high-frequency sound effects & musics in many games
+- YM2612(MAME): fixed registers 0x20-0x26 Reset state, fix intro music in B.O.B
 
 [NGC/Wii]
 - improved menu scrolling using Wiimote D-PAD

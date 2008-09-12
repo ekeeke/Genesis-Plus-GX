@@ -12,18 +12,18 @@
 /*
 ** History:
 **
-** 2006-2008 Eke-Eke (Gamecube/Wii genesis plus port): 
+** 2006-2008 Eke-Eke (gamecube&wii port of Genesis Plus): 
 **	- fixed internal FM timer emulation
 **	- removed unused multichip support and YMxxx support
-**	- fixed CH3 CSM mode (credits to Nemesis)
-**  - implemented PG overflow, aka "detune bug" (Ariel, Comix Zone, Shaq Fu, Spiderman,...), credits to Nemesis
-**  - fixed SSG-EG support, credits to Nemesis
+**	- fixed CH3 CSM mode (which games actually use this ?), credits to Nemesis
+**  - implemented Detune overflow (Ariel, Comix Zone, Shaq Fu, Spiderman & many others), credits to Nemesis
+**  - fixed SSG-EG support (Asterix, Bubba'n Six & many others), thanks to Nemesis for his tests
 **  - modified EG rates, tested by Nemesis on real hardware
 **  - fixed EG attenuation level on KEY ON (Ecco 2 splash sound)
-**  - fixed LFO phase update for CH3 special mode (Warlock, Alladin), thanks to AamirM
-**  - fixed Attack rate refresh (fix Batman&Robin introduction)$
-**  - fixed attenuation level at the start of Substain (Gynoug ?)
-**  - fixed EG updates in some specific cases (AR maximal and/or Susbstain Level minimal)
+**  - implemented LFO phase update for CH3 special mode (Warlock birds, Alladin bug sound)
+**  - fixed Attack Rate update (Batman & Robin intro)
+**  - fixed attenuation level at the start of Substain (Gynoug explosions)
+**  - fixed EG updates when AR is maximal and/or SL minimal (Mega Turrican tracks 03,09...)
 **
 ** 03-08-2003 Jarek Burczynski:
 **  - fixed YM2608 initial values (after the reset)
@@ -931,6 +931,7 @@ INLINE void advance_eg_channel(FM_SLOT *SLOT)
 					SLOT->volume += (~SLOT->volume * (eg_inc[SLOT->eg_sel_ar + ((ym2612.OPN.eg_cnt>>SLOT->eg_sh_ar)&7)]))>>4;
 					if (SLOT->volume <= MIN_ATT_INDEX)
 					{
+            /* switch to Release or Substain Phase (Eke-Eke) */
 						SLOT->volume = MIN_ATT_INDEX;
 						SLOT->state = (SLOT->sl == MIN_ATT_INDEX) ? EG_SUS : EG_DEC;
 					}
@@ -942,8 +943,8 @@ INLINE void advance_eg_channel(FM_SLOT *SLOT)
 				{
 					if ( !(ym2612.OPN.eg_cnt & ((1<<SLOT->eg_sh_d1r)-1) ) )
 					{
-						//SLOT->volume += 4 * eg_inc[SLOT->eg_sel_d1r + ((ym2612.OPN.eg_cnt>>SLOT->eg_sh_d1r)&7)];
-						SLOT->volume += 6 * eg_inc[SLOT->eg_sel_d1r + ((ym2612.OPN.eg_cnt>>SLOT->eg_sh_d1r)&7)]; /* from Nemesis */
+            /* Nemesis */
+            SLOT->volume += 6 * eg_inc[SLOT->eg_sel_d1r + ((ym2612.OPN.eg_cnt>>SLOT->eg_sh_d1r)&7)];
 
 					  if ( SLOT->volume >= (INT32)(SLOT->sl) )
 						{
@@ -972,8 +973,8 @@ INLINE void advance_eg_channel(FM_SLOT *SLOT)
 				{
 					if ( !(ym2612.OPN.eg_cnt & ((1<<SLOT->eg_sh_d2r)-1) ) )
 					{
-						//SLOT->volume += 4 * eg_inc[SLOT->eg_sel_d2r + ((ym2612.OPN.eg_cnt>>SLOT->eg_sh_d2r)&7)];
-						SLOT->volume += 6 * eg_inc[SLOT->eg_sel_d2r + ((ym2612.OPN.eg_cnt>>SLOT->eg_sh_d2r)&7)]; /* from Nemesis */
+            /* Nemesis */
+            SLOT->volume += 6 * eg_inc[SLOT->eg_sel_d2r + ((ym2612.OPN.eg_cnt>>SLOT->eg_sh_d2r)&7)];
 
 						if ( SLOT->volume >= MAX_ATT_INDEX)
 						{
@@ -1003,7 +1004,7 @@ INLINE void advance_eg_channel(FM_SLOT *SLOT)
                 }
                 else
                 {
-                  /* Attack Rate is maximal: directly switch to Decay */
+                    /* Attack Rate is maximal: directly switch to Decay (or Substain) */
                   SLOT->volume = MIN_ATT_INDEX;
 						      SLOT->state = (SLOT->sl == MIN_ATT_INDEX) ? EG_SUS : EG_DEC;
                 }
@@ -1033,7 +1034,8 @@ INLINE void advance_eg_channel(FM_SLOT *SLOT)
 				if ( !(ym2612.OPN.eg_cnt & ((1<<SLOT->eg_sh_rr)-1) ) )
 				{
           if (SLOT->ssg&0x08)
-             SLOT->volume += 6 * eg_inc[SLOT->eg_sel_rr + ((ym2612.OPN.eg_cnt>>SLOT->eg_sh_rr)&7)]; /* from Nemesis */
+            /* SSG-EG affects Release Phase also (Nemesis) */
+            SLOT->volume += 6 * eg_inc[SLOT->eg_sel_rr + ((ym2612.OPN.eg_cnt>>SLOT->eg_sh_rr)&7)];
           else
             SLOT->volume += eg_inc[SLOT->eg_sel_rr + ((ym2612.OPN.eg_cnt>>SLOT->eg_sh_rr)&7)];
 
@@ -1401,29 +1403,29 @@ static int init_tables(void)
 }
 
 
-/* CSM Key Controll (correct implementation, credits to Nemesis) */
+/* CSM Key Controll */
 INLINE void CSMKeyControll(FM_CH *CH)
 {
-	/* all key on/off */
-  if (CH->SLOT[SLOT1].state == EG_REL)
+	/* all key ON/OFF (only for operator which have been OFF)*/
+  if (!CH->SLOT[SLOT1].key)
   {
   	FM_KEYON(CH,SLOT1);
 	  FM_KEYOFF(CH,SLOT1);
 	}
 
-  if (CH->SLOT[SLOT2].state == EG_REL)
+  if (!CH->SLOT[SLOT2].key)
   {
 	FM_KEYON(CH,SLOT2);
 	  FM_KEYOFF(CH,SLOT2);
 	}
 
-  if (CH->SLOT[SLOT3].state == EG_REL)
+  if (!CH->SLOT[SLOT3].key)
   {
 	FM_KEYON(CH,SLOT3);
 	  FM_KEYOFF(CH,SLOT3);
 	}
 
-  if (CH->SLOT[SLOT4].state == EG_REL)
+  if (!CH->SLOT[SLOT4].key)
   {
 	FM_KEYON(CH,SLOT4);
 	FM_KEYOFF(CH,SLOT4);
@@ -1480,8 +1482,6 @@ static void OPNSetPres(int pres)
   /* timer increment in usecs (timers are incremented after each updated samples) */
 	ym2612.OPN.ST.TimerBase = (int) (ym2612.OPN.ST.freqbase * 4096.0);
 
-
-
 	/* make time tables */
 	init_timetables(dt_tab);
 
@@ -1495,8 +1495,8 @@ static void OPNSetPres(int pres)
 		ym2612.OPN.fn_table[i] = (UINT32)( (double)i * 32 * ym2612.OPN.ST.freqbase * (1<<(FREQ_SH-10)) ); /* -10 because chip works with 10.10 fixed point, while we use 16.16 */
 	}
 
-  /* maximal frequency, used for overflow, best setting with BLOCK=5 (notaz) */
-  fn_max = ((UINT32)((double)ym2612.OPN.fn_table[0x7ff*2] / ym2612.OPN.ST.freqbase) >> 2);
+  /* maximal frequency, used for overflow, internal register is 17-bits (Nemesis) */
+  fn_max = (UINT32)( (double)0x1ffff * ym2612.OPN.ST.freqbase * (1<<(FREQ_SH-10)) );
 
 	/* LFO freq. table */
 	for(i = 0; i < 8; i++)
@@ -1506,7 +1506,6 @@ static void OPNSetPres(int pres)
 		ym2612.OPN.lfo_freq[i] = (UINT32)((1.0 / lfo_samples_per_step[i]) * (1<<LFO_SH) * ym2612.OPN.ST.freqbase);
 	}
 }
-
 
 
 /* write a OPN mode register 0x20-0x2f */
@@ -1799,10 +1798,9 @@ void YM2612UpdateOne(int **buffer, int length)
     chan_calc(&ym2612.CH[2]);
 		chan_calc(&ym2612.CH[3]);
 		chan_calc(&ym2612.CH[4]);
-
-		/* DAC Mode */
 		if (ym2612.dacen)
 		{
+			/* DAC Mode */
 			*(ym2612.CH[5].connect4) += ym2612.dacout;
 		}
 		else chan_calc(&ym2612.CH[5]);
@@ -1893,7 +1891,7 @@ int YM2612ResetChip(void)
 		OPNWriteReg(i      ,0);
 		OPNWriteReg(i|0x100,0);
 	}
-	for(i = 0x26 ; i >= 0x20 ; i-- ) OPNWriteReg(i,0);
+	for(i = 0x26 ; i >= 0x20 ; i-- ) OPNWriteMode(i,0);
 
 	/* DAC mode clear */
 	ym2612.dacen  = 0;

@@ -583,11 +583,10 @@ void render_shutdown(void)
 void remap_buffer(int line, int width)
 {
   /* get line offset from framebuffer */
-  int offset = vdp_pal ? bitmap.viewport.y : (bitmap.viewport.y*11/8); // NTSC is 243 lines
-  int vline = (line + offset) % lines_per_frame;
+  int vline = (line + bitmap.viewport.y) % lines_per_frame;
 
   /* illegal video mode (screen rolls up) */
-  if (!vdp_pal && (reg[1] & 8)) vline = (vline + frame_cnt)%240;
+  if ((reg[1] & 8) && !vdp_pal) vline = (vline + frame_cnt)%240;
   
   /* double resolution mode */
   if (config.render && interlaced) vline = (vline * 2) + odd_frame;
