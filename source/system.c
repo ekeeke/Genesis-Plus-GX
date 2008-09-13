@@ -233,6 +233,7 @@ int system_frame (int do_skip)
 				
         /* adjust timings to take decrement in account */
         if ((line != 0) || (h_counter == 0)) aim_m68k += 36;
+      }
 
       /* HINT will be triggered on next line, approx. 36 cycles before VDP starts line rendering */
       /* during this period, any VRAM/CRAM/VSRAM writes should NOT be taken in account before next line */
