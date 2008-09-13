@@ -868,11 +868,11 @@ INLINE signed int op_calc1(UINT32 phase, unsigned int env, signed int pm)
 INLINE void advance_lfo()
 {
 	UINT8 pos;
-	UINT8 prev_pos;
+	/*UINT8 prev_pos;*/
 
 	if (ym2612.OPN.lfo_inc)	/* LFO enabled ? */
 	{
-		prev_pos = ym2612.OPN.lfo_cnt>>LFO_SH & 127;
+		/*prev_pos = ym2612.OPN.lfo_cnt>>LFO_SH & 127;*/
 		
 		ym2612.OPN.lfo_cnt +=  ym2612.OPN.lfo_inc;
 		
@@ -895,7 +895,7 @@ INLINE void advance_lfo()
 		}
 
 		/* PM works with 4 times slower clock */
-		prev_pos >>= 2;
+		/*prev_pos >>= 2;*/
 		pos >>= 2;
 		/* update PM when LFO output changes */
 		/*if (prev_pos != pos)*/ /* can't use global lfo_pm for this optimization, must be chip->lfo_pm instead*/

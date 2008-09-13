@@ -399,7 +399,7 @@ static void gxScale(void)
     }
     
 		xshift = (config.aspect || !gc_pal) ? 8 : 4;
-		yshift = vdp_pal ? 1 : -1;
+		yshift = vdp_pal ? 1 : 3;
 	}
   else
 	{

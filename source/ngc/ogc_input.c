@@ -71,7 +71,7 @@ static const u16 pad_keys[8] =
 #define PAD_LEFT  2
 #define PAD_RIGHT 3
 
-#define MAX_HELD_CNT 10
+#define MAX_HELD_CNT 8
 static u32 held_cnt = 0;
 
 static u32 wpad_dirmap[3][4] =
@@ -537,8 +537,8 @@ static void wpad_update(s8 num, u8 i, u32 exp)
       }
       else
       {
-        old_x -= input.analog[2][0];
-        old_y -= input.analog[2][1];
+        old_x += input.analog[2][0];
+        old_y += input.analog[2][1];
       }
     }
 
@@ -750,27 +750,12 @@ u16 ogc_input__getMenuButtons(void)
   WPAD_IR(0, &ir);
 
   /* wiimote directions */
-  if (q & WPAD_BUTTON_UP)
-  {
-    held_cnt = 0;
-    p |= ir.valid ? PAD_BUTTON_UP : PAD_BUTTON_LEFT;
-  }
-  else if (q & WPAD_BUTTON_DOWN)
-  {
-    held_cnt = 0;
-    p |= ir.valid ? PAD_BUTTON_DOWN : PAD_BUTTON_RIGHT;
-  }
-  else if (q & WPAD_BUTTON_LEFT)
-  {
-    held_cnt = 0;
-    p |= ir.valid ? PAD_BUTTON_LEFT : PAD_BUTTON_DOWN;
-  }
-  else if (q & WPAD_BUTTON_RIGHT)
-  {
-    held_cnt = 0;
-    p |= ir.valid ? PAD_BUTTON_RIGHT : PAD_BUTTON_UP;
-  }
-  else if (h & WPAD_BUTTON_UP)
+  if (q & WPAD_BUTTON_UP)         p |= ir.valid ? PAD_BUTTON_UP : PAD_BUTTON_LEFT;
+  else if (q & WPAD_BUTTON_DOWN)  p |= ir.valid ? PAD_BUTTON_DOWN : PAD_BUTTON_RIGHT;
+  else if (q & WPAD_BUTTON_LEFT)  p |= ir.valid ? PAD_BUTTON_LEFT : PAD_BUTTON_DOWN;
+  else if (q & WPAD_BUTTON_RIGHT) p |= ir.valid ? PAD_BUTTON_RIGHT : PAD_BUTTON_UP;
+  
+  if (h & WPAD_BUTTON_UP)
   {
     held_cnt ++;
     if (held_cnt == MAX_HELD_CNT)

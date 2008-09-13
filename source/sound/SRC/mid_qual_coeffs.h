@@ -30,7 +30,7 @@
 **   half length      : 22437
 **   increment        : 491
 */
-
+#ifndef NGC
 static const struct slow_mid_qual_coeffs_s
 {	int increment ;
 	coeff_t coeffs [22438] ;
@@ -22478,3 +22478,4 @@ static const struct slow_mid_qual_coeffs_s
 }
 } ; /* mid_qual_coeffs */
 
+#endif

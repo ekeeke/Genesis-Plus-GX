@@ -186,13 +186,13 @@ sinc_set_converter (SRC_PRIVATE *psrc, int src_enum)
 				temp_filter.index_inc = fastest_coeffs.increment ;
 				break ;
 
+#ifndef NGC
 		case SRC_SINC_MEDIUM_QUALITY :
 				temp_filter.coeffs = slow_mid_qual_coeffs.coeffs ;
 				temp_filter.coeff_half_len = ARRAY_LEN (slow_mid_qual_coeffs.coeffs) - 1 ;
 				temp_filter.index_inc = slow_mid_qual_coeffs.increment ;
 				break ;
 
-#ifdef USE_SINC_BEST
     case SRC_SINC_BEST_QUALITY :
 				temp_filter.coeffs = slow_high_qual_coeffs.coeffs ;
 				temp_filter.coeff_half_len = ARRAY_LEN (slow_high_qual_coeffs.coeffs) - 1 ;

@@ -164,7 +164,7 @@ void sound_update(void)
 		}
 
     /* samplerate conversion */
-    src_simple (&src_data, SRC_LINEAR + 1 - config.hq_fm, 2);
+    src_simple (&src_data, SRC_SINC_FASTEST, 2);
 
 	  /* this is basically libsamplerate "src_float_to_int_array" function, adapted to interlace samples */
     len = snd.buffer_size;
@@ -220,8 +220,8 @@ void fm_write(unsigned int cpu, unsigned int address, unsigned int data)
 {
   if (address & 1)
   {
-	snd.fm.curStage = fm_sample_cnt(cpu);
-	fm_update();
+    snd.fm.curStage = fm_sample_cnt(cpu);
+	  fm_update();
   }
   _YM2612_Write(address & 3, data);
 }

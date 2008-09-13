@@ -231,9 +231,8 @@ int system_frame (int do_skip)
 				hint_pending = 1;
         hvint_updated = 0;
 				
-        /* previous scanline was shortened (see below), we execute extra cycles on this line */
-        if (line != 0) aim_m68k += 36; 
-      }
+        /* adjust timings to take decrement in account */
+        if ((line != 0) || (h_counter == 0)) aim_m68k += 36;
 
       /* HINT will be triggered on next line, approx. 36 cycles before VDP starts line rendering */
       /* during this period, any VRAM/CRAM/VSRAM writes should NOT be taken in account before next line */

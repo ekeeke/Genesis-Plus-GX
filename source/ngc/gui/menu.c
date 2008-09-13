@@ -146,23 +146,7 @@ void soundmenu ()
 		sprintf (items[1], "FM Volume: %1.2f", config.fm_preamp);
 		sprintf (items[2], "Volume Boost: %dX", config.boost);
 		sprintf (items[3], "LowPass Filter: %s", config.filter ? " ON":"OFF");
-		if (config.hq_fm == 0) sprintf (items[4], "HQ YM2612: OFF");
-		else if (config.fm_core)
-    {
-      /* GENS core only got linear resampling */
-      sprintf (items[4], "HQ YM2612: LINEAR");
-    }
-    else
-    {
-      /* MAME core uses libsamplerate */
-      if (config.hq_fm == 1)      sprintf (items[4], "HQ YM2612: LINEAR");
-      else if (config.hq_fm == 2) sprintf (items[4], "HQ YM2612: LOW");
-      else if (config.hq_fm == 3) sprintf (items[4], "HQ YM2612: FAST");
-		  else if (config.hq_fm == 4) sprintf (items[4], "HQ YM2612: MEDIUM");
-#ifdef USE_SINC_BEST
-		  else if (config.hq_fm == 5) sprintf (items[4], "HQ YM2612: BEST");
-#endif
-    }
+		sprintf (items[4], "HQ YM2612: %s", config.hq_fm ? " ON":"OFF");
 		sprintf (items[5], "FM core: %s", config.fm_core ? "GENS" : "MAME");
 
 		ret = domenu (&items[0], count, 1);
@@ -194,11 +178,7 @@ void soundmenu ()
 				break;
 
       case 4:
-#ifdef USE_SINC_BEST
-				config.hq_fm = (config.hq_fm + 1) % (config.fm_core ? 2 : 6);
-#else
-				config.hq_fm = (config.hq_fm + 1) % (config.fm_core ? 2 : 5);
-#endif
+				config.hq_fm ^= 1;
         if (genromsize) 
 				{
 					audio_init(48000);

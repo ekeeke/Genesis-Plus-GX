@@ -4,7 +4,7 @@
 #include <fat.h>
 #include <sys/dir.h>
 
-#define CONFIG_VERSION "GENPLUS 1.2.2 "
+#define CONFIG_VERSION "GENPLUS 1.2.3 "
 
 t_config config;
 
