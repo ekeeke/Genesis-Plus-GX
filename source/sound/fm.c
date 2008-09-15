@@ -19,11 +19,10 @@
 **  - implemented Detune overflow (Ariel, Comix Zone, Shaq Fu, Spiderman & many others), credits to Nemesis
 **  - fixed SSG-EG support (Asterix, Bubba'n Six & many others), thanks to Nemesis for his tests
 **  - modified EG rates, tested by Nemesis on real hardware
-**  - fixed EG attenuation level on KEY ON (Ecco 2 splash sound)
 **  - implemented LFO phase update for CH3 special mode (Warlock birds, Alladin bug sound)
 **  - fixed Attack Rate update (Batman & Robin intro)
 **  - fixed attenuation level at the start of Substain (Gynoug explosions)
-**  - fixed EG updates when AR is maximal and/or SL minimal (Mega Turrican tracks 03,09...)
+**  - fixed EG when AR is maximal and/or SL minimal (Mega Turrican tracks 03,09...)
 **
 ** 03-08-2003 Jarek Burczynski:
 **  - fixed YM2608 initial values (after the reset)
@@ -658,7 +657,6 @@ INLINE void FM_KEYON(FM_CH *CH , int s )
 		if ((SLOT->ar + SLOT->ksr) < 94 /*32+62*/)
 		{
 		  SLOT->state = EG_ATT;	/* phase -> Attack */
-      SLOT->volume = MAX_ATT_INDEX;	/* fix Ecco 2 splash sound */
     }
     else
     {
@@ -913,11 +911,9 @@ INLINE void advance_lfo()
 
 INLINE void advance_eg_channel(FM_SLOT *SLOT)
 {
-	unsigned int out;
 	unsigned int swap_flag = 0;
-	unsigned int i;
+	unsigned int i = 4; /* four operators per channel */
 
-	i = 4; /* four operators per channel */
 	do
 	{
     /* reset SSG-EG swap flag (Eke-Eke) */
@@ -999,7 +995,6 @@ INLINE void advance_eg_channel(FM_SLOT *SLOT)
 
                 if ((SLOT->ar + SLOT->ksr) < 94 /*32+62*/)
                 {
-                  SLOT->volume = MAX_ATT_INDEX;
                   SLOT->state = EG_ATT;	/* phase -> Attack */
                 }
                 else
@@ -1034,7 +1029,7 @@ INLINE void advance_eg_channel(FM_SLOT *SLOT)
 				if ( !(ym2612.OPN.eg_cnt & ((1<<SLOT->eg_sh_rr)-1) ) )
 				{
           if (SLOT->ssg&0x08)
-            /* SSG-EG affects Release Phase also (Nemesis) */
+            /* SSG-EG affects Release phase also (Nemesis) */
             SLOT->volume += 6 * eg_inc[SLOT->eg_sel_rr + ((ym2612.OPN.eg_cnt>>SLOT->eg_sh_rr)&7)];
           else
             SLOT->volume += eg_inc[SLOT->eg_sel_rr + ((ym2612.OPN.eg_cnt>>SLOT->eg_sh_rr)&7)];
@@ -1049,7 +1044,7 @@ INLINE void advance_eg_channel(FM_SLOT *SLOT)
       
 		}
 
-		out = (UINT32)SLOT->volume;
+    unsigned int out = (UINT32)SLOT->volume;
 
 		/* negate output (changes come from alternate bit, init comes from attack bit) */
     if ((SLOT->ssg&0x08) && (SLOT->ssgn&2) && (SLOT->state > EG_REL))
@@ -1442,7 +1437,8 @@ static void INTERNAL_TIMER_A()
 			if (ym2612.OPN.ST.mode & 0x04) ym2612.OPN.ST.status |= 0x01;
 
 			/* reload the counter */
-			ym2612.OPN.ST.TAC += ym2612.OPN.ST.TAL;
+			if (ym2612.OPN.ST.TAL) ym2612.OPN.ST.TAC += ym2612.OPN.ST.TAL;
+      else ym2612.OPN.ST.TAC = ym2612.OPN.ST.TAL;
 
 			/* CSM mode total level latch and auto key on */
 			if ((ym2612.OPN.ST.mode & 0xC0) == 0x80) CSMKeyControll (&(ym2612.CH[2]));
@@ -1460,7 +1456,8 @@ static void INTERNAL_TIMER_B(int step)
 			if (ym2612.OPN.ST.mode & 0x08) ym2612.OPN.ST.status |= 0x02;
 
 			/* reload the counter */
-			ym2612.OPN.ST.TBC += ym2612.OPN.ST.TBL;
+			if (ym2612.OPN.ST.TBL) ym2612.OPN.ST.TBC += ym2612.OPN.ST.TBL;
+      else ym2612.OPN.ST.TBC = ym2612.OPN.ST.TBL;
 		}		
 	}
 }
@@ -1891,7 +1888,7 @@ int YM2612ResetChip(void)
 		OPNWriteReg(i      ,0);
 		OPNWriteReg(i|0x100,0);
 	}
-	for(i = 0x26 ; i >= 0x20 ; i-- ) OPNWriteMode(i,0);
+	for(i = 0x26 ; i >= 0x20 ; i-- ) OPNWriteMode(i,0); /* fixed (Eke-Eke) */
 
 	/* DAC mode clear */
 	ym2612.dacen  = 0;
