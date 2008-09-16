@@ -99,9 +99,6 @@
 ** change ADPCMA_DECODE_MIN/MAX.
 */
 
-
-
-
 /************************************************************************/
 /*    comment of hiro-shi(Hiromitsu Shioya)                             */
 /*    YM2610(B) = OPN-B                                                 */
@@ -119,7 +116,7 @@
 
 /* globals */
 #define FREQ_SH			16  /* 16.16 fixed point (frequency calculations) */
-#define EG_SH			  16  /* 16.16 fixed point (envelope generator timing) */
+#define EG_SH			16  /* 16.16 fixed point (envelope generator timing) */
 #define LFO_SH			24  /*  8.24 fixed point (LFO calculations)       */
 #define TIMER_SH		16  /* 16.16 fixed point (timers calculations)    */
 
@@ -222,7 +219,7 @@ O(18),O(18),O(18),O(18),O(18),O(18),O(18),O(18),
 O( 0),O( 1),O( 2),O( 3),
 O( 0),O( 1),O( 2),O( 3),
 */
-O( 18),O( 18),O( 0),O( 0),
+O(18),O(18),O( 0),O( 0),
 O( 0),O( 0),O( 2),O( 2),   // Nemesis's tests
 
 O( 0),O( 1),O( 2),O( 3),
@@ -449,10 +446,6 @@ static const UINT8 lfo_pm_output[7*8][8]={ /* 7 bits meaningful (of F-NUMBER), 8
 /* all 128 LFO PM waveforms */
 static INT32 lfo_pm_table[128*8*32]; /* 128 combinations of 7 bits meaningful (of F-NUMBER), 8 LFO depths, 32 LFO output levels per one depth */
 
-
-
-
-
 /* register number to channel number , slot offset */
 #define OPN_CHAN(N) (N&3)
 #define OPN_SLOT(N) ((N>>2)&3)
@@ -466,88 +459,87 @@ static INT32 lfo_pm_table[128*8*32]; /* 128 combinations of 7 bits meaningful (o
 /* struct describing a single operator (SLOT) */
 typedef struct
 {
-	INT32	*DT;		/* detune          :dt_tab[DT] */
-	UINT8	KSR;		/* key scale rate  :3-KSR */
-	UINT32	ar;			/* attack rate  */
-	UINT32	d1r;		/* decay rate   */
-	UINT32	d2r;		/* sustain rate */
-	UINT32	rr;			/* release rate */
-	UINT8	ksr;		/* key scale rate  :kcode>>(3-KSR) */
-	UINT32	mul;		/* multiple        :ML_TABLE[ML] */
+	INT32	*DT;		    /* detune          :dt_tab[DT]      */
+	UINT8	KSR;		    /* key scale rate  :3-KSR           */
+	UINT32	ar;			  /* attack rate                      */
+	UINT32	d1r;		  /* decay rate                       */
+	UINT32	d2r;		  /* sustain rate                     */
+	UINT32	rr;			  /* release rate                     */
+	UINT8	ksr;		    /* key scale rate  :kcode>>(3-KSR)  */
+	UINT32	mul;		  /* multiple        :ML_TABLE[ML]    */
 
 	/* Phase Generator */
-	UINT32	phase;		/* phase counter */
-	INT32	Incr;		/* phase step */
+	UINT32	phase;    /* phase counter */
+	INT32	Incr;		    /* phase step */
 
 	/* Envelope Generator */
-	UINT8	state;		/* phase type */
-	UINT32	tl;			/* total level: TL << 3 */
-	INT32	volume;		/* envelope counter */
-	UINT32	sl;			/* sustain level:sl_table[SL] */
-	UINT32	vol_out;	/* current output from EG circuit (without AM from LFO) */
+	UINT8	state;		  /* phase type */
+	UINT32	tl;			  /* total level: TL << 3 */
+	INT32	volume;		  /* envelope counter */
+	UINT32	sl;			  /* sustain level:sl_table[SL] */
+	UINT32	vol_out;  /* current output from EG circuit (without AM from LFO) */
 
-	UINT8	eg_sh_ar;	/*  (attack state) */
-	UINT8	eg_sel_ar;	/*  (attack state) */
-	UINT8	eg_sh_d1r;	/*  (decay state) */
-	UINT8	eg_sel_d1r;	/*  (decay state) */
+	UINT8	eg_sh_ar;	  /*  (attack state)  */
+	UINT8	eg_sel_ar;	/*  (attack state)  */
+	UINT8	eg_sh_d1r;	/*  (decay state)   */
+	UINT8	eg_sel_d1r;	/*  (decay state)   */
 	UINT8	eg_sh_d2r;	/*  (sustain state) */
 	UINT8	eg_sel_d2r;	/*  (sustain state) */
-	UINT8	eg_sh_rr;	/*  (release state) */
+	UINT8	eg_sh_rr;	  /*  (release state) */
 	UINT8	eg_sel_rr;	/*  (release state) */
 
-	UINT8	ssg;		/* SSG-EG waveform */
-	UINT8	ssgn;		/* SSG-EG negated output */
+	UINT8	ssg;        /* SSG-EG waveform  */
+	UINT8	ssgn;       /* SSG-EG negated output  */
 
-	UINT32	key;		/* 0=last key was KEY OFF, 1=KEY ON */
+	UINT32	key;      /* 0=last key was KEY OFF, 1=KEY ON */
 
 	/* LFO */
-	UINT32	AMmask;		/* AM enable flag */
+	UINT32	AMmask;   /* AM enable flag */
 
 } FM_SLOT;
 
 typedef struct
 {
-	FM_SLOT	SLOT[4];	/* four SLOTs (operators) */
+	FM_SLOT	SLOT[4];	  /* four SLOTs (operators) */
 
-	UINT8	ALGO;		/* algorithm */
-	UINT8	FB;			/* feedback shift */
-	INT32	op1_out[2];	/* op1 output for feedback */
+	UINT8	ALGO;		      /* algorithm */
+	UINT8	FB;			      /* feedback shift */
+	INT32	op1_out[2];	  /* op1 output for feedback */
 
-	INT32	*connect1;	/* SLOT1 output pointer */
-	INT32	*connect3;	/* SLOT3 output pointer */
-	INT32	*connect2;	/* SLOT2 output pointer */
-	INT32	*connect4;	/* SLOT4 output pointer */
+	INT32	*connect1;	  /* SLOT1 output pointer */
+	INT32	*connect3;	  /* SLOT3 output pointer */
+	INT32	*connect2;	  /* SLOT2 output pointer */
+	INT32	*connect4;	  /* SLOT4 output pointer */
 
-	INT32	*mem_connect;/* where to put the delayed sample (MEM) */
-	INT32	mem_value;	/* delayed sample (MEM) value */
+	INT32	*mem_connect; /* where to put the delayed sample (MEM) */
+	INT32	mem_value;	  /* delayed sample (MEM) value */
 
-	INT32	pms;		/* channel PMS */
-	UINT8	ams;		/* channel AMS */
+	INT32	pms;		      /* channel PMS */
+	UINT8	ams;		      /* channel AMS */
 
-	UINT32	fc;			/* fnum,blk:adjusted to sample rate */
-	UINT8	kcode;		/* key code:                        */
+	UINT32	fc;			    /* fnum,blk:adjusted to sample rate */
+	UINT8	kcode;		    /* key code:                        */
 	UINT32	block_fnum;	/* current blk/fnum value for this slot (can be different betweeen slots of one channel in 3slot mode) */
 } FM_CH;
 
 
 typedef struct
 {
-	int		clock;		/* master clock  (Hz)   */
-	int		rate;		/* sampling rate (Hz)   */
-	double	freqbase;	/* frequency base       */
-	UINT8	address[2];	/* address register     */
-	UINT8	status;		/* status flag          */
-	UINT32	mode;		/* mode  CSM / 3SLOT    */
-	UINT8	fn_h;		/* freq latch           */
-	int  TimerBase;	/* Timer base time      */
-	int	TA;			/* timer a value        */
-	int	TAL;		/* timer a base		    */
-	int	TAC;		/* timer a counter      */
-	int	TB;			/* timer b              */
-	int	TBL;		/* timer b base		    */
-	int	TBC;		/* timer b counter      */
-	/* local time tables */
-	INT32	dt_tab[8][32];/* DeTune table       */
+	UINT32		clock;      /* master clock  (Hz)   */
+	UINT32		rate;       /* sampling rate (Hz)   */
+	double	freqbase;	    /* frequency base       */
+	UINT8	address[2];	    /* address register     */
+	UINT8	status;		      /* status flag          */
+	UINT32	mode;		      /* mode  CSM / 3SLOT    */
+	UINT8	fn_h;		        /* freq latch           */
+	INT32  TimerBase;     /* Timer base time      */
+	INT32	TA;			        /* timer a value        */
+	INT32	TAL;		        /* timer a base		      */
+	INT32	TAC;            /* timer a counter      */
+	INT32	TB;			        /* timer b value        */
+	INT32	TBL;		        /* timer b base		      */
+	INT32	TBC;		        /* timer b counter      */
+	INT32	dt_tab[8][32];  /* DeTune table         */
 
 } FM_ST;
 
@@ -560,58 +552,55 @@ typedef struct
 /* OPN 3slot struct */
 typedef struct
 {
-	UINT32  fc[3];			/* fnum3,blk3: calculated */
-	UINT8	fn_h;			/* freq3 latch */
-	UINT8	kcode[3];		/* key code */
-	UINT32	block_fnum[3];	/* current fnum value for this slot (can be different betweeen slots of one channel in 3slot mode) */
+	UINT32  fc[3];			    /* fnum3,blk3: calculated */
+	UINT8	fn_h;			        /* freq3 latch */
+	UINT8	kcode[3];		      /* key code */
+	UINT32	block_fnum[3];  /* current fnum value for this slot (can be different betweeen slots of one channel in 3slot mode) */
 } FM_3SLOT;
 
 /* OPN/A/B common state */
 typedef struct
 {
-	FM_ST	ST;				/* general state */
-	FM_3SLOT SL3;			/* 3 slot mode state */
-	unsigned int pan[6*2];	/* fm channels output masks (0xffffffff = enable) */
+	FM_ST	ST;				            /* general state */
+	FM_3SLOT SL3;			          /* 3 slot mode state */
+	unsigned int pan[6*2];      /* fm channels output masks (0xffffffff = enable) */
 
-	UINT32	eg_cnt;			/* global envelope generator counter */
-	UINT32	eg_timer;		/* global envelope generator counter works at frequency = chipclock/64/3 */
-	UINT32	eg_timer_add;	/* step of eg_timer */
-	UINT32	eg_timer_overflow;/* envelope generator timer overlfows every 3 samples (on real chip) */
-
+	UINT32	eg_cnt;             /* global envelope generator counter */
+	UINT32	eg_timer;		        /* global envelope generator counter works at frequency = chipclock/64/3 */
+	UINT32	eg_timer_add;	      /* step of eg_timer */
+	UINT32	eg_timer_overflow;  /* envelope generator timer overlfows every 3 samples (on real chip) */
 
 	/* there are 2048 FNUMs that can be generated using FNUM/BLK registers
         but LFO works with one more bit of a precision so we really need 4096 elements */
-
-	UINT32	fn_table[4096];	/* fnumber->increment counter */
-
+	UINT32	fn_table[4096];	    /* fnumber->increment counter */
+  UINT32  fn_max;             /* max increment (required for calculating phase overflow) */
 
 	/* LFO */
-	UINT32	lfo_cnt;
-	UINT32	lfo_inc;
-
-	UINT32	lfo_freq[8];	/* LFO FREQ table */
+	UINT32	lfo_cnt;            /* current LFO phase */
+	UINT32	lfo_inc;            /* step of LFO counter */
+	UINT32	lfo_freq[8];	      /* LFO FREQ table */
 } FM_OPN;
 
+/***********************************************************/
+/* YM2612 chip                                                */
+/***********************************************************/
 typedef struct
 {
-	FM_CH		CH[6];		/* channel state */
-	UINT8		dacen;		/* DAC mode  */
-	INT32		dacout;		/* DAC output */
-	FM_OPN		OPN;		/* OPN state */
+	FM_CH		CH[6];  /* channel state */
+	UINT8		dacen;  /* DAC mode  */
+	INT32   dacout; /* DAC output */
+	FM_OPN  OPN;		/* OPN state */
 } YM2612;
 
+/* emulated chip */
 static YM2612 ym2612;
 
 /* current chip state */
 static INT32	m2,c1,c2;		/* Phase Modulation input for operators 2,3,4 */
-static INT32	mem;			/* one sample delay memory */
-
-static INT32	out_fm[8];		    /* outputs of working channels */
-
+static INT32	mem;			  /* one sample delay memory */
+static INT32	out_fm[8];  /* outputs of working channels */
 static UINT32	LFO_AM;			/* runtime LFO calculations helper */
 static INT32	LFO_PM;			/* runtime LFO calculations helper */
-
-static int fn_max;    /* maximal phase increment (used for phase overflow) */
 
 
 /* limitter */
@@ -1086,7 +1075,7 @@ INLINE void update_phase_lfo_slot(FM_SLOT *SLOT , INT32 pms, UINT32 block_fnum)
     int fc = (ym2612.OPN.fn_table[fn]>>(7-blk)) + SLOT->DT[kc];
       
     /* (frequency) phase overflow (credits to Nemesis) */
-    if (fc < 0) fc += fn_max;
+    if (fc < 0) fc += ym2612.OPN.fn_max;
 
     /* update phase */
     SLOT->phase += (fc * SLOT->mul) >> 1;
@@ -1119,19 +1108,19 @@ INLINE void update_phase_lfo_channel(FM_CH *CH)
 
     /* (frequency) phase overflow (credits to Nemesis) */
     int finc = fc + CH->SLOT[SLOT1].DT[kc];
-    if (finc < 0) finc += fn_max;
+    if (finc < 0) finc += ym2612.OPN.fn_max;
     CH->SLOT[SLOT1].phase += (finc*CH->SLOT[SLOT1].mul) >> 1;
 
     finc = fc + CH->SLOT[SLOT2].DT[kc];
-    if (finc < 0) finc += fn_max;
+    if (finc < 0) finc += ym2612.OPN.fn_max;
     CH->SLOT[SLOT2].phase += (finc*CH->SLOT[SLOT2].mul) >> 1;
 
     finc = fc + CH->SLOT[SLOT3].DT[kc];
-    if (finc < 0) finc += fn_max;
+    if (finc < 0) finc += ym2612.OPN.fn_max;
     CH->SLOT[SLOT3].phase += (finc*CH->SLOT[SLOT3].mul) >> 1;
 
     finc = fc + CH->SLOT[SLOT4].DT[kc];
-    if (finc < 0) finc += fn_max;
+    if (finc < 0) finc += ym2612.OPN.fn_max;
     CH->SLOT[SLOT4].phase += (finc*CH->SLOT[SLOT4].mul) >> 1;
   }
   else	/* LFO phase modulation  = zero */
@@ -1177,7 +1166,7 @@ INLINE void chan_calc(FM_CH *CH)
 			CH->op1_out[1] = op_calc1(CH->SLOT[SLOT1].phase, eg_out, (out<<CH->FB) );
 		}
 	}
- 
+
 	eg_out = volume_calc(&CH->SLOT[SLOT3]);
 	if( eg_out < ENV_QUIET )		/* SLOT 3 */
 		*CH->connect3 += op_calc(CH->SLOT[SLOT3].phase, eg_out, m2);
@@ -1224,7 +1213,7 @@ INLINE void refresh_fc_eg_slot(FM_SLOT *SLOT , int fc , int kc )
   fc += SLOT->DT[kc];
 
   /* (frequency) phase overflow (credits to Nemesis) */
-  if (fc < 0) fc += fn_max;
+  if (fc < 0) fc += ym2612.OPN.fn_max;
 
   /* (frequency) phase increment counter */
   SLOT->Incr = (fc * SLOT->mul) >> 1;
@@ -1492,8 +1481,8 @@ static void OPNSetPres(int pres)
 		ym2612.OPN.fn_table[i] = (UINT32)( (double)i * 32 * ym2612.OPN.ST.freqbase * (1<<(FREQ_SH-10)) ); /* -10 because chip works with 10.10 fixed point, while we use 16.16 */
 	}
 
-  /* maximal frequency, used for overflow, internal register is 17-bits (Nemesis) */
-  fn_max = (UINT32)( (double)0x1ffff * ym2612.OPN.ST.freqbase * (1<<(FREQ_SH-10)) );
+  /* maximal frequency is required for Phase overflow calculation, register size is 17 bits (Nemesis) */
+  ym2612.OPN.fn_max = (UINT32)( (double)0x20000 * ym2612.OPN.ST.freqbase * (1<<(FREQ_SH-10)) );
 
 	/* LFO freq. table */
 	for(i = 0; i < 8; i++)

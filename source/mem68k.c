@@ -297,7 +297,7 @@ unsigned int m68k_read_memory_8(unsigned int address)
 			return m68k_lockup_r_8(address);
 
 		case UMK3_HACK:
-			return READ_BYTE(&cart_rom[offset<<19], address & 0x7ffff);
+			return READ_BYTE(&cart_rom[offset << 19], address & 0x7ffff);
 
  		case PICO_HW:
       switch (address & 0xff)

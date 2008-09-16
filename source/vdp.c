@@ -63,7 +63,7 @@ uint8 border;				              /* Border color index */
 uint8 bg_name_dirty[0x800];	      /* 1= This pattern is dirty */
 uint16 bg_name_list[0x800];	      /* List of modified pattern indices */
 uint16 bg_list_index;		          /* # of modified patterns in list */
-uint8 bg_pattern_cache[0x80000];  /* Cached and flipped patterns */
+uint8 bg_pattern_cache[0x80000];/* Cached and flipped patterns */
 uint8 playfield_shift;		        /* Width of planes A, B (in bits) */
 uint8 playfield_col_mask;	        /* Vertical scroll mask */
 uint16 playfield_row_mask;	      /* Horizontal scroll mask */
