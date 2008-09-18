@@ -38,6 +38,7 @@ uint32 z80cycles_per_line;
 uint32 aim_m68k;
 uint32 count_m68k;
 uint32 line_m68k;
+uint32 hint_m68k;
 uint32 aim_z80;
 uint32 count_z80;
 uint32 line_z80;
@@ -214,6 +215,7 @@ int system_frame (int do_skip)
 		input_update();
 
  		/* Update CPU cycle counters */
+    hint_m68k = count_m68k;
     line_m68k = aim_m68k;
 		line_z80  = aim_z80;
     aim_z80  += z80cycles_per_line;

@@ -566,7 +566,7 @@ void ogc_video__update()
 	  GX_InitTexObj (&texobj, texturemem, vwidth, vheight, GX_TF_RGB565, GX_CLAMP, GX_CLAMP, GX_FALSE);
     
     /* original H40 mode: force filtering OFF */
-    if (!config.render && (reg[12]&1))
+    if (!config.overscan && !config.render && (reg[12]&1))
     {
       GX_InitTexObjLOD(&texobj,GX_NEAR,GX_NEAR_MIP_NEAR,2.5,9.0,0.0,GX_FALSE,GX_FALSE,GX_ANISO_1);
     }

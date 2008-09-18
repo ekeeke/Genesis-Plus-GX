@@ -82,6 +82,7 @@ extern uint32 z80cycles_per_line;
 extern uint32 aim_m68k;
 extern uint32 count_m68k;
 extern uint32 line_m68k;
+extern uint32 hint_m68k;
 extern uint32 aim_z80;
 extern uint32 count_z80;
 extern uint32 line_z80;

@@ -10,9 +10,12 @@ CURRENT:
 - YM2612(MAME): fixed registers 0x20-0x26 Reset state, fix intro music in B.O.B
 - adjusted HCounter values, fix Sonic 3D bonus stage
 
+
 [NGC/Wii]
-- improved menu scrolling using Wiimote D-PAD
+- simplified HQ YM2612 option (use FAST setting for MAME by default)
+- improved fast scrolling in menus when using Wiimote D-PAD
 - fixed config file incompatibility between GC and Wii versions
+- reenabled texture filtering in H40 original mode when overscan is emulated: fix screen scroll tearing
 
 
 26/08/2008:
