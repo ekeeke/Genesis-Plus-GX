@@ -17,12 +17,12 @@
 **	- removed unused multichip support and YMxxx support
 **	- fixed CH3 CSM mode (which games actually use this ?), credits to Nemesis
 **  - implemented Detune overflow (Ariel, Comix Zone, Shaq Fu, Spiderman & many others), credits to Nemesis
-**  - fixed SSG-EG support (Asterix, Bubba'n Six & many others), thanks to Nemesis for his tests
+**  - fixed SSG-EG support (Asterix, Bubba'n Six & many others), credits to Nemesis
 **  - modified EG rates, tested by Nemesis on real hardware
 **  - implemented LFO phase update for CH3 special mode (Warlock birds, Alladin bug sound)
 **  - fixed Attack Rate update (Batman & Robin intro)
 **  - fixed attenuation level at the start of Substain (Gynoug explosions)
-**  - fixed EG when AR is maximal and/or SL minimal (Mega Turrican tracks 03,09...)
+**  - fixed EG decay->substain transition to handle special cases, like SL=0 and Decay rate is very slow (Mega Turrican tracks 03,09...)
 **
 ** 03-08-2003 Jarek Burczynski:
 **  - fixed YM2608 initial values (after the reset)
@@ -649,9 +649,9 @@ INLINE void FM_KEYON(FM_CH *CH , int s )
     }
     else
     {
-      /* directly switch to Decay (or Substain) */
+      /* directly switch to Decay */
       SLOT->volume = MIN_ATT_INDEX;
-      SLOT->state = (SLOT->sl == MIN_ATT_INDEX) ? EG_SUS : EG_DEC;
+      SLOT->state = EG_DEC;
     }
 	}
 }
@@ -665,7 +665,6 @@ INLINE void FM_KEYOFF(FM_CH *CH , int s )
 		if (SLOT->state>EG_REL)
 		{
       SLOT->state = EG_REL; /* phase -> Release */
-      SLOT->ssgn = 0;       /* reset Invert Flag (from Nemesis) */
 	  }
   }
 }
@@ -916,41 +915,28 @@ INLINE void advance_eg_channel(FM_SLOT *SLOT)
 					SLOT->volume += (~SLOT->volume * (eg_inc[SLOT->eg_sel_ar + ((ym2612.OPN.eg_cnt>>SLOT->eg_sh_ar)&7)]))>>4;
 					if (SLOT->volume <= MIN_ATT_INDEX)
 					{
-            /* switch to Release or Substain Phase (Eke-Eke) */
 						SLOT->volume = MIN_ATT_INDEX;
-						SLOT->state = (SLOT->sl == MIN_ATT_INDEX) ? EG_SUS : EG_DEC;
+						SLOT->state = EG_DEC;
 					}
 				}
 				break;
 
 			case EG_DEC:	/* decay phase */
-				if (SLOT->ssg&0x08)	/* SSG EG type envelope selected */
-				{
 					if ( !(ym2612.OPN.eg_cnt & ((1<<SLOT->eg_sh_d1r)-1) ) )
 					{
-            /* Nemesis */
+          if (SLOT->ssg&0x08)	/* SSG EG type envelope selected */
             SLOT->volume += 6 * eg_inc[SLOT->eg_sel_d1r + ((ym2612.OPN.eg_cnt>>SLOT->eg_sh_d1r)&7)];
-
-					  if ( SLOT->volume >= (INT32)(SLOT->sl) )
-						{
-              SLOT->volume = (INT32)(SLOT->sl);
-              SLOT->state = EG_SUS;
-            }
-				  }
-				}
 				else
-				{
-					if ( !(ym2612.OPN.eg_cnt & ((1<<SLOT->eg_sh_d1r)-1) ) )
-					{
 						SLOT->volume += eg_inc[SLOT->eg_sel_d1r + ((ym2612.OPN.eg_cnt>>SLOT->eg_sh_d1r)&7)];
+        }
 
+        /* check transition even if no volume update: this fixes the case when SL = MIN_ATT_INDEX */
 					  if ( SLOT->volume >= (INT32)(SLOT->sl) )
 						{
               SLOT->volume = (INT32)(SLOT->sl);
               SLOT->state = EG_SUS;
             }
-  				}
-				}
+
 				break;
 
 			case EG_SUS:	/* sustain phase */
@@ -960,8 +946,9 @@ INLINE void advance_eg_channel(FM_SLOT *SLOT)
 					{
             /* Nemesis */
             SLOT->volume += 6 * eg_inc[SLOT->eg_sel_d2r + ((ym2612.OPN.eg_cnt>>SLOT->eg_sh_d2r)&7)];
+          }
 
-						if ( SLOT->volume >= MAX_ATT_INDEX)
+          if ( SLOT->volume >= 992)
 						{
 							SLOT->volume = MAX_ATT_INDEX;
 
@@ -973,7 +960,6 @@ INLINE void advance_eg_channel(FM_SLOT *SLOT)
 								}
 								else
 									swap_flag = (SLOT->ssg&0x02) | 1 ; /* bit 1 = alternate */
-
 							}
 							else
 							{
@@ -994,7 +980,7 @@ INLINE void advance_eg_channel(FM_SLOT *SLOT)
                 }
 
 								swap_flag = (SLOT->ssg&0x02); /* bit 1 = alternate */
-							}
+              
 						}
 					}
         }
@@ -1005,13 +991,10 @@ INLINE void advance_eg_channel(FM_SLOT *SLOT)
             SLOT->volume += eg_inc[SLOT->eg_sel_d2r + ((ym2612.OPN.eg_cnt>>SLOT->eg_sh_d2r)&7)];
 
 						if ( SLOT->volume >= MAX_ATT_INDEX )
-						{
 							SLOT->volume = MAX_ATT_INDEX;
 							/* do not change SLOT->state (verified on real chip) */
 						}
 					}
-
-				}
 				break;
 
 			case EG_REL:	/* release phase */
