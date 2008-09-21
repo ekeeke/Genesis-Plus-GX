@@ -232,7 +232,8 @@ void z80_write_banked_memory (unsigned int address, unsigned int data)
       return;
 
     default:	/* WRAM */
-			z80bank_unused_w(address, data);
+      /* Mamono Hunter Youko - Dai 7 no Keishou need this */
+      WRITE_BYTE(work_ram, address & 0xffff, data);
       return;
 	}
 }
@@ -243,8 +244,8 @@ unsigned int z80_read_banked_memory(unsigned int address)
 
 	switch (m68k_readmap_8[offset])
 	{
-    case WRAM: /* NOTE: can't be read on some Genesis models (!)*/
-      return z80bank_unused_r(address) | 0xff;
+    	case WRAM: /* NOTE: can't be read on some Genesis models (!), only japanese ones ??? */
+           return READ_BYTE(work_ram, address);
 
 		case SYSTEM_IO:
 		{

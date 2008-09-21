@@ -4,12 +4,14 @@ Genesis Plus for Gamecube
 CURRENT:
 ---------
 [Genesis]
-- YM2612(MAME): fixed EG Decay->Substain transition when SL & DR are minimals, fix tracks #3 and #9 in Mega Turrican
-- YM2612(MAME): fixed a bug in SSG-EG emulation code, fix Level 1 music in Alisia Dragoon
+- YM2612(MAME): fixed EG Decay->Substain transition when SL & DR are minimals, fix tracks #3 and #9 in "Mega Turrican"
+- YM2612(MAME): fixed a bug in SSG-EG emulation code, fix Level 1 music in "Alisia Dragoon"
+- YM2612(MAME): modified SSG-EG Decay End Level, fix "Chainsaw" sfx in "Beavis & Butthead"
 - YM2612(MAME): improved Detune overflow accuracy, fix high-frequency sound effects & musics in many games
-- YM2612(MAME): fixed registers 0x20-0x26 Reset state, fix intro music in B.O.B
-- YM2612(MAME): removed previous fix with KEY ON, fix "Flamethrower" sfx in Alien 3
-- adjusted HCounter values, fix Sonic 3D bonus stage
+- YM2612(MAME): fixed registers 0x20-0x26 Reset state, fix intro music in "B.O.B"
+- YM2612(MAME): removed previous fix with KEY ON, fix "Flamethrower" sfx in "Alien 3"
+- adjusted HCounter values, fix "Sonic 3D" bonus stage
+- enabled Z80 access to WRAM, fix "Mamono Hunter Youko"
 
 
 [NGC/Wii]
