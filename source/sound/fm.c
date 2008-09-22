@@ -948,10 +948,8 @@ INLINE void advance_eg_channel(FM_SLOT *SLOT)
             SLOT->volume += 6 * eg_inc[SLOT->eg_sel_d2r + ((ym2612.OPN.eg_cnt>>SLOT->eg_sh_d2r)&7)];
           }
 
-          if ( SLOT->volume >= 512) /* Alone Coder */
+          if ( SLOT->volume >= ENV_QUIET) /* Alone Coder */
 						{
-							SLOT->volume = MAX_ATT_INDEX;
-
 							if (SLOT->ssg&0x01)	/* bit 0 = hold */
 							{
 								if (SLOT->ssgn&1)	/* have we swapped once ??? */
@@ -970,7 +968,6 @@ INLINE void advance_eg_channel(FM_SLOT *SLOT)
 
                 if ((SLOT->ar + SLOT->ksr) < 94 /*32+62*/)
                 {
-							    SLOT->volume = 511; /* Alone Coder */
                   SLOT->state = EG_ATT;	/* phase -> Attack */
                 }
                 else

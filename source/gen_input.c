@@ -601,7 +601,7 @@ void teamplayer_2_write (unsigned int data)
 
 unsigned int jcart_read(void)
 {
-	return (gamepad_read(5) | (gamepad_read(6) << 8));
+	return (gamepad_read(5) | ((gamepad_read(6)&0x3f) << 8)); /* fixes Micro Machines 2 (is it correct ?) */
 }
 
 void jcart_write(unsigned int data)
