@@ -725,7 +725,7 @@ void vdp_reg_w(unsigned int r, unsigned int d)
       /* DISPLAY switched ON/OFF during HBLANK */
 			if ((v_counter < bitmap.viewport.h) && ((d&0x40) != (reg[1]&0x40)))
       {
-        if (count_m68k <= (hint_m68k + 84))
+        if (count_m68k <= (hint_m68k + 120))
         {
           /* Redraw the current line :
             - Legend of Galahad, Lemmings 2, Nigel Mansell's World Championship Racing (set display OFF)

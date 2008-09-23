@@ -6,19 +6,20 @@ CURRENT:
 [Genesis]
 - YM2612(MAME): fixed EG Decay->Substain transition when SL & DR are minimals, fix tracks #3 and #9 in "Mega Turrican"
 - YM2612(MAME): fixed a bug in SSG-EG emulation code, fix Level 1 music in "Alisia Dragoon"
-- YM2612(MAME): modified SSG-EG Decay End Level, fix "Chainsaw" sfx in "Beavis & Butthead"
-- YM2612(MAME): improved Detune overflow accuracy, fix high-frequency sound effects & musics in many games
+- YM2612(MAME): modified SSG-EG Decay End Level, fix some sound effects (ChainSaw, Zap...) in "Beavis & Butthead"
+- YM2612(MAME): improved Detune overflow accuracy, fix very high frequency sounds in many games
 - YM2612(MAME): fixed registers 0x20-0x26 Reset state, fix intro music in "B.O.B"
-- YM2612(MAME): removed previous fix with KEY ON, fix "Flamethrower" sfx in "Alien 3"
-- adjusted HCounter values, fix "Sonic 3D" bonus stage
-- enabled Z80 access to WRAM, fix "Mamono Hunter Youko"
+- YM2612(MAME): removed previous fix with KEY ON, fix "Flamethrower" sound effect in "Alien 3"
+- adjusted HCounter values, fix line flickering in "Sonic 3D" bonus stage
+- re-enabled Z80 banked access to WRAM, fix hang-up in "Mamono Hunter Youko"
+- modified JCART emulation, fix corrupted tracks logo in "Micro Machines 2"
 
 
 [NGC/Wii]
-- simplified HQ YM2612 option (use FAST setting for MAME by default)
+- removed unused libsamplerate settings for HQ YM2612 (now use "FAST" setting for MAME by default)
 - improved fast scrolling in menus when using Wiimote D-PAD
 - fixed config file incompatibility between GC and Wii versions
-- reenabled texture filtering in H40 original mode when overscan is emulated: fix screen scroll tearing
+- re-enabled texture filtering in H40 original mode when overscan is emulated: fix screen scroll tearing
 
 
 26/08/2008:
