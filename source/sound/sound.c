@@ -164,7 +164,7 @@ void sound_update(void)
 		}
 
     /* samplerate conversion */
-    src_simple (&src_data, SRC_SINC_FASTEST, 2);
+    src_simple (&src_data, svp ? SRC_LINEAR : SRC_SINC_FASTEST, 2);
 
 	  /* this is basically libsamplerate "src_float_to_int_array" function, adapted to interlace samples */
     len = snd.buffer_size;

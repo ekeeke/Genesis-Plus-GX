@@ -757,7 +757,7 @@ void render_ntx(int which, int line, uint8 *buf)
   int shift;
   int v_line;
   uint32 atex, atbuf, *src, *dst;
-  uint16 xscroll;
+  uint16 xscroll = 0;
   int y_scroll;
   uint32 *nt;
   uint32 *vs;
@@ -819,7 +819,7 @@ void render_ntx_im2(int which, int line, uint8 *buf, uint8 odd)
   int shift;
   int v_line;
   uint32 atex, atbuf, *src, *dst;
-  uint16 xscroll;
+  uint16 xscroll = 0;
   int y_scroll;
   uint32 *nt;
   uint32 *vs;
@@ -880,7 +880,7 @@ void render_ntx_vs(int which, int line, uint8 *buf)
   int shift;
   int v_line;
   uint32 atex, atbuf, *src, *dst;
-  uint16 xscroll;
+  uint16 xscroll = 0;
   int y_scroll;
   uint32 *nt;
   uint32 *vs;
