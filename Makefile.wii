@@ -18,9 +18,9 @@ include $(DEVKITPPC)/wii_rules
 TARGET		:=	genplus_wii
 BUILD		:=	build_wii
 SOURCES		:=	source source/m68k source/z80 source/sound source/cart_hw\
-			source/cart_hw/svp source/ngc source/ngc/gui source/sound/SRC
+			source/cart_hw/svp source/ngc source/ngc/gui source/sound/SRC source/ntsc
 INCLUDES	:=	source source/m68k source/z80 source/sound source/cart_hw\
-			source/cart_hw/svp source/ngc source/ngc/gui source/sound/SRC
+			source/cart_hw/svp source/ngc source/ngc/gui source/sound/SRC source/ntsc
 
 #---------------------------------------------------------------------------------
 # options for code generation

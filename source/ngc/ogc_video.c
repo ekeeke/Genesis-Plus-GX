@@ -22,6 +22,15 @@
 #include "shared.h"
 #include "font.h"
 #include "gcaram.h"
+#include "md_ntsc.h"
+#include "sms_ntsc.h"
+
+/*** NTSC Filters ***/
+md_ntsc_setup_t md_setup;
+md_ntsc_t md_ntsc;
+sms_ntsc_setup_t sms_setup;
+sms_ntsc_t sms_ntsc;
+
 
 /*** PAL 50hz flag ***/
 uint8 gc_pal = 0;
@@ -32,7 +41,7 @@ int whichfb = 0;		  /*** External framebuffer index ***/
 GXRModeObj *vmode;    /*** Menu video mode            ***/
 
 /*** GX ***/
-#define TEX_WIDTH         356
+#define TEX_WIDTH         360 * 2
 #define TEX_HEIGHT        576
 #define DEFAULT_FIFO_SIZE 256 * 1024
 #define HASPECT           320
@@ -521,6 +530,29 @@ void ogc_video__reset()
   GX_SetPixelFmt (GX_PF_RGB8_Z24, GX_ZC_LINEAR);
   guOrtho(p, rmode->efbHeight/2, -(rmode->efbHeight/2), -(rmode->fbWidth/2), rmode->fbWidth/2, 100, 1000);
   GX_LoadProjectionMtx (p, GX_ORTHOGRAPHIC);
+
+  /* init NTSC filter */
+  if (config.ntsc == 1)
+  {
+    sms_setup = sms_ntsc_composite;
+    md_setup  = md_ntsc_composite;
+    sms_ntsc_init( &sms_ntsc, &sms_setup );
+    md_ntsc_init( &md_ntsc, &md_setup );
+  }
+  else if (config.ntsc == 2)
+  {
+    sms_setup = sms_ntsc_svideo;
+    md_setup  = md_ntsc_svideo;
+    sms_ntsc_init( &sms_ntsc, &sms_setup );
+    md_ntsc_init( &md_ntsc, &md_setup );
+  }
+  if (config.ntsc == 1)
+  {
+    sms_setup = sms_ntsc_rgb;
+    md_setup  = md_ntsc_rgb;
+    sms_ntsc_init( &sms_ntsc, &sms_setup );
+    md_ntsc_init( &md_ntsc, &md_setup );
+  }
 }
 
 /* GX render update */
@@ -531,9 +563,9 @@ void ogc_video__update()
   /* texture and bitmap buffers (buffers width is fixed to 360 pixels) */
   long long int *dst = (long long int *)texturemem;
   long long int *src1 = (long long int *)(bitmap.data); /* line n */
-  long long int *src2 = src1 + 90;  /* line n+1 */
-  long long int *src3 = src2 + 90;  /* line n+2 */
-  long long int *src4 = src3 + 90;  /* line n+3 */
+  long long int *src2 = src1 + 180;  /* line n+1 */
+  long long int *src3 = src2 + 180;  /* line n+2 */
+  long long int *src4 = src3 + 180;  /* line n+3 */
 
   /* check if viewport has changed */
   if (bitmap.viewport.changed)
@@ -555,7 +587,12 @@ void ogc_video__update()
     /* update texture size */
     vwidth  = bitmap.viewport.w + 2 * bitmap.viewport.x;
     vheight = bitmap.viewport.h + 2 * bitmap.viewport.y;
-    if (interlaced && config.render) vheight *= 2;
+
+    /* special cases */
+    if (config.render && (interlaced || config.ntsc)) vheight *= 2;
+    if (config.ntsc) vwidth = (reg[12]&1) ? MD_NTSC_OUT_WIDTH(vwidth) : SMS_NTSC_OUT_WIDTH(vwidth);
+
+    /* final offset */
     stride = bitmap.width - (vwidth >> 2);
     
     /* reset GX scaler */
@@ -566,7 +603,7 @@ void ogc_video__update()
 	  GX_InitTexObj (&texobj, texturemem, vwidth, vheight, GX_TF_RGB565, GX_CLAMP, GX_CLAMP, GX_FALSE);
     
     /* original H40 mode: force filtering OFF */
-    if (!config.overscan && !config.render && (reg[12]&1))
+    if (!config.filtering)
     {
       GX_InitTexObjLOD(&texobj,GX_NEAR,GX_NEAR_MIP_NEAR,2.5,9.0,0.0,GX_FALSE,GX_FALSE,GX_ANISO_1);
     }
@@ -663,6 +700,11 @@ void ogc_video__init(void)
       TV60hz_480i.viTVMode = VI_TVMODE_NTSC_INT;
       config.tv_mode = 0;
 	    gc_pal = 0;
+
+#ifndef HW_RVL
+      /* force 480p when Component cable is detected */
+      if (VIDEO_HaveComponentCable()) vmode = &TVNtsc480Prog;
+#endif
       break;
 
     default:  /* 480 lines (PAL 60Hz) */

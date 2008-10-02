@@ -71,8 +71,8 @@ static const u16 pad_keys[8] =
 #define PAD_LEFT  2
 #define PAD_RIGHT 3
 
-#define MAX_HELD_CNT 9
-static u32 held_cnt = 0;
+#define MAX_HELD_CNT 15
+static int held_cnt = 0;
 
 static u32 wpad_dirmap[3][4] =
 {
@@ -760,7 +760,7 @@ u16 ogc_input__getMenuButtons(void)
     held_cnt ++;
     if (held_cnt == MAX_HELD_CNT)
     {
-      held_cnt = 0;
+      held_cnt = MAX_HELD_CNT - 2;
       p |= ir.valid ? PAD_BUTTON_UP : PAD_BUTTON_LEFT;
     }
   }
@@ -769,7 +769,7 @@ u16 ogc_input__getMenuButtons(void)
     held_cnt ++;
     if (held_cnt == MAX_HELD_CNT)
     {
-      held_cnt = 0;
+      held_cnt = MAX_HELD_CNT - 2;
       p |= ir.valid ? PAD_BUTTON_DOWN : PAD_BUTTON_RIGHT;
     }
   }
@@ -778,7 +778,7 @@ u16 ogc_input__getMenuButtons(void)
     held_cnt ++;
     if (held_cnt == MAX_HELD_CNT)
     {
-      held_cnt = 0;
+      held_cnt = MAX_HELD_CNT - 2;
       p |= ir.valid ? PAD_BUTTON_LEFT : PAD_BUTTON_DOWN;
     }
   }
@@ -787,7 +787,7 @@ u16 ogc_input__getMenuButtons(void)
     held_cnt ++;
     if (held_cnt == MAX_HELD_CNT)
     {
-      held_cnt = 0;
+      held_cnt = MAX_HELD_CNT - 2;
       p |= ir.valid ? PAD_BUTTON_RIGHT : PAD_BUTTON_UP;
     }
   }

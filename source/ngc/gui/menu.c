@@ -40,7 +40,7 @@
 char menutitle[60] = { "" };
 int menu = 0;
 
-void drawmenu (char items[][20], int maxitems, int selected)
+void drawmenu (char items[][25], int maxitems, int selected)
 {
   int i;
   int ypos;
@@ -65,7 +65,7 @@ void drawmenu (char items[][20], int maxitems, int selected)
  *
  * Returns index into menu array when A is pressed, -1 for B
  ****************************************************************************/
-int domenu (char items[][20], int maxitems, u8 fastmove)
+int domenu (char items[][25], int maxitems, u8 fastmove)
 {
   int redraw = 1;
   int quit = 0;
@@ -135,7 +135,7 @@ void soundmenu ()
 	int quit = 0;
 	int prevmenu = menu;
 	int count = 6;
-	char items[6][20];
+	char items[6][25];
 
 	strcpy (menutitle, "Press B to return");
 
@@ -216,7 +216,7 @@ void miscmenu ()
 	int quit = 0;
 	int prevmenu = menu;
 	int count = 6;
-	char items[6][20];
+	char items[6][25];
 	strcpy (menutitle, "Press B to return");
 	menu = 0;
 	
@@ -311,8 +311,8 @@ void dispmenu ()
 	int ret;
 	int quit = 0;
 	int prevmenu = menu;
-	int count = config.aspect ? 6 : 8;
-	char items[8][20];
+	int count = config.aspect ? 8 : 10;
+	char items[10][25];
 
 	strcpy (menutitle, "Press B to return");
 	menu = 0;
@@ -320,17 +320,22 @@ void dispmenu ()
 	while (quit == 0)
 	{
 		sprintf (items[0], "Aspect: %s", config.aspect ? "ORIGINAL" : "STRETCH");
-		if (config.render == 1) sprintf (items[1], "Render: BILINEAR");
-		else if (config.render == 2) sprintf (items[1], "Render: PROGRESS");
-		else sprintf (items[1], "Render: ORIGINAL");
-		if (config.tv_mode == 0) sprintf (items[2], "TV Mode: 60HZ");
-		else if (config.tv_mode == 1) sprintf (items[2], "TV Mode: 50HZ");
-		else sprintf (items[2], "TV Mode: 50/60HZ");
-		sprintf (items[3], "Borders: %s", config.overscan ? " ON" : "OFF");
-		sprintf (items[4], "Center X: %s%02d", config.xshift < 0 ? "-":"+", abs(config.xshift));
-		sprintf (items[5], "Center Y: %s%02d", config.yshift < 0 ? "-":"+", abs(config.yshift));
-		sprintf (items[6], "Scale  X: %s%02d", config.xscale < 0 ? "-":"+", abs(config.xscale));
-		sprintf (items[7], "Scale  Y: %s%02d", config.yscale < 0 ? "-":"+", abs(config.yscale));
+		if (config.render == 1) sprintf (items[1], "TV Mode: INTERLACED");
+		else if (config.render == 2) sprintf (items[1], "TV Mode: PROGRESSIVE");
+		else sprintf (items[1], "TV Mode: ORIGINAL");
+		if (config.tv_mode == 0) sprintf (items[2], "TV Frequency: 60HZ");
+		else if (config.tv_mode == 1) sprintf (items[2], "TV Frequency: 50HZ");
+		else sprintf (items[2], "TV Frequency: 50/60HZ");
+    sprintf (items[3], "Texture Filter: %s", config.filtering ? " ON" : "OFF");
+		if (config.ntsc == 1) sprintf (items[4], "NTSC Filter: COMPOSITE");
+		else if (config.ntsc == 2) sprintf (items[4], "NTSC Filter: S-VIDEO");
+		else if (config.ntsc == 3) sprintf (items[4], "NTSC Filter: RGB");
+		else sprintf (items[4], "NTSC Filter: OFF");
+		sprintf (items[5], "Borders: %s", config.overscan ? " ON" : "OFF");
+		sprintf (items[6], "Center X: %s%02d", config.xshift < 0 ? "-":"+", abs(config.xshift));
+		sprintf (items[7], "Center Y: %s%02d", config.yshift < 0 ? "-":"+", abs(config.yshift));
+		sprintf (items[8], "Scale  X: %s%02d", config.xscale < 0 ? "-":"+", abs(config.xscale));
+		sprintf (items[9], "Scale  Y: %s%02d", config.yscale < 0 ? "-":"+", abs(config.yscale));
 
 		ret = domenu (&items[0], count, 1);
 
@@ -338,7 +343,7 @@ void dispmenu ()
 		{
 			case 0: /*** config.aspect ratio ***/
 				config.aspect ^= 1;
-        count = config.aspect ? 6 : 8;
+        count = config.aspect ? 8 : 10;
 				bitmap.viewport.changed = 1;
 				break;
 
@@ -366,33 +371,41 @@ void dispmenu ()
 				config.tv_mode = (config.tv_mode + 1) % 3;
 				break;
 		
-			case 3: /*** overscan emulation ***/
+			case 3: /*** texture filtering ***/
+				config.filtering ^= 1;
+				break;
+
+			case 4: /*** NTSC filter ***/
+				config.ntsc ++;
+        if (config.ntsc > 3) config.ntsc = 0;
+				break;
+			case 5: /*** overscan emulation ***/
 				config.overscan ^= 1;
 				bitmap.viewport.x = config.overscan ? ((reg[12] & 1) ? 16 : 12) : 0;
 				bitmap.viewport.y = config.overscan ? (((reg[1] & 8) ? 0 : 8) + (vdp_pal ? 24 : 0)) : 0;
 				bitmap.viewport.changed = 1;
 				break;
 
-			case 4:	/*** Center X ***/
-			case -6:
+			case 6:	/*** Center X ***/
+			case -8:
 				if (ret<0) config.xshift --;
 				else config.xshift ++;
 				break;
 
-			case 5:	/*** Center Y ***/
-			case -7:
+			case 7:	/*** Center Y ***/
+			case -9:
 				if (ret<0) config.yshift --;
 				else config.yshift ++;
 				break;
 			
-			case 6:	/*** Scale X ***/
-			case -8:
+			case 8:	/*** Scale X ***/
+			case -10:
 				if (ret<0) config.xscale --;
 				else config.xscale ++;
 				break;
 
-			case 7:	/*** Scale Y ***/
-			case -9:
+			case 9:	/*** Scale Y ***/
+			case -11:
 				if (ret<0) config.yscale --;
 				else config.yscale ++;
 				break;
@@ -415,7 +428,7 @@ void ConfigureJoypads ()
 	int i = 0;
   int quit = 0;
 	int prevmenu = menu;
-  char padmenu[8][20];
+  char padmenu[8][25];
 
   int player = 0;
 #ifdef HW_RVL
@@ -720,7 +733,7 @@ void optionmenu ()
 	int quit = 0;
 	int prevmenu = menu;
 	int count = 5;
-	char items[5][20] =
+	char items[5][25] =
   {
 		"Video Options",
 		"Sound Options",
@@ -773,7 +786,7 @@ int loadsavemenu (int which)
 	int quit = 0;
 	int ret;
 	int count = 3;
-	char items[3][20];
+	char items[3][25];
 
 	strcpy (menutitle, "Press B to return");
 
@@ -831,7 +844,7 @@ int filemenu ()
 	int ret;
 	int quit = 0;
 	int count = 2;
-	char items[2][20] = {
+	char items[2][25] = {
 		{"SRAM Manager"},
 		{"STATE Manager"}
 	};
@@ -871,7 +884,7 @@ void loadmenu ()
 	int ret;
 	int quit = 0;
   int count = 4;
-  char item[4][20] = {
+  char item[4][25] = {
 		{"Load Recent"},
 		{"Load from SDCARD"},
 		{"Load from DVD"},
@@ -1044,7 +1057,7 @@ void MainMenu ()
 	uint32 crccheck;
 
 	int count = 8;
-	char items[8][20] =
+	char items[8][25] =
 	{
 		{"Play Game"},
 		{"Game Infos"},

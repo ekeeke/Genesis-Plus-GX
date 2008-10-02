@@ -62,7 +62,7 @@ static void init_machine()
 
   /* allocate global work bitmap */
   memset (&bitmap, 0, sizeof (bitmap));
-  bitmap.width  = 360;
+  bitmap.width  = 360 * 2;
   bitmap.height = 576;
   bitmap.depth  = 16;
   bitmap.granularity = 2;

@@ -28,6 +28,8 @@ typedef struct
   uint8 aspect;
   uint8 overscan;
   uint8 render;
+  uint8 ntsc;
+  uint8 filtering;
   uint16 pad_keymap[4][MAX_KEYS];
   uint32 wpad_keymap[4*3][MAX_KEYS];
   t_input_config input[MAX_DEVICES];

@@ -23,6 +23,13 @@
 
 #include "shared.h"
 
+#include "md_ntsc.h"
+#include "sms_ntsc.h"
+
+/*** NTSC Filters ***/
+extern md_ntsc_t md_ntsc;
+extern sms_ntsc_t sms_ntsc;
+
 /* Look-up pixel table information */
 #define LUT_MAX     (5)
 #define LUT_SIZE    (0x10000)
@@ -584,10 +591,23 @@ void remap_buffer(int line, int width)
 {
   /* get line offset from framebuffer */
   int vline = (line + bitmap.viewport.y) % lines_per_frame;
+    
+  /* NTSC Filter */
+  if (config.ntsc)
+  {
+    if (reg[12]&1)
+    {
+      if (config.render) md_ntsc_blit_double(&md_ntsc, ( MD_NTSC_IN_T const * )pixel_16, tmp_buf+0x20-bitmap.viewport.x, width, (vline * 2) + (interlaced ? odd_frame:0));
+      else md_ntsc_blit(&md_ntsc, ( MD_NTSC_IN_T const * )pixel_16, tmp_buf+0x20-bitmap.viewport.x, width, vline);
+    }
+    else
+    {
+      if (config.render) sms_ntsc_blit_double(&sms_ntsc, ( SMS_NTSC_IN_T const * )pixel_16, tmp_buf+0x20-bitmap.viewport.x, width, (vline * 2) + (interlaced ? odd_frame:0));
+      else sms_ntsc_blit(&sms_ntsc, ( SMS_NTSC_IN_T const * )pixel_16, tmp_buf+0x20-bitmap.viewport.x, width, vline);
+    }
+    return;
+  }
 
-  /* illegal video mode (screen rolls up) */
-  if ((reg[1] & 8) && !vdp_pal) vline = (vline + frame_cnt)%240;
-  
   /* double resolution mode */
   if (config.render && interlaced) vline = (vline * 2) + odd_frame;
 	
