@@ -639,20 +639,40 @@ void ogc_input__set_defaults(void)
   }
 #endif
 
-  /* set default device assigantion */
+  /* default device assignation */
   for (i=0; i<MAX_DEVICES; i++)
   {
 #ifdef HW_RVL
     if (i < 4)
     {
-      /* detect wiimote expansion controller */
+      /* autodetect connected controller */
       exp = 255;
-      if (WPAD_Probe(0, &exp) == WPAD_ERR_NONE)
+      WPAD_Probe(i, &exp);
+      if (exp <= WPAD_EXP_CLASSIC)
       {
-        config.input[i].device = (exp <= WPAD_EXP_CLASSIC) ? (exp + 1) : 1;
+        /* set expansion controller (or wiimote if no expansion) as default */
+        config.input[i].device = exp + 1;
+        config.input[i].port = i;
       }
-      /* set gamepad as default */
-      else config.input[i].device = 0;
+      else
+      {
+        /* set gamepad as default */
+        config.input[i].device = 0;
+        config.input[i].port = i;
+
+        /* look for unassigned wiimotes */
+        int j;
+        for (j=0; j<i; j++)
+        {
+          /* expansion is used, wiimote is free */
+          if (config.input[j].device > 1)
+          {
+            /* assign wiimote  */
+            config.input[i].device = 1;
+            config.input[i].port = j;
+          }
+        }
+      }
     }
     else
     {
@@ -664,9 +684,6 @@ void ogc_input__set_defaults(void)
     /* set gamepad as default */
     config.input[i].device = (i < 4) ? 0 : -1;
 #endif
-
-    /* set device port */
-    config.input[i].port = i % 4;
   }
 }
 
