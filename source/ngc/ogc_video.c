@@ -33,7 +33,7 @@ sms_ntsc_t sms_ntsc;
 
 
 /*** PAL 50hz flag ***/
-uint8 gc_pal = 0;
+int gc_pal = 0;
 
 /*** VI ***/
 unsigned int *xfb[2];	/*** Double buffered            ***/
@@ -307,7 +307,7 @@ static void draw_init(void)
   /* Clear all Vertex params */
   GX_ClearVtxDesc ();
 
-  /* Set Position Params (set quad aspect ratio) */
+  /* Set Position Params (quad aspect ratio) */
   GX_SetVtxAttrFmt (GX_VTXFMT0, GX_VA_POS, GX_POS_XYZ, GX_S16, 0);
   GX_SetVtxDesc (GX_VA_POS, GX_INDEX8);
   GX_SetArray (GX_VA_POS, square, 3 * sizeof (s16));
@@ -320,10 +320,12 @@ static void draw_init(void)
   GX_SetNumTexGens (1);
   GX_SetNumChans(0);
 
-  /** Set Modelview **/
+  /* Set Modelview */
   memset (&view, 0, sizeof (Mtx));
   guLookAt(view, &cam.pos, &cam.up, &cam.view);
   GX_LoadPosMtxImm (view, GX_PNMTX0);
+
+  GX_InvVtxCache ();
 }
 
 /* vertex rendering */
@@ -387,9 +389,10 @@ static void gxStart(void)
 }
 
 /* set GX scaler */
-static void gxScale(void)
+int xscale, yscale;
+void ogc_video__scale(void)
 {
-	int xscale, yscale, xshift, yshift, i;
+	int scale, xshift, yshift, i;
   
   /* borders are emulated */
   if (config.overscan)
@@ -439,18 +442,18 @@ static void gxScale(void)
   
   xshift += config.xshift;
   yshift += config.yshift;
-  
-  /* check horizontal upscaling */
-  if (xscale > 320)
+
+  /* horizontal scaling */
+  scale = (xscale > 360) ? 360 : xscale;
+  if (scale > 320)
   {
     /* let VI do horizontal scaling */
-    uint32 scale = (xscale <= 360) ? xscale : 360;
     for (i=0; i<6; i++)
     {
       tvmodes[i]->viXOrigin = (720 - (scale * 2)) / 2;
       tvmodes[i]->viWidth   = scale * 2;
     }
-    xscale -= (scale - 320);
+    scale = 320;
   }
   else
   {
@@ -462,23 +465,16 @@ static void gxScale(void)
     }
   }
 
-	/* double resolution */
-	if (config.render)
-	{
-		 yscale *= 2;
-		 yshift *= 2;
-	}
+	square[6] = square[3]  =  scale + xshift;
+	square[0] = square[9]  = -scale + xshift;
 
-  /* update matrix */
-	square[6] = square[3]  =  xscale + xshift;
-	square[0] = square[9]  = -xscale + xshift;
-	square[4] = square[1]  =  yscale + yshift;
-	square[7] = square[10] = -yscale + yshift;
+  /* vertical scaling */
+  scale = yscale;
+	square[4] = square[1]  =  (scale + yshift) * (config.render ? 2:1);
+	square[7] = square[10] =  (yshift - scale) * (config.render ? 2:1);
+
+  /* update position matrix */
 	draw_init();
-
-  /* vertex array have been modified */
-  GX_InvVtxCache ();
-
 }	
 
 /* Reinitialize GX */
@@ -487,14 +483,14 @@ void ogc_video__reset()
 	GXRModeObj *rmode;
 	Mtx p;
 
-  /* reinitialize GC/Wii PAL mode */
+  /* reset TV type (50Hz/60Hz) */
   if ((config.tv_mode == 1) || ((config.tv_mode == 2) && vdp_pal)) gc_pal = 1;
   else gc_pal = 0;
 
-  /* reset scaler */
-  gxScale();
+  /* reset scaler (aspect ratio) */
+  ogc_video__scale();
 
-  /* reinitialize current TV mode */
+  /* reset TV mode */
   if (config.render == 2)
   {
     tvmodes[2]->viTVMode = VI_TVMODE_NTSC_PROG;
@@ -505,10 +501,8 @@ void ogc_video__reset()
     tvmodes[2]->viTVMode = tvmodes[0]->viTVMode & ~3;
     tvmodes[2]->xfbMode = VI_XFBMODE_DF;
   }
-
-	if (config.render) rmode = tvmodes[gc_pal*3 + 2];
+  if (config.render) rmode = tvmodes[gc_pal*3 + 2];
 	else rmode = tvmodes[gc_pal*3 + interlaced];
-
 
 	VIDEO_Configure (rmode);
 	VIDEO_ClearFrameBuffer(rmode, xfb[whichfb], COLOR_BLACK);
@@ -531,7 +525,7 @@ void ogc_video__reset()
   guOrtho(p, rmode->efbHeight/2, -(rmode->efbHeight/2), -(rmode->fbWidth/2), rmode->fbWidth/2, 100, 1000);
   GX_LoadProjectionMtx (p, GX_ORTHOGRAPHIC);
 
-  /* init NTSC filter */
+  /* reset NTSC filter */
   if (config.ntsc == 1)
   {
     sms_setup = sms_ntsc_composite;
@@ -546,7 +540,7 @@ void ogc_video__reset()
     sms_ntsc_init( &sms_ntsc, &sms_setup );
     md_ntsc_init( &md_ntsc, &md_setup );
   }
-  if (config.ntsc == 1)
+  else if (config.ntsc == 3)
   {
     sms_setup = sms_ntsc_rgb;
     md_setup  = md_ntsc_rgb;
@@ -592,11 +586,15 @@ void ogc_video__update()
     if (config.render && (interlaced || config.ntsc)) vheight *= 2;
     if (config.ntsc) vwidth = (reg[12]&1) ? MD_NTSC_OUT_WIDTH(vwidth) : SMS_NTSC_OUT_WIDTH(vwidth);
 
+    /* texels size must be multiple of 4 */
+    vwidth  = (vwidth  / 4) * 4;
+    vheight = (vheight / 4) * 4;
+
     /* final offset */
     stride = bitmap.width - (vwidth >> 2);
     
     /* reset GX scaler */
-    gxScale();
+    ogc_video__scale();
     
     /* reinitialize texture */
     GX_InvalidateTexAll ();
@@ -670,7 +668,7 @@ void ogc_video__init(void)
   }
 
   /* Get the current video mode then :
-      - set menu video mode (fullscreen, 480i or 576i)
+      - set menu video mode (480p, 480i or 576i)
       - set emulator rendering TV modes (PAL/MPAL/NTSC/EURGB60)
    */
   vmode = VIDEO_GetPreferredMode(NULL);

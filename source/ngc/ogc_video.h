@@ -24,10 +24,11 @@
 extern void ogc_video__init(void);
 extern void ogc_video__update(void);
 extern void ogc_video__reset(void);
+extern void ogc_video__scale(void);
 
-extern u8 gc_pal;
+extern int gc_pal;
 extern unsigned int *xfb[2];
-extern int whichfb;
+extern int whichfb, xscale, yscale;
 extern GXRModeObj *tvmodes[6];
 extern GXRModeObj *vmode;
 

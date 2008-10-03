@@ -319,13 +319,15 @@ void dispmenu ()
 
 	while (quit == 0)
 	{
-		sprintf (items[0], "Aspect: %s", config.aspect ? "ORIGINAL" : "STRETCH");
-		if (config.render == 1) sprintf (items[1], "TV Mode: INTERLACED");
-		else if (config.render == 2) sprintf (items[1], "TV Mode: PROGRESSIVE");
-		else sprintf (items[1], "TV Mode: ORIGINAL");
-		if (config.tv_mode == 0) sprintf (items[2], "TV Frequency: 60HZ");
-		else if (config.tv_mode == 1) sprintf (items[2], "TV Frequency: 50HZ");
-		else sprintf (items[2], "TV Frequency: 50/60HZ");
+		ogc_video__scale();
+
+    sprintf (items[0], "Aspect: %s", config.aspect ? "ORIGINAL" : "STRETCH");
+		if (config.render == 1) sprintf (items[1], "Render: INTERLACED");
+		else if (config.render == 2) sprintf (items[1], "Render: PROGRESSIVE");
+		else sprintf (items[1], "Render: ORIGINAL");
+		if (config.tv_mode == 0) sprintf (items[2], "TV Mode: 60HZ");
+		else if (config.tv_mode == 1) sprintf (items[2], "TV Mode: 50HZ");
+		else sprintf (items[2], "TV Mode: 50/60HZ");
     sprintf (items[3], "Texture Filter: %s", config.filtering ? " ON" : "OFF");
 		if (config.ntsc == 1) sprintf (items[4], "NTSC Filter: COMPOSITE");
 		else if (config.ntsc == 2) sprintf (items[4], "NTSC Filter: S-VIDEO");
@@ -334,8 +336,8 @@ void dispmenu ()
 		sprintf (items[5], "Borders: %s", config.overscan ? " ON" : "OFF");
 		sprintf (items[6], "Center X: %s%02d", config.xshift < 0 ? "-":"+", abs(config.xshift));
 		sprintf (items[7], "Center Y: %s%02d", config.yshift < 0 ? "-":"+", abs(config.yshift));
-		sprintf (items[8], "Scale  X: %s%02d", config.xscale < 0 ? "-":"+", abs(config.xscale));
-		sprintf (items[9], "Scale  Y: %s%02d", config.yscale < 0 ? "-":"+", abs(config.yscale));
+		sprintf (items[8], "Scale  X: %02d", xscale*2);
+		sprintf (items[9], "Scale  Y: %02d", yscale*2);
 
 		ret = domenu (&items[0], count, 1);
 
@@ -373,13 +375,16 @@ void dispmenu ()
 		
 			case 3: /*** texture filtering ***/
 				config.filtering ^= 1;
+				bitmap.viewport.changed = 1;
 				break;
 
 			case 4: /*** NTSC filter ***/
 				config.ntsc ++;
         if (config.ntsc > 3) config.ntsc = 0;
+				bitmap.viewport.changed = 1;
 				break;
-			case 5: /*** overscan emulation ***/
+
+      case 5: /*** overscan emulation ***/
 				config.overscan ^= 1;
 				bitmap.viewport.x = config.overscan ? ((reg[12] & 1) ? 16 : 12) : 0;
 				bitmap.viewport.y = config.overscan ? (((reg[1] & 8) ? 0 : 8) + (vdp_pal ? 24 : 0)) : 0;

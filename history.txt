@@ -16,10 +16,12 @@ CURRENT:
 
 
 [NGC/Wii]
-- removed unused libsamplerate settings for HQ YM2612 (now use "FAST" setting for MAME by default)
-- improved fast scrolling in menus when using Wiimote D-PAD
-- fixed config file incompatibility between GC and Wii versions
+- now use fixed libsamplerate setting in "HQ YM2612" mode
+- implemented menu fast scrolling with the Wiimote D-PAD
+- fixed config file incompatibilities between Gamecube and Wii versions
 - re-enabled texture filtering in H40 original mode when overscan is emulated: fix screen scroll tearing
+- added Shay Green's NTSC Filters support
+- added proper 480p menu detection for NTSC Gamecube users
 
 
 26/08/2008:
