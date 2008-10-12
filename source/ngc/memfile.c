@@ -85,6 +85,8 @@ static int SD_ManageFile(char *filename, int direction, int filetype)
   int done = 0;
   int filesize;
 
+  if (!use_FAT) return 0;
+
   /* first check if directory exist */
   DIR_ITER *dir = diropen("/genplus/saves");
   if (dir == NULL) mkdir("/genplus/saves",S_IRWXU);

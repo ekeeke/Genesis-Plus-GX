@@ -604,7 +604,7 @@ unsigned int vdp_ctrl_r(void)
 	if (!(reg[1] & 0x40)) temp |= 0x8; 
 
 	/* HBLANK flag (Sonic 3 and Sonic 2 "VS Modes", Lemmings 2) */
-	if (count_m68k <= line_m68k + 84) temp |= 0x4;
+	if ((count_m68k <= (line_m68k + 84)) || (count_m68k > (line_m68k + 488))) temp |= 0x4;
 
 	/* clear pending flag */
 	pending = 0;
@@ -766,7 +766,7 @@ void vdp_reg_w(unsigned int r, unsigned int d)
         color_update(0x00, *(uint16 *)&cram[(border << 1)]);
 
         /* background color modified during HBLANK */
-        if ((v_counter < bitmap.viewport.h) && (count_m68k <= (line_m68k + 84)))
+        if (count_m68k <= (line_m68k + 84))
         {
           /* remap current line (see Road Rash I,II,III) */
           reg[7] = d;

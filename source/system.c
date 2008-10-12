@@ -33,8 +33,6 @@ t_snd snd;
 uint8  vdp_rate;
 uint16 lines_per_frame;
 double Master_Clock;
-uint32 m68cycles_per_line;
-uint32 z80cycles_per_line;
 uint32 aim_m68k;
 uint32 count_m68k;
 uint32 line_m68k;
@@ -61,16 +59,21 @@ static inline void update_interrupts(void)
 	uint8 latency = hvint_updated;
 	hvint_updated = -1;
 
+  /* VDP hardware latency */
+  if (latency) count_m68k += m68k_execute(latency);
+
+	/* Level 6 interrupt */
 	if (vint_pending && (reg[1] & 0x20))
 	{
     vint_triggered = 1;
-    if (latency) count_m68k += m68k_execute(latency);
 		m68k_set_irq(6);
 	}
+  /* Level 4 interrupt */
 	else if (hint_pending && (reg[0] & 0x10))
 	{
 		m68k_set_irq(4);
 	}
+  /* Clear all interrupts */
 	else
 	{
 		m68k_set_irq(0);
@@ -105,10 +108,6 @@ void system_init (void)
 	lines_per_frame = vdp_pal ? 313 : 262;
 	Master_Clock	  = vdp_pal ? (double)CLOCK_PAL : (double)CLOCK_NTSC;
 	
-	/* CPU cycles increments */
-	z80cycles_per_line = 228;
-	m68cycles_per_line = 488;
-
 	gen_init ();
 	vdp_init ();
 	render_init ();
@@ -260,22 +259,22 @@ int system_frame (int do_skip)
       /* update inputs */
       update_input();
 
-      /* set VBLANK flag */
+      /* set VBLANK flag (Dracula) */
       status |= 0x08;
 
       /* Z80 interrupt is 16ms period (one frame) and 64us length (one scanline) */
 			zirq = 1;
 			z80_set_irq_line(0, ASSERT_LINE);  
 			 
-      /* delay between HINT, VBLANK and VINT (approx. 14.7 us) */
-      m68k_run(line_m68k + 84); /* need to take upcoming latency in account (Hurricanes, Outrunners) */
-      if (zreset && !zbusreq) z80_run(line_z80 + 40);
-      else count_z80 = line_z80 + 40;
+      /* delay between HINT, VBLANK and VINT (OutRunners, VR Troopers) */
+      m68k_run(line_m68k + 84);
+      if (zreset && !zbusreq) z80_run(line_z80 + 39);
+      else count_z80 = line_z80 + 39;
 
 			/* Vertical Interrupt */
       status |= 0x80;
       vint_pending = 1;
-      hvint_updated = 30; /* Tyrants, Mega-Lo-Mania & Ex Mutant need some cycles to read VINT flag */
+      hvint_updated = 36; /* Tyrants, Mega-Lo-Mania & Ex Mutant need some cycles to read VINT flag */
 		}
     else if (zirq)
     {

@@ -647,7 +647,7 @@ void render_line(int line, uint8 odd_frame)
 	/* vertical borders or display OFF */
   if ((line >= bitmap.viewport.h) || (!(reg[1] & 0x40)))
   {
-    memset(&lb[0x20], 0x40 | border, width);
+    memset(&lb[0x20], 0x40, width);
 	}
 	else
   {
@@ -693,14 +693,14 @@ void render_line(int line, uint8 odd_frame)
     }
 
 		  /* Mode 4 feature only (unemulated, no games rely on this) */
-		  /*if(!(reg[1] & 0x04) && (reg[0] & 0x20)) memset(&lb[0x20], 0x40 | border, 0x08);*/
+		  /*if(!(reg[1] & 0x04) && (reg[0] & 0x20)) memset(&lb[0x20], 0x40, 0x08);*/
   }
 
 	/* horizontal borders */
 	if (config.overscan)
 	{
-		memset(&lb[0x20 - bitmap.viewport.x], 0x40 | border, bitmap.viewport.x);
-		memset(&lb[0x20 + bitmap.viewport.w], 0x40 | border, bitmap.viewport.x);
+		memset(&lb[0x20 - bitmap.viewport.x], 0x40, bitmap.viewport.x);
+		memset(&lb[0x20 + bitmap.viewport.w], 0x40, bitmap.viewport.x);
 		width += 2 * bitmap.viewport.x;
 	}
 

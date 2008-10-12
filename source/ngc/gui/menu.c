@@ -146,7 +146,9 @@ void soundmenu ()
 		sprintf (items[1], "FM Volume: %1.2f", config.fm_preamp);
 		sprintf (items[2], "Volume Boost: %dX", config.boost);
 		sprintf (items[3], "LowPass Filter: %s", config.filter ? " ON":"OFF");
-		sprintf (items[4], "HQ YM2612: %s", config.hq_fm ? " ON":"OFF");
+		if (config.hq_fm == 0) sprintf (items[4], "HQ YM2612: OFF");
+    else if ((config.hq_fm == 1) || config.fm_core) sprintf (items[4], "HQ YM2612: LINEAR");
+    else sprintf (items[4], "HQ YM2612: SINC");
 		sprintf (items[5], "FM core: %s", config.fm_core ? "GENS" : "MAME");
 
 		ret = domenu (&items[0], count, 1);
@@ -178,7 +180,8 @@ void soundmenu ()
 				break;
 
       case 4:
-				config.hq_fm ^= 1;
+				config.hq_fm ++;
+        if ((config.hq_fm>2)||(config.fm_core && (config.hq_fm>1))) config.hq_fm = 0;
         if (genromsize) 
 				{
 					audio_init(48000);
@@ -328,7 +331,7 @@ void dispmenu ()
 		if (config.tv_mode == 0) sprintf (items[2], "TV Mode: 60HZ");
 		else if (config.tv_mode == 1) sprintf (items[2], "TV Mode: 50HZ");
 		else sprintf (items[2], "TV Mode: 50/60HZ");
-    sprintf (items[3], "Texture Filter: %s", config.filtering ? " ON" : "OFF");
+    sprintf (items[3], "GX Filter: %s", config.filtering ? " ON" : "OFF");
 		if (config.ntsc == 1) sprintf (items[4], "NTSC Filter: COMPOSITE");
 		else if (config.ntsc == 2) sprintf (items[4], "NTSC Filter: S-VIDEO");
 		else if (config.ntsc == 3) sprintf (items[4], "NTSC Filter: RGB");

@@ -10,18 +10,24 @@ CURRENT:
 - YM2612(MAME): improved Detune overflow accuracy, fix very high frequency sounds in many games
 - YM2612(MAME): fixed registers 0x20-0x26 Reset state, fix intro music in "B.O.B"
 - YM2612(MAME): removed previous fix with KEY ON, fix "Flamethrower" sound effect in "Alien 3"
-- adjusted HCounter values, fix line flickering in "Sonic 3D" bonus stage
-- re-enabled Z80 banked access to WRAM, fix hang-up in "Mamono Hunter Youko"
-- modified JCART emulation, fix corrupted tracks logo in "Micro Machines 2"
+- adjusted HCounter values, fixes line flickering in "Sonic 3D" bonus stage
+- adjusted VINT timing, fixes hang-up in "V.R Troopers"
+- improved HBLANK flag accuracy, fixes line flickering in "Gouketsuji Ichizoku"
+- re-enabled Z80 banked access to WRAM, fixes hang-up in "Mamono Hunter Youko"
+- modified JCART emulation, fixes corrupted tracks logo in "Micro Machines 2"
 
 
 [NGC/Wii]
-- now use fixed libsamplerate setting in "HQ YM2612" mode
+- remove unused libsamplerate settings in "HQ YM2612" mode
 - implemented menu fast scrolling with the Wiimote D-PAD
 - fixed config file incompatibilities between Gamecube and Wii versions
 - re-enabled texture filtering in H40 original mode when overscan is emulated: fix screen scroll tearing
 - added Shay Green's NTSC Filters support
+
+[NGC]
 - added proper 480p menu detection for NTSC Gamecube users
+- now prevents FAT automatic operations if no SDCARD is inserted
+
 
 
 26/08/2008:

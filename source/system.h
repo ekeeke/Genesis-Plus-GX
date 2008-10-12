@@ -28,6 +28,10 @@
 #define SYSTEM_MEGADRIVE  1
 #define SYSTEM_PICO       2
 
+/* CPU cycles increments */
+#define z80cycles_per_line 228
+#define m68cycles_per_line 488
+
 typedef struct
 {
   uint8 *data;			/* Bitmap data */
@@ -75,10 +79,7 @@ typedef struct
 extern t_bitmap bitmap;
 extern t_snd snd;
 extern uint16 lines_per_frame;
-extern double Master_Clock;
 extern uint8 vdp_rate;
-extern uint32 m68cycles_per_line;
-extern uint32 z80cycles_per_line;
 extern uint32 aim_m68k;
 extern uint32 count_m68k;
 extern uint32 line_m68k;

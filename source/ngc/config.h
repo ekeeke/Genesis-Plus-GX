@@ -41,6 +41,7 @@ extern t_config config;
 extern void config_save();
 extern void config_load();
 extern void set_config_defaults(void);
+extern bool use_FAT;
 
 #endif /* _CONFIG_H_ */
 

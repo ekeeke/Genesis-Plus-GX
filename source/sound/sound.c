@@ -24,6 +24,9 @@
 #include "shared.h"
 #include "samplerate.h"
 
+#define CLOCK_NTSC 53693175
+#define CLOCK_PAL  53203424
+
 /* generic functions */
 int  (*_YM2612_Write)(unsigned char adr, unsigned char data);
 int  (*_YM2612_Read)(void);
@@ -91,8 +94,8 @@ static inline void psg_update()
 
 void sound_init(int rate)
 {
-	double vclk = Master_Clock / 7.0;  /* 68000 and YM2612 clock */
-	double zclk = Master_Clock / 15.0; /* Z80 and SN76489 clock  */
+	double vclk = (vdp_pal ? (double)CLOCK_PAL : (double)CLOCK_NTSC) / 7.0;  /* 68000 and YM2612 clock */
+	double zclk = (vdp_pal ? (double)CLOCK_PAL : (double)CLOCK_NTSC) / 15.0; /* Z80 and SN76489 clock  */
 
 	/* cycle-accurate FM samples */
   if (config.hq_fm && !config.fm_core)
@@ -164,7 +167,7 @@ void sound_update(void)
 		}
 
     /* samplerate conversion */
-    src_simple (&src_data, svp ? SRC_LINEAR : SRC_SINC_FASTEST, 2);
+    src_simple (&src_data, (config.hq_fm&1) ? SRC_LINEAR : SRC_SINC_FASTEST, 2);
 
 	  /* this is basically libsamplerate "src_float_to_int_array" function, adapted to interlace samples */
     len = snd.buffer_size;

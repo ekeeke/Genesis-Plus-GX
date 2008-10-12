@@ -7,9 +7,12 @@
 #define CONFIG_VERSION "GENPLUS 1.2.6 "
 
 t_config config;
+bool use_FAT;
 
 void config_save()
 {
+  if (!use_FAT) return;
+
   /* first check if directory exist */
   DIR_ITER *dir = diropen("/genplus");
   if (dir == NULL) mkdir("/genplus",S_IRWXU);
@@ -27,13 +30,12 @@ void config_save()
 
 void config_load()
 {
-  char version[15];
-  
   /* open file for writing */
   FILE *fp = fopen("/genplus/genplus.ini", "rb");
   if (fp == NULL) return;
 
   /* read version */
+  char version[15];
   fread(version, 15, 1, fp); 
   fclose(fp);
   if (strcmp(version,CONFIG_VERSION)) return;

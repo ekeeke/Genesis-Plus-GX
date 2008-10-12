@@ -125,7 +125,8 @@ int main (int argc, char *argv[])
 #endif
 
   /* Initialize SDCARD Interface (LibFAT) */
-  fatInitDefault();
+  use_FAT = 0;
+  if (fatInitDefault() == true) use_FAT = 1;
   
   /* Restore User Configuration */
   set_config_defaults();
