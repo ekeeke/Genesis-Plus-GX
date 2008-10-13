@@ -8,6 +8,7 @@
 #include "gpback.h"
 
 /*** IPL Font (ripped from original BOOTROM) ***/
+#if 0
 static unsigned char iplfont[]=
 {
 	0x59,0x61,0x79,0x30,0x00,0x01,0x01,0x10,0x00,0x00,0x03,0x08,0x00,0x00,0x13,0x94,
@@ -611,6 +612,7 @@ static unsigned char iplfont[]=
 	0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,
 	0xff,0xff,0xff,0xff,0xa2,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
 };
+#endif
 
 /*** Backdrop ***/
 char backdrop[(640 * 480 * 2) + 32];
@@ -725,19 +727,43 @@ void untile(unsigned char *dst, unsigned char *src, int xres, int yres)
 }
 
 int font_offset[256], font_size[256], fheight;
-//extern void __SYS_ReadROM(void *buf,u32 len,u32 offset);
+extern void __SYS_ReadROM(void *buf,u32 len,u32 offset);
+
+/* lowlevel Qoob Modchip disable (code from emukiddid) */
+#ifndef HW_RVL
+void ipl_set_config(unsigned char c)
+{
+        volatile unsigned long* exi = (volatile unsigned long*)0xCC006800;
+        unsigned long val,addr;
+        addr=0xc0000000;
+        val = c << 24;
+        exi[0] = ((((exi[0]) & 0x405) | 256) | 48);     //select IPL
+        //write addr of IPL
+        exi[0 * 5 + 4] = addr;
+        exi[0 * 5 + 3] = ((4 - 1) << 4) | (1 << 2) | 1;
+        while (exi[0 * 5 + 3] & 1);
+        //write the ipl we want to send
+        exi[0 * 5 + 4] = val;
+        exi[0 * 5 + 3] = ((4 - 1) << 4) | (1 << 2) | 1;
+        while (exi[0 * 5 + 3] & 1);
+        exi[0] &= 0x405;        //deselect IPL
+}
+#endif
 
 void init_font(void)
 {
 	int i;
 
-	//__SYS_ReadROM((unsigned char *)&fontFont,0x3000,0x1FCF00);
-	memcpy(&fontFont, &iplfont, sizeof(iplfont));
-	yay0_decode((unsigned char *)&fontFont, (unsigned char *)&fontWork);
-	FONT_HEADER *fnt;
+  /* read font from IPL ROM */
+	//memcpy(&fontFont, &iplfont, sizeof(iplfont));
+  memset(fontFont,0,0x3000);
+#ifndef HW_RVL
+  ipl_set_config(6);
+#endif
+  __SYS_ReadROM((unsigned char *)&fontFont,0x3000,0x1FCF00);
 
-	fnt = ( FONT_HEADER * )&fontWork;
-
+  yay0_decode((unsigned char *)&fontFont, (unsigned char *)&fontWork);
+	FONT_HEADER *fnt = ( FONT_HEADER * )&fontWork;
 	untile((unsigned char*)&fontFont, (unsigned char*)&fontWork[fnt->offset_tile], fnt->texture_width, fnt->texture_height);
 
 	for (i=0; i<256; ++i)

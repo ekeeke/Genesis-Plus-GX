@@ -75,6 +75,7 @@ int main (int argc, char *argv[])
     return (0);
   }
 
+
 	/* load BIOS */
   memset(bios_rom, 0, sizeof(bios_rom));
 	FILE *f = fopen("./BIOS.bin", "rb");
@@ -274,6 +275,7 @@ void dos_update_input(void)
 	if(key[KEY_X])     input.pad[joynum] |= INPUT_Y;
 	if(key[KEY_C])     input.pad[joynum] |= INPUT_Z;
 	if(key[KEY_V])     input.pad[joynum] |= INPUT_MODE;
+
 	if(key[KEY_F])     input.pad[joynum] |= INPUT_START;
 	
   extern uint8 pico_current;
@@ -495,6 +497,7 @@ void dos_update_video(void)
     else
     {
 		  stretch_blit(gen_bmp, screen, 0, 0, width, height, (SCREEN_W-352)/2, (SCREEN_H-240)/2, 352,240 << (interlaced ? 1:0));
+
     }
 }
 

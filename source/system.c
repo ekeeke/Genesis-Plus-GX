@@ -259,14 +259,14 @@ int system_frame (int do_skip)
       /* update inputs */
       update_input();
 
-      /* set VBLANK flag (Dracula) */
+      /* set VBLANK flag */
       status |= 0x08;
 
       /* Z80 interrupt is 16ms period (one frame) and 64us length (one scanline) */
 			zirq = 1;
 			z80_set_irq_line(0, ASSERT_LINE);  
 			 
-      /* delay between HINT, VBLANK and VINT (OutRunners, VR Troopers) */
+      /* delay between HINT, VBLANK and VINT (Dracula, OutRunners, VR Troopers) */
       m68k_run(line_m68k + 84);
       if (zreset && !zbusreq) z80_run(line_z80 + 39);
       else count_z80 = line_z80 + 39;

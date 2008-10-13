@@ -11,7 +11,7 @@ void set_config_defaults(void)
   config.fm_preamp    = 1.0;
   config.boost        = 1;
   config.filter       = 1;
-  config.hq_fm        = 1;
+  config.hq_fm        = 2;
   config.fm_core      = 0;
 
   /* system options */
@@ -22,7 +22,8 @@ void set_config_defaults(void)
   /* display options */
   config.aspect   = 1;
   config.overscan = 1;
-  config.render   = 0;
+  config.render   = 1;
+  config.ntsc     = 0;
 
   /* controllers options */
   config.gun_cursor   = 1;

@@ -21,6 +21,7 @@ typedef struct
   uint8 aspect;
   uint8 overscan;
   uint8 render;
+  uint8 ntsc;
   uint8 gun_cursor;
   uint8 invert_mouse;
 } t_config;

@@ -2,6 +2,8 @@
 #include <SDL.h>
 
 #include "shared.h"
+#include "sms_ntsc.h"
+#include "md_ntsc.h"
 
 #define SOUND_FREQUENCY    48000
 
@@ -24,29 +26,10 @@ uint8 log_error   = 0;
 uint8 debug_on    = 0;
 uint8 turbo_mode  = 0;
 uint8 use_sound   = 1;
+uint8 fullscreen = 0;
 
 int audio_len;
 
-Uint32 fps_callback(Uint32 interval)
-{
-	if(paused) return 1000/vdp_rate;
-	timer_count++;
-  frameticker ++;
-	if(timer_count % vdp_rate == 0)
-	{
-		int fps = frame_count + 1;
-		char caption[100];
-    char region[10];
-    if (region_code == REGION_USA) sprintf(region,"USA");
-    else if (region_code == REGION_EUROPE) sprintf(region,"EUR");
-    else sprintf(region,"JAP");
-    sprintf(caption, "Genesis Plus/SDL - %s (%s) - %d fps - %d bytes", rominfo.international, region, fps, audio_len);
-		SDL_WM_SetCaption(caption, NULL);
-		frame_count = 0;
-    
-	}
-	return 1000/vdp_rate;
-}
 
 static void sdl_sound_callback(void *userdata, Uint8 *stream, int len)
 {
@@ -95,13 +78,64 @@ static int sdl_sound_init()
   return 1;
 }
 
+static SDL_Rect rect;
+static SDL_Surface* screen;
+static SDL_Surface* surface;
+static unsigned char* output_pixels; /* 16-bit RGB */
+static long output_pitch;
+
+Uint32 fps_callback(Uint32 interval)
+{
+	if(paused) return 1000/vdp_rate;
+	timer_count++;
+  frameticker ++;
+	if(timer_count % vdp_rate == 0)
+	{
+		int fps = frame_count + 1;
+		char caption[100];
+    char region[10];
+    if (region_code == REGION_USA) sprintf(region,"USA");
+    else if (region_code == REGION_EUROPE) sprintf(region,"EUR");
+    else sprintf(region,"JAP");
+    sprintf(caption, "Genesis Plus/SDL - %s (%s) - %d fps", rominfo.international, region, fps);
+		SDL_WM_SetCaption(caption, NULL);
+		frame_count = 0;
+    
+	}
+	return 1000/vdp_rate;
+}
+
+void lock_pixels( void )
+{
+	if ( SDL_LockSurface( surface ) < 0 )
+		MessageBox(NULL, "Couldn't lock surface", "Error", 0);
+	SDL_FillRect( surface, 0, 0 );
+	output_pitch = surface->pitch;
+	output_pixels = (unsigned char*) surface->pixels;
+}
+
+void display_output( void )
+{
+  SDL_Rect dest;
+  dest.w=rect.w;
+  dest.h=rect.h;
+  dest.x=(640-rect.w)/2;
+  dest.y=(480-rect.h)/2;
+	//SDL_UnlockSurface( surface );
+	if ( SDL_BlitSurface( surface, &rect, screen, &dest ) < 0 || SDL_Flip( screen ) < 0 )
+		MessageBox(NULL, "SDL blit failed", "Error", 0);
+}
+
+md_ntsc_t md_ntsc;
+sms_ntsc_t sms_ntsc;
+
 int main (int argc, char **argv)
 {
 	int running = 1;
   int sym;
+  md_ntsc_setup_t md_setup;
+  sms_ntsc_setup_t sms_setup;
 
-  SDL_Rect viewport, display;
-  SDL_Surface *bmp, *screen;
   SDL_Event event;
 
   error_init();
@@ -126,6 +160,43 @@ int main (int argc, char **argv)
 		exit(1);
 	}
         
+  /* initialize SDL */
+  if(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) < 0)
+  {
+		char caption[256];
+		sprintf(caption, "SDL initialization failed");
+		MessageBox(NULL, caption, "Error", 0);
+    exit(1);
+  }
+  SDL_WM_SetCaption("Genesis Plus/SDL", NULL);
+  SDL_ShowCursor(0);
+
+  screen = SDL_SetVideoMode(640, 480, 16,  fullscreen ? (SDL_SWSURFACE|SDL_FULLSCREEN): (SDL_SWSURFACE));
+  surface  = SDL_CreateRGBSurface(SDL_SWSURFACE, 720, 576, 16, 0, 0, 0, 0);
+  if (!screen || !surface)
+  {
+		MessageBox(NULL, "Video initialization failed", "Error", 0);
+		exit(1);
+  }
+
+  /* initialize Genesis display */
+  memset(&bitmap, 0, sizeof(t_bitmap));
+  bitmap.width  = 720;
+  bitmap.height = 576;
+  bitmap.depth  = 16;
+  bitmap.granularity = 2;
+  bitmap.pitch = (bitmap.width * bitmap.granularity);
+  bitmap.data   = surface->pixels;
+  bitmap.viewport.w = 256;
+  bitmap.viewport.h = 224;
+  bitmap.viewport.x = 0;
+  bitmap.viewport.y = 0;
+
+  /* set default config */
+  set_config_defaults();
+  input.system[0] = SYSTEM_GAMEPAD;
+  input.system[1] = SYSTEM_GAMEPAD;
+
 	/* load BIOS */
   memset(bios_rom, 0, sizeof(bios_rom));
 	FILE *f = fopen("./BIOS.bin", "rb");
@@ -142,59 +213,6 @@ int main (int argc, char **argv)
 		}
 		config.bios_enabled |= 2;
   }
-	else config.bios_enabled = 0;
-
-  /* initialize SDL */
-  if(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) < 0)
-  {
-		char caption[256];
-		sprintf(caption, "SDL initialization failed");
-		MessageBox(NULL, caption, "Error", 0);
-    exit(1);
-  }
-
-  SDL_WM_SetCaption("Genesis Plus/SDL", NULL);
-  SDL_ShowCursor(0);
-
-  /* initialize SDL video */
-	viewport.x = 0;
-	viewport.y = 0;
-  viewport.w = 640;
-  viewport.h = 480;
-
-  display.x = 0;
-  display.y = 0;
-	display.w = 256;
-	display.h = 224;
-
-  bmp = SDL_CreateRGBSurface(SDL_HWSURFACE, 360, 576, 16, 0xF800, 0x07E0, 0x001F, 0x0000);
-  screen = SDL_SetVideoMode(viewport.w, viewport.h, 16,  SDL_HWSURFACE);
-  if (!bmp || !screen)
-  {
-		char caption[256];
-		sprintf(caption, "Video initialization failed");
-		MessageBox(NULL, caption, "Error", 0);
-		exit(1);
-  }
-
-  /* initialize Genesis display */
-  memset(&bitmap, 0, sizeof(t_bitmap));
-  bitmap.width  = 360;
-  bitmap.height = 576;
-  bitmap.depth  = 16;
-  bitmap.granularity = 2;
-  bitmap.pitch = (bitmap.width * bitmap.granularity);
-  bitmap.data   = (unsigned char *)bmp->pixels;
-  bitmap.viewport.w = 256;
-  bitmap.viewport.h = 224;
-  bitmap.viewport.x = 0;
-  bitmap.viewport.y = 0;
-  bitmap.remap = 1;
-
-  /* set default config */
-  set_config_defaults();
-  input.system[0] = SYSTEM_GAMEPAD;
-  input.system[1] = SYSTEM_MOUSE;
 
 	/* initialize emulation */
   system_init();
@@ -207,7 +225,7 @@ int main (int argc, char **argv)
   f = fopen("./game.srm", "rb");
   if (f!=NULL)
   {
-    fread(&sram.sram,0x10000,1, f);
+    fread(sram.sram,0x10000,1, f);
 	  fclose(f);
   }
 
@@ -240,6 +258,20 @@ int main (int argc, char **argv)
           sym = event.key.keysym.sym;
 
           if(sym == SDLK_TAB)    system_reset();
+          else if (sym == SDLK_RETURN)
+          {
+            fullscreen ^=1;
+            screen = SDL_SetVideoMode(640, 480, 16,  fullscreen ? (SDL_SWSURFACE|SDL_FULLSCREEN): (SDL_SWSURFACE));
+
+          }
+          else if(sym == SDLK_F3) config.render ^=1;
+          else if(sym == SDLK_F4)
+          {
+            SDL_FillRect( screen, 0, 0 );
+            config.ntsc ++;
+            if (config.ntsc > 3) config.ntsc = 0;
+            bitmap.viewport.changed = 1;
+          }
           else if(sym == SDLK_F5)     log_error ^=1;
           else if(sym == SDLK_F6)
           {
@@ -321,8 +353,9 @@ int main (int argc, char **argv)
       else
       {
         /* Delay */
-        while (!frameticker && !turbo_mode) SDL_Delay(1);
+        while (!frameticker && !turbo_mode) SDL_Delay(0);
          
+        //SDL_FillRect( surface, 0, 0 );
         system_frame (0);
         frame_count++;
       }
@@ -332,16 +365,36 @@ int main (int argc, char **argv)
       if(bitmap.viewport.changed)
       {
         bitmap.viewport.changed = 0;
-        display.w = (bitmap.viewport.w + 2*bitmap.viewport.x);
-        display.h = (bitmap.viewport.h + 2 * bitmap.viewport.y) << ((config.render && interlaced) ? 1:0);
-        viewport.w = bitmap.viewport.w + 2*bitmap.viewport.x;
-        viewport.h = bitmap.viewport.h + 2*bitmap.viewport.y;
-        viewport.x = (640 - viewport.w)/2;
-        viewport.y = (480 - viewport.h)/2;
+        rect.w = bitmap.viewport.w+2*bitmap.viewport.x;
+	      rect.h = bitmap.viewport.h+2*bitmap.viewport.y;
+        if (config.render && (interlaced || config.ntsc))  rect.h *= 2;
+        if (config.ntsc) rect.w = (reg[12]&1) ? MD_NTSC_OUT_WIDTH(rect.w) : SMS_NTSC_OUT_WIDTH(rect.w);
+
+        /* init NTSC filter */
+        if (config.ntsc == 1)
+        {
+          sms_setup = sms_ntsc_composite;
+          md_setup  = md_ntsc_composite;
+          sms_ntsc_init( &sms_ntsc, &sms_setup );
+          md_ntsc_init( &md_ntsc, &md_setup );
+        }
+        else if (config.ntsc == 2)
+        {
+          sms_setup = sms_ntsc_svideo;
+          md_setup  = md_ntsc_svideo;
+          sms_ntsc_init( &sms_ntsc, &sms_setup );
+          md_ntsc_init( &md_ntsc, &md_setup );
+        }
+        else if (config.ntsc == 3)
+        {
+          sms_setup = sms_ntsc_rgb;
+          md_setup  = md_ntsc_rgb;
+          sms_ntsc_init( &sms_ntsc, &sms_setup );
+          md_ntsc_init( &md_ntsc, &md_setup );
+        }
       }
 
-      SDL_BlitSurface(bmp, &display, screen, &viewport);
-      SDL_UpdateRect(screen, viewport.x, viewport.y, viewport.w, viewport.h);
+      display_output();
     }
   }
 
@@ -355,7 +408,7 @@ int main (int argc, char **argv)
 
   SDL_PauseAudio(1);
   SDL_CloseAudio();
-  SDL_FreeSurface(bmp);
+  SDL_FreeSurface(surface);
   SDL_FreeSurface(screen);
   SDL_Quit();
   system_shutdown();
@@ -444,7 +497,6 @@ int update_input(void)
     if(state & SDL_BUTTON_RMASK) input.pad[joynum] |= INPUT_B;
     if(state & SDL_BUTTON_LMASK) input.pad[joynum] |= INPUT_A;
   }
-
 
   /* options */
   return (1);
