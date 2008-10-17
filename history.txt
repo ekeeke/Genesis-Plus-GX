@@ -15,14 +15,14 @@ CURRENT:
 - improved HBLANK flag accuracy, fixes line flickering in "Gouketsuji Ichizoku"
 - re-enabled Z80 banked access to WRAM, fixes hang-up in "Mamono Hunter Youko"
 - modified JCART emulation, fixes corrupted tracks logo in "Micro Machines 2"
-
+- added Blargg's NTSC Filters support
 
 [NGC/Wii]
 - remove unused libsamplerate settings in "HQ YM2612" mode
 - implemented menu fast scrolling with the Wiimote D-PAD
 - fixed config file incompatibilities between Gamecube and Wii versions
 - re-enabled texture filtering in H40 original mode when overscan is emulated: fix screen scroll tearing
-- added Shay Green's NTSC Filters support
+
 
 [NGC]
 - added proper 480p menu detection for NTSC Gamecube users

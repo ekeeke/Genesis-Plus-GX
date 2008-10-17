@@ -89,7 +89,7 @@ void set_config_defaults(void)
   config.overscan = 1;
   config.render   = (vmode->viTVMode == VI_TVMODE_NTSC_PROG) ? 2 : 0;
   config.ntsc     = 0;
-  config.filtering = 0;
+  config.filtering = 1;
 
   /* controllers options */
   ogc_input__set_defaults();

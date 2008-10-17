@@ -12,8 +12,8 @@ NAME	  = ../gen_sdl.exe
 
 CC        = gcc
 CFLAGS    = `sdl-config --cflags` -O6 -march=i686 -fomit-frame-pointer
-DEFINES   = -DLSB_FIRST -DX86_ASM
-INCLUDES  = -I. -I.. -I../z80 -I../m68k -I../dos -I../sound -I../sound/SRC -I../cart_hw -I../cart_hw/svp 
+DEFINES   = -DLSB_FIRST -DX86_ASM -DLOG_ERROR=1
+INCLUDES  = -I. -I.. -I../z80 -I../m68k -I../dos -I../sound -I../sound/SRC -I../cart_hw -I../cart_hw/svp -I../ntsc
 LIBS	  = `sdl-config --libs` -lz -lm
 
 OBJECTS	=       obj/z80.o	
@@ -58,6 +58,9 @@ OBJECTS	+=	obj/main.o	\
 		obj/fileio.o	\
 		obj/loadrom.o	
 
+OBJECTS	+=	obj/sms_ntsc.o	\
+			obj/md_ntsc.o
+
 OBJECTS	+=	obj/icon.o
 
 all: $(NAME)
@@ -96,6 +99,9 @@ obj/%.o :	../m68k/%.c ../m68k/%.h
 		$(CC) -c $(CFLAGS) $(INCLUDES) $(DEFINES) $< -o $@
 
 obj/%.o :	./%.c ./%.h	        
+		$(CC) -c $(CFLAGS) $(INCLUDES) $(DEFINES) $< -o $@
+
+obj/%.o :	../ntsc/%.c ../ntsc/%.h	        
 		$(CC) -c $(CFLAGS) $(INCLUDES) $(DEFINES) $< -o $@
 	        
 obj/icon.o :	
