@@ -70,12 +70,12 @@ GXRModeObj TV50hz_288p =
   GX_FALSE,        // field_rendering
   GX_FALSE,        // aa
 
-  // sample points arranged in increasing Y order
+    // sample points arranged in increasing Y order
 	{
-		{6,6},{6,6},{6,6},  // pix 0, 3 sample points, 1/12 units, 4 bits each
-		{6,6},{6,6},{6,6},  // pix 1
-		{6,6},{6,6},{6,6},  // pix 2
-		{6,6},{6,6},{6,6}   // pix 3
+		{3,2},{9,6},{3,10},  // pix 0, 3 sample points, 1/12 units, 4 bits each
+		{3,2},{9,6},{3,10},  // pix 1
+		{9,2},{3,6},{9,10},  // pix 2
+		{9,2},{3,6},{9,10}   // pix 3
 	},
 
   // vertical filter[7], 1/64 units, 6 bits each
@@ -107,10 +107,10 @@ GXRModeObj TV50hz_288i =
 
     // sample points arranged in increasing Y order
 	{
-		{6,6},{6,6},{6,6},  // pix 0, 3 sample points, 1/12 units, 4 bits each
-		{6,6},{6,6},{6,6},  // pix 1
-		{6,6},{6,6},{6,6},  // pix 2
-		{6,6},{6,6},{6,6}   // pix 3
+		{3,2},{9,6},{3,10},  // pix 0, 3 sample points, 1/12 units, 4 bits each
+		{3,2},{9,6},{3,10},  // pix 1
+		{9,2},{3,6},{9,10},  // pix 2
+		{9,2},{3,6},{9,10}   // pix 3
 	},
 
     // vertical filter[7], 1/64 units, 6 bits each
@@ -140,23 +140,23 @@ GXRModeObj TV50hz_576i =
   GX_FALSE,        // field_rendering
   GX_FALSE,        // aa
 
-  // sample points arranged in increasing Y order
+    // sample points arranged in increasing Y order
 	{
-		{6,6},{6,6},{6,6},  // pix 0, 3 sample points, 1/12 units, 4 bits each
-		{6,6},{6,6},{6,6},  // pix 1
-		{6,6},{6,6},{6,6},  // pix 2
-		{6,6},{6,6},{6,6}   // pix 3
+		{3,2},{9,6},{3,10},  // pix 0, 3 sample points, 1/12 units, 4 bits each
+		{3,2},{9,6},{3,10},  // pix 1
+		{9,2},{3,6},{9,10},  // pix 2
+		{9,2},{3,6},{9,10}   // pix 3
 	},
 
-  // vertical filter[7], 1/64 units, 6 bits each
+    // vertical filter[7], 1/64 units, 6 bits each
 	{
+		 4,         // line n-1
 		 8,         // line n-1
-		 8,         // line n-1
-		10,         // line n
 		12,         // line n
-		10,         // line n
+		16,         // line n
+		12,         // line n
 		 8,         // line n+1
-		 8          // line n+1
+		 4          // line n+1
 	}
 };
 
@@ -175,12 +175,12 @@ GXRModeObj TV60hz_240p =
   GX_FALSE,        // field_rendering
   GX_FALSE,        // aa
 
-  // sample points arranged in increasing Y order
+    // sample points arranged in increasing Y order
 	{
-		{6,6},{6,6},{6,6},  // pix 0, 3 sample points, 1/12 units, 4 bits each
-		{6,6},{6,6},{6,6},  // pix 1
-		{6,6},{6,6},{6,6},  // pix 2
-		{6,6},{6,6},{6,6}   // pix 3
+		{3,2},{9,6},{3,10},  // pix 0, 3 sample points, 1/12 units, 4 bits each
+		{3,2},{9,6},{3,10},  // pix 1
+		{9,2},{3,6},{9,10},  // pix 2
+		{9,2},{3,6},{9,10}   // pix 3
 	},
 
   // vertical filter[7], 1/64 units, 6 bits each
@@ -212,10 +212,10 @@ GXRModeObj TV60hz_240i =
 
     // sample points arranged in increasing Y order
 	{
-		{6,6},{6,6},{6,6},  // pix 0, 3 sample points, 1/12 units, 4 bits each
-		{6,6},{6,6},{6,6},  // pix 1
-		{6,6},{6,6},{6,6},  // pix 2
-		{6,6},{6,6},{6,6}   // pix 3
+		{3,2},{9,6},{3,10},  // pix 0, 3 sample points, 1/12 units, 4 bits each
+		{3,2},{9,6},{3,10},  // pix 1
+		{9,2},{3,6},{9,10},  // pix 2
+		{9,2},{3,6},{9,10}   // pix 3
 	},
 
     // vertical filter[7], 1/64 units, 6 bits each
@@ -245,23 +245,23 @@ GXRModeObj TV60hz_480i =
   GX_FALSE,        // field_rendering
   GX_FALSE,        // aa
 
-  // sample points arranged in increasing Y order
+    // sample points arranged in increasing Y order
 	{
-		{6,6},{6,6},{6,6},  // pix 0, 3 sample points, 1/12 units, 4 bits each
-		{6,6},{6,6},{6,6},  // pix 1
-		{6,6},{6,6},{6,6},  // pix 2
-		{6,6},{6,6},{6,6}   // pix 3
+		{3,2},{9,6},{3,10},  // pix 0, 3 sample points, 1/12 units, 4 bits each
+		{3,2},{9,6},{3,10},  // pix 1
+		{9,2},{3,6},{9,10},  // pix 2
+		{9,2},{3,6},{9,10}   // pix 3
 	},
 
-  // vertical filter[7], 1/64 units, 6 bits each
+    // vertical filter[7], 1/64 units, 6 bits each
 	{
+		 4,         // line n-1
 		 8,         // line n-1
-		 8,         // line n-1
-		10,         // line n
 		12,         // line n
-		10,         // line n
+		16,         // line n
+		12,         // line n
 		 8,         // line n+1
-		 8          // line n+1
+		 4          // line n+1
 	}
 };
 
@@ -406,7 +406,7 @@ void ogc_video__scale(void)
     else
     {
       /* fullscreen stretch */
-      xscale = bitmap.viewport.w + 2*bitmap.viewport.x;
+      xscale = 352;
       yscale = (gc_pal && !config.render) ? (vdp_pal ? (268*144 / bitmap.viewport.h):143) : (vdp_pal ? (224*144 / bitmap.viewport.h):120);
     }
     
@@ -469,9 +469,14 @@ void ogc_video__scale(void)
 	square[0] = square[9]  = -scale + xshift;
 
   /* vertical scaling */
-  scale = yscale;
-	square[4] = square[1]  =  (scale + yshift) * (config.render ? 2:1);
-	square[7] = square[10] =  (yshift - scale) * (config.render ? 2:1);
+  scale = yscale + yshift;
+  if (config.render && !config.aa)
+  {
+    scale  *= 2;
+    yshift *= 2;
+	}
+  square[4] = square[1]  =  scale + yshift;
+	square[7] = square[10] =  yshift - scale;
 
   /* update position matrix */
 	draw_init();
@@ -504,6 +509,11 @@ void ogc_video__reset()
   if (config.render) rmode = tvmodes[gc_pal*3 + 2];
 	else rmode = tvmodes[gc_pal*3 + interlaced];
 
+  /* anti-aliasing */
+  rmode->aa = config.aa;
+  if (config.render) rmode->efbHeight = config.aa ? 242 : 480;
+  else if (gc_pal) rmode->efbHeight = config.aa ? 264 : 286;
+
 	VIDEO_Configure (rmode);
 	VIDEO_ClearFrameBuffer(rmode, xfb[whichfb], COLOR_BLACK);
 	VIDEO_Flush();
@@ -521,7 +531,7 @@ void ogc_video__reset()
   GX_SetDispCopyDst (rmode->fbWidth, xfbHeight);
   GX_SetCopyFilter (rmode->aa, rmode->sample_pattern, config.render ? GX_TRUE : GX_FALSE, rmode->vfilter);
   GX_SetFieldMode (rmode->field_rendering, ((rmode->viHeight == 2 * rmode->xfbHeight) ? GX_ENABLE : GX_DISABLE));
-  GX_SetPixelFmt (GX_PF_RGB8_Z24, GX_ZC_LINEAR);
+  GX_SetPixelFmt (rmode->aa ? GX_PF_RGB565_Z16 : GX_PF_RGB8_Z24, GX_ZC_LINEAR);
   guOrtho(p, rmode->efbHeight/2, -(rmode->efbHeight/2), -(rmode->fbWidth/2), rmode->fbWidth/2, 100, 1000);
   GX_LoadProjectionMtx (p, GX_ORTHOGRAPHIC);
 
