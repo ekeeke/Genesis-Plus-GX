@@ -31,6 +31,8 @@ md_ntsc_t md_ntsc;
 sms_ntsc_setup_t sms_setup;
 sms_ntsc_t sms_ntsc;
 
+/* Aspect Ratio */
+int xscale, yscale, xshift, yshift;
 
 /*** PAL 50hz flag ***/
 int gc_pal = 0;
@@ -353,6 +355,7 @@ static void framestart(u32 retraceCnt)
   frameticker++;
 }
 
+/* Initialize GX */
 static void gxStart(void)
 {
   Mtx p;
@@ -388,34 +391,77 @@ static void gxStart(void)
   memset (texturemem, 0, TEX_WIDTH * TEX_HEIGHT * 2);
 }
 
-/* set GX scaler */
-int xscale, yscale;
-void ogc_video__scale(void)
+/* Reset GX/VI scaler */
+static void gxScale(GXRModeObj *rmode)
 {
-	int scale, xshift, yshift, i;
+  int scale = 0;
   
-  /* borders are emulated */
-  if (config.overscan)
-	{
-    if (config.aspect)
+  /* First configure EFB width */
+  switch (config.gxscaler)
+  {
+    case 0: /* let VI handles upscaling completely */
+      rmode->fbWidth = (vwidth <= 640) ? vwidth : 640;
+      break;
+
+    case 1: /* GX only doubles original width */
+      rmode->fbWidth = (vwidth*2 <= 640) ? (vwidth*2) : ((vwidth <= 640) ? vwidth : 640);
+      break;
+
+    case 2: /* GX upscale up to max EFB width (640 pixels) */
+      rmode->fbWidth = 640;
+      break;
+  }
+
+  /* Configure GX scaler and VI width */
+  if (xscale > (rmode->fbWidth/2))
+  {
+    /* check max upscaling */
+    if (xscale > 360)
     {
+      scale = xscale - 360; /* save offset for later */
+      xscale = 360;
+    }
+
+    /* VI handles the remaining upscaling */
+    rmode->viWidth = xscale * 2;
+    rmode->viXOrigin = (720 - (xscale * 2)) / 2;
+
+    /* set GX scaling to max EFB width */
+    scale += (rmode->fbWidth/2);
+  }
+  else
+  {
+    /* VI should not upscale anything */
+    rmode->viWidth = rmode->fbWidth;
+    rmode->viXOrigin = (720 - rmode->fbWidth) / 2;
+
+    /* set GX scaling to max EFB width */
+    scale = xscale;
+  }
+
+  /* update GX scaler (Vertex Position Matrix) */
+  square[6] = square[3]  =  scale + xshift;
+	square[0] = square[9]  = -scale + xshift;
+  square[4] = square[1]  =  yscale + yshift;
+	square[7] = square[10] =  -yscale + yshift;
+	draw_init();
+}	
+
+/* Set Aspect Ratio (depending on current configuration) */
+void ogc_video__aspect()
+{
+  if (config.aspect)
+  {
+    /* original aspect ratio */
+    /* the following values have been detected from comparison with a real 50/60hz Mega Drive */
+    if (config.overscan)
+	  {
+      /* borders are emulated */
 		  xscale = (reg[12] & 1) ? 360 : 358;
       if (gc_pal) xscale -= 1;
       yscale = (gc_pal && !config.render) ? (vdp_pal ? 144:143) : (vdp_pal ? 121:120);
     }
     else
-    {
-      /* fullscreen stretch */
-      xscale = 352;
-      yscale = (gc_pal && !config.render) ? (vdp_pal ? (268*144 / bitmap.viewport.h):143) : (vdp_pal ? (224*144 / bitmap.viewport.h):120);
-    }
-    
-		xshift = (config.aspect || !gc_pal) ? 8 : 4;
-		yshift = vdp_pal ? 1 : 3;
-	}
-  else
-	{
-    if (config.aspect)
     {
       /* borders are simulated (black) */
 	    xscale = 327;
@@ -423,98 +469,75 @@ void ogc_video__scale(void)
 		  if (vdp_pal && (!gc_pal || config.render)) yscale = yscale * 243 / 288;
 		  else if (!vdp_pal && gc_pal && !config.render) yscale = yscale * 288 / 243;
 		}
+
+    xshift = 8 + config.xshift; /* default RGB offset, composite might be shifted less */
+    yshift = (vdp_pal ? 1 : 3) - (config.overscan ? 0 : 1) + config.yshift;
+  }
+  else
+  {
+    /* manual aspect ratio (default is fullscreen) */
+    if (config.overscan)
+	  {
+      /* borders are emulated */
+      xscale = 352;
+      yscale = (gc_pal && !config.render) ? (vdp_pal ? (268*144 / bitmap.viewport.h):143) : (vdp_pal ? (224*144 / bitmap.viewport.h):120);
+    }
     else
     {
-      /* fit screen */
       xscale = 320;
       yscale = (gc_pal && !config.render) ? 134 : 112;
     }
-    
-		xshift = config.aspect ? 8 : 0;
-		yshift = vdp_pal ? 0 : 2;
-	}
-	
-  if (!config.aspect)
-	{
+
+    /* user scaling */
     xscale += config.xscale;
     yscale += config.yscale;
-  }
-  
-  xshift += config.xshift;
-  yshift += config.yshift;
 
-  /* horizontal scaling */
-  scale = (xscale > 360) ? 360 : xscale;
-  if (scale > 320)
-  {
-    /* let VI do horizontal scaling */
-    for (i=0; i<6; i++)
-    {
-      tvmodes[i]->viXOrigin = (720 - (scale * 2)) / 2;
-      tvmodes[i]->viWidth   = scale * 2;
-    }
-    scale = 320;
-  }
-  else
-  {
-    /* let GX do horizontal downscaling */
-    for (i=0; i<6; i++)
-    {
-      tvmodes[i]->viXOrigin = 40;
-      tvmodes[i]->viWidth   = 640;
-    }
-  }
-
-	square[6] = square[3]  =  scale + xshift;
-	square[0] = square[9]  = -scale + xshift;
-
-  /* vertical scaling */
-  scale = yscale + yshift;
-  if (config.render && !config.aa)
-  {
-    scale  *= 2;
-    yshift *= 2;
+    xshift = config.xshift;
+		yshift = config.yshift;
 	}
-  square[4] = square[1]  =  scale + yshift;
-	square[7] = square[10] =  yshift - scale;
 
-  /* update position matrix */
-	draw_init();
-}	
+  /* Double resolution modes */
+  if (config.render)
+  {
+    yscale *= 2;
+    yshift *= 2;
+  }
+}
 
-/* Reinitialize GX */
+/* Reinitialize Video */
 void ogc_video__reset()
 {
-	GXRModeObj *rmode;
 	Mtx p;
+  GXRModeObj *rmode;
 
-  /* reset TV type (50Hz/60Hz) */
+  /* Set 50Hz/60Hz mode */
   if ((config.tv_mode == 1) || ((config.tv_mode == 2) && vdp_pal)) gc_pal = 1;
   else gc_pal = 0;
 
-  /* reset scaler (aspect ratio) */
-  ogc_video__scale();
-
-  /* reset TV mode */
-  if (config.render == 2)
-  {
-    tvmodes[2]->viTVMode = VI_TVMODE_NTSC_PROG;
-    tvmodes[2]->xfbMode = VI_XFBMODE_SF;
-  }
-  else
-  {
-    tvmodes[2]->viTVMode = tvmodes[0]->viTVMode & ~3;
-    tvmodes[2]->xfbMode = VI_XFBMODE_DF;
-  }
+  /* Set current TV mode */  
   if (config.render) rmode = tvmodes[gc_pal*3 + 2];
 	else rmode = tvmodes[gc_pal*3 + interlaced];
 
-  /* anti-aliasing */
-  rmode->aa = config.aa;
-  if (config.render) rmode->efbHeight = config.aa ? 242 : 480;
-  else if (gc_pal) rmode->efbHeight = config.aa ? 264 : 286;
+  /* Aspect ratio */
+  ogc_video__aspect();
+  gxScale(rmode);
 
-	VIDEO_Configure (rmode);
+  /* Progressive mode support */
+  if (config.render == 2)
+  {
+    /* 480p */
+    rmode->viTVMode = VI_TVMODE_NTSC_PROG;
+    rmode->xfbMode = VI_XFBMODE_SF;
+  }
+  else if (config.render == 1)
+  {
+    /* 480i */
+    rmode->viTVMode = tvmodes[0]->viTVMode & ~3;
+    rmode->xfbMode = VI_XFBMODE_DF;
+  }
+
+  /* Configure VI */
+  VIDEO_Configure (rmode);
 	VIDEO_ClearFrameBuffer(rmode, xfb[whichfb], COLOR_BLACK);
 	VIDEO_Flush();
 	VIDEO_WaitVSync();
@@ -522,7 +545,7 @@ void ogc_video__reset()
 	else while (VIDEO_GetNextField())  VIDEO_WaitVSync();
 	odd_frame = 1;
 
-  /* reset rendering mode */
+  /* Configure GX */
   GX_SetViewport (0.0F, 0.0F, rmode->fbWidth, rmode->efbHeight, 0.0F, 1.0F);
   GX_SetScissor (0, 0, rmode->fbWidth, rmode->efbHeight);
   f32 yScale = GX_GetYScaleFactor(rmode->efbHeight, rmode->xfbHeight);
@@ -535,7 +558,7 @@ void ogc_video__reset()
   guOrtho(p, rmode->efbHeight/2, -(rmode->efbHeight/2), -(rmode->fbWidth/2), rmode->fbWidth/2, 100, 1000);
   GX_LoadProjectionMtx (p, GX_ORTHOGRAPHIC);
 
-  /* reset NTSC filter */
+  /* Software NTSC filter */
   if (config.ntsc == 1)
   {
     sms_setup = sms_ntsc_composite;
@@ -564,7 +587,7 @@ void ogc_video__update()
 {
   int h, w;
   
-  /* texture and bitmap buffers (buffers width is fixed to 360 pixels) */
+  /* texture and bitmap buffers (buffers width is fixed to 720 pixels) */
   long long int *dst = (long long int *)texturemem;
   long long int *src1 = (long long int *)(bitmap.data); /* line n */
   long long int *src2 = src1 + 180;  /* line n+1 */
@@ -574,18 +597,6 @@ void ogc_video__update()
   /* check if viewport has changed */
   if (bitmap.viewport.changed)
   {
-    /* Check interlaced mode changes */
-    if ((bitmap.viewport.changed & 2) && (!config.render))
-    {
-      GXRModeObj *rmode;
-	    rmode = tvmodes[gc_pal*3 + interlaced];
-      VIDEO_Configure (rmode);
-      GX_SetFieldMode (rmode->field_rendering, ((rmode->viHeight == 2 * rmode->xfbHeight) ? GX_ENABLE : GX_DISABLE));
-      VIDEO_WaitVSync();
-      if (rmode->viTVMode & VI_NON_INTERLACE) VIDEO_WaitVSync();
-      else while (VIDEO_GetNextField()) VIDEO_WaitVSync();
-    }
-    
     bitmap.viewport.changed = 0;
     
     /* update texture size */
@@ -602,16 +613,16 @@ void ogc_video__update()
 
     /* final offset */
     stride = bitmap.width - (vwidth >> 2);
-    
-    /* reset GX scaler */
-    ogc_video__scale();
-    
+
+    /* image size has changed, reset GX */
+    ogc_video__reset();
+
     /* reinitialize texture */
     GX_InvalidateTexAll ();
 	  GX_InitTexObj (&texobj, texturemem, vwidth, vheight, GX_TF_RGB565, GX_CLAMP, GX_CLAMP, GX_FALSE);
     
-    /* original H40 mode: force filtering OFF */
-    if (!config.filtering)
+    /* enable/disable bilinear filtering */
+    if (!config.bilinear)
     {
       GX_InitTexObjLOD(&texobj,GX_NEAR,GX_NEAR_MIP_NEAR,2.5,9.0,0.0,GX_FALSE,GX_FALSE,GX_ANISO_1);
     }
@@ -710,7 +721,7 @@ void ogc_video__init(void)
 	    gc_pal = 0;
 
 #ifndef HW_RVL
-      /* force 480p when Component cable is detected */
+      /* force 480p on GameCube if the Component Cable is present */
       if (VIDEO_HaveComponentCable()) vmode = &TVNtsc480Prog;
 #endif
       break;

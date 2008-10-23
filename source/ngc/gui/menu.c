@@ -322,7 +322,7 @@ void dispmenu ()
 
 	while (quit == 0)
 	{
-		ogc_video__scale();
+		ogc_video__aspect();
 
     sprintf (items[0], "Aspect: %s", config.aspect ? "ORIGINAL" : "STRETCH");
 		if (config.render == 1) sprintf (items[1], "Render: INTERLACED");
@@ -331,9 +331,11 @@ void dispmenu ()
 		if (config.tv_mode == 0) sprintf (items[2], "TV Mode: 60HZ");
 		else if (config.tv_mode == 1) sprintf (items[2], "TV Mode: 50HZ");
 		else sprintf (items[2], "TV Mode: 50/60HZ");
-    sprintf (items[3], "Anti Aliasing: %s", config.aa ? " ON" : "OFF");
-    sprintf (items[4], "GX Filter: %s", config.filtering ? " ON" : "OFF");
-		if (config.ntsc == 1) sprintf (items[5], "NTSC Filter: COMPOSITE");
+    sprintf (items[3], "GX Filter: %s", config.bilinear ? " ON" : "OFF");
+    if (config.gxscaler == 1) sprintf (items[4], "GX Scaler:  2X");
+		else if (config.gxscaler == 2)sprintf (items[4], "GX Scaler: FULL");
+    else sprintf (items[4], "GX Scaler: OFF");
+    if (config.ntsc == 1) sprintf (items[5], "NTSC Filter: COMPOSITE");
 		else if (config.ntsc == 2) sprintf (items[5], "NTSC Filter: S-VIDEO");
 		else if (config.ntsc == 3) sprintf (items[5], "NTSC Filter: RGB");
 		else sprintf (items[5], "NTSC Filter: OFF");
@@ -341,7 +343,7 @@ void dispmenu ()
 		sprintf (items[7], "Center X: %s%02d", config.xshift < 0 ? "-":"+", abs(config.xshift));
 		sprintf (items[8], "Center Y: %s%02d", config.yshift < 0 ? "-":"+", abs(config.yshift));
 		sprintf (items[9], "Scale  X: %02d", xscale*2);
-		sprintf (items[10], "Scale  Y: %02d", yscale*2);
+		sprintf (items[10], "Scale  Y: %02d", yscale*4);
 
 		ret = domenu (&items[0], count, 1);
 
@@ -375,16 +377,16 @@ void dispmenu ()
 				config.tv_mode = (config.tv_mode + 1) % 3;
 				break;
 		
-			case 3: /*** antialiasing ***/
-				config.aa ^= 1;
-				break;
-
-      case 4: /*** bilinear filtering ***/
-				config.filtering ^= 1;
+			case 3: /*** bilinear filtering ***/
+				config.bilinear ^= 1;
 				bitmap.viewport.changed = 1;
 				break;
 
-			case 5: /*** NTSC filter ***/
+			case 4: /*** GX scaler ***/
+				config.gxscaler = (config.gxscaler + 1) % 3;
+				break;
+
+      case 5: /*** NTSC filter ***/
 				config.ntsc ++;
         if (config.ntsc > 3) config.ntsc = 0;
 				bitmap.viewport.changed = 1;
@@ -793,6 +795,22 @@ void optionmenu ()
 ****************************************************************************/
 static u8 device = 0;
 
+/****************************************************************************
+ * fat_is_mounted
+ * to check whether FAT media are detected.
+ ***************************************************************************/
+
+bool FatIsMounted(PARTITION_INTERFACE partition) {
+    char prefix[] = "fatX:/";
+    prefix[3] = partition + '0';
+    DIR_ITER *dir = diropen(prefix);
+    if (dir) {
+        dirclose(dir);
+        return true;
+    }
+    return false;
+}
+
 int loadsavemenu (int which)
 {
 	int prevmenu = menu;
@@ -821,6 +839,9 @@ int loadsavemenu (int which)
     if (device == 0) sprintf(items[0], "Device: SDCARD");
     else if (device == 1) sprintf(items[0], "Device: MCARD A");
     else if (device == 2) sprintf(items[0], "Device: MCARD B");
+#ifdef HW_RVL
+    else if (device == 3) sprintf(items[0], "Device: USB");
+#endif
 
 		ret = domenu (&items[0], count, 0);
 		switch (ret)
@@ -830,11 +851,27 @@ int loadsavemenu (int which)
 				break;
 
 			case 0:
+#ifdef HW_RVL
+        device = (device + 1)%4;
+#else
         device = (device + 1)%3;
-				break;
+#endif  
+        break;
 
 			case 1:
 			case 2:
+#ifdef HW_RVL
+        if ((device == 0) || (device == 3))
+        {
+          PARTITION_INTERFACE dev = device ? PI_USBSTORAGE : PI_INTERNAL_SD;
+          if (FatIsMounted(dev)) fatSetDefaultInterface(dev);
+          else
+          {
+            WaitPrompt ("Device not found!");
+            break;
+          }
+        }
+#endif
 				if (which == 1) quit = ManageState(ret-1,device);
 				else if (which == 0) quit = ManageSRAM(ret-1,device);
 				if (quit) return 1;
@@ -896,11 +933,19 @@ void loadmenu ()
 {
 	int ret;
 	int quit = 0;
-  int count = 4;
-  char item[4][25] = {
-		{"Load Recent"},
+#ifdef HW_RVL
+  int count = 5;
+  char item[5][25] = {
+#else
+  int count = 5;
+  char item[5][25] = {
+#endif
+    {"Load Recent"},
 		{"Load from SDCARD"},
-		{"Load from DVD"},
+#ifdef HW_RVL
+		{"Load from USB"},
+#endif
+    {"Load from DVD"},
     {"Stop DVD Motor"}
 	};
 
@@ -921,14 +966,34 @@ void loadmenu ()
 				break;
 
 			case 1:  /*** Load from SCDARD ***/
+#ifdef HW_RVL
+      case 2:
+      {
+        PARTITION_INTERFACE dev = (ret&2) ? PI_USBSTORAGE : PI_INTERNAL_SD;
+        if (FatIsMounted(dev)) fatSetDefaultInterface(dev);
+        else
+        {
+          WaitPrompt ("Device not found!");
+          break;
+        }
+      }
+#endif
 				quit = OpenSD();
 				break;
 
-      case 2:	 /*** Load from DVD ***/
-  			quit = OpenDVD();
+#ifdef HW_RVL
+      case 3:	 /*** Load from DVD ***/
+#else
+      case 2:
+#endif
+        quit = OpenDVD();
         break;
   
-      case 3:  /*** Stop DVD Disc ***/
+#ifdef HW_RVL
+      case 4:  /*** Stop DVD Disc ***/
+#else
+      case 3:
+#endif
         dvd_motor_off();
 				break;
     }

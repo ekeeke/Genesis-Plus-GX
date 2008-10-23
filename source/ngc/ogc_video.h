@@ -24,7 +24,7 @@
 extern void ogc_video__init(void);
 extern void ogc_video__update(void);
 extern void ogc_video__reset(void);
-extern void ogc_video__scale(void);
+extern void ogc_video__aspect(void);
 
 extern int gc_pal;
 extern unsigned int *xfb[2];

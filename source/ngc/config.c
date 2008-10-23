@@ -4,7 +4,7 @@
 #include <fat.h>
 #include <sys/dir.h>
 
-#define CONFIG_VERSION "GENPLUS 1.2.7 "
+#define CONFIG_VERSION "GENPLUS 1.2.8 "
 
 t_config config;
 bool use_FAT;
@@ -87,10 +87,10 @@ void set_config_defaults(void)
   config.yscale   = 0;
   config.aspect   = 1;
   config.overscan = 1;
-  config.render   = (vmode->viTVMode == VI_TVMODE_NTSC_PROG) ? 2 : 0;
+  config.render   = VIDEO_HaveComponentCable() ? 2 : 0;
   config.ntsc     = 0;
-  config.filtering = 1;
-  config.aa       = 0;
+  config.bilinear = 1;
+  config.gxscaler = 2;
 
   /* controllers options */
   ogc_input__set_defaults();
