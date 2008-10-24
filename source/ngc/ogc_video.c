@@ -396,21 +396,9 @@ static void gxScale(GXRModeObj *rmode)
 {
   int scale = 0;
   
-  /* First configure EFB width */
-  switch (config.gxscaler)
-  {
-    case 0: /* let VI handles upscaling completely */
-      rmode->fbWidth = (vwidth <= 640) ? vwidth : 640;
-      break;
-
-    case 1: /* GX only doubles original width */
-      rmode->fbWidth = (vwidth*2 <= 640) ? (vwidth*2) : ((vwidth <= 640) ? vwidth : 640);
-      break;
-
-    case 2: /* GX upscale up to max EFB width (640 pixels) */
-      rmode->fbWidth = 640;
-      break;
-  }
+  /* GX filtering is disabled, VI handles full strecthing */
+  if (!config.bilinear && (vwidth < 640)) rmode->fbWidth = vwidth;
+  else rmode->fbWidth = 640;
 
   /* Configure GX scaler and VI width */
   if (xscale > (rmode->fbWidth/2))
@@ -543,7 +531,6 @@ void ogc_video__reset()
 	VIDEO_WaitVSync();
 	if (rmode->viTVMode & VI_NON_INTERLACE) VIDEO_WaitVSync();
 	else while (VIDEO_GetNextField())  VIDEO_WaitVSync();
-	odd_frame = 1;
 
   /* Configure GX */
   GX_SetViewport (0.0F, 0.0F, rmode->fbWidth, rmode->efbHeight, 0.0F, 1.0F);
@@ -586,7 +573,7 @@ void ogc_video__reset()
 void ogc_video__update()
 {
   int h, w;
-  
+
   /* texture and bitmap buffers (buffers width is fixed to 720 pixels) */
   long long int *dst = (long long int *)texturemem;
   long long int *src1 = (long long int *)(bitmap.data); /* line n */
@@ -597,8 +584,6 @@ void ogc_video__update()
   /* check if viewport has changed */
   if (bitmap.viewport.changed)
   {
-    bitmap.viewport.changed = 0;
-    
     /* update texture size */
     vwidth  = bitmap.viewport.w + 2 * bitmap.viewport.x;
     vheight = bitmap.viewport.h + 2 * bitmap.viewport.y;
@@ -694,7 +679,7 @@ void ogc_video__init(void)
    */
   vmode = VIDEO_GetPreferredMode(NULL);
 
-  /* adjust display settings */
+  /* Adjust display settings */
   switch (vmode->viTVMode >> 2)
   {
     case VI_PAL:  /* 576 lines (PAL 50Hz) */
@@ -703,7 +688,6 @@ void ogc_video__init(void)
       TV60hz_240i.viTVMode = VI_TVMODE_EURGB60_INT;
       TV60hz_480i.viTVMode = VI_TVMODE_EURGB60_INT;
       config.tv_mode = 1;
-      gc_pal = 1;
 
       /* display should be centered vertically (borders) */
       vmode = &TVPal574IntDfScale;
@@ -718,10 +702,9 @@ void ogc_video__init(void)
       TV60hz_240i.viTVMode = VI_TVMODE_NTSC_INT;
       TV60hz_480i.viTVMode = VI_TVMODE_NTSC_INT;
       config.tv_mode = 0;
-	    gc_pal = 0;
 
 #ifndef HW_RVL
-      /* force 480p on GameCube if the Component Cable is present */
+      /* force 480p on NTSC GameCube if the Component Cable is present */
       if (VIDEO_HaveComponentCable()) vmode = &TVNtsc480Prog;
 #endif
       break;
@@ -735,7 +718,7 @@ void ogc_video__init(void)
       break;
   }
    
-  /* configure video mode */
+  /* Configure video mode */
   VIDEO_Configure (vmode);
 
   /* Configure the framebuffers (double-buffering) */
@@ -765,7 +748,7 @@ void ogc_video__init(void)
   VIDEO_WaitVSync();
   VIDEO_WaitVSync();
 
-  /* initialize GUI */
+  /* Initialize GUI */
   unpackBackdrop ();
   init_font();
 

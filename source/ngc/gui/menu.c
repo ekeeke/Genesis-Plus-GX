@@ -314,8 +314,8 @@ void dispmenu ()
 	int ret;
 	int quit = 0;
 	int prevmenu = menu;
-	int count = 11;
-	char items[11][25];
+	int count = 10;
+	char items[10][25];
 
 	strcpy (menutitle, "Press B to return");
 	menu = 0;
@@ -331,19 +331,16 @@ void dispmenu ()
 		if (config.tv_mode == 0) sprintf (items[2], "TV Mode: 60HZ");
 		else if (config.tv_mode == 1) sprintf (items[2], "TV Mode: 50HZ");
 		else sprintf (items[2], "TV Mode: 50/60HZ");
-    sprintf (items[3], "GX Filter: %s", config.bilinear ? " ON" : "OFF");
-    if (config.gxscaler == 1) sprintf (items[4], "GX Scaler:  2X");
-		else if (config.gxscaler == 2)sprintf (items[4], "GX Scaler: FULL");
-    else sprintf (items[4], "GX Scaler: OFF");
-    if (config.ntsc == 1) sprintf (items[5], "NTSC Filter: COMPOSITE");
-		else if (config.ntsc == 2) sprintf (items[5], "NTSC Filter: S-VIDEO");
-		else if (config.ntsc == 3) sprintf (items[5], "NTSC Filter: RGB");
-		else sprintf (items[5], "NTSC Filter: OFF");
-		sprintf (items[6], "Borders: %s", config.overscan ? " ON" : "OFF");
-		sprintf (items[7], "Center X: %s%02d", config.xshift < 0 ? "-":"+", abs(config.xshift));
-		sprintf (items[8], "Center Y: %s%02d", config.yshift < 0 ? "-":"+", abs(config.yshift));
-		sprintf (items[9], "Scale  X: %02d", xscale*2);
-		sprintf (items[10], "Scale  Y: %02d", yscale*4);
+    sprintf (items[3], "Bilinear Filter: %s", config.bilinear ? " ON" : "OFF");
+    if (config.ntsc == 1) sprintf (items[4], "NTSC Filter: COMPOSITE");
+		else if (config.ntsc == 2) sprintf (items[4], "NTSC Filter: S-VIDEO");
+		else if (config.ntsc == 3) sprintf (items[4], "NTSC Filter: RGB");
+		else sprintf (items[4], "NTSC Filter: OFF");
+		sprintf (items[5], "Borders: %s", config.overscan ? " ON" : "OFF");
+		sprintf (items[6], "Center X: %s%02d", config.xshift < 0 ? "-":"+", abs(config.xshift));
+		sprintf (items[7], "Center Y: %s%02d", config.yshift < 0 ? "-":"+", abs(config.yshift));
+		sprintf (items[8], "Scale  X: %02d", xscale*2);
+		sprintf (items[9], "Scale  Y: %02d", yscale*4);
 
 		ret = domenu (&items[0], count, 1);
 
@@ -382,44 +379,40 @@ void dispmenu ()
 				bitmap.viewport.changed = 1;
 				break;
 
-			case 4: /*** GX scaler ***/
-				config.gxscaler = (config.gxscaler + 1) % 3;
-				break;
-
-      case 5: /*** NTSC filter ***/
+      case 4: /*** NTSC filter ***/
 				config.ntsc ++;
         if (config.ntsc > 3) config.ntsc = 0;
 				bitmap.viewport.changed = 1;
 				break;
 
-      case 6: /*** overscan emulation ***/
+      case 5: /*** overscan emulation ***/
 				config.overscan ^= 1;
 				bitmap.viewport.x = config.overscan ? ((reg[12] & 1) ? 16 : 12) : 0;
 				bitmap.viewport.y = config.overscan ? (((reg[1] & 8) ? 0 : 8) + (vdp_pal ? 24 : 0)) : 0;
 				bitmap.viewport.changed = 1;
 				break;
 
-			case 7:	/*** Center X ***/
-			case -9:
+			case 6:	/*** Center X ***/
+			case -8:
 				if (ret<0) config.xshift --;
 				else config.xshift ++;
 				break;
 
-			case 8:	/*** Center Y ***/
-			case -10:
+			case 7:	/*** Center Y ***/
+			case -9:
 				if (ret<0) config.yshift --;
 				else config.yshift ++;
 				break;
 			
-			case 9:	/*** Scale X ***/
-			case -11:
+			case 8:	/*** Scale X ***/
+			case -10:
 				if (config.aspect) break;
         if (ret<0) config.xscale --;
 				else config.xscale ++;
 				break;
 
-			case 10:	/*** Scale Y ***/
-			case -12:
+			case 9:	/*** Scale Y ***/
+			case -11:
 				if (config.aspect) break;
 				if (ret<0) config.yscale --;
 				else config.yscale ++;
@@ -872,6 +865,7 @@ int loadsavemenu (int which)
           }
         }
 #endif
+        fatEnableReadAhead (PI_DEFAULT, 6, 64);
 				if (which == 1) quit = ManageState(ret-1,device);
 				else if (which == 0) quit = ManageSRAM(ret-1,device);
 				if (quit) return 1;
@@ -978,6 +972,7 @@ void loadmenu ()
         }
       }
 #endif
+        fatEnableReadAhead (PI_DEFAULT, 6, 64);
 				quit = OpenSD();
 				break;
 
@@ -1236,6 +1231,7 @@ void MainMenu ()
 
 	/*** Reinitialize GX ***/
   ogc_video__reset();
+  odd_frame = 1;
 
 #ifndef HW_RVL
 	/*** Stop the DVD from causing clicks while playing ***/

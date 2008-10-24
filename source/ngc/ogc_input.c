@@ -642,49 +642,46 @@ void ogc_input__set_defaults(void)
   /* default device assignation */
   for (i=0; i<MAX_DEVICES; i++)
   {
-#ifdef HW_RVL
-    if (i < 4)
-    {
-      /* autodetect connected controller */
-      exp = 255;
-      WPAD_Probe(i, &exp);
-      if (exp <= WPAD_EXP_CLASSIC)
-      {
-        /* set expansion controller (or wiimote if no expansion) as default */
-        config.input[i].device = exp + 1;
-        config.input[i].port = i;
-      }
-      else
-      {
-        /* set gamepad as default */
-        config.input[i].device = 0;
-        config.input[i].port = i;
+    /* set gamepad as default */
+    config.input[i].device = (i < 4) ? 0 : -1;
+    config.input[i].port = i%4;
+  }
 
-        /* look for unassigned wiimotes */
-        int j;
-        for (j=0; j<i; j++)
-        {
-          /* expansion is used, wiimote is free */
-          if (config.input[j].device > 1)
-          {
-            /* assign wiimote  */
-            config.input[i].device = 1;
-            config.input[i].port = j;
-          }
-        }
-      }
+#ifdef HW_RVL
+  int j;
+  for (i=0; i<4; i++)
+  {
+    /* autodetect connected controller */
+    exp = 255;
+    WPAD_Probe(i, &exp);
+    if (exp <= WPAD_EXP_CLASSIC)
+    {
+      /* set expansion controller (or wiimote if no expansion) as default */
+      config.input[i].device = exp + 1;
+      config.input[i].port = i;
     }
     else
     {
-      /* set gamepad if not assigned */
-      config.input[i].device = (config.input[i-4].device == 0) ? -1 : 0;
+      /* look for unassigned wiimotes */
+      for (j=0; j<i; j++)
+      {
+        /* classic is used, wiimote is free */
+        if (config.input[j].device == (WPAD_EXP_CLASSIC + 1))
+        {
+          /* assign wiimote  */
+          config.input[i].device = 1;
+          config.input[i].port = j;
+        }
+      }
     }
-
-#else
-    /* set gamepad as default */
-    config.input[i].device = (i < 4) ? 0 : -1;
-#endif
   }
+
+  for (i=4; i<MAX_DEVICES; i++)
+  {
+    /* set gamepad if not assigned */
+    config.input[i].device = (config.input[i%4].device == 0) ? -1 : 0;
+  }
+#endif
 }
 
 void ogc_input__update(void)

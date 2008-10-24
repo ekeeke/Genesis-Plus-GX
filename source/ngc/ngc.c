@@ -126,11 +126,11 @@ int main (int argc, char *argv[])
 
   /* Initialize SDCARD Interface (LibFAT) */
   use_FAT = 0;
-  if (fatInitDefault() == true)
-  {
-    fatEnableReadAhead (PI_DEFAULT, 6, 64);
-    use_FAT = 1;
-  }
+#ifdef HW_RVL
+  if (fatInit (8, false) == true) use_FAT = 1;
+#else
+  if (fatInitDefault() == true) use_FAT = 1;
+#endif
 
   /* Restore User Configuration */
   set_config_defaults();
