@@ -395,18 +395,25 @@ static void gxStart(void)
 static void gxScale(GXRModeObj *rmode)
 {
   int scale = 0;
-  
-  /* GX filtering is disabled, VI handles full strecthing */
-  if (!config.bilinear && (vwidth < 640)) rmode->fbWidth = vwidth;
-  else rmode->fbWidth = 640;
 
-  /* Configure GX scaler and VI width */
+  /* GX Scaler (by default, use EFB maximal width) */
+  rmode->fbWidth = 640;
+  if (!config.bilinear)
+{
+    /* try to prevent GX bilinear filtering */
+    /* if possible, let GX simply doubles the width, otherwise disable GX stretching completely */
+    if ((vwidth * 2) <= 640) rmode->fbWidth = vwidth * 2; 
+    else if (vwidth <= 640) rmode->fbWidth = vwidth;
+  }
+
+  /* Horizontal Scaling (GX/VI) */
   if (xscale > (rmode->fbWidth/2))
   {
     /* check max upscaling */
     if (xscale > 360)
     {
-      scale = xscale - 360; /* save offset for later */
+      /* save offset for later */
+      scale = xscale - 360;
       xscale = 360;
     }
 
@@ -416,16 +423,16 @@ static void gxScale(GXRModeObj *rmode)
 
     /* set GX scaling to max EFB width */
     scale += (rmode->fbWidth/2);
-  }
-  else
-  {
+    }
+    else
+    {
     /* VI should not upscale anything */
     rmode->viWidth = rmode->fbWidth;
     rmode->viXOrigin = (720 - rmode->fbWidth) / 2;
 
     /* set GX scaling to max EFB width */
     scale = xscale;
-  }
+		}
 
   /* update GX scaler (Vertex Position Matrix) */
   square[6] = square[3]  =  scale + xshift;
@@ -433,13 +440,13 @@ static void gxScale(GXRModeObj *rmode)
   square[4] = square[1]  =  yscale + yshift;
 	square[7] = square[10] =  -yscale + yshift;
 	draw_init();
-}	
+  }
 
 /* Set Aspect Ratio (depending on current configuration) */
 void ogc_video__aspect()
-{
-  if (config.aspect)
   {
+    if (config.aspect)
+	  {
     /* original aspect ratio */
     /* the following values have been detected from comparison with a real 50/60hz Mega Drive */
     if (config.overscan)
@@ -456,22 +463,22 @@ void ogc_video__aspect()
       yscale = bitmap.viewport.h / 2;
 		  if (vdp_pal && (!gc_pal || config.render)) yscale = yscale * 243 / 288;
 		  else if (!vdp_pal && gc_pal && !config.render) yscale = yscale * 288 / 243;
-		}
+    }
 
     xshift = 8 + config.xshift; /* default RGB offset, composite might be shifted less */
     yshift = (vdp_pal ? 1 : 3) - (config.overscan ? 0 : 1) + config.yshift;
-  }
+	}
   else
   {
     /* manual aspect ratio (default is fullscreen) */
     if (config.overscan)
-	  {
+    {
       /* borders are emulated */
       xscale = 352;
       yscale = (gc_pal && !config.render) ? (vdp_pal ? (268*144 / bitmap.viewport.h):143) : (vdp_pal ? (224*144 / bitmap.viewport.h):120);
-    }
-    else
-    {
+  }
+  else
+  {
       xscale = 320;
       yscale = (gc_pal && !config.render) ? 134 : 112;
     }
@@ -584,6 +591,8 @@ void ogc_video__update()
   /* check if viewport has changed */
   if (bitmap.viewport.changed)
   {
+    bitmap.viewport.changed = 0;
+    
     /* update texture size */
     vwidth  = bitmap.viewport.w + 2 * bitmap.viewport.x;
     vheight = bitmap.viewport.h + 2 * bitmap.viewport.y;

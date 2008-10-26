@@ -15,21 +15,21 @@ CURRENT:
 - improved HBLANK flag accuracy, fixes line flickering in "Gouketsuji Ichizoku"
 - re-enabled Z80 banked access to WRAM, fixes hang-up in "Mamono Hunter Youko"
 - modified JCART emulation, fixes corrupted tracks logo in "Micro Machines 2"
-- added Blargg's NTSC Filters support (emulates NTSC composite video artifacts)
+- added Blargg's NTSC Filters support (NTSC composite video artifacts emulation)
 
 [NGC/Wii]
 - remove useless libsamplerate settings in "HQ YM2612" mode, only keeps SRC_LINEAR (faster) and SRC_SINC_FAST (better)
 - implemented fast scrolling in menus using Wiimote D-PAD
 - fixed config file incompatibilities when switching between Gamecube and Wii versions
-- added an option to enable/disable bilinear filtering (can reduce scroll tearing sometime)
-- added antialiasing support (optional)
-- modified Xscale/Yscale values to show scaled width/height instead of scaling offsets
-- removed embedded font, back to internal IPL font: it should still works for Qoob users (thanks to emukiddid !)
+- added an option to enable/disable bilinear filtering
+- rewrote video scaling code
+- removed embedded font, back to internal IPL font: it should still works for Qoob users (fix from emukiddid)
+- improved SDCARD access speed (svpe's libogc patch)
+- added SDHC support (marcan's libogc patch)
 
 
 [NGC]
 - added proper 480p menu detection for NTSC Gamecube users
-- prevents FAT automatic operations if no SDCARD is present
 
 
 

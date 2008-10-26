@@ -4,10 +4,9 @@
 #include <fat.h>
 #include <sys/dir.h>
 
-#define CONFIG_VERSION "GENPLUS 1.2.6 "
+#define CONFIG_VERSION "GENPLUS 1.2.2 "
 
 t_config config;
-bool use_FAT;
 
 void config_save()
 {

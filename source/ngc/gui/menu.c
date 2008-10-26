@@ -857,15 +857,10 @@ int loadsavemenu (int which)
         if ((device == 0) || (device == 3))
         {
           PARTITION_INTERFACE dev = device ? PI_USBSTORAGE : PI_INTERNAL_SD;
-          if (FatIsMounted(dev)) fatSetDefaultInterface(dev);
-          else
-          {
-            WaitPrompt ("Device not found!");
-            break;
-          }
+          fatSetDefaultInterface(dev);
+          fatEnableReadAhead (dev, 6, 64);
         }
 #endif
-        fatEnableReadAhead (PI_DEFAULT, 6, 64);
 				if (which == 1) quit = ManageState(ret-1,device);
 				else if (which == 0) quit = ManageSRAM(ret-1,device);
 				if (quit) return 1;
@@ -964,15 +959,10 @@ void loadmenu ()
       case 2:
       {
         PARTITION_INTERFACE dev = (ret&2) ? PI_USBSTORAGE : PI_INTERNAL_SD;
-        if (FatIsMounted(dev)) fatSetDefaultInterface(dev);
-        else
-        {
-          WaitPrompt ("Device not found!");
-          break;
-        }
+        fatSetDefaultInterface(dev);
+        fatEnableReadAhead (dev, 6, 64);
       }
 #endif
-        fatEnableReadAhead (PI_DEFAULT, 6, 64);
 				quit = OpenSD();
 				break;
 

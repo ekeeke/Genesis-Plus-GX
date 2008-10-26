@@ -1170,10 +1170,10 @@ INLINE void chan_calc(FM_CH *CH)
 		/* add support for 3 slot mode */
     if ((ym2612.OPN.ST.mode & 0xC0) && (CH == &ym2612.CH[2]))
     {
-      update_phase_lfo_slot(&ym2612.CH[2].SLOT[SLOT1], CH->pms, ym2612.OPN.SL3.block_fnum[1]);
-      update_phase_lfo_slot(&ym2612.CH[2].SLOT[SLOT2], CH->pms, ym2612.OPN.SL3.block_fnum[2]);
-      update_phase_lfo_slot(&ym2612.CH[2].SLOT[SLOT3], CH->pms, ym2612.OPN.SL3.block_fnum[0]);
-      update_phase_lfo_slot(&ym2612.CH[2].SLOT[SLOT4], CH->pms, CH->block_fnum);
+      update_phase_lfo_slot(&CH->SLOT[SLOT1], CH->pms, ym2612.OPN.SL3.block_fnum[1]);
+      update_phase_lfo_slot(&CH->SLOT[SLOT2], CH->pms, ym2612.OPN.SL3.block_fnum[2]);
+      update_phase_lfo_slot(&CH->SLOT[SLOT3], CH->pms, ym2612.OPN.SL3.block_fnum[0]);
+      update_phase_lfo_slot(&CH->SLOT[SLOT4], CH->pms, CH->block_fnum);
     }
     else update_phase_lfo_channel(CH);
 	}

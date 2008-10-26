@@ -100,6 +100,7 @@ void reloadrom ()
  ***************************************************************************/
 int FramesPerSecond = 0;
 int frameticker = 0;
+bool use_FAT = 0;
 
 int main (int argc, char *argv[])
 {
@@ -125,12 +126,11 @@ int main (int argc, char *argv[])
 #endif
 
   /* Initialize SDCARD Interface (LibFAT) */
-  use_FAT = 0;
-#ifdef HW_RVL
-  if (fatInit (8, false) == true) use_FAT = 1;
-#else
-  if (fatInitDefault() == true) use_FAT = 1;
-#endif
+  if (fatInitDefault() == true)
+  {
+    use_FAT = 1;
+    fatEnableReadAhead (PI_DEFAULT, 6, 64);
+  }
 
   /* Restore User Configuration */
   set_config_defaults();
