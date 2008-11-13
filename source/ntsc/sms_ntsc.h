@@ -51,8 +51,6 @@ In_row_width is the number of pixels to get to the next input row. Out_pitch
 is the number of *bytes* to get to the next output row. */
 void sms_ntsc_blit( sms_ntsc_t const* ntsc, SMS_NTSC_IN_T const* table, unsigned char* input,
 		int in_width, int vline);
-void sms_ntsc_blit_double( sms_ntsc_t const* ntsc, SMS_NTSC_IN_T const* table, unsigned char* input,
-		int in_width, int vline);
 
 /* Number of output pixels written by blitter for given input width. */
 #define SMS_NTSC_OUT_WIDTH( in_width ) \

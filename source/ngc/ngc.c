@@ -21,10 +21,21 @@
 #include "gcaram.h"
 #include "font.h"
 #include "history.h"
-#ifndef HW_RVL
+
+#ifdef HW_DOL
 #include "dvd.h"
 #else
 #include "di/di.h"
+#endif
+
+#ifdef HW_RVL
+/* Power Button callback */
+static int Shutdown;
+void Power_Off(void)
+{
+  Shutdown = 1;
+  ConfigRequested = 1;
+}
 #endif
 
 /***************************************************************************
@@ -58,7 +69,7 @@ static void load_bios()
 static void init_machine()
 {
   /* Allocate cart_rom here */
-  cart_rom = memalign(32, 0xA00000);
+  cart_rom = memalign(32, 10 * 1024 * 1024);
 
   /* allocate global work bitmap */
   memset (&bitmap, 0, sizeof (bitmap));
@@ -72,7 +83,7 @@ static void init_machine()
   bitmap.viewport.x = 0;
   bitmap.viewport.y = 0;
   bitmap.remap = 1;
-  bitmap.data = malloc (bitmap.width * bitmap.height * bitmap.granularity);
+  bitmap.data = memalign (32, bitmap.width * bitmap.height * bitmap.granularity);
 
   /* default system */
   input.system[0] = SYSTEM_GAMEPAD;
@@ -119,10 +130,15 @@ int main (int argc, char *argv[])
   ogc_input__init();
   ogc_audio__init();
 
-#ifndef HW_RVL
+#ifdef HW_DOL
   /* Initialize GC DVD interface */
   DVD_Init ();
   dvd_drive_detect();
+#endif
+
+#ifdef HW_RVL
+  /* Power Button callback */
+  SYS_SetPowerCallback(Power_Off);
 #endif
 
   /* Initialize SDCARD Interface (LibFAT) */
@@ -224,7 +240,21 @@ int main (int argc, char *argv[])
     {
       /* reset AUDIO */
       ogc_audio__reset();
-      
+
+#ifdef HW_RVL
+      /* wii shutdown */
+      if (Shutdown)
+      {
+        /* autosave SRAM/State */
+        memfile_autosave();
+
+        /* shutdown Wii */
+        Shutdown = 0;
+        DI_Close();
+        SYS_ResetSystem(SYS_POWEROFF, 0, 0);
+      }
+#endif
+  
       /* go to menu */
       MainMenu ();
       ConfigRequested = 0;

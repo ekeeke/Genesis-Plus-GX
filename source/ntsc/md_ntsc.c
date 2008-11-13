@@ -97,7 +97,16 @@ void md_ntsc_blit( md_ntsc_t const* ntsc, MD_NTSC_IN_T const* table, unsigned ch
 				MD_NTSC_ADJ_IN( table[*input++] ),
 				MD_NTSC_ADJ_IN( table[*input++] ) );
 
+#ifdef NGC
+  /* directly fill the RGB565 texture */
+  /* one tile is 32 byte = 4x4 pixels */
+  /* tiles are stored continuously in texture memory */
+  in_width = MD_NTSC_OUT_WIDTH(in_width) >> 2;
+  int offset = ((in_width << 5) * (vline >> 2)) + ((vline & 3) * 8);
+  md_ntsc_out_t* restrict line_out  = (md_ntsc_out_t*)(texturemem + offset);
+#else
   md_ntsc_out_t* restrict line_out  = (md_ntsc_out_t*)(&bitmap.data[(vline * bitmap.pitch)]);
+#endif
 
   int n;
 
@@ -112,6 +121,10 @@ void md_ntsc_blit( md_ntsc_t const* ntsc, MD_NTSC_IN_T const* table, unsigned ch
 		MD_NTSC_RGB_OUT( 2, *line_out++, MD_NTSC_OUT_DEPTH );
 		MD_NTSC_RGB_OUT( 3, *line_out++, MD_NTSC_OUT_DEPTH );
 
+#ifdef NGC
+    line_out += 12;
+#endif
+
 		MD_NTSC_COLOR_IN( 2, ntsc, MD_NTSC_ADJ_IN( table[*input++] ) );
 		MD_NTSC_RGB_OUT( 4, *line_out++, MD_NTSC_OUT_DEPTH );
 		MD_NTSC_RGB_OUT( 5, *line_out++, MD_NTSC_OUT_DEPTH );
@@ -119,7 +132,11 @@ void md_ntsc_blit( md_ntsc_t const* ntsc, MD_NTSC_IN_T const* table, unsigned ch
 		MD_NTSC_COLOR_IN( 3, ntsc, MD_NTSC_ADJ_IN( table[*input++] ) );
 		MD_NTSC_RGB_OUT( 6, *line_out++, MD_NTSC_OUT_DEPTH );
 		MD_NTSC_RGB_OUT( 7, *line_out++, MD_NTSC_OUT_DEPTH );
-	}
+
+  #ifdef NGC
+    line_out += 12;
+  #endif
+}
 
 	/* finish final pixels */
 	MD_NTSC_COLOR_IN( 0, ntsc, MD_NTSC_ADJ_IN( table[*input++] ) );
@@ -130,6 +147,10 @@ void md_ntsc_blit( md_ntsc_t const* ntsc, MD_NTSC_IN_T const* table, unsigned ch
 	MD_NTSC_RGB_OUT( 2, *line_out++, MD_NTSC_OUT_DEPTH );
 	MD_NTSC_RGB_OUT( 3, *line_out++, MD_NTSC_OUT_DEPTH );
 
+#ifdef NGC
+  line_out += 12;
+#endif
+
   MD_NTSC_COLOR_IN( 2, ntsc, md_ntsc_black );
 	MD_NTSC_RGB_OUT( 4, *line_out++, MD_NTSC_OUT_DEPTH );
 	MD_NTSC_RGB_OUT( 5, *line_out++, MD_NTSC_OUT_DEPTH );
@@ -138,67 +159,4 @@ void md_ntsc_blit( md_ntsc_t const* ntsc, MD_NTSC_IN_T const* table, unsigned ch
 	MD_NTSC_RGB_OUT( 6, *line_out++, MD_NTSC_OUT_DEPTH );
 	MD_NTSC_RGB_OUT( 7, *line_out++, MD_NTSC_OUT_DEPTH );
 }
-
-/* draw the pixel along with darkened pixel*/
-#define PIXEL_OUT_DOUBLE( x )\
-{\
-	MD_NTSC_RGB_OUT( x, pixel, MD_NTSC_OUT_DEPTH );\
-	*line_out++  = pixel;\
-	*line_out2++ = pixel - (pixel >> 2 & 0x18E3);\
-}
-
-void md_ntsc_blit_double( md_ntsc_t const* ntsc, MD_NTSC_IN_T const* table, unsigned char* input,
-		int in_width, int vline)
-{
-	int const chunk_count = in_width / md_ntsc_in_chunk - 1;
-
-	MD_NTSC_BEGIN_ROW( ntsc, md_ntsc_black,
-				MD_NTSC_ADJ_IN( table[*input++] ),
-				MD_NTSC_ADJ_IN( table[*input++] ),
-				MD_NTSC_ADJ_IN( table[*input++] ) );
-
-  md_ntsc_out_t* restrict line_out  = (md_ntsc_out_t*)(&bitmap.data[(vline * bitmap.pitch)]);
-  md_ntsc_out_t* restrict line_out2 = (md_ntsc_out_t*)(&bitmap.data[((vline^1) * bitmap.pitch)]);
-
-  int n;
-	unsigned pixel;
-
-  for ( n = chunk_count; n; --n )
-	{
-		/* order of input and output pixels must not be altered */
-		MD_NTSC_COLOR_IN( 0, ntsc, MD_NTSC_ADJ_IN( table[*input++] ) );
-		PIXEL_OUT_DOUBLE(0);
-		PIXEL_OUT_DOUBLE(1);
-
-		MD_NTSC_COLOR_IN( 1, ntsc, MD_NTSC_ADJ_IN( table[*input++] ) );
-		PIXEL_OUT_DOUBLE(2);
-		PIXEL_OUT_DOUBLE(3);
-
-		MD_NTSC_COLOR_IN( 2, ntsc, MD_NTSC_ADJ_IN( table[*input++] ) );
-		PIXEL_OUT_DOUBLE(4);
-		PIXEL_OUT_DOUBLE(5);
-
-		MD_NTSC_COLOR_IN( 3, ntsc, MD_NTSC_ADJ_IN( table[*input++] ) );
-		PIXEL_OUT_DOUBLE(6);
-		PIXEL_OUT_DOUBLE(7);
-	}
-
-	/* finish final pixels */
-	MD_NTSC_COLOR_IN( 0, ntsc, MD_NTSC_ADJ_IN( table[*input++] ) );
-	PIXEL_OUT_DOUBLE(0);
-	PIXEL_OUT_DOUBLE(1);
-
-  MD_NTSC_COLOR_IN( 1, ntsc, md_ntsc_black );
-	PIXEL_OUT_DOUBLE(2);
-	PIXEL_OUT_DOUBLE(3);
-
-	MD_NTSC_COLOR_IN( 2, ntsc, md_ntsc_black );
-	PIXEL_OUT_DOUBLE(4);
-	PIXEL_OUT_DOUBLE(5);
-
-	MD_NTSC_COLOR_IN( 3, ntsc, md_ntsc_black );
-	PIXEL_OUT_DOUBLE(6);
-	PIXEL_OUT_DOUBLE(7);
-}
-
 #endif

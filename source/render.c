@@ -584,35 +584,54 @@ void render_shutdown(void)
 }
 
 /*--------------------------------------------------------------------------*/
-/* Line render function                           */
+/* Line render function                                                     */
 /*--------------------------------------------------------------------------*/
+#ifdef NGC
+static inline void remap_texture(uint8 *src, uint16 *dst, int tile_cnt)
+{
+  int count;
+  uint16 *table = pixel_16;
+
+  for(count = 0; count < tile_cnt; count ++)
+  {
+    /* one tile is 4 pixels wide */
+    *dst++ = table[*src++];
+    *dst++ = table[*src++];
+    *dst++ = table[*src++];
+    *dst++ = table[*src++];
+
+    /* skip next three 4-pixels lines */
+    dst += 12;
+  }
+}
+#endif
+
 void remap_buffer(int line, int width)
 {
   /* get line offset from framebuffer */
   int vline = (line + bitmap.viewport.y) % lines_per_frame;
     
+  /* double resolution mode */
+  if (config.render && interlaced) vline = (vline * 2) + odd_frame;
+
   /* NTSC Filter */
   if (config.ntsc)
   {
-    if (reg[12]&1)
-    {
-      if (config.render) md_ntsc_blit_double(&md_ntsc, ( MD_NTSC_IN_T const * )pixel_16, tmp_buf+0x20-bitmap.viewport.x, width, (vline * 2) + (interlaced ? odd_frame:0));
-      else md_ntsc_blit(&md_ntsc, ( MD_NTSC_IN_T const * )pixel_16, tmp_buf+0x20-bitmap.viewport.x, width, vline);
-    }
-    else
-    {
-      if (config.render) sms_ntsc_blit_double(&sms_ntsc, ( SMS_NTSC_IN_T const * )pixel_16, tmp_buf+0x20-bitmap.viewport.x, width, (vline * 2) + (interlaced ? odd_frame:0));
-      else sms_ntsc_blit(&sms_ntsc, ( SMS_NTSC_IN_T const * )pixel_16, tmp_buf+0x20-bitmap.viewport.x, width, vline);
-    }
+    if (reg[12]&1) md_ntsc_blit(&md_ntsc, ( MD_NTSC_IN_T const * )pixel_16, tmp_buf+0x20-bitmap.viewport.x, width, vline);
+    else sms_ntsc_blit(&sms_ntsc, ( SMS_NTSC_IN_T const * )pixel_16, tmp_buf+0x20-bitmap.viewport.x, width, vline);
     return;
   }
-
-  /* double resolution mode */
-  if (config.render && interlaced) vline = (vline * 2) + odd_frame;
 	
-  void *out =((void *)&bitmap.data[(vline * bitmap.pitch)]);
+#ifdef NGC
+  /* directly fill the RGB565 texture */
+  /* one tile is 32 byte = 4x4 pixels */
+  /* tiles are stored continuously in texture memory */
+  width = width >> 2;
+  int offset = ((width << 5) * (vline >> 2)) + ((vline & 3) * 8);
+  remap_texture(tmp_buf+0x20-bitmap.viewport.x, (uint16 *)(texturemem + offset), width);
 
-#ifndef NGC
+#else
+  void *out =((void *)&bitmap.data[(vline * bitmap.pitch)]);
   switch(bitmap.depth)
   {
 		case 8:
@@ -628,11 +647,8 @@ void remap_buffer(int line, int width)
 			remap_32(tmp_buf+0x20-bitmap.viewport.x, (uint32 *)out, pixel_32, width);
       break;
   }
-#else
-	remap_16(tmp_buf+0x20-bitmap.viewport.x, (uint16 *)out, pixel_16, width);
 #endif
 }
-
 
 void render_line(int line, uint8 odd_frame)
 {

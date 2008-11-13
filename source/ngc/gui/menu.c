@@ -274,8 +274,13 @@ void miscmenu ()
 
 			case 2:	/*** BIOS support ***/
         config.bios_enabled ^= 1;
-        system_reset ();
-				break;
+        if (genromsize || (config.bios_enabled == 3)) 
+        {
+ 					system_init ();
+					audio_init(48000);
+          system_reset ();
+				}
+        break;
 
 			case 3:	/*** SVP emulation ***/
 			case -5:
@@ -314,7 +319,7 @@ void dispmenu ()
 	int ret;
 	int quit = 0;
 	int prevmenu = menu;
-	int count = 10;
+	int count = config.aspect ? 8 : 10;
 	char items[10][25];
 
 	strcpy (menutitle, "Press B to return");
@@ -322,9 +327,7 @@ void dispmenu ()
 
 	while (quit == 0)
 	{
-		ogc_video__aspect();
-
-    sprintf (items[0], "Aspect: %s", config.aspect ? "ORIGINAL" : "STRETCH");
+    sprintf (items[0], "Aspect: %s", config.aspect ? "ORIGINAL" : "STRETCHED");
 		if (config.render == 1) sprintf (items[1], "Render: INTERLACED");
 		else if (config.render == 2) sprintf (items[1], "Render: PROGRESSIVE");
 		else sprintf (items[1], "Render: ORIGINAL");
@@ -339,8 +342,8 @@ void dispmenu ()
 		sprintf (items[5], "Borders: %s", config.overscan ? " ON" : "OFF");
 		sprintf (items[6], "Center X: %s%02d", config.xshift < 0 ? "-":"+", abs(config.xshift));
 		sprintf (items[7], "Center Y: %s%02d", config.yshift < 0 ? "-":"+", abs(config.yshift));
-		sprintf (items[8], "Scale  X: %02d", xscale*2);
-		sprintf (items[9], "Scale  Y: %02d", yscale*4);
+		sprintf (items[8], "Scale  X: %s%02d", config.xscale < 0 ? "-":"+", abs(config.xscale));
+		sprintf (items[9], "Scale  Y: %s%02d", config.yscale < 0 ? "-":"+", abs(config.yscale));
 
 		ret = domenu (&items[0], count, 1);
 
@@ -348,7 +351,7 @@ void dispmenu ()
 		{
 			case 0: /*** config.aspect ratio ***/
 				config.aspect ^= 1;
-				bitmap.viewport.changed = 1;
+        count = config.aspect ? 8 : 10;
 				break;
 
 			case 1:	/*** rendering ***/
@@ -832,9 +835,6 @@ int loadsavemenu (int which)
     if (device == 0) sprintf(items[0], "Device: SDCARD");
     else if (device == 1) sprintf(items[0], "Device: MCARD A");
     else if (device == 2) sprintf(items[0], "Device: MCARD B");
-#ifdef HW_RVL
-    else if (device == 3) sprintf(items[0], "Device: USB");
-#endif
 
 		ret = domenu (&items[0], count, 0);
 		switch (ret)
@@ -844,23 +844,11 @@ int loadsavemenu (int which)
 				break;
 
 			case 0:
-#ifdef HW_RVL
-        device = (device + 1)%4;
-#else
         device = (device + 1)%3;
-#endif  
         break;
 
 			case 1:
 			case 2:
-#ifdef HW_RVL
-        if ((device == 0) || (device == 3))
-        {
-          PARTITION_INTERFACE dev = device ? PI_USBSTORAGE : PI_INTERNAL_SD;
-          fatSetDefaultInterface(dev);
-          fatEnableReadAhead (dev, 6, 64);
-        }
-#endif
 				if (which == 1) quit = ManageState(ret-1,device);
 				else if (which == 0) quit = ManageSRAM(ret-1,device);
 				if (quit) return 1;
@@ -917,23 +905,17 @@ int filemenu ()
  *
  ****************************************************************************/
 static u8 load_menu = 0;
+static u8 dvd_on = 0;
 
-void loadmenu ()
+int loadmenu ()
 {
-	int ret;
+	int prevmenu = menu;
+  int ret;
 	int quit = 0;
-#ifdef HW_RVL
-  int count = 5;
-  char item[5][25] = {
-#else
-  int count = 5;
-  char item[5][25] = {
-#endif
+  int count = 3 + dvd_on;
+  char item[4][25] = {
     {"Load Recent"},
 		{"Load from SDCARD"},
-#ifdef HW_RVL
-		{"Load from USB"},
-#endif
     {"Load from DVD"},
     {"Stop DVD Motor"}
 	};
@@ -951,40 +933,34 @@ void loadmenu ()
 				break;
 
 			case 0: /*** Load Recent ***/
-				quit = OpenHistory();
+				load_menu = menu;
+        if (OpenHistory()) return 1;
 				break;
 
 			case 1:  /*** Load from SCDARD ***/
-#ifdef HW_RVL
-      case 2:
-      {
-        PARTITION_INTERFACE dev = (ret&2) ? PI_USBSTORAGE : PI_INTERNAL_SD;
-        fatSetDefaultInterface(dev);
-        fatEnableReadAhead (dev, 6, 64);
-      }
-#endif
-				quit = OpenSD();
+				load_menu = menu;
+				if (OpenSD()) return 1;
 				break;
 
-#ifdef HW_RVL
-      case 3:	 /*** Load from DVD ***/
-#else
       case 2:
-#endif
-        quit = OpenDVD();
+				load_menu = menu;
+        if (OpenDVD())
+        {
+          dvd_on = 1;
+          return 1;
+        }
         break;
-  
-#ifdef HW_RVL
-      case 4:  /*** Stop DVD Disc ***/
-#else
-      case 3:
-#endif
+
+      case 3:  /*** Stop DVD Disc ***/
         dvd_motor_off();
+        dvd_on = 0;
+        count = 3 + dvd_on;
 				break;
     }
 	}
 
-	load_menu = menu;
+  menu = prevmenu;
+  return 0;
 }
 
 /***************************************************************************
@@ -1139,6 +1115,12 @@ void MainMenu ()
 	VIDEO_WaitVSync();
 	VIDEO_WaitVSync();
 
+  /* autosave SRAM (Freeze States should be saved on exit only) */
+  int temp = config.freeze_auto;
+  config.freeze_auto = -1;
+  memfile_autosave();
+  config.freeze_auto = temp;
+
 	while (quit == 0)
 	{
     crccheck = crc32 (0, &sram.sram[0], 0x10000);
@@ -1163,16 +1145,13 @@ void MainMenu ()
 			case 2:  /*** Emulator Reset ***/
 				if (genromsize || (config.bios_enabled == 3))
 				{
-          system_init ();
-          audio_init(48000);
           system_reset (); 
 					quit = 1;
 				}
 				break;
 
 			case 3:  /*** Load ROM Menu ***/
-        loadmenu();
-        menu = 0;
+        quit = loadmenu();
 				break;
 
 			case 4:  /*** Memory Manager ***/

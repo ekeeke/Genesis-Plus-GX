@@ -3,33 +3,45 @@ Genesis Plus for Gamecube
 
 CURRENT:
 ---------
+
 [Genesis]
-- YM2612(MAME): fixed EG Decay->Substain transition when SL & DR are minimals, fix tracks #3 and #9 in "Mega Turrican"
-- YM2612(MAME): fixed a bug in SSG-EG emulation code, fix Level 1 music in "Alisia Dragoon"
-- YM2612(MAME): modified SSG-EG Decay End Level, fix some sound effects (ChainSaw, Zap...) in "Beavis & Butthead"
-- YM2612(MAME): improved Detune overflow accuracy, fix very high frequency sounds in many games
-- YM2612(MAME): fixed registers 0x20-0x26 Reset state, fix intro music in "B.O.B"
-- YM2612(MAME): removed previous fix with KEY ON, fix "Flamethrower" sound effect in "Alien 3"
-- adjusted HCounter values, fixes line flickering in "Sonic 3D" bonus stage
-- adjusted VINT timing, fixes hang-up in "V.R Troopers"
-- improved HBLANK flag accuracy, fixes line flickering in "Gouketsuji Ichizoku"
-- re-enabled Z80 banked access to WRAM, fixes hang-up in "Mamono Hunter Youko"
-- modified JCART emulation, fixes corrupted tracks logo in "Micro Machines 2"
-- added Blargg's NTSC Filters support (NTSC composite video artifacts emulation)
+
+- YM2612(MAME):
+  .fixed EG Decay->Substain transition when SL & DR are minimals: fix tracks #3 and #9 in "Mega Turrican"
+  .fixed a bug in SSG-EG emulation code: fix Level 1 music in "Alisia Dragoon"
+  .modified SSG-EG Decay End Level: fix some sound effects (ChainSaw, Zap...) in "Beavis & Butthead"
+  .improved Detune overflow accuracy: fix very high frequency sounds in many games
+  .fixed registers 0x20-0x26 Reset state: fix intro music in "B.O.B"
+  .reverted incorrect fix with KEY ON: fix "Flamethrower" sound effect in "Alien 3" and many other games
+
+- adjusted HCounter values: fixes line flickering in "Sonic 3D" bonus stage
+- adjusted VINT timing: fixes hang-up in "V.R Troopers"
+- improved HBLANK flag accuracy: fixes line flickering in "Gouketsuji Ichizoku"
+- fixed broken Z80 access to WRAM: fixes hang-up in "Mamono Hunter Youko"
+- modified JCART emulation: fixes corrupted tracks logo in "Micro Machines 2"
+- added Blargg's NTSC Filters support (NTSC video artifacts emulation)
+
 
 [NGC/Wii]
-- remove useless libsamplerate settings in "HQ YM2612" mode, only keeps SRC_LINEAR (faster) and SRC_SINC_FAST (better)
-- implemented fast scrolling in menus using Wiimote D-PAD
-- fixed config file incompatibilities when switching between Gamecube and Wii versions
+
+- remove slowest libsamplerate settings under "HQ YM2612" option, only keeps SRC_LINEAR (faster) and SRC_SINC_FAST (better)
+- implemented fast scrolling in menu using Wiimote D-PAD
 - added an option to enable/disable bilinear filtering
-- rewrote video scaling code
-- removed embedded font, back to internal IPL font: it should still works for Qoob users (fix from emukiddid)
-- improved SDCARD access speed (svpe's libogc patch)
-- added SDHC support (marcan's libogc patch)
+- rewrote video renderer: improved horizontal scaling (VI+GX), faster rendering (direct texture mapping)...
+- removed embedded font, (re)enabled IPL font support: now should works for Qoob users too (thanks to emukiddid)
+- fixed "Reset" button behavior, now acts more like Genesis Reset button ;-)
+- added SDCARD read-ahead cache support (svpe's libogc patches)
+- minor bugfixes and menu tweaks
 
 
-[NGC]
-- added proper 480p menu detection for NTSC Gamecube users
+
+[NGC only]
+- added 480p support in menu
+
+
+[Wii only]
+- added "Power" button support, including shutdown from the wiimote (libogc CVS)
+- added SDHC support (libogc CVS)
 
 
 

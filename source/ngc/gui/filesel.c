@@ -169,7 +169,7 @@ static int parseSDdirectory()
  *
  * Called when a file is selected by the user inside the FileSelector loop.
  ****************************************************************************/ 
-static void FileSelected()
+static int FileSelected()
 {		
 	/* If loading from history then we need to setup a few more things. */
 	if(UseHistory)
@@ -195,10 +195,16 @@ static void FileSelected()
 	
 	rootdir = filelist[selection].offset;
 	rootdirlength = filelist[selection].length;
-	memfile_autosave();
+  memfile_autosave();
   genromsize = LoadFile(cart_rom);
-	reloadrom();
-  memfile_autoload();
+	if (genromsize)
+	{
+	  reloadrom();
+    memfile_autoload();
+    return 1;
+  }
+
+  return 0;
 }
 
 /****************************************************************************
@@ -206,15 +212,14 @@ static void FileSelected()
  *
  * Let user select a file from the File listing
  ****************************************************************************/ 
-static void FileSelector () 
+static int FileSelector () 
 {
   short p;
-  int haverom = 0;
   int redraw = 1;
   int go_up = 0;
   int i,size;
   
-  while (haverom == 0)
+  while (1)
   {
     if (redraw) ShowFiles (offset, selection);
     redraw = 0;
@@ -298,11 +303,11 @@ static void FileSelector ()
       filelist[selection].filename_offset = 0;
       if (UseSDCARD)
       {
-        if (strcmp(filelist[0].filename,"..") != 0) return;
+        if (strcmp(filelist[0].filename,"..") != 0) return 0;
       }
       else
       {
-        if (basedir == rootdir) return;
+        if (basedir == rootdir) return 0;
       }
       go_up = 1;
     }
@@ -311,7 +316,7 @@ static void FileSelector ()
     if (p & PAD_TRIGGER_Z)
     {
       filelist[selection].filename_offset = 0;
-      return;
+      return 0;
     }
     
     /* open selected file or directory */
@@ -357,8 +362,8 @@ static void FileSelector ()
 						{
 							/* quit */
 							WaitPrompt ("No files found !");
-							haverom   = 1;
 							haveSDdir = 0;
+              return 0;
 						}
 					}
 				}
@@ -395,8 +400,7 @@ static void FileSelector ()
 			}
 			else /*** This is a file ***/
 			{
-				FileSelected();
-        haverom = 1;
+				return FileSelected();
 			}
 			redraw = 1;
 		}
@@ -410,6 +414,8 @@ static void FileSelector ()
  ****************************************************************************/ 
 int OpenDVD () 
 {
+  int ret = 0;
+  
   UseSDCARD = 0;
   UseHistory = 0;
   
@@ -459,13 +465,13 @@ int OpenDVD ()
     
     if ((maxfiles = parseDVDdirectory ()))
     {
-	    FileSelector ();
+	    ret = FileSelector ();
       haveDVDdir = 1;
     }
   }
-  else FileSelector ();
+  else ret = FileSelector ();
 
-  return 1;
+  return ret;
 }
  
 /****************************************************************************
@@ -475,6 +481,8 @@ int OpenDVD ()
  ****************************************************************************/ 
 int OpenSD ()
 {
+  int ret = 0;
+
   UseSDCARD = 1;
   UseHistory = 0;
   
@@ -500,7 +508,7 @@ int OpenSD ()
   if ((maxfiles = parseSDdirectory ()))
   {
     /* Select an entry */
-    FileSelector ();
+    ret = FileSelector ();
 		 
     /* memorize last entries list, actual root directory and selection for next access */
     haveSDdir = 1;
@@ -513,7 +521,7 @@ int OpenSD ()
     return 0;
   }
   
-  return 1;
+  return ret;
 }
   
 /****************************************************************************
@@ -566,8 +574,7 @@ int OpenHistory()
 		return 0;
 	}
 	
-	FileSelector();
-  return 1;
+	return FileSelector();
 }
   
 

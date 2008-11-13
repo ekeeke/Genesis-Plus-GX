@@ -31,9 +31,6 @@ md_ntsc_t md_ntsc;
 sms_ntsc_setup_t sms_setup;
 sms_ntsc_t sms_ntsc;
 
-/* Aspect Ratio */
-int xscale, yscale, xshift, yshift;
-
 /*** PAL 50hz flag ***/
 int gc_pal = 0;
 
@@ -41,6 +38,7 @@ int gc_pal = 0;
 unsigned int *xfb[2];	/*** Double buffered            ***/
 int whichfb = 0;		  /*** External framebuffer index ***/
 GXRModeObj *vmode;    /*** Menu video mode            ***/
+u8 *texturemem;       /*** Texture Data               ***/
 
 /*** GX ***/
 #define TEX_WIDTH         360 * 2
@@ -50,11 +48,10 @@ GXRModeObj *vmode;    /*** Menu video mode            ***/
 #define VASPECT           240
 
 static u8 gp_fifo[DEFAULT_FIFO_SIZE] ATTRIBUTE_ALIGN (32);
-static u8 texturemem[TEX_WIDTH * (TEX_HEIGHT + 8) * 2] ATTRIBUTE_ALIGN (32);
 static GXTexObj texobj;
 static Mtx view;
-static int vwidth, vheight;
-static long long int stride;
+static u32 vwidth, vheight;
+static u32 stride;
 
 /*** custom Video modes (used to emulate original console video modes) ***/
 /* 288 lines progressive (PAL 50Hz) */
@@ -65,7 +62,7 @@ GXRModeObj TV50hz_288p =
   286,             // efbHeight
   286,             // xfbHeight
   (VI_MAX_WIDTH_PAL - 720)/2,         // viXOrigin
-  (VI_MAX_HEIGHT_PAL - 572)/2,        // viYOrigin
+  (VI_MAX_HEIGHT_PAL/2 - 572/2)/2,        // viYOrigin
   720,             // viWidth
   572,             // viHeight
   VI_XFBMODE_SF,   // xFBmode
@@ -100,7 +97,7 @@ GXRModeObj TV50hz_288i =
     286,             // efbHeight
     286,             // xfbHeight
     (VI_MAX_WIDTH_PAL - 720)/2,         // viXOrigin
-    (VI_MAX_HEIGHT_PAL - 572)/2,        // viYOrigin
+    (VI_MAX_HEIGHT_PAL/2 - 572/2)/2,        // viYOrigin
     720,             // viWidth
     572,             // viHeight
     VI_XFBMODE_SF,   // xFBmode
@@ -205,7 +202,7 @@ GXRModeObj TV60hz_240i =
     240,             // efbHeight
     240,             // xfbHeight
     (VI_MAX_WIDTH_NTSC - 720)/2,        // viXOrigin
-    (VI_MAX_HEIGHT_NTSC - 480)/2,       // viYOrigin
+    (VI_MAX_HEIGHT_NTSC/2 - 480/2)/2,       // viYOrigin
     720,             // viWidth
     480,             // viHeight
     VI_XFBMODE_SF,   // xFBmode
@@ -326,19 +323,17 @@ static void draw_init(void)
   memset (&view, 0, sizeof (Mtx));
   guLookAt(view, &cam.pos, &cam.up, &cam.view);
   GX_LoadPosMtxImm (view, GX_PNMTX0);
-
-  GX_InvVtxCache ();
 }
 
 /* vertex rendering */
-static void draw_vert(u8 pos, f32 s, f32 t)
+static inline void draw_vert(u8 pos, f32 s, f32 t)
 {
   GX_Position1x8 (pos);
   GX_TexCoord2f32 (s, t);
 }
 
 /* textured quad rendering */
-static void draw_square (void)
+static inline void draw_square (void)
 {
   GX_Begin (GX_QUADS, GX_VTXFMT0, 4);
   draw_vert (3, 0.0, 0.0);
@@ -384,89 +379,45 @@ static void gxStart(void)
   guOrtho(p, vmode->efbHeight/2, -(vmode->efbHeight/2), -(vmode->fbWidth/2), vmode->fbWidth/2, 100, 1000);
   GX_LoadProjectionMtx (p, GX_ORTHOGRAPHIC);
 
-  /*** reset XFB ***/
+  /*** Reset XFB ***/
   GX_CopyDisp (xfb[whichfb ^ 1], GX_TRUE);
 
   /*** Initialize texture data ***/
+  texturemem = memalign(32, TEX_WIDTH * TEX_HEIGHT * 2);
   memset (texturemem, 0, TEX_WIDTH * TEX_HEIGHT * 2);
+
+  /*** Initialize renderer */
+  draw_init();
 }
 
 /* Reset GX/VI scaler */
 static void gxScale(GXRModeObj *rmode)
 {
-  int scale = 0;
+  int temp = 0;
+  int xscale, yscale, xshift, yshift;
 
-  /* GX Scaler (by default, use EFB maximal width) */
-  rmode->fbWidth = 640;
-  if (!config.bilinear)
-{
-    /* try to prevent GX bilinear filtering */
-    /* if possible, let GX simply doubles the width, otherwise disable GX stretching completely */
-    if ((vwidth * 2) <= 640) rmode->fbWidth = vwidth * 2; 
-    else if (vwidth <= 640) rmode->fbWidth = vwidth;
-  }
-
-  /* Horizontal Scaling (GX/VI) */
-  if (xscale > (rmode->fbWidth/2))
+  /* Aspect Ratio (depending on current configuration) */
+  if (config.aspect)
   {
-    /* check max upscaling */
-    if (xscale > 360)
-    {
-      /* save offset for later */
-      scale = xscale - 360;
-      xscale = 360;
-    }
-
-    /* VI handles the remaining upscaling */
-    rmode->viWidth = xscale * 2;
-    rmode->viXOrigin = (720 - (xscale * 2)) / 2;
-
-    /* set GX scaling to max EFB width */
-    scale += (rmode->fbWidth/2);
-    }
-    else
-    {
-    /* VI should not upscale anything */
-    rmode->viWidth = rmode->fbWidth;
-    rmode->viXOrigin = (720 - rmode->fbWidth) / 2;
-
-    /* set GX scaling to max EFB width */
-    scale = xscale;
-		}
-
-  /* update GX scaler (Vertex Position Matrix) */
-  square[6] = square[3]  =  scale + xshift;
-	square[0] = square[9]  = -scale + xshift;
-  square[4] = square[1]  =  yscale + yshift;
-	square[7] = square[10] =  -yscale + yshift;
-	draw_init();
-  }
-
-/* Set Aspect Ratio (depending on current configuration) */
-void ogc_video__aspect()
-  {
-    if (config.aspect)
-	  {
     /* original aspect ratio */
     /* the following values have been detected from comparison with a real 50/60hz Mega Drive */
     if (config.overscan)
 	  {
       /* borders are emulated */
-		  xscale = (reg[12] & 1) ? 360 : 358;
-      if (gc_pal) xscale -= 1;
-      yscale = (gc_pal && !config.render) ? (vdp_pal ? 144:143) : (vdp_pal ? 121:120);
+		  xscale = 358 + ((reg[12] & 1)*2) - gc_pal;
+      yscale = vdp_pal + ((gc_pal && !config.render) ? 143 : 120);
     }
     else
     {
       /* borders are simulated (black) */
-	    xscale = 327;
+	    xscale = 325 + ((reg[12] & 1)*2) - gc_pal;
       yscale = bitmap.viewport.h / 2;
-		  if (vdp_pal && (!gc_pal || config.render)) yscale = yscale * 243 / 288;
-		  else if (!vdp_pal && gc_pal && !config.render) yscale = yscale * 288 / 243;
+		  if (vdp_pal && (!gc_pal || config.render)) yscale = yscale * 240 / 288;
+		  else if (!vdp_pal && gc_pal && !config.render) yscale = yscale * 288 / 240;
     }
 
-    xshift = 8 + config.xshift; /* default RGB offset, composite might be shifted less */
-    yshift = (vdp_pal ? 1 : 3) - (config.overscan ? 0 : 1) + config.yshift;
+    xshift = config.xshift;
+    yshift = 2 - vdp_pal + 2*(gc_pal & !config.render) + config.yshift;
 	}
   else
   {
@@ -476,9 +427,10 @@ void ogc_video__aspect()
       /* borders are emulated */
       xscale = 352;
       yscale = (gc_pal && !config.render) ? (vdp_pal ? (268*144 / bitmap.viewport.h):143) : (vdp_pal ? (224*144 / bitmap.viewport.h):120);
-  }
-  else
-  {
+    }
+    else
+    {
+      /* borders are simulated (black) */
       xscale = 320;
       yscale = (gc_pal && !config.render) ? 134 : 112;
     }
@@ -497,6 +449,51 @@ void ogc_video__aspect()
     yscale *= 2;
     yshift *= 2;
   }
+
+  /* GX Scaler (by default, use EFB maximal width) */
+  rmode->fbWidth = 640;
+  if (!config.bilinear)
+  {
+    /* try to prevent GX bilinear filtering */
+    /* if possible, let GX simply doubles the width, otherwise disable GX stretching completely */
+    int width = vwidth * 4;
+    if ((width * 2) <= 640) rmode->fbWidth = width * 2; 
+    else if (width <= 640) rmode->fbWidth = width;
+  }
+
+  /* Horizontal Scaling (GX/VI) */
+  if (xscale > (rmode->fbWidth/2))
+  {
+    /* max width = 720 pixels */
+    if (xscale > 360)
+    {
+      /* save offset for later */
+      temp = xscale - 360;
+      xscale = 360;
+    }
+
+    /* enable VI scaler */
+    rmode->viWidth = xscale * 2;
+    rmode->viXOrigin = (720 - (xscale * 2)) / 2;
+
+    /* set GX scaling to max EFB width */
+    xscale = temp + (rmode->fbWidth/2);
+  }
+  else
+  {
+    /* disable VI scaler */
+    rmode->viWidth = rmode->fbWidth;
+    rmode->viXOrigin = (720 - rmode->fbWidth) / 2;
+  }
+
+  /* update GX scaler (Vertex Position Matrix) */
+  square[6] = square[3]  =  xscale + xshift;
+	square[0] = square[9]  = -xscale + xshift;
+  square[4] = square[1]  =  yscale + yshift;
+	square[7] = square[10] =  -yscale + yshift;
+
+  DCFlushRange (square, 32);
+  GX_InvVtxCache ();
 }
 
 /* Reinitialize Video */
@@ -505,31 +502,30 @@ void ogc_video__reset()
 	Mtx p;
   GXRModeObj *rmode;
 
-  /* Set 50Hz/60Hz mode */
+  /* 50Hz/60Hz mode */
   if ((config.tv_mode == 1) || ((config.tv_mode == 2) && vdp_pal)) gc_pal = 1;
   else gc_pal = 0;
+
+  /* progressive mode */
+  if (config.render == 2)
+  {
+    /* 480p */
+    tvmodes[2]->viTVMode = VI_TVMODE_NTSC_PROG;
+    tvmodes[2]->xfbMode = VI_XFBMODE_SF;
+  }
+  else if (config.render == 1)
+  {
+    /* 480i */
+    tvmodes[2]->viTVMode = tvmodes[0]->viTVMode & ~3;
+    tvmodes[2]->xfbMode = VI_XFBMODE_DF;
+  }
 
   /* Set current TV mode */  
   if (config.render) rmode = tvmodes[gc_pal*3 + 2];
 	else rmode = tvmodes[gc_pal*3 + interlaced];
 
   /* Aspect ratio */
-  ogc_video__aspect();
   gxScale(rmode);
-
-  /* Progressive mode support */
-  if (config.render == 2)
-  {
-    /* 480p */
-    rmode->viTVMode = VI_TVMODE_NTSC_PROG;
-    rmode->xfbMode = VI_XFBMODE_SF;
-  }
-  else if (config.render == 1)
-  {
-    /* 480i */
-    rmode->viTVMode = tvmodes[0]->viTVMode & ~3;
-    rmode->xfbMode = VI_XFBMODE_DF;
-  }
 
   /* Configure VI */
   VIDEO_Configure (rmode);
@@ -579,15 +575,6 @@ void ogc_video__reset()
 /* GX render update */
 void ogc_video__update()
 {
-  int h, w;
-
-  /* texture and bitmap buffers (buffers width is fixed to 720 pixels) */
-  long long int *dst = (long long int *)texturemem;
-  long long int *src1 = (long long int *)(bitmap.data); /* line n */
-  long long int *src2 = src1 + 180;  /* line n+1 */
-  long long int *src3 = src2 + 180;  /* line n+2 */
-  long long int *src4 = src3 + 180;  /* line n+3 */
-
   /* check if viewport has changed */
   if (bitmap.viewport.changed)
   {
@@ -598,53 +585,67 @@ void ogc_video__update()
     vheight = bitmap.viewport.h + 2 * bitmap.viewport.y;
 
     /* special cases */
-    if (config.render && (interlaced || config.ntsc)) vheight *= 2;
+    if (config.render && interlaced) vheight *= 2;
     if (config.ntsc) vwidth = (reg[12]&1) ? MD_NTSC_OUT_WIDTH(vwidth) : SMS_NTSC_OUT_WIDTH(vwidth);
 
     /* texels size must be multiple of 4 */
-    vwidth  = (vwidth  / 4) * 4;
-    vheight = (vheight / 4) * 4;
+    vwidth  = vwidth  >> 2;
+    vheight = vheight >> 2;
 
     /* final offset */
-    stride = bitmap.width - (vwidth >> 2);
+    stride = bitmap.width - vwidth;
 
     /* image size has changed, reset GX */
     ogc_video__reset();
 
     /* reinitialize texture */
-    GX_InvalidateTexAll ();
-	  GX_InitTexObj (&texobj, texturemem, vwidth, vheight, GX_TF_RGB565, GX_CLAMP, GX_CLAMP, GX_FALSE);
+	  GX_InitTexObj (&texobj, texturemem, vwidth << 2, vheight << 2, GX_TF_RGB565, GX_CLAMP, GX_CLAMP, GX_FALSE);
     
     /* enable/disable bilinear filtering */
     if (!config.bilinear)
     {
       GX_InitTexObjLOD(&texobj,GX_NEAR,GX_NEAR_MIP_NEAR,2.5,9.0,0.0,GX_FALSE,GX_FALSE,GX_ANISO_1);
     }
+
+    /* load texture */
+    GX_LoadTexObj (&texobj, GX_TEXMAP0);
   }
 
-  GX_InvalidateTexAll ();
  
-  /* update texture data */
-  for (h = 0; h < vheight; h += 4)
+  /* texture map is now directly done by the line renderer */
+  if (config.ntsc && !(reg[12]&1))
   {
-    for (w = 0; w < (vwidth >> 2); w++)
+    int h, w;
+
+    /* texture and bitmap buffers (buffers pitch is fixed to 720*2 pixels) */
+    long long int *dst = (long long int *)texturemem;
+    long long int *src1 = (long long int *)(bitmap.data); /* line n   */
+    long long int *src2 = src1 + 180;                     /* line n+1 */
+    long long int *src3 = src2 + 180;                     /* line n+2 */
+    long long int *src4 = src3 + 180;                     /* line n+3 */
+
+    /* update texture texels */
+    for (h = 0; h < vheight; h++)
     {
-      *dst++ = *src1++;
-      *dst++ = *src2++;
-      *dst++ = *src3++;
-      *dst++ = *src4++;
-    }
+      for (w = 0; w < vwidth; w++)
+      {
+        *dst++ = *src1++;
+        *dst++ = *src2++;
+        *dst++ = *src3++;
+        *dst++ = *src4++;
+      }
     
-    /* jump to next four lines */
-    src1 += stride;
-    src2 += stride;
-    src3 += stride;
-    src4 += stride;
+      /* jump to next four lines */
+      src1 += stride;
+      src2 += stride;
+      src3 += stride;
+      src4 += stride;
+    }
   }
 
-  /* load texture into GX */
-  DCFlushRange (texturemem, vwidth * vheight * 2);
-  GX_LoadTexObj (&texobj, GX_TEXMAP0);
+  /* update texture cache */
+  DCFlushRange (texturemem, TEX_WIDTH * TEX_HEIGHT * 2);
+  GX_InvalidateTexAll ();
   
   /* render textured quad */
   draw_square ();

@@ -221,7 +221,14 @@ int system_frame (int do_skip)
     aim_m68k += m68cycles_per_line;
 
 		/* Check "soft reset" */
-		if (line == resetline) gen_reset(0);
+		if (line == resetline)
+    {
+#ifdef NGC
+      /* wait for RESET button to be released */
+      if (!SYS_ResetButtonDown())
+#endif
+      gen_reset(0);
+    }
 
     /* Horizontal Interrupt */
 		if (line <= bitmap.viewport.h)

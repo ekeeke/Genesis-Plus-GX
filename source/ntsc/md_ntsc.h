@@ -52,10 +52,6 @@ is the number of *bytes* to get to the next output row. */
 void md_ntsc_blit( md_ntsc_t const* ntsc, MD_NTSC_IN_T const* table, unsigned char* input,
 		int in_width, int vline);
 
-/* Same as above but doubles the height */
-void md_ntsc_blit_double( md_ntsc_t const* ntsc, MD_NTSC_IN_T const* table, unsigned char* input,
-		int in_width, int vline);
-
 /* Number of output pixels written by blitter for given input width. */
 #define MD_NTSC_OUT_WIDTH( in_width ) \
 	(((in_width) - 3) / md_ntsc_in_chunk * md_ntsc_out_chunk + md_ntsc_out_chunk)
