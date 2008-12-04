@@ -31,7 +31,7 @@
 /* Mark a pattern as dirty */
 #define MARK_BG_DIRTY(addr)                                     \
 {                                                               \
-    int name = (addr >> 5) & 0x7FF;                             \
+    name = (addr >> 5) & 0x7FF;                                         \
     if(bg_name_dirty[name] == 0) bg_name_list[bg_list_index++] = name; \
     bg_name_dirty[name] |= (1 << ((addr >> 2) & 0x07));         \
 }
@@ -50,8 +50,7 @@ uint16 status;				/* VDP status flags */
 uint8 dmafill;				/* next VDP Write is DMA Fill */
 uint8 hint_pending;   /* 0= Line interrupt is pending */
 uint8 vint_pending;   /* 1= Frame interrupt is pending */
-uint8 vint_triggered; /* 1= Frame interrupt has been triggered */
-int8 hvint_updated;   /* >= 0: Interrupt lines updated */
+uint16 irq_status;		    /* Interrupt lines updated */
 
 /* Global variables */
 uint16 ntab;				              /* Name table A base address */
@@ -68,8 +67,7 @@ uint8 playfield_shift;		        /* Width of planes A, B (in bits) */
 uint8 playfield_col_mask;	        /* Vertical scroll mask */
 uint16 playfield_row_mask;	      /* Horizontal scroll mask */
 uint32 y_mask;				            /* Name table Y-index bits mask */
-int16 h_counter;			            /* Raster counter */
-int16 hc_latch;				            /* latched HCounter (INT2) */
+uint16 hc_latch;				            /* latched HCounter (INT2) */
 uint16 v_counter;			            /* VDP scanline counter */
 uint8 im2_flag;			              /* 1= Interlace mode 2 is being used */
 uint32 dma_length;			          /* Current DMA remaining bytes */
@@ -90,6 +88,8 @@ static uint16 sat_base_mask;	/* Base bits of SAT */
 static uint16 sat_addr_mask;	/* Index bits of SAT */
 static uint32 dma_endCycles;  /* 68k cycles to DMA end */
 static uint8 dma_type;        /* Type of DMA */
+
+static inline void vdp_reg_w(unsigned int r, unsigned int d);
 
 /* DMA Timings
 
@@ -183,11 +183,9 @@ void vdp_reset(void)
 
 	hint_pending = 0;
 	vint_pending = 0;
-	vint_triggered = 0;
-	hvint_updated = -1;
+	irq_status = 0;
 
-	h_counter = 0;
-	hc_latch = -1;
+	hc_latch  = 0;
 	v_counter = 0;
 
 	dmafill = 0;
@@ -221,6 +219,7 @@ void vdp_reset(void)
 		vdp_reg_w(10, 0xff);	/* HINT disabled */
 		vdp_reg_w(12, 0x81);	/* H40 mode */
 		vdp_reg_w(15, 0x02);	/* auto increment */
+    window_clip(1,0);
 	}
 
   /* default latency */
@@ -325,6 +324,7 @@ void dma_update()
 */
 static inline void dma_copy(void)
 {
+  	int name;
   int length = (reg[20] << 8 | reg[19]) & 0xFFFF;
   int source = (reg[22] << 8 | reg[21]) & 0xFFFF;
   if (!length) length = 0x10000;
@@ -355,6 +355,7 @@ static inline void dma_vbus (void)
 {
 	uint32 base, source = ((reg[23] & 0x7F) << 17 | reg[22] << 9 | reg[21] << 1) & 0xFFFFFE;
 	uint32 length = (reg[20] << 8 | reg[19]) & 0xFFFF;
+  uint32 temp;
   
 	if (!length) length = 0x10000;
 	base = source;
@@ -364,15 +365,49 @@ static inline void dma_vbus (void)
 	dma_length = length;
 	dma_update();
 
-	/* proceed DMA */
+  switch (source >> 21)
+  {
+    case 5:
+      do
+      {
+        /* Return $FFFF only when the Z80 isn't hogging the Z-bus.
+          (e.g. Z80 isn't reset and 68000 has the bus) */
+        if (source <= 0xa0ffff) temp = (zbusack ? *(uint16 *)(work_ram + (source & 0xffff)) : 0xffff);
+
+        /* The I/O chip and work RAM try to drive the data bus which results 
+          in both values being combined in random ways when read.
+          We return the I/O chip values which seem to have precedence, */
+        else if (source <= 0xa1001f)
+        {
+          temp = io_read((source >> 1) & 0x0f);
+          temp = (temp << 8 | temp);
+        }
+
+        /* All remaining locations access work RAM */
+        else temp = *(uint16 *)(work_ram + (source & 0xffff));
+
+        source += 2;
+        source = ((base & 0xFE0000) | (source & 0x1FFFF));
+        data_write (temp);
+      }
+      while (--length);
+      break;
+
+    case 0:
+    case 1:
+      if (svp) source = source - 2;
+
+    default:
 	do
 	{
-    unsigned int temp = vdp_dma_r(source);
+        temp = *(uint16 *)(m68k_memory_map[source>>16].base + (source & 0xffff));
     source += 2;
     source = ((base & 0xFE0000) | (source & 0x1FFFF));
 		data_write (temp);
 	}
 	while (--length);
+      break;
+  }
 
 	/* update length & source address registers */
 	reg[19] = length & 0xFF;
@@ -385,6 +420,7 @@ static inline void dma_vbus (void)
 /* VRAM FILL */
 static inline void dma_fill(unsigned int data)
 {
+  	int name;
 	int length = (reg[20] << 8 | reg[19]) & 0xFFFF;
 	if (!length) length = 0x10000;
 
@@ -475,6 +511,7 @@ static inline void data_write (unsigned int data)
 				*(uint16 *) &vram[addr & 0xFFFE] = data;
 
 				/* Update the pattern cache */
+        int name;
 				MARK_BG_DIRTY (addr);
 			}
 			break;
@@ -566,132 +603,11 @@ void vdp_ctrl_w(unsigned int data)
 }
 
 
-unsigned int vdp_ctrl_r(void)
-{
-	/*
-	 * Return vdp status
-     *
-     * Bits are
-     * 0 	0:1 ntsc:pal
-     * 1	DMA Busy
-     * 2	During HBlank
-     * 3	During VBlank
-     * 4	Frame Interlace 0:even 1:odd
-     * 5	Sprite collision
-     * 6	Too many sprites per line
-     * 7	v interrupt occurred
-     * 8	Write FIFO full
-     * 9	Write FIFO empty
-     * 10 - 15	Next word on bus
-     */
-
-  /* update FIFO flags */
-  fifo_update();
-  if (fifo_write_cnt < 4)
-  {
-    status &= 0xFEFF;							
-    if (fifo_write_cnt == 0) status |= 0x200; 
-	}
-	else status ^= 0x200;
-
-	/* update DMA Busy flag */
-	if ((status & 2) && !dma_length && (count_m68k >= dma_endCycles))
-    status &= 0xFFFD;
-
-	unsigned int temp = status | vdp_pal;
-
-	/* display OFF: VBLANK flag is set */
-	if (!(reg[1] & 0x40)) temp |= 0x8; 
-
-	/* HBLANK flag (Sonic 3 and Sonic 2 "VS Modes", Lemmings 2) */
-	if ((count_m68k <= (line_m68k + 84)) || (count_m68k > (line_m68k + m68cycles_per_line))) temp |= 0x4;
-
-	/* clear pending flag */
-	pending = 0;
-
-	/* clear SPR/SCOL flags */
-	status &= 0xFF9F;
-
-	return (temp);
-}
-
-void vdp_data_w(unsigned int data)
-{
-	/* Clear pending flag */
-	pending = 0;
-
-	if (dmafill)
-	{
-		dma_fill(data);
-		return;
-	}
-  
-	/* update VDP FIFO (during HDISPLAY only) */
-	if (!(status&8) && (reg[1]&0x40))
-  {
-  fifo_update();
-  if (fifo_write_cnt == 0)
-  {
-    /* reset cycle counter */
-    fifo_lastwrite = count_m68k;
-    
-	  /* FIFO is not empty anymore */
-    status &= 0xFDFF;
-  }
-
-  /* increase write counter */
-  fifo_write_cnt ++;
-		
-  /* is FIFO full ? */
-  if (fifo_write_cnt >= 4)
-  {
-    status |= 0x100; 
-
-    /* VDP latency (Chaos Engine, Soldiers of Fortune, Double Clutch) */
-	  if (fifo_write_cnt > 4) count_m68k = fifo_lastwrite + fifo_latency;
-  }
-  }
-
-	/* write data */
-	data_write(data);
-}
-
-unsigned int vdp_data_r(void)
-{
-	uint16 temp = 0;
-
-	/* Clear pending flag */
-	pending = 0;
-
-	switch (code & 0x0F)
-  {
-		case 0x00:	/* VRAM */
-			temp = *(uint16 *) & vram[(addr & 0xFFFE)];
-			break;
-
-		case 0x08:	/* CRAM */
-			temp = *(uint16 *) & cram[(addr & 0x7E)];
-			temp = UNPACK_CRAM (temp);
-			break;
-
-		case 0x04:	/* VSRAM */
-			temp = *(uint16 *) & vsram[(addr & 0x7E)];
-			break;
-	}
-
-	/* Increment address register */
-  addr += reg[15];
-
-	/* return data */
-	return (temp);
-}
-
-
 /*
     The reg[] array is updated at the *end* of this function, so the new
     register data can be compared with the previous data.
 */
-void vdp_reg_w(unsigned int r, unsigned int d)
+static inline void vdp_reg_w(unsigned int r, unsigned int d)
 {
 	/* Check if Mode 4 (SMS mode) has been activated 
 	   According to official doc, VDP registers #11 to #23 can not be written unless bit2 in register #1 is set
@@ -702,18 +618,43 @@ void vdp_reg_w(unsigned int r, unsigned int d)
   switch(r)
   {
     case 0x00: /* CTRL #1 */
-			if ((d&0x10) != (reg[0]&0x10)) hvint_updated = 0;
+			/* Check if HINT has been enabled or disabled */
+      if (hint_pending && ((d&0x10) != (reg[0]&0x10)))
+      {
+        irq_status &= 0x20;
+        irq_status |= 0x10;
+        if (vint_pending && (reg[1] & 0x20))
+        {
+          irq_status |= 6;
+        }
+        else if (d & 0x10)
+        {
+          irq_status |= 4;
+        }
+      }
       break;
 
     case 0x01: /* CTRL #2 */
-			/* Sesame Street Counting Cafe need to execute one instruction */
-      if ((d&0x20) != (reg[1]&0x20)) hvint_updated = 1; 
+			/* Check if VINT has been enabled or disabled */
+      if (vint_pending && ((d&0x20) != (reg[1]&0x20)))
+      {
+        irq_status &= 0x20;
+        irq_status |= 0x110;
+        if (d & 0x20)
+        {
+          irq_status |= 6;
+        }
+        else if (hint_pending && (reg[0] & 0x10))
+        {
+          irq_status |= 4;
+        }
+      }
+
 
       /* Check if the viewport height has actually been changed */
       if((reg[1] & 8) != (d & 8))
       {                
         /* Update the height of the viewport */
-        bitmap.viewport.oh = bitmap.viewport.h;
         bitmap.viewport.h = (d & 8) ? 240 : 224;
 		    if (config.overscan) bitmap.viewport.y = ((vdp_pal ? 288 : 240) - bitmap.viewport.h) / 2;
         bitmap.viewport.changed = 1;                
@@ -732,7 +673,7 @@ void vdp_reg_w(unsigned int r, unsigned int d)
             - Deadly Moves aka Power Athlete (set display ON)
           */
           reg[1] = d;
-          render_line(v_counter,odd_frame);
+          render_line(v_counter, 0);
         }
       }
       break;
@@ -780,13 +721,15 @@ void vdp_reg_w(unsigned int r, unsigned int d)
       if((reg[0x0C] & 1) != (d & 1))
       {
         /* Update the width of the viewport */
-        bitmap.viewport.ow = bitmap.viewport.w;
         bitmap.viewport.w = (d & 1) ? 320 : 256;
 				if (config.overscan) bitmap.viewport.x = (d & 1) ? 16 : 12;
         bitmap.viewport.changed = 1;
 		 
 				/* update HC table */
 				hctab = (d & 1) ? cycle2hc40 : cycle2hc32;
+
+        /* update clipping */
+        window_clip(d,reg[17]);
       }
 
       /* See if the S/TE mode bit has changed */
@@ -820,6 +763,10 @@ void vdp_reg_w(unsigned int r, unsigned int d)
       playfield_row_mask = row_mask_table[(d >> 4) & 3];
       y_mask = y_mask_table[(d & 3)];
       break;
+
+    case 0x11: /* update clipping */
+      window_clip(reg[12],d);
+      break;
   }
 
   /* Write new register value */
@@ -827,9 +774,130 @@ void vdp_reg_w(unsigned int r, unsigned int d)
 }
 
 
+
+unsigned int vdp_ctrl_r(void)
+{
+	/*
+	 * Return vdp status
+     *
+     * Bits are
+     * 0 	0:1 ntsc:pal
+     * 1	DMA Busy
+     * 2	During HBlank
+     * 3	During VBlank
+     * 4	Frame Interlace 0:even 1:odd
+     * 5	Sprite collision
+     * 6	Too many sprites per line
+     * 7	v interrupt occurred
+     * 8	Write FIFO full
+     * 9	Write FIFO empty
+     * 10 - 15	Next word on bus
+     */
+
+  	/* update FIFO flags */
+		fifo_update();
+		if (fifo_write_cnt < 4)
+		{
+			status &= 0xFEFF;							
+			if (fifo_write_cnt == 0) status |= 0x200; 
+		}
+	else status ^= 0x200;
+
+	/* update DMA Busy flag */
+	if ((status & 2) && !dma_length && (count_m68k >= dma_endCycles))
+    status &= 0xFFFD;
+
+	unsigned int temp = status | vdp_pal;
+
+	/* display OFF: VBLANK flag is set */
+	if (!(reg[1] & 0x40)) temp |= 0x8; 
+
+	/* HBLANK flag (Sonic 3 and Sonic 2 "VS Modes", Lemmings 2) */
+	if ((count_m68k <= (line_m68k + 84)) || (count_m68k > (line_m68k + m68cycles_per_line))) temp |= 0x4;
+
+	/* clear pending flag */
+	pending = 0;
+
+	/* clear SPR/SCOL flags */
+	status &= 0xFF9F;
+
+	return (temp);
+}
+
+void vdp_data_w(unsigned int data)
+{
+	/* Clear pending flag */
+	pending = 0;
+
+	if (dmafill)
+	{
+		dma_fill(data);
+		return;
+	}
+  
+	/* update VDP FIFO (during HDISPLAY only) */
+	if (!(status&8) && (reg[1]&0x40))
+  {
+		fifo_update();
+		if (fifo_write_cnt == 0)
+		{
+    /* reset cycle counter */
+    fifo_lastwrite = count_m68k;
+    
+	  /* FIFO is not empty anymore */
+    status &= 0xFDFF;
+		}
+
+		/* increase write counter */
+		fifo_write_cnt ++;
+		
+		/* is FIFO full ? */
+		if (fifo_write_cnt >= 4)
+		{
+			status |= 0x100; 
+
+      /* VDP latency (Chaos Engine, Soldiers of Fortune, Double Clutch) */
+      if (fifo_write_cnt > 4) count_m68k = fifo_lastwrite + fifo_latency;
+    }
+  }
+
+	/* write data */
+	data_write(data);
+}
+
+unsigned int vdp_data_r(void)
+{
+	uint16 temp = 0;
+
+	/* Clear pending flag */
+	pending = 0;
+
+	switch (code & 0x0F)
+  {
+		case 0x00:	/* VRAM */
+			temp = *(uint16 *) & vram[(addr & 0xFFFE)];
+			break;
+
+		case 0x08:	/* CRAM */
+			temp = *(uint16 *) & cram[(addr & 0x7E)];
+			temp = UNPACK_CRAM (temp);
+			break;
+
+		case 0x04:	/* VSRAM */
+			temp = *(uint16 *) & vsram[(addr & 0x7E)];
+			break;
+	}
+
+	/* Increment address register */
+  	addr += reg[15];
+
+	/* return data */
+	return (temp);
+}
+
 unsigned int vdp_hvc_r(void)
 {
-	uint8 hc = (hc_latch == -1) ? hctab[count_m68k%488] : (hc_latch & 0xFF);
+	uint8 hc = (hc_latch & 0x100) ? (hc_latch & 0xFF) : hctab[count_m68k % m68cycles_per_line]; 
 	uint8 vc = vctab[v_counter];
 
  	/* interlace mode 2 */
@@ -848,13 +916,26 @@ void vdp_test_w(unsigned int value)
 
 int vdp_int_ack_callback(int int_level)
 {
-	if (vint_triggered)
+
+  if (irq_status&0x20)
 	{
 		vint_pending = 0;
-		vint_triggered = 0;
-		status &= ~0x0080; /* clear VINT flag */
+      status &= ~0x80;  /* clear VINT flag */
   }
-	else hint_pending = 0;
-	hvint_updated = 0;
+  else
+  {
+  		hint_pending = 0;
+  }
+
+  irq_status = 0x10;
+  if (vint_pending && (reg[1] & 0x20))
+  {
+    irq_status |= 6;
+  }
+  else if (hint_pending && (reg[0] & 0x10))
+  {
+    irq_status |= 4;
+  }
+
   return M68K_INT_ACK_AUTOVECTOR;
 }

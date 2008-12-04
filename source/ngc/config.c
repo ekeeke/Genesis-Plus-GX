@@ -74,7 +74,11 @@ void set_config_defaults(void)
 
   /* system options */
   config.freeze_auto    = -1;
+#ifdef HW_RVL
+  config.sram_auto      = 0; /* assume we always got SDCARD */
+#else
   config.sram_auto      = -1;
+#endif
   config.region_detect  = 0;
   config.force_dtack    = 0;
   config.bios_enabled   = 0;

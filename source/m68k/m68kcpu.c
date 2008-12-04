@@ -783,7 +783,7 @@ void m68k_set_cpu_type(unsigned int cpu_type)
 
 /* Execute some instructions until we use up num_cycles clock cycles */
 /* ASG: removed per-instruction interrupt checks */
-int m68k_execute(int num_cycles)
+INLINE int m68k_execute(int num_cycles)
 {
 	/* Make sure we're not stopped */
 	if(!CPU_STOPPED)
@@ -841,6 +841,50 @@ int m68k_execute(int num_cycles)
 	return num_cycles;
 }
 
+/* ASG: rewrote so that the int_level is a mask of the IPL0/IPL1/IPL2 bits */
+/* KS: Modified so that IPL* bits match with mask positions in the SR
+ *     and cleaned out remenants of the interrupt controller.
+ */
+INLINE void m68k_set_irq(unsigned int int_level)
+{
+	uint old_level = CPU_INT_LEVEL;
+	CPU_INT_LEVEL = int_level << 8;
+
+	/* A transition from < 7 to 7 always interrupts (NMI) */
+	/* Note: Level 7 can also level trigger like a normal IRQ */
+	if(old_level != 0x0700 && CPU_INT_LEVEL == 0x0700)
+		m68ki_exception_interrupt(7); /* Edge triggered level 7 (NMI) */
+	else
+		m68ki_check_interrupts(); /* Level triggered (IRQ) */
+}
+
+extern uint16 irq_status;
+extern uint32 count_m68k;
+
+void m68k_run (int cyc) 
+{
+  int temp;
+	while (count_m68k < cyc)
+	{
+		/* check interrupt updates */
+		if (irq_status & 0x10)
+    {
+      irq_status &= ~0x10;
+
+      /* hardware latency */
+      temp = irq_status >> 8;
+      if (temp) count_m68k += m68k_execute(temp);
+
+      /* interrupt level */
+      temp = irq_status & 6;
+      if (temp == 6) irq_status |= 0x20;
+      m68k_set_irq(temp);
+    }
+
+		/* execute a single instruction */
+		count_m68k += m68k_execute(1);
+	}
+}
 
 int m68k_cycles_run(void)
 {
@@ -864,24 +908,6 @@ void m68k_end_timeslice(void)
 {
 	m68ki_initial_cycles = GET_CYCLES();
 	SET_CYCLES(0);
-}
-
-
-/* ASG: rewrote so that the int_level is a mask of the IPL0/IPL1/IPL2 bits */
-/* KS: Modified so that IPL* bits match with mask positions in the SR
- *     and cleaned out remenants of the interrupt controller.
- */
-void m68k_set_irq(unsigned int int_level)
-{
-	uint old_level = CPU_INT_LEVEL;
-	CPU_INT_LEVEL = int_level << 8;
-
-	/* A transition from < 7 to 7 always interrupts (NMI) */
-	/* Note: Level 7 can also level trigger like a normal IRQ */
-	if(old_level != 0x0700 && CPU_INT_LEVEL == 0x0700)
-		m68ki_exception_interrupt(7); /* Edge triggered level 7 (NMI) */
-	else
-		m68ki_check_interrupts(); /* Level triggered (IRQ) */
 }
 
 void m68k_init(void)

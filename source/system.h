@@ -32,6 +32,7 @@
 #define z80cycles_per_line 228
 #define m68cycles_per_line 488
 
+
 typedef struct
 {
   uint8 *data;			/* Bitmap data */
@@ -90,7 +91,6 @@ extern uint32 line_z80;
 extern int32 current_z80;
 extern uint8 interlaced;
 extern uint8 odd_frame;
-extern uint32 frame_cnt;
 extern uint8 system_hw;
 
 /* Function prototypes */
@@ -100,8 +100,6 @@ extern void system_shutdown (void);
 extern int system_frame(int skip);
 extern int audio_init (int rate);
 extern void audio_shutdown (void);
-extern void audio_update (void);
-extern void z80_run (int cyc);
 
 #endif /* _SYSTEM_H_ */
 

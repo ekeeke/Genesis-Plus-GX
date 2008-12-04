@@ -23,8 +23,19 @@
 #ifndef _MEMBNK_H_
 #define _MEMBNK_H_
 
-/* Function prototypes */
-extern void z80_write_banked_memory(unsigned int address, unsigned int data);
-extern unsigned int z80_read_banked_memory(unsigned int address);
+extern uint32 zbank_unused_r(uint32 address);
+extern void zbank_unused_w(uint32 address, uint32 data);
+extern uint32 zbank_lockup_r(uint32 address);
+extern void zbank_lockup_w(uint32 address, uint32 data);
+extern uint32 zbank_read_ctrl_io(uint32 address);
+extern void zbank_write_ctrl_io(uint32 address, uint32 data);
+extern uint32 zbank_read_vdp(uint32 address);
+extern void zbank_write_vdp(uint32 address, uint32 data);
+
+struct _zbank_memory_map
+{
+  unsigned int (*read)(unsigned int address);
+  void (*write)(unsigned int address, unsigned int data);
+} zbank_memory_map[256];
 
 #endif /* _MEMBNK_H_ */

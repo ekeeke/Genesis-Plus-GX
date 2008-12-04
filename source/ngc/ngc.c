@@ -83,7 +83,7 @@ static void init_machine()
   bitmap.viewport.x = 0;
   bitmap.viewport.y = 0;
   bitmap.remap = 1;
-  bitmap.data = memalign (32, bitmap.width * bitmap.height * bitmap.granularity);
+  bitmap.data = texturemem;
 
   /* default system */
   input.system[0] = SYSTEM_GAMEPAD;
@@ -145,7 +145,7 @@ int main (int argc, char *argv[])
   if (fatInitDefault() == true)
   {
     use_FAT = 1;
-    fatEnableReadAhead (PI_DEFAULT, 6, 64);
+//    fatEnableReadAhead (PI_DEFAULT, 6, 64);
   }
 
   /* Restore User Configuration */

@@ -43,60 +43,9 @@ uint32 line_z80;
 int32 current_z80;
 uint8 odd_frame;
 uint8 interlaced;
-uint32 frame_cnt;
 uint8 system_hw;
 
-/****************************************************************
- * CPU execution managment
- ****************************************************************/
-
-/* Interrupt Manager
-   this is called before each new executed instruction
-   only if interrupts have been updated 
- */
-static inline void update_interrupts(void)
-{
-	uint8 latency = hvint_updated;
-	hvint_updated = -1;
-
-  /* VDP hardware latency */
-  if (latency) count_m68k += m68k_execute(latency);
-
-	/* Level 6 interrupt */
-	if (vint_pending && (reg[1] & 0x20))
-	{
-    vint_triggered = 1;
-		m68k_set_irq(6);
-	}
-  /* Level 4 interrupt */
-	else if (hint_pending && (reg[0] & 0x10))
-	{
-		m68k_set_irq(4);
-	}
-  /* Clear all interrupts */
-	else
-	{
-		m68k_set_irq(0);
-	}
-}
-
-static inline void m68k_run (int cyc) 
-{
-	while (count_m68k < cyc)
-	{
-		/* check interrupts */
-		if (hvint_updated >= 0) update_interrupts();
-
-		/* execute a single instruction */
-		count_m68k += m68k_execute(1);
-	}
-}
-
-void z80_run (int cyc) 
-{
-  current_z80 = cyc - count_z80;
-	if (current_z80 > 0) count_z80 += z80_execute(current_z80);
-}
+static inline void audio_update (void);
 
 /****************************************************************
  * Virtual Genesis initialization
@@ -128,7 +77,6 @@ void system_reset (void)
 	current_z80	= 0;
 	odd_frame	  = 0;
 	interlaced	= 0;
-	frame_cnt   = 0;
 
 	/* Cart Hardware reset */
 	cart_hw_reset();		
@@ -161,7 +109,11 @@ void system_shutdown (void)
  ****************************************************************/
 int system_frame (int do_skip)
 {
-	int line;
+	if (!gen_running)
+  {
+    update_input();
+    return 0;
+	}
 	
 	/* reset cycles counts */
 	count_m68k = 0;
@@ -171,37 +123,31 @@ int system_frame (int do_skip)
   fifo_write_cnt = 0;
   fifo_lastwrite = 0;
 
-  /* increment frame counter */
-  frame_cnt ++;
-
-	if (!gen_running)
-  {
-    update_input();
-    return 0;
-  }
-
-  /* Clear VBLANK & DMA BUSY flags */
-  status &= 0xFFF5;
-
-	/* Look for interlace mode change */
-	uint8 old_interlaced = interlaced;
-  interlaced = (reg[12] & 2) >> 1;
+  /* update display settings */
+  int line;
+  int reset = resetline;
+  int vdp_height  = bitmap.viewport.h;
+  int end_line    = vdp_height + bitmap.viewport.y;
+  int start_line  = lines_per_frame - bitmap.viewport.y;
+	int old_interlaced = interlaced;
+  interlaced = (reg[12] >> 1) & 3;
 	if (old_interlaced != interlaced)
   {
 		bitmap.viewport.changed = 2;
-    im2_flag = ((reg[12] & 6) == 6) ? 1 : 0;
+    im2_flag = (interlaced == 3);
 		odd_frame = 1;
 	}
-
-  /* Toggle even/odd field flag (interlaced modes only) */
   odd_frame ^= 1;
-  if (odd_frame && interlaced) status |= 0x0010;
+
+  /* update VDP status  */
+  status &= 0xFFF5;                               // clear VBLANK and DMA flags
+  if (odd_frame && interlaced) status |= 0x0010;  // even/odd field flag (interlaced modes only)
   else status &= 0xFFEF;
 
-	/* Reset HCounter */
-	h_counter = reg[10];
+	/* Reload H Counter */
+	int h_counter = reg[10];
 
-  /* Parse sprites for line 0 (done on line 261 or 312) */
+  /* parse sprites for line 0 (done on last line) */
 	parse_satb (0x80);
 
 	/* Line processing */
@@ -220,8 +166,8 @@ int system_frame (int do_skip)
     aim_z80  += z80cycles_per_line;
     aim_m68k += m68cycles_per_line;
 
-		/* Check "soft reset" */
-		if (line == resetline)
+		/* Soft Reset ? */
+		if (line == reset)
     {
 #ifdef NGC
       /* wait for RESET button to be released */
@@ -231,15 +177,15 @@ int system_frame (int do_skip)
     }
 
     /* Horizontal Interrupt */
-		if (line <= bitmap.viewport.h)
+    if (line <= vdp_height)
 		{
 			if(--h_counter < 0)
 			{
 				h_counter = reg[10];
 				hint_pending = 1;
-        hvint_updated = 0;
+        if (reg[0] & 0x10) irq_status = (irq_status & 0xff) | 0x14;
 				
-        /* adjust timings to take decrement in account */
+        /* adjust timings to take further decrement in account (see below) */
         if ((line != 0) || (h_counter == 0)) aim_m68k += 36;
       }
 
@@ -247,22 +193,17 @@ int system_frame (int do_skip)
       /* during this period, any VRAM/CRAM/VSRAM writes should NOT be taken in account before next line */
       /* as a result, current line is shortened */
       /* fix Lotus 1, Lotus 2 RECS, Striker, Zero the Kamikaze Squirell */
-      if ((line < bitmap.viewport.h)&&(h_counter == 0)) aim_m68k -= 36; 
-		}
+      if ((line < vdp_height) && (h_counter == 0)) aim_m68k -= 36;
 
-    /* Check if there is any DMA in progess */
+      /* update DMA timings */
     if (dma_length) dma_update();
 
-    /* Render Line */
-    if (!do_skip) 
-    {
-      render_line(line,odd_frame);
-			if (line < (bitmap.viewport.h-1)) parse_satb(0x81 + line);
-    }
-
 		/* Vertical Retrace */
-		if (line == bitmap.viewport.h)
+      if (line == vdp_height)
 		{
+        /* render overscan */
+        if ((line < end_line) && (!do_skip)) render_line(line, 1);
+
       /* update inputs */
       update_input();
 
@@ -275,24 +216,51 @@ int system_frame (int do_skip)
 			 
       /* delay between HINT, VBLANK and VINT (Dracula, OutRunners, VR Troopers) */
       m68k_run(line_m68k + 84);
-      if (zreset && !zbusreq) z80_run(line_z80 + 39);
+        if (zreset && !zbusreq)
+        {
+          current_z80 = line_z80 + 39 - count_z80;
+          if (current_z80 > 0) count_z80 += z80_execute(current_z80);
+        }
       else count_z80 = line_z80 + 39;
 
 			/* Vertical Interrupt */
       status |= 0x80;
       vint_pending = 1;
-      hvint_updated = 36; /* Tyrants, Mega-Lo-Mania & Ex Mutant need some cycles to read VINT flag */
+        if (reg[1] & 0x20) irq_status = (irq_status & 0xff) | 0x2416; // 36 cycles latency after VINT occurence flag (Ex-Mutants, Tyrant)
+      }
+      else if (!do_skip) 
+      {
+        /* render scanline and parse sprites for line n+1 */
+        render_line(line, 0);
+        if (line < (vdp_height-1)) parse_satb(0x81 + line);
 		}
-    else if (zirq)
+    }
+    else
     {
+      /* update DMA timings */
+      if (dma_length) dma_update();
+
+      /* render overscan */
+      if ((line < end_line) || (line >= start_line))
+    {
+        if (!do_skip) render_line(line, 1);
+      }
+
       /* clear any pending Z80 interrupt */
+      if (zirq)
+      {
       zirq = 0;
       z80_set_irq_line(0, CLEAR_LINE);
+    }
     }
 
 		/* Process line */
 		m68k_run(aim_m68k);
-		if (zreset == 1 && zbusreq == 0) z80_run(aim_z80);
+		if (zreset == 1 && zbusreq == 0)
+    {
+      current_z80 = aim_z80 - count_z80;
+      if (current_z80 > 0) count_z80 += z80_execute(current_z80);
+		}
 		else count_z80 = aim_z80;
 		
 		/* SVP chip */
@@ -372,7 +340,7 @@ void audio_shutdown(void)
 
 static int ll, rr;
 
-void audio_update (void)
+static inline void audio_update (void)
 {
 	int i;
   int l, r;

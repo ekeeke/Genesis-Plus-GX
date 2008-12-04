@@ -24,28 +24,48 @@
 #ifndef _MEM68K_H_
 #define _MEM68K_H_
 
-enum {
-  SRAM,
-  EEPROM,
-  J_CART,
-  SVP_DRAM,
-  SVP_CELL,
-  CART_HW,
-	REALTEC_ROM,
-	VDP,
-	SYSTEM_IO,
-	UNUSED,
-	ILLEGAL,
-	WRAM,
-  UMK3_HACK,
-  PICO_HW,
-  ROM
-};
+/* unused areas */
+extern uint32 m68k_read_bus_8(uint32 address);
+extern uint32 m68k_read_bus_16(uint32 address);
+extern void m68k_unused_8_w (uint32 address, uint32 data);
+extern void m68k_unused_16_w (uint32 address, uint32 data);
 
-extern uint8 m68k_readmap_8[32];
-extern uint8 m68k_readmap_16[32];
-extern uint8 m68k_writemap_8[32];
-extern uint8 m68k_writemap_16[32];
+/* illegal areas */
+extern uint32 m68k_lockup_r_8 (uint32 address);
+extern uint32 m68k_lockup_r_16 (uint32 address);
+extern void m68k_lockup_w_8 (uint32 address, uint32 data);
+extern void m68k_lockup_w_16 (uint32 address, uint32 data);
 
+/* eeprom */
+extern uint32 eeprom_read_byte(uint32 address);
+extern uint32 eeprom_read_word(uint32 address);
+extern void eeprom_write_byte(uint32 address, uint32 data);
+extern void eeprom_write_word(uint32 address, uint32 data);
+
+/* Z80 bus */
+extern uint32 z80_read_byte(uint32 address);
+extern uint32 z80_read_word(uint32 address);
+extern void z80_write_byte(uint32 address, uint32 data);
+extern void z80_write_word(uint32 address, uint32 data);
+
+/* I/O & Control registers */
+extern uint32 ctrl_io_read_byte(uint32 address);
+extern uint32 ctrl_io_read_word(uint32 address);
+extern void ctrl_io_write_byte(uint32 address, uint32 data);
+extern void ctrl_io_write_word(uint32 address, uint32 data);
+
+/* VDP */
+extern uint32 vdp_read_byte(uint32 address);
+extern uint32 vdp_read_word(uint32 address);
+extern void vdp_write_byte(uint32 address, uint32 data);
+extern void vdp_write_word(uint32 address, uint32 data);
+
+/* PICO */
+extern uint32 pico_read_byte(uint32 address);
+extern uint32 pico_read_word(uint32 address);
+
+uint8 m68k_readmap[256];
+uint8 m68k_writemap[256];
+uint32 pico_current;
 
 #endif /* _MEM68K_H_ */

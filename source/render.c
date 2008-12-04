@@ -42,34 +42,19 @@ typedef struct
 }clip_t;
   
 /* Function prototypes */
-void render_obj(int line, uint8 *buf, uint8 *table);
-void render_obj_im2(int line, uint8 *buf, uint8 *table, uint8 odd);
-void render_ntw(int line, uint8 *buf);
-void render_ntw_im2(int line, uint8 *buf, uint8 odd);
-void render_ntx(int which, int line, uint8 *buf);
-void render_ntx_im2(int which, int line, uint8 *buf, uint8 odd);
-void render_ntx_vs(int which, int line, uint8 *buf);
-void update_bg_pattern_cache(void);
-void get_hscroll(int line, int shift, uint16 *scroll);
-void window_clip(int line);
-int make_lut_bg(int bx, int ax);
-int make_lut_obj(int bx, int sx);
-int make_lut_bg_ste(int bx, int ax);
-int make_lut_obj_ste(int bx, int sx);
-int make_lut_bgobj_ste(int bx, int sx);
-void merge(uint8 *srca, uint8 *srcb, uint8 *dst, uint8 *table, int width);
-void make_name_lut(void);
-void (*color_update)(int index, uint16 data);
-void remap_16(uint8 *src, uint16 *dst, uint16 *table, int length);
-#ifndef NGC
-void remap_8(uint8 *src, uint8 *dst, uint8 *table, int length);
-void remap_32(uint8 *src, uint32 *dst, uint32 *table, int length);
-#endif
+static void render_obj(uint32 line, uint8 *buf, uint8 *table);
+static void render_obj_im2(uint32 line, uint32 odd, uint8 *buf, uint8 *table);
+static void render_bg(uint32 line, uint32 width);
+static void render_bg_im2(uint32 line, uint32 width, uint32 odd);
+static void render_bg_vs(uint32 line, uint32 width);
+static void make_name_lut(void);
+static uint32 make_lut_bg(uint32 bx, uint32 ax);
+static uint32 make_lut_obj(uint32 bx, uint32 sx);
+static uint32 make_lut_bg_ste(uint32 bx, uint32 ax);
+static uint32 make_lut_obj_ste(uint32 bx, uint32 sx);
+static uint32 make_lut_bgobj_ste(uint32 bx, uint32 sx);
 
-#ifndef LSB_FIRST
-static uint32 ATTR_MSB;
-#endif
-
+#undef ALIGN_LONG
 #ifdef ALIGN_LONG
 /* Or change the names if you depend on these from elsewhere.. */
 #undef READ_LONG
@@ -184,7 +169,7 @@ static __inline__ void WRITE_LONG(void *address, uint32 data)
   src++;
 #else
 #define DRAW_COLUMN(ATTR, LINE) \
-  ATTR_MSB = ATTR >> 16; \
+  attr_msb = ATTR >> 16; \
 	atex = atex_table[(ATTR_MSB >> 13) & 7]; \
   src = (uint32 *)&bg_pattern_cache[(ATTR_MSB & 0x1FFF) << 6 | (LINE)]; \
   WRITE_LONG(dst, READ_LONG(src) | atex); \
@@ -216,9 +201,9 @@ static __inline__ void WRITE_LONG(void *address, uint32 data)
   *dst++ = (*src++ | atex);
 #else
 #define DRAW_COLUMN(ATTR, LINE) \
-  ATTR_MSB = ATTR >> 16; \
-	atex = atex_table[(ATTR_MSB >> 13) & 7]; \
-  src = (uint32 *)&bg_pattern_cache[(ATTR_MSB & 0x1FFF) << 6 | (LINE)]; \
+  attr_msb = ATTR >> 16; \
+	atex = atex_table[(attr_msb >> 13) & 7]; \
+  src = (uint32 *)&bg_pattern_cache[(attr_msb & 0x1FFF) << 6 | (LINE)]; \
   *dst++ = (*src++ | atex); \
   *dst++ = (*src++ | atex); \
   atex = atex_table[(ATTR >> 13) & 7]; \
@@ -266,10 +251,10 @@ static __inline__ void WRITE_LONG(void *address, uint32 data)
   src++; 
 #else
 #define DRAW_COLUMN_IM2(ATTR, LINE) \
-  ATTR_MSB = ATTR >> 16; \
-	atex = atex_table[(ATTR_MSB >> 13) & 7]; \
-  offs = (ATTR_MSB & 0x03FF) << 7 | (ATTR_MSB & 0x1800) << 6 | (LINE); \
-  if(ATTR_MSB & 0x1000) offs ^= 0x40; \
+  attr_msb = ATTR >> 16; \
+	atex = atex_table[(attr_msb >> 13) & 7]; \
+  offs = (attr_msb & 0x03FF) << 7 | (attr_msb & 0x1800) << 6 | (LINE); \
+  if(attr_msb & 0x1000) offs ^= 0x40; \
   src = (uint32 *)&bg_pattern_cache[offs]; \
   WRITE_LONG(dst, READ_LONG(src) | atex); \
   dst++; \
@@ -306,10 +291,10 @@ static __inline__ void WRITE_LONG(void *address, uint32 data)
   *dst++ = (*src++ | atex);
 #else
 #define DRAW_COLUMN_IM2(ATTR, LINE) \
-  ATTR_MSB = ATTR >> 16; \
-  atex = atex_table[(ATTR_MSB >> 13) & 7]; \
-  offs = (ATTR_MSB & 0x03FF) << 7 | (ATTR_MSB & 0x1800) << 6 | (LINE); \
-  if(ATTR_MSB & 0x1000) offs ^= 0x40; \
+  attr_msb = ATTR >> 16; \
+  atex = atex_table[(attr_msb >> 13) & 7]; \
+  offs = (attr_msb & 0x03FF) << 7 | (attr_msb & 0x1800) << 6 | (LINE); \
+  if(attr_msb & 0x1000) offs ^= 0x40; \
   src = (uint32 *)&bg_pattern_cache[offs]; \
   *dst++ = (*src++ | atex); \
   *dst++ = (*src++ | atex); \
@@ -335,7 +320,7 @@ static __inline__ void WRITE_LONG(void *address, uint32 data)
 #define DRAW_SPRITE_TILE \
 	for(i=0; i<8; i++) \
 	{ \
-		if ((lb[i] & 0x80) && ((lb[i] | src[i]) & 0x0F)) status |= 0x20; \
+		if ((lb[i] & 0x80) && (lb[i] & 0x0F) && (src[i] & 0x0F)) status |= 0x20; \
 		lb[i] = table[(lb[i] << 8) |(src[i] | palette)]; \
 	}
 
@@ -376,7 +361,7 @@ struct
   uint16 xpos;
   uint16 attr;
   uint8 size;
-  uint8 index;
+  uint8 index; // unused
 } object_info[20];
 
 /* Pixel look-up tables and table base address */
@@ -409,7 +394,7 @@ static uint8 ntb_buf[0x400];	/* Plane B line buffer */
 static uint8 obj_buf[0x400];	/* Object layer line buffer */
 
 /* Sprite line buffer data */
-static uint8 object_index_count;
+static uint32 object_index_count;
 
 /* 
    3:3:3 to 5:6:5 RGB pixel extrapolation tables 
@@ -584,41 +569,186 @@ void render_shutdown(void)
 }
 
 /*--------------------------------------------------------------------------*/
-/* Line render function                                                     */
+/* Helper functions (cache update, hscroll, window clip)                    */
 /*--------------------------------------------------------------------------*/
-#ifdef NGC
-static inline void remap_texture(uint8 *src, uint16 *dst, int tile_cnt)
+
+static inline void update_bg_pattern_cache(uint32 index)
+{
+  int i;
+  uint8 x, y, c;
+  uint16 name;
+  uint8 *dst;
+  uint32 bp;
+#ifdef LSB_FIRST
+	uint8 shift_table[8] = {12, 8, 4, 0, 28, 24, 20, 16};
+#else
+	uint8 shift_table[8] = {28, 24, 20, 16, 12, 8, 4, 0};
+#endif				
+
+  for(i = 0; i < index; i ++)
+  {
+    name = bg_name_list[i];
+    bg_name_list[i] = 0;
+    
+    for(y = 0; y < 8; y ++)
+    {
+      if(bg_name_dirty[name] & (1 << y))
+      {
+        dst = &bg_pattern_cache[name << 6];
+        bp = *(uint32 *)&vram[(name << 5) | (y << 2)];
+
+        for(x = 0; x < 8; x ++)
+        {
+					c = (bp >> shift_table[x]) & 0x0F;
+					dst[0x00000 | (y << 3) | (x)] = (c);			/* hf=0, vf=0: normal */
+          dst[0x20000 | (y << 3) | (x ^ 7)] = (c);		/* hf=1, vf=0: horizontal flipped */
+          dst[0x40000 | ((y ^ 7) << 3) | (x)] = (c);		/* hf=0, vf=1: vertical flipped */
+          dst[0x60000 | ((y ^ 7) << 3) | (x ^ 7)] = (c);	/* hf=1, vf=1: horizontal & vertical flipped */
+        }
+      }
+    }
+    bg_name_dirty[name] = 0;
+  }
+}
+
+static inline uint32 get_hscroll(uint32 line)
+{
+  switch(reg[11] & 3)
+  {
+    case 0: /* Full-screen */
+      return *(uint32 *)&vram[hscb];
+
+    case 1: /* First 8 lines */
+      return *(uint32 *)&vram[hscb + ((line & 7) << 2)];
+
+    case 2: /* Every 8 lines */
+      return *(uint32 *)&vram[hscb + ((line & ~7) << 2)];
+
+    default: /* Every line */
+      return *(uint32 *)&vram[hscb + (line << 2)];
+  }
+}
+
+/* Update Window Clipping (only called when registers change) */
+void window_clip(uint8 reg_12, uint8 reg_17)
+{
+  /* Window size and invert flags */
+  int hp = (reg_17 & 0x1f);
+  int hf = (reg_17 >> 7) & 1;
+
+  /* Display size  */
+  int sw = (reg_12 & 1) ? 20 : 16;
+
+  /* Clear clipping data */
+  memset(&clip, 0, sizeof(clip));
+
+  /* Perform horizontal clipping; the results are applied in reverse
+      if the horizontal inversion flag is set */
+  int a = hf;
+  int w = hf ^ 1;
+
+  if(hp)
+  {
+    if(hp > sw)
+    {
+      /* Plane W takes up entire line */
+      clip[w].right = sw;
+      clip[w].enable = 1;
+    }
+    else
+    {
+      /* Window takes left side, Plane A takes right side */
+      clip[w].right = hp;
+      clip[a].left = hp;
+      clip[a].right = sw;
+      clip[0].enable = clip[1].enable = 1;
+    }
+  }
+  else
+  {
+    /* Plane A takes up entire line */
+    clip[a].right = sw;
+    clip[a].enable = 1;
+  }
+}
+
+/*--------------------------------------------------------------------------*/
+/* Remap functions                                                          */
+/*--------------------------------------------------------------------------*/
+
+#ifndef NGC
+static inline void remap_8(uint8 *src, uint8 *dst, uint8 *table, int length)
+{
+  int count;
+  for(count = 0; count < length; count += 1)
+  {
+    *dst++ = table[*src++];
+  }
+}
+
+static inline void remap_16(uint8 *src, uint16 *dst, uint16 *table, int length)
+{
+  int count;
+  for(count = 0; count < length; count += 1)
+  {
+    *dst++ = table[*src++];
+  }
+}
+
+static inline void remap_32(uint8 *src, uint32 *dst, uint32 *table, int length)
+{
+  int count;
+  for(count = 0; count < length; count += 1)
+  {
+    *dst++ = table[*src++];
+  }
+}
+
+#else
+static inline void remap_texture(uint8 *src, uint16 *dst, uint32 tiles)
 {
   int count;
   uint16 *table = pixel_16;
 
-  for(count = 0; count < tile_cnt; count ++)
+  for(count = 0; count < tiles; count ++)
   {
     /* one tile is 4 pixels wide */
     *dst++ = table[*src++];
     *dst++ = table[*src++];
     *dst++ = table[*src++];
     *dst++ = table[*src++];
-
-    /* skip next three 4-pixels lines */
     dst += 12;
   }
 }
 #endif
 
-void remap_buffer(int line, int width)
+
+static inline void merge(uint8 *srca, uint8 *srcb, uint8 *dst, uint8 *table, uint32 width)
+{
+  int i;
+  for(i = 0; i < width; i += 1)
+  {
+    *dst++ = table[(*srcb++ << 8) | (*srca++)];
+  }
+}
+
+/*--------------------------------------------------------------------------*/
+/* Line render function                                                     */
+/*--------------------------------------------------------------------------*/
+
+void remap_buffer(uint32 line, uint32 width)
 {
   /* get line offset from framebuffer */
-  int vline = (line + bitmap.viewport.y) % lines_per_frame;
+  line = (line + bitmap.viewport.y) % lines_per_frame;
     
   /* double resolution mode */
-  if (config.render && interlaced) vline = (vline * 2) + odd_frame;
+  if (config.render && interlaced) line = (line * 2) + odd_frame;
 
   /* NTSC Filter */
   if (config.ntsc)
   {
-    if (reg[12]&1) md_ntsc_blit(&md_ntsc, ( MD_NTSC_IN_T const * )pixel_16, tmp_buf+0x20-bitmap.viewport.x, width, vline);
-    else sms_ntsc_blit(&sms_ntsc, ( SMS_NTSC_IN_T const * )pixel_16, tmp_buf+0x20-bitmap.viewport.x, width, vline);
+    if (reg[12]&1) md_ntsc_blit(&md_ntsc, ( MD_NTSC_IN_T const * )pixel_16, tmp_buf+0x20-bitmap.viewport.x, width, line);
+    else sms_ntsc_blit(&sms_ntsc, ( SMS_NTSC_IN_T const * )pixel_16, tmp_buf+0x20-bitmap.viewport.x, width, line);
     return;
   }
 	
@@ -627,11 +757,11 @@ void remap_buffer(int line, int width)
   /* one tile is 32 byte = 4x4 pixels */
   /* tiles are stored continuously in texture memory */
   width = width >> 2;
-  int offset = ((width << 5) * (vline >> 2)) + ((vline & 3) * 8);
+  int offset = ((width << 5) * (line >> 2)) + ((line & 3) * 8);
   remap_texture(tmp_buf+0x20-bitmap.viewport.x, (uint16 *)(texturemem + offset), width);
 
 #else
-  void *out =((void *)&bitmap.data[(vline * bitmap.pitch)]);
+  void *out =((void *)&bitmap.data[(line * bitmap.pitch)]);
   switch(bitmap.depth)
   {
 		case 8:
@@ -650,446 +780,477 @@ void remap_buffer(int line, int width)
 #endif
 }
 
-void render_line(int line, uint8 odd_frame)
+void render_line(uint32 line, uint32 overscan)
 {
-  /* check if we are inside display area (including vertical borders) */
-  int min = bitmap.viewport.h + bitmap.viewport.y;
-  int max = lines_per_frame - bitmap.viewport.y;
-  if ((line >= min) && (line < max)) return;
+	uint32 width    = bitmap.viewport.w;
+  uint32 x_offset = bitmap.viewport.x;
 
-  uint8 *lb  = tmp_buf;
-	int width  = bitmap.viewport.w;
-
-	/* vertical borders or display OFF */
-  if ((line >= bitmap.viewport.h) || (!(reg[1] & 0x40)))
+	/* background color (display OFF or borders) */
+  if (overscan || !(reg[1] & 0x40))
   {
-    memset(&lb[0x20], 0x40, width);
+    width += 2 * x_offset;
+		memset(&tmp_buf[0x20 - x_offset], 0x40, width);
 	}
 	else
   {
-    update_bg_pattern_cache();
-    window_clip(line);
+    uint8 *lb = tmp_buf;
 
+    /* update pattern generator */
+    if (bg_list_index)
+    {
+      update_bg_pattern_cache(bg_list_index);
+      bg_list_index = 0;
+    }
+
+    /* double-resolution mode */
     if(im2_flag)
     {
-      if (clip[0].enable) render_ntx_im2(0, line, nta_buf, odd_frame);
-      render_ntx_im2(1, line, ntb_buf, odd_frame);
-			if (clip[1].enable) render_ntw_im2(line, nta_buf, odd_frame);
-    }
-    else
-    {
-      if(reg[11] & 4)
+      uint32 odd = odd_frame;
+
+      /* render BG layers */
+      render_bg_im2(line, width, odd);
+
+      if (reg[12] & 8)
       {
-        if (clip[0].enable) render_ntx_vs(0, line, nta_buf);
-        render_ntx_vs(1, line, ntb_buf);
+        /* Shadow & Highlight */
+        merge(&nta_buf[0x20], &ntb_buf[0x20], &bg_buf[0x20], lut[2], width);
+        memset(&obj_buf[0x20], 0, width);
+        if (object_index_count) render_obj_im2(line, odd, obj_buf, lut[3]);
+        merge(&obj_buf[0x20], &bg_buf[0x20], &lb[0x20], lut[4], width);
       }
       else
       {
-        if (clip[0].enable) render_ntx(0, line, nta_buf);
-        render_ntx(1, line, ntb_buf);
+        merge(&nta_buf[0x20], &ntb_buf[0x20], &lb[0x20], lut[0], width);
+        if (object_index_count) render_obj_im2(line, odd, lb, lut[1]);
       }
-			if (clip[1].enable) render_ntw(line, nta_buf);
-    }
-
-		if(reg[12] & 8)
-    {
-      merge(&nta_buf[0x20], &ntb_buf[0x20], &bg_buf[0x20], lut[2], width);
-      memset(&obj_buf[0x20], 0, width);
-
-      if(im2_flag) render_obj_im2(line, obj_buf, lut[3], odd_frame);
-      else render_obj(line, obj_buf, lut[3]);
-
-      merge(&obj_buf[0x20], &bg_buf[0x20], &lb[0x20], lut[4], width);
     }
     else
     {
-      merge(&nta_buf[0x20], &ntb_buf[0x20], &lb[0x20], lut[0], width);
-      if(im2_flag) render_obj_im2(line, lb, lut[1], odd_frame);
-      else render_obj(line, lb, lut[1]);
-    }
+      /* render BG layers */
+      if(reg[11] & 4) render_bg_vs(line, width);
+      else render_bg(line, width);
 
-		  /* Mode 4 feature only (unemulated, no games rely on this) */
-		  /*if(!(reg[1] & 0x04) && (reg[0] & 0x20)) memset(&lb[0x20], 0x40, 0x08);*/
-  }
-
-	/* horizontal borders */
-	if (config.overscan)
-	{
-		memset(&lb[0x20 - bitmap.viewport.x], 0x40, bitmap.viewport.x);
-		memset(&lb[0x20 + bitmap.viewport.w], 0x40, bitmap.viewport.x);
-		width += 2 * bitmap.viewport.x;
-	}
-
-  /* LightGun mark */
-  if ((input.dev[4] == DEVICE_LIGHTGUN) && (config.gun_cursor))
-  {
-    int dy = v_counter - input.analog[0][1];
-
-    if (abs(dy) < 6)
-    {
-      int i;
-      int start = input.analog[0][0] - 4;
-      int end = start + 8;
-      if (start < 0) start = 0;
-      if (end > bitmap.viewport.w) end = bitmap.viewport.w;
-      for (i=start; i<end; i++)
+      if(reg[12] & 8)
       {
-        lb[0x20+i] = 0xff;
+        /* Shadow & Highlight */
+        merge(&nta_buf[0x20], &ntb_buf[0x20], &bg_buf[0x20], lut[2], width);
+        memset(&obj_buf[0x20], 0, width);
+        render_obj(line, obj_buf, lut[3]);
+        merge(&obj_buf[0x20], &bg_buf[0x20], &lb[0x20], lut[4], width);
+      }
+      else
+      {
+        merge(&nta_buf[0x20], &ntb_buf[0x20], &lb[0x20], lut[0], width);
+        render_obj(line, lb, lut[1]);
       }
     }
-  }
 
-  remap_buffer(line,width);
-}
+    /* Mode 4 feature only (unemulated, no games rely on this) */
+    /*if(!(reg[1] & 0x04) && (reg[0] & 0x20)) memset(&lb[0x20], 0x40, 0x08);*/
 
-/*--------------------------------------------------------------------------*/
-/* Window rendering                             */
-/*--------------------------------------------------------------------------*/
-
-void render_ntw(int line, uint8 *buf)
-{
-  int column, v_line, width;
-  uint32 *nt, *src, *dst, atex, atbuf;
-
-  v_line = (line & 7) << 3;
-  width = (reg[12] & 1) ? 7 : 6;
-	nt = (uint32 *)&vram[ntwb | ((line >> 3) << width)];
-  dst = (uint32 *)&buf[0x20 + (clip[1].left << 4)];
-
-  for(column = clip[1].left; column < clip[1].right; column ++)
-  {
-    atbuf = nt[column];
-    DRAW_COLUMN(atbuf, v_line)
-  }
-}
-
-void render_ntw_im2(int line, uint8 *buf, uint8 odd)
-{
-  int column, v_line, width;
-  uint32 *nt, *src, *dst, atex, atbuf, offs;
-
-  v_line = ((line & 7) << 1 | odd) << 3;
-  width = (reg[12] & 1) ? 7 : 6;
-  nt = (uint32 *)&vram[ntwb | ((line >> 3) << width)];
-  dst = (uint32 *)&buf[0x20 + (clip[1].left << 4)];
-
-  for(column = clip[1].left; column < clip[1].right; column ++)
-  {
-    atbuf = nt[column];
-    DRAW_COLUMN_IM2(atbuf, v_line)
-  }
-}
-
-/*--------------------------------------------------------------------------*/
-/* Background plane rendering                         */
-/*--------------------------------------------------------------------------*/
-
-void render_ntx(int which, int line, uint8 *buf)
-{
-  int column;
-  int start, end;
-  int index;
-  int shift;
-  int v_line;
-  uint32 atex, atbuf, *src, *dst;
-  uint16 xscroll = 0;
-  int y_scroll;
-  uint32 *nt;
-  uint32 *vs;
-  uint16 table[2] = {ntab,ntbb};
-	uint8 xshift[2] = {0,2};
-#ifdef LSB_FIRST
-  uint8 vsr_shift[2] = {0,16};
-#else
-	uint8 vsr_shift[2] = {16,0};
-#endif
-
-  get_hscroll(line, xshift[which], &xscroll);
-  shift = (xscroll & 0x0F);
-  index = playfield_col_mask + 1 - ((xscroll >> 4) & playfield_col_mask);
-
-  if(which)
-  {
-    start = 0;
-    end = (reg[12] & 1) ? 20 : 16;
-  }
-  else
-  {
-    start = clip[0].left;
-    end = clip[0].right;
-    index = (index + clip[0].left) & playfield_col_mask;
-  }
-
-  vs = (uint32 *)&vsram[0];
-  y_scroll = (vs[0] >> vsr_shift[which]) & 0x3FF;
-	y_scroll = (line + y_scroll) & playfield_row_mask;
-	v_line = (y_scroll & 7) << 3;
-	nt = (uint32 *)&vram[table[which] + (((y_scroll >> 3) << playfield_shift) & y_mask)];
-
-  if(shift)
-  {
-		dst = (uint32 *)&buf[0x10 + shift + (start<<4)];
-
-		/* Window bug */
-		if (start) atbuf = nt[(index) & playfield_col_mask];
-		else atbuf = nt[(index-1) & playfield_col_mask];
-
-		DRAW_COLUMN(atbuf, v_line);
-  }
-
-	dst = (uint32 *)&buf[0x20 + shift + (start<<4)];
-
-  for(column = start; column < end; column ++, index ++)
-  {
-    atbuf = nt[index & playfield_col_mask];
-    DRAW_COLUMN(atbuf, v_line)
-  }
-}
-
-void render_ntx_im2(int which, int line, uint8 *buf, uint8 odd)
-{
-  int column;
-  int start, end;
-  int index;
-  int shift;
-  int v_line;
-  uint32 atex, atbuf, *src, *dst;
-  uint16 xscroll = 0;
-  int y_scroll;
-  uint32 *nt;
-  uint32 *vs;
-  uint32 offs;
-  uint16 table[2] = {ntab,ntbb};
-	uint8 xshift[2] = {0,2};
-#ifdef LSB_FIRST
-  uint8 vsr_shift[2] = {1,17};
-#else
-	uint8 vsr_shift[2] = {17,1};
-#endif
-  
-  get_hscroll(line, xshift[which], &xscroll);
-  shift = (xscroll & 0x0F);
-  index = playfield_col_mask + 1 - ((xscroll >> 4) & playfield_col_mask);
-
-  if(which)
-  {
-    start = 0;
-    end = (reg[12] & 1) ? 20 : 16;
-  }
-  else
-  {
-    start = clip[0].left;
-    end = clip[0].right;
-    index = (index + clip[0].left) & playfield_col_mask;
-  }
-
-  vs = (uint32 *)&vsram[0];
-	y_scroll = (vs[0] >> vsr_shift[which]) & 0x3FF;
-  y_scroll = (line + y_scroll) & playfield_row_mask;
-  v_line = (((y_scroll & 7) << 1) | odd) << 3;
-  nt = (uint32 *)&vram[table[which] + (((y_scroll >> 3) << playfield_shift) & y_mask)];
-
-	if(shift)
-  {
-		dst = (uint32 *)&buf[0x10 + shift + (start<<4)];
-
-		/* Window bug */
-		if (start) atbuf = nt[(index) & playfield_col_mask];
-		else atbuf = nt[(index-1) & playfield_col_mask];
-		DRAW_COLUMN_IM2(atbuf, v_line);
-  }
-
-	dst = (uint32 *)&buf[0x20 + shift + (start<<4)];
-  for(column = start; column < end; column ++, index ++)
-  {
-    atbuf = nt[index & playfield_col_mask];
-    DRAW_COLUMN_IM2(atbuf, v_line)
-  }
-}
-
-void render_ntx_vs(int which, int line, uint8 *buf)
-{
-  int column;
-  int start, end;
-  int index;
-  int shift;
-  int v_line;
-  uint32 atex, atbuf, *src, *dst;
-  uint16 xscroll = 0;
-  int y_scroll;
-  uint32 *nt;
-  uint32 *vs;
-  uint16 table[2] = {ntab,ntbb};
-	uint8 xshift[2] = {0,2};
-#ifdef LSB_FIRST
-  uint8 vsr_shift[2] = {0,16};
-#else
-	uint8 vsr_shift[2] = {16,0};
-#endif
-  
-  get_hscroll(line, xshift[which], &xscroll);
-  shift = (xscroll & 0x0F);
-  index = playfield_col_mask + 1 - ((xscroll >> 4) & playfield_col_mask);
-
-  if(which)
-  {
-    start = 0;
-    end = (reg[12] & 1) ? 20 : 16;
-  }
-  else
-  {
-    start = clip[0].left;
-    end = clip[0].right;
-    index = (index + clip[0].left) & playfield_col_mask;
-  }
-
-  vs = (uint32 *)&vsram[0];
-
-	if(shift)
-  {
-		dst = (uint32 *)&buf[0x10 + shift + (start<<4)];
-		y_scroll = (line & playfield_row_mask);
-		v_line = (y_scroll & 7) << 3;
-		nt = (uint32 *)&vram[table[which] + (((y_scroll >> 3) << playfield_shift) & y_mask)];
-
-		/* Window bug */
-		if (start) atbuf = nt[(index) & playfield_col_mask];
-		else atbuf = nt[(index-1) & playfield_col_mask];
-
-		DRAW_COLUMN(atbuf, v_line);
-  }
-
-	dst = (uint32 *)&buf[0x20 + shift + (start<<4)];
-  
-  for(column = start; column < end; column ++, index ++)
-  {
-		y_scroll = (vs[column] >> vsr_shift[which]) & 0x3FF;
-    y_scroll = (line + y_scroll) & playfield_row_mask;
-    v_line = (y_scroll & 7) << 3;
-    nt = (uint32 *)&vram[table[which] + (((y_scroll >> 3) << playfield_shift) & y_mask)];
-    atbuf = nt[index & playfield_col_mask];
-    DRAW_COLUMN(atbuf, v_line)
-  }
-}
-
-/*--------------------------------------------------------------------------*/
-/* Helper functions (cache update, hscroll, window clip)          */
-/*--------------------------------------------------------------------------*/
-
-void update_bg_pattern_cache(void)
-{
-  int i;
-  uint8 x, y, c;
-  uint16 name;
-#ifdef LSB_FIRST
-	uint8 shift_table[8] = {12, 8, 4, 0, 28, 24, 20, 16};
- #else
-	uint8 shift_table[8] = {28, 24, 20, 16, 12, 8, 4, 0};
- #endif				
-
-  if(!bg_list_index) return;
-
-  for(i = 0; i < bg_list_index; i ++)
-  {
-    name = bg_name_list[i];
-    bg_name_list[i] = 0;
-    
-    for(y = 0; y < 8; y ++)
+    /* borders */
+    if (x_offset)
     {
-      if(bg_name_dirty[name] & (1 << y))
-      {
-        uint8 *dst = &bg_pattern_cache[name << 6];
-        uint32 bp = *(uint32 *)&vram[(name << 5) | (y << 2)];
+        memset(&lb[0x20 - x_offset], 0x40, x_offset);
+        memset(&lb[0x20 + width], 0x40, x_offset);
+        width += 2 * x_offset;
+    }
 
-        for(x = 0; x < 8; x ++)
+    /* LightGun mark */
+    if ((input.dev[4] == DEVICE_LIGHTGUN) && (config.gun_cursor))
+    {
+      int dy = v_counter - input.analog[0][1];
+
+      if (abs(dy) < 6)
+      {
+        int i;
+        int start = input.analog[0][0] - 4;
+        int end = start + 8;
+        if (start < 0) start = 0;
+        if (end > bitmap.viewport.w) end = bitmap.viewport.w;
+        for (i=start; i<end; i++)
         {
-					c = (bp >> shift_table[x]) & 0x0F;
-					dst[0x00000 | (y << 3) | (x)] = (c);			/* hf=0, vf=0: normal */
-          dst[0x20000 | (y << 3) | (x ^ 7)] = (c);		/* hf=1, vf=0: horizontal flipped */
-          dst[0x40000 | ((y ^ 7) << 3) | (x)] = (c);		/* hf=0, vf=1: vertical flipped */
-          dst[0x60000 | ((y ^ 7) << 3) | (x ^ 7)] = (c);	/* hf=1, vf=1: horizontal & vertical flipped */
+          lb[0x20+i] = 0xff;
         }
       }
     }
-    bg_name_dirty[name] = 0;
   }
-  bg_list_index = 0;
+
+  /* pixel color remapping */
+  remap_buffer(line,width);
 }
 
-void get_hscroll(int line, int shift, uint16 *scroll)
+static void render_bg(uint32 line, uint32 width)
 {
-  switch(reg[11] & 3)
+  uint32 column, atex, atbuf, *src, *dst;
+#ifndef LSB_FIRST
+  uint32 attr_msb;
+#endif
+
+  /* common data */
+  uint32 xscroll      = get_hscroll(line);
+  uint32 pf_col_mask  = playfield_col_mask;
+  uint32 pf_row_mask  = playfield_row_mask;
+  uint32 pf_shift     = playfield_shift;
+  uint32 pf_y_mask    = y_mask;
+  uint32 *vs          = (uint32 *)&vsram[0];
+
+  /* B Plane */
+  uint8 *buf    = ntb_buf;
+  uint32 start  = 0;
+  uint32 end    = width >> 4;
+
+#ifdef LSB_FIRST
+  uint32 shift    = (xscroll >> 16) & 0x0F;
+  uint32 index    = pf_col_mask + 1 - ((xscroll >> 20) & pf_col_mask);
+  uint32 y_scroll = (line + ((vs[0] >> 16) & 0x3FF)) & pf_row_mask;
+#else
+  uint32 shift    = (xscroll & 0x0F);
+  uint32 index    = pf_col_mask + 1 - ((xscroll >> 4) & pf_col_mask);
+  uint32 y_scroll = (line + (vs[0] & 0x3FF)) & pf_row_mask;
+#endif
+
+	uint32 v_line = (y_scroll & 7) << 3;
+	uint32 *nt    = (uint32 *)&vram[ntbb + (((y_scroll >> 3) << pf_shift) & pf_y_mask)];
+
+  if(shift)
   {
-    case 0: /* Full-screen */
-      *scroll = *(uint16 *)&vram[hscb + shift];
-      break;
-
-    case 1: /* First 8 lines */
-      *scroll = *(uint16 *)&vram[hscb + ((line & 7) << 2) + shift];
-      break;
-
-    case 2: /* Every 8 lines */
-      *scroll = *(uint16 *)&vram[hscb + ((line & ~7) << 2) + shift];
-      break;
-
-    case 3: /* Every line */
-      *scroll = *(uint16 *)&vram[hscb + (line << 2) + shift];
-      break;
+		dst   = (uint32 *)&buf[0x10 + shift];
+    atbuf = nt[(index-1) & pf_col_mask];
+		DRAW_COLUMN(atbuf, v_line);
   }
 
-  *scroll &= 0x03FF;
-}
+	dst = (uint32 *)&buf[0x20 + shift];
+  for(column = 0; column < end; column ++, index ++)
+  {
+    atbuf = nt[index & pf_col_mask];
+    DRAW_COLUMN(atbuf, v_line)
+  }
 
-void window_clip(int line)
-{
-  /* Window size and invert flags */
-  int hp = (reg[17] & 0x1F);
-  int hf = (reg[17] >> 7) & 1;
-  int vp = (reg[18] & 0x1F) << 3;
-  int vf = (reg[18] >> 7) & 1;
-
-  /* Display size  */
-  int sw = (reg[12] & 1) ? 20 : 16;
-
-  /* Clear clipping data */
-  memset(&clip, 0, sizeof(clip));
-
-  /* Check if line falls within window range */
-  if(vf == (line >= vp))
+  /* Window and Plane A */
+  buf = nta_buf;
+  uint32 a  = (reg[18] & 0x1F) << 3;
+  uint32 w  = (reg[18] >> 7) & 1;
+  if (w == (line >= a))
   {
     /* Window takes up entire line */
-    clip[1].right = sw;
-    clip[1].enable = 1;
+    a = 0;
+    w = 1;
   }
   else
   {
-    /* Perform horizontal clipping; the results are applied in reverse
-       if the horizontal inversion flag is set */
-    int a = hf;
-    int w = hf ^ 1;
+    /* Window and Plane A share the line */
+    a = clip[0].enable;
+    w = clip[1].enable;
+  }
 
-    if(hp)
+  /* Plane A */
+  if (a)
+  {
+    /* set for Plane A */
+    start = clip[0].left;
+    end   = clip[0].right;
+
+#ifdef LSB_FIRST
+    shift     = (xscroll & 0x0F);
+    index     = pf_col_mask + start + 1 - ((xscroll >> 4) & pf_col_mask);
+    y_scroll  = (line + (vs[0] & 0x3FF)) & pf_row_mask;
+#else
+    shift     = (xscroll >> 16) & 0x0F;
+    index     = pf_col_mask + start + 1 - ((xscroll >> 20) & pf_col_mask);
+    y_scroll  = (line + ((vs[0] >> 16) & 0x3FF)) & pf_row_mask;
+#endif
+
+    v_line = (y_scroll & 7) << 3;
+    nt        = (uint32 *)&vram[ntab + (((y_scroll >> 3) << pf_shift) & pf_y_mask)];
+
+    if(shift)
     {
-      if(hp > sw)
-      {
-        /* Plane W takes up entire line */
-        clip[w].right = sw;
-        clip[w].enable = 1;
-      }
-      else
-      {
-        /* Window takes left side, Plane A takes right side */
-        clip[w].right = hp;
-        clip[a].left = hp;
-        clip[a].right = sw;
-        clip[0].enable = clip[1].enable = 1;
-      }
+      dst = (uint32 *)&buf[0x10 + shift + (start<<4)];
+
+      /* Window bug */
+      if (start) atbuf = nt[index & pf_col_mask];
+      else atbuf = nt[(index-1) & pf_col_mask];
+
+      DRAW_COLUMN(atbuf, v_line);
     }
-    else
+
+    dst = (uint32 *)&buf[0x20 + shift + (start<<4)];
+    for(column = start; column < end; column ++, index ++)
     {
-      /* Plane A takes up entire line */
-      clip[a].right = sw;
-      clip[a].enable = 1;
+      atbuf = nt[index & pf_col_mask];
+      DRAW_COLUMN(atbuf, v_line)
+    }
+
+    /* set for Window */
+    start = clip[1].left;
+    end   = clip[1].right;
+  }
+
+  /* Window */
+  if (w)
+  {
+    v_line  = (line & 7) << 3;
+	  nt      = (uint32 *)&vram[ntwb | ((line >> 3) << (6 + (reg[12] & 1)))];
+    dst     = (uint32 *)&buf[0x20 + (start << 4)];
+    for(column = start; column < end; column ++)
+    {
+      atbuf = nt[column];
+      DRAW_COLUMN(atbuf, v_line)
+    }
+  }
+}
+
+static void render_bg_vs(uint32 line, uint32 width)
+{
+  uint32 column, atex, atbuf, *src, *dst;
+#ifndef LSB_FIRST
+  uint32 attr_msb;
+#endif
+
+  /* common data */
+  uint32 xscroll      = get_hscroll(line);
+  uint32 pf_col_mask  = playfield_col_mask;
+  uint32 pf_row_mask  = playfield_row_mask;
+  uint32 pf_shift     = playfield_shift;
+  uint32 pf_y_mask    = y_mask;
+  uint32 *vs          = (uint32 *)&vsram[0];
+
+  /* B Plane */
+  uint8 *buf    = ntb_buf;
+  uint32 start  = 0;
+  uint32 end    = width >> 4;
+
+#ifdef LSB_FIRST
+  uint32 shift    = (xscroll >> 16) & 0x0F;
+  uint32 index    = pf_col_mask + 1 - ((xscroll >> 20) & pf_col_mask);
+#else
+  uint32 shift    = (xscroll & 0x0F);
+  uint32 index    = pf_col_mask + 1 - ((xscroll >> 4) & pf_col_mask);
+#endif
+
+	uint32 y_scroll, v_line, *nt;
+
+	if(shift)
+  {
+    y_scroll = (line & pf_row_mask);
+    v_line = (y_scroll & 7) << 3;
+    nt = (uint32 *)&vram[ntbb + (((y_scroll >> 3) << pf_shift) & pf_y_mask)];
+		dst   = (uint32 *)&buf[0x10 + shift];
+    atbuf = nt[(index-1) & pf_col_mask];
+		DRAW_COLUMN(atbuf, v_line);
+  }
+
+	dst = (uint32 *)&buf[0x20 + shift];
+  for(column = start; column < end; column ++, index ++)
+  {
+#ifdef LSB_FIRST
+    y_scroll = (line + ((vs[column] >> 16) & 0x3FF)) & pf_row_mask;
+#else
+    y_scroll = (line + (vs[column] & 0x3FF)) & pf_row_mask;
+#endif
+    v_line = (y_scroll & 7) << 3;
+    nt = (uint32 *)&vram[ntbb + (((y_scroll >> 3) << pf_shift) & pf_y_mask)];
+    atbuf = nt[index & pf_col_mask];
+    DRAW_COLUMN(atbuf, v_line)
+  }
+  
+  /* Window and Plane A */
+  buf = nta_buf;
+  uint32 a  = (reg[18] & 0x1F) << 3;
+  uint32 w  = (reg[18] >> 7) & 1;
+  if (w == (line >= a))
+  {
+    /* Window takes up entire line */
+    a = 0;
+    w = 1;
+  }
+  else
+  {
+    /* Window and Plane A share the line */
+    a = clip[0].enable;
+    w = clip[1].enable;
+  }
+
+  /* Plane A*/
+  if (a)
+  {
+    /* set for Plane A */
+    start = clip[0].left;
+    end   = clip[0].right;
+
+#ifdef LSB_FIRST
+    shift     = (xscroll & 0x0F);
+    index     = pf_col_mask + start + 1 - ((xscroll >> 4) & pf_col_mask);
+#else
+    shift     = (xscroll >> 16) & 0x0F;
+    index     = pf_col_mask + start + 1 - ((xscroll >> 20) & pf_col_mask);
+#endif
+
+    if(shift)
+    {
+      dst = (uint32 *)&buf[0x10 + shift + (start<<4)];
+      y_scroll = (line & pf_row_mask);
+      v_line = (y_scroll & 7) << 3;
+      nt = (uint32 *)&vram[ntab + (((y_scroll >> 3) << pf_shift) & pf_y_mask)];
+
+      /* Window bug */
+      if (start) atbuf = nt[index & pf_col_mask];
+      else atbuf = nt[(index-1) & pf_col_mask];
+
+      DRAW_COLUMN(atbuf, v_line);
+    }
+
+    dst = (uint32 *)&buf[0x20 + shift + (start<<4)];
+    for(column = start; column < end; column ++, index ++)
+    {
+#ifdef LSB_FIRST
+      y_scroll = (line + (vs[column] & 0x3FF)) & pf_row_mask;
+#else
+      y_scroll = (line + ((vs[column] >> 16) & 0x3FF)) & pf_row_mask;
+#endif				
+      v_line = (y_scroll & 7) << 3;
+      nt = (uint32 *)&vram[ntab + (((y_scroll >> 3) << pf_shift) & pf_y_mask)];
+      atbuf = nt[index & pf_col_mask];
+      DRAW_COLUMN(atbuf, v_line)
+    }
+
+    /* set for Window */
+    start = clip[1].left;
+    end   = clip[1].right;
+  }
+    
+  /* Window */
+  if (w)
+  {
+    v_line  = (line & 7) << 3;
+	  nt      = (uint32 *)&vram[ntwb | ((line >> 3) << (6 + (reg[12] & 1)))];
+    dst     = (uint32 *)&buf[0x20 + (start << 4)];
+    for(column = start; column < end; column ++)
+    {
+      atbuf = nt[column];
+      DRAW_COLUMN(atbuf, v_line)
+    }
+  }
+}
+
+static void render_bg_im2(uint32 line, uint32 width, uint32 odd)
+{
+  uint32 column, atex, atbuf, offs, *src, *dst;
+#ifndef LSB_FIRST
+  uint32 attr_msb;
+#endif
+
+  /* common data */
+  uint32 xscroll      = get_hscroll(line);
+  uint32 pf_col_mask  = playfield_col_mask;
+  uint32 pf_row_mask  = playfield_row_mask;
+  uint32 pf_shift     = playfield_shift;
+  uint32 pf_y_mask    = y_mask;
+  uint32 *vs          = (uint32 *)&vsram[0];
+
+  /* B Plane */
+  uint8 *buf    = ntb_buf;
+  uint32 start  = 0;
+  uint32 end    = width >> 4;
+
+#ifdef LSB_FIRST
+  uint32 shift    = (xscroll >> 16) & 0x0F;
+  uint32 index    = pf_col_mask + 1 - ((xscroll >> 20) & pf_col_mask);
+  uint32 y_scroll = (line + ((vs[0] >> 17) & 0x3FF)) & pf_row_mask; /* IM2 specific */
+#else
+  uint32 shift    = (xscroll & 0x0F);
+  uint32 index    = pf_col_mask + 1 - ((xscroll >> 4) & pf_col_mask);
+  uint32 y_scroll = (line + ((vs[0] >> 1) & 0x3FF)) & pf_row_mask;  /* IM2 specific */
+#endif
+
+	uint32 v_line = (((y_scroll & 7) << 1) | odd) << 3; /* IM2 specific */
+	uint32 *nt    = (uint32 *)&vram[ntbb + (((y_scroll >> 3) << pf_shift) & pf_y_mask)];
+
+  if(shift)
+  {
+		dst   = (uint32 *)&buf[0x10 + shift];
+    atbuf = nt[(index-1) & pf_col_mask];
+		DRAW_COLUMN_IM2(atbuf, v_line);   /* IM2 specific */
+  }
+
+	dst = (uint32 *)&buf[0x20 + shift];
+  for(column = 0; column < end; column ++, index ++)
+  {
+    atbuf = nt[index & pf_col_mask];
+    DRAW_COLUMN_IM2(atbuf, v_line)    /* IM2 specific */
+  }
+
+  /* Window and Plane A */
+  buf = nta_buf;
+  uint32 a  = (reg[18] & 0x1F) << 3;
+  uint32 w  = (reg[18] >> 7) & 1;
+  if (w == (line >= a))
+  {
+    /* Window takes up entire line */
+    a = 0;
+    w = 1;
+  }
+  else
+  {
+    /* Window and Plane A share the line */
+    a = clip[0].enable;
+    w = clip[1].enable;
+  }
+
+  /* Plane A */
+  if (a)
+  {
+    /* set for Plane A */
+    start = clip[0].left;
+    end   = clip[0].right;
+
+#ifdef LSB_FIRST
+    shift     = (xscroll & 0x0F);
+    index     = pf_col_mask + start + 1 - ((xscroll >> 4) & pf_col_mask);
+    y_scroll  = (line + ((vs[0] >> 1) & 0x3FF)) & pf_row_mask;  /* IM2 specific */
+#else
+    shift     = (xscroll >> 16) & 0x0F;
+    index     = pf_col_mask + start + 1 - ((xscroll >> 20) & pf_col_mask);
+    y_scroll  = (line + ((vs[0] >> 17) & 0x3FF)) & pf_row_mask;  /* IM2 specific */
+#endif
+
+	  v_line  = (((y_scroll & 7) << 1) | odd) << 3; /* IM2 specific */
+	  nt      = (uint32 *)&vram[ntab + (((y_scroll >> 3) << pf_shift) & pf_y_mask)];
+
+    if(shift)
+    {
+		  dst = (uint32 *)&buf[0x10 + shift + (start<<4)];
+
+		  /* Window bug */
+		  if (start) atbuf = nt[index & pf_col_mask];
+      else atbuf = nt[(index-1) & pf_col_mask];
+
+	  	DRAW_COLUMN_IM2(atbuf, v_line); /* IM2 specific */
+    }
+
+    dst = (uint32 *)&buf[0x20 + shift + (start<<4)];
+    for(column = start; column < end; column ++, index ++)
+    {
+      atbuf = nt[index & pf_col_mask];
+      DRAW_COLUMN_IM2(atbuf, v_line)  /* IM2 specific */
+    }
+
+    /* set for Window */
+    start = clip[1].left;
+    end   = clip[1].right;
+  }
+
+  /* Window */
+  if (w)
+  {
+    v_line = ((line & 7) << 1 | odd) << 3;  /* IM2 specific */
+	  nt      = (uint32 *)&vram[ntwb | ((line >> 3) << (6 + (reg[12] & 1)))];
+    dst     = (uint32 *)&buf[0x20 + (start << 4)];
+    for(column = start; column < end; column ++)
+    {
+      atbuf = nt[column];
+      DRAW_COLUMN_IM2(atbuf, v_line)  /* IM2 specific */
     }
   }
 }
@@ -1102,7 +1263,7 @@ void window_clip(int line)
 /* Input (bx):  d5-d0=color, d6=priority, d7=unused */
 /* Input (ax):  d5-d0=color, d6=priority, d7=unused */
 /* Output:    d5-d0=color, d6=priority, d7=unused */
-int make_lut_bg(int bx, int ax)
+static uint32 make_lut_bg(uint32 bx, uint32 ax)
 {
   int bf, bp, b;
   int af, ap, a;
@@ -1131,7 +1292,7 @@ int make_lut_bg(int bx, int ax)
 /* Input (bx):  d5-d0=color, d6=priority, d7=sprite pixel marker */
 /* Input (sx):  d5-d0=color, d6=priority, d7=unused */
 /* Output:    d5-d0=color, d6=zero, d7=sprite pixel marker */
-int make_lut_obj(int bx, int sx)
+static uint32 make_lut_obj(uint32 bx, uint32 sx)
 {
   int bf, bp, bs, b;
   int sf, sp, s;
@@ -1169,7 +1330,7 @@ int make_lut_obj(int bx, int sx)
 /* Input (bx):  d5-d0=color, d6=priority, d7=unused */
 /* Input (sx):  d5-d0=color, d6=priority, d7=unused */
 /* Output:    d5-d0=color, d6=priority, d7=intensity select (half/normal) */
-int make_lut_bg_ste(int bx, int ax)
+static uint32 make_lut_bg_ste(uint32 bx, uint32 ax)
 {
   int bf, bp, b;
   int af, ap, a;
@@ -1202,7 +1363,7 @@ int make_lut_bg_ste(int bx, int ax)
 /* Input (bx):  d5-d0=color, d6=priority, d7=sprite pixel marker */
 /* Input (sx):  d5-d0=color, d6=priority, d7=unused */
 /* Output:    d5-d0=color, d6=priority, d7=sprite pixel marker */
-int make_lut_obj_ste(int bx, int sx)
+static uint32 make_lut_obj_ste(uint32 bx, uint32 sx)
 {
   int bf, bs;
   int sf;
@@ -1226,7 +1387,7 @@ int make_lut_obj_ste(int bx, int sx)
 /* Input (bx):  d5-d0=color, d6=priority, d7=intensity (half/normal) */
 /* Input (sx):  d5-d0=color, d6=priority, d7=sprite marker */
 /* Output:    d5-d0=color, d6=intensity (half/normal), d7=(double/invalid) */
-int make_lut_bgobj_ste(int bx, int sx)
+static uint32 make_lut_bgobj_ste(uint32 bx, uint32 sx)
 {
   int c;
 
@@ -1355,55 +1516,6 @@ int make_lut_bgobj_ste(int bx, int sx)
 }
 
 /*--------------------------------------------------------------------------*/
-/* Remap functions                              */
-/*--------------------------------------------------------------------------*/
-#ifndef NGC
-void remap_8(uint8 *src, uint8 *dst, uint8 *table, int length)
-{
-  int count;
-  for(count = 0; count < length; count += 1)
-  {
-    *dst++ = table[*src++];
-  }
-}
-
-void remap_32(uint8 *src, uint32 *dst, uint32 *table, int length)
-{
-  int count;
-  for(count = 0; count < length; count += 1)
-  {
-    *dst++ = table[*src++];
-  }
-}
-#endif
-
-void remap_16(uint8 *src, uint16 *dst, uint16 *table, int length)
-{
-  int count;
-  for(count = 0; count < length; count += 1)
-  {
-    *dst++ = table[*src++];
-  }
-}
-
-
-/*--------------------------------------------------------------------------*/
-/* Merge functions                              */
-/*--------------------------------------------------------------------------*/
-
-void merge(uint8 *srca, uint8 *srcb, uint8 *dst, uint8 *table, int width)
-{
-  int i;
-  for(i = 0; i < width; i += 1)
-  {
-    uint8 a = srca[i];
-    uint8 b = srcb[i];
-    uint8 c = table[(b << 8) | (a)];
-    dst[i] = c;
-  }
-}
-
-/*--------------------------------------------------------------------------*/
 /* Color update functions                           */
 /*--------------------------------------------------------------------------*/
 #ifndef NGC
@@ -1482,30 +1594,24 @@ void color_update_16(int index, uint16 data)
 /* Object render functions                          */
 /*--------------------------------------------------------------------------*/
 
-void parse_satb(int line)
+void parse_satb(uint32 line)
 {
-  static uint8 sizetab[] = {8, 16, 24, 32};
-  uint8 link = 0;
-	uint16 *p, *q;
-  uint16 ypos;
-	uint8 size;
-  int count;
-  int height;
+  uint8 sizetab[] = {8, 16, 24, 32};
+  uint32 link = 0;
+  uint32 count, ypos, size, height;
 
-  int limit = (reg[12] & 1) ? 20 : 16;
-  int total = (reg[12] & 1) ? 80 : 64;
+  uint32 limit = (reg[12] & 1) ? 20 : 16;
+  uint32 total = limit << 2;
+
+  uint16 *p = (uint16 *) &vram[satb];
+  uint16 *q = (uint16 *) &sat[0];
 
   object_index_count = 0;
 
   for(count = 0; count < total; count += 1)
   {
-    q = (uint16 *) &sat[link << 3];
-
-    ypos = q[0];
-    if(im2_flag) ypos = (ypos >> 1) & 0x1FF;
-    else ypos &= 0x1FF;
-
-    size = q[1] >> 8;
+    ypos = (q[link] >> im2_flag) & 0x1FF;
+    size = q[link + 1] >> 8;
 		height = sizetab[size & 3];
 
     if((line >= ypos) && (line < (ypos + height)))
@@ -1520,21 +1626,19 @@ void parse_satb(int line)
 			// using xpos from internal satb stops sprite x
       // scrolling in bloodlin.bin,
       // but this seems to go against the test prog
-			p = (uint16 *) &vram[satb + (link << 3)];
-			object_info[object_index_count].ypos = q[0];
-      object_info[object_index_count].xpos = p[3];
-			object_info[object_index_count].attr = p[2];
+			object_info[object_index_count].attr  = p[link + 2];
+      object_info[object_index_count].xpos  = p[link + 3];
+			object_info[object_index_count].ypos  = ypos;
       object_info[object_index_count].size = size;
-      object_info[object_index_count].index = count;
-      object_index_count += 1;
+      ++object_index_count;
     }
 
-    link = q[1] & 0x7F;
+    link = (q[link + 1] & 0x7F) << 2;
     if(link == 0) break;
   }
 }
 
-void render_obj(int line, uint8 *buf, uint8 *table)
+static void render_obj(uint32 line, uint8 *buf, uint8 *table)
 {
   uint16 ypos;
   uint16 attr;
@@ -1543,7 +1647,7 @@ void render_obj(int line, uint8 *buf, uint8 *table)
   uint8 size;
   uint8 *src;
 
-  int count;
+  int count,i;
   int pixelcount = 0;
   int width;
   int height;
@@ -1552,7 +1656,6 @@ void render_obj(int line, uint8 *buf, uint8 *table)
   int sol_flag = 0;
   int left = 0x80;
   int right = 0x80 + bitmap.viewport.w;
-	int i;
 
   uint8 *s, *lb;
   uint16 name, index;
@@ -1562,8 +1665,7 @@ void render_obj(int line, uint8 *buf, uint8 *table)
 
   for(count = 0; count < object_index_count; count += 1)
   {
-    xpos = object_info[count].xpos;
-    xpos &= 0x1ff;
+    xpos = object_info[count].xpos & 0x1ff;
 
     /* sprite masking */
 		if(xpos != 0) sol_flag = 1;
@@ -1578,7 +1680,6 @@ void render_obj(int line, uint8 *buf, uint8 *table)
     if(((xpos + width) >= left) && (xpos < right))
     {
       ypos = object_info[count].ypos;
-      ypos &= 0x1ff;
       attr = object_info[count].attr;
       attr_mask = (attr & 0x1800);
 
@@ -1595,6 +1696,8 @@ void render_obj(int line, uint8 *buf, uint8 *table)
       lb = (uint8 *)&buf[0x20 + (xpos - 0x80)];
 
 			/* number of tiles to draw */
+			/* adjusted for sprite limit */
+      if (pixelcount > bitmap.viewport.w) width -= (pixelcount - bitmap.viewport.w);
 			width >>= 3;
 
       for(column = 0; column < width; column += 1, lb+=8)
@@ -1612,7 +1715,7 @@ void render_obj(int line, uint8 *buf, uint8 *table)
   }
 }
 
-void render_obj_im2(int line, uint8 *buf, uint8 *table, uint8 odd)
+static void render_obj_im2(uint32 line, uint32 odd, uint8 *buf, uint8 *table)
 {
   uint16 ypos;
   uint16 attr;
@@ -1621,7 +1724,7 @@ void render_obj_im2(int line, uint8 *buf, uint8 *table, uint8 odd)
   uint8 size;
   uint8 *src;
 
-  int count;
+  int count,i;
   int pixelcount = 0;
   int width;
   int height;
@@ -1630,7 +1733,6 @@ void render_obj_im2(int line, uint8 *buf, uint8 *table, uint8 odd)
   int sol_flag = 0;
   int left = 0x80;
   int right = 0x80 + bitmap.viewport.w;
-	int i; 
 
   uint8 *s, *lb;
   uint16 name, index;
@@ -1641,8 +1743,7 @@ void render_obj_im2(int line, uint8 *buf, uint8 *table, uint8 odd)
 
 	for(count = 0; count < object_index_count; count += 1)
   {
-    xpos = object_info[count].xpos;
-		xpos &= 0x1ff;
+    xpos = object_info[count].xpos & 0x1ff;
 
 		/* sprite masking */
 		if(xpos != 0) sol_flag = 1;
@@ -1657,7 +1758,6 @@ void render_obj_im2(int line, uint8 *buf, uint8 *table, uint8 odd)
     if(((xpos + width) >= left) && (xpos < right))
     {
       ypos = object_info[count].ypos;
-      ypos = (ypos >> 1) & 0x1ff;
       attr = object_info[count].attr;
       attr_mask = (attr & 0x1800);
 

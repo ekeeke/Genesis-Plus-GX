@@ -63,118 +63,66 @@ static inline unsigned int z80_lockup_r(unsigned int address)
 */
 static inline unsigned int z80_vdp_r(unsigned int address)
 {
-  switch (address & 0xff)
+  switch (address & 0xfd)
   {
-    case 0x00: /* VDP data port */
-    case 0x02:
-      return (vdp_data_r() >> 8) & 0xff;
+    case 0x00:  /* DATA */
+      return (vdp_data_r() >> 8);
           
-    case 0x01: /* VDP data port */ 
-    case 0x03:
+    case 0x01:  /* DATA */
       return (vdp_data_r() & 0xff);
 
-    case 0x04: /* VDP control port */
-    case 0x06:
+    case 0x04:  /* CTRL */
       return (0xfc | ((vdp_ctrl_r() >> 8) & 3));
           
-    case 0x05: /* VDP control port */
-    case 0x07:
+    case 0x05:  /* CTRL */
       return (vdp_ctrl_r() & 0xff);
 
-    case 0x08: /* HV counter */
-    case 0x0a:
+    case 0x08:  /* HVC */
     case 0x0c:
-    case 0x0e:
-      return (vdp_hvc_r() >> 8) & 0xff;
+      return (vdp_hvc_r() >> 8);
 
-    case 0x09: /* HV counter */
-    case 0x0b:
+    case 0x09:  /* HVC */
     case 0x0d:
-    case 0x0f:
       return (vdp_hvc_r() & 0xff);
 
-    case 0x10: /* Unused (PSG) */
-		case 0x11:
-		case 0x12:
-		case 0x13:
-		case 0x14:
-		case 0x15:
-		case 0x16:
-		case 0x17:
-			return z80_lockup_r (address);
-		
 		case 0x18: /* Unused */
 		case 0x19:
-		case 0x1a:
-		case 0x1b:
-			return z80_unused_r(address);
-		
-		case 0x1c: /* Unused (test register) */
+    case 0x1c:
 		case 0x1d:
-		case 0x1e:
-		case 0x1f:
 			return z80_unused_r(address);
 
-		default:   /* Invalid VDP addresses */
+    default:    /* Invalid address */
 			return z80_lockup_r(address);
 	}
 }
 
 static inline void z80_vdp_w(unsigned int address, unsigned int data)
 {
-  switch (address & 0xff)
+  switch (address & 0xfc)
   {
-    case 0x00: /* VDP data port */
-    case 0x01: 
-    case 0x02:
-    case 0x03:
+    case 0x00:	/* Data port */
       vdp_data_w(data << 8 | data);
       return;
 
-    case 0x04: /* VDP control port */
-    case 0x05:
-    case 0x06:
-    case 0x07:
+    case 0x04:	/* Control port */
       vdp_ctrl_w(data << 8 | data);
       return;
 
-    case 0x08: /* Unused (HV counter) */
-    case 0x09:
-    case 0x0a:
-    case 0x0b:
-    case 0x0c:
-    case 0x0d:
-    case 0x0e:
-    case 0x0f:
-      z80_lockup_w(address, data);
-      return;
-
-    case 0x11: /* PSG */
-    case 0x13:
-    case 0x15:
-    case 0x17:
-      psg_write(1, data);
+    case 0x10:	/* PSG */
+    case 0x14:
+      if (address & 1) psg_write(0, data);
+      else z80_unused_w(address, data);
 			return;
 
-    case 0x10: /* Unused */
-    case 0x12:
-    case 0x14:
-    case 0x16:
-		case 0x18:
-		case 0x19:
-    case 0x1a:
-    case 0x1b:
+    case 0x18: /* Unused */
       z80_unused_w(address, data);
       return;
 
     case 0x1c: /* Test register */
-    case 0x1d: 
-    case 0x1e:
-    case 0x1f:
       vdp_test_w(data << 8 | data);
       return;
 
-    default: /* Invalid VDP addresses */
+    default:	/* Invalid address */
       z80_lockup_w(address, data);
       return;
   }
@@ -195,11 +143,16 @@ unsigned int cpu_readmem16(unsigned int address)
       return fm_read(1, address & 3);
 
     case 3: /* VDP */
-      if ((address & 0xff00) == 0x7f00) return z80_vdp_r (address);
-      return (z80_unused_r(address) | 0xff);
+      if ((address >> 8) == 0x7f) return z80_vdp_r (address);
+      return z80_unused_r(address);
 
     default: /* V-bus bank */
-      return z80_read_banked_memory(zbank | (address & 0x7fff));
+    {
+      address = zbank | (address & 0x7fff);
+      int slot = address >> 16;
+      if (zbank_memory_map[slot].read) return (*zbank_memory_map[slot].read)(address);
+      else return READ_BYTE(m68k_memory_map[slot].base, address&0xffff);
+    }
   }
 }
 
@@ -218,13 +171,13 @@ void cpu_writemem16(unsigned int address, unsigned int data)
       return;
 
     case 3: /* Bank register and VDP */
-      switch(address & 0xff00)
+      switch(address >> 8)
       {
-        case 0x6000:
+        case 0x60:
           gen_bank_w(data & 1);
           return;
 
-        case 0x7f00:
+        case 0x7f:
           z80_vdp_w(address, data);
           return;
 
@@ -235,9 +188,14 @@ void cpu_writemem16(unsigned int address, unsigned int data)
       return;
 
     default: /* V-bus bank */
-      z80_write_banked_memory(zbank | (address & 0x7fff), data);
+    {
+      address = zbank | (address & 0x7fff);
+      int slot = address >> 16;
+      if (zbank_memory_map[slot].write) (*zbank_memory_map[slot].write)(address, data);
+      else WRITE_BYTE(m68k_memory_map[slot].base, address&0xffff, data);
       return;
   }
+}
 }
 
 /*

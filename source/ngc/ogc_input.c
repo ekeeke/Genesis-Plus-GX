@@ -604,7 +604,6 @@ void ogc_input__set_defaults(void)
   }
 
 #ifdef HW_RVL
-  u32 exp;
   for (i=0; i<4; i++)
   {
     /* WIIMOTE */
@@ -648,6 +647,8 @@ void ogc_input__set_defaults(void)
   }
 
 #ifdef HW_RVL
+  u32 exp;
+  VIDEO_WaitVSync();
   int j;
   for (i=0; i<4; i++)
   {

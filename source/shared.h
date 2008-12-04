@@ -16,7 +16,6 @@
 #include "mem68k.h"
 #include "memz80.h"
 #include "membnk.h"
-#include "memvdp.h"
 #include "gen_io.h"
 #include "gen_input.h"
 #include "state.h"

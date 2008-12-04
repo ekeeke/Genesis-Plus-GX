@@ -12,7 +12,7 @@ CURRENT:
   .modified SSG-EG Decay End Level: fix some sound effects (ChainSaw, Zap...) in "Beavis & Butthead"
   .improved Detune overflow accuracy: fix very high frequency sounds in many games
   .fixed registers 0x20-0x26 Reset state: fix intro music in "B.O.B"
-  .reverted incorrect fix with KEY ON: fix "Flamethrower" sound effect in "Alien 3" and many other games
+  .reverted incorrect fix with KEY ON: fix "Flamethrower" sound effect in "Alien 3" and many others
 
 - adjusted HCounter values: fixes line flickering in "Sonic 3D" bonus stage
 - adjusted VINT timing: fixes hang-up in "V.R Troopers"
@@ -20,6 +20,7 @@ CURRENT:
 - fixed broken Z80 access to WRAM: fixes hang-up in "Mamono Hunter Youko"
 - modified JCART emulation: fixes corrupted tracks logo in "Micro Machines 2"
 - added Blargg's NTSC Filters support (NTSC video artifacts emulation)
+- improved emulation speed: highly optimized VDP rendering engine, 68k memory handlers, cpu execution & interrupts
 
 
 [NGC/Wii]
@@ -27,10 +28,9 @@ CURRENT:
 - remove slowest libsamplerate settings under "HQ YM2612" option, only keeps SRC_LINEAR (faster) and SRC_SINC_FAST (better)
 - implemented fast scrolling in menu using Wiimote D-PAD
 - added an option to enable/disable bilinear filtering
-- rewrote video renderer: improved horizontal scaling (VI+GX), faster rendering (direct texture mapping)...
+- rewrote video engine: improved horizontal scaling (VI+GX), improved rendering speed (direct texture mapping)
 - removed embedded font, (re)enabled IPL font support: now should works for Qoob users too (thanks to emukiddid)
 - fixed "Reset" button behavior, now acts more like Genesis Reset button ;-)
-- added SDCARD read-ahead cache support (svpe's libogc patches)
 - minor bugfixes and menu tweaks
 
 
@@ -40,8 +40,9 @@ CURRENT:
 
 
 [Wii only]
-- added "Power" button support, including shutdown from the wiimote (libogc CVS)
-- added SDHC support (libogc CVS)
+- added "Power" button support
+- improved SDCARD access speed (svpe's "read-ahead" patch)
+- compiled with libogc CVS: SDHC support, Wiimote shutdown button support
 
 
 

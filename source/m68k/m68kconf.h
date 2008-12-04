@@ -67,7 +67,7 @@
  * and m68k_read_pcrelative_xx() for PC-relative addressing.
  * If off, all read requests from the CPU will be redirected to m68k_read_xx()
  */
-#define M68K_SEPARATE_READS         OPT_OFF
+#define M68K_SEPARATE_READS         OPT_ON
 
 /* If ON, the CPU will call m68k_write_32_pd() when it executes move.l with a
  * predecrement destination EA mode instead of m68k_write_32().
@@ -157,7 +157,7 @@
  * access a word or longword at an odd address.
  * NOTE: This is only emulated properly for 68000 mode.
  */
-#define M68K_EMULATE_ADDRESS_ERROR  OPT_ON
+#define M68K_EMULATE_ADDRESS_ERROR  OPT_OFF
 
 
 /* Turn ON to enable logging of illegal instruction calls.

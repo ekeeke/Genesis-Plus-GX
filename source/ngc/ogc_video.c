@@ -43,6 +43,7 @@ u8 *texturemem;       /*** Texture Data               ***/
 /*** GX ***/
 #define TEX_WIDTH         360 * 2
 #define TEX_HEIGHT        576
+#define TEX_SIZE          TEX_WIDTH * TEX_HEIGHT * 2
 #define DEFAULT_FIFO_SIZE 256 * 1024
 #define HASPECT           320
 #define VASPECT           240
@@ -610,41 +611,11 @@ void ogc_video__update()
     /* load texture */
     GX_LoadTexObj (&texobj, GX_TEXMAP0);
   }
-
  
-  /* texture map is now directly done by the line renderer */
-  if (config.ntsc && !(reg[12]&1))
-  {
-    int h, w;
-
-    /* texture and bitmap buffers (buffers pitch is fixed to 720*2 pixels) */
-    long long int *dst = (long long int *)texturemem;
-    long long int *src1 = (long long int *)(bitmap.data); /* line n   */
-    long long int *src2 = src1 + 180;                     /* line n+1 */
-    long long int *src3 = src2 + 180;                     /* line n+2 */
-    long long int *src4 = src3 + 180;                     /* line n+3 */
-
-    /* update texture texels */
-    for (h = 0; h < vheight; h++)
-    {
-      for (w = 0; w < vwidth; w++)
-      {
-        *dst++ = *src1++;
-        *dst++ = *src2++;
-        *dst++ = *src3++;
-        *dst++ = *src4++;
-      }
-    
-      /* jump to next four lines */
-      src1 += stride;
-      src2 += stride;
-      src3 += stride;
-      src4 += stride;
-    }
-  }
+  /* texture is now directly mapped by the line renderer */
 
   /* update texture cache */
-  DCFlushRange (texturemem, TEX_WIDTH * TEX_HEIGHT * 2);
+  DCFlushRange (texturemem, TEX_SIZE);
   GX_InvalidateTexAll ();
   
   /* render textured quad */

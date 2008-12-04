@@ -791,22 +791,6 @@ void optionmenu ()
 ****************************************************************************/
 static u8 device = 0;
 
-/****************************************************************************
- * fat_is_mounted
- * to check whether FAT media are detected.
- ***************************************************************************/
-
-bool FatIsMounted(PARTITION_INTERFACE partition) {
-    char prefix[] = "fatX:/";
-    prefix[3] = partition + '0';
-    DIR_ITER *dir = diropen(prefix);
-    if (dir) {
-        dirclose(dir);
-        return true;
-    }
-    return false;
-}
-
 int loadsavemenu (int which)
 {
 	int prevmenu = menu;
@@ -955,7 +939,8 @@ int loadmenu ()
         dvd_motor_off();
         dvd_on = 0;
         count = 3 + dvd_on;
-				break;
+				menu = load_menu;
+        break;
     }
 	}
 

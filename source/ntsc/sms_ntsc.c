@@ -99,39 +99,94 @@ void sms_ntsc_blit( sms_ntsc_t const* ntsc, SMS_NTSC_IN_T const* table, unsigned
 			(SMS_NTSC_ADJ_IN( table[input[0]] )) & extra2,
 			(SMS_NTSC_ADJ_IN( table[input[extra2 & 1]] )) & extra1 );
 
+#ifdef NGC
+  /* directly fill the RGB565 texture */
+  /* one tile is 32 byte = 4x4 pixels */
+  /* tiles are stored continuously in texture memory */
+  in_width = SMS_NTSC_OUT_WIDTH(in_width) >> 2;
+  int offset = ((in_width << 5) * (vline >> 2)) + ((vline & 3) * 8);
+  sms_ntsc_out_t* restrict line_out  = (sms_ntsc_out_t*)(texturemem + offset);
+  offset = 0;
+#else
   sms_ntsc_out_t* restrict line_out  = (sms_ntsc_out_t*)(&bitmap.data[(vline * bitmap.pitch)]);
-	int n;
+#endif
+  int n;
 	input += in_extra;
 		
 	for ( n = chunk_count; n; --n )
 	{
 		/* order of input and output pixels must not be altered */
 		SMS_NTSC_COLOR_IN( 0, ntsc, SMS_NTSC_ADJ_IN( table[*input++] ) );
+#ifdef NGC
+		SMS_NTSC_RGB_OUT( 0, line_out[16*(offset/4) + (offset%4)], SMS_NTSC_OUT_DEPTH );
+    offset ++;
+		SMS_NTSC_RGB_OUT( 1, line_out[16*(offset/4) + (offset%4)], SMS_NTSC_OUT_DEPTH );
+    offset ++;
+#else
 		SMS_NTSC_RGB_OUT( 0, *line_out++, SMS_NTSC_OUT_DEPTH );
 		SMS_NTSC_RGB_OUT( 1, *line_out++, SMS_NTSC_OUT_DEPTH );
-			
+#endif
+		
 		SMS_NTSC_COLOR_IN( 1, ntsc, SMS_NTSC_ADJ_IN( table[*input++] ) );
+#ifdef NGC
+		SMS_NTSC_RGB_OUT( 2, line_out[16*(offset/4) + (offset%4)], SMS_NTSC_OUT_DEPTH );
+    offset ++;
+		SMS_NTSC_RGB_OUT( 3, line_out[16*(offset/4) + (offset%4)], SMS_NTSC_OUT_DEPTH );
+    offset ++;
+#else
 		SMS_NTSC_RGB_OUT( 2, *line_out++, SMS_NTSC_OUT_DEPTH );
 		SMS_NTSC_RGB_OUT( 3, *line_out++, SMS_NTSC_OUT_DEPTH );
+#endif
 			
 		SMS_NTSC_COLOR_IN( 2, ntsc, SMS_NTSC_ADJ_IN( table[*input++] ) );
+#ifdef NGC
+		SMS_NTSC_RGB_OUT( 4, line_out[16*(offset/4) + (offset%4)], SMS_NTSC_OUT_DEPTH );
+    offset ++;
+		SMS_NTSC_RGB_OUT( 5, line_out[16*(offset/4) + (offset%4)], SMS_NTSC_OUT_DEPTH );
+    offset ++;
+		SMS_NTSC_RGB_OUT( 6, line_out[16*(offset/4) + (offset%4)], SMS_NTSC_OUT_DEPTH );
+    offset ++;
+#else
 		SMS_NTSC_RGB_OUT( 4, *line_out++, SMS_NTSC_OUT_DEPTH );
 		SMS_NTSC_RGB_OUT( 5, *line_out++, SMS_NTSC_OUT_DEPTH );
 		SMS_NTSC_RGB_OUT( 6, *line_out++, SMS_NTSC_OUT_DEPTH );
+#endif
 	}
 		
 	/* finish final pixels */
 	SMS_NTSC_COLOR_IN( 0, ntsc, sms_ntsc_black );
+#ifdef NGC
+	SMS_NTSC_RGB_OUT( 0, line_out[16*(offset/4) + (offset%4)], SMS_NTSC_OUT_DEPTH );
+  offset ++;
+	SMS_NTSC_RGB_OUT( 1, line_out[16*(offset/4) + (offset%4)], SMS_NTSC_OUT_DEPTH );
+  offset ++;
+#else
 	SMS_NTSC_RGB_OUT( 0, *line_out++, SMS_NTSC_OUT_DEPTH );
 	SMS_NTSC_RGB_OUT( 1, *line_out++, SMS_NTSC_OUT_DEPTH );
+#endif
 		
 	SMS_NTSC_COLOR_IN( 1, ntsc, sms_ntsc_black );
+#ifdef NGC
+	SMS_NTSC_RGB_OUT( 2, line_out[16*(offset/4) + (offset%4)], SMS_NTSC_OUT_DEPTH );
+  offset ++;
+	SMS_NTSC_RGB_OUT( 3, line_out[16*(offset/4) + (offset%4)], SMS_NTSC_OUT_DEPTH );
+  offset ++;
+#else
 	SMS_NTSC_RGB_OUT( 2, *line_out++, SMS_NTSC_OUT_DEPTH );
 	SMS_NTSC_RGB_OUT( 3, *line_out++, SMS_NTSC_OUT_DEPTH );
+#endif
 		
 	SMS_NTSC_COLOR_IN( 2, ntsc, sms_ntsc_black );
+#ifdef NGC
+	SMS_NTSC_RGB_OUT( 4, line_out[16*(offset/4) + (offset%4)], SMS_NTSC_OUT_DEPTH );
+  offset ++;
+	SMS_NTSC_RGB_OUT( 5, line_out[16*(offset/4) + (offset%4)], SMS_NTSC_OUT_DEPTH );
+  offset ++;
+	SMS_NTSC_RGB_OUT( 6, line_out[16*(offset/4) + (offset%4)], SMS_NTSC_OUT_DEPTH );
+#else
 	SMS_NTSC_RGB_OUT( 4, *line_out++, SMS_NTSC_OUT_DEPTH );
 	SMS_NTSC_RGB_OUT( 5, *line_out++, SMS_NTSC_OUT_DEPTH );
 	SMS_NTSC_RGB_OUT( 6, *line_out++, SMS_NTSC_OUT_DEPTH );
+#endif
 }
 #endif

@@ -670,7 +670,7 @@ INLINE void FM_KEYOFF(FM_CH *CH , int s )
 }
 
 /* set algorithm connection */
-static void setup_connection( FM_CH *CH, int ch )
+INLINE void setup_connection( FM_CH *CH, int ch )
 {
 	INT32 *carrier = &out_fm[ch];
 
@@ -1397,7 +1397,7 @@ INLINE void CSMKeyControll(FM_CH *CH)
 	}
 }
 
-static void INTERNAL_TIMER_A()
+INLINE void INTERNAL_TIMER_A()
 {
 	if (ym2612.OPN.ST.mode & 0x01)
 	{
@@ -1416,7 +1416,7 @@ static void INTERNAL_TIMER_A()
 	}
 }
 
-static void INTERNAL_TIMER_B(int step)
+INLINE void INTERNAL_TIMER_B(int step)
 {
 	if (ym2612.OPN.ST.mode & 0x02)
 	{

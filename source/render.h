@@ -34,16 +34,19 @@ extern int render_init(void);
 extern void palette_init(void);
 extern void render_reset(void);
 extern void render_shutdown(void);
-extern void render_line(int line, uint8 odd_frame);
+extern void render_line(uint32 line, uint32 overscan);
+extern void parse_satb(uint32 line);
+extern void remap_buffer(uint32 line,uint32 width);
+extern void window_clip(uint8 reg_12, uint8 reg_17);
+
 #ifndef NGC
 extern void color_update_8(int index, uint16 data);
 extern void color_update_15(int index, uint16 data);
 extern void color_update_32(int index, uint16 data);
 #endif
 extern void color_update_16(int index, uint16 data);
-extern void parse_satb(int line);
-extern void (*color_update)(int index, uint16 data);
-extern void remap_buffer(int line,int width);
+
+void (*color_update)(int index, uint16 data);
 
 #endif /* _RENDER_H_ */
 

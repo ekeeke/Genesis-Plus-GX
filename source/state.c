@@ -25,13 +25,13 @@
 static unsigned char state[0x24000];
 static unsigned int bufferptr;
 
-void load_param(void *param, unsigned int size)
+static inline void load_param(void *param, unsigned int size)
 {
 	memcpy(param, &state[bufferptr], size);
 	bufferptr+= size;
 }
 
-void save_param(void *param, unsigned int size)
+static inline void save_param(void *param, unsigned int size)
 {
 	memcpy(&state[bufferptr], param, size);
 	bufferptr+= size;
@@ -39,27 +39,18 @@ void save_param(void *param, unsigned int size)
 
 void state_load(unsigned char *buffer)
 {
-	uint32	tmp32;
-	uint16 tmp16;
-	uint8 temp_reg[0x20];
-  unsigned long inbytes, outbytes;
-
-	/* get compressed state size & uncompress state file */
-	memcpy(&inbytes, buffer, 4);
+	/* reset buffer pointer */
 	bufferptr = 0;
 
-#ifdef NGC
+  /* uncompress savestate */
+  unsigned long inbytes, outbytes;
+	memcpy(&inbytes, buffer, 4);
 	outbytes = 0x24000;
   uncompress ((Bytef *)state, &outbytes, (Bytef *)(buffer + 4), inbytes);
-#else
-	outbytes = inbytes;
-	memcpy(state, buffer + 4, outbytes);
-#endif
 
-	/* SYSTEM RESET */
+	/* reset system */
 	system_reset();
-	rom_readmap[0] = &cart_rom[0];
-	rom_size = genromsize;
+	m68k_memory_map[0].base = default_rom;
 
 	// GENESIS
 	load_param(work_ram, sizeof(work_ram));
@@ -73,6 +64,7 @@ void state_load(unsigned char *buffer)
 	load_param(io_reg, sizeof(io_reg));
 	
 	// VDP
+	uint8 temp_reg[0x20];
 	load_param(sat, sizeof(sat));
 	load_param(vram, sizeof(vram));
 	load_param(cram, sizeof(cram));
@@ -86,8 +78,7 @@ void state_load(unsigned char *buffer)
 	load_param(&dmafill, sizeof(dmafill));
 	load_param(&hint_pending, sizeof(hint_pending));
 	load_param(&vint_pending, sizeof(vint_pending));
-	load_param(&vint_triggered, sizeof(vint_triggered));
-	load_param(&hvint_updated, sizeof(hvint_updated));
+	load_param(&irq_status, sizeof(irq_status));
 	vdp_restore(temp_reg);
 
 	// FM 
@@ -98,6 +89,8 @@ void state_load(unsigned char *buffer)
 	load_param(SN76489_GetContextPtr (0),SN76489_GetContextSize ());
 
 	// 68000 
+	uint16 tmp16;
+	uint32 tmp32;
 	load_param(&tmp32, 4); m68k_set_reg(M68K_REG_D0, tmp32);
 	load_param(&tmp32, 4); m68k_set_reg(M68K_REG_D1, tmp32);
 	load_param(&tmp32, 4); m68k_set_reg(M68K_REG_D2, tmp32);
@@ -124,11 +117,7 @@ void state_load(unsigned char *buffer)
 
 int state_save(unsigned char *buffer)
 {
-	uint32 tmp32;
-	uint16 tmp16;
-  unsigned long inbytes, outbytes;
-
-	/* save state */
+	/* reset buffer pointer */
 	bufferptr = 0;
 
 	// GENESIS
@@ -155,8 +144,7 @@ int state_save(unsigned char *buffer)
 	save_param(&dmafill, sizeof(dmafill));
 	save_param(&hint_pending, sizeof(hint_pending));
 	save_param(&vint_pending, sizeof(vint_pending));
-	save_param(&vint_triggered, sizeof(vint_triggered));
-	save_param(&hvint_updated, sizeof(hvint_updated));
+	save_param(&irq_status, sizeof(irq_status));
 
 	// FM 
 	save_param(fm_reg,sizeof(fm_reg));
@@ -165,6 +153,8 @@ int state_save(unsigned char *buffer)
 	save_param(SN76489_GetContextPtr (0),SN76489_GetContextSize ());
 
 	// 68000 
+	uint16 tmp16;
+	uint32 tmp32;
   tmp32 = m68k_get_reg(NULL, M68K_REG_D0);	save_param(&tmp32, 4);
 	tmp32 =	m68k_get_reg(NULL, M68K_REG_D1); 	save_param(&tmp32, 4);
 	tmp32 =	m68k_get_reg(NULL, M68K_REG_D2);	save_param(&tmp32, 4);
@@ -188,18 +178,10 @@ int state_save(unsigned char *buffer)
 	// Z80 
 	save_param(&Z80, sizeof(Z80_Regs));
 
-	inbytes = bufferptr;
-
-#ifdef NGC
 	/* compress state file */
-	outbytes = 0x26000;
+	unsigned long inbytes   = bufferptr;
+  unsigned long outbytes  = 0x26000;
   compress2 ((Bytef *)(buffer + 4), &outbytes, (Bytef *)state, inbytes, 9);
-#else
-	outbytes = inbytes;
-	memcpy(buffer + 4, state, outbytes);
-#endif
-
-	/* write compressed size in the first 32 bits for decompression */
 	memcpy(buffer, &outbytes, 4);
 
 	/* return total size */

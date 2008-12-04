@@ -38,8 +38,7 @@ extern uint16 status;
 extern uint8 dmafill;
 extern uint8 hint_pending;
 extern uint8 vint_pending;
-extern uint8 vint_triggered;
-extern int8 hvint_updated;
+extern uint16 irq_status;
 
 /* Global variables */
 extern uint16 ntab;                    
@@ -56,8 +55,7 @@ extern uint8 playfield_shift;
 extern uint8 playfield_col_mask;       
 extern uint16 playfield_row_mask;      
 extern uint32 y_mask;                  
-extern int16 h_counter;
-extern int16 hc_latch;
+extern uint16 hc_latch;
 extern uint16 v_counter;
 extern uint8 im2_flag;
 extern uint32 dma_length;
@@ -85,7 +83,6 @@ extern unsigned int vdp_ctrl_r(void);
 extern void vdp_data_w(unsigned int data);
 extern unsigned int vdp_data_r(void);
 extern unsigned int vdp_hvc_r(void);
-extern void vdp_reg_w(unsigned int r, unsigned int d);
 extern void dma_update();
 extern void vdp_test_w(unsigned int value);
 

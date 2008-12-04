@@ -77,23 +77,25 @@ static inline void lightgun_update(int num)
     if (io_reg[5] & 0x80)
     {
     /* External Interrupt ? */
-      if (reg[11] & 0x08) m68k_set_irq(2); 
+      if (reg[11] & 0x08) {irq_status &= 0xff; irq_status |= 0x12;}
 
 		  /* HVC Latch:
 		    1) some games does not set HVC latch but instead use bigger X offset 
 		    2) for games using H40 mode, the gun routine scales up the Hcounter value,
            H-Counter range is approx. 292 pixel clocks
       */
+      hc_latch = 0x100;
       if (reg[12] & 1)
-        hc_latch = hc_320[((input.analog[num][0] * 290) / (2 * 320) + input.x_offset) % 210];
+        hc_latch |= hc_320[((input.analog[num][0] * 290) / (2 * 320) + input.x_offset) % 210];
       else
-        hc_latch = hc_256[(input.analog[num][0] / 2 + input.x_offset)%171];
+        hc_latch |= hc_256[(input.analog[num][0] / 2 + input.x_offset)%171];
+
 		}			
 	}
 }			
 	
 /* Sega Menacer specific */
-unsigned int menacer_read()
+uint32 menacer_read()
 {
   /* pins should return 0 by default (fix Body Count when mouse is enabled) */
   int retval = 0x00;
@@ -106,7 +108,7 @@ unsigned int menacer_read()
 }
 
 /* Konami Justifier specific */
-unsigned int justifier_read()
+uint32 justifier_read()
 {
   /* TL & TR pins should always return 1 (write only) */
   /* LEFT & RIGHT pins should always return 0 (needed during gun detection) */
@@ -152,7 +154,7 @@ static inline void mouse_reset()
   mouse.Port = (input.system[0] == SYSTEM_MOUSE) ? 0 : 4;
 }
 
-void mouse_write(unsigned int data)
+void mouse_write(uint32 data)
 {
   if (mouse.Counter == 0)
   {
@@ -182,7 +184,7 @@ void mouse_write(unsigned int data)
   mouse.State = data;
 }
 
-unsigned int mouse_read()
+uint32 mouse_read()
 {
   int temp = 0x00;
 
@@ -263,24 +265,24 @@ struct pad
   uint8 Delay;
 } gamepad[MAX_DEVICES];
 
-static inline void gamepad_raz(unsigned int i)
+static inline void gamepad_raz(uint32 i)
 {
 	gamepad[i].Counter = 0;
 	gamepad[i].Delay   = 0;
 }
 
-static inline void gamepad_reset(unsigned int i)
+static inline void gamepad_reset(uint32 i)
 {
 	gamepad[i].State = 0x40;
 	if (input.dev[i] == DEVICE_6BUTTON) gamepad_raz(i);
 }
 
-static inline void gamepad_update(unsigned int i)
+static inline void gamepad_update(uint32 i)
 {
 	if (gamepad[i].Delay++ > 25) gamepad_raz(i);
 }
 
-static inline unsigned int gamepad_read(unsigned int i)
+static inline uint32 gamepad_read(uint32 i)
 {
   int control;
   int retval = 0x7F;
@@ -365,7 +367,7 @@ static inline unsigned int gamepad_read(unsigned int i)
   return retval;
 }
 
-static inline void gamepad_write(unsigned int i, unsigned int data)
+static inline void gamepad_write(uint32 i, uint32 data)
 {
   if (input.dev[i] == DEVICE_6BUTTON)
   {
@@ -392,7 +394,7 @@ struct teamplayer
   uint8 Table[12];
 } teamplayer[2];
 
-static inline void teamplayer_reset(unsigned int port)
+static inline void teamplayer_reset(uint32 port)
 {
 	int i;
 	int index = 0;
@@ -433,7 +435,7 @@ static inline void teamplayer_reset(unsigned int port)
 	 2/ START,A,C,B buttons
 	 3/ MODE, X,Y,Z buttons (6Button only !)
 */
-static inline unsigned int teamplayer_read_device(unsigned int port, unsigned int index)
+static inline uint32 teamplayer_read_device(uint32 port, uint32 index)
 {
 	int retval = 0x7F;
 	int pad_input = teamplayer[port].Table[index] & 0x03;
@@ -469,7 +471,7 @@ static inline unsigned int teamplayer_read_device(unsigned int port, unsigned in
 	return retval; 
 }
 
-static inline unsigned int teamplayer_read(unsigned int port)
+static inline uint32 teamplayer_read(uint32 port)
 {
 	int retval = 0x7F;
 	int padnum;
@@ -509,7 +511,7 @@ static inline unsigned int teamplayer_read(unsigned int port)
   return retval;
 }
 
-static inline void teamplayer_write(unsigned int port, unsigned int data)
+static inline void teamplayer_write(uint32 port, uint32 data)
 {
   int old_state = teamplayer[port].State;
   teamplayer[port].State = (data & io_reg[port+4]) | (teamplayer[port].State & ~io_reg[port+4]);
@@ -521,13 +523,13 @@ static inline void teamplayer_write(unsigned int port, unsigned int data)
  * 4WAYPLAY adapter
  *
  *****************************************************************************/
-static inline void wayplay_write(unsigned int port, unsigned int data)
+static inline void wayplay_write(uint32 port, uint32 data)
 {
   if (port == 0) gamepad_write(input.current, data);
   else input.current = (data >> 4) & 0x07;
 }
 
-static inline unsigned int wayplay_read(unsigned int port)
+static inline uint32 wayplay_read(uint32 port)
 {
 	if (port == 1) return 0x7F;
   if (input.current >= 4) return 0x70; /* multitap detection (TH2 = 1) */
@@ -539,72 +541,72 @@ static inline unsigned int wayplay_read(unsigned int port)
  * I/O wrappers
  *
  *****************************************************************************/
-unsigned int gamepad_1_read (void)
+uint32 gamepad_1_read (void)
 {
   return gamepad_read(0);
 }
 
-unsigned int gamepad_2_read (void)
+uint32 gamepad_2_read (void)
 {
   return gamepad_read(4);
 }
 
-void gamepad_1_write (unsigned int data)
+void gamepad_1_write (uint32 data)
 {
   gamepad_write(0, data);
 }
 
-void gamepad_2_write (unsigned int data)
+void gamepad_2_write (uint32 data)
 {
   gamepad_write(4, data);
 }
 
-unsigned int wayplay_1_read (void)
+uint32 wayplay_1_read (void)
 {
 	return wayplay_read(0);
 }
 
-unsigned int wayplay_2_read (void)
+uint32 wayplay_2_read (void)
 {
 	return wayplay_read(1);
 }
 
-void wayplay_1_write (unsigned int data)
+void wayplay_1_write (uint32 data)
 {
 	wayplay_write(0, data);
 }
 
-void wayplay_2_write (unsigned int data)
+void wayplay_2_write (uint32 data)
 {
 	wayplay_write(1, data);
 }
 
-unsigned int teamplayer_1_read (void)
+uint32 teamplayer_1_read (void)
 {
 	return teamplayer_read(0);
 }
 
-unsigned int teamplayer_2_read (void)
+uint32 teamplayer_2_read (void)
 {
 	return teamplayer_read(1);
 }
 
-void teamplayer_1_write (unsigned int data)
+void teamplayer_1_write (uint32 data)
 {
 	teamplayer_write(0, data);
 }
 
-void teamplayer_2_write (unsigned int data)
+void teamplayer_2_write (uint32 data)
 {
 	teamplayer_write(1, data);
 }
 
-unsigned int jcart_read(void)
+uint32 jcart_read(uint32 address)
 {
 	return (gamepad_read(5) | ((gamepad_read(6)&0x3f) << 8)); /* fixes Micro Machines 2 (is it correct ?) */
 }
 
-void jcart_write(unsigned int data)
+void jcart_write(uint32 address, uint32 data)
 {
 	gamepad_write(5, (data&1) << 6);
 	gamepad_write(6, (data&1) << 6);

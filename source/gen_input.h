@@ -90,23 +90,23 @@ extern void input_update(void);
 extern void input_raz(void);
 
 /* Peripherals specific */
-extern void mouse_write(unsigned int data);
-extern unsigned int mouse_read(void);
-extern unsigned int menacer_read (void);
-extern unsigned int justifier_read (void);
-extern unsigned int gamepad_1_read (void);
-extern unsigned int gamepad_2_read (void);
-extern void gamepad_1_write (unsigned int data);
-extern void gamepad_2_write (unsigned int data);
-extern unsigned int wayplay_1_read (void);
-extern unsigned int wayplay_2_read (void);
-extern void wayplay_1_write (unsigned int data);
-extern void wayplay_2_write (unsigned int data);
-extern unsigned int teamplayer_1_read (void);
-extern unsigned int teamplayer_2_read (void);
-extern void teamplayer_1_write (unsigned int data);
-extern void teamplayer_2_write (unsigned int data);
-extern unsigned int jcart_read(void);
-extern void jcart_write(unsigned int data);
+extern void mouse_write(uint32 data);
+extern uint32 mouse_read(void);
+extern uint32 menacer_read (void);
+extern uint32 justifier_read (void);
+extern uint32 gamepad_1_read (void);
+extern uint32 gamepad_2_read (void);
+extern void gamepad_1_write (uint32 data);
+extern void gamepad_2_write (uint32 data);
+extern uint32 wayplay_1_read (void);
+extern uint32 wayplay_2_read (void);
+extern void wayplay_1_write (uint32 data);
+extern void wayplay_2_write (uint32 data);
+extern uint32 teamplayer_1_read (void);
+extern uint32 teamplayer_2_read (void);
+extern void teamplayer_1_write (uint32 data);
+extern void teamplayer_2_write (uint32 data);
+extern uint32 jcart_read(uint32 address);
+extern void jcart_write(uint32 address, uint32 data);
 
 #endif

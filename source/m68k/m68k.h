@@ -153,15 +153,6 @@ unsigned int  m68k_read_memory_8(unsigned int address);
 unsigned int  m68k_read_memory_16(unsigned int address);
 unsigned int  m68k_read_memory_32(unsigned int address);
 
-/* Read data immediately following the PC */
-unsigned int  m68k_read_immediate_16(unsigned int address);
-unsigned int  m68k_read_immediate_32(unsigned int address);
-
-/* Read data relative to the PC */
-unsigned int  m68k_read_pcrelative_8(unsigned int address);
-unsigned int  m68k_read_pcrelative_16(unsigned int address);
-unsigned int  m68k_read_pcrelative_32(unsigned int address);
-
 /* Memory access for the disassembler */
 unsigned int m68k_read_disassembler_8  (unsigned int address);
 unsigned int m68k_read_disassembler_16 (unsigned int address);
@@ -171,6 +162,30 @@ unsigned int m68k_read_disassembler_32 (unsigned int address);
 void m68k_write_memory_8(unsigned int address, unsigned int value);
 void m68k_write_memory_16(unsigned int address, unsigned int value);
 void m68k_write_memory_32(unsigned int address, unsigned int value);
+
+
+#include "macros.h"
+
+typedef struct 
+{
+  unsigned char *base;
+  unsigned int (*read8)(unsigned int address);
+  unsigned int (*read16)(unsigned int address);
+  void (*write8)(unsigned int address, unsigned int data);
+  void (*write16)(unsigned int address, unsigned int data);
+} _m68k_memory_map;
+
+_m68k_memory_map m68k_memory_map[256];
+
+
+/* Read data immediately following the PC */
+#define m68k_read_immediate_16(address) *(uint16 *)(m68k_memory_map[((address)>>16)&0xff].base + ((address) & 0xffff))
+#define m68k_read_immediate_32(address) (m68k_read_immediate_16(address) << 16) |	(m68k_read_immediate_16(address+2))
+
+/* Read data relative to the PC */
+#define m68k_read_pcrelative_8(address)  READ_BYTE(m68k_memory_map[((address)>>16)&0xff].base, (address) & 0xffff)
+#define m68k_read_pcrelative_16(address) m68k_read_immediate_16(address)
+#define m68k_read_pcrelative_32(address) m68k_read_immediate_32(address)
 
 /* Special call to simulate undocumented 68k behavior when move.l with a
  * predecrement destination mode is executed.
@@ -302,7 +317,8 @@ void m68k_init(void);
 void m68k_pulse_reset(void);
 
 /* execute num_cycles worth of instructions.  returns number of cycles used */
-int m68k_execute(int num_cycles);
+//int m68k_execute(int num_cycles);
+void m68k_run (int cyc);
 
 /* These functions let you read/write/modify the number of cycles left to run
  * while m68k_execute() is running.
@@ -318,7 +334,7 @@ void m68k_end_timeslice(void);          /* End timeslice now */
  * A transition from < 7 to 7 will cause a non-maskable interrupt (NMI).
  * Setting IRQ to 0 will clear an interrupt request.
  */
-void m68k_set_irq(unsigned int int_level);
+//void m68k_set_irq(unsigned int int_level);
 
 
 /* Halt the CPU as if you pulsed the HALT pin. */

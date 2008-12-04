@@ -26,5 +26,8 @@ extern uint16 SVP_cycles;
 
 extern void svp_init(void);
 extern void svp_reset(void);
+extern void svp_write_dram(uint32 address, uint32 data);
+extern uint32 svp_read_cell_1(uint32 address);
+extern uint32 svp_read_cell_2(uint32 address);
 
 #endif
