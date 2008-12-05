@@ -76,7 +76,6 @@ uint32 fifo_lastwrite;		        /* last VDP write cycle */
 uint8 fifo_latency;			          /* VDP write cycles latency */
 uint8 vdp_pal	= 0;		            /* 1: PAL , 0: NTSC (default) */
 
-double vdp_timings[4][4];
 
 /* Tables that define the playfield layout */
 static const uint8 shift_table[] = { 6, 7, 0, 8 };
@@ -84,10 +83,11 @@ static const uint8 col_mask_table[] = { 0x0F, 0x1F, 0x0F, 0x3F };
 static const uint16 row_mask_table[] = { 0x0FF, 0x1FF, 0x2FF, 0x3FF };
 static const uint32 y_mask_table[] = { 0x1FC0, 0x1F80, 0x1FC0, 0x1F00 };
 
-static uint16 sat_base_mask;	/* Base bits of SAT */
-static uint16 sat_addr_mask;	/* Index bits of SAT */
-static uint32 dma_endCycles;  /* 68k cycles to DMA end */
-static uint8 dma_type;        /* Type of DMA */
+static uint16 sat_base_mask;	    /* Base bits of SAT */
+static uint16 sat_addr_mask;	    /* Index bits of SAT */
+static uint32 dma_endCycles;      /* 68k cycles to DMA end */
+static uint8 dma_type;            /* Type of DMA */
+static double vdp_timings[4][4];  /* DMA timings */
 
 static inline void vdp_reg_w(unsigned int r, unsigned int d);
 
@@ -119,10 +119,10 @@ static inline void vdp_reg_w(unsigned int r, unsigned int d);
 
 */
 static const uint8 dma_rates[16] = {
-  	8,  9, 83 , 102,  /* 68K to VRAM */
+  8,  9, 83 , 102,  /* 68K to VRAM */
 	16, 18, 167, 205, /* 68K to CRAM or VSRAM */
 	15, 17, 166, 204, /* DMA fill */
-  	8,  9, 83 , 102,  /* DMA Copy */
+  8,  9, 83 , 102,  /* DMA Copy */
 };
 
 /* Function prototypes */
@@ -159,6 +159,7 @@ void vdp_reset(void)
 	pending = 0;
 
 	status = 0x200; /* fifo empty */
+  status |= vdp_pal;
 
 	ntab = 0;
 	ntbb = 0;
@@ -324,7 +325,7 @@ void dma_update()
 */
 static inline void dma_copy(void)
 {
-  	int name;
+  int name;
   int length = (reg[20] << 8 | reg[19]) & 0xFFFF;
   int source = (reg[22] << 8 | reg[21]) & 0xFFFF;
   if (!length) length = 0x10000;
@@ -365,48 +366,45 @@ static inline void dma_vbus (void)
 	dma_length = length;
 	dma_update();
 
-  switch (source >> 21)
+  /* DMA source */
+  if ((source >> 17) == 0x50)
   {
-    case 5:
-      do
-      {
-        /* Return $FFFF only when the Z80 isn't hogging the Z-bus.
-          (e.g. Z80 isn't reset and 68000 has the bus) */
-        if (source <= 0xa0ffff) temp = (zbusack ? *(uint16 *)(work_ram + (source & 0xffff)) : 0xffff);
+    /* Z80 & I/O area */
+    do
+    {
+      /* Return $FFFF only when the Z80 isn't hogging the Z-bus.
+        (e.g. Z80 isn't reset and 68000 has the bus) */
+      if (source <= 0xa0ffff) temp = (zbusack ? *(uint16 *)(work_ram + (source & 0xffff)) : 0xffff);
 
-        /* The I/O chip and work RAM try to drive the data bus which results 
+      /* The I/O chip and work RAM try to drive the data bus which results 
           in both values being combined in random ways when read.
           We return the I/O chip values which seem to have precedence, */
-        else if (source <= 0xa1001f)
-        {
-          temp = io_read((source >> 1) & 0x0f);
+      else if (source <= 0xa1001f)
+      {
+        temp = io_read((source >> 1) & 0x0f);
           temp = (temp << 8 | temp);
-        }
-
-        /* All remaining locations access work RAM */
-        else temp = *(uint16 *)(work_ram + (source & 0xffff));
-
-        source += 2;
-        source = ((base & 0xFE0000) | (source & 0x1FFFF));
-        data_write (temp);
       }
-      while (--length);
-      break;
 
-    case 0:
-    case 1:
-      if (svp) source = source - 2;
+      /* All remaining locations access work RAM */
+      else temp = *(uint16 *)(work_ram + (source & 0xffff));
 
-    default:
-	do
-	{
-        temp = *(uint16 *)(m68k_memory_map[source>>16].base + (source & 0xffff));
-    source += 2;
-    source = ((base & 0xFE0000) | (source & 0x1FFFF));
-		data_write (temp);
-	}
-	while (--length);
-      break;
+      source += 2;
+      source = ((base & 0xFE0000) | (source & 0x1FFFF));
+      data_write (temp);
+    }
+    while (--length);
+  }
+  else
+  {
+    /* ROM & RAM */
+    do
+    {
+      temp = *(uint16 *)(m68k_memory_map[source>>16].base + (source & 0xffff));
+      source += 2;
+      source = ((base & 0xFE0000) | (source & 0x1FFFF));
+      data_write (temp);
+    }
+    while (--length);
   }
 
 	/* update length & source address registers */
@@ -420,7 +418,7 @@ static inline void dma_vbus (void)
 /* VRAM FILL */
 static inline void dma_fill(unsigned int data)
 {
-  	int name;
+  int name;
 	int length = (reg[20] << 8 | reg[19]) & 0xFFFF;
 	if (!length) length = 0x10000;
 
@@ -442,7 +440,6 @@ static inline void dma_fill(unsigned int data)
 		{
 			/* update internal SAT (fix Battletech) */
 			WRITE_BYTE(sat, (addr & sat_addr_mask)^1, data);
-
 			WRITE_BYTE(vram, addr^1, data);
 			MARK_BG_DIRTY (addr);
 			addr += reg[15];
@@ -618,38 +615,25 @@ static inline void vdp_reg_w(unsigned int r, unsigned int d)
   switch(r)
   {
     case 0x00: /* CTRL #1 */
-			/* Check if HINT has been enabled or disabled */
       if (hint_pending && ((d&0x10) != (reg[0]&0x10)))
       {
+        /* update IRQ status */
         irq_status &= 0x20;
         irq_status |= 0x10;
-        if (vint_pending && (reg[1] & 0x20))
-        {
-          irq_status |= 6;
-        }
-        else if (d & 0x10)
-        {
-          irq_status |= 4;
-        }
+        if (vint_pending && (reg[1] & 0x20)) irq_status |= 6;
+        else if (d & 0x10) irq_status |= 4;
       }
       break;
 
     case 0x01: /* CTRL #2 */
-			/* Check if VINT has been enabled or disabled */
       if (vint_pending && ((d&0x20) != (reg[1]&0x20)))
       {
+        /* update IRQ status */
         irq_status &= 0x20;
         irq_status |= 0x110;
-        if (d & 0x20)
-        {
-          irq_status |= 6;
-        }
-        else if (hint_pending && (reg[0] & 0x10))
-        {
-          irq_status |= 4;
-        }
+        if (d & 0x20) irq_status |= 6;
+        else if (hint_pending && (reg[0] & 0x10)) irq_status |= 4;
       }
-
 
       /* Check if the viewport height has actually been changed */
       if((reg[1] & 8) != (d & 8))
@@ -792,22 +776,24 @@ unsigned int vdp_ctrl_r(void)
      * 8	Write FIFO full
      * 9	Write FIFO empty
      * 10 - 15	Next word on bus
-     */
+  */
 
-  	/* update FIFO flags */
-		fifo_update();
-		if (fifo_write_cnt < 4)
-		{
-			status &= 0xFEFF;							
-			if (fifo_write_cnt == 0) status |= 0x200; 
-		}
+  /* update FIFO flags */
+  fifo_update();
+  if (fifo_write_cnt < 4)
+  {
+    status &= 0xFEFF;							
+    if (fifo_write_cnt == 0) status |= 0x200; 
+  }
 	else status ^= 0x200;
 
 	/* update DMA Busy flag */
 	if ((status & 2) && !dma_length && (count_m68k >= dma_endCycles))
+  {
     status &= 0xFFFD;
+  }
 
-	unsigned int temp = status | vdp_pal;
+	unsigned int temp = status;
 
 	/* display OFF: VBLANK flag is set */
 	if (!(reg[1] & 0x40)) temp |= 0x8; 
@@ -917,25 +903,21 @@ void vdp_test_w(unsigned int value)
 int vdp_int_ack_callback(int int_level)
 {
 
+  /* VINT triggered ? */
   if (irq_status&0x20)
 	{
 		vint_pending = 0;
-      status &= ~0x80;  /* clear VINT flag */
+    status &= ~0x80;  /* clear VINT flag */
   }
   else
   {
-  		hint_pending = 0;
+    hint_pending = 0;
   }
 
+  /* update IRQ status */
   irq_status = 0x10;
-  if (vint_pending && (reg[1] & 0x20))
-  {
-    irq_status |= 6;
-  }
-  else if (hint_pending && (reg[0] & 0x10))
-  {
-    irq_status |= 4;
-  }
+  if (vint_pending && (reg[1] & 0x20)) irq_status |= 6;
+  else if (hint_pending && (reg[0] & 0x10)) irq_status |= 4;
 
   return M68K_INT_ACK_AUTOVECTOR;
 }

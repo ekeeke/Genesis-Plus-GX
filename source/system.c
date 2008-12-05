@@ -23,8 +23,6 @@
 
 #include "shared.h"
 
-#define CLOCK_NTSC 53693175
-#define CLOCK_PAL  53203424
 #define SND_SIZE (snd.buffer_size * sizeof(int16))
 
 /* Global variables */
@@ -32,7 +30,6 @@ t_bitmap bitmap;
 t_snd snd;
 uint8  vdp_rate;
 uint16 lines_per_frame;
-double Master_Clock;
 uint32 aim_m68k;
 uint32 count_m68k;
 uint32 line_m68k;
@@ -55,7 +52,6 @@ void system_init (void)
 	/* PAL/NTSC timings */
 	vdp_rate        = vdp_pal ? 50 : 60;
 	lines_per_frame = vdp_pal ? 313 : 262;
-	Master_Clock	  = vdp_pal ? (double)CLOCK_PAL : (double)CLOCK_NTSC;
 	
 	gen_init ();
 	vdp_init ();
@@ -139,27 +135,29 @@ int system_frame (int do_skip)
 	}
   odd_frame ^= 1;
 
-  /* update VDP status  */
-  status &= 0xFFF5;                               // clear VBLANK and DMA flags
-  if (odd_frame && interlaced) status |= 0x0010;  // even/odd field flag (interlaced modes only)
+  /* clear VBLANK and DMA flags */
+  status &= 0xFFF5;
+  
+  /* even/odd field flag (interlaced modes only) */
+  if (odd_frame && interlaced) status |= 0x0010;
   else status &= 0xFFEF;
 
-	/* Reload H Counter */
+	/* reload HCounter */
 	int h_counter = reg[10];
 
   /* parse sprites for line 0 (done on last line) */
 	parse_satb (0x80);
 
-	/* Line processing */
+	/* process frame */
 	for (line = 0; line < lines_per_frame; line ++)
 	{
-    /* Update VCounter */
+    /* update VCounter */
 		v_counter = line;
 
-		/* 6-Buttons or Menacer update */
+		/* update 6-Buttons or Menacer */
 		input_update();
 
- 		/* Update CPU cycle counters */
+ 		/* update CPU cycle counters */
     hint_m68k = count_m68k;
     line_m68k = aim_m68k;
 		line_z80  = aim_z80;
@@ -176,10 +174,11 @@ int system_frame (int do_skip)
       gen_reset(0);
     }
 
-    /* Horizontal Interrupt */
+    /* active display */
     if (line <= vdp_height)
 		{
-			if(--h_counter < 0)
+			/* H Interrupt */
+      if(--h_counter < 0)
 			{
 				h_counter = reg[10];
 				hint_pending = 1;
@@ -196,44 +195,46 @@ int system_frame (int do_skip)
       if ((line < vdp_height) && (h_counter == 0)) aim_m68k -= 36;
 
       /* update DMA timings */
-    if (dma_length) dma_update();
+      if (dma_length) dma_update();
 
-		/* Vertical Retrace */
+		  /* vertical retrace */
       if (line == vdp_height)
-		{
+		  {
         /* render overscan */
         if ((line < end_line) && (!do_skip)) render_line(line, 1);
 
-      /* update inputs */
-      update_input();
+        /* update inputs (doing this here fix Warriors of Eternal Sun) */
+        update_input();
 
-      /* set VBLANK flag */
-      status |= 0x08;
+        /* set VBLANK flag */
+        status |= 0x08;
 
-      /* Z80 interrupt is 16ms period (one frame) and 64us length (one scanline) */
-			zirq = 1;
-			z80_set_irq_line(0, ASSERT_LINE);  
+        /* Z80 interrupt is 16ms period (one frame) and 64us length (one scanline) */
+			  zirq = 1;
+			  z80_set_irq_line(0, ASSERT_LINE);  
 			 
-      /* delay between HINT, VBLANK and VINT (Dracula, OutRunners, VR Troopers) */
-      m68k_run(line_m68k + 84);
+        /* delay between HINT, VBLANK and VINT (Dracula, OutRunners, VR Troopers) */
+        m68k_run(line_m68k + 84);
         if (zreset && !zbusreq)
         {
           current_z80 = line_z80 + 39 - count_z80;
           if (current_z80 > 0) count_z80 += z80_execute(current_z80);
         }
-      else count_z80 = line_z80 + 39;
+        else count_z80 = line_z80 + 39;
 
-			/* Vertical Interrupt */
-      status |= 0x80;
-      vint_pending = 1;
-        if (reg[1] & 0x20) irq_status = (irq_status & 0xff) | 0x2416; // 36 cycles latency after VINT occurence flag (Ex-Mutants, Tyrant)
+			  /* V Interrupt */
+        status |= 0x80;
+        vint_pending = 1;
+
+        /* 36 cycles latency after VINT occurence flag (Ex-Mutants, Tyrant) */
+        if (reg[1] & 0x20) irq_status = (irq_status & 0xff) | 0x2416; 
       }
       else if (!do_skip) 
       {
         /* render scanline and parse sprites for line n+1 */
         render_line(line, 0);
         if (line < (vdp_height-1)) parse_satb(0x81 + line);
-		}
+		  }
     }
     else
     {
@@ -241,20 +242,17 @@ int system_frame (int do_skip)
       if (dma_length) dma_update();
 
       /* render overscan */
-      if ((line < end_line) || (line >= start_line))
-    {
-        if (!do_skip) render_line(line, 1);
-      }
+      if ((!do_skip) && ((line < end_line) || (line >= start_line))) render_line(line, 1);
 
       /* clear any pending Z80 interrupt */
       if (zirq)
       {
-      zirq = 0;
-      z80_set_irq_line(0, CLEAR_LINE);
-    }
+        zirq = 0;
+        z80_set_irq_line(0, CLEAR_LINE);
+      }
     }
 
-		/* Process line */
+		/* process line */
 		m68k_run(aim_m68k);
 		if (zreset == 1 && zbusreq == 0)
     {

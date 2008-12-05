@@ -2,7 +2,7 @@
  *  Genesis Plus 1.2a
  *  Cartridge Hardware support
  *
- *  code by Eke-Eke, GC/Wii port
+ *  Copyright (C) Eke-Eke, GC/Wii port
  *
  *  Lots of protection mechanism have been discovered by Haze
  *  (http://haze.mameworld.info/)

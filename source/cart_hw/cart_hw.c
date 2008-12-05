@@ -3,7 +3,7 @@
  *  Genesis Plus 1.2a
  *  Cartridge Hardware support
  *
- *  code by Eke-Eke, GC/Wii port
+ *  Copyright (C) Eke-Eke, GC/Wii port
  *
  *  Most cartridge protections documented by Haze
  *  (http://haze.mameworld.info/)
@@ -112,7 +112,7 @@ T_CART_ENTRY rom_database[CART_CNT] =
 
 
 /* previous inputs */
-static int old_system[2] = {-1,-1};
+int old_system[2] = {-1,-1};
 
 /* temporary memory chunk */
 uint8 mem_chunk[0x10000];
@@ -341,15 +341,12 @@ void cart_hw_init()
 	***********************************************/
 	memset(&cart_hw, 0, sizeof(cart_hw));
 
-	/* default write handler for !TIME signal */
-	cart_hw.time_w = default_time_w;
-
-	/* search for game into database */
+  /* search for game into database */
 	for (i=0; i < CART_CNT + 1; i++)
 	{
 		/* known cart found ! */
 		if ((rominfo.checksum == rom_database[i].chk_1) &&
-			(realchecksum == rom_database[i].chk_2))
+			  (realchecksum == rom_database[i].chk_2))
 		{
 			/* retrieve hardware information */
 			memcpy(&cart_hw, &(rom_database[i].cart_hw), sizeof(cart_hw));
@@ -405,11 +402,15 @@ void cart_hw_init()
     /* assume SSF2 mapper */
     cart_hw.bankshift = 1;
   }
+
+	/* default write handler for !TIME signal */
+	if (!cart_hw.time_w) cart_hw.time_w = default_time_w;
 }
 
 /************************************************************
 					MAPPER handlers 
 *************************************************************/
+
 /* 
 	"official" ROM/RAM switch
 */
@@ -492,8 +493,8 @@ void special_mapper_w(uint32 address, uint32 data)
 	Realtec ROM Bankswitch (Earth Defend, Balloon Boy & Funny World, Whac-A-Critter)
 */
 void realtec_mapper_w(uint32 address, uint32 data)
-	{
-		int i;
+{
+  int i;
 	uint32 base;
 
 	/* 32 x 128k banks */
@@ -537,27 +538,27 @@ void seganet_mapper_w(uint32 address, uint32 data)
 {
 	if ((address & 0xff) == 0xf1)
   {
-	int i;
-			if (data & 1)
-			{
+	  int i;
+    if (data & 1)
+    {
       /* ROM Write protected */
       for (i=0; i<0x40; i++)
 			{
         m68k_memory_map[i].write8   = m68k_unused_8_w;
         m68k_memory_map[i].write16  = m68k_unused_16_w;
         zbank_memory_map[i].write   = zbank_unused_w;
-				}
-			}
-			else
-			{
-				/* ROM Write enabled */
-      for (i=0; i<0x40; i++);
+      }
+    }
+    else
+    {
+      /* ROM Write enabled */
+      for (i=0; i<0x40; i++)
       {
         m68k_memory_map[i].write8   = NULL;
         m68k_memory_map[i].write16  = NULL;
         zbank_memory_map[i].write   = NULL;
 			}
-			}
+    }
 	}
 }
 
@@ -571,7 +572,7 @@ uint32 radica_mapper_r(uint32 address)
   
 	/* 64 x 64k banks */
   for (i = 0; i < 64; i++)
-{
+  {
     m68k_memory_map[i].base = &cart_rom[((address++)& 0x3f)<< 16];
 	}
 	return 0xff;

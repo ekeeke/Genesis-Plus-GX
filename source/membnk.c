@@ -60,11 +60,10 @@ void zbank_lockup_w(uint32 address, uint32 data)
 }
 
 /* I/O & Control registers */
-
 uint32 zbank_read_ctrl_io(uint32 address)
 {
   switch ((address >> 8) & 0xff)
-				{
+  {
     case 0x00:	/* I/O chip */
       if (address & 0xe0) return zbank_unused_r(address);
       else return (io_read((address >> 1) & 0x0f));
@@ -89,99 +88,98 @@ uint32 zbank_read_ctrl_io(uint32 address)
     default:	/* Invalid address */
       return zbank_lockup_r(address);
   }
-      }
+}
 
 void zbank_write_ctrl_io(uint32 address, uint32 data)
-			{  			
-      switch ((address >> 8) & 0xff)
-				{
-        case 0x00:	/* I/O chip */
-          if ((address & 0xe1) == 0x01) io_write((address >> 1) & 0x0f, data); /* get /LWR only */
+{  			
+  switch ((address >> 8) & 0xff)
+  {
+    case 0x00:	/* I/O chip */
+      if ((address & 0xe1) == 0x01) io_write((address >> 1) & 0x0f, data); /* get /LWR only */
       else zbank_unused_w(address, data);
-            return;
+      return;
 
-					case 0x11:	/* BUSREQ */
+    case 0x11:	/* BUSREQ */
       if (address & 1) zbank_unused_w(address, data);
-						else gen_busreq_w(data & 1);
-		  			return;
+      else gen_busreq_w(data & 1);
+      return;
 
-					case 0x12:	/* RESET */
+    case 0x12:	/* RESET */
       if (address & 1) zbank_unused_w(address, data);
-					  else gen_reset_w(data & 1);
-					  return;
+      else gen_reset_w(data & 1);
+      return;
 
-					case 0x30:	/* TIME */
+    case 0x30:	/* TIME */
       if (cart_hw.time_w) cart_hw.time_w(address, data);
       else zbank_unused_w(address, data);
-						return;
+      return;
 
-					case 0x41:	/* BOOTROM */
-						if (address & 1)
-						{
+    case 0x41:	/* BOOTROM */
+      if (address & 1)
+      {
         m68k_memory_map[0].base = (data & 1) ?  default_rom : bios_rom;
     
-            /* autodetect BIOS ROM file */
-    					if (!(config.bios_enabled & 2))
-    					{
-    						config.bios_enabled |= 2;
-    						memcpy(bios_rom, cart_rom, 0x800);
-              memset(cart_rom, 0, genromsize);
-    					}
-						}
+        /* autodetect BIOS ROM file */
+        if (!(config.bios_enabled & 2))
+        {
+          config.bios_enabled |= 2;
+          memcpy(bios_rom, cart_rom, 0x800);
+          memset(cart_rom, 0, genromsize);
+        }
+      }
       else zbank_unused_w (address, data);
-						return;
+      return;
 
-					case 0x10:	/* MEMORY MODE */
-					case 0x20:	/* MEGA-CD */
-					case 0x40:	/* TMSS */
-					case 0x44:	/* RADICA */
-					case 0x50:  /* SVP REGISTERS */
+    case 0x10:	/* MEMORY MODE */
+    case 0x20:	/* MEGA-CD */
+    case 0x40:	/* TMSS */
+    case 0x44:	/* RADICA */
+    case 0x50:  /* SVP REGISTERS */
       zbank_unused_w(address, data);
-					  return;
+      return;
 
-					default:	/* Invalid address */
+    default:	/* Invalid address */
       zbank_lockup_w(address, data);
-					  return;
-				}
-			}
+      return;
+  }
+}
 
 
-    /* VDP */
-			
+/* VDP */
 uint32 zbank_read_vdp(uint32 address)
-				{
-      switch (address & 0xfd)
-			  {
-				  case 0x00:		/* DATA */
-				    return (vdp_data_r() >> 8);
+{
+  switch (address & 0xfd)
+  {
+    case 0x00:		/* DATA */
+      return (vdp_data_r() >> 8);
 			
-          case 0x01:		/* DATA */
-				    return (vdp_data_r() & 0xff);
+    case 0x01:		/* DATA */
+      return (vdp_data_r() & 0xff);
 			
-				  case 0x04:		/* CTRL */
-					 return (0xfc | ((vdp_ctrl_r() >> 8) & 3));
+    case 0x04:		/* CTRL */
+      return (0xfc | ((vdp_ctrl_r() >> 8) & 3));
 
-				  case 0x05:		/* CTRL */
-				    return (vdp_ctrl_r() & 0xff);
+    case 0x05:		/* CTRL */
+      return (vdp_ctrl_r() & 0xff);
 			
-				  case 0x08:		/* HVC */
-				  case 0x0c:
-				    return (vdp_hvc_r() >> 8);
+    case 0x08:		/* HVC */
+    case 0x0c:
+      return (vdp_hvc_r() >> 8);
 			
-				  case 0x09:		/* HVC */
-				  case 0x0d:
-				   	return (vdp_hvc_r() & 0xff);
-			
-				  case 0x18:		/* Unused */
-				  case 0x19:
-				  case 0x1c:
-				  case 0x1d:
+    case 0x09:		/* HVC */
+    case 0x0d:
+      return (vdp_hvc_r() & 0xff);
+			  
+    case 0x18:		/* Unused */
+    case 0x19:
+    case 0x1c:
+    case 0x1d:
       return zbank_unused_r(address);
 
-					default:		/* Invalid address */
+    default:		/* Invalid address */
       return zbank_lockup_r(address);
   }
-			  }
+}
 
 void zbank_write_vdp(uint32 address, uint32 data)
 {

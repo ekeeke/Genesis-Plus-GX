@@ -63,7 +63,6 @@ extern int32 fifo_write_cnt;
 extern uint32 fifo_lastwrite;
 extern uint8 fifo_latency;
 extern uint8 vdp_pal;
-extern double vdp_timings[4][4];
 
 extern uint8 *vctab;
 extern uint8 *hctab;

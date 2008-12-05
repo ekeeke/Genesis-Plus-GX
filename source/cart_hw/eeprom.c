@@ -2,7 +2,7 @@
  *  Genesis Plus 1.2a
  *  Serial EEPROM support
  *
- *  code by Eke-Eke, GC/Wii port
+ *  Copyright (C) Eke-Eke, GC/Wii port
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
