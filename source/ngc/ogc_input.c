@@ -113,7 +113,8 @@ static u32 wpad_keys[20] =
 *******************************/
 static void pad_config(int num, int padtype)
 {
-  int i,j,max;
+  int i,j;
+  int max = (padtype == DEVICE_6BUTTON) ? MAX_KEYS : (MAX_KEYS - 3);
   u16 p;
   u8 quit;
   char msg[30];
@@ -127,7 +128,6 @@ static void pad_config(int num, int padtype)
   }
 
   /* configure keys */
-  max = (padtype == DEVICE_6BUTTON) ? MAX_KEYS : (MAX_KEYS - 3);
   for (i=0; i<max; i++)
   {
     /* remove any pending keys */
@@ -333,7 +333,8 @@ static s8 WPAD_StickY(u8 chan, u8 right)
 
 static void wpad_config(u8 num, u8 exp, u8 padtype)
 {
-  int i,j,max;
+  int i,j;
+  int max = (padtype == DEVICE_6BUTTON) ? MAX_KEYS : (MAX_KEYS - 3);
   u8 quit;
   char msg[30];
   u32 current = 255;
@@ -353,7 +354,6 @@ static void wpad_config(u8 num, u8 exp, u8 padtype)
   u8 index = exp + (num * 3);
 
   /* loop on each mapped keys */
-  max = (padtype == DEVICE_6BUTTON) ? MAX_KEYS : (MAX_KEYS - 3);
   for (i=0; i<max; i++)
   {
     /* remove any pending buttons */

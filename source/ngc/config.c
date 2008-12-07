@@ -4,9 +4,11 @@
 #include <fat.h>
 #include <sys/dir.h>
 
-#define CONFIG_VERSION "GENPLUS 1.2.2 "
-
-t_config config;
+#ifdef HW_RVL
+#define CONFIG_VERSION "GENPLUS 1.2.2W"
+#else
+#define CONFIG_VERSION "GENPLUS 1.2.2G"
+#endif
 
 void config_save()
 {
@@ -17,7 +19,7 @@ void config_save()
   if (dir == NULL) mkdir("/genplus",S_IRWXU);
   else dirclose(dir);
 
-  /* open file for writing */
+  /* open configuration file */
   FILE *fp = fopen("/genplus/genplus.ini", "wb");
   if (fp == NULL) return;
 
@@ -29,7 +31,7 @@ void config_save()
 
 void config_load()
 {
-  /* open file for writing */
+  /* open configuration file */
   FILE *fp = fopen("/genplus/genplus.ini", "rb");
   if (fp == NULL) return;
 
@@ -43,20 +45,6 @@ void config_load()
   fp = fopen("/genplus/genplus.ini", "rb");
   fread(&config, sizeof(config), 1, fp);
   fclose(fp);
-
-#ifndef HW_RVL
-  /* check some specific Wii-version options */
-  int i;
-  for (i=0; i<MAX_DEVICES; i++)
-  {
-    if (config.input[i].device > 0)
-    {
-      config.input[i].device = 0;
-      config.input[i].port = i%4;
-    }
-  }
-#endif
-
 }
 
 void set_config_defaults(void)

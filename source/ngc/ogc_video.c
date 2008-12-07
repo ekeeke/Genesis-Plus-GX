@@ -52,7 +52,6 @@ static u8 gp_fifo[DEFAULT_FIFO_SIZE] ATTRIBUTE_ALIGN (32);
 static GXTexObj texobj;
 static Mtx view;
 static u32 vwidth, vheight;
-static u32 stride;
 
 /*** custom Video modes (used to emulate original console video modes) ***/
 /* 288 lines progressive (PAL 50Hz) */
@@ -72,10 +71,10 @@ GXRModeObj TV50hz_288p =
 
     // sample points arranged in increasing Y order
 	{
-		{3,2},{9,6},{3,10},  // pix 0, 3 sample points, 1/12 units, 4 bits each
-		{3,2},{9,6},{3,10},  // pix 1
-		{9,2},{3,6},{9,10},  // pix 2
-		{9,2},{3,6},{9,10}   // pix 3
+		{6,6},{6,6},{6,6},  // pix 0, 3 sample points, 1/12 units, 4 bits each
+		{6,6},{6,6},{6,6},  // pix 1
+		{6,6},{6,6},{6,6},  // pix 2
+		{6,6},{6,6},{6,6}   // pix 3
 	},
 
   // vertical filter[7], 1/64 units, 6 bits each
@@ -107,10 +106,10 @@ GXRModeObj TV50hz_288i =
 
     // sample points arranged in increasing Y order
 	{
-		{3,2},{9,6},{3,10},  // pix 0, 3 sample points, 1/12 units, 4 bits each
-		{3,2},{9,6},{3,10},  // pix 1
-		{9,2},{3,6},{9,10},  // pix 2
-		{9,2},{3,6},{9,10}   // pix 3
+		{6,6},{6,6},{6,6},  // pix 0, 3 sample points, 1/12 units, 4 bits each
+		{6,6},{6,6},{6,6},  // pix 1
+		{6,6},{6,6},{6,6},  // pix 2
+		{6,6},{6,6},{6,6}   // pix 3
 	},
 
     // vertical filter[7], 1/64 units, 6 bits each
@@ -142,21 +141,21 @@ GXRModeObj TV50hz_576i =
 
     // sample points arranged in increasing Y order
 	{
-		{3,2},{9,6},{3,10},  // pix 0, 3 sample points, 1/12 units, 4 bits each
-		{3,2},{9,6},{3,10},  // pix 1
-		{9,2},{3,6},{9,10},  // pix 2
-		{9,2},{3,6},{9,10}   // pix 3
+		{6,6},{6,6},{6,6},  // pix 0, 3 sample points, 1/12 units, 4 bits each
+		{6,6},{6,6},{6,6},  // pix 1
+		{6,6},{6,6},{6,6},  // pix 2
+		{6,6},{6,6},{6,6}   // pix 3
 	},
 
     // vertical filter[7], 1/64 units, 6 bits each
 	{
-		 4,         // line n-1
 		 8,         // line n-1
+		 8,         // line n-1
+		10,         // line n
 		12,         // line n
-		16,         // line n
-		12,         // line n
+		10,         // line n
 		 8,         // line n+1
-		 4          // line n+1
+		 8          // line n+1
 	}
 };
 
@@ -177,10 +176,10 @@ GXRModeObj TV60hz_240p =
 
     // sample points arranged in increasing Y order
 	{
-		{3,2},{9,6},{3,10},  // pix 0, 3 sample points, 1/12 units, 4 bits each
-		{3,2},{9,6},{3,10},  // pix 1
-		{9,2},{3,6},{9,10},  // pix 2
-		{9,2},{3,6},{9,10}   // pix 3
+		{6,6},{6,6},{6,6},  // pix 0, 3 sample points, 1/12 units, 4 bits each
+		{6,6},{6,6},{6,6},  // pix 1
+		{6,6},{6,6},{6,6},  // pix 2
+		{6,6},{6,6},{6,6}   // pix 3
 	},
 
   // vertical filter[7], 1/64 units, 6 bits each
@@ -247,21 +246,21 @@ GXRModeObj TV60hz_480i =
 
     // sample points arranged in increasing Y order
 	{
-		{3,2},{9,6},{3,10},  // pix 0, 3 sample points, 1/12 units, 4 bits each
-		{3,2},{9,6},{3,10},  // pix 1
-		{9,2},{3,6},{9,10},  // pix 2
-		{9,2},{3,6},{9,10}   // pix 3
+		{6,6},{6,6},{6,6},  // pix 0, 3 sample points, 1/12 units, 4 bits each
+		{6,6},{6,6},{6,6},  // pix 1
+		{6,6},{6,6},{6,6},  // pix 2
+		{6,6},{6,6},{6,6}   // pix 3
 	},
 
     // vertical filter[7], 1/64 units, 6 bits each
 	{
-		 4,         // line n-1
 		 8,         // line n-1
+		 8,         // line n-1
+		10,         // line n
 		12,         // line n
-		16,         // line n
-		12,         // line n
+		10,         // line n
 		 8,         // line n+1
-		 4          // line n+1
+		 8          // line n+1
 	}
 };
 
@@ -453,9 +452,9 @@ static void gxScale(GXRModeObj *rmode)
 
   /* GX Scaler (by default, use EFB maximal width) */
   rmode->fbWidth = 640;
-  if (!config.bilinear)
+  if (!config.bilinear && !config.ntsc)
   {
-    /* try to prevent GX bilinear filtering */
+    /* filtering (soft or hard) is disabled, let VI handles horizontal scaling */
     /* if possible, let GX simply doubles the width, otherwise disable GX stretching completely */
     int width = vwidth * 4;
     if ((width * 2) <= 640) rmode->fbWidth = width * 2; 
@@ -590,17 +589,14 @@ void ogc_video__update()
     if (config.ntsc) vwidth = (reg[12]&1) ? MD_NTSC_OUT_WIDTH(vwidth) : SMS_NTSC_OUT_WIDTH(vwidth);
 
     /* texels size must be multiple of 4 */
-    vwidth  = vwidth  >> 2;
-    vheight = vheight >> 2;
-
-    /* final offset */
-    stride = bitmap.width - vwidth;
+    vwidth  = vwidth  / 4;
+    vheight = vheight / 4;
 
     /* image size has changed, reset GX */
     ogc_video__reset();
 
     /* reinitialize texture */
-	  GX_InitTexObj (&texobj, texturemem, vwidth << 2, vheight << 2, GX_TF_RGB565, GX_CLAMP, GX_CLAMP, GX_FALSE);
+	  GX_InitTexObj (&texobj, texturemem, vwidth * 4, vheight * 4, GX_TF_RGB565, GX_CLAMP, GX_CLAMP, GX_FALSE);
     
     /* enable/disable bilinear filtering */
     if (!config.bilinear)
@@ -695,7 +691,6 @@ void ogc_video__init(void)
       TV60hz_240i.viTVMode = VI_TVMODE(vmode->viTVMode >> 2, VI_INTERLACE);
       TV60hz_480i.viTVMode = VI_TVMODE(vmode->viTVMode >> 2, VI_INTERLACE);
       config.tv_mode = 2;
-  	  gc_pal = 0;
       break;
   }
    

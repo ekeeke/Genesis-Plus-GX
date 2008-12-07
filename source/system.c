@@ -126,13 +126,14 @@ int system_frame (int do_skip)
   int end_line    = vdp_height + bitmap.viewport.y;
   int start_line  = lines_per_frame - bitmap.viewport.y;
 	int old_interlaced = interlaced;
-  interlaced = (reg[12] >> 1) & 3;
+  interlaced = (reg[12] & 2) >> 1;
 	if (old_interlaced != interlaced)
   {
 		bitmap.viewport.changed = 2;
-    im2_flag = (interlaced == 3);
+    im2_flag = ((reg[12] & 6) == 6);
 		odd_frame = 1;
 	}
+
   odd_frame ^= 1;
 
   /* clear VBLANK and DMA flags */

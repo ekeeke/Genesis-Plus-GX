@@ -899,7 +899,7 @@ int loadmenu ()
   int count = 3 + dvd_on;
   char item[4][25] = {
     {"Load Recent"},
-		{"Load from SDCARD"},
+	{"Load from SDCARD"},
     {"Load from DVD"},
     {"Stop DVD Motor"}
 	};
@@ -1100,7 +1100,7 @@ void MainMenu ()
 	VIDEO_WaitVSync();
 	VIDEO_WaitVSync();
 
-  /* autosave SRAM (Freeze States should be saved on exit only) */
+  /* autosave (SRAM only) */
   int temp = config.freeze_auto;
   config.freeze_auto = -1;
   memfile_autosave();
@@ -1108,6 +1108,20 @@ void MainMenu ()
 
 	while (quit == 0)
 	{
+
+#ifdef HW_RVL
+    /* wii shutdown */
+    if (Shutdown)
+    {
+      /* autosave SRAM/State */
+      memfile_autosave();
+
+      /* shutdown Wii */
+      DI_Close();
+      SYS_ResetSystem(SYS_POWEROFF, 0, 0);
+    }
+#endif
+
     crccheck = crc32 (0, &sram.sram[0], 0x10000);
     if (genromsize && (crccheck != sram.crc)) strcpy (menutitle, "*** SRAM has been modified ***");
     else sprintf(menutitle, "%d FPS", FramesPerSecond);
@@ -1117,10 +1131,7 @@ void MainMenu ()
 		{
 			case -1: /*** Button B ***/
 			case 0:  /*** Play Game ***/
-				if (genromsize)
-				{
-				   quit = 1;
-				}
+				if (genromsize) quit = 1;
 				break;
 
 			case 1:	 /*** ROM Information ***/
@@ -1130,13 +1141,13 @@ void MainMenu ()
 			case 2:  /*** Emulator Reset ***/
 				if (genromsize || (config.bios_enabled == 3))
 				{
-          system_reset (); 
+					system_reset (); 
 					quit = 1;
 				}
 				break;
 
 			case 3:  /*** Load ROM Menu ***/
-        quit = loadmenu();
+				quit = loadmenu();
 				break;
 
 			case 4:  /*** Memory Manager ***/

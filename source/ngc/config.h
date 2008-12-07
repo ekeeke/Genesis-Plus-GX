@@ -37,7 +37,10 @@ typedef struct
   uint8 invert_mouse;
 } t_config;
 
-extern t_config config;
+/* Global data */
+t_config config;
+
+
 extern void config_save();
 extern void config_load();
 extern void set_config_defaults(void);

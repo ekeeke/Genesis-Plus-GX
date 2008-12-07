@@ -396,6 +396,12 @@ static inline void dma_vbus (void)
   }
   else
   {
+    /* SVP latency */
+    if (svp && (source < 0x400000))
+    {
+      source = (source - 2);
+    }
+
     /* ROM & RAM */
     do
     {

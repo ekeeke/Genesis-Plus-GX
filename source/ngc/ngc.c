@@ -28,15 +28,17 @@
 #include "di/di.h"
 #endif
 
+int Shutdown = 0;
+
 #ifdef HW_RVL
 /* Power Button callback */
-static int Shutdown;
 void Power_Off(void)
 {
   Shutdown = 1;
   ConfigRequested = 1;
 }
 #endif
+
 
 /***************************************************************************
  * Genesis Virtual Machine
@@ -66,7 +68,7 @@ static void load_bios()
   }
 }
 
-static void init_machine()
+static void init_machine (void)
 {
   /* Allocate cart_rom here */
   cart_rom = memalign(32, 10 * 1024 * 1024);
@@ -117,6 +119,7 @@ int main (int argc, char *argv[])
 {
 #ifdef HW_RVL
 	/* initialize Wii DVD interface first */
+  DI_Close();
   DI_Init();
 #endif
 
@@ -145,10 +148,10 @@ int main (int argc, char *argv[])
   if (fatInitDefault() == true)
   {
     use_FAT = 1;
-//    fatEnableReadAhead (PI_DEFAULT, 6, 64);
+    fatEnableReadAhead (PI_DEFAULT, 6, 64);
   }
 
-  /* Restore User Configuration */
+  /* Default Config */
   set_config_defaults();
   config_load();
 
@@ -240,20 +243,6 @@ int main (int argc, char *argv[])
     {
       /* reset AUDIO */
       ogc_audio__reset();
-
-#ifdef HW_RVL
-      /* wii shutdown */
-      if (Shutdown)
-      {
-        /* autosave SRAM/State */
-        memfile_autosave();
-
-        /* shutdown Wii */
-        Shutdown = 0;
-        DI_Close();
-        SYS_ResetSystem(SYS_POWEROFF, 0, 0);
-      }
-#endif
   
       /* go to menu */
       MainMenu ();

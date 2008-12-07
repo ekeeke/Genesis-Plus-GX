@@ -21,7 +21,6 @@
 
 #include "shared.h"
 #include "ogc_input.h"
-//#include <asndlib.h>
 
 /* global datas */
 unsigned char soundbuffer[16][3840] ATTRIBUTE_ALIGN(32);
@@ -50,7 +49,6 @@ static void AudioSwitchBuffers()
   AUDIO_InitDMA((u32) soundbuffer[playbuffer], dma_len);
   DCFlushRange(soundbuffer[playbuffer], dma_len);
   AUDIO_StartDMA();
-  //ASND_SetVoice(0, VOICE_STEREO_16BIT, 48000, 0, soundbuffer[playbuffer], dma_len, 255, 255, AudioSwitchBuffers);
     
   /* increment soundbuffers index */
   if (playbuffer == mixbuffer)
@@ -70,14 +68,12 @@ void ogc_audio__init(void)
 	AUDIO_Init (NULL);
 	AUDIO_SetDSPSampleRate (AI_SAMPLERATE_48KHZ);
 	AUDIO_RegisterDMACallback (AudioSwitchBuffers);
-  //ASND_Init();
 	memset(soundbuffer, 0, 16 * 3840);
 }
 
 void ogc_audio__reset(void)
 {
   AUDIO_StopDMA ();
-  //ASND_Pause(1);
   IsPlaying = 0;
   mixbuffer = 0;
   playbuffer = 0;
@@ -86,9 +82,5 @@ void ogc_audio__reset(void)
 void ogc_audio__update(void)
 {
   /* restart Audio DMA if needed */
-  if (!IsPlaying)
-  {
-    //ASND_Pause(0);
-    AudioSwitchBuffers();
-  }
+  if (!IsPlaying) AudioSwitchBuffers();
 }
