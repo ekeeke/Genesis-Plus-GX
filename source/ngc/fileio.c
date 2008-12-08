@@ -163,7 +163,7 @@ int UnZipDVD (unsigned char *outbuffer, u64 discoffset, int length)
   return 0;
 }
 
-int UnZipSDCARD (unsigned char *outbuffer, char *filename)
+int UnZipFAT (unsigned char *outbuffer, char *filename)
 {
   unzFile *fd = NULL;
   unz_file_info info;

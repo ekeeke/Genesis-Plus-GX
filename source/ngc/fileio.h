@@ -10,6 +10,6 @@
 
 extern int IsZipFile (char *buffer);
 int UnZipDVD (unsigned char *outbuffer, u64 discoffset, int length);
-int UnZipSDCARD (unsigned char *outbuffer, char *filename);
+int UnZipFAT (unsigned char *outbuffer, char *filename);
 
 #endif

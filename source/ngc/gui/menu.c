@@ -896,13 +896,24 @@ int loadmenu ()
 	int prevmenu = menu;
   int ret;
 	int quit = 0;
-  int count = 3 + dvd_on;
-  char item[4][25] = {
+#ifdef HW_RVL
+  int count = 4 + dvd_on;
+  char item[5][25] = {
     {"Load Recent"},
-	{"Load from SDCARD"},
+	  {"Load from SD"},
+	  {"Load from USB"},
     {"Load from DVD"},
     {"Stop DVD Motor"}
 	};
+#else
+  int count = 3 + dvd_on;
+  char item[4][25] = {
+    {"Load Recent"},
+	  {"Load from SD"},
+    {"Load from DVD"},
+    {"Stop DVD Motor"}
+	};
+#endif
 
 	menu = load_menu;
 	
@@ -912,21 +923,37 @@ int loadmenu ()
 		ret = domenu (&item[0], count, 0);
 		switch (ret)
 		{
-			case -1: /*** Button B ***/
+			/*** Button B ***/
+      case -1: 
 				quit = 1;
 				break;
 
-			case 0: /*** Load Recent ***/
+			/*** Load Recent ***/
+      case 0:
 				load_menu = menu;
         if (OpenHistory()) return 1;
 				break;
 
-			case 1:  /*** Load from SCDARD ***/
-				load_menu = menu;
-				if (OpenSD()) return 1;
+      /*** Load from SD ***/
+			case 1:
+        load_menu = menu;
+				if (OpenFAT("") > 0) return 1;
 				break;
 
+#ifdef HW_RVL
+      /*** Load from USB ***/
+			case 2:
+				load_menu = menu;
+				if (OpenFAT("usb:") > 0) return 1;
+        break;
+#endif
+
+      /*** Load from DVD ***/
+#ifdef HW_RVL
+      case 3:
+#else
       case 2:
+#endif
 				load_menu = menu;
         if (OpenDVD())
         {
@@ -935,10 +962,19 @@ int loadmenu ()
         }
         break;
 
-      case 3:  /*** Stop DVD Disc ***/
+      /*** Stop DVD Disc ***/
+#ifdef HW_RVL
+      case 4:  
+#else
+      case 3:
+#endif
         dvd_motor_off();
         dvd_on = 0;
+#ifdef HW_RVL
+        count = 4 + dvd_on;
+#else
         count = 3 + dvd_on;
+#endif
 				menu = load_menu;
         break;
     }

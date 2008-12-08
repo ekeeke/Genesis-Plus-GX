@@ -28,10 +28,10 @@ static int offset = 0;
 static int selection = 0;
 static int old_selection = 0;
 static int old_offset = 0;
-static char rootSDdir[256];
+static char rootFATdir[256];
 static u8 haveDVDdir = 0;
-static u8 haveSDdir  = 0;
-static u8 UseSDCARD = 0;
+static u8 haveFATdir  = 0;
+static u8 UseFAT = 0;
 static u8 UseHistory = 0;
 static int LoadFile (unsigned char *buffer);
 
@@ -88,11 +88,11 @@ static void ShowFiles (int offset, int selection)
 }
 
 /***************************************************************************
- * updateSDdirname
+ * updateFATdirname
  *
  * Update ROOT directory while browsing SDCARD
  ***************************************************************************/ 
-static int updateSDdirname()
+static int updateFATdirname()
 {
   int size=0;
   char *test;
@@ -105,7 +105,7 @@ static int updateSDdirname()
   else if (strcmp(filelist[selection].filename,"..") == 0)
   {
     /* determine last subdirectory namelength */
-    sprintf(temp,"%s",rootSDdir);
+    sprintf(temp,"%s",rootFATdir);
     test= strtok(temp,"/");
     while (test != NULL)
     {
@@ -114,33 +114,33 @@ static int updateSDdirname()
     }
 
     /* remove last subdirectory name */
-    size = strlen(rootSDdir) - size;
-    rootSDdir[size-1] = 0;
+    size = strlen(rootFATdir) - size;
+    rootFATdir[size-1] = 0;
   }
   else
   {
-    sprintf(rootSDdir, "%s%s/",rootSDdir, filelist[selection].filename);
+    sprintf(rootFATdir, "%s%s/",rootFATdir, filelist[selection].filename);
   }
 
   return 1;
 }
 
 /***************************************************************************
- * parseSDdirectory
+ * parseFATdirectory
  *
  * List files into one SDCARD directory
  ***************************************************************************/ 
-static int parseSDdirectory()
+static int parseFATdirectory()
 {
   int nbfiles = 0;
   char filename[MAXPATHLEN];
   struct stat filestat;
 
   /* open directory */
-  DIR_ITER *dir = diropen (rootSDdir);
+  DIR_ITER *dir = diropen (rootFATdir);
   if (dir == NULL) 
   {
-    sprintf(filename, "Error opening %s", rootSDdir);
+    sprintf(filename, "Error opening %s", rootFATdir);
     WaitPrompt (filename);
     return 0;
   }
@@ -176,8 +176,8 @@ static int FileSelected()
 	if(UseHistory)
 	{	
 		/* Get the parent folder for the file. */
-		strncpy(rootSDdir, history.entries[selection].filepath, MAXJOLIET-1);
-		rootSDdir[MAXJOLIET-1] = '\0';
+		strncpy(rootFATdir, history.entries[selection].filepath, MAXJOLIET-1);
+		rootFATdir[MAXJOLIET-1] = '\0';
 	
 		/* Get the length of the file. This has to be done
 		 * before calling LoadFile().  */
@@ -192,7 +192,7 @@ static int FileSelected()
 	}
 
 	/* Add/move the file to the top of the history. */
-	if (UseSDCARD) history_add_file(rootSDdir, filelist[selection].filename);
+	if (UseFAT) history_add_file(rootFATdir, filelist[selection].filename);
 	
 	rootdir = filelist[selection].offset;
 	rootdirlength = filelist[selection].length;
@@ -302,7 +302,7 @@ static int FileSelector ()
     if (p & PAD_BUTTON_B)
     {
       filelist[selection].filename_offset = 0;
-      if (UseSDCARD)
+      if (UseFAT)
       {
         if (strcmp(filelist[0].filename,"..") != 0) return 0;
       }
@@ -328,17 +328,17 @@ static int FileSelector ()
       {
         /* select item #1 */
         go_up = 0;
-        selection = UseSDCARD ? 0 : 1;
+        selection = UseFAT ? 0 : 1;
       }
       
       /*** This is directory ***/
       if (filelist[selection].flags)
       {
 				/* SDCARD directory handler */
-        if (UseSDCARD)
+        if (UseFAT)
 				{
 					/* update current directory */
-					if (updateSDdirname())
+					if (updateFATdirname())
 					{
 						/* reinit selector (previous value is saved for one level) */
 						if (selection == 0)
@@ -358,12 +358,12 @@ static int FileSelector ()
 						}
 						
 						/* set new entry list */
-						maxfiles = parseSDdirectory();
+						maxfiles = parseFATdirectory();
 						if (!maxfiles)
 						{
 							/* quit */
 							WaitPrompt ("No files found !");
-							haveSDdir = 0;
+							haveFATdir = 0;
               return 0;
 						}
 					}
@@ -415,9 +415,7 @@ static int FileSelector ()
  ****************************************************************************/ 
 int OpenDVD () 
 {
-  int ret = 0;
-  
-  UseSDCARD = 0;
+  UseFAT = 0;
   UseHistory = 0;
   
   if (!getpvd())
@@ -458,36 +456,41 @@ int OpenDVD ()
   if (haveDVDdir == 0)
   {
     /* don't mess with SD entries */
-    haveSDdir = 0;
+    haveFATdir = 0;
     
     /* reinit selector */
     rootdir = basedir;
     old_selection = selection = offset = old_offset = 0;
-    
-    if ((maxfiles = parseDVDdirectory ()))
-    {
-	    ret = FileSelector ();
-      haveDVDdir = 1;
-    }
   }
-  else ret = FileSelector ();
-
-  return ret;
+  
+  /* Parse root directory and get entries list */
+  ShowAction("Reading Directory ...");
+  if ((maxfiles = parseDVDdirectory ()))
+  {
+    /* Select an entry */
+    haveDVDdir = 1;
+    return FileSelector ();
+  }
+  else
+  {
+    /* no entries found */
+    WaitPrompt ("no files found !");
+    haveDVDdir = 0;
+    return 0;
+  }
 }
  
 /****************************************************************************
- * OpenSD
+ * OpenFAT
  *
- * Function to load a SDCARD directory and display to user.
+ * Function to load a FAT directory and display to user.
  ****************************************************************************/ 
-int OpenSD ()
+int OpenFAT (char *name)
 {
-  int ret = 0;
-
-  UseSDCARD = 1;
+  UseFAT = 1;
   UseHistory = 0;
   
-  if (haveSDdir == 0)
+  if (haveFATdir == 0)
   {
     /* don't mess with DVD entries */
     haveDVDdir = 0;
@@ -496,33 +499,29 @@ int OpenSD ()
     old_selection = selection = offset = old_offset = 0;
 
     /* Reset SDCARD root directory */
-    sprintf (rootSDdir, "/genplus/roms/");
+    sprintf (rootFATdir, "%s/genplus/roms/", name);
 
     /* if directory doesn't exist, use root */
-    DIR_ITER *dir = diropen(rootSDdir);
-    if (dir == NULL) sprintf (rootSDdir, "fat:/");
+    DIR_ITER *dir = diropen(rootFATdir);
+    if (dir == NULL) sprintf (rootFATdir, "%s/", name);
     else dirclose(dir);
   }
  
   /* Parse root directory and get entries list */
   ShowAction("Reading Directory ...");
-  if ((maxfiles = parseSDdirectory ()))
+  if ((maxfiles = parseFATdirectory ()))
   {
     /* Select an entry */
-    ret = FileSelector ();
-		 
-    /* memorize last entries list, actual root directory and selection for next access */
-    haveSDdir = 1;
+    haveFATdir = 1;
+    return FileSelector ();
   }
   else
   {
     /* no entries found */
     WaitPrompt ("no files found !");
-    haveSDdir = 0;
-    return 0;
+    haveFATdir = 0;
+    return -1;
   }
-  
-  return ret;
 }
   
 /****************************************************************************
@@ -534,11 +533,11 @@ int OpenHistory()
 {
 	int i;
 
-	UseSDCARD = 1;
+	UseFAT = 1;
 	UseHistory = 1;
 
   /* don't mess with other entries */
-  haveSDdir   = 0;
+  haveFATdir   = 0;
   haveDVDdir  = 0;
 
   /* reinit selector */
@@ -598,23 +597,23 @@ static int LoadFile (unsigned char *buffer)
   if (rootdirlength == 0) return 0;
 
   /* SDCard access */ 
-  if (UseSDCARD)
+  if (UseFAT)
   {
     /* open file */
-    sprintf(fname, "%s%s",rootSDdir,filelist[selection].filename);
+    sprintf(fname, "%s%s",rootFATdir,filelist[selection].filename);
     sdfile = fopen(fname, "rb");
     if (sdfile == NULL)
     {
       WaitPrompt ("Unable to open file!");
-      haveSDdir = 0;
-      return 0;
+      haveFATdir = 0;
+      return -1;
     }
   }
   
   ShowAction ("Loading ... Wait");
   
   /* Read first data chunk */
-  if (UseSDCARD)
+  if (UseFAT)
   {
     fread(readbuffer, 1, 2048, sdfile);
   }
@@ -627,7 +626,7 @@ static int LoadFile (unsigned char *buffer)
   /* determine file type */
   if (!IsZipFile ((char *) readbuffer))
   {
-    if (UseSDCARD)
+    if (UseFAT)
     {
       /* go back to file start and read file */
       fseek(sdfile, 0, SEEK_SET);
@@ -662,7 +661,7 @@ static int LoadFile (unsigned char *buffer)
   else
   {
     /* unzip file */
-    if (UseSDCARD) return UnZipSDCARD (buffer, fname);
+    if (UseFAT) return UnZipFAT(buffer, fname);
     else return UnZipDVD (buffer, discoffset, rootdirlength);
   }
   

@@ -35,7 +35,7 @@ extern void set_region();
 extern int ManageSRAM(u8 direction, u8 device);
 extern int ManageState(u8 direction, u8 device);
 extern int OpenDVD();
-extern int OpenSD();
+extern int OpenFAT(char *name);
 extern int OpenHistory();
 extern void memfile_autosave();
 extern void memfile_autoload();
