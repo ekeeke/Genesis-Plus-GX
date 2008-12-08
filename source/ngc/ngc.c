@@ -25,7 +25,7 @@
 #ifdef HW_DOL
 #include "dvd.h"
 #else
-#include "di/di.h"
+#include <di/di.h>
 #endif
 
 int Shutdown = 0;
@@ -144,11 +144,10 @@ int main (int argc, char *argv[])
   SYS_SetPowerCallback(Power_Off);
 #endif
 
-  /* Initialize SDCARD Interface (LibFAT) */
+  /* Initialize FAT Interface */
   if (fatInitDefault() == true)
   {
     use_FAT = 1;
-    fatEnableReadAhead (PI_DEFAULT, 6, 64);
   }
 
   /* Default Config */

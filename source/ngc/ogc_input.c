@@ -24,6 +24,7 @@
 
 #ifdef HW_RVL
 #include <wiiuse/wpad.h>
+#include <di/di.h>
 #endif
 
 /* configurable keys */
@@ -739,7 +740,20 @@ void ogc_input__config(u8 num, u8 type, u8 padtype)
 
 u16 ogc_input__getMenuButtons(void)
 {
-  /* slowdown input updates */
+
+#ifdef HW_RVL
+  if (Shutdown)
+  {
+    /* autosave SRAM/State */
+    memfile_autosave();
+
+    /* shutdown Wii */
+    DI_Close();
+    SYS_ResetSystem(SYS_POWEROFF, 0, 0);
+  }
+#endif
+
+/* slowdown input updates */
   VIDEO_WaitVSync();
 
   /* get gamepad inputs */

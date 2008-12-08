@@ -1108,20 +1108,6 @@ void MainMenu ()
 
 	while (quit == 0)
 	{
-
-#ifdef HW_RVL
-    /* wii shutdown */
-    if (Shutdown)
-    {
-      /* autosave SRAM/State */
-      memfile_autosave();
-
-      /* shutdown Wii */
-      DI_Close();
-      SYS_ResetSystem(SYS_POWEROFF, 0, 0);
-    }
-#endif
-
     crccheck = crc32 (0, &sram.sram[0], 0x10000);
     if (genromsize && (crccheck != sram.crc)) strcpy (menutitle, "*** SRAM has been modified ***");
     else sprintf(menutitle, "%d FPS", FramesPerSecond);

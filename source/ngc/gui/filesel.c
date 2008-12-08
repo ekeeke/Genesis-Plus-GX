@@ -16,8 +16,9 @@
 #include "fileio.h"
 #include "history.h"
 #include "dvd.h"
+
 #ifdef HW_RVL
-#include "di/di.h"
+#include <di/di.h>
 #endif
 
 #define PAGESIZE 12
