@@ -38,7 +38,7 @@ void config_load()
   char pathname[MAXPATHLEN];
 
   /* open configuration file */
-  sprintf (pathname, "%s/genplus.ini", DEFAULT_PATH);
+  sprintf (pathname, "%s/config.ini", DEFAULT_PATH);
   FILE *fp = fopen(pathname, "rb");
   if (fp == NULL) return;
 

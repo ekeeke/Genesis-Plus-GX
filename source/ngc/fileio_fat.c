@@ -230,8 +230,7 @@ int FAT_Open(int type)
 
   /* reset flags */
   useFAT = 1;
-  useHistory = 0;
-
+  
   /* FAT header */
 #ifdef HW_RVL
   if (type == TYPE_SD) sprintf (root, "sd:");
@@ -248,6 +247,7 @@ int FAT_Open(int type)
   /* update filelist */
   if (haveFATdir == 0)
   {
+    useHistory = 0;
     if (type == TYPE_RECENT)
     {
       /* fetch history list */
@@ -275,7 +275,7 @@ int FAT_Open(int type)
     else
     {
       /* reset root directory */
-      sprintf (fatdir, "%s%s/roms", root, DEFAULT_PATH);
+      sprintf (fatdir, "%s%s/roms/", root, DEFAULT_PATH);
 
       /* if directory doesn't exist, use root as default */
       DIR_ITER *dir = diropen(fatdir);
