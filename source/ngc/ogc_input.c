@@ -77,9 +77,9 @@ static int held_cnt = 0;
 
 static u32 wpad_dirmap[3][4] =
 {
-  {WPAD_BUTTON_RIGHT, WPAD_BUTTON_LEFT, WPAD_BUTTON_UP, WPAD_BUTTON_DOWN},                                // WIIMOTE only
-  {WPAD_BUTTON_UP, WPAD_BUTTON_DOWN, WPAD_BUTTON_LEFT, WPAD_BUTTON_RIGHT},                                // WIIMOTE + NUNCHUK
-  {WPAD_CLASSIC_BUTTON_UP, WPAD_CLASSIC_BUTTON_DOWN, WPAD_CLASSIC_BUTTON_LEFT, WPAD_CLASSIC_BUTTON_RIGHT} // CLASSIC
+  {WPAD_BUTTON_RIGHT, WPAD_BUTTON_LEFT, WPAD_BUTTON_UP, WPAD_BUTTON_DOWN},                                /* WIIMOTE only */
+  {WPAD_BUTTON_UP, WPAD_BUTTON_DOWN, WPAD_BUTTON_LEFT, WPAD_BUTTON_RIGHT},                                /* WIIMOTE + NUNCHUK */
+  {WPAD_CLASSIC_BUTTON_UP, WPAD_CLASSIC_BUTTON_DOWN, WPAD_CLASSIC_BUTTON_LEFT, WPAD_CLASSIC_BUTTON_RIGHT} /* CLASSIC */
 };
 
 /* wiimote/expansion available buttons */
@@ -581,7 +581,7 @@ void ogc_input__init(void)
 
 #ifdef HW_RVL
   WPAD_Init();
-	WPAD_SetIdleTimeout(60);
+  WPAD_SetIdleTimeout(60);
   WPAD_SetDataFormat(WPAD_CHAN_ALL,WPAD_FMT_BTNS_ACC_IR);
   WPAD_SetVRes(WPAD_CHAN_ALL,640,480);
 #endif
@@ -763,7 +763,7 @@ u16 ogc_input__getMenuButtons(void)
   s8 y  = PAD_StickY(0);
   if (x > 70) p |= PAD_BUTTON_RIGHT;
   else if (x < -70) p |= PAD_BUTTON_LEFT;
-	if (y > 60) p |= PAD_BUTTON_UP;
+  if (y > 60) p |= PAD_BUTTON_UP;
   else if (y < -60) p |= PAD_BUTTON_DOWN;
 
 #ifdef HW_RVL
@@ -853,7 +853,7 @@ u16 ogc_input__getMenuButtons(void)
   if (q & WPAD_CLASSIC_BUTTON_B)      p |= PAD_BUTTON_B;
   if (q & WPAD_CLASSIC_BUTTON_HOME)   p |= PAD_TRIGGER_Z;
 
- #endif
+#endif
 
   return p;
 }

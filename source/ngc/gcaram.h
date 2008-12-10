@@ -7,8 +7,11 @@
  * Good to know :)
  */
 
-extern void StartARAM ();
-void ShadowROM ();
-void ARAMFetch (char *src, char *dst, int len);
-void ARAMPut (char *src, char *dst, int len);
+#ifndef _ARAM_H
+#define _ARAM_H
 
+extern void StartARAM ();
+extern void ARAMFetch (char *src, char *dst, int len);
+extern void ARAMPut (char *src, char *dst, int len);
+
+#endif

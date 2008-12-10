@@ -25,48 +25,48 @@
 #include "shared.h"
 
 /*** ROM Information ***/
-#define ROMCONSOLE 		256
-#define ROMCOPYRIGHT 	272
-#define ROMDOMESTIC		288
-#define ROMWORLD		336
-#define ROMTYPE 		384
-#define ROMPRODUCT		386
-#define ROMCHECKSUM		398
-#define ROMIOSUPPORT	400
-#define ROMROMSTART		416
-#define ROMROMEND		420
-#define ROMRAMINFO		424
-#define ROMRAMSTART		436
-#define ROMRAMEND		440
-#define ROMMODEMINFO	444
-#define ROMMEMO         456
-#define ROMCOUNTRY		496
+#define ROMCONSOLE    256
+#define ROMCOPYRIGHT  272
+#define ROMDOMESTIC   288
+#define ROMWORLD      336
+#define ROMTYPE       384
+#define ROMPRODUCT    386
+#define ROMCHECKSUM   398
+#define ROMIOSUPPORT  400
+#define ROMROMSTART   416
+#define ROMROMEND     420
+#define ROMRAMINFO    424
+#define ROMRAMSTART   436
+#define ROMRAMEND     440
+#define ROMMODEMINFO  444
+#define ROMMEMO       456
+#define ROMCOUNTRY    496
 
-#define P3BUTTONS 1
-#define P6BUTTONS 2
-#define PKEYBOARD 4
-#define PPRINTER  8
-#define PBALL     16
-#define PFLOPPY   32
-#define PACTIVATOR 64
+#define P3BUTTONS   1
+#define P6BUTTONS   2
+#define PKEYBOARD   4
+#define PPRINTER    8
+#define PBALL       16
+#define PFLOPPY     32
+#define PACTIVATOR  64
 #define PTEAMPLAYER 128
 #define PMSYSTEMPAD 256
 #define PSERIAL     512
-#define PTABLET    1024
-#define PPADDLE    2048
-#define PCDROM     4096
-#define PMOUSE     8192
+#define PTABLET     1024
+#define PPADDLE     2048
+#define PCDROM      4096
+#define PMOUSE      8192
 
 int peripherals;
 uint16 realchecksum;
 ROMINFO rominfo;
 
- /***************************************************************************
+/***************************************************************************
   * Genesis ROM Manufacturers
   *
   * Based on the document provided at
   * http://www.zophar.net/tech/files/Genesis_ROM_Format.txt
-  ***************************************************************************/
+  **************************************************************************/
 COMPANYINFO companyinfo[MAXCOMPANY] = {
   {"ACLD", "Ballistic"},
   {"RSI", "Razorsoft"},
@@ -186,35 +186,35 @@ uint16 GetRealChecksum (uint8 *rom, int length)
  ****************************************************************************/
 int getcompany ()
 {
-	char *s;
-	int i;
-	char company[10];
+  char *s;
+  int i;
+  char company[10];
 
-	for (i = 3; i < 8; i++) company[i - 3] = rominfo.copyright[i];
-	company[5] = 0;
+  for (i = 3; i < 8; i++) company[i - 3] = rominfo.copyright[i];
+  company[5] = 0;
 
-	/** OK, first look for a hyphen
-	 *  Capcom use T-12 for example
-	 */
-	s = strstr (company, "-");
-	if (s != NULL)
-	{
-		s++;
-		strcpy (company, s);
-	}
+  /** OK, first look for a hyphen
+   *  Capcom use T-12 for example
+   */
+  s = strstr (company, "-");
+  if (s != NULL)
+  {
+    s++;
+    strcpy (company, s);
+  }
 
-	/** Strip any trailing spaces **/
-	for (i = strlen (company) - 1; i >= 0; i--)
+  /** Strip any trailing spaces **/
+  for (i = strlen (company) - 1; i >= 0; i--)
   if (company[i] == 32) company[i] = 0;
 
-	if (strlen (company) == 0) return MAXCOMPANY - 1;
+  if (strlen (company) == 0) return MAXCOMPANY - 1;
 
-	for (i = 0; i < MAXCOMPANY - 1; i++)
-	{
-		if (!(strncmp (company, companyinfo[i].companyid, strlen (company)))) return i;
-	}
+  for (i = 0; i < MAXCOMPANY - 1; i++)
+  {
+    if (!(strncmp (company, companyinfo[i].companyid, strlen (company)))) return i;
+  }
 
-	return MAXCOMPANY - 1;
+  return MAXCOMPANY - 1;
 }
 
 
@@ -236,11 +236,11 @@ void getrominfo (char *romheader)
   j=1;
   for (i=1; i<48; i++)
   {
-	  if ((rominfo.domestic[j-1] != 32) || (romheader[ROMDOMESTIC + i] != 32))
-	  {
-		  rominfo.domestic[j] = romheader[ROMDOMESTIC + i];
-		  j++;
-	  }
+    if ((rominfo.domestic[j-1] != 32) || (romheader[ROMDOMESTIC + i] != 32))
+    {
+      rominfo.domestic[j] = romheader[ROMDOMESTIC + i];
+      j++;
+    }
   }
   rominfo.domestic[j] = 0;
 
@@ -248,11 +248,11 @@ void getrominfo (char *romheader)
   j=1;
   for (i=1; i<48; i++)
   {
-	  if ((rominfo.international[j-1] != 32) || (romheader[ROMWORLD + i] != 32))
-	  {
-		  rominfo.international[j] = romheader[ROMWORLD + i];
-		  j++;
-	  }
+    if ((rominfo.international[j-1] != 32) || (romheader[ROMWORLD + i] != 32))
+    {
+      rominfo.international[j] = romheader[ROMWORLD + i];
+      j++;
+    }
   }
   rominfo.international[j] = 0;
 
@@ -277,8 +277,8 @@ void getrominfo (char *romheader)
   peripherals = 0;
 
   for (i = 0; i < 14; i++)
-	for (j=0; j < 14; j++)
-	if (rominfo.io_support[i] == peripheralinfo[j].pID[0]) peripherals |= (1 << j);
+  for (j=0; j < 14; j++)
+  if (rominfo.io_support[i] == peripheralinfo[j].pID[0]) peripherals |= (1 << j);
 
   for (i = 0; i < 8; i++)
   {
@@ -292,63 +292,63 @@ void getrominfo (char *romheader)
 /* 05/05/2006: new region detection routine (taken from GENS sourcecode) */
 void set_region ()
 {
-	/* country codes used to differentiate region */
-	/* 0001 = japan ntsc (1) */
-	/* 0010 = japan  pal (2) */
-	/* 0100 = usa        (4) */
-	/* 1000 = europe     (8) */
+  /* country codes used to differentiate region */
+  /* 0001 = japan ntsc (1) */
+  /* 0010 = japan  pal (2) */
+  /* 0100 = usa        (4) */
+  /* 1000 = europe     (8) */
 
-	int country = 0;
-	int i = 0;
-	char c;
+  int country = 0;
+  int i = 0;
+  char c;
 
-	/* reading header to find the country */
-	if (!strnicmp(rominfo.country, "eur", 3)) country |= 8;
-	else if (!strnicmp(rominfo.country, "usa", 3)) country |= 4;
-	else if (!strnicmp(rominfo.country, "jap", 3)) country |= 1;
+  /* reading header to find the country */
+  if (!strnicmp(rominfo.country, "eur", 3)) country |= 8;
+  else if (!strnicmp(rominfo.country, "usa", 3)) country |= 4;
+  else if (!strnicmp(rominfo.country, "jap", 3)) country |= 1;
 
-	else for(i = 0; i < 4; i++)
-	{
-		c = toupper((int)rominfo.country[i]);
-		if (c == 'U') country |= 4;
-		else if (c == 'J') country |= 1;
-		else if (c == 'E') country |= 8;
-		else if (c < 16) country |= c;
-		else if ((c >= '0') && (c <= '9')) country |= c - '0';
-		else if ((c >= 'A') && (c <= 'F')) country |= c - 'A' + 10;
-	}
+  else for(i = 0; i < 4; i++)
+  {
+    c = toupper((int)rominfo.country[i]);
+    if (c == 'U') country |= 4;
+    else if (c == 'J') country |= 1;
+    else if (c == 'E') country |= 8;
+    else if (c < 16) country |= c;
+    else if ((c >= '0') && (c <= '9')) country |= c - '0';
+    else if ((c >= 'A') && (c <= 'F')) country |= c - 'A' + 10;
+  }
 
-	/* automatic detection */
-	/* setting region */
-	/* this is used by IO register */
-	if (country & 4) region_code = REGION_USA;
-	else if (country & 1) region_code = REGION_JAPAN_NTSC;
-	else if (country & 8) region_code = REGION_EUROPE;
-	else if (country & 2) region_code = REGION_JAPAN_PAL;
-	else region_code = REGION_USA;
+  /* automatic detection */
+  /* setting region */
+  /* this is used by IO register */
+  if (country & 4) region_code = REGION_USA;
+  else if (country & 1) region_code = REGION_JAPAN_NTSC;
+  else if (country & 8) region_code = REGION_EUROPE;
+  else if (country & 2) region_code = REGION_JAPAN_PAL;
+  else region_code = REGION_USA;
 
-	/* some games need specific REGION setting */
+  /* some games need specific REGION setting */
   if (((strstr(rominfo.product,"T-45033") != NULL) && (rominfo.checksum == 0x0F81)) || /* Alisia Dragon (E) */
-	     (strstr(rominfo.product,"T-69046-50") != NULL)) /* On Dal Jang Goon (Korea) */
-	{
-		/* need PAL settings */
-		region_code = REGION_EUROPE;
-	}
-	else if ((realchecksum == 0x532e) && (strstr(rominfo.product,"1011-00") != NULL)) 
-	{
-		/* On Dal Jang Goon (Korea) needs JAP region code */
-		region_code = REGION_JAPAN_NTSC;
-	}
+       (strstr(rominfo.product,"T-69046-50") != NULL)) /* On Dal Jang Goon (Korea) */
+  {
+    /* need PAL settings */
+    region_code = REGION_EUROPE;
+  }
+  else if ((realchecksum == 0x532e) && (strstr(rominfo.product,"1011-00") != NULL)) 
+  {
+    /* On Dal Jang Goon (Korea) needs JAP region code */
+    region_code = REGION_JAPAN_NTSC;
+  }
 
-	/* Force region setting */
-	if (config.region_detect == 1) region_code = REGION_USA;
-	else if (config.region_detect == 2) region_code = REGION_EUROPE;
-	else if (config.region_detect == 3) region_code = REGION_JAPAN_NTSC;
-	else if (config.region_detect == 4) region_code = REGION_JAPAN_PAL;
+  /* Force region setting */
+  if (config.region_detect == 1) region_code = REGION_USA;
+  else if (config.region_detect == 2) region_code = REGION_EUROPE;
+  else if (config.region_detect == 3) region_code = REGION_JAPAN_NTSC;
+  else if (config.region_detect == 4) region_code = REGION_JAPAN_PAL;
 
-	/* set cpu/vdp speed: PAL or NTSC */
-	if ((region_code == REGION_EUROPE) || (region_code == REGION_JAPAN_PAL)) vdp_pal = 1;
-	else vdp_pal = 0;
+  /* set cpu/vdp speed: PAL or NTSC */
+  if ((region_code == REGION_EUROPE) || (region_code == REGION_JAPAN_PAL)) vdp_pal = 1;
+  else vdp_pal = 0;
 }
 
 /* SMD (interleaved) rom support */
@@ -370,64 +370,64 @@ int load_rom(char *filename)
   int i, size, offset = 0;
  
 #ifdef NGC
-	size = genromsize;
+  size = genromsize;
 #else
-	uint8 *ptr;
-	ptr = load_archive(filename, &size);
+  uint8 *ptr;
+  ptr = load_archive(filename, &size);
   if(!ptr) return (0);
   memcpy(cart_rom, ptr + offset, size);
   free(ptr);
 #endif
 
-	/* detect interleaved roms (.smd format) */
-	if (strncmp((char *)(cart_rom + 0x100),"SEGA", 4) && ((size / 512) & 1))
-	{
-		size -= 512;
-		offset += 512;
+  /* detect interleaved roms (.smd format) */
+  if (strncmp((char *)(cart_rom + 0x100),"SEGA", 4) && ((size / 512) & 1))
+  {
+    size -= 512;
+    offset += 512;
 
-		for (i = 0; i < (size / 0x4000); i += 1)
-		{
-			deinterleave_block (cart_rom + offset + (i * 0x4000));
-		}
+    for (i = 0; i < (size / 0x4000); i += 1)
+    {
+      deinterleave_block (cart_rom + offset + (i * 0x4000));
+    }
 
-	    memcpy(cart_rom, cart_rom + offset, size);
-	}
+      memcpy(cart_rom, cart_rom + offset, size);
+  }
 
-	/* max. 10 MBytes supported */
-	if (size > 0xA00000) size = 0xA00000;
-	genromsize = size;
-	
-	/* clear unused ROM space */
-	if (size < 0xA00000) memset (cart_rom + size, 0x00, 0xA00000 - size);
+  /* max. 10 MBytes supported */
+  if (size > 0xA00000) size = 0xA00000;
+  genromsize = size;
+  
+  /* clear unused ROM space */
+  if (size < 0xA00000) memset (cart_rom + size, 0x00, 0xA00000 - size);
 
-	getrominfo((char *)cart_rom);	/* get infos from ROM header */
-	set_region();			/* set game region (PAL/NTSC, JAP/USA/EUR) */
+  getrominfo((char *)cart_rom);  /* get infos from ROM header */
+  set_region();      /* set game region (PAL/NTSC, JAP/USA/EUR) */
    
 #ifdef LSB_FIRST
-	/* Byteswap ROM */
-	uint8 temp;
-	for(i = 0; i < genromsize; i += 2)
-	{
-		temp = cart_rom[i];
-		cart_rom[i] = cart_rom[i+1];
-		cart_rom[i+1] = temp;
-	}
+  /* Byteswap ROM */
+  uint8 temp;
+  for(i = 0; i < genromsize; i += 2)
+  {
+    temp = cart_rom[i];
+    cart_rom[i] = cart_rom[i+1];
+    cart_rom[i+1] = temp;
+  }
 #endif
 
-	/* byteswapped RADICA dumps (from Haze) */
-	if (((strstr(rominfo.product,"-K0101") != NULL) && (rominfo.checksum == 0xf424)) ||
-	    ((strstr(rominfo.product,"-K0109") != NULL) && (rominfo.checksum == 0x4f10)))
-	{
-		uint8 temp;
-		for(i = 0; i < genromsize; i += 2)
-		{
-			temp = cart_rom[i];
-			cart_rom[i] = cart_rom[i+1];
-			cart_rom[i+1] = temp;
-		}
-	}
+  /* byteswapped RADICA dumps (from Haze) */
+  if (((strstr(rominfo.product,"-K0101") != NULL) && (rominfo.checksum == 0xf424)) ||
+      ((strstr(rominfo.product,"-K0109") != NULL) && (rominfo.checksum == 0x4f10)))
+  {
+    uint8 temp;
+    for(i = 0; i < genromsize; i += 2)
+    {
+      temp = cart_rom[i];
+      cart_rom[i] = cart_rom[i+1];
+      cart_rom[i+1] = temp;
+    }
+  }
 
-	/* console hardware */
+  /* console hardware */
   if (strstr(rominfo.consoletype, "SEGA PICO") != NULL) system_hw = SYSTEM_PICO;
   else if (strstr(rominfo.consoletype, "SEGA MEGADRIVE") != NULL) system_hw = SYSTEM_MEGADRIVE;
   else system_hw = SYSTEM_GENESIS;

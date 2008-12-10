@@ -28,12 +28,12 @@ uint8 region_code = REGION_USA;
 
 /*****************************************************************************
  * I/O chip functions                                                        *
- *																			                                     *
+ *                                                                           *
  *****************************************************************************/
 struct port_t
 {
-  void (*data_w)(unsigned int data);
-  unsigned int (*data_r)(void);
+  void (*data_w)(uint32 data);
+  uint32 (*data_r)(void);
 } port[3];
 
 void io_reset(void)
@@ -41,12 +41,12 @@ void io_reset(void)
   /* I/O register default settings */
   uint8 io_def[0x10] =
   {
-	  0xA0,
-	  0x7F, 0x7F, 0x7F,
-	  0x00, 0x00, 0x00,
-	  0xFF, 0x00, 0x00,
-	  0xFF, 0x00, 0x00,
-	  0xFB, 0x00, 0x00,
+    0xA0,
+    0x7F, 0x7F, 0x7F,
+    0x00, 0x00, 0x00,
+    0xFF, 0x00, 0x00,
+    0xFF, 0x00, 0x00,
+    0xFB, 0x00, 0x00,
   };
 
   /* Initialize I/O registers */
@@ -66,20 +66,20 @@ void io_reset(void)
       break;
 
     case SYSTEM_WAYPLAY:
-			port[0].data_w = wayplay_1_write;  
-			port[0].data_r = wayplay_1_read;
-			break;
+      port[0].data_w = wayplay_1_write;  
+      port[0].data_r = wayplay_1_read;
+      break;
 
     case SYSTEM_TEAMPLAYER:
-			port[0].data_w = teamplayer_1_write;  
-			port[0].data_r = teamplayer_1_read;
-			break;
+      port[0].data_w = teamplayer_1_write;  
+      port[0].data_r = teamplayer_1_read;
+      break;
 
-		default:
+    default:
       port[0].data_w = NULL;
       port[0].data_r = NULL;
       break;
-	}
+  }
 
   switch (input.system[1])
   {
@@ -104,20 +104,20 @@ void io_reset(void)
       break;
 
     case SYSTEM_WAYPLAY:
-			port[1].data_w = wayplay_2_write;  
-			port[1].data_r = wayplay_2_read;
-			break;
+      port[1].data_w = wayplay_2_write;  
+      port[1].data_r = wayplay_2_read;
+      break;
 
     case SYSTEM_TEAMPLAYER:
-			port[1].data_w = teamplayer_2_write;  
-			port[1].data_r = teamplayer_2_read;
-			break;
+      port[1].data_w = teamplayer_2_write;  
+      port[1].data_r = teamplayer_2_read;
+      break;
 
-		default:
+    default:
       port[1].data_w = NULL;
       port[1].data_r = NULL;
       break;
-	}
+  }
 
   /* External Port (unconnected) */
   port[2].data_w = NULL;
@@ -127,7 +127,7 @@ void io_reset(void)
   input_reset();
 }
 
-void io_write(unsigned int offset, unsigned int value)
+void io_write(uint32 offset, uint32 value)
 {
   switch (offset)
   {
@@ -138,7 +138,7 @@ void io_write(unsigned int offset, unsigned int value)
       if(port[offset-1].data_w) port[offset-1].data_w(value);
       return;
 
-    case 0x05:			/* Port B Ctrl */
+    case 0x05:      /* Port B Ctrl */
       if (((value & 0x7F) == 0x7F) &&
         ((input.system[0] == SYSTEM_TEAMPLAYER) ||
          (input.system[1] == SYSTEM_TEAMPLAYER)))
@@ -153,47 +153,47 @@ void io_write(unsigned int offset, unsigned int value)
         input_reset();
       }
 
-    case 0x04:			/* Port A Ctrl */
-    case 0x06:			/* Port C Ctrl */
+    case 0x04:      /* Port A Ctrl */
+    case 0x06:      /* Port C Ctrl */
       io_reg[offset] = value & 0xFF;
       io_reg[offset-3] = ((io_reg[offset-3] & 0x80) | (io_reg[offset-3] & io_reg[offset]));
       return;
 
-    case 0x07:			/* Port A TxData */
-    case 0x0A:			/* Port B TxData */
-    case 0x0D:			/* Port C TxData */
+    case 0x07:      /* Port A TxData */
+    case 0x0A:      /* Port B TxData */
+    case 0x0D:      /* Port C TxData */
       io_reg[offset] = value;
       return;
 
-    case 0x09:			/* Port A S-Ctrl */
-    case 0x0C:			/* Port B S-Ctrl */
-    case 0x0F:			/* Port C S-Ctrl */
+    case 0x09:      /* Port A S-Ctrl */
+    case 0x0C:      /* Port B S-Ctrl */
+    case 0x0F:      /* Port C S-Ctrl */
       io_reg[offset] = (value & 0xF8);
       return;
   }
 }
-  
-unsigned int io_read(unsigned int offset)
+
+uint32 io_read(uint32 offset)
 {
   switch(offset)
   {
     case 0x00: /* Version register */
-		{
-			uint8 has_scd = 0x20; /* No Sega CD unit attached */
-			uint8 gen_ver = (config.bios_enabled == 3) ? 0x01 : 0x00; /* hardware version */
+    {
+      uint8 has_scd = 0x20; /* No Sega CD unit attached */
+      uint8 gen_ver = (config.bios_enabled == 3) ? 0x01 : 0x00; /* hardware version */
       return (region_code | has_scd | gen_ver);
-		}
+    }
 
     case 0x01: /* Port A Data */
     case 0x02: /* Port B Data */
-		case 0x03: /* Port C Data */
-		{
-			uint8 input = 0x7F;   /* default input state */
+    case 0x03: /* Port C Data */
+    {
+      uint8 input = 0x7F;   /* default input state */
       if(port[offset-1].data_r) input = port[offset-1].data_r();
-			return (io_reg[offset] | ((~io_reg[offset+3]) & input));
-		}
+      return (io_reg[offset] | ((~io_reg[offset+3]) & input));
+    }
 
-		default:
-			return (io_reg[offset]);
-	}
+    default:
+      return (io_reg[offset]);
+  }
 }

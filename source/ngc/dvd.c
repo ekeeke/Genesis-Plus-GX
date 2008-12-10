@@ -1,28 +1,17 @@
 /****************************************************************************
  * Nintendo Gamecube DVD Reading Library
  *
- * This is NOT a complete DVD library, in that it works for reading 
- * ISO9660 discs only.
+ * Low-Level DVD access
  *
- * If you need softmod drivecodes etc, look elsewhere.
- * There are known issues with libogc dvd handling, so these work
- * outside of it ,if you will.
- *
- * This is ideal for using with a gc-linux self booting DVD only.
- * Go http://www.gc-linux.org for further information and the tools
- * for your platform.
- *
- * To keep libOGC stable, make sure you call DVD_Init before using
- * these functions.
  ***************************************************************************/
 #include "shared.h"
+
 #ifdef HW_RVL
 #include "di/di.h"
 #endif
 
-
 #ifndef HW_RVL
-static u64 DvdMaxOffset = 0x57057C00;                 /* 1.4 GB max. */
+static u64 DvdMaxOffset = 0x57057C00;                 /* 1.4 GB max. by default */
 static vu32* const dvd = (u32*)0xCC006000;            /* DVD I/O Address base */
 static u8 *inquiry=(unsigned char *)0x80000004;       /* pointer to drive ID */
 #else
@@ -30,7 +19,6 @@ static u64 DvdMaxOffset = 0x118244F00LL;              /* 4.7 GB max. */
 #endif
 
 static u8 DVDreadbuffer[2048] ATTRIBUTE_ALIGN (32);   /* data buffer for all DVD operations */
-
 
 
 /***************************************************************************
@@ -85,19 +73,19 @@ u32 dvd_read (void *dst, u32 len, u64 offset)
 void dvd_motor_off( )
 {
 #ifndef HW_RVL
-	dvd[0] = 0x2e;
-	dvd[1] = 0;
-	dvd[2] = 0xe3000000;
-	dvd[3] = 0;
-	dvd[4] = 0;
-	dvd[5] = 0;
-	dvd[6] = 0;
-	dvd[7] = 1; // Do immediate
-	while (dvd[7] & 1);
+  dvd[0] = 0x2e;
+  dvd[1] = 0;
+  dvd[2] = 0xe3000000;
+  dvd[3] = 0;
+  dvd[4] = 0;
+  dvd[5] = 0;
+  dvd[6] = 0;
+  dvd[7] = 1; // Do immediate
+  while (dvd[7] & 1);
 
-	/*** PSO Stops blackscreen at reload ***/
-	dvd[0] = 0x14;
-	dvd[1] = 0;
+  /*** PSO Stops blackscreen at reload ***/
+  dvd[0] = 0x14;
+  dvd[1] = 0;
 
 #else
   DI_StopMotor();

@@ -9,8 +9,8 @@
 #include "dvd.h"
 #include "font.h"
 #include "unzip.h"
-#include <zlib.h>
 
+#include <zlib.h>
 
 /*
  * PKWare Zip Header - adopted into zip standard
@@ -24,7 +24,7 @@
  */
 typedef struct
 {
-  unsigned int zipid __attribute__ ((__packed__));	// 0x04034b50
+  unsigned int zipid __attribute__ ((__packed__));  // 0x04034b50
   unsigned short zipversion __attribute__ ((__packed__));
   unsigned short zipflags __attribute__ ((__packed__));
   unsigned short compressionMethod __attribute__ ((__packed__));
@@ -119,34 +119,34 @@ int UnZipDVD (unsigned char *outbuffer, u64 discoffset, int length)
   {
     zs.avail_in = zipchunk;
     zs.next_in = (Bytef *) & readbuffer[zipoffset];
-    
+
     /*** Now inflate until input buffer is exhausted ***/
     do
-	  {
-	    zs.avail_out = ZIPCHUNK;
-	    zs.next_out = (Bytef *) & out;
- 	    res = inflate (&zs, Z_NO_FLUSH);
+    {
+      zs.avail_out = ZIPCHUNK;
+      zs.next_out = (Bytef *) & out;
+       res = inflate (&zs, Z_NO_FLUSH);
 
-	    if (res == Z_MEM_ERROR)
-	    {
-	      inflateEnd (&zs);
-	      return 0;
-	    }
+      if (res == Z_MEM_ERROR)
+      {
+        inflateEnd (&zs);
+        return 0;
+      }
 
-	    have = ZIPCHUNK - zs.avail_out;
-	    if (have)
-	    {
+      have = ZIPCHUNK - zs.avail_out;
+      if (have)
+      {
         /*** Copy to normal block buffer ***/
-	      memcpy (&outbuffer[bufferoffset], &out, have);
-	      bufferoffset += have;
-	    }
+        memcpy (&outbuffer[bufferoffset], &out, have);
+        bufferoffset += have;
+      }
     }
     while (zs.avail_out == 0);
 
-	  /*** Readup the next 2k block ***/
+    /*** Readup the next 2k block ***/
     zipoffset = 0;
     zipchunk = ZIPCHUNK;
-	  
+    
     discoffset += 2048;
     dvd_read (&readbuffer, 2048, discoffset);
   }

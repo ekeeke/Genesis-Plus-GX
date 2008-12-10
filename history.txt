@@ -25,8 +25,9 @@ Genesis Plus for Gamecube
 - rewrote video engine: improved horizontal scaling (VI+GX), improved rendering speed (direct texture mapping)
 - removed embedded font, (re)enabled IPL font support: now should works for Qoob users too (thanks to emukiddid)
 - fixed "Reset" button behavior, now acts more like Genesis Reset button ;-)
-- minor bugfixes and menu tweaks
-- compiled with libogc 1.7.0 
+- patched libfat for faster SDCARD accesses (thanks to svpe)
+- various bugfixes and menu tweaks
+
 
 [NGC only]
 - added 480p support in menu
@@ -34,7 +35,8 @@ Genesis Plus for Gamecube
 [Wii only]
 - implemented fast scrolling in menu using Wiimote D-PAD
 - added "Power" button support
-- libogc 1.7.0 features (SDHC support , Wiimote shutdown button support)
+- added USB Storage support
+- *new* libogc 1.7.0 features: SDHC support, Wiimote shutdown button support
 
 
 

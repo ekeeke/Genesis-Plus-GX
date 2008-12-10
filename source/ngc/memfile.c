@@ -6,6 +6,7 @@
 #include "shared.h"
 #include "font.h"
 #include "saveicon.h"
+
 #ifndef HW_RVL
 #include "dvd.h"
 #endif
@@ -29,8 +30,8 @@ static card_stat CardStatus;
  */
 static u8 savebuffer[0x26000] ATTRIBUTE_ALIGN (32);
 
-int ManageSRAM (u8 direction, u8 device);
-int ManageState (u8 direction, u8 device);
+int ManageSRAM(u8 direction, u8 device);
+int ManageState(u8 direction, u8 device);
 
 /****************************************************************************
  * FILE autoload (SRAM/FreezeState or Config File)
@@ -39,7 +40,7 @@ int ManageState (u8 direction, u8 device);
  *****************************************************************************/
 void memfile_autoload()
 {
-	/* this should be transparent to the user */
+  /* this should be transparent to the user */
   SILENT = 1; 
 
   /* SRAM */
@@ -50,7 +51,7 @@ void memfile_autoload()
   if (config.freeze_auto != -1)
     ManageState(1,config.freeze_auto);
 
-	SILENT = 0;
+  SILENT = 0;
 }
 
 void memfile_autosave()
@@ -85,15 +86,17 @@ static int SD_ManageFile(char *filename, int direction, int filetype)
   int done = 0;
   int filesize;
 
-  if (!use_FAT) return 0;
+  if (!fat_enabled) return 0;
 
   /* first check if directory exist */
-  DIR_ITER *dir = diropen("/genplus/saves");
-  if (dir == NULL) mkdir("/genplus/saves",S_IRWXU);
+  sprintf (pathname, "%s/saves", DEFAULT_PATH);
+
+  DIR_ITER *dir = diropen(pathname);
+  if (dir == NULL) mkdir(pathname,S_IRWXU);
   else dirclose(dir);
 
   /* build complete SDCARD filename */
-  sprintf (pathname, "/genplus/saves/%s", filename);
+  sprintf (pathname, "%s/%s", pathname, filename);
 
   /* open file */
   FILE *fp = fopen(pathname, direction ? "rb" : "wb");
@@ -104,17 +107,17 @@ static int SD_ManageFile(char *filename, int direction, int filetype)
     return 0;
   }
 
-	switch (direction)
-	{
-		case 0: /* SAVING */
+  switch (direction)
+  {
+    case 0: /* SAVING */
 
-			if (filetype) /* SRAM */
-			{
-				memcpy(savebuffer, sram.sram, 0x10000);
-				sram.crc = crc32 (0, sram.sram, 0x10000);
+      if (filetype) /* SRAM */
+      {
+        memcpy(savebuffer, sram.sram, 0x10000);
+        sram.crc = crc32 (0, sram.sram, 0x10000);
         filesize = 0x10000;
-			}
-			else filesize = state_save(savebuffer); /* STATE */
+      }
+      else filesize = state_save(savebuffer); /* STATE */
 
       /* write buffer */
       done = fwrite(savebuffer, 1, filesize, fp);
@@ -129,9 +132,9 @@ static int SD_ManageFile(char *filename, int direction, int filetype)
       sprintf (filename, "Saved %d bytes successfully", done);
       WaitPrompt (filename);
       return 1;
-		
-		case 1: /* LOADING */
-	
+
+    case 1: /* LOADING */
+
       /* read size */
       fseek(fp , 0 , SEEK_END);
       filesize = ftell (fp);
@@ -147,20 +150,20 @@ static int SD_ManageFile(char *filename, int direction, int filetype)
       }
       fclose(fp);
 
-			if (filetype) /* SRAM */
-			{
-				memcpy(sram.sram, savebuffer, filesize);
-				sram.crc = crc32 (0, sram.sram, 0x10000);
-				system_reset ();
-			}
-			else state_load(savebuffer); /* STATE */
-            
-			sprintf (filename, "Loaded %d bytes successfully", done);
-			WaitPrompt (filename);
-			return 1;
-	}
-	
-	return 0; 
+      if (filetype) /* SRAM */
+      {
+        memcpy(sram.sram, savebuffer, filesize);
+        sram.crc = crc32 (0, sram.sram, 0x10000);
+        system_reset ();
+      }
+      else state_load(savebuffer); /* STATE */
+
+      sprintf (filename, "Loaded %d bytes successfully", done);
+      WaitPrompt (filename);
+      return 1;
+  }
+
+  return 0; 
 }
 
 /****************************************************************************
@@ -174,21 +177,21 @@ static int SD_ManageFile(char *filename, int direction, int filetype)
  *****************************************************************************/
 int MountTheCard (u8 slot)
 {
-	int tries = 0;
-	int CardError;
-	*(unsigned long *) (0xcc006800) |= 1 << 13; /*** Disable Encryption ***/
+  int tries = 0;
+  int CardError;
+  *(unsigned long *) (0xcc006800) |= 1 << 13; /*** Disable Encryption ***/
 #ifndef HW_RVL
-	uselessinquiry ();
+  uselessinquiry ();
 #endif
   while (tries < 10)
   {
     VIDEO_WaitVSync ();
-		CardError = CARD_Mount (slot, SysArea, NULL); /*** Don't need or want a callback ***/
-		if (CardError == 0) return 1;
-		else EXI_ProbeReset ();
-		tries++;
-	}
-	return 0;
+    CardError = CARD_Mount (slot, SysArea, NULL); /*** Don't need or want a callback ***/
+    if (CardError == 0) return 1;
+    else EXI_ProbeReset ();
+    tries++;
+  }
+  return 0;
 }
 
 /****************************************************************************
@@ -199,13 +202,13 @@ int MountTheCard (u8 slot)
  ****************************************************************************/
 int CardFileExists (char *filename, u8 slot)
 {
-	int CardError = CARD_FindFirst (slot, &CardDir, TRUE);
-	while (CardError != CARD_ERROR_NOFILE)
-	{
-		CardError = CARD_FindNext (&CardDir);
-		if (strcmp ((char *) CardDir.filename, filename) == 0) return 1;
-	}
-	return 0;
+  int CardError = CARD_FindFirst (slot, &CardDir, TRUE);
+  while (CardError != CARD_ERROR_NOFILE)
+  {
+    CardError = CARD_FindNext (&CardDir);
+    if (strcmp ((char *) CardDir.filename, filename) == 0) return 1;
+  }
+  return 0;
 }
 
 /****************************************************************************
@@ -221,185 +224,185 @@ int CardFileExists (char *filename, u8 slot)
  ****************************************************************************/
 int ManageSRAM (u8 direction, u8 device)
 {
-	char filename[128];
-	char action[80];
-	int CardError;
-	unsigned int SectorSize;
-	int blocks;
-	char comment[2][32] = { {"Genesis Plus 1.2a"}, {"SRAM Save"} };
+  char filename[128];
+  char action[80];
+  int CardError;
+  unsigned int SectorSize;
+  int blocks;
+  char comment[2][32] = { {"Genesis Plus 1.2a"}, {"SRAM Save"} };
   int outbytes = 0;
-	int sbo;
-	unsigned long inzipped,outzipped;
+  int sbo;
+  unsigned long inzipped,outzipped;
 
-	if (!genromsize) return 0;
+  if (!genromsize) return 0;
 
-	/* clean buffer */
+  /* clean buffer */
   memset(savebuffer, 0, 0x24000);
 
-	if (direction) ShowAction ("Loading SRAM ...");
-	else ShowAction ("Saving SRAM ...");
+  if (direction) ShowAction ("Loading SRAM ...");
+  else ShowAction ("Saving SRAM ...");
 
-	/* First, build a filename */
-	sprintf (filename, "MD-%04X.srm", realchecksum);
-	strcpy (comment[1], filename);
+  /* First, build a filename */
+  sprintf (filename, "MD-%04X.srm", realchecksum);
+  strcpy (comment[1], filename);
 
-	/* device is SDCARD, let's go */
-	if (device == 0) return SD_ManageFile(filename,direction,1);
-  
+  /* device is SDCARD, let's go */
+  if (device == 0) return SD_ManageFile(filename,direction,1);
+
   /* set MCARD slot nr. */
   u8 CARDSLOT = device - 1;
 
-	/* device is MCARD, we continue */
-	if (direction == 0) /*** Saving ***/
-	{
-		/*** Build the output buffer ***/
-		memcpy (&savebuffer, &icon, 2048);
-		memcpy (&savebuffer[2048], &comment[0], 64);
+  /* device is MCARD, we continue */
+  if (direction == 0) /*** Saving ***/
+  {
+    /*** Build the output buffer ***/
+    memcpy (&savebuffer, &icon, 2048);
+    memcpy (&savebuffer[2048], &comment[0], 64);
 
-		inzipped = 0x10000;
-		outzipped = 0x12000;
-		compress2 ((Bytef *) &savebuffer[2112+sizeof(outzipped)], &outzipped, (Bytef *) &sram.sram, inzipped, 9);
-		memcpy(&savebuffer[2112], &outzipped, sizeof(outzipped));
-	}
-	
-	outbytes = 2048 + 64 + outzipped + sizeof(outzipped);
+    inzipped = 0x10000;
+    outzipped = 0x12000;
+    compress2 ((Bytef *) &savebuffer[2112+sizeof(outzipped)], &outzipped, (Bytef *) &sram.sram, inzipped, 9);
+    memcpy(&savebuffer[2112], &outzipped, sizeof(outzipped));
+  }
 
-	/*** Initialise the CARD system ***/
-	memset (&SysArea, 0, CARD_WORKAREA);
-	CARD_Init ("GENP", "00");
+  outbytes = 2048 + 64 + outzipped + sizeof(outzipped);
 
-	/*** Attempt to mount the card ***/
-	CardError = MountTheCard (CARDSLOT);
+  /*** Initialise the CARD system ***/
+  memset (&SysArea, 0, CARD_WORKAREA);
+  CARD_Init ("GENP", "00");
 
-	if (CardError)
-	{
-		/*** Retrieve the sector size ***/
-		CardError = CARD_GetSectorSize (CARDSLOT, &SectorSize);
+  /*** Attempt to mount the card ***/
+  CardError = MountTheCard (CARDSLOT);
 
-		switch (direction)
-		{
-			case 0: /*** Saving ***/
-				/*** Determine number of blocks on this card ***/
-				blocks = (outbytes / SectorSize) * SectorSize;
-				if (outbytes % SectorSize)  blocks += SectorSize;
+  if (CardError)
+  {
+    /*** Retrieve the sector size ***/
+    CardError = CARD_GetSectorSize (CARDSLOT, &SectorSize);
 
-				/*** Check if a previous save exists ***/
-				if (CardFileExists (filename,CARDSLOT))
-				{
-					CardError = CARD_Open (CARDSLOT, filename, &CardFile);
-					if (CardError)
-					{
-						sprintf (action, "Error Open : %d", CardError);
-						WaitPrompt (action);
-						CARD_Unmount (CARDSLOT);
-						return 0;
-					}
+    switch (direction)
+    {
+      case 0: /*** Saving ***/
+        /*** Determine number of blocks on this card ***/
+        blocks = (outbytes / SectorSize) * SectorSize;
+        if (outbytes % SectorSize)  blocks += SectorSize;
 
-					int size = CardFile.len;
-					CARD_Close (&CardFile);
+        /*** Check if a previous save exists ***/
+        if (CardFileExists (filename,CARDSLOT))
+        {
+          CardError = CARD_Open (CARDSLOT, filename, &CardFile);
+          if (CardError)
+          {
+            sprintf (action, "Error Open : %d", CardError);
+            WaitPrompt (action);
+            CARD_Unmount (CARDSLOT);
+            return 0;
+          }
 
-					if (size < blocks)
-					{
-						/* new size is bigger: check if there is enough space left */
-					  CardError = CARD_Create (CARDSLOT, "TEMP", blocks-size, &CardFile);
-						if (CardError)
-						{
-							sprintf (action, "Error Update : %d", CardError);
-							WaitPrompt (action);
-							CARD_Unmount (CARDSLOT);
-							return 0;
-						}
-						CARD_Close (&CardFile);
-						CARD_Delete(CARDSLOT, "TEMP");
-					}
+          int size = CardFile.len;
+          CARD_Close (&CardFile);
 
-					/* always delete existing slot */
-					CARD_Delete(CARDSLOT, filename);
-				}                    
-				
-				/*** Create a new slot ***/
-				CardError = CARD_Create (CARDSLOT, filename, blocks, &CardFile);
-				if (CardError)
-				{
-					sprintf (action, "Error create : %d %d", CardError, CARDSLOT);
-					WaitPrompt (action);
-					CARD_Unmount (CARDSLOT);
-					return 0;
-				}
+          if (size < blocks)
+          {
+            /* new size is bigger: check if there is enough space left */
+            CardError = CARD_Create (CARDSLOT, "TEMP", blocks-size, &CardFile);
+            if (CardError)
+            {
+              sprintf (action, "Error Update : %d", CardError);
+              WaitPrompt (action);
+              CARD_Unmount (CARDSLOT);
+              return 0;
+            }
+            CARD_Close (&CardFile);
+            CARD_Delete(CARDSLOT, "TEMP");
+          }
 
-				/*** Continue and save ***/
-				CARD_GetStatus (CARDSLOT, CardFile.filenum, &CardStatus);
-				CardStatus.icon_addr = 0x0;
-				CardStatus.icon_fmt = 2;
-				CardStatus.icon_speed = 1;
-				CardStatus.comment_addr = 2048;
-				CARD_SetStatus (CARDSLOT, CardFile.filenum, &CardStatus);
+          /* always delete existing slot */
+          CARD_Delete(CARDSLOT, filename);
+        }
 
-				/*** And write the blocks out ***/
-				sbo = 0;
-				while (outbytes > 0)
-				{
-					CardError = CARD_Write (&CardFile, &savebuffer[sbo], SectorSize, sbo);
-					outbytes -= SectorSize;
-					sbo += SectorSize;
-				}
+        /*** Create a new slot ***/
+        CardError = CARD_Create (CARDSLOT, filename, blocks, &CardFile);
+        if (CardError)
+        {
+          sprintf (action, "Error create : %d %d", CardError, CARDSLOT);
+          WaitPrompt (action);
+          CARD_Unmount (CARDSLOT);
+          return 0;
+        }
 
-				CARD_Close (&CardFile);
-				CARD_Unmount (CARDSLOT);
-				sram.crc = crc32 (0, &sram.sram[0], 0x10000);
-				sprintf (action, "Saved %d bytes successfully", blocks);
-				WaitPrompt (action);
-				return 1;
+        /*** Continue and save ***/
+        CARD_GetStatus (CARDSLOT, CardFile.filenum, &CardStatus);
+        CardStatus.icon_addr = 0x0;
+        CardStatus.icon_fmt = 2;
+        CardStatus.icon_speed = 1;
+        CardStatus.comment_addr = 2048;
+        CARD_SetStatus (CARDSLOT, CardFile.filenum, &CardStatus);
 
-			default: /*** Loading ***/
-				if (!CardFileExists (filename,CARDSLOT))
-				{
-					WaitPrompt ("No SRAM File Found");
-					CARD_Unmount (CARDSLOT);
-					return 0;
-				}
+        /*** And write the blocks out ***/
+        sbo = 0;
+        while (outbytes > 0)
+        {
+          CardError = CARD_Write (&CardFile, &savebuffer[sbo], SectorSize, sbo);
+          outbytes -= SectorSize;
+          sbo += SectorSize;
+        }
 
-				memset (&CardFile, 0, sizeof (CardFile));
-				CardError = CARD_Open (CARDSLOT, filename, &CardFile);
-				if (CardError)
-				{
-					sprintf (action, "Error Open : %d", CardError);
-					WaitPrompt (action);
-					CARD_Unmount (CARDSLOT);
-					return 0;
-				}
+        CARD_Close (&CardFile);
+        CARD_Unmount (CARDSLOT);
+        sram.crc = crc32 (0, &sram.sram[0], 0x10000);
+        sprintf (action, "Saved %d bytes successfully", blocks);
+        WaitPrompt (action);
+        return 1;
 
-				blocks = CardFile.len;
-				if (blocks < SectorSize) blocks = SectorSize;
-				if (blocks % SectorSize) blocks++;
+      default: /*** Loading ***/
+        if (!CardFileExists (filename,CARDSLOT))
+        {
+          WaitPrompt ("No SRAM File Found");
+          CARD_Unmount (CARDSLOT);
+          return 0;
+        }
 
-				/*** Just read the file back in ***/
-				sbo = 0;
-				int size = blocks;
-				while (blocks > 0)
-				{
-					CARD_Read (&CardFile, &savebuffer[sbo], SectorSize, sbo);
-					sbo += SectorSize;
-					blocks -= SectorSize;
-				}
-				CARD_Close (&CardFile);
-				CARD_Unmount (CARDSLOT);
+        memset (&CardFile, 0, sizeof (CardFile));
+        CardError = CARD_Open (CARDSLOT, filename, &CardFile);
+        if (CardError)
+        {
+          sprintf (action, "Error Open : %d", CardError);
+          WaitPrompt (action);
+          CARD_Unmount (CARDSLOT);
+          return 0;
+        }
 
-				/* Copy to SRAM */
-				memcpy(&inzipped,&savebuffer[2112],sizeof(inzipped));
-				outzipped = 0x10000;
-				uncompress ((Bytef *) &sram.sram, &outzipped, (Bytef *) &savebuffer[2112+sizeof(inzipped)], inzipped);
-				sram.crc = crc32 (0, &sram.sram[0], 0x10000);
-				system_reset ();
+        blocks = CardFile.len;
+        if (blocks < SectorSize) blocks = SectorSize;
+        if (blocks % SectorSize) blocks++;
 
-				/*** Inform user ***/
-				sprintf (action, "Loaded %d bytes successfully", size);
-				WaitPrompt (action);
-				return 1;
-		}
-	}
-	else WaitPrompt ("Unable to mount memory card");
-	return 0; /*** Signal failure ***/
+        /*** Just read the file back in ***/
+        sbo = 0;
+        int size = blocks;
+        while (blocks > 0)
+        {
+          CARD_Read (&CardFile, &savebuffer[sbo], SectorSize, sbo);
+          sbo += SectorSize;
+          blocks -= SectorSize;
+        }
+        CARD_Close (&CardFile);
+        CARD_Unmount (CARDSLOT);
+
+        /* Copy to SRAM */
+        memcpy(&inzipped,&savebuffer[2112],sizeof(inzipped));
+        outzipped = 0x10000;
+        uncompress ((Bytef *) &sram.sram, &outzipped, (Bytef *) &savebuffer[2112+sizeof(inzipped)], inzipped);
+        sram.crc = crc32 (0, &sram.sram[0], 0x10000);
+        system_reset ();
+
+        /*** Inform user ***/
+        sprintf (action, "Loaded %d bytes successfully", size);
+        WaitPrompt (action);
+        return 1;
+    }
+  }
+  else WaitPrompt ("Unable to mount memory card");
+  return 0; /*** Signal failure ***/
 }
 
 /****************************************************************************
@@ -412,174 +415,174 @@ int ManageSRAM (u8 direction, u8 device)
  ****************************************************************************/
 int ManageState (u8 direction, u8 device)
 {
-	char filename[128];
-	char action[80];
-	int CardError;
-	unsigned int SectorSize;
-	int blocks;
-	char comment[2][32] = { {"Genesis Plus 1.2a [FRZ]"}, {"Freeze State"} };
-	int outbytes = 0;
-	int sbo;
-	int state_size = 0;
+  char filename[128];
+  char action[80];
+  int CardError;
+  unsigned int SectorSize;
+  int blocks;
+  char comment[2][32] = { {"Genesis Plus 1.2a [FRZ]"}, {"Freeze State"} };
+  int outbytes = 0;
+  int sbo;
+  int state_size = 0;
 
-	if (!genromsize) return 0;
+  if (!genromsize) return 0;
 
-	/* clean buffer */
-	memset(savebuffer, 0, 0x24000);
+  /* clean buffer */
+  memset(savebuffer, 0, 0x24000);
 
   if (direction) ShowAction ("Loading State ...");
-	else ShowAction ("Saving State ...");
+  else ShowAction ("Saving State ...");
 
-	/* First, build a filename */
-	sprintf (filename, "MD-%04X.gpz", realchecksum);
-	strcpy (comment[1], filename);
+  /* First, build a filename */
+  sprintf (filename, "MD-%04X.gpz", realchecksum);
+  strcpy (comment[1], filename);
 
-	/* device is SDCARD, let's go */
-	if (device == 0) return SD_ManageFile(filename,direction,0);
+  /* device is SDCARD, let's go */
+  if (device == 0) return SD_ManageFile(filename,direction,0);
   
   /* set MCARD slot nr. */
   u8 CARDSLOT = device - 1;
 
-	/* device is MCARD, we continue */
-	if (direction == 0) /* Saving */
-	{
-		/* Build the output buffer */
-		memcpy (&savebuffer, &icon, 2048);
-		memcpy (&savebuffer[2048], &comment[0], 64);
-		state_size = state_save(&savebuffer[2112]);
-	}
+  /* device is MCARD, we continue */
+  if (direction == 0) /* Saving */
+  {
+    /* Build the output buffer */
+    memcpy (&savebuffer, &icon, 2048);
+    memcpy (&savebuffer[2048], &comment[0], 64);
+    state_size = state_save(&savebuffer[2112]);
+  }
 
-	outbytes = 2048 + 64 + state_size;
+  outbytes = 2048 + 64 + state_size;
 
-	/*** Initialise the CARD system ***/
-	memset (&SysArea, 0, CARD_WORKAREA);
-	CARD_Init ("GENP", "00");
+  /*** Initialise the CARD system ***/
+  memset (&SysArea, 0, CARD_WORKAREA);
+  CARD_Init ("GENP", "00");
 
-	/*** Attempt to mount the card ***/
-	CardError = MountTheCard (CARDSLOT);
+  /*** Attempt to mount the card ***/
+  CardError = MountTheCard (CARDSLOT);
 
-	if (CardError)
-	{
-		/*** Retrieve the sector size ***/
-		CardError = CARD_GetSectorSize (CARDSLOT, &SectorSize);
+  if (CardError)
+  {
+    /*** Retrieve the sector size ***/
+    CardError = CARD_GetSectorSize (CARDSLOT, &SectorSize);
 
-		switch (direction)
-		{
-			case 0: /*** Saving ***/
-				/*** Determine number of blocks on this card ***/
-				blocks = (outbytes / SectorSize) * SectorSize;
-				if (outbytes % SectorSize) blocks += SectorSize;
+    switch (direction)
+    {
+      case 0: /*** Saving ***/
+        /*** Determine number of blocks on this card ***/
+        blocks = (outbytes / SectorSize) * SectorSize;
+        if (outbytes % SectorSize) blocks += SectorSize;
 
-				/*** Check if a previous save exists ***/
-				if (CardFileExists (filename, CARDSLOT))
-				{
-					CardError = CARD_Open (CARDSLOT, filename, &CardFile);
-					if (CardError)
-					{
-						sprintf (action, "Error Open : %d", CardError);
-						WaitPrompt (action);
-						CARD_Unmount (CARDSLOT);
-						return 0;
-					}
+        /*** Check if a previous save exists ***/
+        if (CardFileExists (filename, CARDSLOT))
+        {
+          CardError = CARD_Open (CARDSLOT, filename, &CardFile);
+          if (CardError)
+          {
+            sprintf (action, "Error Open : %d", CardError);
+            WaitPrompt (action);
+            CARD_Unmount (CARDSLOT);
+            return 0;
+          }
 
-					int size = CardFile.len;
-					CARD_Close (&CardFile);
+          int size = CardFile.len;
+          CARD_Close (&CardFile);
 
-					if (size < blocks)
-					{
-						/* new size is bigger: check if there is enough space left */
-					  CardError = CARD_Create (CARDSLOT, "TEMP", blocks-size, &CardFile);
-						if (CardError)
-						{
-							sprintf (action, "Error Update : %d", CardError);
-							WaitPrompt (action);
-							CARD_Unmount (CARDSLOT);
-							return 0;
-						}
-						CARD_Close (&CardFile);
-						CARD_Delete(CARDSLOT, "TEMP");
-					}
+          if (size < blocks)
+          {
+            /* new size is bigger: check if there is enough space left */
+            CardError = CARD_Create (CARDSLOT, "TEMP", blocks-size, &CardFile);
+            if (CardError)
+            {
+              sprintf (action, "Error Update : %d", CardError);
+              WaitPrompt (action);
+              CARD_Unmount (CARDSLOT);
+              return 0;
+            }
+            CARD_Close (&CardFile);
+            CARD_Delete(CARDSLOT, "TEMP");
+          }
 
-					/* always delete existing slot */
-					CARD_Delete(CARDSLOT, filename);
-				}                    
+          /* always delete existing slot */
+          CARD_Delete(CARDSLOT, filename);
+        }
 
-				/*** Create a new slot ***/
-				CardError = CARD_Create (CARDSLOT, filename, blocks, &CardFile);
-				if (CardError)
-				{
-					sprintf (action, "Error create : %d %d", CardError, CARDSLOT);
-					WaitPrompt (action);
-					CARD_Unmount (CARDSLOT);
-					return 0;
-				}
-				
-				/*** Continue and save ***/
-				CARD_GetStatus (CARDSLOT, CardFile.filenum, &CardStatus);
-				CardStatus.icon_addr = 0x0;
-				CardStatus.icon_fmt = 2;
-				CardStatus.icon_speed = 1;
-				CardStatus.comment_addr = 2048;
-				CARD_SetStatus (CARDSLOT, CardFile.filenum, &CardStatus);
+        /*** Create a new slot ***/
+        CardError = CARD_Create (CARDSLOT, filename, blocks, &CardFile);
+        if (CardError)
+        {
+          sprintf (action, "Error create : %d %d", CardError, CARDSLOT);
+          WaitPrompt (action);
+          CARD_Unmount (CARDSLOT);
+          return 0;
+        }
+        
+        /*** Continue and save ***/
+        CARD_GetStatus (CARDSLOT, CardFile.filenum, &CardStatus);
+        CardStatus.icon_addr = 0x0;
+        CardStatus.icon_fmt = 2;
+        CardStatus.icon_speed = 1;
+        CardStatus.comment_addr = 2048;
+        CARD_SetStatus (CARDSLOT, CardFile.filenum, &CardStatus);
 
-				/*** And write the blocks out ***/
-				sbo = 0;
-				while (outbytes > 0)
-				{
-					CardError = CARD_Write (&CardFile, &savebuffer[sbo], SectorSize, sbo);
-					outbytes -= SectorSize;
-					sbo += SectorSize;
-				}
+        /*** And write the blocks out ***/
+        sbo = 0;
+        while (outbytes > 0)
+        {
+          CardError = CARD_Write (&CardFile, &savebuffer[sbo], SectorSize, sbo);
+          outbytes -= SectorSize;
+          sbo += SectorSize;
+        }
 
-				CARD_Close (&CardFile);
-				CARD_Unmount (CARDSLOT);
-				sprintf (action, "Saved %d bytes successfully", blocks);
-				WaitPrompt (action);
-				return 1;
+        CARD_Close (&CardFile);
+        CARD_Unmount (CARDSLOT);
+        sprintf (action, "Saved %d bytes successfully", blocks);
+        WaitPrompt (action);
+        return 1;
 
-			default: /*** Loading ***/
-				if (!CardFileExists (filename, CARDSLOT))
-				{
-					WaitPrompt ("No Savestate Found");
-					CARD_Unmount (CARDSLOT);
-					return 0;
-				}
+      default: /*** Loading ***/
+        if (!CardFileExists (filename, CARDSLOT))
+        {
+          WaitPrompt ("No Savestate Found");
+          CARD_Unmount (CARDSLOT);
+          return 0;
+        }
 
-				memset (&CardFile, 0, sizeof (CardFile));
-				CardError = CARD_Open (CARDSLOT, filename, &CardFile);
-				if (CardError)
-				{
-					sprintf (action, "Error Open : %d", CardError);
-					WaitPrompt (action);
-					CARD_Unmount (CARDSLOT);
-					return 0;
-				}
+        memset (&CardFile, 0, sizeof (CardFile));
+        CardError = CARD_Open (CARDSLOT, filename, &CardFile);
+        if (CardError)
+        {
+          sprintf (action, "Error Open : %d", CardError);
+          WaitPrompt (action);
+          CARD_Unmount (CARDSLOT);
+          return 0;
+        }
 
-				blocks = CardFile.len;
-				if (blocks < SectorSize) blocks = SectorSize;
-				if (blocks % SectorSize) blocks++;
+        blocks = CardFile.len;
+        if (blocks < SectorSize) blocks = SectorSize;
+        if (blocks % SectorSize) blocks++;
 
-				/*** Just read the file back in ***/
-				sbo = 0;
-				int size = blocks;
-				while (blocks > 0)
-				{
-					CARD_Read (&CardFile, &savebuffer[sbo], SectorSize, sbo);
-					sbo += SectorSize;
-					blocks -= SectorSize;
-				}
-				CARD_Close (&CardFile);
-				CARD_Unmount (CARDSLOT);
+        /*** Just read the file back in ***/
+        sbo = 0;
+        int size = blocks;
+        while (blocks > 0)
+        {
+          CARD_Read (&CardFile, &savebuffer[sbo], SectorSize, sbo);
+          sbo += SectorSize;
+          blocks -= SectorSize;
+        }
+        CARD_Close (&CardFile);
+        CARD_Unmount (CARDSLOT);
 
-				/*** Load State ***/
-			    state_load(&savebuffer[2112]);
+        /*** Load State ***/
+          state_load(&savebuffer[2112]);
 
-				/*** Inform user ***/
-				sprintf (action, "Loaded %d bytes successfully", size);
-				WaitPrompt (action);
-				return 1;
-		}
-	}
-	else WaitPrompt ("Unable to mount memory card");
-	return 0; /*** Signal failure ***/
+        /*** Inform user ***/
+        sprintf (action, "Loaded %d bytes successfully", size);
+        WaitPrompt (action);
+        return 1;
+    }
+  }
+  else WaitPrompt ("Unable to mount memory card");
+  return 0; /*** Signal failure ***/
 }

@@ -28,6 +28,8 @@
 #include <di/di.h>
 #endif
 
+#include <fat.h>
+
 int Shutdown = 0;
 
 #ifdef HW_RVL
@@ -46,11 +48,14 @@ void Power_Off(void)
  ***************************************************************************/
 static void load_bios()
 {
+  char pathname[MAXPATHLEN];
+
   /* reset BIOS found flag */
   config.bios_enabled &= ~2;
 
   /* open file */
-  FILE *fp = fopen("/genplus/BIOS.bin", "rb");
+  sprintf (pathname, "%s/BIOS.bin", DEFAULT_PATH);
+  FILE *fp = fopen(pathname, "rb");
   if (fp == NULL) return;
 
   /* read file */
@@ -113,12 +118,12 @@ void reloadrom ()
  ***************************************************************************/
 int FramesPerSecond = 0;
 int frameticker = 0;
-bool use_FAT = 0;
+bool fat_enabled = 0;
 
 int main (int argc, char *argv[])
 {
 #ifdef HW_RVL
-	/* initialize Wii DVD interface first */
+  /* initialize Wii DVD interface first */
   DI_Close();
   DI_Init();
 #endif
@@ -127,7 +132,7 @@ int main (int argc, char *argv[])
   long long now, prev;
   int RenderedFrameCount = 0;
   int FrameCount = 0;
-  
+
   /* Initialize OGC subsystems */
   ogc_video__init();
   ogc_input__init();
@@ -147,7 +152,7 @@ int main (int argc, char *argv[])
   /* Initialize FAT Interface */
   if (fatInitDefault() == true)
   {
-    use_FAT = 1;
+    fat_enabled = 1;
   }
 
   /* Default Config */
@@ -172,11 +177,11 @@ int main (int argc, char *argv[])
   legal();
   MainMenu();
   ConfigRequested = 0;
-  
+
   /* Initialize Frame timings */
   frameticker = 0;
   prev = gettime();
-  
+
   /* Emulation Loop */
   while (1)
   {
@@ -202,7 +207,7 @@ int main (int argc, char *argv[])
         system_frame(0);
         RenderedFrameCount++;
       }
-    }    
+    }
     else
     {
       /* use VSync */
@@ -223,11 +228,11 @@ int main (int argc, char *argv[])
       
       frameticker--;
     }
-    
+
     /* update video & audio */
     ogc_video__update();
     ogc_audio__update();
-    
+
     /* Check rendered frames (FPS) */
     FrameCount++;
     if (FrameCount == vdp_rate)
@@ -236,17 +241,17 @@ int main (int argc, char *argv[])
       RenderedFrameCount = 0;
       FrameCount = 0;
     }
-    
+
     /* Check for Menu request */
     if (ConfigRequested)
     {
       /* reset AUDIO */
       ogc_audio__reset();
-  
+
       /* go to menu */
       MainMenu ();
       ConfigRequested = 0;
-      
+
       /* reset frame timings */
       frameticker = 0;
       prev = gettime();

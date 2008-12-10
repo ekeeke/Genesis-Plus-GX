@@ -24,7 +24,8 @@
 #include "shared.h"
 #include "dvd.h"
 #include "font.h"
-#include "history.h"
+#include "fileio_dvd.h"
+#include "fileio_fat.h"
 
 #ifdef HW_RVL
 #include <wiiuse/wpad.h>
@@ -131,82 +132,82 @@ int domenu (char items[][25], int maxitems, u8 fastmove)
 extern struct ym2612__ YM2612;
 void soundmenu ()
 {
-	int ret;
-	int quit = 0;
-	int prevmenu = menu;
-	int count = 6;
-	char items[6][25];
+  int ret;
+  int quit = 0;
+  int prevmenu = menu;
+  int count = 6;
+  char items[6][25];
 
-	strcpy (menutitle, "Press B to return");
+  strcpy (menutitle, "Press B to return");
 
-	menu = 0;
-	while (quit == 0)
-	{
-		sprintf (items[0], "PSG Volume: %1.2f", config.psg_preamp);
-		sprintf (items[1], "FM Volume: %1.2f", config.fm_preamp);
-		sprintf (items[2], "Volume Boost: %dX", config.boost);
-		sprintf (items[3], "LowPass Filter: %s", config.filter ? " ON":"OFF");
-		if (config.hq_fm == 0) sprintf (items[4], "HQ YM2612: OFF");
+  menu = 0;
+  while (quit == 0)
+  {
+    sprintf (items[0], "PSG Volume: %1.2f", config.psg_preamp);
+    sprintf (items[1], "FM Volume: %1.2f", config.fm_preamp);
+    sprintf (items[2], "Volume Boost: %dX", config.boost);
+    sprintf (items[3], "LowPass Filter: %s", config.filter ? " ON":"OFF");
+    if (config.hq_fm == 0) sprintf (items[4], "HQ YM2612: OFF");
     else if ((config.hq_fm == 1) || config.fm_core) sprintf (items[4], "HQ YM2612: LINEAR");
     else sprintf (items[4], "HQ YM2612: SINC");
-		sprintf (items[5], "FM core: %s", config.fm_core ? "GENS" : "MAME");
+    sprintf (items[5], "FM core: %s", config.fm_core ? "GENS" : "MAME");
 
-		ret = domenu (&items[0], count, 1);
-		switch (ret)
-		{
-			case 0:
-			case -2:
-				if (ret<0) config.psg_preamp -= 0.01;
-				else config.psg_preamp += 0.01;
-				if (config.psg_preamp < 0.0) config.psg_preamp = 5.0;
-				if (config.psg_preamp > 5.0) config.psg_preamp = 0.0;
-				break;
+    ret = domenu (&items[0], count, 1);
+    switch (ret)
+    {
+      case 0:
+      case -2:
+        if (ret<0) config.psg_preamp -= 0.01;
+        else config.psg_preamp += 0.01;
+        if (config.psg_preamp < 0.0) config.psg_preamp = 5.0;
+        if (config.psg_preamp > 5.0) config.psg_preamp = 0.0;
+        break;
 
-			case 1:
-			case -3:
-				if (ret<0) config.fm_preamp -= 0.01;
-				else config.fm_preamp += 0.01;
-				if (config.fm_preamp < 0.0) config.fm_preamp = 5.0;
-				if (config.fm_preamp > 5.0) config.fm_preamp = 0.0;
-				break;
+      case 1:
+      case -3:
+        if (ret<0) config.fm_preamp -= 0.01;
+        else config.fm_preamp += 0.01;
+        if (config.fm_preamp < 0.0) config.fm_preamp = 5.0;
+        if (config.fm_preamp > 5.0) config.fm_preamp = 0.0;
+        break;
 
-			case 2:
-				config.boost ++;
-				if (config.boost > 4) config.boost = 0;
-				break;
-			
-			case 3:
-				config.filter ^= 1;
-				break;
+      case 2:
+        config.boost ++;
+        if (config.boost > 4) config.boost = 0;
+        break;
+      
+      case 3:
+        config.filter ^= 1;
+        break;
 
       case 4:
-				config.hq_fm ++;
+        config.hq_fm ++;
         if ((config.hq_fm>2)||(config.fm_core && (config.hq_fm>1))) config.hq_fm = 0;
         if (genromsize) 
-				{
-					audio_init(48000);
-					fm_restore();
-				}
-				break;
+        {
+          audio_init(48000);
+          fm_restore();
+        }
+        break;
 
-			case 5:
-				config.fm_core ^= 1;
-				config.psg_preamp = config.fm_core ? 2.5 : 1.5;
-				config.fm_preamp  = 1.0;
-				if (genromsize) 
-				{
-					if (!config.fm_core) memcpy(fm_reg,YM2612.REG,sizeof(fm_reg));
-					audio_init(48000);
-					fm_restore();
-				}
-				break;
+      case 5:
+        config.fm_core ^= 1;
+        config.psg_preamp = config.fm_core ? 2.5 : 1.5;
+        config.fm_preamp  = 1.0;
+        if (genromsize) 
+        {
+          if (!config.fm_core) memcpy(fm_reg,YM2612.REG,sizeof(fm_reg));
+          audio_init(48000);
+          fm_restore();
+        }
+        break;
 
       case -1:
-				quit = 1;
-				break;
-		}
-	}
-	menu = prevmenu;
+        quit = 1;
+        break;
+    }
+  }
+  menu = prevmenu;
 }
 
 /****************************************************************************
@@ -215,97 +216,97 @@ void soundmenu ()
  ****************************************************************************/
 void miscmenu ()
 {
-	int ret;
-	int quit = 0;
-	int prevmenu = menu;
-	int count = 6;
-	char items[6][25];
-	strcpy (menutitle, "Press B to return");
-	menu = 0;
-	
-	while (quit == 0)
-	{
-		if (config.region_detect == 0)	     sprintf (items[0], "Region: AUTO");
-		else if (config.region_detect == 1) sprintf (items[0], "Region:  USA");
-		else if (config.region_detect == 2) sprintf (items[0], "Region:  EUR");
-		else if (config.region_detect == 3) sprintf (items[0], "Region:  JAP");
-		sprintf (items[1], "Force DTACK: %s", config.force_dtack ? "Y" : "N");
-		if (config.bios_enabled & 1) sprintf (items[2], "Use BIOS: ON");
-		else sprintf (items[2], "Use BIOS: OFF");
-		sprintf (items[3], "SVP Cycles: %d", SVP_cycles);
-		if (config.sram_auto == 0) sprintf (items[4], "Auto SRAM: SDCARD");
-		else if (config.sram_auto == 1) sprintf (items[4], "Auto SRAM: MCARD A");
-		else if (config.sram_auto == 2) sprintf (items[4], "Auto SRAM: MCARD B");
-		else sprintf (items[4], "Auto SRAM: OFF");
-		if (config.freeze_auto == 0) sprintf (items[5], "Auto FREEZE: SDCARD");
-		else if (config.freeze_auto == 1) sprintf (items[5], "Auto FREEZE: MCARD A");
-		else if (config.freeze_auto == 2) sprintf (items[5], "Auto FREEZE: MCARD B");
-		else sprintf (items[5], "Auto FREEZE: OFF");
+  int ret;
+  int quit = 0;
+  int prevmenu = menu;
+  int count = 6;
+  char items[6][25];
+  strcpy (menutitle, "Press B to return");
+  menu = 0;
+  
+  while (quit == 0)
+  {
+    if (config.region_detect == 0)       sprintf (items[0], "Region: AUTO");
+    else if (config.region_detect == 1) sprintf (items[0], "Region:  USA");
+    else if (config.region_detect == 2) sprintf (items[0], "Region:  EUR");
+    else if (config.region_detect == 3) sprintf (items[0], "Region:  JAP");
+    sprintf (items[1], "Force DTACK: %s", config.force_dtack ? "Y" : "N");
+    if (config.bios_enabled & 1) sprintf (items[2], "Use BIOS: ON");
+    else sprintf (items[2], "Use BIOS: OFF");
+    sprintf (items[3], "SVP Cycles: %d", SVP_cycles);
+    if (config.sram_auto == 0) sprintf (items[4], "Auto SRAM: SDCARD");
+    else if (config.sram_auto == 1) sprintf (items[4], "Auto SRAM: MCARD A");
+    else if (config.sram_auto == 2) sprintf (items[4], "Auto SRAM: MCARD B");
+    else sprintf (items[4], "Auto SRAM: OFF");
+    if (config.freeze_auto == 0) sprintf (items[5], "Auto FREEZE: SDCARD");
+    else if (config.freeze_auto == 1) sprintf (items[5], "Auto FREEZE: MCARD A");
+    else if (config.freeze_auto == 2) sprintf (items[5], "Auto FREEZE: MCARD B");
+    else sprintf (items[5], "Auto FREEZE: OFF");
 
-		ret = domenu (&items[0], count, 1);
-		switch (ret)
-		{
-			case 0:	/*** Region Force ***/
-				config.region_detect = (config.region_detect + 1) % 4;
-				if (genromsize)
-				{
-					/* force region & cpu mode */
-					set_region();
-					
-					/* reinitialize timings */
-					system_init ();
-					audio_init(48000);
-					fm_restore();
-									
-					/* reinitialize HVC tables */
-					vctab = (vdp_pal) ? ((reg[1] & 8) ? vc_pal_240 : vc_pal_224) : vc_ntsc_224;
-					hctab = (reg[12] & 1) ? cycle2hc40 : cycle2hc32;
+    ret = domenu (&items[0], count, 1);
+    switch (ret)
+    {
+      case 0:  /*** Region Force ***/
+        config.region_detect = (config.region_detect + 1) % 4;
+        if (genromsize)
+        {
+          /* force region & cpu mode */
+          set_region();
+          
+          /* reinitialize timings */
+          system_init ();
+          audio_init(48000);
+          fm_restore();
+                  
+          /* reinitialize HVC tables */
+          vctab = (vdp_pal) ? ((reg[1] & 8) ? vc_pal_240 : vc_pal_224) : vc_ntsc_224;
+          hctab = (reg[12] & 1) ? cycle2hc40 : cycle2hc32;
 
-					/* reinitialize overscan area */
-					bitmap.viewport.x = config.overscan ? ((reg[12] & 1) ? 16 : 12) : 0;
-					bitmap.viewport.y = config.overscan ? (((reg[1] & 8) ? 0 : 8) + (vdp_pal ? 24 : 0)) : 0;
-					bitmap.viewport.changed = 1;
-				}
-				break;
+          /* reinitialize overscan area */
+          bitmap.viewport.x = config.overscan ? ((reg[12] & 1) ? 16 : 12) : 0;
+          bitmap.viewport.y = config.overscan ? (((reg[1] & 8) ? 0 : 8) + (vdp_pal ? 24 : 0)) : 0;
+          bitmap.viewport.changed = 1;
+        }
+        break;
 
-			case 1:	/*** force DTACK ***/
-				config.force_dtack ^= 1;
-				break;
+      case 1:  /*** force DTACK ***/
+        config.force_dtack ^= 1;
+        break;
 
-			case 2:	/*** BIOS support ***/
+      case 2:  /*** BIOS support ***/
         config.bios_enabled ^= 1;
         if (genromsize || (config.bios_enabled == 3)) 
         {
- 					system_init ();
-					audio_init(48000);
+           system_init ();
+          audio_init(48000);
           system_reset ();
-				}
+        }
         break;
 
-			case 3:	/*** SVP emulation ***/
-			case -5:
-				if (ret<0) SVP_cycles = SVP_cycles ? (SVP_cycles-1) : 1500;
-				else SVP_cycles++;
-				if (SVP_cycles > 1500) SVP_cycles = 0;
-				break;
+      case 3:  /*** SVP emulation ***/
+      case -5:
+        if (ret<0) SVP_cycles = SVP_cycles ? (SVP_cycles-1) : 1500;
+        else SVP_cycles++;
+        if (SVP_cycles > 1500) SVP_cycles = 0;
+        break;
 
-      case 4:	/*** SRAM autoload/autosave ***/
-				config.sram_auto ++;
+      case 4:  /*** SRAM autoload/autosave ***/
+        config.sram_auto ++;
         if (config.sram_auto > 2) config.sram_auto = -1;
         break;
 
-      case 5:	/*** FreezeState autoload/autosave ***/
+      case 5:  /*** FreezeState autoload/autosave ***/
         config.freeze_auto ++;
         if (config.freeze_auto > 2) config.freeze_auto = -1;
         break;
 
       case -1:
-				quit = 1;
-				break;
-		}
-	}
+        quit = 1;
+        break;
+    }
+  }
 
-	menu = prevmenu;
+  menu = prevmenu;
 }
 
 /****************************************************************************
@@ -316,50 +317,50 @@ uint8 old_overscan = 1;
 
 void dispmenu ()
 {
-	int ret;
-	int quit = 0;
-	int prevmenu = menu;
-	int count = config.aspect ? 8 : 10;
-	char items[10][25];
+  int ret;
+  int quit = 0;
+  int prevmenu = menu;
+  int count = config.aspect ? 8 : 10;
+  char items[10][25];
 
-	strcpy (menutitle, "Press B to return");
-	menu = 0;
+  strcpy (menutitle, "Press B to return");
+  menu = 0;
 
-	while (quit == 0)
-	{
+  while (quit == 0)
+  {
     sprintf (items[0], "Aspect: %s", config.aspect ? "ORIGINAL" : "STRETCHED");
-		if (config.render == 1) sprintf (items[1], "Render: INTERLACED");
-		else if (config.render == 2) sprintf (items[1], "Render: PROGRESSIVE");
-		else sprintf (items[1], "Render: ORIGINAL");
-		if (config.tv_mode == 0) sprintf (items[2], "TV Mode: 60HZ");
-		else if (config.tv_mode == 1) sprintf (items[2], "TV Mode: 50HZ");
-		else sprintf (items[2], "TV Mode: 50/60HZ");
+    if (config.render == 1) sprintf (items[1], "Render: INTERLACED");
+    else if (config.render == 2) sprintf (items[1], "Render: PROGRESSIVE");
+    else sprintf (items[1], "Render: ORIGINAL");
+    if (config.tv_mode == 0) sprintf (items[2], "TV Mode: 60HZ");
+    else if (config.tv_mode == 1) sprintf (items[2], "TV Mode: 50HZ");
+    else sprintf (items[2], "TV Mode: 50/60HZ");
     sprintf (items[3], "Bilinear Filter: %s", config.bilinear ? " ON" : "OFF");
     if (config.ntsc == 1) sprintf (items[4], "NTSC Filter: COMPOSITE");
-		else if (config.ntsc == 2) sprintf (items[4], "NTSC Filter: S-VIDEO");
-		else if (config.ntsc == 3) sprintf (items[4], "NTSC Filter: RGB");
-		else sprintf (items[4], "NTSC Filter: OFF");
-		sprintf (items[5], "Borders: %s", config.overscan ? " ON" : "OFF");
-		sprintf (items[6], "Center X: %s%02d", config.xshift < 0 ? "-":"+", abs(config.xshift));
-		sprintf (items[7], "Center Y: %s%02d", config.yshift < 0 ? "-":"+", abs(config.yshift));
-		sprintf (items[8], "Scale  X: %s%02d", config.xscale < 0 ? "-":"+", abs(config.xscale));
-		sprintf (items[9], "Scale  Y: %s%02d", config.yscale < 0 ? "-":"+", abs(config.yscale));
+    else if (config.ntsc == 2) sprintf (items[4], "NTSC Filter: S-VIDEO");
+    else if (config.ntsc == 3) sprintf (items[4], "NTSC Filter: RGB");
+    else sprintf (items[4], "NTSC Filter: OFF");
+    sprintf (items[5], "Borders: %s", config.overscan ? " ON" : "OFF");
+    sprintf (items[6], "Center X: %s%02d", config.xshift < 0 ? "-":"+", abs(config.xshift));
+    sprintf (items[7], "Center Y: %s%02d", config.yshift < 0 ? "-":"+", abs(config.yshift));
+    sprintf (items[8], "Scale  X: %s%02d", config.xscale < 0 ? "-":"+", abs(config.xscale));
+    sprintf (items[9], "Scale  Y: %s%02d", config.yscale < 0 ? "-":"+", abs(config.yscale));
 
-		ret = domenu (&items[0], count, 1);
+    ret = domenu (&items[0], count, 1);
 
-		switch (ret)
-		{
-			case 0: /*** config.aspect ratio ***/
-				config.aspect ^= 1;
+    switch (ret)
+    {
+      case 0: /*** config.aspect ratio ***/
+        config.aspect ^= 1;
         count = config.aspect ? 8 : 10;
-				break;
+        break;
 
-			case 1:	/*** rendering ***/
-				config.render = (config.render + 1) % 3;
-				if (config.render == 2)
-				{
-					if (VIDEO_HaveComponentCable())
-					{
+      case 1:  /*** rendering ***/
+        config.render = (config.render + 1) % 3;
+        if (config.render == 2)
+        {
+          if (VIDEO_HaveComponentCable())
+          {
             /* progressive mode (60hz only) */
             config.tv_mode = 0;
           }
@@ -368,65 +369,65 @@ void dispmenu ()
             /* do nothing if component cable is not detected */
             config.render = 0;
           }
-				}
-				bitmap.viewport.changed = 1;
-				break;
+        }
+        bitmap.viewport.changed = 1;
+        break;
 
-			case 2: /*** tv mode ***/
-				if (config.render == 2) break; /* 60hz progressive only */
-				config.tv_mode = (config.tv_mode + 1) % 3;
-				break;
-		
-			case 3: /*** bilinear filtering ***/
-				config.bilinear ^= 1;
-				bitmap.viewport.changed = 1;
-				break;
+      case 2: /*** tv mode ***/
+        if (config.render == 2) break; /* 60hz progressive only */
+        config.tv_mode = (config.tv_mode + 1) % 3;
+        break;
+    
+      case 3: /*** bilinear filtering ***/
+        config.bilinear ^= 1;
+        bitmap.viewport.changed = 1;
+        break;
 
       case 4: /*** NTSC filter ***/
-				config.ntsc ++;
+        config.ntsc ++;
         if (config.ntsc > 3) config.ntsc = 0;
-				bitmap.viewport.changed = 1;
-				break;
+        bitmap.viewport.changed = 1;
+        break;
 
       case 5: /*** overscan emulation ***/
-				config.overscan ^= 1;
-				bitmap.viewport.x = config.overscan ? ((reg[12] & 1) ? 16 : 12) : 0;
-				bitmap.viewport.y = config.overscan ? (((reg[1] & 8) ? 0 : 8) + (vdp_pal ? 24 : 0)) : 0;
-				bitmap.viewport.changed = 1;
-				break;
+        config.overscan ^= 1;
+        bitmap.viewport.x = config.overscan ? ((reg[12] & 1) ? 16 : 12) : 0;
+        bitmap.viewport.y = config.overscan ? (((reg[1] & 8) ? 0 : 8) + (vdp_pal ? 24 : 0)) : 0;
+        bitmap.viewport.changed = 1;
+        break;
 
-			case 6:	/*** Center X ***/
-			case -8:
-				if (ret<0) config.xshift --;
-				else config.xshift ++;
-				break;
+      case 6:  /*** Center X ***/
+      case -8:
+        if (ret<0) config.xshift --;
+        else config.xshift ++;
+        break;
 
-			case 7:	/*** Center Y ***/
-			case -9:
-				if (ret<0) config.yshift --;
-				else config.yshift ++;
-				break;
-			
-			case 8:	/*** Scale X ***/
-			case -10:
-				if (config.aspect) break;
+      case 7:  /*** Center Y ***/
+      case -9:
+        if (ret<0) config.yshift --;
+        else config.yshift ++;
+        break;
+      
+      case 8:  /*** Scale X ***/
+      case -10:
+        if (config.aspect) break;
         if (ret<0) config.xscale --;
-				else config.xscale ++;
-				break;
+        else config.xscale ++;
+        break;
 
-			case 9:	/*** Scale Y ***/
-			case -11:
-				if (config.aspect) break;
-				if (ret<0) config.yscale --;
-				else config.yscale ++;
-				break;
+      case 9:  /*** Scale Y ***/
+      case -11:
+        if (config.aspect) break;
+        if (ret<0) config.yscale --;
+        else config.yscale ++;
+        break;
 
-			case -1:
-				quit = 1;
-				break;
-		}
-	}
-	menu = prevmenu;
+      case -1:
+        quit = 1;
+        break;
+    }
+  }
+  menu = prevmenu;
 }
 
 /****************************************************************************
@@ -435,10 +436,10 @@ void dispmenu ()
 extern int old_system[2];
 void ConfigureJoypads ()
 {
-	int ret, max_players;
-	int i = 0;
+  int ret, max_players;
+  int i = 0;
   int quit = 0;
-	int prevmenu = menu;
+  int prevmenu = menu;
   char padmenu[8][25];
 
   int player = 0;
@@ -446,11 +447,11 @@ void ConfigureJoypads ()
   u32 exp;
 #endif
 
-	strcpy (menutitle, "Press B to return");
+  strcpy (menutitle, "Press B to return");
 
-	menu = 0;
-	while (quit == 0)
-	{
+  menu = 0;
+  while (quit == 0)
+  {
     /* update max players */
     max_players = 0;
     if (input.system[0] == SYSTEM_GAMEPAD)
@@ -548,9 +549,9 @@ void ConfigureJoypads ()
 
     ret = domenu (&padmenu[0], 8,0);
 
-		switch (ret)
-		{
-			case 0:
+    switch (ret)
+    {
+      case 0:
         if (j_cart)
         {
           WaitPrompt("JCART detected !");
@@ -569,9 +570,9 @@ void ConfigureJoypads ()
         io_reset();
         old_system[0] = input.system[0];
         old_system[1] = input.system[1];
-			  break;
-		
-			case 1:
+        break;
+    
+      case 1:
         if (j_cart)
         {
           WaitPrompt("JCART detected !");
@@ -588,7 +589,7 @@ void ConfigureJoypads ()
         io_reset();
         old_system[0] = input.system[0];
         old_system[1] = input.system[1];
-			  break;
+        break;
 
       case 2:
         config.gun_cursor ^= 1;
@@ -704,7 +705,7 @@ void ConfigureJoypads ()
 #endif
         break;
     
-			case 6:
+      case 6:
         if (config.input[player].device == 1) break;
         input.padtype[player] ^= 1;
         io_reset();
@@ -716,7 +717,7 @@ void ConfigureJoypads ()
         ogc_input__config(config.input[player].port, config.input[player].device, input.padtype[player]);
         break;
 
-			case -1:
+      case -1:
         /* remove duplicate assigned inputs */
         for (i=0; i<8; i++)
         {
@@ -726,12 +727,12 @@ void ConfigureJoypads ()
             config.input[i].port = i%4;
           }
         }
-			  quit = 1;
-			  break;
-		}
-	}
+        quit = 1;
+        break;
+    }
+  }
 
-	menu = prevmenu;
+  menu = prevmenu;
 }
 
 /****************************************************************************
@@ -740,49 +741,49 @@ void ConfigureJoypads ()
  ****************************************************************************/
 void optionmenu ()
 {
-	int ret;
-	int quit = 0;
-	int prevmenu = menu;
-	int count = 5;
-	char items[5][25] =
+  int ret;
+  int quit = 0;
+  int prevmenu = menu;
+  int count = 5;
+  char items[5][25] =
   {
-		"Video Options",
-		"Sound Options",
-		"System Options",
-		"Controls Options",
-		"Game Genie Codes"
-	};
+    "Video Options",
+    "Sound Options",
+    "System Options",
+    "Controls Options",
+    "Game Genie Codes"
+  };
 
-	menu = 0;
-	while (quit == 0)
-	{
-		strcpy (menutitle, "Press B to return");
-		ret = domenu (&items[0], count, 0);
-		switch (ret)
-		{
-			case 0:
-				dispmenu();
-				break;
-			case 1:
-				soundmenu();
-				break;
-			case 2:
-				miscmenu();
-				break;
-			case 3:
-				ConfigureJoypads();
-				break;
-			case 4:
-				GetGGEntries();
-				break;
-			case -1:
-				quit = 1;
-				break;
-		}
-	}
+  menu = 0;
+  while (quit == 0)
+  {
+    strcpy (menutitle, "Press B to return");
+    ret = domenu (&items[0], count, 0);
+    switch (ret)
+    {
+      case 0:
+        dispmenu();
+        break;
+      case 1:
+        soundmenu();
+        break;
+      case 2:
+        miscmenu();
+        break;
+      case 3:
+        ConfigureJoypads();
+        break;
+      case 4:
+        GetGGEntries();
+        break;
+      case -1:
+        quit = 1;
+        break;
+    }
+  }
 
   config_save();
-	menu = prevmenu;
+  menu = prevmenu;
 }
 
 /****************************************************************************
@@ -793,15 +794,15 @@ static u8 device = 0;
 
 int loadsavemenu (int which)
 {
-	int prevmenu = menu;
-	int quit = 0;
-	int ret;
-	int count = 3;
-	char items[3][25];
+  int prevmenu = menu;
+  int quit = 0;
+  int ret;
+  int count = 3;
+  char items[3][25];
 
-	strcpy (menutitle, "Press B to return");
+  strcpy (menutitle, "Press B to return");
 
-	menu = 2;
+  menu = 2;
 
   if (which == 1)
   {
@@ -814,34 +815,34 @@ int loadsavemenu (int which)
     sprintf(items[2], "Load SRAM");
   }
 
-	while (quit == 0)
-	{
+  while (quit == 0)
+  {
     if (device == 0) sprintf(items[0], "Device: SDCARD");
     else if (device == 1) sprintf(items[0], "Device: MCARD A");
     else if (device == 2) sprintf(items[0], "Device: MCARD B");
 
-		ret = domenu (&items[0], count, 0);
-		switch (ret)
-		{
-			case -1:
-				quit = 1;
-				break;
+    ret = domenu (&items[0], count, 0);
+    switch (ret)
+    {
+      case -1:
+        quit = 1;
+        break;
 
-			case 0:
+      case 0:
         device = (device + 1)%3;
         break;
 
-			case 1:
-			case 2:
-				if (which == 1) quit = ManageState(ret-1,device);
-				else if (which == 0) quit = ManageSRAM(ret-1,device);
-				if (quit) return 1;
+      case 1:
+      case 2:
+        if (which == 1) quit = ManageState(ret-1,device);
+        else if (which == 0) quit = ManageSRAM(ret-1,device);
+        if (quit) return 1;
         break;
-		}
-	}
+    }
+  }
 
-	menu = prevmenu;
-	return 0;
+  menu = prevmenu;
+  return 0;
 }
 
 
@@ -851,36 +852,37 @@ int loadsavemenu (int which)
  ****************************************************************************/
 int filemenu ()
 {
-	int prevmenu = menu;
-	int ret;
-	int quit = 0;
-	int count = 2;
-	char items[2][25] = {
-		{"SRAM Manager"},
-		{"STATE Manager"}
-	};
+  int prevmenu = menu;
+  int ret;
+  int quit = 0;
+  int count = 2;
+  char items[2][25] = {
+    {"SRAM Manager"},
+    {"STATE Manager"}
+  };
 
-	menu = 0;
+  menu = 0;
 
-	while (quit == 0)
-	{
-		strcpy (menutitle, "Press B to return");
-		ret = domenu (&items[0], count, 0);
-		switch (ret)
-		{
-			case -1: /*** Button B ***/
-				ret = 0;
-				quit = 1;
-				break;
-			case 0:	 /*** SRAM Manager ***/
-			case 1:  /*** SaveState Manager ***/
-				if (loadsavemenu(ret)) return 1;
-				break;
-		}
-	}
+  while (quit == 0)
+  {
+    strcpy (menutitle, "Press B to return");
+    ret = domenu (&items[0], count, 0);
+    switch (ret)
+    {
+      case -1: /*** Button B ***/
+        ret = 0;
+        quit = 1;
+        break;
 
-	menu = prevmenu;
-	return 0;
+      case 0:   /*** SRAM Manager ***/
+      case 1:  /*** SaveState Manager ***/
+        if (loadsavemenu(ret)) return 1;
+        break;
+    }
+  }
+
+  menu = prevmenu;
+  return 0;
 }
 
 
@@ -893,60 +895,40 @@ static u8 dvd_on = 0;
 
 int loadmenu ()
 {
-	int prevmenu = menu;
+  int prevmenu = menu;
   int ret;
-	int quit = 0;
+  int quit = 0;
 #ifdef HW_RVL
   int count = 4 + dvd_on;
   char item[5][25] = {
     {"Load Recent"},
-	  {"Load from SD"},
-	  {"Load from USB"},
+    {"Load from SD"},
+    {"Load from USB"},
     {"Load from DVD"},
     {"Stop DVD Motor"}
-	};
+  };
 #else
   int count = 3 + dvd_on;
   char item[4][25] = {
     {"Load Recent"},
-	  {"Load from SD"},
+    {"Load from SD"},
     {"Load from DVD"},
     {"Stop DVD Motor"}
-	};
+  };
 #endif
 
-	menu = load_menu;
-	
-	while (quit == 0)
-	{
-		strcpy (menutitle, "Press B to return");
-		ret = domenu (&item[0], count, 0);
-		switch (ret)
-		{
-			/*** Button B ***/
+  menu = load_menu;
+  
+  while (quit == 0)
+  {
+    strcpy (menutitle, "Press B to return");
+    ret = domenu (&item[0], count, 0);
+    switch (ret)
+    {
+      /*** Button B ***/
       case -1: 
-				quit = 1;
-				break;
-
-			/*** Load Recent ***/
-      case 0:
-				load_menu = menu;
-        if (OpenHistory()) return 1;
-				break;
-
-      /*** Load from SD ***/
-			case 1:
-        load_menu = menu;
-				if (OpenFAT("") > 0) return 1;
-				break;
-
-#ifdef HW_RVL
-      /*** Load from USB ***/
-			case 2:
-				load_menu = menu;
-				if (OpenFAT("usb:") > 0) return 1;
+        quit = 1;
         break;
-#endif
 
       /*** Load from DVD ***/
 #ifdef HW_RVL
@@ -954,8 +936,8 @@ int loadmenu ()
 #else
       case 2:
 #endif
-				load_menu = menu;
-        if (OpenDVD())
+        load_menu = menu;
+        if (DVD_Open())
         {
           dvd_on = 1;
           return 1;
@@ -975,10 +957,17 @@ int loadmenu ()
 #else
         count = 3 + dvd_on;
 #endif
-				menu = load_menu;
+        menu = load_menu;
         break;
+
+      /*** Load from FAT device ***/
+      default:
+        load_menu = menu;
+        if (FAT_Open(ret)) return 1;
+        break;
+
     }
-	}
+  }
 
   menu = prevmenu;
   return 0;
@@ -1008,100 +997,100 @@ void showrominfo ()
   max = 14;
   for (i = 0; i < 14; i++)
   {
-	  if (peripherals & (1 << i))
-	  {
-		  sprintf(pName[max-14],"%s", peripheralinfo[i].pName);
-		  max ++;
-	  }
+    if (peripherals & (1 << i))
+    {
+      sprintf(pName[max-14],"%s", peripheralinfo[i].pName);
+      max ++;
+    }
   }
 
   while (quit == 0)
   {
       if (redraw)
       {
-		  ClearScreen ();
+      ClearScreen ();
 
-		  ypos = 134;
-		  WriteCentre(ypos, "ROM Header Information");
-		  ypos += 2*fheight;
+      ypos = 134;
+      WriteCentre(ypos, "ROM Header Information");
+      ypos += 2*fheight;
 
-		  for (i=0; i<8; i++)
-		  {
-			  switch (i+j)
-			  {
-				case 0:
-					sprintf (msg, "Console type: %s", rominfo.consoletype);
-					break;
-				case 1:
-					sprintf (msg, "Copyright: %s", rominfo.copyright);
-					break;
-				case 2:
-					sprintf (msg, "Company: %s", companyinfo[getcompany ()].company);
-					break;
-				case 3:
-					sprintf (msg, "Game Domestic Name:");
-					break;
-				case 4:
-					sprintf(msg, " %s",rominfo.domestic);
-					break;
-				case 5:
-					sprintf (msg, "Game International Name:");
-					break;
-				case 6:
-					sprintf(msg, " %s",rominfo.international);
-					break;
-				case 7:
-					sprintf (msg, "Type - %s : %s", rominfo.ROMType, strcmp (rominfo.ROMType, "AI") ? "Game" : "Educational");
-					break;
-				case 8:
-					sprintf (msg, "Product - %s", rominfo.product);
-					break;
-				case 9:
-					sprintf (msg, "Checksum - %04x (%04x) (%s)", rominfo.checksum, realchecksum, (rominfo.checksum == realchecksum) ? "Good" : "Bad");
-					break;
-				case 10:
-					sprintf (msg, "ROM end: $%06X", rominfo.romend);
-					break;
-				case 11:
-					if (svp) sprintf (msg, "SVP Chip detected");
-					else if (sram.custom) sprintf (msg, "EEPROM(%dK) - $%06X", ((eeprom.type.size_mask+1)* 8) /1024, (unsigned int)sram.start);
-					else if (sram.detected) sprintf (msg, "SRAM Start  - $%06X", sram.start);
-					else sprintf (msg, "External RAM undetected");
-						 
-					break;
-				case 12:
-					if (sram.custom) sprintf (msg, "EEPROM(%dK) - $%06X", ((eeprom.type.size_mask+1)* 8) /1024, (unsigned int)sram.end);
-					else if (sram.detected) sprintf (msg, "SRAM End   - $%06X", sram.end);
-					else if (sram.on) sprintf (msg, "Default SRAM activated ");
-					else sprintf (msg, "SRAM is disactivated  ");
-					break;
-				case 13:
-					if (region_code == REGION_USA) sprintf (msg, "Region - %s (USA)", rominfo.country);
-					else if (region_code == REGION_EUROPE) sprintf (msg, "Region - %s (EUR)", rominfo.country);
-					else if (region_code == REGION_JAPAN_NTSC) sprintf (msg, "Region - %s (JAP)", rominfo.country);
-					else if (region_code == REGION_JAPAN_PAL) sprintf (msg, "Region - %s (JPAL)", rominfo.country);
-					break;
-				default:
-					sprintf (msg, "Supports - %s", pName[i+j-14]);
-					break;
-			}
+      for (i=0; i<8; i++)
+      {
+        switch (i+j)
+        {
+        case 0:
+          sprintf (msg, "Console type: %s", rominfo.consoletype);
+          break;
+        case 1:
+          sprintf (msg, "Copyright: %s", rominfo.copyright);
+          break;
+        case 2:
+          sprintf (msg, "Company: %s", companyinfo[getcompany ()].company);
+          break;
+        case 3:
+          sprintf (msg, "Game Domestic Name:");
+          break;
+        case 4:
+          sprintf(msg, " %s",rominfo.domestic);
+          break;
+        case 5:
+          sprintf (msg, "Game International Name:");
+          break;
+        case 6:
+          sprintf(msg, " %s",rominfo.international);
+          break;
+        case 7:
+          sprintf (msg, "Type - %s : %s", rominfo.ROMType, strcmp (rominfo.ROMType, "AI") ? "Game" : "Educational");
+          break;
+        case 8:
+          sprintf (msg, "Product - %s", rominfo.product);
+          break;
+        case 9:
+          sprintf (msg, "Checksum - %04x (%04x) (%s)", rominfo.checksum, realchecksum, (rominfo.checksum == realchecksum) ? "Good" : "Bad");
+          break;
+        case 10:
+          sprintf (msg, "ROM end: $%06X", rominfo.romend);
+          break;
+        case 11:
+          if (svp) sprintf (msg, "SVP Chip detected");
+          else if (sram.custom) sprintf (msg, "EEPROM(%dK) - $%06X", ((eeprom.type.size_mask+1)* 8) /1024, (unsigned int)sram.start);
+          else if (sram.detected) sprintf (msg, "SRAM Start  - $%06X", sram.start);
+          else sprintf (msg, "External RAM undetected");
+             
+          break;
+        case 12:
+          if (sram.custom) sprintf (msg, "EEPROM(%dK) - $%06X", ((eeprom.type.size_mask+1)* 8) /1024, (unsigned int)sram.end);
+          else if (sram.detected) sprintf (msg, "SRAM End   - $%06X", sram.end);
+          else if (sram.on) sprintf (msg, "Default SRAM activated ");
+          else sprintf (msg, "SRAM is disactivated  ");
+          break;
+        case 13:
+          if (region_code == REGION_USA) sprintf (msg, "Region - %s (USA)", rominfo.country);
+          else if (region_code == REGION_EUROPE) sprintf (msg, "Region - %s (EUR)", rominfo.country);
+          else if (region_code == REGION_JAPAN_NTSC) sprintf (msg, "Region - %s (JAP)", rominfo.country);
+          else if (region_code == REGION_JAPAN_PAL) sprintf (msg, "Region - %s (JPAL)", rominfo.country);
+          break;
+        default:
+          sprintf (msg, "Supports - %s", pName[i+j-14]);
+          break;
+      }
 
-			write_font (100, ypos, msg);
-			ypos += fheight;
-		}
+      write_font (100, ypos, msg);
+      ypos += fheight;
+    }
 
-		ypos += fheight;
-		WriteCentre (ypos, "Press A to Continue");
-		SetScreen ();
-	}
+    ypos += fheight;
+    WriteCentre (ypos, "Press A to Continue");
+    SetScreen ();
+  }
 
-	p = ogc_input__getMenuButtons();
-	redraw = 0;
+  p = ogc_input__getMenuButtons();
+  redraw = 0;
 
-	if ((j<(max-8)) && (p & PAD_BUTTON_DOWN)) {redraw = 1; j++;}
-	if ((j>0) && (p & PAD_BUTTON_UP)) {redraw = 1; j--;}
-	if (p & PAD_BUTTON_A) quit = 1;
-	if (p & PAD_BUTTON_B) quit = 1;
+  if ((j<(max-8)) && (p & PAD_BUTTON_DOWN)) {redraw = 1; j++;}
+  if ((j>0) && (p & PAD_BUTTON_UP)) {redraw = 1; j--;}
+  if (p & PAD_BUTTON_A) quit = 1;
+  if (p & PAD_BUTTON_B) quit = 1;
   }
 }
 
@@ -1111,30 +1100,30 @@ void showrominfo ()
  ****************************************************************************/
 void MainMenu ()
 {
- 	menu = 0;
-	int ret;
-	int quit = 0;
-	uint32 crccheck;
+   menu = 0;
+  int ret;
+  int quit = 0;
+  uint32 crccheck;
 
-	int count = 8;
-	char items[8][25] =
-	{
-		{"Play Game"},
-		{"Game Infos"},
-		{"Hard Reset"},
-		{"Load New Game"},
-		{"File Management"},
-		{"Emulator Options"},
-		{"Return to Loader"},
-		{"System Reboot"}
-	};
+  int count = 8;
+  char items[8][25] =
+  {
+    {"Play Game"},
+    {"Game Infos"},
+    {"Hard Reset"},
+    {"Load New Game"},
+    {"File Management"},
+    {"Emulator Options"},
+    {"Return to Loader"},
+    {"System Reboot"}
+  };
 
-	/* Switch to menu default rendering mode (60hz or 50hz, but always 480 lines) */
-	VIDEO_Configure (vmode);
-	VIDEO_ClearFrameBuffer(vmode, xfb[whichfb], COLOR_BLACK);
-	VIDEO_Flush();
-	VIDEO_WaitVSync();
-	VIDEO_WaitVSync();
+  /* Switch to menu default rendering mode (60hz or 50hz, but always 480 lines) */
+  VIDEO_Configure (vmode);
+  VIDEO_ClearFrameBuffer(vmode, xfb[whichfb], COLOR_BLACK);
+  VIDEO_Flush();
+  VIDEO_WaitVSync();
+  VIDEO_WaitVSync();
 
   /* autosave (SRAM only) */
   int temp = config.freeze_auto;
@@ -1142,45 +1131,45 @@ void MainMenu ()
   memfile_autosave();
   config.freeze_auto = temp;
 
-	while (quit == 0)
-	{
+  while (quit == 0)
+  {
     crccheck = crc32 (0, &sram.sram[0], 0x10000);
     if (genromsize && (crccheck != sram.crc)) strcpy (menutitle, "*** SRAM has been modified ***");
     else sprintf(menutitle, "%d FPS", FramesPerSecond);
 
-		ret = domenu (&items[0], count, 0);
-		switch (ret)
-		{
-			case -1: /*** Button B ***/
-			case 0:  /*** Play Game ***/
-				if (genromsize) quit = 1;
-				break;
+    ret = domenu (&items[0], count, 0);
+    switch (ret)
+    {
+      case -1: /*** Button B ***/
+      case 0:  /*** Play Game ***/
+        if (genromsize) quit = 1;
+        break;
 
-			case 1:	 /*** ROM Information ***/
-				showrominfo ();
-				break;
+      case 1:   /*** ROM Information ***/
+        showrominfo ();
+        break;
 
-			case 2:  /*** Emulator Reset ***/
-				if (genromsize || (config.bios_enabled == 3))
-				{
-					system_reset (); 
-					quit = 1;
-				}
-				break;
+      case 2:  /*** Emulator Reset ***/
+        if (genromsize || (config.bios_enabled == 3))
+        {
+          system_reset (); 
+          quit = 1;
+        }
+        break;
 
-			case 3:  /*** Load ROM Menu ***/
-				quit = loadmenu();
-				break;
+      case 3:  /*** Load ROM Menu ***/
+        quit = loadmenu();
+        break;
 
-			case 4:  /*** Memory Manager ***/
-				quit = filemenu ();
-				break;
+      case 4:  /*** Memory Manager ***/
+        quit = filemenu ();
+        break;
 
-			case 5:  /*** Emulator Options */
-				optionmenu ();
-				break;
+      case 5:  /*** Emulator Options */
+        optionmenu ();
+        break;
 
-			case 6:  /*** SD/PSO/TP Reload ***/
+      case 6:  /*** SD/PSO/TP Reload ***/
         memfile_autosave();
         system_shutdown();
         audio_shutdown();
@@ -1193,7 +1182,7 @@ void MainMenu ()
         exit(0);
         break;
 
-			case 7:  /*** Return to Wii System Menu ***/
+      case 7:  /*** Return to Wii System Menu ***/
         memfile_autosave();
         system_shutdown();
         audio_shutdown();
@@ -1202,26 +1191,26 @@ void MainMenu ()
         VIDEO_WaitVSync();
 #ifdef HW_RVL
         DI_Close();
-				SYS_ResetSystem(SYS_RETURNTOMENU, 0, 0);
+        SYS_ResetSystem(SYS_RETURNTOMENU, 0, 0);
 #else
-				SYS_ResetSystem(SYS_HOTRESET,0,0);
+        SYS_ResetSystem(SYS_HOTRESET,0,0);
 #endif
-				break;
-		}
-	}
+        break;
+    }
+  }
 
-	/*** Remove any still held buttons ***/
+  /*** Remove any still held buttons ***/
   while (PAD_ButtonsHeld(0))  PAD_ScanPads();
 #ifdef HW_RVL
   while (WPAD_ButtonsHeld(0)) WPAD_ScanPads();
 #endif
 
-	/*** Reinitialize GX ***/
+  /*** Reinitialize GX ***/
   ogc_video__reset();
   odd_frame = 1;
 
 #ifndef HW_RVL
-	/*** Stop the DVD from causing clicks while playing ***/
-	uselessinquiry ();			
+  /*** Stop the DVD from causing clicks while playing ***/
+  uselessinquiry ();
 #endif
 }

@@ -35,38 +35,38 @@
 
 typedef struct
 {
-  uint8 *data;			/* Bitmap data */
-  int width;			/* Bitmap width (32+512+32) */
-  int height;			/* Bitmap height (256) */
-  int depth;			/* Color depth (8 bits) */
-  int pitch;			/* Width of bitmap in bytes */
-  int granularity;		/* Size of each pixel in bytes */
-  int remap;			/* 1= Translate pixel data */
+  uint8 *data;      /* Bitmap data */
+  int width;        /* Bitmap width (32+512+32) */
+  int height;       /* Bitmap height (256) */
+  int depth;        /* Color depth (8 bits) */
+  int pitch;        /* Width of bitmap in bytes */
+  int granularity;  /* Size of each pixel in bytes */
+  int remap;        /* 1= Translate pixel data */
   struct
   {
-    int x;			/* X offset of viewport within bitmap */
-    int y;			/* Y offset of viewport within bitmap */
-    int w;			/* Width of viewport */
-    int h;			/* Height of viewport */
-    int ow;			/* Previous width of viewport */
-    int oh;			/* Previous height of viewport */
-    int changed;		/* 1= Viewport width or height have changed */
+    int x;          /* X offset of viewport within bitmap */
+    int y;          /* Y offset of viewport within bitmap */
+    int w;          /* Width of viewport */
+    int h;          /* Height of viewport */
+    int ow;         /* Previous width of viewport */
+    int oh;         /* Previous height of viewport */
+    int changed;    /* 1= Viewport width or height have changed */
   } viewport;
 } t_bitmap;
 
 
 typedef struct
 {
-  int sample_rate;		/* Sample rate (8000-48000) */
-  int enabled;			/* 1= sound emulation is enabled */
-  int buffer_size;		/* Size of sound buffer (in bytes) */
-  int16 *buffer[2];		/* Signed 16-bit stereo sound data */
+  int sample_rate;  /* Sample rate (8000-48000) */
+  int enabled;      /* 1= sound emulation is enabled */
+  int buffer_size;  /* Size of sound buffer (in bytes) */
+  int16 *buffer[2]; /* Signed 16-bit stereo sound data */
   struct
   {
     int curStage;
     int lastStage;
     int *buffer[2];
-    float *src_out;   /* SRC conversion buffer */
+    float *src_out; /* SRC conversion buffer */
   } fm;
   struct
   {

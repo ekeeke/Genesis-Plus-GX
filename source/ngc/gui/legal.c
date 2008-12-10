@@ -80,12 +80,12 @@ void legal ()
       dispoffset = (316 * 320) + ((640 - dkpro_WIDTH) >> 2);
 
       for (h = 0; h < dkpro_HEIGHT; h++)
-	  {
-		  for (w = 0; w < dkpro_WIDTH >> 1; w++)
-			xfb[whichfb][dispoffset + w] = dkproraw[p++];
+    {
+      for (w = 0; w < dkpro_WIDTH >> 1; w++)
+      xfb[whichfb][dispoffset + w] = dkproraw[p++];
 
-		  dispoffset += 320;
-	  }
+      dispoffset += 320;
+    }
 
       free (dkproraw);
   }

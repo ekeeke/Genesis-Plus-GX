@@ -10,7 +10,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <malloc.h>
-#include <fat.h>
 #include <sys/dir.h>
 
 #include "ogc_input.h"
@@ -18,6 +17,8 @@
 #include "ogc_video.h"
 #include "config.h"
 #include "history.h"
+
+#define DEFAULT_PATH "/genplus"
 
 #define update_input() ogc_input__update()
 

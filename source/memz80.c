@@ -24,8 +24,8 @@
 #define LOG_PORT 0      /* 1= Log Z80 I/O port accesses */
 
 /*
-    Handlers for access to unused addresses and those which make the
-    machine lock up.
+  Handlers for access to unused addresses and those which make the
+  machine lock up.
 */
 static inline void z80_unused_w(unsigned int address, unsigned int data)
 {
@@ -39,7 +39,7 @@ static inline unsigned int z80_unused_r(unsigned int address)
 #ifdef LOGERROR
   error("Z80 unused read %04X\n", address);
 #endif
-	return 0xff;
+  return 0xff;
 }
 
 static inline void z80_lockup_w(unsigned int address, unsigned int data)
@@ -47,7 +47,7 @@ static inline void z80_lockup_w(unsigned int address, unsigned int data)
 #ifdef LOGERROR
   error("Z80 lockup write %04X = %02X\n", address, data);
 #endif
- 	gen_running = config.force_dtack;
+   gen_running = config.force_dtack;
 }
 
 static inline unsigned int z80_lockup_r(unsigned int address)
@@ -55,8 +55,8 @@ static inline unsigned int z80_lockup_r(unsigned int address)
 #ifdef LOGERROR
   error("Z80 lockup read %04X\n", address);
 #endif
- 	gen_running = config.force_dtack;
-	return 0xff;
+  gen_running = config.force_dtack;
+  return 0xff;
 }
 /*
     VDP access
@@ -85,34 +85,34 @@ static inline unsigned int z80_vdp_r(unsigned int address)
     case 0x0d:
       return (vdp_hvc_r() & 0xff);
 
-		case 0x18: /* Unused */
-		case 0x19:
+    case 0x18: /* Unused */
+    case 0x19:
     case 0x1c:
-		case 0x1d:
-			return z80_unused_r(address);
+    case 0x1d:
+      return z80_unused_r(address);
 
     default:    /* Invalid address */
-			return z80_lockup_r(address);
-	}
+      return z80_lockup_r(address);
+  }
 }
 
 static inline void z80_vdp_w(unsigned int address, unsigned int data)
 {
   switch (address & 0xfc)
   {
-    case 0x00:	/* Data port */
+    case 0x00:  /* Data port */
       vdp_data_w(data << 8 | data);
       return;
 
-    case 0x04:	/* Control port */
+    case 0x04:  /* Control port */
       vdp_ctrl_w(data << 8 | data);
       return;
 
-    case 0x10:	/* PSG */
+    case 0x10:  /* PSG */
     case 0x14:
       if (address & 1) psg_write(0, data);
       else z80_unused_w(address, data);
-			return;
+      return;
 
     case 0x18: /* Unused */
       z80_unused_w(address, data);
@@ -122,7 +122,7 @@ static inline void z80_vdp_w(unsigned int address, unsigned int data)
       vdp_test_w(data << 8 | data);
       return;
 
-    default:	/* Invalid address */
+    default:  /* Invalid address */
       z80_lockup_w(address, data);
       return;
   }
@@ -194,22 +194,22 @@ void cpu_writemem16(unsigned int address, unsigned int data)
       if (zbank_memory_map[slot].write) (*zbank_memory_map[slot].write)(address, data);
       else WRITE_BYTE(m68k_memory_map[slot].base, address&0xffff, data);
       return;
+    }
   }
-}
 }
 
 /*
-    Port handlers. Ports are unused when not in Mark III compatability mode.
+  Port handlers. Ports are unused when not in Mark III compatability mode.
 
-    Games that access ports anyway:
-    - Thunder Force IV reads port $BF in it's interrupt handler.
+  Games that access ports anyway:
+    Thunder Force IV reads port $BF in it's interrupt handler.
 */
 
 unsigned int cpu_readport16(unsigned int port)
 {
 #if LOG_PORT
   error("Z80 read port %04X\n", port);
-#endif    
+#endif
   return 0xFF;
 }
 

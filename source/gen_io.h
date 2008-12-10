@@ -24,10 +24,10 @@
 #ifndef _GEN_IO_H_
 #define _GEN_IO_H_
 
-#define REGION_USA			0x80
-#define REGION_JAPAN_NTSC	0x00
-#define REGION_EUROPE		0xC0
-#define REGION_JAPAN_PAL	0x40
+#define REGION_JAPAN_NTSC 0x00
+#define REGION_JAPAN_PAL  0x40
+#define REGION_USA        0x80
+#define REGION_EUROPE     0xC0
 
 /* Global variables */
 extern uint8 io_reg[0x10];
@@ -36,8 +36,8 @@ extern uint8 pad_type;
 
 /* Function prototypes */
 extern void io_reset(void);
-extern void io_write(unsigned int offset, unsigned int value);
-extern unsigned int io_read(unsigned int offset);
+extern void io_write(uint32 offset, uint32 value);
+extern uint32 io_read(uint32 offset);
 
 #endif /* _IO_H_ */
 

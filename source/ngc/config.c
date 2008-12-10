@@ -12,15 +12,19 @@
 
 void config_save()
 {
-  if (!use_FAT) return;
+  char pathname[MAXPATHLEN];
+
+  if (!fat_enabled) return;
 
   /* first check if directory exist */
-  DIR_ITER *dir = diropen("/genplus");
-  if (dir == NULL) mkdir("/genplus",S_IRWXU);
+  sprintf (pathname, DEFAULT_PATH);
+  DIR_ITER *dir = diropen(pathname);
+  if (dir == NULL) mkdir(pathname,S_IRWXU);
   else dirclose(dir);
 
   /* open configuration file */
-  FILE *fp = fopen("/genplus/genplus.ini", "wb");
+  sprintf (pathname, "%s/config.ini", pathname);
+  FILE *fp = fopen(pathname, "wb");
   if (fp == NULL) return;
 
   /* save options */
@@ -31,8 +35,11 @@ void config_save()
 
 void config_load()
 {
+  char pathname[MAXPATHLEN];
+
   /* open configuration file */
-  FILE *fp = fopen("/genplus/genplus.ini", "rb");
+  sprintf (pathname, "%s/genplus.ini", DEFAULT_PATH);
+  FILE *fp = fopen(pathname, "rb");
   if (fp == NULL) return;
 
   /* read version */
@@ -42,7 +49,7 @@ void config_load()
   if (strcmp(version,CONFIG_VERSION)) return;
 
   /* read file */
-  fp = fopen("/genplus/genplus.ini", "rb");
+  fp = fopen(pathname, "rb");
   fread(&config, sizeof(config), 1, fp);
   fclose(fp);
 }

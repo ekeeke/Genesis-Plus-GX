@@ -24,7 +24,7 @@
 
 /* global datas */
 unsigned char soundbuffer[16][3840] ATTRIBUTE_ALIGN(32);
-int mixbuffer   = 0;
+int mixbuffer = 0;
 
 static int playbuffer  = 0;
 static int IsPlaying   = 0;
@@ -42,14 +42,14 @@ static void AudioSwitchBuffers()
     IsPlaying = 0;
     return;
   }
-  
+
   u32 dma_len = (vdp_pal) ? 3840 : 3200;
 
   /* restart audio DMA with current soundbuffer */
   AUDIO_InitDMA((u32) soundbuffer[playbuffer], dma_len);
   DCFlushRange(soundbuffer[playbuffer], dma_len);
   AUDIO_StartDMA();
-    
+
   /* increment soundbuffers index */
   if (playbuffer == mixbuffer)
   {
@@ -65,10 +65,10 @@ static void AudioSwitchBuffers()
 
 void ogc_audio__init(void)
 {
-	AUDIO_Init (NULL);
-	AUDIO_SetDSPSampleRate (AI_SAMPLERATE_48KHZ);
-	AUDIO_RegisterDMACallback (AudioSwitchBuffers);
-	memset(soundbuffer, 0, 16 * 3840);
+  AUDIO_Init (NULL);
+  AUDIO_SetDSPSampleRate (AI_SAMPLERATE_48KHZ);
+  AUDIO_RegisterDMACallback (AudioSwitchBuffers);
+  memset(soundbuffer, 0, 16 * 3840);
 }
 
 void ogc_audio__reset(void)

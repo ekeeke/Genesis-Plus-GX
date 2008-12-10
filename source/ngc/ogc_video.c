@@ -35,10 +35,10 @@ sms_ntsc_t sms_ntsc;
 int gc_pal = 0;
 
 /*** VI ***/
-unsigned int *xfb[2];	/*** Double buffered            ***/
-int whichfb = 0;		  /*** External framebuffer index ***/
-GXRModeObj *vmode;    /*** Menu video mode            ***/
-u8 *texturemem;       /*** Texture Data               ***/
+unsigned int *xfb[2];  /*** Double buffered            ***/
+int whichfb = 0;       /*** External framebuffer index ***/
+GXRModeObj *vmode;     /*** Menu video mode            ***/
+u8 *texturemem;        /*** Texture Data               ***/
 
 /*** GX ***/
 #define TEX_WIDTH         360 * 2
@@ -57,12 +57,12 @@ static u32 vwidth, vheight;
 /* 288 lines progressive (PAL 50Hz) */
 GXRModeObj TV50hz_288p = 
 {
-  VI_TVMODE_PAL_DS,       // viDisplayMode
+  VI_TVMODE_PAL_DS,// viDisplayMode
   640,             // fbWidth
   286,             // efbHeight
   286,             // xfbHeight
-  (VI_MAX_WIDTH_PAL - 720)/2,         // viXOrigin
-  (VI_MAX_HEIGHT_PAL/2 - 572/2)/2,        // viYOrigin
+  (VI_MAX_WIDTH_PAL - 720)/2,     // viXOrigin
+  (VI_MAX_HEIGHT_PAL/2 - 572/2)/2,// viYOrigin
   720,             // viWidth
   572,             // viHeight
   VI_XFBMODE_SF,   // xFBmode
@@ -70,34 +70,34 @@ GXRModeObj TV50hz_288p =
   GX_FALSE,        // aa
 
     // sample points arranged in increasing Y order
-	{
-		{6,6},{6,6},{6,6},  // pix 0, 3 sample points, 1/12 units, 4 bits each
-		{6,6},{6,6},{6,6},  // pix 1
-		{6,6},{6,6},{6,6},  // pix 2
-		{6,6},{6,6},{6,6}   // pix 3
-	},
+  {
+    {6,6},{6,6},{6,6},  // pix 0, 3 sample points, 1/12 units, 4 bits each
+    {6,6},{6,6},{6,6},  // pix 1
+    {6,6},{6,6},{6,6},  // pix 2
+    {6,6},{6,6},{6,6}   // pix 3
+  },
 
   // vertical filter[7], 1/64 units, 6 bits each
-	{
-		 0,         // line n-1
-		 0,         // line n-1
-		21,         // line n
-		22,         // line n
-		21,         // line n
-		 0,         // line n+1
-		 0          // line n+1
-	}
+  {
+     0,         // line n-1
+     0,         // line n-1
+    21,         // line n
+    22,         // line n
+    21,         // line n
+     0,         // line n+1
+     0          // line n+1
+  }
 };
 
 /* 288 lines interlaced (PAL 50Hz) */
 GXRModeObj TV50hz_288i = 
 {
-    VI_TVMODE_PAL_INT,      // viDisplayMode
-    640,             // fbWidth
-    286,             // efbHeight
-    286,             // xfbHeight
-    (VI_MAX_WIDTH_PAL - 720)/2,         // viXOrigin
-    (VI_MAX_HEIGHT_PAL/2 - 572/2)/2,        // viYOrigin
+    VI_TVMODE_PAL_INT,// viDisplayMode
+    640,              // fbWidth
+    286,              // efbHeight
+    286,              // xfbHeight
+    (VI_MAX_WIDTH_PAL - 720)/2,     // viXOrigin
+    (VI_MAX_HEIGHT_PAL/2 - 572/2)/2,// viYOrigin
     720,             // viWidth
     572,             // viHeight
     VI_XFBMODE_SF,   // xFBmode
@@ -105,34 +105,34 @@ GXRModeObj TV50hz_288i =
     GX_FALSE,        // aa
 
     // sample points arranged in increasing Y order
-	{
-		{6,6},{6,6},{6,6},  // pix 0, 3 sample points, 1/12 units, 4 bits each
-		{6,6},{6,6},{6,6},  // pix 1
-		{6,6},{6,6},{6,6},  // pix 2
-		{6,6},{6,6},{6,6}   // pix 3
-	},
+  {
+    {6,6},{6,6},{6,6},  // pix 0, 3 sample points, 1/12 units, 4 bits each
+    {6,6},{6,6},{6,6},  // pix 1
+    {6,6},{6,6},{6,6},  // pix 2
+    {6,6},{6,6},{6,6}   // pix 3
+  },
 
     // vertical filter[7], 1/64 units, 6 bits each
-	{
-		 0,         // line n-1
-		 0,         // line n-1
-		21,         // line n
-		22,         // line n
-		21,         // line n
-		 0,         // line n+1
-		 0          // line n+1
-	}
+  {
+     0,         // line n-1
+     0,         // line n-1
+    21,         // line n
+    22,         // line n
+    21,         // line n
+     0,         // line n+1
+     0          // line n+1
+  }
 };
 
 /* 576 lines interlaced (PAL 50Hz, scaled) */
 GXRModeObj TV50hz_576i = 
 {
-  VI_TVMODE_PAL_INT,      // viDisplayMode
+  VI_TVMODE_PAL_INT,// viDisplayMode
   640,             // fbWidth
   480,             // efbHeight
   574,             // xfbHeight
-  (VI_MAX_WIDTH_PAL - 720)/2,         // viXOrigin
-  (VI_MAX_HEIGHT_PAL - 574)/2,        // viYOrigin
+  (VI_MAX_WIDTH_PAL - 720)/2, // viXOrigin
+  (VI_MAX_HEIGHT_PAL - 574)/2,// viYOrigin
   720,             // viWidth
   574,             // viHeight
   VI_XFBMODE_DF,   // xFBmode
@@ -140,34 +140,34 @@ GXRModeObj TV50hz_576i =
   GX_FALSE,        // aa
 
     // sample points arranged in increasing Y order
-	{
-		{6,6},{6,6},{6,6},  // pix 0, 3 sample points, 1/12 units, 4 bits each
-		{6,6},{6,6},{6,6},  // pix 1
-		{6,6},{6,6},{6,6},  // pix 2
-		{6,6},{6,6},{6,6}   // pix 3
-	},
+  {
+    {6,6},{6,6},{6,6},  // pix 0, 3 sample points, 1/12 units, 4 bits each
+    {6,6},{6,6},{6,6},  // pix 1
+    {6,6},{6,6},{6,6},  // pix 2
+    {6,6},{6,6},{6,6}   // pix 3
+  },
 
     // vertical filter[7], 1/64 units, 6 bits each
-	{
-		 8,         // line n-1
-		 8,         // line n-1
-		10,         // line n
-		12,         // line n
-		10,         // line n
-		 8,         // line n+1
-		 8          // line n+1
-	}
+  {
+     8,         // line n-1
+     8,         // line n-1
+    10,         // line n
+    12,         // line n
+    10,         // line n
+     8,         // line n+1
+     8          // line n+1
+  }
 };
 
 /* 240 lines progressive (NTSC or PAL 60Hz) */
 GXRModeObj TV60hz_240p = 
 {
-  VI_TVMODE_EURGB60_DS,      // viDisplayMode
+  VI_TVMODE_EURGB60_DS,// viDisplayMode
   640,             // fbWidth
   240,             // efbHeight
   240,             // xfbHeight
-  (VI_MAX_WIDTH_NTSC - 720)/2,        // viXOrigin
-  (VI_MAX_HEIGHT_NTSC/2 - 480/2)/2,       // viYOrigin
+  (VI_MAX_WIDTH_NTSC - 720)/2,      // viXOrigin
+  (VI_MAX_HEIGHT_NTSC/2 - 480/2)/2, // viYOrigin
   720,             // viWidth
   480,             // viHeight
   VI_XFBMODE_SF,   // xFBmode
@@ -175,34 +175,34 @@ GXRModeObj TV60hz_240p =
   GX_FALSE,        // aa
 
     // sample points arranged in increasing Y order
-	{
-		{6,6},{6,6},{6,6},  // pix 0, 3 sample points, 1/12 units, 4 bits each
-		{6,6},{6,6},{6,6},  // pix 1
-		{6,6},{6,6},{6,6},  // pix 2
-		{6,6},{6,6},{6,6}   // pix 3
-	},
+  {
+    {6,6},{6,6},{6,6},  // pix 0, 3 sample points, 1/12 units, 4 bits each
+    {6,6},{6,6},{6,6},  // pix 1
+    {6,6},{6,6},{6,6},  // pix 2
+    {6,6},{6,6},{6,6}   // pix 3
+  },
 
   // vertical filter[7], 1/64 units, 6 bits each
-	{
-		  0,         // line n-1
-		  0,         // line n-1
-		 21,         // line n
-		 22,         // line n
-		 21,         // line n
-		  0,         // line n+1
-		  0          // line n+1
-	}
+  {
+      0,         // line n-1
+      0,         // line n-1
+     21,         // line n
+     22,         // line n
+     21,         // line n
+      0,         // line n+1
+      0          // line n+1
+  }
 };
 
 /* 240 lines interlaced (NTSC or PAL 60Hz) */
 GXRModeObj TV60hz_240i = 
 {
-    VI_TVMODE_EURGB60_INT,     // viDisplayMode
+    VI_TVMODE_EURGB60_INT,// viDisplayMode
     640,             // fbWidth
     240,             // efbHeight
     240,             // xfbHeight
-    (VI_MAX_WIDTH_NTSC - 720)/2,        // viXOrigin
-    (VI_MAX_HEIGHT_NTSC/2 - 480/2)/2,       // viYOrigin
+    (VI_MAX_WIDTH_NTSC - 720)/2,      // viXOrigin
+    (VI_MAX_HEIGHT_NTSC/2 - 480/2)/2, // viYOrigin
     720,             // viWidth
     480,             // viHeight
     VI_XFBMODE_SF,   // xFBmode
@@ -210,34 +210,34 @@ GXRModeObj TV60hz_240i =
     GX_FALSE,        // aa
 
     // sample points arranged in increasing Y order
-	{
-		{3,2},{9,6},{3,10},  // pix 0, 3 sample points, 1/12 units, 4 bits each
-		{3,2},{9,6},{3,10},  // pix 1
-		{9,2},{3,6},{9,10},  // pix 2
-		{9,2},{3,6},{9,10}   // pix 3
-	},
+  {
+    {3,2},{9,6},{3,10},  // pix 0, 3 sample points, 1/12 units, 4 bits each
+    {3,2},{9,6},{3,10},  // pix 1
+    {9,2},{3,6},{9,10},  // pix 2
+    {9,2},{3,6},{9,10}   // pix 3
+  },
 
     // vertical filter[7], 1/64 units, 6 bits each
-	{
-		 0,         // line n-1
-		 0,         // line n-1
-		21,         // line n
-		22,         // line n
-		21,         // line n
-		 0,         // line n+1
-		 0          // line n+1
-	}
+  {
+     0,         // line n-1
+     0,         // line n-1
+    21,         // line n
+    22,         // line n
+    21,         // line n
+     0,         // line n+1
+     0          // line n+1
+  }
 };
 
 /* 480 lines interlaced (NTSC or PAL 60Hz) */
 GXRModeObj TV60hz_480i = 
 {
-  VI_TVMODE_EURGB60_INT,     // viDisplayMode
+  VI_TVMODE_EURGB60_INT,// viDisplayMode
   640,             // fbWidth
   480,             // efbHeight
   480,             // xfbHeight
-  (VI_MAX_WIDTH_NTSC - 720)/2,        // viXOrigin
-  (VI_MAX_HEIGHT_NTSC - 480)/2,       // viYOrigin
+  (VI_MAX_WIDTH_NTSC - 720)/2,  // viXOrigin
+  (VI_MAX_HEIGHT_NTSC - 480)/2, // viYOrigin
   720,             // viWidth
   480,             // viHeight
   VI_XFBMODE_DF,   // xFBmode
@@ -245,29 +245,29 @@ GXRModeObj TV60hz_480i =
   GX_FALSE,        // aa
 
     // sample points arranged in increasing Y order
-	{
-		{6,6},{6,6},{6,6},  // pix 0, 3 sample points, 1/12 units, 4 bits each
-		{6,6},{6,6},{6,6},  // pix 1
-		{6,6},{6,6},{6,6},  // pix 2
-		{6,6},{6,6},{6,6}   // pix 3
-	},
+  {
+    {6,6},{6,6},{6,6},  // pix 0, 3 sample points, 1/12 units, 4 bits each
+    {6,6},{6,6},{6,6},  // pix 1
+    {6,6},{6,6},{6,6},  // pix 2
+    {6,6},{6,6},{6,6}   // pix 3
+  },
 
     // vertical filter[7], 1/64 units, 6 bits each
-	{
-		 8,         // line n-1
-		 8,         // line n-1
-		10,         // line n
-		12,         // line n
-		10,         // line n
-		 8,         // line n+1
-		 8          // line n+1
-	}
+  {
+     8,         // line n-1
+     8,         // line n-1
+    10,         // line n
+    12,         // line n
+    10,         // line n
+     8,         // line n+1
+     8          // line n+1
+  }
 };
 
 /* TV Modes table */
 GXRModeObj *tvmodes[6] = {
-	 &TV60hz_240p, &TV60hz_240i, &TV60hz_480i,  /* 60hz modes */
-	 &TV50hz_288p, &TV50hz_288i, &TV50hz_576i   /* 50Hz modes */
+   &TV60hz_240p, &TV60hz_240i, &TV60hz_480i,  /* 60hz modes */
+   &TV50hz_288p, &TV50hz_288i, &TV50hz_576i   /* 50Hz modes */
 };
 
 typedef struct tagcamera
@@ -279,7 +279,7 @@ typedef struct tagcamera
 
 /*** Square Matrix
      This structure controls the size of the image on the screen.
-	 Think of the output as a -80 x 80 by -60 x 60 graph.
+   Think of the output as a -80 x 80 by -60 x 60 graph.
 ***/
 static s16 square[] ATTRIBUTE_ALIGN (32) =
 {
@@ -287,10 +287,10 @@ static s16 square[] ATTRIBUTE_ALIGN (32) =
    * X,   Y,  Z
    * Values set are for roughly 4:3 aspect
    */
-	-HASPECT,  VASPECT, 0,	// 0
-   HASPECT,  VASPECT, 0,	// 1
-	 HASPECT, -VASPECT, 0,	// 2
-	-HASPECT, -VASPECT, 0,	// 3
+  -HASPECT,  VASPECT, 0,  // 0
+   HASPECT,  VASPECT, 0,  // 1
+   HASPECT, -VASPECT, 0,  // 2
+  -HASPECT, -VASPECT, 0,  // 3
 };
 
 static camera cam = {
@@ -402,23 +402,23 @@ static void gxScale(GXRModeObj *rmode)
     /* original aspect ratio */
     /* the following values have been detected from comparison with a real 50/60hz Mega Drive */
     if (config.overscan)
-	  {
+    {
       /* borders are emulated */
-		  xscale = 358 + ((reg[12] & 1)*2) - gc_pal;
+      xscale = 358 + ((reg[12] & 1)*2) - gc_pal;
       yscale = vdp_pal + ((gc_pal && !config.render) ? 143 : 120);
     }
     else
     {
       /* borders are simulated (black) */
-	    xscale = 325 + ((reg[12] & 1)*2) - gc_pal;
+      xscale = 325 + ((reg[12] & 1)*2) - gc_pal;
       yscale = bitmap.viewport.h / 2;
-		  if (vdp_pal && (!gc_pal || config.render)) yscale = yscale * 240 / 288;
-		  else if (!vdp_pal && gc_pal && !config.render) yscale = yscale * 288 / 240;
+      if (vdp_pal && (!gc_pal || config.render)) yscale = yscale * 240 / 288;
+      else if (!vdp_pal && gc_pal && !config.render) yscale = yscale * 288 / 240;
     }
 
     xshift = config.xshift;
     yshift = 2 - vdp_pal + 2*(gc_pal & !config.render) + config.yshift;
-	}
+  }
   else
   {
     /* manual aspect ratio (default is fullscreen) */
@@ -440,8 +440,8 @@ static void gxScale(GXRModeObj *rmode)
     yscale += config.yscale;
 
     xshift = config.xshift;
-		yshift = config.yshift;
-	}
+    yshift = config.yshift;
+  }
 
   /* Double resolution modes */
   if (config.render)
@@ -488,9 +488,9 @@ static void gxScale(GXRModeObj *rmode)
 
   /* update GX scaler (Vertex Position Matrix) */
   square[6] = square[3]  =  xscale + xshift;
-	square[0] = square[9]  = -xscale + xshift;
+  square[0] = square[9]  = -xscale + xshift;
   square[4] = square[1]  =  yscale + yshift;
-	square[7] = square[10] =  -yscale + yshift;
+  square[7] = square[10] =  -yscale + yshift;
 
   DCFlushRange (square, 32);
   GX_InvVtxCache ();
@@ -499,7 +499,7 @@ static void gxScale(GXRModeObj *rmode)
 /* Reinitialize Video */
 void ogc_video__reset()
 {
-	Mtx p;
+  Mtx p;
   GXRModeObj *rmode;
 
   /* 50Hz/60Hz mode */
@@ -522,18 +522,18 @@ void ogc_video__reset()
 
   /* Set current TV mode */  
   if (config.render) rmode = tvmodes[gc_pal*3 + 2];
-	else rmode = tvmodes[gc_pal*3 + interlaced];
+  else rmode = tvmodes[gc_pal*3 + interlaced];
 
   /* Aspect ratio */
   gxScale(rmode);
 
   /* Configure VI */
   VIDEO_Configure (rmode);
-	VIDEO_ClearFrameBuffer(rmode, xfb[whichfb], COLOR_BLACK);
-	VIDEO_Flush();
-	VIDEO_WaitVSync();
-	if (rmode->viTVMode & VI_NON_INTERLACE) VIDEO_WaitVSync();
-	else while (VIDEO_GetNextField())  VIDEO_WaitVSync();
+  VIDEO_ClearFrameBuffer(rmode, xfb[whichfb], COLOR_BLACK);
+  VIDEO_Flush();
+  VIDEO_WaitVSync();
+  if (rmode->viTVMode & VI_NON_INTERLACE) VIDEO_WaitVSync();
+  else while (VIDEO_GetNextField())  VIDEO_WaitVSync();
 
   /* Configure GX */
   GX_SetViewport (0.0F, 0.0F, rmode->fbWidth, rmode->efbHeight, 0.0F, 1.0F);
@@ -596,7 +596,7 @@ void ogc_video__update()
     ogc_video__reset();
 
     /* reinitialize texture */
-	  GX_InitTexObj (&texobj, texturemem, vwidth * 4, vheight * 4, GX_TF_RGB565, GX_CLAMP, GX_CLAMP, GX_FALSE);
+    GX_InitTexObj (&texobj, texturemem, vwidth * 4, vheight * 4, GX_TF_RGB565, GX_CLAMP, GX_CLAMP, GX_FALSE);
     
     /* enable/disable bilinear filtering */
     if (!config.bilinear)

@@ -28,12 +28,12 @@
 #define MAX_DEVICES (8)
 
 /* Device types */
-#define DEVICE_3BUTTON      (0x00)	/* 3-button gamepad */
-#define DEVICE_6BUTTON      (0x01)	/* 6-button gamepad */
-#define DEVICE_LIGHTGUN     (0x02)	/* Sega Menacer or Konami Justifier */
-#define DEVICE_MOUSE	    	(0x03)	/* Sega Mouse */
-#define DEVICE_2BUTTON      (0x04)	/* 2-button gamepad (not supported) */
-#define NO_DEVICE						(0x0F)	/* unconnected */
+#define DEVICE_3BUTTON      (0x00)  /* 3-button gamepad */
+#define DEVICE_6BUTTON      (0x01)  /* 6-button gamepad */
+#define DEVICE_LIGHTGUN     (0x02)  /* Sega Menacer or Konami Justifier */
+#define DEVICE_MOUSE        (0x03)  /* Sega Mouse */
+#define DEVICE_2BUTTON      (0x04)  /* 2-button gamepad (not supported) */
+#define NO_DEVICE           (0x0F)  /* unconnected */
 
 /* Input bitmasks */
 #define INPUT_MODE      (0x00000800)
@@ -53,10 +53,10 @@
 #define NO_SYSTEM           (0) /* Unconnected Port*/
 #define SYSTEM_MOUSE        (1) /* Sega Mouse */
 #define SYSTEM_GAMEPAD      (2) /* Single Gamepad */
-#define SYSTEM_MENACER      (3)	/* Sega Menacer (port 2) */
-#define SYSTEM_JUSTIFIER    (4)	/* Konami Justifier (port 2) */
-#define SYSTEM_TEAMPLAYER   (5)	/* Sega TeamPlayer */
-#define SYSTEM_WAYPLAY      (6)	/* EA 4-Way Play (use both ports) */
+#define SYSTEM_MENACER      (3) /* Sega Menacer (port 2) */
+#define SYSTEM_JUSTIFIER    (4) /* Konami Justifier (port 2) */
+#define SYSTEM_TEAMPLAYER   (5) /* Sega TeamPlayer */
+#define SYSTEM_WAYPLAY      (6) /* EA 4-Way Play (use both ports) */
 
 /* Players Inputs */
 #define PLAYER_1A   (0)
@@ -76,7 +76,7 @@ typedef struct
   uint8   system[2];            /* Can be any of the SYSTEM_* bitmasks */
   uint8   max;                  /* maximum number of connected devices */
   uint8   current;              /* current PAD number (4WAYPLAY) */
-  int     analog[3][2];       /* analog devices */
+  int     analog[3][2];         /* analog devices */
   int     x_offset;
   int     y_offset;
 } t_input;
