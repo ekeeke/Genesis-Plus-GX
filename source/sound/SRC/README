@@ -22,8 +22,8 @@ Win32
 There are detailed instructions for building libsamplerate on Win32 
 in the file
 
-	doc/win32.html
-	
+  doc/win32.html
+  
 
 MacOSX
 ------
@@ -36,15 +36,15 @@ OTHER PLATFORMS
 To compile libsamplerate on platforms which have a Bourne Shell compatible
 shell, an ANSI C compiler and a make utility should require no more that
 the following three commands :
-		./configure
-		make
-		make install
-		
+    ./configure
+    make
+    make install
+    
 CONTACTS
 --------
 
 libsamplerate was written by Erik de Castro Lopo (erikd AT mega-nerd DOT com).  
 The libsamplerate home page is at :
 
-	http://www.mega-nerd.com/libsamplerate/
+  http://www.mega-nerd.com/libsamplerate/
 

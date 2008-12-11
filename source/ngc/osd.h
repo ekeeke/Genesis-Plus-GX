@@ -16,11 +16,10 @@
 #include "ogc_audio.h"
 #include "ogc_video.h"
 #include "config.h"
-#include "history.h"
-
-#define DEFAULT_PATH "/genplus"
 
 #define update_input() ogc_input__update()
+
+#define DEFAULT_PATH "/genplus"
 
 /* globals */
 extern u32 diff_usec(long long start,long long end);
@@ -35,9 +34,6 @@ extern void MainMenu();
 extern void set_region();
 extern int ManageSRAM(u8 direction, u8 device);
 extern int ManageState(u8 direction, u8 device);
-extern int OpenDVD();
-extern int OpenFAT(char *name);
-extern int OpenHistory();
 extern void memfile_autosave();
 extern void memfile_autoload();
 

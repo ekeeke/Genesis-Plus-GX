@@ -19,7 +19,7 @@
 /*
 ** This code is part of Secret Rabibt Code aka libsamplerate. A commercial
 ** use license for this code is available, please see:
-**		http://www.mega-nerd.com/SRC/procedure.html
+**    http://www.mega-nerd.com/SRC/procedure.html
 */
 
 /*
@@ -32,10 +32,10 @@
 */
 
 static const struct fastest_coeffs_s
-{	int increment ;
-	coeff_t coeffs [2464] ;
+{  int increment ;
+  coeff_t coeffs [2464] ;
 } fastest_coeffs =
-{	128,
+{  128,
 {
  8.31472372954840555082e-01,
  8.31414005540308198583e-01,
@@ -2500,6 +2500,6 @@ static const struct fastest_coeffs_s
 -3.59691078491283933177e-07,
 -2.38952398011216803052e-07,
 -1.22889677382464548894e-07,
- 0.0	/* Need a final zero coefficient */
+ 0.0  /* Need a final zero coefficient */
 }
 } ; /* fastest_coeffs */

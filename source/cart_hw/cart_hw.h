@@ -30,15 +30,15 @@
 /* Hardware description */
 typedef struct
 {
-  uint8 regs[4];											/* internal registers (R/W) */
-  uint32 mask[4];											/* registers address mask */
-  uint32 addr[4];											/* registers address */
-  uint32 realtec;    /* bit 0: realtec mapper detected, bit 1: bootrom enabled */
-  uint32 bankshift;  /* cartridge with bankshift mecanism */
-  unsigned int (*time_r)(unsigned int address);				/* !TIME signal ($a130xx) read handler  */
-  void (*time_w)(unsigned int address, unsigned int data);	/* !TIME signal ($a130xx) write handler */
-  unsigned int (*regs_r)(unsigned int address);				/* cart hardware region ($400000-$7fffff) read handler  */
-  void (*regs_w)(unsigned int address, unsigned int data);	/* cart hardware region ($400000-$7fffff) write handler */
+  uint8 regs[4];                                            /* internal registers (R/W) */
+  uint32 mask[4];                                           /* registers address mask */
+  uint32 addr[4];                                           /* registers address */
+  uint32 realtec;                                           /* bit 0: realtec mapper detected, bit 1: bootrom enabled */
+  uint32 bankshift;                                         /* cartridge with bankshift mecanism */
+  unsigned int (*time_r)(unsigned int address);             /* !TIME signal ($a130xx) read handler  */
+  void (*time_w)(unsigned int address, unsigned int data);  /* !TIME signal ($a130xx) write handler */
+  unsigned int (*regs_r)(unsigned int address);             /* cart hardware region ($400000-$7fffff) read handler  */
+  void (*regs_w)(unsigned int address, unsigned int data);  /* cart hardware region ($400000-$7fffff) write handler */
 } T_CART_HW;
 
 /* global variables */

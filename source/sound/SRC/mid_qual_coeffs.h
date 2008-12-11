@@ -19,7 +19,7 @@
 /*
 ** This code is part of Secret Rabibt Code aka libsamplerate. A commercial
 ** use license for this code is available, please see:
-**		http://www.mega-nerd.com/SRC/procedure.html
+**    http://www.mega-nerd.com/SRC/procedure.html
 */
 
 /*
@@ -32,10 +32,10 @@
 */
 
 static const struct slow_mid_qual_coeffs_s
-{	int increment ;
-	coeff_t coeffs [22438] ;
+{  int increment ;
+  coeff_t coeffs [22438] ;
 } slow_mid_qual_coeffs =
-{	491,
+{  491,
 {
  9.190632349861385109e-01,
  9.190579273831620544e-01,

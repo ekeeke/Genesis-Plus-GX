@@ -1,7 +1,9 @@
 /****************************************************************************
- *  Genesis Plus 1.2a
+ *  menu.c
  *
- *  Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003  Charles Mac Donald
+ *  Genesis Plus GX menu
+ *
+ *  code by Softdev (March 2006), Eke-Eke (2007,2008)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -17,15 +19,13 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- * Nintendo Gamecube Menus
- * Please put any user menus here! - softdev March 12 2006
  ***************************************************************************/
 
 #include "shared.h"
 #include "dvd.h"
 #include "font.h"
-#include "fileio_dvd.h"
-#include "fileio_fat.h"
+#include "file_dvd.h"
+#include "file_fat.h"
 
 #ifdef HW_RVL
 #include <wiiuse/wpad.h>
@@ -896,10 +896,9 @@ static u8 dvd_on = 0;
 int loadmenu ()
 {
   int prevmenu = menu;
-  int ret;
+  int ret,count,size;
   int quit = 0;
 #ifdef HW_RVL
-  int count = 4 + dvd_on;
   char item[5][25] = {
     {"Load Recent"},
     {"Load from SD"},
@@ -908,7 +907,6 @@ int loadmenu ()
     {"Stop DVD Motor"}
   };
 #else
-  int count = 3 + dvd_on;
   char item[4][25] = {
     {"Load Recent"},
     {"Load from SD"},
@@ -921,6 +919,11 @@ int loadmenu ()
   
   while (quit == 0)
   {
+#ifdef HW_RVL
+    count = 4 + dvd_on;
+#else
+    count = 3 + dvd_on;
+#endif
     strcpy (menutitle, "Press B to return");
     ret = domenu (&item[0], count, 0);
     switch (ret)
@@ -937,9 +940,14 @@ int loadmenu ()
       case 2:
 #endif
         load_menu = menu;
-        if (DVD_Open())
+        size = DVD_Open(cart_rom);
+        if (size)
         {
           dvd_on = 1;
+          genromsize = size;
+          memfile_autosave();
+          reloadrom();
+          memfile_autoload();
           return 1;
         }
         break;
@@ -952,18 +960,21 @@ int loadmenu ()
 #endif
         dvd_motor_off();
         dvd_on = 0;
-#ifdef HW_RVL
-        count = 4 + dvd_on;
-#else
-        count = 3 + dvd_on;
-#endif
         menu = load_menu;
         break;
 
       /*** Load from FAT device ***/
       default:
         load_menu = menu;
-        if (FAT_Open(ret)) return 1;
+        size = FAT_Open(ret,cart_rom);
+        if (size)
+        {
+          genromsize = size;
+          memfile_autosave();
+          reloadrom();
+          memfile_autoload();
+          return 1;
+        }
         break;
 
     }

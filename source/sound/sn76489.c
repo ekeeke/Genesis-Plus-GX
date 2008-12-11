@@ -37,7 +37,7 @@ static const int PSGVolumeValues[2][16] = {
   /* These values are taken from a real SMS2's output */
     {892,892,892,760,623,497,404,323,257,198,159,123,96,75,60,0}, /* I can't remember why 892... :P some scaling I did at some point */
   /* these values are true volumes for 2dB drops at each step (multiply previous by 10^-0.1), normalised at 760 */
-	{1516,1205,957,760,603,479,381,303,240,191,152,120,96,76,60,0}
+  {1516,1205,957,760,603,479,381,303,240,191,152,120,96,76,60,0}
 };
 
 static SN76489_Context SN76489[MAX_SN76489];
@@ -126,33 +126,33 @@ void SN76489_Write(int which, int data)
 {
     SN76489_Context *p = &SN76489[which];
 
-	if (data&0x80) {
+  if (data&0x80) {
         /* Latch/data byte  %1 cc t dddd */
         p->LatchedRegister=((data>>4)&0x07);
         p->Registers[p->LatchedRegister]=
             (p->Registers[p->LatchedRegister] & 0x3f0)    /* zero low 4 bits */
             | (data&0xf);                           /* and replace with data */
-	} else {
+  } else {
         /* Data byte        %0 - dddddd */
         if (!(p->LatchedRegister%2)&&(p->LatchedRegister<5))
             /* Tone register */
             p->Registers[p->LatchedRegister]=
                 (p->Registers[p->LatchedRegister] & 0x00f)    /* zero high 6 bits */
                 | ((data&0x3f)<<4);                     /* and replace with data */
-		else
+    else
             /* Other register */
             p->Registers[p->LatchedRegister]=data&0x0f;       /* Replace with data */
     }
     switch (p->LatchedRegister) {
-	case 0:
-	case 2:
+  case 0:
+  case 2:
     case 4: /* Tone channels */
         if (p->Registers[p->LatchedRegister]==0) p->Registers[p->LatchedRegister]=1;    /* Zero frequency changed to 1 to avoid div/0 */
-		break;
+    break;
     case 6: /* Noise */
         p->NoiseShiftRegister=NoiseInitialState;   /* reset shift register */
         p->NoiseFreq=0x10<<(p->Registers[6]&0x3);     /* set noise signal generator frequency */
-		break;
+    break;
     }
 }
 

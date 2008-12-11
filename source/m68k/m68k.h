@@ -69,59 +69,59 @@
 /* CPU types for use in m68k_set_cpu_type() */
 enum
 {
-	M68K_CPU_TYPE_INVALID,
-	M68K_CPU_TYPE_68000,
-	M68K_CPU_TYPE_68008,
-	M68K_CPU_TYPE_68010,
-	M68K_CPU_TYPE_68EC020,
-	M68K_CPU_TYPE_68020,
-	M68K_CPU_TYPE_68030,	/* Supported by disassembler ONLY */
-	M68K_CPU_TYPE_68040		/* Supported by disassembler ONLY */
+  M68K_CPU_TYPE_INVALID,
+  M68K_CPU_TYPE_68000,
+  M68K_CPU_TYPE_68008,
+  M68K_CPU_TYPE_68010,
+  M68K_CPU_TYPE_68EC020,
+  M68K_CPU_TYPE_68020,
+  M68K_CPU_TYPE_68030,  /* Supported by disassembler ONLY */
+  M68K_CPU_TYPE_68040    /* Supported by disassembler ONLY */
 };
 
 /* Registers used by m68k_get_reg() and m68k_set_reg() */
 typedef enum
 {
-	/* Real registers */
-	M68K_REG_D0,		/* Data registers */
-	M68K_REG_D1,
-	M68K_REG_D2,
-	M68K_REG_D3,
-	M68K_REG_D4,
-	M68K_REG_D5,
-	M68K_REG_D6,
-	M68K_REG_D7,
-	M68K_REG_A0,		/* Address registers */
-	M68K_REG_A1,
-	M68K_REG_A2,
-	M68K_REG_A3,
-	M68K_REG_A4,
-	M68K_REG_A5,
-	M68K_REG_A6,
-	M68K_REG_A7,
-	M68K_REG_PC,		/* Program Counter */
-	M68K_REG_SR,		/* Status Register */
-	M68K_REG_SP,		/* The current Stack Pointer (located in A7) */
-	M68K_REG_USP,		/* User Stack Pointer */
-	M68K_REG_ISP,		/* Interrupt Stack Pointer */
-	M68K_REG_MSP,		/* Master Stack Pointer */
-	M68K_REG_SFC,		/* Source Function Code */
-	M68K_REG_DFC,		/* Destination Function Code */
-	M68K_REG_VBR,		/* Vector Base Register */
-	M68K_REG_CACR,		/* Cache Control Register */
-	M68K_REG_CAAR,		/* Cache Address Register */
+  /* Real registers */
+  M68K_REG_D0,    /* Data registers */
+  M68K_REG_D1,
+  M68K_REG_D2,
+  M68K_REG_D3,
+  M68K_REG_D4,
+  M68K_REG_D5,
+  M68K_REG_D6,
+  M68K_REG_D7,
+  M68K_REG_A0,    /* Address registers */
+  M68K_REG_A1,
+  M68K_REG_A2,
+  M68K_REG_A3,
+  M68K_REG_A4,
+  M68K_REG_A5,
+  M68K_REG_A6,
+  M68K_REG_A7,
+  M68K_REG_PC,    /* Program Counter */
+  M68K_REG_SR,    /* Status Register */
+  M68K_REG_SP,    /* The current Stack Pointer (located in A7) */
+  M68K_REG_USP,    /* User Stack Pointer */
+  M68K_REG_ISP,    /* Interrupt Stack Pointer */
+  M68K_REG_MSP,    /* Master Stack Pointer */
+  M68K_REG_SFC,    /* Source Function Code */
+  M68K_REG_DFC,    /* Destination Function Code */
+  M68K_REG_VBR,    /* Vector Base Register */
+  M68K_REG_CACR,    /* Cache Control Register */
+  M68K_REG_CAAR,    /* Cache Address Register */
 
-	/* Assumed registers */
-	/* These are cheat registers which emulate the 1-longword prefetch
+  /* Assumed registers */
+  /* These are cheat registers which emulate the 1-longword prefetch
      * present in the 68000 and 68010.
      */
-	M68K_REG_PREF_ADDR,	/* Last prefetch address */
-	M68K_REG_PREF_DATA,	/* Last prefetch data */
+  M68K_REG_PREF_ADDR,  /* Last prefetch address */
+  M68K_REG_PREF_DATA,  /* Last prefetch data */
 
-	/* Convenience registers */
-	M68K_REG_PPC,		/* Previous value in the program counter */
-	M68K_REG_IR,		/* Instruction register */
-	M68K_REG_CPU_TYPE	/* Type of CPU being run */
+  /* Convenience registers */
+  M68K_REG_PPC,    /* Previous value in the program counter */
+  M68K_REG_IR,    /* Instruction register */
+  M68K_REG_CPU_TYPE  /* Type of CPU being run */
 } m68k_register_t;
 
 /* ======================================================================== */
@@ -180,7 +180,7 @@ _m68k_memory_map m68k_memory_map[256];
 
 /* Read data immediately following the PC */
 #define m68k_read_immediate_16(address) *(uint16 *)(m68k_memory_map[((address)>>16)&0xff].base + ((address) & 0xffff))
-#define m68k_read_immediate_32(address) (m68k_read_immediate_16(address) << 16) |	(m68k_read_immediate_16(address+2))
+#define m68k_read_immediate_32(address) (m68k_read_immediate_16(address) << 16) |  (m68k_read_immediate_16(address+2))
 
 /* Read data relative to the PC */
 #define m68k_read_pcrelative_8(address)  READ_BYTE(m68k_memory_map[((address)>>16)&0xff].base, (address) & 0xffff)

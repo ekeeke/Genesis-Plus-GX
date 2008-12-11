@@ -1,7 +1,9 @@
 /****************************************************************************
- *  Genesis Plus 1.2a
+ *  ggentry.c
  *
- *  Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003  Charles Mac Donald
+ *  Genesis Plus GX Game Genie 
+ *
+ *  code by Softdev (2006), Eke-Eke (2007,2008)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -17,7 +19,6 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- * Nintendo Gamecube Game Genie Entry
  ***************************************************************************/
 
 #include "shared.h"

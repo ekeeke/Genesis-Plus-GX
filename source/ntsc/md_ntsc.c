@@ -38,65 +38,65 @@ md_ntsc_setup_t const md_ntsc_rgb        = { 0, 0, 0, 0,.2,  0,.7, -1, -1,-1, 0,
 
 /* 2 input pixels -> 4 composite samples */
 pixel_info_t const md_ntsc_pixels [alignment_count] = {
-	{ PIXEL_OFFSET( -4, -9 ), { 0.1f, 0.9f, 0.9f, 0.1f } },
-	{ PIXEL_OFFSET( -2, -7 ), { 0.1f, 0.9f, 0.9f, 0.1f } },
+  { PIXEL_OFFSET( -4, -9 ), { 0.1f, 0.9f, 0.9f, 0.1f } },
+  { PIXEL_OFFSET( -2, -7 ), { 0.1f, 0.9f, 0.9f, 0.1f } },
 };
 
 static void correct_errors( md_ntsc_rgb_t color, md_ntsc_rgb_t* out )
 {
-	unsigned i;
-	for ( i = 0; i < rgb_kernel_size / 4; i++ )
-	{
-		md_ntsc_rgb_t error = color -
-				out [i    ] - out [i + 2    +16] - out [i + 4    ] - out [i + 6    +16] -
-				out [i + 8] - out [(i+10)%16+16] - out [(i+12)%16] - out [(i+14)%16+16];
-		CORRECT_ERROR( i + 6 + 16 );
-		/*DISTRIBUTE_ERROR( 2+16, 4, 6+16 );*/
-	}
+  unsigned i;
+  for ( i = 0; i < rgb_kernel_size / 4; i++ )
+  {
+    md_ntsc_rgb_t error = color -
+        out [i    ] - out [i + 2    +16] - out [i + 4    ] - out [i + 6    +16] -
+        out [i + 8] - out [(i+10)%16+16] - out [(i+12)%16] - out [(i+14)%16+16];
+    CORRECT_ERROR( i + 6 + 16 );
+    /*DISTRIBUTE_ERROR( 2+16, 4, 6+16 );*/
+  }
 }
 
 void md_ntsc_init( md_ntsc_t* ntsc, md_ntsc_setup_t const* setup )
 {
-	int entry;
-	init_t impl;
-	if ( !setup )
-		setup = &md_ntsc_composite;
-	init( &impl, setup );
+  int entry;
+  init_t impl;
+  if ( !setup )
+    setup = &md_ntsc_composite;
+  init( &impl, setup );
 
-	for ( entry = 0; entry < md_ntsc_palette_size; entry++ )
-	{
-		float bb = impl.to_float [entry >> 6 & 7];
-		float gg = impl.to_float [entry >> 3 & 7];
-		float rr = impl.to_float [entry      & 7];
+  for ( entry = 0; entry < md_ntsc_palette_size; entry++ )
+  {
+    float bb = impl.to_float [entry >> 6 & 7];
+    float gg = impl.to_float [entry >> 3 & 7];
+    float rr = impl.to_float [entry      & 7];
 
-		float y, i, q = RGB_TO_YIQ( rr, gg, bb, y, i );
+    float y, i, q = RGB_TO_YIQ( rr, gg, bb, y, i );
 
-		int r, g, b = YIQ_TO_RGB( y, i, q, impl.to_rgb, int, r, g );
-		md_ntsc_rgb_t rgb = PACK_RGB( r, g, b );
+    int r, g, b = YIQ_TO_RGB( y, i, q, impl.to_rgb, int, r, g );
+    md_ntsc_rgb_t rgb = PACK_RGB( r, g, b );
 
-		if ( setup->palette_out )
-			RGB_PALETTE_OUT( rgb, &setup->palette_out [entry * 3] );
+    if ( setup->palette_out )
+      RGB_PALETTE_OUT( rgb, &setup->palette_out [entry * 3] );
 
-		if ( ntsc )
-		{
-			gen_kernel( &impl, y, i, q, ntsc->table [entry] );
-			correct_errors( rgb, ntsc->table [entry] );
-		}
-	}
+    if ( ntsc )
+    {
+      gen_kernel( &impl, y, i, q, ntsc->table [entry] );
+      correct_errors( rgb, ntsc->table [entry] );
+    }
+  }
 }
 
 #ifndef MD_NTSC_NO_BLITTERS
 /* modified blitters to work on a line basis with genesis plus renderer*/
 void md_ntsc_blit( md_ntsc_t const* ntsc, MD_NTSC_IN_T const* table, unsigned char* input,
-		int in_width, int vline)
+                   int in_width, int vline)
 {
-	int const chunk_count = in_width / md_ntsc_in_chunk - 1;
+  int const chunk_count = in_width / md_ntsc_in_chunk - 1;
   MD_NTSC_IN_T border = table[0];
 
-	MD_NTSC_BEGIN_ROW( ntsc, border,
-				MD_NTSC_ADJ_IN( table[*input++] ),
-				MD_NTSC_ADJ_IN( table[*input++] ),
-				MD_NTSC_ADJ_IN( table[*input++] ) );
+  MD_NTSC_BEGIN_ROW( ntsc, border,
+        MD_NTSC_ADJ_IN( table[*input++] ),
+        MD_NTSC_ADJ_IN( table[*input++] ),
+        MD_NTSC_ADJ_IN( table[*input++] ) );
 
 #ifdef NGC
   /* directly fill the RGB565 texture */
@@ -112,52 +112,52 @@ void md_ntsc_blit( md_ntsc_t const* ntsc, MD_NTSC_IN_T const* table, unsigned ch
   int n;
 
   for ( n = chunk_count; n; --n )
-	{
-		/* order of input and output pixels must not be altered */
-		MD_NTSC_COLOR_IN( 0, ntsc, MD_NTSC_ADJ_IN( table[*input++] ) );
-		MD_NTSC_RGB_OUT( 0, *line_out++, MD_NTSC_OUT_DEPTH );
-		MD_NTSC_RGB_OUT( 1, *line_out++, MD_NTSC_OUT_DEPTH );
+  {
+    /* order of input and output pixels must not be altered */
+    MD_NTSC_COLOR_IN( 0, ntsc, MD_NTSC_ADJ_IN( table[*input++] ) );
+    MD_NTSC_RGB_OUT( 0, *line_out++, MD_NTSC_OUT_DEPTH );
+    MD_NTSC_RGB_OUT( 1, *line_out++, MD_NTSC_OUT_DEPTH );
 
-		MD_NTSC_COLOR_IN( 1, ntsc, MD_NTSC_ADJ_IN( table[*input++] ) );
-		MD_NTSC_RGB_OUT( 2, *line_out++, MD_NTSC_OUT_DEPTH );
-		MD_NTSC_RGB_OUT( 3, *line_out++, MD_NTSC_OUT_DEPTH );
+    MD_NTSC_COLOR_IN( 1, ntsc, MD_NTSC_ADJ_IN( table[*input++] ) );
+    MD_NTSC_RGB_OUT( 2, *line_out++, MD_NTSC_OUT_DEPTH );
+    MD_NTSC_RGB_OUT( 3, *line_out++, MD_NTSC_OUT_DEPTH );
 
 #ifdef NGC
     line_out += 12;
 #endif
 
-		MD_NTSC_COLOR_IN( 2, ntsc, MD_NTSC_ADJ_IN( table[*input++] ) );
-		MD_NTSC_RGB_OUT( 4, *line_out++, MD_NTSC_OUT_DEPTH );
-		MD_NTSC_RGB_OUT( 5, *line_out++, MD_NTSC_OUT_DEPTH );
+    MD_NTSC_COLOR_IN( 2, ntsc, MD_NTSC_ADJ_IN( table[*input++] ) );
+    MD_NTSC_RGB_OUT( 4, *line_out++, MD_NTSC_OUT_DEPTH );
+    MD_NTSC_RGB_OUT( 5, *line_out++, MD_NTSC_OUT_DEPTH );
 
-		MD_NTSC_COLOR_IN( 3, ntsc, MD_NTSC_ADJ_IN( table[*input++] ) );
-		MD_NTSC_RGB_OUT( 6, *line_out++, MD_NTSC_OUT_DEPTH );
-		MD_NTSC_RGB_OUT( 7, *line_out++, MD_NTSC_OUT_DEPTH );
+    MD_NTSC_COLOR_IN( 3, ntsc, MD_NTSC_ADJ_IN( table[*input++] ) );
+    MD_NTSC_RGB_OUT( 6, *line_out++, MD_NTSC_OUT_DEPTH );
+    MD_NTSC_RGB_OUT( 7, *line_out++, MD_NTSC_OUT_DEPTH );
 
   #ifdef NGC
     line_out += 12;
   #endif
 }
 
-	/* finish final pixels */
-	MD_NTSC_COLOR_IN( 0, ntsc, MD_NTSC_ADJ_IN( table[*input++] ) );
-	MD_NTSC_RGB_OUT( 0, *line_out++, MD_NTSC_OUT_DEPTH );
-	MD_NTSC_RGB_OUT( 1, *line_out++, MD_NTSC_OUT_DEPTH );
+  /* finish final pixels */
+  MD_NTSC_COLOR_IN( 0, ntsc, MD_NTSC_ADJ_IN( table[*input++] ) );
+  MD_NTSC_RGB_OUT( 0, *line_out++, MD_NTSC_OUT_DEPTH );
+  MD_NTSC_RGB_OUT( 1, *line_out++, MD_NTSC_OUT_DEPTH );
 
   MD_NTSC_COLOR_IN( 1, ntsc, border );
-	MD_NTSC_RGB_OUT( 2, *line_out++, MD_NTSC_OUT_DEPTH );
-	MD_NTSC_RGB_OUT( 3, *line_out++, MD_NTSC_OUT_DEPTH );
+  MD_NTSC_RGB_OUT( 2, *line_out++, MD_NTSC_OUT_DEPTH );
+  MD_NTSC_RGB_OUT( 3, *line_out++, MD_NTSC_OUT_DEPTH );
 
 #ifdef NGC
   line_out += 12;
 #endif
 
   MD_NTSC_COLOR_IN( 2, ntsc, border );
-	MD_NTSC_RGB_OUT( 4, *line_out++, MD_NTSC_OUT_DEPTH );
-	MD_NTSC_RGB_OUT( 5, *line_out++, MD_NTSC_OUT_DEPTH );
+  MD_NTSC_RGB_OUT( 4, *line_out++, MD_NTSC_OUT_DEPTH );
+  MD_NTSC_RGB_OUT( 5, *line_out++, MD_NTSC_OUT_DEPTH );
 
-	MD_NTSC_COLOR_IN( 3, ntsc, border );
-	MD_NTSC_RGB_OUT( 6, *line_out++, MD_NTSC_OUT_DEPTH );
-	MD_NTSC_RGB_OUT( 7, *line_out++, MD_NTSC_OUT_DEPTH );
+  MD_NTSC_COLOR_IN( 3, ntsc, border );
+  MD_NTSC_RGB_OUT( 6, *line_out++, MD_NTSC_OUT_DEPTH );
+  MD_NTSC_RGB_OUT( 7, *line_out++, MD_NTSC_OUT_DEPTH );
 }
 #endif
