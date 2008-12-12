@@ -1,7 +1,7 @@
 /****************************************************************************
  *  legal.c
  *
- *  generic legal informations screen
+ *  legal informations screen
  *
  *  code by Softdev (2006), Eke-Eke (2007,2008)
  *

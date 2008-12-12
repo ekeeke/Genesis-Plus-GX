@@ -35,7 +35,7 @@ sms_ntsc_setup_t sms_setup;
 sms_ntsc_t sms_ntsc;
 
 /*** PAL 50hz flag ***/
-int gc_pal = 0;
+BOOL gc_pal = 0;
 
 /*** VI ***/
 unsigned int *xfb[2];  /*** Double buffered            ***/
@@ -44,9 +44,9 @@ GXRModeObj *vmode;     /*** Menu video mode            ***/
 u8 *texturemem;        /*** Texture Data               ***/
 
 /*** GX ***/
-#define TEX_WIDTH         360 * 2
+#define TEX_WIDTH         720
 #define TEX_HEIGHT        576
-#define TEX_SIZE          TEX_WIDTH * TEX_HEIGHT * 2
+#define TEX_SIZE          (TEX_WIDTH * TEX_HEIGHT * 2)
 #define DEFAULT_FIFO_SIZE 256 * 1024
 #define HASPECT           320
 #define VASPECT           240

@@ -88,7 +88,6 @@ void memfile_autosave()
     ManageState(0,config.freeze_auto);
 
   SILENT = 0;
-  return;
 }
 
 
@@ -605,7 +604,7 @@ int ManageState (u8 direction, u8 device)
         CARD_Unmount (CARDSLOT);
 
         /*** Load State ***/
-          state_load(&savebuffer[2112]);
+        state_load(&savebuffer[2112]);
 
         /*** Inform user ***/
         sprintf (action, "Loaded %d bytes successfully", size);

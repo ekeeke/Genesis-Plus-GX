@@ -22,9 +22,9 @@
  ***************************************************************************/
 
 #include "shared.h"
-#include "gcaram.h"
 #include "font.h"
 #include "history.h"
+#include "gcaram.h"
 
 #ifdef HW_DOL
 #include "dvd.h"
@@ -47,7 +47,7 @@ void Power_Off(void)
 
 
 /***************************************************************************
- * Genesis Virtual Machine
+ * Genesis Plus Virtual Machine
  *
  ***************************************************************************/
 static void load_bios()
@@ -57,7 +57,7 @@ static void load_bios()
   /* reset BIOS found flag */
   config.bios_enabled &= ~2;
 
-  /* open file */
+  /* open BIOS file */
   sprintf (pathname, "%s/BIOS.bin",DEFAULT_PATH);
   FILE *fp = fopen(pathname, "rb");
   if (fp == NULL) return;
@@ -82,9 +82,12 @@ static void init_machine (void)
   /* Allocate cart_rom here */
   cart_rom = memalign(32, 10 * 1024 * 1024);
 
+  /* BIOS support */
+  load_bios();
+
   /* allocate global work bitmap */
   memset (&bitmap, 0, sizeof (bitmap));
-  bitmap.width  = 360 * 2;
+  bitmap.width  = 720;
   bitmap.height = 576;
   bitmap.depth  = 16;
   bitmap.granularity = 2;
@@ -93,15 +96,11 @@ static void init_machine (void)
   bitmap.viewport.h = 224;
   bitmap.viewport.x = 0;
   bitmap.viewport.y = 0;
-  bitmap.remap = 1;
   bitmap.data = texturemem;
 
   /* default system */
   input.system[0] = SYSTEM_GAMEPAD;
   input.system[1] = SYSTEM_GAMEPAD;
-
-  /* BIOS support */
-  load_bios();
 }
 
 /**************************************************
@@ -175,7 +174,7 @@ int main (int argc, char *argv[])
   set_history_defaults();
   history_load();
 
-  /* Initialize Genesis Virtual Machine */
+  /* Initialize Virtual Machine */
   init_machine ();
   
   /* Load any injected rom */

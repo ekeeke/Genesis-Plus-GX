@@ -66,7 +66,7 @@ t_config config;
 extern void config_save();
 extern void config_load();
 extern void set_config_defaults(void);
-extern bool fat_enabled;
+
 
 #endif /* _CONFIG_H_ */
 

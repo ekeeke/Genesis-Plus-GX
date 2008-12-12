@@ -41,5 +41,6 @@ extern int peripherals;
 extern int frameticker;
 extern int FramesPerSecond;
 extern int Shutdown;
+extern bool fat_enabled;
 
 #endif /* _OSD_H_ */

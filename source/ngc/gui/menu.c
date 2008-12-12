@@ -234,11 +234,11 @@ void miscmenu ()
     if (config.bios_enabled & 1) sprintf (items[2], "Use BIOS: ON");
     else sprintf (items[2], "Use BIOS: OFF");
     sprintf (items[3], "SVP Cycles: %d", SVP_cycles);
-    if (config.sram_auto == 0) sprintf (items[4], "Auto SRAM: SDCARD");
+    if (config.sram_auto == 0) sprintf (items[4], "Auto SRAM: FAT");
     else if (config.sram_auto == 1) sprintf (items[4], "Auto SRAM: MCARD A");
     else if (config.sram_auto == 2) sprintf (items[4], "Auto SRAM: MCARD B");
     else sprintf (items[4], "Auto SRAM: OFF");
-    if (config.freeze_auto == 0) sprintf (items[5], "Auto FREEZE: SDCARD");
+    if (config.freeze_auto == 0) sprintf (items[5], "Auto FREEZE: FAT");
     else if (config.freeze_auto == 1) sprintf (items[5], "Auto FREEZE: MCARD A");
     else if (config.freeze_auto == 2) sprintf (items[5], "Auto FREEZE: MCARD B");
     else sprintf (items[5], "Auto FREEZE: OFF");
@@ -816,7 +816,7 @@ int loadsavemenu (int which)
 
   while (quit == 0)
   {
-    if (device == 0) sprintf(items[0], "Device: SDCARD");
+    if (device == 0) sprintf(items[0], "Device: FAT");
     else if (device == 1) sprintf(items[0], "Device: MCARD A");
     else if (device == 2) sprintf(items[0], "Device: MCARD B");
 

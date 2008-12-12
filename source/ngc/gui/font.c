@@ -344,7 +344,6 @@ u8 SILENT = 0;
 
 void SetScreen ()
 {
-
   VIDEO_SetNextFramebuffer (xfb[whichfb]);
   VIDEO_Flush ();
   VIDEO_WaitVSync ();
