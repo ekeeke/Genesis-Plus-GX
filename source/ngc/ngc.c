@@ -212,7 +212,7 @@ int main (int argc, char *argv[])
       {
         /* Delay */
         while (diff_usec(prev, now) < usBetweenFrames) now = gettime();
-        
+
         /* Render Frame */
         prev = now;
         system_frame(0);
@@ -232,11 +232,11 @@ int main (int argc, char *argv[])
       {
         /* Delay */
         while (!frameticker) usleep(10);
-        
+
         system_frame (0);
         RenderedFrameCount++;
       }
-      
+
       frameticker--;
     }
 
@@ -264,7 +264,6 @@ int main (int argc, char *argv[])
       ConfigRequested = 0;
 
       /* reset frame timings */
-      frameticker = 0;
       prev = gettime();
       FrameCount = 0;
       RenderedFrameCount = 0;

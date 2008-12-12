@@ -25,9 +25,9 @@
 #include <sys/dir.h>
 
 #ifdef HW_RVL
-#define CONFIG_VERSION "GENPLUS 1.2.3W"
+#define CONFIG_VERSION "GENPLUS 1.3.0W"
 #else
-#define CONFIG_VERSION "GENPLUS 1.2.3G"
+#define CONFIG_VERSION "GENPLUS 1.3.0G"
 #endif
 
 void config_save()

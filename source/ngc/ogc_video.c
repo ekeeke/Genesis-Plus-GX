@@ -532,11 +532,13 @@ void ogc_video__reset()
 
   /* Configure VI */
   VIDEO_Configure (rmode);
-  VIDEO_ClearFrameBuffer(rmode, xfb[whichfb], COLOR_BLACK);
   VIDEO_Flush();
   VIDEO_WaitVSync();
   if (rmode->viTVMode & VI_NON_INTERLACE) VIDEO_WaitVSync();
   else while (VIDEO_GetNextField())  VIDEO_WaitVSync();
+
+  /* reset frame counter */
+  frameticker = 0;
 
   /* Configure GX */
   GX_SetViewport (0.0F, 0.0F, rmode->fbWidth, rmode->efbHeight, 0.0F, 1.0F);
@@ -582,7 +584,7 @@ void ogc_video__update()
   if (bitmap.viewport.changed)
   {
     bitmap.viewport.changed = 0;
-    
+
     /* update texture size */
     vwidth  = bitmap.viewport.w + 2 * bitmap.viewport.x;
     vheight = bitmap.viewport.h + 2 * bitmap.viewport.y;
@@ -696,7 +698,16 @@ void ogc_video__init(void)
       config.tv_mode = 2;
       break;
   }
-   
+
+#ifdef HW_RVL
+  /* Widescreen fix */
+  if( CONF_GetAspectRatio() )
+  {
+    vmode->viWidth    = 678;
+    vmode->viXOrigin  = (VI_MAX_WIDTH_NTSC - 678)/2;
+  }
+#endif
+
   /* Configure video mode */
   VIDEO_Configure (vmode);
 
@@ -719,7 +730,7 @@ void ogc_video__init(void)
 
   /* Enable Video Interface */
   VIDEO_SetBlack (FALSE);
-  
+
   /* Update video settings for next VBlank */
   VIDEO_Flush ();
 

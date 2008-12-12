@@ -26,7 +26,7 @@ Genesis Plus for Gamecube
 - removed embedded font, (re)enabled IPL font support: now should works for Qoob users too (thanks to emukiddid)
 - fixed "Reset" button behavior, now acts more like Genesis Reset button ;-)
 - patched libfat for faster SDCARD accesses (thanks to svpe)
-- SRAM and SaveState files are now based on the ROM filename
+- SRAM and SaveState filenames are now based on the ROM filename (for FAT devices only)
 - various bugfixes, menu tweaks and code cleanup
 
 [NGC only]
@@ -36,6 +36,7 @@ Genesis Plus for Gamecube
 - implemented fast scrolling in menu using Wiimote D-PAD
 - added "Power" button support
 - added USB Storage support
+- Widescreen menu fix
 - *new* libogc 1.7.0 features: SDHC support, Wiimote shutdown button support
 
 

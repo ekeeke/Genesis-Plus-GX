@@ -1216,6 +1216,10 @@ void MainMenu ()
 #endif
 
   /*** Reinitialize GX ***/
+  VIDEO_ClearFrameBuffer(vmode, xfb[whichfb], COLOR_BLACK);
+  VIDEO_Flush();
+  VIDEO_WaitVSync();
+  VIDEO_WaitVSync();
   ogc_video__reset();
   odd_frame = 1;
 
