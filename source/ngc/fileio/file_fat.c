@@ -195,7 +195,7 @@ int FAT_LoadFile (u8 *buffer)
   if (length > 0)
   {
     /* Add/move the file to the top of the history. */
-    history_add_file(fatdir, filelist[selection].filename);
+    if(!useHistory) history_add_file(fatdir, filelist[selection].filename);
 
     /* full filename */
     char fname[MAXPATHLEN];

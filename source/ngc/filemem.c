@@ -24,6 +24,7 @@
 #include "shared.h"
 #include "font.h"
 #include "saveicon.h"
+#include "filesel.h"
 
 #ifndef HW_RVL
 #include "dvd.h"
@@ -97,7 +98,7 @@ void memfile_autosave()
  * We use the same buffer as for Memory Card manager
  * Function returns TRUE on success.
  *****************************************************************************/
-static int SD_ManageFile(char *filename, int direction, int filetype)
+static int FAT_ManageFile(char *filename, int direction, int filetype)
 {
   char pathname[MAXPATHLEN];
   int done = 0;
@@ -241,7 +242,24 @@ int CardFileExists (char *filename, u8 slot)
  ****************************************************************************/
 int ManageSRAM (u8 direction, u8 device)
 {
-  char filename[128];
+  if (!genromsize) return 0;
+
+  char filename[MAXJOLIET];
+
+  /* clean buffer */
+  memset(savebuffer, 0, 0x24000);
+
+  if (direction) ShowAction ("Loading SRAM ...");
+  else ShowAction ("Saving SRAM ...");
+
+  if (device == 0)
+  {
+    /* FAT support */
+    sprintf (filename, "%s.srm", rom_filename);
+    return FAT_ManageFile(filename,direction,1);
+  }
+
+  /* Memory CARD support */
   char action[80];
   int CardError;
   unsigned int SectorSize;
@@ -251,26 +269,15 @@ int ManageSRAM (u8 direction, u8 device)
   int sbo;
   unsigned long inzipped,outzipped;
 
-  if (!genromsize) return 0;
-
-  /* clean buffer */
-  memset(savebuffer, 0, 0x24000);
-
-  if (direction) ShowAction ("Loading SRAM ...");
-  else ShowAction ("Saving SRAM ...");
-
   /* First, build a filename */
   sprintf (filename, "MD-%04X.srm", realchecksum);
   strcpy (comment[1], filename);
 
-  /* device is SDCARD, let's go */
-  if (device == 0) return SD_ManageFile(filename,direction,1);
-
   /* set MCARD slot nr. */
   u8 CARDSLOT = device - 1;
 
-  /* device is MCARD, we continue */
-  if (direction == 0) /*** Saving ***/
+  /* Saving */
+  if (direction == 0)
   {
     /*** Build the output buffer ***/
     memcpy (&savebuffer, &icon, 2048);
@@ -432,7 +439,24 @@ int ManageSRAM (u8 direction, u8 device)
  ****************************************************************************/
 int ManageState (u8 direction, u8 device)
 {
-  char filename[128];
+  if (!genromsize) return 0;
+
+  char filename[MAXJOLIET];
+
+  /* clean buffer */
+  memset(savebuffer, 0, 0x24000);
+
+  if (direction) ShowAction ("Loading State ...");
+  else ShowAction ("Saving State ...");
+
+  if (device == 0)
+  {
+    /* FAT support */
+    sprintf (filename, "%s.gpz", rom_filename);
+    return FAT_ManageFile(filename,direction,0);
+  }
+
+  /* Memory CARD support */
   char action[80];
   int CardError;
   unsigned int SectorSize;
@@ -442,26 +466,15 @@ int ManageState (u8 direction, u8 device)
   int sbo;
   int state_size = 0;
 
-  if (!genromsize) return 0;
-
-  /* clean buffer */
-  memset(savebuffer, 0, 0x24000);
-
-  if (direction) ShowAction ("Loading State ...");
-  else ShowAction ("Saving State ...");
-
   /* First, build a filename */
   sprintf (filename, "MD-%04X.gpz", realchecksum);
   strcpy (comment[1], filename);
 
-  /* device is SDCARD, let's go */
-  if (device == 0) return SD_ManageFile(filename,direction,0);
-  
   /* set MCARD slot nr. */
   u8 CARDSLOT = device - 1;
 
-  /* device is MCARD, we continue */
-  if (direction == 0) /* Saving */
+  /* Saving */
+  if (direction == 0)
   {
     /* Build the output buffer */
     memcpy (&savebuffer, &icon, 2048);

@@ -129,7 +129,7 @@ int UnZipBuffer (unsigned char *outbuffer, u64 discoffset, char *filename)
   /*** Copy PKZip header to local, used as info ***/
   memcpy (&pkzip, &readbuffer, sizeof (PKZIPHEADER));
 
-  sprintf (msg, "Unzipping %d bytes ... Wait", FLIP32 (pkzip.uncompressedSize));
+  sprintf (msg, "Unzipping %d bytes ...", FLIP32 (pkzip.uncompressedSize));
   ShowAction (msg);
 
   /*** Prepare the zip stream ***/

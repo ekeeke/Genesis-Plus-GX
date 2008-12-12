@@ -655,7 +655,7 @@ void ogc_input__set_defaults(void)
   int j;
   for (i=0; i<4; i++)
   {
-    /* autodetect connected controller */
+    /* try to autodetect connected controller */
     exp = 255;
     WPAD_Probe(i, &exp);
     if (exp <= WPAD_EXP_CLASSIC)

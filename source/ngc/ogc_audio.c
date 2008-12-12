@@ -52,14 +52,14 @@ static void AudioSwitchBuffers()
   AUDIO_StartDMA();
 
   /* increment soundbuffers index */
+  playbuffer++;
+  playbuffer &= 0xf;
+
   if (playbuffer == mixbuffer)
   {
     playbuffer--;
     if ( playbuffer < 0 ) playbuffer = 15;
   }
-  playbuffer++;
-  playbuffer &= 0xf;
-
   IsPlaying = 1;
 }
 

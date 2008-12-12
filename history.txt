@@ -1,7 +1,7 @@
 Genesis Plus for Gamecube
 ------------------------------
 
-11/12/2008:
+12/12/2008:
 -----------
 [Genesis]
 - YM2612 bugfixes (MAME core):
@@ -26,8 +26,8 @@ Genesis Plus for Gamecube
 - removed embedded font, (re)enabled IPL font support: now should works for Qoob users too (thanks to emukiddid)
 - fixed "Reset" button behavior, now acts more like Genesis Reset button ;-)
 - patched libfat for faster SDCARD accesses (thanks to svpe)
-- various bugfixes and menu tweaks
-
+- SRAM and SaveState files are now based on the ROM filename
+- various bugfixes, menu tweaks and code cleanup
 
 [NGC only]
 - added 480p support in menu

@@ -39,6 +39,7 @@ int haveDVDdir    = 0;
 int haveFATdir    = 0;
 
 FILEENTRIES filelist[MAXFILES];
+char rom_filename[MAXJOLIET];
 
 /***************************************************************************
  * ShowFiles
@@ -80,7 +81,7 @@ int FileSelector(unsigned char *buffer)
   int go_up = 0;
   int ret;
   int i,size;
-  
+
   while (1)
   {
     if (redraw) ShowFiles (offset, selection);
@@ -108,7 +109,7 @@ int FileSelector(unsigned char *buffer)
         redraw = 1;
       }
     }
-    
+
     /* highlight next item */
     else if (p & PAD_BUTTON_DOWN)
     {
@@ -118,7 +119,7 @@ int FileSelector(unsigned char *buffer)
       if ((selection - offset) >= PAGESIZE) offset += PAGESIZE;
       redraw = 1;
     }
-    
+
     /* highlight previous item */
     else if (p & PAD_BUTTON_UP)
     {
@@ -133,7 +134,7 @@ int FileSelector(unsigned char *buffer)
       if (offset < 0) offset = 0;
       redraw = 1;
     }
-    
+
     /* go back one page */
     else if (p & PAD_TRIGGER_L)
     {
@@ -148,7 +149,7 @@ int FileSelector(unsigned char *buffer)
       if (offset < 0) offset = 0;
       redraw = 1;
     }
-    
+
     /* go forward one page */
     else if (p & PAD_TRIGGER_R)
     {
@@ -158,14 +159,14 @@ int FileSelector(unsigned char *buffer)
       if ((selection - offset) >= PAGESIZE) offset += PAGESIZE;
       redraw = 1;
     }
-        
+
     /* quit */
     if (p & PAD_TRIGGER_Z)
     {
       filelist[selection].filename_offset = 0;
       return 0;
     }
-    
+
     /* open selected file or directory */
     if ((p & PAD_BUTTON_A) || (p & PAD_BUTTON_B))
     {
@@ -178,7 +179,7 @@ int FileSelector(unsigned char *buffer)
          go_up = 1;
          selection = useFAT ? 0 : 1;
       }
-      
+
       /*** This is directory ***/
       if (filelist[selection].flags)
       {
@@ -198,9 +199,20 @@ int FileSelector(unsigned char *buffer)
       /*** This is a file ***/
       else 
       {
+        /* root directory ? */
+        if (go_up) return 0;
+
         /* Load file */
-        if (useFAT) return FAT_LoadFile(buffer);
-        else return  DVD_LoadFile(buffer);
+        if (useFAT) ret = FAT_LoadFile(buffer);
+        else ret = DVD_LoadFile(buffer);
+
+        if (ret)
+        {
+          /* get filename and remove extension */
+          sprintf(rom_filename,"%s", filelist[selection].filename);
+          rom_filename[strlen(rom_filename) - 5] = 0;
+        }
+        return ret;
       }
       redraw = 1;
     }

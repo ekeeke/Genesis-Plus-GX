@@ -167,6 +167,7 @@ int main (int argc, char *argv[])
   }
 
   /* Default Config */
+  legal();
   set_config_defaults();
   config_load();
 
@@ -185,7 +186,6 @@ int main (int argc, char *argv[])
   }
   
   /* Show Menu */
-  legal();
   MainMenu();
   ConfigRequested = 0;
 

@@ -712,8 +712,7 @@ void ConfigureJoypads ()
         break;
 
       case 7:
-        /* special case: wiimote controls lightgun */
-        
+        if (config.input[player].device < 0) break;
         ogc_input__config(config.input[player].port, config.input[player].device, input.padtype[player]);
         break;
 

@@ -45,6 +45,7 @@ typedef struct
 
 /* Global Variables */
 extern FILEENTRIES filelist[MAXFILES];
+extern char rom_filename[MAXJOLIET];
 extern int maxfiles;
 extern int offset;
 extern int selection;
