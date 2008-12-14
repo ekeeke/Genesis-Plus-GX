@@ -294,7 +294,7 @@ void WriteCentre( int y, char *string)
 void WriteCentre_HL( int y, char *string)
 {
   int x,t,h;
-    for (x=t=0; t<strlen(string); t++) x += font_size[(u8)string[t]];
+  for (x=t=0; t<strlen(string); t++) x += font_size[(u8)string[t]];
   if (x>back_framewidth) x = back_framewidth;
   h = x;
   x = (640 - x) >> 1;
@@ -352,7 +352,7 @@ void SetScreen ()
 void ClearScreen ()
 {
   whichfb ^= 1;
-  memcpy (xfb[whichfb], &backdrop, 1280 * 480);
+  memcpy (xfb[whichfb], backdrop, 1280 * 480);
   back_framewidth = 440;
 }
 

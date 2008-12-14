@@ -951,7 +951,6 @@ int loadmenu ()
           sprintf(rom_filename,"%s",filelist[selection].filename);
           rom_filename[strlen(rom_filename) - 4] = 0;
           memfile_autoload();
-          memfile_autoload();
           return 1;
         }
         break;
@@ -978,7 +977,6 @@ int loadmenu ()
           reloadrom();
           sprintf(rom_filename,"%s",filelist[selection].filename);
           rom_filename[strlen(rom_filename) - 4] = 0;
-          memfile_autoload();
           memfile_autoload();
           return 1;
         }

@@ -22,8 +22,6 @@
  ***************************************************************************/
 #include "shared.h"
 
-#include <sys/dir.h>
-
 #ifdef HW_RVL
 #define CONFIG_VERSION "GENPLUS 1.3.0W"
 #else

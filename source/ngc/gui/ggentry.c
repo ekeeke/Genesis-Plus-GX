@@ -173,7 +173,7 @@ void DrawGGCodes ()
     if (i == ggrow)
     {
       /*** Highlight selected ***/
-      WriteCentre_HL (i * fheight + 224, (char *)ggcodes[i]);
+      WriteCentre_HL (i * fheight + 190, (char *)ggcodes[i]);
 
       /*** If editing, highlight the current character ***/
       if (editing)
@@ -185,14 +185,14 @@ void DrawGGCodes ()
         for (j=0; j<gghpos[i]; j++) hpos += font_size[ggcodes[i][j]];
 
         c[0] = ggcodes[i][gghpos[i]];
-        fntDrawBoxFilled (hpos, (i * fheight) + 224, hpos + font_size[c[0]],
-                          ((i + 1) * fheight) + 224, COLOR_YELLOW);
+        fntDrawBoxFilled (hpos, (i * fheight) + 190, hpos + font_size[c[0]],
+                          ((i + 1) * fheight) + 190, COLOR_YELLOW);
         setfontcolour (COLOR_BLUE);
-        write_font (hpos, (i * fheight) + 224, (char *)c);
+        write_font (hpos, (i * fheight) + 190, (char *)c);
         setfontcolour (COLOR_WHITE);
       }
     }
-    else WriteCentre ((i * fheight) + 224, (char *)ggcodes[i]);
+    else WriteCentre ((i * fheight) + 190, (char *)ggcodes[i]);
   }
   SetScreen ();
 }

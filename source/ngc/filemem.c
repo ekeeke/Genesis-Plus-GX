@@ -30,8 +30,6 @@
 #include "dvd.h"
 #endif
 
-#include <sys/dir.h>
-
 /* Support for MemCards  */
 /**
  * libOGC System Work Area
