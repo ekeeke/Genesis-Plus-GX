@@ -1,8 +1,8 @@
 Genesis Plus for Gamecube
 ------------------------------
 
-12/12/2008:
------------
+1.3.0 (14/12/2008):
+-------------------
 [Genesis]
 - YM2612 bugfixes (MAME core):
   .fixed EG Decay->Substain transition when SL & DR are minimals: fix tracks #3 and #9 in "Mega Turrican"
