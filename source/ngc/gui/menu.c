@@ -26,6 +26,7 @@
 #include "font.h"
 #include "file_dvd.h"
 #include "file_fat.h"
+#include "filesel.h"
 
 #ifdef HW_RVL
 #include <wiiuse/wpad.h>
@@ -889,6 +890,7 @@ int filemenu ()
  * Load Rom menu
  *
  ****************************************************************************/
+extern char rom_filename[MAXJOLIET];
 static u8 load_menu = 0;
 static u8 dvd_on = 0;
 
@@ -946,6 +948,9 @@ int loadmenu ()
           genromsize = size;
           memfile_autosave();
           reloadrom();
+          sprintf(rom_filename,"%s",filelist[selection].filename);
+          rom_filename[strlen(rom_filename) - 4] = 0;
+          memfile_autoload();
           memfile_autoload();
           return 1;
         }
@@ -968,9 +973,12 @@ int loadmenu ()
         size = FAT_Open(ret,cart_rom);
         if (size)
         {
-          genromsize = size;
           memfile_autosave();
+          genromsize = size;
           reloadrom();
+          sprintf(rom_filename,"%s",filelist[selection].filename);
+          rom_filename[strlen(rom_filename) - 4] = 0;
+          memfile_autoload();
           memfile_autoload();
           return 1;
         }

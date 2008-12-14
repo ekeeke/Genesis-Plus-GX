@@ -537,8 +537,8 @@ void ogc_video__reset()
   if (rmode->viTVMode & VI_NON_INTERLACE) VIDEO_WaitVSync();
   else while (VIDEO_GetNextField())  VIDEO_WaitVSync();
 
-  /* reset frame counter */
-  frameticker = 0;
+  /* reset frame counter (unless it's interlaced mode change) */
+  if (!interlaced) frameticker = 0;
 
   /* Configure GX */
   GX_SetViewport (0.0F, 0.0F, rmode->fbWidth, rmode->efbHeight, 0.0F, 1.0F);

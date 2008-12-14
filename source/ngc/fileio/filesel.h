@@ -45,7 +45,6 @@ typedef struct
 
 /* Global Variables */
 extern FILEENTRIES filelist[MAXFILES];
-extern char rom_filename[MAXJOLIET];
 extern int maxfiles;
 extern int offset;
 extern int selection;
@@ -56,5 +55,6 @@ extern int haveDVDdir;
 extern int haveFATdir;
 
 extern int FileSelector(unsigned char *buffer);
+extern int FileSortCallback(const void *f1, const void *f2);
 
 #endif

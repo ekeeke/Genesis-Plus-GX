@@ -39,7 +39,6 @@ int haveDVDdir    = 0;
 int haveFATdir    = 0;
 
 FILEENTRIES filelist[MAXFILES];
-char rom_filename[MAXJOLIET];
 
 /***************************************************************************
  * ShowFiles
@@ -64,6 +63,33 @@ static void ShowFiles (int offset, int selection)
     j++;
   }
   SetScreen ();
+}
+
+/***************************************************************************
+ * FileSortCallback (Marty Disibio)
+ *
+ * Quick sort callback to sort file entries with the following order:
+ *   .
+ *   ..
+ *   <dirs>
+ *   <files>
+ ***************************************************************************/ 
+int FileSortCallback(const void *f1, const void *f2)
+{
+  /* Special case for implicit directories */
+  if(((FILEENTRIES *)f1)->filename[0] == '.' || ((FILEENTRIES *)f2)->filename[0] == '.')
+  {
+    if(strcmp(((FILEENTRIES *)f1)->filename, ".") == 0) { return -1; }
+    if(strcmp(((FILEENTRIES *)f2)->filename, ".") == 0) { return 1; }
+    if(strcmp(((FILEENTRIES *)f1)->filename, "..") == 0) { return -1; }
+    if(strcmp(((FILEENTRIES *)f2)->filename, "..") == 0) { return 1; }
+  }
+  
+  /* If one is a file and one is a directory the directory is first. */
+  if(((FILEENTRIES *)f1)->flags == 1 && ((FILEENTRIES *)f2)->flags == 0) return -1;
+  if(((FILEENTRIES *)f1)->flags == 0 && ((FILEENTRIES *)f2)->flags == 1) return 1;
+  
+  return stricmp(((FILEENTRIES *)f1)->filename, ((FILEENTRIES *)f2)->filename);
 }
 
 /****************************************************************************
@@ -203,16 +229,8 @@ int FileSelector(unsigned char *buffer)
         if (go_up) return 0;
 
         /* Load file */
-        if (useFAT) ret = FAT_LoadFile(buffer);
-        else ret = DVD_LoadFile(buffer);
-
-        if (ret)
-        {
-          /* get filename and remove extension */
-          sprintf(rom_filename,"%s", filelist[selection].filename);
-          rom_filename[strlen(rom_filename) - 5] = 0;
-        }
-        return ret;
+        if (useFAT) return FAT_LoadFile(buffer);
+        else return DVD_LoadFile(buffer);
       }
       redraw = 1;
     }

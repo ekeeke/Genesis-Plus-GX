@@ -95,33 +95,6 @@ int FAT_UpdateDir(int go_up)
 }
 
 /***************************************************************************
- * FileSortCallback (Marty Disibio)
- *
- * Quick sort callback to sort file entries with the following order:
- *   .
- *   ..
- *   <dirs>
- *   <files>
- ***************************************************************************/ 
-static int FileSortCallback(const void *f1, const void *f2)
-{
-  /* Special case for implicit directories */
-  if(((FILEENTRIES *)f1)->filename[0] == '.' || ((FILEENTRIES *)f2)->filename[0] == '.')
-  {
-    if(strcmp(((FILEENTRIES *)f1)->filename, ".") == 0) { return -1; }
-    if(strcmp(((FILEENTRIES *)f2)->filename, ".") == 0) { return 1; }
-    if(strcmp(((FILEENTRIES *)f1)->filename, "..") == 0) { return -1; }
-    if(strcmp(((FILEENTRIES *)f2)->filename, "..") == 0) { return 1; }
-  }
-  
-  /* If one is a file and one is a directory the directory is first. */
-  if(((FILEENTRIES *)f1)->flags == 1 && ((FILEENTRIES *)f2)->flags == 0) return -1;
-  if(((FILEENTRIES *)f1)->flags == 0 && ((FILEENTRIES *)f2)->flags == 1) return 1;
-  
-  return stricmp(((FILEENTRIES *)f1)->filename, ((FILEENTRIES *)f2)->filename);
-}
-
-/***************************************************************************
  * FAT_ParseDirectory
  *
  * List files into one FAT directory

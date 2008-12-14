@@ -69,7 +69,6 @@ void ogc_audio__init(void)
   AUDIO_Init (NULL);
   AUDIO_SetDSPSampleRate (AI_SAMPLERATE_48KHZ);
   AUDIO_RegisterDMACallback (AudioSwitchBuffers);
-  memset(soundbuffer, 0, 16 * 3840);
 }
 
 void ogc_audio__reset(void)
@@ -78,6 +77,7 @@ void ogc_audio__reset(void)
   IsPlaying = 0;
   mixbuffer = 0;
   playbuffer = 0;
+  memset(soundbuffer, 0, 16 * 3840);
 }
 
 void ogc_audio__update(void)

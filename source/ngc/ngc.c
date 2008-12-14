@@ -263,6 +263,7 @@ int main (int argc, char *argv[])
       ConfigRequested = 0;
 
       /* reset frame timings */
+      frameticker = 0;
       prev = gettime();
       FrameCount = 0;
       RenderedFrameCount = 0;

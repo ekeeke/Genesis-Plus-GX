@@ -275,6 +275,10 @@ int DVD_ParseDirectory ()
     len += 2048;
     pdoffset = rdoffset + len;
   }
+
+  /* Sort the file list */
+  qsort(filelist, filecount, sizeof(FILEENTRIES), FileSortCallback);
+
   return filecount;
 }
 
