@@ -108,11 +108,12 @@ static void init_machine (void)
 ***************************************************/
 void reloadrom ()
 {
-  load_rom("");      /* Load ROM */
-  system_init ();    /* Initialize System */
-  audio_init(48000); /* Audio System initialization */
-  ClearGGCodes ();   /* Clear Game Genie patches */
-  system_reset ();   /* System Power ON */
+  load_rom("");       /* Load ROM */
+  system_init ();     /* Initialize System */
+  audio_init(48000);  /* Audio System initialization */
+  ClearGGCodes ();    /* Clear Game Genie patches */
+  system_reset ();    /* System Power ON */
+  ogc_audio__reset(); /* reset audio buffers */
 }
 
 /***************************************************************************
@@ -232,6 +233,7 @@ int main (int argc, char *argv[])
         /* Delay */
         while (!frameticker) usleep(10);
 
+        /* Render Frame */
         system_frame (0);
         RenderedFrameCount++;
       }
@@ -255,8 +257,8 @@ int main (int argc, char *argv[])
     /* Check for Menu request */
     if (ConfigRequested)
     {
-      /* reset AUDIO */
-      ogc_audio__reset();
+      /* stop AUDIO */
+      ogc_audio__stop();
 
       /* go to menu */
       MainMenu ();

@@ -29,6 +29,7 @@ int mixbuffer = 0;
 
 static int playbuffer  = 0;
 static int IsPlaying   = 0;
+static u32 dma_len = 3200;
 
 /*** AudioSwitchBuffers
      Genesis Plus only provides sound data on completion of each frame.
@@ -38,31 +39,13 @@ static int IsPlaying   = 0;
  ***/
 static void AudioSwitchBuffers()
 {
-  if (ConfigRequested)
-  {
-    IsPlaying = 0;
-    return;
-  }
-
-  u32 dma_len = (vdp_pal) ? 3840 : 3200;
-
-  /* restart audio DMA with current soundbuffer */
-  AUDIO_InitDMA((u32) soundbuffer[playbuffer], dma_len);
-  DCFlushRange(soundbuffer[playbuffer], dma_len);
-  AUDIO_StartDMA();
-
   /* increment soundbuffers index */
   playbuffer++;
   playbuffer &= 0xf;
 
-  if (playbuffer == mixbuffer)
-  {
-    playbuffer--;
-    if ( playbuffer < 0 ) playbuffer = 15;
-  }
-  IsPlaying = 1;
+  /* reset audio DMA parameters */
+  AUDIO_InitDMA((u32) soundbuffer[playbuffer], dma_len);
 }
-
 
 void ogc_audio__init(void)
 {
@@ -73,15 +56,34 @@ void ogc_audio__init(void)
 
 void ogc_audio__reset(void)
 {
-  AUDIO_StopDMA ();
-  IsPlaying = 0;
-  mixbuffer = 0;
-  playbuffer = 0;
   memset(soundbuffer, 0, 16 * 3840);
 }
 
 void ogc_audio__update(void)
 {
-  /* restart Audio DMA if needed */
-  if (!IsPlaying) AudioSwitchBuffers();
+  /* flush data from CPU cache */
+  DCFlushRange(soundbuffer[mixbuffer], dma_len);
+
+  if (!IsPlaying)
+  {
+    dma_len = (vdp_pal) ? 3840 : 3200;
+
+    /* set audio DMA parameters */
+    AUDIO_InitDMA((u32) soundbuffer[0], dma_len);
+
+    /* start audio DMA */
+    AUDIO_StartDMA();
+
+    IsPlaying = 1;
+  }
 }
+
+void ogc_audio__stop(void)
+{
+  /* stop audio DMA */
+  AUDIO_StopDMA ();
+  IsPlaying = 0;
+  mixbuffer = 0;
+  playbuffer = 0;
+}
+
