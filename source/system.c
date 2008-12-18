@@ -396,9 +396,4 @@ static inline void audio_update (void)
     *sb++ = l;
 #endif
   }
-
-#ifndef DOS
-  mixbuffer++;
-  mixbuffer &= 0xf;
-#endif
 }

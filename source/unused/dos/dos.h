@@ -17,7 +17,6 @@ void make_vdp_palette(void);
 void dos_change_mode(void);
 int check_key(int code);
 
-#define update_input() dos_update_input()
 #define MAX_INPUTS 8
 
 extern uint8 debug_on;

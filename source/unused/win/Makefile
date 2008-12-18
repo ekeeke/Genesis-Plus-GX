@@ -31,7 +31,6 @@ OBJECTS	+=     	obj/genesis.o	\
 		obj/mem68k.o	\
 		obj/memz80.o	\
 		obj/membnk.o	\
-		obj/memvdp.o	\
 		obj/state.o     
 		
 OBJECTS	+=      obj/sound.o	\

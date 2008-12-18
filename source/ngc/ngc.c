@@ -196,6 +196,8 @@ int main (int argc, char *argv[])
   /* Emulation Loop */
   while (1)
   {
+    ogc_audio__start();
+
     /* Frame synchronization */
     if (gc_pal != vdp_pal)
     {
@@ -242,8 +244,8 @@ int main (int argc, char *argv[])
     }
 
     /* update video & audio */
-    ogc_video__update();
     ogc_audio__update();
+    ogc_video__update();
 
     /* Check rendered frames (FPS) */
     FrameCount++;

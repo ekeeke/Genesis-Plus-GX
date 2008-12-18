@@ -51,11 +51,14 @@ void ogc_audio__init(void)
 {
   AUDIO_Init (NULL);
   AUDIO_SetDSPSampleRate (AI_SAMPLERATE_48KHZ);
-  AUDIO_RegisterDMACallback (AudioSwitchBuffers);
+ // AUDIO_RegisterDMACallback (AudioSwitchBuffers);
 }
 
 void ogc_audio__reset(void)
 {
+  IsPlaying = 0;
+  mixbuffer = 0;
+  playbuffer = 0;
   memset(soundbuffer, 0, 16 * 3840);
 }
 
@@ -63,12 +66,27 @@ void ogc_audio__update(void)
 {
   /* flush data from CPU cache */
   DCFlushRange(soundbuffer[mixbuffer], dma_len);
+  AUDIO_InitDMA((u32) soundbuffer[mixbuffer], dma_len);
+}
 
+void ogc_audio__stop(void)
+{
+  /* stop audio DMA */
+  AUDIO_StopDMA ();
+  AUDIO_InitDMA((u32) soundbuffer[0], dma_len);
+  IsPlaying = 0;
+  mixbuffer = 0;
+  playbuffer = 0;
+}
+
+void ogc_audio__start(void)
+{
   if (!IsPlaying)
   {
-    dma_len = (vdp_pal) ? 3840 : 3200;
+    /* buffer size */
+    dma_len = vdp_pal ? 3840 : 3200;
 
-    /* set audio DMA parameters */
+    /* set default DMA parameters */
     AUDIO_InitDMA((u32) soundbuffer[0], dma_len);
 
     /* start audio DMA */
@@ -77,13 +95,3 @@ void ogc_audio__update(void)
     IsPlaying = 1;
   }
 }
-
-void ogc_audio__stop(void)
-{
-  /* stop audio DMA */
-  AUDIO_StopDMA ();
-  IsPlaying = 0;
-  mixbuffer = 0;
-  playbuffer = 0;
-}
-

@@ -4,9 +4,9 @@
 FILE *error_log;
 
 struct {
-    int enabled;
-    int verbose;
-    FILE *log;
+  int enabled;
+  int verbose;
+  FILE *log;
 } t_error;
 
 void error_init(void)
@@ -23,8 +23,8 @@ void error_shutdown(void)
 
 void error(char *format, ...)
 {
-	if (!log_error) return;
-	va_list ap;
+  if (!log_error) return;
+  va_list ap;
   va_start(ap, format);
   if(error_log) vfprintf(error_log, format, ap);
   va_end(ap);

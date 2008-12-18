@@ -30,6 +30,7 @@ extern int mixbuffer;
 extern void ogc_audio__init(void);
 extern void ogc_audio__reset(void);
 extern void ogc_audio__stop(void);
+extern void ogc_audio__start(void);
 extern void ogc_audio__update(void);
 
 #endif
