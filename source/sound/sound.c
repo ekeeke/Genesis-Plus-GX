@@ -61,7 +61,7 @@ static inline uint32 psg_sample_cnt(uint8 is_z80)
 /* update FM samples */
 static inline void fm_update()
 {
-  if(snd.fm.curStage - snd.fm.lastStage > 0)
+  if(snd.fm.curStage - snd.fm.lastStage > 1)
   {
     int *tempBuffer[2];
     
@@ -84,7 +84,7 @@ static inline void fm_update()
 /* update PSG samples */
 static inline void psg_update()
 {
-  if(snd.psg.curStage - snd.psg.lastStage > 0)
+  if(snd.psg.curStage - snd.psg.lastStage > 1)
   {
     int16 *tempBuffer = snd.psg.buffer + snd.psg.lastStage;
     SN76489_Update (0, tempBuffer, snd.psg.curStage - snd.psg.lastStage);
@@ -221,11 +221,8 @@ void fm_restore(void)
 /* write FM chip */
 void fm_write(unsigned int cpu, unsigned int address, unsigned int data)
 {
-  if (address & 1)
-  {
-    snd.fm.curStage = fm_sample_cnt(cpu);
-    fm_update();
-  }
+  snd.fm.curStage = fm_sample_cnt(cpu);
+  fm_update();
   _YM2612_Write(address & 3, data);
 }
 

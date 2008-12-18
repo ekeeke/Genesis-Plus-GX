@@ -113,7 +113,6 @@ void reloadrom ()
   audio_init(48000);  /* Audio System initialization */
   ClearGGCodes ();    /* Clear Game Genie patches */
   system_reset ();    /* System Power ON */
-  ogc_audio__reset(); /* reset audio buffers */
 }
 
 /***************************************************************************
@@ -132,8 +131,6 @@ int main (int argc, char *argv[])
   DI_Init();
 #endif
 
-  u16 usBetweenFrames;
-  long long now, prev;
   int RenderedFrameCount = 0;
   int FrameCount = 0;
 
@@ -189,59 +186,29 @@ int main (int argc, char *argv[])
   MainMenu();
   ConfigRequested = 0;
 
-  /* Initialize Frame timings */
-  frameticker = 0;
-  prev = gettime();
-
   /* Emulation Loop */
   while (1)
   {
+    /* audio DMA starting point */
     ogc_audio__start();
 
-    /* Frame synchronization */
-    if (gc_pal != vdp_pal)
+    if (frameticker > 1)
     {
-      /* use timers */
-      usBetweenFrames = vdp_pal ? 20000 : 16666;
-      now = gettime();
-      if (diff_usec(prev, now) > usBetweenFrames)
-      {
-        /* Frame skipping */
-        prev = now;
-        system_frame(1);
-      }
-      else
-      {
-        /* Delay */
-        while (diff_usec(prev, now) < usBetweenFrames) now = gettime();
-
-        /* Render Frame */
-        prev = now;
-        system_frame(0);
-        RenderedFrameCount++;
-      }
-    }
-    else
-    {
-      /* use VSync */
-      if (frameticker > 1)
-      {
         /* Frame skipping */
         frameticker--;
         system_frame (1);
-      }
-      else
-      {
-        /* Delay */
-        while (!frameticker) usleep(10);
-
-        /* Render Frame */
-        system_frame (0);
-        RenderedFrameCount++;
-      }
-
-      frameticker--;
     }
+    else
+    {
+      /* Delay */
+      while (!frameticker) usleep(10);
+
+      /* Render Frame */
+      system_frame (0);
+      RenderedFrameCount++;
+    }
+
+    frameticker--;
 
     /* update video & audio */
     ogc_audio__update();
@@ -268,7 +235,6 @@ int main (int argc, char *argv[])
 
       /* reset frame timings */
       frameticker = 0;
-      prev = gettime();
       FrameCount = 0;
       RenderedFrameCount = 0;
     }

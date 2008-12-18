@@ -346,13 +346,6 @@ static inline void draw_square (void)
   GX_End ();
 }
 
-/* retrace handler */
-static void framestart(u32 retraceCnt)
-{
-  /* simply increment the tick counter */
-  frameticker++;
-}
-
 /* Initialize GX */
 static void gxStart(void)
 {
@@ -724,9 +717,6 @@ void ogc_video__init(void)
 
   /* Set the framebuffer to be displayed at next VBlank */
   VIDEO_SetNextFramebuffer (xfb[0]);
-
-  /* Register Video Retrace handlers */
-  VIDEO_SetPreRetraceCallback(framestart);
 
   /* Enable Video Interface */
   VIDEO_SetBlack (FALSE);
