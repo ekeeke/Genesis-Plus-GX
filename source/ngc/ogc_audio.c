@@ -23,71 +23,102 @@
 
 #include "shared.h"
 
-/* global datas */
-unsigned char soundbuffer[2][3840] ATTRIBUTE_ALIGN(32);
-u8 mixbuffer = 0;
+/* DMA soundbuffers (required to be 32-bytes aligned)
+   Length is dimensionned for one frame of emulation (see below)
+   To prevent audio clashes, we use double buffering technique:
+    one buffer is the active DMA buffer
+    the other one is the current work buffer (updated during frame emulation)
+   We do not need more since frame emulation is synchronized with DMA execution
+*/
+u8 soundbuffer[2][3840] ATTRIBUTE_ALIGN(32);
 
-static int IsPlaying    = 0;
-static int dma_len      = 3200;
+/* Current work soundbuffer */
+u8 mixbuffer = 1;
 
-/*** AudioDmaCallback
+/* Current DMA status (1: DMA in progress, 0: DMA stopped) */ 
+static int IsPlaying  = 0;
+
+/* Current DMA length (required to be a factor of 32-bytes)
+   length is calculated regarding current emulation timings:
+    PAL timings : 50 frames/sec, 48000 samples/sec = 960 samples per frame = 3840 bytes (16 bits stereo samples)
+    NTSC timings: 60 frames/sec, 48000 samples/sec = 800 samples per frame = 3200 bytes (16 bits stereo samples)
+*/
+static int dma_len  = 3200;
+
+/*** 
+      AudioDmaCallback
+
      Genesis Plus only provides sound data on completion of each frame.
-     To try to make the audio less choppy, we synchronize emulation with audio DMA
-     This ensure we only update audio framebuffer when DMA is finished
+     To try to make the audio less choppy, we synchronize frame emulation with audio DMA
+     This ensure we don't access current active audiobuffer until a new DMA has been started
+     This also makes frame emulation sync completely independent from video sync
  ***/
 static void AudioDmaCallback()
 {
   frameticker++;
 }
 
+/***
+      ogc_audio__init
+
+     This function initializes the Audio Interface and DMA callback
+     Default samplerate is set to 48khZ
+ ***/
 void ogc_audio__init(void)
 {
   AUDIO_Init (NULL);
   AUDIO_SetDSPSampleRate (AI_SAMPLERATE_48KHZ);
   AUDIO_RegisterDMACallback (AudioDmaCallback);
-  mixbuffer = 0;
   memset(soundbuffer, 0, 2 * 3840);
 }
 
+/*** 
+      ogc_audio__update
+
+     This function is called at the end of each frame, once the current soundbuffer has been updated
+     DMA sync and switching ensure we never access the active DMA buffer
+     This function set the next DMA buffer 
+     Parameters will be taken in account ONLY when current DMA has finished
+ ***/
 void ogc_audio__update(void)
 {
-  /* buffer size */
-  uint32 dma_len = vdp_pal ? 3840 : 3200;
-
-  /* update DMA settings (this will only be taken in account when current DMA finishes) */
   AUDIO_InitDMA((u32) soundbuffer[mixbuffer], dma_len);
-
-  /* flush data from CPU cache */
   DCFlushRange(soundbuffer[mixbuffer], dma_len);
-
-  /* switch buffer */
   mixbuffer ^= 1;
 }
 
-void ogc_audio__stop(void)
-{
-  /* stop audio DMA */
-  AUDIO_StopDMA ();
-  IsPlaying = 0;
+/*** 
+      ogc_audio__start
 
-  /* reset audio buffers */
-  mixbuffer = 0;
-  memset(soundbuffer, 0, 2 * 3840);
-}
-
+     This function restarts Audio DMA processing
+     This is called only ONCE, when emulation loop starts or when coming back from Main Menu
+     DMA length is used for frame emulation synchronization (PAL & NTSC timings)
+     DMA is *automatically* restarted once the configured audio length has been output
+     When DMA parameters are not updated, same soundbuffer is played again
+     DMA parameters can be updated using successive calls to AUDIO_InitDMA (see above)
+ ***/
 void ogc_audio__start(void)
 {
   if (!IsPlaying)
   {
-    /* buffer size */
     dma_len = vdp_pal ? 3840 : 3200;
-
-    /* set first DMA parameters */
-    AUDIO_InitDMA((u32) soundbuffer[1], dma_len);
-
-    /* start audio DMA */
+    AUDIO_InitDMA((u32) soundbuffer[0], dma_len);
     AUDIO_StartDMA();
-
     IsPlaying = 1;
   }
+}
+
+/***
+      ogc_audio__stop
+
+     This function reset current Audio DMA process and clear soundbuffers
+     This is called when going back to Main Menu
+     DMA need to be restarted when going back to the game (see above)
+ ***/
+void ogc_audio__stop(void)
+{
+  AUDIO_StopDMA ();
+  IsPlaying = 0;
+  mixbuffer = 1;
+  memset(soundbuffer, 0, 2 * 3840);
 }

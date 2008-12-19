@@ -377,10 +377,11 @@ static void gxStart(void)
 
   /*** Reset XFB ***/
   GX_CopyDisp (xfb[whichfb ^ 1], GX_TRUE);
+  GX_Flush ();
 
   /*** Initialize texture data ***/
-  texturemem = memalign(32, TEX_WIDTH * TEX_HEIGHT * 2);
-  memset (texturemem, 0, TEX_WIDTH * TEX_HEIGHT * 2);
+  texturemem = memalign(32, TEX_SIZE);
+  memset (texturemem, 0, TEX_SIZE);
 
   /*** Initialize renderer */
   draw_init();
@@ -545,6 +546,7 @@ void ogc_video__reset()
   GX_SetPixelFmt (rmode->aa ? GX_PF_RGB565_Z16 : GX_PF_RGB8_Z24, GX_ZC_LINEAR);
   guOrtho(p, rmode->efbHeight/2, -(rmode->efbHeight/2), -(rmode->fbWidth/2), rmode->fbWidth/2, 100, 1000);
   GX_LoadProjectionMtx (p, GX_ORTHOGRAPHIC);
+  GX_Flush ();
 
   /* Software NTSC filter */
   if (config.ntsc == 1)

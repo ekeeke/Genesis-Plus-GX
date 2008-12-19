@@ -79,7 +79,7 @@ static void load_bios()
 
 static void init_machine (void)
 {
-  /* Allocate cart_rom here */
+  /* Allocate cart_rom here ( 10 MBytes ) */
   cart_rom = memalign(32, 10 * 1024 * 1024);
 
   /* BIOS support */
@@ -194,16 +194,16 @@ int main (int argc, char *argv[])
 
     if (frameticker > 1)
     {
-        /* Frame skipping */
+        /* frameskipping */
         frameticker--;
         system_frame (1);
     }
     else
     {
-      /* Delay */
+      /* frame sync */
       while (!frameticker) usleep(10);
 
-      /* Render Frame */
+      /* frame rendering */
       system_frame (0);
       RenderedFrameCount++;
     }
@@ -214,7 +214,7 @@ int main (int argc, char *argv[])
     ogc_audio__update();
     ogc_video__update();
 
-    /* Check rendered frames (FPS) */
+    /* check rendered frames (FPS) */
     FrameCount++;
     if (FrameCount == vdp_rate)
     {
@@ -226,14 +226,14 @@ int main (int argc, char *argv[])
     /* Check for Menu request */
     if (ConfigRequested)
     {
-      /* stop AUDIO */
+      /* stop Audio */
       ogc_audio__stop();
 
       /* go to menu */
       MainMenu ();
       ConfigRequested = 0;
 
-      /* reset frame timings */
+      /* reset frame sync */
       frameticker = 0;
       FrameCount = 0;
       RenderedFrameCount = 0;
