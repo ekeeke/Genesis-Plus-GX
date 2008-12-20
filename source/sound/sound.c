@@ -61,7 +61,7 @@ static inline uint32 psg_sample_cnt(uint8 is_z80)
 /* update FM samples */
 static inline void fm_update()
 {
-  if(snd.fm.curStage - snd.fm.lastStage > 1)
+  if(snd.fm.curStage - snd.fm.lastStage > 0)
   {
     int *tempBuffer[2];
     
@@ -84,7 +84,7 @@ static inline void fm_update()
 /* update PSG samples */
 static inline void psg_update()
 {
-  if(snd.psg.curStage - snd.psg.lastStage > 1)
+  if(snd.psg.curStage - snd.psg.lastStage > 0)
   {
     int16 *tempBuffer = snd.psg.buffer + snd.psg.lastStage;
     SN76489_Update (0, tempBuffer, snd.psg.curStage - snd.psg.lastStage);

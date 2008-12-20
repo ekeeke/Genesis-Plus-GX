@@ -170,7 +170,7 @@ int system_frame (int do_skip)
     {
 #ifdef NGC
       /* wait for RESET button to be released */
-      if (!SYS_ResetButtonDown())
+      while (SYS_ResetButtonDown());
 #endif
       gen_reset(0);
     }

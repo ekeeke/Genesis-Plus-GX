@@ -33,7 +33,7 @@
 u8 soundbuffer[2][3840] ATTRIBUTE_ALIGN(32);
 
 /* Current work soundbuffer */
-u8 mixbuffer = 1;
+int mixbuffer;
 
 /* Current DMA status (1: DMA in progress, 0: DMA stopped) */ 
 static int IsPlaying  = 0;
@@ -102,9 +102,12 @@ void ogc_audio__start(void)
   if (!IsPlaying)
   {
     dma_len = vdp_pal ? 3840 : 3200;
+    memset(soundbuffer[0], 0, dma_len);
     AUDIO_InitDMA((u32) soundbuffer[0], dma_len);
+    DCFlushRange(soundbuffer[0], dma_len);
     AUDIO_StartDMA();
     IsPlaying = 1;
+    mixbuffer = 1;
   }
 }
 
@@ -119,6 +122,4 @@ void ogc_audio__stop(void)
 {
   AUDIO_StopDMA ();
   IsPlaying = 0;
-  mixbuffer = 1;
-  memset(soundbuffer, 0, 2 * 3840);
 }

@@ -35,7 +35,7 @@ sms_ntsc_setup_t sms_setup;
 sms_ntsc_t sms_ntsc;
 
 /*** PAL 50hz flag ***/
-BOOL gc_pal = 0;
+int gc_pal = 0;
 
 /*** VI ***/
 unsigned int *xfb[2];  /*** Double buffered            ***/

@@ -131,6 +131,7 @@ int main (int argc, char *argv[])
   DI_Init();
 #endif
 
+  long long now, prev;
   int RenderedFrameCount = 0;
   int FrameCount = 0;
 
@@ -189,26 +190,36 @@ int main (int argc, char *argv[])
   /* Emulation Loop */
   while (1)
   {
-    /* audio DMA starting point */
     ogc_audio__start();
-
-    if (frameticker > 1)
+    
+    if (gc_pal < 0)
     {
-        /* frameskipping */
-        frameticker--;
-        system_frame (1);
+      /* this code is NEVER executed */
+      /* strangely, when removing it, this makes the program crashing (why ?) */
+      prev = now = gettime();
+      while (diff_usec(prev, now) < 1) now = gettime();
+      prev = now;
     }
     else
     {
-      /* frame sync */
-      while (!frameticker) usleep(10);
+      if (frameticker > 1)
+      {
+        /* frameskipping */
+        frameticker--;
+        system_frame (1);
+      }
+      else
+      {
+        /* frame sync */
+        while (!frameticker) usleep(1);
 
-      /* frame rendering */
-      system_frame (0);
-      RenderedFrameCount++;
+        /* frame rendering */
+        system_frame (0);
+        RenderedFrameCount++;
+      }
+
+      frameticker--;
     }
-
-    frameticker--;
 
     /* update video & audio */
     ogc_audio__update();
@@ -237,6 +248,7 @@ int main (int argc, char *argv[])
       frameticker = 0;
       FrameCount = 0;
       RenderedFrameCount = 0;
+
     }
   }
   return 0;
