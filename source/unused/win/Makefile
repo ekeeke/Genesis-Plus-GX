@@ -58,7 +58,7 @@ OBJECTS	+=	obj/main.o	\
 		obj/loadrom.o	
 
 OBJECTS	+=	obj/sms_ntsc.o	\
-			obj/md_ntsc.o
+		obj/md_ntsc.o
 
 OBJECTS	+=	obj/icon.o
 

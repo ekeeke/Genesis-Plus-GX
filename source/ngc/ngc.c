@@ -125,33 +125,33 @@ bool fat_enabled = 0;
 
 int main (int argc, char *argv[])
 {
+  long long now, prev;
+  int RenderedFrameCount = 0;
+  int FrameCount = 0;
+
 #ifdef HW_RVL
   /* initialize Wii DVD interface first */
   DI_Close();
   DI_Init();
 #endif
 
-  long long now, prev;
-  int RenderedFrameCount = 0;
-  int FrameCount = 0;
-
-  /* Initialize OGC subsystems */
+  /* initialize OGC subsystems */
   ogc_video__init();
   ogc_input__init();
   ogc_audio__init();
 
 #ifdef HW_DOL
-  /* Initialize GC DVD interface */
+  /* initialize GC DVD interface */
   DVD_Init ();
   dvd_drive_detect();
 #endif
 
 #ifdef HW_RVL
-  /* Power Button callback */
+  /* Power button callback */
   SYS_SetPowerCallback(Power_Off);
 #endif
 
-  /* Initialize FAT Interface */
+  /* initialize FAT Interface */
   if (fatInitDefault() == true)
   {
     fat_enabled = 1;
@@ -164,34 +164,50 @@ int main (int argc, char *argv[])
 #endif
   }
 
-  /* Default Config */
+  /* default Config */
   legal();
   set_config_defaults();
   config_load();
 
-  /* Restore Recent Files list */
+  /* restore recent Files list */
   set_history_defaults();
   history_load();
 
-  /* Initialize Virtual Machine */
+  /* initialize VM */
   init_machine ();
   
-  /* Load any injected rom */
+  /* load any injected rom */
   if (genromsize)
   {
     ARAMFetch((char *)cart_rom, (void *)0x8000, genromsize);
     reloadrom ();
   }
   
-  /* Show Menu */
-  MainMenu();
-  ConfigRequested = 0;
+  /* show Menu first */
+  ConfigRequested = 1;
 
-  /* Emulation Loop */
+  /* main emulation loop */
   while (1)
   {
-    ogc_audio__start();
-    
+    /* Check for Menu request */
+    if (ConfigRequested)
+    {
+      /* stop Audio */
+      ogc_audio__stop();
+
+      /* go to Menu */
+      MainMenu ();
+      ConfigRequested = 0;
+
+      /* reset frame sync */
+      frameticker = 0;
+      FrameCount = 0;
+      RenderedFrameCount = 0;
+
+      /* restart sound loop */
+      ogc_audio__start();
+    }
+
     if (gc_pal < 0)
     {
       /* this code is NEVER executed */
@@ -204,28 +220,31 @@ int main (int argc, char *argv[])
     {
       if (frameticker > 1)
       {
-        /* frameskipping */
+        /* skip one frame */
         frameticker--;
         system_frame (1);
+
+        /* update audio only */
+        ogc_audio__update();
       }
       else
       {
         /* frame sync */
-        while (!frameticker) usleep(1);
+        while (frameticker < 1) usleep(1);
 
-        /* frame rendering */
+        /* render one frame */
         system_frame (0);
         RenderedFrameCount++;
+
+        /* update audio & video */
+        ogc_audio__update();
+        ogc_video__update();
       }
 
       frameticker--;
     }
 
-    /* update video & audio */
-    ogc_audio__update();
-    ogc_video__update();
-
-    /* check rendered frames (FPS) */
+    /* check rendered frame count (FPS) */
     FrameCount++;
     if (FrameCount == vdp_rate)
     {
@@ -233,23 +252,7 @@ int main (int argc, char *argv[])
       RenderedFrameCount = 0;
       FrameCount = 0;
     }
-
-    /* Check for Menu request */
-    if (ConfigRequested)
-    {
-      /* stop Audio */
-      ogc_audio__stop();
-
-      /* go to menu */
-      MainMenu ();
-      ConfigRequested = 0;
-
-      /* reset frame sync */
-      frameticker = 0;
-      FrameCount = 0;
-      RenderedFrameCount = 0;
-
-    }
   }
+
   return 0;
 }

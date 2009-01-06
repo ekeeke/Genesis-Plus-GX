@@ -12,7 +12,7 @@
 CC	=	gcc 
 AS	=	nasm -f coff
 LDFLAGS	=	
-FLAGS	=	-I. -I.. -I../z80 -I../m68k -I../dos -I../sound -I../sound/SRC -I../cart_hw -I../cart_hw/svp  \
+FLAGS	=	-I. -I.. -I../z80 -I../m68k -I../dos -I../sound -I../sound/SRC -I../cart_hw -I../cart_hw/svp  -I../ntsc \
 		-Wall -g \
 		-O6 -march=i686 -fomit-frame-pointer \
 		-DLSB_FIRST -DX86_ASM -DDOS
@@ -61,6 +61,9 @@ OBJ	+=	obj/dos.o	\
 		obj/fileio.o	\
 		obj/loadrom.o	
 
+OBJ	+=	obj/sms_ntsc.o	\
+		obj/md_ntsc.o
+
 EXE	=	../gen.exe
 
 all	:	$(EXE)
@@ -102,6 +105,10 @@ obj/%.o :	../m68k/%.c ../m68k/%.h
 obj/%.o :	./%.c ./%.h	        
 		$(CC) -c $< -o $@ $(FLAGS)
 	        
+
+obj/%.o :	../ntsc/%.c ../ntsc/%.h	        
+		$(CC) -c $(CFLAGS) $(INCLUDES) $(DEFINES) $< -o $@
+
 pack	:
 		strip $(EXE)
 		upx -1 $(EXE)	        
