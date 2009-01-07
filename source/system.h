@@ -79,18 +79,12 @@ typedef struct
 /* Global variables */
 extern t_bitmap bitmap;
 extern t_snd snd;
-extern uint16 lines_per_frame;
-extern uint8 vdp_rate;
-extern uint32 aim_m68k;
 extern uint32 count_m68k;
 extern uint32 line_m68k;
 extern uint32 hint_m68k;
-extern uint32 aim_z80;
 extern uint32 count_z80;
 extern uint32 line_z80;
 extern int32 current_z80;
-extern uint8 interlaced;
-extern uint8 odd_frame;
 extern uint8 system_hw;
 
 /* Function prototypes */

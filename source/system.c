@@ -28,18 +28,12 @@
 /* Global variables */
 t_bitmap bitmap;
 t_snd snd;
-uint8  vdp_rate;
-uint16 lines_per_frame;
-uint32 aim_m68k;
 uint32 count_m68k;
 uint32 line_m68k;
 uint32 hint_m68k;
-uint32 aim_z80;
 uint32 count_z80;
 uint32 line_z80;
 int32 current_z80;
-uint8 odd_frame;
-uint8 interlaced;
 uint8 system_hw;
 
 static inline void audio_update (void);
@@ -49,10 +43,6 @@ static inline void audio_update (void);
  ****************************************************************/
 void system_init (void)
 {
-  /* PAL/NTSC timings */
-  vdp_rate        = vdp_pal ? 50 : 60;
-  lines_per_frame = vdp_pal ? 313 : 262;
-
   gen_init ();
   vdp_init ();
   render_init ();
@@ -60,31 +50,21 @@ void system_init (void)
 }
 
 /****************************************************************
- * Virtual Genesis Restart
+ * Virtual Genesis Hard Reset
  ****************************************************************/
 void system_reset (void)
 {
-  aim_m68k    = 0;
-  count_m68k  = 0;
-  line_m68k   = 0;
-  aim_z80     = 0;
-  count_z80   = 0;
-  line_z80    = 0;
-  current_z80 = 0;
-  odd_frame   = 0;
-  interlaced  = 0;
-
-  /* Cart Hardware reset */
+  /* Cartridge Hardware */
   cart_hw_reset();
 
-  /* Hard reset */
+  /* Genesis Hardware */
   gen_reset (1); 
   vdp_reset ();
   render_reset ();
   io_reset();
   SN76489_Reset(0);
 
-  /* Sound buffers reset */
+  /* Sound Buffers */
   memset (snd.psg.buffer, 0, SND_SIZE);
   memset (snd.fm.buffer[0], 0, SND_SIZE*2);
   memset (snd.fm.buffer[1], 0, SND_SIZE*2);
@@ -111,10 +91,11 @@ int system_frame (int do_skip)
     return 0;
   }
 
+  int aim_m68k    = 0;
+  int aim_z80     = 0;
+
   /* reset cycles counts */
   count_m68k      = 0;
-  aim_m68k        = 0;
-  aim_z80         = 0;
   count_z80       = 0;
   fifo_write_cnt  = 0;
   fifo_lastwrite  = 0;

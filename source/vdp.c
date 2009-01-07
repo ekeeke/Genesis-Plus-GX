@@ -69,13 +69,16 @@ uint16 playfield_row_mask;        /* Horizontal scroll mask */
 uint32 y_mask;                    /* Name table Y-index bits mask */
 uint16 hc_latch;                  /* latched HCounter (INT2) */
 uint16 v_counter;                 /* VDP scanline counter */
-uint8 im2_flag;                   /* 1= Interlace mode 2 is being used */
 uint32 dma_length;                /* Current DMA remaining bytes */
 int32 fifo_write_cnt;             /* VDP writes fifo count */
 uint32 fifo_lastwrite;            /* last VDP write cycle */
 uint8 fifo_latency;               /* VDP write cycles latency */
-uint8 vdp_pal  = 0;               /* 1: PAL , 0: NTSC (default) */
-
+uint8 odd_frame;                  /* 1: odd field , 0: even field */
+uint8 interlaced;                 /* 1: Interlace mode 1 or 2 */
+uint8 im2_flag;                   /* 1= Interlace mode 2 is being used */
+uint8 vdp_pal;                    /* 0: NTSC, 1: PAL */
+uint8 vdp_rate;                   /* NTSC: 60hz, PAL: 50hz */
+uint16 lines_per_frame;           /* NTSC: 262 lines, PAL: 313 lines */
 
 /* Tables that define the playfield layout */
 static const uint8 shift_table[] = { 6, 7, 0, 8 };
@@ -133,9 +136,8 @@ static inline void data_write(unsigned int data);
 /*--------------------------------------------------------------------------*/
 void vdp_init(void)
 {
+  /* DMA timings */
   int i;
-
-  /* reinitialize DMA timings table */
   for (i=0; i<4; i++)
   {
     vdp_timings[0][i] = ((double)m68cycles_per_line) / ((double) dma_rates[i]);
@@ -143,6 +145,10 @@ void vdp_init(void)
     vdp_timings[2][i] = ((double)m68cycles_per_line) / ((double) dma_rates[i +  8]);
     vdp_timings[3][i] = ((double)m68cycles_per_line) / ((double) dma_rates[i + 12]);
   }
+
+  /* PAL/NTSC timings */
+  vdp_rate        = vdp_pal ? 50 : 60;
+  lines_per_frame = vdp_pal ? 313 : 262;
 }
 
 void vdp_reset(void)
@@ -223,6 +229,10 @@ void vdp_reset(void)
     window_clip(1,0);
   }
 
+  /* non-interlaced display */
+  odd_frame   = 0;
+  interlaced  = 0;
+
   /* default latency */
   fifo_latency = 27;
 }
@@ -281,7 +291,7 @@ void dma_update()
   index += (reg[12] & 1);               /* 32 or 40 Horizontal Cells    */
 
   /* calculate transfer quantity for the remaining 68k cycles */
-  left_cycles = aim_m68k - count_m68k;
+  left_cycles = line_m68k + m68cycles_per_line - count_m68k;
   if (left_cycles < 0) left_cycles = 0;
   dma_bytes = (uint32)(((double)left_cycles / vdp_timings[dma_type][index]) + 0.5);
 
@@ -310,7 +320,7 @@ void dma_update()
     /* VRAM Fill or VRAM Copy */
     /* set DMA end cyles count */
     dma_endCycles = count_m68k + dma_cycles;
-    
+
     /* set DMA Busy flag */
     status |= 0x0002;
   }
@@ -382,7 +392,7 @@ static inline void dma_vbus (void)
       else if (source <= 0xa1001f)
       {
         temp = io_read((source >> 1) & 0x0f);
-          temp = (temp << 8 | temp);
+        temp = (temp << 8 | temp);
       }
 
       /* All remaining locations access work RAM */
@@ -906,7 +916,6 @@ void vdp_test_w(unsigned int value)
 
 int vdp_int_ack_callback(int int_level)
 {
-
   /* VINT triggered ? */
   if (irq_status&0x20)
   {

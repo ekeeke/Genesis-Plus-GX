@@ -676,8 +676,8 @@ void ogc_video__init(void)
     ARAMPut ((char *) 0x80700000 + 0x20, (char *) 0x8000, genromsize);
   }
 
-  /* Get the current video mode then :
-      - set menu video mode (480p, 480i or 576i)
+  /* Get the current VIDEO mode then :
+      - set menu VIDEO mode (480p, 480i or 576i)
       - set emulator rendering TV modes (PAL/MPAL/NTSC/EURGB60)
    */
   vmode = VIDEO_GetPreferredMode(NULL);
@@ -729,7 +729,7 @@ void ogc_video__init(void)
   }
 #endif
 
-  /* Configure video mode */
+  /* Configure VIDEO mode */
   VIDEO_Configure (vmode);
 
   /* Configure the framebuffers (double-buffering) */
@@ -746,13 +746,14 @@ void ogc_video__init(void)
   /* Set the framebuffer to be displayed at next VBlank */
   VIDEO_SetNextFramebuffer (xfb[0]);
 
+  /* Set Vertical Interrupt callbacks for VIDEO synchronization */
   VIDEO_SetPreRetraceCallback(xfb_switch);
   VIDEO_SetPostRetraceCallback(xfb_copy);
 
   /* Enable Video Interface */
   VIDEO_SetBlack (FALSE);
 
-  /* Update video settings for next VBlank */
+  /* Update VIDEO settings for next VBlank */
   VIDEO_Flush ();
 
   /* Wait for VBlank */

@@ -1136,7 +1136,8 @@ void MainMenu ()
 
   /* Switch to menu default rendering mode (60hz or 50hz, but always 480 lines) */
   VIDEO_Configure (vmode);
-  VIDEO_ClearFrameBuffer(vmode, xfb[whichfb], COLOR_BLACK);
+  VIDEO_ClearFrameBuffer(vmode, xfb[0], COLOR_BLACK);
+  VIDEO_ClearFrameBuffer(vmode, xfb[1], COLOR_BLACK);
   VIDEO_Flush();
   VIDEO_WaitVSync();
   VIDEO_WaitVSync();
@@ -1221,10 +1222,10 @@ void MainMenu ()
   while (WPAD_ButtonsHeld(0)) WPAD_ScanPads();
 #endif
 
-  /*** Reinitialize GX ***/
-  VIDEO_ClearFrameBuffer(vmode, xfb[whichfb], COLOR_BLACK);
+  /*** Reinitialize VIDEO ***/
+  VIDEO_ClearFrameBuffer(vmode, xfb[0], COLOR_BLACK);
+  VIDEO_ClearFrameBuffer(vmode, xfb[1], COLOR_BLACK);
   VIDEO_Flush();
-  VIDEO_WaitVSync();
   VIDEO_WaitVSync();
   ogc_video__reset();
   odd_frame = 1;

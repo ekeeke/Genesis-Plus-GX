@@ -28,7 +28,7 @@ typedef struct
   T_EEPROM_TYPE type;
 } T_GAME_ENTRY;
 
-T_GAME_ENTRY database[24] = 
+T_GAME_ENTRY database[25] = 
 {
   /* ACCLAIM mappers */
   /* 24C02 (old mapper) */
@@ -43,11 +43,11 @@ T_GAME_ENTRY database[24] =
   /* 24C65 */
   {{"T-81576"    }, 0,      {16, 0x1FFF, 0x1FFF, 0x200001, 0x200001, 0x200000, 0, 0, 0}},   /* College Slam */
   {{"T-81476"    }, 0,      {16, 0x1FFF, 0x1FFF, 0x200001, 0x200001, 0x200000, 0, 0, 0}},   /* Frank Thomas Big Hurt Baseball */
-  
+
   /* EA mapper (24C01 only) */
   {{"T-50396"    }, 0,      {7,  0x7F,   0x7F,   0x200001, 0x200001, 0x200001, 7, 7, 6}},   /* NHLPA Hockey 93 (UE) */
   {{"T-50176"    }, 0,      {7,  0x7F,   0x7F,   0x200001, 0x200001, 0x200001, 7, 7, 6}},   /* Rings of Power */
-  
+
   /* SEGA mapper (24C01 only) */
   {{"T-12046"    }, 0,      {7,  0x7F,   0x7F,   0x200001, 0x200001, 0x200001, 0, 0, 1}},   /* Megaman - The Wily Wars */
   {{"T-12053"    }, 0xEA80, {7,  0x7F,   0x7F,   0x200001, 0x200001, 0x200001, 0, 0, 1}},   /* Rockman Mega World (J) [A] */
@@ -57,7 +57,8 @@ T_GAME_ENTRY database[24] =
   {{"PR-1993"    }, 0,      {7,  0x7F,   0x7F,   0x200001, 0x200001, 0x200001, 0, 0, 1}},   /* Greatest Heavyweights of the Ring (E) */
   {{"G-4060"     }, 0,      {7,  0x7F,   0x7F,   0x200001, 0x200001, 0x200001, 0, 0, 1}},   /* Wonderboy in Monster World */
   {{"00001211-00"}, 0,      {7,  0x7F,   0x7F,   0x200001, 0x200001, 0x200001, 0, 0, 1}},   /* Sports Talk Baseball */
-  
+  {{"00004076-00"}, 0,      {7,  0x7F,   0x7F,   0x200001, 0x200001, 0x200001, 0, 0, 1}},   /* Honoo no Toukyuuji Dodge Danpei */
+
   /* CODEMASTERS mapper */
   /* 24C01 */
   {{"T-120106"},    0,      {7,   0x7F, 0x7F,   0x300000, 0x380001, 0x300000, 0, 7, 1}},    /* Brian Lara Cricket */
@@ -110,8 +111,8 @@ void eeprom_init()
     if ((sram.end - sram.start) < 2)
     {
       sram.custom = 1;
-      sram.on = 1;
-      sram.write = 1;
+      sram.on     = 1;
+      sram.write  = 1;
       
       /* set SEGA mapper as default */
       memcpy(&eeprom.type, &database[9].type, sizeof(T_EEPROM_TYPE));

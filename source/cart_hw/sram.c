@@ -45,7 +45,7 @@ void sram_init()
   memset (&sram.sram[0], 0xFF, 0x10000);
   sram.crc = crc32 (0, &sram.sram[0], 0x10000);
 
-  if ((cart_rom[0x1b0] == 0x52) && (cart_rom[0x1b1] == 0x41))
+  if ((READ_BYTE(cart_rom,0x1b0) == 0x52) && (READ_BYTE(cart_rom,0x1b1) == 0x41))
   {
     /* retrieve informations from headezr */
     sram.detected = 1;
