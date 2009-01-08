@@ -91,8 +91,8 @@ int system_frame (int do_skip)
     return 0;
   }
 
-  int aim_m68k    = 0;
-  int aim_z80     = 0;
+  uint32 aim_m68k = 0;
+  uint32 aim_z80  = 0;
 
   /* reset cycles counts */
   count_m68k      = 0;

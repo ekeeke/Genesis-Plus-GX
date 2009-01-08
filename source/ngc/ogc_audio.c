@@ -35,8 +35,8 @@ u8 soundbuffer[2][3840] ATTRIBUTE_ALIGN(32);
 /* Current work soundbuffer */
 int mixbuffer;
 
-/* Status of Audio playback */
-static int AudioStarted = 0;
+/* Current DMA status (1: DMA in progress, 0: DMA stopped) */ 
+static int IsPlaying  = 0;
 
 /* Current DMA length (required to be a factor of 32-bytes)
    length is calculated regarding current emulation timings:
@@ -99,12 +99,16 @@ void ogc_audio__update(void)
  ***/
 void ogc_audio__start(void)
 {
-  dma_len = vdp_pal ? 3840 : 3200;
-  AUDIO_InitDMA((u32) soundbuffer[0], dma_len);
-  DCFlushRange(soundbuffer[0], dma_len);
-  AUDIO_StartDMA();
-  AudioStarted = 1;
-  mixbuffer = 1;
+  if (!IsPlaying)
+  {
+    dma_len = vdp_pal ? 3840 : 3200;
+    memset(soundbuffer[0], 0, dma_len);
+    AUDIO_InitDMA((u32) soundbuffer[0], dma_len);
+    DCFlushRange(soundbuffer[0], dma_len);
+    AUDIO_StartDMA();
+    IsPlaying = 1;
+    mixbuffer = 1;
+  }
 }
 
 /***
@@ -116,10 +120,6 @@ void ogc_audio__start(void)
  ***/
 void ogc_audio__stop(void)
 {
-  if (AudioStarted)
-  {
-    AUDIO_StopDMA ();
-    AudioStarted = 0;
-    memset(soundbuffer, 0, 2 * 3840);
-  }
+  AUDIO_StopDMA ();
+  IsPlaying = 0;
 }

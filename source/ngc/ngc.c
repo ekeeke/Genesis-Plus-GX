@@ -125,15 +125,15 @@ bool fat_enabled = 0;
 
 int main (int argc, char *argv[])
 {
-  long long now, prev;
-  int RenderedFrameCount = 0;
-  int FrameCount = 0;
-
 #ifdef HW_RVL
   /* initialize Wii DVD interface first */
   DI_Close();
   DI_Init();
 #endif
+
+  long long now, prev;
+  int RenderedFrameCount = 0;
+  int FrameCount = 0;
 
   /* initialize OGC subsystems */
   ogc_video__init();
@@ -173,7 +173,7 @@ int main (int argc, char *argv[])
   set_history_defaults();
   history_load();
 
-  /* initialize VM */
+  /* Initialize Virtual Machine */
   init_machine ();
   
   /* load any injected rom */
@@ -183,30 +183,17 @@ int main (int argc, char *argv[])
     reloadrom ();
   }
   
-  /* show Menu first */
-  ConfigRequested = 1;
+  /* Show Menu */
+  MainMenu();
+  ConfigRequested = 0;
 
-  /* main emulation loop */
+  /* Emulation Loop */
   while (1)
   {
-    /* Check for Menu request */
-    if (ConfigRequested)
-    {
-      /* stop Audio */
-      ogc_audio__stop();
+    ogc_audio__start();
 
-      /* go to Menu */
-      MainMenu ();
-      ConfigRequested = 0;
-
-      /* reset frame sync */
-      frameticker = 0;
-      FrameCount = 0;
-      RenderedFrameCount = 0;
-
-      /* restart sound loop */
-      ogc_audio__start();
-    }
+    /* this is an ugly hack to prevent VIDEO desync */
+    if (interlaced & !config.render) odd_frame = VIDEO_GetNextField()^1;
 
     if (gc_pal < 0)
     {
@@ -220,37 +207,51 @@ int main (int argc, char *argv[])
     {
       if (frameticker > 1)
       {
-        /* skip one frame */
-        frameticker--;
-        system_frame (1);
+          /* frameskipping */
+          frameticker--;
+          system_frame (1);
+        }
+        else
+        {
+          /* frame sync */
+        while (!frameticker) usleep(1);
 
-        /* update audio only */
-        ogc_audio__update();
-      }
-      else
-      {
-        /* frame sync */
-        while (frameticker < 1) usleep(1);
-
-        /* render one frame */
-        system_frame (0);
-        RenderedFrameCount++;
-
-        /* update audio & video */
-        ogc_audio__update();
-        ogc_video__update();
-      }
+          /* frame rendering */
+          system_frame (0);
+          RenderedFrameCount++;
+        }
 
       frameticker--;
     }
 
-    /* check rendered frame count (FPS) */
+    /* update video & audio */
+    ogc_audio__update();
+    ogc_video__update();
+
+    /* check rendered frames (FPS) */
     FrameCount++;
     if (FrameCount == vdp_rate)
     {
       FramesPerSecond = RenderedFrameCount;
       RenderedFrameCount = 0;
       FrameCount = 0;
+    }
+
+    /* Check for Menu request */
+    if (ConfigRequested)
+    {
+      /* stop Audio */
+      ogc_audio__stop();
+
+      /* go to menu */
+      MainMenu ();
+      ConfigRequested = 0;
+
+      /* reset frame sync */
+      frameticker = 0;
+      FrameCount = 0;
+      RenderedFrameCount = 0;
+
     }
   }
 

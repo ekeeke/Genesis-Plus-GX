@@ -53,7 +53,6 @@ u8 *texturemem;        /*** Texture Data               ***/
 
 static u8 gp_fifo[DEFAULT_FIFO_SIZE] ATTRIBUTE_ALIGN (32);
 static GXTexObj texobj;
-static u8 do_copy = GX_FALSE;
 static Mtx view;
 static u32 vwidth, vheight;
 
@@ -491,7 +490,6 @@ static void gxScale(GXRModeObj *rmode)
   square[4] = square[1]  =  yscale + yshift;
   square[7] = square[10] =  -yscale + yshift;
 
-  /* flush data from cache */
   DCFlushRange (square, 32);
   GX_InvVtxCache ();
 }
@@ -621,37 +619,14 @@ void ogc_video__update()
   draw_square ();
   GX_DrawDone ();
 
-  /* postpound XFB update */
-  do_copy = GX_TRUE;
-}
-
-/* Pre-Retrace  handler 
-    synchronize XFB switch with VSYNC 
- */
-void xfb_switch(u32 cnt)
-{
-  if (!ConfigRequested)
-  {
-    /* switch external framebuffers */
-    whichfb ^= 1;
-
-    /* set next XFB */
-    VIDEO_SetNextFramebuffer (xfb[whichfb]);
-    VIDEO_Flush ();
-  }
-}
-
-/* Post-Retrace handler 
-    synchronize XFB copy with VSYNC */
-void xfb_copy(u32 cnt)
-{
-  if (do_copy)
-  {
-    /* copy EFB to XFB */
-    GX_CopyDisp (xfb[whichfb], GX_TRUE);
-    GX_Flush ();
-    do_copy = GX_FALSE;
-  }
+  /* switch external framebuffers then copy EFB to XFB */
+  whichfb ^= 1;
+  GX_CopyDisp (xfb[whichfb], GX_TRUE);
+  GX_Flush ();
+  
+  /* set next XFB */
+  VIDEO_SetNextFramebuffer (xfb[whichfb]);
+  VIDEO_Flush ();
 }
 
 /* Initialize VIDEO subsystem */
@@ -745,10 +720,6 @@ void ogc_video__init(void)
 
   /* Set the framebuffer to be displayed at next VBlank */
   VIDEO_SetNextFramebuffer (xfb[0]);
-
-  /* Set Vertical Interrupt callbacks for VIDEO synchronization */
-  VIDEO_SetPreRetraceCallback(xfb_switch);
-  VIDEO_SetPostRetraceCallback(xfb_copy);
 
   /* Enable Video Interface */
   VIDEO_SetBlack (FALSE);

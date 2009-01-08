@@ -26,7 +26,7 @@ INCLUDES	:=	source source/m68k source/z80 source/sound source/sound/SRC source/n
 # options for code generation
 #---------------------------------------------------------------------------------
 
-CFLAGS	= -O3 -g -mrvl -Wall $(MACHDEP) -Wno-strict-aliasing $(INCLUDE) -DWORDS_BIGENDIAN -DNGC="1" -DHW_RVL
+CFLAGS	= -O3 -mrvl -Wall $(MACHDEP) -Wno-strict-aliasing $(INCLUDE) -DWORDS_BIGENDIAN -DNGC="1" -DHW_RVL
 CXXFLAGS	=	$(CFLAGS)
 
 LDFLAGS	=	$(MACHDEP) -Wl,-Map,$(notdir $@).map

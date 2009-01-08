@@ -89,7 +89,7 @@ void eeprom_init()
   sram.custom = 0;
 
   /* look into game database */
-  while ((i<24) && (!sram.custom))
+  while ((i<25) && (!sram.custom))
   {
     if (strstr(rominfo.product,database[i].game_id) != NULL)
     {

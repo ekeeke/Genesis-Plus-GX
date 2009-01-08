@@ -1,4 +1,4 @@
-/***************************************************************************************
+  /***************************************************************************************
  *  Genesis Plus 1.2a
  *  Video Display Processor (memory handlers)
  *
@@ -73,12 +73,13 @@ uint32 dma_length;                /* Current DMA remaining bytes */
 int32 fifo_write_cnt;             /* VDP writes fifo count */
 uint32 fifo_lastwrite;            /* last VDP write cycle */
 uint8 fifo_latency;               /* VDP write cycles latency */
-uint8 odd_frame;                  /* 1: odd field , 0: even field */
-uint8 interlaced;                 /* 1: Interlace mode 1 or 2 */
+uint8 odd_frame;                  /* 1: odd field, 0: even field */
 uint8 im2_flag;                   /* 1= Interlace mode 2 is being used */
-uint8 vdp_pal;                    /* 0: NTSC, 1: PAL */
-uint8 vdp_rate;                   /* NTSC: 60hz, PAL: 50hz */
-uint16 lines_per_frame;           /* NTSC: 262 lines, PAL: 313 lines */
+uint8 interlaced;                 /* 1: Interlaced mode 1 or 2 */
+uint8 vdp_pal  = 0;               /* 1: PAL , 0: NTSC (default) */
+uint8 vdp_rate;                   /* PAL: 50hz, NTSC: 60hz */
+uint16 lines_per_frame;           /* PAL: 313 lines, NTSC: 262 lines */
+
 
 /* Tables that define the playfield layout */
 static const uint8 shift_table[] = { 6, 7, 0, 8 };
@@ -136,7 +137,7 @@ static inline void data_write(unsigned int data);
 /*--------------------------------------------------------------------------*/
 void vdp_init(void)
 {
-  /* DMA timings */
+  /* reinitialize DMA timings table */
   int i;
   for (i=0; i<4; i++)
   {
@@ -201,6 +202,7 @@ void vdp_reset(void)
 
   im2_flag = 0;
   interlaced = 0;
+  odd_frame   = 0;
 
   fifo_write_cnt = 0;
 
@@ -228,10 +230,6 @@ void vdp_reset(void)
     vdp_reg_w(15, 0x02);  /* auto increment */
     window_clip(1,0);
   }
-
-  /* non-interlaced display */
-  odd_frame   = 0;
-  interlaced  = 0;
 
   /* default latency */
   fifo_latency = 27;
