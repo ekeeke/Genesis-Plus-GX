@@ -266,7 +266,6 @@ void miscmenu ()
           /* reinitialize overscan area */
           bitmap.viewport.x = config.overscan ? ((reg[12] & 1) ? 16 : 12) : 0;
           bitmap.viewport.y = config.overscan ? (((reg[1] & 8) ? 0 : 8) + (vdp_pal ? 24 : 0)) : 0;
-          bitmap.viewport.changed = 1;
         }
         break;
 
@@ -278,7 +277,7 @@ void miscmenu ()
         config.bios_enabled ^= 1;
         if (genromsize || (config.bios_enabled == 3)) 
         {
-           system_init ();
+          system_init ();
           audio_init(48000);
           system_reset ();
         }
@@ -371,7 +370,6 @@ void dispmenu ()
             config.render = 0;
           }
         }
-        bitmap.viewport.changed = 1;
         break;
 
       case 2: /*** tv mode ***/
@@ -381,20 +379,17 @@ void dispmenu ()
     
       case 3: /*** bilinear filtering ***/
         config.bilinear ^= 1;
-        bitmap.viewport.changed = 1;
         break;
 
       case 4: /*** NTSC filter ***/
         config.ntsc ++;
         if (config.ntsc > 3) config.ntsc = 0;
-        bitmap.viewport.changed = 1;
         break;
 
       case 5: /*** overscan emulation ***/
         config.overscan ^= 1;
         bitmap.viewport.x = config.overscan ? ((reg[12] & 1) ? 16 : 12) : 0;
         bitmap.viewport.y = config.overscan ? (((reg[1] & 8) ? 0 : 8) + (vdp_pal ? 24 : 0)) : 0;
-        bitmap.viewport.changed = 1;
         break;
 
       case 6:  /*** Center X ***/
@@ -1116,7 +1111,7 @@ void showrominfo ()
  ****************************************************************************/
 void MainMenu ()
 {
-   menu = 0;
+  menu = 0;
   int ret;
   int quit = 0;
   uint32 crccheck;
@@ -1133,13 +1128,6 @@ void MainMenu ()
     {"Return to Loader"},
     {"System Reboot"}
   };
-
-  /* Switch to menu default rendering mode (60hz or 50hz, but always 480 lines) */
-  VIDEO_Configure (vmode);
-  VIDEO_ClearFrameBuffer(vmode, xfb[whichfb], COLOR_BLACK);
-  VIDEO_Flush();
-  VIDEO_WaitVSync();
-  VIDEO_WaitVSync();
 
   /* autosave (SRAM only) */
   int temp = config.freeze_auto;
@@ -1220,14 +1208,6 @@ void MainMenu ()
 #ifdef HW_RVL
   while (WPAD_ButtonsHeld(0)) WPAD_ScanPads();
 #endif
-
-  /*** Reinitialize GX ***/
-  VIDEO_ClearFrameBuffer(vmode, xfb[whichfb], COLOR_BLACK);
-  VIDEO_Flush();
-  VIDEO_WaitVSync();
-  VIDEO_WaitVSync();
-  ogc_video__reset();
-  odd_frame = 1;
 
 #ifndef HW_RVL
   /*** Stop the DVD from causing clicks while playing ***/

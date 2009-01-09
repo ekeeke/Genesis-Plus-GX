@@ -303,8 +303,14 @@ static camera cam = {
   {0.0F, 0.0F, 0.0F}
 };
 
-/* rendering initialization */
-/* should be called each time you change quad aspect ratio */
+void xfb_swap(u32 cnt)
+{
+  VIDEO_SetNextFramebuffer (xfb[whichfb]);
+  VIDEO_Flush ();
+  whichfb ^= 1;
+}
+
+/* Rendering Initialization */
 static void draw_init(void)
 {
   /* Clear all Vertex params */
@@ -329,7 +335,7 @@ static void draw_init(void)
   GX_LoadPosMtxImm (view, GX_PNMTX0);
 }
 
-/* vertex rendering */
+/* Vertex Rendering */
 static inline void draw_vert(u8 pos, f32 s, f32 t)
 {
   GX_Position1x8 (pos);
@@ -394,7 +400,7 @@ static void gxScale(GXRModeObj *rmode)
   int temp = 0;
   int xscale, yscale, xshift, yshift;
 
-  /* Aspect Ratio (depending on current configuration) */
+  /* aspect Ratio (depends on current configuration) */
   if (config.aspect)
   {
     /* original aspect ratio */
@@ -441,14 +447,14 @@ static void gxScale(GXRModeObj *rmode)
     yshift = config.yshift;
   }
 
-  /* Double resolution modes */
+  /* double resolution modes */
   if (config.render)
   {
     yscale *= 2;
     yshift *= 2;
   }
 
-  /* GX Scaler (by default, use EFB maximal width) */
+  /* GX scaler (by default, use EFB maximal width) */
   rmode->fbWidth = 640;
   if (!config.bilinear && !config.ntsc)
   {
@@ -459,7 +465,7 @@ static void gxScale(GXRModeObj *rmode)
     else if (width <= 640) rmode->fbWidth = width;
   }
 
-  /* Horizontal Scaling (GX/VI) */
+  /* horizontal scaling (GX/VI) */
   if (xscale > (rmode->fbWidth/2))
   {
     /* max width = 720 pixels */
@@ -494,48 +500,20 @@ static void gxScale(GXRModeObj *rmode)
   GX_InvVtxCache ();
 }
 
-/* Reinitialize Video */
-void ogc_video__reset()
+/* Reset Video Mode */
+static void gxReset(void)
 {
   Mtx p;
   GXRModeObj *rmode;
 
-  /* 50Hz/60Hz mode */
-  if ((config.tv_mode == 1) || ((config.tv_mode == 2) && vdp_pal)) gc_pal = 1;
-  else gc_pal = 0;
-
-  /* progressive mode */
-  if (config.render == 2)
-  {
-    /* 480p */
-    tvmodes[2]->viTVMode = VI_TVMODE_NTSC_PROG;
-    tvmodes[2]->xfbMode = VI_XFBMODE_SF;
-  }
-  else if (config.render == 1)
-  {
-    /* 480i */
-    tvmodes[2]->viTVMode = tvmodes[0]->viTVMode & ~3;
-    tvmodes[2]->xfbMode = VI_XFBMODE_DF;
-  }
-
-  /* Set current TV mode */  
+  /* select TV mode */  
   if (config.render) rmode = tvmodes[gc_pal*3 + 2];
   else rmode = tvmodes[gc_pal*3 + interlaced];
 
-  /* Aspect ratio */
+  /* reset aspect ratio */
   gxScale(rmode);
 
-  /* Configure VI */
-  VIDEO_Configure (rmode);
-  VIDEO_Flush();
-  VIDEO_WaitVSync();
-  if (rmode->viTVMode & VI_NON_INTERLACE) VIDEO_WaitVSync();
-  else while (VIDEO_GetNextField())  VIDEO_WaitVSync();
-
-  /* reset frame counter (unless it's interlaced mode change) */
-  if (!interlaced) frameticker = 0;
-
-  /* Configure GX */
+  /* configure GX */
   GX_SetViewport (0.0F, 0.0F, rmode->fbWidth, rmode->efbHeight, 0.0F, 1.0F);
   GX_SetScissor (0, 0, rmode->fbWidth, rmode->efbHeight);
   f32 yScale = GX_GetYScaleFactor(rmode->efbHeight, rmode->xfbHeight);
@@ -549,7 +527,62 @@ void ogc_video__reset()
   GX_LoadProjectionMtx (p, GX_ORTHOGRAPHIC);
   GX_Flush ();
 
-  /* Software NTSC filter */
+  /* configure VI */
+  VIDEO_Configure (rmode);
+  VIDEO_Flush();
+  VIDEO_WaitVSync();
+  if (rmode->viTVMode & VI_NON_INTERLACE) VIDEO_WaitVSync();
+  else while (VIDEO_GetNextField() != odd_frame)  VIDEO_WaitVSync();
+
+  /* resynchronize field & restore VSYNC handler */
+  whichfb = odd_frame;
+  VIDEO_SetNextFramebuffer (xfb[whichfb]);
+  VIDEO_SetPreRetraceCallback(xfb_swap);
+  VIDEO_Flush();
+  VIDEO_WaitVSync();
+}
+
+/* Set Menu Video mode */
+void ogc_video__stop(void)
+{
+  /* clear screen */
+  VIDEO_Configure (vmode);
+  VIDEO_ClearFrameBuffer(vmode, xfb[0], COLOR_BLACK);
+  VIDEO_ClearFrameBuffer(vmode, xfb[1], COLOR_BLACK);
+
+  /* disable VSYNC handler */
+  VIDEO_SetPreRetraceCallback(NULL);
+  VIDEO_Flush();
+  VIDEO_WaitVSync();
+  VIDEO_WaitVSync();
+}
+
+/* Update Video settings */
+void ogc_video__start()
+{
+  /* clear screen */
+  VIDEO_ClearFrameBuffer(vmode, xfb[whichfb], COLOR_BLACK);
+  VIDEO_ClearFrameBuffer(vmode, xfb[whichfb], COLOR_BLACK);
+  VIDEO_Flush();
+  VIDEO_WaitVSync();
+
+  /* 50Hz/60Hz mode */
+  if ((config.tv_mode == 1) || ((config.tv_mode == 2) && vdp_pal)) gc_pal = 1;
+  else gc_pal = 0;
+
+  /* interlaced/progressive mode */
+  if (config.render == 2)
+  {
+    tvmodes[2]->viTVMode = VI_TVMODE_NTSC_PROG;
+    tvmodes[2]->xfbMode = VI_XFBMODE_SF;
+  }
+  else if (config.render == 1)
+  {
+    tvmodes[2]->viTVMode = tvmodes[0]->viTVMode & ~3;
+    tvmodes[2]->xfbMode = VI_XFBMODE_DF;
+  }
+
+  /* software NTSC filters */
   if (config.ntsc == 1)
   {
     sms_setup = sms_ntsc_composite;
@@ -571,6 +604,9 @@ void ogc_video__reset()
     sms_ntsc_init( &sms_ntsc, &sms_setup );
     md_ntsc_init( &md_ntsc, &md_setup );
   }
+
+  /* apply changes on next video update */
+  bitmap.viewport.changed = 1;
 }
 
 /* GX render update */
@@ -593,8 +629,8 @@ void ogc_video__update()
     vwidth  = vwidth  / 4;
     vheight = vheight / 4;
 
-    /* image size has changed, reset GX */
-    ogc_video__reset();
+    /* reset Video mode */
+    gxReset();
 
     /* reinitialize texture */
     GX_InitTexObj (&texobj, texturemem, vwidth * 4, vheight * 4, GX_TF_RGB565, GX_CLAMP, GX_CLAMP, GX_FALSE);
@@ -614,19 +650,14 @@ void ogc_video__update()
   /* update texture cache */
   DCFlushRange (texturemem, TEX_SIZE);
   GX_InvalidateTexAll ();
-  
+
   /* render textured quad */
   draw_square ();
   GX_DrawDone ();
 
-  /* switch external framebuffers then copy EFB to XFB */
-  whichfb ^= 1;
-  GX_CopyDisp (xfb[whichfb], GX_TRUE);
+  /* copy EFB to current XFB */
+  GX_CopyDisp (xfb[odd_frame], GX_TRUE);
   GX_Flush ();
-  
-  /* set next XFB */
-  VIDEO_SetNextFramebuffer (xfb[whichfb]);
-  VIDEO_Flush ();
 }
 
 /* Initialize VIDEO subsystem */
@@ -704,7 +735,7 @@ void ogc_video__init(void)
   }
 #endif
 
-  /* Configure VIDEO mode */
+  /* Configure VI */
   VIDEO_Configure (vmode);
 
   /* Configure the framebuffers (double-buffering) */

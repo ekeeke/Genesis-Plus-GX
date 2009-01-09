@@ -25,8 +25,9 @@
 #define _GC_VIDEO_H_
 
 extern void ogc_video__init(void);
+extern void ogc_video__start(void);
+extern void ogc_video__stop(void);
 extern void ogc_video__update(void);
-extern void ogc_video__reset();
 
 extern int gc_pal;
 extern unsigned int *xfb[2];

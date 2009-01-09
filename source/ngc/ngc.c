@@ -175,26 +175,30 @@ int main (int argc, char *argv[])
 
   /* Initialize Virtual Machine */
   init_machine ();
-  
+
   /* load any injected rom */
   if (genromsize)
   {
     ARAMFetch((char *)cart_rom, (void *)0x8000, genromsize);
     reloadrom ();
   }
-  
+
   /* Show Menu */
   MainMenu();
   ConfigRequested = 0;
 
+  /* Reset frame sync */
+  frameticker = 0;
+  FrameCount = 0;
+  RenderedFrameCount = 0;
+
+  /* Start Audio & Video */
+  ogc_audio__start();
+  ogc_video__start();
+
   /* Emulation Loop */
   while (1)
   {
-    ogc_audio__start();
-
-    /* this is an ugly hack to prevent VIDEO desync */
-    if (interlaced & !config.render) odd_frame = VIDEO_GetNextField()^1;
-
     if (gc_pal < 0)
     {
       /* this code is NEVER executed */
@@ -207,26 +211,29 @@ int main (int argc, char *argv[])
     {
       if (frameticker > 1)
       {
-          /* frameskipping */
-          frameticker--;
-          system_frame (1);
-        }
-        else
-        {
-          /* frame sync */
+        /* frameskipping */
+        frameticker--;
+        system_frame (1);
+
+        /* update audio only */
+        ogc_audio__update();
+      }
+      else
+      {
+        /* frame sync */
         while (!frameticker) usleep(1);
 
-          /* frame rendering */
-          system_frame (0);
-          RenderedFrameCount++;
-        }
+        /* frame rendering */
+        system_frame (0);
+        RenderedFrameCount++;
+
+        /* update video & audio */
+        ogc_audio__update();
+        ogc_video__update();
+      }
 
       frameticker--;
     }
-
-    /* update video & audio */
-    ogc_audio__update();
-    ogc_video__update();
 
     /* check rendered frames (FPS) */
     FrameCount++;
@@ -240,8 +247,9 @@ int main (int argc, char *argv[])
     /* Check for Menu request */
     if (ConfigRequested)
     {
-      /* stop Audio */
+      /* stop Audio & Video */
       ogc_audio__stop();
+      ogc_video__stop();
 
       /* go to menu */
       MainMenu ();
@@ -252,6 +260,9 @@ int main (int argc, char *argv[])
       FrameCount = 0;
       RenderedFrameCount = 0;
 
+      /* restart Audio & Video */
+      ogc_audio__start();
+      ogc_video__start();
     }
   }
 
