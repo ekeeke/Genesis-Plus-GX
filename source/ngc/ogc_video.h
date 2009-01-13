@@ -24,15 +24,16 @@
 #ifndef _GC_VIDEO_H_
 #define _GC_VIDEO_H_
 
+extern unsigned int *xfb[2];
+extern int whichfb;
+extern int gc_pal;
+extern GXRModeObj *tvmodes[6];
+extern GXRModeObj *vmode;
+extern u8 *texturemem;
+
 extern void ogc_video__init(void);
 extern void ogc_video__start(void);
 extern void ogc_video__stop(void);
 extern void ogc_video__update(void);
 
-extern int gc_pal;
-extern unsigned int *xfb[2];
-extern int whichfb;
-extern GXRModeObj *tvmodes[6];
-extern GXRModeObj *vmode;
-extern u8 *texturemem;
 #endif

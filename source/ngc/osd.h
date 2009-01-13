@@ -39,7 +39,6 @@ extern void memfile_autoload();
 
 extern int peripherals;
 extern int frameticker;
-extern int FramesPerSecond;
 extern int Shutdown;
 extern bool fat_enabled;
 

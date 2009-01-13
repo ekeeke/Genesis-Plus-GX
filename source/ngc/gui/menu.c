@@ -1139,7 +1139,6 @@ void MainMenu ()
   {
     crccheck = crc32 (0, &sram.sram[0], 0x10000);
     if (genromsize && (crccheck != sram.crc)) strcpy (menutitle, "*** SRAM has been modified ***");
-    else sprintf(menutitle, "%d FPS", FramesPerSecond);
 
     ret = domenu (&items[0], count, 0);
     switch (ret)

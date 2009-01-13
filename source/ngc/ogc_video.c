@@ -536,7 +536,6 @@ static void gxReset(void)
 
   /* resynchronize field & restore VSYNC handler */
   whichfb = odd_frame;
-  VIDEO_SetNextFramebuffer (xfb[whichfb]);
   VIDEO_SetPreRetraceCallback(xfb_swap);
   VIDEO_Flush();
   VIDEO_WaitVSync();
@@ -655,9 +654,18 @@ void ogc_video__update()
   draw_square ();
   GX_DrawDone ();
 
-  /* copy EFB to current XFB */
-  GX_CopyDisp (xfb[odd_frame], GX_TRUE);
-  GX_Flush ();
+  /* special case: interlaced display */
+  if (interlaced && !config.render && (odd_frame == whichfb))
+  {
+    /* resynchronize frame emulation */
+    odd_frame = whichfb ^1;
+  }
+  else
+  {
+    /* copy EFB to current XFB */
+    GX_CopyDisp (xfb[whichfb], GX_TRUE);
+    GX_Flush ();
+  }
 }
 
 /* Initialize VIDEO subsystem */

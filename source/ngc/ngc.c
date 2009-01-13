@@ -119,7 +119,6 @@ void reloadrom ()
  *  M A I N
  *
  ***************************************************************************/
-int FramesPerSecond = 0;
 int frameticker = 0;
 bool fat_enabled = 0;
 
@@ -130,10 +129,6 @@ int main (int argc, char *argv[])
   DI_Close();
   DI_Init();
 #endif
-
-  long long now, prev;
-  int RenderedFrameCount = 0;
-  int FrameCount = 0;
 
   /* initialize OGC subsystems */
   ogc_video__init();
@@ -183,67 +178,12 @@ int main (int argc, char *argv[])
     reloadrom ();
   }
 
-  /* Show Menu */
-  MainMenu();
-  ConfigRequested = 0;
-
-  /* Reset frame sync */
-  frameticker = 0;
-  FrameCount = 0;
-  RenderedFrameCount = 0;
-
-  /* Start Audio & Video */
-  ogc_audio__start();
-  ogc_video__start();
+  /* Show Menu first */
+  ConfigRequested = 1;
 
   /* Emulation Loop */
   while (1)
   {
-    if (gc_pal < 0)
-    {
-      /* this code is NEVER executed */
-      /* strangely, when removing it, this makes the program crashing (why ?) */
-      prev = now = gettime();
-      while (diff_usec(prev, now) < 1) now = gettime();
-      prev = now;
-    }
-    else
-    {
-      if (frameticker > 1)
-      {
-        /* frameskipping */
-        frameticker--;
-        system_frame (1);
-
-        /* update audio only */
-        ogc_audio__update();
-      }
-      else
-      {
-        /* frame sync */
-        while (!frameticker) usleep(1);
-
-        /* frame rendering */
-        system_frame (0);
-        RenderedFrameCount++;
-
-        /* update video & audio */
-        ogc_audio__update();
-        ogc_video__update();
-      }
-
-      frameticker--;
-    }
-
-    /* check rendered frames (FPS) */
-    FrameCount++;
-    if (FrameCount == vdp_rate)
-    {
-      FramesPerSecond = RenderedFrameCount;
-      RenderedFrameCount = 0;
-      FrameCount = 0;
-    }
-
     /* Check for Menu request */
     if (ConfigRequested)
     {
@@ -257,13 +197,35 @@ int main (int argc, char *argv[])
 
       /* reset frame sync */
       frameticker = 0;
-      FrameCount = 0;
-      RenderedFrameCount = 0;
 
-      /* restart Audio & Video */
+      /* start Audio & Video */
       ogc_audio__start();
       ogc_video__start();
     }
+
+    if (frameticker > 1)
+    {
+      /* frameskipping */
+      frameticker--;
+      system_frame (1);
+
+      /* update audio only */
+      ogc_audio__update();
+    }
+    else
+    {
+      /* frame sync */
+      while (!frameticker) usleep(1);
+
+      /* frame rendering */
+      system_frame (0);
+
+      /* update video & audio */
+      ogc_audio__update();
+      ogc_video__update();
+    }
+
+    frameticker--;
   }
 
   return 0;
