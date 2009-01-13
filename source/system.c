@@ -130,7 +130,7 @@ int system_frame (int do_skip)
   /* parse sprites for line 0 (done on last line) */
   parse_satb (0x80);
 
-  /* process frame */
+  /* process scanlines */
   for (line = 0; line < lines_per_frame; line ++)
   {
     /* update VCounter */

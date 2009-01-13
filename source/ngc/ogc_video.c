@@ -534,11 +534,14 @@ static void gxReset(void)
   if (rmode->viTVMode & VI_NON_INTERLACE) VIDEO_WaitVSync();
   else while (VIDEO_GetNextField() != odd_frame)  VIDEO_WaitVSync();
 
-  /* resynchronize field & restore VSYNC handler */
-  whichfb = odd_frame;
-  VIDEO_SetPreRetraceCallback(xfb_swap);
-  VIDEO_Flush();
-  VIDEO_WaitVSync();
+  /* resynchronize interlaced field */
+  if (interlaced && !config.render)
+  {
+    whichfb = odd_frame;
+    VIDEO_SetPreRetraceCallback(xfb_swap);
+    VIDEO_Flush();
+    VIDEO_WaitVSync();
+  }
 }
 
 /* Set Menu Video mode */
@@ -560,8 +563,8 @@ void ogc_video__stop(void)
 void ogc_video__start()
 {
   /* clear screen */
-  VIDEO_ClearFrameBuffer(vmode, xfb[whichfb], COLOR_BLACK);
-  VIDEO_ClearFrameBuffer(vmode, xfb[whichfb], COLOR_BLACK);
+  VIDEO_ClearFrameBuffer(vmode, xfb[0], COLOR_BLACK);
+  VIDEO_ClearFrameBuffer(vmode, xfb[1], COLOR_BLACK);
   VIDEO_Flush();
   VIDEO_WaitVSync();
 
@@ -654,14 +657,29 @@ void ogc_video__update()
   draw_square ();
   GX_DrawDone ();
 
-  /* special case: interlaced display */
-  if (interlaced && !config.render && (odd_frame == whichfb))
+  /* single-field interlaced display requires proper sync*/
+  if (interlaced && !config.render)
   {
-    /* resynchronize frame emulation */
-    odd_frame = whichfb ^1;
+    /* desync */
+    if (odd_frame == whichfb)
+    {
+      /* force field resync */
+      odd_frame = whichfb ^ 1;
+    }
+    else
+    {
+      /* copy EFB to proper XFB */
+      GX_CopyDisp (xfb[whichfb], GX_TRUE);
+      GX_Flush ();
+    }
   }
   else
   {
+    /* swap XFB */
+    whichfb ^= 1;
+    VIDEO_SetNextFramebuffer (xfb[whichfb]);
+    VIDEO_Flush ();
+
     /* copy EFB to current XFB */
     GX_CopyDisp (xfb[whichfb], GX_TRUE);
     GX_Flush ();

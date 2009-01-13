@@ -1,4 +1,4 @@
-  /***************************************************************************************
+/***************************************************************************************
  *  Genesis Plus 1.2a
  *  Video Display Processor (memory handlers)
  *
@@ -338,7 +338,7 @@ static inline void dma_copy(void)
   int source = (reg[22] << 8 | reg[21]) & 0xFFFF;
   if (!length) length = 0x10000;
 
-   dma_type = 3;
+  dma_type = 3;
   dma_length = length;
   dma_update();
 
@@ -623,7 +623,7 @@ static inline void vdp_reg_w(unsigned int r, unsigned int d)
   /* Check if Mode 4 (SMS mode) has been activated 
      According to official doc, VDP registers #11 to #23 can not be written unless bit2 in register #1 is set
      Fix Captain Planet & Avengers (Alt version), Bass Master Classic Pro Edition (they incidentally activate Mode 4) 
-   */
+  */
   if (!(reg[1] & 4) && (r > 10)) return;
 
   switch(r)
@@ -887,7 +887,7 @@ unsigned int vdp_data_r(void)
   }
 
   /* Increment address register */
-    addr += reg[15];
+  addr += reg[15];
 
   /* return data */
   return (temp);
@@ -898,7 +898,7 @@ unsigned int vdp_hvc_r(void)
   uint8 hc = (hc_latch & 0x100) ? (hc_latch & 0xFF) : hctab[count_m68k % m68cycles_per_line]; 
   uint8 vc = vctab[v_counter];
 
-   /* interlace mode 2 */
+  /* interlace mode 2 */
   if (im2_flag) vc = (vc << 1) | ((vc >> 7) & 1);
 
   return ((vc << 8) | hc);
@@ -908,7 +908,7 @@ unsigned int vdp_hvc_r(void)
 void vdp_test_w(unsigned int value)
 {
 #ifdef LOGERROR
-  error("Unused VDP Write 0x%x (%08x)", value, m68k_get_reg (NULL, M68K_REG_PC));
+  error("Unused VDP Write 0x%x (%08x)\n", value, m68k_get_reg (NULL, M68K_REG_PC));
 #endif
 }
 

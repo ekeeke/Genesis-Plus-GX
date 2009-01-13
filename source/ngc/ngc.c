@@ -130,6 +130,10 @@ int main (int argc, char *argv[])
   DI_Init();
 #endif
 
+  uint32 RenderedFrames;
+  uint32 TotalFrames;
+  uint32 FramesPerSecond;
+
   /* initialize OGC subsystems */
   ogc_video__init();
   ogc_input__init();
@@ -192,11 +196,14 @@ int main (int argc, char *argv[])
       ogc_video__stop();
 
       /* go to menu */
-      MainMenu ();
+      MainMenu (FramesPerSecond);
       ConfigRequested = 0;
 
       /* reset frame sync */
-      frameticker = 0;
+      frameticker     = 0;
+      RenderedFrames  = 0;
+      TotalFrames     = 0;
+      FramesPerSecond = vdp_rate;
 
       /* start Audio & Video */
       ogc_audio__start();
@@ -223,9 +230,18 @@ int main (int argc, char *argv[])
       /* update video & audio */
       ogc_audio__update();
       ogc_video__update();
+      RenderedFrames++;
     }
 
     frameticker--;
+
+    TotalFrames++;
+    if (TotalFrames == vdp_rate)
+    {
+      FramesPerSecond = RenderedFrames;
+      RenderedFrames  = 0;
+      TotalFrames     = 0;
+    }
   }
 
   return 0;

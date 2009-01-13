@@ -30,7 +30,7 @@ extern void reloadrom();
 extern void ClearGGCodes();
 extern void GetGGEntries();
 extern void legal();
-extern void MainMenu();
+extern void MainMenu(u32 fps);
 extern void set_region();
 extern int ManageSRAM(u8 direction, u8 device);
 extern int ManageState(u8 direction, u8 device);

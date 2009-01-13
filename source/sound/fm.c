@@ -115,8 +115,8 @@
 #include "shared.h"
 
 /* globals */
-#define FREQ_SH      16   /* 16.16 fixed point (frequency calculations) */
-#define EG_SH      16     /* 16.16 fixed point (envelope generator timing) */
+#define FREQ_SH     16    /* 16.16 fixed point (frequency calculations) */
+#define EG_SH       16    /* 16.16 fixed point (envelope generator timing) */
 #define LFO_SH      24    /*  8.24 fixed point (LFO calculations)       */
 #define TIMER_SH    16    /* 16.16 fixed point (timers calculations)    */
 
@@ -586,8 +586,8 @@ typedef struct
 /***********************************************************/
 typedef struct
 {
-  FM_CH    CH[6]; /* channel state */
-  UINT8    dacen; /* DAC mode  */
+  FM_CH   CH[6];  /* channel state */
+  UINT8   dacen;  /* DAC mode  */
   INT32   dacout; /* DAC output */
   FM_OPN  OPN;    /* OPN state */
 } YM2612;
@@ -599,7 +599,7 @@ static YM2612 ym2612;
 static INT32  m2,c1,c2;   /* Phase Modulation input for operators 2,3,4 */
 static INT32  mem;        /* one sample delay memory */
 static INT32  out_fm[8];  /* outputs of working channels */
-static UINT32  LFO_AM;    /* runtime LFO calculations helper */
+static UINT32 LFO_AM;     /* runtime LFO calculations helper */
 static INT32  LFO_PM;     /* runtime LFO calculations helper */
 
 
@@ -922,20 +922,20 @@ INLINE void advance_eg_channel(FM_SLOT *SLOT)
         break;
 
       case EG_DEC:  /* decay phase */
-          if ( !(ym2612.OPN.eg_cnt & ((1<<SLOT->eg_sh_d1r)-1) ) )
-          {
+        if ( !(ym2612.OPN.eg_cnt & ((1<<SLOT->eg_sh_d1r)-1) ) )
+        {
           if (SLOT->ssg&0x08)  /* SSG EG type envelope selected */
             SLOT->volume += 6 * eg_inc[SLOT->eg_sel_d1r + ((ym2612.OPN.eg_cnt>>SLOT->eg_sh_d1r)&7)];
-        else
+          else
             SLOT->volume += eg_inc[SLOT->eg_sel_d1r + ((ym2612.OPN.eg_cnt>>SLOT->eg_sh_d1r)&7)];
         }
 
         /* check transition even if no volume update: this fixes the case when SL = MIN_ATT_INDEX */
-            if ( SLOT->volume >= (INT32)(SLOT->sl) )
-            {
-              SLOT->volume = (INT32)(SLOT->sl);
-              SLOT->state = EG_SUS;
-            }
+        if ( SLOT->volume >= (INT32)(SLOT->sl) )
+        {
+           SLOT->volume = (INT32)(SLOT->sl);
+           SLOT->state = EG_SUS;
+        }
 
         break;
 
@@ -991,8 +991,8 @@ INLINE void advance_eg_channel(FM_SLOT *SLOT)
             if ( SLOT->volume >= MAX_ATT_INDEX )
               SLOT->volume = MAX_ATT_INDEX;
               /* do not change SLOT->state (verified on real chip) */
-            }
           }
+        }
         break;
 
       case EG_REL:  /* release phase */
@@ -1011,7 +1011,6 @@ INLINE void advance_eg_channel(FM_SLOT *SLOT)
           }
         }
         break;
-      
     }
 
     unsigned int out = (UINT32)SLOT->volume;
@@ -1229,7 +1228,8 @@ INLINE void refresh_fc_eg_slot(FM_SLOT *SLOT , int fc , int kc )
 /* update phase increment counters */
 INLINE void refresh_fc_eg_chan(FM_CH *CH )
 {
-  if( CH->SLOT[SLOT1].Incr==-1){
+  if( CH->SLOT[SLOT1].Incr==-1)
+  {
     int fc = CH->fc;
     int kc = CH->kcode;
     refresh_fc_eg_slot(&CH->SLOT[SLOT1] , fc , kc );
@@ -1380,20 +1380,20 @@ INLINE void CSMKeyControll(FM_CH *CH)
 
   if (!CH->SLOT[SLOT2].key)
   {
-  FM_KEYON(CH,SLOT2);
+    FM_KEYON(CH,SLOT2);
     FM_KEYOFF(CH,SLOT2);
   }
 
   if (!CH->SLOT[SLOT3].key)
   {
-  FM_KEYON(CH,SLOT3);
+    FM_KEYON(CH,SLOT3);
     FM_KEYOFF(CH,SLOT3);
   }
 
   if (!CH->SLOT[SLOT4].key)
   {
-  FM_KEYON(CH,SLOT4);
-  FM_KEYOFF(CH,SLOT4);
+    FM_KEYON(CH,SLOT4);
+    FM_KEYOFF(CH,SLOT4);
   }
 }
 
@@ -1662,8 +1662,8 @@ static void OPNWriteReg(int r, int v)
           CH->block_fnum = (blk<<11) | fn;
 
           CH->SLOT[SLOT1].Incr=-1;
-        }
           break;
+        }
         case 1:    /* 0xa4-0xa6 : FNUM2,BLK */
           ym2612.OPN.ST.fn_h = v&0x3f;
           break;
@@ -1695,8 +1695,8 @@ static void OPNWriteReg(int r, int v)
           CH->ALGO = v&7;
           CH->FB   = feedback ? feedback+6 : 0;
           setup_connection( CH, c );
-        }
           break;        
+        }
         case 1:    /* 0xb4-0xb6 : L , R , AMS , PMS (ym2612/YM2610B/YM2610/YM2608) */
           /* b0-2 PMS */
           CH->pms = (v & 7) * 32; /* CH->pms = PM depth * 32 (index in lfo_pm_table) */
@@ -1707,7 +1707,6 @@ static void OPNWriteReg(int r, int v)
           /* PAN :  b7 = L, b6 = R */
           ym2612.OPN.pan[ c*2   ] = (v & 0x80) ? ~0 : 0;
           ym2612.OPN.pan[ c*2+1 ] = (v & 0x40) ? ~0 : 0;
-
           break;
       }
       break;
