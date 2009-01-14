@@ -26,8 +26,6 @@
 
 extern unsigned int *xfb[2];
 extern int whichfb;
-extern int gc_pal;
-extern GXRModeObj *tvmodes[6];
 extern GXRModeObj *vmode;
 extern u8 *texturemem;
 

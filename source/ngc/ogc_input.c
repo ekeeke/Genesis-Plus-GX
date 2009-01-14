@@ -39,7 +39,7 @@
 #define KEY_BUTTONY 6  // 6-buttons only
 #define KEY_BUTTONZ 7  // 6-buttons only
 
-int ConfigRequested = 1;
+u8 ConfigRequested = 1;
 
 static const char *keys_name[MAX_KEYS] =
 {
@@ -744,6 +744,7 @@ u16 ogc_input__getMenuButtons(void)
 {
 
 #ifdef HW_RVL
+  extern u8 Shutdown;
   if (Shutdown)
   {
     /* autosave SRAM/State */

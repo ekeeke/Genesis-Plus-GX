@@ -35,14 +35,15 @@
 /* number of configurable keys */
 #define MAX_KEYS 8
 
+#define update_input() ogc_input__update()
+
 typedef struct 
 {
   s8 device;
   u8 port;
 } t_input_config;
 
-
-extern int ConfigRequested;
+extern u8 ConfigRequested;
 
 extern void ogc_input__init(void);
 extern void ogc_input__set_defaults(void);

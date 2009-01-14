@@ -33,14 +33,14 @@
 u8 soundbuffer[2][3840] ATTRIBUTE_ALIGN(32);
 
 /* Current work soundbuffer */
-int mixbuffer;
+u8 mixbuffer;
 
 /* Current DMA length (required to be a factor of 32-bytes)
    length is calculated regarding current emulation timings:
     PAL timings : 50 frames/sec, 48000 samples/sec = 960 samples per frame = 3840 bytes (16 bits stereo samples)
     NTSC timings: 60 frames/sec, 48000 samples/sec = 800 samples per frame = 3200 bytes (16 bits stereo samples)
 */
-static int dma_len  = 3200;
+static u32 dma_len  = 3200;
 
 /*** 
       AudioDmaCallback

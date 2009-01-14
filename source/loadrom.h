@@ -62,9 +62,12 @@ extern ROMINFO rominfo;
 extern COMPANYINFO companyinfo[MAXCOMPANY];
 extern PERIPHERALINFO peripheralinfo[14];
 extern uint16 realchecksum;
+extern uint16 peripherals;
 
 /* Function prototypes */
 extern int load_rom(char *filename);
+extern int getcompany();
+extern void set_region();
 
 #endif /* _LOADROM_H_ */
 

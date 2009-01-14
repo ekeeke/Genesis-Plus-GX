@@ -25,7 +25,7 @@
 #define _GC_AUDIO_H_
 
 extern u8 soundbuffer[2][3840];
-extern int mixbuffer;
+extern u8 mixbuffer;
 
 extern void ogc_audio__init(void);
 extern void ogc_audio__start(void);

@@ -34,10 +34,10 @@
 
 #include <fat.h>
 
-int Shutdown = 0;
 
 #ifdef HW_RVL
 /* Power Button callback */
+u8 Shutdown = 0;
 void Power_Off(void)
 {
   Shutdown = 1;
@@ -119,8 +119,8 @@ void reloadrom ()
  *  M A I N
  *
  ***************************************************************************/
-int frameticker = 0;
-bool fat_enabled = 0;
+u8 fat_enabled = 0;
+u32 frameticker = 0;
 
 int main (int argc, char *argv[])
 {
@@ -130,9 +130,9 @@ int main (int argc, char *argv[])
   DI_Init();
 #endif
 
-  uint32 RenderedFrames;
-  uint32 TotalFrames;
-  uint32 FramesPerSecond;
+  uint32 RenderedFrames   = 0;
+  uint32 TotalFrames      = 0;
+  uint32 FramesPerSecond  = 0;
 
   /* initialize OGC subsystems */
   ogc_video__init();
@@ -151,7 +151,7 @@ int main (int argc, char *argv[])
 #endif
 
   /* initialize FAT Interface */
-  if (fatInitDefault() == true)
+  if (fatInitDefault())
   {
     fat_enabled = 1;
 #ifdef HW_RVL
@@ -163,16 +163,16 @@ int main (int argc, char *argv[])
 #endif
   }
 
-  /* default Config */
+  /* default config */
   legal();
   set_config_defaults();
   config_load();
 
-  /* restore recent Files list */
+  /* restore recent files list */
   set_history_defaults();
   history_load();
 
-  /* Initialize Virtual Machine */
+  /* initialize Virtual Machine */
   init_machine ();
 
   /* load any injected rom */
@@ -182,16 +182,16 @@ int main (int argc, char *argv[])
     reloadrom ();
   }
 
-  /* Show Menu first */
+  /* show menu first */
   ConfigRequested = 1;
 
-  /* Emulation Loop */
+  /* main emulation loop */
   while (1)
   {
-    /* Check for Menu request */
+    /* check for menu request */
     if (ConfigRequested)
     {
-      /* stop Audio & Video */
+      /* stop audio & video */
       ogc_audio__stop();
       ogc_video__stop();
 
@@ -199,20 +199,22 @@ int main (int argc, char *argv[])
       MainMenu (FramesPerSecond);
       ConfigRequested = 0;
 
-      /* reset frame sync */
+      /* reset framesync */
       frameticker     = 0;
+
+      /* reset framecounts */
       RenderedFrames  = 0;
       TotalFrames     = 0;
       FramesPerSecond = vdp_rate;
 
-      /* start Audio & Video */
+      /* start audio & video */
       ogc_audio__start();
       ogc_video__start();
     }
 
     if (frameticker > 1)
     {
-      /* frameskipping */
+      /* skip frame */
       frameticker--;
       system_frame (1);
 
@@ -221,10 +223,10 @@ int main (int argc, char *argv[])
     }
     else
     {
-      /* frame sync */
-      while (!frameticker) usleep(1);
+      /* framesync */
+      while (frameticker < 1) usleep(1);
 
-      /* frame rendering */
+      /* render frame */
       system_frame (0);
 
       /* update video & audio */
@@ -233,8 +235,10 @@ int main (int argc, char *argv[])
       RenderedFrames++;
     }
 
+    /* update framesync */
     frameticker--;
 
+    /* update framecounts */
     TotalFrames++;
     if (TotalFrames == vdp_rate)
     {

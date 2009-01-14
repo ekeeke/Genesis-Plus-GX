@@ -57,7 +57,7 @@
 #define PCDROM      4096
 #define PMOUSE      8192
 
-int peripherals;
+uint16 peripherals;
 uint16 realchecksum;
 ROMINFO rominfo;
 
@@ -161,7 +161,7 @@ PERIPHERALINFO peripheralinfo[14] = {
  * softdev - New Checksum Calculation
    eke-eke: fixed 
  */
-uint16 GetRealChecksum (uint8 *rom, int length)
+static uint16 GetRealChecksum (uint8 *rom, int length)
 {
   int i;
   uint16 checksum = 0;
@@ -174,56 +174,12 @@ uint16 GetRealChecksum (uint8 *rom, int length)
   return checksum;
 }
 
-
-/****************************************************************************
- * getcompany
- *
- * Try to determine which company made this rom
- *
- * Ok, for some reason there's no standard for this.
- * It seems that there can be pretty much anything you like following the
- * copyright (C) symbol!
- ****************************************************************************/
-int getcompany ()
-{
-  char *s;
-  int i;
-  char company[10];
-
-  for (i = 3; i < 8; i++) company[i - 3] = rominfo.copyright[i];
-  company[5] = 0;
-
-  /** OK, first look for a hyphen
-   *  Capcom use T-12 for example
-   */
-  s = strstr (company, "-");
-  if (s != NULL)
-  {
-    s++;
-    strcpy (company, s);
-  }
-
-  /** Strip any trailing spaces **/
-  for (i = strlen (company) - 1; i >= 0; i--)
-  if (company[i] == 32) company[i] = 0;
-
-  if (strlen (company) == 0) return MAXCOMPANY - 1;
-
-  for (i = 0; i < MAXCOMPANY - 1; i++)
-  {
-    if (!(strncmp (company, companyinfo[i].companyid, strlen (company)))) return i;
-  }
-
-  return MAXCOMPANY - 1;
-}
-
-
  /***************************************************************************
   * getrominfo
   *
   * Pass a pointer to the ROM base address.
   ***************************************************************************/
-void getrominfo (char *romheader)
+static void getrominfo (char *romheader)
 {
   int i,j;
 
@@ -289,72 +245,10 @@ void getrominfo (char *romheader)
    }
 }
 
-/* 05/05/2006: new region detection routine (taken from GENS sourcecode) */
-void set_region ()
-{
-  /* country codes used to differentiate region */
-  /* 0001 = japan ntsc (1) */
-  /* 0010 = japan  pal (2) */
-  /* 0100 = usa        (4) */
-  /* 1000 = europe     (8) */
-
-  int country = 0;
-  int i = 0;
-  char c;
-
-  /* reading header to find the country */
-  if (!strnicmp(rominfo.country, "eur", 3)) country |= 8;
-  else if (!strnicmp(rominfo.country, "usa", 3)) country |= 4;
-  else if (!strnicmp(rominfo.country, "jap", 3)) country |= 1;
-
-  else for(i = 0; i < 4; i++)
-  {
-    c = toupper((int)rominfo.country[i]);
-    if (c == 'U') country |= 4;
-    else if (c == 'J') country |= 1;
-    else if (c == 'E') country |= 8;
-    else if (c < 16) country |= c;
-    else if ((c >= '0') && (c <= '9')) country |= c - '0';
-    else if ((c >= 'A') && (c <= 'F')) country |= c - 'A' + 10;
-  }
-
-  /* automatic detection */
-  /* setting region */
-  /* this is used by IO register */
-  if (country & 4) region_code = REGION_USA;
-  else if (country & 1) region_code = REGION_JAPAN_NTSC;
-  else if (country & 8) region_code = REGION_EUROPE;
-  else if (country & 2) region_code = REGION_JAPAN_PAL;
-  else region_code = REGION_USA;
-
-  /* some games need specific REGION setting */
-  if (((strstr(rominfo.product,"T-45033") != NULL) && (rominfo.checksum == 0x0F81)) || /* Alisia Dragon (E) */
-       (strstr(rominfo.product,"T-69046-50") != NULL)) /* On Dal Jang Goon (Korea) */
-  {
-    /* need PAL settings */
-    region_code = REGION_EUROPE;
-  }
-  else if ((realchecksum == 0x532e) && (strstr(rominfo.product,"1011-00") != NULL)) 
-  {
-    /* On Dal Jang Goon (Korea) needs JAP region code */
-    region_code = REGION_JAPAN_NTSC;
-  }
-
-  /* Force region setting */
-  if (config.region_detect == 1) region_code = REGION_USA;
-  else if (config.region_detect == 2) region_code = REGION_EUROPE;
-  else if (config.region_detect == 3) region_code = REGION_JAPAN_NTSC;
-  else if (config.region_detect == 4) region_code = REGION_JAPAN_PAL;
-
-  /* set cpu/vdp speed: PAL or NTSC */
-  if ((region_code == REGION_EUROPE) || (region_code == REGION_JAPAN_PAL)) vdp_pal = 1;
-  else vdp_pal = 0;
-}
-
 /* SMD (interleaved) rom support */
 static uint8 block[0x4000];
 
-void deinterleave_block (uint8 * src)
+static void deinterleave_block (uint8 * src)
 {
   int i;
   memcpy (block, src, 0x4000);
@@ -433,4 +327,108 @@ int load_rom(char *filename)
   else system_hw = SYSTEM_GENESIS;
 
   return(1);
+}
+
+/* 05/05/2006: new region detection routine (taken from GENS sourcecode) */
+void set_region ()
+{
+  /* country codes used to differentiate region */
+  /* 0001 = japan ntsc (1) */
+  /* 0010 = japan  pal (2) */
+  /* 0100 = usa        (4) */
+  /* 1000 = europe     (8) */
+
+  int country = 0;
+  int i = 0;
+  char c;
+
+  /* reading header to find the country */
+  if (!strnicmp(rominfo.country, "eur", 3)) country |= 8;
+  else if (!strnicmp(rominfo.country, "usa", 3)) country |= 4;
+  else if (!strnicmp(rominfo.country, "jap", 3)) country |= 1;
+
+  else for(i = 0; i < 4; i++)
+  {
+    c = toupper((int)rominfo.country[i]);
+    if (c == 'U') country |= 4;
+    else if (c == 'J') country |= 1;
+    else if (c == 'E') country |= 8;
+    else if (c < 16) country |= c;
+    else if ((c >= '0') && (c <= '9')) country |= c - '0';
+    else if ((c >= 'A') && (c <= 'F')) country |= c - 'A' + 10;
+  }
+
+  /* automatic detection */
+  /* setting region */
+  /* this is used by IO register */
+  if (country & 4) region_code = REGION_USA;
+  else if (country & 1) region_code = REGION_JAPAN_NTSC;
+  else if (country & 8) region_code = REGION_EUROPE;
+  else if (country & 2) region_code = REGION_JAPAN_PAL;
+  else region_code = REGION_USA;
+
+  /* some games need specific REGION setting */
+  if (((strstr(rominfo.product,"T-45033") != NULL) && (rominfo.checksum == 0x0F81)) || /* Alisia Dragon (E) */
+       (strstr(rominfo.product,"T-69046-50") != NULL)) /* On Dal Jang Goon (Korea) */
+  {
+    /* need PAL settings */
+    region_code = REGION_EUROPE;
+  }
+  else if ((realchecksum == 0x532e) && (strstr(rominfo.product,"1011-00") != NULL)) 
+  {
+    /* On Dal Jang Goon (Korea) needs JAP region code */
+    region_code = REGION_JAPAN_NTSC;
+  }
+
+  /* Force region setting */
+  if (config.region_detect == 1) region_code = REGION_USA;
+  else if (config.region_detect == 2) region_code = REGION_EUROPE;
+  else if (config.region_detect == 3) region_code = REGION_JAPAN_NTSC;
+  else if (config.region_detect == 4) region_code = REGION_JAPAN_PAL;
+
+  /* set cpu/vdp speed: PAL or NTSC */
+  if ((region_code == REGION_EUROPE) || (region_code == REGION_JAPAN_PAL)) vdp_pal = 1;
+  else vdp_pal = 0;
+}
+
+/****************************************************************************
+ * getcompany
+ *
+ * Try to determine which company made this rom
+ *
+ * Ok, for some reason there's no standard for this.
+ * It seems that there can be pretty much anything you like following the
+ * copyright (C) symbol!
+ ****************************************************************************/
+int getcompany ()
+{
+  char *s;
+  int i;
+  char company[10];
+
+  for (i = 3; i < 8; i++) company[i - 3] = rominfo.copyright[i];
+  company[5] = 0;
+
+  /** OK, first look for a hyphen
+   *  Capcom use T-12 for example
+   */
+  s = strstr (company, "-");
+  if (s != NULL)
+  {
+    s++;
+    strcpy (company, s);
+  }
+
+  /** Strip any trailing spaces **/
+  for (i = strlen (company) - 1; i >= 0; i--)
+  if (company[i] == 32) company[i] = 0;
+
+  if (strlen (company) == 0) return MAXCOMPANY - 1;
+
+  for (i = 0; i < MAXCOMPANY - 1; i++)
+  {
+    if (!(strncmp (company, companyinfo[i].companyid, strlen (company)))) return i;
+  }
+
+  return MAXCOMPANY - 1;
 }
