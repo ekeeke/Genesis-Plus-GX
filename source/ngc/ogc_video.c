@@ -497,6 +497,13 @@ static void gxScale(u32 width, u32 height)
   GX_InvVtxCache();
 }
 
+static void xfb_swap(u32 cnt)
+{
+  VIDEO_SetNextFramebuffer (xfb[whichfb]);
+  VIDEO_Flush ();
+  whichfb ^= 1;
+}
+
 /* Restore Menu Video mode */
 void ogc_video__stop(void)
 {
@@ -514,6 +521,7 @@ void ogc_video__start()
   /* clear screen */
   VIDEO_ClearFrameBuffer(vmode, xfb[0], COLOR_BLACK);
   VIDEO_ClearFrameBuffer(vmode, xfb[1], COLOR_BLACK);
+  VIDEO_SetPreRetraceCallback(NULL);
   VIDEO_Flush();
   VIDEO_WaitVSync();
 
@@ -623,6 +631,15 @@ void ogc_video__update()
     VIDEO_WaitVSync();
     if (rmode->viTVMode & VI_NON_INTERLACE) VIDEO_WaitVSync();
     else while (VIDEO_GetNextField() != odd_frame) VIDEO_WaitVSync();
+
+    /* resynchronize interlaced field */
+    if (rmode->field_rendering)
+    {
+      whichfb = odd_frame;
+      VIDEO_SetPreRetraceCallback(xfb_swap);
+      VIDEO_Flush();
+      VIDEO_WaitVSync();
+    }
   }
 
   /* texture is now directly mapped by the line renderer */
@@ -635,13 +652,25 @@ void ogc_video__update()
   draw_square();
   GX_DrawDone();
 
-  /* force fields resync in SF interlaced modes*/
-  if (rmode->field_rendering) odd_frame = whichfb;
-
-  /* swap XFB */
-  whichfb ^= 1;
-  VIDEO_SetNextFramebuffer(xfb[whichfb]);
-  VIDEO_Flush();
+  /* in SF interlaced modes, swap is done just before VSYNC */
+  /* this ensures VSYNC does not miss any fields */
+  if (rmode->field_rendering)
+  {
+    /* if we are out of sync, it's better not to draw this one */
+    if (odd_frame == whichfb)
+    {
+      /* resynchronize fields */
+      odd_frame ^= 1;
+      return;
+    }
+  }
+  else
+  {
+    /* swap XFB */
+    whichfb ^= 1;
+    VIDEO_SetNextFramebuffer(xfb[whichfb]);
+    VIDEO_Flush();
+  }
 
   /* copy EFB to XFB */
   GX_CopyDisp(xfb[whichfb], GX_TRUE);

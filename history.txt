@@ -1,101 +1,119 @@
-Genesis Plus GX History
-------------------------------
+---------------------------------------------------------------------------------------------------------
+Genesis Plus GX 1.3.2 (??/??/????)(Eke-Eke)
+---------------------------------------------------------------------------------------------------------
 
-[Genesis]
-- modified SN76489 cut-off frequency
-- various code cleanup
+[Core]
+------
 
-[NGC/Wii]
-- fixed video issues in original interlaced modes
-- fixed some statibilty issues
+* modified SN76489 cut-off frequency
+* various code cleanup
 
+[Gamecube/Wii]
 
-
-1.3.1 (20/12/2008):
--------------------
-[NGC/Wii]
-- improved sound engine
-- modified frame synchronization (now use audio DMA interrupt)
+* improved video synchronization in original interlaced modes: fixed video issues in Sonic 2 (VS mode)
+* fixed some statibilty issues
 
 
 
-1.3.0 (14/12/2008):
--------------------
-[Genesis]
-- YM2612 bugfixes (MAME core):
+---------------------------------------------------------------------------------------------------------
+Genesis Plus GX 1.3.1 (20/12/2008)(Eke-Eke)
+---------------------------------------------------------------------------------------------------------
+
+[Gamecube/Wii]
+
+* improved sound engine
+* modified frame synchronization (now use audio DMA interrupt)
+
+
+
+---------------------------------------------------------------------------------------------------------
+Genesis Plus GX 1.3.0 (14/12/2008)(Eke-Eke)
+---------------------------------------------------------------------------------------------------------
+
+[Core]
+
+* YM2612 bugfixes (MAME core):
   .fixed EG Decay->Substain transition when SL & DR are minimals: fix tracks #3 and #9 in "Mega Turrican"
   .fixed a bug in SSG-EG emulation code: fix Level 1 music in "Alisia Dragoon"
   .modified SSG-EG Decay End Level: fix some sound effects (ChainSaw, Zap...) in "Beavis & Butthead"
   .improved Detune overflow accuracy: fix very high frequency sounds in many games
   .fixed registers 0x20-0x26 Reset state: fix intro music in "B.O.B"
   .reverted incorrect fix with KEY ON: fix "Flamethrower" sound effect in "Alien 3" and many others
-- adjusted HCounter values: fixes line flickering in "Sonic 3D" bonus stage
-- adjusted VINT timing: fixes hang-up in "V.R Troopers"
-- improved HBLANK flag accuracy: fixes line flickering in "Gouketsuji Ichizoku"
-- fixed broken Z80 access to WRAM: fixes hang-up in "Mamono Hunter Youko"
-- modified JCART emulation: fixes corrupted tracks logo in "Micro Machines 2"
-- added Blargg's NTSC Filters support (NTSC video artifacts emulation)
-- optimized VDP rendering core, rewrote 68k interface (memory handlers, cycle execution, interrupts): greatly improved emulation speed
+* adjusted HCounter values: fixes line flickering in "Sonic 3D" bonus stage
+* adjusted VINT timing: fixes hang-up in "V.R Troopers"
+* improved HBLANK flag accuracy: fixes line flickering in "Gouketsuji Ichizoku"
+* fixed broken Z80 access to WRAM: fixes hang-up in "Mamono Hunter Youko"
+* modified JCART emulation: fixes corrupted tracks logo in "Micro Machines 2"
+* added Blargg's NTSC Filters support (NTSC video artifacts emulation)
+* optimized VDP rendering core, rewrote 68k interface (memory handlers, cycle execution, interrupts): greatly improved emulation speed
 
-[NGC/Wii]
-- remove slowest libsamplerate settings under "HQ YM2612" option, only keeps SRC_LINEAR (faster) and SRC_SINC_FAST (better)
-- added an option to enable/disable bilinear filtering
-- rewrote video engine: improved horizontal scaling (VI+GX), improved rendering speed (direct texture mapping)
-- removed embedded font, (re)enabled IPL font support: now should works for Qoob users too (thanks to emukiddid)
-- fixed "Reset" button behavior, now acts more like Genesis Reset button ;-)
-- patched libfat for faster SDCARD accesses (thanks to svpe)
-- SRAM and SaveState filenames are now based on the ROM filename (for FAT devices only)
-- various bugfixes, menu tweaks and code cleanup
+[Gamecube/Wii]
 
-[NGC only]
-- added 480p support in menu
+* remove slowest libsamplerate settings under "HQ YM2612" option, only keeps SRC_LINEAR (faster) and SRC_SINC_FAST (better)
+* added an option to enable/disable bilinear filtering
+* rewrote video engine: improved horizontal scaling (VI+GX), improved rendering speed (direct texture mapping)
+* removed embedded font, (re)enabled IPL font support: now should works for Qoob users too (thanks to emukiddid)
+* fixed "Reset" button behavior, now acts more like Genesis Reset button ;-)
+* patched libfat for faster SDCARD accesses (thanks to svpe)
+* SRAM and SaveState filenames are now based on the ROM filename (for FAT devices only)
+* various bugfixes, menu tweaks and code cleanup
 
-[Wii only]
-- implemented fast scrolling in menu using Wiimote D-PAD
-- added "Power" button support
-- added USB Storage support
-- Widescreen menu fix
-- *new* libogc 1.7.0 features: SDHC support, Wiimote shutdown button support
+[Gamecube]
 
+* added 480p support in menu
 
+[Wii]
 
-26/08/2008:
------------
-[Genesis]
-
-- YM2612(MAME): fixed LFO phase update for CH3 special mode: fix sound effects in Warlock & Aladdin (thanks to AamirM)
-- YM2612(MAME): fixed EG attenuation level on "KEY ON": fix Ecco 2's splash sound
-- YM2612(MAME): fixed SSG-EG emulation: fix Bubba'n Stix (Track 5) and many others
-- YM2612(MAME): replaced sample interpolation with libsamplerate support, High Quality mode is now more accurate
-- implemented cycle-accurate HINT timings: every timing sensitive games/demos are now *finally* working fine
-- fixed a bug affecting CRAM/VSRAM DMA timings
-- fixed Sprite Attribute Table address mask for VRAM writes 
-- improved accuracy of 68k access to Z80: fix music in Pacman 2 when entering PAUSE menu
-- disabled "Address Error" emulation when UMK3 hack is loaded: fix game crashing after a round ends up
-- added support for some more unlicensed games: Pocket Monster, King of Fighter 98, Soul Blade (credits to Haze)
-- improved Menacer emulation: fix lightgun support in Body Count & T2: The Arcade Game
-- added Konami Justifier emulation: fix lightgun support in Lethal Enforcers 1 & 2
-- added Sega Mouse emulation (Populous 2, Body Count, Shangai 2, Fun'n Games, ...)
-
-[NGC/Wii]
-- added Wiimote support for Menacer/Justifier/Mouse
-- added DVD support in Wii mode (no modchip required)
-- added "Gun cursor" option to enable/disable gun position display
-- added "Invert Mouse" option to invert Sega Mouse vertical axe (required by some games)
-- improved Controller options: Wiimote/Nunchuk and Classical Controllers can now be affected separately to ANY player
+* implemented fast scrolling in menu using Wiimote D-PAD
+* added "Power" button support
+* added USB Storage support
+* Widescreen menu fix
+* *new* libogc 1.7.0 features: SDHC support, Wiimote shutdown button support
 
 
 
+---------------------------------------------------------------------------------------------------------
+Genesis Plus GX release 080826(Eke-Eke)
+---------------------------------------------------------------------------------------------------------
 
-16/07/2008:
------------
-[Genesis]
-- adjusted (again) HINT timings: fix Double Dragon 2 (game freezed), hopefully does not break anything else
-- fixed broken EEPROM support for Codemaster games
-- modified input update timings: fix Dungeons & Dragons - Warriors of the Eternal Sun (thanks to Notaz)
-- added support for "Ultimate Mortal Kombat Trilogy" hack (max. size supported is 10MBytes)
-- added (VERY) preliminar support for PICO roms (credits to Notaz for his documentation)
-- improved YM2612 emulation (credits to Nemesis for his tests on real hardware):
+[Core]
+
+* YM2612(MAME): fixed LFO phase update for CH3 special mode: fix sound effects in Warlock & Aladdin (thanks to AamirM)
+* YM2612(MAME): fixed EG attenuation level on "KEY ON": fix Ecco 2's splash sound
+* YM2612(MAME): fixed SSG-EG emulation: fix Bubba'n Stix (Track 5) and many others
+* YM2612(MAME): replaced sample interpolation with libsamplerate support, High Quality mode is now more accurate
+* implemented cycle-accurate HINT timings: every timing sensitive games/demos are now *finally* working fine
+* fixed a bug affecting CRAM/VSRAM DMA timings
+* fixed Sprite Attribute Table address mask for VRAM writes 
+* improved accuracy of 68k access to Z80: fix music in Pacman 2 when entering PAUSE menu
+* disabled "Address Error" emulation when UMK3 hack is loaded: fix game crashing after a round ends up
+* added support for some more unlicensed games: Pocket Monster, King of Fighter 98, Soul Blade (credits to Haze)
+* improved Menacer emulation: fix lightgun support in Body Count & T2: The Arcade Game
+* added Konami Justifier emulation: fix lightgun support in Lethal Enforcers 1 & 2
+* added Sega Mouse emulation (Populous 2, Body Count, Shangai 2, Fun'n Games, ...)
+
+[Gamecube/Wii]
+
+* added Wiimote support for Menacer/Justifier/Mouse
+* added DVD support in Wii mode (no modchip required)
+* added "Gun cursor" option to enable/disable gun position display
+* added "Invert Mouse" option to invert Sega Mouse vertical axe (required by some games)
+* improved Controller options: Wiimote/Nunchuk and Classical Controllers can now be affected separately to ANY player
+
+
+
+---------------------------------------------------------------------------------------------------------
+Genesis Plus GX release 080716(Eke-Eke)
+---------------------------------------------------------------------------------------------------------
+
+[Core]
+
+* adjusted (again) HINT timings: fix Double Dragon 2 (game freezed), hopefully does not break anything else
+* fixed broken EEPROM support for Codemaster games
+* modified input update timings: fix Dungeons & Dragons * Warriors of the Eternal Sun (thanks to Notaz)
+* added support for "Ultimate Mortal Kombat Trilogy" hack (max. size supported is 10MBytes)
+* added (VERY) preliminar support for PICO roms (credits to Notaz for his documentation)
+* improved YM2612 emulation (credits to Nemesis for his tests on real hardware):
   .implemented phase overflow emulation: improved fix for special music instrument used in Comix Zone, Flashback, Ariel, Shaq Fu...
   .improved SSG-EG emulation in MAME core (also based on additional code from Alone Coder)
   .improved Timers emulation accuracy
@@ -103,311 +121,436 @@ Genesis Plus GX History
   .fixed Channel 3 CSM mode emulation
   .implemented sample interpolation in MAME core to emulate the chip at original frequency (HQ YM2612 mode, from gens)
 
-[NGC/Wii]
-- added automatic alphabetical filesorting (Marty Disibio)
-- added ROM History for faster ROM access (Marty Disibio)
-- fixed a silly input bug in "ROM Infos" & "Game Genie" menus
-- modified "Hard Reset" option
-- improved display sharpness in original rendering mode (H40 cell mode only), filtering is now completely disabled
-- enabled overscan emulation in "STRETCH" aspect mode also
-- added support for horizontal wiimote handling in Menu (automatically used when the wiimote is not pointed towards the screen)
-- improved Controller options
+[Gamecube/Wii]
+
+* added automatic alphabetical filesorting (Marty Disibio)
+* added ROM History for faster ROM access (Marty Disibio)
+* fixed a silly input bug in "ROM Infos" & "Game Genie" menus
+* modified "Hard Reset" option
+* improved display sharpness in original rendering mode (H40 cell mode only), filtering is now completely disabled
+* enabled overscan emulation in "STRETCH" aspect mode also
+* added support for horizontal wiimote handling in Menu (automatically used when the wiimote is not pointed towards the screen)
+* improved Controller options
   .prevented keys reconfiguration if device is not detected
   .added support for up to 8 players (ISS Pro Deluxe, ...)
   .each player can be affected to a custom device (GAMECUBE Pad, WIIMOTE/NUNCHUK or CLASSIC)
   .added the ability to use classic controller & wiimote pad from the same port separately
-  .modified "soft-reset" key on the Wiimote to avoid "accidental" resets (now press Buttons + & - simultaneously)
+  .modified "soft-reset" key on the Wiimote to avoid "accidental" resets (now press Buttons + & * simultaneously)
   .added MODE button mapping: use "START+Z" on gamepad or "Button Minus" on wiimote/classic (not reconfigurable)
   .added automatic configuration save for controller options
 
 
 
-01/06/2008:
------------
-[Genesis]
-- improved HCounter accuracy: fix graphic glitches in "Striker (Europe)"
-- improved HINT timing accuracy: fix flickering in "Zero The Kamikaze Squirrel (USA)"
-- improved rendering accuracy when backdrop color is modified during HBLANK (Road Rash I/II/III)
-- fixed broken Game Genie support
+---------------------------------------------------------------------------------------------------------
+Genesis Plus GX release 080601(Eke-Eke)
+---------------------------------------------------------------------------------------------------------
 
-[NGC/Wii]
-- added full horizontal scaling (up to 720 pixels) when using "stretch" aspect mode (use Xscale to increase width)
-- added progressive mode support (480p) in menu also
-- added automatic SRAM/FreezeState support (OFF by default, check "system options")
-- added automatic configuration file support
-- /genplus/saves is now automatically created if it does not exist
-- use libfat automatic SDCARD detection: default slot is now always used when accessing SDCARD
-- assigned Reset Button to Genesis Soft-Reset
+[Core]
 
-[Wii only]
-- added automatic TV mode detection (from SYSCONF), no more PAL60 version needed
-- added option to return to Wii System Menu
-- fixed "TP reload" option: now compatible with HB channel
-- removed SD-Gekko support (Wii slot becomes default slot)
-- added Wii SD slot support for SRAM & FreezeState files
-- added Wiimote, Nunchuk & Classic controllers support through libwiiuse (see User Manual for default keys)
-- added customizable key mapping (for each configurations: wiimote only, wiimote+nunchuk or classic)
+* improved HCounter accuracy: fix graphic glitches in "Striker (Europe)"
+* improved HINT timing accuracy: fix flickering in "Zero The Kamikaze Squirrel (USA)"
+* improved rendering accuracy when backdrop color is modified during HBLANK (Road Rash I/II/III)
+* fixed broken Game Genie support
 
-  
-19/04/2008:
------------
-[Genesis]
-- modified VINT timings a little bit: fix lockup during Desert Strike's intro
-- corrected 68k interrupts handling: fix graphic glitches in Darius II/Sagaia
+[Gamecube/Wii]
 
-[NGC/Wii]
-- fixed 60Hz "Bilinear" rendering mode (was broken in last release)
-- fixed issue with the 1st file when browsing SDCARD through SD-Gekko
-- fixed GX initialization: fix "freeze" issue that occured sometime when starting a game
-- added "Wii Reboot" option
-- added PAL 50hz support in menu (black borders)
-- added progressive rendering mode support (480p) in Wii mode (not supported by the PAL60 version, use the other one !)
-- compiled with a modified libogc: should definitely fix the PAL "red screen" issue for RGB-cable users (still use the PAL60 version !)
+* added full horizontal scaling (up to 720 pixels) when using "stretch" aspect mode (use Xscale to increase width)
+* added progressive mode support (480p) in menu also
+* added automatic SRAM/FreezeState support (OFF by default, check "system options")
+* added automatic configuration file support
+* /genplus/saves is now automatically created if it does not exist
+* use libfat automatic SDCARD detection: default slot is now always used when accessing SDCARD
+* assigned Reset Button to Genesis Soft-Reset
 
-  
-06/04/2008:
------------
-[Genesis]
-- updated SVP core: fix some perspective issues in Virtua Racing (thanks to Notaz)
-- added internal SAT update during VRAM Fill: fix unmasked sprites during Battletech's intro
-- fixed m68k core issues with gcc 4.2.3: fix Xperts, Lemmings 2, M1 Abrams Battle Tank
-- forced YM2612 Enveloppe update: fix intro music in Batman&Robin (thanks to Aamir)
+[Wii]
 
-[NGC/Wii]
-- removed not working DVD features (Wii mode only)
-- fixed Timers with PAL roms
-- added EURGB60 TV mode support: fix "red screen" issue with PAL Wii when using RGB cable
-- added PAL50 TV mode support (PAL and NTSC roms), see video options
-- added "TP reload" option, use "System Reboot" (Wii mode only)
-- added Front SD rom loading support with LFN & subdirectory browsing (Wii mode only)
+* added automatic TV mode detection (from SYSCONF), no more PAL60 version needed
+* added option to return to Wii System Menu
+* fixed "TP reload" option: now compatible with HB channel
+* removed SD-Gekko support (Wii slot becomes default slot)
+* added Wii SD slot support for SRAM & FreezeState files
+* added Wiimote, Nunchuk & Classic controllers support through libwiiuse (see User Manual for default keys)
+* added customizable key mapping (for each configurations: wiimote only, wiimote+nunchuk or classic)
 
 
-01/03/2008:
------------
-[Genesis]
-- added SVP emulation: Virtua Racing is now emulated (big thanks to Notaz and TascoDeluxe)
-- fixed VDP registers behaviour when VDP Mode 4 is enabled: fix Bass Masters Classic Pro, Captain Planet & The Planeeters
-- corrected a bug in DMA Fill operation: fix James Pond 3, Rockman World/Megaman Willy Wars (corrupted VRAM)
-- corrected typo errors in CPU cycle counters update: fix optiom screen music in "College Slam" and probably others games.
-- added preliminary support of undocumented YM2612 bug: fixes soundtracks of Shaq Fu, Spiderman, Comix Zone, Ariel and some others
-- added support for mappers & copy protection devices used in many unlicensed/pirate cartridges (see cart_hw.c for details)
-- rewrote memory handlers for better modularity and some (little) speedup
-- reduced Savestate size
 
-[NGC]
-- compiled with last LibOGC (20080228): fix issues when unplugging controller, support for Wii mode (see release.txt)
-- added "hard-coded" IPL font (no more direct access to BOOTROM): fix font problem for Qoob users
-- added SDCARD Slot B support for loading Roms
-- removed unused MAME PSG Core
-- added 'Force DTACK' option for prototype games usually hanging on real hardware (example: Sonic Crackers)
-- added an option to underclock SVP core (with default cycle count, Virtua Racing actually does not run fullspeed in GC mode)
-- fixed frame timing in PAL mode
-- fixed analog stick sensitivity
+---------------------------------------------------------------------------------------------------------
+Genesis Plus GX release 080419(Eke-Eke)
+---------------------------------------------------------------------------------------------------------
+
+[Core]
+
+* modified VINT timings a little bit: fix lockup during Desert Strike's intro
+* corrected 68k interrupts handling: fix graphic glitches in Darius II/Sagaia
+
+[Gamecube/Wii]
+
+* fixed 60Hz "Bilinear" rendering mode (was broken in last release)
+* fixed issue with the 1st file when browsing SDCARD through SD-Gekko
+* fixed GX initialization: fix "freeze" issue that occured sometime when starting a game
+* added "Wii Reboot" option
+* added PAL 50hz support in menu (black borders)
+* added progressive rendering mode support (480p) in Wii mode (not supported by the PAL60 version, use the other one !)
+* compiled with a modified libogc: should definitely fix the PAL "red screen" issue for RGB-cable users (still use the PAL60 version !)
 
 
-07/01/2008:
------------
-[Genesis]
-- fixed interleaved rom detection: roms with .smd extension should now work fine
-- fixed a recently introduced bug in VDP registers writes: fixes bad colors in Toy Story (intro)
-- updated list of games using EEPROM: added Sports Talk Baseball (internal memory check fixed) and Brian Lara Cricket
-- fixed VINT flag update when VINT is disabled: fixes NCAA College Football
-- adjusted DMA timings in H32 mode: fixes flickering in Out of this World, Kawasaki Superbike Challenge & Formula One
-- adjusted line rendering and HBLANK timings: fixes flickering in Nigel Mansell's World Championship Racing, Deadly Moves/Power Athlete
-- fixed unmapped ROM reads through Z80 Bank: fixes Zombie High (Proto)
-- added support for custom ROM/RAM mapping used by Game no Kanzume Otokuyou
 
-[NGC]
-- fixed broken SDCARD support for SRAM and Savestate files
+---------------------------------------------------------------------------------------------------------
+Genesis Plus GX release 080406(Eke-Eke)
+---------------------------------------------------------------------------------------------------------
+
+[Core]
+
+* updated SVP core: fix some perspective issues in Virtua Racing (thanks to Notaz)
+* added internal SAT update during VRAM Fill: fix unmasked sprites during Battletech's intro
+* fixed m68k core issues with gcc 4.2.3: fix Xperts, Lemmings 2, M1 Abrams Battle Tank
+* forced YM2612 Enveloppe update: fix intro music in Batman&Robin (thanks to Aamir)
+
+[Gamecube/Wii]
+
+* removed not working DVD features (Wii mode only)
+* fixed Timers with PAL roms
+* added EURGB60 TV mode support: fix "red screen" issue with PAL Wii when using RGB cable
+* added PAL50 TV mode support (PAL and NTSC roms), see video options
+* added "TP reload" option, use "System Reboot" (Wii mode only)
+* added Front SD rom loading support with LFN & subdirectory browsing (Wii mode only)
 
 
-30/12/2007:
------------
-- fixed ROM injector base address (DATA section 1)
+
+---------------------------------------------------------------------------------------------------------
+Genesis Plus GX release 080301(Eke-Eke)
+---------------------------------------------------------------------------------------------------------
+
+[Core]
+
+* added SVP emulation: Virtua Racing is now emulated (big thanks to Notaz and TascoDeluxe)
+* fixed VDP registers behaviour when VDP Mode 4 is enabled: fix Bass Masters Classic Pro, Captain Planet & The Planeeters
+* corrected a bug in DMA Fill operation: fix James Pond 3, Rockman World/Megaman Willy Wars (corrupted VRAM)
+* corrected typo errors in CPU cycle counters update: fix optiom screen music in "College Slam" and probably others games.
+* added preliminary support of undocumented YM2612 bug: fixes soundtracks of Shaq Fu, Spiderman, Comix Zone, Ariel and some others
+* added support for mappers & copy protection devices used in many unlicensed/pirate cartridges (see cart_hw.c for details)
+* rewrote memory handlers for better modularity and some (little) speedup
+* reduced Savestate size
+
+[Gamecube]
+
+* compiled with last LibOGC (20080228): fix issues when unplugging controller, support for Wii mode (see release.txt)
+* added "hard-coded" IPL font (no more direct access to BOOTROM): fix font problem for Qoob users
+* added SDCARD Slot B support for loading Roms
+* removed unused MAME PSG Core
+* added 'Force DTACK' option for prototype games usually hanging on real hardware (example: Sonic Crackers)
+* added an option to underclock SVP core (with default cycle count, Virtua Racing actually does not run fullspeed in GC mode)
+* fixed frame timing in PAL mode
+* fixed analog stick sensitivity
 
 
-28/12/2007:
------------
-[Genesis]
-- many sourcecode cleanup and optimization
-- completely rewrote EEPROM emulation: now support all known EEPROM types (24C01-24C65) and mappers (Sega, Acclaim, EA, Codemasters)
+
+---------------------------------------------------------------------------------------------------------
+Genesis Plus GX release 080107(Eke-Eke)
+---------------------------------------------------------------------------------------------------------
+
+[Core]
+
+* fixed interleaved rom detection: roms with .smd extension should now work fine
+* fixed a recently introduced bug in VDP registers writes: fixes bad colors in Toy Story (intro)
+* updated list of games using EEPROM: added Sports Talk Baseball (internal memory check fixed) and Brian Lara Cricket
+* fixed VINT flag update when VINT is disabled: fixes NCAA College Football
+* adjusted DMA timings in H32 mode: fixes flickering in Out of this World, Kawasaki Superbike Challenge & Formula One
+* adjusted line rendering and HBLANK timings: fixes flickering in Nigel Mansell's World Championship Racing, Deadly Moves/Power Athlete
+* fixed unmapped ROM reads through Z80 Bank: fixes Zombie High (Proto)
+* added support for custom ROM/RAM mapping used by Game no Kanzume Otokuyou
+
+[Gamecube]
+
+* fixed broken SDCARD support for SRAM and Savestate files
+
+
+
+---------------------------------------------------------------------------------------------------------
+Genesis Plus GX release 071230(Eke-Eke)
+---------------------------------------------------------------------------------------------------------
+
+[Gamecube]
+
+* fixed ROM injector base address (DATA section 1)
+
+
+
+---------------------------------------------------------------------------------------------------------
+Genesis Plus GX release 071228(Eke-Eke)
+---------------------------------------------------------------------------------------------------------
+
+[Core]
+
+* many sourcecode cleanup and optimization
+* completely rewrote EEPROM emulation: now support all known EEPROM types (24C01-24C65) and mappers (Sega, Acclaim, EA, Codemasters)
 used in a few games (now use internal game database) as external RAM. This should at least fix save support in the following games:
   . NBA Jam (alternate Acclaim mapper)
   . College Slam, Frank Thomas Big Hurt Baseball (24C65 type)
   . NHLPA Hockey 93, Rings of Power (EA mapper)
   . Micro Machines serie, Brian Lara Cricket 96/Shane Warne Cricket (Codemasters mapper)
+* external RAM is now initialized to 0xFF by default: fix Micromachines 2, Dino Dini Soccer 
+* fixed SRAM 16-bits memory handlers: fix some Sega Sports and EA Sports games (NFL95, NBA Action 95, NHL97, NHL98,...)
+* modified WRITE_xxx & READ_xxx macros for better portability and faster memory access on BIG ENDIAN platform 
+* completely rewrote BIG ENDIAN support in render.c and vdp.c: rendering should be a little faster
+* rewrote ROM bankswitch emulation (Super Street Fighter II): ROM access are faster, using memory pointers instead of reading ROM copy from ARAM 
+* fixed leftmost Window/PlaneA column render and implemented Window bug (as described by Charles Mc Donald)
+* improved "Sprite Limit" and "Sprite Collision" detection accuracy
+* modified RGB565 Color Palette to use the full available color range (0-31;0-63)
+* implemented "cycle accurate" HV Interrupt timings: fix Sesame's Street Counting Cafe, Legend of Galahad (intro)
+* improved VDP access timings accuracy (added FIFO emulation): fix Double Clutch
+* improved DMA timings accuracy: fix Winter Olympics (E), Arch Rivals and probably more
+* fixed HCounter again: Road Rash serie (I,II,III) don't need timing hacks anymore
+* fixed VCounter in Interlaced 2 mode: fix Combat Cars "VS-Mode"
+* improved Interlaced 2 mode (double resolution) rendering: Sonic 2, Combat Cars ("VS-Modes") look far better
+* added TMSS BIOS support (optional)
+* rewrote part of the YM2162 MAME's core: fixed internal FM timers handling, removed non-YM2612 emulation code and unused multiple cpu support
+* implemented "cycle accurate" FM timers & sound samples rendering
+* improved Z80 Interrupt timing accuracy: fix Sonic 3 music slowdowns
+* updated Z80 & 68000 cores to last MAME versions
+* improved Soft Reset emulation: X-Men 2 and Eternal Champions (random character selection) now work more like on real hardware.
+* added full overscan emulation (vertical & horizontal borders) for "pixel perfect" aspect ratio (tested against a real genesis)
 
-- external RAM is now initialized to 0xFF by default: fix Micromachines 2, Dino Dini Soccer 
-- fixed SRAM 16-bits memory handlers: fix some Sega Sports and EA Sports games (NFL95, NBA Action 95, NHL97, NHL98,...)
-- modified WRITE_xxx & READ_xxx macros for better portability and faster memory access on BIG ENDIAN platform 
-- completely rewrote BIG ENDIAN support in render.c and vdp.c: rendering should be a little faster
-- rewrote ROM bankswitch emulation (Super Street Fighter II): ROM access are faster, using memory pointers instead of reading ROM copy from ARAM 
-- fixed leftmost Window/PlaneA column render and implemented Window bug (as described by Charles Mc Donald)
-- improved "Sprite Limit" and "Sprite Collision" detection accuracy
-- modified RGB565 Color Palette to use the full available color range (0-31;0-63)
-- implemented "cycle accurate" HV Interrupt timings: fix Sesame's Street Counting Cafe, Legend of Galahad (intro)
-- improved VDP access timings accuracy (added FIFO emulation): fix Double Clutch
-- improved DMA timings accuracy: fix Winter Olympics (E), Arch Rivals and probably more
-- fixed HCounter again: Road Rash serie (I,II,III) don't need timing hacks anymore
-- fixed VCounter in Interlaced 2 mode: fix Combat Cars "VS-Mode"
-- improved Interlaced 2 mode (double resolution) rendering: Sonic 2, Combat Cars ("VS-Modes") look far better
-- added TMSS BIOS support (optional)
-- rewrote part of the YM2162 MAME's core: fixed internal FM timers handling, removed non-YM2612 emulation code and unused multiple cpu support
-- implemented "cycle accurate" FM timers & sound samples rendering
-- improved Z80 Interrupt timing accuracy: fix Sonic 3 music slowdowns
-- updated Z80 & 68000 cores to last MAME versions
-- improved Soft Reset emulation: X-Men 2 and Eternal Champions (random character selection) now work more like on real hardware.
-- added full overscan emulation (vertical & horizontal borders) for "pixel perfect" aspect ratio (tested against a real genesis)
+[Gamecube]
 
-[NGC]
-- fixed rom checksum calculation (only used for rom information)
-- some modifications in GX rendering code.
-- added support for original Genesis/Megadrive NTSC & PAL video modes: this makes games looking exactly as on original hardware (progressive rendering with reduced resolution)
-- added "Aspect" option to switch between ORIGINAL (aspect ratio is fixed and borders are emulated) and MANUAL SET (horizontal and vertical scaling can be manually configured, borders are not emulated)
-- added "Overscan" option to disable the original borders color and always use black borders (only used when ORIGINAL Aspect mode is enabled)
-- added support for up to 720 pixels horizontal resolution (needed for proper aspect ratio emulation)
-- added "TV Mode" option to enable automatic switching to PAL(50Hz) TV mode when the Genesis runs in PAL mode
-- added "Xshift" & "Yshift" settings to let you adjust display area position while keeping the original aspect ratio
-- added option to disable/enable SSG-EG support in FM cores: this special mode is indeed not properly emulated and some games might sound wrong when enabled
-- removed "CPU Type" option, you can also now force Region (JAP/EUR/USA) without reseting the game, choose USA or JAP for 60hz, EUR for 50hz, this can be useful to bypass game region protection at startup.
+* fixed rom checksum calculation (only used for rom information)
+* some modifications in GX rendering code.
+* added support for original Genesis/Megadrive NTSC & PAL video modes: this makes games looking exactly as on original hardware (progressive rendering with reduced resolution)
+* added "Aspect" option to switch between ORIGINAL (aspect ratio is fixed and borders are emulated) and MANUAL SET (horizontal and vertical scaling can be manually configured, borders are not emulated)
+* added "Overscan" option to disable the original borders color and always use black borders (only used when ORIGINAL Aspect mode is enabled)
+* added support for up to 720 pixels horizontal resolution (needed for proper aspect ratio emulation)
+* added "TV Mode" option to enable automatic switching to PAL(50Hz) TV mode when the Genesis runs in PAL mode
+* added "Xshift" & "Yshift" settings to let you adjust display area position while keeping the original aspect ratio
+* added option to disable/enable SSG-EG support in FM cores: this special mode is indeed not properly emulated and some games might sound wrong when enabled
+* removed "CPU Type" option, you can also now force Region (JAP/EUR/USA) without reseting the game, choose USA or JAP for 60hz, EUR for 50hz, this can be useful to bypass game region protection at startup.
 
 
-20/07/2007:
------------
-[Genesis]
-- corrected TeamPlayer support: fix multiplayer in Gauntlet 4 (Sept. version), Pengo and a lot of others
-- added J-Cart support: enable multiplayer in Codemasters games (Pete Sampras, Micromachines games, Super Skidmarks)
-- added serial EEPROM autodetection: fix games with bad SRAM informations in header (NBA Jam TE)
-- added SVP faking: display 2D graphics in Virtua Racing (the game is however still unplayable)
-- added support for more internal IO registers: fixe some unlicensed games (Wisdom Tree games...)
-- added preliminary support for unmapped protection device: fix some unlicensed games with special built-in hardware (Squirell King, Lion King 2...)
-- added "Soft Reset" combo (in game, use L+Z triggers): this should be like pressing the RESET button on a real Genesis and this is required
+---------------------------------------------------------------------------------------------------------
+Genesis Plus GX release 070720(Eke-Eke)
+---------------------------------------------------------------------------------------------------------
+
+[Core]
+
+* corrected TeamPlayer support: fix multiplayer in Gauntlet 4 (Sept. version), Pengo and a lot of others
+* added J-Cart support: enable multiplayer in Codemasters games (Pete Sampras, Micromachines games, Super Skidmarks)
+* added serial EEPROM autodetection: fix games with bad SRAM informations in header (NBA Jam TE)
+* added SVP faking: display 2D graphics in Virtua Racing (the game is however still unplayable)
+* added support for more internal IO registers: fixe some unlicensed games (Wisdom Tree games...)
+* added preliminary support for unmapped protection device: fix some unlicensed games with special built-in hardware (Squirell King, Lion King 2...)
+* added "Soft Reset" combo (in game, use L+Z triggers): this should be like pressing the RESET button on a real Genesis and this is required
   in some games to enable special features or even complete the game (ex: X-Men).
 
-[NGC]
-- added separate configuration for PortA/PortB inputs (GAMEPAD, MULTITAP or NONE, see Joypad Config): this let you setting
+[Gamecube]
+
+* added separate configuration for PortA/PortB inputs (GAMEPAD, MULTITAP or NONE, see Joypad Config): this let you setting
   PORTB as unplugged, which is needed in some games to access special modes or enable cheat codes (Alien Storm, X-Men...)
-- Freezestate & SRAM files are now compressed (using zlib)
-- FreezeState & SRAM files can now be saved/loaded to/from SDCARD: located in /genplus/saves/ from the root of your SDCARD
-- changed initial ROMS directory for SDCARD user: now looking for /genplus/roms/ from the root of your SDCARD
-- added user-transparent SRAM autoload (detection order is MCARD then SDCARD, SLOTA then SLOTB)
-- "System reboot" is now used for console reboot and SD/PSO reload (if detected)
-- added new font: now use original IPL font, extracted from Bootrom
-- modified controls when going into the rom selection menu (DVD or SDCARD):
+* Freezestate & SRAM files are now compressed (using zlib)
+* FreezeState & SRAM files can now be saved/loaded to/from SDCARD: located in /genplus/saves/ from the root of your SDCARD
+* changed initial ROMS directory for SDCARD user: now looking for /genplus/roms/ from the root of your SDCARD
+* added user-transparent SRAM autoload (detection order is MCARD then SDCARD, SLOTA then SLOTB)
+* "System reboot" is now used for console reboot and SD/PSO reload (if detected)
+* added new font: now use original IPL font, extracted from Bootrom
+* modified controls when going into the rom selection menu (DVD or SDCARD):
    . use B button to go up one directory
    . use Z button to quit the file selection menu 
    . use L/R triggers to go down/up one full page
    . use Left/Right buttons or Analog stick to scroll the selected entry's filename when it can't be full displayed
-- various menu rearrangment, minor bugfixes & sourcecode cleanup
+* various menu rearrangment, minor bugfixes & sourcecode cleanup
 
 
-21/06/2007:
------------
-- added 4.7GB DVD support for WII drives (the maximal allowed size for Gamecube DVD is still 1.35GB)
-- removed MPAL video timings, always use 60Hz NTSC: fix display problems for PAL wii users (no more PAL50 version needed)
-- added Console Reboot option in main menu (IPL Reboot)
-- added Multitap support (EA 4-Way Play and Sega Teamplayer): allowed up to four players in games supporting those peripherals
-- added partial Sega Menacer lightgun support (use Analog Stick): automatically set when detecting the 6-in-1 Menacer game
+
+---------------------------------------------------------------------------------------------------------
+Genesis Plus GX release 070621(Eke-Eke)
+---------------------------------------------------------------------------------------------------------
+
+[Core]
+
+* added Multitap support (EA 4-Way Play and Sega Teamplayer): allowed up to four players in games supporting those peripherals
+* added partial Sega Menacer lightgun support: automatically set when detecting the 6-in-1 Menacer game
+
+[Gamecube]
+
+* added 4.7GB DVD support for WII drives (the maximal allowed size for Gamecube DVD is still 1.35GB)
+* removed MPAL video timings, always use 60Hz NTSC: fix display problems for PAL wii users (no more PAL50 version needed)
+* added Console Reboot option in main menu (IPL Reboot)
 
 
-18/05/2007:
------------
-- you can now switch between FM cores without reseting the game. FM registers  value are automatically restored when switching.
-- modified PAL framesync a little bit: the 20ms period is now applied between the start of 2 consecutive frames,
-no more between the end of the previous and the start of the next one, which seems more correct to me
-- removed the previous VINT timings modification because it brokes some games (Rocket Knight, Thunderforce III,...)
-- added automatic Timing configuration (VDP latency, VINT timing & alternate Line Timing) at game loading, based upon specific romname detection.
+
+---------------------------------------------------------------------------------------------------------
+Genesis Plus GX release 070518(Eke-Eke)
+---------------------------------------------------------------------------------------------------------
+
+[Core]
+
+* you can now switch between FM cores without reseting the game. FM registers  value are automatically restored when switching.
+* removed the previous VINT timings modification because it brokes some games (Rocket Knight, Thunderforce III,...)
+* added automatic Timing configuration (VDP latency, VINT timing & alternate Line Timing) at game loading, based upon specific romname detection.
 This means you can still modify some of these options afterwards but they are now automatically set/unset when loading a game which need
 special timing fixes. These fixes are also automatically desactivated when the current game doesn't need them.
-
 For information, games that are actually detected and need special timings to run properly are:
  .Legend of Galahad & Road Rash series (single line not rendered properly)
  .Sesame Street Counting Cafe (don't boot)
  .Chaos Engine/Soldiers of Fortune (graphic glitches on scrolling)
 
+[Gamecube]
 
-08/05/2007:
------------
-- corrected L & R buttons assignment: fixes Genesis X & Z buttons being inverted
-- VINT timings are now a little more accurate: fixes Sesame's Street Counting Cafe
-- SN76496 MAX_OUTPUT back to normal
-- modified FB_WNOISE value in SN76496 core according to John Kortink's last informations 
-- added support for Maxim's PSG core, same as used in SMSPLUS (it becomes the default PSG core)
-- updated FM core to the latest MAME version
-- corrected DAC output level (fixes voices and some special FX being too low)
-- added support for Gens YM2612 (FM) core (MAME's one still remains default FM core)
-- added configurable preamplification for each sound cores (see Emulator Options)
-- added some other configurable sound options (boost overall volume, FM improvment for Gens YM2612)
+* modified PAL framesync a little bit: the 20ms period is now applied between the start of 2 consecutive frames,
+no more between the end of the previous and the start of the next one, which seems more correct to me
 
 
-11/04/2007:
------------
-- corrected MAX_OUTPUT value in SN76496 core: fix PSG sound (SFX) volume
-- removed unused sound buffer allocation
+
+---------------------------------------------------------------------------------------------------------
+Genesis Plus GX release 070508(Eke-Eke)
+---------------------------------------------------------------------------------------------------------
+
+[Core]
+
+* VINT timings are now a little more accurate: fixes Sesame's Street Counting Cafe
+* SN76496 MAX_OUTPUT back to normal
+* modified FB_WNOISE value in SN76496 core according to John Kortink's last informations 
+* added support for Maxim's PSG core, same as used in SMSPLUS (it becomes the default PSG core)
+* updated FM core to the latest MAME version
+* corrected DAC output level (fixes voices and some special FX being too low)
+* added support for Gens YM2612 (FM) core (MAME's one still remains default FM core)
+
+[Gamecube]
+
+* corrected L & R buttons assignment: fixes Genesis X & Z buttons being inverted
+* added configurable preamplification for each sound cores (see Emulator Options)
+* added some other configurable sound options (boost overall volume, FM improvment for Gens YM2612)
 
 
-26/03/2007:
------------
-- added DVD automount: automatically call libogc DVD_Mount function if ISO PVD reading failed (idea taken from softdev's last neocdredux release). This may be useful for loading roms from a DVD after booting from SDLOAD or after stopping DVD motor.
-- added "DVD motor off" feature, like in others emulators
-- corrected Memory Card mounting function: EXI_ProbeReset() function was never called if the first mounting attempt failed. Should fix some of the "Unable to mount memory card" errors.
+---------------------------------------------------------------------------------------------------------
+Genesis Plus GX release 070411(Eke-Eke)
+---------------------------------------------------------------------------------------------------------
+
+[Core]
+
+* corrected MAX_OUTPUT value in SN76496 core: fix PSG sound (SFX) volume
+* removed unused sound buffer allocation
 
 
-22/03/2007:
------------
- - added SDCARD subdirectory browsing and LFN (255 char. max) support
+
+---------------------------------------------------------------------------------------------------------
+Genesis Plus GX release 070326(Eke-Eke)
+---------------------------------------------------------------------------------------------------------
+
+[Gamecube]
+
+* added DVD automount: automatically call libogc DVD_Mount function if ISO PVD reading failed (idea taken from softdev's last neocdredux release). This may be useful for loading roms from a DVD after booting from SDLOAD or after stopping DVD motor.
+* added "DVD motor off" feature, like in others emulators
+* corrected Memory Card mounting function: EXI_ProbeReset() function was never called if the first mounting attempt failed. Should fix some of the "Unable to mount memory card" errors.
 
 
-17/03/2007:
------------
- - remove some rendering unused code (only used by DOS version of genesis plus) for little speedup
- - added an option to enable alternate line rendering timing (fix single line error in Road Rash series and Legend of Galahad's Intro)
- - Color RAM update now always reset color 0 to border color (fix color glitches in Mortal Kombat,...) (thanks to Noop's for the idea)
- - added last Softdev's modifications (normalised memory access and ASM GU functions used intead of 'C' ones) for some speedup
- - updated gcaram.c to be compatible with last libogc version
+
+---------------------------------------------------------------------------------------------------------
+Genesis Plus GX release 070322(Eke-Eke)
+---------------------------------------------------------------------------------------------------------
+
+[Gamecube]
+
+ * added SDCARD subdirectory browsing and LFN (255 char. max) support
 
 
-09/03/2007:
------------
-- little rendering code speedups
-- modified HV counter tables (fix graphic glitches in Skitchin's sky, Lotus 2 Recs, Panorama Cotton, Dashin Desperados & maybe more)
-- completely rewrote DMA timings emulation so that it works for all games (no more cpu freezing)
-- added all DMA tranfer rates handling for each three DMA modes and added dma busy flag emulation
-- modified interrupts handling on VDP register #0 and #1 writes (fix Lemmings status bar)
-- added VDP RAM write latency  (fix Chaos Engine/Soldier of Fortune gfx glitches)
-- modified FM timers handling a bit (fix Vectorman2 music)
-- corrected Sprite Limit rendering (fix Sonic 1 & Micromachines 2 title screens)
-- corrected IO Registers writes (fix Decap' Attack controls, no more need for alternate input)
-- corrected 6 Buttons Pad emulation (fix 6buttons detection in Mortal Kombat 3, Comix Zone and other 6-buttons compatible games)
-- modified sound mixing a bit according to Generator sourcecode (FM and PSG ratios seems more correct)
-- added separate CPU Region (USA, Europe, Japan,...) & Speed (PAL or NTSC) choice in menu options
-- modified main frame synchro in PAL mode (fix sound glitch in this mode), thanks to Softdev for the solution
-- added savestates support (go to SRAM menu, memory card supports only)
+
+---------------------------------------------------------------------------------------------------------
+Genesis Plus GX release 070317(Eke-Eke)
+---------------------------------------------------------------------------------------------------------
+
+[Core]
+
+ * Color RAM update now always reset color 0 to border color (fix color glitches in Mortal Kombat,...) (thanks to Noop's for the idea)
+
+[Gamecube]
+
+ * remove some rendering unused code (only used by DOS version of genesis plus) for little speedup
+ * added an option to enable alternate line rendering timing (fix single line error in Road Rash series and Legend of Galahad's Intro)
+ * added last Softdev's modifications (normalised memory access and ASM GU functions used intead of 'C' ones) for some speedup
+ * updated gcaram.c to be compatible with last libogc version
 
 
-07/02/2007: (Eke-Eke)
----------------------
-- fm timers fixed (fix missing music in Castle of Illusion, Quackshot, Undead Line, Wonderboy in Monster Lair, Cal 50, Turbo Outrun, Thundeforce 4 and maybe more)
-- added complete EEPROM emulation (save support now works fine in Wonderboy5, Megaman Willy Wars, NBA Jam...)  (credits to Notaz, adapted from Picodrive code)
-- added preliminar dma timing emulation (fix bottom screen in Legend of Galahad) (credits to Notaz, adapted from Picodrive code)
-- hack: clear Vint pending after Hint (INT level 4) acknowledge (fix Fatal Rewind)
-- hack: modify read_bus16 to return a random value (fake fetch) (fix Time Killers)
-- modified cpu execution timings, with more correct hblank and interrupts timing  (fix ISS Deluxe, Double Dragon 2 and certainly more) (Based on Gens code)
-- modified busreq mechanism: better synchro between z80 & 68k (no need to dejitter anymore) (Based on Gens code)
-- added sprite collision detection (fix Strider 2)
-- modified dma fill operation for big endian platform (fix Contra Hardcorps gfx garbage)
+
+---------------------------------------------------------------------------------------------------------
+Genesis Plus GX release 070309 (Eke-Eke)
+---------------------------------------------------------------------------------------------------------
+
+[Core]
+
+* little rendering code speedups
+* modified HV counter tables (fix graphic glitches in Skitchin's sky, Lotus 2 Recs, Panorama Cotton, Dashin Desperados & maybe more)
+* completely rewrote DMA timings emulation so that it works for all games (no more cpu freezing)
+* added all DMA tranfer rates handling for each three DMA modes and added dma busy flag emulation
+* modified interrupts handling on VDP register #0 and #1 writes (fix Lemmings status bar)
+* added VDP RAM write latency  (fix Chaos Engine/Soldier of Fortune gfx glitches)
+* modified FM timers handling a bit (fix Vectorman2 music)
+* corrected Sprite Limit rendering (fix Sonic 1 & Micromachines 2 title screens)
+* corrected IO Registers writes (fix Decap' Attack controls, no more need for alternate input)
+* corrected 6 Buttons Pad emulation (fix 6buttons detection in Mortal Kombat 3, Comix Zone and other 6-buttons compatible games)
+* modified sound mixing a bit according to Generator sourcecode (FM and PSG ratios seems more correct)
+* added separate CPU Region (USA, Europe, Japan,...) & Speed (PAL or NTSC) choice in menu options
+* modified main frame synchro in PAL mode (fix sound glitch in this mode), thanks to Softdev for the solution
+* added savestates support (go to SRAM menu, memory card supports only)
 
 
-Based on Softdev's initial releases
+
+---------------------------------------------------------------------------------------------------------
+Genesis Plus GX release 070207 (Eke-Eke)
+---------------------------------------------------------------------------------------------------------
+
+[Core]
+
+* fm timers fixed (fix missing music in Castle of Illusion, Quackshot, Undead Line, Wonderboy in Monster Lair, Cal 50, Turbo Outrun, Thundeforce 4 and maybe more)
+* added complete EEPROM emulation (save support now works fine in Wonderboy5, Megaman Willy Wars, NBA Jam...)  (credits to Notaz, adapted from Picodrive code)
+* added preliminar dma timing emulation (fix bottom screen in Legend of Galahad) (credits to Notaz, adapted from Picodrive code)
+* hack: clear Vint pending after Hint (INT level 4) acknowledge (fix Fatal Rewind)
+* hack: modify read_bus16 to return a random value (fake fetch) (fix Time Killers)
+* modified cpu execution timings, with more correct hblank and interrupts timing  (fix ISS Deluxe, Double Dragon 2 and certainly more) (Based on Gens code)
+* modified busreq mechanism: better synchro between z80 & 68k (no need to dejitter anymore) (Based on Gens code)
+* added sprite collision detection (fix Strider 2)
+* modified dma fill operation for big endian platform (fix Contra Hardcorps gfx garbage)
 
 
-WIP1.2	unzip.c
-		Added partial zip support
-		
-WIP1.1	sio.c added
-		Added six button pad support from x86 Gens
-		Additional changes based on Charles MacDonald's gen-hw.txt
-		
-WIP1	07 March 2006
-		Updated SN76496 driver
-		Added GX Hardware Scaling
+
+---------------------------------------------------------------------------------------------------------
+Genesis Plus GX WIP 1.2 (Softdev)
+---------------------------------------------------------------------------------------------------------
+
+[Gamecube]
+
+* Added partial zip support (unzip.c)
+
+
+
+---------------------------------------------------------------------------------------------------------
+Genesis Plus GX WIP 1.1 (Softdev)
+---------------------------------------------------------------------------------------------------------
+
+[Core]
+
+* sio.c added
+* Added six button pad support from x86 Gens
+* Additional changes based on Charles MacDonald's gen-hw.txt
+
+
+
+---------------------------------------------------------------------------------------------------------
+Genesis Plus GX WIP 1 - 7 March 2006 (Softdev)
+---------------------------------------------------------------------------------------------------------
+
+[Core]
+
+* Updated SN76496 driver
+
+[Gamecube]
+
+* Added GX Hardware Scaling
+
+
+
+---------------------------------------------------------------------------------------------------------
+Genesis Plus GX WIP 0 (Softdev)
+---------------------------------------------------------------------------------------------------------
+
+[Gamecube]
+
+* initial port based on Genesis Plus 1.2a from Charles McDonald (http://cgfm2.emuviews.com/)
