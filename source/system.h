@@ -24,6 +24,8 @@
 #ifndef _SYSTEM_H_
 #define _SYSTEM_H_
 
+#include "samplerate.h"
+
 #define SYSTEM_GENESIS    0
 #define SYSTEM_MEGADRIVE  1
 #define SYSTEM_PICO       2
@@ -66,7 +68,6 @@ typedef struct
     int curStage;
     int lastStage;
     int *buffer[2];
-    float *src_out; /* SRC conversion buffer */
   } fm;
   struct
   {
@@ -86,6 +87,7 @@ extern uint32 count_z80;
 extern uint32 line_z80;
 extern int32 current_z80;
 extern uint8 system_hw;
+extern SRC_DATA src_data;
 
 /* Function prototypes */
 extern void system_init (void);

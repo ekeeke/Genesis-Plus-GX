@@ -1804,8 +1804,16 @@ void YM2612UpdateOne(int **buffer, int length)
     Limit(rt,MAXOUT,MINOUT);
 
     /* buffering */
-    bufL[i] = lt;
-    bufR[i] = rt;
+    if (src_buffer)
+    {
+      src_buffer[i*2]      = (float) lt / (8.0 * 0x10000000);
+      src_buffer[i*2 + 1]  = (float) rt / (8.0 * 0x10000000);
+    }
+    else
+    {
+      bufL[i] = lt;
+      bufR[i] = rt;
+    }
 
     /* timer A control */
     INTERNAL_TIMER_A();

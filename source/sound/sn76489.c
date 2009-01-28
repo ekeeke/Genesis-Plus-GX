@@ -48,7 +48,7 @@ static SN76489_Context SN76489[MAX_SN76489];
 void SN76489_Init(int which, int PSGClockValue, int SamplingRate)
 {
   SN76489_Context *p = &SN76489[which];
-  p->dClock=(float)PSGClockValue/16/SamplingRate;
+  p->dClock=(float)(PSGClockValue)/16.0/(float)SamplingRate;
   SN76489_Config(which, MUTE_ALLON, VOL_FULL, FB_SEGAVDP, SRW_SEGAVDP, 1);
   SN76489_Reset(which);
 }

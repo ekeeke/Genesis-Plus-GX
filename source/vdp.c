@@ -91,9 +91,6 @@ static uint16 sat_base_mask;      /* Base bits of SAT */
 static uint16 sat_addr_mask;      /* Index bits of SAT */
 static uint32 dma_endCycles;      /* 68k cycles to DMA end */
 static uint8 dma_type;            /* Type of DMA */
-static double vdp_timings[4][4];  /* DMA timings */
-
-static inline void vdp_reg_w(unsigned int r, unsigned int d);
 
 /* DMA Timings
 
@@ -122,31 +119,22 @@ static inline void vdp_reg_w(unsigned int r, unsigned int d);
  CRAM or VSRAM for a 68K > VDP transfer, in which case it is in words.
 
 */
-static const uint8 dma_rates[16] = {
-  8,  9, 83 , 102,  /* 68K to VRAM */
-  16, 18, 167, 205, /* 68K to CRAM or VSRAM */
-  15, 17, 166, 204, /* DMA fill */
-  8,  9, 83 , 102,  /* DMA Copy */
+static const uint32 dma_rates[16] = {
+  8,   83,  9, 102, /* 68K to VRAM (1 word = 2 bytes) */
+  16, 167, 18, 205, /* 68K to CRAM or VSRAM */
+  15, 166, 17, 204, /* DMA fill */
+  8,   83,  9, 102, /* DMA Copy */
 };
 
 /* Function prototypes */
 static inline void data_write(unsigned int data);
+static inline void vdp_reg_w(unsigned int r, unsigned int d);
 
 /*--------------------------------------------------------------------------*/
 /* Init, reset, shutdown functions                                          */
 /*--------------------------------------------------------------------------*/
 void vdp_init(void)
 {
-  /* reinitialize DMA timings table */
-  int i;
-  for (i=0; i<4; i++)
-  {
-    vdp_timings[0][i] = ((double)m68cycles_per_line) / ((double) dma_rates[i]);
-    vdp_timings[1][i] = ((double)m68cycles_per_line) / ((double) dma_rates[i +  4]);
-    vdp_timings[2][i] = ((double)m68cycles_per_line) / ((double) dma_rates[i +  8]);
-    vdp_timings[3][i] = ((double)m68cycles_per_line) / ((double) dma_rates[i + 12]);
-  }
-
   /* PAL/NTSC timings */
   vdp_rate        = vdp_pal ? 50 : 60;
   lines_per_frame = vdp_pal ? 313 : 262;
@@ -280,24 +268,27 @@ void vdp_restore(uint8 *vdp_regs)
 /* Update DMA timings (this is call on start of DMA and then at the start of each scanline) */
 void dma_update()
 {
-  int32 left_cycles;
-  uint32 dma_cycles, dma_bytes;
-  uint8 index = 0;
+  int dma_cycles = 0;
 
-  /* get the appropriate tranfer rate (bytes/line) for this DMA operation */
-  if ((status&8) || !(reg[1] & 0x40)) index = 2; /* VBLANK or Display OFF */
-  index += (reg[12] & 1);               /* 32 or 40 Horizontal Cells    */
+  /* DMA timings table index */
+  int index = (4 * dma_type) + ((reg[12] & 1)*2);
+  if ((status&8) || !(reg[1] & 0x40)) index++;
 
-  /* calculate transfer quantity for the remaining 68k cycles */
-  left_cycles = line_m68k + m68cycles_per_line - count_m68k;
+  /* DMA transfer rate */
+  int rate = dma_rates[index];
+
+  /* 68k cycles left */
+  int left_cycles = (line_m68k + m68cycles_per_line) - count_m68k;
   if (left_cycles < 0) left_cycles = 0;
-  dma_bytes = (uint32)(((double)left_cycles / vdp_timings[dma_type][index]) + 0.5);
+
+  /* DMA bytes left */
+  int dma_bytes = (left_cycles * rate) / m68cycles_per_line;
 
   /* determinate DMA length in CPU cycles */
   if (dma_length < dma_bytes)
   {
     /* DMA will be finished during this line */
-    dma_cycles = (uint32)(((double)dma_length * vdp_timings[dma_type][index]) + 0.5);
+    dma_cycles = (dma_length * m68cycles_per_line) / rate;
     dma_length = 0;
   }
   else
@@ -307,6 +298,7 @@ void dma_update()
     dma_length -= dma_bytes;
   }
 
+  /* update 68k cycles counter */
   if (dma_type < 2)
   {
     /* 68K COPY to V-RAM */

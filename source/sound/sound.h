@@ -28,6 +28,7 @@
 extern int fm_reg[2][0x100];
 extern double fm_timera_tab[0x400];
 extern double fm_timerb_tab[0x100];
+extern float *src_buffer;
 
 /* Function prototypes */
 extern void sound_init(int rate);

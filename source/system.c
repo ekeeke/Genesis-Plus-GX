@@ -35,6 +35,7 @@ uint32 count_z80;
 uint32 line_z80;
 int32 current_z80;
 uint8 system_hw;
+SRC_DATA src_data;
 
 static inline void audio_update (void);
 
@@ -65,9 +66,13 @@ void system_reset (void)
   SN76489_Reset(0);
 
   /* Sound Buffers */
-  memset (snd.psg.buffer, 0, SND_SIZE);
-  memset (snd.fm.buffer[0], 0, SND_SIZE*2);
-  memset (snd.fm.buffer[1], 0, SND_SIZE*2);
+  if (snd.psg.buffer)     memset(snd.psg.buffer,   0, SND_SIZE);
+  if (snd.fm.buffer[0])   memset(snd.fm.buffer[0], 0, SND_SIZE*2);
+  if (snd.fm.buffer[1])   memset(snd.fm.buffer[1], 0, SND_SIZE*2);
+
+  /* SRC */
+  if (src_data.data_in)   memset(src_data.data_in, 0, src_data.input_frames  * 2 * sizeof(float));
+  if (src_data.data_out)  memset(src_data.data_out,0, src_data.output_frames * 2 * sizeof(float));
 }
 
 /****************************************************************
@@ -275,28 +280,30 @@ int audio_init (int rate)
   snd.buffer[0] = (int16 *) malloc(SND_SIZE);
   snd.buffer[1] = (int16 *) malloc(SND_SIZE);
   if (!snd.buffer[0] || !snd.buffer[1]) return (-1);
-  memset (snd.buffer[0], 0, SND_SIZE);
-  memset (snd.buffer[1], 0, SND_SIZE);
 #endif
 
   /* YM2612 stream buffers */
   snd.fm.buffer[0] = (int *)malloc (SND_SIZE*2);
   snd.fm.buffer[1] = (int *)malloc (SND_SIZE*2);
   if (!snd.fm.buffer[0] || !snd.fm.buffer[1]) return (-1);
-  memset (snd.fm.buffer[0], 0, SND_SIZE*2);
-  memset (snd.fm.buffer[1], 0, SND_SIZE*2);
 
-  /* SRC buffers */
+  /* YM2612 resampling */
+  src_data.data_in  = NULL;
+  src_data.data_out = NULL;
   if (config.hq_fm && !config.fm_core)
   {
-    snd.fm.src_out = (float *) malloc(snd.buffer_size*2*sizeof(float));
-    if (!snd.fm.src_out) return (-1);
+    /* initialize SRC */
+    src_data.input_frames   = (int)(((double)m68cycles_per_line * (double)lines_per_frame / 144.0) + 0.5);
+    src_data.output_frames  = snd.buffer_size;
+    src_data.data_in        = (float *)malloc(src_data.input_frames  * 2 * sizeof(float));
+    src_data.data_out       = (float *)malloc(src_data.output_frames * 2 * sizeof(float));
+    src_data.src_ratio      = (double)src_data.output_frames  / (double)src_data.input_frames;
+    if (!src_data.data_in || !src_data.data_out) return (-1);
   }
 
   /* SN76489 stream buffers */
   snd.psg.buffer = (int16 *)malloc (SND_SIZE);
   if (!snd.psg.buffer) return (-1);
-  memset (snd.psg.buffer, 0, SND_SIZE);
 
   /* Set audio enable flag */
   snd.enabled = 1;
@@ -310,12 +317,13 @@ int audio_init (int rate)
 void audio_shutdown(void)
 {
   /* free sound buffers */
-  if (snd.buffer[0])    free(snd.buffer[0]);
-  if (snd.buffer[1])    free(snd.buffer[1]);
-  if (snd.fm.buffer[0]) free(snd.fm.buffer[0]);
-  if (snd.fm.buffer[1]) free(snd.fm.buffer[1]);
-  if (snd.fm.src_out)   free(snd.fm.src_out);
-  if (snd.psg.buffer)   free(snd.psg.buffer);
+  if (snd.buffer[0])      free(snd.buffer[0]);
+  if (snd.buffer[1])      free(snd.buffer[1]);
+  if (snd.fm.buffer[0])   free(snd.fm.buffer[0]);
+  if (snd.fm.buffer[1])   free(snd.fm.buffer[1]);
+  if (snd.psg.buffer)     free(snd.psg.buffer);
+  if (src_data.data_in)   free(src_data.data_in);
+  if (src_data.data_out)  free(src_data.data_out);
 }
 
 static int ll, rr;
@@ -324,8 +332,8 @@ static inline void audio_update (void)
 {
   int i;
   int l, r;
-  double psg_preamp = config.psg_preamp;
-  double fm_preamp  = config.fm_preamp;
+  int psg_preamp = config.psg_preamp;
+  int fm_preamp  = config.fm_preamp;
   int boost  = config.boost;
   int filter = config.filter;
 
@@ -339,9 +347,9 @@ static inline void audio_update (void)
   /* mix samples */
   for (i = 0; i < snd.buffer_size; i ++)
   {
-    l = r = (int) ((double)snd.psg.buffer[i] * psg_preamp);
-    l += (int) ((double)snd.fm.buffer[0][i] * fm_preamp);
-    r += (int) ((double)snd.fm.buffer[1][i] * fm_preamp);
+    l = r = (snd.psg.buffer[i] * psg_preamp) / 100;
+    l += ((snd.fm.buffer[0][i] * fm_preamp) / 100);
+    r += ((snd.fm.buffer[1][i] * fm_preamp) / 100);
     snd.fm.buffer[0][i] = 0;
     snd.fm.buffer[1][i] = 0;
     snd.psg.buffer[i] = 0;

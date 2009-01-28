@@ -31,8 +31,8 @@
 typedef struct 
 {
   char version[15];
-  double psg_preamp;
-  double fm_preamp;
+  int32 psg_preamp;
+  int32 fm_preamp;
   uint8 boost;
   uint8 filter;
   uint8 hq_fm;
