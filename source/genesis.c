@@ -185,8 +185,6 @@ void gen_busreq_w (uint32 state)
 {
   uint32 z80_cycles_to_run;
 
-  input_raz (); /* from Gens */
-
   if (state)
   {
     /* Bus Request */

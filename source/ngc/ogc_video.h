@@ -28,6 +28,7 @@ extern unsigned int *xfb[2];
 extern int whichfb;
 extern GXRModeObj *vmode;
 extern u8 *texturemem;
+extern u8 gc_pal;
 
 extern void ogc_video__init(void);
 extern void ogc_video__start(void);

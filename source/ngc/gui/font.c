@@ -23,124 +23,18 @@
  ********************************************************************************/
 
 #include "shared.h"
-#include "gpback.h"
+#include "font.h"
+#include "Overlay_bar_s2.h"
 
-/* Backdrop */
-char backdrop[(640 * 480 * 2) + 32];
+#include <png.h>
+
 
 /* Backdrop Frame Width (to avoid writing outside of the background frame) */
 u16 back_framewidth = 640;
+int font_size[256], fheight;
 
-typedef struct
-{
-  unsigned short font_type, first_char, last_char, subst_char, ascent_units, descent_units, widest_char_width,
-                 leading_space, cell_width, cell_height;
-  unsigned long texture_size;
-  unsigned short texture_format, texture_columns, texture_rows, texture_width, texture_height, offset_charwidth;
-  unsigned long offset_tile, size_tile;
-} FONT_HEADER;
-
-static unsigned char fontWork[ 0x20000 ] __attribute__((aligned(32)));
-static unsigned char fontFont[ 0x40000 ] __attribute__((aligned(32)));
-
-/****************************************************************************
- * YAY0 Decoding
- ****************************************************************************/
-void yay0_decode(unsigned char *s, unsigned char *d)
-{
-  int i, j, k, p, q, cnt;
-
-  i = *(unsigned long *)(s + 4);    // size of decoded data
-  j = *(unsigned long *)(s + 8);    // link table
-  k = *(unsigned long *)(s + 12);   // byte chunks and count modifiers
-
-  q = 0;          // current offset in dest buffer
-  cnt = 0;        // mask bit counter
-  p = 16;          // current offset in mask table
-
-  unsigned long r22 = 0, r5;
-  
-  do
-  {
-    // if all bits are done, get next mask
-    if(cnt == 0)
-    {
-      // read word from mask data block
-      r22 = *(unsigned long *)(s + p);
-      p += 4;
-      cnt = 32;   // bit counter
-    }
-    // if next bit is set, chunk is non-linked
-    if(r22 & 0x80000000)
-    {
-      // get next byte
-      *(unsigned char *)(d + q) = *(unsigned char *)(s + k);
-      k++, q++;
-    }
-    // do copy, otherwise
-    else
-    {
-      // read 16-bit from link table
-      int r26 = *(unsigned short *)(s + j);
-      j += 2;
-      // 'offset'
-      int r25 = q - (r26 & 0xfff);
-      // 'count'
-      int r30 = r26 >> 12;
-      if(r30 == 0)
-      {
-        // get 'count' modifier
-        r5 = *(unsigned char *)(s + k);
-        k++;
-        r30 = r5 + 18;
-      }
-      else r30 += 2;
-      // do block copy
-      unsigned char *pt = ((unsigned char*)d) + r25;
-      int i;
-      for(i=0; i<r30; i++)
-      {
-        *(unsigned char *)(d + q) = *(unsigned char *)(pt - 1);
-        q++, pt++;
-      }
-    }
-    // next bit in mask
-    r22 <<= 1;
-    cnt--;
-
-  } while(q < i);
-}
-
-void untile(unsigned char *dst, unsigned char *src, int xres, int yres)
-{
-  // 8x8 tiles
-  int x, y;
-  int t=0;
-  for (y = 0; y < yres; y += 8)
-    for (x = 0; x < xres; x += 8)
-    {
-      t = !t;
-      int iy, ix;
-      for (iy = 0; iy < 8; ++iy, src+=2)
-      {
-        unsigned char *d = dst + (y + iy) * xres + x;
-        for (ix = 0; ix < 2; ++ix)
-        {
-          int v = src[ix];
-          *d++ = ((v>>6)&3);
-          *d++ = ((v>>4)&3);
-          *d++ = ((v>>2)&3);
-          *d++ = ((v)&3);
-        }
-      }
-    }
-}
-
-int font_offset[256], font_size[256], fheight;
-extern void __SYS_ReadROM(void *buf,u32 len,u32 offset);
-
-/* lowlevel Qoob Modchip disable (code from emukiddid) */
 #ifndef HW_RVL
+/* disable Qoob Modchip before IPL access (emukiddid) */
 void ipl_set_config(unsigned char c)
 {
         volatile unsigned long* exi = (volatile unsigned long*)0xCC006800;
@@ -160,97 +54,65 @@ void ipl_set_config(unsigned char c)
 }
 #endif
 
+//static u8 *sys_fontarea;
+static sys_fontheader *fontHeader;
+static u8 *texture;
+
+extern u32 __SYS_LoadFont(void *src,void *dest);
+
 void init_font(void)
 {
-  int i;
-
-  /* read font from IPL ROM */
-  //memcpy(&fontFont, &iplfont, sizeof(iplfont));
-  memset(fontFont,0,0x3000);
 #ifndef HW_RVL
+  /* disable Qoob before accessing IPL */
   ipl_set_config(6);
 #endif
-  __SYS_ReadROM((unsigned char *)&fontFont,0x3000,0x1FCF00);
 
-  yay0_decode((unsigned char *)&fontFont, (unsigned char *)&fontWork);
-  FONT_HEADER *fnt = ( FONT_HEADER * )&fontWork;
-  untile((unsigned char*)&fontFont, (unsigned char*)&fontWork[fnt->offset_tile], fnt->texture_width, fnt->texture_height);
+  /* initialize IPL font */
+  fontHeader = memalign(32,sizeof(sys_fontheader));
+  SYS_InitFont(&fontHeader);
 
+  int i,c;
   for (i=0; i<256; ++i)
   {
-    int c = i;
+    if ((i < fontHeader->first_char) || (i > fontHeader->last_char)) c = fontHeader->inval_char;
+    else c = i - fontHeader->first_char;
 
-    if ((c < fnt->first_char) || (c > fnt->last_char)) c = fnt->subst_char;
-    else c -= fnt->first_char;
-
-    font_size[i] = ((unsigned char*)fnt)[fnt->offset_charwidth + c];
-
-    int r = c / fnt->texture_columns;
-    c %= fnt->texture_columns;
-    font_offset[i] = (r * fnt->cell_height) * fnt->texture_width + (c * fnt->cell_width);
+    font_size[i] = ((unsigned char*)fontHeader)[fontHeader->width_table + c];
   }
 
-  fheight = fnt->cell_height;
+  fheight = fontHeader->cell_height;
+  texture = memalign(32, fontHeader->cell_width * fontHeader->cell_height / 2);
 }
 
-#define TRANSPARENCY (COLOR_BLACK)
+u8 draw_done = 0;
+void font_DrawChar(unsigned char c, u32 xpos, u32 ypos, u32 color)
+{
+  s32 width;
+  memset(texture,0,fontHeader->cell_width * fontHeader->cell_height / 2); 
+  GXTexObj texobj;
+  GX_InitTexObj(&texobj, texture, fontHeader->cell_width, fontHeader->cell_height, GX_TF_I4, GX_CLAMP, GX_CLAMP, GX_FALSE);
+  GX_LoadTexObj(&texobj, GX_TEXMAP0);
+  SYS_GetFontTexel(c,texture,0,fontHeader->cell_width/2,&width);
 
-unsigned int blit_lookup[4]={COLOR_BLACK, 0x6d896d77, 0xb584b57b, COLOR_WHITE};
-unsigned int blit_lookup_inv[4]={COLOR_WHITE, 0xb584b57b, 0x6d896d77, 0x258e2573};
+  DCFlushRange(texture, fontHeader->cell_width * fontHeader->cell_height / 2);
+  GX_InvalidateTexAll();
+
+  GX_Begin(GX_QUADS, GX_VTXFMT0, 4);
+  GX_Position2s16(xpos, ypos - fontHeader->cell_height);
+  GX_TexCoord2f32(0.0, 0.0);
+  GX_Position2s16(xpos + fontHeader->cell_width, ypos - fontHeader->cell_height);
+  GX_TexCoord2f32(1.0, 0.0);
+  GX_Position2s16(xpos + fontHeader->cell_width, ypos);
+  GX_TexCoord2f32(1.0, 1.0);
+  GX_Position2s16(xpos, ypos);
+  GX_TexCoord2f32(0.0, 1.0);
+  GX_End ();
+
+  GX_DrawDone();
+}
 
 void setfontcolour (int fcolour)
 {
-  if (fcolour == COLOR_WHITE)
-  {
-    blit_lookup[1] = 0x6d896d77;
-    blit_lookup[2] = 0xb584b57b;
-    blit_lookup[3] = COLOR_WHITE;
-  }
-  else
-  {
-    blit_lookup[1] = fcolour;
-    blit_lookup[2] = fcolour;
-    blit_lookup[3] = fcolour;
-  }
-}
-
-void blit_char(int x, int y, unsigned char c, unsigned int *lookup)
-{
-  unsigned char *fnt = ((unsigned char*)fontFont) + font_offset[c];
-  int ay, ax;
-  unsigned int llookup;
-
-  for (ay=0; ay<fheight; ++ay)
-  {
-    int h = (ay + y) * 320;
-
-    for (ax=0; ax<font_size[c]; ax++)
-    {
-      int v0 = fnt[ax];
-      int p = h + (( ax + x ) >> 1);
-      unsigned long o = xfb[whichfb][p];
-
-      llookup = lookup[v0];
-
-      if ((o != TRANSPARENCY) && (v0 == 0) && (lookup[0] == TRANSPARENCY))
-        llookup = o;
-
-      if ((ax+x) & 1)
-      {
-        o &= ~0x00FFFFFF;
-        o |= llookup & 0x00FFFFFF;
-      }
-      else
-      {
-        o &= ~0xFF000000;
-        o |= llookup & 0xFF000000;
-      }
-
-      xfb[whichfb][p] = o;
-    }
-
-    fnt += 512;
-  }
 }
 
 void write_font(int x, int y, char *string)
@@ -258,30 +120,13 @@ void write_font(int x, int y, char *string)
   int ox = x;
   while (*string && (x < (ox + back_framewidth)))
   {
-    blit_char(x, y, *string, blit_lookup);
+    font_DrawChar(*string, x -(vmode->fbWidth/2), y-(vmode->efbHeight/2),1);
     x += font_size[(u8)*string];
     string++;
   }
 }
 
-void writex(int x, int y, int sx, int sy, char *string, unsigned int *lookup)
-{
-  int ox = x;
-  while ((*string) && ((x) < (ox + sx)))
-  {
-    blit_char(x, y, *string, lookup);
-    x += font_size[(u8)*string];
-    string++;
-  }
-
-  int ay;
-  for (ay=0; ay<sy; ay++)
-  {
-    int ax;
-    for (ax=x; ax<(ox + sx); ax += 2) xfb[whichfb][(ay+y)*320+ax/2] = lookup[0];
-  }
-}
-
+int hl = 0;
 void WriteCentre( int y, char *string)
 {
   int x, t;
@@ -289,21 +134,28 @@ void WriteCentre( int y, char *string)
   if (x>back_framewidth) x=back_framewidth;
   x = (640 - x) >> 1;
   write_font(x, y, string);
+  if (hl)
+  {
+    png_texture texture;
+    texture.data   = 0;
+    texture.width  = 0;
+    texture.height = 0;
+    texture.format = 0;
+    OpenPNGFromMemory(&texture, Overlay_bar_s2);
+    DrawTexture(&texture, 0, y-fheight,  640, fheight);
+  }
 }
 
 void WriteCentre_HL( int y, char *string)
 {
-  int x,t,h;
-  for (x=t=0; t<strlen(string); t++) x += font_size[(u8)string[t]];
-  if (x>back_framewidth) x = back_framewidth;
-  h = x;
-  x = (640 - x) >> 1;
-  writex(x, y, h, fheight, string, blit_lookup_inv);
+  hl = 1;
+  WriteCentre(y, string);
+  hl = 0;
 }
 
 
 /****************************************************************************
- *  Draw functions
+ *  Draw functions (FrameBuffer)
  *
  ****************************************************************************/
 void fntDrawHLine (int x1, int x2, int y, int color)
@@ -337,6 +189,211 @@ void fntDrawBoxFilled (int x1, int y1, int x2, int y2, int color)
 }
 
 /****************************************************************************
+ *  Draw functions (GX)
+ *
+ ****************************************************************************/
+
+/* Callback for the read function */
+static void png_read_from_mem (png_structp png_ptr, png_bytep data, png_size_t length)
+{
+  png_file *file = (png_file *)png_get_io_ptr (png_ptr);
+
+  /* copy data from image buffer */
+  memcpy (data, file->buffer + file->offset, length);
+
+  /* advance in the file */
+  file->offset += length;
+}
+
+void OpenPNGFromMemory(png_texture *texture, const u8 *buffer)
+{
+  int i;
+  png_file file;
+
+  /* init PNG file structure */
+  file.buffer = (u8 *) buffer;
+  file.offset = 0;
+
+  /* check for valid magic number */
+  if (!png_check_sig (file.buffer, 8)) return;
+
+  /* create a png read struct */
+  png_structp png_ptr = png_create_read_struct (PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+  if (!png_ptr) return;
+
+  /* create a png info struct */
+  png_infop info_ptr = png_create_info_struct (png_ptr);
+  if (!info_ptr)
+  {
+    png_destroy_read_struct (&png_ptr, NULL, NULL);
+    return;
+  }
+
+  /* set callback for the read function */
+  png_set_read_fn (png_ptr, (png_voidp *)(&file), png_read_from_mem);
+
+  /* read png info */
+  png_read_info (png_ptr, info_ptr);
+
+  /* retrieve image information */
+  u32 width  = png_get_image_width(png_ptr, info_ptr);
+  u32 height = png_get_image_height(png_ptr, info_ptr);
+  u32 bit_depth = png_get_bit_depth(png_ptr, info_ptr);
+  u32 color_type = png_get_color_type(png_ptr, info_ptr);
+
+  /* support for RGBA8 textures ONLY !*/
+  if ((color_type != PNG_COLOR_TYPE_RGB_ALPHA) || (bit_depth != 8))
+  {
+    png_destroy_read_struct (&png_ptr, &info_ptr, NULL);
+    return;
+  }
+
+  /* 4x4 tiles are required */
+  if ((width%4) || (height%4))
+  {
+    png_destroy_read_struct (&png_ptr, &info_ptr, NULL);
+    return;
+  }
+
+  /* allocate memory to store raw image data */
+  u32 stride = width << 2;
+  u8 *img_data = memalign (32, stride * height);
+  if (!img_data)
+  {
+    png_destroy_read_struct (&png_ptr, &info_ptr, NULL);
+    return;
+  }
+
+  /* allocate row pointer data */
+  png_bytep *row_pointers = (png_bytep *)memalign (32, sizeof (png_bytep) * height);
+  if (!row_pointers)
+  {
+    free (img_data);
+    png_destroy_read_struct (&png_ptr, &info_ptr, NULL);
+    return;
+  }
+
+  /* store raw image data */
+  for (i = 0; i < height; i++)
+  {
+    row_pointers[i] = img_data + (i * stride);
+  }
+
+  /* decode image */
+  png_read_image (png_ptr, row_pointers);
+
+  /* finish decompression and release memory */
+  png_read_end (png_ptr, NULL);
+  png_destroy_read_struct (&png_ptr, &info_ptr, NULL);
+  free(row_pointers);
+
+  /* initialize texture */
+  texture->data   = memalign(32, stride * height);
+  memset(texture->data, 0, stride * height);
+  texture->width  = width;
+  texture->height = height;
+  texture->format = GX_TF_RGBA8;
+
+
+  /* encode to GX_TF_RGBA8 format (4x4 pixels paired titles) */
+
+  u16 *dst_ar = (u16 *)(texture->data);
+  u16 *dst_gb = (u16 *)(texture->data + 32);
+  u32 *src1 = (u32 *)(img_data);
+  u32 *src2 = (u32 *)(img_data + stride);
+  u32 *src3 = (u32 *)(img_data + 2*stride);
+  u32 *src4 = (u32 *)(img_data + 3*stride);
+  u32 pixel,h,w;
+
+  for (h=0; h<height; h+=4)
+  {
+    for (w=0; w<width; w+=4)
+    {
+      /* line N (4 pixels) */
+      for (i=0; i<4; i++)
+      {
+        pixel = *src1++;
+        *dst_ar++= ((pixel << 8) & 0xff00) | ((pixel >> 24) & 0x00ff);
+        *dst_gb++= (pixel >> 8) & 0xffff;
+      }
+
+      /* line N + 1 (4 pixels) */
+      for (i=0; i<4; i++)
+      {
+        pixel = *src2++;
+        *dst_ar++= ((pixel << 8) & 0xff00) | ((pixel >> 24) & 0x00ff);
+        *dst_gb++= (pixel >> 8) & 0xffff;
+      }
+
+      /* line N + 2 (4 pixels) */
+      for (i=0; i<4; i++)
+      {
+        pixel = *src3++;
+        *dst_ar++= ((pixel << 8) & 0xff00) | ((pixel >> 24) & 0x00ff);
+        *dst_gb++= (pixel >> 8) & 0xffff;
+      }
+
+      /* line N + 3 (4 pixels) */
+      for (i=0; i<4; i++)
+      {
+        pixel = *src4++;
+        *dst_ar++= ((pixel << 8) & 0xff00) | ((pixel >> 24) & 0x00ff);
+        *dst_gb++= (pixel >> 8) & 0xffff;
+      }
+
+      /* next paired tiles */
+      dst_ar += 16;
+      dst_gb += 16;
+    }
+
+    /* next 4 lines */
+    src1 = src4;
+    src2 = src1 + width;
+    src3 = src2 + width;
+    src4 = src3 + width;
+  }
+
+  /* release memory */
+  free(img_data);
+
+  /* flush texture data from cache */
+  DCFlushRange(texture->data, height * stride);
+}
+
+void DrawTexture(png_texture *texture, u32 xOrigin, u32 yOrigin, u32 w, u32 h)
+{
+  if (texture->data)
+  {
+    /* load texture object */
+    GXTexObj texObj;
+    GX_InitTexObj(&texObj, texture->data, texture->width, texture->height, GX_TF_RGBA8, GX_CLAMP, GX_CLAMP, GX_FALSE);
+    GX_LoadTexObj(&texObj, GX_TEXMAP0);
+    GX_InvalidateTexAll();
+    DCFlushRange(texture->data, texture->width * texture->height * 4);
+
+    /* current coordinate system */
+    xOrigin -= (vmode->fbWidth/2);
+    yOrigin -= (vmode->efbHeight/2);
+
+
+    /* Draw item */
+    GX_Begin(GX_QUADS, GX_VTXFMT0, 4);
+    GX_Position2s16(xOrigin,yOrigin+h);
+    GX_TexCoord2f32(0.0, 1.0);
+    GX_Position2s16(xOrigin+w,yOrigin+h);
+    GX_TexCoord2f32(1.0, 1.0);
+    GX_Position2s16(xOrigin+w,yOrigin);
+    GX_TexCoord2f32(1.0, 0.0);
+    GX_Position2s16(xOrigin,yOrigin);
+    GX_TexCoord2f32(0.0, 0.0);
+    GX_End ();
+
+    GX_DrawDone();
+    free(texture->data);
+  }
+}
+
+/****************************************************************************
  *  Display functions
  *
  ****************************************************************************/
@@ -344,16 +401,19 @@ u8 SILENT = 0;
 
 void SetScreen ()
 {
+  GX_CopyDisp(xfb[whichfb], GX_FALSE);
+  GX_Flush();
   VIDEO_SetNextFramebuffer (xfb[whichfb]);
   VIDEO_Flush ();
   VIDEO_WaitVSync ();
 }
 
-void ClearScreen ()
+void ClearScreen (GXColor color)
 {
   whichfb ^= 1;
-  memcpy (xfb[whichfb], backdrop, 1280 * 480);
-  back_framewidth = 440;
+  GX_SetCopyClear(color,0x00ffffff);
+  GX_CopyDisp(xfb[whichfb], GX_TRUE);
+  GX_Flush();
 }
 
 void WaitButtonA ()
@@ -366,7 +426,7 @@ void WaitButtonA ()
 void WaitPrompt (char *msg)
 {
   if (SILENT) return;
-  ClearScreen();
+  ClearScreen((GXColor)BLACK);
   WriteCentre(254, msg);
   WriteCentre(254 + fheight, "Press A to Continue");
   SetScreen();
@@ -377,7 +437,7 @@ void ShowAction (char *msg)
 {
   if (SILENT) return;
 
-  ClearScreen();
+  ClearScreen((GXColor)BLACK);
   WriteCentre(254, msg);
   SetScreen();
 }
@@ -390,11 +450,4 @@ void ShowAction (char *msg)
  ****************************************************************************/
 void unpackBackdrop ()
 {
-  unsigned long res, inbytes, outbytes;
-
-  inbytes = gpback_COMPRESSED;
-  outbytes = gpback_RAW;
-  res = uncompress ((Bytef *) &backdrop[0], &outbytes, (Bytef *) &gpback[0], inbytes);
-  if (res != Z_OK) while (1);
 }
-

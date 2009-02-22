@@ -24,25 +24,10 @@
 
 #include "shared.h"
 #include "font.h"
-#include "dkpro.h"
-
-/*
- * Unpack the devkit pro logo
- */
-u32 *dkproraw;
-
-int dkunpack ()
-{
-  unsigned long res, inbytes, outbytes;
-
-  inbytes = dkpro_COMPRESSED;
-  outbytes = dkpro_RAW;
-  dkproraw = malloc (dkpro_RAW + 16);
-  res = uncompress ((Bytef *) dkproraw, &outbytes, (Bytef *) &dkpro[0], inbytes);
-  if (res == Z_OK) return 1;
-  free (dkproraw);
-  return 0;
-}
+#include "Background_intro_c1.h"
+#include "Background_intro_c2.h"
+#include "Background_intro_c3.h"
+#include "Background_intro_c4.h"
 
 /* 
  * This is the legal stuff - which must be shown at program startup 
@@ -53,11 +38,9 @@ int dkunpack ()
 void legal ()
 {
   int ypos = 64;
+  png_texture texture;
 
-  whichfb ^= 1;
-  VIDEO_ClearFrameBuffer(&TVNtsc480IntDf, xfb[whichfb], COLOR_BLACK);
-  back_framewidth = 640;
-
+  ClearScreen((GXColor)BLACK);
   WriteCentre (ypos, "Genesis Plus Sega Mega Drive Emulator (v1.2a)");
   ypos += fheight;
   WriteCentre (ypos, "(C) 1999 - 2003 Charles MacDonald");
@@ -75,30 +58,54 @@ void legal ()
   WriteCentre (ypos, "Nintendo Gamecube Porting code.");
   ypos += fheight;
   WriteCentre (ypos, "You are free to use it as you wish.");
-  ypos += 6 * fheight;
+  ypos += 2*fheight;
 
-  if (dkunpack ())
-  {
-      int w, h, p, dispoffset;
-      p = 0;
-      dispoffset = (316 * 320) + ((640 - dkpro_WIDTH) >> 2);
+  texture.data   = 0;
+  texture.width  = 0;
+  texture.height = 0;
+  texture.format = 0;
+  OpenPNGFromMemory(&texture, Background_intro_c4);
+  DrawTexture(&texture, (640-texture.width)/2, ypos, texture.width, texture.height);
+  ypos += texture.height + 2 * fheight;
 
-      for (h = 0; h < dkpro_HEIGHT; h++)
-    {
-      for (w = 0; w < dkpro_WIDTH >> 1; w++)
-      xfb[whichfb][dispoffset + w] = dkproraw[p++];
-
-      dispoffset += 320;
-    }
-
-      free (dkproraw);
-  }
-  else WriteCentre (ypos, "Developed with DevkitPPC and libOGC");
 #ifdef HW_RVL
   SetScreen ();
   sleep(1);
 #endif
-  WriteCentre (ypos, "Press A to continue");
+  //WriteCentre (ypos, "Press A to continue");
   SetScreen ();
-  WaitButtonA ();
+  //WaitButtonA ();
+  sleep (3);
+
+
+  ClearScreen((GXColor)BLACK);
+  texture.data   = 0;
+  texture.width  = 0;
+  texture.height = 0;
+  texture.format = 0;
+  OpenPNGFromMemory(&texture, Background_intro_c1);
+  DrawTexture(&texture, (640-texture.width)/2, (480-texture.height)/2,  texture.width, texture.height);
+  SetScreen ();
+  sleep (2);
+
+  ClearScreen((GXColor)WHITE);
+  texture.data   = 0;
+  texture.width  = 0;
+  texture.height = 0;
+  texture.format = 0;
+  OpenPNGFromMemory(&texture, Background_intro_c2);
+  DrawTexture(&texture, (640-texture.width)/2, (480-texture.height)/2,  texture.width, texture.height);
+  SetScreen ();
+  sleep (2);
+
+  ClearScreen((GXColor)BLACK);
+  texture.data   = 0;
+  texture.width  = 0;
+  texture.height = 0;
+  texture.format = 0;
+  OpenPNGFromMemory(&texture, Background_intro_c3);
+  DrawTexture(&texture, (640-texture.width)/2, (480-texture.height)/2,  texture.width, texture.height);
+  SetScreen ();
+  sleep (3);
+
 }

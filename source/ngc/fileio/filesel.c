@@ -50,7 +50,7 @@ static void ShowFiles (int offset, int selection)
   int i, j;
   char text[MAXJOLIET+2];
 
-  ClearScreen ();
+  ClearScreen ((GXColor)BLACK);
   j = 0;
 
   for (i = offset; i < (offset + PAGESIZE) && (i < maxfiles); i++)

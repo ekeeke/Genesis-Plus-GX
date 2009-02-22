@@ -23,9 +23,6 @@
 
 #include "shared.h"
 
-#define CLOCK_NTSC 53693175
-#define CLOCK_PAL  53203424
-
 /* generic functions */
 int  (*_YM2612_Write)(unsigned char adr, unsigned char data);
 int  (*_YM2612_Read)(void);
@@ -35,23 +32,20 @@ int (*_YM2612_Reset)(void);
 /* cycle-accurate samples */
 static int m68cycles_per_sample[2];
 
-/* pointer to current SRC buffer */
-float *src_buffer;
-
 /* YM2612 register arrays */
 int fm_reg[2][0x100];
 
 /* return the number of samples that should have been rendered so far */
 static inline uint32 fm_sample_cnt(uint8 is_z80)
 {
-  if (is_z80) return ((count_z80 + current_z80 - z80_ICount) * 15) / (7 * m68cycles_per_sample[0]);
-  else return count_m68k / m68cycles_per_sample[0];
+  if (is_z80) return ((count_z80 + current_z80 - z80_ICount) * 15) / (m68cycles_per_sample[0] * 7);
+  else return (count_m68k / m68cycles_per_sample[0]);
 }
 
 static inline uint32 psg_sample_cnt(uint8 is_z80)
 {
-  if (is_z80) return ((count_z80 + current_z80 - z80_ICount) * 15) / (7 * m68cycles_per_sample[1]);
-  else return count_m68k / m68cycles_per_sample[1];
+  if (is_z80) return ((count_z80 + current_z80 - z80_ICount) * 15) / (m68cycles_per_sample[1] * 7);
+  else return (count_m68k / m68cycles_per_sample[1]);
 }
 
 /* update FM samples */
@@ -62,12 +56,6 @@ static inline void fm_update()
     int *tempBuffer[2];
     tempBuffer[0] = snd.fm.buffer[0] + snd.fm.lastStage;
     tempBuffer[1] = snd.fm.buffer[1] + snd.fm.lastStage;
-
-    if (src_buffer)
-    {
-      src_buffer = src_data.data_in + (snd.fm.lastStage * 2);
-    }
-
     _YM2612_Update(tempBuffer, snd.fm.curStage - snd.fm.lastStage);
     snd.fm.lastStage = snd.fm.curStage;
   }
@@ -89,19 +77,14 @@ void sound_init(int rate)
   double vclk = (vdp_pal ? (double)CLOCK_PAL : (double)CLOCK_NTSC) / 7.0;  /* 68000 and YM2612 clock */
   double zclk = (vdp_pal ? (double)CLOCK_PAL : (double)CLOCK_NTSC) / 15.0; /* Z80 and SN76489 clock  */
 
-  /* cycle-accurate samples */
-  m68cycles_per_sample[0] = (m68cycles_per_line * lines_per_frame * vdp_rate) / rate;
-  m68cycles_per_sample[1] = (m68cycles_per_line * lines_per_frame * vdp_rate) / rate;
+  /* cycle-accurate FM & PSG samples */
+  m68cycles_per_sample[0] = (int)(((double)m68cycles_per_line * (double)lines_per_frame * (double)vdp_rate / (double)rate) + 0.5);
+  m68cycles_per_sample[1] = m68cycles_per_sample[0];
 
-  /* YM2612 is emulated at the original frequency */
-  src_buffer = 0;
-  if (src_data.data_in)
+  /* YM2612 is emulated at original frequency (VLCK/144) */
+  if (config.hq_fm && !config.fm_core)
   {
-    /* YM2612 original frequency is VCLK/144 */
     m68cycles_per_sample[0] = 144;
-
-    /* Initialize SRC buffer */
-    src_buffer = src_data.data_in;
   }
 
   /* initialize sound chips */
@@ -126,45 +109,15 @@ void sound_init(int rate)
   }
 } 
 
-void sound_update(void)
+void sound_update(int fm_len, int psg_len)
 {
   /* finalize sound buffers */
-  snd.fm.curStage  = (src_data.data_in) ? src_data.input_frames : snd.buffer_size;
-  snd.psg.curStage = snd.buffer_size;
+  snd.fm.curStage  = fm_len;
+  snd.psg.curStage = psg_len;
 
   /* update last samples (if needed) */
   fm_update();
   psg_update();
-
-  /* Resampling */
-  if (src_data.data_in)
-  {
-    /* samplerate conversion */
-    src_simple (&src_data, (config.hq_fm&1) ? SRC_LINEAR : SRC_SINC_FASTEST, 2);
-
-    /* this is basically libsamplerate "src_float_to_int_array" function, adapted to interlace samples */
-    double scaled_value;
-    int len = snd.buffer_size;
-    while (len)
-    {
-      len -- ;
-      scaled_value = src_data.data_out[len*2] * (8.0 * 0x10000000);
-      if (scaled_value >= (1.0 * 0x7FFFFFFF))
-        snd.fm.buffer[0][len] = 0x7fffffff;
-      else if (scaled_value <= (-8.0 * 0x10000000))
-        snd.fm.buffer[0][len] = -1 - 0x7fffffff;
-      else
-        snd.fm.buffer[0][len] = lrint(scaled_value);
-
-      scaled_value = src_data.data_out[len*2+1] * (8.0 * 0x10000000);
-      if (scaled_value >= (1.0 * 0x7FFFFFFF))
-        snd.fm.buffer[1][len] = 0x7fffffff;
-      else if (scaled_value <= (-8.0 * 0x10000000))
-        snd.fm.buffer[1][len] = -1 - 0x7fffffff;
-      else
-        snd.fm.buffer[1][len] = lrint(scaled_value);
-    }
-  }
 
   /* reset samples count */
   snd.fm.curStage   = 0;

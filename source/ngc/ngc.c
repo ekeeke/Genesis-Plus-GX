@@ -199,23 +199,23 @@ int main (int argc, char *argv[])
       MainMenu (FramesPerSecond);
       ConfigRequested = 0;
 
-      /* reset framesync */
-      frameticker     = 0;
-
       /* reset framecounts */
       RenderedFrames  = 0;
       TotalFrames     = 0;
       FramesPerSecond = vdp_rate;
 
       /* start audio & video */
-      ogc_audio__start();
       ogc_video__start();
+      ogc_audio__start();
+
+      /* reset framesync */
+      frameticker = 1;
     }
 
     if (frameticker > 1)
     {
       /* skip frame */
-      frameticker--;
+      frameticker-=2;
       system_frame (1);
 
       /* update audio only */
@@ -225,18 +225,16 @@ int main (int argc, char *argv[])
     {
       /* framesync */
       while (frameticker < 1) usleep(1);
+      frameticker--;
 
       /* render frame */
       system_frame (0);
 
       /* update video & audio */
-      ogc_audio__update();
       ogc_video__update();
+      ogc_audio__update();
       RenderedFrames++;
     }
-
-    /* update framesync */
-    frameticker--;
 
     /* update framecounts */
     TotalFrames++;

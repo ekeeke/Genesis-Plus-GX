@@ -24,8 +24,6 @@
 #ifndef _SYSTEM_H_
 #define _SYSTEM_H_
 
-#include "samplerate.h"
-
 #define SYSTEM_GENESIS    0
 #define SYSTEM_MEGADRIVE  1
 #define SYSTEM_PICO       2
@@ -34,6 +32,8 @@
 #define z80cycles_per_line 228
 #define m68cycles_per_line 488
 
+#define CLOCK_NTSC 53693175
+#define CLOCK_PAL  53203424
 
 typedef struct
 {
@@ -65,9 +65,11 @@ typedef struct
   int16 *buffer[2]; /* Signed 16-bit stereo sound data */
   struct
   {
+    int size;
     int curStage;
     int lastStage;
     int *buffer[2];
+    float *src_buffer;
   } fm;
   struct
   {
@@ -87,7 +89,6 @@ extern uint32 count_z80;
 extern uint32 line_z80;
 extern int32 current_z80;
 extern uint8 system_hw;
-extern SRC_DATA src_data;
 
 /* Function prototypes */
 extern void system_init (void);
@@ -96,6 +97,7 @@ extern void system_shutdown (void);
 extern int system_frame(int skip);
 extern int audio_init (int rate);
 extern void audio_shutdown (void);
+extern void audio_update (int len);
 
 #endif /* _SYSTEM_H_ */
 

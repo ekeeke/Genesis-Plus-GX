@@ -140,7 +140,7 @@ static void pad_config(int num, int padtype)
       PAD_ScanPads();
     }
 
-    ClearScreen();
+    ClearScreen((GXColor)BLACK);
     sprintf(msg,"Press key for %s",keys_name[i]);
     WriteCentre(254, msg);
     SetScreen();
@@ -367,7 +367,7 @@ static void wpad_config(u8 num, u8 exp, u8 padtype)
     }
 
     /* user information */
-    ClearScreen();
+    ClearScreen((GXColor)BLACK);
     sprintf(msg,"Press key for %s",keys_name[i]);
     WriteCentre(254, msg);
     SetScreen();

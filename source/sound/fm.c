@@ -1717,12 +1717,12 @@ static void OPNWriteReg(int r, int v)
 void YM2612UpdateOne(int **buffer, int length)
 {
   int i;
-  int  *bufL,*bufR;
   int lt,rt;
 
-  /* set buffer */
-  bufL = buffer[0];
-  bufR = buffer[1];
+  /* set buffers */
+  int  *bufL = buffer[0];
+  int  *bufR = buffer[1];
+  float *bufSRC = snd.fm.src_buffer ? (snd.fm.src_buffer + (2*snd.fm.lastStage)) : 0;
 
   /* refresh PG and EG */
   refresh_fc_eg_chan(&ym2612.CH[0]);
@@ -1804,15 +1804,15 @@ void YM2612UpdateOne(int **buffer, int length)
     Limit(rt,MAXOUT,MINOUT);
 
     /* buffering */
-    if (src_buffer)
+    if (bufSRC)
     {
-      src_buffer[i*2]      = (float) lt / (8.0 * 0x10000000);
-      src_buffer[i*2 + 1]  = (float) rt / (8.0 * 0x10000000);
+      *bufSRC++ = ((float) (lt)) / (8.0 * 0x10000000);
+      *bufSRC++ = ((float) (rt)) / (8.0 * 0x10000000);
     }
     else
     {
-      bufL[i] = lt;
-      bufR[i] = rt;
+      *bufL++ = lt;
+      *bufR++ = rt;
     }
 
     /* timer A control */

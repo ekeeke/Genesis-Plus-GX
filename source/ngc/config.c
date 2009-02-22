@@ -23,9 +23,9 @@
 #include "shared.h"
 
 #ifdef HW_RVL
-#define CONFIG_VERSION "GENPLUS 1.3.0W"
+#define CONFIG_VERSION "GENPLUS 1.3.1W"
 #else
-#define CONFIG_VERSION "GENPLUS 1.3.0G"
+#define CONFIG_VERSION "GENPLUS 1.3.1G"
 #endif
 
 void config_save()
@@ -78,8 +78,8 @@ void set_config_defaults(void)
   strncpy(config.version,CONFIG_VERSION,15);
   
   /* sound options */
-  config.psg_preamp   = 1.5;
-  config.fm_preamp    = 1.0;
+  config.psg_preamp   = 150;
+  config.fm_preamp    = 100;
   config.boost        = 1;
   config.hq_fm        = 1;
   config.filter       = 1;

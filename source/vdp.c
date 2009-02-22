@@ -600,6 +600,8 @@ void vdp_ctrl_w(unsigned int data)
       H40: 20 accesses --> 366/20 = 18 cycles per access
 
     VRAM access are byte wide --> VRAM writes takes 2x CPU cycles
+    Memory access requires some additional cyles, the following values 
+    seems to work fine (see Chaos Engine/Soldier of Fortune) 
   */
   fifo_latency = (reg[12] & 1) ? 27 : 30;
   if ((code & 0x0F) == 0x01) fifo_latency = fifo_latency * 2;

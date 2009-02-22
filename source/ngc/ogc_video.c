@@ -40,6 +40,9 @@ int whichfb = 0;       /* Current Framebuffer   */
 GXRModeObj *vmode;     /* Default Video Mode    */
 u8 *texturemem;        /* Texture Data          */
 
+/* 50/60hz flag */
+u8 gc_pal = 0;
+
 /*** NTSC Filters ***/
 sms_ntsc_t sms_ntsc;
 md_ntsc_t md_ntsc;
@@ -276,9 +279,6 @@ static GXRModeObj *tvmodes[6] =
    &TV50hz_576i   
 };
 
-/* 50/60hz flag */
-static u8 gc_pal = 0;
-
 typedef struct tagcamera
 {
   Vector pos;
@@ -308,31 +308,6 @@ static camera cam = {
   {0.0F, 0.0F, 0.0F}
 };
 
-/* Rendering Initialization */
-static void draw_init(void)
-{
-  /* Clear all Vertex params */
-  GX_ClearVtxDesc();
-
-  /* Set Position Params (quad aspect ratio) */
-  GX_SetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XYZ, GX_S16, 0);
-  GX_SetVtxDesc(GX_VA_POS, GX_INDEX8);
-  GX_SetArray(GX_VA_POS, square, 3 * sizeof (s16));
-
-  /* Set Tex Coord Params */
-  GX_SetVtxAttrFmt(GX_VTXFMT0, GX_VA_TEX0, GX_TEX_ST, GX_F32, 0);
-  GX_SetVtxDesc(GX_VA_TEX0, GX_DIRECT);
-  GX_SetTevOp(GX_TEVSTAGE0, GX_REPLACE);
-  GX_SetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP0, GX_COLORNULL);
-  GX_SetNumTexGens(1);
-  GX_SetNumChans(0);
-
-  /* Set Modelview */
-  Mtx view;
-  memset (&view, 0, sizeof (Mtx));
-  guLookAt(view, &cam.pos, &cam.up, &cam.view);
-  GX_LoadPosMtxImm(view, GX_PNMTX0);
-}
 
 /* Vertex Rendering */
 static inline void draw_vert(u8 pos, f32 s, f32 t)
@@ -352,49 +327,85 @@ static inline void draw_square(void)
   GX_End ();
 }
 
-/* Initialize GX */
+/* Initialize GX renderer */
 static void gxStart(void)
 {
-  Mtx p;
-  GXColor gxbackground = {0, 0, 0, 0xff};
-
   /*** Clear out FIFO area ***/
   memset(&gp_fifo, 0, DEFAULT_FIFO_SIZE);
 
   /*** GX default ***/
   GX_Init(&gp_fifo, DEFAULT_FIFO_SIZE);
-  GX_SetCopyClear(gxbackground, 0x00ffffff);
-
-  GX_SetViewport(0.0F, 0.0F, vmode->fbWidth, vmode->efbHeight, 0.0F, 1.0F);
-  GX_SetScissor(0, 0, vmode->fbWidth, vmode->efbHeight);
-  f32 yScale = GX_GetYScaleFactor(vmode->efbHeight, vmode->xfbHeight);
-  u16 xfbHeight = GX_SetDispCopyYScale(yScale);
-  GX_SetDispCopySrc(0, 0, vmode->fbWidth, vmode->efbHeight);
-  GX_SetDispCopyDst(vmode->fbWidth, xfbHeight);
-  GX_SetCopyFilter(vmode->aa, vmode->sample_pattern, GX_TRUE, vmode->vfilter);
-  GX_SetFieldMode(vmode->field_rendering, ((vmode->viHeight == 2 * vmode->xfbHeight) ? GX_ENABLE : GX_DISABLE));
   GX_SetPixelFmt(GX_PF_RGB8_Z24, GX_ZC_LINEAR);
   GX_SetCullMode(GX_CULL_NONE);
   GX_SetDispCopyGamma(GX_GM_1_0);
+  GX_SetBlendMode(GX_BM_BLEND,GX_BL_SRCALPHA,GX_BL_INVSRCALPHA,GX_LO_CLEAR);
   GX_SetZMode(GX_FALSE, GX_ALWAYS, GX_TRUE);
   GX_SetColorUpdate(GX_TRUE);
-  guOrtho(p, vmode->efbHeight/2, -(vmode->efbHeight/2), -(vmode->fbWidth/2), vmode->fbWidth/2, 100, 1000);
-  GX_LoadProjectionMtx(p, GX_ORTHOGRAPHIC);
+  GX_SetTevOp(GX_TEVSTAGE0, GX_REPLACE);
+  GX_SetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP0, GX_COLORNULL);
+  GX_SetNumTexGens(1);
+  GX_SetNumChans(0);
 
-  /*** Reset XFB ***/
-  GX_CopyDisp(xfb[whichfb ^ 1], GX_TRUE);
+  /* Modelview */
+  Mtx view;
+  memset (&view, 0, sizeof (Mtx));
+  guLookAt(view, &cam.pos, &cam.up, &cam.view);
+  GX_LoadPosMtxImm(view, GX_PNMTX0);
   GX_Flush();
 
   /*** Initialize texture data ***/
   texturemem = memalign(32, TEX_SIZE);
   memset (texturemem, 0, TEX_SIZE);
+}
 
-  /*** Initialize renderer */
-  draw_init();
+/* Reset GX vertex attributes */
+static void gxResetVtx(bool isMenu)
+{
+  GX_ClearVtxDesc();
+
+  /* Set Position Params (quad aspect ratio) */
+  if (isMenu)
+  {
+    /* menu uses direct position */
+    GX_SetBlendMode(GX_BM_BLEND,GX_BL_SRCALPHA,GX_BL_INVSRCALPHA,GX_LO_CLEAR);
+    GX_SetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XY, GX_S16, 0);
+    GX_SetVtxDesc(GX_VA_POS, GX_DIRECT);
+  }
+  else
+  {
+    /* emulation uses an indexed array for easy control on aspect ratio */
+    GX_SetBlendMode(GX_BM_NONE,GX_BL_SRCALPHA,GX_BL_INVSRCALPHA,GX_LO_CLEAR);
+    GX_SetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XYZ, GX_S16, 0);
+    GX_SetVtxDesc(GX_VA_POS, GX_INDEX8);
+    GX_SetArray(GX_VA_POS, square, 3 * sizeof (s16));
+  }
+
+  /* Set Tex Coord Params */
+  GX_SetVtxAttrFmt(GX_VTXFMT0, GX_VA_TEX0, GX_TEX_ST, GX_F32, 0);
+  GX_SetVtxDesc(GX_VA_TEX0, GX_DIRECT);
+  GX_Flush();
+}
+
+/* Reset GX 2D rendering */
+static void gxResetView(GXRModeObj *tvmode)
+{
+  Mtx44 p;
+  f32 yScale = GX_GetYScaleFactor(tvmode->efbHeight, tvmode->xfbHeight);
+  u16 xfbHeight = GX_SetDispCopyYScale(yScale);
+
+  GX_SetCopyClear((GXColor)BLACK,0x00ffffff);
+  GX_SetViewport(0.0F, 0.0F, tvmode->fbWidth, tvmode->efbHeight, 0.0F, 1.0F);
+  GX_SetScissor(0, 0, tvmode->fbWidth, tvmode->efbHeight);
+  GX_SetDispCopySrc(0, 0, tvmode->fbWidth, tvmode->efbHeight);
+  GX_SetDispCopyDst(tvmode->fbWidth, xfbHeight);
+  GX_SetCopyFilter(tvmode->aa, tvmode->sample_pattern, GX_TRUE, tvmode->vfilter);
+  GX_SetFieldMode(tvmode->field_rendering, ((tvmode->viHeight == 2 * tvmode->xfbHeight) ? GX_ENABLE : GX_DISABLE));
+  guOrtho(p, tvmode->efbHeight/2, -(tvmode->efbHeight/2), -(tvmode->fbWidth/2), tvmode->fbWidth/2, 100, 1000);
+  GX_LoadProjectionMtx(p, GX_ORTHOGRAPHIC);
 }
 
 /* Reset GX/VI scaler */
-static void gxScale(u32 width, u32 height)
+static void gxResetScale(u32 width, u32 height)
 {
   int temp = 0;
   int xscale, yscale, xshift, yshift;
@@ -497,37 +508,44 @@ static void gxScale(u32 width, u32 height)
   GX_InvVtxCache();
 }
 
-static void xfb_swap(u32 cnt)
+
+static void VSyncCallback(u32 cnt)
 {
-  VIDEO_SetNextFramebuffer (xfb[whichfb]);
-  VIDEO_Flush ();
-  whichfb ^= 1;
+  frameticker++;
 }
 
 /* Restore Menu Video mode */
 void ogc_video__stop(void)
 {
+  VIDEO_WaitVSync();
   VIDEO_Configure(vmode);
-  VIDEO_ClearFrameBuffer(vmode, xfb[0], COLOR_BLACK);
-  VIDEO_ClearFrameBuffer(vmode, xfb[1], COLOR_BLACK);
-  VIDEO_Flush();
-  VIDEO_WaitVSync();
-  VIDEO_WaitVSync();
-}
-
-/* Update Video settings */
-void ogc_video__start()
-{
-  /* clear screen */
   VIDEO_ClearFrameBuffer(vmode, xfb[0], COLOR_BLACK);
   VIDEO_ClearFrameBuffer(vmode, xfb[1], COLOR_BLACK);
   VIDEO_SetPreRetraceCallback(NULL);
   VIDEO_Flush();
   VIDEO_WaitVSync();
+  VIDEO_WaitVSync();
 
+  /* reset GX */
+  gxResetVtx(GX_TRUE);
+  gxResetView(vmode);
+}
+
+/* Update Video settings */
+void ogc_video__start()
+{
   /* 50Hz/60Hz mode */
   if ((config.tv_mode == 1) || ((config.tv_mode == 2) && vdp_pal)) gc_pal = 1;
   else gc_pal = 0;
+
+  /* Video Interrupt synchronization */
+  if (!gc_pal && !vdp_pal) VIDEO_SetPreRetraceCallback(VSyncCallback);
+
+  /* clear screen */
+  VIDEO_ClearFrameBuffer(vmode, xfb[0], COLOR_BLACK);
+  VIDEO_ClearFrameBuffer(vmode, xfb[1], COLOR_BLACK);
+  VIDEO_Flush();
+  VIDEO_WaitVSync();
 
   /* interlaced/progressive mode */
   if (config.render == 2)
@@ -566,6 +584,10 @@ void ogc_video__start()
 
   /* apply changes on next video update */
   bitmap.viewport.changed = 1;
+
+  /* reset GX */
+  gxResetVtx(GX_FALSE);
+
 }
 
 /* GX render update */
@@ -606,40 +628,19 @@ void ogc_video__update()
     else rmode = tvmodes[gc_pal*3 + interlaced];
 
     /* reset aspect ratio */
-    gxScale(vwidth,vheight);
+    gxResetScale(vwidth,vheight);
 
-    /* configure GX */
-    GX_SetViewport(0.0F, 0.0F, rmode->fbWidth, rmode->efbHeight, 0.0F, 1.0F);
-    GX_SetScissor(0, 0, rmode->fbWidth, rmode->efbHeight);
-    f32 yScale = GX_GetYScaleFactor(rmode->efbHeight, rmode->xfbHeight);
-    u16 xfbHeight = GX_SetDispCopyYScale(yScale);
-    GX_SetDispCopySrc(0, 0, rmode->fbWidth, rmode->efbHeight);
-    GX_SetDispCopyDst(rmode->fbWidth, xfbHeight);
-    GX_SetCopyFilter(rmode->aa, rmode->sample_pattern, config.render ? GX_TRUE : GX_FALSE, rmode->vfilter);
-    GX_SetFieldMode(rmode->field_rendering, ((rmode->viHeight == 2 * rmode->xfbHeight) ? GX_ENABLE : GX_DISABLE));
-    GX_SetPixelFmt(rmode->aa ? GX_PF_RGB565_Z16 : GX_PF_RGB8_Z24, GX_ZC_LINEAR);
-    Mtx p;
-    guOrtho(p, rmode->efbHeight/2, -(rmode->efbHeight/2), -(rmode->fbWidth/2), rmode->fbWidth/2, 100, 1000);
-    GX_LoadProjectionMtx(p, GX_ORTHOGRAPHIC);
-    GX_Flush();
+    /* reset GX */
+    gxResetView(rmode);
 
     /* configure VI */
-    whichfb = odd_frame;
     VIDEO_Configure(rmode);
-    VIDEO_SetNextFramebuffer(xfb[whichfb]);
     VIDEO_Flush();
     VIDEO_WaitVSync();
     if (rmode->viTVMode & VI_NON_INTERLACE) VIDEO_WaitVSync();
     else while (VIDEO_GetNextField() != odd_frame) VIDEO_WaitVSync();
 
-    /* resynchronize interlaced field */
-    if (rmode->field_rendering)
-    {
-      whichfb = odd_frame;
-      VIDEO_SetPreRetraceCallback(xfb_swap);
-      VIDEO_Flush();
-      VIDEO_WaitVSync();
-    }
+    if (frameticker > 1) frameticker = 1;
   }
 
   /* texture is now directly mapped by the line renderer */
@@ -652,25 +653,10 @@ void ogc_video__update()
   draw_square();
   GX_DrawDone();
 
-  /* in SF interlaced modes, swap is done just before VSYNC */
-  /* this ensures VSYNC does not miss any fields */
-  if (rmode->field_rendering)
-  {
-    /* if we are out of sync, it's better not to draw this one */
-    if (odd_frame == whichfb)
-    {
-      /* resynchronize fields */
-      odd_frame ^= 1;
-      return;
-    }
-  }
-  else
-  {
-    /* swap XFB */
-    whichfb ^= 1;
-    VIDEO_SetNextFramebuffer(xfb[whichfb]);
-    VIDEO_Flush();
-  }
+  /* swap XFB */
+  whichfb ^= 1;
+  VIDEO_SetNextFramebuffer(xfb[whichfb]);
+  VIDEO_Flush();
 
   /* copy EFB to XFB */
   GX_CopyDisp(xfb[whichfb], GX_TRUE);
@@ -779,10 +765,13 @@ void ogc_video__init(void)
   VIDEO_WaitVSync();
   VIDEO_WaitVSync();
 
+  /* Initialize GX */
+  gxStart();
+  gxResetVtx(GX_TRUE);
+  gxResetView(vmode);
+
   /* Initialize GUI */
   unpackBackdrop();
   init_font();
 
-  /* Initialize GX */
-  gxStart();
 }

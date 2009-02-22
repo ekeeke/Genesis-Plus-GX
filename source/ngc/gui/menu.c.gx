@@ -1,0 +1,254 @@
+#include "shared.h"
+#include "dvd.h"
+#include "font.h"
+#include "file_dvd.h"
+#include "file_fat.h"
+#include "filesel.h"
+
+#include "Banner_bottom.h"
+#include "Banner_top.h"
+#include "Banner_main.h"
+#include "Background_main.h"
+#include "Main_logo.h"
+
+#ifdef HW_RVL
+#include <wiiuse/wpad.h>
+#include <di/di.h>
+#endif
+
+#define SCROLL_V     0
+#define SCROLL_H     1
+#define SCROLL_NONE  2
+
+typedef struct
+{
+  u8 *img;
+  char txt[30];
+  u32 x;
+  u32 y;
+  u32 w;
+  u32 h;
+} gui_item;
+
+typedef struct
+{
+  gui_item item;
+  u8 *img_norm;
+  u8 *img_over;
+  u8 scroll;
+  u32 x;
+  u32 y;
+  u32 w;
+  u32 h;
+} gui_butn;
+
+typedef struct
+{
+  u8 nb_items;
+  u8 nb_butns;
+  u8 selected;
+  u8 stride;
+  gui_item *item_list;
+  gui_bttn *butn_list;
+  int (*bttn_callback)(int val);
+  int (*special_callback)();
+} gui_menu;
+
+
+gui_butn main_buttons[6] =
+{
+  {{Main_play   , "", 108,  76, 92, 88}, Button, Button_over, SCROLL_NONE,  80,  50, 148, 132},
+  {{Main_load   , "", 280,  72, 80, 92}, Button, Button_over, SCROLL_NONE, 246,  50, 148, 132},
+  {{Main_options, "", 456 , 76, 60, 88}, Button, Button_over, SCROLL_NONE, 412,  50, 148, 132},
+  {{Main_file   , "", 114, 216, 80, 92}, Button, Button_over, SCROLL_NONE,  80, 194, 148, 132},
+  {{Main_reset  , "", 282, 224, 76, 84}, Button, Button_over, SCROLL_NONE, 246, 194, 148, 132},
+  {{Main_info   , "", 446, 212, 88, 96}, Button, Button_over, SCROLL_NONE, 412, 194, 148, 132}
+}
+
+#ifdef HW_RVL
+gui_butn loadrom_buttons[4] =
+{
+  {{Load_recent, "", 276, 120, 88, 96}, Button, Button_over, SCROLL_NONE, 246, 102, 148, 132},
+  {{Load_sd    , "", 110, 266, 88, 96}, Button, Button_over, SCROLL_NONE,  80, 248, 148, 132},
+  {{Load_usb   , "", 276, 266, 88, 96}, Button, Button_over, SCROLL_NONE, 246, 248, 148, 132},
+  {{Load_dvd   , "", 442, 266, 88, 96}, Button, Button_over, SCROLL_NONE, 412, 248, 148, 132}
+}
+#else
+gui_butn loadrom_buttons[3] =
+{
+  {{Load_recent, "", 110, 198, 88, 96}, Button, Button_over, SCROLL_NONE,  80, 180, 148, 132},
+  {{Load_sd    , "", 276, 198, 88, 96}, Button, Button_over, SCROLL_NONE, 246, 180, 148, 132},
+  {{Load_dvd   , "", 442, 198, 88, 96}, Button, Button_over, SCROLL_NONE, 412, 180, 148, 132}
+}
+#endif
+
+gui_butn options_buttons[5] =
+{
+  {{Option_system, "", 114, 142, 80, 92}, Button, Button_over, SCROLL_NONE,  80, 120, 148, 132},
+  {{Option_video , "", 288, 150, 64, 84}, Button, Button_over, SCROLL_NONE, 246, 120, 148, 132},
+  {{Option_audio , "", 464, 154, 44, 80}, Button, Button_over, SCROLL_NONE, 412, 120, 148, 132},
+  {{Option_ctrl  , "", 192, 286, 88, 92}, Button, Button_over, SCROLL_NONE, 162, 264, 148, 132},
+  {{Option_ggenie, "", 360, 282, 88, 96}, Button, Button_over, SCROLL_NONE, 330, 264, 148, 132}
+}
+
+
+gui_menu main_m    = { 6, 6, 0, 3, &main_back, &main_buttons,      main_func,     exit_func};
+gui_menu option_m  = { 9, 5, 0, 3, &misc_back, &m_options_buttons, m_option_func, main_menu};
+gui_menu manage_m  = {12, 7, 0, 1, &misc_back, &manage_buttons,    manage_func,   main_menu};
+gui_menu load_m    = { 9, 4, 0, 1, &misc_back, &m_load_buttons,    m_load_func,   main_menu};
+gui_menu video_m   = { 9, 5, 0, 3, &m_options_back, &m_options_buttons, m_option_func, main_menu};
+gui_menu option_m  = {8, 5, 0, 3, &m_options_back, &m_options_buttons, m_option_func, main_menu};
+
+
+void DrawMenu (gui_menu *menu)
+{
+  int i;
+  gui_item *item;
+  gui_bttn *butn;
+
+  /* reset texture data */
+  png_texture texture;
+  memset(texture,0,sizeof(png_texture));
+
+  /* clear EFB */
+  ClearScreen ((GXColor)BLACK);
+
+  /* draw background items */
+  for (i=0; i<menu->nb_items; i++)
+  {
+    item = &menu->item_list[i];
+    if (item->img)
+    {
+      OpenPNGFromMemory(&texture, item->img);
+      DrawTexture(&texture, item->x, item->y, item->w, item->h);
+      memset(texture,0,sizeof(png_texture));
+    }
+    else
+    {
+      /* TODO */
+    }
+  }
+
+  /* draw selectable items */
+  for (i=0; i<menu->nb_butns; i++)
+  {
+    /* draw button */ 
+    butn = &menu->butn_list[i];
+    if (i == menu->selected) OpenPNGFromMemory(&texture, butn->img_over);
+    else OpenPNGFromMemory(&texture, butn->img_norm);
+    DrawTexture(&texture, butn->x, butn->y, butn->w, butn->h);
+    memset(texture,0,sizeof(png_texture));
+
+    /* draw item */
+    item = butn->item;
+    if (item->img)
+    {
+      OpenPNGFromMemory(&texture, item->img);
+      DrawTexture(&texture, item->x, item->y, item->w, item->h);
+      memset(texture,0,sizeof(png_texture));
+    }
+    else
+    {
+      /* TODO */
+    }
+  }
+}
+
+int DoMenu (gui_menu *menu)
+{
+  int redraw = 1;
+  int sel = 0;
+  short p;
+  gui_bttn *butn;
+
+  while (1)
+  {
+    if (redraw & 1) DrawMenu (menu);
+
+    redraw = 0;
+    p = GetInputKeys();
+
+    if (p & MENU_KEY_UP)
+    {
+      butn = &menu->butn_list[menu->selected];
+      if (butn->scroll == TYPE_SCROLL_V)
+      {
+        ret = (*menu->butn_callback)(-menu->selected);
+        if (ret != -1) return ret;
+        redraw = 1;
+      }
+      else
+      {
+        sel = menu->selected - menu->stride;
+        if (sel < 0) sel = 0;
+        if (sel != menu->selected) redraw = 1;
+        menu->selected = sel;
+      }
+    }
+    else if (p & MENU_KEY_DOWN)
+    {
+      butn = &menu->butn_list[menu->selected];
+      if (butn->scroll == TYPE_SCROLL_V)
+      {
+        ret = (*menu->butn_callback)(menu->selected);
+        if (ret != -1) return ret;
+        redraw = 1;
+      }
+      else
+      {
+        sel = menu->selected + menu->stride;
+        if (sel >= menu->max_butns) sel = menu->max_butns;
+        if (sel != menu->selected) redraw = 1;
+        menu->selected = sel;
+      }
+    }
+    else if (p & MENU_KEY_RIGHT)
+    {
+      butn = &menu->butn_list[menu->selected];
+      if (butn->scroll == TYPE_SCROLL_H)
+      {
+        ret = (*menu->butn_callback)(menu->selected);
+        if (ret != -1) return ret;
+        redraw = 1;
+      }
+      else
+      {
+        sel = menu->selected + 1;
+        if (sel >= menu->max_butns) sel = menu->max_butns;
+        if (sel != menu->selected) redraw = 1;
+        menu->selected = sel;
+      }
+    }
+    else if (p & MENU_KEY_LEFT)
+    {
+      butn = &menu->butn_list[menu->selected];
+      if (butn->scroll == TYPE_SCROLL_H)
+      {
+        ret = (*menu->butn_callback)(-menu->selected);
+        if (ret != -1) return ret;
+        redraw = 1;
+      }
+      else
+      {
+        sel = menu->selected - menu->stride;
+        if (sel < 0) sel = 0;
+        if (sel != menu->selected) redraw = 1;
+        menu->selected = sel;
+      }
+    }
+
+    if (p & MENU_KEY_SELECT)
+    {
+      ret = (*menu->butn_callback)(menu->selected);
+      redraw = 1;
+      if (ret != -1) return ret;
+    }
+    else if (p & MENU_KEY_CANCEL)
+    {
+      return 0;
+    }
+  }
+
+  return 0;
+}
+

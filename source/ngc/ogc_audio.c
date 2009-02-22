@@ -3,7 +3,7 @@
  *
  *  Genesis Plus GX audio support
  *
- *  code by Softdev (2006), Eke-Eke (2007,2008)
+ *  code by Eke-Eke (2007,2008)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,28 +28,33 @@
    To prevent audio clashes, we use double buffering technique:
     one buffer is the active DMA buffer
     the other one is the current work buffer (updated during frame emulation)
-   We do not need more since frame emulation is synchronized with DMA execution
+   We do not need more since frame emulation and DMA operation are synchronized
 */
 u8 soundbuffer[2][3840] ATTRIBUTE_ALIGN(32);
 
 /* Current work soundbuffer */
 u8 mixbuffer;
 
-/* Current DMA length (required to be a factor of 32-bytes)
-   length is calculated regarding current emulation timings:
-    PAL timings : 50 frames/sec, 48000 samples/sec = 960 samples per frame = 3840 bytes (16 bits stereo samples)
-    NTSC timings: 60 frames/sec, 48000 samples/sec = 800 samples per frame = 3200 bytes (16 bits stereo samples)
-*/
-static u32 dma_len  = 3200;
+/* Next DMA length */
+static u32 dma_len;
+
+/* Current delta between output & expected sample counts */
+static int delta;
+
+/* Expected sample count x 100 */
+static u32 dma_sync;
+
+/* audio DMA status */
+static u8 audioStarted;
 
 /*** 
       AudioDmaCallback
 
-     Genesis Plus only provides sound data on completion of each frame.
-     To try to make the audio less choppy, we synchronize frame emulation with audio DMA
-     This ensure we don't access current active audiobuffer until a new DMA has been started
-     This also makes frame emulation sync completely independent from video sync
+     In 50Hz emulation mode, we synchronize frame emulation with audio DMA
+     50Hz VSYNC period is shorter than DMA period so there is no video frameskipping
+     In 60Hz modes, VSYNC period is longer than default DMA period so it requires different sync.
  ***/
+
 static void AudioDmaCallback()
 {
   frameticker++;
@@ -58,60 +63,95 @@ static void AudioDmaCallback()
 /***
       ogc_audio__init
 
-     This function initializes the Audio Interface and DMA callback
+     This function initializes the Audio Interface
      Default samplerate is set to 48khZ
  ***/
 void ogc_audio__init(void)
 {
   AUDIO_Init (NULL);
   AUDIO_SetDSPSampleRate (AI_SAMPLERATE_48KHZ);
-  AUDIO_RegisterDMACallback (AudioDmaCallback);
-  memset(soundbuffer, 0, 2 * 3840);
 }
 
 /*** 
       ogc_audio__update
 
-     This function is called at the end of each frame, once the current soundbuffer has been updated
-     DMA sync and switching ensure we never access the active DMA buffer
-     This function set the next DMA buffer 
-     Parameters will be taken in account ONLY when current DMA has finished
+     This function is called at the end of each frame
+     Genesis Plus only provides sound data on completion of each frame.
+     DMA sync and switching ensure we never access the active DMA buffer and sound clashes never happen
+     This function retrieves samples for the frame then set the next DMA parameters 
+     Parameters will be taken in account only when current DMA operation is over
  ***/
-void ogc_audio__update(void)
+void ogc_audio__update()
 {
-  AUDIO_InitDMA((u32) soundbuffer[mixbuffer], dma_len);
-  DCFlushRange(soundbuffer[mixbuffer], dma_len);
+  u32 size = dma_len;
+  
+  /* get audio samples */
+  audio_update(dma_len);
+
+  /* update DMA parameters */
+  s16 *sb = (s16 *)(soundbuffer[mixbuffer]);
   mixbuffer ^= 1;
+  size = size << 2;
+  DCFlushRange((void *)sb, size);
+  AUDIO_InitDMA((u32) sb, size);
+
+  /* Start Audio DMA */
+  /* this is only called once, DMA is automatically restarted when previous one is over */
+  /* When DMA parameters are not updated, same soundbuffer is played again */
+  if (!audioStarted)
+  {
+    audioStarted = 1;
+    AUDIO_StartDMA();
+    if (frameticker > 1) frameticker = 1;
+  }
+
+  /* VIDEO interrupt sync: we approximate DMA length (see below) */
+  /* DMA length should be 32 bytes so we use 800 or 808 samples */
+  if (dma_sync)
+  {
+    delta += (dma_len * 100) - dma_sync;
+    if (delta < 0) dma_len = 808;
+    else dma_len = 800;
+  }
 }
 
 /*** 
       ogc_audio__start
 
-     This function restarts Audio DMA processing
-     This is called only ONCE, when emulation loop starts or when coming back from Main Menu
-     DMA length is used for frame emulation synchronization (PAL & NTSC timings)
-     DMA is *automatically* restarted once the configured audio length has been output
-     When DMA parameters are not updated, same soundbuffer is played again
-     DMA parameters can be updated using successive calls to AUDIO_InitDMA (see above)
+     This function resets the audio engine
+     This is called when coming back from Main Menu
  ***/
 void ogc_audio__start(void)
 {
-  dma_len = vdp_pal ? 3840 : 3200;
-  memset(soundbuffer[0], 0, dma_len);
-  AUDIO_InitDMA((u32) soundbuffer[0], dma_len);
-  DCFlushRange(soundbuffer[0], dma_len);
-  AUDIO_StartDMA();
-  mixbuffer = 1;
+  /* initialize default DMA length */
+  /* PAL (50Hz): 20000 us period --> 960 samples/frame  at 48kHz */
+  /* NTSC (60Hz): 16667 us period --> 800 samples/frame at 48kHz */
+  dma_len   = vdp_pal ? 960 : 800;
+  dma_sync  = 0;
+  mixbuffer = 0;
+  delta     = 0;
+
+  /* default case: we use DMA interrupt to synchronize frame emulation */
+  if (vdp_pal | gc_pal) AUDIO_RegisterDMACallback (AudioDmaCallback);
+
+  /* 60hz video mode requires synchronization with Video interrupt      */
+  /* VSYNC period is 16715 us which is approx. 802.32 samples           */
+  /* to prevent audio/video desynchronization, we approximate the exact */
+  /* number of samples by using alternate audio length                  */
+  else dma_sync = 80232;
 }
 
 /***
       ogc_audio__stop
 
-     This function reset current Audio DMA process
+     This function stops current Audio DMA process
      This is called when going back to Main Menu
      DMA need to be restarted when going back to the game (see above)
  ***/
 void ogc_audio__stop(void)
 {
+  AUDIO_RegisterDMACallback(NULL);
   AUDIO_StopDMA ();
+  memset(soundbuffer, 0, 2 * 3840);
+  audioStarted = 0;
 }

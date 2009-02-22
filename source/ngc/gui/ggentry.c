@@ -165,7 +165,7 @@ void DrawGGCodes ()
   int i,j;
   unsigned char c[2] = { 0, 0 };
 
-  ClearScreen ();
+  ClearScreen ((GXColor)BLACK);
   WriteCentre (134, menutitle);
 
   for (i = 0; i < MAXCODES; i++)

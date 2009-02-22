@@ -28,10 +28,25 @@
 #include "file_fat.h"
 #include "filesel.h"
 
+#include "Banner_bottom.h"
+#include "Banner_top.h"
+#include "Banner_main.h"
+#include "Background_main.h"
+#include "Main_logo.h"
+#include "Main_play.h"
+#include "Main_load.h"
+#include "Main_options.h"
+#include "Main_file.h"
+#include "Main_reset.h"
+#include "Main_info.h"
+#include "Button.h"
+#include "Button_over.h"
+
 #ifdef HW_RVL
 #include <wiiuse/wpad.h>
 #include <di/di.h>
 #endif
+
 
 /***************************************************************************
  * drawmenu
@@ -42,25 +57,117 @@
 char menutitle[60] = { "" };
 int menu = 0;
 
+#define SCROLL_V     0
+#define SCROLL_H     1
+#define SCROLL_NONE  2
+
+typedef struct
+{
+  u8 *img;
+  char txt[30];
+  u32 x;
+  u32 y;
+  u32 w;
+  u32 h;
+} gui_item;
+
+typedef struct
+{
+  gui_item item;
+  u8 *img_norm;
+  u8 *img_over;
+  u8 scroll;
+  u32 x;
+  u32 y;
+  u32 w;
+  u32 h;
+} gui_butn;
+
+gui_butn main_buttons[6] =
+{
+  {{Main_play   , "", 108,  76, 92, 88}, Button, Button_over, SCROLL_NONE,  80,  50, 148, 132},
+  {{Main_load   , "", 280,  72, 80, 92}, Button, Button_over, SCROLL_NONE, 246,  50, 148, 132},
+  {{Main_options, "", 456 , 76, 60, 88}, Button, Button_over, SCROLL_NONE, 412,  50, 148, 132},
+  {{Main_file   , "", 114, 216, 80, 92}, Button, Button_over, SCROLL_NONE,  80, 194, 148, 132},
+  {{Main_reset  , "", 282, 224, 76, 84}, Button, Button_over, SCROLL_NONE, 246, 194, 148, 132},
+  {{Main_info   , "", 446, 212, 88, 96}, Button, Button_over, SCROLL_NONE, 412, 194, 148, 132}
+};
+
+void DrawMenu (gui_butn *butn_list, int nb_butns, int selected)
+{
+  int i;
+  gui_item *item;
+  gui_butn *butn;
+
+  /* reset texture data */
+  png_texture texture;
+  memset(&texture,0,sizeof(png_texture));
+
+  /* draw background items */
+  ClearScreen ((GXColor)BLACK);
+  OpenPNGFromMemory(&texture, Background_main);
+  DrawTexture(&texture, (640-texture.width)/2, (480-124-texture.height)/2,  texture.width, texture.height);
+  /**OpenPNGFromMemory(&texture, Banner_bottom);
+  DrawTexture(&texture, 640-texture.width, 480-texture.height, texture.width, texture.height);
+  OpenPNGFromMemory(&texture, Banner_top);
+  DrawTexture(&texture, 640-texture.width, 0, texture.width, texture.height);
+  OpenPNGFromMemory(&texture, Main_logo);
+  DrawTexture(&texture, 444, 28, 176, 48);*/
+  OpenPNGFromMemory(&texture, Banner_main);
+  DrawTexture(&texture, 0, 480-texture.height, texture.width, texture.height);
+  OpenPNGFromMemory(&texture, Main_logo);
+  DrawTexture(&texture, (640-texture.width)/2, 370, texture.width, texture.height);
+
+  /* draw selectable items */
+  for (i=0; i<nb_butns; i++)
+  {
+    butn = &butn_list[i];
+      
+    /* draw button */ 
+    if (i == selected) OpenPNGFromMemory(&texture, butn->img_over);
+    else OpenPNGFromMemory(&texture, butn->img_norm);
+    DrawTexture(&texture, butn->x, butn->y, butn->w, butn->h);
+    memset(&texture,0,sizeof(png_texture));
+
+    /* draw item */
+    item = &butn->item;
+    if (item->img)
+    {
+      OpenPNGFromMemory(&texture, item->img);
+      DrawTexture(&texture, item->x, item->y, item->w, item->h);
+      memset(&texture,0,sizeof(png_texture));
+    }
+    else
+    {
+      /* TODO */
+    }
+  }
+}
+
 void drawmenu (char items[][25], int maxitems, int selected)
 {
   int i;
   int ypos;
 
-  ypos = (310 - (fheight * maxitems)) >> 1;
+  ypos = (226 - (fheight * maxitems)) >> 1;
   ypos += 130;
 
-  ClearScreen ();
-  WriteCentre (134, menutitle);
+  DrawMenu (main_buttons, 6, selected);
+
+  /*WriteCentre (134, menutitle);
 
   for (i = 0; i < maxitems; i++)
   {
       if (i == selected) WriteCentre_HL (i * fheight + ypos, (char *) items[i]);
       else WriteCentre (i * fheight + ypos, (char *) items[i]);
-  }
+  }*/
 
   SetScreen ();
 }
+
+
+
+
 
 /****************************************************************************
  * domenu
@@ -144,8 +251,8 @@ void soundmenu ()
   menu = 0;
   while (quit == 0)
   {
-    sprintf (items[0], "PSG Volume: %1.2f", config.psg_preamp);
-    sprintf (items[1], "FM Volume: %1.2f", config.fm_preamp);
+    sprintf (items[0], "PSG Volume: %1.2f", (double)config.psg_preamp/100.0);
+    sprintf (items[1], "FM Volume: %1.2f", (double)config.fm_preamp/100.0);
     sprintf (items[2], "Volume Boost: %dX", config.boost);
     sprintf (items[3], "LowPass Filter: %s", config.filter ? " ON":"OFF");
     if (config.hq_fm == 0) sprintf (items[4], "HQ YM2612: OFF");
@@ -158,18 +265,18 @@ void soundmenu ()
     {
       case 0:
       case -2:
-        if (ret<0) config.psg_preamp -= 0.01;
-        else config.psg_preamp += 0.01;
-        if (config.psg_preamp < 0.0) config.psg_preamp = 5.0;
-        if (config.psg_preamp > 5.0) config.psg_preamp = 0.0;
+        if (ret<0) config.psg_preamp --;
+        else config.psg_preamp ++;
+        if (config.psg_preamp < 0) config.psg_preamp = 500;
+        if (config.psg_preamp > 500) config.psg_preamp = 0;
         break;
 
       case 1:
       case -3:
-        if (ret<0) config.fm_preamp -= 0.01;
-        else config.fm_preamp += 0.01;
-        if (config.fm_preamp < 0.0) config.fm_preamp = 5.0;
-        if (config.fm_preamp > 5.0) config.fm_preamp = 0.0;
+        if (ret<0) config.fm_preamp --;
+        else config.fm_preamp ++;
+        if (config.fm_preamp < 0) config.fm_preamp = 500;
+        if (config.fm_preamp > 500) config.fm_preamp = 0;
         break;
 
       case 2:
@@ -193,8 +300,8 @@ void soundmenu ()
 
       case 5:
         config.fm_core ^= 1;
-        config.psg_preamp = config.fm_core ? 2.5 : 1.5;
-        config.fm_preamp  = 1.0;
+        config.psg_preamp = config.fm_core ? 250 : 150;
+        config.fm_preamp  = 100;
         if (genromsize) 
         {
           if (!config.fm_core) memcpy(fm_reg,YM2612.REG,sizeof(fm_reg));
@@ -1017,9 +1124,9 @@ void showrominfo ()
 
   while (quit == 0)
   {
-      if (redraw)
-      {
-      ClearScreen ();
+    if (redraw)
+    {
+      ClearScreen ((GXColor)BLACK);
 
       ypos = 134;
       WriteCentre(ypos, "ROM Header Information");
@@ -1138,6 +1245,7 @@ void MainMenu (u32 fps)
   while (quit == 0)
   {
     crccheck = crc32 (0, &sram.sram[0], 0x10000);
+    strcpy (menutitle,"");
     if (genromsize && (crccheck != sram.crc)) strcpy (menutitle, "*** SRAM has been modified ***");
     else if (genromsize) sprintf (menutitle, "%d FPS",fps);
 
