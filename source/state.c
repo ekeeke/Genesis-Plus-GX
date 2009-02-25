@@ -22,30 +22,27 @@
 
 #include "shared.h"
 
-static unsigned char state[0x24000];
-static unsigned int bufferptr;
-
-static inline void load_param(void *param, unsigned int size)
-{
-  memcpy(param, &state[bufferptr], size);
+#define load_param(param, size) \
+  memcpy(param, &state[bufferptr], size); \
   bufferptr+= size;
-}
 
-static inline void save_param(void *param, unsigned int size)
-{
-  memcpy(&state[bufferptr], param, size);
+#define save_param(param, size) \
+  memcpy(&state[bufferptr], param, size); \
   bufferptr+= size;
-}
 
 void state_load(unsigned char *buffer)
 {
-  /* reset buffer pointer */
-  bufferptr = 0;
+  /* allocate memory */
+  unsigned char *state = malloc(STATE_SIZE);
+  if (state == NULL) return;
+
+  /* buffer size */
+  int bufferptr = 0;
 
   /* uncompress savestate */
   unsigned long inbytes, outbytes;
   memcpy(&inbytes, buffer, 4);
-  outbytes = 0x24000;
+  outbytes = STATE_SIZE;
   uncompress ((Bytef *)state, &outbytes, (Bytef *)(buffer + 4), inbytes);
 
   /* reset system */
@@ -82,8 +79,7 @@ void state_load(unsigned char *buffer)
   vdp_restore(temp_reg);
 
   // FM 
-  load_param(fm_reg,sizeof(fm_reg));
-  fm_restore();
+  load_param(YM2612GetContextPtr(),YM2612GetContextSize());
 
   // PSG
   load_param(SN76489_GetContextPtr (0),SN76489_GetContextSize ());
@@ -113,12 +109,19 @@ void state_load(unsigned char *buffer)
 
   // Z80 
   load_param(&Z80, sizeof(Z80_Regs));
+
+  /* Free memory */
+  free(state);
 }
 
 int state_save(unsigned char *buffer)
 {
-  /* reset buffer pointer */
-  bufferptr = 0;
+  /* allocate memory */
+  unsigned char *state = malloc(STATE_SIZE);
+  if (state == NULL) return 0;
+
+  /* buffer size */
+  int bufferptr = 0;
 
   // GENESIS
   save_param(work_ram, sizeof(work_ram));
@@ -147,7 +150,7 @@ int state_save(unsigned char *buffer)
   save_param(&irq_status, sizeof(irq_status));
 
   // FM 
-  save_param(fm_reg,sizeof(fm_reg));
+  save_param(YM2612GetContextPtr(),YM2612GetContextSize());
 
   // PSG 
   save_param(SN76489_GetContextPtr (0),SN76489_GetContextSize ());
@@ -180,9 +183,12 @@ int state_save(unsigned char *buffer)
 
   /* compress state file */
   unsigned long inbytes   = bufferptr;
-  unsigned long outbytes  = 0x26000;
+  unsigned long outbytes  = STATE_SIZE;
   compress2 ((Bytef *)(buffer + 4), &outbytes, (Bytef *)state, inbytes, 9);
   memcpy(buffer, &outbytes, 4);
+
+  /* Free memory */
+  free(state);
 
   /* return total size */
   return (outbytes + 4);

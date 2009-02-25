@@ -23,9 +23,9 @@
 #include "shared.h"
 
 #ifdef HW_RVL
-#define CONFIG_VERSION "GENPLUS 1.3.1W"
+#define CONFIG_VERSION "GENPLUS 1.3.2W"
 #else
-#define CONFIG_VERSION "GENPLUS 1.3.1G"
+#define CONFIG_VERSION "GENPLUS 1.3.2G"
 #endif
 
 void config_save()
@@ -83,7 +83,6 @@ void set_config_defaults(void)
   config.boost        = 1;
   config.hq_fm        = 1;
   config.filter       = 1;
-  config.fm_core      = 0;
 
   /* system options */
   config.freeze_auto    = -1;

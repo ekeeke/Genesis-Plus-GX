@@ -169,7 +169,7 @@ int audio_init (int rate)
 #endif
 
   /* SRC */
-  if (config.hq_fm && !config.fm_core)
+  if (config.hq_fm)
   {
     /* SRC ratio (YM2612 original samplerate is VCLK/144) */
     src_data.src_ratio = ((double)rate * 144.0) / ((double) vdp_rate * (double)m68cycles_per_line * (double)lines_per_frame);

@@ -22,7 +22,6 @@
 #include "sound.h"
 #include "sn76489.h"
 #include "fm.h"
-#include "ym2612.h"
 #include "loadrom.h"
 #include "cart_hw.h"
 #include "eeprom.h"

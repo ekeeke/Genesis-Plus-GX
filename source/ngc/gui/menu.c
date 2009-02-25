@@ -30,7 +30,7 @@
 
 #include "Banner_bottom.h"
 #include "Banner_top.h"
-#include "Banner_main.h"
+//#include "Banner_main.h"
 #include "Background_main.h"
 #include "Main_logo.h"
 #include "Main_play.h"
@@ -113,10 +113,10 @@ void DrawMenu (gui_butn *butn_list, int nb_butns, int selected)
   DrawTexture(&texture, 640-texture.width, 0, texture.width, texture.height);
   OpenPNGFromMemory(&texture, Main_logo);
   DrawTexture(&texture, 444, 28, 176, 48);*/
-  OpenPNGFromMemory(&texture, Banner_main);
+  /*OpenPNGFromMemory(&texture, Banner_main);
   DrawTexture(&texture, 0, 480-texture.height, texture.width, texture.height);
   OpenPNGFromMemory(&texture, Main_logo);
-  DrawTexture(&texture, (640-texture.width)/2, 370, texture.width, texture.height);
+  DrawTexture(&texture, (640-texture.width)/2, 370, texture.width, texture.height);*/
 
   /* draw selectable items */
   for (i=0; i<nb_butns; i++)
@@ -243,8 +243,8 @@ void soundmenu ()
   int ret;
   int quit = 0;
   int prevmenu = menu;
-  int count = 6;
-  char items[6][25];
+  int count = 5;
+  char items[5][25];
 
   strcpy (menutitle, "Press B to return");
 
@@ -256,9 +256,8 @@ void soundmenu ()
     sprintf (items[2], "Volume Boost: %dX", config.boost);
     sprintf (items[3], "LowPass Filter: %s", config.filter ? " ON":"OFF");
     if (config.hq_fm == 0) sprintf (items[4], "HQ YM2612: OFF");
-    else if ((config.hq_fm == 1) || config.fm_core) sprintf (items[4], "HQ YM2612: LINEAR");
+    else if (config.hq_fm == 1) sprintf (items[4], "HQ YM2612: LINEAR");
     else sprintf (items[4], "HQ YM2612: SINC");
-    sprintf (items[5], "FM core: %s", config.fm_core ? "GENS" : "MAME");
 
     ret = domenu (&items[0], count, 1);
     switch (ret)
@@ -290,21 +289,9 @@ void soundmenu ()
 
       case 4:
         config.hq_fm ++;
-        if ((config.hq_fm>2)||(config.fm_core && (config.hq_fm>1))) config.hq_fm = 0;
+        if (config.hq_fm>2) config.hq_fm = 0;
         if (genromsize) 
         {
-          audio_init(48000);
-          fm_restore();
-        }
-        break;
-
-      case 5:
-        config.fm_core ^= 1;
-        config.psg_preamp = config.fm_core ? 250 : 150;
-        config.fm_preamp  = 100;
-        if (genromsize) 
-        {
-          if (!config.fm_core) memcpy(fm_reg,YM2612.REG,sizeof(fm_reg));
           audio_init(48000);
           fm_restore();
         }

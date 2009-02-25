@@ -166,7 +166,7 @@ void gen_reset (uint32 hard_reset)
   /* Reset CPUs */
   m68k_pulse_reset ();
   z80_reset ();
-  _YM2612_Reset();
+  YM2612ResetChip();
 
 #ifdef NGC
   /* register SOFTRESET */
@@ -245,8 +245,8 @@ void gen_reset_w (uint32 state)
     }
 
     /* Reset Z80 & YM2612 */
-    _YM2612_Reset();
     z80_reset ();
+    YM2612ResetChip();
   }
 
   zreset = state;

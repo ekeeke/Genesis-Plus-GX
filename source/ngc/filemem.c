@@ -44,7 +44,7 @@ static card_stat CardStatus;
  * Must be 32-byte aligned.
  * 64k SRAM + 2k Icon
  */
-static u8 savebuffer[0x26000] ATTRIBUTE_ALIGN (32);
+static u8 savebuffer[STATE_SIZE] ATTRIBUTE_ALIGN (32);
 char rom_filename[MAXJOLIET];
 
 int ManageSRAM(u8 direction, u8 device);

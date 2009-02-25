@@ -23,17 +23,8 @@
 
 #include "shared.h"
 
-/* generic functions */
-int  (*_YM2612_Write)(unsigned char adr, unsigned char data);
-int  (*_YM2612_Read)(void);
-void (*_YM2612_Update)(int **buf, int length);
-int (*_YM2612_Reset)(void);
-
 /* cycle-accurate samples */
 static int m68cycles_per_sample[2];
-
-/* YM2612 register arrays */
-int fm_reg[2][0x100];
 
 /* return the number of samples that should have been rendered so far */
 static inline uint32 fm_sample_cnt(uint8 is_z80)
@@ -56,7 +47,7 @@ static inline void fm_update()
     int *tempBuffer[2];
     tempBuffer[0] = snd.fm.buffer[0] + snd.fm.lastStage;
     tempBuffer[1] = snd.fm.buffer[1] + snd.fm.lastStage;
-    _YM2612_Update(tempBuffer, snd.fm.curStage - snd.fm.lastStage);
+    YM2612UpdateOne(tempBuffer, snd.fm.curStage - snd.fm.lastStage);
     snd.fm.lastStage = snd.fm.curStage;
   }
 }
@@ -82,7 +73,7 @@ void sound_init(int rate)
   m68cycles_per_sample[1] = m68cycles_per_sample[0];
 
   /* YM2612 is emulated at original frequency (VLCK/144) */
-  if (config.hq_fm && !config.fm_core)
+  if (config.hq_fm)
   {
     m68cycles_per_sample[0] = 144;
   }
@@ -91,22 +82,7 @@ void sound_init(int rate)
   SN76489_Init(0, (int)zclk, rate);
   SN76489_Config(0, MUTE_ALLON, VOL_FULL, FB_SEGAVDP, SRW_SEGAVDP, 0);
 
-  if (config.fm_core)
-  {
-    _YM2612_Write  = YM2612_Write;
-    _YM2612_Read   = YM2612_Read;
-    _YM2612_Update = YM2612_Update;
-    _YM2612_Reset  = YM2612_Reset;
-    YM2612_Init((int)vclk, rate, config.hq_fm);
-  }
-  else
-  {
-    _YM2612_Write  = YM2612Write;
-    _YM2612_Read   = YM2612Read;
-    _YM2612_Update = YM2612UpdateOne;
-    _YM2612_Reset  = YM2612ResetChip;
-    YM2612Init ((int)vclk, rate);
-  }
+  YM2612Init ((int)vclk, rate);
 } 
 
 void sound_update(int fm_len, int psg_len)
@@ -127,21 +103,16 @@ void sound_update(int fm_len, int psg_len)
 }
 
 /* YM2612 control */
-/* restore FM registers */
+
+/* restore FM context */
 void fm_restore(void)
 {
-  int i;
-
-  _YM2612_Reset();
-
-  /* feed all the registers and update internal state */
-  for(i = 0; i < 0x100; i++)
-  {
-    _YM2612_Write(0, i);
-    _YM2612_Write(1, fm_reg[0][i]);
-    _YM2612_Write(2, i);
-    _YM2612_Write(3, fm_reg[1][i]);
-  }
+  unsigned char *temp = malloc(YM2612GetContextSize());
+  if (!temp) return;
+  memcpy(temp, YM2612GetContextPtr(), YM2612GetContextSize());
+  YM2612ResetChip();
+  memcpy(YM2612GetContextPtr(), temp, YM2612GetContextSize());
+  free(temp);
 }
 
 /* write FM chip */
@@ -152,7 +123,7 @@ void fm_write(unsigned int cpu, unsigned int address, unsigned int data)
     snd.fm.curStage = fm_sample_cnt(cpu);
     fm_update();
   }
-  _YM2612_Write(address & 3, data);
+  YM2612Write(address, data);
 }
 
 /* read FM status */
@@ -160,7 +131,7 @@ unsigned int fm_read(unsigned int cpu, unsigned int address)
 {
   snd.fm.curStage = fm_sample_cnt(cpu);
   fm_update();
-  return (_YM2612_Read() & 0xff);
+  return YM2612Read();
 }
 
 

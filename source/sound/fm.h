@@ -22,8 +22,9 @@
 extern int YM2612Init(int baseclock, int rate);
 extern int YM2612ResetChip(void);
 extern void YM2612UpdateOne(int **buffer, int length);
-extern int YM2612Write(unsigned char a, unsigned char v);
-extern int YM2612Read(void);
-
+extern void YM2612Write(unsigned int a, unsigned int v);
+extern unsigned int YM2612Read(void);
+extern unsigned char *YM2612GetContextPtr(void);
+extern unsigned int YM2612GetContextSize(void);
 
 #endif /* _H_FM_FM_ */

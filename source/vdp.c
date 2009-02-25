@@ -497,7 +497,7 @@ static inline void data_write (unsigned int data)
   switch (code & 0x0F)
   {
     case 0x01:  /* VRAM */
-          
+
       /* Byte-swap data if A0 is set */
       if (addr & 1) data = (data >> 8) | (data << 8);
 
@@ -833,11 +833,11 @@ void vdp_data_w(unsigned int data)
     fifo_update();
     if (fifo_write_cnt == 0)
     {
-    /* reset cycle counter */
-    fifo_lastwrite = count_m68k;
+      /* reset cycle counter */
+      fifo_lastwrite = count_m68k;
 
-    /* FIFO is not empty anymore */
-    status &= 0xFDFF;
+      /* FIFO is not empty anymore */
+      status &= 0xFDFF;
     }
 
     /* increase write counter */

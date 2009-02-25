@@ -6,12 +6,18 @@ Genesis Plus GX 1.3.2 (??/??/????) (Eke-Eke)
 ------
 
 * modified SN76489 cut-off frequency
+* removed outdated Gens YM2612 core
+* improved MAME YM2612 core accuracy: SSG-EG support, CSM Mode (based upon last Nemesis tests on real hardware)
+* fixed YM2612 context restore
+* modified sound update engine to fix synchronization issues (see below)
 * various code cleanup
 
 [Gamecube/Wii]
 
-* improved video synchronization in original interlaced modes: fixed video issues in Sonic 2 (VS mode)
+* improved sound/video synchronization in 60Hz modes
 * fixed some statibilty issues
+* rewrote Font & GUI engines (now powered by GX hardware)
+* new Interface design !
 
 
 
