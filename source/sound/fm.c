@@ -25,8 +25,8 @@
 **  - fixed YM2612 initial values (after the reset)
 **  - implemented correct Detune overflow (Ariel, Comix Zone, Shaq Fu, Spiderman & many others)
 **  - implemented correct CSM mode support
-**  - rewrote SSG-EG emulation (Asterix, Bubba'n Six & many others)
-**  - modified some EG rates
+**  - implemented correct SSG-EG support (Asterix, Beavis&Butthead, Bubba'n Six & many others)
+**  - adjusted some EG rates
 **  - modified address/data port behavior
 **
 
@@ -632,7 +632,7 @@ INLINE void FM_KEYON(FM_CH *CH , int s )
 
     if ((SLOT->ar + SLOT->ksr) < 94 /*32+62*/)
     {
-      SLOT->state = EG_ATT;  /* phase -> Attack */
+      SLOT->state = (SLOT->volume <= MIN_ATT_INDEX) ? ((SLOT->sl == MIN_ATT_INDEX) ? EG_SUS : EG_DEC) : EG_ATT;
     }
     else
     {
@@ -645,7 +645,7 @@ INLINE void FM_KEYON(FM_CH *CH , int s )
 
     /* recalculate EG output */
     if ((SLOT->ssg&0x08) && (SLOT->ssgn ^ (SLOT->ssg&0x04)))
-      SLOT->vol_out = ((UINT32)SLOT->volume ^ 0x1FF) + 1 + SLOT->tl; /* SSG-EG Output Inversion */
+      SLOT->vol_out = ((UINT32)(0x200 - SLOT->volume) & MAX_ATT_INDEX) + SLOT->tl;
     else
       SLOT->vol_out = (UINT32)SLOT->volume + SLOT->tl;
   }
@@ -690,7 +690,7 @@ INLINE void FM_KEYON_CSM(FM_CH *CH , int s )
 
     if ((SLOT->ar + SLOT->ksr) < 94 /*32+62*/)
     {
-      SLOT->state = EG_ATT;  /* phase -> Attack */
+      SLOT->state = (SLOT->volume <= MIN_ATT_INDEX) ? ((SLOT->sl == MIN_ATT_INDEX) ? EG_SUS : EG_DEC) : EG_ATT;
     }
     else
     {
@@ -703,7 +703,7 @@ INLINE void FM_KEYON_CSM(FM_CH *CH , int s )
 
     /* recalculate EG output */
     if ((SLOT->ssg&0x08) && (SLOT->ssgn ^ (SLOT->ssg&0x04)))
-      SLOT->vol_out = ((UINT32)SLOT->volume ^ 0x1FF) + 1 + SLOT->tl; /* SSG-EG Output Inversion */
+      SLOT->vol_out = ((UINT32)(0x200 - SLOT->volume) & MAX_ATT_INDEX) + SLOT->tl;
     else
       SLOT->vol_out = (UINT32)SLOT->volume + SLOT->tl;
   }
@@ -869,7 +869,7 @@ INLINE void set_tl(FM_CH *CH,FM_SLOT *SLOT , int v)
 
   /* recalculate EG output */
   if ((SLOT->ssg&0x08) && (SLOT->ssgn ^ (SLOT->ssg&0x04)) && (SLOT->state > EG_REL))
-    SLOT->vol_out = ((UINT32)SLOT->volume ^ 0x1FF) + 1 + SLOT->tl; /* SSG-EG Output Inversion */
+    SLOT->vol_out = ((UINT32)(0x200 - SLOT->volume) & MAX_ATT_INDEX) + SLOT->tl;
   else
     SLOT->vol_out = (UINT32)SLOT->volume + SLOT->tl;
 }
@@ -1028,7 +1028,7 @@ INLINE void advance_eg_channel(FM_SLOT *SLOT)
 
           /* recalculate EG output */
           if ((SLOT->ssg&0x08) && (SLOT->ssgn ^ (SLOT->ssg&0x04)))  /* SSG-EG Output Inversion */
-            SLOT->vol_out = ((UINT32)SLOT->volume ^ 0x1FF) + 1 + SLOT->tl;
+            SLOT->vol_out = ((UINT32)(0x200 - SLOT->volume) & MAX_ATT_INDEX) + SLOT->tl;
           else
             SLOT->vol_out = (UINT32)SLOT->volume + SLOT->tl;
         }
@@ -1042,13 +1042,15 @@ INLINE void advance_eg_channel(FM_SLOT *SLOT)
           {
             /* update attenuation level */
             if (SLOT->volume < 0x200)
+            {
               SLOT->volume += 4 * eg_inc[SLOT->eg_sel_d1r + ((ym2612.OPN.eg_cnt>>SLOT->eg_sh_d1r)&7)];
 
-            /* recalculate EG output */
-            if (SLOT->ssgn ^ (SLOT->ssg&0x04))   /* SSG-EG Output Inversion */
-              SLOT->vol_out = ((UINT32)SLOT->volume ^ 0x1FF) + 1 + SLOT->tl;
-            else
-              SLOT->vol_out = (UINT32)SLOT->volume + SLOT->tl;
+              /* recalculate EG output */
+              if (SLOT->ssgn ^ (SLOT->ssg&0x04))   /* SSG-EG Output Inversion */
+                SLOT->vol_out = ((UINT32)(0x200 - SLOT->volume) & MAX_ATT_INDEX) + SLOT->tl;
+              else
+                SLOT->vol_out = (UINT32)SLOT->volume + SLOT->tl;
+            }
           }
           else
           {
@@ -1073,13 +1075,15 @@ INLINE void advance_eg_channel(FM_SLOT *SLOT)
           {
             /* update attenuation level */
             if (SLOT->volume < 0x200)
+            {
               SLOT->volume += 4 * eg_inc[SLOT->eg_sel_d2r + ((ym2612.OPN.eg_cnt>>SLOT->eg_sh_d2r)&7)];
 
-            /* recalculate EG output */
-            if (SLOT->ssgn ^ (SLOT->ssg&0x04))   /* SSG-EG Output Inversion */
-              SLOT->vol_out = ((UINT32)SLOT->volume ^ 0x1FF) + 1 + SLOT->tl;
-            else
-              SLOT->vol_out = (UINT32)SLOT->volume + SLOT->tl;
+              /* recalculate EG output */
+              if (SLOT->ssgn ^ (SLOT->ssg&0x04))   /* SSG-EG Output Inversion */
+                SLOT->vol_out = ((UINT32)(0x200 - SLOT->volume) & MAX_ATT_INDEX) + SLOT->tl;
+              else
+                SLOT->vol_out = (UINT32)SLOT->volume + SLOT->tl;
+            }
           }
           else
           {
@@ -1106,6 +1110,13 @@ INLINE void advance_eg_channel(FM_SLOT *SLOT)
             /* update attenuation level */
             if (SLOT->volume < 0x200)
               SLOT->volume += 4 * eg_inc[SLOT->eg_sel_rr + ((ym2612.OPN.eg_cnt>>SLOT->eg_sh_rr)&7)];
+
+            /* check phase transition */
+            if (SLOT->volume >= 0x200)
+            {
+              SLOT->volume = MAX_ATT_INDEX;
+              SLOT->state = EG_OFF;
+            }
           }
           else
           {
@@ -1132,64 +1143,57 @@ INLINE void advance_eg_channel(FM_SLOT *SLOT)
   } while (i);
 }
 
-
+/* SSG-EG update process */
+/* The behavior is based upon Nemesis tests on real hardware */
+/* This is actually executed before each samples */
 INLINE void update_ssg_eg_channel(FM_SLOT *SLOT)
 {
   unsigned int i = 4; /* four operators per channel */
-  int update_out = 0;
 
   do
   {
-    /* check SSG-EG state */
-    if ((SLOT->ssg & 0x08) && (SLOT->volume >= 0x200))
+    /* detect SSG-EG transition */
+    /* this is not required during release phase as the attenuation is set to MAX and output invert flag is not used */
+    /* if an Attack Phase is programmed, inversion can occur on each sample */
+    if ((SLOT->ssg & 0x08) && (SLOT->volume >= 0x200) && (SLOT->state > EG_REL))
     {
-      /* swap Invert Output flag if required */
-      /* if HOLD bit is set, verify we didn't already swapped once */
-      if ((SLOT->ssg & 0x02) && (!(SLOT->ssg & 0x01) || !(SLOT->ssgn&4)))
+      if (SLOT->ssg & 0x01)  /* bit 0 = hold SSG-EG */
       {
-        SLOT->ssgn ^= 4;
-        update_out = 1;
+        /* set inversion flag */
+        if ((SLOT->ssg & 0x02) && !SLOT->ssgn)
+          SLOT->ssgn = 4;
+
+        /* force attenuation level */
+        if (!(SLOT->ssgn ^ (SLOT->ssg & 0x04)))
+          SLOT->volume  = MAX_ATT_INDEX;
       }
-
-      /* output is not alternated and not hold */ 
-      if (!(SLOT->ssg & 0x02) && !(SLOT->ssg & 0x01))
-        SLOT->phase = 0;  /* reset Phase Generator */
-
-      /* update EG phase */
-      if (SLOT->state < EG_ATT)
+      else  /* loop SSG-EG */
       {
-        if ((SLOT->state != EG_REL) && (!SLOT->ssg&0x01))
+        /* toggle output inversion flag or reset Phase Generator */
+        if (SLOT->ssg & 0x02) SLOT->ssgn ^= 4;
+        else SLOT->phase = 0;
+
+        /* same as Key ON */
+        if (SLOT->state != EG_ATT)
         {
-          /* same as Key ON */
           if ((SLOT->ar + SLOT->ksr) < 94 /*32+62*/)
           {
-            SLOT->state = EG_ATT;   /* phase -> Attack */
+            SLOT->state = (SLOT->volume <= MIN_ATT_INDEX) ? ((SLOT->sl == MIN_ATT_INDEX) ? EG_SUS : EG_DEC) : EG_ATT;
           }
           else
           {
-            /* Attack Rate is maximal: directly switch to Decay */
+            /* Attack Rate is maximal: directly switch to Decay or Substain */
             SLOT->volume = MIN_ATT_INDEX;
-            SLOT->state = (SLOT->sl == MIN_ATT_INDEX) ? EG_SUS : EG_DEC; /* special case where SL=0 */
-            update_out = 1;
+            SLOT->state = (SLOT->sl == MIN_ATT_INDEX) ? EG_SUS : EG_DEC;
           }
-        }
-        else if (SLOT->state == EG_REL || (!(SLOT->ssgn ^ (SLOT->ssg & 0x04))))
-        {
-          SLOT->volume = MAX_ATT_INDEX;
-          update_out = 1;
         }
       }
 
       /* recalculate EG output */
-      if (update_out)
-      {
-        update_out = 0;
-
-        if ((SLOT->state > EG_REL) && (SLOT->ssgn ^ (SLOT->ssg&0x04)))
-          SLOT->vol_out = ((UINT32)SLOT->volume ^ 0x1FF) + 1 + SLOT->tl;
-        else
-          SLOT->vol_out = (UINT32)SLOT->volume + SLOT->tl;
-      }
+      if (SLOT->ssgn ^ (SLOT->ssg&0x04))
+        SLOT->vol_out = ((UINT32)(0x200 - SLOT->volume) & MAX_ATT_INDEX) + SLOT->tl;
+      else
+        SLOT->vol_out = (UINT32)SLOT->volume + SLOT->tl;
     }
 
     /* next slot */
@@ -1197,7 +1201,6 @@ INLINE void update_ssg_eg_channel(FM_SLOT *SLOT)
     i--;
    } while (i);
 }
-
 
 #define volume_calc(OP) ((OP)->vol_out + (AM & (OP)->AMmask))
 
@@ -1717,10 +1720,13 @@ static void OPNWriteReg(int r, int v)
       SLOT->ssg  = v&0x0f;
 
       /* recalculate EG output */
-      if ((SLOT->ssg&0x08) && (SLOT->ssgn ^ (SLOT->ssg&0x04)) && (SLOT->state > EG_REL))
-        SLOT->vol_out = ((UINT32)SLOT->volume ^ 0x1FF) + 1 + SLOT->tl; /* SSG-EG Output Inversion */
-      else
-        SLOT->vol_out = (UINT32)SLOT->volume + SLOT->tl;
+      if (SLOT->state > EG_REL)
+      {
+        if ((SLOT->ssg&0x08) && (SLOT->ssgn ^ (SLOT->ssg&0x04)))
+          SLOT->vol_out = ((UINT32)(0x200 - SLOT->volume) & MAX_ATT_INDEX) + SLOT->tl;
+        else
+          SLOT->vol_out = (UINT32)SLOT->volume + SLOT->tl;
+      }
 
       /* SSG-EG envelope shapes :
 
@@ -1730,11 +1736,11 @@ static void OPNWriteReg(int r, int v)
       1 0 0 1  \___
 
       1 0 1 0  \/\/
-            ___
+                ___
       1 0 1 1  \
 
       1 1 0 0  ////
-            ___
+                ___
       1 1 0 1  /
 
       1 1 1 0  /\/\
@@ -1919,10 +1925,10 @@ void YM2612UpdateOne(int **buffer, int length)
     update_ssg_eg_channel(&ym2612.CH[5].SLOT[SLOT1]);
 
     /* advance envelope generator */
-    ym2612.OPN.eg_timer += ym2612.OPN.eg_timer_add;
-    while (ym2612.OPN.eg_timer >= ym2612.OPN.eg_timer_overflow)
+    ym2612.OPN.eg_timer ++;
+    if (ym2612.OPN.eg_timer == 3)
     {
-      ym2612.OPN.eg_timer -= ym2612.OPN.eg_timer_overflow;
+      ym2612.OPN.eg_timer = 0;
       ym2612.OPN.eg_cnt++;
 
       advance_eg_channel(&ym2612.CH[0].SLOT[SLOT1]);
@@ -2030,10 +2036,8 @@ int YM2612ResetChip(void)
   reset_channels(&ym2612.CH[0] , 6 );
   for(i = 0xb6 ; i >= 0xb4 ; i-- )
   {
-    /*OPNWriteReg(i      ,0xc0);
-    OPNWriteReg(i|0x100,0xc0);*/
-    OPNWriteReg(i      ,0);
-    OPNWriteReg(i|0x100,0);
+    OPNWriteReg(i      ,0xc0);
+    OPNWriteReg(i|0x100,0xc0);
   }
   for(i = 0xb2 ; i >= 0x30 ; i-- )
   {
@@ -2056,7 +2060,7 @@ void YM2612Write(unsigned int a, unsigned int v)
 {
   v &= 0xff;  /* adjust to 8 bit bus */
 
-  switch( a&3 )
+  switch( a )
   {
     case 0:  /* address port 0 */
       ym2612.OPN.ST.address = v;

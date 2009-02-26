@@ -6,8 +6,8 @@ Genesis Plus GX 1.3.2 (??/??/????) (Eke-Eke)
 ------
 
 * modified SN76489 cut-off frequency
-* removed outdated Gens YM2612 core
-* improved MAME YM2612 core accuracy: SSG-EG support, CSM Mode (based upon last Nemesis tests on real hardware)
+* removed old Gens YM2612 core support
+* improved MAME YM2612 core accuracy: SSG-EG mode, CSM mode (based on Nemesis real hardware's last tests)
 * fixed YM2612 context restore
 * modified sound update engine to fix synchronization issues (see below)
 * various code cleanup

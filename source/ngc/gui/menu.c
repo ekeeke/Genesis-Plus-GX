@@ -152,15 +152,29 @@ void drawmenu (char items[][25], int maxitems, int selected)
   ypos = (226 - (fheight * maxitems)) >> 1;
   ypos += 130;
 
-  DrawMenu (main_buttons, 6, selected);
+  /*DrawMenu (main_buttons, 6, selected);*/
+  /* reset texture data */
+  png_texture texture;
+  memset(&texture,0,sizeof(png_texture));
 
-  /*WriteCentre (134, menutitle);
+  /* draw background items */
+  ClearScreen ((GXColor)BLACK);
+  OpenPNGFromMemory(&texture, Background_main);
+  DrawTexture(&texture, (640-texture.width)/2, (480-124-texture.height)/2,  texture.width, texture.height);
+  OpenPNGFromMemory(&texture, Banner_bottom);
+  DrawTexture(&texture, 640-texture.width, 480-texture.height, texture.width, texture.height);
+  OpenPNGFromMemory(&texture, Banner_top);
+  DrawTexture(&texture, 640-texture.width, 0, texture.width, texture.height);
+  OpenPNGFromMemory(&texture, Main_logo);
+  DrawTexture(&texture, 444, 28, 176, 48);
+
+  WriteCentre (134, menutitle);
 
   for (i = 0; i < maxitems; i++)
   {
       if (i == selected) WriteCentre_HL (i * fheight + ypos, (char *) items[i]);
       else WriteCentre (i * fheight + ypos, (char *) items[i]);
-  }*/
+  }
 
   SetScreen ();
 }
