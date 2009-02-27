@@ -467,25 +467,25 @@ static INT32 lfo_pm_table[128*8*32]; /* 128 combinations of 7 bits meaningful (o
 /* struct describing a single operator (SLOT) */
 typedef struct
 {
-  INT32  *DT;   /* detune          :dt_tab[DT]      */
-  UINT8  KSR;   /* key scale rate  :3-KSR           */
-  UINT32  ar;   /* attack rate                      */
-  UINT32  d1r;  /* decay rate                       */
-  UINT32  d2r;  /* sustain rate                     */
-  UINT32  rr;   /* release rate                     */
-  UINT8  ksr;   /* key scale rate  :kcode>>(3-KSR)  */
-  UINT32  mul;  /* multiple        :ML_TABLE[ML]    */
+  INT32   *DT;        /* detune          :dt_tab[DT]      */
+  UINT8   KSR;        /* key scale rate  :3-KSR           */
+  UINT32  ar;         /* attack rate                      */
+  UINT32  d1r;        /* decay rate                       */
+  UINT32  d2r;        /* sustain rate                     */
+  UINT32  rr;         /* release rate                     */
+  UINT8   ksr;        /* key scale rate  :kcode>>(3-KSR)  */
+  UINT32  mul;        /* multiple        :ML_TABLE[ML]    */
 
   /* Phase Generator */
-  UINT32  phase;  /* phase counter */
-  INT32  Incr;    /* phase step */
+  UINT32  phase;      /* phase counter */
+  INT32   Incr;       /* phase step */
 
   /* Envelope Generator */
-  UINT8  state;     /* phase type */
-  UINT32  tl;       /* total level: TL << 3 */
-  INT32  volume;    /* envelope counter */
-  UINT32  sl;       /* sustain level:sl_table[SL] */
-  UINT32  vol_out;  /* current output from EG circuit (without AM from LFO) */
+  UINT8   state;      /* phase type */
+  UINT32  tl;         /* total level: TL << 3 */
+  INT32   volume;     /* envelope counter */
+  UINT32  sl;         /* sustain level:sl_table[SL] */
+  UINT32  vol_out;    /* current output from EG circuit (without AM from LFO) */
 
   UINT8  eg_sh_ar;    /*  (attack state)  */
   UINT8  eg_sel_ar;   /*  (attack state)  */
@@ -496,13 +496,13 @@ typedef struct
   UINT8  eg_sh_rr;    /*  (release state) */
   UINT8  eg_sel_rr;   /*  (release state) */
 
-  UINT8  ssg;   /* SSG-EG waveform  */
-  UINT8  ssgn;  /* SSG-EG negated output  */
+  UINT8  ssg;         /* SSG-EG waveform  */
+  UINT8  ssgn;        /* SSG-EG negated output  */
 
-  UINT8  key;       /* 0=last key was KEY OFF, 1=KEY ON */
+  UINT8  key;         /* 0=last key was KEY OFF, 1=KEY ON */
 
   /* LFO */
-  UINT32  AMmask; /* AM enable flag */
+  UINT32  AMmask;     /* AM enable flag */
 
 } FM_SLOT;
 
@@ -510,44 +510,44 @@ typedef struct
 {
   FM_SLOT  SLOT[4];     /* four SLOTs (operators) */
 
-  UINT8  ALGO;          /* algorithm */
-  UINT8  FB;            /* feedback shift */
-  INT32  op1_out[2];    /* op1 output for feedback */
+  UINT8   ALGO;         /* algorithm */
+  UINT8   FB;           /* feedback shift */
+  INT32   op1_out[2];   /* op1 output for feedback */
 
-  INT32  *connect1;     /* SLOT1 output pointer */
-  INT32  *connect3;     /* SLOT3 output pointer */
-  INT32  *connect2;     /* SLOT2 output pointer */
-  INT32  *connect4;     /* SLOT4 output pointer */
+  INT32   *connect1;    /* SLOT1 output pointer */
+  INT32   *connect3;    /* SLOT3 output pointer */
+  INT32   *connect2;    /* SLOT2 output pointer */
+  INT32   *connect4;    /* SLOT4 output pointer */
 
-  INT32  *mem_connect;  /* where to put the delayed sample (MEM) */
-  INT32  mem_value;     /* delayed sample (MEM) value */
+  INT32   *mem_connect; /* where to put the delayed sample (MEM) */
+  INT32   mem_value;    /* delayed sample (MEM) value */
 
-  INT32  pms;           /* channel PMS */
-  UINT8  ams;           /* channel AMS */
+  INT32   pms;          /* channel PMS */
+  UINT8   ams;          /* channel AMS */
 
   UINT32  fc;           /* fnum,blk:adjusted to sample rate */
-  UINT8  kcode;         /* key code */
+  UINT8   kcode;        /* key code */
   UINT32  block_fnum;   /* current blk/fnum value for this slot (can be different betweeen slots of one channel in 3slot mode) */
 } FM_CH;
 
 
 typedef struct
 {
-  UINT32    clock;      /* master clock  (Hz)   */
-  UINT32    rate;       /* sampling rate (Hz)   */
-  double  freqbase;     /* frequency base       */
-  UINT16  address;      /* address register     */
-  UINT8  status;        /* status flag          */
-  UINT32  mode;         /* mode  CSM / 3SLOT    */
-  UINT8  fn_h;          /* freq latch           */
-  INT32  TimerBase;     /* Timer base time      */
-  INT32  TA;            /* timer a value        */
-  INT32  TAL;           /* timer a base          */
-  INT32  TAC;           /* timer a counter      */
-  INT32  TB;            /* timer b value        */
-  INT32  TBL;           /* timer b base          */
-  INT32  TBC;           /* timer b counter      */
-  INT32  dt_tab[8][32]; /* DeTune table         */
+  UINT32  clock;          /* master clock  (Hz)   */
+  UINT32  rate;           /* sampling rate (Hz)   */
+  double  freqbase;       /* frequency base       */
+  UINT16  address;        /* address register     */
+  UINT8   status;         /* status flag          */
+  UINT32  mode;           /* mode  CSM / 3SLOT    */
+  UINT8   fn_h;           /* freq latch           */
+  INT32   TimerBase;      /* Timer base time      */
+  INT32   TA;             /* timer a value        */
+  INT32   TAL;            /* timer a base          */
+  INT32   TAC;            /* timer a counter      */
+  INT32   TB;             /* timer b value        */
+  INT32   TBL;            /* timer b base          */
+  INT32   TBC;            /* timer b counter      */
+  INT32   dt_tab[8][32];  /* DeTune table         */
 
 } FM_ST;
 
@@ -560,10 +560,10 @@ typedef struct
 typedef struct
 {
   UINT32  fc[3];          /* fnum3,blk3: calculated */
-  UINT8  fn_h;            /* freq3 latch */
-  UINT8  kcode[3];        /* key code */
+  UINT8   fn_h;           /* freq3 latch */
+  UINT8   kcode[3];       /* key code */
   UINT32  block_fnum[3];  /* current fnum value for this slot (can be different betweeen slots of one channel in 3slot mode) */
-  UINT8  key_csm;         /* 1: KEY ON event occured in CSM mode */
+  UINT8   key_csm;        /* CSM mode Key-ON flag */
 
 } FM_3SLOT;
 
@@ -622,7 +622,7 @@ INLINE void FM_KEYON(FM_CH *CH , int s )
 {
   FM_SLOT *SLOT = &CH->SLOT[s];
 
-  if( !SLOT->key && !ym2612.OPN.SL3.key_csm)
+  if (!SLOT->key && !ym2612.OPN.SL3.key_csm)
   {
     /* restart Phase Generator */
     SLOT->phase = 0;
@@ -657,17 +657,27 @@ INLINE void FM_KEYOFF(FM_CH *CH , int s )
 {
   FM_SLOT *SLOT = &CH->SLOT[s];
 
-  if( SLOT->key && !ym2612.OPN.SL3.key_csm)
+  if (SLOT->key && !ym2612.OPN.SL3.key_csm)
   {
     if (SLOT->state>EG_REL)
     {
       SLOT->state = EG_REL; /* phase -> Release */
 
-      /* SSG-EG */
-      if ((SLOT->ssg&0x08) && (SLOT->ssgn ^ (SLOT->ssg&0x04)))
+      /* SSG-EG specific update */
+      if (SLOT->ssg&0x08)
       {
-        /* recalculate proper volume */
-        SLOT->volume = ((UINT32)SLOT->volume ^ 0x1FF) + 1; /* Invert Attenuation */
+        /* convert EG attenuation level */
+        if (SLOT->ssgn ^ (SLOT->ssg&0x04))
+          SLOT->volume = ((UINT32)SLOT->volume ^ 0x1FF) + 1;
+
+        /* force EG attenuation level */
+        if (SLOT->volume >= 0x200)
+        {
+          SLOT->volume = MAX_ATT_INDEX;
+          SLOT->state  = EG_OFF;
+        }
+
+        /* recalculate EG output */
         SLOT->vol_out = (UINT32)SLOT->volume + SLOT->tl;
       }
     }
@@ -680,7 +690,7 @@ INLINE void FM_KEYON_CSM(FM_CH *CH , int s )
 {
   FM_SLOT *SLOT = &CH->SLOT[s];
 
-  if( !SLOT->key && !ym2612.OPN.SL3.key_csm)
+  if (!SLOT->key && !ym2612.OPN.SL3.key_csm)
   {
     /* restart Phase Generator */
     SLOT->phase = 0;
@@ -712,17 +722,27 @@ INLINE void FM_KEYON_CSM(FM_CH *CH , int s )
 INLINE void FM_KEYOFF_CSM(FM_CH *CH , int s )
 {
   FM_SLOT *SLOT = &CH->SLOT[s];
-  if( !SLOT->key )
+  if (!SLOT->key)
   {
     if (SLOT->state>EG_REL)
     {
       SLOT->state = EG_REL; /* phase -> Release */
 
-      /* SSG-EG */
-      if ((SLOT->ssg&0x08) && (SLOT->ssgn ^ (SLOT->ssg&0x04)))
+      /* SSG-EG specific update */
+      if (SLOT->ssg&0x08)
       {
-        /* recalculate proper volume */
-        SLOT->volume = ((UINT32)SLOT->volume ^ 0x1FF) + 1; /* Invert Attenuation */
+        /* convert EG attenuation level */
+        if (SLOT->ssgn ^ (SLOT->ssg&0x04))
+          SLOT->volume = ((UINT32)SLOT->volume ^ 0x1FF) + 1;
+
+        /* force EG attenuation level */
+        if (SLOT->volume >= 0x200)
+        {
+          SLOT->volume = MAX_ATT_INDEX;
+          SLOT->state  = EG_OFF;
+        }
+
+        /* recalculate EG output */
         SLOT->vol_out = (UINT32)SLOT->volume + SLOT->tl;
       }
     }
@@ -1153,14 +1173,14 @@ INLINE void update_ssg_eg_channel(FM_SLOT *SLOT)
   do
   {
     /* detect SSG-EG transition */
-    /* this is not required during release phase as the attenuation is set to MAX and output invert flag is not used */
+    /* this is not required during release phase as the attenuation has been forced to MAX and output invert flag is not used */
     /* if an Attack Phase is programmed, inversion can occur on each sample */
     if ((SLOT->ssg & 0x08) && (SLOT->volume >= 0x200) && (SLOT->state > EG_REL))
     {
       if (SLOT->ssg & 0x01)  /* bit 0 = hold SSG-EG */
       {
-        /* set inversion flag */
-        if ((SLOT->ssg & 0x02) && !SLOT->ssgn)
+        /* force inversion flag */
+        if (SLOT->ssg & 0x02)
           SLOT->ssgn = 4;
 
         /* force attenuation level */
@@ -1170,8 +1190,10 @@ INLINE void update_ssg_eg_channel(FM_SLOT *SLOT)
       else  /* loop SSG-EG */
       {
         /* toggle output inversion flag or reset Phase Generator */
-        if (SLOT->ssg & 0x02) SLOT->ssgn ^= 4;
-        else SLOT->phase = 0;
+        if (SLOT->ssg & 0x02)
+          SLOT->ssgn ^= 4;
+        else
+          SLOT->phase = 0;
 
         /* same as Key ON */
         if (SLOT->state != EG_ATT)
