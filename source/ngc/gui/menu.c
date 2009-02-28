@@ -306,8 +306,12 @@ void soundmenu ()
         if (config.hq_fm>2) config.hq_fm = 0;
         if (genromsize) 
         {
+          unsigned char *temp = malloc(YM2612GetContextSize());
+          if (!temp) break;
+          memcpy(temp, YM2612GetContextPtr(), YM2612GetContextSize());
           audio_init(48000);
-          fm_restore();
+          YM2612Restore(temp);
+          free(temp);
         }
         break;
 
@@ -364,9 +368,12 @@ void miscmenu ()
           
           /* reinitialize timings */
           system_init ();
+          unsigned char *temp = malloc(YM2612GetContextSize());
+          if (temp) memcpy(temp, YM2612GetContextPtr(), YM2612GetContextSize());
           audio_init(48000);
-          fm_restore();
-                  
+          YM2612Restore(temp);
+          if (temp) free(temp);
+
           /* reinitialize HVC tables */
           vctab = (vdp_pal) ? ((reg[1] & 8) ? vc_pal_240 : vc_pal_224) : vc_ntsc_224;
           hctab = (reg[12] & 1) ? cycle2hc40 : cycle2hc32;

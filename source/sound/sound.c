@@ -102,19 +102,6 @@ void sound_update(int fm_len, int psg_len)
   snd.psg.lastStage = 0;
 }
 
-/* YM2612 control */
-
-/* restore FM context */
-void fm_restore(void)
-{
-  unsigned char *temp = malloc(YM2612GetContextSize());
-  if (!temp) return;
-  memcpy(temp, YM2612GetContextPtr(), YM2612GetContextSize());
-  YM2612ResetChip();
-  memcpy(YM2612GetContextPtr(), temp, YM2612GetContextSize());
-  free(temp);
-}
-
 /* write FM chip */
 void fm_write(unsigned int cpu, unsigned int address, unsigned int data)
 {

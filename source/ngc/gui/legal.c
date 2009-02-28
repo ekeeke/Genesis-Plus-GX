@@ -68,14 +68,10 @@ void legal ()
   DrawTexture(&texture, (640-texture.width)/2, ypos, texture.width, texture.height);
   ypos += texture.height + 2 * fheight;
 
-#ifdef HW_RVL
-  SetScreen ();
-  sleep(1);
-#endif
   //WriteCentre (ypos, "Press A to continue");
   SetScreen ();
   //WaitButtonA ();
-  sleep (3);
+  sleep (2);
 
 
   ClearScreen((GXColor)BLACK);
@@ -86,7 +82,7 @@ void legal ()
   OpenPNGFromMemory(&texture, Background_intro_c1);
   DrawTexture(&texture, (640-texture.width)/2, (480-texture.height)/2,  texture.width, texture.height);
   SetScreen ();
-  sleep (2);
+  sleep (1);
 
   ClearScreen((GXColor)WHITE);
   texture.data   = 0;
@@ -96,7 +92,7 @@ void legal ()
   OpenPNGFromMemory(&texture, Background_intro_c2);
   DrawTexture(&texture, (640-texture.width)/2, (480-texture.height)/2,  texture.width, texture.height);
   SetScreen ();
-  sleep (2);
+  sleep (1);
 
   ClearScreen((GXColor)BLACK);
   texture.data   = 0;
@@ -106,6 +102,6 @@ void legal ()
   OpenPNGFromMemory(&texture, Background_intro_c3);
   DrawTexture(&texture, (640-texture.width)/2, (480-texture.height)/2,  texture.width, texture.height);
   SetScreen ();
-  sleep (3);
+  sleep (2);
 
 }

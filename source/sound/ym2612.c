@@ -17,15 +17,16 @@
 **
 **  - removed multichip support (unused)
 **  - added YM2612 Context external access functions
-**  - implemented correct LFO phase update in CH3 special mode (Warlock birds, Alladin bug sound)
+**  - added LFO phase update in CH3 special mode (Warlock birds, Alladin bug sound)
 **  - fixed internal timers emulation
-**  - fixed Attack Rate update on register write (Batman & Robin intro)
-**  - fixed EG behavior on KEY ON when Attack Rate is maximal
-**  - fixed EG behavior on decay->substain transition when SL=0 (Mega Turrican tracks 03,09...)
+**  - added Attack Rate immediate update on register write (Batman & Robin intro)
+**  - fixed EG behavior when Attack Rate is maximal
+**  - fixed EG behavior when SL=0 (Mega Turrican tracks 03,09...) or/and Key ON occurs at minimal attenuation 
+**  - added EG output immediate update on register writes
 **  - fixed YM2612 initial values (after the reset)
-**  - implemented correct Detune overflow (Ariel, Comix Zone, Shaq Fu, Spiderman & many others)
-**  - implemented correct CSM mode support
-**  - implemented correct SSG-EG support (Asterix, Beavis&Butthead, Bubba'n Six & many others)
+**  - implemented Detune overflow (Ariel, Comix Zone, Shaq Fu, Spiderman & many others)
+**  - implemented correct CSM mode emulation
+**  - implemented correct SSG-EG emulation (Asterix, Beavis&Butthead, Bubba'n Six & many others)
 **  - adjusted some EG rates
 **  - modified address/data port behavior
 **
@@ -668,7 +669,7 @@ INLINE void FM_KEYOFF(FM_CH *CH , int s )
       {
         /* convert EG attenuation level */
         if (SLOT->ssgn ^ (SLOT->ssg&0x04))
-          SLOT->volume = ((UINT32)SLOT->volume ^ 0x1FF) + 1;
+          SLOT->volume = (0x200 - SLOT->volume);
 
         /* force EG attenuation level */
         if (SLOT->volume >= 0x200)
@@ -733,7 +734,7 @@ INLINE void FM_KEYOFF_CSM(FM_CH *CH , int s )
       {
         /* convert EG attenuation level */
         if (SLOT->ssgn ^ (SLOT->ssg&0x04))
-          SLOT->volume = ((UINT32)SLOT->volume ^ 0x1FF) + 1;
+          SLOT->volume = (0x200 - SLOT->volume);
 
         /* force EG attenuation level */
         if (SLOT->volume >= 0x200)
@@ -946,6 +947,10 @@ INLINE void set_sr(FM_SLOT *SLOT,int v)
 INLINE void set_sl_rr(FM_SLOT *SLOT,int v)
 {
   SLOT->sl = sl_table[ v>>4 ];
+  
+  /* check EG state changes */
+  if ((SLOT->state == EG_DEC) && (SLOT->volume >= (INT32)(SLOT->sl)))
+    SLOT->state = EG_SUS;
 
   SLOT->rr  = 34 + ((v&0x0f)<<2);
 
@@ -1179,12 +1184,12 @@ INLINE void update_ssg_eg_channel(FM_SLOT *SLOT)
     {
       if (SLOT->ssg & 0x01)  /* bit 0 = hold SSG-EG */
       {
-        /* force inversion flag */
+        /* set inversion flag */
         if (SLOT->ssg & 0x02)
           SLOT->ssgn = 4;
 
-        /* force attenuation level */
-        if (!(SLOT->ssgn ^ (SLOT->ssg & 0x04)))
+        /* force attenuation level during decay phases */
+        if ((SLOT->state != EG_ATT) && !(SLOT->ssgn ^ (SLOT->ssg & 0x04)))
           SLOT->volume  = MAX_ATT_INDEX;
       }
       else  /* loop SSG-EG */
@@ -1947,10 +1952,10 @@ void YM2612UpdateOne(int **buffer, int length)
     update_ssg_eg_channel(&ym2612.CH[5].SLOT[SLOT1]);
 
     /* advance envelope generator */
-    ym2612.OPN.eg_timer ++;
-    if (ym2612.OPN.eg_timer == 3)
+    ym2612.OPN.eg_timer += ym2612.OPN.eg_timer_add;
+    while (ym2612.OPN.eg_timer >= ym2612.OPN.eg_timer_overflow)
     {
-      ym2612.OPN.eg_timer = 0;
+      ym2612.OPN.eg_timer -= ym2612.OPN.eg_timer_overflow;
       ym2612.OPN.eg_cnt++;
 
       advance_eg_channel(&ym2612.CH[0].SLOT[SLOT1]);
@@ -2134,4 +2139,19 @@ unsigned char *YM2612GetContextPtr(void)
 unsigned int YM2612GetContextSize(void)
 {
   return sizeof(YM2612);
+}
+
+void YM2612Restore(unsigned char *buffer)
+{
+  /* save current timings */
+  int clock = ym2612.OPN.ST.clock;
+  int rate = ym2612.OPN.ST.rate;
+
+  /* restore internal state */
+  memcpy(&ym2612, buffer, sizeof(YM2612));
+
+  /* restore current timings */
+  ym2612.OPN.ST.clock = clock;
+  ym2612.OPN.ST.rate  = rate;
+  OPNSetPres(6*24);
 }

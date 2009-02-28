@@ -79,7 +79,14 @@ void state_load(unsigned char *buffer)
   vdp_restore(temp_reg);
 
   // FM 
-  load_param(YM2612GetContextPtr(),YM2612GetContextSize());
+  unsigned char *temp = malloc (YM2612GetContextSize());
+  if (temp)
+  {
+    load_param(temp,YM2612GetContextSize());
+    YM2612Restore(temp);
+    free(temp);
+  }
+  else bufferptr+=YM2612GetContextSize();
 
   // PSG
   load_param(SN76489_GetContextPtr (0),SN76489_GetContextSize ());

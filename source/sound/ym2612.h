@@ -26,5 +26,6 @@ extern void YM2612Write(unsigned int a, unsigned int v);
 extern unsigned int YM2612Read(void);
 extern unsigned char *YM2612GetContextPtr(void);
 extern unsigned int YM2612GetContextSize(void);
+extern void YM2612Restore(unsigned char *buffer);
 
 #endif /* _H_FM_FM_ */
