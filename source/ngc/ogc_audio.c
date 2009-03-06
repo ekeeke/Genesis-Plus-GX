@@ -55,7 +55,7 @@ static u8 audioStarted;
      In 60Hz modes, VSYNC period is longer than default DMA period so it requires different sync.
  ***/
 
-static void AudioDmaCallback()
+static void AudioDmaCallback(void)
 {
   frameticker++;
 }
@@ -81,7 +81,7 @@ void ogc_audio__init(void)
      This function retrieves samples for the frame then set the next DMA parameters 
      Parameters will be taken in account only when current DMA operation is over
  ***/
-void ogc_audio__update()
+void ogc_audio__update(void)
 {
   u32 size = dma_len;
   
@@ -124,15 +124,19 @@ void ogc_audio__update()
 void ogc_audio__start(void)
 {
   /* initialize default DMA length */
-  /* PAL (50Hz): 20000 us period --> 960 samples/frame  at 48kHz */
-  /* NTSC (60Hz): 16667 us period --> 800 samples/frame at 48kHz */
+  /* PAL (50Hz): 20000 us period --> 960 samples/frame  @48kHz */
+  /* NTSC (60Hz): 16667 us period --> 800 samples/frame @48kHz */
   dma_len   = vdp_pal ? 960 : 800;
   dma_sync  = 0;
   mixbuffer = 0;
   delta     = 0;
 
+  /* reset sound buffers */
+  memset(soundbuffer, 0, 2 * 3840);
+
   /* default case: we use DMA interrupt to synchronize frame emulation */
-  if (vdp_pal | gc_pal) AUDIO_RegisterDMACallback (AudioDmaCallback);
+  AUDIO_RegisterDMACallback(NULL);
+  if (vdp_pal | gc_pal) AUDIO_RegisterDMACallback(AudioDmaCallback);
 
   /* 60hz video mode requires synchronization with Video interrupt      */
   /* VSYNC period is 16715 us which is approx. 802.32 samples           */
@@ -150,8 +154,6 @@ void ogc_audio__start(void)
  ***/
 void ogc_audio__stop(void)
 {
-  AUDIO_RegisterDMACallback(NULL);
   AUDIO_StopDMA ();
-  memset(soundbuffer, 0, 2 * 3840);
   audioStarted = 0;
 }

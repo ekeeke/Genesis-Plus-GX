@@ -402,6 +402,7 @@ static void gxResetView(GXRModeObj *tvmode)
   GX_SetFieldMode(tvmode->field_rendering, ((tvmode->viHeight == 2 * tvmode->xfbHeight) ? GX_ENABLE : GX_DISABLE));
   guOrtho(p, tvmode->efbHeight/2, -(tvmode->efbHeight/2), -(tvmode->fbWidth/2), tvmode->fbWidth/2, 100, 1000);
   GX_LoadProjectionMtx(p, GX_ORTHOGRAPHIC);
+  GX_Flush();
 }
 
 /* Reset GX/VI scaler */
@@ -532,7 +533,7 @@ void ogc_video__stop(void)
 }
 
 /* Update Video settings */
-void ogc_video__start()
+void ogc_video__start(void)
 {
   /* 50Hz/60Hz mode */
   if ((config.tv_mode == 1) || ((config.tv_mode == 2) && vdp_pal)) gc_pal = 1;
@@ -591,7 +592,7 @@ void ogc_video__start()
 }
 
 /* GX render update */
-void ogc_video__update()
+void ogc_video__update(void)
 {
   /* check if display has changed */
   if (bitmap.viewport.changed)
@@ -603,12 +604,12 @@ void ogc_video__update()
     u32 vheight = bitmap.viewport.h + 2 * bitmap.viewport.y;
 
     /* special cases */
-    if (config.render && interlaced) vheight *= 2;
+    if (config.render && interlaced) vheight = vheight << 1;
     if (config.ntsc) vwidth = (reg[12]&1) ? MD_NTSC_OUT_WIDTH(vwidth) : SMS_NTSC_OUT_WIDTH(vwidth);
 
     /* texels size must be multiple of 4 */
-    vwidth  = (vwidth  / 4) * 4;
-    vheight = (vheight / 4) * 4;
+    vwidth  = (vwidth  >> 2) << 2;
+    vheight = (vheight >> 2) << 2;
 
     /* initialize texture object */
     GXTexObj texobj;
@@ -623,29 +624,28 @@ void ogc_video__update()
     /* load texture object */
     GX_LoadTexObj(&texobj, GX_TEXMAP0);
 
-    /* select TV mode */
+    /* reset TV mode */
     if (config.render) rmode = tvmodes[gc_pal*3 + 2];
     else rmode = tvmodes[gc_pal*3 + interlaced];
 
     /* reset aspect ratio */
     gxResetScale(vwidth,vheight);
 
-    /* reset GX */
-    gxResetView(rmode);
-
-    /* configure VI */
+    /* reconfigure VI */
     VIDEO_Configure(rmode);
     VIDEO_Flush();
     VIDEO_WaitVSync();
     if (rmode->viTVMode & VI_NON_INTERLACE) VIDEO_WaitVSync();
     else while (VIDEO_GetNextField() != odd_frame) VIDEO_WaitVSync();
-
     if (frameticker > 1) frameticker = 1;
+
+    /* reset GX */
+    gxResetView(rmode);
   }
 
   /* texture is now directly mapped by the line renderer */
 
-  /* update texture cache */
+  /* force texture cache update */
   DCFlushRange(texturemem, TEX_SIZE);
   GX_InvalidateTexAll();
 
@@ -653,14 +653,15 @@ void ogc_video__update()
   draw_square();
   GX_DrawDone();
 
-  /* swap XFB */
+  /* swap XFB then copy EFB to XFB */
   whichfb ^= 1;
+  GX_CopyDisp(xfb[whichfb], GX_TRUE);
+  GX_Flush();
+
+  /* set next XFB */
   VIDEO_SetNextFramebuffer(xfb[whichfb]);
   VIDEO_Flush();
 
-  /* copy EFB to XFB */
-  GX_CopyDisp(xfb[whichfb], GX_TRUE);
-  GX_Flush();
 }
 
 /* Initialize VIDEO subsystem */
