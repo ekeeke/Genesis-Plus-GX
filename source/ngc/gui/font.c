@@ -35,7 +35,7 @@ int font_size[256], fheight;
 
 #ifndef HW_RVL
 /* disable Qoob Modchip before IPL access (emukiddid) */
-void ipl_set_config(unsigned char c)
+static void ipl_set_config(unsigned char c)
 {
         volatile unsigned long* exi = (volatile unsigned long*)0xCC006800;
         unsigned long val,addr;
@@ -54,11 +54,8 @@ void ipl_set_config(unsigned char c)
 }
 #endif
 
-//static u8 *sys_fontarea;
 static sys_fontheader *fontHeader;
 static u8 *texture;
-
-extern u32 __SYS_LoadFont(void *src,void *dest);
 
 void init_font(void)
 {
@@ -84,8 +81,7 @@ void init_font(void)
   texture = memalign(32, fontHeader->cell_width * fontHeader->cell_height / 2);
 }
 
-u8 draw_done = 0;
-void font_DrawChar(unsigned char c, u32 xpos, u32 ypos, u32 color)
+void font_DrawChar(unsigned char c, u32 xpos, u32 ypos, u32 size)
 {
   s32 width;
   memset(texture,0,fontHeader->cell_width * fontHeader->cell_height / 2); 
@@ -93,16 +89,17 @@ void font_DrawChar(unsigned char c, u32 xpos, u32 ypos, u32 color)
   GX_InitTexObj(&texobj, texture, fontHeader->cell_width, fontHeader->cell_height, GX_TF_I4, GX_CLAMP, GX_CLAMP, GX_FALSE);
   GX_LoadTexObj(&texobj, GX_TEXMAP0);
   SYS_GetFontTexel(c,texture,0,fontHeader->cell_width/2,&width);
-
   DCFlushRange(texture, fontHeader->cell_width * fontHeader->cell_height / 2);
   GX_InvalidateTexAll();
 
+  width = (fontHeader->cell_width * size) / fontHeader->cell_height;
+
   GX_Begin(GX_QUADS, GX_VTXFMT0, 4);
-  GX_Position2s16(xpos, ypos - fontHeader->cell_height);
+  GX_Position2s16(xpos, ypos - size);
   GX_TexCoord2f32(0.0, 0.0);
-  GX_Position2s16(xpos + fontHeader->cell_width, ypos - fontHeader->cell_height);
+  GX_Position2s16(xpos + width, ypos - size);
   GX_TexCoord2f32(1.0, 0.0);
-  GX_Position2s16(xpos + fontHeader->cell_width, ypos);
+  GX_Position2s16(xpos + width, ypos);
   GX_TexCoord2f32(1.0, 1.0);
   GX_Position2s16(xpos, ypos);
   GX_TexCoord2f32(0.0, 1.0);
@@ -111,16 +108,13 @@ void font_DrawChar(unsigned char c, u32 xpos, u32 ypos, u32 color)
   GX_DrawDone();
 }
 
-void setfontcolour (int fcolour)
-{
-}
 
 void write_font(int x, int y, char *string)
 {
   int ox = x;
   while (*string && (x < (ox + back_framewidth)))
   {
-    font_DrawChar(*string, x -(vmode->fbWidth/2), y-(vmode->efbHeight/2),1);
+    font_DrawChar(*string, x -(vmode->fbWidth/2), y-(vmode->efbHeight/2),fontHeader->cell_height);
     x += font_size[(u8)*string];
     string++;
   }
@@ -153,7 +147,19 @@ void WriteCentre_HL( int y, char *string)
   hl = 0;
 }
 
+ void WriteText(char *text, u16 size, u16 x, u16 y)
+ {
+   int ox = x;
+  while (*text && (x < (ox + back_framewidth)))
+  {
+    font_DrawChar(*text, x -(vmode->fbWidth/2), y-(vmode->efbHeight/2),size);
+    x += (font_size[(u8)*text] * size) / fontHeader->cell_height;;
+    text++;
+  }
+ }
 
+void setfontcolour (int fcolour)
+{}
 /****************************************************************************
  *  Draw functions (FrameBuffer)
  *

@@ -49,6 +49,7 @@ extern void init_font(void);
 extern void WriteCentre_HL( int y, char *string);
 extern void WriteCentre (int y, char *text);
 extern void write_font (int x, int y, char *text);
+extern void WriteText(char *text, u16 size, u16 x, u16 y);
 extern void WaitPrompt (char *msg);
 extern void ShowAction (char *msg);
 extern void WaitButtonA ();
