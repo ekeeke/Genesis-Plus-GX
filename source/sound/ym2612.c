@@ -1,11 +1,11 @@
 /*
 **
-** File: fm.c -- software implementation of Yamaha FM sound generator
+** software implementation of Yamaha YM2612 FM sound generator (taken from M.A.M.E fm.c)
 **
 ** Copyright (C) 2001, 2002, 2003 Jarek Burczynski (bujar at mame dot net)
 ** Copyright (C) 1998 Tatsuyuki Satoh , MultiArcadeMachineEmulator development
 **
-** Version 1.4 (final beta)
+** Version 1.4 (final beta) 
 **
 */
 
@@ -13,9 +13,9 @@
 ** History:
 **
 ** 2006~2008  Eke-Eke (Genesis Plus GX):
-** Credits to Nemesis (@spritesmind.net), most of those fixes came from his tests on a real Mega Drive 
+** Credits to Nemesis (@spritesmind.net), most of those fixes came from his tests on a Model 1 Sega Mega Drive 
 **
-**  - removed multichip support (unused)
+**  - removed unused multichip support
 **  - added YM2612 Context external access functions
 **  - added LFO phase update in CH3 special mode (Warlock birds, Alladin bug sound)
 **  - fixed internal timers emulation
@@ -29,6 +29,8 @@
 **  - implemented correct SSG-EG emulation (Asterix, Beavis&Butthead, Bubba'n Six & many others)
 **  - adjusted some EG rates
 **  - modified address/data port behavior
+**
+**  TODO: complete SSG-EG documentation
 **
 
 **
@@ -150,8 +152,8 @@
 #define TL_RES_LEN    (256) /* 8 bits addressing (real chip) */
 
 
-#define MAXOUT    (+16383)
-#define MINOUT    (-16384)
+#define MAXOUT    (+32767)
+#define MINOUT    (-32768)
 
 
 /*  TL_TAB_LEN is calculated as:
