@@ -24,10 +24,9 @@
 
 #include "shared.h"
 #include "font.h"
-#include "Overlay_bar_s2.h"
+#include "Overlay_bar.h"
 
 #include <png.h>
-
 
 /* Backdrop Frame Width (to avoid writing outside of the background frame) */
 u16 back_framewidth = 640;
@@ -37,27 +36,27 @@ int font_size[256], fheight;
 /* disable Qoob Modchip before IPL access (emukiddid) */
 static void ipl_set_config(unsigned char c)
 {
-        volatile unsigned long* exi = (volatile unsigned long*)0xCC006800;
-        unsigned long val,addr;
-        addr=0xc0000000;
-        val = c << 24;
-        exi[0] = ((((exi[0]) & 0x405) | 256) | 48);     //select IPL
-        //write addr of IPL
-        exi[0 * 5 + 4] = addr;
-        exi[0 * 5 + 3] = ((4 - 1) << 4) | (1 << 2) | 1;
-        while (exi[0 * 5 + 3] & 1);
-        //write the ipl we want to send
-        exi[0 * 5 + 4] = val;
-        exi[0 * 5 + 3] = ((4 - 1) << 4) | (1 << 2) | 1;
-        while (exi[0 * 5 + 3] & 1);
-        exi[0] &= 0x405;        //deselect IPL
+  volatile unsigned long* exi = (volatile unsigned long*)0xCC006800;
+  unsigned long val,addr;
+  addr=0xc0000000;
+  val = c << 24;
+  exi[0] = ((((exi[0]) & 0x405) | 256) | 48);     //select IPL
+  //write addr of IPL
+  exi[0 * 5 + 4] = addr;
+  exi[0 * 5 + 3] = ((4 - 1) << 4) | (1 << 2) | 1;
+  while (exi[0 * 5 + 3] & 1);
+  //write the ipl we want to send
+  exi[0 * 5 + 4] = val;
+  exi[0 * 5 + 3] = ((4 - 1) << 4) | (1 << 2) | 1;
+  while (exi[0 * 5 + 3] & 1);
+  exi[0] &= 0x405;        //deselect IPL
 }
 #endif
 
 static sys_fontheader *fontHeader;
 static u8 *texture;
 
-void init_font(void)
+int FONT_Init(void)
 {
 #ifndef HW_RVL
   /* disable Qoob before accessing IPL */
@@ -66,34 +65,47 @@ void init_font(void)
 
   /* initialize IPL font */
   fontHeader = memalign(32,sizeof(sys_fontheader));
+  if (!fontHeader) return -1;
   SYS_InitFont(&fontHeader);
 
+  /* character width table */
   int i,c;
   for (i=0; i<256; ++i)
   {
     if ((i < fontHeader->first_char) || (i > fontHeader->last_char)) c = fontHeader->inval_char;
     else c = i - fontHeader->first_char;
-
     font_size[i] = ((unsigned char*)fontHeader)[fontHeader->width_table + c];
   }
 
+  /* default font height */
   fheight = fontHeader->cell_height;
+  
+  /* initialize texture data */
   texture = memalign(32, fontHeader->cell_width * fontHeader->cell_height / 2);
+  if (!texture) return -1;
+
+  return 0;
 }
 
-void font_DrawChar(unsigned char c, u32 xpos, u32 ypos, u32 size)
+static void DrawChar(unsigned char c, u32 xpos, u32 ypos, u32 size)
 {
   s32 width;
-  memset(texture,0,fontHeader->cell_width * fontHeader->cell_height / 2); 
+
+  /* reintialize texture object */
   GXTexObj texobj;
   GX_InitTexObj(&texobj, texture, fontHeader->cell_width, fontHeader->cell_height, GX_TF_I4, GX_CLAMP, GX_CLAMP, GX_FALSE);
   GX_LoadTexObj(&texobj, GX_TEXMAP0);
+
+  /* reinitialize font texture data */
+  memset(texture,0,fontHeader->cell_width * fontHeader->cell_height / 2);
   SYS_GetFontTexel(c,texture,0,fontHeader->cell_width/2,&width);
   DCFlushRange(texture, fontHeader->cell_width * fontHeader->cell_height / 2);
   GX_InvalidateTexAll();
 
+  /* adjust texture width */
   width = (fontHeader->cell_width * size) / fontHeader->cell_height;
 
+  /* GX rendering */
   GX_Begin(GX_QUADS, GX_VTXFMT0, 4);
   GX_Position2s16(xpos, ypos - size);
   GX_TexCoord2f32(0.0, 0.0);
@@ -104,7 +116,6 @@ void font_DrawChar(unsigned char c, u32 xpos, u32 ypos, u32 size)
   GX_Position2s16(xpos, ypos);
   GX_TexCoord2f32(0.0, 1.0);
   GX_End ();
-
   GX_DrawDone();
 }
 
@@ -114,13 +125,12 @@ void write_font(int x, int y, char *string)
   int ox = x;
   while (*string && (x < (ox + back_framewidth)))
   {
-    font_DrawChar(*string, x -(vmode->fbWidth/2), y-(vmode->efbHeight/2),fontHeader->cell_height);
+    DrawChar(*string, x -(vmode->fbWidth/2), y-(vmode->efbHeight/2),fontHeader->cell_height);
     x += font_size[(u8)*string];
     string++;
   }
 }
 
-int hl = 0;
 void WriteCentre( int y, char *string)
 {
   int x, t;
@@ -128,38 +138,68 @@ void WriteCentre( int y, char *string)
   if (x>back_framewidth) x=back_framewidth;
   x = (640 - x) >> 1;
   write_font(x, y, string);
-  if (hl)
-  {
-    png_texture texture;
-    texture.data   = 0;
-    texture.width  = 0;
-    texture.height = 0;
-    texture.format = 0;
-    OpenPNGFromMemory(&texture, Overlay_bar_s2);
-    DrawTexture(&texture, 0, y-fheight,  640, fheight);
-  }
 }
 
 void WriteCentre_HL( int y, char *string)
 {
-  hl = 1;
   WriteCentre(y, string);
-  hl = 0;
+  png_texture texture;
+  texture.data   = 0;
+  texture.width  = 0;
+  texture.height = 0;
+  texture.format = 0;
+  OpenPNGFromMemory(&texture, Overlay_bar);
+  DrawTexture(&texture, 0, y-fheight,  640, fheight);
 }
 
- void WriteText(char *text, u16 size, u16 x, u16 y)
- {
-   int ox = x;
-  while (*text && (x < (ox + back_framewidth)))
-  {
-    font_DrawChar(*text, x -(vmode->fbWidth/2), y-(vmode->efbHeight/2),size);
-    x += (font_size[(u8)*text] * size) / fontHeader->cell_height;;
-    text++;
-  }
- }
+void FONT_WriteLeft(char *string, u16 size, u16 x, u16 y)
+{
+  x -= (vmode->fbWidth/2);
+  y -= (vmode->efbHeight/2);
 
-void setfontcolour (int fcolour)
-{}
+  while (*string)
+  {
+    DrawChar(*string, x, y, size);
+    x += (font_size[(u8)*string++] * size) / fheight;
+  }
+}
+
+void FONT_WriteRight(char *string, u16 size, u16 x, u16 y)
+{
+  int i;
+  u16 width = 0;
+
+  for (i=0; i<strlen(string); i++)
+    width += (font_size[(u8)string[i]] * size) / fheight;
+
+  x -= (vmode->fbWidth / 2) + width;
+  y -= (vmode->efbHeight / 2);
+
+  while (*string)
+  {
+    DrawChar(*string, x, y, size);
+    x += (font_size[(u8)*string++] * size) / fheight;
+  }
+}
+
+void FONT_WriteCenter(char *string, u16 size, u16 x1, u16 x2, u16 y)
+{
+  int i;
+  u16 width = 0;
+
+  for (i=0; i<strlen(string); i++)
+    width += (font_size[(u8)string[i]] * size) / fheight;
+
+  x1 += (x2 - x1 - width - vmode->fbWidth) / 2;
+  y -= (vmode->efbHeight / 2);
+
+  while (*string)
+  {
+    DrawChar(*string, x1, y, size);
+    x1 += (font_size[(u8)*string++] * size) / fheight;
+  }
+}
+
 /****************************************************************************
  *  Draw functions (FrameBuffer)
  *
@@ -198,8 +238,13 @@ void fntDrawBoxFilled (int x1, int y1, int x2, int y2, int color)
  *  Draw functions (GX)
  *
  ****************************************************************************/
+typedef struct
+{
+  u8 *buffer;
+  u32 offset;
+} png_file;
 
-/* Callback for the read function */
+/* libpng read callback function */
 static void png_read_from_mem (png_structp png_ptr, png_bytep data, png_size_t length)
 {
   png_file *file = (png_file *)png_get_io_ptr (png_ptr);
@@ -211,6 +256,7 @@ static void png_read_from_mem (png_structp png_ptr, png_bytep data, png_size_t l
   file->offset += length;
 }
 
+/* convert a png file into RGBA8 texture */
 void OpenPNGFromMemory(png_texture *texture, const u8 *buffer)
 {
   int i;
@@ -221,7 +267,7 @@ void OpenPNGFromMemory(png_texture *texture, const u8 *buffer)
   file.offset = 0;
 
   /* check for valid magic number */
-  if (!png_check_sig (file.buffer, 8)) return;
+  /*if (!png_check_sig (file.buffer, 8)) return;*/
 
   /* create a png read struct */
   png_structp png_ptr = png_create_read_struct (PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
@@ -244,22 +290,22 @@ void OpenPNGFromMemory(png_texture *texture, const u8 *buffer)
   /* retrieve image information */
   u32 width  = png_get_image_width(png_ptr, info_ptr);
   u32 height = png_get_image_height(png_ptr, info_ptr);
-  u32 bit_depth = png_get_bit_depth(png_ptr, info_ptr);
-  u32 color_type = png_get_color_type(png_ptr, info_ptr);
+  /*u32 bit_depth = png_get_bit_depth(png_ptr, info_ptr);
+  u32 color_type = png_get_color_type(png_ptr, info_ptr);*/
 
   /* support for RGBA8 textures ONLY !*/
-  if ((color_type != PNG_COLOR_TYPE_RGB_ALPHA) || (bit_depth != 8))
+  /*if ((color_type != PNG_COLOR_TYPE_RGB_ALPHA) || (bit_depth != 8))
   {
     png_destroy_read_struct (&png_ptr, &info_ptr, NULL);
     return;
-  }
+  }*/
 
   /* 4x4 tiles are required */
-  if ((width%4) || (height%4))
+  /*if ((width%4) || (height%4))
   {
     png_destroy_read_struct (&png_ptr, &info_ptr, NULL);
     return;
-  }
+  }*/
 
   /* allocate memory to store raw image data */
   u32 stride = width << 2;
@@ -294,15 +340,20 @@ void OpenPNGFromMemory(png_texture *texture, const u8 *buffer)
   free(row_pointers);
 
   /* initialize texture */
-  texture->data   = memalign(32, stride * height);
+  texture->data = memalign(32, stride * height);
+  if (!texture->data)
+  {
+    free (img_data);
+    png_destroy_read_struct (&png_ptr, &info_ptr, NULL);
+    return;
+  }
+
   memset(texture->data, 0, stride * height);
   texture->width  = width;
   texture->height = height;
   texture->format = GX_TF_RGBA8;
 
-
   /* encode to GX_TF_RGBA8 format (4x4 pixels paired titles) */
-
   u16 *dst_ar = (u16 *)(texture->data);
   u16 *dst_gb = (u16 *)(texture->data + 32);
   u32 *src1 = (u32 *)(img_data);
@@ -373,6 +424,7 @@ void DrawTexture(png_texture *texture, u32 xOrigin, u32 yOrigin, u32 w, u32 h)
     /* load texture object */
     GXTexObj texObj;
     GX_InitTexObj(&texObj, texture->data, texture->width, texture->height, GX_TF_RGBA8, GX_CLAMP, GX_CLAMP, GX_FALSE);
+    GX_InitTexObjLOD(&texObj,GX_LINEAR,GX_LIN_MIP_LIN,0.0,10.0,0.0,GX_FALSE,GX_TRUE,GX_ANISO_4);
     GX_LoadTexObj(&texObj, GX_TEXMAP0);
     GX_InvalidateTexAll();
     DCFlushRange(texture->data, texture->width * texture->height * 4);
@@ -381,8 +433,7 @@ void DrawTexture(png_texture *texture, u32 xOrigin, u32 yOrigin, u32 w, u32 h)
     xOrigin -= (vmode->fbWidth/2);
     yOrigin -= (vmode->efbHeight/2);
 
-
-    /* Draw item */
+    /* Draw textured quad */
     GX_Begin(GX_QUADS, GX_VTXFMT0, 4);
     GX_Position2s16(xOrigin,yOrigin+h);
     GX_TexCoord2f32(0.0, 1.0);
@@ -393,8 +444,9 @@ void DrawTexture(png_texture *texture, u32 xOrigin, u32 yOrigin, u32 w, u32 h)
     GX_Position2s16(xOrigin,yOrigin);
     GX_TexCoord2f32(0.0, 0.0);
     GX_End ();
-
     GX_DrawDone();
+
+    /* free texture data array */
     free(texture->data);
   }
 }
@@ -446,14 +498,4 @@ void ShowAction (char *msg)
   ClearScreen((GXColor)BLACK);
   WriteCentre(254, msg);
   SetScreen();
-}
-
-/****************************************************************************
- * Unpack Backdrop
- *
- * Called at startup to unpack our backdrop to a temporary 
- * framebuffer.
- ****************************************************************************/
-void unpackBackdrop ()
-{
 }

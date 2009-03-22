@@ -30,12 +30,6 @@
 
 typedef struct
 {
-  u8 *buffer;
-  u32 offset;
-} png_file;
-
-typedef struct
-{
   u8 *data;
   u16 width;
   u16 height;
@@ -45,24 +39,25 @@ typedef struct
 extern void OpenPNGFromMemory(png_texture *texture, const u8 *buffer);
 extern void DrawTexture(png_texture *texture, u32 xOrigin, u32 yOrigin, u32 w, u32 h);
 
-extern void init_font(void);
+extern int FONT_Init(void);
+void FONT_WriteLeft(char *string, u16 size, u16 x, u16 y);
+void FONT_WriteRight(char *string, u16 size, u16 x, u16 y);
+void FONT_WriteCenter(char *string, u16 size, u16 x1, u16 x2, u16 y);
+
+
 extern void WriteCentre_HL( int y, char *string);
-extern void WriteCentre (int y, char *text);
-extern void write_font (int x, int y, char *text);
+extern void WriteCentre (int y, char *string);
+extern void write_font (int x, int y, char *string);
 extern void WriteText(char *text, u16 size, u16 x, u16 y);
 extern void WaitPrompt (char *msg);
 extern void ShowAction (char *msg);
 extern void WaitButtonA ();
-extern void unpackBackdrop ();
 extern void ClearScreen (GXColor color);
 extern void SetScreen ();
 extern void fntDrawBoxFilled (int x1, int y1, int x2, int y2, int color);
-extern void setfontcolour (int fcolour);
 extern int fheight;
 extern int font_size[256];
 extern u16 back_framewidth;
 extern u8 SILENT;
-
-extern void font_DrawChar(unsigned char c, u32 xpos, u32 ypos, u32 color);
 
 #endif

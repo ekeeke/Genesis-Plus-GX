@@ -398,7 +398,7 @@ static void gxResetView(GXRModeObj *tvmode)
   GX_SetScissor(0, 0, tvmode->fbWidth, tvmode->efbHeight);
   GX_SetDispCopySrc(0, 0, tvmode->fbWidth, tvmode->efbHeight);
   GX_SetDispCopyDst(tvmode->fbWidth, xfbHeight);
-  GX_SetCopyFilter(tvmode->aa, tvmode->sample_pattern, GX_TRUE, tvmode->vfilter);
+  GX_SetCopyFilter(tvmode->aa, tvmode->sample_pattern, (tvmode->xfbMode == VI_XFBMODE_SF) ? GX_FALSE : GX_TRUE, tvmode->vfilter);
   GX_SetFieldMode(tvmode->field_rendering, ((tvmode->viHeight == 2 * tvmode->xfbHeight) ? GX_ENABLE : GX_DISABLE));
   guOrtho(p, tvmode->efbHeight/2, -(tvmode->efbHeight/2), -(tvmode->fbWidth/2), tvmode->fbWidth/2, 100, 1000);
   GX_LoadProjectionMtx(p, GX_ORTHOGRAPHIC);
@@ -618,7 +618,7 @@ void ogc_video__update(void)
     /* configure texture filtering */
     if (!config.bilinear)
     {
-      GX_InitTexObjLOD(&texobj,GX_NEAR,GX_NEAR_MIP_NEAR,2.5,9.0,0.0,GX_FALSE,GX_FALSE,GX_ANISO_1);
+      GX_InitTexObjLOD(&texobj,GX_NEAR,GX_NEAR_MIP_NEAR,0.0,10.0,0.0,GX_FALSE,GX_FALSE,GX_ANISO_1);
     }
 
     /* load texture object */
@@ -730,14 +730,9 @@ void ogc_video__init(void)
       break;
   }
 
-#ifdef HW_RVL
-  /* widescreen menu fix */
-  if (CONF_GetAspectRatio())
-  {
-    vmode->viWidth    = 678;
-    vmode->viXOrigin  = (VI_MAX_WIDTH_NTSC - 678)/2;
-  }
-#endif
+  /* adjust overscan */
+  vmode->viWidth    = 672;
+  vmode->viXOrigin  = (VI_MAX_WIDTH_NTSC - 672)/2;
 
   /* Configure VI */
   VIDEO_Configure (vmode);
@@ -771,8 +766,7 @@ void ogc_video__init(void)
   gxResetVtx(GX_TRUE);
   gxResetView(vmode);
 
-  /* Initialize GUI */
-  unpackBackdrop();
-  init_font();
+  /* Initialize Font */
+  FONT_Init();
 
 }

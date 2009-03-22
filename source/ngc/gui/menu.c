@@ -54,12 +54,12 @@
 #include "Load_usb.h"
 #endif
 
-#include "Button.h"
-#include "Button_over.h"
-#include "Item.h"
-#include "Item_over.h"
-#include "Arrow_up.h"
-#include "Arrow_down.h"
+#include "Button_text.h"
+#include "Button_text_over.h"
+#include "Button_icon.h"
+#include "Button_icon_over.h"
+#include "Button_up.h"
+#include "Button_down.h"
 
 #ifdef HW_RVL
 #include "Key_A_wii.h"
@@ -155,7 +155,7 @@ static gui_item action_exit =
 {
   Key_home,
   "",
-  "Back to previous",
+  "Exit",
   10,388,24,24
 };
 
@@ -181,7 +181,7 @@ static gui_item items_system[6] =
 static gui_item items_video[8] =
 {
   {NULL,"Aspect Ratio: ORIGINAL",       "Set display aspect ratio",                   0,0,0,0},
-  {NULL,"Display mode: PROGRESSIVE", "Set video mode type",                        0,0,0,0},
+  {NULL,"Display: PROGRESSIVE", "Set video mode type",                        0,0,0,0},
   {NULL,"TV mode: AUTO",          "Set video refresh rate",                     0,0,0,0},
   {NULL,"Bilinear Filter: OFF",   "Enable/disable hardware filtering",          0,0,0,0},
   {NULL,"NTSC Filter: OFF",       "Enable/disable NTSC software filtering",     0,0,0,0},
@@ -234,46 +234,46 @@ static gui_item items_options[5] =
 
 static gui_butn buttons_generic[4] =
 {
-  {&Item[0], &Item_over[0], 46, 128, 276, 48},
-  {&Item[0], &Item_over[0], 46, 188, 276, 48},
-  {&Item[0], &Item_over[0], 46, 248, 276, 48},
-  {&Item[0], &Item_over[0], 46, 308, 276, 48}
+  {&Button_text[0], &Button_text_over[0], 52, 132, 276, 48},
+  {&Button_text[0], &Button_text_over[0], 52, 188, 276, 48},
+  {&Button_text[0], &Button_text_over[0], 52, 244, 276, 48},
+  {&Button_text[0], &Button_text_over[0], 52, 300, 276, 48}
 };
 
 static gui_butn buttons_main[6] =
 {
-  {&Button[0], &Button_over[0],  80,  50, 148, 132},
-  {&Button[0], &Button_over[0], 246,  50, 148, 132},
-  {&Button[0], &Button_over[0], 412,  50, 148, 132},
-  {&Button[0], &Button_over[0],  80, 194, 148, 132},
-  {&Button[0], &Button_over[0], 246, 194, 148, 132},
-  {&Button[0], &Button_over[0], 412, 194, 148, 132}
+  {&Button_icon[0], &Button_icon_over[0],  80,  50, 148, 132},
+  {&Button_icon[0], &Button_icon_over[0], 246,  50, 148, 132},
+  {&Button_icon[0], &Button_icon_over[0], 412,  50, 148, 132},
+  {&Button_icon[0], &Button_icon_over[0],  80, 194, 148, 132},
+  {&Button_icon[0], &Button_icon_over[0], 246, 194, 148, 132},
+  {&Button_icon[0], &Button_icon_over[0], 412, 194, 148, 132}
 };
 
 #ifdef HW_RVL
 static gui_butn buttons_load[4] =
 {
-  {&Button[0], &Button_over[0], 246, 102, 148, 132},
-  {&Button[0], &Button_over[0], 80, 248, 148, 132},
-  {&Button[0], &Button_over[0], 246, 248, 148, 132},
-  {&Button[0], &Button_over[0], 412, 248, 148, 132}
+  {&Button_icon[0], &Button_icon_over[0], 246, 102, 148, 132},
+  {&Button_icon[0], &Button_icon_over[0], 80, 248, 148, 132},
+  {&Button_icon[0], &Button_icon_over[0], 246, 248, 148, 132},
+  {&Button_icon[0], &Button_icon_over[0], 412, 248, 148, 132}
 };
 #else
 static gui_butn buttons_load[3] =
 {
-  {&Button[0], &Button_over[0], 80, 180, 148, 132},
-  {&Button[0], &Button_over[0], 246, 180, 148, 132},
-  {&Button[0], &Button_over[0], 412, 180, 148, 132}
+  {&Button_icon[0], &Button_icon_over[0], 80, 180, 148, 132},
+  {&Button_icon[0], &Button_icon_over[0], 246, 180, 148, 132},
+  {&Button_icon[0], &Button_icon_over[0], 412, 180, 148, 132}
 };
 #endif
 
 static gui_butn buttons_options[5] =
 {
-  {&Button[0], &Button_over[0], 80, 120, 148, 132},
-  {&Button[0], &Button_over[0], 246, 120, 148, 132},
-  {&Button[0], &Button_over[0], 412, 120, 148, 132},
-  {&Button[0], &Button_over[0], 162, 264, 148, 132},
-  {&Button[0], &Button_over[0], 330, 264, 148, 132}
+  {&Button_icon[0], &Button_icon_over[0], 80, 120, 148, 132},
+  {&Button_icon[0], &Button_icon_over[0], 246, 120, 148, 132},
+  {&Button_icon[0], &Button_icon_over[0], 412, 120, 148, 132},
+  {&Button_icon[0], &Button_icon_over[0], 162, 264, 148, 132},
+  {&Button_icon[0], &Button_icon_over[0], 330, 264, 148, 132}
 };
 
 /*****************************************************************************/
@@ -287,7 +287,7 @@ gui_menu menu_main =
   NULL,
   Banner_main,
   NULL,
-  Background_main,146,36,
+  Background_main,146,24,
   {&action_exit, NULL},
   NULL
 };
@@ -340,7 +340,7 @@ gui_menu menu_video =
   0,1,0,8,4,
   items_video,
   buttons_generic,
-  "System Options",
+  "Video Options",
   Banner_bottom,
   Banner_top,
   Background_main,368,132,
@@ -353,7 +353,7 @@ gui_menu menu_audio =
   0,1,0,5,4,
   items_audio,
   buttons_generic,
-  "System Options",
+  "Sound Options",
   Banner_bottom,
   Banner_top,
   Background_main,368,132,
@@ -396,8 +396,8 @@ void MenuDraw(gui_menu *menu)
     OpenPNGFromMemory(&texture, menu->banner_top);
     DrawTexture(&texture, 0, 0, texture.width, texture.height);
     OpenPNGFromMemory(&texture, Main_logo);
-    DrawTexture(&texture, 444, 28, 176, 48);
-    WriteText(menu->title, 16,10,30);
+    DrawTexture(&texture, 466, 40, 152, 44);
+    FONT_WriteLeft(menu->title, 22,10,56);
   }
   else
   {
@@ -412,7 +412,7 @@ void MenuDraw(gui_menu *menu)
     item = menu->helper[0];
     OpenPNGFromMemory(&texture, item->data);
     DrawTexture(&texture, item->x, item->y, item->w, item->h);
-    WriteText(item->comment, 12, item->x+item->w+12,item->y+(item->h-24)/2);
+    FONT_WriteLeft(item->comment, 16, item->x+item->w+6,item->y+(item->h-16)/2 + 16);
   }
 
   if (menu->helper[1])
@@ -420,7 +420,7 @@ void MenuDraw(gui_menu *menu)
     item = menu->helper[1];
     OpenPNGFromMemory(&texture, item->data);
     DrawTexture(&texture, item->x, item->y, item->w, item->h);
-    WriteText(item->comment, 12, item->x+item->w+12,item->y+(item->h-24)/2);
+    FONT_WriteRight(item->comment, 16, item->x - 6, item->y+(item->h-16)/2 + 16);
   }
 
   /* buttons + items */
@@ -441,20 +441,20 @@ void MenuDraw(gui_menu *menu)
     }
     else
     {
-      WriteText(item->text, 19, button->x+10,button->y + (button->h - 20)/2 + 18);
+      FONT_WriteCenter(item->text, 18, button->x, button->x + button->w, button->y + (button->h - 18)/2 + 18);
     }
   }
 
   /* draw arrows */
   if (menu->offset > 0)
   {
-    OpenPNGFromMemory(&texture, Arrow_up);
-    DrawTexture(&texture, 156, 100, texture.width, texture.height);
+    OpenPNGFromMemory(&texture, Button_up);
+    DrawTexture(&texture, 172, 82, texture.width, texture.height);
   }
   if (menu->offset + menu->max_buttons < menu->max_items)
   {
-    OpenPNGFromMemory(&texture, Arrow_down);
-    DrawTexture(&texture, 156, 368, texture.width, texture.height);
+    OpenPNGFromMemory(&texture, Button_down);
+    DrawTexture(&texture, 172, 362, texture.width, texture.height);
   }
 
   SetScreen ();
@@ -817,10 +817,10 @@ void dispmenu ()
 
   while (quit == 0)
   {
-    sprintf (items[0].text, "Aspect Ratio: %s", config.aspect ? "ORIGINAL" : "STRETCHED");
-    if (config.render == 1) sprintf (items[1].text,"Display Mode: INTERLACED");
-    else if (config.render == 2) sprintf (items[1].text, "Display Mode: PROGRESSIVE");
-    else sprintf (items[1].text, "Display Mode: ORIGINAL");
+    sprintf (items[0].text, "Aspect: %s", config.aspect ? "ORIGINAL" : "STRETCHED");
+    if (config.render == 1) sprintf (items[1].text,"Display: INTERLACED");
+    else if (config.render == 2) sprintf (items[1].text, "Display: PROGRESSIVE");
+    else sprintf (items[1].text, "Display: ORIGINAL");
     if (config.tv_mode == 0) sprintf (items[2].text, "TV Mode: 60HZ");
     else if (config.tv_mode == 1) sprintf (items[2].text, "TV Mode: 50HZ");
     else sprintf (items[2].text, "TV Mode: 50/60HZ");
@@ -1572,8 +1572,7 @@ void MainMenu (u32 fps)
     if (genromsize && (crccheck != sram.crc)) strcpy (menutitle, "*** SRAM has been modified ***");
     else if (genromsize) sprintf (menutitle, "%d FPS",fps);
 
-   // ret = MenuCall(&menu_main);
-    ret = MenuCall(&menu_video);
+    ret = MenuCall(&menu_main);
     switch (ret)
     {
       case -1: /*** Button B ***/

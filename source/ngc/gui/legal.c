@@ -68,10 +68,12 @@ void legal ()
   DrawTexture(&texture, (640-texture.width)/2, ypos, texture.width, texture.height);
   ypos += texture.height + 2 * fheight;
 
-  //WriteCentre (ypos, "Press A to continue");
   SetScreen ();
-  //WaitButtonA ();
   sleep (2);
+  WriteCentre (ypos, "Press A to skip intro");
+  SetScreen ();
+  sleep (2);
+  if (ogc_input__getMenuButtons() & PAD_BUTTON_A) return;
 
 
   ClearScreen((GXColor)BLACK);

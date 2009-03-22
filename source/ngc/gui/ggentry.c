@@ -187,9 +187,7 @@ void DrawGGCodes ()
         c[0] = ggcodes[i][gghpos[i]];
         fntDrawBoxFilled (hpos, (i * fheight) + 190, hpos + font_size[c[0]],
                           ((i + 1) * fheight) + 190, COLOR_YELLOW);
-        setfontcolour (COLOR_BLUE);
         write_font (hpos, (i * fheight) + 190, (char *)c);
-        setfontcolour (COLOR_WHITE);
       }
     }
     else WriteCentre ((i * fheight) + 190, (char *)ggcodes[i]);
