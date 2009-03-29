@@ -73,7 +73,7 @@ void legal ()
   WriteCentre (ypos, "Press A to skip intro");
   SetScreen ();
   sleep (2);
-  if (ogc_input__getMenuButtons() & PAD_BUTTON_A) return;
+  if (ogc_input__getMenuButtons(0) & PAD_BUTTON_A) return;
 
 
   ClearScreen((GXColor)BLACK);

@@ -34,4 +34,8 @@ extern void memfile_autoload();
 extern u8 fat_enabled;
 extern u32 frameticker;
 
+#ifdef HW_RVL
+extern u8 Shutdown;
+#endif
+
 #endif /* _OSD_H_ */

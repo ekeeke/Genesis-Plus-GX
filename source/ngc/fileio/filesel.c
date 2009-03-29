@@ -112,7 +112,7 @@ int FileSelector(unsigned char *buffer)
   {
     if (redraw) ShowFiles (offset, selection);
     redraw = 0;
-    p = ogc_input__getMenuButtons();
+    p = ogc_input__getMenuButtons(0);
     
     /* scroll displayed filename */
     if (p & PAD_BUTTON_LEFT)

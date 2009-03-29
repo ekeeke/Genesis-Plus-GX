@@ -87,7 +87,7 @@ int FONT_Init(void)
   return 0;
 }
 
-static void DrawChar(unsigned char c, u32 xpos, u32 ypos, u32 size)
+static void DrawChar(unsigned char c, int xpos, int ypos, int size)
 {
   s32 width;
 
@@ -152,10 +152,10 @@ void WriteCentre_HL( int y, char *string)
   DrawTexture(&texture, 0, y-fheight,  640, fheight);
 }
 
-void FONT_WriteLeft(char *string, u16 size, u16 x, u16 y)
+void FONT_WriteLeft(char *string, int size, int x, int y)
 {
-  x -= (vmode->fbWidth/2);
-  y -= (vmode->efbHeight/2);
+  x -= (vmode->fbWidth / 2);
+  y -= (vmode->efbHeight / 2);
 
   while (*string)
   {
@@ -164,7 +164,7 @@ void FONT_WriteLeft(char *string, u16 size, u16 x, u16 y)
   }
 }
 
-void FONT_WriteRight(char *string, u16 size, u16 x, u16 y)
+void FONT_WriteRight(char *string, int size, int x, int y)
 {
   int i;
   u16 width = 0;
@@ -182,7 +182,7 @@ void FONT_WriteRight(char *string, u16 size, u16 x, u16 y)
   }
 }
 
-void FONT_WriteCenter(char *string, u16 size, u16 x1, u16 x2, u16 y)
+void FONT_WriteCenter(char *string, int size, int x1, int x2, int y)
 {
   int i;
   u16 width = 0;
@@ -417,7 +417,7 @@ void OpenPNGFromMemory(png_texture *texture, const u8 *buffer)
   DCFlushRange(texture->data, height * stride);
 }
 
-void DrawTexture(png_texture *texture, u32 xOrigin, u32 yOrigin, u32 w, u32 h)
+void DrawTexture(png_texture *texture, int x, int y, int w, int h)
 {
   if (texture->data)
   {
@@ -429,19 +429,19 @@ void DrawTexture(png_texture *texture, u32 xOrigin, u32 yOrigin, u32 w, u32 h)
     GX_InvalidateTexAll();
     DCFlushRange(texture->data, texture->width * texture->height * 4);
 
-    /* current coordinate system */
-    xOrigin -= (vmode->fbWidth/2);
-    yOrigin -= (vmode->efbHeight/2);
+    /* adjust coordinate system */
+    x -= (vmode->fbWidth/2);
+    y -= (vmode->efbHeight/2);
 
     /* Draw textured quad */
     GX_Begin(GX_QUADS, GX_VTXFMT0, 4);
-    GX_Position2s16(xOrigin,yOrigin+h);
+    GX_Position2s16(x,y+h);
     GX_TexCoord2f32(0.0, 1.0);
-    GX_Position2s16(xOrigin+w,yOrigin+h);
+    GX_Position2s16(x+w,y+h);
     GX_TexCoord2f32(1.0, 1.0);
-    GX_Position2s16(xOrigin+w,yOrigin);
+    GX_Position2s16(x+w,y);
     GX_TexCoord2f32(1.0, 0.0);
-    GX_Position2s16(xOrigin,yOrigin);
+    GX_Position2s16(x,y);
     GX_TexCoord2f32(0.0, 0.0);
     GX_End ();
     GX_DrawDone();
@@ -476,9 +476,9 @@ void ClearScreen (GXColor color)
 
 void WaitButtonA ()
 {
-  s16 p = ogc_input__getMenuButtons();
-  while (p & PAD_BUTTON_A)    p = ogc_input__getMenuButtons();
-  while (!(p & PAD_BUTTON_A)) p = ogc_input__getMenuButtons();
+  s16 p = ogc_input__getMenuButtons(0);
+  while (p & PAD_BUTTON_A)    p = ogc_input__getMenuButtons(0);
+  while (!(p & PAD_BUTTON_A)) p = ogc_input__getMenuButtons(0);
 }
 
 void WaitPrompt (char *msg)

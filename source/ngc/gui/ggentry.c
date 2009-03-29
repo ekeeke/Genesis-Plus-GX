@@ -220,7 +220,7 @@ void GGEditLine ()
       redraw = 0;
     }
 
-    p = ogc_input__getMenuButtons();
+    p = ogc_input__getMenuButtons(0);
 
     if (p & PAD_BUTTON_UP)
     {
@@ -293,7 +293,7 @@ void GGSelectLine ()
       redraw = 0;
     }
 
-    j = ogc_input__getMenuButtons();
+    j = ogc_input__getMenuButtons(0);
 
     if (j & PAD_BUTTON_UP)
     {

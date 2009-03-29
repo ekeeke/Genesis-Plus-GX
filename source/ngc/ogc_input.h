@@ -49,6 +49,8 @@ extern void ogc_input__init(void);
 extern void ogc_input__set_defaults(void);
 extern void ogc_input__update(void);
 extern void ogc_input__config(u8 num, u8 type, u8 padtype);
-extern u16 ogc_input__getMenuButtons(void);
+
+extern s8 WPAD_StickX(u8 chan,u8 right);
+extern s8 WPAD_StickY(u8 chan,u8 right);
 
 #endif

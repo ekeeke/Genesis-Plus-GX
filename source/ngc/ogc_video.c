@@ -386,6 +386,7 @@ static void gxResetVtx(bool isMenu)
   GX_Flush();
 }
 
+
 /* Reset GX 2D rendering */
 static void gxResetView(GXRModeObj *tvmode)
 {
@@ -515,6 +516,28 @@ static void VSyncCallback(u32 cnt)
   frameticker++;
 }
 
+void gxResetCamera(f32 angle)
+{
+  Mtx view;
+
+  if (angle)
+  {
+    Mtx m,m1;
+    Vector axis = (Vector) {0,0,1};
+    guLookAt(m, &cam.pos, &cam.up, &cam.view);
+    guMtxRotAxisDeg (m1, &axis, angle);
+    guMtxConcat(m,m1,view);
+  }
+  else
+  {
+    guLookAt(view, &cam.pos, &cam.up, &cam.view);
+  }
+  
+  GX_LoadPosMtxImm(view, GX_PNMTX0);
+  GX_Flush();
+}
+
+
 /* Restore Menu Video mode */
 void ogc_video__stop(void)
 {
@@ -591,6 +614,18 @@ void ogc_video__start(void)
 
 }
 
+static GXTexObj texobj;
+
+void ogc_video_caption(void)
+{
+  gxResetVtx(0);
+  GX_LoadTexObj(&texobj, GX_TEXMAP0);
+  GX_InvalidateTexAll();
+  draw_square();
+  GX_DrawDone();
+  gxResetVtx(1);
+}
+
 /* GX render update */
 void ogc_video__update(void)
 {
@@ -612,7 +647,6 @@ void ogc_video__update(void)
     vheight = (vheight >> 2) << 2;
 
     /* initialize texture object */
-    GXTexObj texobj;
     GX_InitTexObj(&texobj, texturemem, vwidth, vheight, GX_TF_RGB565, GX_CLAMP, GX_CLAMP, GX_FALSE);
 
     /* configure texture filtering */

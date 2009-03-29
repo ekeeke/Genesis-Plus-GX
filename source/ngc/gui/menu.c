@@ -50,9 +50,6 @@
 #include "Load_recent.h"
 #include "Load_sd.h"
 #include "Load_dvd.h"
-#ifdef HW_RVL
-#include "Load_usb.h"
-#endif
 
 #include "Button_text.h"
 #include "Button_text_over.h"
@@ -60,10 +57,14 @@
 #include "Button_icon_over.h"
 #include "Button_up.h"
 #include "Button_down.h"
+#include "Button_up_over.h"
+#include "Button_down_over.h"
 
 #ifdef HW_RVL
+#include "Load_usb.h"
 #include "Key_A_wii.h"
 #include "Key_B_wii.h"
+#include "generic_point.h"
 #else
 #include "Key_A_gcn.h"
 #include "Key_B_gcn.h"
@@ -79,405 +80,767 @@
 /*  Generic GUI structures                                                   */
 /*****************************************************************************/
 
+/* Controller inputs structure */
+typedef struct
+{
+  u16 keys;
+#ifdef HW_RVL
+  struct ir_t ir;
+} gui_input;
+
 /* Item descriptor*/
 typedef struct
 {
-  const u8 *data;   /* pointer to button image data (items icon only)       */
-  char text[32];    /* item string (items list only)                        */
-  char comment[64]; /* item comment                                         */
-  u16 x;            /* button image or text X position (upper left corner)  */
-  u16 y;            /* button image or text Y position (upper left corner)  */
-  u16 w;            /* button image or text width                           */
-  u16 h;            /* button image or text height                          */
+  png_texture *texture; /* temporary texture data                               */
+  const u8 *data;       /* pointer to png image data (items icon only)          */
+  const char *text;     /* item string (items list only)                        */
+  char *comment;        /* item comment                                         */
+  u16 x;                /* button image or text X position (upper left corner)  */
+  u16 y;                /* button image or text Y position (upper left corner)  */
+  u16 w;                /* button image or text width                           */
+  u16 h;                /* button image or text height                          */
 } gui_item;
 
-/* Button descriptor*/
+/* Button descriptor */
 typedef struct
 {
-  const u8 *img_norm; /* pointer to button image data (default)       */
-  const u8 *img_over; /* pointer to button image data (selected)      */
-  u16 x;              /* button image X position (upper left corner)  */
-  u16 y;              /* button image Y position (upper left corner)  */
-  u16 w;              /* button image pixels width                    */
-  u16 h;              /* button image pixels height                   */
+  png_texture *texture[2];  /* temporary texture datas                       */
+  const u8 *image[2];       /* pointer to png image datas (default)         */
+} butn_data;
+
+/* Button descriptor */
+typedef struct
+{
+  butn_data *data;          /* pointer to button image/texture data         */
+  u16 x;                    /* button image X position (upper left corner)  */
+  u16 y;                    /* button image Y position (upper left corner)  */
+  u16 w;                    /* button image pixels width                    */
+  u16 h;                    /* button image pixels height                   */
 } gui_butn;
 
+/* Image descriptor */
+typedef struct
+{
+  png_texture *texture; /* temporary texture data                               */
+  const u8 *data;       /* pointer to png image data                            */
+  u16 x;                /* button image or text X position (upper left corner)  */
+  u16 y;                /* button image or text Y position (upper left corner)  */
+  u16 w;                /* button image or text width                           */
+  u16 h;                /* button image or text height                          */
+} gui_image;
 
 /* Menu descriptor */
 typedef struct
 {
-  s8 selected;              /* index of selected item                             */
-  u8 shift;                 /* number of items by line                            */
-  u8 offset;                /* items list offset                                  */
-  u8 max_items;             /* total number of items                              */
-  u8 max_buttons;           /* total number of buttons (not necessary identical)  */
-  gui_item *items;          /* pointer to the menu items table                    */
-  gui_butn *buttons;        /* pointer to the menu buttons table                  */
-  char *title;
-  const u8 *banner_bottom;
-  const u8 *banner_top;
-  const u8 *back_image;
-  u16 back_x;
-  u16 back_y;
-  gui_item *helper[2];
-  s32 (*callback)(int num); /* selection callback                                 */
+  char *title;                /* menu title                                         */
+  s8 selected;                /* index of selected item                             */
+  u8 shift;                   /* number of items by line                            */
+  u8 offset;                  /* items list offset                                  */
+  u8 max_items;               /* total number of items                              */
+  u8 max_buttons;             /* total number of buttons (not necessary identical)  */
+  gui_item *items;            /* menu items table                                   */
+  gui_butn *buttons;          /* menu buttons table                                 */
+  gui_image *frames[2];       /* top and bottom frames                              */
+  gui_image *background;      /* background image                                   */
+  gui_image *logo;            /* logo image                                         */
+  gui_item *helper[2];        /* key helpers                                        */
+  gui_butn *arrows[2];        /* items list arrows                                  */
 } gui_menu;
 
+#ifdef HW_RVL
+static png_texture w_pointer = {0,0,0,0};
+#endif
+
+static gui_input m_input;
 
 /*****************************************************************************/
-/*  Menu Items description                                                   */
+/*  Generic Images                                                           */
+/*****************************************************************************/
+static gui_image logo_main =
+{
+  NULL,Main_logo,204,372,232,56
+};
+
+static gui_image logo_small =
+{
+  NULL,Main_logo,466,40,152,44
+};
+
+static gui_image top_frame =
+{
+  NULL,Banner_top,0,0,640,108
+};
+
+static gui_image bottom_frame =
+{
+  NULL,Banner_top,0,388,640,92
+};
+
+static gui_image main_frame =
+{
+  NULL,Banner_top,0,356,640,124
+};
+
+static gui_image background_center =
+{
+  NULL,Background_main,146,74,348,288
+};
+
+static gui_image background_right =
+{
+  NULL,Background_main,368,132,348,288
+};
+
+/*****************************************************************************/
+/*  Shared buttons data                                                      */
+/*****************************************************************************/
+static butn_data arrow_up_data =
+{
+  {NULL,NULL},
+  {Button_up,Button_up_over}
+};
+
+static butn_data arrow_down_data =
+{
+  {NULL,NULL},
+  {Button_down,Button_down_over}
+};
+
+static butn_data button_text_data =
+{
+  {NULL,NULL},
+  {Button_text,Button_text_over}
+};
+
+static butn_data button_icon_data =
+{
+  {NULL,NULL},
+  {Button_icon,Button_icon_over}
+};
+
+/*****************************************************************************/
+/*  Generic Arrow Buttons                                                    */
+/*****************************************************************************/
+static gui_butn arrow_up =
+{
+  &arrow_up_data,172,82,36,36
+};
+
+static gui_butn arrow_down =
+{
+  &arrow_down_data,172,360,36,36
+};
+
+/*****************************************************************************/
+/*  Generic Items                                                            */
 /*****************************************************************************/
 static gui_item action_cancel =
 {
 #ifdef HW_RVL
-  Key_B_wii,
+  NULL,Key_B_wii,NULL,"Back to previous",10,422,28,28
 #else
-  Key_B_gcn,
+  NULL,Key_B_gcn,NULL,"Back to previous",10,422,28,28
 #endif
-  "",
-  "Back to previous",
-  10,422,28,28
 };
 
 static gui_item action_select =
 {
 #ifdef HW_RVL
-  Key_A_wii,
+  NULL,Key_A_wii,NULL,"Select",602,422,28,28
 #else
-  Key_A_gcn,
+  NULL,Key_A_gcn,NULL,"Select",602,422,28,28
 #endif
-  "",
-  "Select",
-  602,422,28,28
 };
 
 static gui_item action_exit =
 {
-  Key_home,
-  "",
-  "Exit",
-  10,388,24,24
+  NULL,Key_home,NULL,"Exit",10,388,24,24
 };
 
+
+/*****************************************************************************/
+/*  Menu Items description                                                   */
+/*****************************************************************************/
+
+/* Audio options menu */
 static gui_item items_audio[5] =
 {
-  {NULL,"PSG Volume: 2.50",   "Adjust PSG output level",            0,0,0,0},
-  {NULL,"FM Volume: 1.00",    "Adjust FM output level",             0,0,0,0},
-  {NULL,"Volume Boost: 1X",   "Adjust general output level",        0,0,0,0},
-  {NULL,"LowPass Filter: ON", "Enable/disable sound filtering",     0,0,0,0},
-  {NULL,"HQ YM2612: SINC",    "Adjust FM emulation accuracy level", 0,0,0,0}
+  {NULL,NULL,"PSG Volume:",    "Adjust PSG output level",           0,0,0,0},
+  {NULL,NULL,"FM Volume:",     "Adjust FM output level",            0,0,0,0},
+  {NULL,NULL,"Volume Boost:",  "Adjust general output level",       0,0,0,0},
+  {NULL,NULL,"LowPass Filter:","Enable/disable sound filtering",    0,0,0,0},
+  {NULL,NULL,"HQ YM2612:",     "Adjust FM emulation accuracy level",0,0,0,0}
 };
 
+/* System options menu */
 static gui_item items_system[6] =
 {
-  {NULL,"Console Region: AUTO", "Set system region",                      0,0,0,0},
-  {NULL,"System Lockups: OFF",  "Enable/disable original system lock-ups",0,0,0,0},
-  {NULL,"System BIOS: OFF",     "Enable/disable TMSS BIOS support",       0,0,0,0},
-  {NULL,"SVP Cycles: 950",      "Adjust SVP chip emulation speed",        0,0,0,0},
-  {NULL,"Auto SRAM: FAT",       "Enable/disable automatic SRAM",          0,0,0,0},
-  {NULL,"Auto STATE: FAT",      "Enable/disable automatic Freeze State",  0,0,0,0}
+  {NULL,NULL,"Console Region:","Select system region",                   0,0,0,0},
+  {NULL,NULL,"System Lockups:","Enable/disable original system lock-ups",0,0,0,0},
+  {NULL,NULL,"System BIOS:",   "Enable/disable TMSS BIOS support",       0,0,0,0},
+  {NULL,NULL,"SVP Cycles",     "Adjust SVP chip emulation speed",        0,0,0,0},
+  {NULL,NULL,"Auto SRAM",      "Enable/disable automatic SRAM",          0,0,0,0},
+  {NULL,NULL,"Auto STATE",     "Enable/disable automatic Freeze State",  0,0,0,0}
 };
 
+/* Video options menu */
 static gui_item items_video[8] =
 {
-  {NULL,"Aspect Ratio: ORIGINAL",       "Set display aspect ratio",                   0,0,0,0},
-  {NULL,"Display: PROGRESSIVE", "Set video mode type",                        0,0,0,0},
-  {NULL,"TV mode: AUTO",          "Set video refresh rate",                     0,0,0,0},
-  {NULL,"Bilinear Filter: OFF",   "Enable/disable hardware filtering",          0,0,0,0},
-  {NULL,"NTSC Filter: OFF",       "Enable/disable NTSC software filtering",     0,0,0,0},
-  {NULL,"Borders: ON",            "Enable/disable original overscan emulation", 0,0,0,0},
-  {NULL,"DISPLAY POSITION",       "Adjust display position",                    0,0,0,0},
-  {NULL,"DISPLAY SIZE",           "Adjust display size",                        0,0,0,0}
+  {NULL,NULL,"Aspect Ratio:",   "Select display aspect ratio",               0,0,0,0},
+  {NULL,NULL,"Display:",        "Select video mode type",                    0,0,0,0},
+  {NULL,NULL,"TV mode:",        "Select video refresh rate",                 0,0,0,0},
+  {NULL,NULL,"Bilinear Filter:","Enable/disable hardware filtering",         0,0,0,0},
+  {NULL,NULL,"NTSC Filter:",    "Enable/disable NTSC software filtering",    0,0,0,0},
+  {NULL,NULL,"Borders:",        "Enable/disable original overscan emulation",0,0,0,0},
+  {NULL,NULL,"DISPLAY POSITION","Adjust display position",                   0,0,0,0},
+  {NULL,NULL,"DISPLAY SIZE",    "Adjust display size",                       0,0,0,0}
 };
 
+/* Main menu */
 static gui_item items_main[6] =
 {
-  {&Main_play[0]   , "", "", 108,  76, 92, 88},
-  {&Main_load[0]   , "", "", 280,  72, 80, 92},
-  {&Main_options[0], "", "", 456,  76, 60, 88},
-  {&Main_file[0]   , "", "", 114, 216, 80, 92},
-  {&Main_reset[0]  , "", "", 282, 224, 76, 84},
-  {&Main_info[0]   , "", "", 446, 212, 88, 96}
+  {NULL,Main_play   ,NULL,NULL,108, 76,92,88},
+  {NULL,Main_load   ,NULL,NULL,280, 72,80,92},
+  {NULL,Main_options,NULL,NULL,456, 76,60,88},
+  {NULL,Main_file   ,NULL,NULL,114,216,80,92},
+  {NULL,Main_reset  ,NULL,NULL,282,224,76,84},
+  {NULL,Main_info   ,NULL,NULL,446,212,88,96}
 };
 
 #ifdef HW_RVL
 static gui_item items_load[4] =
 {
-  {&Load_recent[0], "", "Load recent files",                276, 120, 88, 96},
-  {&Load_sd[0]    , "", "Load ROM files from SDCARD device",110, 266, 88, 96},
-  {&Load_usb[0]   , "", "Load ROM files from USB device",   276, 266, 88, 96},
-  {&Load_dvd[0]   , "", "Load ROM files from DVD",          442, 266, 88, 96},
+  {NULL,Load_recent,NULL,"Load recent files",             276,120,88,96},
+  {NULL,Load_sd    ,NULL,"Load ROM files from SDCARD",    110,266,88,96},
+  {NULL,Load_usb   ,NULL,"Load ROM files from USB device",276,266,88,96},
+  {NULL,Load_dvd   ,NULL,"Load ROM files from DVD",       442,266,88,96}
 };
 #else
 static gui_item items_load[3] =
 {
-  {&Load_recent[0], "", "Load recent files",                 110, 198, 88, 96},
-  {&Load_sd[0]    , "", "Load ROM files from SDCARD device", 276, 198, 88, 96},
-  {&Load_dvd[0]   , "", "Load ROM files from DVD",           442, 198, 88, 96},
+  {NULL,Load_recent,NULL,"Load recent files",         110,198,88,96},
+  {NULL,Load_sd    ,NULL,"Load ROM files from SDCARD",276,198,88,96},
+  {NULL,Load_dvd   ,NULL,"Load ROM files from DVD",   442,198,88,96}
 };
 #endif
 
 static gui_item items_options[5] =
 {
-  {&Option_system[0], "", "Configure System settings",  114, 142, 80, 92},
-  {&Option_video[0] , "", "Configure Video settings",   288, 150, 64, 84},
-  {&Option_sound[0] , "", "Configure Audio settings",   464, 154, 44, 80},
-  {&Option_ctrl[0]  , "", "Configure Input settings",   192, 286, 88, 92},
-  {&Option_ggenie[0], "", "Configure Game Genie Codes", 360, 282, 88, 96},
+  {NULL,Option_system,NULL,"Configure System settings", 114,142,80,92},
+  {NULL,Option_video ,NULL,"Configure Video settings",  288,150,64,84},
+  {NULL,Option_sound ,NULL,"Configure Audio settings",  464,154,44,80},
+  {NULL,Option_ctrl  ,NULL,"Configure Input settings",  192,286,88,92},
+  {NULL,Option_ggenie,NULL,"Configure Game Genie Codes",360,282,88,96}
 };
-
 
 
 /*****************************************************************************/
 /*  Menu Buttons description                                                 */
 /*****************************************************************************/
 
+/* Generic list menu */
 static gui_butn buttons_generic[4] =
 {
-  {&Button_text[0], &Button_text_over[0], 52, 132, 276, 48},
-  {&Button_text[0], &Button_text_over[0], 52, 188, 276, 48},
-  {&Button_text[0], &Button_text_over[0], 52, 244, 276, 48},
-  {&Button_text[0], &Button_text_over[0], 52, 300, 276, 48}
+  &button_text_data,52,132,276,48},
+  &button_text_data,52,188,276,48},
+  &button_text_data,52,244,276,48},
+  &button_text_data,52,300,276,48},
 };
 
+/* Main menu */
 static gui_butn buttons_main[6] =
 {
-  {&Button_icon[0], &Button_icon_over[0],  80,  50, 148, 132},
-  {&Button_icon[0], &Button_icon_over[0], 246,  50, 148, 132},
-  {&Button_icon[0], &Button_icon_over[0], 412,  50, 148, 132},
-  {&Button_icon[0], &Button_icon_over[0],  80, 194, 148, 132},
-  {&Button_icon[0], &Button_icon_over[0], 246, 194, 148, 132},
-  {&Button_icon[0], &Button_icon_over[0], 412, 194, 148, 132}
+  &button_icon_data, 80, 50,148,132},
+  &button_icon_data,246, 50,148,132},
+  &button_icon_data,412, 50,148,132},
+  &button_icon_data, 80,194,148,132},
+  &button_icon_data,246,194,148,132},
+  &button_icon_data,412,194,148,132}
 };
 
+/* Load Game menu */
 #ifdef HW_RVL
 static gui_butn buttons_load[4] =
 {
-  {&Button_icon[0], &Button_icon_over[0], 246, 102, 148, 132},
-  {&Button_icon[0], &Button_icon_over[0], 80, 248, 148, 132},
-  {&Button_icon[0], &Button_icon_over[0], 246, 248, 148, 132},
-  {&Button_icon[0], &Button_icon_over[0], 412, 248, 148, 132}
-};
+  &button_icon_data,246,102,148,132},
+  &button_icon_data, 80,248,148,132},
+  &button_icon_data,246,248,148,132},
+  &button_icon_data,412,248,148,132}
 #else
 static gui_butn buttons_load[3] =
 {
-  {&Button_icon[0], &Button_icon_over[0], 80, 180, 148, 132},
-  {&Button_icon[0], &Button_icon_over[0], 246, 180, 148, 132},
-  {&Button_icon[0], &Button_icon_over[0], 412, 180, 148, 132}
+  &button_icon_data, 80,180,148,132},
+  &button_icon_data,246,180,148,132},
+  &button_icon_data,412,180,148,132}
 };
 #endif
 
+/* Options menu */
 static gui_butn buttons_options[5] =
 {
-  {&Button_icon[0], &Button_icon_over[0], 80, 120, 148, 132},
-  {&Button_icon[0], &Button_icon_over[0], 246, 120, 148, 132},
-  {&Button_icon[0], &Button_icon_over[0], 412, 120, 148, 132},
-  {&Button_icon[0], &Button_icon_over[0], 162, 264, 148, 132},
-  {&Button_icon[0], &Button_icon_over[0], 330, 264, 148, 132}
+  &button_icon_data, 80,120,148,132},
+  &button_icon_data,246,120,148,132},
+  &button_icon_data,412,120,148,132},
+  &button_icon_data,162,264,148,132},
+  &button_icon_data,330,264,148,132}
 };
 
 /*****************************************************************************/
-/*  Menus description                                                       */
+/*  Menu descriptions                                                        */
 /*****************************************************************************/
-gui_menu menu_main =
+
+/* Main menu */
+static gui_menu menu_main =
 {
-  0,3,0,6,6,
+  NULL,
+  0,0,6,6,3,
   items_main,
   buttons_main,
   NULL,
-  Banner_main,
-  NULL,
-  Background_main,146,24,
-  {&action_exit, NULL},
-  NULL
+  &logo_main,
+  {NULL,&main_frame},
+  {&action_exit,NULL},
+  {NULL,NULL}
 };
 
-gui_menu menu_load =
+/* Load Game menu */
+static gui_menu menu_load =
 {
+  "Load Game",
 #ifdef HW_RVL
-  0,3,0,4,4,
+  0,0,4,4,3,
 #else
-  0,0,0,3,3,
+  0,0,3,3,0,
 #endif
   items_load,
   buttons_load,
-  "Load Game",
-  Banner_bottom,
-  Banner_top,
-  Background_main,146,74,
+  &background_center,
+  &logo_small,
+  {&top_frame,&bottom_frame},
   {&action_cancel, &action_select},
-  NULL
+  {NULL, NULL}
 };
 
-gui_menu menu_options =
+/* Options menu */
+static gui_menu menu_options =
 {
-  0,3,0,5,5,
+  "Emulator Settings",
+  0,0,5,5,3,
   items_options,
   buttons_options,
-  "Emulator Options",
-  Banner_bottom,
-  Banner_top,
-  Background_main,146,74,
+  &background_center,
+  &logo_small,
+  {&top_frame,&bottom_frame},
   {&action_cancel, &action_select},
-  NULL
+  {NULL, NULL}
 };
 
-gui_menu menu_system =
+/* System Options menu */
+static gui_menu menu_system =
 {
-  0,1,0,6,4,
+  "System Options",
+  0,0,6,4,1,
   items_system,
   buttons_generic,
-  "System Options",
-  Banner_bottom,
-  Banner_top,
-  Background_main,368,132,
+  &background_right,
+  &logo_small,
+  {&top_frame,&bottom_frame},
   {&action_cancel, &action_select},
-  NULL
+  {NULL, NULL}
 };
 
-gui_menu menu_video =
+/* Video Options menu */
+static gui_menu menu_video =
 {
-  0,1,0,8,4,
+  "Video Options",
+  0,0,8,4,1,
   items_video,
   buttons_generic,
-  "Video Options",
-  Banner_bottom,
-  Banner_top,
-  Background_main,368,132,
+  &background_right,
+  &logo_small,
+  {&top_frame,&bottom_frame},
   {&action_cancel, &action_select},
-  NULL
+  {NULL, NULL}
 };
 
-gui_menu menu_audio =
+/* Sound Options menu */
+static gui_menu menu_audio =
 {
-  0,1,0,5,4,
+  "Sound Options",
+  0,0,5,4,1,
   items_audio,
   buttons_generic,
-  "Sound Options",
-  Banner_bottom,
-  Banner_top,
-  Background_main,368,132,
+  &background_right,
+  &logo_small,
+  {&top_frame,&bottom_frame},
   {&action_cancel, &action_select},
-  NULL
+  {NULL, NULL}
 };
 
 /*****************************************************************************/
 /*  Generic GUI routines                                                     */
 /*****************************************************************************/
-void MenuDraw(gui_menu *menu)
+static void menu_initialize(gui_menu *menu)
+{
+  int i,j;
+  png_texture *texture;
+  gui_item *item;
+  gui_butn *button;
+  gui_image *image;
+  butn_data *button_data;
+
+#ifdef HW_RVL
+  /* allocate wiimote pointer data (only done once) */
+  if (w_pointer.data == NULL)
+  {
+    OpenPNGFromMemory(&w_pointer, generic_point);
+  }
+#endif
+
+  /* allocate background image texture */
+  if (menu->background)
+  {
+    texture = (png_texture *)malloc(sizeof(png_texture));
+    if (texture)
+    {
+      image = menu->background;
+      OpenPNGFromMemory(texture, image->data);
+      image->texture = texture;
+    }
+  }
+
+  /* allocate logo texture */
+  if (menu->logo)
+  {
+    texture = (png_texture *)malloc(sizeof(png_texture));
+    if (texture)
+    {
+      image = menu->logo;
+      OpenPNGFromMemory(texture, image->data);
+      image->texture = texture;
+    }
+  }
+
+  /* allocate background elements textures */
+  for (i=0; i<2; i++)
+  {
+    /* frames */
+    if (menu->frames[i])
+    {
+      texture = (png_texture *)malloc(sizeof(png_texture));
+      if (texture)
+      {
+        image = menu->frames[i];
+        OpenPNGFromMemory(texture, image->data);
+        image->texture = texture;
+      }
+    }
+
+    /* key helpers */
+    if (menu->helpers[i])
+    {
+      texture = (png_texture *)malloc(sizeof(png_texture));
+      if (texture)
+      {
+        image = menu->helpers[i];
+        OpenPNGFromMemory(texture, image->data);
+        image->texture = texture;
+      }
+    }
+
+    /* up/down buttons */
+    if (menu->arrows[i])
+    {
+      button_data = menu->arrows[i]->data;
+      texture = (png_texture *)malloc(sizeof(png_texture));
+      if (texture)
+      {
+        OpenPNGFromMemory(texture, button_data->image);
+        button_data->texture = texture;
+      }
+    }
+
+    /* menu buttons */
+    for (j=0; j<menu->max_buttons; j++)
+    {
+      button_data = menu->buttons[j]->data;
+      if (!button_data->texture[i])
+      {
+        texture = (png_texture *)malloc(sizeof(png_texture));
+        if (texture)
+        {
+          OpenPNGFromMemory(texture, buttons_data->image[i]);
+          buttons_data->texture[i] = texture;
+        }
+      }
+    }
+  }
+
+  /* allocate item textures */
+  for (i=0; i<menu->max_items; i++)
+  {
+    item = menu->items[i];
+    if (item->data)
+    {
+      texture = (png_texture *)malloc(sizeof(png_texture));
+      if (texture)
+      {
+        OpenPNGFromMemory(texture, item->data);
+        items->texture = texture;
+      }
+    }
+  }
+}
+
+static void menu_delete(gui_menu *menu)
+{
+  int i,j;
+  png_texture *texture;
+  gui_item *item;
+  gui_butn *button;
+  gui_image *image;
+  butn_data *button_data;
+
+  /* free background image texture */
+  if (menu->background)
+  {
+    texture = menu->background->texture;
+    if (texture)
+    {
+      if (texture->data) free(texture.data);
+      free(texture);
+    }
+  }
+
+  /* allocate logo texture */
+  if (menu->logo)
+  {
+    texture = menu->logo->texture;
+    if (texture)
+    {
+      if (texture->data) free(texture.data);
+      free(texture);
+    }
+  }
+
+  /* allocate background elements textures */
+  for (i=0; i<2; i++)
+  {
+    /* frames */
+    if (menu->frames[i])
+    {
+      texture = menu->frames[i]->texture;
+      if (texture)
+      {
+        if (texture->data) free(texture.data);
+        free(texture);
+        texture = NULL;
+      }
+    }
+
+    /* key helpers */
+    if (menu->helpers[i])
+    {
+      texture = menu->helpers[i]->texture;
+      if (texture)
+      {
+        if (texture->data) free(texture.data);
+        free(texture);
+        texture = NULL;
+      }
+    }
+
+    /* up/down buttons */
+    if (menu->arrows[i])
+    {
+      texture = menu->arrows[i]->texture;
+      if (texture)
+      {
+        if (texture->data) free(texture.data);
+        free(texture);
+        texture = NULL;
+      }
+    }
+
+    /* menu buttons */
+    for (j=0; j<menu->max_buttons; j++)
+    {
+      button_data = menu->buttons[j]->data;
+      texture = button_data->texture[i];
+      if (texture)
+      {
+        if (texture->data) free(texture.data);
+        free(texture);
+        texture = NULL;
+      }
+    }
+  }
+
+  /* allocate item textures */
+  for (i=0; i<menu->max_items; i++)
+  {
+    texture = menu->items[i]->texture;
+    if (texture)
+    {
+      if (texture->data) free(texture.data);
+      free(texture);
+      texture = NULL;
+    }
+  }
+}
+
+static void menu_draw(gui_menu *menu)
 {
   int i;
   gui_item *item;
   gui_butn *button;
-  
-  /* texture data */
-  png_texture texture;
-  memset(&texture,0,sizeof(png_texture));
+  gui_image *image;
 
+  /* clear EFB */
   ClearScreen ((GXColor)BLACK);
 
-  /* background image */
-  if (menu->back_image)
+  /* draw background image */
+  image = menu->background;
+  if (image) DrawTexture(image->texture,image->x,image->y,image->w,image->h);
+
+  /* draw logo */
+  image = menu->logo;
+  if (image) DrawTexture(image->texture,image->x,image->y,image->w,image->h);
+
+  /* draw title */
+  if (menu->title) FONT_alignLeft(menu->title, 22,10,56);
+
+  /* draw background frames */
+  for (i=0; i<2; i++)
   {
-    OpenPNGFromMemory(&texture, menu->back_image);
-    DrawTexture(&texture, menu->back_x, menu->back_y,  texture.width, texture.height);
+    image = menu->frames[i];
+    if (image) DrawTexture(image->texture,image->x,image->y,image->w,image->h);
   }
 
-  /* bottom banner */
-  if (menu->banner_bottom)
+  /* draw left helper */
+  item = menu->helper[0];
+  if (item)
   {
-    OpenPNGFromMemory(&texture, menu->banner_bottom);
-    DrawTexture(&texture, 0, 480-texture.height, texture.width, texture.height);
+    DrawTexture(item->texture, item->x, item->y, item->w, item->h);
+    FONT_alignLeft(item->comment, 16, item->x+item->w+6,item->y+(item->h-16)/2 + 16);
   }
 
-  /* top banner (incl. sub-menu title and logo) */
-  if (menu->banner_top)
+  /* draw right helper */
+  item = menu->helper[1];
+  if (item)
   {
-    OpenPNGFromMemory(&texture, menu->banner_top);
-    DrawTexture(&texture, 0, 0, texture.width, texture.height);
-    OpenPNGFromMemory(&texture, Main_logo);
-    DrawTexture(&texture, 466, 40, 152, 44);
-    FONT_WriteLeft(menu->title, 22,10,56);
-  }
-  else
-  {
-    /* main logo */
-    OpenPNGFromMemory(&texture, Main_logo);
-    DrawTexture(&texture, 204, 372, texture.width, texture.height);
+    DrawTexture(item->texture, item->x, item->y, item->w, item->h);
+    FONT_alignRight(item->comment, 16, item->x - 6, item->y+(item->h-16)/2 + 16);
   }
 
-  /* helpers */
-  if (menu->helper[0])
-  {
-    item = menu->helper[0];
-    OpenPNGFromMemory(&texture, item->data);
-    DrawTexture(&texture, item->x, item->y, item->w, item->h);
-    FONT_WriteLeft(item->comment, 16, item->x+item->w+6,item->y+(item->h-16)/2 + 16);
-  }
-
-  if (menu->helper[1])
-  {
-    item = menu->helper[1];
-    OpenPNGFromMemory(&texture, item->data);
-    DrawTexture(&texture, item->x, item->y, item->w, item->h);
-    FONT_WriteRight(item->comment, 16, item->x - 6, item->y+(item->h-16)/2 + 16);
-  }
-
-  /* buttons + items */
+  /* draw buttons + items */
   for (i=0; i<menu->max_buttons; i++)
   {
     /* draw button */ 
     button = &menu->buttons[i];
-    if (i == menu->selected) OpenPNGFromMemory(&texture, button->img_over);
-    else OpenPNGFromMemory(&texture, button->img_norm);
-    DrawTexture(&texture, button->x, button->y, button->w, button->h);
+    DrawTexture(button->texture[i == menu->selected], button->x, button->y, button->w, button->h);
 
     /* draw item */
     item = &menu->items[menu->offset +i];
-    if (item->data)
+    if (item->texture) DrawTexture(item->texture, item->x, item->y, item->w, item->h);
+    else FONT_writeCenter(item->text, 18, button->x, button->x + button->w, button->y + (button->h - 18)/2 + 18);
+  }
+
+  /* Arrows (Items list only) */
+  for (i=0; i<2; i++)
+  {
+    button = menu->arrows[i];
+    if (button)
     {
-      OpenPNGFromMemory(&texture, item->data);
-      DrawTexture(&texture, item->x, item->y, item->w, item->h);
-    }
-    else
-    {
-      FONT_WriteCenter(item->text, 18, button->x, button->x + button->w, button->y + (button->h - 18)/2 + 18);
+      if (menu->selected == menu->max_buttons + i)
+      {
+        DrawTexture(button->texture[1], button->x-2, button->y-2, button->w+4, button->h+4);
+      }
+      else
+      {
+        DrawTexture(button->texture[0], button->x, button->y, button->w, button->h);
+      }
     }
   }
 
-  /* draw arrows */
-  if (menu->offset > 0)
+#ifdef HW_RVL
+  if (m_input.ir.valid)
   {
-    OpenPNGFromMemory(&texture, Button_up);
-    DrawTexture(&texture, 172, 82, texture.width, texture.height);
+    /* draw wiimote pointer */
+    gxResetCamera(m_input.ir.angle);
+    DrawTexture(&w_pointer, m_input.ir.x, m_input.ir.y, w_pointer.width, w_pointer.height);
+    gxResetCamera(0.0);
   }
-  if (menu->offset + menu->max_buttons < menu->max_items)
-  {
-    OpenPNGFromMemory(&texture, Button_down);
-    DrawTexture(&texture, 172, 362, texture.width, texture.height);
-  }
+#endif
 
+  /* copy EFB to XFB */
   SetScreen ();
 }
 
-int MenuCall (gui_menu *menu)
+static int menu_callback(gui_menu *menu)
 {
-  int redraw = 1;
-  short p;
+  u16 p;
+
+#ifdef HW_RVL
+  int i,x,y;
+  gui_butn *button;
+#endif
 
   for(;;)
   {
-    if (redraw)
-    {
-      MenuDraw(menu);
-      redraw = 0;
-    }
+    menu_draw(menu);
 
-    p = ogc_input__getMenuButtons();
-    
-    if (p & PAD_BUTTON_UP)
+    p = m_input.keys;
+
+#ifdef HW_RVL
+    if (Shutdown)
     {
-      redraw = 1;
+      /* autosave SRAM/State */
+      memfile_autosave();
+
+      /* shutdown Wii */
+      DI_Close();
+      SYS_ResetSystem(SYS_POWEROFF, 0, 0);
+    }
+    else if (m_input.ir.valid)
+    {
+      /* get cursor position */
+      x = m_input.ir.x;
+      y = m_input.ir.y;
+
+      /* check for valid buttons */
+      for (i=0; i<menu->max_buttons; i++)
+      {
+        button = &menu->buttons[i];
+        if ((x >= button->x) && (x <= (button->x + button->w)) && (y >= button->y) && (y <= (button->y + button->h)))
+        {
+          menu->selected = i;
+          break;
+        }
+      }
+
+      /* no valid buttons */
+      if (i == menu->max_buttons)
+      {
+        menu->selected = i + 2;
+        
+        /* check for arrow buttons */
+        if (menu->arrows[0])
+        {
+          button = menu->arrows[0];
+          if ((x >= button->x) && (x <= (button->x + button->w)) && (y >= button->y) && (y <= (button->y + button->h)))
+            menu->selected = i;
+        }
+        if (menu->arrows[1])
+        {
+          button = menu->arrows[1];
+          if ((x >= button->x) && (x <= (button->x + button->w)) && (y >= button->y) && (y <= (button->y + button->h)))
+            menu->selected = i +1;
+        }
+      }
+    }
+    else if (p & PAD_BUTTON_UP)
+    {
       if (menu->selected == 0)
       {
         if (menu->offset) menu->offset --;
@@ -489,7 +852,6 @@ int MenuCall (gui_menu *menu)
     }
     else if (p & PAD_BUTTON_DOWN)
     {
-      redraw = 1;
       if (menu->selected == (menu->max_buttons -1))
       {
         if ((menu->offset + menu->selected < (menu->max_items - 1))) menu->offset ++;
@@ -499,9 +861,32 @@ int MenuCall (gui_menu *menu)
         menu->selected += menu->shift;
       }
     }
+#else
+    if (p & PAD_BUTTON_UP)
+    {
+      if (menu->selected == 0)
+      {
+        if (menu->offset) menu->offset --;
+      }
+      else if (menu->selected >= menu->shift)
+      {
+        menu->selected -= menu->shift;
+      }
+    }
+    else if (p & PAD_BUTTON_DOWN)
+    {
+      if (menu->selected == (menu->max_buttons -1))
+      {
+        if ((menu->offset + menu->selected < (menu->max_items - 1))) menu->offset ++;
+      }
+      else if ((menu->selected + menu->shift) < menu->max_buttons)
+      {
+        menu->selected += menu->shift;
+      }
+    }
+ #endif
     else if (p & PAD_BUTTON_LEFT)
     {
-      redraw = 1;
       if (menu->shift > 1)
       {
         menu->selected --;
@@ -514,7 +899,6 @@ int MenuCall (gui_menu *menu)
     }
     else if (p & PAD_BUTTON_RIGHT)
     {
-      redraw = 1;
       if (menu->shift > 1)
       {
         menu->selected ++;
@@ -528,13 +912,104 @@ int MenuCall (gui_menu *menu)
 
     if (p & PAD_BUTTON_A)
     {
-      return menu->selected;
+      if (menu->selected == menu->max_buttons) menu->offset --;
+      else if (menu->selected == menu->max_buttons + 1) menu->offset ++;
+      else if (menu->selected < menu->max_buttons) return (menu->offset + menu->selected);
     }
     else if (p & PAD_BUTTON_B)
     {
       return  -1;
     }
+
+    /* update arrows status (items list) */
+    if (menu->offset > 0)
+      menu->arrows[0] = &arrow_up;
+    else
+      menu->arrows[0] = NULL;
+
+    if (menu->offset + menu->max_buttons < menu->max_items)
+      menu->arrows[1] = &arrow_down;
+    else
+      menu->arrows[1] = NULL;
+
+    /* update comment */
+    if (menu->helper[1])
+    {
+      gui_item *item = &menu->items[menu->offset + menu->selected];
+      strcpy(menu->helper[1]->comment,item->comment);
+    }
   }
+}
+
+void menu_update_inputs(u32 cnt)
+{
+  /* get gamepad inputs */
+  PAD_ScanPads();
+  u16 p = PAD_ButtonsDown(0);
+  s8 x  = PAD_StickX(0);
+  s8 y  = PAD_StickY(0);
+  if (x > 70) p |= PAD_BUTTON_RIGHT;
+  else if (x < -70) p |= PAD_BUTTON_LEFT;
+  if (y > 60) p |= PAD_BUTTON_UP;
+  else if (y < -60) p |= PAD_BUTTON_DOWN;
+
+#ifdef HW_RVL
+  /* get wiimote + expansions inputs */
+  WPAD_ScanPads();
+  u32 q = WPAD_ButtonsDown(0);
+  u32 h = WPAD_ButtonsHeld(0);
+  x = WPAD_StickX(0, 0);
+  y = WPAD_StickY(0, 0);
+
+  /* Wiimote orientation */
+  WPAD_IR(0, &M_inputs.ir);
+
+  /* wiimote directions */
+  if (m_inputs.ir.valid)
+  {
+    if (q & WPAD_BUTTON_UP)         p |= PAD_BUTTON_UP;
+    else if (q & WPAD_BUTTON_DOWN)  p |= PAD_BUTTON_DOWN;
+    else if (q & WPAD_BUTTON_LEFT)  p |= PAD_BUTTON_LEFT;
+    else if (q & WPAD_BUTTON_RIGHT) p |= PAD_BUTTON_RIGHT;
+  }
+  else
+  {
+    if (q & WPAD_BUTTON_UP)         p |= PAD_BUTTON_LEFT;
+    else if (q & WPAD_BUTTON_DOWN)  p |= PAD_BUTTON_RIGHT;
+    else if (q & WPAD_BUTTON_LEFT)  p |= PAD_BUTTON_DOWN;
+    else if (q & WPAD_BUTTON_RIGHT) p |= PAD_BUTTON_UP;
+  }
+
+  /* analog sticks */
+  if (y > 70)       p |= PAD_BUTTON_UP;
+  else if (y < -70) p |= PAD_BUTTON_DOWN;
+  if (x < -60)      p |= PAD_BUTTON_LEFT;
+  else if (x > 60)  p |= PAD_BUTTON_RIGHT;
+
+  /* classic controller directions */
+  if (q & WPAD_CLASSIC_BUTTON_UP)         p |= PAD_BUTTON_UP;
+  else if (q & WPAD_CLASSIC_BUTTON_DOWN)  p |= PAD_BUTTON_DOWN;
+  if (q & WPAD_CLASSIC_BUTTON_LEFT)       p |= PAD_BUTTON_LEFT;
+  else if (q & WPAD_CLASSIC_BUTTON_RIGHT) p |= PAD_BUTTON_RIGHT;
+
+  /* wiimote keys */
+  if (q & WPAD_BUTTON_MINUS)  p |= PAD_TRIGGER_L;
+  if (q & WPAD_BUTTON_PLUS)   p |= PAD_TRIGGER_R;
+  if (q & WPAD_BUTTON_A)      p |= PAD_BUTTON_A;
+  if (q & WPAD_BUTTON_B)      p |= PAD_BUTTON_B;
+  if (q & WPAD_BUTTON_2)      p |= PAD_BUTTON_A;
+  if (q & WPAD_BUTTON_1)      p |= PAD_BUTTON_B;
+  if (q & WPAD_BUTTON_HOME)   p |= PAD_TRIGGER_Z;
+
+  /* classic controller keys */
+  if (q & WPAD_CLASSIC_BUTTON_FULL_L) p |= PAD_TRIGGER_L;
+  if (q & WPAD_CLASSIC_BUTTON_FULL_R) p |= PAD_TRIGGER_R;
+  if (q & WPAD_CLASSIC_BUTTON_A)      p |= PAD_BUTTON_A;
+  if (q & WPAD_CLASSIC_BUTTON_B)      p |= PAD_BUTTON_B;
+  if (q & WPAD_CLASSIC_BUTTON_HOME)   p |= PAD_TRIGGER_Z;
+#endif
+
+  m_input.keys = p;
 }
 
 /***************************************************************************
@@ -597,7 +1072,7 @@ int domenu (char items[][25], int maxitems, u8 fastmove)
       redraw = 0;
     }
     
-    p = ogc_input__getMenuButtons();
+    p = ogc_input__getMenuButtons(0);
     
     if (p & PAD_BUTTON_UP)
     {
@@ -1539,7 +2014,7 @@ void showrominfo ()
     SetScreen ();
   }
 
-  p = ogc_input__getMenuButtons();
+  p = ogc_input__getMenuButtons(0);
   redraw = 0;
 
   if ((j<(max-8)) && (p & PAD_BUTTON_DOWN)) {redraw = 1; j++;}
@@ -1572,7 +2047,8 @@ void MainMenu (u32 fps)
     if (genromsize && (crccheck != sram.crc)) strcpy (menutitle, "*** SRAM has been modified ***");
     else if (genromsize) sprintf (menutitle, "%d FPS",fps);
 
-    ret = MenuCall(&menu_main);
+    menu_initialize(&menu_main);
+    ret = menu_callback(&menu_main);
     switch (ret)
     {
       case -1: /*** Button B ***/
@@ -1606,6 +2082,7 @@ void MainMenu (u32 fps)
 
 
       case 6:  /*** SD/PSO/TP Reload ***/
+        menu_delete(&menu_main);
         memfile_autosave();
         system_shutdown();
         audio_shutdown();
@@ -1619,6 +2096,7 @@ void MainMenu (u32 fps)
         break;
 
       case 7:  /*** Return to Wii System Menu ***/
+        menu_delete(&menu_main);
         memfile_autosave();
         system_shutdown();
         audio_shutdown();
@@ -1634,6 +2112,8 @@ void MainMenu (u32 fps)
         break;
     }
   }
+
+  menu_delete(&menu_main);
 
   /*** Remove any still held buttons ***/
   while (PAD_ButtonsHeld(0))  PAD_ScanPads();

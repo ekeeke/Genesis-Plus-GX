@@ -1653,7 +1653,6 @@ static void render_obj(uint32 line, uint8 *buf, uint8 *table)
   int height;
   int v_line;
   int column;
-  int sol_flag = 0;
   int left = 0x80;
   int right = 0x80 + bitmap.viewport.w;
 
@@ -1667,9 +1666,8 @@ static void render_obj(uint32 line, uint8 *buf, uint8 *table)
   {
     xpos = object_info[count].xpos & 0x1ff;
 
-    /* sprite masking */
-    if(xpos != 0) sol_flag = 1;
-    else if(xpos == 0 && sol_flag) return;
+    /* sprite masking (low priority sprite only) */
+    if(!xpos && count) return;
 
     size = object_info[count].size & 0x0f;
     width = sizetab[(size >> 2) & 3];
@@ -1730,7 +1728,6 @@ static void render_obj_im2(uint32 line, uint32 odd, uint8 *buf, uint8 *table)
   int height;
   int v_line;
   int column;
-  int sol_flag = 0;
   int left = 0x80;
   int right = 0x80 + bitmap.viewport.w;
 
@@ -1745,9 +1742,8 @@ static void render_obj_im2(uint32 line, uint32 odd, uint8 *buf, uint8 *table)
   {
     xpos = object_info[count].xpos & 0x1ff;
 
-    /* sprite masking */
-    if(xpos != 0) sol_flag = 1;
-    else if(xpos == 0 && sol_flag) return;
+    /* sprite masking (low priority sprite only) */
+    if(!xpos && count) return;
 
     size = object_info[count].size & 0x0f;
     width = sizetab[(size >> 2) & 3];

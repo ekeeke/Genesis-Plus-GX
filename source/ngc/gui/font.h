@@ -37,18 +37,18 @@ typedef struct
 } png_texture;
 
 extern void OpenPNGFromMemory(png_texture *texture, const u8 *buffer);
-extern void DrawTexture(png_texture *texture, u32 xOrigin, u32 yOrigin, u32 w, u32 h);
+extern void DrawTexture(png_texture *texture, int x, int y, int w, int h);
 
-extern int FONT_Init(void);
-void FONT_WriteLeft(char *string, u16 size, u16 x, u16 y);
-void FONT_WriteRight(char *string, u16 size, u16 x, u16 y);
-void FONT_WriteCenter(char *string, u16 size, u16 x1, u16 x2, u16 y);
+extern int  FONT_Init(void);
+extern void FONT_WriteLeft(char *string, int size, int x, int y);
+extern void FONT_WriteRight(char *string, int size, int x, int y);
+extern void FONT_WriteCenter(char *string, int size, int x1, int x2, int y);
 
 
 extern void WriteCentre_HL( int y, char *string);
 extern void WriteCentre (int y, char *string);
 extern void write_font (int x, int y, char *string);
-extern void WriteText(char *text, u16 size, u16 x, u16 y);
+extern void WriteText(char *text, int size, int x, int y);
 extern void WaitPrompt (char *msg);
 extern void ShowAction (char *msg);
 extern void WaitButtonA ();
