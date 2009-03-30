@@ -65,6 +65,7 @@
 #include "Key_A_wii.h"
 #include "Key_B_wii.h"
 #include "generic_point.h"
+#include "generic_openhand.h"
 #else
 #include "Key_A_gcn.h"
 #include "Key_B_gcn.h"
@@ -149,7 +150,7 @@ typedef struct
 } gui_menu;
 
 #ifdef HW_RVL
-static png_texture *w_pointer;
+static png_texture *w_pointer[2];
 #endif
 
 static gui_input m_input;
@@ -484,7 +485,8 @@ static void menu_initialize(gui_menu *menu)
 
 #ifdef HW_RVL
   /* allocate wiimote pointer data (only done once) */
-  w_pointer = OpenTexturePNG(generic_point);
+  w_pointer[0] = OpenTexturePNG(generic_point);
+  w_pointer[1] = OpenTexturePNG(generic_openhand);
 #endif
 
   /* allocate background image texture */
@@ -510,8 +512,8 @@ static void menu_initialize(gui_menu *menu)
   /* allocate arrow buttons */
   if (menu->max_items > menu->max_buttons)
   {
-    arrow_up_data.texture[0] = OpenTexturePNG(arrow_up_data.image[0]);
-    arrow_up_data.texture[1] = OpenTexturePNG(arrow_up_data.image[1]);
+    arrow_up_data.texture[0]   = OpenTexturePNG(arrow_up_data.image[0]);
+    arrow_up_data.texture[1]   = OpenTexturePNG(arrow_up_data.image[1]);
     arrow_down_data.texture[0] = OpenTexturePNG(arrow_down_data.image[0]);
     arrow_down_data.texture[1] = OpenTexturePNG(arrow_down_data.image[1]);
   }
@@ -539,17 +541,7 @@ static void menu_delete(gui_menu *menu)
   gui_butn *button;
   gui_item *item;
 
-#ifdef HW_RVL
-  /* free wiimote pointer data */
-  if (w_pointer)
-  {
-    if (w_pointer->data) free(w_pointer->data);
-    free(w_pointer);
-    w_pointer = NULL;
-  }
-#endif
-
-/* free background image texture */
+  /* free background image texture */
   if (menu->background)
   {
     texture = menu->background->texture;
@@ -576,6 +568,16 @@ static void menu_delete(gui_menu *menu)
   /* free background elements textures */
   for (i=0; i<2; i++)
   {
+#ifdef HW_RVL
+    /* free wiimote pointer data */
+    if (w_pointer[i])
+    {
+      if (w_pointer[i]->data) free(w_pointer[i]->data);
+      free(w_pointer[i]);
+      w_pointer[i] = NULL;
+    }
+#endif
+
     /* frames */
     if (menu->frames[i])
     {
@@ -730,7 +732,8 @@ static void menu_draw(gui_menu *menu)
   {
     /* draw wiimote pointer */
     gxResetCamera(m_input.ir.angle);
-    DrawTexture(w_pointer, m_input.ir.x, m_input.ir.y, w_pointer->width, w_pointer->height);
+    png_texture *texture = w_pointer[menu->selected != -1];
+    DrawTexture(texture, m_input.ir.x-texture->width/2, m_input.ir.y-texture->height/2, texture->width, texture->height);
     gxResetCamera(0.0);
   }
 #endif
@@ -742,6 +745,9 @@ static void menu_draw(gui_menu *menu)
 static int menu_callback(gui_menu *menu)
 {
   u16 p;
+  u16 max_buttons = menu->max_buttons;
+  u16 max_items = menu->max_items;
+  u16 shift = menu->shift;
 
 #ifdef HW_RVL
   int i,x,y;
@@ -771,7 +777,7 @@ static int menu_callback(gui_menu *menu)
       y = m_input.ir.y;
 
       /* check for valid buttons */
-      for (i=0; i<menu->max_buttons; i++)
+      for (i=0; i<max_buttons; i++)
       {
         button = &menu->buttons[i];
         if ((x >= button->x) && (x <= (button->x + button->w)) && (y >= button->y) && (y <= (button->y + button->h)))
@@ -782,22 +788,22 @@ static int menu_callback(gui_menu *menu)
       }
 
       /* no valid buttons */
-      if (i == menu->max_buttons)
+      if (i == max_buttons)
       {
-        menu->selected = i + 2;
+        menu->selected = -1;
         
         /* check for arrow buttons */
-        if (menu->arrows[0])
+        button = menu->arrows[0];
+        if (button)
         {
-          button = menu->arrows[0];
           if ((x >= button->x) && (x <= (button->x + button->w)) && (y >= button->y) && (y <= (button->y + button->h)))
             menu->selected = i;
         }
-        if (menu->arrows[1])
+        button = menu->arrows[1];
+        if (button)
         {
-          button = menu->arrows[1];
           if ((x >= button->x) && (x <= (button->x + button->w)) && (y >= button->y) && (y <= (button->y + button->h)))
-            menu->selected = i +1;
+            menu->selected = i + 1;
         }
       }
     }
@@ -807,20 +813,20 @@ static int menu_callback(gui_menu *menu)
       {
         if (menu->offset) menu->offset --;
       }
-      else if (menu->selected >= menu->shift)
+      else if (menu->selected >= shift)
       {
-        menu->selected -= menu->shift;
+        menu->selected -= shift;
       }
     }
     else if (p & PAD_BUTTON_DOWN)
     {
-      if (menu->selected == (menu->max_buttons -1))
+      if (menu->selected == (max_buttons - 1))
       {
-        if ((menu->offset + menu->selected < (menu->max_items - 1))) menu->offset ++;
+        if ((menu->offset + menu->selected < (max_items - 1))) menu->offset ++;
       }
-      else if ((menu->selected + menu->shift) < menu->max_buttons)
+      else if ((menu->selected + shift) < max_buttons)
       {
-        menu->selected += menu->shift;
+        menu->selected += shift;
       }
     }
 #else
@@ -830,26 +836,26 @@ static int menu_callback(gui_menu *menu)
       {
         if (menu->offset) menu->offset --;
       }
-      else if (menu->selected >= menu->shift)
+      else if (menu->selected >= shift)
       {
-        menu->selected -= menu->shift;
+        menu->selected -= shift;
       }
     }
     else if (p & PAD_BUTTON_DOWN)
     {
-      if (menu->selected == (menu->max_buttons -1))
+      if (menu->selected == (max_buttons - 1))
       {
-        if ((menu->offset + menu->selected < (menu->max_items - 1))) menu->offset ++;
+        if ((menu->offset + menu->selected < (max_items - 1))) menu->offset ++;
       }
-      else if ((menu->selected + menu->shift) < menu->max_buttons)
+      else if ((menu->selected + shift) < max_buttons)
       {
-        menu->selected += menu->shift;
+        menu->selected += shift;
       }
     }
  #endif
     else if (p & PAD_BUTTON_LEFT)
     {
-      if (menu->shift > 1)
+      if (shift > 1)
       {
         menu->selected --;
         if (menu->selected < 0) menu->selected = 0;
@@ -861,10 +867,10 @@ static int menu_callback(gui_menu *menu)
     }
     else if (p & PAD_BUTTON_RIGHT)
     {
-      if (menu->shift > 1)
+      if (shift > 1)
       {
         menu->selected ++;
-        if (menu->selected >= menu->max_buttons) menu->selected = menu->max_buttons - 1;
+        if (menu->selected >= max_buttons) menu->selected = max_buttons - 1;
       }
       else
       {
@@ -874,9 +880,9 @@ static int menu_callback(gui_menu *menu)
 
     if (p & PAD_BUTTON_A)
     {
-      if (menu->selected == menu->max_buttons) menu->offset --;
-      else if (menu->selected == menu->max_buttons + 1) menu->offset ++;
-      else if (menu->selected < menu->max_buttons) return (menu->offset + menu->selected);
+      if (menu->selected == max_buttons) menu->offset --;
+      else if (menu->selected == max_buttons + 1) menu->offset ++;
+      else if (menu->selected != -1) return (menu->offset + menu->selected);
     }
     else if (p & PAD_BUTTON_B)
     {
@@ -884,21 +890,19 @@ static int menu_callback(gui_menu *menu)
     }
 
     /* update arrows status (items list) */
-    if (menu->offset > 0)
-      menu->arrows[0] = &arrow_up;
-    else
-      menu->arrows[0] = NULL;
-
-    if (menu->offset + menu->max_buttons < menu->max_items)
-      menu->arrows[1] = &arrow_down;
-    else
-      menu->arrows[1] = NULL;
+    menu->arrows[0] = NULL;
+    menu->arrows[1] = NULL;
+    if (menu->offset > 0) menu->arrows[0] = &arrow_up;
+    if (menu->offset + max_buttons < max_items) menu->arrows[1] = &arrow_down;
 
     /* update comment */
     if (menu->helpers[1])
     {
-      gui_item *item = &menu->items[menu->offset + menu->selected];
-      if (item->comment) strcpy(menu->helpers[1]->comment,item->comment);
+      if ((menu->offset + menu->selected) < max_items)
+      {
+        gui_item *item = &menu->items[menu->offset + menu->selected];
+        if (item->comment) strcpy(menu->helpers[1]->comment,item->comment);
+      }
     }
   }
 }
