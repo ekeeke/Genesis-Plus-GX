@@ -40,9 +40,9 @@ extern void OpenPNGFromMemory(png_texture *texture, const u8 *buffer);
 extern void DrawTexture(png_texture *texture, int x, int y, int w, int h);
 
 extern int  FONT_Init(void);
-extern void FONT_WriteLeft(char *string, int size, int x, int y);
-extern void FONT_WriteRight(char *string, int size, int x, int y);
-extern void FONT_WriteCenter(char *string, int size, int x1, int x2, int y);
+extern void FONT_alignLeft(char *string, int size, int x, int y);
+extern void FONT_alignRight(char *string, int size, int x, int y);
+extern void FONT_writeCenter(char *string, int size, int x1, int x2, int y);
 
 
 extern void WriteCentre_HL( int y, char *string);

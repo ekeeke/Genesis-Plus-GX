@@ -152,7 +152,7 @@ void WriteCentre_HL( int y, char *string)
   DrawTexture(&texture, 0, y-fheight,  640, fheight);
 }
 
-void FONT_WriteLeft(char *string, int size, int x, int y)
+void FONT_alignLeft(char *string, int size, int x, int y)
 {
   x -= (vmode->fbWidth / 2);
   y -= (vmode->efbHeight / 2);
@@ -164,7 +164,7 @@ void FONT_WriteLeft(char *string, int size, int x, int y)
   }
 }
 
-void FONT_WriteRight(char *string, int size, int x, int y)
+void FONT_alignRight(char *string, int size, int x, int y)
 {
   int i;
   u16 width = 0;
@@ -182,7 +182,7 @@ void FONT_WriteRight(char *string, int size, int x, int y)
   }
 }
 
-void FONT_WriteCenter(char *string, int size, int x1, int x2, int y)
+void FONT_writeCenter(char *string, int size, int x1, int x2, int y)
 {
   int i;
   u16 width = 0;
@@ -427,7 +427,6 @@ void DrawTexture(png_texture *texture, int x, int y, int w, int h)
     GX_InitTexObjLOD(&texObj,GX_LINEAR,GX_LIN_MIP_LIN,0.0,10.0,0.0,GX_FALSE,GX_TRUE,GX_ANISO_4);
     GX_LoadTexObj(&texObj, GX_TEXMAP0);
     GX_InvalidateTexAll();
-    DCFlushRange(texture->data, texture->width * texture->height * 4);
 
     /* adjust coordinate system */
     x -= (vmode->fbWidth/2);
@@ -445,9 +444,6 @@ void DrawTexture(png_texture *texture, int x, int y, int w, int h)
     GX_TexCoord2f32(0.0, 0.0);
     GX_End ();
     GX_DrawDone();
-
-    /* free texture data array */
-    free(texture->data);
   }
 }
 
@@ -473,6 +469,8 @@ void ClearScreen (GXColor color)
   GX_CopyDisp(xfb[whichfb], GX_TRUE);
   GX_Flush();
 }
+
+extern s16 ogc_input__getMenuButtons(u32 cnt);
 
 void WaitButtonA ()
 {

@@ -100,6 +100,7 @@ int FileSortCallback(const void *f1, const void *f2)
  * ROM size is returned
  *
  ****************************************************************************/ 
+extern s16 ogc_input__getMenuButtons(u32 cnt);
 int FileSelector(unsigned char *buffer) 
 {
   short p;

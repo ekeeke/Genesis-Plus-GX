@@ -27,6 +27,7 @@
 #define MAXCODES 8
 
 extern char menutitle[60];
+extern s16 ogc_input__getMenuButtons(u32 cnt);
 
 typedef struct
 {

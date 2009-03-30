@@ -29,6 +29,8 @@
 #include "Background_intro_c3.h"
 #include "Background_intro_c4.h"
 
+extern s16 ogc_input__getMenuButtons(u32 cnt);
+
 /* 
  * This is the legal stuff - which must be shown at program startup 
  * Any derivative work MUST include the same textual output.
