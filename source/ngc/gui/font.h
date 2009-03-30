@@ -36,7 +36,7 @@ typedef struct
   u8 format;
 } png_texture;
 
-extern void OpenPNGFromMemory(png_texture *texture, const u8 *buffer);
+extern png_texture *OpenTexturePNG(const u8 *buffer);
 extern void DrawTexture(png_texture *texture, int x, int y, int w, int h);
 
 extern int  FONT_Init(void);

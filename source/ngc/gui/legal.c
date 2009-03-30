@@ -40,9 +40,10 @@ extern s16 ogc_input__getMenuButtons(u32 cnt);
 void legal ()
 {
   int ypos = 64;
-  png_texture texture;
+  png_texture *texture;
 
   ClearScreen((GXColor)BLACK);
+
   WriteCentre (ypos, "Genesis Plus Sega Mega Drive Emulator (v1.2a)");
   ypos += fheight;
   WriteCentre (ypos, "(C) 1999 - 2003 Charles MacDonald");
@@ -62,13 +63,14 @@ void legal ()
   WriteCentre (ypos, "You are free to use it as you wish.");
   ypos += 2*fheight;
 
-  texture.data   = 0;
-  texture.width  = 0;
-  texture.height = 0;
-  texture.format = 0;
-  OpenPNGFromMemory(&texture, Background_intro_c4);
-  DrawTexture(&texture, (640-texture.width)/2, ypos, texture.width, texture.height);
-  ypos += texture.height + 2 * fheight;
+  texture= OpenTexturePNG(Background_intro_c4);
+  if (texture)
+  {
+    DrawTexture(texture, (640-texture->width)/2, ypos, texture->width, texture->height);
+    ypos += texture->height + 2 * fheight;
+    if (texture->data) free(texture->data);
+    free(texture);
+  }
 
   SetScreen ();
   sleep (2);
@@ -77,35 +79,39 @@ void legal ()
   sleep (2);
   if (ogc_input__getMenuButtons(0) & PAD_BUTTON_A) return;
 
-
   ClearScreen((GXColor)BLACK);
-  texture.data   = 0;
-  texture.width  = 0;
-  texture.height = 0;
-  texture.format = 0;
-  OpenPNGFromMemory(&texture, Background_intro_c1);
-  DrawTexture(&texture, (640-texture.width)/2, (480-texture.height)/2,  texture.width, texture.height);
+  texture = OpenTexturePNG(Background_intro_c1);
+  if (texture)
+  {
+    DrawTexture(texture, (640-texture->width)/2, (480-texture->height)/2,  texture->width, texture->height);
+    if (texture->data) free(texture->data);
+    free(texture);
+  }
+
   SetScreen ();
   sleep (1);
 
   ClearScreen((GXColor)WHITE);
-  texture.data   = 0;
-  texture.width  = 0;
-  texture.height = 0;
-  texture.format = 0;
-  OpenPNGFromMemory(&texture, Background_intro_c2);
-  DrawTexture(&texture, (640-texture.width)/2, (480-texture.height)/2,  texture.width, texture.height);
+  texture = OpenTexturePNG(Background_intro_c2);
+  if (texture)
+  {
+    DrawTexture(texture, (640-texture->width)/2, (480-texture->height)/2,  texture->width, texture->height);
+    if (texture->data) free(texture->data);
+    free(texture);
+  }
+
   SetScreen ();
   sleep (1);
 
   ClearScreen((GXColor)BLACK);
-  texture.data   = 0;
-  texture.width  = 0;
-  texture.height = 0;
-  texture.format = 0;
-  OpenPNGFromMemory(&texture, Background_intro_c3);
-  DrawTexture(&texture, (640-texture.width)/2, (480-texture.height)/2,  texture.width, texture.height);
+  texture = OpenTexturePNG(Background_intro_c3);
+  if (texture)
+  {
+    DrawTexture(texture, (640-texture->width)/2, (480-texture->height)/2,  texture->width, texture->height);
+    if (texture->data) free(texture->data);
+    free(texture);
+  }
+
   SetScreen ();
   sleep (2);
-
 }

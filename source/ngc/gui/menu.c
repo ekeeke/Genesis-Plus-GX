@@ -135,10 +135,10 @@ typedef struct
 {
   char *title;                /* menu title                                         */
   s8 selected;                /* index of selected item                             */
-  u8 shift;                   /* number of items by line                            */
   u8 offset;                  /* items list offset                                  */
   u8 max_items;               /* total number of items                              */
   u8 max_buttons;             /* total number of buttons (not necessary identical)  */
+  u8 shift;                   /* number of items by line                            */
   gui_item *items;            /* menu items table                                   */
   gui_butn *buttons;          /* menu buttons table                                 */
   gui_image *background;      /* background image                                   */
@@ -149,7 +149,7 @@ typedef struct
 } gui_menu;
 
 #ifdef HW_RVL
-static png_texture w_pointer = {0,0,0,0};
+static png_texture *w_pointer;
 #endif
 
 static gui_input m_input;
@@ -320,11 +320,11 @@ static gui_item items_load[3] =
 
 static gui_item items_options[5] =
 {
-  {NULL,Option_system,NULL,"Configure System settings", 114,142,80,92},
-  {NULL,Option_video ,NULL,"Configure Video settings",  288,150,64,84},
-  {NULL,Option_sound ,NULL,"Configure Audio settings",  464,154,44,80},
-  {NULL,Option_ctrl  ,NULL,"Configure Input settings",  192,286,88,92},
-  {NULL,Option_ggenie,NULL,"Configure Game Genie Codes",360,282,88,96}
+  {NULL,Option_system,NULL,"System settings", 114,142,80,92},
+  {NULL,Option_video ,NULL,"Video settings",  288,150,64,84},
+  {NULL,Option_sound ,NULL,"Audio settings",  464,154,44,80},
+  {NULL,Option_ctrl  ,NULL,"Input settings",  192,286,88,92},
+  {NULL,Option_ggenie,NULL,"Game Genie Codes",360,282,88,96}
 };
 
 
@@ -419,7 +419,7 @@ static gui_menu menu_load =
 /* Options menu */
 static gui_menu menu_options =
 {
-  "Emulator Settings",
+  "Settings",
   0,0,5,5,3,
   items_options,
   buttons_options,
@@ -441,7 +441,7 @@ static gui_menu menu_system =
   &logo_small,
   {&top_frame,&bottom_frame},
   {&action_cancel, &action_select},
-  {NULL, NULL}
+  {NULL, &arrow_down}
 };
 
 /* Video Options menu */
@@ -455,7 +455,7 @@ static gui_menu menu_video =
   &logo_small,
   {&top_frame,&bottom_frame},
   {&action_cancel, &action_select},
-  {NULL, NULL}
+  {NULL, &arrow_down}
 };
 
 /* Sound Options menu */
@@ -469,7 +469,7 @@ static gui_menu menu_audio =
   &logo_small,
   {&top_frame,&bottom_frame},
   {&action_cancel, &action_select},
-  {NULL, NULL}
+  {NULL, &arrow_down}
 };
 
 /*****************************************************************************/
@@ -478,128 +478,57 @@ static gui_menu menu_audio =
 static void menu_initialize(gui_menu *menu)
 {
   int i;
-  png_texture *texture;
   gui_item *item;
   gui_image *image;
   gui_butn *button;
-  butn_data *button_data;
 
 #ifdef HW_RVL
   /* allocate wiimote pointer data (only done once) */
-  if (w_pointer.data == NULL)
-  {
-    OpenPNGFromMemory(&w_pointer, generic_point);
-  }
+  w_pointer = OpenTexturePNG(generic_point);
 #endif
 
   /* allocate background image texture */
-  if (menu->background)
-  {
-    texture = (png_texture *)malloc(sizeof(png_texture));
-    if (texture)
-    {
-      image = menu->background;
-      OpenPNGFromMemory(texture, image->data);
-      image->texture = texture;
-    }
-  }
+  image = menu->background;
+  if (image) image->texture = OpenTexturePNG(image->data);
 
   /* allocate logo texture */
-  if (menu->logo)
-  {
-    texture = (png_texture *)malloc(sizeof(png_texture));
-    if (texture)
-    {
-      image = menu->logo;
-      OpenPNGFromMemory(texture, image->data);
-      image->texture = texture;
-    }
-  }
+  image = menu->logo;
+  if (image) image->texture = OpenTexturePNG(image->data);
 
   /* allocate background elements textures */
   for (i=0; i<2; i++)
   {
     /* frames */
-    if (menu->frames[i])
-    {
-      texture = (png_texture *)malloc(sizeof(png_texture));
-      if (texture)
-      {
-        image = menu->frames[i];
-        OpenPNGFromMemory(texture, image->data);
-        image->texture = texture;
-      }
-    }
+    image = menu->frames[i];
+    if (image) image->texture = OpenTexturePNG(image->data);
 
     /* key helpers */
-    if (menu->helpers[i])
-    {
-      texture = (png_texture *)malloc(sizeof(png_texture));
-      if (texture)
-      {
-        item = menu->helpers[i];
-        OpenPNGFromMemory(texture, item->data);
-        item->texture = texture;
-      }
-    }
-
-    /* up/down buttons */
-    if (menu->arrows[i])
-    {
-      button_data = menu->arrows[i]->data;
-      texture = (png_texture *)malloc(sizeof(png_texture));
-      if (texture)
-      {
-        OpenPNGFromMemory(texture, button_data->image[0]);
-        button_data->texture[0] = texture;
-      }
-      texture = (png_texture *)malloc(sizeof(png_texture));
-      if (texture)
-      {
-        OpenPNGFromMemory(texture, button_data->image[1]);
-        button_data->texture[1] = texture;
-      }
-    }
+    item = menu->helpers[i];
+    if (item) item->texture = OpenTexturePNG(item->data);
   }
 
-  /* menu buttons */
+  /* allocate arrow buttons */
+  if (menu->max_items > menu->max_buttons)
+  {
+    arrow_up_data.texture[0] = OpenTexturePNG(arrow_up_data.image[0]);
+    arrow_up_data.texture[1] = OpenTexturePNG(arrow_up_data.image[1]);
+    arrow_down_data.texture[0] = OpenTexturePNG(arrow_down_data.image[0]);
+    arrow_down_data.texture[1] = OpenTexturePNG(arrow_down_data.image[1]);
+  }
+
+  /* allocate menu buttons */
   for (i=0; i<menu->max_buttons; i++)
   {
     button = &menu->buttons[i];
-    button_data = button->data;
-    if (button_data->texture[0] == NULL)
-    {
-      texture = (png_texture *)malloc(sizeof(png_texture));
-      if (texture)
-      {
-        OpenPNGFromMemory(texture, button_data->image[0]);
-        button_data->texture[0] = texture;
-      }
-    }
-    if (button_data->texture[1] == NULL)
-    {
-      texture = (png_texture *)malloc(sizeof(png_texture));
-      if (texture)
-      {
-        OpenPNGFromMemory(texture, button_data->image[1]);
-        button_data->texture[1] = texture;
-      }
-    }
+    if (!button->data->texture[0]) button->data->texture[0] = OpenTexturePNG(button->data->image[0]);
+    if (!button->data->texture[1]) button->data->texture[1] = OpenTexturePNG(button->data->image[1]);
   }
 
   /* allocate item textures */
   for (i=0; i<menu->max_items; i++)
   {
     item = &menu->items[i];
-    if (item->data)
-    {
-      texture = (png_texture *)malloc(sizeof(png_texture));
-      if (texture)
-      {
-        OpenPNGFromMemory(texture, item->data);
-        item->texture = texture;
-      }
-    }
+    if (item->data) item->texture = OpenTexturePNG(item->data);
   }
 }
 
@@ -609,9 +538,18 @@ static void menu_delete(gui_menu *menu)
   png_texture *texture;
   gui_butn *button;
   gui_item *item;
-  butn_data *button_data;
 
-  /* free background image texture */
+#ifdef HW_RVL
+  /* free wiimote pointer data */
+  if (w_pointer)
+  {
+    if (w_pointer->data) free(w_pointer->data);
+    free(w_pointer);
+    w_pointer = NULL;
+  }
+#endif
+
+/* free background image texture */
   if (menu->background)
   {
     texture = menu->background->texture;
@@ -619,10 +557,11 @@ static void menu_delete(gui_menu *menu)
     {
       if (texture->data) free(texture->data);
       free(texture);
+      menu->background->texture = NULL;
     }
   }
 
-  /* allocate logo texture */
+  /* free logo texture */
   if (menu->logo)
   {
     texture = menu->logo->texture;
@@ -630,10 +569,11 @@ static void menu_delete(gui_menu *menu)
     {
       if (texture->data) free(texture->data);
       free(texture);
+      menu->logo->texture = NULL;
     }
   }
 
-  /* allocate background elements textures */
+  /* free background elements textures */
   for (i=0; i<2; i++)
   {
     /* frames */
@@ -644,7 +584,7 @@ static void menu_delete(gui_menu *menu)
       {
         if (texture->data) free(texture->data);
         free(texture);
-        texture = NULL;
+        menu->frames[i]->texture = NULL;
       }
     }
 
@@ -656,52 +596,48 @@ static void menu_delete(gui_menu *menu)
       {
         if (texture->data) free(texture->data);
         free(texture);
-        texture = NULL;
+        menu->helpers[i]->texture = NULL;
       }
     }
 
-    /* up/down buttons */
-    if (menu->arrows[i])
+    /* up/down arrows */
+    texture = arrow_up_data.texture[i];
+    if (texture)
     {
-      texture = menu->arrows[i]->data->texture[0];
-      if (texture)
-      {
-        if (texture->data) free(texture->data);
-        free(texture);
-        texture = NULL;
-      }
-      texture = menu->arrows[i]->data->texture[1];
-      if (texture)
-      {
-        if (texture->data) free(texture->data);
-        free(texture);
-        texture = NULL;
-      }
+      if (texture->data) free(texture->data);
+      free(texture);
+      arrow_up_data.texture[i] = NULL;
+    }
+    texture = arrow_down_data.texture[i];
+    if (texture)
+    {
+      if (texture->data) free(texture->data);
+      free(texture);
+      arrow_up_data.texture[i] = NULL;
     }
   }
 
-  /* menu buttons */
+  /* free menu buttons */
   for (i=0; i<menu->max_buttons; i++)
   {
     button = &menu->buttons[i];
-    button_data = button->data;
-    texture = button_data->texture[0];
+    texture = button->data->texture[0];
     if (texture)
     {
       if (texture->data) free(texture->data);
       free(texture);
-      texture = NULL;
+      button->data->texture[0] = NULL;
     }
-    texture = button_data->texture[1];
+    texture = button->data->texture[1];
     if (texture)
     {
       if (texture->data) free(texture->data);
       free(texture);
-      texture = NULL;
+      button->data->texture[1] = NULL;
     }
   }
 
-  /* allocate item textures */
+  /* free item textures */
   for (i=0; i<menu->max_items; i++)
   {
     item = &menu->items[i];
@@ -710,7 +646,7 @@ static void menu_delete(gui_menu *menu)
     {
       if (texture->data) free(texture->data);
       free(texture);
-      texture = NULL;
+      item->texture = NULL;
     }
   }
 }
@@ -767,9 +703,9 @@ static void menu_draw(gui_menu *menu)
     DrawTexture(button->data->texture[i==menu->selected], button->x, button->y, button->w, button->h);
 
     /* draw item */
-    /*item = &menu->items[menu->offset +i];
+    item = &menu->items[menu->offset +i];
     if (item->data) DrawTexture(item->texture, item->x, item->y, item->w, item->h);
-    else FONT_writeCenter(item->text, 18, button->x, button->x + button->w, button->y + (button->h - 18)/2 + 18);*/
+    else FONT_writeCenter(item->text, 18, button->x, button->x + button->w, button->y + (button->h - 18)/2 + 18);
   }
 
   /* Arrows (Items list only) */
@@ -794,7 +730,7 @@ static void menu_draw(gui_menu *menu)
   {
     /* draw wiimote pointer */
     gxResetCamera(m_input.ir.angle);
-    DrawTexture(&w_pointer, m_input.ir.x, m_input.ir.y, w_pointer.width, w_pointer.height);
+    DrawTexture(w_pointer, m_input.ir.x, m_input.ir.y, w_pointer->width, w_pointer->height);
     gxResetCamera(0.0);
   }
 #endif
@@ -969,6 +905,11 @@ static int menu_callback(gui_menu *menu)
 
 s16 ogc_input__getMenuButtons(u32 cnt)
 {
+  return m_input.keys;
+}
+
+static void menu_updateInputs(u32 cnt)
+{
   /* get gamepad inputs */
   PAD_ScanPads();
   s16 p = PAD_ButtonsDown(0);
@@ -1036,8 +977,6 @@ s16 ogc_input__getMenuButtons(u32 cnt)
 #endif
 
   m_input.keys = p;
-
-  return p;
 }
 
 /***************************************************************************
@@ -1059,19 +998,39 @@ static void drawmenu (char items[][25], int maxitems, int selected)
   ypos += 130;
 
   /* reset texture data */
-  png_texture texture;
+  png_texture *texture;
   memset(&texture,0,sizeof(png_texture));
 
   /* draw background items */
   ClearScreen ((GXColor)BLACK);
-  OpenPNGFromMemory(&texture, Background_main);
-  DrawTexture(&texture, (640-texture.width)/2, (480-124-texture.height)/2,  texture.width, texture.height);
-  OpenPNGFromMemory(&texture, Banner_bottom);
-  DrawTexture(&texture, 640-texture.width, 480-texture.height, texture.width, texture.height);
-  OpenPNGFromMemory(&texture, Banner_top);
-  DrawTexture(&texture, 640-texture.width, 0, texture.width, texture.height);
-  OpenPNGFromMemory(&texture, Main_logo);
-  DrawTexture(&texture, 444, 28, 176, 48);
+  texture= OpenTexturePNG(Background_main);
+  if (texture)
+  {
+    DrawTexture(texture, (640-texture->width)/2, (480-texture->height)/2, texture->width, texture->height);
+    if (texture->data) free(texture->data);
+    free(texture);
+  }
+  texture= OpenTexturePNG(Banner_bottom);
+  if (texture)
+  {
+    DrawTexture(texture, 0, 480-texture->height, texture->width, texture->height);
+    if (texture->data) free(texture->data);
+    free(texture);
+  }
+  texture= OpenTexturePNG(Banner_top);
+  if (texture)
+  {
+    DrawTexture(texture, 0, 0, texture->width, texture->height);
+    if (texture->data) free(texture->data);
+    free(texture);
+  }
+  texture= OpenTexturePNG(Main_logo);
+  if (texture)
+  {
+    DrawTexture(texture, 444, 28, 176, 48);
+    if (texture->data) free(texture->data);
+    free(texture);
+  }
 
   for (i = 0; i < maxitems; i++)
   {
@@ -2064,6 +2023,8 @@ void MainMenu (u32 fps)
 
   gui_menu *m = &menu_main;
 
+  VIDEO_SetPostRetraceCallback(menu_updateInputs);
+
   while (quit == 0)
   {
 /*  crccheck = crc32 (0, &sram.sram[0], 0x10000);
@@ -2136,6 +2097,8 @@ void MainMenu (u32 fps)
         break;
     }
   }
+
+  VIDEO_SetPostRetraceCallback(NULL);
 
   /*** Remove any still held buttons ***/
   while (PAD_ButtonsHeld(0))  PAD_ScanPads();

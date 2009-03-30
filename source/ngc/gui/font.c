@@ -143,13 +143,13 @@ void WriteCentre( int y, char *string)
 void WriteCentre_HL( int y, char *string)
 {
   WriteCentre(y, string);
-  png_texture texture;
-  texture.data   = 0;
-  texture.width  = 0;
-  texture.height = 0;
-  texture.format = 0;
-  OpenPNGFromMemory(&texture, Overlay_bar);
-  DrawTexture(&texture, 0, y-fheight,  640, fheight);
+  png_texture *texture = OpenTexturePNG(Overlay_bar);
+  if (texture)
+  {
+    DrawTexture(texture, 0, y-fheight,  640, fheight);
+    if (texture->data) free(texture->data);
+    free(texture);
+  }
 }
 
 void FONT_alignLeft(char *string, int size, int x, int y)
@@ -257,7 +257,7 @@ static void png_read_from_mem (png_structp png_ptr, png_bytep data, png_size_t l
 }
 
 /* convert a png file into RGBA8 texture */
-void OpenPNGFromMemory(png_texture *texture, const u8 *buffer)
+png_texture *OpenTexturePNG(const u8 *buffer)
 {
   int i;
   png_file file;
@@ -271,14 +271,14 @@ void OpenPNGFromMemory(png_texture *texture, const u8 *buffer)
 
   /* create a png read struct */
   png_structp png_ptr = png_create_read_struct (PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
-  if (!png_ptr) return;
+  if (!png_ptr) return NULL;
 
   /* create a png info struct */
   png_infop info_ptr = png_create_info_struct (png_ptr);
   if (!info_ptr)
   {
     png_destroy_read_struct (&png_ptr, NULL, NULL);
-    return;
+    return NULL;
   }
 
   /* set callback for the read function */
@@ -313,7 +313,7 @@ void OpenPNGFromMemory(png_texture *texture, const u8 *buffer)
   if (!img_data)
   {
     png_destroy_read_struct (&png_ptr, &info_ptr, NULL);
-    return;
+    return NULL;
   }
 
   /* allocate row pointer data */
@@ -322,7 +322,7 @@ void OpenPNGFromMemory(png_texture *texture, const u8 *buffer)
   {
     free (img_data);
     png_destroy_read_struct (&png_ptr, &info_ptr, NULL);
-    return;
+    return NULL;
   }
 
   /* store raw image data */
@@ -340,12 +340,22 @@ void OpenPNGFromMemory(png_texture *texture, const u8 *buffer)
   free(row_pointers);
 
   /* initialize texture */
+  png_texture *texture = (png_texture *)memalign(32, sizeof(png_texture));
+  if (!texture)
+  {
+    free (img_data);
+    png_destroy_read_struct (&png_ptr, &info_ptr, NULL);
+    return NULL;
+  }
+
+  /* initialize texture data */
   texture->data = memalign(32, stride * height);
   if (!texture->data)
   {
     free (img_data);
     png_destroy_read_struct (&png_ptr, &info_ptr, NULL);
-    return;
+    free(texture);
+    return NULL;
   }
 
   memset(texture->data, 0, stride * height);
@@ -415,10 +425,18 @@ void OpenPNGFromMemory(png_texture *texture, const u8 *buffer)
 
   /* flush texture data from cache */
   DCFlushRange(texture->data, height * stride);
+
+  return texture;
 }
 
 void DrawTexture(png_texture *texture, int x, int y, int w, int h)
 {
+  if (!texture) 
+  {
+    FONT_alignLeft("error",16,x,y);
+    return;
+  }
+
   if (texture->data)
   {
     /* load texture object */
