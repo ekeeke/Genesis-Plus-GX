@@ -3,7 +3,7 @@
  *
  *  Genesis Plus GX menu
  *
- *  code by Softdev (March 2006), Eke-Eke (2007,2008)
+ *  code by Eke-Eke (march 2009)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -95,8 +95,8 @@ typedef struct
 {
   png_texture *texture; /* temporary texture data                               */
   const u8 *data;       /* pointer to png image data (items icon only)          */
-  char *text;           /* item string (items list only)                        */
-  char *comment;        /* item comment                                         */
+  char text[64];        /* item string (items list only)                        */
+  char comment[64];     /* item comment                                         */
   u16 x;                /* button image or text X position (upper left corner)  */
   u16 y;                /* button image or text Y position (upper left corner)  */
   u16 w;                /* button image or text width                           */
@@ -134,7 +134,7 @@ typedef struct
 /* Menu descriptor */
 typedef struct
 {
-  char *title;                /* menu title                                         */
+  char title[64];             /* menu title                                         */
   s8 selected;                /* index of selected item                             */
   u8 offset;                  /* items list offset                                  */
   u8 max_items;               /* total number of items                              */
@@ -232,24 +232,24 @@ static gui_butn arrow_down  = {&arrow_down_data,172,360,36,36};
 static gui_item action_cancel =
 {
 #ifdef HW_RVL
-  NULL,Key_B_wii,NULL,"Back to previous",10,422,28,28
+  NULL,Key_B_wii,"","Back to previous",10,422,28,28
 #else
-  NULL,Key_B_gcn,NULL,"Back to previous",10,422,28,28
+  NULL,Key_B_gcn,"","Back to previous",10,422,28,28
 #endif
 };
 
 static gui_item action_select =
 {
 #ifdef HW_RVL
-  NULL,Key_A_wii,NULL,"Select",602,422,28,28
+  NULL,Key_A_wii,"","Select",602,422,28,28
 #else
-  NULL,Key_A_gcn,NULL,"Select",602,422,28,28
+  NULL,Key_A_gcn,"","Select",602,422,28,28
 #endif
 };
 
 static gui_item action_exit =
 {
-  NULL,Key_home,NULL,"Exit",10,388,24,24
+  NULL,Key_home,"","Exit",10,388,24,24
 };
 
 
@@ -294,38 +294,38 @@ static gui_item items_video[8] =
 /* Main menu */
 static gui_item items_main[6] =
 {
-  {NULL,Main_play   ,NULL,NULL,108, 76,92,88},
-  {NULL,Main_load   ,NULL,NULL,280, 72,80,92},
-  {NULL,Main_options,NULL,NULL,456, 76,60,88},
-  {NULL,Main_file   ,NULL,NULL,114,216,80,92},
-  {NULL,Main_reset  ,NULL,NULL,282,224,76,84},
-  {NULL,Main_info   ,NULL,NULL,446,212,88,96}
+  {NULL,Main_play   ,"","",108, 76,92,88},
+  {NULL,Main_load   ,"","",280, 72,80,92},
+  {NULL,Main_options,"","",456, 76,60,88},
+  {NULL,Main_file   ,"","",114,216,80,92},
+  {NULL,Main_reset  ,"","",282,224,76,84},
+  {NULL,Main_info   ,"","",446,212,88,96}
 };
 
 #ifdef HW_RVL
 static gui_item items_load[4] =
 {
-  {NULL,Load_recent,NULL,"Load recent files",             276,120,88,96},
-  {NULL,Load_sd    ,NULL,"Load ROM files from SDCARD",    110,266,88,96},
-  {NULL,Load_usb   ,NULL,"Load ROM files from USB device",276,266,88,96},
-  {NULL,Load_dvd   ,NULL,"Load ROM files from DVD",       442,266,88,96}
+  {NULL,Load_recent,"","Load recent files",             276,120,88,96},
+  {NULL,Load_sd    ,"","Load ROM files from SDCARD",    110,266,88,96},
+  {NULL,Load_usb   ,"","Load ROM files from USB device",276,266,88,96},
+  {NULL,Load_dvd   ,"","Load ROM files from DVD",       442,266,88,96}
 };
 #else
 static gui_item items_load[3] =
 {
-  {NULL,Load_recent,NULL,"Load recent files",         110,198,88,96},
-  {NULL,Load_sd    ,NULL,"Load ROM files from SDCARD",276,198,88,96},
-  {NULL,Load_dvd   ,NULL,"Load ROM files from DVD",   442,198,88,96}
+  {NULL,Load_recent,"","Load recent files",         110,198,88,96},
+  {NULL,Load_sd    ,"","Load ROM files from SDCARD",276,198,88,96},
+  {NULL,Load_dvd   ,"","Load ROM files from DVD",   442,198,88,96}
 };
 #endif
 
 static gui_item items_options[5] =
 {
-  {NULL,Option_system,NULL,"System settings", 114,142,80,92},
-  {NULL,Option_video ,NULL,"Video settings",  288,150,64,84},
-  {NULL,Option_sound ,NULL,"Audio settings",  464,154,44,80},
-  {NULL,Option_ctrl  ,NULL,"Input settings",  192,286,88,92},
-  {NULL,Option_ggenie,NULL,"Game Genie Codes",360,282,88,96}
+  {NULL,Option_system,"","System settings", 114,142,80,92},
+  {NULL,Option_video ,"","Video settings",  288,150,64,84},
+  {NULL,Option_sound ,"","Audio settings",  464,154,44,80},
+  {NULL,Option_ctrl  ,"","Input settings",  192,286,88,92},
+  {NULL,Option_ggenie,"","Game Genie Codes",360,282,88,96}
 };
 
 
@@ -388,7 +388,7 @@ static gui_butn buttons_options[5] =
 /* Main menu */
 static gui_menu menu_main =
 {
-  NULL,
+  "",
   0,0,6,6,3,
   items_main,
   buttons_main,
@@ -486,7 +486,7 @@ static void menu_initialize(gui_menu *menu)
 #ifdef HW_RVL
   /* allocate wiimote pointer data (only done once) */
   w_pointer[0] = OpenTexturePNG(generic_point);
-  w_pointer[1] = OpenTexturePNG(generic_openhand);
+/*  w_pointer[1] = OpenTexturePNG(generic_openhand);*/
 #endif
 
   /* allocate background image texture */
@@ -615,7 +615,7 @@ static void menu_delete(gui_menu *menu)
     {
       if (texture->data) free(texture->data);
       free(texture);
-      arrow_up_data.texture[i] = NULL;
+      arrow_down_data.texture[i] = NULL;
     }
   }
 
@@ -679,7 +679,7 @@ static void menu_draw(gui_menu *menu)
   if (image) DrawTexture(image->texture,image->x,image->y,image->w,image->h);
 
   /* draw title */
-  if (menu->title) FONT_alignLeft(menu->title, 22,10,56);
+  FONT_alignLeft(menu->title, 22,10,56);
 
   /* draw left helper */
   item = menu->helpers[0];
@@ -732,7 +732,7 @@ static void menu_draw(gui_menu *menu)
   {
     /* draw wiimote pointer */
     gxResetCamera(m_input.ir.angle);
-    png_texture *texture = w_pointer[menu->selected != -1];
+    png_texture *texture = w_pointer[0];
     DrawTexture(texture, m_input.ir.x-texture->width/2, m_input.ir.y-texture->height/2, texture->width, texture->height);
     gxResetCamera(0.0);
   }
@@ -790,19 +790,19 @@ static int menu_callback(gui_menu *menu)
       /* no valid buttons */
       if (i == max_buttons)
       {
-        menu->selected = -1;
+        menu->selected = i + 2;
         
         /* check for arrow buttons */
         button = menu->arrows[0];
         if (button)
         {
-          if ((x >= button->x) && (x <= (button->x + button->w)) && (y >= button->y) && (y <= (button->y + button->h)))
+          if ((y <= button->y + button->h) && (x < 320))
             menu->selected = i;
         }
         button = menu->arrows[1];
         if (button)
         {
-          if ((x >= button->x) && (x <= (button->x + button->w)) && (y >= button->y) && (y <= (button->y + button->h)))
+          if ((y >= button->y) && (x < 320))
             menu->selected = i + 1;
         }
       }
@@ -880,9 +880,9 @@ static int menu_callback(gui_menu *menu)
 
     if (p & PAD_BUTTON_A)
     {
-      if (menu->selected == max_buttons) menu->offset --;
+      if (menu->selected < max_buttons) return (menu->offset + menu->selected);
+      else if (menu->selected == max_buttons) menu->offset --;
       else if (menu->selected == max_buttons + 1) menu->offset ++;
-      else if (menu->selected != -1) return (menu->offset + menu->selected);
     }
     else if (p & PAD_BUTTON_B)
     {
@@ -898,11 +898,12 @@ static int menu_callback(gui_menu *menu)
     /* update comment */
     if (menu->helpers[1])
     {
-      if ((menu->offset + menu->selected) < max_items)
+      if (menu->selected < max_buttons)
       {
         gui_item *item = &menu->items[menu->offset + menu->selected];
-        if (item->comment) strcpy(menu->helpers[1]->comment,item->comment);
+        strcpy(menu->helpers[1]->comment,item->comment);
       }
+      else strcpy(menu->helpers[1]->comment,"");
     }
   }
 }
@@ -1115,7 +1116,6 @@ static void soundmenu ()
   gui_menu *m = &menu_audio;
   gui_item *items = m->items;
 
-  menu_initialize(m);
 
   while (quit == 0)
   {
@@ -1127,7 +1127,9 @@ static void soundmenu ()
     else if (config.hq_fm == 1) sprintf (items[4].text, "HQ YM2612: LINEAR");
     else sprintf (items[4].text, "HQ YM2612: SINC");
 
+    menu_initialize(m);
     ret = menu_callback(m);
+    menu_delete(m);
     switch (ret)
     {
       case 0:
@@ -1174,7 +1176,6 @@ static void soundmenu ()
         break;
     }
   }
-  menu_delete(m);
 }
 
 /****************************************************************************
