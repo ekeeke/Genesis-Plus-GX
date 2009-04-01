@@ -354,7 +354,7 @@ static void gxStart(void)
 }
 
 /* Reset GX rendering */
-static void gxResetRendering(bool isMenu)
+static void gxResetRendering(u8 isMenu)
 {
   GX_ClearVtxDesc();
 
@@ -554,18 +554,14 @@ void gxResetCamera(f32 angle)
 /* Restore Menu Video mode */
 void ogc_video__stop(void)
 {
-  VIDEO_WaitVSync();
-  VIDEO_Configure(vmode);
-  VIDEO_ClearFrameBuffer(vmode, xfb[0], COLOR_BLACK);
-  VIDEO_ClearFrameBuffer(vmode, xfb[1], COLOR_BLACK);
-  VIDEO_SetPreRetraceCallback(NULL);
-  VIDEO_Flush();
-  VIDEO_WaitVSync();
-  VIDEO_WaitVSync();
-
   /* reset GX */
-  gxResetRendering(GX_TRUE);
+  gxResetRendering(1);
   gxResetView(vmode);
+
+  ogc_video_caption(0xff);
+  VIDEO_Configure(vmode);
+  VIDEO_SetPreRetraceCallback(NULL);
+  SetScreen ();
 }
 
 /* Update Video settings */
@@ -576,13 +572,13 @@ void ogc_video__start(void)
   else gc_pal = 0;
 
   /* Video Interrupt synchronization */
-  if (!gc_pal && !vdp_pal) VIDEO_SetPreRetraceCallback(VSyncCallback);
-
-  /* clear screen */
-  VIDEO_ClearFrameBuffer(vmode, xfb[0], COLOR_BLACK);
-  VIDEO_ClearFrameBuffer(vmode, xfb[1], COLOR_BLACK);
-  VIDEO_Flush();
-  VIDEO_WaitVSync();
+  VIDEO_SetPostRetraceCallback(NULL);
+  if (!gc_pal && !vdp_pal)
+  {
+    VIDEO_SetPreRetraceCallback(VSyncCallback);
+    VIDEO_Flush();
+    VIDEO_WaitVSync();
+  }
 
   /* interlaced/progressive mode */
   if (config.render == 2)
@@ -623,7 +619,7 @@ void ogc_video__start(void)
   bitmap.viewport.changed = 1;
 
   /* reset GX rendering */
-  gxResetRendering(GX_FALSE);
+  gxResetRendering(0);
 
 }
 
@@ -828,7 +824,7 @@ void ogc_video__init(void)
 
   /* Initialize GX */
   gxStart();
-  gxResetRendering(GX_TRUE);
+  gxResetRendering(1);
   gxResetView(vmode);
 
   /* Initialize Font */

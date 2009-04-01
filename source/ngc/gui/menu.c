@@ -792,8 +792,8 @@ static void menu_fade(gui_menu *menu, u8 speed, u8 out)
 
   /* alpha step */
   u16 alpha = out ? 128 : 255;
-  int alpha_step = out ? (128/offset) : -(128/offset);
-
+  s16 alpha_step = (127 * speed) /offset;
+  if (!out) alpha_step = -alpha_step;
 
   /* loop until final position is reeached */
   while (offset > 0)
@@ -2164,6 +2164,8 @@ void MainMenu (u32 fps)
         if (genromsize || (config.bios_enabled == 3))
         {
           system_reset (); 
+          VIDEO_ClearFrameBuffer(vmode, xfb[whichfb], COLOR_BLACK);
+          VIDEO_Flush();
           quit = 1;
         }
         break;
@@ -2203,7 +2205,8 @@ void MainMenu (u32 fps)
     }
   }
 
-  VIDEO_SetPostRetraceCallback(NULL);
+  /* clear EFB */
+  ClearScreen ((GXColor)BLACK);
 
   /*** Remove any still held buttons ***/
   while (PAD_ButtonsHeld(0))  PAD_ScanPads();
