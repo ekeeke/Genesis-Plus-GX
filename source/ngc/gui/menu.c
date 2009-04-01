@@ -663,6 +663,11 @@ static void menu_draw(gui_menu *menu)
   /* clear EFB */
   ClearScreen ((GXColor)BLACK);
 
+  if ((menu == &menu_main) && genromsize)
+  {
+    ogc_video_caption(128);
+  }
+
   /* draw background image */
   image = menu->background;
   if (image) DrawTexture(image->texture,image->x,image->y,image->w,image->h);
@@ -740,6 +745,93 @@ static void menu_draw(gui_menu *menu)
 
   /* copy EFB to XFB */
   SetScreen ();
+}
+
+static void menu_fade(gui_menu *menu, u8 speed, u8 out)
+{
+  int offset;
+  int yfinal[3];
+  gui_image *image[3];
+
+  menu_initialize(menu);
+
+  offset = 0;
+  yfinal[0] = 0;
+  yfinal[1] = 0;
+  yfinal[2] = 0;
+
+  /* logo (top or bottom) */
+  image[2] = menu->logo;
+
+  /* Top banner */
+  image[0] = menu->frames[0];
+  if (image[0])
+  {
+    /* intial offset */
+    offset = image[0]->y + image[0]->h;
+
+    /* final ypos */
+    yfinal[0] = out ? (-image[0]->h) : (image[0]->y);
+    if (image[2] && !image[1]) yfinal[2] = out ? (image[2]->y - offset) : image[2]->y;
+  }
+
+  /* Bottom banner */
+  image[1] = menu->frames[1];
+  if (image[1])
+  {
+    if ((480 + image[1]->h - image[1]->y) > offset)
+    {
+      /* intial offset */
+      offset = 480 - image[1]->y;
+
+      /* final ypos */
+      yfinal[1] = out ? 480 : (image[1]->y);
+      if (image[2] && !image[0]) yfinal[2] = out ? (image[2]->y + offset) : image[2]->y;
+    }
+  }
+
+  /* alpha step */
+  u16 alpha = out ? 128 : 255;
+  int alpha_step = out ? (128/offset) : -(128/offset);
+
+
+  /* loop until final position is reeached */
+  while (offset > 0)
+  {
+    /* clear EFB */
+    ClearScreen ((GXColor)BLACK);
+
+    if ((menu == &menu_main) && genromsize)
+    {
+      ogc_video_caption(alpha);
+    }
+
+    /* draw top banner + logo */
+    if (image[out])
+    {
+      DrawTexture(image[out]->texture,image[out]->x,yfinal[out]-offset,image[out]->w,image[out]->h);
+      if (image[2] && !image[out^1]) DrawTexture(image[2]->texture,image[2]->x,yfinal[2]-offset,image[2]->w,image[2]->h);
+    }
+    /*  draw bottom banner + logo */
+    if (image[out^1])
+    {
+      DrawTexture(image[out^1]->texture,image[out^1]->x,yfinal[out^1]+offset,image[out^1]->w,image[out^1]->h);
+      if (image[2] && !image[out]) DrawTexture(image[2]->texture,image[2]->x,image[2]->y+offset,image[2]->w,image[2]->h);
+    }
+
+    /* update offset */
+    offset -= speed;
+
+    /* update alpha */
+    alpha += alpha_step;
+    if (alpha > 255) alpha = 255;
+
+    /* copy EFB to XFB */
+    SetScreen ();
+  }
+
+  if (!out) menu_draw(menu);
+  menu_delete(menu);
 }
 
 static int menu_callback(gui_menu *menu)
@@ -2030,6 +2122,9 @@ void MainMenu (u32 fps)
 
   VIDEO_SetPostRetraceCallback(menu_updateInputs);
 
+  /* basic fade-in effect */
+  menu_fade(m,10,0);
+
   while (quit == 0)
   {
 /*  crccheck = crc32 (0, &sram.sram[0], 0x10000);
@@ -2045,7 +2140,12 @@ void MainMenu (u32 fps)
     {
       case -1: /*** Button B ***/
       case 0:  /*** Play Game ***/
-        if (genromsize) quit = 1;
+        if (genromsize)
+        {
+          /* basic fade-out effect */
+          menu_fade(m,10,1);
+          quit = 1;
+        }
         break;
 
       case 1:  /*** Load ROM Menu ***/

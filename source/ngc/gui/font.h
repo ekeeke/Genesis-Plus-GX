@@ -25,8 +25,8 @@
 #ifndef _FONT_H
 #define _FONT_H
 
-#define BLACK {0,0,0,255}
-#define WHITE {255,255,255,255}
+#define BLACK {0,0,0,0xff}
+#define WHITE {0xff,0xff,0xff,0xff}
 
 typedef struct
 {

@@ -338,13 +338,8 @@ static void gxStart(void)
   GX_SetPixelFmt(GX_PF_RGB8_Z24, GX_ZC_LINEAR);
   GX_SetCullMode(GX_CULL_NONE);
   GX_SetDispCopyGamma(GX_GM_1_0);
-  GX_SetBlendMode(GX_BM_BLEND,GX_BL_SRCALPHA,GX_BL_INVSRCALPHA,GX_LO_CLEAR);
   GX_SetZMode(GX_FALSE, GX_ALWAYS, GX_TRUE);
   GX_SetColorUpdate(GX_TRUE);
-  GX_SetTevOp(GX_TEVSTAGE0, GX_REPLACE);
-  GX_SetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP0, GX_COLORNULL);
-  GX_SetNumTexGens(1);
-  GX_SetNumChans(0);
 
   /* Modelview */
   Mtx view;
@@ -358,31 +353,49 @@ static void gxStart(void)
   memset (texturemem, 0, TEX_SIZE);
 }
 
-/* Reset GX vertex attributes */
-static void gxResetVtx(bool isMenu)
+/* Reset GX rendering */
+static void gxResetRendering(bool isMenu)
 {
   GX_ClearVtxDesc();
 
-  /* Set Position Params (quad aspect ratio) */
   if (isMenu)
   {
-    /* menu uses direct position */
+    /* GX menu (uses direct positionning, alpha blending & color channel) */
     GX_SetBlendMode(GX_BM_BLEND,GX_BL_SRCALPHA,GX_BL_INVSRCALPHA,GX_LO_CLEAR);
     GX_SetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XY, GX_S16, 0);
+    GX_SetVtxAttrFmt(GX_VTXFMT0, GX_VA_CLR0, GX_CLR_RGBA, GX_RGBA8, 0);
+    GX_SetVtxAttrFmt(GX_VTXFMT0, GX_VA_TEX0, GX_TEX_ST, GX_F32, 0);
     GX_SetVtxDesc(GX_VA_POS, GX_DIRECT);
+    GX_SetVtxDesc(GX_VA_TEX0, GX_DIRECT);
+    GX_SetVtxDesc (GX_VA_CLR0, GX_DIRECT);
+    /* 
+       Color.out = Color.rasterized*Color.texture
+       Alpha.out = Alpha.rasterized*Alpha.texture 
+    */
+    GX_SetTevOp (GX_TEVSTAGE0, GX_MODULATE);
+    GX_SetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP0, GX_COLOR0A0);
+    GX_SetNumTexGens(1);
+    GX_SetNumChans(1);
   }
   else
   {
-    /* emulation uses an indexed array for easy control on aspect ratio */
+    /* video emulation (uses array positionning, no alpha blending, no color channel) */
     GX_SetBlendMode(GX_BM_NONE,GX_BL_SRCALPHA,GX_BL_INVSRCALPHA,GX_LO_CLEAR);
     GX_SetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XYZ, GX_S16, 0);
+    GX_SetVtxAttrFmt(GX_VTXFMT0, GX_VA_TEX0, GX_TEX_ST, GX_F32, 0);
     GX_SetVtxDesc(GX_VA_POS, GX_INDEX8);
+    GX_SetVtxDesc(GX_VA_TEX0, GX_DIRECT);
     GX_SetArray(GX_VA_POS, square, 3 * sizeof (s16));
+    /* 
+       Color.out = Color.texture
+       Alpha.out = Alpha.texture 
+    */
+    GX_SetTevOp (GX_TEVSTAGE0, GX_REPLACE);
+    GX_SetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP0, GX_COLORNULL);
+    GX_SetNumTexGens(1);
+    GX_SetNumChans(0);
   }
 
-  /* Set Tex Coord Params */
-  GX_SetVtxAttrFmt(GX_VTXFMT0, GX_VA_TEX0, GX_TEX_ST, GX_F32, 0);
-  GX_SetVtxDesc(GX_VA_TEX0, GX_DIRECT);
   GX_Flush();
 }
 
@@ -551,7 +564,7 @@ void ogc_video__stop(void)
   VIDEO_WaitVSync();
 
   /* reset GX */
-  gxResetVtx(GX_TRUE);
+  gxResetRendering(GX_TRUE);
   gxResetView(vmode);
 }
 
@@ -609,21 +622,42 @@ void ogc_video__start(void)
   /* apply changes on next video update */
   bitmap.viewport.changed = 1;
 
-  /* reset GX */
-  gxResetVtx(GX_FALSE);
+  /* reset GX rendering */
+  gxResetRendering(GX_FALSE);
 
 }
 
-static GXTexObj texobj;
+static u32 vwidth,vheight;
 
-void ogc_video_caption(void)
+void ogc_video_caption(u8 alpha)
 {
-  gxResetVtx(0);
+  GXTexObj texobj;
+  GX_InitTexObj(&texobj, texturemem, vwidth, vheight, GX_TF_RGB565, GX_CLAMP, GX_CLAMP, GX_FALSE);
   GX_LoadTexObj(&texobj, GX_TEXMAP0);
   GX_InvalidateTexAll();
-  draw_square();
+
+  /* reset Scaler (display screenshot in background) */
+  s32 x = config.overscan ? -352 : -320;
+  s32 y = config.overscan ? -240 : -224;
+  s32 w = config.overscan ? 704 : 640;
+  s32 h = config.overscan ? 480 : 448;
+
+  /* Draw textured quad */
+  GX_Begin(GX_QUADS, GX_VTXFMT0, 4);
+  GX_Position2s16(x,y+h);
+  GX_Color4u8(0xff,0xff,0xff,alpha);
+  GX_TexCoord2f32(0.0, 1.0);
+  GX_Position2s16(x+w,y+h);
+  GX_Color4u8(0xff,0xff,0xff,alpha);
+  GX_TexCoord2f32(1.0, 1.0);
+  GX_Position2s16(x+w,y);
+  GX_Color4u8(0xff,0xff,0xff,alpha);
+  GX_TexCoord2f32(1.0, 0.0);
+  GX_Position2s16(x,y);
+  GX_Color4u8(0xff,0xff,0xff,alpha);
+  GX_TexCoord2f32(0.0, 0.0);
+  GX_End ();
   GX_DrawDone();
-  gxResetVtx(1);
 }
 
 /* GX render update */
@@ -635,8 +669,8 @@ void ogc_video__update(void)
     bitmap.viewport.changed = 0;
 
     /* update texture size */
-    u32 vwidth  = bitmap.viewport.w + 2 * bitmap.viewport.x;
-    u32 vheight = bitmap.viewport.h + 2 * bitmap.viewport.y;
+    vwidth  = bitmap.viewport.w + 2 * bitmap.viewport.x;
+    vheight = bitmap.viewport.h + 2 * bitmap.viewport.y;
 
     /* special cases */
     if (config.render && interlaced) vheight = vheight << 1;
@@ -647,6 +681,7 @@ void ogc_video__update(void)
     vheight = (vheight >> 2) << 2;
 
     /* initialize texture object */
+    GXTexObj texobj;
     GX_InitTexObj(&texobj, texturemem, vwidth, vheight, GX_TF_RGB565, GX_CLAMP, GX_CLAMP, GX_FALSE);
 
     /* configure texture filtering */
@@ -736,12 +771,8 @@ void ogc_video__init(void)
       TV60hz_480i.viTVMode = VI_TVMODE_EURGB60_INT;
       config.tv_mode = 1;
 
-      /* display should be centered vertically (borders) */
+      /* use harwdare vertical scaling to fill screen */
       vmode = &TVPal574IntDfScale;
-      vmode->xfbHeight = 480;
-      vmode->viYOrigin = (VI_MAX_HEIGHT_PAL - 480)/2;
-      vmode->viHeight = 480;
-
       break;
     
     case VI_NTSC: /* 480 lines (NTSC 60hz) */
@@ -797,7 +828,7 @@ void ogc_video__init(void)
 
   /* Initialize GX */
   gxStart();
-  gxResetVtx(GX_TRUE);
+  gxResetRendering(GX_TRUE);
   gxResetView(vmode);
 
   /* Initialize Font */

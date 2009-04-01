@@ -34,7 +34,7 @@ extern void ogc_video__init(void);
 extern void ogc_video__start(void);
 extern void ogc_video__stop(void);
 extern void ogc_video__update(void);
-extern void ogc_video_caption(void);
+extern void ogc_video_caption(u8 alpha);
 extern void gxResetCamera(f32 angle);
 
 

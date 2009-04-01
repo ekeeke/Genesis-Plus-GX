@@ -87,7 +87,7 @@ int FONT_Init(void)
   return 0;
 }
 
-static void DrawChar(unsigned char c, int xpos, int ypos, int size)
+static void DrawChar(unsigned char c, int xpos, int ypos, int size, GXColor color)
 {
   s32 width;
 
@@ -108,12 +108,16 @@ static void DrawChar(unsigned char c, int xpos, int ypos, int size)
   /* GX rendering */
   GX_Begin(GX_QUADS, GX_VTXFMT0, 4);
   GX_Position2s16(xpos, ypos - size);
+  GX_Color4u8(color.r, color.g, color.b, 0xff);
   GX_TexCoord2f32(0.0, 0.0);
   GX_Position2s16(xpos + width, ypos - size);
+  GX_Color4u8(color.r, color.g, color.b, 0xff);
   GX_TexCoord2f32(1.0, 0.0);
   GX_Position2s16(xpos + width, ypos);
+  GX_Color4u8(color.r, color.g, color.b, 0xff);
   GX_TexCoord2f32(1.0, 1.0);
   GX_Position2s16(xpos, ypos);
+  GX_Color4u8(color.r, color.g, color.b, 0xff);
   GX_TexCoord2f32(0.0, 1.0);
   GX_End ();
   GX_DrawDone();
@@ -125,7 +129,7 @@ void write_font(int x, int y, char *string)
   int ox = x;
   while (*string && (x < (ox + back_framewidth)))
   {
-    DrawChar(*string, x -(vmode->fbWidth/2), y-(vmode->efbHeight/2),fontHeader->cell_height);
+    DrawChar(*string, x -(vmode->fbWidth/2), y-(vmode->efbHeight/2),fontHeader->cell_height,(GXColor)WHITE);
     x += font_size[(u8)*string];
     string++;
   }
@@ -159,7 +163,7 @@ void FONT_alignLeft(char *string, int size, int x, int y)
 
   while (*string)
   {
-    DrawChar(*string, x, y, size);
+    DrawChar(*string, x, y, size,(GXColor)WHITE);
     x += (font_size[(u8)*string++] * size) / fheight;
   }
 }
@@ -177,7 +181,7 @@ void FONT_alignRight(char *string, int size, int x, int y)
 
   while (*string)
   {
-    DrawChar(*string, x, y, size);
+    DrawChar(*string, x, y, size,(GXColor)WHITE);
     x += (font_size[(u8)*string++] * size) / fheight;
   }
 }
@@ -195,7 +199,7 @@ void FONT_writeCenter(char *string, int size, int x1, int x2, int y)
 
   while (*string)
   {
-    DrawChar(*string, x1, y, size);
+    DrawChar(*string, x1, y, size,(GXColor)WHITE);
     x1 += (font_size[(u8)*string++] * size) / fheight;
   }
 }
@@ -453,12 +457,16 @@ void DrawTexture(png_texture *texture, int x, int y, int w, int h)
     /* Draw textured quad */
     GX_Begin(GX_QUADS, GX_VTXFMT0, 4);
     GX_Position2s16(x,y+h);
+    GX_Color4u8(0xff,0xff,0xff,0xff);
     GX_TexCoord2f32(0.0, 1.0);
     GX_Position2s16(x+w,y+h);
+    GX_Color4u8(0xff,0xff,0xff,0xff);
     GX_TexCoord2f32(1.0, 1.0);
     GX_Position2s16(x+w,y);
+    GX_Color4u8(0xff,0xff,0xff,0xff);
     GX_TexCoord2f32(1.0, 0.0);
     GX_Position2s16(x,y);
+    GX_Color4u8(0xff,0xff,0xff,0xff);
     GX_TexCoord2f32(0.0, 0.0);
     GX_End ();
     GX_DrawDone();
