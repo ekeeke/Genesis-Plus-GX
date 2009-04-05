@@ -135,9 +135,9 @@ int main (int argc, char *argv[])
   uint32 FramesPerSecond  = 0;
 
   /* initialize OGC subsystems */
-  ogc_video__init();
-  ogc_input__init();
-  ogc_audio__init();
+  ogc_video_init();
+  ogc_input_init();
+  ogc_audio_init();
 
 #ifdef HW_DOL
   /* initialize GC DVD interface */
@@ -175,15 +175,20 @@ int main (int argc, char *argv[])
   /* initialize Virtual Machine */
   init_machine ();
 
-  /* load any injected rom */
+  /* run any injected rom */
   if (genromsize)
   {
     ARAMFetch((char *)cart_rom, (void *)0x8000, genromsize);
     reloadrom ();
+    ogc_video_start();
+    ogc_audio_start();
+    frameticker = 1;
   }
-
-  /* show menu first */
-  ConfigRequested = 1;
+  else
+  {
+    /* show menu first */
+    ConfigRequested = 1;
+  }
 
   /* main emulation loop */
   while (1)
@@ -192,8 +197,8 @@ int main (int argc, char *argv[])
     if (ConfigRequested)
     {
       /* stop audio & video */
-      ogc_audio__stop();
-      ogc_video__stop();
+      ogc_audio_stop();
+      ogc_video_stop();
 
       /* go to menu */
       MainMenu (FramesPerSecond);
@@ -205,8 +210,8 @@ int main (int argc, char *argv[])
       FramesPerSecond = vdp_rate;
 
       /* start audio & video */
-      ogc_video__start();
-      ogc_audio__start();
+      ogc_video_start();
+      ogc_audio_start();
 
       /* reset framesync */
       frameticker = 1;
@@ -219,7 +224,7 @@ int main (int argc, char *argv[])
       system_frame (1);
 
       /* update audio only */
-      ogc_audio__update();
+      ogc_audio_update();
     }
     else
     {
@@ -231,8 +236,8 @@ int main (int argc, char *argv[])
       system_frame (0);
 
       /* update video & audio */
-      ogc_video__update();
-      ogc_audio__update();
+      ogc_video_update();
+      ogc_audio_update();
       RenderedFrames++;
     }
 

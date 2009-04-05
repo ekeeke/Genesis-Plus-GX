@@ -107,7 +107,7 @@ void set_config_defaults(void)
   config.bilinear = 1;
 
   /* controllers options */
-  ogc_input__set_defaults();
+  ogc_input_default();
   config.gun_cursor   = 1;
   config.invert_mouse = 0;
 }

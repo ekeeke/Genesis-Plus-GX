@@ -24,18 +24,27 @@
 #ifndef _GC_VIDEO_H_
 #define _GC_VIDEO_H_
 
+typedef struct
+{
+  u8 *data;
+  u16 width;
+  u16 height;
+  u8 format;
+} gx_texture;
+
 extern unsigned int *xfb[2];
 extern int whichfb;
 extern GXRModeObj *vmode;
 extern u8 *texturemem;
 extern u8 gc_pal;
 
-extern void ogc_video__init(void);
-extern void ogc_video__start(void);
-extern void ogc_video__stop(void);
-extern void ogc_video__update(void);
-extern void ogc_video_caption(u8 alpha);
+extern void ogc_video_init(void);
+extern void ogc_video_start(void);
+extern void ogc_video_stop(void);
+extern void ogc_video_update(void);
+
 extern void gxResetCamera(f32 angle);
+extern void gxDrawScreenshot(u8 alpha);
 
 
 

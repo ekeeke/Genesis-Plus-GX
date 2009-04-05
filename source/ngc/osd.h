@@ -30,6 +30,7 @@ extern int ManageSRAM(u8 direction, u8 device);
 extern int ManageState(u8 direction, u8 device);
 extern void memfile_autosave();
 extern void memfile_autoload();
+extern void menu_updateInputs(u32 cnt);
 
 extern u8 fat_enabled;
 extern u32 frameticker;

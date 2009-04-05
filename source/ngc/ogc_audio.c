@@ -22,6 +22,11 @@
  ***************************************************************************/
 
 #include "shared.h"
+#include "button_select.h"
+#include "button_over.h"
+#include "button_back.h"
+
+#include <asndlib.h>
 
 /* DMA soundbuffers (required to be 32-bytes aligned)
    Length is dimensionned for one frame of emulation (see below)
@@ -66,10 +71,31 @@ static void AudioDmaCallback(void)
      This function initializes the Audio Interface
      Default samplerate is set to 48khZ
  ***/
-void ogc_audio__init(void)
+void ogc_audio_init(void)
 {
   AUDIO_Init (NULL);
   AUDIO_SetDSPSampleRate (AI_SAMPLERATE_48KHZ);
+
+  uint8 temp;
+  int i;
+  for (i=0; i<button_over_size; i+=2)
+  {
+    temp = button_over[i];
+    button_over[i] = button_over[i+1];
+    button_over[i+1] = temp;
+  }
+  for (i=0; i<button_back_size; i+=2)
+  {
+    temp = button_back[i];
+    button_back[i] = button_back[i+1];
+    button_back[i+1] = temp;
+  }
+  for (i=0; i<button_select_size; i+=2)
+  {
+    temp = button_select[i];
+    button_select[i] = button_over[i+1];
+    button_select[i+1] = temp;
+  }
 }
 
 /*** 
@@ -81,7 +107,7 @@ void ogc_audio__init(void)
      This function retrieves samples for the frame then set the next DMA parameters 
      Parameters will be taken in account only when current DMA operation is over
  ***/
-void ogc_audio__update(void)
+void ogc_audio_update(void)
 {
   u32 size = dma_len;
   
@@ -121,8 +147,12 @@ void ogc_audio__update(void)
      This function resets the audio engine
      This is called when coming back from Main Menu
  ***/
-void ogc_audio__start(void)
+void ogc_audio_start(void)
 {
+  /* shutdown menu audio */
+  ASND_Pause(1);
+  ASND_End();
+
   /* initialize default DMA length */
   /* PAL (50Hz): 20000 us period --> 960 samples/frame  @48kHz */
   /* NTSC (60Hz): 16667 us period --> 800 samples/frame @48kHz */
@@ -134,8 +164,11 @@ void ogc_audio__start(void)
   /* reset sound buffers */
   memset(soundbuffer, 0, 2 * 3840);
 
-  /* default case: we use DMA interrupt to synchronize frame emulation */
+  /* default */
+  AUDIO_SetDSPSampleRate (AI_SAMPLERATE_48KHZ);
   AUDIO_RegisterDMACallback(NULL);
+
+  /* let's use audio DMA to synchronize frame emulation */
   if (vdp_pal | gc_pal) AUDIO_RegisterDMACallback(AudioDmaCallback);
 
   /* 60hz video mode requires synchronization with Video interrupt      */
@@ -152,8 +185,13 @@ void ogc_audio__start(void)
      This is called when going back to Main Menu
      DMA need to be restarted when going back to the game (see above)
  ***/
-void ogc_audio__stop(void)
+void ogc_audio_stop(void)
 {
+  /* shutdown sound emulation */
   AUDIO_StopDMA ();
   audioStarted = 0;
+
+  /* start menu audio */
+  ASND_Init();
+  ASND_Pause(0);
 }

@@ -74,10 +74,15 @@ void legal ()
 
   SetScreen ();
   sleep (2);
-  WriteCentre (ypos, "Press A to skip intro");
+  WriteCentre (ypos, "Press any button to skip intro");
   SetScreen ();
-  sleep (2);
-  if (ogc_input__getMenuButtons(0) & PAD_BUTTON_A) return;
+  int count = 100;
+  while (count > 0)
+  {
+    count--;
+    VIDEO_WaitVSync();
+    if (ogc_input__getMenuButtons(0)) return;
+  }
 
   ClearScreen((GXColor)BLACK);
   texture = OpenTexturePNG(Background_intro_c1);

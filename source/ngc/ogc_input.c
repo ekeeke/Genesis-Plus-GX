@@ -574,7 +574,7 @@ static void wpad_update(s8 num, u8 i, u32 exp)
                 Generic input handlers 
 ******************************************************************/
 
-void ogc_input__init(void)
+void ogc_input_init(void)
 {
   PAD_Init ();
 
@@ -584,9 +584,11 @@ void ogc_input__init(void)
   WPAD_SetDataFormat(WPAD_CHAN_ALL,WPAD_FMT_BTNS_ACC_IR);
   WPAD_SetVRes(WPAD_CHAN_ALL,640,480);
 #endif
+  VIDEO_SetPostRetraceCallback(menu_updateInputs);
+  VIDEO_Flush();
 }
 
-void ogc_input__set_defaults(void)
+void ogc_input_default(void)
 {
   int i;
 
@@ -685,7 +687,7 @@ void ogc_input__set_defaults(void)
 #endif
 }
 
-void ogc_input__update(void)
+void ogc_input_update(void)
 {
   int i;
   int num = 0;
@@ -721,7 +723,7 @@ void ogc_input__update(void)
   }
 }
 
-void ogc_input__config(u8 num, u8 type, u8 padtype)
+void ogc_input_config(u8 num, u8 type, u8 padtype)
 {
   switch (type)
   {

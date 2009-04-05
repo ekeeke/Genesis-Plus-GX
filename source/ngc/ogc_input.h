@@ -35,7 +35,7 @@
 /* number of configurable keys */
 #define MAX_KEYS 8
 
-#define update_input() ogc_input__update()
+#define update_input() ogc_input_update()
 
 typedef struct 
 {
@@ -45,10 +45,10 @@ typedef struct
 
 extern u8 ConfigRequested;
 
-extern void ogc_input__init(void);
-extern void ogc_input__set_defaults(void);
-extern void ogc_input__update(void);
-extern void ogc_input__config(u8 num, u8 type, u8 padtype);
+extern void ogc_input_init(void);
+extern void ogc_input_default(void);
+extern void ogc_input_update(void);
+extern void ogc_input_config(u8 num, u8 type, u8 padtype);
 
 extern s8 WPAD_StickX(u8 chan,u8 right);
 extern s8 WPAD_StickY(u8 chan,u8 right);

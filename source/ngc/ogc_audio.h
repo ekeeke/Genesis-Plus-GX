@@ -27,9 +27,9 @@
 extern u8 soundbuffer[2][3840];
 extern u8 mixbuffer;
 
-extern void ogc_audio__init(void);
-extern void ogc_audio__start(void);
-extern void ogc_audio__stop(void);
-extern void ogc_audio__update(void);
+extern void ogc_audio_init(void);
+extern void ogc_audio_start(void);
+extern void ogc_audio_stop(void);
+extern void ogc_audio_update(void);
 
 #endif

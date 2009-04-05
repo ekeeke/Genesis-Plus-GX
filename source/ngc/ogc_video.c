@@ -27,6 +27,9 @@
 #include "md_ntsc.h"
 #include "sms_ntsc.h"
 
+#include "Crosshair_p1.h"
+#include "Crosshair_p2.h"
+
 #define TEX_WIDTH         720
 #define TEX_HEIGHT        576
 #define TEX_SIZE          (TEX_WIDTH * TEX_HEIGHT * 2)
@@ -54,6 +57,10 @@ static u8 gp_fifo[DEFAULT_FIFO_SIZE] ATTRIBUTE_ALIGN (32);
 
 /*** custom Video modes ***/
 static GXRModeObj *rmode;
+
+/*** GX Textures ***/
+static u32 vwidth,vheight;
+static png_texture *crosshair[2];
 
 /* 288 lines progressive (PAL 50Hz) */
 static GXRModeObj TV50hz_288p = 
@@ -308,6 +315,10 @@ static camera cam = {
   {0.0F, 0.0F, 0.0F}
 };
 
+static void updateFrameCount(u32 cnt)
+{
+  frameticker++;
+}
 
 /* Vertex Rendering */
 static inline void draw_vert(u8 pos, f32 s, f32 t)
@@ -354,13 +365,13 @@ static void gxStart(void)
 }
 
 /* Reset GX rendering */
-static void gxResetRendering(u8 isMenu)
+static void gxResetRendering(u8 type)
 {
   GX_ClearVtxDesc();
 
-  if (isMenu)
+  if (type)
   {
-    /* GX menu (uses direct positionning, alpha blending & color channel) */
+    /* uses direct positionning, alpha blending & color channel (menu rendering) */
     GX_SetBlendMode(GX_BM_BLEND,GX_BL_SRCALPHA,GX_BL_INVSRCALPHA,GX_LO_CLEAR);
     GX_SetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XY, GX_S16, 0);
     GX_SetVtxAttrFmt(GX_VTXFMT0, GX_VA_CLR0, GX_CLR_RGBA, GX_RGBA8, 0);
@@ -379,7 +390,7 @@ static void gxResetRendering(u8 isMenu)
   }
   else
   {
-    /* video emulation (uses array positionning, no alpha blending, no color channel) */
+    /* uses array positionning, no alpha blending, no color channel (video emulation) */
     GX_SetBlendMode(GX_BM_NONE,GX_BL_SRCALPHA,GX_BL_INVSRCALPHA,GX_LO_CLEAR);
     GX_SetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XYZ, GX_S16, 0);
     GX_SetVtxAttrFmt(GX_VTXFMT0, GX_VA_TEX0, GX_TEX_ST, GX_F32, 0);
@@ -398,7 +409,6 @@ static void gxResetRendering(u8 isMenu)
 
   GX_Flush();
 }
-
 
 /* Reset GX 2D rendering */
 static void gxResetView(GXRModeObj *tvmode)
@@ -523,10 +533,96 @@ static void gxResetScale(u32 width, u32 height)
   GX_InvVtxCache();
 }
 
-
-static void VSyncCallback(u32 cnt)
+static void gxDrawCrosshair(png_texture *texture, int x, int y)
 {
-  frameticker++;
+  if (texture->data)
+  {
+    /* load texture object */
+    GXTexObj texObj;
+    GX_InitTexObj(&texObj, texture->data, texture->width, texture->height, GX_TF_RGBA8, GX_CLAMP, GX_CLAMP, GX_FALSE);
+    GX_InitTexObjLOD(&texObj,GX_LINEAR,GX_LIN_MIP_LIN,0.0,10.0,0.0,GX_FALSE,GX_TRUE,GX_ANISO_4);
+    GX_LoadTexObj(&texObj, GX_TEXMAP0);
+    GX_InvalidateTexAll();
+
+    /* reset GX rendering */
+    gxResetRendering(1);
+
+    /* adjust coordinate system */
+    x = ((x * rmode->fbWidth) / bitmap.viewport.w) - (texture->width/2) - (rmode->fbWidth/2) + (rmode->viWidth-rmode->fbWidth)/2;
+    y = ((y * rmode->efbHeight) / bitmap.viewport.h) - (config.render ? (texture->height/2) : (texture->height/4)) - (rmode->efbHeight/2) + (rmode->xfbHeight-rmode->efbHeight)/2;;
+    int w = texture->width - (rmode->viWidth-rmode->fbWidth);
+    int h = (config.render ? texture->height : (texture->height/2)) - (rmode->xfbHeight-rmode->efbHeight);
+
+    /* Draw textured quad */
+    GX_Begin(GX_QUADS, GX_VTXFMT0, 4);
+    GX_Position2s16(x,y+h);
+    GX_Color4u8(0xff,0xff,0xff,0xff);
+    GX_TexCoord2f32(0.0, 1.0);
+    GX_Position2s16(x+w,y+h);
+    GX_Color4u8(0xff,0xff,0xff,0xff);
+    GX_TexCoord2f32(1.0, 1.0);
+    GX_Position2s16(x+w,y);
+    GX_Color4u8(0xff,0xff,0xff,0xff);
+    GX_TexCoord2f32(1.0, 0.0);
+    GX_Position2s16(x,y);
+    GX_Color4u8(0xff,0xff,0xff,0xff);
+    GX_TexCoord2f32(0.0, 0.0);
+    GX_End ();
+    GX_DrawDone();
+
+    /* restore GX rendering */
+    gxResetRendering(0);
+
+    /* restore texture object */
+    GXTexObj texobj;
+    GX_InitTexObj(&texobj, texturemem, vwidth, vheight, GX_TF_RGB565, GX_CLAMP, GX_CLAMP, GX_FALSE);
+    if (!config.bilinear) GX_InitTexObjLOD(&texobj,GX_NEAR,GX_NEAR_MIP_NEAR,0.0,10.0,0.0,GX_FALSE,GX_FALSE,GX_ANISO_1);
+    GX_LoadTexObj(&texobj, GX_TEXMAP0);
+    GX_InvalidateTexAll();
+  }
+}
+
+void gxDrawScreenshot(u8 alpha)
+{
+  if (rmode)
+  {
+    GXTexObj texobj;
+    GX_InitTexObj(&texobj, texturemem, vwidth, vheight, GX_TF_RGB565, GX_CLAMP, GX_CLAMP, GX_FALSE);
+    GX_LoadTexObj(&texobj, GX_TEXMAP0);
+    GX_InvalidateTexAll();
+
+    /* retrieve current xscale/xshift values */
+    s32 xscale = (rmode->viWidth + square[6] - square[0] - rmode->fbWidth) / 2 - 16;
+    s32 xshift = (square[6] + square[0]) / 2;
+
+    /* apply current position/size */
+    s32 x = xshift - xscale;
+    s32 y = square[7];
+    s32 w = xscale * 2;
+    s32 h = square[4] - square[7];
+    if (rmode->efbHeight < 480)
+    {
+      y = y * 2;
+      h = h * 2;
+    }
+
+    /* Draw textured quad */
+    GX_Begin(GX_QUADS, GX_VTXFMT0, 4);
+    GX_Position2s16(x,y+h);
+    GX_Color4u8(0xff,0xff,0xff,alpha);
+    GX_TexCoord2f32(0.0, 1.0);
+    GX_Position2s16(x+w,y+h);
+    GX_Color4u8(0xff,0xff,0xff,alpha);
+    GX_TexCoord2f32(1.0, 1.0);
+    GX_Position2s16(x+w,y);
+    GX_Color4u8(0xff,0xff,0xff,alpha);
+    GX_TexCoord2f32(1.0, 0.0);
+    GX_Position2s16(x,y);
+    GX_Color4u8(0xff,0xff,0xff,alpha);
+    GX_TexCoord2f32(0.0, 0.0);
+    GX_End ();
+    GX_DrawDone();
+  }
 }
 
 void gxResetCamera(f32 angle)
@@ -552,20 +648,36 @@ void gxResetCamera(f32 angle)
 
 
 /* Restore Menu Video mode */
-void ogc_video__stop(void)
+void ogc_video_stop(void)
 {
+  /* lightgun textures */
+  if (crosshair[0])
+  {
+    if (crosshair[0]->data) free(crosshair[0]->data);
+    free(crosshair[0]);
+    crosshair[0] = NULL;
+  }
+  if (crosshair[1])
+  {
+    if (crosshair[1]->data) free(crosshair[1]->data);
+    free(crosshair[1]);
+    crosshair[1] = NULL;
+  }
+
   /* reset GX */
   gxResetRendering(1);
   gxResetView(vmode);
 
-  ogc_video_caption(0xff);
+  /* reset VI */
+  gxDrawScreenshot(0xff);
   VIDEO_Configure(vmode);
   VIDEO_SetPreRetraceCallback(NULL);
+  VIDEO_SetPostRetraceCallback(menu_updateInputs);
   SetScreen ();
 }
 
 /* Update Video settings */
-void ogc_video__start(void)
+void ogc_video_start(void)
 {
   /* 50Hz/60Hz mode */
   if ((config.tv_mode == 1) || ((config.tv_mode == 2) && vdp_pal)) gc_pal = 1;
@@ -573,12 +685,7 @@ void ogc_video__start(void)
 
   /* Video Interrupt synchronization */
   VIDEO_SetPostRetraceCallback(NULL);
-  if (!gc_pal && !vdp_pal)
-  {
-    VIDEO_SetPreRetraceCallback(VSyncCallback);
-    VIDEO_Flush();
-    VIDEO_WaitVSync();
-  }
+  if (!gc_pal && !vdp_pal) VIDEO_SetPreRetraceCallback(updateFrameCount);
 
   /* interlaced/progressive mode */
   if (config.render == 2)
@@ -615,6 +722,16 @@ void ogc_video__start(void)
     md_ntsc_init( &md_ntsc, &md_setup );
   }
 
+  /* lightgun textures */
+  if ((input.system[1] == SYSTEM_MENACER) || (input.system[1] == SYSTEM_JUSTIFIER))
+  {
+    if (config.gun_cursor)
+    {
+      if (input.dev[4] == DEVICE_LIGHTGUN) crosshair[0] = OpenTexturePNG(Crosshair_p1);
+      if (input.dev[5] == DEVICE_LIGHTGUN) crosshair[1] = OpenTexturePNG(Crosshair_p2);
+    }
+  }
+
   /* apply changes on next video update */
   bitmap.viewport.changed = 1;
 
@@ -623,47 +740,13 @@ void ogc_video__start(void)
 
 }
 
-static u32 vwidth,vheight;
-
-void ogc_video_caption(u8 alpha)
-{
-  GXTexObj texobj;
-  GX_InitTexObj(&texobj, texturemem, vwidth, vheight, GX_TF_RGB565, GX_CLAMP, GX_CLAMP, GX_FALSE);
-  GX_LoadTexObj(&texobj, GX_TEXMAP0);
-  GX_InvalidateTexAll();
-
-  /* reset Scaler (display screenshot in background) */
-  s32 x = config.overscan ? -352 : -320;
-  s32 y = config.overscan ? -240 : -224;
-  s32 w = config.overscan ? 704 : 640;
-  s32 h = config.overscan ? 480 : 448;
-
-  /* Draw textured quad */
-  GX_Begin(GX_QUADS, GX_VTXFMT0, 4);
-  GX_Position2s16(x,y+h);
-  GX_Color4u8(0xff,0xff,0xff,alpha);
-  GX_TexCoord2f32(0.0, 1.0);
-  GX_Position2s16(x+w,y+h);
-  GX_Color4u8(0xff,0xff,0xff,alpha);
-  GX_TexCoord2f32(1.0, 1.0);
-  GX_Position2s16(x+w,y);
-  GX_Color4u8(0xff,0xff,0xff,alpha);
-  GX_TexCoord2f32(1.0, 0.0);
-  GX_Position2s16(x,y);
-  GX_Color4u8(0xff,0xff,0xff,alpha);
-  GX_TexCoord2f32(0.0, 0.0);
-  GX_End ();
-  GX_DrawDone();
-}
 
 /* GX render update */
-void ogc_video__update(void)
+void ogc_video_update(void)
 {
   /* check if display has changed */
   if (bitmap.viewport.changed)
   {
-    bitmap.viewport.changed = 0;
-
     /* update texture size */
     vwidth  = bitmap.viewport.w + 2 * bitmap.viewport.x;
     vheight = bitmap.viewport.h + 2 * bitmap.viewport.y;
@@ -696,14 +779,6 @@ void ogc_video__update(void)
     /* reset aspect ratio */
     gxResetScale(vwidth,vheight);
 
-    /* reconfigure VI */
-    VIDEO_Configure(rmode);
-    VIDEO_Flush();
-    VIDEO_WaitVSync();
-    if (rmode->viTVMode & VI_NON_INTERLACE) VIDEO_WaitVSync();
-    else while (VIDEO_GetNextField() != odd_frame) VIDEO_WaitVSync();
-    if (frameticker > 1) frameticker = 1;
-
     /* reset GX */
     gxResetView(rmode);
   }
@@ -718,19 +793,46 @@ void ogc_video__update(void)
   draw_square();
   GX_DrawDone();
 
-  /* swap XFB then copy EFB to XFB */
+  /* LightGun marks */
+  if (crosshair[0]) gxDrawCrosshair(crosshair[0], input.analog[0][0],input.analog[0][1]);
+  if (crosshair[1]) gxDrawCrosshair(crosshair[1], input.analog[1][0],input.analog[1][1]);
+
+  /* swap XFB */
   whichfb ^= 1;
-  GX_CopyDisp(xfb[whichfb], GX_TRUE);
-  GX_Flush();
 
-  /* set next XFB */
-  VIDEO_SetNextFramebuffer(xfb[whichfb]);
-  VIDEO_Flush();
+  /* reconfigure VI */
+  if (bitmap.viewport.changed)
+  {
+    bitmap.viewport.changed = 0;
 
+    /* change VI mode */
+    VIDEO_Configure(rmode);
+    VIDEO_Flush();
+
+    /* copy EFB to XFB */
+    GX_CopyDisp(xfb[whichfb], GX_TRUE);
+    GX_Flush();
+    VIDEO_SetNextFramebuffer(xfb[whichfb]);
+    VIDEO_Flush();
+
+    /* field synchronizations */
+    VIDEO_WaitVSync();
+    if (rmode->viTVMode & VI_NON_INTERLACE) VIDEO_WaitVSync();
+    else while (VIDEO_GetNextField() != odd_frame) VIDEO_WaitVSync();
+    if (frameticker > 1) frameticker = 1;
+  }
+  else
+  {
+    /* copy EFB to XFB */
+    GX_CopyDisp(xfb[whichfb], GX_TRUE);
+    GX_Flush();
+    VIDEO_SetNextFramebuffer(xfb[whichfb]);
+    VIDEO_Flush();
+  }
 }
 
 /* Initialize VIDEO subsystem */
-void ogc_video__init(void)
+void ogc_video_init(void)
 {
   /*
    * Before doing anything else under libogc,
@@ -829,5 +931,4 @@ void ogc_video__init(void)
 
   /* Initialize Font */
   FONT_Init();
-
 }

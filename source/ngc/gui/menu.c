@@ -72,10 +72,16 @@
 #endif
 #include "Key_home.h"
 
+#include "button_select.h"
+#include "button_over.h"
+#include "button_back.h"
+
 #ifdef HW_RVL
 #include <wiiuse/wpad.h>
 #include <di/di.h>
 #endif
+
+#include <asndlib.h>
 
 /*****************************************************************************/
 /*  Generic GUI structures                                                   */
@@ -183,14 +189,9 @@ static gui_image main_frame =
   NULL,Banner_main,0,356,640,124
 };
 
-static gui_image background_center =
-{
-  NULL,Background_main,146,74,348,288
-};
-
 static gui_image background_right =
 {
-  NULL,Background_main,368,132,348,288
+  NULL,Background_main,390,136,296,280
 };
 
 /*****************************************************************************/
@@ -232,18 +233,18 @@ static gui_butn arrow_down  = {&arrow_down_data,172,360,36,36};
 static gui_item action_cancel =
 {
 #ifdef HW_RVL
-  NULL,Key_B_wii,"","Back to previous",10,422,28,28
+  NULL,Key_B_wii,"","Back",10,422,28,28
 #else
-  NULL,Key_B_gcn,"","Back to previous",10,422,28,28
+  NULL,Key_B_gcn,"","Back",10,422,28,28
 #endif
 };
 
 static gui_item action_select =
 {
 #ifdef HW_RVL
-  NULL,Key_A_wii,"","Select",602,422,28,28
+  NULL,Key_A_wii,"","",602,422,28,28
 #else
-  NULL,Key_A_gcn,"","Select",602,422,28,28
+  NULL,Key_A_gcn,"","",602,422,28,28
 #endif
 };
 
@@ -392,7 +393,7 @@ static gui_menu menu_main =
   0,0,6,6,3,
   items_main,
   buttons_main,
-  NULL,
+  &background_right,
   &logo_main,
   {NULL,&main_frame},
   {&action_exit,NULL},
@@ -410,7 +411,7 @@ static gui_menu menu_load =
 #endif
   items_load,
   buttons_load,
-  &background_center,
+  &background_right,
   &logo_small,
   {&top_frame,&bottom_frame},
   {&action_cancel, &action_select},
@@ -424,7 +425,7 @@ static gui_menu menu_options =
   0,0,5,5,3,
   items_options,
   buttons_options,
-  &background_center,
+  &background_right,
   &logo_small,
   {&top_frame,&bottom_frame},
   {&action_cancel, &action_select},
@@ -660,17 +661,18 @@ static void menu_draw(gui_menu *menu)
   gui_butn *button;
   gui_image *image;
 
-  /* clear EFB */
-  ClearScreen ((GXColor)BLACK);
-
+  /* draw background */
   if ((menu == &menu_main) && genromsize)
   {
-    ogc_video_caption(128);
+    ClearScreen ((GXColor)BLACK);
+    gxDrawScreenshot(128);
   }
-
-  /* draw background image */
-  image = menu->background;
-  if (image) DrawTexture(image->texture,image->x,image->y,image->w,image->h);
+  else
+  {
+    ClearScreen ((GXColor)BACKGROUND);
+    image = menu->background;
+    if (image) DrawTexture(image->texture,image->x,image->y,image->w,image->h);
+  }
 
   /* draw background frames */
   for (i=0; i<2; i++)
@@ -707,12 +709,21 @@ static void menu_draw(gui_menu *menu)
   {
     /* draw button */ 
     button = &menu->buttons[i];
-    DrawTexture(button->data->texture[i==menu->selected], button->x, button->y, button->w, button->h);
+    if (i==menu->selected) DrawTexture(button->data->texture[1], button->x-2, button->y-2, button->w+4, button->h+4);
+    else DrawTexture(button->data->texture[0], button->x, button->y, button->w, button->h);
 
     /* draw item */
     item = &menu->items[menu->offset +i];
-    if (item->data) DrawTexture(item->texture, item->x, item->y, item->w, item->h);
-    else FONT_writeCenter(item->text, 18, button->x, button->x + button->w, button->y + (button->h - 18)/2 + 18);
+    if (item->data)
+    {
+      if (i==menu->selected) DrawTexture(item->texture, item->x-2, item->y-2, item->w+4, item->h+4);
+      else DrawTexture(item->texture, item->x, item->y, item->w, item->h);
+    }
+    else
+    {
+      if (i==menu->selected) FONT_writeCenter(item->text, 20, button->x, button->x + button->w, button->y + (button->h - 20)/2 + 20);
+      else FONT_writeCenter(item->text, 18, button->x, button->x + button->w, button->y + (button->h - 18)/2 + 18);
+    }
   }
 
   /* Arrows (Items list only) */
@@ -798,12 +809,14 @@ static void menu_fade(gui_menu *menu, u8 speed, u8 out)
   /* loop until final position is reeached */
   while (offset > 0)
   {
-    /* clear EFB */
-    ClearScreen ((GXColor)BLACK);
-
     if ((menu == &menu_main) && genromsize)
     {
-      ogc_video_caption(alpha);
+      ClearScreen ((GXColor)BLACK);
+      gxDrawScreenshot(alpha);
+    }
+    else
+    {
+      ClearScreen ((GXColor)BACKGROUND);
     }
 
     /* draw top banner + logo */
@@ -836,13 +849,14 @@ static void menu_fade(gui_menu *menu, u8 speed, u8 out)
 
 static int menu_callback(gui_menu *menu)
 {
+  s32 voice;
   u16 p;
   u16 max_buttons = menu->max_buttons;
   u16 max_items = menu->max_items;
   u16 shift = menu->shift;
 
 #ifdef HW_RVL
-  int i,x,y;
+  int i,x,y,old;
   gui_butn *button;
 #endif
 
@@ -867,6 +881,7 @@ static int menu_callback(gui_menu *menu)
       /* get cursor position */
       x = m_input.ir.x;
       y = m_input.ir.y;
+      old = menu->selected;
 
       /* check for valid buttons */
       for (i=0; i<max_buttons; i++)
@@ -898,30 +913,19 @@ static int menu_callback(gui_menu *menu)
             menu->selected = i + 1;
         }
       }
-    }
-    else if (p & PAD_BUTTON_UP)
-    {
-      if (menu->selected == 0)
+
+      /* play sound ? */
+      if (menu->selected < max_buttons + 2)
       {
-        if (menu->offset) menu->offset --;
-      }
-      else if (menu->selected >= shift)
-      {
-        menu->selected -= shift;
-      }
-    }
-    else if (p & PAD_BUTTON_DOWN)
-    {
-      if (menu->selected == (max_buttons - 1))
-      {
-        if ((menu->offset + menu->selected < (max_items - 1))) menu->offset ++;
-      }
-      else if ((menu->selected + shift) < max_buttons)
-      {
-        menu->selected += shift;
+        if (menu->selected != old)
+        {
+          voice = ASND_GetFirstUnusedVoice();
+          if(voice >= 0) ASND_SetVoice(voice, VOICE_MONO_16BIT, 22050, 0, (u8 *)button_over, button_over_size, 255, 255, NULL);
+        }
       }
     }
-#else
+    else
+ #endif
     if (p & PAD_BUTTON_UP)
     {
       if (menu->selected == 0)
@@ -944,7 +948,6 @@ static int menu_callback(gui_menu *menu)
         menu->selected += shift;
       }
     }
- #endif
     else if (p & PAD_BUTTON_LEFT)
     {
       if (shift > 1)
@@ -972,13 +975,36 @@ static int menu_callback(gui_menu *menu)
 
     if (p & PAD_BUTTON_A)
     {
-      if (menu->selected < max_buttons) return (menu->offset + menu->selected);
+      if (menu->selected < max_buttons)
+      {
+        if (shift > 1)
+        {
+          voice = ASND_GetFirstUnusedVoice();
+          if(voice >= 0) ASND_SetVoice(voice, VOICE_MONO_16BIT, 22050, 0, (u8 *)button_select, button_select_size, 255, 255, NULL);
+          return (menu->offset + menu->selected);
+        }
+      }
       else if (menu->selected == max_buttons) menu->offset --;
       else if (menu->selected == max_buttons + 1) menu->offset ++;
     }
     else if (p & PAD_BUTTON_B)
     {
+      voice = ASND_GetFirstUnusedVoice();
+      if(voice >= 0) ASND_SetVoice(voice, VOICE_MONO_16BIT, 22050, 0, (u8 *)button_back, button_back_size, 255, 255, NULL);
       return  -1;
+    }
+    else if (p & PAD_TRIGGER_Z)
+    {
+      memfile_autosave();
+      system_shutdown();
+      audio_shutdown();
+      VIDEO_ClearFrameBuffer(vmode, xfb[whichfb], COLOR_BLACK);
+      VIDEO_Flush();
+      VIDEO_WaitVSync();
+#ifdef HW_RVL
+      DI_Close();
+#endif
+      exit(0);
     }
 
     /* update arrows status (items list) */
@@ -1005,7 +1031,7 @@ s16 ogc_input__getMenuButtons(u32 cnt)
   return m_input.keys;
 }
 
-static void menu_updateInputs(u32 cnt)
+void menu_updateInputs(u32 cnt)
 {
   /* get gamepad inputs */
   PAD_ScanPads();
@@ -1099,7 +1125,7 @@ static void drawmenu (char items[][25], int maxitems, int selected)
   memset(&texture,0,sizeof(png_texture));
 
   /* draw background items */
-  ClearScreen ((GXColor)BLACK);
+  ClearScreen ((GXColor)BACKGROUND);
   texture= OpenTexturePNG(Background_main);
   if (texture)
   {
@@ -1756,7 +1782,7 @@ static void inputsmenu(void)
 
       case 7:
         if (config.input[player].device < 0) break;
-        ogc_input__config(config.input[player].port, config.input[player].device, input.padtype[player]);
+        ogc_input_config(config.input[player].port, config.input[player].device, input.padtype[player]);
         break;
 
       case -1:
@@ -2017,7 +2043,7 @@ static void showrominfo ()
   {
     if (redraw)
     {
-      ClearScreen ((GXColor)BLACK);
+      ClearScreen ((GXColor)BACKGROUND);
 
       ypos = 134;
       WriteCentre(ypos, "ROM Header Information");
@@ -2120,8 +2146,6 @@ void MainMenu (u32 fps)
 
   gui_menu *m = &menu_main;
 
-  VIDEO_SetPostRetraceCallback(menu_updateInputs);
-
   /* basic fade-in effect */
   menu_fade(m,10,0);
 
@@ -2144,6 +2168,9 @@ void MainMenu (u32 fps)
         {
           /* basic fade-out effect */
           menu_fade(m,10,1);
+          ClearScreen ((GXColor)BLACK);
+          gxDrawScreenshot(0xff);
+          SetScreen ();
           quit = 1;
         }
         break;
@@ -2164,8 +2191,8 @@ void MainMenu (u32 fps)
         if (genromsize || (config.bios_enabled == 3))
         {
           system_reset (); 
-          VIDEO_ClearFrameBuffer(vmode, xfb[whichfb], COLOR_BLACK);
-          VIDEO_Flush();
+          ClearScreen ((GXColor)BLACK);
+          SetScreen ();
           quit = 1;
         }
         break;
@@ -2204,9 +2231,6 @@ void MainMenu (u32 fps)
         break;
     }
   }
-
-  /* clear EFB */
-  ClearScreen ((GXColor)BLACK);
 
   /*** Remove any still held buttons ***/
   while (PAD_ButtonsHeld(0))  PAD_ScanPads();

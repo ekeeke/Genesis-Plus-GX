@@ -435,12 +435,6 @@ png_texture *OpenTexturePNG(const u8 *buffer)
 
 void DrawTexture(png_texture *texture, int x, int y, int w, int h)
 {
-  if (!texture) 
-  {
-    FONT_alignLeft("error",16,x,y);
-    return;
-  }
-
   if (texture->data)
   {
     /* load texture object */
@@ -508,7 +502,7 @@ void WaitButtonA ()
 void WaitPrompt (char *msg)
 {
   if (SILENT) return;
-  ClearScreen((GXColor)BLACK);
+  ClearScreen((GXColor)BACKGROUND);
   WriteCentre(254, msg);
   WriteCentre(254 + fheight, "Press A to Continue");
   SetScreen();
@@ -519,7 +513,7 @@ void ShowAction (char *msg)
 {
   if (SILENT) return;
 
-  ClearScreen((GXColor)BLACK);
+  ClearScreen((GXColor)BACKGROUND);
   WriteCentre(254, msg);
   SetScreen();
 }

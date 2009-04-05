@@ -855,25 +855,6 @@ void render_line(uint32 line, uint32 overscan)
         memset(&lb[0x20 + width], 0x40, x_offset);
         width += 2 * x_offset;
     }
-
-    /* LightGun mark */
-    if ((input.dev[4] == DEVICE_LIGHTGUN) && (config.gun_cursor))
-    {
-      int dy = v_counter - input.analog[0][1];
-
-      if (abs(dy) < 6)
-      {
-        int i;
-        int start = input.analog[0][0] - 4;
-        int end = start + 8;
-        if (start < 0) start = 0;
-        if (end > bitmap.viewport.w) end = bitmap.viewport.w;
-        for (i=start; i<end; i++)
-        {
-          lb[0x20+i] = 0xff;
-        }
-      }
-    }
   }
 
   /* pixel color remapping */
