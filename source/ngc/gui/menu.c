@@ -32,6 +32,10 @@
 #include "Banner_bottom.h"
 #include "Banner_top.h"
 #include "Background_main.h"
+#include "Background_overlay_line.h"
+#include "Background_overlay_square.h"
+#include "Frame_s1.h"
+#include "Frame_s2.h"
 #include "Main_logo.h"
 
 #include "Main_play.h"
@@ -74,7 +78,6 @@
 
 #include "button_select.h"
 #include "button_over.h"
-#include "button_back.h"
 
 #ifdef HW_RVL
 #include <wiiuse/wpad.h>
@@ -148,11 +151,13 @@ typedef struct
   u8 shift;                   /* number of items by line                            */
   gui_item *items;            /* menu items table                                   */
   gui_butn *buttons;          /* menu buttons table                                 */
+  gui_image *overlay;         /* overlay image                                      */
   gui_image *background;      /* background image                                   */
   gui_image *logo;            /* logo image                                         */
-  gui_image *frames[2];       /* top and bottom frames                              */
-  gui_item *helpers[2];       /* key helpers                                        */
-  gui_butn *arrows[2];        /* items list arrows                                  */
+  gui_image *frames[2];      /* windows (max. 2)                                   */
+  gui_image *banners[2];      /* bottom & top banners                               */
+  gui_item *helpers[2];       /* left & right key comments                          */
+  gui_butn *arrows[2];        /* items list up & down arrows                        */
 } gui_menu;
 
 #ifdef HW_RVL
@@ -164,35 +169,17 @@ static gui_input m_input;
 /*****************************************************************************/
 /*  Generic Images                                                           */
 /*****************************************************************************/
-static gui_image logo_main =
-{
-  NULL,Main_logo,204,372,232,56
-};
-
-static gui_image logo_small =
-{
-  NULL,Main_logo,466,40,152,44
-};
-
-static gui_image top_frame =
-{
-  NULL,Banner_top,0,0,640,108
-};
-
-static gui_image bottom_frame =
-{
-  NULL,Banner_bottom,0,388,640,92
-};
-
-static gui_image main_frame =
-{
-  NULL,Banner_main,0,356,640,124
-};
-
-static gui_image background_right =
-{
-  NULL,Background_main,390,136,296,280
-};
+static gui_image logo_main          = {NULL,Main_logo,204,372,232,56};
+static gui_image logo_small         = {NULL,Main_logo,466,40,152,44};
+static gui_image top_banner         = {NULL,Banner_top,0,0,640,108};
+static gui_image bottom_banner      = {NULL,Banner_bottom,0,388,640,92};
+static gui_image main_banner        = {NULL,Banner_main,0,356,640,124};
+static gui_image bg_right           = {NULL,Background_main,356,144,348,288};
+static gui_image bg_center          = {NULL,Background_main,146,78,348,288};
+static gui_image bg_overlay_line    = {NULL,Background_overlay_line,0,0,640,480};
+static gui_image bg_overlay_square  = {NULL,Background_overlay_square,0,0,640,480};
+static gui_image left_frame         = {NULL,Frame_s1,8,72,372,336};
+static gui_image right_frame        = {NULL,Frame_s2,384,116,248,296};
 
 /*****************************************************************************/
 /*  Shared buttons data                                                      */
@@ -224,8 +211,8 @@ static butn_data button_icon_data =
 /*****************************************************************************/
 /*  Generic Arrow Buttons                                                    */
 /*****************************************************************************/
-static gui_butn arrow_up    = {&arrow_up_data,172,82,36,36};
-static gui_butn arrow_down  = {&arrow_down_data,172,360,36,36};
+static gui_butn arrow_up    = {&arrow_up_data,172,86,36,36};
+static gui_butn arrow_down  = {&arrow_down_data,172,356,36,36};
 
 /*****************************************************************************/
 /*  Generic Items                                                            */
@@ -393,9 +380,11 @@ static gui_menu menu_main =
   0,0,6,6,3,
   items_main,
   buttons_main,
-  &background_right,
+  &bg_overlay_line,
+  &bg_center,
   &logo_main,
-  {NULL,&main_frame},
+  {NULL,NULL},
+  {NULL,&main_banner},
   {&action_exit,NULL},
   {NULL,NULL}
 };
@@ -411,9 +400,11 @@ static gui_menu menu_load =
 #endif
   items_load,
   buttons_load,
-  &background_right,
+  &bg_overlay_line,
+  &bg_center,
   &logo_small,
-  {&top_frame,&bottom_frame},
+  {NULL,NULL},
+  {&top_banner,&bottom_banner},
   {&action_cancel, &action_select},
   {NULL, NULL}
 };
@@ -425,9 +416,11 @@ static gui_menu menu_options =
   0,0,5,5,3,
   items_options,
   buttons_options,
-  &background_right,
+  &bg_overlay_line,
+  &bg_center,
   &logo_small,
-  {&top_frame,&bottom_frame},
+  {NULL,NULL},
+  {&top_banner,&bottom_banner},
   {&action_cancel, &action_select},
   {NULL, NULL}
 };
@@ -439,9 +432,11 @@ static gui_menu menu_system =
   0,0,6,4,1,
   items_system,
   buttons_generic,
-  &background_right,
+  &bg_overlay_line,
+  &bg_right,
   &logo_small,
-  {&top_frame,&bottom_frame},
+  {&left_frame,NULL},
+  {&top_banner,&bottom_banner},
   {&action_cancel, &action_select},
   {NULL, &arrow_down}
 };
@@ -453,9 +448,11 @@ static gui_menu menu_video =
   0,0,8,4,1,
   items_video,
   buttons_generic,
-  &background_right,
+  &bg_overlay_line,
+  &bg_right,
   &logo_small,
-  {&top_frame,&bottom_frame},
+  {&left_frame,NULL},
+  {&top_banner,&bottom_banner},
   {&action_cancel, &action_select},
   {NULL, &arrow_down}
 };
@@ -467,9 +464,11 @@ static gui_menu menu_audio =
   0,0,5,4,1,
   items_audio,
   buttons_generic,
-  &background_right,
+  &bg_overlay_square,
+  &bg_right,
   &logo_small,
-  {&top_frame,&bottom_frame},
+  {&left_frame,NULL},
+  {&top_banner,&bottom_banner},
   {&action_cancel, &action_select},
   {NULL, &arrow_down}
 };
@@ -490,6 +489,10 @@ static void menu_initialize(gui_menu *menu)
 /*  w_pointer[1] = OpenTexturePNG(generic_openhand);*/
 #endif
 
+  /* allocate background overlay texture */
+  image = menu->overlay;
+  if (image) image->texture = OpenTexturePNG(image->data);
+
   /* allocate background image texture */
   image = menu->background;
   if (image) image->texture = OpenTexturePNG(image->data);
@@ -501,6 +504,10 @@ static void menu_initialize(gui_menu *menu)
   /* allocate background elements textures */
   for (i=0; i<2; i++)
   {
+    /* banners */
+    image = menu->banners[i];
+    if (image) image->texture = OpenTexturePNG(image->data);
+
     /* frames */
     image = menu->frames[i];
     if (image) image->texture = OpenTexturePNG(image->data);
@@ -538,119 +545,59 @@ static void menu_initialize(gui_menu *menu)
 static void menu_delete(gui_menu *menu)
 {
   int i;
-  png_texture *texture;
   gui_butn *button;
   gui_item *item;
 
   /* free background image texture */
+  if (menu->overlay)
+    CloseTexturePNG(&menu->overlay->texture);
+
+  /* free background image texture */
   if (menu->background)
-  {
-    texture = menu->background->texture;
-    if (texture)
-    {
-      if (texture->data) free(texture->data);
-      free(texture);
-      menu->background->texture = NULL;
-    }
-  }
+    CloseTexturePNG(&menu->background->texture);
 
   /* free logo texture */
   if (menu->logo)
-  {
-    texture = menu->logo->texture;
-    if (texture)
-    {
-      if (texture->data) free(texture->data);
-      free(texture);
-      menu->logo->texture = NULL;
-    }
-  }
+    CloseTexturePNG(&menu->logo->texture);
 
   /* free background elements textures */
   for (i=0; i<2; i++)
   {
 #ifdef HW_RVL
     /* free wiimote pointer data */
-    if (w_pointer[i])
-    {
-      if (w_pointer[i]->data) free(w_pointer[i]->data);
-      free(w_pointer[i]);
-      w_pointer[i] = NULL;
-    }
+    CloseTexturePNG(&w_pointer[i]);
 #endif
 
-    /* frames */
+    /* banners */
+    if (menu->banners[i])
+      CloseTexturePNG(&menu->banners[i]->texture);
+
+    /* banners */
     if (menu->frames[i])
-    {
-      texture = menu->frames[i]->texture;
-      if (texture)
-      {
-        if (texture->data) free(texture->data);
-        free(texture);
-        menu->frames[i]->texture = NULL;
-      }
-    }
+      CloseTexturePNG(&menu->frames[i]->texture);
 
     /* key helpers */
     if (menu->helpers[i])
-    {
-      texture = menu->helpers[i]->texture;
-      if (texture)
-      {
-        if (texture->data) free(texture->data);
-        free(texture);
-        menu->helpers[i]->texture = NULL;
-      }
-    }
+      CloseTexturePNG(&menu->helpers[i]->texture);
 
-    /* up/down arrows */
-    texture = arrow_up_data.texture[i];
-    if (texture)
-    {
-      if (texture->data) free(texture->data);
-      free(texture);
-      arrow_up_data.texture[i] = NULL;
-    }
-    texture = arrow_down_data.texture[i];
-    if (texture)
-    {
-      if (texture->data) free(texture->data);
-      free(texture);
-      arrow_down_data.texture[i] = NULL;
-    }
+    /* up&down arrows */
+    CloseTexturePNG(&arrow_up_data.texture[i]);
+    CloseTexturePNG(&arrow_down_data.texture[i]);
   }
 
   /* free menu buttons */
   for (i=0; i<menu->max_buttons; i++)
   {
     button = &menu->buttons[i];
-    texture = button->data->texture[0];
-    if (texture)
-    {
-      if (texture->data) free(texture->data);
-      free(texture);
-      button->data->texture[0] = NULL;
-    }
-    texture = button->data->texture[1];
-    if (texture)
-    {
-      if (texture->data) free(texture->data);
-      free(texture);
-      button->data->texture[1] = NULL;
-    }
+    CloseTexturePNG(&button->data->texture[0]);
+    CloseTexturePNG(&button->data->texture[1]);
   }
 
   /* free item textures */
   for (i=0; i<menu->max_items; i++)
   {
     item = &menu->items[i];
-    texture = item->texture;
-    if (texture)
-    {
-      if (texture->data) free(texture->data);
-      free(texture);
-      item->texture = NULL;
-    }
+    CloseTexturePNG(&item->texture);
   }
 }
 
@@ -670,15 +617,21 @@ static void menu_draw(gui_menu *menu)
   else
   {
     ClearScreen ((GXColor)BACKGROUND);
+    image = menu->overlay;
+    if (image) DrawTextureRepeat(image->texture,image->x,image->y,image->w,image->h);
     image = menu->background;
     if (image) DrawTexture(image->texture,image->x,image->y,image->w,image->h);
   }
 
-  /* draw background frames */
   for (i=0; i<2; i++)
   {
-    image = menu->frames[i];
+    /* draw top&bottom banners */
+    image = menu->banners[i];
     if (image) DrawTexture(image->texture,image->x,image->y,image->w,image->h);
+
+    /* draw frames */
+    image = menu->frames[i];
+    if (image) DrawTextureAlpha(image->texture,image->x,image->y,image->w,image->h, 128);
   }
 
   /* draw logo */
@@ -702,6 +655,13 @@ static void menu_draw(gui_menu *menu)
   {
     DrawTexture(item->texture, item->x, item->y, item->w, item->h);
     FONT_alignRight(item->comment, 16, item->x - 6, item->y+(item->h-16)/2 + 16);
+  }
+
+  /* draw top&bottom banners */
+  for (i=0; i<2; i++)
+  {
+    image = menu->banners[i];
+    if (image) DrawTexture(image->texture,image->x,image->y,image->w,image->h);
   }
 
   /* draw buttons + items */
@@ -742,27 +702,151 @@ static void menu_draw(gui_menu *menu)
       }
     }
   }
+}
+
+static int menu_prompt(gui_menu *menu, char *title, char *items[], u8 nb_items)
+{
+  int i, ret, quit = 0;
+  int selected = 0;
+  gui_butn button[nb_items];
+  butn_data *data = &button_text_data;
+  u8 delete_me[2];
+  s16 p;
 
 #ifdef HW_RVL
-  if (m_input.ir.valid)
-  {
-    /* draw wiimote pointer */
-    gxResetCamera(m_input.ir.angle);
-    png_texture *texture = w_pointer[0];
-    DrawTexture(texture, m_input.ir.x-texture->width/2, m_input.ir.y-texture->height/2, texture->width, texture->height);
-    gxResetCamera(0.0);
-  }
+  int x,y;
 #endif
 
-  /* copy EFB to XFB */
-  SetScreen ();
+  /* initialize data */
+  for (i=0; i<2; i++)
+  {
+    delete_me[i] = 0;
+    if (!data->texture[i])
+    {
+      data->texture[i] = OpenTexturePNG(data->image[i]);
+      delete_me[i] = 1;
+    }
+  }
+
+  /* get initial yposition */
+  int ypos = 140 + ((324 - nb_items*data->texture[0]->height - 20*(nb_items - 1))/2);
+
+  /* fill button data */
+  for (i=0; i<nb_items; i++)
+  {
+    button[i].data = data;
+    button[i].x = 182;
+    button[i].y = ypos + i*(data->texture[0]->height + 20);
+    button[i].w = data->texture[0]->width;
+    button[i].h = data->texture[0]->height;
+  }
+
+  /* texture window */
+  png_texture *window = OpenTexturePNG(Frame_s1);
+
+  /* menu should have been initiliazed first ! */
+  while (quit == 0)
+  {
+    /* draw parent menu */
+    menu_draw(menu);
+
+    /* draw window */
+    DrawTexture(window, 134, 72, window->width, window->height);
+
+    /* draw title */
+    FONT_writeCenter(title, 18,134, 134 + window->width, 92);
+
+    /* draw buttons + text */
+    for (i=0; i<nb_items; i++)
+    {
+      if (i==menu->selected) DrawTexture(data->texture[1], button[i].x-2, button[i].y-2, button[i].w+4, button[i].h+4);
+      else DrawTexture(data->texture[0], button[i].x, button[i].y, button[i].w, button[i].h);
+      if (i==menu->selected) FONT_writeCenter(items[i], 20, button[i].x, button[i].x + button[i].w, button[i].y + (button[i].h - 20)/2 + 20);
+      else FONT_writeCenter(items[i], 18, button[i].x, button[i].x + button[i].w, button[i].y + (button[i].h - 18)/2 + 18);
+    }
+
+#ifdef HW_RVL
+    p = m_input.keys;
+    if (Shutdown)
+    {
+      /* autosave SRAM/State */
+      memfile_autosave();
+
+      /* shutdown Wii */
+      DI_Close();
+      SYS_ResetSystem(SYS_POWEROFF, 0, 0);
+    }
+    else if (m_input.ir.valid)
+    {
+      /* get cursor position */
+      x = m_input.ir.x;
+      y = m_input.ir.y;
+
+      /* draw wiimote pointer */
+      gxResetCamera(m_input.ir.angle);
+      png_texture *texture = w_pointer[0];
+      DrawTexture(texture, x-texture->width/2, y-texture->height/2, texture->width, texture->height);
+      gxResetCamera(0.0);
+      SetScreen ();
+
+      /* check for valid buttons */
+      selected = -1;
+      for (i=0; i<nb_items; i++)
+      {
+        if ((x >= button[i].x) && (x <= (button[i].x + button[i].w)) && (y >= button[i].y) && (y <= (button[i].y + button[i].h)))
+        {
+          selected = i;
+          break;
+        }
+      }
+    }
+#else
+    /* copy EFB to XFB */
+    SetScreen ();
+
+    /* update inputs */
+    p = m_input.keys;
+#endif
+
+    if (p & PAD_BUTTON_UP)
+    {
+      if (selected > 0) selected --;
+    }
+    else if (p & PAD_BUTTON_DOWN)
+    {
+      if (selected < (nb_items -1)) selected ++;
+    }
+
+    if (p & PAD_BUTTON_A)
+    {
+      if (selected >= 0)
+      {
+        quit = 1;
+        ret = selected;
+      }
+    }
+    else if (p & PAD_BUTTON_B)
+    {
+      quit = 1;
+      ret = -1;
+    }
+  }
+
+  /* close textures */
+  CloseTexturePNG(&window);
+  if (delete_me[0]) CloseTexturePNG(&data->texture[0]);
+  if (delete_me[1]) CloseTexturePNG(&data->texture[1]);
+
+  return ret;
 }
+
 
 static void menu_fade(gui_menu *menu, u8 speed, u8 out)
 {
   int offset;
   int yfinal[3];
   gui_image *image[3];
+  gui_image *temp;
 
   menu_initialize(menu);
 
@@ -775,7 +859,7 @@ static void menu_fade(gui_menu *menu, u8 speed, u8 out)
   image[2] = menu->logo;
 
   /* Top banner */
-  image[0] = menu->frames[0];
+  image[0] = menu->banners[0];
   if (image[0])
   {
     /* intial offset */
@@ -787,7 +871,7 @@ static void menu_fade(gui_menu *menu, u8 speed, u8 out)
   }
 
   /* Bottom banner */
-  image[1] = menu->frames[1];
+  image[1] = menu->banners[1];
   if (image[1])
   {
     if ((480 + image[1]->h - image[1]->y) > offset)
@@ -817,6 +901,10 @@ static void menu_fade(gui_menu *menu, u8 speed, u8 out)
     else
     {
       ClearScreen ((GXColor)BACKGROUND);
+      temp = menu->overlay;
+      if (temp) DrawTextureRepeat(temp->texture,temp->x,temp->y,temp->w,temp->h);
+      temp = menu->background;
+      if (temp) DrawTexture(temp->texture,temp->x,temp->y,temp->w,temp->h);
     }
 
     /* draw top banner + logo */
@@ -843,9 +931,29 @@ static void menu_fade(gui_menu *menu, u8 speed, u8 out)
     SetScreen ();
   }
 
-  if (!out) menu_draw(menu);
+  if (!out) 
+  {
+    menu_draw(menu);
+    SetScreen ();
+  }
+
   menu_delete(menu);
 }
+
+#define MAX_COLORS 6
+#define VERSION "v 1.03"
+
+static GXColor background_colors[MAX_COLORS]=
+{
+  {0xcc,0xcc,0xcc,0xff}, /* light grey */
+  {0xb8,0xc7,0xda,0xff}, /* light blue */
+  {0xd4,0xd0,0xc8,0xff}, /* silver */
+  {0xbb,0xb0,0x99,0xff}, /* gold */
+  {0xc0,0xcf,0xe7,0xff}, /* sky blue */
+  {0xd6,0xcb,0xba,0xff}  /* light gold */
+};
+
+static s8 color_cnt = 0;
 
 static int menu_callback(gui_menu *menu)
 {
@@ -864,9 +972,8 @@ static int menu_callback(gui_menu *menu)
   {
     menu_draw(menu);
 
-    p = m_input.keys;
-
 #ifdef HW_RVL
+    p = m_input.keys;
     if (Shutdown)
     {
       /* autosave SRAM/State */
@@ -882,6 +989,13 @@ static int menu_callback(gui_menu *menu)
       x = m_input.ir.x;
       y = m_input.ir.y;
       old = menu->selected;
+
+      /* draw wiimote pointer */
+      gxResetCamera(m_input.ir.angle);
+      png_texture *texture = w_pointer[0];
+      DrawTexture(texture, x-texture->width/2, y-texture->height/2, texture->width, texture->height);
+      gxResetCamera(0.0);
+      SetScreen ();
 
       /* check for valid buttons */
       for (i=0; i<max_buttons; i++)
@@ -924,8 +1038,14 @@ static int menu_callback(gui_menu *menu)
         }
       }
     }
-    else
- #endif
+#else
+    /* copy EFB to XFB */
+    SetScreen ();
+
+    /* update inputs */
+    p = m_input.keys;
+#endif
+
     if (p & PAD_BUTTON_UP)
     {
       if (menu->selected == 0)
@@ -972,39 +1092,80 @@ static int menu_callback(gui_menu *menu)
         return (menu->offset + menu->selected);
       }
     }
+    else if (p & PAD_TRIGGER_R)
+    {
+      /* swap menu background color (DEBUG !)*/
+      color_cnt++;
+      if (color_cnt >= MAX_COLORS) color_cnt = 0;
+      BACKGROUND.r = background_colors[color_cnt].r;
+      BACKGROUND.g = background_colors[color_cnt].g;
+      BACKGROUND.b = background_colors[color_cnt].b;
+      BACKGROUND.a = background_colors[color_cnt].a;
+    }
+    else if (p & PAD_TRIGGER_L)
+    {
+      /* swap background overlay (DEBUG !)*/
+      if (menu->overlay == &bg_overlay_line)
+        menu->overlay = &bg_overlay_square;
+      else if (menu->overlay == &bg_overlay_square)
+        menu->overlay = &bg_overlay_line;
+    }
 
     if (p & PAD_BUTTON_A)
     {
       if (menu->selected < max_buttons)
       {
-        if (shift > 1)
-        {
-          voice = ASND_GetFirstUnusedVoice();
-          if(voice >= 0) ASND_SetVoice(voice, VOICE_MONO_16BIT, 22050, 0, (u8 *)button_select, button_select_size, 255, 255, NULL);
-          return (menu->offset + menu->selected);
-        }
+        voice = ASND_GetFirstUnusedVoice();
+        if(voice >= 0) ASND_SetVoice(voice, VOICE_MONO_16BIT, 22050, 0, (u8 *)button_select, button_select_size, 255, 255, NULL);
+        return (menu->offset + menu->selected);
       }
       else if (menu->selected == max_buttons) menu->offset --;
       else if (menu->selected == max_buttons + 1) menu->offset ++;
     }
     else if (p & PAD_BUTTON_B)
     {
-      voice = ASND_GetFirstUnusedVoice();
-      if(voice >= 0) ASND_SetVoice(voice, VOICE_MONO_16BIT, 22050, 0, (u8 *)button_back, button_back_size, 255, 255, NULL);
       return  -1;
     }
     else if (p & PAD_TRIGGER_Z)
     {
-      memfile_autosave();
-      system_shutdown();
-      audio_shutdown();
-      VIDEO_ClearFrameBuffer(vmode, xfb[whichfb], COLOR_BLACK);
-      VIDEO_Flush();
-      VIDEO_WaitVSync();
 #ifdef HW_RVL
-      DI_Close();
+      char *items[3] = {"CREDITS", "RETURN TO LOADER", "SYTEM MENU"};
+#else
+      char *items[3] = {"CREDITS", "RETURN TO LOADER", "RESET GAMECUBE"};
 #endif
-      exit(0);
+      switch (menu_prompt(menu, VERSION, items,3))
+      {
+        case 1:
+          memfile_autosave();
+          system_shutdown();
+          audio_shutdown();
+          VIDEO_ClearFrameBuffer(vmode, xfb[whichfb], COLOR_BLACK);
+          VIDEO_Flush();
+          VIDEO_WaitVSync();
+#ifdef HW_RVL
+          DI_Close();
+#endif
+          exit(0);
+          break;
+
+        case 2:
+          memfile_autosave();
+          system_shutdown();
+          audio_shutdown();
+          VIDEO_ClearFrameBuffer(vmode, xfb[whichfb], COLOR_BLACK);
+          VIDEO_Flush();
+          VIDEO_WaitVSync();
+  #ifdef HW_RVL
+          DI_Close();
+          SYS_ResetSystem(SYS_RETURNTOMENU, 0, 0);
+  #else
+          SYS_ResetSystem(SYS_HOTRESET,0,0);
+  #endif
+          break;
+
+        default:
+          break;
+      }
     }
 
     /* update arrows status (items list) */

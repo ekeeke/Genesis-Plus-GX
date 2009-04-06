@@ -27,7 +27,9 @@
 
 #define BLACK {0,0,0,0xff}
 #define WHITE {0xff,0xff,0xff,0xff}
-#define BACKGROUND {0x1d,0x2c,0x3d,0xff}
+
+
+extern GXColor BACKGROUND;
 
 typedef struct
 {
@@ -37,8 +39,11 @@ typedef struct
   u8 format;
 } png_texture;
 
+extern void CloseTexturePNG(png_texture **p_texture);
 extern png_texture *OpenTexturePNG(const u8 *buffer);
 extern void DrawTexture(png_texture *texture, int x, int y, int w, int h);
+extern void DrawTextureRepeat(png_texture *texture, int x, int y, int w, int h);
+extern void DrawTextureAlpha(png_texture *texture, int x, int y, int w, int h, u8 alpha);
 
 extern int  FONT_Init(void);
 extern void FONT_alignLeft(char *string, int size, int x, int y);

@@ -260,6 +260,18 @@ static void png_read_from_mem (png_structp png_ptr, png_bytep data, png_size_t l
   file->offset += length;
 }
 
+void CloseTexturePNG(png_texture **p_texture)
+{
+  png_texture *texture = *p_texture;
+
+  if (texture)
+  {
+    if (texture->data) free(texture->data);
+    free(texture);
+    *p_texture = NULL;
+  }
+}
+
 /* convert a png file into RGBA8 texture */
 png_texture *OpenTexturePNG(const u8 *buffer)
 {
@@ -440,7 +452,74 @@ void DrawTexture(png_texture *texture, int x, int y, int w, int h)
     /* load texture object */
     GXTexObj texObj;
     GX_InitTexObj(&texObj, texture->data, texture->width, texture->height, GX_TF_RGBA8, GX_CLAMP, GX_CLAMP, GX_FALSE);
-    GX_InitTexObjLOD(&texObj,GX_LINEAR,GX_LIN_MIP_LIN,0.0,10.0,0.0,GX_FALSE,GX_TRUE,GX_ANISO_4);
+    GX_InitTexObjLOD(&texObj,GX_LINEAR,GX_LIN_MIP_LIN,0.0,10.0,0.0,GX_FALSE,GX_TRUE,GX_ANISO_4); /* does this really change anything ? */
+    GX_LoadTexObj(&texObj, GX_TEXMAP0);
+    GX_InvalidateTexAll();
+
+    /* adjust coordinate system */
+    x -= (vmode->fbWidth/2);
+    y -= (vmode->efbHeight/2);
+
+    /* Draw textured quad */
+    GX_Begin(GX_QUADS, GX_VTXFMT0, 4);
+    GX_Position2s16(x,y+h);
+    GX_Color4u8(0xff,0xff,0xff,0xff);
+    GX_TexCoord2f32(0.0, 1.0);
+    GX_Position2s16(x+w,y+h);
+    GX_Color4u8(0xff,0xff,0xff,0xff);
+    GX_TexCoord2f32(1.0, 1.0);
+    GX_Position2s16(x+w,y);
+    GX_Color4u8(0xff,0xff,0xff,0xff);
+    GX_TexCoord2f32(1.0, 0.0);
+    GX_Position2s16(x,y);
+    GX_Color4u8(0xff,0xff,0xff,0xff);
+    GX_TexCoord2f32(0.0, 0.0);
+    GX_End ();
+    GX_DrawDone();
+  }
+}
+
+void DrawTextureAlpha(png_texture *texture, int x, int y, int w, int h, u8 alpha)
+{
+  if (texture->data)
+  {
+    /* load texture object */
+    GXTexObj texObj;
+    GX_InitTexObj(&texObj, texture->data, texture->width, texture->height, GX_TF_RGBA8, GX_CLAMP, GX_CLAMP, GX_FALSE);
+    GX_InitTexObjLOD(&texObj,GX_LINEAR,GX_LIN_MIP_LIN,0.0,10.0,0.0,GX_FALSE,GX_TRUE,GX_ANISO_4); /* does this really change anything ? */
+    GX_LoadTexObj(&texObj, GX_TEXMAP0);
+    GX_InvalidateTexAll();
+
+    /* adjust coordinate system */
+    x -= (vmode->fbWidth/2);
+    y -= (vmode->efbHeight/2);
+
+    /* Draw textured quad */
+    GX_Begin(GX_QUADS, GX_VTXFMT0, 4);
+    GX_Position2s16(x,y+h);
+    GX_Color4u8(0xff,0xff,0xff,alpha);
+    GX_TexCoord2f32(0.0, 1.0);
+    GX_Position2s16(x+w,y+h);
+    GX_Color4u8(0xff,0xff,0xff,alpha);
+    GX_TexCoord2f32(1.0, 1.0);
+    GX_Position2s16(x+w,y);
+    GX_Color4u8(0xff,0xff,0xff,alpha);
+    GX_TexCoord2f32(1.0, 0.0);
+    GX_Position2s16(x,y);
+    GX_Color4u8(0xff,0xff,0xff,alpha);
+    GX_TexCoord2f32(0.0, 0.0);
+    GX_End ();
+    GX_DrawDone();
+  }
+}
+
+void DrawTextureRepeat(png_texture *texture, int x, int y, int w, int h)
+{
+  if (texture->data)
+  {
+    /* load texture object */
+    GXTexObj texObj;
+    GX_InitTexObj(&texObj, texture->data, texture->width, texture->height, GX_TF_RGBA8, GX_REPEAT, GX_REPEAT, GX_FALSE);
     GX_LoadTexObj(&texObj, GX_TEXMAP0);
     GX_InvalidateTexAll();
 
@@ -472,6 +551,9 @@ void DrawTexture(png_texture *texture, int x, int y, int w, int h)
  *
  ****************************************************************************/
 u8 SILENT = 0;
+
+GXColor BACKGROUND = {0xcc,0xcc,0xcc,0xff};
+
 
 void SetScreen ()
 {
