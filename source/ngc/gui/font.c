@@ -490,11 +490,11 @@ void DrawTextureAlpha(png_texture *texture, int x, int y, int w, int h, u8 alpha
     GX_LoadTexObj(&texObj, GX_TEXMAP0);
     GX_InvalidateTexAll();
 
-    /* adjust coordinate system */
+    /* vertex coordinate */
     x -= (vmode->fbWidth/2);
     y -= (vmode->efbHeight/2);
 
-    /* Draw textured quad */
+    /* draw textured quad */
     GX_Begin(GX_QUADS, GX_VTXFMT0, 4);
     GX_Position2s16(x,y+h);
     GX_Color4u8(0xff,0xff,0xff,alpha);
@@ -519,25 +519,29 @@ void DrawTextureRepeat(png_texture *texture, int x, int y, int w, int h)
   {
     /* load texture object */
     GXTexObj texObj;
-    GX_InitTexObj(&texObj, texture->data, texture->width, texture->height, GX_TF_RGBA8, GX_REPEAT, GX_REPEAT, GX_FALSE);
+    GX_InitTexObj(&texObj, texture->data, texture->width, texture->height, GX_TF_RGBA8, GX_MIRROR, GX_MIRROR, GX_FALSE);
     GX_LoadTexObj(&texObj, GX_TEXMAP0);
     GX_InvalidateTexAll();
 
-    /* adjust coordinate system */
+    /* vertex coordinate */
     x -= (vmode->fbWidth/2);
     y -= (vmode->efbHeight/2);
 
-    /* Draw textured quad */
+    /* texture coordinates */
+    f32 s = (f32)vmode->fbWidth / (f32)texture->width;
+    f32 t = (f32)vmode->efbHeight / (f32)texture->height;
+
+    /* draw textured quad */
     GX_Begin(GX_QUADS, GX_VTXFMT0, 4);
     GX_Position2s16(x,y+h);
     GX_Color4u8(0xff,0xff,0xff,0xff);
-    GX_TexCoord2f32(0.0, 1.0);
+    GX_TexCoord2f32(0.0, t);
     GX_Position2s16(x+w,y+h);
     GX_Color4u8(0xff,0xff,0xff,0xff);
-    GX_TexCoord2f32(1.0, 1.0);
+    GX_TexCoord2f32(s, t);
     GX_Position2s16(x+w,y);
     GX_Color4u8(0xff,0xff,0xff,0xff);
-    GX_TexCoord2f32(1.0, 0.0);
+    GX_TexCoord2f32(s, 0.0);
     GX_Position2s16(x,y);
     GX_Color4u8(0xff,0xff,0xff,0xff);
     GX_TexCoord2f32(0.0, 0.0);

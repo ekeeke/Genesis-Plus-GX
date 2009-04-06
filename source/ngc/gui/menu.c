@@ -32,8 +32,7 @@
 #include "Banner_bottom.h"
 #include "Banner_top.h"
 #include "Background_main.h"
-#include "Background_overlay_line.h"
-#include "Background_overlay_square.h"
+#include "Background_overlay.h"
 #include "Frame_s1.h"
 #include "Frame_s2.h"
 #include "Main_logo.h"
@@ -154,7 +153,7 @@ typedef struct
   gui_image *overlay;         /* overlay image                                      */
   gui_image *background;      /* background image                                   */
   gui_image *logo;            /* logo image                                         */
-  gui_image *frames[2];      /* windows (max. 2)                                   */
+  gui_image *frames[2];       /* windows (max. 2)                                   */
   gui_image *banners[2];      /* bottom & top banners                               */
   gui_item *helpers[2];       /* left & right key comments                          */
   gui_butn *arrows[2];        /* items list up & down arrows                        */
@@ -176,8 +175,7 @@ static gui_image bottom_banner      = {NULL,Banner_bottom,0,388,640,92};
 static gui_image main_banner        = {NULL,Banner_main,0,356,640,124};
 static gui_image bg_right           = {NULL,Background_main,356,144,348,288};
 static gui_image bg_center          = {NULL,Background_main,146,78,348,288};
-static gui_image bg_overlay_line    = {NULL,Background_overlay_line,0,0,640,480};
-static gui_image bg_overlay_square  = {NULL,Background_overlay_square,0,0,640,480};
+static gui_image bg_overlay_line    = {NULL,Background_overlay,0,0,640,480};
 static gui_image left_frame         = {NULL,Frame_s1,8,72,372,336};
 static gui_image right_frame        = {NULL,Frame_s2,384,116,248,296};
 
@@ -464,7 +462,7 @@ static gui_menu menu_audio =
   0,0,5,4,1,
   items_audio,
   buttons_generic,
-  &bg_overlay_square,
+  &bg_overlay_line,
   &bg_right,
   &logo_small,
   {&left_frame,NULL},
@@ -572,7 +570,7 @@ static void menu_delete(gui_menu *menu)
     if (menu->banners[i])
       CloseTexturePNG(&menu->banners[i]->texture);
 
-    /* banners */
+    /* frames */
     if (menu->frames[i])
       CloseTexturePNG(&menu->frames[i]->texture);
 
@@ -625,13 +623,13 @@ static void menu_draw(gui_menu *menu)
 
   for (i=0; i<2; i++)
   {
-    /* draw top&bottom banners */
-    image = menu->banners[i];
-    if (image) DrawTexture(image->texture,image->x,image->y,image->w,image->h);
-
     /* draw frames */
     image = menu->frames[i];
     if (image) DrawTextureAlpha(image->texture,image->x,image->y,image->w,image->h, 128);
+
+    /* draw top&bottom banners */
+    image = menu->banners[i];
+    if (image) DrawTexture(image->texture,image->x,image->y,image->w,image->h);
   }
 
   /* draw logo */
@@ -655,13 +653,6 @@ static void menu_draw(gui_menu *menu)
   {
     DrawTexture(item->texture, item->x, item->y, item->w, item->h);
     FONT_alignRight(item->comment, 16, item->x - 6, item->y+(item->h-16)/2 + 16);
-  }
-
-  /* draw top&bottom banners */
-  for (i=0; i<2; i++)
-  {
-    image = menu->banners[i];
-    if (image) DrawTexture(image->texture,image->x,image->y,image->w,image->h);
   }
 
   /* draw buttons + items */
@@ -708,7 +699,6 @@ static int menu_prompt(gui_menu *menu, char *title, char *items[], u8 nb_items)
 {
   int i, ret, quit = 0;
   int selected = 0;
-  gui_butn button[nb_items];
   butn_data *data = &button_text_data;
   u8 delete_me[2];
   s16 p;
@@ -728,21 +718,17 @@ static int menu_prompt(gui_menu *menu, char *title, char *items[], u8 nb_items)
     }
   }
 
-  /* get initial yposition */
-  int ypos = 140 + ((324 - nb_items*data->texture[0]->height - 20*(nb_items - 1))/2);
-
-  /* fill button data */
-  for (i=0; i<nb_items; i++)
-  {
-    button[i].data = data;
-    button[i].x = 182;
-    button[i].y = ypos + i*(data->texture[0]->height + 20);
-    button[i].w = data->texture[0]->width;
-    button[i].h = data->texture[0]->height;
-  }
-
-  /* texture window */
+  /* initialize texture window */
   png_texture *window = OpenTexturePNG(Frame_s1);
+
+  /* get initial positions */
+  int w = data->texture[0]->width;
+  int h = data->texture[0]->height;
+  int xwindow = (640 - window->width)/2;
+  int ywindow = (480 - window->height)/2;
+  int xpos = xwindow + (window->width - w)/2;
+  int ypos = (window->height - (h*nb_items) - (nb_items-1)*20)/2;
+  ypos = ypos + ywindow;
 
   /* menu should have been initiliazed first ! */
   while (quit == 0)
@@ -751,22 +737,22 @@ static int menu_prompt(gui_menu *menu, char *title, char *items[], u8 nb_items)
     menu_draw(menu);
 
     /* draw window */
-    DrawTexture(window, 134, 72, window->width, window->height);
+    DrawTextureAlpha(window, xwindow, ywindow, window->width, window->height,235);
 
     /* draw title */
-    FONT_writeCenter(title, 18,134, 134 + window->width, 92);
+    FONT_writeCenter(title, 20,xwindow, xwindow + window->width, ywindow + 40);
 
     /* draw buttons + text */
     for (i=0; i<nb_items; i++)
     {
-      if (i==menu->selected) DrawTexture(data->texture[1], button[i].x-2, button[i].y-2, button[i].w+4, button[i].h+4);
-      else DrawTexture(data->texture[0], button[i].x, button[i].y, button[i].w, button[i].h);
-      if (i==menu->selected) FONT_writeCenter(items[i], 20, button[i].x, button[i].x + button[i].w, button[i].y + (button[i].h - 20)/2 + 20);
-      else FONT_writeCenter(items[i], 18, button[i].x, button[i].x + button[i].w, button[i].y + (button[i].h - 18)/2 + 18);
+      if (i==selected) DrawTexture(data->texture[1], xpos-2, ypos + i*(20 + h) - 2, w+4, h+4);
+      else DrawTexture(data->texture[0],xpos,  ypos+i*(20 + h), w,h);
+      if (i==selected) FONT_writeCenter(items[i], 20, xpos, xpos + w, ypos + i*(20 + h) + (h - 20)/2 + 20);
+      else FONT_writeCenter(items[i], 18, xpos, xpos + w,  ypos+i*(20 + h) + (h - 18)/2 + 18);
     }
 
-#ifdef HW_RVL
     p = m_input.keys;
+#ifdef HW_RVL
     if (Shutdown)
     {
       /* autosave SRAM/State */
@@ -787,26 +773,22 @@ static int menu_prompt(gui_menu *menu, char *title, char *items[], u8 nb_items)
       png_texture *texture = w_pointer[0];
       DrawTexture(texture, x-texture->width/2, y-texture->height/2, texture->width, texture->height);
       gxResetCamera(0.0);
-      SetScreen ();
 
       /* check for valid buttons */
       selected = -1;
       for (i=0; i<nb_items; i++)
       {
-        if ((x >= button[i].x) && (x <= (button[i].x + button[i].w)) && (y >= button[i].y) && (y <= (button[i].y + button[i].h)))
+        if ((x >= xpos) && (x <= (xpos + w)) && (y >= ypos + i*(20 + h)) && (y <= (ypos + i*(20 + h) + h)))
         {
           selected = i;
           break;
         }
       }
     }
-#else
+#endif
+
     /* copy EFB to XFB */
     SetScreen ();
-
-    /* update inputs */
-    p = m_input.keys;
-#endif
 
     if (p & PAD_BUTTON_UP)
     {
@@ -941,7 +923,7 @@ static void menu_fade(gui_menu *menu, u8 speed, u8 out)
 }
 
 #define MAX_COLORS 6
-#define VERSION "v 1.03"
+#define VERSION "version 1.03"
 
 static GXColor background_colors[MAX_COLORS]=
 {
@@ -972,8 +954,9 @@ static int menu_callback(gui_menu *menu)
   {
     menu_draw(menu);
 
-#ifdef HW_RVL
     p = m_input.keys;
+
+#ifdef HW_RVL
     if (Shutdown)
     {
       /* autosave SRAM/State */
@@ -995,7 +978,6 @@ static int menu_callback(gui_menu *menu)
       png_texture *texture = w_pointer[0];
       DrawTexture(texture, x-texture->width/2, y-texture->height/2, texture->width, texture->height);
       gxResetCamera(0.0);
-      SetScreen ();
 
       /* check for valid buttons */
       for (i=0; i<max_buttons; i++)
@@ -1038,13 +1020,10 @@ static int menu_callback(gui_menu *menu)
         }
       }
     }
-#else
+#endif
+
     /* copy EFB to XFB */
     SetScreen ();
-
-    /* update inputs */
-    p = m_input.keys;
-#endif
 
     if (p & PAD_BUTTON_UP)
     {
@@ -1104,11 +1083,13 @@ static int menu_callback(gui_menu *menu)
     }
     else if (p & PAD_TRIGGER_L)
     {
-      /* swap background overlay (DEBUG !)*/
-      if (menu->overlay == &bg_overlay_line)
-        menu->overlay = &bg_overlay_square;
-      else if (menu->overlay == &bg_overlay_square)
-        menu->overlay = &bg_overlay_line;
+      /* swap menu background color (DEBUG !)*/
+      color_cnt--;
+      if (color_cnt < 0) color_cnt = MAX_COLORS - 1;
+      BACKGROUND.r = background_colors[color_cnt].r;
+      BACKGROUND.g = background_colors[color_cnt].g;
+      BACKGROUND.b = background_colors[color_cnt].b;
+      BACKGROUND.a = background_colors[color_cnt].a;
     }
 
     if (p & PAD_BUTTON_A)

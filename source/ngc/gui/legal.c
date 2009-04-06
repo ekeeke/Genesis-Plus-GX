@@ -73,7 +73,7 @@ void legal ()
   }
 
   SetScreen ();
-  sleep (2);
+  sleep (1);
   WriteCentre (ypos, "Press any button to skip intro");
   SetScreen ();
   int count = 100;
