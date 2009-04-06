@@ -1619,6 +1619,8 @@ void parse_satb(uint32 line)
   }
 }
 
+static int spr_over = 0;
+
 static void render_obj(uint32 line, uint8 *buf, uint8 *table)
 {
   uint16 ypos;
@@ -1642,21 +1644,27 @@ static void render_obj(uint32 line, uint8 *buf, uint8 *table)
   uint8 palette;
 
   int attr_mask, nt_row;
+  int mask = 0;
 
   for(count = 0; count < object_index_count; count += 1)
   {
     xpos = object_info[count].xpos & 0x1ff;
 
-    /* sprite masking (low priority sprite only) */
-    if(!xpos && count) return;
+    /* sprite masking (ignore the 1st sprite) */
+    if (xpos) spr_over = 1;
+    else if (spr_over)
+    {
+      spr_over = 0;
+      mask = 1;
+    }
 
     size = object_info[count].size & 0x0f;
     width = sizetab[(size >> 2) & 3];
 
     /* update pixel count (off-screen sprites included) */
-    pixelcount += width;
-    
-    if(((xpos + width) >= left) && (xpos < right))
+    pixelcount += xpos ? width : (width * 2);
+
+    if(((xpos + width) >= left) && (xpos < right) && !mask)
     {
       ypos = object_info[count].ypos;
       attr = object_info[count].attr;
@@ -1676,7 +1684,11 @@ static void render_obj(uint32 line, uint8 *buf, uint8 *table)
 
       /* number of tiles to draw */
       /* adjusted for sprite limit */
-      if (pixelcount > bitmap.viewport.w) width -= (pixelcount - bitmap.viewport.w);
+      if (pixelcount > bitmap.viewport.w)
+      {
+        width -= (pixelcount - bitmap.viewport.w);
+      }
+
       width >>= 3;
 
       for(column = 0; column < width; column += 1, lb+=8)
@@ -1685,13 +1697,17 @@ static void render_obj(uint32 line, uint8 *buf, uint8 *table)
         src = &bg_pattern_cache[(index << 6) | (v_line)];
         DRAW_SPRITE_TILE;
       }
-
     }
 
     /* sprite limit (256 or 320 pixels) */
-    if (pixelcount >= bitmap.viewport.w) return;
-     
+    if (pixelcount >= bitmap.viewport.w)
+    {
+      spr_over = 1;
+      return;
+    }
   }
+
+  spr_over = 0;
 }
 
 static void render_obj_im2(uint32 line, uint32 odd, uint8 *buf, uint8 *table)
@@ -1718,21 +1734,27 @@ static void render_obj_im2(uint32 line, uint32 odd, uint8 *buf, uint8 *table)
   uint32 offs;
 
   int attr_mask, nt_row;
+  int mask = 0;
 
   for(count = 0; count < object_index_count; count += 1)
   {
     xpos = object_info[count].xpos & 0x1ff;
 
-    /* sprite masking (low priority sprite only) */
-    if(!xpos && count) return;
+    /* sprite masking (ignore the 1st sprite) */
+    if (xpos) spr_over = 1;
+    else if(spr_over)
+    {
+      spr_over = 0;
+      mask = 1;
+    }
 
     size = object_info[count].size & 0x0f;
     width = sizetab[(size >> 2) & 3];
-     
+
     /* update pixel count (off-screen sprites included) */
-    pixelcount += width;
-    
-    if(((xpos + width) >= left) && (xpos < right))
+    pixelcount += xpos ? width : (width * 2);
+
+    if(((xpos + width) >= left) && (xpos < right) && !mask)
     {
       ypos = object_info[count].ypos;
       attr = object_info[count].attr;
@@ -1766,7 +1788,13 @@ static void render_obj_im2(uint32 line, uint32 odd, uint8 *buf, uint8 *table)
     }
 
     /* sprite limit (256 or 320 pixels) */
-    if (pixelcount >= bitmap.viewport.w) return;
+    if (pixelcount >= bitmap.viewport.w)
+    {
+      spr_over = 1;
+      return;
+    }
   }
+
+  spr_over = 0;
 }
 

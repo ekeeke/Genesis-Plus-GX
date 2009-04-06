@@ -556,8 +556,8 @@ void vdp_ctrl_w(unsigned int data)
     }
     else pending = 1;
 
-    addr = ((addr_latch & 0xC000) | (data & 0x3FFF)) & 0xFFFF;
-    code = ((code & 0x3C) | ((data >> 14) & 0x03)) & 0x3F;
+    addr = ((addr_latch & 0xC000) | (data & 0x3FFF));
+    code = ((code & 0x3C) | ((data >> 14) & 0x03));
   }
   else
   {
@@ -565,8 +565,8 @@ void vdp_ctrl_w(unsigned int data)
     pending = 0;
 
     /* Update address and code registers */
-    addr = ((addr & 0x3FFF) | ((data & 3) << 14)) & 0xFFFF;
-    code = ((code & 0x03) | ((data >> 2) & 0x3C)) & 0x3F;
+    addr = ((addr & 0x3FFF) | ((data & 3) << 14));
+    code = ((code & 0x03) | ((data >> 2) & 0x3C));
 
     /* Save address bits A15 and A14 */
     addr_latch = (addr & 0xC000);
