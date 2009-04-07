@@ -556,7 +556,7 @@ void DrawTextureRepeat(png_texture *texture, int x, int y, int w, int h)
  ****************************************************************************/
 u8 SILENT = 0;
 
-GXColor BACKGROUND = {0xcc,0xcc,0xcc,0xff};
+GXColor BACKGROUND = {0xd4,0xd0,0xc8,0xff};
 
 
 void SetScreen ()

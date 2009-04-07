@@ -8,7 +8,7 @@ Visit http://www.devkitpro.org
 #define _button_over_h_
 //---------------------------------------------------------------------------------
 extern unsigned char button_over[];
-extern const int button_over_size;
+extern int button_over_size;
 //---------------------------------------------------------------------------------
 #endif //_button_over_h_
 //---------------------------------------------------------------------------------

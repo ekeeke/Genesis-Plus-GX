@@ -4,11 +4,11 @@ Visit http://www.devkitpro.org
 */
 
 //---------------------------------------------------------------------------------
-#ifndef _button_back_h_
-#define _button_back_h_
+#ifndef _Browser_dir_h_
+#define _Browser_dir_h_
 //---------------------------------------------------------------------------------
-extern unsigned char button_back[];
-extern const int button_back_size;
+extern const unsigned char Browser_dir[];
+extern const int Browser_dir_size;
 //---------------------------------------------------------------------------------
-#endif //_button_back_h_
+#endif //_Browser_dir_h_
 //---------------------------------------------------------------------------------

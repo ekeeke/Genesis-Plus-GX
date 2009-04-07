@@ -35,8 +35,9 @@
 #include "Background_overlay.h"
 #include "Frame_s1.h"
 #include "Frame_s2.h"
-#include "Main_logo.h"
+#include "Frame_title.h"
 
+#include "Main_logo.h"
 #include "Main_play.h"
 #include "Main_load.h"
 #include "Main_options.h"
@@ -174,7 +175,7 @@ static gui_image top_banner         = {NULL,Banner_top,0,0,640,108};
 static gui_image bottom_banner      = {NULL,Banner_bottom,0,388,640,92};
 static gui_image main_banner        = {NULL,Banner_main,0,356,640,124};
 static gui_image bg_right           = {NULL,Background_main,356,144,348,288};
-static gui_image bg_center          = {NULL,Background_main,146,78,348,288};
+static gui_image bg_center          = {NULL,Background_main,146,80,348,288};
 static gui_image bg_overlay_line    = {NULL,Background_overlay,0,0,640,480};
 static gui_image left_frame         = {NULL,Frame_s1,8,72,372,336};
 static gui_image right_frame        = {NULL,Frame_s2,384,116,248,296};
@@ -623,13 +624,13 @@ static void menu_draw(gui_menu *menu)
 
   for (i=0; i<2; i++)
   {
-    /* draw frames */
-    image = menu->frames[i];
-    if (image) DrawTextureAlpha(image->texture,image->x,image->y,image->w,image->h, 128);
-
     /* draw top&bottom banners */
     image = menu->banners[i];
     if (image) DrawTexture(image->texture,image->x,image->y,image->w,image->h);
+
+    /* draw frames */
+    image = menu->frames[i];
+    if (image) DrawTextureAlpha(image->texture,image->x,image->y,image->w,image->h, 128);
   }
 
   /* draw logo */
@@ -695,10 +696,13 @@ static void menu_draw(gui_menu *menu)
   }
 }
 
-static int menu_prompt(gui_menu *menu, char *title, char *items[], u8 nb_items)
+/* Basic menu prompt  */
+/* prompt window slides in & out */
+static int menu_prompt(gui_menu *parent, char *title, char *items[], u8 nb_items)
 {
   int i, ret, quit = 0;
-  int selected = 0;
+  s32 selected = 0;
+  s32 old, voice;
   butn_data *data = &button_text_data;
   u8 delete_me[2];
   s16 p;
@@ -720,6 +724,7 @@ static int menu_prompt(gui_menu *menu, char *title, char *items[], u8 nb_items)
 
   /* initialize texture window */
   png_texture *window = OpenTexturePNG(Frame_s1);
+  png_texture *top = OpenTexturePNG(Frame_title);
 
   /* get initial positions */
   int w = data->texture[0]->width;
@@ -727,14 +732,41 @@ static int menu_prompt(gui_menu *menu, char *title, char *items[], u8 nb_items)
   int xwindow = (640 - window->width)/2;
   int ywindow = (480 - window->height)/2;
   int xpos = xwindow + (window->width - w)/2;
-  int ypos = (window->height - (h*nb_items) - (nb_items-1)*20)/2;
-  ypos = ypos + ywindow;
+  int ypos = (window->height - top->height - (h*nb_items) - (nb_items-1)*20)/2;
+  ypos = ypos + ywindow + top->height;
 
-  /* menu should have been initiliazed first ! */
-  while (quit == 0)
+  /* get initial vertical offset */
+  int yoffset = ywindow + window->height;
+
+  /* slide in */
+  while (yoffset > 0)
   {
     /* draw parent menu */
-    menu_draw(menu);
+    menu_draw(parent);
+
+    /* draw window */
+    DrawTextureAlpha(window, xwindow, ywindow - yoffset, window->width, window->height,235);
+    DrawTexture(top, xwindow, ywindow - yoffset, top->width, top->height);
+
+    /* draw title */
+    FONT_writeCenter(title, 20,xwindow, xwindow + window->width, ywindow + (top->height-20) / 2 + 20 - yoffset);
+
+    /* draw buttons + text */
+    for (i=0; i<nb_items; i++)
+    {
+      DrawTexture(data->texture[0],xpos,  ypos+i*(20 + h)-yoffset, w,h);
+      FONT_writeCenter(items[i], 18, xpos, xpos + w,  ypos + i*(20 + h) + (h + 18)/2 - yoffset);
+    }
+
+    yoffset -=10;
+    SetScreen ();
+  }
+
+  /* draw menu  */
+  while (quit == 0)
+  {
+    /* draw parent menu (should have been initialized first) */
+    menu_draw(parent);
 
     /* draw window */
     DrawTextureAlpha(window, xwindow, ywindow, window->width, window->height,235);
@@ -747,11 +779,13 @@ static int menu_prompt(gui_menu *menu, char *title, char *items[], u8 nb_items)
     {
       if (i==selected) DrawTexture(data->texture[1], xpos-2, ypos + i*(20 + h) - 2, w+4, h+4);
       else DrawTexture(data->texture[0],xpos,  ypos+i*(20 + h), w,h);
-      if (i==selected) FONT_writeCenter(items[i], 20, xpos, xpos + w, ypos + i*(20 + h) + (h - 20)/2 + 20);
-      else FONT_writeCenter(items[i], 18, xpos, xpos + w,  ypos+i*(20 + h) + (h - 18)/2 + 18);
+      if (i==selected) FONT_writeCenter(items[i], 20, xpos, xpos + w, ypos + i*(20 + h) + (h + 20)/2);
+      else FONT_writeCenter(items[i], 18, xpos, xpos + w,  ypos+i*(20 + h) + (h + 18)/2);
     }
 
+    old = selected;
     p = m_input.keys;
+
 #ifdef HW_RVL
     if (Shutdown)
     {
@@ -790,6 +824,7 @@ static int menu_prompt(gui_menu *menu, char *title, char *items[], u8 nb_items)
     /* copy EFB to XFB */
     SetScreen ();
 
+    /* update selection */
     if (p & PAD_BUTTON_UP)
     {
       if (selected > 0) selected --;
@@ -797,6 +832,16 @@ static int menu_prompt(gui_menu *menu, char *title, char *items[], u8 nb_items)
     else if (p & PAD_BUTTON_DOWN)
     {
       if (selected < (nb_items -1)) selected ++;
+    }
+
+    /* sound fx */
+    if (selected != old)
+    {
+      if (selected >= 0)
+      {
+        voice = ASND_GetFirstUnusedVoice();
+        if(voice >= 0) ASND_SetVoice(voice, VOICE_MONO_16BIT, 22050, 0, (u8 *)button_over, button_over_size, 255, 255, NULL);
+      }
     }
 
     if (p & PAD_BUTTON_A)
@@ -814,6 +859,33 @@ static int menu_prompt(gui_menu *menu, char *title, char *items[], u8 nb_items)
     }
   }
 
+  /* get initial vertical offset */
+  yoffset = 0;
+
+  /* slide out */
+  while (yoffset < (ywindow + window->height))
+  {
+    /* draw parent menu */
+    menu_draw(parent);
+
+    /* draw window */
+    DrawTextureAlpha(window, xwindow, ywindow - yoffset, window->width, window->height,235);
+    DrawTexture(top, xwindow, ywindow - yoffset, top->width, top->height);
+
+    /* draw title */
+    FONT_writeCenter(title, 20, xwindow, xwindow + window->width, ywindow + (top->height-20) / 2 + 20 - yoffset);
+
+    /* draw buttons + text */
+    for (i=0; i<nb_items; i++)
+    {
+      DrawTexture(data->texture[0],xpos,  ypos+i*(20 + h)-yoffset, w,h);
+      FONT_writeCenter(items[i], 18, xpos, xpos + w,  ypos + i*(20 + h) + (h + 18)/2 - yoffset);
+    }
+
+    yoffset +=10;
+    SetScreen ();
+  }
+
   /* close textures */
   CloseTexturePNG(&window);
   if (delete_me[0]) CloseTexturePNG(&data->texture[0]);
@@ -822,8 +894,10 @@ static int menu_prompt(gui_menu *menu, char *title, char *items[], u8 nb_items)
   return ret;
 }
 
-
-static void menu_fade(gui_menu *menu, u8 speed, u8 out)
+/* Basic menu sliding effect */
+/* this basically makes the bottom & top banners sliding in or out */
+/* when a game is displayed in background, it is faded accordingly */
+static void menu_slide(gui_menu *menu, u8 speed, u8 out)
 {
   int offset;
   int yfinal[3];
@@ -922,38 +996,43 @@ static void menu_fade(gui_menu *menu, u8 speed, u8 out)
   menu_delete(menu);
 }
 
-#define MAX_COLORS 6
+#define MAX_COLORS 11
 #define VERSION "version 1.03"
 
 static GXColor background_colors[MAX_COLORS]=
 {
   {0xcc,0xcc,0xcc,0xff}, /* light grey */
+  {0xd4,0xd0,0xc8,0xff}, /* cream */
   {0xb8,0xc7,0xda,0xff}, /* light blue */
-  {0xd4,0xd0,0xc8,0xff}, /* silver */
-  {0xbb,0xb0,0x99,0xff}, /* gold */
   {0xc0,0xcf,0xe7,0xff}, /* sky blue */
-  {0xd6,0xcb,0xba,0xff}  /* light gold */
+  {0x98,0xb1,0xd8,0xff}, /* sea blue */
+  {0x7b,0x8c,0xa6,0xff}, /* violet */
+  {0xa9,0xc7,0xc6,0xff}, /* green blue */
+  {0x7d,0xa4,0x9f,0xff}, /* darker green blue */
+  {0x22,0x52,0x74,0xff}, /* dark blue */
+  {0xd6,0xcb,0xba,0xff}, /* light gold */
+  {0xbb,0xb0,0x99,0xff}  /* gold */
 };
 
 static s8 color_cnt = 0;
 
 static int menu_callback(gui_menu *menu)
 {
-  s32 voice;
+  s32 voice,old;
   u16 p;
   u16 max_buttons = menu->max_buttons;
   u16 max_items = menu->max_items;
   u16 shift = menu->shift;
 
 #ifdef HW_RVL
-  int i,x,y,old;
+  int i,x,y;
   gui_butn *button;
 #endif
 
   for(;;)
   {
     menu_draw(menu);
-
+    old = menu->selected;
     p = m_input.keys;
 
 #ifdef HW_RVL
@@ -971,7 +1050,6 @@ static int menu_callback(gui_menu *menu)
       /* get cursor position */
       x = m_input.ir.x;
       y = m_input.ir.y;
-      old = menu->selected;
 
       /* draw wiimote pointer */
       gxResetCamera(m_input.ir.angle);
@@ -1007,16 +1085,6 @@ static int menu_callback(gui_menu *menu)
         {
           if ((y >= button->y) && (x < 320))
             menu->selected = i + 1;
-        }
-      }
-
-      /* play sound ? */
-      if (menu->selected < max_buttons + 2)
-      {
-        if (menu->selected != old)
-        {
-          voice = ASND_GetFirstUnusedVoice();
-          if(voice >= 0) ASND_SetVoice(voice, VOICE_MONO_16BIT, 22050, 0, (u8 *)button_over, button_over_size, 255, 255, NULL);
         }
       }
     }
@@ -1071,9 +1139,20 @@ static int menu_callback(gui_menu *menu)
         return (menu->offset + menu->selected);
       }
     }
-    else if (p & PAD_TRIGGER_R)
+
+    /* sound fx */
+    if (menu->selected != old)
     {
-      /* swap menu background color (DEBUG !)*/
+      if (menu->selected < max_buttons + 2)
+      {
+        voice = ASND_GetFirstUnusedVoice();
+        if(voice >= 0) ASND_SetVoice(voice, VOICE_MONO_16BIT, 22050, 0, (u8 *)button_over, button_over_size, 255, 255, NULL);
+      }
+    }
+
+    /* swap menu background color */
+    if (p & PAD_TRIGGER_R)
+    {
       color_cnt++;
       if (color_cnt >= MAX_COLORS) color_cnt = 0;
       BACKGROUND.r = background_colors[color_cnt].r;
@@ -1083,7 +1162,6 @@ static int menu_callback(gui_menu *menu)
     }
     else if (p & PAD_TRIGGER_L)
     {
-      /* swap menu background color (DEBUG !)*/
       color_cnt--;
       if (color_cnt < 0) color_cnt = MAX_COLORS - 1;
       BACKGROUND.r = background_colors[color_cnt].r;
@@ -2289,7 +2367,7 @@ void MainMenu (u32 fps)
   gui_menu *m = &menu_main;
 
   /* basic fade-in effect */
-  menu_fade(m,10,0);
+  menu_slide(m,10,0);
 
   while (quit == 0)
   {
@@ -2309,7 +2387,7 @@ void MainMenu (u32 fps)
         if (genromsize)
         {
           /* basic fade-out effect */
-          menu_fade(m,10,1);
+          menu_slide(m,10,1);
           ClearScreen ((GXColor)BLACK);
           gxDrawScreenshot(0xff);
           SetScreen ();

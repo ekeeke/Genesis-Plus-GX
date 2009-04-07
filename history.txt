@@ -7,18 +7,17 @@ Genesis Plus GX 1.3.2 (??/??/????) (Eke-Eke)
 
 * modified SN76489 cut-off frequency
 * removed now outdated Gens YM2612 core
-* improved MAME YM2612 accuracy (SSG-EG, CSM mode and more !), based upon Nemesis last tests on real hardware
-* improved FM context restore when loading savesates
-* modified sound update functions to be compatible with the new advanced synchronization techniques
+* improved MAME YM2612 emulation accuracy (SSG-EG, CSM mode and more), thanks to Nemesis for his tests on real hardware
+* fixed FM context restore when loading savesates
+* improved sprites masking: fixes 3D level in Mickey Mania
 * various code cleanup & optimization
 
 [Gamecube/Wii]
 
-* greatly improved audio/video synchronization
-* fixed video skipping issues in 60Hz modes
-* fixed some statibilty issues
-* rewrote Font & GUI engines (now powered by GX hardware)
-* new Interface design !
+* improved audio/video synchronization: fixes video skipping issues with 60Hz modes
+* fixed stability issues
+* completely rewrote FONT & GUI engines (powered by GX hardware)
+* new GUI design (incl. Wii Remote pointing, ROM snapshots & more)
 
 
 

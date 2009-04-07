@@ -24,7 +24,6 @@
 #include "shared.h"
 #include "button_select.h"
 #include "button_over.h"
-#include "button_back.h"
 
 #include <asndlib.h>
 
@@ -83,12 +82,6 @@ void ogc_audio_init(void)
     temp = button_over[i];
     button_over[i] = button_over[i+1];
     button_over[i+1] = temp;
-  }
-  for (i=0; i<button_back_size; i+=2)
-  {
-    temp = button_back[i];
-    button_back[i] = button_back[i+1];
-    button_back[i+1] = temp;
   }
   for (i=0; i<button_select_size; i+=2)
   {

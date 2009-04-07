@@ -4,11 +4,11 @@ Visit http://www.devkitpro.org
 */
 
 //---------------------------------------------------------------------------------
-#ifndef _button_select_h_
-#define _button_select_h_
+#ifndef _Frame_title_h_
+#define _Frame_title_h_
 //---------------------------------------------------------------------------------
-extern unsigned char button_select[];
-extern int button_select_size;
+extern const unsigned char Frame_title[];
+extern const int Frame_title_size;
 //---------------------------------------------------------------------------------
-#endif //_button_select_h_
+#endif //_Frame_title_h_
 //---------------------------------------------------------------------------------
