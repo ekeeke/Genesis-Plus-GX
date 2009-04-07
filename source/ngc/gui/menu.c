@@ -696,7 +696,7 @@ static void menu_draw(gui_menu *menu)
   }
 }
 
-/* Basic menu prompt  */
+/* Menu Prompt  */
 /* prompt window slides in & out */
 static int menu_prompt(gui_menu *parent, char *title, char *items[], u8 nb_items)
 {
@@ -868,7 +868,7 @@ static int menu_prompt(gui_menu *parent, char *title, char *items[], u8 nb_items
     /* draw parent menu */
     menu_draw(parent);
 
-    /* draw window */
+    /* draw window + header */
     DrawTextureAlpha(window, xwindow, ywindow - yoffset, window->width, window->height,235);
     DrawTexture(top, xwindow, ywindow - yoffset, top->width, top->height);
 
@@ -911,7 +911,7 @@ static void menu_slide(gui_menu *menu, u8 speed, u8 out)
   yfinal[1] = 0;
   yfinal[2] = 0;
 
-  /* logo (top or bottom) */
+  /* Main Logo (top or bottom) */
   image[2] = menu->logo;
 
   /* Top banner */
@@ -941,12 +941,12 @@ static void menu_slide(gui_menu *menu, u8 speed, u8 out)
     }
   }
 
-  /* alpha step */
+  /* Alpha steps */
   u16 alpha = out ? 128 : 255;
   s16 alpha_step = (127 * speed) /offset;
   if (!out) alpha_step = -alpha_step;
 
-  /* loop until final position is reeached */
+  /* Let's loop until final position has been reached */
   while (offset > 0)
   {
     if ((menu == &menu_main) && genromsize)
@@ -987,6 +987,7 @@ static void menu_slide(gui_menu *menu, u8 speed, u8 out)
     SetScreen ();
   }
 
+  /* final position */
   if (!out) 
   {
     menu_draw(menu);
@@ -997,8 +998,9 @@ static void menu_slide(gui_menu *menu, u8 speed, u8 out)
 }
 
 #define MAX_COLORS 11
-#define VERSION "version 1.03"
+#define VERSION "Version 1.03"
 
+/* it's hard to choose a nice background colors ;-) */
 static GXColor background_colors[MAX_COLORS]=
 {
   {0xcc,0xcc,0xcc,0xff}, /* light grey */

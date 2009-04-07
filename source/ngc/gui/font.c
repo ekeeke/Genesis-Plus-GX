@@ -306,22 +306,26 @@ png_texture *OpenTexturePNG(const u8 *buffer)
   /* retrieve image information */
   u32 width  = png_get_image_width(png_ptr, info_ptr);
   u32 height = png_get_image_height(png_ptr, info_ptr);
-  /*u32 bit_depth = png_get_bit_depth(png_ptr, info_ptr);
-  u32 color_type = png_get_color_type(png_ptr, info_ptr);*/
+
+#if 0
+  /* ensure PNG images are in the supported format */
+  u32 bit_depth = png_get_bit_depth(png_ptr, info_ptr);
+  u32 color_type = png_get_color_type(png_ptr, info_ptr);
 
   /* support for RGBA8 textures ONLY !*/
-  /*if ((color_type != PNG_COLOR_TYPE_RGB_ALPHA) || (bit_depth != 8))
+  if ((color_type != PNG_COLOR_TYPE_RGB_ALPHA) || (bit_depth != 8))
   {
     png_destroy_read_struct (&png_ptr, &info_ptr, NULL);
     return;
-  }*/
+  }
 
   /* 4x4 tiles are required */
-  /*if ((width%4) || (height%4))
+  if ((width%4) || (height%4))
   {
     png_destroy_read_struct (&png_ptr, &info_ptr, NULL);
     return;
-  }*/
+  }
+#endif
 
   /* allocate memory to store raw image data */
   u32 stride = width << 2;
@@ -360,7 +364,6 @@ png_texture *OpenTexturePNG(const u8 *buffer)
   if (!texture)
   {
     free (img_data);
-    png_destroy_read_struct (&png_ptr, &info_ptr, NULL);
     return NULL;
   }
 
@@ -369,7 +372,6 @@ png_texture *OpenTexturePNG(const u8 *buffer)
   if (!texture->data)
   {
     free (img_data);
-    png_destroy_read_struct (&png_ptr, &info_ptr, NULL);
     free(texture);
     return NULL;
   }
