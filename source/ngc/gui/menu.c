@@ -68,13 +68,14 @@
 #include "Load_usb.h"
 #include "Key_A_wii.h"
 #include "Key_B_wii.h"
+#include "Key_home.h"
 #include "generic_point.h"
 #include "generic_openhand.h"
 #else
 #include "Key_A_gcn.h"
 #include "Key_B_gcn.h"
+#include "Key_trigger_Z.h"
 #endif
-#include "Key_home.h"
 
 #include "button_select.h"
 #include "button_over.h"
@@ -169,11 +170,11 @@ static gui_input m_input;
 /*****************************************************************************/
 /*  Generic Images                                                           */
 /*****************************************************************************/
-static gui_image logo_main          = {NULL,Main_logo,204,372,232,56};
+static gui_image logo_main          = {NULL,Main_logo,204,362,232,56};
 static gui_image logo_small         = {NULL,Main_logo,466,40,152,44};
 static gui_image top_banner         = {NULL,Banner_top,0,0,640,108};
-static gui_image bottom_banner      = {NULL,Banner_bottom,0,388,640,92};
-static gui_image main_banner        = {NULL,Banner_main,0,356,640,124};
+static gui_image bottom_banner      = {NULL,Banner_bottom,0,380,640,100};
+static gui_image main_banner        = {NULL,Banner_main,0,340,640,140};
 static gui_image bg_right           = {NULL,Background_main,356,144,348,288};
 static gui_image bg_center          = {NULL,Background_main,146,80,348,288};
 static gui_image bg_overlay_line    = {NULL,Background_overlay,0,0,640,480};
@@ -236,7 +237,11 @@ static gui_item action_select =
 
 static gui_item action_exit =
 {
-  NULL,Key_home,"","Exit",10,388,24,24
+#ifdef HW_RVL
+  NULL,Key_home,"","",10,372,68,28
+#else
+  NULL,Key_trigger_Z,"","",10,372,92,28
+#endif
 };
 
 
@@ -612,6 +617,8 @@ static void menu_draw(gui_menu *menu)
   {
     ClearScreen ((GXColor)BLACK);
     gxDrawScreenshot(128);
+    image = menu->overlay;
+    if (image) DrawTextureRepeat(image->texture,image->x,image->y,image->w,image->h);
   }
   else
   {
@@ -631,6 +638,10 @@ static void menu_draw(gui_menu *menu)
     /* draw frames */
     image = menu->frames[i];
     if (image) DrawTextureAlpha(image->texture,image->x,image->y,image->w,image->h, 128);
+
+    /* draw top&bottom banners */
+    image = menu->banners[i];
+    if (image) DrawTexture(image->texture,image->x,image->y,image->w,image->h);
   }
 
   /* draw logo */
@@ -638,14 +649,14 @@ static void menu_draw(gui_menu *menu)
   if (image) DrawTexture(image->texture,image->x,image->y,image->w,image->h);
 
   /* draw title */
-  FONT_alignLeft(menu->title, 22,10,56);
+  FONT_alignLeft(menu->title, 22,10,56, (GXColor)WHITE);
 
   /* draw left helper */
   item = menu->helpers[0];
   if (item)
   {
     DrawTexture(item->texture, item->x, item->y, item->w, item->h);
-    FONT_alignLeft(item->comment, 16, item->x+item->w+6,item->y+(item->h-16)/2 + 16);
+    FONT_alignLeft(item->comment, 16, item->x+item->w+6,item->y+(item->h-16)/2 + 16, (GXColor)WHITE);
   }
 
   /* draw right helper */
@@ -653,7 +664,7 @@ static void menu_draw(gui_menu *menu)
   if (item)
   {
     DrawTexture(item->texture, item->x, item->y, item->w, item->h);
-    FONT_alignRight(item->comment, 16, item->x - 6, item->y+(item->h-16)/2 + 16);
+    FONT_alignRight(item->comment, 16, item->x - 6, item->y+(item->h-16)/2 + 16, (GXColor)WHITE);
   }
 
   /* draw buttons + items */
@@ -673,8 +684,8 @@ static void menu_draw(gui_menu *menu)
     }
     else
     {
-      if (i==menu->selected) FONT_writeCenter(item->text, 20, button->x, button->x + button->w, button->y + (button->h - 20)/2 + 20);
-      else FONT_writeCenter(item->text, 18, button->x, button->x + button->w, button->y + (button->h - 18)/2 + 18);
+      if (i==menu->selected) FONT_writeCenter(item->text, 18, button->x, button->x + button->w, button->y + (button->h - 18)/2 + 18, (GXColor)DARK_GREY);
+      else FONT_writeCenter(item->text, 16, button->x, button->x + button->w, button->y + (button->h - 16)/2 + 16, (GXColor)DARK_GREY);
     }
   }
 
@@ -745,20 +756,20 @@ static int menu_prompt(gui_menu *parent, char *title, char *items[], u8 nb_items
     menu_draw(parent);
 
     /* draw window */
-    DrawTextureAlpha(window, xwindow, ywindow - yoffset, window->width, window->height,235);
+    DrawTextureAlpha(window, xwindow, ywindow - yoffset, window->width, window->height,210);
     DrawTexture(top, xwindow, ywindow - yoffset, top->width, top->height);
 
     /* draw title */
-    FONT_writeCenter(title, 20,xwindow, xwindow + window->width, ywindow + (top->height-20) / 2 + 20 - yoffset);
+    FONT_writeCenter(title, 20,xwindow, xwindow + window->width, ywindow + (top->height-20) / 2 + 20 - yoffset, (GXColor)WHITE);
 
     /* draw buttons + text */
     for (i=0; i<nb_items; i++)
     {
       DrawTexture(data->texture[0],xpos,  ypos+i*(20 + h)-yoffset, w,h);
-      FONT_writeCenter(items[i], 18, xpos, xpos + w,  ypos + i*(20 + h) + (h + 18)/2 - yoffset);
+      FONT_writeCenter(items[i], 18, xpos, xpos + w,  ypos + i*(20 + h) + (h + 18)/2 - yoffset, (GXColor)DARK_GREY);
     }
 
-    yoffset -=10;
+    yoffset -=60;
     SetScreen ();
   }
 
@@ -769,18 +780,19 @@ static int menu_prompt(gui_menu *parent, char *title, char *items[], u8 nb_items
     menu_draw(parent);
 
     /* draw window */
-    DrawTextureAlpha(window, xwindow, ywindow, window->width, window->height,235);
+    DrawTextureAlpha(window, xwindow, ywindow, window->width, window->height,210);
+    DrawTexture(top, xwindow, ywindow, top->width, top->height);
 
     /* draw title */
-    FONT_writeCenter(title, 20,xwindow, xwindow + window->width, ywindow + 40);
+    FONT_writeCenter(title, 20,xwindow, xwindow + window->width, ywindow + (top->height-20) / 2 + 20, (GXColor)WHITE);
 
     /* draw buttons + text */
     for (i=0; i<nb_items; i++)
     {
       if (i==selected) DrawTexture(data->texture[1], xpos-2, ypos + i*(20 + h) - 2, w+4, h+4);
       else DrawTexture(data->texture[0],xpos,  ypos+i*(20 + h), w,h);
-      if (i==selected) FONT_writeCenter(items[i], 20, xpos, xpos + w, ypos + i*(20 + h) + (h + 20)/2);
-      else FONT_writeCenter(items[i], 18, xpos, xpos + w,  ypos+i*(20 + h) + (h + 18)/2);
+      if (i==selected) FONT_writeCenter(items[i], 20, xpos, xpos + w, ypos + i*(20 + h) + (h + 20)/2, (GXColor)DARK_GREY);
+      else FONT_writeCenter(items[i], 18, xpos, xpos + w,  ypos+i*(20 + h) + (h + 18)/2, (GXColor)DARK_GREY);
     }
 
     old = selected;
@@ -869,20 +881,20 @@ static int menu_prompt(gui_menu *parent, char *title, char *items[], u8 nb_items
     menu_draw(parent);
 
     /* draw window + header */
-    DrawTextureAlpha(window, xwindow, ywindow - yoffset, window->width, window->height,235);
+    DrawTextureAlpha(window, xwindow, ywindow - yoffset, window->width, window->height,210);
     DrawTexture(top, xwindow, ywindow - yoffset, top->width, top->height);
 
     /* draw title */
-    FONT_writeCenter(title, 20, xwindow, xwindow + window->width, ywindow + (top->height-20) / 2 + 20 - yoffset);
+    FONT_writeCenter(title, 20, xwindow, xwindow + window->width, ywindow + (top->height-20) / 2 + 20 - yoffset, (GXColor)WHITE);
 
     /* draw buttons + text */
     for (i=0; i<nb_items; i++)
     {
       DrawTexture(data->texture[0],xpos,  ypos+i*(20 + h)-yoffset, w,h);
-      FONT_writeCenter(items[i], 18, xpos, xpos + w,  ypos + i*(20 + h) + (h + 18)/2 - yoffset);
+      FONT_writeCenter(items[i], 18, xpos, xpos + w,  ypos + i*(20 + h) + (h + 18)/2 - yoffset, (GXColor)WHITE);
     }
 
-    yoffset +=10;
+    yoffset +=60;
     SetScreen ();
   }
 
@@ -997,12 +1009,15 @@ static void menu_slide(gui_menu *menu, u8 speed, u8 out)
   menu_delete(menu);
 }
 
-#define MAX_COLORS 11
+#define MAX_COLORS 14
 #define VERSION "Version 1.03"
 
 /* it's hard to choose a nice background colors ;-) */
 static GXColor background_colors[MAX_COLORS]=
 {
+  {0x00,0x00,0x00,0xff}, /* black */
+  {0x33,0x33,0x33,0xff}, /* dark grey */
+  {0x66,0x66,0x66,0xff}, /* faded grey */
   {0xcc,0xcc,0xcc,0xff}, /* light grey */
   {0xd4,0xd0,0xc8,0xff}, /* cream */
   {0xb8,0xc7,0xda,0xff}, /* light blue */
@@ -1119,7 +1134,7 @@ static int menu_callback(gui_menu *menu)
     }
     else if (p & PAD_BUTTON_LEFT)
     {
-      if (shift > 1)
+      if (shift != 1)
       {
         menu->selected --;
         if (menu->selected < 0) menu->selected = 0;
@@ -1131,7 +1146,7 @@ static int menu_callback(gui_menu *menu)
     }
     else if (p & PAD_BUTTON_RIGHT)
     {
-      if (shift > 1)
+      if (shift != 1)
       {
         menu->selected ++;
         if (menu->selected >= max_buttons) menu->selected = max_buttons - 1;
@@ -1190,9 +1205,9 @@ static int menu_callback(gui_menu *menu)
     else if (p & PAD_TRIGGER_Z)
     {
 #ifdef HW_RVL
-      char *items[3] = {"CREDITS", "RETURN TO LOADER", "SYTEM MENU"};
+      char *items[3] = {"Show Credits", "Exit to Loader", "Exit to System Menu"};
 #else
-      char *items[3] = {"CREDITS", "RETURN TO LOADER", "RESET GAMECUBE"};
+      char *items[3] = {"Show Credits", "Exit to Loader", "Reset System"};
 #endif
       switch (menu_prompt(menu, VERSION, items,3))
       {

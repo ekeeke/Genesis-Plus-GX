@@ -146,7 +146,6 @@ void WriteCentre( int y, char *string)
 
 void WriteCentre_HL( int y, char *string)
 {
-  WriteCentre(y, string);
   png_texture *texture = OpenTexturePNG(Overlay_bar);
   if (texture)
   {
@@ -154,21 +153,22 @@ void WriteCentre_HL( int y, char *string)
     if (texture->data) free(texture->data);
     free(texture);
   }
+  WriteCentre(y, string);
 }
 
-void FONT_alignLeft(char *string, int size, int x, int y)
+void FONT_alignLeft(char *string, int size, int x, int y, GXColor color)
 {
   x -= (vmode->fbWidth / 2);
   y -= (vmode->efbHeight / 2);
 
   while (*string)
   {
-    DrawChar(*string, x, y, size,(GXColor)WHITE);
+    DrawChar(*string, x, y, size,color);
     x += (font_size[(u8)*string++] * size) / fheight;
   }
 }
 
-void FONT_alignRight(char *string, int size, int x, int y)
+void FONT_alignRight(char *string, int size, int x, int y, GXColor color)
 {
   int i;
   u16 width = 0;
@@ -181,12 +181,12 @@ void FONT_alignRight(char *string, int size, int x, int y)
 
   while (*string)
   {
-    DrawChar(*string, x, y, size,(GXColor)WHITE);
+    DrawChar(*string, x, y, size,color);
     x += (font_size[(u8)*string++] * size) / fheight;
   }
 }
 
-void FONT_writeCenter(char *string, int size, int x1, int x2, int y)
+void FONT_writeCenter(char *string, int size, int x1, int x2, int y, GXColor color)
 {
   int i;
   u16 width = 0;
@@ -199,7 +199,7 @@ void FONT_writeCenter(char *string, int size, int x1, int x2, int y)
 
   while (*string)
   {
-    DrawChar(*string, x1, y, size,(GXColor)WHITE);
+    DrawChar(*string, x1, y, size,color);
     x1 += (font_size[(u8)*string++] * size) / fheight;
   }
 }
@@ -590,7 +590,7 @@ void WaitButtonA ()
 void WaitPrompt (char *msg)
 {
   if (SILENT) return;
-  ClearScreen((GXColor)BACKGROUND);
+  ClearScreen((GXColor)BLACK);
   WriteCentre(254, msg);
   WriteCentre(254 + fheight, "Press A to Continue");
   SetScreen();
@@ -601,7 +601,7 @@ void ShowAction (char *msg)
 {
   if (SILENT) return;
 
-  ClearScreen((GXColor)BACKGROUND);
+  ClearScreen((GXColor)BLACK);
   WriteCentre(254, msg);
   SetScreen();
 }

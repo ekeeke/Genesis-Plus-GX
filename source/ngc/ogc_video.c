@@ -349,8 +349,9 @@ static void gxStart(void)
   GX_SetPixelFmt(GX_PF_RGB8_Z24, GX_ZC_LINEAR);
   GX_SetCullMode(GX_CULL_NONE);
   GX_SetDispCopyGamma(GX_GM_1_0);
-  GX_SetZMode(GX_FALSE, GX_ALWAYS, GX_TRUE);
+  GX_SetZMode(GX_FALSE, GX_ALWAYS, GX_FALSE);
   GX_SetColorUpdate(GX_TRUE);
+  GX_SetAlphaUpdate(GX_FALSE);
 
   /* Modelview */
   Mtx view;
@@ -592,7 +593,7 @@ void gxDrawScreenshot(u8 alpha)
     GX_InvalidateTexAll();
 
     /* retrieve current xscale/xshift values */
-    s32 xscale = (rmode->viWidth + square[6] - square[0] - rmode->fbWidth) / 2 - 16;
+    s32 xscale = (rmode->viWidth + square[6] - square[0] - rmode->fbWidth) / 2 - (vmode->viWidth - 640)/2;
     s32 xshift = (square[6] + square[0]) / 2;
 
     /* apply current position/size */
@@ -894,8 +895,15 @@ void ogc_video_init(void)
   }
 
   /* adjust overscan */
-  vmode->viWidth    = 672;
-  vmode->viXOrigin  = (VI_MAX_WIDTH_NTSC - 672)/2;
+  vmode->viWidth    = 658;
+  vmode->viXOrigin  = (VI_MAX_WIDTH_NTSC - 658)/2;
+#ifdef HW_RVL
+  if (CONF_GetAspectRatio()) 
+  {
+    vmode->viWidth    = 672;
+    vmode->viXOrigin  = (VI_MAX_WIDTH_NTSC - 672)/2;
+  }
+#endif
 
   /* Configure VI */
   VIDEO_Configure (vmode);

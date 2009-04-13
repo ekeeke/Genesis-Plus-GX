@@ -26,6 +26,7 @@
 #define _FONT_H
 
 #define BLACK {0,0,0,0xff}
+#define DARK_GREY {0x22,0x22,0x22,0xff}
 #define WHITE {0xff,0xff,0xff,0xff}
 
 
@@ -46,9 +47,9 @@ extern void DrawTextureRepeat(png_texture *texture, int x, int y, int w, int h);
 extern void DrawTextureAlpha(png_texture *texture, int x, int y, int w, int h, u8 alpha);
 
 extern int  FONT_Init(void);
-extern void FONT_alignLeft(char *string, int size, int x, int y);
-extern void FONT_alignRight(char *string, int size, int x, int y);
-extern void FONT_writeCenter(char *string, int size, int x1, int x2, int y);
+extern void FONT_alignLeft(char *string, int size, int x, int y, GXColor color);
+extern void FONT_alignRight(char *string, int size, int x, int y, GXColor color);
+extern void FONT_writeCenter(char *string, int size, int x1, int x2, int y, GXColor color);
 
 
 extern void WriteCentre_HL( int y, char *string);

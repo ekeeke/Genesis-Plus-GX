@@ -67,14 +67,15 @@ u32 dvd_read (void *dst, u32 len, u64 offset)
 
     /*** Enable reading with DMA ***/
     while (dvd[7] & 1);
+    memcpy (dst, buffer, len);
 
     /*** Ensure it has completed ***/
     if (dvd[0] & 0x4) return 0;
 
 #else
     if (DI_ReadDVD(buffer, len >> 11, (u32)(offset >> 11))) return 0;
-#endif
     memcpy (dst, buffer, len);
+#endif
     return 1;
   }
 
