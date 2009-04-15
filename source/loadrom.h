@@ -24,6 +24,7 @@
 #define _LOADROM_H_
 
 #define MAXCOMPANY 64
+#define MAXROMSIZE 10485760
 
 typedef struct
 {

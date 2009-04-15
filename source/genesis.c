@@ -176,6 +176,7 @@ void gen_reset (uint32 hard_reset)
 
 void gen_shutdown (void)
 {
+  z80_exit();
 }
 
 /*-----------------------------------------------------------------------

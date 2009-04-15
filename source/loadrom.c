@@ -288,11 +288,11 @@ int load_rom(char *filename)
   }
 
   /* max. 10 MBytes supported */
-  if (size > 0xA00000) size = 0xA00000;
+  if (size > MAXROMSIZE) size = MAXROMSIZE;
   genromsize = size;
   
   /* clear unused ROM space */
-  if (size < 0xA00000) memset (cart_rom + size, 0x00, 0xA00000 - size);
+  if (size < MAXROMSIZE) memset (cart_rom + size, 0x00, MAXROMSIZE - size);
 
   getrominfo((char *)cart_rom);  /* get infos from ROM header */
   set_region();      /* set game region (PAL/NTSC, JAP/USA/EUR) */
