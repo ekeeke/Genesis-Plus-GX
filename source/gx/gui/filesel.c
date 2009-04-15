@@ -128,7 +128,7 @@ int FileSelector(unsigned char *buffer)
 
 #ifdef HW_RVL
   /* allocate wiimote pointer data (only done once) */
-  gx_texture *pointer = gxTextureOpenPNG(generic_point);
+  gx_texture *pointer = gxTextureOpenPNG(generic_point_png);
 #endif
 
   /* allocate background overlay texture */
@@ -156,28 +156,28 @@ int FileSelector(unsigned char *buffer)
   }
 
   /* frames */
-  gx_texture *frame_left  = gxTextureOpenPNG(Frame_s1);
-  gx_texture *frame_right = gxTextureOpenPNG(Frame_s2);
+  gx_texture *frame_left  = gxTextureOpenPNG(Frame_s1_png);
+  gx_texture *frame_right = gxTextureOpenPNG(Frame_s2_png);
 
   /* arrows */
-  gx_texture *arrow_up        = gxTextureOpenPNG(Button_up);
-  gx_texture *arrow_up_over   = gxTextureOpenPNG(Button_up_over);
-  gx_texture *arrow_down      = gxTextureOpenPNG(Button_down);
-  gx_texture *arrow_down_over = gxTextureOpenPNG(Button_down_over);
+  gx_texture *arrow_up        = gxTextureOpenPNG(Button_up_png);
+  gx_texture *arrow_up_over   = gxTextureOpenPNG(Button_up_over_png);
+  gx_texture *arrow_down      = gxTextureOpenPNG(Button_down_png);
+  gx_texture *arrow_down_over = gxTextureOpenPNG(Button_down_over_png);
 
   /* selection bar */
-  gx_texture *bar_over = gxTextureOpenPNG(Overlay_bar);
+  gx_texture *bar_over = gxTextureOpenPNG(Overlay_bar_png);
 
   /* directory icon */
-  gx_texture *dir_icon = gxTextureOpenPNG(Browser_dir);
+  gx_texture *dir_icon = gxTextureOpenPNG(Browser_dir_png);
 
   /* stars */
-  gx_texture *star_full  = gxTextureOpenPNG(Star_full);
-  gx_texture *star_empty = gxTextureOpenPNG(Star_empty);
+  gx_texture *star_full  = gxTextureOpenPNG(Star_full_png);
+  gx_texture *star_empty = gxTextureOpenPNG(Star_empty_png);
 
   /* snapshots */
-  gx_texture *snap_frame = gxTextureOpenPNG(Snap_frame);
-  gx_texture *snap_empty = gxTextureOpenPNG(Snap_empty);
+  gx_texture *snap_frame = gxTextureOpenPNG(Snap_frame_png);
+  gx_texture *snap_empty = gxTextureOpenPNG(Snap_empty_png);
 
   while (!quit)
   {

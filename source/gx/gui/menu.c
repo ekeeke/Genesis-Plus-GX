@@ -40,16 +40,16 @@ t_input_menu m_input;
 /*****************************************************************************/
 /*  Common GUI images                                                        */
 /*****************************************************************************/
-gui_image logo_main          = {NULL,Main_logo,204,362,232,56};
-gui_image logo_small         = {NULL,Main_logo,466,40,152,44};
-gui_image top_banner         = {NULL,Banner_top,0,0,640,108};
-gui_image bottom_banner      = {NULL,Banner_bottom,0,380,640,100};
-gui_image main_banner        = {NULL,Banner_main,0,340,640,140};
-gui_image bg_right           = {NULL,Background_main,356,144,348,288};
-gui_image bg_center          = {NULL,Background_main,146,80,348,288};
-gui_image bg_overlay_line    = {NULL,Background_overlay,0,0,640,480};
-gui_image left_frame         = {NULL,Frame_s1,8,70,372,336};
-gui_image right_frame        = {NULL,Frame_s2,384,264,248,140};
+gui_image logo_main          = {NULL,Main_logo_png,204,362,232,56};
+gui_image logo_small         = {NULL,Main_logo_png,466,40,152,44};
+gui_image top_banner         = {NULL,Banner_top_png,0,0,640,108};
+gui_image bottom_banner      = {NULL,Banner_bottom_png,0,380,640,100};
+gui_image main_banner        = {NULL,Banner_main_png,0,340,640,140};
+gui_image bg_right           = {NULL,Bg_main_png,356,144,348,288};
+gui_image bg_center          = {NULL,Bg_main_png,146,80,348,288};
+gui_image bg_overlay_line    = {NULL,Bg_overlay_png,0,0,640,480};
+gui_image left_frame         = {NULL,Frame_s1_png,8,70,372,336};
+gui_image right_frame        = {NULL,Frame_s2_png,384,264,248,140};
 
 /*****************************************************************************/
 /*  Common GUI buttons data                                                  */
@@ -57,25 +57,25 @@ gui_image right_frame        = {NULL,Frame_s2,384,264,248,140};
 butn_data arrow_up_data =
 {
   {NULL,NULL},
-  {Button_up,Button_up_over}
+  {Button_up_png,Button_up_over_png}
 };
 
 butn_data arrow_down_data =
 {
   {NULL,NULL},
-  {Button_down,Button_down_over}
+  {Button_down_png,Button_down_over_png}
 };
 
 butn_data button_text_data =
 {
   {NULL,NULL},
-  {Button_text,Button_text_over}
+  {Button_text_png,Button_text_over_png}
 };
 
 butn_data button_icon_data =
 {
   {NULL,NULL},
-  {Button_icon,Button_icon_over}
+  {Button_icon_png,Button_icon_over_png}
 };
 
 /*****************************************************************************/
@@ -84,27 +84,27 @@ butn_data button_icon_data =
 gui_item action_cancel =
 {
 #ifdef HW_RVL
-  NULL,Key_B_wii,"","Back",10,422,28,28
+  NULL,Key_B_wii_png,"","Back",10,422,28,28
 #else
-  NULL,Key_B_gcn,"","Back",10,422,28,28
+  NULL,Key_B_gcn_png,"","Back",10,422,28,28
 #endif
 };
 
 gui_item action_select =
 {
 #ifdef HW_RVL
-  NULL,Key_A_wii,"","",602,422,28,28
+  NULL,Key_A_wii_png,"","",602,422,28,28
 #else
-  NULL,Key_A_gcn,"","",602,422,28,28
+  NULL,Key_A_gcn_png,"","",602,422,28,28
 #endif
 };
 
 gui_item action_exit =
 {
 #ifdef HW_RVL
-  NULL,Key_home,"","",10,372,68,28
+  NULL,Key_home_png,"","",10,372,68,28
 #else
-  NULL,Key_trigger_Z,"","",10,372,92,28
+  NULL,Key_trigger_Z_png,"","",10,372,92,28
 #endif
 };
 
@@ -156,38 +156,38 @@ static gui_item items_video[8] =
 /* Main menu */
 static gui_item items_main[6] =
 {
-  {NULL,Main_play   ,"","",108, 76,92,88},
-  {NULL,Main_load   ,"","",280, 72,80,92},
-  {NULL,Main_options,"","",456, 76,60,88},
-  {NULL,Main_file   ,"","",114,216,80,92},
-  {NULL,Main_reset  ,"","",282,224,76,84},
-  {NULL,Main_info   ,"","",446,212,88,96}
+  {NULL,Main_play_png   ,"","",108, 76,92,88},
+  {NULL,Main_load_png   ,"","",280, 72,80,92},
+  {NULL,Main_options_png,"","",456, 76,60,88},
+  {NULL,Main_file_png   ,"","",114,216,80,92},
+  {NULL,Main_reset_png  ,"","",282,224,76,84},
+  {NULL,Main_info_png   ,"","",446,212,88,96}
 };
 
 #ifdef HW_RVL
 static gui_item items_load[4] =
 {
-  {NULL,Load_recent,"","Load recent files",             276,120,88,96},
-  {NULL,Load_sd    ,"","Load ROM files from SDCARD",    110,266,88,96},
-  {NULL,Load_usb   ,"","Load ROM files from USB device",276,266,88,96},
-  {NULL,Load_dvd   ,"","Load ROM files from DVD",       442,266,88,96}
+  {NULL,Load_recent_png,"","Load recent files",             276,120,88,96},
+  {NULL,Load_sd_png    ,"","Load ROM files from SDCARD",    110,266,88,96},
+  {NULL,Load_usb_png   ,"","Load ROM files from USB device",276,266,88,96},
+  {NULL,Load_dvd_png   ,"","Load ROM files from DVD",       442,266,88,96}
 };
 #else
 static gui_item items_load[3] =
 {
-  {NULL,Load_recent,"","Load recent files",         110,198,88,96},
-  {NULL,Load_sd    ,"","Load ROM files from SDCARD",276,198,88,96},
-  {NULL,Load_dvd   ,"","Load ROM files from DVD",   442,198,88,96}
+  {NULL,Load_recent_png,"","Load recent files",         110,198,88,96},
+  {NULL,Load_sd_png    ,"","Load ROM files from SDCARD",276,198,88,96},
+  {NULL,Load_dvd_png   ,"","Load ROM files from DVD",   442,198,88,96}
 };
 #endif
 
 static gui_item items_options[5] =
 {
-  {NULL,Option_system,"","System settings", 114,142,80,92},
-  {NULL,Option_video ,"","Video settings",  288,150,64,84},
-  {NULL,Option_sound ,"","Audio settings",  464,154,44,80},
-  {NULL,Option_ctrl  ,"","Input settings",  192,286,88,92},
-  {NULL,Option_ggenie,"","Game Genie Codes",360,282,88,96}
+  {NULL,Option_system_png,"","System settings", 114,142,80,92},
+  {NULL,Option_video_png ,"","Video settings",  288,150,64,84},
+  {NULL,Option_sound_png ,"","Audio settings",  464,154,44,80},
+  {NULL,Option_ctrl_png  ,"","Input settings",  192,286,88,92},
+  {NULL,Option_ggenie_png,"","Game Genie Codes",360,282,88,96}
 };
 
 
@@ -359,7 +359,7 @@ static void menu_initialize(gui_menu *menu)
 
 #ifdef HW_RVL
   /* allocate wiimote pointer data (only done once) */
-  w_pointer[0] = gxTextureOpenPNG(generic_point);
+  w_pointer[0] = gxTextureOpenPNG(generic_point_png);
 /*  w_pointer[1] = gxTextureOpenPNG(generic_openhand);*/
 #endif
 
@@ -614,8 +614,8 @@ static int menu_prompt(gui_menu *parent, char *title, char *items[], u8 nb_items
   }
 
   /* initialize texture window */
-  gx_texture *window = gxTextureOpenPNG(Frame_s1);
-  gx_texture *top = gxTextureOpenPNG(Frame_title);
+  gx_texture *window = gxTextureOpenPNG(Frame_s1_png);
+  gx_texture *top = gxTextureOpenPNG(Frame_title_png);
 
   /* get initial positions */
   int w = data->texture[0]->width;
@@ -736,7 +736,7 @@ static int menu_prompt(gui_menu *parent, char *title, char *items[], u8 nb_items
       if (selected >= 0)
       {
         voice = ASND_GetFirstUnusedVoice();
-        if(voice >= 0) ASND_SetVoice(voice,VOICE_MONO_16BIT,22050,0,(u8 *)button_over,button_over_size,255,255,NULL);
+        if(voice >= 0) ASND_SetVoice(voice,VOICE_MONO_16BIT,22050,0,(u8 *)button_over_pcm,button_over_pcm_size,255,255,NULL);
       }
     }
 
@@ -1054,7 +1054,7 @@ static int menu_callback(gui_menu *menu)
       if (menu->selected < max_buttons + 2)
       {
         voice = ASND_GetFirstUnusedVoice();
-        if(voice >= 0) ASND_SetVoice(voice,VOICE_MONO_16BIT,22050,0,(u8 *)button_over,button_over_size,255,255,NULL);
+        if(voice >= 0) ASND_SetVoice(voice,VOICE_MONO_16BIT,22050,0,(u8 *)button_over_pcm,button_over_pcm_size,255,255,NULL);
       }
     }
 
@@ -1083,7 +1083,7 @@ static int menu_callback(gui_menu *menu)
       if (menu->selected < max_buttons)
       {
         voice = ASND_GetFirstUnusedVoice();
-        if(voice >= 0) ASND_SetVoice(voice,VOICE_MONO_16BIT,22050,0,(u8 *)button_select,button_select_size,255,255,NULL);
+        if(voice >= 0) ASND_SetVoice(voice,VOICE_MONO_16BIT,22050,0,(u8 *)button_select_pcm,button_select_pcm_size,255,255,NULL);
         return (menu->offset + menu->selected);
       }
       else if (menu->selected == max_buttons) menu->offset --;
@@ -1180,28 +1180,28 @@ static void drawmenu (char items[][25], int maxitems, int selected)
 
   /* draw background items */
   gxClearScreen ((GXColor)BACKGROUND);
-  texture= gxTextureOpenPNG(Background_main);
+  texture= gxTextureOpenPNG(Bg_main_png);
   if (texture)
   {
     gxDrawTexture(texture, (640-texture->width)/2, (480-texture->height)/2, texture->width, texture->height,255);
     if (texture->data) free(texture->data);
     free(texture);
   }
-  texture= gxTextureOpenPNG(Banner_bottom);
+  texture= gxTextureOpenPNG(Banner_bottom_png);
   if (texture)
   {
     gxDrawTexture(texture, 0, 480-texture->height, texture->width, texture->height, 255);
     if (texture->data) free(texture->data);
     free(texture);
   }
-  texture= gxTextureOpenPNG(Banner_top);
+  texture= gxTextureOpenPNG(Banner_top_png);
   if (texture)
   {
     gxDrawTexture(texture, 0, 0, texture->width, texture->height, 255);
     if (texture->data) free(texture->data);
     free(texture);
   }
-  texture= gxTextureOpenPNG(Main_logo);
+  texture= gxTextureOpenPNG(Main_logo_png);
   if (texture)
   {
     gxDrawTexture(texture, 444, 28, 176, 48, 255);

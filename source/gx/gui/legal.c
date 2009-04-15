@@ -58,7 +58,7 @@ void legal ()
   WriteCentre (ypos, "You are free to use it as you wish.");
   ypos += 2*fheight;
 
-  texture= gxTextureOpenPNG(Background_intro_c4);
+  texture= gxTextureOpenPNG(Bg_intro_c4_png);
   if (texture)
   {
     gxDrawTexture(texture, (640-texture->width)/2, ypos, texture->width, texture->height,255);
@@ -80,7 +80,7 @@ void legal ()
   }
 
   gxClearScreen((GXColor)BLACK);
-  texture = gxTextureOpenPNG(Background_intro_c1);
+  texture = gxTextureOpenPNG(Bg_intro_c1_png);
   if (texture)
   {
     gxDrawTexture(texture, (640-texture->width)/2, (480-texture->height)/2,  texture->width, texture->height,255);
@@ -92,7 +92,7 @@ void legal ()
   sleep (1);
 
   gxClearScreen((GXColor)WHITE);
-  texture = gxTextureOpenPNG(Background_intro_c2);
+  texture = gxTextureOpenPNG(Bg_intro_c2_png);
   if (texture)
   {
     gxDrawTexture(texture, (640-texture->width)/2, (480-texture->height)/2,  texture->width, texture->height,255);
@@ -104,7 +104,7 @@ void legal ()
   sleep (1);
 
   gxClearScreen((GXColor)BLACK);
-  texture = gxTextureOpenPNG(Background_intro_c3);
+  texture = gxTextureOpenPNG(Bg_intro_c3_png);
   if (texture)
   {
     gxDrawTexture(texture, (640-texture->width)/2, (480-texture->height)/2,  texture->width, texture->height,255);

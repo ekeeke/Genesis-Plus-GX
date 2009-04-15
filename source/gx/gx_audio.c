@@ -22,8 +22,6 @@
  ***************************************************************************/
 
 #include "shared.h"
-#include "button_select.h"
-#include "button_over.h"
 
 #include <asndlib.h>
 
@@ -74,21 +72,6 @@ void gx_audio_init(void)
 {
   AUDIO_Init (NULL);
   AUDIO_SetDSPSampleRate (AI_SAMPLERATE_48KHZ);
-
-  uint8 temp;
-  int i;
-  for (i=0; i<button_over_size; i+=2)
-  {
-    temp = button_over[i];
-    button_over[i] = button_over[i+1];
-    button_over[i+1] = temp;
-  }
-  for (i=0; i<button_select_size; i+=2)
-  {
-    temp = button_select[i];
-    button_select[i] = button_over[i+1];
-    button_select[i+1] = temp;
-  }
 }
 
 /*** 

@@ -28,9 +28,6 @@
 #include "md_ntsc.h"
 #include "sms_ntsc.h"
 
-#include "Crosshair_p1.h"
-#include "Crosshair_p2.h"
-
 #include <png.h>
 
 #define TEX_WIDTH         720
@@ -46,6 +43,9 @@ typedef struct
   u8 *buffer;
   u32 offset;
 } png_file;
+
+extern const u8 Crosshair_p1_png[];
+extern const u8 Crosshair_p2_png[];
 
 /*** VI ***/
 unsigned int *xfb[2];  /* External Framebuffers */
@@ -1022,8 +1022,8 @@ void gx_video_start(void)
   {
     if (config.gun_cursor)
     {
-      if (input.dev[4] == DEVICE_LIGHTGUN) crosshair[0] = gxTextureOpenPNG(Crosshair_p1);
-      if (input.dev[5] == DEVICE_LIGHTGUN) crosshair[1] = gxTextureOpenPNG(Crosshair_p2);
+      if (input.dev[4] == DEVICE_LIGHTGUN) crosshair[0] = gxTextureOpenPNG(Crosshair_p1_png);
+      if (input.dev[5] == DEVICE_LIGHTGUN) crosshair[1] = gxTextureOpenPNG(Crosshair_p2_png);
     }
   }
 

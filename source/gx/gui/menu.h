@@ -28,75 +28,81 @@
 #include <wiiuse/wpad.h>
 #endif
 
+/*****************************************************************************/
+/*  GUI png data                                                             */
+/*****************************************************************************/
 
-#include "Background_intro_c1.h"
-#include "Background_intro_c2.h"
-#include "Background_intro_c3.h"
-#include "Background_intro_c4.h"
+extern const u8 Bg_intro_c1_png[];
+extern const u8 Bg_intro_c2_png[];
+extern const u8 Bg_intro_c3_png[];
+extern const u8 Bg_intro_c4_png[];
+extern const u8 Bg_main_png[];
+extern const u8 Bg_overlay_png[];
 
-#include "Banner_main.h"
-#include "Banner_bottom.h"
-#include "Banner_top.h"
+extern const u8 Main_logo_png[];
 
-#include "Background_main.h"
-#include "Background_overlay.h"
+extern const u8 Banner_main_png[];
+extern const u8 Banner_bottom_png[];
+extern const u8 Banner_top_png[];
 
-#include "Frame_s1.h"
-#include "Frame_s2.h"
-#include "Frame_title.h"
+extern const u8 Frame_s1_png[];
+extern const u8 Frame_s2_png[];
+extern const u8 Frame_title_png[];
 
-#include "Overlay_bar.h"
+extern const u8 Overlay_bar_png[];
 
-#include "Browser_dir.h"
+extern const u8 Browser_dir_png[];
 
-#include "Star_full.h"
-#include "Star_empty.h"
+extern const u8 Star_full_png[];
+extern const u8 Star_empty_png[];
 
-#include "Snap_empty.h"
-#include "Snap_frame.h"
+extern const u8 Snap_empty_png[];
+extern const u8 Snap_frame_png[];
 
-#include "Main_logo.h"
-#include "Main_play.h"
-#include "Main_load.h"
-#include "Main_options.h"
-#include "Main_file.h"
-#include "Main_reset.h"
-#include "Main_info.h"
+extern const u8 Main_play_png[];
+extern const u8 Main_load_png[];
+extern const u8 Main_options_png[];
+extern const u8 Main_file_png[];
+extern const u8 Main_reset_png[];
+extern const u8 Main_info_png[];
 
-#include "Option_ctrl.h"
-#include "Option_ggenie.h"
-#include "Option_sound.h"
-#include "Option_video.h"
-#include "Option_system.h"
+extern const u8 Option_ctrl_png[];
+extern const u8 Option_ggenie_png[];
+extern const u8 Option_sound_png[];
+extern const u8 Option_video_png[];
+extern const u8 Option_system_png[];
 
-#include "Load_recent.h"
-#include "Load_sd.h"
-#include "Load_dvd.h"
+extern const u8 Load_recent_png[];
+extern const u8 Load_sd_png[];
+extern const u8 Load_dvd_png[];
 
-#include "Button_text.h"
-#include "Button_text_over.h"
-#include "Button_icon.h"
-#include "Button_icon_over.h"
-#include "Button_up.h"
-#include "Button_down.h"
-#include "Button_up_over.h"
-#include "Button_down_over.h"
+extern const u8 Button_text_png[];
+extern const u8 Button_text_over_png[];
+extern const u8 Button_icon_png[];
+extern const u8 Button_icon_over_png[];
+extern const u8 Button_up_png[];
+extern const u8 Button_down_png[];
+extern const u8 Button_up_over_png[];
+extern const u8 Button_down_over_png[];
 
 #ifdef HW_RVL
-#include "Load_usb.h"
-#include "Key_A_wii.h"
-#include "Key_B_wii.h"
-#include "Key_home.h"
-#include "generic_point.h"
-#include "generic_openhand.h"
+extern const u8 Load_usb_png[];
+extern const u8 Key_A_wii_png[];
+extern const u8 Key_B_wii_png[];
+extern const u8 Key_home_png[];
+extern const u8 generic_point_png[];
+extern const u8 generic_openhand_png[];
 #else
-#include "Key_A_gcn.h"
-#include "Key_B_gcn.h"
-#include "Key_trigger_Z.h"
+extern const u8 Key_A_gcn_png[];
+extern const u8 Key_B_gcn_png[];
+extern const u8 Key_trigger_Z_png[];
 #endif
 
-#include "button_select.h"
-#include "button_over.h"
+extern const u8 button_select_pcm[];
+extern const u8 button_over_pcm[];
+extern const u32 button_select_pcm_size;
+extern const u32 button_over_pcm_size;
+
 
 /*****************************************************************************/
 /*  Generic GUI structures                                                   */
