@@ -833,6 +833,7 @@ void gxDrawScreenshot(u8 alpha)
 
 void gxDrawTexture(gx_texture *texture, int x, int y, int w, int h, u8 alpha)
 {
+  if (!texture) return;
   if (texture->data)
   {
     /* load texture object */
@@ -867,6 +868,7 @@ void gxDrawTexture(gx_texture *texture, int x, int y, int w, int h, u8 alpha)
 
 void gxDrawRepeat(gx_texture *texture, int x, int y, int w, int h)
 {
+  if (!texture) return;
   if (texture->data)
   {
     /* load texture object */

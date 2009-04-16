@@ -52,33 +52,6 @@ gui_image left_frame         = {NULL,Frame_s1_png,8,70,372,336};
 gui_image right_frame        = {NULL,Frame_s2_png,384,264,248,140};
 
 /*****************************************************************************/
-/*  Common GUI buttons data                                                  */
-/*****************************************************************************/
-butn_data arrow_up_data =
-{
-  {NULL,NULL},
-  {Button_up_png,Button_up_over_png}
-};
-
-butn_data arrow_down_data =
-{
-  {NULL,NULL},
-  {Button_down_png,Button_down_over_png}
-};
-
-butn_data button_text_data =
-{
-  {NULL,NULL},
-  {Button_text_png,Button_text_over_png}
-};
-
-butn_data button_icon_data =
-{
-  {NULL,NULL},
-  {Button_icon_png,Button_icon_over_png}
-};
-
-/*****************************************************************************/
 /*  Common GUI items                                                         */
 /*****************************************************************************/
 gui_item action_cancel =
@@ -106,6 +79,33 @@ gui_item action_exit =
 #else
   NULL,Key_trigger_Z_png,"","",10,372,92,28
 #endif
+};
+
+/*****************************************************************************/
+/*  Buttons data                                                             */
+/*****************************************************************************/
+static butn_data arrow_up_data =
+{
+  {NULL,NULL},
+  {Button_up_png,Button_up_over_png}
+};
+
+static butn_data arrow_down_data =
+{
+  {NULL,NULL},
+  {Button_down_png,Button_down_over_png}
+};
+
+static butn_data button_text_data =
+{
+  {NULL,NULL},
+  {Button_text_png,Button_text_over_png}
+};
+
+static butn_data button_icon_data =
+{
+  {NULL,NULL},
+  {Button_icon_png,Button_icon_over_png}
 };
 
 /*****************************************************************************/
@@ -508,10 +508,6 @@ static void menu_draw(gui_menu *menu)
     /* draw frames */
     image = menu->frames[i];
     if (image) gxDrawTexture(image->texture,image->x,image->y,image->w,image->h, 128);
-
-    /* draw top&bottom banners */
-    image = menu->banners[i];
-    if (image) gxDrawTexture(image->texture,image->x,image->y,image->w,image->h,255);
   }
 
   /* draw logo */
@@ -521,20 +517,12 @@ static void menu_draw(gui_menu *menu)
   /* draw title */
   FONT_alignLeft(menu->title, 22,10,56, (GXColor)WHITE);
 
-  /* draw left helper */
+  /* draw left comment */
   item = menu->helpers[0];
   if (item)
   {
     gxDrawTexture(item->texture,item->x,item->y,item->w,item->h,255);
     FONT_alignLeft(item->comment,16,item->x+item->w+6,item->y+(item->h-16)/2 + 16,(GXColor)WHITE);
-  }
-
-  /* draw right helper */
-  item = menu->helpers[1];
-  if (item)
-  {
-    gxDrawTexture(item->texture,item->x,item->y,item->w,item->h,255);
-    FONT_alignRight(item->comment,16,item->x-6,item->y+(item->h-16)/2+16,(GXColor)WHITE);
   }
 
   /* draw buttons + items */
@@ -558,6 +546,7 @@ static void menu_draw(gui_menu *menu)
       {
         strcpy(menu->helpers[1]->comment,item->comment);
         item = menu->helpers[1];
+        gxDrawTexture(item->texture,item->x,item->y,item->w,item->h,255);
         FONT_alignRight(item->comment,16,item->x-6,item->y+(item->h-16)/2+16,(GXColor)WHITE);
       }
     }
@@ -637,7 +626,7 @@ static int menu_prompt(gui_menu *parent, char *title, char *items[], u8 nb_items
     menu_draw(parent);
 
     /* draw window */
-    gxDrawTexture(window,xwindow,ywindow-yoffset,window->width,window->height,210);
+    gxDrawTexture(window,xwindow,ywindow-yoffset,window->width,window->height,208);
     gxDrawTexture(top,xwindow,ywindow-yoffset,top->width,top->height,255);
 
     /* draw title */
@@ -664,7 +653,7 @@ static int menu_prompt(gui_menu *parent, char *title, char *items[], u8 nb_items
     menu_draw(parent);
 
     /* draw window */
-    gxDrawTexture(window,xwindow,ywindow,window->width,window->height,210);
+    gxDrawTexture(window,xwindow,ywindow,window->width,window->height,208);
     gxDrawTexture(top,xwindow,ywindow,top->width,top->height,255);
 
     /* draw title */
@@ -765,7 +754,7 @@ static int menu_prompt(gui_menu *parent, char *title, char *items[], u8 nb_items
     menu_draw(parent);
 
     /* draw window + header */
-    gxDrawTexture(window,xwindow,ywindow-yoffset,window->width,window->height,210);
+    gxDrawTexture(window,xwindow,ywindow-yoffset,window->width,window->height,208);
     gxDrawTexture(top,xwindow,ywindow-yoffset,top->width,top->height,255);
 
     /* draw title */
@@ -795,14 +784,14 @@ static int menu_prompt(gui_menu *parent, char *title, char *items[], u8 nb_items
 /* when a game is displayed in background, it is faded accordingly */
 static void menu_slide(gui_menu *menu, u8 speed, u8 out)
 {
-  int offset;
+  int yoffset;
   int yfinal[3];
   gui_image *image[3];
   gui_image *temp;
 
   menu_initialize(menu);
 
-  offset = 0;
+  yoffset = 0;
   yfinal[0] = 0;
   yfinal[1] = 0;
   yfinal[2] = 0;
@@ -815,11 +804,11 @@ static void menu_slide(gui_menu *menu, u8 speed, u8 out)
   if (image[0])
   {
     /* intial offset */
-    offset = image[0]->y + image[0]->h;
+    yoffset = image[0]->y + image[0]->h;
 
     /* final ypos */
     yfinal[0] = out ? (-image[0]->h) : (image[0]->y);
-    if (image[2] && !image[1]) yfinal[2] = out ? (image[2]->y - offset) : image[2]->y;
+    if (image[2] && !image[1]) yfinal[2] = out ? (image[2]->y - yoffset) : image[2]->y;
   }
 
   /* Bottom banner */
@@ -829,17 +818,17 @@ static void menu_slide(gui_menu *menu, u8 speed, u8 out)
     if ((480 + image[1]->h - image[1]->y) > offset)
     {
       /* intial offset */
-      offset = 480 - image[1]->y;
+      yoffset = 480 - image[1]->y;
 
       /* final ypos */
       yfinal[1] = out ? 480 : (image[1]->y);
-      if (image[2] && !image[0]) yfinal[2] = out ? (image[2]->y + offset) : image[2]->y;
+      if (image[2] && !image[0]) yfinal[2] = out ? (image[2]->y + yoffset) : image[2]->y;
     }
   }
 
   /* Alpha steps */
   u16 alpha = out ? 128 : 255;
-  s16 alpha_step = (127 * speed) /offset;
+  s16 alpha_step = (127 * speed) / yoffset;
   if (!out) alpha_step = -alpha_step;
 
   /* Let's loop until final position has been reached */
@@ -862,18 +851,18 @@ static void menu_slide(gui_menu *menu, u8 speed, u8 out)
     /* draw top banner + logo */
     if (image[out])
     {
-      gxDrawTexture(image[out]->texture,image[out]->x,yfinal[out]-offset,image[out]->w,image[out]->h,255);
-      if (image[2] && !image[out^1]) gxDrawTexture(image[2]->texture,image[2]->x,yfinal[2]-offset,image[2]->w,image[2]->h,255);
+      gxDrawTexture(image[out]->texture,image[out]->x,yfinal[out]-yoffset,image[out]->w,image[out]->h,255);
+      if (image[2] && !image[out^1]) gxDrawTexture(image[2]->texture,image[2]->x,yfinal[2]-yoffset,image[2]->w,image[2]->h,255);
     }
     /*  draw bottom banner + logo */
     if (image[out^1])
     {
-      gxDrawTexture(image[out^1]->texture,image[out^1]->x,yfinal[out^1]+offset,image[out^1]->w,image[out^1]->h,255);
-      if (image[2] && !image[out]) gxDrawTexture(image[2]->texture,image[2]->x,image[2]->y+offset,image[2]->w,image[2]->h,255);
+      gxDrawTexture(image[out^1]->texture,image[out^1]->x,yfinal[out^1]+yoffset,image[out^1]->w,image[out^1]->h,255);
+      if (image[2] && !image[out]) gxDrawTexture(image[2]->texture,image[2]->x,image[2]->y+yoffset,image[2]->w,image[2]->h,255);
     }
 
     /* update offset */
-    offset -= speed;
+    yoffset -= speed;
 
     /* update alpha */
     alpha += alpha_step;

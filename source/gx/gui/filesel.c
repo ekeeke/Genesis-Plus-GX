@@ -33,8 +33,8 @@
 #endif
 
 /* this is emulator specific ! */
-#define PAGESIZE 14
-//#define PAGEOFFSET 120
+#define PAGESIZE 13
+#define PAGEOFFSET 86
 
 
 /* Global Variables */
@@ -44,36 +44,10 @@ int selection     = 0;
 int old_selection = 0;
 int old_offset    = 0;
 int useFAT        = 0;
-int useHistory    = 0;
 int haveDVDdir    = 0;
 int haveFATdir    = 0;
 
 FILEENTRIES filelist[MAXFILES];
-
-/***************************************************************************
- * ShowFiles
- *
- * Show filenames list in current directory
- ***************************************************************************/ 
-/*static void ShowFiles (int offset, int selection) 
-{
-  int i, j;
-  char text[MAXJOLIET+2];
-
-  gxClearScreen ((GXColor)BLACK);
-  j = 0;
-
-  for (i = offset; i < (offset + PAGESIZE) && (i < maxfiles); i++)
-  {
-    memset(text,0,MAXJOLIET+2);
-    if (filelist[i].flags) sprintf(text, "[%s]", filelist[i].filename + filelist[i].filename_offset);
-    else sprintf (text, "%s", filelist[i].filename + filelist[i].filename_offset);
-    if (j == (selection - offset)) WriteCentre_HL ((j * fheight) + PAGEOFFSET, text);
-    else WriteCentre ((j * fheight) + PAGEOFFSET, text);
-    j++;
-  }
-  gxSetScreen ();
-}*/
 
 /***************************************************************************
  * FileSortCallback (Marty Disibio)
@@ -119,16 +93,15 @@ int FileSelector(unsigned char *buffer)
   int quit =0;
   int ret;
   int i,size;
-  int yoffset = 86;
 
-  char comment[2][30] = {"Back","Load ROM File"};
-  char fname[MAXPATHLEN];
+  int yoffset;
+  char text[MAXJOLIET+2];
   FILE *xml;
   FILE *snap;
 
 #ifdef HW_RVL
   /* allocate wiimote pointer data (only done once) */
-  gx_texture *pointer = gxTextureOpenPNG(generic_point_png);
+ // gx_texture *pointer = gxTextureOpenPNG(generic_point_png);
 #endif
 
   /* allocate background overlay texture */
@@ -143,11 +116,15 @@ int FileSelector(unsigned char *buffer)
   gui_image *logo = &logo_small;
   if (!logo->texture) logo->texture = gxTextureOpenPNG(logo->data);
 
-  /* allocate background elements textures */
+  /* allocate generic elements textures */
+  gui_image *frames[2] = {&left_frame,&right_frame};
   gui_image *banners[2] = {&top_banner,&bottom_banner};
   gui_item *helpers[2] = {&action_cancel, &action_select};
   for (i=0; i<2; i++)
   {
+    /* frames */
+    if (!frames[i]->texture) frames[i]->texture = gxTextureOpenPNG(frames[i]->data);
+
     /* banners */
     if (!banners[i]->texture) banners[i]->texture = gxTextureOpenPNG(banners[i]->data);
 
@@ -155,15 +132,9 @@ int FileSelector(unsigned char *buffer)
     if (!helpers[i]->texture) helpers[i]->texture = gxTextureOpenPNG(helpers[i]->data);
   }
 
-  /* frames */
-  gx_texture *frame_left  = gxTextureOpenPNG(Frame_s1_png);
-  gx_texture *frame_right = gxTextureOpenPNG(Frame_s2_png);
-
-  /* arrows */
-  gx_texture *arrow_up        = gxTextureOpenPNG(Button_up_png);
-  gx_texture *arrow_up_over   = gxTextureOpenPNG(Button_up_over_png);
-  gx_texture *arrow_down      = gxTextureOpenPNG(Button_down_png);
-  gx_texture *arrow_down_over = gxTextureOpenPNG(Button_down_over_png);
+  /* snapshots */
+  gx_texture *snap_frame = gxTextureOpenPNG(Snap_frame_png);
+  gx_texture *snap_empty = gxTextureOpenPNG(Snap_empty_png);
 
   /* selection bar */
   gx_texture *bar_over = gxTextureOpenPNG(Overlay_bar_png);
@@ -171,18 +142,23 @@ int FileSelector(unsigned char *buffer)
   /* directory icon */
   gx_texture *dir_icon = gxTextureOpenPNG(Browser_dir_png);
 
+#ifdef NEW_GUI
+
+  /* arrows */
+  gx_texture *arrow_up        = gxTextureOpenPNG(Button_up_png);
+  gx_texture *arrow_up_over   = gxTextureOpenPNG(Button_up_over_png);
+  gx_texture *arrow_down      = gxTextureOpenPNG(Button_down_png);
+  gx_texture *arrow_down_over = gxTextureOpenPNG(Button_down_over_png);
+
   /* stars */
   gx_texture *star_full  = gxTextureOpenPNG(Star_full_png);
   gx_texture *star_empty = gxTextureOpenPNG(Star_empty_png);
-
-  /* snapshots */
-  gx_texture *snap_frame = gxTextureOpenPNG(Snap_frame_png);
-  gx_texture *snap_empty = gxTextureOpenPNG(Snap_empty_png);
-
+#endif
   while (!quit)
   {
     /* Draw menu*/
     gxClearScreen ((GXColor)BACKGROUND);
+
     gxDrawRepeat(overlay->texture,overlay->x,overlay->y,overlay->w,overlay->h);
     gxDrawTexture(bg->texture,bg->x,bg->y,bg->w,bg->h,255);
     gxDrawTexture(banners[0]->texture,banners[0]->x,banners[0]->y,banners[0]->w,banners[0]->h,255);
@@ -192,23 +168,27 @@ int FileSelector(unsigned char *buffer)
     gxDrawTexture(logo->texture,logo->x,logo->y,logo->w,logo->h,255);
 
     /* Draw title & helps */
-    FONT_alignLeft("ROM Files Selection", 22,10,56, (GXColor)WHITE);
-    FONT_alignLeft(comment[0], 16, helpers[0]->x+helpers[0]->w+6,helpers[0]->y+(helpers[0]->h-16)/2 + 16, (GXColor)WHITE);
-    FONT_alignRight(comment[1], 16, helpers[1]->x - 6, helpers[1]->y+(helpers[1]->h-16)/2 + 16, (GXColor)WHITE);
+    FONT_alignLeft("ROM Selection", 22,10,56, (GXColor)WHITE);
+    FONT_alignLeft("Back", 16, helpers[0]->x+helpers[0]->w+6,helpers[0]->y+(helpers[0]->h-16)/2 + 16, (GXColor)WHITE);
+    FONT_alignRight("Load ROM File", 16, helpers[1]->x - 6, helpers[1]->y+(helpers[1]->h-16)/2 + 16, (GXColor)WHITE);
 
+    gxDrawTexture(snap_empty,422,114,snap_empty->width,snap_empty->height,255);
+    gxDrawTexture(frames[0]->texture,frames[0]->x,frames[0]->y,frames[0]->w,frames[0]->h,200);
+
+#ifdef NEW_GUI
     /* ROM database informations */
     strncpy(fname, filelist[selection].filename, strlen(filelist[selection].filename) - 4);
-    sprintf(fname, "%s%s.xml","/genplus/db/",fname);
+    sprintf(fname, "%s/db/%s.xml",DEFAULT_PATH,fname);
     xml = fopen(fname, "rb");
     if (xml)
     {
-      gxDrawTexture(frame_right,384,264,frame_right->width,frame_right->height,204);
+      gxDrawTexture(frames[1]->texture,frames[1]->x,frames[1]->y,frames[1]->w,frames[1]->h,200);
       fclose(xml); /* TODO */
     }
 
     /* ROM snapshot */
     strncpy(fname, filelist[selection].filename, strlen(filelist[selection].filename) - 4);
-    sprintf(fname, "%s%s.png","/genplus/snap/",fname);
+    sprintf(fname, "%s/snap/%s.png",DEFAULT_PATH,fname);
     snap = fopen(fname, "rb");
     if (snap)
     {
@@ -218,14 +198,18 @@ int FileSelector(unsigned char *buffer)
     {
       gxDrawTexture(snap_empty,422,114,snap_empty->width,snap_empty->height,255);
     }
+#endif
 
     /* Cartridge picture */
     gxDrawTexture(snap_frame,388,112,snap_frame->width,snap_frame->height,255);
 
     /* File list */
-    gxDrawTexture(frame_left,14,76,frame_left->width,frame_left->height,204);
+    gxDrawTexture(frames[0]->texture,frames[0]->x,frames[0]->y,frames[0]->w,frames[0]->h,200);
+
+    yoffset = 86;
     for (i = offset; i < (offset + PAGESIZE) && (i < maxfiles); i++)
     {
+      sprintf (text, "%s", filelist[i].filename + filelist[i].filename_offset);
       if (i == selection)
       {
         gxDrawTexture(bar_over,22,yoffset - ((bar_over->height - dir_icon->height)/2), bar_over->width,bar_over->height,255);
@@ -235,21 +219,19 @@ int FileSelector(unsigned char *buffer)
       {
         /* directory icon */
         gxDrawTexture(dir_icon,26,yoffset,dir_icon->width,dir_icon->height,255);
-        FONT_alignLeft(filelist[i].filename + filelist[i].filename_offset, 12,26+dir_icon->width+6,yoffset+(dir_icon->height-12)/2 + 12, (GXColor)WHITE);
+        FONT_alignLeft(text, 16,26+dir_icon->width+6,yoffset + 16, (GXColor)WHITE);
       }
       else
       {
-        FONT_alignLeft(filelist[i].filename + filelist[i].filename_offset, 12,26,yoffset+(dir_icon->height-12)/2 + 12, (GXColor)WHITE);
+        FONT_alignLeft(text, 16,26,yoffset+16, (GXColor)WHITE);
       }
 
-      yoffset += 22;
+      yoffset += 20;
     }
 
     /* copy EFB to XFB */
     gxSetScreen ();
 
-  /*  if (redraw) ShowFiles (offset, selection);
-    redraw = 0;*/
     p = m_input.keys;
 
     /* scroll displayed filename */
@@ -328,7 +310,7 @@ int FileSelector(unsigned char *buffer)
     if (p & PAD_TRIGGER_Z)
     {
       filelist[selection].filename_offset = 0;
-      return 0;
+      quit = 2;
     }
 
     /* open selected file or directory */
@@ -376,7 +358,7 @@ int FileSelector(unsigned char *buffer)
 
 #ifdef HW_RVL
   /* allocate wiimote pointer data (only done once) */
-  gxTextureClose(&pointer);
+//  gxTextureClose(&pointer);
 #endif
 
   gxTextureClose(&overlay->texture);
@@ -384,21 +366,22 @@ int FileSelector(unsigned char *buffer)
   gxTextureClose(&logo->texture);
   for (i=0; i<2; i++)
   {
+    gxTextureClose(&frames[i]->texture);
     gxTextureClose(&banners[i]->texture);
     gxTextureClose(&helpers[i]->texture);
   }
-  gxTextureClose(&frame_left);
-  gxTextureClose(&frame_right);
+  gxTextureClose(&snap_frame);
+  gxTextureClose(&snap_empty);
+  gxTextureClose(&bar_over);
+  gxTextureClose(&dir_icon);
+#ifdef NEW_GUI
   gxTextureClose(&arrow_up);
   gxTextureClose(&arrow_up_over);
   gxTextureClose(&arrow_down);
   gxTextureClose(&arrow_down_over);
-  gxTextureClose(&bar_over);
-  gxTextureClose(&dir_icon);
   gxTextureClose(&star_full);
   gxTextureClose(&star_empty);
-  gxTextureClose(&snap_frame);
-  gxTextureClose(&snap_empty);
+#endif
 
   if (quit == 2) return 0;
   else if (useFAT) return FAT_LoadFile(buffer);

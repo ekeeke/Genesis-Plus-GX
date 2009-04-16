@@ -198,14 +198,6 @@ extern gui_image left_frame;
 extern gui_image right_frame;
 
 /*****************************************************************************/
-/*  Common GUI buttons data                                                  */
-/*****************************************************************************/
-extern butn_data arrow_up_data;
-extern butn_data arrow_down_data;
-extern butn_data button_text_data;
-extern butn_data button_icon_data;
-
-/*****************************************************************************/
 /*  Common GUI items                                                            */
 /*****************************************************************************/
 extern gui_item action_cancel;
