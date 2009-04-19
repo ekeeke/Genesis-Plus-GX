@@ -831,7 +831,7 @@ void gxDrawScreenshot(u8 alpha)
   }
 }
 
-void gxDrawTexture(gx_texture *texture, int x, int y, int w, int h, u8 alpha)
+void gxDrawTexture(gx_texture *texture, s32 x, s32 y, s32 w, s32 h, u8 alpha)
 {
   if (!texture) return;
   if (texture->data)
@@ -866,7 +866,7 @@ void gxDrawTexture(gx_texture *texture, int x, int y, int w, int h, u8 alpha)
   }
 }
 
-void gxDrawRepeat(gx_texture *texture, int x, int y, int w, int h)
+void gxDrawTextureRepeat(gx_texture *texture, s32 x, s32 y, s32 w, s32 h, u8 alpha)
 {
   if (!texture) return;
   if (texture->data)
@@ -888,16 +888,16 @@ void gxDrawRepeat(gx_texture *texture, int x, int y, int w, int h)
     /* draw textured quad */
     GX_Begin(GX_QUADS, GX_VTXFMT0, 4);
     GX_Position2s16(x,y+h);
-    GX_Color4u8(0xff,0xff,0xff,0xff);
+    GX_Color4u8(0xff,0xff,0xff,alpha);
     GX_TexCoord2f32(0.0, t);
     GX_Position2s16(x+w,y+h);
-    GX_Color4u8(0xff,0xff,0xff,0xff);
+    GX_Color4u8(0xff,0xff,0xff,alpha);
     GX_TexCoord2f32(s, t);
     GX_Position2s16(x+w,y);
-    GX_Color4u8(0xff,0xff,0xff,0xff);
+    GX_Color4u8(0xff,0xff,0xff,alpha);
     GX_TexCoord2f32(s, 0.0);
     GX_Position2s16(x,y);
-    GX_Color4u8(0xff,0xff,0xff,0xff);
+    GX_Color4u8(0xff,0xff,0xff,alpha);
     GX_TexCoord2f32(0.0, 0.0);
     GX_End ();
     GX_DrawDone();
@@ -983,6 +983,7 @@ void gx_video_start(void)
   /* Video Interrupt synchronization */
   VIDEO_SetPostRetraceCallback(NULL);
   if (!gc_pal && !vdp_pal) VIDEO_SetPreRetraceCallback(updateFrameCount);
+  VIDEO_Flush();
 
   /* interlaced/progressive mode */
   if (config.render == 2)

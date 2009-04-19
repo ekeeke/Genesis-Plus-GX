@@ -27,16 +27,19 @@
 extern void error(char *format, ...);
 extern void ClearGGCodes();
 extern void GetGGEntries();
-extern void reloadrom();
 extern void legal();
-extern void MainMenu(u32 fps);
+
+extern void reloadrom (int size, char *name);
+extern void shutdown();
+
 extern int ManageSRAM(u8 direction, u8 device);
 extern int ManageState(u8 direction, u8 device);
-extern void memfile_autosave();
-extern void memfile_autoload();
+extern void memfile_autosave(s8 autosram, s8 autostate);
+extern void memfile_autoload(s8 autosram, s8 autostate);
 
 extern u8 fat_enabled;
 extern u32 frameticker;
+extern char rom_filename[256];
 
 #ifdef HW_RVL
 extern u8 Shutdown;

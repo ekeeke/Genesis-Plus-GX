@@ -53,23 +53,23 @@ int ManageState(u8 direction, u8 device);
  *
  *
  *****************************************************************************/
-void memfile_autoload()
+void memfile_autoload(s8 autosram, s8 autostate)
 {
   /* this should be transparent to the user */
   SILENT = 1; 
 
   /* SRAM */
-  if (config.sram_auto != -1)
-    ManageSRAM(1,config.sram_auto);
+  if (autosram != -1)
+    ManageSRAM(1,autosram);
 
   /* STATE */
-  if (config.freeze_auto != -1)
-    ManageState(1,config.freeze_auto);
+  if (autostate != -1)
+    ManageState(1,autostate);
 
   SILENT = 0;
 }
 
-void memfile_autosave()
+void memfile_autosave(s8 autosram, s8 autostate)
 {
   int crccheck = crc32 (0, sram.sram, 0x10000);
 
@@ -77,12 +77,12 @@ void memfile_autosave()
   SILENT = 1;
   
   /* SRAM */
-  if ((config.sram_auto != -1) && (crccheck != sram.crc))
-    ManageSRAM(0, config.sram_auto);
+  if ((autosram != -1) && (crccheck != sram.crc))
+    ManageSRAM(0, autosram);
 
   /* STATE */
-  if (config.freeze_auto != -1)
-    ManageState(0,config.freeze_auto);
+  if (autostate != -1)
+    ManageState(0,autostate);
 
   SILENT = 0;
 }

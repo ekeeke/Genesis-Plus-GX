@@ -27,9 +27,9 @@
 
 extern int  FONT_Init(void);
 extern void FONT_Shutdown(void);
-extern void FONT_alignLeft(char *string, int size, int x, int y, GXColor color);
-extern void FONT_alignRight(char *string, int size, int x, int y, GXColor color);
+extern int  FONT_write(char *string, int size, int x, int y, int max_width, GXColor color);
 extern void FONT_writeCenter(char *string, int size, int x1, int x2, int y, GXColor color);
+extern void FONT_alignRight(char *string, int size, int x, int y, GXColor color);
 
 
 extern void WaitButtonA ();

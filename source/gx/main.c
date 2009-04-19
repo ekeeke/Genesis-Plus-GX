@@ -23,6 +23,7 @@
 
 #include "shared.h"
 #include "font.h"
+#include "menu.h"
 #include "history.h"
 #include "aram.h"
 #include "dvd.h"
@@ -35,7 +36,7 @@
 
 /* Power Button callback */
 u8 Shutdown = 0;
-void Power_Off(void)
+static void Power_Off(void)
 {
   Shutdown = 1;
   ConfigRequested = 1;
@@ -47,7 +48,7 @@ void Power_Off(void)
  * Genesis Plus Virtual Machine
  *
  ***************************************************************************/
-static void load_bios()
+static void load_bios(void)
 {
   char pathname[MAXPATHLEN];
 
@@ -74,7 +75,7 @@ static void load_bios()
   }
 }
 
-static void init_machine (void)
+static void init_machine(void)
 {
   /* Allocate cart_rom here ( 10 MBytes ) */
   cart_rom = memalign(32, MAXROMSIZE);
@@ -115,13 +116,34 @@ static void init_machine (void)
 /**************************************************
   Load a new rom and performs some initialization
 ***************************************************/
-void reloadrom ()
+void reloadrom (int size, char *name)
 {
-  load_rom("");       /* Load ROM */
+  genromsize = size;
+  load_rom(name);       /* Load ROM */
   system_init ();     /* Initialize System */
   audio_init(48000);  /* Audio System initialization */
   ClearGGCodes ();    /* Clear Game Genie patches */
   system_reset ();    /* System Power ON */
+}
+
+/**************************************************
+  Shutdown everything properly
+***************************************************/
+void shutdown(void)
+{
+  /* system shutdown */
+  memfile_autosave(-1,config.state_auto);
+  system_shutdown();
+  audio_shutdown();
+  free(cart_rom);
+  free(texturemem);
+  FONT_Shutdown();
+  VIDEO_ClearFrameBuffer(vmode, xfb[whichfb], COLOR_BLACK);
+  VIDEO_Flush();
+  VIDEO_WaitVSync();
+#ifdef HW_RVL
+  DI_Close();
+#endif
 }
 
 /***************************************************************************
@@ -134,7 +156,7 @@ u32 frameticker = 0;
 int main (int argc, char *argv[])
 {
 #ifdef HW_RVL
-  /* initialize Wii DVD interface first */
+  /* initialize DVD Mode */
   DI_Close();
   DI_Init();
 #endif
@@ -201,7 +223,7 @@ int main (int argc, char *argv[])
   if (genromsize)
   {
     ARAMFetch((char *)cart_rom, (void *)0x8000, genromsize);
-    reloadrom ();
+    reloadrom (genromsize,"INJECT.bin");
     gx_video_start();
     gx_audio_start();
     frameticker = 1;
@@ -219,11 +241,11 @@ int main (int argc, char *argv[])
     if (ConfigRequested)
     {
       /* stop audio & video */
-      gx_audio_stop();
       gx_video_stop();
+      gx_audio_stop();
 
       /* go to menu */
-      MainMenu (FramesPerSecond);
+      MainMenu ();
       ConfigRequested = 0;
 
       /* reset framecounts */

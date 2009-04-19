@@ -37,7 +37,7 @@ typedef struct
   uint8 filter;
   uint8 hq_fm;
   int8 sram_auto;
-  int8 freeze_auto;
+  int8 state_auto;
   uint8 region_detect;
   uint8 force_dtack;
   uint8 bios_enabled;

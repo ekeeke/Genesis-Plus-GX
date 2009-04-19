@@ -265,6 +265,8 @@ int load_rom(char *filename)
  
 #ifdef NGC
   size = genromsize;
+  sprintf(rom_filename,"%s",filename);
+  rom_filename[strlen(rom_filename) - 4] = 0;
 #else
   uint8 *ptr;
   ptr = load_archive(filename, &size);

@@ -26,6 +26,9 @@
 #include "font.h"
 #include "menu.h"
 
+#include "intro_pcm.h"
+#include <asndlib.h>
+
 /* 
  * This is the legal stuff - which must be shown at program startup 
  * Any derivative work MUST include the same textual output.
@@ -113,5 +116,11 @@ void legal ()
   }
 
   gxSetScreen ();
+  ASND_Init();
+  ASND_Pause(0);
+  int voice = ASND_GetFirstUnusedVoice();
+  ASND_SetVoice(voice,VOICE_MONO_16BIT,44100,0,(u8 *)intro_pcm,intro_pcm_size,200,200,NULL);
   sleep (2);
+  ASND_Pause(1);
+  ASND_End();
 }

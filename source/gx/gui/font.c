@@ -164,15 +164,41 @@ void WriteCentre_HL( int y, char *string)
   WriteCentre(y, string);
 }
 
-void FONT_alignLeft(char *string, int size, int x, int y, GXColor color)
+int FONT_write(char *string, int size, int x, int y, int max_width, GXColor color)
 {
   x -= (vmode->fbWidth / 2);
+  y -= (vmode->efbHeight / 2);
+  int w, ox = x;
+
+  while (*string)
+  {
+    w = (font_size[(u8)*string] * size) / fheight;
+    if ((x + w) <= (ox + max_width))
+    {
+      DrawChar(*string, x, y, size,color);
+      x += w;
+      string++;
+    }
+    else return 1;
+  }
+  return 0;
+}
+
+void FONT_writeCenter(char *string, int size, int x1, int x2, int y, GXColor color)
+{
+  int i;
+  u16 width = 0;
+
+  for (i=0; i<strlen(string); i++)
+    width += (font_size[(u8)string[i]] * size) / fheight;
+
+  x1 += (x2 - x1 - width - vmode->fbWidth) / 2;
   y -= (vmode->efbHeight / 2);
 
   while (*string)
   {
-    DrawChar(*string, x, y, size,color);
-    x += (font_size[(u8)*string++] * size) / fheight;
+    DrawChar(*string, x1, y, size,color);
+    x1 += (font_size[(u8)*string++] * size) / fheight;
   }
 }
 
@@ -191,24 +217,6 @@ void FONT_alignRight(char *string, int size, int x, int y, GXColor color)
   {
     DrawChar(*string, x, y, size,color);
     x += (font_size[(u8)*string++] * size) / fheight;
-  }
-}
-
-void FONT_writeCenter(char *string, int size, int x1, int x2, int y, GXColor color)
-{
-  int i;
-  u16 width = 0;
-
-  for (i=0; i<strlen(string); i++)
-    width += (font_size[(u8)string[i]] * size) / fheight;
-
-  x1 += (x2 - x1 - width - vmode->fbWidth) / 2;
-  y -= (vmode->efbHeight / 2);
-
-  while (*string)
-  {
-    DrawChar(*string, x1, y, size,color);
-    x1 += (font_size[(u8)*string++] * size) / fheight;
   }
 }
 

@@ -85,9 +85,9 @@ void config_setDefault(void)
   config.filter       = 1;
 
   /* system options */
-  config.freeze_auto    = -1;
+  config.state_auto    = -1;
 #ifdef HW_RVL
-  config.sram_auto      = 0; /* assume we always got SDCARD */
+  config.sram_auto      = 0; /* let's assume we always have a FAT device by default */
 #else
   config.sram_auto      = -1;
 #endif
