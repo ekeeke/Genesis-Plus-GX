@@ -65,7 +65,7 @@ static butn_data arrow_down_data =
 };
 
 /*****************************************************************************/
-/*  GUI Buttons                                                              */
+/*  GUI Arrows button                                                        */
 /*****************************************************************************/
 
 static gui_butn arrow_up = {&arrow_up_data,BUTTON_VISIBLE|BUTTON_OVER_SFX,14,76,360,32};

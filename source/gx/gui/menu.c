@@ -88,9 +88,9 @@ static gui_item action_select =
 static gui_item action_exit =
 {
 #ifdef HW_RVL
-  NULL,Key_home_png,"","",10,372,68,28
+  NULL,Key_home_png,"","Play",10,422,24,24
 #else
-  NULL,Key_trigger_Z_png,"","",10,372,92,28
+  NULL,Key_B_gcn_png,"","Play",10,422,28,28
 #endif
 };
 
@@ -128,6 +128,45 @@ static gui_image bg_list[6] =
 /*  Menu Items description                                                   */
 /*****************************************************************************/
 
+/* Main menu */
+static gui_item items_main[8] =
+{
+  {NULL,Main_load_png    ,"","",112, 72,80,92},
+  {NULL,Main_options_png ,"","",290, 76,60,88},
+  {NULL,Main_quit_png    ,"","",452, 84,60,80},
+  {NULL,Main_file_png    ,"","",114,216,80,92},
+  {NULL,Main_reset_png   ,"","",282,224,76,84},
+  {NULL,Main_ggenie_png  ,"","",450,224,72,84},
+  {NULL,Main_showinfo_png,"","", 10,370,68,28},
+  {NULL,Main_takeshot_png,"","",562,370,68,28}
+};
+
+#ifdef HW_RVL
+static gui_item items_load[4] =
+{
+  {NULL,Load_recent_png,"","Load recent files",             276,120,88,96},
+  {NULL,Load_sd_png    ,"","Load ROM files from SDCARD",    110,266,88,96},
+  {NULL,Load_usb_png   ,"","Load ROM files from USB device",276,266,88,96},
+  {NULL,Load_dvd_png   ,"","Load ROM files from DVD",       442,266,88,96}
+};
+#else
+static gui_item items_load[3] =
+{
+  {NULL,Load_recent_png,"","Load recent files",         110,198,88,96},
+  {NULL,Load_sd_png    ,"","Load ROM files from SDCARD",276,198,88,96},
+  {NULL,Load_dvd_png   ,"","Load ROM files from DVD",   442,198,88,96}
+};
+#endif
+
+static gui_item items_options[5] =
+{
+  {NULL,Option_system_png,"","System options", 114,142,80,92},
+  {NULL,Option_video_png ,"","Video options",  288,150,64,84},
+  {NULL,Option_sound_png ,"","Audio options",  464,154,44,80},
+  {NULL,Option_ctrl_png  ,"","Input options",  192,286,88,92},
+  {NULL,Option_menu_png  ,"","Menu options",   370,286,60,92}
+};
+
 /* Audio options menu */
 static gui_item items_audio[5] =
 {
@@ -162,44 +201,6 @@ static gui_item items_video[8] =
   {NULL,NULL,"DISPLAY SIZE",          "Adjust display size",                       0,0,0,0}
 };
 
-/* Main menu */
-static gui_item items_main[6] =
-{
-  {NULL,Main_play_png   ,"","",108, 76,92,88},
-  {NULL,Main_load_png   ,"","",280, 72,80,92},
-  {NULL,Main_options_png,"","",456, 76,60,88},
-  {NULL,Main_file_png   ,"","",114,216,80,92},
-  {NULL,Main_reset_png  ,"","",282,224,76,84},
-  {NULL,Main_info_png   ,"","",446,212,88,96}
-};
-
-#ifdef HW_RVL
-static gui_item items_load[4] =
-{
-  {NULL,Load_recent_png,"","Load recent files",             276,120,88,96},
-  {NULL,Load_sd_png    ,"","Load ROM files from SDCARD",    110,266,88,96},
-  {NULL,Load_usb_png   ,"","Load ROM files from USB device",276,266,88,96},
-  {NULL,Load_dvd_png   ,"","Load ROM files from DVD",       442,266,88,96}
-};
-#else
-static gui_item items_load[3] =
-{
-  {NULL,Load_recent_png,"","Load recent files",         110,198,88,96},
-  {NULL,Load_sd_png    ,"","Load ROM files from SDCARD",276,198,88,96},
-  {NULL,Load_dvd_png   ,"","Load ROM files from DVD",   442,198,88,96}
-};
-#endif
-
-static gui_item items_options[5] =
-{
-  {NULL,Option_system_png,"","System settings", 114,142,80,92},
-  {NULL,Option_video_png ,"","Video settings",  288,150,64,84},
-  {NULL,Option_sound_png ,"","Audio settings",  464,154,44,80},
-  {NULL,Option_ctrl_png  ,"","Input settings",  192,286,88,92},
-  {NULL,Option_ggenie_png,"","Game Genie Codes",360,282,88,96}
-};
-
-
 /*****************************************************************************/
 /*  Menu Buttons description                                                 */
 /*****************************************************************************/
@@ -218,15 +219,18 @@ static gui_butn buttons_list[4] =
  };
 
 /* Main menu */
-static gui_butn buttons_main[6] =
+static gui_butn buttons_main[8] =
 {
-  {&button_icon_data,BUTTON_VISIBLE|BUTTON_OVER_SFX,80, 50,148,132},
+  {&button_icon_data,BUTTON_VISIBLE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX ,80, 50,148,132},
   {&button_icon_data,BUTTON_VISIBLE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,246, 50,148,132},
   {&button_icon_data,BUTTON_VISIBLE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,412, 50,148,132},
-  {&button_icon_data,BUTTON_VISIBLE|BUTTON_OVER_SFX,80,194,148,132},
-  {&button_icon_data,BUTTON_VISIBLE|BUTTON_OVER_SFX,246,194,148,132},
-  {&button_icon_data,BUTTON_VISIBLE|BUTTON_OVER_SFX,412,194,148,132}
+  {&button_icon_data,BUTTON_VISIBLE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX, 80,194,148,132},
+  {&button_icon_data,BUTTON_VISIBLE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,246,194,148,132},
+  {&button_icon_data,BUTTON_VISIBLE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,412,194,148,132},
+  {NULL             ,BUTTON_VISIBLE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX, 10,370, 68, 28},
+  {NULL             ,BUTTON_VISIBLE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,562,370, 68, 28}
 };
+
 
 /* Load Game menu */
 #ifdef HW_RVL
@@ -265,7 +269,7 @@ static gui_menu menu_main =
 {
   "",
   0,0,
-  6,6,4,
+  8,8,4,
   {3,3},
   items_main,
   buttons_main,
@@ -377,7 +381,10 @@ void GUI_InitMenu(gui_menu *menu)
   {
     /* key helpers */
     item = menu->helpers[i];
-    if (item) item->texture = gxTextureOpenPNG(item->data);
+    if (item)
+    {
+      item->texture = gxTextureOpenPNG(item->data);
+    }
 
     /* arrows */
     button = menu->arrows[i];
@@ -392,8 +399,11 @@ void GUI_InitMenu(gui_menu *menu)
   for (i=0; i<menu->max_buttons; i++)
   {
     button = &menu->buttons[i];
-    if (!button->data->texture[0]) button->data->texture[0] = gxTextureOpenPNG(button->data->image[0]);
-    if (!button->data->texture[1]) button->data->texture[1] = gxTextureOpenPNG(button->data->image[1]);
+    if (button->data)
+    {
+      if (!button->data->texture[0]) button->data->texture[0] = gxTextureOpenPNG(button->data->image[0]);
+      if (!button->data->texture[1]) button->data->texture[1] = gxTextureOpenPNG(button->data->image[1]);
+    }
   }
 
   /* menu items */
@@ -423,7 +433,10 @@ void GUI_DeleteMenu(gui_menu *menu)
   {
     /* key helpers */
     item = menu->helpers[i];
-    if (item) gxTextureClose(&item->texture);
+    if (item)
+    {
+      gxTextureClose(&item->texture);
+    }
 
     /* arrows */
     button = menu->arrows[i];
@@ -438,8 +451,11 @@ void GUI_DeleteMenu(gui_menu *menu)
   for (i=0; i<menu->max_buttons; i++)
   {
     button = &menu->buttons[i];
-    gxTextureClose(&button->data->texture[0]);
-    gxTextureClose(&button->data->texture[1]);
+    if (button->data)
+    {
+      gxTextureClose(&button->data->texture[0]);
+      gxTextureClose(&button->data->texture[1]);
+    }
   }
 
   /* menu items */
@@ -939,16 +955,6 @@ int GUI_RunMenu(gui_menu *menu)
   int i,x,y;
 #endif
 
-  char *items[3] =
-  {
-    "View Credits",
-    "Exit to Loader",
-#ifdef HW_RVL
-    "Exit to System Menu"
-#else
-    "Reset System"
-#endif
-  };
 
   while(quit==0)
   {
@@ -1073,7 +1079,7 @@ int GUI_RunMenu(gui_menu *menu)
       else if (selected == max_buttons) menu->offset --; /* up arrow */
       else if (selected == (max_buttons+1))menu->offset ++; /* down arrow */
     }
-    else if (p & PAD_BUTTON_B)
+    else if ((p & PAD_BUTTON_B) || (p & PAD_TRIGGER_Z))
     {
       quit = 2;
     }
@@ -1096,34 +1102,6 @@ int GUI_RunMenu(gui_menu *menu)
       BACKGROUND.g = background_colors[color_cnt].g;
       BACKGROUND.b = background_colors[color_cnt].b;
       BACKGROUND.a = background_colors[color_cnt].a;
-    }
-    else if (p & PAD_TRIGGER_Z)
-    {
-      switch (GUI_WindowPrompt(menu, VERSION, items,3))
-      {
-        case 1:
-#ifdef HW_RVL
-          gxTextureClose(&w_pointer);
-#endif
-          GUI_DeleteMenu(menu);
-          shutdown();
-          exit(0);
-          break;
-
-        case 2:
-          GUI_DeleteMenu(menu);
-          shutdown();
-#ifdef HW_RVL
-          gxTextureClose(&w_pointer);
-          SYS_ResetSystem(SYS_RETURNTOMENU, 0, 0);
-#else
-          SYS_ResetSystem(SYS_HOTRESET,0,0);
-#endif
-          break;
-
-        default: /* TODO */
-          break;
-      }
     }
 
     /* selected item has changed ? */
@@ -1926,7 +1904,7 @@ static void optionmenu(void)
         inputsmenu();
         break;
       case 4:
-        GetGGEntries();
+        /*TODO */
         break;
       case -1:
         quit = 1;
@@ -2217,6 +2195,17 @@ void MainMenu (void)
 {
   int ret, quit = 0;
 
+  char *items[3] =
+  {
+    "View Credits",
+    "Exit to Loader",
+#ifdef HW_RVL
+    "Exit to System Menu"
+#else
+    "Reset System"
+#endif
+  };
+
   /* autosave SRAM */
   memfile_autosave(config.sram_auto,-1);
 
@@ -2233,21 +2222,26 @@ void MainMenu (void)
 
   gui_menu *m = &menu_main;
 
-  /* display game screen in background */
+  /* check if a game is running */
   if (genromsize)
   {
     m->screenshot = 1;
-    gui_image *image = &m->bg_images[0];
-    image->state &= ~IMAGE_VISIBLE;
-    gui_butn *button = &m->buttons[0];
-    button->state |= BUTTON_SELECT_SFX;
-    button = &m->buttons[3];
-    button->state |= BUTTON_SELECT_SFX;
-    button = &m->buttons[4];
-    button->state |= BUTTON_SELECT_SFX;
-    button = &m->buttons[5];
-    button->state |= BUTTON_SELECT_SFX;
+    m->buttons[0].h = 50;
+    m->buttons[1].h = 50;
+    m->buttons[2].h = 50;
+    m->max_items = 8;
+    m->max_buttons = 8;
   }
+  else
+  {
+    m->screenshot = 0;
+    m->buttons[0].h = 122;
+    m->buttons[1].h = 122;
+    m->buttons[2].h = 122;
+    m->max_items = 3;
+    m->max_buttons = 3;
+  }
+
 
   /* game screen transition to menu */
   GUI_DrawMenuFX(m,10,0);
@@ -2260,8 +2254,7 @@ void MainMenu (void)
 
     switch (ret)
     {
-      case -1: /*** Button B ***/
-      case 0:  /*** Play Game ***/
+      case -1: /*** Play Game ***/
         if (genromsize)
         {
           /* menu transition to game screen */
@@ -2270,30 +2263,66 @@ void MainMenu (void)
         }
         break;
 
-      case 1:  /*** Load ROM Menu ***/
+      case 0:  /*** Load Game ***/
         quit = loadmenu();
         break;
 
-      case 2:  /*** Emulator Options */
+      case 1:  /*** Options */
         optionmenu ();
         break;
 
+      case 2: /*** Quit Emulator ***/
+      {
+        GUI_InitMenu(m);
+        switch (GUI_WindowPrompt(m, VERSION, items,3))
+        {
+          case 1:
+#ifdef HW_RVL
+            gxTextureClose(&w_pointer);
+#endif
+            GUI_DeleteMenu(m);
+            shutdown();
+            exit(0);
+            break;
+
+          case 2:
+            GUI_DeleteMenu(m);
+            shutdown();
+#ifdef HW_RVL
+            gxTextureClose(&w_pointer);
+            SYS_ResetSystem(SYS_RETURNTOMENU, 0, 0);
+#else
+            SYS_ResetSystem(SYS_HOTRESET,0,0);
+#endif
+            break;
+
+          default: /* TODO */
+            break;
+        }
+        GUI_DeleteMenu(m);
+      }
+
       case 3:  /*** Memory Manager ***/
-        if (genromsize) quit = filemenu ();
+        quit = filemenu ();
         break;
 
       case 4:  /*** Emulator Reset ***/
-        if (genromsize)
-        {
-          system_reset (); 
-          gxClearScreen ((GXColor)BLACK);
-          gxSetScreen ();
-          quit = 1;
-        }
+        system_reset (); 
+        gxClearScreen ((GXColor)BLACK);
+        gxSetScreen ();
+        quit = 1;
         break;
 
-      case 5:   /*** ROM Information ***/
-        if (genromsize) showrominfo ();
+      case 5:   /*** Game Genie ***/
+        GetGGEntries();
+        break;
+
+      case 6:   /*** ROM Information ***/
+        showrominfo ();
+        break;
+
+      case 7:   /*** Take Screenshot ***/
+        /* TODO */
         break;
     }
   }

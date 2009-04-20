@@ -76,15 +76,17 @@ extern const u8 Star_empty_png[];
 extern const u8 Snap_empty_png[];
 extern const u8 Snap_frame_png[];
 
-extern const u8 Main_play_png[];
 extern const u8 Main_load_png[];
 extern const u8 Main_options_png[];
+extern const u8 Main_quit_png[];
 extern const u8 Main_file_png[];
 extern const u8 Main_reset_png[];
-extern const u8 Main_info_png[];
+extern const u8 Main_ggenie_png[];
+extern const u8 Main_showinfo_png[];
+extern const u8 Main_takeshot_png[];
 
+extern const u8 Option_menu_png[];
 extern const u8 Option_ctrl_png[];
-extern const u8 Option_ggenie_png[];
 extern const u8 Option_sound_png[];
 extern const u8 Option_video_png[];
 extern const u8 Option_system_png[];
@@ -112,7 +114,6 @@ extern const u8 generic_openhand_png[];
 #else
 extern const u8 Key_A_gcn_png[];
 extern const u8 Key_B_gcn_png[];
-extern const u8 Key_trigger_Z_png[];
 #endif
 
 extern const u8 button_select_pcm[];
