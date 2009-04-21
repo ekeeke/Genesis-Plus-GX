@@ -205,8 +205,10 @@ uint32 mouse_read()
       break;
 
     case 4:   /* Axis sign and overflow */
-      if (input.analog[2][0] < 0) temp |= 0x01;
-      if (input.analog[2][1] < 0) temp |= 0x02;
+      if (input.analog[2][0] < 0)         temp |= 0x01;
+      if (input.analog[2][1] < 0)         temp |= 0x02;
+      if (abs(input.analog[2][0]) > 255)  temp |= 0x04;
+      if (abs(input.analog[2][1]) > 255)  temp |= 0x08;
       break;
 
     case 5:   /* Buttons state */
