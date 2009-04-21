@@ -391,7 +391,6 @@ int DVD_Open (u8 *buffer)
     rootdir = basedir;
 
     /* parse root directory */
-    ShowAction("Reading Directory ...");
     int max = DVD_ParseDirectory ();
     if (max)
     {

@@ -83,7 +83,11 @@ extern const u8 Main_file_png[];
 extern const u8 Main_reset_png[];
 extern const u8 Main_ggenie_png[];
 extern const u8 Main_showinfo_png[];
-extern const u8 Main_takeshot_png[];
+#ifdef HW_RVL
+extern const u8 Main_play_wii_png[];
+#else
+extern const u8 Main_play_gcn_png[];
+#endif
 
 extern const u8 Option_menu_png[];
 extern const u8 Option_ctrl_png[];
@@ -94,6 +98,9 @@ extern const u8 Option_system_png[];
 extern const u8 Load_recent_png[];
 extern const u8 Load_sd_png[];
 extern const u8 Load_dvd_png[];
+#ifdef HW_RVL
+extern const u8 Load_usb_png[];
+#endif
 
 extern const u8 Button_text_png[];
 extern const u8 Button_text_over_png[];
@@ -105,20 +112,20 @@ extern const u8 Button_up_over_png[];
 extern const u8 Button_down_over_png[];
 
 #ifdef HW_RVL
-extern const u8 Load_usb_png[];
 extern const u8 Key_A_wii_png[];
 extern const u8 Key_B_wii_png[];
-extern const u8 Key_home_png[];
-extern const u8 generic_point_png[];
-extern const u8 generic_openhand_png[];
 #else
 extern const u8 Key_A_gcn_png[];
 extern const u8 Key_B_gcn_png[];
 #endif
 
+#ifdef HW_RVL
+extern const u8 generic_point_png[];
+#endif
+
 extern const u8 button_select_pcm[];
-extern const u8 button_over_pcm[];
 extern const u32 button_select_pcm_size;
+extern const u8 button_over_pcm[];
 extern const u32 button_over_pcm_size;
 
 
@@ -213,6 +220,7 @@ extern void MainMenu(void);
 extern void GUI_InitMenu(gui_menu *menu);
 extern void GUI_DeleteMenu(gui_menu *menu);
 extern void GUI_DrawMenu(gui_menu *menu);
+extern void GUI_DrawMenuFX(gui_menu *menu, u8 speed, u8 out);
 extern int GUI_RunMenu(gui_menu *menu);
 
 #endif

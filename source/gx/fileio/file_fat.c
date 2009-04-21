@@ -278,7 +278,6 @@ int FAT_Open(int type, u8 *buffer)
       else dirclose(dir);
 
       /* parse root directory */
-      ShowAction("Reading Directory ...");
       max = FAT_ParseDirectory ();
     }
 

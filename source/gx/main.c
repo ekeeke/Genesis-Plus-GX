@@ -33,7 +33,9 @@
 #ifdef HW_RVL
 #include <wiiuse/wpad.h>
 #include <di/di.h>
+#endif
 
+#ifdef HW_RVL
 /* Power Button callback */
 u8 Shutdown = 0;
 static void Power_Off(void)
@@ -43,6 +45,8 @@ static void Power_Off(void)
 }
 #endif
 
+u8 *Bg_music_ogg = NULL;
+u32 Bg_music_ogg_size = 0;;
 
 /***************************************************************************
  * Genesis Plus Virtual Machine
@@ -86,6 +90,8 @@ static void init_machine(void)
     FONT_Shutdown();
 #ifdef HW_RVL
     DI_Close();
+#endif
+#ifdef HW_RVL
     SYS_ResetSystem(SYS_RESTART,0,0);
 #else
     SYS_ResetSystem(SYS_HOTRESET,0,0);
@@ -137,6 +143,7 @@ void shutdown(void)
   audio_shutdown();
   free(cart_rom);
   free(texturemem);
+  if (Bg_music_ogg) free(Bg_music_ogg);
   FONT_Shutdown();
   VIDEO_ClearFrameBuffer(vmode, xfb[whichfb], COLOR_BLACK);
   VIDEO_Flush();
@@ -177,6 +184,8 @@ int main (int argc, char *argv[])
     free(texturemem);
 #ifdef HW_RVL
     DI_Close();
+#endif
+#ifdef HW_RVL
     SYS_ResetSystem(SYS_RESTART,0,0);
 #else
     SYS_ResetSystem(SYS_HOTRESET,0,0);
@@ -206,6 +215,21 @@ int main (int argc, char *argv[])
     fatEnableReadAhead ("cardb", 6, 64);
 #endif
   }
+
+  /* background music */
+  char fname[MAXPATHLEN];
+  sprintf(fname,"%s/Bg_music.ogg",DEFAULT_PATH);
+  FILE *f = fopen(fname,"rb");
+  if (f)
+  {
+    struct stat filestat;
+    stat(fname, &filestat);
+    Bg_music_ogg_size = filestat.st_size;
+    Bg_music_ogg = memalign(32,Bg_music_ogg_size);
+    if (Bg_music_ogg) fread(Bg_music_ogg,1,Bg_music_ogg_size,f);
+    fclose(f);
+  }
+
 
   /* default config */
   legal();

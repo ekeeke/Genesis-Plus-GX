@@ -315,14 +315,14 @@ int FileSelector(unsigned char *buffer)
 
       /* find selected button */
       for (i=0; i<2; i++)
-      {
+              {
         button = m->arrows[i];
-        if (button)
+      if (button)
+      {
+        if (button->state & BUTTON_VISIBLE)
         {
-          if (button->state & BUTTON_VISIBLE)
-          {
             if ((x>=button->x)&&(x<=(button->x+button->w))&&(y>=button->y)&&(y<=(button->y+button->h)))
-            {
+          {
               m->selected = m->max_buttons + i;
               break;
             }
@@ -432,9 +432,9 @@ int FileSelector(unsigned char *buffer)
         }
       }
 #endif
-      
+
       /* ensure we are in focus area */
-      if (m->selected < m->max_buttons)
+      if (go_up || (m->selected < m->max_buttons))
       {
         /*** This is directory ***/
         if (filelist[selection].flags)

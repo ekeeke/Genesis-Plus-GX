@@ -70,6 +70,8 @@ static const u16 pad_keys[8] =
 #define PAD_LEFT  2
 #define PAD_RIGHT 3
 
+static int held_cnt = 0;
+
 static u32 wpad_dirmap[3][4] =
 {
   {WPAD_BUTTON_RIGHT, WPAD_BUTTON_LEFT, WPAD_BUTTON_UP, WPAD_BUTTON_DOWN},                                /* WIIMOTE only */
@@ -752,12 +754,27 @@ void gx_input_updateMenu(u32 cnt)
   /* get wiimote + expansions inputs */
   WPAD_ScanPads();
   u32 q = WPAD_ButtonsDown(0);
-  /*u32 h = WPAD_ButtonsHeld(0);*/
+  u32 h = WPAD_ButtonsHeld(0);
   x = WPAD_StickX(0, 0);
   y = WPAD_StickY(0, 0);
 
   /* Wiimote orientation */
   WPAD_IR(0, &m_input.ir);
+
+  /* held buttons */
+  if (h & WPAD_BUTTON_UP)         held_cnt++;
+  else if (h & WPAD_BUTTON_DOWN)  held_cnt++;
+  else if (h & WPAD_BUTTON_LEFT)  held_cnt++;
+  else if (h & WPAD_BUTTON_RIGHT) held_cnt++;
+  else if (h & WPAD_BUTTON_A)     held_cnt++;
+  else held_cnt = 0;
+
+  /* delays buttons state update */
+  if (held_cnt > 13)
+  {
+    held_cnt = 0;
+    q |= (h & (WPAD_BUTTON_UP|WPAD_BUTTON_DOWN|WPAD_BUTTON_LEFT|WPAD_BUTTON_RIGHT|WPAD_BUTTON_A));
+  }
 
   /* wiimote directions */
   if (m_input.ir.valid)

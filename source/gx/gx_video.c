@@ -1241,6 +1241,8 @@ void gx_video_init(void)
     WaitPrompt("Failed to allocate texture buffer... Rebooting");
 #ifdef HW_RVL
     DI_Close();
+#endif
+#ifdef HW_RVL
     SYS_ResetSystem(SYS_RESTART,0,0);
 #else
     SYS_ResetSystem(SYS_HOTRESET,0,0);

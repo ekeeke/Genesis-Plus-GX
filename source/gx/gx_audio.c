@@ -22,10 +22,12 @@
  ***************************************************************************/
 
 #include "shared.h"
-//#include "Bg_music_ogg.h"
 
 #include <asndlib.h>
 #include <oggplayer.h>
+
+extern u8 *Bg_music_ogg;
+extern u32 Bg_music_ogg_size;
 
 /* DMA soundbuffers (required to be 32-bytes aligned)
    Length is dimensionned for one frame of emulation (see below)
@@ -174,7 +176,10 @@ void gx_audio_stop(void)
   /* restart menu audio */
   ASND_Init();
   ASND_Pause(0);
-  PauseOgg(0);
- // PlayOgg(mem_open((char *)Bg_music_ogg, Bg_music_ogg_size), 0, OGG_INFINITE_TIME);
-  //SetVolumeOgg(255);
+  if (Bg_music_ogg)
+  {
+    PauseOgg(0);
+    PlayOgg(mem_open((char *)Bg_music_ogg, Bg_music_ogg_size), 0, OGG_INFINITE_TIME);
+    SetVolumeOgg(255);
+  }
 }

@@ -85,14 +85,6 @@ static gui_item action_select =
 #endif
 };
 
-static gui_item action_exit =
-{
-#ifdef HW_RVL
-  NULL,Key_home_png,"","Play",10,422,24,24
-#else
-  NULL,Key_B_gcn_png,"","Play",10,422,28,28
-#endif
-};
 
 /*****************************************************************************/
 /*  Generic GUI backgrounds                                                  */
@@ -102,7 +94,7 @@ static gui_image bg_main[4] =
   {NULL,Bg_main_png,IMAGE_VISIBLE|IMAGE_FADE,146,80,348,288,255,{0,0},{0,0}},
   {NULL,Bg_overlay_png,IMAGE_VISIBLE|IMAGE_REPEAT,0,0,640,480,255,{0,0},{0,0}},
   {NULL,Banner_main_png,IMAGE_VISIBLE|IMAGE_SLIDE_Y,0,340,640,140,255,{0,0},{0,0}},
-  {NULL,Main_logo_png,IMAGE_VISIBLE|IMAGE_SLIDE_Y,200,362,232,56,255,{0,0},{0,0}}
+  {NULL,Main_logo_png,IMAGE_VISIBLE|IMAGE_SLIDE_Y,202,362,232,56,255,{0,0},{0,0}}
 };
 
 static gui_image bg_misc[5] =
@@ -131,14 +123,18 @@ static gui_image bg_list[6] =
 /* Main menu */
 static gui_item items_main[8] =
 {
-  {NULL,Main_load_png    ,"","",112, 72,80,92},
-  {NULL,Main_options_png ,"","",290, 76,60,88},
-  {NULL,Main_quit_png    ,"","",452, 84,60,80},
+  {NULL,Main_quit_png    ,"","",128, 84,52,80},
+  {NULL,Main_load_png    ,"","",280, 72,80,92},
+  {NULL,Main_options_png ,"","",456, 76,60,88},
   {NULL,Main_file_png    ,"","",114,216,80,92},
   {NULL,Main_reset_png   ,"","",282,224,76,84},
   {NULL,Main_ggenie_png  ,"","",450,224,72,84},
-  {NULL,Main_showinfo_png,"","", 10,370,68,28},
-  {NULL,Main_takeshot_png,"","",562,370,68,28}
+#ifdef HW_RVL
+  {NULL,Main_play_wii_png,"","", 10,368,84,32},
+#else
+  {NULL,Main_play_gcn_png,"","", 10,368,84,32},
+#endif
+  {NULL,Main_showinfo_png,"","",546,368,84,32}
 };
 
 #ifdef HW_RVL
@@ -225,10 +221,10 @@ static gui_butn buttons_main[8] =
   {&button_icon_data,BUTTON_VISIBLE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,246, 50,148,132},
   {&button_icon_data,BUTTON_VISIBLE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,412, 50,148,132},
   {&button_icon_data,BUTTON_VISIBLE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX, 80,194,148,132},
-  {&button_icon_data,BUTTON_VISIBLE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,246,194,148,132},
+  {&button_icon_data,BUTTON_VISIBLE|BUTTON_OVER_SFX,                  246,194,148,132},
   {&button_icon_data,BUTTON_VISIBLE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,412,194,148,132},
-  {NULL             ,BUTTON_VISIBLE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX, 10,370, 68, 28},
-  {NULL             ,BUTTON_VISIBLE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,562,370, 68, 28}
+  {NULL             ,BUTTON_VISIBLE|BUTTON_OVER_SFX,                    0,360, 88, 48},
+  {NULL             ,BUTTON_VISIBLE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,552,360, 88, 48}
 };
 
 
@@ -274,7 +270,7 @@ static gui_menu menu_main =
   items_main,
   buttons_main,
   bg_main,
-  {&action_exit,NULL},
+  {NULL,NULL},
   {NULL,NULL},
   FALSE
 };
@@ -506,30 +502,18 @@ void GUI_DrawMenu(gui_menu *menu)
       item = &menu->items[menu->offset +i];
       if (i == menu->selected)
       {
-        gxDrawTexture(button->data->texture[1],button->x-2,button->y-2,button->w+4,button->h+4,255);
-        if (item->data)
-        {
-          gxDrawTexture(item->texture, item->x-2,item->y-2,item->w+4,item->h+4,255);
-        }
-        else
-        {
-          FONT_writeCenter(item->text,18,button->x,button->x+button->w,button->y+(button->h-18)/2+18,(GXColor)DARK_GREY);
-        }
+        if (button->data) gxDrawTexture(button->data->texture[1],button->x-4,button->y-4,button->w+8,button->h+8,255);
+        if (item->data) gxDrawTexture(item->texture, item->x-4,item->y-4,item->w+8,item->h+8,255);
+        else FONT_writeCenter(item->text,18,button->x,button->x+button->w,button->y+(button->h-18)/2+18,(GXColor)DARK_GREY);
 
         /* update help comment */
         if (menu->helpers[1]) strcpy(menu->helpers[1]->comment,item->comment);
       }
       else
       {
-        gxDrawTexture(button->data->texture[0],button->x,button->y,button->w, button->h,255);
-        if (item->data)
-        {
-          gxDrawTexture(item->texture,item->x,item->y,item->w,item->h,255);
-        }
-        else
-        {
-          FONT_writeCenter(item->text,16,button->x,button->x+button->w,button->y+(button->h - 16)/2+16,(GXColor)DARK_GREY);
-        }
+        if (button->data) gxDrawTexture(button->data->texture[0],button->x,button->y,button->w, button->h,255);
+        if (item->data) gxDrawTexture(item->texture,item->x,item->y,item->w,item->h,255);
+        else FONT_writeCenter(item->text,16,button->x,button->x+button->w,button->y+(button->h - 16)/2+16,(GXColor)DARK_GREY);
       }
     }
   }
@@ -575,7 +559,7 @@ void GUI_DrawMenu(gui_menu *menu)
 }
 
 /* Menu transitions effect */
-static void GUI_DrawMenuFX(gui_menu *menu, u8 speed, u8 out)
+void GUI_DrawMenuFX(gui_menu *menu, u8 speed, u8 out)
 {
   int i,temp,xpos,ypos;
   int max_offset = 0;
@@ -683,7 +667,7 @@ static void GUI_DrawMenuFX(gui_menu *menu, u8 speed, u8 out)
       {
         /* draw button + items */ 
         item = &menu->items[menu->offset + i];
-        gxDrawTexture(button->data->texture[0],button->x,button->y,button->w, button->h,alpha);
+        if (button->data) gxDrawTexture(button->data->texture[0],button->x,button->y,button->w, button->h,alpha);
         if (item->data) gxDrawTexture(item->texture,item->x,item->y,item->w,item->h,alpha);
       }
     }
@@ -767,7 +751,7 @@ int GUI_WindowPrompt(gui_menu *parent, char *title, char *items[], u8 nb_items)
     GUI_DrawMenu(parent);
 
     /* draw window */
-    gxDrawTexture(window,xwindow,ywindow-yoffset,window->width,window->height,208);
+    gxDrawTexture(window,xwindow,ywindow-yoffset,window->width,window->height,216);
     gxDrawTexture(top,xwindow,ywindow-yoffset,top->width,top->height,255);
 
     /* draw title */
@@ -794,7 +778,7 @@ int GUI_WindowPrompt(gui_menu *parent, char *title, char *items[], u8 nb_items)
     GUI_DrawMenu(parent);
 
     /* draw window */
-    gxDrawTexture(window,xwindow,ywindow,window->width,window->height,208);
+    gxDrawTexture(window,xwindow,ywindow,window->width,window->height,216);
     gxDrawTexture(top,xwindow,ywindow,top->width,top->height,255);
 
     /* draw title */
@@ -803,10 +787,16 @@ int GUI_WindowPrompt(gui_menu *parent, char *title, char *items[], u8 nb_items)
     /* draw buttons + text */
     for (i=0; i<nb_items; i++)
     {
-      if (i==selected) gxDrawTexture(data->texture[1],xpos-2,ypos+i*(20+h)-2,w+4,h+4,255);
-      else gxDrawTexture(data->texture[0],xpos,ypos+i*(20 + h),w,h,255);
-      if (i==selected) FONT_writeCenter(items[i],20,xpos,xpos+w,ypos+i*(20+h)+(h+20)/2,(GXColor)DARK_GREY);
-      else FONT_writeCenter(items[i],18,xpos,xpos+w,ypos+i*(20+h)+(h+18)/2,(GXColor)DARK_GREY);
+      if (i==selected)
+      {
+        gxDrawTexture(data->texture[1],xpos-4,ypos+i*(20+h)-4,w+8,h+8,255);
+        FONT_writeCenter(items[i],22,xpos,xpos+w,ypos+i*(20+h)+(h+22)/2,(GXColor)DARK_GREY);
+      }
+      else
+      {
+        gxDrawTexture(data->texture[0],xpos,ypos+i*(20 + h),w,h,255);
+        FONT_writeCenter(items[i],18,xpos,xpos+w,ypos+i*(20+h)+(h+18)/2,(GXColor)DARK_GREY);
+      }
     }
 
     old = selected;
@@ -892,7 +882,7 @@ int GUI_WindowPrompt(gui_menu *parent, char *title, char *items[], u8 nb_items)
     GUI_DrawMenu(parent);
 
     /* draw window + header */
-    gxDrawTexture(window,xwindow,ywindow-yoffset,window->width,window->height,208);
+    gxDrawTexture(window,xwindow,ywindow-yoffset,window->width,window->height,216);
     gxDrawTexture(top,xwindow,ywindow-yoffset,top->width,top->height,255);
 
     /* draw title */
@@ -2226,24 +2216,22 @@ void MainMenu (void)
   if (genromsize)
   {
     m->screenshot = 1;
-    m->buttons[0].h = 50;
-    m->buttons[1].h = 50;
-    m->buttons[2].h = 50;
     m->max_items = 8;
     m->max_buttons = 8;
+    m->buttons[3].state |= BUTTON_SELECT_SFX;
+    m->buttons[4].state |= BUTTON_SELECT_SFX;
+    m->buttons[5].state |= BUTTON_SELECT_SFX;
   }
   else
   {
     m->screenshot = 0;
-    m->buttons[0].h = 122;
-    m->buttons[1].h = 122;
-    m->buttons[2].h = 122;
-    m->max_items = 3;
-    m->max_buttons = 3;
+    m->max_items = 6;
+    m->max_buttons = 6;
+    m->buttons[3].state &= ~BUTTON_SELECT_SFX;
+    m->buttons[4].state &= ~BUTTON_SELECT_SFX;
+    m->buttons[5].state &= ~BUTTON_SELECT_SFX;
   }
 
-
-  /* game screen transition to menu */
   GUI_DrawMenuFX(m,10,0);
 
   while (quit == 0)
@@ -2255,6 +2243,7 @@ void MainMenu (void)
     switch (ret)
     {
       case -1: /*** Play Game ***/
+      case 6:
         if (genromsize)
         {
           /* menu transition to game screen */
@@ -2263,15 +2252,7 @@ void MainMenu (void)
         }
         break;
 
-      case 0:  /*** Load Game ***/
-        quit = loadmenu();
-        break;
-
-      case 1:  /*** Options */
-        optionmenu ();
-        break;
-
-      case 2: /*** Quit Emulator ***/
+      case 0: /*** Quit Emulator ***/
       {
         GUI_InitMenu(m);
         switch (GUI_WindowPrompt(m, VERSION, items,3))
@@ -2286,10 +2267,12 @@ void MainMenu (void)
             break;
 
           case 2:
+#ifdef HW_RVL
+            gxTextureClose(&w_pointer);
+#endif
             GUI_DeleteMenu(m);
             shutdown();
 #ifdef HW_RVL
-            gxTextureClose(&w_pointer);
             SYS_ResetSystem(SYS_RETURNTOMENU, 0, 0);
 #else
             SYS_ResetSystem(SYS_HOTRESET,0,0);
@@ -2300,13 +2283,23 @@ void MainMenu (void)
             break;
         }
         GUI_DeleteMenu(m);
+        break;
       }
 
+      case 1:  /*** Load Game ***/
+        quit = loadmenu();
+        break;
+
+      case 2:  /*** Options */
+        optionmenu ();
+        break;
+
       case 3:  /*** Memory Manager ***/
-        quit = filemenu ();
+        if (genromsize) quit = filemenu ();
         break;
 
       case 4:  /*** Emulator Reset ***/
+        if (!genromsize) break;
         system_reset (); 
         gxClearScreen ((GXColor)BLACK);
         gxSetScreen ();
@@ -2314,15 +2307,12 @@ void MainMenu (void)
         break;
 
       case 5:   /*** Game Genie ***/
+        if (!genromsize) break;
         GetGGEntries();
         break;
 
-      case 6:   /*** ROM Information ***/
+      case 7:   /*** ROM Information ***/
         showrominfo ();
-        break;
-
-      case 7:   /*** Take Screenshot ***/
-        /* TODO */
         break;
     }
   }
@@ -2331,11 +2321,14 @@ void MainMenu (void)
   while (PAD_ButtonsHeld(0))  PAD_ScanPads();
 #ifdef HW_RVL
   while (WPAD_ButtonsHeld(0)) WPAD_ScanPads();
+#endif
 
+#ifdef HW_RVL
   /* free wiimote pointer data */
   gxTextureClose(&w_pointer);
+#endif
 
-#else
+#ifndef HW_RVL
   /*** Stop the DVD from causing clicks while playing ***/
   uselessinquiry ();
 #endif
