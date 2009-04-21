@@ -162,10 +162,6 @@ int FileSortCallback(const void *f1, const void *f2)
  ****************************************************************************/ 
 int FileSelector(unsigned char *buffer)
 {
-#ifdef HW_RVL
-  int x,y;
-  gui_butn *button;
-#endif
   short p;
   int ret,i,yoffset,string_offset;
   int go_up = 0;
@@ -173,6 +169,12 @@ int FileSelector(unsigned char *buffer)
   char text[MAXJOLIET+2];
   char fname[MAXPATHLEN];
   FILE *xml,*snap;
+
+#ifdef HW_RVL
+  int x,y;
+  gui_butn *button;
+  struct orient_t orient;
+#endif
 
   /* Initialize Menu */
   gui_menu *m = &menu_browser;
@@ -295,7 +297,8 @@ int FileSelector(unsigned char *buffer)
       y = m_input.ir.y;
 
       /* draw wiimote pointer */
-      gxResetAngle(m_input.ir.angle);
+      WPAD_Orientation(0,&orient);
+      gxResetAngle(orient.roll);
       gxDrawTexture(w_pointer, x-w_pointer->width/2, y-w_pointer->height/2, w_pointer->width, w_pointer->height,255);
       gxResetAngle(0.0);
 

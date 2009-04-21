@@ -714,6 +714,7 @@ int GUI_WindowPrompt(gui_menu *parent, char *title, char *items[], u8 nb_items)
 
 #ifdef HW_RVL
   int x,y;
+  struct orient_t orient;
 #endif
 
   /* initialize data */
@@ -817,7 +818,8 @@ int GUI_WindowPrompt(gui_menu *parent, char *title, char *items[], u8 nb_items)
       y = m_input.ir.y;
 
       /* draw wiimote pointer */
-      gxResetAngle(m_input.ir.angle);
+      WPAD_Orientation(0,&orient);
+      gxResetAngle(orient.roll);
       gxDrawTexture(w_pointer,x-w_pointer->width/2,y-w_pointer->height/2,w_pointer->width,w_pointer->height,255);
       gxResetAngle(0.0);
 
@@ -943,6 +945,7 @@ int GUI_RunMenu(gui_menu *menu)
 
 #ifdef HW_RVL
   int i,x,y;
+  struct orient_t orient;
 #endif
 
 
@@ -966,7 +969,8 @@ int GUI_RunMenu(gui_menu *menu)
       y = m_input.ir.y;
 
       /* draw wiimote pointer */
-      gxResetAngle(m_input.ir.angle);
+      WPAD_Orientation(0,&orient);
+      gxResetAngle(orient.roll);
       gxDrawTexture(w_pointer, x-w_pointer->width/2, y-w_pointer->height/2, w_pointer->width, w_pointer->height,255);
       gxResetAngle(0.0);
 

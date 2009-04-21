@@ -52,7 +52,4 @@ extern void gx_input_config(u8 num, u8 type, u8 padtype);
 extern void gx_input_updateEmu(void);
 extern void gx_input_updateMenu(u32 cnt);
 
-extern s8 WPAD_StickX(u8 chan,u8 right);
-extern s8 WPAD_StickY(u8 chan,u8 right);
-
 #endif

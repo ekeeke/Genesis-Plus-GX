@@ -242,9 +242,7 @@ static void pad_update(s8 num, u8 i)
 *******************************/
 #ifdef HW_RVL
 
-#define PI 3.14159265f
-
-s8 WPAD_StickX(u8 chan,u8 right)
+static s8 WPAD_StickX(u8 chan,u8 right)
 {
   float mag = 0.0;
   float ang = 0.0;
@@ -281,13 +279,13 @@ s8 WPAD_StickX(u8 chan,u8 right)
   /* calculate X value (angle need to be converted into radian) */
   if (mag > 1.0) mag = 1.0;
   else if (mag < -1.0) mag = -1.0;
-  double val = mag * sin(PI * ang/180.0f);
+  double val = mag * sin(M_PI * ang/180.0f);
  
   return (s8)(val * 128.0f);
 }
 
 
-s8 WPAD_StickY(u8 chan, u8 right)
+static s8 WPAD_StickY(u8 chan, u8 right)
 {
   float mag = 0.0;
   float ang = 0.0;
@@ -324,7 +322,7 @@ s8 WPAD_StickY(u8 chan, u8 right)
   /* calculate X value (angle need to be converted into radian) */
   if (mag > 1.0) mag = 1.0;
   else if (mag < -1.0) mag = -1.0;
-  double val = mag * cos(PI * ang/180.0f);
+  double val = mag * cos(M_PI * ang/180.0f);
  
   return (s8)(val * 128.0f);
 }
@@ -394,8 +392,8 @@ static void wpad_config(u8 num, u8 exp, u8 padtype)
   }
 }
 
-float old_x = 0.0;
-float old_y = 0.0;
+/*float old_x = 0.0;
+float old_y = 0.0;*/
 
 static void wpad_update(s8 num, u8 i, u32 exp)
 {
@@ -411,6 +409,9 @@ static void wpad_update(s8 num, u8 i, u32 exp)
     x = WPAD_StickX(num,0);
     y = WPAD_StickY(num,0);
   }
+
+  /* IR structure */
+  struct ir_t ir;
 
   /* retrieve current key mapping */
   u32 *wpad_keymap = config.wpad_keymap[exp + (3 * num)];
@@ -446,7 +447,6 @@ static void wpad_update(s8 num, u8 i, u32 exp)
     if (exp != WPAD_EXP_CLASSIC)
     {
       /* wiimote IR */
-      struct ir_t ir;
       WPAD_IR(num, &ir);
       if (ir.valid)
       {
@@ -474,7 +474,6 @@ static void wpad_update(s8 num, u8 i, u32 exp)
     if (exp != WPAD_EXP_CLASSIC)
     {
       /* wiimote IR */
-      struct ir_t ir;
       WPAD_IR(num, &ir);
       if (ir.valid)
       {
@@ -485,21 +484,30 @@ static void wpad_update(s8 num, u8 i, u32 exp)
     }
   }
 
-  /* MOUSE quantity of movement (-256,256) */
+  /* MOUSE quantity of movement (-255,255) */
   else if (input.dev[i] == DEVICE_MOUSE)
   {
-    /* analog stick */
-    input.analog[2][0] = x * 2 / sensitivity;
-    input.analog[2][1] = 0 - y * 2 / sensitivity;
+    /* by default, use analog stick values */
+    input.analog[2][0] = (x * 2) / sensitivity;
+    input.analog[2][1] = - (y * 2) / sensitivity;
  
     if (exp != WPAD_EXP_CLASSIC)
     {
       /* wiimote IR */
-      struct ir_t ir;
       WPAD_IR(num, &ir);
       if (ir.valid)
       {
-        input.analog[2][0] = ir.x - old_x;
+        /* get wiimote orientation */
+        struct orient_t orient;
+        WPAD_Orientation(num,&orient);
+
+        /* horizontal axis (yaw is between -180 and 180 degrees) */
+        input.analog[2][0] = ((int)orient.yaw * 255) / 90;
+
+        /* vertical axis (pitch is between -180 and 180 degrees) */
+        input.analog[2][1] = ((int)orient.pitch * 255) / 90;
+
+        /*input.analog[2][0] = ir.x - old_x;
         if (input.analog[2][0] > 256)
         {
           input.analog[2][0] = 256;
@@ -529,19 +537,23 @@ static void wpad_update(s8 num, u8 i, u32 exp)
         else
         {
           old_y = ir.y;
-        }
+        }*/
 
         if (p & WPAD_BUTTON_B) input.pad[i]  |= INPUT_B;
       }
-      else
+/*      else
       {
         old_x += input.analog[2][0];
         old_y += input.analog[2][1];
       }
+*/
     }
 
-    if (!config.invert_mouse) input.analog[2][1] = 0 - input.analog[2][1];
-
+    /* Invert Y coordinate */
+    if (!config.invert_mouse)
+    {
+      input.analog[2][1] = -input.analog[2][1];
+    }
   }
 
   /* GAMEPAD directional buttons */
