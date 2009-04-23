@@ -30,12 +30,35 @@
 #include "filesel.h"
 
 #include <asndlib.h>
+#include <oggplayer.h>
+
+/* Global datas */
+t_input_menu m_input;
 
 #ifdef HW_RVL
 gx_texture *w_pointer;
 #endif
 
-t_input_menu m_input;
+#define BG_COLOR_MAX 14
+
+/* various background colors */
+static GXColor bg_colors[BG_COLOR_MAX]=
+{
+  {0xd6,0xcb,0xba,0xff}, /* light gold */
+  {0xbb,0xb0,0x99,0xff},  /* gold */
+  {0x66,0x66,0x66,0xff}, /* faded grey */
+  {0xcc,0xcc,0xcc,0xff}, /* light grey */
+  {0xd4,0xd0,0xc8,0xff}, /* cream */
+  {0xb8,0xc7,0xda,0xff}, /* light blue */
+  {0xc0,0xcf,0xe7,0xff}, /* sky blue */
+  {0x98,0xb1,0xd8,0xff}, /* sea blue */
+  {0x7b,0x8c,0xa6,0xff}, /* violet */
+  {0xa9,0xc7,0xc6,0xff}, /* green blue */
+  {0x7d,0xa4,0x9f,0xff}, /* darker green blue */
+  {0x22,0x52,0x74,0xff}, /* dark blue */
+  {0x33,0x33,0x33,0xff}, /* dark grey */
+  {0x00,0x00,0x00,0xff}  /* black */
+};
 
 /*****************************************************************************/
 /*  Generic Buttons data                                                      */
@@ -174,14 +197,12 @@ static gui_item items_audio[5] =
 };
 
 /* System options menu */
-static gui_item items_system[6] =
+static gui_item items_system[4] =
 {
   {NULL,NULL,"Console Region: AUTO","Select system region",                   0,0,0,0},
   {NULL,NULL,"System Lockups: OFF", "Enable/disable original system lock-ups",0,0,0,0},
   {NULL,NULL,"System BIOS: OFF",    "Enable/disable TMSS BIOS support",       0,0,0,0},
-  {NULL,NULL,"SVP Cycles: 1500",    "Adjust SVP chip emulation speed",        0,0,0,0},
-  {NULL,NULL,"Auto SRAM: OFF",      "Enable/disable automatic SRAM",          0,0,0,0},
-  {NULL,NULL,"Auto STATE: OFF",     "Enable/disable automatic Freeze State",  0,0,0,0}
+  {NULL,NULL,"SVP Cycles: 1500",    "Adjust SVP chip emulation speed",        0,0,0,0}
 };
 
 /* Video options menu */
@@ -195,6 +216,16 @@ static gui_item items_video[8] =
   {NULL,NULL,"Borders: OFF",          "Enable/disable original overscan emulation",0,0,0,0},
   {NULL,NULL,"DISPLAY POSITION",      "Adjust display position",                   0,0,0,0},
   {NULL,NULL,"DISPLAY SIZE",          "Adjust display size",                       0,0,0,0}
+};
+
+/* Preferences menu */
+static gui_item items_prefs[5] =
+{
+  {NULL,NULL,"Auto SRAM: OFF",    "Enable/disable automatic SRAM",      0,0,0,0},
+  {NULL,NULL,"Auto STATE: OFF",   "Enable/disable automatic Savestate", 0,0,0,0},
+  {NULL,NULL,"SFX Volume: 100",   "Adjust sound effects volume",        0,0,0,0},
+  {NULL,NULL,"BGM Volume: 100",   "Adjust background music volume",     0,0,0,0},
+  {NULL,NULL,"BG Color: DEFAULT", "Change background color",            0,0,0,0}
 };
 
 /*****************************************************************************/
@@ -315,7 +346,7 @@ static gui_menu menu_system =
 {
   "System Options",
   0,0,
-  6,4,6,
+  4,4,6,
   {1,1},
   items_system,
   buttons_list,
@@ -348,6 +379,21 @@ static gui_menu menu_audio =
   5,4,6,
   {1,1},
   items_audio,
+  buttons_list,
+  bg_list,
+  {&action_cancel, &action_select},
+  {&arrow_up,&arrow_down},
+  FALSE
+};
+
+/* Sound Options menu */
+static gui_menu menu_prefs =
+{
+  "Sound Options",
+  0,0,
+  5,4,6,
+  {1,1},
+  items_prefs,
   buttons_list,
   bg_list,
   {&action_cancel, &action_select},
@@ -477,7 +523,7 @@ void GUI_DrawMenu(gui_menu *menu)
   }
   else
   {
-    gxClearScreen((GXColor)BACKGROUND);
+    gxClearScreen(bg_colors[config.bg_color]);
   }
 
   /* background elements */
@@ -623,7 +669,7 @@ void GUI_DrawMenuFX(gui_menu *menu, u8 speed, u8 out)
     }
     else
     {
-      gxClearScreen((GXColor)BACKGROUND);
+      gxClearScreen(bg_colors[config.bg_color]);
     }
 
     /* background elements */
@@ -707,7 +753,7 @@ int GUI_WindowPrompt(gui_menu *parent, char *title, char *items[], u8 nb_items)
 {
   int i, ret, quit = 0;
   s32 selected = 0;
-  s32 old, voice;
+  s32 old;
   butn_data *data = &button_text_data;
   u8 delete_me[2];
   s16 p;
@@ -752,7 +798,7 @@ int GUI_WindowPrompt(gui_menu *parent, char *title, char *items[], u8 nb_items)
     GUI_DrawMenu(parent);
 
     /* draw window */
-    gxDrawTexture(window,xwindow,ywindow-yoffset,window->width,window->height,216);
+    gxDrawTexture(window,xwindow,ywindow-yoffset,window->width,window->height,230);
     gxDrawTexture(top,xwindow,ywindow-yoffset,top->width,top->height,255);
 
     /* draw title */
@@ -779,7 +825,7 @@ int GUI_WindowPrompt(gui_menu *parent, char *title, char *items[], u8 nb_items)
     GUI_DrawMenu(parent);
 
     /* draw window */
-    gxDrawTexture(window,xwindow,ywindow,window->width,window->height,216);
+    gxDrawTexture(window,xwindow,ywindow,window->width,window->height,230);
     gxDrawTexture(top,xwindow,ywindow,top->width,top->height,255);
 
     /* draw title */
@@ -854,8 +900,8 @@ int GUI_WindowPrompt(gui_menu *parent, char *title, char *items[], u8 nb_items)
     {
       if (selected >= 0)
       {
-        voice = ASND_GetFirstUnusedVoice();
-        if(voice >= 0) ASND_SetVoice(voice,VOICE_MONO_16BIT,22050,0,(u8 *)button_over_pcm,button_over_pcm_size,255,255,NULL);
+        ASND_SetVoice(ASND_GetFirstUnusedVoice(),VOICE_MONO_16BIT,22050,0,(u8 *)button_over_pcm,button_over_pcm_size,
+                      ((int)config.sfx_volume * 255) / 100,((int)config.sfx_volume * 255) / 100,NULL);
       }
     }
 
@@ -884,7 +930,7 @@ int GUI_WindowPrompt(gui_menu *parent, char *title, char *items[], u8 nb_items)
     GUI_DrawMenu(parent);
 
     /* draw window + header */
-    gxDrawTexture(window,xwindow,ywindow-yoffset,window->width,window->height,216);
+    gxDrawTexture(window,xwindow,ywindow-yoffset,window->width,window->height,230);
     gxDrawTexture(top,xwindow,ywindow-yoffset,top->width,top->height,255);
 
     /* draw title */
@@ -908,31 +954,6 @@ int GUI_WindowPrompt(gui_menu *parent, char *title, char *items[], u8 nb_items)
 
   return ret;
 }
-
-
-#define MAX_COLORS 14
-#define VERSION "Version 1.03"
-
-/* it's hard to choose a nice background color ;-) */
-static GXColor background_colors[MAX_COLORS]=
-{
-  {0x00,0x00,0x00,0xff}, /* black */
-  {0x33,0x33,0x33,0xff}, /* dark grey */
-  {0x66,0x66,0x66,0xff}, /* faded grey */
-  {0xcc,0xcc,0xcc,0xff}, /* light grey */
-  {0xd4,0xd0,0xc8,0xff}, /* cream */
-  {0xb8,0xc7,0xda,0xff}, /* light blue */
-  {0xc0,0xcf,0xe7,0xff}, /* sky blue */
-  {0x98,0xb1,0xd8,0xff}, /* sea blue */
-  {0x7b,0x8c,0xa6,0xff}, /* violet */
-  {0xa9,0xc7,0xc6,0xff}, /* green blue */
-  {0x7d,0xa4,0x9f,0xff}, /* darker green blue */
-  {0x22,0x52,0x74,0xff}, /* dark blue */
-  {0xd6,0xcb,0xba,0xff}, /* light gold */
-  {0xbb,0xb0,0x99,0xff}  /* gold */
-};
-
-static s8 color_cnt = 0;
 
 int GUI_RunMenu(gui_menu *menu)
 {
@@ -1077,26 +1098,6 @@ int GUI_RunMenu(gui_menu *menu)
     {
       quit = 2;
     }
-    else if (p & PAD_TRIGGER_R)
-    {
-      /* swap menu background color (debug) */
-      color_cnt++;
-      if (color_cnt >= MAX_COLORS) color_cnt = 0;
-      BACKGROUND.r = background_colors[color_cnt].r;
-      BACKGROUND.g = background_colors[color_cnt].g;
-      BACKGROUND.b = background_colors[color_cnt].b;
-      BACKGROUND.a = background_colors[color_cnt].a;
-    }
-    else if (p & PAD_TRIGGER_L)
-    {
-      /* swap menu background color (debug) */
-      color_cnt--;
-      if (color_cnt < 0) color_cnt = MAX_COLORS - 1;
-      BACKGROUND.r = background_colors[color_cnt].r;
-      BACKGROUND.g = background_colors[color_cnt].g;
-      BACKGROUND.b = background_colors[color_cnt].b;
-      BACKGROUND.a = background_colors[color_cnt].a;
-    }
 
     /* selected item has changed ? */
     if (menu->selected != selected)
@@ -1107,7 +1108,8 @@ int GUI_RunMenu(gui_menu *menu)
         button = &menu->buttons[selected];
         if (button->state & BUTTON_OVER_SFX)
         {
-          ASND_SetVoice(ASND_GetFirstUnusedVoice(),VOICE_MONO_16BIT,22050,0,(u8 *)button_over_pcm,button_over_pcm_size,200,200,NULL);
+          ASND_SetVoice(ASND_GetFirstUnusedVoice(),VOICE_MONO_16BIT,22050,0,(u8 *)button_over_pcm,button_over_pcm_size,
+                        ((int)config.sfx_volume * 255) / 100,((int)config.sfx_volume * 255) / 100,NULL);
         }
       }
       else if (selected < (max_buttons + 2))
@@ -1116,7 +1118,8 @@ int GUI_RunMenu(gui_menu *menu)
         button = menu->arrows[selected-max_buttons];
         if (button->state & BUTTON_OVER_SFX)
         {
-          ASND_SetVoice(ASND_GetFirstUnusedVoice(),VOICE_MONO_16BIT,22050,0,(u8 *)button_over_pcm,button_over_pcm_size,200,200,NULL);
+          ASND_SetVoice(ASND_GetFirstUnusedVoice(),VOICE_MONO_16BIT,22050,0,(u8 *)button_over_pcm,button_over_pcm_size,
+                        ((int)config.sfx_volume * 255) / 100,((int)config.sfx_volume * 255) / 100,NULL);
         }
       }
 
@@ -1147,7 +1150,8 @@ int GUI_RunMenu(gui_menu *menu)
       button = &menu->buttons[selected];
       if (button->state & BUTTON_SELECT_SFX)
       {
-        ASND_SetVoice(ASND_GetFirstUnusedVoice(),VOICE_MONO_16BIT,22050,0,(u8 *)button_select_pcm,button_select_pcm_size,200,200,NULL);
+        ASND_SetVoice(ASND_GetFirstUnusedVoice(),VOICE_MONO_16BIT,22050,0,(u8 *)button_select_pcm,button_select_pcm_size,
+                      ((int)config.sfx_volume * 255) / 100,((int)config.sfx_volume * 255) / 100,NULL);
       }
     }
 
@@ -1183,7 +1187,7 @@ static void drawmenu (char items[][25], int maxitems, int selected)
   memset(&texture,0,sizeof(gx_texture));
 
   /* draw background items */
-  gxClearScreen ((GXColor)BACKGROUND);
+  gxClearScreen (bg_colors[config.bg_color]);
   texture= gxTextureOpenPNG(Bg_main_png);
   if (texture)
   {
@@ -1280,6 +1284,81 @@ static int domenu (char items[][25], int maxitems, u8 fastmove)
   }
 
   return ret;
+}
+
+/****************************************************************************
+ * Preferences menu
+ *
+ ****************************************************************************/
+static void prefmenu ()
+{
+  int ret, quit = 0;
+  gui_menu *m = &menu_prefs;
+  gui_item *items = m->items;
+
+  GUI_InitMenu(m);
+
+  while (quit == 0)
+  {
+    if (config.sram_auto == 0) sprintf (items[0].text, "SRAM Auto: FAT");
+    else if (config.sram_auto == 1) sprintf (items[0].text, "SRAM Auto: MCARD A");
+    else if (config.sram_auto == 2) sprintf (items[0].text, "SRAM Auto: MCARD B");
+    else sprintf (items[0].text, "SRAM Auto: OFF");
+    if (config.state_auto == 0) sprintf (items[1].text, "Savestate Auto: FAT");
+    else if (config.state_auto == 1) sprintf (items[1].text, "Savestate Auto: MCARD A");
+    else if (config.state_auto == 2) sprintf (items[1].text, "Savestate Auto: MCARD B");
+    else sprintf (items[3].text, "Savestate Auto: OFF");
+    sprintf (items[2].text, "SFX Volume: %1.2f", config.sfx_volume);
+    sprintf (items[3].text, "BGM Volume: %1.2f", config.bgm_volume);
+    if (config.bg_color) sprintf (items[4].text, "BG Color: Type %d", config.bg_color);
+    else sprintf (items[4].text, "BG Color: DEFAULT");
+
+    ret = GUI_RunMenu(m);
+
+    switch (ret)
+    {
+      case 0:  /*** SRAM auto load/save ***/
+        config.sram_auto ++;
+        if (config.sram_auto > 2) config.sram_auto = -1;
+        break;
+
+      case 1:   /*** Savestate auto load/save ***/
+        config.state_auto ++;
+        if (config.state_auto > 2) config.state_auto = -1;
+        break;
+
+      case 2:   /*** Sound effects volume ***/
+      case -4:
+        if (ret < 0) config.sfx_volume --;
+        else config.sfx_volume ++;
+        if (config.sfx_volume < 0) config.sfx_volume = 100.0;
+        else if (config.sfx_volume > 100) config.sfx_volume = 0.0;
+        break;
+
+      case 3:   /*** Background music volume ***/
+      case -5:
+        if (ret < 0) config.bgm_volume --;
+        else config.bgm_volume ++;
+        if (config.bgm_volume < 0) config.bgm_volume = 100.0;
+        else if (config.bgm_volume > 100) config.bgm_volume = 0.0;
+        SetVolumeOgg(((int)config.bgm_volume * 255) / 100);
+        break;
+
+      case 4:   /*** Background color ***/
+      case -6:
+        if (ret < 0) config.bg_color --;
+        else config.bg_color ++;
+        if (config.bg_color < 0) config.bg_color = BG_COLOR_MAX - 1;
+        if (config.bg_color >= BG_COLOR_MAX) config.bg_color = 0;
+        break;
+
+      case -1:
+        quit = 1;
+        break;
+    }
+  }
+
+  GUI_DeleteMenu(m);
 }
 
 /****************************************************************************
@@ -1380,14 +1459,6 @@ static void systemmenu ()
     sprintf (items[1].text, "System Lockups: %s", config.force_dtack ? "OFF" : "ON");
     sprintf (items[2].text, "System BIOS: %s", (config.bios_enabled & 1) ? "ON":"OFF");
     sprintf (items[3].text, "SVP Cycles: %d", SVP_cycles);
-    if (config.sram_auto == 0) sprintf (items[4].text, "Auto SRAM: FAT");
-    else if (config.sram_auto == 1) sprintf (items[4].text, "Auto SRAM: MCARD A");
-    else if (config.sram_auto == 2) sprintf (items[4].text, "Auto SRAM: MCARD B");
-    else sprintf (items[4].text, "Auto SRAM: OFF");
-    if (config.state_auto == 0) sprintf (items[5].text, "Auto FREEZE: FAT");
-    else if (config.state_auto == 1) sprintf (items[5].text, "Auto FREEZE: MCARD A");
-    else if (config.state_auto == 2) sprintf (items[5].text, "Auto FREEZE: MCARD B");
-    else sprintf (items[5].text, "Auto FREEZE: OFF");
 
     ret = GUI_RunMenu(m);
 
@@ -1437,16 +1508,6 @@ static void systemmenu ()
         if (ret<0) SVP_cycles = SVP_cycles ? (SVP_cycles-1) : 1500;
         else SVP_cycles++;
         if (SVP_cycles > 1500) SVP_cycles = 0;
-        break;
-
-      case 4:  /*** SRAM autoload/autosave ***/
-        config.sram_auto ++;
-        if (config.sram_auto > 2) config.sram_auto = -1;
-        break;
-
-      case 5:  /*** FreezeState autoload/autosave ***/
-        config.state_auto ++;
-        if (config.state_auto > 2) config.state_auto = -1;
         break;
 
       case -1:
@@ -1848,8 +1909,13 @@ static void inputsmenu(void)
 
       case 7:
         if (config.input[player].device < 0) break;
-        gx_input_config(config.input[player].port, config.input[player].device, input.padtype[player]);
-        break;
+        if (input.padtype[player] == DEVICE_3BUTTON)  /* 3-buttons */
+          gx_input_config(config.input[player].port, config.input[player].device, 4);
+        else if (config.input[player].device == 0)    /* 6-buttons w/o MODE */
+          gx_input_config(config.input[player].port, 0, 7);
+        else                                          /* 6-buttons */
+          gx_input_config(config.input[player].port, config.input[player].device, 8);
+       break;
 
       case -1:
         /* remove duplicate assigned inputs */
@@ -1898,7 +1964,7 @@ static void optionmenu(void)
         inputsmenu();
         break;
       case 4:
-        /*TODO */
+        prefmenu();
         break;
       case -1:
         quit = 1;

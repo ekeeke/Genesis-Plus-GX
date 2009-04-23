@@ -180,6 +180,6 @@ void gx_audio_stop(void)
   {
     PauseOgg(0);
     PlayOgg(mem_open((char *)Bg_music_ogg, Bg_music_ogg_size), 0, OGG_INFINITE_TIME);
-    SetVolumeOgg(255);
+    SetVolumeOgg(((int)config.bgm_volume * 255) / 100);
   }
 }

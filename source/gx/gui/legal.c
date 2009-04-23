@@ -72,7 +72,8 @@ void legal ()
 
   gxSetScreen ();
   sleep (1);
-  WriteCentre (ypos, "Press any button to skip intro");
+  GXColor color = {0x66,0x99,0xcc,0xff};
+  FONT_writeCenter("Press any button to skip intro",fheight,0,640,ypos,color);
   gxSetScreen ();
   int count = 100;
   while (count > 0)

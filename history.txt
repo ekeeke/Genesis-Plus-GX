@@ -9,7 +9,8 @@ Genesis Plus GX 1.3.2 (??/??/????) (Eke-Eke)
 * removed now outdated Gens YM2612 core
 * improved MAME YM2612 emulation accuracy (SSG-EG, CSM mode and more), thanks to Nemesis for his tests on real hardware
 * fixed FM context restore when loading savesates
-* improved sprites masking: fixes 3D level in Mickey Mania
+* improved sprites masking emulation: fixes 3D level in Mickey Mania
+* fixed lightgun games detection: fixes cursor position in Lethal Enforcers II
 * various code cleanup & optimization
 
 [Gamecube/Wii]

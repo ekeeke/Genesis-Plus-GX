@@ -925,7 +925,6 @@ void gxResetAngle(f32 angle)
   GX_Flush();
 }
 
-GXColor BACKGROUND = {0xd4,0xd0,0xc8,0xff};
 
 void gxSetScreen ()
 {

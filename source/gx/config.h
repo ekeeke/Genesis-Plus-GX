@@ -30,14 +30,12 @@
  ****************************************************************************/
 typedef struct 
 {
-  char version[15];
+  char version[16];
   int32 psg_preamp;
   int32 fm_preamp;
   uint8 boost;
   uint8 filter;
   uint8 hq_fm;
-  int8 sram_auto;
-  int8 state_auto;
   uint8 region_detect;
   uint8 force_dtack;
   uint8 bios_enabled;
@@ -51,11 +49,16 @@ typedef struct
   uint8 render;
   uint8 ntsc;
   uint8 bilinear;
+  uint8 gun_cursor;
+  uint8 invert_mouse;
   uint16 pad_keymap[4][MAX_KEYS];
   uint32 wpad_keymap[4*3][MAX_KEYS];
   t_input_config input[MAX_DEVICES];
-  uint8 gun_cursor;
-  uint8 invert_mouse;
+  int8 bg_color;
+  float bgm_volume;
+  float sfx_volume;
+  int8 sram_auto;
+  int8 state_auto;
 } t_config;
 
 /* Global data */

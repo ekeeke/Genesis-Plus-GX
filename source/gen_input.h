@@ -58,16 +58,6 @@
 #define SYSTEM_TEAMPLAYER   (5) /* Sega TeamPlayer */
 #define SYSTEM_WAYPLAY      (6) /* EA 4-Way Play (use both ports) */
 
-/* Players Inputs */
-#define PLAYER_1A   (0)
-#define PLAYER_1B   (1)
-#define PLAYER_1C   (2)
-#define PLAYER_1D   (3)
-#define PLAYER_2A   (4)
-#define PLAYER_2B   (5)
-#define PLAYER_2C   (6)
-#define PLAYER_2D   (7)
-
 typedef struct
 {
   uint8   dev[MAX_DEVICES];     /* Can be any of the DEVICE_* values */

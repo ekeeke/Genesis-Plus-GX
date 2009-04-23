@@ -282,7 +282,7 @@ void cart_hw_init()
   /**********************************************
           KONAMI JUSTIFIER 
   ***********************************************/
-  if (strstr(rominfo.international,"LETHAL ENFORCERS II") != NULL)
+  else if (strstr(rominfo.international,"LETHAL ENFORCERSII") != NULL)
   {
     /* save current setting */
     if (old_system[0] == -1) old_system[0] = input.system[0];

@@ -31,25 +31,26 @@
 #define MAX_INPUTS 8
 #endif
 
-/* number of configurable keys */
+/* Genesis controller keys */
 #define MAX_KEYS 8
 
-/* wrapper for genesis plus */
+/* Genesis Plus wrapper */
 #define update_input() gx_input_updateEmu()
 
-/* key configuration structure */
+/* Key configuration structure */
 typedef struct 
 {
   s8 device;
   u8 port;
 } t_input_config;
 
-extern u8 ConfigRequested;
 
 extern void gx_input_init(void);
 extern void gx_input_setDefault(void);
-extern void gx_input_config(u8 num, u8 type, u8 padtype);
+extern void gx_input_config(u8 num, u8 type, u8 max_keys);
 extern void gx_input_updateEmu(void);
 extern void gx_input_updateMenu(u32 cnt);
+
+extern u8 ConfigRequested;
 
 #endif

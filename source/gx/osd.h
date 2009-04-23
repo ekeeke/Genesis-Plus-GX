@@ -22,6 +22,11 @@
 #include "config.h"
 
 #define DEFAULT_PATH "/genplus"
+#ifdef HW_RVL
+#define VERSION "v1.3.2 (WII)"
+#else
+#define VERSION "v1.3.2 (GCN)"
+#endif
 
 /* globals */
 extern void error(char *format, ...);

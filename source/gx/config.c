@@ -22,12 +22,6 @@
  ***************************************************************************/
 #include "shared.h"
 
-#ifdef HW_RVL
-#define CONFIG_VERSION "GENPLUS 1.3.2W"
-#else
-#define CONFIG_VERSION "GENPLUS 1.3.2G"
-#endif
-
 void config_save()
 {
   char pathname[MAXPATHLEN];
@@ -61,10 +55,10 @@ void config_load()
   if (fp == NULL) return;
 
   /* read version */
-  char version[15];
-  fread(version, 15, 1, fp); 
+  char version[16];
+  fread(version, 16, 1, fp); 
   fclose(fp);
-  if (strcmp(version,CONFIG_VERSION)) return;
+  if (strcmp(version,VERSION)) return;
 
   /* read file */
   fp = fopen(pathname, "rb");
@@ -75,7 +69,7 @@ void config_load()
 void config_setDefault(void)
 {
   /* version TAG */
-  strncpy(config.version,CONFIG_VERSION,15);
+  strncpy(config.version,VERSION,16);
 
   /* sound options */
   config.psg_preamp   = 150;
@@ -85,17 +79,11 @@ void config_setDefault(void)
   config.filter       = 1;
 
   /* system options */
-  config.state_auto    = -1;
-#ifdef HW_RVL
-  config.sram_auto      = 0; /* let's assume we always have a FAT device by default */
-#else
-  config.sram_auto      = -1;
-#endif
   config.region_detect  = 0;
   config.force_dtack    = 0;
   config.bios_enabled   = 0;
 
-  /* display options */
+  /* video options */
   config.xshift   = 0;
   config.yshift   = 0;
   config.xscale   = 0;
@@ -110,5 +98,16 @@ void config_setDefault(void)
   gx_input_setDefault();
   config.gun_cursor   = 1;
   config.invert_mouse = 0;
+
+  /* menu options */
+#ifdef HW_RVL
+  config.sram_auto  = 0; /* let's assume we always have a FAT device by default */
+#else
+  config.sram_auto  = -1;
+#endif
+  config.state_auto = -1;
+  config.bg_color   = 0;
+  config.bgm_volume = 100.0;
+  config.sfx_volume = 100.0;
 }
 

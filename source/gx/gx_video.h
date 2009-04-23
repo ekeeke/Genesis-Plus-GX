@@ -44,7 +44,6 @@ extern int whichfb;
 extern GXRModeObj *vmode;
 extern u8 *texturemem;
 extern u8 gc_pal;
-extern GXColor BACKGROUND;
 
 /* GX video emulation functions */
 extern void gx_video_init(void);
