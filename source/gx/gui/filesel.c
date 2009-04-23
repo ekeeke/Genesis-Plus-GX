@@ -68,8 +68,8 @@ static butn_data arrow_down_data =
 /*  GUI Arrows button                                                        */
 /*****************************************************************************/
 
-static gui_butn arrow_up = {&arrow_up_data,BUTTON_VISIBLE|BUTTON_OVER_SFX,14,76,360,32};
-static gui_butn arrow_down = {&arrow_down_data,BUTTON_VISIBLE|BUTTON_OVER_SFX,14,368,360,32};
+static gui_butn arrow_up = {&arrow_up_data,BUTTON_VISIBLE|BUTTON_OVER_SFX,{0,0},14,76,360,32};
+static gui_butn arrow_down = {&arrow_down_data,BUTTON_VISIBLE|BUTTON_OVER_SFX,{0,0},14,368,360,32};
 
 /*****************************************************************************/
 /*  GUI helpers                                                              */
@@ -114,9 +114,8 @@ static gui_image bg_filesel[9] =
 static gui_menu menu_browser =
 {
   "ROM Selection",
-  -1,0,
+  -1,-1,
   0,0,9,
-  {0,0},
   NULL,
   NULL,
   bg_filesel,

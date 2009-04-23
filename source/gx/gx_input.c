@@ -25,50 +25,58 @@
 #include "font.h"
 #include "menu.h"
 
-/* analog sensitivity */
+/* Analog sticks sensitivity */
 #define ANALOG_SENSITIVITY 30
+
+/* Delay before held keys triggering */
+#define HELD_DELAY 18
+
+/* Direction & selection update speed when a key is being held */
+/* the less is the value, faster is the key update */
+#define HELD_SPEED 4
 
 /* Menu request flag */
 u8 ConfigRequested = 0;
 
-/* configurable Genesis keys */
-#define KEY_BUTTONA 0   
+/* Configurable Genesis keys */
+#define KEY_BUTTONA 0
 #define KEY_BUTTONB 1
 #define KEY_BUTTONC 2
 #define KEY_START   3
-#define KEY_BUTTONX 5  // 6-buttons only
-#define KEY_BUTTONY 6  // 6-buttons only
-#define KEY_BUTTONZ 7  // 6-buttons only
-#define KEY_MODE    8  // 6-buttons only
+#define KEY_BUTTONX 5  /* 6-buttons only */
+#define KEY_BUTTONY 6  /* 6-buttons only */
+#define KEY_BUTTONZ 7  /* 6-buttons only */
+#define KEY_MODE    8  /* 6-buttons only */
 
 static const char *keys_name[MAX_KEYS] =
 {
   "Button A",
   "Button B",
   "Button C",
-  "Button START ",
+  "START Button",
   "Button X",
   "Button Y",
   "Button Z",
+  "MODE Button"
 };
+
+static int held_cnt = 0;
+
 
 #ifdef HW_RVL
 
-/* default directionnal buttons map  */
 #define PAD_UP    0   
 #define PAD_DOWN  1
 #define PAD_LEFT  2
 #define PAD_RIGHT 3
 
+/* default directions mapping  */
 static u32 wpad_dirmap[3][4] =
 {
   {WPAD_BUTTON_RIGHT, WPAD_BUTTON_LEFT, WPAD_BUTTON_UP, WPAD_BUTTON_DOWN},  /* WIIMOTE */
   {WPAD_BUTTON_UP, WPAD_BUTTON_DOWN, WPAD_BUTTON_LEFT, WPAD_BUTTON_RIGHT},  /* WIIMOTE + NUNCHUK */
   {WPAD_CLASSIC_BUTTON_UP, WPAD_CLASSIC_BUTTON_DOWN, WPAD_CLASSIC_BUTTON_LEFT, WPAD_CLASSIC_BUTTON_RIGHT} /* CLASSIC */
 };
-
-static int held_cnt = 0;
-
 #endif
 
 
@@ -89,6 +97,7 @@ static void pad_config(int chan, int max_keys)
     return;
   }
 
+  /* disable inputs update callback */
   VIDEO_SetPostRetraceCallback(NULL);
   VIDEO_Flush();
 
@@ -132,7 +141,8 @@ static void pad_config(int chan, int max_keys)
     if (key !=0xff) config.pad_keymap[chan][i] = key;
   }
 
-  VIDEO_SetPostRetraceCallback(gx_input_updateMenu);
+  /* restore inputs update callback */
+  VIDEO_SetPostRetraceCallback(gx_input_UpdateMenu);
   VIDEO_Flush();
 }
 
@@ -314,6 +324,7 @@ static void wpad_config(u8 chan, u8 exp, u8 max_keys)
     return;
   }
 
+  /* disable inputs update callback */
   VIDEO_SetPostRetraceCallback(NULL);
   VIDEO_Flush();
 
@@ -344,7 +355,7 @@ static void wpad_config(u8 chan, u8 exp, u8 max_keys)
 
       switch (exp)
       {
-        /* Wiimote (TODO: add motion sensor) */
+        /* Wiimote (TODO: add motion sensing !) */
         case WPAD_EXP_NONE:
           if (p & WPAD_BUTTON_HOME) key = 0xff;
           else if (p & WPAD_BUTTON_2) key = WPAD_BUTTON_2;
@@ -355,7 +366,7 @@ static void wpad_config(u8 chan, u8 exp, u8 max_keys)
           else if (p & WPAD_BUTTON_MINUS) key = WPAD_BUTTON_MINUS;
           break;
         
-        /* Wiimote + Nunchuk */
+        /* Wiimote + Nunchuk (TODO: add motion sensing !) */
         case WPAD_EXP_NUNCHUK:
           if (p & WPAD_BUTTON_HOME) key = 0xff;
           else if (p & WPAD_BUTTON_2) key = WPAD_BUTTON_2;
@@ -393,7 +404,8 @@ static void wpad_config(u8 chan, u8 exp, u8 max_keys)
     if (key != 0xff) config.wpad_keymap[exp + (chan * 3)][i] = key;
   }
 
-  VIDEO_SetPostRetraceCallback(gx_input_updateMenu);
+  /* restore inputs update callback */
+  VIDEO_SetPostRetraceCallback(gx_input_UpdateMenu);
   VIDEO_Flush();
 }
 
@@ -554,7 +566,7 @@ static void wpad_update(s8 chan, u8 i, u32 exp)
 /***************************************************************************************/
 /*   GX Input interface                                                                */
 /***************************************************************************************/
-void gx_input_init(void)
+void gx_input_Init(void)
 {
   PAD_Init ();
 
@@ -565,11 +577,11 @@ void gx_input_init(void)
   WPAD_SetVRes(WPAD_CHAN_ALL,640,480);
 #endif
 
-  VIDEO_SetPostRetraceCallback(gx_input_updateMenu);
+  VIDEO_SetPostRetraceCallback(gx_input_UpdateMenu);
   VIDEO_Flush();
 }
 
-void gx_input_setDefault(void)
+void gx_input_SetDefault(void)
 {
   int i;
 
@@ -583,7 +595,7 @@ void gx_input_setDefault(void)
     config.pad_keymap[i][KEY_BUTTONX] = PAD_TRIGGER_L;
     config.pad_keymap[i][KEY_BUTTONY] = PAD_BUTTON_Y;
     config.pad_keymap[i][KEY_BUTTONZ] = PAD_TRIGGER_R;
-    config.pad_keymap[i][KEY_MODE]    = PAD_TRIGGER_R;
+    config.pad_keymap[i][KEY_MODE]    = 0;
   }
 
 #ifdef HW_RVL
@@ -621,10 +633,10 @@ void gx_input_setDefault(void)
   }
 #endif
 
-  /* Set default device assignation */
+  /* Default device assignation */
   for (i=0; i<MAX_DEVICES; i++)
   {
-    /* gamepad as default */
+    /* set gamepad by default */
     config.input[i].device = (i < 4) ? 0 : -1;
     config.input[i].port = i%4;
   }
@@ -668,7 +680,7 @@ void gx_input_setDefault(void)
 #endif
 }
 
-void gx_input_config(u8 chan, u8 type, u8 max)
+void gx_input_Config(u8 chan, u8 type, u8 max)
 {
   switch (type)
   {
@@ -684,7 +696,7 @@ void gx_input_config(u8 chan, u8 type, u8 max)
   }
 }
 
-void gx_input_updateEmu(void)
+void gx_input_UpdateEmu(void)
 {
   int i;
   int player = 0;
@@ -716,84 +728,110 @@ void gx_input_updateEmu(void)
 }
 
 /* Menu inputs update function (done by Video Interrupt callback) */
-void gx_input_updateMenu(u32 cnt)
+void gx_input_UpdateMenu(u32 cnt)
 {
-  /* PAD status */
+  /* PAD status update */
   PAD_ScanPads();
-  s16 p = PAD_ButtonsDown(0);
+
+  /* PAD pressed keys */
+  s16 pp = PAD_ButtonsDown(0);
+
+  /* PAD held keys (direction/selection) */
+  s16 hp = PAD_ButtonsHeld(0) & (PAD_BUTTON_UP|PAD_BUTTON_DOWN|PAD_BUTTON_LEFT|PAD_BUTTON_RIGHT|PAD_BUTTON_A);
+
+  /* PAD analog sticks (handled as PAD held direction keys) */
   s8 x  = PAD_StickX(0);
   s8 y  = PAD_StickY(0);
-  if (x > 70) p |= PAD_BUTTON_RIGHT;
-  else if (x < -70) p |= PAD_BUTTON_LEFT;
-  if (y > 60) p |= PAD_BUTTON_UP;
-  else if (y < -60) p |= PAD_BUTTON_DOWN;
+  if (x > ANALOG_SENSITIVITY)       hp |= PAD_BUTTON_RIGHT;
+  else if (x < -ANALOG_SENSITIVITY) hp |= PAD_BUTTON_LEFT;
+  else if (y > ANALOG_SENSITIVITY)  hp |= PAD_BUTTON_UP;
+  else if (y < -ANALOG_SENSITIVITY) hp |= PAD_BUTTON_DOWN;
 
 #ifdef HW_RVL
-  /* WPAD status */
+  /* WPAD status update */
   WPAD_ScanPads();
   WPADData *data = WPAD_Data(0);
-  u32 q = data->btns_d;
-  u32 h = data->btns_h;
 
-  /* fast scrolling/selection */
-  h &= (WPAD_BUTTON_UP|WPAD_BUTTON_DOWN|WPAD_BUTTON_LEFT|WPAD_BUTTON_RIGHT|WPAD_BUTTON_A);
-  
-  /* wait for the key to be held for a short period */
-  if (h) held_cnt++;
+  /* WPAD pressed keys */
+  u32 pw = data->btns_d;
+
+  /* WPAD held keys (direction/selection) */
+  u32 hw = data->btns_h & (WPAD_BUTTON_UP|WPAD_BUTTON_DOWN|WPAD_BUTTON_LEFT|WPAD_BUTTON_RIGHT|WPAD_BUTTON_A|WPAD_BUTTON_2);
+
+  /* WPAD analog sticks (handled as PAD held direction keys) */
+  x = WPAD_StickX(data, 0);
+  y = WPAD_StickY(data, 0);
+  if (x > ANALOG_SENSITIVITY)       hp |= PAD_BUTTON_RIGHT;
+  else if (x < -ANALOG_SENSITIVITY) hp |= PAD_BUTTON_LEFT;
+  else if (y > ANALOG_SENSITIVITY)  hp |= PAD_BUTTON_UP;
+  else if (y < -ANALOG_SENSITIVITY) hp |= PAD_BUTTON_DOWN;
+#endif
+
+  /* check if any direction/selection key is being held or just being pressed/released */
+#ifdef HW_RVL
+  if (pp||pw) held_cnt = 0;
+  else if (hp||hw) held_cnt++;
   else held_cnt = 0;
-  if (held_cnt > 14)
+#else
+  if (pp) held_cnt = 0;
+  else if (hp) held_cnt++;
+  else held_cnt = 0;
+#endif
+
+  /* initial delay (prevents triggering to start immediately) */
+  if (held_cnt > HELD_DELAY)
   {
-    /* update pressed status */
-    held_cnt = 0;
-    q |= h;
+    /* key triggering */
+    pp |= hp;
+#ifdef HW_RVL
+    pw |= hw;
+#endif
+
+    /* delay until next triggering (adjusts direction/selection update speed) */
+    held_cnt -= HELD_SPEED;
   }
 
-  /* Wiimote orientation */
+#ifdef HW_RVL
+  /* Wiimote direction keys */
   WPAD_IR(0, &m_input.ir);
   if (m_input.ir.valid)
   {
-    if (q & WPAD_BUTTON_UP)         p |= PAD_BUTTON_UP;
-    else if (q & WPAD_BUTTON_DOWN)  p |= PAD_BUTTON_DOWN;
-    else if (q & WPAD_BUTTON_LEFT)  p |= PAD_BUTTON_LEFT;
-    else if (q & WPAD_BUTTON_RIGHT) p |= PAD_BUTTON_RIGHT;
+    /* Wiimote is handled vertically */
+    if (pw & WPAD_BUTTON_UP)         pp |= PAD_BUTTON_UP;
+    else if (pw & WPAD_BUTTON_DOWN)  pp |= PAD_BUTTON_DOWN;
+    else if (pw & WPAD_BUTTON_LEFT)  pp |= PAD_BUTTON_LEFT;
+    else if (pw & WPAD_BUTTON_RIGHT) pp |= PAD_BUTTON_RIGHT;
   }
   else
   {
-    if (q & WPAD_BUTTON_UP)         p |= PAD_BUTTON_LEFT;
-    else if (q & WPAD_BUTTON_DOWN)  p |= PAD_BUTTON_RIGHT;
-    else if (q & WPAD_BUTTON_LEFT)  p |= PAD_BUTTON_DOWN;
-    else if (q & WPAD_BUTTON_RIGHT) p |= PAD_BUTTON_UP;
+    /* Wiimote is handled horizontally */
+    if (pw & WPAD_BUTTON_UP)         pp |= PAD_BUTTON_LEFT;
+    else if (pw & WPAD_BUTTON_DOWN)  pp |= PAD_BUTTON_RIGHT;
+    else if (pw & WPAD_BUTTON_LEFT)  pp |= PAD_BUTTON_DOWN;
+    else if (pw & WPAD_BUTTON_RIGHT) pp |= PAD_BUTTON_UP;
   }
 
-  /* Analog sticks */
-  x = WPAD_StickX(data, 0);
-  y = WPAD_StickY(data, 0);
-  if (y > 70)       p |= PAD_BUTTON_UP;
-  else if (y < -70) p |= PAD_BUTTON_DOWN;
-  if (x < -60)      p |= PAD_BUTTON_LEFT;
-  else if (x > 60)  p |= PAD_BUTTON_RIGHT;
+  /* Classic Controller direction keys */
+  if (pw & WPAD_CLASSIC_BUTTON_UP)          pp |= PAD_BUTTON_UP;
+  else if (pw & WPAD_CLASSIC_BUTTON_DOWN)   pp |= PAD_BUTTON_DOWN;
+  else if (pw & WPAD_CLASSIC_BUTTON_LEFT)   pp |= PAD_BUTTON_LEFT;
+  else if (pw & WPAD_CLASSIC_BUTTON_RIGHT)  pp |= PAD_BUTTON_RIGHT;
 
-  /* Classic controller */
-  if (q & WPAD_CLASSIC_BUTTON_UP)         p |= PAD_BUTTON_UP;
-  else if (q & WPAD_CLASSIC_BUTTON_DOWN)  p |= PAD_BUTTON_DOWN;
-  if (q & WPAD_CLASSIC_BUTTON_LEFT)       p |= PAD_BUTTON_LEFT;
-  else if (q & WPAD_CLASSIC_BUTTON_RIGHT) p |= PAD_BUTTON_RIGHT;
-
-  /* Supported keys */
-  if (q & WPAD_BUTTON_MINUS)  p |= PAD_TRIGGER_L;
-  if (q & WPAD_BUTTON_PLUS)   p |= PAD_TRIGGER_R;
-  if (q & WPAD_BUTTON_A)      p |= PAD_BUTTON_A;
-  if (q & WPAD_BUTTON_B)      p |= PAD_BUTTON_B;
-  if (q & WPAD_BUTTON_2)      p |= PAD_BUTTON_A;
-  if (q & WPAD_BUTTON_1)      p |= PAD_BUTTON_B;
-  if (q & WPAD_BUTTON_HOME)   p |= PAD_TRIGGER_Z;
-  if (q & WPAD_CLASSIC_BUTTON_FULL_L) p |= PAD_TRIGGER_L;
-  if (q & WPAD_CLASSIC_BUTTON_FULL_R) p |= PAD_TRIGGER_R;
-  if (q & WPAD_CLASSIC_BUTTON_A)      p |= PAD_BUTTON_A;
-  if (q & WPAD_CLASSIC_BUTTON_B)      p |= PAD_BUTTON_B;
-  if (q & WPAD_CLASSIC_BUTTON_HOME)   p |= PAD_TRIGGER_Z;
+  /* WPAD buttons */
+  if (pw & WPAD_BUTTON_MINUS)           pp |= PAD_TRIGGER_L;
+  if (pw & WPAD_BUTTON_PLUS)            pp |= PAD_TRIGGER_R;
+  if (pw & WPAD_BUTTON_A)               pp |= PAD_BUTTON_A;
+  if (pw & WPAD_BUTTON_B)               pp |= PAD_BUTTON_B;
+  if (pw & WPAD_BUTTON_2)               pp |= PAD_BUTTON_A;
+  if (pw & WPAD_BUTTON_1)               pp |= PAD_BUTTON_B;
+  if (pw & WPAD_BUTTON_HOME)            pp |= PAD_TRIGGER_Z;
+  if (pw & WPAD_CLASSIC_BUTTON_FULL_L)  pp |= PAD_TRIGGER_L;
+  if (pw & WPAD_CLASSIC_BUTTON_FULL_R)  pp |= PAD_TRIGGER_R;
+  if (pw & WPAD_CLASSIC_BUTTON_A)       pp |= PAD_BUTTON_A;
+  if (pw & WPAD_CLASSIC_BUTTON_B)       pp |= PAD_BUTTON_B;
+  if (pw & WPAD_CLASSIC_BUTTON_HOME)    pp |= PAD_TRIGGER_Z;
 #endif
 
   /* Update menu inputs */
-  m_input.keys = p;
+  m_input.keys = pp;
 }

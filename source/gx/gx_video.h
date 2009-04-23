@@ -46,10 +46,11 @@ extern u8 *texturemem;
 extern u8 gc_pal;
 
 /* GX video emulation functions */
-extern void gx_video_init(void);
-extern void gx_video_start(void);
-extern void gx_video_stop(void);
-extern void gx_video_update(void);
+extern void gx_video_Init(void);
+extern void gx_video_Shutdown(void);
+extern void gx_video_Start(void);
+extern void gx_video_Stop(void);
+extern void gx_video_Update(void);
 
 /* GX draw functions */
 extern gx_texture *gxTextureOpenPNG(const u8 *buffer);

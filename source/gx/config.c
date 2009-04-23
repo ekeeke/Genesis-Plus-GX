@@ -95,7 +95,7 @@ void config_setDefault(void)
   config.bilinear = 1;
 
   /* controllers options */
-  gx_input_setDefault();
+  gx_input_SetDefault();
   config.gun_cursor   = 1;
   config.invert_mouse = 0;
 

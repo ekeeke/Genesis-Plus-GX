@@ -944,7 +944,7 @@ void gxClearScreen (GXColor color)
 }
 
 /* Restore Menu Video mode */
-void gx_video_stop(void)
+void gx_video_Stop(void)
 {
   /* lightgun textures */
   if (crosshair[0])
@@ -968,12 +968,12 @@ void gx_video_stop(void)
   gxDrawScreenshot(0xff);
   VIDEO_Configure(vmode);
   VIDEO_SetPreRetraceCallback(NULL);
-  VIDEO_SetPostRetraceCallback(gx_input_updateMenu);
+  VIDEO_SetPostRetraceCallback(gx_input_UpdateMenu);
   gxSetScreen ();
 }
 
 /* Update Video settings */
-void gx_video_start(void)
+void gx_video_Start(void)
 {
   /* 50Hz/60Hz mode */
   if ((config.tv_mode == 1) || ((config.tv_mode == 2) && vdp_pal)) gc_pal = 1;
@@ -1039,7 +1039,7 @@ void gx_video_start(void)
 
 
 /* GX render update */
-void gx_video_update(void)
+void gx_video_Update(void)
 {
   /* check if display has changed */
   if (bitmap.viewport.changed)
@@ -1129,7 +1129,7 @@ void gx_video_update(void)
 }
 
 /* Initialize VIDEO subsystem */
-void gx_video_init(void)
+void gx_video_Init(void)
 {
   /*
    * Before doing anything else under libogc,
@@ -1233,6 +1233,17 @@ void gx_video_init(void)
   gxResetRendering(1);
   gxResetView(vmode);
 
+  /* initialize FONT */
+  if (!FONT_Init())
+  {
+#ifdef HW_RVL
+    DI_Close();
+    SYS_ResetSystem(SYS_RESTART,0,0);
+#else
+    SYS_ResetSystem(SYS_HOTRESET,0,0);
+#endif
+  }
+
   /* Initialize texture data */
   texturemem = memalign(32, TEX_SIZE);
   if (!texturemem)
@@ -1240,12 +1251,19 @@ void gx_video_init(void)
     WaitPrompt("Failed to allocate texture buffer... Rebooting");
 #ifdef HW_RVL
     DI_Close();
-#endif
-#ifdef HW_RVL
     SYS_ResetSystem(SYS_RESTART,0,0);
 #else
     SYS_ResetSystem(SYS_HOTRESET,0,0);
 #endif
   }
   memset (texturemem, 0, TEX_SIZE);
+}
+
+void gx_video_Shutdown(void)
+{
+  if (texturemem) free(texturemem);
+  FONT_Shutdown();
+  VIDEO_ClearFrameBuffer(vmode, xfb[whichfb], COLOR_BLACK);
+  VIDEO_Flush();
+  VIDEO_WaitVSync();
 }

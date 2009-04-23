@@ -27,9 +27,10 @@
 extern u8 soundbuffer[2][3840];
 extern u8 mixbuffer;
 
-extern void gx_audio_init(void);
-extern void gx_audio_start(void);
-extern void gx_audio_stop(void);
-extern void gx_audio_update(void);
+extern void gx_audio_Init(void);
+extern void gx_audio_Shutdown(void);
+extern void gx_audio_Start(void);
+extern void gx_audio_Stop(void);
+extern void gx_audio_Update(void);
 
 #endif

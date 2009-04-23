@@ -179,11 +179,11 @@ static gui_item items_load[3] =
 
 static gui_item items_options[5] =
 {
-  {NULL,Option_system_png,"","System options", 114,142,80,92},
-  {NULL,Option_video_png ,"","Video options",  288,150,64,84},
-  {NULL,Option_sound_png ,"","Audio options",  464,154,44,80},
-  {NULL,Option_ctrl_png  ,"","Input options",  192,286,88,92},
-  {NULL,Option_menu_png  ,"","Menu options",   370,286,60,92}
+  {NULL,Option_system_png,"","System settings", 114,142,80,92},
+  {NULL,Option_video_png ,"","Video settings",  288,150,64,84},
+  {NULL,Option_sound_png ,"","Audio settings",  464,154,44,80},
+  {NULL,Option_ctrl_png  ,"","Input settings",  192,286,88,92},
+  {NULL,Option_menu_png  ,"","Menu settings",   370,286,60,92}
 };
 
 /* Audio options menu */
@@ -233,29 +233,29 @@ static gui_item items_prefs[5] =
 /*****************************************************************************/
 
 /* Generic Buttons for list menu */
-static gui_butn arrow_up = {&arrow_up_data,BUTTON_OVER_SFX,14,76,360,32};
-static gui_butn arrow_down = {&arrow_down_data,BUTTON_VISIBLE|BUTTON_OVER_SFX,14,368,360,32};
+static gui_butn arrow_up = {&arrow_up_data,BUTTON_OVER_SFX,{0,0},14,76,360,32};
+static gui_butn arrow_down = {&arrow_down_data,BUTTON_VISIBLE|BUTTON_OVER_SFX,{0,0},14,368,360,32};
 
 /* Generic list menu */
 static gui_butn buttons_list[4] =
 {
-  {&button_text_data,BUTTON_VISIBLE|BUTTON_OVER_SFX, 52,132,276,48},
-  {&button_text_data,BUTTON_VISIBLE|BUTTON_OVER_SFX, 52,188,276,48},
-  {&button_text_data,BUTTON_VISIBLE|BUTTON_OVER_SFX, 52,244,276,48},
-  {&button_text_data,BUTTON_VISIBLE|BUTTON_OVER_SFX, 52,300,276,48}
+  {&button_text_data,BUTTON_VISIBLE|BUTTON_OVER_SFX,{1,1},52,132,276,48},
+  {&button_text_data,BUTTON_VISIBLE|BUTTON_OVER_SFX,{1,1},52,188,276,48},
+  {&button_text_data,BUTTON_VISIBLE|BUTTON_OVER_SFX,{1,1},52,244,276,48},
+  {&button_text_data,BUTTON_VISIBLE|BUTTON_OVER_SFX,{1,1},52,300,276,48}
  };
 
 /* Main menu */
 static gui_butn buttons_main[8] =
 {
-  {&button_icon_data,BUTTON_VISIBLE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX ,80, 50,148,132},
-  {&button_icon_data,BUTTON_VISIBLE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,246, 50,148,132},
-  {&button_icon_data,BUTTON_VISIBLE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,412, 50,148,132},
-  {&button_icon_data,BUTTON_VISIBLE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX, 80,194,148,132},
-  {&button_icon_data,BUTTON_VISIBLE|BUTTON_OVER_SFX,                  246,194,148,132},
-  {&button_icon_data,BUTTON_VISIBLE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,412,194,148,132},
-  {NULL             ,BUTTON_VISIBLE|BUTTON_OVER_SFX,                    0,360, 88, 48},
-  {NULL             ,BUTTON_VISIBLE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,552,360, 88, 48}
+  {&button_icon_data,BUTTON_VISIBLE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{0,3}, 80, 50,148,132},
+  {&button_icon_data,BUTTON_VISIBLE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{0,3},246, 50,148,132},
+  {&button_icon_data,BUTTON_VISIBLE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{0,3},412, 50,148,132},
+  {&button_icon_data,BUTTON_VISIBLE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{3,3}, 80,194,148,132},
+  {&button_icon_data,BUTTON_VISIBLE|BUTTON_OVER_SFX                  ,{3,3},246,194,148,132},
+  {&button_icon_data,BUTTON_VISIBLE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{3,2},412,194,148,132},
+  {NULL             ,BUTTON_VISIBLE|BUTTON_OVER_SFX                  ,{3,0},  0,360, 88, 48},
+  {NULL             ,BUTTON_VISIBLE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{3,0},552,360, 88, 48}
 };
 
 
@@ -263,28 +263,28 @@ static gui_butn buttons_main[8] =
 #ifdef HW_RVL
 static gui_butn buttons_load[4] =
 {
-  {&button_icon_data,BUTTON_VISIBLE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,246,102,148,132},
-  {&button_icon_data,BUTTON_VISIBLE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX, 80,248,148,132},
-  {&button_icon_data,BUTTON_VISIBLE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,246,248,148,132},
-  {&button_icon_data,BUTTON_VISIBLE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,412,248,148,132}
+  {&button_icon_data,BUTTON_VISIBLE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{0,2},246,102,148,132},
+  {&button_icon_data,BUTTON_VISIBLE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{1,0}, 80,248,148,132},
+  {&button_icon_data,BUTTON_VISIBLE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{2,0},246,248,148,132},
+  {&button_icon_data,BUTTON_VISIBLE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{3,0},412,248,148,132}
 };
 #else
 static gui_butn buttons_load[3] =
 {
-  {&button_icon_data,BUTTON_VISIBLE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX, 80,180,148,132},
-  {&button_icon_data,BUTTON_VISIBLE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,246,180,148,132},
-  {&button_icon_data,BUTTON_VISIBLE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,412,180,148,132}
+  {&button_icon_data,BUTTON_VISIBLE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{0,0}, 80,180,148,132},
+  {&button_icon_data,BUTTON_VISIBLE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{0,0},246,180,148,132},
+  {&button_icon_data,BUTTON_VISIBLE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{0,0},412,180,148,132}
 };
 #endif
 
 /* Options menu */
 static gui_butn buttons_options[5] =
 {
-  {&button_icon_data,BUTTON_VISIBLE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX, 80,120,148,132},
-  {&button_icon_data,BUTTON_VISIBLE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,246,120,148,132},
-  {&button_icon_data,BUTTON_VISIBLE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,412,120,148,132},
-  {&button_icon_data,BUTTON_VISIBLE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,162,264,148,132},
-  {&button_icon_data,BUTTON_VISIBLE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,330,264,148,132}
+  {&button_icon_data,BUTTON_VISIBLE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{0,3}, 80,120,148,132},
+  {&button_icon_data,BUTTON_VISIBLE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{0,3},246,120,148,132},
+  {&button_icon_data,BUTTON_VISIBLE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{0,2},412,120,148,132},
+  {&button_icon_data,BUTTON_VISIBLE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{3,0},162,264,148,132},
+  {&button_icon_data,BUTTON_VISIBLE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{2,0},330,264,148,132}
 };
 
 /*****************************************************************************/
@@ -297,7 +297,6 @@ static gui_menu menu_main =
   "",
   0,0,
   8,8,4,
-  {3,3},
   items_main,
   buttons_main,
   bg_main,
@@ -313,10 +312,8 @@ static gui_menu menu_load =
   0,0,
 #ifdef HW_RVL
   4,4,5,
-  {1,3},
 #else
   3,3,5,
-  {3,0},
 #endif
   items_load,
   buttons_load,
@@ -332,7 +329,6 @@ static gui_menu menu_options =
   "Settings",
   0,0,
   5,5,5,
-  {3,2},
   items_options,
   buttons_options,
   bg_misc,
@@ -344,25 +340,23 @@ static gui_menu menu_options =
 /* System Options menu */
 static gui_menu menu_system =
 {
-  "System Options",
+  "System Settings",
   0,0,
   4,4,6,
-  {1,1},
   items_system,
   buttons_list,
   bg_list,
   {&action_cancel, &action_select},
-  {&arrow_up,&arrow_down},
+  {NULL,NULL},
   FALSE
 };
 
 /* Video Options menu */
 static gui_menu menu_video =
 {
-  "Video Options",
+  "Video Settings",
   0,0,
   8,4,6,
-  {1,1},
   items_video,
   buttons_list,
   bg_list,
@@ -374,10 +368,9 @@ static gui_menu menu_video =
 /* Sound Options menu */
 static gui_menu menu_audio =
 {
-  "Sound Options",
+  "Sound Settings",
   0,0,
   5,4,6,
-  {1,1},
   items_audio,
   buttons_list,
   bg_list,
@@ -389,10 +382,9 @@ static gui_menu menu_audio =
 /* Sound Options menu */
 static gui_menu menu_prefs =
 {
-  "Sound Options",
+  "Menu Settings",
   0,0,
   5,4,6,
-  {1,1},
   items_prefs,
   buttons_list,
   bg_list,
@@ -434,6 +426,14 @@ void GUI_InitMenu(gui_menu *menu)
     {
       if (!button->data->texture[0]) button->data->texture[0] = gxTextureOpenPNG(button->data->image[0]);
       if (!button->data->texture[1]) button->data->texture[1] = gxTextureOpenPNG(button->data->image[1]);
+
+      /* initial state */
+      button->state &= ~BUTTON_VISIBLE;
+      if (((i==0) && (abs(menu->offset) > 0)) ||
+          ((i==1) && (menu->offset + menu->max_buttons) < menu->max_items))
+      {
+        button->state |= BUTTON_VISIBLE;
+      }
     }
   }
 
@@ -746,7 +746,6 @@ void GUI_DrawMenuFX(gui_menu *menu, u8 speed, u8 out)
   GUI_DeleteMenu(menu);
 }
 
-
 /* Window Prompt  */
 /* prompt window slides in & out */
 int GUI_WindowPrompt(gui_menu *parent, char *title, char *items[], u8 nb_items)
@@ -962,7 +961,6 @@ int GUI_RunMenu(gui_menu *menu)
   u16 p;
   u16 max_buttons = menu->max_buttons;
   u16 max_items = menu->max_items;
-  u16 shift[2] = {menu->shift[0],menu->shift[1]};
 
 #ifdef HW_RVL
   int i,x,y;
@@ -1040,26 +1038,52 @@ int GUI_RunMenu(gui_menu *menu)
     {
       if (p & PAD_BUTTON_UP)
       {
-        if (selected == 0)
+        button = &menu->buttons[selected];
+        if (button->shift[0])
         {
-          if (menu->offset) menu->offset --;
-        }
-        else if (selected >= shift[0])
-        {
-          selected -= shift[1];
-          if (selected < 0) selected = 0;
+          selected -= button->shift[0];
+          if (selected < 0)
+          {
+            selected = 0;
+            if (menu->offset) menu->offset --;
+          }
         }
       }
       else if (p & PAD_BUTTON_DOWN)
       {
-        if (selected == (max_buttons - 1))
+        button = &menu->buttons[selected];
+        if (button->shift[1])
         {
-          if ((menu->offset + selected < (max_items - 1))) menu->offset ++;
+          selected += button->shift[1];
+          if (selected >= max_buttons)
+          {
+            selected = max_buttons - 1;
+            if ((menu->offset + selected < (max_items - 1))) menu->offset ++;
+          }
         }
-        else if ((shift[1] == 1) || (selected < shift[0]))
+      }
+      else if (p & PAD_BUTTON_LEFT)
+      {
+        if (max_buttons == max_items)
         {
-          selected += shift[0];
+          selected --;
+          if (selected < 0) selected = 0;
+        }
+        else
+        {
+          quit = -1;
+        }
+      }
+      else if (p & PAD_BUTTON_RIGHT)
+      {
+        if (max_buttons == max_items)
+        {
+          selected ++;
           if (selected >= max_buttons) selected = max_buttons - 1;
+        }
+        else
+        {
+          quit = 1;
         }
       }
       else if (p & PAD_BUTTON_LEFT)
@@ -1163,6 +1187,24 @@ int GUI_RunMenu(gui_menu *menu)
   /* leave menu (default) */
   return -1;
  }
+
+/* basic slide effect for option menus */
+static void GUI_SlideMenuTitle(gui_menu *m, int title_offset)
+{
+  char title[64];
+  strcpy(title,m->title);
+
+  while (title_offset > 0)
+  {
+    strcpy(m->title,title+title_offset);
+    m->title[strlen(title)-title_offset-1] = 0;
+    GUI_DrawMenu(m);
+    gxSetScreen ();
+    usleep(6000);
+    title_offset--;
+  }
+  strcpy(m->title,title);
+}
 
 /***************************************************************************
  * drawmenu (deprecated)
@@ -1297,6 +1339,7 @@ static void prefmenu ()
   gui_item *items = m->items;
 
   GUI_InitMenu(m);
+  GUI_SlideMenuTitle(m,strlen("Menu "));
 
   while (quit == 0)
   {
@@ -1307,9 +1350,9 @@ static void prefmenu ()
     if (config.state_auto == 0) sprintf (items[1].text, "Savestate Auto: FAT");
     else if (config.state_auto == 1) sprintf (items[1].text, "Savestate Auto: MCARD A");
     else if (config.state_auto == 2) sprintf (items[1].text, "Savestate Auto: MCARD B");
-    else sprintf (items[3].text, "Savestate Auto: OFF");
-    sprintf (items[2].text, "SFX Volume: %1.2f", config.sfx_volume);
-    sprintf (items[3].text, "BGM Volume: %1.2f", config.bgm_volume);
+    else sprintf (items[1].text, "Savestate Auto: OFF");
+    sprintf (items[2].text, "SFX Volume: %1.1f", config.sfx_volume);
+    sprintf (items[3].text, "BGM Volume: %1.1f", config.bgm_volume);
     if (config.bg_color) sprintf (items[4].text, "BG Color: Type %d", config.bg_color);
     else sprintf (items[4].text, "BG Color: DEFAULT");
 
@@ -1329,16 +1372,16 @@ static void prefmenu ()
 
       case 2:   /*** Sound effects volume ***/
       case -4:
-        if (ret < 0) config.sfx_volume --;
-        else config.sfx_volume ++;
+        if (ret < 0) config.sfx_volume -=10;
+        else config.sfx_volume +=10;
         if (config.sfx_volume < 0) config.sfx_volume = 100.0;
         else if (config.sfx_volume > 100) config.sfx_volume = 0.0;
         break;
 
       case 3:   /*** Background music volume ***/
       case -5:
-        if (ret < 0) config.bgm_volume --;
-        else config.bgm_volume ++;
+        if (ret < 0) config.bgm_volume -=10;
+        else config.bgm_volume +=10;
         if (config.bgm_volume < 0) config.bgm_volume = 100.0;
         else if (config.bgm_volume > 100) config.bgm_volume = 0.0;
         SetVolumeOgg(((int)config.bgm_volume * 255) / 100);
@@ -1372,6 +1415,7 @@ static void soundmenu ()
   gui_item *items = m->items;
 
   GUI_InitMenu(m);
+  GUI_SlideMenuTitle(m,strlen("Sound "));
 
   while (quit == 0)
   {
@@ -1449,6 +1493,7 @@ static void systemmenu ()
   gui_item *items = m->items;
 
   GUI_InitMenu(m);
+  GUI_SlideMenuTitle(m,strlen("System "));
 
   while (quit == 0)
   {
@@ -1530,6 +1575,7 @@ static void videomenu ()
   gui_item *items = m->items;
 
   GUI_InitMenu(m);
+  GUI_SlideMenuTitle(m,strlen("Video "));
 
   while (quit == 0)
   {
@@ -1910,11 +1956,11 @@ static void inputsmenu(void)
       case 7:
         if (config.input[player].device < 0) break;
         if (input.padtype[player] == DEVICE_3BUTTON)  /* 3-buttons */
-          gx_input_config(config.input[player].port, config.input[player].device, 4);
+          gx_input_Config(config.input[player].port, config.input[player].device, 4);
         else if (config.input[player].device == 0)    /* 6-buttons w/o MODE */
-          gx_input_config(config.input[player].port, 0, 7);
+          gx_input_Config(config.input[player].port, 0, 7);
         else                                          /* 6-buttons */
-          gx_input_config(config.input[player].port, config.input[player].device, 8);
+          gx_input_Config(config.input[player].port, config.input[player].device, 8);
        break;
 
       case -1:
@@ -2289,8 +2335,10 @@ void MainMenu (void)
     m->max_items = 8;
     m->max_buttons = 8;
     m->buttons[3].state |= BUTTON_SELECT_SFX;
-    m->buttons[4].state |= BUTTON_SELECT_SFX;
     m->buttons[5].state |= BUTTON_SELECT_SFX;
+    m->buttons[3].shift[1] = 3;
+    m->buttons[4].shift[1] = 3;
+    m->buttons[5].shift[1] = 2;
   }
   else
   {
@@ -2298,8 +2346,10 @@ void MainMenu (void)
     m->max_items = 6;
     m->max_buttons = 6;
     m->buttons[3].state &= ~BUTTON_SELECT_SFX;
-    m->buttons[4].state &= ~BUTTON_SELECT_SFX;
     m->buttons[5].state &= ~BUTTON_SELECT_SFX;
+    m->buttons[3].shift[1] = 0;
+    m->buttons[4].shift[1] = 0;
+    m->buttons[5].shift[1] = 0;
   }
 
   GUI_DrawMenuFX(m,10,0);

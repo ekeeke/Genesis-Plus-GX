@@ -167,6 +167,7 @@ typedef struct
 {
   butn_data *data;          /* pointer to button image/texture data         */
   u8 state;                 /* button state (ACTIVE,VISIBLE,SELECTED...)    */
+  u8 shift[2];              /* up & down direction offsets                  */
   u16 x;                    /* button image X position (upper left corner)  */
   u16 y;                    /* button image Y position (upper left corner)  */
   u16 w;                    /* button image pixels width                    */
@@ -193,11 +194,10 @@ typedef struct
 {
   char title[64];             /* menu title                         */
   s8 selected;                /* index of selected item             */
-  u8 offset;                  /* items list offset                  */
+  s8 offset;                  /* items list offset                  */
   u8 max_items;               /* total number of items              */
   u8 max_buttons;             /* total number of buttons            */
   u8 max_images;              /* total number of background images  */
-  u8 shift[2];                /* number of buttons per line         */
   gui_item *items;            /* menu items                         */
   gui_butn *buttons;          /* menu buttons                       */
   gui_image *bg_images;       /* background images                  */

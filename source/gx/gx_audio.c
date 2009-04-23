@@ -26,9 +26,6 @@
 #include <asndlib.h>
 #include <oggplayer.h>
 
-extern u8 *Bg_music_ogg;
-extern u32 Bg_music_ogg_size;
-
 /* DMA soundbuffers (required to be 32-bytes aligned)
    Length is dimensionned for one frame of emulation (see below)
    To prevent audio clashes, we use double buffering technique:
@@ -53,6 +50,10 @@ static u32 dma_sync;
 /* audio DMA status */
 static u8 audioStarted = 0;
 
+/* Background music */
+static u8 *Bg_music_ogg = NULL;
+static u32 Bg_music_ogg_size = 0;
+
 /*** 
       AudioDmaCallback
 
@@ -72,10 +73,29 @@ static void AudioDmaCallback(void)
      This function initializes the Audio Interface
      Default samplerate is set to 48khZ
  ***/
-void gx_audio_init(void)
+void gx_audio_Init(void)
 {
   AUDIO_Init (NULL);
   AUDIO_SetDSPSampleRate (AI_SAMPLERATE_48KHZ);
+
+  /* load background music from FAT device */
+  char fname[MAXPATHLEN];
+  sprintf(fname,"%s/Bg_music.ogg",DEFAULT_PATH);
+  FILE *f = fopen(fname,"rb");
+  if (f)
+  {
+    struct stat filestat;
+    stat(fname, &filestat);
+    Bg_music_ogg_size = filestat.st_size;
+    Bg_music_ogg = memalign(32,Bg_music_ogg_size);
+    if (Bg_music_ogg) fread(Bg_music_ogg,1,Bg_music_ogg_size,f);
+    fclose(f);
+  }
+}
+
+void gx_audio_Shutdown(void)
+{
+  if (Bg_music_ogg) free(Bg_music_ogg);
 }
 
 /*** 
@@ -87,7 +107,7 @@ void gx_audio_init(void)
      This function retrieves samples for the frame then set the next DMA parameters 
      Parameters will be taken in account only when current DMA operation is over
  ***/
-void gx_audio_update(void)
+void gx_audio_Update(void)
 {
   u32 size = dma_len;
   
@@ -127,7 +147,7 @@ void gx_audio_update(void)
      This function resets the audio engine
      This is called when coming back from Main Menu
  ***/
-void gx_audio_start(void)
+void gx_audio_Start(void)
 {
   /* shutdown menu audio */
   PauseOgg(1);
@@ -167,7 +187,7 @@ void gx_audio_start(void)
      This is called when going back to Main Menu
      DMA need to be restarted when going back to the game (see above)
  ***/
-void gx_audio_stop(void)
+void gx_audio_Stop(void)
 {
   /* stop emulator audio */
   AUDIO_StopDMA ();

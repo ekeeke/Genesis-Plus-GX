@@ -36,6 +36,7 @@
 #endif
 
 #ifdef HW_RVL
+
 /* Power Button callback */
 u8 Shutdown = 0;
 static void Power_Off(void)
@@ -43,10 +44,8 @@ static void Power_Off(void)
   Shutdown = 1;
   ConfigRequested = 1;
 }
-#endif
 
-u8 *Bg_music_ogg = NULL;
-u32 Bg_music_ogg_size = 0;;
+#endif
 
 /***************************************************************************
  * Genesis Plus Virtual Machine
@@ -86,12 +85,10 @@ static void init_machine(void)
   if (!cart_rom)
   {
     WaitPrompt("Failed to allocate ROM buffer... Rebooting");
-    free(texturemem);
-    FONT_Shutdown();
+    gx_audio_Shutdown();
+    gx_video_Shutdown();
 #ifdef HW_RVL
     DI_Close();
-#endif
-#ifdef HW_RVL
     SYS_ResetSystem(SYS_RESTART,0,0);
 #else
     SYS_ResetSystem(SYS_HOTRESET,0,0);
@@ -142,12 +139,8 @@ void shutdown(void)
   system_shutdown();
   audio_shutdown();
   free(cart_rom);
-  free(texturemem);
-  if (Bg_music_ogg) free(Bg_music_ogg);
-  FONT_Shutdown();
-  VIDEO_ClearFrameBuffer(vmode, xfb[whichfb], COLOR_BLACK);
-  VIDEO_Flush();
-  VIDEO_WaitVSync();
+  gx_audio_Shutdown();
+  gx_video_Shutdown();
 #ifdef HW_RVL
   DI_Close();
 #endif
@@ -172,38 +165,16 @@ int main (int argc, char *argv[])
   uint32 TotalFrames      = 0;
   uint32 FramesPerSecond  = 0;
 
-  /* initialize harwdare */
-  gx_video_init();
-  gx_input_init();
-  gx_audio_init();
-
-  /* initialize font */
-  if (!FONT_Init())
-  {
-    WaitPrompt("Failed to allocate ROM buffer... Rebooting");
-    free(texturemem);
-#ifdef HW_RVL
-    DI_Close();
-#endif
-#ifdef HW_RVL
-    SYS_ResetSystem(SYS_RESTART,0,0);
-#else
-    SYS_ResetSystem(SYS_HOTRESET,0,0);
-#endif
-  }
-
+  /* initialize hardware */
+  gx_video_Init();
+  gx_input_Init();
+  gx_audio_Init();
 #ifdef HW_DOL
-  /* initialize GC DVD interface */
   DVD_Init ();
   dvd_drive_detect();
 #endif
 
-#ifdef HW_RVL
-  /* Power button callback */
-  SYS_SetPowerCallback(Power_Off);
-#endif
-
-  /* initialize FAT Interface */
+  /* initialize FAT devices */
   if (fatInitDefault())
   {
     fat_enabled = 1;
@@ -216,27 +187,15 @@ int main (int argc, char *argv[])
 #endif
   }
 
-  /* background music */
-  char fname[MAXPATHLEN];
-  sprintf(fname,"%s/Bg_music.ogg",DEFAULT_PATH);
-  FILE *f = fopen(fname,"rb");
-  if (f)
-  {
-    struct stat filestat;
-    stat(fname, &filestat);
-    Bg_music_ogg_size = filestat.st_size;
-    Bg_music_ogg = memalign(32,Bg_music_ogg_size);
-    if (Bg_music_ogg) fread(Bg_music_ogg,1,Bg_music_ogg_size,f);
-    fclose(f);
-  }
-
+  /* Initialize sound engine */
+  gx_audio_Init();
 
   /* default config */
   legal();
   config_setDefault();
   config_load();
 
-  /* restore recent files list */
+  /* recent ROM files list */
   history_setDefault();
   history_load();
 
@@ -248,8 +207,8 @@ int main (int argc, char *argv[])
   {
     ARAMFetch((char *)cart_rom, (void *)0x8000, genromsize);
     reloadrom (genromsize,"INJECT.bin");
-    gx_video_start();
-    gx_audio_start();
+    gx_video_Start();
+    gx_audio_Start();
     frameticker = 1;
   }
   else
@@ -258,6 +217,11 @@ int main (int argc, char *argv[])
     ConfigRequested = 1;
   }
 
+#ifdef HW_RVL
+  /* Power button callback */
+  SYS_SetPowerCallback(Power_Off);
+#endif
+
   /* main emulation loop */
   while (1)
   {
@@ -265,8 +229,8 @@ int main (int argc, char *argv[])
     if (ConfigRequested)
     {
       /* stop audio & video */
-      gx_video_stop();
-      gx_audio_stop();
+      gx_video_Stop();
+      gx_audio_Stop();
 
       /* go to menu */
       MainMenu ();
@@ -278,8 +242,8 @@ int main (int argc, char *argv[])
       FramesPerSecond = vdp_rate;
 
       /* start audio & video */
-      gx_video_start();
-      gx_audio_start();
+      gx_video_Start();
+      gx_audio_Start();
 
       /* reset framesync */
       frameticker = 1;
@@ -292,7 +256,7 @@ int main (int argc, char *argv[])
       system_frame (1);
 
       /* update audio only */
-      gx_audio_update();
+      gx_audio_Update();
     }
     else
     {
@@ -304,8 +268,8 @@ int main (int argc, char *argv[])
       system_frame (0);
 
       /* update video & audio */
-      gx_video_update();
-      gx_audio_update();
+      gx_video_Update();
+      gx_audio_Update();
       RenderedFrames++;
     }
 
