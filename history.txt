@@ -8,7 +8,7 @@ Genesis Plus GX 1.3.2 (??/??/????) (Eke-Eke)
 * modified SN76489 cut-off frequency
 * removed now outdated Gens YM2612 core
 * improved MAME YM2612 emulation accuracy (SSG-EG, CSM mode and more), thanks to Nemesis for his tests on real hardware
-* fixed FM context restore when loading savesates
+* fixed FM context in savestates
 * improved sprites masking emulation: fixes 3D level in Mickey Mania
 * fixed lightgun games detection: fixes cursor position in Lethal Enforcers II
 * various code cleanup & optimization
@@ -16,9 +16,10 @@ Genesis Plus GX 1.3.2 (??/??/????) (Eke-Eke)
 [Gamecube/Wii]
 
 * improved audio/video synchronization: fixes video skipping issues with 60Hz modes
-* fixed stability issues
+* fixed stability issues and potential memory leaks
+* added screenshot feature
 * completely rewrote FONT & GUI engines (powered by GX hardware)
-* new GUI design (incl. Wii Remote pointing, ROM snapshots & more)
+* new GUI layout (incl. IR pointing, ROM snapshots, sound effects & more)
 
 
 

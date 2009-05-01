@@ -23,9 +23,9 @@
 
 #define DEFAULT_PATH "/genplus"
 #ifdef HW_RVL
-#define VERSION "v1.3.2 (WII)"
+#define VERSION "version 1.3.2W"
 #else
-#define VERSION "v1.3.2 (GCN)"
+#define VERSION "version 1.3.2G"
 #endif
 
 /* globals */
@@ -42,7 +42,6 @@ extern int ManageState(u8 direction, u8 device);
 extern void memfile_autosave(s8 autosram, s8 autostate);
 extern void memfile_autoload(s8 autosram, s8 autostate);
 
-extern u8 fat_enabled;
 extern u32 frameticker;
 extern char rom_filename[256];
 

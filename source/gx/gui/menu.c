@@ -39,16 +39,17 @@ t_input_menu m_input;
 gx_texture *w_pointer;
 #endif
 
-#define BG_COLOR_MAX 14
+#define BG_COLOR_MAX 15
 
 /* various background colors */
 static GXColor bg_colors[BG_COLOR_MAX]=
 {
   {0xd6,0xcb,0xba,0xff}, /* light gold */
-  {0xbb,0xb0,0x99,0xff},  /* gold */
+  {0xbb,0xb0,0x99,0xff}, /* gold */
   {0x66,0x66,0x66,0xff}, /* faded grey */
   {0xcc,0xcc,0xcc,0xff}, /* light grey */
   {0xd4,0xd0,0xc8,0xff}, /* cream */
+  {0x50,0x51,0x5b,0xff}, /* grey blue */
   {0xb8,0xc7,0xda,0xff}, /* light blue */
   {0xc0,0xcf,0xe7,0xff}, /* sky blue */
   {0x98,0xb1,0xd8,0xff}, /* sea blue */
@@ -144,7 +145,7 @@ static gui_image bg_list[6] =
 /*****************************************************************************/
 
 /* Main menu */
-static gui_item items_main[8] =
+static gui_item items_main[9] =
 {
   {NULL,Main_quit_png    ,"","",128, 84,52,80},
   {NULL,Main_load_png    ,"","",280, 72,80,92},
@@ -153,11 +154,12 @@ static gui_item items_main[8] =
   {NULL,Main_reset_png   ,"","",282,224,76,84},
   {NULL,Main_ggenie_png  ,"","",450,224,72,84},
 #ifdef HW_RVL
-  {NULL,Main_play_wii_png,"","", 10,368,84,32},
+  {NULL,Main_play_wii_png,"","", 10,372,84,32},
 #else
-  {NULL,Main_play_gcn_png,"","", 10,368,84,32},
+  {NULL,Main_play_gcn_png,"","", 10,372,84,32},
 #endif
-  {NULL,Main_showinfo_png,"","",546,368,84,32}
+  {NULL,Main_takeshot_png,"","",546,334,84,32},
+  {NULL,Main_showinfo_png,"","",546,372,84,32}
 };
 
 #ifdef HW_RVL
@@ -246,7 +248,7 @@ static gui_butn buttons_list[4] =
  };
 
 /* Main menu */
-static gui_butn buttons_main[8] =
+static gui_butn buttons_main[9] =
 {
   {&button_icon_data,BUTTON_VISIBLE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{0,3}, 80, 50,148,132},
   {&button_icon_data,BUTTON_VISIBLE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{0,3},246, 50,148,132},
@@ -255,7 +257,8 @@ static gui_butn buttons_main[8] =
   {&button_icon_data,BUTTON_VISIBLE|BUTTON_OVER_SFX                  ,{3,3},246,194,148,132},
   {&button_icon_data,BUTTON_VISIBLE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{3,2},412,194,148,132},
   {NULL             ,BUTTON_VISIBLE|BUTTON_OVER_SFX                  ,{3,0},  0,360, 88, 48},
-  {NULL             ,BUTTON_VISIBLE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{3,0},552,360, 88, 48}
+  {NULL             ,BUTTON_VISIBLE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{2,1},542,330, 88, 38},
+  {NULL             ,BUTTON_VISIBLE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{1,0},542,370, 88, 48}
 };
 
 
@@ -296,7 +299,7 @@ static gui_menu menu_main =
 {
   "",
   0,0,
-  8,8,4,
+  9,9,4,
   items_main,
   buttons_main,
   bg_main,
@@ -408,7 +411,7 @@ void GUI_InitMenu(gui_menu *menu)
   for (i=0; i<menu->max_images; i++)
   {
     image = &menu->bg_images[i];
-    image->texture = gxTextureOpenPNG(image->data);
+    image->texture = gxTextureOpenPNG(image->data,0);
   }
 
   for (i=0; i<2; i++)
@@ -417,15 +420,15 @@ void GUI_InitMenu(gui_menu *menu)
     item = menu->helpers[i];
     if (item)
     {
-      item->texture = gxTextureOpenPNG(item->data);
+      item->texture = gxTextureOpenPNG(item->data,0);
     }
 
     /* arrows */
     button = menu->arrows[i];
     if (button)
     {
-      if (!button->data->texture[0]) button->data->texture[0] = gxTextureOpenPNG(button->data->image[0]);
-      if (!button->data->texture[1]) button->data->texture[1] = gxTextureOpenPNG(button->data->image[1]);
+      if (!button->data->texture[0]) button->data->texture[0] = gxTextureOpenPNG(button->data->image[0],0);
+      if (!button->data->texture[1]) button->data->texture[1] = gxTextureOpenPNG(button->data->image[1],0);
 
       /* initial state */
       button->state &= ~BUTTON_VISIBLE;
@@ -443,8 +446,8 @@ void GUI_InitMenu(gui_menu *menu)
     button = &menu->buttons[i];
     if (button->data)
     {
-      if (!button->data->texture[0]) button->data->texture[0] = gxTextureOpenPNG(button->data->image[0]);
-      if (!button->data->texture[1]) button->data->texture[1] = gxTextureOpenPNG(button->data->image[1]);
+      if (!button->data->texture[0]) button->data->texture[0] = gxTextureOpenPNG(button->data->image[0],0);
+      if (!button->data->texture[1]) button->data->texture[1] = gxTextureOpenPNG(button->data->image[1],0);
     }
   }
 
@@ -452,7 +455,7 @@ void GUI_InitMenu(gui_menu *menu)
   for (i=0; i<menu->max_items; i++)
   {
     item = &menu->items[i];
-    if (item->data) item->texture = gxTextureOpenPNG(item->data);
+    if (item->data) item->texture = gxTextureOpenPNG(item->data,0);
   }
 }
 
@@ -602,6 +605,21 @@ void GUI_DrawMenu(gui_menu *menu)
       FONT_alignRight(item->comment,16,item->x-6,item->y+(item->h-16)/2+16,(GXColor)WHITE);
     }
   }
+}
+
+/* Menu fading */
+void GUI_FadeMenu(gui_menu *menu, u8 speed, u8 out)
+{
+  int alpha = 255;
+
+  while (alpha > 0)
+  {
+    GUI_DrawMenu(menu);
+    gxDrawRectangle(0, 0, 640, 480, out ? (255-alpha) : alpha, (GXColor)BLACK);
+    alpha -= speed;
+  }
+
+  if (out) gxDrawRectangle(0, 0, 640, 480, 255, (GXColor)BLACK);
 }
 
 /* Menu transitions effect */
@@ -768,14 +786,14 @@ int GUI_WindowPrompt(gui_menu *parent, char *title, char *items[], u8 nb_items)
     delete_me[i] = 0;
     if (!data->texture[i])
     {
-      data->texture[i] = gxTextureOpenPNG(data->image[i]);
+      data->texture[i] = gxTextureOpenPNG(data->image[i],0);
       delete_me[i] = 1;
     }
   }
 
   /* initialize texture window */
-  gx_texture *window = gxTextureOpenPNG(Frame_s1_png);
-  gx_texture *top = gxTextureOpenPNG(Frame_title_png);
+  gx_texture *window = gxTextureOpenPNG(Frame_s1_png,0);
+  gx_texture *top = gxTextureOpenPNG(Frame_s1_title_png,0);
 
   /* get initial positions */
   int w = data->texture[0]->width;
@@ -1191,6 +1209,12 @@ int GUI_RunMenu(gui_menu *menu)
 /* basic slide effect for option menus */
 static void GUI_SlideMenuTitle(gui_menu *m, int title_offset)
 {
+#ifdef HW_RVL
+  gui_butn *button;
+  int i,x,y;
+  struct orient_t orient;
+#endif
+
   char title[64];
   strcpy(title,m->title);
 
@@ -1199,6 +1223,53 @@ static void GUI_SlideMenuTitle(gui_menu *m, int title_offset)
     strcpy(m->title,title+title_offset);
     m->title[strlen(title)-title_offset-1] = 0;
     GUI_DrawMenu(m);
+#ifdef HW_RVL
+    if (m_input.ir.valid)
+    {
+      /* get cursor position */
+      x = m_input.ir.x;
+      y = m_input.ir.y;
+
+      /* draw wiimote pointer */
+      WPAD_Orientation(0,&orient);
+      gxResetAngle(orient.roll);
+      gxDrawTexture(w_pointer, x-w_pointer->width/2, y-w_pointer->height/2, w_pointer->width, w_pointer->height,255);
+      gxResetAngle(0.0);
+
+      /* check for valid buttons */
+      m->selected = m->max_buttons + 2;
+      for (i=0; i<m->max_buttons; i++)
+      {
+        button = &m->buttons[i];
+        if ((button->state & BUTTON_VISIBLE)&&(x>=button->x)&&(x<=(button->x+button->w))&&(y>=button->y)&&(y<=(button->y+button->h)))
+        {
+          m->selected = i;
+          break;
+        }
+      }
+
+      for (i=0; i<2; i++)
+      {
+        button = m->arrows[i];
+        if (button)
+        {
+          if (button->state & BUTTON_VISIBLE)
+          {
+            if ((x<=(button->x+button->w))&&(y>=button->y)&&(y<=(button->y+button->h)))
+            {
+              m->selected = m->max_buttons + i;
+              break;
+            }
+          }
+        }
+      }
+    }
+    else
+    {
+      /* reinitialize selection */
+      if (m->selected >= m->max_buttons) m->selected = 0;
+    }
+#endif
     gxSetScreen ();
     usleep(6000);
     title_offset--;
@@ -1230,28 +1301,28 @@ static void drawmenu (char items[][25], int maxitems, int selected)
 
   /* draw background items */
   gxClearScreen (bg_colors[config.bg_color]);
-  texture= gxTextureOpenPNG(Bg_main_png);
+  texture= gxTextureOpenPNG(Bg_main_png,0);
   if (texture)
   {
     gxDrawTexture(texture, (640-texture->width)/2, (480-texture->height)/2, texture->width, texture->height,255);
     if (texture->data) free(texture->data);
     free(texture);
   }
-  texture= gxTextureOpenPNG(Banner_bottom_png);
+  texture= gxTextureOpenPNG(Banner_bottom_png,0);
   if (texture)
   {
     gxDrawTexture(texture, 0, 480-texture->height, texture->width, texture->height, 255);
     if (texture->data) free(texture->data);
     free(texture);
   }
-  texture= gxTextureOpenPNG(Banner_top_png);
+  texture= gxTextureOpenPNG(Banner_top_png,0);
   if (texture)
   {
     gxDrawTexture(texture, 0, 0, texture->width, texture->height, 255);
     if (texture->data) free(texture->data);
     free(texture);
   }
-  texture= gxTextureOpenPNG(Main_logo_png);
+  texture= gxTextureOpenPNG(Main_logo_png,0);
   if (texture)
   {
     gxDrawTexture(texture, 444, 28, 176, 48, 255);
@@ -1338,24 +1409,24 @@ static void prefmenu ()
   gui_menu *m = &menu_prefs;
   gui_item *items = m->items;
 
+  if (config.sram_auto == 0) sprintf (items[0].text, "SRAM Auto: FAT");
+  else if (config.sram_auto == 1) sprintf (items[0].text, "SRAM Auto: MCARD A");
+  else if (config.sram_auto == 2) sprintf (items[0].text, "SRAM Auto: MCARD B");
+  else sprintf (items[0].text, "SRAM Auto: OFF");
+  if (config.state_auto == 0) sprintf (items[1].text, "Savestate Auto: FAT");
+  else if (config.state_auto == 1) sprintf (items[1].text, "Savestate Auto: MCARD A");
+  else if (config.state_auto == 2) sprintf (items[1].text, "Savestate Auto: MCARD B");
+  else sprintf (items[1].text, "Savestate Auto: OFF");
+  sprintf (items[2].text, "SFX Volume: %1.1f", config.sfx_volume);
+  sprintf (items[3].text, "BGM Volume: %1.1f", config.bgm_volume);
+  if (config.bg_color) sprintf (items[4].text, "BG Color: Type %d", config.bg_color);
+  else sprintf (items[4].text, "BG Color: DEFAULT");
+
   GUI_InitMenu(m);
   GUI_SlideMenuTitle(m,strlen("Menu "));
 
   while (quit == 0)
   {
-    if (config.sram_auto == 0) sprintf (items[0].text, "SRAM Auto: FAT");
-    else if (config.sram_auto == 1) sprintf (items[0].text, "SRAM Auto: MCARD A");
-    else if (config.sram_auto == 2) sprintf (items[0].text, "SRAM Auto: MCARD B");
-    else sprintf (items[0].text, "SRAM Auto: OFF");
-    if (config.state_auto == 0) sprintf (items[1].text, "Savestate Auto: FAT");
-    else if (config.state_auto == 1) sprintf (items[1].text, "Savestate Auto: MCARD A");
-    else if (config.state_auto == 2) sprintf (items[1].text, "Savestate Auto: MCARD B");
-    else sprintf (items[1].text, "Savestate Auto: OFF");
-    sprintf (items[2].text, "SFX Volume: %1.1f", config.sfx_volume);
-    sprintf (items[3].text, "BGM Volume: %1.1f", config.bgm_volume);
-    if (config.bg_color) sprintf (items[4].text, "BG Color: Type %d", config.bg_color);
-    else sprintf (items[4].text, "BG Color: DEFAULT");
-
     ret = GUI_RunMenu(m);
 
     switch (ret)
@@ -1363,11 +1434,19 @@ static void prefmenu ()
       case 0:  /*** SRAM auto load/save ***/
         config.sram_auto ++;
         if (config.sram_auto > 2) config.sram_auto = -1;
+        if (config.sram_auto == 0) sprintf (items[0].text, "SRAM Auto: FAT");
+        else if (config.sram_auto == 1) sprintf (items[0].text, "SRAM Auto: MCARD A");
+        else if (config.sram_auto == 2) sprintf (items[0].text, "SRAM Auto: MCARD B");
+        else sprintf (items[0].text, "SRAM Auto: OFF");
         break;
 
       case 1:   /*** Savestate auto load/save ***/
         config.state_auto ++;
         if (config.state_auto > 2) config.state_auto = -1;
+        if (config.state_auto == 0) sprintf (items[1].text, "Savestate Auto: FAT");
+        else if (config.state_auto == 1) sprintf (items[1].text, "Savestate Auto: MCARD A");
+        else if (config.state_auto == 2) sprintf (items[1].text, "Savestate Auto: MCARD B");
+        else sprintf (items[1].text, "Savestate Auto: OFF");
         break;
 
       case 2:   /*** Sound effects volume ***/
@@ -1376,6 +1455,7 @@ static void prefmenu ()
         else config.sfx_volume +=10;
         if (config.sfx_volume < 0) config.sfx_volume = 100.0;
         else if (config.sfx_volume > 100) config.sfx_volume = 0.0;
+        sprintf (items[2].text, "SFX Volume: %1.1f", config.sfx_volume);
         break;
 
       case 3:   /*** Background music volume ***/
@@ -1385,6 +1465,7 @@ static void prefmenu ()
         if (config.bgm_volume < 0) config.bgm_volume = 100.0;
         else if (config.bgm_volume > 100) config.bgm_volume = 0.0;
         SetVolumeOgg(((int)config.bgm_volume * 255) / 100);
+        sprintf (items[3].text, "BGM Volume: %1.1f", config.bgm_volume);
         break;
 
       case 4:   /*** Background color ***/
@@ -1393,6 +1474,8 @@ static void prefmenu ()
         else config.bg_color ++;
         if (config.bg_color < 0) config.bg_color = BG_COLOR_MAX - 1;
         if (config.bg_color >= BG_COLOR_MAX) config.bg_color = 0;
+        if (config.bg_color) sprintf (items[4].text, "BG Color: Type %d", config.bg_color);
+        else sprintf (items[4].text, "BG Color: DEFAULT");
         break;
 
       case -1:
@@ -1414,18 +1497,19 @@ static void soundmenu ()
   gui_menu *m = &menu_audio;
   gui_item *items = m->items;
 
+  sprintf (items[0].text, "PSG Volume: %1.2f", (double)config.psg_preamp/100.0);
+  sprintf (items[1].text, "FM Volume: %1.2f", (double)config.fm_preamp/100.0);
+  sprintf (items[2].text, "Volume Boost: %dX", config.boost);
+  sprintf (items[3].text, "LowPass Filter: %s", config.filter ? " ON":"OFF");
+  if (config.hq_fm == 0) sprintf (items[4].text, "HQ YM2612: OFF");
+  else if (config.hq_fm == 1) sprintf (items[4].text, "HQ YM2612: LINEAR");
+  else sprintf (items[4].text, "HQ YM2612: SINC");
+
   GUI_InitMenu(m);
   GUI_SlideMenuTitle(m,strlen("Sound "));
 
   while (quit == 0)
   {
-    sprintf (items[0].text, "PSG Volume: %1.2f", (double)config.psg_preamp/100.0);
-    sprintf (items[1].text, "FM Volume: %1.2f", (double)config.fm_preamp/100.0);
-    sprintf (items[2].text, "Volume Boost: %dX", config.boost);
-    sprintf (items[3].text, "LowPass Filter: %s", config.filter ? " ON":"OFF");
-    if (config.hq_fm == 0) sprintf (items[4].text, "HQ YM2612: OFF");
-    else if (config.hq_fm == 1) sprintf (items[4].text, "HQ YM2612: LINEAR");
-    else sprintf (items[4].text, "HQ YM2612: SINC");
 
     ret = GUI_RunMenu(m);
 
@@ -1437,6 +1521,7 @@ static void soundmenu ()
         else config.psg_preamp ++;
         if (config.psg_preamp < 0) config.psg_preamp = 500;
         if (config.psg_preamp > 500) config.psg_preamp = 0;
+        sprintf (items[0].text, "PSG Volume: %1.2f", (double)config.psg_preamp/100.0);
         break;
 
       case 1:
@@ -1445,23 +1530,29 @@ static void soundmenu ()
         else config.fm_preamp ++;
         if (config.fm_preamp < 0) config.fm_preamp = 500;
         if (config.fm_preamp > 500) config.fm_preamp = 0;
+        sprintf (items[1].text, "FM Volume: %1.2f", (double)config.fm_preamp/100.0);
         break;
 
       case 2:
         config.boost ++;
         if (config.boost > 4) config.boost = 0;
+        sprintf (items[2].text, "Volume Boost: %dX", config.boost);
         break;
       
       case 3:
         config.filter ^= 1;
+        sprintf (items[3].text, "LowPass Filter: %s", config.filter ? " ON":"OFF");
         break;
 
       case 4:
         config.hq_fm ++;
         if (config.hq_fm>2) config.hq_fm = 0;
+        if (config.hq_fm == 0) sprintf (items[4].text, "HQ YM2612: OFF");
+        else if (config.hq_fm == 1) sprintf (items[4].text, "HQ YM2612: LINEAR");
+        else sprintf (items[4].text, "HQ YM2612: SINC");
         if (genromsize) 
         {
-          unsigned char *temp = malloc(YM2612GetContextSize());
+          unsigned char *temp = memalign(32,YM2612GetContextSize());
           if (temp) memcpy(temp, YM2612GetContextPtr(), YM2612GetContextSize());
           audio_init(48000);
           if (temp)
@@ -1492,25 +1583,29 @@ static void systemmenu ()
   gui_menu *m = &menu_system;
   gui_item *items = m->items;
 
+  if (config.region_detect == 0)      sprintf (items[0].text, "Console Region: AUTO");
+  else if (config.region_detect == 1) sprintf (items[0].text, "Console Region:  USA");
+  else if (config.region_detect == 2) sprintf (items[0].text, "Console Region:  EUR");
+  else if (config.region_detect == 3) sprintf (items[0].text, "Console Region:  JAP");
+  sprintf (items[1].text, "System Lockups: %s", config.force_dtack ? "OFF" : "ON");
+  sprintf (items[2].text, "System BIOS: %s", (config.bios_enabled & 1) ? "ON":"OFF");
+  sprintf (items[3].text, "SVP Cycles: %d", SVP_cycles);
+
   GUI_InitMenu(m);
   GUI_SlideMenuTitle(m,strlen("System "));
 
   while (quit == 0)
   {
-    if (config.region_detect == 0)      sprintf (items[0].text, "Console Region: AUTO");
-    else if (config.region_detect == 1) sprintf (items[0].text, "Console Region:  USA");
-    else if (config.region_detect == 2) sprintf (items[0].text, "Console Region:  EUR");
-    else if (config.region_detect == 3) sprintf (items[0].text, "Console Region:  JAP");
-    sprintf (items[1].text, "System Lockups: %s", config.force_dtack ? "OFF" : "ON");
-    sprintf (items[2].text, "System BIOS: %s", (config.bios_enabled & 1) ? "ON":"OFF");
-    sprintf (items[3].text, "SVP Cycles: %d", SVP_cycles);
-
     ret = GUI_RunMenu(m);
 
     switch (ret)
     {
       case 0:  /*** Region Force ***/
         config.region_detect = (config.region_detect + 1) % 4;
+        if (config.region_detect == 0)      sprintf (items[0].text, "Console Region: AUTO");
+        else if (config.region_detect == 1) sprintf (items[0].text, "Console Region:  USA");
+        else if (config.region_detect == 2) sprintf (items[0].text, "Console Region:  EUR");
+        else if (config.region_detect == 3) sprintf (items[0].text, "Console Region:  JAP");
         if (genromsize)
         {
           /* force region & cpu mode */
@@ -1518,11 +1613,14 @@ static void systemmenu ()
           
           /* reinitialize timings */
           system_init ();
-          unsigned char *temp = malloc(YM2612GetContextSize());
+          unsigned char *temp = memalign(32,YM2612GetContextSize());
           if (temp) memcpy(temp, YM2612GetContextPtr(), YM2612GetContextSize());
           audio_init(48000);
-          YM2612Restore(temp);
-          if (temp) free(temp);
+          if (temp)
+          {
+            YM2612Restore(temp);
+            free(temp);
+          }
 
           /* reinitialize HVC tables */
           vctab = (vdp_pal) ? ((reg[1] & 8) ? vc_pal_240 : vc_pal_224) : vc_ntsc_224;
@@ -1536,10 +1634,12 @@ static void systemmenu ()
 
       case 1:  /*** force DTACK ***/
         config.force_dtack ^= 1;
+        sprintf (items[1].text, "System Lockups: %s", config.force_dtack ? "OFF" : "ON");
         break;
 
       case 2:  /*** BIOS support ***/
         config.bios_enabled ^= 1;
+        sprintf (items[2].text, "System BIOS: %s", (config.bios_enabled & 1) ? "ON":"OFF");
         if (genromsize || (config.bios_enabled == 3)) 
         {
           system_init ();
@@ -1553,6 +1653,7 @@ static void systemmenu ()
         if (ret<0) SVP_cycles = SVP_cycles ? (SVP_cycles-1) : 1500;
         else SVP_cycles++;
         if (SVP_cycles > 1500) SVP_cycles = 0;
+        sprintf (items[3].text, "SVP Cycles: %d", SVP_cycles);
         break;
 
       case -1:
@@ -1574,24 +1675,25 @@ static void videomenu ()
   gui_menu *m = &menu_video;
   gui_item *items = m->items;
 
+  sprintf (items[0].text, "Aspect: %s", config.aspect ? "ORIGINAL" : "STRETCHED");
+  if (config.render == 1) sprintf (items[1].text,"Display: INTERLACED");
+  else if (config.render == 2) sprintf (items[1].text, "Display: PROGRESSIVE");
+  else sprintf (items[1].text, "Display: ORIGINAL");
+  if (config.tv_mode == 0) sprintf (items[2].text, "TV Mode: 60HZ");
+  else if (config.tv_mode == 1) sprintf (items[2].text, "TV Mode: 50HZ");
+  else sprintf (items[2].text, "TV Mode: 50/60HZ");
+  sprintf (items[3].text, "Bilinear Filter: %s", config.bilinear ? " ON" : "OFF");
+  if (config.ntsc == 1) sprintf (items[4].text, "NTSC Filter: COMPOSITE");
+  else if (config.ntsc == 2) sprintf (items[4].text, "NTSC Filter: S-VIDEO");
+  else if (config.ntsc == 3) sprintf (items[4].text, "NTSC Filter: RGB");
+  else sprintf (items[4].text, "NTSC Filter: OFF");
+  sprintf (items[5].text, "Borders: %s", config.overscan ? " ON" : "OFF");
+
   GUI_InitMenu(m);
   GUI_SlideMenuTitle(m,strlen("Video "));
 
   while (quit == 0)
   {
-    sprintf (items[0].text, "Aspect: %s", config.aspect ? "ORIGINAL" : "STRETCHED");
-    if (config.render == 1) sprintf (items[1].text,"Display: INTERLACED");
-    else if (config.render == 2) sprintf (items[1].text, "Display: PROGRESSIVE");
-    else sprintf (items[1].text, "Display: ORIGINAL");
-    if (config.tv_mode == 0) sprintf (items[2].text, "TV Mode: 60HZ");
-    else if (config.tv_mode == 1) sprintf (items[2].text, "TV Mode: 50HZ");
-    else sprintf (items[2].text, "TV Mode: 50/60HZ");
-    sprintf (items[3].text, "Bilinear Filter: %s", config.bilinear ? " ON" : "OFF");
-    if (config.ntsc == 1) sprintf (items[4].text, "NTSC Filter: COMPOSITE");
-    else if (config.ntsc == 2) sprintf (items[4].text, "NTSC Filter: S-VIDEO");
-    else if (config.ntsc == 3) sprintf (items[4].text, "NTSC Filter: RGB");
-    else sprintf (items[4].text, "NTSC Filter: OFF");
-    sprintf (items[5].text, "Borders: %s", config.overscan ? " ON" : "OFF");
 
     ret = GUI_RunMenu(m);
 
@@ -1599,6 +1701,7 @@ static void videomenu ()
     {
       case 0: /*** config.aspect ratio ***/
         config.aspect ^= 1;
+        sprintf (items[0].text, "Aspect: %s", config.aspect ? "ORIGINAL" : "STRETCHED");
         break;
 
       case 1:  /*** rendering ***/
@@ -1616,25 +1719,38 @@ static void videomenu ()
             config.render = 0;
           }
         }
+        if (config.render == 1) sprintf (items[1].text,"Display: INTERLACED");
+        else if (config.render == 2) sprintf (items[1].text, "Display: PROGRESSIVE");
+        else sprintf (items[1].text, "Display: ORIGINAL");
+        if (config.tv_mode == 0) sprintf (items[2].text, "TV Mode: 60HZ");
+        else if (config.tv_mode == 1) sprintf (items[2].text, "TV Mode: 50HZ");
+        else sprintf (items[2].text, "TV Mode: 50/60HZ");
         break;
 
       case 2: /*** tv mode ***/
         if (config.render != 2) config.tv_mode = (config.tv_mode + 1) % 3;
+        if (config.tv_mode == 0) sprintf (items[2].text, "TV Mode: 60HZ");
+        else if (config.tv_mode == 1) sprintf (items[2].text, "TV Mode: 50HZ");
+        else sprintf (items[2].text, "TV Mode: 50/60HZ");
         break;
     
       case 3: /*** bilinear filtering ***/
         config.bilinear ^= 1;
+        sprintf (items[3].text, "Bilinear Filter: %s", config.bilinear ? " ON" : "OFF");
         break;
 
       case 4: /*** NTSC filter ***/
         config.ntsc ++;
         if (config.ntsc > 3) config.ntsc = 0;
+        if (config.ntsc == 1) sprintf (items[4].text, "NTSC Filter: COMPOSITE");
+        else if (config.ntsc == 2) sprintf (items[4].text, "NTSC Filter: S-VIDEO");
+        else if (config.ntsc == 3) sprintf (items[4].text, "NTSC Filter: RGB");
+        else sprintf (items[4].text, "NTSC Filter: OFF");
         break;
 
       case 5: /*** overscan emulation ***/
         config.overscan ^= 1;
-        bitmap.viewport.x = config.overscan ? ((reg[12] & 1) ? 16 : 12) : 0;
-        bitmap.viewport.y = config.overscan ? (((reg[1] & 8) ? 0 : 8) + (vdp_pal ? 24 : 0)) : 0;
+        sprintf (items[5].text, "Borders: %s", config.overscan ? " ON" : "OFF");
         break;
 
  /*     case 6: 
@@ -1689,6 +1805,28 @@ static void inputsmenu(void)
   u32 exp;
 #endif
 
+ /* gui_item items_sys[7][2] =
+  {
+    {
+      {NULL,Ctrl_none      ,"","Port 1 - Unconnected",110,130,48,72},
+      {NULL,Ctrl_gamepad   ,"","Port 1 - Gamepad"    , 87,117,96,84},
+      {NULL,Ctrl_mouse     ,"","Port 1 - Mouse"      , 97,113,64,88},
+      {NULL,Ctrl_menacer   ,"","Port 1 - Menacer"    , 94,113,80,88},
+      {NULL,Ctrl_justifier ,"","Port 1 - Justifiers" , 88,117,80,84}
+      {NULL,Ctrl_teamplayer,"","Port 1 - Teamplayer" , 94,109,80,92},
+      {NULL,Ctrl_4wayplay  ,"","Port 1 - 4 Way Play" , 98,110,72,92}
+    },
+    {
+      {NULL,Ctrl_none      ,"","Port 2 - Unconnected",110,130,48,72},
+      {NULL,Ctrl_gamepad   ,"","Port 2 - Gamepad"    , 87,117,96,84},
+      {NULL,Ctrl_mouse     ,"","Port 2 - Mouse"      , 97,113,64,88},
+      {NULL,Ctrl_menacer   ,"","Port 2 - Menacer"    , 94,113,80,88},
+      {NULL,Ctrl_justifier ,"","Port 2 - Justifiers" , 88,117,80,84}
+      {NULL,Ctrl_teamplayer,"","Port 2 - Teamplayer" , 94,109,80,92},
+      {NULL,Ctrl_4wayplay  ,"","Port 2 - 4 Way Play" , 98,110,72,92}
+    }
+  };
+*/
   strcpy (menutitle, "Press B to return");
 
   menu = 0;
@@ -2323,7 +2461,7 @@ void MainMenu (void)
   }
 
   /* wiimote pointer */
-  w_pointer = gxTextureOpenPNG(generic_point_png);
+  w_pointer = gxTextureOpenPNG(generic_point_png,0);
 #endif
 
   gui_menu *m = &menu_main;
@@ -2332,8 +2470,8 @@ void MainMenu (void)
   if (genromsize)
   {
     m->screenshot = 1;
-    m->max_items = 8;
-    m->max_buttons = 8;
+    m->max_items = 9;
+    m->max_buttons = 9;
     m->buttons[3].state |= BUTTON_SELECT_SFX;
     m->buttons[5].state |= BUTTON_SELECT_SFX;
     m->buttons[3].shift[1] = 3;
@@ -2378,6 +2516,7 @@ void MainMenu (void)
         switch (GUI_WindowPrompt(m, VERSION, items,3))
         {
           case 1:
+            GUI_FadeMenu(m,1,1);
 #ifdef HW_RVL
             gxTextureClose(&w_pointer);
 #endif
@@ -2387,6 +2526,7 @@ void MainMenu (void)
             break;
 
           case 2:
+            GUI_FadeMenu(m,1,1);
 #ifdef HW_RVL
             gxTextureClose(&w_pointer);
 #endif
@@ -2400,9 +2540,9 @@ void MainMenu (void)
             break;
 
           default: /* TODO */
+            GUI_DeleteMenu(m);
             break;
         }
-        GUI_DeleteMenu(m);
         break;
       }
 
@@ -2431,8 +2571,12 @@ void MainMenu (void)
         GetGGEntries();
         break;
 
-      case 7:   /*** ROM Information ***/
-        showrominfo ();
+      case 7:   /*** ROM Captrure ***/
+        if (genromsize) gx_video_Capture();
+        break;
+
+      case 8:   /*** ROM Information ***/
+        if (genromsize) showrominfo ();
         break;
     }
   }

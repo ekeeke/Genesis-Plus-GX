@@ -42,7 +42,7 @@ typedef struct
 {
   u8 *buffer;
   u32 offset;
-} png_file;
+} png_image;
 
 extern const u8 Crosshair_p1_png[];
 extern const u8 Crosshair_p2_png[];
@@ -52,6 +52,7 @@ unsigned int *xfb[2];  /* External Framebuffers */
 int whichfb = 0;       /* Current Framebuffer   */
 GXRModeObj *vmode;     /* Default Video Mode    */
 u8 *texturemem;        /* Texture Data          */
+u8 *screenshot;        /* Texture Data          */
 
 /* 50/60hz flag */
 u8 gc_pal = 0;
@@ -65,12 +66,14 @@ static md_ntsc_setup_t md_setup;
 /*** GX FIFO ***/
 static u8 gp_fifo[DEFAULT_FIFO_SIZE] ATTRIBUTE_ALIGN (32);
 
-/*** custom Video modes ***/
-static GXRModeObj *rmode;
-
 /*** GX Textures ***/
 static u32 vwidth,vheight;
 static gx_texture *crosshair[2];
+
+/***************************************************************************************/
+/*   Emulation video modes                                                             */
+/***************************************************************************************/
+static GXRModeObj *rmode;
 
 /* 288 lines progressive (PAL 50Hz) */
 static GXRModeObj TV50hz_288p = 
@@ -296,6 +299,11 @@ static GXRModeObj *tvmodes[6] =
    &TV50hz_576i   
 };
 
+
+/***************************************************************************************/
+/*   GX rendering engine                                                               */
+/***************************************************************************************/
+
 typedef struct tagcamera
 {
   Vector pos;
@@ -325,11 +333,6 @@ static camera cam = {
   {0.0F, 0.0F, 0.0F}
 };
 
-static void updateFrameCount(u32 cnt)
-{
-  frameticker++;
-}
-
 /* Vertex Rendering */
 static inline void draw_vert(u8 pos, f32 s, f32 t)
 {
@@ -348,7 +351,7 @@ static inline void draw_square(void)
   GX_End ();
 }
 
-/* Initialize GX renderer */
+/* Initialize GX */
 static void gxStart(void)
 {
   /*** Clear out FIFO area ***/
@@ -589,79 +592,344 @@ static void gxDrawCrosshair(gx_texture *texture, int x, int y)
   }
 }
 
+
+void gxDrawRectangle(s32 x, s32 y, s32 w, s32 h, u8 alpha, GXColor color)
+{
+  /* GX only use Color channel for rendering */
+  GX_SetTevOp (GX_TEVSTAGE0, GX_PASSCLR);
+  GX_SetVtxDesc (GX_VA_TEX0, GX_NONE);
+  GX_Flush();
+
+  /* vertex coordinate */
+  x -= (vmode->fbWidth/2);
+  y -= (vmode->efbHeight/2);
+
+  /* draw colored quad */
+  GX_Begin(GX_QUADS, GX_VTXFMT0, 4);
+  GX_Position2s16(x,y+h);
+  GX_Color4u8(color.r,color.g,color.b,alpha);
+  GX_Position2s16(x+w,y+h);
+  GX_Color4u8(color.r,color.g,color.b,alpha);
+  GX_Position2s16(x+w,y);
+  GX_Color4u8(color.r,color.g,color.b,alpha);
+  GX_Position2s16(x,y);
+  GX_Color4u8(color.r,color.g,color.b,alpha);
+  GX_End ();
+  GX_DrawDone();
+
+  /* restore GX rendering */
+  GX_SetVtxDesc(GX_VA_TEX0, GX_DIRECT);
+  GX_SetTevOp (GX_TEVSTAGE0, GX_MODULATE);
+  GX_Flush();
+}
+
+void gxDrawTexture(gx_texture *texture, s32 x, s32 y, s32 w, s32 h, u8 alpha)
+{
+  if (!texture) return;
+  if (texture->data)
+  {
+    /* load texture object */
+    GXTexObj texObj;
+    GX_InitTexObj(&texObj, texture->data, texture->width, texture->height, GX_TF_RGBA8, GX_CLAMP, GX_CLAMP, GX_FALSE);
+    GX_InitTexObjLOD(&texObj,GX_LINEAR,GX_LIN_MIP_LIN,0.0,10.0,0.0,GX_FALSE,GX_TRUE,GX_ANISO_4); /* does this really change anything ? */
+    GX_LoadTexObj(&texObj, GX_TEXMAP0);
+    GX_InvalidateTexAll();
+
+    /* vertex coordinate */
+    x -= (vmode->fbWidth/2);
+    y -= (vmode->efbHeight/2);
+
+    /* draw textured quad */
+    GX_Begin(GX_QUADS, GX_VTXFMT0, 4);
+    GX_Position2s16(x,y+h);
+    GX_Color4u8(0xff,0xff,0xff,alpha);
+    GX_TexCoord2f32(0.0, 1.0);
+    GX_Position2s16(x+w,y+h);
+    GX_Color4u8(0xff,0xff,0xff,alpha);
+    GX_TexCoord2f32(1.0, 1.0);
+    GX_Position2s16(x+w,y);
+    GX_Color4u8(0xff,0xff,0xff,alpha);
+    GX_TexCoord2f32(1.0, 0.0);
+    GX_Position2s16(x,y);
+    GX_Color4u8(0xff,0xff,0xff,alpha);
+    GX_TexCoord2f32(0.0, 0.0);
+    GX_End ();
+    GX_DrawDone();
+  }
+}
+
+void gxDrawTextureRepeat(gx_texture *texture, s32 x, s32 y, s32 w, s32 h, u8 alpha)
+{
+  if (!texture) return;
+  if (texture->data)
+  {
+    /* load texture object */
+    GXTexObj texObj;
+    GX_InitTexObj(&texObj, texture->data, texture->width, texture->height, GX_TF_RGBA8, GX_MIRROR, GX_MIRROR, GX_FALSE);
+    GX_LoadTexObj(&texObj, GX_TEXMAP0);
+    GX_InvalidateTexAll();
+
+    /* vertex coordinate */
+    x -= (vmode->fbWidth/2);
+    y -= (vmode->efbHeight/2);
+
+    /* texture coordinates */
+    f32 s = (f32)w / (f32)texture->width;
+    f32 t = (f32)h / (f32)texture->height;
+
+    /* draw textured quad */
+    GX_Begin(GX_QUADS, GX_VTXFMT0, 4);
+    GX_Position2s16(x,y+h);
+    GX_Color4u8(0xff,0xff,0xff,alpha);
+    GX_TexCoord2f32(0.0, t);
+    GX_Position2s16(x+w,y+h);
+    GX_Color4u8(0xff,0xff,0xff,alpha);
+    GX_TexCoord2f32(s, t);
+    GX_Position2s16(x+w,y);
+    GX_Color4u8(0xff,0xff,0xff,alpha);
+    GX_TexCoord2f32(s, 0.0);
+    GX_Position2s16(x,y);
+    GX_Color4u8(0xff,0xff,0xff,alpha);
+    GX_TexCoord2f32(0.0, 0.0);
+    GX_End ();
+    GX_DrawDone();
+  }
+}
+
+void gxDrawScreenshot(u8 alpha)
+{
+  if (!rmode) return;
+
+  GXTexObj texobj;
+  GX_InitTexObj(&texobj, texturemem, vwidth, vheight, GX_TF_RGB565, GX_CLAMP, GX_CLAMP, GX_FALSE);
+  GX_LoadTexObj(&texobj, GX_TEXMAP0);
+  GX_InvalidateTexAll();
+
+  /* retrieve current xscale/xshift values */
+  s32 xscale = (rmode->viWidth + square[6] - square[0] - rmode->fbWidth) / 2 - (vmode->viWidth - 640)/2;
+  s32 xshift = (square[6] + square[0]) / 2;
+
+  /* apply current position/size */
+  s32 x = xshift - xscale;
+  s32 y = square[7];
+  s32 w = xscale * 2;
+  s32 h = square[4] - square[7];
+  if (rmode->efbHeight < 480)
+  {
+    y = y * 2;
+    h = h * 2;
+  }
+
+  /* Draw textured quad */
+  GX_Begin(GX_QUADS, GX_VTXFMT0, 4);
+  GX_Position2s16(x,y+h);
+  GX_Color4u8(0xff,0xff,0xff,alpha);
+  GX_TexCoord2f32(0.0, 1.0);
+  GX_Position2s16(x+w,y+h);
+  GX_Color4u8(0xff,0xff,0xff,alpha);
+  GX_TexCoord2f32(1.0, 1.0);
+  GX_Position2s16(x+w,y);
+  GX_Color4u8(0xff,0xff,0xff,alpha);
+  GX_TexCoord2f32(1.0, 0.0);
+  GX_Position2s16(x,y);
+  GX_Color4u8(0xff,0xff,0xff,alpha);
+  GX_TexCoord2f32(0.0, 0.0);
+  GX_End ();
+  GX_DrawDone();
+}
+
+void gxCopyScreenshot(gx_texture *texture)
+{
+  /* current game texture */
+  gxClearScreen((GXColor)BLACK);
+  GXTexObj texobj;
+  GX_InitTexObj(&texobj, texturemem, vwidth, vheight, GX_TF_RGB565, GX_CLAMP, GX_CLAMP, GX_FALSE);
+  GX_LoadTexObj(&texobj, GX_TEXMAP0);
+  GX_InvalidateTexAll();
+
+  /* scale texture to EFB width */
+  s32 w = bitmap.viewport.x ? (704) : (640);
+  s32 h = (bitmap.viewport.h + 2*bitmap.viewport.y) * 2;
+  s32 x = -w/2;
+  s32 y = -(240+ 2*bitmap.viewport.y);
+
+  /* render gamescreen to EFB */
+  GX_Begin(GX_QUADS, GX_VTXFMT0, 4);
+  GX_Position2s16(x,y+h);
+  GX_Color4u8(0xff,0xff,0xff,0xff);
+  GX_TexCoord2f32(0.0, 1.0);
+  GX_Position2s16(x+w,y+h);
+  GX_Color4u8(0xff,0xff,0xff,0xff);
+  GX_TexCoord2f32(1.0, 1.0);
+  GX_Position2s16(x+w,y);
+  GX_Color4u8(0xff,0xff,0xff,0xff);
+  GX_TexCoord2f32(1.0, 0.0);
+  GX_Position2s16(x,y);
+  GX_Color4u8(0xff,0xff,0xff,0xff);
+  GX_TexCoord2f32(0.0, 0.0);
+  GX_End ();
+  GX_DrawDone();
+
+  /* copy EFB to texture */
+  texture->format = GX_TF_RGBA8;
+  texture->width = 320;
+  texture->height = bitmap.viewport.h;
+  texture->data = screenshot;
+  GX_SetTexCopySrc(0, 0, texture->width * 2, texture->height * 2);
+  GX_SetTexCopyDst(texture->width, texture->height, texture->format, GX_TRUE);
+  GX_CopyTex(texture->data, GX_TRUE);
+  GX_Flush();
+
+  /* wait for copy operation to finish */
+  /* GX_PixModeSync is only useful if GX_ command follows */
+  /* we use dummy GX commands to stall CPU execution */
+  GX_PixModeSync();
+  GX_LoadTexObj(&texobj, GX_TEXMAP0);
+  GX_InvalidateTexAll();
+  DCFlushRange(texture->data, texture->width * texture->height * 4);
+}
+
+void gxResetAngle(f32 angle)
+{
+  Mtx view;
+
+  if (angle)
+  {
+    Mtx m,m1;
+    Vector axis = (Vector) {0,0,1};
+    guLookAt(m, &cam.pos, &cam.up, &cam.view);
+    guMtxRotAxisDeg (m1, &axis, angle);
+    guMtxConcat(m,m1,view);
+  }
+  else
+  {
+    guLookAt(view, &cam.pos, &cam.up, &cam.view);
+  }
+  
+  GX_LoadPosMtxImm(view, GX_PNMTX0);
+  GX_Flush();
+}
+
+void gxSetScreen ()
+{
+  GX_CopyDisp(xfb[whichfb], GX_FALSE);
+  GX_Flush();
+  VIDEO_SetNextFramebuffer (xfb[whichfb]);
+  VIDEO_Flush ();
+  VIDEO_WaitVSync ();
+}
+
+void gxClearScreen (GXColor color)
+{
+  whichfb ^= 1;
+  GX_SetCopyClear(color,0x00ffffff);
+  GX_CopyDisp(xfb[whichfb], GX_TRUE);
+  GX_Flush();
+}
+
+/***************************************************************************************/
+/*   GX Texture <-> LibPNG routines                                                    */
+/***************************************************************************************/
+
 /* libpng read callback function */
 static void png_read_from_mem (png_structp png_ptr, png_bytep data, png_size_t length)
 {
-  png_file *file = (png_file *)png_get_io_ptr (png_ptr);
+  png_image *image = (png_image *)png_get_io_ptr(png_ptr);
 
   /* copy data from image buffer */
-  memcpy (data, file->buffer + file->offset, length);
+  memcpy (data, image->buffer + image->offset, length);
 
   /* advance in the file */
-  file->offset += length;
+  image->offset += length;
 }
 
-/* convert a png file into RGBA8 texture */
-gx_texture *gxTextureOpenPNG(const u8 *buffer)
+/* convert PNG image (from file or data buffer) into RGBA8 texture */
+gx_texture *gxTextureOpenPNG(const u8 *png_data, FILE *png_file)
 {
   int i;
-  png_file file;
-
-  /* init PNG file structure */
-  file.buffer = (u8 *) buffer;
-  file.offset = 0;
-
-  /* check for valid magic number */
-  /*if (!png_check_sig (file.buffer, 8)) return;*/
 
   /* create a png read struct */
-  png_structp png_ptr = png_create_read_struct (PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+  png_structp png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING,NULL,NULL,NULL);
   if (!png_ptr) return NULL;
 
   /* create a png info struct */
-  png_infop info_ptr = png_create_info_struct (png_ptr);
+  png_infop info_ptr = png_create_info_struct(png_ptr);
   if (!info_ptr)
   {
-    png_destroy_read_struct (&png_ptr, NULL, NULL);
+    png_destroy_read_struct(&png_ptr,NULL,NULL);
     return NULL;
   }
 
-  /* set callback for the read function */
-  png_set_read_fn (png_ptr, (png_voidp *)(&file), png_read_from_mem);
+  if (png_data)
+  {
+    /* init PNG image structure */
+    png_image image;
+    image.buffer = (u8 *) png_data;
+    image.offset = 0;
+
+    /* set callback for the read function */
+    png_set_read_fn(png_ptr,(png_voidp *)(&image),png_read_from_mem);
+  }
+  else if (png_file)
+  {
+    /* check for valid magic number */
+    png_byte magic[8];
+    if (fread (magic, 1, 8, png_file) != 8)
+    {
+      png_destroy_read_struct(&png_ptr,&info_ptr,NULL);
+      return NULL;
+    }
+
+    if (!png_check_sig (magic, 8))
+    if (fread (magic, 1, 8, png_file) != 8)
+    {
+      png_destroy_read_struct(&png_ptr,&info_ptr,NULL);
+      return NULL;
+    }
+
+    /* set IO callback for read function */
+    png_init_io (png_ptr, png_file);
+    png_set_sig_bytes (png_ptr, 8);
+  }
+  else
+  {
+    png_destroy_read_struct(&png_ptr,&info_ptr,NULL);
+    return NULL;
+  }
 
   /* read png info */
-  png_read_info (png_ptr, info_ptr);
+  png_read_info(png_ptr,info_ptr);
 
   /* retrieve image information */
-  u32 width  = png_get_image_width(png_ptr, info_ptr);
-  u32 height = png_get_image_height(png_ptr, info_ptr);
+  u32 width  = png_get_image_width(png_ptr,info_ptr);
+  u32 height = png_get_image_height(png_ptr,info_ptr);
+  u32 bit_depth = png_get_bit_depth(png_ptr,info_ptr);
+  u32 color_type = png_get_color_type(png_ptr,info_ptr);
 
-#if 0
-  /* ensure PNG images are in the supported format */
-  u32 bit_depth = png_get_bit_depth(png_ptr, info_ptr);
-  u32 color_type = png_get_color_type(png_ptr, info_ptr);
-
-  /* support for RGBA8 textures ONLY !*/
-  if ((color_type != PNG_COLOR_TYPE_RGB_ALPHA) || (bit_depth != 8))
+  /* ensure PNG file is in the supported format */
+  if (png_file)
   {
-    png_destroy_read_struct (&png_ptr, &info_ptr, NULL);
-    return;
-  }
+    /* support for RGBA8 textures ONLY !*/
+    if ((color_type != PNG_COLOR_TYPE_RGB_ALPHA) || (bit_depth != 8))
+    {
+      png_destroy_read_struct(&png_ptr, &info_ptr,NULL);
+      return NULL;
+    }
 
-  /* 4x4 tiles are required */
-  if ((width%4) || (height%4))
-  {
-    png_destroy_read_struct (&png_ptr, &info_ptr, NULL);
-    return;
+    /* 4x4 tiles are required */
+    if ((width%4) || (height%4))
+    {
+      png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
+      return NULL;
+    }
   }
-#endif
 
   /* allocate memory to store raw image data */
   u32 stride = width << 2;
   u8 *img_data = memalign (32, stride * height);
   if (!img_data)
   {
-    png_destroy_read_struct (&png_ptr, &info_ptr, NULL);
+    png_destroy_read_struct(&png_ptr,&info_ptr,NULL);
     return NULL;
   }
 
@@ -670,7 +938,7 @@ gx_texture *gxTextureOpenPNG(const u8 *buffer)
   if (!row_pointers)
   {
     free (img_data);
-    png_destroy_read_struct (&png_ptr, &info_ptr, NULL);
+    png_destroy_read_struct(&png_ptr,&info_ptr,NULL);
     return NULL;
   }
 
@@ -681,11 +949,11 @@ gx_texture *gxTextureOpenPNG(const u8 *buffer)
   }
 
   /* decode image */
-  png_read_image (png_ptr, row_pointers);
+  png_read_image(png_ptr, row_pointers);
 
   /* finish decompression and release memory */
-  png_read_end (png_ptr, NULL);
-  png_destroy_read_struct (&png_ptr, &info_ptr, NULL);
+  png_read_end(png_ptr, NULL);
+  png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
   free(row_pointers);
 
   /* initialize texture */
@@ -776,6 +1044,127 @@ gx_texture *gxTextureOpenPNG(const u8 *buffer)
   return texture;
 }
 
+/* Write RGBA8 Texture to PNG file */
+void gxTextureWritePNG(gx_texture *texture, FILE *png_file)
+{
+  /* allocate PNG data buffer */
+  u8 *img_data = (u8 *)memalign(32, texture->width * texture->height * 4);
+  if(!img_data) return;
+
+  /* decode GX_TF_RGBA8 format (4x4 pixels paired titles) */
+  u16 *ar = (u16 *)(texture->data);
+  u16 *gb = (u16 *)(texture->data + 32);
+  u32 *dst1 = (u32 *)(img_data);
+  u32 *dst2 = dst1 + texture->width;
+  u32 *dst3 = dst2 + texture->width;
+  u32 *dst4 = dst3 + texture->width;
+  u32 i,h,w,pixel;
+
+  for (h=0; h<texture->height; h+=4)
+  {
+    for (w=0; w<texture->width; w+=4)
+    {
+      /* line N (4 pixels) */
+      for (i=0; i<4; i++)
+      {
+        pixel = ((*ar & 0xff) << 24) | (*gb << 8) | ((*ar & 0xff00) >> 8);
+        *dst1++ = pixel;
+        ar++;
+        gb++;
+      }
+
+      /* line N + 1 (4 pixels) */
+      for (i=0; i<4; i++)
+      {
+        pixel = ((*ar & 0xff) << 24) | (*gb << 8) | ((*ar & 0xff00) >> 8);
+        *dst2++ = pixel;
+        ar++;
+        gb++;
+      }
+
+      /* line N + 2 (4 pixels) */
+      for (i=0; i<4; i++)
+      {
+        pixel = ((*ar & 0xff) << 24) | (*gb << 8) | ((*ar & 0xff00) >> 8);
+        *dst3++ = pixel;
+        ar++;
+        gb++;
+      }
+
+      /* line N + 3 (4 pixels) */
+      for (i=0; i<4; i++)
+      {
+        pixel = ((*ar & 0xff) << 24) | (*gb << 8) | ((*ar & 0xff00) >> 8);
+        *dst4++ = pixel;
+        ar++;
+        gb++;
+      }
+
+      /* next paired tiles */
+      ar += 16;
+      gb += 16;
+    }
+
+    /* next 4 lines */
+    dst1 = dst4;
+    dst2 = dst1 + texture->width;
+    dst3 = dst2 + texture->width;
+    dst4 = dst3 + texture->width;
+  }
+
+  /* create a png write struct */
+  png_structp png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+  if(!png_ptr)
+  {
+    free(img_data);
+    return;
+  }
+
+  /* create a png info struct */
+  png_infop info_ptr = png_create_info_struct (png_ptr);
+  if (!info_ptr)
+  {
+    free(img_data);
+    png_destroy_write_struct(&png_ptr, NULL);
+    return;
+  }
+
+  /* set IO callback for the write function */
+  png_init_io(png_ptr, png_file);
+
+  /* set PNG file properties */
+  png_set_IHDR(png_ptr, info_ptr, texture->width, texture->height, 8, PNG_COLOR_TYPE_RGB_ALPHA, 
+               PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
+
+  /* allocate row pointer data */
+  png_bytep *row_pointers = (png_bytep *)memalign (32, sizeof (png_bytep) * texture->height);
+  if (!row_pointers)
+  {
+    free (img_data);
+    png_destroy_write_struct(&png_ptr, &info_ptr);
+    return;
+  }
+
+  /* store raw image data */
+  for (i = 0; i < texture->height; i++)
+  {
+    row_pointers[i] = img_data + (i * texture->width * 4);
+  }
+
+  /* configure libpng for image data */
+  png_set_rows(png_ptr,info_ptr,row_pointers);
+
+  /* write data to PNG file */
+  png_write_png(png_ptr,info_ptr,PNG_TRANSFORM_IDENTITY,NULL);
+
+  /* finish compression and release memory */
+  png_write_end(png_ptr, NULL);
+  free(row_pointers);
+  free(img_data);
+  png_destroy_write_struct(&png_ptr, &info_ptr);
+}
+
+
 void gxTextureClose(gx_texture **p_texture)
 {
   gx_texture *texture = *p_texture;
@@ -788,177 +1177,42 @@ void gxTextureClose(gx_texture **p_texture)
   }
 }
 
-void gxDrawScreenshot(u8 alpha)
+
+/***************************************************************************************/
+/*   VIDEO engine                                                                      */
+/***************************************************************************************/
+
+/* VIDEO callback */
+static void vi_callback(u32 cnt)
 {
-  if (rmode)
+  frameticker++;
+}
+
+/* Take Screenshot */
+void gx_video_Capture(void)
+{
+  /* capture screenshot into a texture */
+  gx_texture texture;
+  gxCopyScreenshot(&texture);
+
+  /* open PNG file */
+  char fname[MAXPATHLEN];
+  sprintf(fname,"%s/snaps/%s.png", DEFAULT_PATH, rom_filename);
+  FILE *f = fopen(fname,"wb");
+  if (f)
   {
-    GXTexObj texobj;
-    GX_InitTexObj(&texobj, texturemem, vwidth, vheight, GX_TF_RGB565, GX_CLAMP, GX_CLAMP, GX_FALSE);
-    GX_LoadTexObj(&texobj, GX_TEXMAP0);
-    GX_InvalidateTexAll();
-
-    /* retrieve current xscale/xshift values */
-    s32 xscale = (rmode->viWidth + square[6] - square[0] - rmode->fbWidth) / 2 - (vmode->viWidth - 640)/2;
-    s32 xshift = (square[6] + square[0]) / 2;
-
-    /* apply current position/size */
-    s32 x = xshift - xscale;
-    s32 y = square[7];
-    s32 w = xscale * 2;
-    s32 h = square[4] - square[7];
-    if (rmode->efbHeight < 480)
-    {
-      y = y * 2;
-      h = h * 2;
-    }
-
-    /* Draw textured quad */
-    GX_Begin(GX_QUADS, GX_VTXFMT0, 4);
-    GX_Position2s16(x,y+h);
-    GX_Color4u8(0xff,0xff,0xff,alpha);
-    GX_TexCoord2f32(0.0, 1.0);
-    GX_Position2s16(x+w,y+h);
-    GX_Color4u8(0xff,0xff,0xff,alpha);
-    GX_TexCoord2f32(1.0, 1.0);
-    GX_Position2s16(x+w,y);
-    GX_Color4u8(0xff,0xff,0xff,alpha);
-    GX_TexCoord2f32(1.0, 0.0);
-    GX_Position2s16(x,y);
-    GX_Color4u8(0xff,0xff,0xff,alpha);
-    GX_TexCoord2f32(0.0, 0.0);
-    GX_End ();
-    GX_DrawDone();
+    /* encode screenshot into PNG file */
+    gxTextureWritePNG(&texture,f);
+    fclose(f);
   }
 }
 
-void gxDrawTexture(gx_texture *texture, s32 x, s32 y, s32 w, s32 h, u8 alpha)
-{
-  if (!texture) return;
-  if (texture->data)
-  {
-    /* load texture object */
-    GXTexObj texObj;
-    GX_InitTexObj(&texObj, texture->data, texture->width, texture->height, GX_TF_RGBA8, GX_CLAMP, GX_CLAMP, GX_FALSE);
-    GX_InitTexObjLOD(&texObj,GX_LINEAR,GX_LIN_MIP_LIN,0.0,10.0,0.0,GX_FALSE,GX_TRUE,GX_ANISO_4); /* does this really change anything ? */
-    GX_LoadTexObj(&texObj, GX_TEXMAP0);
-    GX_InvalidateTexAll();
-
-    /* vertex coordinate */
-    x -= (vmode->fbWidth/2);
-    y -= (vmode->efbHeight/2);
-
-    /* draw textured quad */
-    GX_Begin(GX_QUADS, GX_VTXFMT0, 4);
-    GX_Position2s16(x,y+h);
-    GX_Color4u8(0xff,0xff,0xff,alpha);
-    GX_TexCoord2f32(0.0, 1.0);
-    GX_Position2s16(x+w,y+h);
-    GX_Color4u8(0xff,0xff,0xff,alpha);
-    GX_TexCoord2f32(1.0, 1.0);
-    GX_Position2s16(x+w,y);
-    GX_Color4u8(0xff,0xff,0xff,alpha);
-    GX_TexCoord2f32(1.0, 0.0);
-    GX_Position2s16(x,y);
-    GX_Color4u8(0xff,0xff,0xff,alpha);
-    GX_TexCoord2f32(0.0, 0.0);
-    GX_End ();
-    GX_DrawDone();
-  }
-}
-
-void gxDrawTextureRepeat(gx_texture *texture, s32 x, s32 y, s32 w, s32 h, u8 alpha)
-{
-  if (!texture) return;
-  if (texture->data)
-  {
-    /* load texture object */
-    GXTexObj texObj;
-    GX_InitTexObj(&texObj, texture->data, texture->width, texture->height, GX_TF_RGBA8, GX_MIRROR, GX_MIRROR, GX_FALSE);
-    GX_LoadTexObj(&texObj, GX_TEXMAP0);
-    GX_InvalidateTexAll();
-
-    /* vertex coordinate */
-    x -= (vmode->fbWidth/2);
-    y -= (vmode->efbHeight/2);
-
-    /* texture coordinates */
-    f32 s = (f32)w / (f32)texture->width;
-    f32 t = (f32)h / (f32)texture->height;
-
-    /* draw textured quad */
-    GX_Begin(GX_QUADS, GX_VTXFMT0, 4);
-    GX_Position2s16(x,y+h);
-    GX_Color4u8(0xff,0xff,0xff,alpha);
-    GX_TexCoord2f32(0.0, t);
-    GX_Position2s16(x+w,y+h);
-    GX_Color4u8(0xff,0xff,0xff,alpha);
-    GX_TexCoord2f32(s, t);
-    GX_Position2s16(x+w,y);
-    GX_Color4u8(0xff,0xff,0xff,alpha);
-    GX_TexCoord2f32(s, 0.0);
-    GX_Position2s16(x,y);
-    GX_Color4u8(0xff,0xff,0xff,alpha);
-    GX_TexCoord2f32(0.0, 0.0);
-    GX_End ();
-    GX_DrawDone();
-  }
-}
-
-void gxResetAngle(f32 angle)
-{
-  Mtx view;
-
-  if (angle)
-  {
-    Mtx m,m1;
-    Vector axis = (Vector) {0,0,1};
-    guLookAt(m, &cam.pos, &cam.up, &cam.view);
-    guMtxRotAxisDeg (m1, &axis, angle);
-    guMtxConcat(m,m1,view);
-  }
-  else
-  {
-    guLookAt(view, &cam.pos, &cam.up, &cam.view);
-  }
-  
-  GX_LoadPosMtxImm(view, GX_PNMTX0);
-  GX_Flush();
-}
-
-
-void gxSetScreen ()
-{
-  GX_CopyDisp(xfb[whichfb], GX_FALSE);
-  GX_Flush();
-  VIDEO_SetNextFramebuffer (xfb[whichfb]);
-  VIDEO_Flush ();
-  VIDEO_WaitVSync ();
-}
-
-void gxClearScreen (GXColor color)
-{
-  whichfb ^= 1;
-  GX_SetCopyClear(color,0x00ffffff);
-  GX_CopyDisp(xfb[whichfb], GX_TRUE);
-  GX_Flush();
-}
-
-/* Restore Menu Video mode */
+/* Emulation mode -> Menu mode */
 void gx_video_Stop(void)
 {
   /* lightgun textures */
-  if (crosshair[0])
-  {
-    if (crosshair[0]->data) free(crosshair[0]->data);
-    free(crosshair[0]);
-    crosshair[0] = NULL;
-  }
-  if (crosshair[1])
-  {
-    if (crosshair[1]->data) free(crosshair[1]->data);
-    free(crosshair[1]);
-    crosshair[1] = NULL;
-  }
+  gxTextureClose(&crosshair[0]);
+  gxTextureClose(&crosshair[1]);
 
   /* reset GX */
   gxResetRendering(1);
@@ -972,16 +1226,17 @@ void gx_video_Stop(void)
   gxSetScreen ();
 }
 
-/* Update Video settings */
+/* Menu mode -> Emulation mode */
 void gx_video_Start(void)
 {
   /* 50Hz/60Hz mode */
   if ((config.tv_mode == 1) || ((config.tv_mode == 2) && vdp_pal)) gc_pal = 1;
   else gc_pal = 0;
 
-  /* Video Interrupt synchronization */
+  /* VIDEO sync */
   VIDEO_SetPostRetraceCallback(NULL);
-  if (!gc_pal && !vdp_pal) VIDEO_SetPreRetraceCallback(updateFrameCount);
+  if (!gc_pal && !vdp_pal)
+    VIDEO_SetPreRetraceCallback(vi_callback);
   VIDEO_Flush();
 
   /* interlaced/progressive mode */
@@ -994,6 +1249,19 @@ void gx_video_Start(void)
   {
     tvmodes[2]->viTVMode = tvmodes[0]->viTVMode & ~3;
     tvmodes[2]->xfbMode = VI_XFBMODE_DF;
+  }
+
+  /* overscan */
+  if (config.overscan)
+  {
+    bitmap.viewport.x = (reg[12] & 1) ? 16 : 12;
+    bitmap.viewport.y = (reg[1] & 8) ? 0 : 8;
+    if (vdp_pal) bitmap.viewport.y  += 24;
+  }
+  else
+  {
+    bitmap.viewport.x = 0;
+    bitmap.viewport.y = 0;
   }
 
   /* software NTSC filters */
@@ -1024,8 +1292,8 @@ void gx_video_Start(void)
   {
     if (config.gun_cursor)
     {
-      if (input.dev[4] == DEVICE_LIGHTGUN) crosshair[0] = gxTextureOpenPNG(Crosshair_p1_png);
-      if (input.dev[5] == DEVICE_LIGHTGUN) crosshair[1] = gxTextureOpenPNG(Crosshair_p2_png);
+      if (input.dev[4] == DEVICE_LIGHTGUN) crosshair[0] = gxTextureOpenPNG(Crosshair_p1_png,0);
+      if (input.dev[5] == DEVICE_LIGHTGUN) crosshair[1] = gxTextureOpenPNG(Crosshair_p2_png,0);
     }
   }
 
@@ -1034,9 +1302,7 @@ void gx_video_Start(void)
 
   /* reset GX rendering */
   gxResetRendering(0);
-
 }
-
 
 /* GX render update */
 void gx_video_Update(void)
@@ -1244,24 +1510,16 @@ void gx_video_Init(void)
 #endif
   }
 
-  /* Initialize texture data */
+  /* Initialize textures */
   texturemem = memalign(32, TEX_SIZE);
-  if (!texturemem)
-  {
-    WaitPrompt("Failed to allocate texture buffer... Rebooting");
-#ifdef HW_RVL
-    DI_Close();
-    SYS_ResetSystem(SYS_RESTART,0,0);
-#else
-    SYS_ResetSystem(SYS_HOTRESET,0,0);
-#endif
-  }
-  memset (texturemem, 0, TEX_SIZE);
+  screenshot = memalign(32, HASPECT*VASPECT*4);
+  if (!texturemem || !screenshot) gx_video_Shutdown();
 }
 
 void gx_video_Shutdown(void)
 {
   if (texturemem) free(texturemem);
+  if (screenshot) free(screenshot);
   FONT_Shutdown();
   VIDEO_ClearFrameBuffer(vmode, xfb[whichfb], COLOR_BLACK);
   VIDEO_Flush();

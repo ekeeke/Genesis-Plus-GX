@@ -96,28 +96,19 @@ void memfile_autosave(s8 autosram, s8 autostate)
  *****************************************************************************/
 static int FAT_ManageFile(char *filename, int direction, int filetype)
 {
-  char pathname[MAXPATHLEN];
+  char fname[MAXPATHLEN];
   int done = 0;
   int filesize;
 
-  if (!fat_enabled) return 0;
-
-  /* first check if directory exist */
-  sprintf (pathname, "%s/saves", DEFAULT_PATH);
-
-  DIR_ITER *dir = diropen(pathname);
-  if (dir == NULL) mkdir(pathname,S_IRWXU);
-  else dirclose(dir);
-
   /* build complete SDCARD filename */
-  sprintf (pathname, "%s/%s", pathname, filename);
+  sprintf (fname, "%s/saves/%s", DEFAULT_PATH, filename);
 
   /* open file */
-  FILE *fp = fopen(pathname, direction ? "rb" : "wb");
+  FILE *fp = fopen(fname, direction ? "rb" : "wb");
   if (fp == NULL)
   {
-    sprintf (filename, "Error opening %s", pathname);
-    WaitPrompt(filename);
+    sprintf (fname, "Error opening %s", filename);
+    WaitPrompt(fname);
     return 0;
   }
 
@@ -137,14 +128,14 @@ static int FAT_ManageFile(char *filename, int direction, int filetype)
       done = fwrite(savebuffer, 1, filesize, fp);
       if (done < filesize)
       {
-        sprintf (filename, "Error writing %s", pathname);
-        WaitPrompt(filename);
+        sprintf (fname, "Error writing %s", filename);
+        WaitPrompt(fname);
         return 0;
       }
 
       fclose(fp);
-      sprintf (filename, "Saved %d bytes successfully", done);
-      WaitPrompt (filename);
+      sprintf (fname, "Saved %d bytes successfully", done);
+      WaitPrompt (fname);
       return 1;
 
     case 1: /* LOADING */
@@ -158,8 +149,8 @@ static int FAT_ManageFile(char *filename, int direction, int filetype)
       done = fread(savebuffer, 1, filesize, fp);
       if (done < filesize)
       {
-        sprintf (filename, "Error reading %s", pathname);
-        WaitPrompt(filename);
+        sprintf (fname, "Error reading %s", filename);
+        WaitPrompt(fname);
         return 0;
       }
       fclose(fp);
@@ -172,8 +163,8 @@ static int FAT_ManageFile(char *filename, int direction, int filetype)
       }
       else state_load(savebuffer); /* STATE */
 
-      sprintf (filename, "Loaded %d bytes successfully", done);
-      WaitPrompt (filename);
+      sprintf (fname, "Loaded %d bytes successfully", done);
+      WaitPrompt (fname);
       return 1;
   }
 

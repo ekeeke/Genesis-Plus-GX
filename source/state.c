@@ -22,6 +22,8 @@
 
 #include "shared.h"
 
+static unsigned char state[STATE_SIZE];
+
 #define load_param(param, size) \
   memcpy(param, &state[bufferptr], size); \
   bufferptr+= size;
@@ -32,10 +34,6 @@
 
 void state_load(unsigned char *buffer)
 {
-  /* allocate memory */
-  unsigned char *state = malloc(STATE_SIZE);
-  if (state == NULL) return;
-
   /* buffer size */
   int bufferptr = 0;
 
@@ -79,14 +77,8 @@ void state_load(unsigned char *buffer)
   vdp_restore(temp_reg);
 
   // FM 
-  unsigned char *temp = malloc (YM2612GetContextSize());
-  if (temp)
-  {
-    load_param(temp,YM2612GetContextSize());
-    YM2612Restore(temp);
-    free(temp);
-  }
-  else bufferptr+=YM2612GetContextSize();
+  YM2612Restore(&state[bufferptr]);
+  bufferptr+= YM2612GetContextSize();
 
   // PSG
   load_param(SN76489_GetContextPtr (0),SN76489_GetContextSize ());
@@ -116,17 +108,10 @@ void state_load(unsigned char *buffer)
 
   // Z80 
   load_param(&Z80, sizeof(Z80_Regs));
-
-  /* Free memory */
-  free(state);
 }
 
 int state_save(unsigned char *buffer)
 {
-  /* allocate memory */
-  unsigned char *state = malloc(STATE_SIZE);
-  if (state == NULL) return 0;
-
   /* buffer size */
   int bufferptr = 0;
 
@@ -166,21 +151,21 @@ int state_save(unsigned char *buffer)
   uint16 tmp16;
   uint32 tmp32;
   tmp32 = m68k_get_reg(NULL, M68K_REG_D0);  save_param(&tmp32, 4);
-  tmp32 =  m68k_get_reg(NULL, M68K_REG_D1);   save_param(&tmp32, 4);
-  tmp32 =  m68k_get_reg(NULL, M68K_REG_D2);  save_param(&tmp32, 4);
-  tmp32 =  m68k_get_reg(NULL, M68K_REG_D3);  save_param(&tmp32, 4);
-  tmp32 =  m68k_get_reg(NULL, M68K_REG_D4);  save_param(&tmp32, 4);
-  tmp32 =  m68k_get_reg(NULL, M68K_REG_D5);  save_param(&tmp32, 4);
-  tmp32 =  m68k_get_reg(NULL, M68K_REG_D6);  save_param(&tmp32, 4);
-  tmp32 =  m68k_get_reg(NULL, M68K_REG_D7);  save_param(&tmp32, 4);
-  tmp32 =  m68k_get_reg(NULL, M68K_REG_A0);  save_param(&tmp32, 4);
-  tmp32 =  m68k_get_reg(NULL, M68K_REG_A1);  save_param(&tmp32, 4);
-  tmp32 =  m68k_get_reg(NULL, M68K_REG_A2);  save_param(&tmp32, 4);
-  tmp32 =  m68k_get_reg(NULL, M68K_REG_A3);  save_param(&tmp32, 4);
-  tmp32 =  m68k_get_reg(NULL, M68K_REG_A4);  save_param(&tmp32, 4);
-  tmp32 =  m68k_get_reg(NULL, M68K_REG_A5);  save_param(&tmp32, 4);
-  tmp32 =  m68k_get_reg(NULL, M68K_REG_A6);  save_param(&tmp32, 4);
-  tmp32 =  m68k_get_reg(NULL, M68K_REG_A7);  save_param(&tmp32, 4);
+  tmp32 = m68k_get_reg(NULL, M68K_REG_D1);   save_param(&tmp32, 4);
+  tmp32 = m68k_get_reg(NULL, M68K_REG_D2);  save_param(&tmp32, 4);
+  tmp32 = m68k_get_reg(NULL, M68K_REG_D3);  save_param(&tmp32, 4);
+  tmp32 = m68k_get_reg(NULL, M68K_REG_D4);  save_param(&tmp32, 4);
+  tmp32 = m68k_get_reg(NULL, M68K_REG_D5);  save_param(&tmp32, 4);
+  tmp32 = m68k_get_reg(NULL, M68K_REG_D6);  save_param(&tmp32, 4);
+  tmp32 = m68k_get_reg(NULL, M68K_REG_D7);  save_param(&tmp32, 4);
+  tmp32 = m68k_get_reg(NULL, M68K_REG_A0);  save_param(&tmp32, 4);
+  tmp32 = m68k_get_reg(NULL, M68K_REG_A1);  save_param(&tmp32, 4);
+  tmp32 = m68k_get_reg(NULL, M68K_REG_A2);  save_param(&tmp32, 4);
+  tmp32 = m68k_get_reg(NULL, M68K_REG_A3);  save_param(&tmp32, 4);
+  tmp32 = m68k_get_reg(NULL, M68K_REG_A4);  save_param(&tmp32, 4);
+  tmp32 = m68k_get_reg(NULL, M68K_REG_A5);  save_param(&tmp32, 4);
+  tmp32 = m68k_get_reg(NULL, M68K_REG_A6);  save_param(&tmp32, 4);
+  tmp32 = m68k_get_reg(NULL, M68K_REG_A7);  save_param(&tmp32, 4);
   tmp32 = m68k_get_reg(NULL, M68K_REG_PC);  save_param(&tmp32, 4);
   tmp16 = m68k_get_reg(NULL, M68K_REG_SR);  save_param(&tmp16, 2); 
   tmp32 = m68k_get_reg(NULL, M68K_REG_USP);  save_param(&tmp32, 4);
@@ -193,9 +178,6 @@ int state_save(unsigned char *buffer)
   unsigned long outbytes  = STATE_SIZE;
   compress2 ((Bytef *)(buffer + 4), &outbytes, (Bytef *)state, inbytes, 9);
   memcpy(buffer, &outbytes, 4);
-
-  /* Free memory */
-  free(state);
 
   /* return total size */
   return (outbytes + 4);

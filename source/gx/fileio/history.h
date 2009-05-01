@@ -45,7 +45,8 @@ typedef struct
 
 extern t_history history;
 extern void history_add_file(char *filepath, char *filename);
-extern void history_load();
-extern void history_setDefault();
+extern void history_save(void);
+extern void history_load(void);
+extern void history_default(void);
 
 #endif

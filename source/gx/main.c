@@ -1,9 +1,9 @@
 /****************************************************************************
  *  main.c
  *
- *  Genesis Plus GX main
+ *  Genesis Plus GX
  *
- *  code by Softdev (2006), Eke-Eke (2007,2008)
+ *  code by Softdev (2006), Eke-Eke (2007,2009)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -156,7 +156,7 @@ u32 frameticker = 0;
 int main (int argc, char *argv[])
 {
 #ifdef HW_RVL
-  /* initialize DVD Mode */
+  /* initialize DVDX */
   DI_Close();
   DI_Init();
 #endif
@@ -168,7 +168,6 @@ int main (int argc, char *argv[])
   /* initialize hardware */
   gx_video_Init();
   gx_input_Init();
-  gx_audio_Init();
 #ifdef HW_DOL
   DVD_Init ();
   dvd_drive_detect();
@@ -177,7 +176,6 @@ int main (int argc, char *argv[])
   /* initialize FAT devices */
   if (fatInitDefault())
   {
-    fat_enabled = 1;
 #ifdef HW_RVL
     fatEnableReadAhead ("sd", 6, 64);
     fatEnableReadAhead ("usb", 6, 64);
@@ -185,22 +183,44 @@ int main (int argc, char *argv[])
     fatEnableReadAhead ("carda", 6, 64);
     fatEnableReadAhead ("cardb", 6, 64);
 #endif
+
+    /* check for default directories */
+    DIR_ITER *dir = NULL;
+
+    /* base directory */
+    char pathname[MAXPATHLEN];
+    sprintf (pathname, DEFAULT_PATH);
+    dir = diropen(pathname);
+    if (dir == NULL) mkdir(pathname,S_IRWXU);
+    else dirclose(dir);
+
+    /* SRAM & Savestate files directory */ 
+    sprintf (pathname, "%s/saves",DEFAULT_PATH);
+    dir = diropen(pathname);
+    if (dir == NULL) mkdir(pathname,S_IRWXU);
+    else dirclose(dir);
+
+    /* Snapshot files directory */ 
+    sprintf (pathname, "%s/snaps",DEFAULT_PATH);
+    dir = diropen(pathname);
+    if (dir == NULL) mkdir(pathname,S_IRWXU);
+    else dirclose(dir);
+
+    /* Cheat files directory */ 
+    sprintf (pathname, "%s/cheats",DEFAULT_PATH);
+    dir = diropen(pathname);
+    if (dir == NULL) mkdir(pathname,S_IRWXU);
+    else dirclose(dir);
   }
 
-  /* Initialize sound engine */
+  /* initialize sound engine */
   gx_audio_Init();
 
-  /* default config */
+  /* initialize core engine */
   legal();
-  config_setDefault();
-  config_load();
-
-  /* recent ROM files list */
-  history_setDefault();
-  history_load();
-
-  /* initialize Virtual Machine */
-  init_machine ();
+  config_default();
+  history_default();
+  init_machine();
 
   /* run any injected rom */
   if (genromsize)
@@ -213,7 +233,7 @@ int main (int argc, char *argv[])
   }
   else
   {
-    /* show menu first */
+    /* Main Menu */
     ConfigRequested = 1;
   }
 
@@ -225,14 +245,14 @@ int main (int argc, char *argv[])
   /* main emulation loop */
   while (1)
   {
-    /* check for menu request */
+    /* Main Menu request */
     if (ConfigRequested)
     {
       /* stop audio & video */
       gx_video_Stop();
       gx_audio_Stop();
 
-      /* go to menu */
+      /* show menu */
       MainMenu ();
       ConfigRequested = 0;
 

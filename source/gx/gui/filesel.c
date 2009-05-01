@@ -95,7 +95,7 @@ static gui_item action_select =
 /*****************************************************************************/
 /*  GUI Background images                                                    */
 /*****************************************************************************/
-static gui_image bg_filesel[9] =
+static gui_image bg_filesel[10] =
 {
   {NULL,Bg_main_png,IMAGE_VISIBLE,356,144,348,288,255,{0,0},{0,0}},
   {NULL,Bg_overlay_png,IMAGE_VISIBLE|IMAGE_REPEAT,0,0,640,480,255,{0,0},{0,0}},
@@ -105,6 +105,7 @@ static gui_image bg_filesel[9] =
   {NULL,Frame_s1_png,IMAGE_VISIBLE,8,70,372,336,200,{0,0},{0,0}},
   {NULL,Frame_s2_png,0,384,264,248,140,200,{0,0},{0,0}},
   {NULL,Snap_empty_png,IMAGE_VISIBLE,422,114,164,116,255,{0,0},{0,0}},
+  {NULL,NULL,0,424,116,160,112,255,{0,0},{0,0}},
   {NULL,Snap_frame_png,IMAGE_VISIBLE,388,112,236,148,255,{0,0},{0,0}}
 };
 
@@ -113,9 +114,9 @@ static gui_image bg_filesel[9] =
 /*****************************************************************************/
 static gui_menu menu_browser =
 {
-  "ROM Selection",
+  "Game Selection",
   -1,-1,
-  0,0,9,
+  0,0,10,
   NULL,
   NULL,
   bg_filesel,
@@ -165,6 +166,7 @@ int FileSelector(unsigned char *buffer)
   int ret,i,yoffset,string_offset;
   int go_up = 0;
   int quit =0;
+  int old = -1;
   char text[MAXJOLIET+2];
   char fname[MAXPATHLEN];
   FILE *xml,*snap;
@@ -181,7 +183,7 @@ int FileSelector(unsigned char *buffer)
 
   /* Initialize directory icon */
   gui_image dir_icon;
-  dir_icon.texture = gxTextureOpenPNG(Browser_dir_png);
+  dir_icon.texture = gxTextureOpenPNG(Browser_dir_png,0);
   dir_icon.w = dir_icon.texture->width;
   dir_icon.h = dir_icon.texture->height;
   dir_icon.x = 26;
@@ -189,7 +191,7 @@ int FileSelector(unsigned char *buffer)
 
   /* Initialize selection bar */
   gui_image bar_over;
-  bar_over.texture = gxTextureOpenPNG(Overlay_bar_png);
+  bar_over.texture = gxTextureOpenPNG(Overlay_bar_png,0);
   bar_over.w = bar_over.texture->width;
   bar_over.h = bar_over.texture->height;
   bar_over.x = 22;
@@ -219,11 +221,23 @@ int FileSelector(unsigned char *buffer)
     }
 
     /* ROM snapshot */
-    sprintf (fname, "%s/snaps/%s.png", DEFAULT_PATH, text);
-    snap = fopen(fname, "rb");
-    if (snap)
+    if (old != selection)
     {
-      fclose(snap); /* TODO */
+      old = selection;
+
+      /* delete previous texture if any */
+      gxTextureClose(&bg_filesel[8].texture);
+      bg_filesel[8].state &= ~IMAGE_VISIBLE;
+
+      /* open screenshot file */
+      sprintf (fname, "%s/snaps/%s.png", DEFAULT_PATH, text);
+      snap = fopen(fname, "rb");
+      if (snap)
+      {
+        bg_filesel[8].texture = gxTextureOpenPNG(0,snap);
+        fclose(snap);
+        if (bg_filesel[8].texture) bg_filesel[8].state |= IMAGE_VISIBLE;
+      }
     }
 
     /* Draw menu*/
@@ -317,14 +331,14 @@ int FileSelector(unsigned char *buffer)
 
       /* find selected button */
       for (i=0; i<2; i++)
-              {
-        button = m->arrows[i];
-      if (button)
       {
-        if (button->state & BUTTON_VISIBLE)
+        button = m->arrows[i];
+        if (button)
         {
-            if ((x>=button->x)&&(x<=(button->x+button->w))&&(y>=button->y)&&(y<=(button->y+button->h)))
+          if (button->state & BUTTON_VISIBLE)
           {
+            if ((x>=button->x)&&(x<=(button->x+button->w))&&(y>=button->y)&&(y<=(button->y+button->h)))
+            {
               m->selected = m->max_buttons + i;
               break;
             }

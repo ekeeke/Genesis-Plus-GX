@@ -2156,4 +2156,12 @@ void YM2612Restore(unsigned char *buffer)
   ym2612.OPN.ST.clock = clock;
   ym2612.OPN.ST.rate  = rate;
   OPNSetPres(6*24);
+
+  /* restore outputs connections */
+  setup_connection(&ym2612.CH[0],0);
+  setup_connection(&ym2612.CH[1],1);
+  setup_connection(&ym2612.CH[2],2);
+  setup_connection(&ym2612.CH[3],3);
+  setup_connection(&ym2612.CH[4],4);
+  setup_connection(&ym2612.CH[5],5);
 }

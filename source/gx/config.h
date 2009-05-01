@@ -65,9 +65,9 @@ typedef struct
 t_config config;
 
 
-extern void config_save();
-extern void config_load();
-extern void config_setDefault(void);
+extern void config_save(void);
+extern void config_load(void);
+extern void config_default(void);
 
 
 #endif /* _CONFIG_H_ */

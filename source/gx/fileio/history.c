@@ -26,28 +26,6 @@
 
 t_history history;
 
-void history_save()
-{
-  char pathname[MAXPATHLEN];
-
-  if (!fat_enabled) return;
-
-  /* first check if directory exist */
-  sprintf (pathname, DEFAULT_PATH);
-  DIR_ITER *dir = diropen(pathname);
-  if (dir == NULL) mkdir(pathname,S_IRWXU);
-  else dirclose(dir);
-
-  /* open file for writing */
-  sprintf (pathname, "%s/history.ini", pathname);
-  FILE *fp = fopen(pathname, "wb");
-  if (fp == NULL) return;
-
-  /* save options */
-  fwrite(&history, sizeof(history), 1, fp);
-
-  fclose(fp);
-}
 
 /****************************************************************************
  * history_add_file
@@ -95,28 +73,44 @@ void history_add_file(char *filepath, char *filename)
   history_save();
 }
 
-void history_load()
+void history_save()
 {
-  char pathname[MAXPATHLEN];
-
-  /* open file for reading */
-  sprintf (pathname, "%s/history.ini", DEFAULT_PATH);
-  FILE *fp = fopen(pathname, "rb");
-  if (fp == NULL) return;
-
-  /* read file */
-  fread(&history, sizeof(history), 1, fp);
-
-  fclose(fp);
+  /* open file */
+  char fname[MAXPATHLEN];
+  sprintf (fname, "%s/history.ini", DEFAULT_PATH);
+  FILE *fp = fopen(fname, "wb");
+  if (fp)
+  {
+    /* write file */
+    fwrite(&history, sizeof(history), 1, fp);
+    fclose(fp);
+  }
 }
 
-void history_setDefault(void)
+void history_load(void)
+{
+  /* open file */
+  char fname[MAXPATHLEN];
+  sprintf (fname, "%s/history.ini", DEFAULT_PATH);
+  FILE *fp = fopen(fname, "rb");
+  if (fp)
+  {
+    /* read file */
+    fread(&history, sizeof(history), 1, fp);
+    fclose(fp);
+  }
+}
+
+void history_default(void)
 {
   int i;
   for(i=0; i < NUM_HISTORY_ENTRIES; i++)
   {
     memset(&history.entries[i], 0, sizeof(t_history_entry));
   }
+
+  /* restore history */
+  history_load();
 }
 
 

@@ -45,21 +45,28 @@ extern GXRModeObj *vmode;
 extern u8 *texturemem;
 extern u8 gc_pal;
 
-/* GX video emulation functions */
+
+/* GX rendering */
+extern void gxDrawRectangle(s32 x, s32 y, s32 w, s32 h, u8 alpha, GXColor color);
+extern void gxDrawTexture(gx_texture *texture, s32 x, s32 y, s32 w, s32 h, u8 alpha);
+extern void gxDrawTextureRepeat(gx_texture *texture, s32 x, s32 y, s32 w, s32 h, u8 alpha);
+extern void gxDrawScreenshot(u8 alpha);
+extern void gxCopyScreenshot(gx_texture *texture);
+extern void gxResetAngle(f32 angle);
+extern void gxClearScreen (GXColor color);
+extern void gxSetScreen ();
+
+/* PNG textures */
+extern gx_texture *gxTextureOpenPNG(const u8 *png_data, FILE *png_file);
+extern void gxTextureWritePNG(gx_texture *p_texture, FILE *png_file);
+extern void gxTextureClose(gx_texture **p_texture);
+
+/* GX video engine */
 extern void gx_video_Init(void);
 extern void gx_video_Shutdown(void);
 extern void gx_video_Start(void);
 extern void gx_video_Stop(void);
 extern void gx_video_Update(void);
-
-/* GX draw functions */
-extern gx_texture *gxTextureOpenPNG(const u8 *buffer);
-extern void gxTextureClose(gx_texture **p_texture);
-extern void gxDrawScreenshot(u8 alpha);
-extern void gxDrawTexture(gx_texture *texture, s32 x, s32 y, s32 w, s32 h, u8 alpha);
-extern void gxDrawTextureRepeat(gx_texture *texture, s32 x, s32 y, s32 w, s32 h, u8 alpha);
-extern void gxResetAngle(f32 angle);
-extern void gxClearScreen (GXColor color);
-extern void gxSetScreen ();
+extern void gx_video_Capture(void);
 
 #endif

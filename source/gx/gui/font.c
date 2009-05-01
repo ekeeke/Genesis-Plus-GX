@@ -154,7 +154,7 @@ void WriteCentre( int y, char *string)
 
 void WriteCentre_HL( int y, char *string)
 {
-  gx_texture *texture = gxTextureOpenPNG(Overlay_bar_png);
+  gx_texture *texture = gxTextureOpenPNG(Overlay_bar_png,0);
   if (texture)
   {
     gxDrawTexture(texture, 0, y-fheight,  640, fheight,240);

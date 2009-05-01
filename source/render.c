@@ -387,11 +387,11 @@ static uint16 pixel_16[0x100];
 static uint16 pixel_16_lut[3][0x200];
 
 /* Line buffers */
-static uint8 tmp_buf[0x400];  /* Temporary buffer */
-static uint8 bg_buf[0x400];    /* Merged background buffer */
-static uint8 nta_buf[0x400];  /* Plane A / Window line buffer */
-static uint8 ntb_buf[0x400];  /* Plane B line buffer */
-static uint8 obj_buf[0x400];  /* Object layer line buffer */
+static uint8 tmp_buf[0x200];  /* Temporary buffer */
+static uint8 bg_buf[0x200];   /* Merged background buffer */
+static uint8 nta_buf[0x200];  /* Plane A / Window line buffer */
+static uint8 ntb_buf[0x200];  /* Plane B line buffer */
+static uint8 obj_buf[0x200];  /* Object layer line buffer */
 
 /* Sprite line buffer data */
 static uint32 object_index_count;

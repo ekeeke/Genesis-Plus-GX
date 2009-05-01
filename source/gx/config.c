@@ -22,51 +22,45 @@
  ***************************************************************************/
 #include "shared.h"
 
-void config_save()
+void config_save(void)
 {
-  char pathname[MAXPATHLEN];
-
-  if (!fat_enabled) return;
-
-  /* first check if directory exist */
-  sprintf (pathname, DEFAULT_PATH);
-  DIR_ITER *dir = diropen(pathname);
-  if (dir == NULL) mkdir(pathname,S_IRWXU);
-  else dirclose(dir);
-
   /* open configuration file */
-  sprintf (pathname, "%s/config.ini", pathname);
-  FILE *fp = fopen(pathname, "wb");
-  if (fp == NULL) return;
-
-  /* save options */
-  fwrite(&config, sizeof(config), 1, fp);
-
-  fclose(fp);
+  char fname[MAXPATHLEN];
+  sprintf (fname, "%s/config.ini", DEFAULT_PATH);
+  FILE *fp = fopen(fname, "wb");
+  if (fp)
+  {
+    /* write file */
+    fwrite(&config, sizeof(config), 1, fp);
+    fclose(fp);
+  }
 }
 
-void config_load()
+void config_load(void)
 {
-  char pathname[MAXPATHLEN];
-
   /* open configuration file */
-  sprintf (pathname, "%s/config.ini", DEFAULT_PATH);
-  FILE *fp = fopen(pathname, "rb");
-  if (fp == NULL) return;
+  char fname[MAXPATHLEN];
+  sprintf (fname, "%s/config.ini", DEFAULT_PATH);
+  FILE *fp = fopen(fname, "rb");
+  if (fp)
+  {
+    /* read version */
+    char version[16];
+    fread(version, 16, 1, fp); 
+    fclose(fp);
+    if (strcmp(version,VERSION)) return;
 
-  /* read version */
-  char version[16];
-  fread(version, 16, 1, fp); 
-  fclose(fp);
-  if (strcmp(version,VERSION)) return;
-
-  /* read file */
-  fp = fopen(pathname, "rb");
-  fread(&config, sizeof(config), 1, fp);
-  fclose(fp);
+    /* read file */
+    fp = fopen(fname, "rb");
+    if (fp)
+    {
+      fread(&config, sizeof(config), 1, fp);
+      fclose(fp);
+    }
+  }
 }
 
-void config_setDefault(void)
+void config_default(void)
 {
   /* version TAG */
   strncpy(config.version,VERSION,16);
@@ -109,5 +103,8 @@ void config_setDefault(void)
   config.bg_color   = 0;
   config.bgm_volume = 100.0;
   config.sfx_volume = 100.0;
+
+  /* restore saved configuration */
+  config_load();
 }
 

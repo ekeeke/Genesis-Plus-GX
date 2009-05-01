@@ -64,7 +64,9 @@ extern const u8 Banner_top_png[];
 
 extern const u8 Frame_s1_png[];
 extern const u8 Frame_s2_png[];
-extern const u8 Frame_title_png[];
+extern const u8 Frame_s3_png[];
+extern const u8 Frame_s1_title_png[];
+extern const u8 Frame_s3_title_png[];
 
 extern const u8 Overlay_bar_png[];
 
@@ -83,6 +85,7 @@ extern const u8 Main_file_png[];
 extern const u8 Main_reset_png[];
 extern const u8 Main_ggenie_png[];
 extern const u8 Main_showinfo_png[];
+extern const u8 Main_takeshot_png[];
 #ifdef HW_RVL
 extern const u8 Main_play_wii_png[];
 #else
@@ -221,6 +224,7 @@ extern void GUI_InitMenu(gui_menu *menu);
 extern void GUI_DeleteMenu(gui_menu *menu);
 extern void GUI_DrawMenu(gui_menu *menu);
 extern void GUI_DrawMenuFX(gui_menu *menu, u8 speed, u8 out);
+extern void GUI_FadeMenu(gui_menu *menu, u8 speed, u8 out);
 extern int GUI_RunMenu(gui_menu *menu);
-
+extern int GUI_WindowPrompt(gui_menu *parent, char *title, char *items[], u8 nb_items);
 #endif

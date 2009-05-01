@@ -3,7 +3,7 @@
  *
  *  Genesis Plus GX audio support
  *
- *  code by Eke-Eke (2007,2008)
+ *  code by Eke-Eke (2007,2009)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -54,25 +54,16 @@ static u8 audioStarted = 0;
 static u8 *Bg_music_ogg = NULL;
 static u32 Bg_music_ogg_size = 0;
 
-/*** 
-      AudioDmaCallback
+/***************************************************************************************/
+/*   Audio engine                                                                      */
+/***************************************************************************************/
 
-     In 50Hz emulation mode, we synchronize frame emulation with audio DMA
-     50Hz VSYNC period is shorter than DMA period so there is no video frameskipping
-     In 60Hz modes, VSYNC period is longer than default DMA period so it requires different sync.
- ***/
-
-static void AudioDmaCallback(void)
+/* Audio DMA callback */
+static void ai_callback(void)
 {
   frameticker++;
 }
 
-/***
-      gx_audio__init
-
-     This function initializes the Audio Interface
-     Default samplerate is set to 48khZ
- ***/
 void gx_audio_Init(void)
 {
   AUDIO_Init (NULL);
@@ -171,7 +162,7 @@ void gx_audio_Start(void)
   AUDIO_RegisterDMACallback(NULL);
 
   /* let's use audio DMA to synchronize frame emulation */
-  if (vdp_pal | gc_pal) AUDIO_RegisterDMACallback(AudioDmaCallback);
+  if (vdp_pal | gc_pal) AUDIO_RegisterDMACallback(ai_callback);
 
   /* 60hz video mode requires synchronization with Video interrupt      */
   /* VSYNC period is 16715 us which is approx. 802.32 samples           */
