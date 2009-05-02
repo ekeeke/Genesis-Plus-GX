@@ -235,14 +235,6 @@ static void getrominfo (char *romheader)
   for (i = 0; i < 14; i++)
   for (j=0; j < 14; j++)
   if (rominfo.io_support[i] == peripheralinfo[j].pID[0]) peripherals |= (1 << j);
-
-  for (i = 0; i < 8; i++)
-  {
-    input.padtype[i] = (peripherals & P6BUTTONS) ? DEVICE_6BUTTON : DEVICE_3BUTTON;
-#ifdef HW_RVL
-    if (config.input[i].device == 1) input.padtype[i] = DEVICE_3BUTTON;
-#endif
-   }
 }
 
 /* SMD (interleaved) rom support */

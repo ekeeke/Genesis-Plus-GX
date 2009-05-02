@@ -312,7 +312,7 @@ int FileSelector(unsigned char *buffer)
       /* draw wiimote pointer */
       WPAD_Orientation(0,&orient);
       gxResetAngle(orient.roll);
-      gxDrawTexture(w_pointer, x-w_pointer->width/2, y-w_pointer->height/2, w_pointer->width, w_pointer->height,255);
+      gxDrawTexture(w_pointer, x, y, w_pointer->width, w_pointer->height,255);
       gxResetAngle(0.0);
 
       /* find selected item */

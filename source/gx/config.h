@@ -49,11 +49,11 @@ typedef struct
   uint8 render;
   uint8 ntsc;
   uint8 bilinear;
-  uint8 gun_cursor;
+  uint8 gun_cursor[2];
   uint8 invert_mouse;
   uint16 pad_keymap[4][MAX_KEYS];
   uint32 wpad_keymap[4*3][MAX_KEYS];
-  t_input_config input[MAX_DEVICES];
+  t_input_config input[MAX_INPUTS];
   int8 bg_color;
   float bgm_volume;
   float sfx_volume;

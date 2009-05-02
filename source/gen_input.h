@@ -62,7 +62,6 @@ typedef struct
 {
   uint8   dev[MAX_DEVICES];     /* Can be any of the DEVICE_* values */
   uint32  pad[MAX_DEVICES];     /* Can be any of the INPUT_* bitmasks */
-  uint8   padtype[MAX_DEVICES]; /* 3BUTTONS or 6BUTTONS gamepad */
   uint8   system[2];            /* Can be any of the SYSTEM_* bitmasks */
   uint8   max;                  /* maximum number of connected devices */
   uint8   current;              /* current PAD number (4WAYPLAY) */

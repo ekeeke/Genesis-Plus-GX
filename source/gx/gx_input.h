@@ -42,6 +42,7 @@ typedef struct
 {
   s8 device;
   u8 port;
+  u8 padtype;
 } t_input_config;
 
 

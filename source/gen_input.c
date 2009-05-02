@@ -603,7 +603,7 @@ void teamplayer_2_write (uint32 data)
 
 uint32 jcart_read(uint32 address)
 {
-  return (gamepad_read(5) | ((gamepad_read(6)&0x3f) << 8)); /* fixes Micro Machines 2 (is it correct ?) */
+  return (gamepad_read(2) | ((gamepad_read(3)&0x3f) << 8)); /* fixes Micro Machines 2 (is it correct ?) */
 }
 
 void jcart_write(uint32 address, uint32 data)
@@ -630,67 +630,90 @@ void input_reset ()
     input.pad[i] = 0;
   }
 
-  for (i=0; i<2; i++)
+  switch (input.system[0])
   {
-    switch (input.system[i])
-    {
-      case SYSTEM_GAMEPAD:
+    case SYSTEM_GAMEPAD:
+      if (input.max == MAX_INPUTS) return;
+      input.dev[0] = config.input[input.max].padtype;
+      input.max ++;
+      gamepad_reset(0);
+      break;
+
+    case SYSTEM_MOUSE:
+      if (input.max == MAX_INPUTS) return;
+      input.dev[0] = DEVICE_MOUSE;
+      input.max ++;
+      mouse_reset();
+      break;
+
+    case SYSTEM_WAYPLAY:
+      for (j=0; j< 4; j++)
+      {
         if (input.max == MAX_INPUTS) return;
-        input.dev[i*4] = input.padtype[input.max];
+        input.dev[j] = config.input[input.max].padtype;
         input.max ++;
-        gamepad_reset(i*4);
-        break;
+        gamepad_reset(j);
+      }
+      break;
 
-      case SYSTEM_MOUSE:
+    case SYSTEM_TEAMPLAYER:
+      for (j=0; j<4; j++)
+      {
         if (input.max == MAX_INPUTS) return;
-        input.dev[i*4] = DEVICE_MOUSE;
+        input.dev[j] = config.input[input.max].padtype;
         input.max ++;
-        mouse_reset();
-        break;
+      }
+      teamplayer_reset(i);
+      break;
+  }
 
-      case SYSTEM_WAYPLAY:
-        for (j=i*4; j< i*4+4; j++)
-        {
-          if (input.max == MAX_INPUTS) return;
-          input.dev[j] = input.padtype[input.max];
-          input.max ++;
-          gamepad_reset(j);
-        }
-        break;
+  switch (input.system[1])
+  {
+    case SYSTEM_GAMEPAD:
+      if (input.max == MAX_INPUTS) return;
+      input.dev[4] = config.input[input.max].padtype;
+      input.max ++;
+      gamepad_reset(4);
+      break;
 
-      case SYSTEM_TEAMPLAYER:
-        for (j=i*4; j< i*4+4; j++)
-        {
-           if (input.max == MAX_INPUTS) return;
-           input.dev[j] = input.padtype[input.max];
-           input.max ++;
-        }
-        teamplayer_reset(i);
-        break;
+    case SYSTEM_MOUSE:
+      if (input.max == MAX_INPUTS) return;
+      input.dev[4] = DEVICE_MOUSE;
+      input.max ++;
+      mouse_reset();
+      break;
 
-      case SYSTEM_MENACER:
+    case SYSTEM_MENACER:
+      if (input.max == MAX_INPUTS) return;
+      input.dev[4] = DEVICE_LIGHTGUN;
+      lightgun_reset(0);
+      break;
+
+    case SYSTEM_JUSTIFIER:
+      for (j=4; j<6; j++)
+      {
         if (input.max == MAX_INPUTS) return;
-        input.dev[i*4] = DEVICE_LIGHTGUN;
-        lightgun_reset(0);
-        break;
+        input.dev[j] = DEVICE_LIGHTGUN;
+        lightgun_reset(j - 4);
+        input.max ++;
+      }
 
-      case SYSTEM_JUSTIFIER:
-        for (j=i*4; j< i*4+2; j++)
-        {
-          if (input.max == MAX_INPUTS) return;
-          input.dev[j] = DEVICE_LIGHTGUN;
-          lightgun_reset(j - i*4);
-          input.max ++;
-        }
-        break;
-    }
+     case SYSTEM_TEAMPLAYER:
+      for (j=4; j<8; j++)
+      {
+        if (input.max == MAX_INPUTS) return;
+        input.dev[j] = config.input[input.max].padtype;
+        input.max ++;
+      }
+      teamplayer_reset(i);
+      break;
   }
 
   /* J-CART: add two gamepad inputs */
   if (j_cart)
   {
-    input.dev[5] = input.padtype[2];
-    input.dev[6] = input.padtype[3];
+    input.dev[5] = config.input[2].padtype;
+    input.dev[6] = config.input[3].padtype;
     gamepad_reset(5);
     gamepad_reset(6);
   }

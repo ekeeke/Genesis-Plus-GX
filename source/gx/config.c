@@ -90,7 +90,8 @@ void config_default(void)
 
   /* controllers options */
   gx_input_SetDefault();
-  config.gun_cursor   = 1;
+  config.gun_cursor[0] = 1;
+  config.gun_cursor[1] = 1;
   config.invert_mouse = 0;
 
   /* menu options */
@@ -106,5 +107,9 @@ void config_default(void)
 
   /* restore saved configuration */
   config_load();
+
+  input.system[0] = SYSTEM_GAMEPAD;
+  input.system[1] = SYSTEM_GAMEPAD;
+  io_reset();
 }
 

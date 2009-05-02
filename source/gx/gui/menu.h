@@ -33,6 +33,8 @@
 /*  GUI Buttons state                                                        */
 /*****************************************************************************/
 #define BUTTON_VISIBLE        0x01
+#define BUTTON_SHIFT          0x02
+#define BUTTON_ACTIVE         0x04
 #define BUTTON_OVER_SFX       0x10
 #define BUTTON_SELECT_SFX     0x20
 
@@ -49,35 +51,34 @@
 /*  GUI png data                                                             */
 /*****************************************************************************/
 
+/* Generic backgrounds */
 extern const u8 Bg_intro_c1_png[];
 extern const u8 Bg_intro_c2_png[];
 extern const u8 Bg_intro_c3_png[];
 extern const u8 Bg_intro_c4_png[];
 extern const u8 Bg_main_png[];
 extern const u8 Bg_overlay_png[];
-
-extern const u8 Main_logo_png[];
-
 extern const u8 Banner_main_png[];
 extern const u8 Banner_bottom_png[];
 extern const u8 Banner_top_png[];
+extern const u8 Main_logo_png[];
 
+/* Generic frames */
 extern const u8 Frame_s1_png[];
 extern const u8 Frame_s2_png[];
 extern const u8 Frame_s3_png[];
+extern const u8 Frame_s4_png[];
 extern const u8 Frame_s1_title_png[];
-extern const u8 Frame_s3_title_png[];
 
+/* ROM Browser */
 extern const u8 Overlay_bar_png[];
-
 extern const u8 Browser_dir_png[];
-
 extern const u8 Star_full_png[];
 extern const u8 Star_empty_png[];
-
 extern const u8 Snap_empty_png[];
 extern const u8 Snap_frame_png[];
 
+/* Main menu */
 extern const u8 Main_load_png[];
 extern const u8 Main_options_png[];
 extern const u8 Main_quit_png[];
@@ -92,12 +93,14 @@ extern const u8 Main_play_wii_png[];
 extern const u8 Main_play_gcn_png[];
 #endif
 
+/* Options menu */
 extern const u8 Option_menu_png[];
 extern const u8 Option_ctrl_png[];
 extern const u8 Option_sound_png[];
 extern const u8 Option_video_png[];
 extern const u8 Option_system_png[];
 
+/* Load ROM menu */
 extern const u8 Load_recent_png[];
 extern const u8 Load_sd_png[];
 extern const u8 Load_dvd_png[];
@@ -105,16 +108,44 @@ extern const u8 Load_dvd_png[];
 extern const u8 Load_usb_png[];
 #endif
 
+/* Generic Buttons */
 extern const u8 Button_text_png[];
 extern const u8 Button_text_over_png[];
 extern const u8 Button_icon_png[];
 extern const u8 Button_icon_over_png[];
+extern const u8 Button_icon_sm_png[];
+extern const u8 Button_icon_sm_over_png[];
 extern const u8 Button_up_png[];
 extern const u8 Button_down_png[];
 extern const u8 Button_up_over_png[];
 extern const u8 Button_down_over_png[];
 
+/* Controller Settings */
+extern const u8 Ctrl_4wayplay_png[];
+extern const u8 Ctrl_gamepad_png[];
+extern const u8 Ctrl_justifiers_png[];
+extern const u8 Ctrl_menacer_png[];
+extern const u8 Ctrl_mouse_png[];
+extern const u8 Ctrl_none_png[];
+extern const u8 Ctrl_teamplayer_png[];
+extern const u8 Ctrl_pad3b_png[];
+extern const u8 Ctrl_pad6b_png[];
+extern const u8 Ctrl_config_png[];
+extern const u8 Ctrl_player_png[];
+extern const u8 Ctrl_player_over_png[];
+extern const u8 Ctrl_player_none_png[];
+extern const u8 ctrl_option_off_png[];
+extern const u8 ctrl_option_on_png[];
+extern const u8 ctrl_gamecube_png[];
 #ifdef HW_RVL
+extern const u8 ctrl_classic_png[];
+extern const u8 ctrl_nunchuk_png[];
+extern const u8 ctrl_wiimote_png[];
+#endif
+
+/* Generic images*/
+#ifdef HW_RVL
+extern const u8 generic_point_png[];
 extern const u8 Key_A_wii_png[];
 extern const u8 Key_B_wii_png[];
 #else
@@ -122,10 +153,7 @@ extern const u8 Key_A_gcn_png[];
 extern const u8 Key_B_gcn_png[];
 #endif
 
-#ifdef HW_RVL
-extern const u8 generic_point_png[];
-#endif
-
+/* Generic sounds */
 extern const u8 button_select_pcm[];
 extern const u32 button_select_pcm_size;
 extern const u8 button_over_pcm[];
@@ -170,7 +198,7 @@ typedef struct
 {
   butn_data *data;          /* pointer to button image/texture data         */
   u8 state;                 /* button state (ACTIVE,VISIBLE,SELECTED...)    */
-  u8 shift[2];              /* up & down direction offsets                  */
+  u8 shift[4];              /* direction offsets                            */
   u16 x;                    /* button image X position (upper left corner)  */
   u16 y;                    /* button image Y position (upper left corner)  */
   u16 w;                    /* button image pixels width                    */

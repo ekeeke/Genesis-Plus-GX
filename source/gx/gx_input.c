@@ -94,6 +94,13 @@ static void pad_config(int chan, int max_keys)
   {
     sprintf(msg, "PAD #%d is not connected !", chan+1);
     WaitPrompt(msg);
+
+    /* remove any pending keys */
+    while (PAD_ButtonsHeld(chan))
+    {
+      VIDEO_WaitVSync();
+      PAD_ScanPads();
+    }
     return;
   }
 
@@ -139,6 +146,13 @@ static void pad_config(int chan, int max_keys)
 
     /* update key mapping */
     if (key !=0xff) config.pad_keymap[chan][i] = key;
+  }
+
+  /* remove any pending keys */
+  while (PAD_ButtonsHeld(chan))
+  {
+    VIDEO_WaitVSync();
+    PAD_ScanPads();
   }
 
   /* restore inputs update callback */
@@ -321,6 +335,14 @@ static void wpad_config(u8 chan, u8 exp, u8 max_keys)
     if (exp == WPAD_EXP_NUNCHUK)  sprintf(msg, "NUNCHUK #%d is not connected !", chan+1);
     if (exp == WPAD_EXP_CLASSIC)  sprintf(msg, "CLASSIC #%d is not connected !", chan+1);
     WaitPrompt(msg);
+
+    /* remove any pending buttons */
+    while (WPAD_ButtonsHeld(chan))
+    {
+      WPAD_ScanPads();
+      VIDEO_WaitVSync();
+    }
+
     return;
   }
 
@@ -402,6 +424,13 @@ static void wpad_config(u8 chan, u8 exp, u8 max_keys)
 
     /* update key mapping */
     if (key != 0xff) config.wpad_keymap[exp + (chan * 3)][i] = key;
+  }
+
+  /* remove any pending buttons */
+  while (WPAD_ButtonsHeld(chan))
+  {
+    WPAD_ScanPads();
+    VIDEO_WaitVSync();
   }
 
   /* restore inputs update callback */
@@ -637,8 +666,9 @@ void gx_input_SetDefault(void)
   for (i=0; i<MAX_DEVICES; i++)
   {
     /* set gamepad by default */
-    config.input[i].device = (i < 4) ? 0 : -1;
-    config.input[i].port = i%4;
+    config.input[i].device  = (i < 4) ? 0 : -1;
+    config.input[i].port    = i%4;
+    config.input[i].padtype = 0;
   }
 
 #ifdef HW_RVL
@@ -707,7 +737,7 @@ void gx_input_UpdateEmu(void)
   WPAD_ScanPads();
 #endif
 
-  for (i=0; i<MAX_INPUTS; i++)
+  for (i=0; i<MAX_DEVICES; i++)
   {
     /* clear key status */
     input.pad[i] = 0;

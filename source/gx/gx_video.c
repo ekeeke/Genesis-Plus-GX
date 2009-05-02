@@ -445,11 +445,11 @@ static void gxResetScale(u32 width, u32 height)
   int temp = 0;
   int xscale, yscale, xshift, yshift;
 
-  /* aspect Ratio (depends on current configuration) */
+  /* Aspect Ratio (depends on current configuration) */
   if (config.aspect)
   {
     /* original aspect ratio */
-    /* the following values have been detected from comparison with a real 50/60hz Mega Drive */
+    /* the following values have been deducted from comparison with a real 50/60hz Mega Drive */
     if (config.overscan)
     {
       /* borders are emulated */
@@ -700,6 +700,7 @@ void gxDrawScreenshot(u8 alpha)
 {
   if (!rmode) return;
 
+  /* retrieve gamescreen texture */
   GXTexObj texobj;
   GX_InitTexObj(&texobj, texturemem, vwidth, vheight, GX_TF_RGB565, GX_CLAMP, GX_CLAMP, GX_FALSE);
   GX_LoadTexObj(&texobj, GX_TEXMAP0);
@@ -720,7 +721,7 @@ void gxDrawScreenshot(u8 alpha)
     h = h * 2;
   }
 
-  /* Draw textured quad */
+  /* draw textured quad */
   GX_Begin(GX_QUADS, GX_VTXFMT0, 4);
   GX_Position2s16(x,y+h);
   GX_Color4u8(0xff,0xff,0xff,alpha);
@@ -740,7 +741,7 @@ void gxDrawScreenshot(u8 alpha)
 
 void gxCopyScreenshot(gx_texture *texture)
 {
-  /* current game texture */
+  /* retrieve gamescreen texture */
   gxClearScreen((GXColor)BLACK);
   GXTexObj texobj;
   GX_InitTexObj(&texobj, texturemem, vwidth, vheight, GX_TF_RGB565, GX_CLAMP, GX_CLAMP, GX_FALSE);
@@ -753,7 +754,7 @@ void gxCopyScreenshot(gx_texture *texture)
   s32 x = -w/2;
   s32 y = -(240+ 2*bitmap.viewport.y);
 
-  /* render gamescreen to EFB */
+  /* draw textured quad */
   GX_Begin(GX_QUADS, GX_VTXFMT0, 4);
   GX_Position2s16(x,y+h);
   GX_Color4u8(0xff,0xff,0xff,0xff);
