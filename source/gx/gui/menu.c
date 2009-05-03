@@ -295,9 +295,9 @@ static gui_butn buttons_main[9] =
   {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{0,3,0,1}, 80, 50,148,132},
   {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{0,3,1,1},246, 50,148,132},
   {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{0,3,1,1},412, 50,148,132},
-  {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{3,3,1,1}, 80,194,148,132},
-  {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX                  ,{3,3,1,1},246,194,148,132},
-  {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{3,2,1,1},412,194,148,132},
+  {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{3,0,1,1}, 80,194,148,132},
+  {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX                  ,{3,0,1,1},246,194,148,132},
+  {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{3,0,1,0},412,194,148,132},
   {NULL             ,                             BUTTON_OVER_SFX                  ,{3,0,1,1},  0,360, 88, 48},
   {NULL             ,                             BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{2,1,1,1},542,330, 88, 38},
   {NULL             ,                             BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{1,0,1,0},542,370, 88, 48}
@@ -475,21 +475,13 @@ void GUI_InitMenu(gui_menu *menu)
   int i;
   gui_item *item;
   gui_butn *button;
-  gui_image *image,*previous = NULL;
+  gui_image *image;
 
   /* background elements */
   for (i=0; i<menu->max_images; i++)
   {
     image = &menu->bg_images[i];
-    if (previous && (previous->data == image->data))
-    {
-      image->texture = previous->texture;
-    }
-    else
-    {
-      image->texture = gxTextureOpenPNG(image->data,0);
-    }
-    previous = image;
+    image->texture = gxTextureOpenPNG(image->data,0);
   }
 
   for (i=0; i<2; i++)
@@ -631,7 +623,7 @@ void GUI_DrawMenu(gui_menu *menu)
       {
         if (button->data) gxDrawTexture(button->data->texture[1],button->x-4,button->y-4,button->w+8,button->h+8,255);
         if (item->data) gxDrawTexture(item->texture, item->x-4,item->y-4,item->w+8,item->h+8,255);
-        else FONT_writeCenter(item->text,18,item->x,item->x+item->w,button->y+(button->h-18)/2+18,(GXColor)DARK_GREY);
+        else FONT_writeCenter(item->text,18,item->x+2,item->x+item->w+2,button->y+(button->h-18)/2+18,(GXColor)DARK_GREY);
 
         /* update help comment */
         if (menu->helpers[1]) strcpy(menu->helpers[1]->comment,item->comment);
@@ -2342,15 +2334,6 @@ static void ctrlmenu(void)
         #else
                 config.input[player].device = 0;
         #endif
-                /* remove duplicate assigned inputs */
-                for (i=0; i<8; i++)
-                {
-                  if ((i!=player) && (config.input[i].device == config.input[player].device) && (config.input[i].port == config.input[player].port))
-                  {
-                    config.input[i].device = -1;
-                    config.input[i].port = i%4;
-                  }
-                }
 
                 if (config.input[player].device == 1) config.input[player].padtype = DEVICE_3BUTTON;
                 break;
@@ -2401,6 +2384,16 @@ static void ctrlmenu(void)
           gxSetScreen();
 
           xoffset += 20;
+        }
+
+        /* remove duplicate assigned inputs */
+        for (i=0; i<8; i++)
+        {
+          if ((i!=player) && (config.input[i].device == config.input[player].device) && (config.input[i].port == config.input[player].port))
+          {
+            config.input[i].device = -1;
+            config.input[i].port = i%4;
+          }
         }
 
         break;
@@ -2817,6 +2810,7 @@ void MainMenu (void)
       m->buttons[3].shift[1] = 3;
       m->buttons[4].shift[1] = 3;
       m->buttons[5].shift[1] = 2;
+      m->buttons[5].shift[3] = 1;
       rom_loaded = 1;
     }
   }

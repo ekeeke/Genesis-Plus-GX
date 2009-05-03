@@ -663,7 +663,7 @@ void input_reset ()
         input.dev[j] = config.input[input.max].padtype;
         input.max ++;
       }
-      teamplayer_reset(i);
+      teamplayer_reset(0);
       break;
   }
 
@@ -705,7 +705,7 @@ void input_reset ()
         input.dev[j] = config.input[input.max].padtype;
         input.max ++;
       }
-      teamplayer_reset(i);
+      teamplayer_reset(1);
       break;
   }
 
