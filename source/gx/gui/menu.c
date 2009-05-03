@@ -1868,6 +1868,84 @@ static void ctrl_raz(void)
       max++;
     }
   }
+
+  if (m->buttons[2].state & BUTTON_ACTIVE)
+  {
+    m->buttons[0].shift[3] = 2;
+  }
+  else if (m->buttons[6].state & BUTTON_ACTIVE)
+  {
+    m->buttons[0].shift[3] = 6;
+  }
+  else
+  {
+    m->buttons[0].shift[3] = 0;
+  }
+
+  if (m->buttons[6].state & BUTTON_ACTIVE)
+  {
+    m->buttons[1].shift[3] = 5;
+  }
+  else if (m->buttons[2].state & BUTTON_ACTIVE)
+  {
+    m->buttons[1].shift[3] = 1;
+  }
+  else
+  {
+    m->buttons[1].shift[3] = 0;
+  }
+
+  if (m->buttons[3].state & BUTTON_ACTIVE)
+  {
+    m->buttons[2].shift[1] = 1;
+  }
+  else if (m->buttons[6].state & BUTTON_ACTIVE)
+  {
+    m->buttons[2].shift[1] = 4;
+  }
+  else
+  {
+    m->buttons[2].shift[1] = 0;
+  }
+
+  if (m->buttons[5].state & BUTTON_ACTIVE)
+  {
+    m->buttons[6].shift[0] = 1;
+  }
+  else if (m->buttons[2].state & BUTTON_ACTIVE)
+  {
+    m->buttons[6].shift[0] = 4;
+  }
+  else
+  {
+    m->buttons[6].shift[0] = 0;
+  }
+
+  if (m->buttons[6].state & BUTTON_ACTIVE)
+  {
+    m->buttons[5].shift[1] = 1;
+  }
+  else
+  {
+    m->buttons[5].shift[1] = 0;
+  }
+
+  if (m->buttons[7].state & BUTTON_ACTIVE)
+  {
+    m->buttons[6].shift[1] = 1;
+    if (m->buttons[8].state & BUTTON_ACTIVE)
+    {
+      m->buttons[7].shift[1] = 1;
+    }
+    else
+    {
+      m->buttons[7].shift[1] = 0;
+    }
+  }
+  else
+  {
+    m->buttons[6].shift[1] = 0;
+  }
 }
 
 
