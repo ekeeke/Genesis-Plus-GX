@@ -43,10 +43,10 @@ u8 ConfigRequested = 0;
 #define KEY_BUTTONB 1
 #define KEY_BUTTONC 2
 #define KEY_START   3
-#define KEY_BUTTONX 5  /* 6-buttons only */
-#define KEY_BUTTONY 6  /* 6-buttons only */
-#define KEY_BUTTONZ 7  /* 6-buttons only */
-#define KEY_MODE    8  /* 6-buttons only */
+#define KEY_BUTTONX 4  /* 6-buttons only */
+#define KEY_BUTTONY 5  /* 6-buttons only */
+#define KEY_BUTTONZ 6  /* 6-buttons only */
+#define KEY_MODE    7  /* 6-buttons only */
 
 static const char *keys_name[MAX_KEYS] =
 {
