@@ -68,8 +68,8 @@ static butn_data arrow_down_data =
 /*  GUI Arrows button                                                        */
 /*****************************************************************************/
 
-static gui_butn arrow_up = {&arrow_up_data,BUTTON_VISIBLE|BUTTON_OVER_SFX,{0,0},14,76,360,32};
-static gui_butn arrow_down = {&arrow_down_data,BUTTON_VISIBLE|BUTTON_OVER_SFX,{0,0},14,368,360,32};
+static gui_butn arrow_up = {&arrow_up_data,BUTTON_VISIBLE|BUTTON_OVER_SFX,{0,0,0,0},14,76,360,32};
+static gui_butn arrow_down = {&arrow_down_data,BUTTON_VISIBLE|BUTTON_OVER_SFX,{0,0,0,0},14,368,360,32};
 
 /*****************************************************************************/
 /*  GUI helpers                                                              */
@@ -97,16 +97,16 @@ static gui_item action_select =
 /*****************************************************************************/
 static gui_image bg_filesel[10] =
 {
-  {NULL,Bg_main_png,IMAGE_VISIBLE,356,144,348,288,255,{0,0},{0,0}},
-  {NULL,Bg_overlay_png,IMAGE_VISIBLE|IMAGE_REPEAT,0,0,640,480,255,{0,0},{0,0}},
-  {NULL,Banner_top_png,IMAGE_VISIBLE,0,0,640,108,255,{0,0},{0,0}},
-  {NULL,Banner_bottom_png,IMAGE_VISIBLE,0,380,640,100,255,{0,0},{0,0}},
-  {NULL,Main_logo_png,IMAGE_VISIBLE,466,40,152,44,255,{0,0},{0,0}},
-  {NULL,Frame_s1_png,IMAGE_VISIBLE,8,70,372,336,200,{0,0},{0,0}},
-  {NULL,Frame_s2_png,0,384,264,248,140,200,{0,0},{0,0}},
-  {NULL,Snap_empty_png,IMAGE_VISIBLE,422,114,164,116,255,{0,0},{0,0}},
-  {NULL,NULL,0,424,116,160,112,255,{0,0},{0,0}},
-  {NULL,Snap_frame_png,IMAGE_VISIBLE,388,112,236,148,255,{0,0},{0,0}}
+  {NULL,Bg_main_png,IMAGE_VISIBLE,356,144,348,288,255},
+  {NULL,Bg_overlay_png,IMAGE_VISIBLE|IMAGE_REPEAT,0,0,640,480,255},
+  {NULL,Banner_top_png,IMAGE_VISIBLE,0,0,640,108,255},
+  {NULL,Banner_bottom_png,IMAGE_VISIBLE,0,380,640,100,255},
+  {NULL,Main_logo_png,IMAGE_VISIBLE,466,40,152,44,255},
+  {NULL,Frame_s1_png,IMAGE_VISIBLE,8,70,372,336,200},
+  {NULL,Frame_s2_png,0,384,264,248,140,200},
+  {NULL,Snap_empty_png,IMAGE_VISIBLE,422,114,164,116,255},
+  {NULL,NULL,0,424,116,160,112,255},
+  {NULL,Snap_frame_png,IMAGE_VISIBLE,388,112,236,148,255}
 };
 
 /*****************************************************************************/
@@ -196,10 +196,6 @@ int FileSelector(unsigned char *buffer)
   bar_over.h = bar_over.texture->height;
   bar_over.x = 22;
   bar_over.y = -(bar_over.h - dir_icon.h)/2;
-
-  /* Initialize star icons */
-  //gx_texture *star_full  = gxTextureOpenPNG(Star_full_png);
-  //gx_texture *star_empty = gxTextureOpenPNG(Star_empty_png);
 
   while (!quit)
   {
@@ -300,6 +296,7 @@ int FileSelector(unsigned char *buffer)
     {
       gxTextureClose(&w_pointer);
       GUI_DeleteMenu(m);
+      GUI_FadeOut();
       shutdown();
       SYS_ResetSystem(SYS_POWEROFF, 0, 0);
     }
@@ -486,8 +483,6 @@ int FileSelector(unsigned char *buffer)
   GUI_DeleteMenu(m);
   gxTextureClose(&bar_over.texture);
   gxTextureClose(&dir_icon.texture);
-  //gxTextureClose(&star_full);
-  //gxTextureClose(&star_empty);
 
   if (quit == 2) return 0;
   else if (useFAT) return FAT_LoadFile(buffer);

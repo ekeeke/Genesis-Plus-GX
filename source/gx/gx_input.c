@@ -73,8 +73,8 @@ static int held_cnt = 0;
 /* default directions mapping  */
 static u32 wpad_dirmap[3][4] =
 {
-  {WPAD_BUTTON_RIGHT, WPAD_BUTTON_LEFT, WPAD_BUTTON_UP, WPAD_BUTTON_DOWN},  /* WIIMOTE */
-  {WPAD_BUTTON_UP, WPAD_BUTTON_DOWN, WPAD_BUTTON_LEFT, WPAD_BUTTON_RIGHT},  /* WIIMOTE + NUNCHUK */
+  {WPAD_BUTTON_RIGHT, WPAD_BUTTON_LEFT, WPAD_BUTTON_UP, WPAD_BUTTON_DOWN},                                /* WIIMOTE */
+  {WPAD_BUTTON_UP, WPAD_BUTTON_DOWN, WPAD_BUTTON_LEFT, WPAD_BUTTON_RIGHT},                                /* WIIMOTE + NUNCHUK */
   {WPAD_CLASSIC_BUTTON_UP, WPAD_CLASSIC_BUTTON_DOWN, WPAD_CLASSIC_BUTTON_LEFT, WPAD_CLASSIC_BUTTON_RIGHT} /* CLASSIC */
 };
 #endif
@@ -96,11 +96,7 @@ static void pad_config(int chan, int max_keys)
     WaitPrompt(msg);
 
     /* remove any pending keys */
-    while (PAD_ButtonsHeld(chan))
-    {
-      VIDEO_WaitVSync();
-      PAD_ScanPads();
-    }
+    while (m_input.keys) VIDEO_WaitVSync();
     return;
   }
 
@@ -337,12 +333,7 @@ static void wpad_config(u8 chan, u8 exp, u8 max_keys)
     WaitPrompt(msg);
 
     /* remove any pending buttons */
-    while (WPAD_ButtonsHeld(chan))
-    {
-      WPAD_ScanPads();
-      VIDEO_WaitVSync();
-    }
-
+    while (m_input.keys) VIDEO_WaitVSync();
     return;
   }
 

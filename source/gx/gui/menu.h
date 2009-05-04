@@ -32,20 +32,27 @@
 /*****************************************************************************/
 /*  GUI Buttons state                                                        */
 /*****************************************************************************/
-#define BUTTON_VISIBLE        0x01
-#define BUTTON_SHIFT          0x02
-#define BUTTON_ACTIVE         0x04
-#define BUTTON_OVER_SFX       0x10
-#define BUTTON_SELECT_SFX     0x20
+#define BUTTON_VISIBLE       0x01
+#define BUTTON_SHIFT         0x02
+#define BUTTON_ACTIVE        0x04
+#define BUTTON_OVER_SFX      0x08
+#define BUTTON_SELECT_SFX    0x10
+#define BUTTON_FADE          0x20
+#define BUTTON_SLIDE_LEFT    0x40
+#define BUTTON_SLIDE_RIGHT   0x80
+#define BUTTON_SLIDE_TOP    0x100
+#define BUTTON_SLIDE_BOTTOM 0x200
 
 /*****************************************************************************/
 /*  GUI Image state                                                        */
 /*****************************************************************************/
-#define IMAGE_VISIBLE         0x01
-#define IMAGE_REPEAT          0x02
-#define IMAGE_FADE            0x10
-#define IMAGE_SLIDE_X         0x20
-#define IMAGE_SLIDE_Y         0x40
+#define IMAGE_VISIBLE       0x01
+#define IMAGE_REPEAT        0x02
+#define IMAGE_FADE          0x04
+#define IMAGE_SLIDE_LEFT    0x08
+#define IMAGE_SLIDE_RIGHT   0x10
+#define IMAGE_SLIDE_TOP     0x20
+#define IMAGE_SLIDE_BOTTOM  0x40
 
 /*****************************************************************************/
 /*  GUI png data                                                             */
@@ -186,7 +193,7 @@ typedef struct
   u16 h;                /* item image or text height                          */
 } gui_item;
 
-/* Button descriptor */
+/* Button Data descriptor */
 typedef struct
 {
   gx_texture *texture[2];  /* temporary texture datas               */
@@ -197,7 +204,7 @@ typedef struct
 typedef struct
 {
   butn_data *data;          /* pointer to button image/texture data         */
-  u8 state;                 /* button state (ACTIVE,VISIBLE,SELECTED...)    */
+  u16 state;                /* button state (ACTIVE,VISIBLE,SELECTED...)    */
   u8 shift[4];              /* direction offsets                            */
   u16 x;                    /* button image X position (upper left corner)  */
   u16 y;                    /* button image Y position (upper left corner)  */
@@ -216,8 +223,6 @@ typedef struct
   u16 w;                /* image width                            */
   u16 h;                /* image height                           */
   u8 alpha;             /* alpha transparency                     */
-  u16 xrange[2];        /* image X range (slide effect)           */
-  u16 yrange[2];        /* image Y range (slide effect)           */
 } gui_image;
 
 /* Menu descriptor */
@@ -248,11 +253,12 @@ extern gx_texture *w_pointer;
 
 
 extern void MainMenu(void);
+extern void GUI_FadeOut();
 extern void GUI_InitMenu(gui_menu *menu);
 extern void GUI_DeleteMenu(gui_menu *menu);
 extern void GUI_DrawMenu(gui_menu *menu);
 extern void GUI_DrawMenuFX(gui_menu *menu, u8 speed, u8 out);
-extern void GUI_FadeMenu(gui_menu *menu, u8 speed, u8 out);
+extern int GUI_UpdateMenu(gui_menu *menu);
 extern int GUI_RunMenu(gui_menu *menu);
 extern int GUI_WindowPrompt(gui_menu *parent, char *title, char *items[], u8 nb_items);
 #endif

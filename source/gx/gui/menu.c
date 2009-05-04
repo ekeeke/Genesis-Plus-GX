@@ -133,40 +133,41 @@ static gui_item action_select =
 /*****************************************************************************/
 static gui_image bg_main[4] =
 {
-  {NULL,Bg_main_png,IMAGE_VISIBLE|IMAGE_FADE,146,80,348,288,255,{0,0},{0,0}},
-  {NULL,Bg_overlay_png,IMAGE_VISIBLE|IMAGE_REPEAT,0,0,640,480,255,{0,0},{0,0}},
-  {NULL,Banner_main_png,IMAGE_VISIBLE|IMAGE_SLIDE_Y,0,340,640,140,255,{0,0},{0,0}},
-  {NULL,Main_logo_png,IMAGE_VISIBLE|IMAGE_SLIDE_Y,202,362,232,56,255,{0,0},{0,0}}
+  {NULL,Bg_main_png,IMAGE_VISIBLE|IMAGE_FADE,146,80,348,288,255},
+  {NULL,Bg_overlay_png,IMAGE_VISIBLE|IMAGE_REPEAT,0,0,640,480,255},
+  {NULL,Banner_main_png,IMAGE_VISIBLE|IMAGE_SLIDE_BOTTOM,0,340,640,140,255},
+  {NULL,Main_logo_png,IMAGE_VISIBLE|IMAGE_SLIDE_BOTTOM,202,362,232,56,255}
 };
 
 static gui_image bg_misc[5] =
 {
-  {NULL,Bg_main_png,IMAGE_VISIBLE,146,80,348,288,255,{0,0},{0,0}},
-  {NULL,Bg_overlay_png,IMAGE_VISIBLE|IMAGE_REPEAT,0,0,640,480,255,{0,0},{0,0}},
-  {NULL,Banner_top_png,IMAGE_VISIBLE,0,0,640,108,255,{0,0},{0,0}},
-  {NULL,Banner_bottom_png,IMAGE_VISIBLE,0,380,640,100,255,{0,0},{0,0}},
-  {NULL,Main_logo_png,IMAGE_VISIBLE,466,40,152,44,255,{0,0},{0,0}}
+  {NULL,Bg_main_png,IMAGE_VISIBLE,146,80,348,288,255},
+  {NULL,Bg_overlay_png,IMAGE_VISIBLE|IMAGE_REPEAT,0,0,640,480,255},
+  {NULL,Banner_top_png,IMAGE_VISIBLE,0,0,640,108,255},
+  {NULL,Banner_bottom_png,IMAGE_VISIBLE,0,380,640,100,255},
+  {NULL,Main_logo_png,IMAGE_VISIBLE,466,40,152,44,255}
 };
 
-static gui_image bg_ctrls[7] =
+static gui_image bg_ctrls[8] =
 {
-  {NULL,Bg_main_png,IMAGE_VISIBLE,356,144,348,288,255,{0,0},{0,0}},
-  {NULL,Bg_overlay_png,IMAGE_VISIBLE|IMAGE_REPEAT,0,0,640,480,255,{0,0},{0,0}},
-  {NULL,Banner_top_png,IMAGE_VISIBLE,0,0,640,108,255,{0,0},{0,0}},
-  {NULL,Banner_bottom_png,IMAGE_VISIBLE,0,380,640,100,255,{0,0},{0,0}},
-  {NULL,Main_logo_png,IMAGE_VISIBLE,466,40,152,44,255,{0,0},{0,0}},
-  {NULL,Frame_s4_png,IMAGE_VISIBLE,38,72,316,168,128,{0,0},{0,0}},
-  {NULL,Frame_s4_png,IMAGE_VISIBLE,38,242,308,168,128,{0,0},{0,0}},
+  {NULL,Bg_main_png,IMAGE_VISIBLE,356,144,348,288,255},
+  {NULL,Bg_overlay_png,IMAGE_VISIBLE|IMAGE_REPEAT,0,0,640,480,255},
+  {NULL,Banner_top_png,IMAGE_VISIBLE,0,0,640,108,255},
+  {NULL,Banner_bottom_png,IMAGE_VISIBLE,0,380,640,100,255},
+  {NULL,Main_logo_png,IMAGE_VISIBLE,466,40,152,44,255},
+  {NULL,Frame_s4_png,IMAGE_VISIBLE,38,72,316,168,128},
+  {NULL,Frame_s4_png,IMAGE_VISIBLE,38,242,308,168,128},
+  {NULL,Frame_s3_png,IMAGE_SLIDE_RIGHT,400,134,292,248,128}
 };
 
 static gui_image bg_list[6] =
 {
-  {NULL,Bg_main_png,IMAGE_VISIBLE,356,144,348,288,255,{0,0},{0,0}},
-  {NULL,Bg_overlay_png,IMAGE_VISIBLE|IMAGE_REPEAT,0,0,640,480,255,{0,0},{0,0}},
-  {NULL,Banner_top_png,IMAGE_VISIBLE,0,0,640,108,255,{0,0},{0,0}},
-  {NULL,Banner_bottom_png,IMAGE_VISIBLE,0,380,640,100,255,{0,0},{0,0}},
-  {NULL,Main_logo_png,IMAGE_VISIBLE,466,40,152,44,255,{0,0},{0,0}},
-  {NULL,Frame_s1_png,IMAGE_VISIBLE,8,70,372,336,128,{0,0},{0,0}}
+  {NULL,Bg_main_png,IMAGE_VISIBLE,356,144,348,288,255},
+  {NULL,Bg_overlay_png,IMAGE_VISIBLE|IMAGE_REPEAT,0,0,640,480,255},
+  {NULL,Banner_top_png,IMAGE_VISIBLE,0,0,640,108,255},
+  {NULL,Banner_bottom_png,IMAGE_VISIBLE,0,380,640,100,255},
+  {NULL,Main_logo_png,IMAGE_VISIBLE,466,40,152,44,255},
+  {NULL,Frame_s1_png,IMAGE_VISIBLE,8,70,372,336,128}
 };
 
 /*****************************************************************************/
@@ -190,18 +191,21 @@ static gui_item items_main[9] =
   {NULL,Main_showinfo_png,"","",546,372,84,32}
 };
 
-static gui_item items_ctrls[10] =
+static gui_item items_ctrls[13] =
 {
-  {NULL,NULL,"",""                          ,  0,  0,  0,  0},
-  {NULL,NULL,"",""                          ,  0,  0,  0,  0},
-  {NULL,NULL,"","Configure Player settings" ,304,  0, 24,  0},
-  {NULL,NULL,"","Configure Player settings" ,304,  0, 24,  0},
-  {NULL,NULL,"","Configure Player settings" ,304,  0, 24,  0},
-  {NULL,NULL,"","Configure Player settings" ,304,  0, 24,  0},
-  {NULL,NULL,"","Configure Player settings" ,304,  0, 24,  0},
-  {NULL,NULL,"","Configure Player settings" ,304,  0, 24,  0},
-  {NULL,NULL,"","Configure Player settings" ,304,  0, 24,  0},
-  {NULL,NULL,"","Configure Player settings" ,304,  0, 24,  0}
+  {NULL,NULL,"","",  0,  0,  0,  0},
+  {NULL,NULL,"","",  0,  0,  0,  0},
+  {NULL,NULL,"","",304,  0, 24,  0},
+  {NULL,NULL,"","",304,  0, 24,  0},
+  {NULL,NULL,"","",304,  0, 24,  0},
+  {NULL,NULL,"","",304,  0, 24,  0},
+  {NULL,NULL,"","",304,  0, 24,  0},
+  {NULL,NULL,"","",304,  0, 24,  0},
+  {NULL,NULL,"","",304,  0, 24,  0},
+  {NULL,NULL,"","",304,  0, 24,  0},
+  {NULL,NULL,"","",  0,  0,  0,  0},
+  {NULL,NULL,"","",  0,  0,  0,  0},
+  {NULL,Ctrl_config_png,"Configure\nKeys","Set controller keys",536,306,32,32}
 };
 
 #ifdef HW_RVL
@@ -292,30 +296,33 @@ static gui_butn buttons_list[4] =
 /* Main menu */
 static gui_butn buttons_main[9] =
 {
-  {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{0,3,0,1}, 80, 50,148,132},
-  {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{0,3,1,1},246, 50,148,132},
-  {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{0,3,1,1},412, 50,148,132},
-  {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{3,0,1,1}, 80,194,148,132},
-  {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX                  ,{3,0,1,1},246,194,148,132},
-  {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{3,0,1,0},412,194,148,132},
-  {NULL             ,                             BUTTON_OVER_SFX                  ,{3,0,1,1},  0,360, 88, 48},
-  {NULL             ,                             BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{2,1,1,1},542,330, 88, 38},
-  {NULL             ,                             BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{1,0,1,0},542,370, 88, 48}
+  {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_FADE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{0,3,0,1}, 80, 50,148,132},
+  {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_FADE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{0,3,1,1},246, 50,148,132},
+  {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_FADE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{0,3,1,1},412, 50,148,132},
+  {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_FADE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{3,0,1,1}, 80,194,148,132},
+  {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_FADE|BUTTON_OVER_SFX                  ,{3,0,1,1},246,194,148,132},
+  {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_FADE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{3,0,1,0},412,194,148,132},
+  {NULL             ,                             BUTTON_FADE|BUTTON_OVER_SFX                  ,{3,0,1,1},  0,360, 88, 48},
+  {NULL             ,                             BUTTON_FADE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{2,1,1,1},542,330, 88, 38},
+  {NULL             ,                             BUTTON_FADE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{1,0,1,0},542,370, 88, 48}
 };
 
 /* Controllers Menu */
-static gui_butn buttons_ctrls[10] =
+static gui_butn buttons_ctrls[13] =
 {
-  {&button_icon_data  ,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX                  ,{0,1,0,2}, 60, 88,148,132},
-  {&button_icon_data  ,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX                  ,{1,0,0,5}, 60,258,148,132},
-  {NULL               ,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{0,1,2,0},250, 79, 84, 32},
-  {NULL               ,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{1,1,3,0},250,117, 84, 32},
-  {NULL               ,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{1,1,4,0},250,155, 84, 32},
-  {NULL               ,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{1,1,5,0},250,193, 84, 32},
-  {NULL               ,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{1,1,5,0},250,249, 84, 32},
-  {NULL               ,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{1,1,6,0},250,287, 84, 32},
-  {NULL               ,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{1,1,7,0},250,325, 84, 32},
-  {NULL               ,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{1,0,8,0},250,363, 84, 32}
+  {&button_icon_data    ,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX                  ,{0,1,0,2}, 60, 88,148,132},
+  {&button_icon_data    ,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX                  ,{1,0,0,5}, 60,258,148,132},
+  {NULL                 ,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{0,1,2,0},250, 79, 84, 32},
+  {NULL                 ,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{1,1,3,0},250,117, 84, 32},
+  {NULL                 ,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{1,1,4,0},250,155, 84, 32},
+  {NULL                 ,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{1,1,5,0},250,193, 84, 32},
+  {NULL                 ,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{1,1,5,0},250,249, 84, 32},
+  {NULL                 ,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{1,1,6,0},250,287, 84, 32},
+  {NULL                 ,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{1,1,7,0},250,325, 84, 32},
+  {NULL                 ,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{1,0,8,0},250,363, 84, 32},
+  {&button_icon_sm_data ,BUTTON_SLIDE_RIGHT|BUTTON_OVER_SFX                            ,{0,1,1,0},436,168,160, 52},
+  {&button_icon_sm_data ,BUTTON_SLIDE_RIGHT|BUTTON_OVER_SFX                            ,{1,1,0,0},436,232,160, 52},
+  {&button_icon_sm_data ,BUTTON_SLIDE_RIGHT|BUTTON_OVER_SFX|BUTTON_SELECT_SFX          ,{1,0,0,0},436,296,160, 52}
 };
 
 /* Load Game menu */
@@ -369,7 +376,7 @@ static gui_menu menu_ctrls =
 {
   "Controller Settings",
   0,0,
-  10,10,7,
+  13,13,8,
   items_ctrls,
   buttons_ctrls,
   bg_ctrls,
@@ -489,24 +496,21 @@ void GUI_InitMenu(gui_menu *menu)
     /* key helpers */
     item = menu->helpers[i];
     if (item)
-    {
       item->texture = gxTextureOpenPNG(item->data,0);
-    }
 
     /* arrows */
     button = menu->arrows[i];
     if (button)
     {
-      if (!button->data->texture[0]) button->data->texture[0] = gxTextureOpenPNG(button->data->image[0],0);
-      if (!button->data->texture[1]) button->data->texture[1] = gxTextureOpenPNG(button->data->image[1],0);
+      if (!button->data->texture[0])
+        button->data->texture[0] = gxTextureOpenPNG(button->data->image[0],0);
+      if (!button->data->texture[1])
+        button->data->texture[1] = gxTextureOpenPNG(button->data->image[1],0);
 
       /* initial state */
       button->state &= ~BUTTON_VISIBLE;
-      if (((i==0) && (abs(menu->offset) > 0)) ||
-          ((i==1) && (menu->offset + menu->max_buttons) < menu->max_items))
-      {
+      if (((i==0) && (menu->offset != 0)) || ((i==1) && (menu->offset + menu->max_buttons) < menu->max_items))
         button->state |= BUTTON_VISIBLE;
-      }
     }
   }
 
@@ -516,8 +520,10 @@ void GUI_InitMenu(gui_menu *menu)
     button = &menu->buttons[i];
     if (button->data)
     {
-      if (!button->data->texture[0]) button->data->texture[0] = gxTextureOpenPNG(button->data->image[0],0);
-      if (!button->data->texture[1]) button->data->texture[1] = gxTextureOpenPNG(button->data->image[1],0);
+      if (!button->data->texture[0])
+        button->data->texture[0] = gxTextureOpenPNG(button->data->image[0],0);
+      if (!button->data->texture[1])
+        button->data->texture[1] = gxTextureOpenPNG(button->data->image[1],0);
     }
   }
 
@@ -525,7 +531,8 @@ void GUI_InitMenu(gui_menu *menu)
   for (i=0; i<menu->max_items; i++)
   {
     item = &menu->items[i];
-    if (item->data) item->texture = gxTextureOpenPNG(item->data,0);
+    if (item->data)
+      item->texture = gxTextureOpenPNG(item->data,0);
   }
 }
 
@@ -549,9 +556,7 @@ void GUI_DeleteMenu(gui_menu *menu)
     /* key helpers */
     item = menu->helpers[i];
     if (item)
-    {
       gxTextureClose(&item->texture);
-    }
 
     /* arrows */
     button = menu->arrows[i];
@@ -603,8 +608,10 @@ void GUI_DrawMenu(gui_menu *menu)
   for (i=0; i<menu->max_images; i++)
   {
     image = &menu->bg_images[i];
-    if (image->state & IMAGE_REPEAT) gxDrawTextureRepeat(image->texture,image->x,image->y,image->w,image->h,image->alpha);
-    else if (image->state & IMAGE_VISIBLE)gxDrawTexture(image->texture,image->x,image->y,image->w,image->h,image->alpha);
+    if (image->state & IMAGE_REPEAT)
+      gxDrawTextureRepeat(image->texture,image->x,image->y,image->w,image->h,image->alpha);
+    else if (image->state & IMAGE_VISIBLE)
+      gxDrawTexture(image->texture,image->x,image->y,image->w,image->h,image->alpha);
   }
 
   /* menu title */
@@ -621,18 +628,36 @@ void GUI_DrawMenu(gui_menu *menu)
       item = &menu->items[menu->offset +i];
       if (i == menu->selected)
       {
-        if (button->data) gxDrawTexture(button->data->texture[1],button->x-4,button->y-4,button->w+8,button->h+8,255);
-        if (item->data) gxDrawTexture(item->texture, item->x-4,item->y-4,item->w+8,item->h+8,255);
-        else FONT_writeCenter(item->text,18,item->x+2,item->x+item->w+2,button->y+(button->h-18)/2+18,(GXColor)DARK_GREY);
+        if (button->data)
+          gxDrawTexture(button->data->texture[1],button->x-4,button->y-4,button->w+8,button->h+8,255);
+
+        if (item->texture)
+        {
+          gxDrawTexture(item->texture, item->x-4,item->y-4,item->w+8,item->h+8,255);
+          FONT_writeCenter(item->text,16,button->x+4,item->x,button->y+(button->h - 32)/2+16,(GXColor)DARK_GREY);
+        }
+        else
+        {
+          FONT_writeCenter(item->text,18,item->x+2,item->x+item->w+2,button->y+(button->h-18)/2+18,(GXColor)DARK_GREY);
+        }
 
         /* update help comment */
         if (menu->helpers[1]) strcpy(menu->helpers[1]->comment,item->comment);
       }
       else
       {
-        if (button->data) gxDrawTexture(button->data->texture[0],button->x,button->y,button->w, button->h,255);
-        if (item->data) gxDrawTexture(item->texture,item->x,item->y,item->w,item->h,255);
-        else FONT_writeCenter(item->text,16,item->x,item->x+item->w,button->y+(button->h - 16)/2+16,(GXColor)DARK_GREY);
+        if (button->data)
+          gxDrawTexture(button->data->texture[0],button->x,button->y,button->w, button->h,255);
+
+        if (item->texture)
+        {
+          gxDrawTexture(item->texture,item->x,item->y,item->w,item->h,255);
+          FONT_writeCenter(item->text,16,button->x+4,item->x,button->y+(button->h - 32)/2+16,(GXColor)DARK_GREY);
+        }
+        else
+        {
+          FONT_writeCenter(item->text,16,item->x,item->x+item->w,button->y+(button->h - 16)/2+16,(GXColor)DARK_GREY);
+        }
       }
     }
   }
@@ -646,13 +671,9 @@ void GUI_DrawMenu(gui_menu *menu)
       if (button->state & BUTTON_VISIBLE)
       {
         if (menu->selected == (menu->max_buttons + i))
-        {
           gxDrawTexture(button->data->texture[1],button->x-2,button->y-2,button->w+4,button->h+4,255);
-        }
         else
-        {
           gxDrawTexture(button->data->texture[0],button->x,button->y,button->w, button->h,255);
-        }
       }
     }
   }
@@ -677,25 +698,22 @@ void GUI_DrawMenu(gui_menu *menu)
   }
 }
 
-/* Menu fading */
-void GUI_FadeMenu(gui_menu *menu, u8 speed, u8 out)
+/* Basic Fading */
+void GUI_FadeOut()
 {
-  int alpha = 255;
-
-  while (alpha > 0)
+  int alpha = 0;
+  while (alpha < 256)
   {
-    GUI_DrawMenu(menu);
-    gxDrawRectangle(0, 0, 640, 480, out ? (255-alpha) : alpha, (GXColor)BLACK);
-    alpha -= speed;
+    gxDrawRectangle(0, 0, 640, 480, alpha, (GXColor)BLACK);
+    gxSetScreen();
+    alpha ++;
   }
-
-  if (out) gxDrawRectangle(0, 0, 640, 480, 255, (GXColor)BLACK);
 }
 
-/* Menu transitions effect */
+/* Menu Transitions effect */
 void GUI_DrawMenuFX(gui_menu *menu, u8 speed, u8 out)
 {
-  int i,temp,xpos,ypos;
+  int i,temp,xoffset,yoffset;
   int max_offset = 0;
   gui_item *item;
   gui_butn *button;
@@ -706,47 +724,39 @@ void GUI_DrawMenuFX(gui_menu *menu, u8 speed, u8 out)
   {
     image = &menu->bg_images[i];
 
-    if (image->state & IMAGE_SLIDE_X)
+    if (image->state & IMAGE_SLIDE_LEFT)
     {
-      temp = (image->x > 320) ? (640 - image->x) : (image->x + image->w);
+      temp = image->x + image->w;
+      if (max_offset < temp) max_offset = temp;
+    }
+    else if (image->state & IMAGE_SLIDE_RIGHT)
+    {
+      temp = 640 - image->x;
       if (max_offset < temp) max_offset = temp;
     }
 
-    if (image->state & IMAGE_SLIDE_Y)
+
+    if (image->state & IMAGE_SLIDE_TOP)
     {
-      temp = (image->y > 240) ? (480 - image->y) : (image->y + image->h);
+      temp = image->y + image->h;
+      if (max_offset < temp) max_offset = temp;
+    }
+    else if (image->state & IMAGE_SLIDE_BOTTOM)
+    {
+      temp = 480 - image->y;
       if (max_offset < temp) max_offset = temp;
     }
   }
 
-  /* set position ranges*/
-  for (i=0; i<menu->max_images; i++)
-  {
-    image = &menu->bg_images[i];
-
-    if (image->state & IMAGE_SLIDE_X)
-    {
-      image->xrange[out] = (image->x > 320) ? (image->x + max_offset) : (image->x - max_offset);
-      image->xrange[out^1] = image->x;
-    }
-
-    if (image->state & IMAGE_SLIDE_Y)
-    {
-      image->yrange[out] = (image->y > 240) ? (image->y + max_offset) : (image->y - max_offset);
-      image->yrange[out^1] = image->y;
-    }
-  }
+  temp = max_offset;
 
   /* Alpha steps */
   int alpha = out ? 255 : 0;
   int alpha_step = (255 * speed) / max_offset;
   if (out) alpha_step = -alpha_step;
 
-  /* Intialize Menu */
-  GUI_InitMenu(menu);
-
   /* Let's loop until final position has been reached */
-  while (max_offset > 0)
+  while (temp > 0)
   {
     /* background color */
     if (menu->screenshot)
@@ -760,35 +770,41 @@ void GUI_DrawMenuFX(gui_menu *menu, u8 speed, u8 out)
       gxClearScreen(bg_colors[config.bg_color]);
     }
 
-    /* background elements */
+    /* menu title */
+    FONT_write(menu->title, 22,10,56,640,(GXColor)WHITE);
+
+    /* background images */
     for (i=0; i<menu->max_images; i++)
     {
       image = &menu->bg_images[i];
 
-      /* default position */
-       xpos = image->x;
-       ypos = image->y;
+      /* X offset */
+      if (image->state & IMAGE_SLIDE_LEFT)
+        xoffset = out ? (temp - max_offset) : (-temp);
+      else if (image->state & IMAGE_SLIDE_RIGHT)
+        xoffset = out ? (max_offset - temp) : (temp);
+      else
+        xoffset = 0;
 
-      /* update position */
-      if (image->state & IMAGE_SLIDE_X)
-      {
-        xpos = (image->xrange[0] < image->xrange[1]) ? (image->xrange[1] - max_offset) : (image->xrange[1] + max_offset);
-      }
-      if (image->state & IMAGE_SLIDE_Y)
-      {
-        ypos = (image->yrange[0] < image->yrange[1]) ? (image->yrange[1] - max_offset) : (image->yrange[1] + max_offset);
-      }
+      /* Y offset */
+      if (image->state & IMAGE_SLIDE_TOP)
+        yoffset = out ? (temp - max_offset) : (-temp);
+      else if (image->state & IMAGE_SLIDE_BOTTOM)
+        yoffset = out ? (max_offset - temp) : (temp);
+      else
+        yoffset = 0;
 
+      /* draw image */
       if ((image->state & IMAGE_FADE) && ((out && (image->alpha > alpha)) || (!out && (image->alpha < alpha))))
       {
         /* FADE In-Out */
-        if (image->state & IMAGE_REPEAT) gxDrawTextureRepeat(image->texture,xpos,ypos,image->w,image->h,alpha);
-        else if (image->state & IMAGE_VISIBLE)gxDrawTexture(image->texture,xpos,ypos,image->w,image->h,alpha);
+        if (image->state & IMAGE_REPEAT) gxDrawTextureRepeat(image->texture,image->x+xoffset,image->y+yoffset,image->w,image->h,alpha);
+        else if (image->state & IMAGE_VISIBLE)gxDrawTexture(image->texture,image->x+xoffset,image->y+yoffset,image->w,image->h,alpha);
       }
       else
       {
-        if (image->state & IMAGE_REPEAT) gxDrawTextureRepeat(image->texture,xpos,ypos,image->w,image->h,image->alpha);
-        else if (image->state & IMAGE_VISIBLE)gxDrawTexture(image->texture,xpos,ypos,image->w,image->h,image->alpha);
+        if (image->state & IMAGE_REPEAT) gxDrawTextureRepeat(image->texture,image->x+xoffset,image->y+yoffset,image->w,image->h,image->alpha);
+        else if (image->state & IMAGE_VISIBLE)gxDrawTexture(image->texture,image->x+xoffset,image->y+yoffset,image->w,image->h,image->alpha);
       }
     }
 
@@ -799,15 +815,43 @@ void GUI_DrawMenuFX(gui_menu *menu, u8 speed, u8 out)
 
       if (button->state & BUTTON_VISIBLE)
       {
+        /* X offset */
+        if (button->state & BUTTON_SLIDE_LEFT)
+          xoffset = out ? (temp - max_offset) : (-temp);
+        else if (button->state & BUTTON_SLIDE_RIGHT)
+          xoffset = out ? (max_offset - temp) : (temp);
+        else
+          xoffset = 0;
+
+        /* Y offset */
+        if (button->state & BUTTON_SLIDE_TOP)
+          yoffset = out ? (temp - max_offset) : (-temp);
+        else if (button->state & BUTTON_SLIDE_BOTTOM)
+          yoffset = out ? (max_offset - temp) : (temp);
+        else
+          yoffset = 0;
+
         /* draw button + items */ 
         item = &menu->items[menu->offset + i];
-        if (button->data) gxDrawTexture(button->data->texture[0],button->x,button->y,button->w, button->h,alpha);
-        if (item->data) gxDrawTexture(item->texture,item->x,item->y,item->w,item->h,alpha);
+        if (button->state & BUTTON_FADE)
+        {
+          if (button->data) gxDrawTexture(button->data->texture[0],button->x+xoffset,button->y+yoffset,button->w, button->h,alpha);
+          if (item->texture) gxDrawTexture(item->texture,item->x+xoffset,item->y+yoffset,item->w,item->h,alpha);
+        }
+        else
+        {
+          if (button->data) gxDrawTexture(button->data->texture[0],button->x+xoffset,button->y+yoffset,button->w, button->h,255);
+          if (item->texture)
+          {
+            gxDrawTexture(item->texture,item->x+xoffset,item->y+yoffset,item->w,item->h,255);
+            FONT_writeCenter(item->text,16,button->x+xoffset+4,item->x+xoffset,button->y+yoffset+(button->h - 32)/2+16,(GXColor)DARK_GREY);
+          }
+        }
       }
     }
 
     /* update offset */
-    max_offset -= speed;
+    temp -= speed;
 
     /* update alpha */
     alpha += alpha_step;
@@ -830,8 +874,6 @@ void GUI_DrawMenuFX(gui_menu *menu, u8 speed, u8 out)
     gxDrawScreenshot(255);
     gxSetScreen ();
   }
-
-  GUI_DeleteMenu(menu);
 }
 
 /* Window Prompt  */
@@ -943,6 +985,7 @@ int GUI_WindowPrompt(gui_menu *parent, char *title, char *items[], u8 nb_items)
     {
       gxTextureClose(&w_pointer);
       GUI_DeleteMenu(parent);
+      GUI_FadeOut();
       shutdown();
       SYS_ResetSystem(SYS_POWEROFF, 0, 0);
     }
@@ -1049,196 +1092,194 @@ int GUI_WindowPrompt(gui_menu *parent, char *title, char *items[], u8 nb_items)
   return ret;
 }
 
-int GUI_RunMenu(gui_menu *menu)
+int GUI_UpdateMenu(gui_menu *menu)
 {
-  int selected,quit=0;
-  gui_butn *button;
   u16 p;
-  u16 max_buttons = menu->max_buttons;
-  u16 max_items = menu->max_items;
+  int ret = 0;
+  int selected = menu->selected;
+  int max_items = menu->max_items;
+  int max_buttons = menu->max_buttons;
+  gui_butn *button;
 
 #ifdef HW_RVL
   int i,x,y;
   struct orient_t orient;
-#endif
-
-
-  while(quit==0)
+  if (Shutdown)
   {
-    GUI_DrawMenu(menu);
-    selected = menu->selected;
+    GUI_DeleteMenu(menu);
+    GUI_FadeOut();
+    shutdown();
+    SYS_ResetSystem(SYS_POWEROFF, 0, 0);
+  }
+  else if (m_input.ir.valid)
+  {
+    /* get cursor position */
+    x = m_input.ir.x;
+    y = m_input.ir.y;
 
-#ifdef HW_RVL
-    if (Shutdown)
+    /* draw wiimote pointer */
+    WPAD_Orientation(0,&orient);
+    gxResetAngle(orient.roll);
+    gxDrawTexture(w_pointer,x,y,w_pointer->width,w_pointer->height,255);
+    gxResetAngle(0.0);
+
+    /* check for valid buttons */
+    selected = max_buttons + 2;
+    for (i=0; i<max_buttons; i++)
     {
-      gxTextureClose(&w_pointer);
-      GUI_DeleteMenu(menu);
-      shutdown();
-      SYS_ResetSystem(SYS_POWEROFF, 0, 0);
-    }
-    else if (m_input.ir.valid)
-    {
-      /* get cursor position */
-      x = m_input.ir.x;
-      y = m_input.ir.y;
-
-      /* draw wiimote pointer */
-      WPAD_Orientation(0,&orient);
-      gxResetAngle(orient.roll);
-      gxDrawTexture(w_pointer,x,y,w_pointer->width,w_pointer->height,255);
-      gxResetAngle(0.0);
-
-      /* check for valid buttons */
-      selected = max_buttons + 2;
-      for (i=0; i<max_buttons; i++)
+      button = &menu->buttons[i];
+      if ((button->state & BUTTON_ACTIVE)&&(x>=button->x)&&(x<=(button->x+button->w))&&(y>=button->y)&&(y<=(button->y+button->h)))
       {
-        button = &menu->buttons[i];
-        if ((button->state & BUTTON_ACTIVE)&&(x>=button->x)&&(x<=(button->x+button->w))&&(y>=button->y)&&(y<=(button->y+button->h)))
-        {
-          selected = i;
-          break;
-        }
+        selected = i;
+        break;
       }
+    }
 
-      for (i=0; i<2; i++)
+    for (i=0; i<2; i++)
+    {
+      button = menu->arrows[i];
+      if (button)
       {
-        button = menu->arrows[i];
-        if (button)
+        if (button->state & BUTTON_VISIBLE)
         {
-          if (button->state & BUTTON_VISIBLE)
+          if ((x<=(button->x+button->w))&&(y>=button->y)&&(y<=(button->y+button->h)))
           {
-            if ((x<=(button->x+button->w))&&(y>=button->y)&&(y<=(button->y+button->h)))
-            {
-              selected = max_buttons + i;
-              break;
-            }
+            selected = max_buttons + i;
+            break;
           }
         }
       }
     }
-    else
-    {
-      /* reinitialize selection */
-      if (selected >= menu->max_buttons) selected = 0;
-    }
+  }
+  else
+  {
+    /* reinitialize selection */
+    if (selected >= menu->max_buttons) selected = 0;
+  }
 #endif
 
-    /* update screen */
-    gxSetScreen ();
+  /* update screen */
+  gxSetScreen ();
 
-    /* update menu */
-    p = m_input.keys;
+  /* update menu */
+  p = m_input.keys;
 
-    if (selected < max_buttons)
+  if (selected < max_buttons)
+  {
+    button = &menu->buttons[selected];
+    if (p & PAD_BUTTON_UP)
     {
-      button = &menu->buttons[selected];
-      if (p & PAD_BUTTON_UP)
+      selected -= button->shift[0];
+      if (selected < 0)
       {
-        selected -= button->shift[0];
+        selected = 0;
+        if (menu->offset)
+          menu->offset --;
+      }
+    }
+    else if (p & PAD_BUTTON_DOWN)
+    {
+      selected += button->shift[1];
+      if (selected >= max_buttons)
+      {
+        selected = max_buttons - 1;
+        if ((menu->offset + selected < (max_items - 1)))
+          menu->offset ++;
+      }
+    }
+    else if (p & PAD_BUTTON_LEFT)
+    {
+      if (button->state & BUTTON_SHIFT)
+      {
+        /* menu clicked */
+        ret = 2;
+      }
+      else
+      {
+        selected -= button->shift[2];
         if (selected < 0)
         {
           selected = 0;
-          if (menu->offset) menu->offset --;
+          if (menu->offset)
+            menu->offset --;
         }
       }
-      else if (p & PAD_BUTTON_DOWN)
+    }
+    else if (p & PAD_BUTTON_RIGHT)
+    {
+      if (button->state & BUTTON_SHIFT)
       {
-        selected += button->shift[1];
+        /* menu clicked */
+        ret = 1;
+      }
+      else
+      {
+        selected += button->shift[3];
         if (selected >= max_buttons)
         {
           selected = max_buttons - 1;
-          if ((menu->offset + selected < (max_items - 1))) menu->offset ++;
+          if ((menu->offset + selected < (max_items - 1)))
+            menu->offset ++;
         }
       }
-      else if (p & PAD_BUTTON_LEFT)
-      {
-        if (button->state & BUTTON_SHIFT)
-        {
-          quit = -1;
-        }
-        else
-        {
-          selected -= button->shift[2];
-          if (selected < 0)
-          {
-            selected = 0;
-            if (menu->offset) menu->offset --;
-          }
-        }
-      }
-      else if (p & PAD_BUTTON_RIGHT)
-      {
-        if (button->state & BUTTON_SHIFT)
-        {
-          quit = 1;
-        }
-        else
-        {
-          selected += button->shift[3];
-          if (selected >= max_buttons)
-          {
-            selected = max_buttons - 1;
-            if ((menu->offset + selected < (max_items - 1))) menu->offset ++;
-          }
-        }
-      }
-    }
-
-    if (p & PAD_BUTTON_A)
-    {
-      if (selected < max_buttons) quit = 1;
-      else if (selected == max_buttons) menu->offset --; /* up arrow */
-      else if (selected == (max_buttons+1))menu->offset ++; /* down arrow */
-    }
-    else if ((p & PAD_BUTTON_B) || (p & PAD_TRIGGER_Z))
-    {
-      quit = 2;
-    }
-
-    /* selected item has changed ? */
-    if (menu->selected != selected)
-    {
-      if (selected < max_buttons)
-      {
-        /* sound fx */
-        button = &menu->buttons[selected];
-        if (button->state & BUTTON_OVER_SFX)
-        {
-          ASND_SetVoice(ASND_GetFirstUnusedVoice(),VOICE_MONO_16BIT,22050,0,(u8 *)button_over_pcm,button_over_pcm_size,
-                        ((int)config.sfx_volume * 255) / 100,((int)config.sfx_volume * 255) / 100,NULL);
-        }
-      }
-      else if (selected < (max_buttons + 2))
-      {
-        /* sound fx */
-        button = menu->arrows[selected-max_buttons];
-        if (button->state & BUTTON_OVER_SFX)
-        {
-          ASND_SetVoice(ASND_GetFirstUnusedVoice(),VOICE_MONO_16BIT,22050,0,(u8 *)button_over_pcm,button_over_pcm_size,
-                        ((int)config.sfx_volume * 255) / 100,((int)config.sfx_volume * 255) / 100,NULL);
-        }
-      }
-
-      /* update selection */
-      menu->selected = selected;
-    }
-
-    /* update arrows buttons status (items list) */
-    button = menu->arrows[0];
-    if (button)
-    {
-      if (menu->offset > 0) button->state |= BUTTON_VISIBLE;
-      else button->state &= ~BUTTON_VISIBLE;
-    }
-    button = menu->arrows[1];
-    if (button)
-    {
-      if ((menu->offset + max_buttons) < max_items) button->state |= BUTTON_VISIBLE;
-      else button->state &= ~BUTTON_VISIBLE;
     }
   }
 
-  if (quit < 2)
+  if (p & PAD_BUTTON_A)
+  {
+    if (selected < max_buttons) ret = 1; /* menu clicked */
+    else if (selected == max_buttons) menu->offset --; /* up arrow */
+    else if (selected == (max_buttons+1))menu->offset ++; /* down arrow */
+  }
+  else if ((p & PAD_BUTTON_B) || (p & PAD_TRIGGER_Z))
+  {
+    /* quit menu */
+    ret = -1;
+  }
+
+  /* selected item has changed ? */
+  if (menu->selected != selected)
+  {
+    if (selected < max_buttons)
+    {
+      /* sound fx */
+      button = &menu->buttons[selected];
+      if (button->state & BUTTON_OVER_SFX)
+      {
+        ASND_SetVoice(ASND_GetFirstUnusedVoice(),VOICE_MONO_16BIT,22050,0,(u8 *)button_over_pcm,button_over_pcm_size,
+                      ((int)config.sfx_volume * 255) / 100,((int)config.sfx_volume * 255) / 100,NULL);
+      }
+    }
+    else if (selected < (max_buttons + 2))
+    {
+      /* sound fx */
+      button = menu->arrows[selected-max_buttons];
+      if (button->state & BUTTON_OVER_SFX)
+      {
+        ASND_SetVoice(ASND_GetFirstUnusedVoice(),VOICE_MONO_16BIT,22050,0,(u8 *)button_over_pcm,button_over_pcm_size,
+                      ((int)config.sfx_volume * 255) / 100,((int)config.sfx_volume * 255) / 100,NULL);
+      }
+    }
+
+    /* update selection */
+    menu->selected = selected;
+  }
+
+  /* update arrows buttons status (items list) */
+  button = menu->arrows[0];
+  if (button)
+  {
+    if (menu->offset > 0) button->state |= BUTTON_VISIBLE;
+    else button->state &= ~BUTTON_VISIBLE;
+  }
+  button = menu->arrows[1];
+  if (button)
+  {
+    if ((menu->offset + max_buttons) < max_items) button->state |= BUTTON_VISIBLE;
+    else button->state &= ~BUTTON_VISIBLE;
+  }
+
+  if (ret > 0)
   {
     if (selected < max_buttons)
     {
@@ -1250,14 +1291,25 @@ int GUI_RunMenu(gui_menu *menu)
                       ((int)config.sfx_volume * 255) / 100,((int)config.sfx_volume * 255) / 100,NULL);
       }
     }
-
-    /* return item selection index */
-    if (quit < 0) return -2-menu->offset-menu->selected;
-    else return (menu->offset + menu->selected);
   }
 
-  /* leave menu (default) */
-  return -1;
+  return ret;
+}
+
+int GUI_RunMenu(gui_menu *menu)
+{
+  int update = 0;
+
+  /* update menu */
+  while (!update)
+  {
+    GUI_DrawMenu(menu);
+    update = GUI_UpdateMenu(menu);
+  }
+
+  if (update == 2) return (-2-menu->offset-menu->selected);
+  else if (update == 1) return (menu->offset + menu->selected);
+  else return -1;
  }
 
 /* basic slide effect for option menus */
@@ -1454,7 +1506,7 @@ static int domenu (char items[][25], int maxitems, u8 fastmove)
 }
 
 /****************************************************************************
- * Preferences menu
+ * GUI Settings menu
  *
  ****************************************************************************/
 static void prefmenu ()
@@ -1542,7 +1594,7 @@ static void prefmenu ()
 }
 
 /****************************************************************************
- * Sound Option menu
+ * Audio Settings menu
  *
  ****************************************************************************/
 static void soundmenu ()
@@ -1627,7 +1679,7 @@ static void soundmenu ()
 }
 
 /****************************************************************************
- * Misc Option menu
+ * System Settings menu
  *
  ****************************************************************************/
 static void systemmenu ()
@@ -1720,7 +1772,7 @@ static void systemmenu ()
 }
 
 /****************************************************************************
- * Display Option menu
+ * Video Settings menu
  *
  ****************************************************************************/
 static void videomenu ()
@@ -1843,15 +1895,17 @@ static void videomenu ()
 }
 
 /****************************************************************************
- * ConfigureJoypads
+ * Controllers Settings menu
  ****************************************************************************/
 extern int old_system[2];
 
-static void ctrl_raz(void)
+/* Set menu elements depending on current system configuration */
+static void ctrlmenu_raz(void)
 {
+  int i,max = 0;
   gui_menu *m = &menu_ctrls;
 
-  int i,max = 0;
+  /* update players buttons */
   for (i=0; i<MAX_DEVICES; i++)
   {
     if (input.dev[i] == NO_DEVICE)
@@ -1859,112 +1913,62 @@ static void ctrl_raz(void)
       m->buttons[i+2].data  = &button_player_none_data;
       m->buttons[i+2].state &= ~BUTTON_ACTIVE;
       strcpy(m->items[i+2].text,"");
+      strcpy(m->items[i+2].comment,"");
     }
     else
     {
       m->buttons[i+2].data  = &button_player_data;
       m->buttons[i+2].state |= BUTTON_ACTIVE;
       sprintf(m->items[i+2].text,"%d",max + 1);
+      sprintf(m->items[i+2].comment,"Configure Player %d settings", max + 1);
       max++;
     }
   }
 
-  if (m->buttons[2].state & BUTTON_ACTIVE)
-  {
-    m->buttons[0].shift[3] = 2;
-  }
-  else if (m->buttons[6].state & BUTTON_ACTIVE)
-  {
-    m->buttons[0].shift[3] = 6;
-  }
-  else
-  {
-    m->buttons[0].shift[3] = 0;
-  }
+  /* update buttons navigation */
+  if (m->buttons[2].state & BUTTON_ACTIVE) m->buttons[0].shift[3] = 2;
+  else if (m->buttons[6].state & BUTTON_ACTIVE) m->buttons[0].shift[3] = 6;
+  else m->buttons[0].shift[3] = 0;
 
-  if (m->buttons[6].state & BUTTON_ACTIVE)
-  {
-    m->buttons[1].shift[3] = 5;
-  }
-  else if (m->buttons[2].state & BUTTON_ACTIVE)
-  {
-    m->buttons[1].shift[3] = 1;
-  }
-  else
-  {
-    m->buttons[1].shift[3] = 0;
-  }
+  if (m->buttons[6].state & BUTTON_ACTIVE) m->buttons[1].shift[3] = 5;
+  else if (m->buttons[2].state & BUTTON_ACTIVE) m->buttons[1].shift[3] = 1;
+  else m->buttons[1].shift[3] = 0;
 
-  if (m->buttons[3].state & BUTTON_ACTIVE)
-  {
-    m->buttons[2].shift[1] = 1;
-  }
-  else if (m->buttons[6].state & BUTTON_ACTIVE)
-  {
-    m->buttons[2].shift[1] = 4;
-  }
-  else
-  {
-    m->buttons[2].shift[1] = 0;
-  }
+  if (m->buttons[3].state & BUTTON_ACTIVE) m->buttons[2].shift[1] = 1;
+  else if (m->buttons[6].state & BUTTON_ACTIVE) m->buttons[2].shift[1] = 4;
+  else m->buttons[2].shift[1] = 0;
 
-  if (m->buttons[5].state & BUTTON_ACTIVE)
-  {
-    m->buttons[6].shift[0] = 1;
-  }
-  else if (m->buttons[2].state & BUTTON_ACTIVE)
-  {
-    m->buttons[6].shift[0] = 4;
-  }
-  else
-  {
-    m->buttons[6].shift[0] = 0;
-  }
+  if (m->buttons[5].state & BUTTON_ACTIVE) m->buttons[6].shift[0] = 1;
+  else if (m->buttons[2].state & BUTTON_ACTIVE) m->buttons[6].shift[0] = 4;
+  else m->buttons[6].shift[0] = 0;
 
-  if (m->buttons[6].state & BUTTON_ACTIVE)
-  {
-    m->buttons[5].shift[1] = 1;
-  }
-  else
-  {
-    m->buttons[5].shift[1] = 0;
-  }
+  if (m->buttons[6].state & BUTTON_ACTIVE) m->buttons[5].shift[1] = 1;
+  else m->buttons[5].shift[1] = 0;
 
   if (m->buttons[7].state & BUTTON_ACTIVE)
   {
     m->buttons[6].shift[1] = 1;
-    if (m->buttons[8].state & BUTTON_ACTIVE)
-    {
-      m->buttons[7].shift[1] = 1;
-    }
-    else
-    {
-      m->buttons[7].shift[1] = 0;
-    }
+    if (m->buttons[8].state & BUTTON_ACTIVE) m->buttons[7].shift[1] = 1;
+    else m->buttons[7].shift[1] = 0;
   }
-  else
-  {
-    m->buttons[6].shift[1] = 0;
-  }
+  else m->buttons[6].shift[1] = 0;
 }
 
 
 static void ctrlmenu(void)
 {
-  int ret,xoffset,player,selected,old;
+  int player = 0;
+  int old_player = -1;
   int i = 0;
-  int quit = 0;
-  s16 p;
+  int update = 0;
+
+  gui_item *items = NULL;
+  u8 *special = NULL;
+  char msg[16];
 
 #ifdef HW_RVL
   u32 exp;
-  int x,y;
-  struct orient_t orient;
 #endif
-
-  gui_item *item;
-  u8 *special;
-  char msg[16];
 
   /* System devices */
   gui_item items_sys[2][7] =
@@ -1989,37 +1993,23 @@ static void ctrlmenu(void)
     }
   };
 
-  /* Player Configuration window */
-  gui_image window = 
-  {
-    NULL,Frame_s3_png,IMAGE_VISIBLE,400,134,292,248,128,{0,0},{0,0}
-  };
-
-  /* Player Configuration buttons */
-  gui_butn buttons_config[3] =
-  {
-    {&button_icon_sm_data,BUTTON_OVER_SFX                  ,{0,1,0,0},436,168,160, 52},
-    {&button_icon_sm_data,BUTTON_OVER_SFX                  ,{1,1,0,0},436,232,160, 52},
-    {&button_icon_sm_data,BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{1,0,0,0},436,296,160, 52}
-  };
-
   /* Player Configuration special items */
   gui_item items_special[3][2] =
   {
     {
       /* Gamepad options */
-      {NULL,Ctrl_pad3b_png,"Gamepad","Type",534,180,44,28},
-      {NULL,Ctrl_pad6b_png,"Gamepad","Type",534,180,44,28}
+      {NULL,Ctrl_pad3b_png,"Gamepad\nType","Select 6-buttons or 3-buttons pad",534,180,44,28},
+      {NULL,Ctrl_pad6b_png,"Gamepad\nType","Select 6-buttons or 3-buttons pad",534,180,44,28}
     },
     {
       /* Mouse options */
-      {NULL,ctrl_option_off_png,"Invert","Mouse",538,180,24,24},
-      {NULL,ctrl_option_on_png ,"Invert","Mouse",538,180,24,24},
+      {NULL,ctrl_option_off_png,"Invert\nMouse","Enable/Disable Mouse Y-Axis inversion",538,180,24,24},
+      {NULL,ctrl_option_on_png ,"Invert\nMouse","Enable/Disable Mouse Y-Axis inversion",538,180,24,24},
     },
     {
       /* Gun options */
-      {NULL,ctrl_option_off_png,"Show","Cursor",538,180,24,24},
-      {NULL,ctrl_option_on_png ,"Show","Cursor",538,180,24,24},
+      {NULL,ctrl_option_off_png,"Show\nCursor","Enable/Disable Lightgun cursor",538,180,24,24},
+      {NULL,ctrl_option_on_png ,"Show\nCursor","Enable/Disable Lightgun cursor",538,180,24,24},
     }
   };
 
@@ -2027,55 +2017,30 @@ static void ctrlmenu(void)
 #ifdef HW_RVL
   gui_item items_device[5] =
   {
-    {NULL,ctrl_option_off_png ,"Input","Device",538,244,24,24},
-    {NULL,ctrl_gamecube_png   ,"Input","Device",530,246,36,24},
-    {NULL,ctrl_wiimote_png    ,"Input","Device",526,250,40,12},
-    {NULL,ctrl_nunchuk_png    ,"Input","Device",532,242,32,32},
-    {NULL,ctrl_classic_png    ,"Input","Device",526,242,40,32},
+    {NULL,ctrl_option_off_png ,"Input\nDevice","Select Input Controller",538,244,24,24},
+    {NULL,ctrl_gamecube_png   ,"Input\nDevice","Select Input Controller",530,246,36,24},
+    {NULL,ctrl_wiimote_png    ,"Input\nDevice","Select Input Controller",526,250,40,12},
+    {NULL,ctrl_nunchuk_png    ,"Input\nDevice","Select Input Controller",532,242,32,32},
+    {NULL,ctrl_classic_png    ,"Input\nDevice","Select Input Controller",526,242,40,32},
   };
 #else
   gui_item items_device[2] =
   {
-    {NULL,ctrl_option_off_png ,"Input","Device",538,244,24,24},
-    {NULL,ctrl_gamecube_png   ,"Input","Device",530,246,36,24}
+    {NULL,ctrl_option_off_png ,"Input\nDevice","Select Input Controller",538,244,24,24},
+    {NULL,ctrl_gamecube_png   ,"Input\nDevice","Select Input Controller",530,246,36,24}
   };
 #endif
 
-  gui_item items_key =
-  {
-    NULL,Ctrl_config_png   ,"Configure","Keys",536,306,32,32
-  };
-
-
-  gui_item *items_config[3] = 
-  {
-    0,items_device,&items_key
-  };
-
-
+  /* initialize menu */
   gui_menu *m = &menu_ctrls;
-
-  /* initialize menu (generic elements) */
-  m->items[0].data    = NULL;
-  m->items[1].data    = NULL;
-  m->buttons[2].data  = NULL;
-  m->buttons[3].data  = NULL;
-  m->buttons[4].data  = NULL;
-  m->buttons[5].data  = NULL;
-  m->buttons[6].data  = NULL;
-  m->buttons[7].data  = NULL;
-  m->buttons[8].data  = NULL;
-  m->buttons[9].data  = NULL;
   GUI_InitMenu(m);
 
   /* initialize custom buttons */
   button_player_data.texture[0]      = gxTextureOpenPNG(button_player_data.image[0],0);
   button_player_data.texture[1]      = gxTextureOpenPNG(button_player_data.image[1],0);
   button_player_none_data.texture[0] = gxTextureOpenPNG(button_player_none_data.image[0],0);
-  button_icon_sm_data.texture[0]     = gxTextureOpenPNG(button_icon_sm_data.image[0],0);
-  button_icon_sm_data.texture[1]     = gxTextureOpenPNG(button_icon_sm_data.image[1],0);
 
-  /* intialize custom images */
+  /* initialize custom images */
   items_sys[1][0].texture = items_sys[0][0].texture = gxTextureOpenPNG(items_sys[0][0].data,0);
   items_sys[1][1].texture = items_sys[0][1].texture = gxTextureOpenPNG(items_sys[0][1].data,0);
   items_sys[1][2].texture = items_sys[0][2].texture = gxTextureOpenPNG(items_sys[0][2].data,0);
@@ -2083,424 +2048,425 @@ static void ctrlmenu(void)
   items_sys[1][4].texture = items_sys[0][4].texture = gxTextureOpenPNG(items_sys[0][4].data,0);
   items_sys[1][5].texture = items_sys[0][5].texture = gxTextureOpenPNG(items_sys[0][5].data,0);
   items_sys[1][6].texture = items_sys[0][6].texture = gxTextureOpenPNG(items_sys[0][6].data,0);
-  items_key.texture = gxTextureOpenPNG(items_key.data,0);
-#ifdef HW_RVL
-  items_device[0].texture = gxTextureOpenPNG(items_device[0].data,0);
+  items_special[0][0].texture = gxTextureOpenPNG(items_special[0][0].data,0);
+  items_special[0][1].texture = gxTextureOpenPNG(items_special[0][1].data,0);
+  items_special[2][0].texture = items_special[1][0].texture = gxTextureOpenPNG(items_special[1][0].data,0);
+  items_special[2][1].texture = items_special[1][1].texture = gxTextureOpenPNG(items_special[1][1].data,0);
+  items_device[0].texture = items_special[1][0].texture;
   items_device[1].texture = gxTextureOpenPNG(items_device[1].data,0);
+#ifdef HW_RVL
   items_device[2].texture = gxTextureOpenPNG(items_device[2].data,0);
   items_device[3].texture = gxTextureOpenPNG(items_device[3].data,0);
   items_device[4].texture = gxTextureOpenPNG(items_device[4].data,0);
-#else
-  items_device[0].texture = gxTextureOpenPNG(items_device[0].data,0);
-  items_device[1].texture = gxTextureOpenPNG(items_device[1].data,0);
 #endif
-  items_special[0][0].texture = gxTextureOpenPNG(items_special[0][0].data,0);
-  items_special[0][1].texture = gxTextureOpenPNG(items_special[0][1].data,0);
-  items_special[2][0].texture = items_special[1][0].texture = items_device[0].texture;
-  items_special[2][1].texture = items_special[1][1].texture = gxTextureOpenPNG(items_special[1][1].data,0);
 
-  /* initialize custom window */
-  window.texture = gxTextureOpenPNG(window.data,0);
-
-  /* update menu layout */
-  ctrl_raz();
+  /* restore current menu elements */
+  ctrlmenu_raz();
   memcpy(&m->items[0],&items_sys[0][input.system[0]],sizeof(gui_item));
   memcpy(&m->items[1],&items_sys[1][input.system[1]],sizeof(gui_item));
 
+  /* menu title slide effect */
   GUI_SlideMenuTitle(m,strlen("Controller "));
 
-  while (quit == 0)
+  while (update != -1)
   {
-    ret = GUI_RunMenu(m);
+    /* draw menu */
+    GUI_DrawMenu(m);
 
-    switch (ret)
+    /* draw device port number */
+    if (m->bg_images[7].state & IMAGE_VISIBLE)
     {
-      case 0:
-        if (j_cart) break;
-        input.system[0] ++;
-        if (input.system[0] == SYSTEM_MENACER) input.system[0] ++;
-        if (input.system[0] == SYSTEM_JUSTIFIER) input.system[0] ++;
-        if ((input.system[0] == SYSTEM_MOUSE) && (input.system[1] == SYSTEM_MOUSE)) input.system[0] ++;
-        if (input.system[0] == SYSTEM_WAYPLAY) input.system[1] = SYSTEM_WAYPLAY;
-        if (input.system[0] > SYSTEM_WAYPLAY)
-        {
-          input.system[0] = NO_SYSTEM;
-          input.system[1] = SYSTEM_GAMEPAD;
-        }
-        io_reset();
-        old_system[0] = input.system[0];
-        old_system[1] = input.system[1];
+      if (config.input[player].device != -1)
+      {
+        sprintf(msg,"%d",config.input[player].port + 1);
+        FONT_write(msg,14,m->items[11].x+m->items[11].w,m->items[11].y+m->items[11].h,640,(GXColor)DARK_GREY);
+      }
+    }
 
-        /* update menu layout */
-        ctrl_raz();
-        memcpy(&m->items[0],&items_sys[0][input.system[0]],sizeof(gui_item));
-        memcpy(&m->items[1],&items_sys[1][input.system[1]],sizeof(gui_item));
-        break;
-    
-      case 1:
-        if (j_cart) break;
-        input.system[1] ++;
-        if ((input.system[0] == SYSTEM_MOUSE) && (input.system[1] == SYSTEM_MOUSE)) input.system[1] ++;
-        if (input.system[1] == SYSTEM_WAYPLAY) input.system[0] = SYSTEM_WAYPLAY;
-        if (input.system[1] > SYSTEM_WAYPLAY)
-        {
-          input.system[1] = NO_SYSTEM;
-          input.system[0] = SYSTEM_GAMEPAD;
-        }
-        io_reset();
-        old_system[0] = input.system[0];
-        old_system[1] = input.system[1];
+    /* update menu */
+    update = GUI_UpdateMenu(m);
 
-        /* update menu layout */
-        ctrl_raz();
-        memcpy(&m->items[0],&items_sys[0][input.system[0]],sizeof(gui_item));
-        memcpy(&m->items[1],&items_sys[1][input.system[1]],sizeof(gui_item));
-        break;
-
-      case 2:
-      case 3:
-      case 4:
-      case 5:
-      case 6:
-      case 7:
-      case 8:
-      case 9:
-
-        /* update player index */
-        player = 0;
-        for (i=0; i<(ret-2); i++)
-        {
-           if (input.dev[i] != NO_DEVICE) player ++;
-        }
-
-        /* get current player configuration */
-        if (input.dev[ret-2] == DEVICE_LIGHTGUN)
-        {
-          items_config[0] = items_special[2];
-          special = &config.gun_cursor[player % 3];
-        }
-        else if (input.dev[ret-2] == DEVICE_MOUSE)
-        {
-          items_config[0] = items_special[1];
-          special = &config.invert_mouse;
-        }
-        else
-        {
-          items_config[0] = items_special[0];
-          special = &config.input[player].padtype;
-        }
-
-        /* shift player configuration window */
-        xoffset = 640 - window.x;
-        while (xoffset > 0)
-        {
-          GUI_DrawMenu(m);
-          gxDrawTexture(window.texture,window.x+xoffset,window.y,window.w,window.h,window.alpha);
-          gxDrawTexture(buttons_config[0].data->texture[0],buttons_config[0].x+xoffset,buttons_config[0].y,buttons_config[0].w,buttons_config[0].h,255);
-          gxDrawTexture(buttons_config[1].data->texture[0],buttons_config[1].x+xoffset,buttons_config[1].y,buttons_config[1].w,buttons_config[1].h,255);
-          gxDrawTexture(buttons_config[2].data->texture[0],buttons_config[2].x+xoffset,buttons_config[2].y,buttons_config[2].w,buttons_config[2].h,255);
-          item = &items_config[0][*special];
-          gxDrawTexture(item->texture,item->x+xoffset,item->y,item->w,item->h,255);
-          FONT_writeCenter(item->text,16,buttons_config[0].x+xoffset+4,item->x+xoffset,buttons_config[0].y+(buttons_config[0].h - 32)/2+16,(GXColor)DARK_GREY);
-          FONT_writeCenter(item->comment,16,buttons_config[0].x+xoffset+4,item->x+xoffset,buttons_config[0].y+(buttons_config[0].h - 32)/2+32,(GXColor)DARK_GREY);
-          item = &items_config[1][config.input[player].device + 1];
-          gxDrawTexture(item->texture,item->x+xoffset,item->y,item->w,item->h,255);
-          FONT_writeCenter(item->text,16,buttons_config[0].x+xoffset+4,item->x+xoffset,buttons_config[1].y+(buttons_config[1].h - 32)/2+16,(GXColor)DARK_GREY);
-          FONT_writeCenter(item->comment,16,buttons_config[0].x+xoffset+4,item->x+xoffset,buttons_config[1].y+(buttons_config[1].h - 32)/2+32,(GXColor)DARK_GREY);
-          if (config.input[player].device >= 0)
+    if (update > 0)
+    {
+      switch (m->selected)
+      {
+        case 0:
+          if (j_cart) break;
+          input.system[0] ++;
+          if (input.system[0] == SYSTEM_MENACER) input.system[0] ++;
+          if (input.system[0] == SYSTEM_JUSTIFIER) input.system[0] ++;
+          if ((input.system[0] == SYSTEM_MOUSE) && (input.system[1] == SYSTEM_MOUSE)) input.system[0] ++;
+          if (input.system[0] == SYSTEM_WAYPLAY) input.system[1] = SYSTEM_WAYPLAY;
+          if (input.system[0] > SYSTEM_WAYPLAY)
           {
-            sprintf(msg,"%d",config.input[player].port);
-            FONT_write(msg,14,item->x+item->w+xoffset,item->y+item->h,strlen(msg),(GXColor)DARK_GREY);
+            input.system[0] = NO_SYSTEM;
+            input.system[1] = SYSTEM_GAMEPAD;
           }
-          item = items_config[2];
-          gxDrawTexture(item->texture,item->x+xoffset,item->y,item->w,item->h,255);
-          FONT_writeCenter(item->text,16,buttons_config[0].x+xoffset+4,item->x+xoffset,buttons_config[2].y+(buttons_config[2].h - 32)/2+16,(GXColor)DARK_GREY);
-          FONT_writeCenter(item->comment,16,buttons_config[0].x+xoffset+4,item->x+xoffset,buttons_config[2].y+(buttons_config[2].h - 32)/2+32,(GXColor)DARK_GREY);
-          gxSetScreen();
+          io_reset();
+          old_system[0] = input.system[0];
+          old_system[1] = input.system[1];
 
-          xoffset -= 20;
-        }
+          /* update menu elements */
+          ctrlmenu_raz();
+          memcpy(&m->items[0],&items_sys[0][input.system[0]],sizeof(gui_item));
+          memcpy(&m->items[1],&items_sys[1][input.system[1]],sizeof(gui_item));
 
-        /* wait for user input */
-        ret = 0;
-        selected = -1;
-        while (!ret)
-        {
-          GUI_DrawMenu(m);
-          gxDrawTexture(window.texture,window.x,window.y,window.w,window.h,window.alpha);
-          for (i=0; i<3; i++)
+          if (m->bg_images[7].state & IMAGE_VISIBLE)
           {
-            if (i == selected)
-              gxDrawTexture(buttons_config[i].data->texture[1],buttons_config[i].x-4,buttons_config[i].y-4,buttons_config[i].w+8,buttons_config[0].h+8,255);
-            else
-              gxDrawTexture(buttons_config[i].data->texture[0],buttons_config[i].x,buttons_config[i].y,buttons_config[i].w,buttons_config[0].h,255);
+            /* slide out configuration window */
+            GUI_DrawMenuFX(m, 20, 1);
+
+            /* remove configuration window */
+            m->bg_images[7].state &= ~IMAGE_VISIBLE;
+
+            /* disable configuration buttons */
+            m->buttons[10].state &= (~BUTTON_VISIBLE & ~BUTTON_ACTIVE);
+            m->buttons[11].state &= (~BUTTON_VISIBLE & ~BUTTON_ACTIVE);
+            m->buttons[12].state &= (~BUTTON_VISIBLE & ~BUTTON_ACTIVE);
+
+            /* update directions */
+            m->buttons[2].shift[3] = 0;
+            m->buttons[3].shift[3] = 0;
+            m->buttons[4].shift[3] = 0;
+            m->buttons[5].shift[3] = 0;
+            m->buttons[6].shift[3] = 0;
+            m->buttons[7].shift[3] = 0;
+            m->buttons[8].shift[3] = 0;
+            m->buttons[9].shift[3] = 0;
+          }
+          break;
+
+        case 1:
+          if (j_cart) break;
+          input.system[1] ++;
+          if ((input.system[0] == SYSTEM_MOUSE) && (input.system[1] == SYSTEM_MOUSE)) input.system[1] ++;
+          if (input.system[1] == SYSTEM_WAYPLAY) input.system[0] = SYSTEM_WAYPLAY;
+          if (input.system[1] > SYSTEM_WAYPLAY)
+          {
+            input.system[1] = NO_SYSTEM;
+            input.system[0] = SYSTEM_GAMEPAD;
+          }
+          io_reset();
+          old_system[0] = input.system[0];
+          old_system[1] = input.system[1];
+
+          /* update menu elements */
+          ctrlmenu_raz();
+          memcpy(&m->items[0],&items_sys[0][input.system[0]],sizeof(gui_item));
+          memcpy(&m->items[1],&items_sys[1][input.system[1]],sizeof(gui_item));
+
+          if (m->bg_images[7].state & IMAGE_VISIBLE)
+          {
+            /* slide out configuration window */
+            GUI_DrawMenuFX(m, 20, 1);
+
+            /* remove configuration window */
+            m->bg_images[7].state &= ~IMAGE_VISIBLE;
+
+            /* disable configuration buttons */
+            m->buttons[10].state &= (~BUTTON_VISIBLE & ~BUTTON_ACTIVE);
+            m->buttons[11].state &= (~BUTTON_VISIBLE & ~BUTTON_ACTIVE);
+            m->buttons[12].state &= (~BUTTON_VISIBLE & ~BUTTON_ACTIVE);
+
+            /* update directions */
+            m->buttons[2].shift[3] = 0;
+            m->buttons[3].shift[3] = 0;
+            m->buttons[4].shift[3] = 0;
+            m->buttons[5].shift[3] = 0;
+            m->buttons[6].shift[3] = 0;
+            m->buttons[7].shift[3] = 0;
+            m->buttons[8].shift[3] = 0;
+            m->buttons[9].shift[3] = 0;
           }
 
-          item = &items_config[0][*special];
-          gxDrawTexture(item->texture,item->x,item->y,item->w,item->h,255);
-          FONT_writeCenter(item->text,16,buttons_config[0].x+4,item->x,buttons_config[0].y+(buttons_config[0].h - 32)/2+16,(GXColor)DARK_GREY);
-          FONT_writeCenter(item->comment,16,buttons_config[0].x+4,item->x,buttons_config[0].y+(buttons_config[0].h - 32)/2+32,(GXColor)DARK_GREY);
-          item = &items_config[1][config.input[player].device + 1];
-          gxDrawTexture(item->texture,item->x,item->y,item->w,item->h,255);
-          FONT_writeCenter(item->text,16,buttons_config[0].x+4,item->x,buttons_config[1].y+(buttons_config[1].h - 32)/2+16,(GXColor)DARK_GREY);
-          FONT_writeCenter(item->comment,16,buttons_config[0].x+4,item->x,buttons_config[1].y+(buttons_config[1].h - 32)/2+32,(GXColor)DARK_GREY);
-          if (config.input[player].device >= 0)
+          break;
+
+        case 2:
+        case 3:
+        case 4:
+        case 5:
+        case 6:
+        case 7:
+        case 8:
+        case 9:
+          /* remove duplicate assigned inputs */
+          for (i=0; i<MAX_INPUTS; i++)
           {
-            sprintf(msg,"%d",config.input[player].port);
-            FONT_write(msg,14,item->x+item->w,item->y+item->h,strlen(msg),(GXColor)DARK_GREY);
-          }
-          item = items_config[2];
-          gxDrawTexture(item->texture,item->x,item->y,item->w,item->h,255);
-          FONT_writeCenter(item->text,16,buttons_config[0].x+4,item->x,buttons_config[2].y+(buttons_config[2].h - 32)/2+16,(GXColor)DARK_GREY);
-          FONT_writeCenter(item->comment,16,buttons_config[0].x+4,item->x,buttons_config[2].y+(buttons_config[2].h - 32)/2+32,(GXColor)DARK_GREY);
-
-          old = selected;
-          p = m_input.keys;
-
-      #ifdef HW_RVL
-          if (m_input.ir.valid)
-          {
-            /* get cursor position */
-            x = m_input.ir.x;
-            y = m_input.ir.y;
-
-            /* draw wiimote pointer */
-            WPAD_Orientation(0,&orient);
-            gxResetAngle(orient.roll);
-            gxDrawTexture(w_pointer,x,y,w_pointer->width,w_pointer->height,255);
-            gxResetAngle(0.0);
-
-            /* check for valid buttons */
-            selected = -1;
-            for (i=0; i<3; i++)
+            if ((i!=player) && (config.input[i].device == config.input[player].device) && (config.input[i].port == config.input[player].port))
             {
-              if ((x>=buttons_config[i].x)&&(x<=(buttons_config[i].x+buttons_config[i].w))&&(y>=buttons_config[i].y)&&(y<=(buttons_config[i].y+buttons_config[i].h)))
-              {
-                selected = i;
-                break;
-              }
+              config.input[i].device = -1;
+              config.input[i].port = i%4;
             }
+          }
+
+          /* update player index */
+          old_player = player;
+          player = 0;
+          for (i=0; i<(m->selected-2); i++)
+            if (input.dev[i] != NO_DEVICE) player ++;
+
+          /* nothing to do if player did not change */
+          if (player == old_player) break;
+
+          if (m->bg_images[7].state & IMAGE_VISIBLE)
+          {
+            /* slide out configuration window */
+            GUI_DrawMenuFX(m, 20, 1);
           }
           else
           {
-            /* reinitialize selection */
-            if (selected == -1) selected = 0;
-          }
-#endif
+            /* append configuration window */
+            m->bg_images[7].state |= IMAGE_VISIBLE;
 
-          /* update screen */
-          gxSetScreen ();
+            /* disable configuration buttons */
+            m->buttons[10].state |= (BUTTON_VISIBLE | BUTTON_ACTIVE);
+            m->buttons[11].state |= (BUTTON_VISIBLE | BUTTON_ACTIVE);
+            m->buttons[12].state |= (BUTTON_VISIBLE | BUTTON_ACTIVE);
 
-          /* update selection */
-          if (p&PAD_BUTTON_UP)
-          {
-            if (selected > 0) selected --;
-          }
-          else if (p&PAD_BUTTON_DOWN)
-          {
-            if (selected < 2) selected ++;
+            /* update directions */
+            m->buttons[2].shift[3] = 8;
+            m->buttons[3].shift[3] = 7;
+            m->buttons[4].shift[3] = 6;
+            m->buttons[5].shift[3] = 5;
+            m->buttons[6].shift[3] = 4;
+            m->buttons[7].shift[3] = 3;
+            m->buttons[8].shift[3] = 2;
+            m->buttons[9].shift[3] = 1;
+            m->buttons[10].shift[2] = 10 - m->selected;
+            m->buttons[11].shift[2] = 11 - m->selected;
+            m->buttons[12].shift[2] = 12 - m->selected;
           }
 
-          /* sound fx */
-          if (selected != old)
+          /* retrieve current player informations */
+          if (input.dev[m->selected-2] == DEVICE_LIGHTGUN)
           {
-            if (selected >= 0)
+            items = items_special[2];
+            special = &config.gun_cursor[player % 3];
+          }
+          else if (input.dev[m->selected-2] == DEVICE_MOUSE)
+          {
+            items = items_special[1];
+            special = &config.invert_mouse;
+          }
+          else
+          {
+            items = items_special[0];
+            special = &config.input[player].padtype;
+          }
+
+          memcpy(&m->items[10],&items[*special],sizeof(gui_item));
+          memcpy(&m->items[11],&items_device[config.input[player].device + 1],sizeof(gui_item));
+
+          /* slide in configuration window */
+          GUI_DrawMenuFX(m, 20, 0);
+          break;
+
+        case 10: /* specific option */
+          if ((config.input[player].device == 1) && (input.dev[m->selected-2] <= DEVICE_6BUTTON)) break;
+          *special ^= 1;
+          io_reset();
+
+          /* update menu items */
+          memcpy(&m->items[10],&items[*special],sizeof(gui_item));
+          break;
+
+        case 11:  /* input controller selection */
+  #ifdef HW_RVL
+          if (config.input[player].device > 0)
+          {
+            /* WPAD controllers, use next port */
+            config.input[player].port ++;
+          }
+          else
+          {
+            /* Otherwise, use next device */
+            config.input[player].device ++;
+            if (config.input[player].device == 1)
+              config.input[player].port = 0;
+          }
+
+          /* autodetect connected wiimotes (without nunchuk) */
+          if (config.input[player].device == 1)
+          {
+            exp = 4;
+            if (config.input[player].port<4)
             {
-              ASND_SetVoice(ASND_GetFirstUnusedVoice(),VOICE_MONO_16BIT,22050,0,(u8 *)button_over_pcm,button_over_pcm_size,
-                            ((int)config.sfx_volume * 255) / 100,((int)config.sfx_volume * 255) / 100,NULL);
+              WPAD_Probe(config.input[player].port,&exp);
+              if (exp == WPAD_EXP_NUNCHUK) exp = 4;
+            }
+
+            while ((config.input[player].port<4) && (exp == 4))
+            {
+              /* try next port */
+              config.input[player].port ++;
+              if (config.input[player].port<4)
+              {
+                exp = 4;
+                WPAD_Probe(config.input[player].port,&exp);
+                if (exp == WPAD_EXP_NUNCHUK)
+                  exp = 4;
+             }
+            }
+
+            if (config.input[player].port >= 4)
+            {
+              /* no wiimote (without nunchuk)  found, try wiimote+nunchuks */
+              config.input[player].port = 0;
+              config.input[player].device = 2;
             }
           }
 
-          if (p & PAD_BUTTON_A)
+          /* autodetect connected wiimote+nunchuks */
+          if (config.input[player].device == 2)
           {
-            switch (selected)
+            exp = 4;
+            if (config.input[player].port<4)
             {
-              case 0: /* special config */
-                if ((config.input[player].device == 1) && (input.dev[ret-2] <= DEVICE_6BUTTON)) break;
-                *special ^= 1;
-                io_reset();
-                break;
+              WPAD_Probe(config.input[player].port,&exp);
+            }
 
-              case 1:
-        #ifdef HW_RVL
-                if (config.input[player].device > 0)
-                {
-                  config.input[player].port ++;
-                }
-                else
-                {
-                  config.input[player].device ++;
-                  if (config.input[player].device == 1) config.input[player].port = 0;
-                }
+            while ((config.input[player].port<4) && (exp != WPAD_EXP_NUNCHUK))
+            {
+              /* try next port */
+              config.input[player].port ++;
+              if (config.input[player].port<4)
+              {
+                exp = 4;
+                WPAD_Probe(config.input[player].port,&exp);
+              }
+            }
 
-                if (config.input[player].device == 1)
-                {
-                  exp = 4;
-                  if (config.input[player].port<4)
-                  {
-                    WPAD_Probe(config.input[player].port,&exp);
-                    if (exp == WPAD_EXP_NUNCHUK) exp = 4;
-                  }
-
-                  while ((config.input[player].port<4) && (exp == 4))
-                  {
-                    config.input[player].port ++;
-                    if (config.input[player].port<4)
-                    {
-                      exp = 4;
-                      WPAD_Probe(config.input[player].port,&exp);
-                      if (exp == WPAD_EXP_NUNCHUK) exp = 4;
-                    }
-                  }
-
-                  if (config.input[player].port >= 4)
-                  {
-                    config.input[player].port = 0;
-                    config.input[player].device = 2;
-                  }
-                }
-
-                if (config.input[player].device == 2)
-                {
-                  exp = 4;
-                  if (config.input[player].port<4)
-                  {
-                    WPAD_Probe(config.input[player].port,&exp);
-                  }
-
-                  while ((config.input[player].port<4) && (exp != WPAD_EXP_NUNCHUK))
-                  {
-                    config.input[player].port ++;
-                    if (config.input[player].port<4)
-                    {
-                      exp = 4;
-                      WPAD_Probe(config.input[player].port,&exp);
-                    }
-                  }
-
-                  if (config.input[player].port >= 4)
-                  {
-                    config.input[player].port = 0;
-                    config.input[player].device = 3;
-                  }
-                }
-
-                if (config.input[player].device == 3)
-                {
-                  exp = 4;
-                  if (config.input[player].port<4)
-                  {
-                    WPAD_Probe(config.input[player].port,&exp);
-                  }
-
-                  while ((config.input[player].port<4) && (exp != WPAD_EXP_CLASSIC))
-                  {
-                    config.input[player].port ++;
-                    if (config.input[player].port<4)
-                    {
-                      exp = 4;
-                      WPAD_Probe(config.input[player].port,&exp);
-                    }
-                  }
-
-                  if (config.input[player].port >= 4)
-                  {
-                    config.input[player].port = player % 4;
-                    config.input[player].device = 0;
-                  }
-                }
-        #else
-                config.input[player].device = 0;
-        #endif
-
-                if (config.input[player].device == 1) config.input[player].padtype = DEVICE_3BUTTON;
-                break;
-
-              case 2:
-                if (config.input[player].device < 0) break;
-                if (config.input[player].padtype == DEVICE_3BUTTON)  /* 3-buttons */
-                  gx_input_Config(config.input[player].port, config.input[player].device, 4);
-                else if (config.input[player].device == 0)    /* 6-buttons w/o MODE */
-                  gx_input_Config(config.input[player].port, 0, 7);
-                else                                          /* 6-buttons */
-                  gx_input_Config(config.input[player].port, config.input[player].device, 8);
-                break;
+            if (config.input[player].port >= 4)
+            {
+              /* no wiimote+nunchuk found, try classic controllers */
+              config.input[player].port = 0;
+              config.input[player].device = 3;
             }
           }
-          else if (p & PAD_BUTTON_B)
+
+          /* autodetect connected classic controllers */
+          if (config.input[player].device == 3)
           {
-            ret = 1;
-          }
-        }
+            exp = 4;
+            if (config.input[player].port<4)
+            {
+              WPAD_Probe(config.input[player].port,&exp);
+            }
 
-        /* shift player configuration window */
-        xoffset = 0; ;
-        while (xoffset < 640 - window.x)
-        {
-          GUI_DrawMenu(m);
-          gxDrawTexture(window.texture,window.x+xoffset,window.y,window.w,window.h,window.alpha);
-          gxDrawTexture(buttons_config[0].data->texture[0],buttons_config[0].x+xoffset,buttons_config[0].y,buttons_config[0].w,buttons_config[0].h,255);
-          gxDrawTexture(buttons_config[1].data->texture[0],buttons_config[1].x+xoffset,buttons_config[1].y,buttons_config[1].w,buttons_config[1].h,255);
-          gxDrawTexture(buttons_config[2].data->texture[0],buttons_config[2].x+xoffset,buttons_config[2].y,buttons_config[2].w,buttons_config[2].h,255);
-          item = &items_config[0][*special];
-          gxDrawTexture(item->texture,item->x+xoffset,item->y,item->w,item->h,255);
-          FONT_writeCenter(item->text,16,buttons_config[0].x+xoffset+4,item->x+xoffset,buttons_config[0].y+(buttons_config[0].h - 32)/2+16,(GXColor)DARK_GREY);
-          FONT_writeCenter(item->comment,16,buttons_config[0].x+xoffset+4,item->x+xoffset,buttons_config[0].y+(buttons_config[0].h - 32)/2+32,(GXColor)DARK_GREY);
-          item = &items_config[1][config.input[player].device + 1];
-          gxDrawTexture(item->texture,item->x+xoffset,item->y,item->w,item->h,255);
-          FONT_writeCenter(item->text,16,buttons_config[0].x+xoffset+4,item->x+xoffset,buttons_config[1].y+(buttons_config[1].h - 32)/2+16,(GXColor)DARK_GREY);
-          FONT_writeCenter(item->comment,16,buttons_config[0].x+xoffset+4,item->x+xoffset,buttons_config[1].y+(buttons_config[1].h - 32)/2+32,(GXColor)DARK_GREY);
-          if (config.input[player].device >= 0)
+            while ((config.input[player].port<4) && (exp != WPAD_EXP_CLASSIC))
+            {
+              /* try next port */
+              config.input[player].port ++;
+              if (config.input[player].port<4)
+              {
+                exp = 4;
+                WPAD_Probe(config.input[player].port,&exp);
+              }
+            }
+
+            if (config.input[player].port >= 4)
+            {
+              /* no classic controller found, use default gamecube pad */
+              config.input[player].port = player % 4;
+              config.input[player].device = 0;
+            }
+          }
+
+          /* force 3-buttons gamepad when using Wiimote */
+          if (config.input[player].device == 1)
+            config.input[player].padtype = DEVICE_3BUTTON;
+
+  #else
+          /* use default gamecube pad */
+          config.input[player].device = 0;
+  #endif
+          
+          /* update menu items */
+          memcpy(&m->items[11],&items_device[config.input[player].device + 1],sizeof(gui_item));
+          break;
+
+        case 12:  /* Controller Keys Configuration */
+          if (config.input[player].device != -1)
           {
-            sprintf(msg,"%d",config.input[player].port);
-            FONT_write(msg,14,item->x+item->w+xoffset,item->y+item->h,strlen(msg),(GXColor)DARK_GREY);
+            if (config.input[player].padtype == DEVICE_6BUTTON)
+            {
+              /* 6-buttons gamepad */
+              if (config.input[player].device == 0)
+              {
+                /* Gamecube PAD: 6-buttons w/o MODE */
+                gx_input_Config(config.input[player].port, config.input[player].device, 7);
+              }
+              else
+              {
+                gx_input_Config(config.input[player].port, config.input[player].device, 8);
+              }
+            }
+            else
+            {
+              /* 3-Buttons gamepad, mouse, lightgun */
+              gx_input_Config(config.input[player].port, config.input[player].device, 4);
+            }
           }
-          item = items_config[2];
-          gxDrawTexture(item->texture,item->x+xoffset,item->y,item->w,item->h,255);
-          FONT_writeCenter(item->text,16,buttons_config[0].x+xoffset+4,item->x+xoffset,buttons_config[2].y+(buttons_config[2].h - 32)/2+16,(GXColor)DARK_GREY);
-          FONT_writeCenter(item->comment,16,buttons_config[0].x+xoffset+4,item->x+xoffset,buttons_config[2].y+(buttons_config[2].h - 32)/2+32,(GXColor)DARK_GREY);
-          gxSetScreen();
-
-          xoffset += 20;
-        }
-
-        /* remove duplicate assigned inputs */
-        for (i=0; i<8; i++)
-        {
-          if ((i!=player) && (config.input[i].device == config.input[player].device) && (config.input[i].port == config.input[player].port))
-          {
-            config.input[i].device = -1;
-            config.input[i].port = i%4;
-          }
-        }
-
-        break;
-
-
-      case -1:
-        quit = 1;
-        break;
+          break;
+      }
     }
   }
 
-  m->items[0].texture = NULL;
-  m->items[1].texture = NULL;
-  m->buttons[2].data  = NULL;
-  m->buttons[3].data  = NULL;
-  m->buttons[4].data  = NULL;
-  m->buttons[5].data  = NULL;
-  m->buttons[6].data  = NULL;
-  m->buttons[7].data  = NULL;
-  m->buttons[8].data  = NULL;
-  m->buttons[9].data  = NULL;
+  /* remove duplicate assigned inputs */
+  for (i=0; i<8; i++)
+  {
+    if ((i!=player) && (config.input[i].device == config.input[player].device) && (config.input[i].port == config.input[player].port))
+    {
+      config.input[i].device = -1;
+      config.input[i].port = i%4;
+    }
+  }
+
+  /* remove configuration window */
+  m->bg_images[7].state &= ~IMAGE_VISIBLE;
+
+  /* disable configuration buttons */
+  m->buttons[10].state &= (~BUTTON_VISIBLE & ~BUTTON_ACTIVE);
+  m->buttons[11].state &= (~BUTTON_VISIBLE & ~BUTTON_ACTIVE);
+  m->buttons[12].state &= (~BUTTON_VISIBLE & ~BUTTON_ACTIVE);
+
+  /* update directions */
+  m->buttons[2].shift[3] = 0;
+  m->buttons[3].shift[3] = 0;
+  m->buttons[4].shift[3] = 0;
+  m->buttons[5].shift[3] = 0;
+  m->buttons[6].shift[3] = 0;
+  m->buttons[7].shift[3] = 0;
+  m->buttons[8].shift[3] = 0;
+  m->buttons[9].shift[3] = 0;
+
+  /* clear menu items */
+  m->items[0].texture   = NULL;
+  m->items[1].texture   = NULL;
+  m->items[10].texture  = NULL;
+  m->items[11].texture  = NULL;
+  m->items[0].data      = NULL;
+  m->items[1].data      = NULL;
+  m->items[10].data     = NULL;
+  m->items[11].data     = NULL;
+  m->buttons[2].data    = NULL;
+  m->buttons[3].data    = NULL;
+  m->buttons[4].data    = NULL;
+  m->buttons[5].data    = NULL;
+  m->buttons[6].data    = NULL;
+  m->buttons[7].data    = NULL;
+  m->buttons[8].data    = NULL;
+  m->buttons[9].data    = NULL;
+
+  /* delete menu */
   GUI_DeleteMenu(m);
 
+  /* delete custom buttons */
   gxTextureClose(&button_player_data.texture[0]);
   gxTextureClose(&button_player_data.texture[1]);
   gxTextureClose(&button_player_none_data.texture[0]);
-  gxTextureClose(&button_icon_sm_data.texture[0]);
-  gxTextureClose(&button_icon_sm_data.texture[1]);
 
+  /* delete custom images */
   gxTextureClose(&items_sys[0][0].texture);
   gxTextureClose(&items_sys[0][1].texture);
   gxTextureClose(&items_sys[0][2].texture);
@@ -2508,22 +2474,16 @@ static void ctrlmenu(void)
   gxTextureClose(&items_sys[0][4].texture);
   gxTextureClose(&items_sys[0][5].texture);
   gxTextureClose(&items_sys[0][6].texture);
-  gxTextureClose(&items_key.texture);
-#ifdef HW_RVL
-  gxTextureClose(&items_device[0].texture);
+  gxTextureClose(&items_special[0][0].texture);
+  gxTextureClose(&items_special[0][1].texture);
+  gxTextureClose(&items_special[1][0].texture);
+  gxTextureClose(&items_special[1][1].texture);
   gxTextureClose(&items_device[1].texture);
+#ifdef HW_RVL
   gxTextureClose(&items_device[2].texture);
   gxTextureClose(&items_device[3].texture);
   gxTextureClose(&items_device[4].texture);
-#else
-  gxTextureClose(&items_device[0].texture);
-  gxTextureClose(&items_device[1].texture);
 #endif
-  gxTextureClose(&items_special[0][0].texture);
-  gxTextureClose(&items_special[0][1].texture);
-  gxTextureClose(&items_special[1][1].texture);
-
-  gxTextureClose(&window.texture);
 }
 
 /****************************************************************************
@@ -2864,6 +2824,7 @@ void MainMenu (void)
 #ifdef HW_RVL
   if (Shutdown)
   {
+    GUI_FadeOut();
     shutdown();
     SYS_ResetSystem(SYS_POWEROFF, 0, 0);
   }
@@ -2880,6 +2841,7 @@ void MainMenu (void)
     if (genromsize)
     {
       m->screenshot = 1;
+      m->bg_images[0].state &= ~IMAGE_VISIBLE;
       m->buttons[3].state |= BUTTON_SELECT_SFX;
       m->buttons[5].state |= BUTTON_SELECT_SFX;
       m->buttons[6].state |= (BUTTON_VISIBLE | BUTTON_ACTIVE);
@@ -2893,7 +2855,9 @@ void MainMenu (void)
     }
   }
 
+  GUI_InitMenu(m);
   GUI_DrawMenuFX(m,10,0);
+  GUI_DeleteMenu(m);
 
   while (quit == 0)
   {
@@ -2903,14 +2867,13 @@ void MainMenu (void)
 
     switch (ret)
     {
-      case -1: /*** Play Game ***/
+      case -1: /*** Return to Game ***/
       case 6:
-        if (genromsize)
-        {
-          /* menu transition to game screen */
-          GUI_DrawMenuFX(m,10,1);
-          quit = 1;
-        }
+        if (!genromsize) break;
+        GUI_InitMenu(m);
+        GUI_DrawMenuFX(m,10,1);
+        GUI_DeleteMenu(m);
+        quit = 1;
         break;
 
       case 0: /*** Quit Emulator ***/
@@ -2919,22 +2882,21 @@ void MainMenu (void)
         switch (GUI_WindowPrompt(m, VERSION, items,3))
         {
           case 1:
-            GUI_FadeMenu(m,1
-            ,1);
 #ifdef HW_RVL
             gxTextureClose(&w_pointer);
 #endif
             GUI_DeleteMenu(m);
+            GUI_FadeOut();
             shutdown();
             exit(0);
             break;
 
           case 2:
-            GUI_FadeMenu(m,1,1);
 #ifdef HW_RVL
             gxTextureClose(&w_pointer);
 #endif
             GUI_DeleteMenu(m);
+            GUI_FadeOut();
             shutdown();
 #ifdef HW_RVL
             SYS_ResetSystem(SYS_RETURNTOMENU, 0, 0);
@@ -2959,7 +2921,8 @@ void MainMenu (void)
         break;
 
       case 3:  /*** Memory Manager ***/
-        if (genromsize) quit = filemenu ();
+        if (!genromsize) break;
+        quit = filemenu ();
         break;
 
       case 4:  /*** Emulator Reset ***/
@@ -2976,22 +2939,24 @@ void MainMenu (void)
         break;
 
       case 7:   /*** ROM Captrure ***/
-        if (genromsize) gx_video_Capture();
+        if (!genromsize) break;
+        gx_video_Capture();
         break;
 
       case 8:   /*** ROM Information ***/
-        if (genromsize) showrominfo ();
+        if (!genromsize) break;
+        showrominfo ();
         break;
     }
   }
 
   /*** Remove any still held buttons ***/
-  while (PAD_ButtonsHeld(0))  PAD_ScanPads();
+  while (PAD_ButtonsHeld(0))
+    PAD_ScanPads();
 #ifdef HW_RVL
-  while (WPAD_ButtonsHeld(0)) WPAD_ScanPads();
-#endif
+  while (WPAD_ButtonsHeld(0))
+    WPAD_ScanPads();
 
-#ifdef HW_RVL
   /* free wiimote pointer data */
   gxTextureClose(&w_pointer);
 #endif

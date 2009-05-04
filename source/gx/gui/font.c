@@ -186,19 +186,35 @@ int FONT_write(char *string, int size, int x, int y, int max_width, GXColor colo
 
 void FONT_writeCenter(char *string, int size, int x1, int x2, int y, GXColor color)
 {
-  int i;
+  int i=0;
   u16 width = 0;
 
-  for (i=0; i<strlen(string); i++)
-    width += (font_size[(u8)string[i]] * size) / fheight;
+  while (string[i] && (string[i] != '\n'))
+    width += (font_size[(u8)string[i++]] * size) / fheight;
 
-  x1 += (x2 - x1 - width - vmode->fbWidth) / 2;
+  int x = x1 + (x2 - x1 - width - vmode->fbWidth) / 2;
   y -= (vmode->efbHeight / 2);
 
-  while (*string)
+  while (*string && (*string != '\n'))
   {
-    DrawChar(*string, x1, y, size,color);
-    x1 += (font_size[(u8)*string++] * size) / fheight;
+    DrawChar(*string, x, y, size,color);
+    x += (font_size[(u8)*string++] * size) / fheight;
+  }
+
+  if (*string == '\n')
+  {
+    string++;
+    i = 0;
+    width = 0;
+    while (string[i])
+      width += (font_size[(u8)string[i++]] * size) / fheight;
+    x = x1 + (x2 - x1 - width - vmode->fbWidth) / 2;
+    y += size;
+    while (*string)
+    {
+      DrawChar(*string, x, y, size,color);
+      x += (font_size[(u8)*string++] * size) / fheight;
+    }
   }
 }
 
