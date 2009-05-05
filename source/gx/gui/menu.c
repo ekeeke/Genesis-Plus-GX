@@ -2264,7 +2264,7 @@ static void ctrlmenu(void)
           if (input.dev[m->selected-2] == DEVICE_LIGHTGUN)
           {
             items = items_special[2];
-            special = &config.gun_cursor[player % 3];
+            special = &config.gun_cursor[m->selected & 1];
           }
           else if (input.dev[m->selected-2] == DEVICE_MOUSE)
           {

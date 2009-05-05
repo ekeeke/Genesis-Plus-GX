@@ -1289,14 +1289,10 @@ void gx_video_Start(void)
   }
 
   /* lightgun textures */
-  if ((input.system[1] == SYSTEM_MENACER) || (input.system[1] == SYSTEM_JUSTIFIER))
-  {
-    if (config.gun_cursor)
-    {
-      if (input.dev[4] == DEVICE_LIGHTGUN) crosshair[0] = gxTextureOpenPNG(Crosshair_p1_png,0);
-      if (input.dev[5] == DEVICE_LIGHTGUN) crosshair[1] = gxTextureOpenPNG(Crosshair_p2_png,0);
-    }
-  }
+  if (config.gun_cursor[0] && (input.dev[4] == DEVICE_LIGHTGUN))
+    crosshair[0] = gxTextureOpenPNG(Crosshair_p1_png,0);
+  if (config.gun_cursor[1] && (input.dev[5] == DEVICE_LIGHTGUN))
+    crosshair[1] = gxTextureOpenPNG(Crosshair_p2_png,0);
 
   /* apply changes on next video update */
   bitmap.viewport.changed = 1;
