@@ -205,7 +205,7 @@ static gui_item items_ctrls[13] =
   {NULL,NULL,"","",304,  0, 24,  0},
   {NULL,NULL,"","",  0,  0,  0,  0},
   {NULL,NULL,"","",  0,  0,  0,  0},
-  {NULL,Ctrl_config_png,"Configure\nKeys","Set controller keys",536,306,32,32}
+  {NULL,Ctrl_config_png,"Keys\nConfig","Configure Controller Keys",530,306,32,32}
 };
 
 #ifdef HW_RVL
@@ -626,10 +626,9 @@ void GUI_DrawMenu(gui_menu *menu)
     {
       /* draw button + items */ 
       item = &menu->items[menu->offset +i];
-      if (i == menu->selected)
+      if ((i == menu->selected) && (button->state & BUTTON_ACTIVE))
       {
-        if (button->data)
-          gxDrawTexture(button->data->texture[1],button->x-4,button->y-4,button->w+8,button->h+8,255);
+        if (button->data) gxDrawTexture(button->data->texture[1],button->x-4,button->y-4,button->w+8,button->h+8,255);
 
         if (item->texture)
         {
@@ -1944,29 +1943,29 @@ static void ctrlmenu_raz(void)
   }
 
   /* update buttons navigation */
-  if (m->buttons[2].state & BUTTON_ACTIVE) m->buttons[0].shift[3] = 2;
-  else if (m->buttons[6].state & BUTTON_ACTIVE) m->buttons[0].shift[3] = 6;
+  if (input.dev[0] != NO_DEVICE) m->buttons[0].shift[3] = 2;
+  else if (input.dev[4] != NO_DEVICE) m->buttons[0].shift[3] = 6;
   else m->buttons[0].shift[3] = 0;
 
-  if (m->buttons[6].state & BUTTON_ACTIVE) m->buttons[1].shift[3] = 5;
-  else if (m->buttons[2].state & BUTTON_ACTIVE) m->buttons[1].shift[3] = 1;
+  if (input.dev[4] != NO_DEVICE) m->buttons[1].shift[3] = 5;
+  else if (input.dev[0] != NO_DEVICE) m->buttons[1].shift[3] = 1;
   else m->buttons[1].shift[3] = 0;
 
-  if (m->buttons[3].state & BUTTON_ACTIVE) m->buttons[2].shift[1] = 1;
-  else if (m->buttons[6].state & BUTTON_ACTIVE) m->buttons[2].shift[1] = 4;
+  if (input.dev[1] != NO_DEVICE) m->buttons[2].shift[1] = 1;
+  else if (input.dev[4] != NO_DEVICE) m->buttons[2].shift[1] = 4;
   else m->buttons[2].shift[1] = 0;
 
-  if (m->buttons[5].state & BUTTON_ACTIVE) m->buttons[6].shift[0] = 1;
-  else if (m->buttons[2].state & BUTTON_ACTIVE) m->buttons[6].shift[0] = 4;
+  if (input.dev[3] != NO_DEVICE) m->buttons[6].shift[0] = 1;
+  else if (input.dev[0] != NO_DEVICE) m->buttons[6].shift[0] = 4;
   else m->buttons[6].shift[0] = 0;
 
-  if (m->buttons[6].state & BUTTON_ACTIVE) m->buttons[5].shift[1] = 1;
+  if (input.dev[4] != NO_DEVICE) m->buttons[5].shift[1] = 1;
   else m->buttons[5].shift[1] = 0;
 
-  if (m->buttons[7].state & BUTTON_ACTIVE)
+  if (input.dev[5] != NO_DEVICE)
   {
     m->buttons[6].shift[1] = 1;
-    if (m->buttons[8].state & BUTTON_ACTIVE) m->buttons[7].shift[1] = 1;
+    if (input.dev[6] != NO_DEVICE) m->buttons[7].shift[1] = 1;
     else m->buttons[7].shift[1] = 0;
   }
   else m->buttons[6].shift[1] = 0;
@@ -2001,13 +2000,13 @@ static void ctrlmenu(void)
       {NULL,Ctrl_4wayplay_png   ,"","Select Port 1 device", 98,110,72,92}
     },
     {
-      {NULL,Ctrl_none_png       ,"","Select Port 1 device",110,300,48,72},
-      {NULL,Ctrl_gamepad_png    ,"","Select Port 1 device", 87,287,96,84},
-      {NULL,Ctrl_mouse_png      ,"","Select Port 1 device", 97,283,64,88},
-      {NULL,Ctrl_menacer_png    ,"","Select Port 1 device", 94,283,80,88},
-      {NULL,Ctrl_justifiers_png ,"","Select Port 1 device", 88,287,80,84},
-      {NULL,Ctrl_teamplayer_png ,"","Select Port 1 device", 94,279,80,92},
-      {NULL,Ctrl_4wayplay_png   ,"","Select Port 1 device", 98,280,72,92}
+      {NULL,Ctrl_none_png       ,"","Select Port 2 device",110,300,48,72},
+      {NULL,Ctrl_gamepad_png    ,"","Select Port 2 device", 87,287,96,84},
+      {NULL,Ctrl_mouse_png      ,"","Select Port 2 device", 97,283,64,88},
+      {NULL,Ctrl_menacer_png    ,"","Select Port 2 device", 94,283,80,88},
+      {NULL,Ctrl_justifiers_png ,"","Select Port 2 device", 88,287,80,84},
+      {NULL,Ctrl_teamplayer_png ,"","Select Port 2 device", 94,279,80,92},
+      {NULL,Ctrl_4wayplay_png   ,"","Select Port 2 device", 98,280,72,92}
     }
   };
 
@@ -2016,18 +2015,18 @@ static void ctrlmenu(void)
   {
     {
       /* Gamepad options */
-      {NULL,Ctrl_pad3b_png,"Gamepad\nType","Select 6-buttons or 3-buttons pad",534,180,44,28},
-      {NULL,Ctrl_pad6b_png,"Gamepad\nType","Select 6-buttons or 3-buttons pad",534,180,44,28}
+      {NULL,Ctrl_pad3b_png,"Pad\nType","Use 6-buttons or 3-buttons Pad",528,180,44,28},
+      {NULL,Ctrl_pad6b_png,"Pad\nType","Use 6-buttons or 3-buttons Pad",528,180,44,28}
     },
     {
       /* Mouse options */
-      {NULL,ctrl_option_off_png,"Invert\nMouse","Enable/Disable Mouse Y-Axis inversion",538,180,24,24},
-      {NULL,ctrl_option_on_png ,"Invert\nMouse","Enable/Disable Mouse Y-Axis inversion",538,180,24,24},
+      {NULL,ctrl_option_off_png,"Invert\nMouse","Enable/Disable Mouse Y-Axis inversion",534,180,24,24},
+      {NULL,ctrl_option_on_png ,"Invert\nMouse","Enable/Disable Mouse Y-Axis inversion",534,180,24,24},
     },
     {
       /* Gun options */
-      {NULL,ctrl_option_off_png,"Show\nCursor","Enable/Disable Lightgun cursor",538,180,24,24},
-      {NULL,ctrl_option_on_png ,"Show\nCursor","Enable/Disable Lightgun cursor",538,180,24,24},
+      {NULL,ctrl_option_off_png,"Show\nCursor","Enable/Disable Lightgun cursor",534,180,24,24},
+      {NULL,ctrl_option_on_png ,"Show\nCursor","Enable/Disable Lightgun cursor",534,180,24,24},
     }
   };
 
@@ -2035,7 +2034,7 @@ static void ctrlmenu(void)
 #ifdef HW_RVL
   gui_item items_device[5] =
   {
-    {NULL,ctrl_option_off_png ,"Input\nDevice","Select Input Controller",538,244,24,24},
+    {NULL,ctrl_option_off_png ,"Input\nDevice","Select Input Controller",534,244,24,24},
     {NULL,ctrl_gamecube_png   ,"Input\nDevice","Select Input Controller",530,246,36,24},
     {NULL,ctrl_wiimote_png    ,"Input\nDevice","Select Input Controller",526,250,40,12},
     {NULL,ctrl_nunchuk_png    ,"Input\nDevice","Select Input Controller",532,242,32,32},
@@ -2044,7 +2043,7 @@ static void ctrlmenu(void)
 #else
   gui_item items_device[2] =
   {
-    {NULL,ctrl_option_off_png ,"Input\nDevice","Select Input Controller",538,244,24,24},
+    {NULL,ctrl_option_off_png ,"Input\nDevice","Select Input Controller",534,244,24,24},
     {NULL,ctrl_gamecube_png   ,"Input\nDevice","Select Input Controller",530,246,36,24}
   };
 #endif
@@ -2084,6 +2083,7 @@ static void ctrlmenu(void)
   memcpy(&m->items[1],&items_sys[1][input.system[1]],sizeof(gui_item));
 
   /* menu title slide effect */
+  m->selected = 0;
   GUI_SlideMenuTitle(m,strlen("Controller "));
 
   while (update != -1)
@@ -2097,7 +2097,10 @@ static void ctrlmenu(void)
       if (config.input[player].device != -1)
       {
         sprintf(msg,"%d",config.input[player].port + 1);
-        FONT_write(msg,14,m->items[11].x+m->items[11].w,m->items[11].y+m->items[11].h,640,(GXColor)DARK_GREY);
+        if (m->selected == 11)
+          FONT_write(msg,16,m->items[11].x+m->items[11].w+4,m->items[11].y+m->items[11].h+4,640,(GXColor)DARK_GREY);
+        else
+          FONT_write(msg,14,m->items[11].x+m->items[11].w,m->items[11].y+m->items[11].h,640,(GXColor)DARK_GREY);
       }
     }
 
@@ -2151,6 +2154,9 @@ static void ctrlmenu(void)
             m->buttons[7].shift[3] = 0;
             m->buttons[8].shift[3] = 0;
             m->buttons[9].shift[3] = 0;
+
+            /* update title */
+            strcpy(m->title,"Controller Settings");
           }
           break;
 
@@ -2195,6 +2201,9 @@ static void ctrlmenu(void)
             m->buttons[7].shift[3] = 0;
             m->buttons[8].shift[3] = 0;
             m->buttons[9].shift[3] = 0;
+
+            /* update title */
+            strcpy(m->title,"Controller Settings");
           }
 
           break;
@@ -2225,9 +2234,8 @@ static void ctrlmenu(void)
 
           if (m->bg_images[7].state & IMAGE_VISIBLE)
           {
-            /* nothing to do if player did not change */
-            if (player == old_player) break;
-
+            if (old_player == player) break;
+            
             /* slide out configuration window */
             GUI_DrawMenuFX(m, 20, 1);
           }
@@ -2236,7 +2244,7 @@ static void ctrlmenu(void)
             /* append configuration window */
             m->bg_images[7].state |= IMAGE_VISIBLE;
 
-            /* disable configuration buttons */
+            /* enable configuration buttons */
             m->buttons[10].state |= (BUTTON_VISIBLE | BUTTON_ACTIVE);
             m->buttons[11].state |= (BUTTON_VISIBLE | BUTTON_ACTIVE);
             m->buttons[12].state |= (BUTTON_VISIBLE | BUTTON_ACTIVE);
@@ -2250,9 +2258,6 @@ static void ctrlmenu(void)
             m->buttons[7].shift[3] = 3;
             m->buttons[8].shift[3] = 2;
             m->buttons[9].shift[3] = 1;
-            m->buttons[10].shift[2] = 10 - m->selected;
-            m->buttons[11].shift[2] = 11 - m->selected;
-            m->buttons[12].shift[2] = 12 - m->selected;
           }
 
           /* retrieve current player informations */
@@ -2276,7 +2281,13 @@ static void ctrlmenu(void)
           memcpy(&m->items[11],&items_device[config.input[player].device + 1],sizeof(gui_item));
 
           /* slide in configuration window */
+          m->buttons[10].shift[2] = 10 - m->selected;
+          m->buttons[11].shift[2] = 11 - m->selected;
+          m->buttons[12].shift[2] = 12 - m->selected;
           GUI_DrawMenuFX(m, 20, 0);
+
+          /* update title */
+          sprintf(m->title,"Controller Settings (Player %d)",player+1);
           break;
 
         case 10: /* specific option */
@@ -2448,7 +2459,7 @@ static void ctrlmenu(void)
   m->buttons[11].state &= (~BUTTON_VISIBLE & ~BUTTON_ACTIVE);
   m->buttons[12].state &= (~BUTTON_VISIBLE & ~BUTTON_ACTIVE);
 
-  /* update directions */
+  /* restore directions */
   m->buttons[2].shift[3] = 0;
   m->buttons[3].shift[3] = 0;
   m->buttons[4].shift[3] = 0;
@@ -2457,6 +2468,9 @@ static void ctrlmenu(void)
   m->buttons[7].shift[3] = 0;
   m->buttons[8].shift[3] = 0;
   m->buttons[9].shift[3] = 0;
+
+  /* restore title */
+  strcpy(m->title,"Controller Settings");
 
   /* clear menu items */
   m->items[0].texture   = NULL;

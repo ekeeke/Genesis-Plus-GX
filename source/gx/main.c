@@ -217,7 +217,7 @@ int main (int argc, char *argv[])
   gx_audio_Init();
 
   /* initialize core engine */
- // legal();
+  legal();
   config_default();
   history_default();
   init_machine();
