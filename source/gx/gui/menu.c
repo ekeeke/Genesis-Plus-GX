@@ -44,11 +44,9 @@ gx_texture *w_pointer;
 /* various background colors */
 static GXColor bg_colors[BG_COLOR_MAX]=
 {
-  {0xd6,0xcb,0xba,0xff}, /* light gold */
-  {0xbb,0xb0,0x99,0xff}, /* gold */
-  {0x66,0x66,0x66,0xff}, /* faded grey */
-  {0xcc,0xcc,0xcc,0xff}, /* light grey */
   {0xd4,0xd0,0xc8,0xff}, /* cream */
+  {0xcc,0xcc,0xcc,0xff}, /* light grey */
+  {0x66,0x66,0x66,0xff}, /* faded grey */
   {0x50,0x51,0x5b,0xff}, /* grey blue */
   {0xb8,0xc7,0xda,0xff}, /* light blue */
   {0xc0,0xcf,0xe7,0xff}, /* sky blue */
@@ -58,7 +56,9 @@ static GXColor bg_colors[BG_COLOR_MAX]=
   {0x7d,0xa4,0x9f,0xff}, /* darker green blue */
   {0x22,0x52,0x74,0xff}, /* dark blue */
   {0x33,0x33,0x33,0xff}, /* dark grey */
-  {0x00,0x00,0x00,0xff}  /* black */
+  {0x00,0x00,0x00,0xff},  /* black */
+  {0xd6,0xcb,0xba,0xff}, /* light gold */
+  {0xbb,0xb0,0x99,0xff} /* gold */
 };
 
 /*****************************************************************************/
@@ -380,7 +380,7 @@ static gui_menu menu_ctrls =
   items_ctrls,
   buttons_ctrls,
   bg_ctrls,
-  {NULL,NULL},
+  {&action_cancel, &action_select},
   {NULL,NULL},
   FALSE
 };
@@ -634,7 +634,7 @@ void GUI_DrawMenu(gui_menu *menu)
         if (item->texture)
         {
           gxDrawTexture(item->texture, item->x-4,item->y-4,item->w+8,item->h+8,255);
-          FONT_writeCenter(item->text,16,button->x+4,item->x,button->y+(button->h - 32)/2+16,(GXColor)DARK_GREY);
+          FONT_writeCenter(item->text,18,button->x+4,item->x-4,button->y+(button->h - 36)/2+18,(GXColor)DARK_GREY);
         }
         else
         {
@@ -652,7 +652,7 @@ void GUI_DrawMenu(gui_menu *menu)
         if (item->texture)
         {
           gxDrawTexture(item->texture,item->x,item->y,item->w,item->h,255);
-          FONT_writeCenter(item->text,16,button->x+4,item->x,button->y+(button->h - 32)/2+16,(GXColor)DARK_GREY);
+          FONT_writeCenter(item->text,16,button->x+8,item->x,button->y+(button->h - 32)/2+16,(GXColor)DARK_GREY);
         }
         else
         {
@@ -698,23 +698,13 @@ void GUI_DrawMenu(gui_menu *menu)
   }
 }
 
-/* Basic Fading */
-void GUI_FadeOut()
-{
-  int alpha = 0;
-  while (alpha < 256)
-  {
-    gxDrawRectangle(0, 0, 640, 480, alpha, (GXColor)BLACK);
-    gxSetScreen();
-    alpha ++;
-  }
-}
-
 /* Menu Transitions effect */
 void GUI_DrawMenuFX(gui_menu *menu, u8 speed, u8 out)
 {
   int i,temp,xoffset,yoffset;
   int max_offset = 0;
+  u8 item_alpha = 255;
+  GXColor text_color = DARK_GREY;
   gui_item *item;
   gui_butn *button;
   gui_image *image;
@@ -770,9 +760,6 @@ void GUI_DrawMenuFX(gui_menu *menu, u8 speed, u8 out)
       gxClearScreen(bg_colors[config.bg_color]);
     }
 
-    /* menu title */
-    FONT_write(menu->title, 22,10,56,640,(GXColor)WHITE);
-
     /* background images */
     for (i=0; i<menu->max_images; i++)
     {
@@ -808,6 +795,16 @@ void GUI_DrawMenuFX(gui_menu *menu, u8 speed, u8 out)
       }
     }
 
+    /* menu title */
+    if (menu->bg_images[2].state & IMAGE_SLIDE_TOP)
+    {
+      FONT_write(menu->title, 22,10,out ? (56 + temp - max_offset) : (56 -temp),640,(GXColor)WHITE);
+    }
+    else
+    {
+      FONT_write(menu->title, 22,10,56,640,(GXColor)WHITE);
+    }
+
     /* draw buttons + items */
     for (i=0; i<menu->max_buttons; i++)
     {
@@ -831,21 +828,30 @@ void GUI_DrawMenuFX(gui_menu *menu, u8 speed, u8 out)
         else
           yoffset = 0;
 
-        /* draw button + items */ 
-        item = &menu->items[menu->offset + i];
+        /* Alpha transparency */
         if (button->state & BUTTON_FADE)
         {
-          if (button->data) gxDrawTexture(button->data->texture[0],button->x+xoffset,button->y+yoffset,button->w, button->h,alpha);
-          if (item->texture) gxDrawTexture(item->texture,item->x+xoffset,item->y+yoffset,item->w,item->h,alpha);
+          item_alpha = alpha;
+          text_color.a = alpha;
         }
         else
         {
-          if (button->data) gxDrawTexture(button->data->texture[0],button->x+xoffset,button->y+yoffset,button->w, button->h,255);
-          if (item->texture)
-          {
-            gxDrawTexture(item->texture,item->x+xoffset,item->y+yoffset,item->w,item->h,255);
-            FONT_writeCenter(item->text,16,button->x+xoffset+4,item->x+xoffset,button->y+yoffset+(button->h - 32)/2+16,(GXColor)DARK_GREY);
-          }
+          item_alpha = 255;
+          text_color.a = 255;
+        }
+
+        /* draw button + items */ 
+        item = &menu->items[menu->offset + i];
+
+        if (button->data) gxDrawTexture(button->data->texture[0],button->x+xoffset,button->y+yoffset,button->w, button->h,item_alpha);
+        if (item->texture)
+        {
+          gxDrawTexture(item->texture,item->x+xoffset,item->y+yoffset,item->w,item->h,item_alpha);
+          FONT_writeCenter(item->text,16,button->x+xoffset+8,item->x+xoffset,button->y+yoffset+(button->h - 32)/2+16,text_color);
+        }
+        else
+        {
+          FONT_writeCenter(item->text,16,item->x+xoffset,item->x+item->w+xoffset,button->y+yoffset+(button->h - 16)/2+16,text_color);
         }
       }
     }
@@ -873,6 +879,18 @@ void GUI_DrawMenuFX(gui_menu *menu, u8 speed, u8 out)
     gxClearScreen((GXColor)BLACK);
     gxDrawScreenshot(255);
     gxSetScreen ();
+  }
+}
+
+/* Basic Fading */
+void GUI_FadeOut()
+{
+  int alpha = 0;
+  while (alpha < 256)
+  {
+    gxDrawRectangle(0, 0, 640, 480, alpha, (GXColor)BLACK);
+    gxSetScreen();
+    alpha ++;
   }
 }
 
@@ -2205,11 +2223,11 @@ static void ctrlmenu(void)
           for (i=0; i<(m->selected-2); i++)
             if (input.dev[i] != NO_DEVICE) player ++;
 
-          /* nothing to do if player did not change */
-          if (player == old_player) break;
-
           if (m->bg_images[7].state & IMAGE_VISIBLE)
           {
+            /* nothing to do if player did not change */
+            if (player == old_player) break;
+
             /* slide out configuration window */
             GUI_DrawMenuFX(m, 20, 1);
           }
