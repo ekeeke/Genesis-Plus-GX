@@ -697,6 +697,7 @@ void input_reset ()
         lightgun_reset(j - 4);
         input.max ++;
       }
+      break;
 
      case SYSTEM_TEAMPLAYER:
       for (j=4; j<8; j++)
