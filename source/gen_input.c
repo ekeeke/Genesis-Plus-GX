@@ -603,7 +603,7 @@ void teamplayer_2_write (uint32 data)
 
 uint32 jcart_read(uint32 address)
 {
-  return (gamepad_read(2) | ((gamepad_read(3)&0x3f) << 8)); /* fixes Micro Machines 2 (is it correct ?) */
+  return (gamepad_read(5) | ((gamepad_read(6)&0x3f) << 8)); /* fixes Micro Machines 2 (is it correct ?) */
 }
 
 void jcart_write(uint32 address, uint32 data)

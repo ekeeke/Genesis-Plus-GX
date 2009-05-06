@@ -167,7 +167,7 @@ int FileSelector(unsigned char *buffer)
   int go_up = 0;
   int quit =0;
   int old = -1;
-  char text[MAXJOLIET+2];
+  char text[MAXPATHLEN];
   char fname[MAXPATHLEN];
   FILE *xml,*snap;
 
@@ -199,40 +199,44 @@ int FileSelector(unsigned char *buffer)
 
   while (!quit)
   {
-    /* get ROM filename without extension */
-    sprintf (text, "%s", filelist[selection].filename);
-    text[strlen(text) - 4] = 0;
-    
-    /* ROM database informations */
-    sprintf (fname, "%s/db/%s.xml", DEFAULT_PATH, text);
-    xml = fopen(fname, "rb");
-    if (xml)
+    /* Ensure a file is selected */
+    if (!filelist[selection].flags)
     {
-      bg_filesel[6].state |= IMAGE_VISIBLE;
-      fclose(xml); /* TODO */
-    }
-    else
-    {
-      bg_filesel[6].state &= ~IMAGE_VISIBLE;
-    }
+      /* get ROM filename without extension */
+      sprintf (text, "%s", filelist[selection].filename);
+      if (strlen(text) >= 4) text[strlen(text) - 4] = 0;
 
-    /* ROM snapshot */
-    if (old != selection)
-    {
-      old = selection;
-
-      /* delete previous texture if any */
-      gxTextureClose(&bg_filesel[8].texture);
-      bg_filesel[8].state &= ~IMAGE_VISIBLE;
-
-      /* open screenshot file */
-      sprintf (fname, "%s/snaps/%s.png", DEFAULT_PATH, text);
-      snap = fopen(fname, "rb");
-      if (snap)
+      /* ROM database informations */
+      sprintf (fname, "%s/db/%s.xml", DEFAULT_PATH, text);
+      xml = fopen(fname, "rb");
+      if (xml)
       {
-        bg_filesel[8].texture = gxTextureOpenPNG(0,snap);
-        fclose(snap);
-        if (bg_filesel[8].texture) bg_filesel[8].state |= IMAGE_VISIBLE;
+        bg_filesel[6].state |= IMAGE_VISIBLE;
+        fclose(xml); /* TODO */
+      }
+      else
+      {
+        bg_filesel[6].state &= ~IMAGE_VISIBLE;
+      }
+
+      /* ROM snapshot */
+      if (old != selection)
+      {
+        old = selection;
+
+        /* delete previous texture if any */
+        gxTextureClose(&bg_filesel[8].texture);
+        bg_filesel[8].state &= ~IMAGE_VISIBLE;
+
+        /* open screenshot file */
+        sprintf (fname, "%s/snaps/%s.png", DEFAULT_PATH, text);
+        snap = fopen(fname, "rb");
+        if (snap)
+        {
+          bg_filesel[8].texture = gxTextureOpenPNG(0,snap);
+          fclose(snap);
+          if (bg_filesel[8].texture) bg_filesel[8].state |= IMAGE_VISIBLE;
+        }
       }
     }
 
@@ -252,7 +256,7 @@ int FileSelector(unsigned char *buffer)
           string_offset = 0;
           filelist[i].filename_offset = 0;
         }
-        sprintf(text, "%s ",filelist[i].filename + string_offset);
+        sprintf(text, "%s  ",filelist[i].filename + string_offset);
         strncat(text, filelist[i].filename, string_offset);
 
         gxDrawTexture(bar_over.texture,bar_over.x,yoffset+bar_over.y,bar_over.w,bar_over.h,255);

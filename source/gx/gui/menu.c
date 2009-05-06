@@ -1937,7 +1937,10 @@ static void ctrlmenu_raz(void)
       m->buttons[i+2].data  = &button_player_data;
       m->buttons[i+2].state |= BUTTON_ACTIVE;
       sprintf(m->items[i+2].text,"%d",max + 1);
-      sprintf(m->items[i+2].comment,"Configure Player %d settings", max + 1);
+      if (j_cart && (i > 4))
+        sprintf(m->items[i+2].comment,"Configure Player %d (J-CART) settings", max + 1);
+      else
+        sprintf(m->items[i+2].comment,"Configure Player %d settings", max + 1);
       max++;
     }
   }
@@ -1946,22 +1949,17 @@ static void ctrlmenu_raz(void)
   if (input.dev[0] != NO_DEVICE) m->buttons[0].shift[3] = 2;
   else if (input.dev[4] != NO_DEVICE) m->buttons[0].shift[3] = 6;
   else m->buttons[0].shift[3] = 0;
-
   if (input.dev[4] != NO_DEVICE) m->buttons[1].shift[3] = 5;
   else if (input.dev[0] != NO_DEVICE) m->buttons[1].shift[3] = 1;
   else m->buttons[1].shift[3] = 0;
-
   if (input.dev[1] != NO_DEVICE) m->buttons[2].shift[1] = 1;
   else if (input.dev[4] != NO_DEVICE) m->buttons[2].shift[1] = 4;
   else m->buttons[2].shift[1] = 0;
-
   if (input.dev[3] != NO_DEVICE) m->buttons[6].shift[0] = 1;
   else if (input.dev[0] != NO_DEVICE) m->buttons[6].shift[0] = 4;
   else m->buttons[6].shift[0] = 0;
-
   if (input.dev[4] != NO_DEVICE) m->buttons[5].shift[1] = 1;
   else m->buttons[5].shift[1] = 0;
-
   if (input.dev[5] != NO_DEVICE)
   {
     m->buttons[6].shift[1] = 1;
@@ -2111,12 +2109,11 @@ static void ctrlmenu(void)
     {
       switch (m->selected)
       {
-        case 0:
+        case 0:   /* update port 1 system */
           if (j_cart) break;
-          input.system[0] ++;
-          if (input.system[0] == SYSTEM_MENACER) input.system[0] ++;
-          if (input.system[0] == SYSTEM_JUSTIFIER) input.system[0] ++;
-          if ((input.system[0] == SYSTEM_MOUSE) && (input.system[1] == SYSTEM_MOUSE)) input.system[0] ++;
+          if (input.system[0] == SYSTEM_MOUSE) input.system[0] +=3; /* lightguns are never used on Port 1 */
+          else input.system[0] ++;
+          if ((input.system[0] == SYSTEM_MOUSE) && (input.system[1] == SYSTEM_MOUSE)) input.system[0] +=3;
           if (input.system[0] == SYSTEM_WAYPLAY) input.system[1] = SYSTEM_WAYPLAY;
           if (input.system[0] > SYSTEM_WAYPLAY)
           {
@@ -2160,7 +2157,7 @@ static void ctrlmenu(void)
           }
           break;
 
-        case 1:
+        case 1:   /* update port 2 system */
           if (j_cart) break;
           input.system[1] ++;
           if ((input.system[0] == SYSTEM_MOUSE) && (input.system[1] == SYSTEM_MOUSE)) input.system[1] ++;
@@ -2291,8 +2288,12 @@ static void ctrlmenu(void)
           break;
 
         case 10: /* specific option */
-          if ((config.input[player].device == 1) && (input.dev[m->selected-2] <= DEVICE_6BUTTON)) break;
           *special ^= 1;
+          if (config.input[player].device == 1)
+          {
+            /* force 3-Buttons pad */
+            config.input[player].padtype = DEVICE_3BUTTON;
+          }
           io_reset();
 
           /* update menu items */
@@ -2403,13 +2404,16 @@ static void ctrlmenu(void)
 
           /* force 3-buttons gamepad when using Wiimote */
           if (config.input[player].device == 1)
+          {
             config.input[player].padtype = DEVICE_3BUTTON;
+            memcpy(&m->items[10],&items[*special],sizeof(gui_item));
+          }
 
-  #else
+#else
           /* use default gamecube pad */
           config.input[player].device = 0;
-  #endif
-          
+#endif
+
           /* update menu items */
           memcpy(&m->items[11],&items_device[config.input[player].device + 1],sizeof(gui_item));
           break;
@@ -2451,7 +2455,7 @@ static void ctrlmenu(void)
     }
   }
 
-  /* remove configuration window */
+  /* disable configuration window */
   m->bg_images[7].state &= ~IMAGE_VISIBLE;
 
   /* disable configuration buttons */
@@ -2459,7 +2463,7 @@ static void ctrlmenu(void)
   m->buttons[11].state &= (~BUTTON_VISIBLE & ~BUTTON_ACTIVE);
   m->buttons[12].state &= (~BUTTON_VISIBLE & ~BUTTON_ACTIVE);
 
-  /* restore directions */
+  /* clear directions */
   m->buttons[2].shift[3] = 0;
   m->buttons[3].shift[3] = 0;
   m->buttons[4].shift[3] = 0;
@@ -2469,18 +2473,16 @@ static void ctrlmenu(void)
   m->buttons[8].shift[3] = 0;
   m->buttons[9].shift[3] = 0;
 
-  /* restore title */
+  /* clear menu title */
   strcpy(m->title,"Controller Settings");
 
   /* clear menu items */
-  m->items[0].texture   = NULL;
-  m->items[1].texture   = NULL;
-  m->items[10].texture  = NULL;
-  m->items[11].texture  = NULL;
-  m->items[0].data      = NULL;
-  m->items[1].data      = NULL;
-  m->items[10].data     = NULL;
-  m->items[11].data     = NULL;
+  memset(&m->items[0],0,sizeof(gui_item));
+  memset(&m->items[1],0,sizeof(gui_item));
+  memset(&m->items[10],0,sizeof(gui_item));
+  memset(&m->items[11],0,sizeof(gui_item));
+
+  /* clear player buttons */
   m->buttons[2].data    = NULL;
   m->buttons[3].data    = NULL;
   m->buttons[4].data    = NULL;
