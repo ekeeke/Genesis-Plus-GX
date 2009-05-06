@@ -86,6 +86,10 @@ void gx_audio_Init(void)
 
 void gx_audio_Shutdown(void)
 {
+  PauseOgg(1);
+  StopOgg();
+  ASND_Pause(1);
+  ASND_End();
   if (Bg_music_ogg) free(Bg_music_ogg);
 }
 
