@@ -157,7 +157,7 @@ static int getentry (int entrycount)
         if (strlen (fname) == 0) fname[0] = filename[0];
       }
 
-      if (strlen (fname) == 0) return -1;
+      if (strlen (fname) == 0) strcpy (fname, ".");
       else
       {
         if (fname[0] == 1) strcpy (fname, "..");
@@ -248,7 +248,6 @@ int DVD_ParseDirectory ()
   u64 rdoffset;
   int len = 0;
   int filecount = 0;
-  int ret;
 
   pdoffset = rdoffset = rootdir;
   pdlength = rootdirlength;
@@ -260,16 +259,14 @@ int DVD_ParseDirectory ()
   /*** Get as many files as possible ***/
   while (len < pdlength)
   {
-    if (dvd_read (&dvdbuffer, 2048, pdoffset) == 0)
-      return 0;
+    if (dvd_read (&dvdbuffer, 2048, pdoffset) == 0) return 0;
 
     diroffset = 0;
 
-    ret = getentry (filecount);
-    while (ret != 0)
+    while (getentry (filecount))
     {
-      if ((ret > 0) && (filecount < MAXFILES)) filecount++;
-      ret = getentry (filecount);
+      if (!strcmp(filelist[filecount].filename,".") && (filecount < MAXFILES))
+        filecount++;
     }
 
     len += 2048;

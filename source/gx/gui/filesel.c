@@ -238,6 +238,16 @@ int FileSelector(unsigned char *buffer)
           if (bg_filesel[8].texture) bg_filesel[8].state |= IMAGE_VISIBLE;
         }
       }
+
+      /* update helper */
+      if (!strcmp(filelist[selection].filename,".."))
+        strcpy(action_select.comment,"Previous Directory");
+      else
+        strcpy(action_select.comment,"Open Directory");
+    }
+    else
+    {
+      strcpy(action_select.comment,"Load ROM File");
     }
 
     /* Draw menu*/
@@ -266,6 +276,7 @@ int FileSelector(unsigned char *buffer)
           gxDrawTexture(dir_icon.texture,dir_icon.x-1,yoffset-1,dir_icon.w+2,dir_icon.h+2,255);
           if (FONT_write(text,18,dir_icon.x+dir_icon.w+6,yoffset+16,bar_over.w-dir_icon.w-14,(GXColor)WHITE))
           {
+            /* text scrolling */
             filelist[i].filename_offset ++;
           }
         }
@@ -273,6 +284,7 @@ int FileSelector(unsigned char *buffer)
         {
           if (FONT_write(text,18,dir_icon.x,yoffset+16,bar_over.w-8,(GXColor)WHITE))
           {
+            /* text scrolling */
             filelist[i].filename_offset ++;
           }
         }
@@ -422,7 +434,7 @@ int FileSelector(unsigned char *buffer)
       {
         /* go up one directory or quit */
          go_up = 1;
-         selection = useFAT ? 0 : 1;
+         selection = 0;
       }
 #ifdef HW_RVL
       else

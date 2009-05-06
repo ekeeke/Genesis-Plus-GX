@@ -205,23 +205,23 @@ static gui_item items_ctrls[13] =
   {NULL,NULL,"","",304,  0, 24,  0},
   {NULL,NULL,"","",  0,  0,  0,  0},
   {NULL,NULL,"","",  0,  0,  0,  0},
-  {NULL,Ctrl_config_png,"Keys\nConfig","Configure Controller Keys",530,306,32,32}
+  {NULL,Ctrl_config_png,"Keys\nConfig","Reconfigure Controller Keys",530,306,32,32}
 };
 
 #ifdef HW_RVL
 static gui_item items_load[4] =
 {
-  {NULL,Load_recent_png,"","Load recent files",             276,120,88,96},
-  {NULL,Load_sd_png    ,"","Load ROM files from SDCARD",    110,266,88,96},
-  {NULL,Load_usb_png   ,"","Load ROM files from USB device",276,266,88,96},
-  {NULL,Load_dvd_png   ,"","Load ROM files from DVD",       442,266,88,96}
+  {NULL,Load_recent_png,"","Load recent ROM files (USB/SD)" ,276,120,88,96},
+  {NULL,Load_sd_png    ,"","Load ROM files from SDCARD"     ,110,266,88,96},
+  {NULL,Load_usb_png   ,"","Load ROM files from USB device" ,276,266,88,96},
+  {NULL,Load_dvd_png   ,"","Load ROM files from DVD"        ,442,266,88,96}
 };
 #else
 static gui_item items_load[3] =
 {
-  {NULL,Load_recent_png,"","Load recent files",         110,198,88,96},
-  {NULL,Load_sd_png    ,"","Load ROM files from SDCARD",276,198,88,96},
-  {NULL,Load_dvd_png   ,"","Load ROM files from DVD",   442,198,88,96}
+  {NULL,Load_recent_png,"","Load recent ROM files (SD)" ,110,198,88,96},
+  {NULL,Load_sd_png    ,"","Load ROM files from SDCARD" ,276,198,88,96},
+  {NULL,Load_dvd_png   ,"","Load ROM files from DVD"    ,442,198,88,96}
 };
 #endif
 
@@ -448,7 +448,7 @@ static gui_menu menu_video =
 /* Sound Options menu */
 static gui_menu menu_audio =
 {
-  "Sound Settings",
+  "Audio Settings",
   0,0,
   5,4,6,
   items_audio,
@@ -1629,11 +1629,10 @@ static void soundmenu ()
   else sprintf (items[4].text, "HQ YM2612: SINC");
 
   GUI_InitMenu(m);
-  GUI_SlideMenuTitle(m,strlen("Sound "));
+  GUI_SlideMenuTitle(m,strlen("Audio "));
 
   while (quit == 0)
   {
-
     ret = GUI_RunMenu(m);
 
     switch (ret)
@@ -1817,7 +1816,6 @@ static void videomenu ()
 
   while (quit == 0)
   {
-
     ret = GUI_RunMenu(m);
 
     switch (ret)
@@ -2013,8 +2011,8 @@ static void ctrlmenu(void)
   {
     {
       /* Gamepad options */
-      {NULL,Ctrl_pad3b_png,"Pad\nType","Use 6-buttons or 3-buttons Pad",528,180,44,28},
-      {NULL,Ctrl_pad6b_png,"Pad\nType","Use 6-buttons or 3-buttons Pad",528,180,44,28}
+      {NULL,Ctrl_pad3b_png,"Pad\nType","Use 3-buttons Pad",528,180,44,28},
+      {NULL,Ctrl_pad6b_png,"Pad\nType","Use 6-buttons Pad",528,180,44,28}
     },
     {
       /* Mouse options */
@@ -2284,7 +2282,10 @@ static void ctrlmenu(void)
           GUI_DrawMenuFX(m, 20, 0);
 
           /* update title */
-          sprintf(m->title,"Controller Settings (Player %d)",player+1);
+          if (j_cart && (player > 1))
+            sprintf(m->title,"Controller Settings (Player %d) (J-CART)",player+1);
+          else
+            sprintf(m->title,"Controller Settings (Player %d)",player+1);
           break;
 
         case 10: /* specific option */
@@ -2301,20 +2302,40 @@ static void ctrlmenu(void)
           break;
 
         case 11:  /* input controller selection */
-  #ifdef HW_RVL
-          if (config.input[player].device > 0)
+
+          /* no input device */
+          if (config.input[player].device < 0)
           {
-            /* WPAD controllers, use next port */
-            config.input[player].port ++;
+            /* use gamecube pad */
+            config.input[player].device = 0;
+            config.input[player].port = 0;
           }
           else
           {
-            /* Otherwise, use next device */
-            config.input[player].device ++;
-            if (config.input[player].device == 1)
-              config.input[player].port = 0;
+            /* use next port */
+            config.input[player].port ++;
           }
 
+          /* autodetect connected gamepads */
+          if (config.input[player].device == 0)
+          {
+            while ((config.input[player].port<4) && !(PAD_ScanPads() & (1<<config.input[player].port)))
+            {
+              /* try next port */
+              config.input[player].port ++;
+            }
+
+            if (config.input[player].port >= 4)
+            {
+              config.input[player].port = 0;
+#ifdef HW_RVL
+              /* no gamecube pad found, try wiimote+nunchuks */
+              config.input[player].device = 1;
+#endif
+            }
+          }
+
+#ifdef HW_RVL
           /* autodetect connected wiimotes (without nunchuk) */
           if (config.input[player].device == 1)
           {
@@ -2333,9 +2354,8 @@ static void ctrlmenu(void)
               {
                 exp = 4;
                 WPAD_Probe(config.input[player].port,&exp);
-                if (exp == WPAD_EXP_NUNCHUK)
-                  exp = 4;
-             }
+                if (exp == WPAD_EXP_NUNCHUK) exp = 4;
+              }
             }
 
             if (config.input[player].port >= 4)
@@ -2397,7 +2417,7 @@ static void ctrlmenu(void)
             if (config.input[player].port >= 4)
             {
               /* no classic controller found, use default gamecube pad */
-              config.input[player].port = player % 4;
+              config.input[player].port = 0;
               config.input[player].device = 0;
             }
           }
@@ -2408,10 +2428,6 @@ static void ctrlmenu(void)
             config.input[player].padtype = DEVICE_3BUTTON;
             memcpy(&m->items[10],&items[*special],sizeof(gui_item));
           }
-
-#else
-          /* use default gamecube pad */
-          config.input[player].device = 0;
 #endif
 
           /* update menu items */
@@ -2419,33 +2435,31 @@ static void ctrlmenu(void)
           break;
 
         case 12:  /* Controller Keys Configuration */
-          if (config.input[player].device != -1)
+          if (config.input[player].device < 0) break;
+          if (config.input[player].padtype == DEVICE_6BUTTON)
           {
-            if (config.input[player].padtype == DEVICE_6BUTTON)
+            /* 6-buttons gamepad */
+            if (config.input[player].device == 0)
             {
-              /* 6-buttons gamepad */
-              if (config.input[player].device == 0)
-              {
-                /* Gamecube PAD: 6-buttons w/o MODE */
-                gx_input_Config(config.input[player].port, config.input[player].device, 7);
-              }
-              else
-              {
-                gx_input_Config(config.input[player].port, config.input[player].device, 8);
-              }
+              /* Gamecube PAD: 6-buttons w/o MODE */
+              gx_input_Config(config.input[player].port, config.input[player].device, 7);
             }
             else
             {
-              /* 3-Buttons gamepad, mouse, lightgun */
-              gx_input_Config(config.input[player].port, config.input[player].device, 4);
+              gx_input_Config(config.input[player].port, config.input[player].device, 8);
             }
+          }
+          else
+          {
+            /* 3-Buttons gamepad, mouse, lightgun */
+            gx_input_Config(config.input[player].port, config.input[player].device, 4);
           }
           break;
       }
     }
   }
 
-  /* remove duplicate assigned inputs */
+  /* remove duplicate assigned inputs before leaving */
   for (i=0; i<8; i++)
   {
     if ((i!=player) && (config.input[i].device == config.input[player].device) && (config.input[i].port == config.input[player].port))
