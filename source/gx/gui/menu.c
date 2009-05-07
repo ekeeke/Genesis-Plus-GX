@@ -32,9 +32,6 @@
 #include <asndlib.h>
 #include <oggplayer.h>
 
-/* Global datas */
-t_input_menu m_input;
-
 #ifdef HW_RVL
 gx_texture *w_pointer;
 #endif
@@ -889,7 +886,7 @@ void GUI_FadeOut()
   {
     gxDrawRectangle(0, 0, 640, 480, alpha, (GXColor)BLACK);
     gxSetScreen();
-    alpha ++;
+    alpha +=2;
   }
 }
 
@@ -1961,7 +1958,12 @@ static void ctrlmenu_raz(void)
   if (input.dev[5] != NO_DEVICE)
   {
     m->buttons[6].shift[1] = 1;
-    if (input.dev[6] != NO_DEVICE) m->buttons[7].shift[1] = 1;
+    if (input.dev[6] != NO_DEVICE)
+    {
+      m->buttons[7].shift[1] = 1;
+      if (input.dev[7] != NO_DEVICE) m->buttons[8].shift[1] = 1;
+      else m->buttons[8].shift[1] = 0;
+    }
     else m->buttons[7].shift[1] = 0;
   }
   else m->buttons[6].shift[1] = 0;
@@ -2280,6 +2282,7 @@ static void ctrlmenu(void)
           m->buttons[11].shift[2] = 11 - m->selected;
           m->buttons[12].shift[2] = 12 - m->selected;
           GUI_DrawMenuFX(m, 20, 0);
+          m->selected = 10;
 
           /* update title */
           if (j_cart && (player > 1))
@@ -2289,53 +2292,36 @@ static void ctrlmenu(void)
           break;
 
         case 10: /* specific option */
-          *special ^= 1;
-          if (config.input[player].device == 1)
+          if (special == &config.input[player].padtype)
           {
-            /* force 3-Buttons pad */
-            config.input[player].padtype = DEVICE_3BUTTON;
+            if (config.input[player].device == 1) break;
+            config.input[player].padtype ^= 1;
+            io_reset();
           }
-          io_reset();
+          else
+          {
+            *special ^= 1;
+          }
 
           /* update menu items */
           memcpy(&m->items[10],&items[*special],sizeof(gui_item));
           break;
 
         case 11:  /* input controller selection */
-
+#ifdef HW_RVL
           /* no input device */
-          if (config.input[player].device < 0)
-          {
-            /* use gamecube pad */
-            config.input[player].device = 0;
-            config.input[player].port = 0;
-          }
-          else
+          if (config.input[player].device > 0)
           {
             /* use next port */
             config.input[player].port ++;
           }
-
-          /* autodetect connected gamepads */
-          if (config.input[player].device == 0)
+          else
           {
-            while ((config.input[player].port<4) && !(PAD_ScanPads() & (1<<config.input[player].port)))
-            {
-              /* try next port */
-              config.input[player].port ++;
-            }
-
-            if (config.input[player].port >= 4)
-            {
-              config.input[player].port = 0;
-#ifdef HW_RVL
-              /* no gamecube pad found, try wiimote+nunchuks */
-              config.input[player].device = 1;
-#endif
-            }
+            /* use gamecube pad */
+            config.input[player].device ++;
+            config.input[player].port = config.input[player].device ? 0 : (player%4);
           }
 
-#ifdef HW_RVL
           /* autodetect connected wiimotes (without nunchuk) */
           if (config.input[player].device == 1)
           {
@@ -2417,8 +2403,8 @@ static void ctrlmenu(void)
             if (config.input[player].port >= 4)
             {
               /* no classic controller found, use default gamecube pad */
-              config.input[player].port = 0;
               config.input[player].device = 0;
+              config.input[player].port = player%4;
             }
           }
 
@@ -2428,6 +2414,11 @@ static void ctrlmenu(void)
             config.input[player].padtype = DEVICE_3BUTTON;
             memcpy(&m->items[10],&items[*special],sizeof(gui_item));
           }
+
+#else
+          /* use gamecube pad */
+          config.input[player].device = 0;
+          config.input[player].port = player%4;
 #endif
 
           /* update menu items */

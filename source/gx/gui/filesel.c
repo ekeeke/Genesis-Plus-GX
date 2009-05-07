@@ -238,16 +238,15 @@ int FileSelector(unsigned char *buffer)
           if (bg_filesel[8].texture) bg_filesel[8].state |= IMAGE_VISIBLE;
         }
       }
-
+      strcpy(action_select.comment,"Load ROM File");
+    }
+    else
+    {
       /* update helper */
       if (!strcmp(filelist[selection].filename,".."))
         strcpy(action_select.comment,"Previous Directory");
       else
         strcpy(action_select.comment,"Open Directory");
-    }
-    else
-    {
-      strcpy(action_select.comment,"Load ROM File");
     }
 
     /* Draw menu*/

@@ -89,20 +89,17 @@ static void pad_config(int chan, int max_keys)
   u16 p,key;
   char msg[30];
 
+  /* disable inputs update callback */
+  VIDEO_SetPostRetraceCallback(NULL);
+  VIDEO_Flush();
+
   /* Check if PAD is connected */
   if (!(PAD_ScanPads() & (1<<chan)))
   {
     sprintf(msg, "PAD #%d is not connected !", chan+1);
     WaitPrompt(msg);
-
-    /* remove any pending keys */
-    while (m_input.keys) VIDEO_WaitVSync();
-    return;
+    max_keys = 0;
   }
-
-  /* disable inputs update callback */
-  VIDEO_SetPostRetraceCallback(NULL);
-  VIDEO_Flush();
 
   /* Configure each keys */
   for (i=0; i<max_keys; i++)
@@ -142,6 +139,7 @@ static void pad_config(int chan, int max_keys)
 
     /* update key mapping */
     if (key !=0xff) config.pad_keymap[chan][i] = key;
+    else break;
   }
 
   /* remove any pending keys */
@@ -167,13 +165,6 @@ static void pad_update(s8 chan, u8 i)
   if ((p & PAD_TRIGGER_L) && (p & PAD_TRIGGER_Z))
   {
     set_softreset();
-  }
-
-  /* Menu */
-  else if (p & PAD_TRIGGER_Z)
-  {
-    ConfigRequested = 1;
-    return;
   }
 
   /* Retrieve current key mapping */
@@ -323,6 +314,10 @@ static void wpad_config(u8 chan, u8 exp, u8 max_keys)
   char msg[30];
   u32 key,p = 255;
 
+  /* disable inputs update callback */
+  VIDEO_SetPostRetraceCallback(NULL);
+  VIDEO_Flush();
+
   /* Check if device is connected */
   WPAD_Probe(chan, &p);
   if (((exp > WPAD_EXP_NONE) && (p != exp)) || (p == 255))
@@ -331,15 +326,8 @@ static void wpad_config(u8 chan, u8 exp, u8 max_keys)
     if (exp == WPAD_EXP_NUNCHUK)  sprintf(msg, "NUNCHUK #%d is not connected !", chan+1);
     if (exp == WPAD_EXP_CLASSIC)  sprintf(msg, "CLASSIC #%d is not connected !", chan+1);
     WaitPrompt(msg);
-
-    /* remove any pending buttons */
-    while (m_input.keys) VIDEO_WaitVSync();
-    return;
+    max_keys = 0;
   }
-
-  /* disable inputs update callback */
-  VIDEO_SetPostRetraceCallback(NULL);
-  VIDEO_Flush();
 
   /* loop on each mapped keys */
   for (i=0; i<max_keys; i++)
@@ -415,6 +403,7 @@ static void wpad_config(u8 chan, u8 exp, u8 max_keys)
 
     /* update key mapping */
     if (key != 0xff) config.wpad_keymap[exp + (chan * 3)][i] = key;
+    else break;
   }
 
   /* remove any pending buttons */
@@ -445,13 +434,6 @@ static void wpad_update(s8 chan, u8 i, u32 exp)
       ((p & WPAD_BUTTON_PLUS) && (p & WPAD_BUTTON_MINUS)))
   {
     set_softreset();
-  }
-
-  /* Menu Request */
-  else if ((p & WPAD_BUTTON_HOME) || (p & WPAD_CLASSIC_BUTTON_HOME))
-  {
-    ConfigRequested = 1;
-    return;
   }
 
   /* Retrieve current key mapping */
@@ -728,6 +710,21 @@ void gx_input_UpdateEmu(void)
   WPAD_ScanPads();
 #endif
 
+  /* Menu Request */
+  if (PAD_ButtonsHeld(0) & PAD_TRIGGER_Z)
+  {
+    ConfigRequested = 1;
+    return;
+  }
+
+#ifdef HW_RVL
+  if ((WPAD_ButtonsHeld(0) & WPAD_BUTTON_HOME) || (WPAD_ButtonsHeld(0) & WPAD_CLASSIC_BUTTON_HOME))
+  {
+    ConfigRequested = 1;
+    return;
+  }
+#endif
+
   for (i=0; i<MAX_DEVICES; i++)
   {
     /* clear key status */
@@ -743,6 +740,7 @@ void gx_input_UpdateEmu(void)
       else if (config.input[player].device > 0)
         wpad_update(config.input[player].port,i, config.input[player].device - 1);
 #endif
+
       player ++;
     }
   }
@@ -752,7 +750,7 @@ void gx_input_UpdateEmu(void)
 void gx_input_UpdateMenu(u32 cnt)
 {
   /* PAD status update */
-  PAD_ScanPads();
+  m_input.connected = PAD_ScanPads();
 
   /* PAD pressed keys */
   s16 pp = PAD_ButtonsDown(0);

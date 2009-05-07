@@ -265,7 +265,7 @@ int DVD_ParseDirectory ()
 
     while (getentry (filecount))
     {
-      if (!strcmp(filelist[filecount].filename,".") && (filecount < MAXFILES))
+      if (strcmp(filelist[filecount].filename,".") && (filecount < MAXFILES))
         filecount++;
     }
 

@@ -171,15 +171,6 @@ extern const u32 button_over_pcm_size;
 /*  Generic GUI structures                                                   */
 /*****************************************************************************/
 
-/* Menu Inputs */
-typedef struct
-{
-  u16 keys;
-#ifdef HW_RVL
-  struct ir_t ir;
-#endif
-} t_input_menu;
-
 /* Item descriptor*/
 typedef struct
 {
@@ -242,10 +233,19 @@ typedef struct
   bool screenshot;            /* use gamescreen as background       */
 } gui_menu;
 
+/* Menu Inputs */
+struct t_input_menu
+{
+  u32 connected;
+  u16 keys;
+#ifdef HW_RVL
+  struct ir_t ir;
+#endif
+} m_input;
+
 
 /* Global data */
 extern u8 SILENT;
-extern t_input_menu m_input;
 
 #ifdef HW_RVL
 extern gx_texture *w_pointer;
