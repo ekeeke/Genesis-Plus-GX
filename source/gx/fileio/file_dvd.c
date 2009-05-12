@@ -202,9 +202,6 @@ static int getentry (int entrycount)
  ***************************************************************************/ 
 int DVD_UpdateDir(int go_up)
 {
-  /* current directory doesn't change */
-  if (selection == 0) return 1;
-
   /* root has no parent directory */
   if (go_up && (basedir == rootdir)) return 0;
 
@@ -213,7 +210,7 @@ int DVD_UpdateDir(int go_up)
   rootdirlength = filelist[selection].length;
 
   /* reinit selector (previous value is saved for one level) */
-  if (selection == 1)
+  if (selection == 0)
   {
     selection = old_selection;
     offset = old_offset;

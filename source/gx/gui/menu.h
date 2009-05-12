@@ -59,10 +59,6 @@
 /*****************************************************************************/
 
 /* Generic backgrounds */
-extern const u8 Bg_intro_c1_png[];
-extern const u8 Bg_intro_c2_png[];
-extern const u8 Bg_intro_c3_png[];
-extern const u8 Bg_intro_c4_png[];
 extern const u8 Bg_main_png[];
 extern const u8 Bg_overlay_png[];
 extern const u8 Banner_main_png[];

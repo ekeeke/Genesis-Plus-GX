@@ -138,11 +138,11 @@ static gui_image bg_main[4] =
 
 static gui_image bg_misc[5] =
 {
-  {NULL,Bg_main_png,IMAGE_VISIBLE,146,80,348,288,255},
+  {NULL,Bg_main_png,IMAGE_VISIBLE|IMAGE_FADE,146,80,348,288,255},
   {NULL,Bg_overlay_png,IMAGE_VISIBLE|IMAGE_REPEAT,0,0,640,480,255},
-  {NULL,Banner_top_png,IMAGE_VISIBLE,0,0,640,108,255},
-  {NULL,Banner_bottom_png,IMAGE_VISIBLE,0,380,640,100,255},
-  {NULL,Main_logo_png,IMAGE_VISIBLE,466,40,152,44,255}
+  {NULL,Banner_top_png,IMAGE_VISIBLE|IMAGE_SLIDE_TOP,0,0,640,108,255},
+  {NULL,Banner_bottom_png,IMAGE_VISIBLE|IMAGE_SLIDE_BOTTOM,0,380,640,100,255},
+  {NULL,Main_logo_png,IMAGE_VISIBLE|IMAGE_SLIDE_TOP,466,40,152,44,255}
 };
 
 static gui_image bg_ctrls[8] =
@@ -153,7 +153,7 @@ static gui_image bg_ctrls[8] =
   {NULL,Banner_bottom_png,IMAGE_VISIBLE,0,380,640,100,255},
   {NULL,Main_logo_png,IMAGE_VISIBLE,466,40,152,44,255},
   {NULL,Frame_s4_png,IMAGE_VISIBLE,38,72,316,168,128},
-  {NULL,Frame_s4_png,IMAGE_VISIBLE,38,242,308,168,128},
+  {NULL,Frame_s4_png,IMAGE_VISIBLE,38,242,316,168,128},
   {NULL,Frame_s3_png,IMAGE_SLIDE_RIGHT,400,134,292,248,128}
 };
 
@@ -296,9 +296,9 @@ static gui_butn buttons_main[9] =
   {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_FADE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{0,3,0,1}, 80, 50,148,132},
   {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_FADE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{0,3,1,1},246, 50,148,132},
   {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_FADE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{0,3,1,1},412, 50,148,132},
-  {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_FADE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{3,0,1,1}, 80,194,148,132},
+  {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_FADE|BUTTON_OVER_SFX                  ,{3,0,1,1}, 80,194,148,132},
   {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_FADE|BUTTON_OVER_SFX                  ,{3,0,1,1},246,194,148,132},
-  {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_FADE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{3,0,1,0},412,194,148,132},
+  {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_FADE|BUTTON_OVER_SFX                  ,{3,0,1,0},412,194,148,132},
   {NULL             ,                             BUTTON_FADE|BUTTON_OVER_SFX                  ,{3,0,1,1},  0,360, 88, 48},
   {NULL             ,                             BUTTON_FADE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{2,1,1,1},542,330, 88, 38},
   {NULL             ,                             BUTTON_FADE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{1,0,1,0},542,370, 88, 48}
@@ -326,28 +326,28 @@ static gui_butn buttons_ctrls[13] =
 #ifdef HW_RVL
 static gui_butn buttons_load[4] =
 {
-  {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{0,2,0,1},246,102,148,132},
-  {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{1,0,1,1}, 80,248,148,132},
-  {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{2,0,1,1},246,248,148,132},
-  {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{3,0,1,0},412,248,148,132}
+  {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_FADE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{0,2,0,1},246,102,148,132},
+  {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_FADE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{1,0,1,1}, 80,248,148,132},
+  {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_FADE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{2,0,1,1},246,248,148,132},
+  {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_FADE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{3,0,1,0},412,248,148,132}
 };
 #else
 static gui_butn buttons_load[3] =
 {
-  {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{0,0,0,1}, 80,180,148,132},
-  {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{0,0,1,1},246,180,148,132},
-  {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{0,0,1,0},412,180,148,132}
+  {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_FADE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{0,0,0,1}, 80,180,148,132},
+  {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_FADE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{0,0,1,1},246,180,148,132},
+  {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_FADE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{0,0,1,0},412,180,148,132}
 };
 #endif
 
 /* Options menu */
 static gui_butn buttons_options[5] =
 {
-  {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{0,3,0,1}, 80,120,148,132},
-  {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{0,3,1,1},246,120,148,132},
-  {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{0,2,1,1},412,120,148,132},
-  {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{3,0,1,1},162,264,148,132},
-  {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{2,0,1,0},330,264,148,132}
+  {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_FADE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{0,3,0,1}, 80,120,148,132},
+  {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_FADE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{0,3,1,1},246,120,148,132},
+  {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_FADE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{0,2,1,1},412,120,148,132},
+  {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_FADE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{3,0,1,1},162,264,148,132},
+  {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_FADE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{2,0,1,0},330,264,148,132}
 };
 
 /*****************************************************************************/
@@ -886,7 +886,7 @@ void GUI_FadeOut()
   {
     gxDrawRectangle(0, 0, 640, 480, alpha, (GXColor)BLACK);
     gxSetScreen();
-    alpha +=2;
+    alpha +=3;
   }
 }
 
@@ -1097,6 +1097,10 @@ int GUI_WindowPrompt(gui_menu *parent, char *title, char *items[], u8 nb_items)
     yoffset += 60;
     gxSetScreen ();
   }
+
+  /* final position */
+  GUI_DrawMenu(parent);
+  gxSetScreen ();
 
   /* close textures */
   gxTextureClose(&window);
@@ -2539,6 +2543,7 @@ static void optionmenu(void)
     GUI_InitMenu(m);
     ret = GUI_RunMenu(m);
     GUI_DeleteMenu(m);
+
     switch (ret)
     {
       case 0:
@@ -2896,20 +2901,16 @@ void MainMenu (void)
 
   GUI_InitMenu(m);
   GUI_DrawMenuFX(m,10,0);
-  GUI_DeleteMenu(m);
 
   while (quit == 0)
   {
-    GUI_InitMenu(m);
     ret = GUI_RunMenu(m);
-    GUI_DeleteMenu(m);
 
     switch (ret)
     {
       case -1: /*** Return to Game ***/
       case 6:
         if (!genromsize) break;
-        GUI_InitMenu(m);
         GUI_DrawMenuFX(m,10,1);
         GUI_DeleteMenu(m);
         quit = 1;
@@ -2917,7 +2918,6 @@ void MainMenu (void)
 
       case 0: /*** Quit Emulator ***/
       {
-        GUI_InitMenu(m);
         switch (GUI_WindowPrompt(m, VERSION, items,3))
         {
           case 1:
@@ -2945,36 +2945,47 @@ void MainMenu (void)
             break;
 
           default: /* TODO */
-            GUI_DeleteMenu(m);
             break;
         }
         break;
       }
 
       case 1:  /*** Load Game ***/
+        GUI_DeleteMenu(m);
         quit = loadmenu();
+        if (quit) break;
+        GUI_InitMenu(m);
         break;
 
       case 2:  /*** Options */
+        GUI_DeleteMenu(m);
         optionmenu ();
+        GUI_InitMenu(m);
         break;
 
       case 3:  /*** Memory Manager ***/
         if (!genromsize) break;
+        GUI_DeleteMenu(m);
         quit = filemenu ();
+        if (quit) break;
+        GUI_InitMenu(m);
         break;
 
       case 4:  /*** Emulator Reset ***/
         if (!genromsize) break;
-        system_reset (); 
+        GUI_DrawMenuFX(m,10,1);
+        GUI_DeleteMenu(m);
         gxClearScreen ((GXColor)BLACK);
         gxSetScreen ();
+        system_reset (); 
         quit = 1;
         break;
 
       case 5:   /*** Game Genie ***/
         if (!genromsize) break;
+        GUI_DeleteMenu(m);
         GetGGEntries();
+        GUI_InitMenu(m);
         break;
 
       case 7:   /*** ROM Captrure ***/
@@ -2984,7 +2995,9 @@ void MainMenu (void)
 
       case 8:   /*** ROM Information ***/
         if (!genromsize) break;
+        GUI_DeleteMenu(m);
         showrominfo ();
+        GUI_InitMenu(m);
         break;
     }
   }
