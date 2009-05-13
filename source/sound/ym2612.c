@@ -12,7 +12,7 @@
 /*
 ** History:
 **
-** 2006~2008  Eke-Eke (Genesis Plus GX):
+** 2006~2009  Eke-Eke (Genesis Plus GX):
 ** Credits to Nemesis (@spritesmind.net), most of those fixes came from his tests on a Model 1 Sega Mega Drive 
 **
 **  - removed unused multichip support

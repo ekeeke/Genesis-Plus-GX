@@ -3,7 +3,7 @@
  *
  *   Generic ROM history list managment
  *
- *   code by Martin Disibio (6/17/08)
+ *   Martin Disibio (6/17/08)
  *
  *   This program is free software; you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by

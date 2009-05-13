@@ -12,6 +12,9 @@
 #include <malloc.h>
 #include <sys/dir.h>
 
+#include <asndlib.h>
+#include <oggplayer.h>
+
 #ifdef HW_RVL
 #include <di/di.h>
 #endif
@@ -20,6 +23,7 @@
 #include "gx_audio.h"
 #include "gx_video.h"
 #include "config.h"
+#include "file_mem.h"
 
 #define DEFAULT_PATH "/genplus"
 #ifdef HW_RVL
@@ -32,19 +36,11 @@
 extern void error(char *format, ...);
 extern void ClearGGCodes();
 extern void GetGGEntries();
+extern void MainMenu(void);
 extern void legal();
-
 extern void reloadrom (int size, char *name);
 extern void shutdown();
-
-extern int ManageSRAM(u8 direction, u8 device);
-extern int ManageState(u8 direction, u8 device);
-extern void memfile_autosave(s8 autosram, s8 autostate);
-extern void memfile_autoload(s8 autosram, s8 autostate);
-
 extern u32 frameticker;
-extern char rom_filename[256];
-
 #ifdef HW_RVL
 extern u8 Shutdown;
 #endif

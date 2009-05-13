@@ -1,9 +1,9 @@
 
 /****************************************************************************
- *  Genesis Plus 1.2a
+ *  Genesis Plus
  *  Cartridge Hardware support
  *
- *  Copyright (C) Eke-Eke, GC/Wii port
+ *  Copyright (C) 2007, 2008, 2009  Eke-Eke (GCN/Wii port)
  *
  *  Most cartridge protections documented by Haze
  *  (http://haze.mameworld.info/)

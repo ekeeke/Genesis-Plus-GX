@@ -1,8 +1,8 @@
 /***************************************************************************************
- *  Genesis Plus 1.2a
- *  SRAM Hardware
+ *  Genesis Plus
+ *  Backup SRAM support
  *
- *  code by Eke-Eke, GC/Wii port
+ *  Copyright (C) 2007, 2008, 2009  Eke-Eke (GCN/Wii port)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by

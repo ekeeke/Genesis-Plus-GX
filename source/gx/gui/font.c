@@ -1,11 +1,11 @@
 /*****************************************************************************
  * font.c
  *
- *   IPL FONT Engine, based on Qoob MP3 Player Font
+ *   IPL FONT Engine, using GX hardware
  *
- *   code by Softdev (2006), Eke-Eke(2007-2008)
+ *   Softdev (2006)
+ *   Eke-Eke (2007,2008,2009)
  * 
- *
  *   This program is free software; you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
  *   the Free Software Foundation; either version 2 of the License, or
@@ -24,10 +24,8 @@
 
 #include "shared.h"
 #include "font.h"
-#include "menu.h"
+#include "gui.h"
 
-/* Backdrop Frame Width (to avoid writing outside of the background frame) */
-u16 back_framewidth = 640;
 int font_size[256], fheight;
 
 #ifndef HW_RVL
@@ -135,7 +133,7 @@ static void DrawChar(unsigned char c, int xpos, int ypos, int size, GXColor colo
 void write_font(int x, int y, char *string)
 {
   int ox = x;
-  while (*string && (x < (ox + back_framewidth)))
+  while (*string && (x < (ox + 640)))
   {
     DrawChar(*string, x -(vmode->fbWidth/2), y-(vmode->efbHeight/2),fontHeader->cell_height,(GXColor)WHITE);
     x += font_size[(u8)*string];
@@ -147,7 +145,7 @@ void WriteCentre( int y, char *string)
 {
   int x, t;
   for (x=t=0; t<strlen(string); t++) x += font_size[(u8)string[t]];
-  if (x>back_framewidth) x=back_framewidth;
+  if (x>640) x=640;
   x = (640 - x) >> 1;
   write_font(x, y, string);
 }

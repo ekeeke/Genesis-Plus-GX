@@ -3,7 +3,8 @@
  *
  *  FAT and Memory Card SRAM/Savestate files managment
  *
- *  code by Softdev (2006), Eke-Eke (2007,2008)
+ *  Softdev (2006)
+ *  Eke-Eke (2007,2008,2009)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -22,11 +23,15 @@
  ***************************************************************************/
 
 #include "shared.h"
+#include "file_mem.h"
 #include "font.h"
-#include "menu.h"
 #include "filesel.h"
 #include "saveicon.h"
 #include "dvd.h"
+
+/* Global ROM filename */
+char rom_filename[MAXJOLIET];
+
 
 /* Support for MemCards  */
 /**
@@ -43,49 +48,6 @@ static card_stat CardStatus;
  * 64k SRAM + 2k Icon
  */
 static u8 savebuffer[STATE_SIZE] ATTRIBUTE_ALIGN (32);
-char rom_filename[MAXJOLIET];
-
-int ManageSRAM(u8 direction, u8 device);
-int ManageState(u8 direction, u8 device);
-
-/****************************************************************************
- * FILE autoload (SRAM/FreezeState or Config File)
- *
- *
- *****************************************************************************/
-void memfile_autoload(s8 autosram, s8 autostate)
-{
-  /* this should be transparent to the user */
-  SILENT = 1; 
-
-  /* SRAM */
-  if (autosram != -1)
-    ManageSRAM(1,autosram);
-
-  /* STATE */
-  if (autostate != -1)
-    ManageState(1,autostate);
-
-  SILENT = 0;
-}
-
-void memfile_autosave(s8 autosram, s8 autostate)
-{
-  int crccheck = crc32 (0, sram.sram, 0x10000);
-
-  /* this should be transparent to the user */
-  SILENT = 1;
-  
-  /* SRAM */
-  if ((autosram != -1) && (crccheck != sram.crc))
-    ManageSRAM(0, autosram);
-
-  /* STATE */
-  if (autostate != -1)
-    ManageState(0,autostate);
-
-  SILENT = 0;
-}
 
 
 /****************************************************************************
@@ -180,7 +142,7 @@ static int FAT_ManageFile(char *filename, int direction, int filetype)
  *
  * Function returns TRUE on success.
  *****************************************************************************/
-int MountTheCard (u8 slot)
+static int MountTheCard (u8 slot)
 {
   int tries = 0;
   int CardError;
@@ -205,7 +167,7 @@ int MountTheCard (u8 slot)
  * Wrapper to search through the files on the card.
  * Returns TRUE if found.
  ****************************************************************************/
-int CardFileExists (char *filename, u8 slot)
+static int CardFileExists (char *filename, u8 slot)
 {
   int CardError = CARD_FindFirst (slot, &CardDir, TRUE);
   while (CardError != CARD_ERROR_NOFILE)
@@ -215,6 +177,46 @@ int CardFileExists (char *filename, u8 slot)
   }
   return 0;
 }
+
+/****************************************************************************
+ * FILE autoload (SRAM/FreezeState or Config File)
+ *
+ *
+ *****************************************************************************/
+void memfile_autoload(s8 autosram, s8 autostate)
+{
+  /* this should be transparent to the user */
+  SILENT = 1; 
+
+  /* SRAM */
+  if (autosram != -1)
+    ManageSRAM(1,autosram);
+
+  /* STATE */
+  if (autostate != -1)
+    ManageState(1,autostate);
+
+  SILENT = 0;
+}
+
+void memfile_autosave(s8 autosram, s8 autostate)
+{
+  int crccheck = crc32 (0, sram.sram, 0x10000);
+
+  /* this should be transparent to the user */
+  SILENT = 1;
+  
+  /* SRAM */
+  if ((autosram != -1) && (crccheck != sram.crc))
+    ManageSRAM(0, autosram);
+
+  /* STATE */
+  if (autostate != -1)
+    ManageState(0,autostate);
+
+  SILENT = 0;
+}
+
 
 /****************************************************************************
  * ManageSRAM

@@ -1,7 +1,7 @@
 /*
- * file_dvd.c
- * 
- *  ISO9660/Joliet DVD loading support
+ *  file_mem.c
+ *
+ *  FAT and Memory Card SRAM/Savestate files managment
  *
  *  Softdev (2006)
  *  Eke-Eke (2007,2008,2009)
@@ -20,14 +20,16 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- ********************************************************************************/
+ ***************************************************************************/
 
-#ifndef _FILE_DVD_H
-#define _FILE_DVD_H
+#ifndef _FILE_MEM_H
+#define _FILE_MEM_H
 
-extern int DVD_UpdateDir(int go_up);
-extern int DVD_ParseDirectory();
-extern int DVD_LoadFile(u8 *buffer);
-extern int DVD_Open (u8 *buffer);
+extern int ManageSRAM(u8 direction, u8 device);
+extern int ManageState(u8 direction, u8 device);
+extern void memfile_autosave(s8 autosram, s8 autostate);
+extern void memfile_autoload(s8 autosram, s8 autostate);
+
+extern char rom_filename[256];
 
 #endif

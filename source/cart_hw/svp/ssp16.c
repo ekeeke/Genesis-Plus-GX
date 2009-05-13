@@ -1,13 +1,14 @@
-// basic, incomplete SSP160x (SSP1601?) interpreter
-// with SVP memory controller emu
+/*
+   basic, incomplete SSP160x (SSP1601?) interpreter
+   with SVP memory controller emu
 
-// (c) Copyright 2008, Grazvydas "notaz" Ignotas
-// Free for non-commercial use.
+   (c) Copyright 2008, Grazvydas "notaz" Ignotas
+   Free for non-commercial use.
 
-// For commercial use, separate licencing terms must be obtained.
+   For commercial use, separate licencing terms must be obtained.
 
-
-/* modified for Genesis Plus GCN port (EkeEke) - inverted mode&addr in ssp_PMC register (more logical ?)*/
+   Modified for Genesis Plus GX (Eke-Eke), added big endian support, fixed mode & addr
+*/
 
 
 /*

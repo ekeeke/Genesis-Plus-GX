@@ -3,7 +3,8 @@
  * 
  *   File Selection menu
  *
- *   code by Softdev (2006), Eke-Eke (2007,2008) 
+ *   Softdev (2006)
+ *   Eke-Eke (2007,2008,2009) 
  *
  *   This program is free software; you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -22,8 +23,8 @@
  ********************************************************************************/
 
 #include "shared.h"
-#include "menu.h"
 #include "font.h"
+#include "gui.h"
 #include "file_dvd.h"
 #include "file_fat.h"
 #include "filesel.h"
@@ -32,10 +33,8 @@
 #include <wiiuse/wpad.h>
 #endif
 
-/* this is emulator specific ! */
 #define PAGESIZE 11
 #define PAGEOFFSET 120
-
 
 /* Global Variables */
 int maxfiles      = 0;

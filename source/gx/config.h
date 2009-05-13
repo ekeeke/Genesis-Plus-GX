@@ -3,7 +3,7 @@
  *
  *  Genesis Plus GX configuration file support
  *
- *  code by Eke-Eke (2008)
+ *  Eke-Eke (2008)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by

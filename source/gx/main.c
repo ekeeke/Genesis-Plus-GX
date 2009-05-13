@@ -3,7 +3,8 @@
  *
  *  Genesis Plus GX
  *
- *  code by Softdev (2006), Eke-Eke (2007,2009)
+ *  Softdev (2006)
+ *  Eke-Eke (2007,2008,2009)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -23,7 +24,6 @@
 
 #include "shared.h"
 #include "font.h"
-#include "menu.h"
 #include "history.h"
 #include "aram.h"
 #include "dvd.h"
@@ -32,7 +32,6 @@
 
 #ifdef HW_RVL
 #include <wiiuse/wpad.h>
-#include <di/di.h>
 #endif
 
 #ifdef HW_RVL

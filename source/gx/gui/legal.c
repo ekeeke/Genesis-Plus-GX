@@ -1,9 +1,10 @@
 /****************************************************************************
  *  legal.c
  *
- *  legal informations screen
+ *  Genesis Plus GX Disclaimer
  *
- *  code by Softdev (2006), Eke-Eke (2007,2008)
+ *  Softdev (2006)
+ *  Eke-Eke (2007,2008,2009)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -21,19 +22,10 @@
  *
  ***************************************************************************/
 
-
 #include "shared.h"
 #include "font.h"
-#include "menu.h"
+#include "gui.h"
 
-#include "intro_pcm.h"
-#include <asndlib.h>
-
-extern const u8 Bg_intro_c1_png[];
-extern const u8 Bg_intro_c2_png[];
-extern const u8 Bg_intro_c3_png[];
-extern const u8 Bg_intro_c4_png[];
-extern const u8 Bg_intro_c5_png[];
 /* 
  * This is the legal stuff - which must be shown at program startup 
  * Any derivative work MUST include the same textual output.

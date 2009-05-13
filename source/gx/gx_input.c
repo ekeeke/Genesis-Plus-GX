@@ -3,7 +3,7 @@
  *
  *  Genesis Plus GX input support
  *
- *  code by Eke-Eke (2008-2009)
+ *  Eke-Eke (2008,2009)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
 
 #include "shared.h"
 #include "font.h"
-#include "menu.h"
+#include "gui.h"
 
 /* Analog sticks sensitivity */
 #define ANALOG_SENSITIVITY 30

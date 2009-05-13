@@ -3,7 +3,8 @@
  * 
  *   File Selection menu
  *
- *   code by Softdev (2006), Eke-Eke (2007,2008) 
+ *   Softdev (2006)
+ *   Eke-Eke (2007,2008,2009) 
  *
  *   This program is free software; you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by

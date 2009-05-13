@@ -1,9 +1,9 @@
 /***************************************************************************************
- *  Genesis Plus 1.2a
+ *  Genesis Plus
  *  68k memory handlers
  *
  *  Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003  Charles Mac Donald (original code)
- *  modified by Eke-Eke (compatibility fixes & additional code), GC/Wii port
+ *  Eke-Eke (2007,2008,2009), additional code & fixes for the GCN/Wii port
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by

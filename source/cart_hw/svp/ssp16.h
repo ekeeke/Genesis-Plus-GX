@@ -1,13 +1,14 @@
-/* The SVP chip emulator
+/*
+   basic, incomplete SSP160x (SSP1601?) interpreter
+   with SVP memory controller emu
 
- (c) Copyright 2008, Grazvydas "notaz" Ignotas
- Free for non-commercial use.
+   (c) Copyright 2008, Grazvydas "notaz" Ignotas
+   Free for non-commercial use.
 
- For commercial use, separate licencing terms must be obtained.
+   For commercial use, separate licencing terms must be obtained.
 
+   Modified for Genesis Plus GX (Eke-Eke): added BIG ENDIAN support, fixed addr/code inversion
 */
-
-/* modified for Genesis Plus GCN port, added BIG ENDIAN support (EkeEke)*/
 
 #ifndef _SSP16_H_
 #define _SSP16_H_

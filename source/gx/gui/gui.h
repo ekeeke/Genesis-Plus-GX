@@ -1,9 +1,9 @@
 /****************************************************************************
- *  menu.c
+ *  gui.c
  *
- *  Genesis Plus GX menu
+ *  GUI engine, using GX hardware
  *
- *  code by Eke-Eke (march 2009)
+ *  Eke-Eke (2009)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -21,13 +21,12 @@
  *
  ***************************************************************************/
 
-#ifndef _MENU_H
-#define _MENU_H
+#ifndef _GUI_H
+#define _GUI_H
 
 #ifdef HW_RVL
 #include <wiiuse/wpad.h>
 #endif
-
 
 /*****************************************************************************/
 /*  GUI Buttons state                                                        */
@@ -55,8 +54,89 @@
 #define IMAGE_SLIDE_BOTTOM  0x40
 
 /*****************************************************************************/
-/*  GUI png data                                                             */
+/*  Generic GUI structures                                                   */
 /*****************************************************************************/
+
+/* Item descriptor*/
+typedef struct
+{
+  gx_texture *texture;  /* temporary texture data                             */
+  const u8 *data;       /* pointer to png image data (items icon only)        */
+  char text[64];        /* item string (items list only)                      */
+  char comment[64];     /* item comment                                       */
+  u16 x;                /* item image or text X position (upper left corner)  */
+  u16 y;                /* item image or text Y position (upper left corner)  */
+  u16 w;                /* item image or text width                           */
+  u16 h;                /* item image or text height                          */
+} gui_item;
+
+/* Button Data descriptor */
+typedef struct
+{
+  gx_texture *texture[2];  /* temporary texture datas               */
+  const u8 *image[2];       /* pointer to png image datas (default) */
+} butn_data;
+
+/* Button descriptor */
+typedef struct
+{
+  butn_data *data;          /* pointer to button image/texture data         */
+  u16 state;                /* button state (ACTIVE,VISIBLE,SELECTED...)    */
+  u8 shift[4];              /* direction offsets                            */
+  u16 x;                    /* button image X position (upper left corner)  */
+  u16 y;                    /* button image Y position (upper left corner)  */
+  u16 w;                    /* button image pixels width                    */
+  u16 h;                    /* button image pixels height                   */
+} gui_butn;
+
+/* Image descriptor */
+typedef struct
+{
+  gx_texture *texture;  /* temporary texture data                 */
+  const u8 *data;       /* pointer to png image data              */
+  u8 state;             /* image state (VISIBLE)                  */
+  u16 x;                /* image X position (upper left corner)   */
+  u16 y;                /* image Y position (upper left corner)   */
+  u16 w;                /* image width                            */
+  u16 h;                /* image height                           */
+  u8 alpha;             /* alpha transparency                     */
+} gui_image;
+
+/* Menu descriptor */
+typedef struct
+{
+  char title[64];             /* menu title                         */
+  s8 selected;                /* index of selected item             */
+  s8 offset;                  /* items list offset                  */
+  u8 max_items;               /* total number of items              */
+  u8 max_buttons;             /* total number of buttons            */
+  u8 max_images;              /* total number of background images  */
+  gui_item *items;            /* menu items                         */
+  gui_butn *buttons;          /* menu buttons                       */
+  gui_image *bg_images;       /* background images                  */
+  gui_item *helpers[2];       /* left & right key comments          */
+  gui_butn *arrows[2];        /* arrows buttons                     */
+  bool screenshot;            /* use gamescreen as background       */
+} gui_menu;
+
+/* Menu Inputs */
+struct t_input_menu
+{
+  u32 connected;
+  u16 keys;
+#ifdef HW_RVL
+  struct ir_t ir;
+#endif
+} m_input;
+
+/* PNG images */
+
+/* Intro */
+extern const u8 Bg_intro_c1_png[];
+extern const u8 Bg_intro_c2_png[];
+extern const u8 Bg_intro_c3_png[];
+extern const u8 Bg_intro_c4_png[];
+extern const u8 Bg_intro_c5_png[];
 
 /* Generic backgrounds */
 extern const u8 Bg_main_png[];
@@ -156,105 +236,28 @@ extern const u8 Key_A_gcn_png[];
 extern const u8 Key_B_gcn_png[];
 #endif
 
-/* Generic sounds */
-extern const u8 button_select_pcm[];
-extern const u32 button_select_pcm_size;
+/* Generic Sounds */
 extern const u8 button_over_pcm[];
+extern const u8 button_select_pcm[];
+extern const u8 intro_pcm[];
+extern const u32 button_select_pcm_size;
 extern const u32 button_over_pcm_size;
+extern const u32 intro_pcm_size;
 
-
-/*****************************************************************************/
-/*  Generic GUI structures                                                   */
-/*****************************************************************************/
-
-/* Item descriptor*/
-typedef struct
-{
-  gx_texture *texture;  /* temporary texture data                             */
-  const u8 *data;       /* pointer to png image data (items icon only)        */
-  char text[64];        /* item string (items list only)                      */
-  char comment[64];     /* item comment                                       */
-  u16 x;                /* item image or text X position (upper left corner)  */
-  u16 y;                /* item image or text Y position (upper left corner)  */
-  u16 w;                /* item image or text width                           */
-  u16 h;                /* item image or text height                          */
-} gui_item;
-
-/* Button Data descriptor */
-typedef struct
-{
-  gx_texture *texture[2];  /* temporary texture datas               */
-  const u8 *image[2];       /* pointer to png image datas (default) */
-} butn_data;
-
-/* Button descriptor */
-typedef struct
-{
-  butn_data *data;          /* pointer to button image/texture data         */
-  u16 state;                /* button state (ACTIVE,VISIBLE,SELECTED...)    */
-  u8 shift[4];              /* direction offsets                            */
-  u16 x;                    /* button image X position (upper left corner)  */
-  u16 y;                    /* button image Y position (upper left corner)  */
-  u16 w;                    /* button image pixels width                    */
-  u16 h;                    /* button image pixels height                   */
-} gui_butn;
-
-/* Image descriptor */
-typedef struct
-{
-  gx_texture *texture;  /* temporary texture data                 */
-  const u8 *data;       /* pointer to png image data              */
-  u8 state;             /* image state (VISIBLE)                  */
-  u16 x;                /* image X position (upper left corner)   */
-  u16 y;                /* image Y position (upper left corner)   */
-  u16 w;                /* image width                            */
-  u16 h;                /* image height                           */
-  u8 alpha;             /* alpha transparency                     */
-} gui_image;
-
-/* Menu descriptor */
-typedef struct
-{
-  char title[64];             /* menu title                         */
-  s8 selected;                /* index of selected item             */
-  s8 offset;                  /* items list offset                  */
-  u8 max_items;               /* total number of items              */
-  u8 max_buttons;             /* total number of buttons            */
-  u8 max_images;              /* total number of background images  */
-  gui_item *items;            /* menu items                         */
-  gui_butn *buttons;          /* menu buttons                       */
-  gui_image *bg_images;       /* background images                  */
-  gui_item *helpers[2];       /* left & right key comments          */
-  gui_butn *arrows[2];        /* arrows buttons                     */
-  bool screenshot;            /* use gamescreen as background       */
-} gui_menu;
-
-/* Menu Inputs */
-struct t_input_menu
-{
-  u32 connected;
-  u16 keys;
-#ifdef HW_RVL
-  struct ir_t ir;
-#endif
-} m_input;
-
-
-/* Global data */
-extern u8 SILENT;
-
+/* Generic textures*/
 #ifdef HW_RVL
 extern gx_texture *w_pointer;
 #endif
 
-
-extern void MainMenu(void);
-extern void GUI_FadeOut();
 extern void GUI_InitMenu(gui_menu *menu);
 extern void GUI_DeleteMenu(gui_menu *menu);
+extern void GUI_FadeOut();
+extern void GUI_SetBgColor(GXColor color);
 extern void GUI_DrawMenu(gui_menu *menu);
 extern void GUI_DrawMenuFX(gui_menu *menu, u8 speed, u8 out);
+extern void GUI_SlideMenuTitle(gui_menu *m, int title_offset);
 extern int GUI_UpdateMenu(gui_menu *menu);
 extern int GUI_RunMenu(gui_menu *menu);
 extern int GUI_WindowPrompt(gui_menu *parent, char *title, char *items[], u8 nb_items);
+
 #endif

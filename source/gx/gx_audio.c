@@ -3,7 +3,8 @@
  *
  *  Genesis Plus GX audio support
  *
- *  code by Eke-Eke (2007,2009)
+ *  Softdev (2006)
+ *  Eke-Eke (2007,2008,2009)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -22,9 +23,6 @@
  ***************************************************************************/
 
 #include "shared.h"
-
-#include <asndlib.h>
-#include <oggplayer.h>
 
 /* DMA soundbuffers (required to be 32-bytes aligned)
    Length is dimensionned for one frame of emulation (see below)
