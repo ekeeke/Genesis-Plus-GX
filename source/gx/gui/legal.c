@@ -43,34 +43,38 @@ extern const u8 Bg_intro_c5_png[];
 
 void legal ()
 {
-  int ypos = 60;
+  int ypos = 56;
 
   gxClearScreen((GXColor)BLACK);
 
-  FONT_writeCenter ("DISCLAIMER",24,0,640,ypos,(GXColor)WHITE);
-  ypos += 48;
+  FONT_writeCenter ("DISCLAIMER",22,0,640,ypos,(GXColor)WHITE);
+  ypos += 32;
   FONT_writeCenter ("This is free software, and you are welcome to",20,0,640,ypos,(GXColor)WHITE);
   ypos += 20;
   FONT_writeCenter ("redistribute it under the conditions of the",20,0,640,ypos,(GXColor)WHITE);
   ypos += 20;
   FONT_writeCenter ("GNU GENERAL PUBLIC LICENSE Version 2.",20,0,640,ypos,(GXColor)WHITE);
   ypos += 20;
+  FONT_writeCenter ("This software includes code from the MAME project and",20,0,640,ypos,(GXColor)WHITE);
+  ypos += 20;
+  FONT_writeCenter ("therefore, its use is conditionned by the MAME license.",20,0,640,ypos,(GXColor)WHITE);
+  ypos += 20;
   FONT_writeCenter ("You may not sell, lease, rent or generally use",20,0,640,ypos,(GXColor)WHITE);
   ypos += 20;
-  FONT_writeCenter ("this software for any commercial purposes.",20,0,640,ypos,(GXColor)WHITE);
+  FONT_writeCenter ("this software in any commercial product or activity.",20,0,640,ypos,(GXColor)WHITE);
   ypos += 20;
   FONT_writeCenter ("You may not distribute this software with any ROM images",20,0,640,ypos,(GXColor)WHITE);
   ypos += 20;
   FONT_writeCenter ("unless you have the legal right to distribute them.",20,0,640,ypos,(GXColor)WHITE);
   ypos += 20;
-  FONT_writeCenter ("All trademarks and registered trademarks are",20,0,640,ypos,(GXColor)WHITE);
-  ypos += 20;
-  FONT_writeCenter ("the property of their respective owners.",20,0,640,ypos,(GXColor)WHITE);
-  ypos += 20;
   FONT_writeCenter ("This software is not endorsed by or affiliated",20,0,640,ypos,(GXColor)WHITE);
   ypos += 20;
   FONT_writeCenter ("with Sega Enterprises Ltd or Nintendo Co Ltd.",20,0,640,ypos,(GXColor)WHITE);
-  ypos += 48;
+  ypos += 20;
+  FONT_writeCenter ("All trademarks and registered trademarks are",20,0,640,ypos,(GXColor)WHITE);
+  ypos += 20;
+  FONT_writeCenter ("the property of their respective owners.",20,0,640,ypos,(GXColor)WHITE);
+  ypos += 38;
 
   GXColor color = {0x99,0xcc,0xff,0xff};
 #ifdef HW_RVL
@@ -88,37 +92,41 @@ void legal ()
 
   sleep(1);
 
-  int count = 1500;
+  int count = 2000;
   int vis = 0;
   while (!(m_input.keys & PAD_BUTTON_A) && (count > 0))
   {
-    ypos = 60;
+    ypos = 56;
     gxClearScreen((GXColor)BLACK);
 
-    FONT_writeCenter ("DISCLAIMER",24,0,640,ypos,(GXColor)WHITE);
-    ypos += 48;
+    FONT_writeCenter ("DISCLAIMER",22,0,640,ypos,(GXColor)WHITE);
+    ypos += 32;
     FONT_writeCenter ("This is free software, and you are welcome to",20,0,640,ypos,(GXColor)WHITE);
     ypos += 20;
     FONT_writeCenter ("redistribute it under the conditions of the",20,0,640,ypos,(GXColor)WHITE);
     ypos += 20;
     FONT_writeCenter ("GNU GENERAL PUBLIC LICENSE Version 2.",20,0,640,ypos,(GXColor)WHITE);
     ypos += 20;
+    FONT_writeCenter ("This software includes code from the MAME project and",20,0,640,ypos,(GXColor)WHITE);
+    ypos += 20;
+    FONT_writeCenter ("therefore, its use is conditionned by the MAME license.",20,0,640,ypos,(GXColor)WHITE);
+    ypos += 20;
     FONT_writeCenter ("You may not sell, lease, rent or generally use",20,0,640,ypos,(GXColor)WHITE);
     ypos += 20;
-    FONT_writeCenter ("this software for any commercial purposes.",20,0,640,ypos,(GXColor)WHITE);
+    FONT_writeCenter ("this software in any commercial product or activity.",20,0,640,ypos,(GXColor)WHITE);
     ypos += 20;
     FONT_writeCenter ("You may not distribute this software with any ROM images",20,0,640,ypos,(GXColor)WHITE);
     ypos += 20;
     FONT_writeCenter ("unless you have the legal right to distribute them.",20,0,640,ypos,(GXColor)WHITE);
     ypos += 20;
-    FONT_writeCenter ("All trademarks and registered trademarks are",20,0,640,ypos,(GXColor)WHITE);
-    ypos += 20;
-    FONT_writeCenter ("the property of their respective owners.",20,0,640,ypos,(GXColor)WHITE);
-    ypos += 20;
     FONT_writeCenter ("This software is not endorsed by or affiliated",20,0,640,ypos,(GXColor)WHITE);
     ypos += 20;
     FONT_writeCenter ("with Sega Enterprises Ltd or Nintendo Co Ltd.",20,0,640,ypos,(GXColor)WHITE);
-    ypos += 48;
+    ypos += 20;
+    FONT_writeCenter ("All trademarks and registered trademarks are",20,0,640,ypos,(GXColor)WHITE);
+    ypos += 20;
+    FONT_writeCenter ("the property of their respective owners.",20,0,640,ypos,(GXColor)WHITE);
+    ypos += 38;
 
     if (count%25 == 0) vis^=1;
 
