@@ -89,6 +89,8 @@ void config_default(void)
   config.bilinear = 1;
 
   /* controllers options */
+  input.system[0] = SYSTEM_GAMEPAD;
+  input.system[1] = SYSTEM_GAMEPAD;
   gx_input_SetDefault();
   config.gun_cursor[0] = 1;
   config.gun_cursor[1] = 1;
@@ -104,12 +106,14 @@ void config_default(void)
   config.bg_color   = 0;
   config.bgm_volume = 100.0;
   config.sfx_volume = 100.0;
+  config.screen_w = 658;
+#ifdef HW_RVL
+  if (CONF_GetAspectRatio() == CONF_ASPECT_16_9)
+    config.screen_w = 672;
+#endif
 
   /* restore saved configuration */
   config_load();
-
-  input.system[0] = SYSTEM_GAMEPAD;
-  input.system[1] = SYSTEM_GAMEPAD;
   io_reset();
 }
 

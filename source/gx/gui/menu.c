@@ -257,13 +257,14 @@ static gui_item items_video[8] =
 };
 
 /* Preferences menu */
-static gui_item items_prefs[5] =
+static gui_item items_prefs[6] =
 {
   {NULL,NULL,"Auto SRAM: OFF",    "Enable/disable automatic SRAM",      52,132,276,48},
   {NULL,NULL,"Auto STATE: OFF",   "Enable/disable automatic Savestate", 52,132,276,48},
   {NULL,NULL,"SFX Volume: 100",   "Adjust sound effects volume",        52,132,276,48},
   {NULL,NULL,"BGM Volume: 100",   "Adjust background music volume",     52,132,276,48},
-  {NULL,NULL,"BG Color: DEFAULT", "Change background color",            52,132,276,48}
+  {NULL,NULL,"BG Color: DEFAULT", "Change background color",            52,132,276,48},
+  {NULL,NULL,"Screen Width: 658", "Adjust Screen Width",                52,132,276,48}
 };
 
 /*****************************************************************************/
@@ -454,7 +455,7 @@ static gui_menu menu_prefs =
 {
   "Menu Settings",
   0,0,
-  5,4,6,
+  6,4,6,
   items_prefs,
   buttons_list,
   bg_list,
@@ -608,6 +609,7 @@ static void prefmenu ()
   sprintf (items[3].text, "BGM Volume: %1.1f", config.bgm_volume);
   if (config.bg_color) sprintf (items[4].text, "BG Color: Type %d", config.bg_color);
   else sprintf (items[4].text, "BG Color: DEFAULT");
+  sprintf (items[5].text, "Screen Width: %d", config.screen_w);
 
   GUI_InitMenu(m);
   GUI_SlideMenuTitle(m,strlen("Menu "));
@@ -660,10 +662,22 @@ static void prefmenu ()
         if (ret < 0) config.bg_color --;
         else config.bg_color ++;
         if (config.bg_color < 0) config.bg_color = BG_COLOR_MAX - 1;
-        if (config.bg_color >= BG_COLOR_MAX) config.bg_color = 0;
+        else if (config.bg_color >= BG_COLOR_MAX) config.bg_color = 0;
         if (config.bg_color) sprintf (items[4].text, "BG Color: Type %d", config.bg_color);
         else sprintf (items[4].text, "BG Color: DEFAULT");
         GUI_SetBgColor(bg_colors[config.bg_color]);
+        break;
+
+      case 5:
+      case -7:
+        if (ret < 0) config.screen_w --;
+        else config.screen_w ++;
+        if (config.screen_w < 640) config.screen_w = VI_MAX_WIDTH_NTSC;
+        else if (config.screen_w > VI_MAX_WIDTH_NTSC) config.screen_w = 640;
+        vmode->viWidth    = config.screen_w;
+        vmode->viXOrigin  = (VI_MAX_WIDTH_NTSC - vmode->viWidth)/2;
+        VIDEO_Configure(vmode);
+        sprintf (items[5].text, "Screen Width: %d", config.screen_w);
         break;
 
       case -1:

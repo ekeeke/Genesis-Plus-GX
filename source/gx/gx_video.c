@@ -1226,6 +1226,10 @@ void gx_video_Stop(void)
 
   /* reset VI */
   gxDrawScreenshot(0xff);
+
+  /* adjust overscan */
+  vmode->viWidth    = config.screen_w;
+  vmode->viXOrigin  = (VI_MAX_WIDTH_NTSC - vmode->viWidth)/2;
   VIDEO_Configure(vmode);
   VIDEO_SetPreRetraceCallback(NULL);
   VIDEO_SetPostRetraceCallback(gx_input_UpdateMenu);
@@ -1457,17 +1461,6 @@ void gx_video_Init(void)
       config.tv_mode = 2;
       break;
   }
-
-  /* adjust overscan */
-  vmode->viWidth    = 658;
-  vmode->viXOrigin  = (VI_MAX_WIDTH_NTSC - 658)/2;
-#ifdef HW_RVL
-  if (CONF_GetAspectRatio()) 
-  {
-    vmode->viWidth    = 672;
-    vmode->viXOrigin  = (VI_MAX_WIDTH_NTSC - 672)/2;
-  }
-#endif
 
   /* Configure VI */
   VIDEO_Configure (vmode);
