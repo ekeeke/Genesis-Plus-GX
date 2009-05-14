@@ -198,34 +198,32 @@ int FileSelector(unsigned char *buffer)
 
   while (!quit)
   {
-    /* Ensure a file is selected */
-    if (!filelist[selection].flags)
+    /* ROM file snapshot/database */
+    if (old != selection)
     {
-      /* get ROM filename without extension */
-      sprintf (text, "%s", filelist[selection].filename);
-      if (strlen(text) >= 4) text[strlen(text) - 4] = 0;
+      old = selection;
 
-      /* ROM database informations */
-      sprintf (fname, "%s/db/%s.xml", DEFAULT_PATH, text);
-      xml = fopen(fname, "rb");
-      if (xml)
-      {
-        bg_filesel[6].state |= IMAGE_VISIBLE;
-        fclose(xml); /* TODO */
-      }
-      else
-      {
-        bg_filesel[6].state &= ~IMAGE_VISIBLE;
-      }
+      /* delete previous texture if any */
+      gxTextureClose(&bg_filesel[8].texture);
+      bg_filesel[8].state &= ~IMAGE_VISIBLE;
+      bg_filesel[6].state &= ~IMAGE_VISIBLE;
 
-      /* ROM snapshot */
-      if (old != selection)
+      if (!filelist[selection].flags)
       {
-        old = selection;
+        strcpy(action_select.comment,"Load ROM File");
 
-        /* delete previous texture if any */
-        gxTextureClose(&bg_filesel[8].texture);
-        bg_filesel[8].state &= ~IMAGE_VISIBLE;
+        /* get ROM filename without extension */
+        sprintf (text, "%s", filelist[selection].filename);
+        if (strlen(text) >= 4) text[strlen(text) - 4] = 0;
+
+        /* ROM database informations */
+        sprintf (fname, "%s/db/%s.xml", DEFAULT_PATH, text);
+        xml = fopen(fname, "rb");
+        if (xml)
+        {
+          bg_filesel[6].state |= IMAGE_VISIBLE;
+          fclose(xml); /* TODO */
+        }
 
         /* open screenshot file */
         sprintf (fname, "%s/snaps/%s.png", DEFAULT_PATH, text);
@@ -233,19 +231,18 @@ int FileSelector(unsigned char *buffer)
         if (snap)
         {
           bg_filesel[8].texture = gxTextureOpenPNG(0,snap);
-          fclose(snap);
           if (bg_filesel[8].texture) bg_filesel[8].state |= IMAGE_VISIBLE;
+          fclose(snap);
         }
       }
-      strcpy(action_select.comment,"Load ROM File");
-    }
-    else
-    {
-      /* update helper */
-      if (!strcmp(filelist[selection].filename,".."))
-        strcpy(action_select.comment,"Previous Directory");
       else
-        strcpy(action_select.comment,"Open Directory");
+      {
+        /* update helper */
+        if (!strcmp(filelist[selection].filename,".."))
+          strcpy(action_select.comment,"Previous Directory");
+        else
+          strcpy(action_select.comment,"Open Directory");
+      }
     }
 
     /* Draw menu*/

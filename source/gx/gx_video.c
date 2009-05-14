@@ -466,6 +466,9 @@ static void gxResetScale(u32 width, u32 height)
       else if (!vdp_pal && gc_pal && !config.render) yscale = yscale * 288 / 240;
     }
 
+    /* 16/9 correction */
+    if (config.aspect & 2) xscale = (xscale * 3) / 4;
+
     xshift = config.xshift;
     yshift = 2 - vdp_pal + 2*(gc_pal & !config.render) + config.yshift;
   }
@@ -499,6 +502,7 @@ static void gxResetScale(u32 width, u32 height)
     yscale *= 2;
     yshift *= 2;
   }
+
 
   /* GX scaler (by default, use EFB maximal width) */
   rmode->fbWidth = 640;

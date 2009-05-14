@@ -246,12 +246,12 @@ static gui_item items_system[4] =
 /* Video options menu */
 static gui_item items_video[8] =
 {
-  {NULL,NULL,"Aspect: STRETCHED",     "Select display aspect ratio",               52,132,276,48},
   {NULL,NULL,"Display: PROGRESSIVE",  "Select video mode type",                    52,132,276,48},
   {NULL,NULL,"TV mode: 50/60Hz",      "Select video refresh rate",                 52,132,276,48},
   {NULL,NULL,"Bilinear Filter: OFF",  "Enable/disable hardware filtering",         52,132,276,48},
   {NULL,NULL,"NTSC Filter: COMPOSITE","Enable/disable NTSC software filtering",    52,132,276,48},
   {NULL,NULL,"Borders: OFF",          "Enable/disable original overscan emulation",52,132,276,48},
+  {NULL,NULL,"Aspect: ORIGINAL (4:3)","Select display aspect ratio",               52,132,276,48},
   {NULL,NULL,"DISPLAY POSITION",      "Adjust display position",                   52,132,276,48},
   {NULL,NULL,"DISPLAY SIZE",          "Adjust display size",                       52,132,276,48}
 };
@@ -862,19 +862,21 @@ static void videomenu ()
   gui_menu *m = &menu_video;
   gui_item *items = m->items;
 
-  sprintf (items[0].text, "Aspect: %s", config.aspect ? "ORIGINAL" : "STRETCHED");
-  if (config.render == 1) sprintf (items[1].text,"Display: INTERLACED");
-  else if (config.render == 2) sprintf (items[1].text, "Display: PROGRESSIVE");
-  else sprintf (items[1].text, "Display: ORIGINAL");
-  if (config.tv_mode == 0) sprintf (items[2].text, "TV Mode: 60HZ");
-  else if (config.tv_mode == 1) sprintf (items[2].text, "TV Mode: 50HZ");
-  else sprintf (items[2].text, "TV Mode: 50/60HZ");
-  sprintf (items[3].text, "Bilinear Filter: %s", config.bilinear ? " ON" : "OFF");
-  if (config.ntsc == 1) sprintf (items[4].text, "NTSC Filter: COMPOSITE");
-  else if (config.ntsc == 2) sprintf (items[4].text, "NTSC Filter: S-VIDEO");
-  else if (config.ntsc == 3) sprintf (items[4].text, "NTSC Filter: RGB");
-  else sprintf (items[4].text, "NTSC Filter: OFF");
-  sprintf (items[5].text, "Borders: %s", config.overscan ? " ON" : "OFF");
+  if (config.render == 1) sprintf (items[0].text,"Display: INTERLACED");
+  else if (config.render == 2) sprintf (items[0].text, "Display: PROGRESSIVE");
+  else sprintf (items[0].text, "Display: ORIGINAL");
+  if (config.tv_mode == 0) sprintf (items[1].text, "TV Mode: 60HZ");
+  else if (config.tv_mode == 1) sprintf (items[1].text, "TV Mode: 50HZ");
+  else sprintf (items[1].text, "TV Mode: 50/60HZ");
+  sprintf (items[2].text, "Bilinear Filter: %s", config.bilinear ? " ON" : "OFF");
+  if (config.ntsc == 1) sprintf (items[3].text, "NTSC Filter: COMPOSITE");
+  else if (config.ntsc == 2) sprintf (items[3].text, "NTSC Filter: S-VIDEO");
+  else if (config.ntsc == 3) sprintf (items[3].text, "NTSC Filter: RGB");
+  else sprintf (items[3].text, "NTSC Filter: OFF");
+  sprintf (items[4].text, "Borders: %s", config.overscan ? " ON" : "OFF");
+  if (config.aspect == 1) sprintf (items[5].text,"Aspect: ORIGINAL (4:3)");
+  else if (config.aspect == 2) sprintf (items[5].text, "Aspect: ORIGINAL (16:9)");
+  else sprintf (items[5].text, "Aspect: FIT SCREEN");
 
   GUI_InitMenu(m);
   GUI_SlideMenuTitle(m,strlen("Video "));
@@ -885,12 +887,7 @@ static void videomenu ()
 
     switch (ret)
     {
-      case 0: /*** config.aspect ratio ***/
-        config.aspect ^= 1;
-        sprintf (items[0].text, "Aspect: %s", config.aspect ? "ORIGINAL" : "STRETCHED");
-        break;
-
-      case 1:  /*** rendering ***/
+      case 0:  /*** rendering ***/
         config.render = (config.render + 1) % 3;
         if (config.render == 2)
         {
@@ -905,38 +902,46 @@ static void videomenu ()
             config.render = 0;
           }
         }
-        if (config.render == 1) sprintf (items[1].text,"Display: INTERLACED");
-        else if (config.render == 2) sprintf (items[1].text, "Display: PROGRESSIVE");
-        else sprintf (items[1].text, "Display: ORIGINAL");
-        if (config.tv_mode == 0) sprintf (items[2].text, "TV Mode: 60HZ");
-        else if (config.tv_mode == 1) sprintf (items[2].text, "TV Mode: 50HZ");
-        else sprintf (items[2].text, "TV Mode: 50/60HZ");
+        if (config.render == 1) sprintf (items[0].text,"Display: INTERLACED");
+        else if (config.render == 2) sprintf (items[0].text, "Display: PROGRESSIVE");
+        else sprintf (items[0].text, "Display: ORIGINAL");
+        if (config.tv_mode == 0) sprintf (items[1].text, "TV Mode: 60HZ");
+        else if (config.tv_mode == 1) sprintf (items[1].text, "TV Mode: 50HZ");
+        else sprintf (items[1].text, "TV Mode: 50/60HZ");
         break;
 
-      case 2: /*** tv mode ***/
+      case 1: /*** tv mode ***/
         if (config.render != 2) config.tv_mode = (config.tv_mode + 1) % 3;
-        if (config.tv_mode == 0) sprintf (items[2].text, "TV Mode: 60HZ");
-        else if (config.tv_mode == 1) sprintf (items[2].text, "TV Mode: 50HZ");
-        else sprintf (items[2].text, "TV Mode: 50/60HZ");
+        if (config.tv_mode == 0) sprintf (items[1].text, "TV Mode: 60HZ");
+        else if (config.tv_mode == 1) sprintf (items[1].text, "TV Mode: 50HZ");
+        else sprintf (items[1].text, "TV Mode: 50/60HZ");
         break;
     
-      case 3: /*** bilinear filtering ***/
+      case 2: /*** bilinear filtering ***/
         config.bilinear ^= 1;
-        sprintf (items[3].text, "Bilinear Filter: %s", config.bilinear ? " ON" : "OFF");
+        sprintf (items[2].text, "Bilinear Filter: %s", config.bilinear ? " ON" : "OFF");
         break;
 
-      case 4: /*** NTSC filter ***/
+      case 3: /*** NTSC filter ***/
         config.ntsc ++;
         if (config.ntsc > 3) config.ntsc = 0;
-        if (config.ntsc == 1) sprintf (items[4].text, "NTSC Filter: COMPOSITE");
-        else if (config.ntsc == 2) sprintf (items[4].text, "NTSC Filter: S-VIDEO");
-        else if (config.ntsc == 3) sprintf (items[4].text, "NTSC Filter: RGB");
-        else sprintf (items[4].text, "NTSC Filter: OFF");
+        if (config.ntsc == 1) sprintf (items[3].text, "NTSC Filter: COMPOSITE");
+        else if (config.ntsc == 2) sprintf (items[3].text, "NTSC Filter: S-VIDEO");
+        else if (config.ntsc == 3) sprintf (items[3].text, "NTSC Filter: RGB");
+        else sprintf (items[3].text, "NTSC Filter: OFF");
         break;
 
-      case 5: /*** overscan emulation ***/
+      case 4: /*** overscan emulation ***/
         config.overscan ^= 1;
-        sprintf (items[5].text, "Borders: %s", config.overscan ? " ON" : "OFF");
+        sprintf (items[4].text, "Borders: %s", config.overscan ? " ON" : "OFF");
+        break;
+
+      case 5: /*** config.aspect ratio ***/
+        config.aspect ++;
+        if (config.aspect > 2) config.aspect = 0;
+        if (config.aspect == 1) sprintf (items[5].text,"Aspect: ORIGINAL (4:3)");
+        else if (config.aspect == 2) sprintf (items[5].text, "Aspect: ORIGINAL (16:9)");
+        else sprintf (items[5].text, "Aspect: FIT SCREEN");
         break;
 
  /*     case 6: 
