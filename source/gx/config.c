@@ -107,10 +107,6 @@ void config_default(void)
   config.bgm_volume = 100.0;
   config.sfx_volume = 100.0;
   config.screen_w = 658;
-#ifdef HW_RVL
-  if (CONF_GetAspectRatio() == CONF_ASPECT_16_9)
-    config.screen_w = 672;
-#endif
 
   /* restore saved configuration */
   config_load();

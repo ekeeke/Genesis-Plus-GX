@@ -454,13 +454,13 @@ static void gxResetScale(u32 width, u32 height)
     if (config.overscan)
     {
       /* borders are emulated */
-      xscale = 358 + ((reg[12] & 1)*2) - gc_pal;
+      xscale = 360 - gc_pal;
       yscale = vdp_pal + ((gc_pal && !config.render) ? 143 : 120);
     }
     else
     {
       /* borders are simulated (black) */
-      xscale = 325 + ((reg[12] & 1)*2) - gc_pal;
+      xscale = 330 - gc_pal;
       yscale = bitmap.viewport.h / 2;
       if (vdp_pal && (!gc_pal || config.render)) yscale = yscale * 240 / 288;
       else if (!vdp_pal && gc_pal && !config.render) yscale = yscale * 288 / 240;
@@ -478,7 +478,7 @@ static void gxResetScale(u32 width, u32 height)
     if (config.overscan)
     {
       /* borders are emulated */
-      xscale = 352;
+      xscale = 348;
       yscale = (gc_pal && !config.render) ? (vdp_pal ? (268*144 / bitmap.viewport.h):143) : (vdp_pal ? (224*144 / bitmap.viewport.h):120);
     }
     else
@@ -502,7 +502,6 @@ static void gxResetScale(u32 width, u32 height)
     yscale *= 2;
     yshift *= 2;
   }
-
 
   /* GX scaler (by default, use EFB maximal width) */
   rmode->fbWidth = 640;
@@ -816,7 +815,7 @@ void gxResetAngle(f32 angle)
   GX_Flush();
 }
 
-void gxSetScreen ()
+void gxSetScreen(void)
 {
   GX_CopyDisp(xfb[whichfb], GX_FALSE);
   GX_Flush();
@@ -825,7 +824,7 @@ void gxSetScreen ()
   VIDEO_WaitVSync ();
 }
 
-void gxClearScreen (GXColor color)
+void gxClearScreen(GXColor color)
 {
   whichfb ^= 1;
   GX_SetCopyClear(color,0x00ffffff);
@@ -1233,7 +1232,7 @@ void gx_video_Stop(void)
   VIDEO_Configure(vmode);
   VIDEO_SetPreRetraceCallback(NULL);
   VIDEO_SetPostRetraceCallback(gx_input_UpdateMenu);
-  gxSetScreen ();
+  gxSetScreen();
 }
 
 /* Menu mode -> Emulation mode */
@@ -1304,7 +1303,7 @@ void gx_video_Start(void)
     crosshair[1] = gxTextureOpenPNG(Crosshair_p2_png,0);
 
   /* apply changes on next video update */
-  bitmap.viewport.changed = 1;
+  bitmap.viewport.changed |= 1;
 
   /* reset GX rendering */
   gxResetRendering(0);
@@ -1314,7 +1313,7 @@ void gx_video_Start(void)
 void gx_video_Update(void)
 {
   /* check if display has changed */
-  if (bitmap.viewport.changed)
+  if (bitmap.viewport.changed & 1)
   {
     /* update texture size */
     vwidth  = bitmap.viewport.w + 2 * bitmap.viewport.x;
@@ -1333,10 +1332,7 @@ void gx_video_Update(void)
     GX_InitTexObj(&texobj, texturemem, vwidth, vheight, GX_TF_RGB565, GX_CLAMP, GX_CLAMP, GX_FALSE);
 
     /* configure texture filtering */
-    if (!config.bilinear)
-    {
-      GX_InitTexObjLOD(&texobj,GX_NEAR,GX_NEAR_MIP_NEAR,0.0,10.0,0.0,GX_FALSE,GX_FALSE,GX_ANISO_1);
-    }
+    if (!config.bilinear) GX_InitTexObjLOD(&texobj,GX_NEAR,GX_NEAR_MIP_NEAR,0.0,10.0,0.0,GX_FALSE,GX_FALSE,GX_ANISO_1);
 
     /* load texture object */
     GX_LoadTexObj(&texobj, GX_TEXMAP0);
@@ -1370,9 +1366,9 @@ void gx_video_Update(void)
   whichfb ^= 1;
 
   /* reconfigure VI */
-  if (bitmap.viewport.changed)
+  if (bitmap.viewport.changed & 1)
   {
-    bitmap.viewport.changed = 0;
+    bitmap.viewport.changed &= 2;
 
     /* change VI mode */
     VIDEO_Configure(rmode);
@@ -1508,7 +1504,19 @@ void gx_video_Init(void)
   /* Initialize textures */
   texturemem = memalign(32, TEX_SIZE);
   screenshot = memalign(32, HASPECT*VASPECT*4);
-  if (!texturemem || !screenshot) gx_video_Shutdown();
+  if (!texturemem || !screenshot)
+  {
+    FONT_writeCenter("Failed to allocate textures memory... Rebooting",18,0,640,200,(GXColor)WHITE);
+    gxSetScreen();
+    sleep(2);
+    gx_video_Shutdown();
+#ifdef HW_RVL
+    DI_Close();
+    SYS_ResetSystem(SYS_RESTART,0,0);
+#else
+    SYS_ResetSystem(SYS_HOTRESET,0,0);
+#endif
+  }
 }
 
 void gx_video_Shutdown(void)

@@ -23,7 +23,7 @@
  ********************************************************************************/
 
 #include "shared.h"
-#include "font.h"
+#include "gui.h"
 #include "dvd.h"
 #include "unzip.h"
 #include "filesel.h"
@@ -53,7 +53,7 @@ static char dvdbuffer[2048];
  * The PVD should reside between sector 16 and 31.
  * This is for single session DVD only.
  ****************************************************************************/
-static int getpvd ()
+static int getpvd()
 {
   int sector = 16;
   u32 rootdir32;
@@ -111,7 +111,7 @@ static int getpvd ()
  * Support function to return the next file entry, if any
  * Declared static to avoid accidental external entry.
  ****************************************************************************/
-static int getentry (int entrycount)
+static int getentry(int entrycount)
 {
   char fname[512]; /* Huge, but experience has determined this */
   char *ptr;
@@ -201,7 +201,7 @@ static int getentry (int entrycount)
  *
  * Update DVD current root directory
  ***************************************************************************/ 
-int DVD_UpdateDir(int go_up)
+int DVD_UpdateDir(bool go_up)
 {
   /* root has no parent directory */
   if (go_up && (basedir == rootdir)) return 0;
@@ -239,7 +239,7 @@ int DVD_UpdateDir(int go_up)
  *
  * The return value is number of files collected, or 0 on failure.
  ****************************************************************************/
-int DVD_ParseDirectory ()
+int DVD_ParseDirectory(void)
 {
   int pdlength;
   u64 pdoffset;
@@ -285,7 +285,7 @@ int DVD_ParseDirectory ()
  * This functions return the actual size of data copied into the buffer
  *
  ****************************************************************************/ 
-int DVD_LoadFile (u8 *buffer) 
+int DVD_LoadFile(u8 *buffer) 
 {
   /* file size */
   int length = filelist[selection].length;
@@ -302,7 +302,7 @@ int DVD_LoadFile (u8 *buffer)
     {
       char msg[50];
       sprintf(msg,"Loading %d bytes...", length);
-      ShowAction(msg);
+      GUI_MsgBoxOpen("INFO",msg);
       /* How many 2k blocks to read */
       int blocks = length / 2048;
       int readoffset = 0;
@@ -325,6 +325,7 @@ int DVD_LoadFile (u8 *buffer)
         memcpy (buffer + readoffset, readbuffer, i);
       }
 
+      GUI_MsgBoxClose();
       return length;
     }
     else
@@ -342,16 +343,16 @@ int DVD_LoadFile (u8 *buffer)
  * Function to load a DVD directory and display to user.
  ****************************************************************************/ 
 
-int DVD_Open (u8 *buffer)
+int DVD_Open(void)
 {
   /* reset flags */
-  useFAT      = 0;
+  useFAT = 0;
 
   /* is DVD mounted ? */
   if (!getpvd())
   {
     /* mount DVD */
-    ShowAction("Mounting DVD ... Wait");
+    GUI_MsgBoxOpen("INFO", "Mounting DVD ... Wait");
 
 #ifdef HW_RVL
     u32 val;
@@ -359,7 +360,7 @@ int DVD_Open (u8 *buffer)
 
     if(val & 0x1)
     {
-      WaitPrompt("No Disc inserted !");
+      GUI_WaitPrompt("ERROR","No Disc inserted !");
       return 0;
     }
 
@@ -368,8 +369,8 @@ int DVD_Open (u8 *buffer)
     if (!(DI_GetStatus() & DVD_READY))
     {
       char msg[50];
-      sprintf(msg, "DI Status Error: 0x%08X\n",DI_GetStatus());
-      WaitPrompt(msg);
+      sprintf(msg, "DI Status Error: 0x%08X !\n",DI_GetStatus());
+      GUI_WaitPrompt("ERROR",msg);
       return 0;
     }
 #else
@@ -379,9 +380,11 @@ int DVD_Open (u8 *buffer)
     haveDVDdir = 0;
     if (!getpvd())
     {
-      WaitPrompt ("Failed to mount DVD");
+      GUI_WaitPrompt("ERROR","Disc can not be read !");
       return 0;
     }
+
+    GUI_MsgBoxClose();
   }
 
   if (haveDVDdir == 0)
@@ -403,15 +406,15 @@ int DVD_Open (u8 *buffer)
       selection     = 0;
       old_offset    = 0;
       old_selection = 0;
-      return FileSelector (buffer);
+      return 1;
     }
     else
     {
       /* no entries found */
-      WaitPrompt ("no files found !");
+      GUI_WaitPrompt("ERROR","No files found !");
       return 0;
     }
   }
 
-  return FileSelector (buffer);
+  return 1;
 }

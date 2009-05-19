@@ -194,7 +194,7 @@ void DrawGGCodes ()
     }
     else WriteCentre ((i * fheight) + 190, (char *)ggcodes[i]);
   }
-  gxSetScreen ();
+  gxSetScreen();
 }
 
 /****************************************************************************

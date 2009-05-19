@@ -89,16 +89,19 @@ static void pad_config(int chan, int max_keys)
   u16 p,key;
   char msg[30];
 
-  /* disable inputs update callback */
+  /* reset VSYNC callback */
   VIDEO_SetPostRetraceCallback(NULL);
   VIDEO_Flush();
 
   /* Check if PAD is connected */
   if (!(PAD_ScanPads() & (1<<chan)))
   {
+    /* restore inputs update callback */
+    VIDEO_SetPostRetraceCallback(gx_input_UpdateMenu);
+    VIDEO_Flush();
     sprintf(msg, "PAD #%d is not connected !", chan+1);
-    WaitPrompt(msg);
-    max_keys = 0;
+    GUI_WaitPrompt("ERROR",msg);
+    return;
   }
 
   /* Configure each keys */
@@ -112,11 +115,8 @@ static void pad_config(int chan, int max_keys)
     }
 
     /* wait for user input */
-    gxClearScreen((GXColor)BLACK);
-    sprintf(msg,"Press key for %s",keys_name[i]);
-    WriteCentre(254, msg);
-    WriteCentre(254+fheight, "Z trigger to exit");
-    gxSetScreen();
+    sprintf(msg,"Press key for %s\n(Z to return)",keys_name[i]);
+    GUI_MsgBoxUpdate(0,0,msg);
 
     key = 0;
     while (!key)
@@ -314,7 +314,7 @@ static void wpad_config(u8 chan, u8 exp, u8 max_keys)
   char msg[30];
   u32 key,p = 255;
 
-  /* disable inputs update callback */
+  /* remove inputs update callback */
   VIDEO_SetPostRetraceCallback(NULL);
   VIDEO_Flush();
 
@@ -322,11 +322,15 @@ static void wpad_config(u8 chan, u8 exp, u8 max_keys)
   WPAD_Probe(chan, &p);
   if (((exp > WPAD_EXP_NONE) && (p != exp)) || (p == 255))
   {
+    /* restore inputs update callback */
+    VIDEO_SetPostRetraceCallback(gx_input_UpdateMenu);
+    VIDEO_Flush();
+
     if (exp == WPAD_EXP_NONE)     sprintf(msg, "WIIMOTE #%d is not connected !", chan+1);
     if (exp == WPAD_EXP_NUNCHUK)  sprintf(msg, "NUNCHUK #%d is not connected !", chan+1);
     if (exp == WPAD_EXP_CLASSIC)  sprintf(msg, "CLASSIC #%d is not connected !", chan+1);
-    WaitPrompt(msg);
-    max_keys = 0;
+    GUI_WaitPrompt("ERROR",msg);
+    return;
   }
 
   /* loop on each mapped keys */
@@ -340,11 +344,8 @@ static void wpad_config(u8 chan, u8 exp, u8 max_keys)
     }
 
     /* wait for user input */
-    gxClearScreen((GXColor)BLACK);
-    sprintf(msg,"Press key for %s",keys_name[i]);
-    WriteCentre(254, msg);
-    WriteCentre(254+fheight, "(HOME to return)");
-    gxSetScreen();
+    sprintf(msg,"Press key for %s\n(HOME to return)",keys_name[i]);
+    GUI_MsgBoxUpdate(0,0,msg);
 
     /* wait for input */
     key = 0;

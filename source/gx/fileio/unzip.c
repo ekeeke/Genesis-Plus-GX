@@ -28,7 +28,7 @@
 
 #include "shared.h"
 #include "dvd.h"
-#include "font.h"
+#include "gui.h"
 
 /*
  * PKWare Zip Header - adopted into zip standard
@@ -131,7 +131,7 @@ int UnZipBuffer (unsigned char *outbuffer, u64 discoffset, char *filename)
   memcpy (&pkzip, &readbuffer, sizeof (PKZIPHEADER));
 
   sprintf (msg, "Unzipping %d bytes ...", FLIP32 (pkzip.uncompressedSize));
-  ShowAction (msg);
+  GUI_MsgBoxOpen("INFO",msg);
 
   /*** Prepare the zip stream ***/
   memset (&zs, 0, sizeof (z_stream));
@@ -142,7 +142,11 @@ int UnZipBuffer (unsigned char *outbuffer, u64 discoffset, char *filename)
   zs.next_in = Z_NULL;
   res = inflateInit2 (&zs, -MAX_WBITS);
 
-  if (res != Z_OK) return 0;
+  if (res != Z_OK)
+  {
+    GUI_WaitPrompt("ERROR","Unable to unzip file !");
+    return 0;
+  }
 
   /*** Set ZipChunk for first pass ***/
   zipoffset = (sizeof (PKZIPHEADER) + FLIP16 (pkzip.filenameLength) + FLIP16 (pkzip.extraDataLength));
@@ -164,6 +168,7 @@ int UnZipBuffer (unsigned char *outbuffer, u64 discoffset, char *filename)
       if (res == Z_MEM_ERROR)
       {
         inflateEnd (&zs);
+        GUI_WaitPrompt("ERROR","Unable to unzip file !");
         return 0;
       }
 
@@ -198,12 +203,13 @@ int UnZipBuffer (unsigned char *outbuffer, u64 discoffset, char *filename)
   /* close file */
   if (fatfile) fclose(fatfile);
 
+  GUI_MsgBoxClose();
+
   if (res == Z_STREAM_END)
   {
     if (FLIP32 (pkzip.uncompressedSize) == (u32) bufferoffset) return bufferoffset;
     else return FLIP32 (pkzip.uncompressedSize);
   }
-
   return 0;
 }
 

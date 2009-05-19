@@ -24,6 +24,7 @@
 
 #include "shared.h"
 #include "font.h"
+#include "gui.h"
 #include "history.h"
 #include "aram.h"
 #include "dvd.h"
@@ -83,7 +84,9 @@ static void init_machine(void)
   cart_rom = memalign(32, MAXROMSIZE);
   if (!cart_rom)
   {
-    WaitPrompt("Failed to allocate ROM buffer... Rebooting");
+    FONT_writeCenter("Failed to allocate ROM buffer... Rebooting",18,0,640,200,(GXColor)WHITE);
+    gxSetScreen();
+    sleep(2);
     gx_audio_Shutdown();
     gx_video_Shutdown();
 #ifdef HW_RVL
@@ -134,7 +137,7 @@ void reloadrom (int size, char *name)
 void shutdown(void)
 {
   /* system shutdown */
-  memfile_autosave(-1,config.state_auto);
+  memfile_autosave(config.sram_auto,config.state_auto);
   system_shutdown();
   audio_shutdown();
   free(cart_rom);
@@ -160,9 +163,6 @@ int main (int argc, char *argv[])
   DI_Init();
 #endif
 
-  uint32 RenderedFrames   = 0;
-  uint32 TotalFrames      = 0;
-  uint32 FramesPerSecond  = 0;
 
   /* initialize hardware */
   gx_video_Init();
@@ -236,6 +236,9 @@ int main (int argc, char *argv[])
     ConfigRequested = 1;
   }
 
+  /* initialize GUI engine */
+  GUI_Initialize();
+
 #ifdef HW_RVL
   /* Power button callback */
   SYS_SetPowerCallback(Power_Off);
@@ -247,18 +250,24 @@ int main (int argc, char *argv[])
     /* Main Menu request */
     if (ConfigRequested)
     {
-      /* stop audio & video */
+      /* stop video */
       gx_video_Stop();
+
+#ifdef HW_RVL
+      if (Shutdown)
+      {
+        GUI_FadeOut();
+        shutdown();
+        SYS_ResetSystem(SYS_POWEROFF, 0, 0);
+      }
+#endif
+
+      /* stop audio */
       gx_audio_Stop();
 
       /* show menu */
       MainMenu ();
       ConfigRequested = 0;
-
-      /* reset framecounts */
-      RenderedFrames  = 0;
-      TotalFrames     = 0;
-      FramesPerSecond = vdp_rate;
 
       /* start audio & video */
       gx_video_Start();
@@ -289,16 +298,6 @@ int main (int argc, char *argv[])
       /* update video & audio */
       gx_video_Update();
       gx_audio_Update();
-      RenderedFrames++;
-    }
-
-    /* update framecounts */
-    TotalFrames++;
-    if (TotalFrames == vdp_rate)
-    {
-      FramesPerSecond = RenderedFrames;
-      RenderedFrames  = 0;
-      TotalFrames     = 0;
     }
   }
 

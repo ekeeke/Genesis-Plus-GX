@@ -23,7 +23,7 @@
  ********************************************************************************/
 
 #include "shared.h"
-#include "font.h"
+#include "gui.h"
 
 #ifndef HW_RVL
 static u64 DvdMaxOffset = 0x57057C00;                 /* 1.4 GB max. by default */
@@ -88,7 +88,7 @@ u32 dvd_read (void *dst, u32 len, u64 offset)
  ****************************************************************************/
 void dvd_motor_off( )
 {
-  ShowAction("Stopping DVD drive...");
+  GUI_MsgBoxOpen("INFO", "Stopping DVD drive ...");
 
 #ifndef HW_RVL
   dvd[0] = 0x2e;
@@ -108,6 +108,7 @@ void dvd_motor_off( )
 #else
   DI_StopMotor();
 #endif
+  GUI_MsgBoxClose();
 }
 
 #ifndef HW_RVL

@@ -205,7 +205,7 @@ void vdp_reset(void)
   bitmap.viewport.ow = 224;
 
   /* reset border area */
-  bitmap.viewport.x = config.overscan ? 12 : 0;
+  bitmap.viewport.x = config.overscan ? 14 : 0;
   bitmap.viewport.y = config.overscan ? (vdp_pal ? 32 : 8) : 0;
   bitmap.viewport.changed = 1;
 
@@ -240,7 +240,7 @@ void vdp_restore(uint8 *vdp_regs)
   hctab = (reg[12] & 1) ? cycle2hc40 : cycle2hc32;
 
   /* reinitialize overscan area */
-  bitmap.viewport.x = config.overscan ? ((reg[12] & 1) ? 16 : 12) : 0;
+  bitmap.viewport.x = config.overscan ? 14 : 0;
   bitmap.viewport.y = config.overscan ? (((reg[1] & 8) ? 0 : 8) + (vdp_pal ? 24 : 0)) : 0;
   bitmap.viewport.changed = 1;
 
@@ -649,7 +649,7 @@ static inline void vdp_reg_w(unsigned int r, unsigned int d)
         /* Update the height of the viewport */
         bitmap.viewport.h = (d & 8) ? 240 : 224;
         if (config.overscan) bitmap.viewport.y = ((vdp_pal ? 288 : 240) - bitmap.viewport.h) / 2;
-        bitmap.viewport.changed = 1;                
+        bitmap.viewport.changed |= 1;
 
         /* update VC table */
         if (vdp_pal) vctab = (d & 8) ? vc_pal_240 : vc_pal_224;
@@ -712,16 +712,19 @@ static inline void vdp_reg_w(unsigned int r, unsigned int d)
       /* Check if the viewport width has actually been changed */
       if((reg[0x0C] & 1) != (d & 1))
       {
+#ifndef NGC
         /* Update the width of the viewport */
         bitmap.viewport.w = (d & 1) ? 320 : 256;
-        if (config.overscan) bitmap.viewport.x = (d & 1) ? 16 : 12;
         bitmap.viewport.changed = 1;
 
+        /* Update clipping */
+        window_clip(d,reg[17]);
+#else
+        /* Postpound update on next frame */
+        bitmap.viewport.changed = 2;
+#endif
         /* update HC table */
         hctab = (d & 1) ? cycle2hc40 : cycle2hc32;
-
-        /* update clipping */
-        window_clip(d,reg[17]);
       }
 
       /* See if the S/TE mode bit has changed */

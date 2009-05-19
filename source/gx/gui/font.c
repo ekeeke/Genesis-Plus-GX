@@ -267,34 +267,3 @@ void fntDrawBoxFilled (int x1, int y1, int x2, int y2, int color)
   int h;
   for (h = y1; h <= y2; h++) fntDrawHLine (x1, x2, h, color);
 }
-
-/****************************************************************************
- *  Generic GUI functions (deprecated)
- *
- ****************************************************************************/
-u8 SILENT = 0;
-
-void WaitButtonA ()
-{
-  while (m_input.keys & PAD_BUTTON_A)    VIDEO_WaitVSync();
-  while (!(m_input.keys & PAD_BUTTON_A)) VIDEO_WaitVSync();
-}
-
-void WaitPrompt (char *msg)
-{
-  if (SILENT) return;
-  gxClearScreen((GXColor)BLACK);
-  WriteCentre(254, msg);
-  WriteCentre(254 + fheight, "Press A to Continue");
-  gxSetScreen();
-  WaitButtonA ();
-}
-
-void ShowAction (char *msg)
-{
-  if (SILENT) return;
-
-  gxClearScreen((GXColor)BLACK);
-  WriteCentre(254, msg);
-  gxSetScreen();
-}

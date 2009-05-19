@@ -22,7 +22,7 @@
  ********************************************************************************/
 
 #include "shared.h"
-#include "font.h"
+#include "gui.h"
 #include "history.h"
 #include "unzip.h"
 #include "filesel.h"
@@ -40,7 +40,7 @@ static int useHistory = 0;
  *
  * Update FAT current root directory
  ***************************************************************************/ 
-int FAT_UpdateDir(int go_up)
+int FAT_UpdateDir(bool go_up)
 {
   int size=0;
   char *test;
@@ -99,7 +99,7 @@ int FAT_UpdateDir(int go_up)
  *
  * List files into one FAT directory
  ***************************************************************************/ 
-int FAT_ParseDirectory()
+int FAT_ParseDirectory(void)
 {
   int nbfiles = 0;
   char filename[MAXPATHLEN];
@@ -109,9 +109,8 @@ int FAT_ParseDirectory()
   DIR_ITER *dir = diropen (fatdir);
   if (dir == NULL) 
   {
-    sprintf(filename, "Error opening %s", fatdir);
-    WaitPrompt (filename);
-    return 0;
+    GUI_WaitPrompt("ERROR","Unable to open directory !");
+    return -1;
   }
 
   while ((dirnext(dir, filename, &filestat) == 0) && (nbfiles < MAXFILES))
@@ -141,7 +140,7 @@ int FAT_ParseDirectory()
  * This functions return the actual size of data copied into the buffer
  *
  ****************************************************************************/ 
-int FAT_LoadFile (u8 *buffer) 
+int FAT_LoadFile(u8 *buffer) 
 {
   /* If loading from history then we need to setup a few more things. */
   if(useHistory)
@@ -178,7 +177,7 @@ int FAT_LoadFile (u8 *buffer)
     FILE *sdfile = fopen(fname, "rb");
     if (sdfile == NULL)
     {
-      WaitPrompt ("Unable to open file!");
+      GUI_WaitPrompt("ERROR","Unable to open file !");
       haveFATdir = 0;
       return 0;
     }
@@ -196,10 +195,11 @@ int FAT_LoadFile (u8 *buffer)
       if (sdfile)
       {
         char msg[50];
-        sprintf(msg,"Loading %d bytes...", length);
-        ShowAction(msg);
+        sprintf(msg,"Loading %d bytes ...", length);
+        GUI_MsgBoxOpen("INFO",msg);
         fread(buffer, 1, length, sdfile);
         fclose(sdfile);
+        GUI_MsgBoxClose();
         return length;
       }
     }
@@ -218,7 +218,7 @@ int FAT_LoadFile (u8 *buffer)
  *
  * Function to load a FAT directory and display to user.
  ****************************************************************************/ 
-int FAT_Open(int type, u8 *buffer)
+int FAT_Open(int type)
 {
   int max = 0;
   char root[10] = "";
@@ -281,7 +281,7 @@ int FAT_Open(int type, u8 *buffer)
       max = FAT_ParseDirectory ();
     }
 
-    if (max)
+    if (max > 0)
     {
       /* FAT is default */
       haveFATdir = 1;
@@ -293,15 +293,15 @@ int FAT_Open(int type, u8 *buffer)
       selection     = 0;
       old_offset    = 0;
       old_selection = 0;
-      return FileSelector (buffer);
+      return 1;
     }
     else
     {
       /* no entries found */
-      WaitPrompt ("no files found !");
+      if (max == 0) GUI_WaitPrompt("ERROR","No files found !");
       return 0;
     }
   }
 
-  return FileSelector (buffer);
+  return 1;
 }

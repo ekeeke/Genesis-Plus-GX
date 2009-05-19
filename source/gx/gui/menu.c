@@ -101,20 +101,12 @@ static butn_data button_player_none_data =
 /*****************************************************************************/
 static gui_item action_cancel =
 {
-#ifdef HW_RVL
-  NULL,Key_B_wii_png,"","Back",10,422,28,28
-#else
-  NULL,Key_B_gcn_png,"","Back",10,422,28,28
-#endif
+  NULL,Key_B_png,"","Back",10,422,28,28
 };
 
 static gui_item action_select =
 {
-#ifdef HW_RVL
-  NULL,Key_A_wii_png,"","",602,422,28,28
-#else
-  NULL,Key_A_gcn_png,"","",602,422,28,28
-#endif
+  NULL,Key_A_png,"","",602,422,28,28
 };
 
 
@@ -195,7 +187,7 @@ static gui_item items_ctrls[13] =
   {NULL,NULL,"","",304,  0, 24,  0},
   {NULL,NULL,"","",  0,  0,  0,  0},
   {NULL,NULL,"","",  0,  0,  0,  0},
-  {NULL,Ctrl_config_png,"Keys\nConfig","Reconfigure Controller Keys",530,306,32,32}
+  {NULL,Ctrl_config_png,"Keys\nConfig","Configure Controller Keys",530,306,32,32}
 };
 
 #ifdef HW_RVL
@@ -363,7 +355,7 @@ static gui_menu menu_main =
 };
 
 /* Main menu */
-static gui_menu menu_ctrls =
+gui_menu menu_ctrls =
 {
   "Controller Settings",
   0,0,
@@ -524,7 +516,7 @@ static void drawmenu (char items[][25], int maxitems, int selected)
     else WriteCentre (i * fheight + ypos, (char *) items[i]);
   }
 
-  gxSetScreen ();
+  gxSetScreen();
 }
 
 static int domenu (char items[][25], int maxitems, u8 fastmove)
@@ -670,14 +662,14 @@ static void prefmenu ()
 
       case 5:
       case -7:
-        if (ret < 0) config.screen_w --;
-        else config.screen_w ++;
+        if (ret < 0) config.screen_w -=2;
+        else config.screen_w +=2;
         if (config.screen_w < 640) config.screen_w = VI_MAX_WIDTH_NTSC;
         else if (config.screen_w > VI_MAX_WIDTH_NTSC) config.screen_w = 640;
-        vmode->viWidth    = config.screen_w;
-        vmode->viXOrigin  = (VI_MAX_WIDTH_NTSC - vmode->viWidth)/2;
-        VIDEO_Configure(vmode);
         sprintf (items[5].text, "Screen Width: %d", config.screen_w);
+        vmode->viWidth    = config.screen_w;
+        vmode->viXOrigin  = (VI_MAX_WIDTH_NTSC -config.screen_w)/2;
+        VIDEO_Configure(vmode);
         break;
 
       case -1:
@@ -828,7 +820,7 @@ static void systemmenu ()
           hctab = (reg[12] & 1) ? cycle2hc40 : cycle2hc32;
 
           /* reinitialize overscan area */
-          bitmap.viewport.x = config.overscan ? ((reg[12] & 1) ? 16 : 12) : 0;
+          bitmap.viewport.x = config.overscan ? 14 : 0;
           bitmap.viewport.y = config.overscan ? (((reg[1] & 8) ? 0 : 8) + (vdp_pal ? 24 : 0)) : 0;
         }
         break;
@@ -1368,8 +1360,8 @@ static void ctrlmenu(void)
           m->buttons[10].shift[2] = 10 - m->selected;
           m->buttons[11].shift[2] = 11 - m->selected;
           m->buttons[12].shift[2] = 12 - m->selected;
-          GUI_DrawMenuFX(m, 20, 0);
           m->selected = 10;
+          GUI_DrawMenuFX(m, 20, 0);
 
           /* update title */
           if (j_cart && (player > 1))
@@ -1514,6 +1506,7 @@ static void ctrlmenu(void)
 
         case 12:  /* Controller Keys Configuration */
           if (config.input[player].device < 0) break;
+          GUI_MsgBoxOpen("Keys Configuration", "");
           if (config.input[player].padtype == DEVICE_6BUTTON)
           {
             /* 6-buttons gamepad */
@@ -1532,7 +1525,40 @@ static void ctrlmenu(void)
             /* 3-Buttons gamepad, mouse, lightgun */
             gx_input_Config(config.input[player].port, config.input[player].device, 4);
           }
+          GUI_MsgBoxClose();
           break;
+      }
+    }
+    else if (update < 0)
+    {
+      if (m->bg_images[7].state & IMAGE_VISIBLE)
+      {
+        /* slide out configuration window */
+        GUI_DrawMenuFX(m, 20, 1);
+
+        /* disable configuration window */
+        m->bg_images[7].state &= ~IMAGE_VISIBLE;
+
+        /* disable configuration buttons */
+        m->buttons[10].state &= (~BUTTON_VISIBLE & ~BUTTON_ACTIVE);
+        m->buttons[11].state &= (~BUTTON_VISIBLE & ~BUTTON_ACTIVE);
+        m->buttons[12].state &= (~BUTTON_VISIBLE & ~BUTTON_ACTIVE);
+
+        /* clear directions */
+        m->buttons[2].shift[3] = 0;
+        m->buttons[3].shift[3] = 0;
+        m->buttons[4].shift[3] = 0;
+        m->buttons[5].shift[3] = 0;
+        m->buttons[6].shift[3] = 0;
+        m->buttons[7].shift[3] = 0;
+        m->buttons[8].shift[3] = 0;
+        m->buttons[9].shift[3] = 0;
+
+        /* update selector */
+        m->selected -= m->buttons[m->selected].shift[2];
+
+        /* stay in menu */
+        update = 0;
       }
     }
   }
@@ -1699,8 +1725,10 @@ static int loadsavemenu (int which)
 
       case 1:
       case 2:
+        SILENT = 1;
         if (which == 1) quit = ManageState(ret-1,device);
         else if (which == 0) quit = ManageSRAM(ret-1,device);
+        SILENT = 0;
         if (quit) return 1;
         break;
     }
@@ -1759,49 +1787,60 @@ static int loadmenu ()
 {
   int ret,size;
   gui_menu *m = &menu_load;
+  GUI_InitMenu(m);
 
   while (1)
   {
-    GUI_InitMenu(m);
     ret = GUI_RunMenu(m);
-    GUI_DeleteMenu(m);
 
     switch (ret)
     {
       /*** Button B ***/
       case -1: 
+        GUI_DeleteMenu(m);
         return 0;
 
       /*** Load from DVD ***/
-#ifdef HW_RVL
+  #ifdef HW_RVL
       case 3:
-#else
+  #else
       case 2:
-#endif
-        size = DVD_Open(cart_rom);
-        if (size)
+  #endif
+        if (DVD_Open())
         {
-          //dvd_motor_off();
-          memfile_autosave(-1,config.state_auto);
-          reloadrom(size,filelist[selection].filename);
-          memfile_autoload(config.sram_auto,config.state_auto);
-          return 1;
+          GUI_DeleteMenu(m);
+          size = FileSelector(cart_rom);
+          if (size)
+          {
+            memfile_autosave(-1,config.state_auto);
+            reloadrom(size,filelist[selection].filename);
+            memfile_autoload(config.sram_auto,config.state_auto);
+            return 1;
+          }
+          GUI_InitMenu(m);
         }
         break;
 
       /*** Load from FAT device ***/
       default:
-        size = FAT_Open(ret,cart_rom);
-        if (size)
+        if (FAT_Open(ret))
         {
-          memfile_autosave(-1,config.state_auto);
-          reloadrom(size,filelist[selection].filename);
-          memfile_autoload(config.sram_auto,config.state_auto);
-          return 1;
+          GUI_DeleteMenu(m);
+          size = FileSelector(cart_rom);
+          if (size)
+          {
+            memfile_autosave(-1,config.state_auto);
+            reloadrom(size,filelist[selection].filename);
+            memfile_autoload(config.sram_auto,config.state_auto);
+            return 1;
+          }
+          GUI_InitMenu(m);
         }
         break;
     }
   }
+
+  return 0;
 }
 
 /***************************************************************************
@@ -1912,7 +1951,7 @@ static void showrominfo ()
 
     ypos += fheight;
     WriteCentre (ypos, "Press A to Continue");
-    gxSetScreen ();
+    gxSetScreen();
   }
 
   p = m_input.keys;
@@ -1949,13 +1988,6 @@ void MainMenu (void)
   memfile_autosave(config.sram_auto,-1);
 
 #ifdef HW_RVL
-  if (Shutdown)
-  {
-    GUI_FadeOut();
-    shutdown();
-    SYS_ResetSystem(SYS_POWEROFF, 0, 0);
-  }
-
   /* wiimote pointer */
   w_pointer = gxTextureOpenPNG(generic_point_png,0);
 #endif
@@ -2060,7 +2092,7 @@ void MainMenu (void)
         GUI_DrawMenuFX(m,10,1);
         GUI_DeleteMenu(m);
         gxClearScreen ((GXColor)BLACK);
-        gxSetScreen ();
+        gxSetScreen();
         system_reset (); 
         quit = 1;
         break;

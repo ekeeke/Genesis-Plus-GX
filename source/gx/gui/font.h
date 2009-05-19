@@ -31,12 +31,6 @@ extern int  FONT_write(char *string, int size, int x, int y, int max_width, GXCo
 extern void FONT_writeCenter(char *string, int size, int x1, int x2, int y, GXColor color);
 extern void FONT_alignRight(char *string, int size, int x, int y, GXColor color);
 
-
-extern void WaitButtonA ();
-extern void WaitPrompt (char *msg);
-extern void ShowAction (char *msg);
-
-
 extern void WriteCentre_HL( int y, char *string);
 extern void WriteCentre (int y, char *string);
 extern void write_font (int x, int y, char *string);
@@ -44,6 +38,5 @@ extern void WriteText(char *text, int size, int x, int y);
 extern void fntDrawBoxFilled (int x1, int y1, int x2, int y2, int color);
 extern int fheight;
 extern int font_size[256];
-extern u8 SILENT;
 
 #endif

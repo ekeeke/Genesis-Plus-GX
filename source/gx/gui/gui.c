@@ -29,6 +29,12 @@
 gx_texture *w_pointer;
 #endif
 
+u8 SILENT = 0;
+
+/* message box */
+static gui_message message_box;
+static lwp_t msgboxthread;
+
 /* background color */
 static GXColor bg_color;
 
@@ -43,7 +49,7 @@ static butn_data button_text_data =
 /*  Generic GUI routines                                                     */
 /*****************************************************************************/
 
-/* Allocate texture images data */
+/* Allocate Menu texture images data */
 void GUI_InitMenu(gui_menu *menu)
 {
   int i;
@@ -101,9 +107,12 @@ void GUI_InitMenu(gui_menu *menu)
     if (item->data)
       item->texture = gxTextureOpenPNG(item->data,0);
   }
+
+  /* setup message box */
+  GUI_MsgBoxUpdate(menu,0,0);
 }
 
-/* release allocated memory */
+/* Release Menu allocated memory */
 void GUI_DeleteMenu(gui_menu *menu)
 {
   int i;
@@ -153,16 +162,8 @@ void GUI_DeleteMenu(gui_menu *menu)
   }
 }
 
-/* set default background */
-void GUI_SetBgColor(GXColor color)
-{
-  bg_color.r = color.r;
-  bg_color.g = color.g;
-  bg_color.b = color.b;
-  bg_color.a = color.a;
-}
 
-/* Menu Rendering */
+/* Draw Menu */
 void GUI_DrawMenu(gui_menu *menu)
 {
   int i;
@@ -216,9 +217,6 @@ void GUI_DrawMenu(gui_menu *menu)
         {
           FONT_writeCenter(item->text,18,item->x+2,item->x+item->w+2,button->y+(button->h-18)/2+18,(GXColor)DARK_GREY);
         }
-
-        /* update help comment */
-        if (menu->helpers[1]) strcpy(menu->helpers[1]->comment,item->comment);
       }
       else
       {
@@ -258,15 +256,18 @@ void GUI_DrawMenu(gui_menu *menu)
   item = menu->helpers[0];
   if (item)
   {
-    gxDrawTexture(item->texture,item->x,item->y,item->w,item->h,255);
-    FONT_write(item->comment,16,item->x+item->w+6,item->y+(item->h-16)/2 + 16,640,(GXColor)WHITE);
+    if (item->data && strlen(item->comment))
+    {
+      gxDrawTexture(item->texture,item->x,item->y,item->w,item->h,255);
+      FONT_write(item->comment,16,item->x+item->w+6,item->y+(item->h-16)/2 + 16,640,(GXColor)WHITE);
+    }
   }
 
   /* right comment */
   item = menu->helpers[1];
   if (item)
   {
-    if (menu->selected  < menu->max_buttons)
+    if (item->data && strlen(item->comment))
     {
       gxDrawTexture(item->texture,item->x,item->y,item->w,item->h,255);
       FONT_alignRight(item->comment,16,item->x-6,item->y+(item->h-16)/2+16,(GXColor)WHITE);
@@ -274,7 +275,7 @@ void GUI_DrawMenu(gui_menu *menu)
   }
 }
 
-/* Menu Transitions effect */
+/* Draw Menu with transitions effects */
 void GUI_DrawMenuFX(gui_menu *menu, u8 speed, u8 out)
 {
   int i,temp,xoffset,yoffset;
@@ -441,247 +442,24 @@ void GUI_DrawMenuFX(gui_menu *menu, u8 speed, u8 out)
     else if (alpha < 0) alpha = 0;
 
     /* copy EFB to XFB */
-    gxSetScreen ();
+    gxSetScreen();
   }
 
   /* final position */
   if (!out) 
   {
     GUI_DrawMenu(menu);
-    gxSetScreen ();
+    gxSetScreen();
   }
   else if (menu->screenshot)
   {
     gxClearScreen((GXColor)BLACK);
     gxDrawScreenshot(255);
-    gxSetScreen ();
-  }
-}
-
-/* Basic Fading */
-void GUI_FadeOut()
-{
-  int alpha = 0;
-  while (alpha < 256)
-  {
-    gxDrawRectangle(0, 0, 640, 480, alpha, (GXColor)BLACK);
     gxSetScreen();
-    alpha +=3;
   }
 }
 
-/* Window Prompt  */
-/* prompt window slides in & out */
-int GUI_WindowPrompt(gui_menu *parent, char *title, char *items[], u8 nb_items)
-{
-  int i, ret, quit = 0;
-  s32 selected = 0;
-  s32 old;
-  butn_data *data = &button_text_data;
-  s16 p;
-
-#ifdef HW_RVL
-  int x,y;
-  struct orient_t orient;
-#endif
-
-  /* initialize buttons data */
-  data->texture[0] = gxTextureOpenPNG(data->image[0],0);
-  data->texture[1] = gxTextureOpenPNG(data->image[1],0);
-
-  /* initialize texture window */
-  gx_texture *window = gxTextureOpenPNG(Frame_s1_png,0);
-  gx_texture *top = gxTextureOpenPNG(Frame_s1_title_png,0);
-
-  /* get initial positions */
-  int w = data->texture[0]->width;
-  int h = data->texture[0]->height;
-  int xwindow = (640 - window->width)/2;
-  int ywindow = (480 - window->height)/2;
-  int xpos = xwindow + (window->width - w)/2;
-  int ypos = (window->height - top->height - (h*nb_items) - (nb_items-1)*20)/2;
-  ypos = ypos + ywindow + top->height;
-
-  /* set initial vertical offset */
-  int yoffset = ywindow + window->height;
-
-  /* reset help comment */
-  if (parent->helpers[1]) strcpy(parent->helpers[1]->comment,"");
-
-  /* slide in */
-  while (yoffset > 0)
-  {
-    /* draw parent menu */
-    GUI_DrawMenu(parent);
-
-    /* draw window */
-    gxDrawTexture(window,xwindow,ywindow-yoffset,window->width,window->height,230);
-    gxDrawTexture(top,xwindow,ywindow-yoffset,top->width,top->height,255);
-
-    /* draw title */
-    FONT_writeCenter(title,20,xwindow,xwindow+window->width,ywindow+(top->height-20)/2+20-yoffset,(GXColor)WHITE);
-
-    /* draw buttons + text */
-    for (i=0; i<nb_items; i++)
-    {
-      gxDrawTexture(data->texture[0],xpos,ypos+i*(20 + h)-yoffset,w,h,255);
-      FONT_writeCenter(items[i],18,xpos,xpos+w,ypos+i*(20 + h)+(h + 18)/2- yoffset,(GXColor)DARK_GREY);
-    }
-
-    /* update display */
-    gxSetScreen ();
-
-    /* slide speed */
-    yoffset -= 60;
-  }
-
-  /* draw menu  */
-  while (quit == 0)
-  {
-    /* draw parent menu (should have been initialized first) */
-    GUI_DrawMenu(parent);
-
-    /* draw window */
-    gxDrawTexture(window,xwindow,ywindow,window->width,window->height,230);
-    gxDrawTexture(top,xwindow,ywindow,top->width,top->height,255);
-
-    /* draw title */
-    FONT_writeCenter(title,20,xwindow,xwindow+window->width,ywindow+(top->height-20)/2+20,(GXColor)WHITE);
-
-    /* draw buttons + text */
-    for (i=0; i<nb_items; i++)
-    {
-      if (i==selected)
-      {
-        gxDrawTexture(data->texture[1],xpos-4,ypos+i*(20+h)-4,w+8,h+8,255);
-        FONT_writeCenter(items[i],22,xpos,xpos+w,ypos+i*(20+h)+(h+22)/2,(GXColor)DARK_GREY);
-      }
-      else
-      {
-        gxDrawTexture(data->texture[0],xpos,ypos+i*(20 + h),w,h,255);
-        FONT_writeCenter(items[i],18,xpos,xpos+w,ypos+i*(20+h)+(h+18)/2,(GXColor)DARK_GREY);
-      }
-    }
-
-    old = selected;
-    p = m_input.keys;
-
-#ifdef HW_RVL
-    if (Shutdown)
-    {
-      gxTextureClose(&w_pointer);
-      GUI_DeleteMenu(parent);
-      GUI_FadeOut();
-      shutdown();
-      SYS_ResetSystem(SYS_POWEROFF, 0, 0);
-    }
-    else if (m_input.ir.valid)
-    {
-      /* get cursor position */
-      x = m_input.ir.x;
-      y = m_input.ir.y;
-
-      /* draw wiimote pointer */
-      WPAD_Orientation(0,&orient);
-      gxResetAngle(orient.roll);
-      gxDrawTexture(w_pointer,x,y,w_pointer->width,w_pointer->height,255);
-      gxResetAngle(0.0);
-
-      /* check for valid buttons */
-      selected = -1;
-      for (i=0; i<nb_items; i++)
-      {
-        if ((x>=xpos)&&(x<=(xpos+w))&&(y>=ypos+i*(20 + h))&&(y<=(ypos+i*(20+h)+h)))
-        {
-          selected = i;
-          break;
-        }
-      }
-    }
-    else
-    {
-      /* reinitialize selection */
-      if (selected == -1) selected = 0;
-    }
-#endif
-
-    /* update screen */
-    gxSetScreen ();
-
-    /* update selection */
-    if (p&PAD_BUTTON_UP)
-    {
-      if (selected > 0) selected --;
-    }
-    else if (p&PAD_BUTTON_DOWN)
-    {
-      if (selected < (nb_items -1)) selected ++;
-    }
-
-    /* sound fx */
-    if (selected != old)
-    {
-      if (selected >= 0)
-      {
-        ASND_SetVoice(ASND_GetFirstUnusedVoice(),VOICE_MONO_16BIT,22050,0,(u8 *)button_over_pcm,button_over_pcm_size,
-                      ((int)config.sfx_volume * 255) / 100,((int)config.sfx_volume * 255) / 100,NULL);
-      }
-    }
-
-    if (p & PAD_BUTTON_A)
-    {
-      if (selected >= 0)
-      {
-        quit = 1;
-        ret = selected;
-      }
-    }
-    else if (p & PAD_BUTTON_B)
-    {
-      quit = 1;
-      ret = -1;
-    }
-  }
-
-  /* reset initial vertical offset */
-  yoffset = 0;
-
-  /* slide out */
-  while (yoffset < (ywindow + window->height))
-  {
-    /* draw parent menu */
-    GUI_DrawMenu(parent);
-
-    /* draw window + header */
-    gxDrawTexture(window,xwindow,ywindow-yoffset,window->width,window->height,230);
-    gxDrawTexture(top,xwindow,ywindow-yoffset,top->width,top->height,255);
-
-    /* draw title */
-    FONT_writeCenter(title,20,xwindow,xwindow+window->width,ywindow+(top->height-20)/2+20-yoffset,(GXColor)WHITE);
-
-    /* draw buttons + text */
-    for (i=0; i<nb_items; i++)
-    {
-      gxDrawTexture(data->texture[0],xpos,ypos+i*(20+h)-yoffset,w,h,255);
-      FONT_writeCenter(items[i],18,xpos,xpos+w,ypos+i*(20+h)+(h+18)/2-yoffset,(GXColor)WHITE);
-    }
-
-    yoffset += 60;
-    gxSetScreen ();
-  }
-
-  /* final position */
-  GUI_DrawMenu(parent);
-  gxSetScreen ();
-
-  /* close textures */
-  gxTextureClose(&window);
-  gxTextureClose(&data->texture[0]);
-  gxTextureClose(&data->texture[1]);
-
-  return ret;
-}
-
+/* Update current menu */
 int GUI_UpdateMenu(gui_menu *menu)
 {
   u16 p;
@@ -749,7 +527,7 @@ int GUI_UpdateMenu(gui_menu *menu)
 #endif
 
   /* update screen */
-  gxSetScreen ();
+  gxSetScreen();
 
   /* update menu */
   p = m_input.keys;
@@ -855,6 +633,20 @@ int GUI_UpdateMenu(gui_menu *menu)
     menu->selected = selected;
   }
 
+  /* update helper comment */
+  if (menu->helpers[1])
+  {
+    if ((menu->offset + selected) < max_items)
+    {
+      gui_item *item = &menu->items[menu->offset + selected];
+      strcpy(menu->helpers[1]->comment,item->comment);
+    }
+    else
+    {
+      strcpy(menu->helpers[1]->comment,"");
+    }
+  }
+
   /* update arrows buttons status (items list) */
   button = menu->arrows[0];
   if (button)
@@ -886,6 +678,7 @@ int GUI_UpdateMenu(gui_menu *menu)
   return ret;
 }
 
+/* Generic routine to render & update menus */
 int GUI_RunMenu(gui_menu *menu)
 {
   int update = 0;
@@ -902,7 +695,223 @@ int GUI_RunMenu(gui_menu *menu)
   else return -1;
  }
 
-/* basic slide effect for option menus */
+/* Window Prompt  */
+/* window slides in & out then display user choices */
+int GUI_WindowPrompt(gui_menu *parent, char *title, char *items[], u8 nb_items)
+{
+  int i, ret, quit = 0;
+  s32 selected = 0;
+  s32 old;
+  butn_data *data = &button_text_data;
+  s16 p;
+
+#ifdef HW_RVL
+  int x,y;
+  struct orient_t orient;
+#endif
+
+  /* initialize buttons data */
+  data->texture[0] = gxTextureOpenPNG(data->image[0],0);
+  data->texture[1] = gxTextureOpenPNG(data->image[1],0);
+
+  /* initialize texture window */
+  gx_texture *window = gxTextureOpenPNG(Frame_s1_png,0);
+  gx_texture *top = gxTextureOpenPNG(Frame_s1_title_png,0);
+
+  /* get initial positions */
+  int w = data->texture[0]->width;
+  int h = data->texture[0]->height;
+  int xwindow = (640 - window->width)/2;
+  int ywindow = (480 - window->height)/2;
+  int xpos = xwindow + (window->width - w)/2;
+  int ypos = (window->height - top->height - (h*nb_items) - (nb_items-1)*20)/2;
+  ypos = ypos + ywindow + top->height;
+
+  /* set initial vertical offset */
+  int yoffset = ywindow + window->height;
+
+  /* disable helper comment */
+  if (parent->helpers[1]) parent->helpers[1]->data = 0;
+
+  /* slide in */
+  while (yoffset > 0)
+  {
+    /* draw parent menu */
+    GUI_DrawMenu(parent);
+
+    /* draw window */
+    gxDrawTexture(window,xwindow,ywindow-yoffset,window->width,window->height,230);
+    gxDrawTexture(top,xwindow,ywindow-yoffset,top->width,top->height,255);
+
+    /* draw title */
+    FONT_writeCenter(title,20,xwindow,xwindow+window->width,ywindow+(top->height-20)/2+20-yoffset,(GXColor)WHITE);
+
+    /* draw buttons + text */
+    for (i=0; i<nb_items; i++)
+    {
+      gxDrawTexture(data->texture[0],xpos,ypos+i*(20 + h)-yoffset,w,h,255);
+      FONT_writeCenter(items[i],18,xpos,xpos+w,ypos+i*(20 + h)+(h + 18)/2- yoffset,(GXColor)DARK_GREY);
+    }
+
+    /* update display */
+    gxSetScreen();
+
+    /* slide speed */
+    yoffset -= 60;
+  }
+
+  /* draw menu  */
+  while (quit == 0)
+  {
+    /* draw parent menu (should have been initialized first) */
+    GUI_DrawMenu(parent);
+
+    /* draw window */
+    gxDrawTexture(window,xwindow,ywindow,window->width,window->height,230);
+    gxDrawTexture(top,xwindow,ywindow,top->width,top->height,255);
+
+    /* draw title */
+    FONT_writeCenter(title,20,xwindow,xwindow+window->width,ywindow+(top->height-20)/2+20,(GXColor)WHITE);
+
+    /* draw buttons + text */
+    for (i=0; i<nb_items; i++)
+    {
+      if (i==selected)
+      {
+        gxDrawTexture(data->texture[1],xpos-4,ypos+i*(20+h)-4,w+8,h+8,255);
+        FONT_writeCenter(items[i],22,xpos,xpos+w,ypos+i*(20+h)+(h+22)/2,(GXColor)DARK_GREY);
+      }
+      else
+      {
+        gxDrawTexture(data->texture[0],xpos,ypos+i*(20 + h),w,h,255);
+        FONT_writeCenter(items[i],18,xpos,xpos+w,ypos+i*(20+h)+(h+18)/2,(GXColor)DARK_GREY);
+      }
+    }
+
+    old = selected;
+    p = m_input.keys;
+
+#ifdef HW_RVL
+    if (Shutdown)
+    {
+      gxTextureClose(&w_pointer);
+      GUI_DeleteMenu(parent);
+      GUI_FadeOut();
+      shutdown();
+      SYS_ResetSystem(SYS_POWEROFF, 0, 0);
+    }
+    else if (m_input.ir.valid)
+    {
+      /* get cursor position */
+      x = m_input.ir.x;
+      y = m_input.ir.y;
+
+      /* draw wiimote pointer */
+      WPAD_Orientation(0,&orient);
+      gxResetAngle(orient.roll);
+      gxDrawTexture(w_pointer,x,y,w_pointer->width,w_pointer->height,255);
+      gxResetAngle(0.0);
+
+      /* check for valid buttons */
+      selected = -1;
+      for (i=0; i<nb_items; i++)
+      {
+        if ((x>=xpos)&&(x<=(xpos+w))&&(y>=ypos+i*(20 + h))&&(y<=(ypos+i*(20+h)+h)))
+        {
+          selected = i;
+          break;
+        }
+      }
+    }
+    else
+    {
+      /* reinitialize selection */
+      if (selected == -1) selected = 0;
+    }
+#endif
+
+    /* update screen */
+    gxSetScreen();
+
+    /* update selection */
+    if (p&PAD_BUTTON_UP)
+    {
+      if (selected > 0) selected --;
+    }
+    else if (p&PAD_BUTTON_DOWN)
+    {
+      if (selected < (nb_items -1)) selected ++;
+    }
+
+    /* sound fx */
+    if (selected != old)
+    {
+      if (selected >= 0)
+      {
+        ASND_SetVoice(ASND_GetFirstUnusedVoice(),VOICE_MONO_16BIT,22050,0,(u8 *)button_over_pcm,button_over_pcm_size,
+                      ((int)config.sfx_volume * 255) / 100,((int)config.sfx_volume * 255) / 100,NULL);
+      }
+    }
+
+    if (p & PAD_BUTTON_A)
+    {
+      if (selected >= 0)
+      {
+        quit = 1;
+        ret = selected;
+      }
+    }
+    else if (p & PAD_BUTTON_B)
+    {
+      quit = 1;
+      ret = -1;
+    }
+  }
+
+  /* reset initial vertical offset */
+  yoffset = 0;
+
+  /* slide out */
+  while (yoffset < (ywindow + window->height))
+  {
+    /* draw parent menu */
+    GUI_DrawMenu(parent);
+
+    /* draw window + header */
+    gxDrawTexture(window,xwindow,ywindow-yoffset,window->width,window->height,230);
+    gxDrawTexture(top,xwindow,ywindow-yoffset,top->width,top->height,255);
+
+    /* draw title */
+    FONT_writeCenter(title,20,xwindow,xwindow+window->width,ywindow+(top->height-20)/2+20-yoffset,(GXColor)WHITE);
+
+    /* draw buttons + text */
+    for (i=0; i<nb_items; i++)
+    {
+      gxDrawTexture(data->texture[0],xpos,ypos+i*(20+h)-yoffset,w,h,255);
+      FONT_writeCenter(items[i],18,xpos,xpos+w,ypos+i*(20+h)+(h+18)/2-yoffset,(GXColor)WHITE);
+    }
+
+    yoffset += 60;
+    gxSetScreen();
+  }
+
+  /* restore helper comment */
+  if (parent->helpers[1]) parent->helpers[1]->data = Key_A_png;
+
+  /* final position */
+  GUI_DrawMenu(parent);
+  gxSetScreen();
+
+  /* close textures */
+  gxTextureClose(&window);
+  gxTextureClose(&top);
+  gxTextureClose(&data->texture[0]);
+  gxTextureClose(&data->texture[1]);
+
+  return ret;
+}
+
+/* Basic menu title slide effect */
 void GUI_SlideMenuTitle(gui_menu *m, int title_offset)
 {
 #ifdef HW_RVL
@@ -966,9 +975,232 @@ void GUI_SlideMenuTitle(gui_menu *m, int title_offset)
       if (m->selected >= m->max_buttons) m->selected = 0;
     }
 #endif
-    gxSetScreen ();
+    gxSetScreen();
     usleep(6000);
     title_offset--;
   }
   strcpy(m->title,title);
 }
+
+/* Interactive Message Box */
+/* Message Box displays a message until a specific action is completed */
+
+/* Message Box LWP Thread */
+static void *MsgBox_Thread(void *arg)
+{
+  while (1)
+  {
+    if (message_box.refresh)
+    {
+      /* window position */
+      int xwindow = (vmode->fbWidth - message_box.window->width)/2;
+      int ywindow = (vmode->efbHeight - message_box.window->height)/2;
+      int ypos = ywindow + message_box.top->height  + (message_box.window->height - message_box.top->height - 24)/2;
+
+      /* draw parent menu */
+      GUI_DrawMenu(message_box.parent);
+
+      /* draw window */
+      gxDrawTexture(message_box.window,xwindow,ywindow,message_box.window->width,message_box.window->height,230);
+      gxDrawTexture(message_box.top,xwindow,ywindow,message_box.top->width,message_box.top->height,255);
+
+      /* draw title */
+      if (message_box.title)
+        FONT_writeCenter(message_box.title,20,xwindow,xwindow+message_box.window->width,ywindow+(message_box.top->height-20)/2+20,(GXColor)WHITE);
+
+      /* draw box message */
+      if (message_box.msg)
+        FONT_writeCenter(message_box.msg,18,xwindow,xwindow+message_box.window->width,ypos,(GXColor)WHITE);
+
+      /* draw exit message */
+      if (message_box.buttonB)
+      {
+        FONT_write(": OK",18,xwindow+40+message_box.buttonA->width,640,ypos,(GXColor)WHITE);
+        FONT_write(": CANCEL",18,xwindow+120+message_box.buttonB->width,640,ypos,(GXColor)WHITE);
+        gxDrawTexture(message_box.buttonA, xwindow+40, ypos-18+(18-message_box.buttonA->height)/2,message_box.buttonA->width, message_box.buttonA->height,255);
+        gxDrawTexture(message_box.buttonB, xwindow+120, ypos-18+(18-message_box.buttonB->height)/2,message_box.buttonA->width, message_box.buttonA->height,255);
+      }
+      else if (message_box.buttonA)
+      {
+        FONT_writeCenter("Press    to continue.",18,xwindow,xwindow+message_box.window->width,ypos+22,(GXColor)WHITE);
+        gxDrawTexture(message_box.buttonA, xwindow+116, ypos+4+(18-message_box.buttonA->height)/2,message_box.buttonA->width, message_box.buttonA->height,255);
+      }
+
+      /* update display */
+      gxSetScreen();
+    }
+    else
+    {
+      LWP_YieldThread();
+    }
+  }
+
+  return NULL;
+}
+
+/* update current Message Box */
+void GUI_MsgBoxUpdate(gui_menu *parent, char *title, char *msg)
+{
+  if (parent) message_box.parent = parent;
+  if (title) strncpy(message_box.title,title,64);
+  if (msg) strncpy(message_box.msg,msg,64);
+}
+
+/* setup current Message Box */
+void GUI_MsgBoxOpen(char *title, char *msg)
+{
+  if (SILENT) return;
+
+  /* update message box */
+  GUI_MsgBoxUpdate(0,title,msg);
+
+  /* ensure we are not already running */
+  if (!message_box.refresh)
+  {
+    /* initialize default textures */
+    message_box.window = gxTextureOpenPNG(Frame_s4_png,0);
+    message_box.top = gxTextureOpenPNG(Frame_s4_title_png,0);
+
+    /* window position */
+    int xwindow = (vmode->fbWidth - message_box.window->width)/2;
+    int ywindow = (vmode->efbHeight - message_box.window->height)/2;
+    int ypos = ywindow + message_box.top->height  + (message_box.window->height - message_box.top->height - 24)/2;
+
+    /* disable helper comments */
+    if (message_box.parent->helpers[0]) message_box.parent->helpers[0]->data = 0;
+    if (message_box.parent->helpers[1]) message_box.parent->helpers[1]->data = 0;
+
+    /* slide in */
+    int yoffset = ywindow + message_box.window->height;
+    while (yoffset > 0)
+    {
+      /* draw parent menu */
+      GUI_DrawMenu(message_box.parent);
+
+      /* draw window */
+      gxDrawTexture(message_box.window,xwindow,ywindow-yoffset,message_box.window->width,message_box.window->height,230);
+      gxDrawTexture(message_box.top,xwindow,ywindow-yoffset,message_box.top->width,message_box.top->height,255);
+
+      /* draw title */
+      if (title) FONT_writeCenter(title,20,xwindow,xwindow+message_box.window->width,ywindow+(message_box.top->height-20)/2+20-yoffset,(GXColor)WHITE);
+
+      /* draw box message */
+      if (msg) FONT_writeCenter(msg,18,xwindow,xwindow+message_box.window->width,ypos-yoffset,(GXColor)WHITE);
+
+      /* update display */
+      gxSetScreen();
+
+      /* slide speed */
+      yoffset -= 60;
+    }
+
+    /* resume LWP thread for MessageBox refresh */
+    message_box.refresh = TRUE;
+    LWP_ResumeThread(msgboxthread);
+  }
+}
+
+/* Close current messagebox */
+void GUI_MsgBoxClose(void)
+{
+  if (message_box.refresh)
+  {
+    /* suspend MessageBox refresh */
+    message_box.refresh = FALSE;
+    LWP_SuspendThread(msgboxthread);
+
+    /* window position */
+    int xwindow = (vmode->fbWidth - message_box.window->width)/2;
+    int ywindow = (vmode->efbHeight - message_box.window->height)/2;
+    int ypos = ywindow + message_box.top->height  + (message_box.window->height - message_box.top->height - 24)/2;
+
+    /* slide out */
+    int yoffset = 0;
+    while (yoffset < (ywindow + message_box.window->height))
+    {
+      /* draw parent menu */
+      GUI_DrawMenu(message_box.parent);
+
+      /* draw window */
+      gxDrawTexture(message_box.window,xwindow,ywindow-yoffset,message_box.window->width,message_box.window->height,230);
+      gxDrawTexture(message_box.top,xwindow,ywindow-yoffset,message_box.top->width,message_box.top->height,255);
+
+      /* draw title */
+      if (message_box.title)
+        FONT_writeCenter(message_box.title,20,xwindow,xwindow+message_box.window->width,ywindow+(message_box.top->height-20)/2+20-yoffset,(GXColor)WHITE);
+
+      /* draw text */
+      if (message_box.msg)
+        FONT_writeCenter(message_box.msg,18,xwindow,xwindow+message_box.window->width,ypos- yoffset,(GXColor)WHITE);
+
+      /* update display */
+      gxSetScreen();
+
+      /* slide speed */
+      yoffset += 60;
+    }
+
+    /* restore helper comment */
+    if (message_box.parent->helpers[0]) message_box.parent->helpers[0]->data = Key_B_png;
+    if (message_box.parent->helpers[1]) message_box.parent->helpers[1]->data = Key_A_png;
+
+    /* final position */
+    GUI_DrawMenu(message_box.parent);
+    gxSetScreen();
+
+    /* close textures */
+    gxTextureClose(&message_box.window);
+    gxTextureClose(&message_box.top);
+    gxTextureClose(&message_box.buttonA);
+    gxTextureClose(&message_box.buttonB);
+  }
+}
+
+void GUI_WaitPrompt(char *title, char *msg)
+{
+  if (SILENT) return;
+
+  /* update message box */
+  GUI_MsgBoxOpen(title, msg);
+
+  /* allocate texture memory */
+  message_box.buttonA = gxTextureOpenPNG(Key_A_png,0);
+
+  /* wait for button A */
+  while (m_input.keys & PAD_BUTTON_A)    VIDEO_WaitVSync();
+  while (!(m_input.keys & PAD_BUTTON_A)) VIDEO_WaitVSync();
+
+  /* close message box if required */
+  GUI_MsgBoxClose();
+}
+
+/* Basic Fading */
+void GUI_FadeOut()
+{
+  int alpha = 0;
+  while (alpha < 256)
+  {
+    gxDrawRectangle(0, 0, 640, 480, alpha, (GXColor)BLACK);
+    gxSetScreen();
+    alpha +=3;
+  }
+}
+
+/* Select default background color */
+void GUI_SetBgColor(GXColor color)
+{
+  bg_color.r = color.r;
+  bg_color.g = color.g;
+  bg_color.b = color.b;
+  bg_color.a = color.a;
+}
+
+/* Initialize GUI engine */
+void GUI_Initialize(void)
+{
+  /* create LWP thread for MessageBox refresh */
+  message_box.refresh = FALSE;
+  LWP_CreateThread (&msgboxthread, MsgBox_Thread, NULL, NULL, 0, 50);
+  LWP_SuspendThread(msgboxthread);
+}
+

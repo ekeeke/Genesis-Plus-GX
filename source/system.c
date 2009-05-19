@@ -298,12 +298,23 @@ int system_frame (int do_skip)
   interlaced = (reg[12] & 2) >> 1;
   if (old_interlaced != interlaced)
   {
-    bitmap.viewport.changed = 2;
+    bitmap.viewport.changed |= 1;
     im2_flag = ((reg[12] & 6) == 6);
     odd_frame = 1;
   }
-
   odd_frame ^= 1;
+
+#ifdef NGC
+  if (bitmap.viewport.changed & 2)
+  {
+    /* Update the width of the viewport */
+    bitmap.viewport.w = (reg[12] & 1) ? 320 : 256;
+    bitmap.viewport.changed = 1;
+
+    /* Update clipping */
+    window_clip(reg[12],reg[17]);
+  }
+#endif
 
   /* clear VBLANK and DMA flags */
   status &= 0xFFF5;

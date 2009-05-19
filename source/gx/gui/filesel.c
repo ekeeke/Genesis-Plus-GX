@@ -75,20 +75,12 @@ static gui_butn arrow_down = {&arrow_down_data,BUTTON_VISIBLE|BUTTON_OVER_SFX,{0
 /*****************************************************************************/
 static gui_item action_cancel =
 {
-#ifdef HW_RVL
-  NULL,Key_B_wii_png,"","Previous",10,422,28,28
-#else
-  NULL,Key_B_gcn_png,"","Previous",10,422,28,28
-#endif
+  NULL,Key_B_png,"","Previous Directory",10,422,28,28
 };
 
 static gui_item action_select =
 {
-#ifdef HW_RVL
-  NULL,Key_A_wii_png,"","Load ROM file",602,422,28,28
-#else
-  NULL,Key_A_gcn_png,"","Load ROM file",602,422,28,28
-#endif
+  NULL,Key_A_png,"","Load ROM file",602,422,28,28
 };
 
 /*****************************************************************************/
@@ -163,8 +155,7 @@ int FileSelector(unsigned char *buffer)
 {
   short p;
   int ret,i,yoffset,string_offset;
-  int go_up = 0;
-  int quit =0;
+  int size,go_up = 0;
   int old = -1;
   char text[MAXPATHLEN];
   char fname[MAXPATHLEN];
@@ -196,7 +187,7 @@ int FileSelector(unsigned char *buffer)
   bar_over.x = 22;
   bar_over.y = -(bar_over.h - dir_icon.h)/2;
 
-  while (!quit)
+  while (1)
   {
     /* ROM file snapshot/database */
     if (old != selection)
@@ -306,6 +297,8 @@ int FileSelector(unsigned char *buffer)
     if (Shutdown)
     {
       gxTextureClose(&w_pointer);
+      gxTextureClose(&bar_over.texture);
+      gxTextureClose(&dir_icon.texture);
       GUI_DeleteMenu(m);
       GUI_FadeOut();
       shutdown();
@@ -362,7 +355,7 @@ int FileSelector(unsigned char *buffer)
 #endif
 
     /* copy EFB to XFB */
-    gxSetScreen ();
+    gxSetScreen();
 
     p = m_input.keys;
 
@@ -416,7 +409,10 @@ int FileSelector(unsigned char *buffer)
     else if (p & PAD_TRIGGER_Z)
     {
       filelist[selection].filename_offset = 0;
-      quit = 2;
+      GUI_DeleteMenu(m);
+      gxTextureClose(&bar_over.texture);
+      gxTextureClose(&dir_icon.texture);
+      return 0;
     }
 
     /* open selected file or directory */
@@ -464,7 +460,7 @@ int FileSelector(unsigned char *buffer)
         if (filelist[selection].flags)
         {
           /* get new directory */
-          if (useFAT) ret =FAT_UpdateDir(go_up);
+          if (useFAT) ret = FAT_UpdateDir(go_up);
           else ret = DVD_UpdateDir(go_up);
 
           /* get new entry list or quit */
@@ -475,7 +471,10 @@ int FileSelector(unsigned char *buffer)
           }
           else
           {
-            quit = 2;
+            GUI_DeleteMenu(m);
+            gxTextureClose(&bar_over.texture);
+            gxTextureClose(&dir_icon.texture);
+            return 0;
           }
         }
 
@@ -483,19 +482,24 @@ int FileSelector(unsigned char *buffer)
         else 
         {
           /* root directory ? */
-          if (go_up) quit = 2;
-          else quit = 1;
+          if (go_up)
+          {
+            GUI_DeleteMenu(m);
+            gxTextureClose(&bar_over.texture);
+            gxTextureClose(&dir_icon.texture);
+            return 0;
+          }
+          else
+          {
+            if (useFAT) size = FAT_LoadFile(buffer);
+            else size = DVD_LoadFile(buffer);
+            GUI_DeleteMenu(m);
+            gxTextureClose(&bar_over.texture);
+            gxTextureClose(&dir_icon.texture);
+            return size;
+          }
         }
       }
     }
   }
-
-  /* Delete Menu */
-  GUI_DeleteMenu(m);
-  gxTextureClose(&bar_over.texture);
-  gxTextureClose(&dir_icon.texture);
-
-  if (quit == 2) return 0;
-  else if (useFAT) return FAT_LoadFile(buffer);
-  else return DVD_LoadFile(buffer);
 }

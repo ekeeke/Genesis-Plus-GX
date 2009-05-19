@@ -54,8 +54,8 @@ extern void gxDrawTextureRepeat(gx_texture *texture, s32 x, s32 y, s32 w, s32 h,
 extern void gxDrawScreenshot(u8 alpha);
 extern void gxCopyScreenshot(gx_texture *texture);
 extern void gxResetAngle(f32 angle);
-extern void gxClearScreen (GXColor color);
-extern void gxSetScreen ();
+extern void gxClearScreen(GXColor color);
+extern void gxSetScreen(void);
 
 /* PNG textures */
 extern gx_texture *gxTextureOpenPNG(const u8 *png_data, FILE *png_file);

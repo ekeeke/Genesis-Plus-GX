@@ -119,6 +119,18 @@ typedef struct
   bool screenshot;            /* use gamescreen as background       */
 } gui_menu;
 
+typedef struct 
+{
+  bool refresh;         /* messagebox current state */
+  gui_menu *parent;     /* parent menu  */
+  char title[64];       /* box title    */
+  char msg[64];         /* box message  */
+  gx_texture *window;   /* pointer to box texture */
+  gx_texture *top;      /* pointer to box title texture */
+  gx_texture *buttonA;  /* pointer to button A texture */
+  gx_texture *buttonB;  /* pointer to button B texture */
+} gui_message;
+
 /* Menu Inputs */
 struct t_input_menu
 {
@@ -152,6 +164,7 @@ extern const u8 Frame_s2_png[];
 extern const u8 Frame_s3_png[];
 extern const u8 Frame_s4_png[];
 extern const u8 Frame_s1_title_png[];
+extern const u8 Frame_s4_title_png[];
 
 /* ROM Browser */
 extern const u8 Overlay_bar_png[];
@@ -228,10 +241,14 @@ extern const u8 ctrl_wiimote_png[];
 
 /* Generic images*/
 #ifdef HW_RVL
+#define Key_A_png Key_A_wii_png
+#define Key_B_png Key_B_wii_png
 extern const u8 generic_point_png[];
 extern const u8 Key_A_wii_png[];
 extern const u8 Key_B_wii_png[];
 #else
+#define Key_A_png Key_A_gcn_png
+#define Key_B_png Key_B_gcn_png
 extern const u8 Key_A_gcn_png[];
 extern const u8 Key_B_gcn_png[];
 #endif
@@ -249,15 +266,22 @@ extern const u32 intro_pcm_size;
 extern gx_texture *w_pointer;
 #endif
 
+extern u8 SILENT;
+
 extern void GUI_InitMenu(gui_menu *menu);
 extern void GUI_DeleteMenu(gui_menu *menu);
-extern void GUI_FadeOut();
-extern void GUI_SetBgColor(GXColor color);
 extern void GUI_DrawMenu(gui_menu *menu);
 extern void GUI_DrawMenuFX(gui_menu *menu, u8 speed, u8 out);
-extern void GUI_SlideMenuTitle(gui_menu *m, int title_offset);
 extern int GUI_UpdateMenu(gui_menu *menu);
 extern int GUI_RunMenu(gui_menu *menu);
 extern int GUI_WindowPrompt(gui_menu *parent, char *title, char *items[], u8 nb_items);
+extern void GUI_SlideMenuTitle(gui_menu *m, int title_offset);
+extern void GUI_MsgBoxOpen(char *title, char *msg);
+extern void GUI_MsgBoxUpdate(gui_menu *parent, char *title, char *msg);
+extern void GUI_MsgBoxClose(void);
+extern void GUI_WaitPrompt(char *title, char *msg);
+extern void GUI_FadeOut();
+extern void GUI_SetBgColor(GXColor color);
+extern void GUI_Initialize(void);
 
 #endif

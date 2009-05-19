@@ -80,7 +80,7 @@ void legal ()
 
   gxDrawTexture(logo_bottom, (640-logo_bottom->width-logo_top->width -32)/2, 480-logo_bottom->height-24, logo_bottom->width, logo_bottom->height,255);
   gxDrawTexture(logo_top, (640-logo_bottom->width-logo_top->width -32)/2+logo_bottom->width+32, 480-logo_bottom->height-24, logo_top->width, logo_top->height,255);
-  gxSetScreen ();
+  gxSetScreen();
 
   sleep(1);
 
@@ -130,7 +130,7 @@ void legal ()
 
     gxDrawTexture(logo_bottom, (640-logo_bottom->width-logo_top->width - 32)/2, 480-logo_bottom->height-24, logo_bottom->width, logo_bottom->height,255);
     gxDrawTexture(logo_top, (640-logo_bottom->width-logo_top->width -32)/2+logo_bottom->width+32, 480-logo_bottom->height-24, logo_top->width, logo_top->height,255);
-    gxSetScreen ();
+    gxSetScreen();
     count--;
   }
 
@@ -159,7 +159,7 @@ void legal ()
     free(texture);
   }
 
-  gxSetScreen ();
+  gxSetScreen();
   sleep (1);
 
   gxClearScreen((GXColor)WHITE);
@@ -171,7 +171,7 @@ void legal ()
     free(texture);
   }
 
-  gxSetScreen ();
+  gxSetScreen();
   sleep (1);
   gxClearScreen((GXColor)BLACK);
   texture = gxTextureOpenPNG(Bg_intro_c3_png,0);
@@ -181,7 +181,7 @@ void legal ()
     if (texture->data) free(texture->data);
     free(texture);
   }
-  gxSetScreen ();
+  gxSetScreen();
 
   ASND_Init();
   ASND_Pause(0);

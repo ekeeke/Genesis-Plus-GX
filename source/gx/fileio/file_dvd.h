@@ -25,9 +25,9 @@
 #ifndef _FILE_DVD_H
 #define _FILE_DVD_H
 
-extern int DVD_UpdateDir(int go_up);
-extern int DVD_ParseDirectory();
+extern int DVD_UpdateDir(bool go_up);
+extern int DVD_ParseDirectory(void);
 extern int DVD_LoadFile(u8 *buffer);
-extern int DVD_Open (u8 *buffer);
+extern int DVD_Open(void);
 
 #endif
