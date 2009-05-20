@@ -302,7 +302,7 @@ int DVD_LoadFile(u8 *buffer)
     {
       char msg[50];
       sprintf(msg,"Loading %d bytes...", length);
-      GUI_MsgBoxOpen("INFO",msg);
+      GUI_MsgBoxOpen("Information",msg);
       /* How many 2k blocks to read */
       int blocks = length / 2048;
       int readoffset = 0;
@@ -325,7 +325,6 @@ int DVD_LoadFile(u8 *buffer)
         memcpy (buffer + readoffset, readbuffer, i);
       }
 
-      GUI_MsgBoxClose();
       return length;
     }
     else
@@ -352,7 +351,7 @@ int DVD_Open(void)
   if (!getpvd())
   {
     /* mount DVD */
-    GUI_MsgBoxOpen("INFO", "Mounting DVD ... Wait");
+    GUI_MsgBoxOpen("Information", "Mounting DVD ... Wait");
 
 #ifdef HW_RVL
     u32 val;
@@ -360,7 +359,7 @@ int DVD_Open(void)
 
     if(val & 0x1)
     {
-      GUI_WaitPrompt("ERROR","No Disc inserted !");
+      GUI_WaitPrompt("Error","No Disc inserted !");
       return 0;
     }
 
@@ -370,7 +369,7 @@ int DVD_Open(void)
     {
       char msg[50];
       sprintf(msg, "DI Status Error: 0x%08X !\n",DI_GetStatus());
-      GUI_WaitPrompt("ERROR",msg);
+      GUI_WaitPrompt("Error",msg);
       return 0;
     }
 #else
@@ -380,7 +379,7 @@ int DVD_Open(void)
     haveDVDdir = 0;
     if (!getpvd())
     {
-      GUI_WaitPrompt("ERROR","Disc can not be read !");
+      GUI_WaitPrompt("Error","Disc can not be read !");
       return 0;
     }
 
@@ -411,7 +410,7 @@ int DVD_Open(void)
     else
     {
       /* no entries found */
-      GUI_WaitPrompt("ERROR","No files found !");
+      GUI_WaitPrompt("Error","No files found !");
       return 0;
     }
   }

@@ -454,13 +454,13 @@ static void gxResetScale(u32 width, u32 height)
     if (config.overscan)
     {
       /* borders are emulated */
-      xscale = 360 - gc_pal;
+      xscale = 358 - gc_pal;
       yscale = vdp_pal + ((gc_pal && !config.render) ? 143 : 120);
     }
     else
     {
       /* borders are simulated (black) */
-      xscale = 330 - gc_pal;
+      xscale = 328 - gc_pal;
       yscale = bitmap.viewport.h / 2;
       if (vdp_pal && (!gc_pal || config.render)) yscale = yscale * 240 / 288;
       else if (!vdp_pal && gc_pal && !config.render) yscale = yscale * 288 / 240;

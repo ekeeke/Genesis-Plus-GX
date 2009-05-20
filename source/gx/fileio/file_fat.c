@@ -109,7 +109,7 @@ int FAT_ParseDirectory(void)
   DIR_ITER *dir = diropen (fatdir);
   if (dir == NULL) 
   {
-    GUI_WaitPrompt("ERROR","Unable to open directory !");
+    GUI_WaitPrompt("Error","Unable to open directory !");
     return -1;
   }
 
@@ -177,7 +177,7 @@ int FAT_LoadFile(u8 *buffer)
     FILE *sdfile = fopen(fname, "rb");
     if (sdfile == NULL)
     {
-      GUI_WaitPrompt("ERROR","Unable to open file !");
+      GUI_WaitPrompt("Error","Unable to open file !");
       haveFATdir = 0;
       return 0;
     }
@@ -196,10 +196,9 @@ int FAT_LoadFile(u8 *buffer)
       {
         char msg[50];
         sprintf(msg,"Loading %d bytes ...", length);
-        GUI_MsgBoxOpen("INFO",msg);
+        GUI_MsgBoxOpen("Information",msg);
         fread(buffer, 1, length, sdfile);
         fclose(sdfile);
-        GUI_MsgBoxClose();
         return length;
       }
     }
@@ -235,9 +234,9 @@ int FAT_Open(int type)
   /* if FAT device type changed, reload filelist */
   if (fat_type != type) 
   {
+    fat_type = type;
     haveFATdir = 0;
   }
-  fat_type = type;
 
   /* update filelist */
   if (haveFATdir == 0)
@@ -298,7 +297,7 @@ int FAT_Open(int type)
     else
     {
       /* no entries found */
-      if (max == 0) GUI_WaitPrompt("ERROR","No files found !");
+      if (max == 0) GUI_WaitPrompt("Error","No files found !");
       return 0;
     }
   }

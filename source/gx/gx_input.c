@@ -100,7 +100,7 @@ static void pad_config(int chan, int max_keys)
     VIDEO_SetPostRetraceCallback(gx_input_UpdateMenu);
     VIDEO_Flush();
     sprintf(msg, "PAD #%d is not connected !", chan+1);
-    GUI_WaitPrompt("ERROR",msg);
+    GUI_WaitPrompt("Error",msg);
     return;
   }
 
@@ -329,7 +329,7 @@ static void wpad_config(u8 chan, u8 exp, u8 max_keys)
     if (exp == WPAD_EXP_NONE)     sprintf(msg, "WIIMOTE #%d is not connected !", chan+1);
     if (exp == WPAD_EXP_NUNCHUK)  sprintf(msg, "NUNCHUK #%d is not connected !", chan+1);
     if (exp == WPAD_EXP_CLASSIC)  sprintf(msg, "CLASSIC #%d is not connected !", chan+1);
-    GUI_WaitPrompt("ERROR",msg);
+    GUI_WaitPrompt("Error",msg);
     return;
   }
 

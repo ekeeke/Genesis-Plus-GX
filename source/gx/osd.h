@@ -41,8 +41,6 @@ extern void legal();
 extern void reloadrom (int size, char *name);
 extern void shutdown();
 extern u32 frameticker;
-#ifdef HW_RVL
 extern u8 Shutdown;
-#endif
 
 #endif /* _OSD_H_ */

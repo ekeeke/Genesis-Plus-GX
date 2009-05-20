@@ -164,7 +164,6 @@ int FileSelector(unsigned char *buffer)
 #ifdef HW_RVL
   int x,y;
   gui_butn *button;
-  struct orient_t orient;
 #endif
 
   /* Initialize Menu */
@@ -235,6 +234,12 @@ int FileSelector(unsigned char *buffer)
           strcpy(action_select.comment,"Open Directory");
       }
     }
+
+#ifdef HW_RVL
+    /* pointer is out of focus */
+    if (m->selected != -1)
+      strcpy(action_select.comment,"");
+#endif
 
     /* Draw menu*/
     GUI_DrawMenu(m);
@@ -311,23 +316,22 @@ int FileSelector(unsigned char *buffer)
       y = m_input.ir.y;
 
       /* draw wiimote pointer */
-      WPAD_Orientation(0,&orient);
-      gxResetAngle(orient.roll);
-      gxDrawTexture(w_pointer, x, y, w_pointer->width, w_pointer->height,255);
+      gxResetAngle(m_input.ir.angle);
+      gxDrawTexture(w_pointer, x-w_pointer->width/2, y-w_pointer->height/2, w_pointer->width, w_pointer->height,255);
       gxResetAngle(0.0);
 
       /* find selected item */
-      yoffset = PAGEOFFSET;
+      yoffset = PAGEOFFSET - 2;
       m->selected = m->max_buttons + 2;
       for (i = offset; i < (offset + PAGESIZE) && (i < maxfiles); i++)
       {
-        if ((x<=380)&&(y>=yoffset)&&(y<(yoffset+22)))
+        if ((x<=380)&&(y>=yoffset)&&(y<(yoffset+24)))
         {
           selection = i;
           m->selected = -1;
           break;
         }
-        yoffset += 22;
+        yoffset += 24;
       }
 
       /* find selected button */
@@ -493,6 +497,13 @@ int FileSelector(unsigned char *buffer)
           {
             if (useFAT) size = FAT_LoadFile(buffer);
             else size = DVD_LoadFile(buffer);
+            if (size)
+            {
+              memfile_autosave(-1,config.state_auto);
+              reloadrom(size,filelist[selection].filename);
+              memfile_autoload(config.sram_auto,config.state_auto);
+            }
+            GUI_MsgBoxClose();
             GUI_DeleteMenu(m);
             gxTextureClose(&bar_over.texture);
             gxTextureClose(&dir_icon.texture);

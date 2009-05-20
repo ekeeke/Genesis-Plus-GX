@@ -189,7 +189,7 @@ void gx_audio_Stop(void)
   /* restart menu audio */
   ASND_Init();
   ASND_Pause(0);
-  if (Bg_music_ogg)
+  if (Bg_music_ogg && !Shutdown)
   {
     PauseOgg(0);
     PlayOgg(mem_open((char *)Bg_music_ogg, Bg_music_ogg_size), 0, OGG_INFINITE_TIME);

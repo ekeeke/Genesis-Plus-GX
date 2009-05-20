@@ -35,10 +35,11 @@
 #include <wiiuse/wpad.h>
 #endif
 
+u8 Shutdown = 0;
+
 #ifdef HW_RVL
 
 /* Power Button callback */
-u8 Shutdown = 0;
 static void Power_Off(void)
 {
   Shutdown = 1;
@@ -137,7 +138,7 @@ void reloadrom (int size, char *name)
 void shutdown(void)
 {
   /* system shutdown */
-  memfile_autosave(config.sram_auto,config.state_auto);
+  memfile_autosave(-1,config.state_auto);
   system_shutdown();
   audio_shutdown();
   free(cart_rom);
@@ -175,14 +176,6 @@ int main (int argc, char *argv[])
   /* initialize FAT devices */
   if (fatInitDefault())
   {
-#ifdef HW_RVL
-    fatEnableReadAhead ("sd", 6, 64);
-    fatEnableReadAhead ("usb", 6, 64);
-#else
-    fatEnableReadAhead ("carda", 6, 64);
-    fatEnableReadAhead ("cardb", 6, 64);
-#endif
-
     /* check for default directories */
     DIR_ITER *dir = NULL;
 
@@ -250,26 +243,16 @@ int main (int argc, char *argv[])
     /* Main Menu request */
     if (ConfigRequested)
     {
-      /* stop video */
+      /* stop video & audio */
       gx_video_Stop();
-
-#ifdef HW_RVL
-      if (Shutdown)
-      {
-        GUI_FadeOut();
-        shutdown();
-        SYS_ResetSystem(SYS_POWEROFF, 0, 0);
-      }
-#endif
-
-      /* stop audio */
       gx_audio_Stop();
 
       /* show menu */
       MainMenu ();
       ConfigRequested = 0;
 
-      /* start audio & video */
+      /* start video & audio */
+      /* always restart video first because it setup gc_pal */
       gx_video_Start();
       gx_audio_Start();
 

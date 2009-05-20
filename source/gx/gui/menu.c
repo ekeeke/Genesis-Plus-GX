@@ -1810,13 +1810,7 @@ static int loadmenu ()
         {
           GUI_DeleteMenu(m);
           size = FileSelector(cart_rom);
-          if (size)
-          {
-            memfile_autosave(-1,config.state_auto);
-            reloadrom(size,filelist[selection].filename);
-            memfile_autoload(config.sram_auto,config.state_auto);
-            return 1;
-          }
+          if (size) return 1;
           GUI_InitMenu(m);
         }
         break;
@@ -1827,13 +1821,7 @@ static int loadmenu ()
         {
           GUI_DeleteMenu(m);
           size = FileSelector(cart_rom);
-          if (size)
-          {
-            memfile_autosave(-1,config.state_auto);
-            reloadrom(size,filelist[selection].filename);
-            memfile_autoload(config.sram_auto,config.state_auto);
-            return 1;
-          }
+          if (size) return 1;
           GUI_InitMenu(m);
         }
         break;
@@ -1988,6 +1976,14 @@ void MainMenu (void)
   memfile_autosave(config.sram_auto,-1);
 
 #ifdef HW_RVL
+  /* sutdown Wii */
+  if (Shutdown)
+  {
+    GUI_FadeOut();
+    shutdown();
+    SYS_ResetSystem(SYS_POWEROFF, 0, 0);
+  }
+
   /* wiimote pointer */
   w_pointer = gxTextureOpenPNG(generic_point_png,0);
 #endif

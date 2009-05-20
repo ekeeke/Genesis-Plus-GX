@@ -69,7 +69,7 @@ static int FAT_ManageFile(char *filename, u8 direction, u8 filetype)
   FILE *fp = fopen(fname, direction ? "rb" : "wb");
   if (fp == NULL)
   {
-    GUI_WaitPrompt("ERROR","Unable to open file !");
+    GUI_WaitPrompt("Error","Unable to open file !");
     return 0;
   }
 
@@ -89,13 +89,13 @@ static int FAT_ManageFile(char *filename, u8 direction, u8 filetype)
       done = fwrite(savebuffer, 1, filesize, fp);
       if (done < filesize)
       {
-        GUI_WaitPrompt("ERROR","Unable to write file !");
+        GUI_WaitPrompt("Error","Unable to write file !");
         return 0;
       }
 
       fclose(fp);
       sprintf (fname, "Saved %d bytes successfully", done);
-      GUI_WaitPrompt("INFO",fname);
+      GUI_WaitPrompt("Information",fname);
       return 1;
 
     case 1: /* LOADING */
@@ -109,7 +109,7 @@ static int FAT_ManageFile(char *filename, u8 direction, u8 filetype)
       done = fread(savebuffer, 1, filesize, fp);
       if (done < filesize)
       {
-        GUI_WaitPrompt("ERROR","Unable to read file !");
+        GUI_WaitPrompt("Error","Unable to read file !");
         return 0;
       }
       fclose(fp);
@@ -123,7 +123,7 @@ static int FAT_ManageFile(char *filename, u8 direction, u8 filetype)
       else state_load(savebuffer); /* STATE */
 
       sprintf (fname, "Loaded %d bytes successfully", done);
-      GUI_WaitPrompt("INFO",fname);
+      GUI_WaitPrompt("Information",fname);
       return 1;
   }
 
@@ -232,11 +232,11 @@ int ManageSRAM (u8 direction, u8 device)
 
   char filename[MAXJOLIET];
 
-  /* clean buffer */
-  memset(savebuffer, 0, 0x24000);
+  if (direction) GUI_MsgBoxOpen("Information","Loading SRAM ...");
+  else GUI_MsgBoxOpen("Information","Saving SRAM ...");
 
-  if (direction) GUI_MsgBoxOpen("INFO","Loading SRAM ...");
-  else GUI_MsgBoxOpen("INFO","Saving SRAM ...");
+  /* clean buffer */
+  memset(savebuffer, 0, STATE_SIZE);
 
   if (device == 0)
   {
@@ -302,8 +302,8 @@ int ManageSRAM (u8 direction, u8 device)
           CardError = CARD_Open (CARDSLOT, filename, &CardFile);
           if (CardError)
           {
-            sprintf (action, "Error Open : %d", CardError);
-            GUI_WaitPrompt("ERROR",action);
+            sprintf (action, "Unable to open file (%d)", CardError);
+            GUI_WaitPrompt("Error",action);
             CARD_Unmount (CARDSLOT);
             return 0;
           }
@@ -317,8 +317,8 @@ int ManageSRAM (u8 direction, u8 device)
             CardError = CARD_Create (CARDSLOT, "TEMP", blocks-size, &CardFile);
             if (CardError)
             {
-              sprintf (action, "Error Update : %d", CardError);
-              GUI_WaitPrompt("ERROR",action);
+              sprintf (action, "Unable to create temporary file (%d)", CardError);
+              GUI_WaitPrompt("Error",action);
               CARD_Unmount (CARDSLOT);
               return 0;
             }
@@ -334,8 +334,8 @@ int ManageSRAM (u8 direction, u8 device)
         CardError = CARD_Create (CARDSLOT, filename, blocks, &CardFile);
         if (CardError)
         {
-          sprintf (action, "Error create : %d %d", CardError, CARDSLOT);
-          GUI_WaitPrompt("ERROR",action);
+          sprintf (action, "Unable to create new file (%d)", CardError);
+          GUI_WaitPrompt("Error",action);
           CARD_Unmount (CARDSLOT);
           return 0;
         }
@@ -361,13 +361,13 @@ int ManageSRAM (u8 direction, u8 device)
         CARD_Unmount (CARDSLOT);
         sram.crc = crc32 (0, &sram.sram[0], 0x10000);
         sprintf (action, "Saved %d bytes successfully", blocks);
-        GUI_WaitPrompt("INFO",action);
+        GUI_WaitPrompt("Information",action);
         return 1;
 
       default: /*** Loading ***/
         if (!CardFileExists (filename,CARDSLOT))
         {
-          GUI_WaitPrompt("ERROR","No SRAM file found !");
+          GUI_WaitPrompt("Error","File does not exist !");
           CARD_Unmount (CARDSLOT);
           return 0;
         }
@@ -376,8 +376,8 @@ int ManageSRAM (u8 direction, u8 device)
         CardError = CARD_Open (CARDSLOT, filename, &CardFile);
         if (CardError)
         {
-          sprintf (action, "Error Open : %d", CardError);
-          GUI_WaitPrompt("ERROR",action);
+          sprintf (action, "Unable to open file (%d)", CardError);
+          GUI_WaitPrompt("Error",action);
           CARD_Unmount (CARDSLOT);
           return 0;
         }
@@ -398,21 +398,24 @@ int ManageSRAM (u8 direction, u8 device)
         CARD_Close (&CardFile);
         CARD_Unmount (CARDSLOT);
 
-        /* Copy to SRAM */
+        /*** update SRAM ***/
         memcpy(&inzipped,&savebuffer[2112],sizeof(inzipped));
         outzipped = 0x10000;
         uncompress ((Bytef *) &sram.sram, &outzipped, (Bytef *) &savebuffer[2112+sizeof(inzipped)], inzipped);
         sram.crc = crc32 (0, &sram.sram[0], 0x10000);
+
+        /*** reset system ***/
         system_reset ();
 
         /*** Inform user ***/
         sprintf (action, "Loaded %d bytes successfully", size);
-        GUI_WaitPrompt("INFO",action);
+        GUI_WaitPrompt("Information",action);
         return 1;
     }
   }
-  else  GUI_WaitPrompt("ERROR","Unable to mount meory card");
-  return 0; /*** Signal failure ***/
+
+  GUI_WaitPrompt("Error","Unable to mount memory card");
+  return 0;
 }
 
 /****************************************************************************
@@ -429,11 +432,11 @@ int ManageState (u8 direction, u8 device)
 
   char filename[MAXJOLIET];
 
-  /* clean buffer */
-  memset(savebuffer, 0, 0x24000);
+  if (direction) GUI_MsgBoxOpen("Information","Loading State ...");
+  else GUI_MsgBoxOpen("Information","Saving State ...");
 
-  if (direction) GUI_MsgBoxOpen("INFO","Loading State ...");
-  else GUI_MsgBoxOpen("INFO","Saving State ...");
+  /* clean buffer */
+  memset(savebuffer, 0, STATE_SIZE);
 
   if (device == 0)
   {
@@ -495,8 +498,8 @@ int ManageState (u8 direction, u8 device)
           CardError = CARD_Open (CARDSLOT, filename, &CardFile);
           if (CardError)
           {
-            sprintf (action, "Error Open : %d", CardError);
-            GUI_WaitPrompt("ERROR",action);
+            sprintf (action, "Unable to open file (%d)", CardError);
+            GUI_WaitPrompt("Error",action);
             CARD_Unmount (CARDSLOT);
             return 0;
           }
@@ -510,8 +513,8 @@ int ManageState (u8 direction, u8 device)
             CardError = CARD_Create (CARDSLOT, "TEMP", blocks-size, &CardFile);
             if (CardError)
             {
-              sprintf (action, "Error Update : %d", CardError);
-              GUI_WaitPrompt("ERROR",action);
+              sprintf (action, "Unable to create temporary file (%d)", CardError);
+              GUI_WaitPrompt("Error",action);
               CARD_Unmount (CARDSLOT);
               return 0;
             }
@@ -527,8 +530,8 @@ int ManageState (u8 direction, u8 device)
         CardError = CARD_Create (CARDSLOT, filename, blocks, &CardFile);
         if (CardError)
         {
-          sprintf (action, "Error create : %d %d", CardError, CARDSLOT);
-          GUI_WaitPrompt("ERROR",action);
+          sprintf (action, "Unable to create new file (%d)", CardError);
+          GUI_WaitPrompt("Error",action);
           CARD_Unmount (CARDSLOT);
           return 0;
         }
@@ -553,13 +556,13 @@ int ManageState (u8 direction, u8 device)
         CARD_Close (&CardFile);
         CARD_Unmount (CARDSLOT);
         sprintf (action, "Saved %d bytes successfully", blocks);
-        GUI_WaitPrompt("ERROR",action);
+        GUI_WaitPrompt("Information",action);
         return 1;
 
       default: /*** Loading ***/
         if (!CardFileExists (filename, CARDSLOT))
         {
-          GUI_WaitPrompt("ERROR","No Savestate file found !");
+          GUI_WaitPrompt("Error","File does not exist !");
           CARD_Unmount (CARDSLOT);
           return 0;
         }
@@ -568,8 +571,8 @@ int ManageState (u8 direction, u8 device)
         CardError = CARD_Open (CARDSLOT, filename, &CardFile);
         if (CardError)
         {
-          sprintf (action, "Error Open : %d", CardError);
-          GUI_WaitPrompt("ERROR",action);
+          sprintf (action, "Unable to open file (%d)", CardError);
+          GUI_WaitPrompt("Error",action);
           CARD_Unmount (CARDSLOT);
           return 0;
         }
@@ -595,11 +598,11 @@ int ManageState (u8 direction, u8 device)
 
         /*** Inform user ***/
         sprintf (action, "Loaded %d bytes successfully", size);
-        GUI_WaitPrompt("ERROR",action);
+        GUI_WaitPrompt("Information",action);
         return 1;
     }
   }
-  else  GUI_WaitPrompt("ERROR","Unable to mount memory card !");
-
-  return 0; /*** Signal failure ***/
+  
+  GUI_WaitPrompt("Error","Unable to mount memory card !");
+  return 0;
 }

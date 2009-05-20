@@ -242,7 +242,7 @@ void vdp_restore(uint8 *vdp_regs)
   /* reinitialize overscan area */
   bitmap.viewport.x = config.overscan ? 14 : 0;
   bitmap.viewport.y = config.overscan ? (((reg[1] & 8) ? 0 : 8) + (vdp_pal ? 24 : 0)) : 0;
-  bitmap.viewport.changed = 1;
+  bitmap.viewport.changed = 2;
 
   /* restore VDP timings */
   fifo_latency = (reg[12] & 1) ? 27 : 30;

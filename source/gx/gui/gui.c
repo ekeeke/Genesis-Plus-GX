@@ -470,8 +470,6 @@ int GUI_UpdateMenu(gui_menu *menu)
   gui_butn *button;
 
 #ifdef HW_RVL
-  int i,x,y;
-  struct orient_t orient;
   if (Shutdown)
   {
     GUI_DeleteMenu(menu);
@@ -482,17 +480,17 @@ int GUI_UpdateMenu(gui_menu *menu)
   else if (m_input.ir.valid)
   {
     /* get cursor position */
-    x = m_input.ir.x;
-    y = m_input.ir.y;
+    int x = m_input.ir.x;
+    int y = m_input.ir.y;
 
     /* draw wiimote pointer */
-    WPAD_Orientation(0,&orient);
-    gxResetAngle(orient.roll);
-    gxDrawTexture(w_pointer,x,y,w_pointer->width,w_pointer->height,255);
+    gxResetAngle(m_input.ir.angle);
+    gxDrawTexture(w_pointer, x-w_pointer->width/2, y-w_pointer->height/2, w_pointer->width, w_pointer->height,255);
     gxResetAngle(0.0);
 
     /* check for valid buttons */
     selected = max_buttons + 2;
+    int i;
     for (i=0; i<max_buttons; i++)
     {
       button = &menu->buttons[i];
@@ -707,7 +705,6 @@ int GUI_WindowPrompt(gui_menu *parent, char *title, char *items[], u8 nb_items)
 
 #ifdef HW_RVL
   int x,y;
-  struct orient_t orient;
 #endif
 
   /* initialize buttons data */
@@ -807,9 +804,8 @@ int GUI_WindowPrompt(gui_menu *parent, char *title, char *items[], u8 nb_items)
       y = m_input.ir.y;
 
       /* draw wiimote pointer */
-      WPAD_Orientation(0,&orient);
-      gxResetAngle(orient.roll);
-      gxDrawTexture(w_pointer,x,y,w_pointer->width,w_pointer->height,255);
+      gxResetAngle(m_input.ir.angle);
+      gxDrawTexture(w_pointer, x-w_pointer->width/2, y-w_pointer->height/2, w_pointer->width, w_pointer->height,255);
       gxResetAngle(0.0);
 
       /* check for valid buttons */
@@ -917,7 +913,6 @@ void GUI_SlideMenuTitle(gui_menu *m, int title_offset)
 #ifdef HW_RVL
   gui_butn *button;
   int i,x,y;
-  struct orient_t orient;
 #endif
 
   char title[64];
@@ -925,9 +920,13 @@ void GUI_SlideMenuTitle(gui_menu *m, int title_offset)
 
   while (title_offset > 0)
   {
+    /* update title */
     strcpy(m->title,title+title_offset);
     m->title[strlen(title)-title_offset-1] = 0;
+
+    /* draw menu */
     GUI_DrawMenu(m);
+
 #ifdef HW_RVL
     if (m_input.ir.valid)
     {
@@ -936,9 +935,8 @@ void GUI_SlideMenuTitle(gui_menu *m, int title_offset)
       y = m_input.ir.y;
 
       /* draw wiimote pointer */
-      WPAD_Orientation(0,&orient);
-      gxResetAngle(orient.roll);
-      gxDrawTexture(w_pointer,x,y,w_pointer->width,w_pointer->height,255);
+      gxResetAngle(m_input.ir.angle);
+      gxDrawTexture(w_pointer, x-w_pointer->width/2, y-w_pointer->height/2, w_pointer->width, w_pointer->height,255);
       gxResetAngle(0.0);
 
       /* check for valid buttons */

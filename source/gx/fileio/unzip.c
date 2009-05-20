@@ -131,7 +131,7 @@ int UnZipBuffer (unsigned char *outbuffer, u64 discoffset, char *filename)
   memcpy (&pkzip, &readbuffer, sizeof (PKZIPHEADER));
 
   sprintf (msg, "Unzipping %d bytes ...", FLIP32 (pkzip.uncompressedSize));
-  GUI_MsgBoxOpen("INFO",msg);
+  GUI_MsgBoxOpen("Information",msg);
 
   /*** Prepare the zip stream ***/
   memset (&zs, 0, sizeof (z_stream));
@@ -144,7 +144,7 @@ int UnZipBuffer (unsigned char *outbuffer, u64 discoffset, char *filename)
 
   if (res != Z_OK)
   {
-    GUI_WaitPrompt("ERROR","Unable to unzip file !");
+    GUI_WaitPrompt("Error","Unable to unzip file !");
     return 0;
   }
 
@@ -168,7 +168,7 @@ int UnZipBuffer (unsigned char *outbuffer, u64 discoffset, char *filename)
       if (res == Z_MEM_ERROR)
       {
         inflateEnd (&zs);
-        GUI_WaitPrompt("ERROR","Unable to unzip file !");
+        GUI_WaitPrompt("Error","Unable to unzip file !");
         return 0;
       }
 
@@ -202,8 +202,6 @@ int UnZipBuffer (unsigned char *outbuffer, u64 discoffset, char *filename)
 
   /* close file */
   if (fatfile) fclose(fatfile);
-
-  GUI_MsgBoxClose();
 
   if (res == Z_STREAM_END)
   {
