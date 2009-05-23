@@ -121,14 +121,16 @@ typedef struct
 
 typedef struct 
 {
-  bool refresh;         /* messagebox current state */
-  gui_menu *parent;     /* parent menu  */
-  char title[64];       /* box title    */
-  char msg[64];         /* box message  */
-  gx_texture *window;   /* pointer to box texture */
-  gx_texture *top;      /* pointer to box title texture */
-  gx_texture *buttonA;  /* pointer to button A texture */
-  gx_texture *buttonB;  /* pointer to button B texture */
+  u32 progress;           /* progress counter */
+  bool refresh;           /* messagebox current state */
+  gui_menu *parent;       /* parent menu  */
+  char title[64];         /* box title    */
+  char msg[64];           /* box message  */
+  gx_texture *window;     /* pointer to box texture */
+  gx_texture *top;        /* pointer to box title texture */
+  gx_texture *buttonA;    /* pointer to button A texture */
+  gx_texture *buttonB;    /* pointer to button B texture */
+  gx_texture *throbber;   /* pointer to throbber texture */
 } gui_message;
 
 /* Menu Inputs */
@@ -165,6 +167,7 @@ extern const u8 Frame_s3_png[];
 extern const u8 Frame_s4_png[];
 extern const u8 Frame_s1_title_png[];
 extern const u8 Frame_s4_title_png[];
+extern const u8 Frame_throbber_png[];
 
 /* ROM Browser */
 extern const u8 Overlay_bar_png[];
@@ -276,7 +279,7 @@ extern int GUI_UpdateMenu(gui_menu *menu);
 extern int GUI_RunMenu(gui_menu *menu);
 extern int GUI_WindowPrompt(gui_menu *parent, char *title, char *items[], u8 nb_items);
 extern void GUI_SlideMenuTitle(gui_menu *m, int title_offset);
-extern void GUI_MsgBoxOpen(char *title, char *msg);
+extern void GUI_MsgBoxOpen(char *title, char *msg, bool throbber);
 extern void GUI_MsgBoxUpdate(gui_menu *parent, char *title, char *msg);
 extern void GUI_MsgBoxClose(void);
 extern void GUI_WaitPrompt(char *title, char *msg);

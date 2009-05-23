@@ -662,6 +662,56 @@ void gxDrawTexture(gx_texture *texture, s32 x, s32 y, s32 w, s32 h, u8 alpha)
   }
 }
 
+void gxDrawTextureRotate(gx_texture *texture, s32 x, s32 y, s32 w, s32 h, f32 angle, u8 alpha)
+{
+  if (!texture) return;
+  if (texture->data)
+  {
+    /* load texture object */
+    GXTexObj texObj;
+    GX_InitTexObj(&texObj, texture->data, texture->width, texture->height, GX_TF_RGBA8, GX_CLAMP, GX_CLAMP, GX_FALSE);
+    GX_InitTexObjLOD(&texObj,GX_LINEAR,GX_LIN_MIP_LIN,0.0,10.0,0.0,GX_FALSE,GX_TRUE,GX_ANISO_4);
+    GX_LoadTexObj(&texObj, GX_TEXMAP0);
+    GX_InvalidateTexAll();
+
+    /* vertex coordinate */
+    x -= (vmode->fbWidth/2);
+    y -= (vmode->efbHeight/2);
+
+    /* Modelview rotation */
+    Mtx m,mv;
+    Vector axis = (Vector) {0,0,1};
+    guLookAt(mv, &cam.pos, &cam.up, &cam.view);
+    guMtxRotAxisDeg (m, &axis, angle);
+    guMtxTransApply(m,m, x+w/2,y+h/2,0);
+    guMtxConcat(mv,m,mv);
+    GX_LoadPosMtxImm(mv, GX_PNMTX0);
+    GX_Flush();
+
+    /* draw textured quad */
+    GX_Begin(GX_QUADS, GX_VTXFMT0, 4);
+    GX_Position2s16(-w/2,-h/2);
+    GX_Color4u8(0xff,0xff,0xff,alpha);
+    GX_TexCoord2f32(0.0, 0.0);
+    GX_Position2s16(w/2,-h/2);
+    GX_Color4u8(0xff,0xff,0xff,alpha);
+    GX_TexCoord2f32(1.0, 0.0);
+    GX_Position2s16(w/2,h/2);
+    GX_Color4u8(0xff,0xff,0xff,alpha);
+    GX_TexCoord2f32(1.0, 1.0);
+    GX_Position2s16(-w/2,h/2);
+    GX_Color4u8(0xff,0xff,0xff,alpha);
+    GX_TexCoord2f32(0.0, 1.0);
+    GX_End ();
+    GX_DrawDone();
+
+    /* restore default Modelview */
+    guLookAt(mv, &cam.pos, &cam.up, &cam.view);
+    GX_LoadPosMtxImm(mv, GX_PNMTX0);
+    GX_Flush();
+  }
+}
+
 void gxDrawTextureRepeat(gx_texture *texture, s32 x, s32 y, s32 w, s32 h, u8 alpha)
 {
   if (!texture) return;
@@ -792,27 +842,6 @@ void gxCopyScreenshot(gx_texture *texture)
   GX_LoadTexObj(&texobj, GX_TEXMAP0);
   GX_InvalidateTexAll();
   DCFlushRange(texture->data, texture->width * texture->height * 4);
-}
-
-void gxResetAngle(f32 angle)
-{
-  Mtx view;
-
-  if (angle)
-  {
-    Mtx m,m1;
-    Vector axis = (Vector) {0,0,1};
-    guLookAt(m, &cam.pos, &cam.up, &cam.view);
-    guMtxRotAxisDeg (m1, &axis, angle);
-    guMtxConcat(m,m1,view);
-  }
-  else
-  {
-    guLookAt(view, &cam.pos, &cam.up, &cam.view);
-  }
-  
-  GX_LoadPosMtxImm(view, GX_PNMTX0);
-  GX_Flush();
 }
 
 void gxSetScreen(void)

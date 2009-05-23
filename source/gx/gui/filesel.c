@@ -316,22 +316,20 @@ int FileSelector(unsigned char *buffer)
       y = m_input.ir.y;
 
       /* draw wiimote pointer */
-      gxResetAngle(m_input.ir.angle);
-      gxDrawTexture(w_pointer, x-w_pointer->width/2, y-w_pointer->height/2, w_pointer->width, w_pointer->height,255);
-      gxResetAngle(0.0);
+      gxDrawTextureRotate(w_pointer, x-w_pointer->width/2, y-w_pointer->height/2, w_pointer->width, w_pointer->height,m_input.ir.angle,255);
 
       /* find selected item */
-      yoffset = PAGEOFFSET - 2;
+      yoffset = PAGEOFFSET  - 4;
       m->selected = m->max_buttons + 2;
       for (i = offset; i < (offset + PAGESIZE) && (i < maxfiles); i++)
       {
-        if ((x<=380)&&(y>=yoffset)&&(y<(yoffset+24)))
+        if ((x<=380)&&(y>=yoffset)&&(y<(yoffset+(bar_over.h))))
         {
           selection = i;
           m->selected = -1;
           break;
         }
-        yoffset += 24;
+        yoffset += (bar_over.h);
       }
 
       /* find selected button */

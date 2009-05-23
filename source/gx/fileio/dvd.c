@@ -63,7 +63,7 @@ u32 dvd_read (void *dst, u32 len, u64 offset)
     dvd[7] = 3; 
 
     /*** Enable reading with DMA ***/
-    while (dvd[7] & 1);
+    while (dvd[7] & 1) usleep(10);
     memcpy (dst, buffer, len);
 
     /*** Ensure it has completed ***/
@@ -88,7 +88,7 @@ u32 dvd_read (void *dst, u32 len, u64 offset)
  ****************************************************************************/
 void dvd_motor_off( )
 {
-  GUI_MsgBoxOpen("Information", "Stopping DVD drive ...");
+  GUI_MsgBoxOpen("Information", "Stopping DVD drive ...", 1);
 
 #ifndef HW_RVL
   dvd[0] = 0x2e;
@@ -99,7 +99,7 @@ void dvd_motor_off( )
   dvd[5] = 0;
   dvd[6] = 0;
   dvd[7] = 1; // Do immediate
-  while (dvd[7] & 1);
+  while (dvd[7] & 1) usleep(10);
 
   /*** PSO Stops blackscreen at reload ***/
   dvd[0] = 0x14;
@@ -133,7 +133,7 @@ void uselessinquiry ()
   dvd[6] = 0x20;
   dvd[7] = 1;
 
-  while (dvd[7] & 1);
+  while (dvd[7] & 1) usleep(10);
 }
 
 /****************************************************************************
@@ -152,7 +152,7 @@ void dvd_drive_detect()
   dvd[5] = 0x80000000;
   dvd[6] = 0x20;
   dvd[7] = 3;
-  while( dvd[7] & 1 );
+  while( dvd[7] & 1 ) usleep(10);
   DCFlushRange((void *)0x80000000, 32);
 
   int driveid = (int)inquiry[2];

@@ -131,7 +131,7 @@ int UnZipBuffer (unsigned char *outbuffer, u64 discoffset, char *filename)
   memcpy (&pkzip, &readbuffer, sizeof (PKZIPHEADER));
 
   sprintf (msg, "Unzipping %d bytes ...", FLIP32 (pkzip.uncompressedSize));
-  GUI_MsgBoxOpen("Information",msg);
+  GUI_MsgBoxOpen("Information",msg,1);
 
   /*** Prepare the zip stream ***/
   memset (&zs, 0, sizeof (z_stream));

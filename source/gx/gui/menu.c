@@ -285,9 +285,9 @@ static gui_butn buttons_main[9] =
   {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_FADE|BUTTON_OVER_SFX                  ,{3,0,1,1}, 80,194,148,132},
   {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_FADE|BUTTON_OVER_SFX                  ,{3,0,1,1},246,194,148,132},
   {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_FADE|BUTTON_OVER_SFX                  ,{3,0,1,0},412,194,148,132},
-  {NULL             ,                             BUTTON_FADE|BUTTON_OVER_SFX                  ,{3,0,1,1},  0,360, 88, 48},
-  {NULL             ,                             BUTTON_FADE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{2,1,1,1},542,330, 88, 38},
-  {NULL             ,                             BUTTON_FADE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{1,0,1,0},542,370, 88, 48}
+  {NULL             ,                             BUTTON_FADE|BUTTON_OVER_SFX                  ,{3,0,1,1}, 10,372, 84, 32},
+  {NULL             ,                             BUTTON_FADE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{2,1,1,1},546,334, 84, 32},
+  {NULL             ,                             BUTTON_FADE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{1,0,1,0},546,372, 84, 32}
 };
 
 /* Controllers Menu */
@@ -1506,7 +1506,7 @@ static void ctrlmenu(void)
 
         case 12:  /* Controller Keys Configuration */
           if (config.input[player].device < 0) break;
-          GUI_MsgBoxOpen("Keys Configuration", "");
+          GUI_MsgBoxOpen("Keys Configuration", "",0);
           if (config.input[player].padtype == DEVICE_6BUTTON)
           {
             /* 6-buttons gamepad */

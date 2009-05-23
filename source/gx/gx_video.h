@@ -51,9 +51,9 @@ extern u8 gc_pal;
 extern void gxDrawRectangle(s32 x, s32 y, s32 w, s32 h, u8 alpha, GXColor color);
 extern void gxDrawTexture(gx_texture *texture, s32 x, s32 y, s32 w, s32 h, u8 alpha);
 extern void gxDrawTextureRepeat(gx_texture *texture, s32 x, s32 y, s32 w, s32 h, u8 alpha);
+extern void gxDrawTextureRotate(gx_texture *texture, s32 x, s32 y, s32 w, s32 h, f32 angle, u8 alpha);
 extern void gxDrawScreenshot(u8 alpha);
 extern void gxCopyScreenshot(gx_texture *texture);
-extern void gxResetAngle(f32 angle);
 extern void gxClearScreen(GXColor color);
 extern void gxSetScreen(void);
 

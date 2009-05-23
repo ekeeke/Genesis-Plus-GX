@@ -196,7 +196,7 @@ int FAT_LoadFile(u8 *buffer)
       {
         char msg[50];
         sprintf(msg,"Loading %d bytes ...", length);
-        GUI_MsgBoxOpen("Information",msg);
+        GUI_MsgBoxOpen("Information",msg,1);
         fread(buffer, 1, length, sdfile);
         fclose(sdfile);
         return length;

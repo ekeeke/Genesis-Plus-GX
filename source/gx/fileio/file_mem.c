@@ -232,8 +232,8 @@ int ManageSRAM (u8 direction, u8 device)
 
   char filename[MAXJOLIET];
 
-  if (direction) GUI_MsgBoxOpen("Information","Loading SRAM ...");
-  else GUI_MsgBoxOpen("Information","Saving SRAM ...");
+  if (direction) GUI_MsgBoxOpen("Information","Loading SRAM ...",1);
+  else GUI_MsgBoxOpen("Information","Saving SRAM ...",1);
 
   /* clean buffer */
   memset(savebuffer, 0, STATE_SIZE);
@@ -432,8 +432,8 @@ int ManageState (u8 direction, u8 device)
 
   char filename[MAXJOLIET];
 
-  if (direction) GUI_MsgBoxOpen("Information","Loading State ...");
-  else GUI_MsgBoxOpen("Information","Saving State ...");
+  if (direction) GUI_MsgBoxOpen("Information","Loading State ...",1);
+  else GUI_MsgBoxOpen("Information","Saving State ...",1);
 
   /* clean buffer */
   memset(savebuffer, 0, STATE_SIZE);

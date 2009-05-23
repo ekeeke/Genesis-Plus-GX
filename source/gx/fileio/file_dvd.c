@@ -302,7 +302,7 @@ int DVD_LoadFile(u8 *buffer)
     {
       char msg[50];
       sprintf(msg,"Loading %d bytes...", length);
-      GUI_MsgBoxOpen("Information",msg);
+      GUI_MsgBoxOpen("Information",msg,1);
       /* How many 2k blocks to read */
       int blocks = length / 2048;
       int readoffset = 0;
@@ -351,7 +351,7 @@ int DVD_Open(void)
   if (!getpvd())
   {
     /* mount DVD */
-    GUI_MsgBoxOpen("Information", "Mounting DVD ... Wait");
+    GUI_MsgBoxOpen("Information", "Mounting DVD ...",1);
 
 #ifdef HW_RVL
     u32 val;
@@ -364,7 +364,7 @@ int DVD_Open(void)
     }
 
     DI_Mount();
-    while(DI_GetStatus() & DVD_INIT);
+    while(DI_GetStatus() & DVD_INIT) usleep(10);
     if (!(DI_GetStatus() & DVD_READY))
     {
       char msg[50];

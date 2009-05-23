@@ -484,9 +484,7 @@ int GUI_UpdateMenu(gui_menu *menu)
     int y = m_input.ir.y;
 
     /* draw wiimote pointer */
-    gxResetAngle(m_input.ir.angle);
-    gxDrawTexture(w_pointer, x-w_pointer->width/2, y-w_pointer->height/2, w_pointer->width, w_pointer->height,255);
-    gxResetAngle(0.0);
+    gxDrawTextureRotate(w_pointer, x-w_pointer->width/2, y-w_pointer->height/2, w_pointer->width, w_pointer->height,m_input.ir.angle,255);
 
     /* check for valid buttons */
     selected = max_buttons + 2;
@@ -804,9 +802,7 @@ int GUI_WindowPrompt(gui_menu *parent, char *title, char *items[], u8 nb_items)
       y = m_input.ir.y;
 
       /* draw wiimote pointer */
-      gxResetAngle(m_input.ir.angle);
-      gxDrawTexture(w_pointer, x-w_pointer->width/2, y-w_pointer->height/2, w_pointer->width, w_pointer->height,255);
-      gxResetAngle(0.0);
+      gxDrawTextureRotate(w_pointer, x-w_pointer->width/2, y-w_pointer->height/2, w_pointer->width, w_pointer->height,m_input.ir.angle,255);
 
       /* check for valid buttons */
       selected = -1;
@@ -935,9 +931,7 @@ void GUI_SlideMenuTitle(gui_menu *m, int title_offset)
       y = m_input.ir.y;
 
       /* draw wiimote pointer */
-      gxResetAngle(m_input.ir.angle);
-      gxDrawTexture(w_pointer, x-w_pointer->width/2, y-w_pointer->height/2, w_pointer->width, w_pointer->height,255);
-      gxResetAngle(0.0);
+      gxDrawTextureRotate(w_pointer, x-w_pointer->width/2, y-w_pointer->height/2, w_pointer->width, w_pointer->height,m_input.ir.angle,255);
 
       /* check for valid buttons */
       m->selected = m->max_buttons + 2;
@@ -1010,6 +1004,12 @@ static void *MsgBox_Thread(void *arg)
       if (message_box.msg)
         FONT_writeCenter(message_box.msg,18,xwindow,xwindow+message_box.window->width,ypos,(GXColor)WHITE);
 
+      /* draw throbber */
+      if (message_box.throbber)
+      {
+        gxDrawTextureRotate(message_box.throbber,xwindow+(message_box.window->width-message_box.throbber->width)/2,ywindow+message_box.window->height-message_box.throbber->height-20,message_box.throbber->width,message_box.throbber->height,(message_box.progress * 360.0) / 100.0, 255);
+      }
+
       /* draw exit message */
       if (message_box.buttonB)
       {
@@ -1026,6 +1026,10 @@ static void *MsgBox_Thread(void *arg)
 
       /* update display */
       gxSetScreen();
+
+      /* update progression */
+      message_box.progress++;
+      if (message_box.progress > 100) message_box.progress = 0;
     }
     else
     {
@@ -1045,7 +1049,7 @@ void GUI_MsgBoxUpdate(gui_menu *parent, char *title, char *msg)
 }
 
 /* setup current Message Box */
-void GUI_MsgBoxOpen(char *title, char *msg)
+void GUI_MsgBoxOpen(char *title, char *msg, bool throbber)
 {
   if (SILENT) return;
 
@@ -1058,6 +1062,7 @@ void GUI_MsgBoxOpen(char *title, char *msg)
     /* initialize default textures */
     message_box.window = gxTextureOpenPNG(Frame_s4_png,0);
     message_box.top = gxTextureOpenPNG(Frame_s4_title_png,0);
+    if (throbber) message_box.throbber = gxTextureOpenPNG(Frame_throbber_png,0);
 
     /* window position */
     int xwindow = (vmode->fbWidth - message_box.window->width)/2;
@@ -1093,6 +1098,7 @@ void GUI_MsgBoxOpen(char *title, char *msg)
     }
 
     /* resume LWP thread for MessageBox refresh */
+    message_box.progress = 0;
     message_box.refresh = TRUE;
     LWP_ResumeThread(msgboxthread);
   }
@@ -1151,6 +1157,7 @@ void GUI_MsgBoxClose(void)
     gxTextureClose(&message_box.top);
     gxTextureClose(&message_box.buttonA);
     gxTextureClose(&message_box.buttonB);
+    gxTextureClose(&message_box.throbber);
   }
 }
 
@@ -1159,7 +1166,8 @@ void GUI_WaitPrompt(char *title, char *msg)
   if (SILENT) return;
 
   /* update message box */
-  GUI_MsgBoxOpen(title, msg);
+  gxTextureClose(&message_box.throbber);
+  GUI_MsgBoxOpen(title, msg, 0);
 
   /* allocate texture memory */
   message_box.buttonA = gxTextureOpenPNG(Key_A_png,0);
@@ -1198,7 +1206,7 @@ void GUI_Initialize(void)
 {
   /* create LWP thread for MessageBox refresh */
   message_box.refresh = FALSE;
-  LWP_CreateThread (&msgboxthread, MsgBox_Thread, NULL, NULL, 0, 50);
+  LWP_CreateThread (&msgboxthread, MsgBox_Thread, NULL, NULL, 0, 10);
   LWP_SuspendThread(msgboxthread);
 }
 
