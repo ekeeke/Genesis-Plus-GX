@@ -38,13 +38,6 @@ static lwp_t msgboxthread;
 /* background color */
 static GXColor bg_color;
 
-/* prompt window button data */
-static butn_data button_text_data =
-{
-  {NULL,NULL},
-  {Button_text_png,Button_text_over_png}
-};
-
 /*****************************************************************************/
 /*  Generic GUI routines                                                     */
 /*****************************************************************************/
@@ -682,7 +675,7 @@ int GUI_WindowPrompt(gui_menu *parent, char *title, char *items[], u8 nb_items)
   int i, ret, quit = 0;
   s32 selected = 0;
   s32 old;
-  butn_data *data = &button_text_data;
+  butn_data button;
   s16 p;
 
 #ifdef HW_RVL
@@ -690,16 +683,16 @@ int GUI_WindowPrompt(gui_menu *parent, char *title, char *items[], u8 nb_items)
 #endif
 
   /* initialize buttons data */
-  data->texture[0] = gxTextureOpenPNG(data->image[0],0);
-  data->texture[1] = gxTextureOpenPNG(data->image[1],0);
+  button.texture[0] = gxTextureOpenPNG(Button_text_png,0);
+  button.texture[1] = gxTextureOpenPNG(Button_text_over_png,0);
 
   /* initialize texture window */
   gx_texture *window = gxTextureOpenPNG(Frame_s1_png,0);
   gx_texture *top = gxTextureOpenPNG(Frame_s1_title_png,0);
 
   /* get initial positions */
-  int w = data->texture[0]->width;
-  int h = data->texture[0]->height;
+  int w = button.texture[0]->width;
+  int h = button.texture[0]->height;
   int xwindow = (640 - window->width)/2;
   int ywindow = (480 - window->height)/2;
   int xpos = xwindow + (window->width - w)/2;
@@ -728,7 +721,7 @@ int GUI_WindowPrompt(gui_menu *parent, char *title, char *items[], u8 nb_items)
     /* draw buttons + text */
     for (i=0; i<nb_items; i++)
     {
-      gxDrawTexture(data->texture[0],xpos,ypos+i*(20 + h)-yoffset,w,h,255);
+      gxDrawTexture(button.texture[0],xpos,ypos+i*(20 + h)-yoffset,w,h,255);
       FONT_writeCenter(items[i],18,xpos,xpos+w,ypos+i*(20 + h)+(h + 18)/2- yoffset,(GXColor)DARK_GREY);
     }
 
@@ -757,12 +750,12 @@ int GUI_WindowPrompt(gui_menu *parent, char *title, char *items[], u8 nb_items)
     {
       if (i==selected)
       {
-        gxDrawTexture(data->texture[1],xpos-4,ypos+i*(20+h)-4,w+8,h+8,255);
+        gxDrawTexture(button.texture[1],xpos-4,ypos+i*(20+h)-4,w+8,h+8,255);
         FONT_writeCenter(items[i],22,xpos,xpos+w,ypos+i*(20+h)+(h+22)/2,(GXColor)DARK_GREY);
       }
       else
       {
-        gxDrawTexture(data->texture[0],xpos,ypos+i*(20 + h),w,h,255);
+        gxDrawTexture(button.texture[0],xpos,ypos+i*(20 + h),w,h,255);
         FONT_writeCenter(items[i],18,xpos,xpos+w,ypos+i*(20+h)+(h+18)/2,(GXColor)DARK_GREY);
       }
     }
@@ -775,8 +768,8 @@ int GUI_WindowPrompt(gui_menu *parent, char *title, char *items[], u8 nb_items)
     {
       gxTextureClose(&window);
       gxTextureClose(&top);
-      gxTextureClose(&data->texture[0]);
-      gxTextureClose(&data->texture[1]);
+      gxTextureClose(&button.texture[0]);
+      gxTextureClose(&button.texture[1]);
       gxTextureClose(&w_pointer);
       GUI_DeleteMenu(parent);
       GUI_FadeOut();
@@ -867,7 +860,7 @@ int GUI_WindowPrompt(gui_menu *parent, char *title, char *items[], u8 nb_items)
     /* draw buttons + text */
     for (i=0; i<nb_items; i++)
     {
-      gxDrawTexture(data->texture[0],xpos,ypos+i*(20+h)-yoffset,w,h,255);
+      gxDrawTexture(button.texture[0],xpos,ypos+i*(20+h)-yoffset,w,h,255);
       FONT_writeCenter(items[i],18,xpos,xpos+w,ypos+i*(20+h)+(h+18)/2-yoffset,(GXColor)WHITE);
     }
 
@@ -885,8 +878,8 @@ int GUI_WindowPrompt(gui_menu *parent, char *title, char *items[], u8 nb_items)
   /* close textures */
   gxTextureClose(&window);
   gxTextureClose(&top);
-  gxTextureClose(&data->texture[0]);
-  gxTextureClose(&data->texture[1]);
+  gxTextureClose(&button.texture[0]);
+  gxTextureClose(&button.texture[1]);
 
   return ret;
 }
