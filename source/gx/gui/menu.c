@@ -583,6 +583,19 @@ static int domenu (char items[][25], int maxitems, u8 fastmove)
  * GUI Settings menu
  *
  ****************************************************************************/
+static void update_screen_w(void)
+{
+  vmode->viWidth    = config.screen_w;
+  vmode->viXOrigin  = (VI_MAX_WIDTH_NTSC -config.screen_w)/2;
+  VIDEO_Configure(vmode);
+  VIDEO_Flush();
+}
+
+static void update_bgm(void)
+{
+  SetVolumeOgg(((int)config.bgm_volume * 255) / 100);
+}
+
 static void prefmenu ()
 {
   int ret, quit = 0;
@@ -631,14 +644,13 @@ static void prefmenu ()
         break;
 
       case 2:   /*** Sound effects volume ***/
-        GUI_OptionBox(m,"SFX Volume",(void *)&config.sfx_volume,10.0,0.0,100.0,0);
+        GUI_OptionBox(m,0,"SFX Volume",(void *)&config.sfx_volume,10.0,0.0,100.0,0);
         sprintf (items[2].text, "SFX Volume: %1.1f", config.sfx_volume);
         break;
 
       case 3:   /*** Background music volume ***/
-        GUI_OptionBox(m,"BGM Volume",(void *)&config.bgm_volume,10.0,0.0,100.0,0);
+        GUI_OptionBox(m,update_bgm,"BGM Volume",(void *)&config.bgm_volume,10.0,0.0,100.0,0);
         sprintf (items[3].text, "BGM Volume: %1.1f", config.bgm_volume);
-        SetVolumeOgg(((int)config.bgm_volume * 255) / 100);
         break;
 
       case 4:   /*** Background color ***/
@@ -652,12 +664,8 @@ static void prefmenu ()
         break;
 
       case 5:
-        GUI_OptionBox(m,"Screen Width",(void *)&config.screen_w,2,640,VI_MAX_WIDTH_NTSC,1);
+        GUI_OptionBox(m,update_screen_w,"Screen Width",(void *)&config.screen_w,2,640,VI_MAX_WIDTH_NTSC,1);
         sprintf (items[5].text, "Screen Width: %d", config.screen_w);
-        vmode->viWidth    = config.screen_w;
-        vmode->viXOrigin  = (VI_MAX_WIDTH_NTSC -config.screen_w)/2;
-        VIDEO_Configure(vmode);
-        VIDEO_Flush();
         break;
 
       case -1:
@@ -699,13 +707,13 @@ static void soundmenu ()
     switch (ret)
     {
       case 0:
-        GUI_OptionBox(m,"PSG Volume",(void *)&psg_volume,0.01,0.0,5.0,0);
+        GUI_OptionBox(m,0,"PSG Volume",(void *)&psg_volume,0.01,0.0,5.0,0);
         sprintf (items[0].text, "PSG Volume: %1.2f", psg_volume);
         config.psg_preamp = (int)(psg_volume * 100.0);
         break;
 
       case 1:
-        GUI_OptionBox(m,"FM Volume",(void *)&fm_volume,0.01,0.0,5.0,0);
+        GUI_OptionBox(m,0,"FM Volume",(void *)&fm_volume,0.01,0.0,5.0,0);
         sprintf (items[1].text, "FM Volume: %1.2f", (double)config.fm_preamp/100.0);
         config.fm_preamp = (int)(fm_volume * 100.0);
         break;
@@ -826,7 +834,7 @@ static void systemmenu ()
         break;
 
       case 3:  /*** SVP emulation ***/
-        GUI_OptionBox(m,"SVP Cycles",(void *)&SVP_cycles,1,1,1500,1);
+        GUI_OptionBox(m,0,"SVP Cycles",(void *)&SVP_cycles,1,1,1500,1);
         sprintf (items[3].text, "SVP Cycles: %d", SVP_cycles);
         break;
 
@@ -942,7 +950,7 @@ static void videomenu ()
         if (ret<0) config.yshift --;
         else config.yshift ++;
         break;
-      
+
       case 8: 
       case -10:
         if (config.aspect) break;

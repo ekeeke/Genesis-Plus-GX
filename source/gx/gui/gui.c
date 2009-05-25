@@ -892,7 +892,7 @@ int GUI_WindowPrompt(gui_menu *parent, char *title, char *items[], u8 nb_items)
 }
 
 /* display Option Box */
-void GUI_OptionBox(gui_menu *parent, char *title, void *option, float step, float min, float max, u8 type)
+void GUI_OptionBox(gui_menu *parent, optioncallback cb, char *title, void *option, float step, float min, float max, u8 type)
 {
   gx_texture *l_arrow[2];
   gx_texture *r_arrow[2];
@@ -1059,8 +1059,12 @@ void GUI_OptionBox(gui_menu *parent, char *title, void *option, float step, floa
         if (*(float *)option < min) *(float *)option = max;
       }
 
+      /* play sound effect */
       ASND_SetVoice(ASND_GetFirstUnusedVoice(),VOICE_MONO_16BIT,22050,0,(u8 *)button_over_pcm,button_over_pcm_size,
                     ((int)config.sfx_volume * 255) / 100,((int)config.sfx_volume * 255) / 100,NULL);
+
+      /* option callback */
+      if (cb) cb();
     }
     else if ((p&PAD_BUTTON_RIGHT) || ((p & PAD_BUTTON_A) && (selected == 1)))
     {
@@ -1078,8 +1082,12 @@ void GUI_OptionBox(gui_menu *parent, char *title, void *option, float step, floa
         if (*(float *)option > max) *(float *)option = min;
       }
 
+      /* play sound effect */
       ASND_SetVoice(ASND_GetFirstUnusedVoice(),VOICE_MONO_16BIT,22050,0,(u8 *)button_over_pcm,button_over_pcm_size,
                     ((int)config.sfx_volume * 255) / 100,((int)config.sfx_volume * 255) / 100,NULL);
+
+      /* option callback */
+      if (cb) cb();
     }
 
     if (p & PAD_BUTTON_B) quit = 1;

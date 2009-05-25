@@ -132,7 +132,7 @@ typedef struct
   gx_texture *throbber;   /* pointer to throbber texture */
 } gui_message;
 
-/* Menu Inputs */
+/* Menu inputs */
 struct t_input_menu
 {
   u32 connected;
@@ -141,6 +141,10 @@ struct t_input_menu
   struct ir_t ir;
 #endif
 } m_input;
+
+/* Optionbox callback */
+typedef void (*optioncallback)(void);
+
 
 /* PNG images */
 
@@ -281,7 +285,7 @@ extern void GUI_DrawMenuFX(gui_menu *menu, u8 speed, u8 out);
 extern int GUI_UpdateMenu(gui_menu *menu);
 extern int GUI_RunMenu(gui_menu *menu);
 extern int GUI_WindowPrompt(gui_menu *parent, char *title, char *items[], u8 nb_items);
-extern void GUI_OptionBox(gui_menu *parent, char *title, void *option, float step, float min, float max, u8 type);
+extern void GUI_OptionBox(gui_menu *parent, optioncallback cb, char *title, void *option, float step, float min, float max, u8 type);
 extern void GUI_SlideMenuTitle(gui_menu *m, int title_offset);
 extern void GUI_MsgBoxOpen(char *title, char *msg, bool throbber);
 extern void GUI_MsgBoxUpdate(gui_menu *parent, char *title, char *msg);
