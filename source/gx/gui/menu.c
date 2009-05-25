@@ -270,10 +270,10 @@ static gui_butn arrow_down = {&arrow_down_data,BUTTON_VISIBLE|BUTTON_OVER_SFX,{0
 /* Generic list menu */
 static gui_butn buttons_list[4] =
 {
-  {&button_text_data,BUTTON_VISIBLE|BUTTON_SHIFT|BUTTON_ACTIVE|BUTTON_OVER_SFX,{1,1,0,0},52,132,276,48},
-  {&button_text_data,BUTTON_VISIBLE|BUTTON_SHIFT|BUTTON_ACTIVE|BUTTON_OVER_SFX,{1,1,0,0},52,188,276,48},
-  {&button_text_data,BUTTON_VISIBLE|BUTTON_SHIFT|BUTTON_ACTIVE|BUTTON_OVER_SFX,{1,1,0,0},52,244,276,48},
-  {&button_text_data,BUTTON_VISIBLE|BUTTON_SHIFT|BUTTON_ACTIVE|BUTTON_OVER_SFX,{1,1,0,0},52,300,276,48}
+  {&button_text_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX,{1,1,0,0},52,132,276,48},
+  {&button_text_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX,{1,1,0,0},52,188,276,48},
+  {&button_text_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX,{1,1,0,0},52,244,276,48},
+  {&button_text_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX,{1,1,0,0},52,300,276,48}
  };
 
 /* Main menu */
@@ -631,26 +631,17 @@ static void prefmenu ()
         break;
 
       case 2:   /*** Sound effects volume ***/
-      case -4:
-        if (ret < 0) config.sfx_volume -=10;
-        else config.sfx_volume +=10;
-        if (config.sfx_volume < 0) config.sfx_volume = 100.0;
-        else if (config.sfx_volume > 100) config.sfx_volume = 0.0;
+        GUI_OptionBox(m,"SFX Volume",(void *)&config.sfx_volume,10.0,0.0,100.0,0);
         sprintf (items[2].text, "SFX Volume: %1.1f", config.sfx_volume);
         break;
 
       case 3:   /*** Background music volume ***/
-      case -5:
-        if (ret < 0) config.bgm_volume -=10;
-        else config.bgm_volume +=10;
-        if (config.bgm_volume < 0) config.bgm_volume = 100.0;
-        else if (config.bgm_volume > 100) config.bgm_volume = 0.0;
-        SetVolumeOgg(((int)config.bgm_volume * 255) / 100);
+        GUI_OptionBox(m,"BGM Volume",(void *)&config.bgm_volume,10.0,0.0,100.0,0);
         sprintf (items[3].text, "BGM Volume: %1.1f", config.bgm_volume);
+        SetVolumeOgg(((int)config.bgm_volume * 255) / 100);
         break;
 
       case 4:   /*** Background color ***/
-      case -6:
         if (ret < 0) config.bg_color --;
         else config.bg_color ++;
         if (config.bg_color < 0) config.bg_color = BG_COLOR_MAX - 1;
@@ -661,15 +652,12 @@ static void prefmenu ()
         break;
 
       case 5:
-      case -7:
-        if (ret < 0) config.screen_w -=2;
-        else config.screen_w +=2;
-        if (config.screen_w < 640) config.screen_w = VI_MAX_WIDTH_NTSC;
-        else if (config.screen_w > VI_MAX_WIDTH_NTSC) config.screen_w = 640;
+        GUI_OptionBox(m,"Screen Width",(void *)&config.screen_w,2,640,VI_MAX_WIDTH_NTSC,1);
         sprintf (items[5].text, "Screen Width: %d", config.screen_w);
         vmode->viWidth    = config.screen_w;
         vmode->viXOrigin  = (VI_MAX_WIDTH_NTSC -config.screen_w)/2;
         VIDEO_Configure(vmode);
+        VIDEO_Flush();
         break;
 
       case -1:
@@ -690,9 +678,11 @@ static void soundmenu ()
   int ret, quit = 0;
   gui_menu *m = &menu_audio;
   gui_item *items = m->items;
+  float psg_volume = (double)config.psg_preamp/100.0;
+  float fm_volume = (double)config.fm_preamp/100.0;
 
-  sprintf (items[0].text, "PSG Volume: %1.2f", (double)config.psg_preamp/100.0);
-  sprintf (items[1].text, "FM Volume: %1.2f", (double)config.fm_preamp/100.0);
+  sprintf (items[0].text, "PSG Volume: %1.2f", psg_volume);
+  sprintf (items[1].text, "FM Volume: %1.2f", fm_volume);
   sprintf (items[2].text, "Volume Boost: %dX", config.boost);
   sprintf (items[3].text, "LowPass Filter: %s", config.filter ? " ON":"OFF");
   if (config.hq_fm == 0) sprintf (items[4].text, "HQ YM2612: OFF");
@@ -709,21 +699,15 @@ static void soundmenu ()
     switch (ret)
     {
       case 0:
-      case -2:
-        if (ret<0) config.psg_preamp --;
-        else config.psg_preamp ++;
-        if (config.psg_preamp < 0) config.psg_preamp = 500;
-        if (config.psg_preamp > 500) config.psg_preamp = 0;
-        sprintf (items[0].text, "PSG Volume: %1.2f", (double)config.psg_preamp/100.0);
+        GUI_OptionBox(m,"PSG Volume",(void *)&psg_volume,0.01,0.0,5.0,0);
+        sprintf (items[0].text, "PSG Volume: %1.2f", psg_volume);
+        config.psg_preamp = (int)(psg_volume * 100.0);
         break;
 
       case 1:
-      case -3:
-        if (ret<0) config.fm_preamp --;
-        else config.fm_preamp ++;
-        if (config.fm_preamp < 0) config.fm_preamp = 500;
-        if (config.fm_preamp > 500) config.fm_preamp = 0;
+        GUI_OptionBox(m,"FM Volume",(void *)&fm_volume,0.01,0.0,5.0,0);
         sprintf (items[1].text, "FM Volume: %1.2f", (double)config.fm_preamp/100.0);
+        config.fm_preamp = (int)(fm_volume * 100.0);
         break;
 
       case 2:
@@ -842,10 +826,7 @@ static void systemmenu ()
         break;
 
       case 3:  /*** SVP emulation ***/
-      case -5:
-        if (ret<0) SVP_cycles = SVP_cycles ? (SVP_cycles-1) : 1500;
-        else SVP_cycles++;
-        if (SVP_cycles > 1500) SVP_cycles = 0;
+        GUI_OptionBox(m,"SVP Cycles",(void *)&SVP_cycles,1,1,1500,1);
         sprintf (items[3].text, "SVP Cycles: %d", SVP_cycles);
         break;
 

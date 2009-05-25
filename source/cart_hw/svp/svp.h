@@ -23,7 +23,7 @@ typedef struct {
 } svp_t;
 
 extern svp_t *svp;
-extern uint16 SVP_cycles; 
+extern int16 SVP_cycles; 
 
 extern void svp_init(void);
 extern void svp_reset(void);

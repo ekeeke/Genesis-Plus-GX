@@ -59,7 +59,7 @@ typedef struct
   float sfx_volume;
   int8 sram_auto;
   int8 state_auto;
-  uint16 screen_w;
+  int16 screen_w;
 } t_config;
 
 /* Global data */

@@ -32,9 +32,8 @@
 /*  GUI Buttons state                                                        */
 /*****************************************************************************/
 #define BUTTON_VISIBLE       0x01
-#define BUTTON_SHIFT         0x02
-#define BUTTON_ACTIVE        0x04
-#define BUTTON_OVER_SFX      0x08
+#define BUTTON_ACTIVE        0x02
+#define BUTTON_OVER_SFX      0x04
 #define BUTTON_SELECT_SFX    0x10
 #define BUTTON_FADE          0x20
 #define BUTTON_SLIDE_LEFT    0x40
@@ -218,6 +217,10 @@ extern const u8 Button_up_png[];
 extern const u8 Button_down_png[];
 extern const u8 Button_up_over_png[];
 extern const u8 Button_down_over_png[];
+extern const u8 Button_right_png[];
+extern const u8 Button_left_png[];
+extern const u8 Button_right_over_png[];
+extern const u8 Button_left_over_png[];
 
 /* Controller Settings */
 extern const u8 Ctrl_4wayplay_png[];
@@ -278,6 +281,7 @@ extern void GUI_DrawMenuFX(gui_menu *menu, u8 speed, u8 out);
 extern int GUI_UpdateMenu(gui_menu *menu);
 extern int GUI_RunMenu(gui_menu *menu);
 extern int GUI_WindowPrompt(gui_menu *parent, char *title, char *items[], u8 nb_items);
+extern void GUI_OptionBox(gui_menu *parent, char *title, void *option, float step, float min, float max, u8 type);
 extern void GUI_SlideMenuTitle(gui_menu *m, int title_offset);
 extern void GUI_MsgBoxOpen(char *title, char *msg, bool throbber);
 extern void GUI_MsgBoxUpdate(gui_menu *parent, char *title, char *msg);

@@ -553,38 +553,22 @@ int GUI_UpdateMenu(gui_menu *menu)
     }
     else if (p & PAD_BUTTON_LEFT)
     {
-      if (button->state & BUTTON_SHIFT)
+      selected -= button->shift[2];
+      if (selected < 0)
       {
-        /* menu clicked */
-        ret = 2;
-      }
-      else
-      {
-        selected -= button->shift[2];
-        if (selected < 0)
-        {
-          selected = 0;
-          if (menu->offset)
-            menu->offset --;
-        }
+        selected = 0;
+        if (menu->offset)
+          menu->offset --;
       }
     }
     else if (p & PAD_BUTTON_RIGHT)
     {
-      if (button->state & BUTTON_SHIFT)
+      selected += button->shift[3];
+      if (selected >= max_buttons)
       {
-        /* menu clicked */
-        ret = 1;
-      }
-      else
-      {
-        selected += button->shift[3];
-        if (selected >= max_buttons)
-        {
-          selected = max_buttons - 1;
-          if ((menu->offset + selected < (max_items - 1)))
-            menu->offset ++;
-        }
+        selected = max_buttons - 1;
+        if ((menu->offset + selected < (max_items - 1)))
+          menu->offset ++;
       }
     }
   }
@@ -789,6 +773,10 @@ int GUI_WindowPrompt(gui_menu *parent, char *title, char *items[], u8 nb_items)
 #ifdef HW_RVL
     if (Shutdown)
     {
+      gxTextureClose(&window);
+      gxTextureClose(&top);
+      gxTextureClose(&data->texture[0]);
+      gxTextureClose(&data->texture[1]);
       gxTextureClose(&w_pointer);
       GUI_DeleteMenu(parent);
       GUI_FadeOut();
@@ -903,6 +891,237 @@ int GUI_WindowPrompt(gui_menu *parent, char *title, char *items[], u8 nb_items)
   return ret;
 }
 
+/* display Option Box */
+void GUI_OptionBox(gui_menu *parent, char *title, void *option, float step, float min, float max, u8 type)
+{
+  gx_texture *l_arrow[2];
+  gx_texture *r_arrow[2];
+  l_arrow[0] = gxTextureOpenPNG(Button_left_png,0);
+  l_arrow[1] = gxTextureOpenPNG(Button_left_over_png,0);
+  r_arrow[0] = gxTextureOpenPNG(Button_right_png,0);
+  r_arrow[1] = gxTextureOpenPNG(Button_right_over_png,0);
+  gx_texture *window = gxTextureOpenPNG(Frame_s4_png,0);
+  gx_texture *top = gxTextureOpenPNG(Frame_s4_title_png,0);
+
+  /* window position */
+  int xwindow = 166;
+  int ywindow = 160;
+
+  /* text position */
+  int ypos = 248;
+
+  /* arrows position */
+  int xleft   = 206;
+  int xright  = 392;
+  int yleft   = 238;
+  int yright  = 238;
+
+  /* disable helper comment */
+  if (parent->helpers[1]) parent->helpers[1]->data = 0;
+
+  /* slide in */
+  char msg[16];
+  int yoffset = ywindow + window->height;
+  while (yoffset > 0)
+  {
+    /* draw parent menu */
+    GUI_DrawMenu(parent);
+
+    /* draw window */
+    gxDrawTexture(window,xwindow,ywindow-yoffset,window->width,window->height,230);
+    gxDrawTexture(top,xwindow,ywindow-yoffset,top->width,top->height,255);
+
+    /* draw title */
+    FONT_writeCenter(title,20,xwindow,xwindow+window->width,ywindow+(top->height-20)/2+20-yoffset,(GXColor)WHITE);
+
+    /* draw buttons */
+    gxDrawTexture(l_arrow[0],xleft,yleft-yoffset,l_arrow[0]->width,l_arrow[0]->height,255);
+    gxDrawTexture(r_arrow[0],xright,yright-yoffset,r_arrow[0]->width,r_arrow[0]->height,255);
+
+    /* update display */
+    gxSetScreen();
+
+    /* slide speed */
+    yoffset -= 60;
+  }
+
+  /* display option box */
+  int quit = 0;
+  int selected = -1;
+  s16 p;
+#ifdef HW_RVL
+  int x,y;
+#endif
+
+  while (!quit)
+  {
+    /* draw parent menu */
+    GUI_DrawMenu(parent);
+
+    /* draw window */
+    gxDrawTexture(window,xwindow,ywindow,window->width,window->height,230);
+    gxDrawTexture(top,xwindow,ywindow,top->width,top->height,255);
+
+    /* draw title */
+    FONT_writeCenter(title,20,xwindow,xwindow+window->width,ywindow+(top->height-20)/2+20,(GXColor)WHITE);
+
+    /* option type */
+    if (type)
+    {
+      /* integer type */
+      if (*(s16 *)option < 0) sprintf(msg,"-%d",abs(*(s16 *)option));
+      else sprintf(msg,"%d",abs(*(s16 *)option));
+    }
+    else
+    {
+      /* float type */
+      if (*(float *)option < 0.0) sprintf(msg,"-%1.2f",fabs(*(float *)option));
+      else sprintf(msg,"%1.2f",fabs(*(float *)option));
+    }
+
+    /* draw option text */
+    FONT_writeCenter(msg,24,xwindow,xwindow+window->width,ypos+24,(GXColor)WHITE);
+
+    /* update inputs */
+    p = m_input.keys;
+
+    /* draw buttons */
+    if (selected < 0)
+    {
+      /* nothing selected */
+      gxDrawTexture(l_arrow[0],xleft,yleft,l_arrow[0]->width,l_arrow[0]->height,255);
+      gxDrawTexture(r_arrow[0],xright,yright,r_arrow[0]->width,r_arrow[0]->height,255);
+    }
+
+#ifdef HW_RVL
+    else if (selected)
+    {
+      /* right button selected */
+      gxDrawTexture(l_arrow[0],xleft,yleft,l_arrow[0]->width,l_arrow[0]->height,255);
+      gxDrawTexture(r_arrow[1],xright-4,yright-4,r_arrow[0]->width+8,r_arrow[0]->height+8,255);
+    }
+    else
+    {
+      /* left button selected */
+      gxDrawTexture(l_arrow[1],xleft-4,yleft-4,l_arrow[0]->width+8,l_arrow[0]->height+8,255);
+      gxDrawTexture(r_arrow[0],xright,yright,r_arrow[0]->width,r_arrow[0]->height,255);
+    }
+
+    selected = -1;
+    if (Shutdown)
+    {
+      gxTextureClose(&l_arrow[0]);
+      gxTextureClose(&l_arrow[1]);
+      gxTextureClose(&r_arrow[0]);
+      gxTextureClose(&r_arrow[1]);
+      gxTextureClose(&window);
+      gxTextureClose(&top);
+      gxTextureClose(&w_pointer);
+      GUI_DeleteMenu(parent);
+      GUI_FadeOut();
+      shutdown();
+      SYS_ResetSystem(SYS_POWEROFF, 0, 0);
+    }
+    else if (m_input.ir.valid)
+    {
+      /* get cursor position */
+      x = m_input.ir.x;
+      y = m_input.ir.y;
+
+      /* draw wiimote pointer */
+      gxDrawTextureRotate(w_pointer, x-w_pointer->width/2, y-w_pointer->height/2, w_pointer->width, w_pointer->height,m_input.ir.angle,255);
+
+      /* check for valid buttons */
+      if ((x>=xleft)&&(x<=(xleft+l_arrow[0]->width))&&(y>=yleft)&&(y<=(yleft+l_arrow[0]->height)))
+        selected = 0;
+      else if ((x>=xright)&&(x<=(xright+r_arrow[0]->width))&&(y>=yright)&&(y<=(yright+r_arrow[0]->height)))
+        selected = 1;
+    }
+#endif
+
+    /* update screen */
+    gxSetScreen();
+
+    /* check input */
+    if ((p&PAD_BUTTON_LEFT) || ((p & PAD_BUTTON_A) && (selected == 0)))
+    {
+      /* decrement option value */
+      if (type)
+      {
+        /* integer type */
+        *(s16 *)option -= (s16)step;
+        if (*(s16 *)option < (s16)min)  *(s16 *)option = (s16)max;
+      }
+      else
+      {
+        /* float type */
+        *(float *)option -= step;
+        if (*(float *)option < min) *(float *)option = max;
+      }
+
+      ASND_SetVoice(ASND_GetFirstUnusedVoice(),VOICE_MONO_16BIT,22050,0,(u8 *)button_over_pcm,button_over_pcm_size,
+                    ((int)config.sfx_volume * 255) / 100,((int)config.sfx_volume * 255) / 100,NULL);
+    }
+    else if ((p&PAD_BUTTON_RIGHT) || ((p & PAD_BUTTON_A) && (selected == 1)))
+    {
+      /* increment option value */
+      if (type)
+      {
+        /* integer type */
+        *(s16 *)option += (s16)step;
+        if (*(s16 *)option > (s16)max)  *(s16 *)option = (s16)min;
+      }
+      else
+      {
+        /* float type */
+        *(float *)option += step;
+        if (*(float *)option > max) *(float *)option = min;
+      }
+
+      ASND_SetVoice(ASND_GetFirstUnusedVoice(),VOICE_MONO_16BIT,22050,0,(u8 *)button_over_pcm,button_over_pcm_size,
+                    ((int)config.sfx_volume * 255) / 100,((int)config.sfx_volume * 255) / 100,NULL);
+    }
+
+    if (p & PAD_BUTTON_B) quit = 1;
+  }
+
+  /* slide out */
+  yoffset = 0; ;
+  while (yoffset < (ywindow + window->height))
+  {
+    /* draw parent menu */
+    GUI_DrawMenu(parent);
+
+    /* draw window */
+    gxDrawTexture(window,xwindow,ywindow-yoffset,window->width,window->height,230);
+    gxDrawTexture(top,xwindow,ywindow-yoffset,top->width,top->height,255);
+
+    /* draw title */
+    FONT_writeCenter(title,20,xwindow,xwindow+window->width,ywindow+(top->height-20)/2+20-yoffset,(GXColor)WHITE);
+
+    /* update display */
+    gxSetScreen();
+
+    /* slide speed */
+    yoffset += 60;
+  }
+
+  /* restore helper comment */
+  if (parent->helpers[1]) parent->helpers[1]->data = Key_A_png;
+
+  /* final position */
+  GUI_DrawMenu(parent);
+  gxSetScreen();
+
+  /* close textures */
+  gxTextureClose(&l_arrow[0]);
+  gxTextureClose(&l_arrow[1]);
+  gxTextureClose(&r_arrow[0]);
+  gxTextureClose(&r_arrow[1]);
+  gxTextureClose(&window);
+  gxTextureClose(&top);
+}
+
 /* Basic menu title slide effect */
 void GUI_SlideMenuTitle(gui_menu *m, int title_offset)
 {
@@ -984,44 +1203,39 @@ static void *MsgBox_Thread(void *arg)
   {
     if (message_box.refresh)
     {
-      /* window position */
-      int xwindow = (vmode->fbWidth - message_box.window->width)/2;
-      int ywindow = (vmode->efbHeight - message_box.window->height)/2;
-      int ypos = ywindow + message_box.top->height  + (message_box.window->height - message_box.top->height - 24)/2;
-
       /* draw parent menu */
       GUI_DrawMenu(message_box.parent);
 
       /* draw window */
-      gxDrawTexture(message_box.window,xwindow,ywindow,message_box.window->width,message_box.window->height,230);
-      gxDrawTexture(message_box.top,xwindow,ywindow,message_box.top->width,message_box.top->height,255);
+      gxDrawTexture(message_box.window,166,160,message_box.window->width,message_box.window->height,230);
+      gxDrawTexture(message_box.top,166,160,message_box.top->width,message_box.top->height,255);
 
       /* draw title */
       if (message_box.title)
-        FONT_writeCenter(message_box.title,20,xwindow,xwindow+message_box.window->width,ywindow+(message_box.top->height-20)/2+20,(GXColor)WHITE);
+        FONT_writeCenter(message_box.title,20,166,166+message_box.window->width,160+(message_box.top->height-20)/2+20,(GXColor)WHITE);
 
       /* draw box message */
       if (message_box.msg)
-        FONT_writeCenter(message_box.msg,18,xwindow,xwindow+message_box.window->width,ypos,(GXColor)WHITE);
+        FONT_writeCenter(message_box.msg,18,166,166+message_box.window->width,248,(GXColor)WHITE);
 
       /* draw throbber */
       if (message_box.throbber)
       {
-        gxDrawTextureRotate(message_box.throbber,xwindow+(message_box.window->width-message_box.throbber->width)/2,ywindow+message_box.window->height-message_box.throbber->height-20,message_box.throbber->width,message_box.throbber->height,(message_box.progress * 360.0) / 100.0, 255);
+        gxDrawTextureRotate(message_box.throbber,166+(message_box.window->width-message_box.throbber->width)/2,160+message_box.window->height-message_box.throbber->height-20,message_box.throbber->width,message_box.throbber->height,(message_box.progress * 360.0) / 100.0, 255);
       }
 
       /* draw exit message */
       if (message_box.buttonB)
       {
-        FONT_write(": OK",18,xwindow+40+message_box.buttonA->width,640,ypos,(GXColor)WHITE);
-        FONT_write(": CANCEL",18,xwindow+120+message_box.buttonB->width,640,ypos,(GXColor)WHITE);
-        gxDrawTexture(message_box.buttonA, xwindow+40, ypos-18+(18-message_box.buttonA->height)/2,message_box.buttonA->width, message_box.buttonA->height,255);
-        gxDrawTexture(message_box.buttonB, xwindow+120, ypos-18+(18-message_box.buttonB->height)/2,message_box.buttonA->width, message_box.buttonA->height,255);
+        FONT_write(": OK",18,206+message_box.buttonA->width+12,640,248,(GXColor)WHITE);
+        FONT_write(": CANCEL",18,286+message_box.buttonB->width+12,640,248,(GXColor)WHITE);
+        gxDrawTexture(message_box.buttonA, 206, 248-18+(18-message_box.buttonA->height)/2,message_box.buttonA->width, message_box.buttonA->height,255);
+        gxDrawTexture(message_box.buttonB, 286, 248-18+(18-message_box.buttonB->height)/2,message_box.buttonA->width, message_box.buttonA->height,255);
       }
       else if (message_box.buttonA)
       {
-        FONT_writeCenter("Press    to continue.",18,xwindow,xwindow+message_box.window->width,ypos+22,(GXColor)WHITE);
-        gxDrawTexture(message_box.buttonA, xwindow+116, ypos+4+(18-message_box.buttonA->height)/2,message_box.buttonA->width, message_box.buttonA->height,255);
+        FONT_writeCenter("Press    to continue.",18,166,166+message_box.window->width,248+22,(GXColor)WHITE);
+        gxDrawTexture(message_box.buttonA, 166+116, 248+4+(18-message_box.buttonA->height)/2,message_box.buttonA->width, message_box.buttonA->height,255);
       }
 
       /* update display */
@@ -1065,9 +1279,9 @@ void GUI_MsgBoxOpen(char *title, char *msg, bool throbber)
     if (throbber) message_box.throbber = gxTextureOpenPNG(Frame_throbber_png,0);
 
     /* window position */
-    int xwindow = (vmode->fbWidth - message_box.window->width)/2;
-    int ywindow = (vmode->efbHeight - message_box.window->height)/2;
-    int ypos = ywindow + message_box.top->height  + (message_box.window->height - message_box.top->height - 24)/2;
+    int xwindow = 166;
+    int ywindow = 160;
+    int ypos = 248;
 
     /* disable helper comments */
     if (message_box.parent->helpers[0]) message_box.parent->helpers[0]->data = 0;
@@ -1114,9 +1328,9 @@ void GUI_MsgBoxClose(void)
     LWP_SuspendThread(msgboxthread);
 
     /* window position */
-    int xwindow = (vmode->fbWidth - message_box.window->width)/2;
-    int ywindow = (vmode->efbHeight - message_box.window->height)/2;
-    int ypos = ywindow + message_box.top->height  + (message_box.window->height - message_box.top->height - 24)/2;
+    int xwindow = 166;
+    int ywindow = 160;
+    int ypos = 248;
 
     /* slide out */
     int yoffset = 0;
@@ -1135,7 +1349,7 @@ void GUI_MsgBoxClose(void)
 
       /* draw text */
       if (message_box.msg)
-        FONT_writeCenter(message_box.msg,18,xwindow,xwindow+message_box.window->width,ypos- yoffset,(GXColor)WHITE);
+        FONT_writeCenter(message_box.msg,18,xwindow,xwindow+message_box.window->width,ypos-yoffset,(GXColor)WHITE);
 
       /* update display */
       gxSetScreen();
