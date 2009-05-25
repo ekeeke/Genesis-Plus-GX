@@ -31,9 +31,10 @@
 #define TYPE_USB      2
 #endif
 
-extern int FAT_UpdateDir(bool go_up);
+extern int FAT_UpdateDir(bool go_up, char *filename);
 extern int FAT_ParseDirectory(void);
-extern int FAT_LoadFile(u8* buffer);
+extern int FAT_LoadFile(u8* buffer,u32 selection);
 extern int FAT_Open(int type);
+extern bool haveFATdir;
 
 #endif

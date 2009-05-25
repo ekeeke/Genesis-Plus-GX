@@ -1798,7 +1798,7 @@ static int loadmenu ()
         if (DVD_Open())
         {
           GUI_DeleteMenu(m);
-          size = FileSelector(cart_rom);
+          size = FileSelector(cart_rom,0);
           if (size) return 1;
           GUI_InitMenu(m);
         }
@@ -1809,7 +1809,7 @@ static int loadmenu ()
         if (FAT_Open(ret))
         {
           GUI_DeleteMenu(m);
-          size = FileSelector(cart_rom);
+          size = FileSelector(cart_rom,1);
           if (size) return 1;
           GUI_InitMenu(m);
         }

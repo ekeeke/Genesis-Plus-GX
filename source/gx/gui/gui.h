@@ -291,6 +291,7 @@ extern void GUI_MsgBoxOpen(char *title, char *msg, bool throbber);
 extern void GUI_MsgBoxUpdate(gui_menu *parent, char *title, char *msg);
 extern void GUI_MsgBoxClose(void);
 extern void GUI_WaitPrompt(char *title, char *msg);
+extern int GUI_ConfirmPrompt(char *title, char *msg);
 extern void GUI_FadeOut();
 extern void GUI_SetBgColor(GXColor color);
 extern void GUI_Initialize(void);

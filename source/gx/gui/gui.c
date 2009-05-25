@@ -1398,8 +1398,37 @@ void GUI_WaitPrompt(char *title, char *msg)
   while (m_input.keys & PAD_BUTTON_A)    VIDEO_WaitVSync();
   while (!(m_input.keys & PAD_BUTTON_A)) VIDEO_WaitVSync();
 
-  /* close message box if required */
+  /* close message box */
   GUI_MsgBoxClose();
+}
+
+int GUI_ConfirmPrompt(char *title, char *msg)
+{
+  if (config.askConfirm)
+  {
+    /* update message box */
+    gxTextureClose(&message_box.throbber);
+    GUI_MsgBoxOpen(title, msg, 0);
+
+    /* allocate textures */
+    message_box.buttonA = gxTextureOpenPNG(Key_A_png,0);
+    message_box.buttonB = gxTextureOpenPNG(Key_B_png,0);
+
+    /* wait for button A or button B*/
+    s16 p = 0;
+    while (m_input.keys) VIDEO_WaitVSync();
+    while (!(p & (PAD_BUTTON_A | PAD_BUTTON_B)))
+    {
+      VIDEO_WaitVSync();
+      p = m_input.keys;
+    }
+
+    /* return user choice */
+    if (p & PAD_BUTTON_A) return 1;
+    else return 0;
+  }
+
+  return 1;
 }
 
 /* Basic Fading */

@@ -60,6 +60,7 @@ typedef struct
   int8 sram_auto;
   int8 state_auto;
   int16 screen_w;
+  uint8 askConfirm;
 } t_config;
 
 /* Global data */

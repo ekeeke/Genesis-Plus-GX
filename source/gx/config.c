@@ -98,15 +98,16 @@ void config_default(void)
 
   /* menu options */
 #ifdef HW_RVL
-  config.sram_auto  = 0; /* let's assume we always have a FAT device by default */
+  config.sram_auto = 0; /* let's assume we always have a FAT device by default */
 #else
-  config.sram_auto  = -1;
+  config.sram_auto = -1;
 #endif
   config.state_auto = -1;
-  config.bg_color   = 0;
+  config.bg_color = 0;
   config.bgm_volume = 100.0;
   config.sfx_volume = 100.0;
   config.screen_w = 658;
+  config.askConfirm = 0;
 
   /* restore saved configuration */
   config_load();

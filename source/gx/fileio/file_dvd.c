@@ -27,6 +27,8 @@
 #include "dvd.h"
 #include "unzip.h"
 #include "filesel.h"
+#include "file_fat.h"
+#include "file_dvd.h"
 
 /** Minimal ISO Directory Definition **/
 #define RECLEN 0            /* Record length */
@@ -38,6 +40,8 @@
 
 /** Minimal Primary Volume Descriptor **/
 #define PVDROOT 0x9c
+
+bool haveDVDdir = 0;
 
 /** Static Variables **/
 static u64 rootdir        = 0;  /* current root directory offset */
@@ -185,7 +189,6 @@ static int getentry(int entrycount)
 
       filelist[entrycount].offset <<= 11;
       filelist[entrycount].flags = filelist[entrycount].flags & 2;
-      filelist[entrycount].filename_offset = 0;
 
       /*** Prepare for next entry ***/
       diroffset += dvdbuffer[diroffset];
@@ -201,31 +204,14 @@ static int getentry(int entrycount)
  *
  * Update DVD current root directory
  ***************************************************************************/ 
-int DVD_UpdateDir(bool go_up)
+int DVD_UpdateDir(bool go_up, u64 offset, u32 length)
 {
   /* root has no parent directory */
   if (go_up && (basedir == rootdir)) return 0;
 
-  /* by default, update current directory */
-  rootdir = filelist[selection].offset;
-  rootdirlength = filelist[selection].length;
-
-  /* reinit selector (previous value is saved for one level) */
-  if (selection == 0)
-  {
-    selection = old_selection;
-    offset = old_offset;
-    old_selection = 0;
-    old_offset = 0;
-  }
-  else
-  {
-    /* save current selector value */
-    old_selection = selection;
-    old_offset = offset;
-    selection = 0;
-    offset = 0;
-  }
+  /* simply update current root directory */
+  rootdir = offset;
+  rootdirlength = length;
 
   return 1;
 }
@@ -285,7 +271,7 @@ int DVD_ParseDirectory(void)
  * This functions return the actual size of data copied into the buffer
  *
  ****************************************************************************/ 
-int DVD_LoadFile(u8 *buffer) 
+int DVD_LoadFile(u8 *buffer, u32 selection)
 {
   /* file size */
   int length = filelist[selection].length;
@@ -344,9 +330,6 @@ int DVD_LoadFile(u8 *buffer)
 
 int DVD_Open(void)
 {
-  /* reset flags */
-  useFAT = 0;
-
   /* is DVD mounted ? */
   if (!getpvd())
   {
@@ -400,11 +383,7 @@ int DVD_Open(void)
       haveFATdir = 0;
 
       /* reset File selector */
-      maxfiles      = max;
-      offset        = 0;
-      selection     = 0;
-      old_offset    = 0;
-      old_selection = 0;
+      FileSelClear(max);
       return 1;
     }
     else

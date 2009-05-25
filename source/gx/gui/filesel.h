@@ -32,25 +32,16 @@
 typedef struct
 {
   u64 offset;
-  unsigned int length;
+  u32 length;
   char flags;
   char filename[MAXJOLIET];
   u16 filename_offset;
 }FILEENTRIES;
 
-
-/* Global Variables */
-extern FILEENTRIES filelist[MAXFILES];
-extern int maxfiles;
-extern int offset;
-extern int selection;
-extern int old_selection;
-extern int old_offset;
-extern int useFAT;
-extern int haveDVDdir;
-extern int haveFATdir;
-
-extern int FileSelector(unsigned char *buffer);
+/* Globals */
+extern int FileSelector(unsigned char *buffer, bool useFAT);
 extern int FileSortCallback(const void *f1, const void *f2);
+extern void FileSelClear(u32 max);
+extern FILEENTRIES filelist[MAXFILES];
 
 #endif

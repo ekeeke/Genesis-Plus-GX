@@ -27,6 +27,9 @@
 #include "unzip.h"
 #include "filesel.h"
 #include "file_fat.h"
+#include "file_dvd.h"
+
+bool haveFATdir = 0;
 
 /* current FAT directory */
 static char fatdir[MAXPATHLEN];
@@ -40,17 +43,14 @@ static int useHistory = 0;
  *
  * Update FAT current root directory
  ***************************************************************************/ 
-int FAT_UpdateDir(bool go_up)
+int FAT_UpdateDir(bool go_up, char *filename)
 {
   int size=0;
   char *test;
   char temp[1024];
 
-  /* current directory doesn't change */
-  if (strcmp(filelist[selection].filename,".") == 0) return 1;
-
   /* go up to parent directory */
-  if (strcmp(filelist[selection].filename,"..") == 0)
+  if (strcmp(filename,"..") == 0)
   {
     /* determine last subdirectory namelength */
     sprintf(temp,"%s",fatdir);
@@ -64,14 +64,6 @@ int FAT_UpdateDir(bool go_up)
     /* remove last subdirectory name */
     size = strlen(fatdir) - size;
     fatdir[size-1] = 0;
-
-    /* restore previous selector state */
-    selection = old_selection;
-    offset = old_offset;
-
-    /* reset old selection */
-    old_selection = 0;
-    old_offset = 0;
   }
   else if (go_up)
   {
@@ -81,15 +73,7 @@ int FAT_UpdateDir(bool go_up)
   else
   {
     /* by default, simply append folder name */
-    sprintf(fatdir, "%s%s/",fatdir, filelist[selection].filename);
-
-    /* save current selector state */
-    old_selection = selection;
-    old_offset = offset;
-
-    /* reset selection */
-    selection = 0;
-    offset = 0;
+    sprintf(fatdir, "%s%s/",fatdir, filename);
   }
   return 1;
 }
@@ -140,7 +124,7 @@ int FAT_ParseDirectory(void)
  * This functions return the actual size of data copied into the buffer
  *
  ****************************************************************************/ 
-int FAT_LoadFile(u8 *buffer) 
+int FAT_LoadFile(u8 *buffer, u32 selection) 
 {
   /* If loading from history then we need to setup a few more things. */
   if(useHistory)
@@ -222,9 +206,6 @@ int FAT_Open(int type)
   int max = 0;
   char root[10] = "";
 
-  /* reset flags */
-  useFAT = 1;
-  
   /* FAT header */
 #ifdef HW_RVL
   if (type == TYPE_SD) sprintf (root, "sd:");
@@ -254,7 +235,6 @@ int FAT_Open(int type)
           filelist[i].offset = 0;
           filelist[i].length = 0;
           filelist[i].flags = 0;
-          filelist[i].filename_offset = 0;
           strncpy(filelist[i].filename, history.entries[i].filename, MAXJOLIET-1);
           filelist[i].filename[MAXJOLIET-1] = '\0';
           max++;
@@ -286,12 +266,8 @@ int FAT_Open(int type)
       haveFATdir = 1;
       haveDVDdir = 0;
 
-      /* reset file selection */
-      maxfiles      = max;
-      offset        = 0;
-      selection     = 0;
-      old_offset    = 0;
-      old_selection = 0;
+      /* reset File selector */
+      FileSelClear(max);
       return 1;
     }
     else
