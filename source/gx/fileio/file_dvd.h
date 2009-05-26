@@ -25,10 +25,10 @@
 #ifndef _FILE_DVD_H
 #define _FILE_DVD_H
 
-extern int DVD_UpdateDir(bool go_up,u64 offset, u32 length);
+extern void DVD_ClearDirectory(void);
+extern int DVD_UpdateDirectory(bool go_up,u64 offset, u32 length);
 extern int DVD_ParseDirectory(void);
 extern int DVD_LoadFile(u8 *buffer,u32 selection);
 extern int DVD_Open(void);
-extern bool haveDVDdir;
 
 #endif

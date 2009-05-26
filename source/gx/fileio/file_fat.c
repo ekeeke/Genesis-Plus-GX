@@ -29,7 +29,8 @@
 #include "file_fat.h"
 #include "file_dvd.h"
 
-bool haveFATdir = 0;
+/* FAT directory has been updated */
+static int  haveFATdir = 0;
 
 /* current FAT directory */
 static char fatdir[MAXPATHLEN];
@@ -39,11 +40,21 @@ static int fat_type   = 0;
 static int useHistory = 0;
 
 /***************************************************************************
- * FAT_UpdateDir
+ * FAT_ClearDirectory
+ *
+ * Clear FAT directory flag
+ ***************************************************************************/ 
+void FAT_ClearDirectory(void)
+{
+  haveFATdir = 0;
+}
+
+/***************************************************************************
+ * FAT_UpdateDirectory
  *
  * Update FAT current root directory
  ***************************************************************************/ 
-int FAT_UpdateDir(bool go_up, char *filename)
+int FAT_UpdateDirectory(bool go_up, char *filename)
 {
   int size=0;
   char *test;
@@ -143,6 +154,9 @@ int FAT_LoadFile(u8 *buffer, u32 selection)
     {
       filelist[selection].length = filestat.st_size;
     }
+
+    /* update filelist */
+    haveFATdir = 0;
   }
 
   /* file size */
@@ -151,7 +165,7 @@ int FAT_LoadFile(u8 *buffer, u32 selection)
   if (length > 0)
   {
     /* Add/move the file to the top of the history. */
-    if(!useHistory) history_add_file(fatdir, filelist[selection].filename);
+    history_add_file(fatdir, filelist[selection].filename);
 
     /* full filename */
     char fname[MAXPATHLEN];
@@ -264,10 +278,10 @@ int FAT_Open(int type)
     {
       /* FAT is default */
       haveFATdir = 1;
-      haveDVDdir = 0;
+      DVD_ClearDirectory();
 
       /* reset File selector */
-      FileSelClear(max);
+      ClearSelector(max);
       return 1;
     }
     else

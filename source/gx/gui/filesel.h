@@ -35,13 +35,12 @@ typedef struct
   u32 length;
   char flags;
   char filename[MAXJOLIET];
-  u16 filename_offset;
 }FILEENTRIES;
 
 /* Globals */
 extern int FileSelector(unsigned char *buffer, bool useFAT);
 extern int FileSortCallback(const void *f1, const void *f2);
-extern void FileSelClear(u32 max);
+extern void ClearSelector(u32 max);
 extern FILEENTRIES filelist[MAXFILES];
 
 #endif

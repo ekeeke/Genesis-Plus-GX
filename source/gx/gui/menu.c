@@ -249,14 +249,15 @@ static gui_item items_video[8] =
 };
 
 /* Preferences menu */
-static gui_item items_prefs[6] =
+static gui_item items_prefs[7] =
 {
-  {NULL,NULL,"Auto SRAM: OFF",    "Enable/disable automatic SRAM",      52,132,276,48},
-  {NULL,NULL,"Auto STATE: OFF",   "Enable/disable automatic Savestate", 52,132,276,48},
-  {NULL,NULL,"SFX Volume: 100",   "Adjust sound effects volume",        52,132,276,48},
-  {NULL,NULL,"BGM Volume: 100",   "Adjust background music volume",     52,132,276,48},
-  {NULL,NULL,"BG Color: DEFAULT", "Change background color",            52,132,276,48},
-  {NULL,NULL,"Screen Width: 658", "Adjust Screen Width",                52,132,276,48}
+  {NULL,NULL,"Auto SRAM: OFF",    "Enable/disable automatic SRAM",        52,132,276,48},
+  {NULL,NULL,"Auto STATE: OFF",   "Enable/disable automatic Savestate",   52,132,276,48},
+  {NULL,NULL,"SFX Volume: 100",   "Adjust sound effects volume",          52,132,276,48},
+  {NULL,NULL,"BGM Volume: 100",   "Adjust background music volume",       52,132,276,48},
+  {NULL,NULL,"BG Color: DEFAULT", "Change background color",              52,132,276,48},
+  {NULL,NULL,"Screen Width: 658", "Adjust Screen Width",                  52,132,276,48},
+  {NULL,NULL,"Confirmation Box: OFF", "Enable/disable user confirmation", 52,132,276,48}
 };
 
 /*****************************************************************************/
@@ -447,7 +448,7 @@ static gui_menu menu_prefs =
 {
   "Menu Settings",
   0,0,
-  6,4,6,
+  7,4,6,
   items_prefs,
   buttons_list,
   bg_list,
@@ -615,6 +616,7 @@ static void prefmenu ()
   if (config.bg_color) sprintf (items[4].text, "BG Color: Type %d", config.bg_color);
   else sprintf (items[4].text, "BG Color: DEFAULT");
   sprintf (items[5].text, "Screen Width: %d", config.screen_w);
+  sprintf (items[6].text, "Confirmation Box: %s",config.ask_confirm ? "ON":"OFF");
 
   GUI_InitMenu(m);
   GUI_SlideMenuTitle(m,strlen("Menu "));
@@ -666,6 +668,11 @@ static void prefmenu ()
       case 5:
         GUI_OptionBox(m,update_screen_w,"Screen Width",(void *)&config.screen_w,2,640,VI_MAX_WIDTH_NTSC,1);
         sprintf (items[5].text, "Screen Width: %d", config.screen_w);
+        break;
+
+      case 6:
+        config.ask_confirm ^= 1;
+        sprintf (items[6].text, "Confirmation Box: %s",config.ask_confirm ? "ON":"OFF");
         break;
 
       case -1:

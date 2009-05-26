@@ -101,8 +101,8 @@ void GUI_InitMenu(gui_menu *menu)
       item->texture = gxTextureOpenPNG(item->data,0);
   }
 
-  /* setup message box */
-  GUI_MsgBoxUpdate(menu,0,0);
+  /* update message box */
+  message_box.parent = menu;
 }
 
 /* Release Menu allocated memory */
@@ -1226,17 +1226,20 @@ static void *MsgBox_Thread(void *arg)
       }
 
       /* draw exit message */
-      if (message_box.buttonB)
+      if (message_box.buttonA)
       {
-        FONT_write(": OK",18,206+message_box.buttonA->width+12,640,248,(GXColor)WHITE);
-        FONT_write(": CANCEL",18,286+message_box.buttonB->width+12,640,248,(GXColor)WHITE);
-        gxDrawTexture(message_box.buttonA, 206, 248-18+(18-message_box.buttonA->height)/2,message_box.buttonA->width, message_box.buttonA->height,255);
-        gxDrawTexture(message_box.buttonB, 286, 248-18+(18-message_box.buttonB->height)/2,message_box.buttonA->width, message_box.buttonA->height,255);
-      }
-      else if (message_box.buttonA)
-      {
-        FONT_writeCenter("Press    to continue.",18,166,166+message_box.window->width,248+22,(GXColor)WHITE);
-        gxDrawTexture(message_box.buttonA, 166+116, 248+4+(18-message_box.buttonA->height)/2,message_box.buttonA->width, message_box.buttonA->height,255);
+        if (message_box.buttonB)
+        {
+          FONT_write("OK",18,220+message_box.buttonA->width+6,288,640,(GXColor)WHITE);
+          FONT_alignRight("CANCEL",18,166+message_box.window->width-(220-166),288,(GXColor)WHITE);
+          if (message_box.buttonA) gxDrawTexture(message_box.buttonA, 220, 288-18+(18-message_box.buttonA->height)/2,message_box.buttonA->width, message_box.buttonA->height,255);
+          if (message_box.buttonB) gxDrawTexture(message_box.buttonB, 328, 288-18+(18-message_box.buttonB->height)/2,message_box.buttonB->width, message_box.buttonB->height,255);
+        }
+        else
+        {
+          FONT_writeCenter("Press    to continue.",18,166,166+message_box.window->width,248+22,(GXColor)WHITE);
+          if (message_box.buttonA) gxDrawTexture(message_box.buttonA, 166+116, 248+4+(18-message_box.buttonA->height)/2,message_box.buttonA->width, message_box.buttonA->height,255);
+        }
       }
 
       /* update display */
@@ -1256,9 +1259,8 @@ static void *MsgBox_Thread(void *arg)
 }
 
 /* update current Message Box */
-void GUI_MsgBoxUpdate(gui_menu *parent, char *title, char *msg)
+void GUI_MsgBoxUpdate(char *title, char *msg)
 {
-  if (parent) message_box.parent = parent;
   if (title) strncpy(message_box.title,title,64);
   if (msg) strncpy(message_box.msg,msg,64);
 }
@@ -1268,8 +1270,13 @@ void GUI_MsgBoxOpen(char *title, char *msg, bool throbber)
 {
   if (SILENT) return;
 
+  /* clear unused textures */
+  gxTextureClose(&message_box.buttonA);
+  gxTextureClose(&message_box.buttonB);
+  gxTextureClose(&message_box.throbber);
+
   /* update message box */
-  GUI_MsgBoxUpdate(0,title,msg);
+  GUI_MsgBoxUpdate(title,msg);
 
   /* ensure we are not already running */
   if (!message_box.refresh)
@@ -1367,7 +1374,7 @@ void GUI_MsgBoxClose(void)
     GUI_DrawMenu(message_box.parent);
     gxSetScreen();
 
-    /* close textures */
+    /* clear all textures */
     gxTextureClose(&message_box.window);
     gxTextureClose(&message_box.top);
     gxTextureClose(&message_box.buttonA);
@@ -1381,27 +1388,25 @@ void GUI_WaitPrompt(char *title, char *msg)
   if (SILENT) return;
 
   /* update message box */
-  gxTextureClose(&message_box.throbber);
   GUI_MsgBoxOpen(title, msg, 0);
 
-  /* allocate texture memory */
+  /* allocate texture */
   message_box.buttonA = gxTextureOpenPNG(Key_A_png,0);
 
   /* wait for button A */
   while (m_input.keys & PAD_BUTTON_A)    VIDEO_WaitVSync();
   while (!(m_input.keys & PAD_BUTTON_A)) VIDEO_WaitVSync();
 
-  /* close message box */
+  /* always close message box */
   GUI_MsgBoxClose();
 }
 
-int GUI_ConfirmPrompt(char *title, char *msg)
+int GUI_ConfirmPrompt(char *msg)
 {
-  if (config.askConfirm)
+  if (config.ask_confirm)
   {
     /* update message box */
-    gxTextureClose(&message_box.throbber);
-    GUI_MsgBoxOpen(title, msg, 0);
+    GUI_MsgBoxOpen("User Confirmation", msg, 0);
 
     /* allocate textures */
     message_box.buttonA = gxTextureOpenPNG(Key_A_png,0);

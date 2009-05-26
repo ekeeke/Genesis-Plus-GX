@@ -107,7 +107,7 @@ void config_default(void)
   config.bgm_volume = 100.0;
   config.sfx_volume = 100.0;
   config.screen_w = 658;
-  config.askConfirm = 0;
+  config.ask_confirm = 0;
 
   /* restore saved configuration */
   config_load();

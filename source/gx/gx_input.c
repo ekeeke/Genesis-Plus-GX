@@ -116,7 +116,7 @@ static void pad_config(int chan, int max_keys)
 
     /* wait for user input */
     sprintf(msg,"Press key for %s\n(Z to return)",keys_name[i]);
-    GUI_MsgBoxUpdate(0,0,msg);
+    GUI_MsgBoxUpdate(0,msg);
 
     key = 0;
     while (!key)
@@ -345,7 +345,7 @@ static void wpad_config(u8 chan, u8 exp, u8 max_keys)
 
     /* wait for user input */
     sprintf(msg,"Press key for %s\n(HOME to return)",keys_name[i]);
-    GUI_MsgBoxUpdate(0,0,msg);
+    GUI_MsgBoxUpdate(0,msg);
 
     /* wait for input */
     key = 0;

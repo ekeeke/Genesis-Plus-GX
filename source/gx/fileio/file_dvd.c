@@ -41,14 +41,13 @@
 /** Minimal Primary Volume Descriptor **/
 #define PVDROOT 0x9c
 
-bool haveDVDdir = 0;
-
 /** Static Variables **/
-static u64 rootdir        = 0;  /* current root directory offset */
-static u64 basedir        = 0;  /* base directory offset */
-static int rootdirlength  = 0;  /* current root directory length */
+static u64 rootdir        = 0;
+static u64 basedir        = 0;
+static int rootdirlength  = 0;
 static int IsJoliet       = 0;
 static int diroffset      = 0;
+static int haveDVDdir     = 0;
 static char dvdbuffer[2048];
 
 /****************************************************************************
@@ -200,11 +199,21 @@ static int getentry(int entrycount)
 }
 
 /***************************************************************************
- * DVD_UpdateRootDir
+ * DVD_ClearDirectory
+ *
+ * Clear DVD directory flag
+ ***************************************************************************/ 
+void DVD_ClearDirectory(void)
+{
+  haveDVDdir = 0;
+}
+
+/***************************************************************************
+ * DVD_UpdateDirectory
  *
  * Update DVD current root directory
  ***************************************************************************/ 
-int DVD_UpdateDir(bool go_up, u64 offset, u32 length)
+int DVD_UpdateDirectory(bool go_up, u64 offset, u32 length)
 {
   /* root has no parent directory */
   if (go_up && (basedir == rootdir)) return 0;
@@ -380,10 +389,10 @@ int DVD_Open(void)
     {
       /* set DVD as default */
       haveDVDdir = 1;
-      haveFATdir = 0;
+      FAT_ClearDirectory();
 
       /* reset File selector */
-      FileSelClear(max);
+      ClearSelector(max);
       return 1;
     }
     else

@@ -89,7 +89,7 @@ static gui_image bg_filesel[10] =
   {NULL,Banner_top_png,IMAGE_VISIBLE,0,0,640,108,255},
   {NULL,Banner_bottom_png,IMAGE_VISIBLE,0,380,640,100,255},
   {NULL,Main_logo_png,IMAGE_VISIBLE,466,40,152,44,255},
-  {NULL,Frame_s1_png,IMAGE_VISIBLE,8,70,372,336,200},
+  {NULL,Frame_s1_png,IMAGE_VISIBLE,8,70,372,336,230},
   {NULL,Frame_s2_png,0,384,264,248,140,200},
   {NULL,Snap_empty_png,IMAGE_VISIBLE,422,114,164,116,255},
   {NULL,NULL,0,424,116,160,112,255},
@@ -284,7 +284,6 @@ int FileSelector(unsigned char *buffer, bool useFAT)
       }
       else
       {
-        filelist[i].filename_offset = 0;
         if (filelist[i].flags)
         {
           /* directory icon */
@@ -325,13 +324,13 @@ int FileSelector(unsigned char *buffer, bool useFAT)
       m->selected = m->max_buttons + 2;
       for (i = offset; i < (offset + PAGESIZE) && (i < maxfiles); i++)
       {
-        if ((x<=380)&&(y>=yoffset)&&(y<(yoffset+(bar_over.h))))
+        if ((x<=380)&&(y>=yoffset)&&(y<(yoffset+24)))
         {
           selection = i;
           m->selected = -1;
           break;
         }
-        yoffset += (bar_over.h);
+        yoffset += 24;
       }
 
       /* find selected button */
@@ -461,9 +460,9 @@ int FileSelector(unsigned char *buffer, bool useFAT)
 
           /* get new directory */
           if (useFAT)
-            ret = FAT_UpdateDir(go_up,filelist[selection].filename);
+            ret = FAT_UpdateDirectory(go_up,filelist[selection].filename);
           else
-            ret = DVD_UpdateDir(go_up,filelist[selection].offset,filelist[selection].length);
+            ret = DVD_UpdateDirectory(go_up,filelist[selection].offset,filelist[selection].length);
 
           /* get new entry list or quit */
           if (ret)
@@ -514,7 +513,7 @@ int FileSelector(unsigned char *buffer, bool useFAT)
           else
           {
             /* user confirmation */
-            if (GUI_ConfirmPrompt("WARNING", "Load File ?"))
+            if (GUI_ConfirmPrompt("Load this file ?"))
             {
               /* Load ROM file from device */
               if (useFAT)
@@ -538,7 +537,7 @@ int FileSelector(unsigned char *buffer, bool useFAT)
               return size;
             }
 
-            /* use canceled */
+            /* user canceled */
             GUI_MsgBoxClose();
           }
         }
@@ -547,8 +546,7 @@ int FileSelector(unsigned char *buffer, bool useFAT)
   }
 }
 
-
-void FileSelClear(u32 max)
+void ClearSelector(u32 max)
 {
   maxfiles = max;
   offset = 0;
