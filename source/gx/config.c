@@ -68,9 +68,11 @@ void config_default(void)
   /* sound options */
   config.psg_preamp   = 150;
   config.fm_preamp    = 100;
-  config.boost        = 1;
   config.hq_fm        = 1;
   config.filter       = 1;
+  config.lg           = 1.0;
+  config.mg           = 1.0;
+  config.hg           = 1.0;
 
   /* system options */
   config.region_detect  = 0;
@@ -84,30 +86,34 @@ void config_default(void)
   config.yscale   = 0;
   config.aspect   = 1;
   config.overscan = 1;
-  config.render   = VIDEO_HaveComponentCable() ? 2 : 0;
+  if (VIDEO_HaveComponentCable())
+    config.render = 2;
+  else
+    config.render = 0;
   config.ntsc     = 0;
   config.bilinear = 1;
 
   /* controllers options */
-  input.system[0] = SYSTEM_GAMEPAD;
-  input.system[1] = SYSTEM_GAMEPAD;
+  input.system[0]       = SYSTEM_GAMEPAD;
+  input.system[1]       = SYSTEM_GAMEPAD;
+  config.gun_cursor[0]  = 1;
+  config.gun_cursor[1]  = 1;
+  config.invert_mouse   = 0;
   gx_input_SetDefault();
-  config.gun_cursor[0] = 1;
-  config.gun_cursor[1] = 1;
-  config.invert_mouse = 0;
 
   /* menu options */
 #ifdef HW_RVL
-  config.sram_auto = 0; /* let's assume we always have a FAT device by default */
+  /* let's assume we always have a FAT device by default */
+  config.sram_auto    = 0;
 #else
-  config.sram_auto = -1;
+  config.sram_auto    = -1;
 #endif
-  config.state_auto = -1;
-  config.bg_color = 0;
-  config.bgm_volume = 100.0;
-  config.sfx_volume = 100.0;
-  config.screen_w = 658;
-  config.ask_confirm = 0;
+  config.state_auto   = -1;
+  config.bg_color     = 0;
+  config.screen_w     = 658;
+  config.ask_confirm  = 0;
+  config.bgm_volume   = 100.0;
+  config.sfx_volume   = 100.0;
 
   /* restore saved configuration */
   config_load();

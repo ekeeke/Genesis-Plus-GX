@@ -217,13 +217,15 @@ static gui_item items_options[5] =
 };
 
 /* Audio options menu */
-static gui_item items_audio[5] =
+static gui_item items_audio[7] =
 {
-  {NULL,NULL,"PSG Volume: 2.50",   "Adjust PSG output level",             52,132,276,48},
-  {NULL,NULL,"FM Volume: 1.00",    "Adjust FM output level",              52,132,276,48},
-  {NULL,NULL,"Volume Boost: 1x",   "Adjust general output level",         52,132,276,48},
-  {NULL,NULL,"LowPass Filter: OFF","Enable/disable sound filtering",      52,132,276,48},
-  {NULL,NULL,"HQ YM2612: LINEAR",  "Enable/disable FM chip interpolation",52,132,276,48}
+  {NULL,NULL,"High-Quality FM: LINEAR", "Setup YM2612 resampling",      52,132,276,48},
+  {NULL,NULL,"PSG Volume: 2.50",        "Adjust SN76489 output level",  52,132,276,48},
+  {NULL,NULL,"FM Volume: 1.00",         "Adjust YM2612 output level",   52,132,276,48},
+  {NULL,NULL,"Filtering: 3-BAND EQ",     "Setup Audio filtering",        52,132,276,48},
+  {NULL,NULL,"Low Gain: 1.00",          "Adjust EQ Low Gain",           52,132,276,48},
+  {NULL,NULL,"Middle Gain: 1.00",       "Adjust EQ Middle Gain",        52,132,276,48},
+  {NULL,NULL,"High Gain: 1.00",         "Adjust EQ High Gain",          52,132,276,48},
 };
 
 /* System options menu */
@@ -434,7 +436,7 @@ static gui_menu menu_audio =
 {
   "Audio Settings",
   0,0,
-  5,4,6,
+  7,4,6,
   items_audio,
   buttons_list,
   bg_list,
@@ -696,15 +698,25 @@ static void soundmenu ()
   float psg_volume = (double)config.psg_preamp/100.0;
   float fm_volume = (double)config.fm_preamp/100.0;
 
-  sprintf (items[0].text, "PSG Volume: %1.2f", psg_volume);
-  sprintf (items[1].text, "FM Volume: %1.2f", fm_volume);
-  sprintf (items[2].text, "Volume Boost: %dX", config.boost);
-  sprintf (items[3].text, "LowPass Filter: %s", config.filter ? " ON":"OFF");
-  if (config.hq_fm == 0) sprintf (items[4].text, "HQ YM2612: OFF");
-  else if (config.hq_fm == 1) sprintf (items[4].text, "HQ YM2612: LINEAR");
-  else sprintf (items[4].text, "HQ YM2612: SINC");
+  if (config.hq_fm == 0) sprintf (items[0].text, "High-Quality FM: OFF");
+  else if (config.hq_fm == 1) sprintf (items[0].text, "High-Quality FM: LINEAR");
+  else sprintf (items[0].text, "High-Quality FM: SINC");
+  sprintf (items[1].text, "PSG Volume: %1.2f", psg_volume);
+  sprintf (items[2].text, "FM Volume: %1.2f", (double)config.fm_preamp/100.0);
+  if (config.filter == 2) sprintf (items[3].text, "Filtering: 3-BAND EQ");
+  else if (config.filter == 1) sprintf (items[3].text, "Filtering: LOW PASS");
+  else sprintf (items[3].text, "Filtering: OFF");
+  sprintf (items[4].text, "Low Gain: %1.2f", config.lg);
+  sprintf (items[5].text, "Low Gain: %1.2f", config.mg);
+  sprintf (items[6].text, "Low Gain: %1.2f", config.hg);
 
   GUI_InitMenu(m);
+
+  if (config.filter < 2)
+    m->max_items  = 4;
+  else
+    m->max_items  = 7;
+
   GUI_SlideMenuTitle(m,strlen("Audio "));
 
   while (quit == 0)
@@ -714,34 +726,11 @@ static void soundmenu ()
     switch (ret)
     {
       case 0:
-        GUI_OptionBox(m,0,"PSG Volume",(void *)&psg_volume,0.01,0.0,5.0,0);
-        sprintf (items[0].text, "PSG Volume: %1.2f", psg_volume);
-        config.psg_preamp = (int)(psg_volume * 100.0);
-        break;
-
-      case 1:
-        GUI_OptionBox(m,0,"FM Volume",(void *)&fm_volume,0.01,0.0,5.0,0);
-        sprintf (items[1].text, "FM Volume: %1.2f", (double)config.fm_preamp/100.0);
-        config.fm_preamp = (int)(fm_volume * 100.0);
-        break;
-
-      case 2:
-        config.boost ++;
-        if (config.boost > 4) config.boost = 0;
-        sprintf (items[2].text, "Volume Boost: %dX", config.boost);
-        break;
-      
-      case 3:
-        config.filter ^= 1;
-        sprintf (items[3].text, "LowPass Filter: %s", config.filter ? " ON":"OFF");
-        break;
-
-      case 4:
         config.hq_fm ++;
-        if (config.hq_fm>2) config.hq_fm = 0;
-        if (config.hq_fm == 0) sprintf (items[4].text, "HQ YM2612: OFF");
-        else if (config.hq_fm == 1) sprintf (items[4].text, "HQ YM2612: LINEAR");
-        else sprintf (items[4].text, "HQ YM2612: SINC");
+        if (config.hq_fm > 2) config.hq_fm = 0;
+        if (config.hq_fm == 0) sprintf (items[0].text, "High-Quality FM: OFF");
+        else if (config.hq_fm == 1) sprintf (items[0].text, "High-Quality FM: LINEAR");
+        else sprintf (items[0].text, "High-Quality FM: SINC");
         if (genromsize) 
         {
           unsigned char *temp = memalign(32,YM2612GetContextSize());
@@ -755,12 +744,70 @@ static void soundmenu ()
         }
         break;
 
+      case 1:
+        GUI_OptionBox(m,0,"PSG Volume",(void *)&psg_volume,0.01,0.0,5.0,0);
+        sprintf (items[1].text, "PSG Volume: %1.2f", psg_volume);
+        config.psg_preamp = (int)(psg_volume * 100.0);
+        break;
+
+      case 2:
+        GUI_OptionBox(m,0,"FM Volume",(void *)&fm_volume,0.01,0.0,5.0,0);
+        sprintf (items[2].text, "FM Volume: %1.2f", (double)config.fm_preamp/100.0);
+        config.fm_preamp = (int)(fm_volume * 100.0);
+        break;
+
+      case 3:
+        config.filter ++;
+        if (config.filter > 2) config.filter = 0;
+        if (config.filter == 2)
+          sprintf (items[3].text, "Filtering: 3-BAND EQ");
+        else if (config.filter == 1)
+          sprintf (items[3].text, "Filtering: LOW PASS");
+        else
+          sprintf (items[3].text, "Filtering: OFF");
+
+        if (config.filter < 2)
+        {
+          /* reset menu selection */
+          m->offset     = 0;
+          m->selected  = 3;
+          m->max_items  = 4;
+        }
+        else
+        {
+          /* enable items */
+          m->max_items  = 7;
+
+          /* intialize EQ */
+          audio_init_equalizer();
+        }
+        break;
+
+      case 4:
+        GUI_OptionBox(m,0,"Low Gain",(void *)&config.lg,0.01,0.0,2.0,0);
+        sprintf (items[4].text, "Low Gain: %1.2f", config.lg);
+        audio_set_equalizer();
+        break;
+
+      case 5:
+        GUI_OptionBox(m,0,"Middle Gain",(void *)&config.mg,0.01,0.0,2.0,0);
+        sprintf (items[5].text, "Low Gain: %1.2f", config.mg);
+        audio_set_equalizer();
+        break;
+
+      case 6:
+        GUI_OptionBox(m,0,"High Gain",(void *)&config.hg,0.01,0.0,2.0,0);
+        sprintf (items[6].text, "Low Gain: %1.2f", config.hg);
+        audio_set_equalizer();
+        break;
+
       case -1:
         quit = 1;
         break;
     }
   }
 
+  m->max_items = 7;
   GUI_DeleteMenu(m);
 }
 
@@ -881,6 +928,12 @@ static void videomenu ()
   else sprintf (items[5].text, "Aspect: FIT SCREEN");
 
   GUI_InitMenu(m);
+
+  if (config.aspect)
+    m->max_items  = 7;
+  else
+    m->max_items  = 8;
+
   GUI_SlideMenuTitle(m,strlen("Video "));
 
   while (quit == 0)
@@ -944,40 +997,40 @@ static void videomenu ()
         if (config.aspect == 1) sprintf (items[5].text,"Aspect: ORIGINAL (4:3)");
         else if (config.aspect == 2) sprintf (items[5].text, "Aspect: ORIGINAL (16:9)");
         else sprintf (items[5].text, "Aspect: FIT SCREEN");
+
+        if (config.aspect)
+        {
+          /* disable items */
+          m->max_items  = 7;
+
+          /* reset menu selection */
+          if (m->offset > 3)
+          {
+            m->offset  = 3;
+            m->selected = 2;
+          }
+        }
+        else
+        {
+          /* enable items */
+          m->max_items  = 8;
+        }
+
         break;
 
- /*     case 6: 
-      case -8:
-        if (ret<0) config.xshift --;
-        else config.xshift ++;
+      case 6: 
         break;
 
       case 7: 
-      case -9:
-        if (ret<0) config.yshift --;
-        else config.yshift ++;
         break;
 
-      case 8: 
-      case -10:
-        if (config.aspect) break;
-        if (ret<0) config.xscale --;
-        else config.xscale ++;
-        break;
-
-      case 9: 
-      case -11:
-        if (config.aspect) break;
-        if (ret<0) config.yscale --;
-        else config.yscale ++;
-        break;
-*/
       case -1:
         quit = 1;
         break;
     }
   }
 
+  m->max_items  = 8;
   GUI_DeleteMenu(m);
 }
 

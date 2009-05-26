@@ -23,6 +23,7 @@
 
 #include "shared.h"
 #include "samplerate.h"
+#include "eq.h"
 
 #define SND_SIZE (snd.buffer_size * sizeof(int16))
 
@@ -37,21 +38,36 @@ uint32 line_z80;
 int32 current_z80;
 uint8 system_hw;
 
-/* SRC */
-static SRC_DATA src_data;
+/****************************************************************
+ * AUDIO equalizer
+ ****************************************************************/
+static EQSTATE eq;
 
-static int ll, rr;
+void audio_init_equalizer(void)
+{
+  init_3band_state(&eq,880,5000,snd.sample_rate);
+  audio_set_equalizer();
+}
+
+void audio_set_equalizer(void)
+{
+  eq.lg = (double)(config.lg);
+  eq.mg = (double)(config.mg);
+  eq.hg = (double)(config.hg);
+}
 
 /****************************************************************
  * AUDIO stream update
  ****************************************************************/
+static int ll, rr;
+static SRC_DATA src_data;
+
 void audio_update (int size)
 {
   int i;
   int l, r;
   int psg_preamp = config.psg_preamp;
   int fm_preamp  = config.fm_preamp;
-  int boost  = config.boost;
   int filter = config.filter;
 
 #ifndef DOS
@@ -109,18 +125,21 @@ void audio_update (int size)
       *fm_r++ = 0;
     }
 
-    /* single-pole low-pass filter (6 dB/octave) */
-    if (filter)
+    /* filtering */
+    if (filter & 1)
     {
+      /* single-pole low-pass filter (6 dB/octave) */
       l = (ll + l) >> 1;
       r = (rr + r) >> 1;
       ll = l;
       rr = r;
     }
-
-    /* boost volume if asked*/
-    l = l * boost;
-    r = r * boost;
+    else if (filter & 2)
+    {
+      /* 3 Band EQ */
+      l = do_3band(&eq,l);
+      r = do_3band(&eq,r);
+    }
 
     /* clipping */
     if (l > 32767) l = 32767;
@@ -199,6 +218,9 @@ int audio_init (int rate)
   /* SN76489 stream buffers */
   snd.psg.buffer = (int16 *)malloc (SND_SIZE);
   if (!snd.psg.buffer) return (-1);
+
+  /* 3 band EQ */
+  audio_init_equalizer();
 
   /* Set audio enable flag */
   snd.enabled = 1;

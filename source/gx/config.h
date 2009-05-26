@@ -31,11 +31,13 @@
 typedef struct 
 {
   char version[16];
+  uint8 hq_fm;
   int32 psg_preamp;
   int32 fm_preamp;
-  uint8 boost;
   uint8 filter;
-  uint8 hq_fm;
+  float lg;
+  float mg;
+  float hg;
   uint8 region_detect;
   uint8 force_dtack;
   uint8 bios_enabled;
@@ -54,13 +56,13 @@ typedef struct
   uint16 pad_keymap[4][MAX_KEYS];
   uint32 wpad_keymap[4*3][MAX_KEYS];
   t_input_config input[MAX_INPUTS];
-  int8 bg_color;
-  float bgm_volume;
-  float sfx_volume;
   int8 sram_auto;
   int8 state_auto;
+  int8 bg_color;
   int16 screen_w;
   uint8 ask_confirm;
+  float bgm_volume;
+  float sfx_volume;
 } t_config;
 
 /* Global data */
