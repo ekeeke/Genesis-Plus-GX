@@ -707,8 +707,8 @@ static void soundmenu ()
   else if (config.filter == 1) sprintf (items[3].text, "Filtering: LOW PASS");
   else sprintf (items[3].text, "Filtering: OFF");
   sprintf (items[4].text, "Low Gain: %1.2f", config.lg);
-  sprintf (items[5].text, "Low Gain: %1.2f", config.mg);
-  sprintf (items[6].text, "Low Gain: %1.2f", config.hg);
+  sprintf (items[5].text, "Middle Gain: %1.2f", config.mg);
+  sprintf (items[6].text, "High Gain: %1.2f", config.hg);
 
   GUI_InitMenu(m);
 
@@ -791,13 +791,13 @@ static void soundmenu ()
 
       case 5:
         GUI_OptionBox(m,0,"Middle Gain",(void *)&config.mg,0.01,0.0,2.0,0);
-        sprintf (items[5].text, "Low Gain: %1.2f", config.mg);
+        sprintf (items[5].text, "Middle Gain: %1.2f", config.mg);
         audio_set_equalizer();
         break;
 
       case 6:
         GUI_OptionBox(m,0,"High Gain",(void *)&config.hg,0.01,0.0,2.0,0);
-        sprintf (items[6].text, "Low Gain: %1.2f", config.hg);
+        sprintf (items[6].text, "High Gain: %1.2f", config.hg);
         audio_set_equalizer();
         break;
 
