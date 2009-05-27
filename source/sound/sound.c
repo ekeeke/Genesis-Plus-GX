@@ -58,7 +58,7 @@ static inline void psg_update()
   if(snd.psg.curStage - snd.psg.lastStage > 0)
   {
     int16 *tempBuffer = snd.psg.buffer + snd.psg.lastStage;
-    SN76489_Update (0, tempBuffer, snd.psg.curStage - snd.psg.lastStage);
+    SN76489_Update(tempBuffer, snd.psg.curStage - snd.psg.lastStage);
     snd.psg.lastStage = snd.psg.curStage;
   }
 }
@@ -74,15 +74,11 @@ void sound_init(int rate)
 
   /* YM2612 is emulated at original frequency (VLCK/144) */
   if (config.hq_fm)
-  {
     m68cycles_per_sample[0] = 144;
-  }
 
   /* initialize sound chips */
-  SN76489_Init(0, (int)zclk, rate);
-  SN76489_Config(0, MUTE_ALLON, VOL_FULL, FB_SEGAVDP, SRW_SEGAVDP, 0);
-
-  YM2612Init ((int)vclk, rate);
+  SN76489_Init((int)zclk,rate);
+  YM2612Init((int)vclk,rate);
 } 
 
 void sound_update(int fm_len, int psg_len)
@@ -127,5 +123,5 @@ void psg_write(unsigned int cpu, unsigned int data)
 {
   snd.psg.curStage = psg_sample_cnt(cpu);
   psg_update();
-  SN76489_Write(0, data);
+  SN76489_Write(data);
 }

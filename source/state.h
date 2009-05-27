@@ -23,10 +23,11 @@
 #ifndef _STATE_H_
 #define _STATE_H_
 
-#define STATE_SIZE 0x28000
+#define STATE_SIZE    0x28000
+#define STATE_VERSION "GENPLUS-GX 1.3.2"
 
 /* Function prototypes */
-extern void state_load(unsigned char *buffer);
+extern int state_load(unsigned char *buffer);
 extern int state_save(unsigned char *buffer);
 
 #endif

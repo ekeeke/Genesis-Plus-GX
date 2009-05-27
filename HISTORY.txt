@@ -5,22 +5,26 @@ Genesis Plus GX 1.3.2 (??/??/????) (Eke-Eke)
 [Core]
 ------
 
-* modified SN76489 cut-off frequency
+* optimized SN76489 core
+* modified SN76489 cut-off frequency (thanks to Steve Snake)
+* added SN76489 linear interpolation using Blip Buffer (thanks to Blargg)
+* added an option to boost SN76489 Noise Channel
 * removed now outdated Gens YM2612 core
-* improved MAME YM2612 emulation accuracy (SSG-EG, CSM mode...), thanks to Nemesis for his tests on real hardware
-* fixed FM context saving/loading.
-* improved sprites masking emulation: fixes 3D level in Mickey Mania, thanks to Nemesis for his test ROM.
+* improved YM2612 emulation accuracy (SSG-EG, CSM mode...) (thanks to Nemesis for his tests on real hardware)
+* fixed YM2612 context saving/loading.
+* added 3 Band Equalizer for improved & fully configurable sound filtering (taken from Softdev's NeoCD Redux)
+* improved sprites masking emulation: fixes 3D level in Mickey Mania (thanks to Nemesis for his test program)
 * fixed lightgun autodetection: fixes cursor position in Lethal Enforcers II
 * various code cleanup & optimization
 
 [Gamecube/Wii]
 
-* improved audio/video synchronization: fixes video skipping issues with 60Hz modes
-* fixed stability issues and a few (potential) memory leaks
-* added screenshot feature
+* improved audio/video synchronization: fixes video skipping issues in 60Hz modes
+* fixed stability issues and some (potential) memory leaks
+* added internal screenshot feature
 * improved lightgun cursors
 * new FONT & GUI engines: use internal IPL FONT, GX hardware & multithreading for fast rendering.
-* new GUI layout: includes IR pointing, ROM snapshots, menu effects, sound effects & more (check the README for more details)
+* new interface: incl. IR pointing, ROM snapshots, menu effects, sound effects, BGM... (check the README for more details)
 
 
 

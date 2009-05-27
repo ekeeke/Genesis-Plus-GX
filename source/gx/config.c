@@ -66,13 +66,14 @@ void config_default(void)
   strncpy(config.version,VERSION,16);
 
   /* sound options */
-  config.psg_preamp   = 150;
-  config.fm_preamp    = 100;
-  config.hq_fm        = 1;
-  config.filter       = 1;
-  config.lg           = 1.0;
-  config.mg           = 1.0;
-  config.hg           = 1.0;
+  config.psg_preamp     = 150;
+  config.fm_preamp      = 100;
+  config.hq_fm          = 1;
+  config.psgBoostNoise  = 0;
+  config.filter         = 1;
+  config.lg             = 1.0;
+  config.mg             = 1.0;
+  config.hg             = 1.0;
 
   /* system options */
   config.region_detect  = 0;

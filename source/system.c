@@ -272,7 +272,7 @@ void system_reset (void)
   vdp_reset ();
   render_reset ();
   io_reset();
-  SN76489_Reset(0);
+  SN76489_Reset();
 
   /* Sound Buffers */
   if (snd.psg.buffer) memset (snd.psg.buffer, 0, SND_SIZE);
@@ -288,6 +288,7 @@ void system_shutdown (void)
   gen_shutdown ();
   vdp_shutdown ();
   render_shutdown ();
+  SN76489_Shutdown();
 }
 
 /****************************************************************

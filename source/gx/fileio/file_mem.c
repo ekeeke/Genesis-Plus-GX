@@ -120,7 +120,15 @@ static int FAT_ManageFile(char *filename, u8 direction, u8 filetype)
         sram.crc = crc32 (0, sram.sram, 0x10000);
         system_reset ();
       }
-      else state_load(savebuffer); /* STATE */
+      else
+      {
+        /* STATE */
+        if (!state_load(savebuffer))
+        {
+          GUI_WaitPrompt("Error","File version is not compatible !");
+          return 0;
+        }
+      }
 
       sprintf (fname, "Loaded %d bytes successfully", done);
       GUI_WaitPrompt("Information",fname);

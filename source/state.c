@@ -22,6 +22,7 @@
 
 #include "shared.h"
 
+
 static unsigned char state[STATE_SIZE];
 
 #define load_param(param, size) \
@@ -32,7 +33,7 @@ static unsigned char state[STATE_SIZE];
   memcpy(&state[bufferptr], param, size); \
   bufferptr+= size;
 
-void state_load(unsigned char *buffer)
+int state_load(unsigned char *buffer)
 {
   /* buffer size */
   int bufferptr = 0;
@@ -42,6 +43,14 @@ void state_load(unsigned char *buffer)
   memcpy(&inbytes, buffer, 4);
   outbytes = STATE_SIZE;
   uncompress ((Bytef *)state, &outbytes, (Bytef *)(buffer + 4), inbytes);
+
+  /* version check */
+  char version[16];
+  load_param(version,16);
+  if (strncmp(version,STATE_VERSION,16))
+  {
+    return 0;
+  }
 
   /* reset system */
   system_reset();
@@ -81,7 +90,7 @@ void state_load(unsigned char *buffer)
   bufferptr+= YM2612GetContextSize();
 
   // PSG
-  load_param(SN76489_GetContextPtr (0),SN76489_GetContextSize ());
+  load_param(SN76489_GetContextPtr(),SN76489_GetContextSize());
 
   // 68000 
   uint16 tmp16;
@@ -108,12 +117,19 @@ void state_load(unsigned char *buffer)
 
   // Z80 
   load_param(&Z80, sizeof(Z80_Regs));
+
+  return 1;
 }
 
 int state_save(unsigned char *buffer)
 {
   /* buffer size */
-  int bufferptr = 0;
+  int bufferptr = 16;
+
+  /* version string */
+  char version[16];
+  strncpy(version,STATE_VERSION,16);
+  save_param(version, 16);
 
   // GENESIS
   save_param(work_ram, sizeof(work_ram));
@@ -145,7 +161,7 @@ int state_save(unsigned char *buffer)
   save_param(YM2612GetContextPtr(),YM2612GetContextSize());
 
   // PSG 
-  save_param(SN76489_GetContextPtr (0),SN76489_GetContextSize ());
+  save_param(SN76489_GetContextPtr(),SN76489_GetContextSize());
 
   // 68000 
   uint16 tmp16;
