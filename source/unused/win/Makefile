@@ -34,7 +34,6 @@ OBJECTS	+=     	obj/genesis.o	\
 		obj/state.o     
 		
 OBJECTS	+=      obj/sound.o	\
-		obj/fm.o	\
 		obj/sn76489.o   \
 		obj/ym2612.o    
 
@@ -43,6 +42,11 @@ OBJECTS	+=	obj/samplerate.o \
 		obj/src_sinc.o   \
 		obj/src_zoh.o    \
 
+OBJECTS	+=	obj/blip.o \
+
+OBJECTS	+=	obj/eq.o \
+
+OBJECTS	+=	obj/filters.o \
 
 OBJECTS	+=      obj/sram.o      \
 		obj/eeprom.o    \

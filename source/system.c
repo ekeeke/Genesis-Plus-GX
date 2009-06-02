@@ -70,7 +70,7 @@ void audio_update (int size)
   int fm_preamp  = config.fm_preamp;
   int filter = config.filter;
 
-#ifndef DOS
+#ifdef NGC
   int16 *sb = (int16 *) soundbuffer[mixbuffer];
 #endif
 
@@ -148,12 +148,9 @@ void audio_update (int size)
     else if (r < -32768) r = -32768;
 
     /* update sound buffer */
-#ifdef DOS
+#ifndef NGC
     snd.buffer[0][i] = l;
     snd.buffer[1][i] = r;
-#elif LSB_FIRST
-    *sb++ = l;
-    *sb++ = r;
 #else
     *sb++ = r;
     *sb++ = l;
@@ -178,10 +175,13 @@ int audio_init (int rate)
   snd.sample_rate = rate;
 
   /* Calculate the sound buffer size (for one frame) */
+#ifdef NGC
   snd.buffer_size = (rate / vdp_rate) + 8;
 
-#ifdef DOS
-  /* output buffers */
+#else
+  snd.buffer_size = (rate / vdp_rate);
+
+  /* allocate output buffers */
   snd.buffer[0] = (int16 *) malloc(SND_SIZE);
   snd.buffer[1] = (int16 *) malloc(SND_SIZE);
   if (!snd.buffer[0] || !snd.buffer[1]) return (-1);
@@ -243,9 +243,12 @@ void audio_shutdown(void)
   if (snd.fm.buffer[1]) free(snd.fm.buffer[1]);
   if (snd.psg.buffer)   free(snd.psg.buffer);
 
-  /* SRC*/
+  /* SRC */
   if (src_data.data_in)   free(src_data.data_in);
   if (src_data.data_out)  free(src_data.data_out);
+
+  /* sn76489 chip (Blip Buffer allocated memory) */
+  SN76489_Shutdown();
 }
 
 /****************************************************************
@@ -288,7 +291,6 @@ void system_shutdown (void)
   gen_shutdown ();
   vdp_shutdown ();
   render_shutdown ();
-  SN76489_Shutdown();
 }
 
 /****************************************************************

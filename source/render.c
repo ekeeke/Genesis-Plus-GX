@@ -42,10 +42,6 @@ typedef struct
 }clip_t;
 
 /* Function prototypes */
-/*--------------------------------------------------------------------------*/
-/* Color update functions                                                   */
-/*--------------------------------------------------------------------------*/
-
 static void palette_init(void);
 static void make_name_lut(void);
 static uint32 make_lut_bg(uint32 bx, uint32 ax);
@@ -542,7 +538,7 @@ void render_line(uint32 line, uint32 overscan)
   uint32 x_offset = bitmap.viewport.x;
 
   /* display OFF */
-  if (!(reg[0] & 0x01)) return;
+  if (reg[0] & 0x01) return;
 
   /* background color (blanked display or vertical borders) */
   if (!(reg[1] & 0x40) || overscan)

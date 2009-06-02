@@ -59,9 +59,6 @@ void SN76489_Init(int PSGClockValue, int SamplingRate)
 {
   SN76489_Context *p = &SN76489;
 
-  /* first unallocate memory */
-  SN76489_Shutdown();
-
   /* SamplingRate*16 instead of PSGClockValue/16 since division would lose some
       precision. blip_alloc doesn't care about the absolute sampling rate, just the
       ratio to clock rate. */

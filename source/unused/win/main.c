@@ -5,7 +5,8 @@
 #include "sms_ntsc.h"
 #include "md_ntsc.h"
 
-#define SOUND_FREQUENCY    48000
+#define SOUND_FREQUENCY 48000
+#define SOUND_SAMPLES_SIZE 2048
 
 int timer_count = 0;
 int old_timer_count = 0;
@@ -16,11 +17,7 @@ int joynum = 0;
 
 int update_input(void);
 uint8 *keystate;
-uint8 buf[0x24000];
-
-uint8 soundbuffer[16][3840];
-int mixbuffer   = 0;
-int playbuffer  = 0;
+uint8 buf[STATE_SIZE];
 
 uint8 log_error   = 0;
 uint8 debug_on    = 0;
@@ -28,54 +25,93 @@ uint8 turbo_mode  = 1;
 uint8 use_sound   = 0;
 uint8 fullscreen  = 0;
 
-int audio_len;
+/* sound */
 
+struct {
+  char* current_pos;
+  char* buffer;
+  int current_emulated_samples;
+} sdl_sound;
 
 static void sdl_sound_callback(void *userdata, Uint8 *stream, int len)
 {
-  audio_len = len;
-  memcpy(stream, soundbuffer[playbuffer], len);
-
-  /* increment soundbuffers index */
-  playbuffer++;
-  playbuffer &= 0xf;
-  if (playbuffer == mixbuffer)
-  {
-    playbuffer--;
-    if ( playbuffer < 0 ) playbuffer = 15;
+  if(sdl_sound.current_emulated_samples < len) {
+    memset(stream, 0, len);
+  }
+  else {
+    memcpy(stream, sdl_sound.buffer, len);
+    /* loop to compensate desync */
+    do {
+      sdl_sound.current_emulated_samples -= len;
+    } while(sdl_sound.current_emulated_samples > 2 * len);
+    memcpy(sdl_sound.buffer,
+           sdl_sound.current_pos - sdl_sound.current_emulated_samples,
+           sdl_sound.current_emulated_samples);
+    sdl_sound.current_pos = sdl_sound.buffer + sdl_sound.current_emulated_samples;
   }
 }
 
 static int sdl_sound_init()
 {
-  SDL_AudioSpec audio;
+  int n;
+  SDL_AudioSpec as_desired, as_obtained;
   
-  if(SDL_Init(SDL_INIT_AUDIO) < 0)
-  {
-    char caption[256];
-    sprintf(caption, "SDL audio can't initialize");
-    MessageBox(NULL, caption, "Error", 0);
+  if(SDL_Init(SDL_INIT_AUDIO) < 0) {
+    printf("ERROR: %s.\n", SDL_GetError());
     return 0;
   }
 
-  audio.freq      = SOUND_FREQUENCY;
-  audio.format    = AUDIO_S16LSB;
-  audio.channels  = 2;
-  audio.samples   = snd.buffer_size;
-  audio.callback  = sdl_sound_callback;
+  as_desired.freq = SOUND_FREQUENCY;
+  as_desired.format = AUDIO_S16LSB;
+  as_desired.channels = 2;
+  as_desired.samples = SOUND_SAMPLES_SIZE;
+  as_desired.callback = sdl_sound_callback;
 
-  if(SDL_OpenAudio(&audio, NULL) == -1)
-  {
-    char caption[256];
-    sprintf(caption, "SDL can't open audio");
-    MessageBox(NULL, caption, "Error", 0);
+  if(SDL_OpenAudio(&as_desired, &as_obtained) == -1) {
+    printf("ERROR: can't open audio: %s.\n", SDL_GetError());
     return 0;
   }
 
-  memset(soundbuffer, 0, 16 * 3840);
-  mixbuffer = 0;
-  playbuffer = 0;
+  if(as_desired.samples != as_obtained.samples) {
+    printf("ERROR: soundcard driver does not accept specified samples size.\n");
+    return 0;
+  }
+
+  sdl_sound.current_emulated_samples = 0;
+  n = SOUND_SAMPLES_SIZE * 2 * sizeof(short) * 11;
+  sdl_sound.buffer = (char*)malloc(n);
+  if(!sdl_sound.buffer) {
+    printf("ERROR: can't allocate memory for sound.\n");
+    return 0;
+  }
+  memset(sdl_sound.buffer, 0, n);
+  sdl_sound.current_pos = sdl_sound.buffer;
   return 1;
+}
+
+static void sdl_sound_update()
+{
+  int i;
+  short* p;
+
+  SDL_LockAudio();
+  p = (short*)sdl_sound.current_pos;
+  for(i = 0; i < snd.buffer_size; ++i) {
+      *p = snd.buffer[0][i];
+      ++p;
+      *p = snd.buffer[1][i];
+      ++p;
+  }
+  sdl_sound.current_pos = (char*)p;
+  sdl_sound.current_emulated_samples += snd.buffer_size * 2 * sizeof(short);
+  SDL_UnlockAudio();
+}
+
+static void sdl_sound_close()
+{
+  SDL_PauseAudio(1);
+  SDL_CloseAudio();
+  free(sdl_sound.buffer);
 }
 
 static SDL_Rect rect;
@@ -97,21 +133,12 @@ Uint32 fps_callback(Uint32 interval)
     if (region_code == REGION_USA) sprintf(region,"USA");
     else if (region_code == REGION_EUROPE) sprintf(region,"EUR");
     else sprintf(region,"JAP");
-    sprintf(caption, "Genesis Plus/SDL - %s (%s) - %d fps", rominfo.international, region, fps);
+    sprintf(caption, "Genesis Plus/SDL - %s (%s) - %d fps - xoffset = %d", rominfo.international, region, fps,input.x_offset);
     SDL_WM_SetCaption(caption, NULL);
     frame_count = 0;
     
   }
   return 1000/vdp_rate;
-}
-
-void lock_pixels( void )
-{
-  if ( SDL_LockSurface( surface ) < 0 )
-    MessageBox(NULL, "Couldn't lock surface", "Error", 0);
-  SDL_FillRect( surface, 0, 0 );
-  output_pitch = surface->pitch;
-  output_pixels = (unsigned char*) surface->pixels;
 }
 
 void display_output( void )
@@ -121,7 +148,6 @@ void display_output( void )
   dest.h=rect.h;
   dest.x=(640-rect.w)/2;
   dest.y=(480-rect.h)/2;
-  //SDL_UnlockSurface( surface );
   if ( SDL_BlitSurface( surface, &rect, screen, &dest ) < 0 || SDL_Flip( screen ) < 0 )
     MessageBox(NULL, "SDL blit failed", "Error", 0);
 }
@@ -136,8 +162,6 @@ int main (int argc, char **argv)
   md_ntsc_setup_t md_setup;
   sms_ntsc_setup_t sms_setup;
 
-  SDL_Event event;
-
   error_init();
 
   /* Print help if no game specified */
@@ -149,9 +173,12 @@ int main (int argc, char **argv)
     exit(1);
   }
 
+  /* set default config */
+  set_config_defaults();
+
   /* Load game */
-  cart_rom = malloc(0xA00000);
-  memset(cart_rom, 0, 0xA00000);
+  cart_rom = malloc(10*1024*1024);
+  memset(cart_rom, 0, 10*1024*1024);
   if(!load_rom(argv[1]))
   {
     char caption[256];
@@ -159,7 +186,7 @@ int main (int argc, char **argv)
     MessageBox(NULL, caption, "Error", 0);
     exit(1);
   }
-        
+
   /* initialize SDL */
   if(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) < 0)
   {
@@ -191,11 +218,6 @@ int main (int argc, char **argv)
   bitmap.viewport.h = 224;
   bitmap.viewport.x = 0;
   bitmap.viewport.y = 0;
-
-  /* set default config */
-  set_config_defaults();
-  input.system[0] = SYSTEM_GAMEPAD;
-  input.system[1] = SYSTEM_GAMEPAD;
 
   /* load BIOS */
   memset(bios_rom, 0, sizeof(bios_rom));
@@ -238,20 +260,13 @@ int main (int argc, char **argv)
 
   while(running)
   {
-    while (SDL_PollEvent(&event)) 
+    SDL_Event event;
+    if (SDL_PollEvent(&event)) 
     {
       switch(event.type) 
       {
         case SDL_QUIT: /* Windows was closed */
           running = 0;
-          break;
-
-        case SDL_ACTIVEEVENT: /* Window focus changed or was minimized */
-          if(event.active.state & (SDL_APPINPUTFOCUS | SDL_APPACTIVE))
-          {
-            paused = !event.active.gain;
-            if (use_sound) SDL_PauseAudio(paused);
-          }
           break;
 
         case SDL_KEYDOWN:   /* user options */
@@ -283,7 +298,7 @@ int main (int argc, char **argv)
             f = fopen("game.gpz","r+b");
             if (f)
             {
-              fread(&buf, 0x23000, 1, f);
+              fread(&buf, STATE_SIZE, 1, f);
               state_load(buf);
               fclose(f);
             }
@@ -294,7 +309,7 @@ int main (int argc, char **argv)
             if (f)
             {
               state_save(buf);
-              fwrite(&buf, 0x23000, 1, f);
+              fwrite(&buf, STATE_SIZE, 1, f);
               fclose(f);
             }
           }
@@ -304,9 +319,15 @@ int main (int argc, char **argv)
 
             /* reinitialize timings */
             system_init ();
-            audio_init(SOUND_FREQUENCY);
-            fm_restore();
-                            
+            unsigned char *temp = malloc(YM2612GetContextSize());
+            if (temp) memcpy(temp, YM2612GetContextPtr(), YM2612GetContextSize());
+            audio_init(48000);
+            if (temp)
+            {
+              YM2612Restore(temp);
+              free(temp);
+            }
+
             /* reinitialize HVC tables */
             vctab = (vdp_pal) ? ((reg[1] & 8) ? vc_pal_240 : vc_pal_224) : vc_ntsc_224;
             hctab = (reg[12] & 1) ? cycle2hc40 : cycle2hc32;
@@ -314,7 +335,6 @@ int main (int argc, char **argv)
             /* reinitialize overscan area */
             bitmap.viewport.x = config.overscan ? 14 : 0;
             bitmap.viewport.y = config.overscan ? (((reg[1] & 8) ? 0 : 8) + (vdp_pal ? 24 : 0)) : 0;
-            bitmap.viewport.changed = 1;
           }
           else if(sym == SDLK_F10) set_softreset();
           else if(sym == SDLK_F11)
@@ -331,7 +351,7 @@ int main (int argc, char **argv)
           else if(sym == SDLK_F12)
           {
             config.overscan ^= 1;
-            bitmap.viewport.x = config.overscan ? 14 : 0;
+            bitmap.viewport.x = config.overscan ? ((reg[12] & 1) ? 16 : 12) : 0;
             bitmap.viewport.y = config.overscan ? (((reg[1] & 8) ? 0 : 8) + (vdp_pal ? 24 : 0)) : 0;
             bitmap.viewport.changed = 1;
           }
@@ -355,18 +375,21 @@ int main (int argc, char **argv)
       {
         /* Delay */
         while (!frameticker && !turbo_mode) SDL_Delay(0);
-         
-        //SDL_FillRect( surface, 0, 0 );
+
         system_frame (0);
         frame_count++;
       }
-      update_input();
 
       frameticker--;
 
+      /* Sound Update */
+      audio_update(snd.buffer_size);
+      if (use_sound) sdl_sound_update();
+
+      /* Video update */
       if(bitmap.viewport.changed)
       {
-         bitmap.viewport.changed = 0;
+        bitmap.viewport.changed = 0;
         rect.w = bitmap.viewport.w+2*bitmap.viewport.x;
         rect.h = bitmap.viewport.h+2*bitmap.viewport.y;
         if (config.render && (interlaced || config.ntsc))  rect.h *= 2;
@@ -408,8 +431,7 @@ int main (int argc, char **argv)
     fclose(f);
   }
 
-  SDL_PauseAudio(1);
-  SDL_CloseAudio();
+  if (use_sound) sdl_sound_close();
   SDL_FreeSurface(surface);
   SDL_FreeSurface(screen);
   SDL_Quit();
@@ -425,9 +447,9 @@ int update_input(void)
   keystate = SDL_GetKeyState(NULL);
 
   while (input.dev[joynum] == NO_DEVICE)
-{
-  joynum ++;
-  if (joynum > MAX_DEVICES - 1) joynum = 0;
+  {
+    joynum ++;
+    if (joynum > MAX_DEVICES - 1) joynum = 0;
   }
 
   /* reset input */

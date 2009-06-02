@@ -24,7 +24,6 @@ OBJ	=       obj/z80.o
 OBJ	+=     	obj/m68kcpu.o	\
 		obj/m68kops.o	
 
-
 OBJ	+=     	obj/genesis.o	\
 		obj/vdp.o	\
 		obj/render.o	\
@@ -35,17 +34,19 @@ OBJ	+=     	obj/genesis.o	\
 		obj/memz80.o	\
 		obj/membnk.o	\
 		obj/state.o     
-		
+
 OBJ	+=      obj/sound.o	\
-		obj/fm.o	\
 		obj/sn76489.o   \
 		obj/ym2612.o    
-
 
 OBJ	+=	obj/samplerate.o \
 		obj/src_linear.o \
 		obj/src_sinc.o   \
 		obj/src_zoh.o    \
+
+OBJ	+=	obj/blip.o \
+
+OBJ	+=	obj/eq.o \
 
 OBJ	+=      obj/sram.o      \
 		obj/eeprom.o    \

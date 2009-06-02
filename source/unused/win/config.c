@@ -6,12 +6,17 @@ t_config config;
 
 void set_config_defaults(void)
 {
+  int i;
+
   /* sound options */
-  config.psg_preamp   = 150;
-  config.fm_preamp    = 100;
-  config.boost        = 1;
-  config.filter       = 1;
-  config.hq_fm        = 1;
+  config.psg_preamp     = 150;
+  config.fm_preamp      = 100;
+  config.hq_fm          = 1;
+  config.psgBoostNoise  = 0;
+  config.filter         = 1;
+  config.lg             = 1.0;
+  config.mg             = 1.0;
+  config.hg             = 1.0;
 
   /* system options */
   config.region_detect  = 0;
@@ -19,13 +24,16 @@ void set_config_defaults(void)
   config.bios_enabled   = 0;
 
   /* display options */
-  config.aspect   = 1;
   config.overscan = 1;
   config.render   = 1;
-  config.ntsc     = 0;
 
   /* controllers options */
-  config.gun_cursor   = 1;
-  config.invert_mouse = 0;
+  input.system[0]       = SYSTEM_GAMEPAD;
+  input.system[1]       = SYSTEM_GAMEPAD;
+  config.gun_cursor[0]  = 1;
+  config.gun_cursor[1]  = 1;
+  config.invert_mouse   = 0;
+  for (i=0;i<MAX_INPUTS;i++)
+    config.input[i].padtype = DEVICE_3BUTTON;
 }
 

@@ -1,6 +1,6 @@
 /***************************************************************************************
  *  Genesis Plus
- *  Backup SRAM support
+ *  Backup RAM support
  *
  *  Copyright (C) 2007, 2008, 2009  Eke-Eke (GCN/Wii port)
  *

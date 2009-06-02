@@ -22,7 +22,7 @@ volatile int old_tick_count  = 0;
 volatile int skip            = 0;
 
 int quit = 0;
-unsigned char buf[0x24000];
+unsigned char buf[STATE_SIZE];
 
 uint8 log_error = 1;
 uint8 debug_on = 0;
@@ -100,8 +100,6 @@ int main (int argc, char *argv[])
   /* default config */
   do_config("genplus.cfg");
   set_config_defaults();
-  input.system[0] = SYSTEM_GAMEPAD;
-  input.system[1] = SYSTEM_GAMEPAD;
 
   /* initialize emulation */
   system_init();
@@ -131,8 +129,10 @@ int main (int argc, char *argv[])
     }
     else
     {
-      system_frame(1,reset_line);
+      system_frame(1);
     }
+
+    audio_update(snd.buffer_size);
     if(option.sound) dos_update_audio();
   }
 
@@ -345,7 +345,7 @@ void dos_update_input(void)
     f = fopen("game.gpz","r+b");
     if (f)
     {
-      fread(&buf, 0x23000, 1, f);
+      fread(&buf, STATE_SIZE, 1, f);
       state_load(buf);
       fclose(f);
     }
@@ -357,7 +357,7 @@ void dos_update_input(void)
     if (f)
     {
       state_save(buf);
-      fwrite(&buf, 0x23000, 1, f);
+      fwrite(&buf, STATE_SIZE, 1, f);
       fclose(f);
     }
   }
@@ -368,8 +368,14 @@ void dos_update_input(void)
 
     /* reinitialize timings */
     system_init ();
-    audio_init(option.sndrate);
-    fm_restore();
+    unsigned char *temp = malloc(YM2612GetContextSize());
+    if (temp) memcpy(temp, YM2612GetContextPtr(), YM2612GetContextSize());
+    audio_init(48000);
+    if (temp)
+    {
+      YM2612Restore(temp);
+      free(temp);
+    }
 
     /* reinitialize HVC tables */
     vctab = (vdp_pal) ? ((reg[1] & 8) ? vc_pal_240 : vc_pal_224) : vc_ntsc_224;
@@ -378,7 +384,6 @@ void dos_update_input(void)
     /* reinitialize overscan area */
     bitmap.viewport.x = config.overscan ? 14 : 0;
     bitmap.viewport.y = config.overscan ? (((reg[1] & 8) ? 0 : 8) + (vdp_pal ? 24 : 0)) : 0;
-    bitmap.viewport.changed = 1;
   }
 
   if(check_key(KEY_F10)) set_softreset();

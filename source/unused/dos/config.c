@@ -1,8 +1,6 @@
 
 #include "osd.h"
 
-#define CONFIG_VERSION "GENPLUS 1.2.1 "
-
 t_option option;
 t_config config;
 
@@ -92,15 +90,20 @@ void set_option_defaults(void)
     option.joy_driver   = JOY_TYPE_NONE;
 }
 
+
 void set_config_defaults(void)
 {
+  int i;
+  
   /* sound options */
-  config.psg_preamp   = 1.5;
-  config.fm_preamp    = 1.0;
-  config.boost        = 1;
-  config.filter       = 0;
-  config.hq_fm        = 1;
-  config.fm_core      = 0;
+  config.psg_preamp     = 150;
+  config.fm_preamp      = 100;
+  config.hq_fm          = 1;
+  config.psgBoostNoise  = 0;
+  config.filter         = 1;
+  config.lg             = 1.0;
+  config.mg             = 1.0;
+  config.hg             = 1.0;
 
   /* system options */
   config.region_detect  = 0;
@@ -108,14 +111,19 @@ void set_config_defaults(void)
   config.bios_enabled   = 0;
 
   /* display options */
-  config.aspect   = 1;
   config.overscan = 1;
-  config.render   = 0;
+  config.render   = 1;
 
   /* controllers options */
-  config.gun_cursor   = 1;
-  config.invert_mouse = 0;
+  input.system[0]       = SYSTEM_GAMEPAD;
+  input.system[1]       = SYSTEM_GAMEPAD;
+  config.gun_cursor[0]  = 1;
+  config.gun_cursor[1]  = 1;
+  config.invert_mouse   = 0;
+  for (i=0;i<MAX_INPUTS;i++)
+    config.input[i].padtype = DEVICE_3BUTTON;
 }
+
 
 void print_options(void)
 {

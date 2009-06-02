@@ -8,21 +8,27 @@
  ****************************************************************************/
 typedef struct 
 {
-  double psg_preamp;
-  double fm_preamp;
-  uint8 boost;
-  uint8 filter;
+  uint8 padtype;
+} t_input_c;
+
+typedef struct 
+{
   uint8 hq_fm;
-  uint8 fm_core;
+  uint8 psgBoostNoise;
+  int32 psg_preamp;
+  int32 fm_preamp;
+  uint8 filter;
+  float lg;
+  float mg;
+  float hg;
   uint8 region_detect;
   uint8 force_dtack;
   uint8 bios_enabled;
-  uint8 tv_mode;
-  uint8 aspect;
   uint8 overscan;
   uint8 render;
   uint8 ntsc;
-  uint8 gun_cursor;
+  t_input_c input[MAX_INPUTS];
+  uint8 gun_cursor[2];
   uint8 invert_mouse;
 } t_config;
 

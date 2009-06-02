@@ -1,6 +1,6 @@
 /*
 **
-** File: fm_ym2612.h -- header for ym2612.c
+** File: ym2612.h -- header for ym2612.c
 ** software implementation of Yamaha FM sound generator
 **
 ** Copyright (C) 2001, 2002, 2003 Jarek Burczynski (bujar at mame dot net)
