@@ -81,13 +81,13 @@ extern void vdp_init(void);
 extern void vdp_reset(void);
 extern void vdp_shutdown(void);
 extern void vdp_restore(uint8 *vdp_regs);
+extern void vdp_update_dma();
 extern void vdp_ctrl_w(unsigned int data);
 extern unsigned int vdp_ctrl_r(void);
 extern void vdp_data_w(unsigned int data);
 extern unsigned int vdp_data_r(void);
 extern unsigned int vdp_hvc_r(void);
-extern void dma_update();
 extern void vdp_test_w(unsigned int value);
-
+extern int vdp_int_ack_callback(int int_level);
 
 #endif /* _VDP_H_ */

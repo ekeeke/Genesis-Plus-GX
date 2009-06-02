@@ -40,19 +40,38 @@ typedef struct
   uint8 right;
   uint8 enable;
 }clip_t;
-  
+
 /* Function prototypes */
-static void render_obj(uint32 line, uint8 *buf, uint8 *table);
-static void render_obj_im2(uint32 line, uint32 odd, uint8 *buf, uint8 *table);
-static void render_bg(uint32 line, uint32 width);
-static void render_bg_im2(uint32 line, uint32 width, uint32 odd);
-static void render_bg_vs(uint32 line, uint32 width);
+/*--------------------------------------------------------------------------*/
+/* Color update functions                                                   */
+/*--------------------------------------------------------------------------*/
+
+static void palette_init(void);
 static void make_name_lut(void);
 static uint32 make_lut_bg(uint32 bx, uint32 ax);
 static uint32 make_lut_obj(uint32 bx, uint32 sx);
 static uint32 make_lut_bg_ste(uint32 bx, uint32 ax);
 static uint32 make_lut_obj_ste(uint32 bx, uint32 sx);
 static uint32 make_lut_bgobj_ste(uint32 bx, uint32 sx);
+static void color_update_16(int index, uint16 data);
+#ifndef NGC
+static void color_update_8(int index, uint16 data);
+static void color_update_15(int index, uint16 data);
+static void color_update_32(int index, uint16 data);
+static inline void remap_8(uint8 *src, uint8 *dst, uint8 *table, int length);
+static inline void remap_16(uint8 *src, uint16 *dst, uint16 *table, int length);
+static inline void remap_32(uint8 *src, uint32 *dst, uint32 *table, int length);
+#else
+static inline void remap_texture(uint8 *src, uint16 *dst, uint32 tiles);
+#endif
+static inline void merge(uint8 *srca, uint8 *srcb, uint8 *dst, uint8 *table, uint32 width);
+static inline void update_bg_pattern_cache(uint32 index);
+static inline uint32 get_hscroll(uint32 line);
+static void render_bg(uint32 line, uint32 width);
+static void render_bg_im2(uint32 line, uint32 width, uint32 odd);
+static void render_bg_vs(uint32 line, uint32 width);
+static void render_obj(uint32 line, uint8 *buf, uint8 *table);
+static void render_obj_im2(uint32 line, uint32 odd, uint8 *buf, uint8 *table);
 
 #undef ALIGN_LONG
 #ifdef ALIGN_LONG
@@ -423,53 +442,29 @@ static uint32 object_index_count;
 
 */
 
-uint8 rgb565_norm[2][8] = {{0 ,  4,  9, 13, 18, 22, 27, 31},
-               {0 ,  9, 18, 27, 36, 45, 54, 63}};
-uint8 rgb565_half[2][8] = {{0 ,  2,  4,  6,  9, 11, 13, 15},
-               {0 ,  4,  9, 13, 18, 22, 27, 31}};
-uint8 rgb565_high[2][8] = {{15, 17, 19, 21, 24, 26, 28, 31},
-               {31, 35, 40, 44, 49, 53, 58, 63}};
-
-
-void palette_init(void)
+static const uint8 rgb565_norm[2][8] =
 {
-  int i;
+  {0 ,  4,  9, 13, 18, 22, 27, 31},
+  {0 ,  9, 18, 27, 36, 45, 54, 63}
+};
 
-  for (i = 0; i < 0x200; i += 1)
-  {
-    int r, g, b;
+static const uint8 rgb565_half[2][8] =
+{
+  {0 ,  2,  4,  6,  9, 11, 13, 15},
+  {0 ,  4,  9, 13, 18, 22, 27, 31}
+};
 
-    r = (i >> 6) & 7;
-    g = (i >> 3) & 7;
-    b = (i >> 0) & 7;
-
-#ifndef NGC
-    pixel_8_lut[0][i] = MAKE_PIXEL_8(r>>1,g>>1,b>>1);
-    pixel_8_lut[1][i] = MAKE_PIXEL_8(r,g,b);
-    pixel_8_lut[2][i] = MAKE_PIXEL_8((r>>1)|4,(g>>1)|4,(b>>1)|4);
-
-    pixel_15_lut[0][i] = MAKE_PIXEL_15(r,g,b);
-    pixel_15_lut[1][i] = MAKE_PIXEL_15(r<<1,g<<1,b<<1);
-    pixel_15_lut[2][i] = MAKE_PIXEL_15(r|8,g|8,b|8);
-
-    pixel_32_lut[0][i] = MAKE_PIXEL_32(r,g,b);
-    pixel_32_lut[1][i] = MAKE_PIXEL_32(r<<1,g<<1,b<<1);
-    pixel_32_lut[2][i] = MAKE_PIXEL_32(r|8,g|8,b|8);
-#endif
-
-    /* RGB 565 format: we extrapolate each 3-bit value into a 5-bit (R,B) or 6-bit (G) value 
-       this is needed to correctly cover full color range: [0-31] for R,B or [0-63] for G */
-    pixel_16_lut[0][i] = MAKE_PIXEL_16(rgb565_half[0][r],rgb565_half[1][g],rgb565_half[0][b]);
-    pixel_16_lut[1][i] = MAKE_PIXEL_16(rgb565_norm[0][r],rgb565_norm[1][g],rgb565_norm[0][b]);
-    pixel_16_lut[2][i] = MAKE_PIXEL_16(rgb565_high[0][r],rgb565_high[1][g],rgb565_high[0][b]);
-  }
-}
+static const uint8 rgb565_high[2][8] =
+{
+  {15, 17, 19, 21, 24, 26, 28, 31},
+  {31, 35, 40, 44, 49, 53, 58, 63}
+};
 
 /*--------------------------------------------------------------------------*/
-/* Init, reset, shutdown routines                       */
+/* Init, reset, shutdown routines                                           */
 /*--------------------------------------------------------------------------*/
 
-int render_init (void)
+void render_init(void)
 {
   int bx, ax, i;
 
@@ -508,38 +503,6 @@ int render_init (void)
 
   /* Make sprite name look-up table */
   make_name_lut();
-
-  return (1);
-}
-
-void make_name_lut(void)
-{
-  int col, row;
-  int vcol, vrow;
-  int width, height;
-  int flipx, flipy;
-  int i, name;
-
-  memset (name_lut, 0, sizeof (name_lut));
-
-  for (i = 0; i < 0x400; i += 1)
-  {
-    vcol = col = i & 3;
-    vrow = row = (i >> 2) & 3;
-    height = (i >> 4) & 3;
-    width = (i >> 6) & 3;
-    flipx = (i >> 8) & 1;
-    flipy = (i >> 9) & 1;
-
-    if(flipx) vcol = (width - col);
-    if(flipy) vrow = (height - row);
-
-    name = vrow + (vcol * (height + 1));
-
-    if ((row > height) || col > width) name = -1;
-
-    name_lut[i] = name;
-  }
 }
 
 void render_reset(void)
@@ -568,225 +531,21 @@ void render_shutdown(void)
   if(lut_base) free(lut_base);
 }
 
-/*--------------------------------------------------------------------------*/
-/* Helper functions (cache update, hscroll, window clip)                    */
-/*--------------------------------------------------------------------------*/
-
-static inline void update_bg_pattern_cache(uint32 index)
-{
-  int i;
-  uint8 x, y, c;
-  uint16 name;
-  uint8 *dst;
-  uint32 bp;
-#ifdef LSB_FIRST
-  uint8 shift_table[8] = {12, 8, 4, 0, 28, 24, 20, 16};
-#else
-  uint8 shift_table[8] = {28, 24, 20, 16, 12, 8, 4, 0};
-#endif        
-
-  for(i = 0; i < index; i ++)
-  {
-    name = bg_name_list[i];
-    bg_name_list[i] = 0;
-    
-    for(y = 0; y < 8; y ++)
-    {
-      if(bg_name_dirty[name] & (1 << y))
-      {
-        dst = &bg_pattern_cache[name << 6];
-        bp = *(uint32 *)&vram[(name << 5) | (y << 2)];
-
-        for(x = 0; x < 8; x ++)
-        {
-          c = (bp >> shift_table[x]) & 0x0F;
-          dst[0x00000 | (y << 3) | (x)] = (c);      /* hf=0, vf=0: normal */
-          dst[0x20000 | (y << 3) | (x ^ 7)] = (c);    /* hf=1, vf=0: horizontal flipped */
-          dst[0x40000 | ((y ^ 7) << 3) | (x)] = (c);    /* hf=0, vf=1: vertical flipped */
-          dst[0x60000 | ((y ^ 7) << 3) | (x ^ 7)] = (c);  /* hf=1, vf=1: horizontal & vertical flipped */
-        }
-      }
-    }
-    bg_name_dirty[name] = 0;
-  }
-}
-
-static inline uint32 get_hscroll(uint32 line)
-{
-  switch(reg[11] & 3)
-  {
-    case 0: /* Full-screen */
-      return *(uint32 *)&vram[hscb];
-
-    case 1: /* First 8 lines */
-      return *(uint32 *)&vram[hscb + ((line & 7) << 2)];
-
-    case 2: /* Every 8 lines */
-      return *(uint32 *)&vram[hscb + ((line & ~7) << 2)];
-
-    default: /* Every line */
-      return *(uint32 *)&vram[hscb + (line << 2)];
-  }
-}
-
-/* Update Window Clipping (only called when registers change) */
-void window_clip(uint8 reg_12, uint8 reg_17)
-{
-  /* Window size and invert flags */
-  int hp = (reg_17 & 0x1f);
-  int hf = (reg_17 >> 7) & 1;
-
-  /* Display size  */
-  int sw = (reg_12 & 1) ? 20 : 16;
-
-  /* Clear clipping data */
-  memset(&clip, 0, sizeof(clip));
-
-  /* Perform horizontal clipping; the results are applied in reverse
-      if the horizontal inversion flag is set */
-  int a = hf;
-  int w = hf ^ 1;
-
-  if(hp)
-  {
-    if(hp > sw)
-    {
-      /* Plane W takes up entire line */
-      clip[w].right = sw;
-      clip[w].enable = 1;
-    }
-    else
-    {
-      /* Window takes left side, Plane A takes right side */
-      clip[w].right = hp;
-      clip[a].left = hp;
-      clip[a].right = sw;
-      clip[0].enable = clip[1].enable = 1;
-    }
-  }
-  else
-  {
-    /* Plane A takes up entire line */
-    clip[a].right = sw;
-    clip[a].enable = 1;
-  }
-}
-
-/*--------------------------------------------------------------------------*/
-/* Remap functions                                                          */
-/*--------------------------------------------------------------------------*/
-
-#ifndef NGC
-static inline void remap_8(uint8 *src, uint8 *dst, uint8 *table, int length)
-{
-  int count;
-  for(count = 0; count < length; count += 1)
-  {
-    *dst++ = table[*src++];
-  }
-}
-
-static inline void remap_16(uint8 *src, uint16 *dst, uint16 *table, int length)
-{
-  int count;
-  for(count = 0; count < length; count += 1)
-  {
-    *dst++ = table[*src++];
-  }
-}
-
-static inline void remap_32(uint8 *src, uint32 *dst, uint32 *table, int length)
-{
-  int count;
-  for(count = 0; count < length; count += 1)
-  {
-    *dst++ = table[*src++];
-  }
-}
-
-#else
-static inline void remap_texture(uint8 *src, uint16 *dst, uint32 tiles)
-{
-  int count;
-  uint16 *table = pixel_16;
-
-  for(count = 0; count < tiles; count ++)
-  {
-    /* one tile is 4 pixels wide */
-    *dst++ = table[*src++];
-    *dst++ = table[*src++];
-    *dst++ = table[*src++];
-    *dst++ = table[*src++];
-    dst += 12;
-  }
-}
-#endif
-
-
-static inline void merge(uint8 *srca, uint8 *srcb, uint8 *dst, uint8 *table, uint32 width)
-{
-  int i;
-  for(i = 0; i < width; i += 1)
-  {
-    *dst++ = table[(*srcb++ << 8) | (*srca++)];
-  }
-}
 
 /*--------------------------------------------------------------------------*/
 /* Line render function                                                     */
 /*--------------------------------------------------------------------------*/
-
-void remap_buffer(uint32 line, uint32 width)
-{
-  /* get line offset from framebuffer */
-  line = (line + bitmap.viewport.y) % lines_per_frame;
-    
-  /* double resolution mode */
-  if (config.render && interlaced) line = (line * 2) + odd_frame;
-
-  /* NTSC Filter */
-  if (config.ntsc)
-  {
-    if (reg[12]&1) md_ntsc_blit(&md_ntsc, ( MD_NTSC_IN_T const * )pixel_16, tmp_buf+0x20-bitmap.viewport.x, width, line);
-    else sms_ntsc_blit(&sms_ntsc, ( SMS_NTSC_IN_T const * )pixel_16, tmp_buf+0x20-bitmap.viewport.x, width, line);
-    return;
-  }
-  
-#ifdef NGC
-  /* directly fill the RGB565 texture */
-  /* one tile is 32 byte = 4x4 pixels */
-  /* tiles are stored continuously in texture memory */
-  width = width >> 2;
-  int offset = ((width << 5) * (line >> 2)) + ((line & 3) * 8);
-  remap_texture(tmp_buf+0x20-bitmap.viewport.x, (uint16 *)(texturemem + offset), width);
-
-#else
-  void *out =((void *)&bitmap.data[(line * bitmap.pitch)]);
-  switch(bitmap.depth)
-  {
-    case 8:
-      remap_8(tmp_buf+0x20-bitmap.viewport.x, (uint8 *)out, pixel_8, width);
-      break;
-    case 15:
-      remap_16(tmp_buf+0x20-bitmap.viewport.x, (uint16 *)out, pixel_15, width);
-      break;
-    case 16:
-      remap_16(tmp_buf+0x20-bitmap.viewport.x, (uint16 *)out, pixel_16, width);
-      break;
-    case 32:
-      remap_32(tmp_buf+0x20-bitmap.viewport.x, (uint32 *)out, pixel_32, width);
-      break;
-  }
-#endif
-}
 
 void render_line(uint32 line, uint32 overscan)
 {
   uint32 width    = bitmap.viewport.w;
   uint32 x_offset = bitmap.viewport.x;
 
-  /* background color (display OFF or borders) */
-  if (overscan || !(reg[1] & 0x40))
+  /* display OFF */
+  if (!(reg[0] & 0x01)) return;
+
+  /* background color (blanked display or vertical borders) */
+  if (!(reg[1] & 0x40) || overscan)
   {
     width += 2 * x_offset;
     memset(&tmp_buf[0x20 - x_offset], 0x40, width);
@@ -860,6 +619,679 @@ void render_line(uint32 line, uint32 overscan)
   /* pixel color remapping */
   remap_buffer(line,width);
 }
+
+void remap_buffer(uint32 line, uint32 width)
+{
+  /* get line offset from framebuffer */
+  line = (line + bitmap.viewport.y) % lines_per_frame;
+    
+  /* double resolution mode */
+  if (config.render && interlaced) line = (line * 2) + odd_frame;
+
+  /* NTSC Filter */
+  if (config.ntsc)
+  {
+    if (reg[12]&1) md_ntsc_blit(&md_ntsc, ( MD_NTSC_IN_T const * )pixel_16, tmp_buf+0x20-bitmap.viewport.x, width, line);
+    else sms_ntsc_blit(&sms_ntsc, ( SMS_NTSC_IN_T const * )pixel_16, tmp_buf+0x20-bitmap.viewport.x, width, line);
+    return;
+  }
+  
+#ifdef NGC
+  /* directly fill the RGB565 texture */
+  /* one tile is 32 byte = 4x4 pixels */
+  /* tiles are stored continuously in texture memory */
+  width = width >> 2;
+  int offset = ((width << 5) * (line >> 2)) + ((line & 3) * 8);
+  remap_texture(tmp_buf+0x20-bitmap.viewport.x, (uint16 *)(texturemem + offset), width);
+
+#else
+  void *out =((void *)&bitmap.data[(line * bitmap.pitch)]);
+  switch(bitmap.depth)
+  {
+    case 8:
+      remap_8(tmp_buf+0x20-bitmap.viewport.x, (uint8 *)out, pixel_8, width);
+      break;
+    case 15:
+      remap_16(tmp_buf+0x20-bitmap.viewport.x, (uint16 *)out, pixel_15, width);
+      break;
+    case 16:
+      remap_16(tmp_buf+0x20-bitmap.viewport.x, (uint16 *)out, pixel_16, width);
+      break;
+    case 32:
+      remap_32(tmp_buf+0x20-bitmap.viewport.x, (uint32 *)out, pixel_32, width);
+      break;
+  }
+#endif
+}
+
+/* Update Window Clipping (only called when registers change) */
+void window_clip(void)
+{
+  /* Window size and invert flags */
+  int hp = (reg[17] & 0x1f);
+  int hf = (reg[17] >> 7) & 1;
+
+  /* Display size  */
+  int sw =  bitmap.viewport.w >> 4;
+
+  /* Clear clipping data */
+  memset(&clip, 0, sizeof(clip));
+
+  /* Perform horizontal clipping; the results are applied in reverse
+      if the horizontal inversion flag is set */
+  int a = hf;
+  int w = hf ^ 1;
+
+  if(hp)
+  {
+    if(hp > sw)
+    {
+      /* Plane W takes up entire line */
+      clip[w].right = sw;
+      clip[w].enable = 1;
+    }
+    else
+    {
+      /* Window takes left side, Plane A takes right side */
+      clip[w].right = hp;
+      clip[a].left = hp;
+      clip[a].right = sw;
+      clip[0].enable = clip[1].enable = 1;
+    }
+  }
+  else
+  {
+    /* Plane A takes up entire line */
+    clip[a].right = sw;
+    clip[a].enable = 1;
+  }
+}
+
+/*--------------------------------------------------------------------------*/
+/* Sprites Parsing function                                                 */
+/*--------------------------------------------------------------------------*/
+
+void parse_satb(uint32 line)
+{
+  uint8 sizetab[] = {8, 16, 24, 32};
+  uint32 link = 0;
+  uint32 count, ypos, size, height;
+
+  uint32 limit = (reg[12] & 1) ? 20 : 16;
+  uint32 total = limit << 2;
+
+  uint16 *p = (uint16 *) &vram[satb];
+  uint16 *q = (uint16 *) &sat[0];
+
+  object_index_count = 0;
+
+  for(count = 0; count < total; count += 1)
+  {
+    ypos = (q[link] >> im2_flag) & 0x1FF;
+    size = q[link + 1] >> 8;
+    height = sizetab[size & 3];
+
+    if((line >= ypos) && (line < (ypos + height)))
+    {
+      /* sprite limit (max. 16 or 20 sprites displayed per line) */
+      if(object_index_count == limit)
+      {
+        if(vint_pending == 0) status |= 0x40;
+        return;
+      }
+
+      // using xpos from internal satb stops sprite x
+      // scrolling in bloodlin.bin,
+      // but this seems to go against the test prog
+      object_info[object_index_count].attr  = p[link + 2];
+      object_info[object_index_count].xpos  = p[link + 3];
+      object_info[object_index_count].ypos  = ypos;
+      object_info[object_index_count].size = size;
+      ++object_index_count;
+    }
+
+    link = (q[link + 1] & 0x7F) << 2;
+    if(link == 0) break;
+  }
+}
+
+/*--------------------------------------------------------------------------*/
+/* Look-up table functions (handles priority between layers pixels)         */
+/*--------------------------------------------------------------------------*/
+
+static void palette_init(void)
+{
+  int i;
+
+  for (i = 0; i < 0x200; i += 1)
+  {
+    int r, g, b;
+
+    r = (i >> 6) & 7;
+    g = (i >> 3) & 7;
+    b = (i >> 0) & 7;
+
+#ifndef NGC
+    pixel_8_lut[0][i] = MAKE_PIXEL_8(r>>1,g>>1,b>>1);
+    pixel_8_lut[1][i] = MAKE_PIXEL_8(r,g,b);
+    pixel_8_lut[2][i] = MAKE_PIXEL_8((r>>1)|4,(g>>1)|4,(b>>1)|4);
+
+    pixel_15_lut[0][i] = MAKE_PIXEL_15(r,g,b);
+    pixel_15_lut[1][i] = MAKE_PIXEL_15(r<<1,g<<1,b<<1);
+    pixel_15_lut[2][i] = MAKE_PIXEL_15(r|8,g|8,b|8);
+
+    pixel_32_lut[0][i] = MAKE_PIXEL_32(r,g,b);
+    pixel_32_lut[1][i] = MAKE_PIXEL_32(r<<1,g<<1,b<<1);
+    pixel_32_lut[2][i] = MAKE_PIXEL_32(r|8,g|8,b|8);
+#endif
+
+    /* RGB 565 format: we extrapolate each 3-bit value into a 5-bit (R,B) or 6-bit (G) value 
+       this is needed to correctly cover full color range: [0-31] for R,B or [0-63] for G */
+    pixel_16_lut[0][i] = MAKE_PIXEL_16(rgb565_half[0][r],rgb565_half[1][g],rgb565_half[0][b]);
+    pixel_16_lut[1][i] = MAKE_PIXEL_16(rgb565_norm[0][r],rgb565_norm[1][g],rgb565_norm[0][b]);
+    pixel_16_lut[2][i] = MAKE_PIXEL_16(rgb565_high[0][r],rgb565_high[1][g],rgb565_high[0][b]);
+  }
+}
+
+static void make_name_lut(void)
+{
+  int col, row;
+  int vcol, vrow;
+  int width, height;
+  int flipx, flipy;
+  int i, name;
+
+  memset (name_lut, 0, sizeof (name_lut));
+
+  for (i = 0; i < 0x400; i += 1)
+  {
+    vcol = col = i & 3;
+    vrow = row = (i >> 2) & 3;
+    height = (i >> 4) & 3;
+    width = (i >> 6) & 3;
+    flipx = (i >> 8) & 1;
+    flipy = (i >> 9) & 1;
+
+    if(flipx) vcol = (width - col);
+    if(flipy) vrow = (height - row);
+
+    name = vrow + (vcol * (height + 1));
+
+    if ((row > height) || col > width) name = -1;
+
+    name_lut[i] = name;
+  }
+}
+
+/* Input (bx):  d5-d0=color, d6=priority, d7=unused */
+/* Input (ax):  d5-d0=color, d6=priority, d7=unused */
+/* Output:    d5-d0=color, d6=priority, d7=unused */
+static uint32 make_lut_bg(uint32 bx, uint32 ax)
+{
+  int bf, bp, b;
+  int af, ap, a;
+  int x = 0;
+  int c;
+
+  bf = (bx & 0x7F);
+  bp = (bx >> 6) & 1;
+  b  = (bx & 0x0F);
+  
+  af = (ax & 0x7F);   
+  ap = (ax >> 6) & 1;
+  a  = (ax & 0x0F);
+
+  c = (ap ? (a ? af : (b ? bf : x)) : \
+    (bp ? (b ? bf : (a ? af : x)) : \
+    (   (a ? af : (b ? bf : x)) )));
+
+  /* Strip palette bits from transparent pixels */
+  if((c & 0x0F) == 0x00) c &= 0xC0;
+
+  return (c);
+}
+
+
+/* Input (bx):  d5-d0=color, d6=priority, d7=sprite pixel marker */
+/* Input (sx):  d5-d0=color, d6=priority, d7=unused */
+/* Output:    d5-d0=color, d6=zero, d7=sprite pixel marker */
+static uint32 make_lut_obj(uint32 bx, uint32 sx)
+{
+  int bf, bp, bs, b;
+  int sf, sp, s;
+  int c;
+
+  bf = (bx & 0x3F);
+  bs = (bx >> 7) & 1;
+  bp = (bx >> 6) & 1;
+  b  = (bx & 0x0F);
+  
+  sf = (sx & 0x3F);
+  sp = (sx >> 6) & 1;
+  s  = (sx & 0x0F);
+
+  if(s == 0) return bx;
+
+  if(bs)
+  {
+    c = bf; /* previous sprite has higher priority */
+  }
+  else
+  {
+    c = (sp ? (s ? sf : bf)  : \
+      (bp ? (b ? bf : (s ? sf : bf)) : \
+          (s ? sf : bf) ));
+  }
+
+  /* Strip palette bits from transparent pixels */
+  if((c & 0x0F) == 0x00) c &= 0xC0;
+
+  return (c | 0x80);
+}
+
+
+/* Input (bx):  d5-d0=color, d6=priority, d7=unused */
+/* Input (sx):  d5-d0=color, d6=priority, d7=unused */
+/* Output:    d5-d0=color, d6=priority, d7=intensity select (half/normal) */
+static uint32 make_lut_bg_ste(uint32 bx, uint32 ax)
+{
+  int bf, bp, b;
+  int af, ap, a;
+  int gi;
+  int x = 0;
+  int c;
+
+  bf = (bx & 0x7F);
+  bp = (bx >> 6) & 1;
+  b  = (bx & 0x0F);
+  
+  af = (ax & 0x7F);   
+  ap = (ax >> 6) & 1;
+  a  = (ax & 0x0F);
+
+  gi = (ap | bp) ? 0x80 : 0x00;
+
+  c = (ap ? (a ? af : (b ? bf : x)) :
+     (bp ? (b ? bf : (a ? af : x)) : ((a ? af : (b ? bf : x)))));
+
+  c |= gi;
+
+  /* Strip palette bits from transparent pixels */
+  if((c & 0x0F) == 0x00) c &= 0xC0;
+
+  return (c);
+}
+
+
+/* Input (bx):  d5-d0=color, d6=priority, d7=sprite pixel marker */
+/* Input (sx):  d5-d0=color, d6=priority, d7=unused */
+/* Output:    d5-d0=color, d6=priority, d7=sprite pixel marker */
+static uint32 make_lut_obj_ste(uint32 bx, uint32 sx)
+{
+  int bf, bs;
+  int sf;
+  int c;
+
+  bf = (bx & 0x7F);   
+  bs = (bx >> 7) & 1; 
+  sf = (sx & 0x7F);
+
+  if((sx & 0x0F) == 0) return bx;
+
+  c = (bs) ? bf : sf;
+
+  /* Strip palette bits from transparent pixels */
+  if((c & 0x0F) == 0x00) c &= 0xC0;
+
+  return (c | 0x80);
+}
+
+
+/* Input (bx):  d5-d0=color, d6=priority, d7=intensity (half/normal) */
+/* Input (sx):  d5-d0=color, d6=priority, d7=sprite marker */
+/* Output:    d5-d0=color, d6=intensity (half/normal), d7=(double/invalid) */
+static uint32 make_lut_bgobj_ste(uint32 bx, uint32 sx)
+{
+  int c;
+
+  int bf = (bx & 0x3F);
+  int bp = (bx >> 6) & 1;
+  int bi = (bx & 0x80) ? 0x40 : 0x00;
+  int b  = (bx & 0x0F);
+
+  int sf = (sx & 0x3F);
+  int sp = (sx >> 6) & 1;
+  int si = (sx & 0x40);
+  int s  = (sx & 0x0F);
+
+  if(bi & 0x40) si |= 0x40;
+
+  if(sp)
+  {
+    if(s)
+    {      
+      if((sf & 0x3E) == 0x3E)
+      {
+        if(sf & 1)
+        {
+          c = (bf | 0x00);
+        }
+        else
+        {
+          c = (bx & 0x80) ? (bf | 0x80) : (bf | 0x40);
+        }
+      }
+      else
+      {
+        if(sf == 0x0E || sf == 0x1E || sf == 0x2E)
+        {
+          c = (sf | 0x40);
+        }
+        else
+        {
+          c = (sf | si);
+        }
+      }
+    }
+    else
+    {
+      c = (bf | bi);
+    }
+  }
+  else
+  {
+    if(bp)
+    {
+      if(b)
+      {
+        c = (bf | bi);
+      }
+      else
+      {
+        if(s)
+        {
+          if((sf & 0x3E) == 0x3E)
+          {
+            if(sf & 1)
+            {
+              c = (bf | 0x00);
+            }
+            else
+            {
+              c = (bx & 0x80) ? (bf | 0x80) : (bf | 0x40);
+            }
+          }
+          else
+          {
+            if(sf == 0x0E || sf == 0x1E || sf == 0x2E)
+            {
+              c = (sf | 0x40);
+            }
+            else
+            {
+              c = (sf | si);
+            }
+          }
+        }
+        else
+        {
+          c = (bf | bi);
+        }
+      }
+    }
+    else
+    {
+      if(s)
+      {
+        if((sf & 0x3E) == 0x3E)
+        {
+          if(sf & 1)
+          {
+            c = (bf | 0x00);
+          }
+          else
+          {
+            c = (bx & 0x80) ? (bf | 0x80) : (bf | 0x40);
+          }
+        }
+        else
+        {
+          if(sf == 0x0E || sf == 0x1E || sf == 0x2E)
+          {
+            c = (sf | 0x40);
+          }
+          else
+          {
+            c = (sf | si);
+          }
+        }
+      }
+      else
+      {          
+        c = (bf | bi);
+      }
+    }
+  }
+
+  if((c & 0x0f) == 0x00) c &= 0xC0;
+
+  return (c);
+}
+
+/*--------------------------------------------------------------------------*/
+/* Color update functions                                                   */
+/*--------------------------------------------------------------------------*/
+#ifndef NGC
+
+static void color_update_8(int index, uint16 data)
+{
+  /* Palette Selection bit */
+  if (!(reg[0] & 4)) data &= 0x49;
+
+  if(reg[12] & 8)
+  {
+    pixel_8[0x00 | index] = pixel_8_lut[0][data];
+    pixel_8[0x40 | index] = pixel_8_lut[1][data];
+    pixel_8[0x80 | index] = pixel_8_lut[2][data];
+  }
+  else
+  {
+    uint8 temp = pixel_8_lut[1][data];
+    pixel_8[0x00 | index] = temp;
+    pixel_8[0x40 | index] = temp;
+    pixel_8[0x80 | index] = temp;
+  }
+}
+
+static void color_update_15(int index, uint16 data)
+{
+  /* Palette Selection bit */
+  if (!(reg[0] & 4)) data &= 0x49;
+
+  if(reg[12] & 8)
+  {
+    pixel_15[0x00 | index] = pixel_15_lut[0][data];
+    pixel_15[0x40 | index] = pixel_15_lut[1][data];
+    pixel_15[0x80 | index] = pixel_15_lut[2][data];
+  }
+  else
+  {
+    uint16 temp = pixel_15_lut[1][data];
+    pixel_15[0x00 | index] = temp;
+    pixel_15[0x40 | index] = temp;
+    pixel_15[0x80 | index] = temp;
+  }
+}
+
+static void color_update_32(int index, uint16 data)
+{
+  /* Palette Selection bit */
+  if (!(reg[0] & 4)) data &= 0x49;
+
+  if(reg[12] & 8)
+  {
+    pixel_32[0x00 | index] = pixel_32_lut[0][data];
+    pixel_32[0x40 | index] = pixel_32_lut[1][data];
+    pixel_32[0x80 | index] = pixel_32_lut[2][data];
+  }
+  else
+  {
+    uint32 temp = pixel_32_lut[1][data];
+    pixel_32[0x00 | index] = temp;
+    pixel_32[0x40 | index] = temp;
+    pixel_32[0x80 | index] = temp;
+  }
+}
+
+#endif
+
+static void color_update_16(int index, uint16 data)
+{
+  /* Palette Selection bit */
+  if (!(reg[0] & 4)) data &= 0x49;
+
+  if(reg[12] & 8)
+  {
+    pixel_16[0x00 | index] = pixel_16_lut[0][data];
+    pixel_16[0x40 | index] = pixel_16_lut[1][data];
+    pixel_16[0x80 | index] = pixel_16_lut[2][data];
+  }
+  else
+  {
+    uint16 temp = pixel_16_lut[1][data];
+    pixel_16[0x00 | index] = temp;
+    pixel_16[0x40 | index] = temp;
+    pixel_16[0x80 | index] = temp;
+  }
+}
+
+/*--------------------------------------------------------------------------*/
+/* Remap functions                                                          */
+/*--------------------------------------------------------------------------*/
+
+#ifndef NGC
+
+static inline void remap_8(uint8 *src, uint8 *dst, uint8 *table, int length)
+{
+  int count;
+  for(count = 0; count < length; count += 1)
+  {
+    *dst++ = table[*src++];
+  }
+}
+
+static inline void remap_16(uint8 *src, uint16 *dst, uint16 *table, int length)
+{
+  int count;
+  for(count = 0; count < length; count += 1)
+  {
+    *dst++ = table[*src++];
+  }
+}
+
+static inline void remap_32(uint8 *src, uint32 *dst, uint32 *table, int length)
+{
+  int count;
+  for(count = 0; count < length; count += 1)
+  {
+    *dst++ = table[*src++];
+  }
+}
+
+#else
+
+static inline void remap_texture(uint8 *src, uint16 *dst, uint32 tiles)
+{
+  int count;
+  uint16 *table = pixel_16;
+
+  for(count = 0; count < tiles; count ++)
+  {
+    /* one tile is 4 pixels wide */
+    *dst++ = table[*src++];
+    *dst++ = table[*src++];
+    *dst++ = table[*src++];
+    *dst++ = table[*src++];
+    dst += 12;
+  }
+}
+#endif
+
+
+static inline void merge(uint8 *srca, uint8 *srcb, uint8 *dst, uint8 *table, uint32 width)
+{
+  int i;
+  for(i = 0; i < width; i += 1)
+  {
+    *dst++ = table[(*srcb++ << 8) | (*srca++)];
+  }
+}
+
+/*--------------------------------------------------------------------------*/
+/* Helper functions (cache update, hscroll, window clip)                    */
+/*--------------------------------------------------------------------------*/
+
+static inline void update_bg_pattern_cache(uint32 index)
+{
+  int i;
+  uint8 x, y, c;
+  uint16 name;
+  uint8 *dst;
+  uint32 bp;
+#ifdef LSB_FIRST
+  uint8 shift_table[8] = {12, 8, 4, 0, 28, 24, 20, 16};
+#else
+  uint8 shift_table[8] = {28, 24, 20, 16, 12, 8, 4, 0};
+#endif        
+
+  for(i = 0; i < index; i ++)
+  {
+    name = bg_name_list[i];
+    bg_name_list[i] = 0;
+    
+    for(y = 0; y < 8; y ++)
+    {
+      if(bg_name_dirty[name] & (1 << y))
+      {
+        dst = &bg_pattern_cache[name << 6];
+        bp = *(uint32 *)&vram[(name << 5) | (y << 2)];
+
+        for(x = 0; x < 8; x ++)
+        {
+          c = (bp >> shift_table[x]) & 0x0F;
+          dst[0x00000 | (y << 3) | (x)] = (c);      /* hf=0, vf=0: normal */
+          dst[0x20000 | (y << 3) | (x ^ 7)] = (c);    /* hf=1, vf=0: horizontal flipped */
+          dst[0x40000 | ((y ^ 7) << 3) | (x)] = (c);    /* hf=0, vf=1: vertical flipped */
+          dst[0x60000 | ((y ^ 7) << 3) | (x ^ 7)] = (c);  /* hf=1, vf=1: horizontal & vertical flipped */
+        }
+      }
+    }
+    bg_name_dirty[name] = 0;
+  }
+}
+
+static inline uint32 get_hscroll(uint32 line)
+{
+  switch(reg[11] & 3)
+  {
+    case 0: /* Full-screen */
+      return *(uint32 *)&vram[hscb];
+
+    case 1: /* First 8 lines */
+      return *(uint32 *)&vram[hscb + ((line & 7) << 2)];
+
+    case 2: /* Every 8 lines */
+      return *(uint32 *)&vram[hscb + ((line & ~7) << 2)];
+
+    default: /* Every line */
+      return *(uint32 *)&vram[hscb + (line << 2)];
+  }
+}
+
+
+/*--------------------------------------------------------------------------*/
+/* Layers render functions                                                  */
+/*--------------------------------------------------------------------------*/
 
 static void render_bg(uint32 line, uint32 width)
 {
@@ -1238,386 +1670,8 @@ static void render_bg_im2(uint32 line, uint32 width, uint32 odd)
 
 
 /*--------------------------------------------------------------------------*/
-/* Look-up table functions (handles priority between layers pixels)     */
+/* Object render functions                                                  */
 /*--------------------------------------------------------------------------*/
-
-/* Input (bx):  d5-d0=color, d6=priority, d7=unused */
-/* Input (ax):  d5-d0=color, d6=priority, d7=unused */
-/* Output:    d5-d0=color, d6=priority, d7=unused */
-static uint32 make_lut_bg(uint32 bx, uint32 ax)
-{
-  int bf, bp, b;
-  int af, ap, a;
-  int x = 0;
-  int c;
-
-  bf = (bx & 0x7F);
-  bp = (bx >> 6) & 1;
-  b  = (bx & 0x0F);
-  
-  af = (ax & 0x7F);   
-  ap = (ax >> 6) & 1;
-  a  = (ax & 0x0F);
-
-  c = (ap ? (a ? af : (b ? bf : x)) : \
-    (bp ? (b ? bf : (a ? af : x)) : \
-    (   (a ? af : (b ? bf : x)) )));
-
-  /* Strip palette bits from transparent pixels */
-  if((c & 0x0F) == 0x00) c &= 0xC0;
-
-  return (c);
-}
-
-
-/* Input (bx):  d5-d0=color, d6=priority, d7=sprite pixel marker */
-/* Input (sx):  d5-d0=color, d6=priority, d7=unused */
-/* Output:    d5-d0=color, d6=zero, d7=sprite pixel marker */
-static uint32 make_lut_obj(uint32 bx, uint32 sx)
-{
-  int bf, bp, bs, b;
-  int sf, sp, s;
-  int c;
-
-  bf = (bx & 0x3F);
-  bs = (bx >> 7) & 1;
-  bp = (bx >> 6) & 1;
-  b  = (bx & 0x0F);
-  
-  sf = (sx & 0x3F);
-  sp = (sx >> 6) & 1;
-  s  = (sx & 0x0F);
-
-  if(s == 0) return bx;
-
-  if(bs)
-  {
-    c = bf; /* previous sprite has higher priority */
-  }
-  else
-  {
-    c = (sp ? (s ? sf : bf)  : \
-      (bp ? (b ? bf : (s ? sf : bf)) : \
-          (s ? sf : bf) ));
-  }
-
-  /* Strip palette bits from transparent pixels */
-  if((c & 0x0F) == 0x00) c &= 0xC0;
-
-  return (c | 0x80);
-}
-
-
-/* Input (bx):  d5-d0=color, d6=priority, d7=unused */
-/* Input (sx):  d5-d0=color, d6=priority, d7=unused */
-/* Output:    d5-d0=color, d6=priority, d7=intensity select (half/normal) */
-static uint32 make_lut_bg_ste(uint32 bx, uint32 ax)
-{
-  int bf, bp, b;
-  int af, ap, a;
-  int gi;
-  int x = 0;
-  int c;
-
-  bf = (bx & 0x7F);
-  bp = (bx >> 6) & 1;
-  b  = (bx & 0x0F);
-  
-  af = (ax & 0x7F);   
-  ap = (ax >> 6) & 1;
-  a  = (ax & 0x0F);
-
-  gi = (ap | bp) ? 0x80 : 0x00;
-
-  c = (ap ? (a ? af : (b ? bf : x)) :
-     (bp ? (b ? bf : (a ? af : x)) : ((a ? af : (b ? bf : x)))));
-
-  c |= gi;
-
-  /* Strip palette bits from transparent pixels */
-  if((c & 0x0F) == 0x00) c &= 0xC0;
-
-  return (c);
-}
-
-
-/* Input (bx):  d5-d0=color, d6=priority, d7=sprite pixel marker */
-/* Input (sx):  d5-d0=color, d6=priority, d7=unused */
-/* Output:    d5-d0=color, d6=priority, d7=sprite pixel marker */
-static uint32 make_lut_obj_ste(uint32 bx, uint32 sx)
-{
-  int bf, bs;
-  int sf;
-  int c;
-
-  bf = (bx & 0x7F);   
-  bs = (bx >> 7) & 1; 
-  sf = (sx & 0x7F);
-
-  if((sx & 0x0F) == 0) return bx;
-
-  c = (bs) ? bf : sf;
-
-  /* Strip palette bits from transparent pixels */
-  if((c & 0x0F) == 0x00) c &= 0xC0;
-
-  return (c | 0x80);
-}
-
-
-/* Input (bx):  d5-d0=color, d6=priority, d7=intensity (half/normal) */
-/* Input (sx):  d5-d0=color, d6=priority, d7=sprite marker */
-/* Output:    d5-d0=color, d6=intensity (half/normal), d7=(double/invalid) */
-static uint32 make_lut_bgobj_ste(uint32 bx, uint32 sx)
-{
-  int c;
-
-  int bf = (bx & 0x3F);
-  int bp = (bx >> 6) & 1;
-  int bi = (bx & 0x80) ? 0x40 : 0x00;
-  int b  = (bx & 0x0F);
-
-  int sf = (sx & 0x3F);
-  int sp = (sx >> 6) & 1;
-  int si = (sx & 0x40);
-  int s  = (sx & 0x0F);
-
-  if(bi & 0x40) si |= 0x40;
-
-  if(sp)
-  {
-    if(s)
-    {      
-      if((sf & 0x3E) == 0x3E)
-      {
-        if(sf & 1)
-        {
-          c = (bf | 0x00);
-        }
-        else
-        {
-          c = (bx & 0x80) ? (bf | 0x80) : (bf | 0x40);
-        }
-      }
-      else
-      {
-        if(sf == 0x0E || sf == 0x1E || sf == 0x2E)
-        {
-          c = (sf | 0x40);
-        }
-        else
-        {
-          c = (sf | si);
-        }
-      }
-    }
-    else
-    {
-      c = (bf | bi);
-    }
-  }
-  else
-  {
-    if(bp)
-    {
-      if(b)
-      {
-        c = (bf | bi);
-      }
-      else
-      {
-        if(s)
-        {
-          if((sf & 0x3E) == 0x3E)
-          {
-            if(sf & 1)
-            {
-              c = (bf | 0x00);
-            }
-            else
-            {
-              c = (bx & 0x80) ? (bf | 0x80) : (bf | 0x40);
-            }
-          }
-          else
-          {
-            if(sf == 0x0E || sf == 0x1E || sf == 0x2E)
-            {
-              c = (sf | 0x40);
-            }
-            else
-            {
-              c = (sf | si);
-            }
-          }
-        }
-        else
-        {
-          c = (bf | bi);
-        }
-      }
-    }
-    else
-    {
-      if(s)
-      {
-        if((sf & 0x3E) == 0x3E)
-        {
-          if(sf & 1)
-          {
-            c = (bf | 0x00);
-          }
-          else
-          {
-            c = (bx & 0x80) ? (bf | 0x80) : (bf | 0x40);
-          }
-        }
-        else
-        {
-          if(sf == 0x0E || sf == 0x1E || sf == 0x2E)
-          {
-            c = (sf | 0x40);
-          }
-          else
-          {
-            c = (sf | si);
-          }
-        }
-      }
-      else
-      {          
-        c = (bf | bi);
-      }
-    }
-  }
-
-  if((c & 0x0f) == 0x00) c &= 0xC0;
-
-  return (c);
-}
-
-/*--------------------------------------------------------------------------*/
-/* Color update functions                           */
-/*--------------------------------------------------------------------------*/
-#ifndef NGC
-
-void color_update_8(int index, uint16 data)
-{
-  if(reg[12] & 8)
-  {
-    pixel_8[0x00 | index] = pixel_8_lut[0][data];
-    pixel_8[0x40 | index] = pixel_8_lut[1][data];
-    pixel_8[0x80 | index] = pixel_8_lut[2][data];
-  }
-  else
-  {
-    uint8 temp = pixel_8_lut[1][data];
-    pixel_8[0x00 | index] = temp;
-    pixel_8[0x40 | index] = temp;
-    pixel_8[0x80 | index] = temp;
-  }
-}
-
-void color_update_15(int index, uint16 data)
-{
-  if(reg[12] & 8)
-  {
-    pixel_15[0x00 | index] = pixel_15_lut[0][data];
-    pixel_15[0x40 | index] = pixel_15_lut[1][data];
-    pixel_15[0x80 | index] = pixel_15_lut[2][data];
-  }
-  else
-  {
-    uint16 temp = pixel_15_lut[1][data];
-    pixel_15[0x00 | index] = temp;
-    pixel_15[0x40 | index] = temp;
-    pixel_15[0x80 | index] = temp;
-  }
-}
-
-void color_update_32(int index, uint16 data)
-{
-  if(reg[12] & 8)
-  {
-    pixel_32[0x00 | index] = pixel_32_lut[0][data];
-    pixel_32[0x40 | index] = pixel_32_lut[1][data];
-    pixel_32[0x80 | index] = pixel_32_lut[2][data];
-  }
-  else
-  {
-    uint32 temp = pixel_32_lut[1][data];
-    pixel_32[0x00 | index] = temp;
-    pixel_32[0x40 | index] = temp;
-    pixel_32[0x80 | index] = temp;
-  }
-}
-
-#endif
-
-void color_update_16(int index, uint16 data)
-{
-  if(reg[12] & 8)
-  {
-    pixel_16[0x00 | index] = pixel_16_lut[0][data];
-    pixel_16[0x40 | index] = pixel_16_lut[1][data];
-    pixel_16[0x80 | index] = pixel_16_lut[2][data];
-  }
-  else
-  {
-    uint16 temp = pixel_16_lut[1][data];
-    pixel_16[0x00 | index] = temp;
-    pixel_16[0x40 | index] = temp;
-    pixel_16[0x80 | index] = temp;
-  }
-}
-
-/*--------------------------------------------------------------------------*/
-/* Object render functions                          */
-/*--------------------------------------------------------------------------*/
-
-void parse_satb(uint32 line)
-{
-  uint8 sizetab[] = {8, 16, 24, 32};
-  uint32 link = 0;
-  uint32 count, ypos, size, height;
-
-  uint32 limit = (reg[12] & 1) ? 20 : 16;
-  uint32 total = limit << 2;
-
-  uint16 *p = (uint16 *) &vram[satb];
-  uint16 *q = (uint16 *) &sat[0];
-
-  object_index_count = 0;
-
-  for(count = 0; count < total; count += 1)
-  {
-    ypos = (q[link] >> im2_flag) & 0x1FF;
-    size = q[link + 1] >> 8;
-    height = sizetab[size & 3];
-
-    if((line >= ypos) && (line < (ypos + height)))
-    {
-      /* sprite limit (max. 16 or 20 sprites displayed per line) */
-      if(object_index_count == limit)
-      {
-        if(vint_pending == 0) status |= 0x40;
-        return;
-      }
-
-      // using xpos from internal satb stops sprite x
-      // scrolling in bloodlin.bin,
-      // but this seems to go against the test prog
-      object_info[object_index_count].attr  = p[link + 2];
-      object_info[object_index_count].xpos  = p[link + 3];
-      object_info[object_index_count].ypos  = ypos;
-      object_info[object_index_count].size = size;
-      ++object_index_count;
-    }
-
-    link = (q[link + 1] & 0x7F) << 2;
-    if(link == 0) break;
-  }
-}
 
 static int spr_over = 0;
 

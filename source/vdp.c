@@ -126,9 +126,15 @@ static const uint32 dma_rates[16] = {
   8,   83,  9, 102, /* DMA Copy */
 };
 
-/* Function prototypes */
-static inline void data_write(unsigned int data);
-static inline void vdp_reg_w(unsigned int r, unsigned int d);
+/*--------------------------------------------------------------------------*/
+/* Functions prototype                                                      */
+/*--------------------------------------------------------------------------*/
+static inline void fifo_update();
+static inline void data_w(unsigned int data);
+static inline void reg_w(unsigned int r, unsigned int d);
+static inline void dma_copy(void);
+static inline void dma_vbus (void);
+static inline void dma_fill(unsigned int data);
 
 /*--------------------------------------------------------------------------*/
 /* Init, reset, shutdown functions                                          */
@@ -212,11 +218,10 @@ void vdp_reset(void)
   /* initialize some registers (normally set by BIOS) */
   if (config.bios_enabled != 3)
   {
-    vdp_reg_w(1 , 0x04);  /* Mode 5 enabled */
-    vdp_reg_w(10, 0xff);  /* HINT disabled */
-    vdp_reg_w(12, 0x81);  /* H40 mode */
-    vdp_reg_w(15, 0x02);  /* auto increment */
-    window_clip(1,0);
+    reg_w(1 , 0x04);  /* Mode 5 enabled */
+    reg_w(10, 0xff);  /* HINT disabled */
+    reg_w(12, 0x81);  /* H40 mode */
+    reg_w(15, 0x02);  /* auto increment */
   }
 
   /* default latency */
@@ -232,7 +237,7 @@ void vdp_restore(uint8 *vdp_regs)
   
   for (i=0;i<0x20;i++) 
   {
-    vdp_reg_w(i, vdp_regs[i]);
+    reg_w(i, vdp_regs[i]);
   }
 
   /* reinitialize HVC tables */
@@ -257,16 +262,19 @@ void vdp_restore(uint8 *vdp_regs)
   bg_list_index=0x800;
 
   /* reinitialize palette */
-  for(i = 0; i < 0x40; i += 1) color_update(i, *(uint16 *)&cram[i << 1]);
   color_update(0x00, *(uint16 *)&cram[border << 1]);
+  for(i = 1; i < 0x40; i += 1)
+  {
+    color_update(i, *(uint16 *)&cram[i << 1]);
+  }
 }
 
+
 /*--------------------------------------------------------------------------*/
-/* DMA Operations                                                           */
+/* DMA Timings update                                                       */
 /*--------------------------------------------------------------------------*/
 
-/* Update DMA timings (this is call on start of DMA and then at the start of each scanline) */
-void dma_update()
+void vdp_update_dma()
 {
   int dma_cycles = 0;
 
@@ -316,232 +324,9 @@ void dma_update()
   }
 }
 
-/*  DMA Copy
-    Read byte from VRAM (source), write to VRAM (addr),
-    bump source and add r15 to addr.
-
-    - see how source addr is affected
-      (can it make high source byte inc?)
-*/
-static inline void dma_copy(void)
-{
-  int name;
-  int length = (reg[20] << 8 | reg[19]) & 0xFFFF;
-  int source = (reg[22] << 8 | reg[21]) & 0xFFFF;
-  if (!length) length = 0x10000;
-
-  dma_type = 3;
-  dma_length = length;
-  dma_update();
-
-  /* proceed DMA */
-  do
-  {
-    vram[addr] = vram[source];
-    MARK_BG_DIRTY(addr);
-    source = (source + 1) & 0xFFFF;
-    addr += reg[15];
-  } while (--length);
-
-  /* update length & source address registers */
-  reg[19] = length & 0xFF;
-  reg[20] = (length >> 8) & 0xFF;
-  reg[21] = source & 0xFF; /* not sure */
-  reg[22] = (source >> 8) & 0xFF; 
-}
-
-
-/* 68K Copy to VRAM, VSRAM or CRAM */
-static inline void dma_vbus (void)
-{
-  uint32 base, source = ((reg[23] & 0x7F) << 17 | reg[22] << 9 | reg[21] << 1) & 0xFFFFFE;
-  uint32 length = (reg[20] << 8 | reg[19]) & 0xFFFF;
-  uint32 temp;
-  
-  if (!length) length = 0x10000;
-  base = source;
-
-  /* DMA timings */
-  dma_type = (code & 0x06) ? 1 : 0;
-  dma_length = length;
-  dma_update();
-
-  /* DMA source */
-  if ((source >> 17) == 0x50)
-  {
-    /* Z80 & I/O area */
-    do
-    {
-      /* Return $FFFF only when the Z80 isn't hogging the Z-bus.
-        (e.g. Z80 isn't reset and 68000 has the bus) */
-      if (source <= 0xa0ffff) temp = (zbusack ? *(uint16 *)(work_ram + (source & 0xffff)) : 0xffff);
-
-      /* The I/O chip and work RAM try to drive the data bus which results 
-          in both values being combined in random ways when read.
-          We return the I/O chip values which seem to have precedence, */
-      else if (source <= 0xa1001f)
-      {
-        temp = io_read((source >> 1) & 0x0f);
-        temp = (temp << 8 | temp);
-      }
-
-      /* All remaining locations access work RAM */
-      else temp = *(uint16 *)(work_ram + (source & 0xffff));
-
-      source += 2;
-      source = ((base & 0xFE0000) | (source & 0x1FFFF));
-      data_write (temp);
-    }
-    while (--length);
-  }
-  else
-  {
-    /* SVP latency */
-    if (svp && (source < 0x400000))
-    {
-      source = (source - 2);
-    }
-
-    /* ROM & RAM */
-    do
-    {
-      temp = *(uint16 *)(m68k_memory_map[source>>16].base + (source & 0xffff));
-      source += 2;
-      source = ((base & 0xFE0000) | (source & 0x1FFFF));
-      data_write (temp);
-    }
-    while (--length);
-  }
-
-  /* update length & source address registers */
-  reg[19] = length & 0xFF;
-  reg[20] = (length >> 8) & 0xFF;
-  reg[21] = (source >> 1) & 0xFF;
-  reg[22] = (source >> 9) & 0xFF;
-  reg[23] = (reg[23] & 0x80) | ((source >> 17) & 0x7F);
-}
-
-/* VRAM FILL */
-static inline void dma_fill(unsigned int data)
-{
-  int name;
-  int length = (reg[20] << 8 | reg[19]) & 0xFFFF;
-  if (!length) length = 0x10000;
-
-  /* DMA timings */
-  dma_type = 2;
-  dma_length = length;
-  dma_update();
-
-  /* proceed DMA */
-  data_write(data);
-
-  /* write MSB */
-  data = (data >> 8) & 0xff;
-
-  /* detect internal SAT modification */
-  if ((addr & sat_base_mask) == satb)
-  {
-    do
-    {
-      /* update internal SAT (fix Battletech) */
-      WRITE_BYTE(sat, (addr & sat_addr_mask)^1, data);
-      WRITE_BYTE(vram, addr^1, data);
-      MARK_BG_DIRTY (addr);
-      addr += reg[15];
-    }
-    while (--length);
-  }
-  else
-  {
-    do
-    {
-      WRITE_BYTE(vram, addr^1, data);
-      MARK_BG_DIRTY (addr);
-      addr += reg[15];
-    }
-    while (--length);
-  }
-
-  /* update length register */
-  reg[19] = length & 0xFF;
-  reg[20] = (length >> 8) & 0xFF;
-  dmafill = 0;
-}
-
 /*--------------------------------------------------------------------------*/
-/* FIFO emulation                                                  */
+/* VDP Ports handler                                                        */
 /*--------------------------------------------------------------------------*/
-static inline void fifo_update()
-{
-  if (fifo_write_cnt > 0)
-  {
-    /* update FIFO reads */
-    uint32 fifo_read = ((count_m68k - fifo_lastwrite) / fifo_latency);
-    if (fifo_read > 0)
-    {
-      fifo_write_cnt -= fifo_read;
-      if (fifo_write_cnt < 0) fifo_write_cnt = 0;
-
-      /* update cycle count */
-      fifo_lastwrite += fifo_read*fifo_latency;
-    }
-  }
-}
-
-/*--------------------------------------------------------------------------*/
-/* Memory access functions                                                  */
-/*--------------------------------------------------------------------------*/
-static inline void data_write (unsigned int data)
-{
-  switch (code & 0x0F)
-  {
-    case 0x01:  /* VRAM */
-
-      /* Byte-swap data if A0 is set */
-      if (addr & 1) data = (data >> 8) | (data << 8);
-
-      /* Copy SAT data to the internal SAT */
-      if ((addr & sat_base_mask) == satb)
-      {
-        *(uint16 *) &sat[addr & sat_addr_mask & 0xFFFE] = data;
-      }
-
-      /* Only write unique data to VRAM */
-      if (data != *(uint16 *) &vram[addr & 0xFFFE])
-      {
-        /* Write data to VRAM */
-        *(uint16 *) &vram[addr & 0xFFFE] = data;
-
-        /* Update the pattern cache */
-        int name;
-        MARK_BG_DIRTY (addr);
-      }
-      break;
-
-    case 0x03:  /* CRAM */
-    {
-      uint16 *p = (uint16 *) &cram[(addr & 0x7E)];
-      data = PACK_CRAM (data & 0x0EEE);
-      if (data != *p)
-      {
-        int index = (addr >> 1) & 0x3F;
-        *p = data;
-        color_update (index, *p);
-        color_update (0x00, *(uint16 *)&cram[border << 1]);
-      }
-      break;
-    }
-
-    case 0x05:  /* VSRAM */
-      *(uint16 *) &vsram[(addr & 0x7E)] = data;
-      break;
-  }
-
-  /* Increment address register */
-  addr += reg[15];
-}
-
 
 void vdp_ctrl_w(unsigned int data)
 {
@@ -552,7 +337,7 @@ void vdp_ctrl_w(unsigned int data)
       /* VDP register write */
       uint8 r = (data >> 8) & 0x1F;
       uint8 d = data & 0xFF;
-      vdp_reg_w (r, d);
+      reg_w(r, d);
     }
     else pending = 1;
 
@@ -605,167 +390,6 @@ void vdp_ctrl_w(unsigned int data)
   */
   fifo_latency = (reg[12] & 1) ? 27 : 30;
   if ((code & 0x0F) == 0x01) fifo_latency = fifo_latency * 2;
-}
-
-
-/*
-    The reg[] array is updated at the *end* of this function, so the new
-    register data can be compared with the previous data.
-*/
-static inline void vdp_reg_w(unsigned int r, unsigned int d)
-{
-  /* Check if Mode 4 (SMS mode) has been activated 
-     According to official doc, VDP registers #11 to #23 can not be written unless bit2 in register #1 is set
-     Fix Captain Planet & Avengers (Alt version), Bass Master Classic Pro Edition (they incidentally activate Mode 4) 
-  */
-  if (!(reg[1] & 4) && (r > 10)) return;
-
-  switch(r)
-  {
-    case 0x00: /* CTRL #1 */
-      if (hint_pending && ((d&0x10) != (reg[0]&0x10)))
-      {
-        /* update IRQ status */
-        irq_status &= 0x20;
-        irq_status |= 0x10;
-        if (vint_pending && (reg[1] & 0x20)) irq_status |= 6;
-        else if (d & 0x10) irq_status |= 4;
-      }
-      break;
-
-    case 0x01: /* CTRL #2 */
-      if (vint_pending && ((d&0x20) != (reg[1]&0x20)))
-      {
-        /* update IRQ status */
-        irq_status &= 0x20;
-        irq_status |= 0x110;
-        if (d & 0x20) irq_status |= 6;
-        else if (hint_pending && (reg[0] & 0x10)) irq_status |= 4;
-      }
-
-      /* Check if the viewport height has actually been changed */
-      if((reg[1] & 8) != (d & 8))
-      {                
-        /* Update the height of the viewport */
-        bitmap.viewport.h = (d & 8) ? 240 : 224;
-        if (config.overscan) bitmap.viewport.y = ((vdp_pal ? 288 : 240) - bitmap.viewport.h) / 2;
-        bitmap.viewport.changed |= 1;
-
-        /* update VC table */
-        if (vdp_pal) vctab = (d & 8) ? vc_pal_240 : vc_pal_224;
-      }
-
-      /* DISPLAY switched ON/OFF during HBLANK */
-      if ((v_counter < bitmap.viewport.h) && ((d&0x40) != (reg[1]&0x40)))
-      {
-        if (count_m68k <= (hint_m68k + 120))
-        {
-          /* Redraw the current line :
-            - Legend of Galahad, Lemmings 2, Nigel Mansell's World Championship Racing (set display OFF)
-            - Deadly Moves aka Power Athlete (set display ON)
-          */
-          reg[1] = d;
-          render_line(v_counter, 0);
-        }
-      }
-      break;
-
-    case 0x02: /* NTAB */
-      ntab = (d << 10) & 0xE000;
-      break;
-
-    case 0x03: /* NTWB */
-      ntwb = (d << 10) & 0xF800;
-      if(reg[12] & 1) ntwb &= 0xF000;
-      break;
-
-    case 0x04: /* NTBB */
-      ntbb = (d << 13) & 0xE000;
-      break;
-
-    case 0x05: /* SATB */
-      sat_base_mask = (reg[12] & 1) ? 0xFC00 : 0xFE00;
-      sat_addr_mask = (reg[12] & 1) ? 0x03FF : 0x01FF;
-      satb = (d << 9) & sat_base_mask;
-      break;
-
-    case 0x07:  /* Border Color index */
-      /* Check if the border color has actually changed */
-      d &= 0x3F;
-      if(border != d)
-      {
-        /* Mark the border color as modified */
-        border = d;
-        color_update(0x00, *(uint16 *)&cram[(border << 1)]);
-
-        /* background color modified during HBLANK */
-        if ((v_counter < bitmap.viewport.h) && (count_m68k <= (line_m68k + 84)))
-        {
-          /* remap current line (see Road Rash I,II,III) */
-          reg[7] = d;
-          remap_buffer(v_counter,bitmap.viewport.w + 2*bitmap.viewport.x);
-        }
-      }
-      break;
-
-    case 0x0C:
-      /* Check if the viewport width has actually been changed */
-      if((reg[0x0C] & 1) != (d & 1))
-      {
-#ifndef NGC
-        /* Update the width of the viewport */
-        bitmap.viewport.w = (d & 1) ? 320 : 256;
-        bitmap.viewport.changed = 1;
-
-        /* Update clipping */
-        window_clip(d,reg[17]);
-#else
-        /* Postpound update on next frame */
-        bitmap.viewport.changed = 2;
-#endif
-        /* update HC table */
-        hctab = (d & 1) ? cycle2hc40 : cycle2hc32;
-      }
-
-      /* See if the S/TE mode bit has changed */
-      if((reg[0x0C] & 8) != (d & 8))
-      {
-        int i;
-
-        /* The following color update check this value */
-        reg[0x0C] = d;
-
-        /* Update colors */
-        for (i = 0; i < 0x40; i += 1) color_update (i, *(uint16 *) & cram[i << 1]);
-        color_update (0x00, *(uint16 *) & cram[border << 1]);
-      }
-
-      /* The following register updates check this value */
-      reg[0x0C] = d;
-
-      /* Update display-dependant registers */
-      vdp_reg_w(0x03, reg[0x03]);
-      vdp_reg_w(0x05, reg[0x05]);
-      break;
-
-    case 0x0D: /* HSCB */
-      hscb = (d << 10) & 0xFC00;
-      break;
-
-    case 0x10: /* Playfield size */
-      playfield_shift = shift_table[(d & 3)];
-      playfield_col_mask = col_mask_table[(d & 3)];
-      playfield_row_mask = row_mask_table[(d >> 4) & 3];
-      y_mask = y_mask_table[(d & 3)];
-      break;
-
-    case 0x11: /* update clipping */
-      window_clip(reg[12],d);
-      break;
-  }
-
-  /* Write new register value */
-  reg[r] = d;
 }
 
 /*
@@ -857,7 +481,7 @@ void vdp_data_w(unsigned int data)
   }
 
   /* write data */
-  data_write(data);
+  data_w(data);
 }
 
 unsigned int vdp_data_r(void)
@@ -901,13 +525,16 @@ unsigned int vdp_hvc_r(void)
   return ((vc << 8) | hc);
 }
 
-
 void vdp_test_w(unsigned int value)
 {
 #ifdef LOGERROR
   error("Unused VDP Write 0x%x (%08x)\n", value, m68k_get_reg (NULL, M68K_REG_PC));
 #endif
 }
+
+/*--------------------------------------------------------------------------*/
+/* VDP Interrupts callback                                                  */
+/*--------------------------------------------------------------------------*/
 
 int vdp_int_ack_callback(int int_level)
 {
@@ -928,4 +555,446 @@ int vdp_int_ack_callback(int int_level)
   else if (hint_pending && (reg[0] & 0x10)) irq_status |= 4;
 
   return M68K_INT_ACK_AUTOVECTOR;
+}
+
+/*--------------------------------------------------------------------------*/
+/* FIFO emulation                                                  */
+/*--------------------------------------------------------------------------*/
+static inline void fifo_update()
+{
+  if (fifo_write_cnt > 0)
+  {
+    /* update FIFO reads */
+    uint32 fifo_read = ((count_m68k - fifo_lastwrite) / fifo_latency);
+    if (fifo_read > 0)
+    {
+      fifo_write_cnt -= fifo_read;
+      if (fifo_write_cnt < 0) fifo_write_cnt = 0;
+
+      /* update cycle count */
+      fifo_lastwrite += fifo_read*fifo_latency;
+    }
+  }
+}
+
+/*--------------------------------------------------------------------------*/
+/* Memory access functions                                                  */
+/*--------------------------------------------------------------------------*/
+static inline void data_w(unsigned int data)
+{
+  switch (code & 0x0F)
+  {
+    case 0x01:  /* VRAM */
+
+      /* Byte-swap data if A0 is set */
+      if (addr & 1) data = (data >> 8) | (data << 8);
+
+      /* Copy SAT data to the internal SAT */
+      if ((addr & sat_base_mask) == satb)
+      {
+        *(uint16 *) &sat[addr & sat_addr_mask & 0xFFFE] = data;
+      }
+
+      /* Only write unique data to VRAM */
+      if (data != *(uint16 *) &vram[addr & 0xFFFE])
+      {
+        /* Write data to VRAM */
+        *(uint16 *) &vram[addr & 0xFFFE] = data;
+
+        /* Update the pattern cache */
+        int name;
+        MARK_BG_DIRTY (addr);
+      }
+      break;
+
+    case 0x03:  /* CRAM */
+    {
+      uint16 *p = (uint16 *) &cram[(addr & 0x7E)];
+      data = PACK_CRAM (data & 0x0EEE);
+      if (data != *p)
+      {
+        int index = (addr >> 1) & 0x3F;
+        *p = data;
+        if (index) color_update (index, *p);
+        if (border == index) color_update (0x00, *p);
+      }
+      break;
+    }
+
+    case 0x05:  /* VSRAM */
+      *(uint16 *) &vsram[(addr & 0x7E)] = data;
+      break;
+  }
+
+  /* Increment address register */
+  addr += reg[15];
+}
+
+/*
+    The reg[] array is updated at the *end* of this function, so the new
+    register data can be compared with the previous data.
+*/
+static inline void reg_w(unsigned int r, unsigned int d)
+{
+  /* See if Mode 4 (SMS mode) is enabled 
+     According to official doc, VDP registers #11 to #23 can not be written unless bit2 in register #1 is set
+     Fix Captain Planet & Avengers (Alt version), Bass Master Classic Pro Edition (they incidentally activate Mode 4) 
+  */
+  if (!(reg[1] & 4) && (r > 10)) return;
+
+  switch(r)
+  {
+    case 0: /* CTRL #1 */
+
+      /* Line Interrupt */
+      if (((d&0x10) != (reg[0]&0x10)) && hint_pending)
+      {
+        /* update IRQ status */
+        irq_status &= 0x20;
+        irq_status |= 0x10;
+        if (vint_pending && (reg[1] & 0x20)) irq_status |= 6;
+        else if (d & 0x10) irq_status |= 4;
+      }
+
+      /* Palette bit  */
+      if ((d&0x04) != (reg[0]&0x04))
+      {
+        /* Update colors */
+        reg[0] = d;
+        int i;
+        color_update (0x00, *(uint16 *) & cram[border << 1]);
+        for (i = 1; i < 0x40; i += 1)
+        {
+          color_update (i, *(uint16 *) & cram[i << 1]);
+        }
+      }
+      break;
+
+    case 1: /* CTRL #2 */
+
+      /* Frame Interrupt */
+      if (((d&0x20) != (reg[1]&0x20)) && vint_pending)
+      {
+        /* update IRQ status */
+        irq_status &= 0x20;
+        irq_status |= 0x110;
+        if (d & 0x20) irq_status |= 6;
+        else if (hint_pending && (reg[0] & 0x10)) irq_status |= 4;
+      }
+
+      /* See if the viewport height has actually been changed */
+      if ((d & 8) != (reg[1] & 8))
+      {
+        /* update the height of the viewport */
+        bitmap.viewport.changed |= 1;
+        bitmap.viewport.h = (d & 8) ? 240 : 224;
+
+        /* update overscan height */
+        if (config.overscan) bitmap.viewport.y = ((vdp_pal ? 288 : 240) - bitmap.viewport.h) / 2;
+
+        /* update VC table */
+        if (vdp_pal) vctab = (d & 8) ? vc_pal_240 : vc_pal_224;
+      }
+
+      /* Display activated/blanked during Horizontal Blanking */
+      if (((d&0x40) != (reg[1]&0x40)) && (v_counter < bitmap.viewport.h))
+      {
+        if (count_m68k <= (hint_m68k + 120))
+        {
+          /* Redraw the current line :
+            - Legend of Galahad, Lemmings 2, Nigel Mansell's World Championship Racing (set display OFF)
+            - Deadly Moves aka Power Athlete (set display ON)
+          */
+          reg[1] = d;
+          render_line(v_counter, 0);
+        }
+      }
+      break;
+
+    case 2: /* NTAB */
+      ntab = (d << 10) & 0xE000;
+      break;
+
+    case 3: /* NTWB */
+      ntwb = (d << 10) & 0xF800;
+      if(reg[12] & 1) ntwb &= 0xF000;
+      break;
+
+    case 4: /* NTBB */
+      ntbb = (d << 13) & 0xE000;
+      break;
+
+    case 5: /* SATB */
+      if (reg[12] & 1)
+      {
+        sat_base_mask = 0xFC00;
+        sat_addr_mask = 0x03FF;
+      }
+      else
+      {
+        sat_base_mask = 0xFE00;
+        sat_addr_mask = 0x01FF;
+      }
+      satb = (d << 9) & sat_base_mask;
+      break;
+
+    case 7:
+      /* See if the border color has actually changed */
+      d &= 0x3F;
+      if (d != border)
+      {
+        /* Mark the border color as modified */
+        border = d;
+        color_update(0x00, *(uint16 *)&cram[(border << 1)]);
+
+        /* background color modified during Horizontal Blanking */
+        if ((v_counter < bitmap.viewport.h) && (count_m68k <= (line_m68k + 84)))
+        {
+          /* remap current line (see Road Rash I,II,III) */
+          reg[7] = d;
+          remap_buffer(v_counter,bitmap.viewport.w + 2*bitmap.viewport.x);
+        }
+      }
+      break;
+
+    case 12:
+      /* See if the viewport width has actually been changed */
+      if ((d & 1) !=  (reg[12] & 1))
+      {
+        if (d & 1)
+        {
+          /* Update display-dependant registers */
+          ntwb = (reg[3] << 10) & 0xF000;
+          sat_base_mask = 0xFC00;
+          sat_addr_mask = 0x03FF;
+          satb = (reg[5] << 9) & sat_base_mask;
+
+          /* update HC table */
+          hctab = cycle2hc40;
+
+#ifndef NGC
+          /* Update viewport width */
+          bitmap.viewport.w = 320;
+#endif
+        }
+        else
+        {
+          /* Update display-dependant registers */
+          ntwb = (reg[3] << 10) & 0xF800;
+          sat_base_mask = 0xFE00;
+          sat_addr_mask = 0x01FF;
+          satb = (reg[5] << 9) & sat_base_mask;
+
+          /* update HC table */
+          hctab = cycle2hc32;
+
+#ifndef NGC
+          /* Update viewport width */
+          bitmap.viewport.w = 256;
+#endif
+        }
+
+#ifndef NGC
+        /* Update viewport */
+        bitmap.viewport.changed = 1;
+
+        /* Update clipping */
+        window_clip();
+#else
+        /* Postpound update on next frame */
+        bitmap.viewport.changed = 2;
+#endif
+      }
+
+      /* See if the S/TE mode bit has changed */
+      if ((d & 8) != (reg[12] & 8))
+      {
+        int i;
+
+        /* The following color update check this value */
+        reg[12] = d;
+
+        /* Update colors */
+        color_update (0x00, *(uint16 *) & cram[border << 1]);
+        for (i = 1; i < 0x40; i += 1)
+        {
+          color_update (i, *(uint16 *) & cram[i << 1]);
+        }
+      }
+      break;
+
+    case 13: /* HSCB */
+      hscb = (d << 10) & 0xFC00;
+      break;
+
+    case 16: /* Playfield size */
+      playfield_shift = shift_table[(d & 3)];
+      playfield_col_mask = col_mask_table[(d & 3)];
+      playfield_row_mask = row_mask_table[(d >> 4) & 3];
+      y_mask = y_mask_table[(d & 3)];
+      break;
+
+    case 17: /* update clipping */
+      window_clip();
+      break;
+  }
+
+  /* Write new register value */
+  reg[r] = d;
+}
+
+/*--------------------------------------------------------------------------*/
+/* DMA Operations                                                           */
+/*--------------------------------------------------------------------------*/
+
+/*  DMA Copy
+    Read byte from VRAM (source), write to VRAM (addr),
+    bump source and add r15 to addr.
+
+    - see how source addr is affected
+      (can it make high source byte inc?)
+*/
+static inline void dma_copy(void)
+{
+  int name;
+  int length = (reg[20] << 8 | reg[19]) & 0xFFFF;
+  int source = (reg[22] << 8 | reg[21]) & 0xFFFF;
+  if (!length) length = 0x10000;
+
+  dma_type = 3;
+  dma_length = length;
+  vdp_update_dma();
+
+  /* proceed DMA */
+  do
+  {
+    vram[addr] = vram[source];
+    MARK_BG_DIRTY(addr);
+    source = (source + 1) & 0xFFFF;
+    addr += reg[15];
+  } while (--length);
+
+  /* update length & source address registers */
+  reg[19] = length & 0xFF;
+  reg[20] = (length >> 8) & 0xFF;
+  reg[21] = source & 0xFF; /* not sure */
+  reg[22] = (source >> 8) & 0xFF; 
+}
+
+/* 68K Copy to VRAM, VSRAM or CRAM */
+static inline void dma_vbus (void)
+{
+  uint32 base, source = ((reg[23] & 0x7F) << 17 | reg[22] << 9 | reg[21] << 1) & 0xFFFFFE;
+  uint32 length = (reg[20] << 8 | reg[19]) & 0xFFFF;
+  uint32 temp;
+  
+  if (!length) length = 0x10000;
+  base = source;
+
+  /* DMA timings */
+  dma_type = (code & 0x06) ? 1 : 0;
+  dma_length = length;
+  vdp_update_dma();
+
+  /* DMA source */
+  if ((source >> 17) == 0x50)
+  {
+    /* Z80 & I/O area */
+    do
+    {
+      /* Return $FFFF only when the Z80 isn't hogging the Z-bus.
+        (e.g. Z80 isn't reset and 68000 has the bus) */
+      if (source <= 0xa0ffff) temp = (zbusack ? *(uint16 *)(work_ram + (source & 0xffff)) : 0xffff);
+
+      /* The I/O chip and work RAM try to drive the data bus which results 
+          in both values being combined in random ways when read.
+          We return the I/O chip values which seem to have precedence, */
+      else if (source <= 0xa1001f)
+      {
+        temp = io_read((source >> 1) & 0x0f);
+        temp = (temp << 8 | temp);
+      }
+
+      /* All remaining locations access work RAM */
+      else temp = *(uint16 *)(work_ram + (source & 0xffff));
+
+      source += 2;
+      source = ((base & 0xFE0000) | (source & 0x1FFFF));
+      data_w(temp);
+    }
+    while (--length);
+  }
+  else
+  {
+    /* SVP latency */
+    if (svp && (source < 0x400000))
+    {
+      source = (source - 2);
+    }
+
+    /* ROM & RAM */
+    do
+    {
+      temp = *(uint16 *)(m68k_memory_map[source>>16].base + (source & 0xffff));
+      source += 2;
+      source = ((base & 0xFE0000) | (source & 0x1FFFF));
+      data_w(temp);
+    }
+    while (--length);
+  }
+
+  /* update length & source address registers */
+  reg[19] = length & 0xFF;
+  reg[20] = (length >> 8) & 0xFF;
+  reg[21] = (source >> 1) & 0xFF;
+  reg[22] = (source >> 9) & 0xFF;
+  reg[23] = (reg[23] & 0x80) | ((source >> 17) & 0x7F);
+}
+
+/* VRAM FILL */
+static inline void dma_fill(unsigned int data)
+{
+  int name;
+  int length = (reg[20] << 8 | reg[19]) & 0xFFFF;
+  if (!length) length = 0x10000;
+
+  /* DMA timings */
+  dma_type = 2;
+  dma_length = length;
+  vdp_update_dma();
+
+  /* proceed DMA */
+  data_w(data);
+
+  /* write MSB */
+  data = (data >> 8) & 0xff;
+
+  /* detect internal SAT modification */
+  if ((addr & sat_base_mask) == satb)
+  {
+    do
+    {
+      /* update internal SAT (fix Battletech) */
+      WRITE_BYTE(sat, (addr & sat_addr_mask)^1, data);
+      WRITE_BYTE(vram, addr^1, data);
+      MARK_BG_DIRTY (addr);
+      addr += reg[15];
+    }
+    while (--length);
+  }
+  else
+  {
+    do
+    {
+      WRITE_BYTE(vram, addr^1, data);
+      MARK_BG_DIRTY (addr);
+      addr += reg[15];
+    }
+    while (--length);
+  }
+
+  /* update length register */
+  reg[19] = length & 0xFF;
+  reg[20] = (length >> 8) & 0xFF;
+  dmafill = 0;
 }

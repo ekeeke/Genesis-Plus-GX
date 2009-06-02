@@ -7,12 +7,11 @@ t_config config;
 void set_config_defaults(void)
 {
   /* sound options */
-  config.psg_preamp   = 1.5;
-  config.fm_preamp    = 1.0;
+  config.psg_preamp   = 150;
+  config.fm_preamp    = 100;
   config.boost        = 1;
   config.filter       = 1;
   config.hq_fm        = 1;
-  config.fm_core      = 1;
 
   /* system options */
   config.region_detect  = 0;

@@ -335,7 +335,7 @@ int system_frame (int do_skip)
     bitmap.viewport.changed = 1;
 
     /* Update clipping */
-    window_clip(reg[12],reg[17]);
+    window_clip();
   }
 #endif
 
@@ -399,7 +399,7 @@ int system_frame (int do_skip)
       if ((line < vdp_height) && (h_counter == 0)) aim_m68k -= 36;
 
       /* update DMA timings */
-      if (dma_length) dma_update();
+      if (dma_length) vdp_update_dma();
 
       /* vertical retrace */
       if (line == vdp_height)
@@ -443,7 +443,7 @@ int system_frame (int do_skip)
     else
     {
       /* update DMA timings */
-      if (dma_length) dma_update();
+      if (dma_length) vdp_update_dma();
 
       /* render overscan */
       if ((!do_skip) && ((line < end_line) || (line >= start_line))) render_line(line, 1);
