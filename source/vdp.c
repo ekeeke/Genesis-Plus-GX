@@ -337,7 +337,7 @@ void vdp_ctrl_w(unsigned int data)
       /* VDP register write */
       uint8 r = (data >> 8) & 0x1F;
       uint8 d = data & 0xFF;
-      reg_w(r, d);
+      reg_w(r,d);
     }
     else pending = 1;
 
@@ -835,6 +835,7 @@ static inline void reg_w(unsigned int r, unsigned int d)
       break;
 
     case 17: /* update clipping */
+      reg[17] = d;
       window_clip();
       break;
   }

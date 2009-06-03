@@ -46,8 +46,6 @@ OBJECTS	+=	obj/blip.o \
 
 OBJECTS	+=	obj/eq.o \
 
-OBJECTS	+=	obj/filters.o \
-
 OBJECTS	+=      obj/sram.o      \
 		obj/eeprom.o    \
 		obj/svp.o	\
