@@ -506,7 +506,6 @@ void render_reset(void)
   /* Clear display bitmap */
   memset(bitmap.data, 0, bitmap.pitch * bitmap.height);
 
-  memset(&clip, 0, sizeof(clip));
   memset(bg_buf, 0, sizeof(bg_buf));
   memset(tmp_buf, 0, sizeof(tmp_buf));
   memset(nta_buf, 0, sizeof(nta_buf));
@@ -519,6 +518,8 @@ void render_reset(void)
   memset(&pixel_32, 0, sizeof(pixel_32));
 #endif
   memset(&pixel_16, 0, sizeof(pixel_16));
+
+  window_clip();
 }
 
 
