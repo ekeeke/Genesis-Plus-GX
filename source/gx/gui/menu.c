@@ -1045,7 +1045,6 @@ static void videomenu ()
 /****************************************************************************
  * Controllers Settings menu
  ****************************************************************************/
-extern int old_system[2];
 
 /* Set menu elements depending on current system configuration */
 static void ctrlmenu_raz(void)

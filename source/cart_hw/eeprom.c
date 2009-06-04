@@ -21,6 +21,10 @@
 
 #include "shared.h"
 
+#define GAME_CNT 25
+
+T_EEPROM eeprom;
+
 typedef struct
 {
   char game_id[14];
@@ -28,7 +32,7 @@ typedef struct
   T_EEPROM_TYPE type;
 } T_GAME_ENTRY;
 
-T_GAME_ENTRY database[25] = 
+static const T_GAME_ENTRY database[GAME_CNT] = 
 {
   /* ACCLAIM mappers */
   /* 24C02 (old mapper) */
@@ -73,12 +77,9 @@ T_GAME_ENTRY database[25] =
   {{"T-120146-50"}, 0,      {16, 0x1FFF, 0x1FFF, 0x300000, 0x380001, 0x300000, 0, 7, 1}}    /* Brian Lara Cricket 96, Shane Warne Cricket */
 };
 
-
-T_EEPROM eeprom;
-
 void eeprom_init()
 {
-  uint8 i = 0;
+  int i = 0;
 
   /* initialize eeprom */
   memset(&eeprom, 0, sizeof(T_EEPROM));
@@ -86,10 +87,11 @@ void eeprom_init()
   eeprom.scl = eeprom.old_scl = 1;
   eeprom.state = STAND_BY;
 
+  /* no eeprom by default */
   sram.custom = 0;
 
   /* look into game database */
-  while ((i<25) && (!sram.custom))
+  while ((i<GAME_CNT) && (!sram.custom))
   {
     if (strstr(rominfo.product,database[i].game_id) != NULL)
     {

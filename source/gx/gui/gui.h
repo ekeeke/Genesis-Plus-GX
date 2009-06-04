@@ -135,7 +135,6 @@ typedef struct
 /* Menu inputs */
 struct t_input_menu
 {
-  u32 connected;
   u16 keys;
 #ifdef HW_RVL
   struct ir_t ir;

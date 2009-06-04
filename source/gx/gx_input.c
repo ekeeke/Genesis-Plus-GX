@@ -29,10 +29,11 @@
 #define ANALOG_SENSITIVITY 30
 
 /* Delay before held keys triggering */
-#define HELD_DELAY 18
+/* higher is the value, less responsive is the key update */
+#define HELD_DELAY 30
 
 /* Direction & selection update speed when a key is being held */
-/* the less is the value, faster is the key update */
+/* lower is the value, faster is the key update */
 #define HELD_SPEED 4
 
 /* Menu request flag */
@@ -751,7 +752,7 @@ void gx_input_UpdateEmu(void)
 void gx_input_UpdateMenu(u32 cnt)
 {
   /* PAD status update */
-  m_input.connected = PAD_ScanPads();
+  PAD_ScanPads();
 
   /* PAD pressed keys */
   s16 pp = PAD_ButtonsDown(0);

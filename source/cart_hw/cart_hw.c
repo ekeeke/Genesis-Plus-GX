@@ -30,6 +30,12 @@
 
 #define CART_CNT 26
 
+/* Global Variables */
+T_CART_HW cart_hw;
+uint8 j_cart;
+uint8 *default_rom;
+int old_system[2] = {-1,-1};
+
 /* Function prototypes */
 void default_time_w(uint32 address, uint32 data);
 void special_mapper_w(uint32 address, uint32 data);
@@ -54,7 +60,7 @@ typedef struct
   - copy protection device
   - custom ROM banking device
 */
-T_CART_ENTRY rom_database[CART_CNT] =
+static const T_CART_ENTRY rom_database[CART_CNT] =
 {
 /* Game no Kanzume Otokuyou */
   {0x0000,0xf9d1,0,0,{{0,0,0,0},{0,0,0,0},{0,0,0,0},0,0,0,seganet_mapper_w,0,0}},
@@ -110,12 +116,9 @@ T_CART_ENTRY rom_database[CART_CNT] =
   {0x30b9,0x1c2a,0x40,0x40,{{0,0,0,0},{0,0,0,0},{0,0,0,0},0,0,0,0,default_regs_r,0}}
 };
 
-
-/* previous inputs */
-int old_system[2] = {-1,-1};
-
 /* temporary memory chunk */
-uint8 mem_chunk[0x10000];
+static uint8 mem_chunk[0x10000];
+
 
 /************************************************************
           Cart Hardware initialization 

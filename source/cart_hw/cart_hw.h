@@ -42,9 +42,10 @@ typedef struct
 } T_CART_HW;
 
 /* global variables */
-T_CART_HW cart_hw;
-uint8 j_cart;
-uint8 *default_rom;
+extern T_CART_HW cart_hw;
+extern uint8 j_cart;
+extern uint8 *default_rom;
+extern int old_system[2];
 
 /* Function prototypes */
 extern void cart_hw_reset();
