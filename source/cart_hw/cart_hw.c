@@ -26,9 +26,10 @@
  ***************************************************************************/
 
 #include "shared.h"
-#include "m68kcpu.h"
 
 #define CART_CNT 26
+
+extern int emulate_address_error;
 
 /* Global Variables */
 T_CART_HW cart_hw;

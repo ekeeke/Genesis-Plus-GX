@@ -388,7 +388,7 @@ int system_frame (int do_skip)
       {
         h_counter = reg[10];
         hint_pending = 1;
-        if (reg[0] & 0x10) irq_status = (irq_status & 0xff) | 0x14;
+        if (reg[0] & 0x10) irq_status = (irq_status & ~0x40) | 0x14;
 
         /* adjust timings to take further decrement in account (see below) */
         if ((line != 0) || (h_counter == 0)) aim_m68k += 36;
@@ -430,10 +430,11 @@ int system_frame (int do_skip)
 
         /* V Interrupt */
         status |= 0x80;
-        vint_pending = 1;
 
         /* 36 cycles latency after VINT occurence flag (Ex-Mutants, Tyrant) */
-        if (reg[1] & 0x20) irq_status = (irq_status & 0xff) | 0x2416; 
+        m68k_run(line_m68k + 113);
+        vint_pending = 1;
+        if (reg[1] & 0x20) irq_status = (irq_status & ~0x40) | 0x16;
       }
       else if (!do_skip) 
       {

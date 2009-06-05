@@ -75,7 +75,9 @@ const char *const m68ki_cpu_names[] =
 m68ki_cpu_core m68ki_cpu = {0};
 
 #if M68K_EMULATE_ADDRESS_ERROR
+#include <setjmp.h>
 jmp_buf m68ki_aerr_trap;
+int emulate_address_error = 0;
 #endif /* M68K_EMULATE_ADDRESS_ERROR */
 
 uint    m68ki_aerr_address;
@@ -505,13 +507,6 @@ static void default_instr_hook_callback(unsigned int pc)
 }
 
 
-#if M68K_EMULATE_ADDRESS_ERROR
-  #include <setjmp.h>
-  jmp_buf m68ki_aerr_trap;
-    int emulate_address_error = 0;
-#endif /* M68K_EMULATE_ADDRESS_ERROR */
-
-
 /* ======================================================================== */
 /* ================================= API ================================== */
 /* ======================================================================== */
@@ -781,64 +776,42 @@ void m68k_set_cpu_type(unsigned int cpu_type)
   }
 }
 
-/* Execute some instructions until we use up num_cycles clock cycles */
-/* ASG: removed per-instruction interrupt checks */
-INLINE int m68k_execute(int num_cycles)
+/* Execute a single  instruction */
+INLINE int m68k_execute(void)
 {
-  /* Make sure we're not stopped */
-  if(!CPU_STOPPED)
-  {
     /* Set our pool of clock cycles available */
-    SET_CYCLES(num_cycles);
-    m68ki_initial_cycles = num_cycles;
+    SET_CYCLES(0);
+
+    /* Set tracing accodring to T1. (T0 is done inside instruction) */
+    m68ki_trace_t1(); /* auto-disable (see m68kcpu.h) */
+
+    /* Set the address space for reads */
+    m68ki_use_data_space(); /* auto-disable (see m68kcpu.h) */
+
+    /* Call external hook to peek at CPU */
+    m68ki_instr_hook(REG_PC); /* auto-disable (see m68kcpu.h) */
+
+    /* Record previous program counter */
+    REG_PPC = REG_PC;
+
+    /* Read an instruction and call its handler */
+    REG_IR = m68ki_read_imm_16();
+    m68ki_instruction_jump_table[REG_IR]();
+    USE_CYCLES(CYC_INSTRUCTION[REG_IR]);
+
+    /* Trace m68k_exception, if necessary */
+    m68ki_exception_if_trace(); /* auto-disable (see m68kcpu.h) */
 
     /* ASG: update cycles */
     USE_CYCLES(CPU_INT_CYCLES);
     CPU_INT_CYCLES = 0;
-
-    /* Return point if we had an address error */
-    m68ki_set_address_error_trap(); /* auto-disable (see m68kcpu.h) */
-
-    /* Main loop.  Keep going until we run out of clock cycles */
-    do
-    {
-      /* Set tracing accodring to T1. (T0 is done inside instruction) */
-      m68ki_trace_t1(); /* auto-disable (see m68kcpu.h) */
-
-      /* Set the address space for reads */
-      m68ki_use_data_space(); /* auto-disable (see m68kcpu.h) */
-
-      /* Call external hook to peek at CPU */
-      m68ki_instr_hook(REG_PC); /* auto-disable (see m68kcpu.h) */
-
-      /* Record previous program counter */
-      REG_PPC = REG_PC;
-
-      /* Read an instruction and call its handler */
-      REG_IR = m68ki_read_imm_16();
-      m68ki_instruction_jump_table[REG_IR]();
-      USE_CYCLES(CYC_INSTRUCTION[REG_IR]);
-
-      /* Trace m68k_exception, if necessary */
-      m68ki_exception_if_trace(); /* auto-disable (see m68kcpu.h) */
-    } while(GET_CYCLES() > 0);
 
     /* set previous PC to current PC for the next entry into the loop */
     REG_PPC = REG_PC;
 
-    /* ASG: update cycles */
-    USE_CYCLES(CPU_INT_CYCLES);
-    CPU_INT_CYCLES = 0;
-
     /* return how many clocks we used */
-    return m68ki_initial_cycles - GET_CYCLES();
-  }
+    return - GET_CYCLES();
 
-  /* We get here if the CPU is stopped or halted */
-  SET_CYCLES(0);
-  CPU_INT_CYCLES = 0;
-
-  return num_cycles;
 }
 
 /* ASG: rewrote so that the int_level is a mask of the IPL0/IPL1/IPL2 bits */
@@ -858,12 +831,23 @@ INLINE void m68k_set_irq(unsigned int int_level)
     m68ki_check_interrupts(); /* Level triggered (IRQ) */
 }
 
-extern uint16 irq_status;
+extern uint8 irq_status;
 extern uint32 count_m68k;
 
 void m68k_run (int cyc) 
 {
+  /* Make sure we're not stopped */
+  if(CPU_STOPPED)
+  {
+    count_m68k = cyc;
+    return;
+  }
+
   int temp;
+
+  /* Return point if we had an address error */
+  m68ki_set_address_error_trap(); /* auto-disable (see m68kcpu.h) */
+
   while (count_m68k < cyc)
   {
     /* check interrupt updates */
@@ -871,18 +855,23 @@ void m68k_run (int cyc)
     {
       irq_status &= ~0x10;
 
+      temp = irq_status & 6;
+
       /* hardware latency */
-      temp = irq_status >> 8;
-      if (temp) count_m68k += m68k_execute(temp);
+      if (irq_status & 0x40)
+        count_m68k += m68k_execute();
 
       /* interrupt level */
-      temp = irq_status & 6;
       if (temp == 6) irq_status |= 0x20;
       m68k_set_irq(temp);
+
+      /* ASG: update cycles */
+      count_m68k += CPU_INT_CYCLES;
+      CPU_INT_CYCLES = 0;
     }
 
     /* execute a single instruction */
-    count_m68k += m68k_execute(1);
+    count_m68k += m68k_execute();
   }
 }
 

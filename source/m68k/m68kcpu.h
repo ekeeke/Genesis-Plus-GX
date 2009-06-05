@@ -554,7 +554,7 @@
 #if M68K_EMULATE_ADDRESS_ERROR
   #include <setjmp.h>
   extern jmp_buf m68ki_aerr_trap;
-    extern int emulate_address_error;
+  extern int emulate_address_error;
 
   #define m68ki_set_address_error_trap() \
     if(setjmp(m68ki_aerr_trap) != 0) \
@@ -564,7 +564,6 @@
       { \
         SET_CYCLES(0); \
         CPU_INT_CYCLES = 0; \
-        return m68ki_initial_cycles; \
       } \
     }
 
@@ -1063,13 +1062,13 @@ INLINE uint m68ki_read_imm_16(void)
   if(MASK_OUT_BELOW_2(REG_PC) != CPU_PREF_ADDR)
   {
     CPU_PREF_ADDR = MASK_OUT_BELOW_2(REG_PC);
-    CPU_PREF_DATA = m68k_read_immediate_32(ADDRESS_68K(CPU_PREF_ADDR));
+    CPU_PREF_DATA = m68k_read_immediate_32(CPU_PREF_ADDR);
   }
   REG_PC += 2;
   return MASK_OUT_ABOVE_16(CPU_PREF_DATA >> ((2-((REG_PC-2)&2))<<3));
 #else
   REG_PC += 2;
-  return m68k_read_immediate_16(ADDRESS_68K(REG_PC-2));
+  return m68k_read_immediate_16(REG_PC-2);
 #endif /* M68K_EMULATE_PREFETCH */
 }
 INLINE uint m68ki_read_imm_32(void)
@@ -1082,14 +1081,14 @@ INLINE uint m68ki_read_imm_32(void)
   if(MASK_OUT_BELOW_2(REG_PC) != CPU_PREF_ADDR)
   {
     CPU_PREF_ADDR = MASK_OUT_BELOW_2(REG_PC);
-    CPU_PREF_DATA = m68k_read_immediate_32(ADDRESS_68K(CPU_PREF_ADDR));
+    CPU_PREF_DATA = m68k_read_immediate_32(CPU_PREF_ADDR);
   }
   temp_val = CPU_PREF_DATA;
   REG_PC += 2;
   if(MASK_OUT_BELOW_2(REG_PC) != CPU_PREF_ADDR)
   {
     CPU_PREF_ADDR = MASK_OUT_BELOW_2(REG_PC);
-    CPU_PREF_DATA = m68k_read_immediate_32(ADDRESS_68K(CPU_PREF_ADDR));
+    CPU_PREF_DATA = m68k_read_immediate_32(CPU_PREF_ADDR);
     temp_val = MASK_OUT_ABOVE_32((temp_val << 16) | (CPU_PREF_DATA >> 16));
   }
   REG_PC += 2;
@@ -1099,7 +1098,7 @@ INLINE uint m68ki_read_imm_32(void)
   m68ki_set_fc(FLAG_S | FUNCTION_CODE_USER_PROGRAM); /* auto-disable (see m68kcpu.h) */
   m68ki_check_address_error(REG_PC, MODE_READ, FLAG_S | FUNCTION_CODE_USER_PROGRAM); /* auto-disable (see m68kcpu.h) */
   REG_PC += 4;
-  return m68k_read_immediate_32(ADDRESS_68K(REG_PC-4));
+  return m68k_read_immediate_32(REG_PC-4);
 #endif /* M68K_EMULATE_PREFETCH */
 }
 
@@ -1119,7 +1118,7 @@ INLINE uint m68ki_read_8_fc(uint address, uint fc)
 
   _m68k_memory_map *temp = &m68k_memory_map[((address)>>16)&0xff];
 
-  if (temp->read8) return (*temp->read8)(address);
+  if (temp->read8) return (*temp->read8)(ADDRESS_68K(address));
   else return READ_BYTE(temp->base, (address) & 0xffff);
 }
 INLINE uint m68ki_read_16_fc(uint address, uint fc)
@@ -1128,7 +1127,7 @@ INLINE uint m68ki_read_16_fc(uint address, uint fc)
   m68ki_check_address_error_010_less(address, MODE_READ, fc); /* auto-disable (see m68kcpu.h) */
 
   _m68k_memory_map *temp = &m68k_memory_map[((address)>>16)&0xff];
-  if (temp->read16) return (*temp->read16)(address);
+  if (temp->read16) return (*temp->read16)(ADDRESS_68K(address));
   else return *(uint16 *)(temp->base + ((address) & 0xffff));
 }
 INLINE uint m68ki_read_32_fc(uint address, uint fc)
@@ -1137,7 +1136,7 @@ INLINE uint m68ki_read_32_fc(uint address, uint fc)
   m68ki_check_address_error_010_less(address, MODE_READ, fc); /* auto-disable (see m68kcpu.h) */
 
   _m68k_memory_map *temp = &m68k_memory_map[((address)>>16)&0xff];
-  if (temp->read16) return ((*temp->read16)(address) << 16) | ((*temp->read16)(address + 2));
+  if (temp->read16) return ((*temp->read16)(ADDRESS_68K(address)) << 16) | ((*temp->read16)(ADDRESS_68K(address + 2)));
   else return m68k_read_immediate_32(address);
 }
 
@@ -1145,7 +1144,7 @@ INLINE void m68ki_write_8_fc(uint address, uint fc, uint value)
 {
   m68ki_set_fc(fc); /* auto-disable (see m68kcpu.h) */
   _m68k_memory_map *temp = &m68k_memory_map[((address)>>16)&0xff];
-  if (temp->write8) (*temp->write8)(address,value);
+  if (temp->write8) (*temp->write8)(ADDRESS_68K(address),value);
   else WRITE_BYTE(temp->base, (address) & 0xffff, value);
 }
 INLINE void m68ki_write_16_fc(uint address, uint fc, uint value)
@@ -1153,7 +1152,7 @@ INLINE void m68ki_write_16_fc(uint address, uint fc, uint value)
   m68ki_set_fc(fc); /* auto-disable (see m68kcpu.h) */
   m68ki_check_address_error_010_less(address, MODE_WRITE, fc); /* auto-disable (see m68kcpu.h) */
   _m68k_memory_map *temp = &m68k_memory_map[((address)>>16)&0xff];
-  if (temp->write16) (*temp->write16)(address,value);
+  if (temp->write16) (*temp->write16)(ADDRESS_68K(address),value);
   else *(uint16 *)(temp->base + ((address) & 0xffff)) = value;
 }
 INLINE void m68ki_write_32_fc(uint address, uint fc, uint value)
@@ -1163,8 +1162,8 @@ INLINE void m68ki_write_32_fc(uint address, uint fc, uint value)
   _m68k_memory_map *temp = &m68k_memory_map[((address)>>16)&0xff];
   if (temp->write16)
   {
-    (*temp->write16)(address,value>>16);
-    (*temp->write16)(address+2,value&0xffff);
+    (*temp->write16)(ADDRESS_68K(address),value>>16);
+    (*temp->write16)(ADDRESS_68K(address+2),value&0xffff);
   }
   else
   {
@@ -1958,7 +1957,6 @@ INLINE void m68ki_exception_address_error(void)
      */
   if(CPU_RUN_MODE == RUN_MODE_BERR_AERR_RESET)
   {
-    m68k_read_memory_8(0x00ffff01);
     CPU_STOPPED = STOP_LEVEL_HALT;
     return;
   }
@@ -1975,7 +1973,7 @@ INLINE void m68ki_exception_address_error(void)
 
 
 /* Service an interrupt request and start exception processing */
-void m68ki_exception_interrupt(uint int_level)
+INLINE void m68ki_exception_interrupt(uint int_level)
 {
   uint vector;
   uint sr;

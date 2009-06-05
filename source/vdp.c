@@ -50,7 +50,7 @@ uint16 status;        /* VDP status flags */
 uint8 dmafill;        /* next VDP Write is DMA Fill */
 uint8 hint_pending;   /* 0= Line interrupt is pending */
 uint8 vint_pending;   /* 1= Frame interrupt is pending */
-uint16 irq_status;    /* Interrupt lines updated */
+uint8 irq_status;     /* Interrupt lines updated */
 
 /* Global variables */
 uint16 ntab;                      /* Name table A base address */
@@ -651,7 +651,7 @@ static inline void reg_w(unsigned int r, unsigned int d)
       {
         /* update IRQ status */
         irq_status &= 0x20;
-        irq_status |= 0x10;
+        irq_status |= 0x50;
         if (vint_pending && (reg[1] & 0x20)) irq_status |= 6;
         else if (d & 0x10) irq_status |= 4;
       }
@@ -677,7 +677,7 @@ static inline void reg_w(unsigned int r, unsigned int d)
       {
         /* update IRQ status */
         irq_status &= 0x20;
-        irq_status |= 0x110;
+        irq_status |= 0x50;
         if (d & 0x20) irq_status |= 6;
         else if (hint_pending && (reg[0] & 0x10)) irq_status |= 4;
       }
@@ -697,7 +697,7 @@ static inline void reg_w(unsigned int r, unsigned int d)
       }
 
       /* Display activated/blanked during Horizontal Blanking */
-      if (((d&0x40) != (reg[1]&0x40)) && (v_counter < bitmap.viewport.h))
+      if (((d&0x40) != (reg[1]&0x40)) && !(status & 8))
       {
         if (count_m68k <= (hint_m68k + 120))
         {
@@ -748,7 +748,7 @@ static inline void reg_w(unsigned int r, unsigned int d)
         color_update(0x00, *(uint16 *)&cram[(border << 1)]);
 
         /* background color modified during Horizontal Blanking */
-        if ((v_counter < bitmap.viewport.h) && (count_m68k <= (line_m68k + 84)))
+        if (!(status & 8) && (count_m68k <= (line_m68k + 84)))
         {
           /* remap current line (see Road Rash I,II,III) */
           reg[7] = d;
