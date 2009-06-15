@@ -224,6 +224,8 @@ static void * ogg_player_thread(private_data_ogg * priv)
   priv[0].fd = -1;
   priv[0].pcm_indx = 0;
   ogg_thread_running = 0;
+  /* free */
+  LWP_CloseQueue(oggplayer_queue);
 
   return 0;
 }
@@ -281,11 +283,11 @@ int PlayOgg(int fd, int time_pos, int mode)
     private_ogg.fd = -1;
     return -1;
   }
-  LWP_ThreadSignal(oggplayer_queue);
   while (((volatile int) ogg_thread_running) == 0)
   {
     ;;;
   }
+  LWP_ThreadSignal(oggplayer_queue);
   return 0;
 }
 

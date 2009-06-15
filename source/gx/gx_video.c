@@ -1216,12 +1216,6 @@ void gxTextureClose(gx_texture **p_texture)
 /*   VIDEO engine                                                                      */
 /***************************************************************************************/
 
-/* VIDEO callback */
-static void vi_callback(u32 cnt)
-{
-  frameticker++;
-}
-
 /* Take Screenshot */
 void gx_video_Capture(void)
 {
@@ -1252,15 +1246,14 @@ void gx_video_Stop(void)
   gxResetRendering(1);
   gxResetView(vmode);
 
-  /* reset VI */
-  gxDrawScreenshot(0xff);
+  /* inputs should be updated during VSYNC */
+  VIDEO_SetPostRetraceCallback(gx_input_UpdateMenu);
 
-  /* adjust overscan */
+  /* reset VI & adjust overscan */
+  gxDrawScreenshot(0xff);
   vmode->viWidth    = config.screen_w;
   vmode->viXOrigin  = (VI_MAX_WIDTH_NTSC - vmode->viWidth)/2;
   VIDEO_Configure(vmode);
-  VIDEO_SetPreRetraceCallback(NULL);
-  VIDEO_SetPostRetraceCallback(gx_input_UpdateMenu);
   gxSetScreen();
 }
 
@@ -1268,13 +1261,13 @@ void gx_video_Stop(void)
 void gx_video_Start(void)
 {
   /* 50Hz/60Hz mode */
-  if ((config.tv_mode == 1) || ((config.tv_mode == 2) && vdp_pal)) gc_pal = 1;
-  else gc_pal = 0;
+  if ((config.tv_mode == 1) || ((config.tv_mode == 2) && vdp_pal))
+    gc_pal = 1;
+  else
+    gc_pal = 0;
 
-  /* VIDEO sync */
+  /* disable VSYNC callback */
   VIDEO_SetPostRetraceCallback(NULL);
-  if (!gc_pal && !vdp_pal)
-    VIDEO_SetPreRetraceCallback(vi_callback);
   VIDEO_Flush();
 
   /* interlaced/progressive mode */

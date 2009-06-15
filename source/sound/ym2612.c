@@ -1655,7 +1655,7 @@ static void OPNSetPres(int pres)
 
 
 /* write a OPN mode register 0x20-0x2f */
-static void OPNWriteMode(int r, int v)
+INLINE void OPNWriteMode(int r, int v)
 {
   UINT8 c;
   FM_CH *CH;
@@ -1704,7 +1704,7 @@ static void OPNWriteMode(int r, int v)
 }
 
 /* write a OPN register (0x30-0xff) */
-static void OPNWriteReg(int r, int v)
+INLINE void OPNWriteReg(int r, int v)
 {
   FM_CH *CH;
   FM_SLOT *SLOT;
