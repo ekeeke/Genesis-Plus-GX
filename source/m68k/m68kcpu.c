@@ -836,13 +836,6 @@ extern uint32 count_m68k;
 
 void m68k_run (int cyc) 
 {
-  /* Make sure we're not stopped */
-  if(CPU_STOPPED)
-  {
-    count_m68k = cyc;
-    return;
-  }
-
   int temp;
 
   /* Return point if we had an address error */
@@ -868,6 +861,13 @@ void m68k_run (int cyc)
       /* ASG: update cycles */
       count_m68k += CPU_INT_CYCLES;
       CPU_INT_CYCLES = 0;
+    }
+
+    /* Make sure we're not stopped */
+    if(CPU_STOPPED)
+    {
+      count_m68k = cyc;
+      return;
     }
 
     /* execute a single instruction */

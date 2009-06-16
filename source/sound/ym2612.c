@@ -30,7 +30,7 @@
 **  - implemented correct SSG-EG emulation (Asterix, Beavis&Butthead, Bubba'n Six & many others)
 **  - adjusted some EG rates
 **  - modified address/data port behavior
-**  - fixed LFO implementation (only 11 bits of precision)
+**  - fixed Phase Modulation (LFO) calculations (precision reduced to 11 bits)
 **
 **  TODO: complete SSG-EG documentation
 **
@@ -1244,8 +1244,8 @@ INLINE void update_phase_lfo_slot(FM_SLOT *SLOT , INT32 pms, UINT32 block_fnum)
     /* retrieve BLOCK register value */
     UINT8 blk = (block_fnum >> 11) & 7;
 
-    /* increase FNUM register value */
-    UINT32 fn  = (block_fnum + lfo_fn_table_index_offset) & 0x7ff;
+    /* apply phase modulation to FNUM register value */
+    UINT32 fn  = (block_fnum + (UINT32)lfo_fn_table_index_offset) & 0x7ff;
 
     /* recalculate keyscale code */
     int kc = (blk<<2) | opn_fktable[fn >> 7];
@@ -1277,8 +1277,8 @@ INLINE void update_phase_lfo_channel(FM_CH *CH)
     /* retrieve BLOCK register value */
     UINT8 blk = (block_fnum >> 11) & 7;
 
-    /* increase FNUM register value */
-    UINT32 fn  = (block_fnum + lfo_fn_table_index_offset)& 0x7ff;
+    /* apply phase modulation to FNUM register value */
+    UINT32 fn  = (block_fnum + (UINT32)lfo_fn_table_index_offset) & 0x7ff;
 
     /* recalculate keyscale code */
     int kc = (blk<<2) | opn_fktable[fn >> 7];
