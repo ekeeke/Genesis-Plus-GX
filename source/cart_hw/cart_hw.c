@@ -163,7 +163,7 @@ void cart_hw_init()
   ***********************************************/
   for (i=0; i<0x40; i++)
   {
-      /* cartridge ROM */
+    /* cartridge ROM */
     m68k_memory_map[i].base     = cart_rom + (i<<16);
     m68k_memory_map[i].read8    = NULL;
     m68k_memory_map[i].read16   = NULL;
@@ -175,7 +175,8 @@ void cart_hw_init()
 
   for (i=0x40; i<0x80; i++)
   {
-      /* unused area */
+    /* unused area */
+    m68k_memory_map[i].base     = cart_rom + (i<<16);
     m68k_memory_map[i].read8    = m68k_read_bus_8;
     m68k_memory_map[i].read16   = m68k_read_bus_16;
     m68k_memory_map[i].write8   = m68k_unused_8_w;

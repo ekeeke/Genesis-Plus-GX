@@ -53,8 +53,10 @@ void gen_init (void)
   m68k_init();
   z80_init(0,0,0,z80_irq_callback);
 
-  /* initialize 68k default address space */
-  for (i=0x0; i<0x100; i++)
+  /* initialize 68k mapped memory */
+  /* $000000-$7fffff is affected to cartridge area (see cart_hw.c) */
+  /* $800000-$ffffff is affected to WRAM (see VDP DMA) */
+  for (i=0x80; i<0x100; i++)
   {
     m68k_memory_map[i].base     = work_ram;
     m68k_memory_map[i].read8    = NULL;
@@ -65,7 +67,7 @@ void gen_init (void)
     zbank_memory_map[i].write   = NULL;
   }
 
-  /* initialize 68k memory map */
+  /* initialize 68k memory handlers */
   for (i=0x80; i<0xe0; i++)
   {
     /* illegal area */
