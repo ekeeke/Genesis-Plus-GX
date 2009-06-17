@@ -213,7 +213,7 @@ void vdp_reset(void)
   /* reset border area */
   bitmap.viewport.x = config.overscan ? 14 : 0;
   bitmap.viewport.y = config.overscan ? (vdp_pal ? 32 : 8) : 0;
-  bitmap.viewport.changed = 1;
+  bitmap.viewport.changed = 2;
 
   /* initialize some registers (normally set by BIOS) */
   if (config.bios_enabled != 3)

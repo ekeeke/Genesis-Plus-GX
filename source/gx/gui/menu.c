@@ -223,19 +223,20 @@ static gui_item items_audio[8] =
   {NULL,NULL,"PSG Noise Boost: OFF",    "Boost PSG Noise Channel",      52,132,276,48},
   {NULL,NULL,"PSG Volume: 2.50",        "Adjust SN76489 output level",  52,132,276,48},
   {NULL,NULL,"FM Volume: 1.00",         "Adjust YM2612 output level",   52,132,276,48},
-  {NULL,NULL,"Filtering: 3-BAND EQ",     "Setup Audio filtering",       52,132,276,48},
+  {NULL,NULL,"Filtering: 3-BAND EQ",    "Setup Audio filtering",        52,132,276,48},
   {NULL,NULL,"Low Gain: 1.00",          "Adjust EQ Low Gain",           52,132,276,48},
   {NULL,NULL,"Middle Gain: 1.00",       "Adjust EQ Middle Gain",        52,132,276,48},
   {NULL,NULL,"High Gain: 1.00",         "Adjust EQ High Gain",          52,132,276,48},
 };
 
 /* System options menu */
-static gui_item items_system[4] =
+static gui_item items_system[5] =
 {
-  {NULL,NULL,"Console Region: AUTO","Select system region",                   52,132,276,48},
-  {NULL,NULL,"System Lockups: OFF", "Enable/disable original system lock-ups",52,132,276,48},
-  {NULL,NULL,"System BIOS: OFF",    "Enable/disable TMSS BIOS support",       52,132,276,48},
-  {NULL,NULL,"SVP Cycles: 1500",    "Adjust SVP chip emulation speed",        52,132,276,48}
+  {NULL,NULL,"Console Region: AUTO",  "Select system region",                     52,132,276,48},
+  {NULL,NULL,"System Lockups: OFF",   "Enable/disable original system lock-ups",  52,132,276,48},
+  {NULL,NULL,"68k Address Error: ON", "Enable/disable 68k Address Error",         52,132,276,48},
+  {NULL,NULL,"System BIOS: OFF",      "Enable/disable TMSS BIOS support",         52,132,276,48},
+  {NULL,NULL,"SVP Cycles: 1500",      "Adjust SVP chip emulation speed",          52,132,276,48}
 };
 
 /* Video options menu */
@@ -409,12 +410,12 @@ static gui_menu menu_system =
 {
   "System Settings",
   0,0,
-  4,4,6,
+  5,4,6,
   items_system,
   buttons_list,
   bg_list,
   {&action_cancel, &action_select},
-  {NULL,NULL},
+  {&arrow_up,&arrow_down},
   FALSE
 };
 
@@ -835,8 +836,19 @@ static void systemmenu ()
   else if (config.region_detect == 2) sprintf (items[0].text, "Console Region:  EUR");
   else if (config.region_detect == 3) sprintf (items[0].text, "Console Region:  JAP");
   sprintf (items[1].text, "System Lockups: %s", config.force_dtack ? "OFF" : "ON");
-  sprintf (items[2].text, "System BIOS: %s", (config.bios_enabled & 1) ? "ON":"OFF");
-  sprintf (items[3].text, "SVP Cycles: %d", SVP_cycles);
+  sprintf (items[2].text, "68k Address Error: %s", config.addr_error ? "ON" : "OFF");
+  sprintf (items[3].text, "System BIOS: %s", (config.bios_enabled & 1) ? "ON":"OFF");
+
+  if (svp)
+  {
+    sprintf (items[4].text, "SVP Cycles: %d", SVP_cycles);
+    m->max_items = 5;
+  }
+  else
+  {
+    m->max_items = 4;
+    m->offset = 0;
+  }
 
   GUI_InitMenu(m);
   GUI_SlideMenuTitle(m,strlen("System "));
@@ -884,9 +896,16 @@ static void systemmenu ()
         sprintf (items[1].text, "System Lockups: %s", config.force_dtack ? "OFF" : "ON");
         break;
 
-      case 2:  /*** BIOS support ***/
+      case 2:  /*** 68k Address Error ***/
+        config.addr_error ^= 1;
+        cart_hw_init ();
+        sprintf (items[2].text, "68k Address Error: %s", config.addr_error ? "ON" : "OFF");
+        break;
+
+
+      case 3:  /*** BIOS support ***/
         config.bios_enabled ^= 1;
-        sprintf (items[2].text, "System BIOS: %s", (config.bios_enabled & 1) ? "ON":"OFF");
+        sprintf (items[3].text, "System BIOS: %s", (config.bios_enabled & 1) ? "ON":"OFF");
         if (genromsize || (config.bios_enabled == 3)) 
         {
           system_init ();
@@ -895,9 +914,9 @@ static void systemmenu ()
         }
         break;
 
-      case 3:  /*** SVP emulation ***/
+      case 4:  /*** SVP emulation ***/
         GUI_OptionBox(m,0,"SVP Cycles",(void *)&SVP_cycles,1,1,1500,1);
-        sprintf (items[3].text, "SVP Cycles: %d", SVP_cycles);
+        sprintf (items[4].text, "SVP Cycles: %d", SVP_cycles);
         break;
 
       case -1:

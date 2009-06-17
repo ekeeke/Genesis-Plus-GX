@@ -1,6 +1,4 @@
-cp Makefile.gc Makefile
-make
-cp Makefile.wii Makefile
-make
-rm Makefile
+make -f Makefile.wii
+make -f Makefile.gc
+rm *.elf
 cp genplus_wii.dol boot.dol

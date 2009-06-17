@@ -41,6 +41,7 @@ typedef struct
   float hg;
   uint8 region_detect;
   uint8 force_dtack;
+  uint8 addr_error;
   uint8 bios_enabled;
   int16 xshift;
   int16 yshift;

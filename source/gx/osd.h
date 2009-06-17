@@ -27,9 +27,9 @@
 
 #define DEFAULT_PATH "/genplus"
 #ifdef HW_RVL
-#define VERSION "version 1.3.2bW"
+#define VERSION "version 1.3.2cW"
 #else
-#define VERSION "version 1.3.2bG"
+#define VERSION "version 1.3.2cG"
 #endif
 
 /* globals */

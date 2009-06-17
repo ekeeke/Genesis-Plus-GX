@@ -382,7 +382,7 @@ void cart_hw_init()
 
 #if M68K_EMULATE_ADDRESS_ERROR
   /* default behavior */
-  emulate_address_error = 1; 
+  emulate_address_error = config.addr_error; 
 #endif
 
   /* detect ROM files larger than 4MB */

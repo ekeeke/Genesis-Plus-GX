@@ -78,6 +78,7 @@ void config_default(void)
   /* system options */
   config.region_detect  = 0;
   config.force_dtack    = 0;
+  config.addr_error     = 1;
   config.bios_enabled   = 0;
 
   /* video options */
