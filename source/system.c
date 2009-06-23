@@ -434,7 +434,7 @@ int system_frame (int do_skip)
         /* 36 cycles latency after VINT occurence flag (Ex-Mutants, Tyrant) */
         m68k_run(line_m68k + 113);
         vint_pending = 1;
-        if (reg[1] & 0x20) irq_status = (irq_status & ~0x40) | 0x16;
+        if (reg[1] & 0x20) irq_status = (irq_status & ~0x40) | 0x36;
       }
       else if (!do_skip) 
       {

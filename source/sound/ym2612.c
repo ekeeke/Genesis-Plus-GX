@@ -30,7 +30,6 @@
 **  - implemented correct SSG-EG emulation (Asterix, Beavis&Butthead, Bubba'n Six & many others)
 **  - adjusted some EG rates
 **  - modified address/data port behavior
-**  - fixed Phase Modulation (LFO) calculations (precision reduced to 11 bits)
 **
 **  TODO: complete SSG-EG documentation
 **
@@ -584,8 +583,9 @@ typedef struct
   UINT32  eg_timer_add;       /* step of eg_timer */
   UINT32  eg_timer_overflow;  /* envelope generator timer overlfows every 3 samples (on real chip) */
 
-  /* there are 2048 FNUMs that can be generated using FNUM/BLK registers */
-  UINT32  fn_table[2048]; /* fnumber->increment counter */
+  /* there are 2048 FNUMs that can be generated using FNUM/BLK registers
+        but LFO works with one more bit of a precision so we really need 4096 elements */
+  UINT32  fn_table[4096]; /* fnumber->increment counter */
   UINT32  fn_max;         /* max increment (required for calculating phase overflow) */
 
   /* LFO */
@@ -1236,23 +1236,20 @@ INLINE void update_ssg_eg_channel(FM_SLOT *SLOT)
 
 INLINE void update_phase_lfo_slot(FM_SLOT *SLOT , INT32 pms, UINT32 block_fnum)
 {
-  UINT32 fnum_lfo   = ((block_fnum & 0x7f0) >> 4) * 32 * 8;
+  UINT32 fnum_lfo   = (block_fnum & 0x7f0) << 4; /* ((block_fnum & 0x7f0) >> 4) * 32 * 8; */
   INT32  lfo_fn_table_index_offset = lfo_pm_table[ fnum_lfo + pms + LFO_PM ];
-
+  
   if (lfo_fn_table_index_offset)  /* LFO phase modulation active */
   {
-    /* retrieve BLOCK register value */
     UINT8 blk = (block_fnum >> 11) & 7;
+    UINT32 fn  = (block_fnum*2 + (UINT32)lfo_fn_table_index_offset) & 0xfff;
 
-    /* apply phase modulation to FNUM register value */
-    UINT32 fn  = (block_fnum + (UINT32)lfo_fn_table_index_offset) & 0x7ff;
+    /* keyscale code */
+    int kc = (blk<<2) | opn_fktable[fn >> 8];
 
-    /* recalculate keyscale code */
-    int kc = (blk<<2) | opn_fktable[fn >> 7];
-
-    /* recalculate (frequency) phase increment counter */
+    /* (frequency) phase increment counter */
     int fc = (ym2612.OPN.fn_table[fn]>>(7-blk)) + SLOT->DT[kc];
-
+      
     /* (frequency) phase overflow (credits to Nemesis) */
     if (fc < 0) fc += ym2612.OPN.fn_max;
 
@@ -1268,22 +1265,19 @@ INLINE void update_phase_lfo_slot(FM_SLOT *SLOT , INT32 pms, UINT32 block_fnum)
 INLINE void update_phase_lfo_channel(FM_CH *CH)
 {
   UINT32 block_fnum = CH->block_fnum;
-
-  UINT32 fnum_lfo   = ((block_fnum & 0x7f0) >> 4) * 32 * 8;
+  UINT32 fnum_lfo   = (block_fnum & 0x7f0) << 4; /* ((block_fnum & 0x7f0) >> 4) * 32 * 8; */
   INT32  lfo_fn_table_index_offset = lfo_pm_table[ fnum_lfo + CH->pms + LFO_PM ];
 
   if (lfo_fn_table_index_offset)  /* LFO phase modulation active */
   {
-    /* retrieve BLOCK register value */
+
     UINT8 blk = (block_fnum >> 11) & 7;
+    UINT32 fn  = (block_fnum*2 + (UINT32)lfo_fn_table_index_offset) & 0xfff;
 
-    /* apply phase modulation to FNUM register value */
-    UINT32 fn  = (block_fnum + (UINT32)lfo_fn_table_index_offset) & 0x7ff;
+    /* keyscale code */
+    int kc = (blk<<2) | opn_fktable[fn >> 8];
 
-    /* recalculate keyscale code */
-    int kc = (blk<<2) | opn_fktable[fn >> 7];
-
-     /* recalculate (frequency) phase increment counter */
+     /* (frequency) phase increment counter */
     int fc = (ym2612.OPN.fn_table[fn]>>(7-blk));
 
     /* (frequency) phase overflow (credits to Nemesis) */
@@ -1318,6 +1312,7 @@ INLINE void chan_calc(FM_CH *CH)
   unsigned int eg_out;
 
   UINT32 AM = LFO_AM >> CH->ams;
+
 
   m2 = c1 = c2 = mem = 0;
 
@@ -1357,6 +1352,7 @@ INLINE void chan_calc(FM_CH *CH)
   eg_out = volume_calc(&CH->SLOT[SLOT4]);
   if( eg_out < ENV_QUIET )    /* SLOT 4 */
     *CH->connect4 += op_calc(CH->SLOT[SLOT4].phase, eg_out, c2);
+
 
   /* store current MEM */
   CH->mem_value = mem;
@@ -1632,9 +1628,10 @@ static void OPNSetPres(int pres)
   /* make time tables */
   init_timetables(dt_tab);
 
-  /* there are 2048 FNUMs that can be generated using FNUM/BLK registers */
+  /* there are 2048 FNUMs that can be generated using FNUM/BLK registers
+      but LFO works with one more bit of a precision so we really need 4096 elements */
   /* calculate fnumber -> increment counter table */
-  for(i = 0; i < 2048; i++)
+  for(i = 0; i < 4096; i++)
   {
     /* freq table for octave 7 */
     /* OPN phase increment counter = 20bit */
@@ -1642,7 +1639,7 @@ static void OPNSetPres(int pres)
     /* where sample clock is  M/144 */
     /* this means the increment value for one clock sample is FNUM * 2^(B-1) = FNUM * 64 for octave 7 */
     /* we also need to handle the ratio between the chip frequency and the emulated frequency (can be 1.0)  */
-    ym2612.OPN.fn_table[i] = (UINT32)( (double)i * 64 * ym2612.OPN.ST.freqbase * (1<<(FREQ_SH-10)) ); /* -10 because chip works with 10.10 fixed point, while we use 16.16 */
+    ym2612.OPN.fn_table[i] = (UINT32)( (double)i * 32 * ym2612.OPN.ST.freqbase * (1<<(FREQ_SH-10)) ); /* -10 because chip works with 10.10 fixed point, while we use 16.16 */
   }
 
   /* maximal frequency is required for Phase overflow calculation, register size is 17 bits (Nemesis) */
@@ -1847,7 +1844,7 @@ INLINE void OPNWriteReg(int r, int v)
           /* keyscale code */
           CH->kcode = (blk<<2) | opn_fktable[fn >> 7];
           /* phase increment counter */
-          CH->fc = ym2612.OPN.fn_table[fn]>>(7-blk);
+          CH->fc = ym2612.OPN.fn_table[fn*2]>>(7-blk);
 
           /* store fnum in clear form for LFO PM calculations */
           CH->block_fnum = (blk<<11) | fn;
@@ -1866,7 +1863,7 @@ INLINE void OPNWriteReg(int r, int v)
             /* keyscale code */
             ym2612.OPN.SL3.kcode[c]= (blk<<2) | opn_fktable[fn >> 7];
             /* phase increment counter */
-            ym2612.OPN.SL3.fc[c] = ym2612.OPN.fn_table[fn]>>(7-blk);
+            ym2612.OPN.SL3.fc[c] = ym2612.OPN.fn_table[fn*2]>>(7-blk);
             ym2612.OPN.SL3.block_fnum[c] = (blk<<11) | fn; //fn;
             ym2612.CH[2].SLOT[SLOT1].Incr=-1;
           }

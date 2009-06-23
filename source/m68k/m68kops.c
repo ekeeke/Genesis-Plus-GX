@@ -1,4 +1,6 @@
 #include "m68kcpu.h"
+#include "m68kCycleAccurate.h"
+
 extern void m68040_fpu_op0(void);
 extern void m68040_fpu_op1(void);
 
@@ -12611,6 +12613,9 @@ static void m68k_op_divs_16_d(void)
 
   if(src != 0)
   {
+    int cyc = getDivs68kCycles(*r_dst,src);
+    USE_CYCLES(cyc);
+
     if((uint32)*r_dst == 0x80000000 && src == -1)
     {
       FLAG_Z = 0;
@@ -12649,6 +12654,9 @@ static void m68k_op_divs_16_ai(void)
 
   if(src != 0)
   {
+    int cyc = getDivs68kCycles(*r_dst,src);
+    USE_CYCLES(cyc);
+
     if((uint32)*r_dst == 0x80000000 && src == -1)
     {
       FLAG_Z = 0;
@@ -12687,6 +12695,9 @@ static void m68k_op_divs_16_pi(void)
 
   if(src != 0)
   {
+    int cyc = getDivs68kCycles(*r_dst,src);
+    USE_CYCLES(cyc);
+
     if((uint32)*r_dst == 0x80000000 && src == -1)
     {
       FLAG_Z = 0;
@@ -12725,6 +12736,9 @@ static void m68k_op_divs_16_pd(void)
 
   if(src != 0)
   {
+    int cyc = getDivs68kCycles(*r_dst,src);
+    USE_CYCLES(cyc);
+
     if((uint32)*r_dst == 0x80000000 && src == -1)
     {
       FLAG_Z = 0;
@@ -12763,6 +12777,9 @@ static void m68k_op_divs_16_di(void)
 
   if(src != 0)
   {
+    int cyc = getDivs68kCycles(*r_dst,src);
+    USE_CYCLES(cyc);
+
     if((uint32)*r_dst == 0x80000000 && src == -1)
     {
       FLAG_Z = 0;
@@ -12801,6 +12818,9 @@ static void m68k_op_divs_16_ix(void)
 
   if(src != 0)
   {
+    int cyc = getDivs68kCycles(*r_dst,src);
+    USE_CYCLES(cyc);
+
     if((uint32)*r_dst == 0x80000000 && src == -1)
     {
       FLAG_Z = 0;
@@ -12839,6 +12859,9 @@ static void m68k_op_divs_16_aw(void)
 
   if(src != 0)
   {
+    int cyc = getDivs68kCycles(*r_dst,src);
+    USE_CYCLES(cyc);
+
     if((uint32)*r_dst == 0x80000000 && src == -1)
     {
       FLAG_Z = 0;
@@ -12877,6 +12900,9 @@ static void m68k_op_divs_16_al(void)
 
   if(src != 0)
   {
+    int cyc = getDivs68kCycles(*r_dst,src);
+    USE_CYCLES(cyc);
+
     if((uint32)*r_dst == 0x80000000 && src == -1)
     {
       FLAG_Z = 0;
@@ -12915,6 +12941,9 @@ static void m68k_op_divs_16_pcdi(void)
 
   if(src != 0)
   {
+    int cyc = getDivs68kCycles(*r_dst,src);
+    USE_CYCLES(cyc);
+
     if((uint32)*r_dst == 0x80000000 && src == -1)
     {
       FLAG_Z = 0;
@@ -12953,6 +12982,9 @@ static void m68k_op_divs_16_pcix(void)
 
   if(src != 0)
   {
+    int cyc = getDivs68kCycles(*r_dst,src);
+    USE_CYCLES(cyc);
+
     if((uint32)*r_dst == 0x80000000 && src == -1)
     {
       FLAG_Z = 0;
@@ -12991,6 +13023,9 @@ static void m68k_op_divs_16_i(void)
 
   if(src != 0)
   {
+    int cyc = getDivs68kCycles(*r_dst,src);
+    USE_CYCLES(cyc);
+
     if((uint32)*r_dst == 0x80000000 && src == -1)
     {
       FLAG_Z = 0;
@@ -13032,6 +13067,9 @@ static void m68k_op_divu_16_d(void)
 
     if(quotient < 0x10000)
     {
+      int cyc = getDivu68kCycles(*r_dst,src);
+      USE_CYCLES(cyc);
+
       FLAG_Z = quotient;
       FLAG_N = NFLAG_16(quotient);
       FLAG_V = VFLAG_CLEAR;
@@ -13039,6 +13077,7 @@ static void m68k_op_divu_16_d(void)
       *r_dst = MASK_OUT_ABOVE_32(MASK_OUT_ABOVE_16(quotient) | (remainder << 16));
       return;
     }
+    USE_CYCLES(10);
     FLAG_V = VFLAG_SET;
     return;
   }
@@ -13058,6 +13097,9 @@ static void m68k_op_divu_16_ai(void)
 
     if(quotient < 0x10000)
     {
+      int cyc = getDivu68kCycles(*r_dst,src);
+      USE_CYCLES(cyc);
+
       FLAG_Z = quotient;
       FLAG_N = NFLAG_16(quotient);
       FLAG_V = VFLAG_CLEAR;
@@ -13065,6 +13107,7 @@ static void m68k_op_divu_16_ai(void)
       *r_dst = MASK_OUT_ABOVE_32(MASK_OUT_ABOVE_16(quotient) | (remainder << 16));
       return;
     }
+    USE_CYCLES(10);
     FLAG_V = VFLAG_SET;
     return;
   }
@@ -13084,6 +13127,9 @@ static void m68k_op_divu_16_pi(void)
 
     if(quotient < 0x10000)
     {
+      int cyc = getDivu68kCycles(*r_dst,src);
+      USE_CYCLES(cyc);
+
       FLAG_Z = quotient;
       FLAG_N = NFLAG_16(quotient);
       FLAG_V = VFLAG_CLEAR;
@@ -13091,6 +13137,7 @@ static void m68k_op_divu_16_pi(void)
       *r_dst = MASK_OUT_ABOVE_32(MASK_OUT_ABOVE_16(quotient) | (remainder << 16));
       return;
     }
+    USE_CYCLES(10);
     FLAG_V = VFLAG_SET;
     return;
   }
@@ -13110,6 +13157,9 @@ static void m68k_op_divu_16_pd(void)
 
     if(quotient < 0x10000)
     {
+      int cyc = getDivu68kCycles(*r_dst,src);
+      USE_CYCLES(cyc);
+
       FLAG_Z = quotient;
       FLAG_N = NFLAG_16(quotient);
       FLAG_V = VFLAG_CLEAR;
@@ -13117,6 +13167,7 @@ static void m68k_op_divu_16_pd(void)
       *r_dst = MASK_OUT_ABOVE_32(MASK_OUT_ABOVE_16(quotient) | (remainder << 16));
       return;
     }
+    USE_CYCLES(10);
     FLAG_V = VFLAG_SET;
     return;
   }
@@ -13136,6 +13187,9 @@ static void m68k_op_divu_16_di(void)
 
     if(quotient < 0x10000)
     {
+      int cyc = getDivu68kCycles(*r_dst,src);
+      USE_CYCLES(cyc);
+
       FLAG_Z = quotient;
       FLAG_N = NFLAG_16(quotient);
       FLAG_V = VFLAG_CLEAR;
@@ -13143,6 +13197,7 @@ static void m68k_op_divu_16_di(void)
       *r_dst = MASK_OUT_ABOVE_32(MASK_OUT_ABOVE_16(quotient) | (remainder << 16));
       return;
     }
+    USE_CYCLES(10);
     FLAG_V = VFLAG_SET;
     return;
   }
@@ -13162,6 +13217,9 @@ static void m68k_op_divu_16_ix(void)
 
     if(quotient < 0x10000)
     {
+      int cyc = getDivu68kCycles(*r_dst,src);
+      USE_CYCLES(cyc);
+
       FLAG_Z = quotient;
       FLAG_N = NFLAG_16(quotient);
       FLAG_V = VFLAG_CLEAR;
@@ -13169,6 +13227,7 @@ static void m68k_op_divu_16_ix(void)
       *r_dst = MASK_OUT_ABOVE_32(MASK_OUT_ABOVE_16(quotient) | (remainder << 16));
       return;
     }
+    USE_CYCLES(10);
     FLAG_V = VFLAG_SET;
     return;
   }
@@ -13188,6 +13247,9 @@ static void m68k_op_divu_16_aw(void)
 
     if(quotient < 0x10000)
     {
+      int cyc = getDivu68kCycles(*r_dst,src);
+      USE_CYCLES(cyc);
+
       FLAG_Z = quotient;
       FLAG_N = NFLAG_16(quotient);
       FLAG_V = VFLAG_CLEAR;
@@ -13195,6 +13257,7 @@ static void m68k_op_divu_16_aw(void)
       *r_dst = MASK_OUT_ABOVE_32(MASK_OUT_ABOVE_16(quotient) | (remainder << 16));
       return;
     }
+    USE_CYCLES(10);
     FLAG_V = VFLAG_SET;
     return;
   }
@@ -13214,6 +13277,9 @@ static void m68k_op_divu_16_al(void)
 
     if(quotient < 0x10000)
     {
+      int cyc = getDivu68kCycles(*r_dst,src);
+      USE_CYCLES(cyc);
+
       FLAG_Z = quotient;
       FLAG_N = NFLAG_16(quotient);
       FLAG_V = VFLAG_CLEAR;
@@ -13221,6 +13287,7 @@ static void m68k_op_divu_16_al(void)
       *r_dst = MASK_OUT_ABOVE_32(MASK_OUT_ABOVE_16(quotient) | (remainder << 16));
       return;
     }
+    USE_CYCLES(10);
     FLAG_V = VFLAG_SET;
     return;
   }
@@ -13240,6 +13307,9 @@ static void m68k_op_divu_16_pcdi(void)
 
     if(quotient < 0x10000)
     {
+      int cyc = getDivu68kCycles(*r_dst,src);
+      USE_CYCLES(cyc);
+
       FLAG_Z = quotient;
       FLAG_N = NFLAG_16(quotient);
       FLAG_V = VFLAG_CLEAR;
@@ -13247,6 +13317,7 @@ static void m68k_op_divu_16_pcdi(void)
       *r_dst = MASK_OUT_ABOVE_32(MASK_OUT_ABOVE_16(quotient) | (remainder << 16));
       return;
     }
+    USE_CYCLES(10);
     FLAG_V = VFLAG_SET;
     return;
   }
@@ -13266,6 +13337,9 @@ static void m68k_op_divu_16_pcix(void)
 
     if(quotient < 0x10000)
     {
+      int cyc = getDivu68kCycles(*r_dst,src);
+      USE_CYCLES(cyc);
+
       FLAG_Z = quotient;
       FLAG_N = NFLAG_16(quotient);
       FLAG_V = VFLAG_CLEAR;
@@ -13273,6 +13347,7 @@ static void m68k_op_divu_16_pcix(void)
       *r_dst = MASK_OUT_ABOVE_32(MASK_OUT_ABOVE_16(quotient) | (remainder << 16));
       return;
     }
+    USE_CYCLES(10);
     FLAG_V = VFLAG_SET;
     return;
   }
@@ -13292,6 +13367,9 @@ static void m68k_op_divu_16_i(void)
 
     if(quotient < 0x10000)
     {
+      int cyc = getDivu68kCycles(*r_dst,src);
+      USE_CYCLES(cyc);
+
       FLAG_Z = quotient;
       FLAG_N = NFLAG_16(quotient);
       FLAG_V = VFLAG_CLEAR;
@@ -13299,6 +13377,7 @@ static void m68k_op_divu_16_i(void)
       *r_dst = MASK_OUT_ABOVE_32(MASK_OUT_ABOVE_16(quotient) | (remainder << 16));
       return;
     }
+    USE_CYCLES(10);
     FLAG_V = VFLAG_SET;
     return;
   }
@@ -23951,7 +24030,11 @@ static void m68k_op_move16_32(void)
 static void m68k_op_muls_16_d(void)
 {
   uint* r_dst = &DX;
-  uint res = MASK_OUT_ABOVE_32(MAKE_INT_16(DY) * MAKE_INT_16(MASK_OUT_ABOVE_16(*r_dst)));
+  uint src = MAKE_INT_16(DY);
+  uint res = MASK_OUT_ABOVE_32( src * MAKE_INT_16(MASK_OUT_ABOVE_16(*r_dst)));
+
+  uint cyc = getMuls68kCycles(src);
+  USE_CYCLES(cyc);
 
   *r_dst = res;
 
@@ -23965,7 +24048,11 @@ static void m68k_op_muls_16_d(void)
 static void m68k_op_muls_16_ai(void)
 {
   uint* r_dst = &DX;
-  uint res = MASK_OUT_ABOVE_32(MAKE_INT_16(OPER_AY_AI_16()) * MAKE_INT_16(MASK_OUT_ABOVE_16(*r_dst)));
+  uint src = MAKE_INT_16(OPER_AY_AI_16());
+  uint res = MASK_OUT_ABOVE_32( src * MAKE_INT_16(MASK_OUT_ABOVE_16(*r_dst)));
+
+  uint cyc = getMuls68kCycles(src);
+  USE_CYCLES(cyc);
 
   *r_dst = res;
 
@@ -23979,7 +24066,11 @@ static void m68k_op_muls_16_ai(void)
 static void m68k_op_muls_16_pi(void)
 {
   uint* r_dst = &DX;
-  uint res = MASK_OUT_ABOVE_32(MAKE_INT_16(OPER_AY_PI_16()) * MAKE_INT_16(MASK_OUT_ABOVE_16(*r_dst)));
+  uint src = MAKE_INT_16(OPER_AY_PI_16());
+  uint res = MASK_OUT_ABOVE_32( src * MAKE_INT_16(MASK_OUT_ABOVE_16(*r_dst)));
+
+  uint cyc = getMuls68kCycles(src);
+  USE_CYCLES(cyc);
 
   *r_dst = res;
 
@@ -23993,7 +24084,11 @@ static void m68k_op_muls_16_pi(void)
 static void m68k_op_muls_16_pd(void)
 {
   uint* r_dst = &DX;
-  uint res = MASK_OUT_ABOVE_32(MAKE_INT_16(OPER_AY_PD_16()) * MAKE_INT_16(MASK_OUT_ABOVE_16(*r_dst)));
+  uint src = MAKE_INT_16(OPER_AY_PD_16());
+  uint res = MASK_OUT_ABOVE_32( src * MAKE_INT_16(MASK_OUT_ABOVE_16(*r_dst)));
+
+  uint cyc = getMuls68kCycles(src);
+  USE_CYCLES(cyc);
 
   *r_dst = res;
 
@@ -24007,7 +24102,11 @@ static void m68k_op_muls_16_pd(void)
 static void m68k_op_muls_16_di(void)
 {
   uint* r_dst = &DX;
-  uint res = MASK_OUT_ABOVE_32(MAKE_INT_16(OPER_AY_DI_16()) * MAKE_INT_16(MASK_OUT_ABOVE_16(*r_dst)));
+  uint src = MAKE_INT_16(OPER_AY_DI_16());
+  uint res = MASK_OUT_ABOVE_32( src * MAKE_INT_16(MASK_OUT_ABOVE_16(*r_dst)));
+
+  uint cyc = getMuls68kCycles(src);
+  USE_CYCLES(cyc);
 
   *r_dst = res;
 
@@ -24021,7 +24120,11 @@ static void m68k_op_muls_16_di(void)
 static void m68k_op_muls_16_ix(void)
 {
   uint* r_dst = &DX;
-  uint res = MASK_OUT_ABOVE_32(MAKE_INT_16(OPER_AY_IX_16()) * MAKE_INT_16(MASK_OUT_ABOVE_16(*r_dst)));
+  uint src = MAKE_INT_16(OPER_AY_IX_16());
+  uint res = MASK_OUT_ABOVE_32( src * MAKE_INT_16(MASK_OUT_ABOVE_16(*r_dst)));
+
+  uint cyc = getMuls68kCycles(src);
+  USE_CYCLES(cyc);
 
   *r_dst = res;
 
@@ -24035,7 +24138,11 @@ static void m68k_op_muls_16_ix(void)
 static void m68k_op_muls_16_aw(void)
 {
   uint* r_dst = &DX;
-  uint res = MASK_OUT_ABOVE_32(MAKE_INT_16(OPER_AW_16()) * MAKE_INT_16(MASK_OUT_ABOVE_16(*r_dst)));
+  uint src = MAKE_INT_16(OPER_AW_16());
+  uint res = MASK_OUT_ABOVE_32( src * MAKE_INT_16(MASK_OUT_ABOVE_16(*r_dst)));
+
+  uint cyc = getMuls68kCycles(src);
+  USE_CYCLES(cyc);
 
   *r_dst = res;
 
@@ -24049,7 +24156,11 @@ static void m68k_op_muls_16_aw(void)
 static void m68k_op_muls_16_al(void)
 {
   uint* r_dst = &DX;
-  uint res = MASK_OUT_ABOVE_32(MAKE_INT_16(OPER_AL_16()) * MAKE_INT_16(MASK_OUT_ABOVE_16(*r_dst)));
+  uint src = MAKE_INT_16(OPER_AL_16());
+  uint res = MASK_OUT_ABOVE_32( src * MAKE_INT_16(MASK_OUT_ABOVE_16(*r_dst)));
+
+  uint cyc = getMuls68kCycles(src);
+  USE_CYCLES(cyc);
 
   *r_dst = res;
 
@@ -24063,7 +24174,11 @@ static void m68k_op_muls_16_al(void)
 static void m68k_op_muls_16_pcdi(void)
 {
   uint* r_dst = &DX;
-  uint res = MASK_OUT_ABOVE_32(MAKE_INT_16(OPER_PCDI_16()) * MAKE_INT_16(MASK_OUT_ABOVE_16(*r_dst)));
+  uint src = MAKE_INT_16(OPER_PCDI_16());
+  uint res = MASK_OUT_ABOVE_32( src * MAKE_INT_16(MASK_OUT_ABOVE_16(*r_dst)));
+
+  uint cyc = getMuls68kCycles(src);
+  USE_CYCLES(cyc);
 
   *r_dst = res;
 
@@ -24077,7 +24192,11 @@ static void m68k_op_muls_16_pcdi(void)
 static void m68k_op_muls_16_pcix(void)
 {
   uint* r_dst = &DX;
-  uint res = MASK_OUT_ABOVE_32(MAKE_INT_16(OPER_PCIX_16()) * MAKE_INT_16(MASK_OUT_ABOVE_16(*r_dst)));
+  uint src = MAKE_INT_16(OPER_PCIX_16());
+  uint res = MASK_OUT_ABOVE_32( src * MAKE_INT_16(MASK_OUT_ABOVE_16(*r_dst)));
+
+  uint cyc = getMuls68kCycles(src);
+  USE_CYCLES(cyc);
 
   *r_dst = res;
 
@@ -24091,7 +24210,11 @@ static void m68k_op_muls_16_pcix(void)
 static void m68k_op_muls_16_i(void)
 {
   uint* r_dst = &DX;
-  uint res = MASK_OUT_ABOVE_32(MAKE_INT_16(OPER_I_16()) * MAKE_INT_16(MASK_OUT_ABOVE_16(*r_dst)));
+  uint src = MAKE_INT_16(OPER_I_16());
+  uint res = MASK_OUT_ABOVE_32( src * MAKE_INT_16(MASK_OUT_ABOVE_16(*r_dst)));
+
+  uint cyc = getMuls68kCycles(src);
+  USE_CYCLES(cyc);
 
   *r_dst = res;
 
@@ -24105,7 +24228,11 @@ static void m68k_op_muls_16_i(void)
 static void m68k_op_mulu_16_d(void)
 {
   uint* r_dst = &DX;
-  uint res = MASK_OUT_ABOVE_16(DY) * MASK_OUT_ABOVE_16(*r_dst);
+  uint src = MASK_OUT_ABOVE_16(DY);
+  uint res = src * MASK_OUT_ABOVE_16(*r_dst);
+
+  uint cyc = getMulu68kCycles(src);
+  USE_CYCLES(cyc);
 
   *r_dst = res;
 
@@ -24119,7 +24246,11 @@ static void m68k_op_mulu_16_d(void)
 static void m68k_op_mulu_16_ai(void)
 {
   uint* r_dst = &DX;
-  uint res = OPER_AY_AI_16() * MASK_OUT_ABOVE_16(*r_dst);
+  uint src = OPER_AY_AI_16();
+  uint res = src * MASK_OUT_ABOVE_16(*r_dst);
+
+  uint cyc = getMulu68kCycles(src);
+  USE_CYCLES(cyc);
 
   *r_dst = res;
 
@@ -24133,7 +24264,11 @@ static void m68k_op_mulu_16_ai(void)
 static void m68k_op_mulu_16_pi(void)
 {
   uint* r_dst = &DX;
-  uint res = OPER_AY_PI_16() * MASK_OUT_ABOVE_16(*r_dst);
+  uint src = OPER_AY_PI_16();
+  uint res = src * MASK_OUT_ABOVE_16(*r_dst);
+
+  uint cyc = getMulu68kCycles(src);
+  USE_CYCLES(cyc);
 
   *r_dst = res;
 
@@ -24147,7 +24282,11 @@ static void m68k_op_mulu_16_pi(void)
 static void m68k_op_mulu_16_pd(void)
 {
   uint* r_dst = &DX;
-  uint res = OPER_AY_PD_16() * MASK_OUT_ABOVE_16(*r_dst);
+  uint src = OPER_AY_PD_16();
+  uint res = src * MASK_OUT_ABOVE_16(*r_dst);
+
+  uint cyc = getMulu68kCycles(src);
+  USE_CYCLES(cyc);
 
   *r_dst = res;
 
@@ -24161,7 +24300,11 @@ static void m68k_op_mulu_16_pd(void)
 static void m68k_op_mulu_16_di(void)
 {
   uint* r_dst = &DX;
-  uint res = OPER_AY_DI_16() * MASK_OUT_ABOVE_16(*r_dst);
+  uint src = OPER_AY_DI_16();
+  uint res = src * MASK_OUT_ABOVE_16(*r_dst);
+
+  uint cyc = getMulu68kCycles(src);
+  USE_CYCLES(cyc);
 
   *r_dst = res;
 
@@ -24175,7 +24318,11 @@ static void m68k_op_mulu_16_di(void)
 static void m68k_op_mulu_16_ix(void)
 {
   uint* r_dst = &DX;
-  uint res = OPER_AY_IX_16() * MASK_OUT_ABOVE_16(*r_dst);
+  uint src = OPER_AY_IX_16();
+  uint res = src * MASK_OUT_ABOVE_16(*r_dst);
+
+  uint cyc = getMulu68kCycles(src);
+  USE_CYCLES(cyc);
 
   *r_dst = res;
 
@@ -24189,7 +24336,11 @@ static void m68k_op_mulu_16_ix(void)
 static void m68k_op_mulu_16_aw(void)
 {
   uint* r_dst = &DX;
-  uint res = OPER_AW_16() * MASK_OUT_ABOVE_16(*r_dst);
+  uint src = OPER_AW_16();
+  uint res = src * MASK_OUT_ABOVE_16(*r_dst);
+
+  uint cyc = getMulu68kCycles(src);
+  USE_CYCLES(cyc);
 
   *r_dst = res;
 
@@ -24203,7 +24354,11 @@ static void m68k_op_mulu_16_aw(void)
 static void m68k_op_mulu_16_al(void)
 {
   uint* r_dst = &DX;
-  uint res = OPER_AL_16() * MASK_OUT_ABOVE_16(*r_dst);
+  uint src = OPER_AL_16();
+  uint res = src * MASK_OUT_ABOVE_16(*r_dst);
+
+  uint cyc = getMulu68kCycles(src);
+  USE_CYCLES(cyc);
 
   *r_dst = res;
 
@@ -24217,7 +24372,11 @@ static void m68k_op_mulu_16_al(void)
 static void m68k_op_mulu_16_pcdi(void)
 {
   uint* r_dst = &DX;
-  uint res = OPER_PCDI_16() * MASK_OUT_ABOVE_16(*r_dst);
+  uint src = OPER_PCDI_16();
+  uint res = src * MASK_OUT_ABOVE_16(*r_dst);
+
+  uint cyc = getMulu68kCycles(src);
+  USE_CYCLES(cyc);
 
   *r_dst = res;
 
@@ -24231,7 +24390,11 @@ static void m68k_op_mulu_16_pcdi(void)
 static void m68k_op_mulu_16_pcix(void)
 {
   uint* r_dst = &DX;
-  uint res = OPER_PCIX_16() * MASK_OUT_ABOVE_16(*r_dst);
+  uint src = OPER_PCIX_16();
+  uint res = src * MASK_OUT_ABOVE_16(*r_dst);
+
+  uint cyc = getMulu68kCycles(src);
+  USE_CYCLES(cyc);
 
   *r_dst = res;
 
@@ -24245,7 +24408,11 @@ static void m68k_op_mulu_16_pcix(void)
 static void m68k_op_mulu_16_i(void)
 {
   uint* r_dst = &DX;
-  uint res = OPER_I_16() * MASK_OUT_ABOVE_16(*r_dst);
+  uint src = OPER_I_16();
+  uint res = src * MASK_OUT_ABOVE_16(*r_dst);
+
+  uint cyc = getMulu68kCycles(src);
+  USE_CYCLES(cyc);
 
   *r_dst = res;
 
@@ -34869,12 +35036,12 @@ static const opcode_handler_struct m68k_opcode_handler_table[] =
   {m68k_op_or_32_er_pd         , 0xf1f8, 0x80a0, { 16,  16,   7,   7}},
   {m68k_op_or_32_er_di         , 0xf1f8, 0x80a8, { 18,  18,   7,   7}},
   {m68k_op_or_32_er_ix         , 0xf1f8, 0x80b0, { 20,  20,   9,   9}},
-  {m68k_op_divu_16_d           , 0xf1f8, 0x80c0, {140, 108,  44,  44}},
-  {m68k_op_divu_16_ai          , 0xf1f8, 0x80d0, {144, 112,  48,  48}},
-  {m68k_op_divu_16_pi          , 0xf1f8, 0x80d8, {144, 112,  48,  48}},
-  {m68k_op_divu_16_pd          , 0xf1f8, 0x80e0, {146, 114,  49,  49}},
-  {m68k_op_divu_16_di          , 0xf1f8, 0x80e8, {148, 116,  49,  49}},
-  {m68k_op_divu_16_ix          , 0xf1f8, 0x80f0, {150, 118,  51,  51}},
+  {m68k_op_divu_16_d           , 0xf1f8, 0x80c0, {  0, 108,  44,  44}},
+  {m68k_op_divu_16_ai          , 0xf1f8, 0x80d0, {  4, 112,  48,  48}},
+  {m68k_op_divu_16_pi          , 0xf1f8, 0x80d8, {  4, 112,  48,  48}},
+  {m68k_op_divu_16_pd          , 0xf1f8, 0x80e0, {  6, 114,  49,  49}},
+  {m68k_op_divu_16_di          , 0xf1f8, 0x80e8, {  8, 116,  49,  49}},
+  {m68k_op_divu_16_ix          , 0xf1f8, 0x80f0, { 10, 118,  51,  51}},
   {m68k_op_sbcd_8_rr           , 0xf1f8, 0x8100, {  6,   6,   4,   4}},
   {m68k_op_sbcd_8_mm           , 0xf1f8, 0x8108, { 18,  18,  16,  16}},
   {m68k_op_or_8_re_ai          , 0xf1f8, 0x8110, { 12,  12,   8,   8}},
@@ -34896,12 +35063,12 @@ static const opcode_handler_struct m68k_opcode_handler_table[] =
   {m68k_op_or_32_re_pd         , 0xf1f8, 0x81a0, { 22,  22,   9,   9}},
   {m68k_op_or_32_re_di         , 0xf1f8, 0x81a8, { 24,  24,   9,   9}},
   {m68k_op_or_32_re_ix         , 0xf1f8, 0x81b0, { 26,  26,  11,  11}},
-  {m68k_op_divs_16_d           , 0xf1f8, 0x81c0, {158, 122,  56,  56}},
-  {m68k_op_divs_16_ai          , 0xf1f8, 0x81d0, {162, 126,  60,  60}},
-  {m68k_op_divs_16_pi          , 0xf1f8, 0x81d8, {162, 126,  60,  60}},
-  {m68k_op_divs_16_pd          , 0xf1f8, 0x81e0, {164, 128,  61,  61}},
-  {m68k_op_divs_16_di          , 0xf1f8, 0x81e8, {166, 130,  61,  61}},
-  {m68k_op_divs_16_ix          , 0xf1f8, 0x81f0, {168, 132,  63,  63}},
+  {m68k_op_divs_16_d           , 0xf1f8, 0x81c0, {  0, 122,  56,  56}},
+  {m68k_op_divs_16_ai          , 0xf1f8, 0x81d0, {  4, 126,  60,  60}},
+  {m68k_op_divs_16_pi          , 0xf1f8, 0x81d8, {  4, 126,  60,  60}},
+  {m68k_op_divs_16_pd          , 0xf1f8, 0x81e0, {  6, 128,  61,  61}},
+  {m68k_op_divs_16_di          , 0xf1f8, 0x81e8, {  8, 130,  61,  61}},
+  {m68k_op_divs_16_ix          , 0xf1f8, 0x81f0, { 10, 132,  63,  63}},
   {m68k_op_sub_8_er_d          , 0xf1f8, 0x9000, {  4,   4,   2,   2}},
   {m68k_op_sub_8_er_ai         , 0xf1f8, 0x9010, {  8,   8,   6,   6}},
   {m68k_op_sub_8_er_pi         , 0xf1f8, 0x9018, {  8,   8,   6,   6}},
@@ -35030,12 +35197,12 @@ static const opcode_handler_struct m68k_opcode_handler_table[] =
   {m68k_op_and_32_er_pd        , 0xf1f8, 0xc0a0, { 16,  16,   7,   7}},
   {m68k_op_and_32_er_di        , 0xf1f8, 0xc0a8, { 18,  18,   7,   7}},
   {m68k_op_and_32_er_ix        , 0xf1f8, 0xc0b0, { 20,  20,   9,   9}},
-  {m68k_op_mulu_16_d           , 0xf1f8, 0xc0c0, { 54,  30,  27,  27}},
-  {m68k_op_mulu_16_ai          , 0xf1f8, 0xc0d0, { 58,  34,  31,  31}},
-  {m68k_op_mulu_16_pi          , 0xf1f8, 0xc0d8, { 58,  34,  31,  31}},
-  {m68k_op_mulu_16_pd          , 0xf1f8, 0xc0e0, { 60,  36,  32,  32}},
-  {m68k_op_mulu_16_di          , 0xf1f8, 0xc0e8, { 62,  38,  32,  32}},
-  {m68k_op_mulu_16_ix          , 0xf1f8, 0xc0f0, { 64,  40,  34,  34}},
+  {m68k_op_mulu_16_d           , 0xf1f8, 0xc0c0, {  0,  30,  27,  27}},
+  {m68k_op_mulu_16_ai          , 0xf1f8, 0xc0d0, {  4,  34,  31,  31}},
+  {m68k_op_mulu_16_pi          , 0xf1f8, 0xc0d8, {  4,  34,  31,  31}},
+  {m68k_op_mulu_16_pd          , 0xf1f8, 0xc0e0, {  6,  36,  32,  32}},
+  {m68k_op_mulu_16_di          , 0xf1f8, 0xc0e8, {  8,  38,  32,  32}},
+  {m68k_op_mulu_16_ix          , 0xf1f8, 0xc0f0, { 10,  40,  34,  34}},
   {m68k_op_abcd_8_rr           , 0xf1f8, 0xc100, {  6,   6,   4,   4}},
   {m68k_op_abcd_8_mm           , 0xf1f8, 0xc108, { 18,  18,  16,  16}},
   {m68k_op_and_8_re_ai         , 0xf1f8, 0xc110, { 12,  12,   8,   8}},
@@ -35056,12 +35223,12 @@ static const opcode_handler_struct m68k_opcode_handler_table[] =
   {m68k_op_and_32_re_pd        , 0xf1f8, 0xc1a0, { 22,  22,   9,   9}},
   {m68k_op_and_32_re_di        , 0xf1f8, 0xc1a8, { 24,  24,   9,   9}},
   {m68k_op_and_32_re_ix        , 0xf1f8, 0xc1b0, { 26,  26,  11,  11}},
-  {m68k_op_muls_16_d           , 0xf1f8, 0xc1c0, { 54,  32,  27,  27}},
-  {m68k_op_muls_16_ai          , 0xf1f8, 0xc1d0, { 58,  36,  31,  31}},
-  {m68k_op_muls_16_pi          , 0xf1f8, 0xc1d8, { 58,  36,  31,  31}},
-  {m68k_op_muls_16_pd          , 0xf1f8, 0xc1e0, { 60,  38,  32,  32}},
-  {m68k_op_muls_16_di          , 0xf1f8, 0xc1e8, { 62,  40,  32,  32}},
-  {m68k_op_muls_16_ix          , 0xf1f8, 0xc1f0, { 64,  42,  34,  34}},
+  {m68k_op_muls_16_d           , 0xf1f8, 0xc1c0, {  0,  32,  27,  27}},
+  {m68k_op_muls_16_ai          , 0xf1f8, 0xc1d0, {  4,  36,  31,  31}},
+  {m68k_op_muls_16_pi          , 0xf1f8, 0xc1d8, {  4,  36,  31,  31}},
+  {m68k_op_muls_16_pd          , 0xf1f8, 0xc1e0, {  6,  38,  32,  32}},
+  {m68k_op_muls_16_di          , 0xf1f8, 0xc1e8, {  8,  40,  32,  32}},
+  {m68k_op_muls_16_ix          , 0xf1f8, 0xc1f0, { 10,  42,  34,  34}},
   {m68k_op_add_8_er_d          , 0xf1f8, 0xd000, {  4,   4,   2,   2}},
   {m68k_op_add_8_er_ai         , 0xf1f8, 0xd010, {  8,   8,   6,   6}},
   {m68k_op_add_8_er_pi         , 0xf1f8, 0xd018, {  8,   8,   6,   6}},
@@ -35347,11 +35514,11 @@ static const opcode_handler_struct m68k_opcode_handler_table[] =
   {m68k_op_or_32_er_pcdi       , 0xf1ff, 0x80ba, { 18,  18,   7,   7}},
   {m68k_op_or_32_er_pcix       , 0xf1ff, 0x80bb, { 20,  20,   9,   9}},
   {m68k_op_or_32_er_i          , 0xf1ff, 0x80bc, { 16,  14,   6,   6}},
-  {m68k_op_divu_16_aw          , 0xf1ff, 0x80f8, {148, 116,  48,  48}},
-  {m68k_op_divu_16_al          , 0xf1ff, 0x80f9, {152, 120,  48,  48}},
-  {m68k_op_divu_16_pcdi        , 0xf1ff, 0x80fa, {148, 116,  49,  49}},
-  {m68k_op_divu_16_pcix        , 0xf1ff, 0x80fb, {150, 118,  51,  51}},
-  {m68k_op_divu_16_i           , 0xf1ff, 0x80fc, {144, 112,  46,  46}},
+  {m68k_op_divu_16_aw          , 0xf1ff, 0x80f8, {  8, 116,  48,  48}},
+  {m68k_op_divu_16_al          , 0xf1ff, 0x80f9, { 12, 120,  48,  48}},
+  {m68k_op_divu_16_pcdi        , 0xf1ff, 0x80fa, {  8, 116,  49,  49}},
+  {m68k_op_divu_16_pcix        , 0xf1ff, 0x80fb, { 10, 118,  51,  51}},
+  {m68k_op_divu_16_i           , 0xf1ff, 0x80fc, {  4, 112,  46,  46}},
   {m68k_op_sbcd_8_mm_ay7       , 0xf1ff, 0x810f, { 18,  18,  16,  16}},
   {m68k_op_or_8_re_pi7         , 0xf1ff, 0x811f, { 12,  12,   8,   8}},
   {m68k_op_or_8_re_pd7         , 0xf1ff, 0x8127, { 14,  14,   9,   9}},
@@ -35363,11 +35530,11 @@ static const opcode_handler_struct m68k_opcode_handler_table[] =
   {m68k_op_unpk_16_mm_ay7      , 0xf1ff, 0x818f, {  0,   0,  13,  13}},
   {m68k_op_or_32_re_aw         , 0xf1ff, 0x81b8, { 24,  24,   8,   8}},
   {m68k_op_or_32_re_al         , 0xf1ff, 0x81b9, { 28,  28,   8,   8}},
-  {m68k_op_divs_16_aw          , 0xf1ff, 0x81f8, {166, 130,  60,  60}},
-  {m68k_op_divs_16_al          , 0xf1ff, 0x81f9, {170, 134,  60,  60}},
-  {m68k_op_divs_16_pcdi        , 0xf1ff, 0x81fa, {166, 130,  61,  61}},
-  {m68k_op_divs_16_pcix        , 0xf1ff, 0x81fb, {168, 132,  63,  63}},
-  {m68k_op_divs_16_i           , 0xf1ff, 0x81fc, {162, 126,  58,  58}},
+  {m68k_op_divs_16_aw          , 0xf1ff, 0x81f8, {  8, 130,  60,  60}},
+  {m68k_op_divs_16_al          , 0xf1ff, 0x81f9, { 12, 134,  60,  60}},
+  {m68k_op_divs_16_pcdi        , 0xf1ff, 0x81fa, {  8, 130,  61,  61}},
+  {m68k_op_divs_16_pcix        , 0xf1ff, 0x81fb, { 10, 132,  63,  63}},
+  {m68k_op_divs_16_i           , 0xf1ff, 0x81fc, {  4, 126,  58,  58}},
   {m68k_op_sub_8_er_pi7        , 0xf1ff, 0x901f, {  8,   8,   6,   6}},
   {m68k_op_sub_8_er_pd7        , 0xf1ff, 0x9027, { 10,  10,   7,   7}},
   {m68k_op_sub_8_er_aw         , 0xf1ff, 0x9038, { 12,  12,   6,   6}},
@@ -35457,11 +35624,11 @@ static const opcode_handler_struct m68k_opcode_handler_table[] =
   {m68k_op_and_32_er_pcdi      , 0xf1ff, 0xc0ba, { 18,  18,   7,   7}},
   {m68k_op_and_32_er_pcix      , 0xf1ff, 0xc0bb, { 20,  20,   9,   9}},
   {m68k_op_and_32_er_i         , 0xf1ff, 0xc0bc, { 16,  14,   6,   6}},
-  {m68k_op_mulu_16_aw          , 0xf1ff, 0xc0f8, { 62,  38,  31,  31}},
-  {m68k_op_mulu_16_al          , 0xf1ff, 0xc0f9, { 66,  42,  31,  31}},
-  {m68k_op_mulu_16_pcdi        , 0xf1ff, 0xc0fa, { 62,  38,  32,  32}},
-  {m68k_op_mulu_16_pcix        , 0xf1ff, 0xc0fb, { 64,  40,  34,  34}},
-  {m68k_op_mulu_16_i           , 0xf1ff, 0xc0fc, { 58,  34,  29,  29}},
+  {m68k_op_mulu_16_aw          , 0xf1ff, 0xc0f8, {  8,  38,  31,  31}},
+  {m68k_op_mulu_16_al          , 0xf1ff, 0xc0f9, { 12,  42,  31,  31}},
+  {m68k_op_mulu_16_pcdi        , 0xf1ff, 0xc0fa, {  8,  38,  32,  32}},
+  {m68k_op_mulu_16_pcix        , 0xf1ff, 0xc0fb, { 10,  40,  34,  34}},
+  {m68k_op_mulu_16_i           , 0xf1ff, 0xc0fc, {  4,  34,  29,  29}},
   {m68k_op_abcd_8_mm_ay7       , 0xf1ff, 0xc10f, { 18,  18,  16,  16}},
   {m68k_op_and_8_re_pi7        , 0xf1ff, 0xc11f, { 12,  12,   8,   8}},
   {m68k_op_and_8_re_pd7        , 0xf1ff, 0xc127, { 14,  14,   9,   9}},
@@ -35471,11 +35638,11 @@ static const opcode_handler_struct m68k_opcode_handler_table[] =
   {m68k_op_and_16_re_al        , 0xf1ff, 0xc179, { 20,  20,   8,   8}},
   {m68k_op_and_32_re_aw        , 0xf1ff, 0xc1b8, { 24,  24,   8,   8}},
   {m68k_op_and_32_re_al        , 0xf1ff, 0xc1b9, { 28,  28,   8,   8}},
-  {m68k_op_muls_16_aw          , 0xf1ff, 0xc1f8, { 62,  40,  31,  31}},
-  {m68k_op_muls_16_al          , 0xf1ff, 0xc1f9, { 66,  44,  31,  31}},
-  {m68k_op_muls_16_pcdi        , 0xf1ff, 0xc1fa, { 62,  40,  32,  32}},
-  {m68k_op_muls_16_pcix        , 0xf1ff, 0xc1fb, { 64,  42,  34,  34}},
-  {m68k_op_muls_16_i           , 0xf1ff, 0xc1fc, { 58,  36,  29,  29}},
+  {m68k_op_muls_16_aw          , 0xf1ff, 0xc1f8, {  8,  40,  31,  31}},
+  {m68k_op_muls_16_al          , 0xf1ff, 0xc1f9, { 12,  44,  31,  31}},
+  {m68k_op_muls_16_pcdi        , 0xf1ff, 0xc1fa, {  8,  40,  32,  32}},
+  {m68k_op_muls_16_pcix        , 0xf1ff, 0xc1fb, { 10,  42,  34,  34}},
+  {m68k_op_muls_16_i           , 0xf1ff, 0xc1fc, {  4,  36,  29,  29}},
   {m68k_op_add_8_er_pi7        , 0xf1ff, 0xd01f, {  8,   8,   6,   6}},
   {m68k_op_add_8_er_pd7        , 0xf1ff, 0xd027, { 10,  10,   7,   7}},
   {m68k_op_add_8_er_aw         , 0xf1ff, 0xd038, { 12,  12,   6,   6}},

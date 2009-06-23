@@ -650,9 +650,8 @@ static inline void reg_w(unsigned int r, unsigned int d)
       if (((d&0x10) != (reg[0]&0x10)) && hint_pending)
       {
         /* update IRQ status */
-        irq_status &= 0x20;
-        irq_status |= 0x50;
-        if (vint_pending && (reg[1] & 0x20)) irq_status |= 6;
+        irq_status = 0x50;
+        if (vint_pending && (reg[1] & 0x20)) irq_status |= 0x26;
         else if (d & 0x10) irq_status |= 4;
       }
 
@@ -676,9 +675,8 @@ static inline void reg_w(unsigned int r, unsigned int d)
       if (((d&0x20) != (reg[1]&0x20)) && vint_pending)
       {
         /* update IRQ status */
-        irq_status &= 0x20;
-        irq_status |= 0x50;
-        if (d & 0x20) irq_status |= 6;
+        irq_status = 0x50;
+        if (d & 0x20) irq_status |= 0x26;
         else if (hint_pending && (reg[0] & 0x10)) irq_status |= 4;
       }
 

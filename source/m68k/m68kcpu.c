@@ -802,13 +802,6 @@ INLINE int m68k_execute(void)
     /* Trace m68k_exception, if necessary */
     m68ki_exception_if_trace(); /* auto-disable (see m68kcpu.h) */
 
-    /* ASG: update cycles */
-    USE_CYCLES(CPU_INT_CYCLES);
-    CPU_INT_CYCLES = 0;
-
-    /* set previous PC to current PC for the next entry into the loop */
-    REG_PPC = REG_PC;
-
     /* return how many clocks we used */
     return - GET_CYCLES();
 
@@ -832,7 +825,6 @@ INLINE void m68k_set_irq(unsigned int int_level)
 }
 
 extern uint8 irq_status;
-extern uint32 count_m68k;
 
 void m68k_run (int cyc) 
 {
@@ -855,12 +847,7 @@ void m68k_run (int cyc)
         count_m68k += m68k_execute();
 
       /* interrupt level */
-      if (temp == 6) irq_status |= 0x20;
       m68k_set_irq(temp);
-
-      /* ASG: update cycles */
-      count_m68k += CPU_INT_CYCLES;
-      CPU_INT_CYCLES = 0;
     }
 
     /* Make sure we're not stopped */
@@ -873,6 +860,10 @@ void m68k_run (int cyc)
     /* execute a single instruction */
     count_m68k += m68k_execute();
   }
+
+  /* set previous PC to current PC for the next entry into the loop */
+  REG_PPC = REG_PC;
+
 }
 
 int m68k_cycles_run(void)

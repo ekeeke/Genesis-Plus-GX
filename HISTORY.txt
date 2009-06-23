@@ -15,7 +15,8 @@ Genesis Plus GX 1.3.2 (??/??/????) (Eke-Eke)
 * added 3 Band Equalizer for improved & fully configurable sound filtering (taken from Softdev's NeoCD Redux)
 * improved sprites masking emulation: fixes 3D level in Mickey Mania (thanks to Nemesis for his test program)
 * fixed lightgun autodetection: fixes cursor position in Lethal Enforcers II
-* various code cleanup & optimization
+* improved DIVU/DVIS (thanks to Jorge Cwik) & MULU/MULS instructions timing accuracy 
+* lots of code cleanup & core optimizations
 
 [Gamecube/Wii]
 

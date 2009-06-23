@@ -33,6 +33,8 @@
 #include <setjmp.h>
 #endif /* M68K_EMULATE_ADDRESS_ERROR */
 
+extern unsigned int count_m68k;
+
 /* ======================================================================== */
 /* ==================== ARCHITECTURE-DEPENDANT DEFINES ==================== */
 /* ======================================================================== */
@@ -2036,7 +2038,7 @@ INLINE void m68ki_exception_interrupt(uint int_level)
   m68ki_jump(new_pc);
 
   /* Defer cycle counting until later */
-  CPU_INT_CYCLES += CYC_EXCEPTION[vector];
+  count_m68k += CYC_EXCEPTION[vector];
 
 //#if !M68K_EMULATE_INT_ACK
   /* Automatically clear IRQ if we are not using an acknowledge scheme */
