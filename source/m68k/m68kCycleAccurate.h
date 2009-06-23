@@ -4,6 +4,8 @@
  *
  * Copyright (c) 2005 by Jorge Cwik, pasti@fxatari.com
  *
+ * Added MULU and MULS accurate timings (Eke-Eke)
+ *
  * This is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -71,7 +73,7 @@ typedef signed short SHORT;
 // Unsigned division
 //
 
-unsigned getDivu68kCycles( DWORD dividend, WORD divisor)
+INLINE unsigned getDivu68kCycles( DWORD dividend, WORD divisor)
 {
   int i;
 
@@ -117,7 +119,7 @@ unsigned getDivu68kCycles( DWORD dividend, WORD divisor)
 // Signed division
 //
 
-unsigned getDivs68kCycles( LONG dividend, SHORT divisor)
+INLINE unsigned getDivs68kCycles( LONG dividend, SHORT divisor)
 {
 
   //if( (SHORT) divisor == 0)
@@ -165,7 +167,7 @@ unsigned getDivs68kCycles( LONG dividend, SHORT divisor)
 // Unsigned multiplication
 //
 
-unsigned getMulu68kCycles( WORD source)
+INLINE unsigned getMulu68kCycles( WORD source)
 {
   int i;
 
@@ -190,7 +192,7 @@ unsigned getMulu68kCycles( WORD source)
 // Signed multiplication
 //
 
-unsigned getMuls68kCycles( SHORT source)
+INLINE unsigned getMuls68kCycles( SHORT source)
 {
   int i;
 
