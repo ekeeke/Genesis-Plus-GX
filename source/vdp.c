@@ -410,7 +410,6 @@ void vdp_ctrl_w(unsigned int data)
  */
 unsigned int vdp_ctrl_r(void)
 {
-
   /* update FIFO flags */
   fifo_update();
   if (fifo_write_cnt < 4)

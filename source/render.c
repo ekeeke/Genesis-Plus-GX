@@ -41,34 +41,6 @@ typedef struct
   uint8 enable;
 }clip_t;
 
-/* Function prototypes */
-static void palette_init(void);
-static void make_name_lut(void);
-static uint32 make_lut_bg(uint32 bx, uint32 ax);
-static uint32 make_lut_obj(uint32 bx, uint32 sx);
-static uint32 make_lut_bg_ste(uint32 bx, uint32 ax);
-static uint32 make_lut_obj_ste(uint32 bx, uint32 sx);
-static uint32 make_lut_bgobj_ste(uint32 bx, uint32 sx);
-static void color_update_16(int index, uint16 data);
-#ifndef NGC
-static void color_update_8(int index, uint16 data);
-static void color_update_15(int index, uint16 data);
-static void color_update_32(int index, uint16 data);
-static inline void remap_8(uint8 *src, uint8 *dst, uint8 *table, int length);
-static inline void remap_16(uint8 *src, uint16 *dst, uint16 *table, int length);
-static inline void remap_32(uint8 *src, uint32 *dst, uint32 *table, int length);
-#else
-static inline void remap_texture(uint8 *src, uint16 *dst, uint32 tiles);
-#endif
-static inline void merge(uint8 *srca, uint8 *srcb, uint8 *dst, uint8 *table, uint32 width);
-static inline void update_bg_pattern_cache(uint32 index);
-static inline uint32 get_hscroll(uint32 line);
-static void render_bg(uint32 line, uint32 width);
-static void render_bg_im2(uint32 line, uint32 width, uint32 odd);
-static void render_bg_vs(uint32 line, uint32 width);
-static void render_obj(uint32 line, uint8 *buf, uint8 *table);
-static void render_obj_im2(uint32 line, uint32 odd, uint8 *buf, uint8 *table);
-
 #undef ALIGN_LONG
 #ifdef ALIGN_LONG
 /* Or change the names if you depend on these from elsewhere.. */
@@ -110,8 +82,8 @@ static __inline__ void WRITE_LONG(void *address, uint32 data)
       *((uint8 *)address)   = (data >> 24);
 #endif /* LSB_FIRST */
     return;
-    }
-    else *(uint32 *)address = data;
+  }
+  else *(uint32 *)address = data;
 }
 
 #endif  /* ALIGN_LONG */
@@ -327,10 +299,9 @@ static __inline__ void WRITE_LONG(void *address, uint32 data)
     *lb++ = table[(*lb << 8) |(*src++ | palette)]; 
   .. claiming the result on lb is undefined.
   So we manually advance lb and use constant offsets into the line buffer.
-*/
 
-/* added sprite collision detection:
-   check if non-transparent sprite data has been previously drawn
+  Added sprite collision detection
+  (check if non-transparent sprite data has been previously drawn)
 */
 #define DRAW_SPRITE_TILE \
   for(i=0; i<8; i++) \
@@ -340,22 +311,67 @@ static __inline__ void WRITE_LONG(void *address, uint32 data)
   }
 
 
-/* Pixel creation macros, input is four bits each */
-#ifndef NGC
-
-/* 8:8:8 RGB */
-#define MAKE_PIXEL_32(r,g,b) ((r) << 20 | (g) << 12 | (b) << 4)
-           
-/* 5:5:5 RGB */
-#define MAKE_PIXEL_15(r,g,b) ((r) << 11 | (g) << 6 | (b) << 1)
-
-/* 3:3:2 RGB */
-#define MAKE_PIXEL_8(r,g,b)  ((r) <<  5 | (g) << 2 | ((b) >> 1))
-
-#endif
+/**************************************************/
+/* Pixel creation macros                          */
+/* Input is four bits each (R,G,B), 12 bits total */
+/* Color range depends on the S/TE mode:          */
+/*                                                */
+/*    normal mode   : xxx0 (0-14)                 */
+/*    shadow mode   : 0xxx (0-7)                  */
+/*    highlight mode: 1xxx (8-15)                 */
+/*                                                */
+/* with xxx0 = original 4-bits CRAM value         */
+/**************************************************/
 
 /* 5:6:5 RGB */
-#define MAKE_PIXEL_16(r,g,b) ((r) << 11 | (g) << 5 | (b))
+/* This RGB format uses 5 or 6bits color  */
+/* 4 bits color value need to be dithered */
+/* to match the whole color range:        */
+/*                                        */
+/* R,B (5 bits) : yyyyy  (0-31)           */
+/* G (6 bits)   : yyyyyy (0-63)           */
+/*                                        */
+/*  normal mode   : xxx0 (0-14)           */
+/*    0000 -> 00000 (000000)              */
+/*    0010 -> 00100 (001000)              */
+/*    0100 -> 01000 (010001)              */
+/*    0110 -> 01100 (011001)              */
+/*    1000 -> 10001 (100010)              */
+/*    1010 -> 10101 (101010)              */
+/*    1100 -> 11001 (110011)              */
+/*    1110 -> 11101 (111011)              */
+/*                                        */
+/*  shadow mode   : 0xxx (0-7)            */
+/*    0000 -> 00000 (000000)              */
+/*    0001 -> 00010 (000100)              */
+/*    0010 -> 00100 (001000)              */
+/*    0011 -> 00110 (001100)              */
+/*    0100 -> 01000 (010001)              */
+/*    0101 -> 01010 (010101)              */
+/*    0110 -> 01100 (011001)              */
+/*    0111 -> 01110 (011101)              */
+/*                                        */
+/*  highlight mode: 1xxx (8-15)           */
+/*    1000 -> 10001 (100010)              */
+/*    1001 -> 10011 (100110)              */
+/*    1010 -> 10101 (101010)              */
+/*    1011 -> 10111 (101110)              */
+/*    1100 -> 11001 (110011)              */
+/*    1101 -> 11011 (110111)              */
+/*    1110 -> 11101 (111011)              */
+/*    1111 -> 11111 (111111)              */
+/*                                        */
+/******************************************/
+#define MAKE_PIXEL_16(r,g,b) (((r) << 12) | (((r) >> 3) << 12) | ((g) << 7) | (((g) >> 2) << 5) | ((b) << 1) | ((b) >> 3) )
+
+#ifndef NGC
+/* 8:8:8 RGB */
+#define MAKE_PIXEL_32(r,g,b) ((r) << 20 | (g) << 12 | (b) << 4)
+/* 5:5:5 RGB */
+#define MAKE_PIXEL_15(r,g,b) ((r) << 11 | (g) << 6 | (b) << 1)
+/* 3:3:2 RGB */
+#define MAKE_PIXEL_8(r,g,b)  ((r) <<  5 | (g) << 2 | ((b) >> 1))
+#endif
 
 
 /* Clip data */
@@ -411,347 +427,6 @@ static uint8 obj_buf[0x200];  /* Object layer line buffer */
 /* Sprite line buffer data */
 static uint32 object_index_count;
 
-/* 
-   3:3:3 to 5:6:5 RGB pixel extrapolation tables 
-   this is used to convert 3bits RGB values to 5bits (R,B) or 6bits (G) values
-   there is three color modes:
-   normal: RGB range is [0;MAX]
-   half:   RGB range is [0;MAX/2]   (shadow mode)
-   high:   RGB range is [MAX/2;MAX] (highlight mode)
-   
-   MAX is 31 (R,B) or 63 (G) for 5:6:5 pixels and 7 (R,G,B) for 3:3:3 pixels
-   MAX/2 is rounded to inferior value (15, 31 or 3) 
-
-   the extrapolation is linear and calculated like this:
-
-    for (i=0; i<8; i++)
-    {
-     rgb565_norm[0][i] = round(((double)i * 31.0) / 7.0);
-     rgb565_norm[1][i] = round(((double)i * 63.0) / 7.0);
-     
-     rgb565_half[0][i] = round(((double)i * 31.0) / 7.0 / 2.0);
-     rgb565_half[1][i] = round(((double)i * 63.0) / 7.0 / 2.0);
-     
-     rgb565_high[0][i] = round(((double)i * 31.0) / 7.0 / 2.0 + 15.5);
-     rgb565_high[1][i] = round(((double)i * 63.0) / 7.0 / 2.0 + 31.5);
-    }
-
-*/
-
-static const uint8 rgb565_norm[2][8] =
-{
-  {0 ,  4,  9, 13, 18, 22, 27, 31},
-  {0 ,  9, 18, 27, 36, 45, 54, 63}
-};
-
-static const uint8 rgb565_half[2][8] =
-{
-  {0 ,  2,  4,  6,  9, 11, 13, 15},
-  {0 ,  4,  9, 13, 18, 22, 27, 31}
-};
-
-static const uint8 rgb565_high[2][8] =
-{
-  {15, 17, 19, 21, 24, 26, 28, 31},
-  {31, 35, 40, 44, 49, 53, 58, 63}
-};
-
-/*--------------------------------------------------------------------------*/
-/* Init, reset, shutdown routines                                           */
-/*--------------------------------------------------------------------------*/
-
-void render_init(void)
-{
-  int bx, ax, i;
-
-  /* Allocate and align pixel look-up tables */
-  if (lut_base == NULL) lut_base = malloc ((LUT_MAX * LUT_SIZE) + LUT_SIZE);
-  lut[0] = (uint8 *) (((uint32) lut_base + LUT_SIZE) & ~(LUT_SIZE - 1));
-  for (i = 1; i < LUT_MAX; i += 1) lut[i] = lut[0] + (i * LUT_SIZE);
-
-  /* Make pixel look-up table data */
-  for (bx = 0; bx < 0x100; bx += 1)
-    for (ax = 0; ax < 0x100; ax += 1)
-    {
-      uint16 index = (bx << 8) | (ax);
-      lut[0][index] = make_lut_bg (bx, ax);
-      lut[1][index] = make_lut_obj (bx, ax);
-      lut[2][index] = make_lut_bg_ste (bx, ax);
-      lut[3][index] = make_lut_obj_ste (bx, ax);
-      lut[4][index] = make_lut_bgobj_ste (bx, ax);
-    }
-
-  /* Make pixel data tables */
-  palette_init();
-
-  /* Set up color update function */
-#ifndef NGC
-  switch(bitmap.depth)
-  {
-    case 8: color_update = color_update_8; break;
-    case 15: color_update = color_update_15; break;
-    case 16: color_update = color_update_16; break;
-    case 32: color_update = color_update_32; break;
-  }
-#else
-  color_update = color_update_16;
-#endif
-
-  /* Make sprite name look-up table */
-  make_name_lut();
-}
-
-void render_reset(void)
-{
-  /* Clear display bitmap */
-  memset(bitmap.data, 0, bitmap.pitch * bitmap.height);
-
-  memset(bg_buf, 0, sizeof(bg_buf));
-  memset(tmp_buf, 0, sizeof(tmp_buf));
-  memset(nta_buf, 0, sizeof(nta_buf));
-  memset(ntb_buf, 0, sizeof(ntb_buf));
-  memset(obj_buf, 0, sizeof(obj_buf));
-
-#ifndef NGC
-  memset(&pixel_8, 0, sizeof(pixel_8));
-  memset(&pixel_15, 0, sizeof(pixel_15));
-  memset(&pixel_32, 0, sizeof(pixel_32));
-#endif
-  memset(&pixel_16, 0, sizeof(pixel_16));
-
-  window_clip();
-}
-
-
-void render_shutdown(void)
-{
-  if(lut_base) free(lut_base);
-}
-
-
-/*--------------------------------------------------------------------------*/
-/* Line render function                                                     */
-/*--------------------------------------------------------------------------*/
-
-void render_line(uint32 line, uint32 overscan)
-{
-  uint32 width    = bitmap.viewport.w;
-  uint32 x_offset = bitmap.viewport.x;
-
-  /* display OFF */
-  if (reg[0] & 0x01) return;
-
-  /* background color (blanked display or vertical borders) */
-  if (!(reg[1] & 0x40) || overscan)
-  {
-    width += 2 * x_offset;
-    memset(&tmp_buf[0x20 - x_offset], 0x40, width);
-  }
-  else
-  {
-    uint8 *lb = tmp_buf;
-
-    /* update pattern generator */
-    if (bg_list_index)
-    {
-      update_bg_pattern_cache(bg_list_index);
-      bg_list_index = 0;
-    }
-
-    /* double-resolution mode */
-    if(im2_flag)
-    {
-      uint32 odd = odd_frame;
-
-      /* render BG layers */
-      render_bg_im2(line, width, odd);
-
-      if (reg[12] & 8)
-      {
-        /* Shadow & Highlight */
-        merge(&nta_buf[0x20], &ntb_buf[0x20], &bg_buf[0x20], lut[2], width);
-        memset(&obj_buf[0x20], 0, width);
-        if (object_index_count) render_obj_im2(line, odd, obj_buf, lut[3]);
-        merge(&obj_buf[0x20], &bg_buf[0x20], &lb[0x20], lut[4], width);
-      }
-      else
-      {
-        merge(&nta_buf[0x20], &ntb_buf[0x20], &lb[0x20], lut[0], width);
-        if (object_index_count) render_obj_im2(line, odd, lb, lut[1]);
-      }
-    }
-    else
-    {
-      /* render BG layers */
-      if(reg[11] & 4) render_bg_vs(line, width);
-      else render_bg(line, width);
-
-      if(reg[12] & 8)
-      {
-        /* Shadow & Highlight */
-        merge(&nta_buf[0x20], &ntb_buf[0x20], &bg_buf[0x20], lut[2], width);
-        memset(&obj_buf[0x20], 0, width);
-        render_obj(line, obj_buf, lut[3]);
-        merge(&obj_buf[0x20], &bg_buf[0x20], &lb[0x20], lut[4], width);
-      }
-      else
-      {
-        merge(&nta_buf[0x20], &ntb_buf[0x20], &lb[0x20], lut[0], width);
-        render_obj(line, lb, lut[1]);
-      }
-    }
-
-    /* Mode 4 feature only (unemulated, no games rely on this) */
-    /*if(!(reg[1] & 0x04) && (reg[0] & 0x20)) memset(&lb[0x20], 0x40, 0x08);*/
-
-    /* borders */
-    if (x_offset)
-    {
-        memset(&lb[0x20 - x_offset], 0x40, x_offset);
-        memset(&lb[0x20 + width], 0x40, x_offset);
-        width += 2 * x_offset;
-    }
-  }
-
-  /* pixel color remapping */
-  remap_buffer(line,width);
-}
-
-void remap_buffer(uint32 line, uint32 width)
-{
-  /* get line offset from framebuffer */
-  line = (line + bitmap.viewport.y) % lines_per_frame;
-    
-  /* double resolution mode */
-  if (config.render && interlaced) line = (line * 2) + odd_frame;
-
-  /* NTSC Filter */
-  if (config.ntsc)
-  {
-    if (reg[12]&1) md_ntsc_blit(&md_ntsc, ( MD_NTSC_IN_T const * )pixel_16, tmp_buf+0x20-bitmap.viewport.x, width, line);
-    else sms_ntsc_blit(&sms_ntsc, ( SMS_NTSC_IN_T const * )pixel_16, tmp_buf+0x20-bitmap.viewport.x, width, line);
-    return;
-  }
-  
-#ifdef NGC
-  /* directly fill the RGB565 texture */
-  /* one tile is 32 byte = 4x4 pixels */
-  /* tiles are stored continuously in texture memory */
-  width = width >> 2;
-  int offset = ((width << 5) * (line >> 2)) + ((line & 3) * 8);
-  remap_texture(tmp_buf+0x20-bitmap.viewport.x, (uint16 *)(texturemem + offset), width);
-
-#else
-  void *out =((void *)&bitmap.data[(line * bitmap.pitch)]);
-  switch(bitmap.depth)
-  {
-    case 8:
-      remap_8(tmp_buf+0x20-bitmap.viewport.x, (uint8 *)out, pixel_8, width);
-      break;
-    case 15:
-      remap_16(tmp_buf+0x20-bitmap.viewport.x, (uint16 *)out, pixel_15, width);
-      break;
-    case 16:
-      remap_16(tmp_buf+0x20-bitmap.viewport.x, (uint16 *)out, pixel_16, width);
-      break;
-    case 32:
-      remap_32(tmp_buf+0x20-bitmap.viewport.x, (uint32 *)out, pixel_32, width);
-      break;
-  }
-#endif
-}
-
-/* Update Window Clipping (only called when registers change) */
-void window_clip(void)
-{
-  /* Window size and invert flags */
-  int hp = (reg[17] & 0x1f);
-  int hf = (reg[17] >> 7) & 1;
-
-  /* Display size  */
-  int sw =  bitmap.viewport.w >> 4;
-
-  /* Clear clipping data */
-  memset(&clip, 0, sizeof(clip));
-
-  /* Perform horizontal clipping; the results are applied in reverse
-      if the horizontal inversion flag is set */
-  int a = hf;
-  int w = hf ^ 1;
-
-  if(hp)
-  {
-    if(hp > sw)
-    {
-      /* Plane W takes up entire line */
-      clip[w].right = sw;
-      clip[w].enable = 1;
-    }
-    else
-    {
-      /* Window takes left side, Plane A takes right side */
-      clip[w].right = hp;
-      clip[a].left = hp;
-      clip[a].right = sw;
-      clip[0].enable = clip[1].enable = 1;
-    }
-  }
-  else
-  {
-    /* Plane A takes up entire line */
-    clip[a].right = sw;
-    clip[a].enable = 1;
-  }
-}
-
-/*--------------------------------------------------------------------------*/
-/* Sprites Parsing function                                                 */
-/*--------------------------------------------------------------------------*/
-
-void parse_satb(uint32 line)
-{
-  uint8 sizetab[] = {8, 16, 24, 32};
-  uint32 link = 0;
-  uint32 count, ypos, size, height;
-
-  uint32 limit = (reg[12] & 1) ? 20 : 16;
-  uint32 total = limit << 2;
-
-  uint16 *p = (uint16 *) &vram[satb];
-  uint16 *q = (uint16 *) &sat[0];
-
-  object_index_count = 0;
-
-  for(count = 0; count < total; count += 1)
-  {
-    ypos = (q[link] >> im2_flag) & 0x1FF;
-    size = q[link + 1] >> 8;
-    height = sizetab[size & 3];
-
-    if((line >= ypos) && (line < (ypos + height)))
-    {
-      /* sprite limit (max. 16 or 20 sprites displayed per line) */
-      if(object_index_count == limit)
-      {
-        if(vint_pending == 0) status |= 0x40;
-        return;
-      }
-
-      // using xpos from internal satb stops sprite x
-      // scrolling in bloodlin.bin,
-      // but this seems to go against the test prog
-      object_info[object_index_count].attr  = p[link + 2];
-      object_info[object_index_count].xpos  = p[link + 3];
-      object_info[object_index_count].ypos  = ypos;
-      object_info[object_index_count].size = size;
-      ++object_index_count;
-    }
-
-    link = (q[link + 1] & 0x7F) << 2;
-    if(link == 0) break;
-  }
-}
-
 /*--------------------------------------------------------------------------*/
 /* Look-up table functions (handles priority between layers pixels)         */
 /*--------------------------------------------------------------------------*/
@@ -782,11 +457,10 @@ static void palette_init(void)
     pixel_32_lut[2][i] = MAKE_PIXEL_32(r|8,g|8,b|8);
 #endif
 
-    /* RGB 565 format: we extrapolate each 3-bit value into a 5-bit (R,B) or 6-bit (G) value 
-       this is needed to correctly cover full color range: [0-31] for R,B or [0-63] for G */
-    pixel_16_lut[0][i] = MAKE_PIXEL_16(rgb565_half[0][r],rgb565_half[1][g],rgb565_half[0][b]);
-    pixel_16_lut[1][i] = MAKE_PIXEL_16(rgb565_norm[0][r],rgb565_norm[1][g],rgb565_norm[0][b]);
-    pixel_16_lut[2][i] = MAKE_PIXEL_16(rgb565_high[0][r],rgb565_high[1][g],rgb565_high[0][b]);
+    pixel_16_lut[0][i] = MAKE_PIXEL_16(r,g,b);
+    pixel_16_lut[1][i] = MAKE_PIXEL_16(r<<1,g<<1,b<<1);
+
+    pixel_16_lut[2][i] = MAKE_PIXEL_16(r|8,g|8,b|8);
   }
 }
 
@@ -1849,3 +1523,298 @@ static void render_obj_im2(uint32 line, uint32 odd, uint8 *buf, uint8 *table)
   spr_over = 0;
 }
 
+/*--------------------------------------------------------------------------*/
+/* Init, reset, shutdown routines                                           */
+/*--------------------------------------------------------------------------*/
+
+void render_init(void)
+{
+  int bx, ax, i;
+
+  /* Allocate and align pixel look-up tables */
+  if (lut_base == NULL) lut_base = malloc ((LUT_MAX * LUT_SIZE) + LUT_SIZE);
+  lut[0] = (uint8 *) (((uint32) lut_base + LUT_SIZE) & ~(LUT_SIZE - 1));
+  for (i = 1; i < LUT_MAX; i += 1) lut[i] = lut[0] + (i * LUT_SIZE);
+
+  /* Make pixel look-up table data */
+  for (bx = 0; bx < 0x100; bx += 1)
+    for (ax = 0; ax < 0x100; ax += 1)
+    {
+      uint16 index = (bx << 8) | (ax);
+      lut[0][index] = make_lut_bg (bx, ax);
+      lut[1][index] = make_lut_obj (bx, ax);
+      lut[2][index] = make_lut_bg_ste (bx, ax);
+      lut[3][index] = make_lut_obj_ste (bx, ax);
+      lut[4][index] = make_lut_bgobj_ste (bx, ax);
+    }
+
+  /* Make pixel data tables */
+  palette_init();
+
+  /* Set up color update function */
+#ifndef NGC
+  switch(bitmap.depth)
+  {
+    case 8: color_update = color_update_8; break;
+    case 15: color_update = color_update_15; break;
+    case 16: color_update = color_update_16; break;
+    case 32: color_update = color_update_32; break;
+  }
+#else
+  color_update = color_update_16;
+#endif
+
+  /* Make sprite name look-up table */
+  make_name_lut();
+}
+
+void render_reset(void)
+{
+  /* Clear display bitmap */
+  memset(bitmap.data, 0, bitmap.pitch * bitmap.height);
+
+  memset(bg_buf, 0, sizeof(bg_buf));
+  memset(tmp_buf, 0, sizeof(tmp_buf));
+  memset(nta_buf, 0, sizeof(nta_buf));
+  memset(ntb_buf, 0, sizeof(ntb_buf));
+  memset(obj_buf, 0, sizeof(obj_buf));
+
+#ifndef NGC
+  memset(&pixel_8, 0, sizeof(pixel_8));
+  memset(&pixel_15, 0, sizeof(pixel_15));
+  memset(&pixel_32, 0, sizeof(pixel_32));
+#endif
+  memset(&pixel_16, 0, sizeof(pixel_16));
+
+  window_clip();
+}
+
+
+void render_shutdown(void)
+{
+  if(lut_base) free(lut_base);
+}
+
+
+/*--------------------------------------------------------------------------*/
+/* Line render function                                                     */
+/*--------------------------------------------------------------------------*/
+
+void render_line(uint32 line, uint32 overscan)
+{
+  uint32 width    = bitmap.viewport.w;
+  uint32 x_offset = bitmap.viewport.x;
+
+  /* display OFF */
+  if (reg[0] & 0x01) return;
+
+  /* background color (blanked display or vertical borders) */
+  if (!(reg[1] & 0x40) || overscan)
+  {
+    width += 2 * x_offset;
+    memset(&tmp_buf[0x20 - x_offset], 0x40, width);
+  }
+  else
+  {
+    uint8 *lb = tmp_buf;
+
+    /* update pattern generator */
+    if (bg_list_index)
+    {
+      update_bg_pattern_cache(bg_list_index);
+      bg_list_index = 0;
+    }
+
+    /* double-resolution mode */
+    if(im2_flag)
+    {
+      uint32 odd = odd_frame;
+
+      /* render BG layers */
+      render_bg_im2(line, width, odd);
+
+      if (reg[12] & 8)
+      {
+        /* Shadow & Highlight */
+        merge(&nta_buf[0x20], &ntb_buf[0x20], &bg_buf[0x20], lut[2], width);
+        memset(&obj_buf[0x20], 0, width);
+        if (object_index_count) render_obj_im2(line, odd, obj_buf, lut[3]);
+        merge(&obj_buf[0x20], &bg_buf[0x20], &lb[0x20], lut[4], width);
+      }
+      else
+      {
+        merge(&nta_buf[0x20], &ntb_buf[0x20], &lb[0x20], lut[0], width);
+        if (object_index_count) render_obj_im2(line, odd, lb, lut[1]);
+      }
+    }
+    else
+    {
+      /* render BG layers */
+      if(reg[11] & 4) render_bg_vs(line, width);
+      else render_bg(line, width);
+
+      if(reg[12] & 8)
+      {
+        /* Shadow & Highlight */
+        merge(&nta_buf[0x20], &ntb_buf[0x20], &bg_buf[0x20], lut[2], width);
+        memset(&obj_buf[0x20], 0, width);
+        render_obj(line, obj_buf, lut[3]);
+        merge(&obj_buf[0x20], &bg_buf[0x20], &lb[0x20], lut[4], width);
+      }
+      else
+      {
+        merge(&nta_buf[0x20], &ntb_buf[0x20], &lb[0x20], lut[0], width);
+        render_obj(line, lb, lut[1]);
+      }
+    }
+
+    /* Mode 4 feature only (unemulated, no games rely on this) */
+    /*if(!(reg[1] & 0x04) && (reg[0] & 0x20)) memset(&lb[0x20], 0x40, 0x08);*/
+
+    /* borders */
+    if (x_offset)
+    {
+        memset(&lb[0x20 - x_offset], 0x40, x_offset);
+        memset(&lb[0x20 + width], 0x40, x_offset);
+        width += 2 * x_offset;
+    }
+  }
+
+  /* pixel color remapping */
+  remap_buffer(line,width);
+}
+
+void remap_buffer(uint32 line, uint32 width)
+{
+  /* get line offset from framebuffer */
+  line = (line + bitmap.viewport.y) % lines_per_frame;
+    
+  /* double resolution mode */
+  if (config.render && interlaced) line = (line * 2) + odd_frame;
+
+  /* NTSC Filter */
+  if (config.ntsc)
+  {
+    if (reg[12]&1) md_ntsc_blit(&md_ntsc, ( MD_NTSC_IN_T const * )pixel_16, tmp_buf+0x20-bitmap.viewport.x, width, line);
+    else sms_ntsc_blit(&sms_ntsc, ( SMS_NTSC_IN_T const * )pixel_16, tmp_buf+0x20-bitmap.viewport.x, width, line);
+    return;
+  }
+  
+#ifdef NGC
+  /* directly fill the RGB565 texture */
+  /* one tile is 32 byte = 4x4 pixels */
+  /* tiles are stored continuously in texture memory */
+  width = width >> 2;
+  int offset = ((width << 5) * (line >> 2)) + ((line & 3) * 8);
+  remap_texture(tmp_buf+0x20-bitmap.viewport.x, (uint16 *)(texturemem + offset), width);
+
+#else
+  void *out =((void *)&bitmap.data[(line * bitmap.pitch)]);
+  switch(bitmap.depth)
+  {
+    case 8:
+      remap_8(tmp_buf+0x20-bitmap.viewport.x, (uint8 *)out, pixel_8, width);
+      break;
+    case 15:
+      remap_16(tmp_buf+0x20-bitmap.viewport.x, (uint16 *)out, pixel_15, width);
+      break;
+    case 16:
+      remap_16(tmp_buf+0x20-bitmap.viewport.x, (uint16 *)out, pixel_16, width);
+      break;
+    case 32:
+      remap_32(tmp_buf+0x20-bitmap.viewport.x, (uint32 *)out, pixel_32, width);
+      break;
+  }
+#endif
+}
+
+/* Update Window Clipping (only called when registers change) */
+void window_clip(void)
+{
+  /* Window size and invert flags */
+  int hp = (reg[17] & 0x1f);
+  int hf = (reg[17] >> 7) & 1;
+
+  /* Display size  */
+  int sw =  bitmap.viewport.w >> 4;
+
+  /* Clear clipping data */
+  memset(&clip, 0, sizeof(clip));
+
+  /* Perform horizontal clipping; the results are applied in reverse
+      if the horizontal inversion flag is set */
+  int a = hf;
+  int w = hf ^ 1;
+
+  if(hp)
+  {
+    if(hp > sw)
+    {
+      /* Plane W takes up entire line */
+      clip[w].right = sw;
+      clip[w].enable = 1;
+    }
+    else
+    {
+      /* Window takes left side, Plane A takes right side */
+      clip[w].right = hp;
+      clip[a].left = hp;
+      clip[a].right = sw;
+      clip[0].enable = clip[1].enable = 1;
+    }
+  }
+  else
+  {
+    /* Plane A takes up entire line */
+    clip[a].right = sw;
+    clip[a].enable = 1;
+  }
+}
+
+/*--------------------------------------------------------------------------*/
+/* Sprites Parsing function                                                 */
+/*--------------------------------------------------------------------------*/
+
+void parse_satb(uint32 line)
+{
+  uint8 sizetab[] = {8, 16, 24, 32};
+  uint32 link = 0;
+  uint32 count, ypos, size, height;
+
+  uint32 limit = (reg[12] & 1) ? 20 : 16;
+  uint32 total = limit << 2;
+
+  uint16 *p = (uint16 *) &vram[satb];
+  uint16 *q = (uint16 *) &sat[0];
+
+  object_index_count = 0;
+
+  for(count = 0; count < total; count += 1)
+  {
+    ypos = (q[link] >> im2_flag) & 0x1FF;
+    size = q[link + 1] >> 8;
+    height = sizetab[size & 3];
+
+    if((line >= ypos) && (line < (ypos + height)))
+    {
+      /* sprite limit (max. 16 or 20 sprites displayed per line) */
+      if(object_index_count == limit)
+      {
+        if(vint_pending == 0) status |= 0x40;
+        return;
+      }
+
+      // using xpos from internal satb stops sprite x
+      // scrolling in bloodlin.bin,
+      // but this seems to go against the test prog
+      object_info[object_index_count].attr  = p[link + 2];
+      object_info[object_index_count].xpos  = p[link + 3];
+      object_info[object_index_count].ypos  = ypos;
+      object_info[object_index_count].size = size;
+      ++object_index_count;
+    }
+
+    link = (q[link + 1] & 0x7F) << 2;
+    if(link == 0) break;
+  }
+}
