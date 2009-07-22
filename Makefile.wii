@@ -17,16 +17,16 @@ include $(DEVKITPPC)/wii_rules
 #---------------------------------------------------------------------------------
 TARGET		:=	genplus_wii
 BUILD		:=	build_wii
-SOURCES		:=	source source/m68k source/z80 source/sound source/sound/SRC source/ntsc source/cart_hw source/cart_hw/svp \
+SOURCES		:=	source source/m68k source/z80 source/sound source/ntsc source/cart_hw source/cart_hw/svp \
 			source/gx source/gx/gui source/gx/fileio source/gx/images source/gx/sounds
-INCLUDES	:=	source source/m68k source/z80 source/sound source/sound/SRC source/ntsc source/cart_hw source/cart_hw/svp \
+INCLUDES	:=	source source/m68k source/z80 source/sound source/ntsc source/cart_hw source/cart_hw/svp \
 			build_wii source/gx source/gx/gui source/gx/fileio source/gx/images source/gx/sounds
 
 #---------------------------------------------------------------------------------
 # options for code generation
 #---------------------------------------------------------------------------------
 
-CFLAGS	= -O3 -fomit-frame-pointer -mrvl -Wall $(MACHDEP) -Wno-strict-aliasing $(INCLUDE) -DWORDS_BIGENDIAN -DNGC="1" -DHW_RVL
+CFLAGS	= -O3 -g -fomit-frame-pointer -mrvl -Wall $(MACHDEP) -Wno-strict-aliasing $(INCLUDE) -DWORDS_BIGENDIAN -DNGC="1" -DHW_RVL
 CXXFLAGS	=	$(CFLAGS)
 
 LDFLAGS	=	$(MACHDEP) -Wl,-Map,$(notdir $@).map
