@@ -766,7 +766,7 @@ static inline void reg_w(unsigned int r, unsigned int d)
           sat_addr_mask = 0x03FF;
           satb = (reg[5] << 9) & sat_base_mask;
 
-          /* update HC table */
+          /* Update HC table */
           hctab = cycle2hc40;
 
 #ifndef NGC
@@ -782,7 +782,7 @@ static inline void reg_w(unsigned int r, unsigned int d)
           sat_addr_mask = 0x01FF;
           satb = (reg[5] << 9) & sat_base_mask;
 
-          /* update HC table */
+          /* Update HC table */
           hctab = cycle2hc32;
 
 #ifndef NGC
@@ -831,7 +831,7 @@ static inline void reg_w(unsigned int r, unsigned int d)
       y_mask = y_mask_table[(d & 3)];
       break;
 
-    case 17: /* update clipping */
+    case 17: /* Update clipping */
       reg[17] = d;
       window_clip();
       break;

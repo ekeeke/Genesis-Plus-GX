@@ -156,29 +156,28 @@ void gx_audio_Start(void)
   StopOgg();
   ASND_Pause(1);
   AUDIO_StopDMA ();
+  AUDIO_RegisterDMACallback(NULL);
   audioStarted = 0;
 
   /* initialize default DMA length */
   /* PAL (50Hz): 20000 us period --> 960 samples/frame  @48kHz */
   /* NTSC (60Hz): 16667 us period --> 800 samples/frame @48kHz */
   dma_len   = vdp_pal ? 960 : 800;
+  dma_sync  = 0;
   mixbuffer = 0;
   delta     = 0;
 
   /* reset sound buffers */
   memset(soundbuffer, 0, 2 * 3840);
 
-  /* let's use audio DMA to synchronize frame emulation */
-  AUDIO_RegisterDMACallback(ai_callback);
+  /* By default, use audio DMA to synchronize frame emulation */
+  if (gc_pal | vdp_pal) AUDIO_RegisterDMACallback(ai_callback);
 
   /* 60hz video mode requires synchronization with Video interrupt      */
   /* VSYNC period is 16715 us which is approx. 802.32 samples           */
   /* to prevent audio/video desynchronization, we approximate the exact */
   /* number of samples by changing audio DMA length on each frame    */
-  if (vdp_pal | gc_pal)
-    dma_sync  = 0;
-  else
-    dma_sync = 80232;
+  else dma_sync = 80232;
 }
 
 /***

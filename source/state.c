@@ -124,7 +124,7 @@ int state_load(unsigned char *buffer)
 int state_save(unsigned char *buffer)
 {
   /* buffer size */
-  int bufferptr = 16;
+  int bufferptr = 0;
 
   /* version string */
   char version[16];

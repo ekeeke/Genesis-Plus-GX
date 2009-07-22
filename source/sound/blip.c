@@ -29,19 +29,20 @@ typedef int buf_t; /* type of element in delta buffer */
 
 struct blip_buffer_t
 {
-  int factor;         /* clocks to samples conversion factor */
-  int offset;         /* fractional position of clock 0 in delta buffer */
-  int amp;            /* current output amplitude (sum of all deltas up to now) */
-  int size;           /* size of delta buffer */
-  buf_t buf [65536];  /* delta buffer, only size elements actually allocated */
+  int factor; /* clocks to samples conversion factor */
+  int offset; /* fractional position of clock 0 in delta buffer */
+  int amp;    /* current output amplitude (sum of all deltas up to now) */
+  int size;   /* size of delta buffer */
+  buf_t *buf; /* delta buffer, only size elements actually allocated */
 };
 
 blip_buffer_t* blip_alloc( int clock_rate, int sample_rate, int size )
 {
   /* Allocate space for structure and delta buffer */
-  blip_buffer_t* s = (blip_buffer_t*) malloc(
-      offsetof (blip_buffer_t, buf) + (size + buf_extra) * sizeof (buf_t) );
-  if ( s != NULL )
+  blip_buffer_t* s = (blip_buffer_t*) malloc( sizeof(blip_buffer_t) );
+  if (!s) return 0;
+  s->buf = (buf_t*) malloc((size + buf_extra) * sizeof (buf_t) );
+  if ( s->buf != NULL )
   {
     /* Calculate output:input ratio and convert to fixed-point */
     double ratio = (double) sample_rate / clock_rate;
@@ -55,6 +56,7 @@ blip_buffer_t* blip_alloc( int clock_rate, int sample_rate, int size )
 
 void blip_free( blip_buffer_t* s )
 {
+  if (s->buf) free(s->buf);
   free( s );
 }
 

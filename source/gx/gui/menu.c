@@ -700,9 +700,7 @@ static void soundmenu ()
   float psg_volume = (double)config.psg_preamp/100.0;
   float fm_volume = (double)config.fm_preamp/100.0;
 
-  if (config.hq_fm == 0) sprintf (items[0].text, "High-Quality FM: OFF");
-  else if (config.hq_fm == 1) sprintf (items[0].text, "High-Quality FM: LINEAR");
-  else sprintf (items[0].text, "High-Quality FM: SINC");
+  sprintf (items[0].text, "High-Quality FM: %s", config.hq_fm ? "ON":"OFF");
   sprintf (items[1].text, "PSG Noise Boost: %s", config.psgBoostNoise ? "ON":"OFF");
   sprintf (items[2].text, "PSG Volume: %1.2f", psg_volume);
   sprintf (items[3].text, "FM Volume: %1.2f", (double)config.fm_preamp/100.0);
@@ -729,11 +727,8 @@ static void soundmenu ()
     switch (ret)
     {
       case 0:
-        config.hq_fm ++;
-        if (config.hq_fm > 2) config.hq_fm = 0;
-        if (config.hq_fm == 0) sprintf (items[0].text, "High-Quality FM: OFF");
-        else if (config.hq_fm == 1) sprintf (items[0].text, "High-Quality FM: LINEAR");
-        else sprintf (items[0].text, "High-Quality FM: SINC");
+        config.hq_fm ^= 1;
+        sprintf (items[0].text, "High-Quality FM: %s", config.hq_fm ? "ON":"OFF");
         if (genromsize) 
         {
           unsigned char *temp = memalign(32,YM2612GetContextSize());

@@ -22,7 +22,7 @@
  ****************************************************************************************/
 
 #include "shared.h"
-#include "samplerate.h"
+#include "Fir_Resampler.h"
 #include "eq.h"
 
 #define SND_SIZE (snd.buffer_size * sizeof(int16))
@@ -60,8 +60,6 @@ void audio_set_equalizer(void)
  * AUDIO stream update
  ****************************************************************/
 static int ll, rr;
-static SRC_DATA src_data;
-
 void audio_update (int size)
 {
   int i;
@@ -70,25 +68,24 @@ void audio_update (int size)
   int fm_preamp  = config.fm_preamp;
   int filter = config.filter;
 
+  int16 *fm[2] = {snd.fm.buffer[0],snd.fm.buffer[1]};
+  int16 *psg = snd.psg.buffer;
+
 #ifdef NGC
   int16 *sb = (int16 *) soundbuffer[mixbuffer];
 #endif
 
-  int *fm_l  = snd.fm.buffer[0];
-  int *fm_r  = snd.fm.buffer[1];
-  int16 *psg = snd.psg.buffer;
-  float *src = src_data.data_out;
-  double scaled_value;
-
   /* resampling */
-  if (src)
+  if (config.hq_fm)
   {
-    src_data.output_frames = size;
-    src_data.input_frames  = (int)((double)size / src_data.src_ratio + 0.5);
-    sound_update(src_data.input_frames,size);
-    src_simple(&src_data,(config.hq_fm&1) ? SRC_LINEAR : SRC_SINC_FASTEST, 2);
+    int fm_len = (int) ((double)size * Fir_Resampler_ratio() + 0.5) ;
+    sound_update(fm_len,size);
+    Fir_Resampler_read(fm,size);
   }
-  else sound_update(size,size);
+  else
+  {
+    sound_update(size,size);
+  }
 
   /* mix samples */
   for (i = 0; i < size; i ++)
@@ -97,33 +94,8 @@ void audio_update (int size)
     l = r = (((int)*psg++) * psg_preamp)/100;
 
     /* FM samples (stereo) */
-    if (src)
-    {
-      /* left channel */
-      scaled_value = (*src++) * (8.0 * 0x10000000);
-      if (scaled_value >= (1.0 * 0x7FFFFFFF))
-        l = 0x7fffffff;
-      else if (scaled_value <= (-8.0 * 0x10000000))
-        l = -1 - 0x7fffffff;
-      else
-        l += (lrint(scaled_value) * fm_preamp)/100;
-
-      /* right channel */
-      scaled_value = (*src++) * (8.0 * 0x10000000);
-      if (scaled_value >= (1.0 * 0x7FFFFFFF))
-        r = 0x7fffffff;
-      else if (scaled_value <= (-8.0 * 0x10000000))
-        r = -1 - 0x7fffffff;
-      else
-        r += (lrint(scaled_value) * fm_preamp)/100;
-    }
-    else
-    {
-      l += (*fm_l * fm_preamp)/100;
-      r += (*fm_r * fm_preamp)/100;
-      *fm_l++ = 0;
-      *fm_r++ = 0;
-    }
+    l += (*fm[0]++ * fm_preamp)/100;
+    r += (*fm[1]++ * fm_preamp)/100;
 
     /* filtering */
     if (filter & 1)
@@ -168,7 +140,6 @@ int audio_init (int rate)
 
   /* Clear the sound data context */
   memset(&snd, 0, sizeof (snd));
-  memset(&src_data, 0, sizeof(src_data));
 
   /* Make sure the requested sample rate is valid */
   if (!rate || ((rate < 8000) | (rate > 48000))) return (-1);
@@ -181,43 +152,26 @@ int audio_init (int rate)
 #else
   snd.buffer_size = (rate / vdp_rate);
 
-  /* allocate output buffers */
+  /* Output buffers */
   snd.buffer[0] = (int16 *) malloc(SND_SIZE);
   snd.buffer[1] = (int16 *) malloc(SND_SIZE);
   if (!snd.buffer[0] || !snd.buffer[1]) return (-1);
 #endif
 
-  /* SRC */
-  if (config.hq_fm)
-  {
-    /* SRC ratio (YM2612 original samplerate is VCLK/144) */
-    src_data.src_ratio = ((double)rate * 144.0) / ((double) vdp_rate * (double)m68cycles_per_line * (double)lines_per_frame);
-
-    /* max. output */
-    src_data.output_frames  = snd.buffer_size;
-
-    /* max. input */
-    snd.fm.size = (int)((double)src_data.output_frames / src_data.src_ratio + 0.5);
-    src_data.input_frames   = snd.fm.size;
-
-    /* SRC buffers */
-    src_data.data_in        = (float *) malloc(snd.fm.size*2*sizeof(float));
-    src_data.data_out       = (float *) malloc(snd.buffer_size*2*sizeof(float));
-    if (!src_data.data_in || !src_data.data_out) return (-1);
-    snd.fm.src_buffer = src_data.data_in;
-  }
-  else
-  {
-    /* YM2612 stream buffers */
-    snd.fm.size = snd.buffer_size;
-    snd.fm.buffer[0] = (int *)malloc (snd.fm.size * sizeof(int));
-    snd.fm.buffer[1] = (int *)malloc (snd.fm.size * sizeof(int));
-    if (!snd.fm.buffer[0] || !snd.fm.buffer[1]) return (-1);
-  }
-
   /* SN76489 stream buffers */
   snd.psg.buffer = (int16 *)malloc (SND_SIZE);
   if (!snd.psg.buffer) return (-1);
+
+  /* YM2612 stream buffers */
+  snd.fm.buffer[0] = (int16 *)malloc (SND_SIZE);
+  snd.fm.buffer[1] = (int16 *)malloc (SND_SIZE);
+  if (!snd.fm.buffer[0] || !snd.fm.buffer[1]) return (-1);
+
+  /* Resampling buffer */
+  if (config.hq_fm)
+  {
+    if (!Fir_Resampler_initialize(4096)) return (-1);
+  }
 
   /* 3 band EQ */
   audio_init_equalizer();
@@ -236,16 +190,15 @@ int audio_init (int rate)
  ****************************************************************/
 void audio_shutdown(void)
 {
-  /* free sound buffers */
+  /* Sound buffers */
   if (snd.buffer[0])    free(snd.buffer[0]);
   if (snd.buffer[1])    free(snd.buffer[1]);
   if (snd.fm.buffer[0]) free(snd.fm.buffer[0]);
   if (snd.fm.buffer[1]) free(snd.fm.buffer[1]);
   if (snd.psg.buffer)   free(snd.psg.buffer);
 
-  /* SRC */
-  if (src_data.data_in)   free(src_data.data_in);
-  if (src_data.data_out)  free(src_data.data_out);
+  /* Resampling buffer */
+  Fir_Resampler_shutdown();
 
   /* sn76489 chip (Blip Buffer allocated memory) */
   SN76489_Shutdown();
@@ -277,10 +230,11 @@ void system_reset (void)
   io_reset();
   SN76489_Reset();
 
-  /* Sound Buffers */
+  /* Clear Sound Buffers */
   if (snd.psg.buffer) memset (snd.psg.buffer, 0, SND_SIZE);
-  if (snd.fm.buffer[0]) memset (snd.fm.buffer[0], 0, snd.fm.size * sizeof(int));
-  if (snd.fm.buffer[1]) memset (snd.fm.buffer[1], 0, snd.fm.size * sizeof(int));
+  if (snd.fm.buffer[0]) memset (snd.fm.buffer[0], 0, SND_SIZE);
+  if (snd.fm.buffer[1]) memset (snd.fm.buffer[1], 0, SND_SIZE);
+  Fir_Resampler_clear();
 }
 
 /****************************************************************

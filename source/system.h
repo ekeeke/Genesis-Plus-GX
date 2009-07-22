@@ -65,16 +65,12 @@ typedef struct
   int16 *buffer[2]; /* Signed 16-bit stereo sound data */
   struct
   {
-    int size;
-    int curStage;
-    int lastStage;
-    int *buffer[2];
-    float *src_buffer;
+    int pos;
+    int16 *buffer[2];
   } fm;
   struct
   {
-    int curStage;
-    int lastStage;
+    int pos;
     int16 *buffer;
   } psg;
 } t_snd;

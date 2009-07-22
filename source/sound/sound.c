@@ -22,44 +22,41 @@
  ****************************************************************************************/
 
 #include "shared.h"
+#include "Fir_Resampler.h"
 
 /* cycle-accurate samples */
 static int m68cycles_per_sample[2];
 
-/* return the number of samples that should have been rendered so far */
-static inline uint32 fm_sample_cnt(uint8 is_z80)
+/* return the number of samples that should be retrieved */
+static inline int fm_sample_cnt(uint8 z80)
 {
-  if (is_z80) return ((count_z80 + current_z80 - z80_ICount) * 15) / (m68cycles_per_sample[0] * 7);
-  else return (count_m68k / m68cycles_per_sample[0]);
+  if (z80) return ((((count_z80 + current_z80 - z80_ICount) * 15) / (m68cycles_per_sample[0] * 7)) - snd.fm.pos);
+  else return ((count_m68k / m68cycles_per_sample[0]) - snd.fm.pos);
 }
 
-static inline uint32 psg_sample_cnt(uint8 is_z80)
+static inline int psg_sample_cnt(uint8 z80)
 {
-  if (is_z80) return ((count_z80 + current_z80 - z80_ICount) * 15) / (m68cycles_per_sample[1] * 7);
-  else return (count_m68k / m68cycles_per_sample[1]);
+  if (z80) return ((((count_z80 + current_z80 - z80_ICount) * 15) / (m68cycles_per_sample[1] * 7)) - snd.psg.pos);
+  else return ((count_m68k / m68cycles_per_sample[1]) - snd.psg.pos);
 }
 
 /* update FM samples */
-static inline void fm_update()
+static inline void fm_update(int cnt)
 {
-  if(snd.fm.curStage - snd.fm.lastStage > 0)
+  if (cnt > 0)
   {
-    int *tempBuffer[2];
-    tempBuffer[0] = snd.fm.buffer[0] + snd.fm.lastStage;
-    tempBuffer[1] = snd.fm.buffer[1] + snd.fm.lastStage;
-    YM2612UpdateOne(tempBuffer, snd.fm.curStage - snd.fm.lastStage);
-    snd.fm.lastStage = snd.fm.curStage;
+    YM2612Update(cnt);
+    snd.fm.pos += cnt;
   }
 }
 
 /* update PSG samples */
-static inline void psg_update()
+static inline void psg_update(int cnt)
 {
-  if(snd.psg.curStage - snd.psg.lastStage > 0)
+  if (cnt > 0)
   {
-    int16 *tempBuffer = snd.psg.buffer + snd.psg.lastStage;
-    SN76489_Update(tempBuffer, snd.psg.curStage - snd.psg.lastStage);
-    snd.psg.lastStage = snd.psg.curStage;
+    SN76489_Update(snd.psg.buffer + snd.psg.pos, cnt);
+    snd.psg.pos += cnt;
   }
 }
 
@@ -72,9 +69,12 @@ void sound_init(int rate)
   m68cycles_per_sample[0] = (int)(((double)m68cycles_per_line * (double)lines_per_frame * (double)vdp_rate / (double)rate) + 0.5);
   m68cycles_per_sample[1] = m68cycles_per_sample[0];
 
-  /* YM2612 is emulated at original frequency (VLCK/144) */
+  /* YM2612 is emulated at its original frequency (VLCK/144) */
   if (config.hq_fm)
+  {
     m68cycles_per_sample[0] = 144;
+    Fir_Resampler_time_ratio(vclk/144.0/(double)rate);
+  }
 
   /* initialize sound chips */
   SN76489_Init((int)zclk,rate);
@@ -83,37 +83,26 @@ void sound_init(int rate)
 
 void sound_update(int fm_len, int psg_len)
 {
-  /* finalize sound buffers */
-  snd.fm.curStage  = fm_len;
-  snd.psg.curStage = psg_len;
-
   /* update last samples (if needed) */
-  fm_update();
-  psg_update();
+  fm_update(fm_len - snd.fm.pos);
+  psg_update(psg_len - snd.psg.pos);
 
   /* reset samples count */
-  snd.fm.curStage   = 0;
-  snd.fm.lastStage  = 0;
-  snd.psg.curStage  = 0;
-  snd.psg.lastStage = 0;
+  snd.fm.pos   = 0;
+  snd.psg.pos  = 0;
 }
 
 /* write FM chip */
 void fm_write(unsigned int cpu, unsigned int address, unsigned int data)
 {
-  if (address & 1)
-  {
-    snd.fm.curStage = fm_sample_cnt(cpu);
-    fm_update();
-  }
+  if (address & 1) fm_update(fm_sample_cnt(cpu));
   YM2612Write(address, data);
 }
 
 /* read FM status */
 unsigned int fm_read(unsigned int cpu, unsigned int address)
 {
-  snd.fm.curStage = fm_sample_cnt(cpu);
-  fm_update();
+  fm_update(fm_sample_cnt(cpu));
   return YM2612Read();
 }
 
@@ -121,7 +110,6 @@ unsigned int fm_read(unsigned int cpu, unsigned int address)
 /* PSG write */
 void psg_write(unsigned int cpu, unsigned int data)
 {
-  snd.psg.curStage = psg_sample_cnt(cpu);
-  psg_update();
+  psg_update(psg_sample_cnt(cpu));
   SN76489_Write(data);
 }

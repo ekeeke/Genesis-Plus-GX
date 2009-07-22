@@ -334,6 +334,12 @@ static camera cam = {
   {0.0F, 0.0F, 0.0F}
 };
 
+/* VSYNC callback */
+static void vi_callback(u32 cnt)
+{
+  frameticker++;
+}
+
 /* Vertex Rendering */
 static inline void draw_vert(u8 pos, f32 s, f32 t)
 {
@@ -1246,7 +1252,8 @@ void gx_video_Stop(void)
   gxResetRendering(1);
   gxResetView(vmode);
 
-  /* inputs should be updated during VSYNC */
+  /* VSYNC default callbacks */
+  VIDEO_SetPreRetraceCallback(NULL);
   VIDEO_SetPostRetraceCallback(gx_input_UpdateMenu);
 
   /* reset VI & adjust overscan */
@@ -1266,7 +1273,9 @@ void gx_video_Start(void)
   else
     gc_pal = 0;
 
-  /* disable VSYNC callback */
+  /* VSYNC callbacks */
+  /* in 60hz mode we use VSYNC to synchronize frame emulation */
+  if (!gc_pal && !vdp_pal) VIDEO_SetPreRetraceCallback(vi_callback);
   VIDEO_SetPostRetraceCallback(NULL);
   VIDEO_Flush();
 

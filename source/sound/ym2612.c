@@ -124,6 +124,7 @@
 #include <math.h>
 
 #include "shared.h"
+#include "Fir_Resampler.h"
 
 /* globals */
 #define FREQ_SH     16    /* 16.16 fixed point (frequency calculations) */
@@ -1276,7 +1277,7 @@ INLINE void update_phase_lfo_channel(FM_CH *CH)
 
     /* keyscale code */
     int kc = (blk<<2) | opn_fktable[fn >> 8];
-
+    
      /* (frequency) phase increment counter */
     int fc = (ym2612.OPN.fn_table[fn]>>(7-blk));
 
@@ -1604,7 +1605,7 @@ INLINE void INTERNAL_TIMER_B(int step)
       /* reload the counter */
       if (ym2612.OPN.ST.TBL) ym2612.OPN.ST.TBC += ym2612.OPN.ST.TBL;
       else ym2612.OPN.ST.TBC = ym2612.OPN.ST.TBL;
-    }    
+    }
   }
 }
 
@@ -1616,7 +1617,7 @@ static void OPNSetPres(int pres)
   /* frequency base */
   ym2612.OPN.ST.freqbase = ((double) ym2612.OPN.ST.clock / (double) ym2612.OPN.ST.rate) / ((double) pres);
 
-  /* YM2612 running at original frequency (~53 kHz) */
+  /* YM2612 running at original frequency (~53267 Hz) */
   if (config.hq_fm) ym2612.OPN.ST.freqbase  = 1.0;
 
   ym2612.OPN.eg_timer_add  = (UINT32)((1<<EG_SH)  *  ym2612.OPN.ST.freqbase);
@@ -1902,17 +1903,21 @@ INLINE void OPNWriteReg(int r, int v)
 }
 
 /* Generate 32bits samples for ym2612 */
-void YM2612UpdateOne(int **buffer, int length)
+void YM2612Update(int length)
 {
   int i;
   int lt,rt;
+  int16 *bufL,*bufR;
 
   /* set buffers */
-  int  *bufL = buffer[0];
-  int  *bufR = buffer[1];
-  float *bufSRC = snd.fm.src_buffer ? (snd.fm.src_buffer + (2*snd.fm.lastStage)) : 0;
+  int16 *bufFIR = Fir_Resampler_buffer();
+  if (!bufFIR)
+  {
+    bufL  = snd.fm.buffer[0] + snd.fm.pos;
+    bufR  = snd.fm.buffer[1] + snd.fm.pos;
+  }
 
-  /* refresh PG and EG */
+  /* refresh PG and EG parameters */
   refresh_fc_eg_chan(&ym2612.CH[0]);
   refresh_fc_eg_chan(&ym2612.CH[1]);
 
@@ -1946,7 +1951,7 @@ void YM2612UpdateOne(int **buffer, int length)
     out_fm[4] = 0;
     out_fm[5] = 0;
 
-    /* update SSG-EG enveloppe type */
+    /* update SSG-EG */
     update_ssg_eg_channel(&ym2612.CH[0].SLOT[SLOT1]);
     update_ssg_eg_channel(&ym2612.CH[1].SLOT[SLOT1]);
     update_ssg_eg_channel(&ym2612.CH[2].SLOT[SLOT1]);
@@ -1982,28 +1987,28 @@ void YM2612UpdateOne(int **buffer, int length)
     }
     else chan_calc(&ym2612.CH[5]);
 
-    lt  = ((out_fm[0]>>0) & ym2612.OPN.pan[0]);
-    rt  = ((out_fm[0]>>0) & ym2612.OPN.pan[1]);
-    lt += ((out_fm[1]>>0) & ym2612.OPN.pan[2]);
-    rt += ((out_fm[1]>>0) & ym2612.OPN.pan[3]);
-    lt += ((out_fm[2]>>0) & ym2612.OPN.pan[4]);
-    rt += ((out_fm[2]>>0) & ym2612.OPN.pan[5]);
-    lt += ((out_fm[3]>>0) & ym2612.OPN.pan[6]);
-    rt += ((out_fm[3]>>0) & ym2612.OPN.pan[7]);
-    lt += ((out_fm[4]>>0) & ym2612.OPN.pan[8]);
-    rt += ((out_fm[4]>>0) & ym2612.OPN.pan[9]);
-    lt += ((out_fm[5]>>0) & ym2612.OPN.pan[10]);
-    rt += ((out_fm[5]>>0) & ym2612.OPN.pan[11]);
+    lt  = (out_fm[0] & ym2612.OPN.pan[0]);
+    rt  = (out_fm[0] & ym2612.OPN.pan[1]);
+    lt += (out_fm[1] & ym2612.OPN.pan[2]);
+    rt += (out_fm[1] & ym2612.OPN.pan[3]);
+    lt += (out_fm[2] & ym2612.OPN.pan[4]);
+    rt += (out_fm[2] & ym2612.OPN.pan[5]);
+    lt += (out_fm[3] & ym2612.OPN.pan[6]);
+    rt += (out_fm[3] & ym2612.OPN.pan[7]);
+    lt += (out_fm[4] & ym2612.OPN.pan[8]);
+    rt += (out_fm[4] & ym2612.OPN.pan[9]);
+    lt += (out_fm[5] & ym2612.OPN.pan[10]);
+    rt += (out_fm[5] & ym2612.OPN.pan[11]);
 
     /* limiter */
     Limit(lt,MAXOUT,MINOUT);
     Limit(rt,MAXOUT,MINOUT);
 
     /* buffering */
-    if (bufSRC)
+    if (bufFIR)
     {
-      *bufSRC++ = ((float) (lt)) / (8.0 * 0x10000000);
-      *bufSRC++ = ((float) (rt)) / (8.0 * 0x10000000);
+      *bufFIR++ = lt;
+      *bufFIR++ = rt;
     }
     else
     {
@@ -2030,8 +2035,12 @@ void YM2612UpdateOne(int **buffer, int length)
     }
   }
 
+  /* timer B control */
   INTERNAL_TIMER_B(length);
 
+  /* update FIR resampler */
+  if (bufFIR) 
+    Fir_Resampler_write(length * 2);
 }
 
 /* initialize ym2612 emulator(s) */

@@ -156,9 +156,8 @@ static __inline__ void WRITE_LONG(void *address, uint32 data)
   src++;
 #else
 #define DRAW_COLUMN(ATTR, LINE) \
-  attr_msb = ATTR >> 16; \
-  atex = atex_table[(ATTR_MSB >> 13) & 7]; \
-  src = (uint32 *)&bg_pattern_cache[(ATTR_MSB & 0x1FFF) << 6 | (LINE)]; \
+  atex = atex_table[(ATTR >> 29) & 7]; \
+  src = (uint32 *)&bg_pattern_cache[(ATTR & 0x1FFF0000) >> 10 | (LINE)]; \
   WRITE_LONG(dst, READ_LONG(src) | atex); \
   dst++; \
   src++; \
@@ -188,9 +187,8 @@ static __inline__ void WRITE_LONG(void *address, uint32 data)
   *dst++ = (*src++ | atex);
 #else
 #define DRAW_COLUMN(ATTR, LINE) \
-  attr_msb = ATTR >> 16; \
-  atex = atex_table[(attr_msb >> 13) & 7]; \
-  src = (uint32 *)&bg_pattern_cache[(attr_msb & 0x1FFF) << 6 | (LINE)]; \
+  atex = atex_table[(ATTR >> 29) & 7]; \
+  src = (uint32 *)&bg_pattern_cache[(ATTR & 0x1FFF0000) >> 10 | (LINE)]; \
   *dst++ = (*src++ | atex); \
   *dst++ = (*src++ | atex); \
   atex = atex_table[(ATTR >> 13) & 7]; \
@@ -238,10 +236,9 @@ static __inline__ void WRITE_LONG(void *address, uint32 data)
   src++; 
 #else
 #define DRAW_COLUMN_IM2(ATTR, LINE) \
-  attr_msb = ATTR >> 16; \
-  atex = atex_table[(attr_msb >> 13) & 7]; \
-  offs = (attr_msb & 0x03FF) << 7 | (attr_msb & 0x1800) << 6 | (LINE); \
-  if(attr_msb & 0x1000) offs ^= 0x40; \
+  atex = atex_table[(ATTR >> 29) & 7]; \
+  offs = (ATTR & 0x03FF0000) >> 9 | (ATTR & 0x18000000) >> 10 | (LINE); \
+  if(ATTR & 0x10000000) offs ^= 0x40; \
   src = (uint32 *)&bg_pattern_cache[offs]; \
   WRITE_LONG(dst, READ_LONG(src) | atex); \
   dst++; \
@@ -278,10 +275,9 @@ static __inline__ void WRITE_LONG(void *address, uint32 data)
   *dst++ = (*src++ | atex);
 #else
 #define DRAW_COLUMN_IM2(ATTR, LINE) \
-  attr_msb = ATTR >> 16; \
-  atex = atex_table[(attr_msb >> 13) & 7]; \
-  offs = (attr_msb & 0x03FF) << 7 | (attr_msb & 0x1800) << 6 | (LINE); \
-  if(attr_msb & 0x1000) offs ^= 0x40; \
+  atex = atex_table[(ATTR >> 29) & 7]; \
+  offs = (ATTR & 0x03FF0000) >> 9 | (ATTR & 0x18000000) >> 10 | (LINE); \
+  if(ATTR & 0x10000000) offs ^= 0x40; \
   src = (uint32 *)&bg_pattern_cache[offs]; \
   *dst++ = (*src++ | atex); \
   *dst++ = (*src++ | atex); \
@@ -756,7 +752,8 @@ static uint32 make_lut_bgobj_ste(uint32 bx, uint32 sx)
 
 static void color_update_8(int index, uint16 data)
 {
-  /* Palette Selection bit */
+  /* VDP Palette Selection bit */
+  /* color value is limited to 00X00X00X */
   if (!(reg[0] & 4)) data &= 0x49;
 
   if(reg[12] & 8)
@@ -776,7 +773,8 @@ static void color_update_8(int index, uint16 data)
 
 static void color_update_15(int index, uint16 data)
 {
-  /* Palette Selection bit */
+  /* VDP Palette Selection bit */
+  /* color value is limited to 00X00X00X */
   if (!(reg[0] & 4)) data &= 0x49;
 
   if(reg[12] & 8)
@@ -796,7 +794,8 @@ static void color_update_15(int index, uint16 data)
 
 static void color_update_32(int index, uint16 data)
 {
-  /* Palette Selection bit */
+  /* VDP Palette Selection bit */
+  /* color value is limited to 00X00X00X */
   if (!(reg[0] & 4)) data &= 0x49;
 
   if(reg[12] & 8)
@@ -818,7 +817,8 @@ static void color_update_32(int index, uint16 data)
 
 static void color_update_16(int index, uint16 data)
 {
-  /* Palette Selection bit */
+  /* VDP Palette Selection bit */
+  /* color value is limited to 00X00X00X */
   if (!(reg[0] & 4)) data &= 0x49;
 
   if(reg[12] & 8)
@@ -967,9 +967,6 @@ static inline uint32 get_hscroll(uint32 line)
 static void render_bg(uint32 line, uint32 width)
 {
   uint32 column, atex, atbuf, *src, *dst;
-#ifndef LSB_FIRST
-  uint32 attr_msb;
-#endif
 
   /* common data */
   uint32 xscroll      = get_hscroll(line);
@@ -1088,9 +1085,6 @@ static void render_bg(uint32 line, uint32 width)
 static void render_bg_vs(uint32 line, uint32 width)
 {
   uint32 column, atex, atbuf, *src, *dst;
-#ifndef LSB_FIRST
-  uint32 attr_msb;
-#endif
 
   /* common data */
   uint32 xscroll      = get_hscroll(line);
@@ -1221,9 +1215,6 @@ static void render_bg_vs(uint32 line, uint32 width)
 static void render_bg_im2(uint32 line, uint32 width, uint32 odd)
 {
   uint32 column, atex, atbuf, offs, *src, *dst;
-#ifndef LSB_FIRST
-  uint32 attr_msb;
-#endif
 
   /* common data */
   uint32 xscroll      = get_hscroll(line);
@@ -1728,7 +1719,7 @@ void remap_buffer(uint32 line, uint32 width)
 #endif
 }
 
-/* Update Window Clipping (only called when registers change) */
+/* Update Window Clipping (now only called on VDP registers change) */
 void window_clip(void)
 {
   /* Window size and invert flags */
