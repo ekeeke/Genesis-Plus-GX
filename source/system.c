@@ -220,7 +220,7 @@ void system_init (void)
  ****************************************************************/
 void system_reset (void)
 {
-  /* Cartridge Hardware */
+  /* Cartridge Hardware (should be done first !) */
   cart_hw_reset();
 
   /* Genesis Hardware */

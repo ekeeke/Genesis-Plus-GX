@@ -230,12 +230,13 @@ static gui_item items_audio[8] =
 };
 
 /* System options menu */
-static gui_item items_system[5] =
+static gui_item items_system[6] =
 {
   {NULL,NULL,"Console Region: AUTO",  "Select system region",                     52,132,276,48},
   {NULL,NULL,"System Lockups: OFF",   "Enable/disable original system lock-ups",  52,132,276,48},
   {NULL,NULL,"68k Address Error: ON", "Enable/disable 68k Address Error",         52,132,276,48},
   {NULL,NULL,"System BIOS: OFF",      "Enable/disable TMSS BIOS support",         52,132,276,48},
+  {NULL,NULL,"Lock-on: OFF",          "Select Lock-On cartridge type",            52,132,276,48},
   {NULL,NULL,"SVP Cycles: 1500",      "Adjust SVP chip emulation speed",          52,132,276,48}
 };
 
@@ -410,7 +411,7 @@ static gui_menu menu_system =
 {
   "System Settings",
   0,0,
-  5,4,6,
+  6,4,6,
   items_system,
   buttons_list,
   bg_list,
@@ -833,16 +834,18 @@ static void systemmenu ()
   sprintf (items[1].text, "System Lockups: %s", config.force_dtack ? "OFF" : "ON");
   sprintf (items[2].text, "68k Address Error: %s", config.addr_error ? "ON" : "OFF");
   sprintf (items[3].text, "System BIOS: %s", (config.bios_enabled & 1) ? "ON":"OFF");
+  if (config.lock_on == CART_GG) sprintf (items[4].text, "Lock-On: GAME GENIE");
+  else  sprintf (items[4].text, "Lock-On: OFF");
 
   if (svp)
   {
-    sprintf (items[4].text, "SVP Cycles: %d", SVP_cycles);
-    m->max_items = 5;
+    sprintf (items[5].text, "SVP Cycles: %d", SVP_cycles);
+    m->max_items = 6;
   }
   else
   {
-    m->max_items = 4;
-    m->offset = 0;
+    m->max_items = 5;
+    if (m->offset > 1) m->offset =1;
   }
 
   GUI_InitMenu(m);
@@ -909,7 +912,13 @@ static void systemmenu ()
         }
         break;
 
-      case 4:  /*** SVP emulation ***/
+      case 4:  /*** Cart Lock-On ***/
+        config.lock_on++;
+        if (config.lock_on > CART_GG) config.lock_on = NO_CART;
+        if (config.lock_on == CART_GG) sprintf (items[4].text, "Lock-On: GAME GENIE");
+        else  sprintf (items[4].text, "Lock-On: OFF");
+
+      case 5:  /*** SVP emulation ***/
         GUI_OptionBox(m,0,"SVP Cycles",(void *)&SVP_cycles,1,1,1500,1);
         sprintf (items[4].text, "SVP Cycles: %d", SVP_cycles);
         break;

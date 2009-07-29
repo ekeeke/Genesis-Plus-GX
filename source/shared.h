@@ -26,6 +26,7 @@
 #include "cart_hw.h"
 #include "eeprom.h"
 #include "sram.h"
+#include "ggenie.h"
 #include "svp.h"
 #include "osd.h"
 

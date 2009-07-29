@@ -25,7 +25,10 @@
 #include "config.h"
 #include "file_mem.h"
 
-#define DEFAULT_PATH "/genplus"
+#define DEFAULT_PATH  "/genplus"
+#define GAMEGENIE_ROM "/genplus/ggenie.bin"
+#define BIOS_ROM      "/genplus/bios.bin"
+
 #ifdef HW_RVL
 #define VERSION "version 1.3.2cW"
 #else

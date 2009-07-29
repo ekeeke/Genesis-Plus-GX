@@ -1909,7 +1909,8 @@ void YM2612Update(int length)
 {
   int i;
   int lt,rt;
-  int16 *bufL,*bufR;
+  int16 *bufL = 0;
+  int16 *bufR = 0;
 
   /* Output samples buffers */
   int16 *bufFIR = Fir_Resampler_buffer();

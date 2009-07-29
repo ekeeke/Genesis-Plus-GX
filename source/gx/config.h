@@ -43,6 +43,7 @@ typedef struct
   uint8 force_dtack;
   uint8 addr_error;
   uint8 bios_enabled;
+  uint8 lock_on;
   int16 xshift;
   int16 yshift;
   int16 xscale;

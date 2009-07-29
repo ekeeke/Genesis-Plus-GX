@@ -27,6 +27,12 @@
 #ifndef _CART_HW_H_
 #define _CART_HW_H_
 
+/* Lock-ON cartridge devices */
+#define NO_CART  0 /* no connections */
+#define CART_GG  1 /* game genie */
+#define CART_AR  2 /* action replay */
+#define CART_SK  3 /* Sonic & Knuckles  */
+
 /* Hardware description */
 typedef struct
 {

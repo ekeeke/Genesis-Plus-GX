@@ -1,22 +1,24 @@
 ---------------------------------------------------------------------------------------------------------
-Genesis Plus GX 1.3.2 (??/??/????) (Eke-Eke)
+Genesis Plus GX 1.4.0 (??/??/????) (Eke-Eke)
 ---------------------------------------------------------------------------------------------------------
 
 [Core]
 ------
 
-* optimized SN76489 core
-* modified SN76489 cut-off frequency (thanks to Steve Snake)
-* modified SN76489 core to use Blip Buffer linear synthesis , Noise channel is now linear averaged (thanks to Blargg)
+* modified SN76489 cut-off frequency
+* implemented optimized SN76489 core from Blargg that uses Blip Buffer linear synthesis (Noise Channel is now linear interpolated)
 * added an option to boost SN76489 Noise Channel
-* removed now outdated Gens YM2612 core
-* improved YM2612 emulation accuracy (SSG-EG, CSM mode...) (thanks to Nemesis for his tests on real hardware)
+* removed outdated Gens YM2612 core
+* improved YM2612 core general accuracy (SSG-EG, CSM mode,...) (based upon Nemesis recent tests on real MD)
+* improved YM2612 LFO emulation (fixes "Spider-Man & Venom : Separation Anxiety" intro music)
 * fixed YM2612 context saving/loading.
-* added 3 Band Equalizer for improved & fully configurable sound filtering (taken from Softdev's NeoCD Redux)
-* improved sprites masking emulation: fixes 3D level in Mickey Mania (thanks to Nemesis for his test program)
+* added 3-Band EQ for fully configurable sound filtering (credits to Neil C / Etanza Systems)
+* implemented faster and better FIR resampler, removed libsamplerate support (thanks to Blargg and AamirM), Virtua Racing now plays fullspeed
+when High Quality FM is enabled.
+* improved VDP sprite masking emulation: fixes 3D level in Mickey Mania (thanks to Nemesis for his sprite test program)
 * fixed lightgun autodetection: fixes cursor position in Lethal Enforcers II
-* improved DIVU/DVIS (thanks to Jorge Cwik) & MULU/MULS instructions timing accuracy 
-* lots of code cleanup & core optimizations
+* improved DIVU/DVIS (thanks to Jorge Cwik) & MULU/MULS 68k instructions timing accuracy 
+* various code cleanup & core optimizations
 
 [Gamecube/Wii]
 
@@ -24,8 +26,8 @@ Genesis Plus GX 1.3.2 (??/??/????) (Eke-Eke)
 * fixed stability issues and some (potential) memory leaks
 * added internal screenshot feature
 * improved lightgun cursors
-* new FONT & GUI engines: use internal IPL FONT, GX hardware & multithreading for fast rendering.
-* new interface: incl. IR pointing, ROM snapshots, menu effects, sound effects, BGM... (check the README for more details)
+* implemented new FONT & GUI engines: use internal IPL FONT, GX hardware & multithreading for fast rendering.
+* implemented new interface: incl. IR pointing, ROM snapshots, menu effects, sound effects, BGM... (check the README for more details)
 
 
 

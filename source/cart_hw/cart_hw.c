@@ -151,6 +151,9 @@ void cart_hw_reset()
 
   /* SVP chip */
   if (svp) svp_reset();
+
+  /* Game Genie hardware */
+  if (config.lock_on == CART_GG) ggenie_reset();
 }
 
 /* cart hardware detection */
@@ -221,6 +224,11 @@ void cart_hw_init()
       zbank_memory_map[sram.start >> 16].write  = NULL;
     }
   }
+
+  /**********************************************
+          GAME GENIE 
+  ***********************************************/
+  if (config.lock_on == CART_GG) ggenie_init();
 
   /**********************************************
           SVP CHIP 

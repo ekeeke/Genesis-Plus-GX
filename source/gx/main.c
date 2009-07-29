@@ -54,14 +54,11 @@ static void Power_Off(void)
  ***************************************************************************/
 static void load_bios(void)
 {
-  char pathname[MAXPATHLEN];
-
   /* reset BIOS found flag */
   config.bios_enabled &= ~2;
 
   /* open BIOS file */
-  sprintf (pathname, "%s/BIOS.bin",DEFAULT_PATH);
-  FILE *fp = fopen(pathname, "rb");
+  FILE *fp = fopen(BIOS_ROM, "rb");
   if (fp == NULL) return;
 
   /* read file */
