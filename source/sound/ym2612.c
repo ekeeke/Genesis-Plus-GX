@@ -917,19 +917,20 @@ INLINE void set_ar_ksr(FM_CH *CH,FM_SLOT *SLOT,int v)
     CH->SLOT[SLOT1].Incr=-1;
   }
 
-  /* Even if it seems unnecessary, in some odd case, KSR and KC are both modified   */
-  /* and could result in SLOT->kc remaining unchanged.                              */
-  /* In such case, AR values would not be recalculated despite SLOT->ar has changed */
-  /* This fixes the introduction music of Batman & Robin    (Eke-Eke)               */
-  if ((SLOT->ar + SLOT->ksr) < 94 /*32+62*/)
+  /* Even if it seems unnecessary to do it here, it could happen that KSR and KC  */
+  /* but the resulted SLOT->ksr value (kc >> SLOT->KSR) remains unchanged.        */
+  /* In such case, Attack Rate would not be recalculated by "refresh_fc_eg_slot". */
+  /* This fixes the intro of "The Adventures of Batman & Robin" (Eke-Eke)         */
+  if ((SLOT->ar + SLOT->ksr) < (32+62))
   {
     SLOT->eg_sh_ar  = eg_rate_shift [SLOT->ar  + SLOT->ksr ];
     SLOT->eg_sel_ar = eg_rate_select[SLOT->ar  + SLOT->ksr ];
   }
   else
   {
+    /* verified by Nemesis on real hardware (Attack phase is blocked) */
     SLOT->eg_sh_ar  = 0;
-    SLOT->eg_sel_ar = 18*RATE_STEPS; /* verified by Nemesis on real hardware (Attack phase is blocked) */
+    SLOT->eg_sel_ar = 18*RATE_STEPS;
   }
  }
 
@@ -1392,15 +1393,16 @@ INLINE void refresh_fc_eg_slot(FM_SLOT *SLOT , int fc , int kc )
     SLOT->ksr = ksr;
 
     /* recalculate envelope generator rates */
-    if ((SLOT->ar + SLOT->ksr) < 94 /*32+62*/)
+    if ((SLOT->ar + SLOT->ksr) < (32+62))
     {
       SLOT->eg_sh_ar  = eg_rate_shift [SLOT->ar  + SLOT->ksr ];
       SLOT->eg_sel_ar = eg_rate_select[SLOT->ar  + SLOT->ksr ];
     }
     else
     {
+      /* verified by Nemesis on real hardware (Attack phase is blocked) */
       SLOT->eg_sh_ar  = 0;
-      SLOT->eg_sel_ar = 18*RATE_STEPS; /* verified by Nemesis on real hardware (Attack phase is blocked) */
+      SLOT->eg_sel_ar = 18*RATE_STEPS;
     }
 
     SLOT->eg_sh_d1r = eg_rate_shift [SLOT->d1r + SLOT->ksr];
@@ -1952,6 +1954,14 @@ void YM2612Update(int length)
     out_fm[4] = 0;
     out_fm[5] = 0;
 
+    /* update SSG-EG output */
+    update_ssg_eg_channel(&ym2612.CH[0].SLOT[SLOT1]);
+    update_ssg_eg_channel(&ym2612.CH[1].SLOT[SLOT1]);
+    update_ssg_eg_channel(&ym2612.CH[2].SLOT[SLOT1]);
+    update_ssg_eg_channel(&ym2612.CH[3].SLOT[SLOT1]);
+    update_ssg_eg_channel(&ym2612.CH[4].SLOT[SLOT1]);
+    update_ssg_eg_channel(&ym2612.CH[5].SLOT[SLOT1]);
+
     /* calculate FM */
     chan_calc(&ym2612.CH[0]);
     chan_calc(&ym2612.CH[1]);
@@ -1961,17 +1971,9 @@ void YM2612Update(int length)
     if (ym2612.dacen)
     {
       /* DAC Mode */
-      *(ym2612.CH[5].connect4) += ym2612.dacout;
+      out_fm[5] = ym2612.dacout;
     }
     else chan_calc(&ym2612.CH[5]);
-
-    /* update SSG-EG output */
-    update_ssg_eg_channel(&ym2612.CH[0].SLOT[SLOT1]);
-    update_ssg_eg_channel(&ym2612.CH[1].SLOT[SLOT1]);
-    update_ssg_eg_channel(&ym2612.CH[2].SLOT[SLOT1]);
-    update_ssg_eg_channel(&ym2612.CH[3].SLOT[SLOT1]);
-    update_ssg_eg_channel(&ym2612.CH[4].SLOT[SLOT1]);
-    update_ssg_eg_channel(&ym2612.CH[5].SLOT[SLOT1]);
 
     /* advance LFO */
     advance_lfo();

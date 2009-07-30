@@ -95,7 +95,7 @@ void SN76489_Reset()
   p->NoiseShiftRegister=NoiseInitialState;
 
   /* Clear Blip delta buffer */
-  blip_clear(p->blip_buffer);
+  if (p->blip_buffer) blip_clear(p->blip_buffer);
 }
 
 void SN76489_Shutdown(void)

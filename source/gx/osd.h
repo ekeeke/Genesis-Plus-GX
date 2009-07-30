@@ -26,13 +26,13 @@
 #include "file_mem.h"
 
 #define DEFAULT_PATH  "/genplus"
-#define GAMEGENIE_ROM "/genplus/ggenie.bin"
-#define BIOS_ROM      "/genplus/bios.bin"
+#define GG_ROM        "/genplus/ggenie.bin"
+#define OS_ROM        "/genplus/bios.bin"
 
 #ifdef HW_RVL
-#define VERSION "version 1.3.2cW"
+#define VERSION "version 1.3.3W"
 #else
-#define VERSION "version 1.3.2cG"
+#define VERSION "version 1.3.3G"
 #endif
 
 /* globals */

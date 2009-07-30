@@ -44,7 +44,7 @@ void ggenie_init(void)
   memset(&ggenie,0,sizeof(ggenie));
 
   /* load Game Genie ROM program */
-  FILE *f = fopen(GAMEGENIE_ROM,"rb");
+  FILE *f = fopen(GG_ROM,"rb");
   if (!f) return;
   fread(ggenie.rom,1,0x8000,f);
   fclose(f);
@@ -97,7 +97,7 @@ void ggenie_reset(void)
 
 
 /* Byte write handler */
-/* Note: 2nd revision of the Game Genie software use byte writes to set registe values on exit */
+/* Note: 2nd revision of the Game Genie software use byte writes to set register values on exit */
 static void ggenie_write_byte(uint32 address, uint32 data)
 {
   /* Lock bit */
@@ -212,6 +212,6 @@ static void ggenie_write_regs(uint8 offset, uint32 data, uint8 type)
 static uint32 ggenie_read_regs(uint32 address)
 {
   if (address < 0x40) return ggenie.regs[address >> 1];
-  else  return *(uint16 *)(cart_rom + address);
+  else return *(uint16 *)(cart_rom + address); /* is that correct ? */
 }
 

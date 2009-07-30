@@ -513,7 +513,7 @@ int FileSelector(unsigned char *buffer, bool useFAT)
           else
           {
             /* user confirmation */
-            if (GUI_ConfirmPrompt("Load this file ?"))
+            if (GUI_ConfirmPrompt("Load selected File ?"))
             {
               /* Load ROM file from device */
               if (useFAT)

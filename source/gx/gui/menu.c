@@ -217,16 +217,18 @@ static gui_item items_options[5] =
 };
 
 /* Audio options menu */
-static gui_item items_audio[8] =
+static gui_item items_audio[10] =
 {
   {NULL,NULL,"High-Quality FM: LINEAR", "Setup YM2612 resampling",      52,132,276,48},
   {NULL,NULL,"PSG Noise Boost: OFF",    "Boost PSG Noise Channel",      52,132,276,48},
   {NULL,NULL,"PSG Volume: 2.50",        "Adjust SN76489 output level",  52,132,276,48},
   {NULL,NULL,"FM Volume: 1.00",         "Adjust YM2612 output level",   52,132,276,48},
   {NULL,NULL,"Filtering: 3-BAND EQ",    "Setup Audio filtering",        52,132,276,48},
-  {NULL,NULL,"Low Gain: 1.00",          "Adjust EQ Low Gain",           52,132,276,48},
-  {NULL,NULL,"Middle Gain: 1.00",       "Adjust EQ Middle Gain",        52,132,276,48},
-  {NULL,NULL,"High Gain: 1.00",         "Adjust EQ High Gain",          52,132,276,48},
+  {NULL,NULL,"Low Freq: 200 Hz",   "Adjust EQ Low Band Frequency", 52,132,276,48},
+  {NULL,NULL,"High Freq: 20000 Hz","Adjust EQ High Band Frequency",52,132,276,48},
+  {NULL,NULL,"Low Gain: 1.00",          "Adjust EQ Low Band Gain",      52,132,276,48},
+  {NULL,NULL,"Middle Gain: 1.00",       "Adjust EQ Middle Band Gain",   52,132,276,48},
+  {NULL,NULL,"High Gain: 1.00",         "Adjust EQ High BandGain",      52,132,276,48},
 };
 
 /* System options menu */
@@ -439,7 +441,7 @@ static gui_menu menu_audio =
 {
   "Audio Settings",
   0,0,
-  8,4,6,
+  10,4,6,
   items_audio,
   buttons_list,
   bg_list,
@@ -708,16 +710,18 @@ static void soundmenu ()
   if (config.filter == 2) sprintf (items[4].text, "Filtering: 3-BAND EQ");
   else if (config.filter == 1) sprintf (items[4].text, "Filtering: LOW PASS");
   else sprintf (items[4].text, "Filtering: OFF");
-  sprintf (items[5].text, "Low Gain: %1.2f", config.lg);
-  sprintf (items[6].text, "Middle Gain: %1.2f", config.mg);
-  sprintf (items[7].text, "High Gain: %1.2f", config.hg);
+  sprintf (items[5].text, "Low Freq: %d", config.low_freq);
+  sprintf (items[6].text, "High Freq: %d", config.high_freq);
+  sprintf (items[7].text, "Low Gain: %1.2f", config.lg);
+  sprintf (items[8].text, "Middle Gain: %1.2f", config.mg);
+  sprintf (items[9].text, "High Gain: %1.2f", config.hg);
 
   GUI_InitMenu(m);
 
   if (config.filter < 2)
     m->max_items  = 5;
   else
-    m->max_items  = 8;
+    m->max_items  = 10;
 
   GUI_SlideMenuTitle(m,strlen("Audio "));
 
@@ -781,28 +785,40 @@ static void soundmenu ()
         else
         {
           /* enable items */
-          m->max_items  = 8;
+          m->max_items  = 10;
 
           /* intialize EQ */
-          audio_init_equalizer();
+          audio_set_equalizer();
         }
         break;
 
       case 5:
-        GUI_OptionBox(m,0,"Low Gain",(void *)&config.lg,0.01,0.0,2.0,0);
-        sprintf (items[5].text, "Low Gain: %1.2f", config.lg);
+        GUI_OptionBox(m,0,"Low Frequency",(void *)&config.low_freq,10,0,config.high_freq,1);
+        sprintf (items[5].text, "Low Freq: %d", config.low_freq);
         audio_set_equalizer();
         break;
 
       case 6:
-        GUI_OptionBox(m,0,"Middle Gain",(void *)&config.mg,0.01,0.0,2.0,0);
-        sprintf (items[6].text, "Middle Gain: %1.2f", config.mg);
+        GUI_OptionBox(m,0,"High Frequency",(void *)&config.high_freq,100,config.low_freq,30000,1);
+        sprintf (items[6].text, "High Freq: %d", config.high_freq);
         audio_set_equalizer();
         break;
 
       case 7:
+        GUI_OptionBox(m,0,"Low Gain",(void *)&config.lg,0.01,0.0,2.0,0);
+        sprintf (items[7].text, "Low Gain: %1.2f", config.lg);
+        audio_set_equalizer();
+        break;
+
+      case 8:
+        GUI_OptionBox(m,0,"Middle Gain",(void *)&config.mg,0.01,0.0,2.0,0);
+        sprintf (items[8].text, "Middle Gain: %1.2f", config.mg);
+        audio_set_equalizer();
+        break;
+
+      case 9:
         GUI_OptionBox(m,0,"High Gain",(void *)&config.hg,0.01,0.0,2.0,0);
-        sprintf (items[7].text, "High Gain: %1.2f", config.hg);
+        sprintf (items[9].text, "High Gain: %1.2f", config.hg);
         audio_set_equalizer();
         break;
 
@@ -867,7 +883,7 @@ static void systemmenu ()
         {
           /* force region & cpu mode */
           set_region();
-          
+
           /* reinitialize timings */
           system_init ();
           unsigned char *temp = memalign(32,YM2612GetContextSize());
@@ -916,11 +932,18 @@ static void systemmenu ()
         config.lock_on++;
         if (config.lock_on > CART_GG) config.lock_on = NO_CART;
         if (config.lock_on == CART_GG) sprintf (items[4].text, "Lock-On: GAME GENIE");
-        else  sprintf (items[4].text, "Lock-On: OFF");
+        else sprintf (items[4].text, "Lock-On: OFF");
+        if (genromsize || (config.bios_enabled == 3)) 
+        {
+          system_init ();
+          audio_init(48000);
+          system_reset ();
+        }
+        break;
 
       case 5:  /*** SVP emulation ***/
         GUI_OptionBox(m,0,"SVP Cycles",(void *)&SVP_cycles,1,1,1500,1);
-        sprintf (items[4].text, "SVP Cycles: %d", SVP_cycles);
+        sprintf (items[5].text, "SVP Cycles: %d", SVP_cycles);
         break;
 
       case -1:

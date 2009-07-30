@@ -109,7 +109,9 @@ double do_3band(EQSTATE * es, int sample)
 
     // Calculate midrange (signal - (low + high))
 
-    m = es->sdm3 - (h + l);
+    //m = es->sdm3 - (h + l);
+    // fix from http://www.musicdsp.org/showArchiveComment.php?ArchiveID=236 ?
+    m = sample - (h + l);
 
     // Scale, Combine and store
 

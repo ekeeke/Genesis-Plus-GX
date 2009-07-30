@@ -43,14 +43,9 @@ uint8 system_hw;
  ****************************************************************/
 static EQSTATE eq;
 
-void audio_init_equalizer(void)
-{
-  init_3band_state(&eq,880,5000,snd.sample_rate);
-  audio_set_equalizer();
-}
-
 void audio_set_equalizer(void)
 {
+  init_3band_state(&eq,config.low_freq,config.high_freq,snd.sample_rate);
   eq.lg = (double)(config.lg);
   eq.mg = (double)(config.mg);
   eq.hg = (double)(config.hg);
@@ -101,10 +96,10 @@ void audio_update (int size)
     if (filter & 1)
     {
       /* single-pole low-pass filter (6 dB/octave) */
-      l = (ll + l) >> 1;
-      r = (rr + r) >> 1;
-      ll = l;
-      rr = r;
+      ll = (ll + l) >> 1;
+      rr = (rr + r) >> 1;
+      l = ll;
+      r = rr;
     }
     else if (filter & 2)
     {
@@ -174,7 +169,7 @@ int audio_init (int rate)
   }
 
   /* 3 band EQ */
-  audio_init_equalizer();
+  audio_set_equalizer();
 
   /* Set audio enable flag */
   snd.enabled = 1;

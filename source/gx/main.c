@@ -58,7 +58,7 @@ static void load_bios(void)
   config.bios_enabled &= ~2;
 
   /* open BIOS file */
-  FILE *fp = fopen(BIOS_ROM, "rb");
+  FILE *fp = fopen(OS_ROM, "rb");
   if (fp == NULL) return;
 
   /* read file */
