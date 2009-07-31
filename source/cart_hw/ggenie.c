@@ -64,6 +64,10 @@ void ggenie_init(void)
   }
 #endif
 
+  /* enable registers write */
+  m68k_memory_map[0].write8   = ggenie_write_byte;
+  m68k_memory_map[0].write16  = ggenie_write_word;
+
   /* set flag */
   ggenie.enabled = 1;
 }
@@ -86,12 +90,8 @@ void ggenie_reset(void)
   memset(ggenie.data,0,sizeof(ggenie.data));
   memset(ggenie.addr,0,sizeof(ggenie.addr));
 
-  /* default slot mapping */
-  /* reads  are mapped to Game Genie ROM */
-  /* writes are mapped to Game Genie internal registers */
+  /* slot 0 is mapped to Game Genie ROM */
   m68k_memory_map[0].base     = ggenie.rom;
-  m68k_memory_map[0].write8   = ggenie_write_byte;
-  m68k_memory_map[0].write16  = ggenie_write_word;
   m68k_memory_map[0].read16   = NULL;
 }
 

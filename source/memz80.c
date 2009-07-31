@@ -47,7 +47,7 @@ static inline void z80_lockup_w(unsigned int address, unsigned int data)
 #ifdef LOGERROR
   error("Z80 lockup write %04X = %02X\n", address, data);
 #endif
-   gen_running = config.force_dtack;
+  gen_running = config.force_dtack;
 }
 
 static inline unsigned int z80_lockup_r(unsigned int address)
@@ -67,13 +67,13 @@ static inline unsigned int z80_vdp_r(unsigned int address)
   {
     case 0x00:  /* DATA */
       return (vdp_data_r() >> 8);
-          
+
     case 0x01:  /* DATA */
       return (vdp_data_r() & 0xff);
 
     case 0x04:  /* CTRL */
       return (0xfc | ((vdp_ctrl_r() >> 8) & 3));
-          
+
     case 0x05:  /* CTRL */
       return (vdp_ctrl_r() & 0xff);
 

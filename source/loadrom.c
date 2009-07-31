@@ -347,6 +347,7 @@ void set_region ()
     if (c == 'U') country |= 4;
     else if (c == 'J') country |= 1;
     else if (c == 'E') country |= 8;
+    else if (c == 'K') country |= 1;
     else if (c < 16) country |= c;
     else if ((c >= '0') && (c <= '9')) country |= c - '0';
     else if ((c >= 'A') && (c <= 'F')) country |= c - 'A' + 10;

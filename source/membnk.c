@@ -47,7 +47,7 @@ uint32 zbank_lockup_r(uint32 address)
 #ifdef LOGERROR
   error("Z80 bank lockup read %06X\n", address);
 #endif
-   gen_running = config.force_dtack;
+  gen_running = config.force_dtack;
   return 0xFF;
 }
 
@@ -56,7 +56,7 @@ void zbank_lockup_w(uint32 address, uint32 data)
 #ifdef LOGERROR
   error("Z80 bank lockup write %06X = %02X\n", address, data);
 #endif
-   gen_running = config.force_dtack;
+  gen_running = config.force_dtack;
 }
 
 /* I/O & Control registers */

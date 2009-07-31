@@ -155,7 +155,7 @@ uint32 z80_read_byte(uint32 address)
       return zram[address & 0x1fff];
   }
 }
-            
+
 uint32 z80_read_word(uint32 address)
 {
   if (zbusack) return m68k_read_bus_16(address);
@@ -179,7 +179,7 @@ uint32 z80_read_word(uint32 address)
     }
   }
 }
-      
+
 void z80_write_byte(uint32 address, uint32 data)
 {
   if (zbusack)
@@ -254,9 +254,9 @@ void z80_write_word(uint32 address, uint32 data)
   }
 }
 
-        
+
 /******* I/O & CTRL ******************************************/
-          
+
 uint32 ctrl_io_read_byte(uint32 address)
 {
   switch ((address >> 8) & 0xff)
@@ -325,14 +325,14 @@ uint32 ctrl_io_read_word(uint32 address)
     case 0x41:  /* BOOTROM */
     case 0x44:  /* RADICA */
       return m68k_read_bus_16(address);
-    
+
     default:  /* Invalid address */
       return m68k_lockup_r_16(address);
   }
 }
 
 void ctrl_io_write_byte(uint32 address, uint32 data)
-{        
+{
   switch ((address >> 8) & 0xff)
   {
     case 0x00:  /* I/O chip */
@@ -358,7 +358,7 @@ void ctrl_io_write_byte(uint32 address, uint32 data)
       if (address & 1)
       {
         m68k_memory_map[0].base = (data & 1) ?  default_rom : bios_rom;
-    
+
         /* autodetect BIOS ROM file */
         if (!(config.bios_enabled & 2))
         {
@@ -385,22 +385,22 @@ void ctrl_io_write_byte(uint32 address, uint32 data)
 }
 
 void ctrl_io_write_word(uint32 address, uint32 data)
-{        
+{
   switch ((address >> 8) & 0xff)
   {
     case 0x00:  /* I/O chip */
       if (address & 0xe0) m68k_unused_16_w (address, data);
       else io_write ((address >> 1) & 0x0f, data & 0xff);
       return;
-        
+
     case 0x11:  /* BUSREQ */
       gen_busreq_w ((data >> 8) & 1);
       return;
-        
+
     case 0x12:  /* RESET */
       gen_reset_w ((data >> 8) & 1);
       return;
-            
+
     case 0x50:  /* SVP REGISTERS */
       if (svp)
       {
@@ -433,7 +433,7 @@ void ctrl_io_write_word(uint32 address, uint32 data)
         memset(cart_rom, 0, genromsize);
       }
       return;
-          
+
     case 0x10:  /* MEMORY MODE */
     case 0x20:  /* MEGA-CD */
     case 0x40:  /* TMSS */
@@ -456,20 +456,20 @@ uint32 vdp_read_byte(uint32 address)
   {
     case 0x00:  /* DATA */
       return (vdp_data_r() >> 8);
-          
+
     case 0x01:  /* DATA */
       return (vdp_data_r() & 0xff);
-  
+
     case 0x04:  /* CTRL */
       return ((m68k_read_pcrelative_8(REG_PC) & 0xfc) | ((vdp_ctrl_r() >> 8) & 3));
 
     case 0x05:  /* CTRL */
       return (vdp_ctrl_r() & 0xff);
-          
+
     case 0x08:  /* HVC */
     case 0x0c:
       return (vdp_hvc_r() >> 8);
-          
+
     case 0x09:  /* HVC */
     case 0x0d:
       return (vdp_hvc_r() & 0xff);
@@ -491,14 +491,14 @@ uint32 vdp_read_word(uint32 address)
   {
     case 0x00:  /* DATA */
       return vdp_data_r();
-            
+
     case 0x04:  /* CTRL */
       return ((vdp_ctrl_r() & 0x3FF) | (m68k_read_pcrelative_16(REG_PC) & 0xFC00));
-          
+
     case 0x08:  /* HVC */
     case 0x0c:
       return vdp_hvc_r();
-          
+
     case 0x18:  /* Unused */
     case 0x1c:
       return m68k_read_bus_16(address);
@@ -525,7 +525,7 @@ void vdp_write_byte(uint32 address, uint32 data)
       if (address & 1) psg_write(0, data);
       else m68k_unused_8_w(address, data);
       return;
-              
+
     case 0x18: /* Unused */
       m68k_unused_8_w(address, data);
       return;
@@ -616,8 +616,8 @@ uint32 pico_read_byte(uint32 address)
     case 0x12:
     case 0x13:
       return 0x80; /* TODO */
-        
-        default:
+
+    default:
       return m68k_read_bus_8(address);
   }
 }

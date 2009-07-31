@@ -935,6 +935,7 @@ static void systemmenu ()
         else sprintf (items[4].text, "Lock-On: OFF");
         if (genromsize || (config.bios_enabled == 3)) 
         {
+          system_reset (); /* clear any GG patches */
           system_init ();
           audio_init(48000);
           system_reset ();
