@@ -27,6 +27,7 @@
 
 #define DEFAULT_PATH  "/genplus"
 #define GG_ROM        "/genplus/ggenie.bin"
+#define AR_ROM        "/genplus/areplay.bin"
 #define OS_ROM        "/genplus/bios.bin"
 
 #ifdef HW_RVL

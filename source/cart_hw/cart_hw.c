@@ -146,14 +146,29 @@ void cart_hw_reset()
     cart_hw.realtec |= 2;
   }
 
-  /* save default cartridge slot mapping */
-  default_rom = m68k_memory_map[0].base;
-
   /* SVP chip */
   if (svp) svp_reset();
 
-  /* Game Genie hardware */
-  if (config.lock_on == CART_GG) ggenie_reset();
+  /* Lock-ON */
+  switch (config.lock_on)
+  {
+    case GAME_GENIE:
+      ggenie_reset();
+      break;
+
+    case ACTION_REPLAY:
+      datel_reset();
+      break;
+
+    case SONIC_KNUCKLES:
+      break;
+
+    default:
+      break;
+  }
+
+  /* save default cartridge slot mapping */
+  default_rom = m68k_memory_map[0].base;
 }
 
 /* cart hardware detection */
@@ -226,9 +241,24 @@ void cart_hw_init()
   }
 
   /**********************************************
-          GAME GENIE 
+          CARTRIDGE LOCK-ON
   ***********************************************/
-  if (config.lock_on == CART_GG) ggenie_init();
+  switch (config.lock_on)
+  {
+    case GAME_GENIE:
+      ggenie_init();
+      break;
+
+    case ACTION_REPLAY:
+      datel_init();
+      break;
+
+    case SONIC_KNUCKLES:
+      break;
+
+    default:
+      break;
+  }
 
   /**********************************************
           SVP CHIP 
@@ -417,6 +447,7 @@ void cart_hw_init()
   }
 
   /* default write handler for !TIME signal */
+  /* TODO: handle Sonic & Knuckles + Sonic 2 case to prevent RAM activation */
   if (!cart_hw.time_w) cart_hw.time_w = default_time_w;
 }
 

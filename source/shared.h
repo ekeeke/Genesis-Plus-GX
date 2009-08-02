@@ -27,6 +27,7 @@
 #include "eeprom.h"
 #include "sram.h"
 #include "ggenie.h"
+#include "datel.h"
 #include "svp.h"
 #include "osd.h"
 

@@ -74,25 +74,67 @@ void ggenie_init(void)
 
 void ggenie_reset(void)
 {
-  if (!ggenie.enabled) return;
-
-  /* restore patched ROM */
-  int i;
-  for (i=0; i<6; i++)
+  if (ggenie.enabled)
   {
-    if (ggenie.regs[0] & (1 << i))
-      *(uint16 *)(cart_rom + ggenie.addr[i]) = ggenie.old[i];
+    /* reset codes */
+    ggenie_switch(0);
+
+    /* reset internal state */
+    memset(ggenie.regs,0,sizeof(ggenie.regs));
+    memset(ggenie.old,0,sizeof(ggenie.old));
+    memset(ggenie.data,0,sizeof(ggenie.data));
+    memset(ggenie.addr,0,sizeof(ggenie.addr));
+
+    /* slot 0 is mapped to Game Genie ROM */
+    m68k_memory_map[0].base = ggenie.rom;
+
+    /* Internal registers are write only */
+    m68k_memory_map[0].read16 = NULL;
   }
+}
 
-  /* reset internal state */
-  memset(ggenie.regs,0,sizeof(ggenie.regs));
-  memset(ggenie.old,0,sizeof(ggenie.old));
-  memset(ggenie.data,0,sizeof(ggenie.data));
-  memset(ggenie.addr,0,sizeof(ggenie.addr));
+void ggenie_switch(uint8 enable)
+{
+  int i,j;
+  if (enable)
+  {
+    for (i=0; i<6; i++)
+    {
+      /* patch is enabled ? */
+      if (ggenie.regs[0] & (1 << i))
+      {
+        /* first look if address has not already been patched */
+        for (j=0;j<i;j++)
+        {
+          if (ggenie.addr[i] == ggenie.addr[j])
+          {
+            /* disable code for later initialization */
+            ggenie.regs[0] &= ~(1 << i);
+            j = i;
+          }
+        }
 
-  /* slot 0 is mapped to Game Genie ROM */
-  m68k_memory_map[0].base     = ggenie.rom;
-  m68k_memory_map[0].read16   = NULL;
+        /* save old value and patch ROM if enabled */
+        if (ggenie.regs[0] & (1 << i))
+        {
+          ggenie.old[i] = *(uint16 *)(cart_rom + ggenie.addr[i]);
+          *(uint16 *)(cart_rom + ggenie.addr[i]) = ggenie.data[i];
+        }
+      }
+    }
+  }
+  else
+  {
+    /* restore old values */
+    for (i=0; i<6; i++)
+    {
+      /* patch is enabled ? */
+      if (ggenie.regs[0] & (1 << i))
+      {
+        *(uint16 *)(cart_rom + ggenie.addr[i]) = ggenie.old[i];
+      }
+    }
+  }
 }
 
 
@@ -101,7 +143,11 @@ void ggenie_reset(void)
 static void ggenie_write_byte(uint32 address, uint32 data)
 {
   /* Lock bit */
-  if (ggenie.regs[0] & 0x100) return;
+  if (ggenie.regs[0] & 0x100)
+  {
+    m68k_unused_8_w(address, data);
+    return;
+  }
 
   /* Register offset */
   uint8 offset = (address >> 1) & 0x1f;
@@ -114,7 +160,11 @@ static void ggenie_write_byte(uint32 address, uint32 data)
 static void ggenie_write_word(uint32 address, uint32 data)
 {
   /* Lock bit */
-  if (ggenie.regs[0] & 0x100) return;
+  if (ggenie.regs[0] & 0x100)
+  {
+    m68k_unused_8_w(address, data);
+    return;
+  }
 
   /* Register offset */
   uint8 offset = (address >> 1) & 0x1f;
@@ -139,6 +189,9 @@ static void ggenie_write_regs(uint8 offset, uint32 data, uint8 type)
     default:
       break;
   }
+
+  /* update internal register */
+  ggenie.regs[offset] = data;
 
   /* Mode Register */
   if (!offset)
@@ -166,47 +219,31 @@ static void ggenie_write_regs(uint8 offset, uint32 data, uint8 type)
     }
 
     /* LOCK bit */
-    if ((data & 0x100) && !(ggenie.regs[0] & 0x100))
+    if (data & 0x100)
     {
+      /* decode patch address (ROM area only)*/
+      /* note: Charles's documment is wrong, first register holds bits 23-16 of patch address */
+      ggenie.addr[0] = ((ggenie.regs[2]   & 0x3f) << 16) | ggenie.regs[3];
+      ggenie.addr[1] = ((ggenie.regs[5]   & 0x3f) << 16) | ggenie.regs[6];
+      ggenie.addr[2] = ((ggenie.regs[8]   & 0x3f) << 16) | ggenie.regs[9];
+      ggenie.addr[3] = ((ggenie.regs[11]  & 0x3f) << 16) | ggenie.regs[12];
+      ggenie.addr[4] = ((ggenie.regs[14]  & 0x3f) << 16) | ggenie.regs[15];
+      ggenie.addr[5] = ((ggenie.regs[17]  & 0x3f) << 16) | ggenie.regs[18];
+
+      /* decode patch data */
+      ggenie.data[0] = ggenie.regs[4];
+      ggenie.data[1] = ggenie.regs[7];
+      ggenie.data[2] = ggenie.regs[10];
+      ggenie.data[3] = ggenie.regs[13];
+      ggenie.data[4] = ggenie.regs[16];
+      ggenie.data[5] = ggenie.regs[19];
+
       /* patch ROM when GG program exits (LOCK bit set) */
       /* this is done here to handle patched program reads faster & more easily */
       /* on real HW, address decoding would be done on each reads */
-      int i,j;
-      for (i=0; i<6; i++)
-      {
-        /* decode patch address */
-        /* note: Charles's documment is wrong, first register holds bits 23-16 of patch address */
-        ggenie.addr[i] = (ggenie.regs[2+3*i] << 16) | ggenie.regs[3+3*i];
-
-        /* decode patch data */
-        ggenie.data[i] = ggenie.regs[4+3*i];
-
-        /* patch is enabled ? */
-        if (data & (1 << i))
-        {
-          /* first look if address has not already been patched */
-          for (j=0;j<i;j++)
-          {
-            if (ggenie.addr[i] == ggenie.addr[j])
-            {
-              /* disable code for later initialization */
-              data &= ~(1 << i);
-            }
-          }
-
-          /* ave old value and patch ROM if enabled */
-          if (data & (1 << i))
-          {
-            ggenie.old[i] = *(uint16 *)(cart_rom + ggenie.addr[i]);
-            *(uint16 *)(cart_rom + ggenie.addr[i]) = ggenie.data[i];
-          }
-        }
-      }
+      ggenie_switch(1);
     }
   }
-
-  /* update internal register */
-  ggenie.regs[offset] = data;
 }
 
 static uint32 ggenie_read_regs(uint32 address)

@@ -1,11 +1,8 @@
 /****************************************************************************
  *  Genesis Plus
- *  Game Genie Hardware emulation
+ *  DATEL Action Replay / Pro Action Replay emulation
  *
  *  Copyright (C) 2009  Eke-Eke (GCN/Wii port)
- *
- *  Based on documentation from Charles McDonald
- *  (http://cgfm2.emuviews.com/txt/genie.txt)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -22,12 +19,11 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  ***************************************************************************/
 
-#ifndef _GGENIE_H_
-#define _GGENIE_H_
+#ifndef _DATEL_H_
+#define _DATEL_H_
 
-/* Function prototypes */
-extern void ggenie_init(void);
-extern void ggenie_reset(void);
-extern void ggenie_switch(uint8 enable);
+extern void datel_init(void);
+extern void datel_reset(void);
+extern void datel_switch(uint8 enable);
 
 #endif

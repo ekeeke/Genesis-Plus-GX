@@ -1,10 +1,8 @@
 /****************************************************************************
  *  Genesis Plus
- *  Action Replay / Pro Action Replay emulation
+ *  DATEL Action Replay / Pro Action Replay emulation
  *
  *  Copyright (C) 2009  Eke-Eke (GCN/Wii port)
- *
- *  Based on reverse-engineering done on DATEL softwares
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -23,7 +21,6 @@
 
 #include "shared.h"
 
-#ifdef TEST_AR
 static struct
 {
   uint8 enabled;
@@ -34,16 +31,16 @@ static struct
   uint32 addr[4];
 } action_replay;
 
-static void ar_write_byte(uint32 address, uint32 data);
 static void ar_write_regs(uint32 address, uint32 data);
-static void ar_write_word(uint32 address, uint32 data);
+static void wram_write_byte(uint32 address, uint32 data);
+static void wram_write_word(uint32 address, uint32 data);
 
-void ar_init(void)
+void datel_init(void)
 {
   memset(&action_replay,0,sizeof(action_replay));
 
   /* load Game Genie ROM program */
-  FILE *f = fopen("./areplay.bin","rb");
+  FILE *f = fopen(AR_ROM,"rb");
   if (!f) return;
   fread(action_replay.rom,1,0x8000,f);
   fclose(f);
@@ -70,41 +67,115 @@ void ar_init(void)
   action_replay.enabled = 1;
 }
 
-void ar_reset(void)
+void datel_reset(void)
 {
-  if (!action_replay.enabled) return;
+  if (action_replay.enabled)
+  {
+    /* reset codes */
+    datel_switch(0);
 
-  /* restore patched ROM */
+    /* reset internal state */
+    memset(action_replay.regs,0,sizeof(action_replay.regs));
+    memset(action_replay.old,0,sizeof(action_replay.old));
+    memset(action_replay.data,0,sizeof(action_replay.data));
+    memset(action_replay.addr,0,sizeof(action_replay.addr));
+
+    /* slot 0 is mapped to Action replay ROM */
+    m68k_memory_map[0].base = action_replay.rom;
+  }
+}
+
+void datel_switch(uint8 enable)
+{
+  int i;
+  if (enable)
+  {
+    int offset;
+
+    /* store old values */
+    for (i=0; i<4; i++)
+    {
+      if (action_replay.data[i])
+      {
+        offset = action_replay.addr[i] >> 16;
+
+        if (offset < 0x40)        /* cartridge ROM */
+          action_replay.old[i] = *(uint16 *)(cart_rom + action_replay.addr[i]);
+        else if (offset >= 0xe0)  /* Work RAM */
+          action_replay.old[i] = *(uint16 *)(work_ram + (action_replay.addr[i]&0xffff));
+      }
+    }
+
+    /* patch new values */
+    for (i=0; i<4; i++)
+    {
+      if (action_replay.data[i])
+      {
+        offset = action_replay.addr[i] >> 16;
+
+        if (offset < 0x40)        /* cartridge ROM */
+          *(uint16 *)(cart_rom + action_replay.addr[i]) = action_replay.data[i];
+        else if (offset >= 0xe0)  /* Work RAM */
+          *(uint16 *)(work_ram + (action_replay.addr[i]&0xffff)) = action_replay.data[i];
+      }
+    }
+
+    /* set RAM write handlers */
+    for (i=0xe0; i<0x100; i++)
+    {
+      m68k_memory_map[i].write8 = wram_write_byte;
+      m68k_memory_map[i].write16 = wram_write_word;
+    }
+  }
+  else
+  {
+    /* restore original data */
+    for (i=0; i<4; i++)
+    {
+      if (action_replay.data[i])
+      {
+        if (action_replay.addr[i] < 0x400000)
+          *(uint16 *)(cart_rom + action_replay.addr[i]) = action_replay.old[i];
+        else if (action_replay.addr[i] >= 0xe00000)
+          *(uint16 *)(work_ram + (action_replay.addr[i]&0xffff)) = action_replay.old[i];
+      }
+    }
+  }
+}
+
+
+static void wram_write_byte(uint32 address, uint32 data)
+{
   int i;
   for (i=0; i<4; i++)
   {
-    if (action_replay.addr[i] < 0x400000)
-      *(uint16 *)(cart_rom + action_replay.addr[i]) = action_replay.old[i];
+    if ((address & 0xe0fffe) == (action_replay.addr[i]&0xe0fffe))
+    {
+      if (address & 1)  /* lower byte write */
+        action_replay.old[i] = (action_replay.old[i] & 0xff00) | (data & 0xff);
+      else              /* upper byte write */
+        action_replay.old[i] = (action_replay.old[i] & 0x00ff) | (data << 8);
+
+      return;
+    }
   }
 
-  /* reset internal state */
-  memset(action_replay.regs,0,sizeof(action_replay.regs));
-  memset(action_replay.old,0,sizeof(action_replay.old));
-  memset(action_replay.data,0,sizeof(action_replay.data));
-  memset(action_replay.addr,0,sizeof(action_replay.addr));
+  WRITE_BYTE(work_ram, address & 0xffff, data);
+}
 
-  /* slot 0 is mapped to Action replay ROM */
-  m68k_memory_map[0].base = action_replay.rom;
-
-  /* reset RAM handlers */
-  for (i=0xe0; i<0x100; i++)
+static void wram_write_word(uint32 address, uint32 data)
+{
+  int i;
+  for (i=0; i<4; i++)
   {
-    m68k_memory_map[i].write8 = NULL;
-    m68k_memory_map[i].write16 = NULL;
+    if ((address & 0xe0fffe) == (action_replay.addr[i]&0xe0fffe))
+    {
+      action_replay.old[i] = data;
+      return;
+    }
   }
-}
 
-static void ar_write_byte(uint32 address, uint32 data)
-{
-}
-
-static void ar_write_word(uint32 address, uint32 data)
-{
+  *(uint16 *)(work_ram + (address & 0xffff)) = data;
 }
 
 static void ar_write_regs(uint32 address, uint32 data)
@@ -124,55 +195,20 @@ static void ar_write_regs(uint32 address, uint32 data)
   /* decode patch value & address on exit */
   if ((offset == 3) && (data == 0xffff))
   {
-    /* patch data */
+    /* decode patch data */
     action_replay.data[0] = action_replay.regs[0];
     action_replay.data[1] = action_replay.regs[4];
     action_replay.data[2] = action_replay.regs[7];
     action_replay.data[3] = action_replay.regs[10];
 
-    /* patch address */
+    /* decode patch address */
     action_replay.addr[0] = (action_replay.regs[1]   | ((action_replay.regs[2]   & 0x7f00) << 8)) << 1;
     action_replay.addr[1] = (action_replay.regs[5]   | ((action_replay.regs[6]   & 0x7f00) << 8)) << 1;
     action_replay.addr[2] = (action_replay.regs[8]   | ((action_replay.regs[9]   & 0x7f00) << 8)) << 1;
     action_replay.addr[3] = (action_replay.regs[11]  | ((action_replay.regs[12]  & 0x7f00) << 8)) << 1;
 
-    int i;
-    for (i=0; i<4; i++)
-    {
-      offset = action_replay.addr[i] >> 16;
-
-      /* ROM area */
-      if (offset < 0x40)
-      {
-        /* store old ROM value */
-        action_replay.old[i] = *(uint16 *)(cart_rom + action_replay.addr[i]);
-      }
-      /* Work RAM area */
-      else if (offset >= 0xe0)
-      {
-        /* patch RAM */
-        *(uint16 *)(work_ram + (action_replay.addr[i] & 0xffff)) = action_replay.data[i];
-
-        /* setup handlers */
-        m68k_memory_map[offset].write8  = ar_write_byte;
-        m68k_memory_map[offset].write16 = ar_write_word;
-      }
-    }
-
-    for (i=0; i<4; i++)
-    {
-      offset = action_replay.addr[i] >> 16;
-
-      /* ROM area */
-      if (offset < 0x40)
-      {
-        /* patch ROM */
-        *(uint16 *)(cart_rom + action_replay.addr[i]) = action_replay.data[i];;
-      }
-    }
-
     /* reads are mapped to Cartridge ROM */
+    /* NOTE: codes should be disabled on startup */
     m68k_memory_map[0].base = cart_rom;
   }
 }
-#endif

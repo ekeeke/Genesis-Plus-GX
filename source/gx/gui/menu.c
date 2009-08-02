@@ -850,7 +850,8 @@ static void systemmenu ()
   sprintf (items[1].text, "System Lockups: %s", config.force_dtack ? "OFF" : "ON");
   sprintf (items[2].text, "68k Address Error: %s", config.addr_error ? "ON" : "OFF");
   sprintf (items[3].text, "System BIOS: %s", (config.bios_enabled & 1) ? "ON":"OFF");
-  if (config.lock_on == CART_GG) sprintf (items[4].text, "Lock-On: GAME GENIE");
+  if (config.lock_on == GAME_GENIE) sprintf (items[4].text, "Lock-On: GAME GENIE");
+  else if (config.lock_on == ACTION_REPLAY) sprintf (items[4].text, "Lock-On: ACTION REPLAY");
   else  sprintf (items[4].text, "Lock-On: OFF");
 
   if (svp)
@@ -920,24 +921,22 @@ static void systemmenu ()
       case 3:  /*** BIOS support ***/
         config.bios_enabled ^= 1;
         sprintf (items[3].text, "System BIOS: %s", (config.bios_enabled & 1) ? "ON":"OFF");
-        if (genromsize || (config.bios_enabled == 3)) 
+        if (genromsize) 
         {
           system_init ();
-          audio_init(48000);
           system_reset ();
         }
         break;
 
       case 4:  /*** Cart Lock-On ***/
         config.lock_on++;
-        if (config.lock_on > CART_GG) config.lock_on = NO_CART;
-        if (config.lock_on == CART_GG) sprintf (items[4].text, "Lock-On: GAME GENIE");
-        else sprintf (items[4].text, "Lock-On: OFF");
-        if (genromsize || (config.bios_enabled == 3)) 
+        if (config.lock_on == GAME_GENIE) sprintf (items[4].text, "Lock-On: GAME GENIE");
+        else if (config.lock_on == ACTION_REPLAY) sprintf (items[4].text, "Lock-On: ACTION REPLAY");
+        else  sprintf (items[4].text, "Lock-On: OFF");
+        if (genromsize) 
         {
-          system_reset (); /* clear any GG patches */
+          system_reset (); /* clear any patches first */
           system_init ();
-          audio_init(48000);
           system_reset ();
         }
         break;
