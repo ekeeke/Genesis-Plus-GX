@@ -21,10 +21,15 @@
 
 #include "shared.h"
 
+#define TYPE_AR   1
+#define TYPE_PRO1 2
+#define TYPE_PRO2 3
+
 static struct
 {
   uint8 enabled;
-  uint8 rom[0x10000];
+  uint8 rom[0x20000];
+  uint8 ram[0x10000];
   uint16 regs[13];
   uint16 old[4];
   uint16 data[4];
@@ -39,32 +44,48 @@ void datel_init(void)
 {
   memset(&action_replay,0,sizeof(action_replay));
 
-  /* load Game Genie ROM program */
+  /* load Action Replay ROM program */
   FILE *f = fopen(AR_ROM,"rb");
   if (!f) return;
-  fread(action_replay.rom,1,0x8000,f);
+  int size = fread(action_replay.rom,1,0x20000,f);
   fclose(f);
 
-  /* $0000-$7fff mirrored into $8000-$ffff */
-  memcpy(action_replay.rom+0x8000,action_replay.rom,0x8000);
+  /* detect Action Replay yype */
+  if (size < 0x10000)
+    action_replay.enabled = TYPE_AR;
+  else if (size < 0x20000)
+    action_replay.enabled = TYPE_PRO2;
+  else
+    action_replay.enabled = TYPE_PRO1;
+
+  /* default memory map */
+  switch (action_replay.enabled)
+  {
+    case TYPE_AR:
+      /* $0000-$7fff mirrored into $8000-$ffff */
+      memcpy(action_replay.rom+0x8000,action_replay.rom,0x8000);
+      m68k_memory_map[1].write16 = ar_write_regs;
+      break;
+
+    case TYPE_PRO1:
+      m68k_memory_map[1].write16 = ar_write_regs;
+      break;
+
+    case TYPE_PRO2: /* todo */
+      break;
+  }
 
 #ifdef LSB_FIRST
   /* Byteswap ROM */
   int i;
   uint8 temp;
-  for(i = 0; i < 0x10000; i += 2)
+  for(i = 0; i < 0x20000; i += 2)
   {
     temp = action_replay.rom[i];
     action_replay.rom[i] = action_replay.rom[i+1];
     action_replay.rom[i+1] = temp;
   }
 #endif
-
-  /* enable registers write */
-  m68k_memory_map[1].write16 = ar_write_regs;
-
-  /* set flag */
-  action_replay.enabled = 1;
 }
 
 void datel_reset(void)
@@ -80,8 +101,32 @@ void datel_reset(void)
     memset(action_replay.data,0,sizeof(action_replay.data));
     memset(action_replay.addr,0,sizeof(action_replay.addr));
 
-    /* slot 0 is mapped to Action replay ROM */
-    m68k_memory_map[0].base = action_replay.rom;
+    /* reset memory map */
+    switch (action_replay.enabled)
+    {
+      case TYPE_AR:
+        m68k_memory_map[0].base = action_replay.rom;
+        break;
+
+      case TYPE_PRO1:
+        m68k_memory_map[0].base    = action_replay.rom;
+        m68k_memory_map[1].base    = action_replay.rom + 0x10000;
+        m68k_memory_map[0x42].base = action_replay.ram;
+        m68k_memory_map[0x42].read8 = NULL;
+        m68k_memory_map[0x42].read16 = NULL;
+        m68k_memory_map[0x42].write8 = NULL;
+        m68k_memory_map[0x42].write16 = NULL;
+        break;
+
+      case TYPE_PRO2:
+        m68k_memory_map[0].base    = action_replay.rom;
+        m68k_memory_map[0x60].base = action_replay.ram;
+        m68k_memory_map[0x60].read8 = NULL;
+        m68k_memory_map[0x60].read16 = NULL;
+        m68k_memory_map[0x60].write8 = NULL;
+        m68k_memory_map[0x60].write16 = NULL;
+        break;
+    }
   }
 }
 
@@ -155,7 +200,6 @@ static void wram_write_byte(uint32 address, uint32 data)
         action_replay.old[i] = (action_replay.old[i] & 0xff00) | (data & 0xff);
       else              /* upper byte write */
         action_replay.old[i] = (action_replay.old[i] & 0x00ff) | (data << 8);
-
       return;
     }
   }
