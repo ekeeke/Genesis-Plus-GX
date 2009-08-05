@@ -86,7 +86,7 @@ void audio_update (int size)
   for (i = 0; i < size; i ++)
   {
     /* PSG samples (mono) */
-    l = r = (((int)*psg++) * psg_preamp)/100;
+    l = r = ((*psg++) * psg_preamp)/100;
 
     /* FM samples (stereo) */
     l += (*fm[0]++ * fm_preamp)/100;

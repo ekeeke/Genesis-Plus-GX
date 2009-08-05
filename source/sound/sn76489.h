@@ -37,32 +37,6 @@
 #ifndef _SN76489_H_
 #define _SN76489_H_
 
-/* SN76489 clone in Sega's VDP chips (315-5124, 315-5246, 315-5313, Game Gear) */
-#define FB_SEGAVDP  0x0009
-#define SRW_SEGAVDP 16
-
-typedef struct
-{
-  /* Configuration */
-  int BoostNoise; // double noise volume when non-zero
-
-  /* PSG registers: */
-  int Registers[8];       /* Tone, vol x4 */
-  int LatchedRegister;
-  int NoiseShiftRegister;
-  int NoiseFreq;          /* Noise channel signal generator frequency */
-
-  /* Output calculation variables */
-  int ToneFreqVals[4];    /* Frequency register values (counters) */
-  int ToneFreqPos[4];     /* Frequency channel flip-flops */
-  int Channels[4];        /* Value of each channel, before stereo is applied */
-
-  /* Blip-Buffer variables */
-  struct blip_buffer_t* blip_buffer;  /* delta resampler */
-  int chan_amp[4];                    /* current channel amplitudes in delta buffers */
-
-} SN76489_Context;
-
 /* Function prototypes */
 extern void SN76489_Init(int PSGClockValue, int SamplingRate);
 extern void SN76489_Reset(void);
@@ -74,6 +48,7 @@ extern int SN76489_GetContextSize(void);
 extern void SN76489_Write(int data);
 extern void SN76489_Update(INT16 *buffer, int length);
 extern void SN76489_BoostNoise(int boost);
+extern void SN76489_Config(int mute, int volume, int feedback, int sr_width, int boost_noise);
 
 #endif /* _SN76489_H_ */
 

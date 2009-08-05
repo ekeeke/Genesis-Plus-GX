@@ -24,7 +24,7 @@
 #define _STATE_H_
 
 #define STATE_SIZE    0x28000
-#define STATE_VERSION "GENPLUS-GX 1.3.2"
+#define STATE_VERSION "GENPLUS-GX 1.4.0"
 
 /* Function prototypes */
 extern int state_load(unsigned char *buffer);

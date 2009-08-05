@@ -6,7 +6,6 @@ Genesis Plus GX 1.4.0 (??/??/????) (Eke-Eke)
 ------
 
 * modified SN76489 cut-off frequency
-* implemented optimized SN76489 core which uses Blip Buffer linear synthesis (Noise Channel is now linear interpolated) (credits to Blargg)
 * added an option to boost SN76489 Noise Channel
 * removed outdated Gens YM2612 core
 * improved YM2612 core general accuracy (SSG-EG, CSM mode,...) (based upon Nemesis recent tests on real MD)
