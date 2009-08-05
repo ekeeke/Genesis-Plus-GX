@@ -10,28 +10,6 @@
     - Super-high quality tone channel "oversampling" by calculating fractional positions on transitions
     - Noise output pattern reverse engineered from actual SMS output
     - Volume levels taken from actual SMS output
-
-    07/08/04  Charles MacDonald
-    Modified for use with SMS Plus:
-    - Added support for multiple PSG chips.
-    - Added reset/config/update routines.
-    - Added context management routines.
-    - Removed SN76489_GetValues().
-    - Removed some unused variables.
-
-   25/04/07 Eke-Eke (Genesis Plus GX)
-    - Removed stereo GG support (unused)
-    - Rade SN76489_Update outputs 16bits mono samples
-    - Replaced volume table with VGM plugin's one
-
-   05/01/09 Eke-Eke (Genesis Plus GX)
-    - Modified Cut-Off frequency (according to Steve Snake: http://www.smspower.org/forums/viewtopic.php?t=1746)
-
-   25/05/09 Eke-Eke (Genesis Plus GX)
-    - Removed multichip support (unused)
-    - Removed alternate volume table, panning & mute support (unused)
-    - Removed configurable Feedback and Shift Register Width (always use Sega ones)
-    - Added linear resampling using Blip Buffer (Blargg's implementation: http://www.smspower.org/forums/viewtopic.php?t=11376)
 */
 
 #ifndef _SN76489_H_
