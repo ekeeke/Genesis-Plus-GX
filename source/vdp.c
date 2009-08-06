@@ -76,21 +76,21 @@ uint8 fifo_latency;               /* VDP write cycles latency */
 uint8 odd_frame;                  /* 1: odd field, 0: even field */
 uint8 im2_flag;                   /* 1= Interlace mode 2 is being used */
 uint8 interlaced;                 /* 1: Interlaced mode 1 or 2 */
-uint8 vdp_pal  = 0;               /* 1: PAL , 0: NTSC (default) */
+uint8 vdp_pal;                    /* 1: PAL , 0: NTSC (default) */
 uint8 vdp_rate;                   /* PAL: 50hz, NTSC: 60hz */
 uint16 lines_per_frame;           /* PAL: 313 lines, NTSC: 262 lines */
 
 
 /* Tables that define the playfield layout */
-static const uint8 shift_table[] = { 6, 7, 0, 8 };
-static const uint8 col_mask_table[] = { 0x0F, 0x1F, 0x0F, 0x3F };
-static const uint16 row_mask_table[] = { 0x0FF, 0x1FF, 0x2FF, 0x3FF };
-static const uint32 y_mask_table[] = { 0x1FC0, 0x1F80, 0x1FC0, 0x1F00 };
+static const uint8 shift_table[]      = { 6, 7, 0, 8 };
+static const uint8 col_mask_table[]   = { 0x0F, 0x1F, 0x0F, 0x3F };
+static const uint16 row_mask_table[]  = { 0x0FF, 0x1FF, 0x2FF, 0x3FF };
+static const uint32 y_mask_table[]    = { 0x1FC0, 0x1F80, 0x1FC0, 0x1F00 };
 
-static uint16 sat_base_mask;      /* Base bits of SAT */
-static uint16 sat_addr_mask;      /* Index bits of SAT */
-static uint32 dma_endCycles;      /* 68k cycles to DMA end */
-static uint8 dma_type;            /* Type of DMA */
+static uint16 sat_base_mask;  /* Base bits of SAT */
+static uint16 sat_addr_mask;  /* Index bits of SAT */
+static uint32 dma_endCycles;  /* 68k cycles to DMA end */
+static uint8 dma_type;        /* DMA mode */
 
 /* DMA Timings
 
@@ -159,8 +159,8 @@ void vdp_reset(void)
   code = 0;
   pending = 0;
 
-  status = 0x200; /* fifo empty */
-  status |= vdp_pal;
+  status = 0x200;     /* fifo empty */
+  status |= vdp_pal;  /* PAL/NTSC flag */
 
   ntab = 0;
   ntbb = 0;

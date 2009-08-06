@@ -17,13 +17,13 @@ int16 SVP_cycles = 850;
 
 void svp_init(void)
 {
-  svp = (void *) ((char *)cart_rom + 0x200000);
+  svp = (void *) ((char *)cart.rom + 0x200000);
   memset(svp, 0, sizeof(*svp));
 }
 
 void svp_reset(void)
 {
-  memcpy(svp->iram_rom + 0x800, cart_rom + 0x800, 0x20000 - 0x800);
+  memcpy(svp->iram_rom + 0x800, cart.rom + 0x800, 0x20000 - 0x800);
   ssp1601_reset(&svp->ssp1601);
 }
 

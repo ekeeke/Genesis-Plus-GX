@@ -45,12 +45,12 @@ void sram_init()
   memset (&sram.sram[0], 0xFF, 0x10000);
   sram.crc = crc32 (0, &sram.sram[0], 0x10000);
 
-  if ((READ_BYTE(cart_rom,0x1b0) == 0x52) && (READ_BYTE(cart_rom,0x1b1) == 0x41))
+  if ((READ_BYTE(cart.rom,0x1b0) == 0x52) && (READ_BYTE(cart.rom,0x1b1) == 0x41))
   {
     /* retrieve informations from headezr */
     sram.detected = 1;
-    sram.start = READ_WORD_LONG(cart_rom, 0x1b4);
-    sram.end   = READ_WORD_LONG(cart_rom, 0x1b8);
+    sram.start = READ_WORD_LONG(cart.rom, 0x1b4);
+    sram.end   = READ_WORD_LONG(cart.rom, 0x1b8);
 
     /* fixe some bad header informations */
     if ((sram.start > sram.end) || ((sram.end - sram.start) >= 0x10000))
@@ -66,7 +66,7 @@ void sram_init()
   }
 
   /* set SRAM ON by default when ROM is not mapped */
-  if (genromsize <= sram.start)
+  if (cart.romsize <= sram.start)
   {
     sram.on = 1;
     sram.write = 1;

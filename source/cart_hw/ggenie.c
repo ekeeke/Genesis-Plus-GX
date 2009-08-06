@@ -117,8 +117,8 @@ void ggenie_switch(uint8 enable)
         /* save old value and patch ROM if enabled */
         if (ggenie.regs[0] & (1 << i))
         {
-          ggenie.old[i] = *(uint16 *)(cart_rom + ggenie.addr[i]);
-          *(uint16 *)(cart_rom + ggenie.addr[i]) = ggenie.data[i];
+          ggenie.old[i] = *(uint16 *)(cart.rom + ggenie.addr[i]);
+          *(uint16 *)(cart.rom + ggenie.addr[i]) = ggenie.data[i];
         }
       }
     }
@@ -131,7 +131,7 @@ void ggenie_switch(uint8 enable)
       /* patch is enabled ? */
       if (ggenie.regs[0] & (1 << i))
       {
-        *(uint16 *)(cart_rom + ggenie.addr[i]) = ggenie.old[i];
+        *(uint16 *)(cart.rom + ggenie.addr[i]) = ggenie.old[i];
       }
     }
   }
@@ -203,7 +203,7 @@ static void ggenie_write_regs(uint8 offset, uint32 data, uint8 type)
     if (data & 0x400)
     {
       /* $0000-$7ffff reads mapped to Cartridge ROM */
-      m68k_memory_map[0].base = cart_rom;
+      m68k_memory_map[0].base = cart.rom;
     }
     else
     {
@@ -249,6 +249,6 @@ static void ggenie_write_regs(uint8 offset, uint32 data, uint8 type)
 static uint32 ggenie_read_regs(uint32 address)
 {
   if (address < 0x40) return ggenie.regs[address >> 1];
-  else return *(uint16 *)(cart_rom + address); /* is that correct ? */
+  else return *(uint16 *)(cart.rom + address); /* is that correct ? */
 }
 

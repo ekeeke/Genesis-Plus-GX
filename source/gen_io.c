@@ -25,34 +25,108 @@
 
 uint8 io_reg[0x10];
 uint8 region_code = REGION_USA;
+int old_system[2] = {-1,-1};
 
-/*****************************************************************************
- * I/O chip functions                                                        *
- *                                                                           *
- *****************************************************************************/
-struct port_t
+static struct port_t
 {
   void (*data_w)(uint32 data);
   uint32 (*data_r)(void);
 } port[3];
 
-void io_reset(void)
+/*****************************************************************************
+ * I/O chip functions                                                        *
+ *                                                                           *
+ *****************************************************************************/
+void io_init(void)
 {
-  /* I/O register default settings */
-  uint8 io_def[0x10] =
+  /* restore previous setting */
+  if (old_system[0] != -1)  input.system[0] = old_system[0];
+  if (old_system[1] != -1)  input.system[1] = old_system[1];
+
+  /* initialize default GUN settings */
+  input.x_offset = 0x00;
+  input.y_offset = 0x00;
+
+  /**********************************************
+          SEGA MENACER 
+  ***********************************************/
+  if (strstr(rominfo.international,"MENACER") != NULL)
   {
-    0xA0,
-    0x7F, 0x7F, 0x7F,
-    0x00, 0x00, 0x00,
-    0xFF, 0x00, 0x00,
-    0xFF, 0x00, 0x00,
-    0xFB, 0x00, 0x00,
-  };
+    /* save current setting */
+    if (old_system[0] == -1) old_system[0] = input.system[0];
+    if (old_system[1] == -1) old_system[1] = input.system[1];
 
-  /* Initialize I/O registers */
-  memcpy (io_reg, io_def, 0x10);
+    input.system[0] = NO_SYSTEM;
+    input.system[1] = SYSTEM_MENACER;
+    input.x_offset = 0x52;
+    input.y_offset = 0x00;
+  }
+  else if (strstr(rominfo.international,"T2 ; THE ARCADE GAME") != NULL)
+  {
+    /* save current setting */
+    if (old_system[0] == -1) old_system[0] = input.system[0];
+    if (old_system[1] == -1) old_system[1] = input.system[1];
 
-  /* Initialize Port handlers */
+    input.system[0] = SYSTEM_GAMEPAD;
+    input.system[1] = SYSTEM_MENACER;
+    input.x_offset = 0x84;
+    input.y_offset = 0x08;
+  }
+  else if (strstr(rominfo.international,"BODY COUNT") != NULL)
+  {
+    /* save current setting */
+    if (old_system[0] == -1) old_system[0] = input.system[0];
+    if (old_system[1] == -1) old_system[1] = input.system[1];
+
+    input.system[0] = SYSTEM_MOUSE;
+    input.system[1] = SYSTEM_MENACER;
+    input.x_offset = 0x44;
+    input.y_offset = 0x18;
+  }
+
+  /**********************************************
+          KONAMI JUSTIFIER 
+  ***********************************************/
+  else if (strstr(rominfo.international,"LETHAL ENFORCERSII") != NULL)
+  {
+    /* save current setting */
+    if (old_system[0] == -1) old_system[0] = input.system[0];
+    if (old_system[1] == -1) old_system[1] = input.system[1];
+
+    input.system[0] = SYSTEM_GAMEPAD;
+    input.system[1] = SYSTEM_JUSTIFIER;
+    input.x_offset = 0x18;
+    input.y_offset = 0x00;
+  }
+  else if (strstr(rominfo.international,"LETHAL ENFORCERS") != NULL)
+  {
+    /* save current setting */
+    if (old_system[0] == -1) old_system[0] = input.system[0];
+    if (old_system[1] == -1) old_system[1] = input.system[1];
+
+    input.system[0] = SYSTEM_GAMEPAD;
+    input.system[1] = SYSTEM_JUSTIFIER;
+    input.x_offset = 0x00;
+    input.y_offset = 0x00;
+  }
+
+  /**********************************************
+          J-CART 
+  ***********************************************/
+  if (cart.hw.jcart)
+  {
+    /* save current setting */
+    if (old_system[0] == -1) old_system[0] = input.system[0];
+    if (old_system[1] == -1) old_system[1] = input.system[1];
+       
+    /* set default settings */
+    input.system[0] = SYSTEM_GAMEPAD;
+    input.system[1] = SYSTEM_GAMEPAD;
+  }
+
+  /**********************************************
+          Initialize IO Port handlers 
+  ***********************************************/
   switch (input.system[0])
   {
     case SYSTEM_GAMEPAD:
@@ -124,6 +198,27 @@ void io_reset(void)
   port[2].data_r = NULL;
 
   /* Initialize Input Devices */
+  input_init();
+}
+
+
+void io_reset(void)
+{
+  /* I/O register default settings */
+  uint8 io_def[0x10] =
+  {
+    0xA0,
+    0x7F, 0x7F, 0x7F,
+    0x00, 0x00, 0x00,
+    0xFF, 0x00, 0x00,
+    0xFF, 0x00, 0x00,
+    0xFB, 0x00, 0x00,
+  };
+
+  /* Reset I/O registers */
+  memcpy (io_reg, io_def, 0x10);
+
+  /* Reset Input Devices */
   input_reset();
 }
 

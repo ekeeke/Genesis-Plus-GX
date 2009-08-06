@@ -134,7 +134,7 @@ void decode_ggcodes ()
       if (ggpatch[i].address < 0x400000)
       {
         /*** Patching ROM space ONLY (Game Genie does NOT have access to other memory areas) ***/
-        if (cart_rom) *(uint16 *)(cart_rom + ggpatch[i].address) = ggpatch[i].data & 0xffff;
+        if (cart.rom) *(uint16 *)(cart.rom + ggpatch[i].address) = ggpatch[i].data & 0xffff;
       }
     }
   }

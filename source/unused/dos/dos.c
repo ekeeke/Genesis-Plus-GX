@@ -66,8 +66,8 @@ int main (int argc, char *argv[])
   }
   error_init();
 
-  cart_rom = malloc(0xA00000);
-  memset(cart_rom, 0, 0xA00000);
+  cart.rom = malloc(0xA00000);
+  memset(cart.rom, 0, 0xA00000);
 
   if(!load_rom(argv[1]))
   {
@@ -146,7 +146,7 @@ int main (int argc, char *argv[])
   trash_machine();
   system_shutdown();
   error_shutdown();
-  free(cart_rom);
+  free(cart.rom);
 
   return (0);
 }

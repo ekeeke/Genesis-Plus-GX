@@ -236,7 +236,7 @@ void memfile_autosave(s8 autosram, s8 autostate)
  ****************************************************************************/
 int ManageSRAM (u8 direction, u8 device)
 {
-  if (!genromsize) return 0;
+  if (!cart.romsize) return 0;
 
   char filename[MAXJOLIET];
 
@@ -436,7 +436,7 @@ int ManageSRAM (u8 direction, u8 device)
  ****************************************************************************/
 int ManageState (u8 direction, u8 device)
 {
-  if (!genromsize) return 0;
+  if (!cart.romsize) return 0;
 
   char filename[MAXJOLIET];
 

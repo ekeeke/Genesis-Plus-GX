@@ -734,7 +734,7 @@ static void soundmenu ()
       case 0:
         config.hq_fm ^= 1;
         sprintf (items[0].text, "High-Quality FM: %s", config.hq_fm ? "ON":"OFF");
-        if (genromsize) 
+        if (cart.romsize) 
         {
           unsigned char *temp = memalign(32,YM2612GetContextSize());
           if (temp) memcpy(temp, YM2612GetContextPtr(), YM2612GetContextSize());
@@ -850,8 +850,9 @@ static void systemmenu ()
   sprintf (items[1].text, "System Lockups: %s", config.force_dtack ? "OFF" : "ON");
   sprintf (items[2].text, "68k Address Error: %s", config.addr_error ? "ON" : "OFF");
   sprintf (items[3].text, "System BIOS: %s", (config.bios_enabled & 1) ? "ON":"OFF");
-  if (config.lock_on == GAME_GENIE) sprintf (items[4].text, "Lock-On: GAME GENIE");
-  else if (config.lock_on == ACTION_REPLAY) sprintf (items[4].text, "Lock-On: ACTION REPLAY");
+  if (config.lock_on == TYPE_GG) sprintf (items[4].text, "Lock-On: GAME GENIE");
+  else if (config.lock_on == TYPE_AR) sprintf (items[4].text, "Lock-On: ACTION REPLAY");
+  else if (config.lock_on == TYPE_SK) sprintf (items[4].text, "Lock-On: SONIC & KNUCKLES");
   else  sprintf (items[4].text, "Lock-On: OFF");
 
   if (svp)
@@ -880,7 +881,7 @@ static void systemmenu ()
         else if (config.region_detect == 1) sprintf (items[0].text, "Console Region:  USA");
         else if (config.region_detect == 2) sprintf (items[0].text, "Console Region:  EUR");
         else if (config.region_detect == 3) sprintf (items[0].text, "Console Region:  JAP");
-        if (genromsize)
+        if (cart.romsize)
         {
           /* force region & cpu mode */
           set_region();
@@ -921,7 +922,7 @@ static void systemmenu ()
       case 3:  /*** BIOS support ***/
         config.bios_enabled ^= 1;
         sprintf (items[3].text, "System BIOS: %s", (config.bios_enabled & 1) ? "ON":"OFF");
-        if (genromsize) 
+        if (cart.romsize) 
         {
           system_init ();
           system_reset ();
@@ -930,10 +931,12 @@ static void systemmenu ()
 
       case 4:  /*** Cart Lock-On ***/
         config.lock_on++;
-        if (config.lock_on == GAME_GENIE) sprintf (items[4].text, "Lock-On: GAME GENIE");
-        else if (config.lock_on == ACTION_REPLAY) sprintf (items[4].text, "Lock-On: ACTION REPLAY");
+        if (config.lock_on > TYPE_SK) config.lock_on = 0;
+        if (config.lock_on == TYPE_GG) sprintf (items[4].text, "Lock-On: GAME GENIE");
+        else if (config.lock_on == TYPE_AR) sprintf (items[4].text, "Lock-On: ACTION REPLAY");
+        else if (config.lock_on == TYPE_SK) sprintf (items[4].text, "Lock-On: SONIC & KNUCKLES");
         else  sprintf (items[4].text, "Lock-On: OFF");
-        if (genromsize) 
+        if (cart.romsize) 
         {
           system_reset (); /* clear any patches first */
           system_init ();
@@ -1113,7 +1116,7 @@ static void ctrlmenu_raz(void)
       m->buttons[i+2].data  = &button_player_data;
       m->buttons[i+2].state |= BUTTON_ACTIVE;
       sprintf(m->items[i+2].text,"%d",max + 1);
-      if (j_cart && (i > 4))
+      if (cart.hw.jcart && (i > 4))
         sprintf(m->items[i+2].comment,"Configure Player %d (J-CART) settings", max + 1);
       else
         sprintf(m->items[i+2].comment,"Configure Player %d settings", max + 1);
@@ -1291,7 +1294,7 @@ static void ctrlmenu(void)
       switch (m->selected)
       {
         case 0:   /* update port 1 system */
-          if (j_cart) break;
+          if (cart.hw.jcart) break;
           if (input.system[0] == SYSTEM_MOUSE) input.system[0] +=3; /* lightguns are never used on Port 1 */
           else input.system[0] ++;
           if ((input.system[0] == SYSTEM_MOUSE) && (input.system[1] == SYSTEM_MOUSE)) input.system[0] +=3;
@@ -1339,7 +1342,7 @@ static void ctrlmenu(void)
           break;
 
         case 1:   /* update port 2 system */
-          if (j_cart) break;
+          if (cart.hw.jcart) break;
           input.system[1] ++;
           if ((input.system[0] == SYSTEM_MOUSE) && (input.system[1] == SYSTEM_MOUSE)) input.system[1] ++;
           if (input.system[1] == SYSTEM_WAYPLAY) input.system[0] = SYSTEM_WAYPLAY;
@@ -1466,7 +1469,7 @@ static void ctrlmenu(void)
           GUI_DrawMenuFX(m, 20, 0);
 
           /* update title */
-          if (j_cart && (player > 1))
+          if (cart.hw.jcart && (player > 1))
             sprintf(m->title,"Controller Settings (Player %d) (J-CART)",player+1);
           else
             sprintf(m->title,"Controller Settings (Player %d)",player+1);
@@ -1911,7 +1914,7 @@ static int loadmenu ()
         if (DVD_Open())
         {
           GUI_DeleteMenu(m);
-          size = FileSelector(cart_rom,0);
+          size = FileSelector(cart.rom,0);
           if (size) return 1;
           GUI_InitMenu(m);
         }
@@ -1922,7 +1925,7 @@ static int loadmenu ()
         if (FAT_Open(ret))
         {
           GUI_DeleteMenu(m);
-          size = FileSelector(cart_rom,1);
+          size = FileSelector(cart.rom,1);
           if (size) return 1;
           GUI_InitMenu(m);
         }
@@ -2095,7 +2098,7 @@ void MainMenu (void)
   if (!rom_loaded)
   {
     /* check if a game is running */
-    if (genromsize)
+    if (cart.romsize)
     {
       m->screenshot = 1;
       m->bg_images[0].state &= ~IMAGE_VISIBLE;
@@ -2124,7 +2127,7 @@ void MainMenu (void)
     {
       case -1: /*** Return to Game ***/
       case 6:
-        if (!genromsize) break;
+        if (!cart.romsize) break;
         GUI_DrawMenuFX(m,10,1);
         GUI_DeleteMenu(m);
         quit = 1;
@@ -2178,7 +2181,7 @@ void MainMenu (void)
         break;
 
       case 3:  /*** Memory Manager ***/
-        if (!genromsize) break;
+        if (!cart.romsize) break;
         GUI_DeleteMenu(m);
         quit = filemenu ();
         if (quit) break;
@@ -2186,7 +2189,7 @@ void MainMenu (void)
         break;
 
       case 4:  /*** Emulator Reset ***/
-        if (!genromsize) break;
+        if (!cart.romsize) break;
         GUI_DrawMenuFX(m,10,1);
         GUI_DeleteMenu(m);
         gxClearScreen ((GXColor)BLACK);
@@ -2196,19 +2199,19 @@ void MainMenu (void)
         break;
 
       case 5:   /*** Game Genie ***/
-        if (!genromsize) break;
+        if (!cart.romsize) break;
         GUI_DeleteMenu(m);
         GetGGEntries();
         GUI_InitMenu(m);
         break;
 
       case 7:   /*** ROM Captrure ***/
-        if (!genromsize) break;
+        if (!cart.romsize) break;
         gx_video_Capture();
         break;
 
       case 8:   /*** ROM Information ***/
-        if (!genromsize) break;
+        if (!cart.romsize) break;
         GUI_DeleteMenu(m);
         showrominfo ();
         GUI_InitMenu(m);

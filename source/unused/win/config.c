@@ -11,9 +11,11 @@ void set_config_defaults(void)
   /* sound options */
   config.psg_preamp     = 150;
   config.fm_preamp      = 100;
-  config.hq_fm          = 1;
+  config.hq_fm          = 0;
   config.psgBoostNoise  = 0;
   config.filter         = 1;
+  config.low_freq       = 200;
+  config.high_freq      = 8000;
   config.lg             = 1.0;
   config.mg             = 1.0;
   config.hg             = 1.0;
@@ -21,11 +23,14 @@ void set_config_defaults(void)
   /* system options */
   config.region_detect  = 0;
   config.force_dtack    = 0;
+  config.addr_error     = 0;
   config.bios_enabled   = 0;
+  config.lock_on        = 0;
+  config.romtype		= 0;
 
   /* display options */
   config.overscan = 1;
-  config.render   = 1;
+  config.render   = 0;
 
   /* controllers options */
   input.system[0]       = SYSTEM_GAMEPAD;

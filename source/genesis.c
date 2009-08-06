@@ -23,7 +23,6 @@
 
 #include "shared.h"
 
-uint8 *cart_rom;          /* CART rom */
 uint8 bios_rom[0x10000];  /* BIOS rom */
 uint8 work_ram[0x10000];  /* 68K work RAM */
 uint8 zram[0x2000];       /* Z80 work RAM */
@@ -33,7 +32,6 @@ uint8 zbusack;            /* /BUSACK to Z80 */
 uint8 zirq;               /* /IRQ to Z80 */
 uint32 zbank;             /* Address of Z80 bank window */
 uint8 gen_running;
-uint32 genromsize;
 int32 resetline;
 
 /*--------------------------------------------------------------------------*/
@@ -159,6 +157,11 @@ void gen_reset (uint32 hard_reset)
   gen_running = 1;
   resetline   = -1;
 
+#ifdef NGC
+  /* register SOFTRESET */
+  SYS_SetResetCallback(set_softreset);
+#endif
+
   zreset = 0;   /* Z80 is reset */
   zbusreq = 0;  /* Z80 has control of the Z bus */
   zbusack = 1;  /* Z80 is busy using the Z bus */
@@ -169,11 +172,7 @@ void gen_reset (uint32 hard_reset)
   m68k_pulse_reset ();
   z80_reset ();
   YM2612ResetChip();
-
-#ifdef NGC
-  /* register SOFTRESET */
-  SYS_SetResetCallback(set_softreset);
-#endif
+  SN76489_Reset();
 }
 
 void gen_shutdown (void)

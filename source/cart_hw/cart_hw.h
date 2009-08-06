@@ -27,34 +27,42 @@
 #ifndef _CART_HW_H_
 #define _CART_HW_H_
 
-/* Lock-ON cartridge devices */
-#define GAME_GENIE      1
-#define ACTION_REPLAY   2
-#define SONIC_KNUCKLES  3
+/* Lock-ON cartridge type */
+#define TYPE_GG 0x10  /* Game Genie */
+#define TYPE_AR 0x20  /* Action Replay (Pro) */
+#define TYPE_SK 0x40  /* Sonic & Knuckles */
 
-/* Hardware description */
+/* Cartridge extra hardware */
 typedef struct
 {
   uint8 regs[4];                                            /* internal registers (R/W) */
   uint32 mask[4];                                           /* registers address mask */
   uint32 addr[4];                                           /* registers address */
   uint32 realtec;                                           /* bit 0: realtec mapper detected, bit 1: bootrom enabled */
-  uint32 bankshift;                                         /* cartridge with bankshift mecanism */
+  uint16 jcart;                                             /* cartridge with JCART port */
+  uint16 bankshift;                                         /* cartridge with bankshift mecanism */
   unsigned int (*time_r)(unsigned int address);             /* !TIME signal ($a130xx) read handler  */
   void (*time_w)(unsigned int address, unsigned int data);  /* !TIME signal ($a130xx) write handler */
-  unsigned int (*regs_r)(unsigned int address);             /* cart hardware region ($400000-$7fffff) read handler  */
-  void (*regs_w)(unsigned int address, unsigned int data);  /* cart hardware region ($400000-$7fffff) write handler */
+  unsigned int (*regs_r)(unsigned int address);             /* cart hardware registers read handler  */
+  void (*regs_w)(unsigned int address, unsigned int data);  /* cart hardware registers write handler */
 } T_CART_HW;
 
+/* Cartridge type */
+typedef struct
+{
+  uint8 *rom;       /* ROM data */
+  uint8 *base;      /* ROM area (slot 0) */
+  uint32 lock_on;   /* 1: Lock-On enabled */
+  uint32 romsize;   /* ROM size */
+  T_CART_HW hw;     /* Custom hardware */
+} T_CART;
+
 /* global variables */
-extern T_CART_HW cart_hw;
-extern uint8 j_cart;
-extern uint8 *default_rom;
-extern int old_system[2];
+extern T_CART cart;
 
 /* Function prototypes */
-extern void cart_hw_reset();
 extern void cart_hw_init();
+extern void cart_hw_reset();
 
 #endif
 

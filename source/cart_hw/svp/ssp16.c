@@ -553,14 +553,14 @@ static u32 pm_io(int reg, int write, u32 d)
       {
 #ifdef LOG_SVP
         elprintf(EL_SVP, "ssp ROM  r [%06x] %04x", CADDR,
-          ((unsigned short *)cart_rom)[addr|((mode&0xf)<<16)]);
+          ((unsigned short *)cart.rom)[addr|((mode&0xf)<<16)]);
 #endif
         /*if ((signed int)ssp->pmac_read[reg] >> 16 == -1) ssp->pmac_read[reg]++;
         ssp->pmac_read[reg] += 1<<16;*/
         if ((signed int)(ssp->pmac_read[reg] & 0xffff) == -1) ssp->pmac_read[reg] += 1<<16;
         ssp->pmac_read[reg] ++;
         
-        d = ((unsigned short *)cart_rom)[addr|((mode&0xf)<<16)];
+        d = ((unsigned short *)cart.rom)[addr|((mode&0xf)<<16)];
       }
       else if ((mode & 0x47ff) == 0x0018) // DRAM
       {

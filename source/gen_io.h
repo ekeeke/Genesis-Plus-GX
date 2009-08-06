@@ -32,9 +32,10 @@
 /* Global variables */
 extern uint8 io_reg[0x10];
 extern uint8 region_code;
-extern uint8 pad_type;
+extern int old_system[2];
 
 /* Function prototypes */
+extern void io_init(void);
 extern void io_reset(void);
 extern void io_write(uint32 offset, uint32 value);
 extern uint32 io_read(uint32 offset);

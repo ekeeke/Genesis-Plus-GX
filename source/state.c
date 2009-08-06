@@ -54,7 +54,7 @@ int state_load(unsigned char *buffer)
 
   /* reset system */
   system_reset();
-  m68k_memory_map[0].base = default_rom;
+  m68k_memory_map[0].base = cart.base;
 
   // GENESIS
   load_param(work_ram, sizeof(work_ram));

@@ -133,7 +133,7 @@ Uint32 fps_callback(Uint32 interval)
     if (region_code == REGION_USA) sprintf(region,"USA");
     else if (region_code == REGION_EUROPE) sprintf(region,"EUR");
     else sprintf(region,"JAP");
-    sprintf(caption, "Genesis Plus/SDL - %s (%s) - %d fps - xoffset = %d", rominfo.international, region, fps,input.x_offset);
+    sprintf(caption, "Genesis Plus/SDL - %s (%s) - %d fps - 0x%04X", rominfo.international, region, fps, realchecksum);
     SDL_WM_SetCaption(caption, NULL);
     frame_count = 0;
     
@@ -177,8 +177,8 @@ int main (int argc, char **argv)
   set_config_defaults();
 
   /* Load game */
-  cart_rom = malloc(10*1024*1024);
-  memset(cart_rom, 0, 10*1024*1024);
+  cart.rom = malloc(10*1024*1024);
+  memset(cart.rom, 0, 10*1024*1024);
   if(!load_rom(argv[1]))
   {
     char caption[256];
@@ -221,7 +221,7 @@ int main (int argc, char **argv)
 
   /* load BIOS */
   memset(bios_rom, 0, sizeof(bios_rom));
-  FILE *f = fopen("./BIOS.bin", "rb");
+  FILE *f = fopen(OS_ROM, "rb");
   if (f!=NULL)
   {
     fread(&bios_rom, 0x800,1,f);
@@ -436,8 +436,9 @@ int main (int argc, char **argv)
   SDL_FreeSurface(screen);
   SDL_Quit();
   system_shutdown();
+  audio_shutdown();
   error_shutdown();
-  free(cart_rom);
+  free(cart.rom);
 
   return 0;
 }

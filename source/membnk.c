@@ -73,7 +73,8 @@ uint32 zbank_read_ctrl_io(uint32 address)
       else return (0xfe | zbusack);
 
     case 0x30:  /* TIME */
-      if (cart_hw.time_r) return cart_hw.time_r(address);
+      if (cart.hw.time_r)
+        return ((address & 1) ? (cart.hw.time_r(address) & 0xff) : (cart.hw.time_r(address) >> 8));
       else return zbank_unused_r(address);
 
     case 0x10:  /* MEMORY MODE */
@@ -110,21 +111,20 @@ void zbank_write_ctrl_io(uint32 address, uint32 data)
       return;
 
     case 0x30:  /* TIME */
-      if (cart_hw.time_w) cart_hw.time_w(address, data);
-      else zbank_unused_w(address, data);
+      cart.hw.time_w(address, data);
       return;
 
     case 0x41:  /* BOOTROM */
       if (address & 1)
       {
-        m68k_memory_map[0].base = (data & 1) ?  default_rom : bios_rom;
+        m68k_memory_map[0].base = (data & 1) ?   cart.base : bios_rom;
     
         /* autodetect BIOS ROM file */
         if (!(config.bios_enabled & 2))
         {
           config.bios_enabled |= 2;
-          memcpy(bios_rom, cart_rom, 0x800);
-          memset(cart_rom, 0, genromsize);
+          memcpy(bios_rom, cart.rom, 0x800);
+          memset(cart.rom, 0xff, cart.romsize);
         }
       }
       else zbank_unused_w (address, data);

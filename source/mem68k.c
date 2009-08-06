@@ -112,13 +112,13 @@ static int pico_page[7] = {0x00,0x01,0x03,0x07,0x0F,0x1F,0x3F};
 uint32 eeprom_read_byte(uint32 address)
 {
   if (address == eeprom.type.sda_out_adr) return eeprom_read(address, 0);
-  else return READ_BYTE(cart_rom, address);
+  else return READ_BYTE(cart.rom, address);
 }
 
 uint32 eeprom_read_word(uint32 address)
 {
   if (address == (eeprom.type.sda_out_adr & 0xfffffe)) return eeprom_read(address, 1);
-  else return *(uint16 *)(cart_rom + address);
+  else return *(uint16 *)(cart.rom + address);
 }
 
 void eeprom_write_byte(uint32 address, uint32 data)
@@ -270,7 +270,8 @@ uint32 ctrl_io_read_byte(uint32 address)
       else return ((m68k_read_pcrelative_8(REG_PC) & 0xfe) | zbusack);
 
     case 0x30:  /* TIME */
-      if (cart_hw.time_r) return cart_hw.time_r(address);
+      if (cart.hw.time_r)
+        return ((address & 1) ? (cart.hw.time_r(address) & 0xff) : (cart.hw.time_r(address) >> 8));
       else return m68k_read_bus_8(address);
 
     case 0x10:  /* MEMORY MODE */
@@ -302,7 +303,7 @@ uint32 ctrl_io_read_word(uint32 address)
       return ((m68k_read_pcrelative_16(REG_PC) & 0xfeff) | (zbusack << 8));
 
     case 0x30:  /* TIME */
-      if (cart_hw.time_r) return cart_hw.time_r(address);
+      if (cart.hw.time_r) return cart.hw.time_r(address);
       else return m68k_read_bus_16(address);
 
     case 0x50:  /* SVP */
@@ -351,20 +352,20 @@ void ctrl_io_write_byte(uint32 address, uint32 data)
       return;
 
     case 0x30:  /* TIME */
-      cart_hw.time_w(address, data);
+      cart.hw.time_w(address, data);
       return;
 
     case 0x41:  /* BOOTROM */
       if (address & 1)
       {
-        m68k_memory_map[0].base = (data & 1) ?  default_rom : bios_rom;
+        m68k_memory_map[0].base = (data & 1) ?  cart.base : bios_rom;
 
         /* autodetect BIOS ROM file */
         if (!(config.bios_enabled & 2))
         {
           config.bios_enabled |= 2;
-          memcpy(bios_rom, cart_rom, 0x800);
-          memset(cart_rom, 0, genromsize);
+          memcpy(bios_rom, cart.rom, 0x800);
+          memset(cart.rom, 0xff, cart.romsize);
         }
       }
       else m68k_unused_8_w (address, data);
@@ -417,20 +418,20 @@ void ctrl_io_write_word(uint32 address, uint32 data)
       return;
 
     case 0x30:  /* TIME */
-      cart_hw.time_w(address & 0xfe, data >> 8);
-      cart_hw.time_w(address, data & 0xff);
+      cart.hw.time_w(address & 0xfe, data >> 8);
+      cart.hw.time_w(address, data & 0xff);
       return;
           
     case 0x41:  /* BOOTROM */
                 
-      m68k_memory_map[0].base = (data & 1) ?  default_rom : bios_rom;
+      m68k_memory_map[0].base = (data & 1) ?   cart.base : bios_rom;
 
       /* autodetect BIOS ROM file */
       if (!(config.bios_enabled & 2))
       {
         config.bios_enabled |= 2;
-        memcpy(bios_rom, cart_rom, 0x800);
-        memset(cart_rom, 0, genromsize);
+        memcpy(bios_rom, cart.rom, 0x800);
+        memset(cart.rom, 0xff, cart.romsize);
       }
       return;
 

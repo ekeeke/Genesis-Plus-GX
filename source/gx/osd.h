@@ -29,11 +29,13 @@
 #define GG_ROM        "/genplus/ggenie.bin"
 #define AR_ROM        "/genplus/areplay.bin"
 #define OS_ROM        "/genplus/bios.bin"
+#define SK_ROM        "/genplus/sk.bin"
+#define SK_UPMEM      "/genplus/sk2chip.bin"
 
 #ifdef HW_RVL
-#define VERSION "version 1.3.3W"
+#define VERSION "version 1.4.0W"
 #else
-#define VERSION "version 1.3.3G"
+#define VERSION "version 1.4.0G"
 #endif
 
 /* globals */

@@ -225,7 +225,7 @@ static void getrominfo (char *romheader)
   memcpy (&rominfo.memo, romheader + ROMMEMO, 40);
   memcpy (&rominfo.country, romheader + ROMCOUNTRY, 16);
 
-  realchecksum = GetRealChecksum (((uint8 *) cart_rom) + 0x200, genromsize - 0x200);
+  realchecksum = GetRealChecksum (((uint8 *) cart.rom) + 0x200, cart.romsize - 0x200);
 #ifdef LSB_FIRST
   rominfo.checksum =  (rominfo.checksum >> 8) | ((rominfo.checksum & 0xff) << 8);
 #endif
@@ -256,49 +256,49 @@ int load_rom(char *filename)
   int i, size, offset = 0;
  
 #ifdef NGC
-  size = genromsize;
+  size = cart.romsize;
   sprintf(rom_filename,"%s",filename);
   rom_filename[strlen(rom_filename) - 4] = 0;
 #else
   uint8 *ptr;
   ptr = load_archive(filename, &size);
   if(!ptr) return (0);
-  memcpy(cart_rom, ptr + offset, size);
+  memcpy(cart.rom, ptr + offset, size);
   free(ptr);
 #endif
 
   /* detect interleaved roms (.smd format) */
-  if (strncmp((char *)(cart_rom + 0x100),"SEGA", 4) && ((size / 512) & 1))
+  if (strncmp((char *)(cart.rom + 0x100),"SEGA", 4) && ((size / 512) & 1))
   {
     size -= 512;
     offset += 512;
 
     for (i = 0; i < (size / 0x4000); i += 1)
     {
-      deinterleave_block (cart_rom + offset + (i * 0x4000));
+      deinterleave_block (cart.rom + offset + (i * 0x4000));
     }
 
-      memcpy(cart_rom, cart_rom + offset, size);
+    memcpy(cart.rom, cart.rom + offset, size);
   }
 
   /* max. 10 MBytes supported */
   if (size > MAXROMSIZE) size = MAXROMSIZE;
-  genromsize = size;
+  cart.romsize = size;
   
   /* clear unused ROM space */
-  if (size < MAXROMSIZE) memset (cart_rom + size, 0x00, MAXROMSIZE - size);
+  memset (cart.rom + size, 0xff, MAXROMSIZE - size);
 
-  getrominfo((char *)cart_rom);  /* get infos from ROM header */
+  getrominfo((char *)cart.rom);  /* get infos from ROM header */
   set_region();      /* set game region (PAL/NTSC, JAP/USA/EUR) */
    
 #ifdef LSB_FIRST
   /* Byteswap ROM */
   uint8 temp;
-  for(i = 0; i < genromsize; i += 2)
+  for(i = 0; i < size; i += 2)
   {
-    temp = cart_rom[i];
-    cart_rom[i] = cart_rom[i+1];
-    cart_rom[i+1] = temp;
+    temp = cart.rom[i];
+    cart.rom[i] = cart.rom[i+1];
+    cart.rom[i+1] = temp;
   }
 #endif
 
@@ -307,11 +307,11 @@ int load_rom(char *filename)
       ((strstr(rominfo.product,"-K0109") != NULL) && (rominfo.checksum == 0x4f10)))
   {
     uint8 temp;
-    for(i = 0; i < genromsize; i += 2)
+    for(i = 0; i < size; i += 2)
     {
-      temp = cart_rom[i];
-      cart_rom[i] = cart_rom[i+1];
-      cart_rom[i+1] = temp;
+      temp = cart.rom[i];
+      cart.rom[i] = cart.rom[i+1];
+      cart.rom[i+1] = temp;
     }
   }
 

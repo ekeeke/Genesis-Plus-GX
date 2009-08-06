@@ -64,17 +64,18 @@ typedef struct
   uint32  pad[MAX_DEVICES];     /* Can be any of the INPUT_* bitmasks */
   uint8   system[2];            /* Can be any of the SYSTEM_* bitmasks */
   uint8   max;                  /* maximum number of connected devices */
-  uint8   current;              /* current PAD number (4WAYPLAY) */
+  uint8   current;              /* current PAD number (4-Way Play) */
   int     analog[3][2];         /* analog devices */
-  int     x_offset;
-  int     y_offset;
+  int     x_offset;             /* gun horizontal offset */
+  int     y_offset;             /* gun vertical offset */
 } t_input;
 
 /* Global variables */
 extern t_input input;
 
 /* Function prototypes */
-extern void input_reset (void);
+extern void input_init(void);
+extern void input_reset(void);
 extern void input_update(void);
 extern void input_raz(void);
 

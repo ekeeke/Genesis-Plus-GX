@@ -1442,11 +1442,11 @@ void gx_video_Init(void)
    */
   int *romptr = (int *)0x80700000;
   StartARAM();
-  genromsize = 0;
+  cart.romsize = 0;
   if (memcmp((char *)romptr,"GENPLUSR",8) == 0)
   {
-    genromsize = romptr[2];
-    ARAMPut((char *) 0x80700000 + 0x20, (char *) 0x8000, genromsize);
+    cart.romsize = romptr[2];
+    ARAMPut((char *) 0x80700000 + 0x20, (char *) 0x8000, cart.romsize);
   }
 
   /* Get the current VIDEO mode then :

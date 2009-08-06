@@ -18,4 +18,10 @@
 #include "unzip.h"
 #include "fileio.h"
 
+#define GG_ROM    "./ggenie.bin"
+#define AR_ROM    "./areplay.bin"
+#define OS_ROM    "./bios.bin"
+#define SK_ROM    "./sk.bin"
+#define SK_UPMEM  "./sk2chip.bin"
+
 #endif /* _OSD_H_ */

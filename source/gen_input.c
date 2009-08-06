@@ -30,7 +30,7 @@ t_input input;
  *
  *****************************************************************************/
 /* H counter values for a 256-pixel wide display (342 pixel max.) */
-static uint8 hc_256[171] = {
+static const uint8 hc_256[171] = {
   0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F,
   0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F,
   0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28, 0x29, 0x2A, 0x2B, 0x2C, 0x2D, 0x2E, 0x2F,
@@ -46,7 +46,7 @@ static uint8 hc_256[171] = {
 };
 
 /* H counter values for a 320-pixel wide display (420 pixels max.) */
-static uint8 hc_320[210] = {
+static const uint8 hc_320[210] = {
   0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F,
   0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F,
   0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28, 0x29, 0x2A, 0x2B, 0x2C, 0x2D, 0x2E, 0x2F,
@@ -80,7 +80,7 @@ static inline void lightgun_update(int num)
       /* External Interrupt ? */
       if (reg[11] & 0x08) irq_status = (irq_status & ~0x40) | 0x12;
 
-      /* HVC Latch:
+      /* Horizontal Counter Latch:
         1) some games does not set HVC latch but instead use bigger X offset 
         2) for games using H40 mode, the gun routine scales up the Hcounter value,
            H-Counter range is approx. 292 pixel clocks
@@ -136,7 +136,7 @@ uint32 justifier_read()
  * SEGA MOUSE specific functions
  *
  *****************************************************************************/
-struct mega_mouse
+static struct mega_mouse
 {
   uint8 State;
   uint8 Counter;
@@ -258,7 +258,7 @@ uint32 mouse_read()
  * GAMEPAD specific functions (2PLAYERS/4WAYPLAY) 
  *
  *****************************************************************************/
-struct pad
+static struct pad
 {
   uint8 State;
   uint8 Counter;
@@ -387,21 +387,18 @@ static inline void gamepad_write(uint32 i, uint32 data)
  * TEAMPLAYER adapter
  *
  *****************************************************************************/
-struct teamplayer
+static struct teamplayer
 {
   uint8 State;
   uint8 Counter;
   uint8 Table[12];
 } teamplayer[2];
 
-static inline void teamplayer_reset(uint32 port)
+static inline void teamplayer_init(uint32 port)
 {
   int i;
   int index = 0;
   int pad_input = 0;
-
-  teamplayer[port].State = 0x60; /* TH = 1, TR = 1 */
-  teamplayer[port].Counter = 0;
 
   /* this table determines which gamepad input should be returned during acquisition sequence
      index     = teamplayer read table index: 0=1st read, 1=2nd read, ...
@@ -422,6 +419,12 @@ static inline void teamplayer_reset(uint32 port)
     }
     pad_input += 4;
   }
+}
+
+static inline void teamplayer_reset(uint32 port)
+{
+  teamplayer[port].State = 0x60; /* TH = 1, TR = 1 */
+  teamplayer[port].Counter = 0;
 }
 
 /* SEGA teamplayer returns successively:
@@ -603,7 +606,7 @@ void teamplayer_2_write (uint32 data)
 
 uint32 jcart_read(uint32 address)
 {
-  return (gamepad_read(5) | ((gamepad_read(6)&0x3f) << 8)); /* fixes Micro Machines 2 (is it correct ?) */
+  return (gamepad_read(5) | ((gamepad_read(6)&0x3f) << 8)); /* fixes Micro Machines 2 */
 }
 
 void jcart_write(uint32 address, uint32 data)
@@ -617,12 +620,11 @@ void jcart_write(uint32 address, uint32 data)
  * Generic INPUTS Control
  *
  *****************************************************************************/
-void input_reset ()
+void input_init ()
 {
   int i,j;
 
   input.max = 0;
-  input.current = 0;
 
   for (i=0; i<MAX_DEVICES; i++)
   {
@@ -636,14 +638,12 @@ void input_reset ()
       if (input.max == MAX_INPUTS) return;
       input.dev[0] = config.input[input.max].padtype;
       input.max ++;
-      gamepad_reset(0);
       break;
 
     case SYSTEM_MOUSE:
       if (input.max == MAX_INPUTS) return;
       input.dev[0] = DEVICE_MOUSE;
       input.max ++;
-      mouse_reset();
       break;
 
     case SYSTEM_WAYPLAY:
@@ -652,7 +652,6 @@ void input_reset ()
         if (input.max == MAX_INPUTS) return;
         input.dev[j] = config.input[input.max].padtype;
         input.max ++;
-        gamepad_reset(j);
       }
       break;
 
@@ -663,7 +662,7 @@ void input_reset ()
         input.dev[j] = config.input[input.max].padtype;
         input.max ++;
       }
-      teamplayer_reset(0);
+      teamplayer_init(0);
       break;
   }
 
@@ -673,20 +672,17 @@ void input_reset ()
       if (input.max == MAX_INPUTS) return;
       input.dev[4] = config.input[input.max].padtype;
       input.max ++;
-      gamepad_reset(4);
       break;
 
     case SYSTEM_MOUSE:
       if (input.max == MAX_INPUTS) return;
       input.dev[4] = DEVICE_MOUSE;
       input.max ++;
-      mouse_reset();
       break;
 
     case SYSTEM_MENACER:
       if (input.max == MAX_INPUTS) return;
       input.dev[4] = DEVICE_LIGHTGUN;
-      lightgun_reset(0);
       break;
 
     case SYSTEM_JUSTIFIER:
@@ -694,7 +690,6 @@ void input_reset ()
       {
         if (input.max == MAX_INPUTS) return;
         input.dev[j] = DEVICE_LIGHTGUN;
-        lightgun_reset(j - 4);
         input.max ++;
       }
       break;
@@ -706,21 +701,54 @@ void input_reset ()
         input.dev[j] = config.input[input.max].padtype;
         input.max ++;
       }
-      teamplayer_reset(1);
+      teamplayer_init(1);
       break;
   }
 
   /* J-CART: add two gamepad inputs */
-  if (j_cart)
+  if (cart.hw.jcart)
   {
     input.dev[5] = config.input[2].padtype;
     input.dev[6] = config.input[3].padtype;
-    gamepad_reset(5);
-    gamepad_reset(6);
   }
 }
 
-void input_update()
+void input_reset(void)
+{
+  /* Reset Controller device */
+  int i;
+  for (i=0; i<MAX_INPUTS; i++)
+  {
+    switch (input.dev[i])
+    {
+      case DEVICE_3BUTTON:
+      case DEVICE_6BUTTON:
+        gamepad_reset(i);
+        break;
+
+      case DEVICE_LIGHTGUN:
+        lightgun_reset(i%4);
+        break;
+
+      case DEVICE_MOUSE:
+        mouse_reset();
+
+      default:
+        break;
+    }
+  }
+
+  /* Team Player */
+  if (input.system[0] == SYSTEM_TEAMPLAYER)
+    teamplayer_reset(0);
+  if (input.system[1] == SYSTEM_TEAMPLAYER)
+    teamplayer_reset(1);
+
+  /* 4-Way Play */
+  input.current = 0;
+}
+
+void input_update(void)
 {
   int i;
   switch (input.system[0])
@@ -754,7 +782,7 @@ void input_update()
   }
 }
 
-void input_raz()
+void input_raz(void)
 {
   int i;
   switch (input.system[0])

@@ -27,7 +27,7 @@ T_EEPROM eeprom;
 
 typedef struct
 {
-  char game_id[14];
+  char game_id[16];
   uint16 chk;
   T_EEPROM_TYPE type;
 } T_GAME_ENTRY;

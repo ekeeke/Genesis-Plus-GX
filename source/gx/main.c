@@ -79,8 +79,8 @@ static void load_bios(void)
 static void init_machine(void)
 {
   /* Allocate cart_rom here ( 10 MBytes ) */
-  cart_rom = memalign(32, MAXROMSIZE);
-  if (!cart_rom)
+  cart.rom = memalign(32, MAXROMSIZE);
+  if (!cart.rom)
   {
     FONT_writeCenter("Failed to allocate ROM buffer... Rebooting",18,0,640,200,(GXColor)WHITE);
     gxSetScreen();
@@ -121,7 +121,7 @@ static void init_machine(void)
 ***************************************************/
 void reloadrom (int size, char *name)
 {
-  genromsize = size;
+  cart.romsize = size;
   load_rom(name);       /* Load ROM */
   system_init ();     /* Initialize System */
   audio_init(48000);  /* Audio System initialization */
@@ -138,7 +138,7 @@ void shutdown(void)
   memfile_autosave(-1,config.state_auto);
   system_shutdown();
   audio_shutdown();
-  free(cart_rom);
+  free(cart.rom);
   gx_audio_Shutdown();
   gx_video_Shutdown();
 #ifdef HW_RVL
@@ -212,10 +212,10 @@ int main (int argc, char *argv[])
   init_machine();
 
   /* run any injected rom */
-  if (genromsize)
+  if (cart.romsize)
   {
-    ARAMFetch((char *)cart_rom, (void *)0x8000, genromsize);
-    reloadrom (genromsize,"INJECT.bin");
+    ARAMFetch((char *)cart.rom, (void *)0x8000, cart.romsize);
+    reloadrom (cart.romsize,"INJECT.bin");
     gx_video_Start();
     gx_audio_Start();
     frameticker = 1;

@@ -204,10 +204,14 @@ void audio_shutdown(void)
  ****************************************************************/
 void system_init (void)
 {
+  /* Cartridge hardware (should be done first !) */
+  cart_hw_init();
+
+  /* Genesis hardware */
   gen_init ();
   vdp_init ();
   render_init ();
-  cart_hw_init();
+  io_init();
 }
 
 /****************************************************************
@@ -215,15 +219,14 @@ void system_init (void)
  ****************************************************************/
 void system_reset (void)
 {
-  /* Cartridge Hardware (should be done first !) */
+  /* Cartridge hardware (should be done first !) */
   cart_hw_reset();
 
-  /* Genesis Hardware */
+  /* Genesis hardware */
   gen_reset (1); 
   vdp_reset ();
   render_reset ();
   io_reset();
-  SN76489_Reset();
 
   /* Clear Sound Buffers */
   if (snd.psg.buffer) memset (snd.psg.buffer, 0, SND_SIZE);

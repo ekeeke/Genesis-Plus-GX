@@ -21,9 +21,9 @@
 
 #include "shared.h"
 
-#define TYPE_AR   1
-#define TYPE_PRO1 2
-#define TYPE_PRO2 3
+#define TYPE_AR   0x01
+#define TYPE_PRO1 0x02
+#define TYPE_PRO2 0x03
 
 static struct
 {
@@ -145,7 +145,7 @@ void datel_switch(uint8 enable)
         offset = action_replay.addr[i] >> 16;
 
         if (offset < 0x40)        /* cartridge ROM */
-          action_replay.old[i] = *(uint16 *)(cart_rom + action_replay.addr[i]);
+          action_replay.old[i] = *(uint16 *)(cart.rom + action_replay.addr[i]);
         else if (offset >= 0xe0)  /* Work RAM */
           action_replay.old[i] = *(uint16 *)(work_ram + (action_replay.addr[i]&0xffff));
       }
@@ -159,7 +159,7 @@ void datel_switch(uint8 enable)
         offset = action_replay.addr[i] >> 16;
 
         if (offset < 0x40)        /* cartridge ROM */
-          *(uint16 *)(cart_rom + action_replay.addr[i]) = action_replay.data[i];
+          *(uint16 *)(cart.rom + action_replay.addr[i]) = action_replay.data[i];
         else if (offset >= 0xe0)  /* Work RAM */
           *(uint16 *)(work_ram + (action_replay.addr[i]&0xffff)) = action_replay.data[i];
       }
@@ -180,7 +180,7 @@ void datel_switch(uint8 enable)
       if (action_replay.data[i])
       {
         if (action_replay.addr[i] < 0x400000)
-          *(uint16 *)(cart_rom + action_replay.addr[i]) = action_replay.old[i];
+          *(uint16 *)(cart.rom + action_replay.addr[i]) = action_replay.old[i];
         else if (action_replay.addr[i] >= 0xe00000)
           *(uint16 *)(work_ram + (action_replay.addr[i]&0xffff)) = action_replay.old[i];
       }
@@ -253,6 +253,6 @@ static void ar_write_regs(uint32 address, uint32 data)
 
     /* reads are mapped to Cartridge ROM */
     /* NOTE: codes should be disabled on startup */
-    m68k_memory_map[0].base = cart_rom;
+    m68k_memory_map[0].base = cart.rom;
   }
 }

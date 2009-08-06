@@ -46,6 +46,7 @@ typedef struct
   uint8 addr_error;
   uint8 bios_enabled;
   uint8 lock_on;
+  uint8 romtype;
   int16 xshift;
   int16 yshift;
   int16 xscale;
