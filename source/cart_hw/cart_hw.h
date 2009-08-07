@@ -28,9 +28,9 @@
 #define _CART_HW_H_
 
 /* Lock-ON cartridge type */
-#define TYPE_GG 0x10  /* Game Genie */
-#define TYPE_AR 0x20  /* Action Replay (Pro) */
-#define TYPE_SK 0x40  /* Sonic & Knuckles */
+#define TYPE_GG 0x01  /* Game Genie */
+#define TYPE_AR 0x02  /* Action Replay (Pro) */
+#define TYPE_SK 0x03  /* Sonic & Knuckles */
 
 /* Cartridge extra hardware */
 typedef struct
@@ -52,6 +52,7 @@ typedef struct
 {
   uint8 *rom;       /* ROM data */
   uint8 *base;      /* ROM area (slot 0) */
+  uint32 mask;      /* mask ROM */
   uint32 lock_on;   /* 1: Lock-On enabled */
   uint32 romsize;   /* ROM size */
   T_CART_HW hw;     /* Custom hardware */

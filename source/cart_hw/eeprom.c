@@ -100,7 +100,6 @@ void eeprom_init()
       {
         sram.custom = 1;
         sram.on = 1;
-        sram.write = 1;
         memcpy(&eeprom.type, &database[i].type, sizeof(T_EEPROM_TYPE));
       }
     }
@@ -114,8 +113,7 @@ void eeprom_init()
     {
       sram.custom = 1;
       sram.on     = 1;
-      sram.write  = 1;
-      
+
       /* set SEGA mapper as default */
       memcpy(&eeprom.type, &database[9].type, sizeof(T_EEPROM_TYPE));
     }

@@ -126,6 +126,8 @@ static uint8 mem_chunk[0x10000];
 /* cart hardware detection */
 void cart_hw_init()
 {
+  int i;
+
   /***************************************************************************************************************
                 CARTRIDGE ROM MIRRORING                                                                                   
    ***************************************************************************************************************
@@ -176,6 +178,7 @@ void cart_hw_init()
   while (cart.romsize > size) size <<= 1;
 
   /* total ROM size is not a factor of 2  */
+  /* TODO: handle more possible ROM configurations (using cartridge database ???) */
   if ((size < MAXROMSIZE) && (cart.romsize < size))
   {
     /* two chips with different size */
@@ -200,20 +203,15 @@ void cart_hw_init()
   }
 
   /* ROM is mirrored each 2^k bytes */
-  int i = size;
-  while (i < 0x400000)
-  {
-    memcpy(cart.rom + i, cart.rom, size);
-    i += size;
-  }
-  
+  cart.mask = size -1;
+
   /**********************************************
           DEFAULT CARTRIDGE MAPPING 
   ***********************************************/
   for (i=0; i<0x40; i++)
   {
     /* cartridge ROM */
-    m68k_memory_map[i].base     = cart.rom + (i<<16);
+    m68k_memory_map[i].base     = cart.rom + ((i<<16) & cart.mask);
     m68k_memory_map[i].read8    = NULL;
     m68k_memory_map[i].read16   = NULL;
     m68k_memory_map[i].write8   = m68k_unused_8_w;
@@ -325,7 +323,7 @@ void cart_hw_init()
       break;
 
     case TYPE_SK:
-      /* be sure we have enough place to copy everything */
+      /* be sure we have enough place to store both ROMs */
       if (cart.romsize < 0x700000)
       {
         /* load Sonic & Knuckles ROM (2 MBytes) */
@@ -340,22 +338,21 @@ void cart_hw_init()
         fread(cart.rom+0x900000,1,0x40000,f);
         fclose(f);
 
-        /* ROM is mirrored each 256K */
-        memcpy(cart.rom+0x940000,cart.rom+0x900000,0x40000);
-        memcpy(cart.rom+0x980000,cart.rom+0x900000,0x40000);
-        memcpy(cart.rom+0x9C0000,cart.rom+0x900000,0x40000);
-
 #ifdef LSB_FIRST
         /* Byteswap ROM */
         int i;
         uint8 temp;
-        for(i = 0; i < 0x300000; i += 2)
+        for(i = 0; i < 0x240000; i += 2)
         {
           temp = cart.rom[i+0x700000];
           cart.rom[i+0x700000] = cart.rom[i+1+0x700000];
           cart.rom[i+1+0x700000] = temp;
         }
 #endif
+
+        /*$000000-$1fffff is mapped to S&K ROM */
+        for (i=0x00; i<0x20; i++)
+          m68k_memory_map[i].base = (cart.rom + 0x700000) + (i<<16);
 
         cart.lock_on = 1;
 
@@ -449,7 +446,7 @@ void cart_hw_reset()
   if (cart.hw.bankshift)
   {
     for (i=0x00; i<0x40; i++)
-      m68k_memory_map[i].base = cart.rom + (i<<16);
+      m68k_memory_map[i].base = cart.rom + ((i<<16) & cart.mask);
   }
 
   /* Realtec mapper */
@@ -482,10 +479,8 @@ void cart_hw_reset()
       if (cart.lock_on)
       {
         /* reset memory map */
-        for (i=0x00; i<0x20; i++)
-          m68k_memory_map[i].base = cart.rom + 0x700000 + (i<<16);
         for (i=0x30; i<0x40; i++)
-          m68k_memory_map[i].base = cart.rom + (i<<16);
+          m68k_memory_map[i].base = cart.rom + ((i<<16) & cart.mask);
       }
       break;
 
@@ -516,41 +511,52 @@ static void sega_mapper_w(uint32 address, uint32 data)
       /* ROM/SRAM switch (Phantasy Star IV, Story of Thor/Beyond Oasis, Sonic 3 & Knuckles) */
       if (data & 1)
       {
-        /* SRAM enabled */
-        m68k_memory_map[0x20].base  = sram.sram;
+        /* $200000-$3fffff is mapped to SRAM (only if SRAM exists) */
+        if (sram.on)
+        {
+          for (i=0x20; i<0x40; i++)
+            m68k_memory_map[i].base  = sram.sram;
 
-        if (data & 2)
-        {
-          /* SRAM write disabled */
-          m68k_memory_map[0x20].write8  = m68k_unused_8_w;
-          m68k_memory_map[0x20].write16 = m68k_unused_16_w;
-          zbank_memory_map[0x20].write  = zbank_unused_w;
-        }
-        else
-        {
-          /* SRAM write enabled */
-          m68k_memory_map[0x20].write8  = NULL;
-          m68k_memory_map[0x20].write16 = NULL;
-          zbank_memory_map[0x20].write  = NULL;
+          if (data & 2)
+          {
+            /* SRAM write disabled */
+            for (i=0x20; i<0x40; i++)
+            {
+              m68k_memory_map[i].write8  = m68k_unused_8_w;
+              m68k_memory_map[i].write16 = m68k_unused_16_w;
+              zbank_memory_map[i].write  = zbank_unused_w;
+            }
+          }
+          else
+          {
+            /* SRAM write enabled */
+            for (i=0x20; i<0x40; i++)
+            {
+              m68k_memory_map[0x20].write8  = NULL;
+              m68k_memory_map[0x20].write16 = NULL;
+              zbank_memory_map[0x20].write  = NULL;
+            }
+          }
         }
 
         if (cart.lock_on)
         {
           /* enable UPMEM chip at $300000-$3fffff */
           for (i=0x30; i<0x40; i++)
-            m68k_memory_map[i].base = cart.rom + 0x600000 + (i<<16);
+            m68k_memory_map[i].base = (cart.rom + 0x900000) + ((i & 3)<<16);
         }
       }
       else
       {
         /* ROM enabled */
-        m68k_memory_map[0x20].base  = cart.rom + 0x200000;
+        for (i=0x20; i<0x40; i++)
+          m68k_memory_map[i].base  = cart.rom + ((i<<16) & cart.mask);
 
         if (cart.lock_on)
         {
           /* enable cartridge ROM at $300000-$3fffff */
           for (i=0x30; i<0x40; i++)
-            m68k_memory_map[i].base = cart.rom + (i<<16);
+            m68k_memory_map[i].base = cart.rom + ((i<<16) & cart.mask);
         }
       }
       break;

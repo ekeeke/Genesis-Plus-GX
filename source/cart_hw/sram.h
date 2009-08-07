@@ -27,7 +27,6 @@ typedef struct
 {
   uint8 detected;
   uint8 on;
-  uint8 write;
   uint8 custom;
   uint32 start;
   uint32 end;

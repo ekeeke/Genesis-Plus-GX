@@ -57,6 +57,7 @@ void sram_init()
     sram.end = sram.start + 0xffff;
     sram.start &= 0xfffffffe;
     sram.end |= 1;
+    sram.on = 1;
   }
   else 
   {
@@ -66,24 +67,24 @@ void sram_init()
   }
 
   /* set SRAM ON by default when ROM is not mapped */
-  if (cart.romsize <= sram.start)
-  {
-    sram.on = 1;
-    sram.write = 1;
-  }
+  if (cart.romsize <= sram.start) sram.on = 1;
 
   /* Some games with bad header or specific configuration */
   if (strstr(rominfo.product,"T-113016") != NULL)
   {
     /* Pugsy (try accessing unmapped area for copy protection) */
     sram.on = 0;
-    sram.write = 0;
+  }
+  else if (strstr(rominfo.international,"SONIC THE HEDGEHOG 2") != NULL)
+  {
+    /* Sonic the Hedgehog 2 does not use SRAM */
+    /* this prevents SRAM activation when using Sonic & Knuckles LOCK-ON feature */
+    sram.on = 0;
   }
   else if ((strstr(rominfo.product,"T-26013") != NULL) && (rominfo.checksum == 0xa837))
   {
     /* Psy-O-Blade (bad header) */
     sram.on = 1;
-    sram.write = 1;
     sram.start = 0x200001;
     sram.end = 0x203fff;
   }
@@ -91,7 +92,6 @@ void sram_init()
   {
     /* Xin Qigai Wangzi, aka Beggar Prince (no header, use uncommon area) */
     sram.on = 1;
-    sram.write = 1;
     sram.start = 0x400000;
     sram.end = 0x40ffff;
   }
