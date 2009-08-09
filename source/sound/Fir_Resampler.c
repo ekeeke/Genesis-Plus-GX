@@ -1,6 +1,6 @@
 /* Game_Music_Emu 0.5.2. http://www.slack.net/~ant/ */
 /* Copyright (C) 2004-2006 Shay Green. */
-/* Modified by Eke-Eke for use in Genesis Plus (2009). */
+/* C Conversion by Eke-Eke for use in Genesis Plus (2009). */
 
 #include "Fir_Resampler.h"
 
@@ -23,7 +23,7 @@ static int step = STEREO;
 static int input_per_cycle;
 static double ratio = 1.0;
 
-static void gen_sinc(double rolloff, int width, double offset, double spacing, double scale, int count, sample_t *out )
+static void gen_sinc(double rolloff, int width, double offset, double spacing, double scale, int count, short *out )
 {
   double const maxh = 256;
   double const fstep = M_PI / maxh * spacing;
@@ -38,11 +38,11 @@ static void gen_sinc(double rolloff, int width, double offset, double spacing, d
     double w = angle * to_w;
     if ( fabs( w ) < M_PI )
     {
-      double rolloff_cos_a = ROLLOFF * cos( angle );
+      double rolloff_cos_a = rolloff * cos( angle );
       double num = 1 - rolloff_cos_a -
           pow_a_n * cos( maxh * angle ) +
-          pow_a_n * ROLLOFF * cos( (maxh - 1) * angle );
-      double den = 1 - rolloff_cos_a - rolloff_cos_a + ROLLOFF * ROLLOFF;
+          pow_a_n * rolloff * cos( (maxh - 1) * angle );
+      double den = 1 - rolloff_cos_a - rolloff_cos_a + rolloff * rolloff;
       double sinc = scale * num / den - scale;
 
       out [-1] = (short) (cos( w ) * sinc + sinc);
@@ -78,6 +78,12 @@ int Fir_Resampler_initialize( int new_size )
   buffer = (sample_t *) realloc( buffer, (new_size + WRITE_OFFSET) * sizeof (sample_t) );
   if ( !buffer && new_size ) return 0;
   buffer_size = new_size + WRITE_OFFSET;
+  write_pos = 0;
+  res       = 1;
+  imp_phase = 0;
+  skip_bits = 0;
+  step      = STEREO;
+  ratio     = 1.0;
   Fir_Resampler_clear();
   return 1;
 }
@@ -265,7 +271,7 @@ int Fir_Resampler_input_needed( unsigned long output_count )
 
   unsigned long skip = skip_bits >> imp_phase;
   int remain = res - imp_phase;
-  while ( (output_count -= 2) > 0 )
+  while ( (output_count) > 0 ) /* fixed (Eke_Eke) */
   {
     input_count += step + (skip & 1) * STEREO;
     skip >>= 1;

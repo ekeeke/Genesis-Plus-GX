@@ -137,9 +137,6 @@
 
 #define FREQ_MASK    ((1<<FREQ_SH)-1)
 
-#define MAXOUT    (+32767)
-#define MINOUT    (-32768)
-
 
 /* envelope generator */
 #define ENV_BITS    10
@@ -161,6 +158,11 @@
 #define SIN_MASK    (SIN_LEN-1)
 
 #define TL_RES_LEN    (256) /* 8 bits addressing (real chip) */
+
+
+#define MAXOUT    (+16383)
+#define MINOUT    (-16384)
+
 
 /*  TL_TAB_LEN is calculated as:
 *   13 - sinus amplitude bits     (Y axis)
@@ -1913,7 +1915,8 @@ void YM2612Update(int length)
 
   /* Output samples buffers */
   int16 *bufFIR = Fir_Resampler_buffer();
-  if (!bufFIR)
+  if (bufFIR) bufFIR += snd.fm.pos*2;
+  else
   {
     bufL  = snd.fm.buffer[0] + snd.fm.pos;
     bufR  = snd.fm.buffer[1] + snd.fm.pos;
@@ -2041,10 +2044,6 @@ void YM2612Update(int length)
 
   /* timer B control */
   INTERNAL_TIMER_B(length);
-
-  /* update FIR resampler */
-  if (bufFIR) 
-    Fir_Resampler_write(length * 2);
 }
 
 /* initialize ym2612 emulator(s) */

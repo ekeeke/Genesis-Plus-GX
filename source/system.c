@@ -73,8 +73,9 @@ void audio_update (int size)
   /* resampling */
   if (config.hq_fm)
   {
-    int fm_len = (int) ((double)size * Fir_Resampler_ratio() + 0.5) ;
-    sound_update(fm_len,size);
+    int len = Fir_Resampler_input_needed(size * 2);
+    sound_update(len/2,size);
+    Fir_Resampler_write(len);
     Fir_Resampler_read(fm,size);
   }
   else
@@ -96,10 +97,10 @@ void audio_update (int size)
     if (filter & 1)
     {
       /* single-pole low-pass filter (6 dB/octave) */
-      ll = (ll + l) >> 1;
-      rr = (rr + r) >> 1;
-      l = ll;
-      r = rr;
+      l = (ll + l) >> 1;
+      r = (rr + r) >> 1;
+      ll = l;
+      rr = r;
     }
     else if (filter & 2)
     {
@@ -141,7 +142,7 @@ int audio_init (int rate)
   snd.sample_rate = rate;
 
   /* Calculate the sound buffer size (for one frame) */
-  snd.buffer_size = (rate / vdp_rate) + 8;
+  snd.buffer_size = (rate / vdp_rate) + 32;
 
 #ifndef NGC
   /* Output buffers */
