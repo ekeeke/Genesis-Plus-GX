@@ -203,7 +203,7 @@ void cart_hw_init()
   }
 
   /* ROM is mirrored each 2^k bytes */
-  cart.mask = size -1;
+  cart.mask = size - 1;
 
   /**********************************************
           DEFAULT CARTRIDGE MAPPING 
@@ -296,7 +296,7 @@ void cart_hw_init()
       ((strstr(rominfo.product,"XXXXXXXX")  != NULL) && (rominfo.checksum == 0xdf39)) ||  /* Sampras Tennis 96 */
       ((strstr(rominfo.product,"T-123456")  != NULL) && (rominfo.checksum == 0x1eae)) ||  /* Sampras Tennis 96 */
       ((strstr(rominfo.product,"T-120066")  != NULL) && (rominfo.checksum == 0x16a4)) ||  /* Pete Sampras Tennis (1994)*/
-      (strstr(rominfo.product,"T-120096")    != NULL))                                    /*  Micro Machines 2 */
+      (strstr(rominfo.product,"T-120096")    != NULL))                                    /* Micro Machines 2 */
   {
     if (cart.romsize <= 0x380000)  /* just to be sure (checksum might not be enough) */
     {
@@ -532,9 +532,9 @@ static void sega_mapper_w(uint32 address, uint32 data)
             /* SRAM write enabled */
             for (i=0x20; i<0x40; i++)
             {
-              m68k_memory_map[0x20].write8  = NULL;
-              m68k_memory_map[0x20].write16 = NULL;
-              zbank_memory_map[0x20].write  = NULL;
+              m68k_memory_map[i].write8  = NULL;
+              m68k_memory_map[i].write16 = NULL;
+              zbank_memory_map[i].write  = NULL;
             }
           }
         }

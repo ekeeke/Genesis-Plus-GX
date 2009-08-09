@@ -597,6 +597,9 @@ typedef struct
   UINT32  lfo_cnt;      /* current LFO phase */
   UINT32  lfo_inc;      /* step of LFO counter */
   UINT32  lfo_freq[8];  /* LFO FREQ table */
+  UINT32 LFO_AM;        /* current LFO AM step */
+  INT32  LFO_PM;        /* current LFO PM step */
+
 } FM_OPN;
 
 /***********************************************************/
@@ -617,9 +620,6 @@ static YM2612 ym2612;
 static INT32  m2,c1,c2;   /* Phase Modulation input for operators 2,3,4 */
 static INT32  mem;        /* one sample delay memory */
 static INT32  out_fm[8];  /* outputs of working channels */
-static UINT32 LFO_AM;     /* runtime LFO calculations helper */
-static INT32  LFO_PM;     /* runtime LFO calculations helper */
-
 
 /* limitter */
 #define Limit(val, max,min) { \
@@ -1009,12 +1009,12 @@ INLINE void advance_lfo()
     /* triangle */
     /* AM: 0 to 126 step +2, 126 to 0 step -2 */
     if (pos<64)
-      LFO_AM = pos * 2;
+      ym2612.OPN.LFO_AM = pos * 2;
     else
-      LFO_AM = 126 - ((pos&63) * 2);
+      ym2612.OPN.LFO_AM = 126 - ((pos&63) * 2);
 
     /* PM works with 4 times slower clock */
-    LFO_PM = pos >> 2;
+    ym2612.OPN.LFO_PM = pos >> 2;
   }
   /* when LFO is disabled, current level is held (fix Spider-Man & Venom : Separation Anxiety) */
   /*else
@@ -1229,7 +1229,7 @@ INLINE void update_ssg_eg_channel(FM_SLOT *SLOT)
 INLINE void update_phase_lfo_slot(FM_SLOT *SLOT , INT32 pms, UINT32 block_fnum)
 {
   UINT32 fnum_lfo   = ((block_fnum & 0x7f0) >> 4) * 32 * 8;
-  INT32  lfo_fn_table_index_offset = lfo_pm_table[ fnum_lfo + pms + LFO_PM ];
+  INT32  lfo_fn_table_index_offset = lfo_pm_table[ fnum_lfo + pms + ym2612.OPN.LFO_PM ];
   
   if (lfo_fn_table_index_offset)  /* LFO phase modulation active */
   {
@@ -1261,7 +1261,7 @@ INLINE void update_phase_lfo_channel(FM_CH *CH)
   UINT32 block_fnum = CH->block_fnum;
   
   UINT32 fnum_lfo   = ((block_fnum & 0x7f0) >> 4) * 32 * 8;
-  INT32  lfo_fn_table_index_offset = lfo_pm_table[ fnum_lfo + CH->pms + LFO_PM ];
+  INT32  lfo_fn_table_index_offset = lfo_pm_table[ fnum_lfo + CH->pms + ym2612.OPN.LFO_PM ];
 
   if (lfo_fn_table_index_offset)  /* LFO phase modulation active */
   {
@@ -1305,16 +1305,13 @@ INLINE void update_phase_lfo_channel(FM_CH *CH)
 
 INLINE void chan_calc(FM_CH *CH)
 {
-  unsigned int eg_out;
-
-  UINT32 AM = LFO_AM >> CH->ams;
-
+  UINT32 AM = ym2612.OPN.LFO_AM >> CH->ams;
 
   m2 = c1 = c2 = mem = 0;
 
   *CH->mem_connect = CH->mem_value;  /* restore delayed sample (MEM) value to m2 or c2 */
 
-  eg_out = volume_calc(&CH->SLOT[SLOT1]);
+  unsigned int eg_out = volume_calc(&CH->SLOT[SLOT1]);
   {
     INT32 out = CH->op1_out[0] + CH->op1_out[1];
     CH->op1_out[0] = CH->op1_out[1];
@@ -1459,11 +1456,11 @@ static void reset_channels(FM_CH *CH , int num )
     CH[c].fc = 0;
     for(s = 0 ; s < 4 ; s++ )
     {
-      CH[c].SLOT[s].ssg = 0;
-      CH[c].SLOT[s].ssgn = 0;
-      CH[c].SLOT[s].state= EG_OFF;
-      CH[c].SLOT[s].volume = MAX_ATT_INDEX;
-      CH[c].SLOT[s].vol_out= MAX_ATT_INDEX;
+      CH[c].SLOT[s].ssg     = 0;
+      CH[c].SLOT[s].ssgn    = 0;
+      CH[c].SLOT[s].state   = EG_OFF;
+      CH[c].SLOT[s].volume  = MAX_ATT_INDEX;
+      CH[c].SLOT[s].vol_out = MAX_ATT_INDEX;
     }
   }
 }
@@ -1668,9 +1665,9 @@ INLINE void OPNWriteMode(int r, int v)
         if (!ym2612.OPN.lfo_inc)
         {
           /* restart LFO */
-          ym2612.OPN.lfo_cnt  = 0;
-          LFO_AM  = 0;
-          LFO_PM  = 0;
+          ym2612.OPN.lfo_cnt = 0;
+          ym2612.OPN.LFO_AM  = 0;
+          ym2612.OPN.LFO_PM  = 0;
         }
 
         ym2612.OPN.lfo_inc = ym2612.OPN.lfo_freq[v&7];
@@ -2071,9 +2068,9 @@ int YM2612ResetChip(void)
   ym2612.OPN.eg_timer = 0;
   ym2612.OPN.eg_cnt   = 0;
 
-  LFO_AM  = 0;
-  LFO_PM  = 0;
   ym2612.OPN.lfo_cnt  = 0;
+  ym2612.OPN.LFO_AM   = 0;
+  ym2612.OPN.LFO_PM   = 0;
 
   ym2612.OPN.ST.TAC = 0;
   ym2612.OPN.ST.TBC = 0;

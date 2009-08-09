@@ -1304,6 +1304,9 @@ static void ctrlmenu(void)
             input.system[0] = NO_SYSTEM;
             input.system[1] = SYSTEM_GAMEPAD;
           }
+          old_system[0] = -1;
+          old_system[1] = -1;
+          io_init();
           io_reset();
           old_system[0] = input.system[0];
           old_system[1] = input.system[1];
@@ -1351,6 +1354,9 @@ static void ctrlmenu(void)
             input.system[1] = NO_SYSTEM;
             input.system[0] = SYSTEM_GAMEPAD;
           }
+          old_system[0] = -1;
+          old_system[1] = -1;
+          io_init();
           io_reset();
           old_system[0] = input.system[0];
           old_system[1] = input.system[1];
@@ -1480,7 +1486,8 @@ static void ctrlmenu(void)
           {
             if (config.input[player].device == 1) break;
             config.input[player].padtype ^= 1;
-            io_reset();
+            input_init();
+            input_reset();
           }
           else
           {

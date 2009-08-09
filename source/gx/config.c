@@ -118,6 +118,6 @@ void config_default(void)
 
   /* restore saved configuration */
   config_load();
-  io_reset();
+  io_init();
 }
 

@@ -13,7 +13,7 @@ NAME	  = ../gen_sdl.exe
 CC        = gcc
 CFLAGS    = `sdl-config --cflags` -O6 -march=i686 -fomit-frame-pointer
 DEFINES   = -DLSB_FIRST -DX86_ASM -DLOGERROR=1
-INCLUDES  = -I. -I.. -I../z80 -I../m68k -I../dos -I../sound -I../sound/SRC -I../cart_hw -I../cart_hw/svp -I../ntsc
+INCLUDES  = -I. -I.. -I../z80 -I../m68k -I../sound -I../cart_hw -I../cart_hw/svp -I../ntsc
 LIBS	  = `sdl-config --libs` -lz -lm
 
 OBJECTS	=       obj/z80.o	
@@ -37,19 +37,19 @@ OBJECTS	+=      obj/sound.o	\
 		obj/sn76489.o   \
 		obj/ym2612.o    
 
-OBJECTS	+=	obj/samplerate.o \
-		obj/src_linear.o \
-		obj/src_sinc.o   \
-		obj/src_zoh.o    \
-
 OBJECTS	+=	obj/blip.o \
+		obj/Fir_Resampler.o 
 
 OBJECTS	+=	obj/eq.o \
+
+OBJECTS	+=	obj/filters.o \
 
 OBJECTS	+=      obj/sram.o      \
 		obj/eeprom.o    \
 		obj/svp.o	\
 		obj/ssp16.o	\
+		obj/ggenie.o	\
+		obj/datel.o	\
 		obj/cart_hw.o	
 
 OBJECTS	+=	obj/main.o	\
@@ -78,11 +78,6 @@ obj/%.o :	../asm/%.s
 obj/%.o :	../sound/%.c ../sound/%.h	        
 		$(CC) -c $(CFLAGS) $(INCLUDES) $(DEFINES) $< -o $@
 obj/%.o :	../sound/%.c      
-		$(CC) -c $(CFLAGS) $(INCLUDES) $(DEFINES) $< -o $@
-
-obj/%.o :	../sound/SRC/%.c ../sound/SRC/%.h	        
-		$(CC) -c $(CFLAGS) $(INCLUDES) $(DEFINES) $< -o $@
-obj/%.o :	../sound/SRC/%.c      
 		$(CC) -c $(CFLAGS) $(INCLUDES) $(DEFINES) $< -o $@
 
 obj/%.o :	../cart_hw/%.c ../cart_hw/%.h	        

@@ -93,7 +93,7 @@ static inline void lightgun_update(int num)
 }
 
 /* Sega Menacer specific */
-uint32 menacer_read()
+uint32 menacer_read(void)
 {
   /* pins should return 0 by default (fix Body Count when mouse is enabled) */
   int retval = 0x00;
@@ -106,7 +106,7 @@ uint32 menacer_read()
 }
 
 /* Konami Justifier specific */
-uint32 justifier_read()
+uint32 justifier_read(void)
 {
   /* TL & TR pins should always return 1 (write only) */
   /* LEFT & RIGHT pins should always return 0 (needed during gun detection) */
@@ -144,7 +144,7 @@ static struct mega_mouse
   uint8 Port;
 } mouse;
 
-static inline void mouse_reset()
+static inline void mouse_reset(void)
 {
   mouse.State   = 0x60;
   mouse.Counter = 0;
@@ -620,7 +620,7 @@ void jcart_write(uint32 address, uint32 data)
  * Generic INPUTS Control
  *
  *****************************************************************************/
-void input_init ()
+void input_init(void)
 {
   int i,j;
 

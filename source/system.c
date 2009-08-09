@@ -141,12 +141,9 @@ int audio_init (int rate)
   snd.sample_rate = rate;
 
   /* Calculate the sound buffer size (for one frame) */
-#ifdef NGC
   snd.buffer_size = (rate / vdp_rate) + 8;
 
-#else
-  snd.buffer_size = (rate / vdp_rate);
-
+#ifndef NGC
   /* Output buffers */
   snd.buffer[0] = (int16 *) malloc(SND_SIZE);
   snd.buffer[1] = (int16 *) malloc(SND_SIZE);
@@ -204,14 +201,14 @@ void audio_shutdown(void)
  ****************************************************************/
 void system_init (void)
 {
-  /* Cartridge hardware (should be done first !) */
-  cart_hw_init();
-
   /* Genesis hardware */
   gen_init ();
   vdp_init ();
   render_init ();
   io_init();
+
+  /* Cartridge hardware */
+  cart_hw_init();
 }
 
 /****************************************************************
@@ -219,7 +216,7 @@ void system_init (void)
  ****************************************************************/
 void system_reset (void)
 {
-  /* Cartridge hardware (should be done first !) */
+  /* Cartridge Hardware */
   cart_hw_reset();
 
   /* Genesis hardware */
