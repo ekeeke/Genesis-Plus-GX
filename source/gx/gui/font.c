@@ -3,8 +3,8 @@
  *
  *   IPL FONT Engine, using GX hardware
  *
- *   Softdev (2006)
- *   Eke-Eke (2007,2008,2009)
+ *   original font engine by Softdev (2006)
+ *   GX engine by Eke-Eke (2008,2009)
  * 
  *   This program is free software; you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -75,7 +75,7 @@ int FONT_Init(void)
 
   /* default font height */
   fheight = fontHeader->cell_height;
-  
+
   /* initialize texture data */
   fontTexture = memalign(32, fontHeader->cell_width * fontHeader->cell_height / 2);
   if (!fontTexture)

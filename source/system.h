@@ -85,7 +85,6 @@ extern uint32 count_z80;
 extern uint32 line_z80;
 extern int32 current_z80;
 extern uint8 system_hw;
-extern uint32 count_z80;
 
 /* Function prototypes */
 extern int audio_init (int rate);

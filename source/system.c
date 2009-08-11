@@ -102,8 +102,8 @@ void audio_update (int size)
     if (filter & 1)
     {
       /* single-pole low-pass filter (6 dB/octave) */
-      ll = (ll>>16)*factorb + l*factora;
-      rr = (rr>>16)*factorb + r*factora;
+      ll = (ll>>16)*factora + l*factorb;
+      rr = (rr>>16)*factora + r*factorb;
       l = ll >> 16;
       r = rr >> 16;
     }

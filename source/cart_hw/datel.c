@@ -35,12 +35,14 @@ static struct
   uint32 addr[4];
 } action_replay;
 
-static void ar_write_regs(uint32 address, uint32 data);
 static void wram_write_byte(uint32 address, uint32 data);
 static void wram_write_word(uint32 address, uint32 data);
+static void ar_write_regs(uint32 address, uint32 data);
+static void ar_write_regs_pro2(uint32 address, uint32 data);
 
 void datel_init(void)
 {
+  int i;
   memset(&action_replay,0,sizeof(action_replay));
 
   /* load Action Replay ROM program */
@@ -61,22 +63,52 @@ void datel_init(void)
   switch (action_replay.enabled)
   {
     case TYPE_AR:
+    {
+      /* internal registers mapped at $0000-$ffff */
+      m68k_memory_map[0x01].write16 = ar_write_regs;
+
       /* $0000-$7fff mirrored into $8000-$ffff */
       memcpy(action_replay.rom+0x8000,action_replay.rom,0x8000);
-      m68k_memory_map[1].write16 = ar_write_regs;
       break;
+    }
 
     case TYPE_PRO1:
-      m68k_memory_map[1].write16 = ar_write_regs;
-      break;
+    {
+      /* internal registers mapped at $0000-$ffff */
+      m68k_memory_map[0x01].write16 = ar_write_regs;
 
-    case TYPE_PRO2: /* todo */
+      /* RAM (64k) mapped at $400000-$7fffff */
+      for (i=0x40; i<0x80; i++)
+      {
+        m68k_memory_map[i].base     = action_replay.ram;
+        m68k_memory_map[i].read8    = NULL;
+        m68k_memory_map[i].read16   = NULL;
+        m68k_memory_map[i].write8   = NULL;
+        m68k_memory_map[i].write16  = NULL;
+      }
       break;
+    }
+
+    case TYPE_PRO2:
+    {
+      /* internal registers mapped at $100000-$10ffff */
+      m68k_memory_map[0x10].write16 = ar_write_regs_pro2;
+
+      /* RAM (64k) mapped at $400000-$7fffff */
+      for (i=0x40; i<0x80; i++)
+      {
+        m68k_memory_map[i].base     = action_replay.ram;
+        m68k_memory_map[i].read8    = NULL;
+        m68k_memory_map[i].read16   = NULL;
+        m68k_memory_map[i].write8   = NULL;
+        m68k_memory_map[i].write16  = NULL;
+      }
+      break;
+    }
   }
 
 #ifdef LSB_FIRST
   /* Byteswap ROM */
-  int i;
   uint8 temp;
   for(i = 0; i < 0x20000; i += 2)
   {
@@ -100,31 +132,29 @@ void datel_reset(void)
     memset(action_replay.data,0,sizeof(action_replay.data));
     memset(action_replay.addr,0,sizeof(action_replay.addr));
 
-    /* reset memory map */
+    /* ROM mapped at $000000-$3fffff */
+    int i;
     switch (action_replay.enabled)
-    {
-      case TYPE_AR:
-        m68k_memory_map[0].base = action_replay.rom;
+    { 
+      case TYPE_AR:   /* 32k ROM */
+      case TYPE_PRO2: /* 64k ROM */
+      {
+        for (i=0x00; i<0x40; i++)
+        {
+          m68k_memory_map[i].base = action_replay.rom;
+        }
         break;
+      }
 
-      case TYPE_PRO1:
-        m68k_memory_map[0].base    = action_replay.rom;
-        m68k_memory_map[1].base    = action_replay.rom + 0x10000;
-        m68k_memory_map[0x42].base = action_replay.ram;
-        m68k_memory_map[0x42].read8 = NULL;
-        m68k_memory_map[0x42].read16 = NULL;
-        m68k_memory_map[0x42].write8 = NULL;
-        m68k_memory_map[0x42].write16 = NULL;
+      case TYPE_PRO1: /* 128k ROM */
+      {
+        for (i=0x00; i<0x40; i+=2)
+        {
+          m68k_memory_map[i].base   = action_replay.rom;
+          m68k_memory_map[i+1].base = action_replay.rom + 0x10000;
+        }
         break;
-
-      case TYPE_PRO2:
-        m68k_memory_map[0].base    = action_replay.rom;
-        m68k_memory_map[0x60].base = action_replay.ram;
-        m68k_memory_map[0x60].read8 = NULL;
-        m68k_memory_map[0x60].read16 = NULL;
-        m68k_memory_map[0x60].write8 = NULL;
-        m68k_memory_map[0x60].write16 = NULL;
-        break;
+      }
     }
   }
 }
@@ -167,8 +197,8 @@ void datel_switch(uint8 enable)
     /* set RAM write handlers */
     for (i=0xe0; i<0x100; i++)
     {
-      m68k_memory_map[i].write8 = wram_write_byte;
-      m68k_memory_map[i].write16 = wram_write_word;
+      m68k_memory_map[i].write8   = wram_write_byte;
+      m68k_memory_map[i].write16  = wram_write_word;
     }
   }
   else
@@ -250,8 +280,18 @@ static void ar_write_regs(uint32 address, uint32 data)
     action_replay.addr[2] = (action_replay.regs[8]   | ((action_replay.regs[9]   & 0x7f00) << 8)) << 1;
     action_replay.addr[3] = (action_replay.regs[11]  | ((action_replay.regs[12]  & 0x7f00) << 8)) << 1;
 
-    /* reads are mapped to Cartridge ROM */
+    /* Cartridge ROM mapped to $000000-$3fffff */
     /* NOTE: codes should be disabled on startup */
-    m68k_memory_map[0].base = cart.rom;
+    int i;
+    for (i=0x00; i<0x40; i++)
+    {
+      m68k_memory_map[i].base = cart.rom + ((i<<16) & cart.mask);
+    }
   }
+}
+
+
+static void ar_write_regs_pro2(uint32 address, uint32 data)
+{
+  /* TODO */
 }

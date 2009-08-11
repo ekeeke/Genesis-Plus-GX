@@ -623,7 +623,7 @@ static INT32  m2,c1,c2;   /* Phase Modulation input for operators 2,3,4 */
 static INT32  mem;        /* one sample delay memory */
 static INT32  out_fm[8];  /* outputs of working channels */
 
-/* limitter */
+/* limiter */
 #define Limit(val, max,min) { \
   if ( val > max )      val = max; \
   else if ( val < min ) val = min; \
@@ -1021,8 +1021,8 @@ INLINE void advance_lfo()
   /* when LFO is disabled, current level is held (fix Spider-Man & Venom : Separation Anxiety) */
   /*else
   {
-    LFO_AM = 0;
-    LFO_PM = 0;
+    ym2612.OPN.LFO_AM = 0;
+    ym2612.OPN.LFO_PM = 0;
   }*/
 }
 
@@ -1490,6 +1490,8 @@ static int init_tables(void)
       n = n>>1;
             /* 11 bits here (rounded) */
     n <<= 2;    /* 13 bits here (as in real chip) */
+
+    /* 14 bits (with sign bit) */
     tl_tab[ x*2 + 0 ] = n;
     tl_tab[ x*2 + 1 ] = -tl_tab[ x*2 + 0 ];
 
@@ -1615,7 +1617,7 @@ static void OPNSetPres(int pres)
   /* YM2612 running at original frequency (~53267 Hz) */
   if (config.hq_fm) freqbase  = 1.0;
 
-  ym2612.OPN.eg_timer_add  = (UINT32)((1<<EG_SH)  *  freqbase);
+  ym2612.OPN.eg_timer_add  = (UINT32)((1<<EG_SH) * freqbase);
   ym2612.OPN.eg_timer_overflow = ( 3 ) * (1<<EG_SH);
 
   /* timer increment in usecs (timers are incremented after each updated samples) */
@@ -2071,8 +2073,8 @@ int YM2612ResetChip(void)
   ym2612.OPN.LFO_AM   = 0;
   ym2612.OPN.LFO_PM   = 0;
 
-  ym2612.OPN.ST.TAC = 0;
-  ym2612.OPN.ST.TBC = 0;
+  ym2612.OPN.ST.TAC   = 0;
+  ym2612.OPN.ST.TBC   = 0;
 
   OPNWriteMode(0x27,0x30);
   OPNWriteMode(0x26,0x00);
