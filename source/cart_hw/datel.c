@@ -21,9 +21,8 @@
 
 #include "shared.h"
 
-#define TYPE_AR   0x01
-#define TYPE_PRO1 0x02
-#define TYPE_PRO2 0x03
+#define TYPE_PRO1 0x12
+#define TYPE_PRO2 0x22
 
 static struct
 {

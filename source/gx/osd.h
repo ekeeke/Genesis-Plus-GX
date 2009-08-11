@@ -33,9 +33,9 @@
 #define SK_UPMEM      "/genplus/sk2chip.bin"
 
 #ifdef HW_RVL
-#define VERSION "version 1.4.0W"
+#define VERSION "version 1.3.XW"
 #else
-#define VERSION "version 1.4.0G"
+#define VERSION "version 1.3.XG"
 #endif
 
 /* globals */

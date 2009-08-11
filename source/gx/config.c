@@ -71,6 +71,7 @@ void config_default(void)
   config.hq_fm          = 1;
   config.psgBoostNoise  = 0;
   config.filter         = 1;
+  config.lp_range       = 50;
   config.low_freq       = 880;
   config.high_freq      = 5000;
   config.lg             = 1.0;

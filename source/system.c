@@ -54,14 +54,19 @@ void audio_set_equalizer(void)
 /****************************************************************
  * AUDIO stream update
  ****************************************************************/
-static int ll, rr;
+static int llp,rrp;
+
 void audio_update (int size)
 {
-  int i;
-  int l, r;
-  int psg_preamp = config.psg_preamp;
-  int fm_preamp  = config.fm_preamp;
-  int filter = config.filter;
+  int i, l, r;
+  int ll = llp;
+  int rr = rrp;
+
+  int psg_preamp    = config.psg_preamp;
+  int fm_preamp     = config.fm_preamp;
+  int filter        = config.filter;
+  uint32 factora    = (config.lp_range << 16) / 100;
+  uint32 factorb    = 0x10000 - factora;
 
   int16 *fm[2] = {snd.fm.buffer[0],snd.fm.buffer[1]};
   int16 *psg = snd.psg.buffer;
@@ -97,10 +102,10 @@ void audio_update (int size)
     if (filter & 1)
     {
       /* single-pole low-pass filter (6 dB/octave) */
-      l = (ll + l) >> 1;
-      r = (rr + r) >> 1;
-      ll = l;
-      rr = r;
+      ll = (ll>>16)*factorb + l*factora;
+      rr = (rr>>16)*factorb + r*factora;
+      l = ll >> 16;
+      r = rr >> 16;
     }
     else if (filter & 2)
     {
@@ -124,6 +129,10 @@ void audio_update (int size)
     *sb++ = l;
 #endif
   }
+
+  /* save delayed samples */
+  llp = ll;
+  rrp = rr;
 }
 
 /****************************************************************

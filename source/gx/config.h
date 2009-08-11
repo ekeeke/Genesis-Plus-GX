@@ -36,8 +36,9 @@ typedef struct
   int32 psg_preamp;
   int32 fm_preamp;
   uint8 filter;
-  uint16 low_freq;
-  uint16 high_freq;
+  int16 lp_range;
+  int16 low_freq;
+  int16 high_freq;
   float lg;
   float mg;
   float hg;

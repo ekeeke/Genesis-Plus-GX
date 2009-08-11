@@ -36,7 +36,6 @@
 void legal ()
 {
   int ypos = 56;
-
   gxClearScreen((GXColor)BLACK);
 
   FONT_writeCenter ("DISCLAIMER",22,0,640,ypos,(GXColor)WHITE);
