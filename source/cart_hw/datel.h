@@ -23,7 +23,7 @@
 #define _DATEL_H_
 
 extern void datel_init(void);
-extern void datel_reset(void);
-extern void datel_switch(uint8 enable);
+extern void datel_reset(int hard_reset);
+extern void datel_switch(int enable);
 
 #endif

@@ -76,11 +76,10 @@ static int available( unsigned long input_count )
 int Fir_Resampler_initialize( int new_size )
 {
   buffer = (sample_t *) realloc( buffer, (new_size + WRITE_OFFSET) * sizeof (sample_t) );
+  write_pos = 0;
   if ( !buffer && new_size ) return 0;
   buffer_size = new_size + WRITE_OFFSET;
-  write_pos = 0;
   res       = 1;
-  imp_phase = 0;
   skip_bits = 0;
   step      = STEREO;
   ratio     = 1.0;
@@ -206,62 +205,61 @@ int Fir_Resampler_read( sample_t** out, unsigned long count )
   sample_t const* imp = impulses [imp_phase];
   int remain = res - imp_phase;
   int n;
-  
+  int pt0,pt1;
+  sample_t* i;
+  unsigned long l,r;
+
   if ( end_pos - in >= WIDTH * STEREO )
   {
     end_pos -= WIDTH * STEREO;
     do
     {
-      count--;
-      
       /* accumulate in extended precision */
-      unsigned long l = 0;
-      unsigned long r = 0;
-      
-      const sample_t* i = in;
-      if ( count < 0 )
-        break;
-      
+      l = 0;
+      r = 0;
+
+      i = in;
+
       for ( n = WIDTH / 2; n; --n )
       {
-        int pt0 = imp [0];
+        pt0 = imp [0];
         l += pt0 * i [0];
         r += pt0 * i [1];
-        int pt1 = imp [1];
+        pt1 = imp [1];
         imp += 2;
         l += pt1 * i [2];
         r += pt1 * i [3];
         i += 4;
       }
-      
+
       remain--;
-      
+
       l >>= 15;
       r >>= 15;
-      
+
       in += (skip * STEREO) & STEREO;
       skip >>= 1;
       in += step;
-      
+
       if ( !remain )
       {
         imp = impulses [0];
         skip = skip_bits;
         remain = res;
       }
-      
+
       *out_l++ = (sample_t) l;
       *out_r++ = (sample_t) r;
     }
-    while ( in <= end_pos );
+    while ( (in <= end_pos) && (--count > 0) );
   }
-  
+
   imp_phase = res - remain;
-  
+
   int left = write_pos - in;
   write_pos = &buffer [left];
   memmove( buffer, in, left * sizeof *in );
-  
+
   return out_l - out[0];
 }
 

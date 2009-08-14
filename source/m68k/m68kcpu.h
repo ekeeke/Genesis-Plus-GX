@@ -304,7 +304,7 @@ extern unsigned int count_m68k;
 #define REG_DA           m68ki_cpu.dar /* easy access to data and address regs */
 #define REG_D            m68ki_cpu.dar
 #define REG_A            (m68ki_cpu.dar+8)
-#define REG_PPC      m68ki_cpu.ppc
+#define REG_PPC          m68ki_cpu.ppc
 #define REG_PC           m68ki_cpu.pc
 #define REG_SP_BASE      m68ki_cpu.sp
 #define REG_USP          m68ki_cpu.sp[0]
@@ -605,6 +605,12 @@ extern unsigned int count_m68k;
   #define M68K_DO_LOG(A)
   #define M68K_DO_LOG_EMU(A)
 #endif
+
+#if M68K_CHECK_INFINITE_LOOP
+  #define m68ki_check_infinite_loop() if(REG_PC == REG_PPC) USE_ALL_CYCLES()
+#else
+  #define m68ki_check_infinite_loop()
+#endif /* M68K_CHECK_INFINITE_LOOP */
 
 
 

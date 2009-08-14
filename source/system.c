@@ -78,7 +78,7 @@ void audio_update (int size)
   /* resampling */
   if (config.hq_fm)
   {
-    int len = Fir_Resampler_input_needed(size * 2);
+    int len = Fir_Resampler_input_needed(size << 1);
     sound_update(len >> 1,size);
     Fir_Resampler_write(len);
     Fir_Resampler_read(fm,size);
@@ -209,9 +209,9 @@ void audio_shutdown(void)
 void system_init (void)
 {
   /* Genesis hardware */
-  gen_init ();
-  vdp_init ();
-  render_init ();
+  gen_init();
+  vdp_init();
+  render_init();
   io_init();
 
   /* Cartridge hardware */
@@ -227,9 +227,10 @@ void system_reset (void)
   cart_hw_reset();
 
   /* Genesis hardware */
-  gen_reset (1); 
-  vdp_reset ();
-  render_reset ();
+  gen_reset(1); 
+  SN76489_Reset();
+  vdp_reset();
+  render_reset();
   io_reset();
 
   /* Clear Sound Buffers */
@@ -321,6 +322,10 @@ int system_frame (int do_skip)
       /* wait for RESET button to be released */
       while (SYS_ResetButtonDown());
 #endif
+      /* Pro Action Replay (switch at "Trainer" position) */
+      if (config.lock_on == TYPE_AR)
+        datel_reset(0);
+
       gen_reset(0);
     }
 

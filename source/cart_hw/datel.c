@@ -64,7 +64,7 @@ void datel_init(void)
   {
     case TYPE_AR:
     {
-      /* internal registers mapped at $0000-$ffff */
+      /* internal registers mapped at $010000-$01ffff */
       m68k_memory_map[0x01].write16 = ar_write_regs;
 
       /* $0000-$7fff mirrored into $8000-$ffff */
@@ -74,18 +74,15 @@ void datel_init(void)
 
     case TYPE_PRO1:
     {
-      /* internal registers mapped at $0000-$ffff */
+      /* internal registers mapped at $010000-$01ffff */
       m68k_memory_map[0x01].write16 = ar_write_regs;
 
-      /* RAM (64k) mapped at $400000-$7fffff */
-      for (i=0x40; i<0x80; i++)
-      {
-        m68k_memory_map[i].base     = action_replay.ram;
-        m68k_memory_map[i].read8    = NULL;
-        m68k_memory_map[i].read16   = NULL;
-        m68k_memory_map[i].write8   = NULL;
-        m68k_memory_map[i].write16  = NULL;
-      }
+      /* RAM (64k) mapped at $420000-$42ffff */
+      m68k_memory_map[0x42].base     = action_replay.ram;
+      m68k_memory_map[0x42].read8    = NULL;
+      m68k_memory_map[0x42].read16   = NULL;
+      m68k_memory_map[0x42].write8   = NULL;
+      m68k_memory_map[0x42].write16  = NULL;
       break;
     }
 
@@ -94,15 +91,12 @@ void datel_init(void)
       /* internal registers mapped at $100000-$10ffff */
       m68k_memory_map[0x10].write16 = ar_write_regs_pro2;
 
-      /* RAM (64k) mapped at $400000-$7fffff */
-      for (i=0x40; i<0x80; i++)
-      {
-        m68k_memory_map[i].base     = action_replay.ram;
-        m68k_memory_map[i].read8    = NULL;
-        m68k_memory_map[i].read16   = NULL;
-        m68k_memory_map[i].write8   = NULL;
-        m68k_memory_map[i].write16  = NULL;
-      }
+      /* RAM (64k) mapped at $600000-$60ffff */
+      m68k_memory_map[0x60].base     = action_replay.ram;
+      m68k_memory_map[0x60].read8    = NULL;
+      m68k_memory_map[0x60].read16   = NULL;
+      m68k_memory_map[0x60].write8   = NULL;
+      m68k_memory_map[0x60].write16  = NULL;
       break;
     }
   }
@@ -119,10 +113,16 @@ void datel_init(void)
 #endif
 }
 
-void datel_reset(void)
+void datel_reset(int hard_reset)
 {
   if (action_replay.enabled)
   {
+    if (hard_reset)
+    {
+      /* clear RAM */
+      memset(action_replay.ram,0,sizeof(action_replay.ram));
+    }
+
     /* reset codes */
     datel_switch(0);
 
@@ -133,33 +133,26 @@ void datel_reset(void)
     memset(action_replay.addr,0,sizeof(action_replay.addr));
 
     /* ROM mapped at $000000-$3fffff */
-    int i;
     switch (action_replay.enabled)
     { 
       case TYPE_AR:   /* 32k ROM */
       case TYPE_PRO2: /* 64k ROM */
       {
-        for (i=0x00; i<0x40; i++)
-        {
-          m68k_memory_map[i].base = action_replay.rom;
-        }
+        m68k_memory_map[0].base = action_replay.rom;
         break;
       }
 
       case TYPE_PRO1: /* 128k ROM */
       {
-        for (i=0x00; i<0x40; i+=2)
-        {
-          m68k_memory_map[i].base   = action_replay.rom;
-          m68k_memory_map[i+1].base = action_replay.rom + 0x10000;
-        }
+        m68k_memory_map[0].base = action_replay.rom;
+        m68k_memory_map[1].base = action_replay.rom + 0x10000;
         break;
       }
     }
   }
 }
 
-void datel_switch(uint8 enable)
+void datel_switch(int enable)
 {
   int i;
   if (enable)
@@ -213,6 +206,13 @@ void datel_switch(uint8 enable)
         else if (action_replay.addr[i] >= 0xe00000)
           *(uint16 *)(work_ram + (action_replay.addr[i]&0xffff)) = action_replay.old[i];
       }
+    }
+
+    /* set default Work RAM write handlers */
+    for (i=0xe0; i<0x100; i++)
+    {
+      m68k_memory_map[i].write8   = NULL;
+      m68k_memory_map[i].write16  = NULL;
     }
   }
 }
@@ -280,18 +280,17 @@ static void ar_write_regs(uint32 address, uint32 data)
     action_replay.addr[2] = (action_replay.regs[8]   | ((action_replay.regs[9]   & 0x7f00) << 8)) << 1;
     action_replay.addr[3] = (action_replay.regs[11]  | ((action_replay.regs[12]  & 0x7f00) << 8)) << 1;
 
-    /* Cartridge ROM mapped to $000000-$3fffff */
+    /* Enable Cartridge ROM */
     /* NOTE: codes should be disabled on startup */
-    int i;
-    for (i=0x00; i<0x40; i++)
-    {
-      m68k_memory_map[i].base = cart.rom + ((i<<16) & cart.mask);
-    }
+    m68k_memory_map[0].base = cart.rom;
+    m68k_memory_map[1].base = cart.rom + ((1<<16) & cart.mask);
   }
 }
 
 
 static void ar_write_regs_pro2(uint32 address, uint32 data)
 {
-  /* TODO */
+  /* Enable Cartridge ROM */
+  if (((address & 0xff) == 0x78) && (data == 0xffff))
+    m68k_memory_map[0].base = cart.rom;
 }

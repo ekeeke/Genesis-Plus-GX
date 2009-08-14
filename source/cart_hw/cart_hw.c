@@ -472,7 +472,7 @@ void cart_hw_reset()
       break;
 
     case TYPE_AR:
-      datel_reset();
+      datel_reset(1);
       break;
 
     case TYPE_SK:

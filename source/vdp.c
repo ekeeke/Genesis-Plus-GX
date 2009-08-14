@@ -211,7 +211,7 @@ void vdp_reset(void)
   bitmap.viewport.ow = 224;
 
   /* reset border area */
-  bitmap.viewport.x = (reg[12] & 1) ? 16 : 12;
+  bitmap.viewport.x = config.overscan ? ((reg[12] & 1) ? 16 : 12) : 0;
   bitmap.viewport.y = config.overscan ? (vdp_pal ? 32 : 8) : 0;
   bitmap.viewport.changed = 1;
 
@@ -245,7 +245,7 @@ void vdp_restore(uint8 *vdp_regs)
   hctab = (reg[12] & 1) ? cycle2hc40 : cycle2hc32;
 
   /* reinitialize overscan area */
-  bitmap.viewport.x = (reg[12] & 1) ? 16 : 12;
+  bitmap.viewport.x = config.overscan ? ((reg[12] & 1) ? 16 : 12) : 0;
   bitmap.viewport.y = config.overscan ? (((reg[1] & 8) ? 0 : 8) + (vdp_pal ? 24 : 0)) : 0;
   bitmap.viewport.changed = 1;
 
@@ -685,10 +685,7 @@ static inline void reg_w(unsigned int r, unsigned int d)
         /* update viewport */
         bitmap.viewport.changed = 1;
         bitmap.viewport.h = (d & 8) ? 240 : 224;
-        if (config.overscan)
-        {
-          bitmap.viewport.y = ((vdp_pal ? 288 : 240) - bitmap.viewport.h) / 2;
-        }
+        if (config.overscan) bitmap.viewport.y = ((vdp_pal ? 288 : 240) - bitmap.viewport.h) / 2;
 
         /* update VC table */
         if (vdp_pal) vctab = (d & 8) ? vc_pal_240 : vc_pal_224;

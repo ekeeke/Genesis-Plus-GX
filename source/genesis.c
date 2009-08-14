@@ -42,12 +42,12 @@ void set_softreset(void)
   resetline = (int) ((double) (lines_per_frame - 1) * rand() / (RAND_MAX + 1.0));
 }
 
-void gen_init (void)
+void gen_init(void)
 {
   int i;
 
   /* initialize CPUs */
-  m68k_set_cpu_type (M68K_CPU_TYPE_68000);
+  m68k_set_cpu_type(M68K_CPU_TYPE_68000);
   m68k_init();
   z80_init(0,0,0,z80_irq_callback);
 
@@ -113,33 +113,18 @@ void gen_init (void)
   }
 
   /* VDP */
-  m68k_memory_map[0xc0].read8   = vdp_read_byte;
-  m68k_memory_map[0xc0].read16  = vdp_read_word;
-  m68k_memory_map[0xc0].write8  = vdp_write_byte;
-  m68k_memory_map[0xc0].write16 = vdp_write_word;
-  m68k_memory_map[0xc8].read8   = vdp_read_byte;
-  m68k_memory_map[0xc8].read16  = vdp_read_word;
-  m68k_memory_map[0xc8].write8  = vdp_write_byte;
-  m68k_memory_map[0xc8].write16 = vdp_write_word;
-  m68k_memory_map[0xd0].read8   = vdp_read_byte;
-  m68k_memory_map[0xd0].read16  = vdp_read_word;
-  m68k_memory_map[0xd0].write8  = vdp_write_byte;
-  m68k_memory_map[0xd0].write16 = vdp_write_word;
-  m68k_memory_map[0xd8].read8   = vdp_read_byte;
-  m68k_memory_map[0xd8].read16  = vdp_read_word;
-  m68k_memory_map[0xd8].write8  = vdp_write_byte;
-  m68k_memory_map[0xd8].write16 = vdp_write_word;
-  zbank_memory_map[0xc0].read   = zbank_read_vdp;
-  zbank_memory_map[0xc0].write  = zbank_write_vdp;
-  zbank_memory_map[0xc8].read   = zbank_read_vdp;
-  zbank_memory_map[0xc8].write  = zbank_write_vdp;
-  zbank_memory_map[0xd0].read   = zbank_read_vdp;
-  zbank_memory_map[0xd0].write  = zbank_write_vdp;
-  zbank_memory_map[0xd8].read   = zbank_read_vdp;
-  zbank_memory_map[0xd8].write  = zbank_write_vdp;
+  for (i=0xc0; i<0xe0; i+=8)
+  {
+    m68k_memory_map[i].read8   = vdp_read_byte;
+    m68k_memory_map[i].read16  = vdp_read_word;
+    m68k_memory_map[i].write8  = vdp_write_byte;
+    m68k_memory_map[i].write16 = vdp_write_word;
+    zbank_memory_map[i].read   = zbank_read_vdp;
+    zbank_memory_map[i].write  = zbank_write_vdp;
+  }
 }
 
-void gen_reset (uint32 hard_reset)
+void gen_reset(uint32 hard_reset)
 {
   if (hard_reset)
   {
@@ -152,30 +137,30 @@ void gen_reset (uint32 hard_reset)
     {
       m68k_memory_map[0].base = bios_rom;
     }
+
+    count_m68k  = 0;
+    count_z80   = 0;
+    gen_running = 1;  /* System is running */
+    zreset      = 0;  /* Z80 is reset */
+    zbusreq     = 0;  /* Z80 has control of the Z bus */
+    zbusack     = 1;  /* Z80 is busy using the Z bus */
+    zirq        = 0;  /* No interrupts occuring */
+    zbank       = 0;  /* Assume default bank is $000000-$007FFF */
   }
 
-  gen_running = 1;
   resetline   = -1;
-
 #ifdef NGC
   /* register SOFTRESET */
   SYS_SetResetCallback(set_softreset);
 #endif
 
-  zreset = 0;   /* Z80 is reset */
-  zbusreq = 0;  /* Z80 has control of the Z bus */
-  zbusack = 1;  /* Z80 is busy using the Z bus */
-  zirq = 0;     /* No interrupts occuring */
-  zbank = 0;    /* Assume default bank is 000000-007FFF */
-
-  /* Reset CPUs */
-  m68k_pulse_reset ();
-  z80_reset ();
-  YM2612ResetChip();
-  SN76489_Reset();
+  /* reset CPUs */
+  m68k_pulse_reset();
+  z80_reset();
+  fm_reset();
 }
 
-void gen_shutdown (void)
+void gen_shutdown(void)
 {
   z80_exit();
 }
@@ -183,7 +168,7 @@ void gen_shutdown (void)
 /*-----------------------------------------------------------------------
   Bus controller chip functions                                            
   -----------------------------------------------------------------------*/
-void gen_busreq_w (uint32 state)
+void gen_busreq_w(uint32 state)
 {
   uint32 z80_cycles_to_run;
 
@@ -217,7 +202,7 @@ void gen_busreq_w (uint32 state)
   zbusack = 1 ^ (zbusreq & zreset);
 }
 
-void gen_reset_w (uint32 state)
+void gen_reset_w(uint32 state)
 {
   uint32 z80_cycles_to_run;
 
@@ -247,8 +232,8 @@ void gen_reset_w (uint32 state)
     }
 
     /* Reset Z80 & YM2612 */
-    z80_reset ();
-    YM2612ResetChip();
+    z80_reset();
+    fm_reset();
   }
 
   zreset = state;

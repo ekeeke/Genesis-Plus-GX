@@ -40,7 +40,7 @@ static inline int psg_sample_cnt(uint8 z80)
   else return ((count_m68k / m68cycles_per_sample[1]) - snd.psg.pos);
 }
 
-/* update FM samples */
+/* run FM chip for n samples */
 static inline void fm_update(int cnt)
 {
   if (cnt > 0)
@@ -50,7 +50,7 @@ static inline void fm_update(int cnt)
   }
 }
 
-/* update PSG samples */
+/* run PSG chip for n samples */
 static inline void psg_update(int cnt)
 {
   if (cnt > 0)
@@ -60,6 +60,7 @@ static inline void psg_update(int cnt)
   }
 }
 
+/* initialize sound chips emulation */
 void sound_init(int rate)
 {
   double vclk = (vdp_pal ? (double)CLOCK_PAL : (double)CLOCK_NTSC) / 7.0;  /* 68000 and YM2612 clock */
@@ -96,6 +97,13 @@ void sound_update(int fm_len, int psg_len)
   snd.psg.pos  = 0;
 }
 
+/* reset FM chip */
+void fm_reset(void)
+{
+  fm_update(fm_sample_cnt(0));
+  YM2612ResetChip();
+}
+
 /* write FM chip */
 void fm_write(unsigned int cpu, unsigned int address, unsigned int data)
 {
@@ -110,8 +118,7 @@ unsigned int fm_read(unsigned int cpu, unsigned int address)
   return YM2612Read();
 }
 
-
-/* PSG write */
+/* write PSG chip */
 void psg_write(unsigned int cpu, unsigned int data)
 {
   psg_update(psg_sample_cnt(cpu));

@@ -160,6 +160,14 @@
 #define M68K_EMULATE_ADDRESS_ERROR  OPT_ON
 
 
+/* If ON, branch instructions will check for infinite loop and
+ * freeze current CPU execution .
+ * Unnecessary checking might be disabled to improve instruction
+ * emulation speed since infinite loops are going to "lock" the CPU
+ * execution anyway.
+ */
+#define M68K_CHECK_INFINITE_LOOP  OPT_OFF
+
 /* Turn ON to enable logging of illegal instruction calls.
  * M68K_LOG_FILEHANDLE must be #defined to a stdio file stream.
  * Turn on M68K_LOG_1010_1111 to log all 1010 and 1111 calls.

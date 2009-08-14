@@ -854,6 +854,7 @@ void m68k_run (int cyc)
     if(CPU_STOPPED)
     {
       count_m68k = cyc;
+      REG_PPC = REG_PC;
       return;
     }
 
