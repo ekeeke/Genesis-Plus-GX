@@ -73,7 +73,11 @@ void sound_init(int rate)
   if (config.hq_fm)
   {
     m68cycles_per_sample[0] = 144;
-    Fir_Resampler_time_ratio(vclk/144.0/(double)rate);
+
+    /* "real" ratio is (vclk/144.0)/(rate) but this causes scratchy sound in Wii/GCN 50Hz video mode    */
+    /* since "real" framerate is lower than 50 fps whereas PAL Wii/GCN framerate is higher than 50 fps  */
+    /* it's better to directly use the ratio between generated & expected numbers of samples per frame  */
+    Fir_Resampler_time_ratio((double)m68cycles_per_line * (double)lines_per_frame * (double)vdp_rate / 144.0 / (double)rate);
   }
 
   /* initialize sound chips */

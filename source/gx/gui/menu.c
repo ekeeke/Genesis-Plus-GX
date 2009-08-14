@@ -2209,14 +2209,14 @@ void MainMenu (void)
 
       case 2:  /*** Options */
         GUI_DeleteMenu(m);
-        optionmenu ();
+        optionmenu();
         GUI_InitMenu(m);
         break;
 
       case 3:  /*** Memory Manager ***/
         if (!cart.romsize) break;
         GUI_DeleteMenu(m);
-        quit = filemenu ();
+        quit = filemenu();
         if (quit) break;
         GUI_InitMenu(m);
         break;
@@ -2225,9 +2225,10 @@ void MainMenu (void)
         if (!cart.romsize) break;
         GUI_DrawMenuFX(m,10,1);
         GUI_DeleteMenu(m);
-        gxClearScreen ((GXColor)BLACK);
+        gxClearScreen((GXColor)BLACK);
         gxSetScreen();
-        system_reset (); 
+        system_init(); 
+        system_reset(); 
         quit = 1;
         break;
 
@@ -2246,7 +2247,7 @@ void MainMenu (void)
       case 8:   /*** ROM Information ***/
         if (!cart.romsize) break;
         GUI_DeleteMenu(m);
-        showrominfo ();
+        showrominfo();
         GUI_InitMenu(m);
         break;
     }

@@ -211,9 +211,9 @@ void vdp_reset(void)
   bitmap.viewport.ow = 224;
 
   /* reset border area */
-  bitmap.viewport.x = config.overscan ? 14 : 0;
+  bitmap.viewport.x = (reg[12] & 1) ? 16 : 12;
   bitmap.viewport.y = config.overscan ? (vdp_pal ? 32 : 8) : 0;
-  bitmap.viewport.changed = 2;
+  bitmap.viewport.changed = 1;
 
   /* initialize some registers (normally set by BIOS) */
   if (config.bios_enabled != 3)
@@ -245,9 +245,9 @@ void vdp_restore(uint8 *vdp_regs)
   hctab = (reg[12] & 1) ? cycle2hc40 : cycle2hc32;
 
   /* reinitialize overscan area */
-  bitmap.viewport.x = config.overscan ? 14 : 0;
+  bitmap.viewport.x = (reg[12] & 1) ? 16 : 12;
   bitmap.viewport.y = config.overscan ? (((reg[1] & 8) ? 0 : 8) + (vdp_pal ? 24 : 0)) : 0;
-  bitmap.viewport.changed = 2;
+  bitmap.viewport.changed = 1;
 
   /* restore VDP timings */
   fifo_latency = (reg[12] & 1) ? 27 : 30;
@@ -682,12 +682,13 @@ static inline void reg_w(unsigned int r, unsigned int d)
       /* See if the viewport height has actually been changed */
       if ((d & 8) != (reg[1] & 8))
       {
-        /* update the height of the viewport */
-        bitmap.viewport.changed |= 1;
+        /* update viewport */
+        bitmap.viewport.changed = 1;
         bitmap.viewport.h = (d & 8) ? 240 : 224;
-
-        /* update overscan height */
-        if (config.overscan) bitmap.viewport.y = ((vdp_pal ? 288 : 240) - bitmap.viewport.h) / 2;
+        if (config.overscan)
+        {
+          bitmap.viewport.y = ((vdp_pal ? 288 : 240) - bitmap.viewport.h) / 2;
+        }
 
         /* update VC table */
         if (vdp_pal) vctab = (d & 8) ? vc_pal_240 : vc_pal_224;
@@ -769,10 +770,9 @@ static inline void reg_w(unsigned int r, unsigned int d)
           /* Update HC table */
           hctab = cycle2hc40;
 
-#ifndef NGC
           /* Update viewport width */
           bitmap.viewport.w = 320;
-#endif
+          if (config.overscan) bitmap.viewport.x = 16;
         }
         else
         {
@@ -785,22 +785,16 @@ static inline void reg_w(unsigned int r, unsigned int d)
           /* Update HC table */
           hctab = cycle2hc32;
 
-#ifndef NGC
           /* Update viewport width */
           bitmap.viewport.w = 256;
-#endif
+          if (config.overscan) bitmap.viewport.x = 12;
         }
 
-#ifndef NGC
         /* Update viewport */
         bitmap.viewport.changed = 1;
 
         /* Update clipping */
         window_clip();
-#else
-        /* Postpound update on next frame */
-        bitmap.viewport.changed = 2;
-#endif
       }
 
       /* See if the S/TE mode bit has changed */

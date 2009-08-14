@@ -79,7 +79,7 @@ void audio_update (int size)
   if (config.hq_fm)
   {
     int len = Fir_Resampler_input_needed(size * 2);
-    sound_update(len/2,size);
+    sound_update(len >> 1,size);
     Fir_Resampler_write(len);
     Fir_Resampler_read(fm,size);
   }
@@ -201,9 +201,6 @@ void audio_shutdown(void)
 
   /* Resampling buffer */
   Fir_Resampler_shutdown();
-
-  /* sn76489 chip (Blip Buffer allocated memory) */
-  SN76489_Shutdown();
 }
 
 /****************************************************************
@@ -282,23 +279,11 @@ int system_frame (int do_skip)
   interlaced = (reg[12] & 2) >> 1;
   if (old_interlaced != interlaced)
   {
-    bitmap.viewport.changed |= 1;
+    bitmap.viewport.changed = 1;
     im2_flag = ((reg[12] & 6) == 6);
     odd_frame = 1;
   }
   odd_frame ^= 1;
-
-#ifdef NGC
-  if (bitmap.viewport.changed & 2)
-  {
-    /* Update the width of the viewport */
-    bitmap.viewport.w = (reg[12] & 1) ? 320 : 256;
-    bitmap.viewport.changed = 1;
-
-    /* Update clipping */
-    window_clip();
-  }
-#endif
 
   /* clear VBLANK and DMA flags */
   status &= 0xFFF5;

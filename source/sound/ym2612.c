@@ -1917,7 +1917,10 @@ void YM2612Update(int length)
 
   /* Output samples buffers */
   int16 *bufFIR = Fir_Resampler_buffer();
-  if (bufFIR) bufFIR += snd.fm.pos*2;
+  if (bufFIR)
+  {
+  	bufFIR += (snd.fm.pos << 1);
+  }
   else
   {
     bufL  = snd.fm.buffer[0] + snd.fm.pos;

@@ -1679,7 +1679,7 @@ void remap_buffer(uint32 line, uint32 width)
 {
   /* get line offset from framebuffer */
   line = (line + bitmap.viewport.y) % lines_per_frame;
-    
+
   /* double resolution mode */
   if (config.render && interlaced) line = (line * 2) + odd_frame;
 
@@ -1690,7 +1690,7 @@ void remap_buffer(uint32 line, uint32 width)
     else sms_ntsc_blit(&sms_ntsc, ( SMS_NTSC_IN_T const * )pixel_16, tmp_buf+0x20-bitmap.viewport.x, width, line);
     return;
   }
-  
+
 #ifdef NGC
   /* directly fill the RGB565 texture */
   /* one tile is 32 byte = 4x4 pixels */

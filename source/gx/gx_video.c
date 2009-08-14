@@ -460,13 +460,13 @@ static void gxResetScale(u32 width, u32 height)
     if (config.overscan)
     {
       /* borders are emulated */
-      xscale = 358 - gc_pal;
+      xscale = 358 + ((reg[12] & 1)*2) - gc_pal;
       yscale = vdp_pal + ((gc_pal && !config.render) ? 143 : 120);
     }
     else
     {
       /* borders are simulated (black) */
-      xscale = 328 - gc_pal;
+      xscale = 325 + ((reg[12] & 1)*2) - gc_pal;
       yscale = bitmap.viewport.h / 2;
       if (vdp_pal && (!gc_pal || config.render)) yscale = yscale * 240 / 288;
       else if (!vdp_pal && gc_pal && !config.render) yscale = yscale * 288 / 240;
@@ -484,7 +484,7 @@ static void gxResetScale(u32 width, u32 height)
     if (config.overscan)
     {
       /* borders are emulated */
-      xscale = 348;
+      xscale = 352;
       yscale = (gc_pal && !config.render) ? (vdp_pal ? (268*144 / bitmap.viewport.h):143) : (vdp_pal ? (224*144 / bitmap.viewport.h):120);
     }
     else
@@ -1334,7 +1334,7 @@ void gx_video_Start(void)
     crosshair[1] = gxTextureOpenPNG(Crosshair_p2_png,0);
 
   /* apply changes on next video update */
-  bitmap.viewport.changed |= 1;
+  bitmap.viewport.changed = 1;
 
   /* reset GX rendering */
   gxResetRendering(0);
@@ -1343,12 +1343,19 @@ void gx_video_Start(void)
 /* GX render update */
 void gx_video_Update(void)
 {
+  int update = bitmap.viewport.changed;
+
   /* check if display has changed */
-  if (bitmap.viewport.changed & 1)
+  if (update)
   {
     /* update texture size */
-    vwidth  = bitmap.viewport.w + 2 * bitmap.viewport.x;
-    vheight = bitmap.viewport.h + 2 * bitmap.viewport.y;
+    int old_vwidth = vwidth;
+    vwidth = bitmap.viewport.w + (2 * bitmap.viewport.x);
+    vheight = bitmap.viewport.h + (2 * bitmap.viewport.y);
+
+    /* if width has been changed, do no render this frame           */
+    /* this fixes texture glitches when changing width middle-frame */
+    if (vwidth != old_vwidth) return;
 
     /* special cases */
     if (config.render && interlaced) vheight = vheight << 1;
@@ -1397,9 +1404,9 @@ void gx_video_Update(void)
   whichfb ^= 1;
 
   /* reconfigure VI */
-  if (bitmap.viewport.changed & 1)
+  if (update)
   {
-    bitmap.viewport.changed &= 2;
+    bitmap.viewport.changed = 0;
 
     /* change VI mode */
     VIDEO_Configure(rmode);

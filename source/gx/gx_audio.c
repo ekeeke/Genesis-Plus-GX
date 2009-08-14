@@ -110,7 +110,8 @@ void gx_audio_Update(void)
   u32 size = dma_len;
 
   /* VIDEO interrupt synchronization: we approximate next DMA length (see below)      */
-  /* VSYNC period is 16715 us which is approx. 802.32 samples                         */
+  /* In 50Hz mode, VSYNC period is 19967 usec which is approx 958.42 samples          */
+  /* In 60Hz mode, VSYNC period is 16715 usec which is approx. 802.32 samples         */
   /* DMA length should be a multiple of 32 bytes so we use either 800 or 808 samples  */
   if (dma_sync)
   {
