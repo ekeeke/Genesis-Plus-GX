@@ -81,9 +81,30 @@ void sram_init()
     /* this prevents SRAM activation when using Sonic & Knuckles LOCK-ON feature */
     sram.on = 0;
   }
-  else if ((strstr(rominfo.product,"T-26013") != NULL) && (rominfo.checksum == 0xa837))
+  else if (strstr(rominfo.product,"T-26013") != NULL)
   {
     /* Psy-O-Blade (bad header) */
+    sram.on = 1;
+    sram.start = 0x200001;
+    sram.end = 0x203fff;
+  }
+  else if (strstr(rominfo.product,"T-50086") != NULL)
+  {
+    /* PGA Tour Golf (no header) */
+    sram.on = 1;
+    sram.start = 0x200001;
+    sram.end = 0x203fff;
+  }
+  else if (strstr(rominfo.product,"ACLD007") != NULL)
+  {
+    /* Winter Challenge (no header) */
+    sram.on = 1;
+    sram.start = 0x200001;
+    sram.end = 0x200fff;
+  }
+  else if (strstr(rominfo.product,"T-50286") != NULL)
+  {
+    /* Buck Rogers - Countdown to Doomsday (no header) */
     sram.on = 1;
     sram.start = 0x200001;
     sram.end = 0x203fff;

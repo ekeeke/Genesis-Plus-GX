@@ -42,7 +42,6 @@ static void ar_write_regs_pro2(uint32 address, uint32 data);
 
 void datel_init(void)
 {
-  int i;
   memset(&action_replay,0,sizeof(action_replay));
 
   /* load Action Replay ROM program */
@@ -103,6 +102,7 @@ void datel_init(void)
 
 #ifdef LSB_FIRST
   /* Byteswap ROM */
+  int i;
   uint8 temp;
   for(i = 0; i < 0x20000; i += 2)
   {

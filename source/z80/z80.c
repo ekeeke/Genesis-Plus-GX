@@ -1,9 +1,9 @@
 /*****************************************************************************
  *
  *   z80.c
- *   Portable Z80 emulator V3.5
+ *   Portable Z80 emulator V3.8
  *
- *   Copyright (C) 1998,1999,2000 Juergen Buchmueller, all rights reserved.
+ *   Copyright Juergen Buchmueller, all rights reserved.
  *
  *   - This source code is released as freeware for non-commercial purposes.
  *   - You are free to use and redistribute this code in modified or
@@ -17,6 +17,11 @@
  *     terms of its usage and license at any time, including retroactively
  *   - This entire notice must remain in the source code.
  *
+ *   Changes in 3.8 [Miodrag Milanovic]
+ *   - Added MEMPTR register (according to informations provided
+ *     by Vladimir Kladov
+ *   - BIT n,(HL) now return valid values due to use of MEMPTR
+ *   - Fixed BIT 6,(XY+o) undocumented instructions
  *   Changes in 3.7 [Aaron Giles]
  *   - Changed NMI handling. NMIs are now latched in set_irq_state
  *     but are not taken there. Instead they are taken at the start of the
@@ -111,13 +116,7 @@
 #define BIG_SWITCH      1
 #endif
 
-/* big flags array for ADD/ADC/SUB/SBC/CP results */
-#define BIG_FLAGS_ARRAY    1
 
-/* on JP and JR opcodes check for tight loops */
-#define BUSY_LOOP_HACKS   1
-
-#define change_pc(a)
 
 #define CF  0x01
 #define NF  0x02
@@ -170,6 +169,10 @@
 #define HY Z80.iy.b.h
 #define LY Z80.iy.b.l
 
+#define MEMPTR   Z80.memptr.w.l
+#define MEMPTR_H Z80.memptr.b.h
+#define MEMPTR_L Z80.memptr.b.l
+
 #define I Z80.i
 #define R Z80.r
 #define R2 Z80.r2
@@ -188,10 +191,8 @@ static UINT8 SZP[256];    /* zero, sign and parity flags */
 static UINT8 SZHV_inc[256]; /* zero, sign, half carry and overflow flags INC r8 */
 static UINT8 SZHV_dec[256]; /* zero, sign, half carry and overflow flags DEC r8 */
 
-#if BIG_FLAGS_ARRAY
 static UINT8 *SZHVC_add = 0;
 static UINT8 *SZHVC_sub = 0;
-#endif
 
 static const UINT8 cc_op[0x100] = {
  4,10, 7, 6, 4, 4, 7, 4, 4,11, 7, 6, 4, 4, 7, 4,
@@ -250,7 +251,7 @@ static const UINT8 cc_ed[0x100] = {
 static const UINT8 cc_xy[0x100] = {
  4, 4, 4, 4, 4, 4, 4, 4, 4,15, 4, 4, 4, 4, 4, 4,
  4, 4, 4, 4, 4, 4, 4, 4, 4,15, 4, 4, 4, 4, 4, 4,
- 4,14,20,10, 9, 9, 9, 4, 4,15,20,10, 9, 9, 9, 4,
+ 4,14,20,10, 9, 9,11, 4, 4,15,20,10, 9, 9,11, 4,
  4, 4, 4, 4,23,23,19, 4, 4,15, 4, 4, 4, 4, 4, 4,
  4, 4, 4, 4, 9, 9,19, 4, 4, 4, 4, 4, 9, 9,19, 4,
  4, 4, 4, 4, 9, 9,19, 4, 4, 4, 4, 4, 9, 9,19, 4,
@@ -444,14 +445,15 @@ INLINE void BURNODD(int cycles, int opcodes, int cyclesum)
 #define EXEC(prefix,opcode)                   \
 {                                \
   unsigned op = opcode;                    \
-  (*Z80##prefix[op])();                    \
   CC(prefix,op);                        \
+  (*Z80##prefix[op])();             \
 }
 
 #if BIG_SWITCH
 #define EXEC_INLINE(prefix,opcode)                \
 {                                \
   unsigned op = opcode;                    \
+  CC(prefix,op);                    \
   switch(op)                          \
   {                              \
   case 0x00:prefix##_##00();break; case 0x01:prefix##_##01();break; case 0x02:prefix##_##02();break; case 0x03:prefix##_##03();break; \
@@ -519,7 +521,6 @@ INLINE void BURNODD(int cycles, int opcodes, int cyclesum)
   case 0xf8:prefix##_##f8();break; case 0xf9:prefix##_##f9();break; case 0xfa:prefix##_##fa();break; case 0xfb:prefix##_##fb();break; \
   case 0xfc:prefix##_##fc();break; case 0xfd:prefix##_##fd();break; case 0xfe:prefix##_##fe();break; case 0xff:prefix##_##ff();break; \
   }                                                                  \
-  CC(prefix,op);                        \
 }
 #else
 #define EXEC_INLINE EXEC
@@ -621,8 +622,8 @@ INLINE UINT32 ARG16(void)
  * Calculate the effective address EA of an opcode using
  * IX+offset resp. IY+offset addressing.
  ***************************************************************/
-#define EAX EA = (UINT32)(UINT16)(IX + (INT8)ARG())
-#define EAY EA = (UINT32)(UINT16)(IY + (INT8)ARG())
+#define EAX   	{ EA = (UINT32)(UINT16)(IX + (INT8)ARG()); MEMPTR = EA; } while (0)
+#define EAY    	{ EA = (UINT32)(UINT16)(IY + (INT8)ARG()); MEMPTR = EA; } while (0)
 
 /***************************************************************
  * POP
@@ -637,168 +638,104 @@ INLINE UINT32 ARG16(void)
 /***************************************************************
  * JP
  ***************************************************************/
-#if BUSY_LOOP_HACKS
-#define JP {                          \
-  unsigned oldpc = PCD-1;                    \
-  PCD = ARG16();                        \
-  change_pc(PCD);                        \
-  /* speed up busy loop */                  \
-  if( PCD == oldpc )                      \
-  {                              \
-    if( Z80.irq_state == CLEAR_LINE )            \
-      BURNODD( z80_ICount, 1, cc[Z80_TABLE_op][0xc3] );  \
-  }                              \
-  else                            \
-  {                              \
-    UINT8 op = cpu_readop(PCD);                \
-    if( PCD == oldpc-1 )                  \
-    {                            \
-      /* NOP - JP $-1 or EI - JP $-1 */          \
-      if ( op == 0x00 || op == 0xfb )           \
-      {                          \
-        if( Z80.irq_state == CLEAR_LINE )        \
-          BURNODD( z80_ICount-cc[Z80_TABLE_op][0x00], \
-            2, cc[Z80_TABLE_op][0x00]+cc[Z80_TABLE_op][0xc3]); \
-      }                          \
-    }                            \
-    else                          \
-    /* LD SP,#xxxx - JP $-3 (Galaga) */           \
-    if( PCD == oldpc-3 && op == 0x31 )            \
-    {                            \
-      if( Z80.irq_state == CLEAR_LINE )          \
-        BURNODD( z80_ICount-cc[Z80_TABLE_op][0x31],    \
-          2, cc[Z80_TABLE_op][0x31]+cc[Z80_TABLE_op][0xc3]); \
-    }                            \
-  }                              \
-}
-#else
 #define JP {                          \
   PCD = ARG16();                        \
-  change_pc(PCD);                        \
+  MEMPTR = PCD;                                 \
 }
-#endif
 
 /***************************************************************
  * JP_COND
  ***************************************************************/
-
-#define JP_COND(cond)                      \
-  if( cond )                          \
+#define JP_COND(cond) {                         \
+  if (cond)                                     \
   {                              \
     PCD = ARG16();                      \
-    change_pc(PCD);                      \
+    MEMPTR = PCD;                               \
   }                              \
   else                            \
   {                              \
-    PC += 2;                        \
-  }
+    MEMPTR = ARG16(); /* implicit do PC += 2 */ \
+  }                                             \
+}
 
 /***************************************************************
  * JR
  ***************************************************************/
-#define JR()                          \
-{                                \
-  unsigned oldpc = PCD-1;                    \
+#define JR() {                                              \
   INT8 arg = (INT8)ARG(); /* ARG() also increments PC */    \
   PC += arg;        /* so don't do PC += ARG() */    \
-  change_pc(PCD);                        \
-  /* speed up busy loop */                  \
-  if( PCD == oldpc )                      \
-  {                              \
-    if( Z80.irq_state == CLEAR_LINE )            \
-      BURNODD( z80_ICount, 1, cc[Z80_TABLE_op][0x18] );  \
-  }                              \
-  else                            \
-  {                              \
-    UINT8 op = cpu_readop(PCD);                \
-    if( PCD == oldpc-1 )                  \
-    {                            \
-      /* NOP - JR $-1 or EI - JR $-1 */          \
-      if ( op == 0x00 || op == 0xfb )           \
-      {                          \
-        if( Z80.irq_state == CLEAR_LINE )        \
-           BURNODD( z80_ICount-cc[Z80_TABLE_op][0x00],  \
-             2, cc[Z80_TABLE_op][0x00]+cc[Z80_TABLE_op][0x18]); \
-      }                          \
-    }                            \
-    else                          \
-    /* LD SP,#xxxx - JR $-3 */                \
-    if( PCD == oldpc-3 && op == 0x31 )            \
-    {                            \
-      if( Z80.irq_state == CLEAR_LINE )          \
-         BURNODD( z80_ICount-cc[Z80_TABLE_op][0x31],    \
-           2, cc[Z80_TABLE_op][0x31]+cc[Z80_TABLE_op][0x18]); \
-    }                            \
-  }                              \
+  MEMPTR = PC;                                              \
 }
 
 /***************************************************************
  * JR_COND
  ***************************************************************/
-#define JR_COND(cond,opcode)                  \
-  if( cond )                          \
+#define JR_COND(cond, opcode) {   \
+  if (cond)                       \
   {                              \
-    INT8 arg = (INT8)ARG(); /* ARG() also increments PC */  \
-    PC += arg;        /* so don't do PC += ARG() */  \
-    CC(ex,opcode);                      \
-    change_pc(PCD);                      \
+    JR();                         \
+    CC(ex, opcode);               \
   }                              \
   else PC++;                          \
+}
 
 /***************************************************************
  * CALL
  ***************************************************************/
-#define CALL()                          \
+#define CALL() {                  \
   EA = ARG16();                        \
-  PUSH( pc );                          \
+  MEMPTR = EA;                    \
+  PUSH(pc);                       \
   PCD = EA;                          \
-  change_pc(PCD)
+}
 
 /***************************************************************
  * CALL_COND
  ***************************************************************/
-#define CALL_COND(cond,opcode)                  \
-  if( cond )                          \
+#define CALL_COND(cond, opcode) { \
+  if (cond)                       \
   {                              \
     EA = ARG16();                      \
-    PUSH( pc );                        \
+    MEMPTR = EA;                  \
+    PUSH(pc);                     \
     PCD = EA;                        \
-    CC(ex,opcode);                      \
-    change_pc(PCD);                      \
+    CC(ex, opcode);               \
   }                              \
   else                            \
   {                              \
-    PC+=2;                          \
-  }
+    MEMPTR = ARG16();  /* implicit call PC+=2;   */ \
+  }                               \
+}
 
 /***************************************************************
  * RET_COND
  ***************************************************************/
-#define RET_COND(cond,opcode)                  \
-  if( cond )                          \
+#define RET_COND(cond, opcode) do { \
+  if (cond)                         \
   {                              \
-    POP( pc );                        \
-    change_pc(PCD);                      \
-    CC(ex,opcode);                      \
-  }
+    POP(pc);                        \
+    MEMPTR = PC;                    \
+    CC(ex, opcode);                 \
+  }                                 \
+} while (0)
 
 /***************************************************************
  * RETN
  ***************************************************************/
-#define RETN  {                        \
+#define RETN do { \
   LOG(("Z80 #%d RETN IFF1:%d IFF2:%d\n", cpu_getactivecpu(), IFF1, IFF2)); \
   POP( pc );                          \
-  change_pc(PCD);                        \
+  MEMPTR = PC; \
   IFF1 = IFF2;                        \
-}
+} while (0)
 
 /***************************************************************
  * RETI
  ***************************************************************/
 #define RETI  {                        \
   POP( pc );                          \
-  change_pc(PCD);                        \
-/* according to http://www.msxnet.org/tech/z80-documented.pdf */\
+  MEMPTR = PC; \
+/* according to http://www.msxnet.org/tech/z80-documented.pdf */ \
   IFF1 = IFF2;                        \
 }
 
@@ -839,7 +776,7 @@ INLINE UINT32 ARG16(void)
 #define RST(addr)                        \
   PUSH( pc );                          \
   PCD = addr;                          \
-  change_pc(PCD)
+  MEMPTR = PC;                    \
 
 /***************************************************************
  * INC  r8
@@ -901,6 +838,7 @@ INLINE UINT8 DEC(UINT8 value)
  ***************************************************************/
 #define RRD {                          \
   UINT8 n = RM(HL);                      \
+  MEMPTR = HL+1;                                    \
   WM( HL, (n >> 4) | (A << 4) );                \
   A = (A & 0xf0) | (n & 0x0f);                \
   F = (F & CF) | SZP[A];                    \
@@ -911,6 +849,7 @@ INLINE UINT8 DEC(UINT8 value)
  ***************************************************************/
 #define RLD {                          \
   UINT8 n = RM(HL);                      \
+  MEMPTR = HL+1;                     \
   WM( HL, (n << 4) | (A & 0x0f) );              \
   A = (A & 0xf0) | (n >> 4);                  \
   F = (F & CF) | SZP[A];                    \
@@ -919,7 +858,6 @@ INLINE UINT8 DEC(UINT8 value)
 /***************************************************************
  * ADD  A,n
  ***************************************************************/
-#if BIG_FLAGS_ARRAY
 #define ADD(value)                        \
 {                                \
   UINT32 ah = AFD & 0xff00;                  \
@@ -927,22 +865,10 @@ INLINE UINT8 DEC(UINT8 value)
   F = SZHVC_add[ah | res];                  \
   A = res;                          \
 }
-#else
-#define ADD(value)                        \
-{                                \
-  unsigned val = value;                    \
-  unsigned res = A + val;                    \
-  F = SZ[(UINT8)res] | ((res >> 8) & CF) |          \
-    ((A ^ res ^ val) & HF) |                \
-    (((val ^ A ^ 0x80) & (val ^ res) & 0x80) >> 5);      \
-  A = (UINT8)res;                        \
-}
-#endif
 
 /***************************************************************
  * ADC  A,n
  ***************************************************************/
-#if BIG_FLAGS_ARRAY
 #define ADC(value)                        \
 {                                \
   UINT32 ah = AFD & 0xff00, c = AFD & 1;            \
@@ -950,22 +876,10 @@ INLINE UINT8 DEC(UINT8 value)
   F = SZHVC_add[(c << 16) | ah | res];            \
   A = res;                          \
 }
-#else
-#define ADC(value)                        \
-{                                \
-  unsigned val = value;                    \
-  unsigned res = A + val + (F & CF);              \
-  F = SZ[res & 0xff] | ((res >> 8) & CF) |          \
-    ((A ^ res ^ val) & HF) |                \
-    (((val ^ A ^ 0x80) & (val ^ res) & 0x80) >> 5);      \
-  A = res;                          \
-}
-#endif
 
 /***************************************************************
  * SUB  n
  ***************************************************************/
-#if BIG_FLAGS_ARRAY
 #define SUB(value)                        \
 {                                \
   UINT32 ah = AFD & 0xff00;                  \
@@ -973,22 +887,10 @@ INLINE UINT8 DEC(UINT8 value)
   F = SZHVC_sub[ah | res];                  \
   A = res;                          \
 }
-#else
-#define SUB(value)                        \
-{                                \
-  unsigned val = value;                    \
-  unsigned res = A - val;                    \
-  F = SZ[res & 0xff] | ((res >> 8) & CF) | NF |        \
-    ((A ^ res ^ val) & HF) |                \
-    (((val ^ A) & (A ^ res) & 0x80) >> 5);          \
-  A = res;                          \
-}
-#endif
 
 /***************************************************************
  * SBC  A,n
  ***************************************************************/
-#if BIG_FLAGS_ARRAY
 #define SBC(value)                        \
 {                                \
   UINT32 ah = AFD & 0xff00, c = AFD & 1;            \
@@ -996,17 +898,6 @@ INLINE UINT8 DEC(UINT8 value)
   F = SZHVC_sub[(c<<16) | ah | res];              \
   A = res;                          \
 }
-#else
-#define SBC(value)                        \
-{                                \
-  unsigned val = value;                    \
-  unsigned res = A - val - (F & CF);              \
-  F = SZ[res & 0xff] | ((res >> 8) & CF) | NF |        \
-    ((A ^ res ^ val) & HF) |                \
-    (((val ^ A) & (A ^ res) & 0x80) >> 5);          \
-  A = res;                          \
-}
-#endif
 
 /***************************************************************
  * NEG
@@ -1029,27 +920,13 @@ INLINE UINT8 DEC(UINT8 value)
   hi = A / 16;                        \
                                 \
   if (cf)                            \
-  {                              \
     diff = (lo <= 9 && !hf) ? 0x60 : 0x66;          \
-  }                              \
-  else                            \
-  {                              \
-    if (lo >= 10)                      \
-    {                            \
+  else if (lo >= 10)                      \
       diff = hi <= 8 ? 0x06 : 0x66;            \
-    }                            \
-    else                          \
-    {                            \
-      if (hi >= 10)                    \
-      {                          \
+  else if (hi >= 10)                    \
         diff = hf ? 0x66 : 0x60;            \
-      }                          \
       else                        \
-      {                          \
         diff = hf ? 0x06 : 0x00;            \
-      }                          \
-    }                            \
-  }                              \
   if (nf) A -= diff;                      \
   else A += diff;                        \
                                 \
@@ -1082,26 +959,13 @@ INLINE UINT8 DEC(UINT8 value)
 /***************************************************************
  * CP  n
  ***************************************************************/
-#if BIG_FLAGS_ARRAY
-#define CP(value)                        \
-{                                \
+#define CP(value) {                         \
   unsigned val = value;                    \
   UINT32 ah = AFD & 0xff00;                  \
   UINT32 res = (UINT8)((ah >> 8) - val);            \
   F = (SZHVC_sub[ah | res] & ~(YF | XF)) |          \
     (val & (YF | XF));                    \
 }
-#else
-#define CP(value)                        \
-{                                \
-  unsigned val = value;                    \
-  unsigned res = A - val;                    \
-  F = (SZ[res & 0xff] & (SF | ZF)) |              \
-    (val & (YF | XF)) | ((res >> 8) & CF) | NF |      \
-    ((A ^ res ^ val) & HF) |                \
-    ((((val ^ A) & (A ^ res)) >> 5) & VF);          \
-}
-#endif
 
 /***************************************************************
  * EX  AF,AF'
@@ -1138,6 +1002,7 @@ INLINE UINT8 DEC(UINT8 value)
   RM16( SPD, &tmp );                      \
   WM16( SPD, &Z80.DR );                    \
   Z80.DR = tmp;                        \
+  MEMPTR = Z80.DR.d;                       \
 }
 
 
@@ -1147,6 +1012,7 @@ INLINE UINT8 DEC(UINT8 value)
 #define ADD16(DR,SR)                      \
 {                                \
   UINT32 res = Z80.DR.d + Z80.SR.d;              \
+  MEMPTR = Z80.DR.d + 1;                       \
   F = (F & (SF | ZF | VF)) |                  \
     (((Z80.DR.d ^ res ^ Z80.SR.d) >> 8) & HF) |       \
     ((res >> 16) & CF) | ((res >> 8) & (YF | XF));       \
@@ -1159,6 +1025,7 @@ INLINE UINT8 DEC(UINT8 value)
 #define ADC16(Reg)                        \
 {                                \
   UINT32 res = HLD + Z80.Reg.d + (F & CF);          \
+  MEMPTR = HL + 1;                       \
   F = (((HLD ^ res ^ Z80.Reg.d) >> 8) & HF) |          \
     ((res >> 16) & CF) |                  \
     ((res >> 8) & (SF | YF | XF)) |              \
@@ -1173,6 +1040,7 @@ INLINE UINT8 DEC(UINT8 value)
 #define SBC16(Reg)                        \
 {                                \
   UINT32 res = HLD - Z80.Reg.d - (F & CF);          \
+  MEMPTR = HL + 1;                       \
   F = (((HLD ^ res ^ Z80.Reg.d) >> 8) & HF) | NF |      \
     ((res >> 16) & CF) |                  \
     ((res >> 8) & (SF | YF | XF)) |             \
@@ -1285,9 +1153,14 @@ INLINE UINT8 SRL(UINT8 value)
   F = (F & CF) | HF | SZ_BIT[reg & (1<<bit)]
 
 /***************************************************************
+ * BIT  bit,(HL)
+ ***************************************************************/
+#define BIT_HL(bit, reg)                    \
+  F = (F & CF) | HF | (SZ_BIT[reg & (1<<bit)] & ~(YF|XF)) | (MEMPTR_H & (YF|XF)); \
+
+/***************************************************************
  * BIT  bit,(IX/Y+o)
  ***************************************************************/
-
 #define BIT_XY(bit,reg)                     \
   F = (F & CF) | HF | (SZ_BIT[reg & (1<<bit)] & ~(YF|XF)) | ((EA>>8) & (YF|XF))
 
@@ -1326,6 +1199,7 @@ INLINE UINT8 SET(UINT8 bit, UINT8 value)
 #define CPI {                          \
   UINT8 val = RM(HL);                      \
   UINT8 res = A - val;                    \
+  MEMPTR++;  \
   HL++; BC--;                          \
   F = (F & CF) | (SZ[res]&~(YF|XF)) | ((A^val^res)&HF) | NF;  \
   if( F & HF ) res -= 1;                    \
@@ -1340,6 +1214,7 @@ INLINE UINT8 SET(UINT8 bit, UINT8 value)
 #define INI {                          \
   unsigned t;                          \
   UINT8 io = IN(BC);                      \
+  MEMPTR = BC + 1; \
   B--;                            \
   WM( HL, io );                        \
   HL++;                            \
@@ -1357,6 +1232,7 @@ INLINE UINT8 SET(UINT8 bit, UINT8 value)
   unsigned t;                          \
   UINT8 io = RM(HL);                      \
   B--;                            \
+  MEMPTR = BC + 1;  \
   OUT( BC, io );                        \
   HL++;                            \
   F = SZ[B];                          \
@@ -1385,6 +1261,7 @@ INLINE UINT8 SET(UINT8 bit, UINT8 value)
 #define CPD {                          \
   UINT8 val = RM(HL);                      \
   UINT8 res = A - val;                    \
+  MEMPTR--;  \
   HL--; BC--;                          \
   F = (F & CF) | (SZ[res]&~(YF|XF)) | ((A^val^res)&HF) | NF;  \
   if( F & HF ) res -= 1;                    \
@@ -1399,6 +1276,7 @@ INLINE UINT8 SET(UINT8 bit, UINT8 value)
 #define IND {                          \
   unsigned t;                          \
   UINT8 io = IN(BC);                      \
+  MEMPTR = BC - 1;  \
   B--;                            \
   WM( HL, io );                        \
   HL--;                            \
@@ -1416,6 +1294,7 @@ INLINE UINT8 SET(UINT8 bit, UINT8 value)
   unsigned t;                          \
   UINT8 io = RM(HL);                      \
   B--;                            \
+  MEMPTR = BC - 1;  \
   OUT( BC, io );                        \
   HL--;                            \
   F = SZ[B];                          \
@@ -1433,6 +1312,7 @@ INLINE UINT8 SET(UINT8 bit, UINT8 value)
   if( BC )                          \
   {                              \
     PC -= 2;                        \
+    MEMPTR = PC + 1;  \
     CC(ex,0xb0);                      \
   }
 
@@ -1444,6 +1324,7 @@ INLINE UINT8 SET(UINT8 bit, UINT8 value)
   if( BC && !(F & ZF) )                    \
   {                              \
     PC -= 2;                        \
+   MEMPTR = PC + 1;  \
     CC(ex,0xb1);                      \
   }
 
@@ -1488,6 +1369,7 @@ INLINE UINT8 SET(UINT8 bit, UINT8 value)
   if( BC && !(F & ZF) )                    \
   {                              \
     PC -= 2;                        \
+   MEMPTR = PC + 1;  \
     CC(ex,0xb9);                      \
   }
 
@@ -1603,7 +1485,7 @@ OP(cb,42) { BIT(0,D);                      } /* BIT  0,D         */
 OP(cb,43) { BIT(0,E);                      } /* BIT  0,E         */
 OP(cb,44) { BIT(0,H);                      } /* BIT  0,H         */
 OP(cb,45) { BIT(0,L);                      } /* BIT  0,L         */
-OP(cb,46) { BIT(0,RM(HL));                    } /* BIT  0,(HL)      */
+OP(cb,46) { BIT_HL(0,RM(HL));                    } /* BIT  0,(HL)      */
 OP(cb,47) { BIT(0,A);                      } /* BIT  0,A         */
 
 OP(cb,48) { BIT(1,B);                      } /* BIT  1,B         */
@@ -1612,7 +1494,7 @@ OP(cb,4a) { BIT(1,D);                      } /* BIT  1,D         */
 OP(cb,4b) { BIT(1,E);                      } /* BIT  1,E         */
 OP(cb,4c) { BIT(1,H);                      } /* BIT  1,H         */
 OP(cb,4d) { BIT(1,L);                      } /* BIT  1,L         */
-OP(cb,4e) { BIT(1,RM(HL));                    } /* BIT  1,(HL)      */
+OP(cb,4e) { BIT_HL(1,RM(HL));                    } /* BIT  1,(HL)      */
 OP(cb,4f) { BIT(1,A);                      } /* BIT  1,A         */
 
 OP(cb,50) { BIT(2,B);                      } /* BIT  2,B         */
@@ -1621,7 +1503,7 @@ OP(cb,52) { BIT(2,D);                      } /* BIT  2,D         */
 OP(cb,53) { BIT(2,E);                      } /* BIT  2,E         */
 OP(cb,54) { BIT(2,H);                      } /* BIT  2,H         */
 OP(cb,55) { BIT(2,L);                      } /* BIT  2,L         */
-OP(cb,56) { BIT(2,RM(HL));                    } /* BIT  2,(HL)      */
+OP(cb,56) { BIT_HL(2,RM(HL));                    } /* BIT  2,(HL)      */
 OP(cb,57) { BIT(2,A);                      } /* BIT  2,A         */
 
 OP(cb,58) { BIT(3,B);                      } /* BIT  3,B         */
@@ -1630,7 +1512,7 @@ OP(cb,5a) { BIT(3,D);                      } /* BIT  3,D         */
 OP(cb,5b) { BIT(3,E);                      } /* BIT  3,E         */
 OP(cb,5c) { BIT(3,H);                      } /* BIT  3,H         */
 OP(cb,5d) { BIT(3,L);                      } /* BIT  3,L         */
-OP(cb,5e) { BIT(3,RM(HL));                    } /* BIT  3,(HL)      */
+OP(cb,5e) { BIT_HL(3,RM(HL));                    } /* BIT  3,(HL)      */
 OP(cb,5f) { BIT(3,A);                      } /* BIT  3,A         */
 
 OP(cb,60) { BIT(4,B);                      } /* BIT  4,B         */
@@ -1639,7 +1521,7 @@ OP(cb,62) { BIT(4,D);                      } /* BIT  4,D         */
 OP(cb,63) { BIT(4,E);                      } /* BIT  4,E         */
 OP(cb,64) { BIT(4,H);                      } /* BIT  4,H         */
 OP(cb,65) { BIT(4,L);                      } /* BIT  4,L         */
-OP(cb,66) { BIT(4,RM(HL));                    } /* BIT  4,(HL)      */
+OP(cb,66) { BIT_HL(4,RM(HL));                    } /* BIT  4,(HL)      */
 OP(cb,67) { BIT(4,A);                      } /* BIT  4,A         */
 
 OP(cb,68) { BIT(5,B);                      } /* BIT  5,B         */
@@ -1648,7 +1530,7 @@ OP(cb,6a) { BIT(5,D);                      } /* BIT  5,D         */
 OP(cb,6b) { BIT(5,E);                      } /* BIT  5,E         */
 OP(cb,6c) { BIT(5,H);                      } /* BIT  5,H         */
 OP(cb,6d) { BIT(5,L);                      } /* BIT  5,L         */
-OP(cb,6e) { BIT(5,RM(HL));                    } /* BIT  5,(HL)      */
+OP(cb,6e) { BIT_HL(5,RM(HL));                    } /* BIT  5,(HL)      */
 OP(cb,6f) { BIT(5,A);                      } /* BIT  5,A         */
 
 OP(cb,70) { BIT(6,B);                      } /* BIT  6,B         */
@@ -1657,7 +1539,7 @@ OP(cb,72) { BIT(6,D);                      } /* BIT  6,D         */
 OP(cb,73) { BIT(6,E);                      } /* BIT  6,E         */
 OP(cb,74) { BIT(6,H);                      } /* BIT  6,H         */
 OP(cb,75) { BIT(6,L);                      } /* BIT  6,L         */
-OP(cb,76) { BIT(6,RM(HL));                    } /* BIT  6,(HL)      */
+OP(cb,76) { BIT_HL(6,RM(HL));                    } /* BIT  6,(HL)      */
 OP(cb,77) { BIT(6,A);                      } /* BIT  6,A         */
 
 OP(cb,78) { BIT(7,B);                      } /* BIT  7,B         */
@@ -1666,7 +1548,7 @@ OP(cb,7a) { BIT(7,D);                      } /* BIT  7,D         */
 OP(cb,7b) { BIT(7,E);                      } /* BIT  7,E         */
 OP(cb,7c) { BIT(7,H);                      } /* BIT  7,H         */
 OP(cb,7d) { BIT(7,L);                      } /* BIT  7,L         */
-OP(cb,7e) { BIT(7,RM(HL));                    } /* BIT  7,(HL)      */
+OP(cb,7e) { BIT_HL(7,RM(HL));                    } /* BIT  7,(HL)      */
 OP(cb,7f) { BIT(7,A);                      } /* BIT  7,A         */
 
 OP(cb,80) { B = RES(0,B);                    } /* RES  0,B         */
@@ -1944,14 +1826,14 @@ OP(xycb,6d) { xycb_6e();                    } /* BIT  5,(XY+o)    */
 OP(xycb,6e) { BIT_XY(5,RM(EA));                   } /* BIT  5,(XY+o)    */
 OP(xycb,6f) { xycb_6e();                    } /* BIT  5,(XY+o)    */
 
-OP(xycb,70) { xycb_66();                    } /* BIT  6,(XY+o)    */
-OP(xycb,71) { xycb_66();                    } /* BIT  6,(XY+o)    */
-OP(xycb,72) { xycb_66();                    } /* BIT  6,(XY+o)    */
-OP(xycb,73) { xycb_66();                    } /* BIT  6,(XY+o)    */
-OP(xycb,74) { xycb_66();                    } /* BIT  6,(XY+o)    */
-OP(xycb,75) { xycb_66();                    } /* BIT  6,(XY+o)    */
+OP(xycb,70) { xycb_76();                    } /* BIT  6,(XY+o)    */
+OP(xycb,71) { xycb_76();                    } /* BIT  6,(XY+o)    */
+OP(xycb,72) { xycb_76();                    } /* BIT  6,(XY+o)    */
+OP(xycb,73) { xycb_76();                    } /* BIT  6,(XY+o)    */
+OP(xycb,74) { xycb_76();                    } /* BIT  6,(XY+o)    */
+OP(xycb,75) { xycb_76();                    } /* BIT  6,(XY+o)    */
 OP(xycb,76) { BIT_XY(6,RM(EA));                   } /* BIT  6,(XY+o)    */
-OP(xycb,77) { xycb_66();                    } /* BIT  6,(XY+o)    */
+OP(xycb,77) { xycb_76();                    } /* BIT  6,(XY+o)    */
 
 OP(xycb,78) { xycb_7e();                    } /* BIT  7,(XY+o)    */
 OP(xycb,79) { xycb_7e();                    } /* BIT  7,(XY+o)    */
@@ -2153,7 +2035,7 @@ OP(dd,1f) { illegal_1(); op_1f();                  } /* DB   DD      */
 
 OP(dd,20) { illegal_1(); op_20();                  } /* DB   DD      */
 OP(dd,21) { R++; IX = ARG16();                  } /* LD   IX,w        */
-OP(dd,22) { R++; EA = ARG16(); WM16( EA, &Z80.ix );        } /* LD   (w),IX      */
+OP(dd,22) { R++; EA = ARG16(); WM16( EA, &Z80.ix ); MEMPTR = EA+1;       } /* LD   (w),IX      */
 OP(dd,23) { R++; IX++;                      } /* INC  IX          */
 OP(dd,24) { R++; HX = INC(HX);                  } /* INC  HX          */
 OP(dd,25) { R++; HX = DEC(HX);                  } /* DEC  HX          */
@@ -2162,7 +2044,7 @@ OP(dd,27) { illegal_1(); op_27();                  } /* DB   DD      */
 
 OP(dd,28) { illegal_1(); op_28();                  } /* DB   DD      */
 OP(dd,29) { R++; ADD16(ix,ix);                  } /* ADD  IX,IX       */
-OP(dd,2a) { R++; EA = ARG16(); RM16( EA, &Z80.ix );        } /* LD   IX,(w)      */
+OP(dd,2a) { R++; EA = ARG16(); RM16( EA, &Z80.ix ); MEMPTR = EA+1;       } /* LD   IX,(w)      */
 OP(dd,2b) { R++; IX--;                      } /* DEC  IX          */
 OP(dd,2c) { R++; LX = INC(LX);                  } /* INC  LX          */
 OP(dd,2d) { R++; LX = DEC(LX);                  } /* DEC  LX          */
@@ -2377,7 +2259,7 @@ OP(dd,e6) { illegal_1(); op_e6();                  } /* DB   DD      */
 OP(dd,e7) { illegal_1(); op_e7();                  } /* DB   DD      */
 
 OP(dd,e8) { illegal_1(); op_e8();                  } /* DB   DD      */
-OP(dd,e9) { R++; PC = IX; change_pc(PCD);            } /* JP   (IX)        */
+OP(dd,e9) { R++; PC = IX;                          } /* JP   (IX)        */
 OP(dd,ea) { illegal_1(); op_ea();                  } /* DB   DD      */
 OP(dd,eb) { illegal_1(); op_eb();                  } /* DB   DD      */
 OP(dd,ec) { illegal_1(); op_ec();                  } /* DB   DD      */
@@ -2444,7 +2326,7 @@ OP(fd,1f) { illegal_1(); op_1f();                  } /* DB   FD      */
 
 OP(fd,20) { illegal_1(); op_20();                  } /* DB   FD      */
 OP(fd,21) { R++; IY = ARG16();                  } /* LD   IY,w        */
-OP(fd,22) { R++; EA = ARG16(); WM16( EA, &Z80.iy );        } /* LD   (w),IY      */
+OP(fd,22) { R++; EA = ARG16(); WM16( EA, &Z80.iy ); MEMPTR = EA+1;       } /* LD   (w),IY      */
 OP(fd,23) { R++; IY++;                      } /* INC  IY          */
 OP(fd,24) { R++; HY = INC(HY);                  } /* INC  HY          */
 OP(fd,25) { R++; HY = DEC(HY);                  } /* DEC  HY          */
@@ -2453,7 +2335,7 @@ OP(fd,27) { illegal_1(); op_27();                  } /* DB   FD      */
 
 OP(fd,28) { illegal_1(); op_28();                  } /* DB   FD      */
 OP(fd,29) { R++; ADD16(iy,iy);                  } /* ADD  IY,IY       */
-OP(fd,2a) { R++; EA = ARG16(); RM16( EA, &Z80.iy );        } /* LD   IY,(w)      */
+OP(fd,2a) { R++; EA = ARG16(); RM16( EA, &Z80.iy ); MEMPTR = EA+1;       } /* LD   IY,(w)      */
 OP(fd,2b) { R++; IY--;                      } /* DEC  IY          */
 OP(fd,2c) { R++; LY = INC(LY);                  } /* INC  LY          */
 OP(fd,2d) { R++; LY = DEC(LY);                  } /* DEC  LY          */
@@ -2668,7 +2550,7 @@ OP(fd,e6) { illegal_1(); op_e6();                  } /* DB   FD      */
 OP(fd,e7) { illegal_1(); op_e7();                  } /* DB   FD      */
 
 OP(fd,e8) { illegal_1(); op_e8();                  } /* DB   FD      */
-OP(fd,e9) { R++; PC = IY; change_pc(PCD);            } /* JP   (IY)        */
+OP(fd,e9) { R++; PC = IY;                          } /* JP   (IY)        */
 OP(fd,ea) { illegal_1(); op_ea();                  } /* DB   FD      */
 OP(fd,eb) { illegal_1(); op_eb();                  } /* DB   FD      */
 OP(fd,ec) { illegal_1(); op_ec();                  } /* DB   FD      */
@@ -2780,7 +2662,7 @@ OP(ed,3f) { illegal_2();                      } /* DB   ED      */
 OP(ed,40) { B = IN(BC); F = (F & CF) | SZP[B];          } /* IN   B,(C)       */
 OP(ed,41) { OUT(BC, B);                      } /* OUT  (C),B       */
 OP(ed,42) { SBC16( bc );                    } /* SBC  HL,BC       */
-OP(ed,43) { EA = ARG16(); WM16( EA, &Z80.bc );          } /* LD   (w),BC      */
+OP(ed,43) { EA = ARG16(); WM16( EA, &Z80.bc ); MEMPTR = EA+1;          } /* LD   (w),BC      */
 OP(ed,44) { NEG;                          } /* NEG        */
 OP(ed,45) { RETN;                          } /* RETN;        */
 OP(ed,46) { IM = 0;                        } /* IM   0           */
@@ -2789,7 +2671,7 @@ OP(ed,47) { LD_I_A;                         } /* LD   I,A      */
 OP(ed,48) { C = IN(BC); F = (F & CF) | SZP[C];          } /* IN   C,(C)       */
 OP(ed,49) { OUT(BC, C);                      } /* OUT  (C),C       */
 OP(ed,4a) { ADC16( bc );                    } /* ADC  HL,BC       */
-OP(ed,4b) { EA = ARG16(); RM16( EA, &Z80.bc );          } /* LD   BC,(w)      */
+OP(ed,4b) { EA = ARG16(); RM16( EA, &Z80.bc ); MEMPTR = EA+1;          } /* LD   BC,(w)      */
 OP(ed,4c) { NEG;                          } /* NEG        */
 OP(ed,4d) { RETI;                          } /* RETI        */
 OP(ed,4e) { IM = 0;                        } /* IM   0           */
@@ -2798,7 +2680,7 @@ OP(ed,4f) { LD_R_A;                         } /* LD   R,A      */
 OP(ed,50) { D = IN(BC); F = (F & CF) | SZP[D];          } /* IN   D,(C)       */
 OP(ed,51) { OUT(BC, D);                      } /* OUT  (C),D       */
 OP(ed,52) { SBC16( de );                    } /* SBC  HL,DE       */
-OP(ed,53) { EA = ARG16(); WM16( EA, &Z80.de );          } /* LD   (w),DE      */
+OP(ed,53) { EA = ARG16(); WM16( EA, &Z80.de ); MEMPTR = EA+1;          } /* LD   (w),DE      */
 OP(ed,54) { NEG;                          } /* NEG        */
 OP(ed,55) { RETN;                          } /* RETN;        */
 OP(ed,56) { IM = 1;                        } /* IM   1           */
@@ -2807,7 +2689,7 @@ OP(ed,57) { LD_A_I;                         } /* LD   A,I      */
 OP(ed,58) { E = IN(BC); F = (F & CF) | SZP[E];          } /* IN   E,(C)       */
 OP(ed,59) { OUT(BC, E);                      } /* OUT  (C),E       */
 OP(ed,5a) { ADC16( de );                    } /* ADC  HL,DE       */
-OP(ed,5b) { EA = ARG16(); RM16( EA, &Z80.de );          } /* LD   DE,(w)      */
+OP(ed,5b) { EA = ARG16(); RM16( EA, &Z80.de ); MEMPTR = EA+1;          } /* LD   DE,(w)      */
 OP(ed,5c) { NEG;                          } /* NEG        */
 OP(ed,5d) { RETI;                          } /* RETI        */
 OP(ed,5e) { IM = 2;                        } /* IM   2           */
@@ -2816,7 +2698,7 @@ OP(ed,5f) { LD_A_R;                         } /* LD   A,R      */
 OP(ed,60) { H = IN(BC); F = (F & CF) | SZP[H];          } /* IN   H,(C)       */
 OP(ed,61) { OUT(BC, H);                      } /* OUT  (C),H       */
 OP(ed,62) { SBC16( hl );                    } /* SBC  HL,HL       */
-OP(ed,63) { EA = ARG16(); WM16( EA, &Z80.hl );          } /* LD   (w),HL      */
+OP(ed,63) { EA = ARG16(); WM16( EA, &Z80.hl ); MEMPTR = EA+1;          } /* LD   (w),HL      */
 OP(ed,64) { NEG;                          } /* NEG        */
 OP(ed,65) { RETN;                          } /* RETN;        */
 OP(ed,66) { IM = 0;                        } /* IM   0           */
@@ -2825,7 +2707,7 @@ OP(ed,67) { RRD;                          } /* RRD  (HL)      */
 OP(ed,68) { L = IN(BC); F = (F & CF) | SZP[L];          } /* IN   L,(C)       */
 OP(ed,69) { OUT(BC, L);                      } /* OUT  (C),L       */
 OP(ed,6a) { ADC16( hl );                    } /* ADC  HL,HL       */
-OP(ed,6b) { EA = ARG16(); RM16( EA, &Z80.hl );          } /* LD   HL,(w)      */
+OP(ed,6b) { EA = ARG16(); RM16( EA, &Z80.hl ); MEMPTR = EA+1;         } /* LD   HL,(w)      */
 OP(ed,6c) { NEG;                          } /* NEG        */
 OP(ed,6d) { RETI;                          } /* RETI        */
 OP(ed,6e) { IM = 0;                        } /* IM   0           */
@@ -2834,16 +2716,16 @@ OP(ed,6f) { RLD;                          } /* RLD  (HL)      */
 OP(ed,70) { UINT8 res = IN(BC); F = (F & CF) | SZP[res];    } /* IN   0,(C)       */
 OP(ed,71) { OUT(BC, 0);                      } /* OUT  (C),0       */
 OP(ed,72) { SBC16( sp );                    } /* SBC  HL,SP       */
-OP(ed,73) { EA = ARG16(); WM16( EA, &Z80.sp );          } /* LD   (w),SP      */
+OP(ed,73) { EA = ARG16(); WM16( EA, &Z80.sp ); MEMPTR = EA+1;          } /* LD   (w),SP      */
 OP(ed,74) { NEG;                          } /* NEG        */
 OP(ed,75) { RETN;                          } /* RETN;        */
 OP(ed,76) { IM = 1;                        } /* IM   1           */
 OP(ed,77) { illegal_2();                      } /* DB   ED,77     */
 
-OP(ed,78) { A = IN(BC); F = (F & CF) | SZP[A];          } /* IN   E,(C)       */
-OP(ed,79) { OUT(BC, A);                      } /* OUT  (C),A       */
+OP(ed,78) { A = IN(BC); F = (F & CF) | SZP[A]; MEMPTR = BC+1;          } /* IN   E,(C)       */
+OP(ed,79) { OUT(BC, A); MEMPTR = BC + 1;                     } /* OUT  (C),A       */
 OP(ed,7a) { ADC16( sp );                    } /* ADC  HL,SP       */
-OP(ed,7b) { EA = ARG16(); RM16( EA, &Z80.sp );          } /* LD   SP,(w)      */
+OP(ed,7b) { EA = ARG16(); RM16( EA, &Z80.sp ); MEMPTR = EA+1;          } /* LD   SP,(w)      */
 OP(ed,7c) { NEG;                          } /* NEG        */
 OP(ed,7d) { RETI;                          } /* RETI        */
 OP(ed,7e) { IM = 2;                        } /* IM   2           */
@@ -2999,7 +2881,7 @@ OP(ed,ff) { illegal_2();                      } /* DB   ED      */
  **********************************************************/
 OP(op,00) {                             } /* NOP        */
 OP(op,01) { BC = ARG16();                    } /* LD   BC,w        */
-OP(op,02) { WM( BC, A );                    } /* LD   (BC),A      */
+OP(op,02) { WM( BC, A ); MEMPTR_L = (BC + 1) & 0xFF;  MEMPTR_H = A;                   } /* LD   (BC),A      */
 OP(op,03) { BC++;                        } /* INC  BC          */
 OP(op,04) { B = INC(B);                      } /* INC  B           */
 OP(op,05) { B = DEC(B);                      } /* DEC  B           */
@@ -3008,7 +2890,7 @@ OP(op,07) { RLCA;                          } /* RLCA        */
 
 OP(op,08) { EX_AF;                          } /* EX   AF,AF'      */
 OP(op,09) { ADD16(hl, bc);                    } /* ADD  HL,BC       */
-OP(op,0a) { A = RM( BC );                    } /* LD   A,(BC)      */
+OP(op,0a) { A = RM( BC ); MEMPTR=BC+1;                   } /* LD   A,(BC)      */
 OP(op,0b) { BC--;                         } /* DEC  BC          */
 OP(op,0c) { C = INC(C);                      } /* INC  C           */
 OP(op,0d) { C = DEC(C);                      } /* DEC  C           */
@@ -3017,7 +2899,7 @@ OP(op,0f) { RRCA;                          } /* RRCA        */
 
 OP(op,10) { B--; JR_COND( B, 0x10 );              } /* DJNZ o           */
 OP(op,11) { DE = ARG16();                    } /* LD   DE,w        */
-OP(op,12) { WM( DE, A );                    } /* LD   (DE),A      */
+OP(op,12) { WM( DE, A ); MEMPTR_L = (DE + 1) & 0xFF;  MEMPTR_H = A;                   } /* LD   (DE),A      */
 OP(op,13) { DE++;                        } /* INC  DE          */
 OP(op,14) { D = INC(D);                      } /* INC  D           */
 OP(op,15) { D = DEC(D);                      } /* DEC  D           */
@@ -3026,7 +2908,7 @@ OP(op,17) { RLA;                          } /* RLA        */
 
 OP(op,18) { JR();                          } /* JR   o       */
 OP(op,19) { ADD16(hl, de);                    } /* ADD  HL,DE       */
-OP(op,1a) { A = RM( DE );                    } /* LD   A,(DE)      */
+OP(op,1a) { A = RM( DE ); MEMPTR=DE+1;                   } /* LD   A,(DE)      */
 OP(op,1b) { DE--;                         } /* DEC  DE          */
 OP(op,1c) { E = INC(E);                      } /* INC  E           */
 OP(op,1d) { E = DEC(E);                      } /* DEC  E           */
@@ -3035,7 +2917,7 @@ OP(op,1f) { RRA;                          } /* RRA        */
 
 OP(op,20) { JR_COND( !(F & ZF), 0x20 );              } /* JR   NZ,o        */
 OP(op,21) { HL = ARG16();                    } /* LD   HL,w        */
-OP(op,22) { EA = ARG16(); WM16( EA, &Z80.hl );          } /* LD   (w),HL      */
+OP(op,22) { EA = ARG16(); WM16( EA, &Z80.hl ); MEMPTR = EA+1;         } /* LD   (w),HL      */
 OP(op,23) { HL++;                        } /* INC  HL          */
 OP(op,24) { H = INC(H);                      } /* INC  H           */
 OP(op,25) { H = DEC(H);                      } /* DEC  H           */
@@ -3044,7 +2926,7 @@ OP(op,27) { DAA;                          } /* DAA        */
 
 OP(op,28) { JR_COND( F & ZF, 0x28 );              } /* JR   Z,o         */
 OP(op,29) { ADD16(hl, hl);                    } /* ADD  HL,HL       */
-OP(op,2a) { EA = ARG16(); RM16( EA, &Z80.hl );          } /* LD   HL,(w)      */
+OP(op,2a) { EA = ARG16(); RM16( EA, &Z80.hl ); MEMPTR = EA+1;         } /* LD   HL,(w)      */
 OP(op,2b) { HL--;                         } /* DEC  HL          */
 OP(op,2c) { L = INC(L);                      } /* INC  L           */
 OP(op,2d) { L = DEC(L);                      } /* DEC  L           */
@@ -3053,7 +2935,7 @@ OP(op,2f) { A ^= 0xff; F = (F&(SF|ZF|PF|CF))|HF|NF|(A&(YF|XF));  } /* CPL       
 
 OP(op,30) { JR_COND( !(F & CF), 0x30 );              } /* JR   NC,o        */
 OP(op,31) { SP = ARG16();                    } /* LD   SP,w        */
-OP(op,32) { EA = ARG16(); WM( EA, A );              } /* LD   (w),A       */
+OP(op,32) { EA = ARG16(); WM( EA, A ); MEMPTR_L=(EA+1)&0xFF;MEMPTR_H=A;             } /* LD   (w),A       */
 OP(op,33) { SP++;                        } /* INC  SP          */
 OP(op,34) { WM( HL, INC(RM(HL)) );                } /* INC  (HL)        */
 OP(op,35) { WM( HL, DEC(RM(HL)) );                } /* DEC  (HL)        */
@@ -3062,7 +2944,7 @@ OP(op,37) { F = (F & (SF|ZF|PF)) | CF | (A & (YF|XF));      } /* SCF            
 
 OP(op,38) { JR_COND( F & CF, 0x38 );              } /* JR   C,o         */
 OP(op,39) { ADD16(hl, sp);                    } /* ADD  HL,SP       */
-OP(op,3a) { EA = ARG16(); A = RM( EA );              } /* LD   A,(w)       */
+OP(op,3a) { EA = ARG16(); A = RM( EA ); MEMPTR = EA+1;              } /* LD   A,(w)       */
 OP(op,3b) { SP--;                        } /* DEC  SP          */
 OP(op,3c) { A = INC(A);                      } /* INC  A           */
 OP(op,3d) { A = DEC(A);                      } /* DEC  A           */
@@ -3223,7 +3105,7 @@ OP(op,c6) { ADD(ARG());                       } /* ADD  A,n      */
 OP(op,c7) { RST(0x00);                        } /* RST  0       */
 
 OP(op,c8) { RET_COND( F & ZF, 0xc8 );              } /* RET  Z           */
-OP(op,c9) { POP( pc ); change_pc(PCD);              } /* RET              */
+OP(op,c9) { POP( pc ); MEMPTR=PCD;                } /* RET              */
 OP(op,ca) { JP_COND( F & ZF );                  } /* JP   Z,a         */
 OP(op,cb) { R++; EXEC(cb,ROP());                } /* **** CB xx       */
 OP(op,cc) { CALL_COND( F & ZF, 0xcc );              } /* CALL Z,a         */
@@ -3234,7 +3116,7 @@ OP(op,cf) { RST(0x08);                        } /* RST  1       */
 OP(op,d0) { RET_COND( !(F & CF), 0xd0 );            } /* RET  NC          */
 OP(op,d1) { POP( de );                      } /* POP  DE          */
 OP(op,d2) { JP_COND( !(F & CF) );                } /* JP   NC,a        */
-OP(op,d3) { unsigned n = ARG() | (A << 8); OUT( n, A );      } /* OUT  (n),A       */
+OP(op,d3) { unsigned n = ARG() | (A << 8); OUT( n, A ); MEMPTR_L = ((n & 0xff) + 1) & 0xff;  MEMPTR_H = A;     } /* OUT  (n),A       */
 OP(op,d4) { CALL_COND( !(F & CF), 0xd4 );            } /* CALL NC,a        */
 OP(op,d5) { PUSH( de );                      } /* PUSH DE          */
 OP(op,d6) { SUB(ARG());                       } /* SUB  n       */
@@ -3243,7 +3125,7 @@ OP(op,d7) { RST(0x10);                        } /* RST  2       */
 OP(op,d8) { RET_COND( F & CF, 0xd8 );              } /* RET  C           */
 OP(op,d9) { EXX;                          } /* EXX        */
 OP(op,da) { JP_COND( F & CF );                  } /* JP   C,a         */
-OP(op,db) { unsigned n = ARG() | (A << 8); A = IN( n );      } /* IN   A,(n)       */
+OP(op,db) { unsigned n = ARG() | (A << 8); A = IN( n ); MEMPTR = n + 1;     } /* IN   A,(n)       */
 OP(op,dc) { CALL_COND( F & CF, 0xdc );              } /* CALL C,a         */
 OP(op,dd) { R++; EXEC(dd,ROP());                } /* **** DD xx       */
 OP(op,de) { SBC(ARG());                       } /* SBC  A,n      */
@@ -3259,7 +3141,7 @@ OP(op,e6) { AND(ARG());                       } /* AND  n       */
 OP(op,e7) { RST(0x20);                        } /* RST  4       */
 
 OP(op,e8) { RET_COND( F & PF, 0xe8 );              } /* RET  PE          */
-OP(op,e9) { PC = HL; change_pc(PCD);              } /* JP   (HL)        */
+OP(op,e9) { PC = HL;                                  } /* JP   (HL)        */
 OP(op,ea) { JP_COND( F & PF );                  } /* JP   PE,a        */
 OP(op,eb) { EX_DE_HL;                        } /* EX   DE,HL     */
 OP(op,ec) { CALL_COND( F & PF, 0xec );              } /* CALL PE,a        */
@@ -3347,11 +3229,11 @@ static void take_interrupt(void)
         PUSH( pc );
         PCD = irq_vector & 0x0038;
           /* RST $xx + 2 cycles */
-        z80_ICount -= cc[Z80_TABLE_op][PCD] + cc[Z80_TABLE_ex][PCD];
+        z80_ICount -= cc[Z80_TABLE_op][0xff] + cc[Z80_TABLE_ex][0xff];
           break;
       }
     }
-  change_pc(PCD);
+  MEMPTR=PCD;
 }
 
 /****************************************************************************
@@ -3361,15 +3243,6 @@ void z80_init(int index, int clock, const void *config, int (*irqcallback)(int))
 {
   int i, p;
 
-  /* setup cycle tables */
-  cc[Z80_TABLE_op] = cc_op;
-  cc[Z80_TABLE_cb] = cc_cb;
-  cc[Z80_TABLE_ed] = cc_ed;
-  cc[Z80_TABLE_xy] = cc_xy;
-  cc[Z80_TABLE_xycb] = cc_xycb;
-  cc[Z80_TABLE_ex] = cc_ex;
-
-#if BIG_FLAGS_ARRAY
   if( !SZHVC_add || !SZHVC_sub )
   {
     int oldval, newval, val;
@@ -3427,7 +3300,7 @@ void z80_init(int index, int clock, const void *config, int (*irqcallback)(int))
       }
     }
   }
-#endif
+
   for (i = 0; i < 256; i++)
   {
     p = 0;
@@ -3455,6 +3328,13 @@ void z80_init(int index, int clock, const void *config, int (*irqcallback)(int))
   /* Reset registers to their initial values */
   Z80.daisy = config;
   Z80.irq_callback = irqcallback;
+  /* setup cycle tables */
+  cc[Z80_TABLE_op] = cc_op;
+  cc[Z80_TABLE_cb] = cc_cb;
+  cc[Z80_TABLE_ed] = cc_ed;
+  cc[Z80_TABLE_xy] = cc_xy;
+  cc[Z80_TABLE_xycb] = cc_xycb;
+  cc[Z80_TABLE_ex] = cc_ex;
 }
 
 /****************************************************************************
@@ -3481,17 +3361,15 @@ void z80_reset(void)
   Z80.nmi_pending = FALSE;
   Z80.irq_state = CLEAR_LINE;
   Z80.after_ei = FALSE;
-  change_pc(PCD);
+  MEMPTR=PCD;
 }
 
 void z80_exit(void)
 {
-#if BIG_FLAGS_ARRAY
   if (SZHVC_add) free(SZHVC_add);
   SZHVC_add = NULL;
   if (SZHVC_sub) free(SZHVC_sub);
   SZHVC_sub = NULL;
-#endif
 }
 
 /****************************************************************************
@@ -3513,7 +3391,7 @@ int z80_execute(int cycles)
     IFF1 = 0;
     PUSH( pc );
     PCD = 0x0066;
-    change_pc(PCD);
+    MEMPTR=PCD;
     z80_ICount -= 11;
     Z80.nmi_pending = FALSE;
   }
@@ -3563,7 +3441,6 @@ void z80_set_context (void *src)
 {
   if( src )
     Z80 = *(Z80_Regs*)src;
-  change_pc(PCD);
 }
 
 /****************************************************************************

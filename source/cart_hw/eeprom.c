@@ -21,7 +21,7 @@
 
 #include "shared.h"
 
-#define GAME_CNT 26
+#define GAME_CNT 28
 
 T_EEPROM eeprom;
 
@@ -51,6 +51,8 @@ static const T_GAME_ENTRY database[GAME_CNT] =
   /* EA mapper (24C01 only) */
   {{"T-50176"    }, 0,      {7,  0x7F,   0x7F,   0x200001, 0x200001, 0x200001, 7, 7, 6}},   /* Rings of Power */
   {{"T-50396"    }, 0,      {7,  0x7F,   0x7F,   0x200001, 0x200001, 0x200001, 7, 7, 6}},   /* NHLPA Hockey 93 */
+  {{"T-50446"    }, 0,      {7,  0x7F,   0x7F,   0x200001, 0x200001, 0x200001, 7, 7, 6}},   /* John Madden Football 93 */
+  {{"T-50516"    }, 0,      {7,  0x7F,   0x7F,   0x200001, 0x200001, 0x200001, 7, 7, 6}},   /* John Madden Football 93 (Championship Ed.) */
   {{"T-50606"    }, 0,      {7,  0x7F,   0x7F,   0x200001, 0x200001, 0x200001, 7, 7, 6}},   /* Bill Walsh College Football */
 
   /* SEGA mapper (24C01 only) */
