@@ -14,6 +14,8 @@ Genesis Plus GX 1.4.0 (??/??/????) (Eke-Eke)
 * added 3-Band EQ for fully configurable sound filtering (credits to Neil C / Etanza Systems)
 * removed libsamplerate support, implemented faster/better FIR resampler (thanks to Blargg and AamirM)
 * improved VDP sprite masking emulation: fixes 3D level in Mickey Mania (thanks to Nemesis for his sprite test program)
+* fixed 2-Cell vertical scrolling when column 0 is shifted.
+* added support for 2-Cell vertical scrolling in Interlaced 2 mode.
 * fixed lightgun autodetection: fixes cursor position in Lethal Enforcers II
 * improved DIVU/DVIS (thanks to Jorge Cwik) & MULU/MULS 68000 instructions timing accuracy
 * updated Z80 core to last version (fixes interrupt Mode 0 timing and some BIT instructions)

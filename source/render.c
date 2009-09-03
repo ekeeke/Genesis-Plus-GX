@@ -970,13 +970,13 @@ static void render_bg(uint32 line, uint32 width)
 
   /* common data */
   uint32 xscroll      = get_hscroll(line);
+  uint32 yscroll      = *(uint32 *)&vsram[0];
   uint32 pf_col_mask  = playfield_col_mask;
   uint32 pf_row_mask  = playfield_row_mask;
   uint32 pf_shift     = playfield_shift;
   uint32 pf_y_mask    = y_mask;
-  uint32 *vs          = (uint32 *)&vsram[0];
 
-  /* B Plane */
+  /* Plane B */
   uint8 *buf    = ntb_buf;
   uint32 start  = 0;
   uint32 end    = width >> 4;
@@ -984,21 +984,21 @@ static void render_bg(uint32 line, uint32 width)
 #ifdef LSB_FIRST
   uint32 shift    = (xscroll >> 16) & 0x0F;
   uint32 index    = pf_col_mask + 1 - ((xscroll >> 20) & pf_col_mask);
-  uint32 y_scroll = (line + ((vs[0] >> 16) & 0x3FF)) & pf_row_mask;
+  uint32 v_line = (line + ((yscroll >> 16) & 0x3FF)) & pf_row_mask;
 #else
   uint32 shift    = (xscroll & 0x0F);
   uint32 index    = pf_col_mask + 1 - ((xscroll >> 4) & pf_col_mask);
-  uint32 y_scroll = (line + (vs[0] & 0x3FF)) & pf_row_mask;
+  uint32 v_line = (line + (yscroll & 0x3FF)) & pf_row_mask;
 #endif
 
-  uint32 v_line = (y_scroll & 7) << 3;
-  uint32 *nt    = (uint32 *)&vram[ntbb + (((y_scroll >> 3) << pf_shift) & pf_y_mask)];
+  uint32 *nt    = (uint32 *)&vram[ntbb + (((v_line >> 3) << pf_shift) & pf_y_mask)];
+  v_line        = (v_line & 7) << 3;
 
   if(shift)
   {
     dst   = (uint32 *)&buf[0x10 + shift];
     atbuf = nt[(index-1) & pf_col_mask];
-    DRAW_COLUMN(atbuf, v_line);
+    DRAW_COLUMN(atbuf, v_line)
   }
 
   dst = (uint32 *)&buf[0x20 + shift];
@@ -1010,8 +1010,10 @@ static void render_bg(uint32 line, uint32 width)
 
   /* Window and Plane A */
   buf = nta_buf;
+
   uint32 a  = (reg[18] & 0x1F) << 3;
   uint32 w  = (reg[18] >> 7) & 1;
+
   if (w == (line >= a))
   {
     /* Window takes up entire line */
@@ -1035,15 +1037,15 @@ static void render_bg(uint32 line, uint32 width)
 #ifdef LSB_FIRST
     shift     = (xscroll & 0x0F);
     index     = pf_col_mask + start + 1 - ((xscroll >> 4) & pf_col_mask);
-    y_scroll  = (line + (vs[0] & 0x3FF)) & pf_row_mask;
+    v_line  = (line + (yscroll & 0x3FF)) & pf_row_mask;
 #else
     shift     = (xscroll >> 16) & 0x0F;
     index     = pf_col_mask + start + 1 - ((xscroll >> 20) & pf_col_mask);
-    y_scroll  = (line + ((vs[0] >> 16) & 0x3FF)) & pf_row_mask;
+    v_line  = (line + ((yscroll >> 16) & 0x3FF)) & pf_row_mask;
 #endif
 
-    v_line = (y_scroll & 7) << 3;
-    nt        = (uint32 *)&vram[ntab + (((y_scroll >> 3) << pf_shift) & pf_y_mask)];
+    nt      = (uint32 *)&vram[ntab + (((v_line >> 3) << pf_shift) & pf_y_mask)];
+    v_line  = (v_line & 7) << 3;
 
     if(shift)
     {
@@ -1053,7 +1055,7 @@ static void render_bg(uint32 line, uint32 width)
       if (start) atbuf = nt[index & pf_col_mask];
       else atbuf = nt[(index-1) & pf_col_mask];
 
-      DRAW_COLUMN(atbuf, v_line);
+      DRAW_COLUMN(atbuf, v_line)
     }
 
     dst = (uint32 *)&buf[0x20 + shift + (start<<4)];
@@ -1074,6 +1076,7 @@ static void render_bg(uint32 line, uint32 width)
     v_line  = (line & 7) << 3;
     nt      = (uint32 *)&vram[ntwb | ((line >> 3) << (6 + (reg[12] & 1)))];
     dst     = (uint32 *)&buf[0x20 + (start << 4)];
+
     for(column = start; column < end; column ++)
     {
       atbuf = nt[column];
@@ -1094,7 +1097,7 @@ static void render_bg_vs(uint32 line, uint32 width)
   uint32 pf_y_mask    = y_mask;
   uint32 *vs          = (uint32 *)&vsram[0];
 
-  /* B Plane */
+  /* Plane B */
   uint8 *buf    = ntb_buf;
   uint32 start  = 0;
   uint32 end    = width >> 4;
@@ -1107,36 +1110,45 @@ static void render_bg_vs(uint32 line, uint32 width)
   uint32 index    = pf_col_mask + 1 - ((xscroll >> 4) & pf_col_mask);
 #endif
 
-  uint32 y_scroll, v_line, *nt;
+  uint32 v_line, *nt;
 
   if(shift)
   {
-    y_scroll = (line & pf_row_mask);
-    v_line = (y_scroll & 7) << 3;
-    nt = (uint32 *)&vram[ntbb + (((y_scroll >> 3) << pf_shift) & pf_y_mask)];
     dst   = (uint32 *)&buf[0x10 + shift];
+
+#ifdef LSB_FIRST
+    v_line = (line + ((vs[0] >> 16) & 0x3FF)) & pf_row_mask;
+#else
+    v_line = (line + (vs[0] & 0x3FF)) & pf_row_mask;
+#endif
+    nt = (uint32 *)&vram[ntbb + (((v_line >> 3) << pf_shift) & pf_y_mask)];
+    v_line = (v_line & 7) << 3;
+
     atbuf = nt[(index-1) & pf_col_mask];
-    DRAW_COLUMN(atbuf, v_line);
+    DRAW_COLUMN(atbuf, v_line)
   }
 
   dst = (uint32 *)&buf[0x20 + shift];
-  for(column = start; column < end; column ++, index ++)
+  for(column = 0; column < end; column ++, index ++)
   {
 #ifdef LSB_FIRST
-    y_scroll = (line + ((vs[column] >> 16) & 0x3FF)) & pf_row_mask;
+    v_line = (line + ((vs[column] >> 16) & 0x3FF)) & pf_row_mask;
 #else
-    y_scroll = (line + (vs[column] & 0x3FF)) & pf_row_mask;
+    v_line = (line + (vs[column] & 0x3FF)) & pf_row_mask;
 #endif
-    v_line = (y_scroll & 7) << 3;
-    nt = (uint32 *)&vram[ntbb + (((y_scroll >> 3) << pf_shift) & pf_y_mask)];
+    nt = (uint32 *)&vram[ntbb + (((v_line >> 3) << pf_shift) & pf_y_mask)];
+    v_line = (v_line & 7) << 3;
+
     atbuf = nt[index & pf_col_mask];
     DRAW_COLUMN(atbuf, v_line)
   }
   
   /* Window and Plane A */
   buf = nta_buf;
+
   uint32 a  = (reg[18] & 0x1F) << 3;
   uint32 w  = (reg[18] >> 7) & 1;
+
   if (w == (line >= a))
   {
     /* Window takes up entire line */
@@ -1168,27 +1180,33 @@ static void render_bg_vs(uint32 line, uint32 width)
     if(shift)
     {
       dst = (uint32 *)&buf[0x10 + shift + (start<<4)];
-      y_scroll = (line & pf_row_mask);
-      v_line = (y_scroll & 7) << 3;
-      nt = (uint32 *)&vram[ntab + (((y_scroll >> 3) << pf_shift) & pf_y_mask)];
+
+#ifdef LSB_FIRST
+      v_line = (line + (vs[start] & 0x3FF)) & pf_row_mask;
+#else
+      v_line = (line + ((vs[start] >> 16) & 0x3FF)) & pf_row_mask;
+#endif
+      nt = (uint32 *)&vram[ntab + (((v_line >> 3) << pf_shift) & pf_y_mask)];
+      v_line = (v_line & 7) << 3;
 
       /* Window bug */
       if (start) atbuf = nt[index & pf_col_mask];
       else atbuf = nt[(index-1) & pf_col_mask];
 
-      DRAW_COLUMN(atbuf, v_line);
+      DRAW_COLUMN(atbuf, v_line)
     }
 
     dst = (uint32 *)&buf[0x20 + shift + (start<<4)];
     for(column = start; column < end; column ++, index ++)
     {
 #ifdef LSB_FIRST
-      y_scroll = (line + (vs[column] & 0x3FF)) & pf_row_mask;
+      v_line = (line + (vs[column] & 0x3FF)) & pf_row_mask;
 #else
-      y_scroll = (line + ((vs[column] >> 16) & 0x3FF)) & pf_row_mask;
+      v_line = (line + ((vs[column] >> 16) & 0x3FF)) & pf_row_mask;
 #endif        
-      v_line = (y_scroll & 7) << 3;
-      nt = (uint32 *)&vram[ntab + (((y_scroll >> 3) << pf_shift) & pf_y_mask)];
+      nt = (uint32 *)&vram[ntab + (((v_line >> 3) << pf_shift) & pf_y_mask)];
+      v_line = (v_line & 7) << 3;
+
       atbuf = nt[index & pf_col_mask];
       DRAW_COLUMN(atbuf, v_line)
     }
@@ -1218,13 +1236,13 @@ static void render_bg_im2(uint32 line, uint32 width, uint32 odd)
 
   /* common data */
   uint32 xscroll      = get_hscroll(line);
+  uint32 yscroll      = *(uint32 *)&vsram[0];
   uint32 pf_col_mask  = playfield_col_mask;
   uint32 pf_row_mask  = playfield_row_mask;
   uint32 pf_shift     = playfield_shift;
   uint32 pf_y_mask    = y_mask;
-  uint32 *vs          = (uint32 *)&vsram[0];
 
-  /* B Plane */
+  /* Plane B */
   uint8 *buf    = ntb_buf;
   uint32 start  = 0;
   uint32 end    = width >> 4;
@@ -1232,28 +1250,28 @@ static void render_bg_im2(uint32 line, uint32 width, uint32 odd)
 #ifdef LSB_FIRST
   uint32 shift    = (xscroll >> 16) & 0x0F;
   uint32 index    = pf_col_mask + 1 - ((xscroll >> 20) & pf_col_mask);
-  uint32 y_scroll = (line + ((vs[0] >> 17) & 0x3FF)) & pf_row_mask; /* IM2 specific */
+  uint32 v_line = (line + ((yscroll >> 17) & 0x3FF)) & pf_row_mask;
 #else
   uint32 shift    = (xscroll & 0x0F);
   uint32 index    = pf_col_mask + 1 - ((xscroll >> 4) & pf_col_mask);
-  uint32 y_scroll = (line + ((vs[0] >> 1) & 0x3FF)) & pf_row_mask;  /* IM2 specific */
+  uint32 v_line = (line + ((yscroll >> 1) & 0x3FF)) & pf_row_mask;
 #endif
 
-  uint32 v_line = (((y_scroll & 7) << 1) | odd) << 3; /* IM2 specific */
-  uint32 *nt    = (uint32 *)&vram[ntbb + (((y_scroll >> 3) << pf_shift) & pf_y_mask)];
+  uint32 *nt    = (uint32 *)&vram[ntbb + (((v_line >> 3) << pf_shift) & pf_y_mask)];
+  v_line        = (((v_line & 7) << 1) | odd) << 3;
 
   if(shift)
   {
     dst   = (uint32 *)&buf[0x10 + shift];
     atbuf = nt[(index-1) & pf_col_mask];
-    DRAW_COLUMN_IM2(atbuf, v_line);   /* IM2 specific */
+    DRAW_COLUMN_IM2(atbuf, v_line)
   }
 
   dst = (uint32 *)&buf[0x20 + shift];
   for(column = 0; column < end; column ++, index ++)
   {
     atbuf = nt[index & pf_col_mask];
-    DRAW_COLUMN_IM2(atbuf, v_line)    /* IM2 specific */
+    DRAW_COLUMN_IM2(atbuf, v_line)
   }
 
   /* Window and Plane A */
@@ -1283,15 +1301,15 @@ static void render_bg_im2(uint32 line, uint32 width, uint32 odd)
 #ifdef LSB_FIRST
     shift     = (xscroll & 0x0F);
     index     = pf_col_mask + start + 1 - ((xscroll >> 4) & pf_col_mask);
-    y_scroll  = (line + ((vs[0] >> 1) & 0x3FF)) & pf_row_mask;  /* IM2 specific */
+    v_line  = (line + ((yscroll >> 1) & 0x3FF)) & pf_row_mask;
 #else
     shift     = (xscroll >> 16) & 0x0F;
     index     = pf_col_mask + start + 1 - ((xscroll >> 20) & pf_col_mask);
-    y_scroll  = (line + ((vs[0] >> 17) & 0x3FF)) & pf_row_mask;  /* IM2 specific */
+    v_line  = (line + ((yscroll >> 17) & 0x3FF)) & pf_row_mask;
 #endif
 
-    v_line  = (((y_scroll & 7) << 1) | odd) << 3; /* IM2 specific */
-    nt      = (uint32 *)&vram[ntab + (((y_scroll >> 3) << pf_shift) & pf_y_mask)];
+    nt      = (uint32 *)&vram[ntab + (((v_line >> 3) << pf_shift) & pf_y_mask)];
+    v_line  = (((v_line & 7) << 1) | odd) << 3;
 
     if(shift)
     {
@@ -1301,14 +1319,14 @@ static void render_bg_im2(uint32 line, uint32 width, uint32 odd)
       if (start) atbuf = nt[index & pf_col_mask];
       else atbuf = nt[(index-1) & pf_col_mask];
 
-      DRAW_COLUMN_IM2(atbuf, v_line); /* IM2 specific */
+      DRAW_COLUMN_IM2(atbuf, v_line)
     }
 
     dst = (uint32 *)&buf[0x20 + shift + (start<<4)];
     for(column = start; column < end; column ++, index ++)
     {
       atbuf = nt[index & pf_col_mask];
-      DRAW_COLUMN_IM2(atbuf, v_line)  /* IM2 specific */
+      DRAW_COLUMN_IM2(atbuf, v_line)
     }
 
     /* set for Window */
@@ -1319,17 +1337,159 @@ static void render_bg_im2(uint32 line, uint32 width, uint32 odd)
   /* Window */
   if (w)
   {
-    v_line = ((line & 7) << 1 | odd) << 3;  /* IM2 specific */
+    v_line = ((line & 7) << 1 | odd) << 3;
     nt      = (uint32 *)&vram[ntwb | ((line >> 3) << (6 + (reg[12] & 1)))];
     dst     = (uint32 *)&buf[0x20 + (start << 4)];
     for(column = start; column < end; column ++)
     {
       atbuf = nt[column];
-      DRAW_COLUMN_IM2(atbuf, v_line)  /* IM2 specific */
+      DRAW_COLUMN_IM2(atbuf, v_line)
     }
   }
 }
 
+static void render_bg_im2_vs(uint32 line, uint32 width, uint32 odd)
+{
+  uint32 column, atex, atbuf, offs, *src, *dst;
+
+  /* common data */
+  uint32 xscroll      = get_hscroll(line);
+  uint32 pf_col_mask  = playfield_col_mask;
+  uint32 pf_row_mask  = playfield_row_mask;
+  uint32 pf_shift     = playfield_shift;
+  uint32 pf_y_mask    = y_mask;
+  uint32 *vs          = (uint32 *)&vsram[0];
+
+  /* Plane B */
+  uint8 *buf    = ntb_buf;
+  uint32 start  = 0;
+  uint32 end    = width >> 4;
+
+#ifdef LSB_FIRST
+  uint32 shift  = (xscroll >> 16) & 0x0F;
+  uint32 index  = pf_col_mask + 1 - ((xscroll >> 20) & pf_col_mask);
+#else
+  uint32 shift  = (xscroll & 0x0F);
+  uint32 index  = pf_col_mask + 1 - ((xscroll >> 4) & pf_col_mask);
+#endif
+
+  uint32 v_line, *nt;
+
+  if(shift)
+  {
+    dst   = (uint32 *)&buf[0x10 + shift];
+
+#ifdef LSB_FIRST
+    v_line = (line + ((vs[0] >> 17) & 0x3FF)) & pf_row_mask;
+#else
+    v_line = (line + ((vs[0] >> 1) & 0x3FF)) & pf_row_mask;
+#endif
+    nt = (uint32 *)&vram[ntbb + (((v_line >> 3) << pf_shift) & pf_y_mask)];
+    v_line = (((v_line & 7) << 1) | odd) << 3;
+
+    atbuf = nt[(index-1) & pf_col_mask];
+    DRAW_COLUMN_IM2(atbuf, v_line)
+  }
+
+  dst = (uint32 *)&buf[0x20 + shift];
+  for(column = 0; column < end; column ++, index ++)
+  {
+#ifdef LSB_FIRST
+    v_line  = (line + ((vs[column] >> 17) & 0x3FF)) & pf_row_mask;
+#else
+    v_line  = (line + ((vs[column] >> 1) & 0x3FF)) & pf_row_mask;
+#endif
+    nt      = (uint32 *)&vram[ntbb + (((v_line >> 3) << pf_shift) & pf_y_mask)];
+    v_line  = (((v_line & 7) << 1) | odd) << 3;
+
+    atbuf = nt[index & pf_col_mask];
+    DRAW_COLUMN_IM2(atbuf, v_line)
+  }
+
+  /* Window and Plane A */
+  buf = nta_buf;
+  uint32 a  = (reg[18] & 0x1F) << 3;
+  uint32 w  = (reg[18] >> 7) & 1;
+  if (w == (line >= a))
+  {
+    /* Window takes up entire line */
+    a = 0;
+    w = 1;
+  }
+  else
+  {
+    /* Window and Plane A share the line */
+    a = clip[0].enable;
+    w = clip[1].enable;
+  }
+
+  /* Plane A */
+  if (a)
+  {
+    /* set for Plane A */
+    start = clip[0].left;
+    end   = clip[0].right;
+
+#ifdef LSB_FIRST
+    shift   = (xscroll & 0x0F);
+    index   = pf_col_mask + start + 1 - ((xscroll >> 4) & pf_col_mask);
+#else
+    shift   = (xscroll >> 16) & 0x0F;
+    index   = pf_col_mask + start + 1 - ((xscroll >> 20) & pf_col_mask);
+#endif
+
+    if(shift)
+    {
+      dst = (uint32 *)&buf[0x10 + shift + (start<<4)];
+
+#ifdef LSB_FIRST
+      v_line  = (line + ((vs[start] >> 1) & 0x3FF)) & pf_row_mask;
+#else
+      v_line  = (line + ((vs[start] >> 17) & 0x3FF)) & pf_row_mask;
+#endif
+      nt      = (uint32 *)&vram[ntab + (((v_line >> 3) << pf_shift) & pf_y_mask)];
+      v_line  = (((v_line & 7) << 1) | odd) << 3;
+
+      /* Window bug */
+      if (start) atbuf = nt[index & pf_col_mask];
+      else atbuf = nt[(index-1) & pf_col_mask];
+
+      DRAW_COLUMN_IM2(atbuf, v_line)
+    }
+
+    dst = (uint32 *)&buf[0x20 + shift + (start<<4)];
+    for(column = start; column < end; column ++, index ++)
+    {
+#ifdef LSB_FIRST
+      v_line  = (line + ((vs[column] >> 1) & 0x3FF)) & pf_row_mask;
+#else
+      v_line  = (line + ((vs[column] >> 17) & 0x3FF)) & pf_row_mask;
+#endif
+      nt      = (uint32 *)&vram[ntab + (((v_line >> 3) << pf_shift) & pf_y_mask)];
+      v_line  = (((v_line & 7) << 1) | odd) << 3;
+
+      atbuf = nt[index & pf_col_mask];
+      DRAW_COLUMN_IM2(atbuf, v_line)
+    }
+
+    /* set for Window */
+    start = clip[1].left;
+    end   = clip[1].right;
+  }
+
+  /* Window */
+  if (w)
+  {
+    v_line = ((line & 7) << 1 | odd) << 3;
+    nt      = (uint32 *)&vram[ntwb | ((line >> 3) << (6 + (reg[12] & 1)))];
+    dst     = (uint32 *)&buf[0x20 + (start << 4)];
+    for(column = start; column < end; column ++)
+    {
+      atbuf = nt[column];
+      DRAW_COLUMN_IM2(atbuf, v_line)
+    }
+  }
+}
 
 /*--------------------------------------------------------------------------*/
 /* Object render functions                                                  */
@@ -1622,7 +1782,8 @@ void render_line(uint32 line, uint32 overscan)
       uint32 odd = odd_frame;
 
       /* render BG layers */
-      render_bg_im2(line, width, odd);
+      if(reg[11] & 4) render_bg_im2_vs(line, width, odd);
+      else render_bg_im2(line, width, odd);
 
       if (reg[12] & 8)
       {
