@@ -81,6 +81,15 @@ void sram_init()
     /* this prevents SRAM activation when using Sonic & Knuckles LOCK-ON feature */
     sram.on = 0;
   }
+  else if (strstr(rominfo.international,"SONIC & KNUCKLES") != NULL)
+  {
+    if (cart.romsize == 0x400000)
+    {
+      /* Sonic 3 & Knuckles */
+      /* the combined ROM has S&K header but should obviously use FRAM from Sonic the Hedgehog 3 */
+      sram.on = 1;
+    }
+  }
   else if (strstr(rominfo.product,"T-26013") != NULL)
   {
     /* Psy-O-Blade (bad header) */
