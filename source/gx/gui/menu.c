@@ -2166,9 +2166,9 @@ void MainMenu (void)
         quit = 1;
         break;
 
-      case 0: /*** Quit Emulator ***/
+      case 0: /*** Exit Menu ***/
       {
-        switch (GUI_WindowPrompt(m, VERSION, items,3))
+        switch (GUI_OptionWindow(m, VERSION, items,3))
         {
           case 1:
 #ifdef HW_RVL
@@ -2213,7 +2213,7 @@ void MainMenu (void)
         GUI_InitMenu(m);
         break;
 
-      case 3:  /*** Memory Manager ***/
+      case 3:  /*** Memory Manager (TODO !!!) ***/
         if (!cart.romsize) break;
         GUI_DeleteMenu(m);
         quit = filemenu();
@@ -2229,19 +2229,22 @@ void MainMenu (void)
         gxSetScreen();
         system_init(); 
         system_reset(); 
+        memfile_autoload(config.sram_auto,-1);
         quit = 1;
         break;
 
-      case 5:   /*** Game Genie ***/
+      case 5:   /*** Game Genie (TODO !!!) ***/
         if (!cart.romsize) break;
         GUI_DeleteMenu(m);
         GetGGEntries();
         GUI_InitMenu(m);
         break;
 
-      case 7:   /*** ROM Captrure ***/
+      case 7:   /*** Game Screenshot ***/
         if (!cart.romsize) break;
-        gx_video_Capture();
+        char filename[MAXPATHLEN];
+        sprintf(filename,"%s/snaps/%s.png", DEFAULT_PATH, rom_filename);
+        gxSaveScreenshot(filename);
         break;
 
       case 8:   /*** ROM Information ***/

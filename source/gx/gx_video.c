@@ -307,9 +307,9 @@ static GXRModeObj *tvmodes[6] =
 
 typedef struct tagcamera
 {
-  Vector pos;
-  Vector up;
-  Vector view;
+  guVector pos;
+  guVector up;
+  guVector view;
 } camera;
 
 /*** Square Matrix
@@ -686,7 +686,7 @@ void gxDrawTextureRotate(gx_texture *texture, s32 x, s32 y, s32 w, s32 h, f32 an
 
     /* Modelview rotation */
     Mtx m,mv;
-    Vector axis = (Vector) {0,0,1};
+    guVector axis = (guVector) {0,0,1};
     guLookAt(mv, &cam.pos, &cam.up, &cam.view);
     guMtxRotAxisDeg (m, &axis, angle);
     guMtxTransApply(m,m, x+w/2,y+h/2,0);
@@ -848,6 +848,23 @@ void gxCopyScreenshot(gx_texture *texture)
   GX_LoadTexObj(&texobj, GX_TEXMAP0);
   GX_InvalidateTexAll();
   DCFlushRange(texture->data, texture->width * texture->height * 4);
+}
+
+/* Take Screenshot */
+void gxSaveScreenshot(char *filename)
+{
+  /* capture screenshot into a texture */
+  gx_texture texture;
+  gxCopyScreenshot(&texture);
+
+  /* open PNG file */
+  FILE *f = fopen(filename,"wb");
+  if (f)
+  {
+    /* encode screenshot into PNG file */
+    gxTextureWritePNG(&texture,f);
+    fclose(f);
+  }
 }
 
 void gxSetScreen(void)
@@ -1222,25 +1239,6 @@ void gxTextureClose(gx_texture **p_texture)
 /*   VIDEO engine                                                                      */
 /***************************************************************************************/
 
-/* Take Screenshot */
-void gx_video_Capture(void)
-{
-  /* capture screenshot into a texture */
-  gx_texture texture;
-  gxCopyScreenshot(&texture);
-
-  /* open PNG file */
-  char fname[MAXPATHLEN];
-  sprintf(fname,"%s/snaps/%s.png", DEFAULT_PATH, rom_filename);
-  FILE *f = fopen(fname,"wb");
-  if (f)
-  {
-    /* encode screenshot into PNG file */
-    gxTextureWritePNG(&texture,f);
-    fclose(f);
-  }
-}
-
 /* Emulation mode -> Menu mode */
 void gx_video_Stop(void)
 {
@@ -1384,6 +1382,10 @@ void gx_video_Update(void)
 
     /* reset GX */
     gxResetView(rmode);
+
+    /* change VI mode */
+    VIDEO_Configure(rmode);
+    VIDEO_Flush();
   }
 
   /* texture is now directly mapped by the line renderer */
@@ -1403,34 +1405,20 @@ void gx_video_Update(void)
   /* swap XFB */
   whichfb ^= 1;
 
-  /* reconfigure VI */
+  /* copy EFB to XFB */
+  GX_CopyDisp(xfb[whichfb], GX_TRUE);
+  GX_Flush();
+  VIDEO_SetNextFramebuffer(xfb[whichfb]);
+  VIDEO_Flush();
+
   if (update)
   {
-    bitmap.viewport.changed = 0;
-
-    /* change VI mode */
-    VIDEO_Configure(rmode);
-    VIDEO_Flush();
-
-    /* copy EFB to XFB */
-    GX_CopyDisp(xfb[whichfb], GX_TRUE);
-    GX_Flush();
-    VIDEO_SetNextFramebuffer(xfb[whichfb]);
-    VIDEO_Flush();
-
     /* field synchronizations */
     VIDEO_WaitVSync();
     if (rmode->viTVMode & VI_NON_INTERLACE) VIDEO_WaitVSync();
     else while (VIDEO_GetNextField() != odd_frame) VIDEO_WaitVSync();
     if (frameticker > 1) frameticker = 1;
-  }
-  else
-  {
-    /* copy EFB to XFB */
-    GX_CopyDisp(xfb[whichfb], GX_TRUE);
-    GX_Flush();
-    VIDEO_SetNextFramebuffer(xfb[whichfb]);
-    VIDEO_Flush();
+    bitmap.viewport.changed = 0;
   }
 }
 

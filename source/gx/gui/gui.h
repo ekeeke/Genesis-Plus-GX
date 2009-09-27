@@ -1,7 +1,7 @@
 /****************************************************************************
  *  gui.c
  *
- *  GUI engine, using GX hardware
+ *  generic GUI engine, using GX hardware
  *
  *  Eke-Eke (2009)
  *
@@ -281,11 +281,11 @@ extern void GUI_InitMenu(gui_menu *menu);
 extern void GUI_DeleteMenu(gui_menu *menu);
 extern void GUI_DrawMenu(gui_menu *menu);
 extern void GUI_DrawMenuFX(gui_menu *menu, u8 speed, u8 out);
+extern void GUI_SlideMenuTitle(gui_menu *m, int title_offset);
 extern int GUI_UpdateMenu(gui_menu *menu);
 extern int GUI_RunMenu(gui_menu *menu);
-extern int GUI_WindowPrompt(gui_menu *parent, char *title, char *items[], u8 nb_items);
+extern int GUI_OptionWindow(gui_menu *parent, char *title, char *items[], u8 nb_items);
 extern void GUI_OptionBox(gui_menu *parent, optioncallback cb, char *title, void *option, float step, float min, float max, u8 type);
-extern void GUI_SlideMenuTitle(gui_menu *m, int title_offset);
 extern void GUI_MsgBoxOpen(char *title, char *msg, bool throbber);
 extern void GUI_MsgBoxUpdate(char *title, char *msg);
 extern void GUI_MsgBoxClose(void);

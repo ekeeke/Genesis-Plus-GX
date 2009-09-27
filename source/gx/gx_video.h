@@ -54,6 +54,7 @@ extern void gxDrawTextureRepeat(gx_texture *texture, s32 x, s32 y, s32 w, s32 h,
 extern void gxDrawTextureRotate(gx_texture *texture, s32 x, s32 y, s32 w, s32 h, f32 angle, u8 alpha);
 extern void gxDrawScreenshot(u8 alpha);
 extern void gxCopyScreenshot(gx_texture *texture);
+extern void gxSaveScreenshot(char *filename);
 extern void gxClearScreen(GXColor color);
 extern void gxSetScreen(void);
 
@@ -68,6 +69,5 @@ extern void gx_video_Shutdown(void);
 extern void gx_video_Start(void);
 extern void gx_video_Stop(void);
 extern void gx_video_Update(void);
-extern void gx_video_Capture(void);
 
 #endif
