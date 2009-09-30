@@ -157,14 +157,20 @@ static void pad_config(int chan, int max_keys)
 
 static void pad_update(s8 chan, u8 i)
 {
-  /* get PAD status */
+  /* PAD status */
+  u16 p = PAD_ButtonsHeld(chan);
   s8 x  = PAD_StickX (chan);
   s8 y  = PAD_StickY (chan);
-  u16 p = PAD_ButtonsHeld(chan);
- 
-  /* Soft RESET */
-  if ((p & PAD_TRIGGER_L) && (p & PAD_TRIGGER_Z))
+
+  if (p & PAD_TRIGGER_Z)
   {
+    /* Menu Request */
+    ConfigRequested = 1;
+    return;
+  }
+  else if ((p & PAD_TRIGGER_L) && (p & PAD_TRIGGER_Z))
+  {
+    /* Soft RESET */
     set_softreset();
   }
 
@@ -428,13 +434,19 @@ static void wpad_update(s8 chan, u8 i, u32 exp)
   /* WPAD data */
   WPADData *data = WPAD_Data(chan);
 
-  /* WPAD buttons */
+  /* WPAD held buttons */
   u32 p = data->btns_h;
 
-  /* Soft RESET */
-  if (((p & WPAD_CLASSIC_BUTTON_PLUS) && (p & WPAD_CLASSIC_BUTTON_MINUS)) ||
-      ((p & WPAD_BUTTON_PLUS) && (p & WPAD_BUTTON_MINUS)))
+  if ((p & WPAD_BUTTON_HOME) || (p & WPAD_CLASSIC_BUTTON_HOME))
   {
+    /* Menu Request */
+    ConfigRequested = 1;
+    return;
+  }
+  else if (((p & WPAD_BUTTON_PLUS) && (p & WPAD_BUTTON_MINUS)) ||
+           ((p & WPAD_CLASSIC_BUTTON_PLUS) && (p & WPAD_CLASSIC_BUTTON_MINUS)))
+  {
+    /* Soft RESET */
     set_softreset();
   }
 
@@ -712,18 +724,11 @@ void gx_input_UpdateEmu(void)
   WPAD_ScanPads();
 #endif
 
-  /* Menu Request */
-  if (PAD_ButtonsHeld(0) & PAD_TRIGGER_Z)
-  {
-    ConfigRequested = 1;
-    return;
-  }
-
 #ifdef HW_RVL
-  if ((WPAD_ButtonsHeld(0) & WPAD_BUTTON_HOME) || (WPAD_ButtonsHeld(0) & WPAD_CLASSIC_BUTTON_HOME))
+  if (SYS_ResetButtonDown())
   {
-    ConfigRequested = 1;
-    return;
+    /* Soft RESET */
+    set_softreset();
   }
 #endif
 

@@ -38,6 +38,8 @@
 #define VERSION "version 1.3.XG"
 #endif
 
+#define osd_input_Update() gx_input_UpdateEmu()
+
 /* globals */
 extern void error(char *format, ...);
 extern void ClearGGCodes();

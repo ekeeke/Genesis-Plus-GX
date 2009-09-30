@@ -34,9 +34,6 @@
 /* Genesis controller keys */
 #define MAX_KEYS 8
 
-/* Genesis Plus wrapper */
-#define update_input() gx_input_UpdateEmu()
-
 /* Key configuration structure */
 typedef struct 
 {

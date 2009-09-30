@@ -257,7 +257,7 @@ int system_frame (int do_skip)
 {
   if (!gen_running)
   {
-    update_input();
+    osd_input_Update();
     return 0;
   }
 
@@ -318,10 +318,6 @@ int system_frame (int do_skip)
     /* Soft Reset ? */
     if (line == reset)
     {
-#ifdef NGC
-      /* wait for RESET button to be released */
-      while (SYS_ResetButtonDown());
-#endif
       /* Pro Action Replay (switch at "Trainer" position) */
       if (config.lock_on == TYPE_AR)
         datel_reset(0);
@@ -343,10 +339,11 @@ int system_frame (int do_skip)
         if ((line != 0) || (h_counter == 0)) aim_m68k += 36;
       }
 
-      /* HINT will be triggered on next line, approx. 36 cycles before VDP starts line rendering */
-      /* during this period, any VRAM/CRAM/VSRAM writes should NOT be taken in account before next line */
-      /* as a result, current line is shortened */
-      /* fix Lotus 1, Lotus 2 RECS, Striker, Zero the Kamikaze Squirell */
+      /* HINT will be triggered on next line, approx. 36 cycles before VDP starts line rendering      */
+      /* during this period, any VRAM or VSRAM writes should NOT be taken in account before next line */
+      /* as a result, line is rendered immediately after HINT and current line is shortened           */
+      /* CRAM and VDP register writes that could occur during HBLANK are handled separately           */
+      /* fix Lotus 1, Lotus 2 RECS, Striker, Skitchin, Zero the Kamikaze Squirell                     */
       if ((line < vdp_height) && (h_counter == 0)) aim_m68k -= 36;
 
       /* update DMA timings */
@@ -359,7 +356,7 @@ int system_frame (int do_skip)
         if ((line < end_line) && (!do_skip)) render_line(line, 1);
 
         /* update inputs (doing this here fix Warriors of Eternal Sun) */
-        update_input();
+        osd_input_Update();
 
         /* set VBLANK flag */
         status |= 0x08;

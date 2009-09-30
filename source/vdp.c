@@ -430,8 +430,8 @@ unsigned int vdp_ctrl_r(void)
   /* display OFF: VBLANK flag is set */
   if (!(reg[1] & 0x40)) temp |= 0x8; 
 
-  /* HBLANK flag (Sonic 3 and Sonic 2 "VS Modes", Lemmings 2) */
-  if ((count_m68k <= (line_m68k + 84)) || (count_m68k > (line_m68k + m68cycles_per_line))) temp |= 0x4;
+  /* HBLANK flag (Sonic 3 and Sonic 2 "VS Modes", Lemmings 2, Mega Turrican) */
+  if ((count_m68k <= (line_m68k + 84)) || (count_m68k > (line_m68k + m68cycles_per_line - 36))) temp |= 0x4;
 
   /* clear pending flag */
   pending = 0;
@@ -616,6 +616,13 @@ static inline void data_w(unsigned int data)
         *p = data;
         if (index) color_update (index, *p);
         if (border == index) color_update (0x00, *p);
+
+        /* CRAM modified during HBLANK */
+        if (!(status & 8) && (reg[1]&0x40) && (count_m68k <= (line_m68k + 84)))
+        {
+          /* remap current line (Striker) */
+          remap_buffer(v_counter,bitmap.viewport.w + 2*bitmap.viewport.x);
+        }
       }
       break;
     }
@@ -691,15 +698,19 @@ static inline void reg_w(unsigned int r, unsigned int d)
         if (vdp_pal) vctab = (d & 8) ? vc_pal_240 : vc_pal_224;
       }
 
-      /* Display activated/blanked during Horizontal Blanking */
+      /* Display enabled/blanked during "Horizontal Blanking" */
       if (((d&0x40) != (reg[1]&0x40)) && !(status & 8))
       {
         if (count_m68k <= (hint_m68k + 120))
         {
-          /* Redraw the current line :
-            - Legend of Galahad, Lemmings 2, Nigel Mansell's World Championship Racing (set display OFF)
-            - Deadly Moves aka Power Athlete (set display ON)
+          /* Fixes the following games :
+            - Legend of Galahad, Lemmings 2, Nigel Mansell's World Championship Racing (display OFF)
+            - Deadly Moves, Power Athlete (display ON)
           */
+          /* NB: This is not entirely correct since we are a little too tolerant with the HBLANK period limits
+                 while still redrawing the whole line. This is done because some games appear to write this
+                 register outside HBLANK: on real hardware, the line would appear partially blanked.
+           */
           reg[1] = d;
           render_line(v_counter, 0);
         }
@@ -745,7 +756,7 @@ static inline void reg_w(unsigned int r, unsigned int d)
         /* background color modified during Horizontal Blanking */
         if (!(status & 8) && (count_m68k <= (line_m68k + 84)))
         {
-          /* remap current line (see Road Rash I,II,III) */
+          /* remap entire line (see Road Rash I,II,III) */
           reg[7] = d;
           remap_buffer(v_counter,bitmap.viewport.w + 2*bitmap.viewport.x);
         }

@@ -149,10 +149,6 @@ void gen_reset(uint32 hard_reset)
   }
 
   resetline   = -1;
-#ifdef NGC
-  /* register SOFTRESET */
-  SYS_SetResetCallback(set_softreset);
-#endif
 
   /* reset CPUs */
   m68k_pulse_reset();

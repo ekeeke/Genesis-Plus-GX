@@ -982,12 +982,12 @@ static void render_bg(uint32 line, uint32 width)
   uint32 end    = width >> 4;
 
 #ifdef LSB_FIRST
-  uint32 shift    = (xscroll >> 16) & 0x0F;
-  uint32 index    = pf_col_mask + 1 - ((xscroll >> 20) & pf_col_mask);
+  uint32 shift  = (xscroll >> 16) & 0x0F;
+  uint32 index  = pf_col_mask + 1 - ((xscroll >> 20) & pf_col_mask);
   uint32 v_line = (line + ((yscroll >> 16) & 0x3FF)) & pf_row_mask;
 #else
-  uint32 shift    = (xscroll & 0x0F);
-  uint32 index    = pf_col_mask + 1 - ((xscroll >> 4) & pf_col_mask);
+  uint32 shift  = (xscroll & 0x0F);
+  uint32 index  = pf_col_mask + 1 - ((xscroll >> 4) & pf_col_mask);
   uint32 v_line = (line + (yscroll & 0x3FF)) & pf_row_mask;
 #endif
 
@@ -1035,12 +1035,12 @@ static void render_bg(uint32 line, uint32 width)
     end   = clip[0].right;
 
 #ifdef LSB_FIRST
-    shift     = (xscroll & 0x0F);
-    index     = pf_col_mask + start + 1 - ((xscroll >> 4) & pf_col_mask);
+    shift   = (xscroll & 0x0F);
+    index   = pf_col_mask + start + 1 - ((xscroll >> 4) & pf_col_mask);
     v_line  = (line + (yscroll & 0x3FF)) & pf_row_mask;
 #else
-    shift     = (xscroll >> 16) & 0x0F;
-    index     = pf_col_mask + start + 1 - ((xscroll >> 20) & pf_col_mask);
+    shift   = (xscroll >> 16) & 0x0F;
+    index   = pf_col_mask + start + 1 - ((xscroll >> 20) & pf_col_mask);
     v_line  = (line + ((yscroll >> 16) & 0x3FF)) & pf_row_mask;
 #endif
 
@@ -1103,11 +1103,11 @@ static void render_bg_vs(uint32 line, uint32 width)
   uint32 end    = width >> 4;
 
 #ifdef LSB_FIRST
-  uint32 shift    = (xscroll >> 16) & 0x0F;
-  uint32 index    = pf_col_mask + 1 - ((xscroll >> 20) & pf_col_mask);
+  uint32 shift  = (xscroll >> 16) & 0x0F;
+  uint32 index  = pf_col_mask + 1 - ((xscroll >> 20) & pf_col_mask);
 #else
-  uint32 shift    = (xscroll & 0x0F);
-  uint32 index    = pf_col_mask + 1 - ((xscroll >> 4) & pf_col_mask);
+  uint32 shift  = (xscroll & 0x0F);
+  uint32 index  = pf_col_mask + 1 - ((xscroll >> 4) & pf_col_mask);
 #endif
 
   uint32 v_line, *nt;
@@ -1203,7 +1203,7 @@ static void render_bg_vs(uint32 line, uint32 width)
       v_line = (line + (vs[column] & 0x3FF)) & pf_row_mask;
 #else
       v_line = (line + ((vs[column] >> 16) & 0x3FF)) & pf_row_mask;
-#endif        
+#endif
       nt = (uint32 *)&vram[ntab + (((v_line >> 3) << pf_shift) & pf_y_mask)];
       v_line = (v_line & 7) << 3;
 
@@ -1215,7 +1215,7 @@ static void render_bg_vs(uint32 line, uint32 width)
     start = clip[1].left;
     end   = clip[1].right;
   }
-    
+
   /* Window */
   if (w)
   {
@@ -1248,12 +1248,12 @@ static void render_bg_im2(uint32 line, uint32 width, uint32 odd)
   uint32 end    = width >> 4;
 
 #ifdef LSB_FIRST
-  uint32 shift    = (xscroll >> 16) & 0x0F;
-  uint32 index    = pf_col_mask + 1 - ((xscroll >> 20) & pf_col_mask);
+  uint32 shift  = (xscroll >> 16) & 0x0F;
+  uint32 index  = pf_col_mask + 1 - ((xscroll >> 20) & pf_col_mask);
   uint32 v_line = (line + ((yscroll >> 17) & 0x3FF)) & pf_row_mask;
 #else
-  uint32 shift    = (xscroll & 0x0F);
-  uint32 index    = pf_col_mask + 1 - ((xscroll >> 4) & pf_col_mask);
+  uint32 shift  = (xscroll & 0x0F);
+  uint32 index  = pf_col_mask + 1 - ((xscroll >> 4) & pf_col_mask);
   uint32 v_line = (line + ((yscroll >> 1) & 0x3FF)) & pf_row_mask;
 #endif
 
@@ -1299,12 +1299,12 @@ static void render_bg_im2(uint32 line, uint32 width, uint32 odd)
     end   = clip[0].right;
 
 #ifdef LSB_FIRST
-    shift     = (xscroll & 0x0F);
-    index     = pf_col_mask + start + 1 - ((xscroll >> 4) & pf_col_mask);
+    shift   = (xscroll & 0x0F);
+    index   = pf_col_mask + start + 1 - ((xscroll >> 4) & pf_col_mask);
     v_line  = (line + ((yscroll >> 1) & 0x3FF)) & pf_row_mask;
 #else
-    shift     = (xscroll >> 16) & 0x0F;
-    index     = pf_col_mask + start + 1 - ((xscroll >> 20) & pf_col_mask);
+    shift   = (xscroll >> 16) & 0x0F;
+    index   = pf_col_mask + start + 1 - ((xscroll >> 20) & pf_col_mask);
     v_line  = (line + ((yscroll >> 17) & 0x3FF)) & pf_row_mask;
 #endif
 
