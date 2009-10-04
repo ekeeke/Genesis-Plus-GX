@@ -292,6 +292,10 @@ void vdp_update_dma()
   /* DMA bytes left */
   int dma_bytes = (left_cycles * rate) / m68cycles_per_line;
 
+#ifdef LOGERROR
+  error("[%d(%d)][%d(%d)] DMA type %d (%d access/line)-> %d access (%d remaining) (%x)\n", v_counter, count_m68k/488, count_m68k, count_m68k%488,dma_type, rate, dma_length, dma_bytes, m68k_get_reg (NULL, M68K_REG_PC));
+#endif
+
   /* determinate DMA length in CPU cycles */
   if (dma_length < dma_bytes)
   {
@@ -312,12 +316,20 @@ void vdp_update_dma()
     /* 68K COPY to V-RAM */
     /* 68K is frozen during DMA operation */
     count_m68k += dma_cycles;
+
+#ifdef LOGERROR
+    error("-->CPU frozen for %d cycles\n", dma_cycles);
+#endif
   }
   else
   {
     /* VRAM Fill or VRAM Copy */
     /* set DMA end cyles count */
     dma_endCycles = count_m68k + dma_cycles;
+
+#ifdef LOGERROR
+    error("-->DMA ends in %d cycles\n", dma_cycles);
+#endif
 
     /* set DMA Busy flag */
     status |= 0x0002;
@@ -431,7 +443,7 @@ unsigned int vdp_ctrl_r(void)
   if (!(reg[1] & 0x40)) temp |= 0x8; 
 
   /* HBLANK flag (Sonic 3 and Sonic 2 "VS Modes", Lemmings 2, Mega Turrican) */
-  if ((count_m68k <= (line_m68k + 84)) || (count_m68k > (line_m68k + m68cycles_per_line - 36))) temp |= 0x4;
+  if ((count_m68k <= (line_m68k + 84)) || (count_m68k > (line_m68k + m68cycles_per_line))) temp |= 0x4;
 
   /* clear pending flag */
   pending = 0;
@@ -439,7 +451,31 @@ unsigned int vdp_ctrl_r(void)
   /* clear SPR/SCOL flags */
   status &= 0xFF9F;
 
+#ifdef LOGERROR
+  error("[%d(%d)][%d(%d)] VDP status read -> 0x%x (%x)\n", v_counter, count_m68k/488, count_m68k, count_m68k%488, temp, m68k_get_reg (NULL, M68K_REG_PC));
+#endif
   return (temp);
+}
+
+unsigned int vdp_hvc_r(void)
+{
+  uint8 hc = (hc_latch & 0x100) ? (hc_latch & 0xFF) : hctab[count_m68k % m68cycles_per_line]; 
+  uint8 vc = vctab[v_counter];
+
+  /* interlace mode 2 */
+  if (im2_flag) vc = (vc << 1) | ((vc >> 7) & 1);
+
+#ifdef LOGERROR
+  error("[%d(%d)][%d(%d)] VDP HVC Read -> 0x%04x (%x)\n", v_counter, count_m68k/488, count_m68k, count_m68k%488,(vc << 8) | hc, m68k_get_reg (NULL, M68K_REG_PC));
+#endif
+  return ((vc << 8) | hc);
+}
+
+void vdp_test_w(unsigned int value)
+{
+#ifdef LOGERROR
+  error("Unused VDP Write 0x%x (%08x)\n", value, m68k_get_reg (NULL, M68K_REG_PC));
+#endif
 }
 
 void vdp_data_w(unsigned int data)
@@ -494,15 +530,24 @@ unsigned int vdp_data_r(void)
   {
     case 0x00:  /* VRAM */
       temp = *(uint16 *) & vram[(addr & 0xFFFE)];
+#ifdef LOGERROR
+      error("[%d(%d)][%d(%d)] VRAM 0x%x read -> 0x%x (%x)\n", v_counter, count_m68k/488, count_m68k, count_m68k%488, addr, temp, m68k_get_reg (NULL, M68K_REG_PC));
+#endif
       break;
 
     case 0x08:  /* CRAM */
       temp = *(uint16 *) & cram[(addr & 0x7E)];
       temp = UNPACK_CRAM (temp);
+#ifdef LOGERROR
+      error("[%d(%d)][%d(%d)] CRAM 0x%x read -> 0x%x (%x)\n", v_counter, count_m68k/488, count_m68k, count_m68k%488, addr, temp, m68k_get_reg (NULL, M68K_REG_PC));
+#endif
       break;
 
     case 0x04:  /* VSRAM */
       temp = *(uint16 *) & vsram[(addr & 0x7E)];
+#ifdef LOGERROR
+      error("[%d(%d)][%d(%d)] VSRAM 0x%x read -> 0x%x (%x)\n", v_counter, count_m68k/488, count_m68k, count_m68k%488, addr, temp, m68k_get_reg (NULL, M68K_REG_PC));
+#endif
       break;
   }
 
@@ -513,39 +558,31 @@ unsigned int vdp_data_r(void)
   return (temp);
 }
 
-unsigned int vdp_hvc_r(void)
-{
-  uint8 hc = (hc_latch & 0x100) ? (hc_latch & 0xFF) : hctab[count_m68k % m68cycles_per_line]; 
-  uint8 vc = vctab[v_counter];
-
-  /* interlace mode 2 */
-  if (im2_flag) vc = (vc << 1) | ((vc >> 7) & 1);
-
-  return ((vc << 8) | hc);
-}
-
-void vdp_test_w(unsigned int value)
-{
-#ifdef LOGERROR
-  error("Unused VDP Write 0x%x (%08x)\n", value, m68k_get_reg (NULL, M68K_REG_PC));
-#endif
-}
-
 /*--------------------------------------------------------------------------*/
 /* VDP Interrupts callback                                                  */
 /*--------------------------------------------------------------------------*/
 
 int vdp_int_ack_callback(int int_level)
 {
+#ifdef LOGERROR
+  error("[%d(%d)][%d(%d)] INT Level %d ack (%x)\n", v_counter, count_m68k/488, count_m68k, count_m68k%488,int_level, m68k_get_reg (NULL, M68K_REG_PC));
+#endif
+
   /* VINT triggered ? */
   if (irq_status&0x20)
   {
     vint_pending = 0;
     status &= ~0x80;  /* clear VINT flag */
+#ifdef LOGERROR
+    error("---> VINT cleared\n");
+#endif
   }
   else
   {
     hint_pending = 0;
+#ifdef LOGERROR
+    error("---> HINT cleared\n");
+#endif
   }
 
   /* update IRQ status */
@@ -585,6 +622,10 @@ static inline void data_w(unsigned int data)
   {
     case 0x01:  /* VRAM */
 
+#ifdef LOGERROR
+      error("[%d(%d)][%d(%d)] VRAM 0x%x write -> 0x%x (%x)\n", v_counter, count_m68k/488, count_m68k, count_m68k%488, addr, data, m68k_get_reg (NULL, M68K_REG_PC));
+#endif
+
       /* Byte-swap data if A0 is set */
       if (addr & 1) data = (data >> 8) | (data << 8);
 
@@ -608,6 +649,9 @@ static inline void data_w(unsigned int data)
 
     case 0x03:  /* CRAM */
     {
+#ifdef LOGERROR
+      error("[%d(%d)][%d(%d)] CRAM 0x%x write -> 0x%x (%x)\n", v_counter, count_m68k/488, count_m68k, count_m68k%488, addr, data, m68k_get_reg (NULL, M68K_REG_PC));
+#endif
       uint16 *p = (uint16 *) &cram[(addr & 0x7E)];
       data = PACK_CRAM (data & 0x0EEE);
       if (data != *p)
@@ -622,12 +666,21 @@ static inline void data_w(unsigned int data)
         {
           /* remap current line (Striker) */
           remap_buffer(v_counter,bitmap.viewport.w + 2*bitmap.viewport.x);
+#ifdef LOGERROR
+          error("Line remapped\n");
+#endif
         }
+#ifdef LOGERROR
+        else error("Line NOT remapped\n");
+#endif
       }
       break;
     }
 
     case 0x05:  /* VSRAM */
+#ifdef LOGERROR
+      error("[%d(%d)][%d(%d)] VSRAM 0x%x write -> 0x%x (%x)\n", v_counter, count_m68k/488, count_m68k, count_m68k%488, addr, data, m68k_get_reg (NULL, M68K_REG_PC));
+#endif
       *(uint16 *) &vsram[(addr & 0x7E)] = data;
       break;
   }
@@ -642,6 +695,10 @@ static inline void data_w(unsigned int data)
 */
 static inline void reg_w(unsigned int r, unsigned int d)
 {
+#ifdef LOGERROR
+  error("[%d(%d)][%d(%d)] VDP register %d write -> 0x%x (%x)\n", v_counter, count_m68k/488, count_m68k, count_m68k%488, r, d, m68k_get_reg (NULL, M68K_REG_PC));
+#endif
+
   /* See if Mode 4 (SMS mode) is enabled 
      According to official doc, VDP registers #11 to #23 can not be written unless bit2 in register #1 is set
      Fix Captain Planet & Avengers (Alt version), Bass Master Classic Pro Edition (they incidentally activate Mode 4) 
@@ -713,7 +770,14 @@ static inline void reg_w(unsigned int r, unsigned int d)
            */
           reg[1] = d;
           render_line(v_counter, 0);
+#ifdef LOGERROR
+          error("Line redrawn\n");
+#endif
         }
+#ifdef LOGERROR
+        else
+          error("Line NOT redrawn\n");
+#endif
       }
       break;
 
@@ -759,7 +823,14 @@ static inline void reg_w(unsigned int r, unsigned int d)
           /* remap entire line (see Road Rash I,II,III) */
           reg[7] = d;
           remap_buffer(v_counter,bitmap.viewport.w + 2*bitmap.viewport.x);
+#ifdef LOGERROR
+          error("--> Line remapped\n");
+#endif
         }
+#ifdef LOGERROR
+        else
+          error("--> Line NOT remapped\n");
+#endif
       }
       break;
 

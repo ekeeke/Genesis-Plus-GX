@@ -453,7 +453,7 @@ void cart_hw_reset()
   if (cart.hw.realtec & 1)
   {
     /* enable BOOTROM */
-    for (i=0; i<0x40; i++)
+    for (i=0x00; i<0x40; i++)
       m68k_memory_map[i].base = mem_chunk;
     for (i=0; i<8; i++)
       memcpy(mem_chunk + i*0x2000, cart.rom + 0x7e000, 0x2000);

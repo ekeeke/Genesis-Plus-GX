@@ -599,7 +599,8 @@ void gx_input_Init(void)
 
 void gx_input_SetDefault(void)
 {
-  int i;
+  int i,j;
+  u32 exp;
 
   /* set default key mapping for each type of devices */
   for (i=0; i<4; i++)
@@ -649,19 +650,17 @@ void gx_input_SetDefault(void)
   }
 #endif
 
-  /* Default device assignation */
+  /* Default player inputs */
   for (i=0; i<MAX_DEVICES; i++)
   {
-    /* set gamepad by default */
-    config.input[i].device  = (i < 4) ? 0 : -1;
+    config.input[i].device  = -1;
     config.input[i].port    = i%4;
     config.input[i].padtype = 0;
   }
 
 #ifdef HW_RVL
-  u32 exp;
+  /* Autodetect Wii Controllers */
   VIDEO_WaitVSync();
-  int j;
   for (i=0; i<4; i++)
   {
     /* try to autodetect connected controller */
@@ -678,7 +677,7 @@ void gx_input_SetDefault(void)
       /* look for unassigned wiimotes */
       for (j=0; j<i; j++)
       {
-        /* classic is used, wiimote is free */
+        /* classic controller is already assigned, which means wiimote is not used */
         if (config.input[j].device == (WPAD_EXP_CLASSIC + 1))
         {
           /* assign wiimote  */
@@ -688,13 +687,31 @@ void gx_input_SetDefault(void)
       }
     }
   }
-
-  for (i=4; i<MAX_DEVICES; i++)
-  {
-    /* set gamepad if not assigned */
-    config.input[i].device = (config.input[i%4].device == 0) ? -1 : 0;
-  }
 #endif
+
+  /* Autodetect Gamecube Controllers */
+  VIDEO_WaitVSync();
+  exp = PAD_ScanPads();
+  for (i=0; i<4; i++)
+  {
+    /* check if Gamecube Controller is connected */
+    if (exp & (1 << i))
+    {
+      for (j=0; j<MAX_DEVICES; j++)
+      {
+        /* look for the first unassigned player */
+        if (config.input[j].device == -1)
+        {
+          config.input[j].device  = 0;
+          config.input[j].port    = i;
+        }
+      }
+    }
+  }
+
+  /* default emulated inputs */
+  input.system[0] = SYSTEM_GAMEPAD;
+  input.system[1] = (config.input[1].device != -1) ? SYSTEM_GAMEPAD : NO_SYSTEM;
 }
 
 void gx_input_Config(u8 chan, u8 type, u8 max)

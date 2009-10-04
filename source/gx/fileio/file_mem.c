@@ -118,7 +118,6 @@ static int FAT_ManageFile(char *filename, u8 direction, u8 filetype)
       {
         memcpy(sram.sram, savebuffer, filesize);
         sram.crc = crc32 (0, sram.sram, 0x10000);
-        system_reset ();
       }
       else
       {
@@ -411,9 +410,6 @@ int ManageSRAM (u8 direction, u8 device)
         outzipped = 0x10000;
         uncompress ((Bytef *) &sram.sram, &outzipped, (Bytef *) &savebuffer[2112+sizeof(inzipped)], inzipped);
         sram.crc = crc32 (0, &sram.sram[0], 0x10000);
-
-        /*** reset system ***/
-        system_reset ();
 
         /*** Inform user ***/
         sprintf (action, "Loaded %d bytes successfully", size);

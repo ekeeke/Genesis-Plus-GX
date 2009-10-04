@@ -67,13 +67,6 @@ static void load_bios(void)
 
   /* update BIOS flags */
   config.bios_enabled |= 2;
-
-  if (config.bios_enabled == 3)
-  {
-    /* initialize system */
-    system_init ();
-    audio_init(48000);
-  }
 }
 
 static void init_machine(void)
@@ -110,10 +103,6 @@ static void init_machine(void)
   bitmap.viewport.x = 0;
   bitmap.viewport.y = 0;
   bitmap.data = texturemem;
-
-  /* default system */
-  input.system[0] = SYSTEM_GAMEPAD;
-  input.system[1] = SYSTEM_GAMEPAD;
 }
 
 /**************************************************

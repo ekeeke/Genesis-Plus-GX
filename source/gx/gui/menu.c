@@ -914,6 +914,7 @@ static void systemmenu ()
 
           /* reinitialize timings */
           system_init ();
+          memfile_autoload(config.sram_auto,-1);
           unsigned char *temp = memalign(32,YM2612GetContextSize());
           if (temp) memcpy(temp, YM2612GetContextPtr(), YM2612GetContextSize());
           audio_init(48000);
@@ -952,6 +953,7 @@ static void systemmenu ()
         {
           system_init ();
           system_reset ();
+          memfile_autoload(config.sram_auto,-1);
         }
         break;
 
@@ -967,6 +969,7 @@ static void systemmenu ()
           system_reset (); /* clear any patches first */
           system_init ();
           system_reset ();
+          memfile_autoload(config.sram_auto,-1);
         }
         break;
 
