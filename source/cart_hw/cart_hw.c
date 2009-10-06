@@ -601,45 +601,45 @@ static void special_mapper_w(uint32 address, uint32 data)
 
 /* 
   Realtec ROM Bankswitch (Earth Defend, Balloon Boy & Funny World, Whac-A-Critter)
+  (Note: register usage is inverted in TascoDlx documentation)
 */
 static void realtec_mapper_w(uint32 address, uint32 data)
 {
-  int i;
-  uint32 base;
-
-  /* 32 x 128k banks */
   switch (address)
   {
-    case 0x404000:  /* three lower bits of ROM base address */
+    case 0x402000:  
+    {
+      /* number of mapped 64k blocks (the written value is a number of 128k blocks) */
+      cart.hw.regs[2] = data << 1;
+      return;
+    }
+
+    case 0x404000:
+    {
+      /* 00000xxx */
       cart.hw.regs[0] = data & 7;
-      base = ((data & 7) | (cart.hw.regs[1] << 2));
-      for (i=0; i<=cart.hw.regs[2]; i++) 
-      {
-        m68k_memory_map[i*2].base   = &cart.rom[((base + i)*2 & 0x3f) << 16];
-        m68k_memory_map[i*2+1].base = &cart.rom[(((base + i)*2 + 1) & 0x3f) << 16];
-      }
       return;
+    }
 
-    case 0x400000:  /* two higher bits of ROM base address */
+    case 0x400000:  
+    {
+      /* 00000yy1 */
       cart.hw.regs[1] = data & 6;
-      base = cart.hw.regs[0] | ((data & 6) << 2);
-      for (i=0; i<=cart.hw.regs[2]; i++) 
+
+      /* mapped start address is 00yy xxx0 0000 0000 0000 0000 */
+      uint32 base = (cart.hw.regs[0] << 1) | (cart.hw.regs[1] << 3);
+
+      /* ensure mapped size is not null */
+      if (!cart.hw.regs[2]) return;
+
+      /* selected blocks are mirrored into the whole cartridge area */
+      int i;
+      for (i=0x00; i<0x40; i++)
       {
-        m68k_memory_map[i*2].base   = &cart.rom[((base + i)*2 & 0x3f) << 16];
-        m68k_memory_map[i*2+1].base = &cart.rom[(((base + i)*2 + 1) & 0x3f) << 16];
+        m68k_memory_map[i].base = &cart.rom[(base + (i % cart.hw.regs[2])) << 16];
       }
       return;
-
-    case 0x402000:  /* number of 128k blocks to map */
-      cart.hw.regs[2] = data & 0x1f;
-      base = cart.hw.regs[0] | (cart.hw.regs[1] << 2);
-      for (i=0; i<=(data & 0x1f); i++) 
-      {
-        m68k_memory_map[i*2].base   = &cart.rom[((base + i)*2 & 0x3f) << 16];
-        m68k_memory_map[i*2+1].base = &cart.rom[(((base + i)*2 + 1) & 0x3f) << 16];
-      }
-      return;
-
+    }
   }
 }
 

@@ -2230,9 +2230,7 @@ void MainMenu (void)
         GUI_DeleteMenu(m);
         gxClearScreen((GXColor)BLACK);
         gxSetScreen();
-        system_init(); 
         system_reset(); 
-        memfile_autoload(config.sram_auto,-1);
         quit = 1;
         break;
 
