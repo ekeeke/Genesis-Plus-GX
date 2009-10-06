@@ -824,6 +824,10 @@ INLINE void m68k_set_irq(unsigned int int_level)
     m68ki_check_interrupts(); /* Level triggered (IRQ) */
 }
 
+#ifdef LOGVDP
+extern uint16 v_counter;
+extern void error(char *format, ...);
+#endif
 extern uint8 irq_status;
 
 void m68k_run (int cyc) 
@@ -846,6 +850,9 @@ void m68k_run (int cyc)
       if (irq_status & 0x40)
         count_m68k += m68k_execute();
 
+#ifdef LOGVDP
+      error("[%d(%d)][%d(%d)] IRQ Level = %d (%d cycles)(%x)\n", v_counter, count_m68k/488, count_m68k, count_m68k%488,temp, m68ki_remaining_cycles,m68k_get_reg (NULL, M68K_REG_PC));
+#endif
       /* interrupt level */
       m68k_set_irq(temp);
     }

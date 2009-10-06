@@ -343,7 +343,7 @@ int system_frame (int do_skip)
       /* during this period, any VRAM or VSRAM writes should NOT be taken in account before next line */
       /* as a result, line is rendered immediately after HINT and current line is shortened           */
       /* CRAM and VDP register writes that could occur during HBLANK are handled separately           */
-      /* fix Lotus 1, Lotus 2 RECS, Striker, Skitchin, Zero the Kamikaze Squirell                     */
+      /* fix Striker, Zero the Kamikaze Squirell                                                      */
       if ((line < vdp_height) && (h_counter == 0)) aim_m68k -= 36;
 
       /* update DMA timings */

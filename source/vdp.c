@@ -292,7 +292,7 @@ void vdp_update_dma()
   /* DMA bytes left */
   int dma_bytes = (left_cycles * rate) / m68cycles_per_line;
 
-#ifdef LOGERROR
+#ifdef LOGVDP
   error("[%d(%d)][%d(%d)] DMA type %d (%d access/line)-> %d access (%d remaining) (%x)\n", v_counter, count_m68k/488, count_m68k, count_m68k%488,dma_type, rate, dma_length, dma_bytes, m68k_get_reg (NULL, M68K_REG_PC));
 #endif
 
@@ -317,7 +317,7 @@ void vdp_update_dma()
     /* 68K is frozen during DMA operation */
     count_m68k += dma_cycles;
 
-#ifdef LOGERROR
+#ifdef LOGVDP
     error("-->CPU frozen for %d cycles\n", dma_cycles);
 #endif
   }
@@ -327,7 +327,7 @@ void vdp_update_dma()
     /* set DMA end cyles count */
     dma_endCycles = count_m68k + dma_cycles;
 
-#ifdef LOGERROR
+#ifdef LOGVDP
     error("-->DMA ends in %d cycles\n", dma_cycles);
 #endif
 
@@ -451,7 +451,7 @@ unsigned int vdp_ctrl_r(void)
   /* clear SPR/SCOL flags */
   status &= 0xFF9F;
 
-#ifdef LOGERROR
+#ifdef LOGVDP
   error("[%d(%d)][%d(%d)] VDP status read -> 0x%x (%x)\n", v_counter, count_m68k/488, count_m68k, count_m68k%488, temp, m68k_get_reg (NULL, M68K_REG_PC));
 #endif
   return (temp);
@@ -465,7 +465,7 @@ unsigned int vdp_hvc_r(void)
   /* interlace mode 2 */
   if (im2_flag) vc = (vc << 1) | ((vc >> 7) & 1);
 
-#ifdef LOGERROR
+#ifdef LOGVDP
   error("[%d(%d)][%d(%d)] VDP HVC Read -> 0x%04x (%x)\n", v_counter, count_m68k/488, count_m68k, count_m68k%488,(vc << 8) | hc, m68k_get_reg (NULL, M68K_REG_PC));
 #endif
   return ((vc << 8) | hc);
@@ -530,7 +530,7 @@ unsigned int vdp_data_r(void)
   {
     case 0x00:  /* VRAM */
       temp = *(uint16 *) & vram[(addr & 0xFFFE)];
-#ifdef LOGERROR
+#ifdef LOGVDP
       error("[%d(%d)][%d(%d)] VRAM 0x%x read -> 0x%x (%x)\n", v_counter, count_m68k/488, count_m68k, count_m68k%488, addr, temp, m68k_get_reg (NULL, M68K_REG_PC));
 #endif
       break;
@@ -538,14 +538,14 @@ unsigned int vdp_data_r(void)
     case 0x08:  /* CRAM */
       temp = *(uint16 *) & cram[(addr & 0x7E)];
       temp = UNPACK_CRAM (temp);
-#ifdef LOGERROR
+#ifdef LOGVDP
       error("[%d(%d)][%d(%d)] CRAM 0x%x read -> 0x%x (%x)\n", v_counter, count_m68k/488, count_m68k, count_m68k%488, addr, temp, m68k_get_reg (NULL, M68K_REG_PC));
 #endif
       break;
 
     case 0x04:  /* VSRAM */
       temp = *(uint16 *) & vsram[(addr & 0x7E)];
-#ifdef LOGERROR
+#ifdef LOGVDP
       error("[%d(%d)][%d(%d)] VSRAM 0x%x read -> 0x%x (%x)\n", v_counter, count_m68k/488, count_m68k, count_m68k%488, addr, temp, m68k_get_reg (NULL, M68K_REG_PC));
 #endif
       break;
@@ -564,7 +564,7 @@ unsigned int vdp_data_r(void)
 
 int vdp_int_ack_callback(int int_level)
 {
-#ifdef LOGERROR
+#ifdef LOGVDP
   error("[%d(%d)][%d(%d)] INT Level %d ack (%x)\n", v_counter, count_m68k/488, count_m68k, count_m68k%488,int_level, m68k_get_reg (NULL, M68K_REG_PC));
 #endif
 
@@ -573,14 +573,14 @@ int vdp_int_ack_callback(int int_level)
   {
     vint_pending = 0;
     status &= ~0x80;  /* clear VINT flag */
-#ifdef LOGERROR
+#ifdef LOGVDP
     error("---> VINT cleared\n");
 #endif
   }
   else
   {
     hint_pending = 0;
-#ifdef LOGERROR
+#ifdef LOGVDP
     error("---> HINT cleared\n");
 #endif
   }
@@ -622,7 +622,7 @@ static inline void data_w(unsigned int data)
   {
     case 0x01:  /* VRAM */
 
-#ifdef LOGERROR
+#ifdef LOGVDP
       error("[%d(%d)][%d(%d)] VRAM 0x%x write -> 0x%x (%x)\n", v_counter, count_m68k/488, count_m68k, count_m68k%488, addr, data, m68k_get_reg (NULL, M68K_REG_PC));
 #endif
 
@@ -649,7 +649,7 @@ static inline void data_w(unsigned int data)
 
     case 0x03:  /* CRAM */
     {
-#ifdef LOGERROR
+#ifdef LOGVDP
       error("[%d(%d)][%d(%d)] CRAM 0x%x write -> 0x%x (%x)\n", v_counter, count_m68k/488, count_m68k, count_m68k%488, addr, data, m68k_get_reg (NULL, M68K_REG_PC));
 #endif
       uint16 *p = (uint16 *) &cram[(addr & 0x7E)];
@@ -666,11 +666,11 @@ static inline void data_w(unsigned int data)
         {
           /* remap current line (Striker) */
           remap_buffer(v_counter,bitmap.viewport.w + 2*bitmap.viewport.x);
-#ifdef LOGERROR
+#ifdef LOGVDP
           error("Line remapped\n");
 #endif
         }
-#ifdef LOGERROR
+#ifdef LOGVDP
         else error("Line NOT remapped\n");
 #endif
       }
@@ -678,7 +678,7 @@ static inline void data_w(unsigned int data)
     }
 
     case 0x05:  /* VSRAM */
-#ifdef LOGERROR
+#ifdef LOGVDP
       error("[%d(%d)][%d(%d)] VSRAM 0x%x write -> 0x%x (%x)\n", v_counter, count_m68k/488, count_m68k, count_m68k%488, addr, data, m68k_get_reg (NULL, M68K_REG_PC));
 #endif
       *(uint16 *) &vsram[(addr & 0x7E)] = data;
@@ -695,7 +695,7 @@ static inline void data_w(unsigned int data)
 */
 static inline void reg_w(unsigned int r, unsigned int d)
 {
-#ifdef LOGERROR
+#ifdef LOGVDP
   error("[%d(%d)][%d(%d)] VDP register %d write -> 0x%x (%x)\n", v_counter, count_m68k/488, count_m68k, count_m68k%488, r, d, m68k_get_reg (NULL, M68K_REG_PC));
 #endif
 
@@ -770,11 +770,11 @@ static inline void reg_w(unsigned int r, unsigned int d)
            */
           reg[1] = d;
           render_line(v_counter, 0);
-#ifdef LOGERROR
+#ifdef LOGVDP
           error("Line redrawn\n");
 #endif
         }
-#ifdef LOGERROR
+#ifdef LOGVDP
         else
           error("Line NOT redrawn\n");
 #endif
@@ -823,11 +823,11 @@ static inline void reg_w(unsigned int r, unsigned int d)
           /* remap entire line (see Road Rash I,II,III) */
           reg[7] = d;
           remap_buffer(v_counter,bitmap.viewport.w + 2*bitmap.viewport.x);
-#ifdef LOGERROR
+#ifdef LOGVDP
           error("--> Line remapped\n");
 #endif
         }
-#ifdef LOGERROR
+#ifdef LOGVDP
         else
           error("--> Line NOT remapped\n");
 #endif
