@@ -196,7 +196,7 @@ void gx_audio_Stop(void)
   if (Bg_music_ogg && !Shutdown)
   {
     PauseOgg(0);
-    PlayOgg(mem_open((char *)Bg_music_ogg, Bg_music_ogg_size), 0, OGG_INFINITE_TIME);
+    PlayOgg((char *)Bg_music_ogg, Bg_music_ogg_size, 0, OGG_INFINITE_TIME);
     SetVolumeOgg(((int)config.bgm_volume * 255) / 100);
   }
 }

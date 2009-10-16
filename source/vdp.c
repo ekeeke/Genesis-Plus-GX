@@ -142,8 +142,21 @@ static inline void dma_fill(unsigned int data);
 void vdp_init(void)
 {
   /* PAL/NTSC timings */
-  vdp_rate        = vdp_pal ? 50 : 60;
-  lines_per_frame = vdp_pal ? 313 : 262;
+  switch (region_code)
+  {
+    case REGION_EUROPE:
+    case REGION_JAPAN_PAL:
+      vdp_pal = 1;
+      vdp_rate = 50;
+      lines_per_frame = 313;
+      break;
+
+    default:
+      vdp_pal = 0;
+      vdp_rate = 60;
+      lines_per_frame = 262;
+      break;
+  }
 }
 
 void vdp_reset(void)
@@ -443,7 +456,7 @@ unsigned int vdp_ctrl_r(void)
   if (!(reg[1] & 0x40)) temp |= 0x8; 
 
   /* HBLANK flag (Sonic 3 and Sonic 2 "VS Modes", Lemmings 2, Mega Turrican) */
-  if ((count_m68k <= (line_m68k + 84)) || (count_m68k > (line_m68k + m68cycles_per_line))) temp |= 0x4;
+  if ((count_m68k % m68cycles_per_line) < 84) temp |= 0x4;
 
   /* clear pending flag */
   pending = 0;

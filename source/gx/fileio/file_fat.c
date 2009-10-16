@@ -181,8 +181,8 @@ int FAT_LoadFile(u8 *buffer, u32 selection)
     }
 
     /* Read first data chunk */
-    unsigned char temp[2048];
-    fread(temp, 1, 2048, sdfile);
+    unsigned char temp[FATCHUNK];
+    fread(temp, FATCHUNK, 1, sdfile);
     fclose(sdfile);
 
     /* determine file type */
@@ -195,9 +195,16 @@ int FAT_LoadFile(u8 *buffer, u32 selection)
         char msg[50];
         sprintf(msg,"Loading %d bytes ...", length);
         GUI_MsgBoxOpen("Information",msg,1);
-        fread(buffer, 1, length, sdfile);
+        int i = 0;
+        while (length > FATCHUNK)
+        {
+          fread(buffer+i, FATCHUNK, 1, sdfile);
+          length -= FATCHUNK;
+          i += FATCHUNK;
+        }
+        fread(buffer+i, length, 1, sdfile);
         fclose(sdfile);
-        return length;
+        return filelist[selection].length;
       }
     }
     else

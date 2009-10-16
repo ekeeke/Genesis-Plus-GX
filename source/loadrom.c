@@ -267,7 +267,7 @@ int load_rom(char *filename)
   free(ptr);
 #endif
 
-  /* detect interleaved roms (.smd format) */
+  /* detect interleaved format (.SMD) */
   if (strncmp((char *)(cart.rom + 0x100),"SEGA", 4) && ((size / 512) & 1))
   {
     size -= 512;
@@ -288,9 +288,9 @@ int load_rom(char *filename)
   /* clear unused ROM space */
   memset (cart.rom + size, 0xff, MAXROMSIZE - size);
 
-  getrominfo((char *)cart.rom);  /* get infos from ROM header */
-  set_region();      /* set game region (PAL/NTSC, JAP/USA/EUR) */
-   
+  /* get infos from ROM header */
+  getrominfo((char *)cart.rom);
+
 #ifdef LSB_FIRST
   /* Byteswap ROM */
   uint8 temp;
@@ -380,10 +380,6 @@ void set_region ()
   else if (config.region_detect == 2) region_code = REGION_EUROPE;
   else if (config.region_detect == 3) region_code = REGION_JAPAN_NTSC;
   else if (config.region_detect == 4) region_code = REGION_JAPAN_PAL;
-
-  /* set cpu/vdp speed: PAL or NTSC */
-  if ((region_code == REGION_EUROPE) || (region_code == REGION_JAPAN_PAL)) vdp_pal = 1;
-  else vdp_pal = 0;
 }
 
 /****************************************************************************

@@ -23,6 +23,7 @@
  ********************************************************************************/
 
 #include "shared.h"
+#include "file_dvd.h"
 #include "gui.h"
 
 #ifndef HW_RVL
@@ -44,7 +45,7 @@ static u8 DVDreadbuffer[2048] ATTRIBUTE_ALIGN (32);   /* data buffer for all DVD
 u32 dvd_read (void *dst, u32 len, u64 offset)
 {
   /*** We only allow 2k reads **/
-  if (len > 2048) return 0;
+  if (len > DVDCHUNK) return 0;
 
   /*** Let's not read past end of DVD ***/
   if(offset < DvdMaxOffset)

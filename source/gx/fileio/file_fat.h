@@ -31,6 +31,8 @@
 #define TYPE_USB      2
 #endif
 
+#define FATCHUNK (2048)
+
 extern void FAT_ClearDirectory(void);
 extern int FAT_UpdateDirectory(bool go_up, char *filename);
 extern int FAT_ParseDirectory(void);

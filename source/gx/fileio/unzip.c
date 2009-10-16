@@ -28,6 +28,8 @@
 
 #include "shared.h"
 #include "dvd.h"
+#include "file_dvd.h"
+#include "file_fat.h"
 #include "gui.h"
 
 /*
@@ -120,11 +122,11 @@ int UnZipBuffer (unsigned char *outbuffer, u64 discoffset, char *filename)
   if (fatfile)
   {
     fseek(fatfile, 0, SEEK_SET);
-    fread(readbuffer, 1, 2048, fatfile);
+    fread(readbuffer, FATCHUNK,  1, fatfile);
   }
   else
   {
-    dvd_read (&readbuffer, 2048, discoffset);
+    dvd_read (&readbuffer, DVDCHUNK, discoffset);
   }
 
   /*** Copy PKZip header to local, used as info ***/
@@ -188,12 +190,12 @@ int UnZipBuffer (unsigned char *outbuffer, u64 discoffset, char *filename)
     
     if (fatfile)
     {
-      fread(readbuffer, 1, 2048, fatfile);
+      fread(readbuffer, FATCHUNK, 1, fatfile);
     }
     else
     {
-      discoffset += 2048;
-      dvd_read (&readbuffer, 2048, discoffset);
+      discoffset += DVDCHUNK;
+      dvd_read (&readbuffer, DVDCHUNK, discoffset);
     }
   }
   while (res != Z_STREAM_END);

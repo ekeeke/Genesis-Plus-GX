@@ -58,7 +58,9 @@ extern "C"
 
  -- Params ---
 
- fd: file descriptor from open() or mem_open()
+ buf: pointer to sound data
+
+ buflen: buffer size in bytes
 
  time_pos: initial time position in the file (in milliseconds). For example, use 30000 to advance 30 seconds
 
@@ -68,7 +70,7 @@ extern "C"
 
  */
 
-int PlayOgg(int fd, int time_pos, int mode);
+int PlayOgg(char * buf, int buflen, int time_pos, int mode);
 
 /*------------------------------------------------------------------------------------------------------------------------------------------------------*/
 

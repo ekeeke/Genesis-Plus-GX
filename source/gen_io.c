@@ -39,6 +39,9 @@ static struct port_t
  *****************************************************************************/
 void io_init(void)
 {
+  /* set region according to ROM header */
+  set_region();
+
   /* restore previous setting */
   if (old_system[0] != -1)  input.system[0] = old_system[0];
   if (old_system[1] != -1)  input.system[1] = old_system[1];

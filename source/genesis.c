@@ -140,15 +140,15 @@ void gen_reset(uint32 hard_reset)
 
     count_m68k  = 0;
     count_z80   = 0;
-    gen_running = 1;  /* System is running */
-    zreset      = 0;  /* Z80 is reset */
-    zbusreq     = 0;  /* Z80 has control of the Z bus */
-    zbusack     = 1;  /* Z80 is busy using the Z bus */
-    zirq        = 0;  /* No interrupts occuring */
-    zbank       = 0;  /* Assume default bank is $000000-$007FFF */
   }
 
-  resetline   = -1;
+  resetline   = -1; /* clear !RESET */
+  gen_running = 1;  /* System is running */
+  zreset      = 0;  /* Z80 is reset */
+  zbusreq     = 0;  /* Z80 has control of the Z bus */
+  zbusack     = 1;  /* Z80 is busy using the Z bus */
+  zirq        = 0;  /* No interrupts occuring */
+  zbank       = 0;  /* Assume default bank is $000000-$007FFF */
 
   /* reset CPUs */
   m68k_pulse_reset();

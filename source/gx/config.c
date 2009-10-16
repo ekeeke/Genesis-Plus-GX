@@ -85,6 +85,7 @@ void config_default(void)
   config.bios_enabled   = 0;
   config.lock_on        = 0;
   config.romtype        = 0;
+  config.hot_swap       = 0;
 
   /* video options */
   config.xshift   = 0;
@@ -107,7 +108,11 @@ void config_default(void)
   gx_input_SetDefault();
 
   /* menu options */
+#ifdef HW_RVL
+  config.sram_auto    = 0;
+#else
   config.sram_auto    = -1;
+#endif
   config.state_auto   = -1;
   config.bg_color     = 0;
   config.screen_w     = 658;

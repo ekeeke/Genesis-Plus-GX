@@ -24,10 +24,11 @@
 
 #include "shared.h"
 #include "file_mem.h"
+#include "file_fat.h"
+#include "dvd.h"
 #include "gui.h"
 #include "filesel.h"
 #include "saveicon.h"
-#include "dvd.h"
 
 /* Global ROM filename */
 char rom_filename[MAXJOLIET];
@@ -85,15 +86,22 @@ static int FAT_ManageFile(char *filename, u8 direction, u8 filetype)
       }
       else filesize = state_save(savebuffer); /* STATE */
 
-      /* write buffer */
-      done = fwrite(savebuffer, 1, filesize, fp);
+      /* write buffer (2k blocks) */
+      while (filesize > FATCHUNK)
+      {
+        fwrite(savebuffer + done, FATCHUNK, 1, fp);
+        filesize -= FATCHUNK;
+        done += FATCHUNK;
+      }
+      done += fwrite(savebuffer + done, filesize, 1, fp);
+      fclose(fp);
+
       if (done < filesize)
       {
         GUI_WaitPrompt("Error","Unable to write file !");
         return 0;
       }
 
-      fclose(fp);
       sprintf (fname, "Saved %d bytes successfully", done);
       GUI_WaitPrompt("Information",fname);
       return 1;
@@ -105,14 +113,21 @@ static int FAT_ManageFile(char *filename, u8 direction, u8 filetype)
       filesize = ftell (fp);
       fseek(fp, 0, SEEK_SET);
 
-      /* read into buffer (32k blocks) */
-      done = fread(savebuffer, 1, filesize, fp);
+      /* read into buffer (2k blocks) */
+      while (filesize > FATCHUNK)
+      {
+        fread(savebuffer + done, FATCHUNK, 1, fp);
+        filesize -= FATCHUNK;
+        done += FATCHUNK;
+      }
+      done += fread(savebuffer + done, filesize, 1, fp);
+      fclose(fp);
+
       if (done < filesize)
       {
         GUI_WaitPrompt("Error","Unable to read file !");
         return 0;
       }
-      fclose(fp);
 
       if (filetype) /* SRAM */
       {

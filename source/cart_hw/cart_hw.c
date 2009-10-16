@@ -595,7 +595,7 @@ static void special_mapper_w(uint32 address, uint32 data)
 {
   /* 1 x 32k bank */
   m68k_memory_map[0].base = mem_chunk;
-  memcpy(mem_chunk,&cart.rom[(data & 0x7f)  << 15],0x8000);
+  memcpy(mem_chunk,&cart.rom[(data & 0x7f) << 15],0x8000);
   memcpy(mem_chunk+0x8000,cart.rom + 0x8000,0x8000);
 }
 

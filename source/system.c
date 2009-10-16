@@ -210,9 +210,9 @@ void system_init (void)
 {
   /* Genesis hardware */
   gen_init();
+  io_init();
   vdp_init();
   render_init();
-  io_init();
 
   /* Cartridge hardware */
   cart_hw_init();
@@ -229,9 +229,9 @@ void system_reset (void)
   /* Genesis hardware */
   gen_reset(1); 
   SN76489_Reset();
+  io_reset();
   vdp_reset();
   render_reset();
-  io_reset();
 
   /* Clear Sound Buffers */
   if (snd.psg.buffer) memset (snd.psg.buffer, 0, SND_SIZE);

@@ -232,13 +232,14 @@ static gui_item items_audio[10] =
 };
 
 /* System options menu */
-static gui_item items_system[6] =
+static gui_item items_system[7] =
 {
   {NULL,NULL,"Console Region: AUTO",  "Select system region",                     52,132,276,48},
   {NULL,NULL,"System Lockups: OFF",   "Enable/disable original system lock-ups",  52,132,276,48},
   {NULL,NULL,"68k Address Error: ON", "Enable/disable 68k Address Error",         52,132,276,48},
   {NULL,NULL,"System BIOS: OFF",      "Enable/disable TMSS BIOS support",         52,132,276,48},
   {NULL,NULL,"Lock-on: OFF",          "Select Lock-On cartridge type",            52,132,276,48},
+  {NULL,NULL,"Cartridge Swap: OFF",   "Enable/disable cartridge hot swap",        52,132,276,48},
   {NULL,NULL,"SVP Cycles: 1500",      "Adjust SVP chip emulation speed",          52,132,276,48}
 };
 
@@ -880,16 +881,17 @@ static void systemmenu ()
   else if (config.lock_on == TYPE_AR) sprintf (items[4].text, "Lock-On: ACTION REPLAY");
   else if (config.lock_on == TYPE_SK) sprintf (items[4].text, "Lock-On: SONIC & KNUCKLES");
   else  sprintf (items[4].text, "Lock-On: OFF");
+  sprintf (items[5].text, "Cartridge Swap: %s", config.hot_swap ? "ON":"OFF");
 
   if (svp)
   {
-    sprintf (items[5].text, "SVP Cycles: %d", SVP_cycles);
-    m->max_items = 6;
+    sprintf (items[6].text, "SVP Cycles: %d", SVP_cycles);
+    m->max_items = 7;
   }
   else
   {
-    m->max_items = 5;
-    if (m->offset > 1) m->offset =1;
+    m->max_items = 6;
+    if (m->offset > 2) m->offset--;
   }
 
   GUI_InitMenu(m);
@@ -973,9 +975,14 @@ static void systemmenu ()
         }
         break;
 
-      case 5:  /*** SVP emulation ***/
+      case 5:  /*** Cartridge Hot Swap ***/
+        config.hot_swap ^= 1;
+        sprintf (items[5].text, "Cartridge Swap: %s", config.hot_swap ? "ON":"OFF");
+        break;
+
+      case 6:  /*** SVP emulation ***/
         GUI_OptionBox(m,0,"SVP Cycles",(void *)&SVP_cycles,1,1,1500,1);
-        sprintf (items[5].text, "SVP Cycles: %d", SVP_cycles);
+        sprintf (items[6].text, "SVP Cycles: %d", SVP_cycles);
         break;
 
       case -1:
@@ -1193,10 +1200,7 @@ static void ctrlmenu(void)
   gui_item *items = NULL;
   u8 *special = NULL;
   char msg[16];
-
-#ifdef HW_RVL
   u32 exp;
-#endif
 
   /* System devices */
   gui_item items_sys[2][7] =
@@ -1528,20 +1532,45 @@ static void ctrlmenu(void)
           break;
 
         case 11:  /* input controller selection */
-#ifdef HW_RVL
+
           /* no input device */
-          if (config.input[player].device > 0)
+          if (config.input[player].device < 0)
           {
-            /* use next port */
-            config.input[player].port ++;
+            /* try gamecube controllers */
+            config.input[player].device = 0;
+            config.input[player].port = 0;
           }
           else
           {
-            /* use gamecube pad */
-            config.input[player].device ++;
-            config.input[player].port = config.input[player].device ? 0 : (player%4);
+            /* try next port */
+            config.input[player].port ++;
           }
 
+          /* autodetect connected gamecube controllers */
+          if (config.input[player].device == 0)
+          {
+            exp = 0;
+            while ((config.input[player].port<4) && !exp)
+            {
+              exp = PAD_ScanPads() & (1<<config.input[player].port);
+              if (!exp) config.input[player].port ++;
+            }
+
+            if (config.input[player].port >= 4)
+            {
+#ifdef HW_RVL
+              /* no gamecube controller found, try wiimote */
+              config.input[player].port = 0;
+              config.input[player].device = 1;
+#else
+              /* no input controller left */
+              config.input[player].device = -1;
+              config.input[player].port = player%4;
+#endif
+            }
+          }
+
+#ifdef HW_RVL
           /* autodetect connected wiimotes (without nunchuk) */
           if (config.input[player].device == 1)
           {
@@ -1622,8 +1651,8 @@ static void ctrlmenu(void)
 
             if (config.input[player].port >= 4)
             {
-              /* no classic controller found, use default gamecube pad */
-              config.input[player].device = 0;
+              /* no input controller left */
+              config.input[player].device = -1;
               config.input[player].port = player%4;
             }
           }
@@ -1634,11 +1663,6 @@ static void ctrlmenu(void)
             config.input[player].padtype = DEVICE_3BUTTON;
             memcpy(&m->items[10],&items[*special],sizeof(gui_item));
           }
-
-#else
-          /* use gamecube pad */
-          config.input[player].device = 0;
-          config.input[player].port = player%4;
 #endif
 
           /* update menu items */
@@ -1670,6 +1694,7 @@ static void ctrlmenu(void)
           break;
       }
     }
+
     else if (update < 0)
     {
       if (m->bg_images[7].state & IMAGE_VISIBLE)
@@ -1699,6 +1724,32 @@ static void ctrlmenu(void)
         m->selected -= m->buttons[m->selected].shift[2];
 
         /* stay in menu */
+        update = 0;
+      }
+    }
+
+    /* check we have at least one connected input before leaving */
+    if (update < 0)
+    {
+      old_player = player;
+      player = 0;
+      for (i=0; i<MAX_DEVICES; i++)
+      {
+        /* check inputs */
+        if (input.dev[i] != NO_DEVICE)
+        {
+          if (config.input[player].device != -1)
+            break;
+          player++;
+        }
+      }
+      player = old_player;
+
+      /* no input connected */
+      if (i == MAX_DEVICES) 
+      {
+        /* stay in menu */
+        GUI_WaitPrompt("Error","No input connected !");
         update = 0;
       }
     }
@@ -2224,13 +2275,16 @@ void MainMenu (void)
         GUI_InitMenu(m);
         break;
 
-      case 4:  /*** Emulator Reset ***/
+      case 4:  /*** System Power Off/On ***/
         if (!cart.romsize) break;
         GUI_DrawMenuFX(m,10,1);
         GUI_DeleteMenu(m);
         gxClearScreen((GXColor)BLACK);
         gxSetScreen();
-        system_reset(); 
+        system_init();
+        audio_init(48000);
+        system_reset();
+        memfile_autoload(config.sram_auto,-1);
         quit = 1;
         break;
 

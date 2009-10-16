@@ -25,6 +25,8 @@
 #ifndef _FILE_DVD_H
 #define _FILE_DVD_H
 
+#define DVDCHUNK (2048)
+
 extern void DVD_ClearDirectory(void);
 extern int DVD_UpdateDirectory(bool go_up,u64 offset, u32 length);
 extern int DVD_ParseDirectory(void);

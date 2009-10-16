@@ -48,7 +48,7 @@ static int rootdirlength  = 0;
 static int IsJoliet       = 0;
 static int diroffset      = 0;
 static int haveDVDdir     = 0;
-static char dvdbuffer[2048];
+static char dvdbuffer[DVDCHUNK];
 
 /****************************************************************************
  * Primary Volume Descriptor
@@ -67,7 +67,7 @@ static int getpvd()
   /** Look for Joliet PVD first **/
   while (sector < 32)
   {
-    if (dvd_read (&dvdbuffer, 2048, (u64)(sector << 11)))
+    if (dvd_read (&dvdbuffer, DVDCHUNK, (u64)(sector << 11)))
     {
       if (memcmp (&dvdbuffer, "\2CD001\1", 8) == 0)
       {
@@ -89,7 +89,7 @@ static int getpvd()
   sector = 16;
   while (sector < 32)
   {
-    if (dvd_read (&dvdbuffer, 2048, (u64)(sector << 11)))
+    if (dvd_read (&dvdbuffer, DVDCHUNK, (u64)(sector << 11)))
     {
       if (memcmp (&dvdbuffer, "\1CD001\1", 8) == 0)
       {
@@ -126,7 +126,7 @@ static int getentry(int entrycount)
 
   /* Basic checks */
   if (entrycount >= MAXFILES) return 0;
-  if (diroffset >= 2048) return 0;
+  if (diroffset >= DVDCHUNK) return 0;
 
   /** Decode this entry **/
   if (dvdbuffer[diroffset])  /* Record length available */
@@ -139,7 +139,7 @@ static int getentry(int entrycount)
 
     /* Check for wrap round - illegal in ISO spec,
      * but certain crap writers do it! */
-    if ((diroffset + dvdbuffer[diroffset]) > 2048) return 0;
+    if ((diroffset + dvdbuffer[diroffset]) > DVDCHUNK) return 0;
 
     if (*filenamelength)
     {
@@ -252,7 +252,7 @@ int DVD_ParseDirectory(void)
   /*** Get as many files as possible ***/
   while (len < pdlength)
   {
-    if (dvd_read (&dvdbuffer, 2048, pdoffset) == 0) return 0;
+    if (dvd_read (&dvdbuffer, DVDCHUNK, pdoffset) == 0) return 0;
 
     diroffset = 0;
 
@@ -262,7 +262,7 @@ int DVD_ParseDirectory(void)
         filecount++;
     }
 
-    len += 2048;
+    len += DVDCHUNK;
     pdoffset = rdoffset + len;
   }
 
@@ -288,9 +288,9 @@ int DVD_LoadFile(u8 *buffer, u32 selection)
   if (length > 0)
   {
     /* Read first data chunk */
-    char readbuffer[2048];
+    char readbuffer[DVDCHUNK];
     u64 discoffset = filelist[selection].offset;
-    dvd_read (&readbuffer, 2048, discoffset);
+    dvd_read (&readbuffer, DVDCHUNK, discoffset);
 
     /* determine file type */
     if (!IsZipFile ((char *) readbuffer))
@@ -299,24 +299,24 @@ int DVD_LoadFile(u8 *buffer, u32 selection)
       sprintf(msg,"Loading %d bytes...", length);
       GUI_MsgBoxOpen("Information",msg,1);
       /* How many 2k blocks to read */
-      int blocks = length / 2048;
+      int blocks = length / DVDCHUNK;
       int readoffset = 0;
       int i;
 
       /* read data chunks */
       for (i = 0; i < blocks; i++)
       {
-        dvd_read(readbuffer, 2048, discoffset);
-        discoffset += 2048;
-        memcpy (buffer + readoffset, readbuffer, 2048);
-        readoffset += 2048;
+        dvd_read(readbuffer, DVDCHUNK, discoffset);
+        discoffset += DVDCHUNK;
+        memcpy (buffer + readoffset, readbuffer, DVDCHUNK);
+        readoffset += DVDCHUNK;
       }
 
       /* final read */ 
-      i = length % 2048;
+      i = length % DVDCHUNK;
       if (i)
       {
-        dvd_read (readbuffer, 2048, discoffset);
+        dvd_read (readbuffer, DVDCHUNK, discoffset);
         memcpy (buffer + readoffset, readbuffer, i);
       }
 

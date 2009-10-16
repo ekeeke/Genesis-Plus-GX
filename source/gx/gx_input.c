@@ -559,9 +559,29 @@ static void wpad_update(s8 chan, u8 i, u32 exp)
         else if (input.analog[2][1] < -255) input.analog[2][1] = -255;
 
         /* default button */
-        if (p & WPAD_BUTTON_B) input.pad[i]  |= INPUT_B;
+        if (p & WPAD_BUTTON_B) input.pad[i] |= INPUT_B;
       }
     }
+
+#ifdef USB_MOUSE
+    if (MOUSE_IsConnected())
+    {
+      /* USB Mouse support */
+      mouse_event event;
+      MOUSE_GetEvent(&event);
+      MOUSE_FlushEvents();
+
+      /* relative X/Y position: (-128;+127) -> (-255;+255) */
+      if (event.rx) input.analog[2][0] = (event.rx * 2) + 1;
+      else input.analog[2][0] = 0;
+      if (event.ry) input.analog[2][1] = (event.ry * 2) + 1;
+      else input.analog[2][1] = 0;
+
+      /* buttons pressed */
+      if (event.button & 1) input.pad[i] |= INPUT_A;
+      if (event.button & 2) input.pad[i] |= INPUT_B;
+    }
+#endif
 
     /* Invert Y coordinate */
     if (!config.invert_mouse) input.analog[2][1] = -input.analog[2][1];
@@ -651,7 +671,7 @@ void gx_input_SetDefault(void)
 #endif
 
   /* Default player inputs */
-  for (i=0; i<MAX_DEVICES; i++)
+  for (i=0; i<MAX_INPUTS; i++)
   {
     config.input[i].device  = -1;
     config.input[i].port    = i%4;
@@ -697,7 +717,7 @@ void gx_input_SetDefault(void)
     /* check if Gamecube Controller is connected */
     if (exp & (1 << i))
     {
-      for (j=0; j<MAX_DEVICES; j++)
+      for (j=0; j<MAX_INPUTS; j++)
       {
         /* look for the first unassigned player */
         if (config.input[j].device == -1)

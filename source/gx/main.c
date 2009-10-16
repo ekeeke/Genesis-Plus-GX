@@ -110,12 +110,26 @@ static void init_machine(void)
 ***************************************************/
 void reloadrom (int size, char *name)
 {
+  /* cartridge hot-swap support */
+  uint8 hotswap = 0;
+  if (cart.romsize) hotswap = config.hot_swap;
+
+  /* Load ROM */
   cart.romsize = size;
-  load_rom(name);       /* Load ROM */
-  system_init ();     /* Initialize System */
-  audio_init(48000);  /* Audio System initialization */
-  ClearGGCodes ();    /* Clear Game Genie patches */
-  system_reset ();    /* System Power ON */
+  load_rom(name);
+
+  if (hotswap)
+  {
+    cart_hw_init();
+    cart_hw_reset();
+  }
+  else
+  {
+    system_init ();     /* Initialize System */
+    audio_init(48000);  /* Audio System initialization */
+    ClearGGCodes ();    /* Clear Game Genie patches */
+    system_reset ();    /* System Power ON */
+  }
 }
 
 /**************************************************

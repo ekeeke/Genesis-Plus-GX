@@ -199,7 +199,7 @@ int Fir_Resampler_read( sample_t** out, unsigned long count )
 {
   sample_t* out_l = out[0];
   sample_t* out_r = out[1];
-  const sample_t* in = buffer;
+  sample_t* in = buffer;
   sample_t* end_pos = write_pos;
   unsigned long skip = skip_bits >> imp_phase;
   sample_t const* imp = impulses [imp_phase];

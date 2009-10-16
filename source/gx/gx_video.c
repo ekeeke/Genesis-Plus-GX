@@ -588,7 +588,6 @@ static void gxDrawCrosshair(gx_texture *texture, int x, int y)
     GX_Color4u8(0xff,0xff,0xff,0xff);
     GX_TexCoord2f32(0.0, 0.0);
     GX_End ();
-    GX_DrawDone();
 
     /* restore GX rendering */
     gxResetRendering(0);
@@ -625,7 +624,6 @@ void gxDrawRectangle(s32 x, s32 y, s32 w, s32 h, u8 alpha, GXColor color)
   GX_Position2s16(x,y);
   GX_Color4u8(color.r,color.g,color.b,alpha);
   GX_End ();
-  GX_DrawDone();
 
   /* restore GX rendering */
   GX_SetVtxDesc(GX_VA_TEX0, GX_DIRECT);
@@ -664,7 +662,6 @@ void gxDrawTexture(gx_texture *texture, s32 x, s32 y, s32 w, s32 h, u8 alpha)
     GX_Color4u8(0xff,0xff,0xff,alpha);
     GX_TexCoord2f32(0.0, 0.0);
     GX_End ();
-    GX_DrawDone();
   }
 }
 
@@ -709,7 +706,6 @@ void gxDrawTextureRotate(gx_texture *texture, s32 x, s32 y, s32 w, s32 h, f32 an
     GX_Color4u8(0xff,0xff,0xff,alpha);
     GX_TexCoord2f32(0.0, 1.0);
     GX_End ();
-    GX_DrawDone();
 
     /* restore default Modelview */
     guLookAt(mv, &cam.pos, &cam.up, &cam.view);
@@ -752,7 +748,6 @@ void gxDrawTextureRepeat(gx_texture *texture, s32 x, s32 y, s32 w, s32 h, u8 alp
     GX_Color4u8(0xff,0xff,0xff,alpha);
     GX_TexCoord2f32(0.0, 0.0);
     GX_End ();
-    GX_DrawDone();
   }
 }
 
@@ -796,7 +791,6 @@ void gxDrawScreenshot(u8 alpha)
   GX_Color4u8(0xff,0xff,0xff,alpha);
   GX_TexCoord2f32(0.0, 0.0);
   GX_End ();
-  GX_DrawDone();
 }
 
 void gxCopyScreenshot(gx_texture *texture)
@@ -829,7 +823,6 @@ void gxCopyScreenshot(gx_texture *texture)
   GX_Color4u8(0xff,0xff,0xff,0xff);
   GX_TexCoord2f32(0.0, 0.0);
   GX_End ();
-  GX_DrawDone();
 
   /* copy EFB to texture */
   texture->format = GX_TF_RGBA8;
@@ -838,6 +831,7 @@ void gxCopyScreenshot(gx_texture *texture)
   texture->data = screenshot;
   GX_SetTexCopySrc(0, 0, texture->width * 2, texture->height * 2);
   GX_SetTexCopyDst(texture->width, texture->height, texture->format, GX_TRUE);
+  GX_DrawDone();
   GX_CopyTex(texture->data, GX_TRUE);
   GX_Flush();
 
@@ -847,6 +841,7 @@ void gxCopyScreenshot(gx_texture *texture)
   GX_PixModeSync();
   GX_LoadTexObj(&texobj, GX_TEXMAP0);
   GX_InvalidateTexAll();
+  GX_Flush();
   DCFlushRange(texture->data, texture->width * texture->height * 4);
 }
 
@@ -869,6 +864,7 @@ void gxSaveScreenshot(char *filename)
 
 void gxSetScreen(void)
 {
+  GX_DrawDone();
   GX_CopyDisp(xfb[whichfb], GX_FALSE);
   GX_Flush();
   VIDEO_SetNextFramebuffer (xfb[whichfb]);
@@ -1396,7 +1392,6 @@ void gx_video_Update(void)
 
   /* render textured quad */
   draw_square();
-  GX_DrawDone();
 
   /* LightGun marks */
   if (crosshair[0]) gxDrawCrosshair(crosshair[0], input.analog[0][0],input.analog[0][1]);
@@ -1406,6 +1401,7 @@ void gx_video_Update(void)
   whichfb ^= 1;
 
   /* copy EFB to XFB */
+  GX_DrawDone();
   GX_CopyDisp(xfb[whichfb], GX_TRUE);
   GX_Flush();
   VIDEO_SetNextFramebuffer(xfb[whichfb]);

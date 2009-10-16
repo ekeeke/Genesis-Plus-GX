@@ -2,6 +2,9 @@
  Copyright (c) 2008 Francisco Muñoz 'Hermes' <www.elotrolado.net>
  All rights reserved.
 
+ Proper (standard) vorbis usage by Tantric, 2009
+ Threading modifications/corrections by Tantric, 2009
+
  Redistribution and use in source and binary forms, with or without modification, are
  permitted provided that the following conditions are met:
 
@@ -24,10 +27,212 @@
  THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef NO_SOUND
-
 #include "oggplayer.h"
 #include <gccore.h>
+#include <unistd.h>
+#include <string.h>
+
+/* functions to read the Ogg file from memory */
+
+static struct
+{
+  char *mem;
+  int size;
+  int pos;
+} file[4];
+
+static int f_read(void * punt, int bytes, int blocks, int *f)
+{
+  int b;
+  int c;
+  int d;
+
+  if (bytes * blocks <= 0)
+    return 0;
+
+  blocks = bytes * blocks;
+  c = 0;
+
+  while (blocks > 0)
+  {
+    b = blocks;
+    if (b > 4096)
+      b = 4096;
+
+    if (*f >= 0x666 && *f <= 0x669)
+    {
+      d = (*f) - 0x666;
+      if (file[d].size == 0)
+        return -1;
+      if ((file[d].pos + b) > file[d].size)
+        b = file[d].size - file[d].pos;
+      if (b > 0)
+      {
+        memcpy(punt, file[d].mem + file[d].pos, b);
+        file[d].pos += b;
+      }
+    }
+    else
+      b = read(*f, ((char *) punt) + c, b);
+
+    if (b <= 0)
+    {
+      return c / bytes;
+    }
+    c += b;
+    blocks -= b;
+  }
+  return c / bytes;
+}
+
+static int f_seek(int *f, ogg_int64_t offset, int mode)
+{
+  if(f==NULL) return(-1);
+
+  int k, d;
+  mode &= 3;
+  if (*f >= 0x666 && *f <= 0x669)
+  {
+    d = (*f) - 0x666;
+    k = 0;
+
+    if (file[d].size == 0)
+      return -1;
+
+    if (mode == 0)
+    {
+      if ((offset) >= file[d].size)
+      {
+        file[d].pos = file[d].size;
+        k = -1;
+      }
+      else if ((offset) < 0)
+      {
+        file[d].pos = 0;
+        k = -1;
+      }
+      else
+        file[d].pos = offset;
+    }
+    if (mode == 1)
+    {
+      if ((file[d].pos + offset) >= file[d].size)
+      {
+        file[d].pos = file[d].size;
+        k = -1;
+      }
+      else if ((file[d].pos + offset) < 0)
+      {
+        file[d].pos = 0;
+        k = -1;
+      }
+      else
+        file[d].pos += offset;
+    }
+    if (mode == 2)
+    {
+
+      if ((file[d].size + offset) >= file[d].size)
+      {
+        file[d].pos = file[d].size;
+        k = -1;
+      }
+      else if ((file[d].size + offset) < 0)
+      {
+        file[d].pos = 0;
+        k = -1;
+      }
+      else
+        file[d].pos = file[d].size + offset;
+    }
+
+  }
+  else
+    k = lseek(*f, (int) offset, mode);
+
+  if (k < 0)
+    k = -1;
+  else
+    k = 0;
+  return k;
+}
+
+static int f_close(int *f)
+{
+  int d;
+  if (*f >= 0x666 && *f <= 0x669)
+  {
+    d = (*f) - 0x666;
+    file[d].size = 0;
+    file[d].pos = 0;
+    if (file[d].mem)
+    {
+      file[d].mem = (void *) 0;
+    }
+    return 0;
+  }
+  else
+    return close(*f);
+  return 0;
+}
+
+static long f_tell(int *f)
+{
+  int k, d;
+
+  if (*f >= 0x666 && *f <= 0x669)
+  {
+    d = (*f) - 0x666;
+    k = file[d].pos;
+  }
+  else
+    k = lseek(*f, 0, 1);
+
+  return (long) k;
+}
+
+static int mem_open(char * ogg, int size)
+{
+  static int one = 1;
+  int n;
+  if (one)
+  {
+    one = 0;
+    for (n = 0; n < 4; n++)
+      file[n].size = 0;
+  }
+
+  for (n = 0; n < 4; n++)
+  {
+    if (file[n].size == 0)
+    {
+      file[n].mem = ogg;
+      file[n].size = size;
+      file[n].pos = 0;
+      return (0x666 + n);
+    }
+  }
+  return -1;
+}
+
+static int mem_close(int fd)
+{
+  if (fd >= 0x666 && fd <= 0x669) // it is a memory file descriptor?
+  {
+    fd -= 0x666;
+    file[fd].size = 0;
+    return 0;
+  }
+  else
+    return f_close(&fd);
+}
+
+static ov_callbacks callbacks = {
+  (size_t (*)(void *, size_t, size_t, void *))  f_read,
+  (int (*)(void *, ogg_int64_t, int))           f_seek,
+  (int (*)(void *))                             f_close,
+  (long (*)(void *))                            f_tell
+};
 
 /* OGG control */
 
@@ -61,15 +266,15 @@ static private_data_ogg private_ogg;
 #define STACKSIZE    8192
 
 static u8 oggplayer_stack[STACKSIZE];
-static lwpq_t oggplayer_queue;
-static lwp_t h_oggplayer;
+static lwpq_t oggplayer_queue = LWP_TQUEUE_NULL;
+static lwp_t h_oggplayer = LWP_THREAD_NULL;
 static int ogg_thread_running = 0;
 
 static void ogg_add_callback(int voice)
 {
-  if (ogg_thread_running <= 0)
+  if (!ogg_thread_running)
   {
-    SND_StopVoice(0);
+    ASND_StopVoice(0);
     return;
   }
 
@@ -78,7 +283,7 @@ static void ogg_add_callback(int voice)
 
   if (private_ogg.pcm_indx >= READ_SAMPLES)
   {
-    if (SND_AddVoice(0,
+    if (ASND_AddVoice(0,
         (void *) private_ogg.pcmout[private_ogg.pcmout_pos],
         private_ogg.pcm_indx << 1) == 0)
     {
@@ -101,14 +306,14 @@ static void ogg_add_callback(int voice)
 static void * ogg_player_thread(private_data_ogg * priv)
 {
   int first_time = 1;
+  long ret;
 
-  ogg_thread_running = 0;
   /* init */
   LWP_InitQueue(&oggplayer_queue);
 
   priv[0].vi = ov_info(&priv[0].vf, -1);
 
-  SND_Pause(0);
+  ASND_Pause(0);
 
   priv[0].pcm_indx = 0;
   priv[0].pcmout_pos = 0;
@@ -118,22 +323,15 @@ static void * ogg_player_thread(private_data_ogg * priv)
 
   ogg_thread_running = 1;
 
-  while (!priv[0].eof)
+  while (!priv[0].eof && ogg_thread_running)
   {
-    long ret;
-    if (ogg_thread_running <= 0)
-      break;
-
     if (priv[0].flag)
       LWP_ThreadSleep(oggplayer_queue); /* wait only when i have samples to send */
 
-    if (ogg_thread_running <= 0)
-      break;
-
     if (priv[0].flag == 0) /* wait to all samples are sended */
     {
-      if (SND_TestPointer(0, priv[0].pcmout[priv[0].pcmout_pos])
-          && SND_StatusVoice(0) != SND_UNUSED)
+      if (ASND_TestPointer(0, priv[0].pcmout[priv[0].pcmout_pos])
+          && ASND_StatusVoice(0) != SND_UNUSED)
       {
         priv[0].flag |= 64;
         continue;
@@ -187,12 +385,12 @@ static void * ogg_player_thread(private_data_ogg * priv)
 
     if (priv[0].flag == 1)
     {
-      if (SND_StatusVoice(0) == SND_UNUSED || first_time)
+      if (ASND_StatusVoice(0) == SND_UNUSED || first_time)
       {
         first_time = 0;
         if (priv[0].vi->channels == 2)
         {
-          SND_SetVoice(0, VOICE_STEREO_16BIT, priv[0].vi->rate, 0,
+          ASND_SetVoice(0, VOICE_STEREO_16BIT, priv[0].vi->rate, 0,
               (void *) priv[0].pcmout[priv[0].pcmout_pos],
               priv[0].pcm_indx << 1, priv[0].volume,
               priv[0].volume, ogg_add_callback);
@@ -202,7 +400,7 @@ static void * ogg_player_thread(private_data_ogg * priv)
         }
         else
         {
-          SND_SetVoice(0, VOICE_MONO_16BIT, priv[0].vi->rate, 0,
+          ASND_SetVoice(0, VOICE_MONO_16BIT, priv[0].vi->rate, 0,
               (void *) priv[0].pcmout[priv[0].pcmout_pos],
               priv[0].pcm_indx << 1, priv[0].volume,
               priv[0].volume, ogg_add_callback);
@@ -211,48 +409,47 @@ static void * ogg_player_thread(private_data_ogg * priv)
           priv[0].flag = 0;
         }
       }
-      else
-      {
-        /* all samples sended */
-        /* if(priv[0].pcm_indx==0) priv[0].flag=0; */ 
-      }
-
     }
-
+    usleep(10);
   }
   ov_clear(&priv[0].vf);
   priv[0].fd = -1;
   priv[0].pcm_indx = 0;
-  ogg_thread_running = 0;
-  /* free */
-  LWP_CloseQueue(oggplayer_queue);
 
   return 0;
 }
 
 void StopOgg()
 {
-  SND_StopVoice(0);
-  if (ogg_thread_running > 0)
-  {
-    ogg_thread_running = -2;
-    LWP_ThreadSignal(oggplayer_queue);
-    LWP_JoinThread(h_oggplayer, NULL);
+  ASND_StopVoice(0);
+  ogg_thread_running = 0;
 
-    while (((volatile int) ogg_thread_running) != 0)
-    {
-      ;;;
-    }
+  if(h_oggplayer != LWP_THREAD_NULL)
+  {
+    if(oggplayer_queue != LWP_TQUEUE_NULL)
+      LWP_ThreadSignal(oggplayer_queue);
+    LWP_JoinThread(h_oggplayer, NULL);
+    h_oggplayer = LWP_THREAD_NULL;
+  }
+  if(oggplayer_queue != LWP_TQUEUE_NULL)
+  {
+    LWP_CloseQueue(oggplayer_queue);
+    oggplayer_queue = LWP_TQUEUE_NULL;
   }
 }
 
-int PlayOgg(int fd, int time_pos, int mode)
+int PlayOgg(char * buf, int buflen, int time_pos, int mode)
 {
   StopOgg();
 
-  ogg_thread_running = 0;
+  private_ogg.fd = mem_open(buf, buflen);
+  
+  if (private_ogg.fd < 0)
+  {
+    private_ogg.fd = -1;
+    return -1;
+  }
 
-  private_ogg.fd = fd;
   private_ogg.mode = mode;
   private_ogg.eof = 0;
   private_ogg.volume = 127;
@@ -262,32 +459,22 @@ int PlayOgg(int fd, int time_pos, int mode)
   if (time_pos > 0)
     private_ogg.seek_time = time_pos;
 
-  if (fd < 0)
-  {
-    private_ogg.fd = -1;
-    return -1;
-  }
-  if (ov_open((void *) &private_ogg.fd, &private_ogg.vf, NULL, 0) < 0)
+  if (ov_open_callbacks((void *) &private_ogg.fd, &private_ogg.vf, NULL, 0, callbacks) < 0)
   {
     mem_close(private_ogg.fd); /* mem_close() can too close files from devices */
     private_ogg.fd = -1;
-    ogg_thread_running = -1;
+    ogg_thread_running = 0;
     return -1;
   }
 
   if (LWP_CreateThread(&h_oggplayer, (void *) ogg_player_thread,
       &private_ogg, oggplayer_stack, STACKSIZE, 80) == -1)
   {
-    ogg_thread_running = -1;
+    ogg_thread_running = 0;
     ov_clear(&private_ogg.vf);
     private_ogg.fd = -1;
     return -1;
   }
-  while (((volatile int) ogg_thread_running) == 0)
-  {
-    ;;;
-  }
-  LWP_ThreadSignal(oggplayer_queue);
   return 0;
 }
 
@@ -306,39 +493,33 @@ void PauseOgg(int pause)
       if (ogg_thread_running > 0)
       {
         LWP_ThreadSignal(oggplayer_queue);
-        /*   while(((volatile int )private_ogg.flag)!=1 && ((volatile int )ogg_thread_running)>0) {;;;} */
       }
     }
-
   }
 }
 
 int StatusOgg()
 {
-  if (ogg_thread_running <= 0)
+  if (ogg_thread_running == 0)
     return -1; /* Error */
-
-  if (private_ogg.eof)
+  else if (private_ogg.eof)
     return 255; /* EOF */
-
-  if (private_ogg.flag & 128)
+  else if (private_ogg.flag & 128)
     return 2; /* paused */
-  return 1; /* running */
+  else
+    return 1; /* running */
 }
 
 void SetVolumeOgg(int volume)
 {
   private_ogg.volume = volume;
-
-  SND_ChangeVolumeVoice(0, volume, volume);
+  ASND_ChangeVolumeVoice(0, volume, volume);
 }
 
 s32 GetTimeOgg()
 {
   int ret;
-  if (ogg_thread_running <= 0)
-    return 0;
-  if (private_ogg.fd < 0)
+  if (ogg_thread_running == 0 || private_ogg.fd < 0)
     return 0;
   ret = ((s32) ov_time_tell(&private_ogg.vf));
   if (ret < 0)
@@ -353,4 +534,3 @@ void SetTimeOgg(s32 time_pos)
     private_ogg.seek_time = time_pos;
 }
 
-#endif
