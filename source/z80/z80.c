@@ -1,7 +1,7 @@
 /*****************************************************************************
  *
  *   z80.c
- *   Portable Z80 emulator V3.8
+ *   Portable Z80 emulator V3.9
  *
  *   Copyright Juergen Buchmueller, all rights reserved.
  *
@@ -17,19 +17,42 @@
  *     terms of its usage and license at any time, including retroactively
  *   - This entire notice must remain in the source code.
  *
- *   Changes in 3.8 [Miodrag Milanovic]
+ *   TODO:
+ *    - If LD A,I or LD A,R is interrupted, P/V flag gets reset, even if IFF2
+ *      was set before this instruction
+ *    - Ideally, the tiny differences between Z80 types should be supported,
+ *      currently known differences:
+ *       - LD A,I/R P/V flag reset glitch is fixed on CMOS Z80
+ *       - OUT (C),0 outputs 0 on NMOS Z80, $FF on CMOS Z80
+ *       - SCF/CCF X/Y flags is ((flags | A) & 0x28) on SGS/SHARP/ZiLOG NMOS Z80,
+ *         (flags & A & 0x28) on NEC NMOS Z80, other models unknown.
+ *         However, people from the Speccy scene mention that SCF/CCF X/Y results
+ *         are inconsistant and may be influenced by I and R registers.
+ *      This Z80 emulator assumes a ZiLOG NMOS model.
+ *
+ *   Additional changes [Eke-Eke]:
+ *    - Discarded multi-chip support (unused)
+ *    - Fixed cycle counting for FD and DD prefixed instructions
+ *    - Fixed behavior of chained FD and DD prefixes (R register should be only incremented by one
+ *    - Implemented cycle-accurate INI/IND (needed by SMS emulation)
+ *   Changes in 3.9:
+ *    - Fixed cycle counts for LD IYL/IXL/IYH/IXH,n [Marshmellow]
+ *    - Fixed X/Y flags in CCF/SCF/BIT, ZEXALL is happy now [hap]
+ *    - Simplified DAA, renamed MEMPTR (3.8) to WZ, added TODO [hap]
+ *    - Fixed IM2 interrupt cycles [eke]
+ *   Changes in 3.8 [Miodrag Milanovic]:
  *   - Added MEMPTR register (according to informations provided
  *     by Vladimir Kladov
  *   - BIT n,(HL) now return valid values due to use of MEMPTR
  *   - Fixed BIT 6,(XY+o) undocumented instructions
- *   Changes in 3.7 [Aaron Giles]
+ *   Changes in 3.7 [Aaron Giles]:
  *   - Changed NMI handling. NMIs are now latched in set_irq_state
  *     but are not taken there. Instead they are taken at the start of the
  *     execute loop.
  *   - Changed IRQ handling. IRQ state is set in set_irq_state but not taken
  *     except during the inner execute loop.
  *   - Removed x86 assembly hacks and obsolete timing loop catchers.
- *   Changes in 3.6
+ *   Changes in 3.6:
  *   - Got rid of the code that would inexactly emulate a Z80, i.e. removed
  *     all the #if Z80_EXACT #else branches.
  *   - Removed leading underscores from local register name shortcuts as
@@ -37,23 +60,23 @@
  *   - Renamed the registers inside the Z80 context to lower case to avoid
  *     ambiguities (shortcuts would have had the same names as the fields
  *     of the structure).
- *   Changes in 3.5
+ *   Changes in 3.5:
  *   - Implemented OTIR, INIR, etc. without look-up table for PF flag.
  *     [Ramsoft, Sean Young]
- *   Changes in 3.4
+ *   Changes in 3.4:
  *   - Removed Z80-MSX specific code as it's not needed any more.
  *   - Implemented DAA without look-up table [Ramsoft, Sean Young]
- *   Changes in 3.3
+ *   Changes in 3.3:
  *   - Fixed undocumented flags XF & YF in the non-asm versions of CP,
  *     and all the 16 bit arithmetic instructions. [Sean Young]
- *   Changes in 3.2
+ *   Changes in 3.2:
  *   - Fixed undocumented flags XF & YF of RRCA, and CF and HF of
  *     INI/IND/OUTI/OUTD/INIR/INDR/OTIR/OTDR [Sean Young]
- *   Changes in 3.1
+ *   Changes in 3.1:
  *   - removed the REPEAT_AT_ONCE execution of LDIR/CPIR etc. opcodes
  *     for readabilities sake and because the implementation was buggy
  *     (and I was not able to find the difference)
- *   Changes in 3.0
+ *   Changes in 3.0:
  *   - 'finished' switch to dynamically overrideable cycle count tables
  *   Changes in 2.9:
  *   - added methods to access and override the cycle count tables
@@ -927,28 +950,20 @@ INLINE UINT8 DEC(UINT8 value)
 /***************************************************************
  * DAA
  ***************************************************************/
-#define DAA {                          \
-  UINT8 cf, nf, hf, lo, hi, diff;                \
-  cf = F & CF;                        \
-  nf = F & NF;                        \
-  hf = F & HF;                        \
-  lo = A & 15;                        \
-  hi = A / 16;                        \
+#define DAA {												\
+	UINT8 a = A;											\
+	if (F & NF) {											\
+		if ((F&HF) | ((A&0xf)>9)) a-=6;				\
+		if ((F&CF) | (A>0x99)) a-=0x60;				\
+	}															\
+	else {														\
+		if ((F&HF) | ((A&0xf)>9)) a+=6;				\
+		if ((F&CF) | (A>0x99)) a+=0x60;				\
+	}															\
                                 \
-  if (cf)                            \
-    diff = (lo <= 9 && !hf) ? 0x60 : 0x66;          \
-  else if (lo >= 10)                      \
-    diff = hi <= 8 ? 0x06 : 0x66;            \
-  else if (hi >= 10)                    \
-        diff = hf ? 0x66 : 0x60;            \
-      else                        \
-        diff = hf ? 0x06 : 0x00;            \
-  if (nf) A -= diff;                      \
-  else A += diff;                        \
-  F = SZP[A] | (F & NF);                    \
-  if (cf || (lo <= 9 ? hi >= 10 : hi >= 9)) F |= CF;      \
-  if (nf ? hf && lo <= 5 : lo >= 10)  F |= HF;        \
-}
+	F = (F&(CF|NF)) | (A>0x99) | ((A^a)&HF) | SZP[a]; \
+	A = a;													\
+} 
 
 /***************************************************************
  * AND  n
@@ -1165,7 +1180,7 @@ INLINE UINT8 SRL(UINT8 value)
  ***************************************************************/
 #undef BIT
 #define BIT(bit,reg)                      \
-  F = (F & CF) | HF | SZ_BIT[reg & (1<<bit)]
+  F = (F & CF) | HF | (SZ_BIT[reg & (1<<bit)] & ~(YF|XF)) | (reg & (YF|XF)); \
 
 /***************************************************************
  * BIT  bit,(HL)
@@ -1375,6 +1390,7 @@ INLINE UINT8 SET(UINT8 bit, UINT8 value)
   if( BC )                          \
   {                              \
     PC -= 2;                        \
+    MEMPTR = PC + 1;                  \
     CC(ex,0xb8);                      \
   }
 
@@ -1386,7 +1402,7 @@ INLINE UINT8 SET(UINT8 bit, UINT8 value)
   if( BC && !(F & ZF) )                    \
   {                              \
     PC -= 2;                        \
-   MEMPTR = PC + 1;  \
+    MEMPTR = PC + 1;  \
     CC(ex,0xb9);                      \
   }
 
@@ -2957,7 +2973,7 @@ OP(op,33) { SP++;                                                               
 OP(op,34) { WM( HL, INC(RM(HL)) );                                                                         } /* INC  (HL)        */
 OP(op,35) { WM( HL, DEC(RM(HL)) );                                                                         } /* DEC  (HL)        */
 OP(op,36) { WM( HL, ARG() );                                                                               } /* LD   (HL),n      */
-OP(op,37) { F = (F & (SF|ZF|PF)) | CF | (A & (YF|XF));                                                     } /* SCF              */
+OP(op,37) { F = (F & (SF|ZF|YF|XF|PF)) | CF | (A & (YF|XF));                                               } /* SCF              */
 
 OP(op,38) { JR_COND( F & CF, 0x38 );                                                                       } /* JR   C,o         */
 OP(op,39) { ADD16(hl, sp);                                                                                 } /* ADD  HL,SP       */
@@ -2966,7 +2982,7 @@ OP(op,3b) { SP--;                                                               
 OP(op,3c) { A = INC(A);                                                                                    } /* INC  A           */
 OP(op,3d) { A = DEC(A);                                                                                    } /* DEC  A           */
 OP(op,3e) { A = ARG();                                                                                     } /* LD   A,n         */
-OP(op,3f) { F = ((F&(SF|ZF|PF|CF))|((F&CF)<<4)|(A&(YF|XF)))^CF;                                            } /* CCF              */
+OP(op,3f) { F = ((F&(SF|ZF|YF|XF|PF|CF))|((F&CF)<<4)|(A&(YF|XF)))^CF;                                      } /* CCF              */
 
 OP(op,40) {                                                                                                } /* LD   B,B         */
 OP(op,41) { B = C;                                                                                         } /* LD   B,C         */
