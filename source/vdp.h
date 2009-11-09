@@ -54,7 +54,6 @@ extern uint8 bg_pattern_cache[0x80000];
 extern uint8 playfield_shift;
 extern uint8 playfield_col_mask;
 extern uint16 playfield_row_mask;
-extern uint32 y_mask;
 extern uint16 hc_latch;
 extern uint16 v_counter;
 extern uint32 dma_length;

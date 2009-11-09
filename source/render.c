@@ -974,7 +974,6 @@ static void render_bg(uint32 line, uint32 width)
   uint32 pf_col_mask  = playfield_col_mask;
   uint32 pf_row_mask  = playfield_row_mask;
   uint32 pf_shift     = playfield_shift;
-  uint32 pf_y_mask    = y_mask;
 
   /* Plane B */
   uint8 *buf    = ntb_buf;
@@ -991,7 +990,7 @@ static void render_bg(uint32 line, uint32 width)
   uint32 v_line = (line + (yscroll & 0x3FF)) & pf_row_mask;
 #endif
 
-  uint32 *nt    = (uint32 *)&vram[ntbb + (((v_line >> 3) << pf_shift) & pf_y_mask)];
+  uint32 *nt    = (uint32 *)&vram[ntbb + (((v_line >> 3) << pf_shift) & 0x1FC0)];
   v_line        = (v_line & 7) << 3;
 
   if(shift)
@@ -1044,7 +1043,7 @@ static void render_bg(uint32 line, uint32 width)
     v_line  = (line + ((yscroll >> 16) & 0x3FF)) & pf_row_mask;
 #endif
 
-    nt      = (uint32 *)&vram[ntab + (((v_line >> 3) << pf_shift) & pf_y_mask)];
+    nt      = (uint32 *)&vram[ntab + (((v_line >> 3) << pf_shift) & 0x1FC0)];
     v_line  = (v_line & 7) << 3;
 
     if(shift)
@@ -1094,7 +1093,6 @@ static void render_bg_vs(uint32 line, uint32 width)
   uint32 pf_col_mask  = playfield_col_mask;
   uint32 pf_row_mask  = playfield_row_mask;
   uint32 pf_shift     = playfield_shift;
-  uint32 pf_y_mask    = y_mask;
   uint32 *vs          = (uint32 *)&vsram[0];
 
   /* Plane B */
@@ -1121,7 +1119,7 @@ static void render_bg_vs(uint32 line, uint32 width)
 #else
     v_line = (line + (vs[0] & 0x3FF)) & pf_row_mask;
 #endif
-    nt = (uint32 *)&vram[ntbb + (((v_line >> 3) << pf_shift) & pf_y_mask)];
+    nt = (uint32 *)&vram[ntbb + (((v_line >> 3) << pf_shift) & 0x1FC0)];
     v_line = (v_line & 7) << 3;
 
     atbuf = nt[(index-1) & pf_col_mask];
@@ -1136,7 +1134,7 @@ static void render_bg_vs(uint32 line, uint32 width)
 #else
     v_line = (line + (vs[column] & 0x3FF)) & pf_row_mask;
 #endif
-    nt = (uint32 *)&vram[ntbb + (((v_line >> 3) << pf_shift) & pf_y_mask)];
+    nt = (uint32 *)&vram[ntbb + (((v_line >> 3) << pf_shift) & 0x1FC0)];
     v_line = (v_line & 7) << 3;
 
     atbuf = nt[index & pf_col_mask];
@@ -1186,7 +1184,7 @@ static void render_bg_vs(uint32 line, uint32 width)
 #else
       v_line = (line + ((vs[start] >> 16) & 0x3FF)) & pf_row_mask;
 #endif
-      nt = (uint32 *)&vram[ntab + (((v_line >> 3) << pf_shift) & pf_y_mask)];
+      nt = (uint32 *)&vram[ntab + (((v_line >> 3) << pf_shift) & 0x1FC0)];
       v_line = (v_line & 7) << 3;
 
       /* Window bug */
@@ -1204,7 +1202,7 @@ static void render_bg_vs(uint32 line, uint32 width)
 #else
       v_line = (line + ((vs[column] >> 16) & 0x3FF)) & pf_row_mask;
 #endif
-      nt = (uint32 *)&vram[ntab + (((v_line >> 3) << pf_shift) & pf_y_mask)];
+      nt = (uint32 *)&vram[ntab + (((v_line >> 3) << pf_shift) & 0x1FC0)];
       v_line = (v_line & 7) << 3;
 
       atbuf = nt[index & pf_col_mask];
@@ -1240,7 +1238,6 @@ static void render_bg_im2(uint32 line, uint32 width, uint32 odd)
   uint32 pf_col_mask  = playfield_col_mask;
   uint32 pf_row_mask  = playfield_row_mask;
   uint32 pf_shift     = playfield_shift;
-  uint32 pf_y_mask    = y_mask;
 
   /* Plane B */
   uint8 *buf    = ntb_buf;
@@ -1257,7 +1254,7 @@ static void render_bg_im2(uint32 line, uint32 width, uint32 odd)
   uint32 v_line = (line + ((yscroll >> 1) & 0x3FF)) & pf_row_mask;
 #endif
 
-  uint32 *nt    = (uint32 *)&vram[ntbb + (((v_line >> 3) << pf_shift) & pf_y_mask)];
+  uint32 *nt    = (uint32 *)&vram[ntbb + (((v_line >> 3) << pf_shift) & 0x1FC0)];
   v_line        = (((v_line & 7) << 1) | odd) << 3;
 
   if(shift)
@@ -1308,7 +1305,7 @@ static void render_bg_im2(uint32 line, uint32 width, uint32 odd)
     v_line  = (line + ((yscroll >> 17) & 0x3FF)) & pf_row_mask;
 #endif
 
-    nt      = (uint32 *)&vram[ntab + (((v_line >> 3) << pf_shift) & pf_y_mask)];
+    nt      = (uint32 *)&vram[ntab + (((v_line >> 3) << pf_shift) & 0x1FC0)];
     v_line  = (((v_line & 7) << 1) | odd) << 3;
 
     if(shift)
@@ -1357,7 +1354,6 @@ static void render_bg_im2_vs(uint32 line, uint32 width, uint32 odd)
   uint32 pf_col_mask  = playfield_col_mask;
   uint32 pf_row_mask  = playfield_row_mask;
   uint32 pf_shift     = playfield_shift;
-  uint32 pf_y_mask    = y_mask;
   uint32 *vs          = (uint32 *)&vsram[0];
 
   /* Plane B */
@@ -1384,7 +1380,7 @@ static void render_bg_im2_vs(uint32 line, uint32 width, uint32 odd)
 #else
     v_line = (line + ((vs[0] >> 1) & 0x3FF)) & pf_row_mask;
 #endif
-    nt = (uint32 *)&vram[ntbb + (((v_line >> 3) << pf_shift) & pf_y_mask)];
+    nt = (uint32 *)&vram[ntbb + (((v_line >> 3) << pf_shift) & 0x1FC0)];
     v_line = (((v_line & 7) << 1) | odd) << 3;
 
     atbuf = nt[(index-1) & pf_col_mask];
@@ -1399,7 +1395,7 @@ static void render_bg_im2_vs(uint32 line, uint32 width, uint32 odd)
 #else
     v_line  = (line + ((vs[column] >> 1) & 0x3FF)) & pf_row_mask;
 #endif
-    nt      = (uint32 *)&vram[ntbb + (((v_line >> 3) << pf_shift) & pf_y_mask)];
+    nt      = (uint32 *)&vram[ntbb + (((v_line >> 3) << pf_shift) & 0x1FC0)];
     v_line  = (((v_line & 7) << 1) | odd) << 3;
 
     atbuf = nt[index & pf_col_mask];
@@ -1447,7 +1443,7 @@ static void render_bg_im2_vs(uint32 line, uint32 width, uint32 odd)
 #else
       v_line  = (line + ((vs[start] >> 17) & 0x3FF)) & pf_row_mask;
 #endif
-      nt      = (uint32 *)&vram[ntab + (((v_line >> 3) << pf_shift) & pf_y_mask)];
+      nt      = (uint32 *)&vram[ntab + (((v_line >> 3) << pf_shift) & 0x1FC0)];
       v_line  = (((v_line & 7) << 1) | odd) << 3;
 
       /* Window bug */
@@ -1465,7 +1461,7 @@ static void render_bg_im2_vs(uint32 line, uint32 width, uint32 odd)
 #else
       v_line  = (line + ((vs[column] >> 17) & 0x3FF)) & pf_row_mask;
 #endif
-      nt      = (uint32 *)&vram[ntab + (((v_line >> 3) << pf_shift) & pf_y_mask)];
+      nt      = (uint32 *)&vram[ntab + (((v_line >> 3) << pf_shift) & 0x1FC0)];
       v_line  = (((v_line & 7) << 1) | odd) << 3;
 
       atbuf = nt[index & pf_col_mask];

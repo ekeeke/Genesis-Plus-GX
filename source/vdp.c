@@ -82,10 +82,9 @@ uint16 lines_per_frame;           /* PAL: 313 lines, NTSC: 262 lines */
 
 
 /* Tables that define the playfield layout */
-static const uint8 shift_table[]      = { 6, 7, 0, 8 };
+static const uint8 shift_table[]      = { 6, 7, 0, 8 }; /* fixes Window Bug test program */
 static const uint8 col_mask_table[]   = { 0x0F, 0x1F, 0x0F, 0x3F };
 static const uint16 row_mask_table[]  = { 0x0FF, 0x1FF, 0x2FF, 0x3FF };
-static const uint32 y_mask_table[]    = { 0x1FC0, 0x1F80, 0x1FC0, 0x1F00 };
 
 static uint16 sat_base_mask;  /* Base bits of SAT */
 static uint16 sat_addr_mask;  /* Index bits of SAT */
@@ -194,7 +193,6 @@ void vdp_reset(void)
   playfield_shift = 6;
   playfield_col_mask = 0x0F;
   playfield_row_mask = 0x0FF;
-  y_mask = 0x1FC0;
 
   hint_pending = 0;
   vint_pending = 0;
@@ -906,7 +904,7 @@ static inline void reg_w(unsigned int r, unsigned int d)
       }
       break;
 
-    case 13: /* HSCB */
+    case 13: /* HScroll Base Address */
       hscb = (d << 10) & 0xFC00;
       break;
 
@@ -914,10 +912,9 @@ static inline void reg_w(unsigned int r, unsigned int d)
       playfield_shift = shift_table[(d & 3)];
       playfield_col_mask = col_mask_table[(d & 3)];
       playfield_row_mask = row_mask_table[(d >> 4) & 3];
-      y_mask = y_mask_table[(d & 3)];
       break;
 
-    case 17: /* Update clipping */
+    case 17: /* Window/Plane A clipping */
       reg[17] = d;
       window_clip();
       break;
