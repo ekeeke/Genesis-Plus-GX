@@ -999,8 +999,11 @@ static void render_bg(uint32 line, uint32 width)
     atbuf = nt[(index-1) & pf_col_mask];
     DRAW_COLUMN(atbuf, v_line)
   }
+  else
+  {
+    dst = (uint32 *)&buf[0x20];
+  }
 
-  dst = (uint32 *)&buf[0x20 + shift];
   for(column = 0; column < end; column ++, index ++)
   {
     atbuf = nt[index & pf_col_mask];
@@ -1056,8 +1059,11 @@ static void render_bg(uint32 line, uint32 width)
 
       DRAW_COLUMN(atbuf, v_line)
     }
+    else
+    {
+      dst = (uint32 *)&buf[0x20 + (start<<4)];
+    }
 
-    dst = (uint32 *)&buf[0x20 + shift + (start<<4)];
     for(column = start; column < end; column ++, index ++)
     {
       atbuf = nt[index & pf_col_mask];
@@ -1087,6 +1093,7 @@ static void render_bg(uint32 line, uint32 width)
 static void render_bg_vs(uint32 line, uint32 width)
 {
   uint32 column, atex, atbuf, *src, *dst;
+  uint32 v_line, *nt;
 
   /* common data */
   uint32 xscroll      = get_hscroll(line);
@@ -1108,8 +1115,6 @@ static void render_bg_vs(uint32 line, uint32 width)
   uint32 index  = pf_col_mask + 1 - ((xscroll >> 4) & pf_col_mask);
 #endif
 
-  uint32 v_line, *nt;
-
   if(shift)
   {
     dst   = (uint32 *)&buf[0x10 + shift];
@@ -1125,8 +1130,11 @@ static void render_bg_vs(uint32 line, uint32 width)
     atbuf = nt[(index-1) & pf_col_mask];
     DRAW_COLUMN(atbuf, v_line)
   }
+  else
+  {
+    dst = (uint32 *)&buf[0x20];
+  }
 
-  dst = (uint32 *)&buf[0x20 + shift];
   for(column = 0; column < end; column ++, index ++)
   {
 #ifdef LSB_FIRST
@@ -1193,8 +1201,11 @@ static void render_bg_vs(uint32 line, uint32 width)
 
       DRAW_COLUMN(atbuf, v_line)
     }
+    else
+    {
+      dst = (uint32 *)&buf[0x20 + (start<<4)];
+    }
 
-    dst = (uint32 *)&buf[0x20 + shift + (start<<4)];
     for(column = start; column < end; column ++, index ++)
     {
 #ifdef LSB_FIRST
@@ -1263,8 +1274,11 @@ static void render_bg_im2(uint32 line, uint32 width, uint32 odd)
     atbuf = nt[(index-1) & pf_col_mask];
     DRAW_COLUMN_IM2(atbuf, v_line)
   }
+  else
+  {
+    dst = (uint32 *)&buf[0x20];
+  }
 
-  dst = (uint32 *)&buf[0x20 + shift];
   for(column = 0; column < end; column ++, index ++)
   {
     atbuf = nt[index & pf_col_mask];
@@ -1318,8 +1332,11 @@ static void render_bg_im2(uint32 line, uint32 width, uint32 odd)
 
       DRAW_COLUMN_IM2(atbuf, v_line)
     }
+    else
+    {
+      dst = (uint32 *)&buf[0x20 + (start<<4)];
+    }
 
-    dst = (uint32 *)&buf[0x20 + shift + (start<<4)];
     for(column = start; column < end; column ++, index ++)
     {
       atbuf = nt[index & pf_col_mask];
@@ -1348,6 +1365,7 @@ static void render_bg_im2(uint32 line, uint32 width, uint32 odd)
 static void render_bg_im2_vs(uint32 line, uint32 width, uint32 odd)
 {
   uint32 column, atex, atbuf, offs, *src, *dst;
+  uint32 v_line, *nt;
 
   /* common data */
   uint32 xscroll      = get_hscroll(line);
@@ -1369,8 +1387,6 @@ static void render_bg_im2_vs(uint32 line, uint32 width, uint32 odd)
   uint32 index  = pf_col_mask + 1 - ((xscroll >> 4) & pf_col_mask);
 #endif
 
-  uint32 v_line, *nt;
-
   if(shift)
   {
     dst   = (uint32 *)&buf[0x10 + shift];
@@ -1386,8 +1402,11 @@ static void render_bg_im2_vs(uint32 line, uint32 width, uint32 odd)
     atbuf = nt[(index-1) & pf_col_mask];
     DRAW_COLUMN_IM2(atbuf, v_line)
   }
+  else
+  {
+    dst = (uint32 *)&buf[0x20];
+  }
 
-  dst = (uint32 *)&buf[0x20 + shift];
   for(column = 0; column < end; column ++, index ++)
   {
 #ifdef LSB_FIRST
@@ -1452,8 +1471,11 @@ static void render_bg_im2_vs(uint32 line, uint32 width, uint32 odd)
 
       DRAW_COLUMN_IM2(atbuf, v_line)
     }
+    else
+    {
+      dst = (uint32 *)&buf[0x20 + (start<<4)];
+    }
 
-    dst = (uint32 *)&buf[0x20 + shift + (start<<4)];
     for(column = start; column < end; column ++, index ++)
     {
 #ifdef LSB_FIRST
