@@ -1838,14 +1838,11 @@ void render_line(uint32 line, uint32 overscan)
       }
     }
 
-    /* Mode 4 feature only (unemulated, no games rely on this) */
-    /*if(!(reg[1] & 0x04) && (reg[0] & 0x20)) memset(&lb[0x20], 0x40, 0x08);*/
-
     /* borders */
     if (x_offset)
     {
-        memset(&lb[0x20 - x_offset], 0x40, x_offset);
-        memset(&lb[0x20 + width], 0x40, x_offset);
+        memset(&lb[0x20 - x_offset], 0x00, x_offset);
+        memset(&lb[0x20 + width], 0x00, x_offset);
         width += 2 * x_offset;
     }
   }

@@ -669,8 +669,15 @@ static inline void data_w(unsigned int data)
       {
         int index = (addr >> 1) & 0x3F;
         *p = data;
-        if (index) color_update (index, *p);
-        if (border == index) color_update (0x00, *p);
+
+        /* update color palette */
+        /* color entry 0 of each palette is never displayed (transparent pixel) */
+        if (index & 0x0F)
+          color_update(index, *p);
+
+        /* update background color */
+        if (border == index)
+          color_update (0x00, *p);
 
         /* CRAM modified during HBLANK */
         if (!(status & 8) && (reg[1]&0x40) && (count_m68k <= (line_m68k + 84)))
