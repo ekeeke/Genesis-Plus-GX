@@ -1781,7 +1781,7 @@ void render_line(uint32 line, uint32 overscan)
   if (!(reg[1] & 0x40) || overscan)
   {
     width += 2 * x_offset;
-    memset(&tmp_buf[0x20 - x_offset], 0x40, width);
+    memset(&tmp_buf[0x20 - x_offset], 0x00, width);
   }
   else
   {

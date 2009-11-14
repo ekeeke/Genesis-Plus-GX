@@ -3,13 +3,14 @@
 
 #include "cpuintrf.h"
 
-enum {
-  Z80_PC=1, Z80_SP, Z80_A, Z80_B,
-  Z80_C, Z80_D, Z80_E, Z80_H, Z80_L,
+enum
+{
+  Z80_PC, Z80_SP,
+  Z80_A, Z80_B, Z80_C, Z80_D, Z80_E, Z80_H, Z80_L,
   Z80_AF, Z80_BC, Z80_DE, Z80_HL,
   Z80_IX, Z80_IY,  Z80_AF2, Z80_BC2, Z80_DE2, Z80_HL2,
   Z80_R, Z80_I, Z80_IM, Z80_IFF1, Z80_IFF2, Z80_HALT,
-  Z80_DC0, Z80_DC1, Z80_DC2, Z80_DC3, Z80_MEMPTR
+  Z80_DC0, Z80_DC1, Z80_DC2, Z80_DC3, Z80_WZ
 };
 
 enum {
@@ -27,7 +28,7 @@ enum {
 /****************************************************************************/
 typedef struct
 {
-  PAIR  prvpc,pc,sp,af,bc,de,hl,ix,iy,memptr;
+  PAIR  pc,sp,af,bc,de,hl,ix,iy,wz;
   PAIR  af2,bc2,de2,hl2;
   UINT8  r,r2,iff1,iff2,halt,im,i;
   UINT8  nmi_state;      /* nmi line state */
