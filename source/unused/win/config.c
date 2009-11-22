@@ -11,7 +11,7 @@ void set_config_defaults(void)
   /* sound options */
   config.psg_preamp     = 150;
   config.fm_preamp      = 100;
-  config.hq_fm          = 0;
+  config.hq_fm          = 1;
   config.psgBoostNoise  = 0;
   config.filter         = 1;
   config.low_freq       = 200;
@@ -19,6 +19,7 @@ void set_config_defaults(void)
   config.lg             = 1.0;
   config.mg             = 1.0;
   config.hg             = 1.0;
+  config.lp_range       = 50;
 
   /* system options */
   config.region_detect  = 0;
@@ -26,7 +27,7 @@ void set_config_defaults(void)
   config.addr_error     = 1;
   config.bios_enabled   = 0;
   config.lock_on        = 0;
-  config.romtype		= 0;
+  config.romtype        = 0;
 
   /* display options */
   config.overscan = 1;

@@ -8,7 +8,7 @@
 # LSB_FIRST : for little endian systems.
 # X86_ASM   : enable x86 assembly optimizations
 
-NAME	  = ../gen_sdl.exe
+NAME	  = gen_sdl.exe
 
 CC        = gcc
 CFLAGS    = `sdl-config --cflags` -O6 -march=i686 -fomit-frame-pointer
@@ -37,12 +37,9 @@ OBJECTS	+=      obj/sound.o	\
 		obj/sn76489.o   \
 		obj/ym2612.o    
 
-OBJECTS	+=	obj/blip.o \
-		obj/Fir_Resampler.o 
+OBJECTS	+=	obj/Fir_Resampler.o \
 
 OBJECTS	+=	obj/eq.o \
-
-OBJECTS	+=	obj/filters.o \
 
 OBJECTS	+=      obj/sram.o      \
 		obj/eeprom.o    \

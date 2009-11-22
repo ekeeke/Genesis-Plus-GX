@@ -141,7 +141,7 @@ void eeprom_write_word(uint32 address, uint32 data)
 uint32 z80_read_byte(uint32 address)
 {
   if (zbusack) return m68k_read_bus_8(address);
-          
+
   switch ((address >> 13) & 3)
   {
     case 2:   /* YM2612 */
@@ -159,7 +159,7 @@ uint32 z80_read_byte(uint32 address)
 uint32 z80_read_word(uint32 address)
 {
   if (zbusack) return m68k_read_bus_16(address);
-      
+
   switch ((address >> 13) & 3)
   {
     case 2:   /* YM2612 */

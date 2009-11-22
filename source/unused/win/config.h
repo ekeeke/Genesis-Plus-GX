@@ -20,6 +20,7 @@ typedef struct
   uint8 filter;
   uint16 low_freq;
   uint16 high_freq;
+  uint8 lp_range;
   float lg;
   float mg;
   float hg;
@@ -39,6 +40,7 @@ typedef struct
 
 /* Global variables */
 extern t_config config;
+extern void set_config_defaults(void);
 
 #endif /* _CONFIG_H_ */
 

@@ -18,6 +18,8 @@
 #include "unzip.h"
 #include "fileio.h"
 
+#define osd_input_Update sdl_input_update
+
 #define GG_ROM    "./ggenie.bin"
 #define AR_ROM    "./areplay.bin"
 #define OS_ROM    "./bios.bin"
