@@ -855,7 +855,7 @@ static void soundmenu ()
     }
   }
 
-  m->max_items = 8;
+  m->max_items = 10;
   GUI_DeleteMenu(m);
 }
 
