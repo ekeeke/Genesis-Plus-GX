@@ -8,7 +8,7 @@
 #define MAX_RES       32
 #define WIDTH         16
 #define WRITE_OFFSET  (WIDTH * STEREO) - STEREO
-#define ROLLOFF       0.999
+#define ROLLOFF       0.990
 #define GAIN          1.0
 
 typedef short sample_t;
