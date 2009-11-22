@@ -624,6 +624,7 @@ void gxDrawRectangle(s32 x, s32 y, s32 w, s32 h, u8 alpha, GXColor color)
   GX_Position2s16(x,y);
   GX_Color4u8(color.r,color.g,color.b,alpha);
   GX_End ();
+  GX_DrawDone();
 
   /* restore GX rendering */
   GX_SetVtxDesc(GX_VA_TEX0, GX_DIRECT);
@@ -662,6 +663,7 @@ void gxDrawTexture(gx_texture *texture, s32 x, s32 y, s32 w, s32 h, u8 alpha)
     GX_Color4u8(0xff,0xff,0xff,alpha);
     GX_TexCoord2f32(0.0, 0.0);
     GX_End ();
+    GX_DrawDone();
   }
 }
 
@@ -706,6 +708,7 @@ void gxDrawTextureRotate(gx_texture *texture, s32 x, s32 y, s32 w, s32 h, f32 an
     GX_Color4u8(0xff,0xff,0xff,alpha);
     GX_TexCoord2f32(0.0, 1.0);
     GX_End ();
+    GX_DrawDone();
 
     /* restore default Modelview */
     guLookAt(mv, &cam.pos, &cam.up, &cam.view);
@@ -748,6 +751,7 @@ void gxDrawTextureRepeat(gx_texture *texture, s32 x, s32 y, s32 w, s32 h, u8 alp
     GX_Color4u8(0xff,0xff,0xff,alpha);
     GX_TexCoord2f32(0.0, 0.0);
     GX_End ();
+    GX_DrawDone();
   }
 }
 
@@ -791,6 +795,7 @@ void gxDrawScreenshot(u8 alpha)
   GX_Color4u8(0xff,0xff,0xff,alpha);
   GX_TexCoord2f32(0.0, 0.0);
   GX_End ();
+  GX_DrawDone();
 }
 
 void gxCopyScreenshot(gx_texture *texture)
