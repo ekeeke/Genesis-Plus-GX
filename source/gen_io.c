@@ -39,97 +39,7 @@ static struct port_t
  *****************************************************************************/
 void io_init(void)
 {
-  /* set region according to ROM header */
-  set_region();
-
-  /* restore previous setting */
-  if (old_system[0] != -1)  input.system[0] = old_system[0];
-  if (old_system[1] != -1)  input.system[1] = old_system[1];
-
-  /* initialize default GUN settings */
-  input.x_offset = 0x00;
-  input.y_offset = 0x00;
-
-  /**********************************************
-          SEGA MENACER 
-  ***********************************************/
-  if (strstr(rominfo.international,"MENACER") != NULL)
-  {
-    /* save current setting */
-    if (old_system[0] == -1) old_system[0] = input.system[0];
-    if (old_system[1] == -1) old_system[1] = input.system[1];
-
-    input.system[0] = NO_SYSTEM;
-    input.system[1] = SYSTEM_MENACER;
-    input.x_offset = 0x52;
-    input.y_offset = 0x00;
-  }
-  else if (strstr(rominfo.international,"T2 ; THE ARCADE GAME") != NULL)
-  {
-    /* save current setting */
-    if (old_system[0] == -1) old_system[0] = input.system[0];
-    if (old_system[1] == -1) old_system[1] = input.system[1];
-
-    input.system[0] = SYSTEM_GAMEPAD;
-    input.system[1] = SYSTEM_MENACER;
-    input.x_offset = 0x84;
-    input.y_offset = 0x08;
-  }
-  else if (strstr(rominfo.international,"BODY COUNT") != NULL)
-  {
-    /* save current setting */
-    if (old_system[0] == -1) old_system[0] = input.system[0];
-    if (old_system[1] == -1) old_system[1] = input.system[1];
-
-    input.system[0] = SYSTEM_MOUSE;
-    input.system[1] = SYSTEM_MENACER;
-    input.x_offset = 0x44;
-    input.y_offset = 0x18;
-  }
-
-  /**********************************************
-          KONAMI JUSTIFIER 
-  ***********************************************/
-  else if (strstr(rominfo.international,"LETHAL ENFORCERSII") != NULL)
-  {
-    /* save current setting */
-    if (old_system[0] == -1) old_system[0] = input.system[0];
-    if (old_system[1] == -1) old_system[1] = input.system[1];
-
-    input.system[0] = SYSTEM_GAMEPAD;
-    input.system[1] = SYSTEM_JUSTIFIER;
-    input.x_offset = 0x18;
-    input.y_offset = 0x00;
-  }
-  else if (strstr(rominfo.international,"LETHAL ENFORCERS") != NULL)
-  {
-    /* save current setting */
-    if (old_system[0] == -1) old_system[0] = input.system[0];
-    if (old_system[1] == -1) old_system[1] = input.system[1];
-
-    input.system[0] = SYSTEM_GAMEPAD;
-    input.system[1] = SYSTEM_JUSTIFIER;
-    input.x_offset = 0x00;
-    input.y_offset = 0x00;
-  }
-
-  /**********************************************
-          J-CART 
-  ***********************************************/
-  if (cart.hw.jcart)
-  {
-    /* save current setting */
-    if (old_system[0] == -1) old_system[0] = input.system[0];
-    if (old_system[1] == -1) old_system[1] = input.system[1];
-       
-    /* set default settings */
-    input.system[0] = SYSTEM_GAMEPAD;
-    input.system[1] = SYSTEM_GAMEPAD;
-  }
-
-  /**********************************************
-          Initialize IO Port handlers 
-  ***********************************************/
+  /* Initialize IO Ports handlers */
   switch (input.system[0])
   {
     case SYSTEM_GAMEPAD:
@@ -200,7 +110,7 @@ void io_init(void)
   port[2].data_w = NULL;
   port[2].data_r = NULL;
 
-  /* Initialize Input Devices */
+  /* Initialize connected input devices */
   input_init();
 }
 
@@ -221,7 +131,7 @@ void io_reset(void)
   /* Reset I/O registers */
   memcpy (io_reg, io_def, 0x10);
 
-  /* Reset Input Devices */
+  /* Reset connected input devices */
   input_reset();
 }
 

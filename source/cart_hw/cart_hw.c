@@ -286,6 +286,83 @@ void cart_hw_init()
   }
 
   /**********************************************
+          SPECIAL PERIPHERALS 
+  ***********************************************/
+
+  /* restore previous settings */
+  if (old_system[0] != -1)
+    input.system[0] = old_system[0];
+  if (old_system[1] != -1)
+    input.system[1] = old_system[1];
+
+  /* initialize default GUN settings */
+  input.x_offset = 0x00;
+  input.y_offset = 0x00;
+
+  /**********************************************
+          SEGA MENACER 
+  ***********************************************/
+  if (strstr(rominfo.international,"MENACER") != NULL)
+  {
+    /* save current setting */
+    if (old_system[0] == -1) old_system[0] = input.system[0];
+    if (old_system[1] == -1) old_system[1] = input.system[1];
+
+    input.system[0] = NO_SYSTEM;
+    input.system[1] = SYSTEM_MENACER;
+    input.x_offset = 0x52;
+    input.y_offset = 0x00;
+  }
+  else if (strstr(rominfo.international,"T2 ; THE ARCADE GAME") != NULL)
+  {
+    /* save current setting */
+    if (old_system[0] == -1) old_system[0] = input.system[0];
+    if (old_system[1] == -1) old_system[1] = input.system[1];
+
+    input.system[0] = SYSTEM_GAMEPAD;
+    input.system[1] = SYSTEM_MENACER;
+    input.x_offset = 0x84;
+    input.y_offset = 0x08;
+  }
+  else if (strstr(rominfo.international,"BODY COUNT") != NULL)
+  {
+    /* save current setting */
+    if (old_system[0] == -1) old_system[0] = input.system[0];
+    if (old_system[1] == -1) old_system[1] = input.system[1];
+
+    input.system[0] = SYSTEM_MOUSE;
+    input.system[1] = SYSTEM_MENACER;
+    input.x_offset = 0x44;
+    input.y_offset = 0x18;
+  }
+
+  /**********************************************
+          KONAMI JUSTIFIER 
+  ***********************************************/
+  else if (strstr(rominfo.international,"LETHAL ENFORCERSII") != NULL)
+  {
+    /* save current setting */
+    if (old_system[0] == -1) old_system[0] = input.system[0];
+    if (old_system[1] == -1) old_system[1] = input.system[1];
+
+    input.system[0] = SYSTEM_GAMEPAD;
+    input.system[1] = SYSTEM_JUSTIFIER;
+    input.x_offset = 0x18;
+    input.y_offset = 0x00;
+  }
+  else if (strstr(rominfo.international,"LETHAL ENFORCERS") != NULL)
+  {
+    /* save current setting */
+    if (old_system[0] == -1) old_system[0] = input.system[0];
+    if (old_system[1] == -1) old_system[1] = input.system[1];
+
+    input.system[0] = SYSTEM_GAMEPAD;
+    input.system[1] = SYSTEM_JUSTIFIER;
+    input.x_offset = 0x00;
+    input.y_offset = 0x00;
+  }
+
+  /**********************************************
           J-CART 
   ***********************************************/
   cart.hw.jcart = 0;
@@ -305,6 +382,14 @@ void cart_hw_init()
       m68k_memory_map[0x38].write16 = jcart_write;
       m68k_memory_map[0x3f].read16  = jcart_read;
       m68k_memory_map[0x3f].write16 = jcart_write;
+
+      /* save current setting */
+      if (old_system[0] == -1) old_system[0] = input.system[0];
+      if (old_system[1] == -1) old_system[1] = input.system[1];
+
+      /* set default settings */
+      input.system[0] = SYSTEM_GAMEPAD;
+      input.system[1] = SYSTEM_GAMEPAD;
     }
   }
 

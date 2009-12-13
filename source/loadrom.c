@@ -291,6 +291,9 @@ int load_rom(char *filename)
   /* get infos from ROM header */
   getrominfo((char *)cart.rom);
 
+  /* set system region */
+  set_region();
+
 #ifdef LSB_FIRST
   /* Byteswap ROM */
   uint8 temp;
@@ -316,9 +319,12 @@ int load_rom(char *filename)
   }
 
   /* console hardware */
-  if (strstr(rominfo.consoletype, "SEGA PICO") != NULL) system_hw = SYSTEM_PICO;
-  else if (strstr(rominfo.consoletype, "SEGA MEGADRIVE") != NULL) system_hw = SYSTEM_MEGADRIVE;
-  else system_hw = SYSTEM_GENESIS;
+  if (strstr(rominfo.consoletype, "SEGA PICO") != NULL)
+    system_hw = SYSTEM_PICO;
+  else if (strstr(rominfo.consoletype, "SEGA MEGADRIVE") != NULL)
+    system_hw = SYSTEM_MEGADRIVE;
+  else 
+    system_hw = SYSTEM_GENESIS;
 
   return(1);
 }
