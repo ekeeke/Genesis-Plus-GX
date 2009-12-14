@@ -192,10 +192,6 @@ int FileSelector(unsigned char *buffer, bool useFAT)
       old = selection;
       string_offset = 0;
 
-      /* play sound effect */
-      ASND_SetVoice(ASND_GetFirstUnusedVoice(),VOICE_MONO_16BIT,22050,0,(u8 *)button_over_pcm,button_over_pcm_size,
-                    ((int)config.sfx_volume * 255) / 100,((int)config.sfx_volume * 255) / 100,NULL);
-
       /* delete previous texture if any */
       gxTextureClose(&bg_filesel[8].texture);
       bg_filesel[8].state &= ~IMAGE_VISIBLE;

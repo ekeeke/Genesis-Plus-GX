@@ -158,9 +158,9 @@ static gui_image bg_list[6] =
 
 static gui_item items_main[9] =
 {
-  {NULL,Main_quit_png    ,"","",128, 84,52,80},
-  {NULL,Main_load_png    ,"","",280, 72,80,92},
-  {NULL,Main_options_png ,"","",456, 76,60,88},
+  {NULL,Main_load_png    ,"","",114, 72,80,92},
+  {NULL,Main_options_png ,"","",290, 76,60,88},
+  {NULL,Main_quit_png    ,"","",460, 80,52,84},
   {NULL,Main_file_png    ,"","",114,216,80,92},
   {NULL,Main_reset_png   ,"","",282,224,76,84},
   {NULL,Main_ggenie_png  ,"","",450,224,72,84},
@@ -2212,19 +2212,27 @@ void MainMenu (void)
 
     switch (ret)
     {
-      case -1: /*** Return to Game ***/
-      case 6:
-        if (!cart.romsize) break;
-        GUI_DrawMenuFX(m,10,1);
+      /*** Load Game Menu ***/
+      case 0:
         GUI_DeleteMenu(m);
-        quit = 1;
+        quit = loadmenu();
+        if (quit) break;
+        GUI_InitMenu(m);
         break;
 
-      case 0: /*** Exit Menu ***/
+      /*** Options Menu */
+      case 1:
+        GUI_DeleteMenu(m);
+        optionmenu();
+        GUI_InitMenu(m);
+        break;
+
+      /*** Exit Menu ***/
+      case 2:
       {
         switch (GUI_OptionWindow(m, VERSION, items,3))
         {
-          case 1:
+          case 1: /* return to loader */
 #ifdef HW_RVL
             gxTextureClose(&w_pointer);
 #endif
@@ -2234,7 +2242,7 @@ void MainMenu (void)
             exit(0);
             break;
 
-          case 2:
+          case 2: /* soft reset */
 #ifdef HW_RVL
             gxTextureClose(&w_pointer);
 #endif
@@ -2248,26 +2256,14 @@ void MainMenu (void)
 #endif
             break;
 
-          default: /* TODO */
+          default: /* credits (TODO !!!) */
             break;
         }
         break;
       }
 
-      case 1:  /*** Load Game ***/
-        GUI_DeleteMenu(m);
-        quit = loadmenu();
-        if (quit) break;
-        GUI_InitMenu(m);
-        break;
-
-      case 2:  /*** Options */
-        GUI_DeleteMenu(m);
-        optionmenu();
-        GUI_InitMenu(m);
-        break;
-
-      case 3:  /*** Memory Manager (TODO !!!) ***/
+      /*** File Manager (TODO !!!) ***/
+      case 3:
         if (!cart.romsize) break;
         GUI_DeleteMenu(m);
         quit = filemenu();
@@ -2275,7 +2271,8 @@ void MainMenu (void)
         GUI_InitMenu(m);
         break;
 
-      case 4:  /*** System Power Off/On ***/
+      /*** Virtual system  hard reset ***/
+      case 4:
         if (!cart.romsize) break;
         GUI_DrawMenuFX(m,10,1);
         GUI_DeleteMenu(m);
@@ -2288,21 +2285,33 @@ void MainMenu (void)
         quit = 1;
         break;
 
-      case 5:   /*** Game Genie (TODO !!!) ***/
+      /*** Game Genie menu (TODO !!!) ***/
+      case 5:
         if (!cart.romsize) break;
         GUI_DeleteMenu(m);
         GetGGEntries();
         GUI_InitMenu(m);
         break;
 
-      case 7:   /*** Game Screenshot ***/
+      /*** Return to Game ***/
+      case 6:
+      case -1:
+       if (!cart.romsize) break;
+        GUI_DrawMenuFX(m,10,1);
+        GUI_DeleteMenu(m);
+        quit = 1;
+        break;
+
+      /*** Game Capture ***/
+      case 7:
         if (!cart.romsize) break;
         char filename[MAXPATHLEN];
         sprintf(filename,"%s/snaps/%s.png", DEFAULT_PATH, rom_filename);
         gxSaveScreenshot(filename);
         break;
 
-      case 8:   /*** ROM Information ***/
+      /*** ROM information screen (TODO !!!) ***/
+      case 8:
         if (!cart.romsize) break;
         GUI_DeleteMenu(m);
         showrominfo();
