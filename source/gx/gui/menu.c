@@ -246,14 +246,14 @@ static gui_item items_system[7] =
 /* Video options menu */
 static gui_item items_video[8] =
 {
-  {NULL,NULL,"Display: PROGRESSIVE",  "Select video mode type",                    52,132,276,48},
-  {NULL,NULL,"TV mode: 50/60Hz",      "Select video refresh rate",                 52,132,276,48},
-  {NULL,NULL,"Bilinear Filter: OFF",  "Enable/disable hardware filtering",         52,132,276,48},
-  {NULL,NULL,"NTSC Filter: COMPOSITE","Enable/disable NTSC software filtering",    52,132,276,48},
-  {NULL,NULL,"Borders: OFF",          "Enable/disable original overscan emulation",52,132,276,48},
-  {NULL,NULL,"Aspect: ORIGINAL (4:3)","Select display aspect ratio",               52,132,276,48},
-  {NULL,NULL,"DISPLAY POSITION",      "Adjust display position",                   52,132,276,48},
-  {NULL,NULL,"DISPLAY SIZE",          "Adjust display size",                       52,132,276,48}
+  {NULL,NULL,"Display: PROGRESSIVE",    "Select video mode type",                    52,132,276,48},
+  {NULL,NULL,"TV mode: 50/60Hz",        "Select video refresh rate",                 52,132,276,48},
+  {NULL,NULL,"Bilinear Filter: OFF",    "Enable/disable hardware filtering",         52,132,276,48},
+  {NULL,NULL,"NTSC Filter: COMPOSITE",  "Enable/disable NTSC software filtering",    52,132,276,48},
+  {NULL,NULL,"Borders: OFF",            "Enable/disable original overscan emulation",52,132,276,48},
+  {NULL,NULL,"Aspect: ORIGINAL (4:3)",  "Select display aspect ratio",               52,132,276,48},
+  {NULL,NULL,"Screen Position (+0,+0)", "Adjust display position",                   52,132,276,48},
+  {NULL,NULL,"Screen Size (+0,+0)",     "Adjust display size",                       52,132,276,48}
 };
 
 /* Preferences menu */
@@ -354,13 +354,12 @@ static gui_menu menu_main =
 {
   "",
   0,0,
-  9,9,4,
+  9,9,4,0,
   items_main,
   buttons_main,
   bg_main,
   {NULL,NULL},
-  {NULL,NULL},
-  FALSE
+  {NULL,NULL}
 };
 
 /* Main menu */
@@ -368,13 +367,12 @@ gui_menu menu_ctrls =
 {
   "Controller Settings",
   0,0,
-  13,13,8,
+  13,13,8,0,
   items_ctrls,
   buttons_ctrls,
   bg_ctrls,
   {&action_cancel, &action_select},
-  {NULL,NULL},
-  FALSE
+  {NULL,NULL}
 };
 
 /* Load Game menu */
@@ -383,16 +381,15 @@ static gui_menu menu_load =
   "Load Game",
   0,0,
 #ifdef HW_RVL
-  4,4,5,
+  4,4,5,0,
 #else
-  3,3,5,
+  3,3,5,0,
 #endif
   items_load,
   buttons_load,
   bg_misc,
   {&action_cancel, &action_select},
-  {NULL,NULL},
-  FALSE
+  {NULL,NULL}
 };
 
 /* Options menu */
@@ -400,13 +397,12 @@ static gui_menu menu_options =
 {
   "Settings",
   0,0,
-  5,5,5,
+  5,5,5,0,
   items_options,
   buttons_options,
   bg_misc,
   {&action_cancel, &action_select},
-  {NULL,NULL},
-  FALSE
+  {NULL,NULL}
 };
 
 /* System Options menu */
@@ -414,13 +410,12 @@ static gui_menu menu_system =
 {
   "System Settings",
   0,0,
-  6,4,6,
+  6,4,6,0,
   items_system,
   buttons_list,
   bg_list,
   {&action_cancel, &action_select},
-  {&arrow_up,&arrow_down},
-  FALSE
+  {&arrow_up,&arrow_down}
 };
 
 /* Video Options menu */
@@ -428,13 +423,12 @@ static gui_menu menu_video =
 {
   "Video Settings",
   0,0,
-  8,4,6,
+  8,4,6,0,
   items_video,
   buttons_list,
   bg_list,
   {&action_cancel, &action_select},
-  {&arrow_up,&arrow_down},
-  FALSE
+  {&arrow_up,&arrow_down}
 };
 
 /* Sound Options menu */
@@ -442,13 +436,12 @@ static gui_menu menu_audio =
 {
   "Audio Settings",
   0,0,
-  10,4,6,
+  10,4,6,0,
   items_audio,
   buttons_list,
   bg_list,
   {&action_cancel, &action_select},
-  {&arrow_up,&arrow_down},
-  FALSE
+  {&arrow_up,&arrow_down}
 };
 
 /* Sound Options menu */
@@ -456,13 +449,12 @@ static gui_menu menu_prefs =
 {
   "Menu Settings",
   0,0,
-  7,4,6,
+  7,4,6,0,
   items_prefs,
   buttons_list,
   bg_list,
   {&action_cancel, &action_select},
-  {&arrow_up,&arrow_down},
-  FALSE
+  {&arrow_up,&arrow_down}
 };
 
 
@@ -750,7 +742,7 @@ static void soundmenu ()
         {
           unsigned char *temp = memalign(32,YM2612GetContextSize());
           if (temp) memcpy(temp, YM2612GetContextPtr(), YM2612GetContextSize());
-          audio_init(48000);
+          audio_init(48000,vdp_pal?50.0:(1000000.0/16715.0));
           if (temp)
           {
             YM2612Restore(temp);
@@ -870,17 +862,28 @@ static void systemmenu ()
   gui_menu *m = &menu_system;
   gui_item *items = m->items;
 
-  if (config.region_detect == 0)      sprintf (items[0].text, "Console Region: AUTO");
-  else if (config.region_detect == 1) sprintf (items[0].text, "Console Region:  USA");
-  else if (config.region_detect == 2) sprintf (items[0].text, "Console Region:  EUR");
-  else if (config.region_detect == 3) sprintf (items[0].text, "Console Region:  JAP");
+  if (config.region_detect == 0)
+    sprintf (items[0].text, "Console Region: AUTO");
+  else if (config.region_detect == 1)
+    sprintf (items[0].text, "Console Region:  USA");
+  else if (config.region_detect == 2)
+    sprintf (items[0].text, "Console Region:  EUR");
+  else if (config.region_detect == 3)
+    sprintf (items[0].text, "Console Region:  JAP");
+
   sprintf (items[1].text, "System Lockups: %s", config.force_dtack ? "OFF" : "ON");
   sprintf (items[2].text, "68k Address Error: %s", config.addr_error ? "ON" : "OFF");
   sprintf (items[3].text, "System BIOS: %s", (config.bios_enabled & 1) ? "ON":"OFF");
-  if (config.lock_on == TYPE_GG) sprintf (items[4].text, "Lock-On: GAME GENIE");
-  else if (config.lock_on == TYPE_AR) sprintf (items[4].text, "Lock-On: ACTION REPLAY");
-  else if (config.lock_on == TYPE_SK) sprintf (items[4].text, "Lock-On: SONIC & KNUCKLES");
-  else  sprintf (items[4].text, "Lock-On: OFF");
+
+  if (config.lock_on == TYPE_GG)
+    sprintf (items[4].text, "Lock-On: GAME GENIE");
+  else if (config.lock_on == TYPE_AR)
+    sprintf (items[4].text, "Lock-On: ACTION REPLAY");
+  else if (config.lock_on == TYPE_SK)
+    sprintf (items[4].text, "Lock-On: SONIC & KNUCKLES");
+  else
+    sprintf (items[4].text, "Lock-On: OFF");
+
   sprintf (items[5].text, "Cartridge Swap: %s", config.hot_swap ? "ON":"OFF");
 
   if (svp)
@@ -905,21 +908,28 @@ static void systemmenu ()
     {
       case 0:  /*** Region Force ***/
         config.region_detect = (config.region_detect + 1) % 4;
-        if (config.region_detect == 0)      sprintf (items[0].text, "Console Region: AUTO");
-        else if (config.region_detect == 1) sprintf (items[0].text, "Console Region:  USA");
-        else if (config.region_detect == 2) sprintf (items[0].text, "Console Region:  EUR");
-        else if (config.region_detect == 3) sprintf (items[0].text, "Console Region:  JAP");
+
+        if (config.region_detect == 0)
+          sprintf (items[0].text, "Console Region: AUTO");
+        else if (config.region_detect == 1)
+          sprintf (items[0].text, "Console Region:  USA");
+        else if (config.region_detect == 2)
+          sprintf (items[0].text, "Console Region:  EUR");
+        else if (config.region_detect == 3)
+          sprintf (items[0].text, "Console Region:  JAP");
+
         if (cart.romsize)
         {
           /* force region & cpu mode */
           set_region();
 
           /* reinitialize timings */
-          system_init ();
+          system_init();
           memfile_autoload(config.sram_auto,-1);
           unsigned char *temp = memalign(32,YM2612GetContextSize());
-          if (temp) memcpy(temp, YM2612GetContextPtr(), YM2612GetContextSize());
-          audio_init(48000);
+          if (temp)
+            memcpy(temp, YM2612GetContextPtr(), YM2612GetContextSize());
+          audio_init(48000,vdp_pal?50.0:(1000000.0/16715.0));
           if (temp)
           {
             YM2612Restore(temp);
@@ -961,11 +971,17 @@ static void systemmenu ()
 
       case 4:  /*** Cart Lock-On ***/
         config.lock_on++;
-        if (config.lock_on > TYPE_SK) config.lock_on = 0;
-        if (config.lock_on == TYPE_GG) sprintf (items[4].text, "Lock-On: GAME GENIE");
-        else if (config.lock_on == TYPE_AR) sprintf (items[4].text, "Lock-On: ACTION REPLAY");
-        else if (config.lock_on == TYPE_SK) sprintf (items[4].text, "Lock-On: SONIC & KNUCKLES");
-        else  sprintf (items[4].text, "Lock-On: OFF");
+        if (config.lock_on > TYPE_SK)
+          config.lock_on = 0;
+        if (config.lock_on == TYPE_GG)
+          sprintf (items[4].text, "Lock-On: GAME GENIE");
+        else if (config.lock_on == TYPE_AR)
+          sprintf (items[4].text, "Lock-On: ACTION REPLAY");
+        else if (config.lock_on == TYPE_SK)
+          sprintf (items[4].text, "Lock-On: SONIC & KNUCKLES");
+        else
+          sprintf (items[4].text, "Lock-On: OFF");
+
         if (cart.romsize) 
         {
           system_reset (); /* clear any patches first */
@@ -1000,25 +1016,53 @@ static void systemmenu ()
  ****************************************************************************/
 static void videomenu ()
 {
+  u16 state[2];
   int ret, quit = 0;
   gui_menu *m = &menu_video;
   gui_item *items = m->items;
 
-  if (config.render == 1) sprintf (items[0].text,"Display: INTERLACED");
-  else if (config.render == 2) sprintf (items[0].text, "Display: PROGRESSIVE");
-  else sprintf (items[0].text, "Display: ORIGINAL");
-  if (config.tv_mode == 0) sprintf (items[1].text, "TV Mode: 60HZ");
-  else if (config.tv_mode == 1) sprintf (items[1].text, "TV Mode: 50HZ");
-  else sprintf (items[1].text, "TV Mode: 50/60HZ");
-  sprintf (items[2].text, "Bilinear Filter: %s", config.bilinear ? " ON" : "OFF");
-  if (config.ntsc == 1) sprintf (items[3].text, "NTSC Filter: COMPOSITE");
-  else if (config.ntsc == 2) sprintf (items[3].text, "NTSC Filter: S-VIDEO");
-  else if (config.ntsc == 3) sprintf (items[3].text, "NTSC Filter: RGB");
-  else sprintf (items[3].text, "NTSC Filter: OFF");
-  sprintf (items[4].text, "Borders: %s", config.overscan ? " ON" : "OFF");
-  if (config.aspect == 1) sprintf (items[5].text,"Aspect: ORIGINAL (4:3)");
-  else if (config.aspect == 2) sprintf (items[5].text, "Aspect: ORIGINAL (16:9)");
-  else sprintf (items[5].text, "Aspect: FIT SCREEN");
+  if (config.render == 1)
+    sprintf (items[0].text,"Display: INTERLACED");
+  else if (config.render == 2)
+    sprintf (items[0].text, "Display: PROGRESSIVE");
+  else
+    sprintf (items[0].text, "Display: ORIGINAL");
+
+  if (config.tv_mode == 0)
+    sprintf (items[1].text, "TV Mode: 60HZ");
+  else if (config.tv_mode == 1)
+    sprintf (items[1].text, "TV Mode: 50HZ");
+  else
+    sprintf (items[1].text, "TV Mode: 50/60HZ");
+
+  sprintf (items[2].text, "Bilinear Filter: %s",
+    config.bilinear ? " ON" : "OFF");
+
+  if (config.ntsc == 1)
+    sprintf (items[3].text, "NTSC Filter: COMPOSITE");
+  else if (config.ntsc == 2)
+    sprintf (items[3].text, "NTSC Filter: S-VIDEO");
+  else if (config.ntsc == 3)
+    sprintf (items[3].text, "NTSC Filter: RGB");
+  else
+    sprintf (items[3].text, "NTSC Filter: OFF");
+
+  sprintf (items[4].text, "Borders: %s",
+    config.overscan ? "ON" : "OFF");
+
+  if (config.aspect == 1)
+    sprintf (items[5].text,"Aspect: ORIGINAL (4:3)");
+  else if (config.aspect == 2)
+    sprintf (items[5].text, "Aspect: ORIGINAL (16:9)");
+  else
+    sprintf (items[5].text, "Aspect: SCALED");
+
+  sprintf (items[6].text, "Screen Position: (%s%02d,%s%02d)",
+    (config.xshift < 0) ? "":"+", config.xshift,
+    (config.yshift < 0) ? "":"+", config.yshift);
+  sprintf (items[7].text, "Screen Scaling: (%s%02d,%s%02d)",
+    (config.xscale < 0) ? "":"+", config.xscale,
+    (config.yscale < 0) ? "":"+", config.yscale);
 
   GUI_InitMenu(m);
 
@@ -1043,6 +1087,7 @@ static void videomenu ()
           {
             /* progressive mode (60hz only) */
             config.tv_mode = 0;
+            sprintf (items[1].text, "TV Mode: 60HZ");
           }
           else
           {
@@ -1050,46 +1095,57 @@ static void videomenu ()
             config.render = 0;
           }
         }
-        if (config.render == 1) sprintf (items[0].text,"Display: INTERLACED");
-        else if (config.render == 2) sprintf (items[0].text, "Display: PROGRESSIVE");
-        else sprintf (items[0].text, "Display: ORIGINAL");
-        if (config.tv_mode == 0) sprintf (items[1].text, "TV Mode: 60HZ");
-        else if (config.tv_mode == 1) sprintf (items[1].text, "TV Mode: 50HZ");
-        else sprintf (items[1].text, "TV Mode: 50/60HZ");
+        if (config.render == 1)
+          sprintf (items[0].text,"Display: INTERLACED");
+        else if (config.render == 2)
+          sprintf (items[0].text, "Display: PROGRESSIVE");
+        else
+          sprintf (items[0].text, "Display: ORIGINAL");
         break;
 
       case 1: /*** tv mode ***/
-        if (config.render != 2) config.tv_mode = (config.tv_mode + 1) % 3;
-        if (config.tv_mode == 0) sprintf (items[1].text, "TV Mode: 60HZ");
-        else if (config.tv_mode == 1) sprintf (items[1].text, "TV Mode: 50HZ");
-        else sprintf (items[1].text, "TV Mode: 50/60HZ");
+        if (config.render == 2) break;
+        config.tv_mode = (config.tv_mode + 1) % 3;
+        if (config.tv_mode == 0)
+          sprintf (items[1].text, "TV Mode: 60HZ");
+        else if (config.tv_mode == 1)
+          sprintf (items[1].text, "TV Mode: 50HZ");
+        else
+          sprintf (items[1].text, "TV Mode: 50/60HZ");
         break;
     
       case 2: /*** bilinear filtering ***/
         config.bilinear ^= 1;
-        sprintf (items[2].text, "Bilinear Filter: %s", config.bilinear ? " ON" : "OFF");
+        sprintf (items[2].text, "Bilinear Filter: %s",
+          config.bilinear ? " ON" : "OFF");
         break;
 
       case 3: /*** NTSC filter ***/
-        config.ntsc ++;
-        if (config.ntsc > 3) config.ntsc = 0;
-        if (config.ntsc == 1) sprintf (items[3].text, "NTSC Filter: COMPOSITE");
-        else if (config.ntsc == 2) sprintf (items[3].text, "NTSC Filter: S-VIDEO");
-        else if (config.ntsc == 3) sprintf (items[3].text, "NTSC Filter: RGB");
-        else sprintf (items[3].text, "NTSC Filter: OFF");
+        config.ntsc = (config.ntsc + 1) % 4;
+        if (config.ntsc == 1)
+          sprintf (items[3].text, "NTSC Filter: COMPOSITE");
+        else if (config.ntsc == 2)
+          sprintf (items[3].text, "NTSC Filter: S-VIDEO");
+        else if (config.ntsc == 3)
+          sprintf (items[3].text, "NTSC Filter: RGB");
+        else
+          sprintf (items[3].text, "NTSC Filter: OFF");
         break;
 
       case 4: /*** overscan emulation ***/
         config.overscan ^= 1;
-        sprintf (items[4].text, "Borders: %s", config.overscan ? " ON" : "OFF");
+        sprintf (items[4].text, "Overscan Color: %s",
+          config.overscan ? "ORIGINAL" : "BLACK");
         break;
 
-      case 5: /*** config.aspect ratio ***/
-        config.aspect ++;
-        if (config.aspect > 2) config.aspect = 0;
-        if (config.aspect == 1) sprintf (items[5].text,"Aspect: ORIGINAL (4:3)");
-        else if (config.aspect == 2) sprintf (items[5].text, "Aspect: ORIGINAL (16:9)");
-        else sprintf (items[5].text, "Aspect: FIT SCREEN");
+      case 5: /*** aspect ratio ***/
+        config.aspect = (config.aspect + 1) % 3;
+        if (config.aspect == 1)
+          sprintf (items[5].text,"Aspect: ORIGINAL (4:3)");
+        else if (config.aspect == 2)
+          sprintf (items[5].text, "Aspect: ORIGINAL (16:9)");
+        else
+          sprintf (items[5].text, "Aspect: SCALED");
 
         if (config.aspect)
         {
@@ -1111,10 +1167,52 @@ static void videomenu ()
 
         break;
 
-      case 6: 
+      case 6: /*** screen position ***/
+        if (cart.romsize) 
+        {
+          state[0] = m->arrows[0]->state;
+          state[1] = m->arrows[1]->state;
+          m->max_buttons = 0;
+          m->max_images = 0;
+          m->arrows[0]->state = 0;
+          m->arrows[1]->state = 0;
+          m->screenshot = 255;
+          strcpy(m->title,"");
+          GUI_OptionBox2(m,"X Offset","Y Offset",&config.xshift,&config.yshift,1,-99,99);
+          m->max_buttons = 4;
+          m->max_images = 6;
+          m->arrows[0]->state = state[0];
+          m->arrows[1]->state = state[1];
+          m->screenshot = 0;
+          strcpy(m->title,"Video Settings");
+          sprintf (items[6].text, "Screen Position: (%s%02d,%s%02d)",
+            (config.xshift < 0) ? "":"+", config.xshift,
+            (config.yshift < 0) ? "":"+", config.yshift);
+        }
         break;
 
-      case 7: 
+      case 7: /*** screen scaling ***/
+        if (cart.romsize) 
+        {
+          state[0] = m->arrows[0]->state;
+          state[1] = m->arrows[1]->state;
+          m->max_buttons = 0;
+          m->max_images = 0;
+          m->arrows[0]->state = 0;
+          m->arrows[1]->state = 0;
+          m->screenshot = 255;
+          strcpy(m->title,"");
+          GUI_OptionBox2(m,"X Scale","Y Scale",&config.xscale,&config.yscale,1,-99,99);
+          m->max_buttons = 4;
+          m->max_images = 6;
+          m->arrows[0]->state = state[0];
+          m->arrows[1]->state = state[1];
+          m->screenshot = 0;
+          strcpy(m->title,"Video Settings");
+          sprintf (items[7].text, "Screen Scaling: (%s%02d,%s%02d)",
+            (config.xscale < 0) ? "":"+", config.xscale,
+            (config.yscale < 0) ? "":"+", config.yscale);
+        }
         break;
 
       case -1:
@@ -1161,20 +1259,35 @@ static void ctrlmenu_raz(void)
   }
 
   /* update buttons navigation */
-  if (input.dev[0] != NO_DEVICE) m->buttons[0].shift[3] = 2;
-  else if (input.dev[4] != NO_DEVICE) m->buttons[0].shift[3] = 6;
-  else m->buttons[0].shift[3] = 0;
-  if (input.dev[4] != NO_DEVICE) m->buttons[1].shift[3] = 5;
-  else if (input.dev[0] != NO_DEVICE) m->buttons[1].shift[3] = 1;
-  else m->buttons[1].shift[3] = 0;
-  if (input.dev[1] != NO_DEVICE) m->buttons[2].shift[1] = 1;
-  else if (input.dev[4] != NO_DEVICE) m->buttons[2].shift[1] = 4;
-  else m->buttons[2].shift[1] = 0;
-  if (input.dev[3] != NO_DEVICE) m->buttons[6].shift[0] = 1;
-  else if (input.dev[0] != NO_DEVICE) m->buttons[6].shift[0] = 4;
-  else m->buttons[6].shift[0] = 0;
-  if (input.dev[4] != NO_DEVICE) m->buttons[5].shift[1] = 1;
-  else m->buttons[5].shift[1] = 0;
+  if (input.dev[0] != NO_DEVICE)
+    m->buttons[0].shift[3] = 2;
+  else if (input.dev[4] != NO_DEVICE)
+    m->buttons[0].shift[3] = 6;
+  else
+    m->buttons[0].shift[3] = 0;
+  if (input.dev[4] != NO_DEVICE)
+    m->buttons[1].shift[3] = 5;
+  else if (input.dev[0] != NO_DEVICE)
+    m->buttons[1].shift[3] = 1;
+  else
+    m->buttons[1].shift[3] = 0;
+  if (input.dev[1] != NO_DEVICE)
+    m->buttons[2].shift[1] = 1;
+  else if (input.dev[4] != NO_DEVICE)
+    m->buttons[2].shift[1] = 4;
+  else
+    m->buttons[2].shift[1] = 0;
+  if (input.dev[3] != NO_DEVICE)
+    m->buttons[6].shift[0] = 1;
+  else if (input.dev[0] != NO_DEVICE)
+    m->buttons[6].shift[0] = 4;
+  else
+    m->buttons[6].shift[0] = 0;
+  if (input.dev[4] != NO_DEVICE)
+    m->buttons[5].shift[1] = 1;
+  else
+    m->buttons[5].shift[1] = 0;
+
   if (input.dev[5] != NO_DEVICE)
   {
     m->buttons[6].shift[1] = 1;
@@ -1184,11 +1297,16 @@ static void ctrlmenu_raz(void)
       if (input.dev[7] != NO_DEVICE) m->buttons[8].shift[1] = 1;
       else m->buttons[8].shift[1] = 0;
     }
-    else m->buttons[7].shift[1] = 0;
+    else
+    {
+      m->buttons[7].shift[1] = 0;
+    }
   }
-  else m->buttons[6].shift[1] = 0;
+  else
+  {
+    m->buttons[6].shift[1] = 0;
+  }
 }
-
 
 static void ctrlmenu(void)
 {
@@ -1328,10 +1446,14 @@ static void ctrlmenu(void)
       {
         case 0:   /* update port 1 system */
           if (cart.hw.jcart) break;
-          if (input.system[0] == SYSTEM_MOUSE) input.system[0] +=3; /* lightguns are never used on Port 1 */
-          else input.system[0] ++;
-          if ((input.system[0] == SYSTEM_MOUSE) && (input.system[1] == SYSTEM_MOUSE)) input.system[0] +=3;
-          if (input.system[0] == SYSTEM_WAYPLAY) input.system[1] = SYSTEM_WAYPLAY;
+          if (input.system[0] == SYSTEM_MOUSE)
+            input.system[0] +=3; /* lightguns are never used on Port 1 */
+          else
+            input.system[0]++;
+          if ((input.system[0] == SYSTEM_MOUSE) && (input.system[1] == SYSTEM_MOUSE))
+            input.system[0] +=3;
+          if (input.system[0] == SYSTEM_WAYPLAY)
+            input.system[1] = SYSTEM_WAYPLAY;
           if (input.system[0] > SYSTEM_WAYPLAY)
           {
             input.system[0] = NO_SYSTEM;
@@ -1380,8 +1502,10 @@ static void ctrlmenu(void)
         case 1:   /* update port 2 system */
           if (cart.hw.jcart) break;
           input.system[1] ++;
-          if ((input.system[0] == SYSTEM_MOUSE) && (input.system[1] == SYSTEM_MOUSE)) input.system[1] ++;
-          if (input.system[1] == SYSTEM_WAYPLAY) input.system[0] = SYSTEM_WAYPLAY;
+          if ((input.system[0] == SYSTEM_MOUSE) && (input.system[1] == SYSTEM_MOUSE))
+            input.system[1] ++;
+          if (input.system[1] == SYSTEM_WAYPLAY)
+            input.system[0] = SYSTEM_WAYPLAY;
           if (input.system[1] > SYSTEM_WAYPLAY)
           {
             input.system[1] = NO_SYSTEM;
@@ -2187,7 +2311,7 @@ void MainMenu (void)
     /* check if a game is running */
     if (cart.romsize)
     {
-      m->screenshot = 1;
+      m->screenshot = 128;
       m->bg_images[0].state &= ~IMAGE_VISIBLE;
       m->buttons[3].state |= BUTTON_SELECT_SFX;
       m->buttons[5].state |= BUTTON_SELECT_SFX;
@@ -2279,7 +2403,7 @@ void MainMenu (void)
         gxClearScreen((GXColor)BLACK);
         gxSetScreen();
         system_init();
-        audio_init(48000);
+        audio_init(48000,vdp_pal?50.0:(1000000.0/16715.0));
         system_reset();
         memfile_autoload(config.sram_auto,-1);
         quit = 1;

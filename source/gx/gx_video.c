@@ -24,7 +24,6 @@
 
 #include "shared.h"
 #include "font.h"
-#include "sms_ntsc.h"
 #include "aram.h"
 #include "md_ntsc.h"
 #include "sms_ntsc.h"
@@ -446,109 +445,117 @@ static void gxResetView(GXRModeObj *tvmode)
   GX_Flush();
 }
 
-/* Reset GX/VI scaler */
-static void gxResetScale(u32 width, u32 height)
+/* Manage Aspect Ratio */
+static void gxSetAspectRatio(int *xscale, int *yscale)
 {
-  int temp = 0;
-  int xscale, yscale, xshift, yshift;
-
-  /* Aspect Ratio (depends on current configuration) */
+  /* original aspect ratio */
+  /* the following values have been deducted from comparison with a real 50/60hz Mega Drive */
   if (config.aspect)
   {
-    /* original aspect ratio */
-    /* the following values have been deducted from comparison with a real 50/60hz Mega Drive */
     if (config.overscan)
     {
       /* borders are emulated */
-      xscale = 358 + ((reg[12] & 1)*2) - gc_pal;
-      yscale = vdp_pal + ((gc_pal && !config.render) ? 143 : 120);
+      *xscale = 358 + ((reg[12] & 1)*2) - gc_pal;
+      *yscale = vdp_pal + ((gc_pal && !config.render) ? 143 : 120);
     }
     else
     {
       /* borders are simulated (black) */
-      xscale = 325 + ((reg[12] & 1)*2) - gc_pal;
-      yscale = bitmap.viewport.h / 2;
-      if (vdp_pal && (!gc_pal || config.render)) yscale = yscale * 240 / 288;
-      else if (!vdp_pal && gc_pal && !config.render) yscale = yscale * 288 / 240;
+      *xscale = 325 + ((reg[12] & 1)*2) - gc_pal;
+      *yscale = bitmap.viewport.h / 2;
+      if (vdp_pal && (!gc_pal || config.render)) *yscale = *yscale * 240 / 288;
+      else if (!vdp_pal && gc_pal && !config.render) *yscale = *yscale * 288 / 240;
     }
 
     /* 16/9 correction */
-    if (config.aspect & 2) xscale = (xscale * 3) / 4;
-
-    xshift = config.xshift;
-    yshift = 2 - vdp_pal + 2*(gc_pal & !config.render) + config.yshift;
+    if (config.aspect & 2)
+      *xscale = (*xscale * 3) / 4;
   }
+
+  /* manual aspect ratio (default is fullscreen) */
   else
   {
-    /* manual aspect ratio (default is fullscreen) */
     if (config.overscan)
     {
       /* borders are emulated */
-      xscale = 352;
-      yscale = (gc_pal && !config.render) ? (vdp_pal ? (268*144 / bitmap.viewport.h):143) : (vdp_pal ? (224*144 / bitmap.viewport.h):120);
+      *xscale = 352;
+      *yscale = (gc_pal && !config.render) ? (vdp_pal ? (268*144 / bitmap.viewport.h):143) : (vdp_pal ? (224*144 / bitmap.viewport.h):120);
     }
     else
     {
       /* borders are simulated (black) */
-      xscale = 320;
-      yscale = (gc_pal && !config.render) ? 134 : 112;
+      *xscale = 320;
+      *yscale = (gc_pal && !config.render) ? 134 : 112;
     }
 
-    /* user scaling */
-    xscale += config.xscale;
-    yscale += config.yscale;
-
-    xshift = config.xshift;
-    yshift = config.yshift;
+    /* add user scaling */
+    *xscale += config.xscale;
+    *yscale += config.yscale;
   }
+}
 
-  /* double resolution modes */
-  if (config.render)
-  {
-    yscale *= 2;
-    yshift *= 2;
-  }
+/* Reset GX/VI hardware scaler */
+static void gxResetScaler(u32 width, u32 height)
+{
+  /* get Aspect Ratio (depends on current configuration) */
+  int xscale,yscale;
+  gxSetAspectRatio(&xscale, &yscale);
 
-  /* GX scaler (by default, use EFB maximal width) */
+  /* GX horizontal scaling (done during EFB rendering) */
+  /* by default, use maximal EFB width */
   rmode->fbWidth = 640;
   if (!config.bilinear && !config.ntsc)
   {
     /* filtering (soft or hard) is disabled, let VI handles horizontal scaling */
-    /* if possible, let GX simply doubles the width, otherwise disable GX stretching completely */
-    if ((width * 2) <= 640) rmode->fbWidth = width * 2; 
-    else if (width <= 640) rmode->fbWidth = width;
+    if ((width * 2) <= 640)
+      rmode->fbWidth = width * 2; /* GX scaling enabled (simple doubler) */
+    else if (width <= 640)
+      rmode->fbWidth = width; /* GX scaling disabled */
   }
 
-  /* horizontal scaling (GX/VI) */
-  if (xscale > (rmode->fbWidth/2))
+  /* VI horizontal scaling (done during EFB->XFB copy) */
+  int offset = 0;
+  if ((xscale * 2) > rmode->fbWidth)
   {
     /* max width = 720 pixels */
     if (xscale > 360)
     {
       /* save offset for later */
-      temp = xscale - 360;
+      offset = xscale - 360;
+
+      /* maximal width */
       xscale = 360;
     }
 
-    /* enable VI scaler */
+    /* VI horizontal scaling is enabled */
     rmode->viWidth = xscale * 2;
     rmode->viXOrigin = (720 - (xscale * 2)) / 2;
 
-    /* set GX scaling to max EFB width */
-    xscale = temp + (rmode->fbWidth/2);
+    /* update GX horizontal scaling (disabled if no offset) */
+    xscale = (rmode->fbWidth / 2) + ((offset * rmode->fbWidth) / rmode->viWidth);
   }
   else
   {
-    /* disable VI scaler */
+    /* VI horizontal scaling is disabled */
     rmode->viWidth = rmode->fbWidth;
     rmode->viXOrigin = (720 - rmode->fbWidth) / 2;
   }
 
-  /* update GX scaler (Vertex Position Matrix) */
-  square[6] = square[3]  =  xscale + xshift;
-  square[0] = square[9]  = -xscale + xshift;
-  square[4] = square[1]  =  yscale + yshift;
-  square[7] = square[10] =  -yscale + yshift;
+  /* Adjust screen position */
+  int xshift = (config.xshift * rmode->fbWidth) / rmode->viWidth;
+  int yshift = (config.yshift * rmode->efbHeight) / rmode->viHeight;
+
+  /* Configure GX vertical scaling (480i/576i/480p) */
+  if (config.render)
+  {
+    yscale = yscale * 2;
+  }
+
+  /* Set GX scaler (Vertex Position matrix) */
+  square[6] = square[3]  = xshift + xscale;
+  square[0] = square[9]  = xshift - xscale;
+  square[4] = square[1]  = yshift + yscale;
+  square[7] = square[10] = yshift - yscale;
   DCFlushRange(square, 32);
   GX_InvVtxCache();
 }
@@ -759,26 +766,28 @@ void gxDrawScreenshot(u8 alpha)
 {
   if (!rmode) return;
 
-  /* retrieve gamescreen texture */
+  /* get current game screen texture */
   GXTexObj texobj;
   GX_InitTexObj(&texobj, texturemem, vwidth, vheight, GX_TF_RGB565, GX_CLAMP, GX_CLAMP, GX_FALSE);
   GX_LoadTexObj(&texobj, GX_TEXMAP0);
   GX_InvalidateTexAll();
 
-  /* retrieve current xscale/xshift values */
-  s32 xscale = (rmode->viWidth + square[6] - square[0] - rmode->fbWidth) / 2 - (vmode->viWidth - 640)/2;
-  s32 xshift = (square[6] + square[0]) / 2;
+  /* get current aspect ratio */
+  int xscale,yscale;
+  gxSetAspectRatio(&xscale, &yscale);
 
-  /* apply current position/size */
+  /* adjust horizontal scaling */
+  xscale = (xscale * vmode->fbWidth) / vmode->viWidth;
+
+  /* adjust screen position */
+  int xshift = (config.xshift * vmode->fbWidth) / vmode->viWidth;
+  int yshift = (config.yshift * vmode->efbHeight) / vmode->viHeight;
+
+  /* set vertices position & size */
   s32 x = xshift - xscale;
-  s32 y = square[7];
+  s32 y = yshift - (yscale * 2);
   s32 w = xscale * 2;
-  s32 h = square[4] - square[7];
-  if (rmode->efbHeight < 480)
-  {
-    y = y * 2;
-    h = h * 2;
-  }
+  s32 h = yscale * 4;
 
   /* draw textured quad */
   GX_Begin(GX_QUADS, GX_VTXFMT0, 4);
@@ -808,7 +817,7 @@ void gxCopyScreenshot(gx_texture *texture)
   GX_InvalidateTexAll();
 
   /* scale texture to EFB width */
-  s32 w = bitmap.viewport.x ? (704) : (640);
+  s32 w = bitmap.viewport.x ? 704 : 640;
   s32 h = (bitmap.viewport.h + 2*bitmap.viewport.y) * 2;
   s32 x = -w/2;
   s32 y = -(240+ 2*bitmap.viewport.y);
@@ -1256,10 +1265,10 @@ void gx_video_Stop(void)
   VIDEO_SetPostRetraceCallback(gx_input_UpdateMenu);
 
   /* reset VI & adjust overscan */
-  gxDrawScreenshot(0xff);
   vmode->viWidth    = config.screen_w;
   vmode->viXOrigin  = (VI_MAX_WIDTH_NTSC - vmode->viWidth)/2;
   VIDEO_Configure(vmode);
+  gxDrawScreenshot(0xff);
   gxSetScreen();
 }
 
@@ -1379,7 +1388,7 @@ void gx_video_Update(void)
     else rmode = tvmodes[gc_pal*3 + interlaced];
 
     /* reset aspect ratio */
-    gxResetScale(vwidth,vheight);
+    gxResetScaler(vwidth,vheight);
 
     /* reset GX */
     gxResetView(rmode);

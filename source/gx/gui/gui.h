@@ -110,12 +110,12 @@ typedef struct
   u8 max_items;               /* total number of items              */
   u8 max_buttons;             /* total number of buttons            */
   u8 max_images;              /* total number of background images  */
+  u8 screenshot;              /* game screen background             */
   gui_item *items;            /* menu items                         */
   gui_butn *buttons;          /* menu buttons                       */
   gui_image *bg_images;       /* background images                  */
   gui_item *helpers[2];       /* left & right key comments          */
   gui_butn *arrows[2];        /* arrows buttons                     */
-  bool screenshot;            /* use gamescreen as background       */
 } gui_menu;
 
 typedef struct 
@@ -217,13 +217,11 @@ extern const u8 Button_icon_over_png[];
 extern const u8 Button_icon_sm_png[];
 extern const u8 Button_icon_sm_over_png[];
 extern const u8 Button_up_png[];
-extern const u8 Button_down_png[];
 extern const u8 Button_up_over_png[];
+extern const u8 Button_down_png[];
 extern const u8 Button_down_over_png[];
-extern const u8 Button_right_png[];
-extern const u8 Button_left_png[];
-extern const u8 Button_right_over_png[];
-extern const u8 Button_left_over_png[];
+extern const u8 Button_arrow_png[];
+extern const u8 Button_arrow_over_png[];
 
 /* Controller Settings */
 extern const u8 Ctrl_4wayplay_png[];
@@ -286,6 +284,7 @@ extern int GUI_UpdateMenu(gui_menu *menu);
 extern int GUI_RunMenu(gui_menu *menu);
 extern int GUI_OptionWindow(gui_menu *parent, char *title, char *items[], u8 nb_items);
 extern void GUI_OptionBox(gui_menu *parent, optioncallback cb, char *title, void *option, float step, float min, float max, u8 type);
+extern void GUI_OptionBox2(gui_menu *parent, char *text_1, char *text_2, s16 *option_1, s16 *option_2, s16 step, s16 min, s16 max);
 extern void GUI_MsgBoxOpen(char *title, char *msg, bool throbber);
 extern void GUI_MsgBoxUpdate(char *title, char *msg);
 extern void GUI_MsgBoxClose(void);

@@ -103,13 +103,12 @@ static gui_menu menu_browser =
 {
   "Game Selection",
   -1,-1,
-  0,0,10,
+  0,0,10,0,
   NULL,
   NULL,
   bg_filesel,
   {&action_cancel, &action_select},
-  {&arrow_up,&arrow_down},
-  FALSE
+  {&arrow_up,&arrow_down}
 };
 
 /***************************************************************************
