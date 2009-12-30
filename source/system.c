@@ -138,7 +138,7 @@ void audio_update (int size)
 /****************************************************************
  * AUDIO System initialization
  ****************************************************************/
-int audio_init (int rate)
+int audio_init (int rate, double fps)
 {
   /* Shutdown first */
   audio_shutdown();
@@ -151,7 +151,7 @@ int audio_init (int rate)
   snd.sample_rate = rate;
 
   /* Calculate the sound buffer size (for one frame) */
-  snd.buffer_size = (rate / vdp_rate) + 32;
+  snd.buffer_size = (rate / vdp_rate) + 8;
 
 #ifndef NGC
   /* Output buffers */
@@ -182,7 +182,7 @@ int audio_init (int rate)
   snd.enabled = 1;
 
   /* Initialize Sound Chips emulation */
-  sound_init(rate);
+  sound_init(rate,fps);
 
   return (0);
 }
@@ -238,6 +238,7 @@ void system_reset (void)
   if (snd.fm.buffer[0]) memset (snd.fm.buffer[0], 0, SND_SIZE);
   if (snd.fm.buffer[1]) memset (snd.fm.buffer[1], 0, SND_SIZE);
   Fir_Resampler_clear();
+  llp = rrp = 0;
 }
 
 /****************************************************************

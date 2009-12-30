@@ -61,24 +61,26 @@ static inline void psg_update(int cnt)
 }
 
 /* initialize sound chips emulation */
-void sound_init(int rate)
+void sound_init(int rate, double fps)
 {
   double vclk = (vdp_pal ? (double)CLOCK_PAL : (double)CLOCK_NTSC) / 7.0;  /* 68000 and YM2612 clock */
   double zclk = (vdp_pal ? (double)CLOCK_PAL : (double)CLOCK_NTSC) / 15.0; /* Z80 and SN76489 clock  */
 
   /* cycle-accurate FM & PSG samples */
-  m68cycles_per_sample[0] = (int)(((double)m68cycles_per_line * (double)lines_per_frame * (double)vdp_rate / (double)rate) + 0.5);
+  m68cycles_per_sample[0] = (int)(((double)m68cycles_per_line * (double)lines_per_frame * fps/ (double)rate) + 0.5);
   m68cycles_per_sample[1] = m68cycles_per_sample[0];
 
   /* YM2612 is emulated at its original frequency (VLCK/144) */
   if (config.hq_fm)
   {
+    /* "real" ratio is (vclk/144.0)/(rate) but since we need perfect synchronization between video & audio
+        on the target system, we are not exactly running at the real genesis framerate but the target 
+        framerate (which is calculated so that no video or audio frameskip occur)
+    */
+    Fir_Resampler_time_ratio((double)m68cycles_per_line * (double)lines_per_frame * fps / 144.0 / (double)rate);
+
     m68cycles_per_sample[0] = 144;
 
-    /* "real" ratio is (vclk/144.0)/(rate) but this causes scratchy sound in Wii/GCN 50Hz video mode    */
-    /* since "real" framerate is lower than 50 fps whereas PAL Wii/GCN framerate is higher than 50 fps  */
-    /* it's better to directly use the ratio between generated & expected numbers of samples per frame  */
-    Fir_Resampler_time_ratio((double)m68cycles_per_line * (double)lines_per_frame * (double)vdp_rate / 144.0 / (double)rate);
   }
 
   /* initialize sound chips */

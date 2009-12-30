@@ -25,7 +25,7 @@
 #define _SOUND_H_
 
 /* Function prototypes */
-extern void sound_init(int rate);
+extern void sound_init(int rate, double fps);
 extern void sound_update(int fm_len, int psg_len);
 extern void fm_reset(void);
 extern void fm_write(unsigned int cpu, unsigned int  address, unsigned int  data);

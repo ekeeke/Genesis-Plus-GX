@@ -87,7 +87,7 @@ extern int32 current_z80;
 extern uint8 system_hw;
 
 /* Function prototypes */
-extern int audio_init (int rate);
+extern int audio_init (int rate,double fps);
 extern void audio_shutdown (void);
 extern void audio_update (int len);
 extern void audio_set_equalizer(void);

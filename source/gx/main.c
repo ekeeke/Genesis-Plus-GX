@@ -126,7 +126,7 @@ void reloadrom (int size, char *name)
   else
   {
     system_init ();     /* Initialize System */
-    audio_init(48000);  /* Audio System initialization */
+    audio_init(48000,vdp_pal?50.0:(1000000.0/16715.0));
     ClearGGCodes ();    /* Clear Game Genie patches */
     system_reset ();    /* System Power ON */
   }

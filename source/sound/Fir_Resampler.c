@@ -281,7 +281,7 @@ int Fir_Resampler_input_needed( unsigned long output_count )
     output_count -= 2;
   }
 
-  long input_extra = input_count - (write_pos - &buffer [(WIDTH - 1) * STEREO]);
+  long input_extra = input_count - (write_pos - &buffer [WRITE_OFFSET]);
   if ( input_extra < 0 )
     input_extra = 0;
   return input_extra;
