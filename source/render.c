@@ -312,63 +312,25 @@ static __inline__ void WRITE_LONG(void *address, uint32 data)
 /* Input is four bits each (R,G,B), 12 bits total */
 /* Color range depends on the S/TE mode:          */
 /*                                                */
-/*    normal mode   : xxx0 (0-14)                 */
-/*    shadow mode   : 0xxx (0-7)                  */
-/*    highlight mode: 1xxx (8-15)                 */
+/*    normal mode   : xxx0     (0-14)             */
+/*    shadow mode   : 0xxx     (0-7)              */
+/*    highlight mode: 1xxx - 1 (7-14)             */
 /*                                                */
 /* with xxx0 = original 4-bits CRAM value         */
 /**************************************************/
-
-/* 5:6:5 RGB */
-/* This RGB format uses 5 or 6bits color  */
-/* 4 bits color value need to be dithered */
-/* to match the whole color range:        */
-/*                                        */
-/* R,B (5 bits) : yyyyy  (0-31)           */
-/* G (6 bits)   : yyyyyy (0-63)           */
-/*                                        */
-/*  normal mode   : xxx0 (0-14)           */
-/*    0000 -> 00000 (000000)              */
-/*    0010 -> 00100 (001000)              */
-/*    0100 -> 01000 (010001)              */
-/*    0110 -> 01100 (011001)              */
-/*    1000 -> 10001 (100010)              */
-/*    1010 -> 10101 (101010)              */
-/*    1100 -> 11001 (110011)              */
-/*    1110 -> 11101 (111011)              */
-/*                                        */
-/*  shadow mode   : 0xxx (0-7)            */
-/*    0000 -> 00000 (000000)              */
-/*    0001 -> 00010 (000100)              */
-/*    0010 -> 00100 (001000)              */
-/*    0011 -> 00110 (001100)              */
-/*    0100 -> 01000 (010001)              */
-/*    0101 -> 01010 (010101)              */
-/*    0110 -> 01100 (011001)              */
-/*    0111 -> 01110 (011101)              */
-/*                                        */
-/*  highlight mode: 1xxx (8-15)           */
-/*    1000 -> 10001 (100010)              */
-/*    1001 -> 10011 (100110)              */
-/*    1010 -> 10101 (101010)              */
-/*    1011 -> 10111 (101110)              */
-/*    1100 -> 11001 (110011)              */
-/*    1101 -> 11011 (110111)              */
-/*    1110 -> 11101 (111011)              */
-/*    1111 -> 11111 (111111)              */
-/*                                        */
-/******************************************/
-#define MAKE_PIXEL_16(r,g,b) (((r) << 12) | (((r) >> 3) << 12) | ((g) << 7) | (((g) >> 2) << 5) | ((b) << 1) | ((b) >> 3) )
-
 #ifndef NGC
+
 /* 8:8:8 RGB */
 #define MAKE_PIXEL_32(r,g,b) ((r) << 20 | (g) << 12 | (b) << 4)
 /* 5:5:5 RGB */
 #define MAKE_PIXEL_15(r,g,b) ((r) << 11 | (g) << 6 | (b) << 1)
 /* 3:3:2 RGB */
-#define MAKE_PIXEL_8(r,g,b)  ((r) <<  5 | (g) << 2 | ((b) >> 1))
+#define MAKE_PIXEL_8(r,g,b)  ((r) <<  5 | (g) << 2 | (b) >> 1)
+
 #endif
 
+/* 5:6:5 RGB */
+#define MAKE_PIXEL_16(r,g,b) ((r) << 12 | (g) << 7 | (b) << 1)
 
 /* Clip data */
 static clip_t clip[2];
@@ -442,21 +404,20 @@ static void palette_init(void)
 #ifndef NGC
     pixel_8_lut[0][i] = MAKE_PIXEL_8(r>>1,g>>1,b>>1);
     pixel_8_lut[1][i] = MAKE_PIXEL_8(r,g,b);
-    pixel_8_lut[2][i] = MAKE_PIXEL_8((r>>1)|4,(g>>1)|4,(b>>1)|4);
+    pixel_8_lut[2][i] = MAKE_PIXEL_8((r+7)>>1,(g+7)>>1,(b+7)>>1);
 
     pixel_15_lut[0][i] = MAKE_PIXEL_15(r,g,b);
     pixel_15_lut[1][i] = MAKE_PIXEL_15(r<<1,g<<1,b<<1);
-    pixel_15_lut[2][i] = MAKE_PIXEL_15(r|8,g|8,b|8);
+    pixel_15_lut[2][i] = MAKE_PIXEL_15(r+7,g+7,b+7);
 
     pixel_32_lut[0][i] = MAKE_PIXEL_32(r,g,b);
     pixel_32_lut[1][i] = MAKE_PIXEL_32(r<<1,g<<1,b<<1);
-    pixel_32_lut[2][i] = MAKE_PIXEL_32(r|8,g|8,b|8);
+    pixel_32_lut[2][i] = MAKE_PIXEL_32(r+7,g+7,b+7);
 #endif
 
     pixel_16_lut[0][i] = MAKE_PIXEL_16(r,g,b);
     pixel_16_lut[1][i] = MAKE_PIXEL_16(r<<1,g<<1,b<<1);
-
-    pixel_16_lut[2][i] = MAKE_PIXEL_16(r|8,g|8,b|8);
+    pixel_16_lut[2][i] = MAKE_PIXEL_16(r+7,g+7,b+7);
   }
 }
 
@@ -1781,7 +1742,7 @@ void render_line(uint32 line, uint32 overscan)
   if (!(reg[1] & 0x40) || overscan)
   {
     width += 2 * x_offset;
-    memset(&tmp_buf[0x20 - x_offset], 0x00, width);
+    memset(&tmp_buf[0x20 - x_offset], 0x40, width);
   }
   else
   {
@@ -1841,8 +1802,8 @@ void render_line(uint32 line, uint32 overscan)
     /* borders */
     if (x_offset)
     {
-        memset(&lb[0x20 - x_offset], 0x00, x_offset);
-        memset(&lb[0x20 + width], 0x00, x_offset);
+        memset(&lb[0x20 - x_offset], 0x40, x_offset);
+        memset(&lb[0x20 + width], 0x40, x_offset);
         width += 2 * x_offset;
     }
   }

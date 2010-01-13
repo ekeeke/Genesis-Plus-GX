@@ -21,7 +21,6 @@
  *
  ****************************************************************************************/
 #include "shared.h"
-#define LOG_PORT 0      /* 1= Log Z80 I/O port accesses */
 
 /*
   Handlers for access to unused addresses and those which make the
@@ -72,7 +71,7 @@ static inline unsigned int z80_vdp_r(unsigned int address)
       return (vdp_data_r() & 0xff);
 
     case 0x04:  /* CTRL */
-      return (0xfc | ((vdp_ctrl_r() >> 8) & 3));
+      return (0xfc | (vdp_ctrl_r() >> 8));
 
     case 0x05:  /* CTRL */
       return (vdp_ctrl_r() & 0xff);
@@ -110,7 +109,7 @@ static inline void z80_vdp_w(unsigned int address, unsigned int data)
 
     case 0x10:  /* PSG */
     case 0x14:
-      if (address & 1) psg_write(0, data);
+      if (address & 1) psg_write(1, data);
       else z80_unused_w(address, data);
       return;
 
@@ -207,7 +206,7 @@ void cpu_writemem16(unsigned int address, unsigned int data)
 
 unsigned int cpu_readport16(unsigned int port)
 {
-#if LOG_PORT
+#if LOGERROR
   error("Z80 read port %04X\n", port);
 #endif
   return 0xFF;
@@ -215,7 +214,7 @@ unsigned int cpu_readport16(unsigned int port)
 
 void cpu_writeport16(unsigned int port, unsigned int data)
 {
-#if LOG_PORT
+#if LOGERROR
   error("Z80 write %02X to port %04X\n", data, port);
 #endif
 }
