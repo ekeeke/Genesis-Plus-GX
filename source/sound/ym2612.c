@@ -590,9 +590,9 @@ typedef struct
 /* OPN/A/B common state */
 typedef struct
 {
-  FM_ST  ST;              /* general state */
-  FM_3SLOT SL3;           /* 3 slot mode state */
-  unsigned int pan[6*2];  /* fm channels output masks (0xffffffff = enable) */
+  FM_ST  ST;                  /* general state */
+  FM_3SLOT SL3;               /* 3 slot mode state */
+  unsigned int pan[6*2];      /* fm channels output masks (0xffffffff = enable) */
 
   UINT32  eg_cnt;             /* global envelope generator counter */
   UINT32  eg_timer;           /* global envelope generator counter works at frequency = chipclock/144/3 */
@@ -601,15 +601,15 @@ typedef struct
 
   /* there are 2048 FNUMs that can be generated using FNUM/BLK registers
         but LFO works with one more bit of a precision so we really need 4096 elements */
-  UINT32  fn_table[4096]; /* fnumber->increment counter */
-  UINT32  fn_max;         /* max increment (required for calculating phase overflow) */
+  UINT32  fn_table[4096];     /* fnumber->increment counter */
+  UINT32  fn_max;             /* max increment (required for calculating phase overflow) */
 
   /* LFO */
   UINT8   lfo_cnt;            /* current LFO phase (out of 128) */
   UINT32  lfo_timer;          /* current LFO phase runs at LFO frequency */
   UINT32  lfo_timer_add;      /* step of lfo_timer */
   UINT32  lfo_timer_overflow; /* LFO timer overflows every N samples (depends on LFO frequency) */
-  UINT32 LFO_AM;              /* current LFO AM step */
+  UINT32  LFO_AM;             /* current LFO AM step */
   UINT32  LFO_PM;             /* current LFO PM step */
 
 } FM_OPN;
@@ -1032,7 +1032,7 @@ INLINE void advance_lfo()
   if (ym2612.OPN.lfo_timer_overflow)   /* LFO enabled ? */
   {
     /* increment LFO timer */
-    ym2612.OPN.lfo_timer += ym2612.OPN.lfo_timer_add;
+    ym2612.OPN.lfo_timer +=  ym2612.OPN.lfo_timer_add;
 
     /* when LFO is enabled, one level will last for 108, 77, 71, 67, 62, 44, 8 or 5 samples */
     while (ym2612.OPN.lfo_timer >= ym2612.OPN.lfo_timer_overflow)
@@ -1590,7 +1590,7 @@ INLINE void OPNWriteReg(int r, int v)
           SLOT->vol_out = ((UINT32)(0x200 - SLOT->volume) & MAX_ATT_INDEX) + SLOT->tl;
         else
           SLOT->vol_out = (UINT32)SLOT->volume + SLOT->tl;
-}
+      }
 
       /* SSG-EG envelope shapes :
 
@@ -1828,13 +1828,13 @@ static void init_tables(void)
     /* we never reach (1<<16) here due to the (x+1) */
     /* result fits within 16 bits at maximum */
 
-    n = (int)m;    /* 16 bits here */
+    n = (int)m; /* 16 bits here */
     n >>= 4;    /* 12 bits here */
     if (n&1)    /* round to nearest */
       n = (n>>1)+1;
     else
       n = n>>1;
-            /* 11 bits here (rounded) */
+                /* 11 bits here (rounded) */
     n <<= 2;    /* 13 bits here (as in real chip) */
 
     /* 14 bits (with sign bit) */
@@ -1889,7 +1889,7 @@ static void init_tables(void)
       UINT32 offset_fnum_bit;
       UINT32 bit_tmp;
 
-      for (step=0; step<8; step++)
+      for (step=0; step<8; step++) 
       {
         value = 0;
         for (bit_tmp=0; bit_tmp<7; bit_tmp++) /* 7 bits */
@@ -1908,7 +1908,7 @@ static void init_tables(void)
       }
     }
   }
-      }
+}
 
 
 
@@ -1969,7 +1969,7 @@ int YM2612ResetChip(void)
 /* a = address */
 /* v = value   */
 void YM2612Write(unsigned int a, unsigned int v)
-        {
+{
   v &= 0xff;  /* adjust to 8 bit bus */
 
   switch( a )
@@ -1980,7 +1980,7 @@ void YM2612Write(unsigned int a, unsigned int v)
 
     case 2:  /* address port 1 */
       ym2612.OPN.ST.address = v | 0x100;
-          break;
+      break;
 
     default:  /* data port */
     {
@@ -1992,24 +1992,24 @@ void YM2612Write(unsigned int a, unsigned int v)
           {
             case 0x2a:  /* DAC data (ym2612) */
               ym2612.dacout = ((int)v - 0x80) << 6; /* level unknown (5 is too low, 8 is too loud) */
-          break;            
+              break;
             case 0x2b:  /* DAC Sel  (ym2612) */
               /* b7 = dac enable */
               ym2612.dacen = v & 0x80;
-          break;
+              break;
             default:  /* OPN section */
               /* write register */
               OPNWriteMode(addr,v);
-      }
-      break;
+          }
+          break;
         default:  /* 0x30-0xff OPN section */
           /* write register */
           OPNWriteReg(addr,v);
       }
-          break;        
-        }
-      }
+      break;
+    }
   }
+}
 
 unsigned int YM2612Read(void)
 {

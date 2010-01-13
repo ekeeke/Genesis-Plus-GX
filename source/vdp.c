@@ -218,8 +218,6 @@ void vdp_reset(void)
   /* reset display area */
   bitmap.viewport.w = 256;
   bitmap.viewport.h = 224;
-  bitmap.viewport.oh = 256;
-  bitmap.viewport.ow = 224;
 
   /* reset border area */
   bitmap.viewport.x = config.overscan ? ((reg[12] & 1) ? 16 : 12) : 0;
@@ -293,7 +291,7 @@ void vdp_update_dma()
   int index = (4 * dma_type) + ((reg[12] & 1)*2);
   if ((status&8) || !(reg[1] & 0x40)) index++;
 
-  /* DMA transfer rate */
+  /* DMA transfer rate (bytes per line) */
   int rate = dma_rates[index];
 
   /* 68k cycles left */
@@ -412,7 +410,8 @@ void vdp_ctrl_w(unsigned int data)
     seems to work fine (see Chaos Engine/Soldier of Fortune) 
   */
   fifo_latency = (reg[12] & 1) ? 27 : 30;
-  if ((code & 0x0F) == 0x01) fifo_latency = fifo_latency * 2;
+  if ((code & 0x0F) == 0x01)
+    fifo_latency = fifo_latency * 2;
 }
 
 /*
@@ -444,17 +443,17 @@ unsigned int vdp_ctrl_r(void)
 
   /* update DMA Busy flag */
   if ((status & 2) && !dma_length && (count_m68k >= dma_endCycles))
-  {
     status &= 0xFFFD;
-  }
 
   unsigned int temp = status;
 
   /* display OFF: VBLANK flag is set */
-  if (!(reg[1] & 0x40)) temp |= 0x8; 
+  if (!(reg[1] & 0x40))
+    temp |= 0x08; 
 
   /* HBLANK flag (Sonic 3 and Sonic 2 "VS Modes", Lemmings 2, Mega Turrican) */
-  if ((count_m68k % m68cycles_per_line) < 84) temp |= 0x4;
+  if ((count_m68k % m68cycles_per_line) < 84)
+    temp |= 0x04;
 
   /* clear pending flag */
   pending = 0;
@@ -522,7 +521,8 @@ void vdp_data_w(unsigned int data)
       status |= 0x100; 
 
       /* VDP latency (Chaos Engine, Soldiers of Fortune, Double Clutch) */
-      if (fifo_write_cnt > 4) count_m68k = fifo_lastwrite + fifo_latency;
+      if (fifo_write_cnt > 4)
+        count_m68k = fifo_lastwrite + fifo_latency;
     }
   }
 
@@ -598,8 +598,10 @@ int vdp_int_ack_callback(int int_level)
 
   /* update IRQ status */
   irq_status = 0x10;
-  if (vint_pending && (reg[1] & 0x20)) irq_status |= 6;
-  else if (hint_pending && (reg[0] & 0x10)) irq_status |= 4;
+  if (vint_pending && (reg[1] & 0x20))
+    irq_status |= 6;
+  else if (hint_pending && (reg[0] & 0x10))
+    irq_status |= 4;
 
   return M68K_INT_ACK_AUTOVECTOR;
 }

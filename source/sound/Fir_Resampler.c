@@ -25,6 +25,7 @@ static double ratio = 1.0;
 
 static void gen_sinc(double rolloff, int width, double offset, double spacing, double scale, int count, short *out )
 {
+  double w, rolloff_cos_a, num, den, sinc;
   double const maxh = 256;
   double const fstep = M_PI / maxh * spacing;
   double const to_w = maxh * 2 / width;
@@ -32,18 +33,19 @@ static void gen_sinc(double rolloff, int width, double offset, double spacing, d
   scale /= maxh * 2;
 
   double angle = (count / 2 - 1 + offset) * -fstep;
+
   while ( count-- )
   {
     *out++ = 0;
-    double w = angle * to_w;
+    w = angle * to_w;
     if ( fabs( w ) < M_PI )
     {
-      double rolloff_cos_a = rolloff * cos( angle );
-      double num = 1 - rolloff_cos_a -
+      rolloff_cos_a = rolloff * cos( angle );
+      num = 1 - rolloff_cos_a -
           pow_a_n * cos( maxh * angle ) +
           pow_a_n * rolloff * cos( (maxh - 1) * angle );
-      double den = 1 - rolloff_cos_a - rolloff_cos_a + rolloff * rolloff;
-      double sinc = scale * num / den - scale;
+      den = 1 - rolloff_cos_a - rolloff_cos_a + rolloff * rolloff;
+      sinc = scale * num / den - scale;
 
       out [-1] = (short) (cos( w ) * sinc + sinc);
     }
@@ -51,7 +53,7 @@ static void gen_sinc(double rolloff, int width, double offset, double spacing, d
   }
 }
 
-static int available( unsigned long input_count )
+static int available( long input_count )
 {
   int cycle_count = input_count / input_per_cycle;
   int output_count = cycle_count * res * STEREO;
@@ -75,14 +77,15 @@ static int available( unsigned long input_count )
 
 int Fir_Resampler_initialize( int new_size )
 {
-  buffer = (sample_t *) realloc( buffer, (new_size + WRITE_OFFSET) * sizeof (sample_t) );
-  write_pos = 0;
-  if ( !buffer && new_size ) return 0;
-  buffer_size = new_size + WRITE_OFFSET;
   res       = 1;
   skip_bits = 0;
+  imp_phase = 0;
   step      = STEREO;
   ratio     = 1.0;
+  buffer = (sample_t *) realloc( buffer, (new_size + WRITE_OFFSET) * sizeof (sample_t) );
+  write_pos = 0;
+  if ( !buffer ) return 0;
+  buffer_size = new_size + WRITE_OFFSET;
   Fir_Resampler_clear();
   return 1;
 }
@@ -101,7 +104,7 @@ void Fir_Resampler_clear()
   if ( buffer_size )
   {
     write_pos = &buffer [WRITE_OFFSET];
-    memset( buffer, 0, buffer_size * sizeof (sample_t) );
+    memset( buffer, 0, WRITE_OFFSET * sizeof (sample_t) );
   }
 }
 
@@ -110,6 +113,7 @@ double Fir_Resampler_time_ratio( double new_factor )
   ratio = new_factor;
 
   int i, r;
+  double nearest, error;
   double fstep = 0.0;
   double least_error = 2;
   double pos = 0.0;
@@ -118,8 +122,8 @@ double Fir_Resampler_time_ratio( double new_factor )
   for ( r = 1; r <= MAX_RES; r++ )
   {
     pos += ratio;
-    double nearest = floor( pos + 0.5 );
-    double error = fabs( pos - nearest );
+    nearest = floor( pos + 0.5 );
+    error = fabs( pos - nearest );
     if ( error < least_error )
     {
       res = r;
@@ -138,6 +142,7 @@ double Fir_Resampler_time_ratio( double new_factor )
   double filter = (ratio < 1.0) ? 1.0 : 1.0 / ratio;
   pos = 0.0;
   input_per_cycle = 0;
+
   for ( i = 0; i < res; i++ )
   {
     gen_sinc( ROLLOFF, (int) (WIDTH * filter + 1) & ~1, pos, filter,
@@ -195,7 +200,7 @@ void Fir_Resampler_write( long count )
   assert( write_pos <= ( buffer + buffer_size ) );
 }
 
-int Fir_Resampler_read( sample_t** out, unsigned long count )
+int Fir_Resampler_read( sample_t** out, long count )
 {
   sample_t* out_l = out[0];
   sample_t* out_r = out[1];
@@ -207,13 +212,18 @@ int Fir_Resampler_read( sample_t** out, unsigned long count )
   int n;
   int pt0,pt1;
   sample_t* i;
-  unsigned long l,r;
+  long l,r;
 
   if ( end_pos - in >= WIDTH * STEREO )
   {
     end_pos -= WIDTH * STEREO;
     do
     {
+			count--;
+			
+			if ( count < 0 )
+				break;
+
       /* accumulate in extended precision */
       l = 0;
       r = 0;
@@ -251,7 +261,7 @@ int Fir_Resampler_read( sample_t** out, unsigned long count )
       *out_l++ = (sample_t) l;
       *out_r++ = (sample_t) r;
     }
-    while ( (in <= end_pos) && (--count > 0) );
+    while ( in <= end_pos );
   }
 
   imp_phase = res - remain;
@@ -263,9 +273,9 @@ int Fir_Resampler_read( sample_t** out, unsigned long count )
   return out_l - out[0];
 }
 
-int Fir_Resampler_input_needed( unsigned long output_count )
+int Fir_Resampler_input_needed( long output_count )
 {
-  unsigned long input_count = 0;
+  long input_count = 0;
 
   unsigned long skip = skip_bits >> imp_phase;
   int remain = res - imp_phase;
