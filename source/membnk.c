@@ -195,7 +195,7 @@ void zbank_write_vdp(uint32 address, uint32 data)
 
     case 0x10:  /* PSG */
     case 0x14:
-      if (address & 1) psg_write(0, data);
+      if (address & 1) psg_write(1, data);
       else zbank_unused_w(address, data);
       return;
               
