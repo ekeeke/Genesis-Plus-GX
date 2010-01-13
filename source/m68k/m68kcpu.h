@@ -132,6 +132,7 @@ extern unsigned int count_m68k;
 /* ======================================================================== */
 
 /* Exception Vectors handled by emulation */
+#define EXCEPTION_RESET                    0
 #define EXCEPTION_BUS_ERROR                2 /* This one is not emulated! */
 #define EXCEPTION_ADDRESS_ERROR            3 /* This one is partially emulated (doesn't stack a proper frame yet) */
 #define EXCEPTION_ILLEGAL_INSTRUCTION      4
@@ -335,7 +336,6 @@ extern unsigned int count_m68k;
 #define FLAG_INT_MASK    m68ki_cpu.int_mask
 
 #define CPU_INT_LEVEL    m68ki_cpu.int_level /* ASG: changed from CPU_INTS_PENDING */
-#define CPU_INT_CYCLES   m68ki_cpu.int_cycles /* ASG */
 #define CPU_STOPPED      m68ki_cpu.stopped
 #define CPU_PREF_ADDR    m68ki_cpu.pref_addr
 #define CPU_PREF_DATA    m68ki_cpu.pref_data
@@ -565,19 +565,20 @@ extern unsigned int count_m68k;
       if(CPU_STOPPED) \
       { \
         SET_CYCLES(0); \
-        CPU_INT_CYCLES = 0; \
       } \
     }
 
   #define m68ki_check_address_error(ADDR, WRITE_MODE, FC) \
-    if(((ADDR)&1) && emulate_address_error)\
+    if((ADDR)&1) \
     { \
-      m68ki_aerr_address = ADDR; \
-      m68ki_aerr_write_mode = WRITE_MODE; \
-      m68ki_aerr_fc = FC; \
-      longjmp(m68ki_aerr_trap, 1); \
+      if (emulate_address_error) \
+      { \
+        m68ki_aerr_address = ADDR; \
+        m68ki_aerr_write_mode = WRITE_MODE; \
+        m68ki_aerr_fc = FC; \
+        longjmp(m68ki_aerr_trap, 1); \
+      } \
     }
-
   #define m68ki_check_address_error_010_less(ADDR, WRITE_MODE, FC) \
     if (CPU_TYPE_IS_010_LESS(CPU_TYPE)) \
     { \
@@ -882,7 +883,6 @@ typedef struct
   uint c_flag;       /* Carry */
   uint int_mask;     /* I0-I2 */
   uint int_level;    /* State of interrupt pins IPL0-IPL2 -- ASG: changed from ints_pending */
-  uint int_cycles;   /* ASG: extra cycles from generated interrupts */
   uint stopped;      /* Stopped state */
   uint pref_addr;    /* Last prefetch address */
   uint pref_data;    /* Data in the prefetch queue */
