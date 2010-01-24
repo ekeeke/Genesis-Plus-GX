@@ -382,10 +382,27 @@ void set_region ()
   }
 
   /* Force region setting */
-  if (config.region_detect == 1) region_code = REGION_USA;
-  else if (config.region_detect == 2) region_code = REGION_EUROPE;
-  else if (config.region_detect == 3) region_code = REGION_JAPAN_NTSC;
-  else if (config.region_detect == 4) region_code = REGION_JAPAN_PAL;
+  if (config.region_detect == 1)
+    region_code = REGION_USA;
+  else if (config.region_detect == 2)
+    region_code = REGION_EUROPE;
+  else if (config.region_detect == 3)
+    region_code = REGION_JAPAN_NTSC;
+  else if (config.region_detect == 4)
+    region_code = REGION_JAPAN_PAL;
+
+  /* Set VDP default mode */
+  switch (region_code)
+  {
+    case REGION_EUROPE:
+    case REGION_JAPAN_PAL:
+      vdp_pal = 1;
+      break;
+
+    default:
+      vdp_pal = 0;
+      break;
+  }
 }
 
 /****************************************************************************

@@ -65,17 +65,19 @@ uint32 zbank_read_ctrl_io(uint32 address)
   switch ((address >> 8) & 0xff)
   {
     case 0x00:  /* I/O chip */
-      if (address & 0xe0) return zbank_unused_r(address);
-      else return (io_read((address >> 1) & 0x0f));
+      if (address & 0xe0)
+        return zbank_unused_r(address);
+      return (io_read((address >> 1) & 0x0f));
 
     case 0x11:  /* BUSACK */
-      if (address & 1) return zbank_unused_r(address);
-      else return (0xfe | zbusack);
+      if (address & 1)
+        return zbank_unused_r(address);
+      return 0xff;
 
     case 0x30:  /* TIME */
       if (cart.hw.time_r)
         return ((address & 1) ? (cart.hw.time_r(address) & 0xff) : (cart.hw.time_r(address) >> 8));
-      else return zbank_unused_r(address);
+      return zbank_unused_r(address);
 
     case 0x10:  /* MEMORY MODE */
     case 0x12:  /* RESET */
@@ -96,18 +98,24 @@ void zbank_write_ctrl_io(uint32 address, uint32 data)
   switch ((address >> 8) & 0xff)
   {
     case 0x00:  /* I/O chip */
-      if ((address & 0xe1) == 0x01) io_write((address >> 1) & 0x0f, data); /* get /LWR only */
-      else zbank_unused_w(address, data);
+      if ((address & 0xe1) == 0x01)
+        io_write((address >> 1) & 0x0f, data); /* get /LWR only */
+      else
+        zbank_unused_w(address, data);
       return;
 
     case 0x11:  /* BUSREQ */
-      if (address & 1) zbank_unused_w(address, data);
-      else gen_busreq_w(data & 1);
+      if (address & 1) 
+        zbank_unused_w(address, data);
+      else
+        gen_busreq_w(data & 1);
       return;
 
     case 0x12:  /* RESET */
-      if (address & 1) zbank_unused_w(address, data);
-      else gen_reset_w(data & 1);
+      if (address & 1)
+        zbank_unused_w(address, data);
+      else
+        gen_reset_w(data & 1);
       return;
 
     case 0x30:  /* TIME */
@@ -127,7 +135,10 @@ void zbank_write_ctrl_io(uint32 address, uint32 data)
           memset(cart.rom, 0xff, cart.romsize);
         }
       }
-      else zbank_unused_w (address, data);
+      else
+      {
+        zbank_unused_w (address, data);
+      }
       return;
 
     case 0x10:  /* MEMORY MODE */
@@ -195,8 +206,10 @@ void zbank_write_vdp(uint32 address, uint32 data)
 
     case 0x10:  /* PSG */
     case 0x14:
-      if (address & 1) psg_write(1, data);
-      else zbank_unused_w(address, data);
+      if (address & 1)
+        psg_write(mcycles_z80, data);
+      else
+        zbank_unused_w(address, data);
       return;
               
     case 0x18: /* Unused */

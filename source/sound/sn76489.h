@@ -16,7 +16,7 @@
 #define _SN76489_H_
 
 /* Function prototypes */
-extern void SN76489_Init(int PSGClockValue, int SamplingRate);
+extern void SN76489_Init(float PSGClockValue, int SamplingRate);
 extern void SN76489_Reset(void);
 extern void SN76489_Shutdown(void);
 extern void SN76489_SetContext(uint8 *data);

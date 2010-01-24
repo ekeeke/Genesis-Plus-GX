@@ -32,6 +32,6 @@ extern void gx_audio_Init(void);
 extern void gx_audio_Shutdown(void);
 extern void gx_audio_Start(void);
 extern void gx_audio_Stop(void);
-extern void gx_audio_Update(void);
+extern void gx_audio_Update(int size);
 
 #endif

@@ -28,12 +28,10 @@
 extern uint8 bios_rom[0x10000];
 extern uint8 work_ram[0x10000];
 extern uint8 zram[0x2000];
-extern uint8 zbusreq;
-extern uint8 zbusack;
-extern uint8 zreset;
-extern uint8 zirq;
+extern uint32 zirq;
 extern uint32 zbank;
-extern uint8 gen_running;
+extern uint32 zstate;
+extern uint32 gen_running;
 extern int32 resetline;
 
 /* Function prototypes */

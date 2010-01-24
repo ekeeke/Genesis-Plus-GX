@@ -59,10 +59,8 @@ int state_load(unsigned char *buffer)
   // GENESIS
   load_param(work_ram, sizeof(work_ram));
   load_param(zram, sizeof(zram));
-  load_param(&zbusreq, sizeof(zbusreq));
-  load_param(&zreset, sizeof(zreset));
+  load_param(&zstate, sizeof(zstate));
   load_param(&zbank, sizeof(zbank));
-  zbusack = 1 ^(zbusreq & zreset);
 
   // IO
   load_param(io_reg, sizeof(io_reg));
@@ -134,8 +132,7 @@ int state_save(unsigned char *buffer)
   // GENESIS
   save_param(work_ram, sizeof(work_ram));
   save_param(zram, sizeof(zram));
-  save_param(&zbusreq, sizeof(zbusreq));
-  save_param(&zreset, sizeof(zreset));
+  save_param(&zstate, sizeof(zstate));
   save_param(&zbank, sizeof(zbank));
 
   // IO

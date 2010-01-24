@@ -554,7 +554,7 @@ typedef struct
 
 typedef struct
 {
-  UINT32  clock;          /* master clock  (Hz)   */
+  float   clock;          /* master clock  (Hz)   */
   UINT32  rate;           /* sampling rate (Hz)   */
   UINT16  address;        /* address register     */
   UINT8   status;         /* status flag          */
@@ -1775,7 +1775,7 @@ static void init_timetables(double freqbase)
 static void OPNSetPres(int pres)
 {
   /* frequency base (ratio between FM original samplerate & desired output samplerate)*/
-  double freqbase = ((double) ym2612.OPN.ST.clock / (double) ym2612.OPN.ST.rate) / ((double) pres);
+  double freqbase = ym2612.OPN.ST.clock / ym2612.OPN.ST.rate / pres;
 
   /* YM2612 running at original frequency (~53267 Hz) */
   if (config.hq_fm) freqbase  = 1.0;
@@ -1913,7 +1913,7 @@ static void init_tables(void)
 
 
 /* initialize ym2612 emulator(s) */
-int YM2612Init(int clock, int rate)
+int YM2612Init(float clock, int rate)
 {
   memset(&ym2612,0,sizeof(YM2612));
   init_tables();
@@ -2017,24 +2017,10 @@ unsigned int YM2612Read(void)
 }
 
 /* Generate 16 bits samples for ym2612 */
-void YM2612Update(int length)
+void YM2612Update(short int *buffer, int length)
 {
   int i;
   int lt,rt;
-  int16 *bufL = 0;
-  int16 *bufR = 0;
-
-  /* Output samples buffers */
-  int16 *bufFIR = Fir_Resampler_buffer();
-  if (bufFIR)
-  {
-    bufFIR += (snd.fm.pos << 1);
-  }
-  else
-  {
-    bufL  = snd.fm.buffer[0] + snd.fm.pos;
-    bufR  = snd.fm.buffer[1] + snd.fm.pos;
-  }
 
   /* refresh PG increments and EG rates if required */
   refresh_fc_eg_chan(&ym2612.CH[0]);
@@ -2139,16 +2125,8 @@ void YM2612Update(int length)
    // Limit(rt,MAXOUT,MINOUT);
 
     /* buffering */
-    if (bufFIR)
-    {
-      *bufFIR++ = lt;
-      *bufFIR++ = rt;
-    }
-    else
-    {
-      *bufL++ = lt;
-      *bufR++ = rt;
-    }
+    *buffer++ = lt;
+    *buffer++ = rt;
 
     /* CSM mode: if CSM Key ON has occured, CSM Key OFF need to be sent       */
     /* only if Timer A does not overflow again (i.e CSM Key ON not set again) */
@@ -2186,7 +2164,7 @@ unsigned int YM2612GetContextSize(void)
 void YM2612Restore(unsigned char *buffer)
 {
   /* save current timings */
-  int clock = ym2612.OPN.ST.clock;
+  float clock = ym2612.OPN.ST.clock;
   int rate = ym2612.OPN.ST.rate;
 
   /* restore internal state */

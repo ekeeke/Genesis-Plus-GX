@@ -125,10 +125,20 @@ void reloadrom (int size, char *name)
   }
   else
   {
-    system_init ();     /* Initialize System */
-    audio_init(48000,vdp_pal?50.0:(1000000.0/16715.0));
-    ClearGGCodes ();    /* Clear Game Genie patches */
-    system_reset ();    /* System Power ON */
+    /* initialize audio back-end */
+    /* 60hz video mode requires synchronization with Video Interrupt.    */
+    /* VSYNC period is 16715 us on Wii/Gamecube (approx. 802.32 samples per frame) */
+    float framerate;
+    if (vdp_pal)
+      framerate = 50.0;
+    else
+      framerate = ((config.tv_mode == 0) || (config.tv_mode == 2)) ? (1000000.0/16715.0) : 60.0;
+    audio_init(48000, framerate);
+
+    /* System Power ON */
+    system_init ();
+    ClearGGCodes ();
+    system_reset ();
   }
 }
 
@@ -164,6 +174,7 @@ int main (int argc, char *argv[])
   DI_Init();
 #endif
 
+  int size;
 
   /* initialize hardware */
   gx_video_Init();
@@ -265,9 +276,6 @@ int main (int argc, char *argv[])
       /* skip frame */
       frameticker-=2;
       system_frame (1);
-
-      /* update audio only */
-      gx_audio_Update();
     }
     else
     {
@@ -277,11 +285,14 @@ int main (int argc, char *argv[])
 
       /* render frame */
       system_frame (0);
-
-      /* update video & audio */
-      gx_video_Update();
-      gx_audio_Update();
     }
+
+    /* retrieve audio samples */
+    size = audio_update();
+
+    /* update video & audio */
+    gx_video_Update();
+    gx_audio_Update(size * 4);
   }
 
   return 0;

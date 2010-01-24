@@ -1283,9 +1283,11 @@ void gx_video_Start(void)
 
   /* VSYNC callbacks */
   /* in 60hz mode we use VSYNC to synchronize frame emulation */
-  if (!gc_pal && !vdp_pal) VIDEO_SetPreRetraceCallback(vi_callback);
+  if (!gc_pal && !vdp_pal)
+    VIDEO_SetPreRetraceCallback(vi_callback);
   VIDEO_SetPostRetraceCallback(NULL);
   VIDEO_Flush();
+  VIDEO_WaitVSync();
 
   /* interlaced/progressive mode */
   if (config.render == 2)

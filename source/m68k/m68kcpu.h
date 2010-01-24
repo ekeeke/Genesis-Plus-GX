@@ -33,8 +33,6 @@
 #include <setjmp.h>
 #endif /* M68K_EMULATE_ADDRESS_ERROR */
 
-extern unsigned int count_m68k;
-
 /* ======================================================================== */
 /* ==================== ARCHITECTURE-DEPENDANT DEFINES ==================== */
 /* ======================================================================== */
@@ -562,10 +560,6 @@ extern unsigned int count_m68k;
     if(setjmp(m68ki_aerr_trap) != 0) \
     { \
       m68ki_exception_address_error(); \
-      if(CPU_STOPPED) \
-      { \
-        SET_CYCLES(0); \
-      } \
     }
 
   #define m68ki_check_address_error(ADDR, WRITE_MODE, FC) \
@@ -799,12 +793,15 @@ extern unsigned int count_m68k;
 
 /* ---------------------------- Cycle Counting ---------------------------- */
 
+/*
 #define ADD_CYCLES(A)    m68ki_remaining_cycles += (A)
 #define USE_CYCLES(A)    m68ki_remaining_cycles -= (A)
 #define SET_CYCLES(A)    m68ki_remaining_cycles = A
 #define GET_CYCLES()     m68ki_remaining_cycles
 #define USE_ALL_CYCLES() m68ki_remaining_cycles = 0
+*/
 
+#define USE_CYCLES(A)    mcycles_68k += (7 * (A))
 
 
 /* ----------------------------- Read / Write ----------------------------- */
@@ -917,9 +914,10 @@ typedef struct
 
 } m68ki_cpu_core;
 
+extern unsigned int mcycles_68k;
 
 extern m68ki_cpu_core m68ki_cpu;
-extern sint           m68ki_remaining_cycles;
+//extern sint           m68ki_remaining_cycles;
 extern uint           m68ki_tracing;
 extern const uint8    m68ki_shift_8_table[];
 extern const uint16   m68ki_shift_16_table[];
@@ -2042,15 +2040,9 @@ INLINE void m68ki_exception_interrupt(uint int_level)
 
   m68ki_jump(new_pc);
 
-  /* Defer cycle counting until later */
-  count_m68k += CYC_EXCEPTION[vector];
-
-//#if !M68K_EMULATE_INT_ACK
-  /* Automatically clear IRQ if we are not using an acknowledge scheme */
-  CPU_INT_LEVEL = 0;
-//#endif /* M68K_EMULATE_INT_ACK */
+  /* Update cycle count now */
+  USE_CYCLES(CYC_EXCEPTION[vector]);
 }
-
 
 /* ASG: Check for interrupts */
 INLINE void m68ki_check_interrupts(void)

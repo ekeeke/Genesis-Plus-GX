@@ -318,23 +318,25 @@ void m68k_pulse_reset(void);
 
 /* execute num_cycles worth of instructions.  returns number of cycles used */
 //int m68k_execute(int num_cycles);
-void m68k_run (int cyc);
+
+/* run until global cycle count is reached */
+void m68k_run(unsigned int cycles);
 
 /* These functions let you read/write/modify the number of cycles left to run
  * while m68k_execute() is running.
  * These are useful if the 68k accesses a memory-mapped port on another device
  * that requires immediate processing by another CPU.
  */
-int m68k_cycles_run(void);              /* Number of cycles run so far */
-int m68k_cycles_remaining(void);        /* Number of cycles left */
-void m68k_modify_timeslice(int cycles); /* Modify cycles left */
-void m68k_end_timeslice(void);          /* End timeslice now */
+//int m68k_cycles_run(void);              /* Number of cycles run so far */
+//int m68k_cycles_remaining(void);        /* Number of cycles left */
+//void m68k_modify_timeslice(int cycles); /* Modify cycles left */
+//void m68k_end_timeslice(void);          /* End timeslice now */
 
 /* Set the IPL0-IPL2 pins on the CPU (IRQ).
  * A transition from < 7 to 7 will cause a non-maskable interrupt (NMI).
  * Setting IRQ to 0 will clear an interrupt request.
  */
-//void m68k_set_irq(unsigned int int_level);
+void m68k_set_irq(unsigned int int_level);
 
 
 /* Halt the CPU as if you pulsed the HALT pin. */

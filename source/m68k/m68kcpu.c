@@ -43,8 +43,8 @@ extern void m68040_fpu_op1(void);
 /* ================================= DATA ================================= */
 /* ======================================================================== */
 
-int  m68ki_initial_cycles;
-int  m68ki_remaining_cycles = 0;                     /* Number of clocks remaining */
+//int  m68ki_initial_cycles;
+//int  m68ki_remaining_cycles = 0;                     /* Number of clocks remaining */
 uint m68ki_tracing = 0;
 uint m68ki_address_space;
 
@@ -777,10 +777,11 @@ void m68k_set_cpu_type(unsigned int cpu_type)
 }
 
 /* Execute a single  instruction */
-INLINE int m68k_execute(void)
+//INLINE int m68k_execute(void)
+INLINE void m68k_execute(void)
 {
     /* Set our pool of clock cycles available */
-    SET_CYCLES(0);
+    //SET_CYCLES(0);
 
     /* Set tracing accodring to T1. (T0 is done inside instruction) */
     m68ki_trace_t1(); /* auto-disable (see m68kcpu.h) */
@@ -803,15 +804,14 @@ INLINE int m68k_execute(void)
     m68ki_exception_if_trace(); /* auto-disable (see m68kcpu.h) */
 
     /* return how many clocks we used */
-    return - GET_CYCLES();
-
+    //return - GET_CYCLES();
 }
 
 /* ASG: rewrote so that the int_level is a mask of the IPL0/IPL1/IPL2 bits */
 /* KS: Modified so that IPL* bits match with mask positions in the SR
  *     and cleaned out remenants of the interrupt controller.
  */
-INLINE void m68k_set_irq(unsigned int int_level)
+void m68k_set_irq(unsigned int int_level)
 {
   uint old_level = CPU_INT_LEVEL;
   CPU_INT_LEVEL = int_level << 8;
@@ -830,50 +830,50 @@ extern void error(char *format, ...);
 #endif
 extern uint8 irq_status;
 
-void m68k_run (int cyc) 
+void m68k_run (unsigned int cycles) 
 {
-  int temp;
+  unsigned int int_level;
 
   /* Return point if we had an address error */
   m68ki_set_address_error_trap(); /* auto-disable (see m68kcpu.h) */
 
-  while (count_m68k < cyc)
+  while (mcycles_68k < cycles)
   {
+    /* Make sure we're not stopped */
+    if(CPU_STOPPED)
+    {
+      mcycles_68k = cycles;
+      return;
+    }
+
     /* check interrupt updates */
     if (irq_status & 0x10)
     {
       irq_status &= ~0x10;
-
-      temp = irq_status & 6;
+      int_level = irq_status & 6;
 
       /* hardware latency */
       if (irq_status & 0x40)
-        count_m68k += m68k_execute();
+        m68k_execute();
 
 #ifdef LOGVDP
-      error("[%d(%d)][%d(%d)] IRQ Level = %d (%d cycles)(%x)\n", v_counter, count_m68k/488, count_m68k, count_m68k%488,temp, m68ki_remaining_cycles,m68k_get_reg (NULL, M68K_REG_PC));
+      error("[%d(%d)][%d(%d)] IRQ Level = %d (%x)\n", v_counter, mcycles_68k/3420, mcycles_68k, mcycles_68k%3420,int_level,m68k_get_reg (NULL, M68K_REG_PC));
 #endif
-      /* interrupt level */
-      m68k_set_irq(temp);
-    }
+      /* update IRQ level */
+      CPU_INT_LEVEL = int_level << 8;
+      m68ki_check_interrupts();
 
-    /* Make sure we're not stopped */
-    if(CPU_STOPPED)
-    {
-      count_m68k = cyc;
-      REG_PPC = REG_PC;
-      return;
+      if (mcycles_68k >= cycles)
+        return;
+
     }
 
     /* execute a single instruction */
-    count_m68k += m68k_execute();
+    m68k_execute();
   }
-
-  /* set previous PC to current PC for the next entry into the loop */
-  REG_PPC = REG_PC;
-
 }
 
+/*
 int m68k_cycles_run(void)
 {
   return m68ki_initial_cycles - GET_CYCLES();
@@ -883,20 +883,22 @@ int m68k_cycles_remaining(void)
 {
   return GET_CYCLES();
 }
+*/
 
 /* Change the timeslice */
+/*
 void m68k_modify_timeslice(int cycles)
 {
   m68ki_initial_cycles += cycles;
   ADD_CYCLES(cycles);
 }
 
-
 void m68k_end_timeslice(void)
 {
   m68ki_initial_cycles = GET_CYCLES();
   SET_CYCLES(0);
 }
+*/
 
 void m68k_init(void)
 {
@@ -904,7 +906,7 @@ void m68k_init(void)
 
   /* The first call to this function initializes the opcode handler jump table */
   if(!emulation_initialized)
-    {
+  {
     m68ki_build_opcode_table();
     emulation_initialized = 1;
   }
@@ -925,7 +927,7 @@ void m68k_pulse_reset(void)
 {
   /* Clear all stop levels and eat up all remaining cycles */
   CPU_STOPPED = 0;
-  SET_CYCLES(0);
+  //SET_CYCLES(0);
 
   CPU_RUN_MODE = RUN_MODE_BERR_AERR_RESET;
 
@@ -953,6 +955,8 @@ void m68k_pulse_reset(void)
   m68ki_jump(REG_PC);
 
   CPU_RUN_MODE = RUN_MODE_NORMAL;
+
+  USE_CYCLES(CYC_EXCEPTION[EXCEPTION_RESET]);
 }
 
 /* Pulse the HALT line on the CPU */

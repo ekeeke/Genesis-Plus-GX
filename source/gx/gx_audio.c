@@ -25,7 +25,7 @@
 #include "shared.h"
 
 /* DMA soundbuffers (required to be 32-bytes aligned)
-   Length is dimensionned for one frame of emulation (see below)
+   Length is dimensionned for one frame of emulation (800/808 samples @60hz, 960 samples@50Hz)
    To prevent audio clashes, we use double buffering technique:
     one buffer is the active DMA buffer
     the other one is the current work buffer (updated during frame emulation)
@@ -35,15 +35,6 @@ u8 soundbuffer[2][3840] ATTRIBUTE_ALIGN(32);
 
 /* Current work soundbuffer */
 u8 mixbuffer;
-
-/* Next DMA length */
-static u32 dma_len;
-
-/* Current delta between output & expected sample counts */
-static int delta;
-
-/* Expected sample count x 100 */
-static u32 dma_sync;
 
 /* audio DMA status */
 static u8 audioStarted = 0;
@@ -98,38 +89,14 @@ void gx_audio_Shutdown(void)
 /*** 
       gx_audio_Update
 
-     This function is called at the end of each frame
-     Genesis Plus only provides sound data on completion of each frame.
-     DMA sync and switching ensure we never access the active DMA buffer and sound clashes never happen
      This function retrieves samples for the frame then set the next DMA parameters 
      Parameters will be taken in account only when current DMA operation is over
  ***/
-void gx_audio_Update(void)
+void gx_audio_Update(int size)
 {
-  /* current DMA length */
-  u32 size = dma_len;
-
-  /* VIDEO interrupt synchronization: we approximate next DMA length (see below)      */
-  /* In 50Hz mode, VSYNC period is 19967 usec which is approx 958.42 samples          */
-  /* In 60Hz mode, VSYNC period is 16715 usec which is approx. 802.32 samples         */
-  /* DMA length should be a multiple of 32 bytes so we use either 800 or 808 samples  */
-  if (dma_sync)
-  {
-    /* current samples delay */
-    delta += (size * 100) - dma_sync;
-
-    /* adjust next DMA length */
-    if (delta < 0) dma_len = 808;
-    else dma_len = 800;
-  }
-
-  /* retrieve audio samples */
-  audio_update(size);
-
   /* set next DMA soundbuffer */
   s16 *sb = (s16 *)(soundbuffer[mixbuffer]);
   mixbuffer ^= 1;
-  size = size << 2;
   DCFlushRange((void *)sb, size);
   AUDIO_InitDMA((u32) sb, size);
 
@@ -140,7 +107,8 @@ void gx_audio_Update(void)
   {
     audioStarted = 1;
     AUDIO_StartDMA();
-    if (frameticker > 1) frameticker = 1;
+    if (frameticker > 1)
+      frameticker = 1;
   }
 }
 
@@ -156,29 +124,16 @@ void gx_audio_Start(void)
   PauseOgg(1);
   StopOgg();
   ASND_Pause(1);
-  AUDIO_StopDMA ();
-  AUDIO_RegisterDMACallback(NULL);
+  ASND_End();
   audioStarted = 0;
-
-  /* initialize default DMA length */
-  /* PAL (50Hz): 20000 us period --> 960 samples/frame  @48kHz */
-  /* NTSC (60Hz): 16667 us period --> 800 samples/frame @48kHz */
-  dma_len   = vdp_pal ? 960 : 800;
-  dma_sync  = 0;
   mixbuffer = 0;
-  delta     = 0;
 
   /* reset sound buffers */
   memset(soundbuffer, 0, 2 * 3840);
 
   /* By default, use audio DMA to synchronize frame emulation */
-  if (gc_pal | vdp_pal) AUDIO_RegisterDMACallback(ai_callback);
-
-  /* 60hz video mode requires synchronization with Video interrupt      */
-  /* VSYNC period is 16715 us which is approx. 802.32 samples           */
-  /* to prevent audio/video desynchronization, we approximate the exact */
-  /* number of samples by changing audio DMA length on each frame    */
-  else dma_sync = 80232;
+  if (gc_pal | vdp_pal)
+    AUDIO_RegisterDMACallback(ai_callback);
 }
 
 /***

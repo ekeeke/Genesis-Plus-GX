@@ -24,6 +24,9 @@
 #ifndef _RENDER_H_
 #define _RENDER_H_
 
+/* Global variables */
+extern uint32 object_index_count;
+
 /* Function prototypes */
 extern void render_init(void);
 extern void render_reset(void);

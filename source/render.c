@@ -307,17 +307,20 @@ static __inline__ void WRITE_LONG(void *address, uint32 data)
   }
 
 
-/**************************************************/
-/* Pixel creation macros                          */
-/* Input is four bits each (R,G,B), 12 bits total */
-/* Color range depends on the S/TE mode:          */
-/*                                                */
-/*    normal mode   : xxx0     (0-14)             */
-/*    shadow mode   : 0xxx     (0-7)              */
-/*    highlight mode: 1xxx - 1 (7-14)             */
-/*                                                */
-/* with xxx0 = original 4-bits CRAM value         */
-/**************************************************/
+/************************************************/
+/* Pixel creation macros                        */
+/* each R,G,B color channel is 4-bits with a    */
+/* total of 15 different intensity levels.      */
+/*                                              */
+/* Color intensity depends on the S/TE mode:    */
+/*                                              */
+/*    normal   : xxx0     (0-14)                */
+/*    shadow   : 0xxx     (0-7)                 */
+/*    highlight: 1xxx - 1 (7-14)                */
+/*                                              */
+/* with xxx0 = original 4-bits CRAM value       */
+/*                                              */
+/************************************************/
 #ifndef NGC
 
 /* 8:8:8 RGB */
@@ -330,7 +333,8 @@ static __inline__ void WRITE_LONG(void *address, uint32 data)
 #endif
 
 /* 5:6:5 RGB */
-#define MAKE_PIXEL_16(r,g,b) ((r) << 12 | (g) << 7 | (b) << 1)
+/* 4-bit color intensity is dithered to match 5-bit or 6-bit equivalent */
+#define MAKE_PIXEL_16(r,g,b) ((r) << 12 | ((r) >> 3) << 11 | (g) << 7 | ((g) >> 2) << 5 | (b) << 1 | (b) >> 3)
 
 /* Clip data */
 static clip_t clip[2];
@@ -383,7 +387,7 @@ static uint8 ntb_buf[0x200];  /* Plane B line buffer */
 static uint8 obj_buf[0x200];  /* Object layer line buffer */
 
 /* Sprite line buffer data */
-static uint32 object_index_count;
+uint32 object_index_count;
 
 /*--------------------------------------------------------------------------*/
 /* Look-up table functions (handles priority between layers pixels)         */
@@ -1505,8 +1509,9 @@ static void render_obj(uint32 line, uint8 *buf, uint8 *table)
   {
     xpos = object_info[count].xpos & 0x1ff;
 
-    /* sprite masking (ignore the 1st sprite) */
-    if (xpos) spr_over = 1;
+    /* sprite masking (requires at least one sprite with xpos > 0) */
+    if (xpos)
+      spr_over = 1;
     else if (spr_over)
     {
       spr_over = 0;
@@ -1517,7 +1522,7 @@ static void render_obj(uint32 line, uint8 *buf, uint8 *table)
     width = sizetab[(size >> 2) & 3];
 
     /* update pixel count (off-screen sprites included) */
-    pixelcount += xpos ? width : (width * 2);
+    pixelcount += width;
 
     if(((xpos + width) >= left) && (xpos < right) && !mask)
     {
@@ -1595,8 +1600,9 @@ static void render_obj_im2(uint32 line, uint32 odd, uint8 *buf, uint8 *table)
   {
     xpos = object_info[count].xpos & 0x1ff;
 
-    /* sprite masking (ignore the 1st sprite) */
-    if (xpos) spr_over = 1;
+    /* sprite masking (requires at least one sprite with xpos > 0) */
+    if (xpos)
+      spr_over = 1;
     else if(spr_over)
     {
       spr_over = 0;
@@ -1607,7 +1613,7 @@ static void render_obj_im2(uint32 line, uint32 odd, uint8 *buf, uint8 *table)
     width = sizetab[(size >> 2) & 3];
 
     /* update pixel count (off-screen sprites included) */
-    pixelcount += xpos ? width : (width * 2);
+    pixelcount += width;
 
     if(((xpos + width) >= left) && (xpos < right) && !mask)
     {
@@ -1629,14 +1635,16 @@ static void render_obj_im2(uint32 line, uint32 odd, uint8 *buf, uint8 *table)
 
       /* number of tiles to draw */
       /* adjusted for sprite limit */
-      if (pixelcount > bitmap.viewport.w) width -= (pixelcount - bitmap.viewport.w);
+      if (pixelcount > bitmap.viewport.w)
+        width -= (pixelcount - bitmap.viewport.w);
       width >>= 3;
 
       for(column = 0; column < width; column += 1, lb+=8)
       {
         index = (name + s[column]) & 0x3ff;
         offs = index << 7 | attr_mask << 6 | v_line;
-        if(attr & 0x1000) offs ^= 0x40;
+        if(attr & 0x1000)
+          offs ^= 0x40;
         src = &bg_pattern_cache[offs];
         DRAW_SPRITE_TILE;
       }
@@ -1662,9 +1670,11 @@ void render_init(void)
   int bx, ax, i;
 
   /* Allocate and align pixel look-up tables */
-  if (lut_base == NULL) lut_base = malloc ((LUT_MAX * LUT_SIZE) + LUT_SIZE);
+  if (lut_base == NULL)
+    lut_base = malloc ((LUT_MAX * LUT_SIZE) + LUT_SIZE);
   lut[0] = (uint8 *) (((uint32) lut_base + LUT_SIZE) & ~(LUT_SIZE - 1));
-  for (i = 1; i < LUT_MAX; i += 1) lut[i] = lut[0] + (i * LUT_SIZE);
+  for (i = 1; i < LUT_MAX; i += 1)
+    lut[i] = lut[0] + (i * LUT_SIZE);
 
   /* Make pixel look-up table data */
   for (bx = 0; bx < 0x100; bx += 1)
@@ -1722,7 +1732,8 @@ void render_reset(void)
 
 void render_shutdown(void)
 {
-  if(lut_base) free(lut_base);
+  if(lut_base)
+    free(lut_base);
 }
 
 
@@ -1736,7 +1747,8 @@ void render_line(uint32 line, uint32 overscan)
   uint32 x_offset = bitmap.viewport.x;
 
   /* display OFF */
-  if (reg[0] & 0x01) return;
+  if (reg[0] & 0x01)
+    return;
 
   /* background color (blanked display or vertical borders) */
   if (!(reg[1] & 0x40) || overscan)
@@ -1761,28 +1773,32 @@ void render_line(uint32 line, uint32 overscan)
       uint32 odd = odd_frame;
 
       /* render BG layers */
-      if(reg[11] & 4) render_bg_im2_vs(line, width, odd);
-      else render_bg_im2(line, width, odd);
+      if(reg[11] & 4)
+        render_bg_im2_vs(line, width, odd);
+      else
+        render_bg_im2(line, width, odd);
 
       if (reg[12] & 8)
       {
         /* Shadow & Highlight */
         merge(&nta_buf[0x20], &ntb_buf[0x20], &bg_buf[0x20], lut[2], width);
         memset(&obj_buf[0x20], 0, width);
-        if (object_index_count) render_obj_im2(line, odd, obj_buf, lut[3]);
+        render_obj_im2(line, odd, obj_buf, lut[3]);
         merge(&obj_buf[0x20], &bg_buf[0x20], &lb[0x20], lut[4], width);
       }
       else
       {
         merge(&nta_buf[0x20], &ntb_buf[0x20], &lb[0x20], lut[0], width);
-        if (object_index_count) render_obj_im2(line, odd, lb, lut[1]);
+        render_obj_im2(line, odd, lb, lut[1]);
       }
     }
     else
     {
       /* render BG layers */
-      if(reg[11] & 4) render_bg_vs(line, width);
-      else render_bg(line, width);
+      if(reg[11] & 4)
+        render_bg_vs(line, width);
+      else
+        render_bg(line, width);
 
       if(reg[12] & 8)
       {
@@ -1818,13 +1834,16 @@ void remap_buffer(uint32 line, uint32 width)
   line = (line + bitmap.viewport.y) % lines_per_frame;
 
   /* double resolution mode */
-  if (config.render && interlaced) line = (line * 2) + odd_frame;
+  if (config.render && interlaced)
+    line = (line * 2) + odd_frame;
 
   /* NTSC Filter */
   if (config.ntsc)
   {
-    if (reg[12]&1) md_ntsc_blit(&md_ntsc, ( MD_NTSC_IN_T const * )pixel_16, tmp_buf+0x20-bitmap.viewport.x, width, line);
-    else sms_ntsc_blit(&sms_ntsc, ( SMS_NTSC_IN_T const * )pixel_16, tmp_buf+0x20-bitmap.viewport.x, width, line);
+    if (reg[12]&1)
+      md_ntsc_blit(&md_ntsc, ( MD_NTSC_IN_T const * )pixel_16, tmp_buf+0x20-bitmap.viewport.x, width, line);
+    else
+      sms_ntsc_blit(&sms_ntsc, ( SMS_NTSC_IN_T const * )pixel_16, tmp_buf+0x20-bitmap.viewport.x, width, line);
     return;
   }
 
@@ -1928,7 +1947,8 @@ void parse_satb(uint32 line)
       /* sprite limit (max. 16 or 20 sprites displayed per line) */
       if(object_index_count == limit)
       {
-        if(vint_pending == 0) status |= 0x40;
+        if(vint_pending == 0)
+          status |= 0x40;
         return;
       }
 

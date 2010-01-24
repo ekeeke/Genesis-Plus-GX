@@ -8,32 +8,56 @@ Genesis Plus GX 1.4.0 (??/??/????) (Eke-Eke)
 * modified SN76489 cut-off frequency
 * added an option to boost SN76489 Noise Channel
 * removed outdated Gens YM2612 core
-* improved YM2612 core general accuracy (SSG-EG, CSM mode,...) (based upon Nemesis recent tests on real MD)
+* improved YM2612 core general accuracy (SSG-EG, CSM mode,...) (based upon Nemesis recent tests on real hardware)
 * improved YM2612 LFO emulation accuracy (fixes "Spider-Man & Venom : Separation Anxiety" intro music)
 * fixed YM2612 context saving/loading.
 * added 3-Band EQ for fully configurable sound filtering (thanks to Neil C)
 * implemented faster FIR resampler, dropped libsamplerate support (thanks to Blargg & AamirM)
-* improved VDP sprite masking emulation: fixes 3D level in Mickey Mania (thanks to Nemesis for his sprite test program)
+
+* improved VDP sprite masking accuracy (thanks to Nemesis for his sprite test program)
+* improved HBLANK flag timing accuracy: fixes Mega Turrican (Sky level)
+* added support for CRAM writes during horizontal blanking.
 * fixed 2-Cell vertical scrolling when column 0 is shifted.
 * added support for 2-Cell vertical scrolling in Interlaced 2 mode.
 * fixed lightgun auto detection: fixes cursor position in Lethal Enforcers II
-* improved DIVU/DVIS (thanks to Jorge Cwik) & MULU/MULS 68000 instructions timing accuracy
+
+* improved DIVU/DVIS (thanks to Jorge Cwik) & MULU/MULS 68k instructions timing accuracy
 * updated Z80 core to last version (fixes interrupt Mode 0 timing and some BIT instructions)
+* fixed some Z80 instructions timing
+
 * fixed Backup Memory support in some games using serial EEPROM
+* fixed Realtec mapper support: fix sound in Balloon Boy / Funny World
 * added Game Genie hardware emulation (Game Genie ROM is now fully supported, see README for more details)
 * added Action Replay hardware emulation (Action replay ROM is now fully supported, see README for more details)
 * added S&K "Lock-On" hardware emulation ("lock" any games to Sonic & Knuckles)
 * added Cartridge "hot swap" feature (swap games without reseting the virtual console)
-* various code cleanup & core optimizations
+
+* lots of code cleanup & optimization
+
+
+* improved 68k accuracy (initial reset timing + auto-vectored interrupts handling).
+* modified Z80 & 68k cores to directly use external cycle count instead of intermediate counters.
+* improved Z80 & 68k cpu execution/synchronization accuracy, now use Master Clock as common clock reference.
+* improved PSG & FM chips synchronization with CPU execution (fixed point precision).
+
+* completely rewrote sound output processing & mixing: sound chips are now clocked with exact output framerate
+to ensure 100% smooth video & audio playback, with no lag or skipping, while still rendering an accurate number
+of samples per frame. This would also make fast-forward implementation (video AND sound) more trivial.
+
+* improved color accuracy in VDP highlight mode to match results observed on real hardware.
+* improved sprites processing timing accuracy: fixes (un)masked sprites in Mickey Mania (3D level), Sonic 2 (VS mode).
+* improved horizontal blanking & HINT/VINT occurence timing accuracy, as measured on real hardware.
+* improved H-Counter accuraccy in 40-cell mode, as measured on real hardware.
 
 [Gamecube/Wii]
 
-* improved audio/video synchronization: fixes video skipping issues in 60Hz modes
-* fixed stability issues and some potential memory leaks
+* improved audio/video synchronization (see above)
+* improved reset button behavior, now works much more like the real Genesis reset button
+* fixed stability issues and some memory leaks
 * added internal screenshot feature
 * improved lightgun cursors
-* implemented new FONT & GUI engines: use internal IPL FONT, GX hardware & multithreading for fast rendering.
-* implemented new interface: incl. IR pointing, game snapshots, menu effects, sound effects, BGM...
+* new FONT & GUI engines: use internal IPL FONT, GX hardware rendering, sound support & multithreading.
+* new emulator interface design: incl. IR pointing, game snapshots, menu effects, sound effects, BGM...
  (check the README for more details)
 
 

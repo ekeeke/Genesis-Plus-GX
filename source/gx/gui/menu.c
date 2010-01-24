@@ -740,9 +740,15 @@ static void soundmenu ()
         sprintf (items[0].text, "High-Quality FM: %s", config.hq_fm ? "ON":"OFF");
         if (cart.romsize) 
         {
+          /* save YM2612 context */
           unsigned char *temp = memalign(32,YM2612GetContextSize());
           if (temp) memcpy(temp, YM2612GetContextPtr(), YM2612GetContextSize());
-          audio_init(48000,vdp_pal?50.0:(1000000.0/16715.0));
+
+          /* reinitialize audio timings */
+          audio_init(snd.sample_rate,snd.frame_rate);
+          sound_init();
+
+          /* restore YM2612 context */
           if (temp)
           {
             YM2612Restore(temp);
@@ -923,13 +929,26 @@ static void systemmenu ()
           /* force region & cpu mode */
           set_region();
 
-          /* reinitialize timings */
-          system_init();
-          memfile_autoload(config.sram_auto,-1);
+          /* update framerate */
+          float framerate;
+          if (vdp_pal)
+            framerate = 50.0;
+          else
+            framerate = ((config.tv_mode == 0) || (config.tv_mode == 2)) ? (1000000.0/16715.0) : 60.0;
+
+          /* save YM2612 context */
           unsigned char *temp = memalign(32,YM2612GetContextSize());
           if (temp)
             memcpy(temp, YM2612GetContextPtr(), YM2612GetContextSize());
-          audio_init(48000,vdp_pal?50.0:(1000000.0/16715.0));
+
+          /* reinitialize all timings */
+          audio_init(snd.sample_rate, framerate);
+          system_init();
+
+          /* restore SRAM */
+          memfile_autoload(config.sram_auto,-1);
+
+          /* restore YM2612 context */
           if (temp)
           {
             YM2612Restore(temp);
@@ -937,7 +956,7 @@ static void systemmenu ()
           }
 
           /* reinitialize HVC tables */
-          vctab = (vdp_pal) ? ((reg[1] & 8) ? vc_pal_240 : vc_pal_224) : vc_ntsc_224;
+          vctab = vdp_pal ? ((reg[1] & 8) ? vc_pal_240 : vc_pal_224) : vc_ntsc_224;
           hctab = (reg[12] & 1) ? cycle2hc40 : cycle2hc32;
 
           /* reinitialize overscan area */
@@ -963,8 +982,8 @@ static void systemmenu ()
         sprintf (items[3].text, "System BIOS: %s", (config.bios_enabled & 1) ? "ON":"OFF");
         if (cart.romsize) 
         {
-          system_init ();
-          system_reset ();
+          system_init();
+          system_reset();
           memfile_autoload(config.sram_auto,-1);
         }
         break;
@@ -984,9 +1003,9 @@ static void systemmenu ()
 
         if (cart.romsize) 
         {
-          system_reset (); /* clear any patches first */
-          system_init ();
-          system_reset ();
+          system_reset(); /* clear any patches first */
+          system_init();
+          system_reset();
           memfile_autoload(config.sram_auto,-1);
         }
         break;
@@ -1035,8 +1054,7 @@ static void videomenu ()
   else
     sprintf (items[1].text, "TV Mode: 50/60HZ");
 
-  sprintf (items[2].text, "Bilinear Filter: %s",
-    config.bilinear ? " ON" : "OFF");
+  sprintf (items[2].text, "Bilinear Filter: %s", config.bilinear ? " ON" : "OFF");
 
   if (config.ntsc == 1)
     sprintf (items[3].text, "NTSC Filter: COMPOSITE");
@@ -1047,15 +1065,14 @@ static void videomenu ()
   else
     sprintf (items[3].text, "NTSC Filter: OFF");
 
-  sprintf (items[4].text, "Borders: %s",
-    config.overscan ? "ON" : "OFF");
+  sprintf (items[4].text, "Borders: %s", config.overscan ? "ON" : "OFF");
 
   if (config.aspect == 1)
     sprintf (items[5].text,"Aspect: ORIGINAL (4:3)");
   else if (config.aspect == 2)
     sprintf (items[5].text, "Aspect: ORIGINAL (16:9)");
   else
-    sprintf (items[5].text, "Aspect: SCALED");
+    sprintf (items[5].text, "Aspect: SCALE");
 
   sprintf (items[6].text, "Screen Position: (%s%02d,%s%02d)",
     (config.xshift < 0) ? "":"+", config.xshift,
@@ -1104,20 +1121,49 @@ static void videomenu ()
         break;
 
       case 1: /*** tv mode ***/
-        if (config.render == 2) break;
-        config.tv_mode = (config.tv_mode + 1) % 3;
-        if (config.tv_mode == 0)
-          sprintf (items[1].text, "TV Mode: 60HZ");
-        else if (config.tv_mode == 1)
-          sprintf (items[1].text, "TV Mode: 50HZ");
+        if (config.render != 2)
+        {
+          config.tv_mode = (config.tv_mode + 1) % 3;
+
+          /* update framerate */
+          float framerate;
+          if (vdp_pal)
+            framerate = 50.0;
+          else
+            framerate = ((config.tv_mode == 0) || (config.tv_mode == 2)) ? (1000000.0/16715.0) : 60.0;
+
+          /* save YM2612 context */
+          unsigned char *temp = memalign(32,YM2612GetContextSize());
+          if (temp)
+            memcpy(temp, YM2612GetContextPtr(), YM2612GetContextSize());
+
+          /* reinitialize audio timings */
+          audio_init(snd.sample_rate, framerate);
+          sound_init();
+
+          /* restore YM2612 context */
+          if (temp)
+          {
+            YM2612Restore(temp);
+            free(temp);
+          }
+
+          if (config.tv_mode == 0)
+            sprintf (items[1].text, "TV Mode: 60HZ");
+          else if (config.tv_mode == 1)
+            sprintf (items[1].text, "TV Mode: 50HZ");
+          else
+            sprintf (items[1].text, "TV Mode: 50/60HZ");
+        }
         else
-          sprintf (items[1].text, "TV Mode: 50/60HZ");
+        {
+          GUI_WaitPrompt("Error","Progressive Mode is 60hz only !\n");
+        }
         break;
     
       case 2: /*** bilinear filtering ***/
         config.bilinear ^= 1;
-        sprintf (items[2].text, "Bilinear Filter: %s",
-          config.bilinear ? " ON" : "OFF");
+        sprintf (items[2].text, "Bilinear Filter: %s", config.bilinear ? " ON" : "OFF");
         break;
 
       case 3: /*** NTSC filter ***/
@@ -1134,8 +1180,7 @@ static void videomenu ()
 
       case 4: /*** overscan emulation ***/
         config.overscan ^= 1;
-        sprintf (items[4].text, "Overscan Color: %s",
-          config.overscan ? "ORIGINAL" : "BLACK");
+        sprintf (items[4].text, "Borders: %s", config.overscan ? "ON" : "OFF");
         break;
 
       case 5: /*** aspect ratio ***/
@@ -1189,6 +1234,10 @@ static void videomenu ()
             (config.xshift < 0) ? "":"+", config.xshift,
             (config.yshift < 0) ? "":"+", config.yshift);
         }
+        else
+        {
+          GUI_WaitPrompt("Error","Please load a game first !\n");
+        }
         break;
 
       case 7: /*** screen scaling ***/
@@ -1212,6 +1261,10 @@ static void videomenu ()
           sprintf (items[7].text, "Screen Scaling: (%s%02d,%s%02d)",
             (config.xscale < 0) ? "":"+", config.xscale,
             (config.yscale < 0) ? "":"+", config.yscale);
+        }
+        else
+        {
+          GUI_WaitPrompt("Error","Please load a game first !\n");
         }
         break;
 
@@ -2402,8 +2455,8 @@ void MainMenu (void)
         GUI_DeleteMenu(m);
         gxClearScreen((GXColor)BLACK);
         gxSetScreen();
+        audio_init(snd.sample_rate,snd.frame_rate);
         system_init();
-        audio_init(48000,vdp_pal?50.0:(1000000.0/16715.0));
         system_reset();
         memfile_autoload(config.sram_auto,-1);
         quit = 1;

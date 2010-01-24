@@ -30,12 +30,10 @@
 /* Global variables */
 t_bitmap bitmap;
 t_snd snd;
-uint32 count_m68k;
-uint32 line_m68k;
-uint32 hint_m68k;
-uint32 count_z80;
-uint32 line_z80;
-int32 current_z80;
+uint32 mcycles_vdp;
+uint32 mcycles_z80;
+uint32 mcycles_68k;
+uint32 hint_68k;
 uint8 system_hw;
 
 /****************************************************************
@@ -56,7 +54,7 @@ void audio_set_equalizer(void)
  ****************************************************************/
 static int llp,rrp;
 
-void audio_update (int size)
+int audio_update (void)
 {
   int i, l, r;
   int ll = llp;
@@ -68,25 +66,44 @@ void audio_update (int size)
   uint32 factora    = (config.lp_range << 16) / 100;
   uint32 factorb    = 0x10000 - factora;
 
-  int16 *fm[2] = {snd.fm.buffer[0],snd.fm.buffer[1]};
-  int16 *psg = snd.psg.buffer;
+  int16 *fm         = snd.fm.buffer;
+  int16 *psg        = snd.psg.buffer;
 
 #ifdef NGC
   int16 *sb = (int16 *) soundbuffer[mixbuffer];
 #endif
 
-  /* resampling */
+  /* get number of available samples */
+  int size = sound_update(mcycles_vdp);
+
+  /* return an aligned number of samples */
+  size &= ~7;
+
   if (config.hq_fm)
   {
-    int len = Fir_Resampler_input_needed(size << 1);
-    sound_update(len >> 1,size);
-    Fir_Resampler_write(len);
+    /* resample into FM output buffer */
     Fir_Resampler_read(fm,size);
+
+#ifdef LOG_SOUND
+    error("%d FM samples remaining\n",Fir_Resampler_written() >> 1);
+#endif
   }
   else
-  {
-    sound_update(size,size);
+  {  
+    /* adjust remaining samples in FM output buffer*/
+    snd.fm.pos -= (size << 1);
+
+#ifdef LOG_SOUND
+    error("%d FM samples remaining\n",(snd.fm.pos - snd.fm.buffer)>>1);
+#endif
   }
+
+  /* adjust remaining samples in PSG output buffer*/
+  snd.psg.pos -= size;
+
+#ifdef LOG_SOUND
+  error("%d PSG samples remaining\n",snd.psg.pos - snd.psg.buffer);
+#endif
 
   /* mix samples */
   for (i = 0; i < size; i ++)
@@ -95,8 +112,8 @@ void audio_update (int size)
     l = r = ((*psg++) * psg_preamp)/100;
 
     /* FM samples (stereo) */
-    l += (*fm[0]++ * fm_preamp)/100;
-    r += (*fm[1]++ * fm_preamp)/100;
+    l += (*fm++ * fm_preamp)/100;
+    r += (*fm++ * fm_preamp)/100;
 
     /* filtering */
     if (filter & 1)
@@ -130,15 +147,25 @@ void audio_update (int size)
 #endif
   }
 
-  /* save delayed samples */
+  /* save delayed samples for next frame */
   llp = ll;
   rrp = rr;
+
+  /* save remaining samples for next frame */
+  memcpy(snd.fm.buffer, fm, (snd.fm.pos - snd.fm.buffer) << 1);
+  memcpy(snd.psg.buffer, psg, (snd.psg.pos - snd.psg.buffer) << 1);
+
+#ifdef LOG_SOUND
+  error("%d samples returned\n\n",size);
+#endif
+
+  return size;
 }
 
 /****************************************************************
  * AUDIO System initialization
  ****************************************************************/
-int audio_init (int rate, double fps)
+int audio_init (int samplerate, float framerate)
 {
   /* Shutdown first */
   audio_shutdown();
@@ -146,48 +173,73 @@ int audio_init (int rate, double fps)
   /* Clear the sound data context */
   memset(&snd, 0, sizeof (snd));
 
-  /* Make sure the requested sample rate is valid */
-  if (!rate || ((rate < 8000) | (rate > 48000))) return (-1);
-  snd.sample_rate = rate;
+  /* Default settings */
+  snd.sample_rate = samplerate;
+  snd.frame_rate  = framerate;
+
+  /* Calculate the sound buffer size (for one frame) */
+  snd.buffer_size = (int)(samplerate / framerate) + 32;
 
 #ifndef NGC
-  /* Calculate the sound buffer size (for one frame) */
-  snd.buffer_size = (rate / vdp_rate);
-
   /* Output buffers */
   snd.buffer[0] = (int16 *) malloc(SND_SIZE);
   snd.buffer[1] = (int16 *) malloc(SND_SIZE);
-  if (!snd.buffer[0] || !snd.buffer[1]) return (-1);
-#else
-  /* Calculate the sound buffer size (for one frame) */
-  snd.buffer_size = (rate / vdp_rate) + 32;
+  if (!snd.buffer[0] || !snd.buffer[1])
+    return (-1);
 #endif
 
   /* SN76489 stream buffers */
-  snd.psg.buffer = (int16 *)malloc (SND_SIZE);
-  if (!snd.psg.buffer) return (-1);
+  snd.psg.buffer = (int16 *) malloc(SND_SIZE);
+  if (!snd.psg.buffer)
+    return (-1);
 
   /* YM2612 stream buffers */
-  snd.fm.buffer[0] = (int16 *)malloc (SND_SIZE);
-  snd.fm.buffer[1] = (int16 *)malloc (SND_SIZE);
-  if (!snd.fm.buffer[0] || !snd.fm.buffer[1]) return (-1);
+  snd.fm.buffer = (int16 *) malloc(SND_SIZE * 2);
+  if (!snd.fm.buffer)
+    return (-1);
 
   /* Resampling buffer */
   if (config.hq_fm)
   {
-    if (!Fir_Resampler_initialize(4096)) return (-1);
+    if (!Fir_Resampler_initialize(4096))
+      return (-1);
   }
-
-  /* 3 band EQ */
-  audio_set_equalizer();
 
   /* Set audio enable flag */
   snd.enabled = 1;
 
-  /* Initialize Sound Chips emulation */
-  sound_init(rate,fps);
+  /* Reset audio */
+  audio_reset();
 
   return (0);
+}
+
+/****************************************************************
+ * AUDIO System reset
+ ****************************************************************/
+void audio_reset(void)
+{
+  /* Low-Pass filter */
+  llp = 0;
+  rrp = 0;
+
+  /* 3 band EQ */
+  audio_set_equalizer();
+
+  /* audio buffers */
+  Fir_Resampler_clear();
+  snd.psg.pos = snd.psg.buffer;
+  snd.fm.pos  = snd.fm.buffer;
+#ifndef NGC
+  if (snd.buffer[0])
+    memset (snd.buffer[0], 0, SND_SIZE);
+  if (snd.buffer[1])
+    memset (snd.buffer[1], 0, SND_SIZE);
+#endif
+  if (snd.psg.buffer)
+    memset (snd.psg.buffer, 0, SND_SIZE);
+  if (snd.fm.buffer)
+    memset (snd.fm.buffer, 0, SND_SIZE * 2);
 }
 
 /****************************************************************
@@ -196,11 +248,16 @@ int audio_init (int rate, double fps)
 void audio_shutdown(void)
 {
   /* Sound buffers */
-  if (snd.buffer[0])    free(snd.buffer[0]);
-  if (snd.buffer[1])    free(snd.buffer[1]);
-  if (snd.fm.buffer[0]) free(snd.fm.buffer[0]);
-  if (snd.fm.buffer[1]) free(snd.fm.buffer[1]);
-  if (snd.psg.buffer)   free(snd.psg.buffer);
+#ifndef NGC
+  if (snd.buffer[0])
+    free(snd.buffer[0]);
+  if (snd.buffer[1])
+    free(snd.buffer[1]);
+#endif
+  if (snd.fm.buffer)
+    free(snd.fm.buffer);
+  if (snd.psg.buffer)
+    free(snd.psg.buffer);
 
   /* Resampling buffer */
   Fir_Resampler_shutdown();
@@ -219,6 +276,9 @@ void system_init (void)
 
   /* Cartridge hardware */
   cart_hw_init();
+
+  /* Sound Chips hardware */
+  sound_init();
 }
 
 /****************************************************************
@@ -231,17 +291,15 @@ void system_reset (void)
 
   /* Genesis hardware */
   gen_reset(1); 
-  SN76489_Reset();
   io_reset();
   vdp_reset();
   render_reset();
 
-  /* Clear Sound Buffers */
-  if (snd.psg.buffer) memset (snd.psg.buffer, 0, SND_SIZE);
-  if (snd.fm.buffer[0]) memset (snd.fm.buffer[0], 0, SND_SIZE);
-  if (snd.fm.buffer[1]) memset (snd.fm.buffer[1], 0, SND_SIZE);
-  Fir_Resampler_clear();
-  llp = rrp = 0;
+  /* Sound chips */
+  sound_reset();
+
+  /* Audio System */
+  audio_reset();
 }
 
 /****************************************************************
@@ -265,15 +323,6 @@ int system_frame (int do_skip)
     return 0;
   }
 
-  uint32 aim_m68k = 0;
-  uint32 aim_z80  = 0;
-
-  /* reset cycles counts */
-  count_m68k      = 0;
-  count_z80       = 0;
-  fifo_write_cnt  = 0;
-  fifo_lastwrite  = 0;
-
   /* update display settings */
   int line;
   int reset = resetline;
@@ -291,17 +340,21 @@ int system_frame (int do_skip)
   odd_frame ^= 1;
 
   /* clear VBLANK and DMA flags */
-  status &= 0xFFF5;
+  status &= 0xFFE5;
 
   /* even/odd field flag (interlaced modes only) */
-  if (odd_frame && interlaced) status |= 0x0010;
-  else status &= 0xFFEF;
+  if (odd_frame && interlaced)
+    status |= 0x0010;
 
   /* reload HCounter */
   int h_counter = reg[10];
 
-  /* parse sprites for line 0 (done on last line) */
-  parse_satb (0x80);
+  /* reset VDP FIFO */
+  fifo_write_cnt  = 0;
+  fifo_lastwrite  = 0;
+
+  /* reset line cycle count */
+  mcycles_vdp = 0;
 
   /* process scanlines */
   for (line = 0; line < lines_per_frame; line ++)
@@ -312,14 +365,10 @@ int system_frame (int do_skip)
     /* update 6-Buttons or Menacer */
     input_update();
 
-    /* update CPU cycle counters */
-    hint_m68k = count_m68k;
-    line_m68k = aim_m68k;
-    line_z80  = aim_z80;
-    aim_z80  += z80cycles_per_line;
-    aim_m68k += m68cycles_per_line;
+    /* 68k line cycle count */
+    hint_68k = mcycles_68k;
 
-    /* Soft Reset ? */
+    /* Soft Reset line */
     if (line == reset)
     {
       /* Pro Action Replay (switch at "Trainer" position) */
@@ -329,6 +378,10 @@ int system_frame (int do_skip)
       gen_reset(0);
     }
 
+    /* update VDP DMA */
+    if (dma_length)
+      vdp_update_dma();
+
     /* active display */
     if (line <= vdp_height)
     {
@@ -337,27 +390,16 @@ int system_frame (int do_skip)
       {
         h_counter = reg[10];
         hint_pending = 1;
-        if (reg[0] & 0x10) irq_status = (irq_status & ~0x40) | 0x14;
-
-        /* adjust timings to take further decrement in account (see below) */
-        if ((line != 0) || (h_counter == 0)) aim_m68k += 36;
+        if (reg[0] & 0x10)
+          irq_status = (irq_status & ~0x40) | 0x14;
       }
-
-      /* HINT will be triggered on next line, approx. 36 cycles before VDP starts line rendering      */
-      /* during this period, any VRAM or VSRAM writes should NOT be taken in account before next line */
-      /* as a result, line is rendered immediately after HINT and current line is shortened           */
-      /* CRAM and VDP register writes that could occur during HBLANK are handled separately           */
-      /* fix Striker, Zero the Kamikaze Squirell                                                      */
-      if ((line < vdp_height) && (h_counter == 0)) aim_m68k -= 36;
-
-      /* update DMA timings */
-      if (dma_length) vdp_update_dma();
 
       /* vertical retrace */
       if (line == vdp_height)
       {
         /* render overscan */
-        if ((line < end_line) && (!do_skip)) render_line(line, 1);
+        if (line < end_line)
+          render_line(line, 1);
 
         /* update inputs (doing this here fix Warriors of Eternal Sun) */
         osd_input_Update();
@@ -367,39 +409,38 @@ int system_frame (int do_skip)
 
         /* Z80 interrupt is 16ms period (one frame) and 64us length (one scanline) */
         zirq = 1;
-        z80_set_irq_line(0, ASSERT_LINE);  
+        z80_set_irq_line(0, ASSERT_LINE);
 
-        /* delay between HINT, VBLANK and VINT (Dracula, OutRunners, VR Troopers) */
-        m68k_run(line_m68k + 84);
-        if (zreset && !zbusreq)
-        {
-          current_z80 = line_z80 + 39 - count_z80;
-          if (current_z80 > 0) count_z80 += z80_execute(current_z80);
-        }
-        else count_z80 = line_z80 + 39;
-
-        /* V Interrupt */
+        /* delay between VINT flag & V Interrupt (Ex-Mutants, Tyrant) */
+        m68k_run(mcycles_vdp + 588);
         status |= 0x80;
 
-        /* 36 cycles latency after VINT occurence flag (Ex-Mutants, Tyrant) */
-        m68k_run(line_m68k + 113);
+        /* delay between VBLANK flag & V Interrupt (Dracula, OutRunners, VR Troopers) */
+        m68k_run(mcycles_vdp + 788);
+        if (zstate == 1)
+          z80_run(mcycles_vdp + 788);
+        else
+          mcycles_z80 = mcycles_vdp + 788;
+
+        /* V Interrupt */
         vint_pending = 1;
-        if (reg[1] & 0x20) irq_status = (irq_status & ~0x40) | 0x36;
+        if (reg[1] & 0x20)
+          irq_status = (irq_status & ~0x40) | 0x36;
       }
       else if (!do_skip) 
       {
-        /* render scanline and parse sprites for line n+1 */
+        /* sprites are processed during horizontal blanking */
+        parse_satb(0x80 + line);
+
+        /* render scanline */
         render_line(line, 0);
-        if (line < (vdp_height-1)) parse_satb(0x81 + line);
       }
     }
     else
     {
-      /* update DMA timings */
-      if (dma_length) vdp_update_dma();
-
       /* render overscan */
-      if ((!do_skip) && ((line < end_line) || (line >= start_line))) render_line(line, 1);
+      if ((line < end_line) || (line >= start_line))
+        render_line(line, 1);
 
       /* clear any pending Z80 interrupt */
       if (zirq)
@@ -410,17 +451,23 @@ int system_frame (int do_skip)
     }
 
     /* process line */
-    m68k_run(aim_m68k);
-    if (zreset == 1 && zbusreq == 0)
-    {
-      current_z80 = aim_z80 - count_z80;
-      if (current_z80 > 0) count_z80 += z80_execute(current_z80);
-    }
-    else count_z80 = aim_z80;
+    m68k_run(mcycles_vdp + MCYCLES_PER_LINE);
+    if (zstate == 1)
+      z80_run(mcycles_vdp + MCYCLES_PER_LINE);
+    else 
+      mcycles_z80 = mcycles_vdp + MCYCLES_PER_LINE;
     
     /* SVP chip */
-    if (svp) ssp1601_run(SVP_cycles);
+    if (svp)
+      ssp1601_run(SVP_cycles);
+
+    /* update line cycle count */
+    mcycles_vdp += MCYCLES_PER_LINE;
   }
+
+  /* adjust cpu cycle count for next frame */
+  mcycles_68k -= mcycles_vdp;
+  mcycles_z80 -= mcycles_vdp;
 
   return gen_running;
 }

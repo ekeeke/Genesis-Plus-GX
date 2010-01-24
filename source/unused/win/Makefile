@@ -12,7 +12,7 @@ NAME	  = gen_sdl.exe
 
 CC        = gcc
 CFLAGS    = `sdl-config --cflags` -O6 -march=i686 -fomit-frame-pointer
-DEFINES   = -DLSB_FIRST -DX86_ASM -DLOGERROR=1
+DEFINES   = -DLSB_FIRST -DX86_ASM  -DLOGERROR=1 -DLOGVDP=1 
 INCLUDES  = -I. -I.. -I../z80 -I../m68k -I../sound -I../cart_hw -I../cart_hw/svp -I../ntsc
 LIBS	  = `sdl-config --libs` -lz -lm
 

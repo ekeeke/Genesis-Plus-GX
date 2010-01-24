@@ -23,16 +23,14 @@
 
 #include "shared.h"
 
-uint8 bios_rom[0x10000];  /* BIOS rom */
-uint8 work_ram[0x10000];  /* 68K work RAM */
-uint8 zram[0x2000];       /* Z80 work RAM */
-uint8 zbusreq;            /* /BUSREQ from Z80 */
-uint8 zreset;             /* /RESET to Z80 */
-uint8 zbusack;            /* /BUSACK to Z80 */
-uint8 zirq;               /* /IRQ to Z80 */
-uint32 zbank;             /* Address of Z80 bank window */
-uint8 gen_running;
-int32 resetline;
+uint8 bios_rom[0x10000];  /* OS ROM   */
+uint8 work_ram[0x10000];  /* 68K RAM  */
+uint8 zram[0x2000];       /* Z80 RAM  */
+uint32 zirq;              /* /IRQ to Z80 */
+uint32 zstate;            /* Z80 bus state (d0 = BUSACK, d1 = /RESET) */
+uint32 zbank;             /* Z80 bank window address */
+uint32 gen_running;       /* 0: cpu are in locked state */
+int32 resetline;          /* soft reset is triggered on a random line (X-Men 2, Eternal Champions) */
 
 /*--------------------------------------------------------------------------*/
 /* Init, reset, shutdown functions                                          */
@@ -132,28 +130,24 @@ void gen_reset(uint32 hard_reset)
     memset (work_ram, 0x00, sizeof (work_ram));
     memset (zram, 0x00, sizeof (zram));
 
-    /* TMSS BIOS */
+    /* TMSS BIOS support */
     if (config.bios_enabled == 3)
-    {
       m68k_memory_map[0].base = bios_rom;
-    }
 
-    count_m68k  = 0;
-    count_z80   = 0;
+    /* Reset CPU cycle counts */
+    mcycles_68k = 0;
+    mcycles_z80 = 0;
   }
 
-  resetline   = -1; /* clear !RESET */
-  gen_running = 1;  /* System is running */
-  zreset      = 0;  /* Z80 is reset */
-  zbusreq     = 0;  /* Z80 has control of the Z bus */
-  zbusack     = 1;  /* Z80 is busy using the Z bus */
-  zirq        = 0;  /* No interrupts occuring */
-  zbank       = 0;  /* Assume default bank is $000000-$007FFF */
+  zstate  = 0;  /* Z80 is reset & has control of the bus */
+  zirq    = 0;  /* No interrupts occuring */
+  zbank   = 0;  /* Assume default bank is $000000-$007FFF */
 
-  /* reset CPUs */
+  /* Reset CPUs */
+  resetline = -1;
+  gen_running = 1; 
   m68k_pulse_reset();
   z80_reset();
-  fm_reset();
 }
 
 void gen_shutdown(void)
@@ -166,74 +160,66 @@ void gen_shutdown(void)
   -----------------------------------------------------------------------*/
 void gen_busreq_w(uint32 state)
 {
-  uint32 z80_cycles_to_run;
-
   if (state)
   {
-    /* Bus Request */
-    if (!zbusreq && zreset)
+    /* Bus requested */
+    if (zstate == 1)
     {
-      /* Z80 stopped */
-      /* z80 was ON during the last 68k cycles */
-      /* we execute the appropriate number of z80 cycles */
-      z80_cycles_to_run = line_z80 + ((count_m68k - line_m68k)*7)/15;
-      current_z80 = z80_cycles_to_run - count_z80;
-      if (current_z80 > 0) count_z80 += z80_execute(current_z80);
+      /* Z80 is stopped */
+      /* Z80 was ON during the last 68k cycles */
+      z80_run(mcycles_68k);
     }
+
+    /* update Z80 bus status */
+    zstate |= 2;
   }
   else
   {
     /* Bus released */
-    if (zbusreq && zreset)
+    if (zstate == 3)
     {
-      /* Z80 started */
-      /* z80 was OFF during the last 68k cycles */
-      /* we burn the appropriate number of z80 cycles */
-      z80_cycles_to_run = line_z80 + ((count_m68k - line_m68k)*7)/15;
-      count_z80 = z80_cycles_to_run;
+      /* Z80 is restarted */
+      /* Z80 was OFF during the last 68k cycles */
+      mcycles_z80 = mcycles_68k;
     }
-  }
 
-  zbusreq = state;
-  zbusack = 1 ^ (zbusreq & zreset);
+    /* update Z80 bus status */
+    zstate &= 1;
+  }
 }
 
 void gen_reset_w(uint32 state)
 {
-  uint32 z80_cycles_to_run;
-
   if (state)
   {
     /* stop RESET process */
-    if (!zbusreq && !zreset)
+    if (!zstate)
     {
-      /* Z80 started */
-      /* z80 was OFF during the last 68k cycles */
-      /* we burn the appropriate number of z80 cycles */
-      z80_cycles_to_run = line_z80 + ((count_m68k - line_m68k)*7)/15;
-      count_z80 = z80_cycles_to_run;
+      /* Z80 is restarted */
+      /* Z80 was OFF during the last cycles */
+      mcycles_z80 = mcycles_68k;
     }
+
+    /* update Z80 bus status */
+    zstate |= 1;
   }
   else
   {
     /* start RESET process */
-    if (!zbusreq && zreset)
+    if (zstate == 1)
     {
       /* Z80 stopped */
       /* z80 was ON during the last 68k cycles */
-      /* we execute the appropriate number of z80 cycles */
-      z80_cycles_to_run = line_z80 + ((count_m68k - line_m68k)*7)/15;
-      current_z80 = z80_cycles_to_run - count_z80;
-      if (current_z80 > 0) count_z80 += z80_execute(current_z80);
+      z80_run(mcycles_68k);
     }
 
     /* Reset Z80 & YM2612 */
     z80_reset();
     fm_reset();
-  }
 
-  zreset = state;
-  zbusack = 1 ^ (zbusreq & zreset);
+    /* update Z80 bus status */
+    zstate &= 2;
+  }
 }
 
 void gen_bank_w (uint32 state)

@@ -104,7 +104,7 @@ void Fir_Resampler_clear()
   if ( buffer_size )
   {
     write_pos = &buffer [WRITE_OFFSET];
-    memset( buffer, 0, WRITE_OFFSET * sizeof (sample_t) );
+    memset( buffer, 0, buffer_size * sizeof (sample_t) );
   }
 }
 
@@ -142,6 +142,8 @@ double Fir_Resampler_time_ratio( double new_factor )
   double filter = (ratio < 1.0) ? 1.0 : 1.0 / ratio;
   pos = 0.0;
   input_per_cycle = 0;
+
+  memset(impulses, 0, MAX_RES*WIDTH*sizeof(sample_t));
 
   for ( i = 0; i < res; i++ )
   {
@@ -200,10 +202,9 @@ void Fir_Resampler_write( long count )
   assert( write_pos <= ( buffer + buffer_size ) );
 }
 
-int Fir_Resampler_read( sample_t** out, long count )
+int Fir_Resampler_read( sample_t* out, long count )
 {
-  sample_t* out_l = out[0];
-  sample_t* out_r = out[1];
+  sample_t* out_ = out;
   sample_t* in = buffer;
   sample_t* end_pos = write_pos;
   unsigned long skip = skip_bits >> imp_phase;
@@ -258,8 +259,8 @@ int Fir_Resampler_read( sample_t** out, long count )
         remain = res;
       }
 
-      *out_l++ = (sample_t) l;
-      *out_r++ = (sample_t) r;
+      *out++ = (sample_t) l;
+      *out++ = (sample_t) r;
     }
     while ( in <= end_pos );
   }
@@ -270,7 +271,7 @@ int Fir_Resampler_read( sample_t** out, long count )
   write_pos = &buffer [left];
   memmove( buffer, in, left * sizeof *in );
 
-  return out_l - out[0];
+  return out - out_;
 }
 
 int Fir_Resampler_input_needed( long output_count )

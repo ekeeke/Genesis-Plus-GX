@@ -28,12 +28,7 @@
 #define SYSTEM_MEGADRIVE  1
 #define SYSTEM_PICO       2
 
-/* CPU cycles increments */
-#define z80cycles_per_line 228
-#define m68cycles_per_line 488
-
-#define CLOCK_NTSC 53693175
-#define CLOCK_PAL  53203424
+#define MCYCLES_PER_LINE  3420
 
 typedef struct
 {
@@ -59,18 +54,19 @@ typedef struct
 
 typedef struct
 {
-  int sample_rate;  /* Sample rate (8000-48000) */
+  int sample_rate;  /* Output Sample rate (8000-48000) */
+  float frame_rate; /* Output Frame rate (usually 50 or 60 frames per second) */
   int enabled;      /* 1= sound emulation is enabled */
   int buffer_size;  /* Size of sound buffer (in bytes) */
   int16 *buffer[2]; /* Signed 16-bit stereo sound data */
   struct
   {
-    int pos;
-    int16 *buffer[2];
+    int16 *pos;
+    int16 *buffer;
   } fm;
   struct
   {
-    int pos;
+    int16 *pos;
     int16 *buffer;
   } psg;
 } t_snd;
@@ -78,18 +74,17 @@ typedef struct
 /* Global variables */
 extern t_bitmap bitmap;
 extern t_snd snd;
-extern uint32 count_m68k;
-extern uint32 line_m68k;
-extern uint32 hint_m68k;
-extern uint32 count_z80;
-extern uint32 line_z80;
-extern int32 current_z80;
+extern uint32 mcycles_vdp;
+extern uint32 mcycles_z80;
+extern uint32 mcycles_68k;
+extern uint32 hint_68k;
 extern uint8 system_hw;
 
 /* Function prototypes */
-extern int audio_init (int rate,double fps);
+extern int audio_init (int samplerate,float framerate);
+extern void audio_reset (void);
 extern void audio_shutdown (void);
-extern void audio_update (int len);
+extern int audio_update (void);
 extern void audio_set_equalizer(void);
 extern void system_init (void);
 extern void system_reset (void);

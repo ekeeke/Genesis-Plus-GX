@@ -59,12 +59,10 @@ extern uint16 v_counter;
 extern uint32 dma_length;
 extern int32 fifo_write_cnt;
 extern uint32 fifo_lastwrite;
-extern uint8 fifo_latency;
 extern uint8 im2_flag;
 extern uint8 interlaced;
 extern uint8 odd_frame;
 extern uint8 vdp_pal;
-extern uint8 vdp_rate;
 extern uint16 lines_per_frame;
 
 extern uint8 *vctab;
@@ -72,8 +70,8 @@ extern uint8 *hctab;
 extern uint8 vc_ntsc_224[262];
 extern uint8 vc_pal_224[313];
 extern uint8 vc_pal_240[313];
-extern uint8 cycle2hc32[488];
-extern uint8 cycle2hc40[488];
+extern uint8 cycle2hc32[3420];
+extern uint8 cycle2hc40[3420];
 
 /* Function prototypes */
 extern void vdp_init(void);

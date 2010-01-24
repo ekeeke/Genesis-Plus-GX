@@ -109,8 +109,10 @@ static inline void z80_vdp_w(unsigned int address, unsigned int data)
 
     case 0x10:  /* PSG */
     case 0x14:
-      if (address & 1) psg_write(1, data);
-      else z80_unused_w(address, data);
+      if (address & 1)
+        psg_write(mcycles_z80, data);
+      else
+        z80_unused_w(address, data);
       return;
 
     case 0x18: /* Unused */
@@ -139,18 +141,20 @@ unsigned int cpu_readmem16(unsigned int address)
       return zram[address & 0x1fff];
 
     case 2: /* YM2612 */
-      return fm_read(1, address & 3);
+      return fm_read(mcycles_68k, address & 3);
 
     case 3: /* VDP */
-      if ((address >> 8) == 0x7f) return z80_vdp_r (address);
+      if ((address >> 8) == 0x7f)
+        return z80_vdp_r (address);
       return z80_unused_r(address);
 
     default: /* V-bus bank */
     {
       address = zbank | (address & 0x7fff);
       int slot = address >> 16;
-      if (zbank_memory_map[slot].read) return (*zbank_memory_map[slot].read)(address);
-      else return READ_BYTE(m68k_memory_map[slot].base, address&0xffff);
+      if (zbank_memory_map[slot].read)
+        return (*zbank_memory_map[slot].read)(address);
+      return READ_BYTE(m68k_memory_map[slot].base, address&0xffff);
     }
   }
 }
@@ -166,7 +170,7 @@ void cpu_writemem16(unsigned int address, unsigned int data)
       return;
 
     case 2: /* YM2612 */
-      fm_write(1, address & 3, data);
+      fm_write(mcycles_z80, address & 3, data);
       return;
 
     case 3: /* Bank register and VDP */
@@ -190,8 +194,10 @@ void cpu_writemem16(unsigned int address, unsigned int data)
     {
       address = zbank | (address & 0x7fff);
       int slot = address >> 16;
-      if (zbank_memory_map[slot].write) (*zbank_memory_map[slot].write)(address, data);
-      else WRITE_BYTE(m68k_memory_map[slot].base, address&0xffff, data);
+      if (zbank_memory_map[slot].write)
+        (*zbank_memory_map[slot].write)(address, data);
+      else
+        WRITE_BYTE(m68k_memory_map[slot].base, address&0xffff, data);
       return;
     }
   }

@@ -19,9 +19,9 @@
 #endif
 
 
-extern int YM2612Init(int baseclock, int rate);
+extern int YM2612Init(float clock, int rate);
 extern int YM2612ResetChip(void);
-extern void YM2612Update(int length);
+extern void YM2612Update(short int*buffer, int length);
 extern void YM2612Write(unsigned int a, unsigned int v);
 extern unsigned int YM2612Read(void);
 extern unsigned char *YM2612GetContextPtr(void);

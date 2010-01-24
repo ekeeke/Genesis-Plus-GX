@@ -103,7 +103,7 @@ int main (int argc, char *argv[])
 
   /* initialize emulation */
   system_init();
-  audio_init(option.sndrate);
+  audio_init(option.sndrate, vdp_pal ? 50 : 60);
 
   f = fopen("./game.srm", "rb");
   if (f!=NULL)
@@ -132,8 +132,9 @@ int main (int argc, char *argv[])
       system_frame(1);
     }
 
-    audio_update(snd.buffer_size);
-    if(option.sound) dos_update_audio();
+    audio_update();
+    if(option.sound)
+      dos_update_audio();
   }
 
   f = fopen("./game.srm", "wb");
@@ -366,11 +367,19 @@ void dos_update_input(void)
   {
     vdp_pal ^= 1;
 
-    /* reinitialize timings */
-    system_init ();
-    unsigned char *temp = malloc(YM2612GetContextSize());
-    if (temp) memcpy(temp, YM2612GetContextPtr(), YM2612GetContextSize());
-    audio_init(48000);
+    /* save YM2612 context */
+    unsigned char *temp = memalign(32,YM2612GetContextSize());
+    if (temp)
+      memcpy(temp, YM2612GetContextPtr(), YM2612GetContextSize());
+
+    /* reinitialize all timings */
+    audio_init(snd.sample_rate, framerate);
+    system_init();
+
+    /* restore SRAM */
+    memfile_autoload(config.sram_auto,-1);
+
+    /* restore YM2612 context */
     if (temp)
     {
       YM2612Restore(temp);
@@ -378,7 +387,7 @@ void dos_update_input(void)
     }
 
     /* reinitialize HVC tables */
-    vctab = (vdp_pal) ? ((reg[1] & 8) ? vc_pal_240 : vc_pal_224) : vc_ntsc_224;
+    vctab = vdp_pal ? ((reg[1] & 8) ? vc_pal_240 : vc_pal_224) : vc_ntsc_224;
     hctab = (reg[12] & 1) ? cycle2hc40 : cycle2hc32;
 
     /* reinitialize overscan area */

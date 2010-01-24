@@ -24,105 +24,229 @@
 #include "shared.h"
 #include "Fir_Resampler.h"
 
-/* cycle-accurate samples */
-static int m68cycles_per_sample[2];
+/* Cycle-accurate samples */
+static unsigned int psg_cycles_ratio;
+static unsigned int psg_cycles_count;
+static unsigned int fm_cycles_ratio;
+static unsigned int fm_cycles_count;
 
-/* return the number of samples that should be retrieved */
-static inline int fm_sample_cnt(uint8 z80)
+/* Run FM chip for required M-cycles */
+static inline void fm_update(unsigned int cycles)
 {
-  if (z80) return ((((count_z80 + current_z80 - z80_ICount) * 15) / (m68cycles_per_sample[0] * 7)) - snd.fm.pos);
-  else return ((count_m68k / m68cycles_per_sample[0]) - snd.fm.pos);
-}
+  /* convert to 21.11 fixed point */
+  cycles <<= 11;
 
-static inline int psg_sample_cnt(uint8 z80)
-{
-  if (z80) return ((((count_z80 + current_z80 - z80_ICount) * 15) / (m68cycles_per_sample[1] * 7)) - snd.psg.pos);
-  else return ((count_m68k / m68cycles_per_sample[1]) - snd.psg.pos);
-}
-
-/* run FM chip for n samples */
-static inline void fm_update(int cnt)
-{
-  if (cnt > 0)
+  if (cycles > fm_cycles_count)
   {
-    YM2612Update(cnt);
-    snd.fm.pos += cnt;
+    /* period to run */
+    cycles -= fm_cycles_count;
+
+    /* update cycle count */
+    fm_cycles_count += cycles;
+
+    /* number of samples during period */
+    uint32 cnt = cycles / fm_cycles_ratio;
+
+    /* remaining cycles */
+    uint32 remain = cycles % fm_cycles_ratio;
+    if (remain)
+    {
+      /* one sample ahead */
+      fm_cycles_count += fm_cycles_ratio - remain;
+      cnt++;
+    }
+
+    /* select input sample buffer */
+    int16 *buffer = Fir_Resampler_buffer();
+    if (buffer)
+    {
+      Fir_Resampler_write(cnt << 1);
+    }
+    else
+    {
+      buffer = snd.fm.pos;
+      snd.fm.pos += (cnt << 1);
+    }
+
+    /* run FM chip & get samples */
+    YM2612Update(buffer, cnt);
   }
 }
 
-/* run PSG chip for n samples */
-static inline void psg_update(int cnt)
+/* Run PSG chip for required M-cycles */
+static inline void psg_update(unsigned int cycles)
 {
-  if (cnt > 0)
+  /* convert to 21.11 fixed point */
+  cycles <<= 11;
+
+  if (cycles > psg_cycles_count)
   {
-    SN76489_Update(snd.psg.buffer + snd.psg.pos, cnt);
+    /* period to run */
+    cycles -= psg_cycles_count;
+
+    /* update cycle count */
+    psg_cycles_count += cycles;
+
+    /* number of samples during period */
+    uint32 cnt = cycles / psg_cycles_ratio;
+
+    /* remaining cycles */
+    uint32 remain = cycles % psg_cycles_ratio;
+    if (remain)
+    {
+      /* one sample ahead */
+      psg_cycles_count += psg_cycles_ratio - remain;
+      cnt++;
+    }
+
+    /* run PSG chip & get samples */
+    SN76489_Update(snd.psg.pos, cnt);
     snd.psg.pos += cnt;
   }
 }
 
-/* initialize sound chips emulation */
-void sound_init(int rate, double fps)
+/* Initialize sound chips emulation */
+void sound_init(void)
 {
-  double vclk = (vdp_pal ? (double)CLOCK_PAL : (double)CLOCK_NTSC) / 7.0;  /* 68000 and YM2612 clock */
-  double zclk = (vdp_pal ? (double)CLOCK_PAL : (double)CLOCK_NTSC) / 15.0; /* Z80 and SN76489 clock  */
+  /* Number of M-cycles executed per second.                                              */
+  /*                                                                                      */
+  /* The original Genesis would run exactly 53693175 M-cycles (53203424 for PAL), with    */
+  /* 3420 M-cycles per line and 262 (313 for PAL) lines per frame, which gives an exact   */
+  /* framerate of 59.92 (49.70 for PAL) fps.                                              */
+  /*                                                                                      */
+  /* On some systems, the output framerate is not exactly 60 or 50 fps because we need    */ 
+  /* 100% smooth video and therefore frame emulation is synchronized with VSYNC, which    */
+  /* period is never exactly 1/60 or 1/50 seconds.                                        */
+  /*                                                                                      */
+  /* For optimal sound rendering, input samplerate (number of samples rendered per frame) */
+  /* is the exact output samplerate (number of samples played per second) divided by the  */
+  /* exact output framerate (number of frames emulated per seconds).                      */
+  /*                                                                                      */
+  /* This ensure there is no audio skipping or lag between emulated frames, while keeping */
+  /* accurate timings for sound chips execution & synchronization.                        */
+  /*                                                                                      */
+  double mclk = MCYCLES_PER_LINE * lines_per_frame * snd.frame_rate;
 
-  /* cycle-accurate FM & PSG samples */
-  m68cycles_per_sample[0] = (int)(((double)m68cycles_per_line * (double)lines_per_frame * fps/ (double)rate) + 0.5);
-  m68cycles_per_sample[1] = m68cycles_per_sample[0];
+  /* For better accuracy, sound chips run in synchronization with 68k and Z80 cpus        */
+  /* These values give the exact number of M-cycles between 2 rendered samples.           */
+  /* we use 21.11 fixed point precision (max. mcycle value is 3420*313 i.e 21 bits max)   */
+  psg_cycles_ratio  = (int)((mclk / (double) snd.sample_rate) * 2048.0);
+  fm_cycles_ratio   = psg_cycles_ratio;
+  fm_cycles_count   = 0;
+  psg_cycles_count  = 0;
 
-  /* YM2612 is emulated at its original frequency (VLCK/144) */
+  /* Initialize core emulation (input clock based on input frequency for 100% accuracy)   */
+  /* By default, both chips are running at the output frequency.                          */
+  SN76489_Init(mclk/15.0,snd.sample_rate);
+  YM2612Init(mclk/7.0,snd.sample_rate);
+
+  /* In HQ mode, YM2612 is running at its original rate (one sample each 144*7 M-cycles)  */
+  /* FM stream is resampled to the output frequency at the end of a frame.                */
   if (config.hq_fm)
   {
-    /* "real" ratio is (vclk/144.0)/(rate) but since we need perfect synchronization between video & audio
-        on the target system, we are not exactly running at the real genesis framerate but the target 
-        framerate (which is calculated so that no video or audio frameskip occur)
-    */
-    Fir_Resampler_time_ratio((double)m68cycles_per_line * (double)lines_per_frame * fps / 144.0 / (double)rate);
-
-    m68cycles_per_sample[0] = 144;
-
+    fm_cycles_ratio = 144 * 7 * (1 << 11);
+    Fir_Resampler_time_ratio(mclk / (double)snd.sample_rate / (144.0 * 7.0));
   }
 
-  /* initialize sound chips */
-  SN76489_Init((int)zclk,rate);
-  YM2612Init((int)vclk,rate);
-} 
-
-void sound_update(int fm_len, int psg_len)
-{
-  /* update last samples (if needed) */
-  fm_update(fm_len - snd.fm.pos);
-  psg_update(psg_len - snd.psg.pos);
-
-  /* reset samples count */
-  snd.fm.pos   = 0;
-  snd.psg.pos  = 0;
+#ifdef LOG_SOUND
+  error("%d mcycles per PSG samples\n", psg_cycles_ratio);
+  error("%d mcycles per FM samples\n", fm_cycles_ratio);
+#endif
 }
 
-/* reset FM chip */
+/* Reset sound chips emulation */
+void sound_reset(void)
+{
+  YM2612ResetChip();
+  SN76489_Reset();
+  fm_cycles_count = 0;
+  psg_cycles_count = 0;
+}
+
+/* End of frame update, return the number of samples run so far.  */
+int sound_update(unsigned int cycles)
+{
+  /* run PSG chip until end of frame */
+  psg_update(cycles);
+
+  /* number of available samples */
+  int size = snd.psg.pos - snd.psg.buffer;
+
+#ifdef LOG_SOUND
+  error("%d PSG samples available\n",snd.psg.pos - snd.psg.buffer);
+#endif
+
+  /* FM resampling */
+  if (config.hq_fm)
+  {
+    /* resynchronize FM & PSG chips */
+    int remain = Fir_Resampler_input_needed(size << 1) >> 1;
+
+    /* get remaining FM samples */
+    if (remain > 0)
+    {
+      YM2612Update(Fir_Resampler_buffer(), remain);
+      Fir_Resampler_write(remain << 1);
+    }
+
+    fm_cycles_count = psg_cycles_count;
+
+#ifdef LOG_SOUND
+    error("%d FM samples available\n",Fir_Resampler_written() >> 1);
+#endif
+  }
+  else
+  {
+    /* run FM chip until end of frame */
+    fm_update(cycles);
+
+#ifdef LOG_SOUND
+    error("%d FM samples available\n",(snd.fm.pos - snd.fm.buffer)>>1);
+#endif
+  }
+
+#ifdef LOG_SOUND
+  error("%lu PSG cycles run\n",psg_cycles_count);
+  error("%lu FM cycles run \n",fm_cycles_count);
+#endif
+
+  /* adjust PSG & FM cycle counts */
+  psg_cycles_count -= (cycles << 11);
+  fm_cycles_count -= (cycles << 11);
+
+#ifdef LOG_SOUND
+  error("%lu PSG cycles left\n",psg_cycles_count);
+  error("%lu FM cycles left\n",fm_cycles_count);
+#endif
+
+  return size;
+}
+
+/* Reset FM chip during 68k execution */
 void fm_reset(void)
 {
-  fm_update(fm_sample_cnt(0));
+  fm_update(mcycles_68k);
   YM2612ResetChip();
 }
 
-/* write FM chip */
-void fm_write(unsigned int cpu, unsigned int address, unsigned int data)
+/* Write FM chip */
+void fm_write(unsigned int cycles, unsigned int address, unsigned int data)
 {
-  if (address & 1) fm_update(fm_sample_cnt(cpu));
+  if (address & 1)
+    fm_update(cycles);
   YM2612Write(address, data);
 }
 
-/* read FM status */
-unsigned int fm_read(unsigned int cpu, unsigned int address)
+/* Read FM status */
+unsigned int fm_read(unsigned int cycles, unsigned int address)
 {
-  fm_update(fm_sample_cnt(cpu));
+  fm_update(cycles);
   return YM2612Read();
 }
 
-/* write PSG chip */
-void psg_write(unsigned int cpu, unsigned int data)
+/* Write PSG chip */
+void psg_write(unsigned int cycles, unsigned int data)
 {
-  psg_update(psg_sample_cnt(cpu));
+  psg_update(cycles);
   SN76489_Write(data);
 }
