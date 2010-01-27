@@ -148,7 +148,7 @@ void sound_init(void)
     Fir_Resampler_time_ratio(mclk / (double)snd.sample_rate / (144.0 * 7.0));
   }
 
-#ifdef LOG_SOUND
+#ifdef LOGSOUND
   error("%d mcycles per PSG samples\n", psg_cycles_ratio);
   error("%d mcycles per FM samples\n", fm_cycles_ratio);
 #endif
@@ -172,26 +172,26 @@ int sound_update(unsigned int cycles)
   /* number of available samples */
   int size = snd.psg.pos - snd.psg.buffer;
 
-#ifdef LOG_SOUND
-  error("%d PSG samples available\n",snd.psg.pos - snd.psg.buffer);
+#ifdef LOGSOUND
+    error("%d PSG samples available\n",size);
 #endif
 
   /* FM resampling */
   if (config.hq_fm)
   {
-    /* resynchronize FM & PSG chips */
-    int remain = Fir_Resampler_input_needed(size << 1) >> 1;
-
     /* get remaining FM samples */
+    int remain = Fir_Resampler_input_needed(size);
+
     if (remain > 0)
     {
+      /* resynchronize FM & PSG chips */
       YM2612Update(Fir_Resampler_buffer(), remain);
       Fir_Resampler_write(remain << 1);
     }
 
     fm_cycles_count = psg_cycles_count;
 
-#ifdef LOG_SOUND
+#ifdef LOGSOUND
     error("%d FM samples available\n",Fir_Resampler_written() >> 1);
 #endif
   }
@@ -200,21 +200,21 @@ int sound_update(unsigned int cycles)
     /* run FM chip until end of frame */
     fm_update(cycles);
 
-#ifdef LOG_SOUND
+#ifdef LOGSOUND
     error("%d FM samples available\n",(snd.fm.pos - snd.fm.buffer)>>1);
 #endif
   }
 
-#ifdef LOG_SOUND
+#ifdef LOGSOUND
   error("%lu PSG cycles run\n",psg_cycles_count);
   error("%lu FM cycles run \n",fm_cycles_count);
 #endif
 
   /* adjust PSG & FM cycle counts */
-  psg_cycles_count -= (cycles << 11);
-  fm_cycles_count -= (cycles << 11);
+  psg_cycles_count  -= (cycles << 11);
+  fm_cycles_count   -= (cycles << 11);
 
-#ifdef LOG_SOUND
+#ifdef LOGSOUND
   error("%lu PSG cycles left\n",psg_cycles_count);
   error("%lu FM cycles left\n",fm_cycles_count);
 #endif
@@ -222,10 +222,10 @@ int sound_update(unsigned int cycles)
   return size;
 }
 
-/* Reset FM chip during 68k execution */
-void fm_reset(void)
+/* Reset FM chip */
+void fm_reset(unsigned int cycles)
 {
-  fm_update(mcycles_68k);
+  fm_update(cycles);
   YM2612ResetChip();
 }
 

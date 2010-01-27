@@ -53,7 +53,7 @@ static void gen_sinc(double rolloff, int width, double offset, double spacing, d
   }
 }
 
-static int available( long input_count )
+/*static int available( long input_count )
 {
   int cycle_count = input_count / input_per_cycle;
   int output_count = cycle_count * res * STEREO;
@@ -73,6 +73,36 @@ static int available( long input_count )
     output_count += 2;
   }
   return output_count;
+}
+*/
+int Fir_Resampler_avail()
+{
+  long count = 0;
+  sample_t* in = buffer;
+  sample_t* end_pos = write_pos;
+  unsigned long skip = skip_bits >> imp_phase;
+  int remain = res - imp_phase;
+  if ( end_pos - in >= WIDTH * STEREO )
+  {
+    end_pos -= WIDTH * STEREO;
+    do
+    {
+			count++;
+      remain--;
+      in += (skip * STEREO) & STEREO;
+      skip >>= 1;
+      in += step;
+
+      if ( !remain )
+      {
+        skip = skip_bits;
+        remain = res;
+      }
+    }
+    while ( in <= end_pos );
+  }
+
+  return count;
 }
 
 int Fir_Resampler_initialize( int new_size )
@@ -191,10 +221,10 @@ int Fir_Resampler_written( void )
 }
 
 /* Number of output samples available */
-int Fir_Resampler_avail( void )
+/*int Fir_Resampler_avail( void )
 {
   return available( write_pos - &buffer [WIDTH * STEREO] );
-}
+}*/
 
 void Fir_Resampler_write( long count )
 {
@@ -274,13 +304,14 @@ int Fir_Resampler_read( sample_t* out, long count )
   return out - out_;
 }
 
+ /* fixed (Eke_Eke) */
 int Fir_Resampler_input_needed( long output_count )
 {
   long input_count = 0;
 
   unsigned long skip = skip_bits >> imp_phase;
   int remain = res - imp_phase;
-  while ( (output_count) > 0 ) /* fixed (Eke_Eke) */
+  while ( (output_count) > 0 )
   {
     input_count += step + (skip & 1) * STEREO;
     skip >>= 1;
@@ -289,13 +320,13 @@ int Fir_Resampler_input_needed( long output_count )
       skip = skip_bits;
       remain = res;
     }
-    output_count -= 2;
+    output_count --;
   }
 
   long input_extra = input_count - (write_pos - &buffer [WRITE_OFFSET]);
   if ( input_extra < 0 )
     input_extra = 0;
-  return input_extra;
+  return (input_extra >> 1);
 }
 
 int Fir_Resampler_skip_input( long count )

@@ -146,6 +146,7 @@ void gen_reset(uint32 hard_reset)
   /* Reset CPUs */
   resetline = -1;
   gen_running = 1; 
+  fm_reset(0);
   m68k_pulse_reset();
   z80_reset();
 }
@@ -214,8 +215,8 @@ void gen_reset_w(uint32 state)
     }
 
     /* Reset Z80 & YM2612 */
+    fm_reset(mcycles_68k);
     z80_reset();
-    fm_reset();
 
     /* update Z80 bus status */
     zstate &= 2;

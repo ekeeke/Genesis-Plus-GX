@@ -84,7 +84,7 @@ int audio_update (void)
     /* resample into FM output buffer */
     Fir_Resampler_read(fm,size);
 
-#ifdef LOG_SOUND
+#ifdef LOGSOUND
     error("%d FM samples remaining\n",Fir_Resampler_written() >> 1);
 #endif
   }
@@ -93,7 +93,7 @@ int audio_update (void)
     /* adjust remaining samples in FM output buffer*/
     snd.fm.pos -= (size << 1);
 
-#ifdef LOG_SOUND
+#ifdef LOGSOUND
     error("%d FM samples remaining\n",(snd.fm.pos - snd.fm.buffer)>>1);
 #endif
   }
@@ -101,7 +101,7 @@ int audio_update (void)
   /* adjust remaining samples in PSG output buffer*/
   snd.psg.pos -= size;
 
-#ifdef LOG_SOUND
+#ifdef LOGSOUND
   error("%d PSG samples remaining\n",snd.psg.pos - snd.psg.buffer);
 #endif
 
@@ -155,7 +155,7 @@ int audio_update (void)
   memcpy(snd.fm.buffer, fm, (snd.fm.pos - snd.fm.buffer) << 1);
   memcpy(snd.psg.buffer, psg, (snd.psg.pos - snd.psg.buffer) << 1);
 
-#ifdef LOG_SOUND
+#ifdef LOGSOUND
   error("%d samples returned\n\n",size);
 #endif
 
@@ -398,7 +398,7 @@ int system_frame (int do_skip)
       if (line == vdp_height)
       {
         /* render overscan */
-        if (line < end_line)
+        if (!do_skip && (line < end_line))
           render_line(line, 1);
 
         /* update inputs (doing this here fix Warriors of Eternal Sun) */
@@ -439,7 +439,7 @@ int system_frame (int do_skip)
     else
     {
       /* render overscan */
-      if ((line < end_line) || (line >= start_line))
+      if (!do_skip && ((line < end_line) || (line >= start_line)))
         render_line(line, 1);
 
       /* clear any pending Z80 interrupt */
