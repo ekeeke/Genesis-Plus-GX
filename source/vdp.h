@@ -65,13 +65,13 @@ extern uint8 odd_frame;
 extern uint8 vdp_pal;
 extern uint16 lines_per_frame;
 
-extern uint8 *vctab;
-extern uint8 *hctab;
-extern uint8 vc_ntsc_224[262];
-extern uint8 vc_pal_224[313];
-extern uint8 vc_pal_240[313];
-extern uint8 cycle2hc32[3420];
-extern uint8 cycle2hc40[3420];
+extern const uint8 vc_ntsc_224[262];
+extern const uint8 vc_pal_224[313];
+extern const uint8 vc_pal_240[313];
+extern const uint8 cycle2hc32[3420];
+extern const uint8 cycle2hc40[3420];
+extern const uint8 *vctab;
+extern const uint8 *hctab;
 
 /* Function prototypes */
 extern void vdp_init(void);
