@@ -27,6 +27,7 @@
 
 extern u8 soundbuffer[2][3840];
 extern u32 mixbuffer;
+extern u32 audioStarted;
 
 extern void gx_audio_Init(void);
 extern void gx_audio_Shutdown(void);

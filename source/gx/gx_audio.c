@@ -37,7 +37,7 @@ u8 soundbuffer[2][3840] ATTRIBUTE_ALIGN(32);
 u32 mixbuffer;
 
 /* audio DMA status */
-static u32 audioStarted = 0;
+u32 audioStarted;
 
 /* Background music */
 static u8 *Bg_music_ogg = NULL;
@@ -100,18 +100,22 @@ void gx_audio_Update(void)
 
   /* set next DMA soundbuffer */
   s16 *sb = (s16 *)(soundbuffer[mixbuffer]);
-  mixbuffer ^= 1;
   DCFlushRange((void *)sb, size);
   AUDIO_InitDMA((u32) sb, size);
+  mixbuffer ^= 1;
 
   /* Start Audio DMA */
-  /* this is only called once to kick-off DMA from external memory to audio interface   */
+  /* this is called once to kick-off DMA from external memory to audio interface        */
   /* DMA operation is automatically restarted when all samples have been sent.          */
   /* If DMA settings are not updated at that time, previous sound buffer will be used.  */
   /* Therefore we need to make sure frame emulation is completed before current DMA is  */
   /* completed, either by synchronizing frame emulation with DMA start or by syncing it */
   /* with Vertical Interrupt and outputing a suitable number of samples per frame.      */
   /* In 60hz mode, VSYNC period is actually 16715 ms which is 802.32 samples at 48kHz.  */
+  /*                                                                                    */
+  /* In both cases, audio DMA need to be synchronized with VSYNC and therefore need to  */
+  /* be resynchronized (restarted) every time video settings are changed (hopefully,    */
+  /* this generally happens while no music is played.                                   */                    
   if (!audioStarted)
   {
     audioStarted = 1;
@@ -120,6 +124,8 @@ void gx_audio_Update(void)
     if (gc_pal | vdp_pal)
       AUDIO_RegisterDMACallback(ai_callback);
 
+    /* restart audio DMA */
+    AUDIO_StopDMA();
     AUDIO_StartDMA();
     if (frameticker > 1)
       frameticker = 1;

@@ -2,63 +2,67 @@
 Genesis Plus GX 1.4.0 (??/??/????) (Eke-Eke)
 ---------------------------------------------------------------------------------------------------------
 
-[Core]
-------
-
-* modified SN76489 cut-off frequency
-* added an option to boost SN76489 Noise Channel
-* removed outdated Gens YM2612 core
-* improved YM2612 core general accuracy (SSG-EG, CSM mode,...) (based upon Nemesis recent tests on real hardware)
-* improved YM2612 LFO emulation accuracy (fixes "Spider-Man & Venom : Separation Anxiety" intro music)
-* fixed YM2612 context saving/loading.
-* added 3-Band EQ for fully configurable sound filtering (thanks to Neil C)
-* implemented faster FIR resampler, dropped libsamplerate support (thanks to Blargg & AamirM)
-
-* improved VDP sprite masking accuracy (thanks to Nemesis for his sprite test program)
-* improved HBLANK flag timing accuracy: fixes Mega Turrican (Sky level)
-* added support for CRAM writes during horizontal blanking.
-* fixed 2-Cell vertical scrolling when column 0 is shifted.
-* added support for 2-Cell vertical scrolling in Interlaced 2 mode.
-* fixed lightgun auto detection: fixes cursor position in Lethal Enforcers II
-
-* improved DIVU/DVIS (thanks to Jorge Cwik) & MULU/MULS 68k instructions timing accuracy
-* updated Z80 core to last version (fixes interrupt Mode 0 timing and some BIT instructions)
-* fixed some Z80 instructions timing
-
-* fixed Backup Memory support in some games using serial EEPROM
-* fixed Realtec mapper support: fix sound in Balloon Boy / Funny World
-* added Game Genie hardware emulation (Game Genie ROM is now fully supported, see README for more details)
-* added Action Replay hardware emulation (Action replay ROM is now fully supported, see README for more details)
-* added S&K "Lock-On" hardware emulation ("lock" any games to Sonic & Knuckles)
-* added Cartridge "hot swap" feature (swap games without reseting the virtual console)
-
-* lots of code cleanup & optimization
-
-
-* improved 68k accuracy (initial reset timing + auto-vectored interrupts handling).
-* modified Z80 & 68k cores to directly use external cycle count instead of intermediate counters.
-* improved Z80 & 68k cpu execution/synchronization accuracy, now use Master Clock as common clock reference.
+[Core/Sound]
+---------------
+* completely rewrote sound processing/mixing: sound chips are now clocked with exact output framerate
+to ensure 100% smooth video & audio playback, with no lag or skipping, while rendering an accurate number
+of samples per frame and keeping PSG & FM chips in sync.
 * improved PSG & FM chips synchronization with CPU execution (fixed point precision).
+* improved YM2612 core general accuracy (SSG-EG, CSM mode,...) (based upon Nemesis recent tests on real hardware)
+* improved YM2612 LFO emulation accuracy: fixes "Spider-Man & Venom : Separation Anxiety" (intro)
+* fixed YM2612 context saving/loading.
+* fixed YM2612 state upon reset.
+* removed outdated Gens YM2612 core
+* added faster FIR resampler (thanks to Blargg & AamirM), dropped libsamplerate support.
+* added configurable Low-Pass filtering
+* added 3-Band Equalizer to support fully configurable sound filtering (thanks to Neil C).
+* added an option to boost SN76489 Noise Channel.
+* modified SN76489 cut-off frequency.
 
-* completely rewrote sound output processing & mixing: sound chips are now clocked with exact output framerate
-to ensure 100% smooth video & audio playback, with no lag or skipping, while still rendering an accurate number
-of samples per frame. This would also make fast-forward implementation (video AND sound) more trivial.
-
-* improved color accuracy in VDP highlight mode to match results observed on real hardware.
+[Core/VDP]
+---------------
+* added support for CRAM writes during horizontal blanking.
+* added support for 2-Cell vertical scrolling in Interlaced 2 mode (unused by games ?)
+* fixed 2-Cell vertical scrolling when column 0 is shifted.
+* improved sprite masking accuracy (thanks to Nemesis for his sprite test program)
+* improved HBLANK flag timing accuracy: fixes Mega Turrican (Sky level)
 * improved sprites processing timing accuracy: fixes (un)masked sprites in Mickey Mania (3D level), Sonic 2 (VS mode).
 * improved horizontal blanking & HINT/VINT occurence timing accuracy, as measured on real hardware.
-* improved H-Counter accuraccy in 40-cell mode, as measured on real hardware.
+* improved H-Counter accuracy in 40-cell mode, as measured on real hardware.
+* improved color accuracy in VDP highlight mode to match results observed on real hardware.
+
+[Core/CPU]
+---------------
+* updated Z80 core to last version (fixes interrupt Mode 0 timing and some BIT instructions).
+* fixed some Z80 instructions timing.
+* improved 68k accuracy (initial Reset timing + auto-vectored interrupts handling).
+* improved 68k timing accuracy for DIVU/DVIS (thanks to Jorge Cwik) & MULU/MULS instructions.
+* improved Z80 & 68k cpu execution/synchronization accuracy by using Master Clock as common reference (now run exactly 3420 M-Cycles per line).
+* modified Z80 & 68k cores to directly use external cycle count instead of intermediate counters.
+
+[Core/Extra]
+---------------
+* added Game Genie hardware emulation (Game Genie ROM is now fully supported).
+* added Action Replay hardware emulation (Action replay ROM is now fully supported).
+* added S&K "Lock-On" hardware emulation (you can "lock" any games to Sonic & Knuckles).
+* added Cartridge "hot swap" feature.
+* fixed Backup Memory support in some games that were actually using serial EEPROM.
+* fixed Realtec mapper emulation: fixes missing sound in Balloon Boy / Funny World.
+* fixed lightgun auto detection: fixes cursor position in Lethal Enforcers II.
+* lots of code cleanup, bugfixes & optimization.
+
 
 [Gamecube/Wii]
+---------------
+* new! FONT engine (using internal IPL font & GX hardware rendering).
+* new! GUI engine (with PCM/OGG sound support, using GX hardware rendering & multithreading).
+* new! interface design (incl. IR pointing, game snapshots, visual & sound effects, BGM...).
+* improved audio/video back-end synchronization to ensure 100% smooth video & audio playback.
+* improved reset button behavior, now works more like the real Genesis reset button.
+* improved lightgun cursors layout.
+* fixed stability issues and memory leaks.
+* compiled with Devkitpro/PPC r18 and last libogc/libfat (support for SDHC, new DVDX, etc)
 
-* improved audio/video synchronization (see above)
-* improved reset button behavior, now works much more like the real Genesis reset button
-* fixed stability issues and some memory leaks
-* added internal screenshot feature
-* improved lightgun cursors
-* new FONT & GUI engines: use internal IPL FONT, GX hardware rendering, sound support & multithreading.
-* new emulator interface design: incl. IR pointing, game snapshots, menu effects, sound effects, BGM...
- (check the README for more details)
 
 
 

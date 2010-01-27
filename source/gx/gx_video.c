@@ -1288,7 +1288,7 @@ void gx_video_Start(void)
   VIDEO_SetPostRetraceCallback(NULL);
   VIDEO_Flush();
 
-  /* interlaced/progressive Video mode */
+  /* switch interlaced/progressive video settings */
   if (config.render == 2)
   {
     tvmodes[2]->viTVMode = VI_TVMODE_NTSC_PROG;
@@ -1440,7 +1440,7 @@ void gx_video_Update(void)
 
   if (update)
   {
-    /* field synchronizations */
+    /* field synchronization */
     VIDEO_WaitVSync();
     if (rmode->viTVMode & VI_NON_INTERLACE)
       VIDEO_WaitVSync();
@@ -1448,6 +1448,10 @@ void gx_video_Update(void)
       VIDEO_WaitVSync();
     if (frameticker > 1)
       frameticker = 1;
+
+    /* force audio DMA resynchronization */
+    audioStarted = 0;
+
     bitmap.viewport.changed = 0;
   }
 }
