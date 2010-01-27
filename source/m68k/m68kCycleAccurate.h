@@ -111,7 +111,7 @@ INLINE unsigned getDivu68kCycles( DWORD dividend, WORD divisor)
     }
   }
 
-  return mcycles * 2;
+  return mcycles * 14;
 }
 
 //
@@ -133,7 +133,7 @@ INLINE unsigned getDivs68kCycles( LONG dividend, SHORT divisor)
   // Check for absolute overflow
   if( ((DWORD) abs( dividend) >> 16) >= (WORD) abs( divisor))
   {
-    return (mcycles + 2) * 2;
+    return (mcycles + 2) * 14;
   }
 
   // Absolute quotient
@@ -159,7 +159,7 @@ INLINE unsigned getDivs68kCycles( LONG dividend, SHORT divisor)
     aquot <<= 1;
   }
 
-  return mcycles * 2;
+  return mcycles * 14;
 }
 
 //
@@ -171,14 +171,14 @@ INLINE unsigned getMulu68kCycles( WORD source)
 {
   int i;
 
-  unsigned mcycles = 38;
+  unsigned mcycles = 266;
 
   /* count number of bits set to 1 */
   for( i = 0; i < 15; i++)
   {
     if (source & 1)
     {
-      mcycles += 2;
+      mcycles += 14;
     }
     source >>= 1;
   }
@@ -196,7 +196,7 @@ INLINE unsigned getMuls68kCycles( SHORT source)
 {
   int i;
 
-  unsigned mcycles = 38;
+  unsigned mcycles = 266;
 
   /* detect 01 or 10 patterns */
   LONG temp = source << 1;
@@ -207,7 +207,7 @@ INLINE unsigned getMuls68kCycles( SHORT source)
   {
     if (source & 1)
     {
-      mcycles += 2;
+      mcycles += 14;
     }
     source >>= 1;
   }

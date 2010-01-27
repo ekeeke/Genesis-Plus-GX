@@ -124,7 +124,7 @@ const uint m68ki_shift_32_table[65] =
 /* Number of clock cycles to use for exception processing.
  * I used 4 for any vectors that are undocumented for processing times.
  */
-const uint8 m68ki_exception_cycle_table[4][256] =
+uint16 m68ki_exception_cycle_table[4][256] =
 {
   { /* 000 */
      40, /*  0: Reset - Initial Stack Pointer                      */
@@ -420,6 +420,7 @@ const uint8 m68ki_exception_cycle_table[4][256] =
   }
 };
 
+#if M68K_EMULATE_010 || M68K_EMULATE_020 || M68K_EMULATE_EC020 || M68K_EMULATE_040
 const uint8 m68ki_ea_idx_cycle_table[64] =
 {
    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
@@ -439,7 +440,7 @@ const uint8 m68ki_ea_idx_cycle_table[64] =
   13, /* ..11..11 memory indirect,    base 32,   outer 32   */
    0, 11, 13, 13,  0, 11, 13, 13,  0, 11, 13, 13
 };
-
+#endif
 
 
 /* ======================================================================== */
@@ -683,15 +684,15 @@ void m68k_set_cpu_type(unsigned int cpu_type)
       CPU_SR_MASK      = 0xa71f; /* T1 -- S  -- -- I2 I1 I0 -- -- -- X  N  Z  V  C  */
       CYC_INSTRUCTION  = m68ki_cycles[0];
       CYC_EXCEPTION    = m68ki_exception_cycle_table[0];
-      CYC_BCC_NOTAKE_B = -2;
-      CYC_BCC_NOTAKE_W = 2;
-      CYC_DBCC_F_NOEXP = -2;
-      CYC_DBCC_F_EXP   = 2;
-      CYC_SCC_R_TRUE   = 2;
-      CYC_MOVEM_W      = 2;
-      CYC_MOVEM_L      = 3;
-      CYC_SHIFT        = 1;
-      CYC_RESET        = 132;
+      CYC_BCC_NOTAKE_B = -2 * 7;
+      CYC_BCC_NOTAKE_W = 2 * 7;
+      CYC_DBCC_F_NOEXP = -2 * 7;
+      CYC_DBCC_F_EXP   = 2 * 7;
+      CYC_SCC_R_TRUE   = 2 * 7;
+      CYC_MOVEM_W      = 4 * 7;
+      CYC_MOVEM_L      = 8 * 7;
+      CYC_SHIFT        = 2 * 7;
+      CYC_RESET        = 132 * 7;
       return;
     case M68K_CPU_TYPE_68008:
       CPU_TYPE         = CPU_TYPE_008;
@@ -839,13 +840,6 @@ void m68k_run (unsigned int cycles)
 
   while (mcycles_68k < cycles)
   {
-    /* Make sure we're not stopped */
-    if(CPU_STOPPED)
-    {
-      mcycles_68k = cycles;
-      return;
-    }
-
     /* check interrupt updates */
     if (irq_status & 0x10)
     {
@@ -857,7 +851,7 @@ void m68k_run (unsigned int cycles)
         m68k_execute();
 
 #ifdef LOGVDP
-      error("[%d(%d)][%d(%d)] IRQ Level = %d (%x)\n", v_counter, mcycles_68k/3420, mcycles_68k, mcycles_68k%3420,int_level,m68k_get_reg (NULL, M68K_REG_PC));
+      error("[%d(%d)][%d(%d)] IRQ Level = %d(0x%02x) (%x)\n", v_counter, mcycles_68k/3420, mcycles_68k, mcycles_68k%3420,int_level,FLAG_INT_MASK,m68k_get_reg (NULL, M68K_REG_PC));
 #endif
       /* update IRQ level */
       CPU_INT_LEVEL = int_level << 8;
@@ -865,7 +859,13 @@ void m68k_run (unsigned int cycles)
 
       if (mcycles_68k >= cycles)
         return;
+    }
 
+    /* Make sure we're not stopped */
+    if(CPU_STOPPED)
+    {
+      mcycles_68k = cycles;
+      return;
     }
 
     /* execute a single instruction */

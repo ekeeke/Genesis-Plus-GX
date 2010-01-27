@@ -384,8 +384,8 @@
   #define CPU_TYPE_IS_020_PLUS(A)    ((A) & (CPU_TYPE_020 | CPU_TYPE_040))
   #define CPU_TYPE_IS_020_LESS(A)    1
 #else
-  #define CPU_TYPE_IS_020_PLUS(A)    0
-  #define CPU_TYPE_IS_020_LESS(A)    1
+  #define CPU_TYPE_IS_020_PLUS(A)    CPU_TYPE_IS_040_PLUS(A)
+  #define CPU_TYPE_IS_020_LESS(A)    CPU_TYPE_IS_040_LESS(A)
 #endif
 
 #if M68K_EMULATE_EC020
@@ -801,7 +801,7 @@
 #define USE_ALL_CYCLES() m68ki_remaining_cycles = 0
 */
 
-#define USE_CYCLES(A)    mcycles_68k += (7 * (A))
+#define USE_CYCLES(A)    mcycles_68k += (A)
 
 
 /* ----------------------------- Read / Write ----------------------------- */
@@ -899,7 +899,7 @@ typedef struct
   uint cyc_shift;
   uint cyc_reset;
   const uint8* cyc_instruction;
-  const uint8* cyc_exception;
+  const uint16* cyc_exception;
 
   /* Callbacks to host */
   int  (*int_ack_callback)(int int_line);           /* Interrupt Acknowledge */
@@ -922,7 +922,7 @@ extern uint           m68ki_tracing;
 extern const uint8    m68ki_shift_8_table[];
 extern const uint16   m68ki_shift_16_table[];
 extern const uint     m68ki_shift_32_table[];
-extern const uint8    m68ki_exception_cycle_table[][256];
+extern uint16         m68ki_exception_cycle_table[][256];
 extern uint           m68ki_address_space;
 extern const uint8    m68ki_ea_idx_cycle_table[];
 
@@ -1254,8 +1254,6 @@ INLINE uint m68ki_get_ea_ix(uint An)
   /* An = base register */
   uint extension = m68ki_read_imm_16();
   uint Xn = 0;                        /* Index register */
-  uint bd = 0;                        /* Base Displacement */
-  uint od = 0;                        /* Outer Displacement */
 
   if(CPU_TYPE_IS_010_LESS(CPU_TYPE))
   {
@@ -1267,6 +1265,11 @@ INLINE uint m68ki_get_ea_ix(uint An)
     /* Add base register and displacement and return */
     return An + Xn + MAKE_INT_8(extension);
   }
+
+#if M68K_EMULATE_010 || M68K_EMULATE_020 || M68K_EMULATE_EC020 || M68K_EMULATE_040
+  
+  uint bd = 0;                        /* Base Displacement */
+  uint od = 0;                        /* Outer Displacement */
 
   /* Brief extension format */
   if(!BIT_8(extension))
@@ -1318,6 +1321,7 @@ INLINE uint m68ki_get_ea_ix(uint An)
 
   /* Preindex */
   return m68ki_read_32(An + bd + Xn) + od;
+#endif
 }
 
 
