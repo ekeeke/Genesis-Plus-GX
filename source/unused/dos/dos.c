@@ -368,16 +368,13 @@ void dos_update_input(void)
     vdp_pal ^= 1;
 
     /* save YM2612 context */
-    unsigned char *temp = memalign(32,YM2612GetContextSize());
+    unsigned char *temp = malloc(YM2612GetContextSize());
     if (temp)
       memcpy(temp, YM2612GetContextPtr(), YM2612GetContextSize());
 
     /* reinitialize all timings */
-    audio_init(snd.sample_rate, framerate);
+    audio_init(snd.sample_rate, snd.frame_rate);
     system_init();
-
-    /* restore SRAM */
-    memfile_autoload(config.sram_auto,-1);
 
     /* restore YM2612 context */
     if (temp)

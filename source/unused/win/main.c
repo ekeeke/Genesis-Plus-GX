@@ -90,17 +90,22 @@ static void sdl_sound_update()
   int i;
   short* p;
 
-  SDL_LockAudio();
-  p = (short*)sdl_sound.current_pos;
-  for(i = 0; i < snd.buffer_size; ++i) {
-      *p = snd.buffer[0][i];
-      ++p;
-      *p = snd.buffer[1][i];
-      ++p;
+  int size = audio_update();
+
+  if (use_sound)
+  {
+    SDL_LockAudio();
+    p = (short*)sdl_sound.current_pos;
+    for(i = 0; i < size; ++i) {
+        *p = snd.buffer[0][i];
+        ++p;
+        *p = snd.buffer[1][i];
+        ++p;
+    }
+    sdl_sound.current_pos = (char*)p;
+    sdl_sound.current_emulated_samples += size * 2 * sizeof(short);
+    SDL_UnlockAudio();
   }
-  sdl_sound.current_pos = (char*)p;
-  sdl_sound.current_emulated_samples += snd.buffer_size * 2 * sizeof(short);
-  SDL_UnlockAudio();
 }
 
 static void sdl_sound_close()
@@ -196,20 +201,28 @@ static void sdl_video_close()
 
 struct {
   SDL_sem* sem_sync;
+  unsigned ticks;
 } sdl_sync;
 
 /* sync */
 
 static Uint32 sdl_sync_timer_callback(Uint32 interval)
 {
-  /*char caption[100];
+  SDL_SemPost(sdl_sync.sem_sync);
+  char caption[100];
   char region[10];
   if (region_code == REGION_USA) sprintf(region,"USA");
   else if (region_code == REGION_EUROPE) sprintf(region,"EUR");
   else sprintf(region,"JAP");
-  sprintf(caption, "Genesis Plus/SDL - %s (%s) - %d fps - 0x%04X", rominfo.international, region, vdp_rate, realchecksum);
-  SDL_WM_SetCaption(caption, NULL);*/
-  SDL_SemPost(sdl_sync.sem_sync);
+  
+  sdl_sync.ticks++;
+  if (sdl_sync.ticks == (vdp_pal ? 50 : 20))
+  {
+    int fps = vdp_pal ? (sdl_video.frames_rendered / 3) : sdl_video.frames_rendered;
+    sdl_sync.ticks = sdl_video.frames_rendered = 0;
+    sprintf(caption, "Genesis Plus/SDL - %s (%s) - 0x%04X - %d fps", rominfo.international, region, realchecksum, fps);
+    SDL_WM_SetCaption(caption, NULL);
+  }
   return interval;
 }
 
@@ -220,6 +233,7 @@ static int sdl_sync_init()
     return 0;
   }
   sdl_sync.sem_sync = SDL_CreateSemaphore(0);
+  sdl_sync.ticks = 0;
   return 1;
 }
 
@@ -305,16 +319,13 @@ static int sdl_control_update(SDLKey keystate)
         vdp_pal ^= 1;
 
         /* save YM2612 context */
-        unsigned char *temp = memalign(32,YM2612GetContextSize());
+        unsigned char *temp = malloc(YM2612GetContextSize());
         if (temp)
           memcpy(temp, YM2612GetContextPtr(), YM2612GetContextSize());
 
         /* reinitialize all timings */
-        audio_init(snd.sample_rate, framerate);
+        audio_init(snd.sample_rate, snd.frame_rate);
         system_init();
-
-        /* restore SRAM */
-        memfile_autoload(config.sram_auto,-1);
 
         /* restore YM2612 context */
         if (temp)
@@ -536,7 +547,8 @@ int main (int argc, char **argv)
   SDL_UnlockSurface(sdl_video.surf_bitmap);
 
   /* initialize emulation */
-  audio_init(SOUND_FREQUENCY, vdp_pal ? 50 : 60);
+  audio_init(SOUND_FREQUENCY, vdp_pal ? 50:60);
+  //audio_init(SOUND_FREQUENCY, 1000000.0/16715.0);
   system_init();
 
   /* load SRAM */
@@ -576,9 +588,7 @@ int main (int argc, char **argv)
     }
 
     sdl_video_update();
-    audio_update(snd.buffer_size);
-    if(use_sound)
-      sdl_sound_update();
+    sdl_sound_update();
 
     if(!turbo_mode && sdl_sync.sem_sync && sdl_video.frames_rendered % 3 == 0)
     {
