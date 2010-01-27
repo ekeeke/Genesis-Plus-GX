@@ -1800,10 +1800,14 @@ static void reset_channels(FM_CH *CH , int num )
 
   for( c = 0 ; c < num ; c++ )
   {
-    CH[c].fc = 0;
+    CH[c].mem_value   = 0;
+    CH[c].op1_out[0]  = 0;
+    CH[c].op1_out[1]  = 0;
     for(s = 0 ; s < 4 ; s++ )
     {
-      CH[c].SLOT[s].ssg     = 0;
+      CH[c].SLOT[s].Incr    = -1;
+      CH[c].SLOT[s].key     = 0;
+      CH[c].SLOT[s].phase   = 0;
       CH[c].SLOT[s].ssgn    = 0;
       CH[c].SLOT[s].state   = EG_OFF;
       CH[c].SLOT[s].volume  = MAX_ATT_INDEX;
@@ -1928,21 +1932,27 @@ int YM2612ResetChip(void)
 {
   int i;
 
-  ym2612.OPN.eg_timer = 0;
-  ym2612.OPN.eg_cnt   = 0;
+  ym2612.OPN.eg_timer     = 0;
+  ym2612.OPN.eg_cnt       = 0;
 
-  ym2612.OPN.lfo_timer = 0;
-  ym2612.OPN.lfo_cnt   = 0;
-  ym2612.OPN.LFO_AM    = 0;
-  ym2612.OPN.LFO_PM    = 0;
+  ym2612.OPN.lfo_timer    = 0;
+  ym2612.OPN.lfo_cnt      = 0;
+  ym2612.OPN.LFO_AM       = 0;
+  ym2612.OPN.LFO_PM       = 0;
 
-  ym2612.OPN.ST.TAC   = 0;
-  ym2612.OPN.ST.TBC   = 0;
+  ym2612.OPN.ST.TAC       = 0;
+  ym2612.OPN.ST.TBC       = 0;
+
+  ym2612.OPN.SL3.key_csm  = 0;
+
+  ym2612.dacen            = 0;
+  ym2612.dacout           = 0;
 
   OPNWriteMode(0x27,0x30);
   OPNWriteMode(0x26,0x00);
   OPNWriteMode(0x25,0x00);
   OPNWriteMode(0x24,0x00);
+  OPNWriteMode(0x22,0x00);
 
   reset_channels(&ym2612.CH[0] , 6 );
 
@@ -1957,9 +1967,6 @@ int YM2612ResetChip(void)
     OPNWriteReg(i|0x100,0);
   }
 
-  /* DAC mode clear */
-  ym2612.dacen  = 0;
-  ym2612.dacout = 0;
 
   return 0;
 }
