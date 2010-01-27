@@ -37,7 +37,7 @@
 #define HELD_SPEED 4
 
 /* Menu request flag */
-u8 ConfigRequested = 0;
+u32 ConfigRequested = 0;
 
 /* Configurable Genesis keys */
 #define KEY_BUTTONA 0

@@ -49,6 +49,6 @@ extern void legal();
 extern void reloadrom (int size, char *name);
 extern void shutdown();
 extern u32 frameticker;
-extern u8 Shutdown;
+extern u32 Shutdown;
 
 #endif /* _OSD_H_ */

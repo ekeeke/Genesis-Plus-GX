@@ -34,10 +34,10 @@
 u8 soundbuffer[2][3840] ATTRIBUTE_ALIGN(32);
 
 /* Current work soundbuffer */
-u8 mixbuffer;
+u32 mixbuffer;
 
 /* audio DMA status */
-static u8 audioStarted = 0;
+static u32 audioStarted = 0;
 
 /* Background music */
 static u8 *Bg_music_ogg = NULL;
@@ -56,9 +56,9 @@ static void ai_callback(void)
 /* AUDIO engine initialization */
 void gx_audio_Init(void)
 {
-  /* Initialize AUDIO hardware */
-  /* Default samplerate is 48kHZ */
-  /* Default DMA callback is programmed */
+  /* Initialize AUDIO processing library (ASNDLIB) */
+  /* AUDIO & DSP hardware are initialized */
+  /* Default samplerate is set to 48kHz */
   ASND_Init();
 
   /* Load background music from FAT device */
@@ -83,7 +83,8 @@ void gx_audio_Shutdown(void)
   StopOgg();
   ASND_Pause(1);
   ASND_End();
-  if (Bg_music_ogg) free(Bg_music_ogg);
+  if (Bg_music_ogg)
+    free(Bg_music_ogg);
 }
 
 /*** 
@@ -92,8 +93,11 @@ void gx_audio_Shutdown(void)
      This function retrieves samples for the frame then set the next DMA parameters 
      Parameters will be taken in account only when current DMA operation is over
  ***/
-void gx_audio_Update(int size)
+void gx_audio_Update(void)
 {
+  /* retrieve audio samples */
+  int size = audio_update() * 4;
+
   /* set next DMA soundbuffer */
   s16 *sb = (s16 *)(soundbuffer[mixbuffer]);
   mixbuffer ^= 1;
@@ -101,11 +105,21 @@ void gx_audio_Update(int size)
   AUDIO_InitDMA((u32) sb, size);
 
   /* Start Audio DMA */
-  /* this is only called once, DMA being automatically restarted when previous one is over */
-  /* If DMA settings are not updated at that time, the same soundbuffer will be played again */
+  /* this is only called once to kick-off DMA from external memory to audio interface   */
+  /* DMA operation is automatically restarted when all samples have been sent.          */
+  /* If DMA settings are not updated at that time, previous sound buffer will be used.  */
+  /* Therefore we need to make sure frame emulation is completed before current DMA is  */
+  /* completed, either by synchronizing frame emulation with DMA start or by syncing it */
+  /* with Vertical Interrupt and outputing a suitable number of samples per frame.      */
+  /* In 60hz mode, VSYNC period is actually 16715 ms which is 802.32 samples at 48kHz.  */
   if (!audioStarted)
   {
     audioStarted = 1;
+
+    /* when not using 60hz mode, frame emulation is synchronized with Audio Interface DMA */
+    if (gc_pal | vdp_pal)
+      AUDIO_RegisterDMACallback(ai_callback);
+
     AUDIO_StartDMA();
     if (frameticker > 1)
       frameticker = 1;
@@ -120,20 +134,20 @@ void gx_audio_Update(int size)
  ***/
 void gx_audio_Start(void)
 {
-  /* shutdown menu audio */
-  PauseOgg(1);
-  StopOgg();
+  /* shutdown background music */
+  PauseOgg(1);	
+  StopOgg();	
+  
+  /* shutdown menu audio processing */
   ASND_Pause(1);
-  ASND_End();
+  AUDIO_StopDMA();
+  AUDIO_RegisterDMACallback(NULL);
+  DSP_Halt();
+
+  /* reset emulation audio processing */
+  memset(soundbuffer, 0, 2 * 3840);
   audioStarted = 0;
   mixbuffer = 0;
-
-  /* reset sound buffers */
-  memset(soundbuffer, 0, 2 * 3840);
-
-  /* By default, use audio DMA to synchronize frame emulation */
-  if (gc_pal | vdp_pal)
-    AUDIO_RegisterDMACallback(ai_callback);
 }
 
 /***
@@ -145,13 +159,16 @@ void gx_audio_Start(void)
  ***/
 void gx_audio_Stop(void)
 {
-  /* restart menu audio (this will automatically stops current audio DMA) */
+  /* restart menu audio processing */
+  DSP_Unhalt();
   ASND_Init();
   ASND_Pause(0);
+	
+  /* play background music */
   if (Bg_music_ogg && !Shutdown)
   {
-    PauseOgg(0);
-    PlayOgg((char *)Bg_music_ogg, Bg_music_ogg_size, 0, OGG_INFINITE_TIME);
-    SetVolumeOgg(((int)config.bgm_volume * 255) / 100);
+    PauseOgg(0);	
+    PlayOgg((char *)Bg_music_ogg, Bg_music_ogg_size, 0, OGG_INFINITE_TIME);	
+    SetVolumeOgg(((int)config.bgm_volume * 255) / 100);	
   }
 }

@@ -30,12 +30,13 @@
 #include "dvd.h"
 
 #include <fat.h>
+#include <ogc/cast.h>
 
 #ifdef HW_RVL
 #include <wiiuse/wpad.h>
 #endif
 
-u8 Shutdown = 0;
+u32 Shutdown = 0;
 
 #ifdef HW_RVL
 
@@ -163,18 +164,17 @@ void shutdown(void)
  *  M A I N
  *
  ***************************************************************************/
-u8 fat_enabled = 0;
+u32 fat_enabled = 0;
 u32 frameticker = 0;
 
 int main (int argc, char *argv[])
 {
+  CAST_Init();
+
 #ifdef HW_RVL
   /* initialize DVDX */
-  DI_Close();
   DI_Init();
 #endif
-
-  int size;
 
   /* initialize hardware */
   gx_video_Init();
@@ -255,44 +255,40 @@ int main (int argc, char *argv[])
     if (ConfigRequested)
     {
       /* stop video & audio */
-      gx_video_Stop();
       gx_audio_Stop();
+      gx_video_Stop();
 
       /* show menu */
       MainMenu ();
       ConfigRequested = 0;
 
       /* start video & audio */
-      /* always restart video first because it setup gc_pal */
-      gx_video_Start();
       gx_audio_Start();
-
-      /* reset framesync */
+      gx_video_Start();
       frameticker = 1;
     }
 
     if (frameticker > 1)
     {
       /* skip frame */
-      frameticker-=2;
-      system_frame (1);
+      system_frame(1);
+      --frameticker;
     }
     else
     {
-      /* framesync */
-      while (frameticker < 1) usleep(1);
-      frameticker--;
+      while (frameticker < 1)
+        usleep(10);
 
       /* render frame */
-      system_frame (0);
+      system_frame(0);
+      --frameticker;
+
+      /* update video */
+      gx_video_Update();
     }
 
-    /* retrieve audio samples */
-    size = audio_update();
-
-    /* update video & audio */
-    gx_video_Update();
-    gx_audio_Update(size * 4);
+    /* update audio */
+    gx_audio_Update();
   }
 
   return 0;

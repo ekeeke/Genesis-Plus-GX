@@ -40,11 +40,11 @@ typedef struct
 } gx_texture;
 
 /* Global variables */
-extern unsigned int *xfb[2];
-extern int whichfb;
+extern u32 *xfb[2];
+extern u32 whichfb;
 extern GXRModeObj *vmode;
 extern u8 *texturemem;
-extern u8 gc_pal;
+extern u32 gc_pal;
 
 
 /* GX rendering */

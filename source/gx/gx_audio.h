@@ -26,12 +26,12 @@
 #define _GC_AUDIO_H_
 
 extern u8 soundbuffer[2][3840];
-extern u8 mixbuffer;
+extern u32 mixbuffer;
 
 extern void gx_audio_Init(void);
 extern void gx_audio_Shutdown(void);
 extern void gx_audio_Start(void);
 extern void gx_audio_Stop(void);
-extern void gx_audio_Update(int size);
+extern void gx_audio_Update(void);
 
 #endif

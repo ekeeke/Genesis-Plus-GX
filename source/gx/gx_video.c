@@ -48,14 +48,14 @@ extern const u8 Crosshair_p1_png[];
 extern const u8 Crosshair_p2_png[];
 
 /*** VI ***/
-unsigned int *xfb[2];  /* External Framebuffers */
-int whichfb = 0;       /* Current Framebuffer   */
-GXRModeObj *vmode;     /* Default Video Mode    */
-u8 *texturemem;        /* Texture Data          */
-u8 *screenshot;        /* Texture Data          */
+u32 *xfb[2];        /* External Framebuffers */
+u32 whichfb = 0;    /* Current Framebuffer   */
+GXRModeObj *vmode;  /* Default Video Mode    */
+u8 *texturemem;     /* Texture Data          */
+u8 *screenshot;     /* Texture Data          */
 
-/* 50/60hz flag */
-u8 gc_pal = 0;
+/*** 50/60hz flag ***/
+u32 gc_pal = 0;
 
 /*** NTSC Filters ***/
 sms_ntsc_t sms_ntsc;
@@ -1282,14 +1282,13 @@ void gx_video_Start(void)
     gc_pal = 0;
 
   /* VSYNC callbacks */
-  /* in 60hz mode we use VSYNC to synchronize frame emulation */
+  /* in 60hz mode, frame emulation is synchronized with Video Interrupt */
   if (!gc_pal && !vdp_pal)
     VIDEO_SetPreRetraceCallback(vi_callback);
   VIDEO_SetPostRetraceCallback(NULL);
   VIDEO_Flush();
-  VIDEO_WaitVSync();
 
-  /* interlaced/progressive mode */
+  /* interlaced/progressive Video mode */
   if (config.render == 2)
   {
     tvmodes[2]->viTVMode = VI_TVMODE_NTSC_PROG;
@@ -1306,13 +1305,18 @@ void gx_video_Start(void)
   {
     bitmap.viewport.x = (reg[12] & 1) ? 16 : 12;
     bitmap.viewport.y = (reg[1] & 8) ? 0 : 8;
-    if (vdp_pal) bitmap.viewport.y  += 24;
+    if (vdp_pal)
+      bitmap.viewport.y  += 24;
   }
   else
   {
     bitmap.viewport.x = 0;
     bitmap.viewport.y = 0;
   }
+
+  /* reinitialize video size */
+  vwidth  = bitmap.viewport.w + (2 * bitmap.viewport.x);
+  vheight = bitmap.viewport.h + (2 * bitmap.viewport.y);
 
   /* software NTSC filters */
   if (config.ntsc == 1)
@@ -1348,6 +1352,9 @@ void gx_video_Start(void)
 
   /* reset GX rendering */
   gxResetRendering(0);
+
+  /* resynchronize emulation with VSYNC*/
+  VIDEO_WaitVSync();
 }
 
 /* GX render update */
@@ -1365,11 +1372,14 @@ void gx_video_Update(void)
 
     /* if width has been changed, do no render this frame           */
     /* this fixes texture glitches when changing width middle-frame */
-    if (vwidth != old_vwidth) return;
+    if (vwidth != old_vwidth)
+      return;
 
     /* special cases */
-    if (config.render && interlaced) vheight = vheight << 1;
-    if (config.ntsc) vwidth = (reg[12]&1) ? MD_NTSC_OUT_WIDTH(vwidth) : SMS_NTSC_OUT_WIDTH(vwidth);
+    if (config.render && interlaced)
+      vheight = vheight << 1;
+    if (config.ntsc)
+      vwidth = (reg[12]&1) ? MD_NTSC_OUT_WIDTH(vwidth) : SMS_NTSC_OUT_WIDTH(vwidth);
 
     /* texels size must be multiple of 4 */
     vwidth  = (vwidth  >> 2) << 2;
@@ -1380,14 +1390,17 @@ void gx_video_Update(void)
     GX_InitTexObj(&texobj, texturemem, vwidth, vheight, GX_TF_RGB565, GX_CLAMP, GX_CLAMP, GX_FALSE);
 
     /* configure texture filtering */
-    if (!config.bilinear) GX_InitTexObjLOD(&texobj,GX_NEAR,GX_NEAR_MIP_NEAR,0.0,10.0,0.0,GX_FALSE,GX_FALSE,GX_ANISO_1);
+    if (!config.bilinear)
+      GX_InitTexObjLOD(&texobj,GX_NEAR,GX_NEAR_MIP_NEAR,0.0,10.0,0.0,GX_FALSE,GX_FALSE,GX_ANISO_1);
 
     /* load texture object */
     GX_LoadTexObj(&texobj, GX_TEXMAP0);
 
     /* reset TV mode */
-    if (config.render) rmode = tvmodes[gc_pal*3 + 2];
-    else rmode = tvmodes[gc_pal*3 + interlaced];
+    if (config.render)
+      rmode = tvmodes[gc_pal*3 + 2];
+    else
+      rmode = tvmodes[gc_pal*3 + interlaced];
 
     /* reset aspect ratio */
     gxResetScaler(vwidth,vheight);
@@ -1410,8 +1423,10 @@ void gx_video_Update(void)
   draw_square();
 
   /* LightGun marks */
-  if (crosshair[0]) gxDrawCrosshair(crosshair[0], input.analog[0][0],input.analog[0][1]);
-  if (crosshair[1]) gxDrawCrosshair(crosshair[1], input.analog[1][0],input.analog[1][1]);
+  if (crosshair[0])
+    gxDrawCrosshair(crosshair[0], input.analog[0][0],input.analog[0][1]);
+  if (crosshair[1])
+    gxDrawCrosshair(crosshair[1], input.analog[1][0],input.analog[1][1]);
 
   /* swap XFB */
   whichfb ^= 1;
@@ -1427,9 +1442,12 @@ void gx_video_Update(void)
   {
     /* field synchronizations */
     VIDEO_WaitVSync();
-    if (rmode->viTVMode & VI_NON_INTERLACE) VIDEO_WaitVSync();
-    else while (VIDEO_GetNextField() != odd_frame) VIDEO_WaitVSync();
-    if (frameticker > 1) frameticker = 1;
+    if (rmode->viTVMode & VI_NON_INTERLACE)
+      VIDEO_WaitVSync();
+    else while (VIDEO_GetNextField() != odd_frame)
+      VIDEO_WaitVSync();
+    if (frameticker > 1)
+      frameticker = 1;
     bitmap.viewport.changed = 0;
   }
 }
