@@ -187,12 +187,11 @@ int sound_update(unsigned int cycles)
       /* resynchronize FM & PSG chips */
       YM2612Update(Fir_Resampler_buffer(), remain);
       Fir_Resampler_write(remain << 1);
+      fm_cycles_count = psg_cycles_count;
     }
 
-    fm_cycles_count = psg_cycles_count;
-
 #ifdef LOGSOUND
-    error("%d FM samples available\n",Fir_Resampler_written() >> 1);
+    error("%d FM samples available (%d needed)\n",Fir_Resampler_written() >> 1, remain);
 #endif
   }
   else
@@ -210,7 +209,7 @@ int sound_update(unsigned int cycles)
   error("%lu FM cycles run \n",fm_cycles_count);
 #endif
 
-  /* adjust PSG & FM cycle counts */
+  /* adjust PSG & FM cycle counts for next frame */
   psg_cycles_count  -= (cycles << 11);
   fm_cycles_count   -= (cycles << 11);
 
