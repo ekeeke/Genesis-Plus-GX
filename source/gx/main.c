@@ -169,8 +169,6 @@ u32 frameticker = 0;
 
 int main (int argc, char *argv[])
 {
-  CAST_Init();
-
 #ifdef HW_RVL
   /* initialize DVDX */
   DI_Init();

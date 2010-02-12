@@ -95,8 +95,10 @@ static inline void lightgun_update(int num)
            H-Counter range is approx. 292 pixel clocks
       */
       hc_latch = 0x100;
-      if (reg[12] & 1) hc_latch |= hc_320[((input.analog[num][0] * 290) / (2 * 320) + input.x_offset) % 210];
-      else hc_latch |= hc_256[(input.analog[num][0] / 2 + input.x_offset)%171];
+      if (reg[12] & 1) 
+        hc_latch |= hc_320[((input.analog[num][0] * 290) / (2 * 320) + input.x_offset) % 210];
+      else
+        hc_latch |= hc_256[(input.analog[num][0] / 2 + input.x_offset)%171];
     }
   }
 }
