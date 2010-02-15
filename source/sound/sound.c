@@ -33,9 +33,6 @@ static unsigned int fm_cycles_count;
 /* Run FM chip for required M-cycles */
 static inline void fm_update(unsigned int cycles)
 {
-  /* convert to 21.11 fixed point */
-  cycles <<= 11;
-
   if (cycles > fm_cycles_count)
   {
     /* period to run */
@@ -76,9 +73,6 @@ static inline void fm_update(unsigned int cycles)
 /* Run PSG chip for required M-cycles */
 static inline void psg_update(unsigned int cycles)
 {
-  /* convert to 21.11 fixed point */
-  cycles <<= 11;
-
   if (cycles > psg_cycles_count)
   {
     /* period to run */
@@ -145,7 +139,7 @@ void sound_init(void)
   if (config.hq_fm)
   {
     fm_cycles_ratio = 144 * 7 * (1 << 11);
-    Fir_Resampler_time_ratio(mclk / (double)snd.sample_rate / (144.0 * 7.0));
+    Fir_Resampler_time_ratio(mclk / (double)snd.sample_rate / (144.0 * 7.0), config.rolloff);
   }
 
 #ifdef LOGSOUND
@@ -166,10 +160,11 @@ void sound_reset(void)
 /* End of frame update, return the number of samples run so far.  */
 int sound_update(unsigned int cycles)
 {
-  /* run PSG chip until end of frame */
+  /* run PSG & FM chips until end of frame */
+  cycles <<= 11;
   psg_update(cycles);
+  fm_update(cycles);
 
-  /* number of available samples */
   int size = snd.psg.pos - snd.psg.buffer;
 
 #ifdef LOGSOUND
@@ -179,30 +174,30 @@ int sound_update(unsigned int cycles)
   /* FM resampling */
   if (config.hq_fm)
   {
-    /* get remaining FM samples */
-    int remain = Fir_Resampler_input_needed(size);
+    /* get available FM samples */
+    int avail = Fir_Resampler_avail();
 
-    if (remain > 0)
+    /* resynchronize FM & PSG chips */
+    if (avail < size)
     {
-      /* resynchronize FM & PSG chips */
-      YM2612Update(Fir_Resampler_buffer(), remain);
-      Fir_Resampler_write(remain << 1);
-      fm_cycles_count = psg_cycles_count;
+      /* FM chip is late for one sample */
+      YM2612Update(Fir_Resampler_buffer(), 1);
+      Fir_Resampler_write(2);
+      fm_cycles_count += fm_cycles_ratio;
     }
-
-#ifdef LOGSOUND
-    error("%d FM samples available (%d needed)\n",Fir_Resampler_written() >> 1, remain);
-#endif
+    else
+    {
+      /* FM chip is ahead */
+      fm_cycles_count += (avail - size) * psg_cycles_ratio;
+    }
   }
-  else
-  {
-    /* run FM chip until end of frame */
-    fm_update(cycles);
 
 #ifdef LOGSOUND
+  if (config.hq_fm)
+    error("%d FM samples (%d) available\n",Fir_Resampler_avail(), Fir_Resampler_written() >> 1);
+  else
     error("%d FM samples available\n",(snd.fm.pos - snd.fm.buffer)>>1);
 #endif
-  }
 
 #ifdef LOGSOUND
   error("%lu PSG cycles run\n",psg_cycles_count);
@@ -210,8 +205,8 @@ int sound_update(unsigned int cycles)
 #endif
 
   /* adjust PSG & FM cycle counts for next frame */
-  psg_cycles_count  -= (cycles << 11);
-  fm_cycles_count   -= (cycles << 11);
+  psg_cycles_count -= cycles;
+  fm_cycles_count  -= cycles;
 
 #ifdef LOGSOUND
   error("%lu PSG cycles left\n",psg_cycles_count);
@@ -224,7 +219,7 @@ int sound_update(unsigned int cycles)
 /* Reset FM chip */
 void fm_reset(unsigned int cycles)
 {
-  fm_update(cycles);
+  fm_update(cycles << 11);
   YM2612ResetChip();
 }
 
@@ -232,20 +227,20 @@ void fm_reset(unsigned int cycles)
 void fm_write(unsigned int cycles, unsigned int address, unsigned int data)
 {
   if (address & 1)
-    fm_update(cycles);
+    fm_update(cycles << 11);
   YM2612Write(address, data);
 }
 
 /* Read FM status */
 unsigned int fm_read(unsigned int cycles, unsigned int address)
 {
-  fm_update(cycles);
+  fm_update(cycles << 11);
   return YM2612Read();
 }
 
 /* Write PSG chip */
 void psg_write(unsigned int cycles, unsigned int data)
 {
-  psg_update(cycles);
+  psg_update(cycles << 11);
   SN76489_Write(data);
 }
