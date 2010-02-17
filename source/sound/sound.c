@@ -139,7 +139,7 @@ void sound_init(void)
   if (config.hq_fm)
   {
     fm_cycles_ratio = 144 * 7 * (1 << 11);
-    Fir_Resampler_time_ratio(mclk / (double)snd.sample_rate / (144.0 * 7.0), config.rolloff);
+    Fir_Resampler_time_ratio(mclk / (double)snd.sample_rate / (144.0 * 7.0));
   }
 
 #ifdef LOGSOUND
