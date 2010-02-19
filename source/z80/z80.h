@@ -2,6 +2,7 @@
 #define Z80_H_
 
 #include "cpuintrf.h"
+#include "memz80.h"
 
 enum
 {
@@ -50,11 +51,6 @@ void z80_burn(int cycles);
 void z80_get_context (void *dst);
 void z80_set_context (void *src);
 void z80_set_irq_line(int irqline, int state);
-
-unsigned int cpu_readport16(unsigned int port);
-void cpu_writeport16(unsigned int port, unsigned int data);
-unsigned int cpu_readmem16(unsigned int address);
-void cpu_writemem16(unsigned int address, unsigned int data);
 
 #endif
 

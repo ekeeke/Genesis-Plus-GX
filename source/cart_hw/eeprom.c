@@ -1,6 +1,6 @@
 /****************************************************************************
  *  Genesis Plus
- *  Serial EEPROM support
+ *  I2C EEPROM support
  *
  *  Copyright (C) 2007, 2008, 2009  Eke-Eke (GCN/Wii port)
  *
