@@ -131,7 +131,7 @@ static int FAT_ManageFile(char *filename, u8 direction, u8 filetype)
 
       if (filetype) /* SRAM */
       {
-        memcpy(sram.sram, savebuffer, filesize);
+        memcpy(sram.sram, savebuffer, done);
         sram.crc = crc32 (0, sram.sram, 0x10000);
       }
       else
