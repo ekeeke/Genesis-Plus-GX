@@ -788,14 +788,18 @@ INLINE void INTERNAL_TIMER_A()
     if ((ym2612.OPN.ST.TAC -= ym2612.OPN.ST.TimerBase) <= 0)
     {
       /* set status (if enabled) */
-      if (ym2612.OPN.ST.mode & 0x04) ym2612.OPN.ST.status |= 0x01;
+      if (ym2612.OPN.ST.mode & 0x04)
+        ym2612.OPN.ST.status |= 0x01;
 
       /* reload the counter */
-      if (ym2612.OPN.ST.TAL) ym2612.OPN.ST.TAC += ym2612.OPN.ST.TAL;
-      else ym2612.OPN.ST.TAC = ym2612.OPN.ST.TAL;
+      if (ym2612.OPN.ST.TAL)
+        ym2612.OPN.ST.TAC += ym2612.OPN.ST.TAL;
+      else
+        ym2612.OPN.ST.TAC = ym2612.OPN.ST.TAL;
 
       /* CSM mode auto key on */
-      if ((ym2612.OPN.ST.mode & 0xC0) == 0x80) CSMKeyControll(&ym2612.CH[2]);
+      if ((ym2612.OPN.ST.mode & 0xC0) == 0x80)
+        CSMKeyControll(&ym2612.CH[2]);
     }
   }
 }
@@ -807,11 +811,14 @@ INLINE void INTERNAL_TIMER_B(int step)
     if ((ym2612.OPN.ST.TBC -= (ym2612.OPN.ST.TimerBase * step)) <= 0)
     {
       /* set status (if enabled) */
-      if (ym2612.OPN.ST.mode & 0x08) ym2612.OPN.ST.status |= 0x02;
+      if (ym2612.OPN.ST.mode & 0x08)
+        ym2612.OPN.ST.status |= 0x02;
 
       /* reload the counter */
-      if (ym2612.OPN.ST.TBL) ym2612.OPN.ST.TBC += ym2612.OPN.ST.TBL;
-      else ym2612.OPN.ST.TBC = ym2612.OPN.ST.TBL;
+      if (ym2612.OPN.ST.TBL)
+        ym2612.OPN.ST.TBC += ym2612.OPN.ST.TBL;
+      else
+        ym2612.OPN.ST.TBC = ym2612.OPN.ST.TBL;
     }
   }
 }
@@ -846,9 +853,11 @@ INLINE void set_timers(int v )
   }
 
   /* reload Timers */
-  if ((v&1) & !(ym2612.OPN.ST.mode&1)) ym2612.OPN.ST.TAC = ym2612.OPN.ST.TAL;
-  if ((v&2) & !(ym2612.OPN.ST.mode&2)) ym2612.OPN.ST.TBC = ym2612.OPN.ST.TBL;
-
+  if ((v&1) && !(ym2612.OPN.ST.mode&1))
+    ym2612.OPN.ST.TAC = ym2612.OPN.ST.TAL;
+  if ((v&2) && !(ym2612.OPN.ST.mode&2))
+    ym2612.OPN.ST.TBC = ym2612.OPN.ST.TBL;
+  
   /* reset Timers flags */
   ym2612.OPN.ST.status &= (~v >> 4); 
 
@@ -2100,6 +2109,7 @@ void YM2612Update(short int *buffer, int length)
       advance_eg_channel(&ym2612.CH[5].SLOT[SLOT1]);
     }
 
+    /* 14-bit channel output */
     if (out_fm[0] > 8191) out_fm[0] = 8191;
     else if (out_fm[0] < -8192) out_fm[0] = -8192;
     if (out_fm[1] > 8191) out_fm[1] = 8191;
@@ -2126,10 +2136,6 @@ void YM2612Update(short int *buffer, int length)
     rt += ((out_fm[4]) & ym2612.OPN.pan[9]);
     lt += ((out_fm[5]) & ym2612.OPN.pan[10]);
     rt += ((out_fm[5]) & ym2612.OPN.pan[11]);
-
-    /* limiter */
-   // Limit(lt,MAXOUT,MINOUT);
-   // Limit(rt,MAXOUT,MINOUT);
 
     /* buffering */
     *buffer++ = lt;
