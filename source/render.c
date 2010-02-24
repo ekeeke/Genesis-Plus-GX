@@ -1084,13 +1084,8 @@ static void render_bg_vs(uint32 line, uint32 width)
   {
     dst   = (uint32 *)&buf[0x10 + shift];
 
-#ifdef LSB_FIRST
-    v_line = (line + ((vs[0] >> 16) & 0x3FF)) & pf_row_mask;
-#else
-    v_line = (line + (vs[0] & 0x3FF)) & pf_row_mask;
-#endif
-    nt = (uint32 *)&vram[ntbb + (((v_line >> 3) << pf_shift) & 0x1FC0)];
-    v_line = (v_line & 7) << 3;
+    nt = (uint32 *)&vram[ntbb + (((line >> 3) << pf_shift) & 0x1FC0)];
+    v_line = (line & 7) << 3;
 
     atbuf = nt[(index-1) & pf_col_mask];
     DRAW_COLUMN(atbuf, v_line)
@@ -1152,13 +1147,8 @@ static void render_bg_vs(uint32 line, uint32 width)
     {
       dst = (uint32 *)&buf[0x10 + shift + (start<<4)];
 
-#ifdef LSB_FIRST
-      v_line = (line + (vs[start] & 0x3FF)) & pf_row_mask;
-#else
-      v_line = (line + ((vs[start] >> 16) & 0x3FF)) & pf_row_mask;
-#endif
-      nt = (uint32 *)&vram[ntab + (((v_line >> 3) << pf_shift) & 0x1FC0)];
-      v_line = (v_line & 7) << 3;
+      nt = (uint32 *)&vram[ntab + (((line >> 3) << pf_shift) & 0x1FC0)];
+      v_line = (line & 7) << 3;
 
       /* Window bug */
       if (start) atbuf = nt[index & pf_col_mask];
@@ -1356,13 +1346,8 @@ static void render_bg_im2_vs(uint32 line, uint32 width, uint32 odd)
   {
     dst   = (uint32 *)&buf[0x10 + shift];
 
-#ifdef LSB_FIRST
-    v_line = (line + ((vs[0] >> 17) & 0x3FF)) & pf_row_mask;
-#else
-    v_line = (line + ((vs[0] >> 1) & 0x3FF)) & pf_row_mask;
-#endif
-    nt = (uint32 *)&vram[ntbb + (((v_line >> 3) << pf_shift) & 0x1FC0)];
-    v_line = (((v_line & 7) << 1) | odd) << 3;
+    nt = (uint32 *)&vram[ntbb + (((line >> 3) << pf_shift) & 0x1FC0)];
+    v_line = (((line & 7) << 1) | odd) << 3;
 
     atbuf = nt[(index-1) & pf_col_mask];
     DRAW_COLUMN_IM2(atbuf, v_line)
@@ -1422,13 +1407,8 @@ static void render_bg_im2_vs(uint32 line, uint32 width, uint32 odd)
     {
       dst = (uint32 *)&buf[0x10 + shift + (start<<4)];
 
-#ifdef LSB_FIRST
-      v_line  = (line + ((vs[start] >> 1) & 0x3FF)) & pf_row_mask;
-#else
-      v_line  = (line + ((vs[start] >> 17) & 0x3FF)) & pf_row_mask;
-#endif
-      nt      = (uint32 *)&vram[ntab + (((v_line >> 3) << pf_shift) & 0x1FC0)];
-      v_line  = (((v_line & 7) << 1) | odd) << 3;
+      nt      = (uint32 *)&vram[ntab + (((line >> 3) << pf_shift) & 0x1FC0)];
+      v_line  = (((line & 7) << 1) | odd) << 3;
 
       /* Window bug */
       if (start) atbuf = nt[index & pf_col_mask];
