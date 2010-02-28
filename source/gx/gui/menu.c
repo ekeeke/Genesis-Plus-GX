@@ -216,22 +216,24 @@ static gui_item items_options[5] =
   {NULL,Option_menu_png  ,"","Menu settings",   370,286,60,92}
 };
 
-/* Audio options menu */
-static gui_item items_audio[10] =
+/* Audio options */
+static gui_item items_audio[12] =
 {
-  {NULL,NULL,"High-Quality FM: LINEAR", "Setup YM2612 resampling",      52,132,276,48},
-  {NULL,NULL,"PSG Noise Boost: OFF",    "Boost PSG Noise Channel",      52,132,276,48},
-  {NULL,NULL,"PSG Volume: 2.50",        "Adjust SN76489 output level",  52,132,276,48},
-  {NULL,NULL,"FM Volume: 1.00",         "Adjust YM2612 output level",   52,132,276,48},
-  {NULL,NULL,"Filtering: 3-BAND EQ",    "Setup Audio filtering",        52,132,276,48},
-  {NULL,NULL,"Low Gain: 1.00",          "Adjust EQ Low Band Gain",      52,132,276,48},
-  {NULL,NULL,"Mid Gain: 1.00",          "Adjust EQ Middle Band Gain",   52,132,276,48},
-  {NULL,NULL,"High Gain: 1.00",         "Adjust EQ High BandGain",      52,132,276,48},
-  {NULL,NULL,"Low Freq: 200 Hz",        "Adjust EQ Low Band Frequency", 52,132,276,48},
-  {NULL,NULL,"High Freq: 20000 Hz",     "Adjust EQ High Band Frequency",52,132,276,48}
+  {NULL,NULL,"High-Quality FM: ON",   "Enable/disable YM2612 resampling", 52,132,276,48},
+  {NULL,NULL,"FM Roll-off: 0.999",    "Adjust FIR low-pass filtering",    52,132,276,48},
+  {NULL,NULL,"FM Resolution: MAX",    "Adjust YM2612 DAC precision",      52,132,276,48},
+  {NULL,NULL,"FM Volume: 1.00",       "Adjust YM2612 output level",       52,132,276,48},
+  {NULL,NULL,"PSG Volume: 2.50",      "Adjust SN76489 output level",      52,132,276,48},
+  {NULL,NULL,"PSG Noise Boost: OFF",  "Boost SN76489 Noise Channel",      52,132,276,48},
+  {NULL,NULL,"Filtering: 3-BAND EQ",  "Setup Audio filtering",            52,132,276,48},
+  {NULL,NULL,"Low Gain: 1.00",        "Adjust EQ Low Band Gain",          52,132,276,48},
+  {NULL,NULL,"Mid Gain: 1.00",        "Adjust EQ Mid Band Gain",          52,132,276,48},
+  {NULL,NULL,"High Gain: 1.00",       "Adjust EQ High BandGain",          52,132,276,48},
+  {NULL,NULL,"Low Freq: 200 Hz",      "Adjust EQ Lowest Frequency",       52,132,276,48},
+  {NULL,NULL,"High Freq: 20000 Hz",   "Adjust EQ Highest Frequency",      52,132,276,48}
 };
 
-/* System options menu */
+/* System options */
 static gui_item items_system[7] =
 {
   {NULL,NULL,"Console Region: AUTO",  "Select system region",                     52,132,276,48},
@@ -243,20 +245,28 @@ static gui_item items_system[7] =
   {NULL,NULL,"SVP Cycles: 1500",      "Adjust SVP chip emulation speed",          52,132,276,48}
 };
 
-/* Video options menu */
+/* Video options */
+#ifdef HW_RVL
+static gui_item items_video[10] =
+#else
 static gui_item items_video[8] =
+#endif
 {
-  {NULL,NULL,"Display: PROGRESSIVE",    "Select video mode type",                    52,132,276,48},
-  {NULL,NULL,"TV mode: 50/60Hz",        "Select video refresh rate",                 52,132,276,48},
-  {NULL,NULL,"Bilinear Filter: OFF",    "Enable/disable hardware filtering",         52,132,276,48},
-  {NULL,NULL,"NTSC Filter: COMPOSITE",  "Enable/disable NTSC software filtering",    52,132,276,48},
-  {NULL,NULL,"Borders: OFF",            "Enable/disable original overscan emulation",52,132,276,48},
-  {NULL,NULL,"Aspect: ORIGINAL (4:3)",  "Select display aspect ratio",               52,132,276,48},
-  {NULL,NULL,"Screen Position (+0,+0)", "Adjust display position",                   52,132,276,48},
-  {NULL,NULL,"Screen Size (+0,+0)",     "Adjust display size",                       52,132,276,48}
+  {NULL,NULL,"Display: PROGRESSIVE",    "Select video signal type",                   52,132,276,48},
+  {NULL,NULL,"TV mode: 50/60Hz",        "Select video signal frequency",              52,132,276,48},
+  {NULL,NULL,"GX Bilinear Filter: OFF", "Enable/disable texture hardware filtering",  52,132,276,48},
+#ifdef HW_RVL
+  {NULL,NULL,"VI Trap Filter: ON",      "Enable/disable video hardware filtering",    52,132,276,48},
+  {NULL,NULL,"VI Gamma Correction: 1.0","Adjust video hardware gamma correction",     52,132,276,48},
+#endif
+  {NULL,NULL,"NTSC Filter: COMPOSITE",  "Enable/disable NTSC software filtering",     52,132,276,48},
+  {NULL,NULL,"Borders: OFF",            "Enable/disable overscan emulation",          52,132,276,48},
+  {NULL,NULL,"Aspect: ORIGINAL (4:3)",  "Select display aspect ratio",                52,132,276,48},
+  {NULL,NULL,"Screen Position (+0,+0)", "Adjust display position",                    52,132,276,48},
+  {NULL,NULL,"Screen Scaling (+0,+0)",  "Adjust display scaling",                     52,132,276,48}
 };
 
-/* Preferences menu */
+/* Menu options */
 static gui_item items_prefs[7] =
 {
   {NULL,NULL,"Auto SRAM: OFF",    "Enable/disable automatic SRAM",        52,132,276,48},
@@ -265,7 +275,7 @@ static gui_item items_prefs[7] =
   {NULL,NULL,"BGM Volume: 100",   "Adjust background music volume",       52,132,276,48},
   {NULL,NULL,"BG Color: DEFAULT", "Change background color",              52,132,276,48},
   {NULL,NULL,"Screen Width: 658", "Adjust Screen Width",                  52,132,276,48},
-  {NULL,NULL,"Confirmation Box: OFF", "Enable/disable user confirmation", 52,132,276,48}
+  {NULL,NULL,"Confirm Box: OFF",  "Enable/disable user confirmation",     52,132,276,48}
 };
 
 /*****************************************************************************/
@@ -436,7 +446,7 @@ static gui_menu menu_audio =
 {
   "Audio Settings",
   0,0,
-  10,4,6,0,
+  8,4,6,0,
   items_audio,
   buttons_list,
   bg_list,
@@ -688,61 +698,146 @@ static void prefmenu ()
  * Audio Settings menu
  *
  ****************************************************************************/
-static void soundmenu ()
+static int update_snd_items(void)
 {
-  int ret, quit = 0;
   gui_menu *m = &menu_audio;
   gui_item *items = m->items;
-  float psg_volume = (float)config.psg_preamp/100.0;
+  int offset;
   float fm_volume = (float)config.fm_preamp/100.0;
+  float psg_volume = (float)config.psg_preamp/100.0;
+  
+  if (config.hq_fm)
+  {
+    sprintf (items[0].text, "High-Quality FM: ON");
+    sprintf (items[1].text, "FM Roll-off: %1.3f",config.rolloff);
+    strcpy  (items[1].comment, "Adjust FIR low-pass filtering");
+    offset = 2;
+  }
+  else
+  {
+    sprintf (items[0].text, "High-Quality FM: OFF");
+    offset = 1;
+  }
+ 
+  strcpy(items[offset].comment, "Adjust YM2612 DAC precision");
+  strcpy(items[offset+1].comment, "Adjust YM2612 output level");
+  strcpy(items[offset+2].comment, "Adjust SN76489 output level");
+  strcpy(items[offset+3].comment, "Boost SN76489 Noise Channel");
+  strcpy(items[offset+4].comment, "Configure Audio filtering");
 
-  sprintf (items[0].text, "High-Quality FM: %s", config.hq_fm ? "ON":"OFF");
-  sprintf (items[1].text, "PSG Noise Boost: %s", config.psgBoostNoise ? "ON":"OFF");
-  sprintf (items[2].text, "PSG Volume: %1.2f", psg_volume);
-  sprintf (items[3].text, "FM Volume: %1.2f", (double)config.fm_preamp/100.0);
-  if (config.filter == 2) sprintf (items[4].text, "Filtering: 3-BAND EQ");
-  else if (config.filter == 1) sprintf (items[4].text, "Filtering: LOW PASS");
-  else sprintf (items[4].text, "Filtering: OFF");
+  if (config.dac_bits < 14)
+    sprintf (items[offset].text, "FM Resolution: %d bits", config.dac_bits);
+  else 
+    sprintf (items[offset].text, "FM Resolution: MAX");
+
+  sprintf (items[offset+1].text, "FM Volume: %1.2f", fm_volume);
+  sprintf (items[offset+2].text, "PSG Volume: %1.2f", psg_volume);
+  sprintf (items[offset+3].text, "PSG Noise Boost: %s", config.psgBoostNoise ? "ON":"OFF");
+
   if (config.filter == 2)
   {
-    sprintf (items[5].text, "Low Gain: %1.2f", config.lg);
-    strcpy (items[5].comment, "Adjust EQ Low Band Gain");
-    sprintf (items[6].text, "Middle Gain: %1.2f", config.mg);
-    sprintf (items[7].text, "High Gain: %1.2f", config.hg);
-    sprintf (items[8].text, "Low Freq: %d", config.low_freq);
-    sprintf (items[9].text, "High Freq: %d", config.high_freq);
+    sprintf (items[offset+4].text, "Filtering: 3-BAND EQ");
+    sprintf (items[offset+5].text, "Low Gain: %1.2f", config.lg);
+    sprintf (items[offset+6].text, "Middle Gain: %1.2f", config.mg);
+    sprintf (items[offset+7].text, "High Gain: %1.2f", config.hg);
+    sprintf (items[offset+8].text, "Low Freq: %d", config.low_freq);
+    sprintf (items[offset+9].text, "High Freq: %d", config.high_freq);
+    strcpy  (items[offset+5].comment, "Adjust EQ Low Band Gain");
+    strcpy  (items[offset+6].comment, "Adjust EQ Mid Band Gain");
+    strcpy  (items[offset+7].comment, "Adjust EQ High Band Gain");
+    strcpy  (items[offset+8].comment, "Adjust EQ Lowest Frequency");
+    strcpy  (items[offset+9].comment, "Adjust EQ Highest Frequency");
+    m->max_items  = offset + 10;
   }
   else if (config.filter == 1)
   {
-    sprintf (items[5].text, "Low-Pass Rate: %d %%", config.lp_range);
-    strcpy (items[5].comment, "Adjust Low Pass filter");
+    sprintf (items[offset+4].text, "Filtering: LOW-PASS");
+    sprintf (items[offset+5].text, "Low-Pass Rate: %d %%", config.lp_range);
+    strcpy (items[offset+5].comment, "Adjust Low Pass filter");
+    m->max_items  = offset + 6;
+  }
+  else
+  {
+    sprintf (items[offset+4].text, "Filtering: OFF");
+    m->max_items  = offset + 5;
   }
 
+  sprintf (items[offset+6].text, "Middle Gain: %1.2f", config.mg);
+  sprintf (items[offset+7].text, "High Gain: %1.2f", config.hg);
+  sprintf (items[offset+8].text, "Low Freq: %d", config.low_freq);
+  sprintf (items[offset+9].text, "High Freq: %d", config.high_freq);
+  strcpy  (items[offset+5].comment, "Adjust EQ Low Band Gain");
+  strcpy  (items[offset+6].comment, "Adjust EQ Mid Band Gain");
+  strcpy  (items[offset+7].comment, "Adjust EQ High Band Gain");
+  strcpy  (items[offset+8].comment, "Adjust EQ Lowest Frequency");
+  strcpy  (items[offset+9].comment, "Adjust EQ Highest Frequency");
+
+  return offset;
+}
+
+static void soundmenu ()
+{
+  int ret, quit = 0;
+  u8 *temp;
+  gui_menu *m = &menu_audio;
+  gui_item *items = m->items;
+  float fm_volume = (float)config.fm_preamp/100.0;
+  float psg_volume = (float)config.psg_preamp/100.0;
+  int offset = update_snd_items();
   GUI_InitMenu(m);
-
-  if (config.filter == 1)
-    m->max_items  = 6;
-  else if (config.filter == 2)
-    m->max_items  = 10;
-  else
-    m->max_items  = 5;
-
   GUI_SlideMenuTitle(m,strlen("Audio "));
 
   while (quit == 0)
   {
     ret = GUI_RunMenu(m);
 
+    /* special case */
+    if (config.hq_fm)
+    {
+      if (ret == 1)
+      {
+        GUI_OptionBox(m,0,"FM Roll-off",(void *)&config.rolloff,0.001,0.800,1.000,0);
+        sprintf (items[1].text, "FM Roll-off: %1.3f",config.rolloff);
+        ret = 255;
+        if (cart.romsize) 
+        {
+          /* save YM2612 context */
+          temp = memalign(32,YM2612GetContextSize());
+          if (temp)
+          {
+            /* save YM2612 context */
+            memcpy(temp, YM2612GetContextPtr(), YM2612GetContextSize());
+
+            /* reinitialize audio timings */
+            audio_init(snd.sample_rate,snd.frame_rate);
+            sound_init();
+
+            /* restore YM2612 context */
+            YM2612Restore(temp);
+            free(temp);
+          }
+        }
+      }
+      else if (ret > 1)
+      {
+        ret--;
+      }
+    }
+
     switch (ret)
     {
       case 0:
         config.hq_fm ^= 1;
-        sprintf (items[0].text, "High-Quality FM: %s", config.hq_fm ? "ON":"OFF");
+        offset = update_snd_items();
+
         if (cart.romsize) 
         {
           /* save YM2612 context */
-          unsigned char *temp = memalign(32,YM2612GetContextSize());
-          if (temp) memcpy(temp, YM2612GetContextPtr(), YM2612GetContextSize());
+          temp = memalign(32,YM2612GetContextSize());
+          if (temp)
+          {
+            memcpy(temp, YM2612GetContextPtr(), YM2612GetContextSize());
+          }
 
           /* reinitialize audio timings */
           audio_init(snd.sample_rate,snd.frame_rate);
@@ -758,92 +853,119 @@ static void soundmenu ()
         break;
 
       case 1:
-        config.psgBoostNoise ^= 1;
-        sprintf (items[1].text, "PSG Noise Boost: %s", config.psgBoostNoise ? "ON":"OFF");
-        SN76489_BoostNoise(config.psgBoostNoise);
+        config.dac_bits++;
+        if (config.dac_bits > 14)
+          config.dac_bits = 7;
+        if (config.dac_bits < 14)
+          sprintf (items[offset].text, "FM Resolution: %d bits", config.dac_bits);
+        else 
+          sprintf (items[offset].text, "FM Resolution: MAX");
+
+        if (cart.romsize) 
+        {
+          /* save YM2612 context */
+          temp = memalign(32,YM2612GetContextSize());
+          if (temp)
+          {
+            memcpy(temp, YM2612GetContextPtr(), YM2612GetContextSize());
+          }
+
+          /* reinitialize audio timings */
+          audio_init(snd.sample_rate,snd.frame_rate);
+          sound_init();
+
+          /* restore YM2612 context */
+          if (temp)
+          {
+            YM2612Restore(temp);
+            free(temp);
+          }
+        }
         break;
 
       case 2:
-        GUI_OptionBox(m,0,"PSG Volume",(void *)&psg_volume,0.01,0.0,5.0,0);
-        sprintf (items[2].text, "PSG Volume: %1.2f", psg_volume);
-        config.psg_preamp = (int)(psg_volume * 100.0);
-        break;
-
-      case 3:
         GUI_OptionBox(m,0,"FM Volume",(void *)&fm_volume,0.01,0.0,5.0,0);
-        sprintf (items[3].text, "FM Volume: %1.2f", fm_volume);
+        sprintf (items[offset+1].text, "FM Volume: %1.2f", fm_volume);
         config.fm_preamp = (int)(fm_volume * 100.0);
         break;
 
+      case 3:
+        GUI_OptionBox(m,0,"PSG Volume",(void *)&psg_volume,0.01,0.0,5.0,0);
+        sprintf (items[offset+2].text, "PSG Volume: %1.2f", psg_volume);
+        config.psg_preamp = (int)(psg_volume * 100.0);
+        break;
+
       case 4:
-        config.filter ++;
-        if (config.filter > 2) config.filter = 0;
-        if (config.filter == 2)
-        {
-          m->max_items  = 10;
-          sprintf (items[4].text, "Filtering: 3-BAND EQ");
-          sprintf (items[5].text, "Low Gain: %1.2f", config.lg);
-          strcpy (items[5].comment, "Adjust EQ Low Band Gain");
-          sprintf (items[6].text, "Middle Gain: %1.2f", config.mg);
-          sprintf (items[7].text, "High Gain: %1.2f", config.hg);
-          sprintf (items[8].text, "Low Freq: %d", config.low_freq);
-          sprintf (items[9].text, "High Freq: %d", config.high_freq);
-        }
-        else if (config.filter == 1)
-        {
-          m->max_items  = 6;
-          sprintf (items[4].text, "Filtering: LOW PASS");
-          sprintf (items[5].text, "Low-Pass Rate: %d %%", config.lp_range);
-          strcpy (items[5].comment, "Adjust Low Pass filter");
-        }
-        else
-        {
-          sprintf (items[4].text, "Filtering: OFF");
-          m->max_items  = 5;
-          m->offset = 1;
-          m->selected = 3;
-        }
-
-        /* reintialize EQ */
-        audio_set_equalizer();
-
+        config.psgBoostNoise ^= 1;
+        sprintf (items[offset+3].text, "PSG Noise Boost: %s", config.psgBoostNoise ? "ON":"OFF");
+        SN76489_BoostNoise(config.psgBoostNoise);
         break;
 
       case 5:
-        if (config.filter == 1)
+        config.filter = (config.filter + 1) % 3;
+        if (config.filter == 2)
         {
-          GUI_OptionBox(m,0,"Low-Pass Rate",(void *)&config.lp_range,1,0,100,1);
-          sprintf (items[5].text, "Low-Pass Rate: %d %%", config.lp_range);
+          sprintf (items[offset+4].text, "Filtering: 3-BAND EQ");
+          sprintf (items[offset+5].text, "Low Gain: %1.2f", config.lg);
+          strcpy (items[offset+5].comment, "Adjust EQ Low Band Gain");
+          m->max_items = offset + 10;
+          audio_set_equalizer();
+        }
+        else if (config.filter == 1)
+        {
+          sprintf (items[offset+4].text, "Filtering: LOW-PASS");
+          sprintf (items[offset+5].text, "Low-Pass Rate: %d %%", config.lp_range);
+          strcpy (items[offset+5].comment, "Adjust Low Pass filter");
+          m->max_items = offset + 6;
         }
         else
         {
-          GUI_OptionBox(m,0,"Low Gain",(void *)&config.lg,0.01,0.0,2.0,0);
-          sprintf (items[5].text, "Low Gain: %1.2f", config.lg);
-          audio_set_equalizer();
+          sprintf (items[offset+4].text, "Filtering: OFF");
+          m->max_items = offset + 5;
+        }
+
+        while ((m->offset + 4) > m->max_items)
+        {
+          m->offset --;
+          m->selected++;
         }
         break;
 
       case 6:
-        GUI_OptionBox(m,0,"Middle Gain",(void *)&config.mg,0.01,0.0,2.0,0);
-        sprintf (items[6].text, "Middle Gain: %1.2f", config.mg);
-        audio_set_equalizer();
+        if (config.filter == 1)
+        {
+          GUI_OptionBox(m,0,"Low-Pass Rate",(void *)&config.lp_range,1,0,100,1);
+          sprintf (items[offset+5].text, "Low-Pass Rate: %d %%", config.lp_range);
+        }
+        else
+        {
+          GUI_OptionBox(m,0,"Low Gain",(void *)&config.lg,0.01,0.0,2.0,0);
+          sprintf (items[offset+5].text, "Low Gain: %1.2f", config.lg);
+          audio_set_equalizer();
+        }
         break;
 
       case 7:
-        GUI_OptionBox(m,0,"High Gain",(void *)&config.hg,0.01,0.0,2.0,0);
-        sprintf (items[7].text, "High Gain: %1.2f", config.hg);
+        GUI_OptionBox(m,0,"Middle Gain",(void *)&config.mg,0.01,0.0,2.0,0);
+        sprintf (items[offset+6].text, "Middle Gain: %1.2f", config.mg);
         audio_set_equalizer();
         break;
 
       case 8:
-        GUI_OptionBox(m,0,"Low Frequency",(void *)&config.low_freq,10,0,config.high_freq,1);
-        sprintf (items[8].text, "Low Freq: %d", config.low_freq);
+        GUI_OptionBox(m,0,"High Gain",(void *)&config.hg,0.01,0.0,2.0,0);
+        sprintf (items[offset+7].text, "High Gain: %1.2f", config.hg);
         audio_set_equalizer();
         break;
 
       case 9:
+        GUI_OptionBox(m,0,"Low Frequency",(void *)&config.low_freq,10,0,config.high_freq,1);
+        sprintf (items[offset+8].text, "Low Freq: %d", config.low_freq);
+        audio_set_equalizer();
+        break;
+
+      case 10:
         GUI_OptionBox(m,0,"High Frequency",(void *)&config.high_freq,100,config.low_freq,30000,1);
-        sprintf (items[9].text, "High Freq: %d", config.high_freq);
+        sprintf (items[offset+9].text, "High Freq: %d", config.high_freq);
         audio_set_equalizer();
         break;
 
@@ -853,7 +975,6 @@ static void soundmenu ()
     }
   }
 
-  m->max_items = 10;
   GUI_DeleteMenu(m);
 }
 
@@ -863,8 +984,9 @@ static void soundmenu ()
  ****************************************************************************/
 static void systemmenu ()
 {
-  int ret = 255;
-  int quit = 0;
+  int ret, quit = 0;
+  float framerate;
+  u8 *temp;
   gui_menu *m = &menu_system;
   gui_item *items = m->items;
 
@@ -900,7 +1022,6 @@ static void systemmenu ()
   else
   {
     m->max_items = 6;
-    if (m->offset > 2) m->offset--;
   }
 
   GUI_InitMenu(m);
@@ -914,7 +1035,6 @@ static void systemmenu ()
     {
       case 0:  /*** Region Force ***/
         config.region_detect = (config.region_detect + 1) % 4;
-
         if (config.region_detect == 0)
           sprintf (items[0].text, "Console Region: AUTO");
         else if (config.region_detect == 1)
@@ -930,14 +1050,13 @@ static void systemmenu ()
           set_region();
 
           /* update framerate */
-          float framerate;
           if (vdp_pal)
             framerate = 50.0;
           else
             framerate = ((config.tv_mode == 0) || (config.tv_mode == 2)) ? (1000000.0/16715.0) : 60.0;
 
           /* save YM2612 context */
-          unsigned char *temp = memalign(32,YM2612GetContextSize());
+          temp = memalign(32,YM2612GetContextSize());
           if (temp)
             memcpy(temp, YM2612GetContextPtr(), YM2612GetContextSize());
 
@@ -1000,7 +1119,6 @@ static void systemmenu ()
           sprintf (items[4].text, "Lock-On: SONIC & KNUCKLES");
         else
           sprintf (items[4].text, "Lock-On: OFF");
-
         if (cart.romsize) 
         {
           system_reset(); /* clear any patches first */
@@ -1015,7 +1133,7 @@ static void systemmenu ()
         sprintf (items[5].text, "Cartridge Swap: %s", config.hot_swap ? "ON":"OFF");
         break;
 
-      case 6:  /*** SVP emulation ***/
+      case 6:  /*** SVP cycles per line ***/
         GUI_OptionBox(m,0,"SVP Cycles",(void *)&SVP_cycles,1,1,1500,1);
         sprintf (items[6].text, "SVP Cycles: %d", SVP_cycles);
         break;
@@ -1033,10 +1151,23 @@ static void systemmenu ()
  * Video Settings menu
  *
  ****************************************************************************/
+#ifdef HW_RVL
+#define VI_OFFSET 5
+static void update_gamma(void)
+{
+  VIDEO_SetGamma((int)(config.gamma * 10.0));
+  VIDEO_Flush();
+}
+#else
+#define VI_OFFSET 3
+#endif
+
 static void videomenu ()
 {
   u16 state[2];
   int ret, quit = 0;
+  float framerate;
+  u8 *temp;
   gui_menu *m = &menu_video;
   gui_item *items = m->items;
 
@@ -1054,40 +1185,45 @@ static void videomenu ()
   else
     sprintf (items[1].text, "TV Mode: 50/60HZ");
 
-  sprintf (items[2].text, "Bilinear Filter: %s", config.bilinear ? " ON" : "OFF");
+  sprintf (items[2].text, "GX Bilinear Filter: %s", config.bilinear ? " ON" : "OFF");
+
+#ifdef HW_RVL
+  sprintf (items[3].text, "VI Trap Filter: %s", config.trap ? " ON" : "OFF");
+  sprintf (items[4].text, "VI Gamma Correction: %1.1f", config.gamma);
+#endif
 
   if (config.ntsc == 1)
-    sprintf (items[3].text, "NTSC Filter: COMPOSITE");
+    sprintf (items[VI_OFFSET].text, "NTSC Filter: COMPOSITE");
   else if (config.ntsc == 2)
-    sprintf (items[3].text, "NTSC Filter: S-VIDEO");
+    sprintf (items[VI_OFFSET].text, "NTSC Filter: S-VIDEO");
   else if (config.ntsc == 3)
-    sprintf (items[3].text, "NTSC Filter: RGB");
+    sprintf (items[VI_OFFSET].text, "NTSC Filter: RGB");
   else
-    sprintf (items[3].text, "NTSC Filter: OFF");
+    sprintf (items[VI_OFFSET].text, "NTSC Filter: OFF");
 
-  sprintf (items[4].text, "Borders: %s", config.overscan ? "ON" : "OFF");
+  sprintf (items[VI_OFFSET+1].text, "Borders: %s", config.overscan ? "ON" : "OFF");
 
   if (config.aspect == 1)
-    sprintf (items[5].text,"Aspect: ORIGINAL (4:3)");
+    sprintf (items[VI_OFFSET+2].text,"Aspect: ORIGINAL (4:3)");
   else if (config.aspect == 2)
-    sprintf (items[5].text, "Aspect: ORIGINAL (16:9)");
+    sprintf (items[VI_OFFSET+2].text, "Aspect: ORIGINAL (16:9)");
   else
-    sprintf (items[5].text, "Aspect: SCALE");
+    sprintf (items[VI_OFFSET+2].text, "Aspect: MANUAL SCALE");
 
-  sprintf (items[6].text, "Screen Position: (%s%02d,%s%02d)",
+  sprintf (items[VI_OFFSET+3].text, "Screen Position: (%s%02d,%s%02d)",
     (config.xshift < 0) ? "":"+", config.xshift,
     (config.yshift < 0) ? "":"+", config.yshift);
-  sprintf (items[7].text, "Screen Scaling: (%s%02d,%s%02d)",
+
+  sprintf (items[VI_OFFSET+4].text, "Screen Scaling: (%s%02d,%s%02d)",
     (config.xscale < 0) ? "":"+", config.xscale,
     (config.yscale < 0) ? "":"+", config.yscale);
 
-  GUI_InitMenu(m);
-
   if (config.aspect)
-    m->max_items  = 7;
+    m->max_items  = VI_OFFSET+4;
   else
-    m->max_items  = 8;
+    m->max_items  = VI_OFFSET+5;
 
+  GUI_InitMenu(m);
   GUI_SlideMenuTitle(m,strlen("Video "));
 
   while (quit == 0)
@@ -1126,14 +1262,13 @@ static void videomenu ()
           config.tv_mode = (config.tv_mode + 1) % 3;
 
           /* update framerate */
-          float framerate;
           if (vdp_pal)
             framerate = 50.0;
           else
             framerate = ((config.tv_mode == 0) || (config.tv_mode == 2)) ? (1000000.0/16715.0) : 60.0;
 
           /* save YM2612 context */
-          unsigned char *temp = memalign(32,YM2612GetContextSize());
+          temp = memalign(32,YM2612GetContextSize());
           if (temp)
             memcpy(temp, YM2612GetContextPtr(), YM2612GetContextSize());
 
@@ -1161,58 +1296,94 @@ static void videomenu ()
         }
         break;
     
-      case 2: /*** bilinear filtering ***/
+      case 2: /*** GX Texture filtering ***/
         config.bilinear ^= 1;
-        sprintf (items[2].text, "Bilinear Filter: %s", config.bilinear ? " ON" : "OFF");
+        sprintf (items[2].text, "GX Bilinear Filter: %s", config.bilinear ? " ON" : "OFF");
         break;
 
-      case 3: /*** NTSC filter ***/
+#ifdef HW_RVL
+      case 3: /*** VIDEO Trap filtering ***/
+        config.trap ^= 1;
+        sprintf (items[3].text, "VI Trap Filter: %s", config.trap ? " ON" : "OFF");
+        break;
+
+      case 4: /*** VIDEO Gamma correction ***/
+        if (cart.romsize) 
+        {
+          update_gamma();
+          state[0] = m->arrows[0]->state;
+          state[1] = m->arrows[1]->state;
+          m->max_buttons = 0;
+          m->max_images = 0;
+          m->arrows[0]->state = 0;
+          m->arrows[1]->state = 0;
+          m->screenshot = 255;
+          strcpy(m->title,"");
+          GUI_OptionBox(m,update_gamma,"VI Gamma Correction",(void *)&config.gamma,0.1,0.1,3.0,0);
+          m->max_buttons = 4;
+          m->max_images = 6;
+          m->arrows[0]->state = state[0];
+          m->arrows[1]->state = state[1];
+          m->screenshot = 0;
+          strcpy(m->title,"Video Settings");
+          sprintf (items[4].text, "VI Gamma Correction: %1.1f", config.gamma);
+          VIDEO_SetGamma(VI_GM_1_0);
+          VIDEO_Flush();
+        }
+        else
+        {
+          GUI_WaitPrompt("Error","Please load a game first !\n");
+        }
+        break;
+#endif
+
+      case VI_OFFSET: /*** NTSC filter ***/
         config.ntsc = (config.ntsc + 1) % 4;
         if (config.ntsc == 1)
-          sprintf (items[3].text, "NTSC Filter: COMPOSITE");
+          sprintf (items[VI_OFFSET].text, "NTSC Filter: COMPOSITE");
         else if (config.ntsc == 2)
-          sprintf (items[3].text, "NTSC Filter: S-VIDEO");
+          sprintf (items[VI_OFFSET].text, "NTSC Filter: S-VIDEO");
         else if (config.ntsc == 3)
-          sprintf (items[3].text, "NTSC Filter: RGB");
+          sprintf (items[VI_OFFSET].text, "NTSC Filter: RGB");
         else
-          sprintf (items[3].text, "NTSC Filter: OFF");
+          sprintf (items[VI_OFFSET].text, "NTSC Filter: OFF");
         break;
 
-      case 4: /*** overscan emulation ***/
+      case VI_OFFSET+1: /*** overscan emulation ***/
         config.overscan ^= 1;
-        sprintf (items[4].text, "Borders: %s", config.overscan ? "ON" : "OFF");
+        sprintf (items[VI_OFFSET+1].text, "Borders: %s", config.overscan ? "ON" : "OFF");
         break;
 
-      case 5: /*** aspect ratio ***/
+      case VI_OFFSET+2: /*** aspect ratio ***/
         config.aspect = (config.aspect + 1) % 3;
         if (config.aspect == 1)
-          sprintf (items[5].text,"Aspect: ORIGINAL (4:3)");
+          sprintf (items[VI_OFFSET+2].text,"Aspect: ORIGINAL (4:3)");
         else if (config.aspect == 2)
-          sprintf (items[5].text, "Aspect: ORIGINAL (16:9)");
+          sprintf (items[VI_OFFSET+2].text, "Aspect: ORIGINAL (16:9)");
         else
-          sprintf (items[5].text, "Aspect: SCALED");
+          sprintf (items[VI_OFFSET+2].text, "Aspect: MANUAL SCALE");
 
         if (config.aspect)
         {
           /* disable items */
-          m->max_items  = 7;
+          m->max_items  = VI_OFFSET+4;
 
           /* reset menu selection */
-          if (m->offset > 3)
+          if (m->offset > VI_OFFSET)
           {
-            m->offset  = 3;
+            m->offset  = VI_OFFSET;
             m->selected = 2;
           }
         }
         else
         {
           /* enable items */
-          m->max_items  = 8;
+          m->max_items  = VI_OFFSET+5;
         }
 
         break;
 
-      case 6: /*** screen position ***/
+      case VI_OFFSET+3: /*** screen position ***/
         if (cart.romsize) 
         {
           state[0] = m->arrows[0]->state;
@@ -1230,7 +1401,7 @@ static void videomenu ()
           m->arrows[1]->state = state[1];
           m->screenshot = 0;
           strcpy(m->title,"Video Settings");
-          sprintf (items[6].text, "Screen Position: (%s%02d,%s%02d)",
+          sprintf (items[VI_OFFSET+3].text, "Screen Position: (%s%02d,%s%02d)",
             (config.xshift < 0) ? "":"+", config.xshift,
             (config.yshift < 0) ? "":"+", config.yshift);
         }
@@ -1240,7 +1411,7 @@ static void videomenu ()
         }
         break;
 
-      case 7: /*** screen scaling ***/
+      case VI_OFFSET+4: /*** screen scaling ***/
         if (cart.romsize) 
         {
           state[0] = m->arrows[0]->state;
@@ -1258,7 +1429,7 @@ static void videomenu ()
           m->arrows[1]->state = state[1];
           m->screenshot = 0;
           strcpy(m->title,"Video Settings");
-          sprintf (items[7].text, "Screen Scaling: (%s%02d,%s%02d)",
+          sprintf (items[VI_OFFSET+4].text, "Screen Scaling: (%s%02d,%s%02d)",
             (config.xscale < 0) ? "":"+", config.xscale,
             (config.yscale < 0) ? "":"+", config.yscale);
         }
@@ -1274,7 +1445,6 @@ static void videomenu ()
     }
   }
 
-  m->max_items  = 8;
   GUI_DeleteMenu(m);
 }
 
@@ -1548,7 +1718,7 @@ static void ctrlmenu(void)
             m->buttons[9].shift[3] = 0;
 
             /* update title */
-            strcpy(m->title,"Controller Settings");
+            sprintf(m->title,"Controller Settings");
           }
           break;
 
@@ -1600,7 +1770,7 @@ static void ctrlmenu(void)
             m->buttons[9].shift[3] = 0;
 
             /* update title */
-            strcpy(m->title,"Controller Settings");
+            sprintf(m->title,"Controller Settings");
           }
 
           break;
@@ -1900,6 +2070,9 @@ static void ctrlmenu(void)
         /* update selector */
         m->selected -= m->buttons[m->selected].shift[2];
 
+        /* restore title */
+        sprintf(m->title,"Controller Settings");
+
         /* stay in menu */
         update = 0;
       }
@@ -1959,9 +2132,6 @@ static void ctrlmenu(void)
   m->buttons[7].shift[3] = 0;
   m->buttons[8].shift[3] = 0;
   m->buttons[9].shift[3] = 0;
-
-  /* clear menu title */
-  strcpy(m->title,"Controller Settings");
 
   /* clear menu items */
   memset(&m->items[0],0,sizeof(gui_item));

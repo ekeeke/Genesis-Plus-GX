@@ -1278,8 +1278,8 @@ void GUI_OptionBox(gui_menu *parent, optioncallback cb, char *title, void *optio
     else
     {
       /* float type */
-      if (*(float *)option < 0.0) sprintf(msg,"-%1.2f",fabs(*(float *)option));
-      else sprintf(msg,"%1.2f",fabs(*(float *)option));
+      if (*(float *)option < 0.0) sprintf(msg,"-%1.3f",fabs(*(float *)option));
+      else sprintf(msg,"%1.3f",fabs(*(float *)option));
     }
 
     /* draw option text */

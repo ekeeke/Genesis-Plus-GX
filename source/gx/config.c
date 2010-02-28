@@ -48,7 +48,8 @@ void config_load(void)
     char version[16];
     fread(version, 16, 1, fp); 
     fclose(fp);
-    if (strcmp(version,VERSION)) return;
+    if (strcmp(version,VERSION))
+      return;
 
     /* read file */
     fp = fopen(fname, "rb");
@@ -77,6 +78,8 @@ void config_default(void)
   config.lg             = 1.0;
   config.mg             = 1.0;
   config.hg             = 1.0;
+  config.rolloff        = 0.995;
+  config.dac_bits 		= 14;
 
   /* system options */
   config.region_detect  = 0;
@@ -100,6 +103,10 @@ void config_default(void)
     config.render = 0;
   config.ntsc     = 0;
   config.bilinear = 1;
+#ifdef HW_RVL
+  config.trap     = 1;
+  config.gamma    = VI_GM_1_0 / 10.0;
+#endif
 
   /* controllers options */
   config.gun_cursor[0]  = 1;

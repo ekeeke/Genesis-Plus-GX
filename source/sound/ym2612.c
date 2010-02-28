@@ -131,7 +131,6 @@
 #include <math.h>
 
 #include "shared.h"
-#include "Fir_Resampler.h"
 
 /* globals */
 #define FREQ_SH     16    /* 16.16 fixed point (frequency calculations) */
@@ -162,10 +161,6 @@
 #define SIN_MASK    (SIN_LEN-1)
 
 #define TL_RES_LEN    (256) /* 8 bits addressing (real chip) */
-
-
-#define MAXOUT    (+32767)
-#define MINOUT    (-32768)
 
 
 /*  TL_TAB_LEN is calculated as:
@@ -1736,8 +1731,8 @@ INLINE void OPNWriteReg(int r, int v)
           CH->ams = lfo_ams_depth_shift[(v>>4) & 0x03];
 
           /* PAN :  b7 = L, b6 = R */
-          ym2612.OPN.pan[ c*2   ] = (v & 0x80) ? ~0 : 0;
-          ym2612.OPN.pan[ c*2+1 ] = (v & 0x40) ? ~0 : 0;
+          ym2612.OPN.pan[ c*2   ] = (v & 0x80) ? ~((1 << (14 - config.dac_bits)) - 1) : 0;
+          ym2612.OPN.pan[ c*2+1 ] = (v & 0x40) ? ~((1 << (14 - config.dac_bits)) - 1) : 0;
           break;
       }
       break;
@@ -2033,10 +2028,10 @@ unsigned int YM2612Read(void)
 }
 
 /* Generate 16 bits samples for ym2612 */
-void YM2612Update(short int *buffer, int length)
+void YM2612Update(long int *buffer, int length)
 {
   int i;
-  int lt,rt;
+  long int lt,rt;
 
   /* refresh PG increments and EG rates if required */
   refresh_fc_eg_chan(&ym2612.CH[0]);
@@ -2195,4 +2190,19 @@ void YM2612Restore(unsigned char *buffer)
   setup_connection(&ym2612.CH[3],3);
   setup_connection(&ym2612.CH[4],4);
   setup_connection(&ym2612.CH[5],5);
+
+  /* update channels mask */
+  unsigned int mask = ~((1 << (14 - config.dac_bits)) - 1);
+  ym2612.OPN.pan[0] = ym2612.OPN.pan[0] ? mask : 0;
+  ym2612.OPN.pan[1] = ym2612.OPN.pan[1] ? mask : 0;
+  ym2612.OPN.pan[2] = ym2612.OPN.pan[2] ? mask : 0;
+  ym2612.OPN.pan[3] = ym2612.OPN.pan[3] ? mask : 0;
+  ym2612.OPN.pan[4] = ym2612.OPN.pan[4] ? mask : 0;
+  ym2612.OPN.pan[5] = ym2612.OPN.pan[5] ? mask : 0;
+  ym2612.OPN.pan[6] = ym2612.OPN.pan[6] ? mask : 0;
+  ym2612.OPN.pan[7] = ym2612.OPN.pan[7] ? mask : 0;
+  ym2612.OPN.pan[8] = ym2612.OPN.pan[8] ? mask : 0;
+  ym2612.OPN.pan[9] = ym2612.OPN.pan[9] ? mask : 0;
+  ym2612.OPN.pan[10] = ym2612.OPN.pan[10] ? mask : 0;
+  ym2612.OPN.pan[11] = ym2612.OPN.pan[11] ? mask : 0;
 }

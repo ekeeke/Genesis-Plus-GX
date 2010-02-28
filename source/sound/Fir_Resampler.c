@@ -23,7 +23,7 @@ static int step = STEREO;
 static int input_per_cycle;
 static double ratio = 1.0;
 
-static void gen_sinc(double rolloff, int width, double offset, double spacing, double scale, int count, short *out )
+static void gen_sinc(double rolloff, int width, double offset, double spacing, double scale, int count, sample_t *out )
 {
   double w, rolloff_cos_a, num, den, sinc;
   double const maxh = 256;
@@ -138,7 +138,7 @@ void Fir_Resampler_clear()
   }
 }
 
-double Fir_Resampler_time_ratio( double new_factor )
+double Fir_Resampler_time_ratio( double new_factor, double rolloff )
 {
   ratio = new_factor;
 
@@ -177,7 +177,7 @@ double Fir_Resampler_time_ratio( double new_factor )
 
   for ( i = 0; i < res; i++ )
   {
-    gen_sinc( ROLLOFF, (int) (WIDTH * filter + 1) & ~1, pos, filter,
+    gen_sinc( rolloff, (int) (WIDTH * filter + 1) & ~1, pos, filter,
               (double) (0x7FFF * GAIN * filter),
               (int) WIDTH, impulses[i] );
 

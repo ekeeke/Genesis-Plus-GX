@@ -87,7 +87,8 @@ static inline void lightgun_update(int num)
     if (io_reg[5] & 0x80)
     {
       /* External Interrupt ? */
-      if (reg[11] & 0x08) irq_status = (irq_status & ~0x40) | 0x12;
+      if (reg[11] & 0x08) 
+        irq_status = (irq_status & ~0x40) | 0x12;
 
       /* Horizontal Counter Latch:
         1) some games does not set HVC latch but instead use bigger X offset 

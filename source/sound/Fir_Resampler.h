@@ -8,15 +8,14 @@
 #define MAX_RES       32
 #define WIDTH         16
 #define WRITE_OFFSET  (WIDTH * STEREO) - STEREO
-#define ROLLOFF       0.990
 #define GAIN          1.0
 
-typedef short sample_t;
+typedef long int sample_t;
 
 extern int Fir_Resampler_initialize( int new_size );
 extern void Fir_Resampler_shutdown( void );
 extern void Fir_Resampler_clear( void );
-extern double Fir_Resampler_time_ratio( double new_factor );
+extern double Fir_Resampler_time_ratio( double new_factor, double rolloff );
 extern double Fir_Resampler_ratio( void );
 extern int Fir_Resampler_max_write( void );
 extern sample_t* Fir_Resampler_buffer( void );

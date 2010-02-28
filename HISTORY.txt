@@ -10,23 +10,25 @@ of samples per frame and keeping PSG & FM chips in sync.
 * improved PSG & FM chips synchronization with CPU execution (fixed point precision).
 * improved YM2612 core general accuracy (SSG-EG, CSM mode,...) (based upon Nemesis recent tests on real hardware)
 * improved YM2612 LFO emulation accuracy: fixes "Spider-Man & Venom : Separation Anxiety" (intro)
+* fixed YM2612 bug with Timer B: fixes "Langrisser Hikari II"/"Der Langrisser II" (Sega logo)
 * fixed YM2612 context saving/loading.
-* fixed YM2612 state upon reset.
-* removed outdated Gens YM2612 core
-* added faster FIR resampler (thanks to Blargg & AamirM), dropped libsamplerate support.
+* fixed YM2612 state on reset.
+* removed outdated & less accurate Gens YM2612 core
+* added preliminar emulation of YM2612 DAC original resolution (configurable).
+* added configurable & faster FIR resampler (thanks to Blargg & AamirM), dropped libsamplerate support.
 * added configurable Low-Pass filtering
-* added 3-Band Equalizer to support fully configurable sound filtering (thanks to Neil C).
-* added an option to boost SN76489 Noise Channel.
+* added configurable 3-Band Equalizer (thanks to Neil C).
+* added support for SN76489 Noise Channel boost (optional).
 * modified SN76489 cut-off frequency.
 
 [Core/VDP]
 ---------------
-* added support for CRAM writes during horizontal blanking.
-* added support for 2-Cell vertical scrolling in Interlaced 2 mode (unused by games ?)
-* fixed 2-Cell vertical scrolling when column 0 is shifted.
+* added support for CRAM writes during horizontal blanking (Striker, Zero the Kamikaze Squirrel,...)
+* added support for 2-Cell vertical scrolling in Interlaced 2 mode
+* fixed VBLANK transition line checks
 * improved sprite masking accuracy (thanks to Nemesis for his sprite test program)
 * improved HBLANK flag timing accuracy: fixes Mega Turrican (Sky level)
-* improved sprites processing timing accuracy: fixes (un)masked sprites in Mickey Mania (3D level), Sonic 2 (VS mode).
+* improved sprites processing accuracy: fixes (un)masked sprites in Mickey Mania (3D level), Sonic 2 (VS mode).
 * improved horizontal blanking & HINT/VINT occurence timing accuracy, as measured on real hardware.
 * improved H-Counter accuracy in 40-cell mode, as measured on real hardware.
 * improved color accuracy in VDP highlight mode to match results observed on real hardware.
@@ -54,14 +56,14 @@ of samples per frame and keeping PSG & FM chips in sync.
 
 [Gamecube/Wii]
 ---------------
-* new! FONT engine (using internal IPL font & GX hardware rendering).
-* new! GUI engine (with PCM/OGG sound support, using GX hardware rendering & multithreading).
-* new! interface design (incl. IR pointing, game snapshots, visual & sound effects, BGM...).
+* implemented new FONT engine (using internal IPL font & GX hardware rendering).
+* implemented custom GUI engine (with PCM/OGG sound support, multithreading & using GX hardware for rendering) 
+* new interface design (incl. IR pointing, game snapshots, visual & sound effects, BGM...).
 * improved audio/video back-end synchronization to ensure 100% smooth video & audio playback.
 * improved reset button behavior, now works more like the real Genesis reset button.
 * improved lightgun cursors layout.
 * fixed stability issues and memory leaks.
-* compiled with Devkitpro/PPC r18 and last libogc/libfat (support for SDHC, new DVDX, etc)
+* compiled with devkitPPC r19 & libOGC 1.8.1 (SDHC support, new DVDX, etc)
 
 
 

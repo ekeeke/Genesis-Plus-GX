@@ -42,6 +42,8 @@ typedef struct
   float lg;
   float mg;
   float hg;
+  float rolloff;
+  uint8 dac_bits;
   uint8 region_detect;
   uint8 force_dtack;
   uint8 addr_error;
@@ -59,6 +61,10 @@ typedef struct
   uint8 render;
   uint8 ntsc;
   uint8 bilinear;
+#ifdef HW_RVL
+  uint8 trap;
+  float gamma;
+#endif
   uint8 gun_cursor[2];
   uint8 invert_mouse;
   uint16 pad_keymap[4][MAX_KEYS];

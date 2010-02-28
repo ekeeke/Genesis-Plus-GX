@@ -25,8 +25,6 @@
 #include "Fir_Resampler.h"
 #include "eq.h"
 
-#define SND_SIZE (snd.buffer_size * sizeof(int16))
-
 /* Global variables */
 t_bitmap bitmap;
 t_snd snd;
@@ -50,24 +48,24 @@ void audio_set_equalizer(void)
 }
 
 /****************************************************************
- * AUDIO stream update
+ * AUDIO stream update & mixing
  ****************************************************************/
-static int llp,rrp;
+static int32 llp,rrp;
 
 int audio_update (void)
 {
-  int i, l, r;
-  int ll = llp;
-  int rr = rrp;
+  int32 i, l, r;
+  int32 ll = llp;
+  int32 rr = rrp;
 
-  int psg_preamp    = config.psg_preamp;
-  int fm_preamp     = config.fm_preamp;
-  int filter        = config.filter;
-  uint32 factora    = (config.lp_range << 16) / 100;
-  uint32 factorb    = 0x10000 - factora;
+  int psg_preamp  = config.psg_preamp;
+  int fm_preamp   = config.fm_preamp;
+  int filter      = config.filter;
+  uint32 factora  = (config.lp_range << 16) / 100;
+  uint32 factorb  = 0x10000 - factora;
 
-  int16 *fm         = snd.fm.buffer;
-  int16 *psg        = snd.psg.buffer;
+  int32 *fm       = snd.fm.buffer;
+  int16 *psg      = snd.psg.buffer;
 
 #ifdef NGC
   int16 *sb = (int16 *) soundbuffer[mixbuffer];
@@ -109,11 +107,11 @@ int audio_update (void)
   for (i = 0; i < size; i ++)
   {
     /* PSG samples (mono) */
-    l = r = ((*psg++) * psg_preamp)/100;
+    l = r = (((*psg++) * psg_preamp) / 100);
 
     /* FM samples (stereo) */
-    l += (*fm++ * fm_preamp)/100;
-    r += (*fm++ * fm_preamp)/100;
+    l += ((*fm++ * fm_preamp) / 100);
+    r += ((*fm++ * fm_preamp) / 100);
 
     /* filtering */
     if (filter & 1)
@@ -131,27 +129,31 @@ int audio_update (void)
       r = do_3band(&eq,r);
     }
 
-    /* clipping */
-    if (l > 32767) l = 32767;
-    else if (l < -32768) l = -32768;
-    if (r > 32767) r = 32767;
-    else if (r < -32768) r = -32768;
+    /* clipping (16-bit samples) */
+    if (l > 32767)
+      l = 32767;
+    else if (l < -32768)
+      l = -32768;
+    if (r > 32767)
+      r = 32767;
+    else if (r < -32768)
+      r = -32768;
 
     /* update sound buffer */
 #ifndef NGC
-    snd.buffer[0][i] = l;
-    snd.buffer[1][i] = r;
+    snd.buffer[0][i] = r;
+    snd.buffer[1][i] = l;
 #else
     *sb++ = r;
     *sb++ = l;
 #endif
   }
 
-  /* save delayed samples for next frame */
+  /* save filtered samples for next frame */
   llp = ll;
   rrp = rr;
 
-  /* save remaining samples for next frame */
+  /* keep remaining samples for next frame */
   memcpy(snd.fm.buffer, fm, (snd.fm.pos - snd.fm.buffer) << 1);
   memcpy(snd.psg.buffer, psg, (snd.psg.pos - snd.psg.buffer) << 1);
 
@@ -182,19 +184,19 @@ int audio_init (int samplerate, float framerate)
 
 #ifndef NGC
   /* Output buffers */
-  snd.buffer[0] = (int16 *) malloc(SND_SIZE);
-  snd.buffer[1] = (int16 *) malloc(SND_SIZE);
+  snd.buffer[0] = (int16 *) malloc(snd.buffer_size * sizeof(int16));
+  snd.buffer[1] = (int16 *) malloc(snd.buffer_size * sizeof(int16));
   if (!snd.buffer[0] || !snd.buffer[1])
     return (-1);
 #endif
 
   /* SN76489 stream buffers */
-  snd.psg.buffer = (int16 *) malloc(SND_SIZE);
+  snd.psg.buffer = (int16 *) malloc(snd.buffer_size * sizeof(int16));
   if (!snd.psg.buffer)
     return (-1);
 
   /* YM2612 stream buffers */
-  snd.fm.buffer = (int16 *) malloc(SND_SIZE * 2);
+  snd.fm.buffer = (int32 *) malloc(snd.buffer_size * sizeof(int32) * 2);
   if (!snd.fm.buffer)
     return (-1);
 
@@ -232,14 +234,14 @@ void audio_reset(void)
   snd.fm.pos  = snd.fm.buffer;
 #ifndef NGC
   if (snd.buffer[0])
-    memset (snd.buffer[0], 0, SND_SIZE);
+    memset (snd.buffer[0], 0, snd.buffer_size * sizeof(int16));
   if (snd.buffer[1])
-    memset (snd.buffer[1], 0, SND_SIZE);
+    memset (snd.buffer[1], 0, snd.buffer_size * sizeof(int16));
 #endif
   if (snd.psg.buffer)
-    memset (snd.psg.buffer, 0, SND_SIZE);
+    memset (snd.psg.buffer, 0, snd.buffer_size * sizeof(int16));
   if (snd.fm.buffer)
-    memset (snd.fm.buffer, 0, SND_SIZE * 2);
+    memset (snd.fm.buffer, 0, snd.buffer_size * sizeof(int32) * 2);
 }
 
 /****************************************************************
@@ -339,8 +341,11 @@ int system_frame (int do_skip)
   }
   odd_frame ^= 1;
 
-  /* clear VBLANK and DMA flags */
-  status &= 0xFFE5;
+  /* clear VBLANK, DMA, FIFO FULL & field flags */
+  status &= 0xFEE5;
+
+  /* set FIFO EMPTY flag */
+  status |= 0x0200;
 
   /* even/odd field flag (interlaced modes only) */
   if (odd_frame && interlaced)
@@ -382,19 +387,34 @@ int system_frame (int do_skip)
     if (dma_length)
       vdp_update_dma();
 
+    /* vertical blanking */
+    if (status & 8)
+    {
+      /* render overscan */
+      if (!do_skip && ((line < end_line) || (line >= start_line)))
+        render_line(line, 1);
+
+      /* clear any pending Z80 interrupt */
+      if (zirq)
+      {
+        zirq = 0;
+        z80_set_irq_line(0, CLEAR_LINE);
+      }
+    }
+
     /* active display */
-    if (line <= vdp_height)
+    else
     {
       /* H Interrupt */
       if(--h_counter < 0)
       {
         h_counter = reg[10];
-        hint_pending = 1;
+        hint_pending = 0x10;
         if (reg[0] & 0x10)
           irq_status = (irq_status & ~0x40) | 0x14;
       }
 
-      /* vertical retrace */
+      /* end of active display */
       if (line == vdp_height)
       {
         /* render overscan */
@@ -423,30 +443,18 @@ int system_frame (int do_skip)
           mcycles_z80 = mcycles_vdp + 788;
 
         /* V Interrupt */
-        vint_pending = 1;
+        vint_pending = 0x20;
         if (reg[1] & 0x20)
           irq_status = (irq_status & ~0x40) | 0x36;
       }
       else if (!do_skip) 
       {
         /* sprites are processed during horizontal blanking */
-        parse_satb(0x80 + line);
+        if (reg[1] & 0x40)
+          parse_satb(0x80 + line);
 
         /* render scanline */
         render_line(line, 0);
-      }
-    }
-    else
-    {
-      /* render overscan */
-      if (!do_skip && ((line < end_line) || (line >= start_line)))
-        render_line(line, 1);
-
-      /* clear any pending Z80 interrupt */
-      if (zirq)
-      {
-        zirq = 0;
-        z80_set_irq_line(0, CLEAR_LINE);
       }
     }
 

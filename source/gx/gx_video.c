@@ -367,6 +367,7 @@ static void gxStart(void)
   GX_Init(&gp_fifo, DEFAULT_FIFO_SIZE);
   GX_SetPixelFmt(GX_PF_RGB8_Z24, GX_ZC_LINEAR);
   GX_SetCullMode(GX_CULL_NONE);
+  GX_SetClipMode(GX_CLIP_DISABLE);
   GX_SetDispCopyGamma(GX_GM_1_0);
   GX_SetZMode(GX_FALSE, GX_ALWAYS, GX_FALSE);
   GX_SetColorUpdate(GX_TRUE);
@@ -426,18 +427,21 @@ static void gxResetRendering(u8 type)
   GX_Flush();
 }
 
-/* Reset GX 2D rendering */
-static void gxResetView(GXRModeObj *tvmode)
+/* Reset GX rendering mode */
+static void gxResetMode(GXRModeObj *tvmode)
 {
   Mtx44 p;
   f32 yScale = GX_GetYScaleFactor(tvmode->efbHeight, tvmode->xfbHeight);
   u16 xfbHeight = GX_SetDispCopyYScale(yScale);
+  u16 xfbWidth  = tvmode->fbWidth;  
+  if (xfbWidth & 15)  // xfb width is 16 pixels aligned
+    xfbWidth = (xfbWidth & ~15) + 16;
 
   GX_SetCopyClear((GXColor)BLACK,0x00ffffff);
   GX_SetViewport(0.0F, 0.0F, tvmode->fbWidth, tvmode->efbHeight, 0.0F, 1.0F);
   GX_SetScissor(0, 0, tvmode->fbWidth, tvmode->efbHeight);
   GX_SetDispCopySrc(0, 0, tvmode->fbWidth, tvmode->efbHeight);
-  GX_SetDispCopyDst(tvmode->fbWidth, xfbHeight);
+  GX_SetDispCopyDst(xfbWidth, xfbHeight);
   GX_SetCopyFilter(tvmode->aa, tvmode->sample_pattern, (tvmode->xfbMode == VI_XFBMODE_SF) ? GX_FALSE : GX_TRUE, tvmode->vfilter);
   GX_SetFieldMode(tvmode->field_rendering, ((tvmode->viHeight == 2 * tvmode->xfbHeight) ? GX_ENABLE : GX_DISABLE));
   guOrtho(p, tvmode->efbHeight/2, -(tvmode->efbHeight/2), -(tvmode->fbWidth/2), tvmode->fbWidth/2, 100, 1000);
@@ -497,42 +501,56 @@ static void gxSetAspectRatio(int *xscale, int *yscale)
 /* Reset GX/VI hardware scaler */
 static void gxResetScaler(u32 width, u32 height)
 {
-  /* get Aspect Ratio (depends on current configuration) */
-  int xscale,yscale;
+  int xscale  = 0;
+  int yscale  = 0;
+  int offset  = 0;
+
+  /* retrieve screen aspect ratio */
   gxSetAspectRatio(&xscale, &yscale);
 
-  /* GX horizontal scaling (done during EFB rendering) */
-  /* by default, use maximal EFB width */
+  /* default EFB width */
   rmode->fbWidth = 640;
+
+  /* no filtering, disable GX horizontal scaling */
   if (!config.bilinear && !config.ntsc)
   {
-    /* filtering (soft or hard) is disabled, let VI handles horizontal scaling */
     if ((width * 2) <= 640)
-      rmode->fbWidth = width * 2; /* GX scaling enabled (simple doubler) */
+      rmode->fbWidth = width * 2;
     else if (width <= 640)
-      rmode->fbWidth = width; /* GX scaling disabled */
+      rmode->fbWidth = width;
   }
 
-  /* VI horizontal scaling (done during EFB->XFB copy) */
-  int offset = 0;
+  /* configure VI width */
   if ((xscale * 2) > rmode->fbWidth)
   {
     /* max width = 720 pixels */
     if (xscale > 360)
     {
       /* save offset for later */
-      offset = xscale - 360;
+      offset = ((xscale - 360) * rmode->fbWidth) / rmode->viWidth;
 
       /* maximal width */
       xscale = 360;
     }
 
-    /* VI horizontal scaling is enabled */
+    /* enable VI upscaling */
     rmode->viWidth = xscale * 2;
     rmode->viXOrigin = (720 - (xscale * 2)) / 2;
 
-    /* update GX horizontal scaling (disabled if no offset) */
-    xscale = (rmode->fbWidth / 2) + ((offset * rmode->fbWidth) / rmode->viWidth);
+    /* default GX horizontal scaling */
+    xscale = (rmode->fbWidth / 2);
+
+    /* handle additional upscaling */
+    if (offset)
+    {
+      /* no filtering, reduce EFB width to increase VI upscaling */
+      if (!config.bilinear && !config.ntsc)
+        rmode->fbWidth -= (offset * 2);
+      
+      /* increase GX horizontal scaling */
+      else
+        xscale += offset;
+    }
   }
   else
   {
@@ -547,9 +565,7 @@ static void gxResetScaler(u32 width, u32 height)
 
   /* Configure GX vertical scaling (480i/576i/480p) */
   if (config.render)
-  {
     yscale = yscale * 2;
-  }
 
   /* Set GX scaler (Vertex Position matrix) */
   square[6] = square[3]  = xshift + xscale;
@@ -1256,18 +1272,24 @@ void gx_video_Stop(void)
   gxTextureClose(&crosshair[0]);
   gxTextureClose(&crosshair[1]);
 
-  /* reset GX */
+  /* GX menu rendering */
   gxResetRendering(1);
-  gxResetView(vmode);
+  gxResetMode(vmode);
 
-  /* VSYNC default callbacks */
+  /* default VI settings */
   VIDEO_SetPreRetraceCallback(NULL);
   VIDEO_SetPostRetraceCallback(gx_input_UpdateMenu);
+#ifdef HW_RVL
+  VIDEO_SetTrapFilter(1);
+  VIDEO_SetGamma(VI_GM_1_0);
+#endif
 
-  /* reset VI & adjust overscan */
+  /* default TV mode */
   vmode->viWidth    = config.screen_w;
   vmode->viXOrigin  = (VI_MAX_WIDTH_NTSC - vmode->viWidth)/2;
   VIDEO_Configure(vmode);
+
+  /* starts menu rendering */
   gxDrawScreenshot(0xff);
   gxSetScreen();
 }
@@ -1281,6 +1303,11 @@ void gx_video_Start(void)
   else
     gc_pal = 0;
 
+#ifdef HW_RVL
+  VIDEO_SetTrapFilter(config.trap);
+  VIDEO_SetGamma((int)(config.gamma * 10.0));
+#endif
+
   /* VSYNC callbacks */
   /* in 60hz mode, frame emulation is synchronized with Video Interrupt */
   if (!gc_pal && !vdp_pal)
@@ -1288,7 +1315,7 @@ void gx_video_Start(void)
   VIDEO_SetPostRetraceCallback(NULL);
   VIDEO_Flush();
 
-  /* switch interlaced/progressive video settings */
+  /* set interlaced or progressive video mode */
   if (config.render == 2)
   {
     tvmodes[2]->viTVMode = VI_TVMODE_NTSC_PROG;
@@ -1300,7 +1327,7 @@ void gx_video_Start(void)
     tvmodes[2]->xfbMode = VI_XFBMODE_DF;
   }
 
-  /* overscan */
+  /* overscan emulation */
   if (config.overscan)
   {
     bitmap.viewport.x = (reg[12] & 1) ? 16 : 12;
@@ -1347,10 +1374,10 @@ void gx_video_Start(void)
   if (config.gun_cursor[1] && (input.dev[5] == DEVICE_LIGHTGUN))
     crosshair[1] = gxTextureOpenPNG(Crosshair_p2_png,0);
 
-  /* apply changes on next video update */
+  /* force changes on next video update */
   bitmap.viewport.changed = 1;
 
-  /* reset GX rendering */
+  /* GX emulation rendering */
   gxResetRendering(0);
 
   /* resynchronize emulation with VSYNC*/
@@ -1375,9 +1402,11 @@ void gx_video_Update(void)
     if (vwidth != old_vwidth)
       return;
 
-    /* special cases */
+    /* interlaced mode */
     if (config.render && interlaced)
       vheight = vheight << 1;
+
+    /* ntsc filter */
     if (config.ntsc)
       vwidth = (reg[12]&1) ? MD_NTSC_OUT_WIDTH(vwidth) : SMS_NTSC_OUT_WIDTH(vwidth);
 
@@ -1396,19 +1425,19 @@ void gx_video_Update(void)
     /* load texture object */
     GX_LoadTexObj(&texobj, GX_TEXMAP0);
 
-    /* reset TV mode */
+    /* update TV mode */
     if (config.render)
       rmode = tvmodes[gc_pal*3 + 2];
     else
       rmode = tvmodes[gc_pal*3 + interlaced];
 
-    /* reset aspect ratio */
+    /* update aspect ratio */
     gxResetScaler(vwidth,vheight);
 
-    /* reset GX */
-    gxResetView(rmode);
+    /* update GX rendering mode */
+    gxResetMode(rmode);
 
-    /* change VI mode */
+    /* update VI mode */
     VIDEO_Configure(rmode);
     VIDEO_Flush();
   }
@@ -1548,7 +1577,7 @@ void gx_video_Init(void)
   /* Initialize GX */
   gxStart();
   gxResetRendering(1);
-  gxResetView(vmode);
+  gxResetMode(vmode);
 
   /* initialize FONT */
   if (!FONT_Init())

@@ -54,7 +54,7 @@ static inline void fm_update(unsigned int cycles)
     }
 
     /* select input sample buffer */
-    int16 *buffer = Fir_Resampler_buffer();
+    int32 *buffer = Fir_Resampler_buffer();
     if (buffer)
     {
       Fir_Resampler_write(cnt << 1);
@@ -139,7 +139,7 @@ void sound_init(void)
   if (config.hq_fm)
   {
     fm_cycles_ratio = 144 * 7 * (1 << 11);
-    Fir_Resampler_time_ratio(mclk / (double)snd.sample_rate / (144.0 * 7.0));
+    Fir_Resampler_time_ratio(mclk / (double)snd.sample_rate / (144.0 * 7.0), config.rolloff);
   }
 
 #ifdef LOGSOUND

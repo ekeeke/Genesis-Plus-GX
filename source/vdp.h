@@ -46,7 +46,7 @@ extern uint16 ntbb;
 extern uint16 ntwb;
 extern uint16 satb;
 extern uint16 hscb;
-extern uint8 border;
+
 extern uint8 bg_name_dirty[0x800];
 extern uint16 bg_name_list[0x800];
 extern uint16 bg_list_index;
