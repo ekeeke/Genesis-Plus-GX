@@ -28,6 +28,8 @@
 #include <ogcsys.h>
 #include <ogc/machine/processor.h>
 
+#include "vi_encoder.h"
+
 /****************************************************************************
  *  I2C driver by Hector Martin (marcan)
  *

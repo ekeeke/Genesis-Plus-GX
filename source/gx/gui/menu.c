@@ -705,11 +705,12 @@ static int update_snd_items(void)
   int offset;
   float fm_volume = (float)config.fm_preamp/100.0;
   float psg_volume = (float)config.psg_preamp/100.0;
+  float rolloff = config.rolloff * 100.0;
   
   if (config.hq_fm)
   {
     sprintf (items[0].text, "High-Quality FM: ON");
-    sprintf (items[1].text, "FM Roll-off: %1.3f",config.rolloff);
+    sprintf (items[1].text, "FM Roll-off: %1.2f %%",rolloff);
     strcpy  (items[1].comment, "Adjust FIR low-pass filtering");
     offset = 2;
   }
@@ -783,6 +784,7 @@ static void soundmenu ()
   gui_item *items = m->items;
   float fm_volume = (float)config.fm_preamp/100.0;
   float psg_volume = (float)config.psg_preamp/100.0;
+  float rolloff = config.rolloff * 100.0;
   int offset = update_snd_items();
   GUI_InitMenu(m);
   GUI_SlideMenuTitle(m,strlen("Audio "));
@@ -796,8 +798,9 @@ static void soundmenu ()
     {
       if (ret == 1)
       {
-        GUI_OptionBox(m,0,"FM Roll-off",(void *)&config.rolloff,0.001,0.800,1.000,0);
-        sprintf (items[1].text, "FM Roll-off: %1.3f",config.rolloff);
+        GUI_OptionBox(m,0,"FM Roll-off",(void *)&rolloff,0.1,95.0,99.9,0);
+        sprintf (items[1].text, "FM Roll-off: %1.2f %%",rolloff);
+        config.rolloff = rolloff / 100.0;
         ret = 255;
         if (cart.romsize) 
         {

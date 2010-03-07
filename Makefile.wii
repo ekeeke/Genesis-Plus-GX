@@ -26,7 +26,7 @@ INCLUDES	:=	source source/m68k source/z80 source/sound source/ntsc source/cart_h
 # options for code generation
 #---------------------------------------------------------------------------------
 
-CFLAGS	= -O3 -g -fomit-frame-pointer -mrvl -Wall $(MACHDEP) -Wno-strict-aliasing $(INCLUDE) -DWORDS_BIGENDIAN -DNGC="1" -DHW_RVL
+CFLAGS  = -O3 -fomit-frame-pointer -Wall -Wno-strict-aliasing $(MACHDEP) $(INCLUDE) -DWORDS_BIGENDIAN -DNGC -DHW_RVL
 CXXFLAGS	=	$(CFLAGS)
 
 LDFLAGS	=	$(MACHDEP) -Wl,-Map,$(notdir $@).map

@@ -17,6 +17,7 @@
 
 #ifdef HW_RVL
 #include <di/di.h>
+#include "vi_encoder.h"
 #endif
 
 #include "gx_input.h"
