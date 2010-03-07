@@ -455,9 +455,6 @@ static void wpad_config(u8 chan, u8 exp, u8 max_keys)
   VIDEO_Flush();
 }
 
-static float old_x = 0.0;
-static float old_y = 0.0;
-
 static void wpad_update(s8 chan, u8 i, u32 exp)
 {
   /* WPAD data */
@@ -513,7 +510,7 @@ static void wpad_update(s8 chan, u8 i, u32 exp)
   /* Emulated device specific */
   switch (input.dev[i])
   {
-    case  DEVICE_LIGHTGUN:
+    case DEVICE_LIGHTGUN:
     {
       /* Lightgun cursor position (x,y) */
       if (x || y)
@@ -551,10 +548,13 @@ static void wpad_update(s8 chan, u8 i, u32 exp)
 
     case DEVICE_MOUSE:
     {
-      /* Mouse relative movement (-255,255) */
+      /* Mouse relative movement (9 bits signed value) */
+      input.analog[2][0] = 0;
+      input.analog[2][1] = 0;
+
+      /* Nunchuk/Classic controller analog stick */
       if (x || y)
       {
-        /* analog stick relative positions */
         input.analog[2][0] = (x * 2) / ANALOG_SENSITIVITY;
         input.analog[2][1] = -(y * 2) / ANALOG_SENSITIVITY;
       }
@@ -564,19 +564,10 @@ static void wpad_update(s8 chan, u8 i, u32 exp)
       {
         struct ir_t ir;
         WPAD_IR(chan, &ir);
-        if (ir.valid)
+        if(ir.smooth_valid)
         {
-          /* calculate mouse values (FIXME) */
-          input.analog[2][0] = (ir.x - old_x);
-          input.analog[2][1] = (ir.y - old_y);
-          old_x = ir.x;
-          old_y = ir.y;
-          if (input.analog[2][0] > 255)
-            input.analog[2][0] = 255;
-          else if (input.analog[2][0] < -255)
-            input.analog[2][0] = -255;
-          if (input.analog[2][1] > 255) input.analog[2][1] = 255;
-          else if (input.analog[2][1] < -255) input.analog[2][1] = -255;
+          input.analog[2][0] = (int)((ir.sx - 512) / 2 / ANALOG_SENSITIVITY);
+          input.analog[2][1] = (int)((ir.sy - 384) * 2 / 3 / ANALOG_SENSITIVITY);
 
           /* use default trigger button */
           if (p & WPAD_BUTTON_B)
@@ -585,7 +576,7 @@ static void wpad_update(s8 chan, u8 i, u32 exp)
       }
 
 #ifdef USB_MOUSE
-      /* USB mouse support (NOT WORKING) */
+      /* USB mouse support (FIXME) */
       if (MOUSE_IsConnected())
       {
         mouse_event event;

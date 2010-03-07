@@ -438,7 +438,7 @@ unsigned int vdp_ctrl_r(void)
   if (!(reg[1] & 0x40))
     temp |= 0x08; 
 
-  /* HBLANK flag (Sonic 3 and Sonic 2 "VS Modes", Lemmings 2, Mega Turrican, Gouketsuji Ichizoku) */
+  /* HBLANK flag (Sonic 3 and Sonic 2 "VS Modes", Lemmings 2, Mega Turrican, V.R Troopers, Gouketsuji Ichizoku, ...) */
   if ((mcycles_68k % MCYCLES_PER_LINE) < 588)
     temp |= 0x04;
 
@@ -456,10 +456,13 @@ unsigned int vdp_ctrl_r(void)
 
 unsigned int vdp_hvc_r(void)
 {
-  uint8 hc = (hc_latch & 0x100) ? (hc_latch & 0xFF) : hctab[mcycles_68k%MCYCLES_PER_LINE]; 
+  /* Horizontal Counter (Striker, Mickey Mania, Skitchin, Road Rash I,II,III, ...) */
+  uint8 hc = (hc_latch & 0x100) ? (hc_latch & 0xFF) : hctab[mcycles_68k%MCYCLES_PER_LINE];
+
+  /* Vertical Counter */
   uint8 vc = vctab[v_counter];
 
-  /* interlace mode 2 */
+  /* interlace mode 2 (Sonic the Hedgehog 2, Combat Cars) */
   if (im2_flag)
     vc = (vc << 1) | ((vc >> 7) & 1);
 
@@ -813,13 +816,13 @@ static inline void reg_w(unsigned int r, unsigned int d)
         }
       }
 
-      /* Display status modified during Horizontal Blanking (Legend of Galahad, Lemmings 2,         */
-      /* Nigel Mansell's World Championship Racing, Deadly Moves, Power Athlete, ...)               */
-      /*                                                                                            */
-      /* Note that this is not entirely correct since we are cheating with the HBLANK period limits */
-      /* and still redrawing the whole line. This is done because some game (PAL version of Nigel   */
-      /* Mansell's World Championship Racing actually) appear to disable display outside HBLANK. On */
-      /* real hardware, the raster line would appear partially blanked.                             */
+      /* Display status modified during HBLANK (Legend of Galahad, Lemmings 2, Formula 1 Championship,  */
+      /* Nigel Mansell's World Championship Racing,  ...)                                               */
+      /*                                                                                                */
+      /* Note that this is not entirely correct since we are cheating with the HBLANK period limits and */
+      /* still redrawing the whole line. This is done because some games (forexample, the PAL version   */
+      /* of Nigel Mansell's World Championship Racing) appear to disable display outside HBLANK.        */
+      /* On  real hardware, the raster line would appear partially blanked.                             */
       if ((r & 0x40) && !(status & 8))
       {
         if (mcycles_68k <= (hint_68k + 860))
@@ -863,11 +866,7 @@ static inline void reg_w(unsigned int r, unsigned int d)
 
     case 5: /* SATB */
       reg[5] = d;
-      if (reg[12] & 1)
-        satb = (d << 9) & 0xFC00;
-      else
-        satb = (d << 9) & 0xFE00;
-
+      satb = (d << 9) & sat_base_mask;
       break;
 
     case 7:
