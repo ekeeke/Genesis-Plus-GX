@@ -122,12 +122,13 @@ void config_default(void)
 #endif
   config.state_auto   = -1;
   config.bg_color     = 0;
+  config.bg_overlay   = 0;
   config.screen_w     = 658;
   config.ask_confirm  = 0;
   config.bgm_volume   = 100.0;
   config.sfx_volume   = 100.0;
 
-  /* restore saved configuration */
+  /* restore from config file */
   config_load();
   io_init();
 }

@@ -73,6 +73,7 @@ typedef struct
   int8 sram_auto;
   int8 state_auto;
   int8 bg_color;
+  int8 bg_overlay;
   int16 screen_w;
   uint8 ask_confirm;
   float bgm_volume;

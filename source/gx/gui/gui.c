@@ -38,6 +38,27 @@ static lwp_t msgboxthread;
 /* background color */
 static GXColor bg_color;
 
+/* various background colors */
+static GXColor bg_colors[BG_COLOR_MAX]=
+{
+  {0xd4,0xd0,0xc8,0xff}, /* cream */
+  {0xbb,0xb0,0x99,0xff}, /* gold */
+  {0xd6,0xcb,0xba,0xff}, /* light gold */
+  {0xcc,0xcc,0xcc,0xff}, /* light grey */
+  {0x66,0x66,0x66,0xff}, /* faded grey */
+  {0x50,0x51,0x5b,0xff}, /* grey blue */
+  {0xb8,0xc7,0xda,0xff}, /* light blue */
+  {0xc0,0xcf,0xe7,0xff}, /* sky blue */
+  {0x98,0xb1,0xd8,0xff}, /* sea blue */
+  {0x7b,0x8c,0xa6,0xff}, /* violet */
+  {0xa9,0xc7,0xc6,0xff}, /* green blue */
+  {0x7d,0xa4,0x9f,0xff}, /* darker green blue */
+  {0x22,0x52,0x74,0xff}, /* dark blue */
+  {0x33,0x33,0x33,0xff}, /* dark grey */
+  {0x00,0x00,0x00,0xff} /* black */
+};
+
+
 /*****************************************************************************/
 /*  Generic GUI routines                                                     */
 /*****************************************************************************/
@@ -179,10 +200,13 @@ void GUI_DrawMenu(gui_menu *menu)
   for (i=0; i<menu->max_images; i++)
   {
     image = &menu->bg_images[i];
-    if (image->state & IMAGE_REPEAT)
-      gxDrawTextureRepeat(image->texture,image->x,image->y,image->w,image->h,image->alpha);
-    else if (image->state & IMAGE_VISIBLE)
-      gxDrawTexture(image->texture,image->x,image->y,image->w,image->h,image->alpha);
+    if (image->state & IMAGE_VISIBLE)
+    {
+      if (image->state & IMAGE_REPEAT)
+        gxDrawTextureRepeat(image->texture,image->x,image->y,image->w,image->h,image->alpha);
+      else 
+        gxDrawTexture(image->texture,image->x,image->y,image->w,image->h,image->alpha);
+    }
   }
 
   /* menu title */
@@ -365,29 +389,31 @@ void GUI_DrawMenuFX(gui_menu *menu, u8 speed, u8 out)
       if ((image->state & IMAGE_FADE) && ((out && (image->alpha > alpha)) || (!out && (image->alpha < alpha))))
       {
         /* FADE In-Out */
-        if (image->state & IMAGE_REPEAT)
-          gxDrawTextureRepeat(image->texture,image->x+xoffset,image->y+yoffset,image->w,image->h,alpha);
-        else if (image->state & IMAGE_VISIBLE)
+        if (image->state & IMAGE_VISIBLE)
+        {
+          if (image->state & IMAGE_REPEAT)
+            gxDrawTextureRepeat(image->texture,image->x+xoffset,image->y+yoffset,image->w,image->h,alpha);
+          else
           gxDrawTexture(image->texture,image->x+xoffset,image->y+yoffset,image->w,image->h,alpha);
+        }
       }
       else
       {
-        if (image->state & IMAGE_REPEAT)
-          gxDrawTextureRepeat(image->texture,image->x+xoffset,image->y+yoffset,image->w,image->h,image->alpha);
-        else if (image->state & IMAGE_VISIBLE)
-          gxDrawTexture(image->texture,image->x+xoffset,image->y+yoffset,image->w,image->h,image->alpha);
+        if (image->state & IMAGE_VISIBLE)
+        {
+          if (image->state & IMAGE_REPEAT)
+            gxDrawTextureRepeat(image->texture,image->x+xoffset,image->y+yoffset,image->w,image->h,image->alpha);
+          else
+            gxDrawTexture(image->texture,image->x+xoffset,image->y+yoffset,image->w,image->h,image->alpha);
+        }
       }
     }
 
     /* menu title */
     if (menu->bg_images[2].state & IMAGE_SLIDE_TOP)
-    {
       FONT_write(menu->title, 22,10,out ? (56 + temp - max_offset) : (56 -temp),640,(GXColor)WHITE);
-    }
     else
-    {
       FONT_write(menu->title, 22,10,56,640,(GXColor)WHITE);
-    }
 
     /* draw buttons + items */
     for (i=0; i<menu->max_buttons; i++)
@@ -1234,7 +1260,7 @@ void GUI_OptionBox(gui_menu *parent, optioncallback cb, char *title, void *optio
     GUI_DrawMenu(parent);
 
     /* draw window */
-    gxDrawTexture(window,xwindow,ywindow-yoffset,window->width,window->height,230);
+    gxDrawTexture(window,xwindow,ywindow-yoffset,window->width,window->height,225);
     gxDrawTexture(top,xwindow,ywindow-yoffset,top->width,top->height,255);
 
     /* display title */
@@ -1262,7 +1288,7 @@ void GUI_OptionBox(gui_menu *parent, optioncallback cb, char *title, void *optio
     GUI_DrawMenu(parent);
 
     /* draw window */
-    gxDrawTexture(window,xwindow,ywindow,window->width,window->height,230);
+    gxDrawTexture(window,xwindow,ywindow,window->width,window->height,225);
     gxDrawTexture(top,xwindow,ywindow,top->width,top->height,255);
 
     /* display title */
@@ -1414,7 +1440,7 @@ void GUI_OptionBox(gui_menu *parent, optioncallback cb, char *title, void *optio
     GUI_DrawMenu(parent);
 
     /* draw window */
-    gxDrawTexture(window,xwindow,ywindow-yoffset,window->width,window->height,230);
+    gxDrawTexture(window,xwindow,ywindow-yoffset,window->width,window->height,225);
     gxDrawTexture(top,xwindow,ywindow-yoffset,top->width,top->height,255);
 
     /* display title */
@@ -1476,7 +1502,7 @@ void GUI_OptionBox2(gui_menu *parent, char *text_1, char *text_2, s16 *option_1,
     GUI_DrawMenu(parent);
 
     /* draw window */
-    gxDrawTexture(window,xwindow,ywindow-yoffset,window->width,window->height,230);
+    gxDrawTexture(window,xwindow,ywindow-yoffset,window->width,window->height,225);
 
     /* update display */
     gxSetScreen();
@@ -1500,7 +1526,7 @@ void GUI_OptionBox2(gui_menu *parent, char *text_1, char *text_2, s16 *option_1,
     GUI_DrawMenu(parent);
 
     /* draw window */
-    gxDrawTexture(window,xwindow,ywindow,window->width,window->height,230);
+    gxDrawTexture(window,xwindow,ywindow,window->width,window->height,225);
 
     /* draw options text */
     if (*option_1 < 0) sprintf(msg,"%s: -%02d",text_1,abs(*option_1));
@@ -1651,7 +1677,7 @@ void GUI_OptionBox2(gui_menu *parent, char *text_1, char *text_2, s16 *option_1,
     GUI_DrawMenu(parent);
 
     /* draw window */
-    gxDrawTexture(window,xwindow,ywindow-yoffset,window->width,window->height,230);
+    gxDrawTexture(window,xwindow,ywindow-yoffset,window->width,window->height,225);
 
     /* update display */
     gxSetScreen();
@@ -1921,13 +1947,22 @@ void GUI_FadeOut()
   }
 }
 
-/* Select default background color */
-void GUI_SetBgColor(GXColor color)
+/* Return background color */
+GXColor *GUI_GetBgColor(void)
 {
-  bg_color.r = color.r;
-  bg_color.g = color.g;
-  bg_color.b = color.b;
-  bg_color.a = color.a;
+  return &bg_color;
+}
+
+/* Select background color */
+void GUI_SetBgColor(u8 color)
+{
+  if (color < BG_COLOR_MAX)
+  {
+    bg_color.r = bg_colors[color].r;
+    bg_color.g = bg_colors[color].g;
+    bg_color.b = bg_colors[color].b;
+    bg_color.a = bg_colors[color].a;
+  }
 }
 
 /* Initialize GUI engine */

@@ -84,12 +84,12 @@ static gui_item action_select =
 /*****************************************************************************/
 static gui_image bg_filesel[10] =
 {
-  {NULL,Bg_main_png,IMAGE_VISIBLE,356,144,348,288,255},
+  {NULL,Bg_main_png,IMAGE_VISIBLE,374,140,284,288,255},
   {NULL,Bg_overlay_png,IMAGE_VISIBLE|IMAGE_REPEAT,0,0,640,480,255},
   {NULL,Banner_top_png,IMAGE_VISIBLE,0,0,640,108,255},
   {NULL,Banner_bottom_png,IMAGE_VISIBLE,0,380,640,100,255},
   {NULL,Main_logo_png,IMAGE_VISIBLE,466,40,152,44,255},
-  {NULL,Frame_s1_png,IMAGE_VISIBLE,8,70,372,336,230},
+  {NULL,Frame_s1_png,IMAGE_VISIBLE,8,70,372,336,200},
   {NULL,Frame_s2_png,0,384,264,248,140,200},
   {NULL,Snap_empty_png,IMAGE_VISIBLE,422,114,164,116,255},
   {NULL,NULL,0,424,116,160,112,255},
@@ -162,6 +162,16 @@ int FileSelector(unsigned char *buffer, bool useFAT)
   int x,y;
   gui_butn *button;
 #endif
+
+  /* Background Settings */
+  if (config.bg_color == (BG_COLOR_MAX - 1))
+    bg_filesel[0].data = Bg_main_2_png;
+  else
+    bg_filesel[0].data = Bg_main_png;
+  if (config.bg_overlay)
+    bg_filesel[1].state |= IMAGE_VISIBLE;
+  else
+    bg_filesel[1].state &= ~IMAGE_VISIBLE;
 
   /* Initialize Menu */
   gui_menu *m = &menu_browser;

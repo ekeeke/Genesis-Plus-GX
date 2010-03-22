@@ -52,6 +52,8 @@
 #define IMAGE_SLIDE_TOP     0x20
 #define IMAGE_SLIDE_BOTTOM  0x40
 
+#define BG_COLOR_MAX 15
+
 /*****************************************************************************/
 /*  Generic GUI structures                                                   */
 /*****************************************************************************/
@@ -153,9 +155,11 @@ extern const u8 Bg_intro_c2_png[];
 extern const u8 Bg_intro_c3_png[];
 extern const u8 Bg_intro_c4_png[];
 extern const u8 Bg_intro_c5_png[];
+extern const u8 Bg_credits_png[];
 
 /* Generic backgrounds */
 extern const u8 Bg_main_png[];
+extern const u8 Bg_main_2_png[];
 extern const u8 Bg_overlay_png[];
 extern const u8 Banner_main_png[];
 extern const u8 Banner_bottom_png[];
@@ -291,7 +295,8 @@ extern void GUI_MsgBoxClose(void);
 extern void GUI_WaitPrompt(char *title, char *msg);
 extern int GUI_ConfirmPrompt(char *msg);
 extern void GUI_FadeOut();
-extern void GUI_SetBgColor(GXColor color);
+extern GXColor *GUI_GetBgColor(void);
+extern void GUI_SetBgColor(u8 color);
 extern void GUI_Initialize(void);
 
 #endif

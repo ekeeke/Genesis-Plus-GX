@@ -29,28 +29,6 @@
 #include "file_fat.h"
 #include "filesel.h"
 
-#define BG_COLOR_MAX 15
-
-/* various background colors */
-static GXColor bg_colors[BG_COLOR_MAX]=
-{
-  {0xd4,0xd0,0xc8,0xff}, /* cream */
-  {0xcc,0xcc,0xcc,0xff}, /* light grey */
-  {0x66,0x66,0x66,0xff}, /* faded grey */
-  {0x50,0x51,0x5b,0xff}, /* grey blue */
-  {0xb8,0xc7,0xda,0xff}, /* light blue */
-  {0xc0,0xcf,0xe7,0xff}, /* sky blue */
-  {0x98,0xb1,0xd8,0xff}, /* sea blue */
-  {0x7b,0x8c,0xa6,0xff}, /* violet */
-  {0xa9,0xc7,0xc6,0xff}, /* green blue */
-  {0x7d,0xa4,0x9f,0xff}, /* darker green blue */
-  {0x22,0x52,0x74,0xff}, /* dark blue */
-  {0x33,0x33,0x33,0xff}, /* dark grey */
-  {0x00,0x00,0x00,0xff}, /* black */
-  {0xd6,0xcb,0xba,0xff}, /* light gold */
-  {0xbb,0xb0,0x99,0xff}  /* gold */
-};
-
 /*****************************************************************************/
 /*  Generic Buttons data                                                      */
 /*****************************************************************************/
@@ -115,7 +93,7 @@ static gui_item action_select =
 /*****************************************************************************/
 static gui_image bg_main[4] =
 {
-  {NULL,Bg_main_png,IMAGE_VISIBLE|IMAGE_FADE,146,80,348,288,255},
+  {NULL,Bg_main_png,IMAGE_VISIBLE|IMAGE_FADE,178,28,284,288,255},
   {NULL,Bg_overlay_png,IMAGE_VISIBLE|IMAGE_REPEAT,0,0,640,480,255},
   {NULL,Banner_main_png,IMAGE_VISIBLE|IMAGE_SLIDE_BOTTOM,0,340,640,140,255},
   {NULL,Main_logo_png,IMAGE_VISIBLE|IMAGE_SLIDE_BOTTOM,202,362,232,56,255}
@@ -123,7 +101,7 @@ static gui_image bg_main[4] =
 
 static gui_image bg_misc[5] =
 {
-  {NULL,Bg_main_png,IMAGE_VISIBLE|IMAGE_FADE,146,80,348,288,255},
+  {NULL,Bg_main_png,IMAGE_VISIBLE|IMAGE_FADE,178,96,284,288,255},
   {NULL,Bg_overlay_png,IMAGE_VISIBLE|IMAGE_REPEAT,0,0,640,480,255},
   {NULL,Banner_top_png,IMAGE_VISIBLE|IMAGE_SLIDE_TOP,0,0,640,108,255},
   {NULL,Banner_bottom_png,IMAGE_VISIBLE|IMAGE_SLIDE_BOTTOM,0,380,640,100,255},
@@ -132,7 +110,7 @@ static gui_image bg_misc[5] =
 
 static gui_image bg_ctrls[8] =
 {
-  {NULL,Bg_main_png,IMAGE_VISIBLE,356,144,348,288,255},
+  {NULL,Bg_main_png,IMAGE_VISIBLE,374,140,284,288,255},
   {NULL,Bg_overlay_png,IMAGE_VISIBLE|IMAGE_REPEAT,0,0,640,480,255},
   {NULL,Banner_top_png,IMAGE_VISIBLE,0,0,640,108,255},
   {NULL,Banner_bottom_png,IMAGE_VISIBLE,0,380,640,100,255},
@@ -144,7 +122,7 @@ static gui_image bg_ctrls[8] =
 
 static gui_image bg_list[6] =
 {
-  {NULL,Bg_main_png,IMAGE_VISIBLE,356,144,348,288,255},
+  {NULL,Bg_main_png,IMAGE_VISIBLE,374,140,284,288,255},
   {NULL,Bg_overlay_png,IMAGE_VISIBLE|IMAGE_REPEAT,0,0,640,480,255},
   {NULL,Banner_top_png,IMAGE_VISIBLE,0,0,640,108,255},
   {NULL,Banner_bottom_png,IMAGE_VISIBLE,0,380,640,100,255},
@@ -190,22 +168,15 @@ static gui_item items_ctrls[13] =
   {NULL,Ctrl_config_png,"Keys\nConfig","Configure Controller Keys",530,306,32,32}
 };
 
-#ifdef HW_RVL
 static gui_item items_load[4] =
 {
   {NULL,Load_recent_png,"","Load recent ROM files (USB/SD)" ,276,120,88,96},
   {NULL,Load_sd_png    ,"","Load ROM files from SDCARD"     ,110,266,88,96},
+#ifdef HW_RVL
   {NULL,Load_usb_png   ,"","Load ROM files from USB device" ,276,266,88,96},
+#endif
   {NULL,Load_dvd_png   ,"","Load ROM files from DVD"        ,442,266,88,96}
 };
-#else
-static gui_item items_load[3] =
-{
-  {NULL,Load_recent_png,"","Load recent ROM files (SD)" ,110,198,88,96},
-  {NULL,Load_sd_png    ,"","Load ROM files from SDCARD" ,276,198,88,96},
-  {NULL,Load_dvd_png   ,"","Load ROM files from DVD"    ,442,198,88,96}
-};
-#endif
 
 static gui_item items_options[5] =
 {
@@ -267,13 +238,14 @@ static gui_item items_video[8] =
 };
 
 /* Menu options */
-static gui_item items_prefs[7] =
+static gui_item items_prefs[8] =
 {
   {NULL,NULL,"Auto SRAM: OFF",    "Enable/disable automatic SRAM",        52,132,276,48},
   {NULL,NULL,"Auto STATE: OFF",   "Enable/disable automatic Savestate",   52,132,276,48},
   {NULL,NULL,"SFX Volume: 100",   "Adjust sound effects volume",          52,132,276,48},
   {NULL,NULL,"BGM Volume: 100",   "Adjust background music volume",       52,132,276,48},
   {NULL,NULL,"BG Color: DEFAULT", "Change background color",              52,132,276,48},
+  {NULL,NULL,"BG Overlay: ON",     "Enable/disable background overlay",   52,132,276,48},
   {NULL,NULL,"Screen Width: 658", "Adjust Screen Width",                  52,132,276,48},
   {NULL,NULL,"Confirm Box: OFF",  "Enable/disable user confirmation",     52,132,276,48}
 };
@@ -328,22 +300,17 @@ static gui_butn buttons_ctrls[13] =
 };
 
 /* Load Game menu */
-#ifdef HW_RVL
 static gui_butn buttons_load[4] =
 {
   {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_FADE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{0,2,0,1},246,102,148,132},
   {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_FADE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{1,0,1,1}, 80,248,148,132},
+#ifdef HW_RVL
   {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_FADE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{2,0,1,1},246,248,148,132},
   {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_FADE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{3,0,1,0},412,248,148,132}
-};
 #else
-static gui_butn buttons_load[3] =
-{
-  {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_FADE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{0,0,0,1}, 80,180,148,132},
-  {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_FADE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{0,0,1,1},246,180,148,132},
-  {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_FADE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{0,0,1,0},412,180,148,132}
-};
+  {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_FADE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{2,0,1,0},412,248,148,132}
 #endif
+};
 
 /* Options menu */
 static gui_butn buttons_options[5] =
@@ -459,7 +426,7 @@ static gui_menu menu_prefs =
 {
   "Menu Settings",
   0,0,
-  7,4,6,0,
+  8,4,6,0,
   items_prefs,
   buttons_list,
   bg_list,
@@ -491,7 +458,7 @@ static void drawmenu (char items[][25], int maxitems, int selected)
   memset(&texture,0,sizeof(gx_texture));
 
   /* draw background items */
-  gxClearScreen (bg_colors[config.bg_color]);
+  gxClearScreen (*GUI_GetBgColor());
   texture= gxTextureOpenPNG(Bg_main_png,0);
   if (texture)
   {
@@ -625,8 +592,9 @@ static void prefmenu ()
   sprintf (items[3].text, "BGM Volume: %1.1f", config.bgm_volume);
   if (config.bg_color) sprintf (items[4].text, "BG Color: Type %d", config.bg_color);
   else sprintf (items[4].text, "BG Color: DEFAULT");
-  sprintf (items[5].text, "Screen Width: %d", config.screen_w);
-  sprintf (items[6].text, "Confirmation Box: %s",config.ask_confirm ? "ON":"OFF");
+  sprintf (items[5].text, "BG Overlay: %s", config.bg_overlay ? "ON":"OFF");
+  sprintf (items[6].text, "Screen Width: %d", config.screen_w);
+  sprintf (items[7].text, "Confirmation Box: %s",config.ask_confirm ? "ON":"OFF");
 
   GUI_InitMenu(m);
   GUI_SlideMenuTitle(m,strlen("Menu "));
@@ -672,15 +640,50 @@ static void prefmenu ()
         else if (config.bg_color >= BG_COLOR_MAX) config.bg_color = 0;
         if (config.bg_color) sprintf (items[4].text, "BG Color: Type %d", config.bg_color);
         else sprintf (items[4].text, "BG Color: DEFAULT");
-        GUI_SetBgColor(bg_colors[config.bg_color]);
+        GUI_SetBgColor((u8)config.bg_color);
+        GUI_DeleteMenu(m);
+        if (config.bg_color == (BG_COLOR_MAX - 1))
+        {
+          bg_main[0].data = Bg_main_2_png;
+          bg_misc[0].data = Bg_main_2_png;
+          bg_ctrls[0].data = Bg_main_2_png;
+          bg_list[0].data = Bg_main_2_png;
+        }
+        else
+        {
+          bg_main[0].data = Bg_main_png;
+          bg_misc[0].data = Bg_main_png;
+          bg_ctrls[0].data = Bg_main_png;
+          bg_list[0].data = Bg_main_png;
+        }
+        GUI_InitMenu(m);
         break;
 
-      case 5:
+      case 5:   /*** Background items ***/
+        config.bg_overlay ^= 1;
+        sprintf (items[5].text, "BG Overlay: %s", config.bg_overlay ? "ON":"OFF");
+        if (config.bg_overlay)
+        {
+          bg_main[1].state |= IMAGE_VISIBLE;
+          bg_misc[1].state |= IMAGE_VISIBLE;
+          bg_ctrls[1].state |= IMAGE_VISIBLE;
+          bg_list[1].state |= IMAGE_VISIBLE;
+        }
+        else
+        {
+          bg_main[1].state &= ~IMAGE_VISIBLE;
+          bg_misc[1].state &= ~IMAGE_VISIBLE;
+          bg_ctrls[1].state &= ~IMAGE_VISIBLE;
+          bg_list[1].state &= ~IMAGE_VISIBLE;
+        }
+        break;
+
+      case 6:   /*** Screen Width ***/
         GUI_OptionBox(m,update_screen_w,"Screen Width",(void *)&config.screen_w,2,640,VI_MAX_WIDTH_NTSC,1);
         sprintf (items[5].text, "Screen Width: %d", config.screen_w);
         break;
 
-      case 6:
+      case 7:   /*** User COnfirmation ***/
         config.ask_confirm ^= 1;
         sprintf (items[6].text, "Confirmation Box: %s",config.ask_confirm ? "ON":"OFF");
         break;
@@ -2189,28 +2192,39 @@ static void optionmenu(void)
   int ret, quit = 0;
   gui_menu *m = &menu_options;
 
+  GUI_InitMenu(m);
+  GUI_DrawMenuFX(m,30,0);
+
   while (quit == 0)
   {
-    GUI_InitMenu(m);
     ret = GUI_RunMenu(m);
-    GUI_DeleteMenu(m);
 
     switch (ret)
     {
       case 0:
+        GUI_DeleteMenu(m);
         systemmenu();
+        GUI_InitMenu(m);
         break;
       case 1:
+        GUI_DeleteMenu(m);
         videomenu();
+        GUI_InitMenu(m);
         break;
       case 2:
+        GUI_DeleteMenu(m);
         soundmenu();
+        GUI_InitMenu(m);
         break;
       case 3:
+        GUI_DeleteMenu(m);
         ctrlmenu();
+        GUI_InitMenu(m);
         break;
       case 4:
+        GUI_DeleteMenu(m);
         prefmenu();
+        GUI_InitMenu(m);
         break;
       case -1:
         quit = 1;
@@ -2218,6 +2232,8 @@ static void optionmenu(void)
     }
   }
 
+  GUI_DrawMenuFX(m,30,1);
+  GUI_DeleteMenu(m);
   config_save();
 }
 
@@ -2250,9 +2266,12 @@ static int loadsavemenu (int which)
 
   while (quit == 0)
   {
-    if (device == 0) sprintf(items[0], "Device: FAT");
-    else if (device == 1) sprintf(items[0], "Device: MCARD A");
-    else if (device == 2) sprintf(items[0], "Device: MCARD B");
+    if (device == 0)
+      sprintf(items[0], "Device: FAT");
+    else if (device == 1)
+      sprintf(items[0], "Device: MCARD A");
+    else if (device == 2)
+      sprintf(items[0], "Device: MCARD B");
 
     ret = domenu (&items[0], count, 0);
     switch (ret)
@@ -2268,10 +2287,13 @@ static int loadsavemenu (int which)
       case 1:
       case 2:
         SILENT = 1;
-        if (which == 1) quit = ManageState(ret-1,device);
-        else if (which == 0) quit = ManageSRAM(ret-1,device);
+        if (which == 1)
+          quit = ManageState(ret-1,device);
+        else if (which == 0)
+          quit = ManageSRAM(ret-1,device);
         SILENT = 0;
-        if (quit) return 1;
+        if (quit)
+          return 1;
         break;
     }
   }
@@ -2311,7 +2333,8 @@ static int filemenu ()
 
       case 0:   /*** SRAM Manager ***/
       case 1:  /*** SaveState Manager ***/
-        if (loadsavemenu(ret)) return 1;
+        if (loadsavemenu(ret))
+          return 1;
         break;
     }
   }
@@ -2327,9 +2350,10 @@ static int filemenu ()
  ****************************************************************************/
 static int loadmenu ()
 {
-  int ret,size;
+  int ret;
   gui_menu *m = &menu_load;
   GUI_InitMenu(m);
+  GUI_DrawMenuFX(m,30,0);
 
   while (1)
   {
@@ -2339,6 +2363,7 @@ static int loadmenu ()
     {
       /*** Button B ***/
       case -1: 
+        GUI_DrawMenuFX(m,30,1);
         GUI_DeleteMenu(m);
         return 0;
 
@@ -2351,8 +2376,8 @@ static int loadmenu ()
         if (DVD_Open())
         {
           GUI_DeleteMenu(m);
-          size = FileSelector(cart.rom,0);
-          if (size) return 1;
+          if (FileSelector(cart.rom,0))
+            return 1;
           GUI_InitMenu(m);
         }
         break;
@@ -2362,8 +2387,8 @@ static int loadmenu ()
         if (FAT_Open(ret))
         {
           GUI_DeleteMenu(m);
-          size = FileSelector(cart.rom,1);
-          if (size) return 1;
+          if (FileSelector(cart.rom,1))
+            return 1;
           GUI_InitMenu(m);
         }
         break;
@@ -2453,13 +2478,13 @@ static void showrominfo ()
           break;
         case 11:
           if (svp) sprintf (msg, "SVP Chip detected");
-          else if (sram.custom) sprintf (msg, "EEPROM(%dK) - $%06X", ((eeprom.type.size_mask+1)* 8) /1024, (unsigned int)sram.start);
+          else if (sram.custom) sprintf (msg, "EEPROM(%dK) - $%06X", ((eeprom.type.size_mask+1)* 8) /1024, (unsigned int)eeprom.type.sda_out_bit);
           else if (sram.detected) sprintf (msg, "SRAM Start  - $%06X", sram.start);
           else sprintf (msg, "External RAM undetected");
              
           break;
         case 12:
-          if (sram.custom) sprintf (msg, "EEPROM(%dK) - $%06X", ((eeprom.type.size_mask+1)* 8) /1024, (unsigned int)sram.end);
+          if (sram.custom) sprintf (msg, "EEPROM(%dK) - $%06X", ((eeprom.type.size_mask+1)* 8) /1024, (unsigned int)eeprom.type.scl_bit);
           else if (sram.detected) sprintf (msg, "SRAM End   - $%06X", sram.end);
           else if (sram.on) sprintf (msg, "Default SRAM activated ");
           else sprintf (msg, "SRAM is disactivated  ");
@@ -2518,7 +2543,7 @@ void MainMenu (void)
   memfile_autosave(config.sram_auto,-1);
 
 #ifdef HW_RVL
-  /* sutdown Wii */
+  /* Wiimote shutdown */
   if (Shutdown)
   {
     GUI_FadeOut();
@@ -2552,8 +2577,38 @@ void MainMenu (void)
     }
   }
 
+  /* Background Settings */
+  GUI_SetBgColor((u8)config.bg_color);
+  if (config.bg_color == (BG_COLOR_MAX - 1))
+  {
+    bg_main[0].data = Bg_main_2_png;
+    bg_misc[0].data = Bg_main_2_png;
+    bg_ctrls[0].data = Bg_main_2_png;
+    bg_list[0].data = Bg_main_2_png;
+  }
+  else
+  {
+    bg_main[0].data = Bg_main_png;
+    bg_misc[0].data = Bg_main_png;
+    bg_ctrls[0].data = Bg_main_png;
+    bg_list[0].data = Bg_main_png;
+  }
+  if (config.bg_overlay)
+  {
+    bg_main[1].state |= IMAGE_VISIBLE;
+    bg_misc[1].state |= IMAGE_VISIBLE;
+    bg_ctrls[1].state |= IMAGE_VISIBLE;
+    bg_list[1].state |= IMAGE_VISIBLE;
+  }
+  else
+  {
+    bg_main[1].state &= ~IMAGE_VISIBLE;
+    bg_misc[1].state &= ~IMAGE_VISIBLE;
+    bg_ctrls[1].state &= ~IMAGE_VISIBLE;
+    bg_list[1].state &= ~IMAGE_VISIBLE;
+  }
+
   GUI_InitMenu(m);
-  GUI_SetBgColor(bg_colors[config.bg_color]);
   GUI_DrawMenuFX(m,10,0);
 
   while (quit == 0)
@@ -2564,17 +2619,22 @@ void MainMenu (void)
     {
       /*** Load Game Menu ***/
       case 0:
+        GUI_DrawMenuFX(m,30,1);
         GUI_DeleteMenu(m);
         quit = loadmenu();
-        if (quit) break;
+        if (quit)
+          break;
         GUI_InitMenu(m);
+        GUI_DrawMenuFX(m,30,0);
         break;
 
       /*** Options Menu */
       case 1:
+        GUI_DrawMenuFX(m,30,1);
         GUI_DeleteMenu(m);
         optionmenu();
         GUI_InitMenu(m);
+        GUI_DrawMenuFX(m,30,0);
         break;
 
       /*** Exit Menu ***/
@@ -2607,23 +2667,43 @@ void MainMenu (void)
             break;
 
           default: /* credits (TODO !!!) */
+          {
+#if 0
+            gxClearScreen ((GXColor){0,0,0,0});
+            gx_texture *texture = gxTextureOpenPNG(Bg_credits_png,0);
+            if (texture)
+            {
+              gxDrawTexture(texture, (640-texture->width)/2, (480-texture->height)/2, texture->width, texture->height,255);
+              if (texture->data)
+                free(texture->data);
+              free(texture);
+            }
+            gxSetScreen();
+            while (!(m_input.keys & PAD_BUTTON_A) && !(m_input.keys & PAD_BUTTON_B))
+              VIDEO_WaitVSync ();
+#endif
             break;
+          }
         }
         break;
       }
 
       /*** File Manager (TODO !!!) ***/
       case 3:
-        if (!cart.romsize) break;
+        if (!cart.romsize)
+          break;
+        GUI_DrawMenuFX(m,30,1);
         GUI_DeleteMenu(m);
         quit = filemenu();
         if (quit) break;
         GUI_InitMenu(m);
+        GUI_DrawMenuFX(m,30,0);
         break;
 
       /*** Virtual system  hard reset ***/
       case 4:
-        if (!cart.romsize) break;
+        if (!cart.romsize)
+          break;
         GUI_DrawMenuFX(m,10,1);
         GUI_DeleteMenu(m);
         gxClearScreen((GXColor)BLACK);
@@ -2637,16 +2717,20 @@ void MainMenu (void)
 
       /*** Game Genie menu (TODO !!!) ***/
       case 5:
-        if (!cart.romsize) break;
+        if (!cart.romsize)
+          break;
+        GUI_DrawMenuFX(m,30,1);
         GUI_DeleteMenu(m);
         GetGGEntries();
         GUI_InitMenu(m);
+        GUI_DrawMenuFX(m,30,0);
         break;
 
       /*** Return to Game ***/
       case 6:
       case -1:
-       if (!cart.romsize) break;
+        if (!cart.romsize)
+          break;
         GUI_DrawMenuFX(m,10,1);
         GUI_DeleteMenu(m);
         quit = 1;
@@ -2654,7 +2738,8 @@ void MainMenu (void)
 
       /*** Game Capture ***/
       case 7:
-        if (!cart.romsize) break;
+        if (!cart.romsize)
+          break;
         char filename[MAXPATHLEN];
         sprintf(filename,"%s/snaps/%s.png", DEFAULT_PATH, rom_filename);
         gxSaveScreenshot(filename);
@@ -2663,9 +2748,11 @@ void MainMenu (void)
       /*** ROM information screen (TODO !!!) ***/
       case 8:
         if (!cart.romsize) break;
+        GUI_DrawMenuFX(m,30,1);
         GUI_DeleteMenu(m);
         showrominfo();
         GUI_InitMenu(m);
+        GUI_DrawMenuFX(m,30,0);
         break;
     }
   }

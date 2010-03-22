@@ -34,9 +34,9 @@
 #define SK_UPMEM      "/genplus/sk2chip.bin"
 
 #ifdef HW_RVL
-#define VERSION "version 1.4.0W"
+#define VERSION "version 1.4.xW"
 #else
-#define VERSION "version 1.4.0G"
+#define VERSION "version 1.4.xG"
 #endif
 
 #define osd_input_Update() gx_input_UpdateEmu()
