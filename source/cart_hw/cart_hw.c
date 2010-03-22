@@ -233,7 +233,7 @@ void cart_hw_init()
   }
 
   /**********************************************
-          EXTERNAL RAM 
+          BACKUP MEMORY 
   ***********************************************/
   sram_init();
   eeprom_init();
@@ -241,7 +241,7 @@ void cart_hw_init()
   {
     if (sram.custom)
     {
-      /* serial EEPROM */
+      /* Serial EEPROM */
       m68k_memory_map[eeprom.type.sda_out_adr >> 16].read8  = eeprom_read_byte;
       m68k_memory_map[eeprom.type.sda_out_adr >> 16].read16 = eeprom_read_word;
       m68k_memory_map[eeprom.type.sda_in_adr >> 16].read8   = eeprom_read_byte;
@@ -286,7 +286,7 @@ void cart_hw_init()
   }
 
   /**********************************************
-          SPECIAL PERIPHERALS 
+          SPECIFIC CONTROLLER SETTINGS
   ***********************************************/
 
   /* restore previous settings */
@@ -305,8 +305,10 @@ void cart_hw_init()
   if (strstr(rominfo.international,"MENACER") != NULL)
   {
     /* save current setting */
-    if (old_system[0] == -1) old_system[0] = input.system[0];
-    if (old_system[1] == -1) old_system[1] = input.system[1];
+    if (old_system[0] == -1)
+      old_system[0] = input.system[0];
+    if (old_system[1] == -1)
+      old_system[1] = input.system[1];
 
     input.system[0] = NO_SYSTEM;
     input.system[1] = SYSTEM_MENACER;
@@ -316,8 +318,10 @@ void cart_hw_init()
   else if (strstr(rominfo.international,"T2 ; THE ARCADE GAME") != NULL)
   {
     /* save current setting */
-    if (old_system[0] == -1) old_system[0] = input.system[0];
-    if (old_system[1] == -1) old_system[1] = input.system[1];
+    if (old_system[0] == -1)
+      old_system[0] = input.system[0];
+    if (old_system[1] == -1)
+      old_system[1] = input.system[1];
 
     input.system[0] = SYSTEM_GAMEPAD;
     input.system[1] = SYSTEM_MENACER;
@@ -327,8 +331,10 @@ void cart_hw_init()
   else if (strstr(rominfo.international,"BODY COUNT") != NULL)
   {
     /* save current setting */
-    if (old_system[0] == -1) old_system[0] = input.system[0];
-    if (old_system[1] == -1) old_system[1] = input.system[1];
+    if (old_system[0] == -1)
+      old_system[0] = input.system[0];
+    if (old_system[1] == -1)
+      old_system[1] = input.system[1];
 
     input.system[0] = SYSTEM_MOUSE;
     input.system[1] = SYSTEM_MENACER;
@@ -342,8 +348,10 @@ void cart_hw_init()
   else if (strstr(rominfo.international,"LETHAL ENFORCERSII") != NULL)
   {
     /* save current setting */
-    if (old_system[0] == -1) old_system[0] = input.system[0];
-    if (old_system[1] == -1) old_system[1] = input.system[1];
+    if (old_system[0] == -1)
+      old_system[0] = input.system[0];
+    if (old_system[1] == -1)
+      old_system[1] = input.system[1];
 
     input.system[0] = SYSTEM_GAMEPAD;
     input.system[1] = SYSTEM_JUSTIFIER;
@@ -353,8 +361,10 @@ void cart_hw_init()
   else if (strstr(rominfo.international,"LETHAL ENFORCERS") != NULL)
   {
     /* save current setting */
-    if (old_system[0] == -1) old_system[0] = input.system[0];
-    if (old_system[1] == -1) old_system[1] = input.system[1];
+    if (old_system[0] == -1)
+      old_system[0] = input.system[0];
+    if (old_system[1] == -1)
+      old_system[1] = input.system[1];
 
     input.system[0] = SYSTEM_GAMEPAD;
     input.system[1] = SYSTEM_JUSTIFIER;
@@ -384,8 +394,10 @@ void cart_hw_init()
       m68k_memory_map[0x3f].write16 = jcart_write;
 
       /* save current setting */
-      if (old_system[0] == -1) old_system[0] = input.system[0];
-      if (old_system[1] == -1) old_system[1] = input.system[1];
+      if (old_system[0] == -1)
+        old_system[0] = input.system[0];
+      if (old_system[1] == -1)
+        old_system[1] = input.system[1];
 
       /* set default settings */
       input.system[0] = SYSTEM_GAMEPAD;
@@ -715,13 +727,12 @@ static void realtec_mapper_w(uint32 address, uint32 data)
       uint32 base = (cart.hw.regs[0] << 1) | (cart.hw.regs[1] << 3);
 
       /* ensure mapped size is not null */
-      if (!cart.hw.regs[2]) return;
-
-      /* selected blocks are mirrored into the whole cartridge area */
-      int i;
-      for (i=0x00; i<0x40; i++)
+      if (cart.hw.regs[2])
       {
-        m68k_memory_map[i].base = &cart.rom[(base + (i % cart.hw.regs[2])) << 16];
+        /* selected blocks are mirrored into the whole cartridge area */
+        int i;
+        for (i=0x00; i<0x40; i++)
+          m68k_memory_map[i].base = &cart.rom[(base + (i % cart.hw.regs[2])) << 16];
       }
       return;
     }

@@ -369,8 +369,10 @@ void set_region ()
   else region_code = REGION_USA;
 
   /* some games need specific REGION setting */
-  if (((strstr(rominfo.product,"T-45033") != NULL) && (rominfo.checksum == 0x0F81)) || /* Alisia Dragon (E) */
-       (strstr(rominfo.product,"T-69046-50") != NULL)) /* On Dal Jang Goon (Korea) */
+  if (((strstr(rominfo.product,"T-45033") != NULL) && (rominfo.checksum == 0x0F81)) || /* Alisia Dragon (PAL) */
+       (strstr(rominfo.product,"T-69046-50") != NULL) ||  /* Back to the Future III (PAL) */
+       (strstr(rominfo.product,"T-120106-00") != NULL) ||  /* Brian Lara Cricket (PAL) */
+       (strstr(rominfo.product,"T-70096 -00") != NULL))  /* Muhammad Ali Heavyweight Boxing (PAL) */
   {
     /* need PAL settings */
     region_code = REGION_EUROPE;

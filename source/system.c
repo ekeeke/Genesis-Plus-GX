@@ -270,14 +270,14 @@ void audio_shutdown(void)
  ****************************************************************/
 void system_init (void)
 {
+  /* Cartridge hardware */
+  cart_hw_init();
+
   /* Genesis hardware */
   gen_init();
   io_init();
   vdp_init();
   render_init();
-
-  /* Cartridge hardware */
-  cart_hw_init();
 
   /* Sound Chips hardware */
   sound_init();

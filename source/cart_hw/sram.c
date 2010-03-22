@@ -67,9 +67,10 @@ void sram_init()
   }
 
   /* set SRAM ON by default when ROM is not mapped */
-  if (cart.romsize <= sram.start) sram.on = 1;
+  if (cart.romsize <= sram.start)
+    sram.on = 1;
 
-  /* Some games with bad header or specific configuration */
+  /* autodetect some games with bad header or specific configuration */
   if (strstr(rominfo.product,"T-113016") != NULL)
   {
     /* Pugsy (try accessing unmapped area for copy protection) */
