@@ -127,12 +127,12 @@ static const uint32 dma_rates[16] = {
 /*--------------------------------------------------------------------------*/
 /* Functions prototype                                                      */
 /*--------------------------------------------------------------------------*/
-static inline void fifo_update();
-static inline void data_w(unsigned int data);
-static inline void reg_w(unsigned int r, unsigned int d);
-static inline void dma_copy(void);
-static inline void dma_vbus (void);
-static inline void dma_fill(unsigned int data);
+static void fifo_update();
+static void data_w(unsigned int data);
+static void reg_w(unsigned int r, unsigned int d);
+static void dma_copy(void);
+static void dma_vbus (void);
+static void dma_fill(unsigned int data);
 
 /*--------------------------------------------------------------------------*/
 /* Init, reset, shutdown functions                                          */
@@ -172,7 +172,7 @@ void vdp_reset(void)
   interlaced      = 0;
   fifo_write_cnt  = 0;
   fifo_lastwrite  = 0;
-  fifo_latency    = 192;  /* default FIFO timings */
+  fifo_latency    = 190;  /* default FIFO timings */
 
   status  = vdp_pal | 0x0200;  /* FIFO empty */
 
@@ -248,7 +248,7 @@ void vdp_restore(uint8 *vdp_regs)
   bitmap.viewport.changed = 1;
 
   /* restore FIFO timings */
-  fifo_latency = (reg[12] & 1) ? 192 : 210;
+  fifo_latency = (reg[12] & 1) ? 190 : 214;
   if ((code & 0x0F) == 0x01) 
     fifo_latency = fifo_latency * 2;
 
@@ -387,22 +387,21 @@ void vdp_ctrl_w(unsigned int data)
   }
 
   /* 
-     FIFO emulation (Chaos Engine/Soldier of Fortune, Double Clutch) 
-     ---------------------------------------------------------------
-
-      HDISP is 2560 mcycles (same in both modes)
+     FIFO emulation (Chaos Engine/Soldier of Fortune, Double Clutch, Sol Deace) 
+     --------------------------------------------------------------------------
 
       CPU access per line is limited during active display:
-         H32: 16 access --> 2560/16 = 160 cycles between access
-         H40: 18 access --> 2560/18 = 142 cycles between access
+         H32: 16 access --> 3420/16 = ~214 Mcycles between access
+         H40: 18 access --> 3420/18 = ~190 Mcycles between access
 
-      FIFO access seems to require some additional cyles (VDP latency).
+      This is an approximation, on real hardware, the delay between access is
+	  more likely 16 pixels (128 or 160 Mcycles) with no access allowed during
+	  HBLANK (~860 Mcycles), H40 mode being probably a little more restricted.
 
-      Also note that VRAM access are byte wide, so one VRAM write (word)
-      takes twice CPU cycles.
+      Each VRAM access is byte wide, so one VRAM write (word) need twice cycles.
 
   */
-  fifo_latency = (reg[12] & 1) ? 192 : 210;
+  fifo_latency = (reg[12] & 1) ? 190 : 214;
   if ((code & 0x0F) == 0x01)
     fifo_latency = fifo_latency * 2;
 }
@@ -432,7 +431,7 @@ unsigned int vdp_ctrl_r(void)
   if ((status & 2) && !dma_length && (mcycles_68k >= dma_endCycles))
     status &= 0xFFFD;
 
-  uint32 temp = status;
+  unsigned int temp = status;
 
   /* display OFF: VBLANK flag is set */
   if (!(reg[1] & 0x40))
@@ -554,6 +553,12 @@ unsigned int vdp_data_r(void)
       error("[%d(%d)][%d(%d)] VSRAM 0x%x read -> 0x%x (%x)\n", v_counter, mcycles_68k/MCYCLES_PER_LINE, mcycles_68k, mcycles_68k%MCYCLES_PER_LINE, addr, temp, m68k_get_reg (NULL, M68K_REG_PC));
 #endif
       break;
+	  
+#ifdef LOGVDP
+    default:
+	  error("[%d(%d)][%d(%d)] Unknown (%d) 0x%x read (%x)\n", v_counter, mcycles_68k/MCYCLES_PER_LINE, mcycles_68k, mcycles_68k%MCYCLES_PER_LINE, code, addr, m68k_get_reg (NULL, M68K_REG_PC));
+      break;
+#endif
   }
 
   /* Increment address register */
@@ -616,12 +621,12 @@ int vdp_int_ack_callback(int int_level)
 /*--------------------------------------------------------------------------*/
 /* FIFO emulation                                                  */
 /*--------------------------------------------------------------------------*/
-static inline void fifo_update()
+static void fifo_update()
 {
   if (fifo_write_cnt > 0)
   {
     /* update FIFO reads */
-    uint32 fifo_read = ((mcycles_68k - fifo_lastwrite) / fifo_latency);
+    int fifo_read = ((mcycles_68k - fifo_lastwrite) / fifo_latency);
     if (fifo_read > 0)
     {
       fifo_write_cnt -= fifo_read;
@@ -649,16 +654,14 @@ static inline void fifo_update()
 /*--------------------------------------------------------------------------*/
 /* Memory access functions                                                  */
 /*--------------------------------------------------------------------------*/
-static inline void data_w(unsigned int data)
+static void data_w(unsigned int data)
 {
   switch (code & 0x0F)
   {
     case 0x01:  /* VRAM */
-
 #ifdef LOGVDP
       error("[%d(%d)][%d(%d)] VRAM 0x%x write -> 0x%x (%x)\n", v_counter, mcycles_68k/MCYCLES_PER_LINE, mcycles_68k, mcycles_68k%MCYCLES_PER_LINE, addr, data, m68k_get_reg (NULL, M68K_REG_PC));
 #endif
-
       /* Byte-swap data if A0 is set */
       if (addr & 1)
         data = ((data >> 8) | (data << 8)) & 0xFFFF;
@@ -724,19 +727,25 @@ static inline void data_w(unsigned int data)
 #endif
       *(uint16 *) &vsram[(addr & 0x7E)] = data;
       break;
+	  
+#ifdef LOGVDP
+    default:
+      error("[%d(%d)][%d(%d)] Unknown (%d) 0x%x write -> 0x%x (%x)\n", v_counter, mcycles_68k/MCYCLES_PER_LINE, mcycles_68k, mcycles_68k%MCYCLES_PER_LINE, code, addr, data, m68k_get_reg (NULL, M68K_REG_PC));
+      break;
+#endif
   }
 
   /* Increment address register */
   addr += reg[15];
 }
 
-static inline void reg_w(unsigned int r, unsigned int d)
+static void reg_w(unsigned int r, unsigned int d)
 {
 #ifdef LOGVDP
   error("[%d(%d)][%d(%d)] VDP register %d write -> 0x%x (%x)\n", v_counter, mcycles_68k/MCYCLES_PER_LINE, mcycles_68k, mcycles_68k%MCYCLES_PER_LINE, r, d, m68k_get_reg (NULL, M68K_REG_PC));
 #endif
 
-  /* See if Mode 4 (SMS mode) is enabled 
+  /* Mode 4 (SMS mode) is enabled 
      According to official doc, VDP registers #11 to #23 can not be written unless bit2 in register #1 is set
      Fix Captain Planet & Avengers (Alt version), Bass Master Classic Pro Edition (they incidentally activate Mode 4) 
   */
@@ -921,7 +930,7 @@ static inline void reg_w(unsigned int r, unsigned int d)
             bitmap.viewport.x = 16;
 
           /* Update fifo timings */
-          fifo_latency = ((code & 0x0F) == 0x01) ? 384 : 192;
+          fifo_latency = 190;
         }
         else
         {
@@ -940,8 +949,11 @@ static inline void reg_w(unsigned int r, unsigned int d)
             bitmap.viewport.x = 12;
 
           /* Update fifo timings */
-          fifo_latency = ((code & 0x0F) == 0x01) ? 420 : 210;
+          fifo_latency = 214;
         }
+		
+	    if ((code & 0x0F) == 0x01)
+		  fifo_latency *= 2;
 
         /* Update viewport */
         bitmap.viewport.changed = 1;
@@ -995,11 +1007,11 @@ static inline void reg_w(unsigned int r, unsigned int d)
     - see how source addr is affected
       (can it make high source byte inc?)
 */
-static inline void dma_copy(void)
+static void dma_copy(void)
 {
   int name;
-  uint32 length = (reg[20] << 8 | reg[19]) & 0xFFFF;
-  uint32 source = (reg[22] << 8 | reg[21]) & 0xFFFF;
+  unsigned int length = (reg[20] << 8 | reg[19]) & 0xFFFF;
+  unsigned int source = (reg[22] << 8 | reg[21]) & 0xFFFF;
 
   if (!length)
     length = 0x10000;
@@ -1025,12 +1037,12 @@ static inline void dma_copy(void)
 }
 
 /* 68K Copy to VRAM, VSRAM or CRAM */
-static inline void dma_vbus (void)
+static void dma_vbus (void)
 {
-  uint32 source = ((reg[23] & 0x7F) << 17 | reg[22] << 9 | reg[21] << 1) & 0xFFFFFE;
-  uint32 base   = source;
-  uint32 length = (reg[20] << 8 | reg[19]) & 0xFFFF;
-  uint32 temp;
+  unsigned int source = ((reg[23] & 0x7F) << 17 | reg[22] << 9 | reg[21] << 1) & 0xFFFFFE;
+  unsigned int base   = source;
+  unsigned int length = (reg[20] << 8 | reg[19]) & 0xFFFF;
+  uint16 temp;
   
   if (!length)
     length = 0x10000;
@@ -1098,10 +1110,10 @@ static inline void dma_vbus (void)
 }
 
 /* VRAM FILL */
-static inline void dma_fill(unsigned int data)
+static void dma_fill(unsigned int data)
 {
   int name;
-  uint32 length = (reg[20] << 8 | reg[19]) & 0xFFFF;
+  unsigned int length = (reg[20] << 8 | reg[19]) & 0xFFFF;
 
   if (!length)
     length = 0x10000;
