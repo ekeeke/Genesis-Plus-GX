@@ -963,11 +963,13 @@ gx_texture *gxTextureOpenPNG(const u8 *png_data, FILE *png_file)
       return NULL;
     }
 
-    if (!png_check_sig (magic, 8))
-    if (fread (magic, 1, 8, png_file) != 8)
+    if (!png_sig_cmp (magic, 0, 8))
     {
-      png_destroy_read_struct(&png_ptr,&info_ptr,NULL);
-      return NULL;
+      if (fread (magic, 1, 8, png_file) != 8)
+      {
+        png_destroy_read_struct(&png_ptr,&info_ptr,NULL);
+        return NULL;
+      }
     }
 
     /* set IO callback for read function */
