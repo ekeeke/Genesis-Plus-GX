@@ -2286,12 +2286,10 @@ static int loadsavemenu (int which)
 
       case 1:
       case 2:
-        SILENT = 1;
         if (which == 1)
           quit = ManageState(ret-1,device);
         else if (which == 0)
           quit = ManageSRAM(ret-1,device);
-        SILENT = 0;
         if (quit)
           return 1;
         break;
