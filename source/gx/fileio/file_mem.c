@@ -39,9 +39,6 @@ char rom_filename[MAXJOLIET];
  * libOGC System Work Area
  */
 static u8 SysArea[CARD_WORKAREA] ATTRIBUTE_ALIGN (32);
-static card_dir CardDir;
-static card_file CardFile;
-static card_stat CardStatus;
 
 /**
  * DMA Transfer Area.
@@ -190,8 +187,9 @@ static int MountTheCard (u8 slot)
  ****************************************************************************/
 static int CardFileExists (char *filename, u8 slot)
 {
+  card_dir CardDir;
   int CardError = CARD_FindFirst (slot, &CardDir, TRUE);
-  while (CardError != CARD_ERROR_NOFILE)
+  while (CardError >= 0)
   {
     CardError = CARD_FindNext (&CardDir);
     if (strcmp ((char *) CardDir.filename, filename) == 0)
@@ -282,6 +280,8 @@ int ManageSRAM (u8 direction, u8 device)
   int outbytes = 0;
   int sbo;
   unsigned long inzipped,outzipped;
+  card_file CardFile;
+  card_stat CardStatus;
 
   /* First, build a filename */
   sprintf (filename, "MD-%04X.srm", realchecksum);
@@ -398,13 +398,6 @@ int ManageSRAM (u8 direction, u8 device)
 
         default: /*** Loading ***/
 
-          if (!CardFileExists (filename,CARDSLOT))
-          {
-            GUI_WaitPrompt("Error","File does not exist !");
-            CARD_Unmount (CARDSLOT);
-            return 0;
-          }
-
           memset (&CardFile, 0, sizeof (CardFile));
           CardError = CARD_Open (CARDSLOT, filename, &CardFile);
           if (CardError)
@@ -489,6 +482,8 @@ int ManageState (u8 direction, u8 device)
   int outbytes = 0;
   int sbo;
   int state_size = 0;
+  card_file CardFile;
+  card_stat CardStatus;
 
   /* First, build a filename */
   sprintf (filename, "MD-%04X.gpz", realchecksum);
@@ -599,13 +594,6 @@ int ManageState (u8 direction, u8 device)
 
         default: /*** Loading ***/
 
-          if (!CardFileExists (filename, CARDSLOT))
-          {
-            GUI_WaitPrompt("Error","File does not exist !");
-            CARD_Unmount (CARDSLOT);
-            return 0;
-          }
-
           memset (&CardFile, 0, sizeof (CardFile));
           CardError = CARD_Open (CARDSLOT, filename, &CardFile);
           if (CardError)
@@ -632,10 +620,10 @@ int ManageState (u8 direction, u8 device)
           }
           CARD_Close (&CardFile);
           CARD_Unmount (CARDSLOT);
-          GUI_MsgBoxClose();
 
           /*** Load State ***/
           state_load(&savebuffer[2112]);
+          GUI_MsgBoxClose();
           return 1;
       }
     }

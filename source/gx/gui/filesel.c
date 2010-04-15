@@ -164,7 +164,7 @@ int FileSelector(unsigned char *buffer, bool useFAT)
 #endif
 
   /* Background Settings */
-  if (config.bg_color == (BG_COLOR_MAX - 1))
+  if (config.bg_color == 0)
     bg_filesel[0].data = Bg_main_2_png;
   else
     bg_filesel[0].data = Bg_main_png;
