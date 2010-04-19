@@ -1081,9 +1081,13 @@ static void render_bg_vs(int line, int width)
   if(shift)
   {
     dst   = (uint32 *)&buf[0x10 + shift];
-
-    nt = (uint32 *)&vram[ntbb + (((line >> 3) << pf_shift) & 0x1FC0)];
-    v_line = (line & 7) << 3;
+#ifdef LSB_FIRST
+    v_line = (reg[12] & 1) ? ((line + ((vs[0] >> 16) & 0x3FF)) & pf_row_mask) : line;
+#else
+    v_line = (reg[12] & 1) ? ((line + (vs[0] & 0x3FF)) & pf_row_mask) : line;
+#endif
+    nt = (uint32 *)&vram[ntbb + (((v_line >> 3) << pf_shift) & 0x1FC0)];
+    v_line = (v_line & 7) << 3;
 
     atbuf = nt[(index-1) & pf_col_mask];
     DRAW_COLUMN(atbuf, v_line)
@@ -1145,8 +1149,13 @@ static void render_bg_vs(int line, int width)
     {
       dst = (uint32 *)&buf[0x10 + shift + (start<<4)];
 
-      nt = (uint32 *)&vram[ntab + (((line >> 3) << pf_shift) & 0x1FC0)];
-      v_line = (line & 7) << 3;
+#ifdef LSB_FIRST
+      v_line = (reg[12] & 1) ? ((line + (vs[start] & 0x3FF)) & pf_row_mask) : line;
+#else
+      v_line = (reg[12] & 1) ? ((line + ((vs[start] >> 16) & 0x3FF)) & pf_row_mask) : line;
+#endif
+      nt = (uint32 *)&vram[ntab + (((v_line >> 3) << pf_shift) & 0x1FC0)];
+      v_line = (v_line & 7) << 3;
 
       /* Window bug */
       if (start) atbuf = nt[index & pf_col_mask];
@@ -1343,9 +1352,13 @@ static void render_bg_im2_vs(int line, int width, int odd)
   if(shift)
   {
     dst   = (uint32 *)&buf[0x10 + shift];
-
-    nt = (uint32 *)&vram[ntbb + (((line >> 3) << pf_shift) & 0x1FC0)];
-    v_line = (((line & 7) << 1) | odd) << 3;
+#ifdef LSB_FIRST
+    v_line = (line + (reg[12] & 1) ? ((vs[0] >> 17) & 0x3FF) : 0) & pf_row_mask;
+#else
+    v_line = (line + (reg[12] & 1) ? ((vs[0] >> 1) & 0x3FF) : 0) & pf_row_mask;
+#endif
+    nt = (uint32 *)&vram[ntbb + (((v_line >> 3) << pf_shift) & 0x1FC0)];
+    v_line = (((v_line & 7) << 1) | odd) << 3;
 
     atbuf = nt[(index-1) & pf_col_mask];
     DRAW_COLUMN_IM2(atbuf, v_line)
@@ -1404,9 +1417,13 @@ static void render_bg_im2_vs(int line, int width, int odd)
     if(shift)
     {
       dst = (uint32 *)&buf[0x10 + shift + (start<<4)];
-
-      nt      = (uint32 *)&vram[ntab + (((line >> 3) << pf_shift) & 0x1FC0)];
-      v_line  = (((line & 7) << 1) | odd) << 3;
+#ifdef LSB_FIRST
+      v_line = (line + (reg[12] & 1) ? ((vs[start] >> 1) & 0x3FF) : 0) & pf_row_mask;
+#else
+      v_line = (line + (reg[12] & 1) ? ((vs[start] >> 17) & 0x3FF) : 0) & pf_row_mask;
+#endif
+      nt      = (uint32 *)&vram[ntab + (((v_line >> 3) << pf_shift) & 0x1FC0)];
+      v_line  = (((v_line & 7) << 1) | odd) << 3;
 
       /* Window bug */
       if (start) atbuf = nt[index & pf_col_mask];
