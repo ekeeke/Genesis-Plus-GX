@@ -54,7 +54,7 @@ static inline void fm_update(unsigned int cycles)
     }
 
     /* select input sample buffer */
-    int32 *buffer = Fir_Resampler_buffer();
+    int16 *buffer = Fir_Resampler_buffer();
     if (buffer)
     {
       Fir_Resampler_write(cnt << 1);

@@ -4,7 +4,7 @@
 
 #include "Fir_Resampler.h"
 
-#include <assert.h>
+//#include <assert.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -229,7 +229,7 @@ int Fir_Resampler_written( void )
 void Fir_Resampler_write( long count )
 {
   write_pos += count;
-  assert( write_pos <= ( buffer + buffer_size ) );
+ // assert( write_pos <= ( buffer + buffer_size ) );
 }
 
 int Fir_Resampler_read( sample_t* out, long count )

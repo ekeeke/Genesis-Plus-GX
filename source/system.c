@@ -64,7 +64,7 @@ int audio_update (void)
   uint32 factora  = (config.lp_range << 16) / 100;
   uint32 factorb  = 0x10000 - factora;
 
-  int32 *fm       = snd.fm.buffer;
+  int16 *fm       = snd.fm.buffer;
   int16 *psg      = snd.psg.buffer;
 
 #ifdef NGC
@@ -196,7 +196,7 @@ int audio_init (int samplerate, float framerate)
     return (-1);
 
   /* YM2612 stream buffers */
-  snd.fm.buffer = (int32 *) malloc(snd.buffer_size * sizeof(int32) * 2);
+  snd.fm.buffer = (int32 *) malloc(snd.buffer_size * sizeof(int16) * 2);
   if (!snd.fm.buffer)
     return (-1);
 
@@ -241,7 +241,7 @@ void audio_reset(void)
   if (snd.psg.buffer)
     memset (snd.psg.buffer, 0, snd.buffer_size * sizeof(int16));
   if (snd.fm.buffer)
-    memset (snd.fm.buffer, 0, snd.buffer_size * sizeof(int32) * 2);
+    memset (snd.fm.buffer, 0, snd.buffer_size * sizeof(int16) * 2);
 }
 
 /****************************************************************
