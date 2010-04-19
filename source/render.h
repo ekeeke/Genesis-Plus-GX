@@ -31,10 +31,10 @@ extern uint32 object_index_count;
 extern void render_init(void);
 extern void render_reset(void);
 extern void render_shutdown(void);
-extern void render_line(uint32 line, uint32 overscan);
-extern void remap_buffer(uint32 line,uint32 width);
+extern void render_line(int line, int overscan);
+extern void remap_buffer(int line,int width);
 extern void window_clip(void);
-extern void parse_satb(uint32 line);
+extern void parse_satb(int line);
 
 void (*color_update)(int index, uint16 data);
 

@@ -238,11 +238,10 @@ static void getrominfo (char *romheader)
 }
 
 /* SMD (interleaved) rom support */
-static uint8 block[0x4000];
-
 static void deinterleave_block (uint8 * src)
 {
   int i;
+  uint8 block[0x4000];
   memcpy (block, src, 0x4000);
   for (i = 0; i < 0x2000; i += 1)
   {
