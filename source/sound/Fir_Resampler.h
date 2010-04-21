@@ -10,7 +10,7 @@
 #define WRITE_OFFSET  (WIDTH * STEREO) - STEREO
 #define GAIN          1.0
 
-typedef short int sample_t;
+typedef signed long int sample_t;
 
 extern int Fir_Resampler_initialize( int new_size );
 extern void Fir_Resampler_shutdown( void );

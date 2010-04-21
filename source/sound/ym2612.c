@@ -2028,7 +2028,7 @@ unsigned int YM2612Read(void)
 }
 
 /* Generate 16 bits samples for ym2612 */
-void YM2612Update(short int *buffer, int length)
+void YM2612Update(INT32 *buffer, int length)
 {
   int i;
   long int lt,rt;

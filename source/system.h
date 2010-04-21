@@ -61,8 +61,8 @@ typedef struct
   int16 *buffer[2]; /* Signed 16-bit stereo sound data */
   struct
   {
-    int16 *pos;
-    int16 *buffer;
+    int32 *pos;
+    int32 *buffer;
   } fm;
   struct
   {
