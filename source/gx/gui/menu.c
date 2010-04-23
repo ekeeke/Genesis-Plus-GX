@@ -127,7 +127,7 @@ static gui_image bg_list[6] =
   {NULL,Banner_top_png,IMAGE_VISIBLE,0,0,640,108,255},
   {NULL,Banner_bottom_png,IMAGE_VISIBLE,0,380,640,100,255},
   {NULL,Main_logo_png,IMAGE_VISIBLE,466,40,152,44,255},
-  {NULL,Frame_s1_png,IMAGE_VISIBLE,8,70,372,336,128}
+  {NULL,Frame_s1_png,IMAGE_VISIBLE,8,70,372,336,64}
 };
 
 /*****************************************************************************/

@@ -18,9 +18,10 @@ include $(DEVKITPPC)/gamecube_rules
 TARGET		:=	genplus_cube
 BUILD		:=	build_cube
 SOURCES		:=	source source/m68k source/z80 source/sound source/ntsc source/cart_hw source/cart_hw/svp \
-			source/gx source/gx/gui source/gx/fileio source/gx/images source/gx/sounds
+			source/gx source/gx/utils source/gx/gui source/gx/fileio source/gx/images source/gx/sounds
 INCLUDES	:=	source source/m68k source/z80 source/sound source/ntsc source/cart_hw source/cart_hw/svp \
-			build_cube source/gx source/gx/gui source/gx/fileio source/gx/images source/gx/sounds
+			source/gx source/gx/utils source/gx/gui source/gx/fileio source/gx/images source/gx/sounds \
+			$(BUILD)
 
 #---------------------------------------------------------------------------------
 # options for code generation
