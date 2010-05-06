@@ -24,7 +24,7 @@
 
 #include "shared.h"
 #include "font.h"
-#include "gui.h"
+#include "menu.h"
 
 #define _SHIFTR(v, s, w)	\
     ((u32)(((u32)(v) >> (s)) & ((0x01 << (w)) - 1)))

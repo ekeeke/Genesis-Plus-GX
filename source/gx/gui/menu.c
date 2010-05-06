@@ -22,15 +22,23 @@
  ***************************************************************************/
 
 #include "shared.h"
+#include "menu.h"
 #include "font.h"
 #include "gui.h"
 #include "dvd.h"
 #include "file_dvd.h"
 #include "file_fat.h"
+#include "file_slot.h"
 #include "filesel.h"
 
 /*****************************************************************************/
-/*  Generic Buttons data                                                      */
+/*  Specific Menu Callbacks                                                  */
+/*****************************************************************************/
+static void ctrlmenu_cb(void);
+static void savemenu_cb(void);
+
+/*****************************************************************************/
+/*  Generic Buttons data                                                     */
 /*****************************************************************************/
 static butn_data arrow_up_data =
 {
@@ -72,6 +80,30 @@ static butn_data button_player_none_data =
 {
   {NULL,NULL},
   {Ctrl_player_none_png,NULL}
+};
+
+static butn_data button_load_data =
+{
+  {NULL,NULL},
+  {Button_load_png,Button_load_over_png}
+};
+
+static butn_data button_save_data =
+{
+  {NULL,NULL},
+  {Button_save_png,Button_save_over_png}
+};
+
+static butn_data button_special_data =
+{
+  {NULL,NULL},
+  {Button_special_png,Button_special_over_png}
+};
+
+static butn_data button_delete_data =
+{
+  {NULL,NULL},
+  {Button_delete_png,Button_delete_over_png}
 };
 
 /*****************************************************************************/
@@ -128,6 +160,18 @@ static gui_image bg_list[6] =
   {NULL,Banner_bottom_png,IMAGE_VISIBLE,0,380,640,100,255},
   {NULL,Main_logo_png,IMAGE_VISIBLE,466,40,152,44,255},
   {NULL,Frame_s1_png,IMAGE_VISIBLE,8,70,372,336,64}
+};
+
+static gui_image bg_saves[8] =
+{
+  {NULL,NULL,0,0,0,0,0,255},
+  {NULL,Bg_main_png,IMAGE_VISIBLE,374,140,284,288,255},
+  {NULL,Bg_overlay_png,IMAGE_VISIBLE|IMAGE_REPEAT,0,0,640,480,255},
+  {NULL,Banner_top_png,IMAGE_VISIBLE|IMAGE_SLIDE_TOP,0,0,640,108,255},
+  {NULL,Banner_bottom_png,IMAGE_VISIBLE|IMAGE_SLIDE_BOTTOM,0,380,640,100,255},
+  {NULL,Main_logo_png,IMAGE_VISIBLE|IMAGE_SLIDE_TOP,466,40,152,44,255},
+  {NULL,Frame_s1_png,IMAGE_VISIBLE,8,70,372,336,64},
+  {NULL,Frame_s1_png,IMAGE_SLIDE_RIGHT,468,110,372,296,64}
 };
 
 /*****************************************************************************/
@@ -250,22 +294,36 @@ static gui_item items_prefs[8] =
   {NULL,NULL,"Confirm Box: OFF",  "Enable/disable user confirmation",     52,132,276,48}
 };
 
+/* Save Manager */
+static gui_item items_saves[9] =
+{
+  {NULL,NULL,"",""                   ,0,0,0,0},
+  {NULL,NULL,"",""                   ,0,0,0,0},
+  {NULL,NULL,"",""                   ,0,0,0,0},
+  {NULL,NULL,"",""                   ,0,0,0,0},
+  {NULL,NULL,"",""                   ,0,0,0,0},
+  {NULL,NULL,"","Load file"          ,0,0,0,0},
+  {NULL,NULL,"","Set as default file",0,0,0,0},
+  {NULL,NULL,"","Delete file"        ,0,0,0,0},
+  {NULL,NULL,"","Save file"          ,0,0,0,0}
+};
+
 /*****************************************************************************/
 /*  Menu Buttons description                                                 */
 /*****************************************************************************/
 
 /* Generic Buttons for list menu */
-static gui_butn arrow_up = {&arrow_up_data,BUTTON_OVER_SFX,{0,0,0,0},14,76,360,32};
-static gui_butn arrow_down = {&arrow_down_data,BUTTON_VISIBLE|BUTTON_OVER_SFX,{0,0,0,0},14,368,360,32};
+static gui_butn arrow_up = {&arrow_up_data,BUTTON_ACTIVE|BUTTON_OVER_SFX,{0,0,0,0},14,76,360,32};
+static gui_butn arrow_down = {&arrow_down_data,BUTTON_ACTIVE|BUTTON_OVER_SFX,{0,0,0,0},14,368,360,32};
 
 /* Generic list menu */
 static gui_butn buttons_list[4] =
 {
-  {&button_text_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX,{1,1,0,0},52,132,276,48},
-  {&button_text_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX,{1,1,0,0},52,188,276,48},
-  {&button_text_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX,{1,1,0,0},52,244,276,48},
-  {&button_text_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX,{1,1,0,0},52,300,276,48}
- };
+  {&button_text_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX,{1,1,0,0},56,132,276,48},
+  {&button_text_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX,{1,1,0,0},56,188,276,48},
+  {&button_text_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX,{1,1,0,0},56,244,276,48},
+  {&button_text_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX,{1,1,0,0},56,300,276,48}
+};
 
 /* Main menu */
 static gui_butn buttons_main[9] =
@@ -322,6 +380,20 @@ static gui_butn buttons_options[5] =
   {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{2,0,1,0},330,264,148,132}
 };
 
+/* Save Manager Menu */
+static gui_butn buttons_saves[9] =
+{
+  {&button_text_data   ,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX,{0,1,0,0}, 56,102,276,48},
+  {&button_text_data   ,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX,{1,1,0,0}, 56,158,276,48},
+  {&button_text_data   ,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX,{1,1,0,0}, 56,214,276,48},
+  {&button_text_data   ,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX,{1,1,0,0}, 56,270,276,48},
+  {&button_text_data   ,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX,{1,0,0,0}, 56,326,276,48},
+  {&button_load_data   ,BUTTON_ACTIVE|BUTTON_SLIDE_RIGHT|BUTTON_OVER_SFX,{0,1,0,0},530,130, 56,56},
+  {&button_special_data,BUTTON_ACTIVE|BUTTON_SLIDE_RIGHT|BUTTON_OVER_SFX,{1,1,0,0},530,196, 56,56},
+  {&button_delete_data ,BUTTON_ACTIVE|BUTTON_SLIDE_RIGHT|BUTTON_OVER_SFX,{1,1,0,0},530,262, 56,56},
+  {&button_save_data   ,BUTTON_ACTIVE|BUTTON_SLIDE_RIGHT|BUTTON_OVER_SFX,{1,0,0,0},530,328, 56,56}
+};
+
 /*****************************************************************************/
 /*  Menu descriptions                                                        */
 /*****************************************************************************/
@@ -336,7 +408,8 @@ static gui_menu menu_main =
   buttons_main,
   bg_main,
   {NULL,NULL},
-  {NULL,NULL}
+  {NULL,NULL},
+  NULL
 };
 
 /* Main menu */
@@ -349,7 +422,8 @@ gui_menu menu_ctrls =
   buttons_ctrls,
   bg_ctrls,
   {&action_cancel, &action_select},
-  {NULL,NULL}
+  {NULL,NULL},
+  ctrlmenu_cb
 };
 
 /* Load Game menu */
@@ -366,7 +440,8 @@ static gui_menu menu_load =
   buttons_load,
   bg_misc,
   {&action_cancel, &action_select},
-  {NULL,NULL}
+  {NULL,NULL},
+  NULL
 };
 
 /* Options menu */
@@ -379,7 +454,8 @@ static gui_menu menu_options =
   buttons_options,
   bg_misc,
   {&action_cancel, &action_select},
-  {NULL,NULL}
+  {NULL,NULL},
+  NULL
 };
 
 /* System Options menu */
@@ -392,7 +468,8 @@ static gui_menu menu_system =
   buttons_list,
   bg_list,
   {&action_cancel, &action_select},
-  {&arrow_up,&arrow_down}
+  {&arrow_up,&arrow_down},
+  NULL
 };
 
 /* Video Options menu */
@@ -405,7 +482,8 @@ static gui_menu menu_video =
   buttons_list,
   bg_list,
   {&action_cancel, &action_select},
-  {&arrow_up,&arrow_down}
+  {&arrow_up,&arrow_down},
+  NULL
 };
 
 /* Sound Options menu */
@@ -418,7 +496,8 @@ static gui_menu menu_audio =
   buttons_list,
   bg_list,
   {&action_cancel, &action_select},
-  {&arrow_up,&arrow_down}
+  {&arrow_up,&arrow_down},
+  NULL
 };
 
 /* Sound Options menu */
@@ -431,131 +510,24 @@ static gui_menu menu_prefs =
   buttons_list,
   bg_list,
   {&action_cancel, &action_select},
-  {&arrow_up,&arrow_down}
+  {&arrow_up,&arrow_down},
+  NULL
 };
 
 
-/***************************************************************************
- * drawmenu (deprecated)
- *
- * As it says, simply draws the menu with a highlight on the currently
- * selected item :)
- ***************************************************************************/
-char menutitle[60] = { "" };
-static int menu = 0;
-
-static void drawmenu (char items[][25], int maxitems, int selected)
+/* Save Manager menu */
+static gui_menu menu_saves =
 {
-
-  int i;
-  int ypos;
-
-  ypos = (226 - (fheight * maxitems)) >> 1;
-  ypos += 130;
-
-  /* reset texture data */
-  gx_texture *texture;
-  memset(&texture,0,sizeof(gx_texture));
-
-  /* draw background items */
-  gxClearScreen (*GUI_GetBgColor());
-  texture= gxTextureOpenPNG(Bg_main_png,0);
-  if (texture)
-  {
-    gxDrawTexture(texture, (640-texture->width)/2, (480-texture->height)/2, texture->width, texture->height,255);
-    if (texture->data) free(texture->data);
-    free(texture);
-  }
-  texture= gxTextureOpenPNG(Banner_bottom_png,0);
-  if (texture)
-  {
-    gxDrawTexture(texture, 0, 480-texture->height, texture->width, texture->height, 255);
-    if (texture->data) free(texture->data);
-    free(texture);
-  }
-  texture= gxTextureOpenPNG(Banner_top_png,0);
-  if (texture)
-  {
-    gxDrawTexture(texture, 0, 0, texture->width, texture->height, 255);
-    if (texture->data) free(texture->data);
-    free(texture);
-  }
-  texture= gxTextureOpenPNG(Main_logo_png,0);
-  if (texture)
-  {
-    gxDrawTexture(texture, 444, 28, 176, 48, 255);
-    if (texture->data) free(texture->data);
-    free(texture);
-  }
-
-  for (i = 0; i < maxitems; i++)
-  {
-    if (i == selected) WriteCentre_HL (i * fheight + ypos, (char *) items[i]);
-    else WriteCentre (i * fheight + ypos, (char *) items[i]);
-  }
-
-  gxSetScreen();
-}
-
-static int domenu (char items[][25], int maxitems, u8 fastmove)
-{
-  int redraw = 1;
-  int quit = 0;
-  short p;
-  int ret = 0;
-
-
-  while (quit == 0)
-  {
-    if (redraw)
-    {
-      drawmenu (&items[0], maxitems, menu);
-      redraw = 0;
-    }
-    
-    p = m_input.keys;
-    
-    if (p & PAD_BUTTON_UP)
-    {
-      redraw = 1;
-      menu--;
-      if (menu < 0) menu = maxitems - 1;
-    }
-    else if (p & PAD_BUTTON_DOWN)
-    {
-      redraw = 1;
-      menu++;
-      if (menu == maxitems) menu = 0;
-    }
-
-    if (p & PAD_BUTTON_A)
-    {
-      quit = 1;
-      ret = menu;
-    }
-    else if (p & PAD_BUTTON_B)
-    {
-      quit = 1;
-      ret = -1;
-    }
-
-    if (fastmove)
-    {
-      if (p & PAD_BUTTON_RIGHT)
-      {
-        quit = 1;
-        ret = menu;
-      }
-      else if (p & PAD_BUTTON_LEFT)
-      {
-        quit = 1;
-        ret = 0 - 2 - menu;
-      }
-    }
-  }
-
-  return ret;
-}
+  "Save Manager",
+  0,0,
+  9,9,8,0,
+  items_saves,
+  buttons_saves,
+  bg_saves,
+  {&action_cancel, &action_select},
+  {NULL,NULL},
+  savemenu_cb
+};
 
 /****************************************************************************
  * GUI Settings menu
@@ -579,19 +551,27 @@ static void prefmenu ()
   int ret, quit = 0;
   gui_menu *m = &menu_prefs;
   gui_item *items = m->items;
-
-  if (config.sram_auto == 0) sprintf (items[0].text, "SRAM Auto: FAT");
-  else if (config.sram_auto == 1) sprintf (items[0].text, "SRAM Auto: MCARD A");
-  else if (config.sram_auto == 2) sprintf (items[0].text, "SRAM Auto: MCARD B");
-  else sprintf (items[0].text, "SRAM Auto: OFF");
-  if (config.state_auto == 0) sprintf (items[1].text, "Savestate Auto: FAT");
-  else if (config.state_auto == 1) sprintf (items[1].text, "Savestate Auto: MCARD A");
-  else if (config.state_auto == 2) sprintf (items[1].text, "Savestate Auto: MCARD B");
-  else sprintf (items[1].text, "Savestate Auto: OFF");
+  
+  if (config.s_auto == 3)
+    sprintf (items[0].text, "Auto Saves: ALL");
+  else if (config.s_auto == 2)
+    sprintf (items[0].text, "Auto Saves: STATE ONLY");
+  else if (config.s_auto == 1)
+    sprintf (items[0].text, "Auto Saves: SRAM ONLY");
+  else
+    sprintf (items[0].text, "Auto Saves: NONE");
+  if (config.s_device == 1)
+    sprintf (items[1].text, "Saves Device: MCARD A");
+  else if (config.s_device == 2)
+    sprintf (items[1].text, "Saves Device: MCARD B");
+  else
+    sprintf (items[1].text, "Saves Device: FAT");
   sprintf (items[2].text, "SFX Volume: %1.1f", config.sfx_volume);
   sprintf (items[3].text, "BGM Volume: %1.1f", config.bgm_volume);
-  if (config.bg_color) sprintf (items[4].text, "BG Color: Type %d", config.bg_color);
-  else sprintf (items[4].text, "BG Color: DEFAULT");
+  if (config.bg_color)
+    sprintf (items[4].text, "BG Color: TYPE %d", config.bg_color);
+  else
+    sprintf (items[4].text, "BG Color: DEFAULT");
   sprintf (items[5].text, "BG Overlay: %s", config.bg_overlay ? "ON":"OFF");
   sprintf (items[6].text, "Screen Width: %d", config.screen_w);
   sprintf (items[7].text, "Confirmation Box: %s",config.ask_confirm ? "ON":"OFF");
@@ -605,22 +585,26 @@ static void prefmenu ()
 
     switch (ret)
     {
-      case 0:  /*** SRAM auto load/save ***/
-        config.sram_auto ++;
-        if (config.sram_auto > 2) config.sram_auto = -1;
-        if (config.sram_auto == 0) sprintf (items[0].text, "SRAM Auto: FAT");
-        else if (config.sram_auto == 1) sprintf (items[0].text, "SRAM Auto: MCARD A");
-        else if (config.sram_auto == 2) sprintf (items[0].text, "SRAM Auto: MCARD B");
-        else sprintf (items[0].text, "SRAM Auto: OFF");
+      case 0:  /*** Auto load/save ***/
+        config.s_auto = (config.s_auto + 1) % 4;
+        if (config.s_auto == 3)
+          sprintf (items[0].text, "Auto Saves: ALL");
+        else if (config.s_auto == 2)
+          sprintf (items[0].text, "Auto Saves: STATE ONLY");
+        else if (config.s_auto == 1)
+          sprintf (items[0].text, "Auto Saves: SRAM ONLY");
+        else
+          sprintf (items[0].text, "Auto Saves: NONE");
         break;
 
-      case 1:   /*** Savestate auto load/save ***/
-        config.state_auto ++;
-        if (config.state_auto > 2) config.state_auto = -1;
-        if (config.state_auto == 0) sprintf (items[1].text, "Savestate Auto: FAT");
-        else if (config.state_auto == 1) sprintf (items[1].text, "Savestate Auto: MCARD A");
-        else if (config.state_auto == 2) sprintf (items[1].text, "Savestate Auto: MCARD B");
-        else sprintf (items[1].text, "Savestate Auto: OFF");
+      case 1:   /*** Default saves device ***/
+        config.s_device = (config.s_device + 1) % 3;
+        if (config.s_device == 1)
+          sprintf (items[1].text, "Saves Device: MCARD A");
+        else if (config.s_device == 2)
+          sprintf (items[1].text, "Saves Device: MCARD B");
+        else
+          sprintf (items[1].text, "Saves Device: FAT");
         break;
 
       case 2:   /*** Sound effects volume ***/
@@ -638,7 +622,7 @@ static void prefmenu ()
         else config.bg_color ++;
         if (config.bg_color < 0) config.bg_color = BG_COLOR_MAX - 1;
         else if (config.bg_color >= BG_COLOR_MAX) config.bg_color = 0;
-        if (config.bg_color) sprintf (items[4].text, "BG Color: Type %d", config.bg_color);
+        if (config.bg_color) sprintf (items[4].text, "BG Color: TYPE %d", config.bg_color);
         else sprintf (items[4].text, "BG Color: DEFAULT");
         GUI_SetBgColor((u8)config.bg_color);
         GUI_DeleteMenu(m);
@@ -648,6 +632,7 @@ static void prefmenu ()
           bg_misc[0].data = Bg_main_2_png;
           bg_ctrls[0].data = Bg_main_2_png;
           bg_list[0].data = Bg_main_2_png;
+          bg_saves[1].data = Bg_main_2_png;
         }
         else
         {
@@ -655,6 +640,7 @@ static void prefmenu ()
           bg_misc[0].data = Bg_main_png;
           bg_ctrls[0].data = Bg_main_png;
           bg_list[0].data = Bg_main_png;
+          bg_saves[1].data = Bg_main_png;
         }
         GUI_InitMenu(m);
         break;
@@ -668,6 +654,7 @@ static void prefmenu ()
           bg_misc[1].state |= IMAGE_VISIBLE;
           bg_ctrls[1].state |= IMAGE_VISIBLE;
           bg_list[1].state |= IMAGE_VISIBLE;
+          bg_saves[2].state |= IMAGE_VISIBLE;
         }
         else
         {
@@ -675,17 +662,18 @@ static void prefmenu ()
           bg_misc[1].state &= ~IMAGE_VISIBLE;
           bg_ctrls[1].state &= ~IMAGE_VISIBLE;
           bg_list[1].state &= ~IMAGE_VISIBLE;
+          bg_saves[2].state &= ~IMAGE_VISIBLE;
         }
         break;
 
       case 6:   /*** Screen Width ***/
         GUI_OptionBox(m,update_screen_w,"Screen Width",(void *)&config.screen_w,2,640,VI_MAX_WIDTH_NTSC,1);
-        sprintf (items[5].text, "Screen Width: %d", config.screen_w);
+        sprintf (items[6].text, "Screen Width: %d", config.screen_w);
         break;
 
       case 7:   /*** User COnfirmation ***/
         config.ask_confirm ^= 1;
-        sprintf (items[6].text, "Confirmation Box: %s",config.ask_confirm ? "ON":"OFF");
+        sprintf (items[7].text, "Confirmation Box: %s",config.ask_confirm ? "ON":"OFF");
         break;
 
       case -1:
@@ -1071,7 +1059,8 @@ static void systemmenu ()
           system_init();
 
           /* restore SRAM */
-          memfile_autoload(config.sram_auto,-1);
+          if (config.s_auto & 1)
+            slot_autoload(0,config.s_device);
 
           /* restore YM2612 context */
           if (temp)
@@ -1109,7 +1098,8 @@ static void systemmenu ()
         {
           system_init();
           system_reset();
-          memfile_autoload(config.sram_auto,-1);
+          if (config.s_auto & 1)
+            slot_autoload(0,config.s_device);
         }
         break;
 
@@ -1130,7 +1120,8 @@ static void systemmenu ()
           system_reset(); /* clear any patches first */
           system_init();
           system_reset();
-          memfile_autoload(config.sram_auto,-1);
+          if (config.s_auto & 1)
+            slot_autoload(0,config.s_device);
         }
         break;
 
@@ -1457,6 +1448,25 @@ static void videomenu ()
 /****************************************************************************
  * Controllers Settings menu
  ****************************************************************************/
+static int player = 0;
+static void ctrlmenu_cb(void)
+{
+  char msg[16];
+  gui_menu *m = &menu_ctrls;
+
+  /* draw device port number */
+  if (m->bg_images[7].state & IMAGE_VISIBLE)
+  {
+    if (config.input[player].device != -1)
+    {
+      sprintf(msg,"%d",config.input[player].port + 1);
+      if (m->selected == 11)
+        FONT_write(msg,16,m->items[11].x+m->items[11].w+4,m->items[11].y+m->items[11].h+4,640,(GXColor)DARK_GREY);
+      else
+        FONT_write(msg,14,m->items[11].x+m->items[11].w,m->items[11].y+m->items[11].h,640,(GXColor)DARK_GREY);
+    }
+  }
+}
 
 /* Set menu elements depending on current system configuration */
 static void ctrlmenu_raz(void)
@@ -1539,14 +1549,11 @@ static void ctrlmenu_raz(void)
 
 static void ctrlmenu(void)
 {
-  int player = 0;
   int old_player = -1;
   int i = 0;
   int update = 0;
-
   gui_item *items = NULL;
   u8 *special = NULL;
-  char msg[16];
   u32 exp;
 
   /* System devices */
@@ -1640,6 +1647,7 @@ static void ctrlmenu(void)
 #endif
 
   /* restore current menu elements */
+  player = 0;
   ctrlmenu_raz();
   memcpy(&m->items[0],&items_sys[0][input.system[0]],sizeof(gui_item));
   memcpy(&m->items[1],&items_sys[1][input.system[1]],sizeof(gui_item));
@@ -1652,19 +1660,6 @@ static void ctrlmenu(void)
   {
     /* draw menu */
     GUI_DrawMenu(m);
-
-    /* draw device port number */
-    if (m->bg_images[7].state & IMAGE_VISIBLE)
-    {
-      if (config.input[player].device != -1)
-      {
-        sprintf(msg,"%d",config.input[player].port + 1);
-        if (m->selected == 11)
-          FONT_write(msg,16,m->items[11].x+m->items[11].w+4,m->items[11].y+m->items[11].h+4,640,(GXColor)DARK_GREY);
-        else
-          FONT_write(msg,14,m->items[11].x+m->items[11].w,m->items[11].y+m->items[11].h,640,(GXColor)DARK_GREY);
-      }
-    }
 
     /* update menu */
     update = GUI_UpdateMenu(m);
@@ -2048,6 +2043,7 @@ static void ctrlmenu(void)
       }
     }
 
+    /* Close Window */
     else if (update < 0)
     {
       if (m->bg_images[7].state & IMAGE_VISIBLE)
@@ -2082,31 +2078,30 @@ static void ctrlmenu(void)
         /* stay in menu */
         update = 0;
       }
-    }
-
-    /* check we have at least one connected input before leaving */
-    if (update < 0)
-    {
-      old_player = player;
-      player = 0;
-      for (i=0; i<MAX_DEVICES; i++)
+      else
       {
-        /* check inputs */
-        if (input.dev[i] != NO_DEVICE)
+        /* check we have at least one connected input before leaving */
+        old_player = player;
+        player = 0;
+        for (i=0; i<MAX_DEVICES; i++)
         {
-          if (config.input[player].device != -1)
-            break;
-          player++;
+          /* check inputs */
+          if (input.dev[i] != NO_DEVICE)
+          {
+            if (config.input[player].device != -1)
+              break;
+            player++;
+          }
         }
-      }
-      player = old_player;
+        player = old_player;
 
-      /* no input connected */
-      if (i == MAX_DEVICES) 
-      {
-        /* stay in menu */
-        GUI_WaitPrompt("Error","No input connected !");
-        update = 0;
+        /* no input connected */
+        if (i == MAX_DEVICES) 
+        {
+          /* stay in menu */
+          GUI_WaitPrompt("Error","No input connected !");
+          update = 0;
+        }
       }
     }
   }
@@ -2238,115 +2233,320 @@ static void optionmenu(void)
 }
 
 /****************************************************************************
-* Generic Load/Save menu
+* Save Manager menu
 *
 ****************************************************************************/
-static u8 device = 0;
-
-static int loadsavemenu (int which)
+static t_slot slots[5];
+static void savemenu_cb(void)
 {
-  int prevmenu = menu;
-  int quit = 0;
-  int ret;
-  int count = 3;
-  char items[3][25];
-
-  menu = 2;
-
-  if (which == 1)
+  int i;
+  char msg[16];
+  gx_texture *star = gxTextureOpenPNG(Star_full_png,0);
+  
+  if (sram.on)
   {
-    sprintf(items[1], "Save State");
-    sprintf(items[2], "Load State");
+    FONT_write("Backup Memory",16,buttons_saves[0].x+16,buttons_saves[0].y+(buttons_saves[0].h-16)/2+16,buttons_saves[0].x+buttons_saves[0].w,(GXColor)DARK_GREY);
+    if (slots[0].valid)
+    {
+      sprintf(msg,"%d/%02d/%02d",slots[0].day,slots[0].month,slots[0].year);
+      FONT_alignRight(msg,12,buttons_saves[0].x+buttons_saves[0].w-16,buttons_saves[0].y+(buttons_saves[0].h-28)/2+12,(GXColor)DARK_GREY);
+      sprintf(msg,"%02d:%02d",slots[0].hour,slots[0].min);
+      FONT_alignRight(msg,12,buttons_saves[0].x+buttons_saves[0].w-16,buttons_saves[0].y+(buttons_saves[0].h-28)/2+28,(GXColor)DARK_GREY);
+    }
+
+    if (sram.crc != crc32(0, &sram.sram[0], 0x10000))
+      gxDrawTexture(star,22,buttons_saves[0].y+(buttons_saves[0].h-star->height)/2,star->width,star->height,255);
   }
   else
   {
-    sprintf(items[1], "Save SRAM");
-    sprintf(items[2], "Load SRAM");
+    FONT_writeCenter("Backup Memory disabled",16,buttons_saves[0].x,buttons_saves[0].x+buttons_saves[0].w,buttons_saves[0].y+(buttons_saves[0].h-16)/2+16,(GXColor)DARK_GREY);
   }
 
-  while (quit == 0)
+  for (i=1; i<5; i++)
   {
-    if (device == 0)
-      sprintf(items[0], "Device: FAT");
-    else if (device == 1)
-      sprintf(items[0], "Device: MCARD A");
-    else if (device == 2)
-      sprintf(items[0], "Device: MCARD B");
-
-    ret = domenu (&items[0], count, 0);
-    switch (ret)
+    if (slots[i].valid)
     {
-      case -1:
-        quit = 1;
-        break;
-
-      case 0:
-        device = (device + 1)%3;
-        break;
-
-      case 1:
-      case 2:
-        if (which == 1)
-          quit = ManageState(ret-1,device);
-        else if (which == 0)
-          quit = ManageSRAM(ret-1,device);
-        if (quit)
-          return 1;
-        break;
+      sprintf(msg,"Slot %d",i);
+      FONT_write(msg,16,buttons_saves[i].x+16,buttons_saves[i].y+(buttons_saves[i].h-16)/2+16,buttons_saves[i].x+buttons_saves[i].w,(GXColor)DARK_GREY);
+      sprintf(msg,"%d/%02d/%02d",slots[i].day,slots[i].month,slots[i].year);
+      FONT_alignRight(msg,12,buttons_saves[i].x+buttons_saves[i].w-16,buttons_saves[i].y+(buttons_saves[i].h-28)/2+12,(GXColor)DARK_GREY);
+      sprintf(msg,"%02d:%02d",slots[i].hour,slots[i].min);
+      FONT_alignRight(msg,12,buttons_saves[i].x+buttons_saves[i].w-16,buttons_saves[i].y+(buttons_saves[i].h-28)/2+28,(GXColor)DARK_GREY);
     }
-  }
+    else
+    {
+      FONT_write("Empty Slot",16,buttons_saves[i].x+16,buttons_saves[i].y+(buttons_saves[i].h-16)/2+16,buttons_saves[i].x+buttons_saves[i].h,(GXColor)DARK_GREY);
+    }
 
-  menu = prevmenu;
-  return 0;
+    if (i == config.s_default)
+      gxDrawTexture(star,22,buttons_saves[i].y+(buttons_saves[i].h-star->height)/2,star->width,star->height,255);
+  }
+  gxTextureClose(&star);
 }
 
-
-/****************************************************************************
- * File Manager menu
- *
- ****************************************************************************/
-static int filemenu ()
+static int savemenu(void)
 {
-  int prevmenu = menu;
-  int ret;
-  int quit = 0;
-  int count = 2;
-  char items[2][25] = {
-    {"SRAM Manager"},
-    {"STATE Manager"}
-  };
+  int i, update = 0;
+  int ret = 0;
+  int slot = -1;
+  char filename[MAXPATHLEN];
+  gui_menu *m = &menu_saves;
+  FILE *snap;
 
-  menu = 0;
+  GUI_InitMenu(m);
+  GUI_DrawMenuFX(m,30,0);
+  m->bg_images[3].state &= ~IMAGE_SLIDE_TOP;
+  m->bg_images[4].state &= ~IMAGE_SLIDE_BOTTOM;
+  m->bg_images[5].state &= ~IMAGE_SLIDE_TOP;
 
-  while (quit == 0)
+  /* detect existing files */
+  for (i=0; i<5; i++)
+    slot_autodetect(i, config.s_device, &slots[i]);
+
+  /* SRAM disabled */
+  if (sram.on)
+    m->buttons[0].state |= BUTTON_ACTIVE;
+  else
   {
-    strcpy (menutitle, "Press B to return");
-    ret = domenu (&items[0], count, 0);
-    switch (ret)
-    {
-      case -1: /*** Button B ***/
-        ret = 0;
-        quit = 1;
-        break;
+    m->buttons[0].state &= ~BUTTON_ACTIVE;
+    if (m->selected == 0)
+      m->selected = 1;
+  }
 
-      case 0:   /*** SRAM Manager ***/
-      case 1:  /*** SaveState Manager ***/
-        if (loadsavemenu(ret))
-          return 1;
-        break;
+  while (update != -1)
+  {
+    /* slot selection */
+    if ((m->selected < 5) && (slot != m->selected))
+    {
+      /* update slot */
+      slot = m->selected;
+
+      /* delete previous texture if any */
+      gxTextureClose(&bg_saves[0].texture);
+      bg_saves[0].state &= ~IMAGE_VISIBLE;
+      bg_saves[1].state |= IMAGE_VISIBLE;
+
+      /* state slot */
+      if (slot && slots[slot].valid)
+      {
+        /* open screenshot file */
+        sprintf (filename, "%s/saves/%s__%d.png", DEFAULT_PATH, rom_filename, slot - 1);
+        snap = fopen(filename, "rb");
+        if (snap)
+        {
+          /* load texture from file */
+          bg_saves[0].texture = gxTextureOpenPNG(0,snap);
+          if (bg_saves[0].texture)
+          {
+            /* set menu background */
+            bg_saves[0].w = bg_saves[0].texture->width * 2;
+            bg_saves[0].h = bg_saves[0].texture->height * 2;
+            bg_saves[0].x = (vmode->fbWidth - bg_saves[0].w) / 2;
+            bg_saves[0].y = (vmode->efbHeight - bg_saves[0].h) / 2;
+            bg_saves[0].state |= IMAGE_VISIBLE;
+            bg_saves[1].state &= ~IMAGE_VISIBLE;
+          }
+          fclose(snap);
+        }
+      }
+    }
+
+    /* draw menu */
+    GUI_DrawMenu(m);
+
+    /* update menu */
+    update = GUI_UpdateMenu(m);
+
+    if (update > 0)
+    {
+      switch (m->selected)
+      {
+        case 5: /* load file */
+        {
+          if (slots[slot].valid)
+          {
+            ret = slot_load(slot,config.s_device);
+         
+            /* force exit */
+            if (ret > 0)
+            {
+              GUI_DrawMenuFX(m, 20, 1);
+              m->buttons[slot].state &= ~BUTTON_SELECTED;
+              m->bg_images[7].state &= ~IMAGE_VISIBLE;
+              if (sram.on)
+                m->buttons[0].state |= BUTTON_ACTIVE;
+              m->buttons[1].state |= BUTTON_ACTIVE;
+              m->buttons[2].state |= BUTTON_ACTIVE;
+              m->buttons[3].state |= BUTTON_ACTIVE;
+              m->buttons[4].state |= BUTTON_ACTIVE;
+              m->buttons[5].state &= ~BUTTON_VISIBLE;
+              m->buttons[6].state &= ~BUTTON_VISIBLE;
+              m->buttons[7].state &= ~BUTTON_VISIBLE;
+              m->buttons[8].state &= ~BUTTON_VISIBLE;
+              m->selected = slot;
+              update = -1;
+            }
+          }
+          break;
+        }
+
+        case 6: /* set default slot */
+        {
+          config.s_default = slot;
+          config_save();
+          break;
+        }
+
+        case 7: /* delete file */
+        {
+          if (slots[slot].valid)
+          {
+            if (slot_delete(slot,config.s_device) >= 0)
+            {
+              /* hide screenshot */
+              gxTextureClose(&bg_saves[0].texture);
+              bg_saves[0].state &= ~IMAGE_VISIBLE;
+              slots[slot].valid = 0;
+              update = -1;
+            }
+          }
+          break;
+        }
+
+        case 8: /* save file */
+        {
+          ret = slot_save(slot,config.s_device);
+
+          /* force exit */
+          if (ret > 0)
+          {
+            GUI_DrawMenuFX(m, 20, 1);
+            m->buttons[slot].state &= ~BUTTON_SELECTED;
+            m->bg_images[7].state &= ~IMAGE_VISIBLE;
+            if (sram.on)
+              m->buttons[0].state |= BUTTON_ACTIVE;
+            m->buttons[1].state |= BUTTON_ACTIVE;
+            m->buttons[2].state |= BUTTON_ACTIVE;
+            m->buttons[3].state |= BUTTON_ACTIVE;
+            m->buttons[4].state |= BUTTON_ACTIVE;
+            m->buttons[5].state &= ~BUTTON_VISIBLE;
+            m->buttons[6].state &= ~BUTTON_VISIBLE;
+            m->buttons[7].state &= ~BUTTON_VISIBLE;
+            m->buttons[8].state &= ~BUTTON_VISIBLE;
+            m->selected = slot;
+            update = -1;
+          }
+          break;
+        }
+
+        default: /* slot selection */
+        {
+          /* enable right window */
+          m->bg_images[7].state |= IMAGE_VISIBLE;
+          m->buttons[5].state |= BUTTON_VISIBLE;
+          m->buttons[6].state |= BUTTON_VISIBLE;
+          m->buttons[7].state |= BUTTON_VISIBLE;
+          m->buttons[8].state |= BUTTON_VISIBLE;
+
+          /* only enable valid options */
+          if (slots[slot].valid)
+          {
+            m->buttons[5].state |= BUTTON_ACTIVE;
+            m->buttons[7].state |= BUTTON_ACTIVE;
+            m->buttons[6].shift[0] = 1;
+            m->buttons[6].shift[1] = 1;
+            m->buttons[8].shift[0] = 1;
+            m->selected = 5;
+          }
+          else
+          {
+            m->buttons[5].state &= ~BUTTON_ACTIVE;
+            m->buttons[7].state &= ~BUTTON_ACTIVE;
+            m->buttons[6].shift[0] = 0;
+            m->buttons[6].shift[1] = 2;
+            m->buttons[8].shift[0] = 2;
+            m->selected = 8;
+          }
+
+          /* state slot 'only' button */
+          if (slot > 0)
+          {
+            m->buttons[6].state |= BUTTON_ACTIVE;
+            m->buttons[5].shift[1] = 1;
+            m->buttons[7].shift[0] = 1;
+          }
+          else
+          {
+            m->buttons[6].state &= ~BUTTON_ACTIVE;
+            m->buttons[5].shift[1] = 2;
+            m->buttons[7].shift[0] = 2;
+          }
+
+          /* disable left buttons */
+          m->buttons[0].state &= ~BUTTON_ACTIVE;
+          m->buttons[1].state &= ~BUTTON_ACTIVE;
+          m->buttons[2].state &= ~BUTTON_ACTIVE;
+          m->buttons[3].state &= ~BUTTON_ACTIVE;
+          m->buttons[4].state &= ~BUTTON_ACTIVE;
+
+          /* keep current selection highlighted */
+          m->buttons[slot].state |= BUTTON_SELECTED;
+
+          /* slide in window */
+          GUI_DrawMenuFX(m, 20, 0);
+
+          break;
+        }
+      }
+    }
+
+    if (update < 0)
+    {
+      /* close right window */
+      if (m->bg_images[7].state & IMAGE_VISIBLE)
+      {
+        /* slide out window */
+        GUI_DrawMenuFX(m, 20, 1);
+
+        /* clear current selection */
+        m->buttons[slot].state &= ~BUTTON_SELECTED;
+
+        /* enable left buttons */
+        if (sram.on)
+          m->buttons[0].state |= BUTTON_ACTIVE;
+        m->buttons[1].state |= BUTTON_ACTIVE;
+        m->buttons[2].state |= BUTTON_ACTIVE;
+        m->buttons[3].state |= BUTTON_ACTIVE;
+        m->buttons[4].state |= BUTTON_ACTIVE;
+
+        /* disable right window */
+        m->bg_images[7].state &= ~IMAGE_VISIBLE;
+        m->buttons[5].state &= ~BUTTON_VISIBLE;
+        m->buttons[6].state &= ~BUTTON_VISIBLE;
+        m->buttons[7].state &= ~BUTTON_VISIBLE;
+        m->buttons[8].state &= ~BUTTON_VISIBLE;
+
+        /* stay in menu */
+        m->selected = slot;
+        update = 0;
+      }
     }
   }
 
-  menu = prevmenu;
-  return 0;
+  /* leave menu */
+  m->bg_images[3].state |= IMAGE_SLIDE_TOP;
+  m->bg_images[4].state |= IMAGE_SLIDE_BOTTOM;
+  m->bg_images[5].state |= IMAGE_SLIDE_TOP;
+  GUI_DrawMenuFX(m,30,1);
+  GUI_DeleteMenu(m);
+  return ret;
 }
 
-
 /****************************************************************************
- * Load Rom menu
+ * Load Game menu
  *
  ****************************************************************************/
-static int loadmenu ()
+static int loadgamemenu ()
 {
   int ret;
   gui_menu *m = &menu_load;
@@ -2521,9 +2721,9 @@ static void showrominfo ()
  * Main Menu
  *
  ****************************************************************************/
-static int rom_loaded = 0;
 void MainMenu (void)
 {
+  static int rom_loaded = 0;
   int ret, quit = 0;
 
   char *items[3] =
@@ -2538,7 +2738,8 @@ void MainMenu (void)
   };
 
   /* autosave SRAM */
-  memfile_autosave(config.sram_auto,-1);
+  if (config.s_auto & 1)
+    slot_autosave(0,config.s_device);
 
 #ifdef HW_RVL
   /* Wiimote shutdown */
@@ -2583,6 +2784,7 @@ void MainMenu (void)
     bg_misc[0].data = Bg_main_2_png;
     bg_ctrls[0].data = Bg_main_2_png;
     bg_list[0].data = Bg_main_2_png;
+    bg_saves[1].data = Bg_main_2_png;
   }
   else
   {
@@ -2590,6 +2792,7 @@ void MainMenu (void)
     bg_misc[0].data = Bg_main_png;
     bg_ctrls[0].data = Bg_main_png;
     bg_list[0].data = Bg_main_png;
+    bg_saves[1].data = Bg_main_png;
   }
   if (config.bg_overlay)
   {
@@ -2597,6 +2800,7 @@ void MainMenu (void)
     bg_misc[1].state |= IMAGE_VISIBLE;
     bg_ctrls[1].state |= IMAGE_VISIBLE;
     bg_list[1].state |= IMAGE_VISIBLE;
+    bg_saves[2].state |= IMAGE_VISIBLE;
   }
   else
   {
@@ -2604,6 +2808,7 @@ void MainMenu (void)
     bg_misc[1].state &= ~IMAGE_VISIBLE;
     bg_ctrls[1].state &= ~IMAGE_VISIBLE;
     bg_list[1].state &= ~IMAGE_VISIBLE;
+    bg_saves[2].state &= ~IMAGE_VISIBLE;
   }
 
   GUI_InitMenu(m);
@@ -2619,7 +2824,7 @@ void MainMenu (void)
       case 0:
         GUI_DrawMenuFX(m,30,1);
         GUI_DeleteMenu(m);
-        quit = loadmenu();
+        quit = loadgamemenu();
         if (quit)
           break;
         GUI_InitMenu(m);
@@ -2686,14 +2891,15 @@ void MainMenu (void)
         break;
       }
 
-      /*** File Manager (TODO !!!) ***/
+      /*** Save Manager ***/
       case 3:
         if (!cart.romsize)
           break;
         GUI_DrawMenuFX(m,30,1);
         GUI_DeleteMenu(m);
-        quit = filemenu();
-        if (quit) break;
+        quit = savemenu();
+        if (quit)
+          break;
         GUI_InitMenu(m);
         GUI_DrawMenuFX(m,30,0);
         break;
@@ -2709,7 +2915,8 @@ void MainMenu (void)
         audio_init(snd.sample_rate,snd.frame_rate);
         system_init();
         system_reset();
-        memfile_autoload(config.sram_auto,-1);
+        if (config.s_auto & 1)
+          slot_autoload(0,config.s_device);
         quit = 1;
         break;
 

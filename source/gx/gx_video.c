@@ -826,7 +826,6 @@ void gxDrawScreenshot(u8 alpha)
 void gxCopyScreenshot(gx_texture *texture)
 {
   /* retrieve gamescreen texture */
-  gxClearScreen((GXColor)BLACK);
   GXTexObj texobj;
   GX_InitTexObj(&texobj, texturemem, vwidth, vheight, GX_TF_RGB565, GX_CLAMP, GX_CLAMP, GX_FALSE);
   GX_LoadTexObj(&texobj, GX_TEXMAP0);

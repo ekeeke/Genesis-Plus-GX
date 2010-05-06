@@ -23,11 +23,13 @@
  ********************************************************************************/
 
 #include "shared.h"
+#include "filesel.h"
+#include "menu.h"
 #include "font.h"
 #include "gui.h"
 #include "file_dvd.h"
 #include "file_fat.h"
-#include "filesel.h"
+#include "file_slot.h"
 
 #ifdef HW_RVL
 #include <wiiuse/wpad.h>
@@ -43,6 +45,8 @@ static int selection     = 0;
 static int old_selection = 0;
 static int old_offset    = 0;
 static int maxfiles      = 0;
+static int string_offset = 0;
+static void selector_cb(void);
 
 /*****************************************************************************/
 /*  GUI Buttons data                                                         */
@@ -63,8 +67,8 @@ static butn_data arrow_down_data =
 /*  GUI Arrows button                                                        */
 /*****************************************************************************/
 
-static gui_butn arrow_up = {&arrow_up_data,BUTTON_VISIBLE|BUTTON_OVER_SFX,{0,0,0,0},14,76,360,32};
-static gui_butn arrow_down = {&arrow_down_data,BUTTON_VISIBLE|BUTTON_OVER_SFX,{0,0,0,0},14,368,360,32};
+static gui_butn arrow_up = {&arrow_up_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX,{0,0,0,0},14,76,360,32};
+static gui_butn arrow_down = {&arrow_down_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX,{0,0,0,0},14,368,360,32};
 
 /*****************************************************************************/
 /*  GUI helpers                                                              */
@@ -108,7 +112,8 @@ static gui_menu menu_browser =
   NULL,
   bg_filesel,
   {&action_cancel, &action_select},
-  {&arrow_up,&arrow_down}
+  {&arrow_up,&arrow_down},
+  selector_cb
 };
 
 /***************************************************************************
@@ -146,36 +151,11 @@ int FileSortCallback(const void *f1, const void *f2)
  * ROM size is returned
  *
  ****************************************************************************/ 
-int FileSelector(unsigned char *buffer, bool useFAT)
+static void selector_cb(void)
 {
-  short p;
-  int ret,i,yoffset;
-  int size = 0;
-  int go_up = 0;
-  int string_offset = 0;
-  int old = -1;
+  int i;
   char text[MAXPATHLEN];
-  char fname[MAXPATHLEN];
-  FILE *xml,*snap;
-
-#ifdef HW_RVL
-  int x,y;
-  gui_butn *button;
-#endif
-
-  /* Background Settings */
-  if (config.bg_color == 0)
-    bg_filesel[0].data = Bg_main_2_png;
-  else
-    bg_filesel[0].data = Bg_main_png;
-  if (config.bg_overlay)
-    bg_filesel[1].state |= IMAGE_VISIBLE;
-  else
-    bg_filesel[1].state &= ~IMAGE_VISIBLE;
-
-  /* Initialize Menu */
-  gui_menu *m = &menu_browser;
-  GUI_InitMenu(m);
+  int yoffset = PAGEOFFSET;
 
   /* Initialize directory icon */
   gui_image dir_icon;
@@ -192,6 +172,91 @@ int FileSelector(unsigned char *buffer, bool useFAT)
   bar_over.h = bar_over.texture->height;
   bar_over.x = 22;
   bar_over.y = -(bar_over.h - dir_icon.h)/2;
+
+  /* Draw Files list */
+  for (i = offset; i < (offset + PAGESIZE) && (i < maxfiles); i++)
+  {
+    if (i == selection)
+    {
+      /* selection bar */
+      gxDrawTexture(bar_over.texture,bar_over.x,yoffset+bar_over.y,bar_over.w,bar_over.h,255);
+
+      /* scrolling text */
+      if ((string_offset/10) >= strlen(filelist[i].filename))
+        string_offset = 0;
+      sprintf(text, "%s  ",filelist[i].filename + string_offset/10);
+      strncat(text, filelist[i].filename, string_offset/10);
+      if (filelist[i].flags)
+      {
+        /* directory icon */
+        gxDrawTexture(dir_icon.texture,dir_icon.x-1,yoffset-1,dir_icon.w+2,dir_icon.h+2,255);
+        if (FONT_write(text,18,dir_icon.x+dir_icon.w+6,yoffset+16,bar_over.w-dir_icon.w-14,(GXColor)WHITE))
+        {
+          /* string is too large -> scroll text */
+          string_offset ++;
+        }
+      }
+      else
+      {
+        if (FONT_write(text,18,dir_icon.x,yoffset+16,bar_over.w-8,(GXColor)WHITE))
+        {
+          /* text scrolling */
+          string_offset ++;
+        }
+      }
+    }
+    else
+    {
+      if (filelist[i].flags)
+      {
+        /* directory icon */
+        gxDrawTexture(dir_icon.texture,dir_icon.x,yoffset,dir_icon.w,dir_icon.h,255);
+        FONT_write(filelist[i].filename,16,dir_icon.x+dir_icon.w+6,yoffset+16,bar_over.w-dir_icon.w-14,(GXColor)WHITE);
+      }
+      else
+      {
+        FONT_write(filelist[i].filename,16,dir_icon.x,yoffset+16,bar_over.w-8,(GXColor)WHITE);
+      }
+    }
+
+    yoffset += 22;
+  }
+
+  gxTextureClose(&bar_over.texture);
+  gxTextureClose(&dir_icon.texture);
+}  
+  
+
+int FileSelector(unsigned char *buffer, bool useFAT)
+{
+  short p;
+  int ret;
+  int size = 0;
+  int go_up = 0;
+  int old = -1;
+  char fname[MAXPATHLEN];
+  char text[MAXPATHLEN];
+  FILE *xml,*snap;
+
+#ifdef HW_RVL
+  int x,y,i,yoffset;
+  gui_butn *button;
+#endif
+
+  /* Background Settings */
+  if (config.bg_color == 0)
+    bg_filesel[0].data = Bg_main_2_png;
+  else
+    bg_filesel[0].data = Bg_main_png;
+  if (config.bg_overlay)
+    bg_filesel[1].state |= IMAGE_VISIBLE;
+  else
+    bg_filesel[1].state &= ~IMAGE_VISIBLE;
+
+  /* Initialize Menu */
+  gui_menu *m = &menu_browser;
+  GUI_InitMenu(m);
+  string_offset = 0;
 
   while (1)
   {
@@ -210,7 +275,8 @@ int FileSelector(unsigned char *buffer, bool useFAT)
       {
         /* get ROM filename without extension */
         sprintf (text, "%s", filelist[selection].filename);
-        if (strlen(text) >= 4) text[strlen(text) - 4] = 0;
+        if (strlen(text) >= 4)
+          text[strlen(text) - 4] = 0;
 
         /* ROM database informations */
         sprintf (fname, "%s/db/%s.xml", DEFAULT_PATH, text);
@@ -227,7 +293,8 @@ int FileSelector(unsigned char *buffer, bool useFAT)
         if (snap)
         {
           bg_filesel[8].texture = gxTextureOpenPNG(0,snap);
-          if (bg_filesel[8].texture) bg_filesel[8].state |= IMAGE_VISIBLE;
+          if (bg_filesel[8].texture)
+            bg_filesel[8].state |= IMAGE_VISIBLE;
           fclose(snap);
         }
       }
@@ -256,60 +323,10 @@ int FileSelector(unsigned char *buffer, bool useFAT)
     /* Draw menu*/
     GUI_DrawMenu(m);
 
-    /* Draw Files list */
-    yoffset = PAGEOFFSET;
-    for (i = offset; i < (offset + PAGESIZE) && (i < maxfiles); i++)
-    {
-      if (i == selection)
-      {
-        /* scrolling text */
-        if ((string_offset/10) >= strlen(filelist[i].filename))  string_offset = 0;
-        sprintf(text, "%s  ",filelist[i].filename + string_offset/10);
-        strncat(text, filelist[i].filename, string_offset/10);
-
-        gxDrawTexture(bar_over.texture,bar_over.x,yoffset+bar_over.y,bar_over.w,bar_over.h,255);
-        if (filelist[i].flags)
-        {
-          /* directory icon */
-          gxDrawTexture(dir_icon.texture,dir_icon.x-1,yoffset-1,dir_icon.w+2,dir_icon.h+2,255);
-          if (FONT_write(text,18,dir_icon.x+dir_icon.w+6,yoffset+16,bar_over.w-dir_icon.w-14,(GXColor)WHITE))
-          {
-            /* text scrolling */
-            string_offset ++;
-          }
-        }
-        else
-        {
-          if (FONT_write(text,18,dir_icon.x,yoffset+16,bar_over.w-8,(GXColor)WHITE))
-          {
-            /* text scrolling */
-            string_offset ++;
-          }
-        }
-      }
-      else
-      {
-        if (filelist[i].flags)
-        {
-          /* directory icon */
-          gxDrawTexture(dir_icon.texture,dir_icon.x,yoffset,dir_icon.w,dir_icon.h,255);
-          FONT_write(filelist[i].filename,16,dir_icon.x+dir_icon.w+6,yoffset+16,bar_over.w-dir_icon.w-14,(GXColor)WHITE);
-        }
-        else
-        {
-          FONT_write(filelist[i].filename,16,dir_icon.x,yoffset+16,bar_over.w-8,(GXColor)WHITE);
-        }
-      }
-
-      yoffset += 22;
-    }
-
 #ifdef HW_RVL
     if (Shutdown)
     {
       gxTextureClose(&w_pointer);
-      gxTextureClose(&bar_over.texture);
-      gxTextureClose(&dir_icon.texture);
       GUI_DeleteMenu(m);
       GUI_FadeOut();
       shutdown();
@@ -371,8 +388,10 @@ int FileSelector(unsigned char *buffer, bool useFAT)
     if (p & PAD_BUTTON_DOWN)
     {
       selection++;
-      if (selection == maxfiles) selection = offset = 0;
-      if ((selection - offset) >= PAGESIZE) offset += PAGESIZE;
+      if (selection == maxfiles)
+        selection = offset = 0;
+      if ((selection - offset) >= PAGESIZE)
+        offset += PAGESIZE;
     }
 
     /* highlight previous item */
@@ -384,8 +403,10 @@ int FileSelector(unsigned char *buffer, bool useFAT)
         selection = maxfiles - 1;
         offset = selection - PAGESIZE + 1;
       }
-      if (selection < offset) offset -= PAGESIZE;
-      if (offset < 0) offset = 0;
+      if (selection < offset)
+        offset -= PAGESIZE;
+      if (offset < 0)
+        offset = 0;
     }
 
     /* go back one page */
@@ -397,24 +418,26 @@ int FileSelector(unsigned char *buffer, bool useFAT)
         selection = maxfiles - 1;
         offset = selection - PAGESIZE + 1;
       }
-      if (selection < offset) offset -= PAGESIZE;
-      if (offset < 0) offset = 0;
+      if (selection < offset)
+        offset -= PAGESIZE;
+      if (offset < 0)
+        offset = 0;
     }
 
     /* go forward one page */
     else if (p & PAD_TRIGGER_R)
     {
       selection += PAGESIZE;
-      if (selection > maxfiles - 1) selection = offset = 0;
-      if ((selection - offset) >= PAGESIZE) offset += PAGESIZE;
+      if (selection > maxfiles - 1)
+        selection = offset = 0;
+      if ((selection - offset) >= PAGESIZE)
+        offset += PAGESIZE;
     }
 
     /* quit */
     else if (p & PAD_TRIGGER_Z)
     {
       GUI_DeleteMenu(m);
-      gxTextureClose(&bar_over.texture);
-      gxTextureClose(&dir_icon.texture);
       return 0;
     }
 
@@ -442,14 +465,18 @@ int FileSelector(unsigned char *buffer, bool useFAT)
             selection = maxfiles - 1;
             offset = selection - PAGESIZE + 1;
           }
-          if (selection < offset) offset -= PAGESIZE;
-          if (offset < 0) offset = 0;
+          if (selection < offset)
+            offset -= PAGESIZE;
+          if (offset < 0)
+            offset = 0;
         }
         else if (m->selected == (m->max_buttons+1)) /* down arrow */
         {
           selection++;
-          if (selection == maxfiles) selection = offset = 0;
-          if ((selection - offset) >= PAGESIZE) offset += PAGESIZE;
+          if (selection == maxfiles)
+            selection = offset = 0;
+          if ((selection - offset) >= PAGESIZE)
+            offset += PAGESIZE;
         }
       }
 #endif
@@ -498,8 +525,6 @@ int FileSelector(unsigned char *buffer, bool useFAT)
           else
           {
             GUI_DeleteMenu(m);
-            gxTextureClose(&bar_over.texture);
-            gxTextureClose(&dir_icon.texture);
             return 0;
           }
         }
@@ -511,8 +536,6 @@ int FileSelector(unsigned char *buffer, bool useFAT)
           if (go_up)
           {
             GUI_DeleteMenu(m);
-            gxTextureClose(&bar_over.texture);
-            gxTextureClose(&dir_icon.texture);
             return 0;
           }
           else
@@ -529,16 +552,18 @@ int FileSelector(unsigned char *buffer, bool useFAT)
               /* Reload emulation */
               if (size)
               {
-                memfile_autosave(-1,config.state_auto);
+                if (config.s_auto & 2)
+                  slot_autosave(config.s_default,config.s_device);
                 reloadrom(size,filelist[selection].filename);
-                memfile_autoload(config.sram_auto,config.state_auto);
+                if (config.s_auto & 1)
+                  slot_autoload(0,config.s_device);
+                if (config.s_auto & 2)
+                  slot_autoload(config.s_default,config.s_device);
               }
 
               /* Exit */
               GUI_MsgBoxClose();
               GUI_DeleteMenu(m);
-              gxTextureClose(&bar_over.texture);
-              gxTextureClose(&dir_icon.texture);
               return size;
             }
 

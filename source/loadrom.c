@@ -60,6 +60,8 @@
 uint16 peripherals;
 uint16 realchecksum;
 ROMINFO rominfo;
+char rom_filename[256];
+
 
 /***************************************************************************
   * Genesis ROM Manufacturers

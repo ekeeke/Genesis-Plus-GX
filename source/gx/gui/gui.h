@@ -33,7 +33,8 @@
 /*****************************************************************************/
 #define BUTTON_VISIBLE       0x01
 #define BUTTON_ACTIVE        0x02
-#define BUTTON_OVER_SFX      0x04
+#define BUTTON_SELECTED      0x04
+#define BUTTON_OVER_SFX      0x08
 #define BUTTON_SELECT_SFX    0x10
 #define BUTTON_FADE          0x20
 #define BUTTON_SLIDE_LEFT    0x40
@@ -118,6 +119,7 @@ typedef struct
   gui_image *bg_images;       /* background images                  */
   gui_item *helpers[2];       /* left & right key comments          */
   gui_butn *arrows[2];        /* arrows buttons                     */
+  void (*cb)(void);           /* specific draw callback */
 } gui_menu;
 
 typedef struct 
@@ -146,16 +148,10 @@ struct t_input_menu
 /* Optionbox callback */
 typedef void (*optioncallback)(void);
 
-
-/* PNG images */
-
-/* Intro */
-extern const u8 Bg_intro_c1_png[];
-extern const u8 Bg_intro_c2_png[];
-extern const u8 Bg_intro_c3_png[];
-extern const u8 Bg_intro_c4_png[];
-extern const u8 Bg_intro_c5_png[];
-extern const u8 Bg_credits_png[];
+/* Generic textures*/
+#ifdef HW_RVL
+extern gx_texture *w_pointer;
+#endif
 
 /* Generic backgrounds */
 extern const u8 Bg_main_png[];
@@ -164,6 +160,9 @@ extern const u8 Bg_overlay_png[];
 extern const u8 Banner_main_png[];
 extern const u8 Banner_bottom_png[];
 extern const u8 Banner_top_png[];
+extern const u8 Banner_main_2_png[];
+extern const u8 Banner_bottom_2_png[];
+extern const u8 Banner_top_2_png[];
 extern const u8 Main_logo_png[];
 
 /* Generic frames */
@@ -174,44 +173,6 @@ extern const u8 Frame_s4_png[];
 extern const u8 Frame_s1_title_png[];
 extern const u8 Frame_s4_title_png[];
 extern const u8 Frame_throbber_png[];
-
-/* ROM Browser */
-extern const u8 Overlay_bar_png[];
-extern const u8 Browser_dir_png[];
-extern const u8 Star_full_png[];
-extern const u8 Star_empty_png[];
-extern const u8 Snap_empty_png[];
-extern const u8 Snap_frame_png[];
-
-/* Main menu */
-extern const u8 Main_load_png[];
-extern const u8 Main_options_png[];
-extern const u8 Main_quit_png[];
-extern const u8 Main_file_png[];
-extern const u8 Main_reset_png[];
-extern const u8 Main_ggenie_png[];
-extern const u8 Main_showinfo_png[];
-extern const u8 Main_takeshot_png[];
-#ifdef HW_RVL
-extern const u8 Main_play_wii_png[];
-#else
-extern const u8 Main_play_gcn_png[];
-#endif
-
-/* Options menu */
-extern const u8 Option_menu_png[];
-extern const u8 Option_ctrl_png[];
-extern const u8 Option_sound_png[];
-extern const u8 Option_video_png[];
-extern const u8 Option_system_png[];
-
-/* Load ROM menu */
-extern const u8 Load_recent_png[];
-extern const u8 Load_sd_png[];
-extern const u8 Load_dvd_png[];
-#ifdef HW_RVL
-extern const u8 Load_usb_png[];
-#endif
 
 /* Generic Buttons */
 extern const u8 Button_text_png[];
@@ -227,29 +188,6 @@ extern const u8 Button_down_over_png[];
 extern const u8 Button_arrow_png[];
 extern const u8 Button_arrow_over_png[];
 
-/* Controller Settings */
-extern const u8 Ctrl_4wayplay_png[];
-extern const u8 Ctrl_gamepad_png[];
-extern const u8 Ctrl_justifiers_png[];
-extern const u8 Ctrl_menacer_png[];
-extern const u8 Ctrl_mouse_png[];
-extern const u8 Ctrl_none_png[];
-extern const u8 Ctrl_teamplayer_png[];
-extern const u8 Ctrl_pad3b_png[];
-extern const u8 Ctrl_pad6b_png[];
-extern const u8 Ctrl_config_png[];
-extern const u8 Ctrl_player_png[];
-extern const u8 Ctrl_player_over_png[];
-extern const u8 Ctrl_player_none_png[];
-extern const u8 ctrl_option_off_png[];
-extern const u8 ctrl_option_on_png[];
-extern const u8 ctrl_gamecube_png[];
-#ifdef HW_RVL
-extern const u8 ctrl_classic_png[];
-extern const u8 ctrl_nunchuk_png[];
-extern const u8 ctrl_wiimote_png[];
-#endif
-
 /* Generic images*/
 #ifdef HW_RVL
 #define Key_A_png Key_A_wii_png
@@ -262,6 +200,8 @@ extern const u8 Key_B_wii_png[];
 #define Key_B_png Key_B_gcn_png
 extern const u8 Key_A_gcn_png[];
 extern const u8 Key_B_gcn_png[];
+extern const u8 Star_empty_png[];
+extern const u8 Star_full_png[];
 #endif
 
 /* Generic Sounds */
@@ -271,11 +211,6 @@ extern const u8 intro_pcm[];
 extern const u32 button_select_pcm_size;
 extern const u32 button_over_pcm_size;
 extern const u32 intro_pcm_size;
-
-/* Generic textures*/
-#ifdef HW_RVL
-extern gx_texture *w_pointer;
-#endif
 
 extern u8 SILENT;
 

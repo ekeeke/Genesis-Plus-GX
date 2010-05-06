@@ -227,8 +227,8 @@ int FAT_Open(int type)
   int max = 0;
   char root[10] = "";
 
-  /* FAT header */
 #ifdef HW_RVL
+  /* FAT header */
   if (type == TYPE_SD) sprintf (root, "sd:");
   else if (type == TYPE_USB) sprintf (root, "usb:");
 #endif

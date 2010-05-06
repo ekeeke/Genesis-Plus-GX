@@ -28,8 +28,6 @@
 
 #define MAXCODES 8
 
-extern char menutitle[60];
-
 typedef struct
 {
   int address;
@@ -168,7 +166,7 @@ void DrawGGCodes ()
   unsigned char c[2] = { 0, 0 };
 
   gxClearScreen ((GXColor)BLACK);
-  WriteCentre (134, menutitle);
+  WriteCentre (134, "Game Genie Entry");
 
   for (i = 0; i < MAXCODES; i++)
   {
@@ -340,7 +338,6 @@ void GGSelectLine ()
 void GetGGEntries ()
 {
   editing = 0;
-  strcpy (menutitle, "Game Genie Entry");
   GGSelectLine ();
 
   /* Apply Game Genie patches */

@@ -24,7 +24,6 @@
 #include "gx_audio.h"
 #include "gx_video.h"
 #include "config.h"
-#include "file_mem.h"
 
 #define DEFAULT_PATH  "/genplus"
 #define GG_ROM        "/genplus/ggenie.bin"
@@ -34,9 +33,9 @@
 #define SK_UPMEM      "/genplus/sk2chip.bin"
 
 #ifdef HW_RVL
-#define VERSION "version 1.4.xW"
+#define VERSION "version 1.4.0W"
 #else
-#define VERSION "version 1.4.xG"
+#define VERSION "version 1.4.0G"
 #endif
 
 #define osd_input_Update() gx_input_UpdateEmu()

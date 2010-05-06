@@ -14,7 +14,7 @@ of samples per frame and keeping PSG & FM chips in sync.
 * fixed YM2612 context saving/loading.
 * fixed YM2612 state on reset.
 * removed outdated & less accurate Gens YM2612 core
-* added preliminar emulation of YM2612 DAC original resolution (configurable).
+* added configurable YM2612 DAC resolution emulation.
 * added configurable & faster FIR resampler (thanks to Blargg & AamirM), dropped libsamplerate support.
 * added configurable Low-Pass filtering
 * added configurable 3-Band Equalizer (thanks to Neil C).
@@ -25,7 +25,9 @@ of samples per frame and keeping PSG & FM chips in sync.
 ---------------
 * added support for CRAM writes during horizontal blanking (Striker, Zero the Kamikaze Squirrel,...)
 * added support for 2-Cell vertical scrolling in Interlaced 2 mode
+* fixed left-most column vertical scrolling when horizontally scrolled (Gynoug, F1) 
 * fixed VBLANK transition line checks
+* improved VDP FIFO timings accuracy: fixes Sol Deace intro
 * improved sprite masking accuracy (thanks to Nemesis for his sprite test program)
 * improved HBLANK flag timing accuracy: fixes Mega Turrican (Sky level)
 * improved sprites processing accuracy: fixes (un)masked sprites in Mickey Mania (3D level), Sonic 2 (VS mode).
@@ -48,9 +50,9 @@ of samples per frame and keeping PSG & FM chips in sync.
 * added Action Replay hardware emulation (Action replay ROM is now fully supported).
 * added S&K "Lock-On" hardware emulation (you can "lock" any games to Sonic & Knuckles).
 * added Cartridge "hot swap" feature.
-* fixed Backup Memory support in some games that were actually using serial EEPROM.
+* added EEPROM support in some games requiring it.
 * fixed Realtec mapper emulation: fixes missing sound in Balloon Boy / Funny World.
-* fixed lightgun auto detection: fixes cursor position in Lethal Enforcers II.
+* fixed lightgun auto-detection: fixes default cursor position in Lethal Enforcers II.
 * lots of code cleanup, bugfixes & optimization.
 
 
@@ -63,7 +65,14 @@ of samples per frame and keeping PSG & FM chips in sync.
 * improved reset button behavior, now works more like the real Genesis reset button.
 * improved lightgun cursors layout.
 * fixed stability issues and memory leaks.
-* compiled with devkitPPC r19 & libOGC 1.8.1 (SDHC support, new DVDX, etc)
+
+[Wii only]
+---------------
+* added USB2 support through Hermes cIOS/mload (cIOS 202 is required)
+* added Video Hardware Gamma control
+* added Video Hardware "Trap Filter" control
+* improved Mouse emulation through the Wiimote
+* compiled with devkitPPC r21 & libOGC 1.8.3 (SDHC support, DVDX v2 support)
 
 
 

@@ -24,6 +24,7 @@
 
 #include "shared.h"
 #include "font.h"
+#include "menu.h"
 #include "gui.h"
 
 /* 

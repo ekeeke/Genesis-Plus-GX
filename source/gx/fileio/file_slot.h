@@ -1,5 +1,5 @@
 /*
- *  file_mem.c
+ *  file_slot.c
  *
  *  FAT and Memory Card SRAM/Savestate files managment
  *
@@ -22,14 +22,24 @@
  *
  ***************************************************************************/
 
-#ifndef _FILE_MEM_H
-#define _FILE_MEM_H
+#ifndef _FILE_SLOT_H
+#define _FILE_SLOT_H
 
-extern int ManageSRAM(u8 direction, u8 device);
-extern int ManageState(u8 direction, u8 device);
-extern void memfile_autosave(s8 autosram, s8 autostate);
-extern void memfile_autoload(s8 autosram, s8 autostate);
+typedef struct 
+{
+  int valid;
+  u16 year;
+  u8 month;
+  u8 day;
+  u8 hour;
+  u8 min;
+} t_slot;
 
-extern char rom_filename[256];
+extern void slot_autoload(int slot, int device);
+extern void slot_autosave(int slot, int device);
+extern void slot_autodetect(int slot, int device, t_slot *ptr);
+extern int slot_delete(int slot, int device);
+extern int slot_load(int slot, int device);
+extern int slot_save(int slot, int device);
 
 #endif

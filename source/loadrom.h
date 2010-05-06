@@ -64,6 +64,7 @@ extern COMPANYINFO companyinfo[MAXCOMPANY];
 extern PERIPHERALINFO peripheralinfo[14];
 extern uint16 realchecksum;
 extern uint16 peripherals;
+extern char rom_filename[256];
 
 /* Function prototypes */
 extern int load_rom(char *filename);

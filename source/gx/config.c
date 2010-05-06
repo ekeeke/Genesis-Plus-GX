@@ -79,7 +79,7 @@ void config_default(void)
   config.mg             = 1.0;
   config.hg             = 1.0;
   config.rolloff        = 0.995;
-  config.dac_bits 		= 14;
+  config.dac_bits 		  = 14;
 
   /* system options */
   config.region_detect  = 0;
@@ -116,11 +116,12 @@ void config_default(void)
 
   /* menu options */
 #ifdef HW_RVL
-  config.sram_auto    = 0;
+  config.s_auto       = 1;
 #else
-  config.sram_auto    = -1;
+  config.s_auto       = 0;
 #endif
-  config.state_auto   = -1;
+  config.s_default    = 1;
+  config.s_device     = 0;
   config.bg_color     = 0;
   config.bg_overlay   = 0;
   config.screen_w     = 658;

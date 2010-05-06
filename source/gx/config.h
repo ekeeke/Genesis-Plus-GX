@@ -70,8 +70,9 @@ typedef struct
   uint16 pad_keymap[4][MAX_KEYS];
   uint32 wpad_keymap[4*3][MAX_KEYS];
   t_input_config input[MAX_INPUTS];
-  int8 sram_auto;
-  int8 state_auto;
+  uint8 s_auto;
+  uint8 s_default;
+  uint8 s_device;
   int8 bg_color;
   int8 bg_overlay;
   int16 screen_w;

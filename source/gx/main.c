@@ -28,6 +28,7 @@
 #include "history.h"
 #include "aram.h"
 #include "dvd.h"
+#include "file_slot.h"
 
 #ifdef HW_RVL
 #include "usb2storage.h"
@@ -35,7 +36,6 @@
 #endif
 
 #include <fat.h>
-#include <ogc/cast.h>
 
 #ifdef HW_RVL
 #include <wiiuse/wpad.h>
@@ -196,7 +196,8 @@ void reloadrom (int size, char *name)
 void shutdown(void)
 {
   /* system shutdown */
-  memfile_autosave(-1,config.state_auto);
+  if (config.s_auto & 2)
+    slot_autosave(config.s_default,config.s_device);
   system_shutdown();
   audio_shutdown();
   free(cart.rom);
