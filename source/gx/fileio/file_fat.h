@@ -26,7 +26,6 @@
 
 #define TYPE_RECENT   0
 #define TYPE_SD       1
-
 #ifdef HW_RVL
 #define TYPE_USB      2
 #endif

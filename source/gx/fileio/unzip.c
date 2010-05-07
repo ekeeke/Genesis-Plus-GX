@@ -115,7 +115,8 @@ int UnZipBuffer (unsigned char *outbuffer, u64 discoffset, char *filename)
   if (filename)
   {
     fatfile = fopen(filename, "rb");
-    if (fatfile == NULL) return 0;
+    if (fatfile == NULL)
+      return 0;
   }
 
   /*** Read Zip Header ***/
@@ -203,12 +204,15 @@ int UnZipBuffer (unsigned char *outbuffer, u64 discoffset, char *filename)
   inflateEnd (&zs);
 
   /* close file */
-  if (fatfile) fclose(fatfile);
+  if (fatfile)
+    fclose(fatfile);
 
   if (res == Z_STREAM_END)
   {
-    if (FLIP32 (pkzip.uncompressedSize) == (u32) bufferoffset) return bufferoffset;
-    else return FLIP32 (pkzip.uncompressedSize);
+    if (FLIP32 (pkzip.uncompressedSize) == (u32) bufferoffset)
+      return bufferoffset;
+    else
+      return FLIP32 (pkzip.uncompressedSize);
   }
   return 0;
 }

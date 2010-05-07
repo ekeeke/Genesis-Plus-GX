@@ -25,10 +25,12 @@
 #include "shared.h"
 #include "font.h"
 #include "gui.h"
-#include "history.h"
 #include "aram.h"
 #include "dvd.h"
+#include "history.h"
 #include "file_slot.h"
+#include "file_fat.h"
+#include "filesel.h"
 
 #ifdef HW_RVL
 #include "usb2storage.h"
@@ -42,6 +44,7 @@
 #endif
 
 u32 Shutdown = 0;
+u32 ConfigRequested = 1;
 
 #ifdef HW_RVL
 /****************************************************************************
@@ -196,6 +199,7 @@ void reloadrom (int size, char *name)
 void shutdown(void)
 {
   /* system shutdown */
+  config_save();
   if (config.s_auto & 2)
     slot_autosave(config.s_default,config.s_device);
   system_shutdown();
@@ -249,26 +253,30 @@ int main (int argc, char *argv[])
   /* initialize FAT devices */
   if (fatInitDefault())
   {
-    DIR_ITER *dir = NULL;
-
     /* base directory */
     char pathname[MAXPATHLEN];
     sprintf (pathname, DEFAULT_PATH);
-    dir = diropen(pathname);
-    if (dir == NULL) mkdir(pathname,S_IRWXU);
-    else dirclose(dir);
+    DIR_ITER *dir = diropen(pathname);
+    if (dir)
+      dirclose(dir);
+    else
+      mkdir(pathname,S_IRWXU);
 
     /* default SRAM & Savestate files directory */ 
     sprintf (pathname, "%s/saves",DEFAULT_PATH);
     dir = diropen(pathname);
-    if (dir == NULL) mkdir(pathname,S_IRWXU);
-    else dirclose(dir);
+    if (dir)
+      dirclose(dir);
+    else
+      mkdir(pathname,S_IRWXU);
 
     /* default Snapshot files directory */ 
     sprintf (pathname, "%s/snaps",DEFAULT_PATH);
     dir = diropen(pathname);
-    if (dir == NULL) mkdir(pathname,S_IRWXU);
-    else dirclose(dir);
+    if (dir)
+      dirclose(dir);
+    else
+      mkdir(pathname,S_IRWXU);
   }
 
   /* initialize input engine */
@@ -286,16 +294,35 @@ int main (int argc, char *argv[])
   /* run any injected rom */
   if (cart.romsize)
   {
-    ARAMFetch((char *)cart.rom, (void *)0x8000, cart.romsize);
-    reloadrom (cart.romsize,"INJECT.bin");
+    int size = cart.romsize;
+    cart.romsize = 0;
+    ARAMFetch((char *)cart.rom, (void *)0x8000, size);
+    reloadrom(size,"INJECT.bin");
+    ConfigRequested = 0;
     gx_video_Start();
     gx_audio_Start();
     frameticker = 1;
   }
-  else
+  else if (config.autoload)
   {
-    /* Main Menu */
-    ConfigRequested = 1;
+    SILENT = 1;
+    if (FAT_Open(TYPE_RECENT))
+    {
+      int size = FAT_LoadFile(cart.rom,0);
+      if (size)
+      {
+        reloadrom(size,filelist[0].filename);
+        if (config.s_auto & 1)
+          slot_autoload(0,config.s_device);
+        if (config.s_auto & 2)
+          slot_autoload(config.s_default,config.s_device);
+        gx_video_Start();
+        gx_audio_Start();
+        frameticker = 1;
+        ConfigRequested = 0;
+      }
+    }
+    SILENT = 0;
   }
 
   /* initialize GUI engine */

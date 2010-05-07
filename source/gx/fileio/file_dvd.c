@@ -79,11 +79,14 @@ static int getpvd()
         break;
       }
     }
-    else return 0; /*** Can't read sector! ***/
+    else
+      return 0; /*** Can't read sector! ***/
+
     sector++;
   }
 
-  if (IsJoliet > 0) return 1; /*** Joliet PVD Found ? ***/
+  if (IsJoliet > 0)
+    return 1; /*** Joliet PVD Found ? ***/
 
   /*** Look for standard ISO9660 PVD ***/
   sector = 16;
@@ -101,8 +104,10 @@ static int getpvd()
         break;
       }
     }
-    else return 0; /*** Can't read sector! ***/
-      sector++;
+    else
+      return 0; /*** Can't read sector! ***/
+    
+    sector++;
   }
 
   return (IsJoliet == 0);
@@ -125,8 +130,10 @@ static int getentry(int entrycount)
   u32 offset32;
 
   /* Basic checks */
-  if (entrycount >= MAXFILES) return 0;
-  if (diroffset >= DVDCHUNK) return 0;
+  if (entrycount >= MAXFILES)
+    return 0;
+  if (diroffset >= DVDCHUNK)
+    return 0;
 
   /** Decode this entry **/
   if (dvdbuffer[diroffset])  /* Record length available */
@@ -139,32 +146,36 @@ static int getentry(int entrycount)
 
     /* Check for wrap round - illegal in ISO spec,
      * but certain crap writers do it! */
-    if ((diroffset + dvdbuffer[diroffset]) > DVDCHUNK) return 0;
+    if ((diroffset + dvdbuffer[diroffset]) > DVDCHUNK)
+      return 0;
 
     if (*filenamelength)
     {
       memset (&fname, 0, 512);
 
-      /*** Do ISO 9660 first ***/
-      if (!IsJoliet) strcpy (fname, filename);
+      /** Do ISO 9660 first **/
+      if (!IsJoliet)
+        strcpy (fname, filename);
+
       else
       {
-        /*** The more tortuous unicode joliet entries ***/
+        /** The more tortuous unicode joliet entries **/
         for (j = 0; j < (*filenamelength >> 1); j++)
-        {
           fname[j] = filename[j * 2 + 1];
-        }
-
         fname[j] = 0;
 
-        if (strlen (fname) >= MAXJOLIET) fname[MAXJOLIET - 1] = 0;
-        if (strlen (fname) == 0) fname[0] = filename[0];
+        if (strlen (fname) >= MAXJOLIET)
+          fname[MAXJOLIET - 1] = 0;
+        if (strlen (fname) == 0)
+          fname[0] = filename[0];
       }
 
-      if (strlen (fname) == 0) strcpy (fname, ".");
+      if (strlen (fname) == 0)
+        strcpy (fname, ".");
       else
       {
-        if (fname[0] == 1) strcpy (fname, "..");
+        if (fname[0] == 1)
+          strcpy (fname, "..");
         else
         {
           /*
@@ -176,20 +187,20 @@ static int getentry(int entrycount)
         }
       }
 
-      /** Rockridge Check **/
+      /* Rockridge Check */
       rr = strstr (fname, ";");
-      if (rr != NULL) *rr = 0;
+      if (rr != NULL)
+        *rr = 0;
 
       strcpy (filelist[entrycount].filename, fname);
       memcpy (&offset32, &dvdbuffer[diroffset + EXTENT], 4);
       filelist[entrycount].offset = (u64)offset32;
       memcpy (&filelist[entrycount].length, &dvdbuffer[diroffset + FILE_LENGTH], 4);
       memcpy (&filelist[entrycount].flags, &dvdbuffer[diroffset + FILE_FLAGS], 1);
-
       filelist[entrycount].offset <<= 11;
       filelist[entrycount].flags = filelist[entrycount].flags & 2;
 
-      /*** Prepare for next entry ***/
+      /* Prepare for next entry */
       diroffset += dvdbuffer[diroffset];
 
       return 1;
@@ -216,7 +227,8 @@ void DVD_ClearDirectory(void)
 int DVD_UpdateDirectory(bool go_up, u64 offset, u32 length)
 {
   /* root has no parent directory */
-  if (go_up && (basedir == rootdir)) return 0;
+  if (go_up && (basedir == rootdir))
+    return 0;
 
   /* simply update current root directory */
   rootdir = offset;
@@ -252,7 +264,8 @@ int DVD_ParseDirectory(void)
   /*** Get as many files as possible ***/
   while (len < pdlength)
   {
-    if (dvd_read (&dvdbuffer, DVDCHUNK, pdoffset) == 0) return 0;
+    if (dvd_read (&dvdbuffer, DVDCHUNK, pdoffset) == 0)
+      return 0;
 
     diroffset = 0;
 
@@ -342,8 +355,9 @@ int DVD_Open(void)
   /* is DVD mounted ? */
   if (!getpvd())
   {
-    /* mount DVD */
+    /* remount DVD */
     GUI_MsgBoxOpen("Information", "Mounting DVD ...",1);
+    haveDVDdir = 0;
 
 #ifdef HW_RVL
     u32 val;
@@ -368,7 +382,6 @@ int DVD_Open(void)
     DVD_Mount();
 #endif
 
-    haveDVDdir = 0;
     if (!getpvd())
     {
       GUI_WaitPrompt("Error","Disc can not be read !");
@@ -378,27 +391,32 @@ int DVD_Open(void)
     GUI_MsgBoxClose();
   }
 
-  if (haveDVDdir == 0)
+  if (!haveDVDdir)
   {
-    /* reset root directory */
+    /* reset current directory */
     rootdir = basedir;
 
-    /* parse root directory */
+    /* parse current directory */
     int max = DVD_ParseDirectory ();
+
     if (max)
     {
-      /* set DVD as default */
+      /* set DVD access flag */
       haveDVDdir = 1;
-      FAT_ClearDirectory();
 
       /* reset File selector */
       ClearSelector(max);
+
+      /* clear FAT access flag */
+      FAT_ClearDirectory();
+
       return 1;
     }
     else
     {
       /* no entries found */
       GUI_WaitPrompt("Error","No files found !");
+
       return 0;
     }
   }

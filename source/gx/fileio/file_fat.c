@@ -29,24 +29,20 @@
 #include "file_fat.h"
 #include "file_dvd.h"
 
-/* FAT directory has been updated */
-static int  haveFATdir = 0;
-
 /* current FAT directory */
-static char fatdir[MAXPATHLEN];
+static char *fatdir;
 
 /* current FAT device */
-static int fat_type   = 0;
-static int useHistory = 0;
+static int fatType    = -1;
 
 /***************************************************************************
  * FAT_ClearDirectory
  *
- * Clear FAT directory flag
+ * Clear FAT access flag
  ***************************************************************************/ 
 void FAT_ClearDirectory(void)
 {
-  haveFATdir = 0;
+  fatType = -1;
 }
 
 /***************************************************************************
@@ -54,14 +50,14 @@ void FAT_ClearDirectory(void)
  *
  * Update FAT current root directory
  ***************************************************************************/ 
-int FAT_UpdateDirectory(bool go_up, char *filename)
+int FAT_UpdateDirectory(bool go_up, char *dirname)
 {
   int size=0;
   char *test;
   char temp[1024];
 
   /* go up to parent directory */
-  if (strcmp(filename,"..") == 0)
+  if (strcmp(dirname,"..") == 0)
   {
     /* determine last subdirectory namelength */
     sprintf(temp,"%s",fatdir);
@@ -84,7 +80,7 @@ int FAT_UpdateDirectory(bool go_up, char *filename)
   else
   {
     /* by default, simply append folder name */
-    sprintf(fatdir, "%s%s/",fatdir, filename);
+    sprintf(fatdir, "%s%s/",fatdir, dirname);
   }
   return 1;
 }
@@ -137,55 +133,51 @@ int FAT_ParseDirectory(void)
  ****************************************************************************/ 
 int FAT_LoadFile(u8 *buffer, u32 selection) 
 {
-  /* If loading from history then we need to setup a few more things. */
-  if(useHistory)
+  char fname[MAXPATHLEN];
+  int length = 0;
+
+  /* Loading from history */
+  if(fatType == TYPE_RECENT)
   {  
-    /* Get the parent folder for the file. */
-    strncpy(fatdir, history.entries[selection].filepath, MAXJOLIET-1);
-    fatdir[MAXJOLIET-1] = '\0';
+    /* full filename */
+    sprintf(fname,"%s%s",history.entries[selection].filepath,filelist[selection].filename);
 
-    /* Get the length of the file. This has to be done
-     * before calling LoadFile().  */
-    char filepath[MAXJOLIET];
+    /* get the length of the file */
     struct stat filestat;
-    snprintf(filepath, MAXJOLIET-1, "%s%s", history.entries[selection].filepath, history.entries[selection].filename);
-    filepath[MAXJOLIET-1] = '\0';
-    if(stat(filepath, &filestat) == 0)
-    {
-      filelist[selection].length = filestat.st_size;
-    }
-
-    /* update filelist */
-    haveFATdir = 0;
+    if(stat(fname, &filestat) == 0)
+      length = filestat.st_size;
   }
+  else
+  {
+    /* full filename */
+    sprintf(fname, "%s%s",fatdir,filelist[selection].filename);
 
-  /* file size */
-  int length = filelist[selection].length;
+    /* get the length of the file */
+    length = filelist[selection].length;
+  }
 
   if (length > 0)
   {
-    /* Add/move the file to the top of the history. */
-    history_add_file(fatdir, filelist[selection].filename);
-
-    /* full filename */
-    char fname[MAXPATHLEN];
-    sprintf(fname, "%s%s",fatdir,filelist[selection].filename);
-
-    /* open file */
+    /* Open file */
     FILE *sdfile = fopen(fname, "rb");
     if (sdfile == NULL)
     {
       GUI_WaitPrompt("Error","Unable to open file !");
-      haveFATdir = 0;
       return 0;
     }
+
+    /* Add/move the file to the top of the history. */
+    if(fatType == TYPE_RECENT)
+      history_add_file(history.entries[selection].filepath, filelist[selection].filename);
+    else
+      history_add_file(fatdir, filelist[selection].filename);
 
     /* Read first data chunk */
     unsigned char temp[FATCHUNK];
     fread(temp, FATCHUNK, 1, sdfile);
     fclose(sdfile);
 
-    /* determine file type */
+    /* Determine file type */
     if (!IsZipFile ((char *) temp))
     {
       /* re-open and read file */
@@ -195,22 +187,23 @@ int FAT_LoadFile(u8 *buffer, u32 selection)
         char msg[50];
         sprintf(msg,"Loading %d bytes ...", length);
         GUI_MsgBoxOpen("Information",msg,1);
-        int i = 0;
+        int done = 0;
         while (length > FATCHUNK)
         {
-          fread(buffer+i, FATCHUNK, 1, sdfile);
+          fread(buffer + done, FATCHUNK, 1, sdfile);
           length -= FATCHUNK;
-          i += FATCHUNK;
+          done += FATCHUNK;
         }
-        fread(buffer+i, length, 1, sdfile);
+        fread(buffer + done, length, 1, sdfile);
+        done += length;
         fclose(sdfile);
-        return filelist[selection].length;
+        return done;
       }
     }
     else
     {
       /* unzip file */
-      return UnZipBuffer (buffer, 0, fname);
+      return UnZipBuffer(buffer, 0, fname);
     }
   }
 
@@ -225,78 +218,73 @@ int FAT_LoadFile(u8 *buffer, u32 selection)
 int FAT_Open(int type)
 {
   int max = 0;
-  char root[10] = "";
 
-#ifdef HW_RVL
-  /* FAT header */
-  if (type == TYPE_SD) sprintf (root, "sd:");
-  else if (type == TYPE_USB) sprintf (root, "usb:");
-#endif
-
-  /* if FAT device type changed, reload filelist */
-  if (fat_type != type) 
+  if (type == TYPE_RECENT)
   {
-    fat_type = type;
-    haveFATdir = 0;
-  }
-
-  /* update filelist */
-  if (haveFATdir == 0)
-  {
-    useHistory = 0;
-    if (type == TYPE_RECENT)
+    /* fetch history list */
+    int i;
+    for(i=0; i < NUM_HISTORY_ENTRIES; i++)
     {
-      /* fetch history list */
-      useHistory = 1;
-      int i;
-      for(i=0; i < NUM_HISTORY_ENTRIES; i++)
+      if(history.entries[i].filepath[0] > 0)
       {
-        if(history.entries[i].filepath[0] > 0)
-        {
-          filelist[i].offset = 0;
-          filelist[i].length = 0;
-          filelist[i].flags = 0;
-          strncpy(filelist[i].filename, history.entries[i].filename, MAXJOLIET-1);
-          filelist[i].filename[MAXJOLIET-1] = '\0';
-          max++;
-        }
-        else
-        {
-          /* Found the end of the list. */
-          break;
-        }
+        filelist[i].offset = 0;
+        filelist[i].length = 0;
+        filelist[i].flags = 0;
+        strncpy(filelist[i].filename, history.entries[i].filename, MAXJOLIET-1);
+        filelist[i].filename[MAXJOLIET-1] = '\0';
+        max++;
+      }
+      else
+      {
+        /* Found the end of the list. */
+        break;
       }
     }
+  }
+  else
+  {
+    /* default directory */
+    fatdir = config.sddir;
+#ifdef HW_RVL
+    if (type == TYPE_USB)
+      fatdir = config.usbdir;
+#endif
+
+    /* verify current dir exists, otherwise browse from root */
+    DIR_ITER *dir = diropen(fatdir);
+    if (dir)
+      dirclose(dir);
+#ifdef HW_RVL
+    else if (type == TYPE_USB)
+      sprintf (fatdir, "usb:/");
+#endif
     else
-    {
-      /* reset root directory */
-      sprintf (fatdir, "%s%s/roms/", root, DEFAULT_PATH);
+      sprintf (fatdir, "sd:/");
 
-      /* if directory doesn't exist, use root as default */
-      DIR_ITER *dir = diropen(fatdir);
-      if (dir == NULL) sprintf (fatdir, "%s/", root);
-      else dirclose(dir);
+    /* parse current directory */
+    max = FAT_ParseDirectory ();
+  }
 
-      /* parse root directory */
-      max = FAT_ParseDirectory ();
-    }
+  if (max < 0)
+    return 0;
 
-    if (max > 0)
-    {
-      /* FAT is default */
-      haveFATdir = 1;
-      DVD_ClearDirectory();
+  if (max == 0)
+  {
+    GUI_WaitPrompt("Error","No files found !");
+    return 0;
+  }
 
-      /* reset File selector */
-      ClearSelector(max);
-      return 1;
-    }
-    else
-    {
-      /* no entries found */
-      if (max == 0) GUI_WaitPrompt("Error","No files found !");
-      return 0;
-    }
+  /* check if access type has changed */
+  if (type != fatType)
+  {
+    /* set current access type */
+    fatType = type;
+
+    /* reset File selector */
+    ClearSelector(max);
+
+    /* clear DVD access flag */
+    DVD_ClearDirectory();
   }
 
   return 1;

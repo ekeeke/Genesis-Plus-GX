@@ -228,7 +228,6 @@ extern void GUI_MsgBoxOpen(char *title, char *msg, bool throbber);
 extern void GUI_MsgBoxUpdate(char *title, char *msg);
 extern void GUI_MsgBoxClose(void);
 extern void GUI_WaitPrompt(char *title, char *msg);
-extern int GUI_ConfirmPrompt(char *msg);
 extern void GUI_FadeOut();
 extern GXColor *GUI_GetBgColor(void);
 extern void GUI_SetBgColor(u8 color);

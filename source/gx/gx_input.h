@@ -49,6 +49,4 @@ extern void gx_input_Config(u8 num, u8 type, u8 max_keys);
 extern void gx_input_UpdateEmu(void);
 extern void gx_input_UpdateMenu(u32 cnt);
 
-extern u32 ConfigRequested;
-
 #endif

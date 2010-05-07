@@ -105,9 +105,7 @@ void history_default(void)
 {
   int i;
   for(i=0; i < NUM_HISTORY_ENTRIES; i++)
-  {
     memset(&history.entries[i], 0, sizeof(t_history_entry));
-  }
 
   /* restore history */
   history_load();

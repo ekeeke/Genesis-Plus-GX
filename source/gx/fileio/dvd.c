@@ -45,7 +45,8 @@ static u8 DVDreadbuffer[2048] ATTRIBUTE_ALIGN (32);   /* data buffer for all DVD
 u32 dvd_read (void *dst, u32 len, u64 offset)
 {
   /*** We only allow 2k reads **/
-  if (len > DVDCHUNK) return 0;
+  if (len > DVDCHUNK)
+    return 0;
 
   /*** Let's not read past end of DVD ***/
   if(offset < DvdMaxOffset)
@@ -64,14 +65,17 @@ u32 dvd_read (void *dst, u32 len, u64 offset)
     dvd[7] = 3; 
 
     /*** Enable reading with DMA ***/
-    while (dvd[7] & 1) usleep(10);
+    while (dvd[7] & 1)
+      usleep(10);
     memcpy (dst, buffer, len);
 
     /*** Ensure it has completed ***/
-    if (dvd[0] & 0x4) return 0;
+    if (dvd[0] & 0x4)
+      return 0;
 
 #else
-    if (DI_ReadDVD(buffer, len >> 11, (u32)(offset >> 11))) return 0;
+    if (DI_ReadDVD(buffer, len >> 11, (u32)(offset >> 11)))
+      return 0;
     memcpy (dst, buffer, len);
 #endif
     return 1;
@@ -100,7 +104,8 @@ void dvd_motor_off( )
   dvd[5] = 0;
   dvd[6] = 0;
   dvd[7] = 1; // Do immediate
-  while (dvd[7] & 1) usleep(10);
+  while (dvd[7] & 1)
+    usleep(10);
 
   /*** PSO Stops blackscreen at reload ***/
   dvd[0] = 0x14;
@@ -133,8 +138,8 @@ void uselessinquiry ()
   dvd[5] = 0x80000000;
   dvd[6] = 0x20;
   dvd[7] = 1;
-
-  while (dvd[7] & 1) usleep(10);
+  while (dvd[7] & 1)
+    usleep(10);
 }
 
 /****************************************************************************
@@ -153,11 +158,11 @@ void dvd_drive_detect()
   dvd[5] = 0x80000000;
   dvd[6] = 0x20;
   dvd[7] = 3;
-  while( dvd[7] & 1 ) usleep(10);
-  DCFlushRange((void *)0x80000000, 32);
+  while (dvd[7] & 1)
+    usleep(10);
 
+  DCFlushRange((void *)0x80000000, 32);
   int driveid = (int)inquiry[2];
-  
   if ((driveid == 4) || (driveid == 6) || (driveid == 8))
   {
     /* Gamecube DVD Drive (1.4 GB)*/

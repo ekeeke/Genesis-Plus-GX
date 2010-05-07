@@ -31,12 +31,12 @@
 typedef struct 
 {
   char version[16];
-  uint8 hq_fm;
-  uint8 psgBoostNoise;
   int32 psg_preamp;
   int32 fm_preamp;
+  uint8 hq_fm;
+  uint8 psgBoostNoise;
   uint8 filter;
-  int16 lp_range;
+  int8 lp_range;
   int16 low_freq;
   int16 high_freq;
   float lg;
@@ -61,24 +61,26 @@ typedef struct
   uint8 render;
   uint8 ntsc;
   uint8 bilinear;
-#ifdef HW_RVL
-  uint8 trap;
-  float gamma;
-#endif
   uint8 gun_cursor[2];
   uint8 invert_mouse;
   uint16 pad_keymap[4][MAX_KEYS];
-  uint32 wpad_keymap[4*3][MAX_KEYS];
   t_input_config input[MAX_INPUTS];
+  uint8 autoload;
   uint8 s_auto;
   uint8 s_default;
   uint8 s_device;
   int8 bg_color;
   int8 bg_overlay;
   int16 screen_w;
-  uint8 ask_confirm;
   float bgm_volume;
   float sfx_volume;
+  char sddir[MAXPATHLEN];
+#ifdef HW_RVL
+  float gamma;
+  uint32 trap;
+  uint32 wpad_keymap[4*3][MAX_KEYS];
+  char usbdir[MAXPATHLEN];
+#endif
 } t_config;
 
 /* Global data */

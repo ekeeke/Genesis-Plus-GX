@@ -115,6 +115,7 @@ void config_default(void)
   gx_input_SetDefault();
 
   /* menu options */
+  config.autoload     = 0;
 #ifdef HW_RVL
   config.s_auto       = 1;
 #else
@@ -125,9 +126,14 @@ void config_default(void)
   config.bg_color     = 0;
   config.bg_overlay   = 0;
   config.screen_w     = 658;
-  config.ask_confirm  = 0;
   config.bgm_volume   = 100.0;
   config.sfx_volume   = 100.0;
+
+  /* default ROM directories */
+  sprintf (config.sddir, "sd:%s/roms/", DEFAULT_PATH);
+#ifdef HW_RVL
+  sprintf (config.usbdir, "usb:%s/roms/", DEFAULT_PATH);
+#endif
 
   /* restore from config file */
   config_load();

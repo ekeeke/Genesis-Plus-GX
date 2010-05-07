@@ -33,9 +33,9 @@
 #define SK_UPMEM      "/genplus/sk2chip.bin"
 
 #ifdef HW_RVL
-#define VERSION "version 1.4.0W"
+#define VERSION "version 1.3.xW"
 #else
-#define VERSION "version 1.4.0G"
+#define VERSION "version 1.3.xG"
 #endif
 
 #define osd_input_Update() gx_input_UpdateEmu()
@@ -50,5 +50,6 @@ extern void reloadrom (int size, char *name);
 extern void shutdown();
 extern u32 frameticker;
 extern u32 Shutdown;
+extern u32 ConfigRequested;
 
 #endif /* _OSD_H_ */

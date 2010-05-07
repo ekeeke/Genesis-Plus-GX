@@ -2027,37 +2027,6 @@ void GUI_WaitPrompt(char *title, char *msg)
   GUI_MsgBoxClose();
 }
 
-int GUI_ConfirmPrompt(char *msg)
-{
-  if (config.ask_confirm)
-  {
-    /* update message box */
-    GUI_MsgBoxOpen("User Confirmation", msg, 0);
-
-    /* allocate textures */
-    message_box.buttonA = gxTextureOpenPNG(Key_A_png,0);
-    message_box.buttonB = gxTextureOpenPNG(Key_B_png,0);
-
-    /* wait for button A or button B*/
-    s16 p = 0;
-    while (m_input.keys)
-      VIDEO_WaitVSync();
-    while (!(p & (PAD_BUTTON_A | PAD_BUTTON_B)))
-    {
-      VIDEO_WaitVSync();
-      p = m_input.keys;
-    }
-
-    /* return user choice */
-    if (p & PAD_BUTTON_A)
-      return 1;
-    else
-      return 0;
-  }
-
-  return 1;
-}
-
 /* Basic Fading */
 void GUI_FadeOut()
 {

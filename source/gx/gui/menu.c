@@ -284,14 +284,14 @@ static gui_item items_video[8] =
 /* Menu options */
 static gui_item items_prefs[8] =
 {
-  {NULL,NULL,"Auto SRAM: OFF",    "Enable/disable automatic SRAM",        52,132,276,48},
-  {NULL,NULL,"Auto STATE: OFF",   "Enable/disable automatic Savestate",   52,132,276,48},
-  {NULL,NULL,"SFX Volume: 100",   "Adjust sound effects volume",          52,132,276,48},
-  {NULL,NULL,"BGM Volume: 100",   "Adjust background music volume",       52,132,276,48},
-  {NULL,NULL,"BG Color: DEFAULT", "Change background color",              52,132,276,48},
-  {NULL,NULL,"BG Overlay: ON",     "Enable/disable background overlay",   52,132,276,48},
-  {NULL,NULL,"Screen Width: 658", "Adjust Screen Width",                  52,132,276,48},
-  {NULL,NULL,"Confirm Box: OFF",  "Enable/disable user confirmation",     52,132,276,48}
+  {NULL,NULL,"Load ROM Auto: OFF","Enable/Disable automatic ROM loading on startup",  52,132,276,48},
+  {NULL,NULL,"Auto Saves: OFF",   "Enable/Disable automatic saves",                   52,132,276,48},
+  {NULL,NULL,"Saves Device: FAT", "Configure default device for saves",               52,132,276,48},
+  {NULL,NULL,"SFX Volume: 100",   "Adjust sound effects volume",                      52,132,276,48},
+  {NULL,NULL,"BGM Volume: 100",   "Adjust background music volume",                   52,132,276,48},
+  {NULL,NULL,"BG Color: DEFAULT", "Select background color",                          52,132,276,48},
+  {NULL,NULL,"BG Overlay: ON",    "Enable/disable background overlay",                52,132,276,48},
+  {NULL,NULL,"Screen Width: 658", "Adjust menu screen width in pixels",               52,132,276,48},
 };
 
 /* Save Manager */
@@ -552,29 +552,29 @@ static void prefmenu ()
   gui_menu *m = &menu_prefs;
   gui_item *items = m->items;
   
+  sprintf (items[0].text, "Load ROM Auto: %s", config.autoload ? "ON":"OFF");
   if (config.s_auto == 3)
-    sprintf (items[0].text, "Auto Saves: ALL");
+    sprintf (items[1].text, "Auto Saves: ALL");
   else if (config.s_auto == 2)
-    sprintf (items[0].text, "Auto Saves: STATE ONLY");
+    sprintf (items[1].text, "Auto Saves: STATE ONLY");
   else if (config.s_auto == 1)
-    sprintf (items[0].text, "Auto Saves: SRAM ONLY");
+    sprintf (items[1].text, "Auto Saves: SRAM ONLY");
   else
-    sprintf (items[0].text, "Auto Saves: NONE");
+    sprintf (items[1].text, "Auto Saves: NONE");
   if (config.s_device == 1)
-    sprintf (items[1].text, "Saves Device: MCARD A");
+    sprintf (items[2].text, "Saves Device: MCARD A");
   else if (config.s_device == 2)
-    sprintf (items[1].text, "Saves Device: MCARD B");
+    sprintf (items[2].text, "Saves Device: MCARD B");
   else
-    sprintf (items[1].text, "Saves Device: FAT");
-  sprintf (items[2].text, "SFX Volume: %1.1f", config.sfx_volume);
-  sprintf (items[3].text, "BGM Volume: %1.1f", config.bgm_volume);
+    sprintf (items[2].text, "Saves Device: FAT");
+  sprintf (items[3].text, "SFX Volume: %1.1f", config.sfx_volume);
+  sprintf (items[4].text, "BGM Volume: %1.1f", config.bgm_volume);
   if (config.bg_color)
-    sprintf (items[4].text, "BG Color: TYPE %d", config.bg_color);
+    sprintf (items[5].text, "BG Color: TYPE %d", config.bg_color);
   else
-    sprintf (items[4].text, "BG Color: DEFAULT");
-  sprintf (items[5].text, "BG Overlay: %s", config.bg_overlay ? "ON":"OFF");
-  sprintf (items[6].text, "Screen Width: %d", config.screen_w);
-  sprintf (items[7].text, "Confirmation Box: %s",config.ask_confirm ? "ON":"OFF");
+    sprintf (items[5].text, "BG Color: DEFAULT");
+  sprintf (items[6].text, "BG Overlay: %s", config.bg_overlay ? "ON":"OFF");
+  sprintf (items[7].text, "Screen Width: %d", config.screen_w);
 
   GUI_InitMenu(m);
   GUI_SlideMenuTitle(m,strlen("Menu "));
@@ -585,45 +585,56 @@ static void prefmenu ()
 
     switch (ret)
     {
-      case 0:  /*** Auto load/save ***/
+      case 0:   /* Auto load last ROM file */
+        config.autoload ^= 1;
+        sprintf (items[ret].text, "Load ROM Auto: %s", config.autoload ? "ON":"OFF");
+        break;
+
+      case 1:  /*** Auto load/save STATE & SRAM files ***/
         config.s_auto = (config.s_auto + 1) % 4;
         if (config.s_auto == 3)
-          sprintf (items[0].text, "Auto Saves: ALL");
+          sprintf (items[ret].text, "Auto Saves: ALL");
         else if (config.s_auto == 2)
-          sprintf (items[0].text, "Auto Saves: STATE ONLY");
+          sprintf (items[ret].text, "Auto Saves: STATE ONLY");
         else if (config.s_auto == 1)
-          sprintf (items[0].text, "Auto Saves: SRAM ONLY");
+          sprintf (items[ret].text, "Auto Saves: SRAM ONLY");
         else
-          sprintf (items[0].text, "Auto Saves: NONE");
+          sprintf (items[ret].text, "Auto Saves: NONE");
         break;
 
-      case 1:   /*** Default saves device ***/
+      case 2:   /*** Default saves device ***/
         config.s_device = (config.s_device + 1) % 3;
         if (config.s_device == 1)
-          sprintf (items[1].text, "Saves Device: MCARD A");
+          sprintf (items[ret].text, "Saves Device: MCARD A");
         else if (config.s_device == 2)
-          sprintf (items[1].text, "Saves Device: MCARD B");
+          sprintf (items[ret].text, "Saves Device: MCARD B");
         else
-          sprintf (items[1].text, "Saves Device: FAT");
+          sprintf (items[ret].text, "Saves Device: FAT");
         break;
 
-      case 2:   /*** Sound effects volume ***/
+      case 3:   /*** Sound effects volume ***/
         GUI_OptionBox(m,0,"SFX Volume",(void *)&config.sfx_volume,10.0,0.0,100.0,0);
-        sprintf (items[2].text, "SFX Volume: %1.1f", config.sfx_volume);
+        sprintf (items[ret].text, "SFX Volume: %1.1f", config.sfx_volume);
         break;
 
-      case 3:   /*** Background music volume ***/
+      case 4:   /*** Background music volume ***/
         GUI_OptionBox(m,update_bgm,"BGM Volume",(void *)&config.bgm_volume,10.0,0.0,100.0,0);
-        sprintf (items[3].text, "BGM Volume: %1.1f", config.bgm_volume);
+        sprintf (items[ret].text, "BGM Volume: %1.1f", config.bgm_volume);
         break;
 
-      case 4:   /*** Background color ***/
-        if (ret < 0) config.bg_color --;
-        else config.bg_color ++;
-        if (config.bg_color < 0) config.bg_color = BG_COLOR_MAX - 1;
-        else if (config.bg_color >= BG_COLOR_MAX) config.bg_color = 0;
-        if (config.bg_color) sprintf (items[4].text, "BG Color: TYPE %d", config.bg_color);
-        else sprintf (items[4].text, "BG Color: DEFAULT");
+      case 5:   /*** Background color ***/
+        if (ret < 0)
+          config.bg_color --;
+        else
+          config.bg_color ++;
+        if (config.bg_color < 0)
+          config.bg_color = BG_COLOR_MAX - 1;
+        else if (config.bg_color >= BG_COLOR_MAX)
+          config.bg_color = 0;
+        if (config.bg_color)
+          sprintf (items[ret].text, "BG Color: TYPE %d", config.bg_color);
+        else
+          sprintf (items[ret].text, "BG Color: DEFAULT");
         GUI_SetBgColor((u8)config.bg_color);
         GUI_DeleteMenu(m);
         if (config.bg_color == 0)
@@ -645,9 +656,8 @@ static void prefmenu ()
         GUI_InitMenu(m);
         break;
 
-      case 5:   /*** Background items ***/
+      case 6:   /*** Background items ***/
         config.bg_overlay ^= 1;
-        sprintf (items[5].text, "BG Overlay: %s", config.bg_overlay ? "ON":"OFF");
         if (config.bg_overlay)
         {
           bg_main[1].state |= IMAGE_VISIBLE;
@@ -664,16 +674,12 @@ static void prefmenu ()
           bg_list[1].state &= ~IMAGE_VISIBLE;
           bg_saves[2].state &= ~IMAGE_VISIBLE;
         }
+        sprintf (items[ret].text, "BG Overlay: %s", config.bg_overlay ? "ON":"OFF");
         break;
 
-      case 6:   /*** Screen Width ***/
+      case 7:   /*** Screen Width ***/
         GUI_OptionBox(m,update_screen_w,"Screen Width",(void *)&config.screen_w,2,640,VI_MAX_WIDTH_NTSC,1);
-        sprintf (items[6].text, "Screen Width: %d", config.screen_w);
-        break;
-
-      case 7:   /*** User COnfirmation ***/
-        config.ask_confirm ^= 1;
-        sprintf (items[7].text, "Confirmation Box: %s",config.ask_confirm ? "ON":"OFF");
+        sprintf (items[ret].text, "Screen Width: %d", config.screen_w);
         break;
 
       case -1:
@@ -2229,7 +2235,6 @@ static void optionmenu(void)
 
   GUI_DrawMenuFX(m,30,1);
   GUI_DeleteMenu(m);
-  config_save();
 }
 
 /****************************************************************************
@@ -2393,7 +2398,6 @@ static int savemenu(void)
         case 6: /* set default slot */
         {
           config.s_default = slot;
-          config_save();
           break;
         }
 
@@ -2952,7 +2956,8 @@ void MainMenu (void)
 
       /*** ROM information screen (TODO !!!) ***/
       case 8:
-        if (!cart.romsize) break;
+        if (!cart.romsize)
+          break;
         GUI_DrawMenuFX(m,30,1);
         GUI_DeleteMenu(m);
         showrominfo();

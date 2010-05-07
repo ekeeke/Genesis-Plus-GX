@@ -540,35 +540,28 @@ int FileSelector(unsigned char *buffer, bool useFAT)
           }
           else
           {
-            /* user confirmation */
-            if (GUI_ConfirmPrompt("Load selected File ?"))
+            /* Load ROM file from device */
+            if (useFAT)
+              size = FAT_LoadFile(buffer,selection);
+            else
+              size = DVD_LoadFile(buffer,selection);
+
+            /* Reload emulation */
+            if (size)
             {
-              /* Load ROM file from device */
-              if (useFAT)
-                size = FAT_LoadFile(buffer,selection);
-              else
-                size = DVD_LoadFile(buffer,selection);
-
-              /* Reload emulation */
-              if (size)
-              {
-                if (config.s_auto & 2)
-                  slot_autosave(config.s_default,config.s_device);
-                reloadrom(size,filelist[selection].filename);
-                if (config.s_auto & 1)
-                  slot_autoload(0,config.s_device);
-                if (config.s_auto & 2)
-                  slot_autoload(config.s_default,config.s_device);
-              }
-
-              /* Exit */
-              GUI_MsgBoxClose();
-              GUI_DeleteMenu(m);
-              return size;
+              if (config.s_auto & 2)
+                slot_autosave(config.s_default,config.s_device);
+              reloadrom(size,filelist[selection].filename);
+              if (config.s_auto & 1)
+                slot_autoload(0,config.s_device);
+              if (config.s_auto & 2)
+                slot_autoload(config.s_default,config.s_device);
             }
 
-            /* user canceled */
+            /* Exit */
             GUI_MsgBoxClose();
+            GUI_DeleteMenu(m);
+            return size;
           }
         }
       }

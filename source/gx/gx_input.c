@@ -36,9 +36,6 @@
 /* lower is the value, faster is the key update */
 #define HELD_SPEED 4
 
-/* Menu request flag */
-u32 ConfigRequested = 0;
-
 /* Configurable Genesis keys */
 #define KEY_BUTTONA 0
 #define KEY_BUTTONB 1
