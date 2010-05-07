@@ -54,7 +54,6 @@ static u8 savebuffer[STATE_SIZE] ATTRIBUTE_ALIGN (32);
 static int CardMount(int slot)
 {
   int tries = 0;
-  int CardError;
 #if defined(HW_DOL)
   *(unsigned long *) (0xCC006800) |= 1 << 13; /*** Disable Encryption ***/
   uselessinquiry ();
@@ -64,30 +63,11 @@ static int CardMount(int slot)
   while (tries < 10)
   {
     VIDEO_WaitVSync ();
-    CardError = CARD_Mount (slot, SysArea, NULL); /*** Don't need or want a callback ***/
-    if (CardError == 0)
+    if (CARD_Mount(slot, SysArea, NULL) == CARD_ERROR_READY)
       return 1;
     else
       EXI_ProbeReset ();
     tries++;
-  }
-  return 0;
-}
-
-/****************************************************************************
- * CardFileExists
- *
- * Wrapper to search through the files on the card.
- ****************************************************************************/
-static int CardFileExists (char *filename, int slot)
-{
-  card_dir CardDir;
-  int CardError = CARD_FindFirst (slot, &CardDir, TRUE);
-  while (CardError >= 0)
-  {
-    CardError = CARD_FindNext (&CardDir);
-    if (strcmp ((char *) CardDir.filename, filename) == 0)
-      return 1;
   }
   return 0;
 }
@@ -115,7 +95,7 @@ void slot_autosave(int slot, int device)
 
   /* only save if SRAM changed */
   if (!slot && (crc32(0, &sram.sram[0], 0x10000) == sram.crc))
-      return;
+    return;
 
   SILENT = 1;
   slot_save(slot, device);
@@ -130,7 +110,7 @@ void slot_autodetect(int slot, int device, t_slot *ptr)
   char filename[MAXPATHLEN];
   memset(ptr,0,sizeof(t_slot));
 
-  if (device == 0)
+  if (!device)
   {
     /* FAT support */
     if (slot > 0)
@@ -175,7 +155,7 @@ void slot_autodetect(int slot, int device, t_slot *ptr)
     {
       /* Open file */
       card_file CardFile;
-      if (CARD_Open(device, filename, &CardFile))
+      if (CARD_Open(device, filename, &CardFile) == CARD_ERROR_READY)
       {
         /* Retrieve date & close */
         card_stat CardStatus;
@@ -200,7 +180,7 @@ int slot_delete(int slot, int device)
   char filename[MAXPATHLEN];
   int ret = 0;
 
-  if (device == 0)
+  if (!device)
   {
     /* FAT support */
     if (slot > 0)
@@ -235,9 +215,8 @@ int slot_delete(int slot, int device)
     /* Mount CARD */
     if (CardMount(device))
     {
-      /* Open file */
-      if (CardFileExists(filename, device))
-        ret = CARD_Delete(device,filename);
+      /* Delete file */
+      ret = CARD_Delete(device,filename);
       CARD_Unmount(device);
     }
   }
@@ -259,7 +238,7 @@ int slot_load(int slot, int device)
   /* clean buffer */
   memset(savebuffer, 0, STATE_SIZE);
 
-  if (device == 0)
+  if (!device)
   {
     /* FAT support */
     if (slot > 0)
@@ -298,7 +277,7 @@ int slot_load(int slot, int device)
   else
   {
     /* Memory Card support */
-    if (index > 0)
+    if (slot > 0)
       sprintf(filename, "MD-%04X.gp%d", realchecksum, slot - 1);
     else
       sprintf(filename, "MD-%04X.srm", realchecksum);
@@ -317,7 +296,7 @@ int slot_load(int slot, int device)
       /* Retrieve the sector size */
       u32 SectorSize = 0;
       int CardError = CARD_GetSectorSize(device, &SectorSize);
-      if (SectorSize)
+      if (SectorSize > 0)
       {
         /* Open file */
         card_file CardFile;
@@ -404,7 +383,7 @@ int slot_save(int slot, int device)
     filesize = 0x10000;
   }
 
-  if (device == 0)
+  if (!device)
   {
     /* FAT support */
     if (slot > 0)
@@ -445,7 +424,7 @@ int slot_save(int slot, int device)
   else
   {
     /* Memory Card support */
-    if (index > 0)
+    if (slot > 0)
       sprintf(filename, "MD-%04X.gp%d", realchecksum, slot - 1);
     else
       sprintf(filename, "MD-%04X.srm", realchecksum);
@@ -479,17 +458,8 @@ int slot_save(int slot, int device)
 
         /* Check if file already exists */
         card_file CardFile;
-        if (CardFileExists(filename,device))
+        if (CARD_Open(device, filename, &CardFile) == CARD_ERROR_READY)
         {
-          CardError = CARD_Open(device, filename, &CardFile);
-          if (CardError)
-          {
-            sprintf(action, "Unable to open file (%d)", CardError);
-            GUI_WaitPrompt("Error",action);
-            CARD_Unmount(device);
-            return 0;
-          }
-          
           int size = filesize - CardFile.len;
           CARD_Close(&CardFile);
           memset(&CardFile,0,sizeof(CardFile));
@@ -499,14 +469,14 @@ int slot_save(int slot, int device)
             CardError = CARD_Create(device, "TEMP", size, &CardFile);
             if (CardError)
             {
-              sprintf(action, "Unable to create temporary file (%d)", CardError);
+              sprintf(action, "Not enough memory space left (%d)", CardError);
               GUI_WaitPrompt("Error",action);
               CARD_Unmount(device);
               return 0;
             }
             CARD_Close(&CardFile);
-            CARD_Delete(device, "TEMP");
             memset(&CardFile,0,sizeof(CardFile));
+            CARD_Delete(device, "TEMP");
           }
 
           /* delete previously existing slot */

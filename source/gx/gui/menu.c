@@ -2327,7 +2327,7 @@ static int savemenu(void)
       bg_saves[1].state |= IMAGE_VISIBLE;
 
       /* state slot */
-      if (slot && slots[slot].valid)
+      if (!config.s_device && slot && slots[slot].valid)
       {
         /* open screenshot file */
         sprintf (filename, "%s/saves/%s__%d.png", DEFAULT_PATH, rom_filename, slot - 1);
