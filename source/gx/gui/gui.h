@@ -221,6 +221,7 @@ extern void GUI_DrawMenuFX(gui_menu *menu, u8 speed, u8 out);
 extern void GUI_SlideMenuTitle(gui_menu *m, int title_offset);
 extern int GUI_UpdateMenu(gui_menu *menu);
 extern int GUI_RunMenu(gui_menu *menu);
+extern void GUI_TextWindow(gui_menu *parent, char *title, char items[][64], u8 nb_items, u8 fontsize);
 extern int GUI_OptionWindow(gui_menu *parent, char *title, char *items[], u8 nb_items);
 extern void GUI_OptionBox(gui_menu *parent, optioncallback cb, char *title, void *option, float step, float min, float max, u8 type);
 extern void GUI_OptionBox2(gui_menu *parent, char *text_1, char *text_2, s16 *option_1, s16 *option_2, s16 step, s16 min, s16 max);

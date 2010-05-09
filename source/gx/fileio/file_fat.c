@@ -138,7 +138,10 @@ int FAT_LoadFile(u8 *buffer, u32 selection)
 
   /* Loading from history */
   if(fatType == TYPE_RECENT)
-  {  
+  {
+    /* file browser should be reinitialized */
+    fatType = -1;
+
     /* full filename */
     sprintf(fname,"%s%s",history.entries[selection].filepath,filelist[selection].filename);
 

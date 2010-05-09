@@ -68,7 +68,6 @@ void legal ()
   FONT_writeCenter ("the property of their respective owners.",20,0,640,ypos,(GXColor)WHITE);
   ypos += 38;
 
-  GXColor color = {0x99,0xcc,0xff,0xff};
 #ifdef HW_RVL
   gx_texture *button = gxTextureOpenPNG(Key_A_wii_png,0);
 #else
@@ -124,7 +123,7 @@ void legal ()
 
     if (vis)
     {
-      FONT_writeCenter("Press    button to continue.",24,0,640,ypos,color);
+      FONT_writeCenter("Press    button to continue.",24,0,640,ypos,(GXColor)SKY_BLUE);
       gxDrawTexture(button, 220, ypos-24+(24-button->height)/2,  button->width, button->height,255);
     }
 

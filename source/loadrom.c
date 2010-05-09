@@ -143,8 +143,8 @@ COMPANYINFO companyinfo[MAXCOMPANY] = {
   * http://www.zophar.net/tech/files/Genesis_ROM_Format.txt
   ***************************************************************************/
 PERIPHERALINFO peripheralinfo[14] = {
-  {"J", "3-Button Joypad"},
-  {"6", "6-button Joypad"},
+  {"J", "3B Joypad"},
+  {"6", "6B Joypad"},
   {"K", "Keyboard"},
   {"P", "Printer"},
   {"B", "Control Ball"},
@@ -236,7 +236,8 @@ static void getrominfo (char *romheader)
 
   for (i = 0; i < 14; i++)
   for (j=0; j < 14; j++)
-  if (rominfo.io_support[i] == peripheralinfo[j].pID[0]) peripherals |= (1 << j);
+  if (rominfo.io_support[i] == peripheralinfo[j].pID[0])
+    peripherals |= (1 << j);
 }
 
 /* SMD (interleaved) rom support */

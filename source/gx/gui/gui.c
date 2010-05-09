@@ -857,47 +857,36 @@ int GUI_RunMenu(gui_menu *menu)
     return -1;
  }
 
-#if 0
-/* Scrollable Text Window (with configurable text size) */
-void GUI_TextWindow(gui_menu *parent, char *title, char *items[], u8 nb_items, u8 fheight)
+/* Text Window */
+void GUI_TextWindow(gui_menu *parent, char *title, char items[][64], u8 nb_items, u8 fontsize)
 {
-  int i, ret, quit = 0;
-  s32 selected = 0;
-  s32 old;
-  s16 p;
+  int i, quit = 0;
 
 #ifdef HW_RVL
   int x,y;
 #endif
 
-  /* initialize arrows */
-  butn_data arrow[2];
-  arrow[0].texture[0] = gxTextureOpenPNG(Button_up_png,0);
-  arrow[0].texture[1] = gxTextureOpenPNG(Button_up_over_png,0);
-  arrow[1].texture[0] = gxTextureOpenPNG(Button_down_png,0);
-  arrow[1].texture[1] = gxTextureOpenPNG(Button_down_over_png,0);
-
   /* initialize window */
   gx_texture *window = gxTextureOpenPNG(Frame_s1_png,0);
   gx_texture *top = gxTextureOpenPNG(Frame_s1_title_png,0);
 
-  /* initialize text position */
-  int offset = 0;
-  int pagesize = ( window->height - 2*top->height) / fheight;
-
-  /* set initial positions */
-  int xwindow = (640 - window->width)/2;
+  /* window position */
+  int xwindow = (640 - window->width) /2;
   int ywindow = (480 - window->height)/2;
-  int ypos  = ywindow + top->height + fheight;
-  int ypos2 = ywindow + window->height - arrow[1].texture[0]->height;
 
-  /* set initial vertical offset */
-  int yoffset = ywindow + window->height;
+  /* text position */
+  int ypos  = ywindow + top->height + (window->height - top->height - fontsize*nb_items) / 2 + fontsize/2;
 
   /* disable helper comment */
-  if (parent->helpers[1]) parent->helpers[1]->data = 0;
+  const u8 *data = NULL;
+  if (parent->helpers[1])
+  {
+    data = parent->helpers[1]->data;
+    parent->helpers[1]->data = NULL;
+  }
 
   /* slide in */
+  int yoffset = ywindow + window->height;
   while (yoffset > 0)
   {
     /* draw parent menu */
@@ -911,10 +900,8 @@ void GUI_TextWindow(gui_menu *parent, char *title, char *items[], u8 nb_items, u
     FONT_writeCenter(title,20,xwindow,xwindow+window->width,ywindow+(top->height-20)/2+20-yoffset,(GXColor)WHITE);
 
     /* draw  text */
-    for (i=0; i<max; i++)
-    {
-      FONT_writeCenter(items[i],fheight,xwindow,xwindow+window->width,ypos+i*fheight- yoffset,(GXColor)WHITE);
-    }
+    for (i=0; i<nb_items; i++)
+      FONT_writeCenter(items[i],fontsize,xwindow,xwindow+window->width,ypos+i*fontsize-yoffset,(GXColor)WHITE);
 
     /* update display */
     gxSetScreen();
@@ -923,56 +910,30 @@ void GUI_TextWindow(gui_menu *parent, char *title, char *items[], u8 nb_items, u
     yoffset -= 60;
   }
 
-  /* draw menu  */
+  /* draw menu + text window */
   while (quit == 0)
   {
-    /* draw parent menu (should have been initialized first) */
+    /* draw parent menu */
     GUI_DrawMenu(parent);
 
     /* draw window */
     gxDrawTexture(window,xwindow,ywindow,window->width,window->height,230);
+    gxDrawTexture(top,xwindow,ywindow,top->width,top->height,255);
 
+    /* draw title */
+    FONT_writeCenter(title,20,xwindow,xwindow+window->width,ywindow+(top->height-20)/2+20,(GXColor)WHITE);
 
-    /* draw  text */
-    for (i=0; i<max; i++)
+    /* draw text */
+    for (i=0; i<nb_items; i++)
     {
-      FONT_writeCenter(items[offset + i],fheight,xwindow,xwindow+window->width,ypos+i*fheight,(GXColor)WHITE);
+      FONT_writeCenter(items[i],fontsize,xwindow,xwindow+window->width,ypos+i*fontsize,(GXColor)WHITE);
     }
-
-    /* down arrow */
-    if ((max + offset) < nb_items)
-    {
-      if (selected == 1)
-        gxDrawTexture(arrow[1].texture[1],xwindow,ypos2,arrow[1].texture[1]->width,arrow[1].texture[1]->height,255);
-      else 
-        gxDrawTexture(arrow[1].texture[0],xwindow,ypos2,arrow[1].texture[0]->width,arrow[1].texture[0]->height,255);
-    }
-
-    /* up arrow */
-    if (offset > 0)
-    {
-      if (selected == 0)
-        gxDrawTexture(arrow[1].texture[1],xwindow,ywindow,arrow[1].texture[1]->width,arrow[1].texture[1]->height,255);
-      else
-        gxDrawTexture(arrow[1].texture[0],xwindow,ywindow,arrow[1].texture[1]->width,arrow[1].texture[1]->height,255);
-    }
-    else
-    {
-      gxDrawTexture(top,xwindow,ywindow,top->width,top->height,255);
-      FONT_writeCenter(title,20,xwindow,xwindow+window->width,ywindow+(top->height-20)/2+20,(GXColor)WHITE);
-    }
-
-    p = m_input.keys;
 
 #ifdef HW_RVL
     if (Shutdown)
     {
       gxTextureClose(&window);
       gxTextureClose(&top);
-      gxTextureClose(&arrow[0].texture[0]);
-      gxTextureClose(&arrow[0].texture[1]);
-      gxTextureClose(&arrow[1].texture[0]);
-      gxTextureClose(&arrow[1].texture[1]);
       gxTextureClose(&w_pointer);
       GUI_DeleteMenu(parent);
       GUI_FadeOut();
@@ -987,93 +948,47 @@ void GUI_TextWindow(gui_menu *parent, char *title, char *items[], u8 nb_items, u
 
       /* draw wiimote pointer */
       gxDrawTextureRotate(w_pointer, x-w_pointer->width/2, y-w_pointer->height/2, w_pointer->width, w_pointer->height,m_input.ir.angle,255);
-
-      /* check for valid buttons */
-      selected = -1;
-      if ((x>=xwindow)&&(x<=(xwindow+window->width))&&(y>=ypos+i*(20 + h))&&(y<=(ypos+i*(20+h)+h)))
-      {
-          selected = i;
-          break;
-      }
-    }
-    else
-    {
-      /* reinitialize selection */
-      if (selected == -1)
-        selected = 0;
     }
 #endif
 
     /* update screen */
     gxSetScreen();
 
-    /* update selection */
-    if (p&PAD_BUTTON_UP)
-    {
-      if (selected > 0)
-        selected --;
-    }
-    else if (p&PAD_BUTTON_DOWN)
-    {
-      if (selected < (nb_items -1))
-        selected ++;
-    }
-
-    /* sound fx */
-    if (selected != old)
-    {
-      if (selected >= 0)
-      {
-        ASND_SetVoice(ASND_GetFirstUnusedVoice(),VOICE_MONO_16BIT,22050,0,(u8 *)button_over_pcm,button_over_pcm_size,
-                      ((int)config.sfx_volume * 255) / 100,((int)config.sfx_volume * 255) / 100,NULL);
-      }
-    }
-
-    if (p & PAD_BUTTON_A)
-    {
-      if (selected >= 0)
-      {
-        quit = 1;
-        ret = selected;
-      }
-    }
-    else if (p & PAD_BUTTON_B)
-    {
+    /* wait for exit buttons */
+    if (m_input.keys)
       quit = 1;
-      ret = -1;
-    }
   }
 
   /* reset initial vertical offset */
-  yoffset = 0;
 
   /* slide out */
+  yoffset = 0;
   while (yoffset < (ywindow + window->height))
   {
     /* draw parent menu */
     GUI_DrawMenu(parent);
 
-    /* draw window + header */
+    /* draw window */
     gxDrawTexture(window,xwindow,ywindow-yoffset,window->width,window->height,230);
     gxDrawTexture(top,xwindow,ywindow-yoffset,top->width,top->height,255);
 
     /* draw title */
     FONT_writeCenter(title,20,xwindow,xwindow+window->width,ywindow+(top->height-20)/2+20-yoffset,(GXColor)WHITE);
 
-    /* draw buttons + text */
+    /* draw  text */
     for (i=0; i<nb_items; i++)
-    {
-      gxDrawTexture(button.texture[0],xpos,ypos+i*(20+h)-yoffset,w,h,255);
-      FONT_writeCenter(items[i],18,xpos,xpos+w,ypos+i*(20+h)+(h+18)/2-yoffset,(GXColor)WHITE);
-    }
+      FONT_writeCenter(items[i],fontsize,xwindow,xwindow+window->width,ypos+i*fontsize-yoffset,(GXColor)WHITE);
 
-    yoffset += 60;
+    /* update display */
     gxSetScreen();
+
+    /* slide speed */
+    yoffset += 60;
   }
 
   /* restore helper comment */
   if (parent->helpers[1])
-    parent->helpers[1]->data = Key_A_png;
+    parent->helpers[1]->data = data;
 
   /* final position */
   GUI_DrawMenu(parent);
@@ -1082,22 +997,15 @@ void GUI_TextWindow(gui_menu *parent, char *title, char *items[], u8 nb_items, u
   /* close textures */
   gxTextureClose(&window);
   gxTextureClose(&top);
-  gxTextureClose(&button.texture[0]);
-  gxTextureClose(&button.texture[1]);
-
-  return ret;
 }
-#endif
-
 
 /* Option Window (returns selected item) */
 int GUI_OptionWindow(gui_menu *parent, char *title, char *items[], u8 nb_items)
 {
   int i, ret, quit = 0;
-  s32 selected = 0;
-  s32 old;
-  butn_data button;
+  int old, selected = 0;
   s16 p;
+  butn_data button;
 
 #ifdef HW_RVL
   int x,y;
@@ -1120,14 +1028,16 @@ int GUI_OptionWindow(gui_menu *parent, char *title, char *items[], u8 nb_items)
   int ypos = (window->height - top->height - (h*nb_items) - (nb_items-1)*20)/2;
   ypos = ypos + ywindow + top->height;
 
-  /* set initial vertical offset */
-  int yoffset = ywindow + window->height;
-
   /* disable helper comment */
+  const u8 *data = NULL;
   if (parent->helpers[1])
+  {
+    data = parent->helpers[1]->data;
     parent->helpers[1]->data = 0;
+  }
 
   /* slide in */
+  int yoffset = ywindow + window->height;
   while (yoffset > 0)
   {
     /* draw parent menu */
@@ -1266,10 +1176,8 @@ int GUI_OptionWindow(gui_menu *parent, char *title, char *items[], u8 nb_items)
     }
   }
 
-  /* reset initial vertical offset */
-  yoffset = 0;
-
   /* slide out */
+  yoffset = 0;
   while (yoffset < (ywindow + window->height))
   {
     /* draw parent menu */
@@ -1289,13 +1197,16 @@ int GUI_OptionWindow(gui_menu *parent, char *title, char *items[], u8 nb_items)
       FONT_writeCenter(items[i],18,xpos,xpos+w,ypos+i*(20+h)+(h+18)/2-yoffset,(GXColor)WHITE);
     }
 
-    yoffset += 60;
+    /* update display */
     gxSetScreen();
+
+    /* slide speed */
+    yoffset += 60;
   }
 
   /* restore helper comment */
   if (parent->helpers[1])
-    parent->helpers[1]->data = Key_A_png;
+    parent->helpers[1]->data = data;
 
   /* final position */
   GUI_DrawMenu(parent);

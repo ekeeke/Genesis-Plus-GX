@@ -2603,123 +2603,146 @@ static int loadgamemenu ()
 /***************************************************************************
   * Show rom info screen
  ***************************************************************************/
-static void showrominfo ()
+static void showrominfo (void)
 {
-  int ypos;
-  u8 i,j,quit,redraw,max;
-  char msg[128];
-  short p;
-  char pName[14][21];
+  char items[15][64];
 
-  quit = 0;
-  j = 0;
-  redraw = 1;
-
-  /*** Remove any still held buttons ***/
-  while (PAD_ButtonsHeld(0))  PAD_ScanPads();
-#ifdef HW_RVL
-  while (WPAD_ButtonsHeld(0)) WPAD_ScanPads();
-#endif
-
-  max = 14;
-  for (i = 0; i < 14; i++)
+  /* fill ROM infos */
+  sprintf (items[0], "Console Type: %s", rominfo.consoletype);
+  sprintf (items[1], "Copyright: %s", rominfo.copyright);
+  sprintf (items[2], "Company Name: %s", companyinfo[getcompany ()].company);
+  sprintf (items[3], "Domestic Name:");
+  sprintf (items[4], "%s",rominfo.domestic);
+  sprintf (items[5], "International Name:");
+  sprintf (items[6], "%s",rominfo.international);
+  sprintf (items[7], "Type: %s (%s)",rominfo.ROMType, strcmp(rominfo.ROMType, "AI") ? "Game" : "Educational");
+  sprintf (items[8], "Product ID: %s", rominfo.product);
+  sprintf (items[9], "Checksum: %04x (%04x) (%s)", rominfo.checksum, realchecksum, (rominfo.checksum == realchecksum) ? "GOOD" : "BAD");
+  
+  sprintf (items[10], "Supports: ");
+  if (peripherals & (1 << 1))
   {
-    if (peripherals & (1 << i))
-    {
-      sprintf(pName[max-14],"%s", peripheralinfo[i].pName);
-      max ++;
-    }
+    strcat(items[10],peripheralinfo[1].pName);
+    strcat(items[10],", ");
   }
-
-  while (quit == 0)
+  else if (peripherals & (1 << 0))
   {
-    if (redraw)
-    {
-      gxClearScreen ((GXColor)BLACK);
-
-      ypos = 134;
-      WriteCentre(ypos, "ROM Header Information");
-      ypos += 2*fheight;
-
-      for (i=0; i<8; i++)
-      {
-        switch (i+j)
-        {
-        case 0:
-          sprintf (msg, "Console type: %s", rominfo.consoletype);
-          break;
-        case 1:
-          sprintf (msg, "Copyright: %s", rominfo.copyright);
-          break;
-        case 2:
-          sprintf (msg, "Company: %s", companyinfo[getcompany ()].company);
-          break;
-        case 3:
-          sprintf (msg, "Game Domestic Name:");
-          break;
-        case 4:
-          sprintf(msg, " %s",rominfo.domestic);
-          break;
-        case 5:
-          sprintf (msg, "Game International Name:");
-          break;
-        case 6:
-          sprintf(msg, " %s",rominfo.international);
-          break;
-        case 7:
-          sprintf (msg, "Type - %s : %s", rominfo.ROMType, strcmp (rominfo.ROMType, "AI") ? "Game" : "Educational");
-          break;
-        case 8:
-          sprintf (msg, "Product - %s", rominfo.product);
-          break;
-        case 9:
-          sprintf (msg, "Checksum - %04x (%04x) (%s)", rominfo.checksum, realchecksum, (rominfo.checksum == realchecksum) ? "Good" : "Bad");
-          break;
-        case 10:
-          sprintf (msg, "ROM end: $%06X", rominfo.romend);
-          break;
-        case 11:
-          if (svp) sprintf (msg, "SVP Chip detected");
-          else if (sram.custom) sprintf (msg, "EEPROM(%dK) - $%06X", ((eeprom.type.size_mask+1)* 8) /1024, (unsigned int)eeprom.type.sda_out_bit);
-          else if (sram.detected) sprintf (msg, "SRAM Start  - $%06X", sram.start);
-          else sprintf (msg, "External RAM undetected");
-             
-          break;
-        case 12:
-          if (sram.custom) sprintf (msg, "EEPROM(%dK) - $%06X", ((eeprom.type.size_mask+1)* 8) /1024, (unsigned int)eeprom.type.scl_bit);
-          else if (sram.detected) sprintf (msg, "SRAM End   - $%06X", sram.end);
-          else if (sram.on) sprintf (msg, "Default SRAM activated ");
-          else sprintf (msg, "SRAM is disactivated  ");
-          break;
-        case 13:
-          if (region_code == REGION_USA) sprintf (msg, "Region - %s (USA)", rominfo.country);
-          else if (region_code == REGION_EUROPE) sprintf (msg, "Region - %s (EUR)", rominfo.country);
-          else if (region_code == REGION_JAPAN_NTSC) sprintf (msg, "Region - %s (JAP)", rominfo.country);
-          else if (region_code == REGION_JAPAN_PAL) sprintf (msg, "Region - %s (JPAL)", rominfo.country);
-          break;
-        default:
-          sprintf (msg, "Supports - %s", pName[i+j-14]);
-          break;
-      }
-
-      write_font (100, ypos, msg);
-      ypos += fheight;
-    }
-
-    ypos += fheight;
-    WriteCentre (ypos, "Press A to Continue");
-    gxSetScreen();
+    strcat(items[10],peripheralinfo[0].pName);
+    strcat(items[10],", ");
   }
-
-  p = m_input.keys;
-  redraw = 0;
-
-  if ((j<(max-8)) && (p & PAD_BUTTON_DOWN)) {redraw = 1; j++;}
-  if ((j>0) && (p & PAD_BUTTON_UP)) {redraw = 1; j--;}
-  if (p & PAD_BUTTON_A) quit = 1;
-  if (p & PAD_BUTTON_B) quit = 1;
+  if (peripherals & (1 << 7))
+  {
+    strcat(items[10],peripheralinfo[7].pName);
+    strcat(items[10],", ");
   }
+  if (peripherals & (1 << 8))
+  {
+    strcat(items[10],peripheralinfo[8].pName);
+    strcat(items[10],", ");
+  }
+  if (peripherals & (1 << 11))
+  {
+    strcat(items[10],peripheralinfo[11].pName);
+    strcat(items[10],", ");
+  }
+  if (peripherals & (1 << 13))
+  {
+    strcat(items[10],peripheralinfo[13].pName);
+    strcat(items[10],", ");
+  }
+  if (strlen(items[10]) > 10)
+    items[10][strlen(items[10]) - 2] = 0;
+
+  sprintf (items[11], "ROM end: $%06X", rominfo.romend);
+
+  if (sram.custom)
+    sprintf (items[12], "EEPROM(%dK): $%06X", ((eeprom.type.size_mask+1)* 8) /1024, (unsigned int)eeprom.type.sda_out_bit);
+  else if (sram.detected)
+    sprintf (items[12], "SRAM Start: $%06X", sram.start);
+  else
+    sprintf (items[12], "No Backup Memory specified");
+
+  if (sram.custom) 
+    sprintf (items[13], "EEPROM(%dK): $%06X", ((eeprom.type.size_mask+1)* 8) /1024, (unsigned int)eeprom.type.scl_bit);
+  else if (sram.detected)
+    sprintf (items[13], "SRAM End: $%06X", sram.end);
+  else if (sram.on)
+    sprintf (items[13], "SRAM enabled by default");
+  else
+    sprintf (items[13], "SRAM disabled by default");
+  
+  if (region_code == REGION_USA)
+    sprintf (items[14], "Region: %s (USA)", rominfo.country);
+  else if (region_code == REGION_EUROPE)
+    sprintf (items[14], "Region: %s (EUR)", rominfo.country);
+  else if (region_code == REGION_JAPAN_NTSC)
+    sprintf (items[14], "Region: %s (JAP)", rominfo.country);
+  else if (region_code == REGION_JAPAN_PAL)
+    sprintf (items[14], "Region: %s (JAP 50Hz)", rominfo.country);
+
+  GUI_TextWindow(&menu_main, "ROM Header Infos", items, 15, 15);
 }
+
+/***************************************************************************
+  * Show credits
+ ***************************************************************************/
+static void showcredits(void)
+{
+  int offset = 0;
+  
+  gx_texture *texture = gxTextureOpenPNG(Bg_credits_png,0);
+  s16 p = 0;
+
+  while (!p)
+  {
+    gxClearScreen ((GXColor)BLACK);
+    gxDrawTexture(texture, (640-texture->width)/2, (480-texture->height)/2, texture->width, texture->height,255);
+
+    FONT_writeCenter("Genesis Plus Core", 24, 0, 640, 480 - offset, (GXColor)LIGHT_BLUE);
+    FONT_writeCenter("original 1.2a version by Charles MacDonald", 18, 0, 640, 516 - offset, (GXColor)WHITE);
+    FONT_writeCenter("improved emulation core & additional features by Eke-Eke", 18, 0, 640, 534 - offset, (GXColor)WHITE);
+    FONT_writeCenter("original Z80 core by Juergen Buchmueller", 18, 0, 640, 552 - offset, (GXColor)WHITE);
+    FONT_writeCenter("original 68k core by Karl Stenerud (Musashi)", 18, 0, 640, 570 - offset, (GXColor)WHITE);
+    FONT_writeCenter("original YM2612 core by Jarek Burczynski & Tatsuyuki Satoh", 18, 0, 640, 588 - offset, (GXColor)WHITE);
+    FONT_writeCenter("SN76489 core by Maxim", 18, 0, 640, 606 - offset, (GXColor)WHITE);
+    FONT_writeCenter("SVP core by Gravydas Ignotas (Notaz)", 18, 0, 640, 624 - offset, (GXColor)WHITE);
+    FONT_writeCenter("FIR Resampler & NTSC Video Filter by Shay Green (Blargg)", 18, 0, 640, 642 - offset, (GXColor)WHITE);
+    FONT_writeCenter("3-Band EQ implementation by Neil C", 18, 0, 640, 660 - offset, (GXColor)WHITE);
+
+    FONT_writeCenter("Additional thanks to ...", 20, 0, 640, 700 - offset, (GXColor)LIGHT_GREEN);
+    FONT_writeCenter("Nemesis, Tasco Deluxe, Bart Trzynadlowski, Jorge Cwik, Haze,", 18, 0, 640, 736 - offset, (GXColor)WHITE);
+    FONT_writeCenter("Stef Dallongeville, AamirM, Steve Snake, Charles MacDonald", 18, 0, 640, 754 - offset, (GXColor)WHITE);
+    FONT_writeCenter("Spritesmind & SMS Power members for their technical help", 18, 0, 640, 772 - offset, (GXColor)WHITE);
+
+    FONT_writeCenter("Gamecube & Wii port", 24, 0, 640, 830 - offset, (GXColor)LIGHT_BLUE);
+    FONT_writeCenter("original Gamecube port by Softdev, Honkeykong & Markcube", 18, 0, 640, 866 - offset, (GXColor)WHITE);
+    FONT_writeCenter("current porting code, GUI engine & design by Eke-Eke", 18, 0, 640, 884 - offset, (GXColor)WHITE);
+    FONT_writeCenter("original icons, logo & button design by Low Lines", 18, 0, 640, 906 - offset, (GXColor)WHITE);
+    FONT_writeCenter("memory card icon design by Brakken", 18, 0, 640, 924 - offset, (GXColor)WHITE);
+    FONT_writeCenter("libogc by Shagkur & many others", 18, 0, 640, 942 - offset, (GXColor)WHITE);
+    FONT_writeCenter("libfat by Chism", 18, 0, 640, 960 - offset, (GXColor)WHITE);
+    FONT_writeCenter("wiiuse by Michael Laforest (Para)", 18, 0, 640, 978 - offset, (GXColor)WHITE);
+    FONT_writeCenter("EHCI module, asndlib & OGG player by Francisco Muñoz (Hermes)", 18, 0, 640, 996 - offset, (GXColor)WHITE);
+    FONT_writeCenter("USB2 storage support by Kwiirk, Rodries & Tantric", 18, 0, 640, 1014 - offset, (GXColor)WHITE);
+    FONT_writeCenter("zlib, libpng & libtremor by their respective authors", 18, 0, 640, 1032 - offset, (GXColor)WHITE);
+    FONT_writeCenter("devkitPPC by Wintermute", 18, 0, 640, 1050 - offset, (GXColor)WHITE);
+
+    FONT_writeCenter("Additional thanks to ...", 20, 0, 640, 1090 - offset, (GXColor)LIGHT_GREEN);
+    FONT_writeCenter("Softdev, Tmbinc, Costis, Emukiddid, Team Twiizer", 18, 0, 640, 1126 - offset, (GXColor)WHITE);
+    FONT_writeCenter("Brakken & Tehskeen members for their support", 18, 0, 640, 1144 - offset, (GXColor)WHITE);
+
+    gxSetScreen();
+    p = m_input.keys;
+    VIDEO_WaitVSync();
+    p |= m_input.keys;
+    offset ++;
+    if (offset > 1144)
+      offset = 0;
+  }
+
+  gxTextureClose(&texture);
+}
+
 
 /****************************************************************************
  * Main Menu
@@ -2733,7 +2756,7 @@ void MainMenu (void)
   char *items[3] =
   {
     "View Credits",
-    "Exit to Loader",
+    "Return to Loader",
 #ifdef HW_RVL
     "Exit to System Menu"
 #else
@@ -2849,6 +2872,10 @@ void MainMenu (void)
       {
         switch (GUI_OptionWindow(m, VERSION, items,3))
         {
+          case 0: /* credits */
+            showcredits();
+            break;
+
           case 1: /* return to loader */
 #ifdef HW_RVL
             gxTextureClose(&w_pointer);
@@ -2872,25 +2899,9 @@ void MainMenu (void)
             SYS_ResetSystem(SYS_HOTRESET,0,0);
 #endif
             break;
-
-          default: /* credits (TODO !!!) */
-          {
-#if 0
-            gxClearScreen ((GXColor){0,0,0,0});
-            gx_texture *texture = gxTextureOpenPNG(Bg_credits_png,0);
-            if (texture)
-            {
-              gxDrawTexture(texture, (640-texture->width)/2, (480-texture->height)/2, texture->width, texture->height,255);
-              if (texture->data)
-                free(texture->data);
-              free(texture);
-            }
-            gxSetScreen();
-            while (!(m_input.keys & PAD_BUTTON_A) && !(m_input.keys & PAD_BUTTON_B))
-              VIDEO_WaitVSync ();
-#endif
+          
+          default:
             break;
-          }
         }
         break;
       }
@@ -2954,15 +2965,11 @@ void MainMenu (void)
         gxSaveScreenshot(filename);
         break;
 
-      /*** ROM information screen (TODO !!!) ***/
+      /*** ROM information screen ***/
       case 8:
         if (!cart.romsize)
           break;
-        GUI_DrawMenuFX(m,30,1);
-        GUI_DeleteMenu(m);
         showrominfo();
-        GUI_InitMenu(m);
-        GUI_DrawMenuFX(m,30,0);
         break;
     }
   }
