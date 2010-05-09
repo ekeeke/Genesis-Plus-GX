@@ -139,9 +139,6 @@ int FAT_LoadFile(u8 *buffer, u32 selection)
   /* Loading from history */
   if(fatType == TYPE_RECENT)
   {
-    /* file browser should be reinitialized */
-    fatType = -1;
-
     /* full filename */
     sprintf(fname,"%s%s",history.entries[selection].filepath,filelist[selection].filename);
 
@@ -174,6 +171,10 @@ int FAT_LoadFile(u8 *buffer, u32 selection)
       history_add_file(history.entries[selection].filepath, filelist[selection].filename);
     else
       history_add_file(fatdir, filelist[selection].filename);
+
+    /* file browser should be reinitialized */
+    if(fatType == TYPE_RECENT)
+      fatType = -1;
 
     /* Read first data chunk */
     unsigned char temp[FATCHUNK];

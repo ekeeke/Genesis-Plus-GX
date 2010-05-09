@@ -2310,10 +2310,14 @@ static int savemenu(void)
 
   /* SRAM disabled */
   if (sram.on)
+  {
     m->buttons[0].state |= BUTTON_ACTIVE;
+    m->buttons[1].shift[0] = 1;
+  }
   else
   {
     m->buttons[0].state &= ~BUTTON_ACTIVE;
+    m->buttons[1].shift[0] = 0;
     if (m->selected == 0)
       m->selected = 1;
   }
@@ -2468,7 +2472,7 @@ static int savemenu(void)
             m->buttons[7].state &= ~BUTTON_ACTIVE;
             m->buttons[6].shift[0] = 0;
             m->buttons[6].shift[1] = 2;
-            m->buttons[8].shift[0] = 2;
+            m->buttons[8].shift[0] = (slot > 0) ? 2 : 0;
             m->selected = 8;
           }
 
