@@ -21,7 +21,7 @@
 
 #include "shared.h"
 
-#define GAME_CNT 28
+#define GAME_CNT 29
 
 T_EEPROM eeprom;
 
@@ -65,6 +65,7 @@ static const T_GAME_ENTRY database[GAME_CNT] =
   {{"G-4060"     }, 0,      {7,  0x7F,   0x7F,   0x200001, 0x200001, 0x200001, 0, 0, 1}},   /* Wonderboy in Monster World */
   {{"00001211-00"}, 0,      {7,  0x7F,   0x7F,   0x200001, 0x200001, 0x200001, 0, 0, 1}},   /* Sports Talk Baseball */
   {{"00004076-00"}, 0,      {7,  0x7F,   0x7F,   0x200001, 0x200001, 0x200001, 0, 0, 1}},   /* Honoo no Toukyuuji Dodge Danpei */
+  {{"G-4524"     }, 0,      {7,  0x7F,   0x7F,   0x200001, 0x200001, 0x200001, 0, 0, 1}},   /* Ninja Burai Densetsu */
 
   /* CODEMASTERS mapper */
   /* 24C01 */
