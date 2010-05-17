@@ -42,9 +42,9 @@ static EQSTATE eq;
 void audio_set_equalizer(void)
 {
   init_3band_state(&eq,config.low_freq,config.high_freq,snd.sample_rate);
-  eq.lg = (double)(config.lg);
-  eq.mg = (double)(config.mg);
-  eq.hg = (double)(config.hg);
+  eq.lg = (double)(config.lg) / 100.0;
+  eq.mg = (double)(config.mg) / 100.0;
+  eq.hg = (double)(config.hg) / 100.0;
 }
 
 /****************************************************************

@@ -31,19 +31,19 @@
 typedef struct 
 {
   char version[16];
-  int32 psg_preamp;
-  int32 fm_preamp;
   uint8 hq_fm;
-  uint8 psgBoostNoise;
   uint8 filter;
-  int8 lp_range;
+  uint8 psgBoostNoise;
+  uint8 dac_bits;
+  int16 psg_preamp;
+  int16 fm_preamp;
+  int16 lp_range;
   int16 low_freq;
   int16 high_freq;
-  float lg;
-  float mg;
-  float hg;
+  int16 lg;
+  int16 mg;
+  int16 hg;
   float rolloff;
-  uint8 dac_bits;
   uint8 region_detect;
   uint8 force_dtack;
   uint8 addr_error;
@@ -51,20 +51,27 @@ typedef struct
   uint8 lock_on;
   uint8 hot_swap;
   uint8 romtype;
+  uint8 invert_mouse;
+  uint8 gun_cursor[2];
+  uint8 overscan;
+  uint8 ntsc;
+  uint8 render;
+  uint8 tv_mode;
+  uint8 bilinear;
+  uint8 aspect;
   int16 xshift;
   int16 yshift;
   int16 xscale;
   int16 yscale;
-  uint8 tv_mode;
-  uint8 aspect;
-  uint8 overscan;
-  uint8 render;
-  uint8 ntsc;
-  uint8 bilinear;
-  uint8 gun_cursor[2];
-  uint8 invert_mouse;
-  uint16 pad_keymap[4][MAX_KEYS];
+#ifdef HW_RVL
+  uint32 trap;
+  float gamma;
+#endif
   t_input_config input[MAX_INPUTS];
+  uint16 pad_keymap[4][MAX_KEYS];
+#ifdef HW_RVL
+  uint32 wpad_keymap[4*3][MAX_KEYS];
+#endif
   uint8 autoload;
   uint8 s_auto;
   uint8 s_default;
@@ -76,9 +83,6 @@ typedef struct
   float sfx_volume;
   char sddir[MAXPATHLEN];
 #ifdef HW_RVL
-  float gamma;
-  uint32 trap;
-  uint32 wpad_keymap[4*3][MAX_KEYS];
   char usbdir[MAXPATHLEN];
 #endif
 } t_config;

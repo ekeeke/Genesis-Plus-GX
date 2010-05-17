@@ -123,11 +123,11 @@ int UnZipBuffer (unsigned char *outbuffer, u64 discoffset, char *filename)
   if (fatfile)
   {
     fseek(fatfile, 0, SEEK_SET);
-    fread(readbuffer, FATCHUNK,  1, fatfile);
+    fread(readbuffer, 2048,  1, fatfile);
   }
   else
   {
-    dvd_read (&readbuffer, DVDCHUNK, discoffset);
+    dvd_read (&readbuffer, 2048, discoffset);
   }
 
   /*** Copy PKZip header to local, used as info ***/
@@ -191,12 +191,12 @@ int UnZipBuffer (unsigned char *outbuffer, u64 discoffset, char *filename)
     
     if (fatfile)
     {
-      fread(readbuffer, FATCHUNK, 1, fatfile);
+      fread(readbuffer, 2048, 1, fatfile);
     }
     else
     {
-      discoffset += DVDCHUNK;
-      dvd_read (&readbuffer, DVDCHUNK, discoffset);
+      discoffset += 2048;
+      dvd_read (&readbuffer, 2048, discoffset);
     }
   }
   while (res != Z_STREAM_END);

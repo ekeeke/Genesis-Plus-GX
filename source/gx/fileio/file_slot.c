@@ -251,8 +251,8 @@ int slot_load(int slot, int device)
     if (fp)
     {
       /* Read size */
-      fseek(fp , 0 , SEEK_END);
-      filesize = ftell (fp);
+      fseek(fp, 0, SEEK_END);
+      filesize = ftell(fp);
       fseek(fp, 0, SEEK_SET);
 
       /* Read into buffer (2k blocks) */
