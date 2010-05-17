@@ -175,7 +175,8 @@ void cart_hw_init()
   
   /* calculate nearest size with factor of 2 */
   int size = 0x10000;
-  while (cart.romsize > size) size <<= 1;
+  while (cart.romsize > size)
+    size <<= 1;
 
   /* total ROM size is not a factor of 2  */
   /* TODO: handle more possible ROM configurations (using cartridge database ???) */
@@ -408,6 +409,12 @@ void cart_hw_init()
   /**********************************************
           LOCK-ON 
   ***********************************************/
+  
+  /* clear all existing patches */
+  ggenie_shutdown();
+  datel_shutdown();
+
+  /* initialize extra hardware */
   cart.lock_on = 0;
   switch (config.lock_on)
   {
@@ -426,15 +433,25 @@ void cart_hw_init()
         /* load Sonic & Knuckles ROM (2 MBytes) */
         FILE *f = fopen(SK_ROM,"r+b");
         if (!f) break;
-        fread(cart.rom+0x700000,1,0x200000,f);
+        int done = 0;
+        while (done < 0x200000)
+        {
+          fread(cart.rom+0x700000+done,4096,1,f);
+          done += 4096;
+        }
         fclose(f);
 
         /* load Sonic 2 UPMEM ROM (256 KBytes) */
         f = fopen(SK_UPMEM,"r+b");
         if (!f) break;
-        fread(cart.rom+0x900000,1,0x40000,f);
+        done = 0;
+        while (done < 0x40000)
+        {
+          fread(cart.rom+0x900000+done,4096,1,f);
+          done += 4096;
+        }
         fclose(f);
-
+          
 #ifdef LSB_FIRST
         /* Byteswap ROM */
         int i;
@@ -575,7 +592,7 @@ void cart_hw_reset()
     case TYPE_SK:
       if (cart.lock_on)
       {
-        /* reset memory map */
+      	/* disable UPMEM chip at $300000-$3fffff */
         for (i=0x30; i<0x40; i++)
           m68k_memory_map[i].base = cart.rom + ((i<<16) & cart.mask);
       }

@@ -24,7 +24,7 @@
 #define TYPE_PRO1 0x12
 #define TYPE_PRO2 0x22
 
-static struct
+struct
 {
   uint8 enabled;
   uint8 rom[0x20000];
@@ -44,37 +44,43 @@ void datel_init(void)
 {
   memset(&action_replay,0,sizeof(action_replay));
 
-  /* load Action Replay ROM program */
+  /* Open Action Replay ROM */
   FILE *f = fopen(AR_ROM,"rb");
-  if (!f) return;
-  int size = fread(action_replay.rom,1,0x20000,f);
-  fclose(f);
+  if (!f)
+    return;
 
-  /* detect Action Replay yype */
-  if (size < 0x10000)
-    action_replay.enabled = TYPE_AR;
-  else if (size < 0x20000)
-    action_replay.enabled = TYPE_PRO2;
-  else
-    action_replay.enabled = TYPE_PRO1;
+  /* ROM size */
+  fseek(f, 0, SEEK_END);
+  int size = ftell(f);
 
-  /* default memory map */
-  switch (action_replay.enabled)
+  /* Detect Action Replay type */
+  switch (size)
   {
-    case TYPE_AR:
+    case 0x8000:  /* ACTION REPLAY (32K) */
     {
-      /* internal registers mapped at $010000-$01ffff */
-      m68k_memory_map[0x01].write16 = ar_write_regs;
+      action_replay.enabled = TYPE_AR;
 
       /* $0000-$7fff mirrored into $8000-$ffff */
       memcpy(action_replay.rom+0x8000,action_replay.rom,0x8000);
       break;
     }
 
-    case TYPE_PRO1:
+    case 0x10000:  /* PRO ACTION REPLAY 2 (64K) */
     {
-      /* internal registers mapped at $010000-$01ffff */
-      m68k_memory_map[0x01].write16 = ar_write_regs;
+      action_replay.enabled = TYPE_PRO2;
+
+      /* RAM (64k) mapped at $600000-$60ffff */
+      m68k_memory_map[0x60].base     = action_replay.ram;
+      m68k_memory_map[0x60].read8    = NULL;
+      m68k_memory_map[0x60].read16   = NULL;
+      m68k_memory_map[0x60].write8   = NULL;
+      m68k_memory_map[0x60].write16  = NULL;
+      break;
+    }
+
+    case 0x20000:  /* PRO ACTION REPLAY (128K) */
+    {
+      action_replay.enabled = TYPE_PRO1;
 
       /* RAM (64k) mapped at $420000-$42ffff */
       m68k_memory_map[0x42].base     = action_replay.ram;
@@ -85,113 +91,131 @@ void datel_init(void)
       break;
     }
 
-    case TYPE_PRO2:
-    {
-      /* internal registers mapped at $100000-$10ffff */
-      m68k_memory_map[0x10].write16 = ar_write_regs_pro2;
-
-      /* RAM (64k) mapped at $600000-$60ffff */
-      m68k_memory_map[0x60].base     = action_replay.ram;
-      m68k_memory_map[0x60].read8    = NULL;
-      m68k_memory_map[0x60].read16   = NULL;
-      m68k_memory_map[0x60].write8   = NULL;
-      m68k_memory_map[0x60].write16  = NULL;
-      break;
-    }
+    default:
+      return;
   }
+
+  if (action_replay.enabled)
+  {
+    /* Load ROM */
+    fseek(f, 0, SEEK_SET);
+    int i = 0;
+    while (i < size)
+    {
+      fread(action_replay.rom+i,0x1000,1,f);
+      i += 0x1000;
+    }
 
 #ifdef LSB_FIRST
-  /* Byteswap ROM */
-  int i;
-  uint8 temp;
-  for(i = 0; i < 0x20000; i += 2)
-  {
-    temp = action_replay.rom[i];
-    action_replay.rom[i] = action_replay.rom[i+1];
-    action_replay.rom[i+1] = temp;
-  }
+    /* Byteswap ROM */
+    uint8 temp;
+    for(i = 0; i < size; i += 2)
+    {
+      temp = action_replay.rom[i];
+      action_replay.rom[i] = action_replay.rom[i+1];
+      action_replay.rom[i+1] = temp;
+    }
 #endif
+  }
+
+  fclose(f);
+}
+
+void datel_shutdown(void)
+{
+  if (action_replay.enabled)
+  {
+    datel_switch(0);
+    action_replay.enabled = 0;
+  }
 }
 
 void datel_reset(int hard_reset)
 {
-  if (action_replay.enabled)
+  /* reset external mapping */
+  switch (action_replay.enabled)
   {
-    if (hard_reset)
-    {
-      /* clear RAM */
-      memset(action_replay.ram,0,sizeof(action_replay.ram));
-    }
+    case TYPE_AR:
 
-    /* reset codes */
-    datel_switch(0);
+      /* internal registers mapped at $010000-$01ffff */
+      m68k_memory_map[0x01].write16 = ar_write_regs;
 
-    /* reset internal state */
-    memset(action_replay.regs,0,sizeof(action_replay.regs));
-    memset(action_replay.old,0,sizeof(action_replay.old));
-    memset(action_replay.data,0,sizeof(action_replay.data));
-    memset(action_replay.addr,0,sizeof(action_replay.addr));
+      /* internal ROM mapped at $000000-$00ffff */
+      m68k_memory_map[0].base = action_replay.rom;
+      break;
 
-    /* ROM mapped at $000000-$3fffff */
-    switch (action_replay.enabled)
-    { 
-      case TYPE_AR:   /* 32k ROM */
-      case TYPE_PRO2: /* 64k ROM */
-      {
-        m68k_memory_map[0].base = action_replay.rom;
-        break;
-      }
+    case TYPE_PRO2:
 
-      case TYPE_PRO1: /* 128k ROM */
-      {
-        m68k_memory_map[0].base = action_replay.rom;
-        m68k_memory_map[1].base = action_replay.rom + 0x10000;
-        break;
-      }
-    }
+      /* internal registers mapped at $100000-$10ffff */
+      m68k_memory_map[0x10].write16 = ar_write_regs_pro2;
+
+      /* internal ROM mapped at $000000-$00ffff */
+      m68k_memory_map[0].base = action_replay.rom;
+      break;
+
+    case TYPE_PRO1:
+
+      /* internal registers mapped at $010000-$01ffff */
+      m68k_memory_map[0x01].write16 = ar_write_regs;
+
+      /* internal ROM mapped at $000000-$01ffff */
+      m68k_memory_map[0].base = action_replay.rom;
+      m68k_memory_map[1].base = action_replay.rom + 0x10000;
+      break;
+
+    default:
+      return;
   }
+
+  /* clear existing codes */
+  datel_switch(0);
+
+  /* reset internal state */
+  memset(action_replay.regs,0,sizeof(action_replay.regs));
+  memset(action_replay.old,0,sizeof(action_replay.old));
+  memset(action_replay.data,0,sizeof(action_replay.data));
+  memset(action_replay.addr,0,sizeof(action_replay.addr));
+
+  /* clear RAM on hard reset only */
+  if (hard_reset)
+    memset(action_replay.ram,0,sizeof(action_replay.ram));
 }
 
 void datel_switch(int enable)
 {
-  int i;
+  int i,use_wram = 0;
   if (enable)
   {
-    int offset;
-
-    /* store old values */
     for (i=0; i<4; i++)
     {
       if (action_replay.data[i])
       {
-        offset = action_replay.addr[i] >> 16;
-
-        if (offset < 0x40)        /* cartridge ROM */
-          action_replay.old[i] = *(uint16 *)(cart.rom + action_replay.addr[i]);
-        else if (offset >= 0xe0)  /* Work RAM */
-          action_replay.old[i] = *(uint16 *)(work_ram + (action_replay.addr[i]&0xffff));
+        /* store old values & patch new values */
+        if (action_replay.addr[i] < 0x400000)
+        {
+          action_replay.old[i] = *(uint16 *)(cart.rom + (action_replay.addr[i]&~1));
+          *(uint16 *)(cart.rom + (action_replay.addr[i]&~1)) = action_replay.data[i];
+        }
+        else
+        {
+          use_wram = 1;
+          action_replay.old[i] = *(uint16 *)(work_ram + (action_replay.addr[i]&0xfffe));
+          if (action_replay.data[i] & 0xff00)
+            *(uint16 *)(work_ram + (action_replay.addr[i]&0xfffe)) = action_replay.data[i];
+          else
+            WRITE_BYTE(work_ram, (action_replay.addr[i]&0xfffe) + 1, action_replay.data[i] & 0xff);
+        }
       }
     }
 
-    /* patch new values */
-    for (i=0; i<4; i++)
+    if (use_wram)
     {
-      if (action_replay.data[i])
+      /* use specific WRAM write handlers */
+      for (i=0xe0; i<0x100; i++)
       {
-        offset = action_replay.addr[i] >> 16;
-
-        if (offset < 0x40)        /* cartridge ROM */
-          *(uint16 *)(cart.rom + action_replay.addr[i]) = action_replay.data[i];
-        else if (offset >= 0xe0)  /* Work RAM */
-          *(uint16 *)(work_ram + (action_replay.addr[i]&0xffff)) = action_replay.data[i];
+        m68k_memory_map[i].write8   = wram_write_byte;
+        m68k_memory_map[i].write16  = wram_write_word;
       }
-    }
-
-    /* set RAM write handlers */
-    for (i=0xe0; i<0x100; i++)
-    {
-      m68k_memory_map[i].write8   = wram_write_byte;
-      m68k_memory_map[i].write16  = wram_write_word;
     }
   }
   else
@@ -203,12 +227,12 @@ void datel_switch(int enable)
       {
         if (action_replay.addr[i] < 0x400000)
           *(uint16 *)(cart.rom + action_replay.addr[i]) = action_replay.old[i];
-        else if (action_replay.addr[i] >= 0xe00000)
-          *(uint16 *)(work_ram + (action_replay.addr[i]&0xffff)) = action_replay.old[i];
+        else
+          *(uint16 *)(work_ram + (action_replay.addr[i]&0xfffe)) = action_replay.old[i];
       }
     }
 
-    /* set default Work RAM write handlers */
+    /* default WRAM write handlers */
     for (i=0xe0; i<0x100; i++)
     {
       m68k_memory_map[i].write8   = NULL;
@@ -223,13 +247,16 @@ static void wram_write_byte(uint32 address, uint32 data)
   int i;
   for (i=0; i<4; i++)
   {
-    if ((address & 0xe0fffe) == (action_replay.addr[i]&0xe0fffe))
+    if (action_replay.data[i])
     {
-      if (address & 1)  /* lower byte write */
-        action_replay.old[i] = (action_replay.old[i] & 0xff00) | (data & 0xff);
-      else              /* upper byte write */
-        action_replay.old[i] = (action_replay.old[i] & 0x00ff) | (data << 8);
-      return;
+      if ((address & 0xfffe) == (action_replay.addr[i] & 0xfffe))
+      {
+        WRITE_BYTE(&action_replay.old[i], address & 1, data);
+        if (action_replay.data[i] & 0xff00)
+          return;
+        if ((address & 0xffff) == ((action_replay.addr[i]&0xfffe) + 1))
+          return;
+      }
     }
   }
 
@@ -238,35 +265,40 @@ static void wram_write_byte(uint32 address, uint32 data)
 
 static void wram_write_word(uint32 address, uint32 data)
 {
+  *(uint16 *)(work_ram + (address & 0xffff)) = data;
+
   int i;
   for (i=0; i<4; i++)
   {
-    if ((address & 0xe0fffe) == (action_replay.addr[i]&0xe0fffe))
+    if (action_replay.data[i])
     {
-      action_replay.old[i] = data;
-      return;
+      if ((address & 0xffff) == (action_replay.addr[i] & 0xfffe))
+      {
+        action_replay.old[i] = data;
+        if (action_replay.data[i] & 0xff00)
+          *(uint16 *)(work_ram + (address & 0xfffe)) = action_replay.data[i];
+        else
+          WRITE_BYTE(work_ram, (action_replay.addr[i] & 0xfffe) + 1, action_replay.data[i]);
+      }
     }
   }
-
-  *(uint16 *)(work_ram + (address & 0xffff)) = data;
 }
 
 static void ar_write_regs(uint32 address, uint32 data)
 {
-  if ((address > 0x10018) || (action_replay.regs[3] == 0xffff))
+  /* register offset */
+  int offset = (address & 0xffff) >> 1;
+  if (offset > 12)
   {
     m68k_unused_16_w(address,data);
     return;
   }
 
-  /* register offset */
-  int offset = (address >> 1) & 0x0F;
-
   /* update internal register */
   action_replay.regs[offset] = data;
 
-  /* decode patch value & address on exit */
-  if ((offset == 3) && (data == 0xffff))
+  /* exit program */
+  if (action_replay.regs[3] == 0xffff)
   {
     /* decode patch data */
     action_replay.data[0] = action_replay.regs[0];
@@ -280,17 +312,21 @@ static void ar_write_regs(uint32 address, uint32 data)
     action_replay.addr[2] = (action_replay.regs[8]   | ((action_replay.regs[9]   & 0x7f00) << 8)) << 1;
     action_replay.addr[3] = (action_replay.regs[11]  | ((action_replay.regs[12]  & 0x7f00) << 8)) << 1;
 
-    /* Enable Cartridge ROM */
-    /* NOTE: codes should be disabled on startup */
+    /* enable Cartridge ROM */
     m68k_memory_map[0].base = cart.rom;
     m68k_memory_map[1].base = cart.rom + ((1<<16) & cart.mask);
+
+    /* disable internal registers (?) */
+    m68k_memory_map[0x01].write16 = m68k_unused_16_w;
+
+    /* enable patches */
+    datel_switch(1);
   }
 }
 
-
 static void ar_write_regs_pro2(uint32 address, uint32 data)
 {
-  /* Enable Cartridge ROM */
+  /* enable Cartridge ROM */
   if (((address & 0xff) == 0x78) && (data == 0xffff))
     m68k_memory_map[0].base = cart.rom;
 }

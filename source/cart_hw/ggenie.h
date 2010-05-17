@@ -27,7 +27,8 @@
 
 /* Function prototypes */
 extern void ggenie_init(void);
+extern void ggenie_shutdown(void);
 extern void ggenie_reset(void);
-extern void ggenie_switch(uint8 enable);
+extern void ggenie_switch(int enable);
 
 #endif
