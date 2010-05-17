@@ -66,8 +66,8 @@ uint8 bg_pattern_cache[0x80000];  /* Cached and flipped patterns */
 uint8 playfield_shift;            /* Width of planes A, B (in bits) */
 uint8 playfield_col_mask;         /* Vertical scroll mask */
 uint16 playfield_row_mask;        /* Horizontal scroll mask */
-uint16 hc_latch;                  /* latched HCounter (INT2) */
 uint16 v_counter;                 /* VDP scanline counter */
+uint32 hvc_latch;                 /* latched HVCounter (INT2) */
 uint32 dma_length;                /* Current DMA remaining bytes */
 int32 fifo_write_cnt;             /* VDP writes fifo count */
 uint32 fifo_lastwrite;            /* last VDP write cycle */
@@ -161,7 +161,7 @@ void vdp_reset(void)
   hint_pending    = 0;
   vint_pending    = 0;
   irq_status      = 0;
-  hc_latch        = 0;
+  hvc_latch       = 0;
   v_counter       = 0;
   dmafill         = 0;
   dma_length      = 0;
@@ -455,8 +455,12 @@ unsigned int vdp_ctrl_r(void)
 
 unsigned int vdp_hvc_r(void)
 {
+  /* HVC is frozen (Lightgun games + Sunset Riders) */
+  if (hvc_latch)
+    return (hvc_latch & 0xffff);
+
   /* Horizontal Counter (Striker, Mickey Mania, Skitchin, Road Rash I,II,III, ...) */
-  uint8 hc = (hc_latch & 0x100) ? (hc_latch & 0xFF) : hctab[mcycles_68k%MCYCLES_PER_LINE];
+  uint8 hc = hctab[mcycles_68k%MCYCLES_PER_LINE];
 
   /* Vertical Counter */
   uint8 vc = vctab[v_counter];
@@ -780,6 +784,16 @@ static void reg_w(unsigned int r, unsigned int d)
         for (i = 1; i < 0x40; i += 1)
           color_update (i, *(uint16 *) & cram[i << 1]);
       }
+
+      /* HVC latch bit */
+      if (r & 0x02)
+      {
+        if (reg[0] & 2) /* latch current HVC */
+          hvc_latch = 0x10000 | (vctab[v_counter] << 8) | hctab[mcycles_68k%MCYCLES_PER_LINE];
+        else            /* free-running HVC */
+          hvc_latch = 0;
+      }
+
       break;
 
     case 1: /* CTRL #2 */

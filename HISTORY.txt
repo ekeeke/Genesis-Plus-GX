@@ -25,6 +25,7 @@ of samples per frame and keeping PSG & FM chips in sync.
 ---------------
 * added support for CRAM writes during horizontal blanking (Striker, Zero the Kamikaze Squirrel,...)
 * added support for 2-Cell vertical scrolling in Interlaced 2 mode
+* added proper HV Counter latch support (fixes Sunset Riders intro)
 * fixed left-most column vertical scrolling when horizontally scrolled (Gynoug, F1) 
 * fixed VBLANK transition line checks
 * improved VDP FIFO timings accuracy: fixes Sol Deace intro
@@ -32,8 +33,9 @@ of samples per frame and keeping PSG & FM chips in sync.
 * improved HBLANK flag timing accuracy: fixes Mega Turrican (Sky level)
 * improved sprites processing accuracy: fixes (un)masked sprites in Mickey Mania (3D level), Sonic 2 (VS mode).
 * improved horizontal blanking & HINT/VINT occurence timing accuracy, as measured on real hardware.
-* improved H-Counter accuracy in 40-cell mode, as measured on real hardware.
+* improved HCounter accuracy in 40-cell mode, as measured on real hardware.
 * improved color accuracy in VDP highlight mode to match results observed on real hardware.
+
 
 [Core/CPU]
 ---------------

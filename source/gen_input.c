@@ -90,16 +90,17 @@ static inline void lightgun_update(int num)
       if (reg[11] & 0x08) 
         irq_status = (irq_status & ~0x40) | 0x12;
 
-      /* Horizontal Counter Latch:
-        1) some games does not set HVC latch but instead use bigger X offset 
-        2) for games using H40 mode, the gun routine scales up the Hcounter value,
-           H-Counter range is approx. 292 pixel clocks
+      /* HV Counter Latch:
+        1) some games does not enable HVC latch but instead use bigger X offset 
+            --> we force the HV counter value read by the gun routine 
+        2) for games using H40 mode, the gun routine scales up the Hcounter value
+            --> H-Counter range is approx. 290 dot clocks
       */
-      hc_latch = 0x100;
+      hvc_latch = 0x10000 | (vctab[v_counter] << 8);
       if (reg[12] & 1) 
-        hc_latch |= hc_320[((input.analog[num][0] * 290) / (2 * 320) + input.x_offset) % 210];
+        hvc_latch |= hc_320[((input.analog[num][0] * 290) / (2 * 320) + input.x_offset) % 210];
       else
-        hc_latch |= hc_256[(input.analog[num][0] / 2 + input.x_offset)%171];
+        hvc_latch |= hc_256[(input.analog[num][0] / 2 + input.x_offset)%171];
     }
   }
 }
