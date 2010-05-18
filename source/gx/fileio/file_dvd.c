@@ -227,7 +227,7 @@ void DVD_ClearDirectory(void)
 int DVD_UpdateDirectory(bool go_up, u64 offset, u32 length)
 {
   /* root has no parent directory */
-  if (go_up && (basedir == rootdir))
+  if ((basedir == rootdir) && (go_up || (offset == basedir)))
     return 0;
 
   /* simply update current root directory */

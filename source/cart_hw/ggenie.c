@@ -58,7 +58,6 @@ void ggenie_init(void)
 
 #ifdef LSB_FIRST
   /* Byteswap ROM */
-  int i;
   uint8 temp;
   for(i = 0; i < 0x8000; i += 2)
   {

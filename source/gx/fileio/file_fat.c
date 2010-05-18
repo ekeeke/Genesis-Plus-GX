@@ -48,7 +48,8 @@ void FAT_ClearDirectory(void)
 /***************************************************************************
  * FAT_UpdateDirectory
  *
- * Update FAT current root directory
+ * Update FAT current directory
+ * return zero if exiting root
  ***************************************************************************/ 
 int FAT_UpdateDirectory(bool go_up, char *dirname)
 {

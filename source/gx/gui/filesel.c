@@ -484,12 +484,8 @@ int FileSelector(unsigned char *buffer, bool useFAT)
       /* ensure we are in focus area */
       if (go_up || (m->selected < m->max_buttons))
       {
-        /*** This is directory ***/
-        if (filelist[selection].flags)
+        if (go_up || filelist[selection].flags)
         {
-          /* force going up */
-          go_up = (selection == 0);
-
           /* get new directory */
           if (useFAT)
             ret = FAT_UpdateDirectory(go_up,filelist[selection].filename);
@@ -528,41 +524,30 @@ int FileSelector(unsigned char *buffer, bool useFAT)
             return 0;
           }
         }
-
-        /*** This is a file ***/
         else 
         {
-          /* root directory ? */
-          if (go_up)
-          {
-            GUI_DeleteMenu(m);
-            return 0;
-          }
+          /* Load ROM file from device */
+          if (useFAT)
+            size = FAT_LoadFile(buffer,selection);
           else
+            size = DVD_LoadFile(buffer,selection);
+
+          /* Reload emulation */
+          if (size)
           {
-            /* Load ROM file from device */
-            if (useFAT)
-              size = FAT_LoadFile(buffer,selection);
-            else
-              size = DVD_LoadFile(buffer,selection);
-
-            /* Reload emulation */
-            if (size)
-            {
-              if (config.s_auto & 2)
-                slot_autosave(config.s_default,config.s_device);
-              reloadrom(size,filelist[selection].filename);
-              if (config.s_auto & 1)
-                slot_autoload(0,config.s_device);
-              if (config.s_auto & 2)
-                slot_autoload(config.s_default,config.s_device);
-            }
-
-            /* Exit */
-            GUI_MsgBoxClose();
-            GUI_DeleteMenu(m);
-            return size;
+            if (config.s_auto & 2)
+              slot_autosave(config.s_default,config.s_device);
+            reloadrom(size,filelist[selection].filename);
+            if (config.s_auto & 1)
+              slot_autoload(0,config.s_device);
+            if (config.s_auto & 2)
+              slot_autoload(config.s_default,config.s_device);
           }
+
+          /* Exit */
+          GUI_MsgBoxClose();
+          GUI_DeleteMenu(m);
+          return size;
         }
       }
     }
