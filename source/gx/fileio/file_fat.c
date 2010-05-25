@@ -262,9 +262,12 @@ int FAT_Open(int type)
 #ifdef HW_RVL
     else if (type == TYPE_USB)
       sprintf (fatdir, "usb:/");
-#endif
     else
       sprintf (fatdir, "sd:/");
+#else
+    else
+      sprintf (fatdir, "/");
+#endif
 
     /* parse current directory */
     max = FAT_ParseDirectory ();

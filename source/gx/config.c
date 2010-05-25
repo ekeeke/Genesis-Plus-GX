@@ -130,9 +130,11 @@ void config_default(void)
   config.sfx_volume   = 100.0;
 
   /* default ROM directories */
-  sprintf (config.sddir, "sd:%s/roms/", DEFAULT_PATH);
 #ifdef HW_RVL
+  sprintf (config.sddir, "sd:%s/roms/", DEFAULT_PATH);
   sprintf (config.usbdir, "usb:%s/roms/", DEFAULT_PATH);
+#else
+  sprintf (config.sddir, "/%s/roms/", DEFAULT_PATH);
 #endif
 
   /* restore from config file */
