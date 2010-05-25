@@ -334,6 +334,7 @@ int main (int argc, char *argv[])
 #endif
 
   /* main emulation loop */
+  int skip = 0;
   while (1)
   {
     /* Main Menu request */
@@ -350,23 +351,20 @@ int main (int argc, char *argv[])
       /* start video & audio */
       gx_audio_Start();
       gx_video_Start();
-      frameticker = 1;
+      skip = 0;
     }
 
-    if (frameticker > 1)
+    frameticker = 0;
+    if (skip)
     {
       /* skip frame */
       system_frame(1);
-      --frameticker;
+      skip = 0;
     }
     else
     {
-      while (frameticker < 1)
-        usleep(10);
-
       /* render frame */
       system_frame(0);
-      --frameticker;
 
       /* update video */
       gx_video_Update();
@@ -374,6 +372,14 @@ int main (int argc, char *argv[])
 
     /* update audio */
     gx_audio_Update();
+
+    /* wait for next frame */
+    while (frameticker < 1)
+      usleep(1);
+
+    /* automatic frame skipping */
+    if (frameticker > 1)
+      skip = 1;
   }
 
   return 0;

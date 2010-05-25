@@ -1288,6 +1288,7 @@ void gx_video_Stop(void)
   VIDEO_Configure(vmode);
 
   /* starts menu rendering */
+  gxClearScreen((GXColor)BLACK);
   gxDrawScreenshot(0xff);
   gxSetScreen();
 }
