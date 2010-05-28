@@ -31,6 +31,8 @@
 #include "file_slot.h"
 #include "filesel.h"
 
+#include <ogc/lwp_threads.h>
+
 /*****************************************************************************/
 /*  Specific Menu Callbacks                                                  */
 /*****************************************************************************/
@@ -125,7 +127,7 @@ static gui_item action_select =
 /*****************************************************************************/
 static gui_image bg_main[4] =
 {
-  {NULL,Bg_main_png,IMAGE_VISIBLE,178,28,284,288,255},
+  {NULL,Bg_main_png,IMAGE_VISIBLE,178,74,284,288,255},
   {NULL,Bg_overlay_png,IMAGE_VISIBLE|IMAGE_REPEAT,0,0,640,480,255},
   {NULL,Banner_main_png,IMAGE_VISIBLE|IMAGE_SLIDE_BOTTOM,0,340,640,140,255},
   {NULL,Main_logo_png,IMAGE_VISIBLE|IMAGE_SLIDE_BOTTOM,202,362,232,56,255}
@@ -180,9 +182,9 @@ static gui_image bg_saves[8] =
 
 static gui_item items_main[9] =
 {
-  {NULL,Main_load_png    ,"","",114, 72,80,92},
-  {NULL,Main_options_png ,"","",290, 76,60,88},
-  {NULL,Main_quit_png    ,"","",460, 80,52,84},
+  {NULL,Main_load_png    ,"","",114,162,80,92},
+  {NULL,Main_options_png ,"","",290,166,60,88},
+  {NULL,Main_quit_png    ,"","",460,170,52,84},
   {NULL,Main_file_png    ,"","",114,216,80,92},
   {NULL,Main_reset_png   ,"","",282,224,76,84},
   {NULL,Main_ggenie_png  ,"","",450,224,72,84},
@@ -214,12 +216,16 @@ static gui_item items_ctrls[13] =
 
 static gui_item items_load[4] =
 {
-  {NULL,Load_recent_png,"","Load recent ROM files (USB/SD)" ,276,120,88,96},
-  {NULL,Load_sd_png    ,"","Load ROM files from SDCARD"     ,110,266,88,96},
 #ifdef HW_RVL
+  {NULL,Load_recent_png,"","Load recent ROM files (USB/SD)" ,276,120,88,96},
+  {NULL,Load_sd_png    ,"","Load ROM files from SD Card"    ,110,266,88,96},
   {NULL,Load_usb_png   ,"","Load ROM files from USB device" ,276,266,88,96},
-#endif
   {NULL,Load_dvd_png   ,"","Load ROM files from DVD"        ,442,266,88,96}
+#else
+  {NULL,Load_recent_png,"","Load recent ROM files (USB/SD)" ,110,192,88,96},
+  {NULL,Load_sd_png    ,"","Load ROM files from SD Card"    ,276,192,88,96},
+  {NULL,Load_dvd_png   ,"","Load ROM files from DVD"        ,442,192,88,96}
+#endif
 };
 
 static gui_item items_options[5] =
@@ -328,12 +334,12 @@ static gui_butn buttons_list[4] =
 /* Main menu */
 static gui_butn buttons_main[9] =
 {
-  {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{0,3,0,1}, 80, 50,148,132},
-  {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{0,3,1,1},246, 50,148,132},
-  {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{0,3,1,1},412, 50,148,132},
-  {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX                  ,{3,0,1,1}, 80,194,148,132},
-  {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX                  ,{3,0,1,1},246,194,148,132},
-  {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX                  ,{3,0,1,0},412,194,148,132},
+  {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{0,3,0,1}, 80,140,148,132},
+  {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{0,3,1,1},246,140,148,132},
+  {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{0,3,1,1},412,140,148,132},
+  {&button_icon_data,                             BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{3,3,1,1}, 80,194,148,132},
+  {&button_icon_data,                             BUTTON_OVER_SFX                  ,{3,3,1,1},246,194,148,132},
+  {&button_icon_data,                             BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{3,2,1,1},412,194,148,132},
   {NULL             ,                             BUTTON_OVER_SFX                  ,{3,0,1,1}, 10,372, 84, 32},
   {NULL             ,                             BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{2,1,1,1},546,334, 84, 32},
   {NULL             ,                             BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{1,0,1,0},546,372, 84, 32}
@@ -360,13 +366,15 @@ static gui_butn buttons_ctrls[13] =
 /* Load Game menu */
 static gui_butn buttons_load[4] =
 {
+#ifdef HW_RVL
   {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{0,2,0,1},246,102,148,132},
   {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{1,0,1,1}, 80,248,148,132},
-#ifdef HW_RVL
   {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{2,0,1,1},246,248,148,132},
   {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{3,0,1,0},412,248,148,132}
 #else
-  {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{2,0,1,0},412,248,148,132}
+  {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{0,2,0,1}, 80,174,148,132},
+  {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{1,0,1,1},246,174,148,132},
+  {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{3,0,1,0},412,174,148,132}
 #endif
 };
 
@@ -2746,6 +2754,70 @@ static void showcredits(void)
   gxTextureClose(&texture);
 }
 
+static void exitmenu(void)
+{
+  char *items[3] =
+  {
+    "View Credits",
+#ifdef HW_RVL
+    "Exit to System Menu",
+#else
+    "Reset System",
+#endif
+    "Return to Loader",
+  };
+
+  /* autodetect loader stub */
+  bool stub = FALSE;
+  u32 *sig = (u32*)0x80001800;
+  void (*reload)() = (void(*)())0x80001800;
+
+#ifdef HW_RVL
+  if ((sig[1] == 0x53545542) && (sig[2] == 0x48415858))
+    stub = TRUE;
+#else
+  if (sig[0] == 0x7c6000a6)
+    stub = TRUE;
+#endif
+
+  /* display option window */
+  switch (GUI_OptionWindow(&menu_main, VERSION, items, stub ? 3:2))
+  {
+    case 0: /* credits */
+      GUI_DeleteMenu(&menu_main);
+      showcredits();
+      GUI_InitMenu(&menu_main);
+      break;
+
+    case 2: /* exit to loader */
+#ifdef HW_RVL
+      gxTextureClose(&w_pointer);
+#endif
+      GUI_DeleteMenu(&menu_main);
+      GUI_FadeOut();
+      shutdown();
+		  SYS_ResetSystem(SYS_SHUTDOWN,0,0);
+		  __lwp_thread_stopmultitasking(*reload);
+      break;
+
+    case 1: /* reset */
+#ifdef HW_RVL
+      gxTextureClose(&w_pointer);
+#endif
+      GUI_DeleteMenu(&menu_main);
+      GUI_FadeOut();
+      shutdown();
+#ifdef HW_RVL
+      SYS_ResetSystem(SYS_RETURNTOMENU, 0, 0);
+#else
+      SYS_ResetSystem(SYS_HOTRESET,0,0);
+#endif
+      break;
+          
+    default:
+      break;
+  }
+}
 
 /****************************************************************************
  * Main Menu
@@ -2753,21 +2825,10 @@ static void showcredits(void)
  ****************************************************************************/
 void MainMenu (void)
 {
-  static int rom_loaded = 0;
-  int ret, quit = 0;
+  char filename[MAXPATHLEN];
+  int quit = 0;
 
-  char *items[3] =
-  {
-    "View Credits",
-    "Return to Loader",
-#ifdef HW_RVL
-    "Exit to System Menu"
-#else
-    "Reset System"
-#endif
-  };
-
-  /* autosave SRAM */
+  /* Autosave SRAM */
   if (config.s_auto & 1)
     slot_autosave(0,config.s_device);
 
@@ -2780,33 +2841,32 @@ void MainMenu (void)
     SYS_ResetSystem(SYS_POWEROFF, 0, 0);
   }
 
-  /* wiimote pointer */
+  /* Wiimote pointer */
   w_pointer = gxTextureOpenPNG(generic_point_png,0);
 #endif
 
   gui_menu *m = &menu_main;
 
-  if (!rom_loaded)
+  /* Update main menu */
+  if (!m->screenshot && cart.romsize)
   {
-    /* check if a game is running */
-    if (cart.romsize)
-    {
-      m->screenshot = 128;
-      m->bg_images[0].state &= ~IMAGE_VISIBLE;
-      m->buttons[3].state |= BUTTON_SELECT_SFX;
-      m->buttons[5].state |= BUTTON_SELECT_SFX;
-      m->buttons[6].state |= (BUTTON_VISIBLE | BUTTON_ACTIVE);
-      m->buttons[7].state |= (BUTTON_VISIBLE | BUTTON_ACTIVE);
-      m->buttons[8].state |= (BUTTON_VISIBLE | BUTTON_ACTIVE);
-      m->buttons[3].shift[1] = 3;
-      m->buttons[4].shift[1] = 3;
-      m->buttons[5].shift[1] = 2;
-      m->buttons[5].shift[3] = 1;
-      rom_loaded = 1;
-    }
+    m->screenshot = 128;
+    m->bg_images[0].state &= ~IMAGE_VISIBLE;
+    m->items[0].y -= 90;
+    m->items[1].y -= 90;
+    m->items[2].y -= 90;
+    m->buttons[0].y -= 90;
+    m->buttons[1].y -= 90;
+    m->buttons[2].y -= 90;
+    m->buttons[3].state |= (BUTTON_VISIBLE | BUTTON_ACTIVE);
+    m->buttons[4].state |= (BUTTON_VISIBLE | BUTTON_ACTIVE);
+    m->buttons[5].state |= (BUTTON_VISIBLE | BUTTON_ACTIVE);
+    m->buttons[6].state |= (BUTTON_VISIBLE | BUTTON_ACTIVE);
+    m->buttons[7].state |= (BUTTON_VISIBLE | BUTTON_ACTIVE);
+    m->buttons[8].state |= (BUTTON_VISIBLE | BUTTON_ACTIVE);
   }
 
-  /* Background Settings */
+  /* Update background */
   GUI_SetBgColor((u8)config.bg_color);
   if (config.bg_color == 0)
   {
@@ -2846,17 +2906,14 @@ void MainMenu (void)
 
   while (quit == 0)
   {
-    ret = GUI_RunMenu(m);
-
-    switch (ret)
+    switch (GUI_RunMenu(m))
     {
       /*** Load Game Menu ***/
       case 0:
         GUI_DrawMenuFX(m,30,1);
         GUI_DeleteMenu(m);
         quit = loadgamemenu();
-        if (quit)
-          break;
+        if (quit) break;
         GUI_InitMenu(m);
         GUI_DrawMenuFX(m,30,0);
         break;
@@ -2872,44 +2929,8 @@ void MainMenu (void)
 
       /*** Exit Menu ***/
       case 2:
-      {
-        switch (GUI_OptionWindow(m, VERSION, items,3))
-        {
-          case 0: /* credits */
-            GUI_DeleteMenu(m);
-            showcredits();
-            GUI_InitMenu(m);
-            break;
-
-          case 1: /* return to loader */
-#ifdef HW_RVL
-            gxTextureClose(&w_pointer);
-#endif
-            GUI_DeleteMenu(m);
-            GUI_FadeOut();
-            shutdown();
-            exit(0);
-            break;
-
-          case 2: /* soft reset */
-#ifdef HW_RVL
-            gxTextureClose(&w_pointer);
-#endif
-            GUI_DeleteMenu(m);
-            GUI_FadeOut();
-            shutdown();
-#ifdef HW_RVL
-            SYS_ResetSystem(SYS_RETURNTOMENU, 0, 0);
-#else
-            SYS_ResetSystem(SYS_HOTRESET,0,0);
-#endif
-            break;
-          
-          default:
-            break;
-        }
+        exitmenu();
         break;
-      }
 
       /*** Save Manager ***/
       case 3:
@@ -2918,8 +2939,7 @@ void MainMenu (void)
         GUI_DrawMenuFX(m,30,1);
         GUI_DeleteMenu(m);
         quit = savemenu();
-        if (quit)
-          break;
+        if (quit) break;
         GUI_InitMenu(m);
         GUI_DrawMenuFX(m,30,0);
         break;
@@ -2965,7 +2985,6 @@ void MainMenu (void)
       case 7:
         if (!cart.romsize)
           break;
-        char filename[MAXPATHLEN];
         sprintf(filename,"%s/snaps/%s.png", DEFAULT_PATH, rom_filename);
         gxSaveScreenshot(filename);
         break;
