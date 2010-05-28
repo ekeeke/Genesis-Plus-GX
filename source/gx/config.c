@@ -134,7 +134,7 @@ void config_default(void)
   sprintf (config.sddir, "sd:%s/roms/", DEFAULT_PATH);
   sprintf (config.usbdir, "usb:%s/roms/", DEFAULT_PATH);
 #else
-  sprintf (config.sddir, "/%s/roms/", DEFAULT_PATH);
+  sprintf (config.sddir, "%s/roms/", DEFAULT_PATH);
 #endif
 
   /* restore from config file */

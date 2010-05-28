@@ -23,53 +23,34 @@
 #ifndef _LOADROM_H_
 #define _LOADROM_H_
 
-#define MAXCOMPANY 64
 #define MAXROMSIZE 10485760
 
 typedef struct
 {
-  char consoletype[18];     /* Genesis or Mega Drive */
-  char copyright[18];       /* Copyright message */
-  char domestic[50];        /* Domestic name of ROM */
-  char international[50];   /* International name of ROM */
-  char ROMType[4];          /* Educational or Game */
-  char product[14];         /* Product serial number */
-  unsigned short checksum;  /* Checksum */
-  char io_support[18];      /* Actually 16 chars :) */
-  unsigned int romstart;    /* ROM start address */
-  unsigned int romend;      /* ROM end address */
-  char RAMInfo[14];         /* Backup RAM header */
-  unsigned int ramstart;    /* RAM start address */
-  unsigned int ramend;      /* RAM end address */
-  char modem[14];           /* Sega Modem support */
-  char memo[50];            /* Misc */
-  char country[18];         /* Country flag */
+  char consoletype[18];         /* Genesis or Mega Drive */
+  char copyright[18];           /* Copyright message */
+  char domestic[50];            /* Domestic name of ROM */
+  char international[50];       /* International name of ROM */
+  char ROMType[4];              /* Educational or Game */
+  char product[14];             /* Product serial number */
+  unsigned short checksum;      /* ROM Checksum (header) */
+  unsigned short realchecksum;  /* ROM Checksum (calculated) */
+  unsigned int romstart;        /* ROM start address */
+  unsigned int romend;          /* ROM end address */
+  char country[18];             /* Country flag */
+  uint16 peripherals;           /* Supported peripherals */
 } ROMINFO;
 
-typedef struct
-{
-  char companyid[6];
-  char company[30];
-} COMPANYINFO;
-
-typedef struct
-{
-  char pID[2];
-  char pName[21];
-} PERIPHERALINFO;
 
 /* Global variables */
 extern ROMINFO rominfo;
-extern COMPANYINFO companyinfo[MAXCOMPANY];
-extern PERIPHERALINFO peripheralinfo[14];
-extern uint16 realchecksum;
-extern uint16 peripherals;
 extern char rom_filename[256];
 
 /* Function prototypes */
 extern int load_rom(char *filename);
-extern int getcompany();
-extern void set_region();
+extern void region_autodetect(void);
+extern char *get_company(void);
+extern char *get_peripheral(int index);
 
 #endif /* _LOADROM_H_ */
 

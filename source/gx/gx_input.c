@@ -85,7 +85,7 @@ static void pad_config(int chan, int max_keys)
 {
   int i;
   u16 p,key;
-  char msg[30];
+  char msg[64];
 
   /* reset VSYNC callback */
   VIDEO_SetPostRetraceCallback(NULL);
@@ -168,7 +168,9 @@ static void pad_update(s8 chan, u8 i)
   else if ((p & PAD_TRIGGER_L) && (p & PAD_TRIGGER_Z))
   {
     /* Soft RESET */
-    set_softreset();
+    if (config.lock_on == TYPE_AR)
+      datel_reset(0);
+    gen_reset(0);
   }
 
   /* Retrieve current key mapping */
@@ -344,7 +346,7 @@ static s8 WPAD_StickY(WPADData *data, u8 right)
 static void wpad_config(u8 chan, u8 exp, u8 max_keys)
 {
   int i;
-  char msg[30];
+  char msg[64];
   u32 key,p = 255;
 
   /* remove inputs update callback */
@@ -473,7 +475,9 @@ static void wpad_update(s8 chan, u8 i, u32 exp)
            ((p & WPAD_CLASSIC_BUTTON_PLUS) && (p & WPAD_CLASSIC_BUTTON_MINUS)))
   {
     /* Soft RESET */
-    set_softreset();
+    if (config.lock_on == TYPE_AR)
+      datel_reset(0);
+    gen_reset(0);
   }
 
   /* Retrieve current key mapping */
@@ -610,7 +614,7 @@ static void wpad_update(s8 chan, u8 i, u32 exp)
       if (system_hw != SYSTEM_PICO)
       {
         /* gamepad */
-        if ((p & wpad_dirmap[exp][PAD_UP])  || (y >  ANALOG_SENSITIVITY))
+        if ((p & wpad_dirmap[exp][PAD_UP])          || (y >  ANALOG_SENSITIVITY))
           input.pad[i] |= INPUT_UP;
         else if ((p & wpad_dirmap[exp][PAD_DOWN])   || (y < -ANALOG_SENSITIVITY))
           input.pad[i] |= INPUT_DOWN;
@@ -822,7 +826,9 @@ void gx_input_UpdateEmu(void)
   if (SYS_ResetButtonDown())
   {
     /* Soft RESET */
-    set_softreset();
+    if (config.lock_on == TYPE_AR)
+      datel_reset(0);
+    gen_reset(0);
   }
 #endif
 

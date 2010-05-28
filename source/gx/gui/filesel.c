@@ -532,7 +532,11 @@ int FileSelector(unsigned char *buffer, bool useFAT)
           else
             size = DVD_LoadFile(buffer,selection);
 
-          /* Reload emulation */
+          /* Exit menu */
+          GUI_MsgBoxClose();
+          GUI_DeleteMenu(m);
+
+          /* Init emulation */
           if (size)
           {
             if (config.s_auto & 2)
@@ -544,9 +548,6 @@ int FileSelector(unsigned char *buffer, bool useFAT)
               slot_autoload(config.s_default,config.s_device);
           }
 
-          /* Exit */
-          GUI_MsgBoxClose();
-          GUI_DeleteMenu(m);
           return size;
         }
       }

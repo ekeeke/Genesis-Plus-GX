@@ -55,7 +55,7 @@ int FAT_UpdateDirectory(bool go_up, char *dirname)
 {
   int size=0;
   char *test;
-  char temp[1024];
+  char temp[MAXPATHLEN];
 
   /* go up to parent directory */
   if (strcmp(dirname,"..") == 0)
@@ -185,11 +185,17 @@ int FAT_LoadFile(u8 *buffer, u32 selection)
     /* Determine file type */
     if (!IsZipFile ((char *) temp))
     {
+      if (length > MAXROMSIZE)
+      {
+        GUI_WaitPrompt("Error","File size not supported !");
+        return 0;
+      }
+
       /* re-open and read file */
       sdfile = fopen(fname, "rb");
       if (sdfile)
       {
-        char msg[50];
+        char msg[64];
         sprintf(msg,"Loading %d bytes ...", length);
         GUI_MsgBoxOpen("Information",msg,1);
         int done = 0;
@@ -235,7 +241,7 @@ int FAT_Open(int type)
         filelist[i].offset = 0;
         filelist[i].length = 0;
         filelist[i].flags = 0;
-        strncpy(filelist[i].filename, history.entries[i].filename, MAXJOLIET-1);
+        strncpy(filelist[i].filename,history.entries[i].filename, MAXJOLIET-1);
         filelist[i].filename[MAXJOLIET-1] = '\0';
         max++;
       }

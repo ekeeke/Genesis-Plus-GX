@@ -26,8 +26,8 @@
 #include "sms_ntsc.h"
 
 /*** NTSC Filters ***/
-extern md_ntsc_t md_ntsc;
-extern sms_ntsc_t sms_ntsc;
+extern md_ntsc_t *md_ntsc;
+extern sms_ntsc_t *sms_ntsc;
 
 /* Look-up pixel table information */
 #define LUT_MAX     (5)
@@ -1836,9 +1836,9 @@ void remap_buffer(int line, int width)
   if (config.ntsc)
   {
     if (reg[12]&1)
-      md_ntsc_blit(&md_ntsc, ( MD_NTSC_IN_T const * )pixel_16, tmp_buf+0x20-bitmap.viewport.x, width, line);
+      md_ntsc_blit(md_ntsc, ( MD_NTSC_IN_T const * )pixel_16, tmp_buf+0x20-bitmap.viewport.x, width, line);
     else
-      sms_ntsc_blit(&sms_ntsc, ( SMS_NTSC_IN_T const * )pixel_16, tmp_buf+0x20-bitmap.viewport.x, width, line);
+      sms_ntsc_blit(sms_ntsc, ( SMS_NTSC_IN_T const * )pixel_16, tmp_buf+0x20-bitmap.viewport.x, width, line);
     return;
   }
 

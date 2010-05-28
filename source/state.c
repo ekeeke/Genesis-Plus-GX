@@ -22,8 +22,7 @@
 
 #include "shared.h"
 
-
-static unsigned char state[STATE_SIZE];
+#define STATE_VERSION "GENPLUS-GX 1.4.x"
 
 #define load_param(param, size) \
   memcpy(param, &state[bufferptr], size); \
@@ -38,6 +37,10 @@ int state_load(unsigned char *buffer)
   /* buffer size */
   int bufferptr = 0;
 
+  /* first allocate state buffer */
+  unsigned char *state = (unsigned char *)malloc(STATE_SIZE);
+  if (!state) return 0;
+
   /* uncompress savestate */
   unsigned long inbytes, outbytes;
   memcpy(&inbytes, buffer, 4);
@@ -49,7 +52,8 @@ int state_load(unsigned char *buffer)
   load_param(version,16);
   if (strncmp(version,STATE_VERSION,16))
   {
-    return 0;
+    free(state);
+    return -1;
   }
 
   /* reset system */
@@ -116,6 +120,7 @@ int state_load(unsigned char *buffer)
   // Z80 
   load_param(&Z80, sizeof(Z80_Regs));
 
+  free(state);
   return 1;
 }
 
@@ -123,6 +128,10 @@ int state_save(unsigned char *buffer)
 {
   /* buffer size */
   int bufferptr = 0;
+
+  /* first allocate state buffer */
+  unsigned char *state = (unsigned char *)malloc(STATE_SIZE);
+  if (!state) return 0;
 
   /* version string */
   char version[16];
@@ -164,7 +173,7 @@ int state_save(unsigned char *buffer)
   uint16 tmp16;
   uint32 tmp32;
   tmp32 = m68k_get_reg(NULL, M68K_REG_D0);  save_param(&tmp32, 4);
-  tmp32 = m68k_get_reg(NULL, M68K_REG_D1);   save_param(&tmp32, 4);
+  tmp32 = m68k_get_reg(NULL, M68K_REG_D1);  save_param(&tmp32, 4);
   tmp32 = m68k_get_reg(NULL, M68K_REG_D2);  save_param(&tmp32, 4);
   tmp32 = m68k_get_reg(NULL, M68K_REG_D3);  save_param(&tmp32, 4);
   tmp32 = m68k_get_reg(NULL, M68K_REG_D4);  save_param(&tmp32, 4);
@@ -181,7 +190,7 @@ int state_save(unsigned char *buffer)
   tmp32 = m68k_get_reg(NULL, M68K_REG_A7);  save_param(&tmp32, 4);
   tmp32 = m68k_get_reg(NULL, M68K_REG_PC);  save_param(&tmp32, 4);
   tmp16 = m68k_get_reg(NULL, M68K_REG_SR);  save_param(&tmp16, 2); 
-  tmp32 = m68k_get_reg(NULL, M68K_REG_USP);  save_param(&tmp32, 4);
+  tmp32 = m68k_get_reg(NULL, M68K_REG_USP); save_param(&tmp32, 4);
 
   // Z80 
   save_param(&Z80, sizeof(Z80_Regs));
@@ -191,6 +200,7 @@ int state_save(unsigned char *buffer)
   unsigned long outbytes  = STATE_SIZE;
   compress2 ((Bytef *)(buffer + 4), &outbytes, (Bytef *)state, inbytes, 9);
   memcpy(buffer, &outbytes, 4);
+  free(state);
 
   /* return total size */
   return (outbytes + 4);

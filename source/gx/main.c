@@ -155,6 +155,54 @@ static void init_machine(void)
   bitmap.data = texturemem;
 }
 
+static void run_emulation(void)
+{
+  /* main emulation loop */
+  while (1)
+  {
+    /* Main Menu request */
+    if (ConfigRequested)
+    {
+      /* stop video & audio */
+      gx_audio_Stop();
+      gx_video_Stop();
+
+      /* show menu */
+      MainMenu ();
+      ConfigRequested = 0;
+
+      /* start video & audio */
+      gx_audio_Start();
+      gx_video_Start();
+      frameticker = 1;
+    }
+
+    /* automatic frame skipping */
+    if (frameticker > 1)
+    {
+      /* skip frame */
+      frameticker = 0;
+      system_frame(1);
+    }
+    else
+    {
+      /* render frame */
+      frameticker = 0;
+      system_frame(0);
+
+      /* update video */
+      gx_video_Update();
+    }
+
+    /* update audio */
+    gx_audio_Update();
+
+    /* wait for next frame */
+    while (frameticker < 1)
+      usleep(1);
+  }
+}
+
 /**************************************************
   Load a new rom and performs some initialization
 ***************************************************/
@@ -325,62 +373,13 @@ int main (int argc, char *argv[])
     SILENT = 0;
   }
 
-  /* initialize GUI engine */
-  GUI_Initialize();
-
 #ifdef HW_RVL
   /* Power button callback */
   SYS_SetPowerCallback(Power_Off);
 #endif
 
   /* main emulation loop */
-  int skip = 0;
-  while (1)
-  {
-    /* Main Menu request */
-    if (ConfigRequested)
-    {
-      /* stop video & audio */
-      gx_audio_Stop();
-      gx_video_Stop();
-
-      /* show menu */
-      MainMenu ();
-      ConfigRequested = 0;
-
-      /* start video & audio */
-      gx_audio_Start();
-      gx_video_Start();
-      skip = 0;
-    }
-
-    frameticker = 0;
-    if (skip)
-    {
-      /* skip frame */
-      system_frame(1);
-      skip = 0;
-    }
-    else
-    {
-      /* render frame */
-      system_frame(0);
-
-      /* update video */
-      gx_video_Update();
-    }
-
-    /* update audio */
-    gx_audio_Update();
-
-    /* wait for next frame */
-    while (frameticker < 1)
-      usleep(1);
-
-    /* automatic frame skipping */
-    if (frameticker > 1)
-      skip = 1;
-  }
+  run_emulation();
 
   return 0;
 }

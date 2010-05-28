@@ -1710,66 +1710,47 @@ void GUI_OptionBox2(gui_menu *parent, char *text_1, char *text_2, s16 *option_1,
 /* Message Box displays a message until a specific action is completed */
 
 /* Message Box LWP Thread */
-static void *MsgBox_Thread(void *arg)
+static void *MsgBox_Thread(gui_message *message_box)
 {
-  while (1)
+  while (message_box->refresh)
   {
-    if (message_box.refresh)
+    /* draw parent menu */
+    GUI_DrawMenu(message_box->parent);
+
+    /* draw window */
+    gxDrawTexture(message_box->window,166,160,message_box->window->width,message_box->window->height,230);
+    gxDrawTexture(message_box->top,166,160,message_box->top->width,message_box->top->height,255);
+
+    /* draw title */
+    if (message_box->title)
+      FONT_writeCenter(message_box->title,20,166,166+message_box->window->width,160+(message_box->top->height-20)/2+20,(GXColor)WHITE);
+
+    /* draw box message */
+    if (message_box->msg)
+      FONT_writeCenter(message_box->msg,18,166,166+message_box->window->width,248,(GXColor)WHITE);
+
+    /* draw throbber */
+    if (message_box->throbber)
+      gxDrawTextureRotate(message_box->throbber,166+(message_box->window->width-message_box->throbber->width)/2,160+message_box->window->height-message_box->throbber->height-20,message_box->throbber->width,message_box->throbber->height,(message_box->progress * 360.0) / 100.0, 255);
+
+    /* draw exit message */
+    if (message_box->buttonA)
     {
-      /* draw parent menu */
-      GUI_DrawMenu(message_box.parent);
-
-      /* draw window */
-      gxDrawTexture(message_box.window,166,160,message_box.window->width,message_box.window->height,230);
-      gxDrawTexture(message_box.top,166,160,message_box.top->width,message_box.top->height,255);
-
-      /* draw title */
-      if (message_box.title)
-        FONT_writeCenter(message_box.title,20,166,166+message_box.window->width,160+(message_box.top->height-20)/2+20,(GXColor)WHITE);
-
-      /* draw box message */
-      if (message_box.msg)
-        FONT_writeCenter(message_box.msg,18,166,166+message_box.window->width,248,(GXColor)WHITE);
-
-      /* draw throbber */
-      if (message_box.throbber)
-        gxDrawTextureRotate(message_box.throbber,166+(message_box.window->width-message_box.throbber->width)/2,160+message_box.window->height-message_box.throbber->height-20,message_box.throbber->width,message_box.throbber->height,(message_box.progress * 360.0) / 100.0, 255);
-
-      /* draw exit message */
-      if (message_box.buttonA)
-      {
-        if (message_box.buttonB)
-        {
-          FONT_write("OK",18,220+message_box.buttonA->width+6,288,640,(GXColor)WHITE);
-          FONT_alignRight("CANCEL",18,166+message_box.window->width-(220-166),288,(GXColor)WHITE);
-          if (message_box.buttonA)
-            gxDrawTexture(message_box.buttonA, 220, 288-18+(18-message_box.buttonA->height)/2,message_box.buttonA->width, message_box.buttonA->height,255);
-          if (message_box.buttonB)
-            gxDrawTexture(message_box.buttonB, 328, 288-18+(18-message_box.buttonB->height)/2,message_box.buttonB->width, message_box.buttonB->height,255);
-        }
-        else
-        {
-          FONT_writeCenter("Press    to continue.",18,166,166+message_box.window->width,248+22,(GXColor)WHITE);
-          if (message_box.buttonA)
-            gxDrawTexture(message_box.buttonA, 166+116, 248+4+(18-message_box.buttonA->height)/2,message_box.buttonA->width, message_box.buttonA->height,255);
-        }
-      }
-
-      /* update display */
-      gxSetScreen();
-
-      /* update progression */
-      message_box.progress++;
-      if (message_box.progress > 100)
-        message_box.progress = 0;
+      FONT_writeCenter("Press    to continue.",18,166,166+message_box->window->width,248+22,(GXColor)WHITE);
+      gxDrawTexture(message_box->buttonA, 166+116, 248+4+(18-message_box->buttonA->height)/2,message_box->buttonA->width, message_box->buttonA->height,255);
     }
-    else
-    {
-      LWP_YieldThread();
-    }
+
+    /* update display */
+    gxSetScreen();
+
+    /* update progression */
+    message_box->progress++;
+    if (message_box->progress > 100)
+      message_box->progress = 0;
+    usleep(10);
   }
 
-  return NULL;
+  return 0;
 }
 
 /* update current Message Box */
@@ -1787,12 +1768,7 @@ void GUI_MsgBoxOpen(char *title, char *msg, bool throbber)
   if (SILENT)
     return;
 
-  /* clear unused textures */
-  gxTextureClose(&message_box.buttonA);
-  gxTextureClose(&message_box.buttonB);
-  gxTextureClose(&message_box.throbber);
-
-  /* update message box */
+  /* update text */
   GUI_MsgBoxUpdate(title,msg);
 
   /* ensure we are not already running */
@@ -1841,20 +1817,9 @@ void GUI_MsgBoxOpen(char *title, char *msg, bool throbber)
       yoffset -= 60;
     }
 
-    /* Final position */
-    GUI_DrawMenu(message_box.parent);
-    gxDrawTexture(message_box.window,xwindow,ywindow,message_box.window->width,message_box.window->height,230);
-    gxDrawTexture(message_box.top,xwindow,ywindow,message_box.top->width,message_box.top->height,255);
-    if (title)
-      FONT_writeCenter(title,20,xwindow,xwindow+message_box.window->width,ywindow+(message_box.top->height-20)/2+20,(GXColor)WHITE);
-    if (msg)
-      FONT_writeCenter(msg,18,xwindow,xwindow+message_box.window->width,ypos,(GXColor)WHITE);
-    gxSetScreen();
-
-    /* resume LWP thread for MessageBox refresh */
-    message_box.progress = 0;
+    /* create LWP thread for MessageBox refresh */
     message_box.refresh = TRUE;
-    LWP_ResumeThread(msgboxthread);
+    LWP_CreateThread (&msgboxthread, (void *)MsgBox_Thread, &message_box, NULL, 0, 70);
   }
 }
 
@@ -1865,7 +1830,7 @@ void GUI_MsgBoxClose(void)
   {
     /* suspend MessageBox refresh */
     message_box.refresh = FALSE;
-    LWP_SuspendThread(msgboxthread);
+    LWP_JoinThread(msgboxthread, NULL);
 
     /* window position */
     int xwindow = 166;
@@ -1912,7 +1877,6 @@ void GUI_MsgBoxClose(void)
     gxTextureClose(&message_box.window);
     gxTextureClose(&message_box.top);
     gxTextureClose(&message_box.buttonA);
-    gxTextureClose(&message_box.buttonB);
     gxTextureClose(&message_box.throbber);
   }
 }
@@ -1922,7 +1886,10 @@ void GUI_WaitPrompt(char *title, char *msg)
   if (SILENT)
     return;
 
-  /* update message box */
+  /* clear unused texture */
+  gxTextureClose(&message_box.throbber);
+
+  /* open or update message box */
   GUI_MsgBoxOpen(title, msg, 0);
 
   /* allocate texture */
@@ -1966,14 +1933,5 @@ void GUI_SetBgColor(u8 color)
     bg_color.b = bg_colors[color].b;
     bg_color.a = bg_colors[color].a;
   }
-}
-
-/* Initialize GUI engine */
-void GUI_Initialize(void)
-{
-  /* create LWP thread for MessageBox refresh */
-  message_box.refresh = FALSE;
-  LWP_CreateThread (&msgboxthread, MsgBox_Thread, NULL, NULL, 0, 10);
-  LWP_SuspendThread(msgboxthread);
 }
 

@@ -1046,8 +1046,8 @@ static void systemmenu ()
 
         if (cart.romsize)
         {
-          /* force region & cpu mode */
-          set_region();
+          /* reset console region */
+          region_autodetect();
 
           /* update framerate */
           if (vdp_pal)
@@ -1494,7 +1494,7 @@ static void ctrlmenu_raz(void)
       m->buttons[i+2].data  = &button_player_data;
       m->buttons[i+2].state |= BUTTON_ACTIVE;
       sprintf(m->items[i+2].text,"%d",max + 1);
-      if (cart.hw.jcart && (i > 4))
+      if (cart.jcart && (i > 4))
         sprintf(m->items[i+2].comment,"Configure Player %d (J-CART) settings", max + 1);
       else
         sprintf(m->items[i+2].comment,"Configure Player %d settings", max + 1);
@@ -1674,7 +1674,7 @@ static void ctrlmenu(void)
       switch (m->selected)
       {
         case 0:   /* update port 1 system */
-          if (cart.hw.jcart) break;
+          if (cart.jcart) break;
           if (input.system[0] == SYSTEM_MOUSE)
             input.system[0] +=3; /* lightguns are never used on Port 1 */
           else
@@ -1688,8 +1688,6 @@ static void ctrlmenu(void)
             input.system[0] = NO_SYSTEM;
             input.system[1] = SYSTEM_GAMEPAD;
           }
-          old_system[0] = -1;
-          old_system[1] = -1;
           io_init();
           io_reset();
           old_system[0] = input.system[0];
@@ -1729,7 +1727,7 @@ static void ctrlmenu(void)
           break;
 
         case 1:   /* update port 2 system */
-          if (cart.hw.jcart) break;
+          if (cart.jcart) break;
           input.system[1] ++;
           if ((input.system[0] == SYSTEM_MOUSE) && (input.system[1] == SYSTEM_MOUSE))
             input.system[1] ++;
@@ -1740,8 +1738,6 @@ static void ctrlmenu(void)
             input.system[1] = NO_SYSTEM;
             input.system[0] = SYSTEM_GAMEPAD;
           }
-          old_system[0] = -1;
-          old_system[1] = -1;
           io_init();
           io_reset();
           old_system[0] = input.system[0];
@@ -1861,7 +1857,7 @@ static void ctrlmenu(void)
           GUI_DrawMenuFX(m, 20, 0);
 
           /* update title */
-          if (cart.hw.jcart && (player > 1))
+          if (cart.jcart && (player > 1))
             sprintf(m->title,"Controller Settings (Player %d) (J-CART)",player+1);
           else
             sprintf(m->title,"Controller Settings (Player %d)",player+1);
@@ -2112,7 +2108,7 @@ static void ctrlmenu(void)
   }
 
   /* remove duplicate assigned inputs before leaving */
-  for (i=0; i<8; i++)
+  for (i=0; i<MAX_INPUTS; i++)
   {
     if ((i!=player) && (config.input[i].device == config.input[player].device) && (config.input[i].port == config.input[player].port))
     {
@@ -2232,6 +2228,7 @@ static void optionmenu(void)
     }
   }
 
+  config_save();
   GUI_DrawMenuFX(m,30,1);
   GUI_DeleteMenu(m);
 }
@@ -2401,6 +2398,7 @@ static int savemenu(void)
         case 6: /* set default slot */
         {
           config.s_default = slot;
+          config_save();
           break;
         }
 
@@ -2613,44 +2611,45 @@ static void showrominfo (void)
   /* fill ROM infos */
   sprintf (items[0], "Console Type: %s", rominfo.consoletype);
   sprintf (items[1], "Copyright: %s", rominfo.copyright);
-  sprintf (items[2], "Company Name: %s", companyinfo[getcompany ()].company);
+  sprintf (items[2], "Company Name: %s", get_company());
   sprintf (items[3], "Domestic Name:");
   sprintf (items[4], "%s",rominfo.domestic);
   sprintf (items[5], "International Name:");
   sprintf (items[6], "%s",rominfo.international);
   sprintf (items[7], "Type: %s (%s)",rominfo.ROMType, strcmp(rominfo.ROMType, "AI") ? "Game" : "Educational");
   sprintf (items[8], "Product ID: %s", rominfo.product);
-  sprintf (items[9], "Checksum: %04x (%04x) (%s)", rominfo.checksum, realchecksum, (rominfo.checksum == realchecksum) ? "GOOD" : "BAD");
+  sprintf (items[9], "Checksum: %04x (%04x) (%s)", rominfo.checksum, rominfo.realchecksum,
+                                                  (rominfo.checksum == rominfo.realchecksum) ? "GOOD" : "BAD");
   
   sprintf (items[10], "Supports: ");
-  if (peripherals & (1 << 1))
+  if (rominfo.peripherals & (1 << 1))
   {
-    strcat(items[10],peripheralinfo[1].pName);
+    strcat(items[10],get_peripheral(1));
     strcat(items[10],", ");
   }
-  else if (peripherals & (1 << 0))
+  else if (rominfo.peripherals & (1 << 0))
   {
-    strcat(items[10],peripheralinfo[0].pName);
+    strcat(items[10],get_peripheral(0));
     strcat(items[10],", ");
   }
-  if (peripherals & (1 << 7))
+  if (rominfo.peripherals & (1 << 7))
   {
-    strcat(items[10],peripheralinfo[7].pName);
+    strcat(items[10],get_peripheral(7));
     strcat(items[10],", ");
   }
-  if (peripherals & (1 << 8))
+  if (rominfo.peripherals & (1 << 8))
   {
-    strcat(items[10],peripheralinfo[8].pName);
+    strcat(items[10],get_peripheral(8));
     strcat(items[10],", ");
   }
-  if (peripherals & (1 << 11))
+  if (rominfo.peripherals & (1 << 11))
   {
-    strcat(items[10],peripheralinfo[11].pName);
+    strcat(items[10],get_peripheral(11));
     strcat(items[10],", ");
   }
-  if (peripherals & (1 << 13))
+  if (rominfo.peripherals & (1 << 13))
   {
-    strcat(items[10],peripheralinfo[13].pName);
+    strcat(items[10],get_peripheral(12));
     strcat(items[10],", ");
   }
   if (strlen(items[10]) > 10)
@@ -2699,7 +2698,8 @@ static void showcredits(void)
   while (!p)
   {
     gxClearScreen ((GXColor)BLACK);
-    gxDrawTexture(texture, (640-texture->width)/2, (480-texture->height)/2, texture->width, texture->height,255);
+    if (texture)
+      gxDrawTexture(texture, (640-texture->width)/2, (480-texture->height)/2, texture->width, texture->height,255);
 
     FONT_writeCenter("Genesis Plus Core", 24, 0, 640, 480 - offset, (GXColor)LIGHT_BLUE);
     FONT_writeCenter("original 1.2a version by Charles MacDonald", 18, 0, 640, 516 - offset, (GXColor)WHITE);
@@ -2876,7 +2876,9 @@ void MainMenu (void)
         switch (GUI_OptionWindow(m, VERSION, items,3))
         {
           case 0: /* credits */
+            GUI_DeleteMenu(m);
             showcredits();
+            GUI_InitMenu(m);
             break;
 
           case 1: /* return to loader */

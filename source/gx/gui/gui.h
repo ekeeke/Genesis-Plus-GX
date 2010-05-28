@@ -132,7 +132,6 @@ typedef struct
   gx_texture *window;     /* pointer to box texture */
   gx_texture *top;        /* pointer to box title texture */
   gx_texture *buttonA;    /* pointer to button A texture */
-  gx_texture *buttonB;    /* pointer to button B texture */
   gx_texture *throbber;   /* pointer to throbber texture */
 } gui_message;
 

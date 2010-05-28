@@ -60,12 +60,13 @@ of samples per frame and keeping PSG & FM chips in sync.
 
 [Gamecube/Wii]
 ---------------
-* implemented new FONT engine (using internal IPL font & GX hardware rendering).
-* implemented custom GUI engine (with PCM/OGG sound support, multithreading & using GX hardware for rendering) 
-* new interface design (incl. IR pointing, game snapshots, visual & sound effects, BGM...).
-* improved audio/video back-end synchronization to ensure 100% smooth video & audio playback.
+* implemented custom FONT engine (uses internal IPL font & GX hardware rendering).
+* implemented custom GUI engine (uses GX hardware rendering & multithreading) 
+* implemented advanced interface (IR pointing, game snapshots, visual & sound effects, BGM...).
+* improved audio/video synchronization to ensure 100% smooth video AND audio playback.
 * improved reset button behavior, now works more like the real Genesis reset button.
 * improved lightgun cursors layout.
+* added automatic ROM loading feature
 * fixed stability issues and memory leaks.
 
 [Wii only]

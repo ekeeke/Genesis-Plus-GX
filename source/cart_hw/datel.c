@@ -27,8 +27,8 @@
 struct
 {
   uint8 enabled;
-  uint8 rom[0x20000];
-  uint8 ram[0x10000];
+  uint8 *rom;
+  uint8 *ram;
   uint16 regs[13];
   uint16 old[4];
   uint16 data[4];
@@ -49,6 +49,11 @@ void datel_init(void)
   if (!f)
     return;
 
+  /* store Action replay ROM + RAM above cartridge ROM + SRAM */
+  if (cart.romsize > 0x600000) return;
+  action_replay.rom = cart.rom + 0x600000;
+  action_replay.ram = cart.rom + 0x610000;
+
   /* ROM size */
   fseek(f, 0, SEEK_END);
   int size = ftell(f);
@@ -59,9 +64,6 @@ void datel_init(void)
     case 0x8000:  /* ACTION REPLAY (32K) */
     {
       action_replay.enabled = TYPE_AR;
-
-      /* $0000-$7fff mirrored into $8000-$ffff */
-      memcpy(action_replay.rom+0x8000,action_replay.rom,0x8000);
       break;
     }
 
@@ -92,33 +94,32 @@ void datel_init(void)
     }
 
     default:
+    {
+      fclose(f);
       return;
+    }
   }
 
-  if (action_replay.enabled)
+  /* Load ROM */
+  fseek(f, 0, SEEK_SET);
+  int i = 0;
+  while (i < size)
   {
-    /* Load ROM */
-    fseek(f, 0, SEEK_SET);
-    int i = 0;
-    while (i < size)
-    {
-      fread(action_replay.rom+i,0x1000,1,f);
-      i += 0x1000;
-    }
+    fread(action_replay.rom+i,0x1000,1,f);
+    i += 0x1000;
+  }
+  fclose(f);
 
 #ifdef LSB_FIRST
-    /* Byteswap ROM */
-    uint8 temp;
-    for(i = 0; i < size; i += 2)
-    {
-      temp = action_replay.rom[i];
-      action_replay.rom[i] = action_replay.rom[i+1];
-      action_replay.rom[i+1] = temp;
-    }
-#endif
+  /* Byteswap ROM */
+  uint8 temp;
+  for(i = 0; i < size; i += 2)
+  {
+    temp = action_replay.rom[i];
+    action_replay.rom[i] = action_replay.rom[i+1];
+    action_replay.rom[i+1] = temp;
   }
-
-  fclose(f);
+#endif
 }
 
 void datel_shutdown(void)
@@ -178,7 +179,7 @@ void datel_reset(int hard_reset)
 
   /* clear RAM on hard reset only */
   if (hard_reset)
-    memset(action_replay.ram,0,sizeof(action_replay.ram));
+    memset(action_replay.ram,0,0x10000);
 }
 
 void datel_switch(int enable)

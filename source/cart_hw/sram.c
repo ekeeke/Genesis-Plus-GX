@@ -42,33 +42,41 @@ T_SRAM sram;
 void sram_init()
 {
   memset (&sram, 0, sizeof (T_SRAM));
-  memset (&sram.sram[0], 0xFF, 0x10000);
-  sram.crc = crc32(0, &sram.sram[0], 0x10000);
 
+  /* store SRAM into cartridge area */
+  if (cart.romsize > 0x500000) return;
+  sram.sram = cart.rom + 0x500000;
+
+  /* initialize SRAM */
+  memset(sram.sram, 0xff, 0x10000);
+  sram.crc = crc32(0, sram.sram, 0x10000);
+
+  /* retrieve informations from header */
   if ((READ_BYTE(cart.rom,0x1b0) == 0x52) && (READ_BYTE(cart.rom,0x1b1) == 0x41))
   {
-    /* retrieve informations from headezr */
-    sram.detected = 1;
     sram.start = READ_WORD_LONG(cart.rom, 0x1b4);
     sram.end   = READ_WORD_LONG(cart.rom, 0x1b8);
 
     /* fixe some bad header informations */
     if ((sram.start > sram.end) || ((sram.end - sram.start) >= 0x10000))
-    sram.end = sram.start + 0xffff;
+      sram.end = sram.start + 0xffff;
     sram.start &= 0xfffffffe;
     sram.end |= 1;
+
+    /* enable SRAM */
     sram.on = 1;
+    sram.detected = 1;
   }
-  else 
+  else
   {
     /* default SRAM region */
     sram.start = 0x200000;
     sram.end = 0x20ffff;
-  }
 
-  /* set SRAM ON by default when ROM is not mapped */
-  if (cart.romsize <= sram.start)
-    sram.on = 1;
+    /* enable SRAM only if ROM < 2MB */
+    if (cart.romsize <= sram.start)
+      sram.on = 1;
+  }
 
   /* autodetect some games with bad header or specific configuration */
   if (strstr(rominfo.product,"T-113016") != NULL)
@@ -119,7 +127,8 @@ void sram_init()
     sram.start = 0x200001;
     sram.end = 0x203fff;
   }
-  else if (((realchecksum == 0xaeaa) || (realchecksum == 0x8dba)) &&  (rominfo.checksum ==  0x8104))
+  else if (((rominfo.realchecksum == 0xaeaa) || (rominfo.realchecksum == 0x8dba)) && 
+           (rominfo.checksum ==  0x8104))
   {
     /* Xin Qigai Wangzi, aka Beggar Prince (no header, use uncommon area) */
     sram.on = 1;

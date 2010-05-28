@@ -278,16 +278,16 @@ void audio_shutdown(void)
  ****************************************************************/
 void system_init (void)
 {
-  /* Cartridge hardware */
-  cart_hw_init();
-
   /* Genesis hardware */
   gen_init();
   io_init();
   vdp_init();
   render_init();
 
-  /* Sound Chips hardware */
+  /* Cartridge hardware */
+  cart_hw_init();
+
+  /* Sound hardware */
   sound_init();
 }
 
@@ -305,10 +305,10 @@ void system_reset (void)
   vdp_reset();
   render_reset();
 
-  /* Sound chips */
+  /* Sound hardware */
   sound_reset();
 
-  /* Audio System */
+  /* Audio system */
   audio_reset();
 }
 
@@ -335,7 +335,6 @@ int system_frame (int do_skip)
 
   /* update display settings */
   int line;
-  int reset = resetline;
   int vdp_height  = bitmap.viewport.h;
   int end_line    = vdp_height + bitmap.viewport.y;
   int start_line  = lines_per_frame - bitmap.viewport.y;
@@ -380,16 +379,6 @@ int system_frame (int do_skip)
 
     /* 68k line cycle count */
     hint_68k = mcycles_68k;
-
-    /* Soft Reset line */
-    if (line == reset)
-    {
-      /* Pro Action Replay (switch at "Trainer" position) */
-      if (config.lock_on == TYPE_AR)
-        datel_reset(0);
-
-      gen_reset(0);
-    }
 
     /* update VDP DMA */
     if (dma_length)

@@ -124,7 +124,7 @@ const uint m68ki_shift_32_table[65] =
 /* Number of clock cycles to use for exception processing.
  * I used 4 for any vectors that are undocumented for processing times.
  */
-uint16 m68ki_exception_cycle_table[4][256] =
+uint16 m68ki_exception_cycle_table[NUM_CPU_TYPES][256] =
 {
   { /* 000 */
      40, /*  0: Reset - Initial Stack Pointer                      */
@@ -199,6 +199,8 @@ uint16 m68ki_exception_cycle_table[4][256] =
       4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,
       4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4
   },
+
+#if M68K_EMULATE_010 || M68K_EMULATE_020 || M68K_EMULATE_EC020 || M68K_EMULATE_040
   { /* 010 */
      40, /*  0: Reset - Initial Stack Pointer                      */
       4, /*  1: Reset - Initial Program Counter                    */
@@ -418,6 +420,7 @@ uint16 m68ki_exception_cycle_table[4][256] =
       4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,
       4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4
   }
+#endif
 };
 
 #if M68K_EMULATE_010 || M68K_EMULATE_020 || M68K_EMULATE_EC020 || M68K_EMULATE_040
@@ -694,6 +697,8 @@ void m68k_set_cpu_type(unsigned int cpu_type)
       CYC_SHIFT        = 2 * 7;
       CYC_RESET        = 132 * 7;
       return;
+
+#if M68K_EMULATE_020 || M68K_EMULATE_EC020 || M68K_EMULATE_040
     case M68K_CPU_TYPE_68008:
       CPU_TYPE         = CPU_TYPE_008;
       CPU_ADDRESS_MASK = 0x003fffff;
@@ -774,6 +779,7 @@ void m68k_set_cpu_type(unsigned int cpu_type)
       CYC_SHIFT        = 0;
       CYC_RESET        = 518;
       return;
+#endif
   }
 }
 

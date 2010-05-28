@@ -220,7 +220,7 @@ static Uint32 sdl_sync_timer_callback(Uint32 interval)
   {
     int fps = vdp_pal ? (sdl_video.frames_rendered / 3) : sdl_video.frames_rendered;
     sdl_sync.ticks = sdl_video.frames_rendered = 0;
-    sprintf(caption, "Genesis Plus/SDL - %s (%s) - 0x%04X - %d fps", rominfo.international, region, realchecksum, fps);
+    sprintf(caption, "Genesis Plus/SDL - %s (%s) - 0x%04X - %d fps", rominfo.international, region, rominfo.realchecksum, fps);
     SDL_WM_SetCaption(caption, NULL);
   }
   return interval;

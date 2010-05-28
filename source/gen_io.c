@@ -25,7 +25,6 @@
 
 uint8 io_reg[0x10];
 uint8 region_code = REGION_USA;
-int old_system[2] = {-1,-1};
 
 static struct port_t
 {
@@ -117,20 +116,24 @@ void io_init(void)
 
 void io_reset(void)
 {
-  /* I/O register default settings */
-  uint8 io_def[0x10] =
-  {
-    0xA0,
-    0x7F, 0x7F, 0x7F,
-    0x00, 0x00, 0x00,
-    0xFF, 0x00, 0x00,
-    0xFF, 0x00, 0x00,
-    0xFB, 0x00, 0x00,
-  };
-
   /* Reset I/O registers */
-  memcpy (io_reg, io_def, 0x10);
-
+  io_reg[0x00] = region_code | 0x20 | (config.bios_enabled == 3);
+  io_reg[0x01] = 0x7F;
+  io_reg[0x02] = 0x7F;
+  io_reg[0x03] = 0x7F;
+  io_reg[0x04] = 0x00;
+  io_reg[0x05] = 0x00;
+  io_reg[0x06] = 0x00;
+  io_reg[0x07] = 0xFF;
+  io_reg[0x08] = 0x00;
+  io_reg[0x09] = 0x00;
+  io_reg[0x0A] = 0xFF;
+  io_reg[0x0B] = 0x00;
+  io_reg[0x0C] = 0x00;
+  io_reg[0x0D] = 0xFB;
+  io_reg[0x0E] = 0x00;
+  io_reg[0x0F] = 0x00;
+  
   /* Reset connected input devices */
   input_reset();
 }
@@ -142,29 +145,16 @@ void io_write(uint32 offset, uint32 value)
     case 0x01: /* Port A Data */
     case 0x02: /* Port B Data */
     case 0x03: /* Port C Data */
-      io_reg[offset] = ((value & 0x80) | (value & io_reg[offset+3]));
-      if(port[offset-1].data_w) port[offset-1].data_w(value);
+      io_reg[offset] = value & (0x80 | io_reg[offset+3]);
+      if(port[offset-1].data_w)
+        port[offset-1].data_w(value);
       return;
 
-    case 0x05:      /* Port B Ctrl */
-      if (((value & 0x7F) == 0x7F) &&
-        ((input.system[0] == SYSTEM_TEAMPLAYER) ||
-         (input.system[1] == SYSTEM_TEAMPLAYER)))
-      {
-        /* autodetect 4-Way play ! */
-        input.system[0] = SYSTEM_WAYPLAY;
-        input.system[1] = SYSTEM_WAYPLAY;
-        port[0].data_w = wayplay_1_write;  
-        port[0].data_r = wayplay_1_read;
-        port[1].data_w = wayplay_2_write;  
-        port[1].data_r = wayplay_2_read;
-        input_reset();
-      }
-
     case 0x04:      /* Port A Ctrl */
+    case 0x05:      /* Port B Ctrl */
     case 0x06:      /* Port C Ctrl */
-      io_reg[offset] = value & 0xFF;
-      io_reg[offset-3] = ((io_reg[offset-3] & 0x80) | (io_reg[offset-3] & io_reg[offset]));
+      io_reg[offset] = value;
+      io_reg[offset-3] &= (0x80 | value);
       return;
 
     case 0x07:      /* Port A TxData */
@@ -176,7 +166,10 @@ void io_write(uint32 offset, uint32 value)
     case 0x09:      /* Port A S-Ctrl */
     case 0x0C:      /* Port B S-Ctrl */
     case 0x0F:      /* Port C S-Ctrl */
-      io_reg[offset] = (value & 0xF8);
+      io_reg[offset] = value & 0xF8;
+      return;
+    
+    default:        /* Read-only ports */
       return;
   }
 }
@@ -185,23 +178,17 @@ uint32 io_read(uint32 offset)
 {
   switch(offset)
   {
-    case 0x00: /* Version register */
-    {
-      uint8 has_scd = 0x20; /* No Sega CD unit attached */
-      uint8 gen_ver = (config.bios_enabled == 3) ? 0x01 : 0x00; /* hardware version */
-      return (region_code | has_scd | gen_ver);
-    }
-
     case 0x01: /* Port A Data */
     case 0x02: /* Port B Data */
     case 0x03: /* Port C Data */
     {
-      uint8 input = 0x7F;   /* default input state */
-      if(port[offset-1].data_r) input = port[offset-1].data_r();
+      uint8 input = 0x7F;
+      if(port[offset-1].data_r)
+        input = port[offset-1].data_r();
       return (io_reg[offset] | ((~io_reg[offset+3]) & input));
     }
 
-    default:
+    default: /* return register value */
       return (io_reg[offset]);
   }
 }

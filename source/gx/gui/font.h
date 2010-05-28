@@ -37,6 +37,6 @@ extern void write_font (int x, int y, char *string);
 extern void WriteText(char *text, int size, int x, int y);
 extern void fntDrawBoxFilled (int x1, int y1, int x2, int y2, int color);
 extern int fheight;
-extern int font_size[256];
+extern u8 font_size[256];
 
 #endif

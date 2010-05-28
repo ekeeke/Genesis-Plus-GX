@@ -21,6 +21,7 @@ static void m68k_op_1111(void)
 }
 
 
+#if M68K_EMULATE_040
 static void m68k_op_040fpu0_32(void)
 {
   if(CPU_TYPE_IS_040_PLUS(CPU_TYPE))
@@ -41,7 +42,7 @@ static void m68k_op_040fpu1_32(void)
   }
   m68ki_exception_1111();
 }
-
+#endif
 
 static void m68k_op_abcd_8_rr(void)
 {
@@ -5255,6 +5256,7 @@ static void m68k_op_bclr_8_s_al(void)
 }
 
 
+#if M68K_EMULATE_020 || M68K_EMULATE_EC020 || M68K_EMULATE_040
 static void m68k_op_bfchg_32_d(void)
 {
   if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
@@ -8051,8 +8053,10 @@ static void m68k_op_bftst_32_pcix(void)
   }
   m68ki_exception_illegal();
 }
+#endif
 
 
+#if M68K_EMULATE_010 || M68K_EMULATE_020 || M68K_EMULATE_EC020 || M68K_EMULATE_040
 static void m68k_op_bkpt(void)
 {
   if(CPU_TYPE_IS_010_PLUS(CPU_TYPE))
@@ -8061,6 +8065,7 @@ static void m68k_op_bkpt(void)
   }
   m68ki_exception_illegal();
 }
+#endif
 
 
 static void m68k_op_bra_8(void)
@@ -8529,6 +8534,7 @@ static void m68k_op_btst_8_s_pcix(void)
 }
 
 
+#if M68K_EMULATE_020 || M68K_EMULATE_EC020 || M68K_EMULATE_040
 static void m68k_op_callm_32_ai(void)
 {
   /* note: watch out for pcrelative modes */
@@ -9417,6 +9423,7 @@ static void m68k_op_cas2_32(void)
   }
   m68ki_exception_illegal();
 }
+#endif
 
 
 static void m68k_op_chk_16_d(void)
@@ -9617,6 +9624,7 @@ static void m68k_op_chk_16_i(void)
 }
 
 
+#if M68K_EMULATE_020 || M68K_EMULATE_EC020 || M68K_EMULATE_040
 static void m68k_op_chk_32_d(void)
 {
   if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
@@ -10552,6 +10560,7 @@ static void m68k_op_chk2cmp2_32_al(void)
   }
   m68ki_exception_illegal();
 }
+#endif
 
 
 static void m68k_op_clr_8_d(void)
@@ -11763,6 +11772,7 @@ static void m68k_op_cmpi_8_al(void)
 }
 
 
+#if M68K_EMULATE_020 || M68K_EMULATE_EC020 || M68K_EMULATE_040
 static void m68k_op_cmpi_8_pcdi(void)
 {
   if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
@@ -11797,6 +11807,7 @@ static void m68k_op_cmpi_8_pcix(void)
   }
   m68ki_exception_illegal();
 }
+#endif
 
 
 static void m68k_op_cmpi_16_d(void)
@@ -11903,6 +11914,7 @@ static void m68k_op_cmpi_16_al(void)
 }
 
 
+#if M68K_EMULATE_020 || M68K_EMULATE_EC020 || M68K_EMULATE_040
 static void m68k_op_cmpi_16_pcdi(void)
 {
   if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
@@ -11937,6 +11949,7 @@ static void m68k_op_cmpi_16_pcix(void)
   }
   m68ki_exception_illegal();
 }
+#endif
 
 
 static void m68k_op_cmpi_32_d(void)
@@ -12045,6 +12058,7 @@ static void m68k_op_cmpi_32_al(void)
 }
 
 
+#if M68K_EMULATE_020 || M68K_EMULATE_EC020 || M68K_EMULATE_040
 static void m68k_op_cmpi_32_pcdi(void)
 {
   if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
@@ -12079,6 +12093,7 @@ static void m68k_op_cmpi_32_pcix(void)
   }
   m68ki_exception_illegal();
 }
+#endif
 
 
 static void m68k_op_cmpm_8_ax7(void)
@@ -12159,6 +12174,7 @@ static void m68k_op_cmpm_32(void)
 }
 
 
+#if M68K_EMULATE_020 || M68K_EMULATE_EC020 || M68K_EMULATE_040
 static void m68k_op_cpbcc_32(void)
 {
   if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
@@ -12222,6 +12238,7 @@ static void m68k_op_cptrapcc_32(void)
   }
   m68ki_exception_1111();
 }
+#endif
 
 
 static void m68k_op_dbt_16(void)
@@ -13381,6 +13398,7 @@ static void m68k_op_divu_16_i(void)
 }
 
 
+#if M68K_EMULATE_020 || M68K_EMULATE_EC020 || M68K_EMULATE_040
 static void m68k_op_divl_32_d(void)
 {
 #if M68K_USE_64_BIT
@@ -15700,6 +15718,7 @@ static void m68k_op_divl_32_i(void)
 
 #endif
 }
+#endif
 
 
 static void m68k_op_eor_8_d(void)
@@ -16510,6 +16529,7 @@ static void m68k_op_ext_32(void)
 }
 
 
+#if M68K_EMULATE_020 || M68K_EMULATE_EC020 || M68K_EMULATE_040
 static void m68k_op_extb_32(void)
 {
   if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
@@ -16526,6 +16546,7 @@ static void m68k_op_extb_32(void)
   }
   m68ki_exception_illegal();
 }
+#endif
 
 
 static void m68k_op_illegal(void)
@@ -16713,6 +16734,7 @@ static void m68k_op_link_16(void)
 }
 
 
+#if M68K_EMULATE_020 || M68K_EMULATE_EC020 || M68K_EMULATE_040
 static void m68k_op_link_32_a7(void)
 {
   if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
@@ -16739,6 +16761,7 @@ static void m68k_op_link_32(void)
   }
   m68ki_exception_illegal();
 }
+#endif
 
 
 static void m68k_op_lsr_8_s(void)
@@ -21949,6 +21972,7 @@ static void m68k_op_movea_32_i(void)
 }
 
 
+#if M68K_EMULATE_010 ||M68K_EMULATE_020 || M68K_EMULATE_EC020 || M68K_EMULATE_040
 static void m68k_op_move_16_frc_d(void)
 {
   if(CPU_TYPE_IS_010_PLUS(CPU_TYPE))
@@ -22035,6 +22059,7 @@ static void m68k_op_move_16_frc_al(void)
   }
   m68ki_exception_illegal();
 }
+#endif
 
 
 static void m68k_op_move_16_toc_d(void)
@@ -22362,6 +22387,7 @@ static void m68k_op_move_32_tou(void)
 }
 
 
+#if M68K_EMULATE_010 || M68K_EMULATE_020 || M68K_EMULATE_EC020 || M68K_EMULATE_040
 static void m68k_op_movec_32_cr(void)
 {
   if(CPU_TYPE_IS_010_PLUS(CPU_TYPE))
@@ -22640,6 +22666,7 @@ static void m68k_op_movec_32_rc(void)
   }
   m68ki_exception_illegal();
 }
+#endif
 
 
 static void m68k_op_movem_16_re_pd(void)
@@ -23219,6 +23246,7 @@ static void m68k_op_movep_32_er(void)
 }
 
 
+#if M68K_EMULATE_010 || M68K_EMULATE_020 || M68K_EMULATE_EC020 || M68K_EMULATE_040
 static void m68k_op_moves_8_ai(void)
 {
   if(CPU_TYPE_IS_010_PLUS(CPU_TYPE))
@@ -23987,6 +24015,7 @@ static void m68k_op_moves_32_al(void)
   }
   m68ki_exception_illegal();
 }
+#endif
 
 
 static void m68k_op_moveq_32(void)
@@ -24412,6 +24441,7 @@ static void m68k_op_mulu_16_i(void)
 }
 
 
+#if M68K_EMULATE_020 || M68K_EMULATE_EC020 || M68K_EMULATE_040
 static void m68k_op_mull_32_d(void)
 {
 #if M68K_USE_64_BIT
@@ -25774,6 +25804,7 @@ static void m68k_op_mull_32_i(void)
 
 #endif
 }
+#endif
 
 
 static void m68k_op_nbcd_8_d(void)
@@ -28404,6 +28435,7 @@ static void m68k_op_ori_16_tos(void)
 }
 
 
+#if M68K_EMULATE_020 || M68K_EMULATE_EC020 || M68K_EMULATE_040
 static void m68k_op_pack_16_rr(void)
 {
   if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
@@ -28484,6 +28516,7 @@ static void m68k_op_pack_16_mm(void)
   }
   m68ki_exception_illegal();
 }
+#endif
 
 
 static void m68k_op_pea_32_ai(void)
@@ -28542,6 +28575,7 @@ static void m68k_op_pea_32_pcix(void)
 }
 
 
+#if M68K_EMULATE_040
 static void m68k_op_pflush_32(void)
 {
   if(CPU_TYPE_IS_040_PLUS(CPU_TYPE))
@@ -28551,6 +28585,7 @@ static void m68k_op_pflush_32(void)
   }
   m68ki_exception_illegal();
 }
+#endif
 
 
 static void m68k_op_reset(void)
@@ -29723,6 +29758,7 @@ static void m68k_op_roxl_16_al(void)
 }
 
 
+#if M68K_EMULATE_010 || M68K_EMULATE_020 || M68K_EMULATE_EC020 || M68K_EMULATE_040
 static void m68k_op_rtd_32(void)
 {
   if(CPU_TYPE_IS_010_PLUS(CPU_TYPE))
@@ -29736,6 +29772,7 @@ static void m68k_op_rtd_32(void)
   }
   m68ki_exception_illegal();
 }
+#endif
 
 
 static void m68k_op_rte_32(void)
@@ -29824,6 +29861,7 @@ rte_loop:
 }
 
 
+#if M68K_EMULATE_020 || M68K_EMULATE_EC020 || M68K_EMULATE_040
 static void m68k_op_rtm_32(void)
 {
   if(CPU_TYPE_IS_020_VARIANT(CPU_TYPE))
@@ -29836,7 +29874,7 @@ static void m68k_op_rtm_32(void)
   }
   m68ki_exception_illegal();
 }
-
+#endif
 
 static void m68k_op_rtr_32(void)
 {
@@ -33476,6 +33514,7 @@ static void m68k_op_trap(void)
 }
 
 
+#if M68K_EMULATE_020 || M68K_EMULATE_EC020 || M68K_EMULATE_040
 static void m68k_op_trapt(void)
 {
   if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
@@ -34155,6 +34194,7 @@ static void m68k_op_traple_32(void)
   }
   m68ki_exception_illegal();
 }
+#endif
 
 
 static void m68k_op_trapv(void)
@@ -34277,6 +34317,7 @@ static void m68k_op_tst_8_al(void)
 }
 
 
+#if M68K_EMULATE_020 || M68K_EMULATE_EC020 || M68K_EMULATE_040
 static void m68k_op_tst_8_pcdi(void)
 {
   if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
@@ -34323,6 +34364,7 @@ static void m68k_op_tst_8_i(void)
   }
   m68ki_exception_illegal();
 }
+#endif
 
 
 static void m68k_op_tst_16_d(void)
@@ -34336,6 +34378,7 @@ static void m68k_op_tst_16_d(void)
 }
 
 
+#if M68K_EMULATE_020 || M68K_EMULATE_EC020 || M68K_EMULATE_040
 static void m68k_op_tst_16_a(void)
 {
   if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
@@ -34350,6 +34393,7 @@ static void m68k_op_tst_16_a(void)
   }
   m68ki_exception_illegal();
 }
+#endif
 
 
 static void m68k_op_tst_16_ai(void)
@@ -34429,6 +34473,7 @@ static void m68k_op_tst_16_al(void)
 }
 
 
+#if M68K_EMULATE_020 || M68K_EMULATE_EC020 || M68K_EMULATE_040
 static void m68k_op_tst_16_pcdi(void)
 {
   if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
@@ -34475,6 +34520,7 @@ static void m68k_op_tst_16_i(void)
   }
   m68ki_exception_illegal();
 }
+#endif
 
 
 static void m68k_op_tst_32_d(void)
@@ -34488,6 +34534,7 @@ static void m68k_op_tst_32_d(void)
 }
 
 
+#if M68K_EMULATE_020 || M68K_EMULATE_EC020 || M68K_EMULATE_040
 static void m68k_op_tst_32_a(void)
 {
   if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
@@ -34502,6 +34549,7 @@ static void m68k_op_tst_32_a(void)
   }
   m68ki_exception_illegal();
 }
+#endif
 
 
 static void m68k_op_tst_32_ai(void)
@@ -34581,6 +34629,7 @@ static void m68k_op_tst_32_al(void)
 }
 
 
+#if M68K_EMULATE_020 || M68K_EMULATE_EC020 || M68K_EMULATE_040
 static void m68k_op_tst_32_pcdi(void)
 {
   if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
@@ -34627,6 +34676,7 @@ static void m68k_op_tst_32_i(void)
   }
   m68ki_exception_illegal();
 }
+#endif
 
 
 static void m68k_op_unlk_32_a7(void)
@@ -34644,6 +34694,7 @@ static void m68k_op_unlk_32(void)
 }
 
 
+#if M68K_EMULATE_020 || M68K_EMULATE_EC020 || M68K_EMULATE_040
 static void m68k_op_unpk_16_rr(void)
 {
   if(CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
@@ -34732,6 +34783,7 @@ static void m68k_op_unpk_16_mm(void)
   }
   m68ki_exception_illegal();
 }
+#endif
 
 
 /* ======================================================================== */
@@ -34745,8 +34797,6 @@ static void m68k_op_unpk_16_mm(void)
 
 #include "m68kops.h"
 
-#define NUM_CPU_TYPES 4
-
 void  (*m68ki_instruction_jump_table[0x10000])(void); /* opcode handler jump table */
 unsigned char m68ki_cycles[NUM_CPU_TYPES][0x10000]; /* Cycles used by CPU type */
 
@@ -34756,7 +34806,7 @@ typedef struct
   void (*opcode_handler)(void);        /* handler function */
   unsigned int  mask;                  /* mask on opcode */
   unsigned int  match;                 /* what to match after masking */
-  unsigned char cycles[NUM_CPU_TYPES]; /* cycles each cpu type takes */
+  unsigned char cycles[4];             /* cycles each cpu type takes */
 } opcode_handler_struct;
 
 
@@ -34769,9 +34819,11 @@ static const opcode_handler_struct m68k_opcode_handler_table[] =
   {m68k_op_1010                , 0xf000, 0xa000, {  4,   4,   4,   4}},
   {m68k_op_1111                , 0xf000, 0xf000, {  4,   4,   4,   4}},
   {m68k_op_moveq_32            , 0xf100, 0x7000, {  4,   4,   2,   2}},
+#if M68K_EMULATE_020 || M68K_EMULATE_EC020 || M68K_EMULATE_040
   {m68k_op_cpbcc_32            , 0xf180, 0xf080, {  0,   0,   4,   0}},
   {m68k_op_cpgen_32            , 0xf1c0, 0xf000, {  0,   0,   4,   0}},
   {m68k_op_cpscc_32            , 0xf1c0, 0xf040, {  0,   0,   4,   0}},
+#endif
   {m68k_op_bra_8               , 0xff00, 0x6000, { 10,  10,  10,  10}},
   {m68k_op_bsr_8               , 0xff00, 0x6100, { 18,  18,   7,   7}},
   {m68k_op_bhi_8               , 0xff00, 0x6200, { 10,  10,   6,   6}},
@@ -34788,8 +34840,10 @@ static const opcode_handler_struct m68k_opcode_handler_table[] =
   {m68k_op_blt_8               , 0xff00, 0x6d00, { 10,  10,   6,   6}},
   {m68k_op_bgt_8               , 0xff00, 0x6e00, { 10,  10,   6,   6}},
   {m68k_op_ble_8               , 0xff00, 0x6f00, { 10,  10,   6,   6}},
+#if M68K_EMULATE_040
   {m68k_op_040fpu0_32          , 0xff00, 0xf200, {  0,   0,   0,   0}},
   {m68k_op_040fpu1_32          , 0xff00, 0xf300, {  0,   0,   0,   0}},
+#endif
   {m68k_op_btst_32_r_d         , 0xf1f8, 0x0100, {  6,   6,   4,   4}},
   {m68k_op_movep_16_er         , 0xf1f8, 0x0108, { 16,  16,  12,  12}},
   {m68k_op_btst_8_r_ai         , 0xf1f8, 0x0110, {  8,   8,   8,   8}},
@@ -34952,12 +35006,14 @@ static const opcode_handler_struct m68k_opcode_handler_table[] =
   {m68k_op_move_16_ix_pd       , 0xf1f8, 0x31a0, { 20,  20,  12,  12}},
   {m68k_op_move_16_ix_di       , 0xf1f8, 0x31a8, { 22,  22,  12,  12}},
   {m68k_op_move_16_ix_ix       , 0xf1f8, 0x31b0, { 24,  24,  14,  14}},
+#if M68K_EMULATE_020 || M68K_EMULATE_EC020 || M68K_EMULATE_040
   {m68k_op_chk_32_d            , 0xf1f8, 0x4100, {  0,   0,   8,   8}},
   {m68k_op_chk_32_ai           , 0xf1f8, 0x4110, {  0,   0,  12,  12}},
   {m68k_op_chk_32_pi           , 0xf1f8, 0x4118, {  0,   0,  12,  12}},
   {m68k_op_chk_32_pd           , 0xf1f8, 0x4120, {  0,   0,  13,  13}},
   {m68k_op_chk_32_di           , 0xf1f8, 0x4128, {  0,   0,  13,  13}},
   {m68k_op_chk_32_ix           , 0xf1f8, 0x4130, {  0,   0,  15,  15}},
+#endif
   {m68k_op_chk_16_d            , 0xf1f8, 0x4180, { 10,   8,   8,   8}},
   {m68k_op_chk_16_ai           , 0xf1f8, 0x4190, { 14,  12,  12,  12}},
   {m68k_op_chk_16_pi           , 0xf1f8, 0x4198, { 14,  12,  12,  12}},
@@ -35038,15 +35094,19 @@ static const opcode_handler_struct m68k_opcode_handler_table[] =
   {m68k_op_or_8_re_pd          , 0xf1f8, 0x8120, { 14,  14,   9,   9}},
   {m68k_op_or_8_re_di          , 0xf1f8, 0x8128, { 16,  16,   9,   9}},
   {m68k_op_or_8_re_ix          , 0xf1f8, 0x8130, { 18,  18,  11,  11}},
+#if M68K_EMULATE_020 || M68K_EMULATE_EC020 || M68K_EMULATE_040
   {m68k_op_pack_16_rr          , 0xf1f8, 0x8140, {  0,   0,   6,   6}},
   {m68k_op_pack_16_mm          , 0xf1f8, 0x8148, {  0,   0,  13,  13}},
+#endif
   {m68k_op_or_16_re_ai         , 0xf1f8, 0x8150, { 12,  12,   8,   8}},
   {m68k_op_or_16_re_pi         , 0xf1f8, 0x8158, { 12,  12,   8,   8}},
   {m68k_op_or_16_re_pd         , 0xf1f8, 0x8160, { 14,  14,   9,   9}},
   {m68k_op_or_16_re_di         , 0xf1f8, 0x8168, { 16,  16,   9,   9}},
   {m68k_op_or_16_re_ix         , 0xf1f8, 0x8170, { 18,  18,  11,  11}},
+#if M68K_EMULATE_020 || M68K_EMULATE_EC020 || M68K_EMULATE_040
   {m68k_op_unpk_16_rr          , 0xf1f8, 0x8180, {  0,   0,   8,   8}},
   {m68k_op_unpk_16_mm          , 0xf1f8, 0x8188, {  0,   0,  13,  13}},
+#endif
   {m68k_op_or_32_re_ai         , 0xf1f8, 0x8190, { 20,  20,   8,   8}},
   {m68k_op_or_32_re_pi         , 0xf1f8, 0x8198, { 20,  20,   8,   8}},
   {m68k_op_or_32_re_pd         , 0xf1f8, 0x81a0, { 22,  22,   9,   9}},
@@ -35321,9 +35381,11 @@ static const opcode_handler_struct m68k_opcode_handler_table[] =
   {m68k_op_lsl_32_r            , 0xf1f8, 0xe1a8, {  8,   8,   6,   6}},
   {m68k_op_roxl_32_r           , 0xf1f8, 0xe1b0, {  8,   8,  12,  12}},
   {m68k_op_rol_32_r            , 0xf1f8, 0xe1b8, {  8,   8,   8,   8}},
+#if M68K_EMULATE_020 || M68K_EMULATE_EC020 || M68K_EMULATE_040
   {m68k_op_cpdbcc_32           , 0xf1f8, 0xf048, {  0,   0,   4,   0}},
   {m68k_op_cptrapcc_32         , 0xf1f8, 0xf078, {  0,   0,   4,   0}},
   {m68k_op_rtm_32              , 0xfff0, 0x06c0, {  0,   0,  19,  19}},
+#endif
   {m68k_op_trap                , 0xfff0, 0x4e40, {  4,   4,   4,   4}},
   {m68k_op_btst_8_r_pi7        , 0xf1ff, 0x011f, {  8,   8,   8,   8}},
   {m68k_op_btst_8_r_pd7        , 0xf1ff, 0x0127, { 10,  10,   9,   9}},
@@ -35456,11 +35518,13 @@ static const opcode_handler_struct m68k_opcode_handler_table[] =
   {m68k_op_move_16_ix_pcdi     , 0xf1ff, 0x31ba, { 22,  22,  12,  12}},
   {m68k_op_move_16_ix_pcix     , 0xf1ff, 0x31bb, { 24,  24,  14,  14}},
   {m68k_op_move_16_ix_i        , 0xf1ff, 0x31bc, { 18,  18,   9,   9}},
+#if M68K_EMULATE_020 || M68K_EMULATE_EC020 || M68K_EMULATE_040
   {m68k_op_chk_32_aw           , 0xf1ff, 0x4138, {  0,   0,  12,  12}},
   {m68k_op_chk_32_al           , 0xf1ff, 0x4139, {  0,   0,  12,  12}},
   {m68k_op_chk_32_pcdi         , 0xf1ff, 0x413a, {  0,   0,  13,  13}},
   {m68k_op_chk_32_pcix         , 0xf1ff, 0x413b, {  0,   0,  15,  15}},
   {m68k_op_chk_32_i            , 0xf1ff, 0x413c, {  0,   0,  12,  12}},
+#endif
   {m68k_op_chk_16_aw           , 0xf1ff, 0x41b8, { 18,  16,  12,  12}},
   {m68k_op_chk_16_al           , 0xf1ff, 0x41b9, { 22,  20,  12,  12}},
   {m68k_op_chk_16_pcdi         , 0xf1ff, 0x41ba, { 18,  16,  13,  13}},
@@ -35513,10 +35577,14 @@ static const opcode_handler_struct m68k_opcode_handler_table[] =
   {m68k_op_or_8_re_pd7         , 0xf1ff, 0x8127, { 14,  14,   9,   9}},
   {m68k_op_or_8_re_aw          , 0xf1ff, 0x8138, { 16,  16,   8,   8}},
   {m68k_op_or_8_re_al          , 0xf1ff, 0x8139, { 20,  20,   8,   8}},
+#if M68K_EMULATE_020 || M68K_EMULATE_EC020 || M68K_EMULATE_040
   {m68k_op_pack_16_mm_ay7      , 0xf1ff, 0x814f, {  0,   0,  13,  13}},
+#endif
   {m68k_op_or_16_re_aw         , 0xf1ff, 0x8178, { 16,  16,   8,   8}},
   {m68k_op_or_16_re_al         , 0xf1ff, 0x8179, { 20,  20,   8,   8}},
+#if M68K_EMULATE_020 || M68K_EMULATE_EC020 || M68K_EMULATE_040
   {m68k_op_unpk_16_mm_ay7      , 0xf1ff, 0x818f, {  0,   0,  13,  13}},
+#endif
   {m68k_op_or_32_re_aw         , 0xf1ff, 0x81b8, { 24,  24,   8,   8}},
   {m68k_op_or_32_re_al         , 0xf1ff, 0x81b9, { 28,  28,   8,   8}},
   {m68k_op_divs_16_aw          , 0xf1ff, 0x81f8, {  8, 130,  60,  60}},
@@ -35686,9 +35754,11 @@ static const opcode_handler_struct m68k_opcode_handler_table[] =
   {m68k_op_ori_32_pd           , 0xfff8, 0x00a0, { 30,  30,   9,   9}},
   {m68k_op_ori_32_di           , 0xfff8, 0x00a8, { 32,  32,   9,   9}},
   {m68k_op_ori_32_ix           , 0xfff8, 0x00b0, { 34,  34,  11,  11}},
+#if M68K_EMULATE_020 || M68K_EMULATE_EC020 || M68K_EMULATE_040
   {m68k_op_chk2cmp2_8_ai       , 0xfff8, 0x00d0, {  0,   0,  22,  22}},
   {m68k_op_chk2cmp2_8_di       , 0xfff8, 0x00e8, {  0,   0,  23,  23}},
   {m68k_op_chk2cmp2_8_ix       , 0xfff8, 0x00f0, {  0,   0,  25,  25}},
+#endif
   {m68k_op_andi_8_d            , 0xfff8, 0x0200, {  8,   8,   2,   2}},
   {m68k_op_andi_8_ai           , 0xfff8, 0x0210, { 16,  16,   8,   8}},
   {m68k_op_andi_8_pi           , 0xfff8, 0x0218, { 16,  16,   8,   8}},
@@ -35707,9 +35777,11 @@ static const opcode_handler_struct m68k_opcode_handler_table[] =
   {m68k_op_andi_32_pd          , 0xfff8, 0x02a0, { 30,  30,   9,   9}},
   {m68k_op_andi_32_di          , 0xfff8, 0x02a8, { 32,  32,   9,   9}},
   {m68k_op_andi_32_ix          , 0xfff8, 0x02b0, { 34,  34,  11,  11}},
+#if M68K_EMULATE_020 || M68K_EMULATE_EC020 || M68K_EMULATE_040
   {m68k_op_chk2cmp2_16_ai      , 0xfff8, 0x02d0, {  0,   0,  22,  22}},
   {m68k_op_chk2cmp2_16_di      , 0xfff8, 0x02e8, {  0,   0,  23,  23}},
   {m68k_op_chk2cmp2_16_ix      , 0xfff8, 0x02f0, {  0,   0,  25,  25}},
+#endif
   {m68k_op_subi_8_d            , 0xfff8, 0x0400, {  8,   8,   2,   2}},
   {m68k_op_subi_8_ai           , 0xfff8, 0x0410, { 16,  16,   8,   8}},
   {m68k_op_subi_8_pi           , 0xfff8, 0x0418, { 16,  16,   8,   8}},
@@ -35728,9 +35800,11 @@ static const opcode_handler_struct m68k_opcode_handler_table[] =
   {m68k_op_subi_32_pd          , 0xfff8, 0x04a0, { 30,  30,   9,   9}},
   {m68k_op_subi_32_di          , 0xfff8, 0x04a8, { 32,  32,   9,   9}},
   {m68k_op_subi_32_ix          , 0xfff8, 0x04b0, { 34,  34,  11,  11}},
+#if M68K_EMULATE_020 || M68K_EMULATE_EC020 || M68K_EMULATE_040
   {m68k_op_chk2cmp2_32_ai      , 0xfff8, 0x04d0, {  0,   0,  22,  22}},
   {m68k_op_chk2cmp2_32_di      , 0xfff8, 0x04e8, {  0,   0,  23,  23}},
   {m68k_op_chk2cmp2_32_ix      , 0xfff8, 0x04f0, {  0,   0,  25,  25}},
+#endif
   {m68k_op_addi_8_d            , 0xfff8, 0x0600, {  8,   8,   2,   2}},
   {m68k_op_addi_8_ai           , 0xfff8, 0x0610, { 16,  16,   8,   8}},
   {m68k_op_addi_8_pi           , 0xfff8, 0x0618, { 16,  16,   8,   8}},
@@ -35749,9 +35823,11 @@ static const opcode_handler_struct m68k_opcode_handler_table[] =
   {m68k_op_addi_32_pd          , 0xfff8, 0x06a0, { 30,  30,   9,   9}},
   {m68k_op_addi_32_di          , 0xfff8, 0x06a8, { 32,  32,   9,   9}},
   {m68k_op_addi_32_ix          , 0xfff8, 0x06b0, { 34,  34,  11,  11}},
+#if M68K_EMULATE_020 || M68K_EMULATE_EC020 || M68K_EMULATE_040
   {m68k_op_callm_32_ai         , 0xfff8, 0x06d0, {  0,   0,  64,  64}},
   {m68k_op_callm_32_di         , 0xfff8, 0x06e8, {  0,   0,  65,  65}},
   {m68k_op_callm_32_ix         , 0xfff8, 0x06f0, {  0,   0,  67,  67}},
+#endif
   {m68k_op_btst_32_s_d         , 0xfff8, 0x0800, { 10,  10,   4,   4}},
   {m68k_op_btst_8_s_ai         , 0xfff8, 0x0810, { 12,  12,   8,   8}},
   {m68k_op_btst_8_s_pi         , 0xfff8, 0x0818, { 12,  12,   8,   8}},
@@ -35794,11 +35870,13 @@ static const opcode_handler_struct m68k_opcode_handler_table[] =
   {m68k_op_eori_32_pd          , 0xfff8, 0x0aa0, { 30,  30,   9,   9}},
   {m68k_op_eori_32_di          , 0xfff8, 0x0aa8, { 32,  32,   9,   9}},
   {m68k_op_eori_32_ix          , 0xfff8, 0x0ab0, { 34,  34,  11,  11}},
+#if M68K_EMULATE_020 || M68K_EMULATE_EC020 || M68K_EMULATE_040
   {m68k_op_cas_8_ai            , 0xfff8, 0x0ad0, {  0,   0,  16,  16}},
   {m68k_op_cas_8_pi            , 0xfff8, 0x0ad8, {  0,   0,  16,  16}},
   {m68k_op_cas_8_pd            , 0xfff8, 0x0ae0, {  0,   0,  17,  17}},
   {m68k_op_cas_8_di            , 0xfff8, 0x0ae8, {  0,   0,  17,  17}},
   {m68k_op_cas_8_ix            , 0xfff8, 0x0af0, {  0,   0,  19,  19}},
+#endif
   {m68k_op_cmpi_8_d            , 0xfff8, 0x0c00, {  8,   8,   2,   2}},
   {m68k_op_cmpi_8_ai           , 0xfff8, 0x0c10, { 12,  12,   6,   6}},
   {m68k_op_cmpi_8_pi           , 0xfff8, 0x0c18, { 12,  12,   6,   6}},
@@ -35817,11 +35895,14 @@ static const opcode_handler_struct m68k_opcode_handler_table[] =
   {m68k_op_cmpi_32_pd          , 0xfff8, 0x0ca0, { 22,  22,   7,   7}},
   {m68k_op_cmpi_32_di          , 0xfff8, 0x0ca8, { 24,  24,   7,   7}},
   {m68k_op_cmpi_32_ix          , 0xfff8, 0x0cb0, { 26,  26,   9,   9}},
+#if M68K_EMULATE_020 || M68K_EMULATE_EC020 || M68K_EMULATE_040
   {m68k_op_cas_16_ai           , 0xfff8, 0x0cd0, {  0,   0,  16,  16}},
   {m68k_op_cas_16_pi           , 0xfff8, 0x0cd8, {  0,   0,  16,  16}},
   {m68k_op_cas_16_pd           , 0xfff8, 0x0ce0, {  0,   0,  17,  17}},
   {m68k_op_cas_16_di           , 0xfff8, 0x0ce8, {  0,   0,  17,  17}},
   {m68k_op_cas_16_ix           , 0xfff8, 0x0cf0, {  0,   0,  19,  19}},
+#endif
+#if M68K_EMULATE_010 || M68K_EMULATE_020 || M68K_EMULATE_EC020 || M68K_EMULATE_040
   {m68k_op_moves_8_ai          , 0xfff8, 0x0e10, {  0,  18,   9,   9}},
   {m68k_op_moves_8_pi          , 0xfff8, 0x0e18, {  0,  18,   9,   9}},
   {m68k_op_moves_8_pd          , 0xfff8, 0x0e20, {  0,  20,  10,  10}},
@@ -35837,11 +35918,14 @@ static const opcode_handler_struct m68k_opcode_handler_table[] =
   {m68k_op_moves_32_pd         , 0xfff8, 0x0ea0, {  0,  28,  10,  10}},
   {m68k_op_moves_32_di         , 0xfff8, 0x0ea8, {  0,  32,  10,  10}},
   {m68k_op_moves_32_ix         , 0xfff8, 0x0eb0, {  0,  36,  12,  12}},
+#endif
+#if M68K_EMULATE_020 || M68K_EMULATE_EC020 || M68K_EMULATE_040
   {m68k_op_cas_32_ai           , 0xfff8, 0x0ed0, {  0,   0,  16,  16}},
   {m68k_op_cas_32_pi           , 0xfff8, 0x0ed8, {  0,   0,  16,  16}},
   {m68k_op_cas_32_pd           , 0xfff8, 0x0ee0, {  0,   0,  17,  17}},
   {m68k_op_cas_32_di           , 0xfff8, 0x0ee8, {  0,   0,  17,  17}},
   {m68k_op_cas_32_ix           , 0xfff8, 0x0ef0, {  0,   0,  19,  19}},
+#endif
   {m68k_op_move_8_aw_d         , 0xfff8, 0x11c0, { 12,  12,   4,   4}},
   {m68k_op_move_8_aw_ai        , 0xfff8, 0x11d0, { 16,  16,   8,   8}},
   {m68k_op_move_8_aw_pi        , 0xfff8, 0x11d8, { 16,  16,   8,   8}},
@@ -35936,12 +36020,14 @@ static const opcode_handler_struct m68k_opcode_handler_table[] =
   {m68k_op_clr_32_pd           , 0xfff8, 0x42a0, { 22,  14,   9,   9}},
   {m68k_op_clr_32_di           , 0xfff8, 0x42a8, { 24,  16,   9,   9}},
   {m68k_op_clr_32_ix           , 0xfff8, 0x42b0, { 26,  20,  11,  11}},
+#if M68K_EMULATE_010 || M68K_EMULATE_020 || M68K_EMULATE_EC020 || M68K_EMULATE_040
   {m68k_op_move_16_frc_d       , 0xfff8, 0x42c0, {  0,   4,   4,   4}},
   {m68k_op_move_16_frc_ai      , 0xfff8, 0x42d0, {  0,  12,   8,   8}},
   {m68k_op_move_16_frc_pi      , 0xfff8, 0x42d8, {  0,  12,   8,   8}},
   {m68k_op_move_16_frc_pd      , 0xfff8, 0x42e0, {  0,  14,   9,   9}},
   {m68k_op_move_16_frc_di      , 0xfff8, 0x42e8, {  0,  16,   9,   9}},
   {m68k_op_move_16_frc_ix      , 0xfff8, 0x42f0, {  0,  18,  11,  11}},
+#endif
   {m68k_op_neg_8_d             , 0xfff8, 0x4400, {  4,   4,   2,   2}},
   {m68k_op_neg_8_ai            , 0xfff8, 0x4410, { 12,  12,   8,   8}},
   {m68k_op_neg_8_pi            , 0xfff8, 0x4418, { 12,  12,   8,   8}},
@@ -35991,14 +36077,18 @@ static const opcode_handler_struct m68k_opcode_handler_table[] =
   {m68k_op_move_16_tos_di      , 0xfff8, 0x46e8, { 20,  20,  13,  13}},
   {m68k_op_move_16_tos_ix      , 0xfff8, 0x46f0, { 22,  22,  15,  15}},
   {m68k_op_nbcd_8_d            , 0xfff8, 0x4800, {  6,   6,   6,   6}},
+#if M68K_EMULATE_020 || M68K_EMULATE_EC020 || M68K_EMULATE_040
   {m68k_op_link_32             , 0xfff8, 0x4808, {  0,   0,   6,   6}},
+#endif
   {m68k_op_nbcd_8_ai           , 0xfff8, 0x4810, { 12,  12,  10,  10}},
   {m68k_op_nbcd_8_pi           , 0xfff8, 0x4818, { 12,  12,  10,  10}},
   {m68k_op_nbcd_8_pd           , 0xfff8, 0x4820, { 14,  14,  11,  11}},
   {m68k_op_nbcd_8_di           , 0xfff8, 0x4828, { 16,  16,  11,  11}},
   {m68k_op_nbcd_8_ix           , 0xfff8, 0x4830, { 18,  18,  13,  13}},
   {m68k_op_swap_32             , 0xfff8, 0x4840, {  4,   4,   4,   4}},
+#if M68K_EMULATE_010 || M68K_EMULATE_020 || M68K_EMULATE_EC020 || M68K_EMULATE_040
   {m68k_op_bkpt                , 0xfff8, 0x4848, {  0,  10,  10,  10}},
+#endif
   {m68k_op_pea_32_ai           , 0xfff8, 0x4850, { 12,  12,   9,   9}},
   {m68k_op_pea_32_di           , 0xfff8, 0x4868, { 16,  16,  10,  10}},
   {m68k_op_pea_32_ix           , 0xfff8, 0x4870, { 20,  20,  12,  12}},
@@ -36012,7 +36102,9 @@ static const opcode_handler_struct m68k_opcode_handler_table[] =
   {m68k_op_movem_32_re_pd      , 0xfff8, 0x48e0, {  8,   8,   4,   4}},
   {m68k_op_movem_32_re_di      , 0xfff8, 0x48e8, { 12,  12,   9,   9}},
   {m68k_op_movem_32_re_ix      , 0xfff8, 0x48f0, { 14,  14,  11,  11}},
+#if M68K_EMULATE_020 || M68K_EMULATE_EC020 || M68K_EMULATE_040
   {m68k_op_extb_32             , 0xfff8, 0x49c0, {  0,   0,   4,   4}},
+#endif
   {m68k_op_tst_8_d             , 0xfff8, 0x4a00, {  4,   4,   2,   2}},
   {m68k_op_tst_8_ai            , 0xfff8, 0x4a10, {  8,   8,   6,   6}},
   {m68k_op_tst_8_pi            , 0xfff8, 0x4a18, {  8,   8,   6,   6}},
@@ -36020,14 +36112,18 @@ static const opcode_handler_struct m68k_opcode_handler_table[] =
   {m68k_op_tst_8_di            , 0xfff8, 0x4a28, { 12,  12,   7,   7}},
   {m68k_op_tst_8_ix            , 0xfff8, 0x4a30, { 14,  14,   9,   9}},
   {m68k_op_tst_16_d            , 0xfff8, 0x4a40, {  4,   4,   2,   2}},
+#if M68K_EMULATE_020 || M68K_EMULATE_EC020 || M68K_EMULATE_040
   {m68k_op_tst_16_a            , 0xfff8, 0x4a48, {  0,   0,   2,   2}},
+#endif
   {m68k_op_tst_16_ai           , 0xfff8, 0x4a50, {  8,   8,   6,   6}},
   {m68k_op_tst_16_pi           , 0xfff8, 0x4a58, {  8,   8,   6,   6}},
   {m68k_op_tst_16_pd           , 0xfff8, 0x4a60, { 10,  10,   7,   7}},
   {m68k_op_tst_16_di           , 0xfff8, 0x4a68, { 12,  12,   7,   7}},
   {m68k_op_tst_16_ix           , 0xfff8, 0x4a70, { 14,  14,   9,   9}},
   {m68k_op_tst_32_d            , 0xfff8, 0x4a80, {  4,   4,   2,   2}},
+#if M68K_EMULATE_020 || M68K_EMULATE_EC020 || M68K_EMULATE_040
   {m68k_op_tst_32_a            , 0xfff8, 0x4a88, {  0,   0,   2,   2}},
+#endif
   {m68k_op_tst_32_ai           , 0xfff8, 0x4a90, { 12,  12,   6,   6}},
   {m68k_op_tst_32_pi           , 0xfff8, 0x4a98, { 12,  12,   6,   6}},
   {m68k_op_tst_32_pd           , 0xfff8, 0x4aa0, { 14,  14,   7,   7}},
@@ -36039,6 +36135,7 @@ static const opcode_handler_struct m68k_opcode_handler_table[] =
   {m68k_op_tas_8_pd            , 0xfff8, 0x4ae0, { 20,  20,  17,  17}},
   {m68k_op_tas_8_di            , 0xfff8, 0x4ae8, { 22,  22,  17,  17}},
   {m68k_op_tas_8_ix            , 0xfff8, 0x4af0, { 24,  24,  19,  19}},
+#if M68K_EMULATE_020 || M68K_EMULATE_EC020 || M68K_EMULATE_040
   {m68k_op_mull_32_d           , 0xfff8, 0x4c00, {  0,   0,  43,  43}},
   {m68k_op_mull_32_ai          , 0xfff8, 0x4c10, {  0,   0,  47,  47}},
   {m68k_op_mull_32_pi          , 0xfff8, 0x4c18, {  0,   0,  47,  47}},
@@ -36051,6 +36148,7 @@ static const opcode_handler_struct m68k_opcode_handler_table[] =
   {m68k_op_divl_32_pd          , 0xfff8, 0x4c60, {  0,   0,  89,  89}},
   {m68k_op_divl_32_di          , 0xfff8, 0x4c68, {  0,   0,  89,  89}},
   {m68k_op_divl_32_ix          , 0xfff8, 0x4c70, {  0,   0,  91,  91}},
+#endif
   {m68k_op_movem_16_er_ai      , 0xfff8, 0x4c90, { 12,  12,  12,  12}},
   {m68k_op_movem_16_er_pi      , 0xfff8, 0x4c98, { 12,  12,   8,   8}},
   {m68k_op_movem_16_er_di      , 0xfff8, 0x4ca8, { 16,  16,  13,  13}},
@@ -36182,8 +36280,10 @@ static const opcode_handler_struct m68k_opcode_handler_table[] =
   {m68k_op_sle_8_di            , 0xfff8, 0x5fe8, { 16,  16,  11,  11}},
   {m68k_op_sle_8_ix            , 0xfff8, 0x5ff0, { 18,  18,  13,  13}},
   {m68k_op_sbcd_8_mm_ax7       , 0xfff8, 0x8f08, { 18,  18,  16,  16}},
+#if M68K_EMULATE_020 || M68K_EMULATE_EC020 || M68K_EMULATE_040
   {m68k_op_pack_16_mm_ax7      , 0xfff8, 0x8f48, {  0,   0,  13,  13}},
   {m68k_op_unpk_16_mm_ax7      , 0xfff8, 0x8f88, {  0,   0,  13,  13}},
+#endif
   {m68k_op_subx_8_mm_ax7       , 0xfff8, 0x9f08, { 18,  18,  12,  12}},
   {m68k_op_cmpm_8_ax7          , 0xfff8, 0xbf08, { 12,  12,   9,   9}},
   {m68k_op_abcd_8_mm_ax7       , 0xfff8, 0xcf08, { 18,  18,  16,  16}},
@@ -36228,6 +36328,7 @@ static const opcode_handler_struct m68k_opcode_handler_table[] =
   {m68k_op_rol_16_pd           , 0xfff8, 0xe7e0, { 14,  14,  12,  12}},
   {m68k_op_rol_16_di           , 0xfff8, 0xe7e8, { 16,  16,  12,  12}},
   {m68k_op_rol_16_ix           , 0xfff8, 0xe7f0, { 18,  18,  14,  14}},
+#if M68K_EMULATE_020 || M68K_EMULATE_EC020 || M68K_EMULATE_040
   {m68k_op_bftst_32_d          , 0xfff8, 0xe8c0, {  0,   0,   6,   6}},
   {m68k_op_bftst_32_ai         , 0xfff8, 0xe8d0, {  0,   0,  17,  17}},
   {m68k_op_bftst_32_di         , 0xfff8, 0xe8e8, {  0,   0,  18,  18}},
@@ -36260,7 +36361,8 @@ static const opcode_handler_struct m68k_opcode_handler_table[] =
   {m68k_op_bfins_32_ai         , 0xfff8, 0xefd0, {  0,   0,  21,  21}},
   {m68k_op_bfins_32_di         , 0xfff8, 0xefe8, {  0,   0,  22,  22}},
   {m68k_op_bfins_32_ix         , 0xfff8, 0xeff0, {  0,   0,  24,  24}},
-  {m68k_op_move16_32           , 0xfff8, 0xf620, {  0,   0,   0,   4}},
+#endif
+  {m68k_op_move16_32           , 0xfff8, 0xf620, {  0,   0,   0,   4}}, /* ???????? */
   {m68k_op_ori_8_pi7           , 0xffff, 0x001f, { 16,  16,   8,   8}},
   {m68k_op_ori_8_pd7           , 0xffff, 0x0027, { 18,  18,   9,   9}},
   {m68k_op_ori_8_aw            , 0xffff, 0x0038, { 20,  20,   8,   8}},
@@ -36271,10 +36373,12 @@ static const opcode_handler_struct m68k_opcode_handler_table[] =
   {m68k_op_ori_16_tos          , 0xffff, 0x007c, { 20,  16,  12,  12}},
   {m68k_op_ori_32_aw           , 0xffff, 0x00b8, { 32,  32,   8,   8}},
   {m68k_op_ori_32_al           , 0xffff, 0x00b9, { 36,  36,   8,   8}},
+#if M68K_EMULATE_020 || M68K_EMULATE_EC020 || M68K_EMULATE_040
   {m68k_op_chk2cmp2_8_aw       , 0xffff, 0x00f8, {  0,   0,  22,  22}},
   {m68k_op_chk2cmp2_8_al       , 0xffff, 0x00f9, {  0,   0,  22,  22}},
   {m68k_op_chk2cmp2_8_pcdi     , 0xffff, 0x00fa, {  0,   0,  23,  23}},
   {m68k_op_chk2cmp2_8_pcix     , 0xffff, 0x00fb, {  0,   0,  23,  23}},
+#endif
   {m68k_op_andi_8_pi7          , 0xffff, 0x021f, { 16,  16,   8,   8}},
   {m68k_op_andi_8_pd7          , 0xffff, 0x0227, { 18,  18,   9,   9}},
   {m68k_op_andi_8_aw           , 0xffff, 0x0238, { 20,  20,   8,   8}},
@@ -36285,10 +36389,12 @@ static const opcode_handler_struct m68k_opcode_handler_table[] =
   {m68k_op_andi_16_tos         , 0xffff, 0x027c, { 20,  16,  12,  12}},
   {m68k_op_andi_32_aw          , 0xffff, 0x02b8, { 32,  32,   8,   8}},
   {m68k_op_andi_32_al          , 0xffff, 0x02b9, { 36,  36,   8,   8}},
+#if M68K_EMULATE_020 || M68K_EMULATE_EC020 || M68K_EMULATE_040
   {m68k_op_chk2cmp2_16_aw      , 0xffff, 0x02f8, {  0,   0,  22,  22}},
   {m68k_op_chk2cmp2_16_al      , 0xffff, 0x02f9, {  0,   0,  22,  22}},
   {m68k_op_chk2cmp2_16_pcdi    , 0xffff, 0x02fa, {  0,   0,  23,  23}},
   {m68k_op_chk2cmp2_16_pcix    , 0xffff, 0x02fb, {  0,   0,  23,  23}},
+#endif
   {m68k_op_subi_8_pi7          , 0xffff, 0x041f, { 16,  16,   8,   8}},
   {m68k_op_subi_8_pd7          , 0xffff, 0x0427, { 18,  18,   9,   9}},
   {m68k_op_subi_8_aw           , 0xffff, 0x0438, { 20,  20,   8,   8}},
@@ -36297,10 +36403,12 @@ static const opcode_handler_struct m68k_opcode_handler_table[] =
   {m68k_op_subi_16_al          , 0xffff, 0x0479, { 24,  24,   8,   8}},
   {m68k_op_subi_32_aw          , 0xffff, 0x04b8, { 32,  32,   8,   8}},
   {m68k_op_subi_32_al          , 0xffff, 0x04b9, { 36,  36,   8,   8}},
+#if M68K_EMULATE_020 || M68K_EMULATE_EC020 || M68K_EMULATE_040
   {m68k_op_chk2cmp2_32_aw      , 0xffff, 0x04f8, {  0,   0,  22,  22}},
   {m68k_op_chk2cmp2_32_al      , 0xffff, 0x04f9, {  0,   0,  22,  22}},
   {m68k_op_chk2cmp2_32_pcdi    , 0xffff, 0x04fa, {  0,   0,  23,  23}},
   {m68k_op_chk2cmp2_32_pcix    , 0xffff, 0x04fb, {  0,   0,  23,  23}},
+#endif
   {m68k_op_addi_8_pi7          , 0xffff, 0x061f, { 16,  16,   8,   8}},
   {m68k_op_addi_8_pd7          , 0xffff, 0x0627, { 18,  18,   9,   9}},
   {m68k_op_addi_8_aw           , 0xffff, 0x0638, { 20,  20,   8,   8}},
@@ -36309,10 +36417,12 @@ static const opcode_handler_struct m68k_opcode_handler_table[] =
   {m68k_op_addi_16_al          , 0xffff, 0x0679, { 24,  24,   8,   8}},
   {m68k_op_addi_32_aw          , 0xffff, 0x06b8, { 32,  32,   8,   8}},
   {m68k_op_addi_32_al          , 0xffff, 0x06b9, { 36,  36,   8,   8}},
+#if M68K_EMULATE_020 || M68K_EMULATE_EC020 || M68K_EMULATE_040
   {m68k_op_callm_32_aw         , 0xffff, 0x06f8, {  0,   0,  64,  64}},
   {m68k_op_callm_32_al         , 0xffff, 0x06f9, {  0,   0,  64,  64}},
   {m68k_op_callm_32_pcdi       , 0xffff, 0x06fa, {  0,   0,  65,  65}},
   {m68k_op_callm_32_pcix       , 0xffff, 0x06fb, {  0,   0,  67,  67}},
+#endif
   {m68k_op_btst_8_s_pi7        , 0xffff, 0x081f, { 12,  12,   8,   8}},
   {m68k_op_btst_8_s_pd7        , 0xffff, 0x0827, { 14,  14,   9,   9}},
   {m68k_op_btst_8_s_aw         , 0xffff, 0x0838, { 16,  16,   8,   8}},
@@ -36341,27 +36451,36 @@ static const opcode_handler_struct m68k_opcode_handler_table[] =
   {m68k_op_eori_16_tos         , 0xffff, 0x0a7c, { 20,  16,  12,  12}},
   {m68k_op_eori_32_aw          , 0xffff, 0x0ab8, { 32,  32,   8,   8}},
   {m68k_op_eori_32_al          , 0xffff, 0x0ab9, { 36,  36,   8,   8}},
+#if M68K_EMULATE_020 || M68K_EMULATE_EC020 || M68K_EMULATE_040
   {m68k_op_cas_8_pi7           , 0xffff, 0x0adf, {  0,   0,  16,  16}},
   {m68k_op_cas_8_pd7           , 0xffff, 0x0ae7, {  0,   0,  17,  17}},
   {m68k_op_cas_8_aw            , 0xffff, 0x0af8, {  0,   0,  16,  16}},
   {m68k_op_cas_8_al            , 0xffff, 0x0af9, {  0,   0,  16,  16}},
+#endif
   {m68k_op_cmpi_8_pi7          , 0xffff, 0x0c1f, { 12,  12,   6,   6}},
   {m68k_op_cmpi_8_pd7          , 0xffff, 0x0c27, { 14,  14,   7,   7}},
   {m68k_op_cmpi_8_aw           , 0xffff, 0x0c38, { 16,  16,   6,   6}},
   {m68k_op_cmpi_8_al           , 0xffff, 0x0c39, { 20,  20,   6,   6}},
+#if M68K_EMULATE_020 || M68K_EMULATE_EC020 || M68K_EMULATE_040
   {m68k_op_cmpi_8_pcdi         , 0xffff, 0x0c3a, {  0,   0,   7,   7}},
   {m68k_op_cmpi_8_pcix         , 0xffff, 0x0c3b, {  0,   0,   9,   9}},
+#endif
   {m68k_op_cmpi_16_aw          , 0xffff, 0x0c78, { 16,  16,   6,   6}},
   {m68k_op_cmpi_16_al          , 0xffff, 0x0c79, { 20,  20,   6,   6}},
+#if M68K_EMULATE_020 || M68K_EMULATE_EC020 || M68K_EMULATE_040
   {m68k_op_cmpi_16_pcdi        , 0xffff, 0x0c7a, {  0,   0,   7,   7}},
   {m68k_op_cmpi_16_pcix        , 0xffff, 0x0c7b, {  0,   0,   9,   9}},
+#endif
   {m68k_op_cmpi_32_aw          , 0xffff, 0x0cb8, { 24,  24,   6,   6}},
   {m68k_op_cmpi_32_al          , 0xffff, 0x0cb9, { 28,  28,   6,   6}},
+#if M68K_EMULATE_020 || M68K_EMULATE_EC020 || M68K_EMULATE_040
   {m68k_op_cmpi_32_pcdi        , 0xffff, 0x0cba, {  0,   0,   7,   7}},
   {m68k_op_cmpi_32_pcix        , 0xffff, 0x0cbb, {  0,   0,   9,   9}},
   {m68k_op_cas_16_aw           , 0xffff, 0x0cf8, {  0,   0,  16,  16}},
   {m68k_op_cas_16_al           , 0xffff, 0x0cf9, {  0,   0,  16,  16}},
   {m68k_op_cas2_16             , 0xffff, 0x0cfc, {  0,   0,  12,  12}},
+#endif
+#if M68K_EMULATE_010 || M68K_EMULATE_020 || M68K_EMULATE_EC020 || M68K_EMULATE_040
   {m68k_op_moves_8_pi7         , 0xffff, 0x0e1f, {  0,  18,   9,   9}},
   {m68k_op_moves_8_pd7         , 0xffff, 0x0e27, {  0,  20,  10,  10}},
   {m68k_op_moves_8_aw          , 0xffff, 0x0e38, {  0,  26,   9,   9}},
@@ -36370,9 +36489,12 @@ static const opcode_handler_struct m68k_opcode_handler_table[] =
   {m68k_op_moves_16_al         , 0xffff, 0x0e79, {  0,  30,   9,   9}},
   {m68k_op_moves_32_aw         , 0xffff, 0x0eb8, {  0,  32,   9,   9}},
   {m68k_op_moves_32_al         , 0xffff, 0x0eb9, {  0,  36,   9,   9}},
+#endif
+#if M68K_EMULATE_020 || M68K_EMULATE_EC020 || M68K_EMULATE_040
   {m68k_op_cas_32_aw           , 0xffff, 0x0ef8, {  0,   0,  16,  16}},
   {m68k_op_cas_32_al           , 0xffff, 0x0ef9, {  0,   0,  16,  16}},
   {m68k_op_cas2_32             , 0xffff, 0x0efc, {  0,   0,  12,  12}},
+#endif
   {m68k_op_move_8_aw_pi7       , 0xffff, 0x11df, { 16,  16,   8,   8}},
   {m68k_op_move_8_aw_pd7       , 0xffff, 0x11e7, { 18,  18,   9,   9}},
   {m68k_op_move_8_aw_aw        , 0xffff, 0x11f8, { 20,  20,   8,   8}},
@@ -36439,8 +36561,10 @@ static const opcode_handler_struct m68k_opcode_handler_table[] =
   {m68k_op_clr_16_al           , 0xffff, 0x4279, { 20,  14,   8,   8}},
   {m68k_op_clr_32_aw           , 0xffff, 0x42b8, { 24,  16,   8,   8}},
   {m68k_op_clr_32_al           , 0xffff, 0x42b9, { 28,  20,   8,   8}},
+#if M68K_EMULATE_010 || M68K_EMULATE_020 || M68K_EMULATE_EC020 || M68K_EMULATE_040
   {m68k_op_move_16_frc_aw      , 0xffff, 0x42f8, {  0,  16,   8,   8}},
   {m68k_op_move_16_frc_al      , 0xffff, 0x42f9, {  0,  20,   8,   8}},
+#endif
   {m68k_op_neg_8_pi7           , 0xffff, 0x441f, { 12,  12,   8,   8}},
   {m68k_op_neg_8_pd7           , 0xffff, 0x4427, { 14,  14,   9,   9}},
   {m68k_op_neg_8_aw            , 0xffff, 0x4438, { 16,  16,   8,   8}},
@@ -36467,7 +36591,9 @@ static const opcode_handler_struct m68k_opcode_handler_table[] =
   {m68k_op_move_16_tos_pcdi    , 0xffff, 0x46fa, { 20,  20,  13,  13}},
   {m68k_op_move_16_tos_pcix    , 0xffff, 0x46fb, { 22,  22,  15,  15}},
   {m68k_op_move_16_tos_i       , 0xffff, 0x46fc, { 16,  16,  10,  10}},
+#if M68K_EMULATE_020 || M68K_EMULATE_EC020 || M68K_EMULATE_040
   {m68k_op_link_32_a7          , 0xffff, 0x480f, {  0,   0,   6,   6}},
+#endif
   {m68k_op_nbcd_8_pi7          , 0xffff, 0x481f, { 12,  12,  10,  10}},
   {m68k_op_nbcd_8_pd7          , 0xffff, 0x4827, { 14,  14,  11,  11}},
   {m68k_op_nbcd_8_aw           , 0xffff, 0x4838, { 16,  16,  10,  10}},
@@ -36484,24 +36610,31 @@ static const opcode_handler_struct m68k_opcode_handler_table[] =
   {m68k_op_tst_8_pd7           , 0xffff, 0x4a27, { 10,  10,   7,   7}},
   {m68k_op_tst_8_aw            , 0xffff, 0x4a38, { 12,  12,   6,   6}},
   {m68k_op_tst_8_al            , 0xffff, 0x4a39, { 16,  16,   6,   6}},
+#if M68K_EMULATE_020 || M68K_EMULATE_EC020 || M68K_EMULATE_040
   {m68k_op_tst_8_pcdi          , 0xffff, 0x4a3a, {  0,   0,   7,   7}},
   {m68k_op_tst_8_pcix          , 0xffff, 0x4a3b, {  0,   0,   9,   9}},
   {m68k_op_tst_8_i             , 0xffff, 0x4a3c, {  0,   0,   6,   6}},
+#endif
   {m68k_op_tst_16_aw           , 0xffff, 0x4a78, { 12,  12,   6,   6}},
   {m68k_op_tst_16_al           , 0xffff, 0x4a79, { 16,  16,   6,   6}},
+#if M68K_EMULATE_020 || M68K_EMULATE_EC020 || M68K_EMULATE_040
   {m68k_op_tst_16_pcdi         , 0xffff, 0x4a7a, {  0,   0,   7,   7}},
   {m68k_op_tst_16_pcix         , 0xffff, 0x4a7b, {  0,   0,   9,   9}},
   {m68k_op_tst_16_i            , 0xffff, 0x4a7c, {  0,   0,   6,   6}},
+#endif
   {m68k_op_tst_32_aw           , 0xffff, 0x4ab8, { 16,  16,   6,   6}},
   {m68k_op_tst_32_al           , 0xffff, 0x4ab9, { 20,  20,   6,   6}},
+#if M68K_EMULATE_020 || M68K_EMULATE_EC020 || M68K_EMULATE_040
   {m68k_op_tst_32_pcdi         , 0xffff, 0x4aba, {  0,   0,   7,   7}},
   {m68k_op_tst_32_pcix         , 0xffff, 0x4abb, {  0,   0,   9,   9}},
   {m68k_op_tst_32_i            , 0xffff, 0x4abc, {  0,   0,   6,   6}},
+#endif
   {m68k_op_tas_8_pi7           , 0xffff, 0x4adf, { 18,  18,  16,  16}},
   {m68k_op_tas_8_pd7           , 0xffff, 0x4ae7, { 20,  20,  17,  17}},
   {m68k_op_tas_8_aw            , 0xffff, 0x4af8, { 22,  22,  16,  16}},
   {m68k_op_tas_8_al            , 0xffff, 0x4af9, { 26,  26,  16,  16}},
   {m68k_op_illegal             , 0xffff, 0x4afc, {  4,   4,   4,   4}},
+#if M68K_EMULATE_020 || M68K_EMULATE_EC020 || M68K_EMULATE_040
   {m68k_op_mull_32_aw          , 0xffff, 0x4c38, {  0,   0,  47,  47}},
   {m68k_op_mull_32_al          , 0xffff, 0x4c39, {  0,   0,  47,  47}},
   {m68k_op_mull_32_pcdi        , 0xffff, 0x4c3a, {  0,   0,  48,  48}},
@@ -36512,6 +36645,7 @@ static const opcode_handler_struct m68k_opcode_handler_table[] =
   {m68k_op_divl_32_pcdi        , 0xffff, 0x4c7a, {  0,   0,  89,  89}},
   {m68k_op_divl_32_pcix        , 0xffff, 0x4c7b, {  0,   0,  91,  91}},
   {m68k_op_divl_32_i           , 0xffff, 0x4c7c, {  0,   0,  88,  88}},
+#endif
   {m68k_op_movem_16_er_aw      , 0xffff, 0x4cb8, { 16,  16,  12,  12}},
   {m68k_op_movem_16_er_al      , 0xffff, 0x4cb9, { 20,  20,  12,  12}},
   {m68k_op_movem_16_er_pcdi    , 0xffff, 0x4cba, { 16,  16,   9,   9}},
@@ -36526,12 +36660,16 @@ static const opcode_handler_struct m68k_opcode_handler_table[] =
   {m68k_op_nop                 , 0xffff, 0x4e71, {  4,   4,   2,   2}},
   {m68k_op_stop                , 0xffff, 0x4e72, {  4,   4,   8,   8}},
   {m68k_op_rte_32              , 0xffff, 0x4e73, { 20,  24,  20,  20}},
+#if M68K_EMULATE_010 || M68K_EMULATE_020 || M68K_EMULATE_EC020 || M68K_EMULATE_040
   {m68k_op_rtd_32              , 0xffff, 0x4e74, {  0,  16,  10,  10}},
+#endif
   {m68k_op_rts_32              , 0xffff, 0x4e75, { 16,  16,  10,  10}},
   {m68k_op_trapv               , 0xffff, 0x4e76, {  4,   4,   4,   4}},
   {m68k_op_rtr_32              , 0xffff, 0x4e77, { 20,  20,  14,  14}},
+#if M68K_EMULATE_010 || M68K_EMULATE_020 || M68K_EMULATE_EC020 || M68K_EMULATE_040
   {m68k_op_movec_32_cr         , 0xffff, 0x4e7a, {  0,  12,   6,   6}},
   {m68k_op_movec_32_rc         , 0xffff, 0x4e7b, {  0,  10,  12,  12}},
+#endif
   {m68k_op_jsr_32_aw           , 0xffff, 0x4eb8, { 18,  18,   4,   4}},
   {m68k_op_jsr_32_al           , 0xffff, 0x4eb9, { 20,  20,   4,   4}},
   {m68k_op_jsr_32_pcdi         , 0xffff, 0x4eba, { 18,  18,   5,   5}},
@@ -36544,114 +36682,146 @@ static const opcode_handler_struct m68k_opcode_handler_table[] =
   {m68k_op_st_8_pd7            , 0xffff, 0x50e7, { 14,  14,  11,  11}},
   {m68k_op_st_8_aw             , 0xffff, 0x50f8, { 16,  16,  10,  10}},
   {m68k_op_st_8_al             , 0xffff, 0x50f9, { 20,  20,  10,  10}},
+#if M68K_EMULATE_020 || M68K_EMULATE_EC020 || M68K_EMULATE_040
   {m68k_op_trapt_16            , 0xffff, 0x50fa, {  0,   0,   6,   6}},
   {m68k_op_trapt_32            , 0xffff, 0x50fb, {  0,   0,   8,   8}},
   {m68k_op_trapt               , 0xffff, 0x50fc, {  0,   0,   4,   4}},
+#endif
   {m68k_op_sf_8_pi7            , 0xffff, 0x51df, { 12,  12,  10,  10}},
   {m68k_op_sf_8_pd7            , 0xffff, 0x51e7, { 14,  14,  11,  11}},
   {m68k_op_sf_8_aw             , 0xffff, 0x51f8, { 16,  16,  10,  10}},
   {m68k_op_sf_8_al             , 0xffff, 0x51f9, { 20,  20,  10,  10}},
+#if M68K_EMULATE_020 || M68K_EMULATE_EC020 || M68K_EMULATE_040
   {m68k_op_trapf_16            , 0xffff, 0x51fa, {  0,   0,   6,   6}},
   {m68k_op_trapf_32            , 0xffff, 0x51fb, {  0,   0,   8,   8}},
   {m68k_op_trapf               , 0xffff, 0x51fc, {  0,   0,   4,   4}},
+#endif
   {m68k_op_shi_8_pi7           , 0xffff, 0x52df, { 12,  12,  10,  10}},
   {m68k_op_shi_8_pd7           , 0xffff, 0x52e7, { 14,  14,  11,  11}},
   {m68k_op_shi_8_aw            , 0xffff, 0x52f8, { 16,  16,  10,  10}},
   {m68k_op_shi_8_al            , 0xffff, 0x52f9, { 20,  20,  10,  10}},
+#if M68K_EMULATE_020 || M68K_EMULATE_EC020 || M68K_EMULATE_040
   {m68k_op_traphi_16           , 0xffff, 0x52fa, {  0,   0,   6,   6}},
   {m68k_op_traphi_32           , 0xffff, 0x52fb, {  0,   0,   8,   8}},
   {m68k_op_traphi              , 0xffff, 0x52fc, {  0,   0,   4,   4}},
+#endif
   {m68k_op_sls_8_pi7           , 0xffff, 0x53df, { 12,  12,  10,  10}},
   {m68k_op_sls_8_pd7           , 0xffff, 0x53e7, { 14,  14,  11,  11}},
   {m68k_op_sls_8_aw            , 0xffff, 0x53f8, { 16,  16,  10,  10}},
   {m68k_op_sls_8_al            , 0xffff, 0x53f9, { 20,  20,  10,  10}},
+#if M68K_EMULATE_020 || M68K_EMULATE_EC020 || M68K_EMULATE_040
   {m68k_op_trapls_16           , 0xffff, 0x53fa, {  0,   0,   6,   6}},
   {m68k_op_trapls_32           , 0xffff, 0x53fb, {  0,   0,   8,   8}},
   {m68k_op_trapls              , 0xffff, 0x53fc, {  0,   0,   4,   4}},
+#endif
   {m68k_op_scc_8_pi7           , 0xffff, 0x54df, { 12,  12,  10,  10}},
   {m68k_op_scc_8_pd7           , 0xffff, 0x54e7, { 14,  14,  11,  11}},
   {m68k_op_scc_8_aw            , 0xffff, 0x54f8, { 16,  16,  10,  10}},
   {m68k_op_scc_8_al            , 0xffff, 0x54f9, { 20,  20,  10,  10}},
+#if M68K_EMULATE_020 || M68K_EMULATE_EC020 || M68K_EMULATE_040
   {m68k_op_trapcc_16           , 0xffff, 0x54fa, {  0,   0,   6,   6}},
   {m68k_op_trapcc_32           , 0xffff, 0x54fb, {  0,   0,   8,   8}},
   {m68k_op_trapcc              , 0xffff, 0x54fc, {  0,   0,   4,   4}},
+#endif
   {m68k_op_scs_8_pi7           , 0xffff, 0x55df, { 12,  12,  10,  10}},
   {m68k_op_scs_8_pd7           , 0xffff, 0x55e7, { 14,  14,  11,  11}},
   {m68k_op_scs_8_aw            , 0xffff, 0x55f8, { 16,  16,  10,  10}},
   {m68k_op_scs_8_al            , 0xffff, 0x55f9, { 20,  20,  10,  10}},
+#if M68K_EMULATE_020 || M68K_EMULATE_EC020 || M68K_EMULATE_040
   {m68k_op_trapcs_16           , 0xffff, 0x55fa, {  0,   0,   6,   6}},
   {m68k_op_trapcs_32           , 0xffff, 0x55fb, {  0,   0,   8,   8}},
   {m68k_op_trapcs              , 0xffff, 0x55fc, {  0,   0,   4,   4}},
+#endif
   {m68k_op_sne_8_pi7           , 0xffff, 0x56df, { 12,  12,  10,  10}},
   {m68k_op_sne_8_pd7           , 0xffff, 0x56e7, { 14,  14,  11,  11}},
   {m68k_op_sne_8_aw            , 0xffff, 0x56f8, { 16,  16,  10,  10}},
   {m68k_op_sne_8_al            , 0xffff, 0x56f9, { 20,  20,  10,  10}},
+#if M68K_EMULATE_020 || M68K_EMULATE_EC020 || M68K_EMULATE_040
   {m68k_op_trapne_16           , 0xffff, 0x56fa, {  0,   0,   6,   6}},
   {m68k_op_trapne_32           , 0xffff, 0x56fb, {  0,   0,   8,   8}},
   {m68k_op_trapne              , 0xffff, 0x56fc, {  0,   0,   4,   4}},
+#endif
   {m68k_op_seq_8_pi7           , 0xffff, 0x57df, { 12,  12,  10,  10}},
   {m68k_op_seq_8_pd7           , 0xffff, 0x57e7, { 14,  14,  11,  11}},
   {m68k_op_seq_8_aw            , 0xffff, 0x57f8, { 16,  16,  10,  10}},
   {m68k_op_seq_8_al            , 0xffff, 0x57f9, { 20,  20,  10,  10}},
+#if M68K_EMULATE_020 || M68K_EMULATE_EC020 || M68K_EMULATE_040
   {m68k_op_trapeq_16           , 0xffff, 0x57fa, {  0,   0,   6,   6}},
   {m68k_op_trapeq_32           , 0xffff, 0x57fb, {  0,   0,   8,   8}},
   {m68k_op_trapeq              , 0xffff, 0x57fc, {  0,   0,   4,   4}},
+#endif
   {m68k_op_svc_8_pi7           , 0xffff, 0x58df, { 12,  12,  10,  10}},
   {m68k_op_svc_8_pd7           , 0xffff, 0x58e7, { 14,  14,  11,  11}},
   {m68k_op_svc_8_aw            , 0xffff, 0x58f8, { 16,  16,  10,  10}},
   {m68k_op_svc_8_al            , 0xffff, 0x58f9, { 20,  20,  10,  10}},
+#if M68K_EMULATE_020 || M68K_EMULATE_EC020 || M68K_EMULATE_040
   {m68k_op_trapvc_16           , 0xffff, 0x58fa, {  0,   0,   6,   6}},
   {m68k_op_trapvc_32           , 0xffff, 0x58fb, {  0,   0,   8,   8}},
   {m68k_op_trapvc              , 0xffff, 0x58fc, {  0,   0,   4,   4}},
+#endif
   {m68k_op_svs_8_pi7           , 0xffff, 0x59df, { 12,  12,  10,  10}},
   {m68k_op_svs_8_pd7           , 0xffff, 0x59e7, { 14,  14,  11,  11}},
   {m68k_op_svs_8_aw            , 0xffff, 0x59f8, { 16,  16,  10,  10}},
   {m68k_op_svs_8_al            , 0xffff, 0x59f9, { 20,  20,  10,  10}},
+#if M68K_EMULATE_020 || M68K_EMULATE_EC020 || M68K_EMULATE_040
   {m68k_op_trapvs_16           , 0xffff, 0x59fa, {  0,   0,   6,   6}},
   {m68k_op_trapvs_32           , 0xffff, 0x59fb, {  0,   0,   8,   8}},
   {m68k_op_trapvs              , 0xffff, 0x59fc, {  0,   0,   4,   4}},
+#endif
   {m68k_op_spl_8_pi7           , 0xffff, 0x5adf, { 12,  12,  10,  10}},
   {m68k_op_spl_8_pd7           , 0xffff, 0x5ae7, { 14,  14,  11,  11}},
   {m68k_op_spl_8_aw            , 0xffff, 0x5af8, { 16,  16,  10,  10}},
   {m68k_op_spl_8_al            , 0xffff, 0x5af9, { 20,  20,  10,  10}},
+#if M68K_EMULATE_020 || M68K_EMULATE_EC020 || M68K_EMULATE_040
   {m68k_op_trappl_16           , 0xffff, 0x5afa, {  0,   0,   6,   6}},
   {m68k_op_trappl_32           , 0xffff, 0x5afb, {  0,   0,   8,   8}},
   {m68k_op_trappl              , 0xffff, 0x5afc, {  0,   0,   4,   4}},
+#endif
   {m68k_op_smi_8_pi7           , 0xffff, 0x5bdf, { 12,  12,  10,  10}},
   {m68k_op_smi_8_pd7           , 0xffff, 0x5be7, { 14,  14,  11,  11}},
   {m68k_op_smi_8_aw            , 0xffff, 0x5bf8, { 16,  16,  10,  10}},
   {m68k_op_smi_8_al            , 0xffff, 0x5bf9, { 20,  20,  10,  10}},
+#if M68K_EMULATE_020 || M68K_EMULATE_EC020 || M68K_EMULATE_040
   {m68k_op_trapmi_16           , 0xffff, 0x5bfa, {  0,   0,   6,   6}},
   {m68k_op_trapmi_32           , 0xffff, 0x5bfb, {  0,   0,   8,   8}},
   {m68k_op_trapmi              , 0xffff, 0x5bfc, {  0,   0,   4,   4}},
+#endif
   {m68k_op_sge_8_pi7           , 0xffff, 0x5cdf, { 12,  12,  10,  10}},
   {m68k_op_sge_8_pd7           , 0xffff, 0x5ce7, { 14,  14,  11,  11}},
   {m68k_op_sge_8_aw            , 0xffff, 0x5cf8, { 16,  16,  10,  10}},
   {m68k_op_sge_8_al            , 0xffff, 0x5cf9, { 20,  20,  10,  10}},
+#if M68K_EMULATE_020 || M68K_EMULATE_EC020 || M68K_EMULATE_040
   {m68k_op_trapge_16           , 0xffff, 0x5cfa, {  0,   0,   6,   6}},
   {m68k_op_trapge_32           , 0xffff, 0x5cfb, {  0,   0,   8,   8}},
   {m68k_op_trapge              , 0xffff, 0x5cfc, {  0,   0,   4,   4}},
+#endif
   {m68k_op_slt_8_pi7           , 0xffff, 0x5ddf, { 12,  12,  10,  10}},
   {m68k_op_slt_8_pd7           , 0xffff, 0x5de7, { 14,  14,  11,  11}},
   {m68k_op_slt_8_aw            , 0xffff, 0x5df8, { 16,  16,  10,  10}},
   {m68k_op_slt_8_al            , 0xffff, 0x5df9, { 20,  20,  10,  10}},
+#if M68K_EMULATE_020 || M68K_EMULATE_EC020 || M68K_EMULATE_040
   {m68k_op_traplt_16           , 0xffff, 0x5dfa, {  0,   0,   6,   6}},
   {m68k_op_traplt_32           , 0xffff, 0x5dfb, {  0,   0,   8,   8}},
   {m68k_op_traplt              , 0xffff, 0x5dfc, {  0,   0,   4,   4}},
+#endif
   {m68k_op_sgt_8_pi7           , 0xffff, 0x5edf, { 12,  12,  10,  10}},
   {m68k_op_sgt_8_pd7           , 0xffff, 0x5ee7, { 14,  14,  11,  11}},
   {m68k_op_sgt_8_aw            , 0xffff, 0x5ef8, { 16,  16,  10,  10}},
   {m68k_op_sgt_8_al            , 0xffff, 0x5ef9, { 20,  20,  10,  10}},
+#if M68K_EMULATE_020 || M68K_EMULATE_EC020 || M68K_EMULATE_040
   {m68k_op_trapgt_16           , 0xffff, 0x5efa, {  0,   0,   6,   6}},
   {m68k_op_trapgt_32           , 0xffff, 0x5efb, {  0,   0,   8,   8}},
   {m68k_op_trapgt              , 0xffff, 0x5efc, {  0,   0,   4,   4}},
+#endif
   {m68k_op_sle_8_pi7           , 0xffff, 0x5fdf, { 12,  12,  10,  10}},
   {m68k_op_sle_8_pd7           , 0xffff, 0x5fe7, { 14,  14,  11,  11}},
   {m68k_op_sle_8_aw            , 0xffff, 0x5ff8, { 16,  16,  10,  10}},
   {m68k_op_sle_8_al            , 0xffff, 0x5ff9, { 20,  20,  10,  10}},
+#if M68K_EMULATE_020 || M68K_EMULATE_EC020 || M68K_EMULATE_040
   {m68k_op_traple_16           , 0xffff, 0x5ffa, {  0,   0,   6,   6}},
   {m68k_op_traple_32           , 0xffff, 0x5ffb, {  0,   0,   8,   8}},
   {m68k_op_traple              , 0xffff, 0x5ffc, {  0,   0,   4,   4}},
+#endif
   {m68k_op_bra_16              , 0xffff, 0x6000, { 10,  10,  10,  10}},
   {m68k_op_bra_32              , 0xffff, 0x60ff, { 10,  10,  10,  10}},
   {m68k_op_bsr_16              , 0xffff, 0x6100, { 18,  18,   7,   7}},
@@ -36685,8 +36855,10 @@ static const opcode_handler_struct m68k_opcode_handler_table[] =
   {m68k_op_ble_16              , 0xffff, 0x6f00, { 10,  10,   6,   6}},
   {m68k_op_ble_32              , 0xffff, 0x6fff, { 10,  10,   6,   6}},
   {m68k_op_sbcd_8_mm_axy7      , 0xffff, 0x8f0f, { 18,  18,  16,  16}},
+#if M68K_EMULATE_020 || M68K_EMULATE_EC020 || M68K_EMULATE_040
   {m68k_op_pack_16_mm_axy7     , 0xffff, 0x8f4f, {  0,   0,  13,  13}},
   {m68k_op_unpk_16_mm_axy7     , 0xffff, 0x8f8f, {  0,   0,  13,  13}},
+#endif
   {m68k_op_subx_8_mm_axy7      , 0xffff, 0x9f0f, { 18,  18,  12,  12}},
   {m68k_op_cmpm_8_axy7         , 0xffff, 0xbf0f, { 12,  12,   9,   9}},
   {m68k_op_abcd_8_mm_axy7      , 0xffff, 0xcf0f, { 18,  18,  16,  16}},
@@ -36707,6 +36879,7 @@ static const opcode_handler_struct m68k_opcode_handler_table[] =
   {m68k_op_ror_16_al           , 0xffff, 0xe6f9, { 20,  20,  11,  11}},
   {m68k_op_rol_16_aw           , 0xffff, 0xe7f8, { 16,  16,  11,  11}},
   {m68k_op_rol_16_al           , 0xffff, 0xe7f9, { 20,  20,  11,  11}},
+#if M68K_EMULATE_020 || M68K_EMULATE_EC020 || M68K_EMULATE_040
   {m68k_op_bftst_32_aw         , 0xffff, 0xe8f8, {  0,   0,  17,  17}},
   {m68k_op_bftst_32_al         , 0xffff, 0xe8f9, {  0,   0,  17,  17}},
   {m68k_op_bftst_32_pcdi       , 0xffff, 0xe8fa, {  0,   0,  18,  18}},
@@ -36731,7 +36904,10 @@ static const opcode_handler_struct m68k_opcode_handler_table[] =
   {m68k_op_bfset_32_al         , 0xffff, 0xeef9, {  0,   0,  24,  24}},
   {m68k_op_bfins_32_aw         , 0xffff, 0xeff8, {  0,   0,  21,  21}},
   {m68k_op_bfins_32_al         , 0xffff, 0xeff9, {  0,   0,  21,  21}},
+#endif
+#if M68K_EMULATE_040
   {m68k_op_pflush_32           , 0xffff, 0xf518, {  0,   0,   0,   4}},
+#endif
   {0, 0, 0, {0, 0, 0, 0}}
 };
 
@@ -36746,12 +36922,8 @@ void m68ki_build_opcode_table(void)
   int k;
 
   for(i = 0; i < 256; i++)
-  {
-    m68ki_exception_cycle_table[0][i] = m68ki_exception_cycle_table[0][i] * 7;
-    m68ki_exception_cycle_table[1][i] = m68ki_exception_cycle_table[1][i] * 7;
-    m68ki_exception_cycle_table[2][i] = m68ki_exception_cycle_table[2][i] * 7;
-    m68ki_exception_cycle_table[3][i] = m68ki_exception_cycle_table[3][i] * 7;
-  }
+    for(k=0;k<NUM_CPU_TYPES;k++)
+      m68ki_exception_cycle_table[k][i] = m68ki_exception_cycle_table[k][i] * 7;
 
   for(i = 0; i < 0x10000; i++)
   {

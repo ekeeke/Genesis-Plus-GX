@@ -38,8 +38,7 @@ typedef struct
   uint8 regs[4];                                            /* internal registers (R/W) */
   uint32 mask[4];                                           /* registers address mask */
   uint32 addr[4];                                           /* registers address */
-  uint32 realtec;                                           /* bit 0: realtec mapper detected, bit 1: bootrom enabled */
-  uint16 jcart;                                             /* cartridge with JCART port */
+  uint16 realtec;                                           /* bit 0: realtec mapper detected, bit 1: bootrom enabled */
   uint16 bankshift;                                         /* cartridge with bankshift mecanism */
   unsigned int (*time_r)(unsigned int address);             /* !TIME signal ($a130xx) read handler  */
   void (*time_w)(unsigned int address, unsigned int data);  /* !TIME signal ($a130xx) write handler */
@@ -51,11 +50,12 @@ typedef struct
 typedef struct
 {
   uint8 *rom;       /* ROM data */
-  uint8 *base;      /* ROM area (slot 0) */
-  uint32 mask;      /* mask ROM */
-  uint32 lock_on;   /* 1: Lock-On enabled */
+  uint8 *base;      /* ROM base area (slot 0) */
   uint32 romsize;   /* ROM size */
-  T_CART_HW hw;     /* Custom hardware */
+  uint32 mask;      /* mask ROM */
+  uint16 lock_on;   /* 1: Lock-On enabled */
+  uint16 jcart;     /* 1: J-CART port enabled */
+  T_CART_HW hw;     /* Extra hardware */
 } T_CART;
 
 /* global variables */

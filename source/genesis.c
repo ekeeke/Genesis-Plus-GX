@@ -30,15 +30,10 @@ uint32 zirq;              /* /IRQ to Z80 */
 uint32 zstate;            /* Z80 bus state (d0 = BUSACK, d1 = /RESET) */
 uint32 zbank;             /* Z80 bank window address */
 uint32 gen_running;       /* 0: cpu are in locked state */
-int32 resetline;          /* soft reset is triggered on a random line (X-Men 2, Eternal Champions) */
 
 /*--------------------------------------------------------------------------*/
 /* Init, reset, shutdown functions                                          */
 /*--------------------------------------------------------------------------*/
-void set_softreset(void)
-{
-  resetline = (int) ((double) (lines_per_frame - 1) * rand() / (RAND_MAX + 1.0));
-}
 
 void gen_init(void)
 {
@@ -138,13 +133,17 @@ void gen_reset(uint32 hard_reset)
     mcycles_68k = 0;
     mcycles_z80 = 0;
   }
+  else
+  {
+    /* VDP is not reseted so CPU could be anywhere in a frame */
+    mcycles_68k = mcycles_z80 = (uint32)((MCYCLES_PER_LINE * lines_per_frame) * ((double)rand() / (double)RAND_MAX));
+  }
 
   zstate  = 0;  /* Z80 is reset & has control of the bus */
   zirq    = 0;  /* No interrupts occuring */
   zbank   = 0;  /* Assume default bank is $000000-$007FFF */
 
   /* Reset CPUs */
-  resetline = -1;
   gen_running = 1; 
   fm_reset(0);
   m68k_pulse_reset();

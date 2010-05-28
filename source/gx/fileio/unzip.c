@@ -108,7 +108,7 @@ int UnZipBuffer (unsigned char *outbuffer, u64 discoffset, char *filename)
   int bufferoffset = 0;
   int have = 0;
   char readbuffer[2048];
-  char msg[128];
+  char msg[64];
   FILE *fatfile = NULL;
 
   /*** FAT file support ***/
@@ -132,6 +132,12 @@ int UnZipBuffer (unsigned char *outbuffer, u64 discoffset, char *filename)
 
   /*** Copy PKZip header to local, used as info ***/
   memcpy (&pkzip, &readbuffer, sizeof (PKZIPHEADER));
+
+  if (FLIP32 (pkzip.uncompressedSize) > MAXROMSIZE)
+  {
+    GUI_WaitPrompt("Error","File size not supported !");
+    return 0;
+  }
 
   sprintf (msg, "Unzipping %d bytes ...", FLIP32 (pkzip.uncompressedSize));
   GUI_MsgBoxOpen("Information",msg,1);

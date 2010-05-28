@@ -308,9 +308,16 @@ int DVD_LoadFile(u8 *buffer, u32 selection)
     /* determine file type */
     if (!IsZipFile ((char *) readbuffer))
     {
-      char msg[50];
+      if (length > MAXROMSIZE)
+      {
+        GUI_WaitPrompt("Error","File size not supported !");
+        return 0;
+      }
+
+      char msg[64];
       sprintf(msg,"Loading %d bytes...", length);
       GUI_MsgBoxOpen("Information",msg,1);
+
       /* How many 2k blocks to read */
       int blocks = length / DVDCHUNK;
       int readoffset = 0;
@@ -373,7 +380,7 @@ int DVD_Open(void)
     while(DI_GetStatus() & DVD_INIT) usleep(10);
     if (!(DI_GetStatus() & DVD_READY))
     {
-      char msg[50];
+      char msg[64];
       sprintf(msg, "DI Status Error: 0x%08X !\n",DI_GetStatus());
       GUI_WaitPrompt("Error",msg);
       return 0;

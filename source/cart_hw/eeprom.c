@@ -111,14 +111,12 @@ void eeprom_init()
   }
 
   /* Game not found in database but header seems to indicate it uses EEPROM */
-  if (!sram.custom)
+  if (sram.detected && !sram.custom)
   {
     if ((sram.end - sram.start) < 2)
     {
-      sram.custom = 1;
-      sram.on     = 1;
-
       /* set SEGA mapper as default */
+      sram.custom = 1;
       memcpy(&eeprom.type, &database[9].type, sizeof(T_EEPROM_TYPE));
     }
   }

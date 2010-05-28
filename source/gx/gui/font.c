@@ -36,7 +36,7 @@ typedef struct _yay0header {
 	unsigned int chunks_offset ATTRIBUTE_PACKED;
 } yay0header;
 
-int font_size[256];
+u8 font_size[256];
 int fheight;
 
 static u8 *fontImage;
@@ -265,7 +265,7 @@ int FONT_Init(void)
     else
       c = i - fontHeader->first_char;
 
-    font_size[i] = ((unsigned char*)fontHeader)[fontHeader->width_table + c];
+    font_size[i] = ((u8*)fontHeader)[fontHeader->width_table + c];
   }
 
   /* font height */
@@ -403,28 +403,13 @@ void WriteCentre_HL( int y, char *string)
  *  Draw functions (FrameBuffer)
  *
  ****************************************************************************/
-void fntDrawHLine (int x1, int x2, int y, int color)
+static void fntDrawHLine (int x1, int x2, int y, int color)
 {
   int i;
   y = 320 * y;
   x1 >>= 1;
   x2 >>= 1;
   for (i = x1; i <= x2; i++) xfb[whichfb][y + i] = color;
-}
-
-void fntDrawVLine (int x, int y1, int y2, int color)
-{
-  int i;
-  x >>= 1;
-  for (i = y1; i <= y2; i++) xfb[whichfb][x + (640 * i) / 2] = color;
-}
-
-void fntDrawBox (int x1, int y1, int x2, int y2, int color)
-{
-  fntDrawHLine (x1, x2, y1, color);
-  fntDrawHLine (x1, x2, y2, color);
-  fntDrawVLine (x1, y1, y2, color);
-  fntDrawVLine (x2, y1, y2, color);
 }
 
 void fntDrawBoxFilled (int x1, int y1, int x2, int y2, int color)

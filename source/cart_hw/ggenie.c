@@ -27,7 +27,7 @@
 static struct
 {
   uint8 enabled;
-  uint8 rom[0x10000];
+  uint8 *rom;
   uint16 regs[0x20];
   uint16 old[6];
   uint16 data[6];
@@ -46,6 +46,10 @@ void ggenie_init(void)
   /* Open Game Genie ROM */
   FILE *f = fopen(GG_ROM,"rb");
   if (!f) return;
+
+  /* store Game Genie ROM above cartridge ROM + SRAM */
+  if (cart.romsize > 0x600000) return;
+  ggenie.rom = cart.rom + 0x600000;
 
   /* Load ROM */
   int i = 0;

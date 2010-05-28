@@ -24,6 +24,7 @@
 #include "shared.h"
 
 t_input input;
+int old_system[2] = {-1,-1};
 
 /************************************************************************************/
 /*                                                                                  */
@@ -70,7 +71,7 @@ static const uint8 hc_256[171] =
 };
 
 /*****************************************************************************
- * LIGHTGUN specific functions
+ * LIGHTGUN support
  *
  *****************************************************************************/
 static inline void lightgun_reset(int num)
@@ -146,7 +147,7 @@ uint32 justifier_read(void)
 }
 
 /*****************************************************************************
- * SEGA MOUSE specific functions
+ * SEGA MOUSE support
  *
  *****************************************************************************/
 static struct mega_mouse
@@ -268,7 +269,7 @@ uint32 mouse_read()
 
 
 /*****************************************************************************
- * GAMEPAD specific functions (2PLAYERS/4WAYPLAY) 
+ * GAMEPAD support (2PLAYERS/4WAYPLAY) 
  *
  *****************************************************************************/
 static struct pad
@@ -297,15 +298,15 @@ static inline void gamepad_update(uint32 i)
 
 static inline uint32 gamepad_read(uint32 i)
 {
-  int control;
+  /* bit7 is latched */
   int retval = 0x7F;
 
-  control = (gamepad[i].State & 0x40) >> 6; /* current TH state */
+  /* current TH state */
+  int control = (gamepad[i].State & 0x40) >> 6;
 
+  /* TH transitions counter */
   if (input.dev[i] == DEVICE_6BUTTON)
-  {
-    control += (gamepad[i].Counter & 3) << 1; /* TH transitions counter */
-  }
+    control += (gamepad[i].Counter & 3) << 1;
 
   switch (control)
   {
@@ -376,7 +377,6 @@ static inline uint32 gamepad_read(uint32 i)
       break;
   }
 
-  /* bit7 is latched */
   return retval;
 }
 
@@ -397,7 +397,7 @@ static inline void gamepad_write(uint32 i, uint32 data)
 
 
 /*****************************************************************************
- * TEAMPLAYER adapter
+ * TEAMPLAYER adapter support
  *
  *****************************************************************************/
 static struct teamplayer
@@ -536,7 +536,7 @@ static inline void teamplayer_write(uint32 port, uint32 data)
 }
 
 /*****************************************************************************
- * 4WAYPLAY adapter
+ * 4-WAYPLAY adapter support
  *
  *****************************************************************************/
 static inline void wayplay_write(uint32 port, uint32 data)
@@ -619,7 +619,8 @@ void teamplayer_2_write (uint32 data)
 
 uint32 jcart_read(uint32 address)
 {
-  return (gamepad_read(5) | ((gamepad_read(6)&0x3f) << 8)); /* fixes Micro Machines 2 */
+   /* TH2 (output) fixed to 0 on read (fixes Micro Machines 2) */
+   return (gamepad_read(5) | ((gamepad_read(6)&0x3f) << 8));
 }
 
 void jcart_write(uint32 address, uint32 data)
@@ -719,7 +720,7 @@ void input_init(void)
   }
 
   /* J-CART: add two gamepad inputs */
-  if (cart.hw.jcart)
+  if (cart.jcart)
   {
     input.dev[5] = config.input[2].padtype;
     input.dev[6] = config.input[3].padtype;
@@ -767,13 +768,15 @@ void input_update(void)
   switch (input.system[0])
   {
     case SYSTEM_GAMEPAD:
-      if (input.dev[0] == DEVICE_6BUTTON) gamepad_update(0);
+      if (input.dev[0] == DEVICE_6BUTTON)
+        gamepad_update(0);
       break;
 
     case SYSTEM_WAYPLAY:
       for (i=0; i<4; i++)
       {
-        if (input.dev[i] == DEVICE_6BUTTON) gamepad_update(i);
+        if (input.dev[i] == DEVICE_6BUTTON)
+          gamepad_update(i);
       }
       break;
   }
@@ -781,7 +784,8 @@ void input_update(void)
   switch (input.system[1])
   {
     case SYSTEM_GAMEPAD:
-      if (input.dev[4] == DEVICE_6BUTTON) gamepad_update(4);
+      if (input.dev[4] == DEVICE_6BUTTON)
+        gamepad_update(4);
       break;
 
     case SYSTEM_MENACER:
@@ -789,8 +793,10 @@ void input_update(void)
       break;
 
     case SYSTEM_JUSTIFIER:
-      if ((io_reg[2] & 0x30) == 0x00) lightgun_update(0);
-      if ((io_reg[2] & 0x30) == 0x20) lightgun_update(1);
+      if ((io_reg[2] & 0x30) == 0x00)
+        lightgun_update(0);
+      if ((io_reg[2] & 0x30) == 0x20)
+        lightgun_update(1);
       break;
   }
 }
@@ -801,13 +807,15 @@ void input_raz(void)
   switch (input.system[0])
   {
     case SYSTEM_GAMEPAD:
-      if (input.dev[0] == DEVICE_6BUTTON) gamepad_raz(0);
+      if (input.dev[0] == DEVICE_6BUTTON)
+        gamepad_raz(0);
       break;
 
     case SYSTEM_WAYPLAY:
       for (i=0; i<4; i++)
       {
-        if (input.dev[i] == DEVICE_6BUTTON) gamepad_raz(i);
+        if (input.dev[i] == DEVICE_6BUTTON)
+          gamepad_raz(i);
       }
       break;
   }
@@ -815,7 +823,123 @@ void input_raz(void)
   switch (input.system[1])
   {
     case SYSTEM_GAMEPAD:
-      if (input.dev[4] == DEVICE_6BUTTON) gamepad_raz(4);
+      if (input.dev[4] == DEVICE_6BUTTON)
+        gamepad_raz(4);
       break;
+  }
+}
+
+void input_autodetect(void)
+{
+  /* restore previous settings */
+  if (old_system[0] != -1)
+    input.system[0] = old_system[0];
+  if (old_system[1] != -1)
+    input.system[1] = old_system[1];
+
+  /* initialize default GUN settings */
+  input.x_offset = 0x00;
+  input.y_offset = 0x00;
+
+  /**********************************************
+          SEGA MENACER 
+  ***********************************************/
+  if (strstr(rominfo.international,"MENACER") != NULL)
+  {
+    /* save current setting */
+    if (old_system[0] == -1)
+      old_system[0] = input.system[0];
+    if (old_system[1] == -1)
+      old_system[1] = input.system[1];
+
+    input.system[0] = NO_SYSTEM;
+    input.system[1] = SYSTEM_MENACER;
+    input.x_offset = 0x52;
+    input.y_offset = 0x00;
+  }
+  else if (strstr(rominfo.international,"T2 ; THE ARCADE GAME") != NULL)
+  {
+    /* save current setting */
+    if (old_system[0] == -1)
+      old_system[0] = input.system[0];
+    if (old_system[1] == -1)
+      old_system[1] = input.system[1];
+
+    input.system[0] = SYSTEM_GAMEPAD;
+    input.system[1] = SYSTEM_MENACER;
+    input.x_offset = 0x84;
+    input.y_offset = 0x08;
+  }
+  else if (strstr(rominfo.international,"BODY COUNT") != NULL)
+  {
+    /* save current setting */
+    if (old_system[0] == -1)
+      old_system[0] = input.system[0];
+    if (old_system[1] == -1)
+      old_system[1] = input.system[1];
+
+    input.system[0] = SYSTEM_MOUSE;
+    input.system[1] = SYSTEM_MENACER;
+    input.x_offset = 0x44;
+    input.y_offset = 0x18;
+  }
+
+  /**********************************************
+          KONAMI JUSTIFIER 
+  ***********************************************/
+  else if (strstr(rominfo.international,"LETHAL ENFORCERSII") != NULL)
+  {
+    /* save current setting */
+    if (old_system[0] == -1)
+      old_system[0] = input.system[0];
+    if (old_system[1] == -1)
+      old_system[1] = input.system[1];
+
+    input.system[0] = SYSTEM_GAMEPAD;
+    input.system[1] = SYSTEM_JUSTIFIER;
+    input.x_offset = 0x18;
+    input.y_offset = 0x00;
+  }
+  else if (strstr(rominfo.international,"LETHAL ENFORCERS") != NULL)
+  {
+    /* save current setting */
+    if (old_system[0] == -1)
+      old_system[0] = input.system[0];
+    if (old_system[1] == -1)
+      old_system[1] = input.system[1];
+
+    input.system[0] = SYSTEM_GAMEPAD;
+    input.system[1] = SYSTEM_JUSTIFIER;
+    input.x_offset = 0x00;
+    input.y_offset = 0x00;
+  }
+
+  /**********************************************
+          J-CART 
+  ***********************************************/
+  cart.jcart = 0;
+  if (((strstr(rominfo.product,"00000000")  != NULL) && (rominfo.checksum == 0x168b)) ||  /* Super Skidmarks, Micro Machines Military*/
+      ((strstr(rominfo.product,"00000000")  != NULL) && (rominfo.checksum == 0x165e)) ||  /* Pete Sampras Tennis (1991), Micro Machines 96 */
+      ((strstr(rominfo.product,"00000000")  != NULL) && (rominfo.checksum == 0xcee0)) ||  /* Micro Machines Military (bad) */
+      ((strstr(rominfo.product,"00000000")  != NULL) && (rominfo.checksum == 0x2c41)) ||  /* Micro Machines 96 (bad) */
+      ((strstr(rominfo.product,"XXXXXXXX")  != NULL) && (rominfo.checksum == 0xdf39)) ||  /* Sampras Tennis 96 */
+      ((strstr(rominfo.product,"T-123456")  != NULL) && (rominfo.checksum == 0x1eae)) ||  /* Sampras Tennis 96 */
+      ((strstr(rominfo.product,"T-120066")  != NULL) && (rominfo.checksum == 0x16a4)) ||  /* Pete Sampras Tennis (1994)*/
+      (strstr(rominfo.product,"T-120096")    != NULL))                                    /* Micro Machines 2 */
+  {
+    if (cart.romsize <= 0x380000)  /* just to be sure (checksum might not be enough) */
+    {
+      cart.jcart = 1;
+
+      /* save current setting */
+      if (old_system[0] == -1)
+        old_system[0] = input.system[0];
+      if (old_system[1] == -1)
+        old_system[1] = input.system[1];
+
+      /* set default settings */
+      input.system[0] = SYSTEM_GAMEPAD;
+      input.system[1] = SYSTEM_GAMEPAD;
+    }
   }
 }

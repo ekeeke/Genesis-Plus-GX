@@ -57,8 +57,23 @@
 #define PCDROM      4096
 #define PMOUSE      8192
 
-uint16 peripherals;
-uint16 realchecksum;
+#define MAXCOMPANY 64
+#define MAXPERIPHERALS 14
+
+
+typedef struct
+{
+  char companyid[6];
+  char company[26];
+} COMPANYINFO;
+
+typedef struct
+{
+  char pID[2];
+  char pName[14];
+} PERIPHERALINFO;
+
+
 ROMINFO rominfo;
 char rom_filename[256];
 
@@ -69,7 +84,7 @@ char rom_filename[256];
   * Based on the document provided at
   * http://www.zophar.net/tech/files/Genesis_ROM_Format.txt
   **************************************************************************/
-COMPANYINFO companyinfo[MAXCOMPANY] = {
+static COMPANYINFO companyinfo[MAXCOMPANY] = {
   {"ACLD", "Ballistic"},
   {"RSI", "Razorsoft"},
   {"SEGA", "SEGA"},
@@ -105,7 +120,7 @@ COMPANYINFO companyinfo[MAXCOMPANY] = {
   {"50", "Electronic Arts"},
   {"56", "Razorsoft"},
   {"58", "Mentrix"},
-  {"60", "Victor Musical Industries"},
+  {"60", "Victor Musical Ind."},
   {"69", "Arena"},
   {"70", "Virgin"},
   {"73", "Soft Vision"},
@@ -142,7 +157,7 @@ COMPANYINFO companyinfo[MAXCOMPANY] = {
   * Based on the document provided at
   * http://www.zophar.net/tech/files/Genesis_ROM_Format.txt
   ***************************************************************************/
-PERIPHERALINFO peripheralinfo[14] = {
+static PERIPHERALINFO peripheralinfo[MAXPERIPHERALS] = {
   {"J", "3B Joypad"},
   {"6", "6B Joypad"},
   {"K", "Keyboard"},
@@ -156,13 +171,14 @@ PERIPHERALINFO peripheralinfo[14] = {
   {"T", "Tablet"},
   {"V", "Paddle"},
   {"C", "CD-ROM"},
-  {"M", "Mega Mouse"}
+  {"M", "Mega Mouse"},
 };
 
-/*
- * softdev - New Checksum Calculation
-   eke-eke: fixed 
- */
+ /***************************************************************************
+  * GetRealChecksum
+  *
+  * Compute ROM checksum.
+  ***************************************************************************/
 static uint16 GetRealChecksum (uint8 *rom, int length)
 {
   int i;
@@ -217,31 +233,28 @@ static void getrominfo (char *romheader)
   memcpy (&rominfo.ROMType, romheader + ROMTYPE, 2);
   memcpy (&rominfo.product, romheader + ROMPRODUCT, 12);
   memcpy (&rominfo.checksum, romheader + ROMCHECKSUM, 2);
-  memcpy (&rominfo.io_support, romheader + ROMIOSUPPORT, 16);
   memcpy (&rominfo.romstart, romheader + ROMROMSTART, 4);
   memcpy (&rominfo.romend, romheader + ROMROMEND, 4);
-  memcpy (&rominfo.RAMInfo, romheader + ROMRAMINFO, 12);
-  memcpy (&rominfo.ramstart, romheader + ROMRAMSTART, 4);
-  memcpy (&rominfo.ramend, romheader + ROMRAMEND, 4);
-  memcpy (&rominfo.modem, romheader + ROMMODEMINFO, 12);
-  memcpy (&rominfo.memo, romheader + ROMMEMO, 40);
   memcpy (&rominfo.country, romheader + ROMCOUNTRY, 16);
 
-  realchecksum = GetRealChecksum (((uint8 *) cart.rom) + 0x200, cart.romsize - 0x200);
 #ifdef LSB_FIRST
   rominfo.checksum =  (rominfo.checksum >> 8) | ((rominfo.checksum & 0xff) << 8);
 #endif
+  rominfo.realchecksum = GetRealChecksum (((uint8 *) cart.rom) + 0x200, cart.romsize - 0x200);
 
-  peripherals = 0;
-
+  rominfo.peripherals = 0;
   for (i = 0; i < 14; i++)
-  for (j=0; j < 14; j++)
-  if (rominfo.io_support[i] == peripheralinfo[j].pID[0])
-    peripherals |= (1 << j);
+    for (j=0; j < 14; j++)
+      if (romheader[ROMIOSUPPORT+i] == peripheralinfo[j].pID[0])
+        rominfo.peripherals |= (1 << j);
 }
 
-/* SMD (interleaved) rom support */
-static void deinterleave_block (uint8 * src)
+ /***************************************************************************
+  * deinterleave_block
+  *
+  * Convert interleaved (.smd) ROM files.
+  ***************************************************************************/
+static void deinterleave_block(uint8 * src)
 {
   int i;
   uint8 block[0x4000];
@@ -253,6 +266,11 @@ static void deinterleave_block (uint8 * src)
   }
 }
 
+ /***************************************************************************
+  * load_rom
+  *
+  * Load a new ROM file.
+  ***************************************************************************/
 int load_rom(char *filename)
 {
   int i, size, offset = 0;
@@ -274,12 +292,8 @@ int load_rom(char *filename)
   {
     size -= 512;
     offset += 512;
-
     for (i = 0; i < (size / 0x4000); i += 1)
-    {
       deinterleave_block (cart.rom + offset + (i * 0x4000));
-    }
-
     memcpy(cart.rom, cart.rom + offset, size);
   }
 
@@ -288,13 +302,16 @@ int load_rom(char *filename)
   cart.romsize = size;
   
   /* clear unused ROM space */
-  memset (cart.rom + size, 0xff, MAXROMSIZE - size);
+  memset(cart.rom + size, 0xff, MAXROMSIZE - size);
 
   /* get infos from ROM header */
   getrominfo((char *)cart.rom);
 
-  /* set system region */
-  set_region();
+  /* get specific input devices */
+  input_autodetect();
+
+  /* get default region */
+  region_autodetect();
 
 #ifdef LSB_FIRST
   /* Byteswap ROM */
@@ -331,8 +348,13 @@ int load_rom(char *filename)
   return(1);
 }
 
-/* 05/05/2006: new region detection routine (taken from GENS sourcecode) */
-void set_region ()
+/****************************************************************************
+ * region_autodetect
+ *
+ * Set console region upon ROM header
+ *
+ ****************************************************************************/
+void region_autodetect(void)
 {
   /* country codes used to differentiate region */
   /* 0001 = japan ntsc (1) */
@@ -379,7 +401,7 @@ void set_region ()
     /* need PAL settings */
     region_code = REGION_EUROPE;
   }
-  else if ((realchecksum == 0x532e) && (strstr(rominfo.product,"1011-00") != NULL)) 
+  else if ((rominfo.realchecksum == 0x532e) && (strstr(rominfo.product,"1011-00") != NULL)) 
   {
     /* On Dal Jang Goon (Korea) needs JAP region code */
     region_code = REGION_JAPAN_NTSC;
@@ -410,7 +432,7 @@ void set_region ()
 }
 
 /****************************************************************************
- * getcompany
+ * get_company
  *
  * Try to determine which company made this rom
  *
@@ -418,13 +440,14 @@ void set_region ()
  * It seems that there can be pretty much anything you like following the
  * copyright (C) symbol!
  ****************************************************************************/
-int getcompany ()
+char *get_company(void)
 {
   char *s;
   int i;
   char company[10];
 
-  for (i = 3; i < 8; i++) company[i - 3] = rominfo.copyright[i];
+  for (i = 3; i < 8; i++)
+    company[i - 3] = rominfo.copyright[i];
   company[5] = 0;
 
   /** OK, first look for a hyphen
@@ -439,14 +462,31 @@ int getcompany ()
 
   /** Strip any trailing spaces **/
   for (i = strlen (company) - 1; i >= 0; i--)
-  if (company[i] == 32) company[i] = 0;
+    if (company[i] == 32)
+      company[i] = 0;
 
-  if (strlen (company) == 0) return MAXCOMPANY - 1;
+  if (strlen (company) == 0)
+    return companyinfo[MAXCOMPANY - 1].company;
 
   for (i = 0; i < MAXCOMPANY - 1; i++)
   {
-    if (!(strncmp (company, companyinfo[i].companyid, strlen (company)))) return i;
+    if (!(strncmp (company, companyinfo[i].companyid, strlen (company))))
+      return companyinfo[i].company;
   }
 
-  return MAXCOMPANY - 1;
+  return companyinfo[MAXCOMPANY - 1].company;
 }
+
+/****************************************************************************
+ * get_peripheral
+ *
+ * Return peripheral name based on header code
+ *
+ ****************************************************************************/
+char *get_peripheral(int index)
+{
+  if (index < MAXPERIPHERALS)
+    return peripheralinfo[index].pName;
+  return companyinfo[MAXCOMPANY - 1].company;
+}
+

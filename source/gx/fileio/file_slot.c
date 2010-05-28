@@ -35,13 +35,6 @@
  */
 static u8 SysArea[CARD_WORKAREA] ATTRIBUTE_ALIGN (32);
 
-/**
- * DMA Transfer Area.
- * Must be 32-byte aligned.
- * 64k SRAM + 2k Icon
- */
-static u8 savebuffer[STATE_SIZE] ATTRIBUTE_ALIGN (32);
-
 
 /****************************************************************************
  * CardMount
@@ -139,9 +132,9 @@ void slot_autodetect(int slot, int device, t_slot *ptr)
   {
     /* Memory Card support */
     if (slot > 0)
-      sprintf(filename,"MD-%04X.gp%d", realchecksum, slot - 1);
+      sprintf(filename,"MD-%04X.gp%d", rominfo.realchecksum, slot - 1);
     else
-      sprintf(filename,"MD-%04X.srm", realchecksum);
+      sprintf(filename,"MD-%04X.srm", rominfo.realchecksum);
 
     /* Initialise the CARD system */
     memset(&SysArea, 0, CARD_WORKAREA);
@@ -201,9 +194,9 @@ int slot_delete(int slot, int device)
   {
     /* Memory Card support */
     if (slot > 0)
-      sprintf(filename,"MD-%04X.gp%d", realchecksum, slot - 1);
+      sprintf(filename,"MD-%04X.gp%d", rominfo.realchecksum, slot - 1);
     else
-      sprintf(filename,"MD-%04X.srm", realchecksum);
+      sprintf(filename,"MD-%04X.srm", rominfo.realchecksum);
 
     /* Initialise the CARD system */
     memset(&SysArea, 0, CARD_WORKAREA);
@@ -228,15 +221,23 @@ int slot_load(int slot, int device)
 {
   char filename[MAXPATHLEN];
   int filesize, done = 0;
-  int offset = device ? 2112 : 0;
+  int offset = 0;
+  u8 *savebuffer;
 
   if (slot > 0)
+  {
     GUI_MsgBoxOpen("Information","Loading State ...",1);
+  }
   else
-    GUI_MsgBoxOpen("Information","Loading SRAM ...",1);
+  {
+    if (!sram.on)
+    {
+      GUI_WaitPrompt("Error","SRAM is disabled !");
+      return 0;
+    }
 
-  /* clean buffer */
-  memset(savebuffer, 0, STATE_SIZE);
+    GUI_MsgBoxOpen("Information","Loading SRAM ...",1);
+  }
 
   if (!device)
   {
@@ -248,42 +249,49 @@ int slot_load(int slot, int device)
 
     /* Open file */
     FILE *fp = fopen(filename, "rb");
-    if (fp)
-    {
-      /* Read size */
-      fseek(fp, 0, SEEK_END);
-      filesize = ftell(fp);
-      fseek(fp, 0, SEEK_SET);
-
-      /* Read into buffer (2k blocks) */
-      while (filesize > FATCHUNK)
-      {
-        fread(savebuffer + done, FATCHUNK, 1, fp);
-        done += FATCHUNK;
-        filesize -= FATCHUNK;
-      }
-
-      /* Read remaining bytes */
-      fread(savebuffer + done, filesize, 1, fp);
-      done += filesize;
-      fclose(fp);
-    }
-    else
+    if (!fp)
     {
       GUI_WaitPrompt("Error","Unable to open file !");
       return 0;
     }
+
+    /* Read size */
+    fseek(fp, 0, SEEK_END);
+    filesize = ftell(fp);
+    fseek(fp, 0, SEEK_SET);
+
+    /* allocate buffer */
+    savebuffer = (u8 *)memalign(32,filesize);
+    if (!savebuffer)
+    {
+      GUI_WaitPrompt("Error","Unable to allocate memory !");
+      fclose(fp);
+      return 0;
+    }
+
+    /* Read into buffer (2k blocks) */
+    while (filesize > FATCHUNK)
+    {
+      fread(savebuffer + done, FATCHUNK, 1, fp);
+      done += FATCHUNK;
+      filesize -= FATCHUNK;
+    }
+
+    /* Read remaining bytes */
+    fread(savebuffer + done, filesize, 1, fp);
+    done += filesize;
+    fclose(fp);
   }  
   else
   {
     /* Memory Card support */
     if (slot > 0)
-      sprintf(filename, "MD-%04X.gp%d", realchecksum, slot - 1);
+      sprintf(filename, "MD-%04X.gp%d", rominfo.realchecksum, slot - 1);
     else
-      sprintf(filename, "MD-%04X.srm", realchecksum);
+      sprintf(filename, "MD-%04X.srm", rominfo.realchecksum);
 
     /* Initialise the CARD system */
-    char action[80];
+    char action[64];
     memset(&SysArea, 0, CARD_WORKAREA);
     CARD_Init("GENP", "00");
 
@@ -291,53 +299,60 @@ int slot_load(int slot, int device)
     device--;
 
     /* Attempt to mount the card */
-    if (CardMount(device))
-    {
-      /* Retrieve the sector size */
-      u32 SectorSize = 0;
-      int CardError = CARD_GetSectorSize(device, &SectorSize);
-      if (SectorSize > 0)
-      {
-        /* Open file */
-        card_file CardFile;
-        CardError = CARD_Open(device, filename, &CardFile);
-        if (CardError)
-        {
-          sprintf(action, "Unable to open file (%d)", CardError);
-          GUI_WaitPrompt("Error",action);
-          CARD_Unmount(device);
-          return 0;
-        }
-
-        /* Get file size */
-        filesize = CardFile.len;
-        if (filesize % SectorSize)
-          filesize = ((filesize / SectorSize) + 1) * SectorSize;
-
-        /* Read file sectors */
-        while (filesize > 0)
-        {
-          CARD_Read(&CardFile, &savebuffer[done], SectorSize, done);
-          done += SectorSize;
-          filesize -= SectorSize;
-        }
-
-        CARD_Close(&CardFile);
-        CARD_Unmount(device);
-      }
-      else
-      {
-        sprintf(action, "Invalid sector size (%d)", CardError);
-        GUI_WaitPrompt("Error",action);
-        CARD_Unmount(device);
-        return 0;
-      }
-    }
-    else
+    if (!CardMount(device))
     {
       GUI_WaitPrompt("Error","Unable to mount memory card");
       return 0;
     }
+    
+    /* Retrieve the sector size */
+    u32 SectorSize = 0;
+    int CardError = CARD_GetSectorSize(device, &SectorSize);
+    if (!SectorSize)
+    {
+      sprintf(action, "Invalid sector size (%d)", CardError);
+      GUI_WaitPrompt("Error",action);
+      CARD_Unmount(device);
+      return 0;
+    }
+
+    /* Open file */
+    card_file CardFile;
+    CardError = CARD_Open(device, filename, &CardFile);
+    if (CardError)
+    {
+      sprintf(action, "Unable to open file (%d)", CardError);
+      GUI_WaitPrompt("Error",action);
+      CARD_Unmount(device);
+      return 0;
+    }
+
+    /* Retrieve file size */
+    filesize = CardFile.len;
+    if (filesize % SectorSize)
+    filesize = ((filesize / SectorSize) + 1) * SectorSize;
+
+    /* Allocate buffer */
+    savebuffer = (u8 *)memalign(32,filesize);
+    if (!savebuffer)
+    {
+      GUI_WaitPrompt("Error","Unable to allocate memory !");
+      CARD_Close(&CardFile);
+      CARD_Unmount(device);
+      return 0;
+    }
+
+    /* Read file sectors */
+    while (filesize > 0)
+    {
+      CARD_Read(&CardFile, &savebuffer[done], SectorSize, done);
+      done += SectorSize;
+      filesize -= SectorSize;
+    }
+
+    CARD_Close(&CardFile);
+    CARD_Unmount(device);
+    offset = 2112;
   }
 
   if (slot > 0)
@@ -345,7 +360,8 @@ int slot_load(int slot, int device)
     /* Load state */
     if (!state_load(&savebuffer[offset]))
     {
-      GUI_WaitPrompt("Error","Version is not compatible !");
+      free(savebuffer);
+      GUI_WaitPrompt("Error","Unable to load state !");
       return 0;
     }
   }
@@ -353,9 +369,10 @@ int slot_load(int slot, int device)
   {
     /* Load SRAM & update CRC */
     memcpy(sram.sram, &savebuffer[offset], 0x10000);
-    sram.crc = crc32(0, &sram.sram[0], 0x10000);
+    sram.crc = crc32(0, sram.sram, 0x10000);
   }
 
+  free(savebuffer);
   GUI_MsgBoxClose();
   return 1;
 }
@@ -366,20 +383,40 @@ int slot_save(int slot, int device)
   char filename[MAXPATHLEN];
   int filesize, done = 0;
   int offset = device ? 2112 : 0;
-
-  /* clean buffer */
-  memset(savebuffer, 0, STATE_SIZE);
+  u8 *savebuffer;
 
   if (slot > 0)
   {
+    /* allocate buffer */
+    savebuffer = (u8 *)memalign(32,STATE_SIZE);
+    if (!savebuffer)
+    {
+      GUI_WaitPrompt("Error","Unable to allocate memory !");
+      return 0;
+    }
+
     GUI_MsgBoxOpen("Information","Saving State ...",1);
     filesize = state_save(&savebuffer[offset]);
   }
   else
   {
+    if (!sram.on)
+    {
+       GUI_WaitPrompt("Error","SRAM is disabled !");
+       return 0;
+    }
+
+    /* allocate buffer */
+    savebuffer = (u8 *)memalign(32,0x10000+offset);
+    if (!savebuffer)
+    {
+      GUI_WaitPrompt("Error","Unable to allocate memory !");
+      return 0;
+    }
+
     GUI_MsgBoxOpen("Information","Saving SRAM ...",1);
     memcpy(&savebuffer[offset], sram.sram, 0x10000);
-    sram.crc = crc32(0, &sram.sram[0], 0x10000);
+    sram.crc = crc32(0, sram.sram, 0x10000);
     filesize = 0x10000;
   }
 
@@ -393,44 +430,36 @@ int slot_save(int slot, int device)
 
     /* Open file */
     FILE *fp = fopen(filename, "wb");
-    if (fp)
-    {
-      /* Read into buffer (2k blocks) */
-      while (filesize > FATCHUNK)
-      {
-        fwrite(savebuffer + done, FATCHUNK, 1, fp);
-        done += FATCHUNK;
-        filesize -= FATCHUNK;
-      }
-
-      /* Write remaining bytes */
-      fwrite(savebuffer + done, filesize, 1, fp);
-      done += filesize;
-      fclose(fp);
-
-      if (slot)
-      {
-        /* save screenshot */
-        sprintf(filename,"%s/saves/%s__%d.png", DEFAULT_PATH, rom_filename, slot - 1);
-        gxSaveScreenshot(filename);
-      }
-    }
-    else
+    if (!fp)
     {
       GUI_WaitPrompt("Error","Unable to open file !");
+      free(savebuffer);
       return 0;
     }
-  }  
+
+    /* Read into buffer (2k blocks) */
+    while (filesize > FATCHUNK)
+    {
+      fwrite(savebuffer + done, FATCHUNK, 1, fp);
+      done += FATCHUNK;
+      filesize -= FATCHUNK;
+    }
+
+    /* Write remaining bytes */
+    fwrite(savebuffer + done, filesize, 1, fp);
+    done += filesize;
+    fclose(fp);
+  }
   else
   {
     /* Memory Card support */
     if (slot > 0)
-      sprintf(filename, "MD-%04X.gp%d", realchecksum, slot - 1);
+      sprintf(filename, "MD-%04X.gp%d", rominfo.realchecksum, slot - 1);
     else
-      sprintf(filename, "MD-%04X.srm", realchecksum);
+      sprintf(filename, "MD-%04X.srm", rominfo.realchecksum);
 
     /* Initialise the CARD system */
-    char action[80];
+    char action[64];
     memset(&SysArea, 0, CARD_WORKAREA);
     CARD_Init("GENP", "00");
 
@@ -438,102 +467,112 @@ int slot_save(int slot, int device)
     device--;
 
     /* Attempt to mount the card */
-    if (CardMount(device))
+    if (!CardMount(device))
     {
-      /* Retrieve the sector size */
-      u32 SectorSize = 0;
-      int CardError = CARD_GetSectorSize(device, &SectorSize);
-      if (SectorSize)
+      GUI_WaitPrompt("Error","Unable to mount memory card");
+      free(savebuffer);
+      return 0;
+    }
+
+    /* Retrieve the sector size */
+    u32 SectorSize = 0;
+    int CardError = CARD_GetSectorSize(device, &SectorSize);
+    if (!SectorSize)
+    {
+      sprintf(action, "Invalid sector size (%d)", CardError);
+      GUI_WaitPrompt("Error",action);
+      CARD_Unmount(device);
+      free(savebuffer);
+      return 0;
+    }
+
+    /* Build the output buffer */
+    char comment[2][32] = { {"Genesis Plus GX"}, {"SRAM Save"} };
+    strcpy (comment[1], filename);
+    memcpy (&savebuffer[0], &icon, 2048);
+    memcpy (&savebuffer[2048], &comment[0], 64);
+
+    /* Adjust file size */
+    filesize += 2112;
+    if (filesize % SectorSize)
+      filesize = ((filesize / SectorSize) + 1) * SectorSize;
+
+    /* Check if file already exists */
+    card_file CardFile;
+    if (CARD_Open(device, filename, &CardFile) == CARD_ERROR_READY)
+    {
+      int size = filesize - CardFile.len;
+      CARD_Close(&CardFile);
+      memset(&CardFile,0,sizeof(CardFile));
+
+      /* Check file new size */
+      if (size > 0)
       {
-        /* Build the output buffer */
-        char comment[2][32] = { {"Genesis Plus GX"}, {"SRAM Save"} };
-        strcpy (comment[1], filename);
-        memcpy (&savebuffer[0], &icon, 2048);
-        memcpy (&savebuffer[2048], &comment[0], 64);
-
-        /* Adjust file size */
-        filesize += 2112;
-        if (filesize % SectorSize)
-          filesize = ((filesize / SectorSize) + 1) * SectorSize;
-
-        /* Check if file already exists */
-        card_file CardFile;
-        if (CARD_Open(device, filename, &CardFile) == CARD_ERROR_READY)
-        {
-          int size = filesize - CardFile.len;
-          CARD_Close(&CardFile);
-          memset(&CardFile,0,sizeof(CardFile));
-          if (size > 0)
-          {
-            /* new file is bigger: check if there is enough space left */
-            CardError = CARD_Create(device, "TEMP", size, &CardFile);
-            if (CardError)
-            {
-              sprintf(action, "Not enough memory space left (%d)", CardError);
-              GUI_WaitPrompt("Error",action);
-              CARD_Unmount(device);
-              return 0;
-            }
-            CARD_Close(&CardFile);
-            memset(&CardFile,0,sizeof(CardFile));
-            CARD_Delete(device, "TEMP");
-          }
-
-          /* delete previously existing slot */
-          CARD_Delete(device, filename);
-        }
-
-        /* Create a new slot */
-        CardError = CARD_Create(device, filename, filesize, &CardFile);
+        CardError = CARD_Create(device, "TEMP", size, &CardFile);
         if (CardError)
         {
-          sprintf(action, "Unable to create file (%d)", CardError);
+          sprintf(action, "Unable to increase file size (%d)", CardError);
           GUI_WaitPrompt("Error",action);
           CARD_Unmount(device);
+          free(savebuffer);
           return 0;
         }
 
-        /* Get current time */
-        time_t rawtime;
-        time(&rawtime);
-        
-        /* Update file informations */
-        card_stat CardStatus;
-        CARD_GetStatus(device, CardFile.filenum, &CardStatus);
-        CardStatus.icon_addr = 0x0;
-        CardStatus.icon_fmt = 2;
-        CardStatus.icon_speed = 1;
-        CardStatus.comment_addr = 2048;
-        CardStatus.time = rawtime;
-        CARD_SetStatus(device, CardFile.filenum, &CardStatus);
-
-        /* Write file sectors */
-        while (filesize > 0)
-        {
-          CARD_Write(&CardFile, &savebuffer[done], SectorSize, done);
-          filesize -= SectorSize;
-          done += SectorSize;
-        }
-
-        /* Close file */
+        /* delete temporary file */
         CARD_Close(&CardFile);
-        CARD_Unmount(device);
+        memset(&CardFile,0,sizeof(CardFile));
+        CARD_Delete(device, "TEMP");
       }
-      else
-      {
-        sprintf(action, "Invalid sector size (%d)", CardError);
-        GUI_WaitPrompt("Error",action);
-        CARD_Unmount(device);
-        return 0;
-      }
+
+      /* delete previously existing file */
+      CARD_Delete(device, filename);
     }
-    else
+
+    /* Create a new file */
+    CardError = CARD_Create(device, filename, filesize, &CardFile);
+    if (CardError)
     {
-      GUI_WaitPrompt("Error","Unable to mount memory card");
+      sprintf(action, "Unable to create file (%d)", CardError);
+      GUI_WaitPrompt("Error",action);
+      CARD_Unmount(device);
+      free(savebuffer);
       return 0;
     }
+
+    /* Update file informations */
+    time_t rawtime;
+    time(&rawtime);
+    card_stat CardStatus;
+    CARD_GetStatus(device, CardFile.filenum, &CardStatus);
+    CardStatus.icon_addr = 0x0;
+    CardStatus.icon_fmt = 2;
+    CardStatus.icon_speed = 1;
+    CardStatus.comment_addr = 2048;
+    CardStatus.time = rawtime;
+    CARD_SetStatus(device, CardFile.filenum, &CardStatus);
+
+    /* Write file sectors */
+    while (filesize > 0)
+    {
+      CARD_Write(&CardFile, &savebuffer[done], SectorSize, done);
+      filesize -= SectorSize;
+      done += SectorSize;
+    }
+
+    /* Close file */
+    CARD_Close(&CardFile);
+    CARD_Unmount(device);
   }
 
   GUI_MsgBoxClose();
+  free(savebuffer);
+
+  /* Save screenshot */
+  if (slot && !device)
+  {
+    sprintf(filename,"%s/saves/%s__%d.png", DEFAULT_PATH, rom_filename, slot - 1);
+    gxSaveScreenshot(filename);
+  }
+
   return 1;
 }

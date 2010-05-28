@@ -58,10 +58,10 @@ u8 *screenshot;     /* Texture Data          */
 u32 gc_pal = 0;
 
 /*** NTSC Filters ***/
-sms_ntsc_t sms_ntsc;
-md_ntsc_t md_ntsc;
-static sms_ntsc_setup_t sms_setup;
-static md_ntsc_setup_t md_setup;
+sms_ntsc_t *sms_ntsc;
+md_ntsc_t *md_ntsc;
+static const sms_ntsc_setup_t *sms_setup;
+static const md_ntsc_setup_t *md_setup;
 
 /*** GX FIFO ***/
 static u8 gp_fifo[DEFAULT_FIFO_SIZE] ATTRIBUTE_ALIGN (32);
@@ -1266,6 +1266,12 @@ void gxTextureClose(gx_texture **p_texture)
 /* Emulation mode -> Menu mode */
 void gx_video_Stop(void)
 {
+  /* unallocate NTSC filters */
+  if (sms_ntsc)
+    free(sms_ntsc);
+  if (md_ntsc)
+    free(md_ntsc);
+
   /* lightgun textures */
   gxTextureClose(&crosshair[0]);
   gxTextureClose(&crosshair[1]);
@@ -1273,6 +1279,10 @@ void gx_video_Stop(void)
   /* GX menu rendering */
   gxResetRendering(1);
   gxResetMode(vmode);
+
+  /* display game snapshot */
+  gxClearScreen((GXColor)BLACK);
+  gxDrawScreenshot(0xff);
 
   /* default VI settings */
   VIDEO_SetPreRetraceCallback(NULL);
@@ -1282,14 +1292,12 @@ void gx_video_Stop(void)
   VIDEO_SetGamma(VI_GM_1_0);
 #endif
 
-  /* default TV mode */
+  /* adjust TV width */
   vmode->viWidth    = config.screen_w;
   vmode->viXOrigin  = (VI_MAX_WIDTH_NTSC - vmode->viWidth)/2;
   VIDEO_Configure(vmode);
 
-  /* starts menu rendering */
-  gxClearScreen((GXColor)BLACK);
-  gxDrawScreenshot(0xff);
+  /* wait for VSYNC */
   gxSetScreen();
 }
 
@@ -1344,27 +1352,35 @@ void gx_video_Start(void)
   vwidth  = bitmap.viewport.w + (2 * bitmap.viewport.x);
   vheight = bitmap.viewport.h + (2 * bitmap.viewport.y);
 
-  /* software NTSC filters */
-  if (config.ntsc == 1)
+  /* NTSC filter */
+  sms_ntsc = NULL;
+  md_ntsc = NULL;
+  if (config.ntsc)
   {
-    sms_setup = sms_ntsc_composite;
-    md_setup  = md_ntsc_composite;
-    sms_ntsc_init( &sms_ntsc, &sms_setup );
-    md_ntsc_init( &md_ntsc, &md_setup );
-  }
-  else if (config.ntsc == 2)
-  {
-    sms_setup = sms_ntsc_svideo;
-    md_setup  = md_ntsc_svideo;
-    sms_ntsc_init( &sms_ntsc, &sms_setup );
-    md_ntsc_init( &md_ntsc, &md_setup );
-  }
-  else if (config.ntsc == 3)
-  {
-    sms_setup = sms_ntsc_rgb;
-    md_setup  = md_ntsc_rgb;
-    sms_ntsc_init( &sms_ntsc, &sms_setup );
-    md_ntsc_init( &md_ntsc, &md_setup );
+    /* allocate filters */
+    sms_ntsc = (sms_ntsc_t *)memalign(32,sizeof(sms_ntsc_t));
+    md_ntsc = (md_ntsc_t *)memalign(32,sizeof(md_ntsc_t));
+
+    /* setup filters default configuration */
+    switch (config.ntsc)
+    {
+      case 1:
+        sms_setup = &sms_ntsc_composite;
+        md_setup  = &md_ntsc_composite;
+        break;
+      case 2:
+        sms_setup = &sms_ntsc_svideo;
+        md_setup  = &md_ntsc_svideo;
+        break;
+      case 3:
+        sms_setup = &sms_ntsc_rgb;
+        md_setup  = &md_ntsc_rgb;
+        break;
+    }
+
+    /* initialize filters */
+    sms_ntsc_init(sms_ntsc, sms_setup);
+    md_ntsc_init(md_ntsc, md_setup);
   }
 
   /* lightgun textures */

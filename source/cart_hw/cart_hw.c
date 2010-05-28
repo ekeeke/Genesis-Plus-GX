@@ -62,61 +62,58 @@ static void special_regs_w(uint32 address, uint32 data);
 static const T_CART_ENTRY rom_database[CART_CNT] =
 {
 /* Funny World & Balloon Boy */
-  {0x0000,0x06ab,0x40,0x40,{{0x00,0x00,0x00,0x00},{0x000000,0x000000,0x000000,0x000000},{0x000000,0x000000,0x000000,0x000000},1,0,1,NULL,NULL,NULL,realtec_mapper_w}},
+  {0x0000,0x06ab,0x40,0x40,{{0x00,0x00,0x00,0x00},{0x000000,0x000000,0x000000,0x000000},{0x000000,0x000000,0x000000,0x000000},1,1,NULL,NULL,NULL,realtec_mapper_w}},
 /* Whac-a-Critter */
-  {0xffff,0xf863,0x40,0x40,{{0x00,0x00,0x00,0x00},{0x000000,0x000000,0x000000,0x000000},{0x000000,0x000000,0x000000,0x000000},1,0,1,NULL,NULL,NULL,realtec_mapper_w}},
+  {0xffff,0xf863,0x40,0x40,{{0x00,0x00,0x00,0x00},{0x000000,0x000000,0x000000,0x000000},{0x000000,0x000000,0x000000,0x000000},1,1,NULL,NULL,NULL,realtec_mapper_w}},
 /* Earth Defense */
-  {0xffff,0x44fb,0x40,0x40,{{0x00,0x00,0x00,0x00},{0x000000,0x000000,0x000000,0x000000},{0x000000,0x000000,0x000000,0x000000},1,0,1,NULL,NULL,NULL,realtec_mapper_w}},
+  {0xffff,0x44fb,0x40,0x40,{{0x00,0x00,0x00,0x00},{0x000000,0x000000,0x000000,0x000000},{0x000000,0x000000,0x000000,0x000000},1,1,NULL,NULL,NULL,realtec_mapper_w}},
 /* RADICA (Volume 1) (not byteswapped) */
-  {0x0000,0x2326,0x00,0x00,{{0x00,0x00,0x00,0x00},{0x000000,0x000000,0x000000,0x000000},{0x000000,0x000000,0x000000,0x000000},0,0,1,radica_mapper_r,NULL,NULL,NULL}},
+  {0x0000,0x2326,0x00,0x00,{{0x00,0x00,0x00,0x00},{0x000000,0x000000,0x000000,0x000000},{0x000000,0x000000,0x000000,0x000000},0,1,radica_mapper_r,NULL,NULL,NULL}},
 /* RADICA (Volume 2) */
-  {0x4f10,0x0836,0x00,0x00,{{0x00,0x00,0x00,0x00},{0x000000,0x000000,0x000000,0x000000},{0x000000,0x000000,0x000000,0x000000},0,0,1,radica_mapper_r,NULL,NULL,NULL}},
+  {0x4f10,0x0836,0x00,0x00,{{0x00,0x00,0x00,0x00},{0x000000,0x000000,0x000000,0x000000},{0x000000,0x000000,0x000000,0x000000},0,1,radica_mapper_r,NULL,NULL,NULL}},
 /* RADICA (Volume 1) */
-  {0xf424,0x9f82,0x00,0x00,{{0x00,0x00,0x00,0x00},{0x000000,0x000000,0x000000,0x000000},{0x000000,0x000000,0x000000,0x000000},0,0,1,radica_mapper_r,NULL,NULL,NULL}},
+  {0xf424,0x9f82,0x00,0x00,{{0x00,0x00,0x00,0x00},{0x000000,0x000000,0x000000,0x000000},{0x000000,0x000000,0x000000,0x000000},0,1,radica_mapper_r,NULL,NULL,NULL}},
 /* Lion King 3 */
-  {0x0000,0x507c,0x60,0x7f,{{0x00,0x00,0x00,0x00},{0xf0000e,0xf0000e,0xf0000e,0x000000},{0x600000,0x600002,0x600004,0x000000},0,0,1,NULL,NULL,default_regs_r,special_regs_w}},
+  {0x0000,0x507c,0x60,0x7f,{{0x00,0x00,0x00,0x00},{0xf0000e,0xf0000e,0xf0000e,0x000000},{0x600000,0x600002,0x600004,0x000000},0,1,NULL,NULL,default_regs_r,special_regs_w}},
 /* Super King Kong 99 */
-  {0x0000,0x7d6e,0x60,0x7f,{{0x00,0x00,0x00,0x00},{0xf0000e,0xf0000e,0xf0000e,0x000000},{0x600000,0x600002,0x600004,0x000000},0,0,1,NULL,NULL,default_regs_r,special_regs_w}},
+  {0x0000,0x7d6e,0x60,0x7f,{{0x00,0x00,0x00,0x00},{0xf0000e,0xf0000e,0xf0000e,0x000000},{0x600000,0x600002,0x600004,0x000000},0,1,NULL,NULL,default_regs_r,special_regs_w}},
 /* Pokemon Stadium */
-  {0x0000,0x843c,0x70,0x7f,{{0x00,0x00,0x00,0x00},{0x000000,0x000000,0x000000,0x000000},{0x000000,0x000000,0x000000,0x000000},0,0,1,NULL,NULL,default_regs_r,special_regs_w}},
+  {0x0000,0x843c,0x70,0x7f,{{0x00,0x00,0x00,0x00},{0x000000,0x000000,0x000000,0x000000},{0x000000,0x000000,0x000000,0x000000},0,1,NULL,NULL,default_regs_r,special_regs_w}},
 /* Lion King 2 */
-  {0xffff,0x1d9b,0x40,0x40,{{0x00,0x00,0x00,0x00},{0xfffffd,0xfffffd,0x000000,0x000000},{0x400000,0x400004,0x000000,0x000000},0,0,0,NULL,NULL,default_regs_r,default_regs_w}},
+  {0xffff,0x1d9b,0x40,0x40,{{0x00,0x00,0x00,0x00},{0xfffffd,0xfffffd,0x000000,0x000000},{0x400000,0x400004,0x000000,0x000000},0,0,NULL,NULL,default_regs_r,default_regs_w}},
 /* Squirell King */
-  {0x0000,0x8ec8,0x40,0x40,{{0x00,0x00,0x00,0x00},{0xfffffd,0xfffffd,0x000000,0x000000},{0x400000,0x400004,0x000000,0x000000},0,0,0,NULL,NULL,default_regs_r,default_regs_w}},
+  {0x0000,0x8ec8,0x40,0x40,{{0x00,0x00,0x00,0x00},{0xfffffd,0xfffffd,0x000000,0x000000},{0x400000,0x400004,0x000000,0x000000},0,0,NULL,NULL,default_regs_r,default_regs_w}},
 /* Supper Bubble Bobble */
-  {0x0000,0x16cd,0x40,0x40,{{0x55,0x0f,0x00,0x00},{0xffffff,0xffffff,0x000000,0x000000},{0x400000,0x400002,0x000000,0x000000},0,0,0,NULL,NULL,default_regs_r,NULL}},
+  {0x0000,0x16cd,0x40,0x40,{{0x55,0x0f,0x00,0x00},{0xffffff,0xffffff,0x000000,0x000000},{0x400000,0x400002,0x000000,0x000000},0,0,NULL,NULL,default_regs_r,NULL}},
 /* Mahjong Lover */
-  {0x0000,0x7037,0x40,0x40,{{0x90,0xd3,0x00,0x00},{0xffffff,0xffffff,0x000000,0x000000},{0x400000,0x401000,0x000000,0x000000},0,0,0,NULL,NULL,default_regs_r,NULL}},
+  {0x0000,0x7037,0x40,0x40,{{0x90,0xd3,0x00,0x00},{0xffffff,0xffffff,0x000000,0x000000},{0x400000,0x401000,0x000000,0x000000},0,0,NULL,NULL,default_regs_r,NULL}},
 /* Elf Wor */
-  {0x0080,0x3dba,0x40,0x40,{{0x55,0x0f,0xc9,0x18},{0xffffff,0xffffff,0xffffff,0xffffff},{0x400000,0x400002,0x400004,0x400006},0,0,0,NULL,NULL,default_regs_r,NULL}},
+  {0x0080,0x3dba,0x40,0x40,{{0x55,0x0f,0xc9,0x18},{0xffffff,0xffffff,0xffffff,0xffffff},{0x400000,0x400002,0x400004,0x400006},0,0,NULL,NULL,default_regs_r,NULL}},
 /* Huan Le Tao Qi Shu - Smart Mouse */
-  {0x0000,0x1a28,0x40,0x40,{{0x55,0x0f,0xaa,0xf0},{0xffffff,0xffffff,0xffffff,0xffffff},{0x400000,0x400002,0x400004,0x400006},0,0,0,NULL,NULL,default_regs_r,NULL}},
+  {0x0000,0x1a28,0x40,0x40,{{0x55,0x0f,0xaa,0xf0},{0xffffff,0xffffff,0xffffff,0xffffff},{0x400000,0x400002,0x400004,0x400006},0,0,NULL,NULL,default_regs_r,NULL}},
 /* Ya-Se Chuanshuo */
-  {0xffff,0xd472,0x40,0x40,{{0x63,0x98,0xc9,0x18},{0xffffff,0xffffff,0xffffff,0xffffff},{0x400000,0x400002,0x400004,0x400006},0,0,0,NULL,NULL,default_regs_r,NULL}},
+  {0xffff,0xd472,0x40,0x40,{{0x63,0x98,0xc9,0x18},{0xffffff,0xffffff,0xffffff,0xffffff},{0x400000,0x400002,0x400004,0x400006},0,0,NULL,NULL,default_regs_r,NULL}},
 /* Soul Blade */
-  {0x0000,0x0c5b,0x40,0x40,{{0x00,0x98,0xc9,0xF0},{0xffffff,0xffffff,0xffffff,0xffffff},{0x400000,0x400002,0x400004,0x400006},0,0,0,NULL,NULL,default_regs_r,NULL}},
+  {0x0000,0x0c5b,0x40,0x40,{{0x00,0x98,0xc9,0xF0},{0xffffff,0xffffff,0xffffff,0xffffff},{0x400000,0x400002,0x400004,0x400006},0,0,NULL,NULL,default_regs_r,NULL}},
 /* King of Fighter 98 */
-  {0x0000,0xd0a0,0x48,0x4f,{{0xaa,0xa0,0xf0,0xa0},{0xfc0000,0xffffff,0xffffff,0xffffff},{0x480000,0x4c82c0,0x4cdda0,0x4f8820},0,0,0,NULL,NULL,default_regs_r,NULL}},
+  {0x0000,0xd0a0,0x48,0x4f,{{0xaa,0xa0,0xf0,0xa0},{0xfc0000,0xffffff,0xffffff,0xffffff},{0x480000,0x4c82c0,0x4cdda0,0x4f8820},0,0,NULL,NULL,default_regs_r,NULL}},
 /* Lian Huan Pao - Barver Battle Saga */
-  {0x30b9,0x1c2a,0x40,0x40,{{0x00,0x00,0x00,0x00},{0x000000,0x000000,0x000000,0x000000},{0x000000,0x000000,0x000000,0x000000},0,0,0,NULL,NULL,default_regs_r,NULL}},
+  {0x30b9,0x1c2a,0x40,0x40,{{0x00,0x00,0x00,0x00},{0x000000,0x000000,0x000000,0x000000},{0x000000,0x000000,0x000000,0x000000},0,0,NULL,NULL,default_regs_r,NULL}},
 /* Rockman X3 */
-  {0x0000,0x9d0e,0x40,0x40,{{0x0c,0x88,0x00,0x00},{0xffffff,0xffffff,0x000000,0x000000},{0xa13000,0x400004,0x000000,0x000000},0,0,0,default_regs_r,NULL,default_regs_r,NULL}},
+  {0x0000,0x9d0e,0x40,0x40,{{0x0c,0x88,0x00,0x00},{0xffffff,0xffffff,0x000000,0x000000},{0xa13000,0x400004,0x000000,0x000000},0,0,default_regs_r,NULL,default_regs_r,NULL}},
 /* Super Mario 2 1998 */
-  {0xffff,0x0474,0x00,0x00,{{0x0a,0x00,0x00,0x00},{0xffffff,0x000000,0x000000,0x000000},{0xa13000,0x000000,0x000000,0x000000},0,0,0,default_regs_r,NULL,NULL,NULL}},
+  {0xffff,0x0474,0x00,0x00,{{0x0a,0x00,0x00,0x00},{0xffffff,0x000000,0x000000,0x000000},{0xa13000,0x000000,0x000000,0x000000},0,0,default_regs_r,NULL,NULL,NULL}},
 /* Super Mario 2 1998 */
-  {0x2020,0xb4eb,0x00,0x00,{{0x1c,0x00,0x00,0x00},{0xffffff,0x000000,0x000000,0x000000},{0xa13000,0x000000,0x000000,0x000000},0,0,0,default_regs_r,NULL,NULL,NULL}},
+  {0x2020,0xb4eb,0x00,0x00,{{0x1c,0x00,0x00,0x00},{0xffffff,0x000000,0x000000,0x000000},{0xa13000,0x000000,0x000000,0x000000},0,0,default_regs_r,NULL,NULL,NULL}},
 /* A Bug's Life */
-  {0x7f7f,0x2aad,0x00,0x00,{{0x28,0x1f,0x01,0x00},{0xffffff,0xffffff,0xffffff,0x000000},{0xa13000,0xa13002,0xa1303e,0x000000},0,0,0,default_regs_r,NULL,NULL,NULL}},
+  {0x7f7f,0x2aad,0x00,0x00,{{0x28,0x1f,0x01,0x00},{0xffffff,0xffffff,0xffffff,0x000000},{0xa13000,0xa13002,0xa1303e,0x000000},0,0,default_regs_r,NULL,NULL,NULL}},
 /* King of Fighter 99 */
-  {0x0000,0x021e,0x00,0x00,{{0x00,0x01,0x1f,0x00},{0xffffff,0xffffff,0xffffff,0x000000},{0xa13000,0xa13002,0xa1303e,0x000000},0,0,0,default_regs_r,NULL,NULL,NULL}},
+  {0x0000,0x021e,0x00,0x00,{{0x00,0x01,0x1f,0x00},{0xffffff,0xffffff,0xffffff,0x000000},{0xa13000,0xa13002,0xa1303e,0x000000},0,0,default_regs_r,NULL,NULL,NULL}},
 /* Pocket Monster */
-  {0xd6fc,0x1eb1,0x00,0x00,{{0x00,0x01,0x1f,0x00},{0xffffff,0xffffff,0xffffff,0x000000},{0xa13000,0xa13002,0xa1303e,0x000000},0,0,0,default_regs_r,NULL,NULL,NULL}},
+  {0xd6fc,0x1eb1,0x00,0x00,{{0x00,0x01,0x1f,0x00},{0xffffff,0xffffff,0xffffff,0x000000},{0xa13000,0xa13002,0xa1303e,0x000000},0,0,default_regs_r,NULL,NULL,NULL}},
 /* Game no Kanzume Otokuyou */
-  {0x0000,0xf9d1,0x00,0x00,{{0x00,0x00,0x00,0x00},{0x000000,0x000000,0x000000,0x000000},{0x000000,0x000000,0x000000,0x000000},0,0,0,NULL,seganet_mapper_w,NULL,NULL}}
+  {0x0000,0xf9d1,0x00,0x00,{{0x00,0x00,0x00,0x00},{0x000000,0x000000,0x000000,0x000000},{0x000000,0x000000,0x000000,0x000000},0,0,NULL,seganet_mapper_w,NULL,NULL}}
 };
-
-/* temporary memory chunk */
-static uint8 mem_chunk[0x10000];
 
 
 /************************************************************
@@ -287,123 +284,14 @@ void cart_hw_init()
   }
 
   /**********************************************
-          SPECIFIC CONTROLLER SETTINGS
-  ***********************************************/
-
-  /* restore previous settings */
-  if (old_system[0] != -1)
-    input.system[0] = old_system[0];
-  if (old_system[1] != -1)
-    input.system[1] = old_system[1];
-
-  /* initialize default GUN settings */
-  input.x_offset = 0x00;
-  input.y_offset = 0x00;
-
-  /**********************************************
-          SEGA MENACER 
-  ***********************************************/
-  if (strstr(rominfo.international,"MENACER") != NULL)
-  {
-    /* save current setting */
-    if (old_system[0] == -1)
-      old_system[0] = input.system[0];
-    if (old_system[1] == -1)
-      old_system[1] = input.system[1];
-
-    input.system[0] = NO_SYSTEM;
-    input.system[1] = SYSTEM_MENACER;
-    input.x_offset = 0x52;
-    input.y_offset = 0x00;
-  }
-  else if (strstr(rominfo.international,"T2 ; THE ARCADE GAME") != NULL)
-  {
-    /* save current setting */
-    if (old_system[0] == -1)
-      old_system[0] = input.system[0];
-    if (old_system[1] == -1)
-      old_system[1] = input.system[1];
-
-    input.system[0] = SYSTEM_GAMEPAD;
-    input.system[1] = SYSTEM_MENACER;
-    input.x_offset = 0x84;
-    input.y_offset = 0x08;
-  }
-  else if (strstr(rominfo.international,"BODY COUNT") != NULL)
-  {
-    /* save current setting */
-    if (old_system[0] == -1)
-      old_system[0] = input.system[0];
-    if (old_system[1] == -1)
-      old_system[1] = input.system[1];
-
-    input.system[0] = SYSTEM_MOUSE;
-    input.system[1] = SYSTEM_MENACER;
-    input.x_offset = 0x44;
-    input.y_offset = 0x18;
-  }
-
-  /**********************************************
-          KONAMI JUSTIFIER 
-  ***********************************************/
-  else if (strstr(rominfo.international,"LETHAL ENFORCERSII") != NULL)
-  {
-    /* save current setting */
-    if (old_system[0] == -1)
-      old_system[0] = input.system[0];
-    if (old_system[1] == -1)
-      old_system[1] = input.system[1];
-
-    input.system[0] = SYSTEM_GAMEPAD;
-    input.system[1] = SYSTEM_JUSTIFIER;
-    input.x_offset = 0x18;
-    input.y_offset = 0x00;
-  }
-  else if (strstr(rominfo.international,"LETHAL ENFORCERS") != NULL)
-  {
-    /* save current setting */
-    if (old_system[0] == -1)
-      old_system[0] = input.system[0];
-    if (old_system[1] == -1)
-      old_system[1] = input.system[1];
-
-    input.system[0] = SYSTEM_GAMEPAD;
-    input.system[1] = SYSTEM_JUSTIFIER;
-    input.x_offset = 0x00;
-    input.y_offset = 0x00;
-  }
-
-  /**********************************************
           J-CART 
   ***********************************************/
-  cart.hw.jcart = 0;
-  if (((strstr(rominfo.product,"00000000")  != NULL) && (rominfo.checksum == 0x168b)) ||  /* Super Skidmarks, Micro Machines Military*/
-      ((strstr(rominfo.product,"00000000")  != NULL) && (rominfo.checksum == 0x165e)) ||  /* Pete Sampras Tennis (1991), Micro Machines 96 */
-      ((strstr(rominfo.product,"00000000")  != NULL) && (rominfo.checksum == 0xcee0)) ||  /* Micro Machines Military (bad) */
-      ((strstr(rominfo.product,"00000000")  != NULL) && (rominfo.checksum == 0x2c41)) ||  /* Micro Machines 96 (bad) */
-      ((strstr(rominfo.product,"XXXXXXXX")  != NULL) && (rominfo.checksum == 0xdf39)) ||  /* Sampras Tennis 96 */
-      ((strstr(rominfo.product,"T-123456")  != NULL) && (rominfo.checksum == 0x1eae)) ||  /* Sampras Tennis 96 */
-      ((strstr(rominfo.product,"T-120066")  != NULL) && (rominfo.checksum == 0x16a4)) ||  /* Pete Sampras Tennis (1994)*/
-      (strstr(rominfo.product,"T-120096")    != NULL))                                    /* Micro Machines 2 */
+  if (cart.jcart)
   {
-    if (cart.romsize <= 0x380000)  /* just to be sure (checksum might not be enough) */
-    {
-      cart.hw.jcart = 1;
-      m68k_memory_map[0x38].read16  = jcart_read;
-      m68k_memory_map[0x38].write16 = jcart_write;
-      m68k_memory_map[0x3f].read16  = jcart_read;
-      m68k_memory_map[0x3f].write16 = jcart_write;
-
-      /* save current setting */
-      if (old_system[0] == -1)
-        old_system[0] = input.system[0];
-      if (old_system[1] == -1)
-        old_system[1] = input.system[1];
-
-      /* set default settings */
-      input.system[0] = SYSTEM_GAMEPAD;
-      input.system[1] = SYSTEM_GAMEPAD;
-    }
+    m68k_memory_map[0x38].read16  = jcart_read;
+    m68k_memory_map[0x38].write16 = jcart_write;
+    m68k_memory_map[0x3f].read16  = jcart_read;
+    m68k_memory_map[0x3f].write16 = jcart_write;
   }
 
   /**********************************************
@@ -427,51 +315,51 @@ void cart_hw_init()
       break;
 
     case TYPE_SK:
-      /* be sure we have enough place to store both ROMs */
-      if (cart.romsize < 0x700000)
-      {
-        /* load Sonic & Knuckles ROM (2 MBytes) */
-        FILE *f = fopen(SK_ROM,"r+b");
-        if (!f) break;
-        int done = 0;
-        while (done < 0x200000)
-        {
-          fread(cart.rom+0x700000+done,4096,1,f);
-          done += 4096;
-        }
-        fclose(f);
+    {
+      /* store S&K ROM above cartridge ROM + SRAM */
+      if (cart.romsize > 0x600000) break;
 
-        /* load Sonic 2 UPMEM ROM (256 KBytes) */
-        f = fopen(SK_UPMEM,"r+b");
-        if (!f) break;
-        done = 0;
-        while (done < 0x40000)
-        {
-          fread(cart.rom+0x900000+done,4096,1,f);
-          done += 4096;
-        }
-        fclose(f);
+       /* load Sonic & Knuckles ROM (2 MBytes) */
+      FILE *f = fopen(SK_ROM,"r+b");
+      if (!f) break;
+      int done = 0;
+      while (done < 0x200000)
+      {
+        fread(cart.rom + 0x600000 + done, 2048, 1, f);
+        done += 2048;
+      }
+      fclose(f);
+
+      /* load Sonic 2 UPMEM ROM (256 KBytes) */
+      f = fopen(SK_UPMEM,"r+b");
+      if (!f) break;
+      done = 0;
+      while (done < 0x40000)
+      {
+        fread(cart.rom + 0x800000 + done, 2048, 1, f);
+        done += 2048;
+      }
+      fclose(f);
           
 #ifdef LSB_FIRST
-        /* Byteswap ROM */
-        int i;
-        uint8 temp;
-        for(i = 0; i < 0x240000; i += 2)
-        {
-          temp = cart.rom[i+0x700000];
-          cart.rom[i+0x700000] = cart.rom[i+1+0x700000];
-          cart.rom[i+1+0x700000] = temp;
-        }
+      /* Byteswap ROM */
+      int i;
+      uint8 temp;
+      for(i = 0; i < 0x240000; i += 2)
+      {
+        temp = cart.rom[i + 0x600000];
+        cart.rom[i + 0x600000] = cart.rom[i + 0x600000 + 1];
+        cart.rom[i + 0x600000 + 1] = temp;
+      }
 #endif
 
-        /*$000000-$1fffff is mapped to S&K ROM */
-        for (i=0x00; i<0x20; i++)
-          m68k_memory_map[i].base = (cart.rom + 0x700000) + (i<<16);
+      /*$000000-$1fffff is mapped to S&K ROM */
+      for (i=0x00; i<0x20; i++)
+        m68k_memory_map[i].base = (cart.rom + 0x600000) + (i<<16);
 
-        cart.lock_on = 1;
-
-      }
+      cart.lock_on = 1;
       break;
+    }
 
     default:
       break;
@@ -487,7 +375,7 @@ void cart_hw_init()
   {
     /* known cart found ! */
     if ((rominfo.checksum == rom_database[i].chk_1) &&
-        (realchecksum == rom_database[i].chk_2))
+        (rominfo.realchecksum == rom_database[i].chk_2))
     {
       /* retrieve hardware information */
       memcpy(&cart.hw, &(rom_database[i].cart_hw), sizeof(T_CART_HW));
@@ -521,7 +409,7 @@ void cart_hw_init()
   emulate_address_error = config.addr_error; 
 #endif
 
-  /* detect ROM files larger than 4MB */
+  /* detect special cartridges */
   if (cart.romsize > 0x800000)
   {
     /* Ultimate MK3 (hack) */
@@ -546,7 +434,6 @@ void cart_hw_init()
   }
 
   /* default write handler for !TIME signal */
-  /* TODO: handle Sonic & Knuckles + Sonic 2 case to prevent RAM activation */
   if (!cart.hw.time_w)
     cart.hw.time_w = default_time_w;
 }
@@ -567,10 +454,10 @@ void cart_hw_reset()
   if (cart.hw.realtec & 1)
   {
     /* enable BOOTROM */
-    for (i=0x00; i<0x40; i++)
-      m68k_memory_map[i].base = mem_chunk;
     for (i=0; i<8; i++)
-      memcpy(mem_chunk + i*0x2000, cart.rom + 0x7e000, 0x2000);
+      memcpy(cart.rom + 0x900000 + i*0x2000, cart.rom + 0x7e000, 0x2000);
+    for (i=0x00; i<0x40; i++)
+      m68k_memory_map[i].base = cart.rom + 0x900000;
     cart.hw.realtec |= 2;
   }
 
@@ -657,7 +544,7 @@ static void sega_mapper_w(uint32 address, uint32 data)
         {
           /* enable UPMEM chip at $300000-$3fffff */
           for (i=0x30; i<0x40; i++)
-            m68k_memory_map[i].base = (cart.rom + 0x900000) + ((i & 3)<<16);
+            m68k_memory_map[i].base = (cart.rom + 0x800000) + ((i & 3)<<16);
         }
       }
       else
@@ -708,9 +595,9 @@ static void multi_mapper_w(uint32 address, uint32 data)
 static void special_mapper_w(uint32 address, uint32 data)
 {
   /* 1 x 32k bank */
-  m68k_memory_map[0].base = mem_chunk;
-  memcpy(mem_chunk,&cart.rom[(data & 0x7f) << 15],0x8000);
-  memcpy(mem_chunk+0x8000,cart.rom + 0x8000,0x8000);
+  memcpy(cart.rom + 0x900000, cart.rom + ((data & 0x7f) << 15), 0x8000);
+  memcpy(cart.rom + 0x908000, cart.rom + 0x8000, 0x8000);
+  m68k_memory_map[0].base = cart.rom + 0x900000;
 }
 
 /* 
