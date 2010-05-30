@@ -50,7 +50,8 @@ uint16 status;        /* VDP status flags */
 uint8 dmafill;        /* next VDP Write is DMA Fill */
 uint8 hint_pending;   /* 0= Line interrupt is pending */
 uint8 vint_pending;   /* 1= Frame interrupt is pending */
-uint8 irq_status;     /* Interrupt lines updated */
+uint8 zirq;           /* Z80 IRQ status */
+uint8 irq_status;     /* 68K IRQ status */
 
 /* Global variables */
 uint16 ntab;                      /* Name table A base address */
@@ -127,7 +128,7 @@ static const uint32 dma_rates[16] = {
 /*--------------------------------------------------------------------------*/
 /* Functions prototype                                                      */
 /*--------------------------------------------------------------------------*/
-static void fifo_update();
+static void fifo_update(unsigned int cycles);
 static void data_w(unsigned int data);
 static void reg_w(unsigned int r, unsigned int d);
 static void dma_copy(void);
@@ -160,6 +161,7 @@ void vdp_reset(void)
   pending         = 0;
   hint_pending    = 0;
   vint_pending    = 0;
+  zirq            = 0;
   irq_status      = 0;
   hvc_latch       = 0;
   v_counter       = 0;
@@ -172,7 +174,7 @@ void vdp_reset(void)
   interlaced      = 0;
   fifo_write_cnt  = 0;
   fifo_lastwrite  = 0;
-  fifo_latency    = 190;  /* default FIFO timings */
+  fifo_latency    = 190;
 
   status  = vdp_pal | 0x0200;  /* FIFO empty */
 
@@ -422,13 +424,13 @@ void vdp_ctrl_w(unsigned int data)
  * 9  Write FIFO empty
  * 10 - 15  Open Bus
  */
-unsigned int vdp_ctrl_r(void)
+unsigned int vdp_ctrl_r(unsigned int cycles)
 {
   /* update FIFO flags */
-  fifo_update();
+  fifo_update(cycles);
 
   /* update DMA Busy flag */
-  if ((status & 2) && !dma_length && (mcycles_68k >= dma_endCycles))
+  if ((status & 2) && !dma_length && (cycles >= dma_endCycles))
     status &= 0xFFFD;
 
   unsigned int temp = status;
@@ -438,7 +440,7 @@ unsigned int vdp_ctrl_r(void)
     temp |= 0x08; 
 
   /* HBLANK flag (Sonic 3 and Sonic 2 "VS Modes", Lemmings 2, Mega Turrican, V.R Troopers, Gouketsuji Ichizoku, ...) */
-  if ((mcycles_68k % MCYCLES_PER_LINE) < 588)
+  if ((cycles % MCYCLES_PER_LINE) < 588)
     temp |= 0x04;
 
   /* clear pending flag */
@@ -448,19 +450,19 @@ unsigned int vdp_ctrl_r(void)
   status &= 0xFF9F;
 
 #ifdef LOGVDP
-  error("[%d(%d)][%d(%d)] VDP status read -> 0x%x (%x)\n", v_counter, mcycles_68k/MCYCLES_PER_LINE, mcycles_68k, mcycles_68k%MCYCLES_PER_LINE, temp, m68k_get_reg (NULL, M68K_REG_PC));
+  error("[%d(%d)][%d(%d)] VDP status read -> 0x%x (%x)\n", v_counter, cycles/MCYCLES_PER_LINE, cycles, cycles%MCYCLES_PER_LINE, temp, m68k_get_reg (NULL, M68K_REG_PC));
 #endif
   return (temp);
 }
 
-unsigned int vdp_hvc_r(void)
+unsigned int vdp_hvc_r(unsigned int cycles)
 {
-  /* HVC is frozen (Lightgun games + Sunset Riders) */
+  /* HVC is frozen (Lightgun games, Sunset Riders) */
   if (hvc_latch)
     return (hvc_latch & 0xffff);
 
-  /* Horizontal Counter (Striker, Mickey Mania, Skitchin, Road Rash I,II,III, ...) */
-  uint8 hc = hctab[mcycles_68k%MCYCLES_PER_LINE];
+  /* Horizontal Counter (Striker, Mickey Mania, Skitchin, Road Rash I,II,III, Sonic 3D Blast...) */
+  uint8 hc = hctab[cycles%MCYCLES_PER_LINE];
 
   /* Vertical Counter */
   uint8 vc = vctab[v_counter];
@@ -470,7 +472,7 @@ unsigned int vdp_hvc_r(void)
     vc = (vc << 1) | ((vc >> 7) & 1);
 
 #ifdef LOGVDP
-  error("[%d(%d)][%d(%d)] VDP HVC Read -> 0x%04x (%x)\n", v_counter, mcycles_68k/MCYCLES_PER_LINE, mcycles_68k, mcycles_68k%MCYCLES_PER_LINE,(vc << 8) | hc, m68k_get_reg (NULL, M68K_REG_PC));
+  error("[%d(%d)][%d(%d)] VDP HVC Read -> 0x%04x (%x)\n", v_counter, cycles/MCYCLES_PER_LINE, cycles, cycles%MCYCLES_PER_LINE,(vc << 8) | hc, m68k_get_reg (NULL, M68K_REG_PC));
 #endif
   return ((vc << 8) | hc);
 }
@@ -497,7 +499,7 @@ void vdp_data_w(unsigned int data)
   if (!(status&8) && (reg[1]&0x40))
   {
     /* update VDP FIFO */
-    fifo_update();
+    fifo_update(mcycles_68k);
 
     if (fifo_write_cnt == 0)
     {
@@ -625,12 +627,12 @@ int vdp_int_ack_callback(int int_level)
 /*--------------------------------------------------------------------------*/
 /* FIFO emulation                                                  */
 /*--------------------------------------------------------------------------*/
-static void fifo_update()
+static void fifo_update(unsigned int cycles)
 {
   if (fifo_write_cnt > 0)
   {
     /* update FIFO reads */
-    int fifo_read = ((mcycles_68k - fifo_lastwrite) / fifo_latency);
+    int fifo_read = ((cycles - fifo_lastwrite) / fifo_latency);
     if (fifo_read > 0)
     {
       fifo_write_cnt -= fifo_read;

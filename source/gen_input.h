@@ -36,18 +36,18 @@
 #define NO_DEVICE           (0x0F)  /* unconnected */
 
 /* Input bitmasks */
-#define INPUT_MODE      (0x00000800)
-#define INPUT_Z         (0x00000400)
-#define INPUT_Y         (0x00000200)
-#define INPUT_X         (0x00000100)
-#define INPUT_START     (0x00000080)
-#define INPUT_C         (0x00000040)
-#define INPUT_B         (0x00000020)
-#define INPUT_A         (0x00000010)
-#define INPUT_LEFT      (0x00000008)
-#define INPUT_RIGHT     (0x00000004)
-#define INPUT_DOWN      (0x00000002)
-#define INPUT_UP        (0x00000001)
+#define INPUT_MODE      (0x0800)
+#define INPUT_Z         (0x0400)
+#define INPUT_Y         (0x0200)
+#define INPUT_X         (0x0100)
+#define INPUT_START     (0x0080)
+#define INPUT_C         (0x0040)
+#define INPUT_B         (0x0020)
+#define INPUT_A         (0x0010)
+#define INPUT_LEFT      (0x0008)
+#define INPUT_RIGHT     (0x0004)
+#define INPUT_DOWN      (0x0002)
+#define INPUT_UP        (0x0001)
 
 /* System IO ports */
 #define NO_SYSTEM           (0) /* Unconnected Port*/
@@ -60,14 +60,10 @@
 
 typedef struct
 {
-  uint8   dev[MAX_DEVICES];     /* Can be any of the DEVICE_* values */
-  uint32  pad[MAX_DEVICES];     /* Can be any of the INPUT_* bitmasks */
-  uint8   system[2];            /* Can be any of the SYSTEM_* bitmasks */
-  uint8   max;                  /* maximum number of connected devices */
-  uint8   current;              /* current PAD number (4-Way Play) */
-  int     analog[3][2];         /* analog devices */
-  int     x_offset;             /* gun horizontal offset */
-  int     y_offset;             /* gun vertical offset */
+  uint8   dev[MAX_DEVICES];     /* Can be one of the DEVICE_* values */
+  uint16  pad[MAX_DEVICES];     /* Can be any of the INPUT_* bitmasks */
+  uint8   system[2];            /* Can be one of the SYSTEM_* values */
+  int     analog[3][2];         /* Analog devices */
 } t_input;
 
 /* Global variables */

@@ -334,9 +334,9 @@ static gui_butn buttons_list[4] =
 /* Main menu */
 static gui_butn buttons_main[9] =
 {
-  {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{0,3,0,1}, 80,140,148,132},
-  {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{0,3,1,1},246,140,148,132},
-  {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{0,3,1,1},412,140,148,132},
+  {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{0,0,0,1}, 80,140,148,132},
+  {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{0,0,1,1},246,140,148,132},
+  {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{0,0,1,0},412,140,148,132},
   {&button_icon_data,                             BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{3,3,1,1}, 80,194,148,132},
   {&button_icon_data,                             BUTTON_OVER_SFX                  ,{3,3,1,1},246,194,148,132},
   {&button_icon_data,                             BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{3,2,1,1},412,194,148,132},
@@ -713,7 +713,7 @@ static int update_snd_items(void)
   float rolloff = config.rolloff * 100.0;
   float lg = (float)config.lg/100.0;
   float mg = (float)config.mg/100.0;
-  float hg = config.hg * 100.0;
+  float hg = (float)config.hg/100.0;
   
   if (config.hq_fm)
   {
@@ -786,7 +786,7 @@ static void soundmenu ()
   float rolloff = config.rolloff * 100.0;
   float lg = (float)config.lg/100.0;
   float mg = (float)config.mg/100.0;
-  float hg = config.hg * 100.0;
+  float hg = (float)config.hg/100.0;
   int offset = update_snd_items();
   GUI_InitMenu(m);
   GUI_SlideMenuTitle(m,strlen("Audio "));
@@ -2858,6 +2858,10 @@ void MainMenu (void)
     m->buttons[0].y -= 90;
     m->buttons[1].y -= 90;
     m->buttons[2].y -= 90;
+    m->buttons[0].shift[1] = 3;
+    m->buttons[1].shift[1] = 3;
+    m->buttons[2].shift[1] = 3;
+    m->buttons[2].shift[3] = 1;
     m->buttons[3].state |= (BUTTON_VISIBLE | BUTTON_ACTIVE);
     m->buttons[4].state |= (BUTTON_VISIBLE | BUTTON_ACTIVE);
     m->buttons[5].state |= (BUTTON_VISIBLE | BUTTON_ACTIVE);

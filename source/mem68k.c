@@ -67,8 +67,7 @@ void m68k_lockup_w_8 (uint32 address, uint32 data)
 #ifdef LOGERROR
   error ("Lockup %08X = %02X (%08X)\n", address, data, m68k_get_reg (NULL, M68K_REG_PC));
 #endif
-  gen_running = config.force_dtack;
-  if (!gen_running)
+  if (!config.force_dtack)
    m68k_pulse_halt ();
 }
 
@@ -77,8 +76,7 @@ void m68k_lockup_w_16 (uint32 address, uint32 data)
 #ifdef LOGERROR
   error ("Lockup %08X = %04X (%08X)\n", address, data, m68k_get_reg (NULL, M68K_REG_PC));
 #endif
-  gen_running = config.force_dtack;
-  if (!gen_running)
+  if (!config.force_dtack)
     m68k_pulse_halt ();
 }
 
@@ -87,8 +85,7 @@ uint32 m68k_lockup_r_8 (uint32 address)
 #ifdef LOGERROR
   error ("Lockup %08X.b (%08X)\n", address, m68k_get_reg (NULL, M68K_REG_PC));
 #endif
-  gen_running = config.force_dtack;
-  if (!gen_running)
+  if (!config.force_dtack)
     m68k_pulse_halt ();
   return -1;
 }
@@ -98,8 +95,7 @@ uint32 m68k_lockup_r_16 (uint32 address)
 #ifdef LOGERROR
   error ("Lockup %08X.w (%08X)\n", address, m68k_get_reg (NULL, M68K_REG_PC));
 #endif
-  gen_running = config.force_dtack;
-  if (!gen_running)
+  if (!config.force_dtack)
     m68k_pulse_halt ();
   return -1;
 }
@@ -371,14 +367,14 @@ void ctrl_io_write_byte(uint32 address, uint32 data)
       if (address & 1)
         m68k_unused_8_w(address, data);
       else
-        gen_busreq_w(data & 1);
+        gen_busreq_w(data & 1, mcycles_68k);
       return;
 
     case 0x12:  /* RESET */
       if (address & 1)
         m68k_unused_8_w(address, data);
       else
-        gen_reset_w(data & 1);
+        gen_reset_w(data & 1, mcycles_68k);
       return;
 
     case 0x30:  /* TIME */
@@ -430,11 +426,11 @@ void ctrl_io_write_word(uint32 address, uint32 data)
       return;
 
     case 0x11:  /* BUSREQ */
-      gen_busreq_w ((data >> 8) & 1);
+      gen_busreq_w ((data >> 8) & 1, mcycles_68k);
       return;
 
     case 0x12:  /* RESET */
-      gen_reset_w ((data >> 8) & 1);
+      gen_reset_w ((data >> 8) & 1, mcycles_68k);
       return;
 
     case 0x50:  /* SVP REGISTERS */
@@ -503,18 +499,18 @@ uint32 vdp_read_byte(uint32 address)
       return (vdp_data_r() & 0xff);
 
     case 0x04:  /* CTRL */
-      return ((m68k_read_pcrelative_8(REG_PC) & 0xfc) | ((vdp_ctrl_r() >> 8) & 3));
+      return ((m68k_read_pcrelative_8(REG_PC) & 0xfc) | ((vdp_ctrl_r(mcycles_68k) >> 8) & 3));
 
     case 0x05:  /* CTRL */
-      return (vdp_ctrl_r() & 0xff);
+      return (vdp_ctrl_r(mcycles_68k) & 0xff);
 
     case 0x08:  /* HVC */
     case 0x0c:
-      return (vdp_hvc_r() >> 8);
+      return (vdp_hvc_r(mcycles_68k) >> 8);
 
     case 0x09:  /* HVC */
     case 0x0d:
-      return (vdp_hvc_r() & 0xff);
+      return (vdp_hvc_r(mcycles_68k) & 0xff);
 
     case 0x18:  /* Unused */
     case 0x19:
@@ -535,11 +531,11 @@ uint32 vdp_read_word(uint32 address)
       return vdp_data_r();
 
     case 0x04:  /* CTRL */
-      return ((vdp_ctrl_r() & 0x3FF) | (m68k_read_pcrelative_16(REG_PC) & 0xFC00));
+      return ((vdp_ctrl_r(mcycles_68k) & 0x3FF) | (m68k_read_pcrelative_16(REG_PC) & 0xFC00));
 
     case 0x08:  /* HVC */
     case 0x0c:
-      return vdp_hvc_r();
+      return vdp_hvc_r(mcycles_68k);
 
     case 0x18:  /* Unused */
     case 0x1c:

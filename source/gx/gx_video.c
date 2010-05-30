@@ -60,8 +60,6 @@ u32 gc_pal = 0;
 /*** NTSC Filters ***/
 sms_ntsc_t *sms_ntsc;
 md_ntsc_t *md_ntsc;
-static const sms_ntsc_setup_t *sms_setup;
-static const md_ntsc_setup_t *md_setup;
 
 /*** GX FIFO ***/
 static u8 gp_fifo[DEFAULT_FIFO_SIZE] ATTRIBUTE_ALIGN (32);
@@ -1267,10 +1265,10 @@ void gxTextureClose(gx_texture **p_texture)
 void gx_video_Stop(void)
 {
   /* unallocate NTSC filters */
-  if (sms_ntsc)
-    free(sms_ntsc);
-  if (md_ntsc)
-    free(md_ntsc);
+  if (sms_ntsc) free(sms_ntsc);
+  if (md_ntsc) free(md_ntsc);
+  sms_ntsc = NULL;
+  md_ntsc = NULL;
 
   /* lightgun textures */
   gxTextureClose(&crosshair[0]);
@@ -1351,36 +1349,33 @@ void gx_video_Start(void)
   /* reinitialize video size */
   vwidth  = bitmap.viewport.w + (2 * bitmap.viewport.x);
   vheight = bitmap.viewport.h + (2 * bitmap.viewport.y);
+  bitmap.viewport.changed = 1;
 
   /* NTSC filter */
-  sms_ntsc = NULL;
-  md_ntsc = NULL;
   if (config.ntsc)
   {
     /* allocate filters */
-    sms_ntsc = (sms_ntsc_t *)memalign(32,sizeof(sms_ntsc_t));
-    md_ntsc = (md_ntsc_t *)memalign(32,sizeof(md_ntsc_t));
+    if (!sms_ntsc)
+      sms_ntsc = (sms_ntsc_t *)memalign(32,sizeof(sms_ntsc_t));
+    if (!md_ntsc)
+      md_ntsc = (md_ntsc_t *)memalign(32,sizeof(md_ntsc_t));
 
     /* setup filters default configuration */
     switch (config.ntsc)
     {
       case 1:
-        sms_setup = &sms_ntsc_composite;
-        md_setup  = &md_ntsc_composite;
+        sms_ntsc_init(sms_ntsc, &sms_ntsc_composite);
+        md_ntsc_init(md_ntsc, &md_ntsc_composite);
         break;
       case 2:
-        sms_setup = &sms_ntsc_svideo;
-        md_setup  = &md_ntsc_svideo;
+        sms_ntsc_init(sms_ntsc, &sms_ntsc_svideo);
+        md_ntsc_init(md_ntsc, &md_ntsc_svideo);
         break;
       case 3:
-        sms_setup = &sms_ntsc_rgb;
-        md_setup  = &md_ntsc_rgb;
+        sms_ntsc_init(sms_ntsc, &sms_ntsc_rgb);
+        md_ntsc_init(md_ntsc, &md_ntsc_rgb);
         break;
     }
-
-    /* initialize filters */
-    sms_ntsc_init(sms_ntsc, sms_setup);
-    md_ntsc_init(md_ntsc, md_setup);
   }
 
   /* lightgun textures */
@@ -1388,9 +1383,6 @@ void gx_video_Start(void)
     crosshair[0] = gxTextureOpenPNG(Crosshair_p1_png,0);
   if (config.gun_cursor[1] && (input.dev[5] == DEVICE_LIGHTGUN))
     crosshair[1] = gxTextureOpenPNG(Crosshair_p2_png,0);
-
-  /* force changes on next video update */
-  bitmap.viewport.changed = 1;
 
   /* GX emulation rendering */
   gxResetRendering(0);

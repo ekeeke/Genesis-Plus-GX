@@ -58,9 +58,6 @@ static const char *keys_name[MAX_KEYS] =
   "MODE Button"
 };
 
-static int held_cnt = 0;
-
-
 #ifdef HW_RVL
 
 #define PAD_UP    0   
@@ -75,8 +72,11 @@ static u32 wpad_dirmap[3][4] =
   {WPAD_BUTTON_UP, WPAD_BUTTON_DOWN, WPAD_BUTTON_LEFT, WPAD_BUTTON_RIGHT},                                /* WIIMOTE + NUNCHUK */
   {WPAD_CLASSIC_BUTTON_UP, WPAD_CLASSIC_BUTTON_DOWN, WPAD_CLASSIC_BUTTON_LEFT, WPAD_CLASSIC_BUTTON_RIGHT} /* CLASSIC */
 };
+
 #endif
 
+static int held_cnt = 0;
+static int softreset = 0;
 
 /***************************************************************************************/
 /*   Gamecube PAD support                                                              */
@@ -159,23 +159,29 @@ static void pad_update(s8 chan, u8 i)
   s8 x  = PAD_StickX (chan);
   s8 y  = PAD_StickY (chan);
 
+  /* Soft Reset */
+  if ((p & PAD_TRIGGER_Z) && (p & PAD_TRIGGER_L))
+  {
+    gen_softreset(1);
+    softreset = 1;
+    return;
+  }
+  else if (softreset & 1)
+  {
+    gen_softreset(0);
+    softreset = 0;
+    return;
+  }
+
+  /* Menu Request */
   if (p & PAD_TRIGGER_Z)
   {
-    /* Menu Request */
     ConfigRequested = 1;
     return;
   }
-  else if ((p & PAD_TRIGGER_L) && (p & PAD_TRIGGER_Z))
-  {
-    /* Soft RESET */
-    if (config.lock_on == TYPE_AR)
-      datel_reset(0);
-    gen_reset(0);
-  }
 
   /* Retrieve current key mapping */
-  u16 pad_keymap[MAX_KEYS];
-  memcpy(pad_keymap, config.pad_keymap[chan], MAX_KEYS * sizeof(u16));
+  u16 *pad_keymap = config.pad_keymap[chan];
 
   /* Generic buttons */
   if (p & pad_keymap[KEY_BUTTONA])
@@ -214,7 +220,7 @@ static void pad_update(s8 chan, u8 i)
 
     case DEVICE_MOUSE:
     {
-      /* MOUSE relative movement (-255,255) */
+      /* Mouse relative movement (-255,255) */
       input.analog[2][0] =  (x / ANALOG_SENSITIVITY) * 2;
       input.analog[2][1] =  (y / ANALOG_SENSITIVITY) * 2;
       if (config.invert_mouse)
@@ -226,7 +232,7 @@ static void pad_update(s8 chan, u8 i)
     {
       if (system_hw != SYSTEM_PICO)
       {
-        /* gamepad */
+        /* Gamepad */
         if ((p & PAD_BUTTON_UP) || (y >  ANALOG_SENSITIVITY))
           input.pad[i] |= INPUT_UP;
         else if ((p & PAD_BUTTON_DOWN)  || (y < -ANALOG_SENSITIVITY))
@@ -463,21 +469,27 @@ static void wpad_update(s8 chan, u8 i, u32 exp)
   s8 x  = 0;
   s8 y  = 0;
   u32 p = data->btns_h;
-  u32 u = data->btns_u;
 
-  if ((u & WPAD_BUTTON_HOME) || (u & WPAD_CLASSIC_BUTTON_HOME))
+  /* Soft Reset */
+  if (((p & WPAD_BUTTON_PLUS) && (p & WPAD_BUTTON_MINUS)) ||
+      ((p & WPAD_CLASSIC_BUTTON_PLUS) && (p & WPAD_CLASSIC_BUTTON_MINUS)))
   {
-    /* Menu Request */
-    ConfigRequested = 1;
+    gen_softreset(1);
+    softreset = 1;
     return;
   }
-  else if (((p & WPAD_BUTTON_PLUS) && (p & WPAD_BUTTON_MINUS)) ||
-           ((p & WPAD_CLASSIC_BUTTON_PLUS) && (p & WPAD_CLASSIC_BUTTON_MINUS)))
+  else if (softreset & 1)
   {
-    /* Soft RESET */
-    if (config.lock_on == TYPE_AR)
-      datel_reset(0);
-    gen_reset(0);
+    gen_softreset(0);
+    softreset = 0;
+    return;
+  }
+
+  /* Menu Request */
+  if ((p & WPAD_BUTTON_HOME) || (p & WPAD_CLASSIC_BUTTON_HOME))
+  {
+    ConfigRequested = 1;
+    return;
   }
 
   /* Retrieve current key mapping */
@@ -816,38 +828,43 @@ void gx_input_UpdateEmu(void)
   int i;
   int player = 0;
 
-  /* update controllers */
+  /* Update controllers */
   PAD_ScanPads();
 #ifdef HW_RVL
   WPAD_ScanPads();
 #endif
 
-#ifdef HW_RVL
+  /* Check RESET button status */
   if (SYS_ResetButtonDown())
   {
-    /* Soft RESET */
-    if (config.lock_on == TYPE_AR)
-      datel_reset(0);
-    gen_reset(0);
+    gen_softreset(1);
+    softreset = 2;
+    return;
   }
-#endif
+  else if (softreset & 2)
+  {
+    gen_softreset(0);
+    softreset = 0;
+    return;
+  }
 
   for (i=0; i<MAX_DEVICES; i++)
   {
-    /* clear key status */
-    input.pad[i] = 0;
-
     /* update inputs */
     if (input.dev[i] != NO_DEVICE)
     {
+      /* clear key status */
+      input.pad[i] = 0;
+
+      /* retrieve controller status */
       if (config.input[player].device == 0)
         pad_update(config.input[player].port, i);
-
 #ifdef HW_RVL
       else if (config.input[player].device > 0)
         wpad_update(config.input[player].port,i, config.input[player].device - 1);
 #endif
 
+      /* increment player index */
       player ++;
     }
   }

@@ -10,8 +10,8 @@
 #define SOUND_FREQUENCY 48000
 #define SOUND_SAMPLES_SIZE  2048
 
-#define VIDEO_WIDTH 640
-#define VIDEO_HEIGHT 480
+#define VIDEO_WIDTH 320
+#define VIDEO_HEIGHT 240
 
 int joynum = 0;
 
@@ -117,8 +117,8 @@ static void sdl_sound_close()
 }
 
 /* video */
-md_ntsc_t md_ntsc;
-sms_ntsc_t sms_ntsc;
+md_ntsc_t *md_ntsc;
+sms_ntsc_t *sms_ntsc;
 
 struct {
   SDL_Surface* surf_screen;
@@ -158,29 +158,41 @@ static void sdl_video_update()
     rect.x=(VIDEO_WIDTH-rect.w)/2;
     rect.y=(VIDEO_HEIGHT-rect.h)/2;
 
-    /* init NTSC filter */
-    md_ntsc_setup_t md_setup;
-    sms_ntsc_setup_t sms_setup;
-    if (config.ntsc == 1)
+    /* NTSC filters */
+    if (config.ntsc)
     {
-      sms_setup = sms_ntsc_composite;
-      md_setup  = md_ntsc_composite;
-      sms_ntsc_init( &sms_ntsc, &sms_setup );
-      md_ntsc_init( &md_ntsc, &md_setup );
+      sms_ntsc = (sms_ntsc_t *)malloc(sizeof(sms_ntsc_t));
+      md_ntsc = (md_ntsc_t *)malloc(sizeof(md_ntsc_t));
+
+      switch (config.ntsc)
+      {
+        case 1:
+          sms_ntsc_init(sms_ntsc, &sms_ntsc_composite);
+          md_ntsc_init(md_ntsc, &md_ntsc_composite);
+          break;
+        case 2:
+          sms_ntsc_init(sms_ntsc, &sms_ntsc_svideo);
+          md_ntsc_init(md_ntsc, &md_ntsc_svideo);
+          break;
+        case 3:
+          sms_ntsc_init(sms_ntsc, &sms_ntsc_rgb);
+          md_ntsc_init(md_ntsc, &md_ntsc_rgb);
+          break;
+      }
     }
-    else if (config.ntsc == 2)
+    else
     {
-      sms_setup = sms_ntsc_svideo;
-      md_setup  = md_ntsc_svideo;
-      sms_ntsc_init( &sms_ntsc, &sms_setup );
-      md_ntsc_init( &md_ntsc, &md_setup );
-    }
-    else if (config.ntsc == 3)
-    {
-      sms_setup = sms_ntsc_rgb;
-      md_setup  = md_ntsc_rgb;
-      sms_ntsc_init( &sms_ntsc, &sms_setup );
-      md_ntsc_init( &md_ntsc, &md_setup );
+      if (sms_ntsc)
+      {
+        free(sms_ntsc);
+        sms_ntsc = NULL;
+      }
+
+      if (md_ntsc)
+      {
+        free(md_ntsc);
+        md_ntsc = NULL;
+      }
     }
   }
 
@@ -193,8 +205,10 @@ static void sdl_video_update()
 
 static void sdl_video_close()
 {
-  if (sdl_video.surf_bitmap) SDL_FreeSurface(sdl_video.surf_bitmap);
-  if (sdl_video.surf_screen) SDL_FreeSurface(sdl_video.surf_screen);
+  if (sdl_video.surf_bitmap)
+    SDL_FreeSurface(sdl_video.surf_bitmap);
+  if (sdl_video.surf_screen)
+    SDL_FreeSurface(sdl_video.surf_screen);
 }
 
 /* Timer Sync */
@@ -209,18 +223,13 @@ struct {
 static Uint32 sdl_sync_timer_callback(Uint32 interval)
 {
   SDL_SemPost(sdl_sync.sem_sync);
-  char caption[100];
-  char region[10];
-  if (region_code == REGION_USA) sprintf(region,"USA");
-  else if (region_code == REGION_EUROPE) sprintf(region,"EUR");
-  else sprintf(region,"JAP");
-  
+  char caption[100];  
   sdl_sync.ticks++;
   if (sdl_sync.ticks == (vdp_pal ? 50 : 20))
   {
     int fps = vdp_pal ? (sdl_video.frames_rendered / 3) : sdl_video.frames_rendered;
     sdl_sync.ticks = sdl_video.frames_rendered = 0;
-    sprintf(caption, "Genesis Plus/SDL - %s (%s) - 0x%04X - %d fps", rominfo.international, region, rominfo.realchecksum, fps);
+    sprintf(caption, "Genesis Plus SDL - %d fps", fps);
     SDL_WM_SetCaption(caption, NULL);
   }
   return interval;
@@ -228,10 +237,12 @@ static Uint32 sdl_sync_timer_callback(Uint32 interval)
 
 static int sdl_sync_init()
 {
-  if(SDL_InitSubSystem(SDL_INIT_TIMER|SDL_INIT_EVENTTHREAD) < 0) {
+  if(SDL_InitSubSystem(SDL_INIT_TIMER|SDL_INIT_EVENTTHREAD) < 0)
+  {
     MessageBox(NULL, "SDL Timer initialization failed", "Error", 0);
     return 0;
   }
+
   sdl_sync.sem_sync = SDL_CreateSemaphore(0);
   sdl_sync.ticks = 0;
   return 1;
@@ -347,7 +358,7 @@ static int sdl_control_update(SDLKey keystate)
 
       case SDLK_F10:
       {
-        set_softreset();
+        gen_softreset(0);
         break;
       }
 
@@ -433,7 +444,8 @@ int sdl_input_update(void)
       input.analog[2][1] = y;
 
       /* Vertical movement is upsidedown */
-      if (!config.invert_mouse) input.analog[2][1] = 0 - input.analog[2][1];
+      if (!config.invert_mouse)
+        input.analog[2][1] = 0 - input.analog[2][1];
 
       /* Map mouse buttons to player #1 inputs */
       if(state & SDL_BUTTON_MMASK) input.pad[joynum] |= INPUT_C;
@@ -463,8 +475,8 @@ int sdl_input_update(void)
     int state = SDL_GetMouseState(&x,&y);
 
     /* Calculate X Y axis values */
-    input.analog[0][0] = 0x3c  + (x * (0x17c-0x03c+1)) / 640;
-    input.analog[0][1] = 0x1fc + (y * (0x2f7-0x1fc+1)) / 480;
+    input.analog[0][0] = 0x3c  + (x * (0x17c-0x03c+1)) / VIDEO_WIDTH;
+    input.analog[0][1] = 0x1fc + (y * (0x2f7-0x1fc+1)) / VIDEO_HEIGHT;
  
     /* Map mouse buttons to player #1 inputs */
     if(state & SDL_BUTTON_MMASK) pico_current++;
@@ -601,7 +613,7 @@ int main (int argc, char **argv)
   f = fopen("./game.srm", "wb");
   if (f!=NULL)
   {
-    fwrite(&sram.sram,0x10000,1, f);
+    fwrite(sram.sram,0x10000,1, f);
     fclose(f);
   }
 

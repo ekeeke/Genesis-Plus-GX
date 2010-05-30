@@ -28,21 +28,18 @@
 extern uint8 bios_rom[0x10000];
 extern uint8 work_ram[0x10000];
 extern uint8 zram[0x2000];
-extern uint32 zirq;
+extern uint8 zstate;
 extern uint32 zbank;
-extern uint32 zstate;
-extern uint32 gen_running;
-extern int32 resetline;
 
 /* Function prototypes */
 extern void gen_init(void);
-extern void gen_reset(uint32 hard_reset);
+extern void gen_hardreset(void);
+extern void gen_softreset(int state);
 extern void gen_shutdown(void);
-extern void gen_busreq_w(uint32 state);
-extern void gen_reset_w(uint32 state);
+extern void gen_busreq_w(uint32 state, uint32 cycles);
+extern void gen_reset_w(uint32 state, uint32 cycles);
 extern void gen_bank_w(uint32 state);
 extern int z80_irq_callback(int param);
-extern void set_softreset(void);
 
 #endif /* _GEN_H_ */
 

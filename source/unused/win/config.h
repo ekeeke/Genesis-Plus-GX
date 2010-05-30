@@ -24,6 +24,8 @@ typedef struct
   float lg;
   float mg;
   float hg;
+  float rolloff;
+  uint8 dac_bits;
   uint8 region_detect;
   uint8 force_dtack;
   uint8 addr_error;

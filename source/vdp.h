@@ -38,6 +38,7 @@ extern uint16 status;
 extern uint8 dmafill;
 extern uint8 hint_pending;
 extern uint8 vint_pending;
+extern uint8 zirq;
 extern uint8 irq_status;
 
 /* Global variables */
@@ -80,10 +81,10 @@ extern void vdp_shutdown(void);
 extern void vdp_restore(uint8 *vdp_regs);
 extern void vdp_update_dma();
 extern void vdp_ctrl_w(unsigned int data);
-extern unsigned int vdp_ctrl_r(void);
+extern unsigned int vdp_ctrl_r(unsigned int cycles);
 extern void vdp_data_w(unsigned int data);
 extern unsigned int vdp_data_r(void);
-extern unsigned int vdp_hvc_r(void);
+extern unsigned int vdp_hvc_r(unsigned int cycles);
 extern void vdp_test_w(unsigned int value);
 extern int vdp_int_ack_callback(int int_level);
 

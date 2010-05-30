@@ -5,19 +5,18 @@
 # modified by Eke-Eke <eke_eke31@yahoo.fr>
 #
 # Defines :
-# LSB_FIRST : for little endian systems.
-# X86_ASM   : enable x86 assembly optimizations
-# LOGERROR
-# LOGVDP
-# LOGSOUND
+# -DLSB_FIRST : for little endian systems.
+# -DLOGERROR  : enable message log
+# -DLOGVDP    : enable VDP debug messages
+# -DLOGSOUND  : enable AUDIO debug messages
 
 NAME	  = gen_sdl.exe
 
 CC        = gcc
-CFLAGS    = `sdl-config --cflags` -O6 -march=i686 -fomit-frame-pointer
+CFLAGS    = `sdl-config --cflags` -march=i686 -O6 -fomit-frame-pointer -Wall -Wno-strict-aliasing
 #-g -ggdb -pg
 #-fomit-frame-pointer
-#LDFLAGS   =  -g -ggdb -pg
+#LDFLAGS   = -pg
 DEFINES   = -DLSB_FIRST -DX86_ASM
 
 INCLUDES  = -I. -I.. -I../z80 -I../m68k -I../sound -I../cart_hw -I../cart_hw/svp -I../ntsc

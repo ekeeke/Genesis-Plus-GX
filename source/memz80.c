@@ -46,7 +46,11 @@ static inline void z80_lockup_w(unsigned int address, unsigned int data)
 #ifdef LOGERROR
   error("Z80 lockup write %04X = %02X\n", address, data);
 #endif
-  gen_running = config.force_dtack;
+  if (!config.force_dtack)
+  {
+    mcycles_z80 = 0xffffffff;
+    zstate = 0;
+  }
 }
 
 static inline unsigned int z80_lockup_r(unsigned int address)
@@ -54,7 +58,11 @@ static inline unsigned int z80_lockup_r(unsigned int address)
 #ifdef LOGERROR
   error("Z80 lockup read %04X\n", address);
 #endif
-  gen_running = config.force_dtack;
+  if (!config.force_dtack)
+  {
+    mcycles_z80 = 0xffffffff;
+    zstate = 0;
+  }
   return 0xff;
 }
 /*
@@ -71,18 +79,18 @@ static inline unsigned int z80_vdp_r(unsigned int address)
       return (vdp_data_r() & 0xff);
 
     case 0x04:  /* CTRL */
-      return (0xfc | (vdp_ctrl_r() >> 8));
+      return (0xfc | (vdp_ctrl_r(mcycles_z80) >> 8));
 
     case 0x05:  /* CTRL */
-      return (vdp_ctrl_r() & 0xff);
+      return (vdp_ctrl_r(mcycles_z80) & 0xff);
 
     case 0x08:  /* HVC */
     case 0x0c:
-      return (vdp_hvc_r() >> 8);
+      return (vdp_hvc_r(mcycles_z80) >> 8);
 
     case 0x09:  /* HVC */
     case 0x0d:
-      return (vdp_hvc_r() & 0xff);
+      return (vdp_hvc_r(mcycles_z80) & 0xff);
 
     case 0x18: /* Unused */
     case 0x19:

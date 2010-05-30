@@ -300,7 +300,7 @@ void system_reset (void)
   cart_hw_reset();
 
   /* Genesis hardware */
-  gen_reset(1); 
+  gen_hardreset(); 
   io_reset();
   vdp_reset();
   render_reset();
@@ -325,14 +325,8 @@ void system_shutdown (void)
 /****************************************************************
  * Virtual Genesis Frame emulation
  ****************************************************************/
-int system_frame (int do_skip)
+void system_frame (int do_skip)
 {
-  if (!gen_running)
-  {
-    osd_input_Update();
-    return 0;
-  }
-
   /* update display settings */
   int line;
   int vdp_height  = bitmap.viewport.h;
@@ -346,8 +340,7 @@ int system_frame (int do_skip)
     im2_flag = ((reg[12] & 6) == 6);
     odd_frame = 1;
   }
-  odd_frame ^= 1;
-
+  
   /* clear VBLANK, DMA, FIFO FULL & field flags */
   status &= 0xFEE5;
 
@@ -355,6 +348,7 @@ int system_frame (int do_skip)
   status |= 0x0200;
 
   /* even/odd field flag (interlaced modes only) */
+  odd_frame ^= 1;
   if (odd_frame && interlaced)
     status |= 0x0010;
 
@@ -473,6 +467,4 @@ int system_frame (int do_skip)
   /* adjust cpu cycle count for next frame */
   mcycles_68k -= mcycles_vdp;
   mcycles_z80 -= mcycles_vdp;
-
-  return gen_running;
 }

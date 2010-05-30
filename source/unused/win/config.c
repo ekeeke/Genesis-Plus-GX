@@ -20,6 +20,8 @@ void set_config_defaults(void)
   config.mg             = 1.0;
   config.hg             = 1.0;
   config.lp_range       = 50;
+  config.rolloff        = 0.999;
+  config.dac_bits       = 14;
 
   /* system options */
   config.region_detect  = 0;
@@ -30,7 +32,7 @@ void set_config_defaults(void)
   config.romtype        = 0;
 
   /* display options */
-  config.overscan = 1;
+  config.overscan = 0;
   config.render   = 0;
 
   /* controllers options */

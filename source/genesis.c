@@ -26,10 +26,8 @@
 uint8 bios_rom[0x10000];  /* OS ROM   */
 uint8 work_ram[0x10000];  /* 68K RAM  */
 uint8 zram[0x2000];       /* Z80 RAM  */
-uint32 zirq;              /* /IRQ to Z80 */
-uint32 zstate;            /* Z80 bus state (d0 = BUSACK, d1 = /RESET) */
+uint8 zstate;             /* Z80 bus state (d0 = BUSACK, d1 = /RESET) */
 uint32 zbank;             /* Z80 bank window address */
-uint32 gen_running;       /* 0: cpu are in locked state */
 
 /*--------------------------------------------------------------------------*/
 /* Init, reset, shutdown functions                                          */
@@ -117,37 +115,52 @@ void gen_init(void)
   }
 }
 
-void gen_reset(uint32 hard_reset)
+void gen_hardreset(void)
 {
-  if (hard_reset)
+  /* Clear RAM */
+  memset (work_ram, 0x00, sizeof (work_ram));
+  memset (zram, 0x00, sizeof (zram));
+
+  /* TMSS BIOS support */
+  if (config.bios_enabled == 3)
+    m68k_memory_map[0].base = bios_rom;
+
+  /* Reset CPU cycle counts */
+  mcycles_68k = 0;
+  mcycles_z80 = 0;
+
+  zstate  = 0;  /* Z80 is resetted & has control of the bus */
+  zbank   = 0;  /* Assume default bank is $000000-$007FFF */
+
+  /* Reset 68k, Z80 & YM2612 */
+  m68k_pulse_reset();
+  z80_reset();
+  YM2612ResetChip();
+}
+
+void gen_softreset(int state)
+{
+  if (state)
   {
-    /* Clear RAM */
-    memset (work_ram, 0x00, sizeof (work_ram));
-    memset (zram, 0x00, sizeof (zram));
-
-    /* TMSS BIOS support */
-    if (config.bios_enabled == 3)
-      m68k_memory_map[0].base = bios_rom;
-
-    /* Reset CPU cycle counts */
-    mcycles_68k = 0;
-    mcycles_z80 = 0;
+    /* Halt 68k, Z80 & YM2612 */
+    m68k_pulse_halt();
+    zstate = 0;
+    YM2612ResetChip();
   }
   else
   {
-    /* VDP is not reseted so CPU could be anywhere in a frame */
+    /* Reset Action Replay */
+    if (config.lock_on == TYPE_AR)
+      datel_reset(0);
+
+    /* VDP is not reseted so 68k & Z80 could restart anywhere in the emulated frame */
     mcycles_68k = mcycles_z80 = (uint32)((MCYCLES_PER_LINE * lines_per_frame) * ((double)rand() / (double)RAND_MAX));
+
+    /* Reset 68k, Z80 & YM2612 */
+    m68k_pulse_reset();
+    z80_reset();
+    YM2612ResetChip();
   }
-
-  zstate  = 0;  /* Z80 is reset & has control of the bus */
-  zirq    = 0;  /* No interrupts occuring */
-  zbank   = 0;  /* Assume default bank is $000000-$007FFF */
-
-  /* Reset CPUs */
-  gen_running = 1; 
-  fm_reset(0);
-  m68k_pulse_reset();
-  z80_reset();
 }
 
 void gen_shutdown(void)
@@ -158,68 +171,58 @@ void gen_shutdown(void)
 /*-----------------------------------------------------------------------
   Bus controller chip functions                                            
   -----------------------------------------------------------------------*/
-void gen_busreq_w(uint32 state)
+void gen_busreq_w(uint32 state, uint32 cycles)
 {
-  if (state)
+  if (state)  /* Z80 Bus Requested */
   {
-    /* Bus requested */
+    /* if z80 was running, resynchronize with 68k */
     if (zstate == 1)
-    {
-      /* Z80 is stopped */
-      /* Z80 was ON during the last 68k cycles */
-      z80_run(mcycles_68k);
-    }
+      z80_run(cycles);
 
-    /* update Z80 bus status */
+    /* request Z80 bus */
     zstate |= 2;
-  }
-  else
+  } 
+  else  /* Z80 Bus Released */
   {
-    /* Bus released */
+    /* if z80 is restarted, resynchronize with 68k */
     if (zstate == 3)
-    {
-      /* Z80 is restarted */
-      /* Z80 was OFF during the last 68k cycles */
-      mcycles_z80 = mcycles_68k;
-    }
+      mcycles_z80 = cycles;
 
-    /* update Z80 bus status */
+    /* release Z80 bus */
     zstate &= 1;
   }
 }
 
-void gen_reset_w(uint32 state)
+void gen_reset_w(uint32 state, uint32 cycles)
 {
-  if (state)
-  {
-    /* stop RESET process */
-    if (!zstate)
-    {
-      /* Z80 is restarted */
-      /* Z80 was OFF during the last cycles */
-      mcycles_z80 = mcycles_68k;
-    }
+  /* detect !ZRESET transitions */
+  if (state == (zstate & 1))
+    return;
 
-    /* update Z80 bus status */
-    zstate |= 1;
-  }
-  else
+  if (state)  /* !ZRESET released */
   {
-    /* start RESET process */
-    if (zstate == 1)
-    {
-      /* Z80 stopped */
-      /* z80 was ON during the last 68k cycles */
-      z80_run(mcycles_68k);
-    }
+    /* if z80 is restarted, resynchronize with 68k */
+    if (zstate == 0)
+      mcycles_z80 = cycles;
 
-    /* Reset Z80 & YM2612 */
-    fm_reset(mcycles_68k);
+    /* reset Z80 */
     z80_reset();
 
-    /* update Z80 bus status */
+    /* release Z80 reset */
+    zstate |= 1;
+  }
+  else  /* !ZRESET enabled */
+  {
+    /* if z80 was running, resynchronize with 68k */
+    if (zstate == 1)
+      z80_run(cycles);
+
+    /* hold Z80 reset */
     zstate &= 2;
   }
+
+  /* reset YM2612 */
+  fm_reset(cycles);
 }
 
 void gen_bank_w (uint32 state)

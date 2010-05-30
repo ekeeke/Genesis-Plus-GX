@@ -47,7 +47,11 @@ uint32 zbank_lockup_r(uint32 address)
 #ifdef LOGERROR
   error("Z80 bank lockup read %06X\n", address);
 #endif
-  gen_running = config.force_dtack;
+  if (!config.force_dtack)
+  {
+    mcycles_z80 = 0xffffffff;
+    zstate = 0;
+  }
   return 0xFF;
 }
 
@@ -56,7 +60,11 @@ void zbank_lockup_w(uint32 address, uint32 data)
 #ifdef LOGERROR
   error("Z80 bank lockup write %06X = %02X\n", address, data);
 #endif
-  gen_running = config.force_dtack;
+  if (!config.force_dtack)
+  {
+    mcycles_z80 = 0xffffffff;
+    zstate = 0;
+  }
 }
 
 /* I/O & Control registers */
@@ -108,14 +116,14 @@ void zbank_write_ctrl_io(uint32 address, uint32 data)
       if (address & 1) 
         zbank_unused_w(address, data);
       else
-        gen_busreq_w(data & 1);
+        gen_busreq_w(data & 1, mcycles_z80);
       return;
 
     case 0x12:  /* RESET */
       if (address & 1)
         zbank_unused_w(address, data);
       else
-        gen_reset_w(data & 1);
+        gen_reset_w(data & 1, mcycles_z80);
       return;
 
     case 0x30:  /* TIME */
@@ -168,18 +176,18 @@ uint32 zbank_read_vdp(uint32 address)
       return (vdp_data_r() & 0xff);
       
     case 0x04:    /* CTRL */
-      return (0xfc | ((vdp_ctrl_r() >> 8) & 3));
+      return (0xfc | ((vdp_ctrl_r(mcycles_z80) >> 8) & 3));
 
     case 0x05:    /* CTRL */
-      return (vdp_ctrl_r() & 0xff);
+      return (vdp_ctrl_r(mcycles_z80) & 0xff);
       
     case 0x08:    /* HVC */
     case 0x0c:
-      return (vdp_hvc_r() >> 8);
+      return (vdp_hvc_r(mcycles_z80) >> 8);
       
     case 0x09:    /* HVC */
     case 0x0d:
-      return (vdp_hvc_r() & 0xff);
+      return (vdp_hvc_r(mcycles_z80) & 0xff);
         
     case 0x18:    /* Unused */
     case 0x19:

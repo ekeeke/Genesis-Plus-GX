@@ -95,7 +95,7 @@ void eeprom_init()
   sram.custom = 0;
 
   /* look into game database */
-  while ((i<GAME_CNT) && (!sram.custom))
+  while (i<GAME_CNT)
   {
     if (strstr(rominfo.product,database[i].game_id) != NULL)
     {
@@ -105,13 +105,14 @@ void eeprom_init()
         sram.custom = 1;
         sram.on = 1;
         memcpy(&eeprom.type, &database[i].type, sizeof(T_EEPROM_TYPE));
+        return;
       }
     }
     i++;
   }
 
   /* Game not found in database but header seems to indicate it uses EEPROM */
-  if (sram.detected && !sram.custom)
+  if (sram.detected)
   {
     if ((sram.end - sram.start) < 2)
     {

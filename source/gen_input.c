@@ -74,6 +74,9 @@ static const uint8 hc_256[171] =
  * LIGHTGUN support
  *
  *****************************************************************************/
+static int x_offset;
+static int y_offset;
+
 static inline void lightgun_reset(int num)
 {
   input.analog[num][0] = bitmap.viewport.w >> 1;
@@ -82,7 +85,7 @@ static inline void lightgun_reset(int num)
 
 static inline void lightgun_update(int num)
 {
-  if ((input.analog[num][1] == v_counter + input.y_offset))
+  if ((input.analog[num][1] == v_counter + y_offset))
   {
     /* HL enabled ? */
     if (io_reg[5] & 0x80)
@@ -99,9 +102,9 @@ static inline void lightgun_update(int num)
       */
       hvc_latch = 0x10000 | (vctab[v_counter] << 8);
       if (reg[12] & 1) 
-        hvc_latch |= hc_320[((input.analog[num][0] * 290) / (2 * 320) + input.x_offset) % 210];
+        hvc_latch |= hc_320[((input.analog[num][0] * 290) / (2 * 320) + x_offset) % 210];
       else
-        hvc_latch |= hc_256[(input.analog[num][0] / 2 + input.x_offset)%171];
+        hvc_latch |= hc_256[(input.analog[num][0] / 2 + x_offset)%171];
     }
   }
 }
@@ -539,17 +542,22 @@ static inline void teamplayer_write(uint32 port, uint32 data)
  * 4-WAYPLAY adapter support
  *
  *****************************************************************************/
+static struct wayplay
+{
+  uint8 current;
+} wayplay;
+
 static inline void wayplay_write(uint32 port, uint32 data)
 {
-  if (port == 0) gamepad_write(input.current, data);
-  else input.current = (data >> 4) & 0x07;
+  if (port == 0) gamepad_write(wayplay.current, data);
+  else wayplay.current = (data >> 4) & 0x07;
 }
 
 static inline uint32 wayplay_read(uint32 port)
 {
   if (port == 1) return 0x7F;
-  if (input.current >= 4) return 0x70; /* multitap detection (TH2 = 1) */
-  return gamepad_read(input.current);  /* 0x0C = Pad1, 0x1C = Pad2, ... */
+  if (wayplay.current >= 4) return 0x70; /* multitap detection (TH2 = 1) */
+  return gamepad_read(wayplay.current);  /* 0x0C = Pad1, 0x1C = Pad2, ... */
 }
 
 
@@ -637,8 +645,7 @@ void jcart_write(uint32 address, uint32 data)
 void input_init(void)
 {
   int i,j;
-
-  input.max = 0;
+  int player = 0;
 
   for (i=0; i<MAX_DEVICES; i++)
   {
@@ -649,32 +656,32 @@ void input_init(void)
   switch (input.system[0])
   {
     case SYSTEM_GAMEPAD:
-      if (input.max == MAX_INPUTS) return;
-      input.dev[0] = config.input[input.max].padtype;
-      input.max ++;
+      if (player == MAX_INPUTS) return;
+      input.dev[0] = config.input[player].padtype;
+      player ++;
       break;
 
     case SYSTEM_MOUSE:
-      if (input.max == MAX_INPUTS) return;
+      if (player == MAX_INPUTS) return;
       input.dev[0] = DEVICE_MOUSE;
-      input.max ++;
+      player ++;
       break;
 
     case SYSTEM_WAYPLAY:
       for (j=0; j< 4; j++)
       {
-        if (input.max == MAX_INPUTS) return;
-        input.dev[j] = config.input[input.max].padtype;
-        input.max ++;
+        if (player == MAX_INPUTS) return;
+        input.dev[j] = config.input[player].padtype;
+        player ++;
       }
       break;
 
     case SYSTEM_TEAMPLAYER:
       for (j=0; j<4; j++)
       {
-        if (input.max == MAX_INPUTS) return;
-        input.dev[j] = config.input[input.max].padtype;
-        input.max ++;
+        if (player == MAX_INPUTS) return;
+        input.dev[j] = config.input[player].padtype;
+        player ++;
       }
       teamplayer_init(0);
       break;
@@ -683,37 +690,38 @@ void input_init(void)
   switch (input.system[1])
   {
     case SYSTEM_GAMEPAD:
-      if (input.max == MAX_INPUTS) return;
-      input.dev[4] = config.input[input.max].padtype;
-      input.max ++;
+      if (player == MAX_INPUTS) return;
+      input.dev[4] = config.input[player].padtype;
+      player ++;
       break;
 
     case SYSTEM_MOUSE:
-      if (input.max == MAX_INPUTS) return;
+      if (player == MAX_INPUTS) return;
       input.dev[4] = DEVICE_MOUSE;
-      input.max ++;
+      player ++;
       break;
 
     case SYSTEM_MENACER:
-      if (input.max == MAX_INPUTS) return;
+      if (player == MAX_INPUTS) return;
       input.dev[4] = DEVICE_LIGHTGUN;
+      player ++;
       break;
 
     case SYSTEM_JUSTIFIER:
       for (j=4; j<6; j++)
       {
-        if (input.max == MAX_INPUTS) return;
+        if (player == MAX_INPUTS) return;
         input.dev[j] = DEVICE_LIGHTGUN;
-        input.max ++;
+        player ++;
       }
       break;
 
      case SYSTEM_TEAMPLAYER:
       for (j=4; j<8; j++)
       {
-        if (input.max == MAX_INPUTS) return;
-        input.dev[j] = config.input[input.max].padtype;
-        input.max ++;
+        if (player == MAX_INPUTS) return;
+        input.dev[j] = config.input[player].padtype;
+        player ++;
       }
       teamplayer_init(1);
       break;
@@ -759,7 +767,7 @@ void input_reset(void)
     teamplayer_reset(1);
 
   /* 4-Way Play */
-  input.current = 0;
+  wayplay.current = 0;
 }
 
 void input_update(void)
@@ -838,8 +846,8 @@ void input_autodetect(void)
     input.system[1] = old_system[1];
 
   /* initialize default GUN settings */
-  input.x_offset = 0x00;
-  input.y_offset = 0x00;
+  x_offset = 0x00;
+  y_offset = 0x00;
 
   /**********************************************
           SEGA MENACER 
@@ -854,8 +862,8 @@ void input_autodetect(void)
 
     input.system[0] = NO_SYSTEM;
     input.system[1] = SYSTEM_MENACER;
-    input.x_offset = 0x52;
-    input.y_offset = 0x00;
+    x_offset = 0x52;
+    y_offset = 0x00;
   }
   else if (strstr(rominfo.international,"T2 ; THE ARCADE GAME") != NULL)
   {
@@ -867,8 +875,8 @@ void input_autodetect(void)
 
     input.system[0] = SYSTEM_GAMEPAD;
     input.system[1] = SYSTEM_MENACER;
-    input.x_offset = 0x84;
-    input.y_offset = 0x08;
+    x_offset = 0x84;
+    y_offset = 0x08;
   }
   else if (strstr(rominfo.international,"BODY COUNT") != NULL)
   {
@@ -880,8 +888,8 @@ void input_autodetect(void)
 
     input.system[0] = SYSTEM_MOUSE;
     input.system[1] = SYSTEM_MENACER;
-    input.x_offset = 0x44;
-    input.y_offset = 0x18;
+    x_offset = 0x44;
+    y_offset = 0x18;
   }
 
   /**********************************************
@@ -897,8 +905,8 @@ void input_autodetect(void)
 
     input.system[0] = SYSTEM_GAMEPAD;
     input.system[1] = SYSTEM_JUSTIFIER;
-    input.x_offset = 0x18;
-    input.y_offset = 0x00;
+    x_offset = 0x18;
+    y_offset = 0x00;
   }
   else if (strstr(rominfo.international,"LETHAL ENFORCERS") != NULL)
   {
@@ -910,8 +918,8 @@ void input_autodetect(void)
 
     input.system[0] = SYSTEM_GAMEPAD;
     input.system[1] = SYSTEM_JUSTIFIER;
-    input.x_offset = 0x00;
-    input.y_offset = 0x00;
+    x_offset = 0x00;
+    y_offset = 0x00;
   }
 
   /**********************************************
