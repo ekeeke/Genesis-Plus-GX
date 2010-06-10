@@ -1050,7 +1050,7 @@ static void systemmenu ()
         else if (config.region_detect == 2)
           sprintf (items[0].text, "Console Region:  EUR");
         else if (config.region_detect == 3)
-          sprintf (items[0].text, "Console Region:  JAP");
+          sprintf (items[0].text, "Console Region:  JPN");
 
         if (cart.romsize)
         {
@@ -1211,7 +1211,14 @@ static void videomenu ()
   else
     sprintf (items[VI_OFFSET].text, "NTSC Filter: OFF");
 
-  sprintf (items[VI_OFFSET+1].text, "Borders: %s", config.overscan ? "ON" : "OFF");
+  if (config.overscan == 3)
+    sprintf (items[VI_OFFSET+1].text, "Borders: ALL");
+  else if (config.overscan == 2)
+    sprintf (items[VI_OFFSET+1].text, "Borders: H ONLY");
+  else if (config.overscan == 1)
+    sprintf (items[VI_OFFSET+1].text, "Borders: V ONLY");
+  else
+    sprintf (items[VI_OFFSET+1].text, "Borders: NONE");
 
   if (config.aspect == 1)
     sprintf (items[VI_OFFSET+2].text,"Aspect: ORIGINAL (4:3)");
@@ -1360,8 +1367,15 @@ static void videomenu ()
         break;
 
       case VI_OFFSET+1: /*** overscan emulation ***/
-        config.overscan ^= 1;
-        sprintf (items[VI_OFFSET+1].text, "Borders: %s", config.overscan ? "ON" : "OFF");
+        config.overscan = (config.overscan + 1) % 4;
+        if (config.overscan == 3)
+          sprintf (items[VI_OFFSET+1].text, "Borders: ALL");
+        else if (config.overscan == 2)
+          sprintf (items[VI_OFFSET+1].text, "Borders: H ONLY");
+        else if (config.overscan == 1)
+          sprintf (items[VI_OFFSET+1].text, "Borders: V ONLY");
+        else
+          sprintf (items[VI_OFFSET+1].text, "Borders: NONE");
         break;
 
       case VI_OFFSET+2: /*** aspect ratio ***/

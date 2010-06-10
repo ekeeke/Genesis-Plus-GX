@@ -96,7 +96,7 @@ void config_default(void)
   config.xscale   = 0;
   config.yscale   = 0;
   config.aspect   = 1;
-  config.overscan = 1;
+  config.overscan = 3;
   if (VIDEO_HaveComponentCable())
     config.render = 2;
   else

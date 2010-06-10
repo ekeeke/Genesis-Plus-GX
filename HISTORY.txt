@@ -27,7 +27,6 @@ of samples per frame and keeping PSG & FM chips in sync.
 * added support for 2-Cell vertical scrolling in Interlaced 2 mode
 * added proper HV Counter latch support (fixes Sunset Riders intro)
 * fixed left-most column vertical scrolling when horizontally scrolled (Gynoug, F1) 
-* fixed VBLANK transition line checks
 * improved VDP FIFO timings accuracy: fixes Sol Deace intro
 * improved sprite masking accuracy (thanks to Nemesis for his sprite test program)
 * improved HBLANK flag timing accuracy: fixes Mega Turrican (Sky level)
@@ -41,6 +40,7 @@ of samples per frame and keeping PSG & FM chips in sync.
 ---------------
 * updated Z80 core to last version (fixes interrupt Mode 0 timing and some BIT instructions).
 * fixed some Z80 instructions timing.
+* improved Z80 interrupt accuracy
 * improved 68k accuracy (initial Reset timing + auto-vectored interrupts handling).
 * improved 68k timing accuracy for DIVU/DVIS (thanks to Jorge Cwik) & MULU/MULS instructions.
 * improved Z80 & 68k cpu execution/synchronization accuracy by using Master Clock as common reference (now run exactly 3420 M-Cycles per line).

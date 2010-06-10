@@ -125,12 +125,14 @@ void gen_hardreset(void)
   if (config.bios_enabled == 3)
     m68k_memory_map[0].base = bios_rom;
 
-  /* Reset CPU cycle counts */
-  mcycles_68k = 0;
-  mcycles_z80 = 0;
+  /* Reset CPU cycles (check EA logo corruption, no glitches for Skitchin/Budokan on PAL 60hz MD2 with TMSS) */
+  mcycles_68k = mcycles_z80 = (rand() % lines_per_frame) * MCYCLES_PER_LINE;
 
-  zstate  = 0;  /* Z80 is resetted & has control of the bus */
-  zbank   = 0;  /* Assume default bank is $000000-$007FFF */
+  /* Z80 bus is released & Z80 reset is asserted */
+  zstate = 0;
+
+  /* Assume default bank is $000000-$007FFF */
+  zbank = 0;  
 
   /* Reset 68k, Z80 & YM2612 */
   m68k_pulse_reset();
@@ -149,11 +151,11 @@ void gen_softreset(int state)
   }
   else
   {
-    /* Reset Action Replay */
+    /* Reset Pro Action Replay (required in Trainer mode) */
     if (config.lock_on == TYPE_AR)
       datel_reset(0);
 
-    /* VDP is not reseted so 68k & Z80 could restart anywhere in the emulated frame */
+    /* 68k & Z80 could restart anywhere in VDP frame (fixes Eternal Champions, X-Men 2) */
     mcycles_68k = mcycles_z80 = (uint32)((MCYCLES_PER_LINE * lines_per_frame) * ((double)rand() / (double)RAND_MAX));
 
     /* Reset 68k, Z80 & YM2612 */
@@ -199,7 +201,7 @@ void gen_reset_w(uint32 state, uint32 cycles)
   if (state == (zstate & 1))
     return;
 
-  if (state)  /* !ZRESET released */
+  if (state)  /* !ZRESET inactive */
   {
     /* if z80 is restarted, resynchronize with 68k */
     if (zstate == 0)
@@ -208,16 +210,16 @@ void gen_reset_w(uint32 state, uint32 cycles)
     /* reset Z80 */
     z80_reset();
 
-    /* release Z80 reset */
+    /* negate Z80 reset */
     zstate |= 1;
   }
-  else  /* !ZRESET enabled */
+  else  /* !ZRESET active */
   {
     /* if z80 was running, resynchronize with 68k */
     if (zstate == 1)
       z80_run(cycles);
 
-    /* hold Z80 reset */
+    /* assert Z80 reset */
     zstate &= 2;
   }
 
@@ -232,7 +234,5 @@ void gen_bank_w (uint32 state)
 
 int z80_irq_callback (int param)
 {
-  zirq = 0;
-  z80_set_irq_line (0, CLEAR_LINE);
   return 0xFF;
 }

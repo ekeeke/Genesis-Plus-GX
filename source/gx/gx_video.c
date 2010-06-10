@@ -1332,24 +1332,8 @@ void gx_video_Start(void)
     tvmodes[2]->xfbMode = VI_XFBMODE_DF;
   }
 
-  /* overscan emulation */
-  if (config.overscan)
-  {
-    bitmap.viewport.x = (reg[12] & 1) ? 16 : 12;
-    bitmap.viewport.y = (reg[1] & 8) ? 0 : 8;
-    if (vdp_pal)
-      bitmap.viewport.y  += 24;
-  }
-  else
-  {
-    bitmap.viewport.x = 0;
-    bitmap.viewport.y = 0;
-  }
-
-  /* reinitialize video size */
-  vwidth  = bitmap.viewport.w + (2 * bitmap.viewport.x);
-  vheight = bitmap.viewport.h + (2 * bitmap.viewport.y);
-  bitmap.viewport.changed = 1;
+  /* force video update */
+  bitmap.viewport.changed = 3;
 
   /* NTSC filter */
   if (config.ntsc)
@@ -1394,20 +1378,14 @@ void gx_video_Start(void)
 /* GX render update */
 void gx_video_Update(void)
 {
-  int update = bitmap.viewport.changed;
+  int update = bitmap.viewport.changed & 1;
 
   /* check if display has changed */
   if (update)
   {
     /* update texture size */
-    int old_vwidth = vwidth;
     vwidth = bitmap.viewport.w + (2 * bitmap.viewport.x);
     vheight = bitmap.viewport.h + (2 * bitmap.viewport.y);
-
-    /* if width has been changed, do no render this frame           */
-    /* this fixes texture glitches when changing width middle-frame */
-    if (vwidth != old_vwidth)
-      return;
 
     /* interlaced mode */
     if (config.render && interlaced)
@@ -1415,7 +1393,7 @@ void gx_video_Update(void)
 
     /* ntsc filter */
     if (config.ntsc)
-      vwidth = (reg[12]&1) ? MD_NTSC_OUT_WIDTH(vwidth) : SMS_NTSC_OUT_WIDTH(vwidth);
+      vwidth = (reg[12] & 1) ? MD_NTSC_OUT_WIDTH(vwidth) : SMS_NTSC_OUT_WIDTH(vwidth);
 
     /* texels size must be multiple of 4 */
     vwidth  = (vwidth  >> 2) << 2;
@@ -1488,7 +1466,7 @@ void gx_video_Update(void)
     /* force audio DMA resynchronization */
     audioStarted = 0;
 
-    bitmap.viewport.changed = 0;
+    bitmap.viewport.changed &= ~1;
   }
 }
 

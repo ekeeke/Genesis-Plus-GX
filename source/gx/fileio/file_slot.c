@@ -437,7 +437,7 @@ int slot_save(int slot, int device)
       return 0;
     }
 
-    /* Read into buffer (2k blocks) */
+    /* Write from buffer (2k blocks) */
     while (filesize > FATCHUNK)
     {
       fwrite(savebuffer + done, FATCHUNK, 1, fp);

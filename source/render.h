@@ -31,7 +31,7 @@ extern uint32 object_index_count;
 extern void render_init(void);
 extern void render_reset(void);
 extern void render_shutdown(void);
-extern void render_line(int line, int overscan);
+extern void render_line(int line);
 extern void remap_buffer(int line,int width);
 extern void window_clip(void);
 extern void parse_satb(int line);

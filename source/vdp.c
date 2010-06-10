@@ -50,7 +50,6 @@ uint16 status;        /* VDP status flags */
 uint8 dmafill;        /* next VDP Write is DMA Fill */
 uint8 hint_pending;   /* 0= Line interrupt is pending */
 uint8 vint_pending;   /* 1= Frame interrupt is pending */
-uint8 zirq;           /* Z80 IRQ status */
 uint8 irq_status;     /* 68K IRQ status */
 
 /* Global variables */
@@ -161,7 +160,6 @@ void vdp_reset(void)
   pending         = 0;
   hint_pending    = 0;
   vint_pending    = 0;
-  zirq            = 0;
   irq_status      = 0;
   hvc_latch       = 0;
   v_counter       = 0;
@@ -204,21 +202,21 @@ void vdp_reset(void)
   hctab = cycle2hc32;
 
   /* reset display area */
-  bitmap.viewport.w = 256;
-  bitmap.viewport.h = 224;
-  bitmap.viewport.changed = 1;
+  bitmap.viewport.w   = 256;
+  bitmap.viewport.h   = 224;
+  bitmap.viewport.ow  = 256;
+  bitmap.viewport.oh  = 224;
 
   /* reset overscan area */
   bitmap.viewport.x = 0;
   bitmap.viewport.y = 0;
-  if (config.overscan)
-  {
-    bitmap.viewport.x = 12;
+  if (config.overscan & 1)
     bitmap.viewport.y = vdp_pal ? 32 : 8;
-  }
+  if (config.overscan & 2)
+    bitmap.viewport.x = 12;
 
-  /* initialize some registers (normally set by BIOS) */
-  if (config.bios_enabled != 3)
+  /* reset some registers normally set by BIOS */
+  if (config.bios_enabled == 1)
   {
     reg_w(0 , 0x04);  /* Palette bit set */
     reg_w(1 , 0x04);  /* Mode 5 enabled */
@@ -243,11 +241,6 @@ void vdp_restore(uint8 *vdp_regs)
   /* reinitialize HVC tables */
   vctab = (vdp_pal) ? ((reg[1] & 8) ? vc_pal_240 : vc_pal_224) : vc_ntsc_224;
   hctab = (reg[12] & 1) ? cycle2hc40 : cycle2hc32;
-
-  /* reinitialize overscan area */
-  bitmap.viewport.x = config.overscan ? ((reg[12] & 1) ? 16 : 12) : 0;
-  bitmap.viewport.y = config.overscan ? (((reg[1] & 8) ? 0 : 8) + (vdp_pal ? 24 : 0)) : 0;
-  bitmap.viewport.changed = 1;
 
   /* restore FIFO timings */
   fifo_latency = (reg[12] & 1) ? 190 : 214;
@@ -501,17 +494,11 @@ void vdp_data_w(unsigned int data)
     /* update VDP FIFO */
     fifo_update(mcycles_68k);
 
-    if (fifo_write_cnt == 0)
-    {
-      /* reset cycle counter */
-      fifo_lastwrite = mcycles_68k;
-
-      /* FIFO is not empty anymore */
-      status &= 0xFDFF;
-    }
-
     /* increase FIFO word count */
     fifo_write_cnt ++;
+
+    /* FIFO is not empty anymore */
+    status &= 0xFDFF;
 
     /* FIFO full ? */
     if (fifo_write_cnt >= 4)
@@ -818,26 +805,29 @@ static void reg_w(unsigned int r, unsigned int d)
       /* See if the viewport height has actually been changed */
       if (r & 0x08)
       {
-        /* PAL mode only ! */
+        /* Update V Counter table */
         if (vdp_pal)
+          vctab = (d & 8) ? vc_pal_240 : vc_pal_224;
+  
+        /* Update viewport */
+        if (status & 8)
         {
+          /* changes should be applied on next frame */
+          bitmap.viewport.changed |= 2;
+        }
+        else
+        {
+          /* Update active display */
           if (d & 8)
           {
             bitmap.viewport.h = 240;
-            if (config.overscan)
-              bitmap.viewport.y = 24;
-            vctab = vc_pal_240;
+            bitmap.viewport.y = (config.overscan & 1) ? (vdp_pal ? 24 : 0) : 0;
           }
           else
           {
             bitmap.viewport.h = 224;
-            if (config.overscan)
-              bitmap.viewport.y = 32;
-            vctab = vc_pal_224;
+            bitmap.viewport.y = (config.overscan & 1) ? (vdp_pal ? 32 : 8) : 0;
           }
-
-          /* update viewport */
-          bitmap.viewport.changed = 1;
         }
       }
 
@@ -861,8 +851,8 @@ static void reg_w(unsigned int r, unsigned int d)
 #ifdef LOGVDP
           error("Line redrawn (%d sprites) \n",object_index_count);
 #endif
-          /* re-render line */
-          render_line(v_counter, 0);
+          /* redraw entire line */
+          render_line(v_counter);
         }
 #ifdef LOGVDP
         else
@@ -939,12 +929,7 @@ static void reg_w(unsigned int r, unsigned int d)
 
           /* Update HC table */
           hctab = cycle2hc40;
-
-          /* Update viewport width */
-          bitmap.viewport.w = 320;
-          if (config.overscan)
-            bitmap.viewport.x = 16;
-
+            
           /* Update fifo timings */
           fifo_latency = 190;
         }
@@ -959,23 +944,50 @@ static void reg_w(unsigned int r, unsigned int d)
           /* Update HC table */
           hctab = cycle2hc32;
 
-          /* Update viewport width */
-          bitmap.viewport.w = 256;
-          if (config.overscan)
-            bitmap.viewport.x = 12;
-
           /* Update fifo timings */
           fifo_latency = 214;
         }
-		
-	    if ((code & 0x0F) == 0x01)
-		  fifo_latency *= 2;
 
-        /* Update viewport */
-        bitmap.viewport.changed = 1;
+        if ((code & 0x0F) == 0x01)
+          fifo_latency = fifo_latency * 2;
 
         /* Update clipping */
         window_clip();
+        
+        /* Update viewport */
+        if (status & 8)
+        {
+          /* changes should be applied on next frame */
+          bitmap.viewport.changed |= 2;
+        }
+        else
+        {
+          /* Update active display */
+          if (d & 1)
+          {
+            bitmap.viewport.w = 320;
+            bitmap.viewport.x = (config.overscan & 2) ? 16 : 0;
+          }
+          else
+          {
+            bitmap.viewport.w = 256;
+            bitmap.viewport.x = (config.overscan & 2) ? 12 : 0;
+          }
+
+          /* display width changed during HBLANK (Bugs Bunny Double Trouble) */
+          if (mcycles_68k <= (mcycles_vdp + 860))
+          {
+            /* redraw entire line */
+            render_line(v_counter);
+          }
+        }
+      }
+
+      /* Interlaced modes */
+      if (r & 0x06)
+      {
+        /* changes should be applied on next frame */
+        bitmap.viewport.changed |= 2;
       }
 
       /* See if the S/TE mode bit has changed */

@@ -327,19 +327,52 @@ void system_shutdown (void)
  ****************************************************************/
 void system_frame (int do_skip)
 {
-  /* update display settings */
-  int line;
-  int vdp_height  = bitmap.viewport.h;
-  int end_line    = vdp_height + bitmap.viewport.y;
-  int start_line  = lines_per_frame - bitmap.viewport.y;
-  int old_interlaced = interlaced;
-  interlaced = (reg[12] & 2) >> 1;
-  if (old_interlaced != interlaced)
+  int start   = 0;
+  int end     = 0;
+  int line    = 0;
+
+  /* display changed during VBLANK */
+  if (bitmap.viewport.changed & 2)
   {
-    bitmap.viewport.changed = 1;
-    im2_flag = ((reg[12] & 6) == 6);
-    odd_frame = 1;
+    bitmap.viewport.changed &= ~2;
+
+    /* interlaced mode */
+    int old_interlaced  = interlaced;
+    interlaced = (reg[12] & 2) >> 1;
+    if (old_interlaced != interlaced)
+    {
+      im2_flag = ((reg[12] & 6) == 6);
+      odd_frame = 1;
+      bitmap.viewport.changed = 1;
+    }
+
+    /* screen height */
+    if (reg[1] & 8)
+    { 
+      bitmap.viewport.h = 240;
+      bitmap.viewport.y = (config.overscan & 1) ? (vdp_pal ? 24 : 0) : 0;
+    }
+    else
+    {
+      bitmap.viewport.h = 224;
+      bitmap.viewport.y = (config.overscan & 1) ? (vdp_pal ? 32 : 8) : 0;
+    }
+
+    /* screen width */
+    if (reg[12] & 1)
+    {
+      bitmap.viewport.w = 320;
+      bitmap.viewport.x = (config.overscan & 2) ? 16 : 0;
+    }
+    else
+    {
+      bitmap.viewport.w = 256;
+      bitmap.viewport.x = (config.overscan & 2) ? 12 : 0;
+    }
   }
+
+  /* Z80 interrupt flag */
+  int zirq = 0;
   
   /* clear VBLANK, DMA, FIFO FULL & field flags */
   status &= 0xFEE5;
@@ -349,8 +382,8 @@ void system_frame (int do_skip)
 
   /* even/odd field flag (interlaced modes only) */
   odd_frame ^= 1;
-  if (odd_frame && interlaced)
-    status |= 0x0010;
+  if (interlaced)
+    status |= (odd_frame << 4);
 
   /* reload HCounter */
   int h_counter = reg[10];
@@ -382,10 +415,10 @@ void system_frame (int do_skip)
     if (status & 8)
     {
       /* render overscan */
-      if (!do_skip && ((line < end_line) || (line >= start_line)))
-        render_line(line, 1);
+      if (!do_skip && ((line < end) || (line >= start)))
+        render_line(line);
 
-      /* clear any pending Z80 interrupt */
+      /* clear pending Z80 interrupt */
       if (zirq)
       {
         zirq = 0;
@@ -406,17 +439,33 @@ void system_frame (int do_skip)
       }
 
       /* end of active display */
-      if (line == vdp_height)
+      if (line == bitmap.viewport.h)
       {
-        /* render overscan */
-        if (!do_skip && (line < end_line))
-          render_line(line, 1);
+        /* set border area */
+        start = lines_per_frame - bitmap.viewport.y;
+        end   = bitmap.viewport.h + bitmap.viewport.y;
 
-        /* update inputs (doing this here fix Warriors of Eternal Sun) */
-        osd_input_Update();
+        /* check viewport changes */
+        if (bitmap.viewport.h != bitmap.viewport.oh)
+        {
+          bitmap.viewport.oh = bitmap.viewport.h;
+          bitmap.viewport.changed |= 1;
+        }
+        if (bitmap.viewport.w != bitmap.viewport.ow)
+        {
+          bitmap.viewport.ow = bitmap.viewport.w;
+          bitmap.viewport.changed |= 1;
+        }
 
         /* set VBLANK flag */
         status |= 0x08;
+
+        /* render overscan */
+        if (!do_skip && bitmap.viewport.y)
+          render_line(line);
+
+        /* update inputs (doing this here fix Warriors of Eternal Sun) */
+        osd_input_Update();
 
         /* Z80 interrupt is 16ms period (one frame) and 64us length (one scanline) */
         zirq = 1;
@@ -445,7 +494,7 @@ void system_frame (int do_skip)
           parse_satb(0x80 + line);
 
         /* render scanline */
-        render_line(line, 0);
+        render_line(line);
       }
     }
 

@@ -38,7 +38,6 @@ extern uint16 status;
 extern uint8 dmafill;
 extern uint8 hint_pending;
 extern uint8 vint_pending;
-extern uint8 zirq;
 extern uint8 irq_status;
 
 /* Global variables */
