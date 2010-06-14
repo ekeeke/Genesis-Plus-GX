@@ -23,14 +23,14 @@
 #ifndef _MEMBNK_H_
 #define _MEMBNK_H_
 
-extern uint32 zbank_unused_r(uint32 address);
-extern void zbank_unused_w(uint32 address, uint32 data);
-extern uint32 zbank_lockup_r(uint32 address);
-extern void zbank_lockup_w(uint32 address, uint32 data);
-extern uint32 zbank_read_ctrl_io(uint32 address);
-extern void zbank_write_ctrl_io(uint32 address, uint32 data);
-extern uint32 zbank_read_vdp(uint32 address);
-extern void zbank_write_vdp(uint32 address, uint32 data);
+extern unsigned int zbank_unused_r(unsigned int address);
+extern void zbank_unused_w(unsigned int address, unsigned int data);
+extern unsigned int zbank_lockup_r(unsigned int address);
+extern void zbank_lockup_w(unsigned int address, unsigned int data);
+extern unsigned int zbank_read_ctrl_io(unsigned int address);
+extern void zbank_write_ctrl_io(unsigned int address, unsigned int data);
+extern unsigned int zbank_read_vdp(unsigned int address);
+extern void zbank_write_vdp(unsigned int address, unsigned int data);
 
 struct _zbank_memory_map
 {

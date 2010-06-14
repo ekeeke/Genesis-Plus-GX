@@ -27,7 +27,7 @@
   machine lock up.
 */
 
-uint32 zbank_unused_r(uint32 address)
+unsigned int zbank_unused_r(unsigned int address)
 {
 #ifdef LOGERROR
   error("Z80 bank unused read %06X\n", address);
@@ -35,14 +35,14 @@ uint32 zbank_unused_r(uint32 address)
   return (address & 1) ? 0x00 : 0xff;
 }
 
-void zbank_unused_w(uint32 address, uint32 data)
+void zbank_unused_w(unsigned int address, unsigned int data)
 {
 #ifdef LOGERROR
   error("Z80 bank unused write %06X = %02X\n", address, data);
 #endif
 }
 
-uint32 zbank_lockup_r(uint32 address)
+unsigned int zbank_lockup_r(unsigned int address)
 {
 #ifdef LOGERROR
   error("Z80 bank lockup read %06X\n", address);
@@ -55,7 +55,7 @@ uint32 zbank_lockup_r(uint32 address)
   return 0xff;
 }
 
-void zbank_lockup_w(uint32 address, uint32 data)
+void zbank_lockup_w(unsigned int address, unsigned int data)
 {
 #ifdef LOGERROR
   error("Z80 bank lockup write %06X = %02X\n", address, data);
@@ -68,7 +68,7 @@ void zbank_lockup_w(uint32 address, uint32 data)
 }
 
 /* I/O & Control registers */
-uint32 zbank_read_ctrl_io(uint32 address)
+unsigned int zbank_read_ctrl_io(unsigned int address)
 {
   switch ((address >> 8) & 0xff)
   {
@@ -130,7 +130,7 @@ uint32 zbank_read_ctrl_io(uint32 address)
   }
 }
 
-void zbank_write_ctrl_io(uint32 address, uint32 data)
+void zbank_write_ctrl_io(unsigned int address, unsigned int data)
 {
   switch ((address >> 8) & 0xff)
   {
@@ -205,7 +205,7 @@ void zbank_write_ctrl_io(uint32 address, uint32 data)
 
 
 /* VDP */
-uint32 zbank_read_vdp(uint32 address)
+unsigned int zbank_read_vdp(unsigned int address)
 {
   switch (address & 0xfd)
   {
@@ -256,7 +256,7 @@ uint32 zbank_read_vdp(uint32 address)
   }
 }
 
-void zbank_write_vdp(uint32 address, uint32 data)
+void zbank_write_vdp(unsigned int address, unsigned int data)
 {
   switch (address & 0xfc)
   {
