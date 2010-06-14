@@ -23,11 +23,16 @@
 
 #include "shared.h"
 
-uint8 bios_rom[0x10000];  /* OS ROM   */
+uint8 tmss[4];            /* TMSS security register */
+uint8 bios_rom[0x800];    /* OS ROM   */
 uint8 work_ram[0x10000];  /* 68K RAM  */
 uint8 zram[0x2000];       /* Z80 RAM  */
-uint8 zstate;             /* Z80 bus state (d0 = BUSACK, d1 = /RESET) */
 uint32 zbank;             /* Z80 bank window address */
+uint8 zstate;             /* Z80 bus state (d0 = BUSACK, d1 = /RESET) */
+
+/* PICO data */
+uint8 pico_current;
+uint8 pico_page[7];
 
 /*--------------------------------------------------------------------------*/
 /* Init, reset, shutdown functions                                          */
@@ -68,11 +73,7 @@ void gen_init(void)
     zbank_memory_map[i].write   = zbank_lockup_w;
   }
 
-  /* Z80 bus */
-  m68k_memory_map[0xa0].read8   = z80_read_byte;
-  m68k_memory_map[0xa0].read16  = z80_read_word;
-  m68k_memory_map[0xa0].write8  = z80_write_byte;
-  m68k_memory_map[0xa0].write16 = z80_write_word;
+  /* Z80 bus (bank access) */
   zbank_memory_map[0xa0].read   = zbank_lockup_r;
   zbank_memory_map[0xa0].write  = zbank_lockup_w;
 
@@ -84,34 +85,43 @@ void gen_init(void)
   zbank_memory_map[0xa1].read   = zbank_read_ctrl_io;
   zbank_memory_map[0xa1].write  = zbank_write_ctrl_io;
 
+  /* VDP (initially locked on models with TMSS) */
+  if (!(config.tmss & 1))
+  {
+    for (i=0xc0; i<0xe0; i+=8)
+    {
+      m68k_memory_map[i].read8    = vdp_read_byte;
+      m68k_memory_map[i].read16   = vdp_read_word;
+      m68k_memory_map[i].write8   = vdp_write_byte;
+      m68k_memory_map[i].write16  = vdp_write_word;
+      zbank_memory_map[i].read    = zbank_read_vdp;
+      zbank_memory_map[i].write   = zbank_write_vdp;
+    }
+  }
+
   /* SEGA PICO */
   if (system_hw == SYSTEM_PICO)
   {
-    m68k_memory_map[0x80].read8    = pico_read_byte;
-    m68k_memory_map[0x80].read16   = pico_read_word;
-    m68k_memory_map[0x80].write8   = m68k_unused_8_w;
-    m68k_memory_map[0x80].write16  = m68k_unused_16_w;
+    m68k_memory_map[0x80].read8   = pico_read_byte;
+    m68k_memory_map[0x80].read16  = pico_read_word;
+    m68k_memory_map[0x80].write8  = m68k_unused_8_w;
+    m68k_memory_map[0x80].write16 = m68k_unused_16_w;
 
     /* there is no I/O area (Notaz) */
-    m68k_memory_map[0xa0].read8   = m68k_read_bus_8;
-    m68k_memory_map[0xa0].read16  = m68k_read_bus_16;
-    m68k_memory_map[0xa0].write8  = m68k_unused_8_w;
-    m68k_memory_map[0xa0].write16 = m68k_unused_16_w;
     m68k_memory_map[0xa1].read8   = m68k_read_bus_8;
     m68k_memory_map[0xa1].read16  = m68k_read_bus_16;
     m68k_memory_map[0xa1].write8  = m68k_unused_8_w;
     m68k_memory_map[0xa1].write16 = m68k_unused_16_w;
-  }
 
-  /* VDP */
-  for (i=0xc0; i<0xe0; i+=8)
-  {
-    m68k_memory_map[i].read8   = vdp_read_byte;
-    m68k_memory_map[i].read16  = vdp_read_word;
-    m68k_memory_map[i].write8  = vdp_write_byte;
-    m68k_memory_map[i].write16 = vdp_write_word;
-    zbank_memory_map[i].read   = zbank_read_vdp;
-    zbank_memory_map[i].write  = zbank_write_vdp;
+    /* page registers */
+    pico_current = 0x00;
+    pico_page[0] = 0x00;
+    pico_page[1] = 0x01;
+    pico_page[2] = 0x03;
+    pico_page[3] = 0x07;
+    pico_page[4] = 0x0F;
+    pico_page[5] = 0x1F;
+    pico_page[6] = 0x3F;
   }
 }
 
@@ -121,8 +131,9 @@ void gen_hardreset(void)
   memset (work_ram, 0x00, sizeof (work_ram));
   memset (zram, 0x00, sizeof (zram));
 
-  /* TMSS BIOS support */
-  if (config.bios_enabled == 3)
+  /* TMSS + OS ROM support */
+  memset(tmss, 0x00, sizeof(tmss));
+  if (config.tmss == 3)
     m68k_memory_map[0].base = bios_rom;
 
   /* Reset CPU cycles (check EA logo corruption, no glitches for Skitchin/Budokan on PAL 60hz MD2 with TMSS) */
@@ -130,6 +141,10 @@ void gen_hardreset(void)
 
   /* Z80 bus is released & Z80 reset is asserted */
   zstate = 0;
+  m68k_memory_map[0xa0].read8   = m68k_read_bus_8;
+  m68k_memory_map[0xa0].read16  = m68k_read_bus_16;
+  m68k_memory_map[0xa0].write8  = m68k_unused_8_w;
+  m68k_memory_map[0xa0].write16 = m68k_unused_16_w;
 
   /* Assume default bank is $000000-$007FFF */
   zbank = 0;  
@@ -170,10 +185,76 @@ void gen_shutdown(void)
   z80_exit();
 }
 
+
 /*-----------------------------------------------------------------------
-  Bus controller chip functions                                            
+  OS ROM / TMSS register control functions                                            
   -----------------------------------------------------------------------*/
-void gen_busreq_w(uint32 state, uint32 cycles)
+
+void gen_tmss_w(unsigned int offset, unsigned int data)
+{
+  /* write TMSS regisiter */
+  WRITE_WORD(tmss, offset, data);
+
+  /* VDP requires "SEGA" value to be written in TMSSS register */
+  int i;
+  if (strncmp((char *)tmss, "SEGA", 4) == 0)
+  {
+    for (i=0xc0; i<0xe0; i+=8)
+    {
+      m68k_memory_map[i].read8    = vdp_read_byte;
+      m68k_memory_map[i].read16   = vdp_read_word;
+      m68k_memory_map[i].write8   = vdp_write_byte;
+      m68k_memory_map[i].write16  = vdp_write_word;
+      zbank_memory_map[i].read    = zbank_read_vdp;
+      zbank_memory_map[i].write   = zbank_write_vdp;
+    }
+  }
+  else
+  {
+    for (i=0xc0; i<0xe0; i+=8)
+    {
+      m68k_memory_map[i].read8    = m68k_lockup_r_8;
+      m68k_memory_map[i].read16   = m68k_lockup_r_16;
+      m68k_memory_map[i].write8   = m68k_lockup_w_8;
+      m68k_memory_map[i].write16  = m68k_lockup_w_16;
+      zbank_memory_map[i].read    = zbank_lockup_r;
+      zbank_memory_map[i].write   = zbank_lockup_w;
+    }
+  }
+}
+
+void gen_bankswitch_w(unsigned int data)
+{
+  /* BIOS has not been loaded yet */
+  if (!(config.tmss & 2))
+  {
+    config.tmss |= 2;
+    memcpy(bios_rom, cart.rom, 0x800);
+    memset(cart.rom, 0xff, cart.romsize);
+  }
+
+  if (data & 1)
+  {
+    /* enable CART */
+    m68k_memory_map[0].base = cart.base;
+  }
+  else
+  {
+    /* enable internal BIOS ROM */
+    m68k_memory_map[0].base = bios_rom;
+  }
+}
+
+unsigned int gen_bankswitch_r(void)
+{
+  return (m68k_memory_map[0].base == cart.base);
+}
+
+
+/*-----------------------------------------------------------------------
+  Z80 Bus controller chip functions                                            
+  -----------------------------------------------------------------------*/
+void gen_zbusreq_w(unsigned int state, unsigned int cycles)
 {
   if (state)  /* Z80 Bus Requested */
   {
@@ -183,7 +264,16 @@ void gen_busreq_w(uint32 state, uint32 cycles)
 
     /* request Z80 bus */
     zstate |= 2;
-  } 
+
+    /* enable 68k access */
+    if (zstate & 1)
+    {
+      m68k_memory_map[0xa0].read8   = z80_read_byte;
+      m68k_memory_map[0xa0].read16  = z80_read_word;
+      m68k_memory_map[0xa0].write8  = z80_write_byte;
+      m68k_memory_map[0xa0].write16 = z80_write_word;
+    }
+  }
   else  /* Z80 Bus Released */
   {
     /* if z80 is restarted, resynchronize with 68k */
@@ -192,10 +282,16 @@ void gen_busreq_w(uint32 state, uint32 cycles)
 
     /* release Z80 bus */
     zstate &= 1;
+
+    /* disable 68k access */
+    m68k_memory_map[0xa0].read8   = m68k_read_bus_8;
+    m68k_memory_map[0xa0].read16  = m68k_read_bus_16;
+    m68k_memory_map[0xa0].write8  = m68k_unused_8_w;
+    m68k_memory_map[0xa0].write16 = m68k_unused_16_w;
   }
 }
 
-void gen_reset_w(uint32 state, uint32 cycles)
+void gen_zreset_w(unsigned int state, unsigned int cycles)
 {
   /* detect !ZRESET transitions */
   if (state == (zstate & 1))
@@ -212,6 +308,15 @@ void gen_reset_w(uint32 state, uint32 cycles)
 
     /* negate Z80 reset */
     zstate |= 1;
+
+    /* enable 68k access */
+    if (zstate & 1)
+    {
+      m68k_memory_map[0xa0].read8   = z80_read_byte;
+      m68k_memory_map[0xa0].read16  = z80_read_word;
+      m68k_memory_map[0xa0].write8  = z80_write_byte;
+      m68k_memory_map[0xa0].write16 = z80_write_word;
+    }
   }
   else  /* !ZRESET active */
   {
@@ -221,13 +326,19 @@ void gen_reset_w(uint32 state, uint32 cycles)
 
     /* assert Z80 reset */
     zstate &= 2;
+
+    /* disable 68k access */
+    m68k_memory_map[0xa0].read8   = m68k_read_bus_8;
+    m68k_memory_map[0xa0].read16  = m68k_read_bus_16;
+    m68k_memory_map[0xa0].write8  = m68k_unused_8_w;
+    m68k_memory_map[0xa0].write16 = m68k_unused_16_w;
   }
 
   /* reset YM2612 */
   fm_reset(cycles);
 }
 
-void gen_bank_w (uint32 state)
+void gen_zbank_w (unsigned int state)
 {
   zbank = ((zbank >> 1) | ((state & 1) << 23)) & 0xFF8000;
 }

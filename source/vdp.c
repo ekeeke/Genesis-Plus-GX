@@ -215,8 +215,8 @@ void vdp_reset(void)
   if (config.overscan & 2)
     bitmap.viewport.x = 12;
 
-  /* reset some registers normally set by BIOS */
-  if (config.bios_enabled == 1)
+  /* initialize registers if OS ROM is not used */
+  if (config.tmss == 1)
   {
     reg_w(0 , 0x04);  /* Palette bit set */
     reg_w(1 , 0x04);  /* Mode 5 enabled */
@@ -489,7 +489,7 @@ void vdp_data_w(unsigned int data)
   }
 
   /* restricted VDP writes during active display */
-  if (!(status&8) && (reg[1]&0x40))
+  if (!(status & 8) && (reg[1] & 0x40))
   {
     /* update VDP FIFO */
     fifo_update(mcycles_68k);

@@ -27,7 +27,7 @@ void set_config_defaults(void)
   config.region_detect  = 0;
   config.force_dtack    = 0;
   config.addr_error     = 1;
-  config.bios_enabled   = 0;
+  config.tmss           = 0;
   config.lock_on        = 0;
   config.romtype        = 0;
 
@@ -42,6 +42,7 @@ void set_config_defaults(void)
   config.gun_cursor[1]  = 1;
   config.invert_mouse   = 0;
   for (i=0;i<MAX_INPUTS;i++)
+  {
     config.input[i].padtype = DEVICE_3BUTTON;
+  }
 }
-

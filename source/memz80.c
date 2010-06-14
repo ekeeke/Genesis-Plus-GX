@@ -1,6 +1,6 @@
 /***************************************************************************************
  *  Genesis Plus
- *  Z80 bus arbitration (Genesis mode)
+ *  Z80 bus address decoding (Genesis mode)
  *
  *  Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003  Charles Mac Donald (original code)
  *  Eke-Eke (2007,2008,2009), additional code & fixes for the GCN/Wii port
@@ -66,78 +66,6 @@ static inline unsigned int z80_lockup_r(unsigned int address)
   return 0xff;
 }
 /*
-    VDP access
-*/
-static inline unsigned int z80_vdp_r(unsigned int address)
-{
-  switch (address & 0xfd)
-  {
-    case 0x00:  /* DATA */
-      return (vdp_data_r() >> 8);
-
-    case 0x01:  /* DATA */
-      return (vdp_data_r() & 0xff);
-
-    case 0x04:  /* CTRL */
-      return (0xfc | (vdp_ctrl_r(mcycles_z80) >> 8));
-
-    case 0x05:  /* CTRL */
-      return (vdp_ctrl_r(mcycles_z80) & 0xff);
-
-    case 0x08:  /* HVC */
-    case 0x0c:
-      return (vdp_hvc_r(mcycles_z80) >> 8);
-
-    case 0x09:  /* HVC */
-    case 0x0d:
-      return (vdp_hvc_r(mcycles_z80) & 0xff);
-
-    case 0x18: /* Unused */
-    case 0x19:
-    case 0x1c:
-    case 0x1d:
-      return z80_unused_r(address);
-
-    default:    /* Invalid address */
-      return z80_lockup_r(address);
-  }
-}
-
-static inline void z80_vdp_w(unsigned int address, unsigned int data)
-{
-  switch (address & 0xfc)
-  {
-    case 0x00:  /* Data port */
-      vdp_data_w(data << 8 | data);
-      return;
-
-    case 0x04:  /* Control port */
-      vdp_ctrl_w(data << 8 | data);
-      return;
-
-    case 0x10:  /* PSG */
-    case 0x14:
-      if (address & 1)
-        psg_write(mcycles_z80, data);
-      else
-        z80_unused_w(address, data);
-      return;
-
-    case 0x18: /* Unused */
-      z80_unused_w(address, data);
-      return;
-
-    case 0x1c: /* Test register */
-      vdp_test_w(data << 8 | data);
-      return;
-
-    default:  /* Invalid address */
-      z80_lockup_w(address, data);
-      return;
-  }
-}
-
-/*
     Z80 memory handlers
 */
 unsigned int cpu_readmem16(unsigned int address)
@@ -146,23 +74,33 @@ unsigned int cpu_readmem16(unsigned int address)
   {
     case 0: /* Work RAM */
     case 1:
+    {
       return zram[address & 0x1fff];
+    }
 
     case 2: /* YM2612 */
+    {
       return fm_read(mcycles_68k, address & 3);
+    }
 
     case 3: /* VDP */
-      if ((address >> 8) == 0x7f)
-        return z80_vdp_r (address);
-      return z80_unused_r(address);
-
+    {
+      if ((address >> 8) != 0x7f)
+      {
+        return z80_unused_r(address);
+      }
+      return (*zbank_memory_map[0xc0].read)(address);
+    }
+      
     default: /* V-bus bank */
     {
       address = zbank | (address & 0x7fff);
-      int slot = address >> 16;
+      unsigned int slot = address >> 16;
       if (zbank_memory_map[slot].read)
+      {
         return (*zbank_memory_map[slot].read)(address);
-      return READ_BYTE(m68k_memory_map[slot].base, address&0xffff);
+      }
+      return READ_BYTE(m68k_memory_map[slot].base, address & 0xffff);
     }
   }
 }
@@ -174,38 +112,51 @@ void cpu_writemem16(unsigned int address, unsigned int data)
   {
     case 0: /* Work RAM */
     case 1: 
+    {
       zram[address & 0x1fff] = data;
       return;
+    }
 
     case 2: /* YM2612 */
+    {
       fm_write(mcycles_z80, address & 3, data);
       return;
+    }
 
     case 3: /* Bank register and VDP */
+    {
       switch(address >> 8)
       {
         case 0x60:
-          gen_bank_w(data & 1);
+        {
+          gen_zbank_w(data & 1);
           return;
+        }
 
         case 0x7f:
-          z80_vdp_w(address, data);
+        {
+          (*zbank_memory_map[0xc0].write)(address, data);
           return;
+        }
 
         default:
+        {
           z80_unused_w(address, data);
           return;
+        }
       }
-      return;
+    }
 
     default: /* V-bus bank */
     {
       address = zbank | (address & 0x7fff);
-      int slot = address >> 16;
+      unsigned int slot = address >> 16;
       if (zbank_memory_map[slot].write)
+      {
         (*zbank_memory_map[slot].write)(address, data);
-      else
-        WRITE_BYTE(m68k_memory_map[slot].base, address&0xffff, data);
+        return;
+      }
+      WRITE_BYTE(m68k_memory_map[slot].base, address & 0xffff, data);
       return;
     }
   }
@@ -223,7 +174,7 @@ unsigned int cpu_readport16(unsigned int port)
 #if LOGERROR
   error("Z80 read port %04X\n", port);
 #endif
-  return 0xFF;
+  return 0xff;
 }
 
 void cpu_writeport16(unsigned int port, unsigned int data)

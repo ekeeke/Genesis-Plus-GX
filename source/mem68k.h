@@ -64,6 +64,4 @@ extern void vdp_write_word(uint32 address, uint32 data);
 extern uint32 pico_read_byte(uint32 address);
 extern uint32 pico_read_word(uint32 address);
 
-uint32 pico_current;
-
 #endif /* _MEM68K_H_ */

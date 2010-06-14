@@ -47,7 +47,7 @@ typedef struct
   uint8 region_detect;
   uint8 force_dtack;
   uint8 addr_error;
-  uint8 bios_enabled;
+  uint8 tmss;
   uint8 lock_on;
   uint8 hot_swap;
   uint8 romtype;

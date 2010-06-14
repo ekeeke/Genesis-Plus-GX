@@ -117,7 +117,7 @@ void io_init(void)
 void io_reset(void)
 {
   /* Reset I/O registers */
-  io_reg[0x00] = region_code | 0x20 | (config.bios_enabled == 3);
+  io_reg[0x00] = region_code | 0x20 | (config.tmss & 1);
   io_reg[0x01] = 0x7F;
   io_reg[0x02] = 0x7F;
   io_reg[0x03] = 0x7F;

@@ -926,7 +926,6 @@ static inline uint32 get_hscroll(int line)
 /*--------------------------------------------------------------------------*/
 /* Layers render functions                                                  */
 /*--------------------------------------------------------------------------*/
-
 static void render_bg(int line, int width)
 {
   uint32 column, atex, atbuf, *src, *dst;
@@ -1723,9 +1722,8 @@ void render_shutdown(void)
 
 void render_line(int line)
 {
-  /* display OFF */
-  if (reg[0] & 0x01)
-    return;
+  /* display disabled */
+  if (reg[0] & 0x01) return;
 
   uint8 *lb     = tmp_buf;
   int width     = bitmap.viewport.w;

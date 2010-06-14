@@ -1009,7 +1009,7 @@ static void systemmenu ()
 
   sprintf (items[1].text, "System Lockups: %s", config.force_dtack ? "OFF" : "ON");
   sprintf (items[2].text, "68k Address Error: %s", config.addr_error ? "ON" : "OFF");
-  sprintf (items[3].text, "System BIOS: %s", (config.bios_enabled & 1) ? "ON":"OFF");
+  sprintf (items[3].text, "System TMSS: %s", (config.tmss & 1) ? "ON":"OFF");
 
   if (config.lock_on == TYPE_GG)
     sprintf (items[4].text, "Lock-On: GAME GENIE");
@@ -1106,8 +1106,8 @@ static void systemmenu ()
 
 
       case 3:  /*** BIOS support ***/
-        config.bios_enabled ^= 1;
-        sprintf (items[3].text, "System BIOS: %s", (config.bios_enabled & 1) ? "ON":"OFF");
+        config.tmss ^= 1;
+        sprintf (items[3].text, "System TMSS: %s", (config.tmss & 1) ? "ON":"OFF");
         if (cart.romsize) 
         {
           system_init();

@@ -85,7 +85,7 @@ void config_default(void)
   config.region_detect  = 0;
   config.force_dtack    = 0;
   config.addr_error     = 1;
-  config.bios_enabled   = 0;
+  config.tmss           = 0;
   config.lock_on        = 0;
   config.romtype        = 0;
   config.hot_swap       = 0;

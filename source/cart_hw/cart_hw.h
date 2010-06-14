@@ -50,11 +50,11 @@ typedef struct
 typedef struct
 {
   uint8 *rom;       /* ROM data */
-  uint8 *base;      /* ROM base area (slot 0) */
+  uint8 *base;      /* ROM base (slot 0) */
   uint32 romsize;   /* ROM size */
-  uint32 mask;      /* mask ROM */
-  uint16 lock_on;   /* 1: Lock-On enabled */
-  uint16 jcart;     /* 1: J-CART port enabled */
+  uint32 mask;      /* ROM mask */
+  uint8 lock_on;    /* 1: Lock-On port */
+  uint8 jcart;      /* 1: J-CART port */
   T_CART_HW hw;     /* Extra hardware */
 } T_CART;
 

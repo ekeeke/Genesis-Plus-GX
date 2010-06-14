@@ -25,20 +25,26 @@
 #define _GENESIS_H_
 
 /* Global variables */
-extern uint8 bios_rom[0x10000];
+extern uint8 tmss[4];
+extern uint8 bios_rom[0x800];
 extern uint8 work_ram[0x10000];
 extern uint8 zram[0x2000];
-extern uint8 zstate;
 extern uint32 zbank;
+extern uint8 zstate;
+extern uint8 pico_current;
+extern uint8 pico_page[7];
 
 /* Function prototypes */
 extern void gen_init(void);
 extern void gen_hardreset(void);
 extern void gen_softreset(int state);
 extern void gen_shutdown(void);
-extern void gen_busreq_w(uint32 state, uint32 cycles);
-extern void gen_reset_w(uint32 state, uint32 cycles);
-extern void gen_bank_w(uint32 state);
+extern void gen_tmss_w(unsigned int offset, unsigned int data);
+extern void gen_bankswitch_w(unsigned int data);
+extern unsigned int gen_bankswitch_r(void);
+extern void gen_zbusreq_w(unsigned int state, unsigned int cycles);
+extern void gen_zreset_w(unsigned int state, unsigned int cycles);
+extern void gen_zbank_w(unsigned int state);
 extern int z80_irq_callback(int param);
 
 #endif /* _GEN_H_ */
