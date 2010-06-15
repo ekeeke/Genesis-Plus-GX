@@ -65,6 +65,8 @@ static inline unsigned int z80_lockup_r(unsigned int address)
   }
   return 0xff;
 }
+
+
 /*
     Z80 memory handlers
 */
@@ -85,11 +87,11 @@ unsigned int cpu_readmem16(unsigned int address)
 
     case 3: /* VDP */
     {
-      if ((address >> 8) != 0x7f)
+      if ((address >> 8) == 0x7f)
       {
-        return z80_unused_r(address);
+        return (*zbank_memory_map[0xc0].read)(address);
       }
-      return (*zbank_memory_map[0xc0].read)(address);
+      return z80_unused_r(address);
     }
       
     default: /* V-bus bank */

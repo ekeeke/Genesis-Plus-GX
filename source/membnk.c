@@ -74,11 +74,11 @@ unsigned int zbank_read_ctrl_io(unsigned int address)
   {
     case 0x00:  /* I/O chip */
     {
-      if (address & 0xe0)
+      if (!(address & 0xe0))
       {
-        return zbank_unused_r(address);
+        return (io_read((address >> 1) & 0x0f));
       }
-      return (io_read((address >> 1) & 0x0f));
+      return zbank_unused_r(address);
     }
 
     case 0x11:  /* BUSACK */
@@ -92,25 +92,25 @@ unsigned int zbank_read_ctrl_io(unsigned int address)
 
     case 0x30:  /* TIME */
     {
-      if (!cart.hw.time_r)
+      if (cart.hw.time_r)
       {
-        return zbank_unused_r(address);
+        unsigned int data = cart.hw.time_r(address);
+        if (address & 1)
+        {
+          return (data & 0xff);
+        }
+        return (data >> 8);
       }
-      unsigned int data = cart.hw.time_r(address);
-      if (address & 1)
-      {
-        return (data & 0xff);
-      }
-      return (data >> 8);
+      return zbank_unused_r(address);
     }
 
     case 0x41:  /* OS ROM */
     {
-      if (!(address & 1))
+      if (address & 1)
       {
-        return zbank_unused_r(address);
+        return (gen_bankswitch_r() | 0xfe);
       }
-      return (gen_bankswitch_r() | 0xfe);
+      return zbank_unused_r(address);
     }
 
     case 0x10:  /* MEMORY MODE */
@@ -137,34 +137,34 @@ void zbank_write_ctrl_io(unsigned int address, unsigned int data)
     case 0x00:  /* I/O chip */
     {
       /* get /LWR only */
-      if ((address & 0xe1) != 0x01)
+      if ((address & 0xe1) == 0x01)
       {
-        zbank_unused_w(address, data);
+        io_write((address >> 1) & 0x0f, data);
         return;
       }
-      io_write((address >> 1) & 0x0f, data);
+      zbank_unused_w(address, data);
       return;
     }
 
     case 0x11:  /* BUSREQ */
     {
-      if (address & 1) 
+      if (!(address & 1))
       {
-        zbank_unused_w(address, data);
+        gen_zbusreq_w(data & 1, mcycles_z80);
         return;
       }
-      gen_zbusreq_w(data & 1, mcycles_z80);
+      zbank_unused_w(address, data);
       return;
     }
 
     case 0x12:  /* RESET */
     {
-      if (address & 1)
+      if (!(address & 1))
       {
-        zbank_unused_w(address, data);
+        gen_zreset_w(data & 1, mcycles_z80);
         return;
       }
-      gen_zreset_w(data & 1, mcycles_z80);
+      zbank_unused_w(address, data);
       return;
     }
 
@@ -176,12 +176,12 @@ void zbank_write_ctrl_io(unsigned int address, unsigned int data)
 
     case 0x41:  /* OS ROM */
     {
-      if (!(address & 1))
+      if (address & 1)
       {
-        zbank_unused_w(address, data);
+        gen_bankswitch_w(data & 1);
         return;
       }
-      gen_bankswitch_w(data & 1);
+      zbank_unused_w(address, data);
       return;
     }
 
@@ -275,12 +275,12 @@ void zbank_write_vdp(unsigned int address, unsigned int data)
     case 0x10:  /* PSG */
     case 0x14:
     {
-      if (!(address & 1))
+      if (address & 1)
       {
-        zbank_unused_w(address, data);
+        psg_write(mcycles_z80, data);
         return;
       }
-      psg_write(mcycles_z80, data);
+      zbank_unused_w(address, data);
       return;
     }
              

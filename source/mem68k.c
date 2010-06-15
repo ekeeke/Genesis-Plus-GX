@@ -115,40 +115,40 @@ unsigned int m68k_lockup_r_16 (unsigned int address)
 /*--------------------------------------------------------------------------*/
 unsigned int eeprom_read_byte(unsigned int address)
 {
-  if (address != eeprom.type.sda_out_adr)
+  if (address == eeprom.type.sda_out_adr)
   {
-    return READ_BYTE(cart.rom, address);
+    return eeprom_read(address, 0);
   }
-  return eeprom_read(address, 0);
+  return READ_BYTE(cart.rom, address);
 }
 
 unsigned int eeprom_read_word(unsigned int address)
 {
-  if (address != (eeprom.type.sda_out_adr & 0xfffffe))
+  if (address == (eeprom.type.sda_out_adr & 0xfffffe))
   {
-    return *(uint16 *)(cart.rom + address);
+    return eeprom_read(address, 1);
   }
-  return eeprom_read(address, 1);
+  return *(uint16 *)(cart.rom + address);
 }
 
 void eeprom_write_byte(unsigned int address, unsigned int data)
 {
-  if ((address != eeprom.type.sda_in_adr) && (address != eeprom.type.scl_adr))
+  if ((address == eeprom.type.sda_in_adr) || (address == eeprom.type.scl_adr))
   {
-    m68k_unused_8_w(address, data);
+    eeprom_write(address, data, 0);
     return;
   }
-  eeprom_write(address, data, 0);
+  m68k_unused_8_w(address, data);
 }
 
 void eeprom_write_word(unsigned int address, unsigned int data)
 {
-  if ((address != (eeprom.type.sda_in_adr & 0xfffffe)) && (address != (eeprom.type.scl_adr & 0xfffffe)))
+  if ((address == (eeprom.type.sda_in_adr & 0xfffffe)) || (address == (eeprom.type.scl_adr & 0xfffffe)))
   {
-    m68k_unused_16_w (address, data);
+    eeprom_write(address, data, 1);
     return;
   }
-  eeprom_write(address, data, 1);
+  m68k_unused_16_w (address, data);
 }
 
 
@@ -245,49 +245,49 @@ unsigned int ctrl_io_read_byte(unsigned int address)
   {
     case 0x00:  /* I/O chip */
     {
-      if (address & 0xe0)
+      if (!(address & 0xe0))
       {
-        return m68k_read_bus_8(address);
+        return io_read((address >> 1) & 0x0f);
       }
-      return io_read((address >> 1) & 0x0f);
+      return m68k_read_bus_8(address);
     }
 
     case 0x11:  /* BUSACK */
     {
-      if (address & 1)
+      if (!(address & 1))
       {
-        return m68k_read_bus_8(address);
-      }
-      unsigned int data = m68k_read_pcrelative_8(REG_PC) & 0xfe;
-      if (zstate ^ 3)
-      {
+        unsigned int data = m68k_read_pcrelative_8(REG_PC) & 0xfe;
+        if (zstate == 3)
+        {
+          return data;
+        }
         return (data | 0x01);
       }
-      return data;
+      return m68k_read_bus_8(address);
     }
 
     case 0x30:  /* TIME */
     {
-      if (!cart.hw.time_r)
+      if (cart.hw.time_r)
       {
-        return m68k_read_bus_8(address);
+        unsigned int data = cart.hw.time_r(address);
+        if (address & 1)
+        {
+          return (data & 0xff);
+        }
+        return (data >> 8);
       }
-      unsigned int data = cart.hw.time_r(address);
-      if (address & 1)
-      {
-        return (data & 0xff);
-      }
-      return (data >> 8);
+      return m68k_read_bus_8(address);
     }
 
     case 0x41:  /* OS ROM */
     {
-      if (!(address & 1))
+      if (address & 1)
       {
-        return m68k_read_bus_8(address);
+        unsigned int data = m68k_read_pcrelative_8(REG_PC) & 0xfe;
+        return (gen_bankswitch_r() | data);
       }
-      unsigned int data = m68k_read_pcrelative_8(REG_PC) & 0xfe;
-      return (gen_bankswitch_r() | data);
+      return m68k_read_bus_8(address);
     }
 
     case 0x10:  /* MEMORY MODE */
@@ -313,55 +313,48 @@ unsigned int ctrl_io_read_word(unsigned int address)
   {
     case 0x00:  /* I/O chip */
     {
-      if (address & 0xe0)
+      if (!(address & 0xe0))
       {
-        return m68k_read_bus_16(address); 
+        unsigned int data = io_read((address >> 1) & 0x0f);
+        return (data << 8 | data);
       }
-      unsigned int data = io_read((address >> 1) & 0x0f);
-      return (data << 8 | data);
-    }
+      return m68k_read_bus_16(address); 
+   }
 
     case 0x11:  /* BUSACK */
     {
       unsigned int data = m68k_read_pcrelative_16(REG_PC) & 0xfeff;
-      if (zstate ^ 3)
+      if (zstate == 3)
       {
-        return data | 0x0100;
+        return data;
       }
-      return data;
+      return (data | 0x0100);
     }
 
     case 0x30:  /* TIME */
     {
-      if (!cart.hw.time_r)
+      if (cart.hw.time_r)
       {
-        return m68k_read_bus_16(address); 
+        return cart.hw.time_r(address);
       }
-      return cart.hw.time_r(address);
+      return m68k_read_bus_16(address); 
     }
       
     case 0x50:  /* SVP */
     {
-      switch (address & 0xfe)
+      if ((address & 0xfd) == 0)
       {
-        case 0:
-        case 2:
-        {
-          return svp->ssp1601.gr[SSP_XST].h;
-        }
-
-        case 4:
-        {
-          unsigned int temp = svp->ssp1601.gr[SSP_PM0].h;
-          svp->ssp1601.gr[SSP_PM0].h &= ~1;
-          return temp;
-        }
-
-        default:
-        {
-          return m68k_read_bus_16(address);
-        }
+        return svp->ssp1601.gr[SSP_XST].h;
       }
+
+      if ((address & 0xff) == 4)
+      {
+        unsigned int data = svp->ssp1601.gr[SSP_PM0].h;
+        svp->ssp1601.gr[SSP_PM0].h &= ~1;
+        return data;
+      }
+
+      return m68k_read_bus_16(address);
     }
 
     case 0x10:  /* MEMORY MODE */
@@ -387,35 +380,35 @@ void ctrl_io_write_byte(unsigned int address, unsigned int data)
   {
     case 0x00:  /* I/O chip */
     {
-      if ((address & 0xe1) != 0x01)
+      if ((address & 0xe1) == 0x01)
       {
         /* get /LWR only */
-        m68k_unused_8_w(address, data);
+        io_write((address >> 1) & 0x0f, data);
         return;
       }
-      io_write((address >> 1) & 0x0f, data);
+      m68k_unused_8_w(address, data);
       return;
     }
 
     case 0x11:  /* BUSREQ */
     {
-      if (address & 1)
+      if (!(address & 1))
       {
-        m68k_unused_8_w(address, data);
+        gen_zbusreq_w(data & 1, mcycles_68k);
         return;
       }
-      gen_zbusreq_w(data & 1, mcycles_68k);
+      m68k_unused_8_w(address, data);
       return;
     }
 
     case 0x12:  /* RESET */
     {
-      if (address & 1)
+      if (!(address & 1))
       {
-        m68k_unused_8_w(address, data);
+        gen_zreset_w(data & 1, mcycles_68k);
         return;
       }
-      gen_zreset_w(data & 1, mcycles_68k);
+      m68k_unused_8_w(address, data);
       return;
     }
 
@@ -427,12 +420,12 @@ void ctrl_io_write_byte(unsigned int address, unsigned int data)
 
     case 0x41:  /* OS ROM */
     {
-      if (!(address & 1))
+      if (address & 1)
       {
-        m68k_unused_8_w(address, data);
+        gen_bankswitch_w(data & 1);
         return;
       }
-      gen_bankswitch_w(data & 1);
+      m68k_unused_8_w(address, data);
       return;
     }
 
@@ -460,12 +453,12 @@ void ctrl_io_write_word(unsigned int address, unsigned int data)
   {
     case 0x00:  /* I/O chip */
     {
-      if (address & 0xe0)
+      if (!(address & 0xe0))
       {
-        m68k_unused_16_w(address, data);
+        io_write((address >> 1) & 0x0f, data & 0xff);
         return;
       }
-      io_write((address >> 1) & 0x0f, data & 0xff);
+      m68k_unused_16_w(address, data);
       return;
     }
 
@@ -496,14 +489,14 @@ void ctrl_io_write_word(unsigned int address, unsigned int data)
 
     case 0x50:  /* SVP REGISTERS */
     {
-      if (address & 0xfd)
+      if (!(address & 0xfd))
       {
-        m68k_unused_16_w(address, data);
+        svp->ssp1601.gr[SSP_XST].h = data;
+        svp->ssp1601.gr[SSP_PM0].h |= 2;
+        svp->ssp1601.emu_status &= ~SSP_WAIT_PM0;
         return;
       }
-      svp->ssp1601.gr[SSP_XST].h = data;
-      svp->ssp1601.gr[SSP_PM0].h |= 2;
-      svp->ssp1601.emu_status &= ~SSP_WAIT_PM0;
+      m68k_unused_16_w(address, data);
       return;
     }
 
@@ -631,12 +624,12 @@ void vdp_write_byte(unsigned int address, unsigned int data)
     case 0x10:  /* PSG */
     case 0x14:
     {
-      if (!(address & 1))
+      if (address & 1)
       {
-        m68k_unused_8_w(address, data);
+        psg_write(mcycles_68k, data);
         return;
       }
-      psg_write(mcycles_68k, data);
+      m68k_unused_8_w(address, data);
       return;
     }
 

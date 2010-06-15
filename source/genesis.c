@@ -134,7 +134,9 @@ void gen_hardreset(void)
   /* TMSS + OS ROM support */
   memset(tmss, 0x00, sizeof(tmss));
   if (config.tmss == 3)
+  {
     m68k_memory_map[0].base = bios_rom;
+  }
 
   /* Reset CPU cycles (check EA logo corruption, no glitches for Skitchin/Budokan on PAL 60hz MD2 with TMSS) */
   mcycles_68k = mcycles_z80 = (rand() % lines_per_frame) * MCYCLES_PER_LINE;
@@ -268,10 +270,11 @@ void gen_zbusreq_w(unsigned int state, unsigned int cycles)
     /* enable 68k access */
     if (zstate & 1)
     {
-      m68k_memory_map[0xa0].read8   = z80_read_byte;
-      m68k_memory_map[0xa0].read16  = z80_read_word;
-      m68k_memory_map[0xa0].write8  = z80_write_byte;
-      m68k_memory_map[0xa0].write16 = z80_write_word;
+      _m68k_memory_map *base = &m68k_memory_map[0xa0];
+      base->read8   = z80_read_byte;
+      base->read16  = z80_read_word;
+      base->write8  = z80_write_byte;
+      base->write16 = z80_write_word;
     }
   }
   else  /* Z80 Bus Released */
@@ -284,10 +287,11 @@ void gen_zbusreq_w(unsigned int state, unsigned int cycles)
     zstate &= 1;
 
     /* disable 68k access */
-    m68k_memory_map[0xa0].read8   = m68k_read_bus_8;
-    m68k_memory_map[0xa0].read16  = m68k_read_bus_16;
-    m68k_memory_map[0xa0].write8  = m68k_unused_8_w;
-    m68k_memory_map[0xa0].write16 = m68k_unused_16_w;
+    _m68k_memory_map *base = &m68k_memory_map[0xa0];
+    base->read8   = m68k_read_bus_8;
+    base->read16  = m68k_read_bus_16;
+    base->write8  = m68k_unused_8_w;
+    base->write16 = m68k_unused_16_w;
   }
 }
 
@@ -312,10 +316,11 @@ void gen_zreset_w(unsigned int state, unsigned int cycles)
     /* enable 68k access */
     if (zstate & 1)
     {
-      m68k_memory_map[0xa0].read8   = z80_read_byte;
-      m68k_memory_map[0xa0].read16  = z80_read_word;
-      m68k_memory_map[0xa0].write8  = z80_write_byte;
-      m68k_memory_map[0xa0].write16 = z80_write_word;
+      _m68k_memory_map *base = &m68k_memory_map[0xa0];
+      base->read8   = z80_read_byte;
+      base->read16  = z80_read_word;
+      base->write8  = z80_write_byte;
+      base->write16 = z80_write_word;
     }
   }
   else  /* !ZRESET active */
@@ -328,10 +333,11 @@ void gen_zreset_w(unsigned int state, unsigned int cycles)
     zstate &= 2;
 
     /* disable 68k access */
-    m68k_memory_map[0xa0].read8   = m68k_read_bus_8;
-    m68k_memory_map[0xa0].read16  = m68k_read_bus_16;
-    m68k_memory_map[0xa0].write8  = m68k_unused_8_w;
-    m68k_memory_map[0xa0].write16 = m68k_unused_16_w;
+    _m68k_memory_map *base = &m68k_memory_map[0xa0];
+    base->read8   = m68k_read_bus_8;
+    base->read16  = m68k_read_bus_16;
+    base->write8  = m68k_unused_8_w;
+    base->write16 = m68k_unused_16_w;
   }
 
   /* reset YM2612 */

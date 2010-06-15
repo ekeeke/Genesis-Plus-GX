@@ -454,20 +454,23 @@ static void gxSetAspectRatio(int *xscale, int *yscale)
   /* the following values have been deducted from comparison with a real 50/60hz Mega Drive */
   if (config.aspect)
   {
-    if (config.overscan)
-    {
-      /* borders are emulated */
-      *xscale = 358 + ((reg[12] & 1)*2) - gc_pal;
+    /* vertical borders */
+    if (config.overscan & 1)
       *yscale = vdp_pal + ((gc_pal && !config.render) ? 143 : 120);
-    }
     else
     {
-      /* borders are simulated (black) */
-      *xscale = 325 + ((reg[12] & 1)*2) - gc_pal;
       *yscale = bitmap.viewport.h / 2;
-      if (vdp_pal && (!gc_pal || config.render)) *yscale = *yscale * 240 / 288;
-      else if (!vdp_pal && gc_pal && !config.render) *yscale = *yscale * 288 / 240;
+      if (vdp_pal && (!gc_pal || config.render))
+        *yscale = *yscale * 240 / 288;
+      else if (!vdp_pal && gc_pal && !config.render)
+        *yscale = *yscale * 288 / 240;
     }
+
+    /* horizontal borders */
+    if (config.overscan & 2)
+      *xscale = 358 + ((reg[12] & 1)*2) - gc_pal;
+    else
+      *xscale = 325 + ((reg[12] & 1)*2) - gc_pal;
 
     /* 16/9 correction */
     if (config.aspect & 2)
@@ -477,18 +480,17 @@ static void gxSetAspectRatio(int *xscale, int *yscale)
   /* manual aspect ratio (default is fullscreen) */
   else
   {
-    if (config.overscan)
-    {
-      /* borders are emulated */
-      *xscale = 352;
+    /* vertical borders */
+    if (config.overscan & 1)
       *yscale = (gc_pal && !config.render) ? (vdp_pal ? (268*144 / bitmap.viewport.h):143) : (vdp_pal ? (224*144 / bitmap.viewport.h):120);
-    }
     else
-    {
-      /* borders are simulated (black) */
-      *xscale = 320;
       *yscale = (gc_pal && !config.render) ? 134 : 112;
-    }
+
+    /* horizontal borders */
+    if (config.overscan & 2)
+      *xscale = 352;
+    else
+      *xscale = 320;
 
     /* add user scaling */
     *xscale += config.xscale;
