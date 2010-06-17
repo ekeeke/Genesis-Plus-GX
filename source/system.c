@@ -80,7 +80,7 @@ int audio_update (void)
   if (config.hq_fm)
   {
     /* resample into FM output buffer */
-    Fir_Resampler_read(fm,size);
+    Fir_Resampler_read(fm, size);
 
 #ifdef LOGSOUND
     error("%d FM samples remaining\n",Fir_Resampler_written() >> 1);
@@ -89,7 +89,7 @@ int audio_update (void)
   else
   {  
     /* adjust remaining samples in FM output buffer*/
-    snd.fm.pos -= (size << 1);
+    snd.fm.pos -= (size * 2);
 
 #ifdef LOGSOUND
     error("%d FM samples remaining\n",(snd.fm.pos - snd.fm.buffer)>>1);
@@ -154,8 +154,8 @@ int audio_update (void)
   rrp = rr;
 
   /* keep remaining samples for next frame */
-  memcpy(snd.fm.buffer, fm, (snd.fm.pos - snd.fm.buffer) << 2);
-  memcpy(snd.psg.buffer, psg, (snd.psg.pos - snd.psg.buffer) << 1);
+  memcpy(snd.fm.buffer, fm, (snd.fm.pos - snd.fm.buffer) * 4);
+  memcpy(snd.psg.buffer, psg, (snd.psg.pos - snd.psg.buffer) * 2);
 
 #ifdef LOGSOUND
   error("%d samples returned\n\n",size);
@@ -191,20 +191,12 @@ int audio_init (int samplerate, float framerate)
 #endif
 
   /* SN76489 stream buffers */
-#ifndef NGC
   snd.psg.buffer = (int16 *) malloc(snd.buffer_size * sizeof(int16));
-#else
-  snd.psg.buffer = (int16 *) memalign(32, snd.buffer_size * sizeof(int16));
-#endif
   if (!snd.psg.buffer)
     return (-1);
 
   /* YM2612 stream buffers */
-#ifndef NGC
   snd.fm.buffer = (int32 *) malloc(snd.buffer_size * sizeof(int32) * 2);
-#else
-  snd.fm.buffer = (int32 *) memalign(32,snd.buffer_size * sizeof(int32) * 2);
-#endif
   if (!snd.fm.buffer)
     return (-1);
 

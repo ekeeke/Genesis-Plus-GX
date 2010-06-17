@@ -42,10 +42,10 @@ static inline void fm_update(unsigned int cycles)
     fm_cycles_count += cycles;
 
     /* number of samples during period */
-    uint32 cnt = cycles / fm_cycles_ratio;
+    unsigned int cnt = cycles / fm_cycles_ratio;
 
     /* remaining cycles */
-    uint32 remain = cycles % fm_cycles_ratio;
+    unsigned int remain = cycles % fm_cycles_ratio;
     if (remain)
     {
       /* one sample ahead */
@@ -82,10 +82,10 @@ static inline void psg_update(unsigned int cycles)
     psg_cycles_count += cycles;
 
     /* number of samples during period */
-    uint32 cnt = cycles / psg_cycles_ratio;
+    unsigned int cnt = cycles / psg_cycles_ratio;
 
     /* remaining cycles */
-    uint32 remain = cycles % psg_cycles_ratio;
+    unsigned int remain = cycles % psg_cycles_ratio;
     if (remain)
     {
       /* one sample ahead */

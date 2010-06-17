@@ -258,18 +258,19 @@ unsigned int gen_bankswitch_r(void)
   -----------------------------------------------------------------------*/
 void gen_zbusreq_w(unsigned int state, unsigned int cycles)
 {
-  if (state)  /* Z80 Bus Requested */
+  if (state)  /* !ZBUSREQ asserted */
   {
     /* if z80 was running, resynchronize with 68k */
     if (zstate == 1)
       z80_run(cycles);
 
-    /* request Z80 bus */
+    /* update Z80 bus status */
     zstate |= 2;
 
-    /* enable 68k access */
+    /* check if Z80 reset is released */
     if (zstate & 1)
     {
+      /* enable 68k access to Z80 bus */
       _m68k_memory_map *base = &m68k_memory_map[0xa0];
       base->read8   = z80_read_byte;
       base->read16  = z80_read_word;
@@ -277,13 +278,13 @@ void gen_zbusreq_w(unsigned int state, unsigned int cycles)
       base->write16 = z80_write_word;
     }
   }
-  else  /* Z80 Bus Released */
+  else  /* !ZBUSREQ released */
   {
     /* if z80 is restarted, resynchronize with 68k */
     if (zstate == 3)
       mcycles_z80 = cycles;
 
-    /* release Z80 bus */
+    /* update Z80 bus status */
     zstate &= 1;
 
     /* disable 68k access */
@@ -301,21 +302,19 @@ void gen_zreset_w(unsigned int state, unsigned int cycles)
   if (state == (zstate & 1))
     return;
 
-  if (state)  /* !ZRESET inactive */
+  if (state)  /* !ZRESET released */
   {
     /* if z80 is restarted, resynchronize with 68k */
-    if (zstate == 0)
+    if (!zstate)
       mcycles_z80 = cycles;
 
-    /* reset Z80 */
-    z80_reset();
-
-    /* negate Z80 reset */
+    /* update Z80 bus status */
     zstate |= 1;
 
-    /* enable 68k access */
-    if (zstate & 1)
+    /* check if Z80 bus has been requested */
+    if (zstate & 2)
     {
+      /* enable 68k access to Z80 bus */
       _m68k_memory_map *base = &m68k_memory_map[0xa0];
       base->read8   = z80_read_byte;
       base->read16  = z80_read_word;
@@ -323,13 +322,17 @@ void gen_zreset_w(unsigned int state, unsigned int cycles)
       base->write16 = z80_write_word;
     }
   }
-  else  /* !ZRESET active */
+  else  /* !ZRESET asserted */
   {
     /* if z80 was running, resynchronize with 68k */
     if (zstate == 1)
       z80_run(cycles);
 
-    /* assert Z80 reset */
+    /* reset Z80 & YM2612 */
+    z80_reset();
+    fm_reset(cycles);
+
+    /* update Z80 bus status */
     zstate &= 2;
 
     /* disable 68k access */
@@ -340,8 +343,6 @@ void gen_zreset_w(unsigned int state, unsigned int cycles)
     base->write16 = m68k_unused_16_w;
   }
 
-  /* reset YM2612 */
-  fm_reset(cycles);
 }
 
 void gen_zbank_w (unsigned int state)
