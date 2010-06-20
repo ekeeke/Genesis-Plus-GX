@@ -265,7 +265,7 @@ void gen_zbusreq_w(unsigned int data, unsigned int cycles)
     {
       /* resynchronize with 68k */ 
       z80_run(cycles);
-      
+
       /* enable 68k access to Z80 bus */
       _m68k_memory_map *base = &m68k_memory_map[0xa0];
       base->read8   = z80_read_byte;
@@ -273,7 +273,7 @@ void gen_zbusreq_w(unsigned int data, unsigned int cycles)
       base->write8  = z80_write_byte;
       base->write16 = z80_write_word;
     }
-	
+
     /* update Z80 bus status */
     zstate |= 2;
   }
@@ -282,15 +282,15 @@ void gen_zbusreq_w(unsigned int data, unsigned int cycles)
     /* check if Z80 is going to be restarted */
     if (zstate == 3)
     {
-       /* resynchronize with 68k */
-       mcycles_z80 = cycles;
-	   
-       /* disable 68k access to Z80 bus */
-       _m68k_memory_map *base = &m68k_memory_map[0xa0];
-       base->read8   = m68k_read_bus_8;
-       base->read16  = m68k_read_bus_16;
-       base->write8  = m68k_unused_8_w;
-       base->write16 = m68k_unused_16_w;
+      /* resynchronize with 68k */
+      mcycles_z80 = cycles;
+
+      /* disable 68k access to Z80 bus */
+      _m68k_memory_map *base = &m68k_memory_map[0xa0];
+      base->read8   = m68k_read_bus_8;
+      base->read16  = m68k_read_bus_16;
+      base->write8  = m68k_unused_8_w;
+      base->write16 = m68k_unused_16_w;
     }   
 
     /* update Z80 bus status */
@@ -306,7 +306,7 @@ void gen_zreset_w(unsigned int data, unsigned int cycles)
     if (zstate == 0)
     {
       /* resynchronize with 68k */
-	    mcycles_z80 = cycles;
+      mcycles_z80 = cycles;
  
       /* reset Z80 & YM2612 */
       z80_reset();
@@ -314,7 +314,7 @@ void gen_zreset_w(unsigned int data, unsigned int cycles)
     }
 	
     /* check if 68k access to Z80 bus is granted */
-	  else if (zstate == 2)
+    else if (zstate == 2)
     {
       /* enable 68k access to Z80 bus */
       _m68k_memory_map *base = &m68k_memory_map[0xa0];
@@ -322,6 +322,10 @@ void gen_zreset_w(unsigned int data, unsigned int cycles)
       base->read16  = z80_read_word;
       base->write8  = z80_write_byte;
       base->write16 = z80_write_word;
+
+      /* reset Z80 & YM2612 */
+      z80_reset();
+      fm_reset(cycles);
     }
 
     /* update Z80 bus status */
@@ -334,8 +338,8 @@ void gen_zreset_w(unsigned int data, unsigned int cycles)
     {
       /* resynchronize with 68k */
       z80_run(cycles);
-	  }
-	
+    }
+
     /* check if 68k had access to Z80 bus */
     else if (zstate == 3)
     {
@@ -346,7 +350,7 @@ void gen_zreset_w(unsigned int data, unsigned int cycles)
       base->write8  = m68k_unused_8_w;
       base->write16 = m68k_unused_16_w;
     }
-	
+
     /* stop YM2612 */
     fm_reset(cycles);
 

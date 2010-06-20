@@ -117,7 +117,7 @@ static uint32 fifo_latency;   /* CPU access latency */
  CRAM or VSRAM for a 68K > VDP transfer, in which case it is in words.
 
 */
-static const uint32 dma_rates[16] = {
+static const uint8 dma_rates[16] = {
   8,   83,  9, 102, /* 68K to VRAM (1 word = 2 bytes) */
   16, 167, 18, 205, /* 68K to CRAM or VSRAM */
   15, 166, 17, 204, /* DMA fill */
@@ -140,10 +140,7 @@ static void dma_fill(unsigned int data);
 void vdp_init(void)
 {
   /* PAL/NTSC timings */
-  if (vdp_pal)
-    lines_per_frame = 313;
-  else
-    lines_per_frame = 262;
+  lines_per_frame = vdp_pal ? 313: 262;
 }
 
 void vdp_reset(void)
@@ -268,25 +265,22 @@ void vdp_restore(uint8 *vdp_regs)
 
 void vdp_update_dma()
 {
-  uint32 dma_cycles = 0;
+  int dma_cycles = 0;
 
   /* update DMA timings  */
-  uint32 index = dma_type;
-  if ((status & 8) || !(reg[1] & 0x40))
-    ++index;
-  if (reg[12] & 1)
-    index+=2;
+  unsigned int index = dma_type;
+  if ((status & 8) || !(reg[1] & 0x40)) index++;
+  if (reg[12] & 1) index += 2;
 
   /* DMA transfer rate (bytes per line) */
-  uint32 rate = dma_rates[index];
+  unsigned int rate = dma_rates[index];
 
   /* 68k cycles left */
-  int32 left_cycles = (mcycles_vdp + MCYCLES_PER_LINE) - mcycles_68k;
-  if (left_cycles < 0)
-    left_cycles = 0;
+  int left_cycles = (mcycles_vdp + MCYCLES_PER_LINE) - mcycles_68k;
+  if (left_cycles < 0) left_cycles = 0;
 
   /* DMA bytes left */
-  uint32 dma_bytes = (left_cycles * rate) / MCYCLES_PER_LINE;
+  int dma_bytes = (left_cycles * rate) / MCYCLES_PER_LINE;
 
 #ifdef LOGVDP
   error("[%d(%d)][%d(%d)] DMA type %d (%d access/line)-> %d access (%d remaining) (%x)\n", v_counter, mcycles_68k/MCYCLES_PER_LINE, mcycles_68k, mcycles_68k%MCYCLES_PER_LINE,dma_type/4, rate, dma_length, dma_bytes, m68k_get_reg (NULL, M68K_REG_PC));
@@ -344,7 +338,11 @@ void vdp_ctrl_w(unsigned int data)
       /* VDP register write */
       reg_w((data >> 8) & 0x1F,data & 0xFF);
     }
-    else pending = 1;
+    else
+    {
+      /* Set pending flag */
+      pending = 1;
+    }
 
     addr = addr_latch | (data & 0x3FFF);
     code = ((code & 0x3C) | ((data >> 14) & 0x03));
