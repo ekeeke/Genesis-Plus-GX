@@ -77,7 +77,6 @@ extern t_snd snd;
 extern uint32 mcycles_vdp;
 extern uint32 mcycles_z80;
 extern uint32 mcycles_68k;
-extern uint32 hint_68k;
 extern uint8 system_hw;
 
 /* Function prototypes */

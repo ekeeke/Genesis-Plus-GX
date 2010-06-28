@@ -15,25 +15,26 @@ of samples per frame and keeping PSG & FM chips in sync.
 * fixed YM2612 state on reset.
 * removed outdated & less accurate Gens YM2612 core
 * added configurable YM2612 DAC resolution emulation.
-* added configurable & faster FIR resampler (thanks to Blargg & AamirM), dropped libsamplerate support.
+* added configurable & faster FIR resampler (thanks to Blargg & AamirM), removed libsamplerate support.
 * added configurable Low-Pass filtering
 * added configurable 3-Band Equalizer (thanks to Neil C).
-* added support for SN76489 Noise Channel boost (optional).
-* modified SN76489 cut-off frequency.
+* added an option to boost SN76489 Noise Channel.
+* adjusted SN76489 cut-off frequency.
 
 [Core/VDP]
 ---------------
 * added support for CRAM writes during horizontal blanking (Striker, Zero the Kamikaze Squirrel,...)
 * added support for 2-Cell vertical scrolling in Interlaced 2 mode
-* added proper HV Counter latch support (fixes Sunset Riders intro)
-* improved VDP FIFO timings accuracy: fixes Sol Deace intro
-* improved sprite masking accuracy (thanks to Nemesis for his sprite test program)
-* improved HBLANK flag timing accuracy: fixes Mega Turrican (Sky level)
+* added support for some undocumented mode register bits
+* added proper emulation of HV Counter latch: fixes Sunset Riders intro
+* added pixel-accurate emulation of mid-line display on/off (Nigel Mansell World Championship PAL, Ren & Stimpy's Invention PAL,...)
+* improved FIFO timings accuracy: fixes Sol Deace intro
+* improved sprite masking accuracy (thanks to Nemesis for his test program)
 * improved sprites processing accuracy: fixes (un)masked sprites in Mickey Mania (3D level), Sonic 2 (VS mode).
+* improved HBLANK flag timing accuracy: fixes Mega Turrican (Sky level)
 * improved horizontal blanking & HINT/VINT occurence timing accuracy, as measured on real hardware.
 * improved HCounter accuracy in 40-cell mode, as measured on real hardware.
-* improved color accuracy in VDP highlight mode to match results observed on real hardware.
-
+* improved color accuracy in VDP highlight mode to match results observed on real hardware
 
 [Core/CPU]
 ---------------

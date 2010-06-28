@@ -25,14 +25,16 @@
 #define _RENDER_H_
 
 /* Global variables */
-extern uint32 object_index_count;
+extern uint8 object_count[2];
+extern uint8 object_which;
 
 /* Function prototypes */
 extern void render_init(void);
 extern void render_reset(void);
 extern void render_shutdown(void);
 extern void render_line(int line);
-extern void remap_buffer(int line,int width);
+extern void remap_buffer(int line);
+extern void blank_line(int line, int offset, int width);
 extern void window_clip(void);
 extern void parse_satb(int line);
 

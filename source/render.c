@@ -302,7 +302,7 @@ static __inline__ void WRITE_LONG(void *address, uint32 data)
 #define DRAW_SPRITE_TILE \
   for(i=0; i<8; i++) \
   { \
-    if ((lb[i] & 0x80) && (lb[i] & 0x0F) && (src[i] & 0x0F)) status |= 0x20; \
+    if (((lb[i] & 0x8F) > 0x80) && src[i]) status |= 0x20; \
     lb[i] = table[(lb[i] << 8) |(src[i] | palette)]; \
   }
 
@@ -348,14 +348,16 @@ static const uint32 atex_table[] = {
 /* Sprite name look-up table */
 static uint8 name_lut[0x400];
 
-struct
+typedef struct
 {
   uint16 ypos;
   uint16 xpos;
   uint16 attr;
   uint8 size;
   uint8 index; // unused
-} object_info[20];
+} object;
+
+static object object_info[2][20];
 
 /* Pixel look-up tables and table base address */
 static uint8 *lut[5];
@@ -387,7 +389,8 @@ static uint8 ntb_buf[0x200];  /* Plane B line buffer */
 static uint8 obj_buf[0x200];  /* Object layer line buffer */
 
 /* Sprite line buffer data */
-uint32 object_index_count;
+uint8 object_count[2];
+uint8 object_which;
 
 /*--------------------------------------------------------------------------*/
 /* Look-up table functions (handles priority between layers pixels)         */
@@ -904,7 +907,7 @@ static void update_bg_pattern_cache(int index)
   }
 }
 
-static inline uint32 get_hscroll(int line)
+static uint32 get_hscroll(int line)
 {
   switch(reg[11] & 3)
   {
@@ -1455,33 +1458,25 @@ static int spr_over = 0;
 
 static void render_obj(int line, uint8 *buf, uint8 *table)
 {
-  uint16 ypos;
-  uint16 attr;
-  uint16 xpos;
   uint8 sizetab[] = {8, 16, 24, 32};
-  uint8 size;
-  uint8 *src;
 
-  int count,i;
-  int pixelcount = 0;
-  int width;
-  int height;
+  int i, count, column;
+  int xpos;
   int v_line;
-  int column;
-  int max = bitmap.viewport.w;
-  int left = 0x80;
-  int right = 0x80 + max;
+  int pixelmax = bitmap.viewport.w;
+  int pixelcount = 0;
+  int masked = 0;
 
-  uint8 *s, *lb;
-  uint16 name, index;
-  uint8 palette;
+  uint8 *src, *s, *lb;
+  uint32 size, width;
+  uint32 attr, attr_mask, name, palette, index;
 
-  int attr_mask, nt_row;
-  int mask = 0;
+  object *obj_info = object_info[object_which];
 
-  for(count = 0; count < object_index_count; count += 1)
+  for(count = 0; count < object_count[object_which]; count ++)
   {
-    xpos = object_info[count].xpos & 0x1ff;
+    /* sprite horizontal position */
+    xpos = obj_info[count].xpos;
 
     /* sprite masking (requires at least one sprite with xpos > 0) */
     if (xpos)
@@ -1491,43 +1486,47 @@ static void render_obj(int line, uint8 *buf, uint8 *table)
     else if (spr_over)
     {
       spr_over = 0;
-      mask = 1;
+      masked = 1;
     }
 
-    size = object_info[count].size & 0x0f;
+    /* sprite horizontal ofsfet */
+    xpos = xpos - 0x80;
+
+    /* sprite size */
+    size = obj_info[count].size;
     width = sizetab[(size >> 2) & 3];
 
-    /* update pixel count (off-screen sprites included) */
+    /* update pixel count (off-screen sprites are included) */
     pixelcount += width;
 
-    if(((xpos + width) >= left) && (xpos < right) && !mask)
+    /* draw visible sprites */
+    if (((xpos + width) >= 0) && (xpos < pixelmax) && !masked)
     {
-      ypos = object_info[count].ypos;
-      attr = object_info[count].attr;
-      attr_mask = (attr & 0x1800);
-
-      height = sizetab[size & 3];
+      /* sprite attributes + pattern index */
+      attr = obj_info[count].attr;
+      attr_mask = attr & 0x1800;
       palette = (attr >> 9) & 0x70;
+      name = attr & 0x07FF;
 
-      v_line = (line - ypos);
-      nt_row = (v_line >> 3) & 3;
+      /* sprite vertical offset */
+      v_line = line - obj_info[count].ypos;
+      s = &name_lut[((attr >> 3) & 0x300) | (size << 4) | ((v_line & 0x18) >> 1)];
       v_line = (v_line & 7) << 3;
 
-      name = (attr & 0x07FF);
-      s = &name_lut[((attr >> 3) & 0x300) | (size << 4) | (nt_row << 2)];
+      /* pointer into line buffer */
+      lb = &buf[0x20 + xpos];
 
-      lb = (uint8 *)&buf[0x20 + (xpos - 0x80)];
-
-      /* number of tiles to draw */
-      /* adjusted for sprite limit */
-      if (pixelcount > max)
+      /* adjust width for sprite limit */
+      if (pixelcount > pixelmax)
       {
-        width -= (pixelcount - max);
+        width = width - pixelcount + pixelmax;
       }
 
-      width >>= 3;
+      /* number of tiles to draw */
+      width = width >> 3;
 
-      for(column = 0; column < width; column += 1, lb+=8)
+      /* render sprite cells (8-pixels column) */
+      for(column = 0; column < width; column++, lb+=8)
       {
         index = attr_mask | ((name + s[column]) & 0x07FF);
         src = &bg_pattern_cache[(index << 6) | (v_line)];
@@ -1536,7 +1535,7 @@ static void render_obj(int line, uint8 *buf, uint8 *table)
     }
 
     /* sprite limit (256 or 320 pixels) */
-    if (pixelcount >= max)
+    if (pixelcount >= pixelmax)
     {
       spr_over = 1;
       return;
@@ -1548,34 +1547,26 @@ static void render_obj(int line, uint8 *buf, uint8 *table)
 
 static void render_obj_im2(int line, int odd, uint8 *buf, uint8 *table)
 {
-  uint16 ypos;
-  uint16 attr;
-  uint16 xpos;
   uint8 sizetab[] = {8, 16, 24, 32};
-  uint8 size;
-  uint8 *src;
 
-  int count,i;
-  int pixelcount = 0;
-  int width;
-  int height;
+  int i, count, column;
+  int xpos;
   int v_line;
-  int column;
-  int max = bitmap.viewport.w;
-  int left = 0x80;
-  int right = 0x80 + max;
+  int pixelmax = bitmap.viewport.w;
+  int pixelcount = 0;
+  int masked = 0;
 
-  uint8 *s, *lb;
-  uint16 name, index;
-  uint8 palette;
+  uint8 *src, *s, *lb;
+  uint32 size, width;
+  uint32 attr, attr_mask, name, palette, index;
   uint32 offs;
 
-  int attr_mask, nt_row;
-  int mask = 0;
+  object *obj_info = object_info[object_which];
 
-  for(count = 0; count < object_index_count; count += 1)
+  for(count = 0; count < object_count[object_which]; count ++)
   {
-    xpos = object_info[count].xpos & 0x1ff;
+    /* sprite horizontal position */
+    xpos = obj_info[count].xpos;
 
     /* sprite masking (requires at least one sprite with xpos > 0) */
     if (xpos)
@@ -1585,52 +1576,58 @@ static void render_obj_im2(int line, int odd, uint8 *buf, uint8 *table)
     else if(spr_over)
     {
       spr_over = 0;
-      mask = 1;
+      masked = 1;
     }
 
-    size = object_info[count].size & 0x0f;
+    /* sprite horizontal ofsfet */
+    xpos = xpos - 0x80;
+
+    /* sprite size */
+    size = obj_info[count].size;
     width = sizetab[(size >> 2) & 3];
 
-    /* update pixel count (off-screen sprites included) */
+    /* update pixel count (off-screen sprites are included) */
     pixelcount += width;
 
-    if(((xpos + width) >= left) && (xpos < right) && !mask)
+    /* draw visible sprites */
+    if (((xpos + width) >= 0) && (xpos < pixelmax) && !masked)
     {
-      ypos = object_info[count].ypos;
-      attr = object_info[count].attr;
+      /* sprite attributes + pattern index */
+      attr = obj_info[count].attr;
       attr_mask = (attr & 0x1800);
-
-      height = sizetab[size & 3];
       palette = (attr >> 9) & 0x70;
+      name = (attr & 0x03FF);
 
-      v_line = (line - ypos);
-      nt_row = (v_line >> 3) & 3;
+      /* sprite vertical offset */
+      v_line = line - obj_info[count].ypos;
+      s = &name_lut[((attr >> 3) & 0x300) | (size << 4) | ((v_line & 0x18) >> 1)];
       v_line = (((v_line & 7) << 1) | odd) << 3;      
 
-      name = (attr & 0x03FF);
-      s = &name_lut[((attr >> 3) & 0x300) | (size << 4) | (nt_row << 2)];
+      /* pointer into line buffer */
+      lb = &buf[0x20 + xpos];
 
-      lb = (uint8 *)&buf[0x20 + (xpos - 0x80)];
+      /* adjust width for sprite limit */
+      if (pixelcount > pixelmax)
+      {
+        width = width - pixelcount + pixelmax;
+      }
 
       /* number of tiles to draw */
-      /* adjusted for sprite limit */
-      if (pixelcount > max)
-        width -= (pixelcount - max);
-      width >>= 3;
+      width = width >> 3;
 
+      /* render sprite cells (8-pixels column) */
       for(column = 0; column < width; column += 1, lb+=8)
       {
         index = (name + s[column]) & 0x3ff;
         offs = index << 7 | attr_mask << 6 | v_line;
-        if(attr & 0x1000)
-          offs ^= 0x40;
+        if(attr & 0x1000) offs ^= 0x40;
         src = &bg_pattern_cache[offs];
         DRAW_SPRITE_TILE;
       }
     }
 
     /* sprite limit (256 or 320 pixels) */
-    if (pixelcount >= max)
+    if (pixelcount >= pixelmax)
     {
       spr_over = 1;
       return;
@@ -1719,12 +1716,14 @@ void render_shutdown(void)
 /*--------------------------------------------------------------------------*/
 /* Line render function                                                     */
 /*--------------------------------------------------------------------------*/
+void blank_line(int line, int offset, int width)
+{
+  memset(&tmp_buf[0x20 + offset], 0x40, width);
+  remap_buffer(line);
+}
 
 void render_line(int line)
 {
-  /* display disabled */
-  if (reg[0] & 0x01) return;
-
   uint8 *lb     = tmp_buf;
   int width     = bitmap.viewport.w;
   int x_offset  = bitmap.viewport.x;
@@ -1732,8 +1731,7 @@ void render_line(int line)
   /* background color (blanked display or vertical borders) */
   if (!(reg[1] & 0x40) || (status & 8))
   {
-    width += 2 * x_offset;
-    memset(&lb[0x20 - x_offset], 0x40, width);
+    memset(&lb[0x20 - x_offset], 0x40, width + 2*x_offset);
   }
   else
   {
@@ -1793,24 +1791,27 @@ void render_line(int line)
     }
 
     /* left-most column blanking */
-    if(reg[0] & 0x20)
-      memset(&lb[0x20], 0x40, 0x08);
+    if(reg[0] & 0x20) memset(&lb[0x20], 0x40, 0x08);
 
     /* horizontal borders */
     if (x_offset)
     {
-        memset(&lb[0x20 - x_offset], 0x40, x_offset);
-        memset(&lb[0x20 + width], 0x40, x_offset);
-        width += 2 * x_offset;
+      memset(&lb[0x20 - x_offset], 0x40, x_offset);
+      memset(&lb[0x20 + width], 0x40, x_offset);
     }
   }
 
   /* pixel color remapping */
-  remap_buffer(line,width);
+  remap_buffer(line);
 }
 
-void remap_buffer(int line, int width)
+void remap_buffer(int line)
 {
+  /* display disabled */
+  if (reg[0] & 0x01) return;
+  
+  int width = bitmap.viewport.w + 2*bitmap.viewport.x;
+
   /* get line offset from framebuffer */
   line = (line + bitmap.viewport.y) % lines_per_frame;
 
@@ -1913,38 +1914,41 @@ void parse_satb(int line)
 
   uint16 *p = (uint16 *) &vram[satb];
   uint16 *q = (uint16 *) &sat[0];
-
-  object_index_count = 0;
+  
+  uint32 count = 0;
+  object *obj_info = object_info[object_which^1];
 
   do
   {
+    /* Read ypos & size from internal SAT */ 
     ypos = (q[link] >> im2_flag) & 0x1FF;
     size = q[link + 1] >> 8;
     height = sizetab[size & 3];
 
     if((line >= ypos) && (line < (ypos + height)))
     {
-      /* sprite limit (max. 16 or 20 sprites displayed per line) */
-      if(object_index_count == limit)
+      /* Sprite limit (max. 16 or 20 sprites displayed per line) */
+      if(count == limit)
       {
-        if(vint_pending == 0)
-          status |= 0x40;
-        return;
+        status |= 0x40;
+        break;
       }
 
-      // using xpos from internal satb stops sprite x
-      // scrolling in bloodlin.bin,
-      // but this seems to go against the test prog
-      object_info[object_index_count].attr  = p[link + 2];
-      object_info[object_index_count].xpos  = p[link + 3];
-      object_info[object_index_count].ypos  = ypos;
-      object_info[object_index_count].size = size;
-      ++object_index_count;
+      /* Update sprite list */
+      /* name, attribute & xpos are parsed from VRAM */ 
+      obj_info[count].attr  = p[link + 2];
+      obj_info[count].xpos  = p[link + 3] & 0x1ff;
+      obj_info[count].ypos  = ypos;
+      obj_info[count].size  = size & 0x0f;
+      ++count;
     }
 
+    /* Read link data from internal SAT */ 
     link = (q[link + 1] & 0x7F) << 2;
-    if(link == 0)
-      break;
+    if(link == 0) break;
   }
   while (--total);
+
+  /* Update sprite count for next line */
+  object_count[object_which^1] = count;
 }

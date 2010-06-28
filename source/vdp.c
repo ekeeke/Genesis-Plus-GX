@@ -700,7 +700,7 @@ static void data_w(unsigned int data)
         if (!(status & 8) && (reg[1]& 0x40) && (mcycles_68k <= (mcycles_vdp + 860)))
         {
           /* remap current line */
-          remap_buffer(v_counter,bitmap.viewport.w + 2*bitmap.viewport.x);
+          remap_buffer(v_counter);
 #ifdef LOGVDP
           error("Line remapped\n");
 #endif
@@ -829,34 +829,56 @@ static void reg_w(unsigned int r, unsigned int d)
         }
       }
 
-      /* Display status modified during HBLANK (Legend of Galahad, Lemmings 2, Formula 1 Championship,  */
-      /* Nigel Mansell's World Championship Racing,  ...)                                               */
-      /*                                                                                                */
-      /* Note that this is not entirely correct since we are cheating with the HBLANK period limits and */
-      /* still redrawing the whole line. This is done because some games (forexample, the PAL version   */
-      /* of Nigel Mansell's World Championship Racing) appear to disable display outside HBLANK.        */
-      /* On  real hardware, the raster line would appear partially blanked.                             */
+      /* Display status modified during active display (Legend of Galahad, Lemmings 2,  */
+      /* Formula One Championship,  Nigel Mansell's World Championship Racing, ...)     */
       if ((r & 0x40) && !(status & 8))
       {
-        if (mcycles_68k <= (hint_68k + 860))
+        int offset = mcycles_68k - mcycles_vdp - 860;
+        if (offset <= 0)
         {
-          /* If display was disabled during HBLANK (Mickey Mania 3D level), sprite processing is limited  */
+          /* redraw entire line */
+          render_line(v_counter);
+
+#ifdef LOGVDP
+          error("Line redrawn (%d sprites) \n",object_count[object_which^1]);
+#endif
+
+          /* If display is was disabled during HBLANK (Mickey Mania 3D level), sprite processing is limited  */
           /* Below values have been deducted from testing on this game, accurate emulation would require  */
           /* to know exact sprite (pre)processing timings. Hopefully, they don't seem to break any other  */
           /* games, so they might not be so much inaccurate.                                              */
-          if ((d&0x40) && (object_index_count > 5) && (mcycles_68k % MCYCLES_PER_LINE >= 360))
-              object_index_count = 5;
-#ifdef LOGVDP
-          error("Line redrawn (%d sprites) \n",object_index_count);
-#endif
-          /* redraw entire line */
-          render_line(v_counter);
+          if (d & 0x40)
+          {
+            parse_satb(0x81 + v_counter);
+            if ((object_count[object_which^1] > 5) && (mcycles_68k % MCYCLES_PER_LINE >= 360))
+              object_count[object_which^1] = 5;
+          }
         }
-#ifdef LOGVDP
         else
-          error("Line NOT redrawn\n");
+        {
+          /* pixel offset */
+          if (reg[12] & 1) offset = offset / 8;
+          else offset = (offset / 10) + 16;
+
+#ifdef LOGVDP
+          error("Line %d redrawn from pixel %d\n",v_counter,offset);
 #endif
-      }
+
+          /* line is partially blanked */
+          if (offset < bitmap.viewport.w)
+          {
+            if (d & 0x40)
+            {
+              render_line(v_counter);
+              blank_line(v_counter, 0, offset);
+            }
+            else
+            {
+              blank_line(v_counter, offset, bitmap.viewport.w - offset);
+            }
+          }
+        }
+      } 
       break;
 
     case 2: /* NTAB */
@@ -896,7 +918,7 @@ static void reg_w(unsigned int r, unsigned int d)
         if (!(status & 8) && (mcycles_68k <= (mcycles_vdp + 860)))
         {
           /* remap colors */
-          remap_buffer(v_counter,bitmap.viewport.w + 2*bitmap.viewport.x);
+          remap_buffer(v_counter);
 #ifdef LOGVDP
           error("--> Line remapped\n");
 #endif
