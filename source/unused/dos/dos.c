@@ -90,9 +90,8 @@ int main (int argc, char *argv[])
       bios_rom[i] = bios_rom[i+1];
       bios_rom[i+1] = temp;
     }
-    config.bios_enabled |= 2;
+    config.tmss |= 2;
   }
-  else config.bios_enabled = 0;
 
   /* initialize genesis VM */
   init_machine();

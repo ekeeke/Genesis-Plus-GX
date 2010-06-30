@@ -2,12 +2,13 @@
  Genesis Plus  
  ----------------------------------------------------------------------------
 
- Version 1.2a
+ based on the original version 1.2a
  by Charles Mac Donald
  WWW: http://cgfm2.emuviews.com
 
- additional code by Eke-Eke
- WWW: http://gxdev.wordpress.com/
+ version 1.4
+ by Eke-Eke
+ WWW: http://code.google.com/p/genplus-gx
 
 
  What's New
@@ -16,34 +17,40 @@
  see CHANGELOG
 
 
- Features (NEW!)
+ Features 
  ---------
 
-    * cycle-accurate CPUs emulation & synchronization (68000, Z80, YM2612, SN76489)
-    * cycle-accurate VDP emulation (DMA, FIFO, HV interrupts, HBLANK,…)
-    * original frequency YM2612 emulation (High Quality FM)
-    * basic hardware latency emulation
-    * full overscan area (horizontal & vertical colored borders) emulation
-    * TMSS BIOS support
-    * PICO hardware support (experimental) 
-    * 3-buttons & 6-buttons controllers
-    * Sega Team Player & EA 4-Way Play multitap adapters (up to 8players !)
-    * Sega Menacer & Konami Justifier lightguns
-    * Sega Mouse & Sega Mega Mouse 
-    * SVP DSP (Virtua Racing)
-    * J-Cart
-    * backup RAM (parallel SRAM/FRAM and serial EEPROM)
-    * ROM bankswitch (Super Street Fighter 2)
-    * SRAM switch (Phantasy Star 4, Legend of Thor, Sonic the Hedgehog 3)
-    * ROM mappers & copy protection devices used in many unlicensed/pirate cartridges
-
+    * NTSC (60Hz) & PAL (50Hz) hardware emulation
+    * highly accurate 68000 & Z80 CPU emulation
+    * highly accurate VDP emulation (HBLANK, DMA, FIFO, HV interrupts, undocumented registers, display mid-line changes…)
+    * cycle-accurate YM2612 emulation (FM synthesis is done at the original frequency, using FIR resampling)
+    * cycle-accurate chip synchronization (68000/Z80/YM2612/SN76489)
+    * basic hardware latency emulation (VDP/68k, Z80/68k)
+    * full overscan area (horizontal & vertical colored borders) emulation (optional)
+    * accurate TMSS model emulation incl. internal BIOS support (optional)
+    * Blargg's software NTSC filters support (optional)
+    * PICO emulation (partial) 
+    * 3-buttons & 6-buttons controllers support
+    * Sega Team Player & EA 4-Way Play multitap adapters support
+    * Sega Menacer & Konami Justifier lightguns support
+    * Sega Mouse support
+    * J-Cart adapter support(Micro Machines & Pete Sampras series, Super Skidmarks)
+    * SVP DSP emulation (Virtua Racing)
+    * SRAM support (up to 64kB)
+    * serial EEPROM emulation (all known chips)
+    * ROM bankswitch hardware support (Super Street Fighter 2)
+    * ROM/SRAM bankswitch hardware support (Phantasy Star 4, Legend of Thor, Sonic the Hedgehog 3)
+    * emulates most banking & copy protection devices used in unlicensed/pirate cartridges
+    * native Game Genie & Action Replay hardware emulation
+    * Lock-On hardware emulation
+    * support for ROM image up to 10MB (Ultimate MK3 hack) 
 
 
  Usage
  -----
 
- The Windows version runs windowed in a 16-bit desktop with NO sound or
- joystick support.
+ The Windows version runs windowed in a 16-bit desktop with 48Hz sound using SDL but
+ without joystick support.
 
  The DOS version has most of the functionality from SMS Plus, such
  as audio, joysticks, etc.
@@ -51,29 +58,27 @@
  Windows/DOS controls:
 
  Arrow Keys -   Directional pad
- A,S,D,F    -   1P gamepad, buttons A, B, C, Start
- Tab        -   Hard Reset 
+ A,S,D,F    -   1P gamepad, buttons A, B, C, StartTab        -   Hard Reset 
  Esc        -   Exit program
 
  F7	    -	Load Savestate (game.gpz)
  F8	    -	Save Savestate (game.gpz)
  F9	    -	Toggle CPU clock: PAL(50hz)/NTSC(60hz)
  F10	    -   Soft Reset
- F11        -   Toggle Player # (keyboard/mouse)
+ F11	    -   Toggle Border emulation (vertical only)
+ F12        -   Toggle Player # (keyboard/mouse)
 
  DOS only:
 
  End        -   Exit program
  F1-F4      -   Set frameskip level (F1 = no skip ... F4 = skip 3 frames)
- F5	    -	Log 68k memory access (for debug ONLY)
  F6	    -	Log messages (for debug ONLY)
 
  WIndows only:
 
  End        -   Exit program
- F1-F4      -   Set frameskip level (F1 = no skip ... F4 = skip 3 frames)
- F5	    -	Log messages (for debug ONLY)
- F6	    -   Toggle Turbo mode
+ F4         -   Toggle Audio (ONLY when Turbo mode is OFF)
+ F6	    -   Toggle Turbo mode (ONLY when Audio is OFF)
 
 
  The mouse can be used for lightgun games, PICO games and when the Sega Mouse is activated.
@@ -134,25 +139,27 @@
  (from the Gamecube/Wii port: http://code.google.com/p/genplus-gx )
 
  The Genesis emulator authors: Bart Trzynadlowski, Quintesson, Steve Snake,
- James Ponder, Stef, Gerrie, Sardu, Haze, Notaz, Nemesis, AamirM
+ James Ponder, Stef, Gerrie, Sardu, AamirM
 
- The regular people and many lurkers at segadev.
-
- People from SpritesMind.net forums
+ The regular people and many lurkers at segadev and spritesmind.net.
 
  The MAME team for the CPU and sound chip emulators.
 
- Maxim for his SN76489 emulator
+ Maxim for his SN76489 emulator.
 
- Stef (again) for his alternate YM2612 emulator
+ Nemesis for his researches about the YM2612 and VDP.
  
- Notaz for his SVP emulator
+ Notaz for his SVP emulator.
 
- Tasco Deluxe for his documentation of Realtec mapper
+ Tasco Deluxe for his documentation of Realtec mapper.
 
- Erik de Castro Lopo for his "Secret Rabbit Code" library aka libsamplerate
+ Haze for his reverse-engineering of most unlicensed games protection.
 
- Jean-Loup Gailly and Mark Adler for their useful zip library
+ Shay Green (Blargg) for his FIR Resampler & NTSC Video Filter.
+
+ Neil C for his 3-Band EQ implementation.
+
+ Jean-Loup Gailly and Mark Adler for their useful zip library.
 
 
  Contact
@@ -164,12 +171,14 @@
 
  Eke-Eke
  E-mail: eke_eke31@yahoo.fr
- WWW: http://gxdev.wordpress.com/
+ WWW: http://code.google.com/p/genplus-gx
+
 
  Legal
  -----
 
  Copyright (C) 1999, 2000, 2001, 2002, 2003  Charles MacDonald
+ Copyright (C) 2006-2010  Eke-Eke
 
  The source code is distributed under the terms of the GNU General Public
  License.

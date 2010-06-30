@@ -102,19 +102,24 @@ void set_config_defaults(void)
   config.psgBoostNoise  = 0;
   config.filter         = 1;
   config.low_freq       = 200;
-  config.high_freq      = 20000;
+  config.high_freq      = 8000;
   config.lg             = 1.0;
   config.mg             = 1.0;
   config.hg             = 1.0;
+  config.lp_range       = 50;
+  config.rolloff        = 0.999;
 
   /* system options */
   config.region_detect  = 0;
   config.force_dtack    = 0;
-  config.bios_enabled   = 0;
+  config.addr_error     = 1;
+  config.tmss           = 0;
+  config.lock_on        = 0;
+  config.romtype        = 0;
 
   /* display options */
   config.overscan = 1;
-  config.render   = 1;
+  config.render   = 0;
 
   /* controllers options */
   input.system[0]       = SYSTEM_GAMEPAD;

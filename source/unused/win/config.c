@@ -32,7 +32,7 @@ void set_config_defaults(void)
   config.romtype        = 0;
 
   /* display options */
-  config.overscan = 0;
+  config.overscan = 1;
   config.render   = 0;
 
   /* controllers options */

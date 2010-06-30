@@ -123,6 +123,8 @@ sms_ntsc_t *sms_ntsc;
 struct {
   SDL_Surface* surf_screen;
   SDL_Surface* surf_bitmap;
+  SDL_Rect srect;
+  SDL_Rect drect;
   Uint32 frames_rendered;
 } sdl_video;
 
@@ -143,22 +145,40 @@ static int sdl_video_init()
 
 static void sdl_video_update()
 {
-  SDL_Rect rect;
-
   system_frame(0);
 
   /* viewport size changed */
-  if(bitmap.viewport.changed)
+  if(bitmap.viewport.changed & 1)
   {
-    bitmap.viewport.changed = 0;
-    rect.w = bitmap.viewport.w+2*bitmap.viewport.x;
-    rect.h = bitmap.viewport.h+2*bitmap.viewport.y;
-    if (config.render && (interlaced || config.ntsc))  rect.h *= 2;
-    if (config.ntsc) rect.w = (reg[12]&1) ? MD_NTSC_OUT_WIDTH(rect.w) : SMS_NTSC_OUT_WIDTH(rect.w);
-    rect.x=(VIDEO_WIDTH-rect.w)/2;
-    rect.y=(VIDEO_HEIGHT-rect.h)/2;
+    bitmap.viewport.changed &= ~1;
 
-    /* NTSC filters */
+    /* source bitmap */
+    sdl_video.srect.w = bitmap.viewport.w+2*bitmap.viewport.x;
+    sdl_video.srect.h = bitmap.viewport.h+2*bitmap.viewport.y;
+    sdl_video.srect.x = 0;
+    sdl_video.srect.y = 0;
+    if (sdl_video.srect.w > VIDEO_WIDTH)
+    {
+      sdl_video.srect.x = (sdl_video.srect.w - VIDEO_WIDTH) / 2;
+      sdl_video.srect.w = VIDEO_WIDTH;
+    }
+    if (sdl_video.srect.h > VIDEO_HEIGHT)
+  {
+      sdl_video.srect.y = (sdl_video.srect.h - VIDEO_HEIGHT) / 2;
+      sdl_video.srect.h = VIDEO_HEIGHT;
+    }
+
+    /* destination bitmap */
+    sdl_video.drect.w = sdl_video.srect.w;
+    sdl_video.drect.h = sdl_video.srect.h;
+    sdl_video.drect.x = (VIDEO_WIDTH - sdl_video.drect.w) / 2;
+    sdl_video.drect.y = (VIDEO_HEIGHT - sdl_video.drect.h) / 2;
+
+    /* clear destination surface */
+    SDL_FillRect(sdl_video.surf_screen, 0, 0);
+
+    /*if (config.render && (interlaced || config.ntsc))  rect.h *= 2;
+    if (config.ntsc) rect.w = (reg[12]&1) ? MD_NTSC_OUT_WIDTH(rect.w) : SMS_NTSC_OUT_WIDTH(rect.w);
     if (config.ntsc)
     {
       sms_ntsc = (sms_ntsc_t *)malloc(sizeof(sms_ntsc_t));
@@ -193,14 +213,13 @@ static void sdl_video_update()
         free(md_ntsc);
         md_ntsc = NULL;
       }
-    }
+    } */
   }
 
-  SDL_BlitSurface(sdl_video.surf_bitmap, NULL, sdl_video.surf_screen, &rect);
+  SDL_BlitSurface(sdl_video.surf_bitmap, &sdl_video.srect, sdl_video.surf_screen, &sdl_video.drect);
   SDL_UpdateRect(sdl_video.surf_screen, 0, 0, 0, 0);
 
   ++sdl_video.frames_rendered;
-
 }
 
 static void sdl_video_close()
@@ -229,7 +248,7 @@ static Uint32 sdl_sync_timer_callback(Uint32 interval)
   {
     int fps = vdp_pal ? (sdl_video.frames_rendered / 3) : sdl_video.frames_rendered;
     sdl_sync.ticks = sdl_video.frames_rendered = 0;
-    sprintf(caption, "Genesis Plus SDL - %d fps", fps);
+    sprintf(caption, "Genesis Plus SDL - %d FPS", fps);
     SDL_WM_SetCaption(caption, NULL);
   }
   return interval;
@@ -260,6 +279,7 @@ static int sdl_control_update(SDLKey keystate)
     {
       case SDLK_TAB:
       {
+        system_init();
         system_reset();
         break;
       }
@@ -280,10 +300,10 @@ static int sdl_control_update(SDLKey keystate)
 
       case SDLK_F4:
       {
-        SDL_FillRect(sdl_video.surf_screen, 0, 0);
-        config.ntsc ++;
+        /*config.ntsc ++;
         if (config.ntsc > 3) config.ntsc = 0;
-        bitmap.viewport.changed = 1;
+        bitmap.viewport.changed = 1;*/
+        if (!turbo_mode) use_sound ^= 1;
         break;
       }
 
@@ -295,7 +315,7 @@ static int sdl_control_update(SDLKey keystate)
 
       case SDLK_F6:
       {
-        turbo_mode ^=1;
+        if (!use_sound) turbo_mode ^=1;
         break;
       }
 
@@ -350,9 +370,9 @@ static int sdl_control_update(SDLKey keystate)
         hctab = (reg[12] & 1) ? cycle2hc40 : cycle2hc32;
 
         /* reinitialize overscan area */
-        bitmap.viewport.x = config.overscan ? 14 : 0;
-        bitmap.viewport.y = config.overscan ? (((reg[1] & 8) ? 0 : 8) + (vdp_pal ? 24 : 0)) : 0;
-
+        bitmap.viewport.x = (config.overscan & 2) ? ((reg[12] & 1) ? 16 : 12) : 0;
+        bitmap.viewport.y = (config.overscan & 1) ? (((reg[1] & 8) ? 0 : 8) + (vdp_pal ? 24 : 0)) : 0;
+        bitmap.viewport.changed = 1;
         break;
       }
 
@@ -364,18 +384,18 @@ static int sdl_control_update(SDLKey keystate)
 
       case SDLK_F11:
       {
-        joynum ++;
-        if (joynum > MAX_DEVICES - 1)
-          joynum = 0;
+        config.overscan ^= 1;
+        bitmap.viewport.x = (config.overscan & 2) ? ((reg[12] & 1) ? 16 : 12) : 0;
+        bitmap.viewport.y = (config.overscan & 1) ? (((reg[1] & 8) ? 0 : 8) + (vdp_pal ? 24 : 0)) : 0;
+        bitmap.viewport.changed = 1;
         break;
       }
 
       case SDLK_F12:
       {
-        config.overscan ^= 1;
-        bitmap.viewport.x = config.overscan ? ((reg[12] & 1) ? 16 : 12) : 0;
-        bitmap.viewport.y = config.overscan ? (((reg[1] & 8) ? 0 : 8) + (vdp_pal ? 24 : 0)) : 0;
-        bitmap.viewport.changed = 1;
+        joynum ++;
+        if (joynum > MAX_DEVICES - 1)
+          joynum = 0;
         break;
       }
 
@@ -531,7 +551,7 @@ int main (int argc, char **argv)
       bios_rom[i] = bios_rom[i+1];
       bios_rom[i+1] = temp;
     }
-    config.bios_enabled |= 2;
+    config.tmss |= 2;
   }
 
   /* initialize SDL */
@@ -543,8 +563,7 @@ int main (int argc, char **argv)
     exit(1);
   }
   sdl_video_init();
-  if (use_sound)
-    sdl_sound_init();
+  if (use_sound) sdl_sound_init();
   sdl_sync_init();
 
   /* initialize Genesis virtual system */
@@ -557,6 +576,7 @@ int main (int argc, char **argv)
   bitmap.pitch        = (bitmap.width * bitmap.granularity);
   bitmap.data         = sdl_video.surf_bitmap->pixels;
   SDL_UnlockSurface(sdl_video.surf_bitmap);
+  bitmap.viewport.changed = 3;
 
   /* initialize emulation */
   audio_init(SOUND_FREQUENCY, vdp_pal ? 50:60);
@@ -574,8 +594,7 @@ int main (int argc, char **argv)
   /* reset emulation */
   system_reset();
 
-  if(use_sound)
-    SDL_PauseAudio(0);
+  if(use_sound) SDL_PauseAudio(0);
 
   /* 3 frames = 50 ms (60hz) or 60 ms (50hz) */
   if(sdl_sync.sem_sync)
@@ -623,8 +642,7 @@ int main (int argc, char **argv)
   free(cart.rom);
 
   sdl_video_close();
-  if (use_sound)
-   sdl_sound_close();
+  sdl_sound_close();
   sdl_sync_close();
   SDL_Quit();
 
