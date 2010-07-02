@@ -84,7 +84,7 @@ extern unsigned int vdp_ctrl_r(unsigned int cycles);
 extern void vdp_data_w(unsigned int data);
 extern unsigned int vdp_data_r(void);
 extern unsigned int vdp_hvc_r(unsigned int cycles);
-extern void vdp_test_w(unsigned int value);
+extern void vdp_test_w(unsigned int data);
 extern int vdp_int_ack_callback(int int_level);
 
 #endif /* _VDP_H_ */

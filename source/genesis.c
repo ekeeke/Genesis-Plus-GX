@@ -45,7 +45,7 @@ void gen_init(void)
   /* initialize CPUs */
   m68k_set_cpu_type(M68K_CPU_TYPE_68000);
   m68k_init();
-  z80_init(0,0,0,z80_irq_callback);
+  z80_init(0,z80_irq_callback);
 
   /* initialize 68k mapped memory */
   /* $000000-$7fffff is affected to cartridge area (see cart_hw.c) */

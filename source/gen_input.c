@@ -77,13 +77,13 @@ static const uint8 hc_256[171] =
 static int x_offset;
 static int y_offset;
 
-static inline void lightgun_reset(int num)
+static void lightgun_reset(int num)
 {
   input.analog[num][0] = bitmap.viewport.w >> 1;
   input.analog[num][1] = bitmap.viewport.h >> 1;
 }
 
-static inline void lightgun_update(int num)
+static void lightgun_update(int num)
 {
   if ((input.analog[num][1] == v_counter + y_offset))
   {

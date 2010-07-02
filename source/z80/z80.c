@@ -3270,7 +3270,7 @@ static void take_interrupt(void)
 /****************************************************************************
  * Processor initialization
  ****************************************************************************/
-void z80_init(int index, int clock, const void *config, int (*irqcallback)(int))
+void z80_init(const void *config, int (*irqcallback)(int))
 {
   int i, p;
 
@@ -3407,7 +3407,7 @@ void z80_exit(void)
 /****************************************************************************
  * Run until given cycle count 
  ****************************************************************************/
-void z80_run(int cycles)
+void z80_run(unsigned int cycles)
 {
   /* check for NMIs on the way in; they can only be set externally */
   /* via timers, and can't be dynamically enabled, so it is safe */
@@ -3443,7 +3443,7 @@ void z80_run(int cycles)
 /****************************************************************************
  * Burn 'cycles' T-states. Adjust R register for the lost time
  ****************************************************************************/
-void z80_burn(int cycles)
+void z80_burn(unsigned int cycles)
 {
   if( cycles > 0 )
   {

@@ -955,7 +955,7 @@ INLINE void set_det_mul(FM_CH *CH,FM_SLOT *SLOT,int v)
 }
 
 /* set total level */
-INLINE void set_tl(FM_CH *CH,FM_SLOT *SLOT , int v)
+INLINE void set_tl(FM_SLOT *SLOT , int v)
 {
   SLOT->tl = (v&0x7f)<<(ENV_BITS-7); /* 7bit TL */
 
@@ -1564,7 +1564,7 @@ INLINE void OPNWriteReg(int r, int v)
       break;
 
     case 0x40:  /* TL */
-      set_tl(CH,SLOT,v);
+      set_tl(SLOT,v);
       break;
 
     case 0x50:  /* KS, AR */

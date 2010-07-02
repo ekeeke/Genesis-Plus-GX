@@ -907,7 +907,7 @@ static void update_bg_pattern_cache(int index)
   }
 }
 
-static uint32 get_hscroll(int line)
+static inline uint32 get_hscroll(int line)
 {
   switch(reg[11] & 3)
   {
@@ -1544,7 +1544,7 @@ static void render_obj(uint8 *buf, uint8 *table)
   spr_over = 0;
 }
 
-static void render_obj_im2(int odd, uint8 *buf, uint8 *table)
+static void render_obj_im2(uint8 *buf, uint8 *table, int odd)
 {
   uint8 sizetab[] = {8, 16, 24, 32};
 
@@ -1756,13 +1756,13 @@ void render_line(int line)
         /* Shadow & Highlight */
         merge(&nta_buf[0x20], &ntb_buf[0x20], &bg_buf[0x20], lut[2], width);
         memset(&obj_buf[0x20], 0, width);
-        render_obj_im2(odd, obj_buf, lut[3]);
+        render_obj_im2(obj_buf, lut[3], odd);
         merge(&obj_buf[0x20], &bg_buf[0x20], &lb[0x20], lut[4], width);
       }
       else
       {
         merge(&nta_buf[0x20], &ntb_buf[0x20], &lb[0x20], lut[0], width);
-        render_obj_im2(odd, lb, lut[1]);
+        render_obj_im2(lb, lut[1], odd);
       }
     }
     else
@@ -1904,17 +1904,16 @@ void window_clip(void)
 void parse_satb(int line)
 {
   uint8 sizetab[] = {8, 16, 24, 32};
-  uint32 link = 0;
-  uint32 size, height;
-  int ypos;
-
+  uint32 size, link = 0;
+  int ypos, height;
+  
+  uint32 count = 0;
   uint32 limit = (reg[12] & 1) ? 20 : 16;
   uint32 total = limit << 2;
-
+  
   uint16 *p = (uint16 *) &vram[satb];
   uint16 *q = (uint16 *) &sat[0];
   
-  uint32 count = 0;
   object *obj_info = object_info[object_which^1];
 
   do

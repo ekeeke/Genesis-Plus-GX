@@ -499,7 +499,7 @@ static void gxSetAspectRatio(int *xscale, int *yscale)
 }
 
 /* Reset GX/VI hardware scaler */
-static void gxResetScaler(u32 width, u32 height)
+static void gxResetScaler(u32 width)
 {
   int xscale  = 0;
   int yscale  = 0;
@@ -1419,7 +1419,7 @@ void gx_video_Update(void)
       rmode = tvmodes[gc_pal*3 + interlaced];
 
     /* update aspect ratio */
-    gxResetScaler(vwidth,vheight);
+    gxResetScaler(vwidth);
 
     /* update GX rendering mode */
     gxResetMode(rmode);

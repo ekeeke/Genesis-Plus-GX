@@ -280,7 +280,7 @@ void vdp_update_dma()
   if (left_cycles < 0) left_cycles = 0;
 
   /* DMA bytes left */
-  int dma_bytes = (left_cycles * rate) / MCYCLES_PER_LINE;
+  unsigned int dma_bytes = (left_cycles * rate) / MCYCLES_PER_LINE;
 
 #ifdef LOGVDP
   error("[%d(%d)][%d(%d)] DMA type %d (%d access/line)-> %d access (%d remaining) (%x)\n", v_counter, mcycles_68k/MCYCLES_PER_LINE, mcycles_68k, mcycles_68k%MCYCLES_PER_LINE,dma_type/4, rate, dma_length, dma_bytes, m68k_get_reg (NULL, M68K_REG_PC));
@@ -449,8 +449,7 @@ unsigned int vdp_ctrl_r(unsigned int cycles)
 unsigned int vdp_hvc_r(unsigned int cycles)
 {
   /* HVC is frozen (Lightgun games, Sunset Riders) */
-  if (hvc_latch)
-    return (hvc_latch & 0xffff);
+  if (hvc_latch) return (hvc_latch & 0xffff);
 
   /* Horizontal Counter (Striker, Mickey Mania, Skitchin, Road Rash I,II,III, Sonic 3D Blast...) */
   uint8 hc = hctab[cycles%MCYCLES_PER_LINE];
@@ -468,10 +467,10 @@ unsigned int vdp_hvc_r(unsigned int cycles)
   return ((vc << 8) | hc);
 }
 
-void vdp_test_w(unsigned int value)
+void vdp_test_w(unsigned int data)
 {
 #ifdef LOGERROR
-  error("Unused VDP Write 0x%x (%08x)\n", value, m68k_get_reg (NULL, M68K_REG_PC));
+  error("Unused VDP Write 0x%x (%08x)\n", data, m68k_get_reg (NULL, M68K_REG_PC));
 #endif
 }
 
@@ -917,15 +916,14 @@ static void reg_w(unsigned int r, unsigned int d)
         /* background color modified during Horizontal Blanking (Road Rash 1,2,3)*/
         if (!(status & 8) && (mcycles_68k <= (mcycles_vdp + 860)))
         {
-          /* remap colors */
+          /* remap entire line */
           remap_buffer(v_counter);
 #ifdef LOGVDP
-          error("--> Line remapped\n");
+          error("Line remapped\n");
 #endif
         }
 #ifdef LOGVDP
-        else
-          error("--> Line NOT remapped\n");
+        else error("Line NOT remapped\n");
 #endif
       }
       break;

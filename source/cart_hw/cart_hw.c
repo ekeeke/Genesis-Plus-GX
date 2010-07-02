@@ -171,7 +171,7 @@ void cart_hw_init()
   ******************************************************************************************************************/
   
   /* calculate nearest size with factor of 2 */
-  int size = 0x10000;
+  unsigned int size = 0x10000;
   while (cart.romsize > size)
     size <<= 1;
 

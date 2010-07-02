@@ -117,7 +117,7 @@ unsigned int eeprom_read_byte(unsigned int address)
 {
   if (address == eeprom.type.sda_out_adr)
   {
-    return eeprom_read(address, 0);
+    return eeprom_read(0);
   }
   return READ_BYTE(cart.rom, address);
 }
@@ -126,7 +126,7 @@ unsigned int eeprom_read_word(unsigned int address)
 {
   if (address == (eeprom.type.sda_out_adr & 0xfffffe))
   {
-    return eeprom_read(address, 1);
+    return eeprom_read(1);
   }
   return *(uint16 *)(cart.rom + address);
 }

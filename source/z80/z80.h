@@ -43,11 +43,11 @@ typedef struct
 
 extern Z80_Regs Z80;
 
-void z80_init(int index, int clock, const void *config, int (*irqcallback)(int));
+void z80_init(const void *config, int (*irqcallback)(int));
 void z80_reset (void);
 void z80_exit (void);
-void z80_run(int cycles);
-void z80_burn(int cycles);
+void z80_run(unsigned int cycles);
+void z80_burn(unsigned int cycles);
 void z80_get_context (void *dst);
 void z80_set_context (void *src);
 void z80_set_irq_line(int irqline, int state);

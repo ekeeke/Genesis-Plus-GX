@@ -152,26 +152,26 @@ static inline void Detect_STOP()
   }
 }
 
-void eeprom_write(uint32 address, uint32 value, uint32 word_access)
+void eeprom_write(unsigned int address, unsigned int data, int word_access)
 {
   /* decode SCL and SDA value */
   if (word_access)
   {
     /* 16-bits access */
-    if (eeprom.type.sda_in_adr == address) eeprom.sda = (value >> (8 + eeprom.type.sda_in_bit)) & 1;      /* MSB */
-    else if (eeprom.type.sda_in_adr == (address | 1)) eeprom.sda = (value >> eeprom.type.sda_in_bit) & 1; /* LSB */
+    if (eeprom.type.sda_in_adr == address) eeprom.sda = (data >> (8 + eeprom.type.sda_in_bit)) & 1;      /* MSB */
+    else if (eeprom.type.sda_in_adr == (address | 1)) eeprom.sda = (data >> eeprom.type.sda_in_bit) & 1; /* LSB */
     else eeprom.sda = eeprom.old_sda;
 
-    if (eeprom.type.scl_adr == address) eeprom.scl = (value >> (8 + eeprom.type.scl_bit)) & 1;      /* MSB */
-    else if (eeprom.type.scl_adr == (address | 1)) eeprom.scl = (value >> eeprom.type.scl_bit) & 1; /* LSB */
+    if (eeprom.type.scl_adr == address) eeprom.scl = (data >> (8 + eeprom.type.scl_bit)) & 1;      /* MSB */
+    else if (eeprom.type.scl_adr == (address | 1)) eeprom.scl = (data >> eeprom.type.scl_bit) & 1; /* LSB */
     else eeprom.scl = eeprom.old_scl;
   }
   else
   {
-    if (eeprom.type.sda_in_adr == address) eeprom.sda = (value >> eeprom.type.sda_in_bit) & 1;
+    if (eeprom.type.sda_in_adr == address) eeprom.sda = (data >> eeprom.type.sda_in_bit) & 1;
     else eeprom.sda = eeprom.old_sda;
 
-    if (eeprom.type.scl_adr == address) eeprom.scl = (value >> eeprom.type.scl_bit) & 1;
+    if (eeprom.type.scl_adr == address) eeprom.scl = (data >> eeprom.type.scl_bit) & 1;
     else eeprom.scl = eeprom.old_scl;
   }
 
@@ -416,7 +416,7 @@ void eeprom_write(uint32 address, uint32 value, uint32 word_access)
   eeprom.old_sda = eeprom.sda;
 }
 
-uint32 eeprom_read(uint32 address, uint32 word_access)
+unsigned int eeprom_read(int word_access)
 {
   uint8 sda_out = eeprom.sda;
 
