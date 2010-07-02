@@ -1456,19 +1456,18 @@ static void render_bg_im2_vs(int line, int width, int odd)
 
 static int spr_over = 0;
 
-static void render_obj(int line, uint8 *buf, uint8 *table)
+static void render_obj(uint8 *buf, uint8 *table)
 {
   uint8 sizetab[] = {8, 16, 24, 32};
 
   int i, count, column;
-  int xpos;
-  int v_line;
+  int xpos, width;
   int pixelmax = bitmap.viewport.w;
   int pixelcount = 0;
   int masked = 0;
 
   uint8 *src, *s, *lb;
-  uint32 size, width;
+  uint32 size, v_line;
   uint32 attr, attr_mask, name, palette, index;
 
   object *obj_info = object_info[object_which];
@@ -1500,7 +1499,7 @@ static void render_obj(int line, uint8 *buf, uint8 *table)
     pixelcount += width;
 
     /* draw visible sprites */
-    if (((xpos + width) >= 0) && (xpos < pixelmax) && !masked)
+    if (((xpos + width) > 0) && (xpos < pixelmax) && !masked)
     {
       /* sprite attributes + pattern index */
       attr = obj_info[count].attr;
@@ -1509,7 +1508,7 @@ static void render_obj(int line, uint8 *buf, uint8 *table)
       name = attr & 0x07FF;
 
       /* sprite vertical offset */
-      v_line = line - obj_info[count].ypos;
+      v_line = obj_info[count].ypos;
       s = &name_lut[((attr >> 3) & 0x300) | (size << 4) | ((v_line & 0x18) >> 1)];
       v_line = (v_line & 7) << 3;
 
@@ -1545,19 +1544,18 @@ static void render_obj(int line, uint8 *buf, uint8 *table)
   spr_over = 0;
 }
 
-static void render_obj_im2(int line, int odd, uint8 *buf, uint8 *table)
+static void render_obj_im2(int odd, uint8 *buf, uint8 *table)
 {
   uint8 sizetab[] = {8, 16, 24, 32};
 
   int i, count, column;
-  int xpos;
-  int v_line;
+  int xpos, width;
   int pixelmax = bitmap.viewport.w;
   int pixelcount = 0;
   int masked = 0;
 
   uint8 *src, *s, *lb;
-  uint32 size, width;
+  uint32 size, v_line;
   uint32 attr, attr_mask, name, palette, index;
   uint32 offs;
 
@@ -1590,7 +1588,7 @@ static void render_obj_im2(int line, int odd, uint8 *buf, uint8 *table)
     pixelcount += width;
 
     /* draw visible sprites */
-    if (((xpos + width) >= 0) && (xpos < pixelmax) && !masked)
+    if (((xpos + width) > 0) && (xpos < pixelmax) && !masked)
     {
       /* sprite attributes + pattern index */
       attr = obj_info[count].attr;
@@ -1599,7 +1597,7 @@ static void render_obj_im2(int line, int odd, uint8 *buf, uint8 *table)
       name = (attr & 0x03FF);
 
       /* sprite vertical offset */
-      v_line = line - obj_info[count].ypos;
+      v_line = obj_info[count].ypos;
       s = &name_lut[((attr >> 3) & 0x300) | (size << 4) | ((v_line & 0x18) >> 1)];
       v_line = (((v_line & 7) << 1) | odd) << 3;      
 
@@ -1758,13 +1756,13 @@ void render_line(int line)
         /* Shadow & Highlight */
         merge(&nta_buf[0x20], &ntb_buf[0x20], &bg_buf[0x20], lut[2], width);
         memset(&obj_buf[0x20], 0, width);
-        render_obj_im2(line, odd, obj_buf, lut[3]);
+        render_obj_im2(odd, obj_buf, lut[3]);
         merge(&obj_buf[0x20], &bg_buf[0x20], &lb[0x20], lut[4], width);
       }
       else
       {
         merge(&nta_buf[0x20], &ntb_buf[0x20], &lb[0x20], lut[0], width);
-        render_obj_im2(line, odd, lb, lut[1]);
+        render_obj_im2(odd, lb, lut[1]);
       }
     }
     else
@@ -1780,13 +1778,13 @@ void render_line(int line)
         /* Shadow & Highlight */
         merge(&nta_buf[0x20], &ntb_buf[0x20], &bg_buf[0x20], lut[2], width);
         memset(&obj_buf[0x20], 0, width);
-        render_obj(line, obj_buf, lut[3]);
+        render_obj(obj_buf, lut[3]);
         merge(&obj_buf[0x20], &bg_buf[0x20], &lb[0x20], lut[4], width);
       }
       else
       {
         merge(&nta_buf[0x20], &ntb_buf[0x20], &lb[0x20], lut[0], width);
-        render_obj(line, lb, lut[1]);
+        render_obj(lb, lut[1]);
       }
     }
 
@@ -1907,7 +1905,8 @@ void parse_satb(int line)
 {
   uint8 sizetab[] = {8, 16, 24, 32};
   uint32 link = 0;
-  uint32 ypos, size, height;
+  uint32 size, height;
+  int ypos;
 
   uint32 limit = (reg[12] & 1) ? 20 : 16;
   uint32 total = limit << 2;
@@ -1921,11 +1920,11 @@ void parse_satb(int line)
   do
   {
     /* Read ypos & size from internal SAT */ 
-    ypos = (q[link] >> im2_flag) & 0x1FF;
+    ypos = line - ((q[link] >> im2_flag) & 0x1FF);
     size = q[link + 1] >> 8;
     height = sizetab[size & 3];
 
-    if((line >= ypos) && (line < (ypos + height)))
+    if ((ypos >= 0) && (ypos < height)) 
     {
       /* Sprite limit (max. 16 or 20 sprites displayed per line) */
       if(count == limit)

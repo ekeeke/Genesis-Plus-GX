@@ -681,7 +681,7 @@ static void data_w(unsigned int data)
       error("[%d(%d)][%d(%d)] CRAM 0x%x write -> 0x%x (%x)\n", v_counter, mcycles_68k/MCYCLES_PER_LINE, mcycles_68k, mcycles_68k%MCYCLES_PER_LINE, addr, data, m68k_get_reg (NULL, M68K_REG_PC));
 #endif
       uint16 *p = (uint16 *) &cram[(addr & 0x7E)];
-      data = PACK_CRAM (data & 0x0EEE);
+      data = PACK_CRAM (data);
       if (data != *p)
       {
         int index = (addr >> 1) & 0x3F;
@@ -690,11 +690,11 @@ static void data_w(unsigned int data)
         /* update color palette */
         /* color entry 0 of each palette is never displayed (transparent pixel) */
         if (index & 0x0F)
-          color_update(index, *p);
+          color_update(index, data);
 
         /* update background color */
         if (border == index)
-          color_update (0x00, *p);
+          color_update (0x00, data);
 
         /* CRAM modified during HBLANK (Striker, Zero the Kamikaze, etc) */
         if (!(status & 8) && (reg[1]& 0x40) && (mcycles_68k <= (mcycles_vdp + 860)))
