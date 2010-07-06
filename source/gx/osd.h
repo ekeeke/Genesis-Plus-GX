@@ -44,7 +44,6 @@
 extern void error(char *format, ...);
 extern void ClearGGCodes();
 extern void GetGGEntries();
-extern void MainMenu(void);
 extern void legal();
 extern void reloadrom (int size, char *name);
 extern void shutdown();

@@ -104,7 +104,8 @@ extern const u8 ctrl_nunchuk_png[];
 extern const u8 ctrl_wiimote_png[];
 #endif
 
-extern void MainMenu (void);
+extern void menu_execute(void);
+extern void menu_configure(void);
 
 #endif
 

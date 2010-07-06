@@ -76,7 +76,7 @@ typedef struct
   uint8 s_auto;
   uint8 s_default;
   uint8 s_device;
-  int8 bg_color;
+  int8 bg_type;
   int8 bg_overlay;
   int16 screen_w;
   float bgm_volume;

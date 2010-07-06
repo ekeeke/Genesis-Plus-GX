@@ -21,6 +21,7 @@
  *
  ***************************************************************************/
 #include "shared.h"
+#include "menu.h"
 
 void config_save(void)
 {
@@ -123,7 +124,7 @@ void config_default(void)
 #endif
   config.s_default    = 1;
   config.s_device     = 0;
-  config.bg_color     = 0;
+  config.bg_type      = 0;
   config.bg_overlay   = 0;
   config.screen_w     = 658;
   config.bgm_volume   = 100.0;
@@ -140,5 +141,8 @@ void config_default(void)
   /* restore from config file */
   config_load();
   io_init();
+
+  /* default menu settings */
+  menu_configure();
 }
 

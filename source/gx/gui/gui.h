@@ -153,6 +153,7 @@ extern gx_texture *w_pointer;
 #endif
 
 /* Generic backgrounds */
+extern const u8 Bg_layer_png[];
 extern const u8 Bg_main_png[];
 extern const u8 Bg_main_2_png[];
 extern const u8 Bg_overlay_png[];

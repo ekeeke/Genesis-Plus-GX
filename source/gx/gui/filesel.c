@@ -93,7 +93,7 @@ static gui_image bg_filesel[10] =
   {NULL,Banner_top_png,IMAGE_VISIBLE,0,0,640,108,255},
   {NULL,Banner_bottom_png,IMAGE_VISIBLE,0,380,640,100,255},
   {NULL,Main_logo_png,IMAGE_VISIBLE,466,40,152,44,255},
-  {NULL,Frame_s1_png,IMAGE_VISIBLE,8,70,372,336,200},
+  {NULL,Frame_s1_png,IMAGE_VISIBLE,8,70,372,336,150},
   {NULL,Frame_s2_png,0,384,264,248,140,200},
   {NULL,Snap_empty_png,IMAGE_VISIBLE,422,114,164,116,255},
   {NULL,NULL,0,424,116,160,112,255},
@@ -243,15 +243,30 @@ int FileSelector(unsigned char *buffer, bool useFAT)
   gui_butn *button;
 #endif
 
-  /* Background Settings */
-  if (config.bg_color == 0)
-    bg_filesel[0].data = Bg_main_2_png;
+  /* background type */
+  if (config.bg_type > 0)
+  {
+    bg_filesel[0].state &= ~IMAGE_REPEAT;
+    if (config.bg_type > 1) bg_filesel[0].data = Bg_main_png;
+    else bg_filesel[0].data = Bg_main_2_png;
+    bg_filesel[0].x = 374;
+    bg_filesel[0].y = 140;
+    bg_filesel[0].w = 284;
+    bg_filesel[0].h = 288;
+  }
   else
-    bg_filesel[0].data = Bg_main_png;
-  if (config.bg_overlay)
-    bg_filesel[1].state |= IMAGE_VISIBLE;
-  else
-    bg_filesel[1].state &= ~IMAGE_VISIBLE;
+  {
+    bg_filesel[0].state |= IMAGE_REPEAT;
+    bg_filesel[0].data = Bg_layer_png;
+    bg_filesel[0].x = 0;
+    bg_filesel[0].y = 0;
+    bg_filesel[0].w = 640;
+    bg_filesel[0].h = 480;
+  }
+
+  /* background overlay */
+  if (config.bg_overlay) bg_filesel[1].state |= IMAGE_VISIBLE;
+  else bg_filesel[1].state &= ~IMAGE_VISIBLE;
 
   /* Initialize Menu */
   gui_menu *m = &menu_browser;

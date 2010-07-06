@@ -561,26 +561,17 @@ static void prefmenu ()
   gui_item *items = m->items;
   
   sprintf (items[0].text, "Load ROM Auto: %s", config.autoload ? "ON":"OFF");
-  if (config.s_auto == 3)
-    sprintf (items[1].text, "Auto Saves: ALL");
-  else if (config.s_auto == 2)
-    sprintf (items[1].text, "Auto Saves: STATE ONLY");
-  else if (config.s_auto == 1)
-    sprintf (items[1].text, "Auto Saves: SRAM ONLY");
-  else
-    sprintf (items[1].text, "Auto Saves: NONE");
-  if (config.s_device == 1)
-    sprintf (items[2].text, "Saves Device: MCARD A");
-  else if (config.s_device == 2)
-    sprintf (items[2].text, "Saves Device: MCARD B");
-  else
-    sprintf (items[2].text, "Saves Device: FAT");
+  if (config.s_auto == 3) sprintf (items[1].text, "Auto Saves: ALL");
+  else if (config.s_auto == 2) sprintf (items[1].text, "Auto Saves: STATE ONLY");
+  else if (config.s_auto == 1) sprintf (items[1].text, "Auto Saves: SRAM ONLY");
+  else sprintf (items[1].text, "Auto Saves: NONE");
+  if (config.s_device == 1) sprintf (items[2].text, "Saves Device: MCARD A");
+  else if (config.s_device == 2) sprintf (items[2].text, "Saves Device: MCARD B");
+  else sprintf (items[2].text, "Saves Device: FAT");
   sprintf (items[3].text, "SFX Volume: %1.1f", config.sfx_volume);
   sprintf (items[4].text, "BGM Volume: %1.1f", config.bgm_volume);
-  if (config.bg_color)
-    sprintf (items[5].text, "BG Color: TYPE %d", config.bg_color);
-  else
-    sprintf (items[5].text, "BG Color: DEFAULT");
+  if (config.bg_type) sprintf (items[5].text, "BG Type: COLOR %d", config.bg_type - 1);
+  else sprintf (items[5].text, "BG Type: DEFAULT");
   sprintf (items[6].text, "BG Overlay: %s", config.bg_overlay ? "ON":"OFF");
   sprintf (items[7].text, "Screen Width: %d", config.screen_w);
 
@@ -600,24 +591,17 @@ static void prefmenu ()
 
       case 1:  /*** Auto load/save STATE & SRAM files ***/
         config.s_auto = (config.s_auto + 1) % 4;
-        if (config.s_auto == 3)
-          sprintf (items[ret].text, "Auto Saves: ALL");
-        else if (config.s_auto == 2)
-          sprintf (items[ret].text, "Auto Saves: STATE ONLY");
-        else if (config.s_auto == 1)
-          sprintf (items[ret].text, "Auto Saves: SRAM ONLY");
-        else
-          sprintf (items[ret].text, "Auto Saves: NONE");
+        if (config.s_auto == 3) sprintf (items[ret].text, "Auto Saves: ALL");
+        else if (config.s_auto == 2) sprintf (items[ret].text, "Auto Saves: STATE ONLY");
+        else if (config.s_auto == 1) sprintf (items[ret].text, "Auto Saves: SRAM ONLY");
+        else sprintf (items[ret].text, "Auto Saves: NONE");
         break;
 
       case 2:   /*** Default saves device ***/
         config.s_device = (config.s_device + 1) % 3;
-        if (config.s_device == 1)
-          sprintf (items[ret].text, "Saves Device: MCARD A");
-        else if (config.s_device == 2)
-          sprintf (items[ret].text, "Saves Device: MCARD B");
-        else
-          sprintf (items[ret].text, "Saves Device: FAT");
+        if (config.s_device == 1) sprintf (items[ret].text, "Saves Device: MCARD A");
+        else if (config.s_device == 2) sprintf (items[ret].text, "Saves Device: MCARD B");
+        else sprintf (items[ret].text, "Saves Device: FAT");
         break;
 
       case 3:   /*** Sound effects volume ***/
@@ -630,64 +614,27 @@ static void prefmenu ()
         sprintf (items[ret].text, "BGM Volume: %1.1f", config.bgm_volume);
         break;
 
-      case 5:   /*** Background color ***/
-        if (ret < 0)
-          config.bg_color --;
-        else
-          config.bg_color ++;
-        if (config.bg_color < 0)
-          config.bg_color = BG_COLOR_MAX - 1;
-        else if (config.bg_color >= BG_COLOR_MAX)
-          config.bg_color = 0;
-        if (config.bg_color)
-          sprintf (items[ret].text, "BG Color: TYPE %d", config.bg_color);
-        else
-          sprintf (items[ret].text, "BG Color: DEFAULT");
-        GUI_SetBgColor((u8)config.bg_color);
+      case 5:   /*** Background type ***/
+        if (ret < 0) config.bg_type --;
+        else config.bg_type++;
+        if (config.bg_type < 0) config.bg_type = BG_COLOR_MAX;
+        else if (config.bg_type > BG_COLOR_MAX) config.bg_type = 0;
+        if (config.bg_type) sprintf (items[5].text, "BG Type: COLOR %d", config.bg_type - 1);
+        else sprintf (items[5].text, "BG Type: DEFAULT");
         GUI_DeleteMenu(m);
-        if (config.bg_color == 0)
-        {
-          bg_main[0].data = Bg_main_2_png;
-          bg_misc[0].data = Bg_main_2_png;
-          bg_ctrls[0].data = Bg_main_2_png;
-          bg_list[0].data = Bg_main_2_png;
-          bg_saves[1].data = Bg_main_2_png;
-        }
-        else
-        {
-          bg_main[0].data = Bg_main_png;
-          bg_misc[0].data = Bg_main_png;
-          bg_ctrls[0].data = Bg_main_png;
-          bg_list[0].data = Bg_main_png;
-          bg_saves[1].data = Bg_main_png;
-        }
+        menu_configure();
         GUI_InitMenu(m);
         break;
 
-      case 6:   /*** Background items ***/
+      case 6:   /*** Background overlay ***/
         config.bg_overlay ^= 1;
-        if (config.bg_overlay)
-        {
-          bg_main[1].state |= IMAGE_VISIBLE;
-          bg_misc[1].state |= IMAGE_VISIBLE;
-          bg_ctrls[1].state |= IMAGE_VISIBLE;
-          bg_list[1].state |= IMAGE_VISIBLE;
-          bg_saves[2].state |= IMAGE_VISIBLE;
-        }
-        else
-        {
-          bg_main[1].state &= ~IMAGE_VISIBLE;
-          bg_misc[1].state &= ~IMAGE_VISIBLE;
-          bg_ctrls[1].state &= ~IMAGE_VISIBLE;
-          bg_list[1].state &= ~IMAGE_VISIBLE;
-          bg_saves[2].state &= ~IMAGE_VISIBLE;
-        }
-        sprintf (items[ret].text, "BG Overlay: %s", config.bg_overlay ? "ON":"OFF");
+        sprintf (items[6].text, "BG Overlay: %s", config.bg_overlay ? "ON":"OFF");
+        menu_configure();
         break;
 
       case 7:   /*** Screen Width ***/
         GUI_OptionBox(m,update_screen_w,"Screen Width",(void *)&config.screen_w,2,640,VI_MAX_WIDTH_NTSC,1);
-        sprintf (items[ret].text, "Screen Width: %d", config.screen_w);
+        sprintf (items[7].text, "Screen Width: %d", config.screen_w);
         break;
 
       case -1:
@@ -2838,7 +2785,7 @@ static void exitmenu(void)
  * Main Menu
  *
  ****************************************************************************/
-void MainMenu (void)
+void menu_execute(void)
 {
   char filename[MAXPATHLEN];
   int quit = 0;
@@ -2883,41 +2830,6 @@ void MainMenu (void)
     m->buttons[6].state |= (BUTTON_VISIBLE | BUTTON_ACTIVE);
     m->buttons[7].state |= (BUTTON_VISIBLE | BUTTON_ACTIVE);
     m->buttons[8].state |= (BUTTON_VISIBLE | BUTTON_ACTIVE);
-  }
-
-  /* Update background */
-  GUI_SetBgColor((u8)config.bg_color);
-  if (config.bg_color == 0)
-  {
-    bg_main[0].data = Bg_main_2_png;
-    bg_misc[0].data = Bg_main_2_png;
-    bg_ctrls[0].data = Bg_main_2_png;
-    bg_list[0].data = Bg_main_2_png;
-    bg_saves[1].data = Bg_main_2_png;
-  }
-  else
-  {
-    bg_main[0].data = Bg_main_png;
-    bg_misc[0].data = Bg_main_png;
-    bg_ctrls[0].data = Bg_main_png;
-    bg_list[0].data = Bg_main_png;
-    bg_saves[1].data = Bg_main_png;
-  }
-  if (config.bg_overlay)
-  {
-    bg_main[1].state |= IMAGE_VISIBLE;
-    bg_misc[1].state |= IMAGE_VISIBLE;
-    bg_ctrls[1].state |= IMAGE_VISIBLE;
-    bg_list[1].state |= IMAGE_VISIBLE;
-    bg_saves[2].state |= IMAGE_VISIBLE;
-  }
-  else
-  {
-    bg_main[1].state &= ~IMAGE_VISIBLE;
-    bg_misc[1].state &= ~IMAGE_VISIBLE;
-    bg_ctrls[1].state &= ~IMAGE_VISIBLE;
-    bg_list[1].state &= ~IMAGE_VISIBLE;
-    bg_saves[2].state &= ~IMAGE_VISIBLE;
   }
 
   GUI_InitMenu(m);
@@ -3032,4 +2944,56 @@ void MainMenu (void)
   /*** Stop the DVD from causing clicks while playing ***/
   uselessinquiry ();
 #endif
+}
+
+void menu_configure(void)
+{
+  /* background type */
+  if (config.bg_type > 0)
+  {
+    GUI_SetBgColor((u8)(config.bg_type - 1));
+    bg_main[0].state  &= ~IMAGE_REPEAT;
+    bg_misc[0].state  &= ~IMAGE_REPEAT;
+    bg_ctrls[0].state &= ~IMAGE_REPEAT;
+    bg_list[0].state  &= ~IMAGE_REPEAT;
+    bg_saves[1].state &= ~IMAGE_REPEAT;
+    if (config.bg_type > 1) bg_main[0].data = bg_misc[0].data = bg_ctrls[0].data = bg_list[0].data = bg_saves[1].data = Bg_main_png;
+    else bg_main[0].data = bg_misc[0].data = bg_ctrls[0].data = bg_list[0].data = bg_saves[1].data = Bg_main_2_png;
+    bg_main[0].x = bg_misc[0].x = bg_ctrls[0].x = bg_list[0].x = bg_saves[1].x = 374;
+    bg_main[0].y = bg_misc[0].y = bg_ctrls[0].y = bg_list[0].y = bg_saves[1].y = 140;
+    bg_main[0].w = bg_misc[0].w = bg_ctrls[0].w = bg_list[0].w = bg_saves[1].w = 284;
+    bg_main[0].h = bg_misc[0].h = bg_ctrls[0].h = bg_list[0].h = bg_saves[1].h = 288;
+  }
+  else
+  {
+    GUI_SetBgColor(0);
+    bg_main[0].state  |= IMAGE_REPEAT;
+    bg_misc[0].state  |= IMAGE_REPEAT;
+    bg_ctrls[0].state |= IMAGE_REPEAT;
+    bg_list[0].state  |= IMAGE_REPEAT;
+    bg_saves[1].state |= IMAGE_REPEAT;
+    bg_main[0].data = bg_misc[0].data = bg_ctrls[0].data = bg_list[0].data = bg_saves[1].data = Bg_layer_png;
+    bg_main[0].x = bg_misc[0].x = bg_ctrls[0].x = bg_list[0].x = bg_saves[1].x = 0;
+    bg_main[0].y = bg_misc[0].y = bg_ctrls[0].y = bg_list[0].y = bg_saves[1].y = 0;
+    bg_main[0].w = bg_misc[0].w = bg_ctrls[0].w = bg_list[0].w = bg_saves[1].w = 640;
+    bg_main[0].h = bg_misc[0].h = bg_ctrls[0].h = bg_list[0].h = bg_saves[1].h = 480;
+  }
+
+  /* background overlay */
+  if (config.bg_overlay)
+  {
+    bg_main[1].state |= IMAGE_VISIBLE;
+    bg_misc[1].state |= IMAGE_VISIBLE;
+    bg_ctrls[1].state |= IMAGE_VISIBLE;
+    bg_list[1].state |= IMAGE_VISIBLE;
+    bg_saves[2].state |= IMAGE_VISIBLE;
+  }
+  else
+  {
+    bg_main[1].state &= ~IMAGE_VISIBLE;
+    bg_misc[1].state &= ~IMAGE_VISIBLE;
+    bg_ctrls[1].state &= ~IMAGE_VISIBLE;
+    bg_list[1].state &= ~IMAGE_VISIBLE;
+    bg_saves[2].state &= ~IMAGE_VISIBLE;
+  }
 }

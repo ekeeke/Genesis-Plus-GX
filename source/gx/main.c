@@ -25,6 +25,7 @@
 #include "shared.h"
 #include "font.h"
 #include "gui.h"
+#include "menu.h"
 #include "aram.h"
 #include "dvd.h"
 #include "history.h"
@@ -168,7 +169,7 @@ static void run_emulation(void)
       gx_video_Stop();
 
       /* show menu */
-      MainMenu ();
+      menu_execute();
       ConfigRequested = 0;
 
       /* start video & audio */
