@@ -28,9 +28,18 @@ uint8 region_code = REGION_USA;
 
 static struct port_t
 {
-  void (*data_w)(uint32 data);
-  uint32 (*data_r)(void);
+  void (*data_w)(unsigned int data);
+  unsigned int (*data_r)(void);
 } port[3];
+
+static void dummy_write(unsigned int data)
+{
+}
+
+static unsigned int dummy_read(void)
+{
+  return 0x7F;
+}
 
 /*****************************************************************************
  * I/O chip functions                                                        *
@@ -62,8 +71,8 @@ void io_init(void)
       break;
 
     default:
-      port[0].data_w = NULL;
-      port[0].data_r = NULL;
+      port[0].data_w = dummy_write;
+      port[0].data_r = dummy_read;
       break;
   }
 
@@ -80,12 +89,12 @@ void io_init(void)
       break;
 
     case SYSTEM_MENACER:
-      port[1].data_w = NULL;
+      port[1].data_w = dummy_write;
       port[1].data_r = menacer_read;
       break;
 
     case SYSTEM_JUSTIFIER:
-      port[1].data_w = NULL;
+      port[1].data_w = dummy_write;
       port[1].data_r = justifier_read;
       break;
 
@@ -100,14 +109,14 @@ void io_init(void)
       break;
 
     default:
-      port[1].data_w = NULL;
-      port[1].data_r = NULL;
+      port[1].data_w = dummy_write;
+      port[1].data_r = dummy_read;
       break;
   }
 
   /* External Port (unconnected) */
-  port[2].data_w = NULL;
-  port[2].data_r = NULL;
+  port[2].data_w = dummy_write;
+  port[2].data_r = dummy_read;
 
   /* Initialize connected input devices */
   input_init();
@@ -118,9 +127,9 @@ void io_reset(void)
 {
   /* Reset I/O registers */
   io_reg[0x00] = region_code | 0x20 | (config.tmss & 1);
-  io_reg[0x01] = 0x7F;
-  io_reg[0x02] = 0x7F;
-  io_reg[0x03] = 0x7F;
+  io_reg[0x01] = 0x00;
+  io_reg[0x02] = 0x00;
+  io_reg[0x03] = 0x00;
   io_reg[0x04] = 0x00;
   io_reg[0x05] = 0x00;
   io_reg[0x06] = 0x00;
@@ -138,35 +147,37 @@ void io_reset(void)
   input_reset();
 }
 
-void io_write(uint32 offset, uint32 value)
+void io_write(unsigned int offset, unsigned int data)
 {
   switch (offset)
   {
     case 0x01: /* Port A Data */
     case 0x02: /* Port B Data */
     case 0x03: /* Port C Data */
-      io_reg[offset] = value & (0x80 | io_reg[offset+3]);
-      if(port[offset-1].data_w)
-        port[offset-1].data_w(value);
+      io_reg[offset] = data;
+      port[offset-1].data_w(data);
       return;
 
     case 0x04:      /* Port A Ctrl */
     case 0x05:      /* Port B Ctrl */
     case 0x06:      /* Port C Ctrl */
-      io_reg[offset] = value;
-      io_reg[offset-3] &= (0x80 | value);
+      if (data != io_reg[offset])
+      {
+        io_reg[offset] = data;
+        port[offset-4].data_w(io_reg[offset-3]);
+      }
       return;
 
     case 0x07:      /* Port A TxData */
     case 0x0A:      /* Port B TxData */
     case 0x0D:      /* Port C TxData */
-      io_reg[offset] = value;
+      io_reg[offset] = data;
       return;
 
     case 0x09:      /* Port A S-Ctrl */
     case 0x0C:      /* Port B S-Ctrl */
     case 0x0F:      /* Port C S-Ctrl */
-      io_reg[offset] = value & 0xF8;
+      io_reg[offset] = data & 0xF8;
       return;
     
     default:        /* Read-only ports */
@@ -174,7 +185,7 @@ void io_write(uint32 offset, uint32 value)
   }
 }
 
-uint32 io_read(uint32 offset)
+unsigned int io_read(unsigned int offset)
 {
   switch(offset)
   {
@@ -182,13 +193,12 @@ uint32 io_read(uint32 offset)
     case 0x02: /* Port B Data */
     case 0x03: /* Port C Data */
     {
-      uint8 input = 0x7F;
-      if(port[offset-1].data_r)
-        input = port[offset-1].data_r();
-      return (io_reg[offset] | ((~io_reg[offset+3]) & input));
+      unsigned int mask = 0x80 | io_reg[offset + 3];
+      unsigned int data = port[offset-1].data_r();
+      return (io_reg[offset] & mask) | (data & ~mask);
     }
 
     default: /* return register value */
-      return (io_reg[offset]);
+      return io_reg[offset];
   }
 }

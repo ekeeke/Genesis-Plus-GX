@@ -37,8 +37,8 @@ extern int old_system[2];
 /* Function prototypes */
 extern void io_init(void);
 extern void io_reset(void);
-extern void io_write(uint32 offset, uint32 value);
-extern uint32 io_read(uint32 offset);
+extern void io_write(unsigned int offset, unsigned int data);
+extern unsigned int io_read(unsigned int offset);
 
 #endif /* _IO_H_ */
 

@@ -110,10 +110,10 @@ static void lightgun_update(int num)
 }
 
 /* Sega Menacer specific */
-uint32 menacer_read(void)
+unsigned int menacer_read(void)
 {
   /* pins should return 0 by default (fix Body Count when mouse is enabled) */
-  int retval = 0x00;
+  unsigned int retval = 0x00;
   if (input.pad[4] & INPUT_B)     retval |= 0x01;
   if (input.pad[4] & INPUT_A)     retval |= 0x02;
   if (input.pad[4] & INPUT_C)     retval |= 0x04;
@@ -123,11 +123,11 @@ uint32 menacer_read(void)
 }
 
 /* Konami Justifier specific */
-uint32 justifier_read(void)
+unsigned int justifier_read(void)
 {
   /* TL & TR pins should always return 1 (write only) */
   /* LEFT & RIGHT pins should always return 0 (needed during gun detection) */
-  int retval = 0x73; 
+  unsigned int retval = 0x73; 
 
   switch (io_reg[2])
   {
@@ -169,7 +169,7 @@ static inline void mouse_reset(void)
   mouse.Port = (input.system[0] == SYSTEM_MOUSE) ? 0 : 4;
 }
 
-void mouse_write(uint32 data)
+void mouse_write(unsigned int data)
 {
   if (mouse.Counter == 0)
   {
@@ -199,9 +199,9 @@ void mouse_write(uint32 data)
   mouse.State = data;
 }
 
-uint32 mouse_read()
+unsigned int mouse_read()
 {
-  int temp = 0x00;
+  unsigned int temp = 0x00;
 
   switch (mouse.Counter)
   {
@@ -282,30 +282,33 @@ static struct pad
   uint8 Delay;
 } gamepad[MAX_DEVICES];
 
-static inline void gamepad_raz(uint32 i)
+static inline void gamepad_raz(int i)
 {
   gamepad[i].Counter = 0;
   gamepad[i].Delay   = 0;
 }
 
-static inline void gamepad_reset(uint32 i)
+static inline void gamepad_reset(int i)
 {
-  gamepad[i].State = 0x40;
+  gamepad[i].State = 0x00;
   if (input.dev[i] == DEVICE_6BUTTON) gamepad_raz(i);
 }
 
-static inline void gamepad_update(uint32 i)
+static inline void gamepad_update(int i)
 {
   if (gamepad[i].Delay++ > 25) gamepad_raz(i);
 }
 
-static inline uint32 gamepad_read(uint32 i)
+static inline unsigned int gamepad_read(int i)
 {
   /* bit7 is latched */
-  int retval = 0x7F;
+  unsigned int retval = 0x7F;
+
+  /* pad status */
+  unsigned int pad = input.pad[i];
 
   /* current TH state */
-  int control = (gamepad[i].State & 0x40) >> 6;
+  unsigned int control = (gamepad[i].State & 0x40) >> 6;
 
   /* TH transitions counter */
   if (input.dev[i] == DEVICE_6BUTTON)
@@ -318,23 +321,16 @@ static inline uint32 gamepad_read(uint32 i)
     case 5: /*** Third High  ***/
 
       /* TH = 1 : ?1CBRLDU */
-      if (input.pad[i] & INPUT_C)     retval &= ~0x20;
-      if (input.pad[i] & INPUT_B)     retval &= ~0x10;
-      if (input.pad[i] & INPUT_UP)    retval &= ~0x01;
-      if (input.pad[i] & INPUT_DOWN)  retval &= ~0x02;
-      if (input.pad[i] & INPUT_LEFT)  retval &= ~0x04;
-      if (input.pad[i] & INPUT_RIGHT) retval &= ~0x08;
+      retval &= ~(pad & 0x3F);
       break;
 
     case 0: /*** First low  ***/
     case 2: /*** Second low ***/
 
       /* TH = 0 : ?0SA00DU */
-      if (input.pad[i] & INPUT_A)     retval &= ~0x10;
-      if (input.pad[i] & INPUT_START) retval &= ~0x20;
-      if (input.pad[i] & INPUT_UP)    retval &= ~0x01;
-      if (input.pad[i] & INPUT_DOWN)  retval &= ~0x02;
-      retval &= 0xB3; 
+      retval &= ~(pad & 0x03);
+      retval &= ~((pad >> 2) & 0x30);
+      retval &= ~0x0C;
       break;
 
     /* 6buttons specific (taken from gen-hw.txt) */
@@ -352,28 +348,21 @@ static inline uint32 gamepad_read(uint32 i)
     case 4: /*** Third Low ***/
 
       /* TH = 0 : ?0SA0000    D3-0 are forced to '0'*/
-      if (input.pad[i] & INPUT_A)     retval &= ~0x10;
-      if (input.pad[i] & INPUT_START) retval &= ~0x20;
-      retval &= 0xB0;
+      retval &= ~((pad >> 2) & 0x30);
+      retval &= ~0x0F;
       break;
 
     case 6: /*** Fourth Low ***/
 
       /* TH = 0 : ?0SA1111    D3-0 are forced to '1'*/
-      if (input.pad[i] & INPUT_A)     retval &= ~0x10;
-      if (input.pad[i] & INPUT_START) retval &= ~0x20;
-      retval &= 0xBF;
+      retval &= ~((pad >> 2) & 0x30);
       break;
 
     case 7: /*** Fourth High ***/
 
       /* TH = 1 : ?1CBMXYZ    Extra buttons returned in D3-0*/
-      if (input.pad[i] & INPUT_X)    retval &= ~0x04;
-      if (input.pad[i] & INPUT_Y)    retval &= ~0x02;
-      if (input.pad[i] & INPUT_Z)    retval &= ~0x01;
-      if (input.pad[i] & INPUT_B)    retval &= ~0x10;
-      if (input.pad[i] & INPUT_C)    retval &= ~0x20;
-      if (input.pad[i] & INPUT_MODE) retval &= ~0x08;
+      retval &= ~(pad & 0x30);
+      retval &= ~((pad >> 8) & 0x0F);
       break;
 
     default:
@@ -383,7 +372,7 @@ static inline uint32 gamepad_read(uint32 i)
   return retval;
 }
 
-static inline void gamepad_write(uint32 i, uint32 data)
+static inline void gamepad_write(int i, unsigned int data)
 {
   if (input.dev[i] == DEVICE_6BUTTON)
   {
@@ -394,7 +383,6 @@ static inline void gamepad_write(uint32 i, uint32 data)
       gamepad[i].Delay = 0;
     }
   }
-
   gamepad[i].State = data;
 }
 
@@ -410,132 +398,113 @@ static struct teamplayer
   uint8 Table[12];
 } teamplayer[2];
 
-static inline void teamplayer_init(uint32 port)
+static inline void teamplayer_init(int port)
 {
-  int i;
+  int i,padnum;
   int index = 0;
-  int pad_input = 0;
 
   /* this table determines which gamepad input should be returned during acquisition sequence
-     index     = teamplayer read table index: 0=1st read, 1=2nd read, ...
-     pad_input = gamepad input 0-14: 0=P1_DIR, 1=P1_SABC, 2=P1_MXYZ, 4=P2_DIR, 5=P2_SABC, ...
+     index  = teamplayer read table index: 0=1st read, 1=2nd read, ...
+     table  = high bits are pad index, low bits are pad input shift: 0=RLDU, 4=SABC, 8=MXYZ
   */  
   for (i=0; i<4; i++)
   {
-    if (input.dev[(4*port) + i] == DEVICE_3BUTTON)
+    padnum = (4 * port) + i;
+    if (input.dev[padnum] == DEVICE_3BUTTON)
     {
-      teamplayer[port].Table[index++] = pad_input;
-      teamplayer[port].Table[index++] = pad_input + 1;
+      padnum = padnum << 4;
+      teamplayer[port].Table[index++] = padnum;
+      teamplayer[port].Table[index++] = padnum | 4;
     }
     else if (input.dev[(4*port) + i] == DEVICE_6BUTTON)
     {
-      teamplayer[port].Table[index++] = pad_input;
-      teamplayer[port].Table[index++] = pad_input + 1;
-      teamplayer[port].Table[index++] = pad_input + 2;
+      padnum = padnum << 4;
+      teamplayer[port].Table[index++] = padnum;
+      teamplayer[port].Table[index++] = padnum | 4;
+      teamplayer[port].Table[index++] = padnum | 8;
     }
-    pad_input += 4;
   }
 }
 
-static inline void teamplayer_reset(uint32 port)
+static inline void teamplayer_reset(int port)
 {
   teamplayer[port].State = 0x60; /* TH = 1, TR = 1 */
   teamplayer[port].Counter = 0;
 }
 
-/* SEGA teamplayer returns successively:
-   - PAD1 inputs
-   - PAD2 inputs
-   - PAD3 inputs
-   - PAD4 inputs
-
-   Each PAD inputs is obtained through 2 or 3 sequential reads:
-   1/ DIR buttons
-   2/ START,A,C,B buttons
-   3/ MODE, X,Y,Z buttons (6Button only !)
-*/
-static inline uint32 teamplayer_read_device(uint32 port, uint32 index)
+static inline unsigned int teamplayer_read(int port)
 {
-  int retval = 0x7F;
-  int pad_input = teamplayer[port].Table[index] & 0x03;
-  int pad_num = (4 * port) + ((teamplayer[port].Table[index] >> 2) & 0x03);
+  unsigned int counter = teamplayer[port].Counter;
 
-  switch (pad_input)
+  /* acquisition sequence */
+  switch (counter)
   {
-    case 0:
-       /* Directions Buttons */
-       if (input.pad[pad_num] & INPUT_UP)    retval &= ~0x01;
-       if (input.pad[pad_num] & INPUT_DOWN)  retval &= ~0x02;
-       if (input.pad[pad_num] & INPUT_LEFT)  retval &= ~0x04;
-       if (input.pad[pad_num] & INPUT_RIGHT) retval &= ~0x08;
-       break;
+    case 0: /* initial state: TH = 1, TR = 1 -> RLDU = 0011 */
+    {
+      return 0x73;
+    }
 
-    case 1:
-       /* S,A,C,B Buttons */
-       if (input.pad[pad_num] & INPUT_B)     retval &= ~0x01;
-       if (input.pad[pad_num] & INPUT_C)     retval &= ~0x02;
-       if (input.pad[pad_num] & INPUT_A)     retval &= ~0x04;
-       if (input.pad[pad_num] & INPUT_START) retval &= ~0x08;
-       break;
+    case 1: /* start request: TH = 0, TR = 1 -> RLDU = 1111 */
+    {
+      return 0x3F; 
+    }
 
     case 2:
-       /* M,X,Y,Z Buttons (6-Buttons only)*/
-       if (input.pad[pad_num] & INPUT_Z)    retval &= ~0x01;
-       if (input.pad[pad_num] & INPUT_Y)    retval &= ~0x02;
-       if (input.pad[pad_num] & INPUT_X)    retval &= ~0x04;
-       if (input.pad[pad_num] & INPUT_MODE) retval &= ~0x08;
-       break;
-  }
-
-  return retval; 
-}
-
-static inline uint32 teamplayer_read(uint32 port)
-{
-  int retval = 0x7F;
-  int padnum;
-
-  switch (teamplayer[port].Counter) /* acquisition sequence steps */
-  {
-    case 0: /* initial state: TH = 1, TR = 1 */
-      retval = 0x73; 
-      break;
-
-    case 1: /* start request: TH = 0, TR = 1 */
-      retval = 0x3F; 
-      break;
-
-    case 2:
-    case 3: /* ack request: TH=0, TR handshake */
-      retval = 0x00;
-      break;
+    case 3: /* ack request: TH=0, TR=0/1 -> RLDU = 0000 */
+    {
+      /* TL should match TR */
+      return ((teamplayer[port].State & 0x20) >> 1);
+    }
 
     case 4:
     case 5:
     case 6:
-    case 7: /* gamepads type */
-      padnum = (4 * port) + teamplayer[port].Counter - 4;
-      retval = input.dev[padnum];
-      break;
+    case 7: /* PAD type */
+    {
+      unsigned int retval = input.dev[(port << 2) + (counter - 4)];
 
-    default: /* gamepads inputs acquisition */
-      retval = teamplayer_read_device(port, teamplayer[port].Counter - 8);
-      break;
+      /* TL should match TR */
+      return (((teamplayer[port].State & 0x20) >> 1) | retval);
+    }
+
+    default: /* PAD status */
+    {
+      unsigned int retval = 0x0F;
+
+      /* SEGA teamplayer returns successively PAD1 -> PAD2 -> PAD3 -> PAD4 inputs */
+      unsigned int padnum = teamplayer[port].Table[counter - 8] >> 4;
+
+      /* Each PAD inputs is obtained through 2 or 3 sequential reads: RLDU -> SACB -> MXYZ */
+      retval &= ~(input.pad[padnum] >> (teamplayer[port].Table[counter - 8] & 0x0F));
+
+      /* TL should match TR */
+      return (((teamplayer[port].State & 0x20) >> 1) | retval);
+    }
   }
-
-  /* TL must match TR state */
-  retval &= ~0x10;
-  if (teamplayer[port].State & 0x20) retval |= 0x10;
-
-  return retval;
 }
 
-static inline void teamplayer_write(uint32 port, uint32 data)
+static inline void teamplayer_write(int port, unsigned int data)
 {
-  int old_state = teamplayer[port].State;
-  teamplayer[port].State = (data & io_reg[port+4]) | (teamplayer[port].State & ~io_reg[port+4]);
-  if (old_state != teamplayer[port].State) teamplayer[port].Counter ++;
-  if ((data&0x60) == 0x60) teamplayer[port].Counter = 0;
+  /* update output bits only */
+  unsigned int state = (teamplayer[port].State & ~io_reg[port + 4]) | (data & io_reg[port + 4]);
+
+  /* TH & TR handshaking */
+  if ((teamplayer[port].State ^ state) & 0x60)
+  {
+    if (state & 0x40) 
+    {
+      /* TH high -> reset counter */
+      teamplayer[port].Counter = 0;
+    }
+    else
+    {
+      /* increment counter */
+      teamplayer[port].Counter ++;
+    }
+
+    /* update internal state */
+    teamplayer[port].State = state;
+  }
 }
 
 /*****************************************************************************
@@ -547,15 +516,15 @@ static struct wayplay
   uint8 current;
 } wayplay;
 
-static inline void wayplay_write(uint32 port, uint32 data)
+static inline void wayplay_write(int port, unsigned int data)
 {
-  if (port == 0) gamepad_write(wayplay.current, data);
+  if (!port && (io_reg[4] & 0x40)) gamepad_write(wayplay.current, data);
   else wayplay.current = (data >> 4) & 0x07;
 }
 
-static inline uint32 wayplay_read(uint32 port)
+static inline unsigned int wayplay_read(int port)
 {
-  if (port == 1) return 0x7F;
+  if (port) return 0x7F;
   if (wayplay.current >= 4) return 0x70; /* multitap detection (TH2 = 1) */
   return gamepad_read(wayplay.current);  /* 0x0C = Pad1, 0x1C = Pad2, ... */
 }
@@ -565,73 +534,73 @@ static inline uint32 wayplay_read(uint32 port)
  * I/O wrappers
  *
  *****************************************************************************/
-uint32 gamepad_1_read (void)
+unsigned int gamepad_1_read (void)
 {
   return gamepad_read(0);
 }
 
-uint32 gamepad_2_read (void)
+unsigned int gamepad_2_read (void)
 {
   return gamepad_read(4);
 }
 
-void gamepad_1_write (uint32 data)
+void gamepad_1_write (unsigned int data)
 {
-  gamepad_write(0, data);
+  if (io_reg[4] & 0x40) gamepad_write(0, data);
 }
 
-void gamepad_2_write (uint32 data)
+void gamepad_2_write (unsigned int data)
 {
-  gamepad_write(4, data);
+  if (io_reg[5] & 0x40) gamepad_write(4, data);
 }
 
-uint32 wayplay_1_read (void)
+unsigned int wayplay_1_read (void)
 {
   return wayplay_read(0);
 }
 
-uint32 wayplay_2_read (void)
+unsigned int wayplay_2_read (void)
 {
   return wayplay_read(1);
 }
 
-void wayplay_1_write (uint32 data)
+void wayplay_1_write (unsigned int data)
 {
   wayplay_write(0, data);
 }
 
-void wayplay_2_write (uint32 data)
+void wayplay_2_write (unsigned int data)
 {
   wayplay_write(1, data);
 }
 
-uint32 teamplayer_1_read (void)
+unsigned int teamplayer_1_read (void)
 {
   return teamplayer_read(0);
 }
 
-uint32 teamplayer_2_read (void)
+unsigned int teamplayer_2_read (void)
 {
   return teamplayer_read(1);
 }
 
-void teamplayer_1_write (uint32 data)
+void teamplayer_1_write (unsigned int data)
 {
   teamplayer_write(0, data);
 }
 
-void teamplayer_2_write (uint32 data)
+void teamplayer_2_write (unsigned int data)
 {
   teamplayer_write(1, data);
 }
 
-uint32 jcart_read(uint32 address)
+unsigned int jcart_read(unsigned int address)
 {
    /* TH2 (output) fixed to 0 on read (fixes Micro Machines 2) */
    return (gamepad_read(5) | ((gamepad_read(6)&0x3f) << 8));
 }
 
-void jcart_write(uint32 address, uint32 data)
+void jcart_write(unsigned int address, unsigned int data)
 {
   gamepad_write(5, (data&1) << 6);
   gamepad_write(6, (data&1) << 6);
