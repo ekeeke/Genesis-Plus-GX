@@ -32,21 +32,31 @@ static const char copyright_notice[] =
 /* ================================ INCLUDES ============================== */
 /* ======================================================================== */
 
-extern void m68040_fpu_op0(void);
-extern void m68040_fpu_op1(void);
-
 #include "m68kops.h"
 #include "m68kcpu.h"
-//#include "m68kfpu.c"
+
+#if M68K_EMULATE_040
+#include "m68kfpu.c"
+extern void m68040_fpu_op0(void);
+extern void m68040_fpu_op1(void);
+#endif /* M68K_EMULATE_040 */
 
 /* ======================================================================== */
 /* ================================= DATA ================================= */
 /* ======================================================================== */
 
-//int  m68ki_initial_cycles;
-//int  m68ki_remaining_cycles = 0;                     /* Number of clocks remaining */
+#if 0
+int  m68ki_initial_cycles;
+int  m68ki_remaining_cycles = 0;  /* Number of clocks remaining */
+#endif
+
+#if M68K_EMULATE_TRACE
 uint m68ki_tracing = 0;
+#endif /* M68K_EMULATE_TRACE */
+
+#if M68K_EMULATE_FC
 uint m68ki_address_space;
+#endif /* M68K_EMULATE_FC */
 
 #ifdef M68K_LOG_ENABLE
 const char *const m68ki_cpu_names[] =
@@ -783,12 +793,12 @@ void m68k_set_cpu_type(unsigned int cpu_type)
   }
 }
 
+#if 0
 /* Execute a single  instruction */
-//INLINE int m68k_execute(void)
-INLINE void m68k_execute(void)
+INLINE int m68k_execute(void)
 {
     /* Set our pool of clock cycles available */
-    //SET_CYCLES(0);
+    SET_CYCLES(0);
 
     /* Set tracing accodring to T1. (T0 is done inside instruction) */
     m68ki_trace_t1(); /* auto-disable (see m68kcpu.h) */
@@ -811,8 +821,9 @@ INLINE void m68k_execute(void)
     m68ki_exception_if_trace(); /* auto-disable (see m68kcpu.h) */
 
     /* return how many clocks we used */
-    //return - GET_CYCLES();
+    return GET_CYCLES();
 }
+#endif
 
 /* ASG: rewrote so that the int_level is a mask of the IPL0/IPL1/IPL2 bits */
 /* KS: Modified so that IPL* bits match with mask positions in the SR
@@ -839,32 +850,32 @@ extern uint8 irq_status;
 
 void m68k_run (unsigned int cycles) 
 {
-  unsigned int int_level;
-
   /* Return point if we had an address error */
   m68ki_set_address_error_trap(); /* auto-disable (see m68kcpu.h) */
 
   while (mcycles_68k < cycles)
   {
-    /* check interrupt updates */
+    /* check IRQ triggering */
     if (irq_status & 0x10)
     {
       irq_status &= ~0x10;
-      int_level = irq_status & 6;
+      CPU_INT_LEVEL = (irq_status & 6) << 8;
 
-      /* hardware latency */
+      /* IRQ was triggered during previous instruction */
       if (irq_status & 0x40)
-        m68k_execute();
-
+      {
+        /* one instruction latency */
+        REG_IR = m68ki_read_imm_16();
+        m68ki_instruction_jump_table[REG_IR]();
+        USE_CYCLES(CYC_INSTRUCTION[REG_IR]);
+      }
 #ifdef LOGVDP
       error("[%d(%d)][%d(%d)] IRQ Level = %d(0x%02x) (%x)\n", v_counter, mcycles_68k/3420, mcycles_68k, mcycles_68k%3420,int_level,FLAG_INT_MASK,m68k_get_reg (NULL, M68K_REG_PC));
 #endif
-      /* update IRQ level */
-      CPU_INT_LEVEL = int_level << 8;
+      /* update internal interrupt level */
       m68ki_check_interrupts();
 
-      if (mcycles_68k >= cycles)
-        return;
+      if (mcycles_68k >= cycles) return;
     }
 
     /* Make sure we're not stopped */
@@ -875,11 +886,13 @@ void m68k_run (unsigned int cycles)
     }
 
     /* execute a single instruction */
-    m68k_execute();
+    REG_IR = m68ki_read_imm_16();
+    m68ki_instruction_jump_table[REG_IR]();
+    USE_CYCLES(CYC_INSTRUCTION[REG_IR]);
   }
 }
 
-/*
+#if 0
 int m68k_cycles_run(void)
 {
   return m68ki_initial_cycles - GET_CYCLES();
@@ -889,10 +902,8 @@ int m68k_cycles_remaining(void)
 {
   return GET_CYCLES();
 }
-*/
 
 /* Change the timeslice */
-/*
 void m68k_modify_timeslice(int cycles)
 {
   m68ki_initial_cycles += cycles;
@@ -904,7 +915,7 @@ void m68k_end_timeslice(void)
   m68ki_initial_cycles = GET_CYCLES();
   SET_CYCLES(0);
 }
-*/
+#endif
 
 void m68k_init(void)
 {
@@ -933,8 +944,9 @@ void m68k_pulse_reset(void)
 {
   /* Clear all stop levels and eat up all remaining cycles */
   CPU_STOPPED = 0;
-  //SET_CYCLES(0);
-
+#if 0
+  SET_CYCLES(0);
+#endif
   CPU_RUN_MODE = RUN_MODE_BERR_AERR_RESET;
 
   /* Turn off tracing */

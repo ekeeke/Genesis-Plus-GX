@@ -131,15 +131,11 @@
 #define LOG(x)
 #endif
 
-#define cpu_readop(a)           cpu_readmem16(a)
-#define cpu_readop_arg(a)       cpu_readmem16(a)
-
 /* execute main opcodes inside a big switch statement */
-#ifndef BIG_SWITCH
-#define BIG_SWITCH      1
-#endif
+#define BIG_SWITCH 1
 
-
+#define cpu_readop(a)     zram[(a) & 0x1fff]
+#define cpu_readop_arg(a) zram[(a) & 0x1fff]
 
 #define CF  0x01
 #define NF  0x02
@@ -3409,36 +3405,20 @@ void z80_exit(void)
  ****************************************************************************/
 void z80_run(unsigned int cycles)
 {
-  /* check for NMIs on the way in; they can only be set externally */
-  /* via timers, and can't be dynamically enabled, so it is safe */
-  /* to just check here */
-  if (Z80.nmi_pending)
-  {
-    LOG(("Z80 #%d take NMI\n", cpu_getactivecpu()));
-    LEAVE_HALT;      /* Check if processor was halted */
-
-    IFF1 = 0;
-    PUSH( pc );
-    PCD = 0x0066;
-    WZ=PCD;
-    mcycles_z80 += 11*15;
-    Z80.nmi_pending = FALSE;
-  }
-
   while( mcycles_z80 < cycles )
   {
     /* check for IRQs before each instruction */
     if (Z80.irq_state != CLEAR_LINE && IFF1 && !Z80.after_ei)
-      take_interrupt();
-    Z80.after_ei = FALSE;
-
-    if (mcycles_z80 < cycles)
     {
-      R++;
-      EXEC_INLINE(op,ROP());
+      take_interrupt();
+      if (mcycles_z80 >= cycles) return;
     }
-  } 
-}
+
+    Z80.after_ei = FALSE;
+    R++;
+    EXEC_INLINE(op,ROP());
+  }
+} 
 
 /****************************************************************************
  * Burn 'cycles' T-states. Adjust R register for the lost time
@@ -3477,19 +3457,29 @@ void z80_set_context (void *src)
  ****************************************************************************/
 void z80_set_irq_line(int irqline, int state)
 {
-  if (irqline == INPUT_LINE_NMI)
-  {
-    /* mark an NMI pending on the rising edge */
-    if (Z80.nmi_state == CLEAR_LINE && state != CLEAR_LINE)
-      Z80.nmi_pending = TRUE;
-    Z80.nmi_state = state;
-  }
-  else
+  if (irqline != INPUT_LINE_NMI)
   {
     /* update the IRQ state via the daisy chain */
     Z80.irq_state = state;
 
     /* the main execute loop will take the interrupt */
+  }
+  else
+  {
+    /* mark an NMI pending on the rising edge */
+    if (Z80.nmi_state == CLEAR_LINE && state != CLEAR_LINE)
+    {
+      LOG(("Z80 #%d take NMI\n", cpu_getactivecpu()));
+      LEAVE_HALT;      /* Check if processor was halted */
+
+      IFF1 = 0;
+      PUSH( pc );
+      PCD = 0x0066;
+      WZ=PCD;
+
+      mcycles_z80 += 11*15;
+    }
+    Z80.nmi_state = state;
   }
 }
 

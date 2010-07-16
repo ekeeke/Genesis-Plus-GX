@@ -1923,7 +1923,7 @@ void parse_satb(int line)
     size = q[link + 1] >> 8;
     height = sizetab[size & 3];
 
-    if ((ypos >= 0) && (ypos < height)) 
+    if ((ypos >= 0) && (ypos < height))
     {
       /* Sprite limit (max. 16 or 20 sprites displayed per line) */
       if(count == limit)

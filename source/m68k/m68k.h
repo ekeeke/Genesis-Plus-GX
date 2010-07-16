@@ -180,7 +180,7 @@ _m68k_memory_map m68k_memory_map[256];
 
 /* Read data immediately following the PC */
 #define m68k_read_immediate_16(address) *(uint16 *)(m68k_memory_map[((address)>>16)&0xff].base + ((address) & 0xffff))
-#define m68k_read_immediate_32(address) (m68k_read_immediate_16(address) << 16) |  (m68k_read_immediate_16(address+2))
+#define m68k_read_immediate_32(address) (m68k_read_immediate_16(address) << 16) | (m68k_read_immediate_16(address+2))
 
 /* Read data relative to the PC */
 #define m68k_read_pcrelative_8(address)  READ_BYTE(m68k_memory_map[((address)>>16)&0xff].base, (address) & 0xffff)
