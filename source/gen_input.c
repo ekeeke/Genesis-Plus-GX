@@ -85,6 +85,13 @@ static void lightgun_reset(int num)
 
 static void lightgun_update(int num)
 {
+  /* update only one justifier at once */
+  if (input.system[1] == SYSTEM_JUSTIFIER)
+  {
+    if ((io_reg[2] & 0x30) != (num << 5))
+      return;
+  }
+
   if ((input.analog[num][1] == v_counter + y_offset))
   {
     /* HL enabled ? */
@@ -597,7 +604,7 @@ void teamplayer_2_write (unsigned int data)
 unsigned int jcart_read(unsigned int address)
 {
    /* TH2 (output) fixed to 0 on read (fixes Micro Machines 2) */
-   return (gamepad_read(5) | ((gamepad_read(6)&0x3f) << 8));
+   return ((gamepad[5].State & 0x40) | (gamepad_read(5) & 0x3f) | ((gamepad_read(6) & 0x3f) << 8));
 }
 
 void jcart_write(unsigned int address, unsigned int data)
@@ -718,7 +725,7 @@ void input_reset(void)
         break;
 
       case DEVICE_LIGHTGUN:
-        lightgun_reset(i%4);
+        lightgun_reset(i%2);
         break;
 
       case DEVICE_MOUSE:
@@ -742,67 +749,22 @@ void input_reset(void)
 void input_update(void)
 {
   int i;
-  switch (input.system[0])
+  for (i=0; i<MAX_INPUTS; i++)
   {
-    case SYSTEM_GAMEPAD:
-      if (input.dev[0] == DEVICE_6BUTTON)
-        gamepad_update(0);
-      break;
-
-    case SYSTEM_WAYPLAY:
-      for (i=0; i<4; i++)
+    switch (input.dev[i])
+    {
+      case DEVICE_6BUTTON:
       {
-        if (input.dev[i] == DEVICE_6BUTTON)
-          gamepad_update(i);
+        gamepad_update(i);
+        break;
       }
-      break;
-  }
 
-  switch (input.system[1])
-  {
-    case SYSTEM_GAMEPAD:
-      if (input.dev[4] == DEVICE_6BUTTON)
-        gamepad_update(4);
-      break;
-
-    case SYSTEM_MENACER:
-      lightgun_update(0);
-      break;
-
-    case SYSTEM_JUSTIFIER:
-      if ((io_reg[2] & 0x30) == 0x00)
-        lightgun_update(0);
-      if ((io_reg[2] & 0x30) == 0x20)
-        lightgun_update(1);
-      break;
-  }
-}
-
-void input_raz(void)
-{
-  int i;
-  switch (input.system[0])
-  {
-    case SYSTEM_GAMEPAD:
-      if (input.dev[0] == DEVICE_6BUTTON)
-        gamepad_raz(0);
-      break;
-
-    case SYSTEM_WAYPLAY:
-      for (i=0; i<4; i++)
+      case DEVICE_LIGHTGUN:
       {
-        if (input.dev[i] == DEVICE_6BUTTON)
-          gamepad_raz(i);
+        lightgun_update(i%2);
+        break;
       }
-      break;
-  }
-  
-  switch (input.system[1])
-  {
-    case SYSTEM_GAMEPAD:
-      if (input.dev[4] == DEVICE_6BUTTON)
-        gamepad_raz(4);
-      break;
+    }
   }
 }
 
