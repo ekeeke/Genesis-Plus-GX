@@ -609,8 +609,8 @@ unsigned int jcart_read(unsigned int address)
 
 void jcart_write(unsigned int address, unsigned int data)
 {
-  gamepad_write(5, (data&1) << 6);
-  gamepad_write(6, (data&1) << 6);
+  gamepad_write(5, (data & 1) << 6);
+  gamepad_write(6, (data & 1) << 6);
   return;
 }
 
@@ -706,8 +706,12 @@ void input_init(void)
   /* J-CART: add two gamepad inputs */
   if (cart.jcart)
   {
-    input.dev[5] = config.input[2].padtype;
-    input.dev[6] = config.input[3].padtype;
+    if (player == MAX_INPUTS) return;
+    input.dev[5] = config.input[player].padtype;
+    player ++;
+    if (player == MAX_INPUTS) return;
+    input.dev[6] = config.input[player].padtype;
+    player ++;
   }
 }
 
@@ -715,7 +719,7 @@ void input_reset(void)
 {
   /* Reset Controller device */
   int i;
-  for (i=0; i<MAX_INPUTS; i++)
+  for (i=0; i<MAX_DEVICES; i++)
   {
     switch (input.dev[i])
     {
@@ -746,10 +750,10 @@ void input_reset(void)
   wayplay.current = 0;
 }
 
-void input_update(void)
+void input_refresh(void)
 {
   int i;
-  for (i=0; i<MAX_INPUTS; i++)
+  for (i=0; i<MAX_DEVICES; i++)
   {
     switch (input.dev[i])
     {
@@ -870,15 +874,12 @@ void input_autodetect(void)
     {
       cart.jcart = 1;
 
-      /* save current setting */
-      if (old_system[0] == -1)
-        old_system[0] = input.system[0];
-      if (old_system[1] == -1)
+      /* set default port 1 setting */
+      if (input.system[1] != SYSTEM_WAYPLAY)
+      {
         old_system[1] = input.system[1];
-
-      /* set default settings */
-      input.system[0] = SYSTEM_GAMEPAD;
-      input.system[1] = SYSTEM_GAMEPAD;
+        input.system[1] = SYSTEM_GAMEPAD;
+      }
     }
   }
 }

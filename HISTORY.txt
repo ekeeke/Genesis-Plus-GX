@@ -56,6 +56,7 @@ of samples per frame and keeping PSG & FM chips in sync.
 * added accurate TMSS emulation (VDP lock-out)
 * fixed Realtec mapper emulation: fixes missing sound in Balloon Boy / Funny World.
 * fixed lightgun auto-detection: fixes default cursor position in Lethal Enforcers II.
+* enabled simultaneous use of multitap & J-CART (Super Skidmarks 6-player mode)
 * lots of code cleanup, bugfixes & optimization.
 
 

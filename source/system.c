@@ -395,8 +395,8 @@ void system_frame (int do_skip)
     /* update VCounter */
     v_counter = line;
 
-    /* update 6-Buttons or Menacer */
-    input_update();
+    /* update 6-Buttons & Lightguns */
+    input_refresh();
 
     /* update VDP DMA */
     if (dma_length) vdp_update_dma();

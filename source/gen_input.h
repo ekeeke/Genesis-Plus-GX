@@ -72,8 +72,7 @@ extern t_input input;
 /* Function prototypes */
 extern void input_init(void);
 extern void input_reset(void);
-extern void input_update(void);
-extern void input_raz(void);
+extern void input_refresh(void);
 extern void input_autodetect(void);
 
 /* Peripherals specific */
