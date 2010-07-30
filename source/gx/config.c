@@ -98,14 +98,25 @@ void config_default(void)
   config.yscale   = 0;
   config.aspect   = 1;
   config.overscan = 3;
-  if (VIDEO_HaveComponentCable())
-    config.render = 2;
-  else
-    config.render = 0;
   config.ntsc     = 0;
-  config.bilinear = 1;
+  if (VIDEO_HaveComponentCable())
+  {
+    config.render   = 2;
+    config.bilinear = 1;
 #ifdef HW_RVL
-  config.trap     = 1;
+    config.trap     = 1;
+#endif
+  }
+  else
+  {
+    config.render   = 0;
+    config.bilinear = 0;
+#ifdef HW_RVL
+    config.trap     = 0;
+#endif
+  }
+
+#ifdef HW_RVL
   config.gamma    = VI_GM_1_0 / 10.0;
 #endif
 
@@ -125,7 +136,7 @@ void config_default(void)
   config.s_default    = 1;
   config.s_device     = 0;
   config.bg_type      = 0;
-  config.bg_overlay   = 0;
+  config.bg_overlay   = 1;
   config.screen_w     = 658;
   config.bgm_volume   = 100.0;
   config.sfx_volume   = 100.0;
