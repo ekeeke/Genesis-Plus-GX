@@ -44,6 +44,7 @@ of samples per frame and keeping PSG & FM chips in sync.
 * improved Z80 interrupt accuracy
 * improved 68k accuracy (initial Reset timing + auto-vectored interrupts handling).
 * improved 68k timing accuracy for DIVU/DVIS (thanks to Jorge Cwik) & MULU/MULS instructions.
+* implemented 68k undocumented flags behavior for DIVU/DIVS instructions (Bloodshot / Battle Frenzy)
 * improved Z80 & 68k cpu execution/synchronization accuracy by using Master Clock as common reference (now run exactly 3420 M-Cycles per line).
 * modified Z80 & 68k cores to directly use external cycle count instead of intermediate counters.
 
