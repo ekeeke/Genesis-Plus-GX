@@ -169,12 +169,10 @@ INLINE unsigned getDivs68kCycles( LONG dividend, SHORT divisor)
 
 INLINE unsigned getMulu68kCycles( WORD source)
 {
-  int i;
-
   unsigned mcycles = 266;
 
   /* count number of bits set to 1 */
-  for( i = 0; i < 15; i++)
+  while (source)
   {
     if (source & 1)
     {
@@ -194,22 +192,20 @@ INLINE unsigned getMulu68kCycles( WORD source)
 
 INLINE unsigned getMuls68kCycles( SHORT source)
 {
-  int i;
-
   unsigned mcycles = 266;
 
   /* detect 01 or 10 patterns */
   LONG temp = source << 1;
-  temp ^= source;
+  temp = (temp ^ source) & 0xFFFF;
 
   /* count number of bits set to 1 */
-  for( i = 0; i < 15; i++)
+  while (temp)
   {
-    if (source & 1)
+    if (temp & 1)
     {
       mcycles += 14;
     }
-    source >>= 1;
+    temp >>= 1;
   }
 
   /* 38 + 2*N */
