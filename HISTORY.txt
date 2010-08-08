@@ -41,6 +41,7 @@ of samples per frame and keeping PSG & FM chips in sync.
 ---------------
 * updated Z80 core to last version (fixes interrupt Mode 0 timing and some BIT instructions).
 * fixed some Z80 instructions timing.
+* fixed state of Z80 registers on reset (sound issues with Defender & Defender 2 in Williams Arcade Classics)
 * improved Z80 interrupt accuracy
 * improved 68k accuracy (initial Reset timing + auto-vectored interrupts handling).
 * improved 68k timing accuracy for DIVU/DVIS (thanks to Jorge Cwik) & MULU/MULS instructions.
