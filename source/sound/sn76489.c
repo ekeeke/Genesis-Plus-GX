@@ -114,7 +114,6 @@ void SN76489_Init(float PSGClockValue, int SamplingRate)
     SN76489_Context *p = &SN76489;
     p->dClock=PSGClockValue/16.0/SamplingRate;
     SN76489_Config(MUTE_ALLON, VOL_FULL, FB_SEGAVDP, SRW_SEGAVDP, config.psgBoostNoise);
-    SN76489_Reset();
 }
 
 void SN76489_Reset(void)

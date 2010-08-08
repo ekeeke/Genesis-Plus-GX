@@ -334,7 +334,7 @@ void system_frame (int do_skip)
     {
       im2_flag = ((reg[12] & 6) == 6);
       odd_frame = 1;
-      bitmap.viewport.changed = 1;
+      bitmap.viewport.changed = 5;
     }
 
     /* active screen height */

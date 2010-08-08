@@ -988,7 +988,7 @@ static void systemmenu ()
 
     switch (ret)
     {
-      case 0:  /*** Region Force ***/
+      case 0:  /*** Force Region ***/
         config.region_detect = (config.region_detect + 1) % 4;
         if (config.region_detect == 0)
           sprintf (items[0].text, "Console Region: AUTO");
@@ -1004,18 +1004,13 @@ static void systemmenu ()
           /* reset console region */
           region_autodetect();
 
-          /* update framerate */
-          if (vdp_pal)
-            framerate = 50.0;
-          else
-            framerate = ((config.tv_mode == 0) || (config.tv_mode == 2)) ? (1000000.0/16715.0) : 60.0;
-
           /* save YM2612 context */
           temp = memalign(32,YM2612GetContextSize());
           if (temp)
             memcpy(temp, YM2612GetContextPtr(), YM2612GetContextSize());
 
           /* reinitialize all timings */
+          framerate = vdp_pal ? 50.0 : ((config.tv_mode == 1) ? 60.0 : ((config.render || interlaced) ? 59.94 : (1000000.0/16715.0)));
           audio_init(snd.sample_rate, framerate);
           system_init();
 
@@ -1212,6 +1207,27 @@ static void videomenu ()
             config.render = 0;
           }
         }
+
+        if (!vdp_pal && cart.romsize)
+        {
+          /* save YM2612 context */
+          temp = memalign(32,YM2612GetContextSize());
+          if (temp)
+            memcpy(temp, YM2612GetContextPtr(), YM2612GetContextSize());
+
+          /* reinitialize audio timings */
+          framerate = (config.tv_mode == 1) ? 60.0 : ((config.render || interlaced) ? 59.94 : (1000000.0/16715.0));
+          audio_init(snd.sample_rate, framerate);
+          sound_init();
+
+          /* restore YM2612 context */
+          if (temp)
+          {
+            YM2612Restore(temp);
+            free(temp);
+          }
+        }
+
         if (config.render == 1)
           sprintf (items[0].text,"Display: INTERLACED");
         else if (config.render == 2)
@@ -1225,26 +1241,24 @@ static void videomenu ()
         {
           config.tv_mode = (config.tv_mode + 1) % 3;
 
-          /* update framerate */
-          if (vdp_pal)
-            framerate = 50.0;
-          else
-            framerate = ((config.tv_mode == 0) || (config.tv_mode == 2)) ? (1000000.0/16715.0) : 60.0;
-
-          /* save YM2612 context */
-          temp = memalign(32,YM2612GetContextSize());
-          if (temp)
-            memcpy(temp, YM2612GetContextPtr(), YM2612GetContextSize());
-
-          /* reinitialize audio timings */
-          audio_init(snd.sample_rate, framerate);
-          sound_init();
-
-          /* restore YM2612 context */
-          if (temp)
+          if (!vdp_pal && cart.romsize)
           {
-            YM2612Restore(temp);
-            free(temp);
+            /* save YM2612 context */
+            temp = memalign(32,YM2612GetContextSize());
+            if (temp)
+              memcpy(temp, YM2612GetContextPtr(), YM2612GetContextSize());
+
+            /* reinitialize audio timings */
+            framerate = (config.tv_mode == 1) ? 60.0 : ((config.render || interlaced) ? 59.94 : (1000000.0/16715.0));
+            audio_init(snd.sample_rate, framerate);
+            sound_init();
+
+            /* restore YM2612 context */
+            if (temp)
+            {
+              YM2612Restore(temp);
+              free(temp);
+            }
           }
 
           if (config.tv_mode == 0)

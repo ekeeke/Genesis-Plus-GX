@@ -178,17 +178,20 @@ int sound_update(unsigned int cycles)
     int avail = Fir_Resampler_avail();
 
     /* resynchronize FM & PSG chips */
-    if (avail < size)
-    {
-      /* FM chip is late for one sample */
-      YM2612Update(Fir_Resampler_buffer(), 1);
-      Fir_Resampler_write(2);
-      fm_cycles_count += fm_cycles_ratio;
-    }
-    else
+    if (avail > size)
     {
       /* FM chip is ahead */
       fm_cycles_count += (avail - size) * psg_cycles_ratio;
+    }
+    else
+    {
+      while (avail < size)
+      {
+        /* FM chip is late for one sample */
+        YM2612Update(Fir_Resampler_buffer(), 1);
+        Fir_Resampler_write(2);
+        avail = Fir_Resampler_avail();
+      }
     }
   }
 

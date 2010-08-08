@@ -71,7 +71,10 @@ void gx_audio_Init(void)
     stat(fname, &filestat);
     Bg_music_ogg_size = filestat.st_size;
     Bg_music_ogg = memalign(32,Bg_music_ogg_size);
-    if (Bg_music_ogg) fread(Bg_music_ogg,1,Bg_music_ogg_size,f);
+    if (Bg_music_ogg)
+    {
+      fread(Bg_music_ogg,1,Bg_music_ogg_size,f);
+    }
     fclose(f);
   }
 }
@@ -84,7 +87,9 @@ void gx_audio_Shutdown(void)
   ASND_Pause(1);
   ASND_End();
   if (Bg_music_ogg)
+  {
     free(Bg_music_ogg);
+  }
 }
 
 /*** 
@@ -111,24 +116,19 @@ void gx_audio_Update(void)
   /* Therefore we need to make sure frame emulation is completed before current DMA is  */
   /* completed, either by synchronizing frame emulation with DMA start or by syncing it */
   /* with Vertical Interrupt and outputing a suitable number of samples per frame.      */
-  /* In 60hz mode, VSYNC period is actually 16715 ms which is 802.32 samples at 48kHz.  */
   /*                                                                                    */
   /* In both cases, audio DMA need to be synchronized with VSYNC and therefore need to  */
   /* be resynchronized (restarted) every time video settings are changed (hopefully,    */
   /* this generally happens while no music is played.                                   */                    
   if (!audioStarted)
   {
-    audioStarted = 1;
-
-    /* when not using 60hz mode, frame emulation is synchronized with Audio Interface DMA */
-    if (gc_pal | vdp_pal)
-      AUDIO_RegisterDMACallback(ai_callback);
-
     /* restart audio DMA */
     AUDIO_StopDMA();
     AUDIO_StartDMA();
-    if (frameticker > 1)
-      frameticker = 1;
+    audioStarted = 1;
+
+    /* resynchronize emulation */
+    frameticker = 1;
   }
 }
 
@@ -149,6 +149,12 @@ void gx_audio_Start(void)
   AUDIO_StopDMA();
   AUDIO_RegisterDMACallback(NULL);
   DSP_Halt();
+
+  /* when not using 60hz mode, frame emulation is synchronized with Audio Interface DMA */
+  if (gc_pal | vdp_pal)
+  {
+    AUDIO_RegisterDMACallback(ai_callback);
+  }
 
   /* reset emulation audio processing */
   memset(soundbuffer, 0, 2 * 3840);

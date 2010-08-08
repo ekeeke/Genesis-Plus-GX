@@ -1306,9 +1306,13 @@ void gx_video_Start(void)
 {
   /* 50Hz/60Hz mode */
   if ((config.tv_mode == 1) || ((config.tv_mode == 2) && vdp_pal))
+  {
     gc_pal = 1;
+  }
   else
+  {
     gc_pal = 0;
+  }
 
 #ifdef HW_RVL
   VIDEO_SetTrapFilter(config.trap);
@@ -1318,7 +1322,9 @@ void gx_video_Start(void)
   /* VSYNC callbacks */
   /* in 60hz mode, frame emulation is synchronized with Video Interrupt */
   if (!gc_pal && !vdp_pal)
+  {
     VIDEO_SetPreRetraceCallback(vi_callback);
+  }
   VIDEO_SetPostRetraceCallback(NULL);
   VIDEO_Flush();
 
@@ -1342,9 +1348,13 @@ void gx_video_Start(void)
   {
     /* allocate filters */
     if (!sms_ntsc)
+    {
       sms_ntsc = (sms_ntsc_t *)memalign(32,sizeof(sms_ntsc_t));
+    }
     if (!md_ntsc)
+    {
       md_ntsc = (md_ntsc_t *)memalign(32,sizeof(md_ntsc_t));
+    }
 
     /* setup filters default configuration */
     switch (config.ntsc)
@@ -1366,9 +1376,13 @@ void gx_video_Start(void)
 
   /* lightgun textures */
   if (config.gun_cursor[0] && (input.dev[4] == DEVICE_LIGHTGUN))
+  {
     crosshair[0] = gxTextureOpenPNG(Crosshair_p1_png,0);
+  }
   if (config.gun_cursor[1] && (input.dev[5] == DEVICE_LIGHTGUN))
+  {
     crosshair[1] = gxTextureOpenPNG(Crosshair_p2_png,0);
+  }
 
   /* GX emulation rendering */
   gxResetRendering(0);
@@ -1382,7 +1396,7 @@ void gx_video_Update(void)
 {
   int update = bitmap.viewport.changed & 1;
 
-  /* check if display has changed */
+  /* check if display has changed during frame */
   if (update)
   {
     /* update texture size */
@@ -1391,11 +1405,15 @@ void gx_video_Update(void)
 
     /* interlaced mode */
     if (config.render && interlaced)
+    {
       vheight = vheight << 1;
+    }
 
     /* ntsc filter */
     if (config.ntsc)
+    {
       vwidth = (reg[12] & 1) ? MD_NTSC_OUT_WIDTH(vwidth) : SMS_NTSC_OUT_WIDTH(vwidth);
+    }
 
     /* texels size must be multiple of 4 */
     vwidth  = (vwidth  >> 2) << 2;
@@ -1407,16 +1425,22 @@ void gx_video_Update(void)
 
     /* configure texture filtering */
     if (!config.bilinear)
+    {
       GX_InitTexObjLOD(&texobj,GX_NEAR,GX_NEAR_MIP_NEAR,0.0,10.0,0.0,GX_FALSE,GX_FALSE,GX_ANISO_1);
+    }
 
     /* load texture object */
     GX_LoadTexObj(&texobj, GX_TEXMAP0);
 
-    /* update TV mode */
+    /* update rendering mode */
     if (config.render)
+    {
       rmode = tvmodes[gc_pal*3 + 2];
+    }
     else
+    {
       rmode = tvmodes[gc_pal*3 + interlaced];
+    }
 
     /* update aspect ratio */
     gxResetScaler(vwidth);
@@ -1426,7 +1450,6 @@ void gx_video_Update(void)
 
     /* update VI mode */
     VIDEO_Configure(rmode);
-    VIDEO_Flush();
   }
 
   /* texture is now directly mapped by the line renderer */
@@ -1438,37 +1461,46 @@ void gx_video_Update(void)
   /* render textured quad */
   draw_square();
 
-  /* LightGun marks */
+  /* Lightgun marks */
   if (crosshair[0])
+  {
     gxDrawCrosshair(crosshair[0], input.analog[0][0],input.analog[0][1]);
+  }
   if (crosshair[1])
+  {
     gxDrawCrosshair(crosshair[1], input.analog[1][0],input.analog[1][1]);
+  }
 
-  /* swap XFB */
+  /* swap XFB */ 
   whichfb ^= 1;
 
   /* copy EFB to XFB */
   GX_DrawDone();
   GX_CopyDisp(xfb[whichfb], GX_TRUE);
   GX_Flush();
+
+  /* XFB is ready to be displayed */
   VIDEO_SetNextFramebuffer(xfb[whichfb]);
   VIDEO_Flush();
 
   if (update)
   {
+    /* Clear update flags */
+    bitmap.viewport.changed &= ~1;
+
     /* field synchronization */
     VIDEO_WaitVSync();
     if (rmode->viTVMode & VI_NON_INTERLACE)
+    {
       VIDEO_WaitVSync();
+    }
     else while (VIDEO_GetNextField() != odd_frame)
+    {
       VIDEO_WaitVSync();
-    if (frameticker > 1)
-      frameticker = 1;
+    }
 
-    /* force audio DMA resynchronization */
+    /* audio & video resynchronization */
     audioStarted = 0;
-
-    bitmap.viewport.changed &= ~1;
   }
 }
 

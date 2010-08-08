@@ -105,7 +105,7 @@ static bool FindIOS(u32 ios)
  ***************************************************************************/
 static void load_bios(void)
 {
-  /* reset BIOS flag */
+  /* clear BIOS detection flag */
   config.tmss &= ~2;
 
   /* open BIOS file */
@@ -116,8 +116,12 @@ static void load_bios(void)
   fread(bios_rom, 1, 0x800, fp);
   fclose(fp);
 
-  /* update BIOS flags */
-  config.tmss |= 2;
+  /* check ROM file */
+  if (!strncmp((char *)(bios_rom + 0x120),"GENESIS OS", 10))
+  {
+    /* valid BIOS detected */
+    config.tmss |= 2;
+  }
 }
 
 static void init_machine(void)
@@ -173,8 +177,8 @@ static void run_emulation(void)
       ConfigRequested = 0;
 
       /* start video & audio */
-      gx_audio_Start();
       gx_video_Start();
+      gx_audio_Start();
       frameticker = 1;
     }
 
@@ -182,8 +186,8 @@ static void run_emulation(void)
     if (frameticker > 1)
     {
       /* skip frame */
-      frameticker = 0;
       system_frame(1);
+      frameticker = 1;
     }
     else
     {
@@ -197,6 +201,32 @@ static void run_emulation(void)
 
     /* update audio */
     gx_audio_Update();
+
+    /* check interlaced mode change */
+    if (bitmap.viewport.changed & 4)
+    {
+      /* in original 60hz modes, audio is synced with framerate */
+      if (!config.render && !vdp_pal && (config.tv_mode != 1))
+      {
+        u8 *temp = memalign(32,YM2612GetContextSize());
+        if (temp)
+        {
+          /* save YM2612 context */
+          memcpy(temp, YM2612GetContextPtr(), YM2612GetContextSize());
+
+          /* framerate has changed, reinitialize audio timings */
+          audio_init(48000, interlaced ? 59.94 : (1000000.0/16715.0));
+          sound_init();
+
+          /* restore YM2612 context */
+          YM2612Restore(temp);
+          free(temp);
+        }
+      }
+
+      /* clear flag */
+      bitmap.viewport.changed &= ~4;
+    }
 
     /* wait for next frame */
     while (frameticker < 1)
@@ -227,12 +257,8 @@ void reloadrom (int size, char *name)
   {
     /* initialize audio back-end */
     /* 60hz video mode requires synchronization with Video Interrupt.    */
-    /* VSYNC period is 16715 us on Wii/Gamecube (approx. 802.32 samples per frame) */
-    float framerate;
-    if (vdp_pal)
-      framerate = 50.0;
-    else
-      framerate = ((config.tv_mode == 0) || (config.tv_mode == 2)) ? (1000000.0/16715.0) : 60.0;
+    /* Framerate is 59.94 fps in interlaced/progressive modes, ~59.825 fps in non-interlaced mode */
+    float framerate = vdp_pal ? 50.0 : ((config.tv_mode == 1) ? 60.0 : (config.render ? 59.94 : (1000000.0/16715.0)));
     audio_init(48000, framerate);
 
     /* System Power ON */
