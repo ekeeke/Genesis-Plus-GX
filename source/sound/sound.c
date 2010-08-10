@@ -124,7 +124,7 @@ void sound_init(void)
   /* For better accuracy, sound chips run in synchronization with 68k and Z80 cpus        */
   /* These values give the exact number of M-cycles between 2 rendered samples.           */
   /* we use 21.11 fixed point precision (max. mcycle value is 3420*313 i.e 21 bits max)   */
-  psg_cycles_ratio  = (int)((mclk / (double) snd.sample_rate) * 2048.0);
+  psg_cycles_ratio  = (unsigned int)(mclk / (double) snd.sample_rate * 2048.0);
   fm_cycles_ratio   = psg_cycles_ratio;
   fm_cycles_count   = 0;
   psg_cycles_count  = 0;
@@ -178,20 +178,21 @@ int sound_update(unsigned int cycles)
     int avail = Fir_Resampler_avail();
 
     /* resynchronize FM & PSG chips */
-    if (avail > size)
+    if (avail < size)
     {
-      /* FM chip is ahead */
-      fm_cycles_count += (avail - size) * psg_cycles_ratio;
-    }
-    else
-    {
-      while (avail < size)
+      /* FM chip is late for one (or two) samples */
+      do
       {
-        /* FM chip is late for one sample */
         YM2612Update(Fir_Resampler_buffer(), 1);
         Fir_Resampler_write(2);
         avail = Fir_Resampler_avail();
       }
+      while (avail < size);
+    }
+    else
+    {
+      /* FM chip is ahead */
+      fm_cycles_count += (avail - size) * psg_cycles_ratio;
     }
   }
 
