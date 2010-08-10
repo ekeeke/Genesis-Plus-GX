@@ -3381,9 +3381,6 @@ void z80_reset(void)
   IFF1 = IFF2 = 0;
   HALT = 0;
 
-  Z80.nmi_state = CLEAR_LINE;
-  Z80.nmi_pending = FALSE;
-  Z80.irq_state = CLEAR_LINE;
   Z80.after_ei = FALSE;
 
   WZ=PCD;
