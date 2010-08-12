@@ -81,8 +81,7 @@ endif
 export OFILES	:=	$(addsuffix .o,$(BINFILES)) \
 			$(PNGFILES:.png=.png.o) $(PCMFILES:.pcm=.pcm.o) $(OGGFILES:.ogg=.ogg.o) \
 			$(CPPFILES:.cpp=.o) $(CFILES:.c=.o) \
-			$(sFILES:.s=.o) $(SFILES:.S=.o) \
-			$(CURDIR)/source/gx/utils/ehcmodule.elf.o
+			$(sFILES:.s=.o) $(SFILES:.S=.o)
 
 #---------------------------------------------------------------------------------
 # build a list of include paths

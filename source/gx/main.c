@@ -33,15 +33,11 @@
 #include "file_fat.h"
 #include "filesel.h"
 
-#ifdef HW_RVL
-#include "usb2storage.h"
-#include "mload.h"
-#endif
-
 #include <fat.h>
 
 #ifdef HW_RVL
 #include <wiiuse/wpad.h>
+extern u32 __di_check_ahbprot(void);
 #endif
 
 u32 Shutdown = 0;
@@ -284,7 +280,6 @@ void shutdown(void)
   gx_video_Shutdown();
 #ifdef HW_RVL
   DI_Close();
-  mload_close();
 #endif
 }
 
@@ -298,21 +293,14 @@ u32 frameticker = 0;
 int main (int argc, char *argv[])
 {
 #ifdef HW_RVL
-	/* try to load IOS 202 */
-	if(IOS_GetVersion() != 202 && FindIOS(202))
-		IOS_ReloadIOS(202);
-	
-	if(IOS_GetVersion() == 202)
-	{
-		/* disable DVDX stub */
-        DI_LoadDVDX(false);
-		
-		/* load EHCI module & enable USB2 driver */
-		if(mload_init() >= 0 && load_ehci_module())
-			USB2Enable(true);
+	/* if not already loaded, try to reload IOS 58 (USB2 support) */
+	if ((IOS_GetVersion() != 58) && FindIOS(58))
+  {
+    /* IOS should not be reloaded if HW_AHBPROT flags are set (DVD support) */
+    if (__di_check_ahbprot() != 1) IOS_ReloadIOS(58);
 	}
 
-  /* initialize DVD driver */
+  /* initialize DVD device */
   DI_Init();
 #endif
 
@@ -320,7 +308,7 @@ int main (int argc, char *argv[])
   gx_video_Init();
 
 #ifdef HW_DOL
-  /* initialize DVD driver */
+  /* initialize DVD device */
   DVD_Init ();
   dvd_drive_detect();
 #endif
@@ -332,26 +320,20 @@ int main (int argc, char *argv[])
     char pathname[MAXPATHLEN];
     sprintf (pathname, DEFAULT_PATH);
     DIR_ITER *dir = diropen(pathname);
-    if (dir)
-      dirclose(dir);
-    else
-      mkdir(pathname,S_IRWXU);
+    if (dir) dirclose(dir);
+    else mkdir(pathname,S_IRWXU);
 
     /* default SRAM & Savestate files directory */ 
     sprintf (pathname, "%s/saves",DEFAULT_PATH);
     dir = diropen(pathname);
-    if (dir)
-      dirclose(dir);
-    else
-      mkdir(pathname,S_IRWXU);
+    if (dir) dirclose(dir);
+    else mkdir(pathname,S_IRWXU);
 
     /* default Snapshot files directory */ 
     sprintf (pathname, "%s/snaps",DEFAULT_PATH);
     dir = diropen(pathname);
-    if (dir)
-      dirclose(dir);
-    else
-      mkdir(pathname,S_IRWXU);
+    if (dir) dirclose(dir);
+    else mkdir(pathname,S_IRWXU);
   }
 
   /* initialize input engine */
