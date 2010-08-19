@@ -408,9 +408,14 @@ void system_frame (int do_skip)
       if (!do_skip && ((line < end) || (line >= start)))
         render_line(line);
 
-      /* clear pending Z80 interrupt */
       if (zirq)
       {
+        /* Z80 interrupt is asserted during one exact line */
+        m68k_run(mcycles_vdp + 788);
+        if (zstate == 1) z80_run(mcycles_vdp + 788);
+        else mcycles_z80 = mcycles_vdp + 788;
+
+        /* clear Z80 interrupt */
         z80_set_irq_line(0, CLEAR_LINE);
         zirq = 0;
       }
@@ -457,10 +462,6 @@ void system_frame (int do_skip)
         /* update inputs (doing this here fix Warriors of Eternal Sun) */
         osd_input_Update();
 
-        /* Z80 interrupt is 16ms period (one frame) and 64us length (one scanline) */
-        z80_set_irq_line(0, ASSERT_LINE);
-        zirq = 1;
-
         /* delay between VINT flag & V Interrupt (Ex-Mutants, Tyrant) */
         m68k_run(mcycles_vdp + 588);
         status |= 0x80;
@@ -474,6 +475,9 @@ void system_frame (int do_skip)
         vint_pending = 0x20;
         if (reg[1] & 0x20)
           irq_status = (irq_status & ~0x40) | 0x36;
+
+        /* Z80 interrupt */
+        z80_set_irq_line(0, ASSERT_LINE);
       }
       else
       {
