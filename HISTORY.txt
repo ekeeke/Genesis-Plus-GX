@@ -28,7 +28,7 @@ of samples per frame and keeping PSG & FM chips in sync.
 * added support for some undocumented mode register bits
 * added proper emulation of HV Counter latch: fixes Sunset Riders intro
 * added pixel-accurate emulation of mid-line display on/off (Nigel Mansell World Championship PAL, Ren & Stimpy's Invention PAL,...)
-* improved 2-cell vscroll emulation accuracy (left-most column in Gynoug, Cutie Suzuki no Ringside Angel, Formula One, Kawasaki Superbike Challenge)
+* improved 2-cell vscroll emulation accuracy, as verified on real hardware (Gynoug, Cutie Suzuki no Ringside Angel, Formula One, Kawasaki Superbike Challenge)
 * improved FIFO timings accuracy: fixes Sol Deace intro
 * improved sprite masking accuracy (thanks to Nemesis for his test program)
 * improved sprites processing accuracy: fixes (un)masked sprites in Mickey Mania (3D level), Sonic 2 (VS mode).

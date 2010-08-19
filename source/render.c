@@ -1062,6 +1062,7 @@ static void render_bg_vs(int line, int width)
 
   /* common data */
   uint32 xscroll      = get_hscroll(line);
+  uint32 yscroll      = 0;
   uint32 pf_col_mask  = playfield_col_mask;
   uint32 pf_row_mask  = playfield_row_mask;
   uint32 pf_shift     = playfield_shift;
@@ -1080,16 +1081,20 @@ static void render_bg_vs(int line, int width)
   uint32 index  = pf_col_mask + 1 - ((xscroll >> 4) & pf_col_mask);
 #endif
 
+  /* left-most column v-scrolling when fine h-scrolling value is applied */
+  /* Gynoug, Cutie Suzuki no Ringside Angel, Formula One, Kawasaki Superbike Challenge */
+  if (reg[12] & 1)
+  {
+    /* only in 40-cell mode, verified on MD2 */
+    yscroll = vs[19] & (vs[19] >> 16);
+    yscroll &= 0x3FF;
+  }
+
   if(shift)
   {
     dst   = (uint32 *)&buf[0x10 + shift];
 
-#ifdef LSB_FIRST
-    v_line = (line + (vs[19] & 0x3FF)) & pf_row_mask;
-#else
-    v_line = (line + ((vs[19] >> 16) & 0x3FF)) & pf_row_mask;
-#endif
-
+    v_line = (line + yscroll) & pf_row_mask;
     nt = (uint32 *)&vram[ntbb + (((v_line >> 3) << pf_shift) & 0x1FC0)];
     v_line = (v_line & 7) << 3;
 
@@ -1153,11 +1158,7 @@ static void render_bg_vs(int line, int width)
     {
       dst = (uint32 *)&buf[0x10 + shift + (start<<4)];
 
-#ifdef LSB_FIRST
-      v_line = (line + ((vs[19] >> 16) & 0x3FF)) & pf_row_mask;
-#else
-      v_line = (line + (vs[19] & 0x3FF)) & pf_row_mask;
-#endif
+      v_line = (line + yscroll) & pf_row_mask;
       nt = (uint32 *)&vram[ntab + (((v_line >> 3) << pf_shift) & 0x1FC0)];
       v_line = (v_line & 7) << 3;
 
@@ -1335,6 +1336,7 @@ static void render_bg_im2_vs(int line, int width, int odd)
 
   /* common data */
   uint32 xscroll      = get_hscroll(line);
+  uint32 yscroll      = 0;
   uint32 pf_col_mask  = playfield_col_mask;
   uint32 pf_row_mask  = playfield_row_mask;
   uint32 pf_shift     = playfield_shift;
@@ -1353,15 +1355,20 @@ static void render_bg_im2_vs(int line, int width, int odd)
   uint32 index  = pf_col_mask + 1 - ((xscroll >> 4) & pf_col_mask);
 #endif
 
+  /* left-most column v-scrolling when fine h-scrolling value is applied */
+  /* Gynoug, Cutie Suzuki no Ringside Angel, Formula One, Kawasaki Superbike Challenge */
+  if (reg[12] & 1)
+  {
+    /* only in 40-cell mode, verified on MD2 */
+    yscroll = (vs[19] >> 1) & (vs[19] >> 17);
+    yscroll &= 0x3FF;
+  }
+
   if(shift)
   {
     dst   = (uint32 *)&buf[0x10 + shift];
 
-#ifdef LSB_FIRST
-    v_line  = (line + ((vs[19] >> 1) & 0x3FF)) & pf_row_mask;
-#else
-    v_line  = (line + ((vs[19] >> 17) & 0x3FF)) & pf_row_mask;
-#endif
+    v_line  = (line + yscroll) & pf_row_mask;
     nt      = (uint32 *)&vram[ntbb + (((v_line >> 3) << pf_shift) & 0x1FC0)];
     v_line  = (((v_line & 7) << 1) | odd) << 3;
 
@@ -1423,11 +1430,7 @@ static void render_bg_im2_vs(int line, int width, int odd)
     {
       dst = (uint32 *)&buf[0x10 + shift + (start<<4)];
 
-#ifdef LSB_FIRST
-      v_line  = (line + ((vs[19] >> 17) & 0x3FF)) & pf_row_mask;
-#else
-      v_line  = (line + ((vs[19] >> 1) & 0x3FF)) & pf_row_mask;
-#endif
+      v_line  = (line + yscroll) & pf_row_mask;
       nt = (uint32 *)&vram[ntab + (((v_line >> 3) << pf_shift) & 0x1FC0)];
       v_line  = (((v_line & 7) << 1) | odd) << 3;
 
