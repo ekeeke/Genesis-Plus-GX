@@ -52,47 +52,6 @@ static void Power_Off(void)
   Shutdown = 1;
   ConfigRequested = 1;
 }
-
-/****************************************************************************
- * IOS support
- ***************************************************************************/
-static bool FindIOS(u32 ios)
-{
-	s32 ret;
-	u32 n;
-	
-  u64 *titles = NULL;
-	u32 num_titles=0;
-	
-	ret = ES_GetNumTitles(&num_titles);
-	if (ret < 0)
-		return false;
-	
-	if(num_titles < 1) 
-		return false;
-	
-	titles = (u64 *)memalign(32, num_titles * sizeof(u64) + 32);
-	if (!titles)
-		return false;
-	
-	ret = ES_GetTitles(titles, num_titles);
-	if (ret < 0)
-	{
-		free(titles);
-		return false;
-	}
-	
-	for(n=0; n < num_titles; n++)
-	{
-		if((titles[n] & 0xFFFFFFFF)==ios) 
-		{
-			free(titles); 
-			return true;
-		}
-	}
-  free(titles); 
-	return false;
-}
 #endif
 
 /***************************************************************************
@@ -238,7 +197,9 @@ void reloadrom (int size, char *name)
   /* cartridge hot-swap support */
   uint8 hotswap = 0;
   if (cart.romsize)
+  {
     hotswap = config.hot_swap;
+  }
 
   /* Load ROM */
   cart.romsize = size;
@@ -269,10 +230,11 @@ void reloadrom (int size, char *name)
 ***************************************************/
 void shutdown(void)
 {
-  /* system shutdown */
   config_save();
   if (config.s_auto & 2)
+  {
     slot_autosave(config.s_default,config.s_device);
+  }
   system_shutdown();
   audio_shutdown();
   free(cart.rom);
@@ -293,12 +255,8 @@ u32 frameticker = 0;
 int main (int argc, char *argv[])
 {
 #ifdef HW_RVL
-	/* if not already loaded, try to reload IOS 58 (USB2 support) */
-	if ((IOS_GetVersion() != 58) && FindIOS(58))
-  {
-    /* IOS should not be reloaded if HW_AHBPROT flags are set (DVD support) */
-    if (__di_check_ahbprot() != 1) IOS_ReloadIOS(58);
-	}
+	/* if HW_AHBPROT flag is not set (DVD support), try to reload IOS 58 (USB2 support) */
+	if ((IOS_GetVersion() != 58) && (__di_check_ahbprot() != 1)) IOS_ReloadIOS(58);
 
   /* initialize DVD device */
   DI_Init();
