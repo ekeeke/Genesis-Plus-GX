@@ -478,6 +478,7 @@ void system_frame (int do_skip)
 
         /* Z80 interrupt */
         z80_set_irq_line(0, ASSERT_LINE);
+        zirq = 1;
       }
       else
       {
