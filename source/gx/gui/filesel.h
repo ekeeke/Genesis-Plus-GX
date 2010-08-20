@@ -26,7 +26,7 @@
 #define _FILESEL_H
 
 #define MAXJOLIET 256
-#define MAXFILES 500
+#define MAXFILES 1000
 
 /* Filelist structure */
 typedef struct
