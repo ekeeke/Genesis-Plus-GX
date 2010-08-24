@@ -395,14 +395,14 @@ int DVD_Open(void)
       return 0;
     }
 
+    /* reset current directory */
+    rootdir = basedir;
+
     GUI_MsgBoxClose();
   }
 
   if (!haveDVDdir)
   {
-    /* reset current directory */
-    rootdir = basedir;
-
     /* parse current directory */
     int max = DVD_ParseDirectory ();
 
