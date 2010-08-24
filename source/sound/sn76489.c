@@ -21,17 +21,17 @@
 
    25/04/07 Eke-Eke (Genesis Plus GX)
     - Removed stereo GG support (unused)
-    - Rade SN76489_Update outputs 16bits mono samples
+    - Made SN76489_Update outputs 16bits mono samples
     - Replaced volume table with VGM plugin's one
 
    05/01/09 Eke-Eke (Genesis Plus GX)
     - Modified Cut-Off frequency (according to Steve Snake: http://www.smspower.org/forums/viewtopic.php?t=1746)
 
-   25/05/09 Eke-Eke (Genesis Plus GX)
+   24/08/10 Eke-Eke (Genesis Plus GX)
     - Removed multichip support (unused)
     - Removed alternate volume table, panning & mute support (unused)
     - Removed configurable Feedback and Shift Register Width (always use Sega ones)
-    - Added linear resampling using Blip Buffer (Blargg's implementation: http://www.smspower.org/forums/viewtopic.php?t=11376)
+    - Added linear resampling using Blip Buffer (based on Blargg's implementation: http://www.smspower.org/forums/viewtopic.php?t=11376)
 */
 
 #include "shared.h"
