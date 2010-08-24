@@ -19,7 +19,7 @@
 #endif
 
 
-extern int YM2612Init(float clock, int rate);
+extern int YM2612Init(double clock, int rate);
 extern int YM2612ResetChip(void);
 extern void YM2612Update(long int *buffer, int length);
 extern void YM2612Write(unsigned int a, unsigned int v);

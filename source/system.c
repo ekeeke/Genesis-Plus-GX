@@ -311,6 +311,7 @@ void system_shutdown (void)
   gen_shutdown ();
   vdp_shutdown ();
   render_shutdown ();
+  SN76489_Shutdown ();
 }
 
 /****************************************************************

@@ -230,8 +230,7 @@ void fm_reset(unsigned int cycles)
 /* Write FM chip */
 void fm_write(unsigned int cycles, unsigned int address, unsigned int data)
 {
-  if (address & 1)
-    fm_update(cycles << 11);
+  if (address & 1) fm_update(cycles << 11);
   YM2612Write(address, data);
 }
 

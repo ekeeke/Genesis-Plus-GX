@@ -16,7 +16,7 @@
 #define _SN76489_H_
 
 /* Function prototypes */
-extern void SN76489_Init(float PSGClockValue, int SamplingRate);
+extern void SN76489_Init(double PSGClockValue, int SamplingRate);
 extern void SN76489_Reset(void);
 extern void SN76489_Shutdown(void);
 extern void SN76489_SetContext(uint8 *data);
@@ -26,7 +26,6 @@ extern int SN76489_GetContextSize(void);
 extern void SN76489_Write(int data);
 extern void SN76489_Update(INT16 *buffer, int length);
 extern void SN76489_BoostNoise(int boost);
-extern void SN76489_Config(int mute, int volume, int feedback, int sr_width, int boost_noise);
 
 #endif /* _SN76489_H_ */
 

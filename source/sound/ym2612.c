@@ -549,7 +549,7 @@ typedef struct
 
 typedef struct
 {
-  float   clock;          /* master clock  (Hz)   */
+  double  clock;          /* master clock  (Hz)   */
   UINT32  rate;           /* sampling rate (Hz)   */
   UINT16  address;        /* address register     */
   UINT8   status;         /* status flag          */
@@ -1921,7 +1921,7 @@ static void init_tables(void)
 
 
 /* initialize ym2612 emulator(s) */
-int YM2612Init(float clock, int rate)
+int YM2612Init(double clock, int rate)
 {
   memset(&ym2612,0,sizeof(YM2612));
   init_tables();
@@ -2172,7 +2172,7 @@ unsigned int YM2612GetContextSize(void)
 void YM2612Restore(unsigned char *buffer)
 {
   /* save current timings */
-  float clock = ym2612.OPN.ST.clock;
+  double clock = ym2612.OPN.ST.clock;
   int rate = ym2612.OPN.ST.rate;
 
   /* restore internal state */
