@@ -870,7 +870,7 @@ void m68k_run (unsigned int cycles)
         USE_CYCLES(CYC_INSTRUCTION[REG_IR]);
       }
 #ifdef LOGVDP
-      error("[%d(%d)][%d(%d)] IRQ Level = %d(0x%02x) (%x)\n", v_counter, mcycles_68k/3420, mcycles_68k, mcycles_68k%3420,CPU_INT_LEVEL,FLAG_INT_MASK,m68k_get_reg (NULL, M68K_REG_PC));
+      error("[%d(%d)][%d(%d)] IRQ Level = %d(0x%02x) (%x)\n", v_counter, mcycles_68k/3420, mcycles_68k, mcycles_68k%3420,CPU_INT_LEVEL>>8,FLAG_INT_MASK,m68k_get_reg (NULL, M68K_REG_PC));
 #endif
       /* update internal interrupt level */
       m68ki_check_interrupts();
