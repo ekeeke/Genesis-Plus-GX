@@ -483,8 +483,13 @@ void ctrl_io_write_word(unsigned int address, unsigned int data)
 
     case 0x40:  /* TMSS */
     {
-      gen_tmss_w(address & 3, data);
-      break;
+      if (config.tmss & 1)
+      {
+        gen_tmss_w(address & 3, data);
+        return;
+      }
+      m68k_unused_16_w(address, data);
+      return;
     }
 
     case 0x50:  /* SVP REGISTERS */

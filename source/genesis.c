@@ -138,8 +138,8 @@ void gen_hardreset(void)
     m68k_memory_map[0].base = bios_rom;
   }
 
-  /* Reset CPU cycles */
-  mcycles_68k = mcycles_z80 = 0;
+  /* 68k & Z80 could restart anywhere in VDP frame (Bonkers, Eternal Champions, X-Men 2) */
+  mcycles_68k = mcycles_z80 = (uint32)((MCYCLES_PER_LINE * lines_per_frame) * ((double)rand() / (double)RAND_MAX));
 
   /* Z80 bus is released & Z80 is stopped */
   m68k_memory_map[0xa0].read8   = m68k_read_bus_8;
@@ -172,7 +172,7 @@ void gen_softreset(int state)
     if (config.lock_on == TYPE_AR)
       datel_reset(0);
 
-    /* 68k & Z80 could restart anywhere in VDP frame (fixes Eternal Champions, X-Men 2) */
+    /* 68k & Z80 could restart anywhere in VDP frame (Bonkers, Eternal Champions, X-Men 2) */
     mcycles_68k = mcycles_z80 = (uint32)((MCYCLES_PER_LINE * lines_per_frame) * ((double)rand() / (double)RAND_MAX));
 
     /* Reset 68k, Z80 & YM2612 */
