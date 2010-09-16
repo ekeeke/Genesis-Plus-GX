@@ -1827,10 +1827,14 @@ static void init_tables(void)
   signed int n;
   double o,m;
 
+#ifdef NGC
+  u32 level = IRQ_Disable();
+#endif
+  
   /* build Linear Power Table */
   for (x=0; x<TL_RES_LEN; x++)
   {
-    m = (1<<16) / pow(2, (x+1) * (ENV_STEP/4.0) / 8.0);
+    m = (1<<16) / pow(2,(x+1) * (ENV_STEP/4.0) / 8.0);
     m = floor(m);
 
     /* we never reach (1<<16) here due to the (x+1) */
@@ -1860,6 +1864,10 @@ static void init_tables(void)
       tl_tab[ x*2+1 + i*2*TL_RES_LEN ] = -tl_tab[ x*2+0 + i*2*TL_RES_LEN ];
     }
   }
+
+#ifdef NGC
+  IRQ_Restore(level);
+#endif
 
   /* build Logarithmic Sinus table */
   for (i=0; i<SIN_LEN; i++)
