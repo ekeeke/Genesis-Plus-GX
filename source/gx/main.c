@@ -27,17 +27,16 @@
 #include "gui.h"
 #include "menu.h"
 #include "aram.h"
-#include "dvd.h"
 #include "history.h"
 #include "file_slot.h"
-#include "file_fat.h"
+#include "file_load.h"
 #include "filesel.h"
+#include "cheats.h"
 
 #include <fat.h>
 
 #ifdef HW_RVL
 #include <wiiuse/wpad.h>
-extern u32 __di_check_ahbprot(void);
 #endif
 
 u32 Shutdown = 0;
@@ -81,7 +80,7 @@ static void load_bios(void)
 
 static void init_machine(void)
 {
-  /* Allocate cart_rom here ( 10 MBytes ) */
+  /* allocate cart.rom here (10 MBytes) */
   cart.rom = memalign(32, MAXROMSIZE);
   if (!cart.rom)
   {
@@ -184,8 +183,7 @@ static void run_emulation(void)
     }
 
     /* wait for next frame */
-    while (frameticker < 1)
-      usleep(1);
+    while (frameticker < 1) usleep(1);
   }
 }
 
@@ -194,14 +192,10 @@ static void run_emulation(void)
 ***************************************************/
 void reloadrom (int size, char *name)
 {
-  /* cartridge hot-swap support */
-  uint8 hotswap = 0;
-  if (cart.romsize)
-  {
-    hotswap = config.hot_swap;
-  }
+  /* hot-swap previous & current cartridge */
+  bool hotswap = config.hot_swap && cart.romsize;
 
-  /* Load ROM */
+  /* load ROM file */
   cart.romsize = size;
   load_rom(name);
 
@@ -217,11 +211,25 @@ void reloadrom (int size, char *name)
     /* Framerate is 59.94 fps in interlaced/progressive modes, ~59.825 fps in non-interlaced mode */
     float framerate = vdp_pal ? 50.0 : ((config.tv_mode == 1) ? 60.0 : (config.render ? 59.94 : (1000000.0/16715.0)));
     audio_init(48000, framerate);
-
+     
     /* System Power ON */
     system_init ();
-    ClearGGCodes ();
     system_reset ();
+  }
+
+  /* load Cheats */
+  CheatLoad();
+
+  /* load SRAM */
+  if (config.s_auto & 1)
+  {
+    slot_autoload(0,config.s_device);
+  }
+            
+  /* load State */
+  if (config.s_auto & 2)
+  {
+    slot_autoload(config.s_default,config.s_device);
   }
 }
 
@@ -230,11 +238,16 @@ void reloadrom (int size, char *name)
 ***************************************************/
 void shutdown(void)
 {
+  /* save current config */
   config_save();
+
+  /* save current game state */
   if (config.s_auto & 2)
   {
     slot_autosave(config.s_default,config.s_device);
   }
+
+  /* shutdown emulation */
   system_shutdown();
   audio_shutdown();
   free(cart.rom);
@@ -249,26 +262,18 @@ void shutdown(void)
  *  M A I N
  *
  ***************************************************************************/
-u32 fat_enabled = 0;
 u32 frameticker = 0;
 
 int main (int argc, char *argv[])
 {
-#ifdef HW_RVL
-	/* if HW_AHBPROT flag is not set (DVD support), try to reload IOS 58 (USB2 support) */
-	if ((IOS_GetVersion() != 58) && (__di_check_ahbprot() != 1)) IOS_ReloadIOS(58);
-
-  /* initialize DVD device */
-  DI_Init();
-#endif
-
   /* initialize video engine */
   gx_video_Init();
 
+  /* initialize DVD interface */
 #ifdef HW_DOL
-  /* initialize DVD device */
   DVD_Init ();
-  dvd_drive_detect();
+#else
+  DI_Init();
 #endif
 
   /* initialize FAT devices */
@@ -292,12 +297,18 @@ int main (int argc, char *argv[])
     dir = diropen(pathname);
     if (dir) dirclose(dir);
     else mkdir(pathname,S_IRWXU);
+
+    /* default Cheat files directory */ 
+    sprintf (pathname, "%s/cheats",DEFAULT_PATH);
+    dir = diropen(pathname);
+    if (dir) dirclose(dir);
+    else mkdir(pathname,S_IRWXU);
   }
 
   /* initialize input engine */
   gx_input_Init();
 
-  /* initialize sound engine (need libfat) */
+  /* initialize sound engine */
   gx_audio_Init();
 
   /* initialize genesis plus core */
@@ -321,16 +332,12 @@ int main (int argc, char *argv[])
   else if (config.autoload)
   {
     SILENT = 1;
-    if (FAT_Open(TYPE_RECENT))
+    if (OpenDirectory(TYPE_RECENT))
     {
-      int size = FAT_LoadFile(cart.rom,0);
+      int size = LoadFile(cart.rom,0);
       if (size)
       {
         reloadrom(size,filelist[0].filename);
-        if (config.s_auto & 1)
-          slot_autoload(0,config.s_device);
-        if (config.s_auto & 2)
-          slot_autoload(config.s_default,config.s_device);
         gx_video_Start();
         gx_audio_Start();
         frameticker = 1;
@@ -341,12 +348,13 @@ int main (int argc, char *argv[])
   }
 
 #ifdef HW_RVL
-  /* Power button callback */
+  /* power button callback */
   SYS_SetPowerCallback(Power_Off);
 #endif
 
   /* main emulation loop */
   run_emulation();
 
+  /* we should never return anyway */
   return 0;
 }

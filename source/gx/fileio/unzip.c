@@ -27,9 +27,6 @@
  ********************************************************************************/
 
 #include "shared.h"
-#include "dvd.h"
-#include "file_dvd.h"
-#include "file_fat.h"
 #include "gui.h"
 
 /*
@@ -97,7 +94,7 @@ int IsZipFile (char *buffer)
  *
  * It should be noted that there is a limit of 5MB total size for any ROM
  ******************************************************************************/
-int UnZipBuffer (unsigned char *outbuffer, u64 discoffset, char *filename)
+int UnZipBuffer (unsigned char *outbuffer, FILE *fd)
 {
   PKZIPHEADER pkzip;
   int zipoffset = 0;
@@ -107,35 +104,18 @@ int UnZipBuffer (unsigned char *outbuffer, u64 discoffset, char *filename)
   int res;
   int bufferoffset = 0;
   int have = 0;
-  char readbuffer[2048];
+  char readbuffer[ZIPCHUNK];
   char msg[64];
-  FILE *fatfile = NULL;
-
-  /*** FAT file support ***/
-  if (filename)
-  {
-    fatfile = fopen(filename, "rb");
-    if (fatfile == NULL)
-      return 0;
-  }
 
   /*** Read Zip Header ***/
-  if (fatfile)
-  {
-    fseek(fatfile, 0, SEEK_SET);
-    fread(readbuffer, 2048,  1, fatfile);
-  }
-  else
-  {
-    dvd_read (&readbuffer, 2048, discoffset);
-  }
+  fread(readbuffer, ZIPCHUNK,  1, fd);
 
   /*** Copy PKZip header to local, used as info ***/
   memcpy (&pkzip, &readbuffer, sizeof (PKZIPHEADER));
 
   if (FLIP32 (pkzip.uncompressedSize) > MAXROMSIZE)
   {
-    GUI_WaitPrompt("Error","File size not supported !");
+    GUI_WaitPrompt("Error","File is too large !");
     return 0;
   }
 
@@ -194,24 +174,12 @@ int UnZipBuffer (unsigned char *outbuffer, u64 discoffset, char *filename)
     /*** Readup the next 2k block ***/
     zipoffset = 0;
     zipchunk = ZIPCHUNK;
-    
-    if (fatfile)
-    {
-      fread(readbuffer, 2048, 1, fatfile);
-    }
-    else
-    {
-      discoffset += 2048;
-      dvd_read (&readbuffer, 2048, discoffset);
-    }
+    fread(readbuffer, ZIPCHUNK, 1, fd);
   }
   while (res != Z_STREAM_END);
 
   inflateEnd (&zs);
-
-  /* close file */
-  if (fatfile)
-    fclose(fatfile);
+  GUI_MsgBoxClose();
 
   if (res == Z_STREAM_END)
   {
@@ -220,6 +188,7 @@ int UnZipBuffer (unsigned char *outbuffer, u64 discoffset, char *filename)
     else
       return FLIP32 (pkzip.uncompressedSize);
   }
+
   return 0;
 }
 

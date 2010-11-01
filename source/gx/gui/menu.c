@@ -1,9 +1,9 @@
 /****************************************************************************
  *  menu.c
  *
- *  Genesis Plus GX menus
+ *  Genesis Plus GX menu
  *
- *  Eke-Eke (2009)
+ *  Eke-Eke (2009,2010)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -25,19 +25,87 @@
 #include "menu.h"
 #include "font.h"
 #include "gui.h"
-#include "dvd.h"
-#include "file_dvd.h"
-#include "file_fat.h"
-#include "file_slot.h"
 #include "filesel.h"
+#include "cheats.h"
+#include "file_load.h"
+#include "file_slot.h"
 
 #include <ogc/lwp_threads.h>
+
+/* Credits */
+extern const u8 Bg_credits_png[];
+
+/* Main menu */
+extern const u8 Main_load_png[];
+extern const u8 Main_options_png[];
+extern const u8 Main_quit_png[];
+extern const u8 Main_file_png[];
+extern const u8 Main_reset_png[];
+extern const u8 Main_ggenie_png[];
+extern const u8 Main_showinfo_png[];
+extern const u8 Main_takeshot_png[];
+#ifdef HW_RVL
+extern const u8 Main_play_wii_png[];
+#else
+extern const u8 Main_play_gcn_png[];
+#endif
+
+/* Options menu */
+extern const u8 Option_menu_png[];
+extern const u8 Option_ctrl_png[];
+extern const u8 Option_sound_png[];
+extern const u8 Option_video_png[];
+extern const u8 Option_system_png[];
+
+/* Load ROM menu */
+extern const u8 Load_recent_png[];
+extern const u8 Load_sd_png[];
+extern const u8 Load_dvd_png[];
+#ifdef HW_RVL
+extern const u8 Load_usb_png[];
+#endif
+
+/* Save Manager menu */
+extern const u8 Button_load_png[];
+extern const u8 Button_load_over_png[];
+extern const u8 Button_save_png[];
+extern const u8 Button_save_over_png[];
+extern const u8 Button_special_png[];
+extern const u8 Button_special_over_png[];
+extern const u8 Button_delete_png[];
+extern const u8 Button_delete_over_png[];
+
+/* Controller Settings */
+extern const u8 Ctrl_4wayplay_png[];
+extern const u8 Ctrl_gamepad_png[];
+extern const u8 Ctrl_justifiers_png[];
+extern const u8 Ctrl_menacer_png[];
+extern const u8 Ctrl_mouse_png[];
+extern const u8 Ctrl_none_png[];
+extern const u8 Ctrl_teamplayer_png[];
+extern const u8 Ctrl_pad3b_png[];
+extern const u8 Ctrl_pad6b_png[];
+extern const u8 Ctrl_config_png[];
+extern const u8 ctrl_option_off_png[];
+extern const u8 ctrl_option_on_png[];
+extern const u8 ctrl_gamecube_png[];
+#ifdef HW_RVL
+extern const u8 ctrl_classic_png[];
+extern const u8 ctrl_nunchuk_png[];
+extern const u8 ctrl_wiimote_png[];
+#endif
+
+/* Generic images */
+extern const u8 Button_sm_blue_png[];
+extern const u8 Button_sm_grey_png[];
+extern const u8 Button_sm_yellow_png[];
 
 /*****************************************************************************/
 /*  Specific Menu Callbacks                                                  */
 /*****************************************************************************/
 static void ctrlmenu_cb(void);
 static void savemenu_cb(void);
+static void mainmenu_cb(void);
 
 /*****************************************************************************/
 /*  Generic Buttons data                                                     */
@@ -75,13 +143,13 @@ static butn_data button_icon_sm_data =
 static butn_data button_player_data =
 {
   {NULL,NULL},
-  {Ctrl_player_png,Ctrl_player_over_png}
+  {Button_sm_blue_png,Button_sm_yellow_png}
 };
 
 static butn_data button_player_none_data =
 {
   {NULL,NULL},
-  {Ctrl_player_none_png,NULL}
+  {Button_sm_grey_png,NULL}
 };
 
 static butn_data button_load_data =
@@ -123,7 +191,7 @@ static gui_item action_select =
 
 
 /*****************************************************************************/
-/*  Generic GUI backgrounds                                                  */
+/* GUI backgrounds images                                                    */
 /*****************************************************************************/
 static gui_image bg_main[4] =
 {
@@ -149,8 +217,8 @@ static gui_image bg_ctrls[8] =
   {NULL,Banner_top_png,IMAGE_VISIBLE,0,0,640,108,255},
   {NULL,Banner_bottom_png,IMAGE_VISIBLE,0,380,640,100,255},
   {NULL,Main_logo_png,IMAGE_VISIBLE,466,40,152,44,255},
-  {NULL,Frame_s4_png,IMAGE_VISIBLE,38,72,316,168,128},
-  {NULL,Frame_s4_png,IMAGE_VISIBLE,38,242,316,168,128},
+  {NULL,Frame_s2_png,IMAGE_VISIBLE,38,72,316,168,128},
+  {NULL,Frame_s2_png,IMAGE_VISIBLE,38,242,316,168,128},
   {NULL,Frame_s3_png,IMAGE_SLIDE_RIGHT,400,134,292,248,128}
 };
 
@@ -161,7 +229,7 @@ static gui_image bg_list[6] =
   {NULL,Banner_top_png,IMAGE_VISIBLE,0,0,640,108,255},
   {NULL,Banner_bottom_png,IMAGE_VISIBLE,0,380,640,100,255},
   {NULL,Main_logo_png,IMAGE_VISIBLE,466,40,152,44,255},
-  {NULL,Frame_s1_png,IMAGE_VISIBLE,8,70,372,336,64}
+  {NULL,Frame_s1_png,IMAGE_VISIBLE,8,70,372,336,76}
 };
 
 static gui_image bg_saves[8] =
@@ -172,15 +240,16 @@ static gui_image bg_saves[8] =
   {NULL,Banner_top_png,IMAGE_VISIBLE|IMAGE_SLIDE_TOP,0,0,640,108,255},
   {NULL,Banner_bottom_png,IMAGE_VISIBLE|IMAGE_SLIDE_BOTTOM,0,380,640,100,255},
   {NULL,Main_logo_png,IMAGE_VISIBLE|IMAGE_SLIDE_TOP,466,40,152,44,255},
-  {NULL,Frame_s1_png,IMAGE_VISIBLE,8,70,372,336,64},
-  {NULL,Frame_s1_png,IMAGE_SLIDE_RIGHT,468,110,372,296,64}
+  {NULL,Frame_s1_png,IMAGE_VISIBLE,8,70,372,336,76},
+  {NULL,Frame_s1_png,IMAGE_SLIDE_RIGHT,468,108,372,296,76}
 };
 
 /*****************************************************************************/
 /*  Menu Items description                                                   */
 /*****************************************************************************/
 
-static gui_item items_main[9] =
+/* Main menu */
+static gui_item items_main[10] =
 {
   {NULL,Main_load_png    ,"","",114,162,80,92},
   {NULL,Main_options_png ,"","",290,166,60,88},
@@ -188,6 +257,7 @@ static gui_item items_main[9] =
   {NULL,Main_file_png    ,"","",114,216,80,92},
   {NULL,Main_reset_png   ,"","",282,224,76,84},
   {NULL,Main_ggenie_png  ,"","",450,224,72,84},
+  {NULL,NULL             ,"","", 10,334,84,32},
 #ifdef HW_RVL
   {NULL,Main_play_wii_png,"","", 10,372,84,32},
 #else
@@ -197,37 +267,40 @@ static gui_item items_main[9] =
   {NULL,Main_showinfo_png,"","",546,372,84,32}
 };
 
+/* Controllers menu */
 static gui_item items_ctrls[13] =
 {
   {NULL,NULL,"","",  0,  0,  0,  0},
   {NULL,NULL,"","",  0,  0,  0,  0},
-  {NULL,NULL,"","",304,  0, 24,  0},
-  {NULL,NULL,"","",304,  0, 24,  0},
-  {NULL,NULL,"","",304,  0, 24,  0},
-  {NULL,NULL,"","",304,  0, 24,  0},
-  {NULL,NULL,"","",304,  0, 24,  0},
-  {NULL,NULL,"","",304,  0, 24,  0},
-  {NULL,NULL,"","",304,  0, 24,  0},
-  {NULL,NULL,"","",304,  0, 24,  0},
+  {NULL,NULL,"","",305,  0, 24,  0},
+  {NULL,NULL,"","",305,  0, 24,  0},
+  {NULL,NULL,"","",305,  0, 24,  0},
+  {NULL,NULL,"","",305,  0, 24,  0},
+  {NULL,NULL,"","",305,  0, 24,  0},
+  {NULL,NULL,"","",305,  0, 24,  0},
+  {NULL,NULL,"","",305,  0, 24,  0},
+  {NULL,NULL,"","",305,  0, 24,  0},
   {NULL,NULL,"","",  0,  0,  0,  0},
   {NULL,NULL,"","",  0,  0,  0,  0},
   {NULL,Ctrl_config_png,"Keys\nConfig","Configure Controller Keys",530,306,32,32}
 };
 
+/* Load menu */
 static gui_item items_load[4] =
 {
 #ifdef HW_RVL
-  {NULL,Load_recent_png,"","Load recent ROM files (USB/SD)" ,276,120,88,96},
-  {NULL,Load_sd_png    ,"","Load ROM files from SD Card"    ,110,266,88,96},
-  {NULL,Load_usb_png   ,"","Load ROM files from USB device" ,276,266,88,96},
+  {NULL,Load_recent_png,"","Load recent ROM files"          ,276,120,88,96},
+  {NULL,Load_sd_png    ,"","Load ROM files from SD card"    ,110,266,88,96},
+  {NULL,Load_usb_png   ,"","Load ROM files from USB drive"  ,276,266,88,96},
   {NULL,Load_dvd_png   ,"","Load ROM files from DVD"        ,442,266,88,96}
 #else
   {NULL,Load_recent_png,"","Load recent ROM files (USB/SD)" ,110,192,88,96},
-  {NULL,Load_sd_png    ,"","Load ROM files from SD Card"    ,276,192,88,96},
+  {NULL,Load_sd_png    ,"","Load ROM files from SD card"    ,276,192,88,96},
   {NULL,Load_dvd_png   ,"","Load ROM files from DVD"        ,442,192,88,96}
 #endif
 };
 
+/* Option menu */
 static gui_item items_options[5] =
 {
   {NULL,Option_system_png,"","System settings", 114,142,80,92},
@@ -240,30 +313,30 @@ static gui_item items_options[5] =
 /* Audio options */
 static gui_item items_audio[12] =
 {
-  {NULL,NULL,"High-Quality FM: ON",   "Enable/disable YM2612 resampling", 52,132,276,48},
-  {NULL,NULL,"FM Roll-off: 0.999",    "Adjust FIR low-pass filtering",    52,132,276,48},
-  {NULL,NULL,"FM Resolution: MAX",    "Adjust YM2612 DAC precision",      52,132,276,48},
-  {NULL,NULL,"FM Volume: 1.00",       "Adjust YM2612 output level",       52,132,276,48},
-  {NULL,NULL,"PSG Volume: 2.50",      "Adjust SN76489 output level",      52,132,276,48},
-  {NULL,NULL,"PSG Noise Boost: OFF",  "Boost SN76489 Noise Channel",      52,132,276,48},
-  {NULL,NULL,"Filtering: 3-BAND EQ",  "Setup Audio filtering",            52,132,276,48},
-  {NULL,NULL,"Low Gain: 1.00",        "Adjust EQ Low Band Gain",          52,132,276,48},
-  {NULL,NULL,"Mid Gain: 1.00",        "Adjust EQ Mid Band Gain",          52,132,276,48},
-  {NULL,NULL,"High Gain: 1.00",       "Adjust EQ High BandGain",          52,132,276,48},
-  {NULL,NULL,"Low Freq: 200 Hz",      "Adjust EQ Lowest Frequency",       52,132,276,48},
-  {NULL,NULL,"High Freq: 20000 Hz",   "Adjust EQ Highest Frequency",      52,132,276,48}
+  {NULL,NULL,"High-Quality FM: ON",   "Enable/disable YM2612 resampling", 56,132,276,48},
+  {NULL,NULL,"FM Roll-off: 0.999",    "Adjust FIR low-pass filtering",    56,132,276,48},
+  {NULL,NULL,"FM Resolution: MAX",    "Adjust YM2612 DAC precision",      56,132,276,48},
+  {NULL,NULL,"FM Volume: 1.00",       "Adjust YM2612 output level",       56,132,276,48},
+  {NULL,NULL,"PSG Volume: 2.50",      "Adjust SN76489 output level",      56,132,276,48},
+  {NULL,NULL,"PSG Noise Boost: OFF",  "Boost SN76489 Noise Channel",      56,132,276,48},
+  {NULL,NULL,"Filtering: 3-BAND EQ",  "Setup Audio filtering",            56,132,276,48},
+  {NULL,NULL,"Low Gain: 1.00",        "Adjust EQ Low Band Gain",          56,132,276,48},
+  {NULL,NULL,"Mid Gain: 1.00",        "Adjust EQ Mid Band Gain",          56,132,276,48},
+  {NULL,NULL,"High Gain: 1.00",       "Adjust EQ High BandGain",          56,132,276,48},
+  {NULL,NULL,"Low Freq: 200 Hz",      "Adjust EQ Lowest Frequency",       56,132,276,48},
+  {NULL,NULL,"High Freq: 20000 Hz",   "Adjust EQ Highest Frequency",      56,132,276,48}
 };
 
 /* System options */
 static gui_item items_system[7] =
 {
-  {NULL,NULL,"Console Region: AUTO",  "Select system region",                     52,132,276,48},
-  {NULL,NULL,"System Lockups: OFF",   "Enable/disable original system lock-ups",  52,132,276,48},
-  {NULL,NULL,"68k Address Error: ON", "Enable/disable 68k Address Error",         52,132,276,48},
-  {NULL,NULL,"System BIOS: OFF",      "Enable/disable TMSS BIOS support",         52,132,276,48},
-  {NULL,NULL,"Lock-on: OFF",          "Select Lock-On cartridge type",            52,132,276,48},
-  {NULL,NULL,"Cartridge Swap: OFF",   "Enable/disable cartridge hot swap",        52,132,276,48},
-  {NULL,NULL,"SVP Cycles: 1500",      "Adjust SVP chip emulation speed",          52,132,276,48}
+  {NULL,NULL,"Console Region: AUTO",  "Select system region",                     56,132,276,48},
+  {NULL,NULL,"System Lockups: OFF",   "Enable/disable original system lock-ups",  56,132,276,48},
+  {NULL,NULL,"68k Address Error: ON", "Enable/disable 68k Address Error",         56,132,276,48},
+  {NULL,NULL,"System BIOS: OFF",      "Enable/disable TMSS BIOS support",         56,132,276,48},
+  {NULL,NULL,"Lock-on: OFF",          "Select Lock-On cartridge type",            56,132,276,48},
+  {NULL,NULL,"Cartridge Swap: OFF",   "Enable/disable cartridge hot swap",        56,132,276,48},
+  {NULL,NULL,"SVP Cycles: 1500",      "Adjust SVP chip emulation speed",          56,132,276,48}
 };
 
 /* Video options */
@@ -273,31 +346,31 @@ static gui_item items_video[10] =
 static gui_item items_video[8] =
 #endif
 {
-  {NULL,NULL,"Display: PROGRESSIVE",    "Select video signal type",                   52,132,276,48},
-  {NULL,NULL,"TV mode: 50/60Hz",        "Select video signal frequency",              52,132,276,48},
-  {NULL,NULL,"GX Bilinear Filter: OFF", "Enable/disable texture hardware filtering",  52,132,276,48},
+  {NULL,NULL,"Display: PROGRESSIVE",    "Select video mode",                          56,132,276,48},
+  {NULL,NULL,"TV mode: 50/60Hz",        "Select video refresh rate",                  56,132,276,48},
+  {NULL,NULL,"GX Bilinear Filter: OFF", "Enable/disable texture hardware filtering",  56,132,276,48},
 #ifdef HW_RVL
-  {NULL,NULL,"VI Trap Filter: ON",      "Enable/disable video hardware filtering",    52,132,276,48},
-  {NULL,NULL,"VI Gamma Correction: 1.0","Adjust video hardware gamma correction",     52,132,276,48},
+  {NULL,NULL,"VI Trap Filter: ON",      "Enable/disable video hardware filtering",    56,132,276,48},
+  {NULL,NULL,"VI Gamma Correction: 1.0","Adjust video hardware gamma correction",     56,132,276,48},
 #endif
-  {NULL,NULL,"NTSC Filter: COMPOSITE",  "Enable/disable NTSC software filtering",     52,132,276,48},
-  {NULL,NULL,"Borders: OFF",            "Enable/disable overscan emulation",          52,132,276,48},
-  {NULL,NULL,"Aspect: ORIGINAL (4:3)",  "Select display aspect ratio",                52,132,276,48},
-  {NULL,NULL,"Screen Position (+0,+0)", "Adjust display position",                    52,132,276,48},
-  {NULL,NULL,"Screen Scaling (+0,+0)",  "Adjust display scaling",                     52,132,276,48}
+  {NULL,NULL,"NTSC Filter: COMPOSITE",  "Enable/disable NTSC software filtering",     56,132,276,48},
+  {NULL,NULL,"Borders: OFF",            "Enable/disable overscan emulation",          56,132,276,48},
+  {NULL,NULL,"Aspect: ORIGINAL (4:3)",  "Select display aspect ratio",                56,132,276,48},
+  {NULL,NULL,"Screen Position (+0,+0)", "Adjust display position",                    56,132,276,48},
+  {NULL,NULL,"Screen Scaling (+0,+0)",  "Adjust display scaling",                     56,132,276,48}
 };
 
 /* Menu options */
 static gui_item items_prefs[8] =
 {
-  {NULL,NULL,"Load ROM Auto: OFF","Enable/Disable automatic ROM loading on startup",  52,132,276,48},
-  {NULL,NULL,"Auto Saves: OFF",   "Enable/Disable automatic saves",                   52,132,276,48},
-  {NULL,NULL,"Saves Device: FAT", "Configure default device for saves",               52,132,276,48},
-  {NULL,NULL,"SFX Volume: 100",   "Adjust sound effects volume",                      52,132,276,48},
-  {NULL,NULL,"BGM Volume: 100",   "Adjust background music volume",                   52,132,276,48},
-  {NULL,NULL,"BG Color: DEFAULT", "Select background color",                          52,132,276,48},
-  {NULL,NULL,"BG Overlay: ON",    "Enable/disable background overlay",                52,132,276,48},
-  {NULL,NULL,"Screen Width: 658", "Adjust menu screen width in pixels",               52,132,276,48},
+  {NULL,NULL,"Load ROM Auto: OFF","Enable/Disable automatic ROM loading on startup",  56,132,276,48},
+  {NULL,NULL,"Auto Saves: OFF",   "Enable/Disable automatic saves",                   56,132,276,48},
+  {NULL,NULL,"Saves Device: FAT", "Configure default device for saves",               56,132,276,48},
+  {NULL,NULL,"SFX Volume: 100",   "Adjust sound effects volume",                      56,132,276,48},
+  {NULL,NULL,"BGM Volume: 100",   "Adjust background music volume",                   56,132,276,48},
+  {NULL,NULL,"BG Color: DEFAULT", "Select background color",                          56,132,276,48},
+  {NULL,NULL,"BG Overlay: ON",    "Enable/disable background overlay",                56,132,276,48},
+  {NULL,NULL,"Screen Width: 658", "Adjust menu screen width in pixels",               56,132,276,48},
 };
 
 /* Save Manager */
@@ -332,17 +405,18 @@ static gui_butn buttons_list[4] =
 };
 
 /* Main menu */
-static gui_butn buttons_main[9] =
+static gui_butn buttons_main[10] =
 {
   {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{0,0,0,1}, 80,140,148,132},
   {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{0,0,1,1},246,140,148,132},
   {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{0,0,1,0},412,140,148,132},
-  {&button_icon_data,                             BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{3,3,1,1}, 80,194,148,132},
-  {&button_icon_data,                             BUTTON_OVER_SFX                  ,{3,3,1,1},246,194,148,132},
-  {&button_icon_data,                             BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{3,2,1,1},412,194,148,132},
-  {NULL             ,                             BUTTON_OVER_SFX                  ,{3,0,1,1}, 10,372, 84, 32},
-  {NULL             ,                             BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{2,1,1,1},546,334, 84, 32},
-  {NULL             ,                             BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{1,0,1,0},546,372, 84, 32}
+  {&button_icon_data,                             BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{3,4,0,1}, 80,194,148,132},
+  {&button_icon_data,                             BUTTON_OVER_SFX                  ,{3,4,1,1},246,194,148,132},
+  {&button_icon_data,                             BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{3,3,1,0},412,194,148,132},
+  {NULL             ,                             BUTTON_OVER_SFX                  ,{3,1,0,2}, 10,334, 84, 32},
+  {NULL             ,                             BUTTON_OVER_SFX                  ,{4,0,0,2}, 10,372, 84, 32},
+  {NULL             ,                             BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{3,1,1,0},546,334, 84, 32},
+  {NULL             ,                             BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{1,0,2,0},546,372, 84, 32}
 };
 
 /* Controllers Menu */
@@ -411,7 +485,7 @@ static gui_menu menu_main =
 {
   "",
   0,0,
-  9,9,4,0,
+  10,10,4,0,
   items_main,
   buttons_main,
   bg_main,
@@ -829,7 +903,7 @@ static void soundmenu ()
           /* restore YM2612 context */
           if (temp)
           {
-            YM2612Restore(temp);
+            //YM2612Restore(temp);
             free(temp);
           }
         }
@@ -838,13 +912,13 @@ static void soundmenu ()
       case 2:
         GUI_OptionBox(m,0,"FM Volume",(void *)&fm_volume,0.01,0.0,5.0,0);
         sprintf (items[offset+1].text, "FM Volume: %1.2f", fm_volume);
-        config.fm_preamp = (int)(fm_volume * 100.0);
+        config.fm_preamp = (int)(fm_volume * 100.0 + 0.5);
         break;
 
       case 3:
         GUI_OptionBox(m,0,"PSG Volume",(void *)&psg_volume,0.01,0.0,5.0,0);
         sprintf (items[offset+2].text, "PSG Volume: %1.2f", psg_volume);
-        config.psg_preamp = (int)(psg_volume * 100.0);
+        config.psg_preamp = (int)(psg_volume * 100.0 + 0.5);
         break;
 
       case 4:
@@ -948,11 +1022,11 @@ static void systemmenu ()
   if (config.region_detect == 0)
     sprintf (items[0].text, "Console Region: AUTO");
   else if (config.region_detect == 1)
-    sprintf (items[0].text, "Console Region:  USA");
+    sprintf (items[0].text, "Console Region: USA");
   else if (config.region_detect == 2)
-    sprintf (items[0].text, "Console Region:  EUR");
+    sprintf (items[0].text, "Console Region: EUR");
   else if (config.region_detect == 3)
-    sprintf (items[0].text, "Console Region:  JPN");
+    sprintf (items[0].text, "Console Region: JAPAN");
 
   sprintf (items[1].text, "System Lockups: %s", config.force_dtack ? "OFF" : "ON");
   sprintf (items[2].text, "68k Address Error: %s", config.addr_error ? "ON" : "OFF");
@@ -993,11 +1067,11 @@ static void systemmenu ()
         if (config.region_detect == 0)
           sprintf (items[0].text, "Console Region: AUTO");
         else if (config.region_detect == 1)
-          sprintf (items[0].text, "Console Region:  USA");
+          sprintf (items[0].text, "Console Region: USA");
         else if (config.region_detect == 2)
-          sprintf (items[0].text, "Console Region:  EUR");
+          sprintf (items[0].text, "Console Region: EUR");
         else if (config.region_detect == 3)
-          sprintf (items[0].text, "Console Region:  JPN");
+          sprintf (items[0].text, "Console Region: JAPAN");
 
         if (cart.romsize)
         {
@@ -1071,12 +1145,35 @@ static void systemmenu ()
           sprintf (items[4].text, "Lock-On: SONIC&KNUCKLES");
         else
           sprintf (items[4].text, "Lock-On: OFF");
+
         if (cart.romsize) 
         {
           system_init();
           system_reset();
           if (config.s_auto & 1)
+          {
             slot_autoload(0,config.s_device);
+          }
+
+          /* Action Replay switch */
+          if (areplay_get_status() < 0)
+          {
+            menu_main.buttons[6].state &= ~(BUTTON_VISIBLE | BUTTON_ACTIVE);
+            menu_main.items[6].data = NULL;
+            menu_main.cb = NULL;
+            menu_main.buttons[3].shift[1] = 4;
+            menu_main.buttons[7].shift[0] = 4;
+            menu_main.buttons[8].shift[2] = 1;
+          }
+          else
+          {
+            menu_main.buttons[6].state |= (BUTTON_VISIBLE | BUTTON_ACTIVE);
+            menu_main.items[6].data = Button_sm_grey_png;
+            menu_main.cb = mainmenu_cb;
+            menu_main.buttons[3].shift[1] = 3;
+            menu_main.buttons[7].shift[0] = 1;
+            menu_main.buttons[8].shift[2] = 2;
+          }
         }
         break;
 
@@ -1167,7 +1264,7 @@ static void videomenu ()
   else if (config.aspect == 2)
     sprintf (items[VI_OFFSET+2].text, "Aspect: ORIGINAL (16:9)");
   else
-    sprintf (items[VI_OFFSET+2].text, "Aspect: MANUAL SCALE");
+    sprintf (items[VI_OFFSET+2].text, "Aspect: SCALED");
 
   sprintf (items[VI_OFFSET+3].text, "Screen Position: (%s%02d,%s%02d)",
     (config.xshift < 0) ? "":"+", config.xshift,
@@ -1346,7 +1443,7 @@ static void videomenu ()
         else if (config.aspect == 2)
           sprintf (items[VI_OFFSET+2].text, "Aspect: ORIGINAL (16:9)");
         else
-          sprintf (items[VI_OFFSET+2].text, "Aspect: MANUAL SCALE");
+          sprintf (items[VI_OFFSET+2].text, "Aspect: SCALED");
 
         if (config.aspect)
         {
@@ -1439,19 +1536,46 @@ static void videomenu ()
 static int player = 0;
 static void ctrlmenu_cb(void)
 {
+  int i, cnt = 1;
   char msg[16];
   gui_menu *m = &menu_ctrls;
 
-  /* draw device port number */
   if (m->bg_images[7].state & IMAGE_VISIBLE)
   {
+    /* draw device port number */
     if (config.input[player].device != -1)
     {
       sprintf(msg,"%d",config.input[player].port + 1);
       if (m->selected == 11)
-        FONT_write(msg,16,m->items[11].x+m->items[11].w+4,m->items[11].y+m->items[11].h+4,640,(GXColor)DARK_GREY);
+        FONT_write(msg,16,m->items[11].x+m->items[11].w+2,m->items[11].y+m->items[11].h+2,640,(GXColor)DARK_GREY);
       else
         FONT_write(msg,14,m->items[11].x+m->items[11].w,m->items[11].y+m->items[11].h,640,(GXColor)DARK_GREY);
+    }
+  }
+
+  /* draw players index */
+  for (i=2; i<MAX_DEVICES+2; i++)
+  {
+    if (m->selected == i)
+    {
+      FONT_writeCenter("Player", 16, m->buttons[i].x + 2, m->buttons[i].x + 54, m->buttons[i].y + (m->buttons[i].h - 16)/2 + 16, (GXColor)DARK_GREY);
+    }
+    else
+    {
+      FONT_writeCenter("Player", 14, m->buttons[i].x + 4, m->buttons[i].x + 54, m->buttons[i].y + (m->buttons[i].h - 14)/2 + 14, (GXColor)DARK_GREY);
+    }
+    
+    if (input.dev[i-2] != NO_DEVICE)
+    {
+      sprintf(msg,"%d",cnt++);
+      if (m->selected == i)
+      {
+        FONT_writeCenter(msg,18,m->items[i].x+2,m->items[i].x+m->items[i].w+2,m->buttons[i].y+(m->buttons[i].h-18)/2+18,(GXColor)DARK_GREY);
+      }
+      else
+      {
+        FONT_writeCenter(msg,16,m->items[i].x,m->items[i].x+m->items[i].w,m->buttons[i].y+(m->buttons[i].h - 16)/2+16,(GXColor)DARK_GREY);
+      }
     }
   }
 }
@@ -1469,14 +1593,12 @@ static void ctrlmenu_raz(void)
     {
       m->buttons[i+2].data  = &button_player_none_data;
       m->buttons[i+2].state &= ~BUTTON_ACTIVE;
-      strcpy(m->items[i+2].text,"");
       strcpy(m->items[i+2].comment,"");
     }
     else
     {
       m->buttons[i+2].data  = &button_player_data;
       m->buttons[i+2].state |= BUTTON_ACTIVE;
-      sprintf(m->items[i+2].text,"%d",max + 1);
       if (cart.jcart && (i > 4))
         sprintf(m->items[i+2].comment,"Configure Player %d (J-CART) settings", max + 1);
       else
@@ -1486,7 +1608,6 @@ static void ctrlmenu_raz(void)
   }
 
   /* update buttons navigation */
-
   if (input.dev[0] != NO_DEVICE)
     m->buttons[0].shift[3] = 2;
   else if (input.dev[4] != NO_DEVICE)
@@ -1674,21 +1795,42 @@ static void ctrlmenu(void)
       switch (m->selected)
       {
         case 0:   /* update port 1 system */
+        {
           if (input.system[0] == SYSTEM_MOUSE)
-            input.system[0] +=3; /* lightguns are never used on Port 1 */
+          {
+            /* lightguns are never used on Port 1 */
+            input.system[0] += 3; 
+          }
           else
+          {
+            /* next connected device */
             input.system[0]++;
+          }
+
+          /* allow only one connected mouse */
           if ((input.system[0] == SYSTEM_MOUSE) && (input.system[1] == SYSTEM_MOUSE))
-            input.system[0] +=3;
+          {
+            input.system[0] += 3;
+          }
+
+          /* 4-wayplay uses both ports */
           if (input.system[0] == SYSTEM_WAYPLAY)
+          {
             input.system[1] = SYSTEM_WAYPLAY;
+          }
+
+          /* loop back */
           if (input.system[0] > SYSTEM_WAYPLAY)
           {
             input.system[0] = NO_SYSTEM;
             input.system[1] = SYSTEM_GAMEPAD;
           }
+
+          /* reset I/O ports */
           io_init();
           input_reset();
+
+          /* save current configuration */
           old_system[0] = input.system[0];
           old_system[1] = input.system[1];
 
@@ -1724,21 +1866,40 @@ static void ctrlmenu(void)
             sprintf(m->title,"Controller Settings");
           }
           break;
+        }
 
         case 1:   /* update port 2 system */
+        {
+          /* J-CART uses fixed configuration */
           if (cart.jcart) break;
+
+          /* next connected device */
           input.system[1] ++;
+
+          /* allow only one connected mouse */
           if ((input.system[0] == SYSTEM_MOUSE) && (input.system[1] == SYSTEM_MOUSE))
+          {
             input.system[1] ++;
+          }
+
+          /* 4-wayplay uses both ports */
           if (input.system[1] == SYSTEM_WAYPLAY)
+          {
             input.system[0] = SYSTEM_WAYPLAY;
+          }
+
+          /* loop back */
           if (input.system[1] > SYSTEM_WAYPLAY)
           {
             input.system[1] = NO_SYSTEM;
             input.system[0] = SYSTEM_GAMEPAD;
           }
+
+          /* reset I/O ports */
           io_init();
           input_reset();
+
+          /* save current configuration */
           old_system[0] = input.system[0];
           old_system[1] = input.system[1];
 
@@ -1775,6 +1936,7 @@ static void ctrlmenu(void)
           }
 
           break;
+        }
 
         case 2:
         case 3:
@@ -1784,6 +1946,7 @@ static void ctrlmenu(void)
         case 7:
         case 8:
         case 9:
+        {
           /* remove duplicate assigned inputs */
           for (i=0; i<MAX_INPUTS; i++)
           {
@@ -1798,10 +1961,13 @@ static void ctrlmenu(void)
           old_player = player;
           player = 0;
           for (i=0; i<(m->selected-2); i++)
+          {
             if (input.dev[i] != NO_DEVICE) player ++;
+          }
 
           if (m->bg_images[7].state & IMAGE_VISIBLE)
           {
+            /* if already displayed, do nothing */
             if (old_player == player) break;
             
             /* slide out configuration window */
@@ -1857,12 +2023,18 @@ static void ctrlmenu(void)
 
           /* update title */
           if (cart.jcart && (player > 1))
+          {
             sprintf(m->title,"Controller Settings (Player %d) (J-CART)",player+1);
+          }
           else
+          {
             sprintf(m->title,"Controller Settings (Player %d)",player+1);
+          }
           break;
+        }
 
         case 10: /* specific option */
+        {
           if (special == &config.input[player].padtype)
           {
             if (config.input[player].device == 1) break;
@@ -1878,9 +2050,10 @@ static void ctrlmenu(void)
           /* update menu items */
           memcpy(&m->items[10],&items[*special],sizeof(gui_item));
           break;
+        }
 
         case 11:  /* input controller selection */
-
+        {
           /* no input device */
           if (config.input[player].device < 0)
           {
@@ -2015,11 +2188,16 @@ static void ctrlmenu(void)
 
           /* update menu items */
           memcpy(&m->items[11],&items_device[config.input[player].device + 1],sizeof(gui_item));
+
           break;
+        }
 
         case 12:  /* Controller Keys Configuration */
+        {
           if (config.input[player].device < 0) break;
+
           GUI_MsgBoxOpen("Keys Configuration", "",0);
+
           if (config.input[player].padtype == DEVICE_6BUTTON)
           {
             /* 6-buttons gamepad */
@@ -2038,8 +2216,10 @@ static void ctrlmenu(void)
             /* 3-Buttons gamepad, mouse, lightgun */
             gx_input_Config(config.input[player].port, config.input[player].device, 4);
           }
+
           GUI_MsgBoxClose();
           break;
+        }
       }
     }
 
@@ -2141,14 +2321,14 @@ static void ctrlmenu(void)
   memset(&m->items[11],0,sizeof(gui_item));
 
   /* clear player buttons */
-  m->buttons[2].data    = NULL;
-  m->buttons[3].data    = NULL;
-  m->buttons[4].data    = NULL;
-  m->buttons[5].data    = NULL;
-  m->buttons[6].data    = NULL;
-  m->buttons[7].data    = NULL;
-  m->buttons[8].data    = NULL;
-  m->buttons[9].data    = NULL;
+  m->buttons[2].data  = NULL;
+  m->buttons[3].data  = NULL;
+  m->buttons[4].data  = NULL;
+  m->buttons[5].data  = NULL;
+  m->buttons[6].data  = NULL;
+  m->buttons[7].data  = NULL;
+  m->buttons[8].data  = NULL;
+  m->buttons[9].data  = NULL;
 
   /* delete menu */
   GUI_DeleteMenu(m);
@@ -2295,6 +2475,7 @@ static int savemenu(void)
 
   GUI_InitMenu(m);
   GUI_DrawMenuFX(m,30,0);
+
   m->bg_images[3].state &= ~IMAGE_SLIDE_TOP;
   m->bg_images[4].state &= ~IMAGE_SLIDE_BOTTOM;
   m->bg_images[5].state &= ~IMAGE_SLIDE_TOP;
@@ -2366,6 +2547,69 @@ static int savemenu(void)
     {
       switch (m->selected)
       {
+        case 0:
+        case 1:
+        case 2:
+        case 3:
+        case 4: /* Slot selection */
+        {
+          /* enable right window */
+          m->bg_images[7].state |= IMAGE_VISIBLE;
+          m->buttons[5].state |= BUTTON_VISIBLE;
+          m->buttons[6].state |= BUTTON_VISIBLE;
+          m->buttons[7].state |= BUTTON_VISIBLE;
+          m->buttons[8].state |= BUTTON_VISIBLE;
+
+          /* only enable valid options */
+          if (slots[slot].valid)
+          {
+            m->buttons[5].state |= BUTTON_ACTIVE;
+            m->buttons[7].state |= BUTTON_ACTIVE;
+            m->buttons[6].shift[0] = 1;
+            m->buttons[6].shift[1] = 1;
+            m->buttons[8].shift[0] = 1;
+            m->selected = 5;
+          }
+          else
+          {
+            m->buttons[5].state &= ~BUTTON_ACTIVE;
+            m->buttons[7].state &= ~BUTTON_ACTIVE;
+            m->buttons[6].shift[0] = 0;
+            m->buttons[6].shift[1] = 2;
+            m->buttons[8].shift[0] = (slot > 0) ? 2 : 0;
+            m->selected = 8;
+          }
+
+          /* state slot 'only' button */
+          if (slot > 0)
+          {
+            m->buttons[6].state |= BUTTON_ACTIVE;
+            m->buttons[5].shift[1] = 1;
+            m->buttons[7].shift[0] = 1;
+          }
+          else
+          {
+            m->buttons[6].state &= ~BUTTON_ACTIVE;
+            m->buttons[5].shift[1] = 2;
+            m->buttons[7].shift[0] = 2;
+          }
+
+          /* disable left buttons */
+          m->buttons[0].state &= ~BUTTON_ACTIVE;
+          m->buttons[1].state &= ~BUTTON_ACTIVE;
+          m->buttons[2].state &= ~BUTTON_ACTIVE;
+          m->buttons[3].state &= ~BUTTON_ACTIVE;
+          m->buttons[4].state &= ~BUTTON_ACTIVE;
+
+          /* keep current selection highlighted */
+          m->buttons[slot].state |= BUTTON_SELECTED;
+
+          /* slide in window */
+          GUI_DrawMenuFX(m, 20, 0);
+
+          break;
+        }
+
         case 5: /* load file */
         {
           if (slots[slot].valid)
@@ -2444,64 +2688,8 @@ static int savemenu(void)
           break;
         }
 
-        default: /* slot selection */
-        {
-          /* enable right window */
-          m->bg_images[7].state |= IMAGE_VISIBLE;
-          m->buttons[5].state |= BUTTON_VISIBLE;
-          m->buttons[6].state |= BUTTON_VISIBLE;
-          m->buttons[7].state |= BUTTON_VISIBLE;
-          m->buttons[8].state |= BUTTON_VISIBLE;
-
-          /* only enable valid options */
-          if (slots[slot].valid)
-          {
-            m->buttons[5].state |= BUTTON_ACTIVE;
-            m->buttons[7].state |= BUTTON_ACTIVE;
-            m->buttons[6].shift[0] = 1;
-            m->buttons[6].shift[1] = 1;
-            m->buttons[8].shift[0] = 1;
-            m->selected = 5;
-          }
-          else
-          {
-            m->buttons[5].state &= ~BUTTON_ACTIVE;
-            m->buttons[7].state &= ~BUTTON_ACTIVE;
-            m->buttons[6].shift[0] = 0;
-            m->buttons[6].shift[1] = 2;
-            m->buttons[8].shift[0] = (slot > 0) ? 2 : 0;
-            m->selected = 8;
-          }
-
-          /* state slot 'only' button */
-          if (slot > 0)
-          {
-            m->buttons[6].state |= BUTTON_ACTIVE;
-            m->buttons[5].shift[1] = 1;
-            m->buttons[7].shift[0] = 1;
-          }
-          else
-          {
-            m->buttons[6].state &= ~BUTTON_ACTIVE;
-            m->buttons[5].shift[1] = 2;
-            m->buttons[7].shift[0] = 2;
-          }
-
-          /* disable left buttons */
-          m->buttons[0].state &= ~BUTTON_ACTIVE;
-          m->buttons[1].state &= ~BUTTON_ACTIVE;
-          m->buttons[2].state &= ~BUTTON_ACTIVE;
-          m->buttons[3].state &= ~BUTTON_ACTIVE;
-          m->buttons[4].state &= ~BUTTON_ACTIVE;
-
-          /* keep current selection highlighted */
-          m->buttons[slot].state |= BUTTON_SELECTED;
-
-          /* slide in window */
-          GUI_DrawMenuFX(m, 20, 0);
-
+        default:
           break;
-        }
       }
     }
 
@@ -2570,31 +2758,30 @@ static int loadgamemenu ()
         GUI_DeleteMenu(m);
         return 0;
 
-      /*** Load from DVD ***/
-  #ifdef HW_RVL
-      case 3:
-  #else
-      case 2:
-  #endif
-        if (DVD_Open())
-        {
-          GUI_DeleteMenu(m);
-          if (FileSelector(cart.rom,0))
-            return 1;
-          GUI_InitMenu(m);
-        }
-        break;
-
-      /*** Load from FAT device ***/
+      /*** Load from selected device */
       default:
-        if (FAT_Open(ret))
+      {
+        if (ret > 0)
+        {
+          ret = OpenDirectory(ret - 1);
+        }
+        else
+        {
+          ret = OpenDirectory(TYPE_RECENT);
+        }
+
+        if (ret)
         {
           GUI_DeleteMenu(m);
-          if (FileSelector(cart.rom,1))
+          if (FileSelector())
+          {
+            /* directly jump to game */
             return 1;
+          }
           GUI_InitMenu(m);
         }
         break;
+      }
     }
   }
 
@@ -2649,7 +2836,7 @@ static void showrominfo (void)
   }
   if (rominfo.peripherals & (1 << 13))
   {
-    strcat(items[10],get_peripheral(12));
+    strcat(items[10],get_peripheral(13));
     strcat(items[10],", ");
   }
   if (strlen(items[10]) > 10)
@@ -2702,37 +2889,38 @@ static void showcredits(void)
       gxDrawTexture(texture, (640-texture->width)/2, (480-texture->height)/2, texture->width, texture->height,255);
 
     FONT_writeCenter("Genesis Plus Core", 24, 0, 640, 480 - offset, (GXColor)LIGHT_BLUE);
-    FONT_writeCenter("original 1.2a version by Charles MacDonald", 18, 0, 640, 516 - offset, (GXColor)WHITE);
-    FONT_writeCenter("improved emulation core & additional features by Eke-Eke", 18, 0, 640, 534 - offset, (GXColor)WHITE);
+    FONT_writeCenter("improved emulation code, fixes & extra features by Eke-Eke", 18, 0, 640, 516 - offset, (GXColor)WHITE);
+    FONT_writeCenter("original 1.2a version by Charles MacDonald", 18, 0, 640, 534 - offset, (GXColor)WHITE);
     FONT_writeCenter("original Z80 core by Juergen Buchmueller", 18, 0, 640, 552 - offset, (GXColor)WHITE);
-    FONT_writeCenter("original 68k core by Karl Stenerud (Musashi)", 18, 0, 640, 570 - offset, (GXColor)WHITE);
+    FONT_writeCenter("original 68k Musashi core by Karl Stenerud", 18, 0, 640, 570 - offset, (GXColor)WHITE);
     FONT_writeCenter("original YM2612 core by Jarek Burczynski & Tatsuyuki Satoh", 18, 0, 640, 588 - offset, (GXColor)WHITE);
     FONT_writeCenter("SN76489 core by Maxim", 18, 0, 640, 606 - offset, (GXColor)WHITE);
     FONT_writeCenter("SVP core by Gravydas Ignotas (Notaz)", 18, 0, 640, 624 - offset, (GXColor)WHITE);
     FONT_writeCenter("FIR Resampler & NTSC Video Filter by Shay Green (Blargg)", 18, 0, 640, 642 - offset, (GXColor)WHITE);
     FONT_writeCenter("3-Band EQ implementation by Neil C", 18, 0, 640, 660 - offset, (GXColor)WHITE);
 
-    FONT_writeCenter("Additional thanks to ...", 20, 0, 640, 700 - offset, (GXColor)LIGHT_GREEN);
+    FONT_writeCenter("Special thanks to ...", 20, 0, 640, 700 - offset, (GXColor)LIGHT_GREEN);
     FONT_writeCenter("Nemesis, Tasco Deluxe, Bart Trzynadlowski, Jorge Cwik, Haze,", 18, 0, 640, 736 - offset, (GXColor)WHITE);
-    FONT_writeCenter("Stef Dallongeville, AamirM, Steve Snake, Charles MacDonald", 18, 0, 640, 754 - offset, (GXColor)WHITE);
-    FONT_writeCenter("Spritesmind & SMS Power members for their technical help", 18, 0, 640, 772 - offset, (GXColor)WHITE);
+    FONT_writeCenter("Stef Dallongeville, Notaz, AamirM, Steve Snake, Charles MacDonald", 18, 0, 640, 754 - offset, (GXColor)WHITE);
+    FONT_writeCenter("Spritesmind & SMS Power forums members for their technical help", 18, 0, 640, 772 - offset, (GXColor)WHITE);
 
     FONT_writeCenter("Gamecube & Wii port", 24, 0, 640, 830 - offset, (GXColor)LIGHT_BLUE);
-    FONT_writeCenter("original Gamecube port by Softdev, Honkeykong & Markcube", 18, 0, 640, 866 - offset, (GXColor)WHITE);
-    FONT_writeCenter("current porting code, GUI engine & design by Eke-Eke", 18, 0, 640, 884 - offset, (GXColor)WHITE);
+    FONT_writeCenter("porting code, GUI engine & design by Eke-Eke", 18, 0, 640, 866 - offset, (GXColor)WHITE);
+    FONT_writeCenter("original Gamecube port by Softdev, Honkeykong & Markcube", 18, 0, 640, 884 - offset, (GXColor)WHITE);
     FONT_writeCenter("original icons, logo & button design by Low Lines", 18, 0, 640, 906 - offset, (GXColor)WHITE);
-    FONT_writeCenter("memory card icon design by Brakken", 18, 0, 640, 924 - offset, (GXColor)WHITE);
-    FONT_writeCenter("libogc by Shagkur & many others", 18, 0, 640, 942 - offset, (GXColor)WHITE);
-    FONT_writeCenter("libfat by Chism", 18, 0, 640, 960 - offset, (GXColor)WHITE);
-    FONT_writeCenter("wiiuse by Michael Laforest (Para)", 18, 0, 640, 978 - offset, (GXColor)WHITE);
-    FONT_writeCenter("EHCI module, asndlib & OGG player by Francisco Muñoz (Hermes)", 18, 0, 640, 996 - offset, (GXColor)WHITE);
-    FONT_writeCenter("USB2 storage support by Kwiirk, Rodries & Tantric", 18, 0, 640, 1014 - offset, (GXColor)WHITE);
+    FONT_writeCenter("credit illustration by Orioto (from Deviant Art)", 18, 0, 640, 924 - offset, (GXColor)WHITE);
+    FONT_writeCenter("memory card icon design by Brakken", 18, 0, 640, 942 - offset, (GXColor)WHITE);
+    FONT_writeCenter("libogc by Shagkur & other contibutors", 18, 0, 640, 960 - offset, (GXColor)WHITE);
+    FONT_writeCenter("libfat by Chism", 18, 0, 640, 978 - offset, (GXColor)WHITE);
+    FONT_writeCenter("wiiuse by Michael Laforest (Para)", 18, 0, 640, 996 - offset, (GXColor)WHITE);
+    FONT_writeCenter("asndlib & OGG player by Francisco Muñoz (Hermes)", 18, 0, 640, 1014 - offset, (GXColor)WHITE);
     FONT_writeCenter("zlib, libpng & libtremor by their respective authors", 18, 0, 640, 1032 - offset, (GXColor)WHITE);
     FONT_writeCenter("devkitPPC by Wintermute", 18, 0, 640, 1050 - offset, (GXColor)WHITE);
 
-    FONT_writeCenter("Additional thanks to ...", 20, 0, 640, 1090 - offset, (GXColor)LIGHT_GREEN);
+    FONT_writeCenter("Special thanks to ...", 20, 0, 640, 1090 - offset, (GXColor)LIGHT_GREEN);
     FONT_writeCenter("Softdev, Tmbinc, Costis, Emukiddid, Team Twiizer", 18, 0, 640, 1126 - offset, (GXColor)WHITE);
     FONT_writeCenter("Brakken & Tehskeen members for their support", 18, 0, 640, 1144 - offset, (GXColor)WHITE);
+    FONT_writeCenter("Anca, my wife, for her patience & various ideas", 18, 0, 640, 1162 - offset, (GXColor)WHITE);
 
     gxSetScreen();
     p = m_input.keys;
@@ -2765,12 +2953,11 @@ static void exitmenu(void)
   void (*reload)() = (void(*)())0x80001800;
 
 #ifdef HW_RVL
-  if ((sig[1] == 0x53545542) && (sig[2] == 0x48415858))
-    stub = TRUE;
+  if ((sig[1] == 0x53545542) && (sig[2] == 0x48415858)) // HBC
 #else
-  if (sig[0] == 0x7c6000a6)
-    stub = TRUE;
+  if (sig[0] == 0x7c6000a6) // SDLOAD
 #endif
+    stub = TRUE;
 
   /* display option window */
   switch (GUI_OptionWindow(&menu_main, VERSION, items, stub ? 3:2))
@@ -2779,17 +2966,6 @@ static void exitmenu(void)
       GUI_DeleteMenu(&menu_main);
       showcredits();
       GUI_InitMenu(&menu_main);
-      break;
-
-    case 2: /* exit to loader */
-#ifdef HW_RVL
-      gxTextureClose(&w_pointer);
-#endif
-      GUI_DeleteMenu(&menu_main);
-      GUI_FadeOut();
-      shutdown();
-		  SYS_ResetSystem(SYS_SHUTDOWN,0,0);
-		  __lwp_thread_stopmultitasking(*reload);
       break;
 
     case 1: /* reset */
@@ -2805,7 +2981,18 @@ static void exitmenu(void)
       SYS_ResetSystem(SYS_HOTRESET,0,0);
 #endif
       break;
-          
+
+    case 2: /* exit to loader */
+#ifdef HW_RVL
+      gxTextureClose(&w_pointer);
+#endif
+      GUI_DeleteMenu(&menu_main);
+      GUI_FadeOut();
+      shutdown();
+      SYS_ResetSystem(SYS_SHUTDOWN,0,0);
+      __lwp_thread_stopmultitasking(*reload);
+      break;
+
     default:
       break;
   }
@@ -2815,10 +3002,35 @@ static void exitmenu(void)
  * Main Menu
  *
  ****************************************************************************/
+
+static void mainmenu_cb(void)
+{
+  char temp[4];
+  gui_menu *m = &menu_main;
+  int status = areplay_get_status();
+
+  /* Action Replay Switch current status */
+  if (status == AR_SWITCH_TRAINER) strcpy(temp,"TM");
+  else if (status == AR_SWITCH_ON) strcpy(temp,"ON");
+  else strcpy(temp,"OFF");
+
+  /* Display informations */
+  if (m->selected == 6)
+  {
+    FONT_writeCenter("Action\nReplay", 14, m->items[6].x, m->items[6].x + 54, m->items[6].y + (m->items[6].h - 28)/2 + 14, (GXColor)DARK_GREY);
+    FONT_writeCenter(temp, 11, m->items[6].x + 56 + 3, m->items[6].x + 78 + 2, m->items[6].y + (m->items[6].h - 11)/2 + 11, (GXColor)DARK_GREY);
+  }
+  else
+  {
+    FONT_writeCenter("Action\nReplay", 12, m->items[6].x + 4, m->items[6].x + 54, m->items[6].y + (m->items[6].h - 24)/2 + 12, (GXColor)DARK_GREY);
+    FONT_writeCenter(temp, 10, m->items[6].x + 56, m->items[6].x + 78, m->items[6].y + (m->items[6].h - 10)/2 + 10, (GXColor)DARK_GREY);
+  }
+}
+
 void menu_execute(void)
 {
   char filename[MAXPATHLEN];
-  int quit = 0;
+  int status, quit = 0;
 
   /* Autosave SRAM */
   if (config.s_auto & 1)
@@ -2853,13 +3065,21 @@ void menu_execute(void)
     m->buttons[0].shift[1] = 3;
     m->buttons[1].shift[1] = 3;
     m->buttons[2].shift[1] = 3;
-    m->buttons[2].shift[3] = 1;
     m->buttons[3].state |= (BUTTON_VISIBLE | BUTTON_ACTIVE);
     m->buttons[4].state |= (BUTTON_VISIBLE | BUTTON_ACTIVE);
     m->buttons[5].state |= (BUTTON_VISIBLE | BUTTON_ACTIVE);
-    m->buttons[6].state |= (BUTTON_VISIBLE | BUTTON_ACTIVE);
     m->buttons[7].state |= (BUTTON_VISIBLE | BUTTON_ACTIVE);
     m->buttons[8].state |= (BUTTON_VISIBLE | BUTTON_ACTIVE);
+    m->buttons[9].state |= (BUTTON_VISIBLE | BUTTON_ACTIVE);
+    if (areplay_get_status() >= 0)
+    {
+      menu_main.buttons[6].state |= (BUTTON_VISIBLE | BUTTON_ACTIVE);
+      menu_main.items[6].data = Button_sm_grey_png;
+      menu_main.cb = mainmenu_cb;
+      menu_main.buttons[3].shift[1] = 3;
+      menu_main.buttons[7].shift[0] = 1;
+      menu_main.buttons[8].shift[2] = 2;
+    }
   }
 
   GUI_InitMenu(m);
@@ -2874,7 +3094,12 @@ void menu_execute(void)
         GUI_DrawMenuFX(m,30,1);
         GUI_DeleteMenu(m);
         quit = loadgamemenu();
-        if (quit) break;
+        if (quit)
+        {
+          gxClearScreen((GXColor)BLACK);
+          gxSetScreen();
+          break;
+        }
         GUI_InitMenu(m);
         GUI_DrawMenuFX(m,30,0);
         break;
@@ -2895,8 +3120,6 @@ void menu_execute(void)
 
       /*** Save Manager ***/
       case 3:
-        if (!cart.romsize)
-          break;
         GUI_DrawMenuFX(m,30,1);
         GUI_DeleteMenu(m);
         quit = savemenu();
@@ -2907,53 +3130,59 @@ void menu_execute(void)
 
       /*** Virtual system  hard reset ***/
       case 4:
-        if (!cart.romsize)
-          break;
         GUI_DrawMenuFX(m,10,1);
         GUI_DeleteMenu(m);
         gxClearScreen((GXColor)BLACK);
         gxSetScreen();
-        audio_init(snd.sample_rate,snd.frame_rate);
         system_init();
         system_reset();
         if (config.s_auto & 1)
+        {
           slot_autoload(0,config.s_device);
+        }
         quit = 1;
         break;
 
-      /*** Game Genie menu (TODO !!!) ***/
+      /*** Cheats menu ***/
       case 5:
-        if (!cart.romsize)
-          break;
         GUI_DrawMenuFX(m,30,1);
         GUI_DeleteMenu(m);
-        GetGGEntries();
+        CheatMenu();
         GUI_InitMenu(m);
         GUI_DrawMenuFX(m,30,0);
         break;
 
-      /*** Return to Game ***/
+      /*** Action Replay switch ***/
       case 6:
-      case -1:
-        if (!cart.romsize)
-          break;
-        GUI_DrawMenuFX(m,10,1);
+        status = (areplay_get_status() + 1) % (AR_SWITCH_TRAINER + 1);
+        areplay_set_status(status);
+        status = areplay_get_status();
         GUI_DeleteMenu(m);
-        quit = 1;
+        if (status == AR_SWITCH_TRAINER) m->items[6].data = Button_sm_blue_png;
+        else if (status == AR_SWITCH_ON) m->items[6].data = Button_sm_yellow_png;
+        else m->items[6].data = Button_sm_grey_png;
+        GUI_InitMenu(m);
+        break;
+
+      /*** Return to Game ***/
+      case 7:
+      case -1:
+        if (cart.romsize)
+        {
+          GUI_DrawMenuFX(m,10,1);
+          GUI_DeleteMenu(m);
+          quit = 1;
+        }
         break;
 
       /*** Game Capture ***/
-      case 7:
-        if (!cart.romsize)
-          break;
+      case 8:
         sprintf(filename,"%s/snaps/%s.png", DEFAULT_PATH, rom_filename);
         gxSaveScreenshot(filename);
         break;
 
       /*** ROM information screen ***/
-      case 8:
-        if (!cart.romsize)
-          break;
+      case 9:
         showrominfo();
         break;
     }
@@ -2969,11 +3198,6 @@ void menu_execute(void)
   /* free wiimote pointer data */
   gxTextureClose(&w_pointer);
 #endif
-
-#ifndef HW_RVL
-  /*** Stop the DVD from causing clicks while playing ***/
-  uselessinquiry ();
-#endif
 }
 
 void menu_configure(void)
@@ -2982,13 +3206,19 @@ void menu_configure(void)
   if (config.bg_type > 0)
   {
     GUI_SetBgColor((u8)(config.bg_type - 1));
-    bg_main[0].state  &= ~IMAGE_REPEAT;
-    bg_misc[0].state  &= ~IMAGE_REPEAT;
-    bg_ctrls[0].state &= ~IMAGE_REPEAT;
-    bg_list[0].state  &= ~IMAGE_REPEAT;
-    bg_saves[1].state &= ~IMAGE_REPEAT;
-    if (config.bg_type > 1) bg_main[0].data = bg_misc[0].data = bg_ctrls[0].data = bg_list[0].data = bg_saves[1].data = Bg_main_png;
-    else bg_main[0].data = bg_misc[0].data = bg_ctrls[0].data = bg_list[0].data = bg_saves[1].data = Bg_main_2_png;
+    bg_main[0].state    &= ~IMAGE_REPEAT;
+    bg_misc[0].state    &= ~IMAGE_REPEAT;
+    bg_ctrls[0].state   &= ~IMAGE_REPEAT;
+    bg_list[0].state    &= ~IMAGE_REPEAT;
+    bg_saves[1].state   &= ~IMAGE_REPEAT;
+    if (config.bg_type > 1)
+    {
+      bg_main[0].data = bg_misc[0].data = bg_ctrls[0].data = bg_list[0].data = bg_saves[1].data = Bg_main_png;
+    }
+    else
+    {
+      bg_main[0].data = bg_misc[0].data = bg_ctrls[0].data = bg_list[0].data = bg_saves[1].data = Bg_main_2_png;
+    }
     bg_main[0].x = bg_misc[0].x = bg_ctrls[0].x = bg_list[0].x = bg_saves[1].x = 374;
     bg_main[0].y = bg_misc[0].y = bg_ctrls[0].y = bg_list[0].y = bg_saves[1].y = 140;
     bg_main[0].w = bg_misc[0].w = bg_ctrls[0].w = bg_list[0].w = bg_saves[1].w = 284;
@@ -2997,11 +3227,11 @@ void menu_configure(void)
   else
   {
     GUI_SetBgColor(0);
-    bg_main[0].state  |= IMAGE_REPEAT;
-    bg_misc[0].state  |= IMAGE_REPEAT;
-    bg_ctrls[0].state |= IMAGE_REPEAT;
-    bg_list[0].state  |= IMAGE_REPEAT;
-    bg_saves[1].state |= IMAGE_REPEAT;
+    bg_main[0].state    |= IMAGE_REPEAT;
+    bg_misc[0].state    |= IMAGE_REPEAT;
+    bg_ctrls[0].state   |= IMAGE_REPEAT;
+    bg_list[0].state    |= IMAGE_REPEAT;
+    bg_saves[1].state   |= IMAGE_REPEAT;
     bg_main[0].data = bg_misc[0].data = bg_ctrls[0].data = bg_list[0].data = bg_saves[1].data = Bg_layer_png;
     bg_main[0].x = bg_misc[0].x = bg_ctrls[0].x = bg_list[0].x = bg_saves[1].x = 0;
     bg_main[0].y = bg_misc[0].y = bg_ctrls[0].y = bg_list[0].y = bg_saves[1].y = 0;
@@ -3012,18 +3242,18 @@ void menu_configure(void)
   /* background overlay */
   if (config.bg_overlay)
   {
-    bg_main[1].state |= IMAGE_VISIBLE;
-    bg_misc[1].state |= IMAGE_VISIBLE;
+    bg_main[1].state  |= IMAGE_VISIBLE;
+    bg_misc[1].state  |= IMAGE_VISIBLE;
     bg_ctrls[1].state |= IMAGE_VISIBLE;
-    bg_list[1].state |= IMAGE_VISIBLE;
+    bg_list[1].state  |= IMAGE_VISIBLE;
     bg_saves[2].state |= IMAGE_VISIBLE;
   }
   else
   {
-    bg_main[1].state &= ~IMAGE_VISIBLE;
-    bg_misc[1].state &= ~IMAGE_VISIBLE;
+    bg_main[1].state  &= ~IMAGE_VISIBLE;
+    bg_misc[1].state  &= ~IMAGE_VISIBLE;
     bg_ctrls[1].state &= ~IMAGE_VISIBLE;
-    bg_list[1].state &= ~IMAGE_VISIBLE;
+    bg_list[1].state  &= ~IMAGE_VISIBLE;
     bg_saves[2].state &= ~IMAGE_VISIBLE;
   }
 }

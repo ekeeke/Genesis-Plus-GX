@@ -48,8 +48,6 @@ extern const u8 Crosshair_p1_png[];
 extern const u8 Crosshair_p2_png[];
 
 /*** VI ***/
-u32 *xfb[2];        /* External Framebuffers */
-u32 whichfb = 0;    /* Current Framebuffer   */
 GXRModeObj *vmode;  /* Default Video Mode    */
 u8 *texturemem;     /* Texture Data          */
 u8 *screenshot;     /* Texture Data          */
@@ -67,6 +65,10 @@ static u8 gp_fifo[DEFAULT_FIFO_SIZE] ATTRIBUTE_ALIGN (32);
 /*** GX Textures ***/
 static u32 vwidth,vheight;
 static gx_texture *crosshair[2];
+
+/*** Framebuffers ***/
+static u32 *xfb[2];
+static u32 whichfb = 0;
 
 /***************************************************************************************/
 /*   Emulation video modes                                                             */

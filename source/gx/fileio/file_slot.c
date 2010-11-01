@@ -24,8 +24,7 @@
 
 #include "shared.h"
 #include "file_slot.h"
-#include "file_fat.h"
-#include "dvd.h"
+#include "file_load.h"
 #include "gui.h"
 #include "filesel.h"
 #include "saveicon.h"
@@ -49,7 +48,6 @@ static int CardMount(int slot)
   int tries = 0;
 #if defined(HW_DOL)
   *(unsigned long *) (0xCC006800) |= 1 << 13; /*** Disable Encryption ***/
-  uselessinquiry ();
 #elif defined(HW_RVL)
   *(unsigned long *) (0xCD006800) |= 1 << 13; /*** Disable Encryption ***/
 #endif
@@ -270,11 +268,11 @@ int slot_load(int slot, int device)
     }
 
     /* Read into buffer (2k blocks) */
-    while (filesize > FATCHUNK)
+    while (filesize > FILECHUNK)
     {
-      fread(savebuffer + done, FATCHUNK, 1, fp);
-      done += FATCHUNK;
-      filesize -= FATCHUNK;
+      fread(savebuffer + done, FILECHUNK, 1, fp);
+      done += FILECHUNK;
+      filesize -= FILECHUNK;
     }
 
     /* Read remaining bytes */
@@ -438,11 +436,11 @@ int slot_save(int slot, int device)
     }
 
     /* Write from buffer (2k blocks) */
-    while (filesize > FATCHUNK)
+    while (filesize > FILECHUNK)
     {
-      fwrite(savebuffer + done, FATCHUNK, 1, fp);
-      done += FATCHUNK;
-      filesize -= FATCHUNK;
+      fwrite(savebuffer + done, FILECHUNK, 1, fp);
+      done += FILECHUNK;
+      filesize -= FILECHUNK;
     }
 
     /* Write remaining bytes */

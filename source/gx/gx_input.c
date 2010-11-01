@@ -24,6 +24,7 @@
 #include "shared.h"
 #include "font.h"
 #include "gui.h"
+#include "cheats.h"
 
 /* Analog sticks sensitivity */
 #define ANALOG_SENSITIVITY 30
@@ -173,9 +174,15 @@ static void pad_update(s8 chan, u8 i)
     return;
   }
 
-  /* Menu Request */
-  if (p & PAD_TRIGGER_Z)
+  if ((p & PAD_TRIGGER_Z) && (p & PAD_BUTTON_START))
   {
+    /* MODE button */
+    input.pad[i]  |= INPUT_MODE;
+    return;
+  }
+  else if (p & PAD_TRIGGER_Z)
+  {
+    /* Menu Request */
     ConfigRequested = 1;
     return;
   }
@@ -825,9 +832,6 @@ void gx_input_Config(u8 chan, u8 type, u8 max)
 
 void gx_input_UpdateEmu(void)
 {
-  int i;
-  int player = 0;
-
   /* Update controllers */
   PAD_ScanPads();
 #ifdef HW_RVL
@@ -848,6 +852,7 @@ void gx_input_UpdateEmu(void)
     return;
   }
 
+  int i, player = 0;
   for (i=0; i<MAX_DEVICES; i++)
   {
     /* update inputs */
@@ -868,6 +873,9 @@ void gx_input_UpdateEmu(void)
       player ++;
     }
   }
+
+  /* Update RAM patches */
+  CheatUpdate();
 }
 
 /* Menu inputs update function (done by Video Interrupt callback) */

@@ -1,10 +1,9 @@
 /*****************************************************************************
  * font.c
  *
- *   IPL font engine
+ *   IPL font engine (using GX rendering)
  *
- *   original font support by Softdev (2006)
- *   GX rendering by Eke-Eke (2008,2009)
+ *   Eke-Eke (2009,2010)
  * 
  *   This program is free software; you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -24,7 +23,6 @@
 
 #include "shared.h"
 #include "font.h"
-#include "menu.h"
 
 #define _SHIFTR(v, s, w)	\
     ((u32)(((u32)(v) >> (s)) & ((0x01 << (w)) - 1)))
@@ -296,124 +294,79 @@ int FONT_write(char *string, int size, int x, int y, int max_width, GXColor colo
   y -= (vmode->efbHeight / 2);
   int w, ox = x;
 
-  while (*string)
+  while (*string && (*string != '\n'))
   {
     w = (font_size[(u8)*string] * size) / fheight;
-    if ((x + w) <= (ox + max_width))
-    {
-      DrawChar(*string, x, y, size,color);
-      x += w;
-      string++;
-    }
-    else return 1;
+    if ((x + w) > (ox + max_width)) return strlen(string);
+    DrawChar(*string, x, y, size,color);
+    x += w;
+    string++;
   }
+ 
+  if (*string == '\n')
+  {
+    string++;
+    return FONT_write(string, size, ox + (vmode->fbWidth / 2), y + size + (vmode->efbHeight / 2), max_width, color);
+  }
+
   return 0;
 }
 
-void FONT_writeCenter(char *string, int size, int x1, int x2, int y, GXColor color)
+int FONT_writeCenter(char *string, int size, int x1, int x2, int y, GXColor color)
 {
   int i=0;
-  u16 width = 0;
-
+  int w = 0;
   while (string[i] && (string[i] != '\n'))
-    width += (font_size[(u8)string[i++]] * size) / fheight;
+  {
+    w += (font_size[(u8)string[i++]] * size) / fheight;
+  }
 
-  int x = x1 + (x2 - x1 - width - vmode->fbWidth) / 2;
-  y -= (vmode->efbHeight / 2);
+  if ((x1 + w) > x2) w = x2 - x1;
+  int x = x1 + (x2 - x1 - w - vmode->fbWidth) / 2;
+  y  -= (vmode->efbHeight / 2);
+  x2 -= (vmode->fbWidth / 2);
 
   while (*string && (*string != '\n'))
   {
+    w = (font_size[(u8)*string] * size) / fheight;
+    if ((x + w) > x2) return strlen(string);
     DrawChar(*string, x, y, size,color);
-    x += (font_size[(u8)*string++] * size) / fheight;
+    x += w;
+    string++;
   }
 
   if (*string == '\n')
   {
     string++;
-    i = 0;
-    width = 0;
-    while (string[i])
-      width += (font_size[(u8)string[i++]] * size) / fheight;
-    x = x1 + (x2 - x1 - width - vmode->fbWidth) / 2;
-    y += size;
-    while (*string)
-    {
-      DrawChar(*string, x, y, size,color);
-      x += (font_size[(u8)*string++] * size) / fheight;
-    }
+    return FONT_writeCenter(string, size, x1, x2 + (vmode->fbWidth / 2), y + size + (vmode->efbHeight / 2), color);
   }
+  return 0;
 }
 
-void FONT_alignRight(char *string, int size, int x, int y, GXColor color)
+int FONT_alignRight(char *string, int size, int x, int y, GXColor color)
 {
   int i;
-  u16 width = 0;
+  int w = 0;
+
+  x -= (vmode->fbWidth / 2);
+  y -= (vmode->efbHeight / 2);
+
+  int ox = x;
 
   for (i=0; i<strlen(string); i++)
-    width += (font_size[(u8)string[i]] * size) / fheight;
+  {
+    w += (font_size[(u8)string[i]] * size) / fheight;
+  }
 
-  x -= (vmode->fbWidth / 2) + width;
-  y -= (vmode->efbHeight / 2);
+  x = ox - w;
 
   while (*string)
   {
+    w = (font_size[(u8)*string] * size) / fheight;
+    if ((x + w) > ox) return strlen(string);
     DrawChar(*string, x, y, size,color);
-    x += (font_size[(u8)*string++] * size) / fheight;
-  }
-}
-
-
-/****************************************************************************
- *  Write functions (OLD)
- *
- ****************************************************************************/
-void write_font(int x, int y, char *string)
-{
-  int ox = x;
-  while (*string && (x < (ox + 640)))
-  {
-    DrawChar(*string, x -(vmode->fbWidth/2), y-(vmode->efbHeight/2),fontHeader->cell_height,(GXColor)WHITE);
-    x += font_size[(u8)*string];
+    x += w;
     string++;
   }
-}
-
-void WriteCentre( int y, char *string)
-{
-  int x, t;
-  for (x=t=0; t<strlen(string); t++) x += font_size[(u8)string[t]];
-  if (x>640) x=640;
-  x = (640 - x) >> 1;
-  write_font(x, y, string);
-}
-
-void WriteCentre_HL( int y, char *string)
-{
-  gx_texture *texture = gxTextureOpenPNG(Overlay_bar_png,0);
-  if (texture)
-  {
-    gxDrawTexture(texture, 0, y-fheight,  640, fheight,240);
-    if (texture->data) free(texture->data);
-    free(texture);
-  }
-  WriteCentre(y, string);
-}
-
-/****************************************************************************
- *  Draw functions (FrameBuffer)
- *
- ****************************************************************************/
-static void fntDrawHLine (int x1, int x2, int y, int color)
-{
-  int i;
-  y = 320 * y;
-  x1 >>= 1;
-  x2 >>= 1;
-  for (i = x1; i <= x2; i++) xfb[whichfb][y + i] = color;
-}
-
-void fntDrawBoxFilled (int x1, int y1, int x2, int y2, int color)
-{
-  int h;
-  for (h = y1; h <= y2; h++) fntDrawHLine (x1, x2, h, color);
+  return 0;
 }

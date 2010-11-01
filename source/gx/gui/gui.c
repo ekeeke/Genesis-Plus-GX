@@ -1,9 +1,9 @@
 /****************************************************************************
  *  gui.c
  *
- *  generic GUI Engine, using GX hardware
+ *  generic GUI Engine (using GX rendering)
  *
- *  Eke-Eke (2009)
+ *  Eke-Eke (2009,2010)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -176,6 +176,7 @@ void GUI_DeleteMenu(gui_menu *menu)
   }
 }
 
+extern void gxSnapshot(void);
 
 /* Draw Menu */
 void GUI_DrawMenu(gui_menu *menu)
@@ -237,7 +238,7 @@ void GUI_DrawMenu(gui_menu *menu)
           }
           else
           {
-            FONT_writeCenter(item->text,18,item->x+2,item->x+item->w+2,button->y+(button->h-18)/2+18,(GXColor)DARK_GREY);
+            FONT_writeCenter(item->text,18,item->x-4,item->x+item->w+4,button->y+(button->h-18)/2+18,(GXColor)DARK_GREY);
           }
         }
       }
@@ -422,7 +423,7 @@ void GUI_DrawMenuFX(gui_menu *menu, u8 speed, u8 out)
 
     /* menu title */
     if ((menu->bg_images[2].state & IMAGE_SLIDE_TOP) || (menu->bg_images[3].state & IMAGE_SLIDE_TOP))
-      FONT_write(menu->title, 22,10,out ? (56 + temp - max_offset) : (56 -temp),640,(GXColor)WHITE);
+      FONT_write(menu->title, 22,10,out ? (56 + temp - max_offset) : (56 - temp),640,(GXColor)WHITE);
     else
       FONT_write(menu->title, 22,10,56,640,(GXColor)WHITE);
 
@@ -465,19 +466,40 @@ void GUI_DrawMenuFX(gui_menu *menu, u8 speed, u8 out)
         item = (menu->items) ? (&menu->items[menu->offset + i]) : NULL;
 
         /* draw button + items */ 
-        if (button->data)
-          gxDrawTexture(button->data->texture[0],button->x+xoffset,button->y+yoffset,button->w, button->h,item_alpha);
-
-        if (item)
+        if ((i == menu->selected) || (button->state & BUTTON_SELECTED))
         {
-          if (item->texture)
+          if (button->data)
+            gxDrawTexture(button->data->texture[1],button->x+xoffset-4,button->y+yoffset-4,button->w+8,button->h+8,item_alpha);
+
+          if (item)
           {
-            gxDrawTexture(item->texture,item->x+xoffset,item->y+yoffset,item->w,item->h,item_alpha);
-            FONT_writeCenter(item->text,16,button->x+xoffset+8,item->x+xoffset,button->y+yoffset+(button->h - 32)/2+16,text_color);
+            if (item->texture)
+            {
+              gxDrawTexture(item->texture, item->x+xoffset-4,item->y+yoffset-4,item->w+8,item->h+8,item_alpha);
+              FONT_writeCenter(item->text,18,button->x+xoffset+4,item->x+xoffset-4,button->y+yoffset+(button->h - 36)/2+18,text_color);
+            }
+            else
+            {
+              FONT_writeCenter(item->text,18,item->x+xoffset+2,item->x+item->w+xoffset+2,button->y+yoffset+(button->h-18)/2+18,text_color);
+            }
           }
-          else
+        }
+        else
+        {
+          if (button->data)
+            gxDrawTexture(button->data->texture[0],button->x+xoffset,button->y+yoffset,button->w, button->h,item_alpha);
+
+          if (item)
           {
-            FONT_writeCenter(item->text,16,item->x+xoffset,item->x+item->w+xoffset,button->y+yoffset+(button->h - 16)/2+16,text_color);
+            if (item->texture)
+            {
+              gxDrawTexture(item->texture,item->x+xoffset,item->y+yoffset,item->w,item->h,item_alpha);
+              FONT_writeCenter(item->text,16,button->x+xoffset+8,item->x+xoffset,button->y+yoffset+(button->h - 32)/2+16,text_color);
+            }
+            else
+            {
+              FONT_writeCenter(item->text,16,item->x+xoffset,item->x+item->w+xoffset,button->y+yoffset+(button->h - 16)/2+16,text_color);
+            }
           }
         }
       }
@@ -688,7 +710,9 @@ int GUI_UpdateMenu(gui_menu *menu)
     if (selected >= menu->max_buttons)
     {
       selected = 0;
-      while (!(menu->buttons[selected].state & BUTTON_ACTIVE))
+      while ((selected < (menu->max_buttons + 2)) && 
+             (!(menu->buttons[selected].state & BUTTON_ACTIVE) || 
+              !(menu->buttons[selected].state & BUTTON_VISIBLE)))
         selected++;
     }
   }
@@ -1140,12 +1164,12 @@ int GUI_OptionWindow(gui_menu *parent, char *title, char *items[], u8 nb_items)
     gxSetScreen();
 
     /* update selection */
-    if (p&PAD_BUTTON_UP)
+    if (p & PAD_BUTTON_UP)
     {
       if (selected > 0)
         selected --;
     }
-    else if (p&PAD_BUTTON_DOWN)
+    else if (p & PAD_BUTTON_DOWN)
     {
       if (selected < (nb_items -1))
         selected ++;
@@ -1227,8 +1251,8 @@ void GUI_OptionBox(gui_menu *parent, optioncallback cb, char *title, void *optio
   gx_texture *arrow[2];
   arrow[0] = gxTextureOpenPNG(Button_arrow_png,0);
   arrow[1] = gxTextureOpenPNG(Button_arrow_over_png,0);
-  gx_texture *window = gxTextureOpenPNG(Frame_s4_png,0);
-  gx_texture *top = gxTextureOpenPNG(Frame_s4_title_png,0);
+  gx_texture *window = gxTextureOpenPNG(Frame_s2_png,0);
+  gx_texture *top = gxTextureOpenPNG(Frame_s2_title_png,0);
 
   /* window position */
   int xwindow = 166;
@@ -1476,7 +1500,7 @@ void GUI_OptionBox2(gui_menu *parent, char *text_1, char *text_2, s16 *option_1,
   gx_texture *arrow[2];
   arrow[0] = gxTextureOpenPNG(Button_arrow_png,0);
   arrow[1] = gxTextureOpenPNG(Button_arrow_over_png,0);
-  gx_texture *window = gxTextureOpenPNG(Frame_s4_png,0);
+  gx_texture *window = gxTextureOpenPNG(Frame_s2_png,0);
 
   /* window position */
   int xwindow = 166;
@@ -1775,8 +1799,8 @@ void GUI_MsgBoxOpen(char *title, char *msg, bool throbber)
   if (!message_box.refresh)
   {
     /* initialize default textures */
-    message_box.window = gxTextureOpenPNG(Frame_s4_png,0);
-    message_box.top = gxTextureOpenPNG(Frame_s4_title_png,0);
+    message_box.window = gxTextureOpenPNG(Frame_s2_png,0);
+    message_box.top = gxTextureOpenPNG(Frame_s2_title_png,0);
     if (throbber)
       message_box.throbber = gxTextureOpenPNG(Frame_throbber_png,0);
 

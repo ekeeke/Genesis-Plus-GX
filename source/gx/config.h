@@ -24,6 +24,8 @@
 #ifndef _CONFIG_H_
 #define _CONFIG_H_
 
+#define CONFIG_VERSION "GENPLUS-GX 1.4.0"
+
 /****************************************************************************
  * Config Option 
  *
@@ -81,9 +83,10 @@ typedef struct
   int16 screen_w;
   float bgm_volume;
   float sfx_volume;
-  char sddir[MAXPATHLEN];
 #ifdef HW_RVL
-  char usbdir[MAXPATHLEN];
+  char lastdir[3][MAXPATHLEN];
+#else
+  char lastdir[2][MAXPATHLEN];
 #endif
 } t_config;
 

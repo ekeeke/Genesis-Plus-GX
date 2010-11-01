@@ -43,8 +43,6 @@ typedef struct
 } gx_texture;
 
 /* Global variables */
-extern u32 *xfb[2];
-extern u32 whichfb;
 extern GXRModeObj *vmode;
 extern u8 *texturemem;
 extern u32 gc_pal;

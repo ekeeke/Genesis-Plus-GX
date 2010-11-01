@@ -1,10 +1,9 @@
 /*
- * file_dvd.c
+ * file_fat.c
  * 
- *  ISO9660/Joliet DVD loading support
+ *  FAT loading support
  *
- *  Softdev (2006)
- *  Eke-Eke (2007,2008,2009)
+ *  Eke-Eke (2008,2009)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -22,15 +21,24 @@
  *
  ********************************************************************************/
 
-#ifndef _FILE_DVD_H
-#define _FILE_DVD_H
+#ifndef _FILE_FAT_H
+#define _FILE_FAT_H
 
-#define DVDCHUNK (2048)
 
-extern void DVD_ClearDirectory(void);
-extern int DVD_UpdateDirectory(bool go_up,u64 offset, u32 length);
-extern int DVD_ParseDirectory(void);
-extern int DVD_LoadFile(u8 *buffer,u32 selection);
-extern int DVD_Open(void);
+#define TYPE_SD (0)
+#ifdef HW_RVL
+#define TYPE_USB (1)
+#define TYPE_DVD (2)
+#else
+#define TYPE_DVD (1)
+#endif
+#define TYPE_RECENT (TYPE_DVD + 1)
+
+#define FILECHUNK (2048)
+
+extern int OpenDirectory(int device);
+extern int UpdateDirectory(bool go_up, char *filename);
+extern int ParseDirectory(void);
+extern int LoadFile(u8* buffer,u32 selection);
 
 #endif

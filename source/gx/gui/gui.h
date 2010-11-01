@@ -1,9 +1,9 @@
 /****************************************************************************
  *  gui.c
  *
- *  generic GUI engine, using GX hardware
+ *  generic GUI Engine (using GX rendering)
  *
- *  Eke-Eke (2009)
+ *  Eke-Eke (2009,2010)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -27,6 +27,8 @@
 #ifdef HW_RVL
 #include <wiiuse/wpad.h>
 #endif
+
+#define BG_COLOR_MAX 15
 
 /*****************************************************************************/
 /*  GUI Buttons state                                                        */
@@ -52,8 +54,6 @@
 #define IMAGE_SLIDE_RIGHT   0x10
 #define IMAGE_SLIDE_TOP     0x20
 #define IMAGE_SLIDE_BOTTOM  0x40
-
-#define BG_COLOR_MAX 15
 
 /*****************************************************************************/
 /*  Generic GUI structures                                                   */
@@ -169,9 +169,8 @@ extern const u8 Main_logo_png[];
 extern const u8 Frame_s1_png[];
 extern const u8 Frame_s2_png[];
 extern const u8 Frame_s3_png[];
-extern const u8 Frame_s4_png[];
 extern const u8 Frame_s1_title_png[];
-extern const u8 Frame_s4_title_png[];
+extern const u8 Frame_s2_title_png[];
 extern const u8 Frame_throbber_png[];
 
 /* Generic Buttons */
@@ -187,6 +186,8 @@ extern const u8 Button_down_png[];
 extern const u8 Button_down_over_png[];
 extern const u8 Button_arrow_png[];
 extern const u8 Button_arrow_over_png[];
+extern const u8 Button_digit_png[];
+extern const u8 Button_digit_over_png[];
 
 /* Generic images*/
 #ifdef HW_RVL
@@ -200,9 +201,10 @@ extern const u8 Key_B_wii_png[];
 #define Key_B_png Key_B_gcn_png
 extern const u8 Key_A_gcn_png[];
 extern const u8 Key_B_gcn_png[];
-extern const u8 Star_empty_png[];
-extern const u8 Star_full_png[];
 #endif
+extern const u8 Star_full_png[];
+extern const u8 Star_empty_png[];
+extern const u8 Overlay_bar_png[];
 
 /* Generic Sounds */
 extern const u8 button_over_pcm[];

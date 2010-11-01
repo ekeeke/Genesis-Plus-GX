@@ -1,10 +1,9 @@
 /*
  * filesel.c
  * 
- *   File Selection menu
+ *   ROM File Browser
  *
- *   Softdev (2006)
- *   Eke-Eke (2007,2008,2009) 
+ *   Eke-Eke (2009,2010) 
  *
  *   This program is free software; you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -31,15 +30,12 @@
 /* Filelist structure */
 typedef struct
 {
-  u64 offset;
-  u32 length;
   char flags;
   char filename[MAXJOLIET];
 }FILEENTRIES;
 
 /* Globals */
-extern int FileSelector(unsigned char *buffer, bool useFAT);
-extern int FileSortCallback(const void *f1, const void *f2);
+extern int FileSelector(void);
 extern void ClearSelector(u32 max);
 extern FILEENTRIES filelist[MAXFILES];
 

@@ -1,10 +1,11 @@
-/*****************************************************************************
- * font.c
- *
- *   IPL font engine (using GX rendering)
- *
- *   Eke-Eke (2009,2010)
+/*
+ * cheats.c
  * 
+ *   Cheats menu
+ *
+ *   Softdev (2006)
+ *   Eke-Eke (2010) 
+ *
  *   This program is free software; you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
  *   the Free Software Foundation; either version 2 of the License, or
@@ -21,13 +22,11 @@
  *
  ********************************************************************************/
 
-#ifndef _FONT_H
-#define _FONT_H
+#ifndef _CHEATS_H
+#define _CHEATS_H
 
-extern int  FONT_Init(void);
-extern void FONT_Shutdown(void);
-extern int  FONT_write(char *string, int size, int x, int y, int max_width, GXColor color);
-extern int  FONT_writeCenter(char *string, int size, int x1, int x2, int y, GXColor color);
-extern int  FONT_alignRight(char *string, int size, int x, int y, GXColor color);
+extern void CheatMenu(void);
+extern void CheatLoad(void);
+extern void CheatUpdate(void);
 
 #endif

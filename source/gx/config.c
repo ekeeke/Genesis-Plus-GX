@@ -22,6 +22,7 @@
  ***************************************************************************/
 #include "shared.h"
 #include "menu.h"
+#include "file_load.h"
 
 void config_save(void)
 {
@@ -49,7 +50,7 @@ void config_load(void)
     char version[16];
     fread(version, 16, 1, fp); 
     fclose(fp);
-    if (strcmp(version,VERSION))
+    if (strcmp(version,CONFIG_VERSION))
       return;
 
     /* read file */
@@ -65,7 +66,7 @@ void config_load(void)
 void config_default(void)
 {
   /* version TAG */
-  strncpy(config.version,VERSION,16);
+  strncpy(config.version,CONFIG_VERSION,16);
 
   /* sound options */
   config.psg_preamp     = 150;
@@ -143,10 +144,12 @@ void config_default(void)
 
   /* default ROM directories */
 #ifdef HW_RVL
-  sprintf (config.sddir, "sd:%s/roms/", DEFAULT_PATH);
-  sprintf (config.usbdir, "usb:%s/roms/", DEFAULT_PATH);
+  sprintf (config.lastdir[TYPE_SD],  "sd:%s/roms/",  DEFAULT_PATH);
+  sprintf (config.lastdir[TYPE_USB], "usb:%s/roms/", DEFAULT_PATH);
+  sprintf (config.lastdir[TYPE_DVD], "dvd:%s/roms/", DEFAULT_PATH);
 #else
-  sprintf (config.sddir, "%s/roms/", DEFAULT_PATH);
+  sprintf (config.lastdir[TYPE_SD],  "%s/roms/",  DEFAULT_PATH);
+  sprintf (config.lastdir[TYPE_DVD], "dvd:%s/roms/", DEFAULT_PATH);
 #endif
 
   /* restore from config file */
