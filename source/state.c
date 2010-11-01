@@ -22,7 +22,7 @@
 
 #include "shared.h"
 
-#define STATE_VERSION "GENPLUS-GX 1.4.x"
+#define STATE_VERSION "GENPLUS-GX 1.4.0"
 
 #define load_param(param, size) \
   memcpy(param, &state[bufferptr], size); \

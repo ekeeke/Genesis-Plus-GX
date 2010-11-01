@@ -33,9 +33,9 @@
 #define SK_UPMEM      "/genplus/sk2chip.bin"
 
 #ifdef HW_RVL
-#define VERSION "version 1.4.0W"
+#define VERSION "Genesis Plus GX 1.4.0 (WII)"
 #else
-#define VERSION "version 1.4.0G"
+#define VERSION "Genesis Plus GX 1.4.0 (GCN)"
 #endif
 
 #define osd_input_Update() gx_input_UpdateEmu()
