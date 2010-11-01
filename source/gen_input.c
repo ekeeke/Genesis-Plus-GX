@@ -297,7 +297,8 @@ static inline void gamepad_raz(int i)
 
 static inline void gamepad_reset(int i)
 {
-  gamepad[i].State = 0x00;
+  /* initial state (Gouketsuji Ichizoku / Power Instinct, Samurai Spirits / Samurai Shodown) */
+  gamepad[i].State = 0x40;
   if (input.dev[i] == DEVICE_6BUTTON) gamepad_raz(i);
 }
 
@@ -308,20 +309,22 @@ static inline void gamepad_update(int i)
 
 static inline unsigned int gamepad_read(int i)
 {
-  /* bit7 is latched */
-  unsigned int retval = 0x7F;
+  /* bit 7 is latched, TH returns current state */
+  unsigned int retval = (gamepad[i].State & 0x40) | 0x3F;
 
   /* pad status */
   unsigned int pad = input.pad[i];
 
-  /* current TH state */
-  unsigned int control = (gamepad[i].State & 0x40) >> 6;
+  /* get current step */
+  unsigned int step = retval >> 6;
 
-  /* TH transitions counter */
+  /* add TH transitions counter */
   if (input.dev[i] == DEVICE_6BUTTON)
-    control += (gamepad[i].Counter & 3) << 1;
+  {
+    step += (gamepad[i].Counter & 3) << 1;
+  }
 
-  switch (control)
+  switch (step)
   {
     case 1: /*** First High  ***/
     case 3: /*** Second High ***/
