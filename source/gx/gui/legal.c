@@ -4,7 +4,7 @@
  *  Genesis Plus GX Disclaimer
  *
  *  Softdev (2006)
- *  Eke-Eke (2007,2008,2009)
+ *  Eke-Eke (2007,2008,2009,2010)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -24,8 +24,13 @@
 
 #include "shared.h"
 #include "font.h"
-#include "menu.h"
 #include "gui.h"
+
+extern const u8 Bg_intro_c1_png[];
+extern const u8 Bg_intro_c2_png[];
+extern const u8 Bg_intro_c3_png[];
+extern const u8 Bg_intro_c4_png[];
+extern const u8 Bg_intro_c5_png[];
 
 /* 
  * This is the legal stuff - which must be shown at program startup 
@@ -34,11 +39,8 @@
  * In other words, play nice and give credit where it's due.
  */
 
-void legal ()
+static void show_disclaimer(int ypos)
 {
-  int ypos = 56;
-  gxClearScreen((GXColor)BLACK);
-
   FONT_writeCenter ("DISCLAIMER",22,0,640,ypos,(GXColor)WHITE);
   ypos += 32;
   FONT_writeCenter ("This is free software, and you are welcome to",20,0,640,ypos,(GXColor)WHITE);
@@ -47,15 +49,15 @@ void legal ()
   ypos += 20;
   FONT_writeCenter ("GNU GENERAL PUBLIC LICENSE Version 2.",20,0,640,ypos,(GXColor)WHITE);
   ypos += 20;
-  FONT_writeCenter ("This software includes code from the MAME project and",20,0,640,ypos,(GXColor)WHITE);
+  FONT_writeCenter ("Authors can not be held responsible for any damage or",20,0,640,ypos,(GXColor)WHITE);
   ypos += 20;
-  FONT_writeCenter ("therefore, its use is conditionned by the MAME license.",20,0,640,ypos,(GXColor)WHITE);
+  FONT_writeCenter ("or dysfunction that could occur while using this port.",20,0,640,ypos,(GXColor)WHITE);
   ypos += 20;
   FONT_writeCenter ("You may not sell, lease, rent or generally use",20,0,640,ypos,(GXColor)WHITE);
   ypos += 20;
   FONT_writeCenter ("this software in any commercial product or activity.",20,0,640,ypos,(GXColor)WHITE);
   ypos += 20;
-  FONT_writeCenter ("You may not distribute this software with any ROM images",20,0,640,ypos,(GXColor)WHITE);
+  FONT_writeCenter ("You may not distribute this software with any ROM image",20,0,640,ypos,(GXColor)WHITE);
   ypos += 20;
   FONT_writeCenter ("unless you have the legal right to distribute them.",20,0,640,ypos,(GXColor)WHITE);
   ypos += 20;
@@ -67,6 +69,12 @@ void legal ()
   ypos += 20;
   FONT_writeCenter ("the property of their respective owners.",20,0,640,ypos,(GXColor)WHITE);
   ypos += 38;
+}
+
+void legal ()
+{
+  int count = 2000;
+  int vis = 0;
 
 #ifdef HW_RVL
   gx_texture *button = gxTextureOpenPNG(Key_A_wii_png,0);
@@ -74,68 +82,36 @@ void legal ()
   gx_texture *button = gxTextureOpenPNG(Key_A_gcn_png,0);
 #endif
 
-  gx_texture *logo_bottom= gxTextureOpenPNG(Bg_intro_c5_png,0);
-  gx_texture *logo_top = gxTextureOpenPNG(Bg_intro_c4_png,0);
+  gx_texture *logo_left= gxTextureOpenPNG(Bg_intro_c5_png,0);
+  gx_texture *logo_right = gxTextureOpenPNG(Bg_intro_c4_png,0);
 
-  gxDrawTexture(logo_bottom, (640-logo_bottom->width-logo_top->width -32)/2, 480-logo_bottom->height-24, logo_bottom->width, logo_bottom->height,255);
-  gxDrawTexture(logo_top, (640-logo_bottom->width-logo_top->width -32)/2+logo_bottom->width+32, 480-logo_bottom->height-24, logo_top->width, logo_top->height,255);
+  gxClearScreen((GXColor)BLACK);
+  show_disclaimer(56);
+  gxDrawTexture(logo_left, (640-logo_left->width-logo_right->width -32)/2, 480-logo_left->height-24, logo_left->width, logo_left->height,255);
+  gxDrawTexture(logo_right, (640-logo_left->width-logo_right->width -32)/2+logo_left->width+32, 480-logo_right->height-24, logo_right->width, logo_right->height,255);
   gxSetScreen();
 
   sleep(1);
 
-  int count = 2000;
-  int vis = 0;
   while (!(m_input.keys & PAD_BUTTON_A) && (count > 0))
   {
-    ypos = 56;
     gxClearScreen((GXColor)BLACK);
-
-    FONT_writeCenter ("DISCLAIMER",22,0,640,ypos,(GXColor)WHITE);
-    ypos += 32;
-    FONT_writeCenter ("This is free software, and you are welcome to",20,0,640,ypos,(GXColor)WHITE);
-    ypos += 20;
-    FONT_writeCenter ("redistribute it under the conditions of the",20,0,640,ypos,(GXColor)WHITE);
-    ypos += 20;
-    FONT_writeCenter ("GNU GENERAL PUBLIC LICENSE Version 2.",20,0,640,ypos,(GXColor)WHITE);
-    ypos += 20;
-    FONT_writeCenter ("This software includes code from the MAME project and",20,0,640,ypos,(GXColor)WHITE);
-    ypos += 20;
-    FONT_writeCenter ("therefore, its use is conditionned by the MAME license.",20,0,640,ypos,(GXColor)WHITE);
-    ypos += 20;
-    FONT_writeCenter ("You may not sell, lease, rent or generally use",20,0,640,ypos,(GXColor)WHITE);
-    ypos += 20;
-    FONT_writeCenter ("this software in any commercial product or activity.",20,0,640,ypos,(GXColor)WHITE);
-    ypos += 20;
-    FONT_writeCenter ("You may not distribute this software with any ROM images",20,0,640,ypos,(GXColor)WHITE);
-    ypos += 20;
-    FONT_writeCenter ("unless you have the legal right to distribute them.",20,0,640,ypos,(GXColor)WHITE);
-    ypos += 20;
-    FONT_writeCenter ("This software is not endorsed by or affiliated",20,0,640,ypos,(GXColor)WHITE);
-    ypos += 20;
-    FONT_writeCenter ("with Sega Enterprises Ltd or Nintendo Co Ltd.",20,0,640,ypos,(GXColor)WHITE);
-    ypos += 20;
-    FONT_writeCenter ("All trademarks and registered trademarks are",20,0,640,ypos,(GXColor)WHITE);
-    ypos += 20;
-    FONT_writeCenter ("the property of their respective owners.",20,0,640,ypos,(GXColor)WHITE);
-    ypos += 38;
-
+    show_disclaimer(56);
     if (count%25 == 0) vis^=1;
-
     if (vis)
     {
-      FONT_writeCenter("Press    button to continue.",24,0,640,ypos,(GXColor)SKY_BLUE);
-      gxDrawTexture(button, 220, ypos-24+(24-button->height)/2,  button->width, button->height,255);
+      FONT_writeCenter("Press    button to continue.",24,0,640,366,(GXColor)SKY_BLUE);
+      gxDrawTexture(button, 220, 366-24+(24-button->height)/2,  button->width, button->height,255);
     }
-
-    gxDrawTexture(logo_bottom, (640-logo_bottom->width-logo_top->width - 32)/2, 480-logo_bottom->height-24, logo_bottom->width, logo_bottom->height,255);
-    gxDrawTexture(logo_top, (640-logo_bottom->width-logo_top->width -32)/2+logo_bottom->width+32, 480-logo_bottom->height-24, logo_top->width, logo_top->height,255);
+    gxDrawTexture(logo_left, (640-logo_left->width-logo_right->width -32)/2, 480-logo_left->height-24, logo_left->width, logo_left->height,255);
+    gxDrawTexture(logo_right, (640-logo_left->width-logo_right->width -32)/2+logo_left->width+32, 480-logo_right->height-24, logo_right->width, logo_right->height,255);
     gxSetScreen();
     count--;
   }
 
-  gxTextureClose(&logo_top);
   gxTextureClose(&button);
-  gxTextureClose(&logo_bottom);
+  gxTextureClose(&logo_left);
+  gxTextureClose(&logo_right);
 
   if (count > 0)
   {
@@ -157,8 +133,8 @@ void legal ()
     if (texture->data) free(texture->data);
     free(texture);
   }
-
   gxSetScreen();
+
   sleep (1);
 
   gxClearScreen((GXColor)WHITE);
@@ -169,9 +145,10 @@ void legal ()
     if (texture->data) free(texture->data);
     free(texture);
   }
-
   gxSetScreen();
+
   sleep (1);
+
   gxClearScreen((GXColor)BLACK);
   texture = gxTextureOpenPNG(Bg_intro_c3_png,0);
   if (texture)
