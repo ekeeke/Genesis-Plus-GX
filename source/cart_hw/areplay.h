@@ -19,12 +19,17 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  ***************************************************************************/
 
-#ifndef _DATEL_H_
-#define _DATEL_H_
+#ifndef _AREPLAY_H_
+#define _AREPLAY_H_
 
-extern void datel_init(void);
-extern void datel_shutdown(void);
-extern void datel_reset(int hard_reset);
-extern void datel_switch(int enable);
+#define AR_SWITCH_OFF     (0)
+#define AR_SWITCH_ON      (1)
+#define AR_SWITCH_TRAINER (2)
+
+extern void areplay_init(void);
+extern void areplay_shutdown(void);
+extern void areplay_reset(int hard_reset);
+extern void areplay_set_status(int status);
+extern int areplay_get_status(void);
 
 #endif

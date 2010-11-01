@@ -302,9 +302,9 @@ void cart_hw_init()
           LOCK-ON 
   ***********************************************/
   
-  /* clear all existing patches */
+  /* clear existing patches */
   ggenie_shutdown();
-  datel_shutdown();
+  areplay_shutdown();
 
   /* initialize extra hardware */
   cart.lock_on = 0;
@@ -315,7 +315,7 @@ void cart_hw_init()
       break;
 
     case TYPE_AR:
-      datel_init();
+      areplay_init();
       break;
 
     case TYPE_SK:
@@ -477,7 +477,7 @@ void cart_hw_reset()
       break;
 
     case TYPE_AR:
-      datel_reset(1);
+      areplay_reset(1);
       break;
 
     case TYPE_SK:

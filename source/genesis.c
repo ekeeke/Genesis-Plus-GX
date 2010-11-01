@@ -168,9 +168,11 @@ void gen_softreset(int state)
   }
   else
   {
-    /* Reset Pro Action Replay (required in Trainer mode) */
-    if (config.lock_on == TYPE_AR)
-      datel_reset(0);
+    /* Reset PRO Action Replay (if switch is in TRAINER position) */
+    if (areplay_get_status() == AR_SWITCH_TRAINER)
+    {
+      areplay_reset(0);
+    }
 
     /* 68k & Z80 could restart anywhere in VDP frame (Bonkers, Eternal Champions, X-Men 2) */
     mcycles_68k = mcycles_z80 = (uint32)((MCYCLES_PER_LINE * lines_per_frame) * ((double)rand() / (double)RAND_MAX));
