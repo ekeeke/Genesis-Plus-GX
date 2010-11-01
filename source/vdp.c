@@ -972,33 +972,18 @@ static void reg_w(unsigned int r, unsigned int d)
         /* Update clipping */
         window_clip();
         
-        /* Update viewport */
-        if (status & 8)
+        /* display width changed during HBLANK (Bugs Bunny Double Trouble) */
+        if (!(status & 8))
         {
-          /* changes should be applied on next frame */
-          bitmap.viewport.changed |= 2;
-        }
-        else
-        {
-          /* Update active display */
-          if (d & 1)
-          {
-            bitmap.viewport.w = 320;
-            bitmap.viewport.x = (config.overscan & 2) ? 16 : 0;
-          }
-          else
-          {
-            bitmap.viewport.w = 256;
-            bitmap.viewport.x = (config.overscan & 2) ? 12 : 0;
-          }
-
-          /* display width changed during HBLANK (Bugs Bunny Double Trouble) */
           if (mcycles_68k <= (mcycles_vdp + 860))
           {
             /* redraw entire line */
             render_line(v_counter);
           }
         }
+
+        /* changes should be applied on next frame */
+        bitmap.viewport.changed |= 2;
       }
 
       /* Interlaced modes */
