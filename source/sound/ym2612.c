@@ -1731,8 +1731,8 @@ INLINE void OPNWriteReg(int r, int v)
           CH->ams = lfo_ams_depth_shift[(v>>4) & 0x03];
 
           /* PAN :  b7 = L, b6 = R */
-          ym2612.OPN.pan[ c*2   ] = (v & 0x80) ? ~((1 << (14 - config.dac_bits)) - 1) : 0;
-          ym2612.OPN.pan[ c*2+1 ] = (v & 0x40) ? ~((1 << (14 - config.dac_bits)) - 1) : 0;
+          ym2612.OPN.pan[ c*2   ] = (v & 0x80) ? ~0 : 0;
+          ym2612.OPN.pan[ c*2+1 ] = (v & 0x40) ? ~0 : 0;
           break;
       }
       break;
@@ -1826,11 +1826,14 @@ static void init_tables(void)
   signed int i,x;
   signed int n;
   double o,m;
-
+  
 #ifdef NGC
   u32 level = IRQ_Disable();
 #endif
   
+  /* DAC precision */
+  unsigned int mask = ~((1 << (14 - config.dac_bits)) - 1);
+
   /* build Linear Power Table */
   for (x=0; x<TL_RES_LEN; x++)
   {
@@ -1850,8 +1853,8 @@ static void init_tables(void)
     n <<= 2;    /* 13 bits here (as in real chip) */
 
     /* 14 bits (with sign bit) */
-    tl_tab[ x*2 + 0 ] = n;
-    tl_tab[ x*2 + 1 ] = -tl_tab[ x*2 + 0 ];
+    tl_tab[ x*2 + 0 ] = n & mask;
+    tl_tab[ x*2 + 1 ] = -tl_tab[ x*2 + 0 ] & mask;
 
     /* one entry in the 'Power' table use the following format, xxxxxyyyyyyyys with:            */
     /*        s = sign bit                                                                      */
@@ -1860,8 +1863,8 @@ static void init_tables(void)
     /*            any value above 13 (included) would be discarded.                             */
     for (i=1; i<13; i++)
     {
-      tl_tab[ x*2+0 + i*2*TL_RES_LEN ] =  tl_tab[ x*2+0 ]>>i;
-      tl_tab[ x*2+1 + i*2*TL_RES_LEN ] = -tl_tab[ x*2+0 + i*2*TL_RES_LEN ];
+      tl_tab[ x*2+0 + i*2*TL_RES_LEN ] =  (tl_tab[ x*2+0 ]>>i) & mask;
+      tl_tab[ x*2+1 + i*2*TL_RES_LEN ] = -tl_tab[ x*2+0 + i*2*TL_RES_LEN ] & mask;
     }
   }
 
@@ -2113,17 +2116,17 @@ void YM2612Update(long int *buffer, int length)
     }
 
     /* 14-bit channel output */
-    if (out_fm[0] > 8191) out_fm[0] = 8191;
+    if (out_fm[0] > 8191) out_fm[0] = 8192;
     else if (out_fm[0] < -8192) out_fm[0] = -8192;
-    if (out_fm[1] > 8191) out_fm[1] = 8191;
+    if (out_fm[1] > 8191) out_fm[1] = 8192;
     else if (out_fm[1] < -8192) out_fm[1] = -8192;
-    if (out_fm[2] > 8191) out_fm[2] = 8191;
+    if (out_fm[2] > 8191) out_fm[2] = 8192;
     else if (out_fm[2] < -8192) out_fm[2] = -8192;
-    if (out_fm[3] > 8191) out_fm[3] = 8191;
+    if (out_fm[3] > 8191) out_fm[3] = 8192;
     else if (out_fm[3] < -8192) out_fm[3] = -8192;
-    if (out_fm[4] > 8191) out_fm[4] = 8191;
+    if (out_fm[4] > 8191) out_fm[4] = 8192;
     else if (out_fm[4] < -8192) out_fm[4] = -8192;
-    if (out_fm[5] > 8191) out_fm[5] = 8191;
+    if (out_fm[5] > 8191) out_fm[5] = 8192;
     else if (out_fm[5] < -8192) out_fm[5] = -8192;
 
     /* 6-channels mixing  */
@@ -2199,18 +2202,6 @@ void YM2612Restore(unsigned char *buffer)
   setup_connection(&ym2612.CH[4],4);
   setup_connection(&ym2612.CH[5],5);
 
-  /* update channels mask */
-  unsigned int mask = ~((1 << (14 - config.dac_bits)) - 1);
-  ym2612.OPN.pan[0] = ym2612.OPN.pan[0] ? mask : 0;
-  ym2612.OPN.pan[1] = ym2612.OPN.pan[1] ? mask : 0;
-  ym2612.OPN.pan[2] = ym2612.OPN.pan[2] ? mask : 0;
-  ym2612.OPN.pan[3] = ym2612.OPN.pan[3] ? mask : 0;
-  ym2612.OPN.pan[4] = ym2612.OPN.pan[4] ? mask : 0;
-  ym2612.OPN.pan[5] = ym2612.OPN.pan[5] ? mask : 0;
-  ym2612.OPN.pan[6] = ym2612.OPN.pan[6] ? mask : 0;
-  ym2612.OPN.pan[7] = ym2612.OPN.pan[7] ? mask : 0;
-  ym2612.OPN.pan[8] = ym2612.OPN.pan[8] ? mask : 0;
-  ym2612.OPN.pan[9] = ym2612.OPN.pan[9] ? mask : 0;
-  ym2612.OPN.pan[10] = ym2612.OPN.pan[10] ? mask : 0;
-  ym2612.OPN.pan[11] = ym2612.OPN.pan[11] ? mask : 0;
+  /* restore TL table (in case DAC precision has changed) */
+  init_tables();
 }
