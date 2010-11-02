@@ -50,7 +50,7 @@ void config_load(void)
     char version[16];
     fread(version, 16, 1, fp); 
     fclose(fp);
-    if (strcmp(version,CONFIG_VERSION))
+    if (strncmp(version,CONFIG_VERSION,16))
       return;
 
     /* read file */
