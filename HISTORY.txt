@@ -1,4 +1,54 @@
 ---------------------------------------------------------------------------------------------------------
+Genesis Plus GX 1.4.1 (04/12/2010) (Eke-Eke)
+---------------------------------------------------------------------------------------------------------
+
+[Core/VDP]
+---------------
+* improved VBLANK flag accuracy, as observed on real hardware.
+* improved DMA operations accuracy, writes are now performed on a scanline basis: fixes Gaiares (flickering title screen).
+* improved DMA Fill timing accuracy.
+* fixed DMA with bad code values: fixes Williams Arcade Classics (corrupted gfx after soft reset).
+* fixed horizontal resolution changes during HBLANK: fixes Bugs Bunny in Double Trouble (2nd stage).
+* fixed Vertical Counter in interlace mode 1, as observed on real hardware.
+* fixed horizontal border width, as observed on real hardware.
+* various code improvments & optimizations.
+
+[Core/Extra]
+---------------
+* improved savestate format: added DMA, SVP, cartridge mapping & internal registers state informations
+* improved unlicensed ROM mappers emulation
+* added Chinese Fighters III mapper support
+* added Top Fighter mapper support
+* fixed Barver Battle Saga mapper support
+* fixed cartridge hardware soft-reset (Game Genie, SVP, ...)
+* fixed Game Genie registers byte reads
+
+[Gamecube/Wii]
+---------------
+* added message box when inputs config uses disconnected controllers.
+* added message box when settings are reseted to default on startup.
+* fixed default inputs configuration.
+* fixed memory leak in Cheat Menu causing spurious resets.
+* added an option to enable/disable automatic cheat activation
+* increased max number of cheat codes
+* optimized cheat codes requiring RAM patching.
+* improved default horizontal scaling to better match output from a real Mega Drive
+
+[Gamecube specific]
+---------------
+* fixed inverted keys in cheat menu.
+* fixed audio input frequency, now use exact audio hardware samplerate, as measured on my Game Cube (~48044 Hz),
+ (NB: Wii samplerate has been verified to be closer to 48000 Hz)
+
+[Wii specific]
+---------------
+* added the possibility for any wiimotes to be used as input device, regardless of the connected expansion controller.
+* fixed USB drive not being detected when application is loaded from USB (HBC), thanks to Tantric for the tips.
+
+
+
+
+---------------------------------------------------------------------------------------------------------
 Genesis Plus GX 1.4.0 (01/11/2010) (Eke-Eke)
 ---------------------------------------------------------------------------------------------------------
 
