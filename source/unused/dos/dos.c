@@ -382,13 +382,15 @@ void dos_update_input(void)
       free(temp);
     }
 
-    /* reinitialize HVC tables */
-    vctab = vdp_pal ? ((reg[1] & 8) ? vc_pal_240 : vc_pal_224) : vc_ntsc_224;
-    hctab = (reg[12] & 1) ? cycle2hc40 : cycle2hc32;
+    /* reinitialize VC max value */
+    vc_max = 0xEA + 24*vdp_pal;
+    if (reg[1] & 8)
+    {
+      vc_max += (28 - 20*vdp_pal);
+    }
 
     /* reinitialize overscan area */
-    bitmap.viewport.x = config.overscan ? 14 : 0;
-    bitmap.viewport.y = config.overscan ? (((reg[1] & 8) ? 0 : 8) + (vdp_pal ? 24 : 0)) : 0;
+    bitmap.viewport.y = (config.overscan & 1) ? (((reg[1] & 8) ? 0 : 8) + (vdp_pal ? 24 : 0)) : 0;
   }
 
   if(check_key(KEY_F10)) set_softreset();

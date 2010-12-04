@@ -6,7 +6,7 @@
 #
 # Defines :
 # -DLSB_FIRST : for little endian systems.
-# -DLOGERROR  : enable message log
+# -DLOGERROR  : enable message logging
 # -DLOGVDP    : enable VDP debug messages
 # -DLOGSOUND  : enable AUDIO debug messages
 
@@ -43,7 +43,8 @@ OBJECTS	+=      obj/sound.o	\
 		obj/sn76489.o   \
 		obj/ym2612.o    
 
-OBJECTS	+=	obj/Fir_Resampler.o \
+OBJECTS	+=	obj/Fir_Resampler.o
+OBJECTS	+=	obj/blip.o 
 
 OBJECTS	+=	obj/eq.o \
 
@@ -52,7 +53,7 @@ OBJECTS	+=      obj/sram.o      \
 		obj/svp.o	\
 		obj/ssp16.o	\
 		obj/ggenie.o	\
-		obj/datel.o	\
+		obj/areplay.o	\
 		obj/cart_hw.o	
 
 OBJECTS	+=	obj/main.o	\

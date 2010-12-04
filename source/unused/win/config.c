@@ -19,8 +19,8 @@ void set_config_defaults(void)
   config.lg             = 1.0;
   config.mg             = 1.0;
   config.hg             = 1.0;
-  config.lp_range       = 50;
-  config.rolloff        = 0.999;
+  config.lp_range       = 60;
+  config.rolloff        = 0.995;
   config.dac_bits       = 14;
 
   /* system options */

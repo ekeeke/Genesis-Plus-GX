@@ -10,7 +10,7 @@
 #define SOUND_FREQUENCY 48000
 #define SOUND_SAMPLES_SIZE  2048
 
-#define VIDEO_WIDTH 320
+#define VIDEO_WIDTH 320 
 #define VIDEO_HEIGHT 240
 
 int joynum = 0;
@@ -137,7 +137,6 @@ static int sdl_video_init()
   sdl_video.surf_screen  = SDL_SetVideoMode(VIDEO_WIDTH, VIDEO_HEIGHT, 16, SDL_SWSURFACE | fullscreen);
   sdl_video.surf_bitmap = SDL_CreateRGBSurface(SDL_SWSURFACE, 720, 576, 16, 0, 0, 0, 0);
   sdl_video.frames_rendered = 0;
-  SDL_WM_SetCaption("Genesis Plus/SDL", NULL);
   SDL_ShowCursor(0);
 
   return 1;
@@ -163,7 +162,7 @@ static void sdl_video_update()
       sdl_video.srect.w = VIDEO_WIDTH;
     }
     if (sdl_video.srect.h > VIDEO_HEIGHT)
-  {
+    {
       sdl_video.srect.y = (sdl_video.srect.h - VIDEO_HEIGHT) / 2;
       sdl_video.srect.h = VIDEO_HEIGHT;
     }
@@ -173,7 +172,7 @@ static void sdl_video_update()
     sdl_video.drect.h = sdl_video.srect.h;
     sdl_video.drect.x = (VIDEO_WIDTH - sdl_video.drect.w) / 2;
     sdl_video.drect.y = (VIDEO_HEIGHT - sdl_video.drect.h) / 2;
-
+    
     /* clear destination surface */
     SDL_FillRect(sdl_video.surf_screen, 0, 0);
 
@@ -248,7 +247,7 @@ static Uint32 sdl_sync_timer_callback(Uint32 interval)
   {
     int fps = vdp_pal ? (sdl_video.frames_rendered / 3) : sdl_video.frames_rendered;
     sdl_sync.ticks = sdl_video.frames_rendered = 0;
-    sprintf(caption, "Genesis Plus SDL - %d FPS", fps);
+    sprintf(caption,"%d fps - %s ", fps, rominfo.international);
     SDL_WM_SetCaption(caption, NULL);
   }
   return interval;
@@ -300,9 +299,6 @@ static int sdl_control_update(SDLKey keystate)
 
       case SDLK_F4:
       {
-        /*config.ntsc ++;
-        if (config.ntsc > 3) config.ntsc = 0;
-        bitmap.viewport.changed = 1;*/
         if (!turbo_mode) use_sound ^= 1;
         break;
       }
@@ -365,19 +361,21 @@ static int sdl_control_update(SDLKey keystate)
           free(temp);
         }
         
-        /* reinitialize HVC tables */
-        vctab = vdp_pal ? ((reg[1] & 8) ? vc_pal_240 : vc_pal_224) : vc_ntsc_224;
-        hctab = (reg[12] & 1) ? cycle2hc40 : cycle2hc32;
+        /* reinitialize VC max value */
+        vc_max = 0xEA + 24*vdp_pal;
+        if (reg[1] & 8)
+        {
+          vc_max += (28 - 20*vdp_pal);
+        }
 
-        /* reinitialize overscan area */
-        bitmap.viewport.x = (config.overscan & 2) ? ((reg[12] & 1) ? 16 : 12) : 0;
-        bitmap.viewport.y = (config.overscan & 1) ? (((reg[1] & 8) ? 0 : 8) + (vdp_pal ? 24 : 0)) : 0;
-        bitmap.viewport.changed = 1;
+        /* reinitialize display area */
+        bitmap.viewport.changed = 3;
         break;
       }
 
       case SDLK_F10:
       {
+        gen_softreset(1);
         gen_softreset(0);
         break;
       }
@@ -385,17 +383,17 @@ static int sdl_control_update(SDLKey keystate)
       case SDLK_F11:
       {
         config.overscan ^= 1;
-        bitmap.viewport.x = (config.overscan & 2) ? ((reg[12] & 1) ? 16 : 12) : 0;
-        bitmap.viewport.y = (config.overscan & 1) ? (((reg[1] & 8) ? 0 : 8) + (vdp_pal ? 24 : 0)) : 0;
-        bitmap.viewport.changed = 1;
+        bitmap.viewport.changed = 3;
         break;
       }
 
       case SDLK_F12:
       {
-        joynum ++;
-        if (joynum > MAX_DEVICES - 1)
-          joynum = 0;
+        while (input.dev[++joynum] == NO_DEVICE)
+        {
+          joynum = joynum % MAX_DEVICES;
+        }
+        joynum = joynum % MAX_DEVICES;
         break;
       }
 
@@ -460,8 +458,8 @@ int sdl_input_update(void)
       int state = SDL_GetRelativeMouseState(&x,&y);
 
       /* Sega Mouse range is -256;+256 */
-      input.analog[2][0] = x;
-      input.analog[2][1] = y;
+      input.analog[2][0] = x * 2;
+      input.analog[2][1] = y * 2;
 
       /* Vertical movement is upsidedown */
       if (!config.invert_mouse)
@@ -579,8 +577,7 @@ int main (int argc, char **argv)
   bitmap.viewport.changed = 3;
 
   /* initialize emulation */
-  audio_init(SOUND_FREQUENCY, vdp_pal ? 50:60);
-  //audio_init(SOUND_FREQUENCY, 1000000.0/16715.0);
+  audio_init(SOUND_FREQUENCY, vdp_pal ? 50.0 : 60.0);
   system_init();
 
   /* load SRAM */
