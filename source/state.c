@@ -22,16 +22,6 @@
 
 #include "shared.h"
 
-#define STATE_VERSION "GENPLUS-GX 1.4.0"
-
-#define load_param(param, size) \
-  memcpy(param, &state[bufferptr], size); \
-  bufferptr+= size;
-
-#define save_param(param, size) \
-  memcpy(&state[bufferptr], param, size); \
-  bufferptr+= size;
-
 int state_load(unsigned char *buffer)
 {
   /* buffer size */
@@ -48,9 +38,10 @@ int state_load(unsigned char *buffer)
   uncompress ((Bytef *)state, &outbytes, (Bytef *)(buffer + 4), inbytes);
 
   /* version check */
-  char version[16];
+  char version[17];
   load_param(version,16);
-  if (strncmp(version,STATE_VERSION,16))
+  version[16] = 0;
+  if (strncmp(version,STATE_VERSION,15))
   {
     free(state);
     return -1;
@@ -58,41 +49,42 @@ int state_load(unsigned char *buffer)
 
   /* reset system */
   system_reset();
-  m68k_memory_map[0].base = cart.base;
 
   // GENESIS
   load_param(work_ram, sizeof(work_ram));
   load_param(zram, sizeof(zram));
   load_param(&zstate, sizeof(zstate));
   load_param(&zbank, sizeof(zbank));
+  if (zstate == 3)
+  {
+    m68k_memory_map[0xa0].read8   = z80_read_byte;
+    m68k_memory_map[0xa0].read16  = z80_read_word;
+    m68k_memory_map[0xa0].write8  = z80_write_byte;
+    m68k_memory_map[0xa0].write16 = z80_write_word;
+  }
+  else
+  {
+    m68k_memory_map[0xa0].read8   = m68k_read_bus_8;
+    m68k_memory_map[0xa0].read16  = m68k_read_bus_16;
+    m68k_memory_map[0xa0].write8  = m68k_unused_8_w;
+    m68k_memory_map[0xa0].write16 = m68k_unused_16_w;
+  }
+
+  if (version[15] > 0x30)
+  {
+    /* extended state */
+    load_param(&mcycles_68k, sizeof(mcycles_68k));
+    load_param(&mcycles_z80, sizeof(mcycles_z80));
+  }
 
   // IO
   load_param(io_reg, sizeof(io_reg));
 
   // VDP
-  uint8 temp_reg[0x20];
-  load_param(sat, sizeof(sat));
-  load_param(vram, sizeof(vram));
-  load_param(cram, sizeof(cram));
-  load_param(vsram, sizeof(vsram));
-  load_param(temp_reg, sizeof(temp_reg));
-  load_param(&addr, sizeof(addr));
-  load_param(&addr_latch, sizeof(addr_latch));
-  load_param(&code, sizeof(code));
-  load_param(&pending, sizeof(pending));
-  load_param(&status, sizeof(status));
-  load_param(&dmafill, sizeof(dmafill));
-  load_param(&hint_pending, sizeof(hint_pending));
-  load_param(&vint_pending, sizeof(vint_pending));
-  load_param(&irq_status, sizeof(irq_status));
-  vdp_restore(temp_reg);
+  bufferptr += vdp_context_load(&state[bufferptr], version);
 
-  // FM 
-  YM2612Restore(&state[bufferptr]);
-  bufferptr+= YM2612GetContextSize();
-
-  // PSG
-  load_param(SN76489_GetContextPtr(),SN76489_GetContextSize());
+  // SOUND 
+  bufferptr += sound_context_load(&state[bufferptr], version);
 
   // 68000 
   uint16 tmp16;
@@ -120,6 +112,9 @@ int state_load(unsigned char *buffer)
   // Z80 
   load_param(&Z80, sizeof(Z80_Regs));
 
+  // Cartridge HW
+  bufferptr += cart_hw_context_load(&state[bufferptr], version);
+
   free(state);
   return 1;
 }
@@ -143,31 +138,17 @@ int state_save(unsigned char *buffer)
   save_param(zram, sizeof(zram));
   save_param(&zstate, sizeof(zstate));
   save_param(&zbank, sizeof(zbank));
+  save_param(&mcycles_68k, sizeof(mcycles_68k));
+  save_param(&mcycles_z80, sizeof(mcycles_z80));
 
   // IO
   save_param(io_reg, sizeof(io_reg));
 
   // VDP
-  save_param(sat, sizeof(sat));
-  save_param(vram, sizeof(vram));
-  save_param(cram, sizeof(cram));
-  save_param(vsram, sizeof(vsram));
-  save_param(reg, sizeof(reg));
-  save_param(&addr, sizeof(addr));
-  save_param(&addr_latch, sizeof(addr_latch));
-  save_param(&code, sizeof(code));
-  save_param(&pending, sizeof(pending));
-  save_param(&status, sizeof(status));
-  save_param(&dmafill, sizeof(dmafill));
-  save_param(&hint_pending, sizeof(hint_pending));
-  save_param(&vint_pending, sizeof(vint_pending));
-  save_param(&irq_status, sizeof(irq_status));
+  bufferptr += vdp_context_save(&state[bufferptr]);
 
-  // FM 
-  save_param(YM2612GetContextPtr(),YM2612GetContextSize());
-
-  // PSG 
-  save_param(SN76489_GetContextPtr(),SN76489_GetContextSize());
+  // SOUND
+  bufferptr += sound_context_save(&state[bufferptr]);
 
   // 68000 
   uint16 tmp16;
@@ -194,6 +175,9 @@ int state_save(unsigned char *buffer)
 
   // Z80 
   save_param(&Z80, sizeof(Z80_Regs));
+
+  // Cartridge HW
+  bufferptr += cart_hw_context_save(&state[bufferptr]);
 
   /* compress state file */
   unsigned long inbytes   = bufferptr;

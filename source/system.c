@@ -288,7 +288,7 @@ void system_init (void)
 void system_reset (void)
 {
   /* Cartridge Hardware */
-  cart_hw_reset();
+  cart_hw_reset(1);
 
   /* Genesis hardware */
   gen_hardreset(); 
@@ -317,11 +317,30 @@ void system_shutdown (void)
 /****************************************************************
  * Virtual Genesis Frame emulation
  ****************************************************************/
+
 void system_frame (int do_skip)
 {
-  int start   = 0;
-  int end     = 0;
-  int line    = 0;
+  /* line counter */
+  int line = 0;
+
+  /* Z80 interrupt flag */
+  int zirq = 0;
+  
+  /* reload H Counter */
+  int h_counter = reg[10];
+
+  /* reload V Counter */
+  v_counter = lines_per_frame - 1;
+
+  /* reset VDP FIFO */
+  fifo_write_cnt  = 0;
+  fifo_lastwrite  = 0;
+
+  /* reset line cycle count */
+  mcycles_vdp = 0;
+
+  /* update 6-Buttons & Lightguns */
+  input_refresh();
 
   /* display changed during VBLANK */
   if (bitmap.viewport.changed & 2)
@@ -339,33 +358,27 @@ void system_frame (int do_skip)
     }
 
     /* active screen height */
-    if (reg[1] & 8)
-    { 
-      bitmap.viewport.h = 240;
-      bitmap.viewport.y = (config.overscan & 1) ? (vdp_pal ? 24 : 0) : 0;
-    }
-    else
-    {
-      bitmap.viewport.h = 224;
-      bitmap.viewport.y = (config.overscan & 1) ? (vdp_pal ? 32 : 8) : 0;
-    }
+    bitmap.viewport.h = 224 + ((reg[1] & 8) << 1);
+    bitmap.viewport.y = (config.overscan & 1) * (8 - (reg[1] & 8) + vdp_pal*24);
 
     /* active screen width */
-    if (reg[12] & 1)
-    {
-      bitmap.viewport.w = 320;
-      bitmap.viewport.x = (config.overscan & 2) ? 16 : 0;
-    }
-    else
-    {
-      bitmap.viewport.w = 256;
-      bitmap.viewport.x = (config.overscan & 2) ? 12 : 0;
-    }
+    bitmap.viewport.w = 256 + ((reg[12] & 1) << 6);
+    bitmap.viewport.x = (config.overscan & 2) * 7;
   }
 
-  /* Z80 interrupt flag */
-  int zirq = 0;
-  
+  /* render last line of overscan */
+  if (!do_skip && bitmap.viewport.y)
+  {
+    render_line(v_counter);
+  }
+
+  /* parse first line of sprites */
+  object_which = 1;
+  if (reg[1] & 0x40)
+  {
+    parse_satb(0x80);
+  }
+
   /* clear VBLANK, DMA, FIFO FULL & field flags */
   status &= 0xFEE5;
 
@@ -374,142 +387,256 @@ void system_frame (int do_skip)
 
   /* even/odd field flag (interlaced modes only) */
   odd_frame ^= 1;
-  if (interlaced) status |= (odd_frame << 4);
-
-  /* reload HCounter */
-  int h_counter = reg[10];
-
-  /* reset VDP FIFO */
-  fifo_write_cnt  = 0;
-  fifo_lastwrite  = 0;
-
-  /* reset line cycle count */
-  mcycles_vdp = 0;
-
-  /* parse sprites on line zero */
-  object_which = 1;
-  if (reg[1] & 0x40) parse_satb(0x80);
-
-  /* process scanlines */
-  for (line = 0; line < lines_per_frame; line ++)
+  if (interlaced)
   {
-    /* update VCounter */
+    status |= (odd_frame << 4);
+  }
+
+  /* update VDP DMA */
+  if (dma_length)
+  {
+    vdp_update_dma(0);
+  }
+
+  /* run 68k & Z80 */
+  m68k_run(MCYCLES_PER_LINE);
+  if (zstate == 1)
+  {
+    z80_run(MCYCLES_PER_LINE);
+  }
+  else
+  {
+    mcycles_z80 = MCYCLES_PER_LINE;
+  }
+
+  /* run SVP chip */
+  if (svp)
+  {
+    ssp1601_run(SVP_cycles);
+  }
+
+  /* update line cycle count */
+  mcycles_vdp += MCYCLES_PER_LINE;
+
+  /* Active Display */
+  do
+  {
+    /* update V Counter */
     v_counter = line;
 
     /* update 6-Buttons & Lightguns */
     input_refresh();
 
-    /* update VDP DMA */
-    if (dma_length) vdp_update_dma();
-
-    /* vertical blanking */
-    if (status & 8)
+    /* H Interrupt */
+    if(--h_counter < 0)
     {
-      /* render overscan */
-      if (!do_skip && ((line < end) || (line >= start)))
-        render_line(line);
-
-      if (zirq)
+      /* reload H Counter */
+      h_counter = reg[10];
+      
+      /* interrupt level 4 */
+      hint_pending = 0x10;
+      if (reg[0] & 0x10)
       {
-        /* Z80 interrupt is asserted during one exact line */
-        m68k_run(mcycles_vdp + 788);
-        if (zstate == 1) z80_run(mcycles_vdp + 788);
-        else mcycles_z80 = mcycles_vdp + 788;
-
-        /* clear Z80 interrupt */
-        z80_set_irq_line(0, CLEAR_LINE);
-        zirq = 0;
+        irq_status = (irq_status & 2) | 0x14;
       }
     }
 
-    /* active display */
+    /* update VDP DMA */
+    if (dma_length)
+    {
+      vdp_update_dma(mcycles_vdp);
+    }
+
+    /* swap sprite line buffers */
+    object_which ^= 1;
+
+    /* render scanline */
+    if (!do_skip)
+    {
+      render_line(line);
+    }
+
+    /* parse next line of sprites */
+    if ((reg[1] & 0x40) && (line < (bitmap.viewport.h - 1)))
+    {
+      parse_satb(0x81 + line);
+    }
+
+    /* run 68k & Z80 */
+    m68k_run(mcycles_vdp + MCYCLES_PER_LINE);
+    if (zstate == 1)
+    {
+      z80_run(mcycles_vdp + MCYCLES_PER_LINE);
+    }
     else
     {
-      /* H Interrupt */
-      if(--h_counter < 0)
-      {
-        h_counter = reg[10];
-        hint_pending = 0x10;
-        if (reg[0] & 0x10)
-          irq_status = (irq_status & ~0x40) | 0x14;
-      }
-
-      /* end of active display */
-      if (line == bitmap.viewport.h)
-      {
-        /* set border area */
-        start = lines_per_frame - bitmap.viewport.y;
-        end   = bitmap.viewport.h + bitmap.viewport.y;
-
-        /* check viewport changes */
-        if (bitmap.viewport.h != bitmap.viewport.oh)
-        {
-          bitmap.viewport.oh = bitmap.viewport.h;
-          bitmap.viewport.changed |= 1;
-        }
-
-        if (bitmap.viewport.w != bitmap.viewport.ow)
-        {
-          bitmap.viewport.ow = bitmap.viewport.w;
-          bitmap.viewport.changed |= 1;
-        }
-
-        /* set VBLANK flag */
-        status |= 0x08;
-
-        /* render overscan */
-        if (!do_skip && (line < end))
-          render_line(line);
-
-        /* update inputs (doing this here fix Warriors of Eternal Sun) */
-        osd_input_Update();
-
-        /* delay between VINT flag & V Interrupt (Ex-Mutants, Tyrant) */
-        m68k_run(mcycles_vdp + 588);
-        status |= 0x80;
-
-        /* delay between VBLANK flag & V Interrupt (Dracula, OutRunners, VR Troopers) */
-        m68k_run(mcycles_vdp + 788);
-        if (zstate == 1) z80_run(mcycles_vdp + 788);
-        else mcycles_z80 = mcycles_vdp + 788;
-
-        /* V Interrupt */
-        vint_pending = 0x20;
-        if (reg[1] & 0x20)
-          irq_status = (irq_status & ~0x40) | 0x36;
-
-        /* Z80 interrupt */
-        z80_set_irq_line(0, ASSERT_LINE);
-        zirq = 1;
-      }
-      else
-      {
-        /* swap sprite line buffers */
-        object_which ^= 1;
-
-        /* render scanline */
-        if (!do_skip)
-        {
-          render_line(line);
-
-          /* parse sprites on next line */
-          if ((reg[1] & 0x40) && (line < (bitmap.viewport.h - 1)))
-            parse_satb(0x81 + line);
-        }
-      }
+      mcycles_z80 = mcycles_vdp + MCYCLES_PER_LINE;
     }
 
-    /* process line */
-    m68k_run(mcycles_vdp + MCYCLES_PER_LINE);
-    if (zstate == 1) z80_run(mcycles_vdp + MCYCLES_PER_LINE);
-    else mcycles_z80 = mcycles_vdp + MCYCLES_PER_LINE;
-    
-    /* SVP chip */
-    if (svp) ssp1601_run(SVP_cycles);
+    /* run SVP chip */
+    if (svp)
+    {
+      ssp1601_run(SVP_cycles);
+    }
 
     /* update line cycle count */
     mcycles_vdp += MCYCLES_PER_LINE;
   }
+  while (++line < bitmap.viewport.h);
+
+  /* end of active display */
+  v_counter = line;
+
+  /* update 6-Buttons & Lightguns */
+  input_refresh();
+
+  /* H Interrupt */
+  if(--h_counter < 0)
+  {
+    /* reload H Counter */
+    h_counter = reg[10];
+      
+    /* interrupt level 4 */
+    hint_pending = 0x10;
+    if (reg[0] & 0x10)
+    {
+      irq_status = (irq_status & 2) | 0x14;
+    }
+  }
+
+  /* overscan area */
+  int start = lines_per_frame - bitmap.viewport.y;
+  int end   = bitmap.viewport.h + bitmap.viewport.y;
+
+  /* check viewport changes */
+  if ((bitmap.viewport.w != bitmap.viewport.ow) || (bitmap.viewport.h != bitmap.viewport.oh))
+  {
+    bitmap.viewport.ow = bitmap.viewport.w;
+    bitmap.viewport.oh = bitmap.viewport.h;
+    bitmap.viewport.changed |= 1;
+  }
+
+  /* set VBLANK flag */
+  status |= 0x08;
+
+  /* update VDP DMA */
+  if (dma_length)
+  {
+    vdp_update_dma(mcycles_vdp);
+  }
+
+  /* render overscan */
+  if (!do_skip && (line < end))
+  {
+    render_line(line);
+  }
+
+  /* update inputs before VINT (Warriors of Eternal Sun) */
+  osd_input_Update();
+
+  /* delay between VINT flag & V Interrupt (Ex-Mutants, Tyrant) */
+  m68k_run(mcycles_vdp + 588);
+  status |= 0x80;
+
+  /* delay between VBLANK flag & V Interrupt (Dracula, OutRunners, VR Troopers) */
+  m68k_run(mcycles_vdp + 788);
+  if (zstate == 1)
+  {
+    z80_run(mcycles_vdp + 788);
+  }
+  else
+  {
+    mcycles_z80 = mcycles_vdp + 788;
+  }
+
+  /* V Interrupt */
+  vint_pending = 0x20;
+  if (reg[1] & 0x20)
+  {
+    irq_status = 0x16;
+  }
+
+  /* Z80 interrupt */
+  z80_set_irq_line(0, ASSERT_LINE);
+  zirq = 1;
+
+  /* run 68k & Z80 */
+  m68k_run(mcycles_vdp + MCYCLES_PER_LINE);
+  if (zstate == 1)
+  {
+    z80_run(mcycles_vdp + MCYCLES_PER_LINE);
+  }
+  else
+  {
+    mcycles_z80 = mcycles_vdp + MCYCLES_PER_LINE;
+  }
+
+  /* run SVP chip */
+  if (svp)
+  {
+    ssp1601_run(SVP_cycles);
+  }
+
+  /* update line cycle count */
+  mcycles_vdp += MCYCLES_PER_LINE;
+
+  /* increment line count */
+  line++;
+
+  /* Vertical Blanking */
+  do
+  {
+    /* update V Counter */
+    v_counter = line;
+
+    /* update 6-Buttons & Lightguns */
+    input_refresh();
+
+    /* render overscan */
+    if (!do_skip && ((line < end) || (line >= start)))
+    {
+      render_line(line);
+    }
+
+    /* Z80 interrupt is asserted for one line */
+    if (zirq)
+    {
+      m68k_run(mcycles_vdp + 788);
+      if (zstate == 1)
+      {
+        z80_run(mcycles_vdp + 788);
+      }
+      else
+      {
+        mcycles_z80 = mcycles_vdp + 788;
+      }
+
+      /* clear Z80 interrupt */
+      z80_set_irq_line(0, CLEAR_LINE);
+      zirq = 0;
+    }
+
+    /* run 68k & Z80 */
+    m68k_run(mcycles_vdp + MCYCLES_PER_LINE);
+    if (zstate == 1)
+    {
+      z80_run(mcycles_vdp + MCYCLES_PER_LINE);
+    }
+    else
+    {
+      mcycles_z80 = mcycles_vdp + MCYCLES_PER_LINE;
+    }
+
+    /* run SVP chip */
+    if (svp)
+    {
+      ssp1601_run(SVP_cycles);
+    }
+
+    /* update line cycle count */
+    mcycles_vdp += MCYCLES_PER_LINE;
+  }
+  while (++line < (lines_per_frame - 1));
 
   /* adjust cpu cycle count for next frame */
   mcycles_68k -= mcycles_vdp;

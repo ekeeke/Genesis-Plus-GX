@@ -476,8 +476,7 @@ void ctrl_io_write_word(unsigned int address, unsigned int data)
 
     case 0x30:  /* TIME */
     {
-      cart.hw.time_w(address & 0xfe, data >> 8);
-      cart.hw.time_w(address, data & 0xff);
+      cart.hw.time_w(address, data);
       return;
     }
 

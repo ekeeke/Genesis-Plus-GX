@@ -151,23 +151,26 @@ void areplay_shutdown(void)
   action_replay.enabled = 0;
 }
 
-void areplay_reset(int hard_reset)
+void areplay_reset(int hard)
 {
   if (action_replay.enabled)
   {
-    /* reset internal registers */
-    memset(action_replay.regs, 0, sizeof(action_replay.regs));
-    memset(action_replay.old, 0, sizeof(action_replay.old));
-    memset(action_replay.data, 0, sizeof(action_replay.data));
-    memset(action_replay.addr, 0, sizeof(action_replay.addr));
-
-    /* by default, internal ROM is mapped at $000000-$00FFFF */
-    m68k_memory_map[0].base = action_replay.rom;
-
-    /* internal RAM is cleared on power ON */
-    if (hard_reset)
+    if (hard || (action_replay.status == AR_SWITCH_TRAINER))
     {
-      memset(action_replay.ram,0xff,0x10000);
+      /* reset internal registers */
+      memset(action_replay.regs, 0, sizeof(action_replay.regs));
+      memset(action_replay.old, 0, sizeof(action_replay.old));
+      memset(action_replay.data, 0, sizeof(action_replay.data));
+      memset(action_replay.addr, 0, sizeof(action_replay.addr));
+
+      /* by default, internal ROM is mapped at $000000-$00FFFF */
+      m68k_memory_map[0].base = action_replay.rom;
+
+      /* reset internal RAM on power-on */
+      if (hard)
+      {
+        memset(action_replay.ram,0xff,0x10000);
+      }
     }
   }
 }

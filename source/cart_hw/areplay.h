@@ -28,7 +28,7 @@
 
 extern void areplay_init(void);
 extern void areplay_shutdown(void);
-extern void areplay_reset(int hard_reset);
+extern void areplay_reset(int hard);
 extern void areplay_set_status(int status);
 extern int areplay_get_status(void);
 

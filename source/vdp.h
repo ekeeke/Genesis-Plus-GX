@@ -30,15 +30,11 @@ extern uint8 vram[0x10000];
 extern uint8 cram[0x80];
 extern uint8 vsram[0x80];
 extern uint8 reg[0x20];
-extern uint16 addr;
-extern uint16 addr_latch;
-extern uint8 code;
-extern uint8 pending;
-extern uint16 status;
-extern uint8 dmafill;
 extern uint8 hint_pending;
 extern uint8 vint_pending;
 extern uint8 irq_status;
+extern uint16 status;
+extern uint32 dma_length;
 
 /* Global variables */
 extern uint16 ntab;
@@ -55,8 +51,6 @@ extern uint8 playfield_shift;
 extern uint8 playfield_col_mask;
 extern uint16 playfield_row_mask;
 extern uint16 v_counter;
-extern uint32 hvc_latch;
-extern uint32 dma_length;
 extern int32 fifo_write_cnt;
 extern uint32 fifo_lastwrite;
 extern uint8 im2_flag;
@@ -64,21 +58,16 @@ extern uint8 interlaced;
 extern uint8 odd_frame;
 extern uint8 vdp_pal;
 extern uint16 lines_per_frame;
-
-extern const uint8 vc_ntsc_224[262];
-extern const uint8 vc_pal_224[313];
-extern const uint8 vc_pal_240[313];
-extern const uint8 cycle2hc32[3420];
-extern const uint8 cycle2hc40[3420];
-extern const uint8 *vctab;
-extern const uint8 *hctab;
+extern uint32 hvc_latch;
+extern uint32 vc_max;
 
 /* Function prototypes */
 extern void vdp_init(void);
 extern void vdp_reset(void);
 extern void vdp_shutdown(void);
-extern void vdp_restore(uint8 *vdp_regs);
-extern void vdp_update_dma();
+extern int vdp_context_save(uint8 *state);
+extern int vdp_context_load(uint8 *state, char *version);
+extern void vdp_update_dma(unsigned int cycles);
 extern void vdp_ctrl_w(unsigned int data);
 extern unsigned int vdp_ctrl_r(unsigned int cycles);
 extern void vdp_data_w(unsigned int data);

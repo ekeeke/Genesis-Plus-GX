@@ -2,7 +2,7 @@
  *  Genesis Plus
  *  Cartridge Hardware support
  *
- *  Copyright (C) 2007, 2008, 2009  Eke-Eke (GCN/Wii port)
+ *  Copyright (C) 2007, 2008, 2009, 2010  Eke-Eke (GCN/Wii port)
  *
  *  Lots of protection mechanism have been discovered by Haze
  *  (http://haze.mameworld.info/)
@@ -38,8 +38,8 @@ typedef struct
   uint8 regs[4];                                            /* internal registers (R/W) */
   uint32 mask[4];                                           /* registers address mask */
   uint32 addr[4];                                           /* registers address */
-  uint16 realtec;                                           /* bit 0: realtec mapper detected, bit 1: bootrom enabled */
-  uint16 bankshift;                                         /* cartridge with bankshift mecanism */
+  uint16 realtec;                                           /* realtec mapper */
+  uint16 bankshift;                                         /* cartridge with bankshift mecanism reseted on soft-reset */
   unsigned int (*time_r)(unsigned int address);             /* !TIME signal ($a130xx) read handler  */
   void (*time_w)(unsigned int address, unsigned int data);  /* !TIME signal ($a130xx) write handler */
   unsigned int (*regs_r)(unsigned int address);             /* cart hardware registers read handler  */
@@ -63,7 +63,9 @@ extern T_CART cart;
 
 /* Function prototypes */
 extern void cart_hw_init();
-extern void cart_hw_reset();
+extern void cart_hw_reset(int hard);
+extern int cart_hw_context_save(uint8 *state);
+extern int cart_hw_context_load(uint8 *state, char *version);
 
 #endif
 

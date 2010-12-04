@@ -99,7 +99,9 @@ static void lightgun_update(int num)
     {
       /* External Interrupt ? */
       if (reg[11] & 0x08) 
-        irq_status = (irq_status & ~0x40) | 0x12;
+      {
+        irq_status = (irq_status & 4) | 0x12;
+      }
 
       /* HV Counter Latch:
         1) some games does not enable HVC latch but instead use bigger X offset 
@@ -107,11 +109,15 @@ static void lightgun_update(int num)
         2) for games using H40 mode, the gun routine scales up the Hcounter value
             --> H-Counter range is approx. 290 dot clocks
       */
-      hvc_latch = 0x10000 | (vctab[v_counter] << 8);
+      hvc_latch = 0x10000 | (v_counter << 8);
       if (reg[12] & 1) 
+      {
         hvc_latch |= hc_320[((input.analog[num][0] * 290) / (2 * 320) + x_offset) % 210];
+      }
       else
-        hvc_latch |= hc_256[(input.analog[num][0] / 2 + x_offset)%171];
+      {
+        hvc_latch |= hc_256[(input.analog[num][0] / 2 + x_offset) % 171];
+      }
     }
   }
 }
@@ -345,9 +351,9 @@ static inline unsigned int gamepad_read(int i)
 
     /* 6buttons specific (taken from gen-hw.txt) */
     /* A 6-button gamepad allows the extra buttons to be read based on how */
-      /* many times TH is switched from 1 to 0 (and not 0 to 1). Observe the */
-      /* following sequence */
-      /*
+    /* many times TH is switched from 1 to 0 (and not 0 to 1). Observe the */
+    /* following sequence */
+    /*
        TH = 1 : ?1CBRLDU    3-button pad return value
        TH = 0 : ?0SA00DU    3-button pad return value
        TH = 1 : ?1CBRLDU    3-button pad return value

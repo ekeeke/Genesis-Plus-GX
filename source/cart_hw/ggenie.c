@@ -34,10 +34,11 @@ static struct
   uint32 addr[6];
 } ggenie;
 
-static void ggenie_write_byte(uint32 address, uint32 data);
-static void ggenie_write_word(uint32 address, uint32 data);
-static void ggenie_write_regs(uint8 offset, uint32 data, uint8 type);
-static uint32 ggenie_read_regs(uint32 address);
+static unsigned int ggenie_read_byte(unsigned int address);
+static unsigned int ggenie_read_word(unsigned int address);
+static void ggenie_write_byte(unsigned int address, unsigned int data);
+static void ggenie_write_word(unsigned int address, unsigned int data);
+static void ggenie_write_regs(unsigned int offset, unsigned int data);
 
 void ggenie_init(void)
 {
@@ -87,29 +88,32 @@ void ggenie_shutdown(void)
   }
 }
 
-void ggenie_reset(void)
+void ggenie_reset(int hard)
 {
-  if (!ggenie.enabled)
-    return;
-  
-  /* clear codes */
-  ggenie_switch(0);
+  if (ggenie.enabled)
+  {
+    if (hard)
+    {
+      /* clear codes */
+      ggenie_switch(0);
 
-  /* reset internal state */
-  memset(ggenie.regs,0,sizeof(ggenie.regs));
-  memset(ggenie.old,0,sizeof(ggenie.old));
-  memset(ggenie.data,0,sizeof(ggenie.data));
-  memset(ggenie.addr,0,sizeof(ggenie.addr));
+      /* reset internal state */
+      memset(ggenie.regs,0,sizeof(ggenie.regs));
+      memset(ggenie.old,0,sizeof(ggenie.old));
+      memset(ggenie.data,0,sizeof(ggenie.data));
+      memset(ggenie.addr,0,sizeof(ggenie.addr));
+    }
 
-  /* Game Genie ROM is mapped at $000000-$007fff */
-  m68k_memory_map[0].base = ggenie.rom;
+    /* Game Genie ROM is mapped at $000000-$007fff */
+    m68k_memory_map[0].base = ggenie.rom;
 
-  /* Internal registers are mapped at $000000-$00001f */
-  m68k_memory_map[0].write8   = ggenie_write_byte;
-  m68k_memory_map[0].write16  = ggenie_write_word;
+    /* Internal registers are mapped at $000000-$00001f */
+    m68k_memory_map[0].write8   = ggenie_write_byte;
+    m68k_memory_map[0].write16  = ggenie_write_word;
 
-  /* Disable registers reads */
-  m68k_memory_map[0].read16 = NULL;
+    /* Disable registers reads */
+    m68k_memory_map[0].read16 = NULL;
+  }
 }
 
 void ggenie_switch(int enable)
@@ -156,71 +160,75 @@ void ggenie_switch(int enable)
   }
 }
 
-/* Byte write handler */
-/* Note: 2nd revision of the Game Genie software use byte writes to set register values on exit */
-static void ggenie_write_byte(uint32 address, uint32 data)
+static unsigned int ggenie_read_byte(unsigned int address)
+{
+  unsigned int data = ggenie.regs[(address >> 1) & 0x1f];
+  return ((address & 1) ? (data & 0xff) : ((data >> 8) & 0xff));
+}
+
+static unsigned int ggenie_read_word(unsigned int address)
+{
+  return ggenie.regs[(address >> 1) & 0x1f];
+}
+
+static void ggenie_write_byte(unsigned int address, unsigned int data)
 {
   /* Register offset */
   uint8 offset = (address >> 1) & 0x1f;
 
-  /* Write internal register (lower or upper BYTE) */
-  ggenie_write_regs(offset,data,address & 1);
+  /* /LWR and /UWR are used to decode writes */
+  if (address & 1)
+  {
+    data = (ggenie.regs[offset] & 0xff00) | (data & 0xff);
+  }
+  else
+  {
+    data = (ggenie.regs[offset] & 0x00ff) | ((data & 0xff) << 8);
+  }
+
+  /* Update internal register */
+  ggenie_write_regs(offset,data);
 }
 
-/* Word write handler */
-static void ggenie_write_word(uint32 address, uint32 data)
+static void ggenie_write_word(unsigned int address, unsigned int data)
 {
   /* Register offset */
   uint8 offset = (address >> 1) & 0x1f;
 
   /* Write internal register (full WORD) */
-  ggenie_write_regs(offset,data,2);
+  ggenie_write_regs(offset,data);
 }
 
-static void ggenie_write_regs(uint8 offset, uint32 data, uint8 type)
+static void ggenie_write_regs(unsigned int offset, unsigned int data)
 {
-  /* access type */
-  switch (type) 
-  {
-    case 0:   /* upper byte write */
-      data = (ggenie.regs[offset] & 0x00ff) | ((data & 0xff) << 8);
-      break;
-
-    case 1:   /* lower byte write */
-      data = (ggenie.regs[offset] & 0xff00) | (data & 0xff);
-      break;
-
-    default:
-      break;
-  }
-
   /* update internal register */
   ggenie.regs[offset] = data;
 
   /* Mode Register */
   if (offset == 0)
   {
-    /* by default, registers are write only */
-    m68k_memory_map[0].read16 = NULL;
-
-    /* MODE bits */
+    /* MODE bit */
     if (data & 0x400)
     {
       /* $0000-$7ffff reads mapped to Cartridge ROM */
       m68k_memory_map[0].base = cart.rom;
+      m68k_memory_map[0].read8 = NULL; 
       m68k_memory_map[0].read16 = NULL; 
     }
     else
     {
       /* $0000-$7ffff reads mapped to Game Genie ROM */
       m68k_memory_map[0].base = ggenie.rom;
+      m68k_memory_map[0].read8 = NULL; 
       m68k_memory_map[0].read16 = NULL; 
 
+      /* READ_ENABLE bit */
       if (data & 0x200)
       {
         /* $0000-$7ffff reads mapped to Game Genie Registers */
         /* code doing this should execute in RAM so we don't need to modify base address */
-        m68k_memory_map[0].read16 = ggenie_read_regs; 
+        m68k_memory_map[0].read8 = ggenie_read_byte; 
+        m68k_memory_map[0].read16 = ggenie_read_word; 
       }
     }
 
@@ -253,6 +261,11 @@ static void ggenie_write_regs(uint8 offset, uint32 data, uint8 type)
       /* on real HW, address decoding would be done on each reads */
       ggenie_switch(1);
     }
+    else
+    {
+      m68k_memory_map[0].write8   = ggenie_write_byte;
+      m68k_memory_map[0].write16  = ggenie_write_word;
+    }
   }
 
   /* RESET register */
@@ -261,9 +274,3 @@ static void ggenie_write_regs(uint8 offset, uint32 data, uint8 type)
     ggenie.regs[1] |= 1;
   }
 }
-
-static uint32 ggenie_read_regs(uint32 address)
-{
-  return ggenie.regs[(address >> 1) & 0x1f];
-}
-

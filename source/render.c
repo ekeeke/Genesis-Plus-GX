@@ -1754,12 +1754,7 @@ void render_line(int line)
   int width     = bitmap.viewport.w;
   int x_offset  = bitmap.viewport.x;
 
-  /* background color (blanked display or vertical borders) */
-  if (!(reg[1] & 0x40) || (status & 8))
-  {
-    memset(&lb[0x20 - x_offset], 0x40, width + 2*x_offset);
-  }
-  else
+  if ((reg[1] & 0x40) && (line < bitmap.viewport.h))
   {
     /* update pattern generator */
     if (bg_list_index)
@@ -1826,6 +1821,11 @@ void render_line(int line)
       memset(&lb[0x20 + width], 0x40, x_offset);
     }
   }
+  else
+  {
+    /* background color (blanked display or vertical borders) */
+    memset(&lb[0x20 - x_offset], 0x40, width + 2*x_offset);
+  }
 
   /* pixel color remapping */
   remap_buffer(line);
@@ -1833,15 +1833,12 @@ void render_line(int line)
 
 void remap_buffer(int line)
 {
-  /* display disabled */
-  if (reg[0] & 0x01) return;
-  
   int width = bitmap.viewport.w + 2*bitmap.viewport.x;
 
   /* get line offset from framebuffer */
   line = (line + bitmap.viewport.y) % lines_per_frame;
 
-  /* double resolution mode */
+  /* interlaced modes */
   if (config.render && interlaced)
     line = (line << 1) + odd_frame;
 

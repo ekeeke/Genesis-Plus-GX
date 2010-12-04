@@ -142,37 +142,44 @@ void gen_hardreset(void)
   mcycles_68k = mcycles_z80 = (uint32)((MCYCLES_PER_LINE * lines_per_frame) * ((double)rand() / (double)RAND_MAX));
 
   /* Z80 bus is released & Z80 is stopped */
+  zstate = 0;
   m68k_memory_map[0xa0].read8   = m68k_read_bus_8;
   m68k_memory_map[0xa0].read16  = m68k_read_bus_16;
   m68k_memory_map[0xa0].write8  = m68k_unused_8_w;
   m68k_memory_map[0xa0].write16 = m68k_unused_16_w;
-  zstate = 0;
 
   /* Assume default bank is $000000-$007FFF */
   zbank = 0;  
 
-  /* Reset 68k, Z80 & YM2612 */
+  /* Reset 68k & Z80 */
   m68k_pulse_reset();
   z80_reset();
-  YM2612ResetChip();
 }
 
 void gen_softreset(int state)
 {
   if (state)
   {
-    /* Halt 68k, Z80 & YM2612 */
+    /* Halt 68k */
     m68k_pulse_halt();
+
+    /* Z80 bus is released & Z80 is reseted */
     zstate = 0;
-    YM2612ResetChip();
+    m68k_memory_map[0xa0].read8   = m68k_read_bus_8;
+    m68k_memory_map[0xa0].read16  = m68k_read_bus_16;
+    m68k_memory_map[0xa0].write8  = m68k_unused_8_w;
+    m68k_memory_map[0xa0].write16 = m68k_unused_16_w;
+
+    /* Assume default bank is $000000-$007FFF */
+    zbank = 0;  
+
+    /* Reset YM2612 */
+    fm_reset(0);
   }
   else
   {
-    /* Reset PRO Action Replay (if switch is in TRAINER position) */
-    if (areplay_get_status() == AR_SWITCH_TRAINER)
-    {
-      areplay_reset(0);
-    }
+    /* Reset Cartridge Hardware */
+    cart_hw_reset(0);
 
     /* 68k & Z80 could restart anywhere in VDP frame (Bonkers, Eternal Champions, X-Men 2) */
     mcycles_68k = mcycles_z80 = (uint32)((MCYCLES_PER_LINE * lines_per_frame) * ((double)rand() / (double)RAND_MAX));
@@ -180,7 +187,7 @@ void gen_softreset(int state)
     /* Reset 68k, Z80 & YM2612 */
     m68k_pulse_reset();
     z80_reset();
-    YM2612ResetChip();
+    fm_reset(0);
   }
 }
 

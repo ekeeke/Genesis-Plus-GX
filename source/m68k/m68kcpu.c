@@ -862,7 +862,7 @@ void m68k_run (unsigned int cycles)
       CPU_INT_LEVEL = (irq_status & 6) << 8;
 
       /* IRQ was triggered during previous instruction */
-      if (irq_status & 0x40)
+      if (irq_status & 0x20)
       {
         /* one instruction latency */
         REG_IR = m68ki_read_imm_16();

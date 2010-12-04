@@ -458,9 +458,14 @@ static void gxSetAspectRatio(int *xscale, int *yscale)
   {
     /* vertical borders */
     if (config.overscan & 1)
+    {
+      /* Genesis outputs 288(PAL) or 243(NTSC) lines */
+      /* Wii & Game Cube output 286/574(PAL50) or 240/480 (PAL60 & NTSC) lines  */
       *yscale = vdp_pal + ((gc_pal && !config.render) ? 143 : 120);
+    }
     else
     {
+      /* overscan is simulated (black) */
       *yscale = bitmap.viewport.h / 2;
       if (vdp_pal && (!gc_pal || config.render))
         *yscale = *yscale * 240 / 288;
@@ -470,29 +475,45 @@ static void gxSetAspectRatio(int *xscale, int *yscale)
 
     /* horizontal borders */
     if (config.overscan & 2)
-      *xscale = 358 + ((reg[12] & 1)*2) - gc_pal;
+    {
+      /* max visible range is ~712 pixels, not 720 */
+      *xscale = 356; 
+    }
     else
-      *xscale = 325 + ((reg[12] & 1)*2) - gc_pal;
+    {
+      /* overscan is simulated (black) */
+      *xscale = 327;
+    }
 
     /* 16/9 correction */
     if (config.aspect & 2)
+    {
       *xscale = (*xscale * 3) / 4;
+    }
   }
 
-  /* manual aspect ratio (default is fullscreen) */
+  /* manual aspect ratio (default is unscaled raw) */
   else
   {
     /* vertical borders */
     if (config.overscan & 1)
+    {
       *yscale = (gc_pal && !config.render) ? (vdp_pal ? (268*144 / bitmap.viewport.h):143) : (vdp_pal ? (224*144 / bitmap.viewport.h):120);
+    }
     else
+    {
       *yscale = (gc_pal && !config.render) ? 134 : 112;
+    }
 
     /* horizontal borders */
     if (config.overscan & 2)
-      *xscale = 352;
+    {
+      *xscale = 348;
+    }
     else
+    {
       *xscale = 320;
+    }
 
     /* add user scaling */
     *xscale += config.xscale;
@@ -565,9 +586,11 @@ static void gxResetScaler(u32 width)
   int xshift = (config.xshift * rmode->fbWidth) / rmode->viWidth;
   int yshift = (config.yshift * rmode->efbHeight) / rmode->viHeight;
 
-  /* Configure GX vertical scaling (480i/576i/480p) */
+  /* Double Resolution modes (480i/576i/480p) */
   if (config.render)
+  {
     yscale = yscale * 2;
+  }
 
   /* Set GX scaler (Vertex Position matrix) */
   square[6] = square[3]  = xshift + xscale;
@@ -834,7 +857,7 @@ void gxCopyScreenshot(gx_texture *texture)
   GX_InvalidateTexAll();
 
   /* scale texture to EFB width */
-  s32 w = bitmap.viewport.x ? 704 : 640;
+  s32 w = bitmap.viewport.x ? 696 : 640;
   s32 h = (bitmap.viewport.h + 2*bitmap.viewport.y) * 2;
   s32 x = -w/2;
   s32 y = -(240+ 2*bitmap.viewport.y);

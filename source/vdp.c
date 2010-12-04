@@ -42,16 +42,12 @@ uint8 vram[0x10000];  /* Video RAM (64Kx8) */
 uint8 cram[0x80];     /* On-chip color RAM (64x9) */
 uint8 vsram[0x80];    /* On-chip vertical scroll RAM (40x11) */
 uint8 reg[0x20];      /* Internal VDP registers (23x8) */
-uint16 addr;          /* Address register */
-uint16 addr_latch;    /* Latched A15, A14 of address */
-uint8 code;           /* Code register */
-uint8 pending;        /* Pending write flag */
-uint16 status;        /* VDP status flags */
-uint8 dmafill;        /* next VDP Write is DMA Fill */
 uint8 hint_pending;   /* 0= Line interrupt is pending */
 uint8 vint_pending;   /* 1= Frame interrupt is pending */
 uint8 irq_status;     /* 68K IRQ status */
-
+uint16 status;        /* VDP status flags */
+uint32 dma_length;    /* DMA remaining length */
+ 
 /* Global variables */
 uint16 ntab;                      /* Name table A base address */
 uint16 ntbb;                      /* Name table B base address */
@@ -66,16 +62,16 @@ uint8 bg_pattern_cache[0x80000];  /* Cached and flipped patterns */
 uint8 playfield_shift;            /* Width of planes A, B (in bits) */
 uint8 playfield_col_mask;         /* Vertical scroll mask */
 uint16 playfield_row_mask;        /* Horizontal scroll mask */
-uint16 v_counter;                 /* VDP scanline counter */
-uint32 hvc_latch;                 /* latched HVCounter (INT2) */
-uint32 dma_length;                /* Current DMA remaining bytes */
-int32 fifo_write_cnt;             /* VDP writes fifo count */
-uint32 fifo_lastwrite;            /* last VDP write cycle */
 uint8 odd_frame;                  /* 1: odd field, 0: even field */
 uint8 im2_flag;                   /* 1= Interlace mode 2 is being used */
 uint8 interlaced;                 /* 1: Interlaced mode 1 or 2 */
 uint8 vdp_pal;                    /* 1: PAL , 0: NTSC (default) */
+uint16 v_counter;                 /* VDP scanline counter */
 uint16 lines_per_frame;           /* PAL: 313 lines, NTSC: 262 lines */
+int32 fifo_write_cnt;             /* VDP writes fifo count */
+uint32 fifo_lastwrite;            /* last VDP write cycle */
+uint32 hvc_latch;                 /* latched HVCounter (INT2) */
+uint32 vc_max;                    /* Vertical Counter max value */
 
 
 /* Tables that define the playfield layout */
@@ -84,11 +80,18 @@ static const uint8 col_mask_table[]   = { 0x0F, 0x1F, 0x0F, 0x3F };
 static const uint16 row_mask_table[]  = { 0x0FF, 0x1FF, 0x2FF, 0x3FF };
 
 static uint8 border;          /* Border color index */
+static uint8 dma_type;        /* DMA mode */
+static uint8 dmafill;         /* next VDP Write is DMA Fill */
+static uint8 pending;         /* Pending write flag */
+static uint8 code;            /* Code register */
+static uint16 addr;           /* Address register */
+static uint16 addr_latch;     /* Latched A15, A14 of address */
+static uint16 fill_data;      /* VRAM Fill data */
 static uint16 sat_base_mask;  /* Base bits of SAT */
 static uint16 sat_addr_mask;  /* Index bits of SAT */
 static uint32 dma_endCycles;  /* 68k cycles to DMA end */
-static uint32 dma_type;       /* DMA mode */
 static uint32 fifo_latency;   /* CPU access latency */
+static int cached_write;      /* 2nd part of 32-bit CTRL port write */
 
 /* DMA Timings
 
@@ -120,7 +123,7 @@ static uint32 fifo_latency;   /* CPU access latency */
 static const uint8 dma_rates[16] = {
   8,   83,  9, 102, /* 68K to VRAM (1 word = 2 bytes) */
   16, 167, 18, 205, /* 68K to CRAM or VSRAM */
-  15, 166, 17, 204, /* DMA fill */
+  16, 167, 18, 205, /* DMA fill (same as above, dma length is adjusted to take first write in account)*/
   8,   83,  9, 102, /* DMA Copy */
 };
 
@@ -130,9 +133,9 @@ static const uint8 dma_rates[16] = {
 static void fifo_update(unsigned int cycles);
 static void data_w(unsigned int data);
 static void reg_w(unsigned int r, unsigned int d);
-static void dma_copy(void);
-static void dma_vbus (void);
-static void dma_fill(unsigned int data);
+static void dma_copy(int length);
+static void dma_vbus (int length);
+static void dma_fill(int length, unsigned int data);
 
 /*--------------------------------------------------------------------------*/
 /* Init, reset, shutdown functions                                          */
@@ -141,6 +144,7 @@ void vdp_init(void)
 {
   /* PAL/NTSC timings */
   lines_per_frame = vdp_pal ? 313: 262;
+  status = (status & ~1) | vdp_pal;
 }
 
 void vdp_reset(void)
@@ -161,6 +165,7 @@ void vdp_reset(void)
   hvc_latch       = 0;
   v_counter       = 0;
   dmafill         = 0;
+  fill_data       = 0;
   dma_length      = 0;
   dma_endCycles   = 0;
   dma_type        = 0;
@@ -170,8 +175,11 @@ void vdp_reset(void)
   fifo_write_cnt  = 0;
   fifo_lastwrite  = 0;
   fifo_latency    = 190;
+  cached_write    = -1;
 
-  status  = vdp_pal | 0x0200;  /* FIFO empty */
+  vc_max = 0xEA + 24*vdp_pal;
+
+  status = vdp_pal | 0x200;  /* FIFO empty flag */
 
   ntab = 0;
   ntbb = 0;
@@ -190,27 +198,18 @@ void vdp_reset(void)
   memset ((char *) bg_name_list, 0, sizeof (bg_name_list));
   memset ((char *) bg_pattern_cache, 0, sizeof (bg_pattern_cache));
 
-  playfield_shift = 6;
-  playfield_col_mask = 0x0F;
-  playfield_row_mask = 0x0FF;
-
-  /* reset HVC tables */
-  vctab = vdp_pal ? vc_pal_224 : vc_ntsc_224;
+  /* default HVC tables */
   hctab = cycle2hc32;
 
-  /* reset display area */
+  /* default display area */
   bitmap.viewport.w   = 256;
   bitmap.viewport.h   = 224;
   bitmap.viewport.ow  = 256;
   bitmap.viewport.oh  = 224;
 
-  /* reset overscan area */
-  bitmap.viewport.x = 0;
-  bitmap.viewport.y = 0;
-  if (config.overscan & 1)
-    bitmap.viewport.y = vdp_pal ? 32 : 8;
-  if (config.overscan & 2)
-    bitmap.viewport.x = 12;
+  /* default overscan area */
+  bitmap.viewport.x = (config.overscan & 2) * 7;
+  bitmap.viewport.y = (config.overscan & 1) * (8 + 24*vdp_pal);
 
   /* initialize registers if OS ROM is not used */
   if (config.tmss == 1)
@@ -226,18 +225,76 @@ void vdp_reset(void)
 void vdp_shutdown(void)
 {}
 
-void vdp_restore(uint8 *vdp_regs)
+int vdp_context_save(uint8 *state)
 {
-  int i;
-  
+  int bufferptr = 0;
+
+  save_param(sat, sizeof(sat));
+  save_param(vram, sizeof(vram));
+  save_param(cram, sizeof(cram));
+  save_param(vsram, sizeof(vsram));
+  save_param(reg, sizeof(reg));
+  save_param(&addr, sizeof(addr));
+  save_param(&addr_latch, sizeof(addr_latch));
+  save_param(&code, sizeof(code));
+  save_param(&pending, sizeof(pending));
+  save_param(&status, sizeof(status));
+  save_param(&dmafill, sizeof(dmafill));
+  save_param(&hint_pending, sizeof(hint_pending));
+  save_param(&vint_pending, sizeof(vint_pending));
+  save_param(&irq_status, sizeof(irq_status));
+
+  /* extended state */
+  save_param(&dma_length, sizeof(dma_length));
+  save_param(&dma_type, sizeof(dma_type));
+  save_param(&fill_data, sizeof(fill_data));
+  save_param(&cached_write, sizeof(cached_write));
+
+  return bufferptr;
+}
+
+int vdp_context_load(uint8 *state, char *version)
+{
+  int i, bufferptr = 0;
+  uint8 temp_reg[0x20];
+
+  load_param(sat, sizeof(sat));
+  load_param(vram, sizeof(vram));
+  load_param(cram, sizeof(cram));
+  load_param(vsram, sizeof(vsram));
+  load_param(temp_reg, sizeof(temp_reg));
+  load_param(&addr, sizeof(addr));
+  load_param(&addr_latch, sizeof(addr_latch));
+  load_param(&code, sizeof(code));
+  load_param(&pending, sizeof(pending));
+  load_param(&status, sizeof(status));
+  load_param(&dmafill, sizeof(dmafill));
+  load_param(&hint_pending, sizeof(hint_pending));
+  load_param(&vint_pending, sizeof(vint_pending));
+  load_param(&irq_status, sizeof(irq_status));
+
+  /* extended state */
+  if (version[15] > 0x30)
+  {
+    load_param(&dma_length, sizeof(dma_length));
+    load_param(&dma_type, sizeof(dma_type));
+    load_param(&fill_data, sizeof(fill_data));
+    load_param(&cached_write, sizeof(cached_write));
+  }
+
+  /* restore VDP registers */
   for (i=0;i<0x20;i++) 
   {
-    reg_w(i, vdp_regs[i]);
+    reg_w(i, temp_reg[i]);
   }
 
   /* reinitialize HVC tables */
-  vctab = (vdp_pal) ? ((reg[1] & 8) ? vc_pal_240 : vc_pal_224) : vc_ntsc_224;
   hctab = (reg[12] & 1) ? cycle2hc40 : cycle2hc32;
+  vc_max = 0xEA + 24*vdp_pal;
+  if (reg[1] & 8)
+  {
+    vc_max += (28 - 20*vdp_pal);
+  }
 
   /* restore FIFO timings */
   fifo_latency = (reg[12] & 1) ? 190 : 214;
@@ -256,6 +313,8 @@ void vdp_restore(uint8 *vdp_regs)
   color_update(0x00, *(uint16 *)&cram[border << 1]);
   for(i = 1; i < 0x40; i += 1)
     color_update(i, *(uint16 *)&cram[i << 1]);
+
+  return bufferptr;
 }
 
 
@@ -263,66 +322,125 @@ void vdp_restore(uint8 *vdp_regs)
 /* DMA update                                                               */
 /*--------------------------------------------------------------------------*/
 
-void vdp_update_dma()
+void vdp_update_dma(unsigned int cycles)
 {
-  int dma_cycles = 0;
-
-  /* update DMA timings  */
-  unsigned int index = dma_type;
-  if ((status & 8) || !(reg[1] & 0x40)) index++;
-  if (reg[12] & 1) index += 2;
+  int dma_cycles;
 
   /* DMA transfer rate (bytes per line) */
-  unsigned int rate = dma_rates[index];
+  unsigned int rate = dma_type;
+  if ((status & 8) || !(reg[1] & 0x40)) rate++;
+  if (reg[12] & 1) rate += 2;
+  rate = dma_rates[rate];
 
-  /* 68k cycles left */
-  int left_cycles = (mcycles_vdp + MCYCLES_PER_LINE) - mcycles_68k;
-  if (left_cycles < 0) left_cycles = 0;
+  /* Remaining DMA cycles */
+  if (status & 8)
+  {
+    /* Process DMA until the end of VBLANK */
+    dma_cycles = (lines_per_frame * MCYCLES_PER_LINE) - cycles;
+  }
+  else
+  {
+    /* Process DMA until the end of current line */
+    dma_cycles = (mcycles_vdp + MCYCLES_PER_LINE) - cycles;
+  }
 
-  /* DMA bytes left */
-  unsigned int dma_bytes = (left_cycles * rate) / MCYCLES_PER_LINE;
+  /* Remaining DMA bytes */
+  int dma_bytes = (dma_cycles * rate) / MCYCLES_PER_LINE;
 
 #ifdef LOGVDP
-  error("[%d(%d)][%d(%d)] DMA type %d (%d access/line)-> %d access (%d remaining) (%x)\n", v_counter, mcycles_68k/MCYCLES_PER_LINE, mcycles_68k, mcycles_68k%MCYCLES_PER_LINE,dma_type/4, rate, dma_length, dma_bytes, m68k_get_reg (NULL, M68K_REG_PC));
+  error("[%d(%d)][%d(%d)] DMA type %d (%d access/line)(%d cycles left)-> %d access (%d remaining) (%x)\n", v_counter, mcycles_68k/MCYCLES_PER_LINE, mcycles_68k, mcycles_68k%MCYCLES_PER_LINE,dma_type/4, rate, dma_cycles, dma_bytes, dma_length, m68k_get_reg (NULL, M68K_REG_PC));
 #endif
 
-  /* determinate DMA length in CPU cycles */
+  /* Check if DMA will be finished during current line */
   if (dma_length < dma_bytes)
   {
-    /* DMA will be finished during this line */
-    dma_cycles = (dma_length * MCYCLES_PER_LINE) / rate;
-    dma_length = 0;
-  }
-  else
-  {
-    /* DMA can not be finished until next scanline */
-    dma_cycles = left_cycles;
-    dma_length -= dma_bytes;
+    /* Adjust remaining DMA */
+    dma_bytes = dma_length;
+    dma_cycles = (dma_bytes * MCYCLES_PER_LINE) / rate;
   }
 
-  /* update 68k cycles counter */
+  /* Update DMA timings */
   if (dma_type < 8)
   {
-    /* 68K to VRAM, CRAM, VSRAM */
     /* 68K is frozen during DMA operation */
-    mcycles_68k += dma_cycles;
-
-#ifdef LOGVDP
+    mcycles_68k = cycles + dma_cycles;
+  #ifdef LOGVDP
     error("-->CPU frozen for %d cycles\n", dma_cycles);
-#endif
+  #endif
   }
   else
   {
-    /* VRAM Fill or VRAM Copy */
-    /* set DMA end cyles count */
-    dma_endCycles = mcycles_68k + dma_cycles;
+    /* Set DMA Busy flag */
+    status |= 0x0002;
 
+    /* 68K is still running, set DMA end cycle */
+    dma_endCycles = cycles + dma_cycles;
 #ifdef LOGVDP
     error("-->DMA ends in %d cycles\n", dma_cycles);
 #endif
+  }
 
-    /* set DMA Busy flag */
-    status |= 0x0002;
+  /* Process DMA */
+  if (dma_bytes > 0)
+  {
+    /* Update DMA length */
+    dma_length -= dma_bytes;
+
+    /* Select DMA operation */
+    switch (dma_type >> 2)
+    {
+      case 0:
+      case 1:
+      {
+        /* 68K to VRAM, CRAM or VSRAM */
+        dma_vbus(dma_bytes);
+        break;
+      }
+
+      case 2:
+      {
+        /* VRAM Fill */
+        if (dmafill)
+        {
+          /* process intial write */
+          dmafill = 0;
+          data_w(fill_data);
+
+          /* adjust remaining DMA length */
+          dma_bytes--;
+
+          /* fill MSB */
+          fill_data = (fill_data >> 8) & 0xff;
+
+          /* check remaining DMA length */
+          if (!dma_bytes) break;
+        }
+
+        dma_fill(dma_bytes, fill_data);
+        break;
+      }
+
+      case 3:
+      {
+        /* VRAM Copy */
+        dma_copy(dma_bytes);
+        break;
+      }
+    }
+
+    /* Check if DMA is finished */
+    if (!dma_length)
+    {
+      /* Reset DMA length registers */
+      reg[19] = reg[20] = 0;
+
+      /* Perform cached write, if any */
+      if (cached_write >= 0)
+      {
+        vdp_ctrl_w(cached_write);
+        cached_write = -1;
+      }
+    }
   }
 }
 
@@ -333,6 +451,14 @@ void vdp_ctrl_w(unsigned int data)
 {
   if (pending == 0)
   {
+    /* check that DMA operation was not first triggered with the same instruction */
+    if (dma_length)
+    {
+      /* 2nd part of 32-bit write should be done after DMA completion (Formula One, Kawasaki Superbike Challenge) */
+      cached_write = data;
+      return;
+    }
+
     if ((data & 0xC000) == 0x8000)
     {
       /* VDP register write */
@@ -364,17 +490,47 @@ void vdp_ctrl_w(unsigned int data)
     {
       switch (reg[23] >> 6)
       {
-        case 2:   /* VRAM fill */
-          dmafill = 1;
+        case 2:
+        {
+          /* VRAM write operation only (Williams Greatest Hits after soft reset) */
+          if ((code & 0x0F) == 1)
+          {
+            /* VRAM fill is triggered next time DATA port is written */
+            dmafill = 1;
+          }
           break;
+        }
 
-        case 3:   /* VRAM copy */
-          dma_copy();
-          break;
+        case 3:
+        {
+          /* VRAM read/write operation only */
+          if ((code & 0x1F) == 0x10)
+          {
+            /* retrieve DMA length */
+            dma_length = (reg[20] << 8 | reg[19]) & 0xFFFF;
+            if (!dma_length) dma_length = 0x10000;
 
-        default:  /* V bus to VDP DMA */
-          dma_vbus();
+            /* VRAM copy */
+            dma_type = 12;
+            vdp_update_dma(mcycles_68k);
+          }
           break;
+        }
+
+        default:
+        {
+          /* retrieve DMA length */
+          dma_length = (reg[20] << 8 | reg[19]) & 0xFFFF;
+          if (!dma_length) dma_length = 0x10000;
+
+          /* SVP transfer latency */
+          if (svp && !(reg[23] & 0x60)) reg[21]--;
+
+          /* 68k to VDP DMA */
+          dma_type = (code & 0x06) ? 4 : 0;
+          vdp_update_dma(mcycles_68k);
+          break;
+        }
       }
     }
   }
@@ -431,8 +587,7 @@ unsigned int vdp_ctrl_r(unsigned int cycles)
     temp |= 0x08; 
 
   /* HBLANK flag (Sonic 3 and Sonic 2 "VS Modes", Lemmings 2, Mega Turrican, V.R Troopers, Gouketsuji Ichizoku, ...) */
-  if ((cycles % MCYCLES_PER_LINE) < 588)
-    temp |= 0x04;
+  if ((cycles % MCYCLES_PER_LINE) < 588) temp |= 0x04;
 
   /* clear pending flag */
   pending = 0;
@@ -455,16 +610,25 @@ unsigned int vdp_hvc_r(unsigned int cycles)
   uint8 hc = hctab[cycles%MCYCLES_PER_LINE];
 
   /* Vertical Counter */
-  uint8 vc = vctab[v_counter];
+  int16 vc = v_counter;
 
-  /* interlace mode 2 (Sonic the Hedgehog 2, Combat Cars) */
-  if (im2_flag)
-    vc = (vc << 1) | ((vc >> 7) & 1);
+  /* Check counter overflow */
+  if (vc > vc_max) vc -= lines_per_frame;
+
+  /* Interlaced Modes */
+  if (interlaced)
+  {
+    /* interlace mode 2 (Sonic the Hedgehog 2, Combat Cars) */  
+    if (im2_flag) vc = vc << 1;
+
+    /* replace bit 0 with bit 8 */
+    vc = (vc & ~1) | ((vc >> 8) & 1);
+  }
 
 #ifdef LOGVDP
   error("[%d(%d)][%d(%d)] VDP HVC Read -> 0x%04x (%x)\n", v_counter, cycles/MCYCLES_PER_LINE, cycles, cycles%MCYCLES_PER_LINE,(vc << 8) | hc, m68k_get_reg (NULL, M68K_REG_PC));
 #endif
-  return ((vc << 8) | hc);
+  return (((vc & 0xff) << 8) | hc);
 }
 
 void vdp_test_w(unsigned int data)
@@ -479,9 +643,22 @@ void vdp_data_w(unsigned int data)
   /* Clear pending flag */
   pending = 0;
 
+  /* DMA Fill */
   if (dmafill)
   {
-    dma_fill(data);
+    /* save fill data */
+    fill_data = data;
+
+    /* retrieve DMA length */
+    dma_length = (reg[20] << 8 | reg[19]) & 0xFFFF;
+    if (!dma_length) dma_length = 0x10000;
+
+    /* adjust DMA length (first write counts for timings) */
+    dma_length++;
+
+    /* perform DMA */
+    dma_type = 8;
+    vdp_update_dma(mcycles_68k);
     return;
   }
 
@@ -523,14 +700,14 @@ unsigned int vdp_data_r(void)
   switch (code & 0x0F)
   {
     case 0x00:  /* VRAM */
-      temp = *(uint16 *) & vram[(addr & 0xFFFE)];
+      temp = *(uint16 *) &vram[(addr & 0xFFFE)];
 #ifdef LOGVDP
       error("[%d(%d)][%d(%d)] VRAM 0x%x read -> 0x%x (%x)\n", v_counter, mcycles_68k/MCYCLES_PER_LINE, mcycles_68k, mcycles_68k%MCYCLES_PER_LINE, addr, temp, m68k_get_reg (NULL, M68K_REG_PC));
 #endif
       break;
 
     case 0x08:  /* CRAM */
-      temp = *(uint16 *) & cram[(addr & 0x7E)];
+      temp = *(uint16 *) &cram[(addr & 0x7E)];
       temp = UNPACK_CRAM (temp);
 #ifdef LOGVDP
       error("[%d(%d)][%d(%d)] CRAM 0x%x read -> 0x%x (%x)\n", v_counter, mcycles_68k/MCYCLES_PER_LINE, mcycles_68k, mcycles_68k%MCYCLES_PER_LINE, addr, temp, m68k_get_reg (NULL, M68K_REG_PC));
@@ -538,7 +715,7 @@ unsigned int vdp_data_r(void)
       break;
 
     case 0x04:  /* VSRAM */
-      temp = *(uint16 *) & vsram[(addr & 0x7E)];
+      temp = *(uint16 *) &vsram[(addr & 0x7E)];
 #ifdef LOGVDP
       error("[%d(%d)][%d(%d)] VSRAM 0x%x read -> 0x%x (%x)\n", v_counter, mcycles_68k/MCYCLES_PER_LINE, mcycles_68k, mcycles_68k%MCYCLES_PER_LINE, addr, temp, m68k_get_reg (NULL, M68K_REG_PC));
 #endif
@@ -569,7 +746,7 @@ int vdp_int_ack_callback(int int_level)
 #endif
 
   /* VINT triggered ? */
-  if (irq_status&0x20)
+  if ((irq_status & 6) == 6)
   {
     vint_pending = 0;
     status &= ~0x80;  /* clear VINT flag */
@@ -696,7 +873,7 @@ static void data_w(unsigned int data)
           color_update (0x00, data);
 
         /* CRAM modified during HBLANK (Striker, Zero the Kamikaze, etc) */
-        if (!(status & 8) && (reg[1]& 0x40) && (mcycles_68k <= (mcycles_vdp + 860)))
+        if ((v_counter < bitmap.viewport.h) && (reg[1]& 0x40) && (mcycles_68k <= (mcycles_vdp + 860)))
         {
           /* remap current line */
           remap_buffer(v_counter);
@@ -754,9 +931,9 @@ static void reg_w(unsigned int r, unsigned int d)
       if ((r & 0x10) && hint_pending)
       {
         /* update IRQ status */
-        irq_status = 0x50;
+        irq_status = 0x30;
         if (vint_pending & reg[1])
-          irq_status |= 0x26;
+          irq_status |= 6;
         else if (d & 0x10)
           irq_status |= 4;
       }
@@ -775,7 +952,7 @@ static void reg_w(unsigned int r, unsigned int d)
       if (r & 0x02)
       {
         if (reg[0] & 2) /* latch current HVC */
-          hvc_latch = 0x10000 | (vctab[v_counter] << 8) | hctab[mcycles_68k%MCYCLES_PER_LINE];
+          hvc_latch = 0x10000 | vdp_hvc_r(mcycles_68k);
         else            /* free-running HVC */
           hvc_latch = 0;
       }
@@ -792,9 +969,9 @@ static void reg_w(unsigned int r, unsigned int d)
       if ((r & 0x20) && vint_pending)
       {
         /* update IRQ status */
-        irq_status = 0x50;
+        irq_status = 0x30;
         if (d & 0x20) 
-          irq_status |= 0x26;
+          irq_status |= 6;
         else if (hint_pending & reg[0])
           irq_status |= 4;
       }
@@ -802,35 +979,29 @@ static void reg_w(unsigned int r, unsigned int d)
       /* See if the viewport height has actually been changed */
       if (r & 0x08)
       {
-        /* Update V Counter table */
-        if (vdp_pal)
-          vctab = (d & 8) ? vc_pal_240 : vc_pal_224;
-  
-        /* Update viewport */
-        if (status & 8)
+        if (v_counter < bitmap.viewport.h)
+        {
+          /* Update active display */
+          bitmap.viewport.h = 224 + ((d & 8) << 1);
+          bitmap.viewport.y = (config.overscan & 1) * ( 8 - (d & 8) + vdp_pal*24);
+        }
+        else
         {
           /* changes should be applied on next frame */
           bitmap.viewport.changed |= 2;
         }
-        else
+
+        /* update vertical counter max value (see hvc.h) */
+        vc_max = 0xEA + 24*vdp_pal;
+        if (d & 8)
         {
-          /* Update active display */
-          if (d & 8)
-          {
-            bitmap.viewport.h = 240;
-            bitmap.viewport.y = (config.overscan & 1) ? (vdp_pal ? 24 : 0) : 0;
-          }
-          else
-          {
-            bitmap.viewport.h = 224;
-            bitmap.viewport.y = (config.overscan & 1) ? (vdp_pal ? 32 : 8) : 0;
-          }
+          vc_max += (28 - 20*vdp_pal);
         }
       }
 
       /* Display status modified during active display (Legend of Galahad, Lemmings 2,  */
       /* Formula One Championship,  Nigel Mansell's World Championship Racing, ...)     */
-      if ((r & 0x40) && !(status & 8))
+      if ((r & 0x40) && (v_counter < bitmap.viewport.h))
       {
         int offset = mcycles_68k - mcycles_vdp - 860;
         if (offset <= 0)
@@ -914,7 +1085,7 @@ static void reg_w(unsigned int r, unsigned int d)
         color_update(0x00, *(uint16 *)&cram[(d << 1)]);
 
         /* background color modified during Horizontal Blanking (Road Rash 1,2,3)*/
-        if (!(status & 8) && (mcycles_68k <= (mcycles_vdp + 860)))
+        if ((v_counter < bitmap.viewport.h) && (mcycles_68k <= (mcycles_vdp + 860)))
         {
           /* remap entire line */
           remap_buffer(v_counter);
@@ -962,28 +1133,33 @@ static void reg_w(unsigned int r, unsigned int d)
           /* Update HC table */
           hctab = cycle2hc32;
 
-          /* Update fifo timings */
+          /* Update FIFO timings */
           fifo_latency = 214;
         }
 
+        /* Adjust VRAM timings */
         if ((code & 0x0F) == 0x01)
+        {
           fifo_latency = fifo_latency * 2;
+        }
 
         /* Update clipping */
         window_clip();
         
-        /* display width changed during HBLANK (Bugs Bunny Double Trouble) */
-        if (!(status & 8))
+        /* Display width switched during HBLANK (Bugs Bunny Double Trouble) */
+        if ((v_counter < bitmap.viewport.h) && (mcycles_68k <= (mcycles_vdp + 860)))
         {
-          if (mcycles_68k <= (mcycles_vdp + 860))
-          {
-            /* redraw entire line */
-            render_line(v_counter);
-          }
-        }
+          /* Update active display */
+          bitmap.viewport.w = 256 + ((d & 1) << 6);
 
-        /* changes should be applied on next frame */
-        bitmap.viewport.changed |= 2;
+          /* Redraw entire line */
+          render_line(v_counter);
+        }
+        else
+        {
+          /* Changes should only be applied on next frame (Golden Axe III intro) */
+          bitmap.viewport.changed |= 2;
+        }
       }
 
       /* Interlaced modes */
@@ -1038,20 +1214,11 @@ static void reg_w(unsigned int r, unsigned int d)
     - see how source addr is affected
       (can it make high source byte inc?)
 */
-static void dma_copy(void)
+static void dma_copy(int length)
 {
   int name;
-  unsigned int length = (reg[20] << 8 | reg[19]) & 0xFFFF;
   unsigned int source = (reg[22] << 8 | reg[21]) & 0xFFFF;
 
-  if (!length)
-    length = 0x10000;
-
-  dma_type = 12;
-  dma_length = length;
-  vdp_update_dma();
-
-  /* proceed DMA */
   do
   {
     vram[addr] = vram[source];
@@ -1060,29 +1227,18 @@ static void dma_copy(void)
     addr += reg[15];
   } while (--length);
 
-  /* update length & source address registers */
-  reg[19] = length & 0xFF;
-  reg[20] = (length >> 8) & 0xFF;
+  /* update source address registers */
   reg[21] = source & 0xFF; /* not sure */
   reg[22] = (source >> 8) & 0xFF; 
 }
 
 /* 68K Copy to VRAM, VSRAM or CRAM */
-static void dma_vbus (void)
+static void dma_vbus (int length)
 {
   unsigned int source = ((reg[23] & 0x7F) << 17 | reg[22] << 9 | reg[21] << 1) & 0xFFFFFE;
   unsigned int base   = source;
-  unsigned int length = (reg[20] << 8 | reg[19]) & 0xFFFF;
   uint16 temp;
   
-  if (!length)
-    length = 0x10000;
-
-  /* DMA timings */
-  dma_type = (code & 0x06) ? 4 : 0;
-  dma_length = length;
-  vdp_update_dma();
-
   /* DMA source */
   if ((source >> 17) == 0x50)
   {
@@ -1105,7 +1261,9 @@ static void dma_vbus (void)
 
       /* All remaining locations access work RAM */
       else
+      {
         temp = *(uint16 *)(work_ram + (source & 0xffff));
+      }
 
       source += 2;
       source = ((base & 0xFE0000) | (source & 0x1FFFF));
@@ -1115,12 +1273,6 @@ static void dma_vbus (void)
   }
   else
   {
-    /* SVP latency */
-    if (svp && (source < 0x400000))
-    {
-      source = (source - 2);
-    }
-
     /* ROM & RAM */
     do
     {
@@ -1132,33 +1284,16 @@ static void dma_vbus (void)
     while (--length);
   }
 
-  /* update length & source address registers */
-  reg[19] = length & 0xFF;
-  reg[20] = (length >> 8) & 0xFF;
+  /* update source address registers */
   reg[21] = (source >> 1) & 0xFF;
   reg[22] = (source >> 9) & 0xFF;
   reg[23] = (reg[23] & 0x80) | ((source >> 17) & 0x7F);
 }
 
 /* VRAM FILL */
-static void dma_fill(unsigned int data)
+static void dma_fill(int length, unsigned int data)
 {
   int name;
-  unsigned int length = (reg[20] << 8 | reg[19]) & 0xFFFF;
-
-  if (!length)
-    length = 0x10000;
-
-  /* DMA timings */
-  dma_type = 8;
-  dma_length = length;
-  vdp_update_dma();
-
-  /* proceed DMA */
-  data_w(data);
-
-  /* write MSB */
-  data = (data >> 8) & 0xff;
 
   /* intercept SAT writes */
   if ((addr & sat_base_mask) == satb)
@@ -1183,9 +1318,4 @@ static void dma_fill(unsigned int data)
     }
     while (--length);
   }
-
-  /* update length register */
-  reg[19] = length & 0xFF;
-  reg[20] = (length >> 8) & 0xFF;
-  dmafill = 0;
 }

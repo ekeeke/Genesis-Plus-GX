@@ -23,7 +23,16 @@
 #ifndef _STATE_H_
 #define _STATE_H_
 
-#define STATE_SIZE    0x28000
+#define STATE_SIZE    0x48100
+#define STATE_VERSION "GENPLUS-GX 1.4.1"
+
+#define load_param(param, size) \
+  memcpy(param, &state[bufferptr], size); \
+  bufferptr+= size;
+
+#define save_param(param, size) \
+  memcpy(&state[bufferptr], param, size); \
+  bufferptr+= size;
 
 /* Function prototypes */
 extern int state_load(unsigned char *buffer);
