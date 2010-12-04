@@ -3,8 +3,8 @@
 /* C Conversion by Eke-Eke for use in Genesis Plus (2009). */
 
 #include "Fir_Resampler.h"
+#include "shared.h"
 
-//#include <assert.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -149,6 +149,10 @@ double Fir_Resampler_time_ratio( double new_factor, double rolloff )
   double pos = 0.0;
   res = -1;
 
+#ifdef NGC
+  u32 level = IRQ_Disable();
+#endif
+
   for ( r = 1; r <= MAX_RES; r++ )
   {
     pos += ratio;
@@ -191,6 +195,10 @@ double Fir_Resampler_time_ratio( double new_factor, double rolloff )
     }
   }
 
+#ifdef NGC
+  IRQ_Restore(level);
+#endif
+
   Fir_Resampler_clear();
 
   return ratio;
@@ -229,7 +237,6 @@ int Fir_Resampler_written( void )
 void Fir_Resampler_write( long count )
 {
   write_pos += count;
- // assert( write_pos <= ( buffer + buffer_size ) );
 }
 
 int Fir_Resampler_read( sample_t* out, long count )

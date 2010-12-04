@@ -1868,10 +1868,6 @@ static void init_tables(void)
     }
   }
 
-#ifdef NGC
-  IRQ_Restore(level);
-#endif
-
   /* build Logarithmic Sinus table */
   for (i=0; i<SIN_LEN; i++)
   {
@@ -1895,6 +1891,10 @@ static void init_tables(void)
     /* 13-bits (8.5) value is formatted for above 'Power' table */
     sin_tab[ i ] = n*2 + (m>=0.0? 0: 1 );
   }
+
+#ifdef NGC
+  IRQ_Restore(level);
+#endif
 
   /* build LFO PM modulation table */
   for(i = 0; i < 8; i++) /* 8 PM depths */
