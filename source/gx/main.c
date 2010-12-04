@@ -39,6 +39,13 @@
 #include <wiiuse/wpad.h>
 #endif
 
+/* audio "exact" samplerate, measured on real hardware */
+#ifdef HW_RVL
+#define SAMPLERATE_48KHZ 48000
+#else
+#define SAMPLERATE_48KHZ 48044
+#endif
+
 u32 Shutdown = 0;
 u32 ConfigRequested = 1;
 
@@ -169,7 +176,7 @@ static void run_emulation(void)
           memcpy(temp, YM2612GetContextPtr(), YM2612GetContextSize());
 
           /* framerate has changed, reinitialize audio timings */
-          audio_init(48000, interlaced ? 59.94 : (1000000.0/16715.0));
+          audio_init(SAMPLERATE_48KHZ, interlaced ? 59.94 : (1000000.0/16715.0));
           sound_init();
 
           /* restore YM2612 context */
@@ -202,7 +209,7 @@ void reloadrom (int size, char *name)
   if (hotswap)
   {
     cart_hw_init();
-    cart_hw_reset();
+    cart_hw_reset(1);
   }
   else
   {
@@ -210,7 +217,7 @@ void reloadrom (int size, char *name)
     /* 60hz video mode requires synchronization with Video Interrupt.    */
     /* Framerate is 59.94 fps in interlaced/progressive modes, ~59.825 fps in non-interlaced mode */
     float framerate = vdp_pal ? 50.0 : ((config.tv_mode == 1) ? 60.0 : (config.render ? 59.94 : (1000000.0/16715.0)));
-    audio_init(48000, framerate);
+    audio_init(SAMPLERATE_48KHZ, framerate);
      
     /* System Power ON */
     system_init ();
@@ -266,18 +273,36 @@ u32 frameticker = 0;
 
 int main (int argc, char *argv[])
 {
-  /* initialize video engine */
-  gx_video_Init();
-
-  /* initialize DVD interface */
-#ifdef HW_DOL
-  DVD_Init ();
-#else
+#ifdef HW_RVL
+  /* initialize DI interface */
+  DI_UseCache(0);
   DI_Init();
 #endif
 
+  /* initialize video engine */
+  gx_video_Init();
+
+#ifdef HW_DOL
+  /* initialize DVD interface */
+  DVD_Init ();
+#endif
+
+  /* initialize input engine */
+  gx_input_Init();
+
   /* initialize FAT devices */
-  if (fatInitDefault())
+  int retry = 0;
+  int fatMounted = 0;
+
+  /* try to mount FAT devices during 3 seconds */
+  while (!fatMounted && (retry < 12))
+  {
+    fatMounted = fatInitDefault();
+    usleep(250000);
+    retry++;
+  }
+
+  if (fatMounted)
   {
     /* base directory */
     char pathname[MAXPATHLEN];
@@ -304,9 +329,6 @@ int main (int argc, char *argv[])
     if (dir) dirclose(dir);
     else mkdir(pathname,S_IRWXU);
   }
-
-  /* initialize input engine */
-  gx_input_Init();
 
   /* initialize sound engine */
   gx_audio_Init();
