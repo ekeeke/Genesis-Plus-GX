@@ -21,24 +21,11 @@
  *
  ***************************************************************************/
 #include "shared.h"
+#include "gui.h"
 #include "menu.h"
 #include "file_load.h"
 
-void config_save(void)
-{
-  /* open configuration file */
-  char fname[MAXPATHLEN];
-  sprintf (fname, "%s/config.ini", DEFAULT_PATH);
-  FILE *fp = fopen(fname, "wb");
-  if (fp)
-  {
-    /* write file */
-    fwrite(&config, sizeof(config), 1, fp);
-    fclose(fp);
-  }
-}
-
-void config_load(void)
+static int config_load(void)
 {
   /* open configuration file */
   char fname[MAXPATHLEN];
@@ -51,7 +38,7 @@ void config_load(void)
     fread(version, 16, 1, fp); 
     fclose(fp);
     if (strncmp(version,CONFIG_VERSION,16))
-      return;
+      return 0;
 
     /* read file */
     fp = fopen(fname, "rb");
@@ -59,7 +46,23 @@ void config_load(void)
     {
       fread(&config, sizeof(config), 1, fp);
       fclose(fp);
+      return 1;
     }
+  }
+  return 0;
+}
+
+void config_save(void)
+{
+  /* open configuration file */
+  char fname[MAXPATHLEN];
+  sprintf (fname, "%s/config.ini", DEFAULT_PATH);
+  FILE *fp = fopen(fname, "wb");
+  if (fp)
+  {
+    /* write file */
+    fwrite(&config, sizeof(config), 1, fp);
+    fclose(fp);
   }
 }
 
@@ -129,6 +132,7 @@ void config_default(void)
 
   /* menu options */
   config.autoload     = 0;
+  config.autocheat    = 0;
 #ifdef HW_RVL
   config.s_auto       = 1;
 #else
@@ -152,11 +156,13 @@ void config_default(void)
   sprintf (config.lastdir[TYPE_DVD], "dvd:%s/roms/", DEFAULT_PATH);
 #endif
 
-  /* restore from config file */
-  config_load();
-  io_init();
+  /* try to restore settings from config file */
+  if (!config_load()) GUI_WaitPrompt("Info","Default Settings restored");
 
-  /* default menu settings */
+  /* restore inputs */
+  input_init();
+
+  /* restore menu settings */
   menu_configure();
 }
 

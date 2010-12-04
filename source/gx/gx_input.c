@@ -697,6 +697,77 @@ void gx_input_Init(void)
   VIDEO_Flush();
 }
 
+int gx_input_FindDevices(void)
+{
+  int i;
+#ifdef HW_RVL
+  u32 wpad;
+#endif
+  u32 pad = PAD_ScanPads();
+  int found = 0;
+  int player = 0;
+
+  for (i=0; i<MAX_DEVICES; i++)
+  {
+    /* check emulated peripheral */
+    if (input.dev[i] != NO_DEVICE)
+    {
+      /* test input device */
+      switch (config.input[player].device)
+      {
+        case 0: /* Gamecube Controller */
+        {
+          if (!(pad & (1 << config.input[player].port)))
+          {
+            return 0;
+          }
+          found++;
+          break;
+        }
+
+ #ifdef HW_RVL
+        case 1:  /* Wiimote */
+        {
+          wpad = 255;
+          WPAD_Probe(config.input[player].port, &wpad);
+          if (wpad == 255)
+          {
+            return 0;
+          }
+          found++;
+          break;
+        }
+
+        case 2: /* Expansion Controller */
+        case 3:
+        {
+          wpad = 255;
+          WPAD_Probe(config.input[player].port, &wpad);
+          if (wpad != (config.input[player].device - 1))
+          {
+            return 0;
+          }
+          found++;
+          break;
+        }
+ #endif
+
+        default:
+        {
+          break;
+        }
+      }
+
+      /* next configured player */
+      player ++;
+    }
+  }
+
+  /* return number of connected devices */
+  return found;
+}
+
+
 void gx_input_SetDefault(void)
 {
   int i,j;
@@ -766,18 +837,30 @@ void gx_input_SetDefault(void)
     /* try to autodetect connected controller */
     exp = 255;
     WPAD_Probe(i, &exp);
-    if (exp <= WPAD_EXP_CLASSIC)
+    if (exp == WPAD_EXP_CLASSIC)
     {
-      /* set expansion controller (or wiimote if no expansion) as default */
-      config.input[i].device = exp + 1;
+      /* use Classic Controller */
+      config.input[i].device = 3;
+      config.input[i].port = i;
+    }
+    else if (exp == WPAD_EXP_NUNCHUK)
+    {
+      /* use Wiimote + Nunchuk */
+      config.input[i].device = 2;
+      config.input[i].port = i;
+    }
+    else if (exp <= EXP_MOTION_PLUS)
+    {
+      /* use Wiimote by default */
+      config.input[i].device = 1;
       config.input[i].port = i;
     }
     else
     {
-      /* look for unassigned wiimotes */
+      /* look for unused Wiimotes */
       for (j=0; j<i; j++)
       {
-        /* classic controller is already assigned, which means wiimote is not used */
+        /* Classic Controller is assigned, which means Wiimote is free to use */
         if (config.input[j].device == (WPAD_EXP_CLASSIC + 1))
         {
           /* assign wiimote  */
@@ -804,6 +887,7 @@ void gx_input_SetDefault(void)
         {
           config.input[j].device  = 0;
           config.input[j].port    = i;
+          j = MAX_INPUTS;
         }
       }
     }

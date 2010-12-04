@@ -24,7 +24,7 @@
 #ifndef _CONFIG_H_
 #define _CONFIG_H_
 
-#define CONFIG_VERSION "GENPLUS-GX 1.4.0"
+#define CONFIG_VERSION "GENPLUS-GX 1.4.1"
 
 /****************************************************************************
  * Config Option 
@@ -75,9 +75,11 @@ typedef struct
   uint32 wpad_keymap[4*3][MAX_KEYS];
 #endif
   uint8 autoload;
+  uint8 autocheat;
   uint8 s_auto;
   uint8 s_default;
   uint8 s_device;
+  uint8 autocheats;
   int8 bg_type;
   int8 bg_overlay;
   int16 screen_w;
@@ -95,7 +97,6 @@ t_config config;
 
 
 extern void config_save(void);
-extern void config_load(void);
 extern void config_default(void);
 
 

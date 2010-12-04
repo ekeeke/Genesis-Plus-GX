@@ -303,11 +303,11 @@ static gui_item items_load[4] =
 /* Option menu */
 static gui_item items_options[5] =
 {
-  {NULL,Option_system_png,"","System settings", 114,142,80,92},
-  {NULL,Option_video_png ,"","Video settings",  288,150,64,84},
-  {NULL,Option_sound_png ,"","Audio settings",  464,154,44,80},
-  {NULL,Option_ctrl_png  ,"","Input settings",  192,286,88,92},
-  {NULL,Option_menu_png  ,"","Menu settings",   370,286,60,92}
+  {NULL,Option_system_png,"","System settings",       114,142,80,92},
+  {NULL,Option_video_png ,"","Video settings",        288,150,64,84},
+  {NULL,Option_sound_png ,"","Audio settings",        464,154,44,80},
+  {NULL,Option_ctrl_png  ,"","Controllers settings",  192,286,88,92},
+  {NULL,Option_menu_png  ,"","Menu settings",         370,286,60,92}
 };
 
 /* Audio options */
@@ -361,16 +361,17 @@ static gui_item items_video[8] =
 };
 
 /* Menu options */
-static gui_item items_prefs[8] =
+static gui_item items_prefs[9] =
 {
-  {NULL,NULL,"Load ROM Auto: OFF","Enable/Disable automatic ROM loading on startup",  56,132,276,48},
-  {NULL,NULL,"Auto Saves: OFF",   "Enable/Disable automatic saves",                   56,132,276,48},
-  {NULL,NULL,"Saves Device: FAT", "Configure default device for saves",               56,132,276,48},
-  {NULL,NULL,"SFX Volume: 100",   "Adjust sound effects volume",                      56,132,276,48},
-  {NULL,NULL,"BGM Volume: 100",   "Adjust background music volume",                   56,132,276,48},
-  {NULL,NULL,"BG Color: DEFAULT", "Select background color",                          56,132,276,48},
-  {NULL,NULL,"BG Overlay: ON",    "Enable/disable background overlay",                56,132,276,48},
-  {NULL,NULL,"Screen Width: 658", "Adjust menu screen width in pixels",               56,132,276,48},
+  {NULL,NULL,"Auto ROM Load: OFF","Enable/Disable automatic ROM loading on startup", 56,132,276,48},
+  {NULL,NULL,"Auto Cheats: OFF", "Enable/Disable automatic cheats activation",          56,132,276,48},
+  {NULL,NULL,"Auto Saves: OFF",   "Enable/Disable automatic saves",                     56,132,276,48},
+  {NULL,NULL,"Saves Device: FAT", "Configure default device for saves",                 56,132,276,48},
+  {NULL,NULL,"SFX Volume: 100",   "Adjust sound effects volume",                        56,132,276,48},
+  {NULL,NULL,"BGM Volume: 100",   "Adjust background music volume",                     56,132,276,48},
+  {NULL,NULL,"BG Color: DEFAULT", "Select background color",                            56,132,276,48},
+  {NULL,NULL,"BG Overlay: ON",    "Enable/disable background overlay",                  56,132,276,48},
+  {NULL,NULL,"Screen Width: 658", "Adjust menu screen width in pixels",                 56,132,276,48},
 };
 
 /* Save Manager */
@@ -587,7 +588,7 @@ static gui_menu menu_prefs =
 {
   "Menu Settings",
   0,0,
-  8,4,6,0,
+  9,4,6,0,
   items_prefs,
   buttons_list,
   bg_list,
@@ -634,20 +635,21 @@ static void prefmenu ()
   gui_menu *m = &menu_prefs;
   gui_item *items = m->items;
   
-  sprintf (items[0].text, "Load ROM Auto: %s", config.autoload ? "ON":"OFF");
-  if (config.s_auto == 3) sprintf (items[1].text, "Auto Saves: ALL");
-  else if (config.s_auto == 2) sprintf (items[1].text, "Auto Saves: STATE ONLY");
-  else if (config.s_auto == 1) sprintf (items[1].text, "Auto Saves: SRAM ONLY");
-  else sprintf (items[1].text, "Auto Saves: NONE");
-  if (config.s_device == 1) sprintf (items[2].text, "Saves Device: MCARD A");
-  else if (config.s_device == 2) sprintf (items[2].text, "Saves Device: MCARD B");
-  else sprintf (items[2].text, "Saves Device: FAT");
-  sprintf (items[3].text, "SFX Volume: %1.1f", config.sfx_volume);
-  sprintf (items[4].text, "BGM Volume: %1.1f", config.bgm_volume);
-  if (config.bg_type) sprintf (items[5].text, "BG Type: COLOR %d", config.bg_type - 1);
-  else sprintf (items[5].text, "BG Type: DEFAULT");
-  sprintf (items[6].text, "BG Overlay: %s", config.bg_overlay ? "ON":"OFF");
-  sprintf (items[7].text, "Screen Width: %d", config.screen_w);
+  sprintf (items[0].text, "Auto ROM Load: %s", config.autoload ? "ON":"OFF");
+  sprintf (items[1].text, "Auto Cheats: %s", config.autocheat ? "ON":"OFF");
+  if (config.s_auto == 3) sprintf (items[2].text, "Auto Saves: ALL");
+  else if (config.s_auto == 2) sprintf (items[2].text, "Auto Saves: STATE ONLY");
+  else if (config.s_auto == 1) sprintf (items[2].text, "Auto Saves: SRAM ONLY");
+  else sprintf (items[2].text, "Auto Saves: NONE");
+  if (config.s_device == 1) sprintf (items[3].text, "Saves Device: MCARD A");
+  else if (config.s_device == 2) sprintf (items[3].text, "Saves Device: MCARD B");
+  else sprintf (items[3].text, "Saves Device: FAT");
+  sprintf (items[4].text, "SFX Volume: %1.1f", config.sfx_volume);
+  sprintf (items[5].text, "BGM Volume: %1.1f", config.bgm_volume);
+  if (config.bg_type) sprintf (items[6].text, "BG Type: COLOR %d", config.bg_type - 1);
+  else sprintf (items[6].text, "BG Type: DEFAULT");
+  sprintf (items[7].text, "BG Overlay: %s", config.bg_overlay ? "ON":"OFF");
+  sprintf (items[8].text, "Screen Width: %d", config.screen_w);
 
   GUI_InitMenu(m);
   GUI_SlideMenuTitle(m,strlen("Menu "));
@@ -658,57 +660,62 @@ static void prefmenu ()
 
     switch (ret)
     {
-      case 0:   /* Auto load last ROM file */
+      case 0:   /* Auto load last ROM file on startup */
         config.autoload ^= 1;
-        sprintf (items[ret].text, "Load ROM Auto: %s", config.autoload ? "ON":"OFF");
+        sprintf (items[0].text, "Auto ROM Load: %s", config.autoload ? "ON":"OFF");
         break;
 
-      case 1:  /*** Auto load/save STATE & SRAM files ***/
+      case 1:   /* Cheats automatic activation */
+        config.autocheat ^= 1;
+        sprintf (items[1].text, "Auto Cheats: %s", config.autocheat ? "ON":"OFF");
+        break;
+
+      case 2:  /*** Auto load/save STATE & SRAM files ***/
         config.s_auto = (config.s_auto + 1) % 4;
-        if (config.s_auto == 3) sprintf (items[ret].text, "Auto Saves: ALL");
-        else if (config.s_auto == 2) sprintf (items[ret].text, "Auto Saves: STATE ONLY");
-        else if (config.s_auto == 1) sprintf (items[ret].text, "Auto Saves: SRAM ONLY");
-        else sprintf (items[ret].text, "Auto Saves: NONE");
+        if (config.s_auto == 3) sprintf (items[2].text, "Auto Saves: ALL");
+        else if (config.s_auto == 2) sprintf (items[2].text, "Auto Saves: STATE ONLY");
+        else if (config.s_auto == 1) sprintf (items[2].text, "Auto Saves: SRAM ONLY");
+        else sprintf (items[2].text, "Auto Saves: NONE");
         break;
 
-      case 2:   /*** Default saves device ***/
+      case 3:   /*** Default saves device ***/
         config.s_device = (config.s_device + 1) % 3;
-        if (config.s_device == 1) sprintf (items[ret].text, "Saves Device: MCARD A");
-        else if (config.s_device == 2) sprintf (items[ret].text, "Saves Device: MCARD B");
-        else sprintf (items[ret].text, "Saves Device: FAT");
+        if (config.s_device == 1) sprintf (items[3].text, "Saves Device: MCARD A");
+        else if (config.s_device == 2) sprintf (items[3].text, "Saves Device: MCARD B");
+        else sprintf (items[3].text, "Saves Device: FAT");
         break;
 
-      case 3:   /*** Sound effects volume ***/
+      case 4:   /*** Sound effects volume ***/
         GUI_OptionBox(m,0,"SFX Volume",(void *)&config.sfx_volume,10.0,0.0,100.0,0);
-        sprintf (items[ret].text, "SFX Volume: %1.1f", config.sfx_volume);
+        sprintf (items[4].text, "SFX Volume: %1.1f", config.sfx_volume);
         break;
 
-      case 4:   /*** Background music volume ***/
+      case 5:   /*** Background music volume ***/
         GUI_OptionBox(m,update_bgm,"BGM Volume",(void *)&config.bgm_volume,10.0,0.0,100.0,0);
-        sprintf (items[ret].text, "BGM Volume: %1.1f", config.bgm_volume);
+        sprintf (items[5].text, "BGM Volume: %1.1f", config.bgm_volume);
         break;
 
-      case 5:   /*** Background type ***/
+      case 6:   /*** Background type ***/
         if (ret < 0) config.bg_type --;
         else config.bg_type++;
         if (config.bg_type < 0) config.bg_type = BG_COLOR_MAX;
         else if (config.bg_type > BG_COLOR_MAX) config.bg_type = 0;
-        if (config.bg_type) sprintf (items[5].text, "BG Type: COLOR %d", config.bg_type - 1);
-        else sprintf (items[5].text, "BG Type: DEFAULT");
+        if (config.bg_type) sprintf (items[6].text, "BG Type: COLOR %d", config.bg_type - 1);
+        else sprintf (items[6].text, "BG Type: DEFAULT");
         GUI_DeleteMenu(m);
         menu_configure();
         GUI_InitMenu(m);
         break;
 
-      case 6:   /*** Background overlay ***/
+      case 7:   /*** Background overlay ***/
         config.bg_overlay ^= 1;
-        sprintf (items[6].text, "BG Overlay: %s", config.bg_overlay ? "ON":"OFF");
+        sprintf (items[7].text, "BG Overlay: %s", config.bg_overlay ? "ON":"OFF");
         menu_configure();
         break;
 
-      case 7:   /*** Screen Width ***/
+      case 8:   /*** Screen Width ***/
         GUI_OptionBox(m,update_screen_w,"Screen Width",(void *)&config.screen_w,2,640,VI_MAX_WIDTH_NTSC,1);
-        sprintf (items[7].text, "Screen Width: %d", config.screen_w);
+        sprintf (items[8].text, "Screen Width: %d", config.screen_w);
         break;
 
       case -1:
@@ -827,7 +834,6 @@ static void soundmenu ()
         ret = 255;
         if (cart.romsize) 
         {
-          /* save YM2612 context */
           temp = memalign(32,YM2612GetContextSize());
           if (temp)
           {
@@ -858,20 +864,17 @@ static void soundmenu ()
 
         if (cart.romsize) 
         {
-          /* save YM2612 context */
           temp = memalign(32,YM2612GetContextSize());
           if (temp)
           {
+            /* save YM2612 context */
             memcpy(temp, YM2612GetContextPtr(), YM2612GetContextSize());
-          }
 
-          /* reinitialize audio timings */
-          audio_init(snd.sample_rate,snd.frame_rate);
-          sound_init();
+            /* reinitialize audio timings */
+            audio_init(snd.sample_rate,snd.frame_rate);
+            sound_init();
 
-          /* restore YM2612 context */
-          if (temp)
-          {
+            /* restore YM2612 context */
             YM2612Restore(temp);
             free(temp);
           }
@@ -889,21 +892,18 @@ static void soundmenu ()
 
         if (cart.romsize) 
         {
-          /* save YM2612 context */
           temp = memalign(32,YM2612GetContextSize());
           if (temp)
           {
+            /* save YM2612 context */
             memcpy(temp, YM2612GetContextPtr(), YM2612GetContextSize());
-          }
 
-          /* reinitialize audio timings */
-          audio_init(snd.sample_rate,snd.frame_rate);
-          sound_init();
+            /* reinitialize audio timings */
+            audio_init(snd.sample_rate,snd.frame_rate);
+            sound_init();
 
-          /* restore YM2612 context */
-          if (temp)
-          {
-            //YM2612Restore(temp);
+            /* restore YM2612 context */
+            YM2612Restore(temp);
             free(temp);
           }
         }
@@ -1081,16 +1081,14 @@ static void systemmenu ()
           /* save YM2612 context */
           temp = memalign(32,YM2612GetContextSize());
           if (temp)
+          {
             memcpy(temp, YM2612GetContextPtr(), YM2612GetContextSize());
+          }
 
           /* reinitialize all timings */
           framerate = vdp_pal ? 50.0 : ((config.tv_mode == 1) ? 60.0 : ((config.render || interlaced) ? 59.94 : (1000000.0/16715.0)));
           audio_init(snd.sample_rate, framerate);
           system_init();
-
-          /* restore SRAM */
-          if (config.s_auto & 1)
-            slot_autoload(0,config.s_device);
 
           /* restore YM2612 context */
           if (temp)
@@ -1099,13 +1097,18 @@ static void systemmenu ()
             free(temp);
           }
 
-          /* reinitialize HVC tables */
-          vctab = vdp_pal ? ((reg[1] & 8) ? vc_pal_240 : vc_pal_224) : vc_ntsc_224;
-          hctab = (reg[12] & 1) ? cycle2hc40 : cycle2hc32;
+          /* restore SRAM */
+          if (config.s_auto & 1)
+          {
+            slot_autoload(0,config.s_device);
+          }
 
-          /* reinitialize overscan area */
-          bitmap.viewport.x = (config.overscan & 2) ? ((reg[12] & 1) ? 16 : 12) : 0;
-          bitmap.viewport.y = (config.overscan & 1) ? (((reg[1] & 8) ? 0 : 8) + (vdp_pal ? 24 : 0)) : 0;
+          /* reinitialize VC max value */
+          vc_max = 0xEA + 24*vdp_pal;
+          if (reg[1] & 8)
+          {
+            vc_max += (28 - 20*vdp_pal);
+          }
         }
         break;
 
@@ -1126,10 +1129,15 @@ static void systemmenu ()
         sprintf (items[3].text, "System TMSS: %s", (config.tmss & 1) ? "ON":"OFF");
         if (cart.romsize) 
         {
+          /* restart emulation */
           system_init();
           system_reset();
+
+          /* restore SRAM */
           if (config.s_auto & 1)
+          {
             slot_autoload(0,config.s_device);
+          }
         }
         break;
 
@@ -1148,8 +1156,11 @@ static void systemmenu ()
 
         if (cart.romsize) 
         {
+          /* restart emulation */
           system_init();
           system_reset();
+
+          /* restore SRAM */
           if (config.s_auto & 1)
           {
             slot_autoload(0,config.s_device);
@@ -1310,7 +1321,9 @@ static void videomenu ()
           /* save YM2612 context */
           temp = memalign(32,YM2612GetContextSize());
           if (temp)
+          {
             memcpy(temp, YM2612GetContextPtr(), YM2612GetContextSize());
+          }
 
           /* reinitialize audio timings */
           framerate = (config.tv_mode == 1) ? 60.0 : ((config.render || interlaced) ? 59.94 : (1000000.0/16715.0));
@@ -1343,7 +1356,9 @@ static void videomenu ()
             /* save YM2612 context */
             temp = memalign(32,YM2612GetContextSize());
             if (temp)
+            {
               memcpy(temp, YM2612GetContextPtr(), YM2612GetContextSize());
+            }
 
             /* reinitialize audio timings */
             framerate = (config.tv_mode == 1) ? 60.0 : ((config.render || interlaced) ? 59.94 : (1000000.0/16715.0));
@@ -1950,7 +1965,8 @@ static void ctrlmenu(void)
           /* remove duplicate assigned inputs */
           for (i=0; i<MAX_INPUTS; i++)
           {
-            if ((i!=player) && (config.input[i].device == config.input[player].device) && (config.input[i].port == config.input[player].port))
+            if ((i!=player) && (config.input[i].port == config.input[player].port) &&
+                ((config.input[i].device == config.input[player].device) || ((config.input[i].device * config.input[player].device) == 2)))
             {
               config.input[i].device = -1;
               config.input[i].port = i%4;
@@ -2057,7 +2073,7 @@ static void ctrlmenu(void)
           /* no input device */
           if (config.input[player].device < 0)
           {
-            /* try gamecube controllers */
+            /* always try gamecube controllers first */
             config.input[player].device = 0;
             config.input[player].port = 0;
           }
@@ -2070,17 +2086,19 @@ static void ctrlmenu(void)
           /* autodetect connected gamecube controllers */
           if (config.input[player].device == 0)
           {
+            /* find first connected controller */
             exp = 0;
-            while ((config.input[player].port<4) && !exp)
+            while ((config.input[player].port < 4) && !exp)
             {
               exp = PAD_ScanPads() & (1<<config.input[player].port);
               if (!exp) config.input[player].port ++;
             }
 
+            /* no more gamecube controller */
             if (config.input[player].port >= 4)
             {
 #ifdef HW_RVL
-              /* no gamecube controller found, try wiimote */
+              /* test wiimote */
               config.input[player].port = 0;
               config.input[player].device = 1;
 #else
@@ -2095,56 +2113,60 @@ static void ctrlmenu(void)
           /* autodetect connected wiimotes (without nunchuk) */
           if (config.input[player].device == 1)
           {
-            exp = 4;
-            if (config.input[player].port<4)
+            /* test current port */
+            exp = 255;
+            if (config.input[player].port < 4)
             {
               WPAD_Probe(config.input[player].port,&exp);
-              if (exp == WPAD_EXP_NUNCHUK) exp = 4;
             }
 
-            while ((config.input[player].port<4) && (exp == 4))
+            /* find first connected controller */
+            while ((config.input[player].port < 4) && (exp == 255))
             {
               /* try next port */
               config.input[player].port ++;
-              if (config.input[player].port<4)
+              if (config.input[player].port < 4)
               {
-                exp = 4;
+                exp = 255;
                 WPAD_Probe(config.input[player].port,&exp);
-                if (exp == WPAD_EXP_NUNCHUK) exp = 4;
               }
             }
 
+            /* no more wiimote */
             if (config.input[player].port >= 4)
             {
-              /* no wiimote (without nunchuk)  found, try wiimote+nunchuks */
+              /* test wiimote+nunchuk */
               config.input[player].port = 0;
               config.input[player].device = 2;
             }
           }
 
-          /* autodetect connected wiimote+nunchuks */
+          /* autodetect connected wiimote+nunchuk */
           if (config.input[player].device == 2)
           {
-            exp = 4;
-            if (config.input[player].port<4)
+            /* test current port */
+            exp = 255;
+            if (config.input[player].port < 4)
             {
               WPAD_Probe(config.input[player].port,&exp);
             }
 
-            while ((config.input[player].port<4) && (exp != WPAD_EXP_NUNCHUK))
+            /* find first connected controller */
+            while ((config.input[player].port < 4) && (exp != WPAD_EXP_NUNCHUK))
             {
               /* try next port */
               config.input[player].port ++;
-              if (config.input[player].port<4)
+              if (config.input[player].port < 4)
               {
-                exp = 4;
+                exp = 255;
                 WPAD_Probe(config.input[player].port,&exp);
               }
             }
 
+            /* no more wiimote+nunchuk */
             if (config.input[player].port >= 4)
             {
-              /* no wiimote+nunchuk found, try classic controllers */
+              /* test classic controllers */
               config.input[player].port = 0;
               config.input[player].device = 3;
             }
@@ -2153,19 +2175,21 @@ static void ctrlmenu(void)
           /* autodetect connected classic controllers */
           if (config.input[player].device == 3)
           {
-            exp = 4;
-            if (config.input[player].port<4)
+            /* test current port */
+            exp = 255;
+            if (config.input[player].port < 4)
             {
               WPAD_Probe(config.input[player].port,&exp);
             }
 
+            /* find first connected controller */
             while ((config.input[player].port<4) && (exp != WPAD_EXP_CLASSIC))
             {
               /* try next port */
               config.input[player].port ++;
-              if (config.input[player].port<4)
+              if (config.input[player].port < 4)
               {
-                exp = 4;
+                exp = 255;
                 WPAD_Probe(config.input[player].port,&exp);
               }
             }
@@ -2289,7 +2313,8 @@ static void ctrlmenu(void)
   /* remove duplicate assigned inputs before leaving */
   for (i=0; i<MAX_INPUTS; i++)
   {
-    if ((i!=player) && (config.input[i].device == config.input[player].device) && (config.input[i].port == config.input[player].port))
+    if ((i!=player) && (config.input[i].port == config.input[player].port) &&
+        ((config.input[i].device == config.input[player].device) || ((config.input[i].device * config.input[player].device) == 2)))
     {
       config.input[i].device = -1;
       config.input[i].port = i%4;
@@ -3091,21 +3116,36 @@ void menu_execute(void)
     {
       /*** Load Game Menu ***/
       case 0:
+
         GUI_DrawMenuFX(m,30,1);
         GUI_DeleteMenu(m);
-        quit = loadgamemenu();
-        if (quit)
+
+        if (loadgamemenu())
         {
+          /* check current controller configuration */
+          if (!gx_input_FindDevices())
+          {
+            GUI_InitMenu(m);
+            GUI_DrawMenuFX(m,30,0);
+            GUI_WaitPrompt("Error","Invalid Controllers Settings");
+            break;
+          }
+
+          /* exit to game */
           gxClearScreen((GXColor)BLACK);
           gxSetScreen();
+          quit = 1;
           break;
         }
+
         GUI_InitMenu(m);
         GUI_DrawMenuFX(m,30,0);
         break;
 
+
       /*** Options Menu */
       case 1:
+
         GUI_DrawMenuFX(m,30,1);
         GUI_DeleteMenu(m);
         optionmenu();
@@ -3113,38 +3153,73 @@ void menu_execute(void)
         GUI_DrawMenuFX(m,30,0);
         break;
 
+
       /*** Exit Menu ***/
       case 2:
+
         exitmenu();
         break;
 
+
       /*** Save Manager ***/
       case 3:
+
         GUI_DrawMenuFX(m,30,1);
         GUI_DeleteMenu(m);
-        quit = savemenu();
-        if (quit) break;
+
+        if (savemenu())
+        {
+          /* check current controller configuration */
+          if (!gx_input_FindDevices())
+          {
+            GUI_InitMenu(m);
+            GUI_DrawMenuFX(m,30,0);
+            GUI_WaitPrompt("Error","Invalid Controllers Settings");
+            break;
+          }
+
+          /* exit to game */
+          quit = 1;
+          break;
+        }
+
         GUI_InitMenu(m);
         GUI_DrawMenuFX(m,30,0);
         break;
 
+
       /*** Virtual system  hard reset ***/
       case 4:
+
+        /* check current controller configuration */
+        if (!gx_input_FindDevices())
+        {
+          GUI_WaitPrompt("Error","Invalid Controllers Settings");
+          break;
+        }
+
+        /* reinitialize emulation */
         GUI_DrawMenuFX(m,10,1);
         GUI_DeleteMenu(m);
         gxClearScreen((GXColor)BLACK);
         gxSetScreen();
         system_init();
         system_reset();
+
+        /* restore SRAM */
         if (config.s_auto & 1)
         {
           slot_autoload(0,config.s_device);
         }
+
+        /* exit to game */
         quit = 1;
         break;
 
+
       /*** Cheats menu ***/
       case 5:
+
         GUI_DrawMenuFX(m,30,1);
         GUI_DeleteMenu(m);
         CheatMenu();
@@ -3152,8 +3227,10 @@ void menu_execute(void)
         GUI_DrawMenuFX(m,30,0);
         break;
 
+
       /*** Action Replay switch ***/
       case 6:
+
         status = (areplay_get_status() + 1) % (AR_SWITCH_TRAINER + 1);
         areplay_set_status(status);
         status = areplay_get_status();
@@ -3164,38 +3241,48 @@ void menu_execute(void)
         GUI_InitMenu(m);
         break;
 
+
       /*** Return to Game ***/
       case 7:
       case -1:
+
         if (cart.romsize)
         {
+          /* check current controller configuration */
+          if (!gx_input_FindDevices())
+          {
+            GUI_WaitPrompt("Error","Invalid Controllers Settings");
+            break;
+          }
+
+          /* exit to game */
           GUI_DrawMenuFX(m,10,1);
           GUI_DeleteMenu(m);
           quit = 1;
         }
         break;
 
+
       /*** Game Capture ***/
       case 8:
+
         sprintf(filename,"%s/snaps/%s.png", DEFAULT_PATH, rom_filename);
         gxSaveScreenshot(filename);
         break;
 
+
       /*** ROM information screen ***/
       case 9:
+
         showrominfo();
         break;
     }
   }
 
   /*** Remove any still held buttons ***/
-  while (PAD_ButtonsHeld(0))
-    PAD_ScanPads();
+  while (PAD_ButtonsHeld(0)) PAD_ScanPads();
 #ifdef HW_RVL
-  while (WPAD_ButtonsHeld(0))
-    WPAD_ScanPads();
-
-  /* free wiimote pointer data */
+  while (WPAD_ButtonsHeld(0)) WPAD_ScanPads();
   gxTextureClose(&w_pointer);
 #endif
 }

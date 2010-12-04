@@ -743,7 +743,7 @@ int GUI_UpdateMenu(gui_menu *menu)
       if (selected >= max_buttons)
       {
         selected = max_buttons - 1;
-        if ((menu->offset + selected < (max_items - 1)))
+        if ((menu->offset + selected) < (max_items - 1))
           menu->offset ++;
       }
     }
@@ -763,7 +763,7 @@ int GUI_UpdateMenu(gui_menu *menu)
       if (selected >= max_buttons)
       {
         selected = max_buttons - 1;
-        if ((menu->offset + selected < (max_items - 1)))
+        if ((menu->offset + selected) < (max_items - 1))
           menu->offset ++;
       }
     }
@@ -826,24 +826,6 @@ int GUI_UpdateMenu(gui_menu *menu)
     }
   }
 
-  /* update arrows buttons status (items list) */
-  button = menu->arrows[0];
-  if (button)
-  {
-    if (menu->offset > 0)
-      button->state |= BUTTON_VISIBLE;
-    else
-      button->state &= ~BUTTON_VISIBLE;
-  }
-  button = menu->arrows[1];
-  if (button)
-  {
-    if ((menu->offset + max_buttons) < max_items)
-      button->state |= BUTTON_VISIBLE;
-    else
-      button->state &= ~BUTTON_VISIBLE;
-  }
-
   if (ret > 0)
   {
     if (selected < max_buttons)
@@ -871,6 +853,23 @@ int GUI_RunMenu(gui_menu *menu)
   {
     GUI_DrawMenu(menu);
     update = GUI_UpdateMenu(menu);
+
+    /* update arrows buttons status (items list) */
+    if (menu->arrows[0])
+    {
+      if (menu->offset > 0)
+        menu->arrows[0]->state |= BUTTON_VISIBLE;
+      else
+        menu->arrows[0]->state &= ~BUTTON_VISIBLE;
+    }
+
+    if (menu->arrows[1])
+    {
+      if ((menu->offset + menu->max_buttons) < menu->max_items)
+        menu->arrows[1]->state |= BUTTON_VISIBLE;
+      else
+        menu->arrows[1]->state &= ~BUTTON_VISIBLE;
+    }
   }
 
   if (update == 2)
@@ -1739,7 +1738,14 @@ static void *MsgBox_Thread(gui_message *message_box)
   while (message_box->refresh)
   {
     /* draw parent menu */
-    GUI_DrawMenu(message_box->parent);
+    if (message_box->parent)
+    {
+      GUI_DrawMenu(message_box->parent);
+    }
+    else
+    {
+      gxClearScreen(bg_color);
+    }
 
     /* draw window */
     gxDrawTexture(message_box->window,166,160,message_box->window->width,message_box->window->height,230);
@@ -1810,17 +1816,27 @@ void GUI_MsgBoxOpen(char *title, char *msg, bool throbber)
     int ypos = 248;
 
     /* disable helper comments */
-    if (message_box.parent->helpers[0])
-      message_box.parent->helpers[0]->data = 0;
-    if (message_box.parent->helpers[1])
-      message_box.parent->helpers[1]->data = 0;
+    if (message_box.parent)
+    {
+      if (message_box.parent->helpers[0])
+        message_box.parent->helpers[0]->data = 0;
+      if (message_box.parent->helpers[1])
+        message_box.parent->helpers[1]->data = 0;
+    }
 
     /* slide in */
     int yoffset = ywindow + message_box.window->height;
     while (yoffset > 0)
     {
       /* draw parent menu */
-      GUI_DrawMenu(message_box.parent);
+      if (message_box.parent)
+      {
+        GUI_DrawMenu(message_box.parent);
+      }
+      else
+      {
+        gxClearScreen(bg_color);
+      }
 
       /* draw window */
       gxDrawTexture(message_box.window,xwindow,ywindow-yoffset,message_box.window->width,message_box.window->height,230);
@@ -1866,7 +1882,14 @@ void GUI_MsgBoxClose(void)
     while (yoffset < (ywindow + message_box.window->height))
     {
       /* draw parent menu */
-      GUI_DrawMenu(message_box.parent);
+      if (message_box.parent)
+      {
+        GUI_DrawMenu(message_box.parent);
+      }
+      else
+      {
+        gxClearScreen(bg_color);
+      }
 
       /* draw window */
       gxDrawTexture(message_box.window,xwindow,ywindow-yoffset,message_box.window->width,message_box.window->height,230);
@@ -1887,14 +1910,22 @@ void GUI_MsgBoxClose(void)
       yoffset += 60;
     }
 
-    /* restore helper comment */
-    if (message_box.parent->helpers[0])
-      message_box.parent->helpers[0]->data = Key_B_png;
-    if (message_box.parent->helpers[1])
-      message_box.parent->helpers[1]->data = Key_A_png;
-
-    /* final position */
-    GUI_DrawMenu(message_box.parent);
+    if (message_box.parent)
+    {
+      /* restore helper comment */
+      if (message_box.parent->helpers[0])
+        message_box.parent->helpers[0]->data = Key_B_png;
+      if (message_box.parent->helpers[1])
+        message_box.parent->helpers[1]->data = Key_A_png;
+    
+      /* final position */
+      GUI_DrawMenu(message_box.parent);
+    }
+    else
+    {
+      gxClearScreen(bg_color);
+    }
+    
     gxSetScreen();
 
     /* clear all textures */

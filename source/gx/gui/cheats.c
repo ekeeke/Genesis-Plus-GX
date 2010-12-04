@@ -34,6 +34,9 @@
 #define BG_COLOR_1 {0x49,0x49,0x49,0xff}
 #define BG_COLOR_2 {0x66,0x66,0x66,0xff}
 
+#define MAX_CHEATS (250)
+#define MAX_DESC_LENGTH (63)
+
 #ifdef HW_RVL
 extern const u8 Key_Minus_wii_png[];
 extern const u8 Key_Plus_wii_png[];
@@ -46,8 +49,8 @@ extern const u8 Key_DPAD_png[];
 typedef struct 
 {
   char code[12];
-  char text[36];
-  u16 enable;
+  char text[MAX_DESC_LENGTH];
+  u8 enable;
   u16 data;
   u16 old;
   u32 address;
@@ -59,22 +62,43 @@ static void clear_cheats(void);
 static void cheatmenu_cb(void);
 static void switch_chars(void);
 
-static int selection = 0;
-static int maxcheats = 0;
 static int string_offset = 0;
+static int selection = 0;
+static int offset = 0;
 static int type = 0;
-static int patchRAM =0;
+static int maxcheats = 0;
+static int maxRAMcheats = 0;
 
-static CHEATENTRY cheatlist[10];
+static CHEATENTRY cheatlist[MAX_CHEATS];
+static u8 RAMcheatlist[MAX_CHEATS];
 
 /*****************************************************************************/
 /*  GUI Buttons data                                                         */
 /*****************************************************************************/
+static butn_data arrow_up_data =
+{
+  {NULL,NULL},
+  {Button_up_png,Button_up_over_png}
+};
+
+static butn_data arrow_down_data =
+{
+  {NULL,NULL},
+  {Button_down_png,Button_down_over_png}
+};
 static butn_data button_digit_data =
 {
   {NULL,NULL},
   {Button_digit_png,Button_digit_over_png}
 };
+
+/*****************************************************************************/
+/*  GUI Arrows button                                                        */
+/*****************************************************************************/
+
+static gui_butn arrow_up = {&arrow_up_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX,{0,0,0,0},14,76,360,32};
+static gui_butn arrow_down = {&arrow_down_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX,{0,0,0,0},14,368,360,32};
+
 
 /*****************************************************************************/
 /*  GUI helpers                                                              */
@@ -145,7 +169,7 @@ static gui_item items_cheats[30] =
 /*****************************************************************************/
 static gui_butn buttons_cheats[30] =
 {
-  {NULL,  BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_SELECT_SFX|BUTTON_OVER_SFX,{0,0,0,0},15,108,358,26},
+  {NULL,  BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_SELECT_SFX|BUTTON_OVER_SFX,{1,0,0,0},15,108,358,26},
   {NULL,  BUTTON_VISIBLE|BUTTON_SELECT_SFX|BUTTON_OVER_SFX,{1,0,0,0},15,134,358,26},
   {NULL,  BUTTON_VISIBLE|BUTTON_SELECT_SFX|BUTTON_OVER_SFX,{1,0,0,0},15,160,358,26},
   {NULL,  BUTTON_VISIBLE|BUTTON_SELECT_SFX|BUTTON_OVER_SFX,{1,0,0,0},15,186,358,26},
@@ -189,7 +213,7 @@ static gui_menu menu_cheats =
   buttons_cheats,
   bg_cheats,
   {&action_cancel, &action_select},
-  {NULL,NULL},
+  {&arrow_up,&arrow_down},
   cheatmenu_cb
 };
 
@@ -290,8 +314,8 @@ static u32 decode_cheat(char *string, u32 *address, u32 *data)
 
 static void apply_cheats(void)
 {
-  /* clear RAM patch flag */
-  patchRAM = 0;
+  /* clear RAM patches counter */
+  maxRAMcheats = 0;
 
   int i;
   for (i = 0; i < maxcheats; i++)
@@ -307,7 +331,7 @@ static void apply_cheats(void)
       else if (cheatlist[i].address >= 0xFF0000)
       {
         /* patch RAM data */
-        patchRAM = 1;
+        RAMcheatlist[maxRAMcheats++] = i;
       }
     }
   }
@@ -450,7 +474,7 @@ static void cheatmenu_cb(void)
   int yoffset = 108;
   gui_image bar_over;
   gui_image star;
-  char temp[36];
+  char temp[MAX_DESC_LENGTH];
 
   /* Initialize textures */
   bar_over.texture = gxTextureOpenPNG(Overlay_bar_png,0);
@@ -469,7 +493,7 @@ static void cheatmenu_cb(void)
   gxDrawRectangle(15, 342, 358, 26, 127, (GXColor)BG_COLOR_2);
 
   /* Draw Cheat list */
-  for (i=0; i<maxcheats; i++)
+  for (i=0; ((offset + i) < maxcheats) && (i < 10); i++)
   {
     if (i == selection)
     {
@@ -483,24 +507,24 @@ static void cheatmenu_cb(void)
         if (menu_cheats.bg_images[6].state & IMAGE_VISIBLE)
         {
           /* adjust offset so that last characters are visible */
-          string_offset += FONT_writeCenter(cheatlist[i].text+string_offset,16,40,366,yoffset+21,(GXColor)WHITE);
+          string_offset += FONT_writeCenter(cheatlist[offset + i].text+string_offset,16,40,366,yoffset+21,(GXColor)WHITE);
         }
         else
         {
           /* scroll text (speed = 1/10 frame) */
-          if ((string_offset/10) >= strlen(cheatlist[i].text))
+          if ((string_offset/10) >= strlen(cheatlist[offset + i].text))
           {
             string_offset = 0;
           }
 
           if (string_offset)
           {
-            sprintf(temp,"%s ",cheatlist[i].text+string_offset/10);
-            strncat(temp, cheatlist[i].text, string_offset/10);
+            sprintf(temp,"%s ",cheatlist[offset + i].text+string_offset/10);
+            strncat(temp, cheatlist[offset + i].text, string_offset/10);
           }
           else
           {
-            strcpy(temp, cheatlist[i].text);
+            strcpy(temp, cheatlist[offset + i].text);
           }
 
           if (FONT_writeCenter(temp,16,40,366,yoffset+21,(GXColor)WHITE))
@@ -512,23 +536,23 @@ static void cheatmenu_cb(void)
       }
       else
       {
-        FONT_writeCenter(cheatlist[i].code,18,40,366,yoffset+22,(GXColor)WHITE);
+        FONT_writeCenter(cheatlist[offset + i].code,18,40,366,yoffset+22,(GXColor)WHITE);
       }
     }
     else
     {
       if (type)
       {
-        FONT_writeCenter(cheatlist[i].text,16,40,366,yoffset+21,(GXColor)WHITE);
+        FONT_writeCenter(cheatlist[offset + i].text,16,40,366,yoffset+21,(GXColor)WHITE);
       }
       else
       {
-        FONT_writeCenter(cheatlist[i].code,18,40,366,yoffset+22,(GXColor)WHITE);
+        FONT_writeCenter(cheatlist[offset + i].code,18,40,366,yoffset+22,(GXColor)WHITE);
       }
     }
 
     /* draw cheat enable mark */
-    if (cheatlist[i].enable)
+    if (cheatlist[offset + i].enable)
     {
       gxDrawTexture(star.texture,20,yoffset+5,16,16,255);
     }
@@ -537,9 +561,9 @@ static void cheatmenu_cb(void)
   }
 
   /* New Entry */
-  if (maxcheats < 10)
+  if (i < 10)
   {
-    if (maxcheats == selection)
+    if (i == selection)
     {
       /* selection bar */
       gxDrawTexture(bar_over.texture,16,yoffset+1,356,24,255);
@@ -547,7 +571,7 @@ static void cheatmenu_cb(void)
       /* check if new code is being edited */
       if (menu_cheats.bg_images[6].state & IMAGE_VISIBLE)
       {
-        FONT_writeCenter(cheatlist[selection].code,18,40,366,yoffset+22,(GXColor)WHITE);
+        FONT_writeCenter(cheatlist[offset + selection].code,18,40,366,yoffset+22,(GXColor)WHITE);
       }
       else
       {
@@ -561,6 +585,7 @@ static void cheatmenu_cb(void)
   }
 
   gxTextureClose(&bar_over.texture);
+  gxTextureClose(&star.texture);
 
   /* Extra helpers */
   if (maxcheats && !(menu_cheats.bg_images[6].state & IMAGE_VISIBLE))
@@ -578,7 +603,7 @@ static void cheatmenu_cb(void)
     gxTextureClose(&key_switch.texture);
 
     /* delete & enable cheats */
-    if (menu_cheats.selected < maxcheats)
+    if ((offset + selection) < maxcheats)
     {
       gui_image key_enable;
       gui_image key_delete;
@@ -588,14 +613,14 @@ static void cheatmenu_cb(void)
       gxDrawTexture(key_delete.texture,152,424,24,24,255);
       gxDrawTexture(key_enable.texture,372,424,24,24,255);
       FONT_write("Delete\nCheat",16,184,436,640,(GXColor)WHITE);
-      FONT_write(cheatlist[selection].enable ? "Disable\nCheat":"Enable\nCheat",16,404,436,640,(GXColor)WHITE);
+      FONT_write(cheatlist[offset + selection].enable ? "Disable\nCheat":"Enable\nCheat",16,404,436,640,(GXColor)WHITE);
   #else
-      key_enable.texture = gxTextureOpenPNG(Key_L_gcn_png,0);
-      key_delete.texture = gxTextureOpenPNG(Key_R_gcn_png,0);
+      key_delete.texture = gxTextureOpenPNG(Key_L_gcn_png,0);
+      key_enable.texture = gxTextureOpenPNG(Key_R_gcn_png,0);
       gxDrawTexture(key_delete.texture,136,426,44,20,255);
       gxDrawTexture(key_enable.texture,368,426,44,20,255);
       FONT_write("Delete\nCheat",16,188,436,640,(GXColor)WHITE);
-      FONT_write(cheatlist[selection].enable ? "Disable\nCheat":"Enable\nCheat",16,420,436,640,(GXColor)WHITE);
+      FONT_write(cheatlist[offset + selection].enable ? "Disable\nCheat":"Enable\nCheat",16,420,436,640,(GXColor)WHITE);
   #endif
       gxTextureClose(&key_enable.texture);
       gxTextureClose(&key_delete.texture);
@@ -613,7 +638,7 @@ static void cheatmenu_cb(void)
 void CheatMenu(void)
 {
   int i, update = 0;
-  int offset = 0;
+  int digit_cnt = 0;
   int max = 0;
   char temp[256];
   char *str = NULL;
@@ -622,6 +647,9 @@ void CheatMenu(void)
 
   /* clear existing ROM patches */
   clear_cheats();
+
+  /* reset scrolling */
+  string_offset = 0;
 
   /* background type */
   if (config.bg_type > 0)
@@ -668,13 +696,35 @@ void CheatMenu(void)
 
   while (update != -1)
   {
+    /* update arrows buttons */
+    if (offset > 0) m->arrows[0]->state |= BUTTON_VISIBLE;
+    else m->arrows[0]->state &= ~BUTTON_VISIBLE;
+    if ((offset + 10) < (maxcheats + 1)) m->arrows[1]->state |= BUTTON_VISIBLE;
+    else m->arrows[1]->state &= ~BUTTON_VISIBLE;
+
     /* draw menu */
     GUI_DrawMenu(m);
+
+    /* restore cheats offset */
+    if (!(menu_cheats.bg_images[6].state & IMAGE_VISIBLE))
+    {
+      m->offset = offset;
+      m->max_items = maxcheats + 1;
+      m->max_buttons = 10;
+    }
 
     /* update menu */
     update = GUI_UpdateMenu(m);
 
-    /* update selection */
+    /* save offset then restore default */
+    if (!(menu_cheats.bg_images[6].state & IMAGE_VISIBLE))
+    {
+      offset = m->offset;
+      m->offset = 0;
+      m->max_items = m->max_buttons = 30;
+    }
+
+    /* update selected cheat */
     if ((m->selected < 10) && (selection != m->selected))
     {
       selection = m->selected;
@@ -697,17 +747,17 @@ void CheatMenu(void)
         case 8:
         case 9: /* Edit cheat */
         {
-          if (type && (selection != maxcheats))
+          if (type && ((selection + offset) != maxcheats))
           {
             /* cheat description */
-            str = cheatlist[selection].text;
+            str = cheatlist[offset + selection].text;
             strcpy(temp, str);
-            max = 34;
-            offset = strlen(str);
-            if (offset <= max)
+            max = MAX_DESC_LENGTH - 2;
+            digit_cnt = strlen(str);
+            if (digit_cnt <= max)
             {
-              str[offset] = '*';
-              str[offset+1] = 0;
+              str[digit_cnt] = '*';
+              str[digit_cnt+1] = 0;
             }
 
             /* init specific characters */
@@ -719,13 +769,13 @@ void CheatMenu(void)
           else
           {
             /* cheat code */
-            str = cheatlist[selection].code;
+            str = cheatlist[offset + selection].code;
             strcpy(temp, str);
-            if (selection == maxcheats)
+            if ((offset + selection) == maxcheats)
             {
               /* initialize code */
               max = 0;
-              offset = 0;
+              digit_cnt = 0;
               str[0] = '*';
               str[1] = 0;
             }
@@ -742,7 +792,7 @@ void CheatMenu(void)
                 /* AR code */
                 max = 10;
               }
-              offset = max + 1;
+              digit_cnt = max + 1;
             }
 
             /* init specific characters */
@@ -760,7 +810,11 @@ void CheatMenu(void)
 
           /* disable left buttons */
           for (i=0; i<10; i++) m->buttons[i].state &= ~BUTTON_ACTIVE;
-   
+
+          /* disable arrow buttons */
+          m->arrows[0]->state &= ~BUTTON_ACTIVE;
+          m->arrows[1]->state &= ~BUTTON_ACTIVE;
+
           /* slide in right window */
           GUI_DrawMenuFX(m,20,0);
 
@@ -777,20 +831,20 @@ void CheatMenu(void)
 
         case 26:  /* Backspace */
         {
-          if (offset > 0)
+          if (digit_cnt > 0)
           {
             /* delete last character */
-            str[offset--] = 0;
+            str[digit_cnt--] = 0;
 
             /* code separator is being deleted */
-            if ((str[offset] == ':') || (str[offset] == '-'))
+            if ((str[digit_cnt] == ':') || (str[digit_cnt] == '-'))
             {
               /* reset detected code type */
               max = 0;
             }
 
             /* edit mark */
-            str[offset] = '*';
+            str[digit_cnt] = '*';
 
             /* update scroll value if necessary */
             if (string_offset > 0) string_offset--;
@@ -800,17 +854,17 @@ void CheatMenu(void)
 
         case 27:
         {
-          if (type && (selection != maxcheats))
+          if (type && ((offset + selection) != maxcheats))
           {
             /* SPACE character */
-            if (offset <= max)
+            if (digit_cnt <= max)
             {
-              str[offset++] = ' ';
-              str[offset] = 0;
-              if (offset <= max)
+              str[digit_cnt++] = ' ';
+              str[digit_cnt] = 0;
+              if (digit_cnt <= max)
               {
-                str[offset] = '*';
-                str[offset+1] = 0;
+                str[digit_cnt] = '*';
+                str[digit_cnt+1] = 0;
               }
             }
           }
@@ -819,23 +873,23 @@ void CheatMenu(void)
             /* Separator character (only if code type has not yet been determined) */
             if (max == 0)
             {
-              if (offset == 4)
+              if (digit_cnt == 4)
               {
                 /* GG code */
                 max = 8;
                 str[4] = '-';
                 str[5] = '*';
                 str[6] = 0;
-                offset++;
+                digit_cnt++;
               }
-              else if (offset == 6)
+              else if (digit_cnt == 6)
               {
                 /* AR code */
                 max = 10;
                 str[6] = ':';
                 str[7] = '*';
                 str[8] = 0;
-                offset++;
+                digit_cnt++;
               }
             }
           }
@@ -853,31 +907,31 @@ void CheatMenu(void)
         case 29:  /* Validate entry */
         {
           /* check if entry is valid */
-          if (type && (selection != maxcheats))
+          if (type && ((offset + selection) != maxcheats))
           {
-            str[offset] = 0;
+            str[digit_cnt] = 0;
             update = -1;
           }
-          else if (max && (offset > max))
+          else if (max && (digit_cnt > max))
           {
             address = data = 0;
-            if (decode_cheat(cheatlist[selection].code, &address, &data))
+            if (decode_cheat(cheatlist[offset + selection].code, &address, &data))
             {
               /* update cheat address & data values */
-              cheatlist[selection].address = address;
-              cheatlist[selection].data = data;
+              cheatlist[offset + selection].address = address;
+              cheatlist[offset + selection].data = data;
 
               /* new cheat ? */
-              if (selection == maxcheats)
+              if ((offset + selection) == maxcheats)
               {
                 /* increase cheat count */
                 maxcheats++;
 
                 /* enable cheat by default */
-                cheatlist[selection].enable = 1;
+                cheatlist[offset + selection].enable = 1;
 
                 /* no description by default */
-                strcpy(cheatlist[selection].text,"No Description");
+                strcpy(cheatlist[offset + selection].text,"No Description");
               }
 
               /* return to cheat selection */
@@ -894,17 +948,17 @@ void CheatMenu(void)
         default:  /* Add Character */
         {
           /* force code separator if none has been set yet */
-          if ((max == 0) && (offset == 6)) break;
+          if ((max == 0) && (digit_cnt == 6)) break;
 
           /* add character */
-          if ((offset <= max) || (max == 0))
+          if ((digit_cnt <= max) || (max == 0))
           {
-            str[offset++] = m->items[m->selected].text[0];
-            str[offset] = 0;
-            if ((offset <= max) || (max == 0))
+            str[digit_cnt++] = m->items[m->selected].text[0];
+            str[digit_cnt] = 0;
+            if ((digit_cnt <= max) || (max == 0))
             {
-              str[offset] = '*';
-              str[offset+1] = 0;
+              str[digit_cnt] = '*';
+              str[digit_cnt+1] = 0;
             }
             if (string_offset > 0) string_offset ++;
           }
@@ -933,13 +987,13 @@ void CheatMenu(void)
           string_offset = 0;
         }
         
-        if (selection < maxcheats)
+        if ((offset + selection) < maxcheats)
         {
           /* Special inputs */
           if (m_input.keys & PAD_TRIGGER_L)
           {
             /* sort cheat list */
-            for (i = selection + 1; i < maxcheats; i++)
+            for (i = offset + selection + 1; i < maxcheats; i++)
             {
               strcpy(cheatlist[i-1].text,cheatlist[i].text);
               strcpy(cheatlist[i-1].code,cheatlist[i].code);
@@ -956,10 +1010,10 @@ void CheatMenu(void)
             cheatlist[maxcheats-1].enable = 0;
 
             /* disable last button */
-            if (maxcheats < 10)
+            if ((maxcheats - offset) < 10)
             {
-              m->buttons[maxcheats].state &= ~BUTTON_ACTIVE;
-              m->buttons[maxcheats - 1].shift[1] = 0;
+              m->buttons[maxcheats - offset].state &= ~BUTTON_ACTIVE;
+              m->buttons[maxcheats - offset - 1].shift[1] = 0;
             }
 
             /* decrease cheat count */
@@ -971,7 +1025,7 @@ void CheatMenu(void)
           else if (m_input.keys & PAD_TRIGGER_R)
           {
             /* cheat ON/OFF */
-            cheatlist[selection].enable ^= 1;
+            cheatlist[offset + selection].enable ^= 1;
           }
         }
       }
@@ -990,22 +1044,29 @@ void CheatMenu(void)
         /* hide right window */
         m->bg_images[6].state &= ~IMAGE_VISIBLE;
 
-        /* enable left buttons */
-        for (i=0; i<maxcheats; i++)
+        /* update left buttons */
+        for (i=0; i<10; i++)
         {
-          m->buttons[i].state |= BUTTON_ACTIVE;
-          m->buttons[i].shift[1] = 1;
+          if ((offset + i) < maxcheats)
+          {
+            m->buttons[i].state |= BUTTON_ACTIVE;
+            m->buttons[i].shift[1] = 1;
+          }
+          else if ((offset + i) == maxcheats)
+          {
+            m->buttons[i].state |= BUTTON_ACTIVE;
+            m->buttons[i].shift[1] = 0;
+          }
+          else
+          {
+            m->buttons[i].state &= ~BUTTON_ACTIVE;
+            m->buttons[i].shift[1] = 0;
+          }
         }
 
-        if (maxcheats < 10)
-        {
-          m->buttons[maxcheats].state |= BUTTON_ACTIVE;
-          m->buttons[maxcheats].shift[1] = 0;
-        }
-        else
-        {
-          m->buttons[9].shift[1] = 0;
-        }
+        /* enable arrow buttons */
+        m->arrows[0]->state |= BUTTON_ACTIVE;
+        m->arrows[1]->state |= BUTTON_ACTIVE;
 
         /* restore helper */
         strcpy(action_cancel.comment,"Back");
@@ -1075,7 +1136,7 @@ void CheatLoad(void)
   char temp[256];
 
   /* reset cheat count */
-  selection = maxcheats = 0;
+  maxcheats = 0;
   
   /* make cheat filename */
   sprintf(temp, "%s/cheats/%s.pat", DEFAULT_PATH, rom_filename);
@@ -1088,7 +1149,7 @@ void CheatLoad(void)
     memset(temp, 0, 256);
 
     /* read cheats from file (one line per cheat) */
-    while (fgets(temp, 256, f) && (maxcheats < 10) && (cnt < 10))
+    while (fgets(temp, 256, f) && (maxcheats < MAX_CHEATS) && (cnt < MAX_CHEATS))
     {
       /* remove CR & EOL chars */
       if ((temp[strlen(temp) - 2] == 0x0d) || (temp[strlen(temp) - 2] == 0x0a)) temp[strlen(temp) - 2] = 0;
@@ -1113,18 +1174,18 @@ void CheatLoad(void)
         while ((temp[len] == 0x20) || (temp[len] == 0x09)) len++;
 
         /* copy cheat description */
-        strncpy(cheatlist[maxcheats].text, &temp[len], 35);
-        cheatlist[maxcheats].text[35] = 0;
+        strncpy(cheatlist[maxcheats].text, &temp[len], MAX_DESC_LENGTH - 1);
+        cheatlist[maxcheats].text[MAX_DESC_LENGTH - 1] = 0;
 
         /* increment cheat count */
         maxcheats++;
       }
-      else if (!strncmp(temp,"ON",2))
+      else if (!strcmp(temp,"ON") && config.autocheat)
       {
         /* enable flag */
         cheatlist[cnt++].enable = 1;
       }
-      else if (!strncmp(temp,"OFF",3))
+      else if (!strcmp(temp,"OFF") && config.autocheat)
       {
         /* disable flag */
         cheatlist[cnt++].enable = 0;
@@ -1142,20 +1203,27 @@ void CheatLoad(void)
   apply_cheats();
 
   /* adjust menu buttons */
-  for (cnt=0; cnt<maxcheats; cnt++)
+  for (cnt=0; cnt<10; cnt++)
   {
-    menu_cheats.buttons[cnt].state |= BUTTON_ACTIVE;
-    menu_cheats.buttons[cnt].shift[1] = 1;
+    if (cnt < maxcheats)
+    {
+      menu_cheats.buttons[cnt].state |= BUTTON_ACTIVE;
+      menu_cheats.buttons[cnt].shift[1] = 1;
+    }
+    else if (cnt == maxcheats)
+    {
+      menu_cheats.buttons[cnt].state |= BUTTON_ACTIVE;
+      menu_cheats.buttons[cnt].shift[1] = 0;
+    }
+    else
+    {
+      menu_cheats.buttons[cnt].shift[1] = 0;
+      menu_cheats.buttons[cnt].state &= ~BUTTON_ACTIVE;
+    }
   }
-  if (maxcheats < 10)
-  {
-    menu_cheats.buttons[maxcheats].state |= BUTTON_ACTIVE;
-    menu_cheats.buttons[maxcheats].shift[1] = 0;
-  }
-  else
-  {
-    menu_cheats.buttons[9].shift[1] = 0;
-  }
+
+  /* reset menu */
+  selection = offset = 0;
 }
 
 /****************************************************************************
@@ -1166,24 +1234,23 @@ void CheatLoad(void)
  ****************************************************************************/ 
 void CheatUpdate(void)
 {
-  if (patchRAM)
+  int index, cnt = maxRAMcheats;
+  
+  while (cnt)
   {
-    int i;
-    for (i = 0; i < maxcheats; i++)
+    /* get cheat index */
+    index = RAMcheatlist[--cnt];
+
+    /* apply RAM patch */
+    if (cheatlist[index].data & 0xFF00)
     {
-      if (cheatlist[i].enable && (cheatlist[i].address >= 0xFF0000))
-      {
-        if (cheatlist[i].data & 0xFF00)
-        {
-          /* word patch */
-          *(u16 *)(work_ram + (cheatlist[i].address & 0xFFFE)) = cheatlist[i].data;
-        }
-        else
-        {
-          /* byte patch */
-          work_ram[cheatlist[i].address & 0xFFFF] = cheatlist[i].data;
-        }
-      }
+      /* word patch */
+      *(u16 *)(work_ram + (cheatlist[index].address & 0xFFFE)) = cheatlist[index].data;
+    }
+    else
+    {
+      /* byte patch */
+      work_ram[cheatlist[index].address & 0xFFFF] = cheatlist[index].data;
     }
   }
 }
