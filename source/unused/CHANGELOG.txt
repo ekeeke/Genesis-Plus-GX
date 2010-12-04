@@ -7,6 +7,44 @@ Please look at http://code.google.com/p/genplus-gx/ for more infos.
 
 
 
+---------------------------------------------------------------------------------------------------------
+[04/12/2010] version 1.4.1 (Eke-Eke)
+---------------------------------------------------------------------------------------------------------
+
+[Core/Sound]
+---------------
+* implemented Blargg's blip buffer in SN76489 core (all channels are now lineary interpolated)
+
+[Core/VDP]
+---------------
+* improved 2-cell vscroll emulation accuracy, as verified on real hardware (Gynoug, Cutie Suzuki no Ringside Angel, Formula One, Kawasaki Superbike Challenge)
+* improved VBLANK flag accuracy, as observed on real hardware.
+* improved DMA operations accuracy, writes are now performed on a scanline basis: fixes Gaiares (flickering title screen).
+* improved DMA Fill timing accuracy.
+* fixed DMA with bad code values: fixes Williams Arcade Classics (corrupted gfx after soft reset).
+* fixed horizontal resolution changes during HBLANK: fixes Bugs Bunny in Double Trouble (2nd stage).
+* fixed Vertical Counter in interlace mode 1, as observed on real hardware.
+* fixed horizontal border width, as observed on real hardware.
+* various code improvments & optimizations.
+
+[Core/CPU]
+---------------
+* fixed state of Z80 registers on reset (sound issues with Defender & Defender 2 in Williams Arcade Classics)
+* implemented 68k undocumented flags behavior for DIVU/DIVS instructions (Bloodshot / Battle Frenzy)
+
+[Core/Extra]
+---------------
+* improved emulation of copy-protection hardware found in some unlicensed cartridges (Mulan, Pocket Monsters II).
+* enabled simultaneous use of multitap & J-CART (Super Skidmarks 6-player mode)
+* improved savestate format: added DMA, SVP, cartridge mapping & internal registers state informations
+* improved unlicensed ROM mappers emulation
+* added Chinese Fighters III mapper support
+* added Top Fighter mapper support
+* fixed Barver Battle Saga mapper support
+* fixed cartridge hardware soft-reset (Game Genie, SVP, ...)
+* fixed Game Genie registers byte reads
+
+
 ----------------------------------------------------------------------------------------------------------------------------------------------------
 [06/30/10] version 1.4.0 (Eke-Eke)
 ----------------------------------------------------------------------------------------------------------------------------------------------------

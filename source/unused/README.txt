@@ -70,13 +70,10 @@
 
  DOS only:
 
- End        -   Exit program
  F1-F4      -   Set frameskip level (F1 = no skip ... F4 = skip 3 frames)
- F6	    -	Log messages (for debug ONLY)
 
- WIndows only:
+ Windows only:
 
- End        -   Exit program
  F4         -   Toggle Audio (ONLY when Turbo mode is OFF)
  F6	    -   Toggle Turbo mode (ONLY when Audio is OFF)
 
