@@ -79,6 +79,7 @@ int state_load(unsigned char *buffer)
 
   // IO
   load_param(io_reg, sizeof(io_reg));
+  io_reg[0] = region_code | 0x20 | (config.tmss & 1);
 
   // VDP
   bufferptr += vdp_context_load(&state[bufferptr], version);
@@ -111,6 +112,7 @@ int state_load(unsigned char *buffer)
 
   // Z80 
   load_param(&Z80, sizeof(Z80_Regs));
+  Z80.irq_callback = z80_irq_callback;
 
   // Cartridge HW
   bufferptr += cart_hw_context_load(&state[bufferptr], version);

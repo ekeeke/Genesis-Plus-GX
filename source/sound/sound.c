@@ -159,9 +159,7 @@ void sound_reset(void)
 
 int sound_context_save(uint8 *state)
 {
-  int bufferptr = 0;
-
-  save_param(YM2612GetContextPtr(),YM2612GetContextSize());
+  int bufferptr = YM2612SaveContext(state);
   save_param(SN76489_GetContextPtr(),SN76489_GetContextSize());
   save_param(&fm_cycles_count,sizeof(fm_cycles_count));
   save_param(&psg_cycles_count,sizeof(psg_cycles_count));
@@ -171,16 +169,14 @@ int sound_context_save(uint8 *state)
 
 int sound_context_load(uint8 *state, char *version)
 {
-  int bufferptr = 0;
-
-  YM2612Restore(&state[bufferptr]);
-  bufferptr += YM2612GetContextSize();
+  int bufferptr = YM2612LoadContext(state, version);
   load_param(SN76489_GetContextPtr(),SN76489_GetContextSize());
 
   if (version[15] > 0x30)
   {
     load_param(&fm_cycles_count,sizeof(fm_cycles_count));
     load_param(&psg_cycles_count,sizeof(psg_cycles_count));
+    fm_cycles_count = psg_cycles_count;
   }
 
   return bufferptr;

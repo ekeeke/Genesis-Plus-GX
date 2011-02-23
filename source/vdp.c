@@ -163,7 +163,6 @@ void vdp_reset(void)
   vint_pending    = 0;
   irq_status      = 0;
   hvc_latch       = 0;
-  v_counter       = 0;
   dmafill         = 0;
   fill_data       = 0;
   dma_length      = 0;
@@ -178,6 +177,7 @@ void vdp_reset(void)
   cached_write    = -1;
 
   vc_max = 0xEA + 24*vdp_pal;
+  v_counter = lines_per_frame - 1;
 
   status = vdp_pal | 0x200;  /* FIFO empty flag */
 
@@ -295,6 +295,9 @@ int vdp_context_load(uint8 *state, char *version)
   {
     vc_max += (28 - 20*vdp_pal);
   }
+
+  /* keep current region mode */
+  status = (status & ~1) | vdp_pal;
 
   /* restore FIFO timings */
   fifo_latency = (reg[12] & 1) ? 190 : 214;

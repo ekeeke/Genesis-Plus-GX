@@ -2189,7 +2189,7 @@ void YM2612Restore(unsigned char *buffer)
   /* restore internal state */
   memcpy(&ym2612, buffer, sizeof(YM2612));
 
-  /* restore current timings */
+  /* keep current timings */
   ym2612.OPN.ST.clock = clock;
   ym2612.OPN.ST.rate  = rate;
   OPNSetPres(6*24);
@@ -2202,6 +2202,57 @@ void YM2612Restore(unsigned char *buffer)
   setup_connection(&ym2612.CH[4],4);
   setup_connection(&ym2612.CH[5],5);
 
-  /* restore TL table (in case DAC precision has changed) */
+  /* restore TL table (DAC resolution might have been modified) */
   init_tables();
+}
+
+int YM2612LoadContext(unsigned char *state, char *version)
+{
+  int bufferptr = sizeof(YM2612);
+
+  /* restore YM2612 context */
+  YM2612Restore(state);
+
+  /* extended state */
+  if (version[15] > 0x31)
+  {
+    int c,s;
+    uint8 index;
+
+    /* restore DT table address pointer for each channel slots */
+    for( c = 0 ; c < 6 ; c++ )
+    {
+      for(s = 0 ; s < 4 ; s++ )
+      {
+        load_param(&index,sizeof(index));
+        bufferptr += sizeof(index);
+        ym2612.CH[c].SLOT[s].DT = ym2612.OPN.ST.dt_tab[index&7];
+      }
+    }
+  }
+
+  return bufferptr;
+}
+
+int YM2612SaveContext(unsigned char *state)
+{
+  int c,s;
+  uint8 index;
+  int bufferptr = sizeof(YM2612);
+
+  /* save YM2612 context */
+  memcpy(state, &ym2612, sizeof(YM2612));
+
+  /* save DT table index for each channel slots */
+  for( c = 0 ; c < 6 ; c++ )
+  {
+    for(s = 0 ; s < 4 ; s++ )
+    {
+      index = (ym2612.CH[c].SLOT[s].DT - ym2612.OPN.ST.dt_tab[0]) >> 5;
+      save_param(&index,sizeof(index));
+      bufferptr += sizeof(index);
+    }
+  }
+
+  return bufferptr;
 }

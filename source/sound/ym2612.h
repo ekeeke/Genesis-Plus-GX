@@ -10,8 +10,8 @@
 **
 */
 
-#ifndef _H_FM_FM_
-#define _H_FM_FM_
+#ifndef _H_YM2612_
+#define _H_YM2612_
 
 /* compiler dependence */
 #ifndef INLINE
@@ -27,5 +27,8 @@ extern unsigned int YM2612Read(void);
 extern unsigned char *YM2612GetContextPtr(void);
 extern unsigned int YM2612GetContextSize(void);
 extern void YM2612Restore(unsigned char *buffer);
+extern int YM2612LoadContext(unsigned char *state, char *version);
+extern int YM2612SaveContext(unsigned char *state);
 
-#endif /* _H_FM_FM_ */
+
+#endif /* _YM2612_ */
