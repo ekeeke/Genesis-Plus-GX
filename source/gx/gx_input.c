@@ -717,11 +717,10 @@ int gx_input_FindDevices(void)
       {
         case 0: /* Gamecube Controller */
         {
-          if (!(pad & (1 << config.input[player].port)))
+          if (pad & (1 << config.input[player].port))
           {
-            return 0;
+            found++;
           }
-          found++;
           break;
         }
 
@@ -730,11 +729,10 @@ int gx_input_FindDevices(void)
         {
           wpad = 255;
           WPAD_Probe(config.input[player].port, &wpad);
-          if (wpad == 255)
+          if (wpad != 255)
           {
-            return 0;
+            found++;
           }
-          found++;
           break;
         }
 
@@ -743,11 +741,10 @@ int gx_input_FindDevices(void)
         {
           wpad = 255;
           WPAD_Probe(config.input[player].port, &wpad);
-          if (wpad != (config.input[player].device - 1))
+          if (wpad == (config.input[player].device - 1))
           {
-            return 0;
+            found++;
           }
-          found++;
           break;
         }
  #endif
