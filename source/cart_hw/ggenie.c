@@ -121,39 +121,27 @@ void ggenie_switch(int enable)
   int i,j;
   if (enable)
   {
+    /* enable cheats */
     for (i=0; i<6; i++)
     {
       /* patch is enabled ? */
       if (ggenie.regs[0] & (1 << i))
       {
-        /* first look if address has not already been patched */
-        for (j=0;j<i;j++)
-        {
-          if (ggenie.addr[i] == ggenie.addr[j])
-          {
-            /* disable code for later initialization */
-            ggenie.regs[0] &= ~(1 << i);
-            j = i;
-          }
-        }
-
         /* save old value and patch ROM if enabled */
-        if (ggenie.regs[0] & (1 << i))
-        {
-          ggenie.old[i] = *(uint16 *)(cart.rom + ggenie.addr[i]);
-          *(uint16 *)(cart.rom + ggenie.addr[i]) = ggenie.data[i];
-        }
+        ggenie.old[i] = *(uint16 *)(cart.rom + ggenie.addr[i]);
+        *(uint16 *)(cart.rom + ggenie.addr[i]) = ggenie.data[i];
       }
     }
   }
   else
   {
-    /* restore old values */
-    for (i=0; i<6; i++)
+    /* disable cheats in reversed order in case the same address is used by multiple patches */
+    for (i=5; i>=0; i--)
     {
       /* patch is enabled ? */
       if (ggenie.regs[0] & (1 << i))
       {
+        /* restore original ROM value */
         *(uint16 *)(cart.rom + ggenie.addr[i]) = ggenie.old[i];
       }
     }

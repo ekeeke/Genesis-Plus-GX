@@ -339,14 +339,18 @@ static void apply_cheats(void)
 
 static void clear_cheats(void)
 {
-  int i;
-  for (i = 0; i < maxcheats; i++)
+  int i = maxcheats;
+
+  /* disable cheats in reversed order in case the same address is used by multiple patches */
+  while (i > 0)
   {
     /* restore original ROM data */
-    if (cheatlist[i].enable && (cheatlist[i].address < cart.romsize))
+    if (cheatlist[i-1].enable && (cheatlist[i-1].address < cart.romsize))
     {
-      *(u16 *)(cart.rom + (cheatlist[i].address & 0xFFFFFE)) = cheatlist[i].old;
+      *(u16 *)(cart.rom + (cheatlist[i-1].address & 0xFFFFFE)) = cheatlist[i-1].old;
     }
+
+    i--;
   }
 }
 
