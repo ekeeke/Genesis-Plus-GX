@@ -1,28 +1,28 @@
 /*
 **
-** software implementation of Yamaha YM2612 FM sound generator (taken from M.A.M.E fm.c)
+** software implementation of Yamaha FM sound generator (YM2612/YM3438)
+**
+** Original code (MAME fm.c)
 **
 ** Copyright (C) 2001, 2002, 2003 Jarek Burczynski (bujar at mame dot net)
 ** Copyright (C) 1998 Tatsuyuki Satoh , MultiArcadeMachineEmulator development
 **
 ** Version 1.4 (final beta) 
 **
-*/
-
-/*
-** History:
+** Additional code & fixes by Eke-Eke for Genesis Plus GX
 **
-** 2006~2009  Eke-Eke (Genesis Plus GX):
-** Huge thanks to Nemesis, lot of those fixes came from his tests on Sega Genesis hardware
+** Huge thanks to Nemesis, most of those fixes came from his tests on Sega Genesis hardware
 ** More informations at http://gendev.spritesmind.net/forum/viewtopic.php?t=386
 **
 **  TODO:
-**
-**  - core documentation
-**  - BUSY flag support
-**
+**  - better documentation
+**  - BUSY flag emulation
+*/
+
+/*
 **  CHANGELOG:
 **
+** 2006~2011  Eke-Eke (Genesis Plus GX):
 **  - removed unused multichip support
 **  - added YM2612 Context external access functions
 **  - fixed LFO implementation:
@@ -40,6 +40,7 @@
 **  - implemented accurate CSM mode emulation
 **  - implemented accurate SSG-EG emulation (Asterix, Beavis&Butthead, Bubba'n Stix & many other games)
 **  - implemented accurate address/data ports behavior
+**  - added preliminar support for DAC precision
 **
 **
 ** 03-08-2003 Jarek Burczynski:
@@ -2213,8 +2214,8 @@ int YM2612LoadContext(unsigned char *state, char *version)
   /* restore YM2612 context */
   YM2612Restore(state);
 
-  /* extended state */
-  if (version[15] > 0x31)
+  /* extended state (from 1.5.0 and above) */
+  if ((version[11] > 0x31) || (version[13] > 0x34))
   {
     int c,s;
     uint8 index;

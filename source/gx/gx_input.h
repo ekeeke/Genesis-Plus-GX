@@ -31,7 +31,7 @@
 #define MAX_INPUTS 8
 #endif
 
-/* Genesis controller keys */
+/* Configurable keys */
 #define MAX_KEYS 8
 
 /* Key configuration structure */
@@ -46,7 +46,7 @@ typedef struct
 extern void gx_input_Init(void);
 extern int gx_input_FindDevices(void);
 extern void gx_input_SetDefault(void);
-extern void gx_input_Config(u8 num, u8 type, u8 max_keys);
+extern void gx_input_Config(u8 chan, u8 device, u8 type);
 extern void gx_input_UpdateEmu(void);
 extern void gx_input_UpdateMenu(u32 cnt);
 

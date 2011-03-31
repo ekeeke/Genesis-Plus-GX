@@ -1,9 +1,9 @@
 /***************************************************************************************
  *  Genesis Plus
- *  Genesis internals & Bus controller
+ *  Internal hardware & Bus controllers
  *
  *  Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003  Charles Mac Donald (original code)
- *  Eke-Eke (2007,2008,2009), additional code & fixes for the GCN/Wii port
+ *  Eke-Eke (2007-2011), additional code & fixes for the GCN/Wii port
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -36,8 +36,7 @@ extern uint8 pico_page[7];
 
 /* Function prototypes */
 extern void gen_init(void);
-extern void gen_hardreset(void);
-extern void gen_softreset(int state);
+extern void gen_reset(int hard_reset);
 extern void gen_shutdown(void);
 extern void gen_tmss_w(unsigned int offset, unsigned int data);
 extern void gen_bankswitch_w(unsigned int data);

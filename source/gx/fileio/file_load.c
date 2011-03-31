@@ -55,6 +55,9 @@ static char *fileDir;
 /* current device */
 static int deviceType = -1;
 
+/* DVD status flag */
+static u8 dvd_mounted = 0;
+
 /***************************************************************************
  * MountDVD
  *
@@ -64,18 +67,31 @@ static int MountDVD(void)
 {
   GUI_MsgBoxOpen("Information", "Mounting DVD ...",1);
 
+  /* check if DVD is already mounted */
+  if (dvd_mounted)
+  {
+		/* unmount DVD */
+    ISO9660_Unmount("dvd:");
+    dvd_mounted = 0;
+  }
+
+  /* check if disc is found */
   if(!dvd->isInserted())
   {
     GUI_WaitPrompt("Error","No Disc inserted !");
     return 0;
   }
 		
-  if(!ISO9660_Mount())
+  /* mount DVD */
+  if(!ISO9660_Mount("dvd",dvd))
   {
     GUI_WaitPrompt("Error","Disc can not be read !");
     return 0;
   }
-  
+
+  /* DVD is mounted */
+  dvd_mounted = 1;
+
   GUI_MsgBoxClose();
   return 1;
 }
@@ -198,7 +214,7 @@ int ParseDirectory(void)
  * This functions return the actual size of data copied into the buffer
  *
  ****************************************************************************/ 
-int LoadFile(u8 *buffer, u32 selection) 
+int LoadFile(u8 *buffer, u32 selection, char *filename) 
 {
   char fname[MAXPATHLEN];
   char *filepath;
@@ -264,11 +280,14 @@ int LoadFile(u8 *buffer, u32 selection)
       fread(buffer + done, length, 1, fd);
       done += length;
       GUI_MsgBoxClose();
+
+      /* update ROM filename (with extension) */
+      sprintf(filename, "%s", filelist[selection].filename);
     }
     else
     {
       /* unzip file */
-      done = UnZipBuffer(buffer, fd);
+      done = UnZipBuffer(buffer, fd, filename);
     }
 
     /* close file */

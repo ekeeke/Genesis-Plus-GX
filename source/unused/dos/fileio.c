@@ -27,7 +27,7 @@ uint8 *load_archive(char *filename, int *file_size)
             return (NULL);
         }
 
-        ret = unzGetCurrentFileInfo(fd, &info, NULL, 0, NULL, 0, NULL, 0);
+        ret = unzGetCurrentFileInfo(fd, &info, filename, 128, NULL, 0, NULL, 0);
         if(ret != UNZ_OK)
         {
             unzClose(fd);

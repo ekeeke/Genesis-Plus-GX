@@ -30,6 +30,6 @@
 #define _UNZIP_H_
 
 extern int IsZipFile (char *buffer);
-int UnZipBuffer (unsigned char *outbuffer, FILE *fd);
+int UnZipBuffer (unsigned char *outbuffer, FILE *fd, char *filename);
 
 #endif

@@ -846,7 +846,7 @@ void m68k_set_irq(unsigned int int_level)
 extern uint16 v_counter;
 extern void error(char *format, ...);
 #endif
-extern uint8 irq_status;
+extern uint8 m68k_irq_state;
 
 void m68k_run (unsigned int cycles) 
 {
@@ -856,13 +856,13 @@ void m68k_run (unsigned int cycles)
   while (mcycles_68k < cycles)
   {
     /* check IRQ triggering */
-    if (irq_status & 0x10)
+    if (m68k_irq_state & 0x10)
     {
-      irq_status &= ~0x10;
-      CPU_INT_LEVEL = (irq_status & 6) << 8;
+      m68k_irq_state &= ~0x10;
+      CPU_INT_LEVEL = (m68k_irq_state & 6) << 8;
 
       /* IRQ was triggered during previous instruction */
-      if (irq_status & 0x20)
+      if (m68k_irq_state & 0x20)
       {
         /* one instruction latency */
         REG_IR = m68ki_read_imm_16();

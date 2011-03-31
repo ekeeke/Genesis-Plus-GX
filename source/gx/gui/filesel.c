@@ -542,7 +542,7 @@ int FileSelector(void)
           areplay_shutdown();
   
           /* load ROM file from device */
-          size = LoadFile(cart.rom, selection);
+          size = LoadFile(cart.rom, selection, fname);
 
           /* exit menu */
           GUI_DeleteMenu(m);
@@ -557,7 +557,7 @@ int FileSelector(void)
             }
 
             /* reinitialize emulation */
-            reloadrom(size,filelist[selection].filename);
+            reloadrom(size,fname);
           }
 
           return size;

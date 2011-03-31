@@ -39,6 +39,6 @@
 extern int OpenDirectory(int device);
 extern int UpdateDirectory(bool go_up, char *filename);
 extern int ParseDirectory(void);
-extern int LoadFile(u8* buffer,u32 selection);
+extern int LoadFile(u8* buffer,u32 selection, char *filename);
 
 #endif

@@ -122,13 +122,13 @@ void set_config_defaults(void)
   config.render   = 0;
 
   /* controllers options */
-  input.system[0]       = SYSTEM_GAMEPAD;
-  input.system[1]       = SYSTEM_GAMEPAD;
+  input.system[0]       = SYSTEM_MD_GAMEPAD;
+  input.system[1]       = SYSTEM_MD_GAMEPAD;
   config.gun_cursor[0]  = 1;
   config.gun_cursor[1]  = 1;
   config.invert_mouse   = 0;
   for (i=0;i<MAX_INPUTS;i++)
-    config.input[i].padtype = DEVICE_3BUTTON;
+    config.input[i].padtype = DEVICE_PAD3B;
 }
 
 

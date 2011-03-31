@@ -1,9 +1,9 @@
 /***************************************************************************************
  *  Genesis Plus
- *  Z80 bus arbitration (Genesis mode)
+ *  Z80 bus controller (MD & MS compatibility mode)
  *
  *  Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003  Charles Mac Donald (original code)
- *  Eke-Eke (2007,2008,2009), additional code & fixes for the GCN/Wii port
+ *  Eke-Eke (2007-2011), additional code & fixes for the GCN/Wii port
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -23,9 +23,13 @@
 #ifndef _MEMZ80_H_
 #define _MEMZ80_H_
 
-extern unsigned int cpu_readmem16(unsigned int address);
-extern void cpu_writemem16(unsigned int address, unsigned int data);
-extern unsigned int cpu_readport16(unsigned int port);
-extern void cpu_writeport16(unsigned int port, unsigned int data);
+extern unsigned char z80_md_memory_r(unsigned int address);
+extern void z80_md_memory_w(unsigned int address, unsigned char data);
+extern unsigned char z80_sms_memory_r(unsigned int address);
+
+extern unsigned char z80_unused_port_r(unsigned int port);
+extern void z80_unused_port_w(unsigned int port, unsigned char data);
+extern unsigned char z80_sms_port_r(unsigned int port);
+extern void z80_sms_port_w(unsigned int port, unsigned char data);
 
 #endif /* _MEMZ80_H_ */

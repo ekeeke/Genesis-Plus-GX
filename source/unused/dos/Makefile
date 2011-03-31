@@ -19,51 +19,62 @@ FLAGS	=	-I. -I.. -I../z80 -I../m68k -I../dos -I../sound -I../sound/SRC -I../cart
 
 LIBS	=	-lalleg -laudio -lz -lm
 
-OBJ	=       obj/z80.o	
+OBJECTS	=       obj/z80.o	
 
-OBJ	+=     	obj/m68kcpu.o	\
+OBJECTS	+=     	obj/m68kcpu.o	\
 		obj/m68kops.o	
 
-OBJ	+=     	obj/genesis.o	\
-		obj/vdp.o	\
-		obj/render.o	\
-		obj/system.o    \
-		obj/gen_io.o	\
-		obj/gen_input.o	\
-		obj/mem68k.o	\
-		obj/memz80.o	\
-		obj/membnk.o	\
+
+OBJECTS	+=     	obj/genesis.o	 \
+		obj/vdp_ctrl.o	 \
+		obj/vdp_render.o \
+		obj/system.o     \
+		obj/io_ctrl.o	 \
+		obj/mem68k.o	 \
+		obj/memz80.o	 \
+		obj/membnk.o	 \
 		obj/state.o     
 
-OBJ	+=      obj/sound.o	\
-		obj/sn76489.o   \
+OBJECTS	+=      obj/input.o	 \
+		obj/gamepad.o	 \
+		obj/lightgun.o	 \
+		obj/mouse.o	 \
+		obj/activator.o	 \
+		obj/xe_a1p.o	 \
+		obj/teamplayer.o \
+		obj/paddle.o	 \
+		obj/sportspad.o 
+
+
+OBJECTS	+=      obj/sound.o	 \
+		obj/sn76489.o    \
 		obj/ym2612.o    
 
-OBJ	+=	obj/samplerate.o \
-		obj/src_linear.o \
-		obj/src_sinc.o   \
-		obj/src_zoh.o    \
+OBJECTS	+=	obj/Fir_Resampler.o
+OBJECTS	+=	obj/blip.o 
 
-OBJ	+=	obj/blip.o \
+OBJECTS	+=	obj/eq.o \
 
-OBJ	+=	obj/eq.o \
-
-OBJ	+=      obj/sram.o      \
+OBJECTS	+=      obj/sram.o      \
 		obj/eeprom.o    \
 		obj/svp.o	\
 		obj/ssp16.o	\
-		obj/cart_hw.o	
+		obj/ggenie.o	\
+		obj/areplay.o	\
+		obj/md_cart.o	\
+		obj/sms_cart.o	
 
-OBJ	+=	obj/dos.o	\
-		obj/sealintf.o	\
+OBJECTS	+=	obj/dos.o	\
+            obj/sealintf.o \
 		obj/config.o	\
 		obj/error.o	\
 		obj/unzip.o     \
 		obj/fileio.o	\
 		obj/loadrom.o	
 
-OBJ	+=	obj/sms_ntsc.o	\
+OBJECTS	+=	obj/sms_ntsc.o	\
 		obj/md_ntsc.o
+
 
 EXE	=	../gen.exe
 
@@ -86,6 +97,9 @@ obj/%.o :	../sound/%.c
 obj/%.o :	../sound/SRC/%.c ../sound/SRC/%.h	        
 		$(CC) -c $< -o $@ $(FLAGS)
 obj/%.o :	../sound/SRC/%.c      
+		$(CC) -c $< -o $@ $(FLAGS)
+
+obj/%.o :	../input_hw/%.c ../input_hw/%.h	        
 		$(CC) -c $< -o $@ $(FLAGS)
 
 obj/%.o :	../cart_hw/%.c ../cart_hw/%.h	        

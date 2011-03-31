@@ -1,6 +1,7 @@
 /* md_ntsc 0.1.2. http://www.slack.net/~ant/ */
 
 /* Added a custom blitter to double the height md_ntsc_blit_y2 -- AamirM */
+/* Added a custom blitter to work with Genesis Plus GX -- EkeEke*/
 
 #include "shared.h"
 #include "md_ntsc.h"

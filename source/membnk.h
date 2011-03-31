@@ -1,6 +1,6 @@
 /***************************************************************************************
  *  Genesis Plus
- *  68k bus banked access from Z80
+ *  Z80 bank access to 68k bus
  *
  *  Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003  Charles Mac Donald (original code)
  *  Eke-Eke (2007,2008,2009), additional code & fixes for the GCN/Wii port

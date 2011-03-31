@@ -1,6 +1,6 @@
 /***************************************************************************************
  *  Genesis Plus
- *  68k bus address decoding
+ *  68k bus controller
  *
  *  Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003  Charles Mac Donald (original code)
  *  Eke-Eke (2007,2008,2009), additional code & fixes for the GCN/Wii port
@@ -124,7 +124,7 @@ unsigned int eeprom_read_byte(unsigned int address)
 
 unsigned int eeprom_read_word(unsigned int address)
 {
-  if (address == (eeprom.type.sda_out_adr & 0xfffffe))
+  if (address == (eeprom.type.sda_out_adr & 0xFFFFFE))
   {
     return eeprom_read(1);
   }
@@ -143,7 +143,7 @@ void eeprom_write_byte(unsigned int address, unsigned int data)
 
 void eeprom_write_word(unsigned int address, unsigned int data)
 {
-  if ((address == (eeprom.type.sda_in_adr & 0xfffffe)) || (address == (eeprom.type.scl_adr & 0xfffffe)))
+  if ((address == (eeprom.type.sda_in_adr & 0xFFFFFE)) || (address == (eeprom.type.scl_adr & 0xFFFFFE)))
   {
     eeprom_write(address, data, 1);
     return;
@@ -166,17 +166,17 @@ unsigned int z80_read_byte(unsigned int address)
 
     case 3:   /* Misc  */
     {
-      if ((address & 0xff00) == 0x7f00)
+      if ((address & 0xFF00) == 0x7F00)
       {
         /* VDP (through 68k bus) */
         return m68k_lockup_r_8(address);
       }
-      return (m68k_read_bus_8(address) | 0xff);
+      return (m68k_read_bus_8(address) | 0xFF);
     }
 
     default: /* ZRAM */
     {
-      return zram[address & 0x1fff];
+      return zram[address & 0x1FFF];
     }
   }
 }
@@ -199,7 +199,7 @@ void z80_write_byte(unsigned int address, unsigned int data)
 
     case 3:
     {
-      switch ((address >> 8) & 0x7f)
+      switch ((address >> 8) & 0x7F)
       {
         case 0x60:  /* Bank register */
         {
@@ -207,7 +207,7 @@ void z80_write_byte(unsigned int address, unsigned int data)
           return;
         }
 
-        case 0x7f:  /* VDP */
+        case 0x7F:  /* VDP */
         {
           m68k_lockup_w_8(address, data);
           return;
@@ -223,7 +223,7 @@ void z80_write_byte(unsigned int address, unsigned int data)
       
     default: /* ZRAM */
     {
-      zram[address & 0x1fff] = data;
+      zram[address & 0x1FFF] = data;
       mcycles_68k += 8; /* ZRAM access latency (fixes Pacman 2: New Adventures) */
       return;
     }
@@ -241,13 +241,13 @@ void z80_write_word(unsigned int address, unsigned int data)
 /*--------------------------------------------------------------------------*/
 unsigned int ctrl_io_read_byte(unsigned int address)
 {
-  switch ((address >> 8) & 0xff)
+  switch ((address >> 8) & 0xFF)
   {
     case 0x00:  /* I/O chip */
     {
-      if (!(address & 0xe0))
+      if (!(address & 0xE0))
       {
-        return io_read((address >> 1) & 0x0f);
+        return io_68k_read((address >> 1) & 0x0F);
       }
       return m68k_read_bus_8(address);
     }
@@ -256,7 +256,7 @@ unsigned int ctrl_io_read_byte(unsigned int address)
     {
       if (!(address & 1))
       {
-        unsigned int data = m68k_read_pcrelative_8(REG_PC) & 0xfe;
+        unsigned int data = m68k_read_pcrelative_8(REG_PC) & 0xFE;
         if (zstate == 3)
         {
           return data;
@@ -273,7 +273,7 @@ unsigned int ctrl_io_read_byte(unsigned int address)
         unsigned int data = cart.hw.time_r(address);
         if (address & 1)
         {
-          return (data & 0xff);
+          return (data & 0xFF);
         }
         return (data >> 8);
       }
@@ -284,7 +284,7 @@ unsigned int ctrl_io_read_byte(unsigned int address)
     {
       if (address & 1)
       {
-        unsigned int data = m68k_read_pcrelative_8(REG_PC) & 0xfe;
+        unsigned int data = m68k_read_pcrelative_8(REG_PC) & 0xFE;
         return (gen_bankswitch_r() | data);
       }
       return m68k_read_bus_8(address);
@@ -309,13 +309,13 @@ unsigned int ctrl_io_read_byte(unsigned int address)
 
 unsigned int ctrl_io_read_word(unsigned int address)
 {
-  switch ((address >> 8) & 0xff)
+  switch ((address >> 8) & 0xFF)
   {
     case 0x00:  /* I/O chip */
     {
-      if (!(address & 0xe0))
+      if (!(address & 0xE0))
       {
-        unsigned int data = io_read((address >> 1) & 0x0f);
+        unsigned int data = io_68k_read((address >> 1) & 0x0F);
         return (data << 8 | data);
       }
       return m68k_read_bus_16(address); 
@@ -323,7 +323,7 @@ unsigned int ctrl_io_read_word(unsigned int address)
 
     case 0x11:  /* BUSACK */
     {
-      unsigned int data = m68k_read_pcrelative_16(REG_PC) & 0xfeff;
+      unsigned int data = m68k_read_pcrelative_16(REG_PC) & 0xFEFF;
       if (zstate == 3)
       {
         return data;
@@ -342,12 +342,12 @@ unsigned int ctrl_io_read_word(unsigned int address)
       
     case 0x50:  /* SVP */
     {
-      if ((address & 0xfd) == 0)
+      if ((address & 0xFD) == 0)
       {
         return svp->ssp1601.gr[SSP_XST].h;
       }
 
-      if ((address & 0xff) == 4)
+      if ((address & 0xFF) == 4)
       {
         unsigned int data = svp->ssp1601.gr[SSP_PM0].h;
         svp->ssp1601.gr[SSP_PM0].h &= ~1;
@@ -376,14 +376,14 @@ unsigned int ctrl_io_read_word(unsigned int address)
 
 void ctrl_io_write_byte(unsigned int address, unsigned int data)
 {
-  switch ((address >> 8) & 0xff)
+  switch ((address >> 8) & 0xFF)
   {
     case 0x00:  /* I/O chip */
     {
-      if ((address & 0xe1) == 0x01)
+      if ((address & 0xE1) == 0x01)
       {
         /* get /LWR only */
-        io_write((address >> 1) & 0x0f, data);
+        io_68k_write((address >> 1) & 0x0F, data);
         return;
       }
       m68k_unused_8_w(address, data);
@@ -449,13 +449,13 @@ void ctrl_io_write_byte(unsigned int address, unsigned int data)
 
 void ctrl_io_write_word(unsigned int address, unsigned int data)
 {
-  switch ((address >> 8) & 0xff)
+  switch ((address >> 8) & 0xFF)
   {
     case 0x00:  /* I/O chip */
     {
-      if (!(address & 0xe0))
+      if (!(address & 0xE0))
       {
-        io_write((address >> 1) & 0x0f, data & 0xff);
+        io_68k_write((address >> 1) & 0x0F, data & 0xFF);
         return;
       }
       m68k_unused_16_w(address, data);
@@ -493,7 +493,7 @@ void ctrl_io_write_word(unsigned int address, unsigned int data)
 
     case 0x50:  /* SVP REGISTERS */
     {
-      if (!(address & 0xfd))
+      if (!(address & 0xFD))
       {
         svp->ssp1601.gr[SSP_XST].h = data;
         svp->ssp1601.gr[SSP_PM0].h |= 2;
@@ -527,44 +527,44 @@ void ctrl_io_write_word(unsigned int address, unsigned int data)
 /*--------------------------------------------------------------------------*/
 unsigned int vdp_read_byte(unsigned int address)
 {
-  switch (address & 0xfd)
+  switch (address & 0xFD)
   {
     case 0x00:  /* DATA */
     {
-      return (vdp_data_r() >> 8);
+      return (vdp_68k_data_r() >> 8);
     }
 
     case 0x01:  /* DATA */
     {
-      return (vdp_data_r() & 0xff);
+      return (vdp_68k_data_r() & 0xFF);
     }
 
     case 0x04:  /* CTRL */
     {
-      return (((vdp_ctrl_r(mcycles_68k) >> 8) & 3) | (m68k_read_pcrelative_8(REG_PC) & 0xfc));
+      return (((vdp_ctrl_r(mcycles_68k) >> 8) & 3) | (m68k_read_pcrelative_8(REG_PC) & 0xFC));
     }
 
     case 0x05:  /* CTRL */
     {
-      return (vdp_ctrl_r(mcycles_68k) & 0xff);
+      return (vdp_ctrl_r(mcycles_68k) & 0xFF);
     }
 
     case 0x08:  /* HVC */
-    case 0x0c:
+    case 0x0C:
     {
       return (vdp_hvc_r(mcycles_68k) >> 8);
     }
 
     case 0x09:  /* HVC */
-    case 0x0d:
+    case 0x0D:
     {
-      return (vdp_hvc_r(mcycles_68k) & 0xff);
+      return (vdp_hvc_r(mcycles_68k) & 0xFF);
     }
 
     case 0x18:  /* Unused */
     case 0x19:
-    case 0x1c:
-    case 0x1d:
+    case 0x1C:
+    case 0x1D:
     {
       return m68k_read_bus_8(address);
     }
@@ -578,11 +578,11 @@ unsigned int vdp_read_byte(unsigned int address)
 
 unsigned int vdp_read_word(unsigned int address)
 {
-  switch (address & 0xfc)
+  switch (address & 0xFC)
   {
     case 0x00:  /* DATA */
     {
-      return vdp_data_r();
+      return vdp_68k_data_r();
     }
 
     case 0x04:  /* CTRL */
@@ -591,13 +591,13 @@ unsigned int vdp_read_word(unsigned int address)
     }
 
     case 0x08:  /* HVC */
-    case 0x0c:
+    case 0x0C:
     {
       return vdp_hvc_r(mcycles_68k);
     }
 
     case 0x18:  /* Unused */
-    case 0x1c:
+    case 0x1C:
     {
       return m68k_read_bus_16(address);
     }
@@ -611,17 +611,17 @@ unsigned int vdp_read_word(unsigned int address)
 
 void vdp_write_byte(unsigned int address, unsigned int data)
 {
-  switch (address & 0xfc)
+  switch (address & 0xFC)
   {
     case 0x00:  /* Data port */
     {
-      vdp_data_w(data << 8 | data);
+      vdp_68k_data_w(data << 8 | data);
       return;
     }
 
     case 0x04:  /* Control port */
     {
-      vdp_ctrl_w(data << 8 | data);
+      vdp_68k_ctrl_w(data << 8 | data);
       return;
     }
 
@@ -643,7 +643,7 @@ void vdp_write_byte(unsigned int address, unsigned int data)
       return;
     }
 
-    case 0x1c:  /* TEST register */
+    case 0x1C:  /* TEST register */
     {
       vdp_test_w(data << 8 | data);
       return;
@@ -659,24 +659,24 @@ void vdp_write_byte(unsigned int address, unsigned int data)
 
 void vdp_write_word(unsigned int address, unsigned int data)
 {
-  switch (address & 0xfc)
+  switch (address & 0xFC)
   {
     case 0x00:  /* DATA */
     {
-      vdp_data_w(data);
+      vdp_68k_data_w(data);
       return;
     }
 
     case 0x04:  /* CTRL */
     {
-      vdp_ctrl_w(data);
+      vdp_68k_ctrl_w(data);
       return;
     }
 
     case 0x10:  /* PSG */
     case 0x14:
     {
-      psg_write(mcycles_68k, data & 0xff);
+      psg_write(mcycles_68k, data & 0xFF);
       return;
     }
 
@@ -686,7 +686,7 @@ void vdp_write_word(unsigned int address, unsigned int data)
       return;
     }
     
-    case 0x1c:  /* Test register */
+    case 0x1C:  /* Test register */
     {
       vdp_test_w(data);
       return;
@@ -706,7 +706,7 @@ void vdp_write_word(unsigned int address, unsigned int data)
 unsigned int pico_read_byte(unsigned int address)
 {
   /* PICO */
-  switch (address & 0xff)
+  switch (address & 0xFF)
   {
     case 0x01:  /* VERSION register */
     {
@@ -715,7 +715,7 @@ unsigned int pico_read_byte(unsigned int address)
 
     case 0x03:  /* IO register */
     {
-      unsigned int retval = 0xff;
+      unsigned int retval = 0xFF;
       if (input.pad[0] & INPUT_B)     retval &= ~0x10;
       if (input.pad[0] & INPUT_A)     retval &= ~0x80;
       if (input.pad[0] & INPUT_UP)    retval &= ~0x01;
@@ -734,7 +734,7 @@ unsigned int pico_read_byte(unsigned int address)
 
     case 0x07:  /* LSB PEN X coordinate */
     {
-      return (input.analog[0][0] & 0xff);
+      return (input.analog[0][0] & 0xFF);
     }
 
     case 0x09:  /* MSB PEN Y coordinate */
@@ -742,12 +742,12 @@ unsigned int pico_read_byte(unsigned int address)
       return (input.analog[0][1] >> 8);
     }
 
-    case 0x0b:  /* LSB PEN Y coordinate */
+    case 0x0B:  /* LSB PEN Y coordinate */
     {
-      return (input.analog[0][1] & 0xff);
+      return (input.analog[0][1] & 0xFF);
     }
 
-    case 0x0d:  /* PAGE register (TODO) */
+    case 0x0D:  /* PAGE register (TODO) */
     {
       return pico_page[pico_current];
     }

@@ -2,7 +2,7 @@
  *  Genesis Plus
  *  Savestate support
  *
- *  Copyright (C) 2007, 2008, 2009  Eke-Eke (GCN/Wii port)
+ *  Copyright (C) 2007-2011  Eke-Eke (GCN/Wii port)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -24,7 +24,7 @@
 #define _STATE_H_
 
 #define STATE_SIZE    0x48100
-#define STATE_VERSION "GENPLUS-GX 1.4.2"
+#define STATE_VERSION "GENPLUS-GX 1.5.0"
 
 #define load_param(param, size) \
   memcpy(param, &state[bufferptr], size); \

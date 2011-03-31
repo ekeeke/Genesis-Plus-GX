@@ -92,9 +92,8 @@ int IsZipFile (char *buffer)
 /*****************************************************************************
  * UnZipBuffer
  *
- * It should be noted that there is a limit of 5MB total size for any ROM
  ******************************************************************************/
-int UnZipBuffer (unsigned char *outbuffer, FILE *fd)
+int UnZipBuffer (unsigned char *outbuffer, FILE *fd, char *filename)
 {
   PKZIPHEADER pkzip;
   int zipoffset = 0;
@@ -137,21 +136,27 @@ int UnZipBuffer (unsigned char *outbuffer, FILE *fd)
     return 0;
   }
 
+  /*** Get file name (first file) ***/
+  int size = FLIP16 (pkzip.filenameLength);
+  if (size > 255) size = 255;
+  strncpy(filename, &readbuffer[sizeof(PKZIPHEADER)], size);
+  filename[size] = 0;
+
   /*** Set ZipChunk for first pass ***/
-  zipoffset = (sizeof (PKZIPHEADER) + FLIP16 (pkzip.filenameLength) + FLIP16 (pkzip.extraDataLength));
+  zipoffset = (sizeof (PKZIPHEADER) + size + FLIP16 (pkzip.extraDataLength));
   zipchunk = ZIPCHUNK - zipoffset;
 
   /*** Now do it! ***/
   do
   {
     zs.avail_in = zipchunk;
-    zs.next_in = (Bytef *) & readbuffer[zipoffset];
+    zs.next_in = (Bytef *) &readbuffer[zipoffset];
 
     /*** Now inflate until input buffer is exhausted ***/
     do
     {
       zs.avail_out = ZIPCHUNK;
-      zs.next_out = (Bytef *) & out;
+      zs.next_out = (Bytef *) &out;
       res = inflate (&zs, Z_NO_FLUSH);
 
       if (res == Z_MEM_ERROR)

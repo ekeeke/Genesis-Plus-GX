@@ -286,8 +286,8 @@ void dos_update_input(void)
       poll_mouse();
 
     /* Calculate X Y axis values */
-    input.analog[joynum - 4][0] = (mouse_x * bitmap.viewport.w) / SCREEN_W;
-    input.analog[joynum - 4][1] = (mouse_y * bitmap.viewport.h) / SCREEN_H;
+    input.analog[joynum][0] = (mouse_x * bitmap.viewport.w) / SCREEN_W;
+    input.analog[joynum][1] = (mouse_y * bitmap.viewport.h) / SCREEN_H;
 
     /* Map mouse buttons to player #1 inputs */
     if(mouse_b & 4) input.pad[joynum] |= INPUT_C;
@@ -301,14 +301,14 @@ void dos_update_input(void)
      poll_mouse();
 
     /* Get X & Y quantity of movement */
-    get_mouse_mickeys(&input.analog[2][0], &input.analog[2][1]);
+    get_mouse_mickeys(&input.analog[joynum][0], &input.analog[joynum][1]);
 
     /* Sega Mouse range is -256;+256 */
-    input.analog[2][0] = (input.analog[2][0] * 256) / SCREEN_W;
-    input.analog[2][1] = (input.analog[2][1] * 256) / SCREEN_H;
+    input.analog[joynum][0] = (input.analog[joynum][0] * 256) / SCREEN_W;
+    input.analog[joynum][1] = (input.analog[joynum][1] * 256) / SCREEN_H;
 
     /* Vertical movement is upsidedown */
-    if (!config.invert_mouse) input.analog[2][1] = 0 - input.analog[2][1];
+    if (!config.invert_mouse) input.analog[joynum][1] = 0 - input.analog[joynum][1];
 
     /* Map mouse buttons to player #1 inputs */
     if(mouse_b & 4) input.pad[joynum] |= INPUT_C;
@@ -383,11 +383,15 @@ void dos_update_input(void)
     }
 
     /* reinitialize VC max value */
-    vc_max = 0xEA + 24*vdp_pal;
-    if (reg[1] & 8)
+    static const uint16 vc_table[4][2] = 
     {
-      vc_max += (28 - 20*vdp_pal);
-    }
+      /* NTSC, PAL */
+      {0xDA , 0xF2},  /* Mode 4 (192 lines) */
+      {0xEA , 0x102}, /* Mode 5 (224 lines) */
+      {0xDA , 0xF2},  /* Mode 4 (192 lines) */
+      {0x106, 0x10A}  /* Mode 5 (240 lines) */
+    };
+    vc_max = vc_table[(reg[1] >> 2) & 3][vdp_pal];
 
     /* reinitialize overscan area */
     bitmap.viewport.y = (config.overscan & 1) ? (((reg[1] & 8) ? 0 : 8) + (vdp_pal ? 24 : 0)) : 0;

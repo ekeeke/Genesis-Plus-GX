@@ -32,6 +32,10 @@
 
 #include <ogc/lwp_threads.h>
 
+#ifdef HW_RVL
+#include <ogc/usbmouse.h>
+#endif
+
 /* Credits */
 extern const u8 Bg_credits_png[];
 
@@ -77,10 +81,16 @@ extern const u8 Button_delete_over_png[];
 
 /* Controller Settings */
 extern const u8 Ctrl_4wayplay_png[];
-extern const u8 Ctrl_gamepad_png[];
+extern const u8 Ctrl_gamepad_md_png[];
+extern const u8 Ctrl_gamepad_ms_png[];
 extern const u8 Ctrl_justifiers_png[];
 extern const u8 Ctrl_menacer_png[];
 extern const u8 Ctrl_mouse_png[];
+extern const u8 Ctrl_xe_a1p_png[];
+extern const u8 Ctrl_activator_png[];
+extern const u8 Ctrl_lightphaser_png[];
+extern const u8 Ctrl_paddle_png[];
+extern const u8 Ctrl_sportspad_png[];
 extern const u8 Ctrl_none_png[];
 extern const u8 Ctrl_teamplayer_png[];
 extern const u8 Ctrl_pad3b_png[];
@@ -1011,6 +1021,15 @@ static void soundmenu ()
  * System Settings menu
  *
  ****************************************************************************/
+static const uint16 vc_table[4][2] = 
+{
+  /* NTSC, PAL */
+  {0xDA , 0xF2},  /* Mode 4 (192 lines) */
+  {0xEA , 0x102}, /* Mode 5 (224 lines) */
+  {0xDA , 0xF2},  /* Mode 4 (192 lines) */
+  {0x106, 0x10A}  /* Mode 5 (240 lines) */
+};
+
 static void systemmenu ()
 {
   int ret, quit = 0;
@@ -1104,11 +1123,7 @@ static void systemmenu ()
           }
 
           /* reinitialize VC max value */
-          vc_max = 0xEA + 24*vdp_pal;
-          if (reg[1] & 8)
-          {
-            vc_max += (28 - 20*vdp_pal);
-          }
+          vc_max = vc_table[(reg[1] >> 2) & 3][vdp_pal];
         }
         break;
 
@@ -1119,7 +1134,10 @@ static void systemmenu ()
 
       case 2:  /*** 68k Address Error ***/
         config.addr_error ^= 1;
-        cart_hw_init ();
+        if (system_hw != SYSTEM_PBC)
+        {
+          md_cart_init ();
+        }
         sprintf (items[2].text, "68k Address Error: %s", config.addr_error ? "ON" : "OFF");
         break;
 
@@ -1449,6 +1467,9 @@ static void videomenu ()
           sprintf (items[VI_OFFSET+1].text, "Borders: V ONLY");
         else
           sprintf (items[VI_OFFSET+1].text, "Borders: NONE");
+
+        /* update viewport */
+        bitmap.viewport.x = (config.overscan & 2) * 7;
         break;
 
       case VI_OFFSET+2: /*** aspect ratio ***/
@@ -1614,7 +1635,7 @@ static void ctrlmenu_raz(void)
     {
       m->buttons[i+2].data  = &button_player_data;
       m->buttons[i+2].state |= BUTTON_ACTIVE;
-      if (cart.jcart && (i > 4))
+      if ((cart.special & HW_J_CART) && (i > 4))
         sprintf(m->items[i+2].comment,"Configure Player %d (J-CART) settings", max + 1);
       else
         sprintf(m->items[i+2].comment,"Configure Player %d settings", max + 1);
@@ -1696,47 +1717,65 @@ static void ctrlmenu(void)
   gui_item *items = NULL;
   u8 *special = NULL;
   u32 exp;
+  u8 type = 0;
 
   /* System devices */
-  gui_item items_sys[2][7] =
+  gui_item items_sys[2][13] =
   {
     {
       {NULL,Ctrl_none_png       ,"","Select Port 1 device",110,130,48,72},
-      {NULL,Ctrl_gamepad_png    ,"","Select Port 1 device", 87,117,96,84},
+      {NULL,Ctrl_gamepad_md_png ,"","Select Port 1 device", 85,117,96,84},
       {NULL,Ctrl_mouse_png      ,"","Select Port 1 device", 97,113,64,88},
       {NULL,Ctrl_menacer_png    ,"","Select Port 1 device", 94,113,80,88},
       {NULL,Ctrl_justifiers_png ,"","Select Port 1 device", 88,117,80,84},
+      {NULL,Ctrl_xe_a1p_png     ,"","Select Port 1 device", 98,118,72,84},
+      {NULL,Ctrl_activator_png  ,"","Select Port 1 device", 94,121,72,80},
+      {NULL,Ctrl_gamepad_ms_png ,"","Select Port 1 device", 91,125,84,76},
+      {NULL,Ctrl_lightphaser_png,"","Select Port 1 device", 89,109,88,92},
+      {NULL,Ctrl_paddle_png     ,"","Select Port 1 device", 86,117,96,84},
+      {NULL,Ctrl_sportspad_png  ,"","Select Port 1 device", 95,117,76,84},
       {NULL,Ctrl_teamplayer_png ,"","Select Port 1 device", 94,109,80,92},
       {NULL,Ctrl_4wayplay_png   ,"","Select Port 1 device", 98,110,72,92}
     },
     {
       {NULL,Ctrl_none_png       ,"","Select Port 2 device",110,300,48,72},
-      {NULL,Ctrl_gamepad_png    ,"","Select Port 2 device", 87,287,96,84},
+      {NULL,Ctrl_gamepad_md_png ,"","Select Port 2 device", 85,287,96,84},
       {NULL,Ctrl_mouse_png      ,"","Select Port 2 device", 97,283,64,88},
       {NULL,Ctrl_menacer_png    ,"","Select Port 2 device", 94,283,80,88},
       {NULL,Ctrl_justifiers_png ,"","Select Port 2 device", 88,287,80,84},
+      {NULL,Ctrl_xe_a1p_png     ,"","Select Port 2 device", 98,288,72,84},
+      {NULL,Ctrl_activator_png  ,"","Select Port 2 device", 94,291,72,80},
+      {NULL,Ctrl_gamepad_ms_png ,"","Select Port 2 device", 91,295,84,76},
+      {NULL,Ctrl_lightphaser_png,"","Select Port 2 device", 89,279,88,92},
+      {NULL,Ctrl_paddle_png     ,"","Select Port 2 device", 86,287,96,84},
+      {NULL,Ctrl_sportspad_png  ,"","Select Port 2 device", 95,287,76,84},
       {NULL,Ctrl_teamplayer_png ,"","Select Port 2 device", 94,279,80,92},
       {NULL,Ctrl_4wayplay_png   ,"","Select Port 2 device", 98,280,72,92}
     }
-  };
+  };    
 
-  /* Player Configuration special items */
-  gui_item items_special[3][2] =
+  /* Specific controller options */
+  gui_item items_special[4][2] =
   {
     {
-      /* Gamepad options */
+      /* Gamepad option */
       {NULL,Ctrl_pad3b_png,"Pad\nType","Use 3-buttons Pad",528,180,44,28},
       {NULL,Ctrl_pad6b_png,"Pad\nType","Use 6-buttons Pad",528,180,44,28}
     },
     {
-      /* Mouse options */
-      {NULL,ctrl_option_off_png,"Invert\nMouse","Enable/Disable Mouse Y-Axis inversion",534,180,24,24},
-      {NULL,ctrl_option_on_png ,"Invert\nMouse","Enable/Disable Mouse Y-Axis inversion",534,180,24,24},
+      /* Mouse option */
+      {NULL,ctrl_option_off_png,"Invert\nMouse","Enable/Disable Y-Axis inversion",534,180,24,24},
+      {NULL,ctrl_option_on_png ,"Invert\nMouse","Enable/Disable Y-Axis inversion",534,180,24,24},
     },
     {
-      /* Gun options */
+      /* Gun option */
       {NULL,ctrl_option_off_png,"Show\nCursor","Enable/Disable Lightgun cursor",534,180,24,24},
       {NULL,ctrl_option_on_png ,"Show\nCursor","Enable/Disable Lightgun cursor",534,180,24,24},
+    },
+    {
+      /* no option */
+      {NULL,NULL,"No Option","",436,180,160,52},
+      {NULL,NULL,"","",0,0,0,0},
     }
   };
 
@@ -1768,13 +1807,10 @@ static void ctrlmenu(void)
   button_player_none_data.texture[0] = gxTextureOpenPNG(button_player_none_data.image[0],0);
 
   /* initialize custom images */
-  items_sys[1][0].texture = items_sys[0][0].texture = gxTextureOpenPNG(items_sys[0][0].data,0);
-  items_sys[1][1].texture = items_sys[0][1].texture = gxTextureOpenPNG(items_sys[0][1].data,0);
-  items_sys[1][2].texture = items_sys[0][2].texture = gxTextureOpenPNG(items_sys[0][2].data,0);
-  items_sys[1][3].texture = items_sys[0][3].texture = gxTextureOpenPNG(items_sys[0][3].data,0);
-  items_sys[1][4].texture = items_sys[0][4].texture = gxTextureOpenPNG(items_sys[0][4].data,0);
-  items_sys[1][5].texture = items_sys[0][5].texture = gxTextureOpenPNG(items_sys[0][5].data,0);
-  items_sys[1][6].texture = items_sys[0][6].texture = gxTextureOpenPNG(items_sys[0][6].data,0);
+  for (i=0; i<13; i++)
+  {
+    items_sys[1][i].texture = items_sys[0][i].texture = gxTextureOpenPNG(items_sys[0][i].data,0);
+  }
   items_special[0][0].texture = gxTextureOpenPNG(items_special[0][0].data,0);
   items_special[0][1].texture = gxTextureOpenPNG(items_special[0][1].data,0);
   items_special[2][0].texture = items_special[1][0].texture = gxTextureOpenPNG(items_special[1][0].data,0);
@@ -1811,21 +1847,25 @@ static void ctrlmenu(void)
       {
         case 0:   /* update port 1 system */
         {
-          if (input.system[0] == SYSTEM_MOUSE)
-          {
-            /* lightguns are never used on Port 1 */
-            input.system[0] += 3; 
-          }
-          else
-          {
-            /* next connected device */
-            input.system[0]++;
-          }
+          /* next connected device */
+          input.system[0]++;
 
           /* allow only one connected mouse */
           if ((input.system[0] == SYSTEM_MOUSE) && (input.system[1] == SYSTEM_MOUSE))
           {
             input.system[0] += 3;
+          }
+
+          /* Menacer & Justifiers on Port B only */
+          if (input.system[0] == SYSTEM_MENACER)
+          {
+            input.system[0] += 2; 
+          }
+ 
+          /* allow only one gun type */
+          if ((input.system[0] == SYSTEM_LIGHTPHASER) && ((input.system[1] == SYSTEM_MENACER) || (input.system[1] == SYSTEM_JUSTIFIER)))
+          {
+            input.system[0] ++;
           }
 
           /* 4-wayplay uses both ports */
@@ -1838,7 +1878,7 @@ static void ctrlmenu(void)
           if (input.system[0] > SYSTEM_WAYPLAY)
           {
             input.system[0] = NO_SYSTEM;
-            input.system[1] = SYSTEM_GAMEPAD;
+            input.system[1] = SYSTEM_MD_GAMEPAD;
           }
 
           /* reset I/O ports */
@@ -1886,13 +1926,31 @@ static void ctrlmenu(void)
         case 1:   /* update port 2 system */
         {
           /* J-CART uses fixed configuration */
-          if (cart.jcart) break;
+          if (cart.special & HW_J_CART) break;
 
           /* next connected device */
           input.system[1] ++;
 
           /* allow only one connected mouse */
           if ((input.system[0] == SYSTEM_MOUSE) && (input.system[1] == SYSTEM_MOUSE))
+          {
+            input.system[1] ++;
+          }
+
+          /* allow only one gun type */
+          if ((input.system[0] == SYSTEM_LIGHTPHASER) && (input.system[1] == SYSTEM_MENACER))
+          {
+            input.system[1] += 3;
+          }
+
+          /* allow only one gun type */
+          if ((input.system[0] == SYSTEM_LIGHTPHASER) && (input.system[1] == SYSTEM_JUSTIFIER))
+          {
+            input.system[1] += 2;
+          }
+
+          /* XE-1AP on port A only */
+          if (input.system[1] == SYSTEM_XE_A1P)
           {
             input.system[1] ++;
           }
@@ -1907,7 +1965,7 @@ static void ctrlmenu(void)
           if (input.system[1] > SYSTEM_WAYPLAY)
           {
             input.system[1] = NO_SYSTEM;
-            input.system[0] = SYSTEM_GAMEPAD;
+            input.system[0] = SYSTEM_MD_GAMEPAD;
           }
 
           /* reset I/O ports */
@@ -2010,24 +2068,61 @@ static void ctrlmenu(void)
             m->buttons[9].shift[3] = 1;
           }
 
+          /* emulated device type */
+          type = input.dev[m->selected - 2];
+
           /* retrieve current player informations */
-          if (input.dev[m->selected-2] == DEVICE_LIGHTGUN)
+          switch (type)
           {
-            items = items_special[2];
-            special = &config.gun_cursor[m->selected & 1];
+            case DEVICE_PAD3B:
+            case DEVICE_PAD6B:
+            {
+              items = items_special[0];
+              special = &config.input[player].padtype;
+              break;
+            }
+
+            case DEVICE_MOUSE:
+            {
+              items = items_special[1];
+              special = &config.invert_mouse;
+              break;
+            }
+
+            case DEVICE_LIGHTGUN:
+            {
+              items = items_special[2];
+
+              if ((input.system[1] == SYSTEM_MENACER) || (input.system[1] == SYSTEM_JUSTIFIER))
+              {
+                /* Menacer & Justifiers affected to devices 4 & 5 */
+                special = &config.gun_cursor[m->selected & 1];
+              }
+              else
+              {
+                /* Lightphasers affected to devices 0 & 4 */
+                special = &config.gun_cursor[m->selected >> 2];
+              }
+              break;
+            }
+
+            default:
+            {
+              items = items_special[3];
+              special = NULL;
+              break;
+            }
           }
-          else if (input.dev[m->selected-2] == DEVICE_MOUSE)
+
+          if (special)
           {
-            items = items_special[1];
-            special = &config.invert_mouse;
+            memcpy(&m->items[10],&items[*special],sizeof(gui_item));
           }
           else
           {
-            items = items_special[0];
-            special = &config.input[player].padtype;
+            memcpy(&m->items[10],&items[0],sizeof(gui_item));
           }
 
-          memcpy(&m->items[10],&items[*special],sizeof(gui_item));
           memcpy(&m->items[11],&items_device[config.input[player].device + 1],sizeof(gui_item));
 
           /* slide in configuration window */
@@ -2037,8 +2132,18 @@ static void ctrlmenu(void)
           m->selected = 10;
           GUI_DrawMenuFX(m, 20, 0);
 
+          /* some devices require analog sticks */
+          if ((type == DEVICE_XE_A1P) && ((config.input[player].device == -1) || (config.input[player].device == 1)))
+          {
+            GUI_WaitPrompt("Warning","One Analog Stick required !");
+          }
+          else if ((type == DEVICE_ACTIVATOR) && ((config.input[player].device != 0) && (config.input[player].device != 3)))
+          {
+            GUI_WaitPrompt("Warning","Two Analog Sticks required !");
+          }
+
           /* update title */
-          if (cart.jcart && (player > 1))
+          if ((cart.special & HW_J_CART) && (player > 1))
           {
             sprintf(m->title,"Controller Settings (Player %d) (J-CART)",player+1);
           }
@@ -2051,20 +2156,25 @@ static void ctrlmenu(void)
 
         case 10: /* specific option */
         {
-          if (special == &config.input[player].padtype)
+          if (special)
           {
-            if (config.input[player].device == 1) break;
-            config.input[player].padtype ^= 1;
-            input_init();
-            input_reset();
-          }
-          else
-          {
+            /* switch option */
             *special ^= 1;
-          }
 
-          /* update menu items */
-          memcpy(&m->items[10],&items[*special],sizeof(gui_item));
+            /* specific case: controller type */
+            if (type < 2)
+            {
+              /* re-initialize emulated device */
+              input_init();
+              input_reset();
+
+              /* update emulated device type */
+              type = *special;
+            }
+
+            /* update menu items */
+            memcpy(&m->items[10],&items[*special],sizeof(gui_item));
+          }
           break;
         }
 
@@ -2205,8 +2315,11 @@ static void ctrlmenu(void)
           /* force 3-buttons gamepad when using Wiimote */
           if (config.input[player].device == 1)
           {
-            config.input[player].padtype = DEVICE_3BUTTON;
-            memcpy(&m->items[10],&items[*special],sizeof(gui_item));
+            config.input[player].padtype = DEVICE_PAD3B;
+            if (special)
+            {
+              memcpy(&m->items[10],&items[*special],sizeof(gui_item));
+            }
           }
 #endif
 
@@ -2218,30 +2331,12 @@ static void ctrlmenu(void)
 
         case 12:  /* Controller Keys Configuration */
         {
-          if (config.input[player].device < 0) break;
-
-          GUI_MsgBoxOpen("Keys Configuration", "",0);
-
-          if (config.input[player].padtype == DEVICE_6BUTTON)
+          if (config.input[player].device >= 0)
           {
-            /* 6-buttons gamepad */
-            if (config.input[player].device == 0)
-            {
-              /* Gamecube PAD: 6-buttons w/o MODE */
-              gx_input_Config(config.input[player].port, config.input[player].device, 7);
-            }
-            else
-            {
-              gx_input_Config(config.input[player].port, config.input[player].device, 8);
-            }
+            GUI_MsgBoxOpen("Keys Configuration", "",0);
+            gx_input_Config(config.input[player].port, config.input[player].device, type);
+            GUI_MsgBoxClose();
           }
-          else
-          {
-            /* 3-Buttons gamepad, mouse, lightgun */
-            gx_input_Config(config.input[player].port, config.input[player].device, 4);
-          }
-
-          GUI_MsgBoxClose();
           break;
         }
       }
@@ -2364,13 +2459,10 @@ static void ctrlmenu(void)
   gxTextureClose(&button_player_none_data.texture[0]);
 
   /* delete custom images */
-  gxTextureClose(&items_sys[0][0].texture);
-  gxTextureClose(&items_sys[0][1].texture);
-  gxTextureClose(&items_sys[0][2].texture);
-  gxTextureClose(&items_sys[0][3].texture);
-  gxTextureClose(&items_sys[0][4].texture);
-  gxTextureClose(&items_sys[0][5].texture);
-  gxTextureClose(&items_sys[0][6].texture);
+  for (i=0; i<13; i++)
+  {
+    gxTextureClose(&items_sys[0][i].texture);
+  }
   gxTextureClose(&items_special[0][0].texture);
   gxTextureClose(&items_special[0][1].texture);
   gxTextureClose(&items_special[1][0].texture);
@@ -3284,6 +3376,16 @@ void menu_execute(void)
 #ifdef HW_RVL
   while (WPAD_ButtonsHeld(0)) WPAD_ScanPads();
   gxTextureClose(&w_pointer);
+
+  /* USB Mouse support */
+  if ((input.system[0] == SYSTEM_MOUSE) || (input.system[1] == SYSTEM_MOUSE))
+  {
+    MOUSE_Init();
+  }
+  else
+  {
+    MOUSE_Deinit();
+  }
 #endif
 }
 

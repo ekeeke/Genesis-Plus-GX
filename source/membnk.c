@@ -30,9 +30,9 @@
 unsigned int zbank_unused_r(unsigned int address)
 {
 #ifdef LOGERROR
-  error("Z80 bank unused read %06X\n", address);
+  error("Z80 bank unused read %06X (%x)\n", address, Z80.pc.d);
 #endif
-  return (address & 1) ? 0x00 : 0xff;
+  return (address & 1) ? 0x00 : 0xFF;
 }
 
 void zbank_unused_w(unsigned int address, unsigned int data)
@@ -45,24 +45,24 @@ void zbank_unused_w(unsigned int address, unsigned int data)
 unsigned int zbank_lockup_r(unsigned int address)
 {
 #ifdef LOGERROR
-  error("Z80 bank lockup read %06X\n", address);
+  error("Z80 bank lockup read %06X (%x)\n", address, Z80.pc.d);
 #endif
   if (!config.force_dtack)
   {
-    mcycles_z80 = 0xffffffff;
+    mcycles_z80 = 0xFFFFFFFF;
     zstate = 0;
   }
-  return 0xff;
+  return 0xFF;
 }
 
 void zbank_lockup_w(unsigned int address, unsigned int data)
 {
 #ifdef LOGERROR
-  error("Z80 bank lockup write %06X = %02X\n", address, data);
+  error("Z80 bank lockup write %06X = %02X (%x)\n", address, data, Z80.pc.d);
 #endif
   if (!config.force_dtack)
   {
-    mcycles_z80 = 0xffffffff;
+    mcycles_z80 = 0xFFFFFFFF;
     zstate = 0;
   }
 }
@@ -70,13 +70,13 @@ void zbank_lockup_w(unsigned int address, unsigned int data)
 /* I/O & Control registers */
 unsigned int zbank_read_ctrl_io(unsigned int address)
 {
-  switch ((address >> 8) & 0xff)
+  switch ((address >> 8) & 0xFF)
   {
     case 0x00:  /* I/O chip */
     {
-      if (!(address & 0xe0))
+      if (!(address & 0xE0))
       {
-        return (io_read((address >> 1) & 0x0f));
+        return (io_68k_read((address >> 1) & 0x0F));
       }
       return zbank_unused_r(address);
     }
@@ -87,7 +87,7 @@ unsigned int zbank_read_ctrl_io(unsigned int address)
       {
         return zbank_unused_r(address);
       }
-      return 0xff;
+      return 0xFF;
     }
 
     case 0x30:  /* TIME */
@@ -97,7 +97,7 @@ unsigned int zbank_read_ctrl_io(unsigned int address)
         unsigned int data = cart.hw.time_r(address);
         if (address & 1)
         {
-          return (data & 0xff);
+          return (data & 0xFF);
         }
         return (data >> 8);
       }
@@ -108,7 +108,7 @@ unsigned int zbank_read_ctrl_io(unsigned int address)
     {
       if (address & 1)
       {
-        return (gen_bankswitch_r() | 0xfe);
+        return (gen_bankswitch_r() | 0xFE);
       }
       return zbank_unused_r(address);
     }
@@ -132,14 +132,14 @@ unsigned int zbank_read_ctrl_io(unsigned int address)
 
 void zbank_write_ctrl_io(unsigned int address, unsigned int data)
 {
-  switch ((address >> 8) & 0xff)
+  switch ((address >> 8) & 0xFF)
   {
     case 0x00:  /* I/O chip */
     {
       /* get /LWR only */
-      if ((address & 0xe1) == 0x01)
+      if ((address & 0xE1) == 0x01)
       {
-        io_write((address >> 1) & 0x0f, data);
+        io_68k_write((address >> 1) & 0x0F, data);
         return;
       }
       zbank_unused_w(address, data);
@@ -207,44 +207,44 @@ void zbank_write_ctrl_io(unsigned int address, unsigned int data)
 /* VDP */
 unsigned int zbank_read_vdp(unsigned int address)
 {
-  switch (address & 0xfd)
+  switch (address & 0xFD)
   {
     case 0x00:    /* DATA */
     {
-      return (vdp_data_r() >> 8);
+      return (vdp_68k_data_r() >> 8);
     }
       
     case 0x01:    /* DATA */
     {
-      return (vdp_data_r() & 0xff);
+      return (vdp_68k_data_r() & 0xFF);
     }
       
     case 0x04:    /* CTRL */
     {
-      return (((vdp_ctrl_r(mcycles_z80) >> 8) & 3) | 0xfc);
+      return (((vdp_ctrl_r(mcycles_z80) >> 8) & 3) | 0xFC);
     }
 
     case 0x05:    /* CTRL */
     {
-      return (vdp_ctrl_r(mcycles_z80) & 0xff);
+      return (vdp_ctrl_r(mcycles_z80) & 0xFF);
     }
       
     case 0x08:    /* HVC */
-    case 0x0c:
+    case 0x0C:
     {
       return (vdp_hvc_r(mcycles_z80) >> 8);
     }
 
     case 0x09:    /* HVC */
-    case 0x0d:
+    case 0x0D:
     {
-      return (vdp_hvc_r(mcycles_z80) & 0xff);
+      return (vdp_hvc_r(mcycles_z80) & 0xFF);
     }
 
     case 0x18:    /* Unused */
     case 0x19:
-    case 0x1c:
-    case 0x1d:
+    case 0x1C:
+    case 0x1D:
     {
       return zbank_unused_r(address);
     }
@@ -258,17 +258,17 @@ unsigned int zbank_read_vdp(unsigned int address)
 
 void zbank_write_vdp(unsigned int address, unsigned int data)
 {
-  switch (address & 0xfc)
+  switch (address & 0xFC)
   {
     case 0x00:  /* Data port */
     {
-      vdp_data_w(data << 8 | data);
+      vdp_68k_data_w(data << 8 | data);
       return;
     }
 
     case 0x04:  /* Control port */
     {
-      vdp_ctrl_w(data << 8 | data);
+      vdp_68k_ctrl_w(data << 8 | data);
       return;
     }
 
@@ -290,7 +290,7 @@ void zbank_write_vdp(unsigned int address, unsigned int data)
       return;
     }
 
-    case 0x1c:  /* TEST register */
+    case 0x1C:  /* TEST register */
     {
       vdp_test_w(data << 8 | data);
       return;

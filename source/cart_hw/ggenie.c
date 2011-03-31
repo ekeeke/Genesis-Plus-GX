@@ -118,7 +118,7 @@ void ggenie_reset(int hard)
 
 void ggenie_switch(int enable)
 {
-  int i,j;
+  int i;
   if (enable)
   {
     /* enable cheats */

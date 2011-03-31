@@ -477,7 +477,7 @@ static void gxSetAspectRatio(int *xscale, int *yscale)
     if (config.overscan & 2)
     {
       /* max visible range is ~712 pixels, not 720 */
-      *xscale = 356; 
+      *xscale = (reg[12] & 1) ? 356 : 360; 
     }
     else
     {
@@ -1400,11 +1400,11 @@ void gx_video_Start(void)
   }
 
   /* lightgun textures */
-  if (config.gun_cursor[0] && (input.dev[4] == DEVICE_LIGHTGUN))
+  if (config.gun_cursor[0] && ((input.system[1] == SYSTEM_MENACER) || (input.system[1] == SYSTEM_JUSTIFIER) || (input.system[0] == SYSTEM_LIGHTPHASER)))
   {
     crosshair[0] = gxTextureOpenPNG(Crosshair_p1_png,0);
   }
-  if (config.gun_cursor[1] && (input.dev[5] == DEVICE_LIGHTGUN))
+  if (config.gun_cursor[1] && ((input.system[1] == SYSTEM_JUSTIFIER) || (input.system[1] == SYSTEM_LIGHTPHASER)))
   {
     crosshair[1] = gxTextureOpenPNG(Crosshair_p2_png,0);
   }
@@ -1486,14 +1486,30 @@ void gx_video_Update(void)
   /* render textured quad */
   draw_square();
 
-  /* Lightgun marks */
+  /* Lightgun # 1 screen mark */
   if (crosshair[0])
   {
-    gxDrawCrosshair(crosshair[0], input.analog[0][0],input.analog[0][1]);
+    if (input.system[0] == SYSTEM_LIGHTPHASER)
+    {
+      gxDrawCrosshair(crosshair[0], input.analog[0][0],input.analog[0][1]);
+    }
+    else
+    {
+      gxDrawCrosshair(crosshair[0], input.analog[4][0],input.analog[4][1]);
+    }
   }
+
+  /* Lightgun # 2 screen mark */
   if (crosshair[1])
   {
-    gxDrawCrosshair(crosshair[1], input.analog[1][0],input.analog[1][1]);
+    if (input.system[1] == SYSTEM_LIGHTPHASER)
+    {
+      gxDrawCrosshair(crosshair[1], input.analog[1][0],input.analog[1][1]);
+    }
+    else
+    {
+      gxDrawCrosshair(crosshair[1], input.analog[5][0],input.analog[5][1]);
+    }
   }
 
   /* swap XFB */ 

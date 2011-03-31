@@ -87,7 +87,7 @@ int Fir_Resampler_avail()
     end_pos -= WIDTH * STEREO;
     do
     {
-			count++;
+      count++;
       remain--;
       in += (skip * STEREO) & STEREO;
       skip >>= 1;
@@ -257,10 +257,10 @@ int Fir_Resampler_read( sample_t* out, long count )
     end_pos -= WIDTH * STEREO;
     do
     {
-			count--;
-			
-			if ( count < 0 )
-				break;
+      count--;
+      
+      if ( count < 0 )
+        break;
 
       /* accumulate in extended precision */
       l = 0;

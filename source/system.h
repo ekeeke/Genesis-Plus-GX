@@ -1,9 +1,9 @@
 /***************************************************************************************
  *  Genesis Plus
- *  Main Emulation
+ *  Virtual System Emulation
  *
  *  Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003  Charles Mac Donald (original code)
- *  Eke-Eke (2007,2008,2009), additional code & fixes for the GCN/Wii port
+ *  Eke-Eke (2007-2011), additional code & fixes for the GCN/Wii port
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -24,18 +24,21 @@
 #ifndef _SYSTEM_H_
 #define _SYSTEM_H_
 
-#define SYSTEM_GENESIS    0
-#define SYSTEM_MEGADRIVE  1
-#define SYSTEM_PICO       2
+#define SYSTEM_PBC        0x00
+#define SYSTEM_GENESIS    0x01
+#define SYSTEM_MEGADRIVE  0x02
+#define SYSTEM_PICO       0x03
 
 #define MCYCLES_PER_LINE  3420
+
+#define Z80_CYCLE_OFFSET  550 /* horizontal timings offset when running in SMS mode */
 
 typedef struct
 {
   uint8 *data;      /* Bitmap data */
-  int width;        /* Bitmap width (32+512+32) */
-  int height;       /* Bitmap height (256) */
-  int depth;        /* Color depth (8 bits) */
+  int width;        /* Bitmap width */
+  int height;       /* Bitmap height */
+  int depth;        /* Color depth (8-32 bits) */
   int pitch;        /* Width of bitmap in bytes */
   int granularity;  /* Size of each pixel in bytes */
   int remap;        /* 1= Translate pixel data */
@@ -50,7 +53,6 @@ typedef struct
     int changed;    /* 1= Viewport width or height have changed */
   } viewport;
 } t_bitmap;
-
 
 typedef struct
 {
@@ -71,12 +73,13 @@ typedef struct
   } psg;
 } t_snd;
 
+
 /* Global variables */
 extern t_bitmap bitmap;
 extern t_snd snd;
-extern uint32 mcycles_vdp;
 extern uint32 mcycles_z80;
 extern uint32 mcycles_68k;
+extern uint32 mcycles_vdp;
 extern uint8 system_hw;
 
 /* Function prototypes */
@@ -88,7 +91,7 @@ extern void audio_set_equalizer(void);
 extern void system_init(void);
 extern void system_reset(void);
 extern void system_shutdown(void);
-extern void system_frame(int do_skip);
+extern void (*system_frame)(int do_skip);
 
 #endif /* _SYSTEM_H_ */
 

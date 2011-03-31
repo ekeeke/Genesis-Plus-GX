@@ -19,7 +19,7 @@ CFLAGS    = `sdl-config --cflags` -march=i686 -O6 -fomit-frame-pointer -Wall -Wn
 #LDFLAGS   = -pg
 DEFINES   = -DLSB_FIRST
 
-INCLUDES  = -I. -I.. -I../z80 -I../m68k -I../sound -I../cart_hw -I../cart_hw/svp -I../ntsc
+INCLUDES  = -I. -I.. -I../z80 -I../m68k -I../sound -I../input_hw -I../cart_hw -I../cart_hw/svp -I../ntsc
 LIBS	  = `sdl-config --libs` -lz -lm
 
 OBJECTS	=       obj/z80.o	
@@ -28,19 +28,29 @@ OBJECTS	+=     	obj/m68kcpu.o	\
 		obj/m68kops.o	
 
 
-OBJECTS	+=     	obj/genesis.o	\
-		obj/vdp.o	\
-		obj/render.o	\
-		obj/system.o    \
-		obj/gen_io.o	\
-		obj/gen_input.o	\
-		obj/mem68k.o	\
-		obj/memz80.o	\
-		obj/membnk.o	\
+OBJECTS	+=     	obj/genesis.o	 \
+		obj/vdp_ctrl.o	 \
+		obj/vdp_render.o \
+		obj/system.o     \
+		obj/io_ctrl.o	 \
+		obj/mem68k.o	 \
+		obj/memz80.o	 \
+		obj/membnk.o	 \
 		obj/state.o     
-		
-OBJECTS	+=      obj/sound.o	\
-		obj/sn76489.o   \
+
+OBJECTS	+=      obj/input.o	 \
+		obj/gamepad.o	 \
+		obj/lightgun.o	 \
+		obj/mouse.o	 \
+		obj/activator.o	 \
+		obj/xe_a1p.o	 \
+		obj/teamplayer.o \
+		obj/paddle.o	 \
+		obj/sportspad.o 
+
+
+OBJECTS	+=      obj/sound.o	 \
+		obj/sn76489.o    \
 		obj/ym2612.o    
 
 OBJECTS	+=	obj/Fir_Resampler.o
@@ -54,7 +64,8 @@ OBJECTS	+=      obj/sram.o      \
 		obj/ssp16.o	\
 		obj/ggenie.o	\
 		obj/areplay.o	\
-		obj/cart_hw.o	
+		obj/md_cart.o	\
+		obj/sms_cart.o	
 
 OBJECTS	+=	obj/main.o	\
 		obj/config.o	\
@@ -82,6 +93,9 @@ obj/%.o :	../asm/%.s
 obj/%.o :	../sound/%.c ../sound/%.h	        
 		$(CC) -c $(CFLAGS) $(INCLUDES) $(DEFINES) $< -o $@
 obj/%.o :	../sound/%.c      
+		$(CC) -c $(CFLAGS) $(INCLUDES) $(DEFINES) $< -o $@
+
+obj/%.o :	../input_hw/%.c ../input_hw/%.h	        
 		$(CC) -c $(CFLAGS) $(INCLUDES) $(DEFINES) $< -o $@
 
 obj/%.o :	../cart_hw/%.c ../cart_hw/%.h	        

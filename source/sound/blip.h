@@ -7,7 +7,7 @@ band-limited synthesis. */
 #define BLIP_H
 
 #ifdef __cplusplus
-	extern "C" {
+  extern "C" {
 #endif
 
 /* Creates a new blip_buffer with specified input clock rate, output
@@ -45,7 +45,7 @@ easy interleving of two channels into a stereo output buffer. */
 int blip_read_samples( blip_buffer_t*, short out [], int n, int stereo );
 
 #ifdef __cplusplus
-	}
+  }
 #endif
 
 #endif

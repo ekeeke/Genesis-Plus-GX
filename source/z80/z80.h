@@ -1,11 +1,18 @@
 #ifndef Z80_H_
 #define Z80_H_
 
-#include "cpuintrf.h"
-#include "memz80.h"
+#include "osd_cpu.h"
 
 enum
 {
+  /* line states */
+  CLEAR_LINE = 0, /* clear (a fired, held or pulsed) line */
+  ASSERT_LINE,    /* assert an interrupt immediately */
+  HOLD_LINE,      /* hold interrupt line until acknowledged */
+  PULSE_LINE     /* pulse interrupt line for one instruction */
+};
+
+enum {
   Z80_PC, Z80_SP,
   Z80_A, Z80_B, Z80_C, Z80_D, Z80_E, Z80_H, Z80_L,
   Z80_AF, Z80_BC, Z80_DE, Z80_HL,
@@ -43,14 +50,22 @@ typedef struct
 
 extern Z80_Regs Z80;
 
-void z80_init(const void *config, int (*irqcallback)(int));
-void z80_reset (void);
-void z80_exit (void);
-void z80_run(unsigned int cycles);
-void z80_burn(unsigned int cycles);
-void z80_get_context (void *dst);
-void z80_set_context (void *src);
-void z80_set_irq_line(int irqline, int state);
+extern unsigned char *z80_readmap[64];
+extern unsigned char *z80_writemap[64];
+
+extern void (*z80_writemem)(unsigned int address, unsigned char data);
+extern unsigned char (*z80_readmem)(unsigned int port);
+extern void (*z80_writeport)(unsigned int port, unsigned char data);
+extern unsigned char (*z80_readport)(unsigned int port);
+
+extern void z80_init(const void *config, int (*irqcallback)(int));
+extern void z80_reset (void);
+extern void z80_exit (void);
+extern void z80_run(unsigned int cycles);
+extern void z80_burn(unsigned int cycles);
+extern void z80_get_context (void *dst);
+extern void z80_set_context (void *src);
+extern void z80_set_nmi_line(int state);
 
 #endif
 

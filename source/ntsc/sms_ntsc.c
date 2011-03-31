@@ -14,6 +14,8 @@ details. You should have received a copy of the GNU Lesser General Public
 License along with this module; if not, write to the Free Software Foundation,
 Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA */
 
+/* Added a custom blitter to work with Genesis Plus GX -- EkeEke*/
+
 sms_ntsc_setup_t const sms_ntsc_monochrome = { 0,-1, 0, 0,.2,  0, .2,-.2,-.2,-1, 0,  0 };
 sms_ntsc_setup_t const sms_ntsc_composite  = { 0, 0, 0, 0, 0,  0,.25,  0,  0, 0, 0,  0 };
 sms_ntsc_setup_t const sms_ntsc_svideo     = { 0, 0, 0, 0, 0,  0,.25, -1, -1, 0, 0,  0 };

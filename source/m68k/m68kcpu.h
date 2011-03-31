@@ -1451,9 +1451,13 @@ INLINE void m68ki_jump(uint new_pc)
 
 INLINE void m68ki_jump_vector(uint vector)
 {
+#if M68K_EMULATE_040 || M68K_EMULATE_020 || M68K_EMULATE_EC020 || M68K_EMULATE_010
   REG_PC = (vector<<2) + REG_VBR;
   REG_PC = m68ki_read_data_32(REG_PC);
+#else
+  REG_PC = m68ki_read_data_32(vector<<2);
   m68ki_pc_changed(REG_PC);
+#endif
 }
 
 
@@ -1993,10 +1997,6 @@ INLINE void m68ki_exception_address_error(void)
 /* Service an interrupt request and start exception processing */
 INLINE void m68ki_exception_interrupt(uint int_level)
 {
-  uint vector;
-  uint sr;
-  uint new_pc;
-
   #if M68K_EMULATE_ADDRESS_ERROR == OPT_ON
   if(CPU_TYPE_IS_000(CPU_TYPE))
   {
@@ -2012,30 +2012,23 @@ INLINE void m68ki_exception_interrupt(uint int_level)
     return;
 
   /* Acknowledge the interrupt */
-  vector = m68ki_int_ack(int_level);
+  m68ki_int_ack(int_level);
 
-  /* Get the interrupt vector */
-  if(vector == M68K_INT_ACK_AUTOVECTOR)
-    /* Use the autovectors.  This is the most commonly used implementation */
-    vector = EXCEPTION_INTERRUPT_AUTOVECTOR+int_level;
-  else if(vector == M68K_INT_ACK_SPURIOUS)
-    /* Called if no devices respond to the interrupt acknowledge */
-    vector = EXCEPTION_SPURIOUS_INTERRUPT;
-  else if(vector > 255)
-  {
-    M68K_DO_LOG_EMU((M68K_LOG_FILEHANDLE "%s at %08x: Interrupt acknowledge returned invalid vector $%x\n",
-         m68ki_cpu_names[CPU_TYPE], ADDRESS_68K(REG_PC), vector));
-    return;
-  }
+  /* Always use the autovectors. */
+  uint vector = EXCEPTION_INTERRUPT_AUTOVECTOR+int_level;
 
   /* Start exception processing */
-  sr = m68ki_init_exception();
+  uint sr = m68ki_init_exception();
 
   /* Set the interrupt mask to the level of the one being serviced */
   FLAG_INT_MASK = int_level<<8;
 
   /* Get the new PC */
-  new_pc = m68ki_read_data_32((vector<<2) + REG_VBR);
+#if M68K_EMULATE_040 || M68K_EMULATE_020 || M68K_EMULATE_EC020 || M68K_EMULATE_010
+  uint new_pc = m68ki_read_data_32((vector<<2) + REG_VBR);
+#else
+  uint new_pc = m68ki_read_data_32(vector<<2);
+#endif
 
   /* If vector is uninitialized, call the uninitialized interrupt vector */
   if(new_pc == 0)
@@ -2043,6 +2036,7 @@ INLINE void m68ki_exception_interrupt(uint int_level)
 
   /* Generate a stack frame */
   m68ki_stack_frame_0000(REG_PC, sr, vector);
+#if M68K_EMULATE_040 || M68K_EMULATE_020 || M68K_EMULATE_EC020 || M68K_EMULATE_010
   if(FLAG_M && CPU_TYPE_IS_EC020_PLUS(CPU_TYPE))
   {
     /* Create throwaway frame */
@@ -2050,6 +2044,7 @@ INLINE void m68ki_exception_interrupt(uint int_level)
     sr |= 0x2000; /* Same as SR in master stack frame except S is forced high */
     m68ki_stack_frame_0001(REG_PC, sr, vector);
   }
+#endif
 
   m68ki_jump(new_pc);
 

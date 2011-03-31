@@ -60,7 +60,6 @@
 #define MAXCOMPANY 64
 #define MAXPERIPHERALS 14
 
-
 typedef struct
 {
   char companyid[6];
@@ -84,7 +83,8 @@ char rom_filename[256];
   * Based on the document provided at
   * http://www.zophar.net/tech/files/Genesis_ROM_Format.txt
   **************************************************************************/
-static COMPANYINFO companyinfo[MAXCOMPANY] = {
+static const COMPANYINFO companyinfo[MAXCOMPANY] =
+{
   {"ACLD", "Ballistic"},
   {"RSI", "Razorsoft"},
   {"SEGA", "SEGA"},
@@ -157,7 +157,8 @@ static COMPANYINFO companyinfo[MAXCOMPANY] = {
   * Based on the document provided at
   * http://www.zophar.net/tech/files/Genesis_ROM_Format.txt
   ***************************************************************************/
-static PERIPHERALINFO peripheralinfo[MAXPERIPHERALS] = {
+static const PERIPHERALINFO peripheralinfo[MAXPERIPHERALS] =
+{
   {"J", "3B Joypad"},
   {"6", "6B Joypad"},
   {"K", "Keyboard"},
@@ -175,11 +176,10 @@ static PERIPHERALINFO peripheralinfo[MAXPERIPHERALS] = {
 };
 
  /***************************************************************************
-  * GetRealChecksum
   *
-  * Compute ROM checksum.
+  * Compute ROM real checksum.
   ***************************************************************************/
-static uint16 GetRealChecksum (uint8 *rom, int length)
+static uint16 getchecksum(uint8 *rom, int length)
 {
   int i;
   uint16 checksum = 0;
@@ -193,60 +193,157 @@ static uint16 GetRealChecksum (uint8 *rom, int length)
 }
 
  /***************************************************************************
-  * getrominfo
   *
   * Pass a pointer to the ROM base address.
   ***************************************************************************/
-static void getrominfo (char *romheader)
+static void getrominfo(char *romheader)
 {
-  int i,j;
+  uint16 offset = 0;
 
+  /* Clear ROM info structure */
   memset (&rominfo, 0, sizeof (ROMINFO));
 
-  memcpy (&rominfo.consoletype, romheader + ROMCONSOLE, 16);
-  memcpy (&rominfo.copyright, romheader + ROMCOPYRIGHT, 16);
-
-  rominfo.domestic[0] = romheader[ROMDOMESTIC];
-  j=1;
-  for (i=1; i<48; i++)
+  /* Look for Master System ROM header */
+  if (!memcmp (&cart.rom[0x1ff0], "TMR SEGA", 8))
   {
-    if ((rominfo.domestic[j-1] != 32) || (romheader[ROMDOMESTIC + i] != 32))
+    offset = 0x1ff0;
+  }
+  else if (!memcmp (&cart.rom[0x3ff0], "TMR SEGA", 8))
+  {
+    offset = 0x3ff0;
+  }
+  else if (!memcmp (&cart.rom[0x7ff0], "TMR SEGA", 8))
+  {
+    offset = 0x7ff0;
+  }
+
+  /* If found, assume this is a SMS game */
+  if (offset)
+  {
+    /* force SMS compatibilty mode */
+    system_hw = SYSTEM_PBC;
+
+    /* checksum */
+    rominfo.checksum = cart.rom[offset + 0x0a] | (cart.rom[offset + 0x0b] << 8);
+
+    /* product code & version */
+    sprintf(&rominfo.product[0], "%02d", cart.rom[offset + 0x0e] >> 4);
+    sprintf(&rominfo.product[2], "%02x", cart.rom[offset + 0x0d]);
+    sprintf(&rominfo.product[4], "%02x", cart.rom[offset + 0x0c]);
+    sprintf(&rominfo.product[6], "-%d", cart.rom[offset + 0x0e] & 0x0F);
+
+    /* region code */
+    switch (cart.rom[offset + 0x0f] >> 4)
     {
-      rominfo.domestic[j] = romheader[ROMDOMESTIC + i];
-      j++;
+      case 3:
+        strcpy(rominfo.country,"SMS Japan");
+        break;
+      case 4:
+        strcpy(rominfo.country,"SMS Export");
+        break;
+      case 5:
+        strcpy(rominfo.country,"GG Japan");
+        break;
+      case 6:
+        strcpy(rominfo.country,"GG Export");
+        break;
+      case 7:
+        strcpy(rominfo.country,"GG International");
+        break;
+      default:
+        sprintf(rominfo.country,"Unknown (%d)", cart.rom[offset + 0x0f] >> 4);
+        break;
+    }
+
+    /* ROM size */
+    rominfo.romstart = 0;
+    switch (cart.rom[offset + 0x0f] & 0x0F)
+    {
+      case 0x00:
+        rominfo.romend = 0x3FFFF;
+        break;
+      case 0x01:
+        rominfo.romend = 0x7FFFF;
+        break;
+      case 0x02:
+        rominfo.romend = 0xFFFFF;
+        break;
+      case 0x0a:
+        rominfo.romend = 0x1FFF;
+        break;
+      case 0x0b:
+        rominfo.romend = 0x3FFF;
+        break;
+      case 0x0c:
+        rominfo.romend = 0x7FFF;
+        break;
+      case 0x0d:
+        rominfo.romend = 0xBFFF;
+        break;
+      case 0x0e:
+        rominfo.romend = 0xFFFF;
+        break;
+      case 0x0f:
+        rominfo.romend = 0x1FFFF;
+        break;
     }
   }
-  rominfo.domestic[j] = 0;
-
-  rominfo.international[0] = romheader[ROMWORLD];
-  j=1;
-  for (i=1; i<48; i++)
+  else
   {
-    if ((rominfo.international[j-1] != 32) || (romheader[ROMWORLD + i] != 32))
+    /* Some SMS games don't have any header */
+    if (system_hw == SYSTEM_PBC) return;
+
+    /* Genesis ROM header support */
+    memcpy (&rominfo.consoletype, romheader + ROMCONSOLE, 16);
+    memcpy (&rominfo.copyright, romheader + ROMCOPYRIGHT, 16);
+
+    /* Domestic (japanese) name */
+    rominfo.domestic[0] = romheader[ROMDOMESTIC];
+    int i, j = 1;
+    for (i=1; i<48; i++)
     {
-      rominfo.international[j] = romheader[ROMWORLD + i];
-      j++;
+      if ((rominfo.domestic[j-1] != 32) || (romheader[ROMDOMESTIC + i] != 32))
+      {
+        rominfo.domestic[j] = romheader[ROMDOMESTIC + i];
+        j++;
+      }
     }
-  }
-  rominfo.international[j] = 0;
+    rominfo.domestic[j] = 0;
 
-  memcpy (&rominfo.ROMType, romheader + ROMTYPE, 2);
-  memcpy (&rominfo.product, romheader + ROMPRODUCT, 12);
-  memcpy (&rominfo.checksum, romheader + ROMCHECKSUM, 2);
-  memcpy (&rominfo.romstart, romheader + ROMROMSTART, 4);
-  memcpy (&rominfo.romend, romheader + ROMROMEND, 4);
-  memcpy (&rominfo.country, romheader + ROMCOUNTRY, 16);
+    /* International name */
+    rominfo.international[0] = romheader[ROMWORLD];
+    j=1;
+    for (i=1; i<48; i++)
+    {
+      if ((rominfo.international[j-1] != 32) || (romheader[ROMWORLD + i] != 32))
+      {
+        rominfo.international[j] = romheader[ROMWORLD + i];
+        j++;
+      }
+    }
+    rominfo.international[j] = 0;
 
+    /* ROM informations */
+    memcpy (&rominfo.ROMType, romheader + ROMTYPE, 2);
+    memcpy (&rominfo.product, romheader + ROMPRODUCT, 12);
+    memcpy (&rominfo.checksum, romheader + ROMCHECKSUM, 2);
+    memcpy (&rominfo.romstart, romheader + ROMROMSTART, 4);
+    memcpy (&rominfo.romend, romheader + ROMROMEND, 4);
+    memcpy (&rominfo.country, romheader + ROMCOUNTRY, 16);
+
+    /* Checksums */
 #ifdef LSB_FIRST
-  rominfo.checksum =  (rominfo.checksum >> 8) | ((rominfo.checksum & 0xff) << 8);
+    rominfo.checksum =  (rominfo.checksum >> 8) | ((rominfo.checksum & 0xff) << 8);
 #endif
-  rominfo.realchecksum = GetRealChecksum (((uint8 *) cart.rom) + 0x200, cart.romsize - 0x200);
+    rominfo.realchecksum = getchecksum(((uint8 *) cart.rom) + 0x200, cart.romsize - 0x200);
 
-  rominfo.peripherals = 0;
-  for (i = 0; i < 14; i++)
-    for (j=0; j < 14; j++)
-      if (romheader[ROMIOSUPPORT+i] == peripheralinfo[j].pID[0])
-        rominfo.peripherals |= (1 << j);
+    /* Supported peripherals */
+    rominfo.peripherals = 0;
+    for (i = 0; i < 14; i++)
+      for (j=0; j < 14; j++)
+        if (romheader[ROMIOSUPPORT+i] == peripheralinfo[j].pID[0])
+          rominfo.peripherals |= (1 << j);
+  }
 }
 
  /***************************************************************************
@@ -273,61 +370,71 @@ static void deinterleave_block(uint8 * src)
   ***************************************************************************/
 int load_rom(char *filename)
 {
-  int i, size, offset = 0;
+  int i, size;
  
 #ifdef NGC
   size = cart.romsize;
-  sprintf(rom_filename,"%s",filename);
-  rom_filename[strlen(rom_filename) - 4] = 0;
 #else
   uint8 *ptr;
   ptr = load_archive(filename, &size);
   if(!ptr) return (0);
-  memcpy(cart.rom, ptr + offset, size);
+  memcpy(cart.rom, ptr, size);
   free(ptr);
 #endif
 
-  /* detect interleaved format (.SMD) */
+  /* Minimal ROM size */
+  if (size < 0x4000)
+  {
+    memset(cart.rom + size, 0xFF, 0x4000 - size);
+    size = 0x4000;
+  }
+
+  /* Get file extension */
+  if (!strnicmp(".sms", &filename[strlen(filename) - 4], 4))
+  {
+    /* Force SMS compatibility mode */
+    system_hw = SYSTEM_PBC;
+  }
+  else
+  {
+    /* Assume Genesis mode */
+    system_hw = SYSTEM_GENESIS;
+  }
+
+  /* Take care of 512 byte header, if present */
   if (strncmp((char *)(cart.rom + 0x100),"SEGA", 4) && ((size / 512) & 1))
   {
     size -= 512;
-    offset += 512;
-    for (i = 0; i < (size / 0x4000); i += 1)
-      deinterleave_block (cart.rom + offset + (i * 0x4000));
-    memcpy(cart.rom, cart.rom + offset, size);
+    memcpy (cart.rom, cart.rom + 512, size);
+
+    /* interleaved ROM format (.smd) */
+    if (system_hw != SYSTEM_PBC)
+    {
+      for (i = 0; i < (size / 0x4000); i++)
+      {
+        deinterleave_block (cart.rom + (i * 0x4000));
+      }
+    }
   }
 
   /* max. 10 MBytes supported */
   if (size > MAXROMSIZE) size = MAXROMSIZE;
   cart.romsize = size;
-  
+
   /* clear unused ROM space */
   memset(cart.rom + size, 0xff, MAXROMSIZE - size);
 
   /* get infos from ROM header */
   getrominfo((char *)cart.rom);
 
-  /* get specific input devices */
-  input_autodetect();
-
-  /* get default region */
+  /* detect console region */
   region_autodetect();
 
+  /* Genesis ROM specific */
+  if (system_hw != SYSTEM_PBC)
+  {
 #ifdef LSB_FIRST
-  /* Byteswap ROM */
-  uint8 temp;
-  for(i = 0; i < size; i += 2)
-  {
-    temp = cart.rom[i];
-    cart.rom[i] = cart.rom[i+1];
-    cart.rom[i+1] = temp;
-  }
-#endif
-
-  /* byteswapped RADICA dumps (from Haze) */
-  if (((strstr(rominfo.product,"-K0101") != NULL) && (rominfo.checksum == 0xf424)) ||
-      ((strstr(rominfo.product,"-K0109") != NULL) && (rominfo.checksum == 0x4f10)))
-  {
+    /* Byteswap ROM */
     uint8 temp;
     for(i = 0; i < size; i += 2)
     {
@@ -335,15 +442,27 @@ int load_rom(char *filename)
       cart.rom[i] = cart.rom[i+1];
       cart.rom[i+1] = temp;
     }
-  }
+#endif
 
-  /* console hardware */
-  if (strstr(rominfo.consoletype, "SEGA PICO") != NULL)
-    system_hw = SYSTEM_PICO;
-  else if (strstr(rominfo.consoletype, "SEGA MEGADRIVE") != NULL)
-    system_hw = SYSTEM_MEGADRIVE;
-  else 
-    system_hw = SYSTEM_GENESIS;
+    /* byteswapped RADICA dumps (from Haze) */
+    if (((strstr(rominfo.product,"-K0101") != NULL) && (rominfo.checksum == 0xf424)) ||
+        ((strstr(rominfo.product,"-K0109") != NULL) && (rominfo.checksum == 0x4f10)))
+    {
+      uint8 temp;
+      for(i = 0; i < size; i += 2)
+      {
+        temp = cart.rom[i];
+        cart.rom[i] = cart.rom[i+1];
+        cart.rom[i+1] = temp;
+      }
+    }
+
+    /* PICO hardware */
+    if (strstr(rominfo.consoletype, "SEGA PICO") != NULL)
+    {
+      system_hw = SYSTEM_PICO;
+    }
+  }
 
   return(1);
 }
@@ -356,83 +475,79 @@ int load_rom(char *filename)
  ****************************************************************************/
 void region_autodetect(void)
 {
-  /* country codes used to differentiate region */
-  /* 0001 = japan ntsc (1) */
-  /* 0010 = japan  pal (2) */
-  /* 0100 = usa        (4) */
-  /* 1000 = europe     (8) */
-
-  int country = 0;
-  int i = 0;
-  char c;
-
-  /* reading header to find the country */
-  if (!strnicmp(rominfo.country, "eur", 3)) country |= 8;
-  else if (!strnicmp(rominfo.country, "usa", 3)) country |= 4;
-  else if (!strnicmp(rominfo.country, "jap", 3)) country |= 1;
-
-  else for(i = 0; i < 4; i++)
+  if (system_hw == SYSTEM_PBC)
   {
-    c = toupper((int)rominfo.country[i]);
-    if (c == 'U') country |= 4;
-    else if (c == 'J') country |= 1;
-    else if (c == 'E') country |= 8;
-    else if (c == 'K') country |= 1;
-    else if (c < 16) country |= c;
-    else if ((c >= '0') && (c <= '9')) country |= c - '0';
-    else if ((c >= 'A') && (c <= 'F')) country |= c - 'A' + 10;
+    region_code = sms_cart_region_detect();
+  }
+  else
+  {
+    /* country codes used to differentiate region */
+    /* 0001 = japan ntsc (1) */
+    /* 0010 = japan  pal (2) */
+    /* 0100 = usa        (4) */
+    /* 1000 = europe     (8) */
+    int country = 0;
+    int i = 0;
+    char c;
+
+    /* from Gens */
+    if (!strnicmp(rominfo.country, "eur", 3)) country |= 8;
+    else if (!strnicmp(rominfo.country, "usa", 3)) country |= 4;
+    else if (!strnicmp(rominfo.country, "jap", 3)) country |= 1;
+    else
+    {
+      /* look for each characters */
+      for(i = 0; i < 4; i++)
+      {
+        c = toupper((int)rominfo.country[i]);
+
+        if (c == 'U') country |= 4;
+        else if (c == 'J') country |= 1;
+        else if (c == 'E') country |= 8;
+        else if (c == 'K') country |= 1;
+        else if (c < 16) country |= c;
+        else if ((c >= '0') && (c <= '9')) country |= c - '0';
+        else if ((c >= 'A') && (c <= 'F')) country |= c - 'A' + 10;
+      }
+    }
+
+    /* set default console region (USA > JAPAN > EUROPE) */
+    if (country & 4) region_code = REGION_USA;
+    else if (country & 1) region_code = REGION_JAPAN_NTSC;
+    else if (country & 8) region_code = REGION_EUROPE;
+    else if (country & 2) region_code = REGION_JAPAN_PAL;
+    else region_code = REGION_USA;
+
+    /* some games need specific REGION setting */
+    if (((strstr(rominfo.product,"T-45033") != NULL) && (rominfo.checksum == 0x0F81)) || /* Alisia Dragon (Europe) */
+         (strstr(rominfo.product,"T-69046-50") != NULL) ||    /* Back to the Future III (Europe) */
+         (strstr(rominfo.product,"T-120106-00") != NULL) ||   /* Brian Lara Cricket (Europe) */
+         (strstr(rominfo.product,"T-70096 -00") != NULL))     /* Muhammad Ali Heavyweight Boxing (Europe) */
+    {
+      /* need PAL settings */
+      region_code = REGION_EUROPE;
+    }
+    
+    if ((rominfo.realchecksum == 0x532e) && (strstr(rominfo.product,"1011-00") != NULL)) 
+    {
+      /* On Dal Jang Goon (Korea) needs JAPAN region code */
+      region_code = REGION_JAPAN_NTSC;
+    }
   }
 
-  /* automatic detection */
-  /* setting region */
-  /* this is used by IO register */
-  if (country & 4) region_code = REGION_USA;
-  else if (country & 1) region_code = REGION_JAPAN_NTSC;
-  else if (country & 8) region_code = REGION_EUROPE;
-  else if (country & 2) region_code = REGION_JAPAN_PAL;
-  else region_code = REGION_USA;
+  /* forced console region */
+  if (config.region_detect == 1) region_code = REGION_USA;
+  else if (config.region_detect == 2) region_code = REGION_EUROPE;
+  else if (config.region_detect == 3) region_code = REGION_JAPAN_NTSC;
+  else if (config.region_detect == 4) region_code = REGION_JAPAN_PAL;
 
-  /* some games need specific REGION setting */
-  if (((strstr(rominfo.product,"T-45033") != NULL) && (rominfo.checksum == 0x0F81)) || /* Alisia Dragon (PAL) */
-       (strstr(rominfo.product,"T-69046-50") != NULL) ||  /* Back to the Future III (PAL) */
-       (strstr(rominfo.product,"T-120106-00") != NULL) ||  /* Brian Lara Cricket (PAL) */
-       (strstr(rominfo.product,"T-70096 -00") != NULL))  /* Muhammad Ali Heavyweight Boxing (PAL) */
-  {
-    /* need PAL settings */
-    region_code = REGION_EUROPE;
-  }
-  else if ((rominfo.realchecksum == 0x532e) && (strstr(rominfo.product,"1011-00") != NULL)) 
-  {
-    /* On Dal Jang Goon (Korea) needs JAP region code */
-    region_code = REGION_JAPAN_NTSC;
-  }
-
-  /* Force region setting */
-  if (config.region_detect == 1)
-    region_code = REGION_USA;
-  else if (config.region_detect == 2)
-    region_code = REGION_EUROPE;
-  else if (config.region_detect == 3)
-    region_code = REGION_JAPAN_NTSC;
-  else if (config.region_detect == 4)
-    region_code = REGION_JAPAN_PAL;
-
-  /* Set VDP default mode */
-  switch (region_code)
-  {
-    case REGION_EUROPE:
-    case REGION_JAPAN_PAL:
-      vdp_pal = 1;
-      break;
-
-    default:
-      vdp_pal = 0;
-      break;
-  }
+  /* PAL/NTSC timings */
+  vdp_pal = (region_code & REGION_JAPAN_PAL) >> 6;
 }
 
+
 /****************************************************************************
- * get_company
+ * get_company (Softdev - 2006)
  *
  * Try to determine which company made this rom
  *
@@ -446,8 +561,10 @@ char *get_company(void)
   int i;
   char company[10];
 
-  for (i = 3; i < 8; i++)
+  for (i = 3; i < 8; i++) 
+  {
     company[i - 3] = rominfo.copyright[i];
+  }
   company[5] = 0;
 
   /** OK, first look for a hyphen
@@ -466,19 +583,19 @@ char *get_company(void)
       company[i] = 0;
 
   if (strlen (company) == 0)
-    return companyinfo[MAXCOMPANY - 1].company;
+    return (char *)companyinfo[MAXCOMPANY - 1].company;
 
   for (i = 0; i < MAXCOMPANY - 1; i++)
   {
     if (!(strncmp (company, companyinfo[i].companyid, strlen (company))))
-      return companyinfo[i].company;
+      return (char *)companyinfo[i].company;
   }
 
-  return companyinfo[MAXCOMPANY - 1].company;
+  return (char *)companyinfo[MAXCOMPANY - 1].company;
 }
 
 /****************************************************************************
- * get_peripheral
+ * get_peripheral (Softdev - 2006)
  *
  * Return peripheral name based on header code
  *
@@ -486,7 +603,7 @@ char *get_company(void)
 char *get_peripheral(int index)
 {
   if (index < MAXPERIPHERALS)
-    return peripheralinfo[index].pName;
-  return companyinfo[MAXCOMPANY - 1].company;
+    return (char *)peripheralinfo[index].pName;
+  return (char *)companyinfo[MAXCOMPANY - 1].company;
 }
 

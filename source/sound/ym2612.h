@@ -1,12 +1,15 @@
 /*
 **
-** File: ym2612.h -- header for ym2612.c
-** software implementation of Yamaha FM sound generator
+** software implementation of Yamaha FM sound generator (YM2612/YM3438)
+**
+** Original code (MAME fm.c)
 **
 ** Copyright (C) 2001, 2002, 2003 Jarek Burczynski (bujar at mame dot net)
 ** Copyright (C) 1998 Tatsuyuki Satoh , MultiArcadeMachineEmulator development
 **
-** Version 1.4 (final beta)
+** Version 1.4 (final beta) 
+**
+** Additional code & fixes by Eke-Eke for Genesis Plus GX
 **
 */
 
@@ -18,7 +21,6 @@
 #define INLINE static __inline__
 #endif
 
-
 extern int YM2612Init(double clock, int rate);
 extern int YM2612ResetChip(void);
 extern void YM2612Update(long int *buffer, int length);
@@ -29,6 +31,5 @@ extern unsigned int YM2612GetContextSize(void);
 extern void YM2612Restore(unsigned char *buffer);
 extern int YM2612LoadContext(unsigned char *state, char *version);
 extern int YM2612SaveContext(unsigned char *state);
-
 
 #endif /* _YM2612_ */

@@ -40,7 +40,7 @@
 //| Constants |
 // -----------
 
-static double vsa = (1.0 / 4294967295.0);	// Very small amount (Denormal Fix)
+static double vsa = (1.0 / 4294967295.0); // Very small amount (Denormal Fix)
 
 
 // ---------------
@@ -87,7 +87,7 @@ double do_3band(EQSTATE * es, int sample)
 {
     // Locals
 
-    double l, m, h;		// Low / Mid / High - Sample Values
+    double l, m, h;   // Low / Mid / High - Sample Values
 
     // Filter #1 (lowpass)
 

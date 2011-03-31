@@ -172,7 +172,8 @@ int sound_context_load(uint8 *state, char *version)
   int bufferptr = YM2612LoadContext(state, version);
   load_param(SN76489_GetContextPtr(),SN76489_GetContextSize());
 
-  if (version[15] > 0x30)
+  /* extended state (from 1.4.1 and above) */
+  if ((version[11] > 0x31) || (version[13] > 0x34) || (version[15] > 0x30))
   {
     load_param(&fm_cycles_count,sizeof(fm_cycles_count));
     load_param(&psg_cycles_count,sizeof(psg_cycles_count));

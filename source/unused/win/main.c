@@ -10,7 +10,7 @@
 #define SOUND_FREQUENCY 48000
 #define SOUND_SAMPLES_SIZE  2048
 
-#define VIDEO_WIDTH 320 
+#define VIDEO_WIDTH  320 
 #define VIDEO_HEIGHT 240
 
 int joynum = 0;
@@ -362,11 +362,15 @@ static int sdl_control_update(SDLKey keystate)
         }
         
         /* reinitialize VC max value */
-        vc_max = 0xEA + 24*vdp_pal;
-        if (reg[1] & 8)
+        static const uint16 vc_table[4][2] = 
         {
-          vc_max += (28 - 20*vdp_pal);
-        }
+          /* NTSC, PAL */
+          {0xDA , 0xF2},  /* Mode 4 (192 lines) */
+          {0xEA , 0x102}, /* Mode 5 (224 lines) */
+          {0xDA , 0xF2},  /* Mode 4 (192 lines) */
+          {0x106, 0x10A}  /* Mode 5 (240 lines) */
+        };
+        vc_max = vc_table[(reg[1] >> 2) & 3][vdp_pal];
 
         /* reinitialize display area */
         bitmap.viewport.changed = 3;
@@ -389,11 +393,11 @@ static int sdl_control_update(SDLKey keystate)
 
       case SDLK_F12:
       {
-        while (input.dev[++joynum] == NO_DEVICE)
+        joynum = (joynum + 1) % MAX_DEVICES;
+        while (input.dev[joynum] == NO_DEVICE)
         {
-          joynum = joynum % MAX_DEVICES;
+          joynum = (joynum + 1) % MAX_DEVICES;
         }
-        joynum = joynum % MAX_DEVICES;
         break;
       }
 
@@ -412,24 +416,9 @@ static int sdl_control_update(SDLKey keystate)
 int sdl_input_update(void)
 {
   uint8 *keystate = SDL_GetKeyState(NULL);
-  while (input.dev[joynum] == NO_DEVICE)
-  {
-    joynum ++;
-    if (joynum > MAX_DEVICES - 1) joynum = 0;
-  }
 
   /* reset input */
   input.pad[joynum] = 0;
-
-  /* keyboard */
-  if(keystate[SDLK_a])  input.pad[joynum] |= INPUT_A;
-  if(keystate[SDLK_s])  input.pad[joynum] |= INPUT_B;
-  if(keystate[SDLK_d])  input.pad[joynum] |= INPUT_C;
-  if(keystate[SDLK_f])  input.pad[joynum] |= INPUT_START;
-  if(keystate[SDLK_z])  input.pad[joynum] |= INPUT_X;
-  if(keystate[SDLK_x])  input.pad[joynum] |= INPUT_Y;
-  if(keystate[SDLK_c])  input.pad[joynum] |= INPUT_Z;
-  if(keystate[SDLK_v])  input.pad[joynum] |= INPUT_MODE;
  
   switch (input.dev[joynum])
   {
@@ -440,13 +429,46 @@ int sdl_input_update(void)
       int state = SDL_GetMouseState(&x,&y);
 
       /* Calculate X Y axis values */
-      input.analog[joynum - 4][0] = (x * bitmap.viewport.w) / 640;
-      input.analog[joynum - 4][1] = (y * bitmap.viewport.h) / 480;
+      input.analog[joynum][0] = (x * bitmap.viewport.w) / VIDEO_WIDTH;
+      input.analog[joynum][1] = (y * bitmap.viewport.h) / VIDEO_HEIGHT;
 
-      /* Map mouse buttons to player #1 inputs */
-      if(state & SDL_BUTTON_MMASK) input.pad[joynum] |= INPUT_C;
-      if(state & SDL_BUTTON_RMASK) input.pad[joynum] |= INPUT_B;
-      if(state & SDL_BUTTON_LMASK) input.pad[joynum] |= INPUT_A;
+      /* Start,Left,Right,Middle buttons -> 0 0 0 0 START MIDDLE RIGHT LEFT */
+      if(state & SDL_BUTTON_LMASK) input.pad[joynum] |= INPUT_B;
+      if(state & SDL_BUTTON_RMASK) input.pad[joynum] |= INPUT_C;
+      if(state & SDL_BUTTON_MMASK) input.pad[joynum] |= INPUT_A;
+      if(keystate[SDLK_f])  input.pad[joynum] |= INPUT_START;
+
+      break;
+    }
+
+    case DEVICE_PADDLE:
+    {
+      /* get mouse (absolute values) */
+      int x;
+      int state = SDL_GetMouseState(&x, NULL);
+
+      /* Range is [0;256], 128 being middle position */
+      input.analog[joynum][0] = x * 256 /VIDEO_WIDTH;
+
+      /* Button I -> 0 0 0 0 0 0 0 I*/
+      if(state & SDL_BUTTON_LMASK) input.pad[joynum] |= INPUT_B;
+
+      break;
+    }
+
+    case DEVICE_SPORTSPAD:
+    {
+      /* get mouse (relative values) */
+      int x,y;
+      int state = SDL_GetRelativeMouseState(&x,&y);
+
+      /* Range is [0;256] */
+      input.analog[joynum][0] = (unsigned char)(-x & 0xFF);
+      input.analog[joynum][1] = (unsigned char)(-y & 0xFF);
+
+      /* Buttons I & II -> 0 0 0 0 0 0 II I*/
+      if(state & SDL_BUTTON_LMASK) input.pad[joynum] |= INPUT_B;
+      if(state & SDL_BUTTON_RMASK) input.pad[joynum] |= INPUT_C;
 
       break;
     }
@@ -457,24 +479,82 @@ int sdl_input_update(void)
       int x,y;
       int state = SDL_GetRelativeMouseState(&x,&y);
 
-      /* Sega Mouse range is -256;+256 */
-      input.analog[2][0] = x * 2;
-      input.analog[2][1] = y * 2;
+      /* Sega Mouse range is [-256;+256] */
+      input.analog[joynum][0] = x * 2;
+      input.analog[joynum][1] = y * 2;
 
       /* Vertical movement is upsidedown */
       if (!config.invert_mouse)
-        input.analog[2][1] = 0 - input.analog[2][1];
+        input.analog[joynum][1] = 0 - input.analog[joynum][1];
 
-      /* Map mouse buttons to player #1 inputs */
-      if(state & SDL_BUTTON_MMASK) input.pad[joynum] |= INPUT_C;
-      if(state & SDL_BUTTON_RMASK) input.pad[joynum] |= INPUT_B;
-      if(state & SDL_BUTTON_LMASK) input.pad[joynum] |= INPUT_A;
-    
+      /* Start,Left,Right,Middle buttons -> 0 0 0 0 START MIDDLE RIGHT LEFT */
+      if(state & SDL_BUTTON_LMASK) input.pad[joynum] |= INPUT_B;
+      if(state & SDL_BUTTON_RMASK) input.pad[joynum] |= INPUT_C;
+      if(state & SDL_BUTTON_MMASK) input.pad[joynum] |= INPUT_A;
+      if(keystate[SDLK_f])  input.pad[joynum] |= INPUT_START;
+
       break;
+    }
+
+    case DEVICE_XE_A1P:
+    {
+      /* A,B,C,D,Select,START,E1,E2 buttons -> E1(?) E2(?) START SELECT(?) A B C D */
+      if(keystate[SDLK_a])  input.pad[joynum] |= INPUT_START;
+      if(keystate[SDLK_s])  input.pad[joynum] |= INPUT_A;
+      if(keystate[SDLK_d])  input.pad[joynum] |= INPUT_C;
+      if(keystate[SDLK_f])  input.pad[joynum] |= INPUT_Y;
+      if(keystate[SDLK_z])  input.pad[joynum] |= INPUT_B;
+      if(keystate[SDLK_x])  input.pad[joynum] |= INPUT_X;
+      if(keystate[SDLK_c])  input.pad[joynum] |= INPUT_MODE;
+      if(keystate[SDLK_v])  input.pad[joynum] |= INPUT_Z;
+      
+      /* Left Analog Stick (bidirectional) */
+      if(keystate[SDLK_UP])     input.analog[joynum][1]-=2;
+      else if(keystate[SDLK_DOWN])   input.analog[joynum][1]+=2;
+      else input.analog[joynum][1] = 128;
+      if(keystate[SDLK_LEFT])   input.analog[joynum][0]-=2;
+      else if(keystate[SDLK_RIGHT])  input.analog[joynum][0]+=2;
+      else input.analog[joynum][0] = 128;
+
+      /* Right Analog Stick (unidirectional) */
+      if(keystate[SDLK_KP8])    input.analog[joynum+1][0]-=2;
+      else if(keystate[SDLK_KP2])   input.analog[joynum+1][0]+=2;
+      else if(keystate[SDLK_KP4])   input.analog[joynum+1][0]-=2;
+      else if(keystate[SDLK_KP6])  input.analog[joynum+1][0]+=2;
+      else input.analog[joynum+1][0] = 128;
+
+      /* Limiters */
+      if (input.analog[joynum][0] > 0xFF) input.analog[joynum][0] = 0xFF;
+      else if (input.analog[joynum][0] < 0) input.analog[joynum][0] = 0;
+      if (input.analog[joynum][1] > 0xFF) input.analog[joynum][1] = 0xFF;
+      else if (input.analog[joynum][1] < 0) input.analog[joynum][1] = 0;
+      if (input.analog[joynum+1][0] > 0xFF) input.analog[joynum+1][0] = 0xFF;
+      else if (input.analog[joynum+1][0] < 0) input.analog[joynum+1][0] = 0;
+      if (input.analog[joynum+1][1] > 0xFF) input.analog[joynum+1][1] = 0xFF;
+      else if (input.analog[joynum+1][1] < 0) input.analog[joynum+1][1] = 0;
+
+      break;
+    }
+
+    case DEVICE_ACTIVATOR:
+    {
+      if(keystate[SDLK_g])  input.pad[joynum] |= INPUT_ACTIVATOR_7L;
+      if(keystate[SDLK_h])  input.pad[joynum] |= INPUT_ACTIVATOR_7U;
+      if(keystate[SDLK_j])  input.pad[joynum] |= INPUT_ACTIVATOR_8L;
+      if(keystate[SDLK_k])  input.pad[joynum] |= INPUT_ACTIVATOR_8U;
     }
 
     default:
     {
+      if(keystate[SDLK_a])  input.pad[joynum] |= INPUT_A;
+      if(keystate[SDLK_s])  input.pad[joynum] |= INPUT_B;
+      if(keystate[SDLK_d])  input.pad[joynum] |= INPUT_C;
+      if(keystate[SDLK_f])  input.pad[joynum] |= INPUT_START;
+      if(keystate[SDLK_z])  input.pad[joynum] |= INPUT_X;
+      if(keystate[SDLK_x])  input.pad[joynum] |= INPUT_Y;
+      if(keystate[SDLK_c])  input.pad[joynum] |= INPUT_Z;
+      if(keystate[SDLK_v])  input.pad[joynum] |= INPUT_MODE;
+
       if(keystate[SDLK_UP])     input.pad[joynum] |= INPUT_UP;
       else
       if(keystate[SDLK_DOWN])   input.pad[joynum] |= INPUT_DOWN;

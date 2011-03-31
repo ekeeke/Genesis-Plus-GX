@@ -59,7 +59,9 @@ void sram_init()
 
     /* fixe some bad header informations */
     if ((sram.start > sram.end) || ((sram.end - sram.start) >= 0x10000))
+    {
       sram.end = sram.start + 0xffff;
+    }
     sram.start &= 0xfffffffe;
     sram.end |= 1;
 

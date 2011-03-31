@@ -1,21 +1,13 @@
 /* 
     SN76489 emulation
     by Maxim in 2001 and 2002
-    converted from my original Delphi implementation
-
-    I'm a C newbie so I'm sure there are loads of stupid things
-    in here which I'll come back to some day and redo
-
-    Includes:
-    - Super-high quality tone channel "oversampling" by calculating fractional positions on transitions
-    - Noise output pattern reverse engineered from actual SMS output
-    - Volume levels taken from actual SMS output
 */
 
 #ifndef _SN76489_H_
 #define _SN76489_H_
 
 /* Function prototypes */
+
 extern void SN76489_Init(double PSGClockValue, int SamplingRate);
 extern void SN76489_Reset(void);
 extern void SN76489_Shutdown(void);

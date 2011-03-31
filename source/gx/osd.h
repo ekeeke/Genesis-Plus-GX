@@ -2,8 +2,6 @@
 #ifndef _OSD_H_
 #define _OSD_H_
 
-#define NGC 1
-
 #include <gccore.h>
 #include <ogcsys.h>
 #include <stdio.h>
@@ -33,9 +31,9 @@
 #define SK_UPMEM      "/genplus/sk2chip.bin"
 
 #ifdef HW_RVL
-#define VERSION "Genesis Plus GX 1.4.1 (WII)"
+#define VERSION "Genesis Plus GX 1.5.0 (WII)"
 #else
-#define VERSION "Genesis Plus GX 1.4.1 (GCN)"
+#define VERSION "Genesis Plus GX 1.5.0 (GCN)"
 #endif
 
 #define osd_input_Update() gx_input_UpdateEmu()

@@ -1,4 +1,51 @@
 ---------------------------------------------------------------------------------------------------------
+Genesis Plus GX 1.5.0 (31/03/2011) (Eke-Eke)
+---------------------------------------------------------------------------------------------------------
+
+[Core/VDP]
+---------------
+* added support for Master System compatibility mode (Z80 ports access mode), incl. Mode 5 rendering.
+* added Mode 4 rendering for both Genesis & Master System modes.
+* added alternate BG planes rendering functions (should be faster on PPC architectures).
+
+[Core/IO]
+---------------
+* added support for Master System compatibility mode (Z80 ports access mode).
+* added Master System peripherals emulation (Control Pad, Paddle, Sports Pad & Light Phaser).
+* added XE-1AP (analog controller) emulation.
+* added Activator emulation.
+
+[Core/Extra]
+---------------
+* added support for all known Master System cartridge mappers.
+* added copy-protection hardware emulation for a few MD unlicensed games: fixes 777 Casino (crash when talking to bunny girls).
+(NB: most of those unlicensed games seem to have been already patched by ROM dumpers, main purpose is documenting them)
+* added support for Top Shooter arcade board controller. (A=Shoot, B=Bet, C/RIGHT=Coins, START=Start, hold UP on startup to enter service mode)
+* improved King of Fighters 98 mapper emulation (registers address decoding is now 100% accurate)
+* fixed Game Genie when several codes affect same ROM address.
+* fixed EEPROM types for Brian Lara Cricket & NBA Jam TE (verified on real cartridges)
+
+[Core/General]
+---------------
+* added Master System compatibility mode emulation (automatically enabled when loading ROM file with .sms extension).
+* improved savestate stability & compatibility (support for old 1.4.x savestates is preserved)
+* various code cleanup & comments.
+
+[Gamecube/Wii]
+---------------
+* fixed cheat codes handling when several codes affect same ROM address.
+* improved input controller detection on menu exit.
+* improved key remapping dialog box to match emulated device
+* changed Menu key for Gamecube controller to allow MODE button mapping
+* fixed DVD not being unmounted on swap (memory leak)
+
+[Wii only]
+---------------
+* added USB mouse support for Sega Mouse emulation
+* compiled with latest libogc: improves USB compatibility & fixes stability issues with Wiimotes.
+
+
+---------------------------------------------------------------------------------------------------------
 Genesis Plus GX 1.4.1 (04/12/2010) (Eke-Eke)
 ---------------------------------------------------------------------------------------------------------
 

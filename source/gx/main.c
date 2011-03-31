@@ -4,7 +4,7 @@
  *  Genesis Plus GX
  *
  *  Softdev (2006)
- *  Eke-Eke (2007,2008,2009)
+ *  Eke-Eke (2007-2010)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -53,12 +53,20 @@ u32 ConfigRequested = 1;
 /****************************************************************************
  * Power Button callback 
  ***************************************************************************/
-static void Power_Off(void)
+static void PowerOff_cb(void)
 {
   Shutdown = 1;
   ConfigRequested = 1;
 }
 #endif
+
+/****************************************************************************
+ * Reset Button callback 
+ ***************************************************************************/
+static void Reset_cb(void)
+{
+  gen_reset(0);
+}
 
 /***************************************************************************
  * Genesis Plus Virtual Machine
@@ -202,24 +210,43 @@ void reloadrom (int size, char *name)
   /* hot-swap previous & current cartridge */
   bool hotswap = config.hot_swap && cart.romsize;
 
-  /* load ROM file */
+  /* ROM size */
   cart.romsize = size;
+  
+  /* load ROM file */
   load_rom(name);
+
+  /* ROM filename without extension*/
+  sprintf(rom_filename,"%s",name);
+  rom_filename[strlen(rom_filename) - 4] = 0;
 
   if (hotswap)
   {
-    cart_hw_init();
-    cart_hw_reset(1);
+    if (system_hw == SYSTEM_PBC)
+    {
+      sms_cart_init();
+      sms_cart_reset();
+    }
+    else
+    {
+      md_cart_init();
+      md_cart_reset(1);
+    }
   }
   else
   {
-    /* initialize audio back-end */
-    /* 60hz video mode requires synchronization with Video Interrupt.    */
-    /* Framerate is 59.94 fps in interlaced/progressive modes, ~59.825 fps in non-interlaced mode */
+    /* initialize audio emulation */
+
+    /* To prevent any sound skipping, sound chips must run at the exact same speed as the rest of emulation (see sound.c) */
+    /* In 60hz video modes with NTSC emulation, we need perfect synchronization with video hardware interrupt (VSYNC) */
+    /* Wii & GC framerate has been measured to be exactly 59.94 fps in 240i/480i/480p video modes, ~59.825 fps in 240p */
+    /* In other modes, emulation is synchronized with audio hardware instead and we use default framerates (50Hz for PAL, 60Hz for NTSC). */
     float framerate = vdp_pal ? 50.0 : ((config.tv_mode == 1) ? 60.0 : (config.render ? 59.94 : (1000000.0/16715.0)));
+ 
+    /* output samplerate has been measured to be ~48044 samples/sec on GC, 48000 samples/sec on Wii */
     audio_init(SAMPLERATE_48KHZ, framerate);
      
-    /* System Power ON */
+    /* system power ON */
     system_init ();
     system_reset ();
   }
@@ -273,6 +300,8 @@ u32 frameticker = 0;
 
 int main (int argc, char *argv[])
 {
+  char pathname[MAXPATHLEN];
+
 #ifdef HW_RVL
   /* initialize DI interface */
   DI_UseCache(0);
@@ -305,7 +334,6 @@ int main (int argc, char *argv[])
   if (fatMounted)
   {
     /* base directory */
-    char pathname[MAXPATHLEN];
     sprintf (pathname, DEFAULT_PATH);
     DIR_ITER *dir = diropen(pathname);
     if (dir) dirclose(dir);
@@ -356,10 +384,10 @@ int main (int argc, char *argv[])
     SILENT = 1;
     if (OpenDirectory(TYPE_RECENT))
     {
-      int size = LoadFile(cart.rom,0);
+      int size = LoadFile(cart.rom,0,pathname);
       if (size)
       {
-        reloadrom(size,filelist[0].filename);
+        reloadrom(size,pathname);
         gx_video_Start();
         gx_audio_Start();
         frameticker = 1;
@@ -371,8 +399,11 @@ int main (int argc, char *argv[])
 
 #ifdef HW_RVL
   /* power button callback */
-  SYS_SetPowerCallback(Power_Off);
+  SYS_SetPowerCallback(PowerOff_cb);
 #endif
+
+  /* reset button callback */
+  SYS_SetResetCallback(Reset_cb);
 
   /* main emulation loop */
   run_emulation();
