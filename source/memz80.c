@@ -57,7 +57,7 @@ static inline void z80_lockup_w(unsigned int address, unsigned char data)
 static inline unsigned char z80_lockup_r(unsigned int address)
 {
 #ifdef LOGERROR
-  error("Z80 lockup read %04X (%x)\n", address, Z80.pc);
+  error("Z80 lockup read %04X (%x)\n", address, Z80.pc.w.l);
 #endif
   if (!config.force_dtack)
   {

@@ -165,31 +165,6 @@ void gen_reset(int hard_reset)
     /* clear RAM */
     memset (work_ram, 0x00, sizeof (work_ram));
     memset (zram, 0x00, sizeof (zram));
-
-    /* TMSS & OS ROM support */
-    if (config.tmss & 1)
-    {
-      /* clear TMSS register */
-      memset(tmss, 0x00, sizeof(tmss));
-
-      /* VDP access is locked by default */
-      int i;
-      for (i=0xc0; i<0xe0; i+=8)
-      {
-        m68k_memory_map[i].read8   = m68k_lockup_r_8;
-        m68k_memory_map[i].read16  = m68k_lockup_r_16;
-        m68k_memory_map[i].write8  = m68k_lockup_w_8;
-        m68k_memory_map[i].write16 = m68k_lockup_w_16;
-        zbank_memory_map[i].read   = zbank_lockup_r;
-        zbank_memory_map[i].write  = zbank_lockup_w;
-      }
-
-      /* OS ROM is mapped at $000000-$0007FF */
-      if (config.tmss & 2)
-      {
-        m68k_memory_map[0].base = bios_rom;
-      }
-    }
   }
   else
   {
@@ -225,6 +200,35 @@ void gen_reset(int hard_reset)
 
     /* assume default bank is $000000-$007FFF */
     zbank = 0;  
+
+    /* TMSS & OS ROM support */
+    if (config.tmss & 1)
+    {
+      /* on HW reset only */
+      if (hard_reset)
+      {
+        /* clear TMSS register */
+        memset(tmss, 0x00, sizeof(tmss));
+
+        /* VDP access is locked by default */
+        int i;
+        for (i=0xc0; i<0xe0; i+=8)
+        {
+          m68k_memory_map[i].read8   = m68k_lockup_r_8;
+          m68k_memory_map[i].read16  = m68k_lockup_r_16;
+          m68k_memory_map[i].write8  = m68k_lockup_w_8;
+          m68k_memory_map[i].write16 = m68k_lockup_w_16;
+          zbank_memory_map[i].read   = zbank_lockup_r;
+          zbank_memory_map[i].write  = zbank_lockup_w;
+        }
+
+        /* OS ROM is mapped at $000000-$0007FF */
+        if (config.tmss & 2)
+        {
+          m68k_memory_map[0].base = bios_rom;
+        }
+      }
+    }
 
     /* reset 68k */
     m68k_pulse_reset();
