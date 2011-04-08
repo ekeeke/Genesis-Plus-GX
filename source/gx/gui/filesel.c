@@ -291,8 +291,9 @@ int FileSelector(void)
       {
         /* get ROM filename without extension */
         sprintf (text, "%s", filelist[selection].filename);
-        if (strlen(text) >= 4)
-          text[strlen(text) - 4] = 0;
+        int i = strlen(text) - 1;
+        while (i && (text[i] != '.')) i--;
+        if (i) text[i] = 0;
 
         /* ROM database informations */
         sprintf (fname, "%s/db/%s.xml", DEFAULT_PATH, text);
@@ -471,6 +472,7 @@ int FileSelector(void)
 
         /* clear selection by default */
         selection = offset = 0;
+        old = -1;
 
         /* select previous directory */
         for (i=0; i<maxfiles; i++)
@@ -534,6 +536,7 @@ int FileSelector(void)
 
           /* clear selection by default */
           selection = offset = 0;
+          old = -1;
         }
         else 
         {

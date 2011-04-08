@@ -218,7 +218,9 @@ void reloadrom (int size, char *name)
 
   /* ROM filename without extension*/
   sprintf(rom_filename,"%s",name);
-  rom_filename[strlen(rom_filename) - 4] = 0;
+  int i = strlen(rom_filename) - 1;
+  while (i && (rom_filename[i] != '.')) i--;
+  if (i) rom_filename[i] = 0;
 
   if (hotswap)
   {
