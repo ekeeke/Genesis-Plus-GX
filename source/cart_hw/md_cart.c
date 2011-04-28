@@ -296,14 +296,17 @@ void md_cart_init(void)
     }
     else
     {
-      /* Static RAM (64k max.) */
-      m68k_memory_map[sram.start >> 16].base    = sram.sram;
-      m68k_memory_map[sram.start >> 16].read8   = NULL;
-      m68k_memory_map[sram.start >> 16].read16  = NULL;
-      m68k_memory_map[sram.start >> 16].write8  = NULL;
-      m68k_memory_map[sram.start >> 16].write16 = NULL;
-      zbank_memory_map[sram.start >> 16].read   = NULL;
-      zbank_memory_map[sram.start >> 16].write  = NULL;
+      /* Static RAM (64k max.) - disabled on reset if ROM is mapped in same area */
+      if (cart.romsize < sram.start)
+      {
+        m68k_memory_map[sram.start >> 16].base    = sram.sram;
+        m68k_memory_map[sram.start >> 16].read8   = NULL;
+        m68k_memory_map[sram.start >> 16].read16  = NULL;
+        m68k_memory_map[sram.start >> 16].write8  = NULL;
+        m68k_memory_map[sram.start >> 16].write16 = NULL;
+        zbank_memory_map[sram.start >> 16].read   = NULL;
+        zbank_memory_map[sram.start >> 16].write  = NULL;
+      }
     }
   }
 
