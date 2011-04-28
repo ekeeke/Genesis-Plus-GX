@@ -1106,11 +1106,11 @@ static void systemmenu ()
           /* reinitialize audio timings */
           if (vdp_pal)
           {
-            audio_init(snd.sample_rate, (config.tv_mode == 0) ? 50.0 : (config.render ? 50.00 : (1000000.0/19967.5)));
+            audio_init(snd.sample_rate, (config.tv_mode == 0) ? 50.0 : ((config.render || interlaced) ? 50.00 : (1000000.0/19967.5)));
           }
           else
           {
-            audio_init(snd.sample_rate, (config.tv_mode == 1) ? 60.0 : (config.render ? 59.94 : (1000000.0/16715.0)));
+            audio_init(snd.sample_rate, (config.tv_mode == 1) ? 60.0 : ((config.render || interlaced) ? 59.94 : (1000000.0/16715.0)));
           }
 
           /* reinitialize system emulation */
@@ -1352,11 +1352,11 @@ static void videomenu ()
           /* reinitialize audio timings */
           if (vdp_pal)
           {
-            audio_init(snd.sample_rate, (config.tv_mode == 0) ? 50.0 : (config.render ? 50.00 : (1000000.0/19967.5)));
+            audio_init(snd.sample_rate, (config.tv_mode == 0) ? 50.0 : ((config.render || interlaced) ? 50.00 : (1000000.0/19967.5)));
           }
           else
           {
-            audio_init(snd.sample_rate, (config.tv_mode == 1) ? 60.0 : (config.render ? 59.94 : (1000000.0/16715.0)));
+            audio_init(snd.sample_rate, (config.tv_mode == 1) ? 60.0 : ((config.render || interlaced) ? 59.94 : (1000000.0/16715.0)));
           }
 
           /* reinitialize sound chip emulation */
@@ -1395,11 +1395,11 @@ static void videomenu ()
             /* reinitialize audio timings */
             if (vdp_pal)
             {
-              audio_init(snd.sample_rate, (config.tv_mode == 0) ? 50.0 : (config.render ? 50.00 : (1000000.0/19967.5)));
+              audio_init(snd.sample_rate, (config.tv_mode == 0) ? 50.0 : ((config.render || interlaced) ? 50.00 : (1000000.0/19967.5)));
             }
             else
             {
-              audio_init(snd.sample_rate, (config.tv_mode == 1) ? 60.0 : (config.render ? 59.94 : (1000000.0/16715.0)));
+              audio_init(snd.sample_rate, (config.tv_mode == 1) ? 60.0 : ((config.render || interlaced) ? 59.94 : (1000000.0/16715.0)));
             }
 
             /* reinitialize sound chip emulation */
