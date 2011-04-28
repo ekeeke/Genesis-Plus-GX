@@ -186,7 +186,7 @@ static void run_emulation(void)
           /* framerate has changed, reinitialize audio timings */
           if (vdp_pal)
           {
-            audio_init(SAMPLERATE_48KHZ, interlaced ? 50.00 : (1000000.0/19967.5));
+            audio_init(SAMPLERATE_48KHZ, interlaced ? 50.00 : (1000000.0/19968.0));
           }
           else
           {
@@ -254,7 +254,7 @@ void reloadrom (int size, char *name)
     /* When modes does not match, emulation is synchronized with audio hardware interrupt (DMA) and we use default framerates (50Hz for PAL, 60Hz for NTSC). */
     if (vdp_pal)
     {
-      audio_init(SAMPLERATE_48KHZ, (config.tv_mode == 0) ? 50.0 : (config.render ? 50.00 : (1000000.0/19967.5)));
+      audio_init(SAMPLERATE_48KHZ, (config.tv_mode == 0) ? 50.0 : (config.render ? 50.00 : (1000000.0/19968.0)));
     }
     else
     {

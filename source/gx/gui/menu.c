@@ -1106,7 +1106,7 @@ static void systemmenu ()
           /* reinitialize audio timings */
           if (vdp_pal)
           {
-            audio_init(snd.sample_rate, (config.tv_mode == 0) ? 50.0 : ((config.render || interlaced) ? 50.00 : (1000000.0/19967.5)));
+            audio_init(snd.sample_rate, (config.tv_mode == 0) ? 50.0 : ((config.render || interlaced) ? 50.00 : (1000000.0/19968.0)));
           }
           else
           {
@@ -1352,7 +1352,7 @@ static void videomenu ()
           /* reinitialize audio timings */
           if (vdp_pal)
           {
-            audio_init(snd.sample_rate, (config.tv_mode == 0) ? 50.0 : ((config.render || interlaced) ? 50.00 : (1000000.0/19967.5)));
+            audio_init(snd.sample_rate, (config.tv_mode == 0) ? 50.0 : ((config.render || interlaced) ? 50.00 : (1000000.0/19968.0)));
           }
           else
           {
@@ -1395,7 +1395,7 @@ static void videomenu ()
             /* reinitialize audio timings */
             if (vdp_pal)
             {
-              audio_init(snd.sample_rate, (config.tv_mode == 0) ? 50.0 : ((config.render || interlaced) ? 50.00 : (1000000.0/19967.5)));
+              audio_init(snd.sample_rate, (config.tv_mode == 0) ? 50.0 : ((config.render || interlaced) ? 50.00 : (1000000.0/19968.0)));
             }
             else
             {
