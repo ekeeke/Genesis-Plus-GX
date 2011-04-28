@@ -21,7 +21,7 @@
 
 #include "shared.h"
 
-#define GAME_CNT 29
+#define GAME_CNT 30
 
 T_EEPROM eeprom;
 
@@ -66,14 +66,15 @@ static const T_GAME_ENTRY database[GAME_CNT] =
   {{"00001211-00"}, 0,      {7,  0x7F,   0x7F,   0x200001, 0x200001, 0x200001, 0, 0, 1}},   /* Sports Talk Baseball */
   {{"00004076-00"}, 0,      {7,  0x7F,   0x7F,   0x200001, 0x200001, 0x200001, 0, 0, 1}},   /* Honoo no Toukyuuji Dodge Danpei */
   {{"G-4524"     }, 0,      {7,  0x7F,   0x7F,   0x200001, 0x200001, 0x200001, 0, 0, 1}},   /* Ninja Burai Densetsu */
+  {{"00054503-00"}, 0,      {7,  0x7F,   0x7F,   0x200001, 0x200001, 0x200001, 0, 0, 1}},   /* Game Toshokan  */
 
   /* CODEMASTERS mapper */
   /* 24C08 */
-  {{"T-120106"   }, 0,      {8,   0x3FF, 0x3FF,   0x300000, 0x380001, 0x300000, 0, 7, 1}},  /* Brian Lara Cricket */
-  {{"T-120096"   }, 0,      {8,  0x3FF,  0x3FF,  0x300000, 0x380001, 0x300000, 0, 7, 1}},   /* Micro Machines 2 - Turbo Tournament (E) */
+  {{"T-120106"   }, 0,      {8,  0x3FF, 0x3FF,   0x300000, 0x380001, 0x300000, 0, 7, 1}},   /* Brian Lara Cricket */
   {{"00000000-00"}, 0x168B, {8,  0x3FF,  0x3FF,  0x300000, 0x380001, 0x300000, 0, 7, 1}},   /* Micro Machines Military */
   {{"00000000-00"}, 0xCEE0, {8,  0x3FF,  0x3FF,  0x300000, 0x380001, 0x300000, 0, 7, 1}},   /* Micro Machines Military (Bad)*/
   /* 24C16 */
+  {{"T-120096"   }, 0,      {8,  0x7FF,  0x7FF,  0x300000, 0x380001, 0x300000, 0, 7, 1}},   /* Micro Machines 2 - Turbo Tournament (E) */
   {{"00000000-00"}, 0x165E, {8,  0x7FF,  0x7FF,  0x300000, 0x380001, 0x300000, 0, 7, 1}},   /* Micro Machines Turbo Tournament 96 */
   {{"00000000-00"}, 0x2C41, {8,  0x7FF,  0x7FF,  0x300000, 0x380001, 0x300000, 0, 7, 1}},   /* Micro Machines Turbo Tournament 96 (Bad)*/
   /* 24C65 */
