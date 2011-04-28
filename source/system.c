@@ -757,6 +757,14 @@ static void system_frame_sms(int do_skip)
       hint_pending = 0x10;
       if (reg[0] & 0x10)
       {
+        /* IRQ line is latched between instructions, on instruction last cycle          */
+        /* This means that if Z80 cycle count is exactly a multiple of MCYCLES_PER_LINE, */
+        /* interrupt should be triggered AFTER the next instruction.                    */
+        if ((mcycles_z80 % MCYCLES_PER_LINE) == 0)
+        {
+          z80_run(mcycles_z80 + 1);
+        }
+
         Z80.irq_state = ASSERT_LINE;
       }
     }
