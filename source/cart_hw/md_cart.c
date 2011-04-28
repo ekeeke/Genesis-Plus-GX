@@ -787,50 +787,36 @@ static void mapper_sega_w(uint32 data)
 
   if (data & 1)
   {
-    /* Only if SRAM is detected */
     if (sram.on)
     {
-      /* $200000-$3fffff is mapped to SRAM */
-      for (i=0x20; i<0x40; i++)
-      {
-        m68k_memory_map[i].base  = sram.sram;
-      }
+      /* Backup RAM mapped to $200000-$20ffff (normally mirrored up to $3fffff but this breaks Sonic Megamix and no game need it) */
+      m68k_memory_map[0x20].base = sram.sram;
+      m68k_memory_map[0x20].write8  = NULL;
+      m68k_memory_map[0x20].write16 = NULL;
+      zbank_memory_map[0x20].write  = NULL;
 
+      /* Backup RAM write protection */
       if (data & 2)
       {
-        /* SRAM write disabled */
-        for (i=0x20; i<0x40; i++)
-        {
-          m68k_memory_map[i].write8  = m68k_unused_8_w;
-          m68k_memory_map[i].write16 = m68k_unused_16_w;
-          zbank_memory_map[i].write  = zbank_unused_w;
-        }
-      }
-      else
-      {
-        /* SRAM write enabled */
-        for (i=0x20; i<0x40; i++)
-        {
-          m68k_memory_map[i].write8  = NULL;
-          m68k_memory_map[i].write16 = NULL;
-          zbank_memory_map[i].write  = NULL;
-        }
+        m68k_memory_map[0x20].write8  = m68k_unused_8_w;
+        m68k_memory_map[0x20].write16 = m68k_unused_16_w;
+        zbank_memory_map[0x20].write  = zbank_unused_w;
       }
     }
 
     /* S&K lock-on chip */
     if ((cart.special & HW_LOCK_ON) && (config.lock_on == TYPE_SK))
     {
-      /* $300000-$3fffff is mapped to S2K upmem chip */
+      /* S2K upmem chip mapped to $300000-$3fffff (256K mirrored) */
       for (i=0x30; i<0x40; i++)
       {
-        m68k_memory_map[i].base = (cart.rom + 0x800000) + ((i & 3)<<16);
+        m68k_memory_map[i].base = (cart.rom + 0x800000) + ((i & 3) << 16);
       }
     }
   }
   else
   {
-    /* $200000-$3fffff is mapped to ROM */
+    /* cartridge ROM mapped to $200000-$3fffff */
     for (i=0x20; i<0x40; i++)
     {
       m68k_memory_map[i].base = cart.rom + ((i<<16) & cart.mask);
