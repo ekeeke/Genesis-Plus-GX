@@ -174,8 +174,8 @@ static void run_emulation(void)
     /* check interlaced mode change */
     if (bitmap.viewport.changed & 4)
     {
-      /* in original 60hz modes, audio is synced with framerate */
-      if (!config.render && !vdp_pal && (config.tv_mode != 1))
+      /* VSYNC "original" mode */
+      if (!config.render && (gc_pal == vdp_pal))
       {
         u8 *temp = memalign(32,YM2612GetContextSize());
         if (temp)
@@ -184,7 +184,16 @@ static void run_emulation(void)
           memcpy(temp, YM2612GetContextPtr(), YM2612GetContextSize());
 
           /* framerate has changed, reinitialize audio timings */
-          audio_init(SAMPLERATE_48KHZ, interlaced ? 59.94 : (1000000.0/16715.0));
+          if (vdp_pal)
+          {
+            audio_init(SAMPLERATE_48KHZ, interlaced ? 50.00 : (1000000.0/19967.5));
+          }
+          else
+          {
+            audio_init(SAMPLERATE_48KHZ, interlaced ? 59.94 : (1000000.0/16715.0));
+          }
+
+          /* reinitialize sound chip emulation */
           sound_init();
 
           /* restore YM2612 context */
@@ -219,8 +228,8 @@ void reloadrom (int size, char *name)
   /* ROM filename without extension*/
   sprintf(rom_filename,"%s",name);
   int i = strlen(rom_filename) - 1;
-  while (i && (rom_filename[i] != '.')) i--;
-  if (i) rom_filename[i] = 0;
+  while ((i > 0) && (rom_filename[i] != '.')) i--;
+  if (i > 0) rom_filename[i] = 0;
 
   if (hotswap)
   {
@@ -237,16 +246,20 @@ void reloadrom (int size, char *name)
   }
   else
   {
-    /* initialize audio emulation */
-
+    /* Initialize audio emulation */
     /* To prevent any sound skipping, sound chips must run at the exact same speed as the rest of emulation (see sound.c) */
-    /* In 60hz video modes with NTSC emulation, we need perfect synchronization with video hardware interrupt (VSYNC) */
-    /* Wii & GC framerate has been measured to be exactly 59.94 fps in 240i/480i/480p video modes, ~59.825 fps in 240p */
-    /* In other modes, emulation is synchronized with audio hardware instead and we use default framerates (50Hz for PAL, 60Hz for NTSC). */
-    float framerate = vdp_pal ? 50.0 : ((config.tv_mode == 1) ? 60.0 : (config.render ? 59.94 : (1000000.0/16715.0)));
- 
-    /* output samplerate has been measured to be ~48044 samples/sec on GC, 48000 samples/sec on Wii */
-    audio_init(SAMPLERATE_48KHZ, framerate);
+    /* When TV output mode matches emulated video mode, we use video hardware interrupt (VSYNC) and exact framerates for perfect synchronization */
+    /* In 60Hz TV modes, Wii & GC framerates have been measured to be 59.94 (interlaced or progressive) and ~59.825 fps (non-interlaced) */
+    /* In 50Hz TV modes, Wii & GC framerates have been measured to be 50.00 (interlaced) and ~50.845 fps (non-interlaced) */
+    /* When modes does not match, emulation is synchronized with audio hardware interrupt (DMA) and we use default framerates (50Hz for PAL, 60Hz for NTSC). */
+    if (vdp_pal)
+    {
+      audio_init(SAMPLERATE_48KHZ, (config.tv_mode == 0) ? 50.0 : (config.render ? 50.00 : (1000000.0/19967.5)));
+    }
+    else
+    {
+      audio_init(SAMPLERATE_48KHZ, (config.tv_mode == 1) ? 60.0 : (config.render ? 59.94 : (1000000.0/16715.0)));
+    }
      
     /* system power ON */
     system_init ();

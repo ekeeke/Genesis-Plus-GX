@@ -150,8 +150,8 @@ void gx_audio_Start(void)
   AUDIO_RegisterDMACallback(NULL);
   DSP_Halt();
 
-  /* when not using 60hz mode, frame emulation is synchronized with Audio Interface DMA */
-  if (gc_pal | vdp_pal)
+  /* when TV mode does not match emulated video mode, frame emulation is synchronized with Audio Interface DMA */
+  if (gc_pal != vdp_pal)
   {
     AUDIO_RegisterDMACallback(ai_callback);
   }

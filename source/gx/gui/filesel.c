@@ -292,8 +292,8 @@ int FileSelector(void)
         /* get ROM filename without extension */
         sprintf (text, "%s", filelist[selection].filename);
         int i = strlen(text) - 1;
-        while (i && (text[i] != '.')) i--;
-        if (i) text[i] = 0;
+        while ((i > 0) && (text[i] != '.')) i--;
+        if (i > 0) text[i] = 0;
 
         /* ROM database informations */
         sprintf (fname, "%s/db/%s.xml", DEFAULT_PATH, text);

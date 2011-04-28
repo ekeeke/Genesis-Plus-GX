@@ -1329,24 +1329,26 @@ void gx_video_Stop(void)
 /* Menu mode -> Emulation mode */
 void gx_video_Start(void)
 {
-  /* 50Hz/60Hz mode */
-  if ((config.tv_mode == 1) || ((config.tv_mode == 2) && vdp_pal))
-  {
-    gc_pal = 1;
-  }
-  else
-  {
-    gc_pal = 0;
-  }
-
 #ifdef HW_RVL
   VIDEO_SetTrapFilter(config.trap);
   VIDEO_SetGamma((int)(config.gamma * 10.0));
 #endif
 
+  /* TV mode */
+  if ((config.tv_mode == 1) || ((config.tv_mode == 2) && vdp_pal))
+  {
+    /* 50 Hz */
+    gc_pal = 1;
+  }
+  else
+  {
+    /* 60 Hz */
+    gc_pal = 0;
+  }
+
   /* VSYNC callbacks */
-  /* in 60hz mode, frame emulation is synchronized with Video Interrupt */
-  if (!gc_pal && !vdp_pal)
+  /* If TV mode matches emulated video mode, frame emulation is synchronized with Video Interrupt */
+  if (gc_pal == vdp_pal)
   {
     VIDEO_SetPreRetraceCallback(vi_callback);
   }

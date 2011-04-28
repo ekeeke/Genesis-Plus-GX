@@ -1033,7 +1033,6 @@ static const uint16 vc_table[4][2] =
 static void systemmenu ()
 {
   int ret, quit = 0;
-  float framerate;
   u8 *temp;
   gui_menu *m = &menu_system;
   gui_item *items = m->items;
@@ -1104,9 +1103,17 @@ static void systemmenu ()
             memcpy(temp, YM2612GetContextPtr(), YM2612GetContextSize());
           }
 
-          /* reinitialize all timings */
-          framerate = vdp_pal ? 50.0 : ((config.tv_mode == 1) ? 60.0 : ((config.render || interlaced) ? 59.94 : (1000000.0/16715.0)));
-          audio_init(snd.sample_rate, framerate);
+          /* reinitialize audio timings */
+          if (vdp_pal)
+          {
+            audio_init(snd.sample_rate, (config.tv_mode == 0) ? 50.0 : (config.render ? 50.00 : (1000000.0/19967.5)));
+          }
+          else
+          {
+            audio_init(snd.sample_rate, (config.tv_mode == 1) ? 60.0 : (config.render ? 59.94 : (1000000.0/16715.0)));
+          }
+
+          /* reinitialize system emulation */
           system_init();
 
           /* restore YM2612 context */
@@ -1244,7 +1251,6 @@ static void videomenu ()
 {
   u16 state[2];
   int ret, quit = 0;
-  float framerate;
   u8 *temp;
   gui_menu *m = &menu_video;
   gui_item *items = m->items;
@@ -1344,8 +1350,16 @@ static void videomenu ()
           }
 
           /* reinitialize audio timings */
-          framerate = (config.tv_mode == 1) ? 60.0 : ((config.render || interlaced) ? 59.94 : (1000000.0/16715.0));
-          audio_init(snd.sample_rate, framerate);
+          if (vdp_pal)
+          {
+            audio_init(snd.sample_rate, (config.tv_mode == 0) ? 50.0 : (config.render ? 50.00 : (1000000.0/19967.5)));
+          }
+          else
+          {
+            audio_init(snd.sample_rate, (config.tv_mode == 1) ? 60.0 : (config.render ? 59.94 : (1000000.0/16715.0)));
+          }
+
+          /* reinitialize sound chip emulation */
           sound_init();
 
           /* restore YM2612 context */
@@ -1379,8 +1393,16 @@ static void videomenu ()
             }
 
             /* reinitialize audio timings */
-            framerate = (config.tv_mode == 1) ? 60.0 : ((config.render || interlaced) ? 59.94 : (1000000.0/16715.0));
-            audio_init(snd.sample_rate, framerate);
+            if (vdp_pal)
+            {
+              audio_init(snd.sample_rate, (config.tv_mode == 0) ? 50.0 : (config.render ? 50.00 : (1000000.0/19967.5)));
+            }
+            else
+            {
+              audio_init(snd.sample_rate, (config.tv_mode == 1) ? 60.0 : (config.render ? 59.94 : (1000000.0/16715.0)));
+            }
+
+            /* reinitialize sound chip emulation */
             sound_init();
 
             /* restore YM2612 context */
@@ -3151,7 +3173,9 @@ void menu_execute(void)
 
   /* Autosave SRAM */
   if (config.s_auto & 1)
+  {
     slot_autosave(0,config.s_device);
+  }
 
 #ifdef HW_RVL
   /* Wiimote shutdown */
