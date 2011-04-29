@@ -133,6 +133,11 @@
 
 #include "shared.h"
 
+/* compiler dependence */
+#ifndef INLINE
+#define INLINE static __inline__
+#endif
+
 /* globals */
 #define FREQ_SH     16    /* 16.16 fixed point (frequency calculations) */
 #define EG_SH       16    /* 16.16 fixed point (envelope generator timing) */
@@ -1933,18 +1938,17 @@ static void init_tables(void)
 
 
 /* initialize ym2612 emulator(s) */
-int YM2612Init(double clock, int rate)
+void YM2612Init(double clock, int rate)
 {
   memset(&ym2612,0,sizeof(YM2612));
   init_tables();
   ym2612.OPN.ST.clock = clock;
   ym2612.OPN.ST.rate = rate;
   OPNSetPres(6*24); /* YM2612 prescaler is fixed to 1/6, one sample (6 mixed channels) is output for each 24 FM clocks */
-  return 0;
 }
 
 /* reset OPN registers */
-int YM2612ResetChip(void)
+void YM2612ResetChip(void)
 {
   int i;
 
@@ -1982,9 +1986,6 @@ int YM2612ResetChip(void)
     OPNWriteReg(i      ,0);
     OPNWriteReg(i|0x100,0);
   }
-
-
-  return 0;
 }
 
 /* ym2612 write */
@@ -2116,18 +2117,18 @@ void YM2612Update(long int *buffer, int length)
       advance_eg_channel(&ym2612.CH[5].SLOT[SLOT1]);
     }
 
-    /* 14-bit channel output */
-    if (out_fm[0] > 8191) out_fm[0] = 8192;
+    /* 14-bit DAC inputs (range is -8192;+8192) */
+    if (out_fm[0] > 8192) out_fm[0] = 8192;
     else if (out_fm[0] < -8192) out_fm[0] = -8192;
-    if (out_fm[1] > 8191) out_fm[1] = 8192;
+    if (out_fm[1] > 8192) out_fm[1] = 8192;
     else if (out_fm[1] < -8192) out_fm[1] = -8192;
-    if (out_fm[2] > 8191) out_fm[2] = 8192;
+    if (out_fm[2] > 8192) out_fm[2] = 8192;
     else if (out_fm[2] < -8192) out_fm[2] = -8192;
-    if (out_fm[3] > 8191) out_fm[3] = 8192;
+    if (out_fm[3] > 8192) out_fm[3] = 8192;
     else if (out_fm[3] < -8192) out_fm[3] = -8192;
-    if (out_fm[4] > 8191) out_fm[4] = 8192;
+    if (out_fm[4] > 8192) out_fm[4] = 8192;
     else if (out_fm[4] < -8192) out_fm[4] = -8192;
-    if (out_fm[5] > 8191) out_fm[5] = 8192;
+    if (out_fm[5] > 8192) out_fm[5] = 8192;
     else if (out_fm[5] < -8192) out_fm[5] = -8192;
 
     /* 6-channels mixing  */

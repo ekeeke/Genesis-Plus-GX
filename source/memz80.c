@@ -252,6 +252,13 @@ void z80_sms_port_w(unsigned int port, unsigned char data)
         }
         return;
       }
+
+      if ((port >= 0xF0) && (config.ym2413_enabled))
+      {
+        fm_write(mcycles_z80, port&3, data);
+        return;
+      }
+
       z80_unused_port_w(port, data);
       return;
     }
@@ -285,9 +292,15 @@ unsigned char z80_sms_port_r(unsigned int port)
     default:
     {
       port &= 0xFF;
+
       if ((port == 0xC0) || (port == 0xC1) || (port == 0xDC) || (port == 0xDD) || (port == 0xDE) || (port == 0xDF))
       {
         return io_z80_read(port & 1);
+      }
+
+      if ((port >= 0xF0) && (config.ym2413_enabled))
+      {
+        return YM2413Read(port & 3); 
       }
 
       return z80_unused_port_r(port);

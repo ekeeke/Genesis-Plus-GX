@@ -24,7 +24,7 @@
 #ifndef _CONFIG_H_
 #define _CONFIG_H_
 
-#define CONFIG_VERSION "GENPLUS-GX 1.4.1"
+#define CONFIG_VERSION "GENPLUS-GX 1.5.1"
 
 /****************************************************************************
  * Config Option 
@@ -37,6 +37,7 @@ typedef struct
   uint8 filter;
   uint8 psgBoostNoise;
   uint8 dac_bits;
+  uint8 ym2413_enabled;
   int16 psg_preamp;
   int16 fm_preamp;
   int16 lp_range;

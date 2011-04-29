@@ -30,6 +30,11 @@ static unsigned int psg_cycles_count;
 static unsigned int fm_cycles_ratio;
 static unsigned int fm_cycles_count;
 
+/* YM chip function pointers */
+static void (*YM_Reset)(void);
+static void (*YM_Update)(long int *buffer, int length);
+static void (*YM_Write)(unsigned int a, unsigned int v);
+
 /* Run FM chip for required M-cycles */
 static inline void fm_update(unsigned int cycles)
 {
@@ -66,7 +71,7 @@ static inline void fm_update(unsigned int cycles)
     }
 
     /* run FM chip & get samples */
-    YM2612Update(buffer, cnt);
+    YM_Update(buffer, cnt);
   }
 }
 
@@ -132,14 +137,38 @@ void sound_init(void)
   /* Initialize core emulation (input clock based on input frequency for 100% accuracy)   */
   /* By default, both chips are running at the output frequency.                          */
   SN76489_Init(mclk/15.0,snd.sample_rate);
-  YM2612Init(mclk/7.0,snd.sample_rate);
 
-  /* In HQ mode, YM2612 is running at its original rate (one sample each 144*7 M-cycles)  */
-  /* FM stream is resampled to the output frequency at the end of a frame.                */
-  if (config.hq_fm)
+  if (system_hw != SYSTEM_PBC)
   {
-    fm_cycles_ratio = 144 * 7 * (1 << 11);
-    Fir_Resampler_time_ratio(mclk / (double)snd.sample_rate / (144.0 * 7.0), config.rolloff);
+    /* YM2612 */
+    YM2612Init(mclk/7.0,snd.sample_rate);
+    YM_Reset = YM2612ResetChip;
+    YM_Update = YM2612Update;
+    YM_Write = YM2612Write;
+
+    /* In HQ mode, YM2612 is running at its original rate (one sample each 144*7 M-cycles)  */
+    /* FM stream is resampled to the output frequency at the end of a frame.                */
+    if (config.hq_fm)
+    {
+      fm_cycles_ratio = 144 * 7 * (1 << 11);
+      Fir_Resampler_time_ratio(mclk / (double)snd.sample_rate / (144.0 * 7.0), config.rolloff);
+    }
+  }
+  else
+  {
+    /* YM2413 */
+    YM2413Init(mclk/15.0,snd.sample_rate);
+    YM_Reset = YM2413ResetChip;
+    YM_Update = YM2413Update;
+    YM_Write = YM2413Write;
+
+    /* In HQ mode, YM2413 is running at its original rate (one sample each 72*15 M-cycles)  */
+    /* FM stream is resampled to the output frequency at the end of a frame.                */
+    if (config.hq_fm)
+    {
+      fm_cycles_ratio = 72 * 15 * (1 << 11);
+      Fir_Resampler_time_ratio(mclk / (double)snd.sample_rate / (72.0 * 15.0), config.rolloff);
+    }
   }
 
 #ifdef LOGSOUND
@@ -151,7 +180,7 @@ void sound_init(void)
 /* Reset sound chips emulation */
 void sound_reset(void)
 {
-  YM2612ResetChip();
+  YM_Reset();
   SN76489_Reset();
   fm_cycles_count = 0;
   psg_cycles_count = 0;
@@ -209,7 +238,7 @@ int sound_update(unsigned int cycles)
       /* FM chip is late for one (or two) samples */
       do
       {
-        YM2612Update(Fir_Resampler_buffer(), 1);
+        YM_Update(Fir_Resampler_buffer(), 1);
         Fir_Resampler_write(2);
         avail = Fir_Resampler_avail();
       }
@@ -250,17 +279,17 @@ int sound_update(unsigned int cycles)
 void fm_reset(unsigned int cycles)
 {
   fm_update(cycles << 11);
-  YM2612ResetChip();
+  YM_Reset();
 }
 
 /* Write FM chip */
 void fm_write(unsigned int cycles, unsigned int address, unsigned int data)
 {
   if (address & 1) fm_update(cycles << 11);
-  YM2612Write(address, data);
+  YM_Write(address, data);
 }
 
-/* Read FM status */
+/* Read FM status (YM2612 only) */
 unsigned int fm_read(unsigned int cycles, unsigned int address)
 {
   fm_update(cycles << 11);

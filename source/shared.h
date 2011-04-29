@@ -21,6 +21,7 @@
 #include "state.h"
 #include "sound.h"
 #include "sn76489.h"
+#include "ym2413.h"
 #include "ym2612.h"
 #include "loadrom.h"
 #include "sms_cart.h"

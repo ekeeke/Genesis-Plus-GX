@@ -85,6 +85,7 @@ void config_default(void)
   config.hg             = 1.0;
   config.rolloff        = 0.995;
   config.dac_bits 		  = 14;
+  config.ym2413_enabled = 1;
 
   /* system options */
   config.region_detect  = 0;

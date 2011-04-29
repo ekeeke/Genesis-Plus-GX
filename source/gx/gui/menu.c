@@ -321,20 +321,21 @@ static gui_item items_options[5] =
 };
 
 /* Audio options */
-static gui_item items_audio[12] =
+static gui_item items_audio[13] =
 {
-  {NULL,NULL,"High-Quality FM: ON",   "Enable/disable YM2612 resampling", 56,132,276,48},
-  {NULL,NULL,"FM Roll-off: 0.999",    "Adjust FIR low-pass filtering",    56,132,276,48},
-  {NULL,NULL,"FM Resolution: MAX",    "Adjust YM2612 DAC precision",      56,132,276,48},
-  {NULL,NULL,"FM Volume: 1.00",       "Adjust YM2612 output level",       56,132,276,48},
-  {NULL,NULL,"PSG Volume: 2.50",      "Adjust SN76489 output level",      56,132,276,48},
-  {NULL,NULL,"PSG Noise Boost: OFF",  "Boost SN76489 Noise Channel",      56,132,276,48},
-  {NULL,NULL,"Filtering: 3-BAND EQ",  "Setup Audio filtering",            56,132,276,48},
-  {NULL,NULL,"Low Gain: 1.00",        "Adjust EQ Low Band Gain",          56,132,276,48},
-  {NULL,NULL,"Mid Gain: 1.00",        "Adjust EQ Mid Band Gain",          56,132,276,48},
-  {NULL,NULL,"High Gain: 1.00",       "Adjust EQ High BandGain",          56,132,276,48},
-  {NULL,NULL,"Low Freq: 200 Hz",      "Adjust EQ Lowest Frequency",       56,132,276,48},
-  {NULL,NULL,"High Freq: 20000 Hz",   "Adjust EQ Highest Frequency",      56,132,276,48}
+  {NULL,NULL,"Master System FM: ON",  "Enable/disable YM2413 chip",               56,132,276,48},
+  {NULL,NULL,"High-Quality FM: ON",   "Enable/disable YM2612/YM2413 resampling",  56,132,276,48},
+  {NULL,NULL,"FM Roll-off: 0.999",    "Adjust FIR low-pass filtering",            56,132,276,48},
+  {NULL,NULL,"FM Resolution: MAX",    "Adjust YM2612 DAC precision",              56,132,276,48},
+  {NULL,NULL,"FM Volume: 1.00",       "Adjust YM2612/YM2413 output level",        56,132,276,48},
+  {NULL,NULL,"PSG Volume: 2.50",      "Adjust SN76489 output level",              56,132,276,48},
+  {NULL,NULL,"PSG Noise Boost: OFF",  "Boost SN76489 Noise Channel",              56,132,276,48},
+  {NULL,NULL,"Filtering: 3-BAND EQ",  "Setup Audio filtering",                    56,132,276,48},
+  {NULL,NULL,"Low Gain: 1.00",        "Adjust EQ Low Band Gain",                  56,132,276,48},
+  {NULL,NULL,"Mid Gain: 1.00",        "Adjust EQ Mid Band Gain",                  56,132,276,48},
+  {NULL,NULL,"High Gain: 1.00",       "Adjust EQ High BandGain",                  56,132,276,48},
+  {NULL,NULL,"Low Freq: 200 Hz",      "Adjust EQ Lowest Frequency",               56,132,276,48},
+  {NULL,NULL,"High Freq: 20000 Hz",   "Adjust EQ Highest Frequency",              56,132,276,48}
 };
 
 /* System options */
@@ -584,7 +585,7 @@ static gui_menu menu_audio =
 {
   "Audio Settings",
   0,0,
-  8,4,6,0,
+  9,4,6,0,
   items_audio,
   buttons_list,
   bg_list,
@@ -755,19 +756,19 @@ static int update_snd_items(void)
   
   if (config.hq_fm)
   {
-    sprintf (items[0].text, "High-Quality FM: ON");
-    sprintf (items[1].text, "FM Roll-off: %1.2f %%",rolloff);
-    strcpy  (items[1].comment, "Adjust FIR low-pass filtering");
-    offset = 2;
+    sprintf (items[1].text, "High-Quality FM: ON");
+    sprintf (items[2].text, "FM Roll-off: %1.2f %%",rolloff);
+    strcpy  (items[2].comment, "Adjust FIR low-pass filtering");
+    offset = 3;
   }
   else
   {
-    sprintf (items[0].text, "High-Quality FM: OFF");
-    offset = 1;
+    sprintf (items[1].text, "High-Quality FM: OFF");
+    offset = 2;
   }
  
   strcpy(items[offset].comment, "Adjust YM2612 DAC precision");
-  strcpy(items[offset+1].comment, "Adjust YM2612 output level");
+  strcpy(items[offset+1].comment, "Adjust YM2612/YM2413 output level");
   strcpy(items[offset+2].comment, "Adjust SN76489 output level");
   strcpy(items[offset+3].comment, "Boost SN76489 Noise Channel");
   strcpy(items[offset+4].comment, "Configure Audio filtering");
@@ -836,10 +837,10 @@ static void soundmenu ()
     /* special case */
     if (config.hq_fm)
     {
-      if (ret == 1)
+      if (ret == 2)
       {
         GUI_OptionBox(m,0,"FM Roll-off",(void *)&rolloff,0.1,95.0,99.9,0);
-        sprintf (items[1].text, "FM Roll-off: %1.2f %%",rolloff);
+        sprintf (items[2].text, "FM Roll-off: %1.2f %%",rolloff);
         config.rolloff = rolloff / 100.0;
         ret = 255;
         if (cart.romsize) 
@@ -860,7 +861,7 @@ static void soundmenu ()
           }
         }
       }
-      else if (ret > 1)
+      else if (ret > 2)
       {
         ret--;
       }
@@ -869,6 +870,11 @@ static void soundmenu ()
     switch (ret)
     {
       case 0:
+        config.ym2413_enabled ^= 1;
+        sprintf (items[0].text, "Master System FM: %s", config.ym2413_enabled ? "ON":"OFF");
+        break;
+
+      case 1:
         config.hq_fm ^= 1;
         offset = update_snd_items();
 
@@ -891,7 +897,7 @@ static void soundmenu ()
         }
         break;
 
-      case 1:
+      case 2:
         config.dac_bits++;
         if (config.dac_bits > 14)
           config.dac_bits = 7;
@@ -919,25 +925,25 @@ static void soundmenu ()
         }
         break;
 
-      case 2:
+      case 3:
         GUI_OptionBox(m,0,"FM Volume",(void *)&fm_volume,0.01,0.0,5.0,0);
         sprintf (items[offset+1].text, "FM Volume: %1.2f", fm_volume);
         config.fm_preamp = (int)(fm_volume * 100.0 + 0.5);
         break;
 
-      case 3:
+      case 4:
         GUI_OptionBox(m,0,"PSG Volume",(void *)&psg_volume,0.01,0.0,5.0,0);
         sprintf (items[offset+2].text, "PSG Volume: %1.2f", psg_volume);
         config.psg_preamp = (int)(psg_volume * 100.0 + 0.5);
         break;
 
-      case 4:
+      case 5:
         config.psgBoostNoise ^= 1;
         sprintf (items[offset+3].text, "PSG Noise Boost: %s", config.psgBoostNoise ? "ON":"OFF");
         SN76489_BoostNoise(config.psgBoostNoise);
         break;
 
-      case 5:
+      case 6:
         config.filter = (config.filter + 1) % 3;
         if (config.filter == 2)
         {
@@ -967,7 +973,7 @@ static void soundmenu ()
         }
         break;
 
-      case 6:
+      case 7:
         if (config.filter == 1)
         {
           GUI_OptionBox(m,0,"Low-Pass Rate",(void *)&config.lp_range,1,0,100,1);
@@ -982,27 +988,27 @@ static void soundmenu ()
         }
         break;
 
-      case 7:
+      case 8:
         GUI_OptionBox(m,0,"Middle Gain",(void *)&mg,0.01,0.0,2.0,0);
         sprintf (items[offset+6].text, "Middle Gain: %1.2f", mg);
         config.mg = (int)(mg * 100.0);
         audio_set_equalizer();
         break;
 
-      case 8:
+      case 9:
         GUI_OptionBox(m,0,"High Gain",(void *)&hg,0.01,0.0,2.0,0);
         sprintf (items[offset+7].text, "High Gain: %1.2f", hg);
         config.hg = (int)(hg * 100.0);
         audio_set_equalizer();
         break;
 
-      case 9:
+      case 10:
         GUI_OptionBox(m,0,"Low Frequency",(void *)&config.low_freq,10,0,config.high_freq,1);
         sprintf (items[offset+8].text, "Low Freq: %d", config.low_freq);
         audio_set_equalizer();
         break;
 
-      case 10:
+      case 11:
         GUI_OptionBox(m,0,"High Frequency",(void *)&config.high_freq,100,config.low_freq,30000,1);
         sprintf (items[offset+9].text, "High Freq: %d", config.high_freq);
         audio_set_equalizer();
