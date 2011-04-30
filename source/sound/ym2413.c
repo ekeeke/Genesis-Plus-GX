@@ -1733,3 +1733,28 @@ void YM2413Update(long int *buffer, int length)
     advance();
   }
 }
+
+unsigned char *YM2413GetContextPtr(void)
+{
+  return (unsigned char *)&ym2413;
+}
+
+unsigned int YM2413GetContextSize(void)
+{
+  return sizeof(YM2413);
+}
+
+void YM2413Restore(unsigned char *buffer)
+{
+  /* save current timings */
+  double clock = ym2413.clock;
+  int rate = ym2413.rate;
+
+  /* restore internal state */
+  memcpy(&ym2413, buffer, sizeof(YM2413));
+
+  /* keep current timings */
+  ym2413.clock = clock;
+  ym2413.rate  = rate;
+  OPLL_initalize();
+}

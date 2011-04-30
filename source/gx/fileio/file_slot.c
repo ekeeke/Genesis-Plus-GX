@@ -356,10 +356,10 @@ int slot_load(int slot, int device)
   if (slot > 0)
   {
     /* Load state */
-    if (!state_load(&savebuffer[offset]))
+    if (state_load(&savebuffer[offset]) <= 0)
     {
       free(savebuffer);
-      GUI_WaitPrompt("Error","Unable to load state !");
+      GUI_WaitPrompt("Error","Invalid state file !");
       return 0;
     }
   }

@@ -24,7 +24,7 @@ extern unsigned int YM2612Read(void);
 extern unsigned char *YM2612GetContextPtr(void);
 extern unsigned int YM2612GetContextSize(void);
 extern void YM2612Restore(unsigned char *buffer);
-extern int YM2612LoadContext(unsigned char *state, char *version);
+extern int YM2612LoadContext(unsigned char *state);
 extern int YM2612SaveContext(unsigned char *state);
 
 #endif /* _YM2612_ */

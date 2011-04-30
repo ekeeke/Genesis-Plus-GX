@@ -167,6 +167,7 @@ void vdp_reset(void)
   addr_latch      = 0;
   code            = 0;
   pending         = 0;
+  border          = 0;
   hint_pending    = 0;
   vint_pending    = 0;
   m68k_irq_state  = 0;
@@ -234,6 +235,14 @@ void vdp_reset(void)
   parse_satb = parse_satb_m4;
   update_bg_pattern_cache = update_bg_pattern_cache_m4;
 
+  /* reset palette */
+  int i;
+  color_update(0x40, 0x00);
+  for(i = 0; i < 0x20; i ++)
+  {
+    color_update(i, 0x00);
+  }
+
   /* default bus access mode */
   vdp_68k_data_w = vdp_68k_data_w_m4;
   vdp_z80_data_w = vdp_z80_data_w_m4;
@@ -276,7 +285,7 @@ int vdp_context_save(uint8 *state)
   return bufferptr;
 }
 
-int vdp_context_load(uint8 *state, char *version)
+int vdp_context_load(uint8 *state)
 {
   int i, bufferptr = 0;
   uint8 temp_reg[0x20];
@@ -291,35 +300,13 @@ int vdp_context_load(uint8 *state, char *version)
   load_param(&code, sizeof(code));
   load_param(&pending, sizeof(pending));
   load_param(&status, sizeof(status));
-
-  /* different size parameter starting from 1.5.0 */
-  if ((version[11] > 0x31) || (version[13] > 0x34))
-  {
-    load_param(&dmafill, sizeof(dmafill));
-  }
-  else
-  {
-    load_param(&dmafill, sizeof(uint8));
-  }
-
+  load_param(&dmafill, sizeof(dmafill));
   load_param(&hint_pending, sizeof(hint_pending));
   load_param(&vint_pending, sizeof(vint_pending));
   load_param(&m68k_irq_state, sizeof(m68k_irq_state));
-
-  /* extended state (1.4.1 and above) */
-  if ((version[11] > 0x31) || (version[13] > 0x34) || (version[15] > 0x30))
-  {
-    load_param(&dma_length, sizeof(dma_length));
-    load_param(&dma_type, sizeof(dma_type));
-
-    if ((version[11] == 0x31) && (version[13] == 0x34) && (version[15] == 0x31)) /* 1.4.1 only */
-    {
-      uint16 temp;
-      load_param(&temp, sizeof(temp));
-    }
-
-    load_param(&cached_write, sizeof(cached_write));
-  }
+  load_param(&dma_length, sizeof(dma_length));
+  load_param(&dma_type, sizeof(dma_type));
+  load_param(&cached_write, sizeof(cached_write));
 
   /* restore VDP registers */
   for (i=0;i<0x20;i++) 
@@ -515,6 +502,7 @@ void vdp_dma_update(unsigned int cycles)
 
 void vdp_68k_ctrl_w(unsigned int data)
 {
+  /* Check pending flag */
   if (pending == 0)
   {
     /* A single long word write instruction could have started DMA with the first word */
@@ -531,6 +519,7 @@ void vdp_68k_ctrl_w(unsigned int data)
       }
     }
 
+    /* Check CD0-CD1 bits */
     if ((data & 0xC000) == 0x8000)
     {
       /* VDP register write */
@@ -558,9 +547,10 @@ void vdp_68k_ctrl_w(unsigned int data)
     addr = addr_latch | (addr & 0x3FFF);
     code = ((code & 0x03) | ((data >> 2) & 0x3C));
 
-    /* Detect DMA operation */
+    /* Detect DMA operation (CD5 bit set) */
     if ((code & 0x20) && (reg[1] & 0x10))
     {
+      /* DMA type */
       switch (reg[23] >> 6)
       {
         case 2:
@@ -1622,7 +1612,7 @@ static void vdp_bus_w(unsigned int data)
       break;
     }
 
-#ifdef LOGVDP
+#ifdef LOGERROR
     default:
     {
       error("[%d(%d)][%d(%d)] Unknown (%d) 0x%x write -> 0x%x (%x)\n", v_counter, mcycles_68k/MCYCLES_PER_LINE, mcycles_68k, mcycles_68k%MCYCLES_PER_LINE, code, addr, data, m68k_get_reg (NULL, M68K_REG_PC));
@@ -1821,7 +1811,7 @@ static unsigned int vdp_68k_data_r_m5(void)
     default:
     {
       /* Invalid code value */
-#ifdef LOGVDP
+#ifdef LOGERROR
       error("[%d(%d)][%d(%d)] Invalid (%d) 0x%x read (%x)\n", v_counter, mcycles_68k/MCYCLES_PER_LINE, mcycles_68k, mcycles_68k%MCYCLES_PER_LINE, code, addr, m68k_get_reg (NULL, M68K_REG_PC));
 #endif
       break;

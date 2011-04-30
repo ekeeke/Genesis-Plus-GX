@@ -186,9 +186,59 @@ void sound_reset(void)
   psg_cycles_count = 0;
 }
 
+void sound_restore()
+{
+  int size;
+  u8 *ptr, *temp;
+
+  /* save YM context */
+  if (system_hw != SYSTEM_PBC)
+  {
+    size = YM2612GetContextSize();
+    ptr = YM2612GetContextPtr();
+  }
+  else
+  {
+    size = YM2413GetContextSize();
+    ptr = YM2413GetContextPtr();
+  }
+  temp = malloc(size);
+  if (temp)
+  {
+    memcpy(temp, ptr, size);
+  }
+
+  /* reinitialize sound chips */
+  sound_init();
+
+  /* restore YM context */
+  if (temp)
+  {
+    if (system_hw != SYSTEM_PBC)
+    {
+      YM2612Restore(temp);
+    }
+    else
+    {
+      YM2413Restore(temp);
+    }
+    free(temp);
+  }
+}
+
 int sound_context_save(uint8 *state)
 {
-  int bufferptr = YM2612SaveContext(state);
+  int bufferptr = 0;
+  
+  if (system_hw != SYSTEM_PBC)
+  {
+    bufferptr = YM2612SaveContext(state);
+  }
+  else
+  {
+    save_param(YM2413GetContextPtr(),YM2413GetContextSize());
+  }
+
   save_param(SN76489_GetContextPtr(),SN76489_GetContextSize());
   save_param(&fm_cycles_count,sizeof(fm_cycles_count));
   save_param(&psg_cycles_count,sizeof(psg_cycles_count));
@@ -198,16 +248,22 @@ int sound_context_save(uint8 *state)
 
 int sound_context_load(uint8 *state, char *version)
 {
-  int bufferptr = YM2612LoadContext(state, version);
+  int bufferptr = 0;
+
+  if ((system_hw != SYSTEM_PBC) || (version[15] == 0x30))
+  {
+    bufferptr = YM2612LoadContext(state);
+  }
+  else
+  {
+    load_param(YM2413GetContextPtr(),YM2413GetContextSize());
+  }
+
   load_param(SN76489_GetContextPtr(),SN76489_GetContextSize());
 
-  /* extended state (from 1.4.1 and above) */
-  if ((version[11] > 0x31) || (version[13] > 0x34) || (version[15] > 0x30))
-  {
-    load_param(&fm_cycles_count,sizeof(fm_cycles_count));
-    load_param(&psg_cycles_count,sizeof(psg_cycles_count));
-    fm_cycles_count = psg_cycles_count;
-  }
+  load_param(&fm_cycles_count,sizeof(fm_cycles_count));
+  load_param(&psg_cycles_count,sizeof(psg_cycles_count));
+  fm_cycles_count = psg_cycles_count;
 
   return bufferptr;
 }

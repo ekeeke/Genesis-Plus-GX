@@ -1367,7 +1367,8 @@ void gx_video_Start(void)
     tvmodes[2]->xfbMode = VI_XFBMODE_DF;
   }
 
-  /* force video update */
+  /* force viewport update */
+  bitmap.viewport.x = (config.overscan & 2) * 7;
   bitmap.viewport.changed = 3;
 
   /* NTSC filter */

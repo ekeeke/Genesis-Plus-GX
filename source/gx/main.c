@@ -177,29 +177,18 @@ static void run_emulation(void)
       /* VSYNC "original" mode */
       if (!config.render && (gc_pal == vdp_pal))
       {
-        u8 *temp = memalign(32,YM2612GetContextSize());
-        if (temp)
+        /* framerate has changed, reinitialize audio timings */
+        if (vdp_pal)
         {
-          /* save YM2612 context */
-          memcpy(temp, YM2612GetContextPtr(), YM2612GetContextSize());
-
-          /* framerate has changed, reinitialize audio timings */
-          if (vdp_pal)
-          {
-            audio_init(SAMPLERATE_48KHZ, interlaced ? 50.00 : (1000000.0/19968.0));
-          }
-          else
-          {
-            audio_init(SAMPLERATE_48KHZ, interlaced ? 59.94 : (1000000.0/16715.0));
-          }
-
-          /* reinitialize sound chip emulation */
-          sound_init();
-
-          /* restore YM2612 context */
-          YM2612Restore(temp);
-          free(temp);
+          audio_init(SAMPLERATE_48KHZ, interlaced ? 50.00 : (1000000.0/19968.0));
         }
+        else
+        {
+          audio_init(SAMPLERATE_48KHZ, interlaced ? 59.94 : (1000000.0/16715.0));
+        }
+
+        /* reinitialize sound chips */
+        sound_restore();
       }
 
       /* clear flag */

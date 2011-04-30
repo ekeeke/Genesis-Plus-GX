@@ -817,7 +817,7 @@ static int update_snd_items(void)
 static void soundmenu ()
 {
   int ret, quit = 0;
-  u8 *temp;
+  int reinit = 0;
   gui_menu *m = &menu_audio;
   gui_item *items = m->items;
   float fm_volume = (float)config.fm_preamp/100.0;
@@ -826,7 +826,9 @@ static void soundmenu ()
   float lg = (float)config.lg/100.0;
   float mg = (float)config.mg/100.0;
   float hg = (float)config.hg/100.0;
+
   int offset = update_snd_items();
+
   GUI_InitMenu(m);
   GUI_SlideMenuTitle(m,strlen("Audio "));
 
@@ -842,24 +844,8 @@ static void soundmenu ()
         GUI_OptionBox(m,0,"FM Roll-off",(void *)&rolloff,0.1,95.0,99.9,0);
         sprintf (items[2].text, "FM Roll-off: %1.2f %%",rolloff);
         config.rolloff = rolloff / 100.0;
+        reinit = 1;
         ret = 255;
-        if (cart.romsize) 
-        {
-          temp = memalign(32,YM2612GetContextSize());
-          if (temp)
-          {
-            /* save YM2612 context */
-            memcpy(temp, YM2612GetContextPtr(), YM2612GetContextSize());
-
-            /* reinitialize audio timings */
-            audio_init(snd.sample_rate,snd.frame_rate);
-            sound_init();
-
-            /* restore YM2612 context */
-            YM2612Restore(temp);
-            free(temp);
-          }
-        }
       }
       else if (ret > 2)
       {
@@ -876,53 +862,16 @@ static void soundmenu ()
 
       case 1:
         config.hq_fm ^= 1;
+        reinit = 1;
         offset = update_snd_items();
-
-        if (cart.romsize) 
-        {
-          temp = memalign(32,YM2612GetContextSize());
-          if (temp)
-          {
-            /* save YM2612 context */
-            memcpy(temp, YM2612GetContextPtr(), YM2612GetContextSize());
-
-            /* reinitialize audio timings */
-            audio_init(snd.sample_rate,snd.frame_rate);
-            sound_init();
-
-            /* restore YM2612 context */
-            YM2612Restore(temp);
-            free(temp);
-          }
-        }
         break;
 
       case 2:
         config.dac_bits++;
-        if (config.dac_bits > 14)
-          config.dac_bits = 7;
-        if (config.dac_bits < 14)
-          sprintf (items[offset].text, "FM Resolution: %d bits", config.dac_bits);
-        else 
-          sprintf (items[offset].text, "FM Resolution: MAX");
-
-        if (cart.romsize) 
-        {
-          temp = memalign(32,YM2612GetContextSize());
-          if (temp)
-          {
-            /* save YM2612 context */
-            memcpy(temp, YM2612GetContextPtr(), YM2612GetContextSize());
-
-            /* reinitialize audio timings */
-            audio_init(snd.sample_rate,snd.frame_rate);
-            sound_init();
-
-            /* restore YM2612 context */
-            YM2612Restore(temp);
-            free(temp);
-          }
-        }
+        if (config.dac_bits > 14) config.dac_bits = 7;
+        else sprintf (items[offset].text, "FM Resolution: MAX");
+        if (config.dac_bits < 14) sprintf (items[offset].text, "FM Resolution: %d bits", config.dac_bits);
+        reinit = 1;
         break;
 
       case 3:
@@ -968,7 +917,7 @@ static void soundmenu ()
 
         while ((m->offset + 4) > m->max_items)
         {
-          m->offset --;
+          m->offset--;
           m->selected++;
         }
         break;
@@ -1020,6 +969,12 @@ static void soundmenu ()
     }
   }
 
+  if (reinit && cart.romsize) 
+  {
+    audio_init(snd.sample_rate,snd.frame_rate);
+    sound_restore();
+  }
+
   GUI_DeleteMenu(m);
 }
 
@@ -1039,7 +994,6 @@ static const uint16 vc_table[4][2] =
 static void systemmenu ()
 {
   int ret, quit = 0;
-  u8 *temp;
   gui_menu *m = &menu_system;
   gui_item *items = m->items;
 
@@ -1102,13 +1056,6 @@ static void systemmenu ()
           /* reset console region */
           region_autodetect();
 
-          /* save YM2612 context */
-          temp = memalign(32,YM2612GetContextSize());
-          if (temp)
-          {
-            memcpy(temp, YM2612GetContextPtr(), YM2612GetContextSize());
-          }
-
           /* reinitialize audio timings */
           if (vdp_pal)
           {
@@ -1120,20 +1067,9 @@ static void systemmenu ()
           }
 
           /* reinitialize system emulation */
-          system_init();
-
-          /* restore YM2612 context */
-          if (temp)
-          {
-            YM2612Restore(temp);
-            free(temp);
-          }
-
-          /* restore SRAM */
-          if (config.s_auto & 1)
-          {
-            slot_autoload(0,config.s_device);
-          }
+          vdp_init();
+          io_init();
+          sound_restore();
 
           /* reinitialize VC max value */
           vc_max = vc_table[(reg[1] >> 2) & 3][vdp_pal];
@@ -1257,7 +1193,7 @@ static void videomenu ()
 {
   u16 state[2];
   int ret, quit = 0;
-  u8 *temp;
+  int reinit = 0;
   gui_menu *m = &menu_video;
   gui_item *items = m->items;
 
@@ -1346,85 +1282,26 @@ static void videomenu ()
           }
         }
 
-        if (!vdp_pal && cart.romsize)
-        {
-          /* save YM2612 context */
-          temp = memalign(32,YM2612GetContextSize());
-          if (temp)
-          {
-            memcpy(temp, YM2612GetContextPtr(), YM2612GetContextSize());
-          }
-
-          /* reinitialize audio timings */
-          if (vdp_pal)
-          {
-            audio_init(snd.sample_rate, (config.tv_mode == 0) ? 50.0 : ((config.render || interlaced) ? 50.00 : (1000000.0/19968.0)));
-          }
-          else
-          {
-            audio_init(snd.sample_rate, (config.tv_mode == 1) ? 60.0 : ((config.render || interlaced) ? 59.94 : (1000000.0/16715.0)));
-          }
-
-          /* reinitialize sound chip emulation */
-          sound_init();
-
-          /* restore YM2612 context */
-          if (temp)
-          {
-            YM2612Restore(temp);
-            free(temp);
-          }
-        }
-
         if (config.render == 1)
           sprintf (items[0].text,"Display: INTERLACED");
         else if (config.render == 2)
           sprintf (items[0].text, "Display: PROGRESSIVE");
         else
           sprintf (items[0].text, "Display: ORIGINAL");
+        reinit = 1;
         break;
 
       case 1: /*** tv mode ***/
         if (config.render != 2)
         {
           config.tv_mode = (config.tv_mode + 1) % 3;
-
-          if (!vdp_pal && cart.romsize)
-          {
-            /* save YM2612 context */
-            temp = memalign(32,YM2612GetContextSize());
-            if (temp)
-            {
-              memcpy(temp, YM2612GetContextPtr(), YM2612GetContextSize());
-            }
-
-            /* reinitialize audio timings */
-            if (vdp_pal)
-            {
-              audio_init(snd.sample_rate, (config.tv_mode == 0) ? 50.0 : ((config.render || interlaced) ? 50.00 : (1000000.0/19968.0)));
-            }
-            else
-            {
-              audio_init(snd.sample_rate, (config.tv_mode == 1) ? 60.0 : ((config.render || interlaced) ? 59.94 : (1000000.0/16715.0)));
-            }
-
-            /* reinitialize sound chip emulation */
-            sound_init();
-
-            /* restore YM2612 context */
-            if (temp)
-            {
-              YM2612Restore(temp);
-              free(temp);
-            }
-          }
-
           if (config.tv_mode == 0)
             sprintf (items[1].text, "TV Mode: 60HZ");
           else if (config.tv_mode == 1)
             sprintf (items[1].text, "TV Mode: 50HZ");
           else
             sprintf (items[1].text, "TV Mode: 50/60HZ");
+          reinit = 1;
         }
         else
         {
@@ -1495,9 +1372,6 @@ static void videomenu ()
           sprintf (items[VI_OFFSET+1].text, "Borders: V ONLY");
         else
           sprintf (items[VI_OFFSET+1].text, "Borders: NONE");
-
-        /* update viewport */
-        bitmap.viewport.x = (config.overscan & 2) * 7;
         break;
 
       case VI_OFFSET+2: /*** aspect ratio ***/
@@ -1589,6 +1463,22 @@ static void videomenu ()
         quit = 1;
         break;
     }
+  }
+
+  if (cart.romsize && reinit)
+  {
+    /* reinitialize audio timings */
+    if (vdp_pal)
+    {
+      audio_init(snd.sample_rate, (config.tv_mode == 0) ? 50.0 : ((config.render || interlaced) ? 50.00 : (1000000.0/19968.0)));
+    }
+    else
+    {
+      audio_init(snd.sample_rate, (config.tv_mode == 1) ? 60.0 : ((config.render || interlaced) ? 59.94 : (1000000.0/16715.0)));
+    }
+
+    /* reinitialize sound chips */
+    sound_restore();
   }
 
   GUI_DeleteMenu(m);

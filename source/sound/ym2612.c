@@ -2208,28 +2208,24 @@ void YM2612Restore(unsigned char *buffer)
   init_tables();
 }
 
-int YM2612LoadContext(unsigned char *state, char *version)
+int YM2612LoadContext(unsigned char *state)
 {
   int bufferptr = sizeof(YM2612);
 
   /* restore YM2612 context */
   YM2612Restore(state);
 
-  /* extended state (from 1.5.0 and above) */
-  if ((version[11] > 0x31) || (version[13] > 0x34))
-  {
-    int c,s;
-    uint8 index;
+  int c,s;
+  uint8 index;
 
-    /* restore DT table address pointer for each channel slots */
-    for( c = 0 ; c < 6 ; c++ )
+  /* restore DT table address pointer for each channel slots */
+  for( c = 0 ; c < 6 ; c++ )
+  {
+    for(s = 0 ; s < 4 ; s++ )
     {
-      for(s = 0 ; s < 4 ; s++ )
-      {
-        load_param(&index,sizeof(index));
-        bufferptr += sizeof(index);
-        ym2612.CH[c].SLOT[s].DT = ym2612.OPN.ST.dt_tab[index&7];
-      }
+      load_param(&index,sizeof(index));
+      bufferptr += sizeof(index);
+      ym2612.CH[c].SLOT[s].DT = ym2612.OPN.ST.dt_tab[index&7];
     }
   }
 

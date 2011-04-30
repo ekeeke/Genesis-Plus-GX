@@ -47,8 +47,8 @@ int state_load(unsigned char *buffer)
     return -1;
   }
 
-  /* version check (1.4.0 and above) */
-  if ((version[11] < 0x31) || ((version[11] == 0x31) && (version[13] < 0x34)))
+  /* version check (1.5.0 and above) */
+  if ((version[11] < 0x31) || ((version[11] == 0x31) && (version[13] < 0x35)))
   {
     free(state);
     return -1;
@@ -84,13 +84,9 @@ int state_load(unsigned char *buffer)
     }
   }
 
-  /* 1.4.1 and above */
-  if ((version[11] > 0x31) || (version[13] > 0x34) || (version[15] > 0x30))
-  {
-    /* extended state */
-    load_param(&mcycles_68k, sizeof(mcycles_68k));
-    load_param(&mcycles_z80, sizeof(mcycles_z80));
-  }
+  /* extended state */
+  load_param(&mcycles_68k, sizeof(mcycles_68k));
+  load_param(&mcycles_z80, sizeof(mcycles_z80));
 
   // IO
   if (system_hw == SYSTEM_PBC)
@@ -104,7 +100,7 @@ int state_load(unsigned char *buffer)
   }
 
   // VDP
-  bufferptr += vdp_context_load(&state[bufferptr], version);
+  bufferptr += vdp_context_load(&state[bufferptr]);
 
   // SOUND 
   bufferptr += sound_context_load(&state[bufferptr], version);
@@ -142,11 +138,11 @@ int state_load(unsigned char *buffer)
   // Cartridge HW
   if (system_hw == SYSTEM_PBC)
   {
-    bufferptr += sms_cart_context_load(&state[bufferptr], version);
+    bufferptr += sms_cart_context_load(&state[bufferptr]);
   }
   else
-  {
-    bufferptr += md_cart_context_load(&state[bufferptr], version);
+  {  
+    bufferptr += md_cart_context_load(&state[bufferptr]);
   }
 
   free(state);

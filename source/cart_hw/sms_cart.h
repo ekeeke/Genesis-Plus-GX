@@ -31,7 +31,7 @@ extern void sms_cart_reset(void);
 extern void sms_cart_switch(int enabled);
 extern int sms_cart_region_detect(void);
 extern int sms_cart_context_save(uint8 *state);
-extern int sms_cart_context_load(uint8 *state, char *version);
+extern int sms_cart_context_load(uint8 *state);
 
 #endif
 

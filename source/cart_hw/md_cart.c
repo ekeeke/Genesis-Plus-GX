@@ -732,43 +732,39 @@ int md_cart_context_save(uint8 *state)
   return bufferptr;
 }
 
-int md_cart_context_load(uint8 *state, char *version)
+int md_cart_context_load(uint8 *state)
 {
   int i;
   int bufferptr = 0;
   uint8 offset;
 
-  /* extended state (from 1.4.1 and above) */
-  if ((version[11] > 0x31) || (version[13] > 0x34) || (version[15] > 0x30))
+  /* cartridge mapping */
+  for (i=0; i<0x40; i++)
   {
-    /* cartridge mapping */
-    for (i=0; i<0x40; i++)
+    /* get offset */
+    offset = state[bufferptr++];
+
+    if (offset == 0xff)
     {
-      /* get offset */
-      offset = state[bufferptr++];
-
-      if (offset == 0xff)
-      {
-        /* SRAM */
-        m68k_memory_map[i].base = sram.sram;
-      }
-      else
-      {
-        /* ROM */
-        m68k_memory_map[i].base = cart.rom + (offset << 16);
-      }
+      /* SRAM */
+      m68k_memory_map[i].base = sram.sram;
     }
-
-    /* hardware registers */
-    load_param(cart.hw.regs, sizeof(cart.hw.regs));
-
-    /* SVP */
-    if (svp)
+    else
     {
-      load_param(svp->iram_rom, 0x800);
-      load_param(svp->dram,sizeof(svp->dram));
-      load_param(&svp->ssp1601,sizeof(ssp1601_t));
+      /* ROM */
+      m68k_memory_map[i].base = cart.rom + (offset << 16);
     }
+  }
+
+  /* hardware registers */
+  load_param(cart.hw.regs, sizeof(cart.hw.regs));
+
+  /* SVP */
+  if (svp)
+  {
+    load_param(svp->iram_rom, 0x800);
+    load_param(svp->dram,sizeof(svp->dram));
+    load_param(&svp->ssp1601,sizeof(ssp1601_t));
   }
 
   return bufferptr;
