@@ -189,7 +189,7 @@ void sound_reset(void)
 void sound_restore()
 {
   int size;
-  u8 *ptr, *temp;
+  uint8 *ptr, *temp;
 
   /* save YM context */
   if (system_hw != SYSTEM_PBC)
