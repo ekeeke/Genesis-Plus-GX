@@ -828,6 +828,7 @@ static void soundmenu ()
   float hg = (float)config.hg/100.0;
 
   int offset = update_snd_items();
+  sprintf (items[0].text, "Master System FM: %s", config.ym2413_enabled ? "ON":"OFF");
 
   GUI_InitMenu(m);
   GUI_SlideMenuTitle(m,strlen("Audio "));
