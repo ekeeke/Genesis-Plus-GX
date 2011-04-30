@@ -1723,8 +1723,8 @@ void YM2413Update(long int *buffer, int length)
       rhythm_calc(&ym2413.P_CH[0], (ym2413.noise_rng>>0)&1 );
     }
 
-    /* Melody (MO) & Rythm (RO) outputs mixing */
-    out = output[0] + (output[1] * 2);
+    /* Melody (MO) & Rythm (RO) outputs mixing & amplification */
+    out = (output[0] + (output[1] * 2)) * 2;
 
     /* Store to stereo sound buffer */
     *buffer++ = out;
