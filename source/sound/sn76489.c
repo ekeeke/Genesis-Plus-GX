@@ -94,33 +94,33 @@ void SN76489_Init(double PSGClockValue, int SamplingRate)
 
 void SN76489_Reset()
 {
-  SN76489_Context *chip = &SN76489;
   int i;
 
   for(i = 0; i <= 3; i++)
   {
     /* Initialise PSG state */
-    chip->Registers[2*i] = 1;         /* tone freq=1 */
-    chip->Registers[2*i+1] = 0xf;     /* vol=off */
+    SN76489.Registers[2*i] = 1;         /* tone freq=1 */
+    SN76489.Registers[2*i+1] = 0xf;     /* vol=off */
 
     /* Set counters to 0 */
-    chip->ToneFreqVals[i] = 0;
+    SN76489.ToneFreqVals[i] = 0;
 
     /* Set flip-flops to 1 */
-    chip->ToneFreqPos[i] = 1;
+    SN76489.ToneFreqPos[i] = 1;
 
     /* Clear channels output */
-    chip->Channels[i] = 0;
+    SN76489.Channels[i] = 0;
 
     /* Clear current amplitudes in delta buffer */
-    chip->chan_amp[i] = 0;
+    SN76489.chan_amp[i] = 0;
   }
 
-  chip->LatchedRegister=0;
+  SN76489.LatchedRegister=0;
 
   /* Initialise noise generator */
-  chip->NoiseShiftRegister=NoiseInitialState;
-  chip->NoiseFreq = 0x10;
+  SN76489.NoiseShiftRegister=NoiseInitialState;
+  SN76489.NoiseFreq = 0x10;
+  SN76489.BoostNoise = config.psgBoostNoise;
 
   /* Clear Blip delta buffer */
   if (blip) blip_clear(blip);
@@ -140,6 +140,7 @@ void SN76489_BoostNoise(int boost)
 
 void SN76489_SetContext(uint8 *data)
 {
+
   memcpy(&SN76489, data, sizeof(SN76489_Context));
 }
 
@@ -160,15 +161,13 @@ int SN76489_GetContextSize(void)
 
 void SN76489_Write(int data)
 {
-  SN76489_Context *chip = &SN76489;
-
   if (data & 0x80)
   {
     /* Latch byte  %1 cc t dddd */
-    chip->LatchedRegister = (data >> 4) & 0x07;
+    SN76489.LatchedRegister = (data >> 4) & 0x07;
   }
 
-  int LatchedRegister = chip->LatchedRegister;
+  int LatchedRegister = SN76489.LatchedRegister;
 
   switch (LatchedRegister)
   {
@@ -178,121 +177,121 @@ void SN76489_Write(int data)
       if (data & 0x80)
       {
         /* Data byte  %1 cc t dddd */
-        chip->Registers[LatchedRegister] = (chip->Registers[LatchedRegister] & 0x3f0) | (data & 0xf);
+        SN76489.Registers[LatchedRegister] = (SN76489.Registers[LatchedRegister] & 0x3f0) | (data & 0xf);
       }
       else
       {
         /* Data byte  %0 - dddddd */
-        chip->Registers[LatchedRegister] = (chip->Registers[LatchedRegister] & 0x00f) | ((data & 0x3f) << 4);
+        SN76489.Registers[LatchedRegister] = (SN76489.Registers[LatchedRegister] & 0x00f) | ((data & 0x3f) << 4);
       }
       /* Zero frequency changed to 1 to avoid div/0 */
-      if (chip->Registers[LatchedRegister] == 0) chip->Registers[LatchedRegister] = 1;  
+      if (SN76489.Registers[LatchedRegister] == 0) SN76489.Registers[LatchedRegister] = 1;  
       break;
 
     case 1:
     case 3:
     case 5: /* Channel attenuation */
-      chip->Registers[LatchedRegister] = data & 0x0f;
-      chip->Channels[LatchedRegister>>1] = PSGVolumeValues[data&0x0f];
+      SN76489.Registers[LatchedRegister] = data & 0x0f;
+      SN76489.Channels[LatchedRegister>>1] = PSGVolumeValues[data&0x0f];
       break;
 
     case 6: /* Noise */
-      chip->Registers[6] = data & 0x0f;
-      chip->NoiseShiftRegister = NoiseInitialState;  /* reset shift register */
-      chip->NoiseFreq = 0x10 << (data&0x3); /* set noise signal generator frequency */
+      SN76489.Registers[6] = data & 0x0f;
+      SN76489.NoiseShiftRegister = NoiseInitialState;  /* reset shift register */
+      SN76489.NoiseFreq = 0x10 << (data&0x3); /* set noise signal generator frequency */
       break;
 
     case 7: /* Noise attenuation */
-      chip->Registers[7] = data&0x0f;
-      chip->Channels[3] = PSGVolumeValues[data&0x0f] << chip->BoostNoise;
+      SN76489.Registers[7] = data & 0x0f;
+      SN76489.Channels[3] = PSGVolumeValues[data&0x0f] << SN76489.BoostNoise;
       break;
   }
 }
 
 /* Updates tone amplitude in delta buffer. Call whenever amplitude might have changed. */
-static void UpdateToneAmplitude(SN76489_Context* chip, int i, int time)
+static void UpdateToneAmplitude(int i, int time)
 {
-  int delta = (chip->Channels[i] * chip->ToneFreqPos[i]) - chip->chan_amp[i];
+  int delta = (SN76489.Channels[i] * SN76489.ToneFreqPos[i]) - SN76489.chan_amp[i];
   if (delta != 0)
   {
-    chip->chan_amp[i] += delta;
+    SN76489.chan_amp[i] += delta;
     blip_add(blip, time, delta);
   }
 }
 
 /* Updates noise amplitude in delta buffer. Call whenever amplitude might have changed. */
-static void UpdateNoiseAmplitude(SN76489_Context* chip, int time)
+static void UpdateNoiseAmplitude(int time)
 {
-  int delta = (chip->Channels[3] * ( chip->NoiseShiftRegister & 0x1 )) - chip->chan_amp[3];
+  int delta = (SN76489.Channels[3] * ( SN76489.NoiseShiftRegister & 0x1 )) - SN76489.chan_amp[3];
   if (delta != 0)
   {
-    chip->chan_amp[3] += delta;
+    SN76489.chan_amp[3] += delta;
     blip_add(blip, time, delta);
   }
 }
 
 /* Runs tone channel for clock_length clocks */
-static void RunTone(SN76489_Context* chip, int i, int clock_length)
+static void RunTone(int i, int clock_length)
 
 {
   int time;
 
   /* Update in case a register changed etc. */
-  UpdateToneAmplitude(chip, i, 0);
+  UpdateToneAmplitude(i, 0);
 
   /* Time of next transition */
-  time = chip->ToneFreqVals[i];
+  time = SN76489.ToneFreqVals[i];
 
   /* Process any transitions that occur within clocks we're running */
   while (time < clock_length)
   {
-    if (chip->Registers[i*2]>PSG_CUTOFF) {
+    if (SN76489.Registers[i*2]>PSG_CUTOFF) {
       /* Flip the flip-flop */
-      chip->ToneFreqPos[i] = -chip->ToneFreqPos[i];
+      SN76489.ToneFreqPos[i] = -SN76489.ToneFreqPos[i];
     } else {
       /* stuck value */
-      chip->ToneFreqPos[i] = 1;
+      SN76489.ToneFreqPos[i] = 1;
     }
-    UpdateToneAmplitude(chip, i, time);
+    UpdateToneAmplitude(i, time);
 
     /* Advance to time of next transition */
-    time += chip->Registers[i*2];
+    time += SN76489.Registers[i*2];
   }
   
   /* Calculate new value for register, now that next transition is past number of clocks we're running */
-  chip->ToneFreqVals[i] = time - clock_length;
+  SN76489.ToneFreqVals[i] = time - clock_length;
 }
 
 /* Runs noise channel for clock_length clocks */
-static void RunNoise(SN76489_Context* chip, int clock_length)
+static void RunNoise(int clock_length)
 
 {
   int time;
 
   /* Noise channel: match to tone2 if in slave mode */
-  int NoiseFreq = chip->NoiseFreq;
+  int NoiseFreq = SN76489.NoiseFreq;
   if (NoiseFreq == 0x80)
   {
-    NoiseFreq = chip->Registers[2*2];
-    chip->ToneFreqVals[3] = chip->ToneFreqVals[2];
+    NoiseFreq = SN76489.Registers[2*2];
+    SN76489.ToneFreqVals[3] = SN76489.ToneFreqVals[2];
   }
 
   /* Update in case a register changed etc. */
-  UpdateNoiseAmplitude(chip, 0);
+  UpdateNoiseAmplitude(0);
 
   /* Time of next transition */
-  time = chip->ToneFreqVals[3];
+  time = SN76489.ToneFreqVals[3];
 
   /* Process any transitions that occur within clocks we're running */
   while ( time < clock_length )
   {
     /* Flip the flip-flop */
-    chip->ToneFreqPos[3] = -chip->ToneFreqPos[3];
-    if (chip->ToneFreqPos[3] == 1)
+    SN76489.ToneFreqPos[3] = -SN76489.ToneFreqPos[3];
+    if (SN76489.ToneFreqPos[3] == 1)
     {
       /* On the positive edge of the square wave (only once per cycle) */
-      int Feedback = chip->NoiseShiftRegister;
-      if ( chip->Registers[6] & 0x4 )
+      int Feedback = SN76489.NoiseShiftRegister;
+      if ( SN76489.Registers[6] & 0x4 )
       {
         /* White noise */
         /* Calculate parity of fed-back bits for feedback */
@@ -304,8 +303,8 @@ static void RunNoise(SN76489_Context* chip, int clock_length)
       else    /* Periodic noise */
         Feedback = Feedback & 1;
 
-      chip->NoiseShiftRegister = (chip->NoiseShiftRegister >> 1) | (Feedback << (SRW_SEGAVDP - 1));
-      UpdateNoiseAmplitude(chip, time);
+      SN76489.NoiseShiftRegister = (SN76489.NoiseShiftRegister >> 1) | (Feedback << (SRW_SEGAVDP - 1));
+      UpdateNoiseAmplitude(time);
     }
 
     /* Advance to time of next transition */
@@ -313,24 +312,22 @@ static void RunNoise(SN76489_Context* chip, int clock_length)
   }
 
   /* Calculate new value for register, now that next transition is past number of clocks we're running */
-  chip->ToneFreqVals[3] = time - clock_length;
+  SN76489.ToneFreqVals[3] = time - clock_length;
 }
 
 void SN76489_Update(INT16 *buffer, int length)
 {
   int i;
 
-  SN76489_Context *chip = &SN76489;
-
   /* Determine how many clocks we need to run until 'length' samples are available */
   int clock_length = blip_clocks_needed(blip, length);
 
   /* Run noise first, since it might use current value of third tone frequency counter */
-  RunNoise(chip, clock_length);
+  RunNoise(clock_length);
 
   /* Run tone channels */
   for( i = 0; i <= 2; ++i )
-    RunTone(chip, i, clock_length);
+    RunTone(i, clock_length);
 
   /* Read samples into output buffer */
   blip_end_frame(blip, clock_length);
