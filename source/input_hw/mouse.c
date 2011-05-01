@@ -97,7 +97,7 @@ unsigned char mouse_read()
   /* TL = busy status */
   if (mouse.Wait)
   {
-    /* wait before ACK, fix some buggy mouse routine (Shangai 2, Wack World,...) */
+    /* wait before ACK, fix some buggy mouse routine (Cannon Fodder, Shangai 2, Wack World,...) */
     mouse.Wait = 0;
 
     /* TL = !TR */
@@ -117,35 +117,25 @@ void mouse_write(unsigned char data, unsigned char mask)
   /* update bits set as output only */
   data = (mouse.State & ~mask) | (data & mask);
 
-  if (mouse.Counter == 0)
+  /* TH transition */
+  if ((mouse.State ^ data) & 0x40)
   {
-    /* wait for TH 1->0 transition */
-    if ((mouse.State & 0x40) && !(data & 0x40))
-    {
-      /* start acquisition */
-      mouse.Counter = 1;
-    }
+    /* start (TH=0) or stop (TH=1) acquisition */
+    mouse.Counter = 1 - ((data & 0x40) >> 6);
   }
-  else
+
+  /* TR transition */
+  if ((mouse.State ^ data) & 0x20)
   {
-    /* TR handshake */
-    if ((mouse.State ^ data) & 0x20)
+    /* acquisition in progress */
+    if ((mouse.Counter > 0) && (mouse.Counter < 10))
     {
       /* increment phase */
-      if (mouse.Counter < 10)
-      {
-        mouse.Counter++;
-      }
-
-      /* input latency */
-      mouse.Wait = 1;
+      mouse.Counter++;
     }
-  }
 
-  /* end of acquisition (TH=1) */
-  if (data & 0x40)
-  {
-    mouse.Counter = 0;
+    /* TL handshake latency */
+    mouse.Wait = 1;
   }
 
   /* update internal state */
