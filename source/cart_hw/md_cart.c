@@ -297,7 +297,7 @@ void md_cart_init(void)
     else
     {
       /* Static RAM (64k max.) - disabled on reset if ROM is mapped in same area */
-      if (cart.romsize < sram.start)
+      if (cart.romsize <= sram.start)
       {
         m68k_memory_map[sram.start >> 16].base    = sram.sram;
         m68k_memory_map[sram.start >> 16].read8   = NULL;
