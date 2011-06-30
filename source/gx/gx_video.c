@@ -615,11 +615,15 @@ static void gxDrawCrosshair(gx_texture *texture, int x, int y)
     /* reset GX rendering */
     gxResetRendering(1);
 
-    /* adjust coordinates */
+    /* adjust texture dimensions to XFB->VI scaling */
     int w = (texture->width * rmode->fbWidth) / (rmode->viWidth);
     int h = (texture->height * rmode->efbHeight) / (rmode->viHeight);
-    x = ((x * rmode->fbWidth) / bitmap.viewport.w) - w/2 - (rmode->fbWidth/2);
-    y = ((y * rmode->efbHeight) / bitmap.viewport.h) - h/2 - (rmode->efbHeight/2);
+	
+    /* adjust texture coordinates to EFB */
+	int fb_w = square[3] - square[9];
+	int fb_h = square[4] - square[10];
+    x = (((x + bitmap.viewport.x) * fb_w) / (bitmap.viewport.w + 2*bitmap.viewport.x)) - w/2 - (fb_w/2);
+    y = (((y + bitmap.viewport.y) * fb_h) / (bitmap.viewport.h + 2*bitmap.viewport.y)) - h/2 - (fb_h/2);
 
     /* Draw textured quad */
     GX_Begin(GX_QUADS, GX_VTXFMT0, 4);
