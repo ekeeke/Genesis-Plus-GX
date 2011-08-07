@@ -25,7 +25,7 @@
     * NTSC (60Hz) & PAL (50Hz) hardware emulation
     * highly accurate 68000 & Z80 CPU emulation
     * highly accurate VDP emulation (all rendering modes, HBLANK, DMA, FIFO, HV interrupts, undocumented registers, display mid-line changes…)
-    * cycle-accurate YM2612 emulation (FM synthesis is done at the original frequency, using FIR resampling)
+    * cycle-accurate YM2612 & YM2413 emulation (FM synthesis is done at the original frequency, using FIR resampling)
     * cycle-accurate chip synchronization (68000/Z80/YM2612/SN76489)
     * basic hardware latency emulation (VDP/68k, Z80/68k)
     * full overscan area (horizontal & vertical colored borders) emulation (optional)
