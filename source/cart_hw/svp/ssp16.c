@@ -461,7 +461,9 @@ static u32 pm_io(int reg, int write, u32 d)
 #ifdef LOG_SVP
     elprintf(EL_SVP, "PM%i (%c) set to %08x @ %04x", reg, write ? 'w' : 'r', rPMC.v, GET_PPC_OFFS());
 #endif
-    ssp->pmac_read[write ? reg + 6 : reg] = rPMC.v;
+
+    unsigned int *pmac = &ssp->pmac_read[reg];
+    pmac[6*write] = rPMC.v;
     ssp->emu_status &= ~SSP_PMC_SET;
 #ifdef LOG_SVP
     if ((rPMC.v & 0x7f) == 0x1c && (rPMC.v & 0x7fff0000) == 0) {
@@ -582,7 +584,8 @@ static u32 pm_io(int reg, int write, u32 d)
     }
 
     // PMC value corresponds to last PMR accessed (not sure).
-    rPMC.v = ssp->pmac_read[write ? reg + 6 : reg];
+    unsigned int *pmac = &ssp->pmac_read[reg];
+    rPMC.v = pmac[6*write];
 
     return d;
   }
@@ -1089,7 +1092,7 @@ void ssp1601_run(int cycles)
   SET_PC(rPC);
   g_cycles = cycles;
 
-  while (g_cycles > 0 && !(ssp->emu_status & SSP_WAIT_MASK))
+  do
   {
     int op;
     u32 tmpv;
@@ -1317,8 +1320,8 @@ void ssp1601_run(int cycles)
 #endif
         break;
     }
-    g_cycles--;
   }
+  while (--g_cycles > 0 && !(ssp->emu_status & SSP_WAIT_MASK));
 
   read_P(); // update P
   rPC = GET_PC();

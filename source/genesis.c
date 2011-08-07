@@ -2,22 +2,40 @@
  *  Genesis Plus
  *  Internal Hardware & Bus controllers
  *
+ *  Support for SG-1000, Mark-III, Master System, Game Gear & Mega Drive hardware
+ *
  *  Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003  Charles Mac Donald (original code)
- *  Eke-Eke (2007-2011), additional code & fixes for the GCN/Wii port
+ *  Copyright (C) 2007-2011  Eke-Eke (Genesis Plus GX)
  *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
+ *  Redistribution and use of this code or any derivative works are permitted
+ *  provided that the following conditions are met:
  *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
+ *   - Redistributions may not be sold, nor may they be used in a commercial
+ *     product or activity.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *   - Redistributions that are modified from the original source must include the
+ *     complete source code, including the source code for all components used by a
+ *     binary built from the modified sources. However, as a special exception, the
+ *     source code distributed need not include anything that is normally distributed
+ *     (in either source or binary form) with the major components (compiler, kernel,
+ *     and so on) of the operating system on which the executable runs, unless that
+ *     component itself accompanies the executable.
+ *
+ *   - Redistributions must reproduce the above copyright notice, this list of
+ *     conditions and the following disclaimer in the documentation and/or other
+ *     materials provided with the distribution.
+ *
+ *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ *  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ *  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ *  ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+ *  LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ *  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ *  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ *  CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ *  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ *  POSSIBILITY OF SUCH DAMAGE.
  *
  ****************************************************************************************/
 
@@ -43,17 +61,30 @@ void gen_init(void)
   int i;
 
   /* initialize 68k */
-  m68k_set_cpu_type(M68K_CPU_TYPE_68000);
   m68k_init();
 
   /* initialize Z80 */
   z80_init(0,z80_irq_callback);
 
-  /* initialize 68k memory map */
-  /* $000000-$7FFFFF is affected to cartridge area (see md_cart.c) */
-  for (i=0x80; i<0x100; i++)
+  /* initialize default 68k memory map */
+
+  /* $000000-$7FFFFF : cartridge area (md_cart.c) */
+
+  /* $800000-$DFFFFF : illegal access by default */
+  for (i=0x80; i<0xe0; i++)
   {
-    /* $800000-$FFFFFF is affected to WRAM (see VDP DMA) */
+    m68k_memory_map[i].base     = work_ram; /* for VDP DMA */
+    m68k_memory_map[i].read8    = m68k_lockup_r_8;
+    m68k_memory_map[i].read16   = m68k_lockup_r_16;
+    m68k_memory_map[i].write8   = m68k_lockup_w_8;
+    m68k_memory_map[i].write16  = m68k_lockup_w_16;
+    zbank_memory_map[i].read    = zbank_lockup_r;
+    zbank_memory_map[i].write   = zbank_lockup_w;
+  }
+
+  /* $E00000-$FFFFFF : Work RAM */
+  for (i=0xe0; i<0x100; i++)
+  {
     m68k_memory_map[i].base     = work_ram;
     m68k_memory_map[i].read8    = NULL;
     m68k_memory_map[i].read16   = NULL;
@@ -61,18 +92,6 @@ void gen_init(void)
     m68k_memory_map[i].write16  = NULL;
     zbank_memory_map[i].read    = NULL;
     zbank_memory_map[i].write   = NULL;
-  }
-
-  /* initialize 68k memory handlers */
-  for (i=0x80; i<0xe0; i++)
-  {
-    /* $800000-$DFFFFF : illegal area by default */
-    m68k_memory_map[i].read8    = m68k_lockup_r_8;
-    m68k_memory_map[i].read16   = m68k_lockup_r_16;
-    m68k_memory_map[i].write8   = m68k_lockup_w_8;
-    m68k_memory_map[i].write16  = m68k_lockup_w_16;
-    zbank_memory_map[i].read    = zbank_lockup_r;
-    zbank_memory_map[i].write   = zbank_lockup_w;
   }
 
   /* $A10000-$A1FFFF : I/O & Control registers */
@@ -94,48 +113,9 @@ void gen_init(void)
     zbank_memory_map[i].write   = zbank_write_vdp;
   }
 
-  /* MS COMPATIBILITY mode */
-  if (system_hw == SYSTEM_PBC)
+  /* 68k mode */
+  if (system_hw == SYSTEM_MD)
   {
-    /* initialize Z80 read handler */
-    /* NB: memory map & write handler are defined by cartridge hardware */
-    z80_readmem = z80_sms_memory_r;
-
-    /* initialize Z80 ports handlers */
-    z80_writeport = z80_sms_port_w;
-    z80_readport  = z80_sms_port_r;
-
-    /* initialize MS cartridge hardware */
-    sms_cart_init();
-  }
-  else
-  {
-    /* PICO hardware */
-    if (system_hw == SYSTEM_PICO)
-    {
-      /* additional registers mapped to $800000-$80FFFF */
-      m68k_memory_map[0x80].read8   = pico_read_byte;
-      m68k_memory_map[0x80].read16  = pico_read_word;
-      m68k_memory_map[0x80].write8  = m68k_unused_8_w;
-      m68k_memory_map[0x80].write16 = m68k_unused_16_w;
-
-      /* there is no I/O area (Notaz) */
-      m68k_memory_map[0xa1].read8   = m68k_read_bus_8;
-      m68k_memory_map[0xa1].read16  = m68k_read_bus_16;
-      m68k_memory_map[0xa1].write8  = m68k_unused_8_w;
-      m68k_memory_map[0xa1].write16 = m68k_unused_16_w;
-
-      /* page registers */
-      pico_current = 0x00;
-      pico_page[0] = 0x00;
-      pico_page[1] = 0x01;
-      pico_page[2] = 0x03;
-      pico_page[3] = 0x07;
-      pico_page[4] = 0x0F;
-      pico_page[5] = 0x1F;
-      pico_page[6] = 0x3F;
-    }
-
     /* initialize Z80 memory map */
     /* $0000-$3FFF is mapped to Z80 RAM (8K mirrored) */
     /* $4000-$FFFF is mapped to hardware but Z80.PC should never point there */
@@ -145,8 +125,8 @@ void gen_init(void)
     }
 
     /* initialize Z80 memory handlers */
-    z80_writemem  = z80_md_memory_w;
-    z80_readmem   = z80_md_memory_r;
+    z80_writemem  = z80_memory_w;
+    z80_readmem   = z80_memory_r;
 
     /* initialize Z80 port handlers */
     z80_writeport = z80_unused_port_w;
@@ -154,6 +134,83 @@ void gen_init(void)
 
     /* initialize MD cartridge hardware */
     md_cart_init();
+  }
+
+  /* PICO hardware */
+  else if (system_hw == SYSTEM_PICO)
+  {
+    /* additional registers mapped to $800000-$80FFFF */
+    m68k_memory_map[0x80].read8   = pico_read_byte;
+    m68k_memory_map[0x80].read16  = pico_read_word;
+    m68k_memory_map[0x80].write8  = m68k_unused_8_w;
+    m68k_memory_map[0x80].write16 = m68k_unused_16_w;
+
+    /* there is no I/O area (Notaz) */
+    m68k_memory_map[0xa1].read8   = m68k_read_bus_8;
+    m68k_memory_map[0xa1].read16  = m68k_read_bus_16;
+    m68k_memory_map[0xa1].write8  = m68k_unused_8_w;
+    m68k_memory_map[0xa1].write16 = m68k_unused_16_w;
+
+    /* page registers */
+    pico_current = 0x00;
+    pico_page[0] = 0x00;
+    pico_page[1] = 0x01;
+    pico_page[2] = 0x03;
+    pico_page[3] = 0x07;
+    pico_page[4] = 0x0F;
+    pico_page[5] = 0x1F;
+    pico_page[6] = 0x3F;
+
+    /* initialize cartridge hardware */
+    md_cart_init();
+  }
+
+  /* Z80 mode */
+  else
+  {
+    /* initialize cartridge hardware (memory handlers are also initialized) */
+    sms_cart_init();
+
+    /* initialize Z80 ports handlers */
+    switch (system_hw)
+    {
+      case SYSTEM_PBC:
+      {
+        z80_writeport = z80_md_port_w;
+        z80_readport  = z80_md_port_r;
+        break;
+      }
+
+      case SYSTEM_GG:
+      case SYSTEM_GGMS:
+      {
+        z80_writeport = z80_gg_port_w;
+        z80_readport  = z80_gg_port_r;
+        break;
+      }
+
+      case SYSTEM_SMS:
+      case SYSTEM_SMS2:
+      {
+        z80_writeport = z80_ms_port_w;
+        z80_readport  = z80_ms_port_r;
+        break;
+      }
+
+      case SYSTEM_MARKIII:
+      {
+        z80_writeport = z80_m3_port_w;
+        z80_readport  = z80_m3_port_r;
+        break;
+      }
+
+      case SYSTEM_SG:
+      {
+        z80_writeport = z80_sg_port_w;
+        z80_readport  = z80_sg_port_r;
+        break;
+      }
+    }
   }
 }
 
@@ -175,20 +232,9 @@ void gen_reset(int hard_reset)
   /* 68k & Z80 could restart anywhere in VDP frame (Bonkers, Eternal Champions, X-Men 2) */
   mcycles_68k = mcycles_z80 = (uint32)((MCYCLES_PER_LINE * lines_per_frame) * ((double)rand() / (double)RAND_MAX));
 
-  if (system_hw == SYSTEM_PBC)
+  if ((system_hw & SYSTEM_PBC) == SYSTEM_MD)
   {
-    /* reset MS cartridge hardware */
-    sms_cart_reset();
-
-    /* Z80 is running */
-    zstate = 1;
-
-    /* 68k is halted */
-    m68k_pulse_halt();
-  }
-  else
-  {
-    /* reset MD cartridge hardware */
+    /* reset cartridge hardware */
     md_cart_reset(hard_reset);
 
     /* Z80 bus is released & Z80 is reseted */
@@ -232,6 +278,20 @@ void gen_reset(int hard_reset)
 
     /* reset 68k */
     m68k_pulse_reset();
+  }
+  else
+  {
+    /* Z80 cycles should a multiple of 15 to avoid rounding errors */
+    mcycles_z80 = (mcycles_z80 / 15) * 15;
+
+    /* reset cartridge hardware */
+    sms_cart_reset();
+
+    /* Z80 is running */
+    zstate = 1;
+
+    /* 68k is halted (/VRES is forced low) */
+    m68k_pulse_halt();
   }
 
   /* reset Z80 */

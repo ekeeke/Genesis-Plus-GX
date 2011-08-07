@@ -135,7 +135,6 @@
 #define LOG(x)
 #endif
 
-
 #define cpu_readop(a)     z80_readmap[(a) >> 10][(a) & 0x03FF]
 #define cpu_readop_arg(a) z80_readmap[(a) >> 10][(a) & 0x03FF]
 
@@ -208,7 +207,7 @@ unsigned char *z80_readmap[64];
 unsigned char *z80_writemap[64];
 
 void (*z80_writemem)(unsigned int address, unsigned char data);
-unsigned char (*z80_readmem)(unsigned int port);
+unsigned char (*z80_readmem)(unsigned int address);
 void (*z80_writeport)(unsigned int port, unsigned char data);
 unsigned char (*z80_readport)(unsigned int port);
 
@@ -3420,7 +3419,7 @@ void z80_run(unsigned int cycles)
   while( mcycles_z80 < cycles )
   {
     /* check for IRQs before each instruction */
-    if ((Z80.irq_state & 7) && IFF1 && !Z80.after_ei)
+    if (Z80.irq_state && IFF1 && !Z80.after_ei)
     {
       take_interrupt();
       if (mcycles_z80 >= cycles) return;
@@ -3465,9 +3464,14 @@ void z80_set_context (void *src)
 }
 
 /****************************************************************************
- * Set IRQ line state
+ * Set IRQ lines
  ****************************************************************************/
-void z80_set_nmi_line(int state)
+void z80_set_irq_line(unsigned int state)
+{
+  Z80.irq_state = state;
+}
+
+void z80_set_nmi_line(unsigned int state)
 {
   /* mark an NMI pending on the rising edge */
   if (Z80.nmi_state == CLEAR_LINE && state != CLEAR_LINE)

@@ -68,13 +68,12 @@ typedef struct
   int chan_amp[4];        /* current channel amplitudes in delta buffers */
 } SN76489_Context;
 
-static const int PSGVolumeValues[16] = {
+static const uint16 PSGVolumeValues[16] =
+{
   /* These values are taken from a real SMS2's output */
   /*{892,892,892,760,623,497,404,323,257,198,159,123,96,75,60,0}, */
   /* I can't remember why 892... :P some scaling I did at some point */
-
   /* these values are true volumes for 2dB drops at each step (multiply previous by 10^-0.1) */
-
   1516,1205,957,760,603,479,381,303,240,191,152,120,96,76,60,0
 };
 
@@ -102,16 +101,16 @@ void SN76489_Reset()
     SN76489.Registers[2*i] = 1;         /* tone freq=1 */
     SN76489.Registers[2*i+1] = 0xf;     /* vol=off */
 
-    /* Set counters to 0 */
+   /* Set counters to 0 */
     SN76489.ToneFreqVals[i] = 0;
 
-    /* Set flip-flops to 1 */
+   /* Set flip-flops to 1 */
     SN76489.ToneFreqPos[i] = 1;
 
-    /* Clear channels output */
+   /* Clear channels output */
     SN76489.Channels[i] = 0;
 
-    /* Clear current amplitudes in delta buffer */
+   /* Clear current amplitudes in delta buffer */
     SN76489.chan_amp[i] = 0;
   }
 
@@ -140,7 +139,6 @@ void SN76489_BoostNoise(int boost)
 
 void SN76489_SetContext(uint8 *data)
 {
-
   memcpy(&SN76489, data, sizeof(SN76489_Context));
 }
 
@@ -195,7 +193,7 @@ void SN76489_Write(int data)
       SN76489.Channels[LatchedRegister>>1] = PSGVolumeValues[data&0x0f];
       break;
 
-    case 6: /* Noise */
+    case 6: /* Noise control */
       SN76489.Registers[6] = data & 0x0f;
       SN76489.NoiseShiftRegister = NoiseInitialState;  /* reset shift register */
       SN76489.NoiseFreq = 0x10 << (data&0x3); /* set noise signal generator frequency */
@@ -232,7 +230,6 @@ static void UpdateNoiseAmplitude(int time)
 
 /* Runs tone channel for clock_length clocks */
 static void RunTone(int i, int clock_length)
-
 {
   int time;
 
@@ -264,7 +261,6 @@ static void RunTone(int i, int clock_length)
 
 /* Runs noise channel for clock_length clocks */
 static void RunNoise(int clock_length)
-
 {
   int time;
 

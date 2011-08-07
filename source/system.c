@@ -2,22 +2,40 @@
  *  Genesis Plus
  *  Virtual System emulation
  *
+ *  Support for Genesis & Master System compatibility modes
+ *
  *  Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003  Charles Mac Donald (original code)
- *  Eke-Eke (2007-2011), additional code & fixes for the GCN/Wii port
-*
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
+ *  Copyright (C) 2007-2011  Eke-Eke (Genesis Plus GX)
  *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
+ *  Redistribution and use of this code or any derivative works are permitted
+ *  provided that the following conditions are met:
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *   - Redistributions may not be sold, nor may they be used in a commercial
+ *     product or activity.
+ *
+ *   - Redistributions that are modified from the original source must include the
+ *     complete source code, including the source code for all components used by a
+ *     binary built from the modified sources. However, as a special exception, the
+ *     source code distributed need not include anything that is normally distributed
+ *     (in either source or binary form) with the major components (compiler, kernel,
+ *     and so on) of the operating system on which the executable runs, unless that
+ *     component itself accompanies the executable.
+ *
+ *   - Redistributions must reproduce the above copyright notice, this list of
+ *     conditions and the following disclaimer in the documentation and/or other
+ *     materials provided with the distribution.
+ *
+ *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ *  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ *  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ *  ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+ *  LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ *  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ *  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ *  CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ *  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ *  POSSIBILITY OF SUCH DAMAGE.
  *
  ****************************************************************************************/
 
@@ -34,9 +52,9 @@ uint32 mcycles_68k;
 uint8 system_hw;
 void (*system_frame)(int do_skip);
 
-static void system_frame_md(int do_skip);
+static void system_frame_gen(int do_skip);
 static void system_frame_sms(int do_skip);
-static int pause_b;
+static uint8 pause_b;
 static EQSTATE eq;
 static int32 llp,rrp;
 
@@ -249,7 +267,22 @@ void system_init(void)
   vdp_init();
   render_init();
   sound_init();
-  system_frame = (system_hw == SYSTEM_PBC) ? system_frame_sms : system_frame_md;
+
+  switch (system_hw)
+  {
+    case SYSTEM_MD:
+    case SYSTEM_PICO:
+    {
+      system_frame = system_frame_gen;
+      break;
+    }
+
+    default:
+    {
+      system_frame = system_frame_sms;
+      break;
+    }
+  }
 }
 
 /****************************************************************
@@ -259,8 +292,8 @@ void system_reset(void)
 {
   gen_reset(1);
   io_reset();
-  vdp_reset();
   render_reset();
+  vdp_reset();
   sound_reset();
   audio_reset();
 }
@@ -271,7 +304,7 @@ void system_shutdown (void)
   SN76489_Shutdown();
 }
 
-static void system_frame_md(int do_skip)
+static void system_frame_gen(int do_skip)
 {
   /* line counter */
   int line = 0;
@@ -300,13 +333,18 @@ static void system_frame_md(int do_skip)
   {
     bitmap.viewport.changed &= ~2;
 
-    /* interlaced mode */
+    /* interlaced modes */
     int old_interlaced  = interlaced;
     interlaced = (reg[12] & 0x02) >> 1;
     if (old_interlaced != interlaced)
     {
+      /* double resolution mode */
       im2_flag = ((reg[12] & 0x06) == 0x06);
+
+      /* reset field status flag */
       odd_frame = 1;
+
+      /* video mode has changed */
       bitmap.viewport.changed = 5;
 
       /* update rendering mode */
@@ -361,7 +399,7 @@ static void system_frame_md(int do_skip)
   }
 
   /* render last line of overscan */
-  if (bitmap.viewport.y)
+  if (bitmap.viewport.y > 0)
   {
     blank_line(v_counter, -bitmap.viewport.x, bitmap.viewport.w + 2*bitmap.viewport.x);
   }
@@ -411,7 +449,7 @@ static void system_frame_md(int do_skip)
       hint_pending = 0x10;
       if (reg[0] & 0x10)
       {
-        m68k_irq_state |= 0x14;
+        m68k_update_irq(4);
       }
     }
 
@@ -480,7 +518,7 @@ static void system_frame_md(int do_skip)
     hint_pending = 0x10;
     if (reg[0] & 0x10)
     {
-      m68k_irq_state |= 0x14;
+      m68k_update_irq(4);
     }
   }
 
@@ -518,7 +556,7 @@ static void system_frame_md(int do_skip)
   vint_pending = 0x20;
   if (reg[1] & 0x20)
   {
-    m68k_irq_state = 0x16;
+    m68k_set_irq(6);
   }
 
   /* assert Z80 interrupt */
@@ -634,100 +672,151 @@ static void system_frame_sms(int do_skip)
   {
     bitmap.viewport.changed &= ~2;
 
-    /* interlaced mode */
-    int old_interlaced  = interlaced;
-    interlaced = (reg[12] & 0x02) >> 1;
-    if (old_interlaced != interlaced)
+    if (system_hw & SYSTEM_MD)
     {
-      im2_flag = ((reg[12] & 0x06) == 0x06);
-      odd_frame = 1;
-      bitmap.viewport.changed = 5;
-
-      /* update rendering mode */
-      if (reg[1] & 0x04)
+      /* interlaced mode */
+      int old_interlaced  = interlaced;
+      interlaced = (reg[12] & 0x02) >> 1;
+      if (old_interlaced != interlaced)
       {
-        if (im2_flag)
-        {
-          render_bg = (reg[11] & 0x04) ? render_bg_m5_im2_vs : render_bg_m5_im2;
-          render_obj = render_obj_m5_im2;
+        im2_flag = ((reg[12] & 0x06) == 0x06);
+        odd_frame = 1;
+        bitmap.viewport.changed = 5;
 
-        }
-        else
+        /* update rendering mode */
+        if (reg[1] & 0x04)
         {
-          render_bg = (reg[11] & 0x04) ? render_bg_m5_vs : render_bg_m5;
-          render_obj = render_obj_m5;
+          if (im2_flag)
+          {
+            render_bg = (reg[11] & 0x04) ? render_bg_m5_im2_vs : render_bg_m5_im2;
+            render_obj = render_obj_m5_im2;
+
+          }
+          else
+          {
+            render_bg = (reg[11] & 0x04) ? render_bg_m5_vs : render_bg_m5;
+            render_obj = render_obj_m5;
+          }
         }
       }
-    }
 
-    /* active screen height */
-    if (reg[1] & 0x04)
-    {
-      bitmap.viewport.h = 224 + ((reg[1] & 0x08) << 1);
-      bitmap.viewport.y = (config.overscan & 1) * ((240 + 48*vdp_pal - bitmap.viewport.h) >> 1);
+      /* active screen height */
+      if (reg[1] & 0x04)
+      {
+        bitmap.viewport.h = 224 + ((reg[1] & 0x08) << 1);
+        bitmap.viewport.y = (config.overscan & 1) * ((240 + 48*vdp_pal - bitmap.viewport.h) >> 1);
+      }
+      else
+      {
+        bitmap.viewport.h = 192;
+        bitmap.viewport.y = (config.overscan & 1) * 24 * (vdp_pal + 1);
+      }
+
+      /* active screen width */
+      bitmap.viewport.w = 256 + ((reg[12] & 0x01) << 6);
     }
     else
     {
-      bitmap.viewport.h = 192;
-      bitmap.viewport.y = (config.overscan & 1) * 24 * (vdp_pal + 1);
-    }
+      /* check for VDP extended modes */
+      int mode = (reg[0] & 0x06) | (reg[1] & 0x18);
 
-    /* active screen width */
-    bitmap.viewport.w = 256 + ((reg[12] & 0x01) << 6);
+      /* update active height */
+      if (mode == 0x0E)
+      {
+        bitmap.viewport.h = 240;
+      }
+      else if (mode == 0x16)
+      {
+        bitmap.viewport.h = 224;
+      }
+      else
+      {
+        bitmap.viewport.h = 192;
+      }
+
+      /* update vertical overscan */
+      if (config.overscan & 1)
+      {
+        bitmap.viewport.y = (240 + 48*vdp_pal - bitmap.viewport.h) >> 1;
+      }
+      else
+      {
+        if (system_hw == SYSTEM_GG)
+        {
+          /* Display area reduced to 160x144 */
+          bitmap.viewport.y = (144 - bitmap.viewport.h) / 2;
+        }
+        else
+        {
+          bitmap.viewport.y = 0;
+        }
+      }
+    }
   }
 
-  /* Detect pause button input */
-  if (input.pad[0] & INPUT_START)
+  /* Detect pause button input (in Game Gear Mode, NMI is not generated) */
+  if ((system_hw != SYSTEM_GG) && (system_hw != SYSTEM_SG))
   {
-    /* NMI is edge-triggered */
-    if (!pause_b)
+    if (input.pad[0] & INPUT_START)
     {
-      pause_b = 1;
-      z80_set_nmi_line(ASSERT_LINE);
-      z80_set_nmi_line(CLEAR_LINE);
+      /* NMI is edge-triggered */
+      if (!pause_b)
+      {
+        pause_b = 1;
+        z80_set_nmi_line(ASSERT_LINE);
+        z80_set_nmi_line(CLEAR_LINE);
+      }
     }
-  }
-  else
-  {
-    pause_b = 0;
+    else
+    {
+      pause_b = 0;
+    }
   }
 
   /* 3-D glasses faking: skip rendering of left lens frame */
   do_skip |= (work_ram[0x1ffb] & cart.special);
 
-  /* clear VBLANK, DMA, FIFO FULL & field flags */
-  status &= 0xFEE5;
-
-  /* set FIFO EMPTY flag */
-  status |= 0x0200;
-
-  /* even/odd field flag (interlaced modes only) */
-  odd_frame ^= 1;
-  if (interlaced)
+  /* Mega Drive VDP specific */
+  if (system_hw & SYSTEM_MD)
   {
-    status |= (odd_frame << 4);
+    /* clear VBLANK, DMA & field flags */
+    status &= 0xE5;
+
+    /* even/odd field flag (interlaced modes only) */
+    odd_frame ^= 1;
+    if (interlaced)
+    {
+      status |= (odd_frame << 4);
+    }
+
+    /* update VDP DMA */
+    if (dma_length)
+    {
+      vdp_dma_update(0);
+    }
   }
 
-  /* update VDP DMA */
-  if (dma_length)
+  /* Master System & Game Gear VDP specific */
+  if (system_hw < SYSTEM_MD)
   {
-    vdp_dma_update(0);
+    /* Sprites are still processed during vertical borders */
+    if (reg[1] & 0x40)
+    {
+      render_obj(bitmap.viewport.w);
+    }
   }
 
   /* render last line of overscan */
-  if (bitmap.viewport.y)
+  if (bitmap.viewport.y > 0)
   {
     blank_line(v_counter, -bitmap.viewport.x, bitmap.viewport.w + 2*bitmap.viewport.x);
   }
 
-  /* parse first line of sprites */
-  if (reg[1] & 0x40)
+  /* parse first line of sprites (on Master System VDP, pre-processing still occurs when display is disabled) */
+  if ((reg[1] & 0x40) || (system_hw < SYSTEM_MD))
   {
     parse_satb(-1);
   }
-
-  /* latch Horizontal Scroll register (if modified during VBLANK) */
-  hscroll = reg[0x08];
 
   /* run Z80 */
   z80_run(MCYCLES_PER_LINE);
@@ -741,8 +830,24 @@ static void system_frame_sms(int do_skip)
   /* Active Display */
   do
   {
-    /* update V Counter */
-    v_counter = line;
+    /* update VDP DMA (Mega Drive VDP specific) */
+    if (dma_length)
+    {
+      vdp_dma_update(mcycles_vdp);
+    }
+
+    /* make sure we didn't already render that line */
+    if (v_counter != line)
+    {
+      /* update V Counter */
+      v_counter = line;
+
+      /* render scanline */
+      if (!do_skip)
+      {
+        render_line(line);
+      }
+    }
 
     /* update 6-Buttons & Lightguns */
     input_refresh();
@@ -757,9 +862,10 @@ static void system_frame_sms(int do_skip)
       hint_pending = 0x10;
       if (reg[0] & 0x10)
       {
-        /* IRQ line is latched between instructions, on instruction last cycle          */
-        /* This means that if Z80 cycle count is exactly a multiple of MCYCLES_PER_LINE, */
-        /* interrupt should be triggered AFTER the next instruction.                    */
+        /* cycle-accurate HINT */
+        /* IRQ line is latched between instructions, during instruction last cycle.       */
+        /* This means that if Z80 cycle count is exactly a multiple of MCYCLES_PER_LINE,  */
+        /* interrupt should be triggered AFTER the next instruction.                      */
         if ((mcycles_z80 % MCYCLES_PER_LINE) == 0)
         {
           z80_run(mcycles_z80 + 1);
@@ -767,18 +873,6 @@ static void system_frame_sms(int do_skip)
 
         Z80.irq_state = ASSERT_LINE;
       }
-    }
-
-    /* update VDP DMA */
-    if (dma_length)
-    {
-      vdp_dma_update(mcycles_vdp);
-    }
-
-    /* render scanline */
-    if (!do_skip)
-    {
-      render_line(line);
     }
 
     /* run Z80 */
@@ -792,8 +886,12 @@ static void system_frame_sms(int do_skip)
   /* end of active display */
   v_counter = line;
 
-  /* set VBLANK flag */
-  status |= 0x08;
+  /* Mega Drive VDP specific */
+  if (system_hw & SYSTEM_MD)
+  {
+    /* set VBLANK flag */
+    status |= 0x08;
+  }
 
   /* overscan area */
   int start = lines_per_frame - bitmap.viewport.y;
@@ -820,11 +918,17 @@ static void system_frame_sms(int do_skip)
     hint_pending = 0x10;
     if (reg[0] & 0x10)
     {
+      /* cycle-accurate HINT */
+      if ((mcycles_z80 % MCYCLES_PER_LINE) == 0)
+      {
+        z80_run(mcycles_z80 + 1);
+      }
+
       Z80.irq_state = ASSERT_LINE;
     }
   }
 
-  /* update VDP DMA */
+  /* update VDP DMA (Mega Drive VDP specific) */
   if (dma_length)
   {
     vdp_dma_update(mcycles_vdp);
@@ -836,20 +940,24 @@ static void system_frame_sms(int do_skip)
     blank_line(line, -bitmap.viewport.x, bitmap.viewport.w + 2*bitmap.viewport.x);
   }
 
-  /* update inputs before VINT (Warriors of Eternal Sun) */
+  /* update inputs before VINT */
   osd_input_Update();
 
   /* run Z80 until end of line */
   z80_run(mcycles_vdp + MCYCLES_PER_LINE);
 
-  /* VINT flag */
-  status |= 0x80;
-
-  /* V Interrupt */
-  vint_pending = 0x20;
-  if (reg[1] & 0x20)
+  /* make sure VINT flag was not cleared by last instruction */
+  if (v_counter == line)
   {
-    Z80.irq_state = ASSERT_LINE;
+    /* Set VINT flag */
+    status |= 0x80;
+
+    /* V Interrupt */
+    vint_pending = 0x20;
+    if (reg[1] & 0x20)
+    {
+      Z80.irq_state = ASSERT_LINE;
+    }
   }
 
   /* update line cycle count */
@@ -866,6 +974,14 @@ static void system_frame_sms(int do_skip)
 
     /* update 6-Buttons & Lightguns */
     input_refresh();
+
+    /* Master System & Game Gear VDP specific */
+    if ((system_hw < SYSTEM_MD) && (line > (lines_per_frame - 16)))
+    {
+      /* Sprites are still processed during top border */
+      render_obj(bitmap.viewport.w);
+      parse_satb(line - lines_per_frame);
+    }
 
     /* render overscan */
     if ((line < end) || (line >= start))

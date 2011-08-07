@@ -3,30 +3,45 @@
  * 
  *   ROM File Browser
  *
- *   Eke-Eke (2009,2010)
+ *  Copyright Eke-Eke (2009-2011)
  *
- *   This program is free software; you can redistribute it and/or modify
- *   it under the terms of the GNU General Public License as published by
- *   the Free Software Foundation; either version 2 of the License, or
- *   (at your option) any later version.
+ *  Redistribution and use of this code or any derivative works are permitted
+ *  provided that the following conditions are met:
  *
- *   This program is distributed in the hope that it will be useful,
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *   GNU General Public License for more details.
+ *   - Redistributions may not be sold, nor may they be used in a commercial
+ *     product or activity.
  *
- *   You should have received a copy of the GNU General Public License
- *   along with this program; if not, write to the Free Software
- *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *   - Redistributions that are modified from the original source must include the
+ *     complete source code, including the source code for all components used by a
+ *     binary built from the modified sources. However, as a special exception, the
+ *     source code distributed need not include anything that is normally distributed
+ *     (in either source or binary form) with the major components (compiler, kernel,
+ *     and so on) of the operating system on which the executable runs, unless that
+ *     component itself accompanies the executable.
  *
- ********************************************************************************/
+ *   - Redistributions must reproduce the above copyright notice, this list of
+ *     conditions and the following disclaimer in the documentation and/or other
+ *     materials provided with the distribution.
+ *
+ *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ *  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ *  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ *  ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+ *  LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ *  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ *  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ *  CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ *  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ *  POSSIBILITY OF SUCH DAMAGE.
+ *
+ ****************************************************************************************/
 
 #include "shared.h"
 #include "filesel.h"
 #include "font.h"
 #include "gui.h"
 #include "file_load.h"
-#include "file_slot.h"
 
 #ifdef HW_RVL
 #include <wiiuse/wpad.h>
@@ -34,6 +49,8 @@
 
 #define BG_COLOR_1 {0x49,0x49,0x49,0xff}
 #define BG_COLOR_2 {0x66,0x66,0x66,0xff}
+
+#define SCROLL_SPEED 10
 
 extern const u8 Browser_dir_png[];
 extern const u8 Snap_empty_png[];
@@ -160,15 +177,15 @@ static void selector_cb(void)
       gxDrawTexture(bar_over.texture,bar_over.x,yoffset+bar_over.y,bar_over.w,bar_over.h,255);
 
       /* scrolling text */
-      if ((string_offset/10) >= strlen(filelist[i].filename))
+      if ((string_offset/SCROLL_SPEED) >= strlen(filelist[i].filename))
       {
         string_offset = 0;
       }
 
       if (string_offset)
       {
-        sprintf(text,"%s ",filelist[i].filename+string_offset/10);
-        strncat(text, filelist[i].filename, string_offset/10);
+        sprintf(text,"%s ",filelist[i].filename+string_offset/SCROLL_SPEED);
+        strncat(text, filelist[i].filename, string_offset/SCROLL_SPEED);
       }
       else
       {
@@ -182,7 +199,7 @@ static void selector_cb(void)
         gxDrawTexture(dir_icon.texture,dir_icon.x,yoffset+dir_icon.y,dir_icon.w,dir_icon.h,255);
         if (FONT_write(text,18,dir_icon.x+dir_icon.w+6,yoffset+22,bar_over.w-dir_icon.w-26,(GXColor)WHITE))
         {
-          /* string is too large -> scroll text */
+          /* text scrolling */
           string_offset ++;
         }
       }
@@ -228,11 +245,9 @@ int FileSelector(void)
 {
   short p;
   int i;
-  int size = 0;
   int old = -1;
   char fname[MAXPATHLEN];
-  char text[MAXPATHLEN];
-  FILE *xml,*snap;
+  FILE *snap;
   gui_menu *m = &menu_selector;
 
 #ifdef HW_RVL
@@ -279,39 +294,74 @@ int FileSelector(void)
     /* ROM file snapshot/database */
     if (old != selection)
     {
+      /* close any existing texture first */
+      gxTextureClose(&bg_filesel[8].texture);
+      bg_filesel[8].state &= ~IMAGE_VISIBLE;
+
       old = selection;
       string_offset = 0;
 
-      /* delete previous texture if any */
-      gxTextureClose(&bg_filesel[8].texture);
-      bg_filesel[8].state &= ~IMAGE_VISIBLE;
-      bg_filesel[6].state &= ~IMAGE_VISIBLE;
-
       if (!filelist[selection].flags)
       {
-        /* get ROM filename without extension */
-        sprintf (text, "%s", filelist[selection].filename);
-        int i = strlen(text) - 1;
-        while ((i > 0) && (text[i] != '.')) i--;
-        if (i > 0) text[i] = 0;
+        /* get compressed file name */
+        sprintf(fname, "%s/%s", GetCurrentDirectory(selection), filelist[selection].filename);
+        get_zipfilename(fname);
 
-        /* ROM database informations */
-        sprintf (fname, "%s/db/%s.xml", DEFAULT_PATH, text);
-        xml = fopen(fname, "rb");
-        if (xml)
+        /* auto-detect file type */
+        if (!strnicmp(".sms", &fname[strlen(fname) - 4], 4))
         {
-          bg_filesel[6].state |= IMAGE_VISIBLE;
-          fclose(xml); /* TODO */
+          /* Master System ROM file */
+          sprintf(fname, "%s/snaps/ms/%s", DEFAULT_PATH, filelist[selection].filename);
         }
+        else if (!strnicmp(".gg", &fname[strlen(fname) - 3], 3))
+        {
+          /* Game Gear ROM file */
+          sprintf(fname, "%s/snaps/gg/%s", DEFAULT_PATH, filelist[selection].filename);
+        }
+        else if (!strnicmp(".sg", &fname[strlen(fname) - 3], 3))
+        {
+          /* SG-1000 ROM file */
+          sprintf(fname, "%s/snaps/sg/%s", DEFAULT_PATH, filelist[selection].filename);
+        }
+        else if ((!strnicmp(".md", &fname[strlen(fname) - 3], 3)) ||
+                 (!strnicmp(".gen", &fname[strlen(fname) - 4], 4)) ||
+                 (!strnicmp(".bin", &fname[strlen(fname) - 4], 4)) ||
+                 (!strnicmp(".mdx", &fname[strlen(fname) - 4], 4)) ||
+                 (!strnicmp(".smd", &fname[strlen(fname) - 4], 4)))
+        {
+          /* Genesis ROM file */
+          sprintf(fname, "%s/snaps/md/%s", DEFAULT_PATH, filelist[selection].filename);
+        }
+        else
+        {
+          fname[0] = 0;
+        }
+      }
+      else
+      {
+        fname[0] = 0;
+      }
 
-        /* open screenshot file */
-        sprintf (fname, "%s/snaps/%s.png", DEFAULT_PATH, text);
+      /* Supported ROM file found ? */
+      if (fname[0])
+      {
+        /* remove original file extension */
+        i = strlen(fname) - 1;
+        while ((i > 0) && (fname[i] != '.')) i--;
+        if (i > 0) fname[i] = 0;
+
+        /* add PNG file extension */
+        strcat(fname, ".png");
+
+        /* try to load screenshot */
         snap = fopen(fname, "rb");
         if (snap)
         {
           bg_filesel[8].texture = gxTextureOpenPNG(0,snap);
           if (bg_filesel[8].texture)
+          {
             bg_filesel[8].state |= IMAGE_VISIBLE;
+          }
           fclose(snap);
         }
       }
@@ -330,7 +380,7 @@ int FileSelector(void)
     }
     else
     {
-      /* this is a file */
+      /* this is a ROM file */
       strcpy(action_select.comment,"Load ROM File");
     }
 
@@ -477,7 +527,7 @@ int FileSelector(void)
         /* select previous directory */
         for (i=0; i<maxfiles; i++)
         {
-          if (filelist[i].flags && !strcmp(prev_folder,filelist[i].filename))
+          if ((filelist[i].flags) && !strcmp(prev_folder,filelist[i].filename))
           {
             selection = i;
             offset = (i / 10) * 10;
@@ -498,9 +548,42 @@ int FileSelector(void)
     {
       string_offset = 0;
 
+      /* ensure we are in focus area */
+      if (m->selected < m->max_buttons)
+      {
+        if (filelist[selection].flags)
+        {
+          /* get new directory */
+          UpdateDirectory(0, filelist[selection].filename);
+
+          /* get directory entries */
+          maxfiles = ParseDirectory();
+
+          /* clear selection by default */
+          selection = offset = 0;
+          old = -1;
+        }
+        else if (fname[0])
+        {  
+          /* load ROM file from device */
+          int ret = LoadFile(selection);
+
+          /* exit menu */
+          GUI_DeleteMenu(m);
+
+          /* return ROM size (or zero if an error occured) */
+          return ret;
+        }
+        else
+        {
+          /* Unsupported ROM file */
+          GUI_WaitPrompt("Error","Unsupported ROM type !");
+        }
+      }
+
 #ifdef HW_RVL
       /* arrow buttons selected */
-      if (m->selected == m->max_buttons)
+      else if (m->selected == m->max_buttons)
       {
         /* up arrow */
         selection--;
@@ -523,49 +606,6 @@ int FileSelector(void)
       }
 #endif
 
-      /* ensure we are in focus area */
-      if (m->selected < m->max_buttons)
-      {
-        if (filelist[selection].flags)
-        {
-          /* get new directory */
-          UpdateDirectory(0, filelist[selection].filename);
-
-          /* get directory entries */
-          maxfiles = ParseDirectory();
-
-          /* clear selection by default */
-          selection = offset = 0;
-          old = -1;
-        }
-        else 
-        {
-          /* clear existing patches before loading new ROM file */
-          ggenie_shutdown();
-          areplay_shutdown();
-  
-          /* load ROM file from device */
-          size = LoadFile(cart.rom, selection, fname);
-
-          /* exit menu */
-          GUI_DeleteMenu(m);
-
-          /* load new game */
-          if (size)
-          {
-            /* save previous game state */
-            if (config.s_auto & 2)
-            {
-              slot_autosave(config.s_default,config.s_device);
-            }
-
-            /* reinitialize emulation */
-            reloadrom(size,fname);
-          }
-
-          return size;
-        }
-      }
     }
   }
 }

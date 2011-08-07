@@ -25,7 +25,7 @@ to do:
 
 */
 
-/** EkeEke (2011): removed multiple chips support and cleaned code for Genesis Plus GX **/
+/** EkeEke (2011): removed multiple chips support, cleaned code & added FM board interface for Genesis Plus GX **/
 
 #include <math.h>
 
@@ -1016,10 +1016,6 @@ static int init_tables(void)
   signed int n;
   double o,m;
 
-#ifdef NGC
-  u32 level = IRQ_Disable();
-#endif
-
   for (x=0; x<TL_RES_LEN; x++)
   {
     m = (1<<16) / pow(2, (x+1) * (ENV_STEP/4.0) / 8.0);
@@ -1076,10 +1072,6 @@ static int init_tables(void)
     else
       sin_tab[1*SIN_LEN+i] = sin_tab[i];
   }
-
-#ifdef NGC
-  IRQ_Restore(level);
-#endif
 
   return 1;
 }
@@ -1663,34 +1655,30 @@ void YM2413ResetChip(void)
 
 void YM2413Write(unsigned int a, unsigned int v)
 {
-  if( !(a&1) )
+  if( !(a&2) )
   {
-    if( !(a&2) )
+    if( !(a&1) )
     {
       /* address port */
       ym2413.address = v & 0xff;
     }
     else
     {
-      /* status port */
-      ym2413.status = v & 0xff;
+      /* data port */
+      OPLLWriteReg(ym2413.address,v);
     }
   }
   else
   {
-    /* data port */
-    OPLLWriteReg(ym2413.address,v);
+    /* latched bit (Master System specific) */
+    ym2413.status = v & 0x01;
   }
 }
 
 unsigned int YM2413Read(unsigned int a)
 {
-  if( !(a&1) )
-  {
-    /* status port */
-    return ym2413.status;
-  }
-  return 0xff;
+  /* D0=latched bit, D1-D2 need to be zero (Master System specific) */
+  return 0xF8 | ym2413.status;
 }
 
 void YM2413Update(long int *buffer, int length)
@@ -1723,8 +1711,8 @@ void YM2413Update(long int *buffer, int length)
       rhythm_calc(&ym2413.P_CH[0], (ym2413.noise_rng>>0)&1 );
     }
 
-    /* Melody (MO) & Rythm (RO) outputs mixing & amplification */
-    out = (output[0] + (output[1] * 2)) * 2;
+    /* Melody (MO) & Rythm (RO) outputs mixing & amplification (latched bit controls FM output) */
+    out = (output[0] + (output[1] * 2)) * 2 * ym2413.status;
 
     /* Store to stereo sound buffer */
     *buffer++ = out;

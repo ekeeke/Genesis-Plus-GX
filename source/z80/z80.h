@@ -54,7 +54,7 @@ extern unsigned char *z80_readmap[64];
 extern unsigned char *z80_writemap[64];
 
 extern void (*z80_writemem)(unsigned int address, unsigned char data);
-extern unsigned char (*z80_readmem)(unsigned int port);
+extern unsigned char (*z80_readmem)(unsigned int address);
 extern void (*z80_writeport)(unsigned int port, unsigned char data);
 extern unsigned char (*z80_readport)(unsigned int port);
 
@@ -65,7 +65,8 @@ extern void z80_run(unsigned int cycles);
 extern void z80_burn(unsigned int cycles);
 extern void z80_get_context (void *dst);
 extern void z80_set_context (void *src);
-extern void z80_set_nmi_line(int state);
+extern void z80_set_irq_line(unsigned int state);
+extern void z80_set_nmi_line(unsigned int state);
 
 #endif
 

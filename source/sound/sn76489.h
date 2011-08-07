@@ -20,4 +20,3 @@ extern void SN76489_Update(INT16 *buffer, int length);
 extern void SN76489_BoostNoise(int boost);
 
 #endif /* _SN76489_H_ */
-

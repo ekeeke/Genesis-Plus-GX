@@ -1,26 +1,46 @@
 /***************************************************************************************
  *  Genesis Plus
- *  Z80 bus controller (MD & MS compatibility modes)
+ *  Z80 bus handlers (Genesis & Master System modes)
+ *
+ *  Support for SG-1000, Mark-III, Master System, Game Gear & Mega Drive ports access
  *
  *  Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003  Charles Mac Donald (original code)
- *  Eke-Eke (2007-2011), additional code & fixes for the GCN/Wii port
+ *  Copyright (C) 2007-2011  Eke-Eke (Genesis Plus GX)
  *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
+ *  Redistribution and use of this code or any derivative works are permitted
+ *  provided that the following conditions are met:
  *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
+ *   - Redistributions may not be sold, nor may they be used in a commercial
+ *     product or activity.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *   - Redistributions that are modified from the original source must include the
+ *     complete source code, including the source code for all components used by a
+ *     binary built from the modified sources. However, as a special exception, the
+ *     source code distributed need not include anything that is normally distributed
+ *     (in either source or binary form) with the major components (compiler, kernel,
+ *     and so on) of the operating system on which the executable runs, unless that
+ *     component itself accompanies the executable.
+ *
+ *   - Redistributions must reproduce the above copyright notice, this list of
+ *     conditions and the following disclaimer in the documentation and/or other
+ *     materials provided with the distribution.
+ *
+ *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ *  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ *  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ *  ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+ *  LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ *  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ *  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ *  CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ *  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ *  POSSIBILITY OF SUCH DAMAGE.
  *
  ****************************************************************************************/
+
 #include "shared.h"
+
 
 /*--------------------------------------------------------------------------*/
 /*  Handlers for access to unused addresses and those which make the        */
@@ -72,7 +92,7 @@ static inline unsigned char z80_lockup_r(unsigned int address)
 /*  Z80 Memory handlers (Genesis mode)                                      */
 /*--------------------------------------------------------------------------*/
 
-unsigned char z80_md_memory_r(unsigned int address)
+unsigned char z80_memory_r(unsigned int address)
 {
   switch((address >> 13) & 7)
   {
@@ -110,7 +130,7 @@ unsigned char z80_md_memory_r(unsigned int address)
 }
 
 
-void z80_md_memory_w(unsigned int address, unsigned char data)
+void z80_memory_w(unsigned int address, unsigned char data)
 {
   switch((address >> 13) & 7)
   {
@@ -166,31 +186,26 @@ void z80_md_memory_w(unsigned int address, unsigned char data)
   }
 }
 
-
 /*--------------------------------------------------------------------------*/
-/*  Z80 Memory handlers (Master System mode)                                */
+/*  Unused Port handlers                                                    */
+/*                                                                          */
+/*  Ports are unused when not in Mark III compatibility mode.               */
+/*                                                                          */
+/*  Genesis games that access ports anyway:                                 */
+/*    Thunder Force IV reads port $BF in it's interrupt handler.            */
+/*                                                                          */
 /*--------------------------------------------------------------------------*/
-
-unsigned char z80_sms_memory_r(unsigned int address)
-{
-  return z80_readmap[(address) >> 10][(address) & 0x03FF];
-}
-
-/*--------------------------------------------------------------------------*/
-/*  Z80 Port handlers                                                       */
-/*--------------------------------------------------------------------------*/
-/*
-  Ports are unused when not in Mark III compatibility mode.
-
-  Genesis games that access ports anyway:
-    Thunder Force IV reads port $BF in it's interrupt handler.
-*/
 
 unsigned char z80_unused_port_r(unsigned int port)
 {
 #if LOGERROR
   error("Z80 unused read from port %04X (%x)\n", port, Z80.pc.w.l);
 #endif
+  if (system_hw == SYSTEM_SMS)
+  {
+    unsigned int address = (Z80.pc.w.l - 1) & 0xFFFF;
+    return z80_readmap[address >> 10][address & 0x3FF];
+  }
   return 0xFF;
 }
 
@@ -201,13 +216,17 @@ void z80_unused_port_w(unsigned int port, unsigned char data)
 #endif
 }
 
-void z80_sms_port_w(unsigned int port, unsigned char data)
+/*--------------------------------------------------------------------------*/
+/* MegaDrive / Genesis port handlers (Master System compatibility mode)     */
+/*--------------------------------------------------------------------------*/
+
+void z80_md_port_w(unsigned int port, unsigned char data)
 {
   switch (port & 0xC1)
   {
     case 0x01:
     {
-      io_z80_write(data);
+      io_z80_write(1, data, mcycles_z80 + PBC_CYCLE_OFFSET);
       return;
     }
 
@@ -232,28 +251,9 @@ void z80_sms_port_w(unsigned int port, unsigned char data)
 
     default:
     {
-      if ((port & 0xFF) == 0x3E)
-      {
-        /* Memory Control Register */
-        /* NB: this register does not exist on MD hardware but is partially emulated to support BIOS ROM image files */
-        if (data & 0x40)
-        {
-          /* Assume only BIOS would disable Cartridge ROM */
-          if (data & 0x08)
-          {
-            /* BIOS ROM disabled */
-            sms_cart_switch(0);
-          }
-          else
-          {
-            /* BIOS ROM enabled */
-            sms_cart_switch(1);
-          }
-        }
-        return;
-      }
+      port &= 0xFF;
 
-      if ((port >= 0xF0) && (config.ym2413_enabled))
+      if ((port >= 0xF0) && (config.ym2413 & 1))
       {
         fm_write(mcycles_z80, port&3, data);
         return;
@@ -265,10 +265,127 @@ void z80_sms_port_w(unsigned int port, unsigned char data)
   }
 }
 
-unsigned char z80_sms_port_r(unsigned int port)
+unsigned char z80_md_port_r(unsigned int port)
 {
   switch (port & 0xC1)
   {
+    case 0x40:
+    {
+      return ((vdp_hvc_r(mcycles_z80 - 15) >> 8) & 0xFF);
+    }
+
+    case 0x41:
+    {
+      return (vdp_hvc_r(mcycles_z80 - 15) & 0xFF);
+    }
+
+    case 0x80:
+    {
+      return vdp_z80_data_r();
+    }
+
+    case 0x81:
+    {
+      return vdp_z80_ctrl_r(mcycles_z80);
+    }
+
+    default:
+    {
+      port &= 0xFF;
+
+      if ((port == 0xC0) || (port == 0xC1) || (port == 0xDC) || (port == 0xDD))
+      {
+        return io_z80_read(port & 1);
+      }
+
+      /* read FM chip if enabled */
+      if ((port >= 0xF0) && (config.ym2413 & 1))
+      {
+        return YM2413Read(port & 3); 
+      }
+
+      return z80_unused_port_r(port);
+    }
+  }
+}
+
+
+/*--------------------------------------------------------------------------*/
+/* Game Gear port handlers                                                  */
+/*--------------------------------------------------------------------------*/
+
+void z80_gg_port_w(unsigned int port, unsigned char data)
+{
+  switch(port & 0xC1)
+  {
+    case 0x00:
+    case 0x01:
+    {
+      port &= 0xFF;
+
+      if (port < 0x07)
+      {
+        if (system_hw == SYSTEM_GG)
+        {
+          io_gg_write(port, data);
+          return;
+        }
+
+        z80_unused_port_w(port & 0xFF, data);
+        return;
+      }
+
+      io_z80_write(port & 1, data, mcycles_z80 + SMS_CYCLE_OFFSET);
+      return;
+    }
+
+    case 0x40:
+    case 0x41:
+    {
+      psg_write(mcycles_z80, data);
+      return;
+    }
+
+    case 0x80:
+    {
+      vdp_z80_data_w(data);
+      return;
+    }
+
+    case 0x81:
+    {
+      vdp_sms_ctrl_w(data);
+      return;
+    }
+
+    default:
+    {
+      z80_unused_port_w(port & 0xFF, data);
+      return;
+    }
+  }
+}
+
+unsigned char z80_gg_port_r(unsigned int port)
+{
+  switch(port & 0xC1)
+  {
+    case 0x00:
+    case 0x01:
+    {
+      port &= 0xFF;
+
+      if (port < 0x07)
+      {
+        if (system_hw == SYSTEM_GG)
+        {
+          return io_gg_read(port);
+        }
+      }
+
+      return z80_unused_port_r(port);
+    }
+
     case 0x40:
     {
       return ((vdp_hvc_r(mcycles_z80) >> 8) & 0xFF);
@@ -286,23 +403,281 @@ unsigned char z80_sms_port_r(unsigned int port)
 
     case 0x81:
     {
-      return (vdp_ctrl_r(mcycles_z80) & 0xFF);
+      return vdp_z80_ctrl_r(mcycles_z80);
     }
 
     default:
     {
       port &= 0xFF;
 
-      if ((port == 0xC0) || (port == 0xC1) || (port == 0xDC) || (port == 0xDD) || (port == 0xDE) || (port == 0xDF))
+      if ((port == 0xC0) || (port == 0xC1) || (port == 0xDC) || (port == 0xDD))
       {
         return io_z80_read(port & 1);
       }
 
-      if ((port >= 0xF0) && (config.ym2413_enabled))
+      return z80_unused_port_r(port);
+    }
+  }
+}
+
+
+/*--------------------------------------------------------------------------*/
+/* Master System port handlers                                              */
+/*--------------------------------------------------------------------------*/
+
+void z80_ms_port_w(unsigned int port, unsigned char data)
+{
+  switch (port & 0xC1)
+  {
+    case 0x00:
+    case 0x01:
+    {
+      io_z80_write(port & 1, data, mcycles_z80 + SMS_CYCLE_OFFSET);
+      return;
+    }
+
+    case 0x40:
+    case 0x41:
+    {
+      psg_write(mcycles_z80, data);
+      return;
+    }
+
+    case 0x80:
+    {
+      vdp_z80_data_w(data);
+      return;
+    }
+
+    case 0x81:
+    {
+      vdp_sms_ctrl_w(data);
+      return;
+    }
+
+    default:
+    {
+      if (!(port & 4) && (config.ym2413 & 1))
       {
-        return YM2413Read(port & 3); 
+        fm_write(mcycles_z80, port & 3, data);
+        return;
       }
 
+      z80_unused_port_w(port & 0xFF, data);
+      return;
+    }
+  }
+}
+
+unsigned char z80_ms_port_r(unsigned int port)
+{
+  switch (port & 0xC1)
+  {
+    case 0x00:
+    case 0x01:
+    {
+      return z80_unused_port_r(port & 0xFF);
+    }
+
+    case 0x40:
+    {
+      return ((vdp_hvc_r(mcycles_z80) >> 8) & 0xFF);
+    }
+
+    case 0x41:
+    {
+      return (vdp_hvc_r(mcycles_z80) & 0xFF);
+    }
+
+    case 0x80:
+    {
+      return vdp_z80_data_r();
+    }
+
+    case 0x81:
+    {
+      return vdp_z80_ctrl_r(mcycles_z80);
+    }
+
+    default:
+    {
+      /* read FM chip if enabled */
+      if (!(port & 4) && (config.ym2413 & 1))
+      {
+        /* check if I/O ports are disabled */
+        if (io_reg[0x0E] & 0x04)
+        {
+          return YM2413Read(port & 3);
+        }
+        else
+        {
+          return YM2413Read(port & 3) & io_z80_read(port & 1);
+        }
+      }
+
+      /* check if I/O ports are enabled */
+      if (!(io_reg[0x0E] & 0x04))
+      {
+        return io_z80_read(port & 1);
+      }
+
+      return z80_unused_port_r(port & 0xFF);
+    }
+  }
+}
+
+
+/*--------------------------------------------------------------------------*/
+/* Mark III port handlers                                                   */
+/*--------------------------------------------------------------------------*/
+
+void z80_m3_port_w(unsigned int port, unsigned char data)
+{
+  switch (port & 0xC1)
+  {
+    case 0x00:
+    case 0x01:
+    {
+      z80_unused_port_w(port, data);
+      return;
+    }
+
+    case 0x40:
+    case 0x41:
+    {
+      psg_write(mcycles_z80, data);
+      return;
+    }
+
+    case 0x80:
+    {
+      vdp_z80_data_w(data);
+      return;
+    }
+
+    case 0x81:
+    {
+      vdp_sms_ctrl_w(data);
+      return;
+    }
+
+    default:
+    {
+      if (!(port & 4) && (config.ym2413 & 1))
+      {
+        fm_write(mcycles_z80, port & 3, data);
+        return;
+      }
+
+      z80_unused_port_w(port & 0xFF, data);
+      return;
+    }
+  }
+}
+
+unsigned char z80_m3_port_r(unsigned int port)
+{
+  switch (port & 0xC1)
+  {
+    case 0x00:
+    case 0x01:
+    {
+      return z80_unused_port_r(port & 0xFF);
+    }
+
+    case 0x40:
+    {
+      return ((vdp_hvc_r(mcycles_z80) >> 8) & 0xFF);
+    }
+
+    case 0x41:
+    {
+      return (vdp_hvc_r(mcycles_z80) & 0xFF);
+    }
+
+    case 0x80:
+    {
+      return vdp_z80_data_r();
+    }
+
+    case 0x81:
+    {
+      return vdp_z80_ctrl_r(mcycles_z80);
+    }
+
+    default:
+    {
+      /* read FM chip if enabled */
+      if (!(port & 4) && (config.ym2413 & 1))
+      {
+        /* I/O ports are automatically disabled */
+        return YM2413Read(port & 3);
+      }
+
+      /* read I/O ports   */
+      return io_z80_read(port & 1);
+    }
+  }
+}
+
+
+/*--------------------------------------------------------------------------*/
+/* SG-1000 port handlers                                                     */
+/*--------------------------------------------------------------------------*/
+
+void z80_sg_port_w(unsigned int port, unsigned char data)
+{
+  switch(port & 0xC1)
+  {
+    case 0x40:
+    case 0x41:
+    {
+      psg_write(mcycles_z80, data);
+      return;
+    }
+
+    case 0x80:
+    {
+      vdp_z80_data_w(data);
+      return;
+    }
+
+    case 0x81:
+    {
+      vdp_tms_ctrl_w(data);
+      return;
+    }
+
+    default:
+    {
+      z80_unused_port_w(port & 0xFF, data);
+      return;
+    }
+  }
+}
+
+unsigned char z80_sg_port_r(unsigned int port)
+{
+  switch (port & 0xC1)
+  {
+    case 0x80:
+    {
+      return vdp_z80_data_r();
+    }
+
+    case 0x81:
+    {
+      return vdp_z80_ctrl_r(mcycles_z80);
+    }
+
+    case 0xC0:
+    case 0xC1:
+    {
+      return io_z80_read(port & 1);
+    }
+
+    default:
+    {
       return z80_unused_port_r(port);
     }
   }

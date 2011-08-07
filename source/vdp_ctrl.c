@@ -2,22 +2,40 @@
  *  Genesis Plus
  *  Video Display Processor (68k & Z80 CPU interface)
  *
+ *  Support for SG-1000, Master System (315-5124 & 315-5246), Game Gear & Mega Drive VDP
+ *
  *  Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003  Charles Mac Donald (original code)
- *  Eke-Eke (2007-2011), additional code & fixes for the GCN/Wii port
+ *  Copyright (C) 2007-2011  Eke-Eke (Genesis Plus GX)
  *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
+ *  Redistribution and use of this code or any derivative works are permitted
+ *  provided that the following conditions are met:
  *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
+ *   - Redistributions may not be sold, nor may they be used in a commercial
+ *     product or activity.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *   - Redistributions that are modified from the original source must include the
+ *     complete source code, including the source code for all components used by a
+ *     binary built from the modified sources. However, as a special exception, the
+ *     source code distributed need not include anything that is normally distributed
+ *     (in either source or binary form) with the major components (compiler, kernel,
+ *     and so on) of the operating system on which the executable runs, unless that
+ *     component itself accompanies the executable.
+ *
+ *   - Redistributions must reproduce the above copyright notice, this list of
+ *     conditions and the following disclaimer in the documentation and/or other
+ *     materials provided with the distribution.
+ *
+ *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ *  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ *  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ *  ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+ *  LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ *  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ *  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ *  CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ *  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ *  POSSIBILITY OF SUCH DAMAGE.
  *
  ****************************************************************************************/
 
@@ -43,7 +61,6 @@ uint8 vsram[0x80];    /* On-chip vertical scroll RAM (40 x 11-bit) */
 uint8 reg[0x20];      /* Internal VDP registers (23 x 8-bit) */
 uint8 hint_pending;   /* 0= Line interrupt is pending */
 uint8 vint_pending;   /* 1= Frame interrupt is pending */
-uint8 m68k_irq_state; /* 68K IRQ status */
 uint16 status;        /* VDP status flags */
 uint32 dma_length;    /* DMA remaining length */
 
@@ -61,7 +78,6 @@ uint8 hscroll_mask;               /* Horizontal Scrolling line mask */
 uint8 playfield_shift;            /* Width of planes A, B (in bits) */
 uint8 playfield_col_mask;         /* Playfield column mask */
 uint16 playfield_row_mask;        /* Playfield row mask */
-uint16 hscroll;                   /* Latched horizontal scroll value */
 uint16 vscroll;                   /* Latched vertical scroll value */
 uint8 odd_frame;                  /* 1: odd field, 0: even field */
 uint8 im2_flag;                   /* 1= Interlace mode 2 is being used */
@@ -98,9 +114,12 @@ static uint16 sat_base_mask;  /* Base bits of SAT */
 static uint16 sat_addr_mask;  /* Index bits of SAT */
 static uint32 dma_endCycles;  /* 68k cycles to DMA end */
 static uint32 fifo_latency;   /* CPU access latency */
-static int cached_write;      /* 2nd part of 32-bit CTRL port write */
+static int cached_write;      /* 2nd part of 32-bit CTRL port write (Genesis mode) or LSB of CRAM data (Game Gear mode) */
 static uint16 fifo[4];        /* FIFO buffer */
-static uint8 *irq_line;       /* Z80 or 68k interrupt lines */
+
+ /* set Z80 or 68k interrupt lines */
+static void (*set_irq_line)(unsigned int level);
+static void (*set_irq_line_delay)(unsigned int level);
 
 /* DMA Timings */
 static const uint8 dma_timing[2][2] =
@@ -133,6 +152,9 @@ static void vdp_z80_data_w_m4(unsigned int data);
 static void vdp_z80_data_w_m5(unsigned int data);
 static unsigned int vdp_z80_data_r_m4(void);
 static unsigned int vdp_z80_data_r_m5(void);
+static void vdp_z80_data_w_ms(unsigned int data);
+static void vdp_z80_data_w_gg(unsigned int data);
+static void vdp_z80_data_w_sg(unsigned int data);
 static void vdp_bus_w(unsigned int data);
 static void vdp_fifo_update(unsigned int cycles);
 static void vdp_reg_w(unsigned int r, unsigned int d, unsigned int cycles);
@@ -149,10 +171,27 @@ void vdp_init(void)
 {
   /* PAL/NTSC timings */
   lines_per_frame = vdp_pal ? 313: 262;
-  status = (status & ~1) | vdp_pal;
 
   /* CPU interrupt line(s)*/
-  irq_line = (system_hw == SYSTEM_PBC) ? &Z80.irq_state : &m68k_irq_state;
+  switch (system_hw)
+  {
+    case SYSTEM_MD:
+    case SYSTEM_PICO:
+    {
+      /* 68k cpu */
+      set_irq_line = m68k_set_irq;
+      set_irq_line_delay = m68k_set_irq_delay;
+      break;
+    }
+
+    default:
+    {
+      /* Z80 cpu */
+      set_irq_line = z80_set_irq_line;
+      set_irq_line_delay = z80_set_irq_line;
+      break;
+    }
+  }
 }
 
 void vdp_reset(void)
@@ -170,7 +209,6 @@ void vdp_reset(void)
   border          = 0;
   hint_pending    = 0;
   vint_pending    = 0;
-  m68k_irq_state  = 0;
   dmafill         = 0;
   dma_type        = 0;
   dma_length      = 0;
@@ -188,7 +226,6 @@ void vdp_reset(void)
   satb = 0;
   hscb = 0;
 
-  hscroll = 0;
   vscroll = 0;
 
   hscroll_mask        = 0x00;
@@ -217,7 +254,14 @@ void vdp_reset(void)
   fifo_latency = 214;
 
   /* reset VDP status (FIFO empty flag is set) */
-  status = vdp_pal | 0x200;
+  if (system_hw & SYSTEM_MD)
+  {
+    status = vdp_pal | 0x200;
+  }
+  else
+  {
+    status = 0;
+  }
 
   /* default display area */
   bitmap.viewport.w   = 256;
@@ -226,38 +270,112 @@ void vdp_reset(void)
   bitmap.viewport.oh  = 192;
 
   /* default overscan area */
-  bitmap.viewport.x = (config.overscan & 2) * 7;
-  bitmap.viewport.y = (config.overscan & 1) * 24 * (vdp_pal + 1);
+  if (system_hw == SYSTEM_GG)
+  {
+    /* Display area reduced to 160x144 if overscan is disabled */
+    bitmap.viewport.x = (config.overscan & 2) ? 14 : -48;
+    bitmap.viewport.y = (config.overscan & 1) ? (24 * (vdp_pal + 1)) : -24;
+  }
+  else
+  {
+    bitmap.viewport.x = (config.overscan & 2) * 7;
+    bitmap.viewport.y = (config.overscan & 1) * 24 * (vdp_pal + 1);
+  }
 
   /* default rendering mode */
-  render_bg = render_bg_m4;
-  render_obj = render_obj_m4;
-  parse_satb = parse_satb_m4;
   update_bg_pattern_cache = update_bg_pattern_cache_m4;
+  if (system_hw < SYSTEM_SMS)
+  {
+    /* Mode 0 */
+    render_bg = render_bg_m0;
+    render_obj = render_obj_tms;
+    parse_satb = parse_satb_tms;
+  }
+  else
+  {
+    /* Mode 4 */
+    render_bg = render_bg_m4;
+    render_obj = render_obj_m4;
+    parse_satb = parse_satb_m4;
+  }
 
-  /* reset palette */
+  /* default 68k bus access mode (Mode 4) */
+  vdp_68k_data_w = vdp_68k_data_w_m4;
+  vdp_68k_data_r = vdp_68k_data_r_m4;
+
+  /* default Z80 bus access mode */
+  switch (system_hw)
+  {
+    case SYSTEM_SG:
+    {
+      /* SG-1000 port access */
+      vdp_z80_data_w = vdp_z80_data_w_sg;
+      vdp_z80_data_r = vdp_z80_data_r_m4;
+      break;
+    }
+
+    case SYSTEM_GG:
+    {
+      /* Game Gear port access */
+      vdp_z80_data_w = vdp_z80_data_w_gg;
+      vdp_z80_data_r = vdp_z80_data_r_m4;
+      break;
+    }
+
+    case SYSTEM_MARKIII:
+    case SYSTEM_SMS:
+    case SYSTEM_SMS2:
+    case SYSTEM_GGMS:
+    {
+      /* Master System port access */
+      vdp_z80_data_w = vdp_z80_data_w_ms;
+      vdp_z80_data_r = vdp_z80_data_r_m4;
+      break;
+    }
+
+    default:
+    {
+      /* Genesis port access */
+      vdp_z80_data_w = vdp_z80_data_w_m4;
+      vdp_z80_data_r = vdp_z80_data_r_m4;
+      break;
+    }
+  }
+
+  if (system_hw == SYSTEM_SG)
+  {
+    /* disable H-INT */
+    vdp_reg_w(10, 0xFF, 0);
+  }
+  else if ((system_hw > SYSTEM_MARKIII) && (system_hw < SYSTEM_MD))
+  {
+    /* initialize registers normally set by Master System BIOS */
+    vdp_reg_w(0 , 0x36, 0);
+    vdp_reg_w(1 , 0x80, 0);
+    vdp_reg_w(2 , 0xFF, 0);
+    vdp_reg_w(3 , 0xFF, 0);
+    vdp_reg_w(4 , 0xFF, 0);
+    vdp_reg_w(5 , 0xFF, 0);
+    vdp_reg_w(6 , 0xFF, 0);
+    vdp_reg_w(10, 0xFF, 0);
+  }
+  else if ((system_hw != SYSTEM_PBC) && (config.tmss == 1))
+  {
+    /* initialize registers if BIOS is simulated */
+    vdp_reg_w(0 , 0x04, 0);
+    vdp_reg_w(1 , 0x04, 0);
+    vdp_reg_w(10, 0xFF, 0);
+    vdp_reg_w(12, 0x81, 0);
+    vdp_reg_w(15, 0x02, 0);
+  }
+
+  /* reset color palette */
   int i;
-  color_update(0x40, 0x00);
   for(i = 0; i < 0x20; i ++)
   {
-    color_update(i, 0x00);
+    color_update_m4(i, 0x00);
   }
-
-  /* default bus access mode */
-  vdp_68k_data_w = vdp_68k_data_w_m4;
-  vdp_z80_data_w = vdp_z80_data_w_m4;
-  vdp_68k_data_r = vdp_68k_data_r_m4;
-  vdp_z80_data_r = vdp_z80_data_r_m4;
-
-  /* initialize some registers if OS ROM is simulated */
-  if (config.tmss == 1)
-  {
-    vdp_reg_w(0 , 0x04, 0);  /* Palette bit set */
-    vdp_reg_w(1 , 0x04, 0);  /* Mode 5 enabled */
-    vdp_reg_w(10, 0xff, 0);  /* HINT disabled */
-    vdp_reg_w(12, 0x81, 0);  /* H40 mode */
-    vdp_reg_w(15, 0x02, 0);  /* auto increment */
-  }
+  color_update_m4(0x40, 0x00);
 }
 
 int vdp_context_save(uint8 *state)
@@ -277,15 +395,13 @@ int vdp_context_save(uint8 *state)
   save_param(&dmafill, sizeof(dmafill));
   save_param(&hint_pending, sizeof(hint_pending));
   save_param(&vint_pending, sizeof(vint_pending));
-  save_param(&m68k_irq_state, sizeof(m68k_irq_state));
   save_param(&dma_length, sizeof(dma_length));
   save_param(&dma_type, sizeof(dma_type));
   save_param(&cached_write, sizeof(cached_write));
-
   return bufferptr;
 }
 
-int vdp_context_load(uint8 *state)
+int vdp_context_load(uint8 *state, char *version)
 {
   int i, bufferptr = 0;
   uint8 temp_reg[0x20];
@@ -303,15 +419,55 @@ int vdp_context_load(uint8 *state)
   load_param(&dmafill, sizeof(dmafill));
   load_param(&hint_pending, sizeof(hint_pending));
   load_param(&vint_pending, sizeof(vint_pending));
-  load_param(&m68k_irq_state, sizeof(m68k_irq_state));
+  if ((version[11] <= 0x31) && (version[13] <= 0x35))
+  {
+    uint8 dummy;
+    load_param(&dummy, sizeof(dummy));
+  }
   load_param(&dma_length, sizeof(dma_length));
   load_param(&dma_type, sizeof(dma_type));
   load_param(&cached_write, sizeof(cached_write));
 
   /* restore VDP registers */
-  for (i=0;i<0x20;i++) 
+  if (system_hw < SYSTEM_MD)
   {
-    vdp_reg_w(i, temp_reg[i], 0);
+    /* save internal data */
+    uint8 old_pending = pending;  
+    uint8 old_code = code;
+    uint16 old_addr = addr;
+    uint16 old_addr_latch = addr_latch;
+
+    if (system_hw > SYSTEM_SG)
+    {
+      for (i=0;i<0x10;i++) 
+      {
+        pending = 1;
+        addr_latch = temp_reg[i];
+        vdp_sms_ctrl_w(0x80 | i);
+      }
+    }
+    else
+    {
+      for (i=0;i<0x08;i++) 
+      {
+        pending = 1;
+        addr_latch = temp_reg[i];
+        vdp_tms_ctrl_w(0x80 | i);
+      }
+    }
+
+    /* restore internal data */
+    pending = old_pending;  
+    code = old_code;
+    addr = old_addr;
+    addr_latch = old_addr_latch;
+  }
+  else
+  {
+    for (i=0;i<0x20;i++) 
+    {
+      vdp_reg_w(i, temp_reg[i], 0);
+    }
   }
 
   /* restore FIFO timings */
@@ -319,7 +475,10 @@ int vdp_context_load(uint8 *state)
   fifo_latency <<= ((code & 0x0F) == 0x01);
 
   /* restore current NTSC/PAL mode */
-  status = (status & ~1) | vdp_pal;
+  if (system_hw & SYSTEM_MD)
+  {
+    status = (status & ~1) | vdp_pal;
+  }
 
   if (reg[1] & 0x04)
   {
@@ -327,23 +486,23 @@ int vdp_context_load(uint8 *state)
     bg_list_index = 0x800;
 
     /* reinitialize palette */
-    color_update(0, *(uint16 *)&cram[border << 1]);
+    color_update_m5(0, *(uint16 *)&cram[border << 1]);
     for(i = 1; i < 0x40; i++)
     {
-      color_update(i, *(uint16 *)&cram[i << 1]);
+      color_update_m5(i, *(uint16 *)&cram[i << 1]);
     }
   }
   else
   {
-    /* Mode 4 */
+    /* Modes 0,1,2,3,4 */
     bg_list_index = 0x200;
 
     /* reinitialize palette */
-    color_update(0x40, *(uint16 *)&cram[(0x10 | (border & 0x0F)) << 1]);
     for(i = 0; i < 0x20; i ++)
     {
-      color_update(i, *(uint16 *)&cram[i << 1]);
+      color_update_m4(i, *(uint16 *)&cram[i << 1]);
     }
+    color_update_m4(0x40, *(uint16 *)&cram[(0x10 | (border & 0x0F)) << 1]);
   }
 
   /* invalidate cache */
@@ -352,7 +511,6 @@ int vdp_context_load(uint8 *state)
     bg_name_list[i]=i;
     bg_name_dirty[i]=0xFF;
   }
-
 
   return bufferptr;
 }
@@ -415,7 +573,7 @@ void vdp_dma_update(unsigned int cycles)
   int dma_bytes = (dma_cycles * rate) / MCYCLES_PER_LINE;
 
 #ifdef LOGVDP
-  error("[%d(%d)][%d(%d)] DMA type %d (%d access/line)(%d cycles left)-> %d access (%d remaining) (%x)\n", v_counter, mcycles_68k/MCYCLES_PER_LINE, mcycles_68k, mcycles_68k%MCYCLES_PER_LINE,dma_type/4, rate, dma_cycles, dma_bytes, dma_length, m68k_get_reg (NULL, M68K_REG_PC));
+  error("[%d(%d)][%d(%d)] DMA type %d (%d access/line)(%d cycles left)-> %d access (%d remaining) (%x)\n", v_counter, mcycles_68k/MCYCLES_PER_LINE, mcycles_68k, mcycles_68k%MCYCLES_PER_LINE,dma_type/4, rate, dma_cycles, dma_bytes, dma_length, m68k_get_reg(M68K_REG_PC));
 #endif
 
   /* Check if DMA can be finished before the end of current line */
@@ -627,6 +785,7 @@ void vdp_68k_ctrl_w(unsigned int data)
   fifo_latency <<= ((code & 0x0F) == 0x01);
 }
 
+/* Mega Drive VDP control port specific (MS compatibility mode) */
 void vdp_z80_ctrl_w(unsigned int data)
 {
   switch (pending)
@@ -650,7 +809,7 @@ void vdp_z80_ctrl_w(unsigned int data)
       if ((code & 0x03) == 0x02)
       {
         /* VDP register write */
-        vdp_reg_w(data & 0x1F, addr_latch, mcycles_z80 + Z80_CYCLE_OFFSET);
+        vdp_reg_w(data & 0x1F, addr_latch, mcycles_z80);
 
         /* Clear pending flag  */
         pending = 0;
@@ -739,8 +898,311 @@ void vdp_z80_ctrl_w(unsigned int data)
   }
 }
 
-unsigned int vdp_ctrl_r(unsigned int cycles)
+/* Master System & Game Gear VDP control port specific */
+void vdp_sms_ctrl_w(unsigned int data)
 {
+  if(pending == 0)
+  {
+    /* Update address register LSB */
+    addr = (addr & 0x3F00) | (data & 0xFF);
+
+    /* Latch LSB */
+    addr_latch = data;
+
+    /* Set LSB pending flag */
+    pending = 1;
+  }
+  else
+  {
+    /* Update address and code registers */
+    code = (data >> 6) & 3;
+    addr = (data << 8 | addr_latch) & 0x3FFF;
+
+    /* Clear pending flag  */
+    pending = 0;
+
+    if (code == 0)
+    {
+      /* Process VRAM read */
+      fifo[0] = vram[addr & 0x3FFF];
+
+      /* Increment address register */
+      addr = (addr + 1) & 0x3FFF;
+      return;
+    }
+
+    if (code == 2)
+    {
+      /* VDP register index (0-15) */
+      data &= 0x0F;
+
+      /* Save current VDP mode */
+      int prev = (reg[0] & 0x06) | (reg[1] & 0x18);
+
+      /* Write VDP register */
+      vdp_reg_w(data, addr_latch, mcycles_z80);
+
+      /* Check VDP mode changes */
+      int mode = (reg[0] & 0x06) | (reg[1] & 0x18);
+      prev ^= mode;
+ 
+      if (prev)
+      {
+        /* Check for extended modes */
+        if (system_hw > SYSTEM_SMS)
+        {
+          int height;
+
+          if (mode == 0x0E) /* M1=0,M2=1,M3=1,M4=1 */
+          {
+            /* Mode 4 extended (240 lines) */
+            height = 240;
+
+            /* Update vertical counter max value */
+            vc_max = vc_table[3][vdp_pal];
+          }
+          else if (mode == 0x16) /* M1=1,M2=1,M3=0,M4=1 */
+          {
+            /* Mode 4 extended (224 lines) */
+            height = 224;
+
+            /* Update vertical counter max value */
+            vc_max = vc_table[1][vdp_pal];
+          }
+          else
+          {
+            /* Mode 4 default (224 lines) */
+            height = 192;
+
+            /* Default vertical counter max value */
+            vc_max = vc_table[0][vdp_pal];
+          }
+
+          if (height != bitmap.viewport.h)
+          {
+            if (v_counter < bitmap.viewport.h)
+            {
+              /* update active display */
+              bitmap.viewport.h = height;
+
+              /* update vertical overscan */
+              if (config.overscan & 1)
+              {
+                bitmap.viewport.y = (240 + 48*vdp_pal - height) >> 1;
+              }
+              else
+              {
+                if (system_hw == SYSTEM_GG)
+                {
+                  /* Display area reduced to 160x144 */
+                  bitmap.viewport.y = (144 - height) / 2;
+                }
+                else
+                {
+                  bitmap.viewport.y = 0;
+                }
+              }
+            }
+            else
+            {
+              /* Changes should be applied on next frame */
+              bitmap.viewport.changed |= 2;
+            }
+          }
+        }
+
+        /* Rendering mode */
+        switch (mode)
+        {
+          case 0x00: /* Graphics I */
+          {
+            render_bg = render_bg_m0;
+            break;
+          }
+
+          case 0x10: /* Text */
+          {
+            render_bg = render_bg_m1;
+           break;
+          }
+
+          case 0x02: /* Graphics II */
+          {
+            render_bg = render_bg_m2;
+            break;
+          }
+
+          case 0x12: /* Text (Extended PG) */
+          {
+            render_bg = render_bg_m1x;
+            break;
+          }
+
+          case 0x08: /* Multicolor */
+          {
+            render_bg = render_bg_m3;
+            break;
+          }
+
+          case 0x18: /* Invalid (1+3) */
+          {
+            render_bg = render_bg_inv;
+            break;
+          }
+
+          case 0x0A: /* Multicolor (Extended PG) */
+          {
+            render_bg = render_bg_m3x;
+            break;
+          }
+
+          case 0x1A: /* Invalid (1+2+3) */
+          {
+            render_bg = render_bg_inv;
+           break;
+          }
+
+          default: /* Mode 4 */
+          {
+            render_bg = render_bg_m4;
+            break;
+          }
+        }
+
+        /* Mode switching */
+        if (prev & 0x04)
+        {
+          if (mode & 0x04)
+          {
+            /* Mode 4 sprites */
+            parse_satb = parse_satb_m4;
+            render_obj = render_obj_m4;
+
+            /* force BG cache update*/
+            bg_list_index = 0x200;
+          }
+          else
+          {
+            /* TMS-mode sprites */
+            parse_satb = parse_satb_tms;
+            render_obj = render_obj_tms;
+
+            /* BG cache is not used */
+            bg_list_index = 0;
+          }
+
+          /* reinitialize palette */
+          int i;
+          for(i = 0; i < 0x20; i ++)
+          {
+            color_update_m4(i, *(uint16 *)&cram[i << 1]);
+          }
+          color_update_m4(0x40, *(uint16 *)&cram[(0x10 | (border & 0x0F)) << 1]);
+        }
+      }
+    }
+  }
+}
+
+/* TMS9918 (SG-1000) VDP control port specific */
+void vdp_tms_ctrl_w(unsigned int data)
+{
+  if(pending == 0)
+  {
+    /* Latch LSB */
+    addr_latch = data;
+
+    /* Set LSB pending flag */
+    pending = 1;
+  }
+  else
+  {
+    /* Update address and code registers */
+    code = (data >> 6) & 3;
+    addr = (data << 8 | addr_latch) & 0x3FFF;
+
+    /* Clear pending flag  */
+    pending = 0;
+
+    if (code == 0)
+    {
+      /* Process VRAM read */
+      fifo[0] = vram[addr & 0x3FFF];
+
+      /* Increment address register */
+      addr = (addr + 1) & 0x3FFF;
+      return;
+    }
+
+    if (code & 2)
+    {
+      /* VDP register index (0-7) */
+      data &= 0x07;
+
+      /* Write VDP register */
+      vdp_reg_w(data, addr_latch, mcycles_z80);
+ 
+      /* Check VDP mode changes */
+      if (data < 2)
+      {
+        int mode = (reg[0] & 0x02) | (reg[1] & 0x18);
+
+        /* Rendering mode */
+        switch (mode)
+        {
+          case 0x00: /* Graphics I */
+          {
+            render_bg = render_bg_m0;
+            break;
+          }
+
+          case 0x10: /* Text */
+          {
+            render_bg = render_bg_m1;
+            break;
+          }
+
+          case 0x02: /* Graphics II */
+          {
+            render_bg = render_bg_m2;
+            break;
+          }
+
+          case 0x12: /* Text (Extended PG) */
+          {
+            render_bg = render_bg_m1x;
+            break;
+          }
+
+          case 0x08: /* Multicolor */
+          {
+            render_bg = render_bg_m3;
+            break;
+          }
+
+          case 0x18: /* Invalid (1+3) */
+          {
+            render_bg = render_bg_inv;
+            break;
+          }
+
+          case 0x0A: /* Multicolor (Extended PG) */
+          {
+            render_bg = render_bg_m3x;
+            break;
+          }
+
+          case 0x1A: /* Invalid (1+2+3) */
+          {
+            render_bg = render_bg_inv;
+            break;
+          }
+        }
+      }
+    }
+  }
+}
+
   /*
    * Status register
    *
@@ -757,6 +1219,8 @@ unsigned int vdp_ctrl_r(unsigned int cycles)
    * 9  Write FIFO empty
    * 10 - 15  Open Bus
    */
+unsigned int vdp_68k_ctrl_r(unsigned int cycles)
+{
 
   /* Update FIFO flags */
   vdp_fifo_update(cycles);
@@ -769,6 +1233,12 @@ unsigned int vdp_ctrl_r(unsigned int cycles)
 
   /* Return VDP status */
   unsigned int temp = status;
+
+  /* Clear pending flag */
+  pending = 0;
+
+  /* Clear SOVR & SCOL flags */
+  status &= 0xFF9F;
 
   /* Display OFF: VBLANK flag is set */
   if (!(reg[1] & 0x40))
@@ -783,35 +1253,104 @@ unsigned int vdp_ctrl_r(unsigned int cycles)
     temp |= 0x04;
   }
 
-  /* Clear pending flag */
-  pending = 0;
-
-  /* Clear SPR/SCOL flags */
-  status &= 0xFF9F;
-
-  /* Mode 4 specific */
-  if (!(reg[1] & 4))
-  {
-    /* Cycle-accurate VINT flag (required by some Master System games) */
-    if ((v_counter == bitmap.viewport.h) && ((cycles / MCYCLES_PER_LINE) > (v_counter + 1)))
-    {
-      temp |= 0x80;
-    }
-
-    /* Clear HINT & VINT pending flags */
-    hint_pending = vint_pending = 0;
-    *irq_line = 0x10;
-
-    /* Clear VINT flag */
-    status &= ~0x80;
-  }
-
 #ifdef LOGVDP
-  error("[%d(%d)][%d(%d)] VDP status read -> 0x%x (0x%x) (%x)\n", v_counter, cycles/MCYCLES_PER_LINE, cycles, cycles%MCYCLES_PER_LINE, temp, status, m68k_get_reg (NULL, M68K_REG_PC));
+  error("[%d(%d)][%d(%d)] VDP 68k status read -> 0x%x (0x%x) (%x)\n", v_counter, cycles/MCYCLES_PER_LINE-1, cycles, cycles%MCYCLES_PER_LINE, temp, status, m68k_get_reg(M68K_REG_PC));
 #endif
   return (temp);
 }
 
+unsigned int vdp_z80_ctrl_r(unsigned int cycles)
+{
+  /* Update DMA Busy flag (Mega Drive VDP specific) */
+  if ((system_hw & SYSTEM_MD) && (status & 2) && !dma_length && (cycles >= dma_endCycles))
+  {
+    status &= 0xFD;
+  }
+
+  /* Cycle-accurate SOVR & VINT flags */
+  int line = (lines_per_frame + (mcycles_z80 / MCYCLES_PER_LINE) - 1) % lines_per_frame;
+
+  /* Check if we are already on next line */
+  if (line > v_counter)
+  {
+    v_counter = line;
+    if (line == (bitmap.viewport.h + 1))
+    {
+      /* set VINT flag (immediately cleared after) */
+      status |= 0x80;
+    }
+    else if ((line >= 0) && (line < bitmap.viewport.h) && !(work_ram[0x1ffb] & cart.special))
+    {
+      /* Check sprites overflow & collision */
+      render_line(line);
+    }
+  }
+
+  /* Return VDP status */
+  unsigned int temp = status;
+
+  /* Clear pending flag */
+  pending = 0;
+
+  /* Clear VINT, SOVR & SCOL flags */
+  status &= 0xFF1F;
+
+  /* Mega Drive VDP specific */
+  if (system_hw & SYSTEM_MD)
+  {
+    /* Display OFF: VBLANK flag is set */
+    if (!(reg[1] & 0x40))
+    {
+      temp |= 0x08;
+    }
+
+    /* HBLANK flag */
+    if ((cycles % MCYCLES_PER_LINE) < 588)
+    {
+      temp |= 0x04;
+    }
+  }
+  else if (reg[0] & 0x04)
+  {
+    /* Mode 4 unused bits (fixes PGA Tour Golf) */
+    temp |= 0x1F;
+  }
+
+  /* Cycle-accurate SCOL flag */
+  if ((temp & 0x20) && (line == (spr_col >> 8)))
+  {
+    if (system_hw & SYSTEM_MD)
+    {
+      /* COL flag is set at HCount 0xFF on MD */
+      if ((cycles % MCYCLES_PER_LINE) < 105)
+      {
+        status |= 0x20;
+        temp &= ~0x20;
+      }
+    }
+    else
+    {
+      /* COL flag is set at the pixel it occurs */
+      uint8 hc = hctab[(cycles + SMS_CYCLE_OFFSET + 15) % MCYCLES_PER_LINE];
+      if ((hc < (spr_col & 0xff)) || (hc > 0xf3))
+      {
+        status |= 0x20;
+        temp &= ~0x20;
+      }
+    }
+  }
+
+  /* Clear HINT & VINT pending flags */
+  hint_pending = vint_pending = 0;
+
+  /* Clear Z80 interrupt */
+  Z80.irq_state = CLEAR_LINE;
+
+#ifdef LOGVDP
+  error("[%d(%d)][%d(%d)] VDP Z80 status read -> 0x%x (0x%x) (%x)\n", v_counter, cycles/MCYCLES_PER_LINE-1, cycles, cycles%MCYCLES_PER_LINE, temp, status, Z80.pc.w.l);
+#endif
+  return (temp);
+}
 
 /*--------------------------------------------------------------------------*/
 /* HV Counters                                                              */
@@ -851,7 +1390,7 @@ unsigned int vdp_hvc_r(unsigned int cycles)
   {
     if (reg[1] & 4)
     {
-      /* Mode5: both counters are frozen (Lightgun games, Sunset Riders) */
+      /* Mode 5: both counters are frozen (Lightgun games, Sunset Riders) */
       temp = hvc_latch & 0xffff;
     }
     else
@@ -862,7 +1401,7 @@ unsigned int vdp_hvc_r(unsigned int cycles)
   }
 
 #ifdef LOGVDP
-  error("[%d(%d)][%d(%d)] HVC read -> 0x%x (%x)\n", v_counter, cycles/MCYCLES_PER_LINE, cycles, cycles%MCYCLES_PER_LINE, temp, m68k_get_reg (NULL, M68K_REG_PC));
+  error("[%d(%d)][%d(%d)] HVC read -> 0x%x (%x)\n", v_counter, (cycles/MCYCLES_PER_LINE-1)%lines_per_frame, cycles, cycles%MCYCLES_PER_LINE, temp, m68k_get_reg(M68K_REG_PC));
 #endif
   return (temp);
 }
@@ -875,7 +1414,7 @@ unsigned int vdp_hvc_r(unsigned int cycles)
 void vdp_test_w(unsigned int data)
 {
 #ifdef LOGERROR
-  error("Unused VDP Write 0x%x (%08x)\n", data, m68k_get_reg (NULL, M68K_REG_PC));
+  error("Unused VDP Write 0x%x (%08x)\n", data, m68k_get_reg(M68K_REG_PC));
 #endif
 }
 
@@ -887,11 +1426,11 @@ void vdp_test_w(unsigned int data)
 int vdp_68k_irq_ack(int int_level)
 {
 #ifdef LOGVDP
-  error("[%d(%d)][%d(%d)] INT Level %d ack (%x)\n", v_counter, mcycles_68k/MCYCLES_PER_LINE, mcycles_68k, mcycles_68k%MCYCLES_PER_LINE,int_level, m68k_get_reg (NULL, M68K_REG_PC));
+  error("[%d(%d)][%d(%d)] INT Level %d ack (%x)\n", v_counter, mcycles_68k/MCYCLES_PER_LINE-1, mcycles_68k, mcycles_68k%MCYCLES_PER_LINE,int_level, m68k_get_reg(M68K_REG_PC));
 #endif
 
-  /* VINT has higher priority */
-  if ((m68k_irq_state & 6) == 6)
+  /* VINT has higher priority (Fatal Rewind) */
+  if (vint_pending & reg[1])
   {
 #ifdef LOGVDP
     error("---> VINT cleared\n");
@@ -904,11 +1443,10 @@ int vdp_68k_irq_ack(int int_level)
     /* Update IRQ status */
     if (hint_pending & reg[0])
     {
-      m68k_irq_state = 0x14;
+      m68k_set_irq(4);
     }
     else
     {
-      m68k_irq_state = 0;
       m68k_set_irq(0);
     }
   }
@@ -922,15 +1460,7 @@ int vdp_68k_irq_ack(int int_level)
     hint_pending = 0;
 
     /* Update IRQ status */
-    if (vint_pending & reg[1])
-    {
-      m68k_irq_state = 0x16;
-    }
-    else
-    {
-      m68k_irq_state = 0;
-      m68k_set_irq(0);
-    }
+    m68k_set_irq(0);
   }
 
   return M68K_INT_ACK_AUTOVECTOR;
@@ -938,13 +1468,13 @@ int vdp_68k_irq_ack(int int_level)
 
 
 /*--------------------------------------------------------------------------*/
-/* Internal registers access function                                       */
+/* VDP registers update function                                            */
 /*--------------------------------------------------------------------------*/
 
 static void vdp_reg_w(unsigned int r, unsigned int d, unsigned int cycles)
 {
 #ifdef LOGVDP
-  error("[%d(%d)][%d(%d)] VDP register %d write -> 0x%x (%x)\n", v_counter, cycles/MCYCLES_PER_LINE, cycles, cycles%MCYCLES_PER_LINE, r, d, m68k_get_reg (NULL, M68K_REG_PC));
+  error("[%d(%d)][%d(%d)] VDP register %d write -> 0x%x (%x)\n", v_counter, cycles/MCYCLES_PER_LINE-1, cycles, cycles%MCYCLES_PER_LINE, r, d, m68k_get_reg(M68K_REG_PC));
 #endif
 
   /* VDP registers #11 to #23 cannot be updated in Mode 4 (Captain Planet & Avengers, Bass Master Classic Pro Edition) */
@@ -965,39 +1495,45 @@ static void vdp_reg_w(unsigned int r, unsigned int d, unsigned int cycles)
       if ((r & 0x10) && hint_pending)
       {
         /* Update IRQ status */
-        *irq_line = 0x30;
-
         if (vint_pending & reg[1])
         {
-          *irq_line |= 0x06;
+          set_irq_line(6);
         }
         else if (d & 0x10)
         {
-          *irq_line |= 0x04;
+          set_irq_line_delay(4);
+        }
+        else
+        {
+          set_irq_line(0);
         }
       }
 
       /* Palette selection */
       if (r & 0x04)
       {
-        /* Reset color palette */
-        int i;
-        if (reg[1] & 0x04)
+        /* Mega Drive VDP only */
+        if (system_hw & SYSTEM_MD)
         {
-          /* Mode 5 */
-          color_update(0x00, *(uint16 *)&cram[border << 1]);
-          for (i = 1; i < 0x40; i++)
+          /* Reset color palette */
+          int i;
+          if (reg[1] & 0x04)
           {
-            color_update (i, *(uint16 *)&cram[i << 1]);
+            /* Mode 5 */
+            color_update_m5(0x00, *(uint16 *)&cram[border << 1]);
+            for (i = 1; i < 0x40; i++)
+            {
+              color_update_m5(i, *(uint16 *)&cram[i << 1]);
+            }
           }
-        }
-        else
-        {
-          /* Mode 4 */
-          color_update(0x40, *(uint16 *)&cram[(0x10 | (border & 0x0F)) << 1]);
-          for (i = 0; i < 0x20; i++)
+          else
           {
-            color_update (i, *(uint16 *)&cram[i << 1]);
+            /* Mode 4 */
+            for (i = 0; i < 0x20; i++)
+            {
+              color_update_m4(i, *(uint16 *)&cram[i << 1]);
+            }
+            color_update_m4(0x40, *(uint16 *)&cram[(0x10 | (border & 0x0F)) << 1]);
           }
         }
       }
@@ -1005,18 +1541,22 @@ static void vdp_reg_w(unsigned int r, unsigned int d, unsigned int cycles)
       /* HVC latch (Sunset Riders, Lightgun games) */
       if (r & 0x02)
       {
-        /* Mode 5 only */
-        if (reg[1] & 0x04)
+        /* Mega Drive VDP only */
+        if (system_hw & SYSTEM_MD)
         {
-          if (d & 0x02)
+          /* Mode 5 only */
+          if (reg[1] & 0x04)
           {
-            /* Latch current HVC */
-            hvc_latch = vdp_hvc_r(cycles) | 0x10000;
-          }
-          else
-          {
-            /* Free-running HVC */
-            hvc_latch = 0;
+            if (d & 0x02)
+            {
+              /* Latch current HVC */
+              hvc_latch = vdp_hvc_r(cycles) | 0x10000;
+            }
+            else
+            {
+              /* Free-running HVC */
+              hvc_latch = 0;
+            }
           }
         }
       }
@@ -1049,7 +1589,7 @@ static void vdp_reg_w(unsigned int r, unsigned int d, unsigned int cycles)
           error("Line redrawn (%d sprites) \n",object_count);
 #endif
         }
-        else
+        else if (system_hw & SYSTEM_MD)
         {
           /* Active pixel offset  */
           if (reg[12] & 1)
@@ -1086,149 +1626,164 @@ static void vdp_reg_w(unsigned int r, unsigned int d, unsigned int cycles)
       if ((r & 0x20) && vint_pending)
       {
         /* Update IRQ status */
-        *irq_line = 0x30;
-
         if (d & 0x20) 
         {
-          *irq_line |= 0x06;
+          set_irq_line_delay(6);
         }
         else if (hint_pending & reg[0])
         {
-          *irq_line |= 0x04;
+          set_irq_line(4);
+        }
+        else
+        {
+          set_irq_line(0);
         }
       }
 
-      /* Active display height (Mode 5 only) */
+      /* Active display height */
       if (r & 0x08)
       {
-        /* Mode 5 only */
-        if (d & 0x04)
+        /* Mega Drive VDP only */
+        if (system_hw & SYSTEM_MD)
         {
-          if (v_counter < bitmap.viewport.h)
+          /* Mode 5 only */
+          if (d & 0x04)
           {
-            /* Update active display height */
-            bitmap.viewport.h = 224 + ((d & 8) << 1);
-            bitmap.viewport.y = (config.overscan & 1) * (8 - (d & 8) + 24*vdp_pal);
+            if (v_counter < bitmap.viewport.h)
+            {
+              /* Update active display height */
+              bitmap.viewport.h = 224 + ((d & 8) << 1);
+              bitmap.viewport.y = (config.overscan & 1) * (8 - (d & 8) + 24*vdp_pal);
+            }
+            else
+            {
+              /* Changes should be applied on next frame */
+              bitmap.viewport.changed |= 2;
+            }
+
+            /* Update vertical counter max value */
+            vc_max = vc_table[(d >> 2) & 3][vdp_pal];
+          }
+        }
+      }
+
+      /* Rendering mode */
+      if (r & 0x04)
+      {
+        /* Mega Drive VDP only */
+        if (system_hw & SYSTEM_MD)
+        {
+          int i;
+          if (d & 0x04)
+          {
+            /* Mode 5 rendering */
+            parse_satb = parse_satb_m5;
+            update_bg_pattern_cache = update_bg_pattern_cache_m5;
+            if (im2_flag)
+            {
+              render_bg = (reg[11] & 0x04) ? render_bg_m5_im2_vs : render_bg_m5_im2;
+              render_obj = (reg[12] & 0x08) ? render_obj_m5_im2_ste : render_obj_m5_im2;
+            }
+            else
+            {
+              render_bg = (reg[11] & 0x04) ? render_bg_m5_vs : render_bg_m5;
+              render_obj = (reg[12] & 0x08) ? render_obj_m5_ste : render_obj_m5;
+            }
+
+            /* Reset color palette */
+            color_update_m5(0x00, *(uint16 *)&cram[border << 1]);
+            for (i = 1; i < 0x40; i++)
+            {
+              color_update_m5(i, *(uint16 *)&cram[i << 1]);
+            }
+
+            /* Mode 5 bus access */
+            vdp_68k_data_w = vdp_68k_data_w_m5;
+            vdp_z80_data_w = vdp_z80_data_w_m5;
+            vdp_68k_data_r = vdp_68k_data_r_m5;
+            vdp_z80_data_r = vdp_z80_data_r_m5;
+
+            /* Change display height */
+            if (v_counter < bitmap.viewport.h)
+            {
+              /* Update active display */
+              bitmap.viewport.h = 224 + ((d & 8) << 1);
+              bitmap.viewport.y = (config.overscan & 1) * (8 - (d & 8) + 24*vdp_pal);
+            }
+            else
+            {
+              /* Changes should be applied on next frame */
+              bitmap.viewport.changed |= 2;
+            }
+
+            /* Clear HVC latched value */
+            hvc_latch = 0;
+
+            /* Check if HVC latch bit is set */
+            if (reg[0] & 0x02)
+            {
+              /* Latch current HVC */
+              hvc_latch = vdp_hvc_r(cycles) | 0x10000;
+            }
+
+            /* max tiles to invalidate */
+            bg_list_index = 0x800;
           }
           else
           {
-            /* Changes should be applied on next frame */
-            bitmap.viewport.changed |= 2;
+            /* Mode 4 rendering */
+            parse_satb = parse_satb_m4;
+            update_bg_pattern_cache = update_bg_pattern_cache_m4;
+            render_bg = render_bg_m4;
+            render_obj = render_obj_m4;
+
+            /* Reset color palette */
+            for (i = 0; i < 0x20; i++)
+            {
+              color_update_m4(i, *(uint16 *)&cram[i << 1]);
+            }
+            color_update_m4(0x40, *(uint16 *)&cram[(0x10 | (border & 0x0F)) << 1]);
+
+            /* Mode 4 bus access */
+            vdp_68k_data_w = vdp_68k_data_w_m4;
+            vdp_z80_data_w = vdp_z80_data_w_m4;
+            vdp_68k_data_r = vdp_68k_data_r_m4;
+            vdp_z80_data_r = vdp_z80_data_r_m4;
+
+            if (v_counter < bitmap.viewport.h)
+            {
+              /* Update active display height */
+              bitmap.viewport.h = 192;
+              bitmap.viewport.y = (config.overscan & 1) * 24 * (vdp_pal + 1);
+            }
+            else
+            {
+              /* Changes should be applied on next frame */
+              bitmap.viewport.changed |= 2;
+            }
+
+            /* Latch current HVC */
+            hvc_latch = vdp_hvc_r(cycles) | 0x10000;
+
+            /* max tiles to invalidate */
+            bg_list_index = 0x200;
+          }
+
+          /* Invalidate pattern cache */
+          for (i=0;i<bg_list_index;i++) 
+          {
+            bg_name_list[i] = i;
+            bg_name_dirty[i] = 0xFF;
           }
 
           /* Update vertical counter max value */
           vc_max = vc_table[(d >> 2) & 3][vdp_pal];
         }
-      }
-
-      /* VDP Mode switch */
-      if (r & 0x04)
-      {
-        int i;
-        if (d & 0x04)
-        {
-          /* Mode 5 rendering */
-          parse_satb = parse_satb_m5;
-          update_bg_pattern_cache = update_bg_pattern_cache_m5;
-          if (im2_flag)
-          {
-            render_bg = (reg[11] & 0x04) ? render_bg_m5_im2_vs : render_bg_m5_im2;
-            render_obj = (reg[12] & 0x08) ? render_obj_m5_im2_ste : render_obj_m5_im2;
-          }
-          else
-          {
-            render_bg = (reg[11] & 0x04) ? render_bg_m5_vs : render_bg_m5;
-            render_obj = (reg[12] & 0x08) ? render_obj_m5_ste : render_obj_m5;
-          }
-
-          /* Reset color palette */
-          color_update(0x00, *(uint16 *)&cram[border << 1]);
-          for (i = 1; i < 0x40; i++)
-          {
-            color_update (i, *(uint16 *)&cram[i << 1]);
-          }
-
-          /* Mode 5 bus access */
-          vdp_68k_data_w = vdp_68k_data_w_m5;
-          vdp_z80_data_w = vdp_z80_data_w_m5;
-          vdp_68k_data_r = vdp_68k_data_r_m5;
-          vdp_z80_data_r = vdp_z80_data_r_m5;
-
-          /* Change display height */
-          if (v_counter < bitmap.viewport.h)
-          {
-            /* Update active display */
-            bitmap.viewport.h = 224 + ((d & 8) << 1);
-            bitmap.viewport.y = (config.overscan & 1) * (8 - (d & 8) + 24*vdp_pal);
-          }
-          else
-          {
-            /* Changes should be applied on next frame */
-            bitmap.viewport.changed |= 2;
-          }
-
-          /* Clear HVC latched value */
-          hvc_latch = 0;
-
-          /* Check if HVC latch bit is set */
-          if (reg[0] & 0x02)
-          {
-            /* Latch current HVC */
-            hvc_latch = vdp_hvc_r(cycles) | 0x10000;
-          }
-
-          /* max tiles to invalidate */
-          bg_list_index = 0x800;
-        }
         else
         {
-          /* Mode 4 rendering */
-          parse_satb = parse_satb_m4;
-          update_bg_pattern_cache = update_bg_pattern_cache_m4;
-          render_bg = render_bg_m4;
-          render_obj = render_obj_m4;
-
-          /* Reset color palette */
-          color_update(0x40, *(uint16 *)&cram[(0x10 | (border & 0x0F)) << 1]);
-          for (i = 0; i < 0x20; i++)
-          {
-            color_update (i, *(uint16 *)&cram[i << 1]);
-          }
-
-          /* Mode 4 bus access */
-          vdp_68k_data_w = vdp_68k_data_w_m4;
-          vdp_z80_data_w = vdp_z80_data_w_m4;
-          vdp_68k_data_r = vdp_68k_data_r_m4;
-          vdp_z80_data_r = vdp_z80_data_r_m4;
-
-          if (v_counter < bitmap.viewport.h)
-          {
-            /* Update active display height */
-            bitmap.viewport.h = 192;
-            bitmap.viewport.y = (config.overscan & 1) * 24 * (vdp_pal + 1);
-          }
-          else
-          {
-            /* Changes should be applied on next frame */
-            bitmap.viewport.changed |= 2;
-          }
-
-          /* Latch current HVC */
-          hvc_latch = vdp_hvc_r(cycles) | 0x10000;
-
-          /* max tiles to invalidate */
-          bg_list_index = 0x200;
+          /* No effect (cleared to avoid mode 5 detection elsewhere) */
+          reg[1] &= ~0x04;
         }
-
-        /* Invalidate pattern cache */
-        for (i=0;i<bg_list_index;i++) 
-        {
-          bg_name_list[i] = i;
-          bg_name_dirty[i] = 0xFF;
-        }
-
-        /* Update vertical counter max value */
-        vc_max = vc_table[(d >> 2) & 3][vdp_pal];
       }
       break;
     }
@@ -1284,12 +1839,12 @@ static void vdp_reg_w(unsigned int r, unsigned int d, unsigned int cycles)
         if (reg[1] & 4)
         {
           /* Mode 5 */
-          color_update(0x00, *(uint16 *)&cram[d << 1]);
+          color_update_m5(0x00, *(uint16 *)&cram[d << 1]);
         }
         else
         {
           /* Mode 4 */
-          color_update(0x40, *(uint16 *)&cram[(0x10 | (d & 0x0F)) << 1]);
+          color_update_m4(0x40, *(uint16 *)&cram[(0x10 | (d & 0x0F)) << 1]);
         }
 
         /* Backdrop color modified during HBLANK (Road Rash 1,2,3)*/
@@ -1313,18 +1868,25 @@ static void vdp_reg_w(unsigned int r, unsigned int d, unsigned int cycles)
       break;
     }
 
-    case 8:   /* HSCROLL (Mode 4) */
+    case 8:   /* Horizontal Scroll (Mode 4 only) */
     {
-      reg[8] = d;
-
-      /* HScroll is latched at the start of a line */
-      /* so make sure we are not already next line */
-      if ((cycles - Z80_CYCLE_OFFSET) < (mcycles_vdp + MCYCLES_PER_LINE - 4))
+      /* Hscroll is latched at HCount 0xF3, HCount 0xF6 on MD */
+      /* Line starts at HCount 0xF4, HCount 0xF6 on MD */
+      if (system_hw < SYSTEM_MD)
       {
-        /* Update Hscroll data for next line */
-        hscroll = d;
+        cycles = cycles + 15;
       }
-      break;      
+
+      /* Make sure Hscroll has not already been latched */
+      int line = (lines_per_frame + (cycles / MCYCLES_PER_LINE) - 1) % lines_per_frame;
+      if ((line > v_counter) && (line < bitmap.viewport.h) && !(work_ram[0x1ffb] & cart.special))
+      {
+        v_counter = line;
+        render_line(line);
+      }
+
+      reg[8] = d;
+      break;
     }
 
     case 11:  /* CTRL #3 */
@@ -1357,10 +1919,10 @@ static void vdp_reg_w(unsigned int r, unsigned int d, unsigned int cycles)
       {
         /* Reset color palette */
         int i;
-        color_update(0x00, *(uint16 *)&cram[border << 1]);
+        color_update_m5(0x00, *(uint16 *)&cram[border << 1]);
         for (i = 1; i < 0x40; i++)
         {
-          color_update (i, *(uint16 *)&cram[i << 1]);
+          color_update_m5(i, *(uint16 *)&cram[i << 1]);
         }
 
         /* Update sprite rendering function */
@@ -1475,7 +2037,7 @@ static void vdp_reg_w(unsigned int r, unsigned int d, unsigned int cycles)
 
 
 /*--------------------------------------------------------------------------*/
-/* FIFO update function                                                     */
+/* FIFO update function (Genesis mode only)                                 */
 /*--------------------------------------------------------------------------*/
 
 static void vdp_fifo_update(unsigned int cycles)
@@ -1520,7 +2082,7 @@ static void vdp_bus_w(unsigned int data)
     case 0x01:  /* VRAM */
     {
 #ifdef LOGVDP
-      error("[%d(%d)][%d(%d)] VRAM 0x%x write -> 0x%x (%x)\n", v_counter, mcycles_68k/MCYCLES_PER_LINE, mcycles_68k, mcycles_68k%MCYCLES_PER_LINE, addr, data, m68k_get_reg (NULL, M68K_REG_PC));
+      error("[%d(%d)][%d(%d)] VRAM 0x%x write -> 0x%x (%x)\n", v_counter, mcycles_68k/MCYCLES_PER_LINE-1, mcycles_68k, mcycles_68k%MCYCLES_PER_LINE, addr, data, m68k_get_reg(M68K_REG_PC));
 #endif
       /* Byte-swap data if A0 is set */
       if (addr & 1)
@@ -1557,7 +2119,7 @@ static void vdp_bus_w(unsigned int data)
     case 0x03:  /* CRAM */
     {
 #ifdef LOGVDP
-      error("[%d(%d)][%d(%d)] CRAM 0x%x write -> 0x%x (%x)\n", v_counter, mcycles_68k/MCYCLES_PER_LINE, mcycles_68k, mcycles_68k%MCYCLES_PER_LINE, addr, data, m68k_get_reg (NULL, M68K_REG_PC));
+      error("[%d(%d)][%d(%d)] CRAM 0x%x write -> 0x%x (%x)\n", v_counter, mcycles_68k/MCYCLES_PER_LINE-1, mcycles_68k, mcycles_68k%MCYCLES_PER_LINE, addr, data, m68k_get_reg(M68K_REG_PC));
 #endif
       /* Pointer to CRAM 9-bit word */
       uint16 *p = (uint16 *)&cram[addr & 0x7E];
@@ -1578,13 +2140,13 @@ static void vdp_bus_w(unsigned int data)
         if (index & 0x0F)
         {
           /* Update color palette */
-          color_update(index, data);
+          color_update_m5(index, data);
         }
 
         /* Update backdrop color */
         if (index == border)
         {
-          color_update(0x00, data);
+          color_update_m5(0x00, data);
         }
 
         /* CRAM modified during HBLANK (Striker, Zero the Kamikaze, etc) */
@@ -1606,7 +2168,7 @@ static void vdp_bus_w(unsigned int data)
     case 0x05:  /* VSRAM */
     {
 #ifdef LOGVDP
-      error("[%d(%d)][%d(%d)] VSRAM 0x%x write -> 0x%x (%x)\n", v_counter, mcycles_68k/MCYCLES_PER_LINE, mcycles_68k, mcycles_68k%MCYCLES_PER_LINE, addr, data, m68k_get_reg (NULL, M68K_REG_PC));
+      error("[%d(%d)][%d(%d)] VSRAM 0x%x write -> 0x%x (%x)\n", v_counter, mcycles_68k/MCYCLES_PER_LINE-1, mcycles_68k, mcycles_68k%MCYCLES_PER_LINE, addr, data, m68k_get_reg(M68K_REG_PC));
 #endif
       *(uint16 *)&vsram[addr & 0x7E] = data;
       break;
@@ -1615,7 +2177,7 @@ static void vdp_bus_w(unsigned int data)
 #ifdef LOGERROR
     default:
     {
-      error("[%d(%d)][%d(%d)] Unknown (%d) 0x%x write -> 0x%x (%x)\n", v_counter, mcycles_68k/MCYCLES_PER_LINE, mcycles_68k, mcycles_68k%MCYCLES_PER_LINE, code, addr, data, m68k_get_reg (NULL, M68K_REG_PC));
+      error("[%d(%d)][%d(%d)] Unknown (%d) 0x%x write -> 0x%x (%x)\n", v_counter, mcycles_68k/MCYCLES_PER_LINE-1, mcycles_68k, mcycles_68k%MCYCLES_PER_LINE, code, addr, data, m68k_get_reg(M68K_REG_PC));
       break;
     }
 #endif
@@ -1634,6 +2196,32 @@ static void vdp_68k_data_w_m4(unsigned int data)
 {
   /* Clear pending flag */
   pending = 0;
+
+  /* Restricted VDP writes during active display */
+  if (!(status & 8) && (reg[1] & 0x40))
+  {
+    /* Update VDP FIFO */
+    vdp_fifo_update(mcycles_68k);
+
+    /* Clear FIFO empty flag */
+    status &= 0xFDFF;
+
+    /* 4 words can be stored */
+    if (fifo_write_cnt < 4)
+    {
+      /* Increment FIFO counter */
+      fifo_write_cnt++;
+
+      /* Set FIFO full flag if 4 words are stored */
+      status |= ((fifo_write_cnt & 4) << 6);
+    }
+    else
+    {
+      /* CPU is locked until last FIFO entry has been processed (Chaos Engine, Soldiers of Fortune, Double Clutch) */
+      fifo_lastwrite += fifo_latency;
+      mcycles_68k = fifo_lastwrite;
+    }
+  }
 
   /* Check destination code */
   if (code & 0x02)
@@ -1654,12 +2242,12 @@ static void vdp_68k_data_w_m4(unsigned int data)
       *p = data;
 
       /* Update color palette */
-      color_update(index, data);
+      color_update_m4(index, data);
 
       /* Update backdrop color */
       if (index == (0x10 | (border & 0x0F)))
       {
-        color_update(0x40, data);
+        color_update_m4(0x40, data);
       }
     }
   }
@@ -1778,7 +2366,7 @@ static unsigned int vdp_68k_data_r_m5(void)
       data = *(uint16 *)&vram[addr & 0xFFFE];
 
 #ifdef LOGVDP
-      error("[%d(%d)][%d(%d)] VRAM 0x%x read -> 0x%x (%x)\n", v_counter, mcycles_68k/MCYCLES_PER_LINE, mcycles_68k, mcycles_68k%MCYCLES_PER_LINE, addr, data, m68k_get_reg (NULL, M68K_REG_PC));
+      error("[%d(%d)][%d(%d)] VRAM 0x%x read -> 0x%x (%x)\n", v_counter, mcycles_68k/MCYCLES_PER_LINE-1, mcycles_68k, mcycles_68k%MCYCLES_PER_LINE, addr, data, m68k_get_reg(M68K_REG_PC));
 #endif
       break;
     }
@@ -1789,7 +2377,7 @@ static unsigned int vdp_68k_data_r_m5(void)
       data = *(uint16 *)&vsram[addr & 0x7E];
 
 #ifdef LOGVDP
-      error("[%d(%d)][%d(%d)] VSRAM 0x%x read -> 0x%x (%x)\n", v_counter, mcycles_68k/MCYCLES_PER_LINE, mcycles_68k, mcycles_68k%MCYCLES_PER_LINE, addr, data, m68k_get_reg (NULL, M68K_REG_PC));
+      error("[%d(%d)][%d(%d)] VSRAM 0x%x read -> 0x%x (%x)\n", v_counter, mcycles_68k/MCYCLES_PER_LINE-1, mcycles_68k, mcycles_68k%MCYCLES_PER_LINE, addr, data, m68k_get_reg(M68K_REG_PC));
 #endif
       break;
     }
@@ -1803,7 +2391,7 @@ static unsigned int vdp_68k_data_r_m5(void)
       data = ((data & 0x1C0) << 3) | ((data & 0x038) << 2) | ((data & 0x007) << 1);
 
 #ifdef LOGVDP
-      error("[%d(%d)][%d(%d)] CRAM 0x%x read -> 0x%x (%x)\n", v_counter, mcycles_68k/MCYCLES_PER_LINE, mcycles_68k, mcycles_68k%MCYCLES_PER_LINE, addr, data, m68k_get_reg (NULL, M68K_REG_PC));
+      error("[%d(%d)][%d(%d)] CRAM 0x%x read -> 0x%x (%x)\n", v_counter, mcycles_68k/MCYCLES_PER_LINE-1, mcycles_68k, mcycles_68k%MCYCLES_PER_LINE, addr, data, m68k_get_reg(M68K_REG_PC));
 #endif
       break;
     }
@@ -1812,7 +2400,7 @@ static unsigned int vdp_68k_data_r_m5(void)
     {
       /* Invalid code value */
 #ifdef LOGERROR
-      error("[%d(%d)][%d(%d)] Invalid (%d) 0x%x read (%x)\n", v_counter, mcycles_68k/MCYCLES_PER_LINE, mcycles_68k, mcycles_68k%MCYCLES_PER_LINE, code, addr, m68k_get_reg (NULL, M68K_REG_PC));
+      error("[%d(%d)][%d(%d)] Invalid (%d) 0x%x read (%x)\n", v_counter, mcycles_68k/MCYCLES_PER_LINE-1, mcycles_68k, mcycles_68k%MCYCLES_PER_LINE, code, addr, m68k_get_reg(M68K_REG_PC));
 #endif
       break;
     }
@@ -1827,7 +2415,7 @@ static unsigned int vdp_68k_data_r_m5(void)
 
 
 /*--------------------------------------------------------------------------*/
-/* Z80 data port access functions (MS compatibilty mode)                    */
+/* Z80 data port access functions (Master System compatibilty mode)         */
 /*--------------------------------------------------------------------------*/
 
 static void vdp_z80_data_w_m4(unsigned int data)
@@ -1841,7 +2429,7 @@ static void vdp_z80_data_w_m4(unsigned int data)
     /* CRAM index (32 words) */
     int index = addr & 0x1F;
 
-    /* Pointer to CRAM 9-bit word */
+    /* Pointer to CRAM word */
     uint16 *p = (uint16 *)&cram[index << 1];
 
     /* Check if CRAM data is being modified */
@@ -1851,12 +2439,12 @@ static void vdp_z80_data_w_m4(unsigned int data)
       *p = data;
 
       /* Update color palette */
-      color_update(index, data);
+      color_update_m4(index, data);
 
       /* Update backdrop color */
       if (index == (0x10 | (border & 0x0F)))
       {
-        color_update(0x40, data);
+        color_update_m4(0x40, data);
       }
     }
   }
@@ -1873,7 +2461,7 @@ static void vdp_z80_data_w_m4(unsigned int data)
 
       /* Update pattern cache */
       int name;
-      MARK_BG_DIRTY (index);
+      MARK_BG_DIRTY(index);
     }
   }
 
@@ -1916,7 +2504,7 @@ static void vdp_z80_data_w_m5(unsigned int data)
 
     case 0x03:  /* CRAM */
     {
-      /* Pointer to CRAM 9-bit word */
+      /* Pointer to CRAM word */
       uint16 *p = (uint16 *)&cram[addr & 0x7E];
 
       /* Pack 8-bit value into 9-bit CRAM data */
@@ -1944,13 +2532,13 @@ static void vdp_z80_data_w_m5(unsigned int data)
         if (index & 0x0F)
         {
           /* Update color palette */
-          color_update(index, data);
+          color_update_m5(index, data);
         }
 
         /* Update backdrop color */
         if (index == border)
         {
-          color_update(0x00, data);
+          color_update_m5(0x00, data);
         }
       }
       break;
@@ -1999,7 +2587,7 @@ static unsigned int vdp_z80_data_r_m4(void)
   /* Process next read */
   fifo[0] = vram[addr & 0x3FFF];
 
-  /* Increment address register */
+  /* Increment address register (register #15 can only be set in Mode 5) */
   addr += (reg[15] + 1);
 
   /* Return data */
@@ -2048,13 +2636,176 @@ static unsigned int vdp_z80_data_r_m5(void)
     }
   }
 
-  /* Increment address register (TODO: see how address is incremented in Mode 5) */
+  /* Increment address register */
   addr += reg[15];
 
   /* Return data */
   return data;
 }
 
+
+/*-----------------------------------------------------------------------------*/
+/* VDP specific data port access functions (Master System, Game Gear, SG-1000) */
+/*-----------------------------------------------------------------------------*/
+
+static void vdp_z80_data_w_ms(unsigned int data)
+{
+  /* Clear pending flag */
+  pending = 0;
+
+  if (code < 3)
+  {
+    /* check if we are already on next line */
+    int line = (lines_per_frame + (mcycles_z80 / MCYCLES_PER_LINE) - 1) % lines_per_frame;
+    if ((line > v_counter) && (line < bitmap.viewport.h) && !(work_ram[0x1ffb] & cart.special))
+    {
+      v_counter = line;
+      render_line(line);
+    }
+
+    /* VRAM address */
+    int index = addr & 0x3FFF;
+
+#ifdef LOGVDP
+    error("[%d(%d)][%d(%d)] VRAM 0x%x write -> 0x%x (%x)\n", v_counter, mcycles_z80/MCYCLES_PER_LINE-1, mcycles_z80, mcycles_z80%MCYCLES_PER_LINE, index, data, Z80.pc.w.l);
+#endif
+
+    /* VRAM write */
+    if(data != vram[index])
+    {
+      int name;
+      vram[index] = data;
+      MARK_BG_DIRTY(index);
+    }
+  }
+  else
+  {
+#ifdef LOGVDP
+      error("[%d(%d)][%d(%d)] CRAM 0x%x write -> 0x%x (%x)\n", v_counter, mcycles_z80/MCYCLES_PER_LINE-1, mcycles_z80, mcycles_z80%MCYCLES_PER_LINE, addr, data, Z80.pc.w.l);
+#endif
+    /* CRAM address */
+    int index = addr & 0x1F;
+
+    /* Pointer to CRAM word */
+    uint16 *p = (uint16 *)&cram[index << 1];
+
+    /* Check if CRAM data is being modified */
+    if (data != *p)
+    {
+      /* Write CRAM data */
+      *p = data;
+
+      /* Update color palette */
+      color_update_m4(index, data);
+
+      /* Update backdrop color */
+      if (index == (0x10 | (border & 0x0F)))
+      {
+        color_update_m4(0x40, data);
+      }
+    }
+  }
+
+  /* Update read buffer */
+  fifo[0] = data;
+
+  /* Update address register */
+  addr++;
+}
+
+static void vdp_z80_data_w_gg(unsigned int data)
+{
+  /* Clear pending flag */
+  pending = 0;
+
+  if (code < 3)
+  {
+    /* check if we are already on next line*/
+    int line = (lines_per_frame + (mcycles_z80 / MCYCLES_PER_LINE) - 1) % lines_per_frame;
+    if ((line > v_counter) && (line < bitmap.viewport.h) && !(work_ram[0x1ffb] & cart.special))
+    {
+      v_counter = line;
+      render_line(line);
+    }
+
+    /* VRAM address */
+    int index = addr & 0x3FFF;
+
+#ifdef LOGVDP
+      error("[%d(%d)][%d(%d)] VRAM 0x%x write -> 0x%x (%x)\n", v_counter, mcycles_z80/MCYCLES_PER_LINE-1, mcycles_z80, mcycles_z80%MCYCLES_PER_LINE, index, data, Z80.pc.w.l);
+#endif
+
+    /* VRAM write */
+    if(data != vram[index])
+    {
+      int name;
+      vram[index] = data;
+      MARK_BG_DIRTY(index);
+    }
+  }
+  else
+  {
+    if(addr & 1)
+    {
+      /* 12-bit data word */
+      data = (data << 8) | cached_write;
+
+      /* Pointer to CRAM word */
+      uint16 *p = (uint16 *)&cram[addr & 0x3E];
+
+      /* Check if CRAM data is being modified */
+      if (data != *p)
+      {
+        /* Write CRAM data */
+        *p = data;
+
+        /* Color index (0-31) */
+        int index = (addr >> 1) & 0x1F;
+
+        /* Update color palette */
+        color_update_m4(index, data);
+
+        /* Update backdrop color */
+        if (index == (0x10 | (border & 0x0F)))
+        {
+          color_update_m4(0x40, data);
+        }
+      }
+    }
+    else
+    {
+      /* Latch LSB */
+      cached_write = data;
+    }
+  }
+
+  /* Update read buffer */
+  fifo[0] = data;
+
+  /* Update address register */
+  addr++;
+}
+
+static void vdp_z80_data_w_sg(unsigned int data)
+{
+  /* Clear pending flag */
+  pending = 0;
+
+  /* VRAM address */
+  int index = addr & 0x3FFF;
+
+  /* 4K address decoding (cf. tms9918a.txt) */
+  if (!(reg[1] & 0x80))
+  {
+    index = (index & 0x203F) | ((index >> 6) & 0x40) | ((index << 1) & 0x1F80);
+  }
+
+  /* VRAM write */
+  vram[index] = data;
+
+  /* Update address register */
+  addr++;
+}
 
 /*--------------------------------------------------------------------------*/
 /* DMA operations                                                           */

@@ -1,6 +1,19 @@
+/* Finite impulse response (FIR) resampler with adjustable FIR size */
+
 /* Game_Music_Emu 0.5.2. http://www.slack.net/~ant/ */
-/* Copyright (C) 2004-2006 Shay Green. */
-/* C Conversion by Eke-Eke for use in Genesis Plus (2009). */
+
+/* Copyright (C) 2004-2006 Shay Green. This module is free software; you
+can redistribute it and/or modify it under the terms of the GNU Lesser
+General Public License as published by the Free Software Foundation; either
+version 2.1 of the License, or (at your option) any later version. This
+module is distributed in the hope that it will be useful, but WITHOUT ANY
+WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+details. You should have received a copy of the GNU Lesser General Public
+License along with this module; if not, write to the Free Software Foundation,
+Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA */
+
+/* C Conversion by Eke-Eke for use in Genesis Plus GX (2009). */
 
 #include "Fir_Resampler.h"
 #include "shared.h"
@@ -34,7 +47,7 @@ static void gen_sinc(double rolloff, int width, double offset, double spacing, d
 
   double angle = (count / 2 - 1 + offset) * -fstep;
 
-  while ( count-- )
+  do
   {
     *out++ = 0;
     w = angle * to_w;
@@ -51,6 +64,7 @@ static void gen_sinc(double rolloff, int width, double offset, double spacing, d
     }
     angle += fstep;
   }
+  while(--count);
 }
 
 /*static int available( long input_count )
@@ -149,10 +163,6 @@ double Fir_Resampler_time_ratio( double new_factor, double rolloff )
   double pos = 0.0;
   res = -1;
 
-#ifdef NGC
-  u32 level = IRQ_Disable();
-#endif
-
   for ( r = 1; r <= MAX_RES; r++ )
   {
     pos += ratio;
@@ -194,10 +204,6 @@ double Fir_Resampler_time_ratio( double new_factor, double rolloff )
       input_per_cycle++;
     }
   }
-
-#ifdef NGC
-  IRQ_Restore(level);
-#endif
 
   Fir_Resampler_clear();
 

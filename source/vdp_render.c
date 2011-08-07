@@ -1,23 +1,41 @@
 /***************************************************************************************
  *  Genesis Plus
- *  Video Display Processor (Mode 4 & Mode 5 rendering)
+ *  Video Display Processor (Modes 0, 1, 2, 3, 4 & 5 rendering)
+ *
+ *  Support for SG-1000, Master System (315-5124 & 315-5246), Game Gear & Mega Drive VDP
  *
  *  Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003  Charles Mac Donald (original code)
- *  Eke-Eke (2007-2011), additional code & fixes for the GCN/Wii port
+ *  Copyright (C) 2007-2011  Eke-Eke (Genesis Plus GX)
  *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
+ *  Redistribution and use of this code or any derivative works are permitted
+ *  provided that the following conditions are met:
  *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
+ *   - Redistributions may not be sold, nor may they be used in a commercial
+ *     product or activity.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *   - Redistributions that are modified from the original source must include the
+ *     complete source code, including the source code for all components used by a
+ *     binary built from the modified sources. However, as a special exception, the
+ *     source code distributed need not include anything that is normally distributed
+ *     (in either source or binary form) with the major components (compiler, kernel,
+ *     and so on) of the operating system on which the executable runs, unless that
+ *     component itself accompanies the executable.
+ *
+ *   - Redistributions must reproduce the above copyright notice, this list of
+ *     conditions and the following disclaimer in the documentation and/or other
+ *     materials provided with the distribution.
+ *
+ *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ *  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ *  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ *  ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+ *  LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ *  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ *  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ *  CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ *  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ *  POSSIBILITY OF SUCH DAMAGE.
  *
  ****************************************************************************************/
 
@@ -389,8 +407,45 @@ static __inline__ void WRITE_LONG(void *address, uint32 data)
     { \
       temp |= (lb[i] << 8); \
       lb[i] = TABLE[temp | ATTR]; \
-      if (temp & 0x8000) \
+      status |= ((temp & 0x8000) >> 10); \
+    } \
+  }
+
+#define DRAW_SPRITE_TILE_ACCURATE(WIDTH,ATTR,TABLE)  \
+  for (i=0;i<WIDTH;i++) \
+  { \
+    temp = *src++; \
+    if (temp & 0x0f) \
+    { \
+      temp |= (lb[i] << 8); \
+      lb[i] = TABLE[temp | ATTR]; \
+      if ((temp & 0x8000) && !(status & 0x20)) \
       { \
+        spr_col = (v_counter << 8) | ((xpos + i + 13) >> 1); \
+        status |= 0x20; \
+      } \
+    } \
+  }
+
+#define DRAW_SPRITE_TILE_ACCURATE_2X(WIDTH,ATTR,TABLE)  \
+  for (i=0;i<WIDTH;i+=2) \
+  { \
+    temp = *src++; \
+    if (temp & 0x0f) \
+    { \
+      temp |= (lb[i] << 8); \
+      lb[i] = TABLE[temp | ATTR]; \
+      if ((temp & 0x8000) && !(status & 0x20)) \
+      { \
+        spr_col = (v_counter << 8) | ((xpos + i + 13) >> 1); \
+        status |= 0x20; \
+      } \
+      temp &= 0x00FF; \
+      temp |= (lb[i+1] << 8); \
+      lb[i+1] = TABLE[temp | ATTR]; \
+      if ((temp & 0x8000) && !(status & 0x20)) \
+      { \
+        spr_col = (v_counter << 8) | ((xpos + i + 1 + 13) >> 1); \
         status |= 0x20; \
       } \
     } \
@@ -400,14 +455,21 @@ static __inline__ void WRITE_LONG(void *address, uint32 data)
 /* Pixel conversion macros */
 /* 4-bit color channels are either compressed to 2/3-bit or dithered to 5/6/8-bit equivalents */
 /* 3:3:2 RGB */
-#define MAKE_PIXEL_8(r,g,b)  (((r) >> 1) << 5 | ((g) >> 1) << 2 | (b) >> 2)
-/* 5:5:5 RGB */
-#define MAKE_PIXEL_15(r,g,b) ((r) << 11 | ((r) >> 3) << 10 | (g) << 6 | ((g) >> 3) << 5 | (b) << 1 | (b) >> 3)
-/* 5:6:5 RGB */
-#define MAKE_PIXEL_16(r,g,b) ((r) << 12 | ((r) >> 3) << 11 | (g) << 7 | ((g) >> 2) << 5 | (b) << 1 | (b) >> 3)
-/* 8:8:8 RGB */
-#define MAKE_PIXEL_32(r,g,b) ((r) << 20 | (r) << 16 | (g) << 12 | (g)  << 8 | (b) << 4 | (b))
+#if defined(USE_8BPP_RENDERING)
+#define MAKE_PIXEL(r,g,b)  (((r) >> 1) << 5 | ((g) >> 1) << 2 | (b) >> 2)
 
+/* 5:5:5 RGB */
+#elif defined(USE_15BPP_RENDERING)
+#define MAKE_PIXEL(r,g,b) ((r) << 11 | ((r) >> 3) << 10 | (g) << 6 | ((g) >> 3) << 5 | (b) << 1 | (b) >> 3)
+
+/* 5:6:5 RGB */
+#elif defined(USE_16BPP_RENDERING)
+#define MAKE_PIXEL(r,g,b) ((r) << 12 | ((r) >> 3) << 11 | (g) << 7 | ((g) >> 2) << 5 | (b) << 1 | (b) >> 3)
+
+/* 8:8:8 RGB */
+#elif defined(USE_32BPP_RENDERING)
+#define MAKE_PIXEL(r,g,b) ((r) << 20 | (r) << 16 | (g) << 12 | (g)  << 8 | (b) << 4 | (b))
+#endif
 
 /* Window & Plane A clipping */
 static struct clip_t
@@ -430,6 +492,53 @@ static const uint32 atex_table[] =
   0x70707070
 };
 
+/* fixed Master System palette for Modes 0,1,2,3 */
+static const uint8 tms_crom[16] =
+{
+  0x00, 0x00, 0x08, 0x0C,
+  0x10, 0x30, 0x01, 0x3C,
+  0x02, 0x03, 0x05, 0x0F,
+  0x04, 0x33, 0x15, 0x3F
+};
+
+/* original SG-1000 palette */
+#if defined(USE_8BPP_RENDERING)
+static const uint8 tms_palette[16] =
+{
+  0x00, 0x00, 0x39, 0x79,
+  0x4B, 0x6F, 0xC9, 0x5B,
+  0xE9, 0xED, 0xD5, 0xD9,
+  0x35, 0xCE, 0xDA, 0xFF
+};
+
+#elif defined(USE_15BPP_RENDERING)
+static const uint16 tms_palette[16] =
+{
+  0x0000, 0x0000, 0x1308, 0x2F6F,
+  0x295D, 0x3DDF, 0x6949, 0x23BE,
+  0x7D4A, 0x7DEF, 0x6B0A, 0x7330,
+  0x12A7, 0x6177, 0x6739, 0x7FFF
+};
+
+#elif defined(USE_16BPP_RENDERING)
+static const uint16 tms_palette[16] =
+{
+  0x0000, 0x0000, 0x2648, 0x5ECF,
+  0x52BD, 0x7BBE, 0xD289, 0x475E,
+  0xF2AA, 0xFBCF, 0xD60A, 0xE670,
+  0x2567, 0xC2F7, 0xCE59, 0xFFFF
+};
+
+#elif defined(USE_32BPP_RENDERING)
+static const uint32 tms_palette[16] =
+{
+  0x000000, 0x000000, 0x21C842, 0x5EDC78,
+  0x5455ED, 0x7D76FC, 0xD4524D, 0x42EBF5,
+  0xFC5554, 0xFF7978, 0xD4C154, 0xE6CE80,
+  0x21B03B, 0xC95BB4, 0xCCCCCC, 0xFFFFFF
+};
+#endif
+
 /* Sprite pattern name offset look-up table (Mode 5) */
 static uint8 name_lut[0x400];
 
@@ -439,35 +548,36 @@ static uint32 bp_lut[0x10000];
 /* Layer priority pixel look-up tables */
 static uint8 lut[LUT_MAX][LUT_SIZE];
 
-#ifdef NGC
-/* 16-bit pixel color mapping */
+/* 8-bit pixel color mapping */
+#if defined(USE_8BPP_RENDERING)
+static uint8 pixel[0x100];
+static uint8 pixel_lut[3][0x200];
+static uint8 pixel_lut_m4[0x40];
+
+/* 15-bit pixel color mapping */
+#elif defined(USE_15BPP_RENDERING)
 static uint16 pixel[0x100];
 static uint16 pixel_lut[3][0x200];
 static uint16 pixel_lut_m4[0x40];
-#else
-/* 8-bit pixel color mapping */
-static uint8 pixel_8[0x100];
-static uint8 pixel_8_lut[3][0x200];
-static uint8 pixel_8_lut_m4[0x40];
-/* 15-bit pixel color mapping */
-static uint16 pixel_15[0x100];
-static uint16 pixel_15_lut[3][0x200];
-static uint16 pixel_15_lut_m4[0x40];
+
 /* 16-bit pixel color mapping */
-static uint16 pixel_16[0x100];
-static uint16 pixel_16_lut[3][0x200];
-static uint16 pixel_16_lut_m4[0x40];
+#elif defined(USE_16BPP_RENDERING)
+static uint16 pixel[0x100];
+static uint16 pixel_lut[3][0x200];
+static uint16 pixel_lut_m4[0x40];
+
 /* 32-bit pixel color mapping */
-static uint32 pixel_32[0x100];
-static uint32 pixel_32_lut[3][0x200];
-static uint32 pixel_32_lut_m4[0x40];
+#elif defined(USE_32BPP_RENDERING)
+static uint32 pixel[0x100];
+static uint32 pixel_lut[3][0x200];
+static uint32 pixel_lut_m4[0x40];
 #endif
 
 /* Background & Sprite line buffers */
 static uint8 linebuf[2][0x200];
 
 /* Sprite limit flag */
-static int spr_over = 0;
+static uint8 spr_ovr;
 
 /* Sprites parsing */
 static struct 
@@ -478,17 +588,17 @@ static struct
   uint16 size;
 } object_info[20];
 
+/* Sprite Counter */
 uint8 object_count;
+
+/* Sprite Collision Info */
+uint16 spr_col;
 
 /* Function pointers */
 void (*render_bg)(int line, int width);
 void (*render_obj)(int max_width);
 void (*parse_satb)(int line);
 void (*update_bg_pattern_cache)(int index);
-
-#ifndef NGC
-void (*color_update)(int index, unsigned int data);
-#endif
 
 
 /*--------------------------------------------------------------------------*/
@@ -812,11 +922,13 @@ static uint32 make_lut_bgobj_m4(uint32 bx, uint32 sx)
   int s  = (sx & 0x0F);
   int sf = (s | 0x10); /* force palette bit */
 
+  /* Transparent sprite pixel */
   if(s == 0) return bx;
 
   /* Previous sprite has higher priority */
   if(bs) return bx;
 
+  /* note: priority bit is always 0 for Modes 0,1,2,3 */
   int c = (bp ? (b ? bf : sf) : sf);
 
   return (c | 0x80);
@@ -837,42 +949,6 @@ static inline void merge(uint8 *srca, uint8 *srcb, uint8 *dst, uint8 *table, int
 }
 
 
-#ifndef NGC
-
-/*--------------------------------------------------------------------------*/
-/* Pixel color mapping functions                                            */
-/*--------------------------------------------------------------------------*/
-
-static inline void remap_8(uint8 *src, uint8 *dst, int length)
-{
-  do
-  {
-    *dst++ = pixel_8[*src++];
-  }
-  while (--length);
-}
-
-static inline void remap_16(uint8 *src, uint16 *dst, int length)
-{
-  do
-  {
-    *dst++ = pixel_16[*src++];
-  }
-  while (--length);
-}
-
-static inline void remap_32(uint8 *src, uint32 *dst, int length)
-{
-  do
-  {
-    *dst++ = pixel_32[*src++];
-  }
-  while (--length);
-}
-
-#endif
-
-
 /*--------------------------------------------------------------------------*/
 /* Pixel color lookup tables initialization                                 */
 /*--------------------------------------------------------------------------*/
@@ -891,69 +967,35 @@ static void palette_init(void)
   /*    shadow   : 0xxx     (0-7)                 */
   /*    highlight: 1xxx - 1 (7-14)                */
   /*    mode4    : xx00 ?   (0-12)                */
+  /*    GG mode  : xxxx     (0-16)                */
   /*                                              */
-  /* with x = original 2-bit or 3-bit CRAM value  */
+  /* with x = original CRAM value (2, 3 or 4-bit) */
   /************************************************/
 
   /* Initialize Mode 5 pixel color look-up tables */
   for (i = 0; i < 0x200; i++)
   {
-    /* CRAM value in mode 5 (BBBGGGRRR) */
+    /* CRAM 9-bit value (BBBGGGRRR) */
     r = (i >> 0) & 7;
     g = (i >> 3) & 7;
     b = (i >> 6) & 7;
 
     /* Convert to output pixel format */
-#ifdef NGC
-    /* 5:6:5 RGB */
-    pixel_lut[0][i] = MAKE_PIXEL_16(r,g,b);
-    pixel_lut[1][i] = MAKE_PIXEL_16(r<<1,g<<1,b<<1);
-    pixel_lut[2][i] = MAKE_PIXEL_16(r+7,g+7,b+7);
-#else
-    /* 3:3:2 RGB */
-    pixel_8_lut[0][i] = MAKE_PIXEL_8(r,g,b);
-    pixel_8_lut[1][i] = MAKE_PIXEL_8(r<<1,g<<1,b<<1);
-    pixel_8_lut[2][i] = MAKE_PIXEL_8(r+7,g+7,b+7);
-
-    /* 5:5:5 RGB */
-    pixel_15_lut[0][i] = MAKE_PIXEL_15(r,g,b);
-    pixel_15_lut[1][i] = MAKE_PIXEL_15(r<<1,g<<1,b<<1);
-    pixel_15_lut[2][i] = MAKE_PIXEL_15(r+7,g+7,b+7);
-
-    /* 5:6:5 RGB */
-    pixel_16_lut[0][i] = MAKE_PIXEL_16(r,g,b);
-    pixel_16_lut[1][i] = MAKE_PIXEL_16(r<<1,g<<1,b<<1);
-    pixel_16_lut[2][i] = MAKE_PIXEL_16(r+7,g+7,b+7);
-
-    /* 8:8:8 RGB */
-    pixel_32_lut[0][i] = MAKE_PIXEL_32(r,g,b);
-    pixel_32_lut[1][i] = MAKE_PIXEL_32(r<<1,g<<1,b<<1);
-    pixel_32_lut[2][i] = MAKE_PIXEL_32(r+7,g+7,b+7);
-#endif
+    pixel_lut[0][i] = MAKE_PIXEL(r,g,b);
+    pixel_lut[1][i] = MAKE_PIXEL(r<<1,g<<1,b<<1);
+    pixel_lut[2][i] = MAKE_PIXEL(r+7,g+7,b+7);
   }
 
   /* Initialize Mode 4 pixel color look-up table */
   for (i = 0; i < 0x40; i++)
   {
-    /* CRAM value in mode 4 (000BBGGRR) */
+    /* CRAM 6-bit value (000BBGGRR) */
     r = (i >> 0) & 3;
     g = (i >> 2) & 3;
     b = (i >> 4) & 3;
 
     /* Convert to output pixel format (expand to 4-bit for brighter colors ?) */
-#ifdef NGC
-    /* 5:6:5 RGB */
-    pixel_lut_m4[i] = MAKE_PIXEL_16(r << 2,g << 2,b<< 2);
-#else
-    /* 3:3:2 RGB */
-    pixel_8_lut_m4[i] = MAKE_PIXEL_8(r << 2,g << 2,b<< 2);
-    /* 5:5:5 RGB */
-    pixel_15_lut_m4[i] = MAKE_PIXEL_15(r << 2,g << 2,b<< 2);
-    /* 5:6:5 RGB */
-    pixel_16_lut_m4[i] = MAKE_PIXEL_16(r << 2,g << 2,b<< 2);
-    /* 8:8:8 RGB */
-    pixel_32_lut_m4[i] = MAKE_PIXEL_32(r << 2,g << 2,b<< 2);
-#endif
+    pixel_lut_m4[i] = MAKE_PIXEL(r << 2,g << 2,b<< 2);
   }
 }
 
@@ -962,300 +1004,429 @@ static void palette_init(void)
 /* Color palette update functions                                           */
 /*--------------------------------------------------------------------------*/
 
-#ifndef NGC
-
-static void color_update_8(int index, unsigned int data)
+void color_update_m4(int index, unsigned int data)
 {
-  /* Mode 5 */
-  if (reg[1] & 4)
+  switch (system_hw)
   {
-    /* VDP Palette Selection bit */
-    if (!(reg[0] & 4))
+    case SYSTEM_GG:
     {
-      /* Color value is limited to 00X00X00X */
-      data &= 0x49;
+      /* CRAM value (BBBBGGGGRRRR) */
+      int r = (data >> 0) & 0x0F;
+      int g = (data >> 4) & 0x0F;
+      int b = (data >> 8) & 0x0F;
+
+      /* Convert to output pixel */
+      data = MAKE_PIXEL(r,g,b);
+      break;
     }
 
-    if(reg[12] & 8)
+    case SYSTEM_SG:
     {
-      /* Mode 5 (Shadow/Normal/Highlight) */
-      pixel_8[0x00 | index] = pixel_8_lut[0][data];
-      pixel_8[0x40 | index] = pixel_8_lut[1][data];
-      pixel_8[0x80 | index] = pixel_8_lut[2][data];
-    }
-    else
-    {
-      /* Mode 5 (Normal) */
-      data = pixel_8_lut[1][data];
-
-      /* Output pixel: xxiiiiii */
-      pixel_8[0x00 | index] = data;
-      pixel_8[0x40 | index] = data;
-      pixel_8[0x80 | index] = data;
-    }
-  }
-  else
-  {
-    /* Test M4 bit */
-    if (reg[0] & 4)
-    {
-      /* Mode 4 */
-      data = pixel_8_lut_m4[data & 0x3F];
-    }
-    else
-    {
-      /* Invalid Mode (black screen) */
-      data = 0x00;
+      /* Fixed TMS9918 palette */
+      if (index & 0x0F)
+      {
+        /* Colors 1-15 */
+        data = tms_palette[index & 0x0F];
+      }
+      else
+      {
+        /* Backdrop color */
+        data = tms_palette[reg[7] & 0x0F];
+      }
+      break;
     }
 
-    /* Output pixel: x0xiiiii */
-    /* Backdrop pixel: 01000000 */
-    pixel_8[0x00 | index] = data;
-    pixel_8[0x20 | index] = data;
-    pixel_8[0x80 | index] = data;
-    pixel_8[0xA0 | index] = data;
-  }
-}
+    default:
+    {
+      /* Test M4 bit */
+      if (!(reg[0] & 0x04))
+      {
+        if (system_hw & SYSTEM_MD)
+        {
+          /* Invalid Mode (black screen) */
+          data = 0x00;
+        }
+        else if (system_hw != SYSTEM_GGMS)
+        {
+          /* Fixed CRAM palette */
+          if (index & 0x0F)
+          {
+            /* Colors 1-15 */
+            data = tms_crom[index & 0x0F];
+          }
+          else
+          {
+            /* Backdrop color */
+            data = tms_crom[reg[7] & 0x0F];
+          }
+        }
+      }
 
-static void color_update_15(int index, unsigned int data)
-{
-  /* Mode 5 */
-  if (reg[1] & 4)
-  {
-    /* VDP Palette Selection bit */
-    if (!(reg[0] & 4))
-    {
-      /* Color value is limited to 00X00X00X */
-      data &= 0x49;
-    }
-
-    if(reg[12] & 8)
-    {
-      /* Mode 5 (Shadow/Normal/Highlight) */
-      pixel_15[0x00 | index] = pixel_15_lut[0][data];
-      pixel_15[0x40 | index] = pixel_15_lut[1][data];
-      pixel_15[0x80 | index] = pixel_15_lut[2][data];
-    }
-    else
-    {
-      /* Mode 5 (Normal) */
-      data = pixel_15_lut[1][data];
-
-      /* Output pixel: xxiiiiii */
-      pixel_15[0x00 | index] = data;
-      pixel_15[0x40 | index] = data;
-      pixel_15[0x80 | index] = data;
-    }
-  }
-  else
-  {
-    /* Test M4 bit */
-    if (reg[0] & 4)
-    {
-      /* Mode 4 */
-      data = pixel_15_lut_m4[data & 0x3F];
-    }
-    else
-    {
-      /* Invalid Mode (black screen) */
-      data = 0x00;
-    }
-
-    /* Output pixel: x0xiiiii */
-    /* Backdrop pixel: 01000000 */
-    pixel_15[0x00 | index] = data;
-    pixel_15[0x20 | index] = data;
-    pixel_15[0x80 | index] = data;
-    pixel_15[0xA0 | index] = data;
-  }
-}
-
-static void color_update_16(int index, unsigned int data)
-{
-  /* Mode 5 */
-  if (reg[1] & 4)
-  {
-    /* VDP Palette Selection bit */
-    if (!(reg[0] & 4))
-    {
-      /* Color value is limited to 00X00X00X */
-      data &= 0x49;
-    }
-
-    if(reg[12] & 8)
-    {
-      /* Mode 5 (Shadow/Normal/Highlight) */
-      pixel_16[0x00 | index] = pixel_16_lut[0][data];
-      pixel_16[0x40 | index] = pixel_16_lut[1][data];
-      pixel_16[0x80 | index] = pixel_16_lut[2][data];
-    }
-    else
-    {
-      /* Mode 5 (Normal) */
-      data = pixel_16_lut[1][data];
-
-      /* Output pixel: xxiiiiii */
-      pixel_16[0x00 | index] = data;
-      pixel_16[0x40 | index] = data;
-      pixel_16[0x80 | index] = data;
-    }
-  }
-  else
-  {
-    /* Test M4 bit */
-    if (reg[0] & 4)
-    {
-      /* Mode 4 */
-      data = pixel_16_lut_m4[data & 0x3F];
-    }
-    else
-    {
-      /* Invalid Mode (black screen) */
-      data = 0x00;
-    }
-
-    /* Output pixel: x0xiiiii */
-    /* Backdrop pixel: 01000000 */
-    pixel_16[0x00 | index] = data;
-    pixel_16[0x20 | index] = data;
-    pixel_16[0x80 | index] = data;
-    pixel_16[0xA0 | index] = data;
-  }
-}
-
-static void color_update_32(int index, unsigned int data)
-{
-  /* Mode 5 */
-  if (reg[1] & 4)
-  {
-    /* VDP Palette Selection bit */
-    if (!(reg[0] & 4))
-    {
-      /* Color value is limited to 00X00X00X */
-      data &= 0x49;
-    }
-
-    if(reg[12] & 8)
-    {
-      /* Mode 5 (Shadow/Normal/Highlight) */
-      pixel_32[0x00 | index] = pixel_32_lut[0][data];
-      pixel_32[0x40 | index] = pixel_32_lut[1][data];
-      pixel_32[0x80 | index] = pixel_32_lut[2][data];
-    }
-    else
-    {
-      /* Mode 5 (Normal) */
-      data = pixel_32_lut[1][data];
-
-      /* Output pixel: xxiiiiii */
-      pixel_32[0x00 | index] = data;
-      pixel_32[0x40 | index] = data;
-      pixel_32[0x80 | index] = data;
-    }
-  }
-  else
-  {
-    /* Test M4 bit */
-    if (reg[0] & 4)
-    {
-      /* Mode 4 */
-      data = pixel_32_lut_m4[data & 0x3F];
-    }
-    else
-    {
-      /* Invalid Mode (black screen) */
-      data = 0x00;
-    }
-
-    /* Output pixel: x0xiiiii */
-    /* Backdrop pixel: 01000000 */
-    pixel_32[0x00 | index] = data;
-    pixel_32[0x20 | index] = data;
-    pixel_32[0x80 | index] = data;
-    pixel_32[0xA0 | index] = data;
-  }
-}
-
-#else
-
-void color_update(int index, unsigned int data)
-{
-  /* Mode 5 */
-  if (reg[1] & 4)
-  {
-    /* Palette selection */
-    if (!(reg[0] & 4))
-    {
-      /* Color value is limited to 00X00X00X */
-      data &= 0x49;
-    }
-
-    if(reg[12] & 8)
-    {
-      /* Mode 5 (Shadow/Normal/Highlight) */
-      pixel[0x00 | index] = pixel_lut[0][data];
-      pixel[0x40 | index] = pixel_lut[1][data];
-      pixel[0x80 | index] = pixel_lut[2][data];
-    }
-    else
-    {
-      /* Mode 5 (Normal) */
-      data = pixel_lut[1][data];
-
-      /* Output pixel: xxiiiiii */
-      pixel[0x00 | index] = data;
-      pixel[0x40 | index] = data;
-      pixel[0x80 | index] = data;
-    }
-  }
-  else
-  {
-    /* Test M4 bit */
-    if (reg[0] & 4)
-    {
-      /* Mode 4 */
+      /* Mode 4 palette */
       data = pixel_lut_m4[data & 0x3F];
+      break;
     }
-    else
-    {
-      /* Invalid Mode (black screen) */
-      data = 0x00;
-    }
+  }
 
-    /* Output pixel: x0xiiiii */
-    /* Backdrop pixel: 01000000 */
+
+  /* Input pixel: x0xiiiii (normal) or 01000000 (backdrop) */
+  if (reg[0] & 0x04)
+  {
+    /* Mode 4 */
     pixel[0x00 | index] = data;
     pixel[0x20 | index] = data;
     pixel[0x80 | index] = data;
     pixel[0xA0 | index] = data;
   }
+  else
+  {
+    /* TMS9918 modes (palette bit forced to 1 because Game Gear uses CRAM palette #1) */
+    if ((index == 0x40) || (index == (0x10 | (reg[7] & 0x0F))))
+    {
+      /* Update backdrop color */
+      pixel[0x40] = data;
+
+      /* Update transparent color */
+      pixel[0x10] = data;
+      pixel[0x30] = data;
+      pixel[0x90] = data;
+      pixel[0xB0] = data;
+    }
+
+    if (index & 0x0F)
+    {
+      /* update non-transparent colors */
+      pixel[0x00 | index] = data;
+      pixel[0x20 | index] = data;
+      pixel[0x80 | index] = data;
+      pixel[0xA0 | index] = data;
+    }
+  }
 }
 
-#endif
+void color_update_m5(int index, unsigned int data)
+{
+  /* Palette Mode */
+  if (!(reg[0] & 0x04))
+  {
+    /* Color value is limited to 00X00X00X */
+    data &= 0x49;
+  }
 
+  if(reg[12] & 0x08)
+  {
+    /* Mode 5 (Shadow/Normal/Highlight) */
+    pixel[0x00 | index] = pixel_lut[0][data];
+    pixel[0x40 | index] = pixel_lut[1][data];
+    pixel[0x80 | index] = pixel_lut[2][data];
+  }
+  else
+  {
+    /* Mode 5 (Normal) */
+    data = pixel_lut[1][data];
+
+    /* Input pixel: xxiiiiii */
+    pixel[0x00 | index] = data;
+    pixel[0x40 | index] = data;
+    pixel[0x80 | index] = data;
+  }
+}
 
 
 /*--------------------------------------------------------------------------*/
 /* Background layers rendering functions                                    */
 /*--------------------------------------------------------------------------*/
 
+/* Graphics I */
+void render_bg_m0(int line, int width)
+{
+  uint8 color, pattern;
+  uint16 name;
+
+  uint8 *lb = &linebuf[0][0x20];
+  uint8 *nt = &vram[((reg[2] << 10) & 0x3C00) + ((line & 0xF8) << 2)];
+  uint8 *ct = &vram[((reg[3] <<  6) & 0x3FC0)];
+  uint8 *pg = &vram[((reg[4] << 11) & 0x3800) + (line & 7)];
+
+  /* 32 x 8 pixels */
+  width = 32;
+
+  do
+  {
+    name = *nt++;
+    color = ct[name >> 3];
+    pattern = pg[name << 3];
+
+    *lb++ = 0x10 | ((color >> (((pattern >> 7) & 1) << 2)) & 0x0F);
+    *lb++ = 0x10 | ((color >> (((pattern >> 6) & 1) << 2)) & 0x0F);
+    *lb++ = 0x10 | ((color >> (((pattern >> 5) & 1) << 2)) & 0x0F);
+    *lb++ = 0x10 | ((color >> (((pattern >> 4) & 1) << 2)) & 0x0F);
+    *lb++ = 0x10 | ((color >> (((pattern >> 3) & 1) << 2)) & 0x0F);
+    *lb++ = 0x10 | ((color >> (((pattern >> 2) & 1) << 2)) & 0x0F);
+    *lb++ = 0x10 | ((color >> (((pattern >> 1) & 1) << 2)) & 0x0F);
+    *lb++ = 0x10 | ((color >> (((pattern >> 0) & 1) << 2)) & 0x0F);
+  }
+  while (--width);
+}
+
+/* Text */
+void render_bg_m1(int line, int width)
+{
+  uint8 pattern;
+  uint8 color = reg[7];
+
+  uint8 *lb = &linebuf[0][0x20];
+  uint8 *nt = &vram[((reg[2] << 10) & 0x3C00) + ((line >> 3) * 40)];
+  uint8 *pg = &vram[((reg[4] << 11) & 0x3800) + (line & 7)];
+
+  /* Left border (8 pixels) */
+  memset (lb, 0x40, 8);
+  lb += 8;
+
+  /* 40 x 6 pixels */
+  width = 40;
+
+  do
+  {
+    pattern = pg[*nt++];
+
+    *lb++ = 0x10 | ((color >> (((pattern >> 7) & 1) << 2)) & 0x0F);
+    *lb++ = 0x10 | ((color >> (((pattern >> 6) & 1) << 2)) & 0x0F);
+    *lb++ = 0x10 | ((color >> (((pattern >> 5) & 1) << 2)) & 0x0F);
+    *lb++ = 0x10 | ((color >> (((pattern >> 4) & 1) << 2)) & 0x0F);
+    *lb++ = 0x10 | ((color >> (((pattern >> 3) & 1) << 2)) & 0x0F);
+    *lb++ = 0x10 | ((color >> (((pattern >> 2) & 1) << 2)) & 0x0F);
+  }
+  while (--width);
+
+  /* Right borders (8 pixels) */
+  memset(lb, 0x40, 8);
+}
+
+/* Text + extended PG */
+void render_bg_m1x(int line, int width)
+{
+  uint8 pattern;
+  uint8 color = reg[7];
+
+  uint16 pg_mask = ~0x3800 ^ (reg[4] << 11);
+
+  /* Unused bits used as a mask on TMS9918 & 315-5124 VDP only */
+  if (system_hw > SYSTEM_SMS)
+  {
+    pg_mask |= 0x1800;
+  }
+
+  uint8 *lb = &linebuf[0][0x20];
+  uint8 *nt = &vram[((reg[2] << 10) & 0x3C00) + ((line >> 3) * 40)];
+  uint8 *pg = &vram[((0x2000 + ((line & 0xC0) << 5)) & pg_mask) + (line & 7)];
+
+  /* Left border (8 pixels) */
+  memset (lb, 0x40, 8);
+  lb += 8;
+
+  /* 40 x 6 pixels */
+  width = 40;
+
+  do
+  {
+    pattern = pg[*nt++ << 3];
+
+    *lb++ = 0x10 | ((color >> (((pattern >> 7) & 1) << 2)) & 0x0F);
+    *lb++ = 0x10 | ((color >> (((pattern >> 6) & 1) << 2)) & 0x0F);
+    *lb++ = 0x10 | ((color >> (((pattern >> 5) & 1) << 2)) & 0x0F);
+    *lb++ = 0x10 | ((color >> (((pattern >> 4) & 1) << 2)) & 0x0F);
+    *lb++ = 0x10 | ((color >> (((pattern >> 3) & 1) << 2)) & 0x0F);
+    *lb++ = 0x10 | ((color >> (((pattern >> 2) & 1) << 2)) & 0x0F);
+  }
+  while (--width);
+
+  /* Right borders (8 pixels) */
+  memset(lb, 0x40, 8);
+}
+
+/* Graphics II */
+void render_bg_m2(int line, int width)
+{
+  uint8 color, pattern;
+  uint16 name;
+
+  uint16 ct_mask = ~0x3FC0 ^ (reg[3] << 6);
+  uint16 pg_mask = ~0x3800 ^ (reg[4] << 11);
+
+  /* Unused bits used as a mask on TMS9918 & 315-5124 VDP only */
+  if (system_hw > SYSTEM_SMS)
+  {
+    ct_mask |= 0x1FC0;
+    pg_mask |= 0x1800;
+  }
+
+  uint8 *lb = &linebuf[0][0x20];
+  uint8 *nt = &vram[((reg[2] << 10) & 0x3C00) + ((line & 0xF8) << 2)];
+  uint8 *ct = &vram[((0x2000 + ((line & 0xC0) << 5)) & ct_mask) + (line & 7)];
+  uint8 *pg = &vram[((0x2000 + ((line & 0xC0) << 5)) & pg_mask) + (line & 7)];
+
+  /* 32 x 8 pixels */
+  width = 32;
+
+  do
+  {
+    name = *nt++ << 3 ;
+    color = ct[name & ct_mask];
+    pattern = pg[name];
+
+    *lb++ = 0x10 | ((color >> (((pattern >> 7) & 1) << 2)) & 0x0F);
+    *lb++ = 0x10 | ((color >> (((pattern >> 6) & 1) << 2)) & 0x0F);
+    *lb++ = 0x10 | ((color >> (((pattern >> 5) & 1) << 2)) & 0x0F);
+    *lb++ = 0x10 | ((color >> (((pattern >> 4) & 1) << 2)) & 0x0F);
+    *lb++ = 0x10 | ((color >> (((pattern >> 3) & 1) << 2)) & 0x0F);
+    *lb++ = 0x10 | ((color >> (((pattern >> 2) & 1) << 2)) & 0x0F);
+    *lb++ = 0x10 | ((color >> (((pattern >> 1) & 1) << 2)) & 0x0F);
+    *lb++ = 0x10 | ((color >> (((pattern >> 0) & 1) << 2)) & 0x0F);
+  }
+  while (--width);
+}
+
+/* Multicolor */
+void render_bg_m3(int line, int width)
+{
+  uint8 color;
+  uint16 name;
+
+  uint8 *lb = &linebuf[0][0x20];
+  uint8 *nt = &vram[((reg[2] << 10) & 0x3C00) + ((line & 0xF8) << 2)];
+  uint8 *pg = &vram[((reg[4] << 11) & 0x3800) + ((line >> 2) & 7)];
+
+  /* 32 x 8 pixels */
+  width = 32;
+
+  do
+  {
+    name = *nt++;
+    color = pg[name << 3];
+    
+    *lb++ = 0x10 | ((color >> 4) & 0x0F);
+    *lb++ = 0x10 | ((color >> 4) & 0x0F);
+    *lb++ = 0x10 | ((color >> 4) & 0x0F);
+    *lb++ = 0x10 | ((color >> 4) & 0x0F);
+    *lb++ = 0x10 | ((color >> 0) & 0x0F);
+    *lb++ = 0x10 | ((color >> 0) & 0x0F);
+    *lb++ = 0x10 | ((color >> 0) & 0x0F);
+    *lb++ = 0x10 | ((color >> 0) & 0x0F);
+  }
+  while (--width);
+}
+
+/* Multicolor + extended PG */
+void render_bg_m3x(int line, int width)
+{
+  uint8 color;
+  uint16 name;
+
+  uint16 pg_mask = ~0x3800 ^ (reg[4] << 11);
+
+  /* Unused bits used as a mask on TMS9918 & 315-5124 VDP only */
+  if (system_hw > SYSTEM_SMS)
+  {
+    pg_mask |= 0x1800;
+  }
+
+  uint8 *lb = &linebuf[0][0x20];
+  uint8 *nt = &vram[((reg[2] << 10) & 0x3C00) + ((line & 0xF8) << 2)];
+  uint8 *pg = &vram[((0x2000 + ((line & 0xC0) << 5)) & pg_mask) + ((line >> 2) & 7)];
+
+  /* 32 x 8 pixels */
+  width = 32;
+
+  do
+  {
+    name = *nt++;
+    color = pg[name << 3];
+    
+    *lb++ = 0x10 | ((color >> 4) & 0x0F);
+    *lb++ = 0x10 | ((color >> 4) & 0x0F);
+    *lb++ = 0x10 | ((color >> 4) & 0x0F);
+    *lb++ = 0x10 | ((color >> 4) & 0x0F);
+    *lb++ = 0x10 | ((color >> 0) & 0x0F);
+    *lb++ = 0x10 | ((color >> 0) & 0x0F);
+    *lb++ = 0x10 | ((color >> 0) & 0x0F);
+    *lb++ = 0x10 | ((color >> 0) & 0x0F);
+  }
+  while (--width);
+}
+
+/* Invalid (2+3/1+2+3) */
+void render_bg_inv(int line, int width)
+{
+  uint8 color = reg[7];
+
+  uint8 *lb = &linebuf[0][0x20];
+
+  /* Left border (8 pixels) */
+  memset (lb, 0x40, 8);
+  lb += 8;
+
+  /* 40 x 6 pixels */
+  width = 40;
+
+  do
+  {
+    *lb++ = 0x10 | ((color >> 4) & 0x0F);
+    *lb++ = 0x10 | ((color >> 4) & 0x0F);
+    *lb++ = 0x10 | ((color >> 4) & 0x0F);
+    *lb++ = 0x10 | ((color >> 4) & 0x0F);
+    *lb++ = 0x10 | ((color >> 0) & 0x0F);
+    *lb++ = 0x10 | ((color >> 0) & 0x0F);
+  }
+  while (--width);
+
+  /* Right borders (8 pixels) */
+  memset(lb, 0x40, 8);
+}
+
+/* Mode 4 */
 void render_bg_m4(int line, int width)
 {
   int column;
+  uint16 *nt;
   uint32 attr, atex, *src;
-
+  
   /* Horizontal scrolling */
-  int index = ((reg[0] & 0x40) && (line < 0x10)) ? 0x100 : hscroll;
+  int index = ((reg[0] & 0x40) && (line < 0x10)) ? 0x100 : reg[0x08];
   int shift = index & 7;
 
   /* Background line buffer */
   uint32 *dst = (uint32 *)&linebuf[0][0x20 + shift];
 
-  /* Vertical scrolling */
-  int v_line = (line + vscroll) % 224;
+  /* Pattern name table mask */
+  uint16 nt_mask = ~0x3C00 ^ (reg[2] << 10);
 
-  /* Pattern name table */
-  uint16 *nt = (uint16 *)&vram[((reg[2] << 10) & 0x3800) + ((v_line >> 3) << 6)];
+  /* Unused bits used as a mask on TMS9918 & 315-5124 VDP only */
+  if (system_hw > SYSTEM_SMS)
+  {
+    nt_mask |= 0x400;
+  }
+
+  /* Vertical scrolling */
+  int v_line = line + vscroll;
+
+  /* Test for extended modes (Master System II & Game gear VDP only) */
+  if (bitmap.viewport.h > 192)
+  {
+    /* Vertical scroll mask */
+    v_line = v_line % 256;
+    
+    /* Pattern name Table */
+    nt = (uint16 *)&vram[(0x3700 & nt_mask) + ((v_line >> 3) << 6)];
+  }
+  else
+  {
+    /* Vertical scroll mask */
+    v_line = v_line % 224;
+
+    /* Pattern name Table */
+    nt = (uint16 *)&vram[(0x3800 + ((v_line >> 3) << 6)) & nt_mask];
+  }
 
   /* Pattern row index */
   v_line = (v_line & 7) << 3;
@@ -1273,14 +1444,21 @@ void render_bg_m4(int line, int width)
   /* Number of tiles to draw */
   width >>= 3;
 
-  /* Draw tiles (TODO: test what happens when H40 mode has been set while in Mode 5 */
+  /* Draw tiles */
   for(column = 0; column < width; column++, index++)
   {
     /* Stop vertical scrolling for rightmost eight tiles */
     if((column == 24) && (reg[0] & 0x80))
     {
-      /* Clear name table base */
-      nt = (uint16 *)&vram[((reg[2] << 10) & 0x3800) + ((line >> 3) << 6)];
+      /* Clear Pattern name table start address */
+      if (bitmap.viewport.h > 192)
+      {
+        nt = (uint16 *)&vram[(0x3700 & nt_mask) + ((line >> 3) << 6)];
+      }
+      else
+      {
+        nt = (uint16 *)&vram[(0x3800 + ((line >> 3) << 6)) & nt_mask];
+      }
 
       /* Clear Pattern row index */
       v_line = (line & 7) << 3;
@@ -1309,11 +1487,9 @@ void render_bg_m4(int line, int width)
     *dst++ = (src[1] | atex);
 #endif
   }
-
-  /* latch horizontal scroll value */
-  hscroll = reg[0x08];
 }
 
+/* Mode 5 */
 #ifndef ALT_RENDERER
 void render_bg_m5(int line, int width)
 {
@@ -2698,19 +2874,178 @@ void render_bg_m5_im2_vs(int line, int width)
 /* Sprite layer rendering functions                                         */
 /*--------------------------------------------------------------------------*/
 
-void render_obj_m4(int max_width)
+void render_obj_tms(int max_width)
 {
-  int i, count, xpos, width;
-  uint8 *src, *lb;
+  int x, count, start, end;
+  uint8 *lb, *sg;
+  uint8 color, pattern[2];
   uint16 temp;
 
+  /* Default sprite width (8 pixels) */
+  int width = 8;
+
+  /* Adjust width for 16x16 sprites */
+  width <<= ((reg[1] & 0x02) >> 1);
+
+  /* Adjust width for zoomed sprites */
+  width <<= (reg[1] & 0x01);
+
   /* Set SOVR flag */
-  status |= spr_over;
-  spr_over = 0;
+  status |= spr_ovr;
+  spr_ovr = 0;
 
   /* Draw sprites in front-to-back order */
   for (count = 0; count < object_count; count++)
   {
+    /* Sprite X position */
+    start = object_info[count].xpos;
+
+    /* Sprite Color + Early Clock bit */
+    color = object_info[count].size;
+
+    /* X position shift (32 pixels) */
+    start -= ((color & 0x80) >> 2);
+
+    /* Pointer to line buffer */
+    lb = &linebuf[0][0x20 + start];
+
+    if ((start + width) > 256)
+    {
+      /* Clip sprites on right edge */
+      end = 256 - start;
+
+      start = 0;
+    }
+    else
+    {
+      end = width;
+
+      if (start < 0)
+      {
+        /* Clip sprites on left edge */
+        start = 0 - start;
+      }
+      else
+      {
+        start = 0;
+      }
+    }
+
+    /* Sprite Color (0-15) */
+    color &= 0x0F;
+
+    /* Sprite Pattern Name */
+    temp = object_info[count].attr;
+
+    /* Mask two LSB for 16x16 sprites */
+    temp &= ~((reg[1] & 0x02) >> 0);
+    temp &= ~((reg[1] & 0x02) >> 1);
+
+    /* Pointer to sprite generator table */
+    sg = (uint8 *)&vram[((reg[6] << 11) & 0x3800) | (temp << 3) | object_info[count].ypos];
+
+    /* Sprite Pattern data (2 x 8 pixels) */
+    pattern[0] = sg[0x00];
+    pattern[1] = sg[0x10];
+
+    if (reg[1] & 0x01)
+    {
+      /* Zoomed sprites are rendered at half speed */
+      for (x=start; x<end; x+=2)
+      {
+        temp = pattern[(x >> 4) & 1];
+        temp = (temp >> (7 - ((x >> 1) & 7))) & 0x01;
+        temp = temp * color;
+        temp |= (lb[x] << 8);
+        lb[x] = lut[5][temp];
+        status |= ((temp & 0x8000) >> 10);
+        temp &= 0x00FF;
+        temp |= (lb[x+1] << 8);
+        lb[x+1] = lut[5][temp];
+        status |= ((temp & 0x8000) >> 10);
+      }
+    }
+    else
+    {
+      /* Normal sprites */
+      for (x=start; x<end; x++)
+      {
+        temp = pattern[(x >> 3) & 1];
+        temp = (temp >> (7 - (x & 7))) & 0x01;
+        temp = temp * color;
+        temp |= (lb[x] << 8);
+        lb[x] = lut[5][temp];
+        status |= ((temp & 0x8000) >> 10);
+      }
+    }
+  }
+
+  /* handle Game Gear reduced screen (160x144) */
+  if ((system_hw == SYSTEM_GG) && (v_counter < bitmap.viewport.h))
+  {
+    int line = v_counter - (bitmap.viewport.h - 144) / 2;
+    if ((line < 0) || (line >= 144))
+    {
+      memset(&linebuf[0][0x20], 0x40, max_width);
+    }
+    else
+    {
+      if (bitmap.viewport.x > 0)
+      {
+        memset(&linebuf[0][0x20], 0x40, 48);
+        memset(&linebuf[0][0x20+48+160], 0x40, 48);
+      }
+    }
+  }
+}
+
+void render_obj_m4(int max_width)
+{
+  int i, count, xpos, end;
+  uint8 *src, *lb;
+  uint16 temp;
+
+  /* Default sprite width */
+  int width = 8;
+
+  /* Zoomed sprites (not working on Genesis VDP) */
+  if (system_hw < SYSTEM_MD)
+  {
+    width <<= (reg[1] & 0x01);
+  }
+
+  /* Sprite Generator address mask (LSB is masked for 8x16 sprites) */
+  uint16 sg_mask = (~0x1C0 ^ (reg[6] << 6)) & (~((reg[1] & 0x02) >> 1));
+
+  /* Unused bits used as a mask on 315-5124 VDP only */
+  if (system_hw > SYSTEM_SMS)
+  {
+    sg_mask |= 0xC0;
+  }
+
+  /* Set SOVR flag */
+  status |= spr_ovr;
+  spr_ovr = 0;
+
+  /* Draw sprites in front-to-back order */
+  for (count = 0; count < object_count; count++)
+  {
+    /* 315-5124 VDP specific */
+    if (count == 4)
+    {
+      if (system_hw < SYSTEM_SMS2)
+      {
+        /* Only 4 first sprites can be zoomed */
+        width = 8;
+      }
+    }
+
+    /* Sprite pattern index */
+    temp = (object_info[count].attr | 0x100) & sg_mask;
+
+    /* Pointer to pattern cache line */
+    src = (uint8 *)&bg_pattern_cache[(temp << 6) | (object_info[count].ypos << 3)];
+
     /* Sprite X position */
     xpos = object_info[count].xpos;
 
@@ -2720,37 +3055,52 @@ void render_obj_m4(int max_width)
     if (xpos < 0)
     {
       /* Clip sprites on left edge */
-      width = xpos + 8;
+      src = src - xpos;
+      end = xpos + width;
       xpos = 0;
     }
-    else if ((xpos + 8) > max_width)
+    else if ((xpos + width) > max_width)
     {
       /* Clip sprites on right edge */
-      width = max_width - xpos;
+      end = max_width - xpos;
     }
     else
     {
-      /* Sprite default width */
-      width = 8;
+      /* Sprite maximal width */
+      end = width;
     }
 
     /* Pointer to line buffer */
     lb = &linebuf[0][0x20 + xpos];
 
-    /* Sprite pattern index */
-    temp = object_info[count].attr;
+    if (width > 8)
+    {
+      /* Draw sprite pattern (zoomed sprites are rendered at half speed) */
+      DRAW_SPRITE_TILE_ACCURATE_2X(end,0,lut[5])
+    }
+    else
+    {
+      /* Draw sprite pattern */
+      DRAW_SPRITE_TILE_ACCURATE(end,0,lut[5])
+    }
+  }
 
-    /* Add MSB of pattern name */
-    temp |= ((reg[6] & 0x04) << 6);
-
-    /* Mask LSB for 8x16 sprites */
-    temp &= ~((reg[1] & 0x02) >> 1);
-
-    /* Pointer to pattern cache line */
-    src = (uint8 *)&bg_pattern_cache[(temp << 6) | (object_info[count].ypos << 3)];
-
-    /* Draw sprite pattern */
-    DRAW_SPRITE_TILE(width,0,lut[5])
+  /* handle Game Gear reduced screen (160x144) */
+  if ((system_hw == SYSTEM_GG) && (v_counter < bitmap.viewport.h))
+  {
+    int line = v_counter - (bitmap.viewport.h - 144) / 2;
+    if ((line < 0) || (line >= 144))
+    {
+      memset(&linebuf[0][0x20], 0x40, max_width);
+    }
+    else
+    {
+      if (bitmap.viewport.x > 0)
+      {
+        memset(&linebuf[0][0x20], 0x40, 48);
+        memset(&linebuf[0][0x20+48+160], 0x40, 48);
+      }
+    }
   }
 }
 
@@ -2780,9 +3130,9 @@ void render_obj_m5(int max_width)
     if (xpos)
     {
       /* Requires at least one sprite with xpos > 0 */
-      spr_over = 1;
+      spr_ovr = 1;
     }
-    else if (spr_over)
+    else if (spr_ovr)
     {
       /* Remaining sprites are not drawn */
       masked = 1;
@@ -2849,7 +3199,7 @@ void render_obj_m5(int max_width)
     if (pixelcount >= max_width)
     {
       /* Sprite masking will be effective on next line  */
-      spr_over = 1;
+      spr_ovr = 1;
 
       /* Stop sprite rendering */
       return;
@@ -2857,7 +3207,7 @@ void render_obj_m5(int max_width)
   }
 
   /* Clear sprite masking for next line  */
-  spr_over = 0;
+  spr_ovr = 0;
 }
 
 void render_obj_m5_ste(int max_width)
@@ -2889,9 +3239,9 @@ void render_obj_m5_ste(int max_width)
     if (xpos)
     {
       /* Requires at least one sprite with xpos > 0 */
-      spr_over = 1;
+      spr_ovr = 1;
     }
-    else if (spr_over)
+    else if (spr_ovr)
     {
       /* Remaining sprites are not drawn */
       masked = 1;
@@ -2958,7 +3308,7 @@ void render_obj_m5_ste(int max_width)
     if (pixelcount >= max_width)
     {
       /* Sprite masking will be effective on next line  */
-      spr_over = 1;
+      spr_ovr = 1;
 
       /* Merge background & sprite layers */
       merge(&linebuf[1][0x20],&linebuf[0][0x20],&linebuf[0][0x20],lut[4], max_width);
@@ -2969,7 +3319,7 @@ void render_obj_m5_ste(int max_width)
   }
 
   /* Clear sprite masking for next line  */
-  spr_over = 0;
+  spr_ovr = 0;
 
   /* Merge background & sprite layers */
   merge(&linebuf[1][0x20],&linebuf[0][0x20],&linebuf[0][0x20],lut[4], max_width);
@@ -3002,9 +3352,9 @@ void render_obj_m5_im2(int max_width)
     if (xpos)
     {
       /* Requires at least one sprite with xpos > 0 */
-      spr_over = 1;
+      spr_ovr = 1;
     }
-    else if (spr_over)
+    else if (spr_ovr)
     {
       /* Remaining sprites are not drawn */
       masked = 1;
@@ -3071,7 +3421,7 @@ void render_obj_m5_im2(int max_width)
     if (pixelcount >= max_width)
     {
       /* Enable sprite masking for next line */
-      spr_over = 1;
+      spr_ovr = 1;
 
       /* Stop sprite rendering */
       return;
@@ -3079,7 +3429,7 @@ void render_obj_m5_im2(int max_width)
   }
 
   /* Clear sprite masking for next line */
-  spr_over = 0;
+  spr_ovr = 0;
 }
 
 void render_obj_m5_im2_ste(int max_width)
@@ -3112,9 +3462,9 @@ void render_obj_m5_im2_ste(int max_width)
     if (xpos)
     {
       /* Requires at least one sprite with xpos > 0 */
-      spr_over = 1;
+      spr_ovr = 1;
     }
-    else if (spr_over)
+    else if (spr_ovr)
     {
       /* Remaining sprites are not drawn */
       masked = 1;
@@ -3181,7 +3531,7 @@ void render_obj_m5_im2_ste(int max_width)
     if (pixelcount >= max_width)
     {
       /* Enable sprite masking for next line */
-      spr_over = 1;
+      spr_ovr = 1;
 
       /* Merge background & sprite layers */
       merge(&linebuf[1][0x20],&linebuf[0][0x20],&linebuf[0][0x20],lut[4], max_width);
@@ -3192,7 +3542,7 @@ void render_obj_m5_im2_ste(int max_width)
   }
 
   /* Clear sprite masking for next line */
-  spr_over = 0;
+  spr_ovr = 0;
 
   /* Merge background & sprite layers */
   merge(&linebuf[1][0x20],&linebuf[0][0x20],&linebuf[0][0x20],lut[4], max_width);
@@ -3203,14 +3553,97 @@ void render_obj_m5_im2_ste(int max_width)
 /* Sprites Parsing functions                                                */
 /*--------------------------------------------------------------------------*/
 
-void parse_satb_m4(int line)
+void parse_satb_tms(int line)
 {
-  int i;
+  if (reg[1] & 0x10)
+  {
+    /* no sprites in Text modes */
+    object_count = 0;
+    return;
+  }
+
+  int i = 0;
 
   /* Pointer to sprite attribute table */
-  uint8 *st = &vram[(reg[5] << 7) & 0x3F00];
+  uint8 *st = &vram[(reg[5] <<  7) & 0x3F80];
 
-  /* Sprite counter (64 max.) */
+  /* Sprite counter (4 max. per line) */
+  int count = 0;
+
+  /* Y position */
+  int ypos;
+
+  /* Sprite height (8 pixels by default) */
+  int height = 8;
+
+  /* Adjust height for 16x16 sprites */
+  height <<= ((reg[1] & 0x02) >> 1);
+
+  /* Adjust height for zoomed sprites */
+  height <<= (reg[1] & 0x01);
+
+  /* Parse Sprite Table (32 entries) */
+  do
+  {
+    /* Sprite Y position */
+    ypos = st[i << 2];
+
+    /* Check end of sprite list marker */
+    if (ypos == 0xD0)
+    {
+      break;
+    }
+
+    /* Wrap Y coordinate for sprites > 256-32 */
+    if (ypos >= 224)
+    {
+      ypos -= 256;
+    }
+
+    /* Y range */
+    ypos = line - ypos;
+
+    /* Sprite is visble on this line ? */
+    if ((ypos >= 0) && (ypos < height))
+    {
+      /* Sprite overflow */
+      if (count == 4)
+      {
+        /* Flag is set only during active area */
+        if (line < bitmap.viewport.h)
+        {
+          spr_ovr = 0x40;
+        }
+        break;
+      }
+
+      /* Adjust Y range back for zoomed sprites */
+      ypos >>= (reg[1] & 0x01);
+
+      /* Store sprite attributes for later processing */
+      object_info[count].ypos = ypos;
+      object_info[count].xpos = st[(i << 2) + 1];
+      object_info[count].attr = st[(i << 2) + 2];
+      object_info[count].size = st[(i << 2) + 3];
+
+      /* Increment Sprite count */
+      ++count;
+    }
+  }
+  while (++i < 32);
+
+  /* Update sprite count for next line */
+  object_count = count;
+
+  /* Insert number of last sprite entry processed */
+  status = (status & 0xE0) | (i & 0x1F);
+}
+
+void parse_satb_m4(int line)
+{
+  int i = 0;
+
+  /* Sprite counter (8 max. per line) */
   int count = 0;
 
   /* Y position */
@@ -3222,20 +3655,32 @@ void parse_satb_m4(int line)
   /* Adjust height for 8x16 sprites */
   height <<= ((reg[1] & 0x02) >> 1);
 
+  /* Sprite attribute table address mask */
+  uint16 st_mask = ~0x3F80 ^ (reg[5] << 7);
+
+  /* Unused bits used as a mask on 315-5124 VDP only */
+  if (system_hw > SYSTEM_SMS)
+  {
+    st_mask |= 0x80;
+  }
+
+  /* Pointer to sprite attribute table */
+  uint8 *st = &vram[st_mask & 0x3F00];
+
   /* Parse Sprite Table (64 entries) */
-  for(i = 0; i < 64; i++)
+  do
   {
     /* Sprite Y position */
     ypos = st[i];
 
-    /* Found end of sprite list marker for non-extended modes? */
-    if(ypos == 208)
+    /* Check end of sprite list marker */
+    if(ypos == (bitmap.viewport.h + 16))
     {
       break;
     }
 
-    /* Wrap Y coordinate for sprites > 240 */
-    if(ypos > 240)
+    /* Wrap Y coordinate for sprites > 256-16 */
+    if (ypos >= 240)
     {
       ypos -= 256;
     }
@@ -3243,25 +3688,36 @@ void parse_satb_m4(int line)
     /* Y range */
     ypos = line - ypos;
 
-    /* Sprite is visble on this line ? */
-    if((ypos >= 0) && (ypos < height))
+    /* Adjust Y range for zoomed sprites (not working on Mega Drive VDP) */
+    if (system_hw < SYSTEM_MD)
+    {
+      ypos >>= (reg[1] & 0x01);
+    }
+
+    /* Check if sprite is visible on this line */
+    if ((ypos >= 0) && (ypos < height))
     {
       /* Sprite overflow */
-      if(count == 8)
+      if (count == 8)
       {
-        spr_over = 0x40;
+        /* Flag is set only during active area */
+        if ((line >= 0) && (line < bitmap.viewport.h))
+        {
+          spr_ovr = 0x40;
+        }
         break;
       }
 
       /* Store sprite attributes for later processing */
       object_info[count].ypos = ypos;
-      object_info[count].xpos = st[0x80 + (i << 1)];
-      object_info[count].attr = st[0x81 + (i << 1)];
+      object_info[count].xpos = st[(0x80 + (i << 1)) & st_mask];
+      object_info[count].attr = st[(0x81 + (i << 1)) & st_mask];
 
       /* Increment Sprite count */
       ++count;
     }
   }
+  while (++i < 64);
 
   /* Update sprite count for next line */
   object_count = count;
@@ -3315,7 +3771,7 @@ void parse_satb_m5(int line)
     if ((ypos >= 0) && (ypos < height))
     {
       /* Sprite overflow */
-      if(count == max)
+      if (count == max)
       {
         status |= 0x40;
         break;
@@ -3334,7 +3790,7 @@ void parse_satb_m5(int line)
     link = (q[link + 1] & 0x7F) << 2;
 
     /* Last sprite */
-    if(link == 0) break;
+    if (link == 0) break;
   }
   while (--total);
 
@@ -3462,7 +3918,7 @@ void update_bg_pattern_cache_m5(int index)
 
 
 /*--------------------------------------------------------------------------*/
-/* Window & Plane A clipping update function                                */
+/* Window & Plane A clipping update function (Mode 5)                       */
 /*--------------------------------------------------------------------------*/
 
 void window_clip(unsigned int data, unsigned int sw)
@@ -3526,30 +3982,19 @@ void render_init(void)
     {
       index = (bx << 8) | (ax);
 
-      lut[0][index] = make_lut_bg (bx, ax);
-      lut[1][index] = make_lut_bgobj (bx, ax);
-      lut[2][index] = make_lut_bg_ste (bx, ax);
-      lut[3][index] = make_lut_obj (bx, ax);
-      lut[4][index] = make_lut_bgobj_ste (bx, ax);
-      lut[5][index] = make_lut_bgobj_m4 (bx,ax);
+      lut[0][index] = make_lut_bg(bx, ax);
+      lut[1][index] = make_lut_bgobj(bx, ax);
+      lut[2][index] = make_lut_bg_ste(bx, ax);
+      lut[3][index] = make_lut_obj(bx, ax);
+      lut[4][index] = make_lut_bgobj_ste(bx, ax);
+      lut[5][index] = make_lut_bgobj_m4(bx,ax);
     }
   }
 
   /* Initialize pixel color look-up tables */
   palette_init();
 
-#ifndef NGC
-  /* Set default color palette update function */
-  switch(bitmap.depth)
-  {
-    case 8:  color_update = color_update_8;  break;
-    case 15: color_update = color_update_15; break;
-    case 16: color_update = color_update_16; break;
-    case 32: color_update = color_update_32; break;
-  }
-#endif
-
-  /* Make sprite pattern name index look-up table */
+  /* Make sprite pattern name index look-up table (Mode 5) */
   make_name_lut();
 
   /* Make bitplane to pixel look-up table (Mode 4) */
@@ -3565,14 +4010,10 @@ void render_reset(void)
   memset(linebuf, 0, sizeof(linebuf));
 
   /* Clear color palettes */
-#ifdef NGC
-  memset(&pixel, 0, sizeof(pixel));
-#else
-  memset(&pixel_8, 0, sizeof(pixel_8));
-  memset(&pixel_15, 0, sizeof(pixel_15));
-  memset(&pixel_16, 0, sizeof(pixel_16));
-  memset(&pixel_32, 0, sizeof(pixel_32));
-#endif
+  memset(pixel, 0, sizeof(pixel));
+
+  /* Reset Sprite infos */
+  spr_ovr = spr_col = object_count = 0;
 }
 
 
@@ -3583,7 +4024,6 @@ void render_reset(void)
 void render_line(int line)
 {
   int width = bitmap.viewport.w;
-  int x_offset = bitmap.viewport.x;
 
   /* Check display status */
   if (reg[1] & 0x40)
@@ -3602,16 +4042,12 @@ void render_line(int line)
     render_obj(width);
 
     /* Left-most column blanking */
-    if(reg[0] & 0x20)
+    if (reg[0] & 0x20)
     {
-      memset(&linebuf[0][0x20], 0x40, 8);
-    }
-
-    /* Horizontal borders */
-    if (x_offset)
-    {
-      memset(&linebuf[0][0x20 - x_offset], 0x40, x_offset);
-      memset(&linebuf[0][0x20 + width], 0x40, x_offset);
+      if (system_hw > SYSTEM_SG)
+      {
+        memset(&linebuf[0][0x20], 0x40, 8);
+      }
     }
 
     /* Parse sprites for next line */
@@ -3622,8 +4058,27 @@ void render_line(int line)
   }
   else
   {
-    /* Display disabled */
-    memset(&linebuf[0][0x20 - x_offset], 0x40, width + (x_offset << 1));
+    /* Master System & Game Gear VDP specific */
+    if (system_hw < SYSTEM_MD)
+    {
+      /* Update SOVR flag */
+      status |= spr_ovr;
+      spr_ovr = 0;
+
+      /* Sprites are still parsed when display is disabled */
+      parse_satb(line);
+    }
+
+    /* Blanked line */
+    memset(&linebuf[0][0x20], 0x40, width);
+  }
+
+  /* Horizontal borders */
+  int x_offset = bitmap.viewport.x;
+  if (x_offset > 0)
+  {
+    memset(&linebuf[0][0x20 - x_offset], 0x40, x_offset);
+    memset(&linebuf[0][0x20 + width], 0x40, x_offset);
   }
 
   /* Pixel color remapping */
@@ -3640,37 +4095,45 @@ void remap_line(int line)
 {
   /* Line width */
   int x_offset = bitmap.viewport.x;
-  int width = bitmap.viewport.w + (x_offset << 1);
+  int width = bitmap.viewport.w + (x_offset * 2);
 
   /* Adjust line offset in framebuffer */
   line = (line + bitmap.viewport.y) % lines_per_frame;
 
+  /* Take care of Game Gear reduced screen when overscan is disabled */
+  if (line < 0) return;
+
   /* Adjust for interlaced output */
   if (interlaced && config.render)
   {
-    line = (line << 1) + odd_frame;
+    line = (line * 2) + odd_frame;
   }
 
-#ifdef NGC
-  /* NTSC Filter */
+  /* Pixel line buffer */
+  uint8 *src = &linebuf[0][0x20 - x_offset];
+
+  /* NTSC Filter (only supported for 16-bit pixels rendering) */
+#ifdef USE_16BPP_RENDERING
   if (config.ntsc)
   {
-    if (reg[12]&1)
+    if (reg[12] & 0x01)
     {
-      md_ntsc_blit(md_ntsc, ( MD_NTSC_IN_T const * )pixel, &linebuf[0][0x20 - x_offset], width, line);
+      md_ntsc_blit(md_ntsc, ( MD_NTSC_IN_T const * )pixel, src, width, line);
     }
     else
     {
-      sms_ntsc_blit(sms_ntsc, ( SMS_NTSC_IN_T const * )pixel, &linebuf[0][0x20 - x_offset], width, line);
+      sms_ntsc_blit(sms_ntsc, ( SMS_NTSC_IN_T const * )pixel, src, width, line);
     }
   }
   else
+#endif
   {
+    /* Convert VDP pixel data to output pixel format */
+#ifdef NGC
     /* Directly fill a RGB565 texture */
     /* One tile is 32 byte = 4x4 pixels */
     /* Tiles are stored continuously in texture memory */
     width >>= 2;
-    uint8 *src = &linebuf[0][0x20 - x_offset];
     uint16 *dst = (uint16 *) (texturemem + (((width << 5) * (line >> 2)) + ((line & 3) << 3)));
     do
     {
@@ -3683,23 +4146,19 @@ void remap_line(int line)
       dst += 12;
     }
     while (--width);
-  }
 #else
-  void *out =((void *)&bitmap.data[(line * bitmap.pitch)]);
-  switch(bitmap.depth)
-  {
-    case 8:
-      remap_8(&linebuf[0][0x20 - x_offset], (uint8 *)out, width);
-      break;
-    case 15:
-      remap_16(&linebuf[0][0x20 - x_offset], (uint16 *)out, width);
-      break;
-    case 16:
-      remap_16(&linebuf[0][0x20 - x_offset], (uint16 *)out, width);
-      break;
-    case 32:
-      remap_32(&linebuf[0][0x20 - x_offset], (uint32 *)out, width);
-      break;
-  }
+#if defined(USE_8BPP_RENDERING)
+    uint8 *dst =((uint8 *)&bitmap.data[(line * bitmap.pitch)]);
+#elif defined(USE_32BPP_RENDERING)
+    uint32 *dst =((uint32 *)&bitmap.data[(line * bitmap.pitch)]);
+#else
+    uint16 *dst =((uint16 *)&bitmap.data[(line * bitmap.pitch)]);
 #endif
+    do
+    {
+      *dst++ = pixel[*src++];
+    }
+    while (--width);
+#endif
+  }
 }

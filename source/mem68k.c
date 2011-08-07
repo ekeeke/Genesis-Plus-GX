@@ -1,28 +1,44 @@
 /***************************************************************************************
  *  Genesis Plus
- *  68k bus controller
+ *  68k bus handlers
  *
  *  Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003  Charles Mac Donald (original code)
- *  Eke-Eke (2007,2008,2009), additional code & fixes for the GCN/Wii port
+ *  Copyright (C) 2007-2011  Eke-Eke (Genesis Plus GX)
  *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
+ *  Redistribution and use of this code or any derivative works are permitted
+ *  provided that the following conditions are met:
  *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
+ *   - Redistributions may not be sold, nor may they be used in a commercial
+ *     product or activity.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *   - Redistributions that are modified from the original source must include the
+ *     complete source code, including the source code for all components used by a
+ *     binary built from the modified sources. However, as a special exception, the
+ *     source code distributed need not include anything that is normally distributed
+ *     (in either source or binary form) with the major components (compiler, kernel,
+ *     and so on) of the operating system on which the executable runs, unless that
+ *     component itself accompanies the executable.
+ *
+ *   - Redistributions must reproduce the above copyright notice, this list of
+ *     conditions and the following disclaimer in the documentation and/or other
+ *     materials provided with the distribution.
+ *
+ *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ *  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ *  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ *  ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+ *  LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ *  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ *  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ *  CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ *  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ *  POSSIBILITY OF SUCH DAMAGE.
  *
  ****************************************************************************************/
 
-#include "m68kcpu.h"
 #include "shared.h"
+#include "m68kcpu.h"
 
 
 /*--------------------------------------------------------------------------*/
@@ -31,7 +47,7 @@
 unsigned int m68k_read_bus_8(unsigned int address)
 {
 #ifdef LOGERROR
-  error("Unused read8 %08X (%08X)\n", address, m68k_get_reg (NULL, M68K_REG_PC));
+  error("Unused read8 %08X (%08X)\n", address, m68k_get_reg(M68K_REG_PC));
 #endif
   return m68k_read_pcrelative_8(REG_PC | (address & 1));
 }
@@ -39,7 +55,7 @@ unsigned int m68k_read_bus_8(unsigned int address)
 unsigned int m68k_read_bus_16(unsigned int address)
 {
 #ifdef LOGERROR
-  error("Unused read16 %08X (%08X)\n", address, m68k_get_reg (NULL, M68K_REG_PC));
+  error("Unused read16 %08X (%08X)\n", address, m68k_get_reg(M68K_REG_PC));
 #endif
   return m68k_read_pcrelative_16(REG_PC);
 }
@@ -48,14 +64,14 @@ unsigned int m68k_read_bus_16(unsigned int address)
 void m68k_unused_8_w (unsigned int address, unsigned int data)
 {
 #ifdef LOGERROR
-  error("Unused write8 %08X = %02X (%08X)\n", address, data, m68k_get_reg (NULL, M68K_REG_PC));
+  error("Unused write8 %08X = %02X (%08X)\n", address, data, m68k_get_reg(M68K_REG_PC));
 #endif
 }
 
 void m68k_unused_16_w (unsigned int address, unsigned int data)
 {
 #ifdef LOGERROR
-  error("Unused write16 %08X = %04X (%08X)\n", address, data, m68k_get_reg (NULL, M68K_REG_PC));
+  error("Unused write16 %08X = %04X (%08X)\n", address, data, m68k_get_reg(M68K_REG_PC));
 #endif
 }
 
@@ -66,7 +82,7 @@ void m68k_unused_16_w (unsigned int address, unsigned int data)
 void m68k_lockup_w_8 (unsigned int address, unsigned int data)
 {
 #ifdef LOGERROR
-  error ("Lockup %08X = %02X (%08X)\n", address, data, m68k_get_reg (NULL, M68K_REG_PC));
+  error ("Lockup %08X = %02X (%08X)\n", address, data, m68k_get_reg(M68K_REG_PC));
 #endif
   if (!config.force_dtack)
   {
@@ -77,7 +93,7 @@ void m68k_lockup_w_8 (unsigned int address, unsigned int data)
 void m68k_lockup_w_16 (unsigned int address, unsigned int data)
 {
 #ifdef LOGERROR
-  error ("Lockup %08X = %04X (%08X)\n", address, data, m68k_get_reg (NULL, M68K_REG_PC));
+  error ("Lockup %08X = %04X (%08X)\n", address, data, m68k_get_reg(M68K_REG_PC));
 #endif
   if (!config.force_dtack)
   {
@@ -88,7 +104,7 @@ void m68k_lockup_w_16 (unsigned int address, unsigned int data)
 unsigned int m68k_lockup_r_8 (unsigned int address)
 { 
 #ifdef LOGERROR
-  error ("Lockup %08X.b (%08X)\n", address, m68k_get_reg (NULL, M68K_REG_PC));
+  error ("Lockup %08X.b (%08X)\n", address, m68k_get_reg(M68K_REG_PC));
 #endif
   if (!config.force_dtack)
   {
@@ -100,55 +116,13 @@ unsigned int m68k_lockup_r_8 (unsigned int address)
 unsigned int m68k_lockup_r_16 (unsigned int address)
 {
 #ifdef LOGERROR
-  error ("Lockup %08X.w (%08X)\n", address, m68k_get_reg (NULL, M68K_REG_PC));
+  error ("Lockup %08X.w (%08X)\n", address, m68k_get_reg(M68K_REG_PC));
 #endif
   if (!config.force_dtack)
   {
     m68k_pulse_halt();
   }
   return m68k_read_pcrelative_16(REG_PC);
-}
-
-
-/*--------------------------------------------------------------------------*/
-/* cartridge EEPROM                                                         */
-/*--------------------------------------------------------------------------*/
-unsigned int eeprom_read_byte(unsigned int address)
-{
-  if (address == eeprom.type.sda_out_adr)
-  {
-    return eeprom_read(0);
-  }
-  return READ_BYTE(cart.rom, address);
-}
-
-unsigned int eeprom_read_word(unsigned int address)
-{
-  if (address == (eeprom.type.sda_out_adr & 0xFFFFFE))
-  {
-    return eeprom_read(1);
-  }
-  return *(uint16 *)(cart.rom + address);
-}
-
-void eeprom_write_byte(unsigned int address, unsigned int data)
-{
-  if ((address == eeprom.type.sda_in_adr) || (address == eeprom.type.scl_adr))
-  {
-    eeprom_write(address, data, 0);
-    return;
-  }
-  m68k_unused_8_w(address, data);
-}
-
-void eeprom_write_word(unsigned int address, unsigned int data)
-{
-  if ((address == (eeprom.type.sda_in_adr & 0xFFFFFE)) || (address == (eeprom.type.scl_adr & 0xFFFFFE)))
-  {
-    eeprom_write(address, data, 1);
-    return;
-  }
-  m68k_unused_16_w (address, data);
 }
 
 
@@ -256,6 +230,7 @@ unsigned int ctrl_io_read_byte(unsigned int address)
     {
       if (!(address & 1))
       {
+        /* Unused bits return prefetched bus data (Time Killers) */
         unsigned int data = m68k_read_pcrelative_8(REG_PC) & 0xFE;
         if (zstate == 3)
         {
@@ -323,6 +298,7 @@ unsigned int ctrl_io_read_word(unsigned int address)
 
     case 0x11:  /* BUSACK */
     {
+      /* Unused bits return prefetched bus data (Time Killers) */
       unsigned int data = m68k_read_pcrelative_16(REG_PC) & 0xFEFF;
       if (zstate == 3)
       {
@@ -541,12 +517,13 @@ unsigned int vdp_read_byte(unsigned int address)
 
     case 0x04:  /* CTRL */
     {
-      return (((vdp_ctrl_r(mcycles_68k) >> 8) & 3) | (m68k_read_pcrelative_8(REG_PC) & 0xFC));
+      /* Unused bits return prefetched bus data */
+      return (((vdp_68k_ctrl_r(mcycles_68k) >> 8) & 3) | (m68k_read_pcrelative_8(REG_PC) & 0xFC));
     }
 
     case 0x05:  /* CTRL */
     {
-      return (vdp_ctrl_r(mcycles_68k) & 0xFF);
+      return (vdp_68k_ctrl_r(mcycles_68k) & 0xFF);
     }
 
     case 0x08:  /* HVC */
@@ -587,7 +564,8 @@ unsigned int vdp_read_word(unsigned int address)
 
     case 0x04:  /* CTRL */
     {
-      return ((vdp_ctrl_r(mcycles_68k) & 0x3FF) | (m68k_read_pcrelative_16(REG_PC) & 0xFC00));
+      /* Unused bits return prefetched bus data */
+      return ((vdp_68k_ctrl_r(mcycles_68k) & 0x3FF) | (m68k_read_pcrelative_16(REG_PC) & 0xFC00));
     }
 
     case 0x08:  /* HVC */

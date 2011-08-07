@@ -3,30 +3,45 @@
  *
  *  Genesis Plus GX video & rendering support
  *
- *  Softdev (2006)
- *  Eke-Eke (2007,2008,2009)
+ *  Copyright Eke-Eke (2007-2011), based on original work from Softdev (2006)
  *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
+ *  Redistribution and use of this code or any derivative works are permitted
+ *  provided that the following conditions are met:
  *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
+ *   - Redistributions may not be sold, nor may they be used in a commercial
+ *     product or activity.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *   - Redistributions that are modified from the original source must include the
+ *     complete source code, including the source code for all components used by a
+ *     binary built from the modified sources. However, as a special exception, the
+ *     source code distributed need not include anything that is normally distributed
+ *     (in either source or binary form) with the major components (compiler, kernel,
+ *     and so on) of the operating system on which the executable runs, unless that
+ *     component itself accompanies the executable.
  *
- ***************************************************************************/
+ *   - Redistributions must reproduce the above copyright notice, this list of
+ *     conditions and the following disclaimer in the documentation and/or other
+ *     materials provided with the distribution.
+ *
+ *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ *  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ *  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ *  ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+ *  LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ *  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ *  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ *  CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ *  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ *  POSSIBILITY OF SUCH DAMAGE.
+ *
+ ****************************************************************************************/
 
 #include "shared.h"
 #include "font.h"
-#include "aram.h"
 #include "md_ntsc.h"
 #include "sms_ntsc.h"
+#include "gx_input.h"
 
 #include <png.h>
 
@@ -53,7 +68,7 @@ u8 *texturemem;     /* Texture Data          */
 u8 *screenshot;     /* Texture Data          */
 
 /*** 50/60hz flag ***/
-u32 gc_pal = 0;
+u32 gc_pal;
 
 /*** NTSC Filters ***/
 sms_ntsc_t *sms_ntsc;
@@ -336,7 +351,7 @@ static camera cam = {
 /* VSYNC callback */
 static void vi_callback(u32 cnt)
 {
-  frameticker++;
+  frameticker ++;
 }
 
 /* Vertex Rendering */
@@ -354,7 +369,7 @@ static inline void draw_square(void)
   draw_vert(2, 1.0, 0.0);
   draw_vert(1, 1.0, 1.0);
   draw_vert(0, 0.0, 1.0);
-  GX_End ();
+  GX_End();
 }
 
 /* Initialize GX */
@@ -466,7 +481,7 @@ static void gxSetAspectRatio(int *xscale, int *yscale)
     else
     {
       /* overscan is simulated (black) */
-      *yscale = bitmap.viewport.h / 2;
+      *yscale = vheight / 2;
       if (vdp_pal && (!gc_pal || config.render))
         *yscale = *yscale * 240 / 288;
       else if (!vdp_pal && gc_pal && !config.render)
@@ -476,23 +491,23 @@ static void gxSetAspectRatio(int *xscale, int *yscale)
     /* horizontal borders */
     if (config.overscan & 2)
     {
-      /* max visible range is ~712 pixels, not 720 */
-      *xscale = (reg[12] & 1) ? 356 : 360; 
+      /* max visible range is ~712 pixels (= 348 'H40' pixels) */
+      *xscale = (reg[12] & 1) ? 356 : 363; 
     }
     else
     {
       /* overscan is simulated (black) */
-      *xscale = 327;
+      *xscale = (system_hw == SYSTEM_GG) ? 204 : 327;
     }
 
-    /* 16/9 correction */
+    /* aspect correction for 16:9 screens */
     if (config.aspect & 2)
     {
       *xscale = (*xscale * 3) / 4;
     }
   }
 
-  /* manual aspect ratio (default is unscaled raw) */
+  /* manual aspect ratio (default is full screen & not scaled if possible) */
   else
   {
     /* vertical borders */
@@ -508,7 +523,7 @@ static void gxSetAspectRatio(int *xscale, int *yscale)
     /* horizontal borders */
     if (config.overscan & 2)
     {
-      *xscale = 348;
+      *xscale = (reg[12] & 1) ? 348 : 355;
     }
     else
     {
@@ -620,8 +635,8 @@ static void gxDrawCrosshair(gx_texture *texture, int x, int y)
     int h = (texture->height * rmode->efbHeight) / (rmode->viHeight);
 	
     /* adjust texture coordinates to EFB */
-	int fb_w = square[3] - square[9];
-	int fb_h = square[4] - square[10];
+    int fb_w = square[3] - square[9];
+    int fb_h = square[4] - square[10];
     x = (((x + bitmap.viewport.x) * fb_w) / (bitmap.viewport.w + 2*bitmap.viewport.x)) - w/2 - (fb_w/2);
     y = (((y + bitmap.viewport.y) * fb_h) / (bitmap.viewport.h + 2*bitmap.viewport.y)) - h/2 - (fb_h/2);
 
@@ -639,7 +654,7 @@ static void gxDrawCrosshair(gx_texture *texture, int x, int y)
     GX_Position2s16(x,y);
     GX_Color4u8(0xff,0xff,0xff,0xff);
     GX_TexCoord2f32(0.0, 0.0);
-    GX_End ();
+    GX_End();
 
     /* restore GX rendering */
     gxResetRendering(0);
@@ -675,7 +690,7 @@ void gxDrawRectangle(s32 x, s32 y, s32 w, s32 h, u8 alpha, GXColor color)
   GX_Color4u8(color.r,color.g,color.b,alpha);
   GX_Position2s16(x,y);
   GX_Color4u8(color.r,color.g,color.b,alpha);
-  GX_End ();
+  GX_End();
   GX_DrawDone();
 
   /* restore GX rendering */
@@ -714,7 +729,7 @@ void gxDrawTexture(gx_texture *texture, s32 x, s32 y, s32 w, s32 h, u8 alpha)
     GX_Position2s16(x,y);
     GX_Color4u8(0xff,0xff,0xff,alpha);
     GX_TexCoord2f32(0.0, 0.0);
-    GX_End ();
+    GX_End();
     GX_DrawDone();
   }
 }
@@ -759,7 +774,7 @@ void gxDrawTextureRotate(gx_texture *texture, s32 x, s32 y, s32 w, s32 h, f32 an
     GX_Position2s16(-w/2,h/2);
     GX_Color4u8(0xff,0xff,0xff,alpha);
     GX_TexCoord2f32(0.0, 1.0);
-    GX_End ();
+    GX_End();
     GX_DrawDone();
 
     /* restore default Modelview */
@@ -802,7 +817,7 @@ void gxDrawTextureRepeat(gx_texture *texture, s32 x, s32 y, s32 w, s32 h, u8 alp
     GX_Position2s16(x,y);
     GX_Color4u8(0xff,0xff,0xff,alpha);
     GX_TexCoord2f32(0.0, 0.0);
-    GX_End ();
+    GX_End();
     GX_DrawDone();
   }
 }
@@ -834,6 +849,12 @@ void gxDrawScreenshot(u8 alpha)
   s32 w = xscale * 2;
   s32 h = yscale * 4;
 
+  /* black out surrounding area if necessary (Game Gear without borders) */
+  if ((w < 640) || (h < 480))
+  {
+    gxDrawRectangle(0, 0, 640, 480, 255, (GXColor)BLACK);
+  }
+
   /* draw textured quad */
   GX_Begin(GX_QUADS, GX_VTXFMT0, 4);
   GX_Position2s16(x,y+h);
@@ -848,7 +869,7 @@ void gxDrawScreenshot(u8 alpha)
   GX_Position2s16(x,y);
   GX_Color4u8(0xff,0xff,0xff,alpha);
   GX_TexCoord2f32(0.0, 0.0);
-  GX_End ();
+  GX_End();
   GX_DrawDone();
 }
 
@@ -861,10 +882,16 @@ void gxCopyScreenshot(gx_texture *texture)
   GX_InvalidateTexAll();
 
   /* scale texture to EFB width */
-  s32 w = bitmap.viewport.x ? 696 : 640;
+  s32 w = ((bitmap.viewport.w + 2*bitmap.viewport.x) * 640) / bitmap.viewport.w;
   s32 h = (bitmap.viewport.h + 2*bitmap.viewport.y) * 2;
   s32 x = -w/2;
   s32 y = -(240+ 2*bitmap.viewport.y);
+
+  /* black out surrounding area if necessary (Game Gear without borders) */
+  if ((w < 640) || (h < 480))
+  {
+    gxDrawRectangle(0, 0, 640, 480, 255, (GXColor)BLACK);
+  }
 
   /* draw textured quad */
   GX_Begin(GX_QUADS, GX_VTXFMT0, 4);
@@ -880,7 +907,7 @@ void gxCopyScreenshot(gx_texture *texture)
   GX_Position2s16(x,y);
   GX_Color4u8(0xff,0xff,0xff,0xff);
   GX_TexCoord2f32(0.0, 0.0);
-  GX_End ();
+  GX_End();
 
   /* copy EFB to texture */
   texture->format = GX_TF_RGBA8;
@@ -928,6 +955,7 @@ void gxSetScreen(void)
   VIDEO_SetNextFramebuffer (xfb[whichfb]);
   VIDEO_Flush ();
   VIDEO_WaitVSync ();
+  gx_input_UpdateMenu();
 }
 
 void gxClearScreen(GXColor color)
@@ -1315,7 +1343,6 @@ void gx_video_Stop(void)
 
   /* default VI settings */
   VIDEO_SetPreRetraceCallback(NULL);
-  VIDEO_SetPostRetraceCallback(gx_input_UpdateMenu);
 #ifdef HW_RVL
   VIDEO_SetTrapFilter(1);
   VIDEO_SetGamma(VI_GM_1_0);
@@ -1355,9 +1382,8 @@ void gx_video_Start(void)
   if (gc_pal == vdp_pal)
   {
     VIDEO_SetPreRetraceCallback(vi_callback);
+    VIDEO_Flush();
   }
-  VIDEO_SetPostRetraceCallback(NULL);
-  VIDEO_Flush();
 
   /* set interlaced or progressive video mode */
   if (config.render == 2)
@@ -1371,8 +1397,17 @@ void gx_video_Start(void)
     tvmodes[2]->xfbMode = VI_XFBMODE_DF;
   }
 
+  /* update horizontal border width */
+  if (system_hw == SYSTEM_GG)
+  {
+    bitmap.viewport.x = (config.overscan & 2) ? 14 : -48;
+  }
+  else
+  {
+    bitmap.viewport.x = (config.overscan & 2) * 7;
+  }
+
   /* force viewport update */
-  bitmap.viewport.x = (config.overscan & 2) * 7;
   bitmap.viewport.changed = 3;
 
   /* NTSC filter */
@@ -1407,19 +1442,46 @@ void gx_video_Start(void)
   }
 
   /* lightgun textures */
-  if (config.gun_cursor[0] && ((input.system[1] == SYSTEM_MENACER) || (input.system[1] == SYSTEM_JUSTIFIER) || (input.system[0] == SYSTEM_LIGHTPHASER)))
+  int i, player = 0;
+  for (i=0; i<MAX_DEVICES; i++)
   {
-    crosshair[0] = gxTextureOpenPNG(Crosshair_p1_png,0);
-  }
-  if (config.gun_cursor[1] && ((input.system[1] == SYSTEM_JUSTIFIER) || (input.system[1] == SYSTEM_LIGHTPHASER)))
-  {
-    crosshair[1] = gxTextureOpenPNG(Crosshair_p2_png,0);
+    /* Check for emulated lightguns */
+    if (input.dev[i] == DEVICE_LIGHTGUN)
+    {
+      /* Check if input device is affected to player */
+      if (config.input[player].device >= 0)
+      {
+        if ((i == 0) || ((i == 4) && (input.system[1] != SYSTEM_LIGHTPHASER)))
+        {
+          /* Lightgun #1 */
+          if (config.gun_cursor[0])
+          {
+            crosshair[0] = gxTextureOpenPNG(Crosshair_p1_png,0);
+          }
+        }
+        else
+        {
+          /* Lightgun #2 */
+          if (config.gun_cursor[1])
+          {
+            crosshair[1] = gxTextureOpenPNG(Crosshair_p2_png,0);
+          }
+        }
+      }
+    }
+
+    /* Check for any emulated device */
+    if (input.dev[i] != NO_DEVICE)
+    {
+      /* increment player index */
+      player++;
+    }
   }
 
   /* GX emulation rendering */
   gxResetRendering(0);
 
-  /* resynchronize emulation with VSYNC*/
+  /* resynchronize emulation with VSYNC */
   VIDEO_WaitVSync();
 }
 
@@ -1493,7 +1555,7 @@ void gx_video_Update(void)
   /* render textured quad */
   draw_square();
 
-  /* Lightgun # 1 screen mark */
+  /* lightgun # 1 screen mark */
   if (crosshair[0])
   {
     if (input.system[0] == SYSTEM_LIGHTPHASER)
@@ -1506,12 +1568,12 @@ void gx_video_Update(void)
     }
   }
 
-  /* Lightgun # 2 screen mark */
+  /* lightgun #2 screen mark */
   if (crosshair[1])
   {
     if (input.system[1] == SYSTEM_LIGHTPHASER)
     {
-      gxDrawCrosshair(crosshair[1], input.analog[1][0],input.analog[1][1]);
+      gxDrawCrosshair(crosshair[1], input.analog[4][0],input.analog[4][1]);
     }
     else
     {
@@ -1533,7 +1595,7 @@ void gx_video_Update(void)
 
   if (update)
   {
-    /* Clear update flags */
+    /* clear update flags */
     bitmap.viewport.changed &= ~1;
 
     /* field synchronization */
@@ -1560,19 +1622,6 @@ void gx_video_Init(void)
    * Call VIDEO_Init
    */
   VIDEO_Init();
-
-  /*
-   * Before any memory is allocated etc.
-   * Rescue any tagged ROM in data 2
-   */
-  int *romptr = (int *)0x80700000;
-  StartARAM();
-  cart.romsize = 0;
-  if (memcmp((char *)romptr,"GENPLUSR",8) == 0)
-  {
-    cart.romsize = romptr[2];
-    ARAMPut((char *) 0x80700000 + 0x20, (char *) 0x8000, cart.romsize);
-  }
 
   /* Get the current VIDEO mode then :
       - set menu VIDEO mode (480p, 480i or 576i)
@@ -1647,32 +1696,11 @@ void gx_video_Init(void)
   gxResetMode(vmode);
 
   /* initialize FONT */
-  if (!FONT_Init())
-  {
-#ifdef HW_RVL
-    DI_Close();
-    SYS_ResetSystem(SYS_RESTART,0,0);
-#else
-    SYS_ResetSystem(SYS_HOTRESET,0,0);
-#endif
-  }
+  FONT_Init();
 
   /* Initialize textures */
   texturemem = memalign(32, TEX_SIZE);
   screenshot = memalign(32, HASPECT*VASPECT*4);
-  if (!texturemem || !screenshot)
-  {
-    FONT_writeCenter("Failed to allocate textures memory... Rebooting",18,0,640,200,(GXColor)WHITE);
-    gxSetScreen();
-    sleep(2);
-    gx_video_Shutdown();
-#ifdef HW_RVL
-    DI_Close();
-    SYS_ResetSystem(SYS_RESTART,0,0);
-#else
-    SYS_ResetSystem(SYS_HOTRESET,0,0);
-#endif
-  }
 }
 
 void gx_video_Shutdown(void)

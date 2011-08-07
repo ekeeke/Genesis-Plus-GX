@@ -3,21 +3,37 @@
  *  ROM Loading Support
  *
  *  Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003  Charles Mac Donald (original code)
- *  Eke-Eke (2007,2008,2009), additional code & fixes for the GCN/Wii port
+ *  Copyright (C) 2007-2011  Eke-Eke (Genesis Plus GX)
  *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
+ *  Redistribution and use of this code or any derivative works are permitted
+ *  provided that the following conditions are met:
  *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
+ *   - Redistributions may not be sold, nor may they be used in a commercial
+ *     product or activity.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *   - Redistributions that are modified from the original source must include the
+ *     complete source code, including the source code for all components used by a
+ *     binary built from the modified sources. However, as a special exception, the
+ *     source code distributed need not include anything that is normally distributed
+ *     (in either source or binary form) with the major components (compiler, kernel,
+ *     and so on) of the operating system on which the executable runs, unless that
+ *     component itself accompanies the executable.
+ *
+ *   - Redistributions must reproduce the above copyright notice, this list of
+ *     conditions and the following disclaimer in the documentation and/or other
+ *     materials provided with the distribution.
+ *
+ *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ *  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ *  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ *  ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+ *  LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ *  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ *  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ *  CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ *  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ *  POSSIBILITY OF SUCH DAMAGE.
  *
  ****************************************************************************************/
 
@@ -75,7 +91,7 @@ typedef struct
 
 ROMINFO rominfo;
 char rom_filename[256];
-
+uint8 romtype;
 
 /***************************************************************************
   * Genesis ROM Manufacturers
@@ -220,9 +236,6 @@ static void getrominfo(char *romheader)
   /* If found, assume this is a SMS game */
   if (offset)
   {
-    /* force SMS compatibilty mode */
-    system_hw = SYSTEM_PBC;
-
     /* checksum */
     rominfo.checksum = cart.rom[offset + 0x0a] | (cart.rom[offset + 0x0b] << 8);
 
@@ -291,7 +304,7 @@ static void getrominfo(char *romheader)
   else
   {
     /* Some SMS games don't have any header */
-    if (system_hw == SYSTEM_PBC) return;
+    if (system_hw != SYSTEM_MD) return;
 
     /* Genesis ROM header support */
     memcpy (&rominfo.consoletype, romheader + ROMCONSOLE, 16);
@@ -367,38 +380,48 @@ static void deinterleave_block(uint8 * src)
   * load_rom
   *
   * Load a new ROM file.
+  *
+  * Return 0 on error, 1 on success
+  *
   ***************************************************************************/
 int load_rom(char *filename)
 {
-  int i, size;
- 
-#ifdef NGC
-  size = cart.romsize;
-#else
-  uint8 *ptr;
-  ptr = load_archive(filename, &size);
-  if(!ptr) return (0);
-  memcpy(cart.rom, ptr, size);
-  free(ptr);
-#endif
+  int i;
 
-  /* Minimal ROM size */
-  if (size < 0x4000)
-  {
-    memset(cart.rom + size, 0xFF, 0x4000 - size);
-    size = 0x4000;
-  }
+  /* Load file into ROM buffer */
+  int size = load_archive(filename);
+  if (!size) return(0);
 
-  /* Get file extension */
+  /* Auto-detect system mode from ROM file extension */
   if (!strnicmp(".sms", &filename[strlen(filename) - 4], 4))
   {
-    /* Force SMS compatibility mode */
-    system_hw = SYSTEM_PBC;
+    /* Master System II hardware */
+    system_hw = SYSTEM_SMS2;
+  }
+  else if (!strnicmp(".gg", &filename[strlen(filename) - 3], 3))
+  {
+    /* Game Gear hardware (GG mode) */
+    system_hw = SYSTEM_GG;
+  }
+  else if (!strnicmp(".sg", &filename[strlen(filename) - 3], 3))
+  {
+    /* SG-1000 hardware */
+    system_hw = SYSTEM_SG;
   }
   else
   {
-    /* Assume Genesis mode */
-    system_hw = SYSTEM_GENESIS;
+    /* Mega Drive hardware (Genesis mode) */
+    system_hw = SYSTEM_MD;
+
+    /* Decode .MDX format */
+    if (!strnicmp(".mdx", &filename[strlen(filename) - 4], 4))
+    {
+      for (i = 4; i < size - 1; i++)
+      {
+        cart.rom[i-4] = cart.rom[i] ^ 0x40;
+      }
+      size = size - 5;
+    }
   }
 
   /* Take care of 512 byte header, if present */
@@ -408,7 +431,7 @@ int load_rom(char *filename)
     memcpy (cart.rom, cart.rom + 512, size);
 
     /* interleaved ROM format (.smd) */
-    if (system_hw != SYSTEM_PBC)
+    if (system_hw == SYSTEM_MD)
     {
       for (i = 0; i < (size / 0x4000); i++)
       {
@@ -427,14 +450,45 @@ int load_rom(char *filename)
   /* get infos from ROM header */
   getrominfo((char *)cart.rom);
 
+  /* PICO hardware */
+  if (strstr(rominfo.consoletype, "SEGA PICO") != NULL)
+  {
+    system_hw = SYSTEM_PICO;
+  }
+
   /* detect console region */
   region_autodetect();
 
-  /* Genesis ROM specific */
-  if (system_hw != SYSTEM_PBC)
+  /* Save ROM type for later use */
+  romtype = system_hw;
+
+  /* Force system if requested */
+  if (config.system == SYSTEM_MD)
+  {
+    if (!(system_hw & SYSTEM_MD))
+    {
+      /* Mega Drive in MS compatibility mode  */
+      system_hw = SYSTEM_PBC;
+    }
+  }
+  else if (config.system == SYSTEM_GG)
+  {
+    if (!(system_hw == SYSTEM_GG))
+    {
+      /* Game Gear in MS compatibility mode  */
+      system_hw = SYSTEM_GGMS;
+    }
+  }
+  else if (config.system)
+  {
+    system_hw = config.system;
+  }
+
+  /* Genesis mode specific */
+  if (system_hw == SYSTEM_MD)
   {
 #ifdef LSB_FIRST
-    /* Byteswap ROM */
+    /* Byteswap ROM to optimize 16-bit access */
     uint8 temp;
     for(i = 0; i < size; i += 2)
     {
@@ -456,12 +510,6 @@ int load_rom(char *filename)
         cart.rom[i+1] = temp;
       }
     }
-
-    /* PICO hardware */
-    if (strstr(rominfo.consoletype, "SEGA PICO") != NULL)
-    {
-      system_hw = SYSTEM_PICO;
-    }
   }
 
   return(1);
@@ -475,7 +523,7 @@ int load_rom(char *filename)
  ****************************************************************************/
 void region_autodetect(void)
 {
-  if (system_hw == SYSTEM_PBC)
+  if (system_hw != SYSTEM_MD)
   {
     region_code = sms_cart_region_detect();
   }

@@ -19,15 +19,15 @@ TARGET		:=	genplus_cube
 BUILD		:=	build_cube
 SOURCES		:=	source source/m68k source/z80 source/sound source/ntsc source/input_hw source/cart_hw source/cart_hw/svp \
 			source/gx source/gx/utils source/gx/gui source/gx/fileio source/gx/images source/gx/sounds
-INCLUDES	:=	source source/m68k source/z80 source/sound source/ntsc source/input_hw source/cart_hw source/cart_hw/svp \
+INCLUDES	:=	source source/m68k source/z80 source/sound source/ntsc source/input_hw  source/cart_hw source/cart_hw/svp \
 			source/gx source/gx/utils source/gx/gui source/gx/fileio source/gx/images source/gx/sounds \
-			$(BUILD)
+			$(BUILD) 
 
 #---------------------------------------------------------------------------------
 # options for code generation
 #---------------------------------------------------------------------------------
 
-CFLAGS	= -O3 -fomit-frame-pointer -Wall -Wno-strict-aliasing $(MACHDEP) $(INCLUDE) -DALT_RENDERER -DNGC -DHW_DOL
+CFLAGS  = -O3 -fomit-frame-pointer --param large-function-growth=800 --param inline-unit-growth=200 -Wall -Winline -Wno-strict-aliasing $(MACHDEP) $(INCLUDE) -DUSE_16BPP_RENDERING -DALT_RENDERER -DNGC -DHW_DOL
 CXXFLAGS	=	$(CFLAGS)
 
 LDFLAGS	=	$(MACHDEP) -Wl,-Map,$(notdir $@).map
@@ -95,7 +95,7 @@ export INCLUDE	:=	$(foreach dir,$(INCLUDES),-I$(CURDIR)/$(dir)) \
 # build a list of library paths
 #---------------------------------------------------------------------------------
 export LIBPATHS	:=	$(foreach dir,$(LIBDIRS),-L$(dir)/lib) \
-			-L$(LIBOGC_LIB)
+					-L$(LIBOGC_LIB)
 
 export OUTPUT	:=	$(CURDIR)/$(TARGET)
 .PHONY: $(BUILD) clean

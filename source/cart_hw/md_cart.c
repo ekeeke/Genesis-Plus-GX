@@ -1,34 +1,50 @@
-
 /****************************************************************************
  *  Genesis Plus
  *  Mega Drive cartridge hardware support
  *
- *  Copyright (C) 2007-2011  Eke-Eke (GCN/Wii port)
+ *  Copyright (C) 2007-2011  Eke-Eke (Genesis Plus GX)
  *
- *  Most cartridge protections documented by Haze
+ *  Most cartridge protections were initially documented by Haze
  *  (http://haze.mameworld.info/)
  *
- *  Realtec mapper documented by TascoDeluxe
+ *  Realtec mapper was documented by TascoDeluxe
  *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
+ *  Redistribution and use of this code or any derivative works are permitted
+ *  provided that the following conditions are met:
  *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
+ *   - Redistributions may not be sold, nor may they be used in a commercial
+ *     product or activity.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- ***************************************************************************/
+ *   - Redistributions that are modified from the original source must include the
+ *     complete source code, including the source code for all components used by a
+ *     binary built from the modified sources. However, as a special exception, the
+ *     source code distributed need not include anything that is normally distributed
+ *     (in either source or binary form) with the major components (compiler, kernel,
+ *     and so on) of the operating system on which the executable runs, unless that
+ *     component itself accompanies the executable.
+ *
+ *   - Redistributions must reproduce the above copyright notice, this list of
+ *     conditions and the following disclaimer in the documentation and/or other
+ *     materials provided with the distribution.
+ *
+ *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ *  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ *  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ *  ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+ *  LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ *  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ *  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ *  CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ *  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ *  POSSIBILITY OF SUCH DAMAGE.
+ *
+ ****************************************************************************************/
 
 #include "shared.h"
 #include "gamepad.h"
 
-#define CART_CNT (44)
+#define CART_CNT (48)
 
 /* Cart database entry */
 typedef struct
@@ -60,8 +76,10 @@ static uint32 default_regs_r(uint32 address);
 static uint32 default_regs_r_16(uint32 address);
 static void custom_regs_w(uint32 address, uint32 data);
 static void custom_alt_regs_w(uint32 address, uint32 data);
-static uint32 topshooter_read(uint32 address);
-static void topshooter_write(uint32 address, uint32 data);
+static uint32 topshooter_r(uint32 address);
+static void topshooter_w(uint32 address, uint32 data);
+static uint32 sega_channel_r(uint32 address);
+static void sega_channel_w(uint32 address, uint32 data);
 
 /* Games that need extra hardware emulation:
   - copy protection device
@@ -81,10 +99,12 @@ static const T_CART_ENTRY rom_database[CART_CNT] =
   {0x4f10,0x0836,0x00,0x00,{{0x00,0x00,0x00,0x00},{0xffffff,0xffffff,0xffffff,0xffffff},{0x000000,0x000000,0x000000,0x000000},0,0,mapper_radica_r,NULL,NULL,NULL}},
 /* RADICA (Volume 1) (byteswapped version) */
   {0xf424,0x9f82,0x00,0x00,{{0x00,0x00,0x00,0x00},{0xffffff,0xffffff,0xffffff,0xffffff},{0x000000,0x000000,0x000000,0x000000},0,0,mapper_radica_r,NULL,NULL,NULL}},
-/* Chinese Fighters III */
+/* Tenchi wo Kurau III: Sangokushi Gaiden - Chinese Fighter */
   {0x9490,0x8180,0x40,0x6f,{{0x00,0x00,0x00,0x00},{0xf0000c,0xf0000c,0xf0000c,0xf0000c},{0x400000,0x400004,0x400008,0x40000c},0,1,NULL,NULL,default_regs_r,custom_alt_regs_w}},
 /* Top Fighter */
   {0x4eb9,0x5d8b,0x60,0x7f,{{0x00,0x00,0x00,0x00},{0xf00007,0xf00007,0xf00007,0xffffff},{0x600001,0x600003,0x600005,0x000000},0,1,NULL,NULL,default_regs_r,custom_regs_w}},
+/* Soul Edge VS Samurai Spirits  */
+  {0x00ff,0x5d34,0x60,0x7f,{{0x00,0x00,0x00,0x00},{0xf00007,0xf00007,0xf00007,0xf00007},{0x600001,0x600003,0x600005,0x600007},0,1,NULL,NULL,default_regs_r,custom_regs_w}},
 /* Mulan */
   {0x0404,0x1b40,0x60,0x7f,{{0x00,0x00,0x00,0x00},{0xf00007,0xf00007,0xf00007,0xffffff},{0x600001,0x600003,0x600005,0x000000},0,1,NULL,NULL,default_regs_r,custom_regs_w}},
 /* Pocket Monsters II */
@@ -99,6 +119,8 @@ static const T_CART_ENTRY rom_database[CART_CNT] =
   {0xffff,0x1d9b,0x40,0x40,{{0x00,0x00,0x00,0x00},{0xfffffd,0xfffffd,0xffffff,0xffffff},{0x400000,0x400004,0x000000,0x000000},0,0,NULL,NULL,default_regs_r,default_regs_w}},
 /* Squirell King */
   {0x0000,0x8ec8,0x40,0x40,{{0x00,0x00,0x00,0x00},{0xfffffd,0xfffffd,0xffffff,0xffffff},{0x400000,0x400004,0x000000,0x000000},0,0,NULL,NULL,default_regs_r,default_regs_w}},
+/* Tiny Toon Adventures 3 */
+  {0x2020,0xed9c,0x40,0x40,{{0x00,0x00,0x00,0x00},{0xfffffd,0xfffffd,0xffffff,0xffffff},{0x400000,0x400004,0x000000,0x000000},0,0,NULL,NULL,default_regs_r,default_regs_w}},
 /* Lian Huan Pao - Barver Battle Saga (registers accessed by Z80, related to sound engine ?) */
   {0x30b9,0x1c2a,0x40,0x40,{{0x00,0x00,0x00,0x00},{0xfffffd,0xfffffd,0xffffff,0xffffff},{0x400000,0x400004,0x000000,0x000000},0,0,NULL,NULL,default_regs_r,default_regs_w}},
 /* Shui Hu Zhuan (registers accessed by Z80, related to sound engine ?) */
@@ -121,12 +143,16 @@ static const T_CART_ENTRY rom_database[CART_CNT] =
   {0xfb40,0x4bed,0x40,0x40,{{0x00,0xaa,0x00,0xf0},{0xffffff,0xffffff,0xffffff,0xffffff},{0x000000,0x400002,0x000000,0x400006},0,0,NULL,NULL,default_regs_r_16,NULL}},
 /* King of Fighter 98 */
   {0x0000,0xd0a0,0x48,0x4f,{{0x00,0x00,0xaa,0xf0},{0xffffff,0xffffff,0xfc0000,0xfc0000},{0x000000,0x000000,0x480000,0x4c0000},0,0,NULL,NULL,default_regs_r,NULL}},
-/* Supper Bubble Bobble */
+/* Super Bubble Bobble */
   {0x0000,0x16cd,0x40,0x40,{{0x55,0x0f,0x00,0x00},{0xffffff,0xffffff,0xffffff,0xffffff},{0x400000,0x400002,0x000000,0x000000},0,0,NULL,NULL,default_regs_r,NULL}},
+/* Tenchi wo Kurau II - The Battle of Red Cliffs (Unl) */
+  {0x0000,0xed61,0x40,0x40,{{0x55,0x0f,0xaa,0xf0},{0xffffff,0xffffff,0xffffff,0xffffff},{0x400000,0x400002,0x400004,0x400006},0,0,NULL,NULL,default_regs_r,NULL}},
 /* Huan Le Tao Qi Shu - Smart Mouse */
   {0x0000,0x1a28,0x40,0x40,{{0x55,0x0f,0xaa,0xf0},{0xffffff,0xffffff,0xffffff,0xffffff},{0x400000,0x400002,0x400004,0x400006},0,0,NULL,NULL,default_regs_r,NULL}},
 /* (*) Hei Tao 2 - Super Big 2 (patched ROM, unused registers) */
   {0x0000,0x5843,0x40,0x40,{{0x55,0x0f,0xaa,0xf0},{0xffffff,0xffffff,0xffffff,0xffffff},{0x400000,0x400002,0x400004,0x400006},0,0,NULL,NULL,default_regs_r,NULL}},
+/* Mighty Morphin Power Rangers - The Fighting Edition */
+  {0x0000,0x2288,0x40,0x40,{{0x55,0x0f,0xc9,0x18},{0xffffff,0xffffff,0xffffff,0xffffff},{0x400000,0x400002,0x400004,0x400006},0,0,NULL,NULL,default_regs_r,NULL}},
 /* Elf Wor */
   {0x0080,0x3dba,0x40,0x40,{{0x55,0x0f,0xc9,0x18},{0xffffff,0xffffff,0xffffff,0xffffff},{0x400000,0x400002,0x400004,0x400006},0,0,NULL,NULL,default_regs_r,NULL}},
 /* Ya-Se Chuanshuo */
@@ -156,7 +182,7 @@ static const T_CART_ENTRY rom_database[CART_CNT] =
 /* Game no Kanzume Otokuyou */
   {0x0000,0xf9d1,0x00,0x00,{{0x00,0x00,0x00,0x00},{0xffffff,0xffffff,0xffffff,0xffffff},{0x000000,0x000000,0x000000,0x000000},0,0,NULL,mapper_seganet_w,NULL,NULL}},
 /* Top Shooter (arcade hardware) */
-  {0xffff,0x3632,0x20,0x20,{{0x00,0x00,0x00,0x00},{0xffffff,0xffffff,0xffffff,0xffffff},{0x000000,0x000000,0x000000,0x000000},0,0,NULL,NULL,topshooter_read,topshooter_write}}
+  {0xffff,0x3632,0x20,0x20,{{0x00,0x00,0x00,0x00},{0xffffff,0xffffff,0xffffff,0xffffff},{0x000000,0x000000,0x000000,0x000000},0,0,NULL,NULL,topshooter_r,topshooter_w}}
 };
 
 
@@ -278,21 +304,21 @@ void md_cart_init(void)
           BACKUP MEMORY 
   ***********************************************/
   sram_init();
-  eeprom_init();
+  md_eeprom_init();
   if (sram.on)
   {
     if (sram.custom)
     {
       /* Serial EEPROM */
-      m68k_memory_map[eeprom.type.sda_out_adr >> 16].read8  = eeprom_read_byte;
-      m68k_memory_map[eeprom.type.sda_out_adr >> 16].read16 = eeprom_read_word;
-      m68k_memory_map[eeprom.type.sda_in_adr >> 16].read8   = eeprom_read_byte;
-      m68k_memory_map[eeprom.type.sda_in_adr >> 16].read16  = eeprom_read_word;
-      m68k_memory_map[eeprom.type.scl_adr >> 16].write8     = eeprom_write_byte;
-      m68k_memory_map[eeprom.type.scl_adr >> 16].write16    = eeprom_write_word;
-      zbank_memory_map[eeprom.type.sda_out_adr >> 16].read  = eeprom_read_byte;
-      zbank_memory_map[eeprom.type.sda_in_adr >> 16].read   = eeprom_read_byte;
-      zbank_memory_map[eeprom.type.scl_adr >> 16].write     = eeprom_write_byte;
+      m68k_memory_map[md_eeprom.type.sda_out_adr >> 16].read8  = md_eeprom_read_byte;
+      m68k_memory_map[md_eeprom.type.sda_out_adr >> 16].read16 = md_eeprom_read_word;
+      m68k_memory_map[md_eeprom.type.sda_in_adr >> 16].read8   = md_eeprom_read_byte;
+      m68k_memory_map[md_eeprom.type.sda_in_adr >> 16].read16  = md_eeprom_read_word;
+      m68k_memory_map[md_eeprom.type.scl_adr >> 16].write8     = md_eeprom_write_byte;
+      m68k_memory_map[md_eeprom.type.scl_adr >> 16].write16    = md_eeprom_write_word;
+      zbank_memory_map[md_eeprom.type.sda_out_adr >> 16].read  = md_eeprom_read_byte;
+      zbank_memory_map[md_eeprom.type.sda_in_adr >> 16].read   = md_eeprom_read_byte;
+      zbank_memory_map[md_eeprom.type.scl_adr >> 16].write     = md_eeprom_write_byte;
     }
     else
     {
@@ -630,6 +656,13 @@ void md_cart_init(void)
     /* assume SSF2 mapper */
     cart.hw.bankshift = 1;
     cart.hw.time_w = mapper_ssf2_w;
+  }
+
+  /* Sega Channel mapped hardware (?) */
+  if (strstr(rominfo.international,"Sega Channel") != NULL)
+  {
+    cart.hw.time_r = sega_channel_r;
+    cart.hw.time_w = sega_channel_w;
   }
 
   /* default write handler for !TIME range ($A130xx)*/
@@ -1120,7 +1153,9 @@ static void custom_alt_regs_w(uint32 address, uint32 data)
   default_regs_w(address, data);
 }
 
-static uint32 topshooter_read(uint32 address)
+
+/* Top Shooter arcade board hardware */
+static uint32 topshooter_r(uint32 address)
 {
   if (address < 0x202000)
   {
@@ -1174,12 +1209,58 @@ static uint32 topshooter_read(uint32 address)
   return READ_BYTE(sram.sram , address & 0xffff);
 }
 
-static void topshooter_write(uint32 address, uint32 data)
+static void topshooter_w(uint32 address, uint32 data)
 {
   if (address >= 0x202000)
   {
     WRITE_BYTE(sram.sram , address & 0xffff, data);
     return;
   }
+
   m68k_unused_8_w(address, data);
+}
+
+
+/* Sega Channel hardware (not emulated) */
+/* 
+
+$A13004: BUSY ? ? ? ? ? ? ? ? ? ? ? ? ? ? ? 
+
+Unused read16 00A13004 (00005B54)
+Unused read16 00A13004 (00005B70)
+Unused read16 00A13006 (00005B7C)
+
+Unused read16 00A13004 (00005BC4)
+Unused read16 00A13004 (00005BDA)
+
+Unused write16 00A13032 = 0004 (00005706)
+Unused write16 00A130F0 = 0000 (0000570E)
+
+Unused write16 00A130F0 = 0000 (0000463E)
+Unused write16 00A130F2 = 0001 (00004646)
+Unused write16 00A130F4 = 0002 (0000464E)
+Unused write16 00A130F6 = 0003 (00004656)
+Unused write16 00A130F8 = 0004 (0000465E)
+Unused write16 00A130FA = 0005 (00004666)
+
+Unused write16 00A13032 = 0004 (00005706)
+Unused write16 00A13032 = 0104 (0000579E)
+
+Unused write16 00380000 = ACDC (00005718)
+Unused write16 00380002 = 0000 (00005722)
+Unused read16 00380000 (0000572C)
+Unused write16 00A13032 = 0104 (0000579E)
+Unused write16 00300000 = ACDC (000057B2)
+Unused write16 00380000 = 0000 (000057BC)
+Unused read16 00300000 (000057C6)
+
+*/
+static uint32 sega_channel_r(uint32 address)
+{
+  return m68k_read_bus_16(address);;
+}
+
+static void sega_channel_w(uint32 address, uint32 data)
+{
+  m68k_unused_16_w(address, data);
 }

@@ -3,30 +3,44 @@
  *
  *  Genesis Plus GX
  *
- *  Softdev (2006)
- *  Eke-Eke (2007-2010)
+ *  Copyright Eke-Eke (2007-2011), based on original work from Softdev (2006)
  *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
+ *  Redistribution and use of this code or any derivative works are permitted
+ *  provided that the following conditions are met:
  *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
+ *   - Redistributions may not be sold, nor may they be used in a commercial
+ *     product or activity.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *   - Redistributions that are modified from the original source must include the
+ *     complete source code, including the source code for all components used by a
+ *     binary built from the modified sources. However, as a special exception, the
+ *     source code distributed need not include anything that is normally distributed
+ *     (in either source or binary form) with the major components (compiler, kernel,
+ *     and so on) of the operating system on which the executable runs, unless that
+ *     component itself accompanies the executable.
  *
- ***************************************************************************/
+ *   - Redistributions must reproduce the above copyright notice, this list of
+ *     conditions and the following disclaimer in the documentation and/or other
+ *     materials provided with the distribution.
+ *
+ *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ *  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ *  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ *  ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+ *  LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ *  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ *  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ *  CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ *  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ *  POSSIBILITY OF SUCH DAMAGE.
+ *
+ ****************************************************************************************/
 
 #include "shared.h"
 #include "font.h"
 #include "gui.h"
 #include "menu.h"
-#include "aram.h"
 #include "history.h"
 #include "file_slot.h"
 #include "file_load.h"
@@ -37,6 +51,7 @@
 
 #ifdef HW_RVL
 #include <wiiuse/wpad.h>
+#include <ogc/machine/processor.h>
 #endif
 
 /* audio "exact" samplerate, measured on real hardware */
@@ -48,6 +63,7 @@
 
 u32 Shutdown = 0;
 u32 ConfigRequested = 1;
+u32 frameticker;
 
 #ifdef HW_RVL
 /****************************************************************************
@@ -65,7 +81,16 @@ static void PowerOff_cb(void)
  ***************************************************************************/
 static void Reset_cb(void)
 {
-  gen_reset(0);
+  if (system_hw & SYSTEM_MD)
+  {
+    /* SOFT-RESET */
+    gen_reset(0);
+  }
+  else if (system_hw == SYSTEM_SMS)
+  {
+    /* assert RESET input */
+    io_reg[0x0D] &= ~IO_RESET_HI;
+  }
 }
 
 /***************************************************************************
@@ -97,36 +122,77 @@ static void init_machine(void)
 {
   /* allocate cart.rom here (10 MBytes) */
   cart.rom = memalign(32, MAXROMSIZE);
-  if (!cart.rom)
-  {
-    FONT_writeCenter("Failed to allocate ROM buffer... Rebooting",18,0,640,200,(GXColor)WHITE);
-    gxSetScreen();
-    sleep(2);
-    gx_audio_Shutdown();
-    gx_video_Shutdown();
-#ifdef HW_RVL
-    DI_Close();
-    SYS_ResetSystem(SYS_RESTART,0,0);
-#else
-    SYS_ResetSystem(SYS_HOTRESET,0,0);
-#endif
-  }
 
   /* BIOS support */
   load_bios();
 
   /* allocate global work bitmap */
-  memset (&bitmap, 0, sizeof (bitmap));
+  memset(&bitmap, 0, sizeof (bitmap));
   bitmap.width  = 720;
   bitmap.height = 576;
-  bitmap.depth  = 16;
-  bitmap.granularity = 2;
-  bitmap.pitch = bitmap.width * bitmap.granularity;
+  bitmap.pitch = bitmap.width * 2;
   bitmap.viewport.w = 256;
   bitmap.viewport.h = 224;
   bitmap.viewport.x = 0;
   bitmap.viewport.y = 0;
   bitmap.data = texturemem;
+}
+
+/*******************************************
+  Restart emulation when loading a new game 
+********************************************/
+static void reload(void)
+{
+  /* Cartridge Hot Swap (make sure system has already been inited once) */
+  if (config.hot_swap && snd.enabled)
+  {
+    if ((system_hw & SYSTEM_PBC) == SYSTEM_MD)
+    {
+      md_cart_init();
+      md_cart_reset(1);
+    }
+    else
+    {
+      sms_cart_init();
+      sms_cart_reset();
+    }
+  }
+  else
+  {
+    /* Initialize audio emulation */
+    /* To prevent any sound skipping, sound chips must run at the exact same speed as the rest of emulation (see sound.c) */
+    /* When TV output mode matches emulated video mode, we use video hardware interrupt (VSYNC) and exact framerates for perfect synchronization */
+    /* In 60Hz TV modes, Wii & GC framerates have been measured to be 59.94 (interlaced or progressive) and ~59.825 fps (non-interlaced) */
+    /* In 50Hz TV modes, Wii & GC framerates have been measured to be 50.00 (interlaced) and ~50.845 fps (non-interlaced) */
+    /* When modes does not match, emulation is synchronized with audio hardware interrupt (DMA) and we use default framerates (50Hz for PAL, 60Hz for NTSC). */
+    if (vdp_pal)
+    {
+      audio_init(SAMPLERATE_48KHZ, (config.tv_mode == 0) ? 50.0 : (config.render ? 50.00 : (1000000.0/19968.0)));
+    }
+    else
+    {
+      audio_init(SAMPLERATE_48KHZ, (config.tv_mode == 1) ? 60.0 : (config.render ? 59.94 : (1000000.0/16715.0)));
+    }
+     
+    /* Switch virtual system on */
+    system_init();
+    system_reset();
+  }
+
+  /* Auto-Load SRAM file */
+  if (config.s_auto & 1)
+  {
+    slot_autoload(0,config.s_device);
+  }
+            
+  /* Auto-Load State file */
+  if (config.s_auto & 2)
+  {
+    slot_autoload(config.s_default,config.s_device);
+  }
+
+  /* Load Cheat file */
+  CheatLoad();
 }
 
 static void run_emulation(void)
@@ -142,8 +208,12 @@ static void run_emulation(void)
       gx_video_Stop();
 
       /* show menu */
-      menu_execute();
       ConfigRequested = 0;
+      if (menu_execute())
+      {
+        /* new ROM has been loaded */
+        reload();
+      }
 
       /* start video & audio */
       gx_video_Start();
@@ -151,7 +221,7 @@ static void run_emulation(void)
       frameticker = 1;
     }
 
-    /* automatic frame skipping */
+    /* automatic frame skipping (only necessary for Virtua Racing in Gamecube mode) */
     if (frameticker > 1)
     {
       /* skip frame */
@@ -201,77 +271,6 @@ static void run_emulation(void)
 }
 
 /**************************************************
-  Load a new rom and performs some initialization
-***************************************************/
-void reloadrom (int size, char *name)
-{
-  /* hot-swap previous & current cartridge */
-  bool hotswap = config.hot_swap && cart.romsize;
-
-  /* ROM size */
-  cart.romsize = size;
-  
-  /* load ROM file */
-  load_rom(name);
-
-  /* ROM filename without extension*/
-  sprintf(rom_filename,"%s",name);
-  int i = strlen(rom_filename) - 1;
-  while ((i > 0) && (rom_filename[i] != '.')) i--;
-  if (i > 0) rom_filename[i] = 0;
-
-  if (hotswap)
-  {
-    if (system_hw == SYSTEM_PBC)
-    {
-      sms_cart_init();
-      sms_cart_reset();
-    }
-    else
-    {
-      md_cart_init();
-      md_cart_reset(1);
-    }
-  }
-  else
-  {
-    /* Initialize audio emulation */
-    /* To prevent any sound skipping, sound chips must run at the exact same speed as the rest of emulation (see sound.c) */
-    /* When TV output mode matches emulated video mode, we use video hardware interrupt (VSYNC) and exact framerates for perfect synchronization */
-    /* In 60Hz TV modes, Wii & GC framerates have been measured to be 59.94 (interlaced or progressive) and ~59.825 fps (non-interlaced) */
-    /* In 50Hz TV modes, Wii & GC framerates have been measured to be 50.00 (interlaced) and ~50.845 fps (non-interlaced) */
-    /* When modes does not match, emulation is synchronized with audio hardware interrupt (DMA) and we use default framerates (50Hz for PAL, 60Hz for NTSC). */
-    if (vdp_pal)
-    {
-      audio_init(SAMPLERATE_48KHZ, (config.tv_mode == 0) ? 50.0 : (config.render ? 50.00 : (1000000.0/19968.0)));
-    }
-    else
-    {
-      audio_init(SAMPLERATE_48KHZ, (config.tv_mode == 1) ? 60.0 : (config.render ? 59.94 : (1000000.0/16715.0)));
-    }
-     
-    /* system power ON */
-    system_init ();
-    system_reset ();
-  }
-
-  /* load Cheats */
-  CheatLoad();
-
-  /* load SRAM */
-  if (config.s_auto & 1)
-  {
-    slot_autoload(0,config.s_device);
-  }
-            
-  /* load State */
-  if (config.s_auto & 2)
-  {
-    slot_autoload(config.s_default,config.s_device);
-  }
-}
-
-/**************************************************
   Shutdown everything properly
 ***************************************************/
 void shutdown(void)
@@ -300,13 +299,12 @@ void shutdown(void)
  *  M A I N
  *
  ***************************************************************************/
-u32 frameticker = 0;
-
 int main (int argc, char *argv[])
 {
-  char pathname[MAXPATHLEN];
-
 #ifdef HW_RVL
+  /* enable 64-byte fetch mode for L2 cache */
+  L2Enhance();
+  
   /* initialize DI interface */
   DI_UseCache(0);
   DI_Init();
@@ -317,7 +315,7 @@ int main (int argc, char *argv[])
 
 #ifdef HW_DOL
   /* initialize DVD interface */
-  DVD_Init ();
+  DVD_Init();
 #endif
 
   /* initialize input engine */
@@ -338,27 +336,76 @@ int main (int argc, char *argv[])
   if (fatMounted)
   {
     /* base directory */
+    char pathname[MAXPATHLEN];
     sprintf (pathname, DEFAULT_PATH);
-    DIR_ITER *dir = diropen(pathname);
-    if (dir) dirclose(dir);
+    DIR *dir = opendir(pathname);
+    if (dir) closedir(dir);
     else mkdir(pathname,S_IRWXU);
 
-    /* default SRAM & Savestate files directory */ 
+    /* default SRAM & Savestate files directories */ 
     sprintf (pathname, "%s/saves",DEFAULT_PATH);
-    dir = diropen(pathname);
-    if (dir) dirclose(dir);
+    dir = opendir(pathname);
+    if (dir) closedir(dir);
+    else mkdir(pathname,S_IRWXU);
+    sprintf (pathname, "%s/saves/md",DEFAULT_PATH);
+    dir = opendir(pathname);
+    if (dir) closedir(dir);
+    else mkdir(pathname,S_IRWXU);
+    sprintf (pathname, "%s/saves/ms",DEFAULT_PATH);
+    dir = opendir(pathname);
+    if (dir) closedir(dir);
+    else mkdir(pathname,S_IRWXU);
+    sprintf (pathname, "%s/saves/gg",DEFAULT_PATH);
+    dir = opendir(pathname);
+    if (dir) closedir(dir);
+    else mkdir(pathname,S_IRWXU);
+    sprintf (pathname, "%s/saves/sg",DEFAULT_PATH);
+    dir = opendir(pathname);
+    if (dir) closedir(dir);
     else mkdir(pathname,S_IRWXU);
 
-    /* default Snapshot files directory */ 
+    /* default Snapshot files directories */ 
     sprintf (pathname, "%s/snaps",DEFAULT_PATH);
-    dir = diropen(pathname);
-    if (dir) dirclose(dir);
+    dir = opendir(pathname);
+    if (dir) closedir(dir);
+    else mkdir(pathname,S_IRWXU);
+    sprintf (pathname, "%s/snaps/md",DEFAULT_PATH);
+    dir = opendir(pathname);
+    if (dir) closedir(dir);
+    else mkdir(pathname,S_IRWXU);
+    sprintf (pathname, "%s/snaps/ms",DEFAULT_PATH);
+    dir = opendir(pathname);
+    if (dir) closedir(dir);
+    else mkdir(pathname,S_IRWXU);
+    sprintf (pathname, "%s/snaps/gg",DEFAULT_PATH);
+    dir = opendir(pathname);
+    if (dir) closedir(dir);
+    else mkdir(pathname,S_IRWXU);
+    sprintf (pathname, "%s/snaps/sg",DEFAULT_PATH);
+    dir = opendir(pathname);
+    if (dir) closedir(dir);
     else mkdir(pathname,S_IRWXU);
 
-    /* default Cheat files directory */ 
+    /* default Cheat files directories */ 
     sprintf (pathname, "%s/cheats",DEFAULT_PATH);
-    dir = diropen(pathname);
-    if (dir) dirclose(dir);
+    dir = opendir(pathname);
+    if (dir) closedir(dir);
+    else mkdir(pathname,S_IRWXU);
+    sprintf (pathname, "%s/cheats/md",DEFAULT_PATH);
+    dir = opendir(pathname);
+    if (dir) closedir(dir);
+    else mkdir(pathname,S_IRWXU);
+    sprintf (pathname, "%s/cheats/ms",DEFAULT_PATH);
+    dir = opendir(pathname);
+    if (dir) closedir(dir);
+    else mkdir(pathname,S_IRWXU);
+    sprintf (pathname, "%s/cheats/gg",DEFAULT_PATH);
+    dir = opendir(pathname);
+    if (dir) closedir(dir);
+    else mkdir(pathname,S_IRWXU);
+    sprintf (pathname, "%s/cheats/sg",DEFAULT_PATH);
+    dir = opendir(pathname);
+    if (dir) closedir(dir);
     else mkdir(pathname,S_IRWXU);
   }
 
@@ -371,27 +418,15 @@ int main (int argc, char *argv[])
   history_default();
   init_machine();
 
-  /* run any injected rom */
-  if (cart.romsize)
-  {
-    int size = cart.romsize;
-    cart.romsize = 0;
-    ARAMFetch((char *)cart.rom, (void *)0x8000, size);
-    reloadrom(size,"INJECT.bin");
-    ConfigRequested = 0;
-    gx_video_Start();
-    gx_audio_Start();
-    frameticker = 1;
-  }
-  else if (config.autoload)
+  /* auto-load last ROM file */
+  if (config.autoload)
   {
     SILENT = 1;
     if (OpenDirectory(TYPE_RECENT))
     {
-      int size = LoadFile(cart.rom,0,pathname);
-      if (size)
+      if (LoadFile(0))
       {
-        reloadrom(size,pathname);
+        reload();
         gx_video_Start();
         gx_audio_Start();
         frameticker = 1;
