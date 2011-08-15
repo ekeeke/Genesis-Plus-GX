@@ -1792,6 +1792,13 @@ static void vdp_reg_w(unsigned int r, unsigned int d, unsigned int cycles)
     {
       reg[2] = d;
       ntab = (d << 10) & 0xE000;
+
+      /* Plane A Name Table Base changed during HBLANK */
+      if ((v_counter < bitmap.viewport.h) && (reg[1] & 0x40) && (cycles <= (mcycles_vdp + 860)))
+      {
+        /* render entire line */
+        render_line(v_counter);
+      }
       break;
     }
 
@@ -1806,6 +1813,13 @@ static void vdp_reg_w(unsigned int r, unsigned int d, unsigned int cycles)
       {
         ntwb = (d << 10) & 0xF800;
       }
+
+      /* Window Plane Name Table Base changed during HBLANK */
+      if ((v_counter < bitmap.viewport.h) && (reg[1] & 0x40) && (cycles <= (mcycles_vdp + 860)))
+      {
+        /* render entire line */
+        render_line(v_counter);
+      }
       break;
     }
 
@@ -1813,6 +1827,14 @@ static void vdp_reg_w(unsigned int r, unsigned int d, unsigned int cycles)
     {
       reg[4] = d;
       ntbb = (d << 13) & 0xE000;
+
+      /* Plane B Name Table Base changed during HBLANK (Adventures of Batman & Robin) */
+      if ((v_counter < bitmap.viewport.h) && (reg[1] & 0x40) && (cycles <= (mcycles_vdp + 860)))
+      {
+        /* render entire line */
+        render_line(v_counter);
+      }
+
       break;
     }
 
@@ -1852,18 +1874,7 @@ static void vdp_reg_w(unsigned int r, unsigned int d, unsigned int cycles)
         {
           /* remap entire line */
           remap_line(v_counter);
-
-#ifdef LOGVDP
-          error("Line remapped\n");
-#endif
         }
-
-#ifdef LOGVDP
-        else
-        {
-          error("Line NOT remapped\n");
-        }
-#endif
       }
       break;
     }
@@ -2154,13 +2165,7 @@ static void vdp_bus_w(unsigned int data)
         {
           /* Remap current line */
           remap_line(v_counter);
-  #ifdef LOGVDP
-          error("Line remapped\n");
-  #endif
         }
-  #ifdef LOGVDP
-        else error("Line NOT remapped\n");
-  #endif
       }
       break;
     }
@@ -2171,6 +2176,17 @@ static void vdp_bus_w(unsigned int data)
       error("[%d(%d)][%d(%d)] VSRAM 0x%x write -> 0x%x (%x)\n", v_counter, mcycles_68k/MCYCLES_PER_LINE-1, mcycles_68k, mcycles_68k%MCYCLES_PER_LINE, addr, data, m68k_get_reg(M68K_REG_PC));
 #endif
       *(uint16 *)&vsram[addr & 0x7E] = data;
+
+      /* 2-cell Vscroll mode */
+      if (reg[11] & 0x04)
+      {
+        /* VSRAM writes during HBLANK (Adventures of Batman & Robin) */
+        if ((v_counter < bitmap.viewport.h) && (reg[1]& 0x40) && (mcycles_68k <= (mcycles_vdp + 860)))
+        {
+          /* Remap current line */
+          render_line(v_counter);
+        }
+      }
       break;
     }
 
