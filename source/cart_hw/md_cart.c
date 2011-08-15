@@ -64,6 +64,7 @@ T_CART cart;
 /* Function prototypes */
 static void mapper_sega_w(uint32 data);
 static void mapper_ssf2_w(uint32 address, uint32 data);
+static void mapper_wukong_w(uint32 address, uint32 data);
 static void mapper_realtec_w(uint32 address, uint32 data);
 static void mapper_seganet_w(uint32 address, uint32 data);
 static void mapper_32k_w(uint32 data);
@@ -104,7 +105,7 @@ static const T_CART_ENTRY rom_database[CART_CNT] =
 /* Top Fighter */
   {0x4eb9,0x5d8b,0x60,0x7f,{{0x00,0x00,0x00,0x00},{0xf00007,0xf00007,0xf00007,0xffffff},{0x600001,0x600003,0x600005,0x000000},0,1,NULL,NULL,default_regs_r,custom_regs_w}},
 /* Soul Edge VS Samurai Spirits  */
-  {0x00ff,0x5d34,0x60,0x7f,{{0x00,0x00,0x00,0x00},{0xf00007,0xf00007,0xf00007,0xf00007},{0x600001,0x600003,0x600005,0x600007},0,1,NULL,NULL,default_regs_r,custom_regs_w}},
+  {0x00ff,0x5d34,0x60,0x7f,{{0x00,0x00,0x00,0x00},{0xf00007,0xf00007,0xf00007,0xffffff},{0x600001,0x600003,0x600005,0x000000},0,1,NULL,NULL,default_regs_r,custom_regs_w}},
 /* Mulan */
   {0x0404,0x1b40,0x60,0x7f,{{0x00,0x00,0x00,0x00},{0xf00007,0xf00007,0xf00007,0xffffff},{0x600001,0x600003,0x600005,0x000000},0,1,NULL,NULL,default_regs_r,custom_regs_w}},
 /* Pocket Monsters II */
@@ -190,7 +191,6 @@ static const T_CART_ENTRY rom_database[CART_CNT] =
           Cart Hardware initialization 
 *************************************************************/
 
-/* cart hardware detection */
 void md_cart_init(void)
 {
   int i;
@@ -665,6 +665,23 @@ void md_cart_init(void)
     cart.hw.time_w = sega_channel_w;
   }
 
+  /* Legend of Wukong mapper */
+  if (strstr(rominfo.international,"LEGEND OF WUKONG") != NULL)
+  {
+    /* 128K ROM Bankswitch */
+    m68k_memory_map[0].write8   = mapper_wukong_w;
+    zbank_memory_map[0].write   = mapper_wukong_w;
+
+    /* 8K SRAM */
+    m68k_memory_map[0x3C].base    = sram.sram;
+    m68k_memory_map[0x3C].read8   = NULL;
+    m68k_memory_map[0x3C].read16  = NULL;
+    m68k_memory_map[0x3C].write8  = NULL;
+    m68k_memory_map[0x3C].write16 = NULL;
+    zbank_memory_map[0x3C].read   = NULL;
+    zbank_memory_map[0x3C].write  = NULL;
+  }
+
   /* default write handler for !TIME range ($A130xx)*/
   if (!cart.hw.time_w)
   {
@@ -879,6 +896,30 @@ static void mapper_ssf2_w(uint32 address, uint32 data)
 }
 
 /* 
+  Legend of Wukong ROM Bankswitch
+*/
+static void mapper_wukong_w(uint32 address, uint32 data)
+{
+  int i;
+  if (data & 0x80)
+  {
+    /* $200000-$3BFFFF mapped to $000000-$1BFFFF */
+    for (i=0x20; i<0x3C; i++)
+    {
+      m68k_memory_map[i].base = cart.rom + (((i&0x1F)<<16) & cart.mask);
+    }
+  }
+  else
+  {
+    /* $200000-$3BFFFF mapped to $200000-$3BFFFF */
+    for (i=0x20; i<0x3C; i++)
+    {
+      m68k_memory_map[i].base = cart.rom + ((i<<16) & cart.mask);
+    }
+  }
+}
+
+/* 
   Realtec ROM Bankswitch (Earth Defend, Balloon Boy & Funny World, Whac-A-Critter)
   (Note: register usage is inverted in TascoDlx documentation)
 */
@@ -951,7 +992,7 @@ static void mapper_seganet_w(uint32 address, uint32 data)
 }
 
 /* 
-  Custom ROM Bankswitch used in Top Fighter, Mulan, Pocket Monsters II, Lion King 3, Super King Kong 99, Pokemon Stadium
+  Custom ROM Bankswitch used in Soul Edge VS Samurai Spirits, Top Fighter, Mulan, Pocket Monsters II, Lion King 3, Super King Kong 99, Pokemon Stadium
 */
 static void mapper_32k_w(uint32 data)
 {
@@ -960,15 +1001,14 @@ static void mapper_32k_w(uint32 data)
   /* 64 x 32k banks */
   if (data)
   {
-    /* unverified (Top Fighter writes $2A instead $2E) */
-    if (data >> 2) data |= 4;
-
-    /* bank is mapped at $000000-$0FFFFF */
-    for (i=0; i<16; i++)
+    for (i=0; i<0x10; i++)
     {
-      memcpy(cart.rom + 0x900000 + (i<<16), cart.rom + ((data & 0x3f) << 15), 0x8000);
-      memcpy(cart.rom + 0x908000 + (i<<16), cart.rom + ((data & 0x3f) << 15), 0x8000);
-      m68k_memory_map[i].base = cart.rom + 0x900000 + (i<<16);
+      /* Remap to unused ROM area  */
+      m68k_memory_map[i].base = &cart.rom[0x400000 + (i << 16)];
+
+      /* address = address OR (value << 15) */
+      memcpy(m68k_memory_map[i].base, cart.rom + ((i << 16) | (data & 0x3f) << 15), 0x8000);
+      memcpy(m68k_memory_map[i].base + 0x8000, cart.rom + ((i << 16) | ((data | 1) & 0x3f) << 15), 0x8000);
     }
   }
   else
