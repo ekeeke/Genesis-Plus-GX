@@ -51,7 +51,7 @@
 #define MAPPER_MSX    (6)
 #define MAPPER_93C46  (7)
 
-#define GAME_DATABASE_CNT (183)
+#define GAME_DATABASE_CNT (187)
 
 typedef struct
 {
@@ -89,9 +89,11 @@ static const rominfo_t game_list[GAME_DATABASE_CNT] =
   {0xA05258F5, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_MSX,    SYSTEM_SMS2, REGION_JAPAN_NTSC}, /* Won-Si-In (KR) */
   {0x06965ED9, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_MSX,    SYSTEM_SMS2, REGION_JAPAN_NTSC}, /* F-1 Spirit - The way to Formula-1 (KR) */
   {0x77EFE84A, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_MSX,    SYSTEM_SMS2, REGION_JAPAN_NTSC}, /* Cyborg Z (KR) */
+  {0xF89AF3CC, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_MSX,    SYSTEM_SMS2, REGION_JAPAN_NTSC}, /* Knightmare II - The Maze of Galious (KR) */
+  {0x9195C34C, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_MSX,    SYSTEM_SMS2, REGION_JAPAN_NTSC}, /* Super Boy 3 (KR) */
   {0x89B79E77, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_KOREA,  SYSTEM_SMS2, REGION_JAPAN_NTSC}, /* Dodgeball King (KR) */
   {0x18FB98A3, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_KOREA,  SYSTEM_SMS2, REGION_JAPAN_NTSC}, /* Jang Pung 3 (KR) */
-  {0x97D03541, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_KOREA,  SYSTEM_SMS2, REGION_JAPAN_NTSC}, /* Sangokushi 3 (KR)"} */
+  {0x97D03541, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_KOREA,  SYSTEM_SMS2, REGION_JAPAN_NTSC}, /* Sangokushi 3 (KR) */
   {0x67C2F0FF, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_KOREA,  SYSTEM_SMS2, REGION_JAPAN_NTSC}, /* Super Boy 2 (KR) */
 
   /* games using Codemaster mapper */
@@ -122,6 +124,7 @@ static const rominfo_t game_list[GAME_DATABASE_CNT] =
 
   /* games requiring JAPANESE region setting */
   {0x71DEBA5A, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA,   SYSTEM_GG,   REGION_JAPAN_NTSC}, /* Pop Breaker */
+  {0xC9DD4E5F, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA,   SYSTEM_SMS2, REGION_JAPAN_NTSC}, /* Woody Pop (Super Arkanoid) */
 
   /* games requiring Mark-III hardware (no Memory Control port) */
   {0xBD1CC7DF, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA,   SYSTEM_MARKIII,     REGION_USA}, /* Super Tetris (K) */
@@ -144,6 +147,7 @@ static const rominfo_t game_list[GAME_DATABASE_CNT] =
   {0xD6F2BFCA, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA,   SYSTEM_SMS2,     REGION_EUROPE}, /* Sonic the Hedgehog 2 [V1] */
   {0xCA1D3752, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA,   SYSTEM_SMS2,     REGION_EUROPE}, /* Space Harrier [50 Hz] */
   {0x85CFC9C9, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA,   SYSTEM_SMS2,     REGION_EUROPE}, /* Taito Chase H.Q. */
+  {0x332A847D, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA,   SYSTEM_SMS2,     REGION_EUROPE}, /* NBA Jam [Proto] */
 
   /* games running in Game Gear MS compatibility mode */
   {0x59840FD6, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA,   SYSTEM_GGMS,        REGION_USA}, /* Castle of Illusion - Starring Mickey Mouse [SMS-GG] */
