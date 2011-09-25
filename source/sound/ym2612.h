@@ -18,7 +18,7 @@
 
 extern void YM2612Init(double clock, int rate);
 extern void YM2612ResetChip(void);
-extern void YM2612Update(long int *buffer, int length);
+extern void YM2612Update(int *buffer, int length);
 extern void YM2612Write(unsigned int a, unsigned int v);
 extern unsigned int YM2612Read(void);
 extern unsigned char *YM2612GetContextPtr(void);

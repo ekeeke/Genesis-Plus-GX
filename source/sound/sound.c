@@ -48,7 +48,7 @@ static unsigned int fm_cycles_count;
 
 /* YM chip function pointers */
 static void (*YM_Reset)(void);
-static void (*YM_Update)(long int *buffer, int length);
+static void (*YM_Update)(int *buffer, int length);
 static void (*YM_Write)(unsigned int a, unsigned int v);
 
 /* Run FM chip for required M-cycles */

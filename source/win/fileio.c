@@ -47,7 +47,6 @@
 int load_archive(char *filename)
 {
   int size = 0;
-  char msg[64];
   
   /* ROM buffer should be allocated first */
   if (cart.rom == NULL)

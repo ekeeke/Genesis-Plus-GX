@@ -1681,7 +1681,7 @@ unsigned int YM2413Read(unsigned int a)
   return 0xF8 | ym2413.status;
 }
 
-void YM2413Update(long int *buffer, int length)
+void YM2413Update(int *buffer, int length)
 {
   int i, out;
 

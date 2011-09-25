@@ -2045,11 +2045,11 @@ unsigned int YM2612Read(void)
   return ym2612.OPN.ST.status & 0xff;
 }
 
-/* Generate 16 bits samples for ym2612 */
-void YM2612Update(long int *buffer, int length)
+/* Generate samples for ym2612 */
+void YM2612Update(int *buffer, int length)
 {
   int i;
-  long int lt,rt;
+  int lt,rt;
 
   /* refresh PG increments and EG rates if required */
   refresh_fc_eg_chan(&ym2612.CH[0]);
