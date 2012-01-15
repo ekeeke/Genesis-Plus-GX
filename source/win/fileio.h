@@ -43,8 +43,6 @@
 #define _FILEIO_H_
 
 /* Function prototypes */
-int load_archive(char *filename);
-int check_zip(char *filename);
-int gzsize(gzFile *gd);
+extern int load_archive(char *filename);
 
 #endif /* _FILEIO_H_ */

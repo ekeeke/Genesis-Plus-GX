@@ -6,5 +6,6 @@
 
 extern int debug_on;
 extern int log_error;
+extern int sdl_input_update(void);
 
 #endif /* _MAIN_H_ */

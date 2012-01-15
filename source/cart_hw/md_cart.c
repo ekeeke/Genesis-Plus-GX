@@ -199,44 +199,39 @@ void md_cart_init(void)
                 CARTRIDGE ROM MIRRORING                                                                                   
    ***************************************************************************************************************
   
-    Cartridge area is mapped to $000000-$3fffff:
+    MD Cartridge area is mapped to $000000-$3fffff:
 
-      -> when accessing ROM, 68k address lines A1 to A21 are used by the internal cartridge hardware to decode the
+      -> when accessing ROM, 68k address lines A1 to A21 can be used by the internal cartridge hardware to decode
          full 4MB address range.
-      -> depending on the ROM total size, some address lines might be ignored, resulting in ROM mirroring.
-
+      -> depending on ROM total size and additional decoding hardware, some address lines might be ignored,
+         resulting in ROM mirroring.
 
     Cartridges can use either 8-bits (x2) or 16-bits (x1, x2) Mask ROM chips, each chip size is a factor of 2 bytes:
 
       -> two 8-bits chips are equivalent to one 16-bits chip, no specific address decoding is required, needed
          address lines are simply connected to each chip, upper address lines are ignored and data lines are
          connected appropriately to each chip (D0-D7 to one chip, D8-D15 to the other one).
-         ROM is mirrored each N bytes where N=2^(k+1) is the total ROM size (ROM1+ROM2,ROM1+ROM2,...).
+         ROM is generally mirrored each N bytes where N=2^(k+1) is the total ROM size (ROM1+ROM2,ROM1+ROM2,...)
 
       -> one single 16-bits chip do not need specific address decoding, address lines are simply connected
          depending on the ROM size, upper address lines being ignored.
-         ROM is mirrored each N bytes where N=2^k is the size of the ROM chip (ROM1,ROM1,ROM1,...).
+         ROM is generally mirrored each N bytes where N=2^k is the size of the ROM chip (ROM1,ROM1,ROM1,...)
 
       -> two 16-bits chips of the same size are equivalent to one chip of double size, address decoding generally
          is the same except that specific hardware is used (one address line is generally used for chip selection,
          lower ones being used to address the chips and upper ones being ignored).
-         ROM is mirrored continuously each N bytes where N=2^(k+1) is the total ROM size (ROM1,ROM2,ROM1,ROM2,...).
+         ROM is generally mirrored each N bytes where N=2^(k+1) is the total ROM size (ROM1,ROM2,ROM1,ROM2,...)
 
       -> two 16-bits chips with different size are mapped differently. Address decoding is done the same way as
          above (one address line used for chip selection) but the ignored & required address lines differ from
          one chip to another, which makes ROM mirroring different.
-         ROM2 size is generally half of ROM1 size and ROM are mirrored like that : ROM1,ROM2,ROM2,ROM1,ROM2,ROM2,...
+         ROM2 size is generally half of ROM1 size and upper half ignored (ROM1,ROM2,XXXX,ROM1,ROM2,XXXX,...)
 
-      From the emulator point of view, we only need to distinguish 3 cases:
+      From the emulator point of view, we only need to distinguish 2 cases:
 
       1/ total ROM size is a factor of 2: ROM is mirrored each 2^k bytes.
 
-      2/ total ROM size is not a factor of 2 and cartridge uses one or two chips of the same size (Type A):
-         ROM is padded up to 2^k and mirrored each 2^k bytes.
-
-      3/ total ROM size is not a factor of 2 and cartridge uses two chips of different sizes (Type B):
-         ROM is not padded and the first 2^(k-1) bytes are mirrored each 2^k bytes while the next 2^(k-2) bytes are
-         mirrored in the last 2^(k-2) bytes.
+      2/ total ROM size is not a factor of 2: ROM is padded up to 2^k then mirrored each 2^k bytes.
 
   ******************************************************************************************************************/
   
@@ -246,20 +241,11 @@ void md_cart_init(void)
     size <<= 1;
 
   /* total ROM size is not a factor of 2  */
-  /* TODO: handle more possible ROM configurations (using cartridge database ???) */
+  /* TODO: handle all possible ROM configurations using cartridge database */
   if ((size < MAXROMSIZE) && (cart.romsize < size))
   {
-    /* two chips with different size */
-    if (config.romtype)
-    {
-      /* third ROM section is mirrored in the last section */
-      memcpy(cart.rom + cart.romsize, cart.rom + 2*cart.romsize - size, size - cart.romsize);
-    }
-    else
-    {
-      /* ROM is padded up to 2^k bytes */
-      memset(cart.rom + cart.romsize, 0xff, size - cart.romsize);
-    }
+    /* ROM is padded up to 2^k bytes */
+    memset(cart.rom + cart.romsize, 0xff, size - cart.romsize);
   }
 
   /* special case: Sonic & Knuckles */
@@ -521,47 +507,43 @@ void md_cart_init(void)
 
     case TYPE_SK:
     {
+      FILE *f;
+      
       /* store S&K ROM above cartridge ROM + SRAM */
       if (cart.romsize > 0x600000) break;
 
        /* load Sonic & Knuckles ROM (2 MBytes) */
-      FILE *f = fopen(SK_ROM,"r+b");
+      f = fopen(SK_ROM,"r+b");
       if (!f) break;
-      int done = 0;
-      while (done < 0x200000)
+      for (i=0; i<0x200000; i+=0x1000)
       {
-        fread(cart.rom + 0x600000 + done, 2048, 1, f);
-        done += 2048;
+        fread(cart.rom + 0x600000 + i, 0x1000, 1, f);
       }
       fclose(f);
 
       /* load Sonic 2 UPMEM ROM (256 KBytes) */
       f = fopen(SK_UPMEM,"r+b");
       if (!f) break;
-      done = 0;
-      while (done < 0x40000)
+      for (i=0; i<0x40000; i+=0x1000)
       {
-        fread(cart.rom + 0x800000 + done, 2048, 1, f);
-        done += 2048;
+        fread(cart.rom + 0x800000 + i, 0x1000, 1, f);
       }
       fclose(f);
           
 #ifdef LSB_FIRST
-      /* Byteswap ROM */
-      int i;
-      uint8 temp;
-      for(i = 0; i < 0x240000; i += 2)
+      for (i=0; i<0x240000; i+=2)
       {
-        temp = cart.rom[i + 0x600000];
+        /* Byteswap ROM */
+        uint8 temp = cart.rom[i + 0x600000];
         cart.rom[i + 0x600000] = cart.rom[i + 0x600000 + 1];
         cart.rom[i + 0x600000 + 1] = temp;
       }
 #endif
 
-      /*$000000-$1FFFFF is mapped to S&K ROM */
+      /* $000000-$1FFFFF is mapped to S&K ROM */
       for (i=0x00; i<0x20; i++)
       {
-        m68k_memory_map[i].base = (cart.rom + 0x600000) + (i<<16);
+        m68k_memory_map[i].base = cart.rom + 0x600000 + (i << 16);
       }
 
       cart.special |= HW_LOCK_ON;
@@ -586,11 +568,12 @@ void md_cart_init(void)
     if ((rominfo.checksum == rom_database[i].chk_1) &&
         (rominfo.realchecksum == rom_database[i].chk_2))
     {
+      int j = rom_database[i].bank_start;
+
       /* retrieve hardware information */
       memcpy(&cart.hw, &(rom_database[i].cart_hw), sizeof(T_CART_HW));
 
       /* initialize memory handlers for $400000-$7FFFFF region */
-      int j = rom_database[i].bank_start;
       while (j <= rom_database[i].bank_end)
       {
         if (cart.hw.regs_r)
@@ -739,9 +722,6 @@ void md_cart_reset(int hard_reset)
       break;
     }
   }
-
-  /* save default cartridge slot mapping */
-  cart.base = m68k_memory_map[0].base;
 }
 
 int md_cart_context_save(uint8 *state)
@@ -880,17 +860,17 @@ static void mapper_sega_w(uint32 data)
 static void mapper_ssf2_w(uint32 address, uint32 data)
 {
   /* 8 x 512k banks */
-  uint32 dst = (address << 2) & 0x38;
+  address = (address << 2) & 0x38;
   
   /* bank 0 remains unchanged */
-  if (dst)
+  if (address)
   {
     uint32 i;
     uint8 *src = cart.rom + (data << 19);
 
     for (i=0; i<8; i++)
     {
-      m68k_memory_map[dst++].base = src + (i<<16);
+      m68k_memory_map[address++].base = src + (i<<16);
     }
   }
 }
@@ -946,16 +926,18 @@ static void mapper_realtec_w(uint32 address, uint32 data)
       /* 00000yy1 */
       cart.hw.regs[1] = data & 6;
 
-      /* mapped start address is 00yy xxx0 0000 0000 0000 0000 */
-      uint32 base = (cart.hw.regs[0] << 1) | (cart.hw.regs[1] << 3);
-
       /* ensure mapped size is not null */
       if (cart.hw.regs[2])
       {
+        /* mapped start address is 00yy xxx0 0000 0000 0000 0000 */
+        uint32 base = (cart.hw.regs[0] << 1) | (cart.hw.regs[1] << 3);
+
         /* selected blocks are mirrored into the whole cartridge area */
         int i;
         for (i=0x00; i<0x40; i++)
+        {
           m68k_memory_map[i].base = &cart.rom[(base + (i % cart.hw.regs[2])) << 16];
+        }
       }
       return;
     }
@@ -1144,6 +1126,8 @@ static void default_regs_w(uint32 address, uint32 data)
 /* custom register hardware (Top Fighter, Lion King III, Super Donkey Kong  99, Mulan, Pocket Monsters II, Pokemon Stadium) */
 static void custom_regs_w(uint32 address, uint32 data)
 {
+  uint8 temp;
+  
   /* ROM bankswitch */
   if ((address >> 16) > 0x6f)
   {
@@ -1155,7 +1139,7 @@ static void custom_regs_w(uint32 address, uint32 data)
   default_regs_w(address, data);
 
   /* bitswapping */
-  uint32 temp = cart.hw.regs[0];
+  temp = cart.hw.regs[0];
   switch (cart.hw.regs[1] & 3)
   {
     case 0:

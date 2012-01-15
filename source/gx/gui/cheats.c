@@ -131,7 +131,7 @@ static gui_item action_select =
 /*****************************************************************************/
 static gui_image bg_cheats[7] =
 {
-  {NULL,Bg_main_png,IMAGE_VISIBLE,374,140,284,288,255},
+  {NULL,Bg_layer_png,IMAGE_VISIBLE|IMAGE_REPEAT,0,0,640,480,255},
   {NULL,Bg_overlay_png,IMAGE_VISIBLE|IMAGE_REPEAT,0,0,640,480,255},
   {NULL,Banner_top_png,IMAGE_VISIBLE|IMAGE_SLIDE_TOP,0,0,640,108,255},
   {NULL,Banner_bottom_png,IMAGE_VISIBLE|IMAGE_SLIDE_BOTTOM,0,380,640,100,255},
@@ -830,26 +830,6 @@ void CheatMenu(void)
   /* reset scrolling */
   string_offset = 0;
 
-  /* background type */
-  if (config.bg_type > 0)
-  {
-    bg_cheats[0].state &= ~IMAGE_REPEAT;
-    bg_cheats[0].data = (config.bg_type > 1) ? Bg_main_png : Bg_main_2_png;
-    bg_cheats[0].x = 374;
-    bg_cheats[0].y = 140;
-    bg_cheats[0].w = 284;
-    bg_cheats[0].h = 288;
-  }
-  else
-  {
-    bg_cheats[0].state |= IMAGE_REPEAT;
-    bg_cheats[0].data = Bg_layer_png;
-    bg_cheats[0].x = 0;
-    bg_cheats[0].y = 0;
-    bg_cheats[0].w = 640;
-    bg_cheats[0].h = 480;
-  }
-
   /* background overlay */
   if (config.bg_overlay)
   {
@@ -1326,11 +1306,6 @@ void CheatMenu(void)
       }
       fclose(f);
     }
-  }
-  else
-  {
-    /* delete cheat file */
-    remove(temp);
   }
 
   /* unlock background elements */

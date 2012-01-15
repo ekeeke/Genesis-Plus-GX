@@ -29,9 +29,8 @@ void set_config_defaults(void)
   config.region_detect  = 0; /* = AUTO (1 = USA, 2 = EUROPE, 3 = JAPAN/NTSC, 4 = JAPAN/PAL) */
   config.force_dtack    = 0;
   config.addr_error     = 1;
-  config.tmss           = 0;
+  config.bios           = 0;
   config.lock_on        = 0; /* = OFF (can be TYPE_SK, TYPE_GG & TYPE_AR) */
-  config.romtype        = 0; /* ROM mirroring type (see md_cart_hw.c) */
 
   /* display options */
   config.overscan = 3;       /* = both ON (0 = no borders , 1 = vertical borders only, 2 = horizontal borders only) */

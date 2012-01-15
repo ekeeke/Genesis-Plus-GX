@@ -12,6 +12,7 @@
 #include <unistd.h>
 #include <asndlib.h>
 #include <oggplayer.h>
+#include <zlib.h>
 
 #ifdef HW_RVL
 #include <di/di.h>
@@ -27,22 +28,23 @@
 #define DEFAULT_PATH  "/genplus"
 #define GG_ROM        "/genplus/ggenie.bin"
 #define AR_ROM        "/genplus/areplay.bin"
-#define OS_ROM        "/genplus/bios.bin"
 #define SK_ROM        "/genplus/sk.bin"
 #define SK_UPMEM      "/genplus/sk2chip.bin"
+#define MD_BIOS       "/genplus/bios.bin"
+#define MS_BIOS       "/genplus/bios.sms"
+#define GG_BIOS       "/genplus/bios.gg"
 
 #ifdef HW_RVL
-#define VERSION "Genesis Plus GX 1.6.0 (WII)"
+#define VERSION "Genesis Plus GX 1.6.1 (WII)"
 #else
-#define VERSION "Genesis Plus GX 1.6.0 (GCN)"
+#define VERSION "Genesis Plus GX 1.6.1 (GCN)"
 #endif
 
 #define osd_input_Update() gx_input_UpdateEmu()
 
 /* globals */
-extern void error(char *format, ...);
 extern void legal(void);
-extern void reloadrom (char *name);
+extern void reloadrom(void);
 extern void shutdown(void);
 extern u32 frameticker;
 extern u32 Shutdown;

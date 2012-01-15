@@ -256,7 +256,7 @@ void io_reset(void)
   /* Reset I/O registers */
   if (system_hw == SYSTEM_MD)
   {
-    io_reg[0x00] = 0x20 | region_code | (config.tmss & 1);
+    io_reg[0x00] = region_code | 0x20 | (config.bios & 1);
     io_reg[0x01] = 0x00;
     io_reg[0x02] = 0x00;
     io_reg[0x03] = 0x00;
@@ -429,24 +429,11 @@ void io_z80_write(unsigned int offset, unsigned int data, unsigned int cycles)
   }
   else
   {
-    /* Memory Control register */
-    if (data & 0x40)
-    {
-      /* Assume only BIOS would disable Cartridge ROM */
-      if (data & 0x08)
-      {
-        /* BIOS ROM disabled */
-        sms_cart_switch(0);
-      }
-      else
-      {
-        /* BIOS ROM enabled */
-        sms_cart_switch(1);
-      }
-    }
-
     /* Update Memory Control register */
     io_reg[0x0E] = data;
+
+    /* Switch cartridge & BIOS ROM */
+    sms_cart_switch(~data);
   }
 }
 

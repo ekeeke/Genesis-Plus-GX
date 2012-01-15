@@ -1400,7 +1400,7 @@ void gx_input_UpdateEmu(void)
   RAMCheatUpdate();
 }
 
-/* Menu inputs update function (done by Video Interrupt callback) */
+/* Menu inputs update function */
 void gx_input_UpdateMenu(void)
 {
   /* Check if inputs update are disabled */

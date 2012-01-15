@@ -51,31 +51,10 @@ u8 SILENT = 0;
 static gui_message message_box;
 static lwp_t msgboxthread;
 
-/* background color */
-static GXColor bg_color;
+/* background color (black) */
+static const GXColor bg_color = {0x00,0x00,0x00,0xff};
 
-/* various background colors */
-static GXColor bg_colors[BG_COLOR_MAX]=
-{
-  {0x00,0x00,0x00,0xff}, /* black */
-  {0xd4,0xd0,0xc8,0xff}, /* cream */
-  {0xbb,0xb0,0x99,0xff}, /* gold */
-  {0xd6,0xcb,0xba,0xff}, /* light gold */
-  {0xcc,0xcc,0xcc,0xff}, /* light grey */
-  {0x66,0x66,0x66,0xff}, /* faded grey */
-  {0x50,0x51,0x5b,0xff}, /* grey blue */
-  {0xb8,0xc7,0xda,0xff}, /* light blue */
-  {0xc0,0xcf,0xe7,0xff}, /* sky blue */
-  {0x98,0xb1,0xd8,0xff}, /* sea blue */
-  {0x7b,0x8c,0xa6,0xff}, /* violet */
-  {0xa9,0xc7,0xc6,0xff}, /* green blue */
-  {0x7d,0xa4,0x9f,0xff}, /* darker green blue */
-  {0x22,0x52,0x74,0xff}, /* dark blue */
-  {0x33,0x33,0x33,0xff}  /* dark grey */
-};
-
-
-/*****************************************************************************/
+/****************************************************************************/
 /*  Generic GUI routines                                                     */
 /*****************************************************************************/
 
@@ -1987,22 +1966,3 @@ void GUI_FadeOut()
     alpha +=3;
   }
 }
-
-/* Return background color */
-GXColor *GUI_GetBgColor(void)
-{
-  return &bg_color;
-}
-
-/* Select background color */
-void GUI_SetBgColor(u8 color)
-{
-  if (color < BG_COLOR_MAX)
-  {
-    bg_color.r = bg_colors[color].r;
-    bg_color.g = bg_colors[color].g;
-    bg_color.b = bg_colors[color].b;
-    bg_color.a = bg_colors[color].a;
-  }
-}
-

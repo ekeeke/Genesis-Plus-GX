@@ -50,7 +50,6 @@
 #include <fat.h>
 
 #ifdef HW_RVL
-#include <wiiuse/wpad.h>
 #include <ogc/machine/processor.h>
 #endif
 
@@ -66,6 +65,46 @@ u32 ConfigRequested = 1;
 u32 frameticker;
 
 #ifdef HW_RVL
+
+/****************************************************************************
+ * Force AHBPROT flags when IOS is reloaded 
+ * Credits to DaveBaol for the original patch
+ ***************************************************************************/
+int Patch_IOS(void)
+{
+  /* full hardware access is initially required */
+  if (read32(0xd800064) == 0xffffffff)
+  {
+    /* disable MEM2 protection */
+    write16(0xd8b420a, 0);
+
+    /* IOS area (top of MEM2, above IOS Heap area) */
+    u8 *ptr_start = (u8*)*((u32*)0x80003134);
+    u8 *ptr_end = (u8*)0x94000000;
+
+    /* Make sure start pointer is valid */
+    if (((u32)ptr_start < 0x90000000) || (ptr_start >= ptr_end))
+    {
+      /* use libogc default value (longer but safer) */
+      ptr_start = (u8*) SYS_GetArena2Hi();
+    }
+   
+    /* Search specific code pattern */
+    const u8 es_set_ahbprot_pattern[] = { 0x68, 0x5B, 0x22, 0xEC, 0x00, 0x52, 0x18, 0x9B, 0x68, 0x1B, 0x46, 0x98, 0x07, 0xDB };
+    while (ptr_start < (ptr_end - sizeof(es_set_ahbprot_pattern)))
+    {
+      if (!memcmp(ptr_start, es_set_ahbprot_pattern, sizeof(es_set_ahbprot_pattern)))
+      {
+        /* patch IOS (force AHBPROT bit to be set when launching titles) */
+        ptr_start[25] = 0x01;
+        DCFlushRange(ptr_start + 25, 1);
+      }
+      ptr_start++; /* could be optimized ? not sure if pattern coincides with instruction start */
+    }
+  }
+  return 0;
+}
+
 /****************************************************************************
  * Power Button callback 
  ***************************************************************************/
@@ -83,12 +122,12 @@ static void Reset_cb(void)
 {
   if (system_hw & SYSTEM_MD)
   {
-    /* SOFT-RESET */
+    /* Soft Reset */
     gen_reset(0);
   }
   else if (system_hw == SYSTEM_SMS)
   {
-    /* assert RESET input */
+    /* assert RESET input (Master System model 1 only) */
     io_reg[0x0D] &= ~IO_RESET_HI;
   }
 }
@@ -97,34 +136,30 @@ static void Reset_cb(void)
  * Genesis Plus Virtual Machine
  *
  ***************************************************************************/
-static void load_bios(void)
-{
-  /* clear BIOS detection flag */
-  config.tmss &= ~2;
-
-  /* open BIOS file */
-  FILE *fp = fopen(OS_ROM, "rb");
-  if (fp == NULL) return;
-
-  /* read file */
-  fread(bios_rom, 1, 0x800, fp);
-  fclose(fp);
-
-  /* check ROM file */
-  if (!strncmp((char *)(bios_rom + 0x120),"GENESIS OS", 10))
-  {
-    /* valid BIOS detected */
-    config.tmss |= 2;
-  }
-}
-
 static void init_machine(void)
 {
-  /* allocate cart.rom here (10 MBytes) */
+  /* allocate cartridge ROM here (10 MB) */
   cart.rom = memalign(32, MAXROMSIZE);
 
-  /* BIOS support */
-  load_bios();
+  /* mark all BIOS as unloaded */
+  config.bios &= 0x03;
+
+  /* Genesis BOOT ROM support (2KB max) */
+  memset(boot_rom, 0xFF, 0x800);
+  FILE *fp = fopen(MD_BIOS, "rb");
+  if (fp != NULL)
+  {
+    /* read BOOT ROM */
+    fread(boot_rom, 1, 0x800, fp);
+    fclose(fp);
+
+    /* check BOOT ROM */
+    if (!strncmp((char *)(boot_rom + 0x120),"GENESIS OS", 10))
+    {
+      /* mark Genesis BIOS as loaded */
+      config.bios |= SYSTEM_MD;
+    }
+  }
 
   /* allocate global work bitmap */
   memset(&bitmap, 0, sizeof (bitmap));
@@ -138,14 +173,133 @@ static void init_machine(void)
   bitmap.data = texturemem;
 }
 
+static void run_emulation(void)
+{
+  /* main emulation loop */
+  while (1)
+  {
+    /* emulated system */
+    if ((system_hw & SYSTEM_PBC) == SYSTEM_MD)
+    {
+      /* Mega Drive type hardware */
+      while (!ConfigRequested)
+      {
+        /* automatic frame skipping (only needed when running Virtua Racing on Gamecube) */
+        if (frameticker > 1)
+        {
+          /* skip frame */
+          system_frame_gen(1);
+          frameticker = 1;
+        }
+        else
+        {
+          /* render frame */
+          frameticker = 0;
+          system_frame_gen(0);
+
+          /* update video */
+          gx_video_Update();
+        }
+
+        /* update audio */
+        gx_audio_Update();
+
+        /* check interlaced mode change */
+        if (bitmap.viewport.changed & 4)
+        {
+          /* VSYNC "original" mode */
+          if (!config.render && (gc_pal == vdp_pal))
+          {
+            /* framerate has changed, reinitialize audio timings */
+            if (vdp_pal)
+            {
+              audio_init(SAMPLERATE_48KHZ, interlaced ? 50.00 : (1000000.0/19968.0));
+            }
+            else
+            {
+              audio_init(SAMPLERATE_48KHZ, interlaced ? 59.94 : (1000000.0/16715.0));
+            }
+
+            /* reinitialize sound chips */
+            sound_restore();
+          }
+
+          /* clear flag */
+          bitmap.viewport.changed &= ~4;
+        }
+
+        /* wait for next frame */
+        while (frameticker < 1) usleep(1);
+      }
+    }
+    else
+    {
+      /* Master System type hardware */
+      while (!ConfigRequested)
+      {
+        /* render frame (no frameskipping needed) */
+        frameticker = 0;
+        system_frame_sms(0);
+
+        /* update video */
+        gx_video_Update();
+
+        /* update audio */
+        gx_audio_Update();
+
+        /* check interlaced mode change */
+        if (bitmap.viewport.changed & 4)
+        {
+          /* VSYNC "original" mode */
+          if (!config.render && (gc_pal == vdp_pal))
+          {
+            /* framerate has changed, reinitialize audio timings */
+            if (vdp_pal)
+            {
+              audio_init(SAMPLERATE_48KHZ, interlaced ? 50.00 : (1000000.0/19968.0));
+            }
+            else
+            {
+              audio_init(SAMPLERATE_48KHZ, interlaced ? 59.94 : (1000000.0/16715.0));
+            }
+
+            /* reinitialize sound chips */
+            sound_restore();
+          }
+
+          /* clear flag */
+          bitmap.viewport.changed &= ~4;
+        }
+
+        /* wait for next frame */
+        while (frameticker < 1) usleep(1);
+      }
+    }
+
+    /* stop video & audio */
+    gx_audio_Stop();
+    gx_video_Stop();
+
+    /* show menu */
+    ConfigRequested = 0;
+    mainmenu();
+
+    /* restart video & audio */
+    gx_video_Start();
+    gx_audio_Start();
+    frameticker = 1;
+  }
+}
+
 /*******************************************
   Restart emulation when loading a new game 
 ********************************************/
-static void reload(void)
+void reloadrom(void)
 {
   /* Cartridge Hot Swap (make sure system has already been inited once) */
-  if (config.hot_swap && snd.enabled)
+  if (config.hot_swap == 3)
   {
+    /* Initialize cartridge hardware only */
     if ((system_hw & SYSTEM_PBC) == SYSTEM_MD)
     {
       md_cart_init();
@@ -177,6 +331,9 @@ static void reload(void)
     /* Switch virtual system on */
     system_init();
     system_reset();
+
+    /* Allow hot swap */
+    config.hot_swap |= 2;
   }
 
   /* Auto-Load SRAM file */
@@ -193,81 +350,6 @@ static void reload(void)
 
   /* Load Cheat file */
   CheatLoad();
-}
-
-static void run_emulation(void)
-{
-  /* main emulation loop */
-  while (1)
-  {
-    /* Main Menu request */
-    if (ConfigRequested)
-    {
-      /* stop video & audio */
-      gx_audio_Stop();
-      gx_video_Stop();
-
-      /* show menu */
-      ConfigRequested = 0;
-      if (menu_execute())
-      {
-        /* new ROM has been loaded */
-        reload();
-      }
-
-      /* start video & audio */
-      gx_video_Start();
-      gx_audio_Start();
-      frameticker = 1;
-    }
-
-    /* automatic frame skipping (only necessary for Virtua Racing in Gamecube mode) */
-    if (frameticker > 1)
-    {
-      /* skip frame */
-      system_frame(1);
-      frameticker = 1;
-    }
-    else
-    {
-      /* render frame */
-      frameticker = 0;
-      system_frame(0);
-
-      /* update video */
-      gx_video_Update();
-    }
-
-    /* update audio */
-    gx_audio_Update();
-
-    /* check interlaced mode change */
-    if (bitmap.viewport.changed & 4)
-    {
-      /* VSYNC "original" mode */
-      if (!config.render && (gc_pal == vdp_pal))
-      {
-        /* framerate has changed, reinitialize audio timings */
-        if (vdp_pal)
-        {
-          audio_init(SAMPLERATE_48KHZ, interlaced ? 50.00 : (1000000.0/19968.0));
-        }
-        else
-        {
-          audio_init(SAMPLERATE_48KHZ, interlaced ? 59.94 : (1000000.0/16715.0));
-        }
-
-        /* reinitialize sound chips */
-        sound_restore();
-      }
-
-      /* clear flag */
-      bitmap.viewport.changed &= ~4;
-    }
-
-    /* wait for next frame */
-    while (frameticker < 1) usleep(1);
-  }
 }
 
 /**************************************************
@@ -301,7 +383,19 @@ void shutdown(void)
  ***************************************************************************/
 int main (int argc, char *argv[])
 {
-#ifdef HW_RVL
+ #ifdef HW_RVL
+  /* Temporary fix for HBC bug when using no_ios_reload with no connected network */
+  /* Try to patch current IOS to force AHBPROT flags being set on reload */
+  if (Patch_IOS())
+  {
+    /* reload IOS (full hardware access should now be preserved after reload) */
+    IOS_ReloadIOS(IOS_GetVersion());
+
+    /* enable DVD video commands */
+    write32(0xd800180, read32(0xd800180) & ~0x00200000);
+    usleep(200000);
+  }
+ 
   /* enable 64-byte fetch mode for L2 cache */
   L2Enhance();
   
@@ -422,11 +516,11 @@ int main (int argc, char *argv[])
   if (config.autoload)
   {
     SILENT = 1;
-    if (OpenDirectory(TYPE_RECENT))
+    if (OpenDirectory(TYPE_RECENT, -1))
     {
       if (LoadFile(0))
       {
-        reload();
+        reloadrom();
         gx_video_Start();
         gx_audio_Start();
         frameticker = 1;

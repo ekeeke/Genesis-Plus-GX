@@ -109,9 +109,8 @@ void config_default(void)
   config.region_detect  = 0; /* AUTO */
   config.force_dtack    = 0;
   config.addr_error     = 1;
-  config.tmss           = 0;
+  config.bios           = 0;
   config.lock_on        = 0;
-  config.romtype        = 0;
   config.hot_swap       = 0;
 
   /* video options */
@@ -154,29 +153,44 @@ void config_default(void)
 #endif
   config.s_default    = 1;
   config.s_device     = 0;
-  config.bg_type      = 0;
-  config.bg_overlay   = 1;
+  config.l_device     = 0;
+  config.bg_overlay   = 0;
   config.screen_w     = 658;
   config.bgm_volume   = 100.0;
   config.sfx_volume   = 100.0;
 
   /* default ROM directories */
 #ifdef HW_RVL
-  sprintf (config.lastdir[TYPE_SD],  "sd:%s/roms/",  DEFAULT_PATH);
-  sprintf (config.lastdir[TYPE_USB], "usb:%s/roms/", DEFAULT_PATH);
-  sprintf (config.lastdir[TYPE_DVD], "dvd:%s/roms/", DEFAULT_PATH);
+  sprintf (config.lastdir[0][TYPE_SD],  "sd:%s/roms/",  DEFAULT_PATH);
+  sprintf (config.lastdir[1][TYPE_SD],  "sd:%s/roms/",  DEFAULT_PATH);
+  sprintf (config.lastdir[2][TYPE_SD],  "sd:%s/roms/",  DEFAULT_PATH);
+  sprintf (config.lastdir[3][TYPE_SD],  "sd:%s/roms/",  DEFAULT_PATH);
+  sprintf (config.lastdir[0][TYPE_USB], "usb:%s/roms/", DEFAULT_PATH);
+  sprintf (config.lastdir[1][TYPE_USB], "usb:%s/roms/", DEFAULT_PATH);
+  sprintf (config.lastdir[2][TYPE_USB], "usb:%s/roms/", DEFAULT_PATH);
+  sprintf (config.lastdir[3][TYPE_USB], "usb:%s/roms/", DEFAULT_PATH);
+  sprintf (config.lastdir[0][TYPE_DVD], "dvd:%s/roms/", DEFAULT_PATH);
+  sprintf (config.lastdir[1][TYPE_DVD], "dvd:%s/roms/", DEFAULT_PATH);
+  sprintf (config.lastdir[2][TYPE_DVD], "dvd:%s/roms/", DEFAULT_PATH);
+  sprintf (config.lastdir[3][TYPE_DVD], "dvd:%s/roms/", DEFAULT_PATH);
 #else
-  sprintf (config.lastdir[TYPE_SD],  "%s/roms/",  DEFAULT_PATH);
-  sprintf (config.lastdir[TYPE_DVD], "dvd:%s/roms/", DEFAULT_PATH);
+  sprintf (config.lastdir[0][TYPE_SD],  "%s/roms/",  DEFAULT_PATH);
+  sprintf (config.lastdir[1][TYPE_SD],  "%s/roms/",  DEFAULT_PATH);
+  sprintf (config.lastdir[2][TYPE_SD],  "%s/roms/",  DEFAULT_PATH);
+  sprintf (config.lastdir[3][TYPE_SD],  "%s/roms/",  DEFAULT_PATH);
+  sprintf (config.lastdir[0][TYPE_DVD], "dvd:%s/roms/", DEFAULT_PATH);
+  sprintf (config.lastdir[1][TYPE_DVD], "dvd:%s/roms/", DEFAULT_PATH);
+  sprintf (config.lastdir[2][TYPE_DVD], "dvd:%s/roms/", DEFAULT_PATH);
+  sprintf (config.lastdir[3][TYPE_DVD], "dvd:%s/roms/", DEFAULT_PATH);
 #endif
 
   /* try to restore settings from config file */
   if (!config_load()) GUI_WaitPrompt("Info","Default Settings restored");
 
+  /* hot swap requires at least a first initialization */
+  config.hot_swap &= 1;
+
   /* restore inputs */
   input_init();
-
-  /* restore menu settings */
-  menu_configure();
 }
 

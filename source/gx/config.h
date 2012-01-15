@@ -40,7 +40,7 @@
 #ifndef _CONFIG_H_
 #define _CONFIG_H_
 
-#define CONFIG_VERSION "GENPLUS-GX 1.6.0"
+#define CONFIG_VERSION "GENPLUS-GX 1.6.1"
 
 /****************************************************************************
  * Config Option 
@@ -68,9 +68,9 @@ typedef struct
   uint8 force_dtack;
   uint8 addr_error;
   uint8 tmss;
+  uint8 bios;
   uint8 lock_on;
   uint8 hot_swap;
-  uint8 romtype;
   uint8 invert_mouse;
   uint8 gun_cursor[2];
   uint8 overscan;
@@ -97,16 +97,15 @@ typedef struct
   uint8 s_auto;
   uint8 s_default;
   uint8 s_device;
-  uint8 autocheats;
-  int8 bg_type;
-  int8 bg_overlay;
+  uint8 l_device;
+  uint8 bg_overlay;
   int16 screen_w;
   float bgm_volume;
   float sfx_volume;
 #ifdef HW_RVL
-  char lastdir[3][MAXPATHLEN];
+  char lastdir[4][3][MAXPATHLEN];
 #else
-  char lastdir[2][MAXPATHLEN];
+  char lastdir[4][2][MAXPATHLEN];
 #endif
 } t_config;
 

@@ -170,15 +170,10 @@ extern gx_texture *w_pointer;
 
 /* Generic backgrounds */
 extern const u8 Bg_layer_png[];
-extern const u8 Bg_main_png[];
-extern const u8 Bg_main_2_png[];
 extern const u8 Bg_overlay_png[];
 extern const u8 Banner_main_png[];
 extern const u8 Banner_bottom_png[];
 extern const u8 Banner_top_png[];
-extern const u8 Banner_main_2_png[];
-extern const u8 Banner_bottom_2_png[];
-extern const u8 Banner_top_2_png[];
 extern const u8 Main_logo_png[];
 
 /* Generic frames */

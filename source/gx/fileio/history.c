@@ -51,7 +51,7 @@ t_history history;
  * already in the list then the existing entry is (in effect) moved to the
  * top instead.
   ****************************************************************************/ 
-void history_add_file(char *filepath, char *filename)
+void history_add_file(char *filepath, char *filename, u8 filetype)
 {
   /* Create the new entry for this path. */
   t_history_entry newentry;
@@ -59,6 +59,7 @@ void history_add_file(char *filepath, char *filename)
   strncpy(newentry.filename, filename, MAXJOLIET - 1);
   newentry.filepath[MAXJOLIET - 1] = '\0';
   newentry.filename[MAXJOLIET - 1] = '\0';
+  newentry.filetype = filetype;
   
   t_history_entry oldentry;  /* Old entry is the one being shuffled down a spot. */  
   t_history_entry currentry;  /* Curr entry is the one that just replaced old path. */
@@ -112,7 +113,13 @@ void history_load(void)
   if (fp)
   {
     /* read file */
-    fread(&history, sizeof(history), 1, fp);
+    if (fread(&history, sizeof(history), 1, fp) != 1)
+    {
+      /* an error ocurred, better clear hoistory */
+      memset(&history, 0, sizeof(history));
+    }
+
+    /* close file */
     fclose(fp);
   }
 }

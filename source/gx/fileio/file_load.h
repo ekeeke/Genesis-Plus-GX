@@ -52,8 +52,7 @@
 
 #define CHUNKSIZE (2048)
 
-extern int OpenDirectory(int device);
-extern char *GetCurrentDirectory(int selection);
+extern int OpenDirectory(int device, int type);
 extern int UpdateDirectory(bool go_up, char *filename);
 extern int ParseDirectory(void);
 extern int LoadFile(int selection);

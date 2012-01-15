@@ -32,9 +32,9 @@ typedef struct
   uint8 force_dtack;
   uint8 addr_error;
   uint8 tmss;
+  uint8 bios;
   uint8 lock_on;
   uint8 hot_swap;
-  uint8 romtype;
   uint8 invert_mouse;
   uint8 gun_cursor[2];
   uint8 overscan;

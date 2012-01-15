@@ -38,20 +38,9 @@
 
 #include "shared.h"
 
-int state_load(unsigned char *buffer)
+int state_load(unsigned char *state)
 {
-  /* buffer size */
-  int bufferptr = 0;
-
-  /* first allocate state buffer */
-  unsigned char *state = (unsigned char *)malloc(STATE_SIZE);
-  if (!state) return 0;
-
-  /* uncompress savestate */
-  unsigned long inbytes, outbytes;
-  memcpy(&inbytes, buffer, 4);
-  outbytes = STATE_SIZE;
-  uncompress ((Bytef *)state, &outbytes, (Bytef *)(buffer + 4), inbytes);
+  int i, bufferptr = 0;
 
   /* signature check (GENPLUS-GX x.x.x) */
   char version[17];
@@ -59,21 +48,30 @@ int state_load(unsigned char *buffer)
   version[16] = 0;
   if (strncmp(version,STATE_VERSION,11))
   {
-    free(state);
     return -1;
   }
 
-  /* version check (1.5.0 and above) */
-  if ((version[11] < 0x31) || ((version[11] == 0x31) && (version[13] < 0x35)))
+  /* version check (1.6.0 and above) */
+  if ((version[11] < 0x31) || ((version[11] == 0x31) && (version[13] < 0x36)))
   {
-    free(state);
     return -1;
   }
 
   /* reset system */
   system_reset();
 
-  // GENESIS
+  /* enable VDP access for TMSS systems */
+  for (i=0xc0; i<0xe0; i+=8)
+  {
+    m68k_memory_map[i].read8    = vdp_read_byte;
+    m68k_memory_map[i].read16   = vdp_read_word;
+    m68k_memory_map[i].write8   = vdp_write_byte;
+    m68k_memory_map[i].write16  = vdp_write_word;
+    zbank_memory_map[i].read    = zbank_read_vdp;
+    zbank_memory_map[i].write   = zbank_write_vdp;
+  }
+
+  /* GENESIS */
   if ((system_hw & SYSTEM_PBC) == SYSTEM_MD)
   {
     load_param(work_ram, sizeof(work_ram));
@@ -100,28 +98,34 @@ int state_load(unsigned char *buffer)
     load_param(work_ram, 0x2000);
   }
 
-  /* extended state */
+  /* CPU cycles */
   load_param(&mcycles_68k, sizeof(mcycles_68k));
   load_param(&mcycles_z80, sizeof(mcycles_z80));
 
-  // IO
+  /* IO */
   if ((system_hw & SYSTEM_PBC) == SYSTEM_MD)
   {
     load_param(io_reg, sizeof(io_reg));
-    io_reg[0] = region_code | 0x20 | (config.tmss & 1);
+    io_reg[0] = region_code | 0x20 | (config.bios & 1);
   }
   else
   {
+    /* 1.6.1 specific (keep support for previous state format) */
+    if ((version[11] == 0x31) && (version[13] == 0x36) && (version[15] == 0x31))
+    {
+      load_param(&io_reg[0x0E], 1);
+    }
+
     load_param(&io_reg[0x0F], 1);
   }
 
-  // VDP
-  bufferptr += vdp_context_load(&state[bufferptr], version);
+  /* VDP */
+  bufferptr += vdp_context_load(&state[bufferptr]);
 
-  // SOUND 
-  bufferptr += sound_context_load(&state[bufferptr], version);
+  /* SOUND */
+  bufferptr += sound_context_load(&state[bufferptr]);
 
-  // 68000 
+  /* 68000 */
   if ((system_hw & SYSTEM_PBC) == SYSTEM_MD)
   {
     uint16 tmp16;
@@ -147,11 +151,11 @@ int state_load(unsigned char *buffer)
     load_param(&tmp32, 4); m68k_set_reg(M68K_REG_USP,tmp32);
   }
 
-  // Z80 
+  /* Z80 */ 
   load_param(&Z80, sizeof(Z80_Regs));
   Z80.irq_callback = z80_irq_callback;
 
-  // Cartridge HW
+  /* Cartridge HW */
   if ((system_hw & SYSTEM_PBC) == SYSTEM_MD)
   {  
     bufferptr += md_cart_context_load(&state[bufferptr]);
@@ -159,27 +163,28 @@ int state_load(unsigned char *buffer)
   else
   {
     bufferptr += sms_cart_context_load(&state[bufferptr]);
+
+    /* 1.6.1 specific (keep support for previous state format) */
+    if ((version[11] == 0x31) && (version[13] == 0x36) && (version[15] == 0x31))
+    {
+      sms_cart_switch(~io_reg[0x0E]);
+    }
   }
 
-  free(state);
   return 1;
 }
 
-int state_save(unsigned char *buffer)
+int state_save(unsigned char *state)
 {
   /* buffer size */
   int bufferptr = 0;
-
-  /* first allocate state buffer */
-  unsigned char *state = (unsigned char *)malloc(STATE_SIZE);
-  if (!state) return 0;
 
   /* version string */
   char version[16];
   strncpy(version,STATE_VERSION,16);
   save_param(version, 16);
 
-  // GENESIS
+  /* GENESIS */
   if ((system_hw & SYSTEM_PBC) == SYSTEM_MD)
   {
     save_param(work_ram, sizeof(work_ram));
@@ -191,26 +196,29 @@ int state_save(unsigned char *buffer)
   {
     save_param(work_ram, 0x2000);
   }
+
+  /* CPU cycles */
   save_param(&mcycles_68k, sizeof(mcycles_68k));
   save_param(&mcycles_z80, sizeof(mcycles_z80));
 
-  // IO
+  /* IO */
   if ((system_hw & SYSTEM_PBC) == SYSTEM_MD)
   {
     save_param(io_reg, sizeof(io_reg));
   }
   else
   {
+    save_param(&io_reg[0x0E], 1);
     save_param(&io_reg[0x0F], 1);
   }
 
-  // VDP
+  /* VDP */
   bufferptr += vdp_context_save(&state[bufferptr]);
 
-  // SOUND
+  /* SOUND */
   bufferptr += sound_context_save(&state[bufferptr]);
 
-  // 68000 
+  /* 68000 */ 
   if ((system_hw & SYSTEM_PBC) == SYSTEM_MD)
   {
     uint16 tmp16;
@@ -236,10 +244,10 @@ int state_save(unsigned char *buffer)
     tmp32 = m68k_get_reg(M68K_REG_USP); save_param(&tmp32, 4);
   }
 
-  // Z80 
+  /* Z80 */ 
   save_param(&Z80, sizeof(Z80_Regs));
 
-  // Cartridge HW
+  /* Cartridge HW */
   if ((system_hw & SYSTEM_PBC) == SYSTEM_MD)
   {
     bufferptr += md_cart_context_save(&state[bufferptr]);
@@ -249,13 +257,6 @@ int state_save(unsigned char *buffer)
     bufferptr += sms_cart_context_save(&state[bufferptr]);
   }
 
-  /* compress state file */
-  unsigned long inbytes   = bufferptr;
-  unsigned long outbytes  = STATE_SIZE;
-  compress2 ((Bytef *)(buffer + 4), &outbytes, (Bytef *)state, inbytes, 9);
-  memcpy(buffer, &outbytes, 4);
-  free(state);
-
   /* return total size */
-  return (outbytes + 4);
+  return bufferptr;
 }

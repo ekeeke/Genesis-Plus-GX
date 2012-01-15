@@ -104,6 +104,7 @@ extern t_snd snd;
 extern uint32 mcycles_z80;
 extern uint32 mcycles_68k;
 extern uint32 mcycles_vdp;
+extern int16 SVP_cycles; 
 extern uint8 system_hw;
 
 /* Function prototypes */
@@ -115,7 +116,8 @@ extern void audio_set_equalizer(void);
 extern void system_init(void);
 extern void system_reset(void);
 extern void system_shutdown(void);
-extern void (*system_frame)(int do_skip);
+extern void system_frame_gen(int do_skip);
+extern void system_frame_sms(int do_skip);
 
 #endif /* _SYSTEM_H_ */
 

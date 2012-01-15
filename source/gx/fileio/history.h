@@ -52,6 +52,7 @@ typedef struct
 {
   char filepath[MAXJOLIET];
   char filename[MAXJOLIET];
+  u8 filetype;
 } t_history_entry;
 
 typedef struct
@@ -60,7 +61,7 @@ typedef struct
 } t_history;
 
 extern t_history history;
-extern void history_add_file(char *filepath, char *filename);
+extern void history_add_file(char *filepath, char *filename, u8 filetype);
 extern void history_save(void);
 extern void history_load(void);
 extern void history_default(void);

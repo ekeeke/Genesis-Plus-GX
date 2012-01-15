@@ -42,8 +42,8 @@
 #include "cheats.h"
 #endif
 
-#define MAPPER_TEREBI (0)
-#define MAPPER_NONE   (1)
+#define MAPPER_NONE   (0)
+#define MAPPER_TEREBI (1)
 #define MAPPER_SEGA   (2)
 #define MAPPER_SEGA_X (3)
 #define MAPPER_CODIES (4)
@@ -64,11 +64,12 @@ typedef struct
   uint8 region;
 } rominfo_t;
 
-static struct
+typedef struct
 {
   uint8 fcr[4];
   uint8 mapper;
-} slot;
+  uint8 pages;
+} romhw_t;
 
 static const rominfo_t game_list[GAME_DATABASE_CNT] =
 {
@@ -82,19 +83,19 @@ static const rominfo_t game_list[GAME_DATABASE_CNT] =
   {0x23BAC434, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA_X, SYSTEM_GG,          REGION_USA}, /* Shining Force Gaiden - Final Conflict (JP) [T-Eng] */
 
   /* games using Korean mappers */
-  {0x17AB6883, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_NONE,   SYSTEM_SMS2, REGION_JAPAN_NTSC}, /* FA Tetris (KR) */
-  {0x61E8806F, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_NONE,   SYSTEM_SMS2, REGION_JAPAN_NTSC}, /* Flash Point (KR) */
-  {0x445525E2, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_MSX,    SYSTEM_SMS2, REGION_JAPAN_NTSC}, /* Penguin Adventure (KR) */
-  {0x83F0EEDE, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_MSX,    SYSTEM_SMS2, REGION_JAPAN_NTSC}, /* Street Master (KR) */
-  {0xA05258F5, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_MSX,    SYSTEM_SMS2, REGION_JAPAN_NTSC}, /* Won-Si-In (KR) */
-  {0x06965ED9, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_MSX,    SYSTEM_SMS2, REGION_JAPAN_NTSC}, /* F-1 Spirit - The way to Formula-1 (KR) */
-  {0x77EFE84A, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_MSX,    SYSTEM_SMS2, REGION_JAPAN_NTSC}, /* Cyborg Z (KR) */
-  {0xF89AF3CC, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_MSX,    SYSTEM_SMS2, REGION_JAPAN_NTSC}, /* Knightmare II - The Maze of Galious (KR) */
-  {0x9195C34C, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_MSX,    SYSTEM_SMS2, REGION_JAPAN_NTSC}, /* Super Boy 3 (KR) */
-  {0x89B79E77, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_KOREA,  SYSTEM_SMS2, REGION_JAPAN_NTSC}, /* Dodgeball King (KR) */
-  {0x18FB98A3, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_KOREA,  SYSTEM_SMS2, REGION_JAPAN_NTSC}, /* Jang Pung 3 (KR) */
-  {0x97D03541, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_KOREA,  SYSTEM_SMS2, REGION_JAPAN_NTSC}, /* Sangokushi 3 (KR) */
-  {0x67C2F0FF, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_KOREA,  SYSTEM_SMS2, REGION_JAPAN_NTSC}, /* Super Boy 2 (KR) */
+  {0x17AB6883, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_NONE,   SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* FA Tetris (KR) */
+  {0x61E8806F, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_NONE,   SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Flash Point (KR) */
+  {0x445525E2, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_MSX,    SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Penguin Adventure (KR) */
+  {0x83F0EEDE, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_MSX,    SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Street Master (KR) */
+  {0xA05258F5, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_MSX,    SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Won-Si-In (KR) */
+  {0x06965ED9, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_MSX,    SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* F-1 Spirit - The way to Formula-1 (KR) */
+  {0x77EFE84A, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_MSX,    SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Cyborg Z (KR) */
+  {0xF89AF3CC, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_MSX,    SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Knightmare II - The Maze of Galious (KR) */
+  {0x9195C34C, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_MSX,    SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Super Boy 3 (KR) */
+  {0x89B79E77, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_KOREA,  SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Dodgeball King (KR) */
+  {0x18FB98A3, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_KOREA,  SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Jang Pung 3 (KR) */
+  {0x97D03541, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_KOREA,  SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Sangokushi 3 (KR) */
+  {0x67C2F0FF, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_KOREA,  SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Super Boy 2 (KR) */
 
   /* games using Codemaster mapper */
   {0x29822980, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_CODIES, SYSTEM_SMS2,     REGION_EUROPE}, /* Cosmic Spacehead */
@@ -124,10 +125,11 @@ static const rominfo_t game_list[GAME_DATABASE_CNT] =
 
   /* games requiring JAPANESE region setting */
   {0x71DEBA5A, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA,   SYSTEM_GG,   REGION_JAPAN_NTSC}, /* Pop Breaker */
-  {0xC9DD4E5F, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA,   SYSTEM_SMS2, REGION_JAPAN_NTSC}, /* Woody Pop (Super Arkanoid) */
+  {0xC9DD4E5F, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA,   SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Woody Pop (Super Arkanoid) */
 
   /* games requiring Mark-III hardware (no Memory Control port) */
-  {0xBD1CC7DF, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA,   SYSTEM_MARKIII,     REGION_USA}, /* Super Tetris (K) */
+  {0xBD1CC7DF, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA,   SYSTEM_MARKIII, REGION_JAPAN_NTSC}, /* Super Tetris (K) */
+  {0x6D309AC5, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA,   SYSTEM_MARKIII, REGION_JAPAN_NTSC}, /* Power Boggle Boggle (K) */
 
   /* games requiring PAL timings */
   {0x72420F38, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA,   SYSTEM_SMS2,     REGION_EUROPE}, /* Addams Familly */
@@ -163,7 +165,6 @@ static const rominfo_t game_list[GAME_DATABASE_CNT] =
   {0x45F058D6, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA,   SYSTEM_GGMS,        REGION_USA}, /* Prince of Persia [B][SMS-GG] */
   {0x56201996, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA,   SYSTEM_GGMS,        REGION_USA}, /* R.C. Grand Prix [SMS-GG] */
   {0x10DBBEF4, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA,   SYSTEM_GGMS,        REGION_USA}, /* Super Kick Off [SMS-GG] */
-  {0xBD1CC7DF, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA,   SYSTEM_GGMS, REGION_JAPAN_NTSC}, /* Super Tetris (KR) [SMS-GG] */
   {0x9942B69B, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA,   SYSTEM_GGMS, REGION_JAPAN_NTSC}, /* Castle of Illusion - Starring Mickey Mouse (J) [SMS-GG] */
   {0x7BB81E3D, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA,   SYSTEM_GGMS, REGION_JAPAN_NTSC}, /* Taito Chase H.Q (J) [SMS-GG] */
   {0x6F8E46CF, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA,   SYSTEM_GGMS, REGION_JAPAN_NTSC}, /* Alex Kidd in Miracle World (TW) [SMS-GG] */
@@ -179,8 +180,8 @@ static const rominfo_t game_list[GAME_DATABASE_CNT] =
   {0xA3EF13CB, 1, 1, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA,   SYSTEM_SMS2,        REGION_USA}, /* Zaxxon 3-D */
   {0xBBA74147, 1, 1, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA,   SYSTEM_SMS2,        REGION_USA}, /* Zaxxon 3-D [Proto] */
   {0xD6F43DDA, 1, 1, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA,   SYSTEM_SMS2,        REGION_USA}, /* Out Run 3-D */
-  {0x871562b0, 1, 1, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA,   SYSTEM_SMS2, REGION_JAPAN_NTSC}, /* Maze Walker */
-  {0x156948f9, 1, 1, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA,   SYSTEM_SMS2, REGION_JAPAN_NTSC}, /* Space Harrier 3-D (J) */
+  {0x871562b0, 1, 1, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA,   SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Maze Walker */
+  {0x156948f9, 1, 1, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA,   SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Space Harrier 3-D (J) */
 
   /* games requiring 3-D Glasses & Sega Light Phaser */
   {0xFBE5CFBB, 1, 0, SYSTEM_LIGHTPHASER, MAPPER_SEGA,   SYSTEM_SMS2,        REGION_USA}, /* Missile Defense 3D */
@@ -203,10 +204,10 @@ static const rominfo_t game_list[GAME_DATABASE_CNT] =
   {0x0CA95637, 0, 0, SYSTEM_LIGHTPHASER, MAPPER_SEGA,   SYSTEM_SMS2,        REGION_USA}, /* Laser Ghost */
 
   /* games requiring Sega Paddle */
-  {0xF9DBB533, 0, 1, SYSTEM_PADDLE,      MAPPER_SEGA,   SYSTEM_SMS2, REGION_JAPAN_NTSC}, /* Alex Kidd BMX Trial */
-  {0xA6FA42D0, 0, 1, SYSTEM_PADDLE,      MAPPER_SEGA,   SYSTEM_SMS2, REGION_JAPAN_NTSC}, /* Galactic Protector */
-  {0x29BC7FAD, 0, 1, SYSTEM_PADDLE,      MAPPER_SEGA,   SYSTEM_SMS2, REGION_JAPAN_NTSC}, /* Megumi Rescue */
-  {0x315917D4, 0, 0, SYSTEM_PADDLE,      MAPPER_SEGA,   SYSTEM_SMS2, REGION_JAPAN_NTSC}, /* Woody Pop */
+  {0xF9DBB533, 0, 1, SYSTEM_PADDLE,      MAPPER_SEGA,   SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Alex Kidd BMX Trial */
+  {0xA6FA42D0, 0, 1, SYSTEM_PADDLE,      MAPPER_SEGA,   SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Galactic Protector */
+  {0x29BC7FAD, 0, 1, SYSTEM_PADDLE,      MAPPER_SEGA,   SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Megumi Rescue */
+  {0x315917D4, 0, 0, SYSTEM_PADDLE,      MAPPER_SEGA,   SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Woody Pop */
 
   /* games requiring Sega Sport Pad */
   {0x0CB7E21F, 0, 0, SYSTEM_SPORTSPAD,   MAPPER_SEGA,   SYSTEM_SMS2,        REGION_USA}, /* Great Ice Hockey */
@@ -264,39 +265,50 @@ static const rominfo_t game_list[GAME_DATABASE_CNT] =
   {0x679E1676, 0, 1, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA,   SYSTEM_SMS2,        REGION_USA}, /* Wonder Boy III: The Dragon's Trap */
   {0x8CBEF0C1, 0, 1, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA,   SYSTEM_SMS2,        REGION_USA}, /* Wonder Boy in Monster Land */
   {0x2F2E3BC9, 0, 1, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA,   SYSTEM_SMS2,        REGION_USA}, /* Zillion II - The Tri Formation */
-  {0x48D44A13, 0, 1, SYSTEM_MS_GAMEPAD,  MAPPER_NONE,   SYSTEM_SMS2, REGION_JAPAN_NTSC}, /* Master System Bios (J) */
-  {0xD8C4165B, 0, 1, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA,   SYSTEM_SMS2, REGION_JAPAN_NTSC}, /* Aleste */
-  {0x4CC11DF9, 0, 1, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA,   SYSTEM_SMS2, REGION_JAPAN_NTSC}, /* Alien Syndrome (J) */
-  {0xE421E466, 0, 1, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA,   SYSTEM_SMS2, REGION_JAPAN_NTSC}, /* Chouon Senshi Borgman */
-  {0x2BCDB8FA, 0, 1, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA,   SYSTEM_SMS2, REGION_JAPAN_NTSC}, /* Doki Doki Penguin Land - Uchuu-Daibouken */
-  {0x56BD2455, 0, 1, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA,   SYSTEM_SMS2, REGION_JAPAN_NTSC}, /* Doki Doki Penguin Land - Uchuu-Daibouken [Proto] */
-  {0xC722FB42, 0, 1, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA,   SYSTEM_SMS2, REGION_JAPAN_NTSC}, /* Fantasy Zone II (J) */
-  {0x7ABC70E9, 0, 1, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA,   SYSTEM_SMS2, REGION_JAPAN_NTSC}, /* Family Games (Party Games) */
-  {0x6586BD1F, 0, 1, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA,   SYSTEM_SMS2, REGION_JAPAN_NTSC}, /* Masters Golf */
-  {0x4847BC91, 0, 1, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA,   SYSTEM_SMS2, REGION_JAPAN_NTSC}, /* Masters Golf [Proto] */
-  {0xB9FDF6D9, 0, 1, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA,   SYSTEM_SMS2, REGION_JAPAN_NTSC}, /* Haja no Fuuin */
-  {0x955A009E, 0, 1, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA,   SYSTEM_SMS2, REGION_JAPAN_NTSC}, /* Hoshi wo Sagashite */
-  {0x05EA5353, 0, 1, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA,   SYSTEM_SMS2, REGION_JAPAN_NTSC}, /* Kenseiden (J) */
-  {0xD11D32E4, 0, 1, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA,   SYSTEM_SMS2, REGION_JAPAN_NTSC}, /* Kujakuou */
-  {0xAA7D6F45, 0, 1, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA,   SYSTEM_SMS2, REGION_JAPAN_NTSC}, /* Lord of Sword */
-  {0xBF0411AD, 0, 1, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA,   SYSTEM_SMS2, REGION_JAPAN_NTSC}, /* Maou Golvellius */
-  {0x21A21352, 0, 1, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA,   SYSTEM_SMS2, REGION_JAPAN_NTSC}, /* Maou Golvellius [Proto] */
-  {0x5B5F9106, 0, 1, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA,   SYSTEM_SMS2, REGION_JAPAN_NTSC}, /* Nekyuu Kousien */
-  {0xBEA27D5C, 0, 1, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA,   SYSTEM_SMS2, REGION_JAPAN_NTSC}, /* Opa Opa */
-  {0x6605D36A, 0, 1, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA,   SYSTEM_SMS2, REGION_JAPAN_NTSC}, /* Phantasy Star (J) */
-  {0xE1FFF1BB, 0, 1, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA,   SYSTEM_SMS2, REGION_JAPAN_NTSC}, /* Shinobi (J) */
-  {0x11645549, 0, 1, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA,   SYSTEM_SMS2, REGION_JAPAN_NTSC}, /* Solomon no Kagi - Oujo Rihita no Namida */
-  {0x7E0EF8CB, 0, 1, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA,   SYSTEM_SMS2, REGION_JAPAN_NTSC}, /* Super Racing */
-  {0xB1DA6A30, 0, 1, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA,   SYSTEM_SMS2, REGION_JAPAN_NTSC}, /* Super Wonder Boy Monster World */
-  {0x8132AB2C, 0, 1, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA,   SYSTEM_SMS2, REGION_JAPAN_NTSC}, /* Tensai Bakabon */
-  {0xC0CE19B1, 0, 1, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA,   SYSTEM_SMS2, REGION_JAPAN_NTSC}, /* Thunder Blade (J) */
+  {0x48D44A13, 0, 1, SYSTEM_MS_GAMEPAD,  MAPPER_NONE,   SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* BIOS (J) */
+  {0xD8C4165B, 0, 1, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA,   SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Aleste */
+  {0x4CC11DF9, 0, 1, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA,   SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Alien Syndrome (J) */
+  {0xE421E466, 0, 1, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA,   SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Chouon Senshi Borgman */
+  {0x2BCDB8FA, 0, 1, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA,   SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Doki Doki Penguin Land - Uchuu-Daibouken */
+  {0x56BD2455, 0, 1, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA,   SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Doki Doki Penguin Land - Uchuu-Daibouken [Proto] */
+  {0xC722FB42, 0, 1, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA,   SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Fantasy Zone II (J) */
+  {0x7ABC70E9, 0, 1, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA,   SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Family Games (Party Games) */
+  {0x6586BD1F, 0, 1, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA,   SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Masters Golf */
+  {0x4847BC91, 0, 1, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA,   SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Masters Golf [Proto] */
+  {0xB9FDF6D9, 0, 1, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA,   SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Haja no Fuuin */
+  {0x955A009E, 0, 1, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA,   SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Hoshi wo Sagashite */
+  {0x05EA5353, 0, 1, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA,   SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Kenseiden (J) */
+  {0xD11D32E4, 0, 1, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA,   SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Kujakuou */
+  {0xAA7D6F45, 0, 1, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA,   SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Lord of Sword */
+  {0xBF0411AD, 0, 1, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA,   SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Maou Golvellius */
+  {0x21A21352, 0, 1, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA,   SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Maou Golvellius [Proto] */
+  {0x5B5F9106, 0, 1, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA,   SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Nekyuu Kousien */
+  {0xBEA27D5C, 0, 1, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA,   SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Opa Opa */
+  {0x6605D36A, 0, 1, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA,   SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Phantasy Star (J) */
+  {0xE1FFF1BB, 0, 1, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA,   SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Shinobi (J) */
+  {0x11645549, 0, 1, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA,   SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Solomon no Kagi - Oujo Rihita no Namida */
+  {0x7E0EF8CB, 0, 1, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA,   SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Super Racing */
+  {0xB1DA6A30, 0, 1, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA,   SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Super Wonder Boy Monster World */
+  {0x8132AB2C, 0, 1, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA,   SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Tensai Bakabon */
+  {0xC0CE19B1, 0, 1, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA,   SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Thunder Blade (J) */
   {0x07301F83, 0, 1, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA,   SYSTEM_PBC,  REGION_JAPAN_NTSC}  /* Phantasy Star [Megadrive] (J) */
 };
 
-/* 1K trash buffer */
-static uint8 dummy[0x400];
+/* Cartridge & BIOS ROM hardware */
+static romhw_t cart_rom;
+static romhw_t bios_rom;
+
+/* Current slot */
+static struct
+{
+  uint8 *rom;
+  uint8 *fcr;
+  uint8 mapper;
+  uint8 pages;
+} slot;
 
 /* Function prototypes */
+static void mapper_reset(void);
 static void mapper_8k_w(int offset, unsigned int data);
 static void mapper_16k_w(int offset, unsigned int data);
 static void write_mapper_none(unsigned int address, unsigned char data);
@@ -312,32 +324,45 @@ static unsigned char read_mapper_default(unsigned int address);
 
 void sms_cart_init(void)
 {
-  /* default mapper */
-  slot.mapper = (cart.romsize > 0xC000) ? MAPPER_SEGA : MAPPER_NONE;
+  int i;
+
+  /* game CRC */
+  uint32 crc = crc32(0, cart.rom, cart.romsize);
 
   /* use Master System controller by default */
   uint8 device = SYSTEM_MS_GAMEPAD;
 
+  /* unmapped memory return $FF on read (mapped to unused cartridge areas $510000-$5103FF & $510400-$5107FF) */
+  memset(cart.rom + 0x510000, 0xFF, 0x800);
+
+  /* default cartridge ROM mapper */
+  cart_rom.mapper = (cart.romsize > 0xC000) ? MAPPER_SEGA : MAPPER_NONE;
+
   /* disable 3-D Glasses by default */
   cart.special = 0;
 
-  /* disable YM2413 chip disabled by default in AUTO mode */
+  /* YM2413 chip in AUTO mode */
   if (config.ym2413 & 2)
   {
-    config.ym2413 = 2;
+    if ((system_hw & SYSTEM_SMS) && (region_code == REGION_JAPAN_NTSC))
+    {
+      /* japanese Master System has built-in FM chip */
+      config.ym2413 = 3;
+    }
+    else
+    {
+      /* by default, FM chip is disabled */
+      config.ym2413 = 2;
+    }
   }
 
-  /* compute CRC */
-  uint32 crc = crc32(0, cart.rom, cart.romsize);
-
   /* auto-detect game settings */
-  int i;
   for (i=0; i<GAME_DATABASE_CNT; i++)
   {
     if (crc == game_list[i].crc)
     {
       /* auto-detect cartridge mapper */
-      slot.mapper = game_list[i].mapper;
+      cart_rom.mapper = game_list[i].mapper;
 
       /* auto-detect required peripherals */
       device = game_list[i].peripheral;
@@ -362,45 +387,33 @@ void sms_cart_init(void)
     }
   }
 
-  /* initialize Z80 memory handlers */
-  switch(slot.mapper)
+  /* ROM paging */
+  if (cart_rom.mapper == MAPPER_NONE)
   {
-    case MAPPER_NONE:
-      z80_readmem = read_mapper_default;
-      z80_writemem = write_mapper_none;
-      break;
+    /* 1k ROM banks */
+    cart_rom.pages = cart.romsize >> 10;
+  }
+  else if (cart_rom.mapper == MAPPER_MSX)
+  {
+    /* 8k ROM banks */
+    cart_rom.pages = cart.romsize >> 13;
+  }
+  else
+  {
+    /* 16k ROM banks */
+    cart_rom.pages = cart.romsize >> 14;
+  }
 
-    case MAPPER_CODIES:
-      z80_readmem = read_mapper_default;
-      z80_writemem = write_mapper_codies;
-      break;
-
-    case MAPPER_KOREA:
-      z80_readmem = read_mapper_default;
-      z80_writemem = write_mapper_korea;
-      break;
-
-    case MAPPER_MSX:
-      z80_readmem = read_mapper_default;
-      z80_writemem = write_mapper_msx;
-      break;
-
-    case MAPPER_93C46:
-      gg_eeprom_init();
-      z80_readmem = read_mapper_93c46;
-      z80_writemem = write_mapper_93c46;
-      break;
-
-    case MAPPER_TEREBI:
-      cart.special |= HW_TEREBI_OEKAKI;
-      z80_readmem = read_mapper_terebi;
-      z80_writemem = write_mapper_terebi;
-      break;
-
-    default:
-      z80_readmem = read_mapper_default;
-      z80_writemem = write_mapper_sega;
-      break;
+  /* initialize extra hardware */
+  if (cart_rom.mapper == MAPPER_93C46)
+  {
+    /* 93C46 eeprom */
+    gg_eeprom_init();
+  }
+  else if (cart_rom.mapper == MAPPER_TEREBI)
+  {
+    /* Terebi Oekaki tablet */
+    cart.special |= HW_TEREBI_OEKAKI;
   }
 
   /* initialize SRAM */
@@ -439,139 +452,275 @@ void sms_cart_init(void)
   {
     input.x_offset = 16;
   }
+
+  /* BIOS support */
+  if (config.bios & 0x01)
+  {
+    /* verify that BIOS is not already loaded */
+    if (!(config.bios & (system_hw & 0xF0)))
+    {
+      FILE *fp = NULL;
+      
+      /* reset BIOS size */
+      int bios_size = 0;
+
+      /* mark both BIOS as unloaded */
+      config.bios &= ~(SYSTEM_SMS | SYSTEM_GG);
+
+      /* open BIOS file */
+      switch (system_hw)
+      {
+        case SYSTEM_GG:
+        case SYSTEM_GGMS:
+          fp = fopen(GG_BIOS, "rb");
+          break;
+
+        case SYSTEM_SMS:
+        case SYSTEM_SMS2:
+          fp = fopen(MS_BIOS, "rb");
+          break;
+
+        default:
+          break;
+      }
+
+      /* try to load BIOS file */
+      if (fp != NULL)
+      {
+        /* get file size */
+        int size;
+        fseek(fp, 0, SEEK_END);
+        size = ftell(fp);
+        fseek(fp, 0, SEEK_SET);
+
+        /* BIOS ROM is stored above cartridge ROM area, into $400000-$4FFFFF (max. 1MB) */
+        if ((size <= 0x100000) && (cart.romsize <= 0x400000))
+        {
+          /* BIOS ROM size */
+          bios_size = size;
+
+          /* read bytes chunks */
+          while (size > 2048)
+          {
+            fread(cart.rom + 0x400000 + bios_size - size, 2048, 1, fp);
+            size -= 2048;
+          }
+
+          /* read remaining bytes */
+          fread(cart.rom + 0x400000 + bios_size - size, size, 1, fp);
+
+          /* mark BIOS ROM as loaded */
+          config.bios |= (system_hw & 0xF0);
+        }
+
+        /* close file */
+        fclose(fp);
+      }
+
+      /* BIOS ROM mapper */
+      if (bios_size > 0xC000)
+      {
+        /* assume SEGA mapper if BIOS ROM is larger than 48k */
+        bios_rom.mapper = MAPPER_SEGA;
+        bios_rom.pages = bios_size >> 14;
+      }
+      else
+      {
+        bios_rom.mapper = MAPPER_NONE;
+        bios_rom.pages = bios_size >> 10;
+      }
+    }
+
+    /* check if BIOS has been correctly loaded */
+    if (bios_rom.pages)
+    {
+      /* unload cartridge if required */
+      if (!(config.bios & 2))
+      {
+        cart_rom.pages = 0;
+      }
+    }
+  }
+  else /* BIOS support disabled */
+  {
+    /* unload BIOS */
+    bios_rom.pages = 0;
+
+    /* mark both BIOS as unloaded */
+    config.bios &= ~(SYSTEM_SMS | SYSTEM_GG);   
+  }
 }
 
 void sms_cart_reset(void)
 {
-  int i;
+  /* reset BIOS ROM paging (SEGA mapper by default) */
+  bios_rom.fcr[0] = 0;
+  bios_rom.fcr[1] = 0;
+  bios_rom.fcr[2] = 1;
+  bios_rom.fcr[3] = 2;
 
-  /* Unmapped memory return $FF */
-  memset(dummy, 0xFF, 0x400);
-
-  /* $0000-$7FFF mapped to Cartridge ROM (32K) */
-  for(i = 0x00; i < 0x20; i++)
-  {
-    z80_readmap[i] = &cart.rom[i << 10];
-    z80_writemap[i] = dummy;
-  }
-
-  /* $8000-$BFFF mapped to Cartridge ROM or RAM (16K) */
-  if (cart.romsize > 0x8000)
-  {
-    for(i = 0x20; i < 0x30; i++)
-    {
-      z80_readmap[i] = &cart.rom[i << 10];
-      z80_writemap[i] = dummy;
-    }
-  }
-  else
-  {
-    for(i = 0x20; i < 0x30; i++)
-    {
-      z80_readmap[i] = z80_writemap[i] = &sram.sram[(i & 0x0F) << 10];
-    }
-  }
-
-  if (system_hw == SYSTEM_SG)
-  {
-    /* $C000-$FFFF mapped to internal RAM (2K mirrored) */
-    for(i = 0x30; i < 0x40; i++)
-    {
-      z80_readmap[i] = z80_writemap[i] = &work_ram[(i & 0x01) << 10];
-    }
-  }
-  else
-  {
-    /* $C000-$FFFF mapped to internal RAM (8K mirrored) */
-    for(i = 0x30; i < 0x40; i++)
-    {
-      z80_readmap[i] = z80_writemap[i] = &work_ram[(i & 0x07) << 10];
-    }
-  }
-
-  /* Reset cartridge paging registers */
-  switch(slot.mapper)
+  /* reset cartridge ROM paging */
+  switch (cart_rom.mapper)
   {
     case MAPPER_SEGA:
     case MAPPER_SEGA_X:
-    {
-      slot.fcr[0] = 0;
-      slot.fcr[1] = 0;
-      slot.fcr[2] = 1;
-      slot.fcr[3] = 2;
+      cart_rom.fcr[0] = 0;
+      cart_rom.fcr[1] = 0;
+      cart_rom.fcr[2] = 1;
+      cart_rom.fcr[3] = 2;
       break;
-    }
+
+    case MAPPER_MSX:
+      cart_rom.fcr[0] = 0;
+      cart_rom.fcr[1] = 0;
+      cart_rom.fcr[2] = 0;
+      cart_rom.fcr[3] = 0;
+      break;
 
     default:
-    {
-      slot.fcr[0] = 0;
-      slot.fcr[1] = 0;
-      slot.fcr[2] = 1;
-      slot.fcr[3] = 0;
+      cart_rom.fcr[0] = 0;
+      cart_rom.fcr[1] = 0;
+      cart_rom.fcr[2] = 1;
+      cart_rom.fcr[3] = 0;
       break;
+  }
+
+  /* check if BIOS is larger than 1k */
+  if (bios_rom.pages > 1)
+  {
+    /* enable BIOS ROM */
+    slot.rom = cart.rom + 0x400000;
+    slot.fcr = bios_rom.fcr;
+    slot.mapper = bios_rom.mapper;
+    slot.pages = bios_rom.pages;
+  }
+  else
+  {
+    /* enable cartridge ROM */
+    slot.rom = cart.rom;
+    slot.fcr = cart_rom.fcr;
+    slot.mapper = cart_rom.mapper;
+    slot.pages = cart_rom.pages;
+
+    /* force Memory Control register value in RAM (usually set by Master System BIOS) */
+    if (system_hw & SYSTEM_SMS)
+    {
+      work_ram[0] = 0xA8;
     }
   }
 
+  /* reset Memory Control register (RAM & I/O are enabled, either BIOS or Cartridge ROM are enabled) */
+  io_reg[0x0E] = bios_rom.pages ? 0xE0 : 0xA8;
 
-  /* Set default memory map */
-  if (slot.mapper == MAPPER_MSX)
+  /* reset Z80 memory map */
+  mapper_reset();
+
+  /* 1k BIOS special case (Majesco GG) */
+  if (bios_rom.pages == 1)
   {
-    mapper_8k_w(0,slot.fcr[0]);
-    mapper_8k_w(1,slot.fcr[1]);
-    mapper_8k_w(2,slot.fcr[2]);
-    mapper_8k_w(3,slot.fcr[3]);
-  }
-  else if (slot.mapper > MAPPER_NONE)
-  {
-    mapper_16k_w(0,slot.fcr[0]);
-    mapper_16k_w(1,slot.fcr[1]);
-    mapper_16k_w(2,slot.fcr[2]);
-    mapper_16k_w(3,slot.fcr[3]);
+    /* BIOS ROM is mapped to $0000-$03FF */
+    z80_readmap[0] = cart.rom + 0x400000;
   }
 }
 
-void sms_cart_switch(int enabled)
+void sms_cart_switch(uint8 mode)
 {
-  int i;
+  /* by default, disable cartridge & BIOS ROM */
+  slot.pages = 0;
 
-  if (enabled)
+  /* cartridge ROM enabled ? */
+  if (mode & 0x40)
   {
-    /* Enable cartridge ROM at $0000-$BFFF */
-    for(i = 0x00; i < 0x30; i++)
+    /* check if cartridge is loaded */
+    if (cart_rom.pages)
     {
-      z80_readmap[i] = &cart.rom[(i & 0x1F) << 10];
-      z80_writemap[i] = dummy;
+      /* map cartridge ROM */
+      slot.rom = cart.rom;
+      slot.fcr = cart_rom.fcr;
+      slot.mapper = cart_rom.mapper;
+      slot.pages = cart_rom.pages;
     }
   }
   else
   {
-    /* Disable cartridge ROM at $0000-$BFFF */
-    for(i = 0x00; i < 0x30; i++)
+    /* BIOS ROM enabled ? */
+    if (mode & 0x08)
     {
-      z80_readmap[i] = z80_writemap[i] = dummy;
+      /* check if BIOS ROM is larger than 1K */
+      if (bios_rom.pages > 1)
+      {
+        /* map BIOS ROM */
+        slot.rom = cart.rom + 0x400000;
+        slot.fcr = bios_rom.fcr;
+        slot.mapper = bios_rom.mapper;
+        slot.pages = bios_rom.pages;
+      }
+      else
+      {
+        /* by default, map cartridge ROM */
+        slot.rom = cart.rom;
+        slot.fcr = cart_rom.fcr;
+        slot.mapper = cart_rom.mapper;
+        slot.pages = cart_rom.pages;
+      }
     }
+
+    /* assume only BIOS would disable cartridge slot */
+    if (!bios_rom.pages)
+    {
+      /* max. BIOS ROM size supported is 1MB */
+      if (cart.romsize <= 0x100000)
+      {
+        /* copy to BIOS ROM */
+        memcpy(cart.rom + 0x400000, cart.rom, cart.romsize);
+        memcpy(bios_rom.fcr, cart_rom.fcr, 4);
+        bios_rom.mapper = cart_rom.mapper;
+        bios_rom.pages = cart_rom.pages;
+
+        /* unload cartridge  */
+        cart_rom.pages = 0;
+      }
+    }
+  }
+
+  /* reset Z80 memory map */
+  mapper_reset();
+
+  /* 1k BIOS special case (Majesco GG) */
+  if ((bios_rom.pages == 1) && ((mode & 0x48) == 0x08))
+  {
+    /* BIOS ROM is mapped to $0000-$03FF */
+    z80_readmap[0] = cart.rom + 0x400000;
   }
 }
 
 int sms_cart_region_detect(void)
 {
+  int i;
+
   /* compute CRC */
   uint32 crc = crc32(0, cart.rom, cart.romsize);
 
-  /* detect game region */
-  int i;
+  /* Turma da Mônica em: O Resgate & Wonder Boy III enable FM support on japanese hardware only */
+  if (config.ym2413 && ((crc == 0x22CCA9BB) || (crc == 0x679E1676)))
+  {
+    return REGION_JAPAN_NTSC;
+  }
+
+  /* game database */
   for (i=0; i<GAME_DATABASE_CNT; i++)
   {
     if (crc == game_list[i].crc)
     {
-      /* Turma da Mônica em: O Resgate & Wonder Boy III enable FM support on japanese hardware only */
-      if (config.ym2413 && ((crc == 0x22CCA9BB) || (crc == 0x679E1676)))
-      {
-        return REGION_JAPAN_NTSC;
-      }
-
       return game_list[i].region;
     }
+  }
+
+  /* Mark-III hardware */
+  if (system_hw == SYSTEM_MARKIII)
+  {
+    /* Japan */
+    return REGION_JAPAN_NTSC;
   }
 
   /* default region */
@@ -581,41 +730,156 @@ int sms_cart_region_detect(void)
 int sms_cart_context_save(uint8 *state)
 {
   int bufferptr = 0;
-  save_param(slot.fcr, sizeof(slot.fcr));
+  save_param(slot.fcr, 4);
   return bufferptr;
 }
 
 int sms_cart_context_load(uint8 *state)
 {
   int bufferptr = 0;
-  load_param(slot.fcr, sizeof(slot.fcr));
-
-  /* Set default memory map */
-  if (slot.mapper == MAPPER_MSX)
-  {
-    mapper_8k_w(0,slot.fcr[0]);
-    mapper_8k_w(1,slot.fcr[1]);
-    mapper_8k_w(2,slot.fcr[2]);
-    mapper_8k_w(3,slot.fcr[3]);
-  }
-  else if (slot.mapper > MAPPER_NONE)
-  {
-    mapper_16k_w(0,slot.fcr[0]);
-    mapper_16k_w(1,slot.fcr[1]);
-    mapper_16k_w(2,slot.fcr[2]);
-    mapper_16k_w(3,slot.fcr[3]);
-  }
-
+  load_param(slot.fcr, 4);
   return bufferptr;
 }
 
+static void mapper_reset(void)
+{
+  int i;
 
-void mapper_8k_w(int offset, unsigned int data)
+  /* reset internal RAM mapping */
+  if (system_hw == SYSTEM_SG)
+  {
+    /* $C000-$FFFF mapped to 2k mirrored RAM */
+    for (i = 0x30; i < 0x40; i++)
+    {
+      z80_readmap[i] = z80_writemap[i] = &work_ram[(i & 0x01) << 10];
+    }
+  }
+  else
+  {
+    /* $C000-$FFFF mapped to 8k mirrored RAM */
+    for (i = 0x30; i < 0x40; i++)
+    {
+      z80_readmap[i] = z80_writemap[i] = &work_ram[(i & 0x07) << 10];
+    }
+  }
+
+  /* check if ROM is disabled */
+  if (!slot.pages)
+  {
+    /* $0000-$BFFF mapped to unused cartridge areas */
+    for(i = 0x00; i < 0x30; i++)
+    {
+      z80_writemap[i] = cart.rom + 0x510000;
+      z80_readmap[i]  = cart.rom + 0x510400;
+    }
+
+    /* set default Z80 memory handlers */
+    z80_readmem = read_mapper_default;
+    z80_writemem = write_mapper_none;
+    return;
+  }
+
+  /* $0000-$3FFF mapped to ROM (first 16k) by default */
+  for (i = 0x00; i < 0x20; i++)
+  {
+    z80_readmap[i] = &slot.rom[i << 10];
+    z80_writemap[i] = cart.rom + 0x510000; /* unused area */
+  }
+
+  /* reset default $4000-$BFFF mapping (32k) */
+  if ((slot.mapper == MAPPER_NONE) || (slot.mapper == MAPPER_TEREBI))
+  {
+    /* $4000-$7FFF mapped to ROM (16k) */
+    for (i = 0x00; i < 0x20; i++)
+    {
+      z80_readmap[i] = &slot.rom[i << 10];
+      z80_writemap[i] = cart.rom + 0x510000; /* unused area */
+    }
+
+    /* enable 16k external RAM by default with 32k ROM (The Castle) */
+    if (slot.pages > 0x20)
+    {
+      /* $8000-$BFFF mapped to ROM (16k) */
+      for (i = 0x20; i < 0x30; i++)
+      {
+        z80_readmap[i] = &slot.rom[i << 10];
+        z80_writemap[i] = cart.rom + 0x510000; /* unused area */
+      }
+    }
+    else
+    {
+      /* $8000-$BFFF mapped to external RAM (16k) */
+      for (i = 0x20; i < 0x30; i++)
+      {
+        z80_readmap[i] = z80_writemap[i] = &sram.sram[(i & 0x0F) << 10];
+      }
+    }
+  }
+  else
+  {
+    /* ROM paging */
+    if (slot.mapper == MAPPER_MSX)
+    {
+      mapper_8k_w(0,slot.fcr[0]);
+      mapper_8k_w(1,slot.fcr[1]);
+      mapper_8k_w(2,slot.fcr[2]);
+      mapper_8k_w(3,slot.fcr[3]);
+    }
+    else
+    {
+      mapper_16k_w(0,slot.fcr[0]);
+      mapper_16k_w(1,slot.fcr[1]);
+      mapper_16k_w(2,slot.fcr[2]);
+      mapper_16k_w(3,slot.fcr[3]);
+    }
+  }
+
+  /* reset Z80 memory handlers */
+  switch (slot.mapper)
+  {
+    case MAPPER_NONE:
+      z80_readmem = read_mapper_default;
+      z80_writemem = write_mapper_none;
+      break;
+
+    case MAPPER_CODIES:
+      z80_readmem = read_mapper_default;
+      z80_writemem = write_mapper_codies;
+      break;
+
+    case MAPPER_KOREA:
+      z80_readmem = read_mapper_default;
+      z80_writemem = write_mapper_korea;
+      break;
+
+    case MAPPER_MSX:
+      z80_readmem = read_mapper_default;
+      z80_writemem = write_mapper_msx;
+      break;
+
+    case MAPPER_93C46:
+      z80_readmem = read_mapper_93c46;
+      z80_writemem = write_mapper_93c46;
+      break;
+
+    case MAPPER_TEREBI:
+      z80_readmem = read_mapper_terebi;
+      z80_writemem = write_mapper_terebi;
+      break;
+
+    default:
+      z80_readmem = read_mapper_default;
+      z80_writemem = write_mapper_sega;
+      break;
+  }
+}
+
+static void mapper_8k_w(int offset, unsigned int data)
 {
   int i;
 
   /* cartridge ROM page (8k) */
-  uint8 page = data % (cart.romsize >> 13);
+  uint8 page = data % slot.pages;
   
   /* Save frame control register data */
   slot.fcr[offset] = data;
@@ -625,36 +889,36 @@ void mapper_8k_w(int offset, unsigned int data)
   {
     case 0: /* cartridge ROM bank (8k) at $8000-$9FFF */
     {
-      for(i = 0x20; i < 0x28; i++)
+      for (i = 0x20; i < 0x28; i++)
       {
-        z80_readmap[i] = &cart.rom[(page << 13) | ((i & 0x07) << 10)];
+        z80_readmap[i] = &slot.rom[(page << 13) | ((i & 0x07) << 10)];
       }
       break;
     }
     
     case 1: /* cartridge ROM bank (8k) at $A000-$BFFF */
     {
-      for(i = 0x28; i < 0x30; i++)
+      for (i = 0x28; i < 0x30; i++)
       {
-        z80_readmap[i] = &cart.rom[(page << 13) | ((i & 0x07) << 10)];
+        z80_readmap[i] = &slot.rom[(page << 13) | ((i & 0x07) << 10)];
       }
       break;
     }
     
     case 2: /* cartridge ROM bank (8k) at $4000-$5FFF */
     {
-      for(i = 0x10; i < 0x18; i++)
+      for (i = 0x10; i < 0x18; i++)
       {
-        z80_readmap[i] = &cart.rom[(page << 13) | ((i & 0x07) << 10)];
+        z80_readmap[i] = &slot.rom[(page << 13) | ((i & 0x07) << 10)];
       }
       break;
     }
     
     case 3: /* cartridge ROM bank (8k) at $6000-$7FFF */
     {
-      for(i = 0x18; i < 0x20; i++)
+      for (i = 0x18; i < 0x20; i++)
       {
-        z80_readmap[i] = &cart.rom[(page << 13) | ((i & 0x07) << 10)];
+        z80_readmap[i] = &slot.rom[(page << 13) | ((i & 0x07) << 10)];
       }
       break;
     }
@@ -666,17 +930,17 @@ void mapper_8k_w(int offset, unsigned int data)
 #endif
 }
     
-void mapper_16k_w(int offset, unsigned int data)
+static void mapper_16k_w(int offset, unsigned int data)
 {
   int i;
 
   /* cartridge ROM page (16k) */
-  uint8 page = data % (cart.romsize >> 14);
+  uint8 page = data % slot.pages;
   
-  /* page index increment (SEGA mapper) */
+  /* page index increment (SEGA mapper only) */
   if ((slot.fcr[0] & 0x03) && (slot.mapper == MAPPER_SEGA))
   {
-    page = (page + ((4 - (slot.fcr[0] & 0x03)) << 3)) % (cart.romsize >> 14);
+    page = (page + ((4 - (slot.fcr[0] & 0x03)) << 3)) % slot.pages;
   }
 
   /* save frame control register data */
@@ -684,12 +948,12 @@ void mapper_16k_w(int offset, unsigned int data)
 
   switch (offset)
   {
-    case 0: /* control register (SEGA mapper) */
+    case 0: /* control register (SEGA mapper only) */
     {
-      if(data & 0x08)
+      if (data & 0x08)
       {
         /* external RAM (upper or lower 16K) mapped at $8000-$BFFF */
-        for(i = 0x20; i < 0x30; i++)
+        for (i = 0x20; i < 0x30; i++)
         {
           z80_readmap[i] = z80_writemap[i] = &sram.sram[((data & 0x04) << 12) + ((i & 0x0F) << 10)];
         }
@@ -697,26 +961,26 @@ void mapper_16k_w(int offset, unsigned int data)
       else
       {
         /* cartridge ROM page (16k) */
-        page = slot.fcr[3] % (cart.romsize >> 14);
+        page = slot.fcr[3] % slot.pages;
         
         /* page index increment (SEGA mapper) */
         if ((data & 0x03) && (slot.mapper == MAPPER_SEGA))
         {
-          page = (page + ((4 - (data & 0x03)) << 3)) % (cart.romsize >> 14);
+          page = (page + ((4 - (data & 0x03)) << 3)) % slot.pages;
         }
 
         /* cartridge ROM mapped at $8000-$BFFF */
-        for(i = 0x20; i < 0x30; i++)
+        for (i = 0x20; i < 0x30; i++)
         {
-          z80_readmap[i] = &cart.rom[(page << 14) | ((i & 0x0F) << 10)];
-          z80_writemap[i] = dummy;
+          z80_readmap[i] = &slot.rom[(page << 14) | ((i & 0x0F) << 10)];
+          z80_writemap[i] = cart.rom + 0x510000; /* unused area */
         }
       }
 
-      if(data & 0x10)
+      if (data & 0x10)
       {
         /* external RAM (lower 16K) mapped at $C000-$FFFF */
-        for(i = 0x30; i < 0x40; i++)
+        for (i = 0x30; i < 0x40; i++)
         {
           z80_readmap[i] = z80_writemap[i] = &sram.sram[(i & 0x0F) << 10];
         }
@@ -724,7 +988,7 @@ void mapper_16k_w(int offset, unsigned int data)
       else
       {
         /* internal RAM (8K mirrorred) mapped at $C000-$FFFF */
-        for(i = 0x30; i < 0x40; i++)
+        for (i = 0x30; i < 0x40; i++)
         {
           z80_readmap[i] = z80_writemap[i] = &work_ram[(i & 0x07) << 10];
         }
@@ -734,33 +998,33 @@ void mapper_16k_w(int offset, unsigned int data)
 
     case 1: /* cartridge ROM bank (16k) at $0000-$3FFF */
     {
-      /* first 1k is not fixed (CODEMASTER mapper) */
+      /* first 1k is not fixed (CODEMASTER mapper only) */
       if (slot.mapper == MAPPER_CODIES)
       {
-        z80_readmap[0] = &cart.rom[(page << 14)];
+        z80_readmap[0] = &slot.rom[(page << 14)];
       }
 
-      for(i = 0x01; i < 0x10; i++)
+      for (i = 0x01; i < 0x10; i++)
       {
-        z80_readmap[i] = &cart.rom[(page << 14) | ((i & 0x0F) << 10)];
+        z80_readmap[i] = &slot.rom[(page << 14) | ((i & 0x0F) << 10)];
       }
       break;
     }
 
     case 2: /* cartridge ROM bank (16k) at $4000-$7FFF */
     {
-      for(i = 0x10; i < 0x20; i++)
+      for (i = 0x10; i < 0x20; i++)
       {
-        z80_readmap[i] = &cart.rom[(page << 14) | ((i & 0x0F) << 10)];
+        z80_readmap[i] = &slot.rom[(page << 14) | ((i & 0x0F) << 10)];
       }
 
-      /* Ernie Elf's Golf external RAM switch */
+      /* cartridge RAM switch (CODEMASTER mapper only, see Ernie Elf's Golf) */
       if (slot.mapper == MAPPER_CODIES)
       {
         if (data & 0x80)
         {
           /* external RAM (8k) mapped at $A000-$BFFF */
-          for(i = 0x28; i < 0x30; i++)
+          for (i = 0x28; i < 0x30; i++)
           {
             z80_readmap[i] = z80_writemap[i] = &sram.sram[(i & 0x0F) << 10];
           }
@@ -768,13 +1032,13 @@ void mapper_16k_w(int offset, unsigned int data)
         else
         {
           /* cartridge ROM page (16k) */
-          page = slot.fcr[3] % (cart.romsize >> 14);
+          page = slot.fcr[3] % slot.pages;
 
           /* cartridge ROM mapped at $A000-$BFFF */
-          for(i = 0x28; i < 0x30; i++)
+          for (i = 0x28; i < 0x30; i++)
           {
-            z80_readmap[i] = &cart.rom[(page << 14) | ((i & 0x0F) << 10)];
-            z80_writemap[i] = dummy;
+            z80_readmap[i] = &slot.rom[(page << 14) | ((i & 0x0F) << 10)];
+            z80_writemap[i] = cart.rom + 0x510000; /* unused area */
           }
         }
       }
@@ -783,22 +1047,22 @@ void mapper_16k_w(int offset, unsigned int data)
 
     case 3: /* cartridge ROM bank (16k) at $8000-$BFFF */
     {
-      /* check that external RAM (16k) is not mapped at $8000-$BFFF (SEGA mapper) */
+      /* check that external RAM (16k) is not mapped at $8000-$BFFF (SEGA mapper only) */
       if ((slot.fcr[0] & 0x08)) break;
 
       /* first 8k */
-      for(i = 0x20; i < 0x28; i++)
+      for (i = 0x20; i < 0x28; i++)
       {
-        z80_readmap[i] = &cart.rom[(page << 14) | ((i & 0x0F) << 10)];
+        z80_readmap[i] = &slot.rom[(page << 14) | ((i & 0x0F) << 10)];
       }
 
-      /* check that external RAM (8k) is not mapped at $A000-$BFFF (CODEMASTER mapper) */
+      /* check that cartridge RAM (8k) is not mapped at $A000-$BFFF (CODEMASTER mapper only) */
       if ((slot.mapper == MAPPER_CODIES) && (slot.fcr[2] & 0x80)) break;
 
       /* last 8k */
-      for(i = 0x28; i < 0x30; i++)
+      for (i = 0x28; i < 0x30; i++)
       {
-        z80_readmap[i] = &cart.rom[(page << 14) | ((i & 0x0F) << 10)];
+        z80_readmap[i] = &slot.rom[(page << 14) | ((i & 0x0F) << 10)];
       }
       break;
     }
@@ -817,7 +1081,7 @@ static void write_mapper_none(unsigned int address, unsigned char data)
 
 static void write_mapper_sega(unsigned int address, unsigned char data)
 {
-  if(address >= 0xFFFC)
+  if (address >= 0xFFFC)
   {
     mapper_16k_w(address & 3, data);
   }
@@ -883,7 +1147,7 @@ static void write_mapper_93c46(unsigned int address, unsigned char data)
     gg_eeprom_ctrl(data);
   }
 
-  if(address > 0xFFFC)
+  if (address > 0xFFFC)
   {
     mapper_16k_w(address & 3, data);
   }

@@ -62,7 +62,7 @@ extern const u8 Main_options_png[];
 extern const u8 Main_quit_png[];
 extern const u8 Main_file_png[];
 extern const u8 Main_reset_png[];
-extern const u8 Main_ggenie_png[];
+extern const u8 Main_cheats_png[];
 extern const u8 Main_showinfo_png[];
 extern const u8 Main_takeshot_png[];
 #ifdef HW_RVL
@@ -80,11 +80,10 @@ extern const u8 Option_system_png[];
 
 /* Load ROM menu */
 extern const u8 Load_recent_png[];
-extern const u8 Load_sd_png[];
-extern const u8 Load_dvd_png[];
-#ifdef HW_RVL
-extern const u8 Load_usb_png[];
-#endif
+extern const u8 Load_md_png[];
+extern const u8 Load_ms_png[];
+extern const u8 Load_gg_png[];
+extern const u8 Load_sg_png[];
 
 /* Save Manager menu */
 extern const u8 Button_load_png[];
@@ -216,13 +215,12 @@ static gui_item action_select =
   NULL,Key_A_png,"","",602,422,28,28
 };
 
-
 /*****************************************************************************/
 /* GUI backgrounds images                                                    */
 /*****************************************************************************/
 static gui_image bg_main[4] =
 {
-  {NULL,Bg_main_png,IMAGE_VISIBLE,178,74,284,288,255},
+  {NULL,Bg_layer_png,IMAGE_VISIBLE|IMAGE_REPEAT,0,0,640,480,255},
   {NULL,Bg_overlay_png,IMAGE_VISIBLE|IMAGE_REPEAT,0,0,640,480,255},
   {NULL,Banner_main_png,IMAGE_VISIBLE|IMAGE_SLIDE_BOTTOM,0,340,640,140,255},
   {NULL,Main_logo_png,IMAGE_VISIBLE|IMAGE_SLIDE_BOTTOM,202,362,232,56,255}
@@ -230,7 +228,7 @@ static gui_image bg_main[4] =
 
 static gui_image bg_misc[5] =
 {
-  {NULL,Bg_main_png,IMAGE_VISIBLE,178,96,284,288,255},
+  {NULL,Bg_layer_png,IMAGE_VISIBLE|IMAGE_REPEAT,0,0,640,480,255},
   {NULL,Bg_overlay_png,IMAGE_VISIBLE|IMAGE_REPEAT,0,0,640,480,255},
   {NULL,Banner_top_png,IMAGE_VISIBLE|IMAGE_SLIDE_TOP,0,0,640,108,255},
   {NULL,Banner_bottom_png,IMAGE_VISIBLE|IMAGE_SLIDE_BOTTOM,0,380,640,100,255},
@@ -239,7 +237,7 @@ static gui_image bg_misc[5] =
 
 static gui_image bg_ctrls[8] =
 {
-  {NULL,Bg_main_png,IMAGE_VISIBLE,374,140,284,288,255},
+  {NULL,Bg_layer_png,IMAGE_VISIBLE|IMAGE_REPEAT,0,0,640,480,255},
   {NULL,Bg_overlay_png,IMAGE_VISIBLE|IMAGE_REPEAT,0,0,640,480,255},
   {NULL,Banner_top_png,IMAGE_VISIBLE,0,0,640,108,255},
   {NULL,Banner_bottom_png,IMAGE_VISIBLE,0,380,640,100,255},
@@ -251,7 +249,7 @@ static gui_image bg_ctrls[8] =
 
 static gui_image bg_list[6] =
 {
-  {NULL,Bg_main_png,IMAGE_VISIBLE,374,140,284,288,255},
+  {NULL,Bg_layer_png,IMAGE_VISIBLE|IMAGE_REPEAT,0,0,640,480,255},
   {NULL,Bg_overlay_png,IMAGE_VISIBLE|IMAGE_REPEAT,0,0,640,480,255},
   {NULL,Banner_top_png,IMAGE_VISIBLE,0,0,640,108,255},
   {NULL,Banner_bottom_png,IMAGE_VISIBLE,0,380,640,100,255},
@@ -262,7 +260,7 @@ static gui_image bg_list[6] =
 static gui_image bg_saves[8] =
 {
   {NULL,NULL,0,0,0,0,0,255},
-  {NULL,Bg_main_png,IMAGE_VISIBLE,374,140,284,288,255},
+  {NULL,Bg_layer_png,IMAGE_VISIBLE|IMAGE_REPEAT,0,0,640,480,255},
   {NULL,Bg_overlay_png,IMAGE_VISIBLE|IMAGE_REPEAT,0,0,640,480,255},
   {NULL,Banner_top_png,IMAGE_VISIBLE|IMAGE_SLIDE_TOP,0,0,640,108,255},
   {NULL,Banner_bottom_png,IMAGE_VISIBLE|IMAGE_SLIDE_BOTTOM,0,380,640,100,255},
@@ -283,7 +281,7 @@ static gui_item items_main[10] =
   {NULL,Main_quit_png    ,"","",460,170,52,84},
   {NULL,Main_file_png    ,"","",114,216,80,92},
   {NULL,Main_reset_png   ,"","",282,224,76,84},
-  {NULL,Main_ggenie_png  ,"","",450,224,72,84},
+  {NULL,Main_cheats_png  ,"","",454,218,64,92},
   {NULL,NULL             ,"","", 10,334,84,32},
 #ifdef HW_RVL
   {NULL,Main_play_wii_png,"","", 10,372,84,32},
@@ -313,28 +311,23 @@ static gui_item items_ctrls[13] =
 };
 
 /* Load menu */
-static gui_item items_load[4] =
+static gui_item items_load[5] =
 {
-#ifdef HW_RVL
-  {NULL,Load_recent_png,"","Load recent ROM files"          ,276,120,88,96},
-  {NULL,Load_sd_png    ,"","Load ROM files from SD card"    ,110,266,88,96},
-  {NULL,Load_usb_png   ,"","Load ROM files from USB drive"  ,276,266,88,96},
-  {NULL,Load_dvd_png   ,"","Load ROM files from DVD"        ,442,266,88,96}
-#else
-  {NULL,Load_recent_png,"","Load recent ROM files (USB/SD)" ,110,192,88,96},
-  {NULL,Load_sd_png    ,"","Load ROM files from SD card"    ,276,192,88,96},
-  {NULL,Load_dvd_png   ,"","Load ROM files from DVD"        ,442,192,88,96}
-#endif
+  {NULL,Load_recent_png,"","Load recently played games",    200,144,72, 92},
+  {NULL,Load_md_png,    "","Load Mega Drive/Genesis games", 362,141,84, 92},
+  {NULL,Load_ms_png,    "","Load Master System games",      114,284,84, 96},
+  {NULL,Load_gg_png,    "","Load Game Gear games",          278,283,84,100},
+  {NULL,Load_sg_png,    "","Load SG-1000 games",            455,281,64, 96}
 };
 
 /* Option menu */
 static gui_item items_options[5] =
 {
   {NULL,Option_system_png,"","System settings",       114,142,80,92},
-  {NULL,Option_video_png ,"","Video settings",        288,150,64,84},
-  {NULL,Option_sound_png ,"","Audio settings",        464,154,44,80},
-  {NULL,Option_ctrl_png  ,"","Controllers settings",  192,286,88,92},
-  {NULL,Option_menu_png  ,"","Menu settings",         370,286,60,92}
+  {NULL,Option_video_png, "","Video settings",        288,150,64,84},
+  {NULL,Option_sound_png, "","Audio settings",        464,154,44,80},
+  {NULL,Option_ctrl_png,  "","Controllers settings",  192,286,88,92},
+  {NULL,Option_menu_png,  "","Menu settings",         370,286,60,92}
 };
 
 /* Audio options */
@@ -358,14 +351,14 @@ static gui_item items_audio[13] =
 /* System options */
 static gui_item items_system[8] =
 {
-  {NULL,NULL,"Console Hardware: AUTO", "Select system hardware model",             56,132,276,48},
-  {NULL,NULL,"Console Region: AUTO",   "Select system region",                     56,132,276,48},
-  {NULL,NULL,"System Lockups: OFF",    "Enable/disable original system lock-ups",  56,132,276,48},
-  {NULL,NULL,"68k Address Error: ON",  "Enable/disable 68k Address Error",         56,132,276,48},
-  {NULL,NULL,"System BIOS: OFF",       "Enable/disable TMSS BIOS support",         56,132,276,48},
-  {NULL,NULL,"Lock-on: OFF",           "Select Lock-On cartridge type",            56,132,276,48},
-  {NULL,NULL,"Cartridge Swap: OFF",    "Enable/disable cartridge hot swap",        56,132,276,48},
-  {NULL,NULL,"SVP Cycles: 1500",       "Adjust SVP chip emulation speed",          56,132,276,48}
+  {NULL,NULL,"Console Hardware: AUTO",    "Select system hardware model",                56,132,276,48},
+  {NULL,NULL,"Console Region: AUTO",      "Select system region",                        56,132,276,48},
+  {NULL,NULL,"System Boot: BIOS&CART", "Select system booting method",                56,132,276,48},
+  {NULL,NULL,"System Lockups: ON",        "Enable/disable original system lock-ups",     56,132,276,48},
+  {NULL,NULL,"68k Address Error: ON",     "Enable/disable 68k address error exceptions", 56,132,276,48},
+  {NULL,NULL,"Lock-on: OFF",              "Select Lock-On cartridge type",               56,132,276,48},
+  {NULL,NULL,"Cartridge Swap: OFF",       "Enable/disable cartridge hot swap",           56,132,276,48},
+  {NULL,NULL,"SVP Cycles: 1500",          "Adjust SVP chip emulation speed",             56,132,276,48}
 };
 
 /* Video options */
@@ -392,13 +385,13 @@ static gui_item items_video[8] =
 /* Menu options */
 static gui_item items_prefs[9] =
 {
-  {NULL,NULL,"Auto ROM Load: OFF","Enable/Disable automatic ROM loading on startup", 56,132,276,48},
-  {NULL,NULL,"Auto Cheats: OFF", "Enable/Disable automatic cheats activation",          56,132,276,48},
+  {NULL,NULL,"Auto ROM Load: OFF","Enable/Disable automatic ROM loading on startup",    56,132,276,48},
+  {NULL,NULL,"Auto Cheats: OFF",  "Enable/Disable automatic cheats activation",         56,132,276,48},
   {NULL,NULL,"Auto Saves: OFF",   "Enable/Disable automatic saves",                     56,132,276,48},
-  {NULL,NULL,"Saves Device: FAT", "Configure default device for saves",                 56,132,276,48},
+  {NULL,NULL,"ROM Device: SD",    "Configure default device for ROM files",             56,132,276,48},
+  {NULL,NULL,"Saves Device: FAT", "Configure default device for Save files",            56,132,276,48},
   {NULL,NULL,"SFX Volume: 100",   "Adjust sound effects volume",                        56,132,276,48},
   {NULL,NULL,"BGM Volume: 100",   "Adjust background music volume",                     56,132,276,48},
-  {NULL,NULL,"BG Color: DEFAULT", "Select background color",                            56,132,276,48},
   {NULL,NULL,"BG Overlay: ON",    "Enable/disable background overlay",                  56,132,276,48},
   {NULL,NULL,"Screen Width: 658", "Adjust menu screen width in pixels",                 56,132,276,48},
 };
@@ -468,18 +461,13 @@ static gui_butn buttons_ctrls[13] =
 };
 
 /* Load Game menu */
-static gui_butn buttons_load[4] =
+static gui_butn buttons_load[5] =
 {
-#ifdef HW_RVL
-  {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{0,2,0,1},246,102,148,132},
-  {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{1,0,1,1}, 80,248,148,132},
-  {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{2,0,1,1},246,248,148,132},
-  {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{3,0,1,0},412,248,148,132}
-#else
-  {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{0,2,0,1}, 80,174,148,132},
-  {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{1,0,1,1},246,174,148,132},
-  {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{3,0,1,0},412,174,148,132}
-#endif
+  {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{0,2,0,1},162,120,148,132},
+  {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{0,2,1,0},330,120,148,132},
+  {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{2,0,0,1}, 80,264,148,132},
+  {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{2,0,1,1},246,264,148,132},
+  {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{3,0,1,0},412,264,148,132}
 };
 
 /* Options menu */
@@ -543,11 +531,7 @@ static gui_menu menu_load =
 {
   "Load Game",
   0,0,
-#ifdef HW_RVL
-  4,4,5,0,
-#else
-  3,3,5,0,
-#endif
+  5,5,5,0,
   items_load,
   buttons_load,
   bg_misc,
@@ -575,7 +559,7 @@ static gui_menu menu_system =
 {
   "System Settings",
   0,0,
-  7,4,7,0,
+  8,4,6,0,
   items_system,
   buttons_list,
   bg_list,
@@ -670,13 +654,18 @@ static void prefmenu ()
   else if (config.s_auto == 2) sprintf (items[2].text, "Auto Saves: STATE ONLY");
   else if (config.s_auto == 1) sprintf (items[2].text, "Auto Saves: SRAM ONLY");
   else sprintf (items[2].text, "Auto Saves: NONE");
-  if (config.s_device == 1) sprintf (items[3].text, "Saves Device: MCARD A");
-  else if (config.s_device == 2) sprintf (items[3].text, "Saves Device: MCARD B");
-  else sprintf (items[3].text, "Saves Device: FAT");
-  sprintf (items[4].text, "SFX Volume: %1.1f", config.sfx_volume);
-  sprintf (items[5].text, "BGM Volume: %1.1f", config.bgm_volume);
-  if (config.bg_type) sprintf (items[6].text, "BG Type: COLOR %d", config.bg_type - 1);
-  else sprintf (items[6].text, "BG Type: DEFAULT");
+#ifdef HW_RVL
+  if (config.l_device == 1) sprintf (items[3].text, "Default ROM Device: USB");
+  else if (config.l_device == 2) sprintf (items[3].text, "Default ROM Device: DVD");
+#else
+  if (config.l_device == 1) sprintf (items[3].text, "Default ROM Device: DVD");
+#endif
+  else sprintf (items[3].text, "Default ROM Device: SD");
+  if (config.s_device == 1) sprintf (items[4].text, "Saves Device: MCARD A");
+  else if (config.s_device == 2) sprintf (items[4].text, "Saves Device: MCARD B");
+  else sprintf (items[4].text, "Saves Device: FAT");
+  sprintf (items[5].text, "SFX Volume: %1.1f", config.sfx_volume);
+  sprintf (items[6].text, "BGM Volume: %1.1f", config.bgm_volume);
   sprintf (items[7].text, "BG Overlay: %s", config.bg_overlay ? "ON":"OFF");
   sprintf (items[8].text, "Screen Width: %d", config.screen_w);
 
@@ -707,39 +696,55 @@ static void prefmenu ()
         else sprintf (items[2].text, "Auto Saves: NONE");
         break;
 
-      case 3:   /*** Default saves device ***/
+      case 3:   /*** Default ROM device ***/
+#ifdef HW_RVL
+        config.l_device = (config.l_device + 1) % 3;
+        if (config.l_device == 1) sprintf (items[3].text, "Default ROM Device: USB");
+        else if (config.l_device == 2) sprintf (items[3].text, "Default ROM Device: DVD");
+#else
+        config.l_device ^= 1;
+        if (config.l_device == 1) sprintf (items[3].text, "Default ROM Device: DVD");
+#endif
+        else sprintf (items[3].text, "Default ROM Device: SD");
+        break;
+
+      case 4:   /*** Default saves device ***/
         config.s_device = (config.s_device + 1) % 3;
-        if (config.s_device == 1) sprintf (items[3].text, "Saves Device: MCARD A");
-        else if (config.s_device == 2) sprintf (items[3].text, "Saves Device: MCARD B");
-        else sprintf (items[3].text, "Saves Device: FAT");
+        if (config.s_device == 1) sprintf (items[4].text, "Saves Device: MCARD A");
+        else if (config.s_device == 2) sprintf (items[4].text, "Saves Device: MCARD B");
+        else sprintf (items[4].text, "Saves Device: FAT");
         break;
 
-      case 4:   /*** Sound effects volume ***/
+      case 5:   /*** Sound effects volume ***/
         GUI_OptionBox(m,0,"SFX Volume",(void *)&config.sfx_volume,10.0,0.0,100.0,0);
-        sprintf (items[4].text, "SFX Volume: %1.1f", config.sfx_volume);
+        sprintf (items[5].text, "SFX Volume: %1.1f", config.sfx_volume);
         break;
 
-      case 5:   /*** Background music volume ***/
+      case 6:   /*** Background music volume ***/
         GUI_OptionBox(m,update_bgm,"BGM Volume",(void *)&config.bgm_volume,10.0,0.0,100.0,0);
-        sprintf (items[5].text, "BGM Volume: %1.1f", config.bgm_volume);
-        break;
-
-      case 6:   /*** Background type ***/
-        if (ret < 0) config.bg_type --;
-        else config.bg_type++;
-        if (config.bg_type < 0) config.bg_type = BG_COLOR_MAX;
-        else if (config.bg_type > BG_COLOR_MAX) config.bg_type = 0;
-        if (config.bg_type) sprintf (items[6].text, "BG Type: COLOR %d", config.bg_type - 1);
-        else sprintf (items[6].text, "BG Type: DEFAULT");
-        GUI_DeleteMenu(m);
-        menu_configure();
-        GUI_InitMenu(m);
+        sprintf (items[6].text, "BGM Volume: %1.1f", config.bgm_volume);
         break;
 
       case 7:   /*** Background overlay ***/
         config.bg_overlay ^= 1;
-        sprintf (items[7].text, "BG Overlay: %s", config.bg_overlay ? "ON":"OFF");
-        menu_configure();
+        if (config.bg_overlay)
+        {
+          bg_main[1].state  |= IMAGE_VISIBLE;
+          bg_misc[1].state  |= IMAGE_VISIBLE;
+          bg_ctrls[1].state |= IMAGE_VISIBLE;
+          bg_list[1].state  |= IMAGE_VISIBLE;
+          bg_saves[2].state |= IMAGE_VISIBLE;
+          sprintf (items[7].text, "BG Overlay: ON");
+        }
+        else
+        {
+          bg_main[1].state  &= ~IMAGE_VISIBLE;
+          bg_misc[1].state  &= ~IMAGE_VISIBLE;
+          bg_ctrls[1].state &= ~IMAGE_VISIBLE;
+          bg_list[1].state  &= ~IMAGE_VISIBLE;
+          bg_saves[2].state &= ~IMAGE_VISIBLE;
+          sprintf (items[7].text, "BG Overlay: OFF");
+        }
         break;
 
       case 8:   /*** Screen Width ***/
@@ -1085,9 +1090,9 @@ static void systemmenu ()
   else if (config.region_detect == 3)
     sprintf (items[1].text, "Console Region: JAPAN");
 
-  sprintf (items[2].text, "System Lockups: %s", config.force_dtack ? "OFF" : "ON");
-  sprintf (items[3].text, "68k Address Error: %s", config.addr_error ? "ON" : "OFF");
-  sprintf (items[4].text, "System TMSS: %s", (config.tmss & 1) ? "ON":"OFF");
+  sprintf (items[2].text, "System Boot: %s", (config.bios & 1) ? ((config.bios & 2) ? "BIOS&CART" : "BIOS ONLY") : "CART");
+  sprintf (items[3].text, "System Lockups: %s", config.force_dtack ? "OFF" : "ON");
+  sprintf (items[4].text, "68k Address Error: %s", config.addr_error ? "ON" : "OFF");
 
   if (config.lock_on == TYPE_GG)
     sprintf (items[5].text, "Lock-On: GAME GENIE");
@@ -1225,7 +1230,7 @@ static void systemmenu ()
           region_autodetect();
           if (system_hw == SYSTEM_MD)
           {
-            io_reg[0x00] = 0x20 | region_code | (config.tmss & 1);
+            io_reg[0x00] = 0x20 | region_code | (config.bios & 1);
           }
           else
           {
@@ -1271,14 +1276,36 @@ static void systemmenu ()
         break;
       }
 
-      case 2:  /*** force DTACK ***/
+      case 2:  /*** BIOS support ***/
       {
-        config.force_dtack ^= 1;
-        sprintf (items[2].text, "System Lockups: %s", config.force_dtack ? "OFF" : "ON");
+        uint8 temp = config.bios & 3;
+        config.bios &= ~3;
+        if (temp == 0) config.bios |= 3;
+        else if (temp == 3) config.bios |= 1;
+        sprintf (items[2].text, "System Boot: %s", (config.bios & 1) ? ((config.bios & 2) ? "BIOS&CART " : "BIOS ONLY") : "CART");
+        if (cart.romsize && ((system_hw == SYSTEM_MD) || (system_hw & SYSTEM_GG) || (system_hw & SYSTEM_SMS)))
+        {
+          /* reset emulation */
+          system_init();
+          system_reset();
+
+          /* restore SRAM */
+          if (config.s_auto & 1)
+          {
+            slot_autoload(0,config.s_device);
+          }
+        }
         break;
       }
 
-      case 3:  /*** 68k Address Error ***/
+      case 3:  /*** force DTACK ***/
+      {
+        config.force_dtack ^= 1;
+        sprintf (items[3].text, "System Lockups: %s", config.force_dtack ? "OFF" : "ON");
+        break;
+      }
+
+      case 4:  /*** 68k Address Error ***/
       {
         config.addr_error ^= 1;
         if (cart.romsize && ((system_hw & SYSTEM_PBC) == SYSTEM_MD))
@@ -1291,26 +1318,7 @@ static void systemmenu ()
             slot_autoload(0,config.s_device);
           }
         }
-        sprintf (items[3].text, "68k Address Error: %s", config.addr_error ? "ON" : "OFF");
-        break;
-      }
-
-      case 4:  /*** BIOS support ***/
-      {
-        config.tmss ^= 1;
-        sprintf (items[4].text, "System TMSS: %s", (config.tmss & 1) ? "ON":"OFF");
-        if (cart.romsize && ((system_hw & SYSTEM_PBC) == SYSTEM_MD))
-        {
-          /* restart emulation */
-          system_init();
-          system_reset();
-
-          /* restore SRAM */
-          if (config.s_auto & 1)
-          {
-            slot_autoload(0,config.s_device);
-          }
-        }
+        sprintf (items[4].text, "68k Address Error: %s", config.addr_error ? "ON" : "OFF");
         break;
       }
 
@@ -3012,7 +3020,7 @@ static int savemenu(void)
  ****************************************************************************/
 static int loadgamemenu ()
 {
-  int ret;
+  int ret, filetype;
   gui_menu *m = &menu_load;
   GUI_InitMenu(m);
   GUI_DrawMenuFX(m,30,0);
@@ -3032,19 +3040,23 @@ static int loadgamemenu ()
       /*** Load from selected device */
       default:
       {
+        /* ROM File type */
+        filetype = ret - 1;
+
+        /* Try to open current directory */
         if (ret > 0)
         {
-          ret = OpenDirectory(ret - 1);
+          ret = OpenDirectory(config.l_device, filetype);
         }
         else
         {
-          ret = OpenDirectory(TYPE_RECENT);
+          ret = OpenDirectory(TYPE_RECENT, filetype);
         }
 
         if (ret)
         {
           GUI_DeleteMenu(m);
-          if (FileSelector())
+          if (FileSelector(filetype))
           {
             /* directly jump to game */
             return 1;
@@ -3320,7 +3332,7 @@ static void mainmenu_cb(void)
   }
 }
 
-int menu_execute(void)
+void mainmenu(void)
 {
   char filename[MAXPATHLEN];
   int status, quit = 0;
@@ -3349,6 +3361,22 @@ int menu_execute(void)
   /* Update main menu */
   if (!m->screenshot && cart.romsize)
   {
+    if (config.bg_overlay)
+    {
+      bg_main[1].state  |= IMAGE_VISIBLE;
+      bg_misc[1].state  |= IMAGE_VISIBLE;
+      bg_ctrls[1].state |= IMAGE_VISIBLE;
+      bg_list[1].state  |= IMAGE_VISIBLE;
+      bg_saves[2].state |= IMAGE_VISIBLE;
+    }
+    else
+    {
+      bg_main[1].state  &= ~IMAGE_VISIBLE;
+      bg_misc[1].state  &= ~IMAGE_VISIBLE;
+      bg_ctrls[1].state &= ~IMAGE_VISIBLE;
+      bg_list[1].state  &= ~IMAGE_VISIBLE;
+      bg_saves[2].state &= ~IMAGE_VISIBLE;
+    }
     m->screenshot = 128;
     m->bg_images[0].state &= ~IMAGE_VISIBLE;
     m->items[0].y -= 90;
@@ -3392,6 +3420,9 @@ int menu_execute(void)
 
         if (loadgamemenu())
         {
+          /* restart emulation */
+          reloadrom();
+
           /* check current controller configuration */
           if (!gx_input_FindDevices())
           {
@@ -3404,7 +3435,7 @@ int menu_execute(void)
           /* exit to game and reinitialize emulation */
           gxClearScreen((GXColor)BLACK);
           gxSetScreen();
-          quit = 2;
+          quit = 1;
           break;
         }
 
@@ -3569,64 +3600,4 @@ int menu_execute(void)
     MOUSE_Deinit();
   }
 #endif
-
-  return (quit >> 1);
-}
-
-void menu_configure(void)
-{
-  /* background type */
-  if (config.bg_type > 0)
-  {
-    GUI_SetBgColor((u8)(config.bg_type - 1));
-    bg_main[0].state    &= ~IMAGE_REPEAT;
-    bg_misc[0].state    &= ~IMAGE_REPEAT;
-    bg_ctrls[0].state   &= ~IMAGE_REPEAT;
-    bg_list[0].state    &= ~IMAGE_REPEAT;
-    bg_saves[1].state   &= ~IMAGE_REPEAT;
-    if (config.bg_type > 1)
-    {
-      bg_main[0].data = bg_misc[0].data = bg_ctrls[0].data = bg_list[0].data = bg_saves[1].data = Bg_main_png;
-    }
-    else
-    {
-      bg_main[0].data = bg_misc[0].data = bg_ctrls[0].data = bg_list[0].data = bg_saves[1].data = Bg_main_2_png;
-    }
-    bg_main[0].x = bg_misc[0].x = bg_ctrls[0].x = bg_list[0].x = bg_saves[1].x = 374;
-    bg_main[0].y = bg_misc[0].y = bg_ctrls[0].y = bg_list[0].y = bg_saves[1].y = 140;
-    bg_main[0].w = bg_misc[0].w = bg_ctrls[0].w = bg_list[0].w = bg_saves[1].w = 284;
-    bg_main[0].h = bg_misc[0].h = bg_ctrls[0].h = bg_list[0].h = bg_saves[1].h = 288;
-  }
-  else
-  {
-    GUI_SetBgColor(0);
-    bg_main[0].state    |= IMAGE_REPEAT;
-    bg_misc[0].state    |= IMAGE_REPEAT;
-    bg_ctrls[0].state   |= IMAGE_REPEAT;
-    bg_list[0].state    |= IMAGE_REPEAT;
-    bg_saves[1].state   |= IMAGE_REPEAT;
-    bg_main[0].data = bg_misc[0].data = bg_ctrls[0].data = bg_list[0].data = bg_saves[1].data = Bg_layer_png;
-    bg_main[0].x = bg_misc[0].x = bg_ctrls[0].x = bg_list[0].x = bg_saves[1].x = 0;
-    bg_main[0].y = bg_misc[0].y = bg_ctrls[0].y = bg_list[0].y = bg_saves[1].y = 0;
-    bg_main[0].w = bg_misc[0].w = bg_ctrls[0].w = bg_list[0].w = bg_saves[1].w = 640;
-    bg_main[0].h = bg_misc[0].h = bg_ctrls[0].h = bg_list[0].h = bg_saves[1].h = 480;
-  }
-
-  /* background overlay */
-  if (config.bg_overlay)
-  {
-    bg_main[1].state  |= IMAGE_VISIBLE;
-    bg_misc[1].state  |= IMAGE_VISIBLE;
-    bg_ctrls[1].state |= IMAGE_VISIBLE;
-    bg_list[1].state  |= IMAGE_VISIBLE;
-    bg_saves[2].state |= IMAGE_VISIBLE;
-  }
-  else
-  {
-    bg_main[1].state  &= ~IMAGE_VISIBLE;
-    bg_misc[1].state  &= ~IMAGE_VISIBLE;
-    bg_ctrls[1].state &= ~IMAGE_VISIBLE;
-    bg_list[1].state  &= ~IMAGE_VISIBLE;
-    bg_saves[2].state &= ~IMAGE_VISIBLE;
-  }
 }

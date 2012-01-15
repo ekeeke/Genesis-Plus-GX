@@ -51,7 +51,7 @@ typedef struct
 }FILEENTRIES;
 
 /* Globals */
-extern int FileSelector(void);
+extern int FileSelector(int type);
 extern void ClearSelector(u32 max);
 extern FILEENTRIES filelist[MAXFILES];
 

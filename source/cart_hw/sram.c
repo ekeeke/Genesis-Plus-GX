@@ -59,7 +59,7 @@ void sram_init()
 {
   memset (&sram, 0, sizeof (T_SRAM));
 
-  /* store SRAM into cartridge area */
+  /* SRAM data is stored above cartridge ROM area, at $500000-$50FFFF (max. 64K) */
   if (cart.romsize > 0x500000) return;
   sram.sram = cart.rom + 0x500000;
 
@@ -87,13 +87,14 @@ void sram_init()
   }
   else
   {
-    /* default SRAM region */
-    sram.start = 0x200000;
-    sram.end = 0x20ffff;
-
-    /* enable SRAM only if ROM < 2MB */
-    if (cart.romsize <= sram.start)
+    /* by default, enable SRAM only for ROM <= 2MB */
+    if (cart.romsize <= 0x200000)
+    {
+      /* SRAM mapped to $200000-$20ffff */
+      sram.start = 0x200000;
+      sram.end = 0x20ffff;
       sram.on = 1;
+    }
   }
 
   /* autodetect some games with bad header or specific configuration */

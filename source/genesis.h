@@ -43,8 +43,7 @@
 #define _GENESIS_H_
 
 /* Global variables */
-extern uint8 tmss[4];
-extern uint8 bios_rom[0x800];
+extern uint8 boot_rom[0x800];
 extern uint8 work_ram[0x10000];
 extern uint8 zram[0x2000];
 extern uint32 zbank;

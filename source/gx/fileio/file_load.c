@@ -71,6 +71,9 @@ static char *fileDir;
 /* current device */
 static int deviceType = -1;
 
+/* current file type */
+static int fileType = -1;
+
 /* DVD status flag */
 static u8 dvd_mounted = 0;
 
@@ -137,16 +140,6 @@ static int FileSortCallback(const void *f1, const void *f2)
   if(!((FILEENTRIES *)f1)->flags  && ((FILEENTRIES *)f2)->flags) return 1;
   
   return stricmp(((FILEENTRIES *)f1)->filename, ((FILEENTRIES *)f2)->filename);
-}
-
-/***************************************************************************
- * GetCurrentDirectory
- *
- * Return current browser directory
- ***************************************************************************/ 
-char *GetCurrentDirectory(int selection)
-{
-  return (deviceType == TYPE_RECENT) ? history.entries[selection].filepath : fileDir;
 }
 
 /***************************************************************************
@@ -248,10 +241,11 @@ int ParseDirectory(void)
  ****************************************************************************/ 
 int LoadFile(int selection) 
 {
+  int filetype;
   char filename[MAXPATHLEN];
 
   /* file path */
-  char *filepath = GetCurrentDirectory(selection);
+  char *filepath = (deviceType == TYPE_RECENT) ? history.entries[selection].filepath : fileDir;
 
   /* full filename */
   sprintf(filename, "%s%s", filepath, filelist[selection].filename);
@@ -273,37 +267,35 @@ int LoadFile(int selection)
 
   if (size > 0)
   {
-    /* add/move the file to the top of the history. */
-    history_add_file(filepath, filelist[selection].filename);
-
-    /* recent file list has changed */
-    if (deviceType == TYPE_RECENT) deviceType = -1;
-
     /* auto-save previous game state */
     if (config.s_auto & 2)
     {
       slot_autosave(config.s_default,config.s_device);
     }
 
-    /* ROM pathname for screenshot, save & cheat files */
+    /* update ROM pathname for screenshot, save & cheat files */
     if (!strnicmp(".sms", &filename[strlen(filename) - 4], 4))
     {
       /* Master System ROM file */
+      filetype = 1;
       sprintf(rom_filename,"ms/%s",filelist[selection].filename);
     }
     else if (!strnicmp(".gg", &filename[strlen(filename) - 3], 3))
     {
       /* Game Gear ROM file */
+      filetype = 2;
       sprintf(rom_filename,"gg/%s",filelist[selection].filename);
     }
     else if (!strnicmp(".sg", &filename[strlen(filename) - 3], 3))
     {
-       /* SG-1000 ROM file */
+      /* SG-1000 ROM file */
+      filetype = 3;
       sprintf(rom_filename,"sg/%s",filelist[selection].filename);
     }
     else
     {
-       /* otherwise, it's Genesis ROM file */
+      /* by default, Genesis ROM file */
+      filetype = 0;
       sprintf(rom_filename,"md/%s",filelist[selection].filename);
     }
 
@@ -311,6 +303,12 @@ int LoadFile(int selection)
     int i = strlen(rom_filename) - 1;
     while ((i > 0) && (rom_filename[i] != '.')) i--;
     if (i > 0) rom_filename[i] = 0;
+
+    /* add/move the file to the top of the history. */
+    history_add_file(filepath, filelist[selection].filename, filetype);
+
+    /* recent file list may have changed */
+    if (deviceType == TYPE_RECENT) deviceType = -1;
 
     /* valid ROM has been loaded */
     return 1;
@@ -324,7 +322,7 @@ int LoadFile(int selection)
  *
  * Function to open a directory and load ROM file list.
  ****************************************************************************/ 
-int OpenDirectory(int device)
+int OpenDirectory(int device, int type)
 {
   int max = 0;
 
@@ -368,7 +366,7 @@ int OpenDirectory(int device)
     }
 
     /* parse last directory */
-    fileDir = config.lastdir[device];
+    fileDir = config.lastdir[type][device];
     max = ParseDirectory();
     if (max <= 0)
     {
@@ -390,11 +388,12 @@ int OpenDirectory(int device)
     return 0;
   }
 
-  /* check if device type has changed */
-  if (device != deviceType)
+  /* check if device or file type has changed */
+  if ((device != deviceType) || (type != fileType))
   {
-    /* reset current device type */
+    /* reset current types */
     deviceType = device;
+    fileType = type;
 
     /* reset File selector */
     ClearSelector(max);

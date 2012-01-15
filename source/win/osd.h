@@ -22,8 +22,10 @@
 
 #define GG_ROM    "./ggenie.bin"
 #define AR_ROM    "./areplay.bin"
-#define OS_ROM    "./bios.bin"
 #define SK_ROM    "./sk.bin"
 #define SK_UPMEM  "./sk2chip.bin"
+#define MD_BIOS   "./bios.bin"
+#define MS_BIOS   "./bios.sms"
+#define GG_BIOS   "./bios.gg"
 
 #endif /* _OSD_H_ */

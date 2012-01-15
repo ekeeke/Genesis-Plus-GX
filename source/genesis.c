@@ -41,16 +41,15 @@
 
 #include "shared.h"
 
-uint8 tmss[4];            /* TMSS security register */
-uint8 bios_rom[0x800];    /* OS ROM   */
+uint8 boot_rom[0x800];    /* Genesis BOOT ROM   */
 uint8 work_ram[0x10000];  /* 68K RAM  */
 uint8 zram[0x2000];       /* Z80 RAM  */
 uint32 zbank;             /* Z80 bank window address */
 uint8 zstate;             /* Z80 bus state (d0 = BUSACK, d1 = /RESET) */
+uint8 pico_current;       /* PICO current page */
+uint8 pico_page[7];       /* PICO page registers */
 
-/* PICO data */
-uint8 pico_current;
-uint8 pico_page[7];
+static uint8 tmss[4];     /* TMSS security register */
 
 /*--------------------------------------------------------------------------*/
 /* Init, reset, shutdown functions                                          */
@@ -90,7 +89,7 @@ void gen_init(void)
     m68k_memory_map[i].read16   = NULL;
     m68k_memory_map[i].write8   = NULL;
     m68k_memory_map[i].write16  = NULL;
-    zbank_memory_map[i].read    = NULL;
+    zbank_memory_map[i].read    = zbank_unused_r;
     zbank_memory_map[i].write   = NULL;
   }
 
@@ -153,13 +152,13 @@ void gen_init(void)
 
     /* page registers */
     pico_current = 0x00;
-    pico_page[0] = 0x00;
-    pico_page[1] = 0x01;
-    pico_page[2] = 0x03;
-    pico_page[3] = 0x07;
-    pico_page[4] = 0x0F;
-    pico_page[5] = 0x1F;
-    pico_page[6] = 0x3F;
+    pico_regs[0] = 0x00;
+    pico_regs[1] = 0x01;
+    pico_regs[2] = 0x03;
+    pico_regs[3] = 0x07;
+    pico_regs[4] = 0x0F;
+    pico_regs[5] = 0x1F;
+    pico_regs[6] = 0x3F;
 
     /* initialize cartridge hardware */
     md_cart_init();
@@ -219,9 +218,9 @@ void gen_reset(int hard_reset)
   /* System Reset */
   if (hard_reset)
   {
-    /* clear RAM */
-    memset (work_ram, 0x00, sizeof (work_ram));
-    memset (zram, 0x00, sizeof (zram));
+    /* clear RAM (TODO: use random bit patterns as on real hardware) */
+    memset(work_ram, 0x00, sizeof (work_ram));
+    memset(zram, 0x00, sizeof (zram));
   }
   else
   {
@@ -232,9 +231,10 @@ void gen_reset(int hard_reset)
   /* 68k & Z80 could restart anywhere in VDP frame (Bonkers, Eternal Champions, X-Men 2) */
   mcycles_68k = mcycles_z80 = (uint32)((MCYCLES_PER_LINE * lines_per_frame) * ((double)rand() / (double)RAND_MAX));
 
+  /* Genesis / Master System modes */
   if ((system_hw & SYSTEM_PBC) == SYSTEM_MD)
   {
-    /* reset cartridge hardware */
+    /* reset cartridge hardware & mapping */
     md_cart_reset(hard_reset);
 
     /* Z80 bus is released & Z80 is reseted */
@@ -247,17 +247,18 @@ void gen_reset(int hard_reset)
     /* assume default bank is $000000-$007FFF */
     zbank = 0;  
 
-    /* TMSS & OS ROM support */
-    if (config.tmss & 1)
+    /* TMSS support */
+    if ((config.bios & 1) && (system_hw != SYSTEM_PICO))
     {
       /* on HW reset only */
       if (hard_reset)
       {
+        int i;
+
         /* clear TMSS register */
         memset(tmss, 0x00, sizeof(tmss));
 
         /* VDP access is locked by default */
-        int i;
         for (i=0xc0; i<0xe0; i+=8)
         {
           m68k_memory_map[i].read8   = m68k_lockup_r_8;
@@ -268,10 +269,14 @@ void gen_reset(int hard_reset)
           zbank_memory_map[i].write  = zbank_lockup_w;
         }
 
-        /* OS ROM is mapped at $000000-$0007FF */
-        if (config.tmss & 2)
+        /* check if BOOT ROM is loaded */
+        if (config.bios & SYSTEM_MD)
         {
-          m68k_memory_map[0].base = bios_rom;
+          /* save default cartridge slot mapping */
+          cart.base = m68k_memory_map[0].base;
+
+          /* BOOT ROM is mapped at $000000-$0007FF */
+          m68k_memory_map[0].base = boot_rom;
         }
       }
     }
@@ -281,16 +286,13 @@ void gen_reset(int hard_reset)
   }
   else
   {
-    /* Z80 cycles should a multiple of 15 to avoid rounding errors */
+    /* Z80 cycles should be a multiple of 15 to avoid rounding errors */
     mcycles_z80 = (mcycles_z80 / 15) * 15;
 
     /* reset cartridge hardware */
     sms_cart_reset();
 
-    /* Z80 is running */
-    zstate = 1;
-
-    /* 68k is halted (/VRES is forced low) */
+    /* halt 68k (/VRES is forced low) */
     m68k_pulse_halt();
   }
 
@@ -310,11 +312,12 @@ void gen_shutdown(void)
 
 void gen_tmss_w(unsigned int offset, unsigned int data)
 {
-  /* write TMSS regisiter */
+  int i;
+
+  /* write TMSS register */
   WRITE_WORD(tmss, offset, data);
 
   /* VDP requires "SEGA" value to be written in TMSS register */
-  int i;
   if (strncmp((char *)tmss, "SEGA", 4) == 0)
   {
     for (i=0xc0; i<0xe0; i+=8)
@@ -343,23 +346,15 @@ void gen_tmss_w(unsigned int offset, unsigned int data)
 
 void gen_bankswitch_w(unsigned int data)
 {
-  /* OS ROM has not been loaded yet */
-  if (!(config.tmss & 2))
-  {
-    config.tmss |= 2;
-    memcpy(bios_rom, cart.rom, 0x800);
-    memset(cart.rom, 0xff, cart.romsize);
-  }
-
   if (data & 1)
   {
-    /* enable CART */
+    /* enable cartridge ROM */
     m68k_memory_map[0].base = cart.base;
   }
   else
   {
-    /* enable internal BIOS ROM */
-    m68k_memory_map[0].base = bios_rom;
+    /* enable internal BOOT ROM */
+    m68k_memory_map[0].base = boot_rom;
   }
 }
 

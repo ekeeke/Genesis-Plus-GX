@@ -40,9 +40,7 @@
 #ifndef _MENU_H
 #define _MENU_H
 
-extern int menu_execute(void);
-extern void menu_configure(void);
-
+extern void mainmenu(void);
 
 #endif
 

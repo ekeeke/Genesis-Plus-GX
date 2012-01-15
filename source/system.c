@@ -49,11 +49,9 @@ t_snd snd;
 uint32 mcycles_vdp;
 uint32 mcycles_z80;
 uint32 mcycles_68k;
+int16 SVP_cycles = 800; 
 uint8 system_hw;
-void (*system_frame)(int do_skip);
 
-static void system_frame_gen(int do_skip);
-static void system_frame_sms(int do_skip);
 static uint8 pause_b;
 static EQSTATE eq;
 static int32 llp,rrp;
@@ -62,7 +60,7 @@ static int32 llp,rrp;
  * Audio subsystem
  ****************************************************************/
 
-int audio_init (int samplerate, float framerate)
+int audio_init(int samplerate, float framerate)
 {
   /* Shutdown first */
   audio_shutdown();
@@ -77,11 +75,11 @@ int audio_init (int samplerate, float framerate)
   /* Calculate the sound buffer size (for one frame) */
   snd.buffer_size = (int)(samplerate / framerate) + 32;
 
-  /* SN76489 stream buffers */
+  /* SN76489 stream buffer */
   snd.psg.buffer = (int16 *) malloc(snd.buffer_size * sizeof(int16));
   if (!snd.psg.buffer) return (-1);
 
-  /* YM2612 stream buffers */
+  /* YM2612 stream buffer */
   snd.fm.buffer = (int32 *) malloc(snd.buffer_size * sizeof(int32) * 2);
   if (!snd.fm.buffer) return (-1);
 
@@ -149,7 +147,7 @@ void audio_shutdown(void)
   Fir_Resampler_shutdown();
 }
 
-int audio_update (void)
+int audio_update(void)
 {
   int32 i, l, r;
   int32 ll = llp;
@@ -234,8 +232,8 @@ int audio_update (void)
 
     /* update sound buffer */
 #ifndef NGC
-    snd.buffer[0][i] = r;
-    snd.buffer[1][i] = l;
+    snd.buffer[0][i] = l;
+    snd.buffer[1][i] = r;
 #else
     *sb++ = r;
     *sb++ = l;
@@ -267,22 +265,6 @@ void system_init(void)
   vdp_init();
   render_init();
   sound_init();
-
-  switch (system_hw)
-  {
-    case SYSTEM_MD:
-    case SYSTEM_PICO:
-    {
-      system_frame = system_frame_gen;
-      break;
-    }
-
-    default:
-    {
-      system_frame = system_frame_sms;
-      break;
-    }
-  }
 }
 
 /****************************************************************
@@ -304,10 +286,10 @@ void system_shutdown (void)
   SN76489_Shutdown();
 }
 
-static void system_frame_gen(int do_skip)
+void system_frame_gen(int do_skip)
 {
-  /* line counter */
-  int line = 0;
+  /* line counters */
+  int start, end, line = 0;
 
   /* Z80 interrupt flag */
   int zirq = 1;
@@ -331,11 +313,10 @@ static void system_frame_gen(int do_skip)
   /* display changed during VBLANK */
   if (bitmap.viewport.changed & 2)
   {
-    bitmap.viewport.changed &= ~2;
-
     /* interlaced modes */
-    int old_interlaced  = interlaced;
+    int old_interlaced = interlaced;
     interlaced = (reg[12] & 0x02) >> 1;
+
     if (old_interlaced != interlaced)
     {
       /* double resolution mode */
@@ -361,6 +342,11 @@ static void system_frame_gen(int do_skip)
           render_obj = (reg[12] & 0x08) ? render_obj_m5_ste : render_obj_m5;
         }
       }
+    }
+    else
+    {
+      /* clear flag */
+      bitmap.viewport.changed &= ~2;
     }
 
     /* active screen height */
@@ -494,8 +480,8 @@ static void system_frame_gen(int do_skip)
   status |= 0x08;
 
   /* overscan area */
-  int start = lines_per_frame - bitmap.viewport.y;
-  int end   = bitmap.viewport.h + bitmap.viewport.y;
+  start = lines_per_frame - bitmap.viewport.y;
+  end   = bitmap.viewport.h + bitmap.viewport.y;
 
   /* check viewport changes */
   if ((bitmap.viewport.w != bitmap.viewport.ow) || (bitmap.viewport.h != bitmap.viewport.oh))
@@ -646,10 +632,10 @@ static void system_frame_gen(int do_skip)
 }
 
 
-static void system_frame_sms(int do_skip)
+void system_frame_sms(int do_skip)
 {
   /* line counter */
-  int line = 0;
+  int start, end, line = 0;
 
   /* reload H Counter */
   int h_counter = reg[10];
@@ -774,7 +760,7 @@ static void system_frame_sms(int do_skip)
   }
 
   /* 3-D glasses faking: skip rendering of left lens frame */
-  do_skip |= (work_ram[0x1ffb] & cart.special);
+  do_skip |= (work_ram[0x1ffb] & cart.special & HW_3D_GLASSES);
 
   /* Mega Drive VDP specific */
   if (system_hw & SYSTEM_MD)
@@ -894,8 +880,8 @@ static void system_frame_sms(int do_skip)
   }
 
   /* overscan area */
-  int start = lines_per_frame - bitmap.viewport.y;
-  int end   = bitmap.viewport.h + bitmap.viewport.y;
+  start = lines_per_frame - bitmap.viewport.y;
+  end   = bitmap.viewport.h + bitmap.viewport.y;
 
   /* check viewport changes */
   if ((bitmap.viewport.w != bitmap.viewport.ow) || (bitmap.viewport.h != bitmap.viewport.oh))

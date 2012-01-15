@@ -144,7 +144,14 @@ static int sdl_video_init()
 
 static void sdl_video_update()
 {
-  system_frame(0);
+  if ((system_hw & SYSTEM_PBC) == SYSTEM_MD)
+  {
+    system_frame_gen(0);
+  }
+  else	
+  {
+    system_frame_sms(0);
+  }
 
   /* viewport size changed */
   if(bitmap.viewport.changed & 1)
@@ -240,8 +247,8 @@ struct {
 
 static Uint32 sdl_sync_timer_callback(Uint32 interval)
 {
-  SDL_SemPost(sdl_sync.sem_sync);
   char caption[100];  
+  SDL_SemPost(sdl_sync.sem_sync);
   sdl_sync.ticks++;
   if (sdl_sync.ticks == (vdp_pal ? 50 : 20))
   {
@@ -302,7 +309,10 @@ static int sdl_control_update(SDLKey keystate)
 
       case SDLK_F3:
       {
-        config.render ^=1;
+        int temp = config.bios & 3;
+        config.bios &= ~3;
+        if (temp == 0) config.bios |= 3;
+        else if (temp == 3) config.bios |= 1;
         break;
       }
 
@@ -352,14 +362,11 @@ static int sdl_control_update(SDLKey keystate)
 
       case SDLK_F9:
       {
-        vdp_pal ^= 1;
-
-        /* reset region code */
-        region_code &= ~0x40;
-        region_code |= (vdp_pal << 6);
+        config.region_detect = (config.region_detect + 1) % 5;
+        region_autodetect();
         if (system_hw == SYSTEM_MD)
         {
-          io_reg[0x00] = 0x20 | region_code | (config.tmss & 1);
+          io_reg[0x00] = 0x20 | region_code | (config.bios & 1);
         }
         else
         {
@@ -369,9 +376,6 @@ static int sdl_control_update(SDLKey keystate)
         /* reinitialize audio timings */
         audio_init(snd.sample_rate, snd.frame_rate);
 
-        /* reinitialize sound emulation */
-        sound_restore();
-
         /* reintialize VDP */
         vdp_init();
 
@@ -380,7 +384,7 @@ static int sdl_control_update(SDLKey keystate)
         {
           status = (status & ~1) | vdp_pal;
         }
-        
+
         /* reinitialize VC max value */
         switch (bitmap.viewport.h)
         {
@@ -395,8 +399,8 @@ static int sdl_control_update(SDLKey keystate)
             break;
         }
 
-        /* reinitialize display area */
-        bitmap.viewport.changed = 3;
+        /* reinitialize sound emulation */
+        sound_restore();
         break;
       }
 
@@ -636,6 +640,7 @@ int sdl_input_update(void)
 
 int main (int argc, char **argv)
 {
+  FILE *fp;
   int running = 1;
 
   /* Print help if no game specified */
@@ -662,22 +667,36 @@ int main (int argc, char **argv)
     exit(1);
   }
 
-  /* load BIOS */
-  memset(bios_rom, 0, sizeof(bios_rom));
-  FILE *f = fopen(OS_ROM, "rb");
-  if (f!=NULL)
+  /* mark all BIOS as unloaded */
+  config.bios &= 0x01;
+
+  /* Genesis BOOT ROM support (2KB max) */
+  memset(boot_rom, 0xFF, 0x800);
+  fp = fopen(MD_BIOS, "rb");
+  if (fp != NULL)
   {
-    fread(&bios_rom, 0x800,1,f);
-    fclose(f);
     int i;
-    for(i = 0; i < 0x800; i += 2)
+
+    /* read BOOT ROM */
+    fread(boot_rom, 1, 0x800, fp);
+    fclose(fp);
+
+    /* check BOOT ROM */
+    if (!strncmp((char *)(boot_rom + 0x120),"GENESIS OS", 10))
     {
-      uint8 temp = bios_rom[i];
-      bios_rom[i] = bios_rom[i+1];
-      bios_rom[i+1] = temp;
+      /* mark Genesis BIOS as loaded */
+      config.bios |= SYSTEM_MD;
     }
-    config.tmss |= 2;
+    
+    /* Byteswap ROM */
+    for (i=0; i<0x800; i+=2)
+    {
+      uint8 temp = boot_rom[i];
+      boot_rom[i] = boot_rom[i+1];
+      boot_rom[i+1] = temp;
+    }
   }
+
 
   /* initialize SDL */
   if(SDL_Init(0) < 0)
@@ -714,11 +733,11 @@ int main (int argc, char **argv)
   system_init();
 
   /* load SRAM */
-  f = fopen("./game.srm", "rb");
-  if (f!=NULL)
+  fp = fopen("./game.srm", "rb");
+  if (fp!=NULL)
   {
-    fread(sram.sram,0x10000,1, f);
-    fclose(f);
+    fread(sram.sram,0x10000,1, fp);
+    fclose(fp);
   }
 
   /* reset emulation */
@@ -759,11 +778,11 @@ int main (int argc, char **argv)
   }
 
   /* save SRAM */
-  f = fopen("./game.srm", "wb");
-  if (f!=NULL)
+  fp = fopen("./game.srm", "wb");
+  if (fp!=NULL)
   {
-    fwrite(sram.sram,0x10000,1, f);
-    fclose(f);
+    fwrite(sram.sram,0x10000,1, fp);
+    fclose(fp);
   }
 
   system_shutdown();

@@ -39,13 +39,14 @@
 #ifndef _SMS_CART_H_
 #define _SMS_CART_H_
 
-/* Special hardware (0x01 reserved for Master System 3-D glasses) */
+/* Special hardware */
+#define HW_3D_GLASSES     0x01
 #define HW_TEREBI_OEKAKI  0x02
 
 /* Function prototypes */
 extern void sms_cart_init(void);
 extern void sms_cart_reset(void);
-extern void sms_cart_switch(int enabled);
+extern void sms_cart_switch(uint8 mode);
 extern int sms_cart_region_detect(void);
 extern int sms_cart_context_save(uint8 *state);
 extern int sms_cart_context_load(uint8 *state);

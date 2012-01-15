@@ -3,7 +3,6 @@
 
 #include <stdio.h>
 #include <math.h>
-#include <zlib.h>
 
 #include "types.h"
 #include "macros.h"

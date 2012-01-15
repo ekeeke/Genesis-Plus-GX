@@ -42,6 +42,7 @@
 #include "font.h"
 #include "gui.h"
 #include "file_load.h"
+#include "history.h"
 
 #ifdef HW_RVL
 #include <wiiuse/wpad.h>
@@ -54,7 +55,10 @@
 
 extern const u8 Browser_dir_png[];
 extern const u8 Snap_empty_png[];
-extern const u8 Snap_frame_png[];
+extern const u8 Cart_md_png[];
+extern const u8 Cart_ms_png[];
+extern const u8 Cart_gg_png[];
+extern const u8 Cart_sg_png[];
 
 FILEENTRIES filelist[MAXFILES];
 
@@ -103,18 +107,37 @@ static gui_item action_select =
 /*****************************************************************************/
 /*  GUI Background images                                                    */
 /*****************************************************************************/
-static gui_image bg_filesel[10] =
+static gui_image bg_filesel[13] =
 {
-  {NULL,Bg_main_png,IMAGE_VISIBLE,374,140,284,288,255},
+  {NULL,Bg_layer_png,IMAGE_VISIBLE|IMAGE_REPEAT,0,0,640,480,255},
   {NULL,Bg_overlay_png,IMAGE_VISIBLE|IMAGE_REPEAT,0,0,640,480,255},
   {NULL,Banner_top_png,IMAGE_VISIBLE,0,0,640,108,255},
   {NULL,Banner_bottom_png,IMAGE_VISIBLE,0,380,640,100,255},
   {NULL,Main_logo_png,IMAGE_VISIBLE,466,40,152,44,255},
   {NULL,Frame_s1_png,IMAGE_VISIBLE,8,70,372,336,152},
   {NULL,Frame_s2_png,0,384,264,248,140,152},
-  {NULL,Snap_empty_png,IMAGE_VISIBLE,422,114,164,116,255},
-  {NULL,NULL,0,424,116,160,112,255},
-  {NULL,Snap_frame_png,IMAGE_VISIBLE,388,112,236,148,255}
+  {NULL,Snap_empty_png,IMAGE_VISIBLE,424,148,160,112,255},
+  {NULL,NULL,0,424,148,160,112,255},
+  {NULL,NULL,0,388,147,240,152,255},
+  {NULL,NULL,0,392,118,232,148,255},
+  {NULL,NULL,0,414,116,184,188,255},
+  {NULL,NULL,0,416,144,180,228,255}
+};
+
+static const u8 *Cart_png[4] =
+{
+  Cart_md_png,
+  Cart_ms_png,
+  Cart_gg_png,
+  Cart_sg_png
+};
+
+static const char *Cart_dir[4] =
+{
+  "md",
+  "ms",
+  "gg",
+  "sg"
 };
 
 /*****************************************************************************/
@@ -124,7 +147,7 @@ static gui_menu menu_selector =
 {
   "Game Selection",
   -1,-1,
-  0,0,10,0,
+  0,0,13,0,
   NULL,
   NULL,
   bg_filesel,
@@ -241,7 +264,7 @@ static void selector_cb(void)
  * return ROM size
  *
  ****************************************************************************/ 
-int FileSelector(void)
+int FileSelector(int type)
 {
   short p;
   int i;
@@ -255,27 +278,7 @@ int FileSelector(void)
   gui_butn *button;
 #endif
 
-  /* background type */
-  if (config.bg_type > 0)
-  {
-    bg_filesel[0].state &= ~IMAGE_REPEAT;
-    bg_filesel[0].data = (config.bg_type > 1) ? Bg_main_png : Bg_main_2_png;
-    bg_filesel[0].x = 374;
-    bg_filesel[0].y = 140;
-    bg_filesel[0].w = 284;
-    bg_filesel[0].h = 288;
-  }
-  else
-  {
-    bg_filesel[0].state |= IMAGE_REPEAT;
-    bg_filesel[0].data = Bg_layer_png;
-    bg_filesel[0].x = 0;
-    bg_filesel[0].y = 0;
-    bg_filesel[0].w = 640;
-    bg_filesel[0].h = 480;
-  }
-
-  /* background overlay */
+  /* Background overlay */
   if (config.bg_overlay)
   {
     bg_filesel[1].state |= IMAGE_VISIBLE;
@@ -283,6 +286,34 @@ int FileSelector(void)
   else
   {
     bg_filesel[1].state &= ~IMAGE_VISIBLE;
+  }
+
+  /* Hide all cartridge labels */
+  bg_filesel[9].state  &= ~IMAGE_VISIBLE;
+  bg_filesel[10].state &= ~IMAGE_VISIBLE;
+  bg_filesel[11].state &= ~IMAGE_VISIBLE;
+  bg_filesel[12].state &= ~IMAGE_VISIBLE;
+
+  /* Cartridge type */
+  if (type < 0)
+  {
+    /* Recent game list -> select all cartridge type */
+    bg_filesel[9].data = Cart_png[0];
+    bg_filesel[10].data = Cart_png[1];
+    bg_filesel[11].data = Cart_png[2];
+    bg_filesel[12].data = Cart_png[3];
+  }
+  else
+  {
+    /* Clear all cartridges type */
+    bg_filesel[9].data  = NULL;
+    bg_filesel[10].data = NULL;
+    bg_filesel[11].data = NULL;
+    bg_filesel[12].data = NULL;
+
+    /* Select cartridge type */
+    bg_filesel[9 + type].data = Cart_png[type];
+    bg_filesel[9 + type].state |= IMAGE_VISIBLE;
   }
 
   /* Initialize Menu */
@@ -303,48 +334,33 @@ int FileSelector(void)
 
       if (!filelist[selection].flags)
       {
-        /* get compressed file name */
-        sprintf(fname, "%s/%s", GetCurrentDirectory(selection), filelist[selection].filename);
-        get_zipfilename(fname);
+        /* recent game list -> variable game types */
+        if (type < 0)
+        {
+          /* hide all cartridge labels */
+          bg_filesel[9].state  &= ~IMAGE_VISIBLE;
+          bg_filesel[10].state &= ~IMAGE_VISIBLE;
+          bg_filesel[11].state &= ~IMAGE_VISIBLE;
+          bg_filesel[12].state &= ~IMAGE_VISIBLE;
 
-        /* auto-detect file type */
-        if (!strnicmp(".sms", &fname[strlen(fname) - 4], 4))
-        {
-          /* Master System ROM file */
-          sprintf(fname, "%s/snaps/ms/%s", DEFAULT_PATH, filelist[selection].filename);
-        }
-        else if (!strnicmp(".gg", &fname[strlen(fname) - 3], 3))
-        {
-          /* Game Gear ROM file */
-          sprintf(fname, "%s/snaps/gg/%s", DEFAULT_PATH, filelist[selection].filename);
-        }
-        else if (!strnicmp(".sg", &fname[strlen(fname) - 3], 3))
-        {
-          /* SG-1000 ROM file */
-          sprintf(fname, "%s/snaps/sg/%s", DEFAULT_PATH, filelist[selection].filename);
-        }
-        else if ((!strnicmp(".md", &fname[strlen(fname) - 3], 3)) ||
-                 (!strnicmp(".gen", &fname[strlen(fname) - 4], 4)) ||
-                 (!strnicmp(".bin", &fname[strlen(fname) - 4], 4)) ||
-                 (!strnicmp(".mdx", &fname[strlen(fname) - 4], 4)) ||
-                 (!strnicmp(".smd", &fname[strlen(fname) - 4], 4)))
-        {
-          /* Genesis ROM file */
-          sprintf(fname, "%s/snaps/md/%s", DEFAULT_PATH, filelist[selection].filename);
+          /* detect cartridge type (0-3) */
+          type = history.entries[selection].filetype;
+
+          /* show selected cartridge label */
+          bg_filesel[9 + type].state |= IMAGE_VISIBLE;
+
+          /*  default screenshot file path */
+          sprintf(fname,"%s/snaps/%s/%s", DEFAULT_PATH, Cart_dir[type], filelist[selection].filename);
+
+          /* restore recent type flag */
+          type = -1;
         }
         else
         {
-          fname[0] = 0;
+          /*  default screenshot file path */
+          sprintf(fname,"%s/snaps/%s/%s", DEFAULT_PATH, Cart_dir[type], filelist[selection].filename);
         }
-      }
-      else
-      {
-        fname[0] = 0;
-      }
 
-      /* Supported ROM file found ? */
-      if (fname[0])
-      {
         /* remove original file extension */
         i = strlen(fname) - 1;
         while ((i > 0) && (fname[i] != '.')) i--;
@@ -353,7 +369,7 @@ int FileSelector(void)
         /* add PNG file extension */
         strcat(fname, ".png");
 
-        /* try to load screenshot */
+        /* try to load screenshot file */
         snap = fopen(fname, "rb");
         if (snap)
         {
@@ -563,7 +579,7 @@ int FileSelector(void)
           selection = offset = 0;
           old = -1;
         }
-        else if (fname[0])
+        else
         {  
           /* load ROM file from device */
           int ret = LoadFile(selection);
@@ -573,11 +589,6 @@ int FileSelector(void)
 
           /* return ROM size (or zero if an error occured) */
           return ret;
-        }
-        else
-        {
-          /* Unsupported ROM file */
-          GUI_WaitPrompt("Error","Unsupported ROM type !");
         }
       }
 
@@ -605,7 +616,6 @@ int FileSelector(void)
           offset += 10;
       }
 #endif
-
     }
   }
 }

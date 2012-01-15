@@ -44,6 +44,9 @@
 #include <windows.h>
 #include <zlib.h>
 
+static int check_zip(char *filename);
+static int gzsize(gzFile *gd);
+
 int load_archive(char *filename)
 {
   int size = 0;
@@ -147,7 +150,7 @@ int load_archive(char *filename)
     Verifies if a file is a ZIP archive or not.
     Returns: 1= ZIP archive, 0= not a ZIP archive
 */
-int check_zip(char *filename)
+static int check_zip(char *filename)
 {
   uint8 buf[2];
   FILE *fd = fopen(filename, "rb");
@@ -162,7 +165,7 @@ int check_zip(char *filename)
 /*
     Returns the size of a GZ compressed file.
 */
-int gzsize(gzFile *gd)
+static int gzsize(gzFile *gd)
 {
   #define CHUNKSIZE   (0x10000)
   int size = 0, length = 0;
