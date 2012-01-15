@@ -482,10 +482,16 @@ static void gxSetAspectRatio(int *xscale, int *yscale)
     {
       /* overscan is simulated (black) */
       *yscale = vheight / 2;
+
+      /* adjust when Genesis & Wii/GC video height does not match */
       if (vdp_pal && (!gc_pal || config.render))
+      {
         *yscale = *yscale * 240 / 288;
+      }
       else if (!vdp_pal && gc_pal && !config.render)
+      {
         *yscale = *yscale * 288 / 240;
+      }
     }
 
     /* horizontal borders */
@@ -517,7 +523,11 @@ static void gxSetAspectRatio(int *xscale, int *yscale)
     }
     else
     {
-      *yscale = (gc_pal && !config.render) ? 134 : 112;
+      *yscale = (vheight == 192) ? 96 : 112;
+      if (gc_pal && !config.render)
+      {
+        *yscale = (*yscale * 134) / 112; 
+      }
     }
 
     /* horizontal borders */
