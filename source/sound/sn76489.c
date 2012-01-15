@@ -165,9 +165,7 @@ void SN76489_Write(int data)
     SN76489.LatchedRegister = (data >> 4) & 0x07;
   }
 
-  int LatchedRegister = SN76489.LatchedRegister;
-
-  switch (LatchedRegister)
+  switch (SN76489.LatchedRegister)
   {
     case 0:
     case 2:
@@ -175,22 +173,22 @@ void SN76489_Write(int data)
       if (data & 0x80)
       {
         /* Data byte  %1 cc t dddd */
-        SN76489.Registers[LatchedRegister] = (SN76489.Registers[LatchedRegister] & 0x3f0) | (data & 0xf);
+        SN76489.Registers[SN76489.LatchedRegister] = (SN76489.Registers[SN76489.LatchedRegister] & 0x3f0) | (data & 0xf);
       }
       else
       {
         /* Data byte  %0 - dddddd */
-        SN76489.Registers[LatchedRegister] = (SN76489.Registers[LatchedRegister] & 0x00f) | ((data & 0x3f) << 4);
+        SN76489.Registers[SN76489.LatchedRegister] = (SN76489.Registers[SN76489.LatchedRegister] & 0x00f) | ((data & 0x3f) << 4);
       }
       /* Zero frequency changed to 1 to avoid div/0 */
-      if (SN76489.Registers[LatchedRegister] == 0) SN76489.Registers[LatchedRegister] = 1;  
+      if (SN76489.Registers[SN76489.LatchedRegister] == 0) SN76489.Registers[SN76489.LatchedRegister] = 1;  
       break;
 
     case 1:
     case 3:
     case 5: /* Channel attenuation */
-      SN76489.Registers[LatchedRegister] = data & 0x0f;
-      SN76489.Channels[LatchedRegister>>1] = PSGVolumeValues[data&0x0f];
+      SN76489.Registers[SN76489.LatchedRegister] = data & 0x0f;
+      SN76489.Channels[SN76489.LatchedRegister>>1] = PSGVolumeValues[data&0x0f];
       break;
 
     case 6: /* Noise control */
@@ -327,5 +325,5 @@ void SN76489_Update(INT16 *buffer, int length)
 
   /* Read samples into output buffer */
   blip_end_frame(blip, clock_length);
-  blip_read_samples(blip, buffer, length, 0);
+  blip_read_samples(blip, buffer, length);
 }

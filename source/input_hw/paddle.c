@@ -49,7 +49,7 @@ void paddle_reset(int index)
   paddle[index].State = 0x40;
 }
 
-static inline unsigned char paddle_read(int port)
+static __inline__ unsigned char paddle_read(int port)
 {
   /* FIRE button status (active low) */
   unsigned char temp = ~(input.pad[port] & 0x10);
@@ -83,7 +83,7 @@ static inline unsigned char paddle_read(int port)
   return temp;
 }
 
-static inline void paddle_write(int index, unsigned char data, unsigned char mask)
+static __inline__ void paddle_write(int index, unsigned char data, unsigned char mask)
 {
   /* update bits set as output only */
   paddle[index].State = (paddle[index].State & ~mask) | (data & mask);

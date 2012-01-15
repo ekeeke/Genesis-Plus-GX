@@ -59,20 +59,23 @@ static void ar_write_ram_8(uint32 address, uint32 data);
 
 void areplay_init(void)
 {
+  int size;
+  FILE *f;
+  
   memset(&action_replay,0,sizeof(action_replay));
-  if (cart.romsize > 0x800000) return;
+
+  /* store Action replay ROM (max. 128k) & RAM (64k) above cartridge ROM + SRAM area */
+  if (cart.romsize > 0x600000) return;
+  action_replay.rom = cart.rom + 0x600000;
+  action_replay.ram = cart.rom + 0x620000;
 
   /* Open Action Replay ROM */
-  FILE *f = fopen(AR_ROM,"rb");
-  if (!f) return;
-
-  /* store Action replay ROM + RAM above cartridge ROM + SRAM */
-  action_replay.rom = cart.rom + 0x800000;
-  action_replay.ram = cart.rom + 0x810000;
+  f = fopen(AR_ROM,"rb");
+  if (f == NULL) return;
 
   /* ROM size */
   fseek(f, 0, SEEK_END);
-  int size = ftell(f);
+  size = ftell(f);
   fseek(f, 0, SEEK_SET);
 
   /* detect Action Replay board type */
@@ -85,7 +88,6 @@ void areplay_init(void)
   
       /* internal registers mapped at $010000-$01ffff */
       m68k_memory_map[0x01].write16 = ar_write_regs;
-
       break;
     }
 
@@ -124,7 +126,6 @@ void areplay_init(void)
         m68k_memory_map[sp[1]].write8    = ar_write_ram_8;
         m68k_memory_map[sp[1]].write16   = NULL;
       }
-
       break;
     }
 
@@ -138,24 +139,23 @@ void areplay_init(void)
   {
     /* Load ROM */
     int i = 0;
-    while (i < size)
+    for (i=0; i<size; i+=0x1000)
     {
-      fread(action_replay.rom+i,0x1000,1,f);
-      i += 0x1000;
+      fread(action_replay.rom + i, 0x1000, 1, f);
     }
 
 #ifdef LSB_FIRST
-    /* Byteswap ROM */
-    uint8 temp;
-    for(i = 0; i < size; i += 2)
+    for (i= 0; i<size; i+=2)
     {
-      temp = action_replay.rom[i];
+      /* Byteswap ROM */
+      uint8 temp = action_replay.rom[i];
       action_replay.rom[i] = action_replay.rom[i+1];
       action_replay.rom[i+1] = temp;
     }
 #endif
   }
 
+  /* Close ROM file */
   fclose(f);
 }
 

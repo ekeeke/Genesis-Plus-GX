@@ -55,7 +55,7 @@ unsigned int zbank_unused_r(unsigned int address)
 void zbank_unused_w(unsigned int address, unsigned int data)
 {
 #ifdef LOGERROR
-  error("Z80 bank unused write %06X = %02X\n", address, data);
+  error("Z80 bank unused write %06X = %02X (%x)\n", address, data, Z80.pc.d);
 #endif
 }
 

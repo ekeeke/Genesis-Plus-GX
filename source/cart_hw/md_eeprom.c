@@ -230,7 +230,7 @@ void md_eeprom_write_word(unsigned int address, unsigned int data)
 }
 
 
-static inline void Detect_START()
+static __inline__ void Detect_START()
 {
   if (md_eeprom.old_scl && md_eeprom.scl)
   {
@@ -248,7 +248,7 @@ static inline void Detect_START()
   }
 }
 
-static inline void Detect_STOP()
+static __inline__ void Detect_STOP()
 {
   if (md_eeprom.old_scl && md_eeprom.scl)
   {

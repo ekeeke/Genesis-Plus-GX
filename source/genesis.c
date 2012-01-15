@@ -47,7 +47,7 @@ uint8 zram[0x2000];       /* Z80 RAM  */
 uint32 zbank;             /* Z80 bank window address */
 uint8 zstate;             /* Z80 bus state (d0 = BUSACK, d1 = /RESET) */
 uint8 pico_current;       /* PICO current page */
-uint8 pico_page[7];       /* PICO page registers */
+uint8 pico_regs[7];       /* PICO page registers */
 
 static uint8 tmss[4];     /* TMSS security register */
 

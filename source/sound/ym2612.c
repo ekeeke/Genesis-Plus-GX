@@ -244,7 +244,7 @@ O( 0),O( 1),O( 2),O( 3),
 O( 0),O( 1),O( 2),O( 3),
 */
 O(18),O(18),O( 0),O( 0),
-O( 0),O( 0),O( 2),O( 2),   // Nemesis's tests
+O( 0),O( 0),O( 2),O( 2),   /* Nemesis's tests */
 
 O( 0),O( 1),O( 2),O( 3),
 O( 0),O( 1),O( 2),O( 3),
@@ -986,9 +986,9 @@ INLINE void set_ar_ksr(FM_CH *CH,FM_SLOT *SLOT,int v)
   }
 
   /* Even if it seems unnecessary to do it here, it could happen that KSR and KC  */
-  /* but the resulted SLOT->ksr value (kc >> SLOT->KSR) remains unchanged.        */
+  /* are modified but the resulted SLOT->ksr value (kc >> SLOT->KSR) remains unchanged. */
   /* In such case, Attack Rate would not be recalculated by "refresh_fc_eg_slot". */
-  /* This fixes the intro of "The Adventures of Batman & Robin" (Eke-Eke)         */
+  /* This actually fixes the intro of "The Adventures of Batman & Robin" (Eke-Eke)         */
   if ((SLOT->ar + SLOT->ksr) < (32+62))
   {
     SLOT->eg_sh_ar  = eg_rate_shift [SLOT->ar  + SLOT->ksr ];
@@ -1287,16 +1287,18 @@ INLINE void update_phase_lfo_slot(FM_SLOT *SLOT , INT32 pms, UINT32 block_fnum)
   
   if (lfo_fn_table_index_offset)  /* LFO phase modulation active */
   {
-    block_fnum = block_fnum*2 + lfo_fn_table_index_offset;
+    UINT8 blk;
+    int kc, fc;
 
-    UINT8 blk = (block_fnum&0x7000) >> 12;
+    block_fnum = block_fnum*2 + lfo_fn_table_index_offset;
+    blk = (block_fnum&0x7000) >> 12;
     block_fnum = block_fnum & 0xfff;
 
     /* keyscale code */
-    int kc = (blk<<2) | opn_fktable[block_fnum >> 8];
+    kc = (blk<<2) | opn_fktable[block_fnum >> 8];
 
     /* (frequency) phase increment counter */
-    int fc = (ym2612.OPN.fn_table[block_fnum]>>(7-blk)) + SLOT->DT[kc];
+    fc = (ym2612.OPN.fn_table[block_fnum]>>(7-blk)) + SLOT->DT[kc];
       
     /* (frequency) phase overflow (credits to Nemesis) */
     if (fc < 0) fc += ym2612.OPN.fn_max;
@@ -1318,19 +1320,21 @@ INLINE void update_phase_lfo_channel(FM_CH *CH)
 
   if (lfo_fn_table_index_offset)  /* LFO phase modulation active */
   {
+    UINT8 blk;
+    int kc, fc, finc;
+   
     block_fnum = block_fnum*2 + lfo_fn_table_index_offset;
-
-    UINT8 blk = (block_fnum&0x7000) >> 12;
+    blk = (block_fnum&0x7000) >> 12;
     block_fnum = block_fnum & 0xfff;
     
     /* keyscale code */
-    int kc = (blk<<2) | opn_fktable[block_fnum >> 8];
+    kc = (blk<<2) | opn_fktable[block_fnum >> 8];
 
      /* (frequency) phase increment counter */
-    int fc = (ym2612.OPN.fn_table[block_fnum]>>(7-blk));
+    fc = (ym2612.OPN.fn_table[block_fnum]>>(7-blk));
 
     /* (frequency) phase overflow (credits to Nemesis) */
-    int finc = fc + CH->SLOT[SLOT1].DT[kc];
+    finc = fc + CH->SLOT[SLOT1].DT[kc];
     if (finc < 0) finc += ym2612.OPN.fn_max;
     CH->SLOT[SLOT1].phase += (finc*CH->SLOT[SLOT1].mul) >> 1;
 
@@ -1435,12 +1439,11 @@ INLINE signed int op_calc1(UINT32 phase, unsigned int env, signed int pm)
 INLINE void chan_calc(FM_CH *CH)
 {
   UINT32 AM = ym2612.OPN.LFO_AM >> CH->ams;
+  unsigned int eg_out = volume_calc(&CH->SLOT[SLOT1]);
 
   m2 = c1 = c2 = mem = 0;
 
   *CH->mem_connect = CH->mem_value;  /* restore delayed sample (MEM) value to m2 or c2 */
-
-  unsigned int eg_out = volume_calc(&CH->SLOT[SLOT1]);
   {
     INT32 out = CH->op1_out[0] + CH->op1_out[1];
     CH->op1_out[0] = CH->op1_out[1];
@@ -1720,7 +1723,7 @@ INLINE void OPNWriteReg(int r, int v)
             ym2612.OPN.SL3.kcode[c]= (blk<<2) | opn_fktable[fn >> 7];
             /* phase increment counter */
             ym2612.OPN.SL3.fc[c] = ym2612.OPN.fn_table[fn*2]>>(7-blk);
-            ym2612.OPN.SL3.block_fnum[c] = (blk<<11) | fn; //fn;
+            ym2612.OPN.SL3.block_fnum[c] = (blk<<11) | fn;
             ym2612.CH[2].SLOT[SLOT1].Incr=-1;
           }
           break;            
@@ -2136,7 +2139,7 @@ void YM2612Update(int *buffer, int length)
     if (out_fm[5] > 8192) out_fm[5] = 8192;
     else if (out_fm[5] < -8192) out_fm[5] = -8192;
 
-    /* 6-channels mixing  */
+    /* 6-channels stereo mixing  */
     lt  = ((out_fm[0]) & ym2612.OPN.pan[0]);
     rt  = ((out_fm[0]) & ym2612.OPN.pan[1]);
     lt += ((out_fm[1]) & ym2612.OPN.pan[2]);
@@ -2215,13 +2218,12 @@ void YM2612Restore(unsigned char *buffer)
 
 int YM2612LoadContext(unsigned char *state)
 {
+  int c,s;
+  uint8 index;
   int bufferptr = sizeof(YM2612);
 
   /* restore YM2612 context */
   YM2612Restore(state);
-
-  int c,s;
-  uint8 index;
 
   /* restore DT table address pointer for each channel slots */
   for( c = 0 ; c < 6 ; c++ )

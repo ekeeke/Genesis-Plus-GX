@@ -47,14 +47,14 @@
 /*  machine lock up.                                                        */
 /*--------------------------------------------------------------------------*/
 
-static inline void z80_unused_w(unsigned int address, unsigned char data)
+static __inline__ void z80_unused_w(unsigned int address, unsigned char data)
 {
 #ifdef LOGERROR
   error("Z80 unused write %04X = %02X (%x)\n", address, data, Z80.pc.w.l);
 #endif
 }
 
-static inline unsigned char z80_unused_r(unsigned int address)
+static __inline__ unsigned char z80_unused_r(unsigned int address)
 {
 #ifdef LOGERROR
   error("Z80 unused read %04X (%x)\n", address, Z80.pc.w.l);
@@ -62,7 +62,7 @@ static inline unsigned char z80_unused_r(unsigned int address)
   return 0xFF;
 }
 
-static inline void z80_lockup_w(unsigned int address, unsigned char data)
+static __inline__ void z80_lockup_w(unsigned int address, unsigned char data)
 {
 #ifdef LOGERROR
   error("Z80 lockup write %04X = %02X (%x)\n", address, data, Z80.pc.w.l);
@@ -74,7 +74,7 @@ static inline void z80_lockup_w(unsigned int address, unsigned char data)
   }
 }
 
-static inline unsigned char z80_lockup_r(unsigned int address)
+static __inline__ unsigned char z80_lockup_r(unsigned int address)
 {
 #ifdef LOGERROR
   error("Z80 lockup read %04X (%x)\n", address, Z80.pc.w.l);
@@ -119,12 +119,11 @@ unsigned char z80_memory_r(unsigned int address)
     default: /* $8000-$FFFF: 68k bank (32K) */
     {
       address = zbank | (address & 0x7FFF);
-      unsigned int slot = address >> 16;
-      if (zbank_memory_map[slot].read)
+      if (zbank_memory_map[address >> 16].read)
       {
-        return (*zbank_memory_map[slot].read)(address);
+        return (*zbank_memory_map[address >> 16].read)(address);
       }
-      return READ_BYTE(m68k_memory_map[slot].base, address & 0xFFFF);
+      return READ_BYTE(m68k_memory_map[address >> 16].base, address & 0xFFFF);
     }
   }
 }
@@ -174,13 +173,12 @@ void z80_memory_w(unsigned int address, unsigned char data)
     default: /* $8000-$FFFF: 68k bank (32K) */
     {
       address = zbank | (address & 0x7FFF);
-      unsigned int slot = address >> 16;
-      if (zbank_memory_map[slot].write)
+      if (zbank_memory_map[address >> 16].write)
       {
-        (*zbank_memory_map[slot].write)(address, data);
+        (*zbank_memory_map[address >> 16].write)(address, data);
         return;
       }
-      WRITE_BYTE(m68k_memory_map[slot].base, address & 0xFFFF, data);
+      WRITE_BYTE(m68k_memory_map[address >> 16].base, address & 0xFFFF, data);
       return;
     }
   }

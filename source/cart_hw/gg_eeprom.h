@@ -45,7 +45,7 @@ typedef enum
   WAIT_START,
   GET_OPCODE,
   WRITE_WORD,
-  READ_WORD,
+  READ_WORD
 
 } T_STATE;
 

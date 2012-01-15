@@ -255,9 +255,9 @@ unsigned int ctrl_io_read_byte(unsigned int address)
       return m68k_read_bus_8(address);
     }
 
-    case 0x41:  /* OS ROM */
+    case 0x41:  /* BOOT ROM */
     {
-      if (address & 1)
+      if ((config.bios & 1) && (address & 1))
       {
         unsigned int data = m68k_read_pcrelative_8(REG_PC) & 0xFE;
         return (gen_bankswitch_r() | data);
@@ -320,13 +320,13 @@ unsigned int ctrl_io_read_word(unsigned int address)
     {
       if ((address & 0xFD) == 0)
       {
-        return svp->ssp1601.gr[SSP_XST].h;
+        return svp->ssp1601.gr[SSP_XST].byte.h;
       }
 
       if ((address & 0xFF) == 4)
       {
-        unsigned int data = svp->ssp1601.gr[SSP_PM0].h;
-        svp->ssp1601.gr[SSP_PM0].h &= ~1;
+        unsigned int data = svp->ssp1601.gr[SSP_PM0].byte.h;
+        svp->ssp1601.gr[SSP_PM0].byte.h &= ~1;
         return data;
       }
 
@@ -337,7 +337,7 @@ unsigned int ctrl_io_read_word(unsigned int address)
     case 0x12:  /* RESET */
     case 0x20:  /* MEGA-CD */
     case 0x40:  /* TMSS */
-    case 0x41:  /* OS ROM */
+    case 0x41:  /* BOOT ROM */
     case 0x44:  /* RADICA */
     {
       return m68k_read_bus_16(address);
@@ -394,9 +394,9 @@ void ctrl_io_write_byte(unsigned int address, unsigned int data)
       return;
     }
 
-    case 0x41:  /* OS ROM */
+    case 0x41:  /* BOOT ROM */
     {
-      if (address & 1)
+      if ((config.bios & 1) && (address & 1))
       {
         gen_bankswitch_w(data & 1);
         return;
@@ -458,7 +458,7 @@ void ctrl_io_write_word(unsigned int address, unsigned int data)
 
     case 0x40:  /* TMSS */
     {
-      if (config.tmss & 1)
+      if (config.bios & 1)
       {
         gen_tmss_w(address & 3, data);
         return;
@@ -471,8 +471,8 @@ void ctrl_io_write_word(unsigned int address, unsigned int data)
     {
       if (!(address & 0xFD))
       {
-        svp->ssp1601.gr[SSP_XST].h = data;
-        svp->ssp1601.gr[SSP_PM0].h |= 2;
+        svp->ssp1601.gr[SSP_XST].byte.h = data;
+        svp->ssp1601.gr[SSP_PM0].byte.h |= 2;
         svp->ssp1601.emu_status &= ~SSP_WAIT_PM0;
         return;
       }
@@ -482,7 +482,7 @@ void ctrl_io_write_word(unsigned int address, unsigned int data)
 
     case 0x10:  /* MEMORY MODE */
     case 0x20:  /* MEGA-CD */
-    case 0x41:  /* OS ROM */
+    case 0x41:  /* BOOT ROM */
     case 0x44:  /* RADICA */
     {
       m68k_unused_16_w (address, data);
@@ -727,7 +727,7 @@ unsigned int pico_read_byte(unsigned int address)
 
     case 0x0D:  /* PAGE register (TODO) */
     {
-      return pico_page[pico_current];
+      return pico_regs[pico_current];
     }
 
     case 0x10:  /* PCM registers (TODO) */

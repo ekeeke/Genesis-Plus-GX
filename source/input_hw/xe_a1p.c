@@ -68,7 +68,10 @@ unsigned char xe_a1p_read()
 
   /* Buttons status (active low) */
   uint16 pad = ~input.pad[0];
-  
+
+  /* Current internal cycle (0-7) */
+  unsigned int cycle = xe_a1p.Counter & 7;
+
   /* Current 4-bit data cycle */
   /* There are eight internal data cycle for each 5 acquisition sequence */
   /* First 4 return the same 4-bit data, next 4 return next 4-bit data */
@@ -103,9 +106,6 @@ unsigned char xe_a1p_read()
       temp |= (z & 0x0F);
       break;
   }
-
-  /* Get current internal cycle (0-7) */
-  unsigned int cycle = xe_a1p.Counter & 7;
 
   /* TL indicates which part of data is returned (0=1st part, 1=2nd part) */
   temp |= ((cycle & 4) << 2);

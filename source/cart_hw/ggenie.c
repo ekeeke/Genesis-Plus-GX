@@ -59,45 +59,40 @@ static void ggenie_write_regs(unsigned int offset, unsigned int data);
 
 void ggenie_init(void)
 {
+  int i;
+  FILE *f;
+  
   memset(&ggenie,0,sizeof(ggenie));
 
-  /* Open Game Genie ROM file */
-  FILE *f = fopen(GG_ROM,"rb");
-  if (!f) return;
-
-  /* Store Game Genie ROM above cartridge ROM + SRAM */
-  if (cart.romsize > 0x600000)
-  {
-    fclose(f);
-    return;
-  }
-  
+  /* Store Game Genie ROM (32k) above cartridge ROM + SRAM area */
+  if (cart.romsize > 0x600000) return;
   ggenie.rom = cart.rom + 0x600000;
 
+  /* Open Game Genie ROM file */
+  f = fopen(GG_ROM,"rb");
+  if (f == NULL) return;
+
   /* Load ROM */
-  int i = 0;
-  while (i < 0x8000)
+  for (i=0; i<0x8000; i+=0x1000)
   {
-    fread(ggenie.rom+i,0x1000,1,f);
-    i += 0x1000;
+    fread(ggenie.rom + i, 0x1000, 1, f);
   }
 
   /* Close ROM file */
   fclose(f);
 
 #ifdef LSB_FIRST
-  /* Byteswap ROM */
-  uint8 temp;
-  for(i = 0; i < 0x8000; i += 2)
+  for (i=0; i<0x8000; i+=2)
   {
-    temp = ggenie.rom[i];
+    /* Byteswap ROM */
+    uint8 temp = ggenie.rom[i];
     ggenie.rom[i] = ggenie.rom[i+1];
     ggenie.rom[i+1] = temp;
   }
 #endif
 
   /* $0000-$7fff mirrored into $8000-$ffff */
-  memcpy(ggenie.rom+0x8000,ggenie.rom,0x8000);
+  memcpy(ggenie.rom + 0x8000, ggenie.rom, 0x8000);
 
   /* set flag */
   ggenie.enabled = 1;

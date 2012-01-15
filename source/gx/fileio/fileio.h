@@ -42,7 +42,6 @@
 #define _FILEIO_H_
 
 /* Function prototypes */
-void get_zipfilename(char *filename);
 int load_archive(char *filename);
 
 #endif /* _FILEIO_H_ */

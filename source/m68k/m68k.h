@@ -114,7 +114,7 @@ typedef enum
 #endif
 
   /* Convenience registers */
-  M68K_REG_IR,    /* Instruction register */
+  M68K_REG_IR    /* Instruction register */
 } m68k_register_t;
 
 

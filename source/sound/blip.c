@@ -105,33 +105,19 @@ int blip_samples_avail( const blip_buffer_t* s )
   return s->offset >> time_bits;
 }
 
-/* Removes n samples from buffer */
-static void remove_samples( blip_buffer_t* s, int n )
-{
-  int remain = blip_samples_avail( s ) + buf_extra - n;
-  
-  s->offset -= n * time_unit;
-  
-  /* Copy remaining samples to beginning of buffer and clear the rest */
-  memmove( s->buf, &s->buf [n], remain * sizeof (buf_t) );
-  memset( &s->buf [remain], 0, n * sizeof (buf_t) );
-}
-
-int blip_read_samples( blip_buffer_t* s, short out [], int count, int stereo )
+void blip_read_samples( blip_buffer_t* s, short out[], int count)
 {
   /* can't read more than available */
-  int avail = blip_samples_avail( s );
+  int avail = s->offset >> time_bits;
   if ( count > avail )
     count = avail;
   
   if ( count )
   {
     /* Sum deltas and write out */
-    int i;
+    int i, sample;
     for ( i = 0; i < count; ++i )
-    {
-      int sample;
-      
+    {      
       /* Apply slight high-pass filter */
       s->amp -= s->amp >> 9;
       
@@ -145,11 +131,15 @@ int blip_read_samples( blip_buffer_t* s, short out [], int count, int stereo )
       if ( sample < -32768 ) sample = -32768;
       if ( sample > +32767 ) sample = +32767;
       
-      out [i << stereo] = sample;
+      out [i] = sample;
     }
-    
-    remove_samples( s, count );
-  }
   
-  return count;
+    /* Copy remaining samples to beginning of buffer and clear the rest */
+    i = (s->offset >> time_bits) + buf_extra - count;
+    memmove( s->buf, &s->buf [count], i * sizeof (buf_t) );
+    memset( &s->buf [i], 0, count * sizeof (buf_t) );
+    
+    /* Remove samples */
+    s->offset -= count * time_unit;
+  }
 }

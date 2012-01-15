@@ -43,9 +43,8 @@ static void gen_sinc(double rolloff, int width, double offset, double spacing, d
   double const fstep = M_PI / maxh * spacing;
   double const to_w = maxh * 2 / width;
   double const pow_a_n = pow( rolloff, maxh );
-  scale /= maxh * 2;
-
   double angle = (count / 2 - 1 + offset) * -fstep;
+  scale /= maxh * 2;
 
   do
   {
@@ -154,10 +153,8 @@ void Fir_Resampler_clear()
 
 double Fir_Resampler_time_ratio( double new_factor, double rolloff )
 {
-  ratio = new_factor;
-
   int i, r;
-  double nearest, error;
+  double nearest, error, filter;
   double fstep = 0.0;
   double least_error = 2;
   double pos = 0.0;
@@ -165,7 +162,7 @@ double Fir_Resampler_time_ratio( double new_factor, double rolloff )
 
   for ( r = 1; r <= MAX_RES; r++ )
   {
-    pos += ratio;
+    pos += new_factor;
     nearest = floor( pos + 0.5 );
     error = fabs( pos - nearest );
     if ( error < least_error )
@@ -183,7 +180,7 @@ double Fir_Resampler_time_ratio( double new_factor, double rolloff )
   ratio = fstep;
   fstep = fmod( fstep, 1.0 );
 
-  double filter = (ratio < 1.0) ? 1.0 : 1.0 / ratio;
+  filter = (ratio < 1.0) ? 1.0 : 1.0 / ratio;
   pos = 0.0;
   input_per_cycle = 0;
 
@@ -310,9 +307,9 @@ int Fir_Resampler_read( sample_t* out, long count )
 
   imp_phase = res - remain;
 
-  int left = write_pos - in;
-  write_pos = &buffer [left];
-  memmove( buffer, in, left * sizeof *in );
+  n = write_pos - in;
+  write_pos = &buffer [n];
+  memmove( buffer, in, n * sizeof *in );
 
   return out - out_;
 }
@@ -321,9 +318,9 @@ int Fir_Resampler_read( sample_t* out, long count )
 int Fir_Resampler_input_needed( long output_count )
 {
   long input_count = 0;
-
   unsigned long skip = skip_bits >> imp_phase;
   int remain = res - imp_phase;
+
   while ( (output_count) > 0 )
   {
     input_count += step + (skip & 1) * STEREO;
@@ -336,10 +333,10 @@ int Fir_Resampler_input_needed( long output_count )
     output_count --;
   }
 
-  long input_extra = input_count - (write_pos - &buffer [WRITE_OFFSET]);
-  if ( input_extra < 0 )
-    input_extra = 0;
-  return (input_extra >> 1);
+  input_count -= (write_pos - &buffer [WRITE_OFFSET]);
+  if ( input_count < 0 )
+    input_count = 0;
+  return (input_count >> 1);
 }
 
 int Fir_Resampler_skip_input( long count )

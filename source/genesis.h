@@ -49,7 +49,7 @@ extern uint8 zram[0x2000];
 extern uint32 zbank;
 extern uint8 zstate;
 extern uint8 pico_current;
-extern uint8 pico_page[7];
+extern uint8 pico_regs[7];
 
 /* Function prototypes */
 extern void gen_init(void);

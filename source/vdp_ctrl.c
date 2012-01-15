@@ -42,7 +42,7 @@
 #include "shared.h"
 #include "hvc.h"
 
-/* Mark a pattern as dirty */
+/* Mark a pattern as modified */
 #define MARK_BG_DIRTY(addr)                         \
 {                                                   \
   name = (addr >> 5) & 0x7FF;                       \
@@ -73,7 +73,6 @@ uint16 hscb;                      /* Horizontal scroll table base address */
 uint8 bg_name_dirty[0x800];       /* 1= This pattern is dirty */
 uint16 bg_name_list[0x800];       /* List of modified pattern indices */
 uint16 bg_list_index;             /* # of modified patterns in list */
-uint8 bg_pattern_cache[0x80000];  /* Cached and flipped patterns */
 uint8 hscroll_mask;               /* Horizontal Scrolling line mask */
 uint8 playfield_shift;            /* Width of planes A, B (in bits) */
 uint8 playfield_col_mask;         /* Playfield column mask */
@@ -139,7 +138,6 @@ static const uint16 vc_table[4][2] =
   {0x106, 0x10A}  /* Mode 5 (240 lines) */
 };
 
-
 /*--------------------------------------------------------------------------*/
 /* Function prototypes                                                      */
 /*--------------------------------------------------------------------------*/
@@ -161,7 +159,6 @@ static void vdp_reg_w(unsigned int r, unsigned int d, unsigned int cycles);
 static void vdp_dma_copy(int length);
 static void vdp_dma_vbus(int length);
 static void vdp_dma_fill(unsigned int data, int length);
-
 
 /*--------------------------------------------------------------------------*/
 /* Init, reset, context functions                                           */
@@ -196,6 +193,8 @@ void vdp_init(void)
 
 void vdp_reset(void)
 {
+  int i;
+
   memset ((char *) sat, 0, sizeof (sat));
   memset ((char *) vram, 0, sizeof (vram));
   memset ((char *) cram, 0, sizeof (cram));
@@ -235,11 +234,10 @@ void vdp_reset(void)
   sat_base_mask       = 0xFE00;
   sat_addr_mask       = 0x01FF;
 
-  /* clear pattern cache */
+  /* reset pattern cache changes */
   bg_list_index = 0;
   memset ((char *) bg_name_dirty, 0, sizeof (bg_name_dirty));
   memset ((char *) bg_name_list, 0, sizeof (bg_name_list));
-  memset ((char *) bg_pattern_cache, 0, sizeof (bg_pattern_cache));
 
   /* default HVC */
   hvc_latch = 0x10000;
@@ -284,7 +282,7 @@ void vdp_reset(void)
 
   /* default rendering mode */
   update_bg_pattern_cache = update_bg_pattern_cache_m4;
-  if (system_hw < SYSTEM_SMS)
+  if (system_hw < SYSTEM_MD)
   {
     /* Mode 0 */
     render_bg = render_bg_m0;
@@ -299,11 +297,11 @@ void vdp_reset(void)
     parse_satb = parse_satb_m4;
   }
 
-  /* default 68k bus access mode (Mode 4) */
+  /* 68k bus access mode (Mode 4 by default) */
   vdp_68k_data_w = vdp_68k_data_w_m4;
   vdp_68k_data_r = vdp_68k_data_r_m4;
 
-  /* default Z80 bus access mode */
+  /* Z80 bus access mode */
   switch (system_hw)
   {
     case SYSTEM_SG:
@@ -344,12 +342,12 @@ void vdp_reset(void)
 
   if (system_hw == SYSTEM_SG)
   {
-    /* disable H-INT */
+    /* no H-INT on TMS9918 */
     vdp_reg_w(10, 0xFF, 0);
   }
-  else if ((system_hw > SYSTEM_MARKIII) && (system_hw < SYSTEM_MD))
+  else if ((system_hw & SYSTEM_SMS) && ((config.bios & (SYSTEM_SMS | 0x01)) != (SYSTEM_SMS | 0x01)))
   {
-    /* initialize registers normally set by Master System BIOS */
+    /* force registers initialization (if not done by Master System BIOS) */
     vdp_reg_w(0 , 0x36, 0);
     vdp_reg_w(1 , 0x80, 0);
     vdp_reg_w(2 , 0xFF, 0);
@@ -358,10 +356,15 @@ void vdp_reset(void)
     vdp_reg_w(5 , 0xFF, 0);
     vdp_reg_w(6 , 0xFF, 0);
     vdp_reg_w(10, 0xFF, 0);
+
+    /* Mode 4 */
+    render_bg = render_bg_m4;
+    render_obj = render_obj_m4;
+    parse_satb = parse_satb_m4;
   }
-  else if ((system_hw != SYSTEM_PBC) && (config.tmss == 1))
+  else if ((system_hw == SYSTEM_MD) && ((config.bios & (SYSTEM_MD | 0x01)) == 0x01))
   {
-    /* initialize registers if BIOS is simulated */
+    /* force registers initialization on TMSS model (if not done by BOOT ROM) */
     vdp_reg_w(0 , 0x04, 0);
     vdp_reg_w(1 , 0x04, 0);
     vdp_reg_w(10, 0xFF, 0);
@@ -370,7 +373,6 @@ void vdp_reset(void)
   }
 
   /* reset color palette */
-  int i;
   for(i = 0; i < 0x20; i ++)
   {
     color_update_m4(i, 0x00);
@@ -401,7 +403,7 @@ int vdp_context_save(uint8 *state)
   return bufferptr;
 }
 
-int vdp_context_load(uint8 *state, char *version)
+int vdp_context_load(uint8 *state)
 {
   int i, bufferptr = 0;
   uint8 temp_reg[0x20];
@@ -419,11 +421,6 @@ int vdp_context_load(uint8 *state, char *version)
   load_param(&dmafill, sizeof(dmafill));
   load_param(&hint_pending, sizeof(hint_pending));
   load_param(&vint_pending, sizeof(vint_pending));
-  if ((version[11] <= 0x31) && (version[13] <= 0x35))
-  {
-    uint8 dummy;
-    load_param(&dummy, sizeof(dummy));
-  }
   load_param(&dma_length, sizeof(dma_length));
   load_param(&dma_type, sizeof(dma_type));
   load_param(&cached_write, sizeof(cached_write));
@@ -522,7 +519,7 @@ int vdp_context_load(uint8 *state, char *version)
 
 void vdp_dma_update(unsigned int cycles)
 {
-  int dma_cycles;
+  int dma_cycles, dma_bytes;
 
   /* DMA transfer rate (bytes per line) 
 
@@ -570,7 +567,7 @@ void vdp_dma_update(unsigned int cycles)
   }
 
   /* Remaining DMA bytes for that line */
-  int dma_bytes = (dma_cycles * rate) / MCYCLES_PER_LINE;
+  dma_bytes = (dma_cycles * rate) / MCYCLES_PER_LINE;
 
 #ifdef LOGVDP
   error("[%d(%d)][%d(%d)] DMA type %d (%d access/line)(%d cycles left)-> %d access (%d remaining) (%x)\n", v_counter, mcycles_68k/MCYCLES_PER_LINE, mcycles_68k, mcycles_68k%MCYCLES_PER_LINE,dma_type/4, rate, dma_cycles, dma_bytes, dma_length, m68k_get_reg(M68K_REG_PC));
@@ -856,7 +853,7 @@ void vdp_z80_ctrl_w(unsigned int data)
         {
           case 2:
           {
-            /* VRAM write operation only (Williams Greatest Hits after soft reset) */
+            /* VRAM write operation only */
             if ((code & 0x0F) == 1)
             {
               /* VRAM fill will be triggered by next write to DATA port */
@@ -933,17 +930,14 @@ void vdp_sms_ctrl_w(unsigned int data)
 
     if (code == 2)
     {
-      /* VDP register index (0-15) */
-      data &= 0x0F;
-
       /* Save current VDP mode */
-      int prev = (reg[0] & 0x06) | (reg[1] & 0x18);
+      int mode, prev = (reg[0] & 0x06) | (reg[1] & 0x18);
 
-      /* Write VDP register */
-      vdp_reg_w(data, addr_latch, mcycles_z80);
+      /* Write VDP register 0-15 */
+      vdp_reg_w(data & 0x0F, addr_latch, mcycles_z80);
 
       /* Check VDP mode changes */
-      int mode = (reg[0] & 0x06) | (reg[1] & 0x18);
+      mode = (reg[0] & 0x06) | (reg[1] & 0x18);
       prev ^= mode;
  
       if (prev)
@@ -1072,6 +1066,8 @@ void vdp_sms_ctrl_w(unsigned int data)
         /* Mode switching */
         if (prev & 0x04)
         {
+          int i;
+
           if (mode & 0x04)
           {
             /* Mode 4 sprites */
@@ -1092,7 +1088,6 @@ void vdp_sms_ctrl_w(unsigned int data)
           }
 
           /* reinitialize palette */
-          int i;
           for(i = 0; i < 0x20; i ++)
           {
             color_update_m4(i, *(uint16 *)&cram[i << 1]);
@@ -1221,6 +1216,7 @@ void vdp_tms_ctrl_w(unsigned int data)
    */
 unsigned int vdp_68k_ctrl_r(unsigned int cycles)
 {
+  unsigned int temp;
 
   /* Update FIFO flags */
   vdp_fifo_update(cycles);
@@ -1232,7 +1228,7 @@ unsigned int vdp_68k_ctrl_r(unsigned int cycles)
   }
 
   /* Return VDP status */
-  unsigned int temp = status;
+  temp = status;
 
   /* Clear pending flag */
   pending = 0;
@@ -1261,14 +1257,16 @@ unsigned int vdp_68k_ctrl_r(unsigned int cycles)
 
 unsigned int vdp_z80_ctrl_r(unsigned int cycles)
 {
+  unsigned int temp;
+
+  /* Cycle-accurate SOVR & VINT flags */
+  int line = (lines_per_frame + (cycles / MCYCLES_PER_LINE) - 1) % lines_per_frame;
+
   /* Update DMA Busy flag (Mega Drive VDP specific) */
   if ((system_hw & SYSTEM_MD) && (status & 2) && !dma_length && (cycles >= dma_endCycles))
   {
     status &= 0xFD;
   }
-
-  /* Cycle-accurate SOVR & VINT flags */
-  int line = (lines_per_frame + (mcycles_z80 / MCYCLES_PER_LINE) - 1) % lines_per_frame;
 
   /* Check if we are already on next line */
   if (line > v_counter)
@@ -1287,7 +1285,7 @@ unsigned int vdp_z80_ctrl_r(unsigned int cycles)
   }
 
   /* Return VDP status */
-  unsigned int temp = status;
+  temp = status;
 
   /* Clear pending flag */
   pending = 0;
@@ -1358,16 +1356,42 @@ unsigned int vdp_z80_ctrl_r(unsigned int cycles)
 
 unsigned int vdp_hvc_r(unsigned int cycles)
 {
-  /* VCounter */
-  int vc = (cycles / MCYCLES_PER_LINE) - 1;
+  int vc;
+  unsigned int temp = hvc_latch;
 
-  /* Check counter overflow */
+  /* Check if HVC is frozen */
+  if (!temp)
+  {
+    /* Cycle-accurate HCounter (Striker, Mickey Mania, Skitchin, Road Rash I,II,III, Sonic 3D Blast...) */
+    temp = hctab[cycles % MCYCLES_PER_LINE];
+  }
+  else
+  {
+    if (reg[1] & 4)
+    {
+      /* Mode 5: both counters are frozen (Lightgun games, Sunset Riders) */
+#ifdef LOGVDP
+      error("[%d(%d)][%d(%d)] HVC read -> 0x%x (%x)\n", v_counter, (cycles/MCYCLES_PER_LINE-1)%lines_per_frame, cycles, cycles%MCYCLES_PER_LINE, hvc_latch & 0xffff, m68k_get_reg(M68K_REG_PC));
+#endif
+      return (temp & 0xffff);
+    }
+    else
+    {
+      /* Mode 4: VCounter runs normally, HCounter is frozen */
+      temp &= 0xff;
+    }
+  }
+
+  /* Cycle-accurate VCounter (cycle counter starts from line -1) */
+  vc = (cycles / MCYCLES_PER_LINE) - 1;
+
+  /* VCounter overflow */
   if (vc > vc_max)
   {
     vc -= lines_per_frame;
   }
 
-  /* Check interlaced modes */
+  /* Interlaced modes */
   if (interlaced)
   {
     /* Interlace mode 2 (Sonic the Hedgehog 2, Combat Cars) */
@@ -1377,29 +1401,8 @@ unsigned int vdp_hvc_r(unsigned int cycles)
     vc = (vc & ~1) | ((vc >> 8) & 1);
   }
 
-  /* Returned value */
-  unsigned int temp = (vc & 0xff) << 8;
-
-  /* Check if HVC is frozen */
-  if (!hvc_latch)
-  {
-    /* Cycle-accurate HCounter (Striker, Mickey Mania, Skitchin, Road Rash I,II,III, Sonic 3D Blast...) */
-    temp |= hctab[cycles % MCYCLES_PER_LINE];
-  }
-  else
-  {
-    if (reg[1] & 4)
-    {
-      /* Mode 5: both counters are frozen (Lightgun games, Sunset Riders) */
-      temp = hvc_latch & 0xffff;
-    }
-    else
-    {
-      /* Mode 4: VCounter runs normally, HCounter is frozen */
-      temp |= (hvc_latch & 0xff);
-    }
-  }
-
+  temp |= ((vc & 0xff) << 8);
+  
 #ifdef LOGVDP
   error("[%d(%d)][%d(%d)] HVC read -> 0x%x (%x)\n", v_counter, (cycles/MCYCLES_PER_LINE-1)%lines_per_frame, cycles, cycles%MCYCLES_PER_LINE, temp, m68k_get_reg(M68K_REG_PC));
 #endif
@@ -1881,6 +1884,8 @@ static void vdp_reg_w(unsigned int r, unsigned int d, unsigned int cycles)
 
     case 8:   /* Horizontal Scroll (Mode 4 only) */
     {
+      int line;
+      
       /* Hscroll is latched at HCount 0xF3, HCount 0xF6 on MD */
       /* Line starts at HCount 0xF4, HCount 0xF6 on MD */
       if (system_hw < SYSTEM_MD)
@@ -1889,7 +1894,7 @@ static void vdp_reg_w(unsigned int r, unsigned int d, unsigned int cycles)
       }
 
       /* Make sure Hscroll has not already been latched */
-      int line = (lines_per_frame + (cycles / MCYCLES_PER_LINE) - 1) % lines_per_frame;
+      line = (lines_per_frame + (cycles / MCYCLES_PER_LINE) - 1) % lines_per_frame;
       if ((line > v_counter) && (line < bitmap.viewport.h) && !(work_ram[0x1ffb] & cart.special))
       {
         v_counter = line;
@@ -2092,20 +2097,17 @@ static void vdp_bus_w(unsigned int data)
   {
     case 0x01:  /* VRAM */
     {
-#ifdef LOGVDP
-      error("[%d(%d)][%d(%d)] VRAM 0x%x write -> 0x%x (%x)\n", v_counter, mcycles_68k/MCYCLES_PER_LINE-1, mcycles_68k, mcycles_68k%MCYCLES_PER_LINE, addr, data, m68k_get_reg(M68K_REG_PC));
-#endif
-      /* Byte-swap data if A0 is set */
-      if (addr & 1)
-      {
-        data = ((data >> 8) | (data << 8)) & 0xFFFF;
-      }
-
       /* VRAM address */
       int index = addr & 0xFFFE;
 
       /* Pointer to VRAM */
       uint16 *p = (uint16 *)&vram[index];
+
+      /* Byte-swap data if A0 is set */
+      if (addr & 1)
+      {
+        data = ((data >> 8) | (data << 8)) & 0xFFFF;
+      }
 
       /* Intercept writes to Sprite Attribute Table */
       if ((index & sat_base_mask) == satb)
@@ -2117,21 +2119,23 @@ static void vdp_bus_w(unsigned int data)
       /* Only write unique data to VRAM */
       if (data != *p)
       {
+        int name;
+
         /* Write data to VRAM */
         *p = data;
 
         /* Update pattern cache */
-        int name;
         MARK_BG_DIRTY (index);
       }
+
+#ifdef LOGVDP
+      error("[%d(%d)][%d(%d)] VRAM 0x%x write -> 0x%x (%x)\n", v_counter, mcycles_68k/MCYCLES_PER_LINE-1, mcycles_68k, mcycles_68k%MCYCLES_PER_LINE, addr, data, m68k_get_reg(M68K_REG_PC));
+#endif
       break;
     }
 
     case 0x03:  /* CRAM */
     {
-#ifdef LOGVDP
-      error("[%d(%d)][%d(%d)] CRAM 0x%x write -> 0x%x (%x)\n", v_counter, mcycles_68k/MCYCLES_PER_LINE-1, mcycles_68k, mcycles_68k%MCYCLES_PER_LINE, addr, data, m68k_get_reg(M68K_REG_PC));
-#endif
       /* Pointer to CRAM 9-bit word */
       uint16 *p = (uint16 *)&cram[addr & 0x7E];
 
@@ -2141,11 +2145,11 @@ static void vdp_bus_w(unsigned int data)
       /* Check if CRAM data is being modified */
       if (data != *p)
       {
-        /* Write CRAM data */
-        *p = data;
-
         /* CRAM index (64 words) */
         int index = (addr >> 1) & 0x3F;
+
+        /* Write CRAM data */
+        *p = data;
 
         /* Color entry 0 of each palette is never displayed (transparent pixel) */
         if (index & 0x0F)
@@ -2167,14 +2171,14 @@ static void vdp_bus_w(unsigned int data)
           remap_line(v_counter);
         }
       }
+#ifdef LOGVDP
+      error("[%d(%d)][%d(%d)] CRAM 0x%x write -> 0x%x (%x)\n", v_counter, mcycles_68k/MCYCLES_PER_LINE-1, mcycles_68k, mcycles_68k%MCYCLES_PER_LINE, addr, data, m68k_get_reg(M68K_REG_PC));
+#endif
       break;
     }
 
     case 0x05:  /* VSRAM */
     {
-#ifdef LOGVDP
-      error("[%d(%d)][%d(%d)] VSRAM 0x%x write -> 0x%x (%x)\n", v_counter, mcycles_68k/MCYCLES_PER_LINE-1, mcycles_68k, mcycles_68k%MCYCLES_PER_LINE, addr, data, m68k_get_reg(M68K_REG_PC));
-#endif
       *(uint16 *)&vsram[addr & 0x7E] = data;
 
       /* 2-cell Vscroll mode */
@@ -2187,16 +2191,19 @@ static void vdp_bus_w(unsigned int data)
           render_line(v_counter);
         }
       }
+#ifdef LOGVDP
+      error("[%d(%d)][%d(%d)] VSRAM 0x%x write -> 0x%x (%x)\n", v_counter, mcycles_68k/MCYCLES_PER_LINE-1, mcycles_68k, mcycles_68k%MCYCLES_PER_LINE, addr, data, m68k_get_reg(M68K_REG_PC));
+#endif
       break;
     }
 
-#ifdef LOGERROR
     default:
     {
+#ifdef LOGERROR
       error("[%d(%d)][%d(%d)] Unknown (%d) 0x%x write -> 0x%x (%x)\n", v_counter, mcycles_68k/MCYCLES_PER_LINE-1, mcycles_68k, mcycles_68k%MCYCLES_PER_LINE, code, addr, data, m68k_get_reg(M68K_REG_PC));
+#endif
       break;
     }
-#endif
   }
 
   /* Increment address register (TODO: see how address is incremented in Mode 4) */
@@ -2269,26 +2276,27 @@ static void vdp_68k_data_w_m4(unsigned int data)
   }
   else
   {
-    /* Byte-swap data if A0 is set */
-    if (addr & 1)
-    {
-      data = ((data >> 8) | (data << 8)) & 0xFFFF;
-    }
-
     /* VRAM address (interleaved format) */
     int index = ((addr << 1) & 0x3FC) | ((addr & 0x200) >> 8) | (addr & 0x3C00);
 
     /* Pointer to VRAM */
     uint16 *p = (uint16 *)&vram[index];
 
+    /* Byte-swap data if A0 is set */
+    if (addr & 1)
+    {
+      data = ((data >> 8) | (data << 8)) & 0xFFFF;
+    }
+
     /* Only write unique data to VRAM */
     if (data != *p)
     {
+      int name;
+
       /* Write data to VRAM */
       *p = data;
 
       /* Update the pattern cache */
-      int name;
       MARK_BG_DIRTY (index);
     }
   }
@@ -2354,11 +2362,11 @@ static void vdp_68k_data_w_m5(unsigned int data)
 
 static unsigned int vdp_68k_data_r_m4(void)
 {
-  /* Clear pending flag */
-  pending = 0;
-
   /* VRAM address (interleaved format) */
   int index = ((addr << 1) & 0x3FC) | ((addr & 0x200) >> 8) | (addr & 0x3C00);
+
+  /* Clear pending flag */
+  pending = 0;
 
   /* Increment address register */
   addr += (reg[15] + 1);
@@ -2472,11 +2480,12 @@ static void vdp_z80_data_w_m4(unsigned int data)
     /* Only write unique data to VRAM */
     if (data != vram[index])
     {
+      int name;
+
       /* Write data */
       vram[index] = data;
 
       /* Update pattern cache */
-      int name;
       MARK_BG_DIRTY(index);
     }
   }
@@ -2508,11 +2517,12 @@ static void vdp_z80_data_w_m5(unsigned int data)
       /* Only write unique data to VRAM */
       if (data != READ_BYTE(vram, index))
       {
+        int name;
+
         /* Write data */
         WRITE_BYTE(vram, index, data);
 
         /* Update pattern cache */
-        int name;
         MARK_BG_DIRTY (index);
       }
       break;
@@ -2538,11 +2548,11 @@ static void vdp_z80_data_w_m5(unsigned int data)
       /* Check if CRAM data is being modified */
       if (data != *p)
       {
-        /* Write CRAM data */
-        *p = data;
-
         /* CRAM index (64 words) */
         int index = (addr >> 1) & 0x3F;
+
+        /* Write CRAM data */
+        *p = data;
 
         /* Color entry 0 of each palette is never displayed (transparent pixel) */
         if (index & 0x0F)
@@ -2594,11 +2604,11 @@ static void vdp_z80_data_w_m5(unsigned int data)
 
 static unsigned int vdp_z80_data_r_m4(void)
 {
-  /* Clear pending flag */
-  pending = 0;
-
   /* Read buffer */
   unsigned int data = fifo[0];
+
+  /* Clear pending flag */
+  pending = 0;
 
   /* Process next read */
   fifo[0] = vram[addr & 0x3FFF];
@@ -2671,6 +2681,8 @@ static void vdp_z80_data_w_ms(unsigned int data)
 
   if (code < 3)
   {
+    int index;
+
     /* check if we are already on next line */
     int line = (lines_per_frame + (mcycles_z80 / MCYCLES_PER_LINE) - 1) % lines_per_frame;
     if ((line > v_counter) && (line < bitmap.viewport.h) && !(work_ram[0x1ffb] & cart.special))
@@ -2680,25 +2692,26 @@ static void vdp_z80_data_w_ms(unsigned int data)
     }
 
     /* VRAM address */
-    int index = addr & 0x3FFF;
+    index = addr & 0x3FFF;
 
 #ifdef LOGVDP
     error("[%d(%d)][%d(%d)] VRAM 0x%x write -> 0x%x (%x)\n", v_counter, mcycles_z80/MCYCLES_PER_LINE-1, mcycles_z80, mcycles_z80%MCYCLES_PER_LINE, index, data, Z80.pc.w.l);
 #endif
 
     /* VRAM write */
-    if(data != vram[index])
+    if (data != vram[index])
     {
       int name;
       vram[index] = data;
       MARK_BG_DIRTY(index);
     }
+
+#ifdef LOGVDP
+    error("[%d(%d)][%d(%d)] VRAM 0x%x write -> 0x%x (%x)\n", v_counter, mcycles_z80/MCYCLES_PER_LINE-1, mcycles_z80, mcycles_z80%MCYCLES_PER_LINE, index, data, Z80.pc.w.l);
+#endif
   }
   else
   {
-#ifdef LOGVDP
-      error("[%d(%d)][%d(%d)] CRAM 0x%x write -> 0x%x (%x)\n", v_counter, mcycles_z80/MCYCLES_PER_LINE-1, mcycles_z80, mcycles_z80%MCYCLES_PER_LINE, addr, data, Z80.pc.w.l);
-#endif
     /* CRAM address */
     int index = addr & 0x1F;
 
@@ -2720,6 +2733,9 @@ static void vdp_z80_data_w_ms(unsigned int data)
         color_update_m4(0x40, data);
       }
     }
+#ifdef LOGVDP
+    error("[%d(%d)][%d(%d)] CRAM 0x%x write -> 0x%x (%x)\n", v_counter, mcycles_z80/MCYCLES_PER_LINE-1, mcycles_z80, mcycles_z80%MCYCLES_PER_LINE, addr, data, Z80.pc.w.l);
+#endif
   }
 
   /* Update read buffer */
@@ -2736,6 +2752,8 @@ static void vdp_z80_data_w_gg(unsigned int data)
 
   if (code < 3)
   {
+    int index;
+
     /* check if we are already on next line*/
     int line = (lines_per_frame + (mcycles_z80 / MCYCLES_PER_LINE) - 1) % lines_per_frame;
     if ((line > v_counter) && (line < bitmap.viewport.h) && !(work_ram[0x1ffb] & cart.special))
@@ -2745,38 +2763,41 @@ static void vdp_z80_data_w_gg(unsigned int data)
     }
 
     /* VRAM address */
-    int index = addr & 0x3FFF;
+    index = addr & 0x3FFF;
 
 #ifdef LOGVDP
       error("[%d(%d)][%d(%d)] VRAM 0x%x write -> 0x%x (%x)\n", v_counter, mcycles_z80/MCYCLES_PER_LINE-1, mcycles_z80, mcycles_z80%MCYCLES_PER_LINE, index, data, Z80.pc.w.l);
 #endif
 
     /* VRAM write */
-    if(data != vram[index])
+    if (data != vram[index])
     {
       int name;
       vram[index] = data;
       MARK_BG_DIRTY(index);
     }
+#ifdef LOGVDP
+    error("[%d(%d)][%d(%d)] VRAM 0x%x write -> 0x%x (%x)\n", v_counter, mcycles_z80/MCYCLES_PER_LINE-1, mcycles_z80, mcycles_z80%MCYCLES_PER_LINE, index, data, Z80.pc.w.l);
+#endif
   }
   else
   {
-    if(addr & 1)
+    if (addr & 1)
     {
-      /* 12-bit data word */
-      data = (data << 8) | cached_write;
-
       /* Pointer to CRAM word */
       uint16 *p = (uint16 *)&cram[addr & 0x3E];
+
+      /* 12-bit data word */
+      data = (data << 8) | cached_write;
 
       /* Check if CRAM data is being modified */
       if (data != *p)
       {
-        /* Write CRAM data */
-        *p = data;
-
         /* Color index (0-31) */
         int index = (addr >> 1) & 0x1F;
+        
+        /* Write CRAM data */
+        *p = data;
 
         /* Update color palette */
         color_update_m4(index, data);
@@ -2793,6 +2814,9 @@ static void vdp_z80_data_w_gg(unsigned int data)
       /* Latch LSB */
       cached_write = data;
     }
+#ifdef LOGVDP
+    error("[%d(%d)][%d(%d)] CRAM 0x%x write -> 0x%x (%x)\n", v_counter, mcycles_z80/MCYCLES_PER_LINE-1, mcycles_z80, mcycles_z80%MCYCLES_PER_LINE, addr, data, Z80.pc.w.l);
+#endif
   }
 
   /* Update read buffer */
@@ -2804,11 +2828,11 @@ static void vdp_z80_data_w_gg(unsigned int data)
 
 static void vdp_z80_data_w_sg(unsigned int data)
 {
-  /* Clear pending flag */
-  pending = 0;
-
   /* VRAM address */
   int index = addr & 0x3FFF;
+
+  /* Clear pending flag */
+  pending = 0;
 
   /* 4K address decoding (cf. tms9918a.txt) */
   if (!(reg[1] & 0x80))
@@ -2821,6 +2845,10 @@ static void vdp_z80_data_w_sg(unsigned int data)
 
   /* Update address register */
   addr++;
+
+#ifdef LOGVDP
+  error("[%d(%d)][%d(%d)] VRAM 0x%x write -> 0x%x (%x)\n", v_counter, mcycles_z80/MCYCLES_PER_LINE-1, mcycles_z80, mcycles_z80%MCYCLES_PER_LINE, index, data, Z80.pc.w.l);
+#endif
 }
 
 /*--------------------------------------------------------------------------*/
