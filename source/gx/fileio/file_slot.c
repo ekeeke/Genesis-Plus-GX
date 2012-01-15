@@ -235,7 +235,7 @@ int slot_delete(int slot, int device)
 int slot_load(int slot, int device)
 {
   char filename[MAXPATHLEN];
-  int filesize, done = 0;
+  unsigned long filesize, done = 0;
   int offset = 0;
   u8 *savebuffer;
 
@@ -345,7 +345,9 @@ int slot_load(int slot, int device)
     /* Retrieve file size */
     filesize = CardFile.len;
     if (filesize % SectorSize)
-    filesize = ((filesize / SectorSize) + 1) * SectorSize;
+    {
+      filesize = ((filesize / SectorSize) + 1) * SectorSize;
+    }
 
     /* Allocate buffer */
     savebuffer = (u8 *)memalign(32,filesize);
@@ -372,13 +374,28 @@ int slot_load(int slot, int device)
 
   if (slot > 0)
   {
-    /* Load state */
-    if (state_load(&savebuffer[offset]) <= 0)
+    /* Uncompress state buffer */
+    u8 *state = (u8 *)memalign(32, STATE_SIZE);
+    if (!state)
     {
+      free(savebuffer);
+      GUI_WaitPrompt("Error","Unable to allocate memory !");
+      return 0;
+    }
+    done = STATE_SIZE;
+    memcpy(&filesize, savebuffer + offset, 4);
+    uncompress ((Bytef *)state, &done, (Bytef *)(savebuffer + offset + 4), filesize);
+
+    /* Load state */
+    if (state_load(state) <= 0)
+    {
+      free(state);
       free(savebuffer);
       GUI_WaitPrompt("Error","Invalid state file !");
       return 0;
     }
+
+    free(state);
   }
   else
   {
@@ -396,22 +413,32 @@ int slot_load(int slot, int device)
 int slot_save(int slot, int device)
 {
   char filename[MAXPATHLEN];
-  int filesize, done = 0;
+  unsigned long filesize, done = 0;
   int offset = device ? 2112 : 0;
   u8 *savebuffer;
 
   if (slot > 0)
   {
-    /* allocate buffer */
+    /* allocate buffers */
     savebuffer = (u8 *)memalign(32,STATE_SIZE);
-    if (!savebuffer)
+    u8 *state = (u8 *)memalign(32,STATE_SIZE);
+    if (!savebuffer || !state)
     {
       GUI_WaitPrompt("Error","Unable to allocate memory !");
       return 0;
     }
 
+    /* save state */
     GUI_MsgBoxOpen("Information","Saving State ...",1);
-    filesize = state_save(&savebuffer[offset]);
+    done = state_save(state);
+
+    /* compress state file */
+    filesize = STATE_SIZE;
+    compress2 ((Bytef *)(savebuffer + offset + 4), &filesize, (Bytef *)state, done, 9);
+    memcpy(savebuffer + offset, &filesize, 4);
+    filesize += 4;
+    done = 0;
+    free(state);
   }
   else
   {
@@ -510,7 +537,9 @@ int slot_save(int slot, int device)
     /* Adjust file size */
     filesize += 2112;
     if (filesize % SectorSize)
+    {
       filesize = ((filesize / SectorSize) + 1) * SectorSize;
+    }
 
     /* Check if file already exists */
     card_file CardFile;
