@@ -316,6 +316,7 @@ void m68k_run(unsigned int cycles)
 
 void m68k_init(void)
 {
+#ifdef BUILD_TABLES
   static uint emulation_initialized = 0;
 
   /* The first call to this function initializes the opcode handler jump table */
@@ -324,6 +325,7 @@ void m68k_init(void)
     m68ki_build_opcode_table();
     emulation_initialized = 1;
   }
+#endif
 
 #if M68K_EMULATE_INT_ACK == OPT_ON
   m68k_set_int_ack_callback(NULL);

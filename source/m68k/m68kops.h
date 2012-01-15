@@ -53,6 +53,8 @@ INLINE void UseDivsCycles(sint32 dst, sint16 src)
 
   if ((abs(dst) >> 16) < abs(src))
   {
+    int i;
+
     /* absolute quotient */
     uint32 quotient = abs(dst) / abs(src);
 
@@ -68,7 +70,6 @@ INLINE void UseDivsCycles(sint32 dst, sint16 src)
     }
 
     /* check higher 15-bits of quotient */
-    int i;
     for (i=0; i<15; i++)
     {
       quotient >>= 1;
@@ -19693,7 +19694,7 @@ static void m68k_op_sbcd_8_rr(void)
   uint dst = *r_dst;
   uint res = LOW_NIBBLE(dst) - LOW_NIBBLE(src) - XFLAG_AS_1();
 
-//  FLAG_V = ~res; /* Undefined V behavior */
+/* FLAG_V = ~res; */ /* Undefined V behavior */
   FLAG_V = VFLAG_CLEAR;  /* Undefined in Motorola's M68000PM/AD rev.1 and safer to assume cleared. */
 
   if(res > 9)
@@ -19710,8 +19711,8 @@ static void m68k_op_sbcd_8_rr(void)
 
   res = MASK_OUT_ABOVE_8(res);
 
-//  FLAG_V &= res; /* Undefined V behavior part II */
-//  FLAG_N = NFLAG_8(res); /* Undefined N behavior */
+/* FLAG_V &= res; */ /* Undefined V behavior part II */
+/* FLAG_N = NFLAG_8(res); */ /* Undefined N behavior */
   FLAG_Z |= res;
 
   *r_dst = MASK_OUT_BELOW_8(*r_dst) | res;
@@ -19725,7 +19726,7 @@ static void m68k_op_sbcd_8_mm_ax7(void)
   uint dst = m68ki_read_8(ea);
   uint res = LOW_NIBBLE(dst) - LOW_NIBBLE(src) - XFLAG_AS_1();
 
-//  FLAG_V = ~res; /* Undefined V behavior */
+/* FLAG_V = ~res; */ /* Undefined V behavior */
   FLAG_V = VFLAG_CLEAR;  /* Undefined in Motorola's M68000PM/AD rev.1 and safer to return zero. */
 
   if(res > 9)
@@ -19742,8 +19743,8 @@ static void m68k_op_sbcd_8_mm_ax7(void)
 
   res = MASK_OUT_ABOVE_8(res);
 
-//  FLAG_V &= res; /* Undefined V behavior part II */
-//  FLAG_N = NFLAG_8(res); /* Undefined N behavior */
+/* FLAG_V &= res; */ /* Undefined V behavior part II */
+/* FLAG_N = NFLAG_8(res); */ /* Undefined N behavior */
   FLAG_Z |= res;
 
   m68ki_write_8(ea, res);
@@ -19757,7 +19758,7 @@ static void m68k_op_sbcd_8_mm_ay7(void)
   uint dst = m68ki_read_8(ea);
   uint res = LOW_NIBBLE(dst) - LOW_NIBBLE(src) - XFLAG_AS_1();
 
-//  FLAG_V = ~res; /* Undefined V behavior */
+/* FLAG_V = ~res; */ /* Undefined V behavior */
   FLAG_V = VFLAG_CLEAR;  /* Undefined in Motorola's M68000PM/AD rev.1 and safer to return zero. */
 
   if(res > 9)
@@ -19774,8 +19775,8 @@ static void m68k_op_sbcd_8_mm_ay7(void)
 
   res = MASK_OUT_ABOVE_8(res);
 
-//  FLAG_V &= res; /* Undefined V behavior part II */
-//  FLAG_N = NFLAG_8(res); /* Undefined N behavior */
+/* FLAG_V &= res; */ /* Undefined V behavior part II */
+/* FLAG_N = NFLAG_8(res); */ /* Undefined N behavior */
   FLAG_Z |= res;
 
   m68ki_write_8(ea, res);
@@ -19789,7 +19790,7 @@ static void m68k_op_sbcd_8_mm_axy7(void)
   uint dst = m68ki_read_8(ea);
   uint res = LOW_NIBBLE(dst) - LOW_NIBBLE(src) - XFLAG_AS_1();
 
-//  FLAG_V = ~res; /* Undefined V behavior */
+/* FLAG_V = ~res; */ /* Undefined V behavior */
   FLAG_V = VFLAG_CLEAR;  /* Undefined in Motorola's M68000PM/AD rev.1 and safer to return zero. */
 
   if(res > 9)
@@ -19806,8 +19807,8 @@ static void m68k_op_sbcd_8_mm_axy7(void)
 
   res = MASK_OUT_ABOVE_8(res);
 
-//  FLAG_V &= res; /* Undefined V behavior part II */
-//  FLAG_N = NFLAG_8(res); /* Undefined N behavior */
+/* FLAG_V &= res; */ /* Undefined V behavior part II */
+/* FLAG_N = NFLAG_8(res); */ /* Undefined N behavior */
   FLAG_Z |= res;
 
   m68ki_write_8(ea, res);
@@ -19821,7 +19822,7 @@ static void m68k_op_sbcd_8_mm(void)
   uint dst = m68ki_read_8(ea);
   uint res = LOW_NIBBLE(dst) - LOW_NIBBLE(src) - XFLAG_AS_1();
 
-//  FLAG_V = ~res; /* Undefined V behavior */
+/* FLAG_V = ~res; */ /* Undefined V behavior */
   FLAG_V = VFLAG_CLEAR;  /* Undefined in Motorola's M68000PM/AD rev.1 and safer to return zero. */
 
   if(res > 9)
@@ -19838,8 +19839,8 @@ static void m68k_op_sbcd_8_mm(void)
 
   res = MASK_OUT_ABOVE_8(res);
 
-//  FLAG_V &= res; /* Undefined V behavior part II */
-//  FLAG_N = NFLAG_8(res); /* Undefined N behavior */
+/* FLAG_V &= res; */ /* Undefined V behavior part II */
+/* FLAG_N = NFLAG_8(res); */ /* Undefined N behavior */
   FLAG_Z |= res;
 
   m68ki_write_8(ea, res);
@@ -23126,9 +23127,7 @@ static void m68k_op_tas_8_ai(void)
        disabled in order to function properly.  Some Amiga software may also rely
        on this, but only when accessing specific addresses so additional functionality
        will be needed. */
-  uint allow_writeback = m68ki_tas_callback();
-
-  if (allow_writeback==1) m68ki_write_8(ea, dst | 0x80);
+  if (m68ki_tas_callback()) m68ki_write_8(ea, dst | 0x80);
 }
 
 
@@ -23146,9 +23145,7 @@ static void m68k_op_tas_8_pi(void)
        disabled in order to function properly.  Some Amiga software may also rely
        on this, but only when accessing specific addresses so additional functionality
        will be needed. */
-  uint allow_writeback = m68ki_tas_callback();
-
-  if (allow_writeback==1) m68ki_write_8(ea, dst | 0x80);
+  if (m68ki_tas_callback()) m68ki_write_8(ea, dst | 0x80);
 }
 
 
@@ -23166,9 +23163,7 @@ static void m68k_op_tas_8_pi7(void)
        disabled in order to function properly.  Some Amiga software may also rely
        on this, but only when accessing specific addresses so additional functionality
        will be needed. */
-  uint allow_writeback = m68ki_tas_callback();
-
-  if (allow_writeback==1) m68ki_write_8(ea, dst | 0x80);
+  if (m68ki_tas_callback()) m68ki_write_8(ea, dst | 0x80);
 }
 
 
@@ -23186,9 +23181,7 @@ static void m68k_op_tas_8_pd(void)
        disabled in order to function properly.  Some Amiga software may also rely
        on this, but only when accessing specific addresses so additional functionality
        will be needed. */
-  uint allow_writeback = m68ki_tas_callback();
-
-  if (allow_writeback==1) m68ki_write_8(ea, dst | 0x80);
+  if (m68ki_tas_callback()) m68ki_write_8(ea, dst | 0x80);
 }
 
 
@@ -23206,9 +23199,7 @@ static void m68k_op_tas_8_pd7(void)
        disabled in order to function properly.  Some Amiga software may also rely
        on this, but only when accessing specific addresses so additional functionality
        will be needed. */
-  uint allow_writeback = m68ki_tas_callback();
-
-  if (allow_writeback==1) m68ki_write_8(ea, dst | 0x80);
+  if (m68ki_tas_callback()) m68ki_write_8(ea, dst | 0x80);
 }
 
 
@@ -23226,9 +23217,7 @@ static void m68k_op_tas_8_di(void)
        disabled in order to function properly.  Some Amiga software may also rely
        on this, but only when accessing specific addresses so additional functionality
        will be needed. */
-  uint allow_writeback = m68ki_tas_callback();
-
-  if (allow_writeback==1) m68ki_write_8(ea, dst | 0x80);
+  if (m68ki_tas_callback()) m68ki_write_8(ea, dst | 0x80);
 }
 
 
@@ -23246,9 +23235,7 @@ static void m68k_op_tas_8_ix(void)
        disabled in order to function properly.  Some Amiga software may also rely
        on this, but only when accessing specific addresses so additional functionality
        will be needed. */
-  uint allow_writeback = m68ki_tas_callback();
-
-  if (allow_writeback==1) m68ki_write_8(ea, dst | 0x80);
+  if (m68ki_tas_callback()) m68ki_write_8(ea, dst | 0x80);
 }
 
 
@@ -23266,9 +23253,7 @@ static void m68k_op_tas_8_aw(void)
        disabled in order to function properly.  Some Amiga software may also rely
        on this, but only when accessing specific addresses so additional functionality
        will be needed. */
-  uint allow_writeback = m68ki_tas_callback();
-
-  if (allow_writeback==1) m68ki_write_8(ea, dst | 0x80);
+  if (m68ki_tas_callback()) m68ki_write_8(ea, dst | 0x80);
 }
 
 
@@ -23286,9 +23271,7 @@ static void m68k_op_tas_8_al(void)
        disabled in order to function properly.  Some Amiga software may also rely
        on this, but only when accessing specific addresses so additional functionality
        will be needed. */
-  uint allow_writeback = m68ki_tas_callback();
-
-  if (allow_writeback==1) m68ki_write_8(ea, dst | 0x80);
+  if (m68ki_tas_callback()) m68ki_write_8(ea, dst | 0x80);
 }
 
 
@@ -23613,6 +23596,12 @@ static void m68k_op_unlk_32(void)
 /* ======================================================================== */
 /* ========================= OPCODE TABLE BUILDER ========================= */
 /* ======================================================================== */
+
+#ifndef BUILD_TABLES
+
+#include "m68ki_instruction_jump_table.h"
+
+#else
 
 /* This is used to generate the opcode handler jump table */
 typedef struct
@@ -25347,7 +25336,7 @@ static void m68ki_build_opcode_table(void)
   {
     /* default to illegal */
     m68ki_instruction_jump_table[i] = m68k_op_illegal;
-    m68ki_cycles[i] = 0;
+    m68ki_cycles[i] = 4;
   }
 
   ostruct = &m68k_opcode_handler_table[0];
@@ -25420,6 +25409,7 @@ static void m68ki_build_opcode_table(void)
   }
 }
 
+#endif
 
 /* ======================================================================== */
 /* ============================== END OF FILE ============================= */

@@ -738,7 +738,11 @@ int emulate_address_error;
 static unsigned int end_cycles;
 
 /* Cycles used by CPU instructions */
+#ifdef BUILD_TABLES
 static unsigned char m68ki_cycles[0x10000];
+#else
+#include "m68ki_cycles.h"
+#endif
 
 /* Used by shift & rotate instructions */
 static const uint8 m68ki_shift_8_table[65] =
@@ -1047,58 +1051,70 @@ INLINE uint m68ki_read_imm_32(void)
  */
 INLINE uint m68ki_read_8_fc(uint address, uint fc)
 {
+  _m68k_memory_map *temp;
+
   m68ki_set_fc(fc) /* auto-disable (see m68kcpu.h) */
 
-  _m68k_memory_map *temp = &m68k_memory_map[((address)>>16)&0xff];
+  temp = &m68k_memory_map[((address)>>16)&0xff];
   if (temp->read8) return (*temp->read8)(ADDRESS_68K(address));
   else return READ_BYTE(temp->base, (address) & 0xffff);
 }
 
 INLINE uint m68ki_read_16_fc(uint address, uint fc)
 {
+  _m68k_memory_map *temp;
+
   m68ki_set_fc(fc) /* auto-disable (see m68kcpu.h) */
   m68ki_check_address_error(address, MODE_READ, fc) /* auto-disable (see m68kcpu.h) */
-
-  _m68k_memory_map *temp = &m68k_memory_map[((address)>>16)&0xff];
+  
+  temp = &m68k_memory_map[((address)>>16)&0xff];
   if (temp->read16) return (*temp->read16)(ADDRESS_68K(address));
   else return *(uint16 *)(temp->base + ((address) & 0xffff));
 }
 
 INLINE uint m68ki_read_32_fc(uint address, uint fc)
 {
+  _m68k_memory_map *temp;
+
   m68ki_set_fc(fc) /* auto-disable (see m68kcpu.h) */
   m68ki_check_address_error(address, MODE_READ, fc) /* auto-disable (see m68kcpu.h) */
 
-  _m68k_memory_map *temp = &m68k_memory_map[((address)>>16)&0xff];
+  temp = &m68k_memory_map[((address)>>16)&0xff];
   if (temp->read16) return ((*temp->read16)(ADDRESS_68K(address)) << 16) | ((*temp->read16)(ADDRESS_68K(address + 2)));
   else return m68k_read_immediate_32(address);
 }
 
 INLINE void m68ki_write_8_fc(uint address, uint fc, uint value)
 {
+  _m68k_memory_map *temp;
+
   m68ki_set_fc(fc) /* auto-disable (see m68kcpu.h) */
 
-  _m68k_memory_map *temp = &m68k_memory_map[((address)>>16)&0xff];
+  temp = &m68k_memory_map[((address)>>16)&0xff];
   if (temp->write8) (*temp->write8)(ADDRESS_68K(address),value);
   else WRITE_BYTE(temp->base, (address) & 0xffff, value);
 }
 
 INLINE void m68ki_write_16_fc(uint address, uint fc, uint value)
 {
+  _m68k_memory_map *temp;
+
   m68ki_set_fc(fc) /* auto-disable (see m68kcpu.h) */
   m68ki_check_address_error(address, MODE_WRITE, fc); /* auto-disable (see m68kcpu.h) */
 
-  _m68k_memory_map *temp = &m68k_memory_map[((address)>>16)&0xff];
+  temp = &m68k_memory_map[((address)>>16)&0xff];
   if (temp->write16) (*temp->write16)(ADDRESS_68K(address),value);
   else *(uint16 *)(temp->base + ((address) & 0xffff)) = value;
 }
 
 INLINE void m68ki_write_32_fc(uint address, uint fc, uint value)
 {
+  _m68k_memory_map *temp;
+
   m68ki_set_fc(fc) /* auto-disable (see m68kcpu.h) */
   m68ki_check_address_error(address, MODE_WRITE, fc) /* auto-disable (see m68kcpu.h) */
 
-  _m68k_memory_map *temp = &m68k_memory_map[((address)>>16)&0xff];
+  temp = &m68k_memory_map[((address)>>16)&0xff];
   if (temp->write16) (*temp->write16)(ADDRESS_68K(address),value>>16);
   else *(uint16 *)(temp->base + ((address) & 0xffff)) = value >> 16;
 
@@ -1521,6 +1537,8 @@ INLINE void m68ki_exception_address_error(void)
 /* Service an interrupt request and start exception processing */
 INLINE void m68ki_exception_interrupt(uint int_level)
 {
+  uint vector, sr, new_pc;
+
   #if M68K_EMULATE_ADDRESS_ERROR == OPT_ON
   CPU_INSTR_MODE = INSTRUCTION_NO;
   #endif /* M68K_EMULATE_ADDRESS_ERROR */
@@ -1533,10 +1551,10 @@ INLINE void m68ki_exception_interrupt(uint int_level)
     return;
 
   /* Always use the autovectors. */
-  uint vector = EXCEPTION_INTERRUPT_AUTOVECTOR+int_level;
+  vector = EXCEPTION_INTERRUPT_AUTOVECTOR+int_level;
 
   /* Start exception processing */
-  uint sr = m68ki_init_exception();
+  sr = m68ki_init_exception();
 
   /* Set the interrupt mask to the level of the one being serviced */
   FLAG_INT_MASK = int_level<<8;
@@ -1545,7 +1563,7 @@ INLINE void m68ki_exception_interrupt(uint int_level)
   m68ki_int_ack(int_level)
 
   /* Get the new PC */
-  uint new_pc = m68ki_read_data_32(vector<<2);
+  new_pc = m68ki_read_data_32(vector<<2);
 
   /* If vector is uninitialized, call the uninitialized interrupt vector */
   if(new_pc == 0)
