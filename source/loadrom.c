@@ -303,6 +303,8 @@ static void getrominfo(char *romheader)
   }
   else
   {
+    int i,j;
+    
     /* Some SMS games don't have any header */
     if (system_hw != SYSTEM_MD) return;
 
@@ -312,7 +314,7 @@ static void getrominfo(char *romheader)
 
     /* Domestic (japanese) name */
     rominfo.domestic[0] = romheader[ROMDOMESTIC];
-    int i, j = 1;
+    j = 1;
     for (i=1; i<48; i++)
     {
       if ((rominfo.domestic[j-1] != 32) || (romheader[ROMDOMESTIC + i] != 32))
@@ -371,8 +373,8 @@ static void deinterleave_block(uint8 * src)
   memcpy (block, src, 0x4000);
   for (i = 0; i < 0x2000; i += 1)
   {
-      src[i * 2 + 0] = block[0x2000 + (i)];
-      src[i * 2 + 1] = block[0x0000 + (i)];
+    src[i * 2 + 0] = block[0x2000 + (i)];
+    src[i * 2 + 1] = block[0x0000 + (i)];
   }
 }
 
@@ -393,17 +395,17 @@ int load_rom(char *filename)
   if (!size) return(0);
 
   /* Auto-detect system mode from ROM file extension */
-  if (!strnicmp(".sms", &filename[strlen(filename) - 4], 4))
+  if (!strncmp(".sms", &filename[strlen(filename) - 4], 4))
   {
     /* Master System II hardware */
     system_hw = SYSTEM_SMS2;
   }
-  else if (!strnicmp(".gg", &filename[strlen(filename) - 3], 3))
+  else if (!strncmp(".gg", &filename[strlen(filename) - 3], 3))
   {
     /* Game Gear hardware (GG mode) */
     system_hw = SYSTEM_GG;
   }
-  else if (!strnicmp(".sg", &filename[strlen(filename) - 3], 3))
+  else if (!strncmp(".sg", &filename[strlen(filename) - 3], 3))
   {
     /* SG-1000 hardware */
     system_hw = SYSTEM_SG;
@@ -414,7 +416,7 @@ int load_rom(char *filename)
     system_hw = SYSTEM_MD;
 
     /* Decode .MDX format */
-    if (!strnicmp(".mdx", &filename[strlen(filename) - 4], 4))
+    if (!strncmp(".mdx", &filename[strlen(filename) - 4], 4))
     {
       for (i = 4; i < size - 1; i++)
       {
@@ -444,9 +446,6 @@ int load_rom(char *filename)
   if (size > MAXROMSIZE) size = MAXROMSIZE;
   cart.romsize = size;
 
-  /* clear unused ROM space */
-  memset(cart.rom + size, 0xff, MAXROMSIZE - size);
-
   /* get infos from ROM header */
   getrominfo((char *)cart.rom);
 
@@ -455,9 +454,6 @@ int load_rom(char *filename)
   {
     system_hw = SYSTEM_PICO;
   }
-
-  /* detect console region */
-  region_autodetect();
 
   /* Save ROM type for later use */
   romtype = system_hw;
@@ -484,13 +480,16 @@ int load_rom(char *filename)
     system_hw = config.system;
   }
 
+  /* set console region */
+  region_autodetect();
+
   /* Genesis mode specific */
   if (system_hw == SYSTEM_MD)
   {
 #ifdef LSB_FIRST
     /* Byteswap ROM to optimize 16-bit access */
     uint8 temp;
-    for(i = 0; i < size; i += 2)
+    for (i = 0; i < size; i += 2)
     {
       temp = cart.rom[i];
       cart.rom[i] = cart.rom[i+1];
@@ -512,6 +511,13 @@ int load_rom(char *filename)
     }
   }
 
+  /* Master System or Game Gear BIOS ROM are loaded within $400000-$4FFFFF area */
+  if (size > 0x400000)
+  {
+    /* Mark both BIOS as unloaded if loaded ROM is overwriting them */
+    config.bios &= ~(SYSTEM_SMS | SYSTEM_GG);
+  }
+
   return(1);
 }
 
@@ -531,19 +537,23 @@ void region_autodetect(void)
   {
     /* country codes used to differentiate region */
     /* 0001 = japan ntsc (1) */
-    /* 0010 = japan  pal (2) */
+    /* 0010 = japan pal  (2) -> does not exist ? */
     /* 0100 = usa        (4) */
     /* 1000 = europe     (8) */
     int country = 0;
-    int i = 0;
-    char c;
 
     /* from Gens */
-    if (!strnicmp(rominfo.country, "eur", 3)) country |= 8;
-    else if (!strnicmp(rominfo.country, "usa", 3)) country |= 4;
-    else if (!strnicmp(rominfo.country, "jap", 3)) country |= 1;
+    if (!strncmp(rominfo.country, "eur", 3)) country |= 8;
+    else if (!strncmp(rominfo.country, "EUR", 3)) country |= 8;
+    else if (!strncmp(rominfo.country, "jap", 3)) country |= 1;
+    else if (!strncmp(rominfo.country, "JAP", 3)) country |= 1;
+    else if (!strncmp(rominfo.country, "usa", 3)) country |= 4;
+    else if (!strncmp(rominfo.country, "USA", 3)) country |= 4;
     else
     {
+      int i;
+      char c;
+
       /* look for each characters */
       for(i = 0; i < 4; i++)
       {
@@ -590,7 +600,7 @@ void region_autodetect(void)
   else if (config.region_detect == 4) region_code = REGION_JAPAN_PAL;
 
   /* PAL/NTSC timings */
-  vdp_pal = (region_code & REGION_JAPAN_PAL) >> 6;
+  vdp_pal = (region_code >> 6) & 0x01;
 }
 
 
