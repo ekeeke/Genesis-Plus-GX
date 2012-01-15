@@ -52,71 +52,49 @@ static void (*YM_Update)(int *buffer, int length);
 static void (*YM_Write)(unsigned int a, unsigned int v);
 
 /* Run FM chip for required M-cycles */
-static inline void fm_update(unsigned int cycles)
+static __inline__ void fm_update(unsigned int cycles)
 {
   if (cycles > fm_cycles_count)
   {
-    /* period to run */
-    cycles -= fm_cycles_count;
+    int32 *buffer;
+
+    /* samples to run */
+    unsigned int samples = (cycles - fm_cycles_count + fm_cycles_ratio - 1) / fm_cycles_ratio;
 
     /* update cycle count */
-    fm_cycles_count += cycles;
-
-    /* number of samples during period */
-    unsigned int cnt = cycles / fm_cycles_ratio;
-
-    /* remaining cycles */
-    unsigned int remain = cycles % fm_cycles_ratio;
-    if (remain)
-    {
-      /* one sample ahead */
-      fm_cycles_count += fm_cycles_ratio - remain;
-      cnt++;
-    }
+    fm_cycles_count += samples * fm_cycles_ratio;
 
     /* select input sample buffer */
-    int32 *buffer = Fir_Resampler_buffer();
+    buffer = Fir_Resampler_buffer();
     if (buffer)
     {
-      Fir_Resampler_write(cnt << 1);
+      Fir_Resampler_write(samples << 1);
     }
     else
     {
       buffer = snd.fm.pos;
-      snd.fm.pos += (cnt << 1);
+      snd.fm.pos += (samples << 1);
     }
 
     /* run FM chip & get samples */
-    YM_Update(buffer, cnt);
+    YM_Update(buffer, samples);
   }
 }
 
 /* Run PSG chip for required M-cycles */
-static inline void psg_update(unsigned int cycles)
+static __inline__ void psg_update(unsigned int cycles)
 {
   if (cycles > psg_cycles_count)
   {
-    /* period to run */
-    cycles -= psg_cycles_count;
+    /* samples to run */
+    unsigned int samples = (cycles - psg_cycles_count + psg_cycles_ratio - 1) / psg_cycles_ratio;
 
     /* update cycle count */
-    psg_cycles_count += cycles;
-
-    /* number of samples during period */
-    unsigned int cnt = cycles / psg_cycles_ratio;
-
-    /* remaining cycles */
-    unsigned int remain = cycles % psg_cycles_ratio;
-    if (remain)
-    {
-      /* one sample ahead */
-      psg_cycles_count += psg_cycles_ratio - remain;
-      cnt++;
-    }
+    psg_cycles_count += samples * psg_cycles_ratio;
 
     /* run PSG chip & get samples */
-    SN76489_Update(snd.psg.pos, cnt);
-    snd.psg.pos += cnt;
+    SN76489_Update(snd.psg.pos, samples);
+    snd.psg.pos += samples;
   }
 }
 
@@ -262,11 +240,11 @@ int sound_context_save(uint8 *state)
   return bufferptr;
 }
 
-int sound_context_load(uint8 *state, char *version)
+int sound_context_load(uint8 *state)
 {
   int bufferptr = 0;
 
-  if (((system_hw & SYSTEM_PBC) == SYSTEM_MD) || ((version[13] == 0x35) && (version[15] == 0x30)))
+  if ((system_hw & SYSTEM_PBC) == SYSTEM_MD)
   {
     bufferptr = YM2612LoadContext(state);
   }
@@ -287,15 +265,17 @@ int sound_context_load(uint8 *state, char *version)
 /* End of frame update, return the number of samples run so far.  */
 int sound_update(unsigned int cycles)
 {
+  int size;
+
   /* run PSG & FM chips until end of frame */
   cycles <<= 11;
   psg_update(cycles);
   fm_update(cycles);
 
-  int size = snd.psg.pos - snd.psg.buffer;
-
+  /* available PSG samples */
+  size = snd.psg.pos - snd.psg.buffer;
 #ifdef LOGSOUND
-    error("%d PSG samples available\n",size);
+  error("%d PSG samples available\n",size);
 #endif
 
   /* FM resampling */

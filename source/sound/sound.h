@@ -45,7 +45,7 @@ extern void sound_init(void);
 extern void sound_reset(void);
 extern void sound_restore(void);
 extern int sound_context_save(uint8 *state);
-extern int sound_context_load(uint8 *state, char *version);
+extern int sound_context_load(uint8 *state);
 extern int sound_update(unsigned int cycles);
 extern void fm_reset(unsigned int cycles);
 extern void fm_write(unsigned int cycles, unsigned int address, unsigned int data);
