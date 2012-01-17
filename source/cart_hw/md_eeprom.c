@@ -38,7 +38,7 @@
 
 #include "shared.h"
 
-#define GAME_CNT 30
+#define GAME_CNT 28
 
 T_EEPROM_24C md_eeprom;
 
@@ -73,8 +73,8 @@ static const T_GAME_ENTRY database[GAME_CNT] =
   {{"T-50606"    }, 0,      {7,  0x7F,   0x7F,   0x200001, 0x200001, 0x200001, 7, 7, 6}},   /* Bill Walsh College Football */
 
   /* SEGA mapper (24C01 only) */
-  {{"T-12046"    }, 0,      {7,  0x7F,   0x7F,   0x200001, 0x200001, 0x200001, 0, 0, 1}},   /* Megaman - The Wily Wars */
-  {{"T-12053"    }, 0xEA80, {7,  0x7F,   0x7F,   0x200001, 0x200001, 0x200001, 0, 0, 1}},   /* Rockman Mega World (J) [A] */
+  {{"T-12046"    }, 0xAD23, {7,  0x7F,   0x7F,   0x200001, 0x200001, 0x200001, 0, 0, 1}},   /* Megaman - The Wily Wars */
+  {{"T-12053"    }, 0xEA80, {7,  0x7F,   0x7F,   0x200001, 0x200001, 0x200001, 0, 0, 1}},   /* Rockman Mega World [Alt] */
   {{"MK-1215"    }, 0,      {7,  0x7F,   0x7F,   0x200001, 0x200001, 0x200001, 0, 0, 1}},   /* Evander 'Real Deal' Holyfield's Boxing */
   {{"MK-1228"    }, 0,      {7,  0x7F,   0x7F,   0x200001, 0x200001, 0x200001, 0, 0, 1}},   /* Greatest Heavyweights of the Ring (U) */
   {{"G-5538"     }, 0,      {7,  0x7F,   0x7F,   0x200001, 0x200001, 0x200001, 0, 0, 1}},   /* Greatest Heavyweights of the Ring (J) */
@@ -88,12 +88,10 @@ static const T_GAME_ENTRY database[GAME_CNT] =
   /* CODEMASTERS mapper */
   /* 24C08 */
   {{"T-120106"   }, 0,      {8,  0x3FF, 0x3FF,   0x300000, 0x380001, 0x300000, 0, 7, 1}},   /* Brian Lara Cricket */
-  {{"00000000-00"}, 0x168B, {8,  0x3FF,  0x3FF,  0x300000, 0x380001, 0x300000, 0, 7, 1}},   /* Micro Machines Military */
-  {{"00000000-00"}, 0xCEE0, {8,  0x3FF,  0x3FF,  0x300000, 0x380001, 0x300000, 0, 7, 1}},   /* Micro Machines Military (Bad)*/
+  {{"00000000-00"}, 0xCEE0, {8,  0x3FF,  0x3FF,  0x300000, 0x380001, 0x300000, 0, 7, 1}},   /* Micro Machines Military */
   /* 24C16 */
-  {{"T-120096"   }, 0,      {8,  0x7FF,  0x7FF,  0x300000, 0x380001, 0x300000, 0, 7, 1}},   /* Micro Machines 2 - Turbo Tournament (E) */
-  {{"00000000-00"}, 0x165E, {8,  0x7FF,  0x7FF,  0x300000, 0x380001, 0x300000, 0, 7, 1}},   /* Micro Machines Turbo Tournament 96 */
-  {{"00000000-00"}, 0x2C41, {8,  0x7FF,  0x7FF,  0x300000, 0x380001, 0x300000, 0, 7, 1}},   /* Micro Machines Turbo Tournament 96 (Bad)*/
+  {{"T-120096"   }, 0,      {8,  0x7FF,  0x7FF,  0x300000, 0x380001, 0x300000, 0, 7, 1}},   /* Micro Machines 2 - Turbo Tournament */
+  {{"00000000-00"}, 0x2C41, {8,  0x7FF,  0x7FF,  0x300000, 0x380001, 0x300000, 0, 7, 1}},   /* Micro Machines Turbo Tournament 96 */
   /* 24C65 */
   {{"T-120146-50"}, 0,      {16, 0x1FFF, 0x1FFF, 0x300000, 0x380001, 0x300000, 0, 7, 1}}    /* Brian Lara Cricket 96, Shane Warne Cricket */
 };
@@ -121,7 +119,7 @@ void md_eeprom_init()
     if (strstr(rominfo.product,database[i].game_id) != NULL)
     {
       /* additional check (Micro Machines, Rockman Mega World) */
-      if ((database[i].chk == 0) || (database[i].chk == rominfo.checksum))
+      if ((database[i].chk == 0x0000) || (database[i].chk == rominfo.realchecksum))
       {
         sram.custom = 1;
         sram.on = 1;
@@ -132,7 +130,7 @@ void md_eeprom_init()
     i++;
   }
 
-  /* Game not found in database but header seems to indicate it uses EEPROM */
+  /* Game not found in database but ROM header indicates it uses EEPROM */
   if (sram.detected)
   {
     if ((sram.end - sram.start) < 2)
