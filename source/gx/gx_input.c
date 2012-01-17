@@ -57,6 +57,7 @@
 /* lower is the value, faster is the key update */
 #define HELD_SPEED 4
 
+
 /* Configurable keys */
 #define KEY_BUTTONA 0
 #define KEY_BUTTONB 1
@@ -82,7 +83,15 @@ static u32 wpad_dirmap[3][4] =
   {WPAD_CLASSIC_BUTTON_UP, WPAD_CLASSIC_BUTTON_DOWN, WPAD_CLASSIC_BUTTON_LEFT, WPAD_CLASSIC_BUTTON_RIGHT} /* CLASSIC */
 };
 
+#define WPAD_BUTTONS_HELD (WPAD_BUTTON_UP | WPAD_BUTTON_DOWN | WPAD_BUTTON_LEFT | WPAD_BUTTON_RIGHT | \
+                           WPAD_BUTTON_MINUS | WPAD_BUTTON_PLUS | WPAD_BUTTON_A | WPAD_BUTTON_2 | \
+                           WPAD_CLASSIC_BUTTON_UP | WPAD_CLASSIC_BUTTON_DOWN | WPAD_CLASSIC_BUTTON_LEFT | WPAD_CLASSIC_BUTTON_RIGHT | \
+                           WPAD_CLASSIC_BUTTON_FULL_L | WPAD_CLASSIC_BUTTON_FULL_R | WPAD_CLASSIC_BUTTON_A)
+
 #endif
+
+#define PAD_BUTTONS_HELD  (PAD_BUTTON_UP | PAD_BUTTON_DOWN | PAD_BUTTON_LEFT | PAD_BUTTON_RIGHT | \
+                           PAD_TRIGGER_L | PAD_TRIGGER_R | PAD_BUTTON_A)
 
 static char keyname[MAX_KEYS][16];
 
@@ -1413,7 +1422,7 @@ void gx_input_UpdateMenu(void)
   s16 pp = PAD_ButtonsDown(0);
 
   /* PAD held keys (direction/selection) */
-  s16 hp = PAD_ButtonsHeld(0) & (PAD_BUTTON_UP|PAD_BUTTON_DOWN|PAD_BUTTON_LEFT|PAD_BUTTON_RIGHT|PAD_BUTTON_A);
+  s16 hp = PAD_ButtonsHeld(0) & PAD_BUTTONS_HELD;
 
   /* PAD analog sticks (handled as PAD held direction keys) */
   s8 x  = PAD_StickX(0);
@@ -1432,7 +1441,7 @@ void gx_input_UpdateMenu(void)
   u32 pw = data->btns_d;
 
   /* WPAD held keys (direction/selection) */
-  u32 hw = data->btns_h & (WPAD_CLASSIC_BUTTON_UP|WPAD_CLASSIC_BUTTON_DOWN|WPAD_CLASSIC_BUTTON_LEFT|WPAD_CLASSIC_BUTTON_RIGHT|WPAD_BUTTON_UP|WPAD_BUTTON_DOWN|WPAD_BUTTON_LEFT|WPAD_BUTTON_RIGHT|WPAD_BUTTON_A|WPAD_BUTTON_2);
+  u32 hw = data->btns_h & WPAD_BUTTONS_HELD;
 
   /* WPAD analog sticks (handled as PAD held direction keys) */
   x = wpad_StickX(data, 0);
@@ -1477,6 +1486,8 @@ void gx_input_UpdateMenu(void)
     else if (pw & WPAD_BUTTON_DOWN)  pp |= PAD_BUTTON_DOWN;
     else if (pw & WPAD_BUTTON_LEFT)  pp |= PAD_BUTTON_LEFT;
     else if (pw & WPAD_BUTTON_RIGHT) pp |= PAD_BUTTON_RIGHT;
+    if (pw & WPAD_BUTTON_MINUS)      pp |= PAD_TRIGGER_L;
+    if (pw & WPAD_BUTTON_PLUS)       pp |= PAD_TRIGGER_R;
   }
   else
   {
@@ -1485,6 +1496,8 @@ void gx_input_UpdateMenu(void)
     else if (pw & WPAD_BUTTON_DOWN)  pp |= PAD_BUTTON_RIGHT;
     else if (pw & WPAD_BUTTON_LEFT)  pp |= PAD_BUTTON_DOWN;
     else if (pw & WPAD_BUTTON_RIGHT) pp |= PAD_BUTTON_UP;
+    if (pw & WPAD_BUTTON_MINUS)      pp |= PAD_TRIGGER_R;
+    if (pw & WPAD_BUTTON_PLUS)       pp |= PAD_TRIGGER_L;
   }
 
   /* Classic Controller direction keys */
@@ -1494,8 +1507,6 @@ void gx_input_UpdateMenu(void)
   else if (pw & WPAD_CLASSIC_BUTTON_RIGHT)  pp |= PAD_BUTTON_RIGHT;
 
   /* WPAD buttons */
-  if (pw & WPAD_BUTTON_MINUS)           pp |= PAD_TRIGGER_L;
-  if (pw & WPAD_BUTTON_PLUS)            pp |= PAD_TRIGGER_R;
   if (pw & WPAD_BUTTON_A)               pp |= PAD_BUTTON_A;
   if (pw & WPAD_BUTTON_B)               pp |= PAD_BUTTON_B;
   if (pw & WPAD_BUTTON_2)               pp |= PAD_BUTTON_A;
