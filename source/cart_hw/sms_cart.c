@@ -50,8 +50,9 @@
 #define MAPPER_KOREA  (5)
 #define MAPPER_MSX    (6)
 #define MAPPER_93C46  (7)
+#define MAPPER_MULTI  (8)
 
-#define GAME_DATABASE_CNT (187)
+#define GAME_DATABASE_CNT (188)
 
 typedef struct
 {
@@ -96,6 +97,7 @@ static const rominfo_t game_list[GAME_DATABASE_CNT] =
   {0x18FB98A3, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_KOREA,  SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Jang Pung 3 (KR) */
   {0x97D03541, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_KOREA,  SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Sangokushi 3 (KR) */
   {0x67C2F0FF, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_KOREA,  SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Super Boy 2 (KR) */
+  {0xA67F2A5C, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_MULTI,  SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* 4-Pak All Action (KR) */
 
   /* games using Codemaster mapper */
   {0x29822980, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_CODIES, SYSTEM_SMS2,     REGION_EUROPE}, /* Cosmic Spacehead */
@@ -316,6 +318,7 @@ static void write_mapper_sega(unsigned int address, unsigned char data);
 static void write_mapper_codies(unsigned int address, unsigned char data);
 static void write_mapper_korea(unsigned int address, unsigned char data);
 static void write_mapper_msx(unsigned int address, unsigned char data);
+static void write_mapper_multi(unsigned int address, unsigned char data);
 static void write_mapper_93c46(unsigned int address, unsigned char data);
 static void write_mapper_terebi(unsigned int address, unsigned char data);
 static unsigned char read_mapper_93c46(unsigned int address);
@@ -857,6 +860,11 @@ static void mapper_reset(void)
       z80_writemem = write_mapper_msx;
       break;
 
+    case MAPPER_MULTI:
+      z80_readmem = read_mapper_default;
+      z80_writemem = write_mapper_multi;
+      break;
+
     case MAPPER_93C46:
       z80_readmem = read_mapper_93c46;
       z80_writemem = write_mapper_93c46;
@@ -998,8 +1006,8 @@ static void mapper_16k_w(int offset, unsigned int data)
 
     case 1: /* cartridge ROM bank (16k) at $0000-$3FFF */
     {
-      /* first 1k is not fixed (CODEMASTER mapper only) */
-      if (slot.mapper == MAPPER_CODIES)
+      /* first 1k is not fixed (CODEMASTER or MULTI mappers only) */
+      if ((slot.mapper == MAPPER_CODIES) || (slot.mapper == MAPPER_MULTI))
       {
         z80_readmap[0] = &slot.rom[(page << 14)];
       }
@@ -1106,6 +1114,29 @@ static void write_mapper_codies(unsigned int address, unsigned char data)
   if (address == 0x8000)
   {
     mapper_16k_w(3,data);
+    return;
+  }
+
+  z80_writemap[address >> 10][address & 0x03FF] = data;
+}
+
+static void write_mapper_multi(unsigned int address, unsigned char data)
+{
+  if (address == 0x3FFE)
+  {
+    mapper_16k_w(1,data);
+    return;
+  }
+
+  if (address == 0x7FFF)
+  {
+    mapper_16k_w(2,data);
+    return;
+  }
+
+  if (address == 0xBFFF)
+  {
+    mapper_16k_w(3,(slot.fcr[1] & 0x30) + data);
     return;
   }
 
