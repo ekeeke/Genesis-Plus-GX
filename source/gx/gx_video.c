@@ -351,6 +351,15 @@ static camera cam = {
 /* VSYNC callback */
 static void vi_callback(u32 cnt)
 {
+#ifdef LOG_TIMING
+  u64 current = gettime();
+  if (prevtime)
+  {
+    delta_time[frame_cnt] = diff_nsec(prevtime, current);
+    frame_cnt = (frame_cnt + 1) % LOGSIZE;
+  }
+  prevtime = current;
+#endif
   frameticker ++;
 }
 
@@ -467,80 +476,99 @@ static void gxResetMode(GXRModeObj *tvmode)
 /* Manage Aspect Ratio */
 static void gxSetAspectRatio(int *xscale, int *yscale)
 {
-  /* original aspect ratio */
-  /* the following values have been deducted from comparison with a real 50/60hz Mega Drive */
+  /* Vertical Scaling is disabled by default */
+  *yscale = (bitmap.viewport.h + (2 * bitmap.viewport.y)) / 2;
+
+  /* Original aspect ratio */
   if (config.aspect)
   {
-    /* vertical borders */
-    if (config.overscan & 1)
+    /* Adjust vertical scaling when input & output video heights are different */
+    if (vdp_pal && (!gc_pal || config.render))
     {
-      /* Genesis outputs 288(PAL) or 243(NTSC) lines */
-      /* Wii & Game Cube output 286/574(PAL50) or 240/480 (PAL60 & NTSC) lines  */
-      *yscale = vdp_pal + ((gc_pal && !config.render) ? 143 : 120);
+      *yscale = *yscale * VI_MAX_HEIGHT_NTSC / VI_MAX_HEIGHT_PAL;
     }
-    else
+    else if (!vdp_pal && gc_pal && !config.render)
     {
-      /* overscan is simulated (black) */
-      *yscale = vheight / 2;
-
-      /* adjust when Genesis & Wii/GC video height does not match */
-      if (vdp_pal && (!gc_pal || config.render))
-      {
-        *yscale = *yscale * 240 / 288;
-      }
-      else if (!vdp_pal && gc_pal && !config.render)
-      {
-        *yscale = *yscale * 288 / 240;
-      }
+      *yscale = *yscale * VI_MAX_HEIGHT_PAL / VI_MAX_HEIGHT_NTSC;
     }
 
-    /* horizontal borders */
+    /* Horizontal Scaling */
+    /* Wii/NGC pixel clock = 13.5 Mhz */
+    /* "H32" pixel clock = Master Clock / 10 = 5.3693175 Mhz (NTSC) or 5.3203424 (PAL) */
+    /* "H40" pixel clock = Master Clock / 8 = 6,711646875 Mhz (NTSC) or 6,650428 Mhz (PAL) */
     if (config.overscan & 2)
     {
-      /* max visible range is ~712 pixels (= 348 'H40' pixels) */
-      *xscale = (reg[12] & 1) ? 356 : 363; 
+      /* Horizontal borders are emulated */
+      if (reg[12] & 1)
+      {
+        /* 348 "H40" pixels = 348 * Wii pixel clock / "H40" pixel clock = approx. 700 (NTSC) or 707 (PAL) Wii/NGC pixels */
+        *xscale = (system_clock == MCLOCK_NTSC) ? 350 : 354; 
+      }
+      else
+      {
+        /* 284 "H32" pixels = 284 * Wii pixel clock / "H40" pixel clock = approx. 714 (NTSC) or 721 (PAL) Wii/NGC pixels */
+        *xscale = (system_clock == MCLOCK_NTSC) ? 357 : 361; 
+      }
     }
     else
     {
-      /* overscan is simulated (black) */
-      *xscale = (system_hw == SYSTEM_GG) ? 204 : 327;
+      /* Horizontal borders are simulated */
+      if (system_hw == SYSTEM_GG)
+      {
+        /* 160 "H32" pixels = 160 * Wii pixel clock / "H32" pixel clock = approx. 403 Wii/NGC pixels (NTSC only) */
+        *xscale = 202;
+      }
+      else
+      {
+        /* 320 "H40" pixels = 256 "H32" pixels = 256 * Wii pixel clock / "H32" pixel clock = approx. 644 (NTSC) or 650 (PAL) Wii/NGC pixels */
+        *xscale = (system_clock == MCLOCK_NTSC) ? 322 : 325; 
+      }
     }
 
-    /* aspect correction for 16:9 screens */
+    /* Aspect correction for widescreen TV */
     if (config.aspect & 2)
     {
+      /* Keep 4:3 aspect ratio on 16:9 output */
       *xscale = (*xscale * 3) / 4;
     }
   }
 
-  /* manual aspect ratio (default is full screen & not scaled if possible) */
+  /* Manual aspect ratio */
   else
   {
-    /* vertical borders */
-    if (config.overscan & 1)
+    /* By default, disable horizontal scaling */
+    *xscale = bitmap.viewport.w + (2 * bitmap.viewport.x);
+      
+    /* Keep original aspect ratio in H32 modes */
+    if (!(reg[12] & 1))
     {
-      *yscale = (gc_pal && !config.render) ? (vdp_pal ? (268*144 / bitmap.viewport.h):143) : (vdp_pal ? (224*144 / bitmap.viewport.h):120);
+        *xscale = (*xscale * 320) / 256;
     }
-    else
+
+    /* Game Gear specific: if borders are disabled, upscale to fullscreen */
+    if (system_hw == SYSTEM_GG)
     {
-      *yscale = (vheight == 192) ? 96 : 112;
-      if (gc_pal && !config.render)
+      if (!(config.overscan & 1))
       {
-        *yscale = (*yscale * 134) / 112; 
+        /* Active area height = approx. 224 non-interlaced lines (60hz) */
+        *yscale = 112;
+      }
+
+      if (!(config.overscan & 2))
+      {
+        /* Active area width = approx. 640 pixels */
+        *xscale = 320;
       }
     }
 
-    /* horizontal borders */
-    if (config.overscan & 2)
+    /* By default, keep NTSC aspect ratio */
+    if (gc_pal && !config.render)
     {
-      *xscale = (reg[12] & 1) ? 348 : 355;
-    }
-    else
-    {
-      *xscale = 320;
+      /* Upscale PAL output */
+      *yscale = *yscale * VI_MAX_HEIGHT_PAL / VI_MAX_HEIGHT_NTSC;
     }
 
-    /* add user scaling */
+    /* Add user scaling */
     *xscale += config.xscale;
     *yscale += config.yscale;
   }
@@ -1387,10 +1415,10 @@ void gx_video_Start(void)
     gc_pal = 0;
   }
 
-  /* VSYNC callbacks */
-  /* If TV mode matches emulated video mode, frame emulation is synchronized with Video Interrupt */
-  if (gc_pal == vdp_pal)
+  /* When VSYNC is forced ON or AUTO with TV mode matching emulated video mode, emulation is synchronized with video hardware */
+  if ((config.vsync == 1) && (gc_pal == vdp_pal))
   {
+    /* VSYNC callback */
     VIDEO_SetPreRetraceCallback(vi_callback);
     VIDEO_Flush();
   }
@@ -1517,11 +1545,10 @@ void gx_video_Update(void)
     if (config.ntsc)
     {
       vwidth = (reg[12] & 1) ? MD_NTSC_OUT_WIDTH(vwidth) : SMS_NTSC_OUT_WIDTH(vwidth);
-    }
 
-    /* texels size must be multiple of 4 */
-    vwidth  = (vwidth  >> 2) << 2;
-    vheight = (vheight >> 2) << 2;
+      /* texel width must remain multiple of 4 */
+      vwidth  = (vwidth >> 2) << 2;
+    }
 
     /* initialize texture object */
     GXTexObj texobj;
@@ -1619,7 +1646,7 @@ void gx_video_Update(void)
       VIDEO_WaitVSync();
     }
 
-    /* audio & video resynchronization */
+    /* Audio DMA need to be resynchronized with VSYNC */                    
     audioStarted = 0;
   }
 }
@@ -1647,29 +1674,21 @@ void gx_video_Init(void)
       TV60hz_240p.viTVMode = VI_TVMODE_EURGB60_DS;
       TV60hz_240i.viTVMode = VI_TVMODE_EURGB60_INT;
       TV60hz_480i.viTVMode = VI_TVMODE_EURGB60_INT;
-      config.tv_mode = 1;
 
-      /* use harwdare vertical scaling to fill screen */
+      /* force harwdare vertical scaling to fill screen */
       vmode = &TVPal574IntDfScale;
       break;
     
-    case VI_NTSC: /* 480 lines (NTSC 60hz) */
-      TV60hz_240p.viTVMode = VI_TVMODE_NTSC_DS;
-      TV60hz_240i.viTVMode = VI_TVMODE_NTSC_INT;
-      TV60hz_480i.viTVMode = VI_TVMODE_NTSC_INT;
-      config.tv_mode = 0;
+    default:  /* 480 lines (NTSC, MPAL or PAL 60Hz) */
 
-#ifndef HW_RVL
-      /* force 480p on NTSC GameCube if the Component Cable is present */
-      if (VIDEO_HaveComponentCable()) vmode = &TVNtsc480Prog;
-#endif
-      break;
-
-    default:  /* 480 lines (PAL 60Hz) */
       TV60hz_240p.viTVMode = VI_TVMODE(vmode->viTVMode >> 2, VI_NON_INTERLACE);
       TV60hz_240i.viTVMode = VI_TVMODE(vmode->viTVMode >> 2, VI_INTERLACE);
       TV60hz_480i.viTVMode = VI_TVMODE(vmode->viTVMode >> 2, VI_INTERLACE);
-      config.tv_mode = 2;
+
+#ifndef HW_RVL
+      /* force 480p on GameCube if Component Cable is detected */
+      if (VIDEO_HaveComponentCable()) vmode = &TVNtsc480Prog;
+#endif
       break;
   }
 

@@ -44,10 +44,20 @@
 
 /* globals */
 extern void legal(void);
+extern double get_framerate(void);
 extern void reloadrom(void);
 extern void shutdown(void);
 extern u32 frameticker;
 extern u32 Shutdown;
 extern u32 ConfigRequested;
+
+#ifdef LOG_TIMING
+#include <ogc/lwp_watchdog.h>
+#define LOGSIZE 2000
+extern u64 prevtime;
+extern u32 frame_cnt;
+extern u32 delta_time[LOGSIZE];
+extern u32 delta_samp[LOGSIZE];
+#endif
 
 #endif /* _OSD_H_ */

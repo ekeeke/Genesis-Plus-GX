@@ -39,14 +39,14 @@
 
 #include "shared.h"
 
+
 /* DMA soundbuffers (required to be 32-bytes aligned)
-   Length is dimensionned for one frame of emulation (800/808 samples @60hz, 960 samples@50Hz)
    To prevent audio clashes, we use double buffering technique:
     one buffer is the active DMA buffer
     the other one is the current work buffer (updated during frame emulation)
    We do not need more since frame emulation and DMA operation are synchronized
 */
-u8 soundbuffer[2][3840] ATTRIBUTE_ALIGN(32);
+u8 soundbuffer[2][SOUND_BUFFER_MAX_SIZE] ATTRIBUTE_ALIGN(32);
 
 /* Current work soundbuffer */
 u32 mixbuffer;
@@ -65,6 +65,15 @@ static u32 Bg_music_ogg_size = 0;
 /* Audio DMA callback */
 static void ai_callback(void)
 {
+#ifdef LOG_TIMING
+  u64 current = gettime();
+  if (prevtime)
+  {
+    delta_time[frame_cnt] = diff_nsec(prevtime, current);
+    frame_cnt = (frame_cnt + 1) % LOGSIZE;
+  }
+  prevtime = current;
+#endif
   frameticker ++;
 }
 
@@ -115,8 +124,18 @@ void gx_audio_Shutdown(void)
  ***/
 void gx_audio_Update(void)
 {
-  /* retrieve audio samples */
+  /* retrieve audio samples (size must be multiple of 32 bytes) */
   int size = audio_update() * 4;
+#ifdef LOG_TIMING
+  if (prevtime && (frame_cnt < LOGSIZE - 1))
+  {
+    delta_samp[frame_cnt + 1] = size;
+  }
+  else
+  {
+    delta_samp[0] = size;
+  }
+#endif
 
   /* set next DMA soundbuffer */
   s16 *sb = (s16 *)(soundbuffer[mixbuffer]);
@@ -131,10 +150,6 @@ void gx_audio_Update(void)
   /* Therefore we need to make sure frame emulation is completed before current DMA is  */
   /* completed, either by synchronizing frame emulation with DMA start or by syncing it */
   /* with Vertical Interrupt and outputing a suitable number of samples per frame.      */
-  /*                                                                                    */
-  /* In both cases, audio DMA need to be synchronized with VSYNC and therefore need to  */
-  /* be resynchronized (restarted) every time video settings are changed (hopefully,    */
-  /* this generally happens while no music is played.                                   */                    
   if (!audioStarted)
   {
     /* restart audio DMA */
@@ -165,14 +180,15 @@ void gx_audio_Start(void)
   AUDIO_RegisterDMACallback(NULL);
   DSP_Halt();
 
-  /* when TV mode does not match emulated video mode, frame emulation is synchronized with Audio Interface DMA */
-  if (gc_pal != vdp_pal)
+  /* when VSYNC is forced OFF or AUTO with TV mode not matching emulated video mode, emulation is synchronized with Audio Hardware */
+  if (!config.vsync || (config.tv_mode == !vdp_pal))
   {
+    /* DMA Interrupt callback */
     AUDIO_RegisterDMACallback(ai_callback);
   }
 
   /* reset emulation audio processing */
-  memset(soundbuffer, 0, 2 * 3840);
+  memset(soundbuffer, 0, 2 * SOUND_BUFFER_MAX_SIZE);
   audioStarted = 0;
   mixbuffer = 0;
 }

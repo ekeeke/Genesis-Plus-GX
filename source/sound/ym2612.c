@@ -125,18 +125,7 @@
 /*    YM2610B : PSG:3ch FM:6ch ADPCM(18.5KHz):6ch DeltaT ADPCM:1ch      */
 /************************************************************************/
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <stdarg.h>
-#include <math.h>
-
 #include "shared.h"
-
-/* compiler dependence */
-#ifndef INLINE
-#define INLINE static __inline__
-#endif
 
 /* globals */
 #define FREQ_SH     16    /* 16.16 fixed point (frequency calculations) */

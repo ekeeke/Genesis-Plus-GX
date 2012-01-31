@@ -49,8 +49,9 @@ t_snd snd;
 uint32 mcycles_vdp;
 uint32 mcycles_z80;
 uint32 mcycles_68k;
-int16 SVP_cycles = 800; 
 uint8 system_hw;
+uint32 system_clock;
+int16 SVP_cycles = 800; 
 
 static uint8 pause_b;
 static EQSTATE eq;
@@ -60,7 +61,7 @@ static int32 llp,rrp;
  * Audio subsystem
  ****************************************************************/
 
-int audio_init(int samplerate, float framerate)
+int audio_init(int samplerate, double framerate)
 {
   /* Shutdown first */
   audio_shutdown();
@@ -72,8 +73,25 @@ int audio_init(int samplerate, float framerate)
   snd.sample_rate = samplerate;
   snd.frame_rate  = framerate;
 
-  /* Calculate the sound buffer size (for one frame) */
-  snd.buffer_size = (int)(samplerate / framerate) + 32;
+  /* If no framerate is specified, assume emulator is running at the original frequency */
+  if (!framerate)
+  {
+    if (vdp_pal)
+    {
+      /* PAL mode -> MCLK cycles/sec, 3420 cycles/line, 313 lines/field */
+      /* fps = MCLK/3420/313 = 49.70 hz (PAL console) or 50.16 hz (NTSC console w/ 50 hz switch) */
+      framerate = (double)system_clock / (double)MCYCLES_PER_LINE / 313.0;
+    }
+    else
+    {
+      /* NTSC mode -> MCLK cycles/sec, 3420 cycles/line, 262 lines/field */
+      /* fps = MCLK/3420/262 = 59.92 hz (NTSC console) or 59.38 hz (PAL console w/ 60 hz switch) */
+      framerate = (double)system_clock / (double)MCYCLES_PER_LINE / 262.0;
+    }
+  }
+
+  /* Sound buffer maximal size (for at least one frame) */
+  snd.buffer_size = (int)((double)samplerate / framerate) + 32;
 
   /* SN76489 stream buffer */
   snd.psg.buffer = (int16 *) malloc(snd.buffer_size * sizeof(int16));

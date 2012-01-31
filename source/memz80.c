@@ -47,14 +47,14 @@
 /*  machine lock up.                                                        */
 /*--------------------------------------------------------------------------*/
 
-static __inline__ void z80_unused_w(unsigned int address, unsigned char data)
+INLINE void z80_unused_w(unsigned int address, unsigned char data)
 {
 #ifdef LOGERROR
   error("Z80 unused write %04X = %02X (%x)\n", address, data, Z80.pc.w.l);
 #endif
 }
 
-static __inline__ unsigned char z80_unused_r(unsigned int address)
+INLINE unsigned char z80_unused_r(unsigned int address)
 {
 #ifdef LOGERROR
   error("Z80 unused read %04X (%x)\n", address, Z80.pc.w.l);
@@ -62,7 +62,7 @@ static __inline__ unsigned char z80_unused_r(unsigned int address)
   return 0xFF;
 }
 
-static __inline__ void z80_lockup_w(unsigned int address, unsigned char data)
+INLINE void z80_lockup_w(unsigned int address, unsigned char data)
 {
 #ifdef LOGERROR
   error("Z80 lockup write %04X = %02X (%x)\n", address, data, Z80.pc.w.l);
@@ -74,7 +74,7 @@ static __inline__ void z80_lockup_w(unsigned int address, unsigned char data)
   }
 }
 
-static __inline__ unsigned char z80_lockup_r(unsigned int address)
+INLINE unsigned char z80_lockup_r(unsigned int address)
 {
 #ifdef LOGERROR
   error("Z80 lockup read %04X (%x)\n", address, Z80.pc.w.l);

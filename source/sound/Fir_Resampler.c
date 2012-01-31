@@ -15,13 +15,13 @@ Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA */
 
 /* C Conversion by Eke-Eke for use in Genesis Plus GX (2009). */
 
-#include "Fir_Resampler.h"
-#include "shared.h"
-
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+
+#include "Fir_Resampler.h"
+#include "macros.h"
 
 /* sound buffer */
 static sample_t *buffer = NULL;

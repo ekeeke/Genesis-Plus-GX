@@ -349,27 +349,30 @@ static gui_item items_audio[13] =
 };
 
 /* System options */
-static gui_item items_system[8] =
+static gui_item items_system[10] =
 {
-  {NULL,NULL,"Console Hardware: AUTO",    "Select system hardware model",                56,132,276,48},
-  {NULL,NULL,"Console Region: AUTO",      "Select system region",                        56,132,276,48},
-  {NULL,NULL,"System Boot: BIOS&CART", "Select system booting method",                56,132,276,48},
-  {NULL,NULL,"System Lockups: ON",        "Enable/disable original system lock-ups",     56,132,276,48},
-  {NULL,NULL,"68k Address Error: ON",     "Enable/disable 68k address error exceptions", 56,132,276,48},
-  {NULL,NULL,"Lock-on: OFF",              "Select Lock-On cartridge type",               56,132,276,48},
-  {NULL,NULL,"Cartridge Swap: OFF",       "Enable/disable cartridge hot swap",           56,132,276,48},
-  {NULL,NULL,"SVP Cycles: 1500",          "Adjust SVP chip emulation speed",             56,132,276,48}
+  {NULL,NULL,"Console Hardware: AUTO",  "Select system hardware model",                56,132,276,48},
+  {NULL,NULL,"Console Region: AUTO",    "Select system region",                        56,132,276,48},
+  {NULL,NULL,"VDP Mode: AUTO",          "Select VDP mode",                             56,132,276,48},
+  {NULL,NULL,"System Clock: AUTO",      "Select system clock frequency",               56,132,276,48},
+  {NULL,NULL,"System Boot: BIOS&CART",  "Select system booting method",                56,132,276,48},
+  {NULL,NULL,"System Lockups: ON",      "Enable/disable original system lock-ups",     56,132,276,48},
+  {NULL,NULL,"68k Address Error: ON",   "Enable/disable 68k address error exceptions", 56,132,276,48},
+  {NULL,NULL,"Lock-on: OFF",            "Select Lock-On cartridge type",               56,132,276,48},
+  {NULL,NULL,"Cartridge Swap: OFF",     "Enable/disable cartridge hot swap",           56,132,276,48},
+  {NULL,NULL,"SVP Cycles: 1500",        "Adjust SVP chip emulation speed",             56,132,276,48}
 };
 
 /* Video options */
 #ifdef HW_RVL
-static gui_item items_video[10] =
+static gui_item items_video[11] =
 #else
-static gui_item items_video[8] =
+static gui_item items_video[9] =
 #endif
 {
   {NULL,NULL,"Display: PROGRESSIVE",    "Select video mode",                          56,132,276,48},
   {NULL,NULL,"TV mode: 50/60Hz",        "Select video refresh rate",                  56,132,276,48},
+  {NULL,NULL,"VSYNC: AUTO", "Enable/disable synchronization with Video Hardware",     56,132,276,48},
   {NULL,NULL,"GX Bilinear Filter: OFF", "Enable/disable texture hardware filtering",  56,132,276,48},
 #ifdef HW_RVL
   {NULL,NULL,"VI Trap Filter: ON",      "Enable/disable video hardware filtering",    56,132,276,48},
@@ -559,7 +562,7 @@ static gui_menu menu_system =
 {
   "System Settings",
   0,0,
-  8,4,6,0,
+  10,4,6,0,
   items_system,
   buttons_list,
   bg_list,
@@ -573,7 +576,7 @@ static gui_menu menu_video =
 {
   "Video Settings",
   0,0,
-  8,4,6,0,
+  9,4,6,0,
   items_video,
   buttons_list,
   bg_list,
@@ -1063,6 +1066,7 @@ static const uint16 vc_table[4][2] =
 static void systemmenu ()
 {
   int ret, quit = 0;
+  int reinit = 0;
   gui_menu *m = &menu_system;
   gui_item *items = m->items;
 
@@ -1090,29 +1094,43 @@ static void systemmenu ()
   else if (config.region_detect == 3)
     sprintf (items[1].text, "Console Region: JAPAN");
 
-  sprintf (items[2].text, "System Boot: %s", (config.bios & 1) ? ((config.bios & 2) ? "BIOS&CART" : "BIOS ONLY") : "CART");
-  sprintf (items[3].text, "System Lockups: %s", config.force_dtack ? "OFF" : "ON");
-  sprintf (items[4].text, "68k Address Error: %s", config.addr_error ? "ON" : "OFF");
+  if (config.vdp_mode == 0)
+    sprintf (items[2].text, "VDP Mode: AUTO");
+  else if (config.vdp_mode == 1)
+    sprintf (items[2].text, "VDP Mode: NTSC");
+  else if (config.vdp_mode == 2)
+    sprintf (items[2].text, "VDP Mode: PAL");
+
+  if (config.master_clock == 0)
+    sprintf (items[3].text, "System Clock: AUTO");
+  else if (config.master_clock == 1)
+    sprintf (items[3].text, "System Clock: NTSC");
+  else if (config.master_clock == 2)
+    sprintf (items[3].text, "System Clock: PAL");
+
+  sprintf (items[4].text, "System Boot: %s", (config.bios & 1) ? ((config.bios & 2) ? "BIOS&CART" : "BIOS ONLY") : "CART");
+  sprintf (items[5].text, "System Lockups: %s", config.force_dtack ? "OFF" : "ON");
+  sprintf (items[6].text, "68k Address Error: %s", config.addr_error ? "ON" : "OFF");
 
   if (config.lock_on == TYPE_GG)
-    sprintf (items[5].text, "Lock-On: GAME GENIE");
+    sprintf (items[7].text, "Lock-On: GAME GENIE");
   else if (config.lock_on == TYPE_AR)
-    sprintf (items[5].text, "Lock-On: ACTION REPLAY");
+    sprintf (items[7].text, "Lock-On: ACTION REPLAY");
   else if (config.lock_on == TYPE_SK)
-    sprintf (items[5].text, "Lock-On: SONIC&KNUCKLES");
+    sprintf (items[7].text, "Lock-On: SONIC&KNUCKLES");
   else
-    sprintf (items[5].text, "Lock-On: OFF");
+    sprintf (items[7].text, "Lock-On: OFF");
 
-  sprintf (items[6].text, "Cartridge Swap: %s", config.hot_swap ? "ON":"OFF");
+  sprintf (items[8].text, "Cartridge Swap: %s", config.hot_swap ? "ON":"OFF");
 
   if (svp)
   {
-    sprintf (items[7].text, "SVP Cycles: %d", SVP_cycles);
-    m->max_items = 8;
+    sprintf (items[9].text, "SVP Cycles: %d", SVP_cycles);
+    m->max_items = 10;
   }
   else
   {
-    m->max_items = 7;
+    m->max_items = 9;
   }
 
   GUI_InitMenu(m);
@@ -1138,32 +1156,24 @@ static void systemmenu ()
         {
           config.system = SYSTEM_SG;
           sprintf (items[0].text, "Console Hardware: SG-1000");
-
-          /* Force system hardware */
           system_hw = SYSTEM_SG;
         }
         else if (config.system == SYSTEM_SG)
         {
           config.system = SYSTEM_MARKIII;
           sprintf (items[0].text, "Console Hardware: MARK-III");
-
-          /* Force system hardware */
           system_hw = SYSTEM_MARKIII;
         }
         else if (config.system == SYSTEM_MARKIII)
         {
           config.system = SYSTEM_SMS;
           sprintf (items[0].text, "Console Hardware: SMS");
-
-          /* Force system hardware */
           system_hw = SYSTEM_SMS;
         }
         else if (config.system == SYSTEM_SMS)
         {
           config.system = SYSTEM_SMS2;
           sprintf (items[0].text, "Console Hardware: SMS-II");
-
-          /* Force system hardware */
           system_hw = SYSTEM_SMS2;
         }
         else if (config.system == SYSTEM_SMS2)
@@ -1199,7 +1209,7 @@ static void systemmenu ()
           }
         }
 
-        /* restart emulation */
+        /* force hard reset */
         system_init();
         system_reset();
 
@@ -1226,66 +1236,61 @@ static void systemmenu ()
 
         if (cart.romsize)
         {
-          /* reset console region */
-          region_autodetect();
-          if (system_hw == SYSTEM_MD)
-          {
-            io_reg[0x00] = 0x20 | region_code | (config.bios & 1);
-          }
-          else
-          {
-            io_reg[0x00] = 0x80 | (region_code >> 1);
-          }
-
-          /* reinitialize audio timings */
-          if (vdp_pal)
-          {
-            audio_init(snd.sample_rate, (config.tv_mode == 0) ? 50.0 : ((config.render || interlaced) ? 50.00 : (1000000.0/19968.0)));
-          }
-          else
-          {
-            audio_init(snd.sample_rate, (config.tv_mode == 1) ? 60.0 : ((config.render || interlaced) ? 59.94 : (1000000.0/16715.0)));
-          }
-
-          /* reintialize VDP */
-          vdp_init();
-
-          /* reintialize VDP Status flag */
-          if (system_hw & SYSTEM_MD)
-          {
-            status = (status & ~1) | vdp_pal;
-          }
-
-          /* reinitialize VC max value */
-          switch (bitmap.viewport.h)
-          {
-            case 192:
-              vc_max = vc_table[0][vdp_pal];
-              break;
-            case 224:
-              vc_max = vc_table[1][vdp_pal];
-              break;
-            case 240:
-              vc_max = vc_table[3][vdp_pal];
-              break;
-          }
-
-          /* reinitialize sound emulation */
-          sound_restore();
+          /* force system reinitialization */
+          reinit = 1;
         }
+
         break;
       }
 
-      case 2:  /*** BIOS support ***/
+      case 2:  /*** Force VDP mode ***/
+      {
+        config.vdp_mode = (config.vdp_mode + 1) % 3;
+        if (config.vdp_mode == 0)
+          sprintf (items[2].text, "VDP Mode: AUTO");
+        else if (config.vdp_mode == 1)
+          sprintf (items[2].text, "VDP Mode: NTSC");
+        else if (config.vdp_mode == 2)
+          sprintf (items[2].text, "VDP Mode: PAL");
+
+        if (cart.romsize)
+        {
+          /* force system reinitialization */
+          reinit = 1;
+        }
+
+        break;
+      }
+
+      case 3:  /*** Force Master Clock ***/
+      {
+        config.master_clock = (config.master_clock + 1) % 3;
+        if (config.master_clock == 0)
+          sprintf (items[3].text, "System Clock: AUTO");
+        else if (config.master_clock == 1)
+          sprintf (items[3].text, "System Clock: NTSC");
+        else if (config.master_clock == 2)
+          sprintf (items[3].text, "System Clock: PAL");
+
+        if (cart.romsize)
+        {
+          /* force system reinitialization */
+          reinit = 1;
+        }
+
+        break;
+      }
+
+      case 4:  /*** BIOS support ***/
       {
         uint8 temp = config.bios & 3;
         config.bios &= ~3;
         if (temp == 0) config.bios |= 3;
         else if (temp == 3) config.bios |= 1;
-        sprintf (items[2].text, "System Boot: %s", (config.bios & 1) ? ((config.bios & 2) ? "BIOS&CART " : "BIOS ONLY") : "CART");
+        sprintf (items[4].text, "System Boot: %s", (config.bios & 1) ? ((config.bios & 2) ? "BIOS&CART " : "BIOS ONLY") : "CART");
         if (cart.romsize && ((system_hw == SYSTEM_MD) || (system_hw & SYSTEM_GG) || (system_hw & SYSTEM_SMS)))
         {
-          /* reset emulation */
+          /* force hard reset */
           system_init();
           system_reset();
 
@@ -1298,18 +1303,19 @@ static void systemmenu ()
         break;
       }
 
-      case 3:  /*** force DTACK ***/
+      case 5:  /*** force DTACK ***/
       {
         config.force_dtack ^= 1;
-        sprintf (items[3].text, "System Lockups: %s", config.force_dtack ? "OFF" : "ON");
+        sprintf (items[5].text, "System Lockups: %s", config.force_dtack ? "OFF" : "ON");
         break;
       }
 
-      case 4:  /*** 68k Address Error ***/
+      case 6:  /*** 68k Address Error ***/
       {
         config.addr_error ^= 1;
         if (cart.romsize && ((system_hw & SYSTEM_PBC) == SYSTEM_MD))
         {
+          /* reinitialize cartridge hardware (UMK3 hack support) */
           md_cart_init();
 
           /* restore SRAM */
@@ -1318,27 +1324,25 @@ static void systemmenu ()
             slot_autoload(0,config.s_device);
           }
         }
-        sprintf (items[4].text, "68k Address Error: %s", config.addr_error ? "ON" : "OFF");
+        sprintf (items[6].text, "68k Address Error: %s", config.addr_error ? "ON" : "OFF");
         break;
       }
 
-      case 5:  /*** Cart Lock-On ***/
+      case 7:  /*** Cart Lock-On ***/
       {
-        config.lock_on++;
-        if (config.lock_on > TYPE_SK)
-          config.lock_on = 0;
+        config.lock_on = (config.lock_on + 1) % (TYPE_SK + 1);
         if (config.lock_on == TYPE_GG)
-          sprintf (items[5].text, "Lock-On: GAME GENIE");
+          sprintf (items[7].text, "Lock-On: GAME GENIE");
         else if (config.lock_on == TYPE_AR)
-          sprintf (items[5].text, "Lock-On: ACTION REPLAY");
+          sprintf (items[7].text, "Lock-On: ACTION REPLAY");
         else if (config.lock_on == TYPE_SK)
-          sprintf (items[5].text, "Lock-On: SONIC&KNUCKLES");
+          sprintf (items[7].text, "Lock-On: SONIC&KNUCKLES");
         else
-          sprintf (items[5].text, "Lock-On: OFF");
+          sprintf (items[7].text, "Lock-On: OFF");
 
         if (cart.romsize && ((system_hw & SYSTEM_PBC) == SYSTEM_MD))
         {
-          /* restart emulation */
+          /* force hard reset */
           system_init();
           system_reset();
 
@@ -1371,17 +1375,17 @@ static void systemmenu ()
         break;
       }
 
-      case 6:  /*** Cartridge Hot Swap ***/
+      case 8:  /*** Cartridge Hot Swap ***/
       {
         config.hot_swap ^= 1;
-        sprintf (items[6].text, "Cartridge Swap: %s", config.hot_swap ? "ON":"OFF");
+        sprintf (items[8].text, "Cartridge Swap: %s", config.hot_swap ? "ON":"OFF");
         break;
       }
 
-      case 7:  /*** SVP cycles per line ***/
+      case 9:  /*** SVP cycles per line ***/
       {
         GUI_OptionBox(m,0,"SVP Cycles",(void *)&SVP_cycles,1,1,1500,1);
-        sprintf (items[7].text, "SVP Cycles: %d", SVP_cycles);
+        sprintf (items[9].text, "SVP Cycles: %d", SVP_cycles);
         break;
       }
 
@@ -1393,6 +1397,54 @@ static void systemmenu ()
     }
   }
 
+  if (reinit)
+  {
+    /* reinitialize console region */
+    region_autodetect();
+
+    /* reinitialize I/O region register */
+    if (system_hw == SYSTEM_MD)
+    {
+      io_reg[0x00] = 0x20 | region_code | (config.bios & 1);
+    }
+    else
+    {
+      io_reg[0x00] = 0x80 | (region_code >> 1);
+    }
+
+    /* reinitialize VDP */
+    if (vdp_pal)
+    {
+      status |= 1;
+      lines_per_frame = 313;
+    }
+    else
+    {
+      status &= ~1;
+      lines_per_frame = 262;
+    }
+
+    /* reinitialize VC max value */
+    switch (bitmap.viewport.h)
+    {
+      case 192:
+        vc_max = vc_table[0][vdp_pal];
+        break;
+      case 224:
+        vc_max = vc_table[1][vdp_pal];
+        break;
+      case 240:
+        vc_max = vc_table[3][vdp_pal];
+        break;
+    }
+
+    /* framerate has changed, reinitialize audio timings */
+    audio_init(snd.sample_rate, get_framerate());
+
+    /* reinitialize sound emulation */
+    sound_restore();
+  }
+
   GUI_DeleteMenu(m);
 }
 
@@ -1401,14 +1453,14 @@ static void systemmenu ()
  *
  ****************************************************************************/
 #ifdef HW_RVL
-#define VI_OFFSET 5
+#define VI_OFFSET 6
 static void update_gamma(void)
 {
   VIDEO_SetGamma((int)(config.gamma * 10.0));
   VIDEO_Flush();
 }
 #else
-#define VI_OFFSET 3
+#define VI_OFFSET 4
 #endif
 
 static void videomenu ()
@@ -1433,11 +1485,16 @@ static void videomenu ()
   else
     sprintf (items[1].text, "TV Mode: 50/60HZ");
 
-  sprintf (items[2].text, "GX Bilinear Filter: %s", config.bilinear ? " ON" : "OFF");
+  if (config.vsync)
+    sprintf (items[2].text, "VSYNC: AUTO");
+  else
+    sprintf (items[2].text, "VSYNC: OFF");
+
+  sprintf (items[3].text, "GX Bilinear Filter: %s", config.bilinear ? " ON" : "OFF");
 
 #ifdef HW_RVL
-  sprintf (items[3].text, "VI Trap Filter: %s", config.trap ? " ON" : "OFF");
-  sprintf (items[4].text, "VI Gamma Correction: %1.1f", config.gamma);
+  sprintf (items[4].text, "VI Trap Filter: %s", config.trap ? " ON" : "OFF");
+  sprintf (items[5].text, "VI Gamma Correction: %1.1f", config.gamma);
 #endif
 
   if (config.ntsc == 1)
@@ -1531,18 +1588,27 @@ static void videomenu ()
         }
         break;
     
-      case 2: /*** GX Texture filtering ***/
+      case 2: /*** VSYNC ***/
+        config.vsync ^= 1;
+        if (config.vsync)
+          sprintf (items[2].text, "VSYNC: AUTO");
+        else
+          sprintf (items[2].text, "VSYNC: OFF");
+        reinit = 1;
+        break;
+
+      case 3: /*** GX Texture filtering ***/
         config.bilinear ^= 1;
-        sprintf (items[2].text, "GX Bilinear Filter: %s", config.bilinear ? " ON" : "OFF");
+        sprintf (items[3].text, "GX Bilinear Filter: %s", config.bilinear ? " ON" : "OFF");
         break;
 
 #ifdef HW_RVL
-      case 3: /*** VIDEO Trap filtering ***/
+      case 4: /*** VIDEO Trap filtering ***/
         config.trap ^= 1;
-        sprintf (items[3].text, "VI Trap Filter: %s", config.trap ? " ON" : "OFF");
+        sprintf (items[4].text, "VI Trap Filter: %s", config.trap ? " ON" : "OFF");
         break;
 
-      case 4: /*** VIDEO Gamma correction ***/
+      case 5: /*** VIDEO Gamma correction ***/
         if (cart.romsize) 
         {
           update_gamma();
@@ -1561,7 +1627,7 @@ static void videomenu ()
           m->arrows[1]->state = state[1];
           m->screenshot = 0;
           strcpy(m->title,"Video Settings");
-          sprintf (items[4].text, "VI Gamma Correction: %1.1f", config.gamma);
+          sprintf (items[5].text, "VI Gamma Correction: %1.1f", config.gamma);
           VIDEO_SetGamma(VI_GM_1_0);
           VIDEO_Flush();
         }
@@ -1689,15 +1755,8 @@ static void videomenu ()
 
   if (cart.romsize && reinit)
   {
-    /* reinitialize audio timings */
-    if (vdp_pal)
-    {
-      audio_init(snd.sample_rate, (config.tv_mode == 0) ? 50.0 : ((config.render || interlaced) ? 50.00 : (1000000.0/19968.0)));
-    }
-    else
-    {
-      audio_init(snd.sample_rate, (config.tv_mode == 1) ? 60.0 : ((config.render || interlaced) ? 59.94 : (1000000.0/16715.0)));
-    }
+    /* framerate has changed, reinitialize audio timings */
+    audio_init(snd.sample_rate, get_framerate());
 
     /* reinitialize sound chips */
     sound_restore();

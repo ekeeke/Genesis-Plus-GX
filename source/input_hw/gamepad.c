@@ -71,7 +71,7 @@ void gamepad_refresh(int port)
   }
 }
 
-static __inline__ unsigned char gamepad_read(int port)
+INLINE unsigned char gamepad_read(int port)
 {
   /* bit 7 is latched, returns current TH state */
   unsigned int data = (gamepad[port].State & 0x40) | 0x3F;
@@ -142,7 +142,7 @@ static __inline__ unsigned char gamepad_read(int port)
   return data;
 }
 
-static __inline__ void gamepad_write(int port, unsigned char data, unsigned char mask)
+INLINE void gamepad_write(int port, unsigned char data, unsigned char mask)
 {
   /* update bits set as output only */
   data = (gamepad[port].State & ~mask) | (data & mask);

@@ -140,7 +140,7 @@ void lightgun_refresh(int port)
 /*  Sega Phaser                                                             */
 /*--------------------------------------------------------------------------*/
 
-static __inline__ unsigned char phaser_read(int port)
+INLINE unsigned char phaser_read(int port)
 {
   /* TL returns TRIGGER (INPUT_A) button status (active low) */
   unsigned char temp = ~((input.pad[port] >> 2) & 0x10);

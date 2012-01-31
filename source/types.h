@@ -11,8 +11,3 @@
 #define int8  signed char
 #define int16 signed short
 #define int32 signed int
-
-/* C89 compatibility */
-#ifndef M_PI
-#define M_PI 3.14159265358979323846264338327
-#endif

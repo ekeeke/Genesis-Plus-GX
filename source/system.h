@@ -53,6 +53,10 @@
 #define SYSTEM_PBC        0x81
 #define SYSTEM_PICO       0x82
 
+/* NTSC & PAL Master Clock frequencies */
+#define MCLOCK_NTSC 53693175
+#define MCLOCK_PAL  53203424
+
 /* Number of M-Cycles executed per line */
 #define MCYCLES_PER_LINE  3420
 
@@ -81,7 +85,7 @@ typedef struct
 typedef struct
 {
   int sample_rate;  /* Output Sample rate (8000-48000) */
-  float frame_rate; /* Output Frame rate (usually 50 or 60 frames per second) */
+  double frame_rate; /* Output Frame rate (usually 50 or 60 frames per second) */
   int enabled;      /* 1= sound emulation is enabled */
   int buffer_size;  /* Size of sound buffer (in bytes) */
   int16 *buffer[2]; /* Signed 16-bit stereo sound data */
@@ -106,9 +110,10 @@ extern uint32 mcycles_68k;
 extern uint32 mcycles_vdp;
 extern int16 SVP_cycles; 
 extern uint8 system_hw;
+extern uint32 system_clock;
 
 /* Function prototypes */
-extern int audio_init(int samplerate,float framerate);
+extern int audio_init(int samplerate, double framerate);
 extern void audio_reset(void);
 extern void audio_shutdown(void);
 extern int audio_update(void);

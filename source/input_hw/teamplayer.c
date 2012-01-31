@@ -80,7 +80,7 @@ void teamplayer_reset(int port)
   teamplayer[port].Counter = 0;
 }
 
-static __inline__ unsigned int teamplayer_read(int port)
+INLINE unsigned int teamplayer_read(int port)
 {
   unsigned int counter = teamplayer[port].Counter;
 
@@ -131,7 +131,7 @@ static __inline__ unsigned int teamplayer_read(int port)
   }
 }
 
-static __inline__ void teamplayer_write(int port, unsigned char data, unsigned char mask)
+INLINE void teamplayer_write(int port, unsigned char data, unsigned char mask)
 {
   /* update bits set as output only */
   unsigned int state = (teamplayer[port].State & ~mask) | (data & mask);

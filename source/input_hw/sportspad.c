@@ -52,7 +52,7 @@ void sportspad_reset(int index)
   sportspad[index].Counter = 0;
 }
 
-static __inline__ unsigned char sportspad_read(int port)
+INLINE unsigned char sportspad_read(int port)
 {
   /* Buttons 1(B) & 2(C) status (active low) */
   unsigned char temp = ~(input.pad[port] & 0x30);
@@ -98,7 +98,7 @@ static __inline__ unsigned char sportspad_read(int port)
   return temp;
 }
 
-static __inline__ void sportspad_write(int index, unsigned char data, unsigned char mask)
+INLINE void sportspad_write(int index, unsigned char data, unsigned char mask)
 {
   /* update bits set as output only */
   data = (sportspad[index].State & ~mask) | (data & mask);

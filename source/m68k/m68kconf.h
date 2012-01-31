@@ -121,16 +121,6 @@
 #define M68K_USE_64_BIT  OPT_OFF
 
 
-/* Set to your compiler's static inline keyword to enable it, or
- * set it to blank to disable it.
- * If you define INLINE in the makefile, it will override this value.
- * NOTE: not enabling inline functions will SEVERELY slow down emulation.
- */
-#ifndef INLINE
-#define INLINE static __inline__
-#endif /* INLINE */
-
-
 /* ======================================================================== */
 /* ============================== END OF FILE ============================= */
 /* ======================================================================== */

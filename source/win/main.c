@@ -729,7 +729,7 @@ int main (int argc, char **argv)
   bitmap.viewport.changed = 3;
 
   /* initialize emulation */
-  audio_init(SOUND_FREQUENCY, vdp_pal ? 50.0 : 60.0);
+  audio_init(SOUND_FREQUENCY, 0);
   system_init();
 
   /* load SRAM */

@@ -593,14 +593,25 @@ void region_autodetect(void)
     }
   }
 
-  /* forced console region */
+  /* force console region if requested */
   if (config.region_detect == 1) region_code = REGION_USA;
   else if (config.region_detect == 2) region_code = REGION_EUROPE;
   else if (config.region_detect == 3) region_code = REGION_JAPAN_NTSC;
   else if (config.region_detect == 4) region_code = REGION_JAPAN_PAL;
 
-  /* PAL/NTSC timings */
+  /* autodetect PAL/NTSC timings */
   vdp_pal = (region_code >> 6) & 0x01;
+
+  /* autodetect PAL/NTSC master clock */
+  system_clock = vdp_pal ? MCLOCK_PAL : MCLOCK_NTSC;
+
+  /* force PAL/NTSC timings if requested */
+  if (config.vdp_mode == 1) vdp_pal = 0;
+  else if (config.vdp_mode == 2) vdp_pal = 1;
+
+  /* force PAL/NTSC master clock if requested */
+  if (config.master_clock == 1) system_clock = MCLOCK_NTSC;
+  else if (config.master_clock == 2) system_clock = MCLOCK_PAL;
 }
 
 

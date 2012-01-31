@@ -57,7 +57,7 @@ extern sms_ntsc_t *sms_ntsc;
 #undef READ_LONG
 #undef WRITE_LONG
 
-static __inline__ uint32 READ_LONG(void *address)
+INLINE uint32 READ_LONG(void *address)
 {
   if ((uint32)address & 3)
   {
@@ -76,7 +76,7 @@ static __inline__ uint32 READ_LONG(void *address)
   else return *(uint32 *)address;
 }
 
-static __inline__ void WRITE_LONG(void *address, uint32 data)
+INLINE void WRITE_LONG(void *address, uint32 data)
 {
   if ((uint32)address & 3)
   {
@@ -948,7 +948,7 @@ static uint32 make_lut_bgobj_m4(uint32 bx, uint32 sx)
 /* Pixel layer merging function                                             */
 /*--------------------------------------------------------------------------*/
 
-static __inline__ void merge(uint8 *srca, uint8 *srcb, uint8 *dst, uint8 *table, int width)
+INLINE void merge(uint8 *srca, uint8 *srcb, uint8 *dst, uint8 *table, int width)
 {
   do
   {

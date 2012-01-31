@@ -27,12 +27,7 @@ to do:
 
 /** EkeEke (2011): removed multiple chips support, cleaned code & added FM board interface for Genesis Plus GX **/
 
-#include <math.h>
-
 #include "shared.h"
-
-/* compiler dependence */
-#define INLINE static __inline__
 
 #define FREQ_SH 16  /* 16.16 fixed point (frequency calculations) */
 #define EG_SH   16  /* 16.16 fixed point (EG timing)              */

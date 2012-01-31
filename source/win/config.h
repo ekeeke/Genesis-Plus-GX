@@ -29,6 +29,8 @@ typedef struct
   float rolloff;
   uint8 system;
   uint8 region_detect;
+  uint8 vdp_mode;
+  uint8 master_clock;
   uint8 force_dtack;
   uint8 addr_error;
   uint8 tmss;

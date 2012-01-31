@@ -51,7 +51,7 @@ void activator_reset(int index)
   activator[index].Counter = 0;
 }
 
-static __inline__ unsigned char activator_read(int port)
+INLINE unsigned char activator_read(int port)
 {
   /* IR sensors 1-16 data (active low) */
   uint16 data = ~input.pad[port << 2];
@@ -85,7 +85,7 @@ static __inline__ unsigned char activator_read(int port)
   return temp;
 }
 
-static __inline__ void activator_write(int index, unsigned char data, unsigned char mask)
+INLINE void activator_write(int index, unsigned char data, unsigned char mask)
 {
   /* update bits set as output only */
   data = (activator[index].State & ~mask) | (data & mask);

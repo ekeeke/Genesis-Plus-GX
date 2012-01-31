@@ -52,7 +52,7 @@ static void (*YM_Update)(int *buffer, int length);
 static void (*YM_Write)(unsigned int a, unsigned int v);
 
 /* Run FM chip for required M-cycles */
-static __inline__ void fm_update(unsigned int cycles)
+INLINE void fm_update(unsigned int cycles)
 {
   if (cycles > fm_cycles_count)
   {
@@ -82,7 +82,7 @@ static __inline__ void fm_update(unsigned int cycles)
 }
 
 /* Run PSG chip for required M-cycles */
-static __inline__ void psg_update(unsigned int cycles)
+INLINE void psg_update(unsigned int cycles)
 {
   if (cycles > psg_cycles_count)
   {
@@ -103,25 +103,29 @@ void sound_init(void)
 {
   /* Number of M-cycles executed per second.                                              */
   /*                                                                                      */
-  /* The original Genesis would run exactly 53693175 M-cycles (53203424 for PAL), with    */
+  /* All emulated chips are kept in sync by using a common oscillator (MCLOCK)            */
+  /*                                                                                      */
+  /* The original console would run exactly 53693175 M-cycles (53203424 for PAL), with    */
   /* 3420 M-cycles per line and 262 (313 for PAL) lines per frame, which gives an exact   */
   /* framerate of 59.92 (49.70 for PAL) fps.                                              */
   /*                                                                                      */
-  /* On some systems, the output framerate is not exactly 60 or 50 fps because we need    */ 
-  /* 100% smooth video and therefore frame emulation is synchronized with VSYNC, which    */
-  /* period is never exactly 1/60 or 1/50 seconds.                                        */
+  /* Since audio samples are generated at the end of the frame, to prevent audio skipping */
+  /* or lag between emulated frames, number of samples rendered per frame must be set to  */
+  /* output samplerate (number of samples played per second) divided by output framerate  */
+  /* (number of frames emulated per seconds).                                             */
   /*                                                                                      */
-  /* For optimal sound rendering, input samplerate (number of samples rendered per frame) */
-  /* is the exact output samplerate (number of samples played per second) divided by the  */
-  /* exact output framerate (number of frames emulated per seconds).                      */
+  /* On some systems, we may want to achieve 100% smooth video rendering by synchronizing */
+  /* frame emulation with VSYNC, which frequency is generally not exactly those values.   */
+  /* In that case, number of frames emulated per seconds is the same as the number of     */
+  /* frames rendered per seconds by the host system video hardware.                       */
   /*                                                                                      */
-  /* This ensure there is no audio skipping or lag between emulated frames, while keeping */
-  /* accurate timings for sound chips execution & synchronization.                        */
+  /* When no framerate is specified, base clock is original master clock value.           */
+  /* Otherwise, it is based on the output framerate.                                      */
   /*                                                                                      */
-  double mclk = MCYCLES_PER_LINE * lines_per_frame * snd.frame_rate;
+  double mclk = snd.frame_rate ? (MCYCLES_PER_LINE * lines_per_frame * snd.frame_rate) : system_clock;
 
   /* For better accuracy, sound chips run in synchronization with 68k and Z80 cpus        */
-  /* These values give the exact number of M-cycles between 2 rendered samples.           */
+  /* These values give the exact number of M-cycles executed per rendered samples.        */
   /* we use 21.11 fixed point precision (max. mcycle value is 3420*313 i.e 21 bits max)   */
   psg_cycles_ratio  = (unsigned int)(mclk / (double) snd.sample_rate * 2048.0);
   fm_cycles_ratio   = psg_cycles_ratio;
@@ -129,7 +133,7 @@ void sound_init(void)
   psg_cycles_count  = 0;
 
   /* Initialize core emulation (input clock based on input frequency for 100% accuracy)   */
-  /* By default, both chips are running at the output frequency.                          */
+  /* By default, both PSG & FM chips are running at the output frequency.                 */
   SN76489_Init(mclk/15.0,snd.sample_rate);
 
   if ((system_hw & SYSTEM_PBC) == SYSTEM_MD)
@@ -166,8 +170,9 @@ void sound_init(void)
   }
 
 #ifdef LOGSOUND
-  error("%d mcycles per PSG samples\n", psg_cycles_ratio);
-  error("%d mcycles per FM samples\n", fm_cycles_ratio);
+  error("%f mcycles per second\n", mclk);
+  error("%d mcycles per PSG sample\n", psg_cycles_ratio);
+  error("%d mcycles per FM sample\n", fm_cycles_ratio);
 #endif
 }
 

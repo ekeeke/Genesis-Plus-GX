@@ -107,6 +107,8 @@ void config_default(void)
   /* system options */
   config.system         = 0; /* AUTO */
   config.region_detect  = 0; /* AUTO */
+  config.vdp_mode       = 0; /* AUTO */
+  config.master_clock   = 0; /* AUTO */
   config.force_dtack    = 0;
   config.addr_error     = 1;
   config.bios           = 0;
@@ -121,6 +123,8 @@ void config_default(void)
   config.aspect   = 1;
   config.overscan = 3; /* FULL */
   config.ntsc     = 0;
+  config.vsync    = 1; /* AUTO */
+
   if (VIDEO_HaveComponentCable())
   {
     config.render   = 2;
@@ -130,6 +134,21 @@ void config_default(void)
   {
     config.render   = 0;
     config.bilinear = 0;
+  }
+
+  switch (vmode->viTVMode >> 2)
+  {
+    case VI_PAL:
+      config.tv_mode = 1; /* 50hz only */
+      break;
+
+    case VI_EURGB60:
+      config.tv_mode = 2; /* 50/60hz */
+      break;
+    
+    default:
+      config.tv_mode = 0; /* 60hz only */
+      break;
   }
 
 #ifdef HW_RVL

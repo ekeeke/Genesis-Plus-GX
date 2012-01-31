@@ -64,6 +64,13 @@ u32 Shutdown = 0;
 u32 ConfigRequested = 1;
 u32 frameticker;
 
+#ifdef LOG_TIMING
+u64 prevtime;
+u32 frame_cnt;
+u32 delta_time[LOGSIZE];
+u32 delta_samp[LOGSIZE];
+#endif
+
 #ifdef HW_RVL
 
 /****************************************************************************
@@ -211,14 +218,7 @@ static void run_emulation(void)
           if (!config.render && (gc_pal == vdp_pal))
           {
             /* framerate has changed, reinitialize audio timings */
-            if (vdp_pal)
-            {
-              audio_init(SAMPLERATE_48KHZ, interlaced ? 50.00 : (1000000.0/19968.0));
-            }
-            else
-            {
-              audio_init(SAMPLERATE_48KHZ, interlaced ? 59.94 : (1000000.0/16715.0));
-            }
+            audio_init(SAMPLERATE_48KHZ, get_framerate());
 
             /* reinitialize sound chips */
             sound_restore();
@@ -250,18 +250,11 @@ static void run_emulation(void)
         /* check interlaced mode change */
         if (bitmap.viewport.changed & 4)
         {
-          /* VSYNC "original" mode */
-          if (!config.render && (gc_pal == vdp_pal))
+          /* "original" mode */
+          if (!config.render)
           {
             /* framerate has changed, reinitialize audio timings */
-            if (vdp_pal)
-            {
-              audio_init(SAMPLERATE_48KHZ, interlaced ? 50.00 : (1000000.0/19968.0));
-            }
-            else
-            {
-              audio_init(SAMPLERATE_48KHZ, interlaced ? 59.94 : (1000000.0/16715.0));
-            }
+            audio_init(SAMPLERATE_48KHZ, get_framerate());
 
             /* reinitialize sound chips */
             sound_restore();
@@ -280,6 +273,87 @@ static void run_emulation(void)
     gx_audio_Stop();
     gx_video_Stop();
 
+#ifdef LOG_TIMING
+    if (cart.romsize)
+    {
+      FILE *f;
+      char filename[64];
+
+      memset(filename, 0, 64);
+      strcpy(filename,"timings-");
+      if (!config.vsync || (config.tv_mode == !vdp_pal))
+      {
+        strcat(filename,"no_");
+      }
+      else
+      {
+        if (gc_pal)
+        {
+          strcat(filename,"50hz_");
+        }
+        else
+        {
+          strcat(filename,"60hz_");
+        }
+      }
+      strcat(filename,"vsync-");
+      if (vdp_pal)
+      {
+        strcat(filename,"pal-");
+      }
+      else
+      {
+        strcat(filename,"ntsc-");
+      }
+      if (config.render == 2)
+      {
+        strcat(filename,"prog.txt");
+      }
+      else
+      {
+        if (!config.render && !interlaced)
+        {
+          strcat(filename,"no_");
+        }
+        strcat(filename,"int.txt");
+      }
+
+      f = fopen(filename,"a");
+      if (f != NULL)
+      {
+        int i;
+        u32 min,max;
+        double total = 0;
+        double nsamples = 0;
+
+        if (delta_time[LOGSIZE - 1] != 0)
+        {
+          frame_cnt = LOGSIZE;
+        }
+
+        min = max = delta_time[0];
+
+        for (i=0; i<frame_cnt; i++)
+        {
+          fprintf(f,"%d ns - %d samples (%5.8f samples/sec)\n", delta_time[i], delta_samp[i], 1000000000.0*(double)delta_samp[i]/(double)delta_time[i]/4.0);
+          total += delta_time[i];
+          nsamples += delta_samp[i] / 4.0;
+          if (min > delta_time[i]) min = delta_time[i];
+          if (max < delta_time[i]) max = delta_time[i];
+        }
+        fprintf(f,"\n");
+        fprintf(f,"min = %d ns\n", min);
+        fprintf(f,"max = %d ns\n", max);
+        fprintf(f,"avg = %8.5f ns (%5.8f samples/sec, %5.8f samples/frame)\n\n\n", total/(double)i, nsamples/total*1000000000.0, nsamples/(double)i);
+        fclose(f);
+      }
+    }
+
+    memset(delta_time,0,LOGSIZE);
+    memset(delta_samp,0,LOGSIZE);
+    frame_cnt = prevtime = 0;
+#endif
+    
     /* show menu */
     ConfigRequested = 0;
     mainmenu();
@@ -288,6 +362,35 @@ static void run_emulation(void)
     gx_video_Start();
     gx_audio_Start();
     frameticker = 1;
+  }
+}
+
+/*********************************************************************************************************************************************************
+  Output exact framerate (used for sound chips emulation -- see sound.c)
+*********************************************************************************************************************************************************/
+double get_framerate(void)
+{
+  /* VSYNC is forced OFF or AUTO with TV mode not matching emulated video mode: emulation is synchronized with audio hardware (DMA interrupt) */
+  if (!config.vsync || (config.tv_mode == !vdp_pal))
+  {
+    /* emulator will use original VDP framerate, which (theorically) provides more accurate frequencies but occasional video desynchronization */
+    return 0.0;
+  }
+
+  /* VSYNC is forced ON or AUTO with TV mode matching emulated video mode: emulation is synchronized with video hardware (VSYNC) */
+  /* emulator use exact output framerate for perfect video synchronization and (theorically) no sound skipping */
+  if (vdp_pal)
+  {
+    /* 288p      -> 13500000 pixels/sec, 864 pixels/line, 312 lines/field -> fps = 13500000/864/312 = 50.08 hz */
+    /* 288i,576i -> 13500000 pixels/sec, 864 pixels/line, 312.5 lines/field (two fields = one frame = 625 lines) -> fps = 13500000/864/312.5 = 50.00 hz */
+    return (config.render || interlaced) ? (27000000.0/864.0/625.0) : (13500000.0/864.0/312.0);
+  }
+  else
+  {
+    /* 240p      -> 13500000 pixels/sec, 858 pixels/line, 263 lines/field -> fps = 13500000/858/263 = 59.83 hz */
+    /* 240i,480i -> 13500000 pixels/sec, 858 pixels/line, 262.5 lines/field (two fields = one frame = 525 lines) -> fps = 13500000/858/262.5 = 59.94 hz */
+    /* 480p      -> 27000000 pixels/sec, 858 pixels/line, 525 lines/field -> fps = 27000000/858/525 = 59.94 hz */
+    return (config.render || interlaced) ? (27000000.0/858.0/525.0) : (13500000.0/858.0/263.0);
   }
 }
 
@@ -315,18 +418,8 @@ void reloadrom(void)
   {
     /* Initialize audio emulation */
     /* To prevent any sound skipping, sound chips must run at the exact same speed as the rest of emulation (see sound.c) */
-    /* When TV output mode matches emulated video mode, we use video hardware interrupt (VSYNC) and exact framerates for perfect synchronization */
-    /* In 60Hz TV modes, Wii & GC framerates have been measured to be 59.94 (interlaced or progressive) and ~59.825 fps (non-interlaced) */
-    /* In 50Hz TV modes, Wii & GC framerates have been measured to be 50.00 (interlaced) and ~50.845 fps (non-interlaced) */
-    /* When modes does not match, emulation is synchronized with audio hardware interrupt (DMA) and we use default framerates (50Hz for PAL, 60Hz for NTSC). */
-    if (vdp_pal)
-    {
-      audio_init(SAMPLERATE_48KHZ, (config.tv_mode == 0) ? 50.0 : (config.render ? 50.00 : (1000000.0/19968.0)));
-    }
-    else
-    {
-      audio_init(SAMPLERATE_48KHZ, (config.tv_mode == 1) ? 60.0 : (config.render ? 59.94 : (1000000.0/16715.0)));
-    }
+    interlaced = 0;
+    audio_init(SAMPLERATE_48KHZ, get_framerate());
      
     /* Switch virtual system on */
     system_init();
@@ -407,7 +500,7 @@ int main (int argc, char *argv[])
   /* initialize video engine */
   gx_video_Init();
 
-#ifdef HW_DOL
+#ifndef HW_RVL
   /* initialize DVD interface */
   DVD_Init();
 #endif
