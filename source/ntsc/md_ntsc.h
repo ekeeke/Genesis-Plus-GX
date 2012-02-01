@@ -137,11 +137,11 @@ struct md_ntsc_t {
 }
 
 /* x is always zero except in snes_ntsc library */
-#ifdef USE_15BPP_RENDERING
+#if MD_NTSC_OUT_DEPTH == 15
 #define MD_NTSC_RGB_OUT_( rgb_out, x ) {\
     rgb_out = (raw_>>(14-x)& 0x7C00)|(raw_>>(9-x)&0x03E0)|(raw_>>(4-x)&0x001F);\
    }
-#else
+#elif MD_NTSC_OUT_DEPTH == 16
 #define MD_NTSC_RGB_OUT_( rgb_out, x ) {\
     rgb_out = (raw_>>(13-x)& 0xF800)|(raw_>>(8-x)&0x07E0)|(raw_>>(4-x)&0x001F);\
    }
