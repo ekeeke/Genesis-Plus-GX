@@ -61,10 +61,10 @@ static u8 SysArea[CARD_WORKAREA] ATTRIBUTE_ALIGN (32);
 static int CardMount(int slot)
 {
   int tries = 0;
-#if defined(HW_DOL)
-  *(unsigned long *) (0xCC006800) |= 1 << 13; /*** Disable Encryption ***/
-#elif defined(HW_RVL)
+#ifdef HW_RVL
   *(unsigned long *) (0xCD006800) |= 1 << 13; /*** Disable Encryption ***/
+#else
+  *(unsigned long *) (0xCC006800) |= 1 << 13; /*** Disable Encryption ***/
 #endif
   while (tries < 10)
   {

@@ -41,10 +41,10 @@
 #define _GC_INPUT_H_
 
 /* max. supported inputs */
-#ifdef HW_DOL
-#define MAX_INPUTS 4
-#else
+#ifdef HW_RVL
 #define MAX_INPUTS 8
+#else
+#define MAX_INPUTS 4
 #endif
 
 /* Configurable keys */
