@@ -1,7 +1,6 @@
 /* md_ntsc 0.1.2. http://www.slack.net/~ant/ */
 
-/* Added a custom blitter to double the height md_ntsc_blit_y2 -- AamirM */
-/* Added a custom blitter to work with Genesis Plus GX -- EkeEke*/
+/* Modified to work with Genesis Plus GX -- EkeEke*/
 
 #include "shared.h"
 #include "md_ntsc.h"
@@ -86,12 +85,12 @@ void md_ntsc_init( md_ntsc_t* ntsc, md_ntsc_setup_t const* setup )
   }
 }
 
-#ifndef MD_NTSC_NO_BLITTERS
-/* modified blitters to work on a line basis with genesis plus renderer*/
 void md_ntsc_blit( md_ntsc_t const* ntsc, MD_NTSC_IN_T const* table, unsigned char* input,
                    int in_width, int vline)
 {
   int const chunk_count = in_width / md_ntsc_in_chunk - 1;
+
+  /* use palette entry 0 for unused pixels */
   MD_NTSC_IN_T border = table[0];
 
   MD_NTSC_BEGIN_ROW( ntsc, border,
@@ -116,24 +115,24 @@ void md_ntsc_blit( md_ntsc_t const* ntsc, MD_NTSC_IN_T const* table, unsigned ch
   {
     /* order of input and output pixels must not be altered */
     MD_NTSC_COLOR_IN( 0, ntsc, MD_NTSC_ADJ_IN( table[*input++] ) );
-    MD_NTSC_RGB_OUT( 0, *line_out++, MD_NTSC_OUT_DEPTH );
-    MD_NTSC_RGB_OUT( 1, *line_out++, MD_NTSC_OUT_DEPTH );
+    MD_NTSC_RGB_OUT( 0, *line_out++ );
+    MD_NTSC_RGB_OUT( 1, *line_out++ );
 
     MD_NTSC_COLOR_IN( 1, ntsc, MD_NTSC_ADJ_IN( table[*input++] ) );
-    MD_NTSC_RGB_OUT( 2, *line_out++, MD_NTSC_OUT_DEPTH );
-    MD_NTSC_RGB_OUT( 3, *line_out++, MD_NTSC_OUT_DEPTH );
+    MD_NTSC_RGB_OUT( 2, *line_out++ );
+    MD_NTSC_RGB_OUT( 3, *line_out++ );
 
 #ifdef NGC
     line_out += 12;
 #endif
 
     MD_NTSC_COLOR_IN( 2, ntsc, MD_NTSC_ADJ_IN( table[*input++] ) );
-    MD_NTSC_RGB_OUT( 4, *line_out++, MD_NTSC_OUT_DEPTH );
-    MD_NTSC_RGB_OUT( 5, *line_out++, MD_NTSC_OUT_DEPTH );
+    MD_NTSC_RGB_OUT( 4, *line_out++ );
+    MD_NTSC_RGB_OUT( 5, *line_out++ );
 
     MD_NTSC_COLOR_IN( 3, ntsc, MD_NTSC_ADJ_IN( table[*input++] ) );
-    MD_NTSC_RGB_OUT( 6, *line_out++, MD_NTSC_OUT_DEPTH );
-    MD_NTSC_RGB_OUT( 7, *line_out++, MD_NTSC_OUT_DEPTH );
+    MD_NTSC_RGB_OUT( 6, *line_out++ );
+    MD_NTSC_RGB_OUT( 7, *line_out++ );
 
   #ifdef NGC
     line_out += 12;
@@ -142,23 +141,22 @@ void md_ntsc_blit( md_ntsc_t const* ntsc, MD_NTSC_IN_T const* table, unsigned ch
 
   /* finish final pixels */
   MD_NTSC_COLOR_IN( 0, ntsc, MD_NTSC_ADJ_IN( table[*input++] ) );
-  MD_NTSC_RGB_OUT( 0, *line_out++, MD_NTSC_OUT_DEPTH );
-  MD_NTSC_RGB_OUT( 1, *line_out++, MD_NTSC_OUT_DEPTH );
+  MD_NTSC_RGB_OUT( 0, *line_out++ );
+  MD_NTSC_RGB_OUT( 1, *line_out++ );
 
   MD_NTSC_COLOR_IN( 1, ntsc, border );
-  MD_NTSC_RGB_OUT( 2, *line_out++, MD_NTSC_OUT_DEPTH );
-  MD_NTSC_RGB_OUT( 3, *line_out++, MD_NTSC_OUT_DEPTH );
+  MD_NTSC_RGB_OUT( 2, *line_out++ );
+  MD_NTSC_RGB_OUT( 3, *line_out++ );
 
 #ifdef NGC
   line_out += 12;
 #endif
 
   MD_NTSC_COLOR_IN( 2, ntsc, border );
-  MD_NTSC_RGB_OUT( 4, *line_out++, MD_NTSC_OUT_DEPTH );
-  MD_NTSC_RGB_OUT( 5, *line_out++, MD_NTSC_OUT_DEPTH );
+  MD_NTSC_RGB_OUT( 4, *line_out++ );
+  MD_NTSC_RGB_OUT( 5, *line_out++ );
 
   MD_NTSC_COLOR_IN( 3, ntsc, border );
-  MD_NTSC_RGB_OUT( 6, *line_out++, MD_NTSC_OUT_DEPTH );
-  MD_NTSC_RGB_OUT( 7, *line_out++, MD_NTSC_OUT_DEPTH );
+  MD_NTSC_RGB_OUT( 6, *line_out++ );
+  MD_NTSC_RGB_OUT( 7, *line_out++ );
 }
-#endif

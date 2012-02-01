@@ -4,15 +4,17 @@
 #define SMS_NTSC_CONFIG_H
 
 /* Format of source pixels */
+#ifdef USE_15BPP_RENDERING
+#define SMS_NTSC_IN_FORMAT SMS_NTSC_RGB15
+#else
 #define SMS_NTSC_IN_FORMAT SMS_NTSC_RGB16
-/* #define SMS_NTSC_IN_FORMAT SMS_NTSC_RGB15 */
+#endif
+
+/* Original CRAM format */
 /* #define SMS_NTSC_IN_FORMAT SMS_NTSC_BGR12 */
 
 /* The following affect the built-in blitter only; a custom blitter can
 handle things however it wants. */
-
-/* Bits per pixel of output. Can be 15, 16, 32, or 24 (same as 32). */
-#define SMS_NTSC_OUT_DEPTH 16
 
 /* Type of input pixel values */
 #define SMS_NTSC_IN_T unsigned short

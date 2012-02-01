@@ -14,7 +14,7 @@ details. You should have received a copy of the GNU Lesser General Public
 License along with this module; if not, write to the Free Software Foundation,
 Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA */
 
-/* Added a custom blitter to work with Genesis Plus GX -- EkeEke*/
+/* Modified to work with Genesis Plus GX -- EkeEke */
 
 sms_ntsc_setup_t const sms_ntsc_monochrome = { 0,-1, 0, 0,.2,  0, .2,-.2,-.2,-1, 0,  0 };
 sms_ntsc_setup_t const sms_ntsc_composite  = { 0, 0, 0, 0, 0,  0,.25,  0,  0, 0, 0,  0 };
@@ -84,9 +84,6 @@ void sms_ntsc_init( sms_ntsc_t* ntsc, sms_ntsc_setup_t const* setup )
   }
 }
 
-#ifndef SMS_NTSC_NO_BLITTERS
-
-/* modified blitters to work on a line basis with genesis plus renderer*/
 void sms_ntsc_blit( sms_ntsc_t const* ntsc, SMS_NTSC_IN_T const* table, unsigned char* input,
                     int in_width, int vline)
 {
@@ -97,6 +94,7 @@ void sms_ntsc_blit( sms_ntsc_t const* ntsc, SMS_NTSC_IN_T const* table, unsigned
   unsigned const extra2 = (unsigned) -(in_extra >> 1 & 1); /* (unsigned) -1 = ~0 */
   unsigned const extra1 = (unsigned) -(in_extra & 1) | extra2;
 
+  /* use palette entry 0 for unused pixels */
   SMS_NTSC_IN_T border = table[0];
 
   SMS_NTSC_BEGIN_ROW( ntsc, border,
@@ -122,76 +120,75 @@ void sms_ntsc_blit( sms_ntsc_t const* ntsc, SMS_NTSC_IN_T const* table, unsigned
     /* order of input and output pixels must not be altered */
     SMS_NTSC_COLOR_IN( 0, ntsc, SMS_NTSC_ADJ_IN( table[*input++] ) );
 #ifdef NGC
-    SMS_NTSC_RGB_OUT( 0, line_out[offset++], SMS_NTSC_OUT_DEPTH );
+    SMS_NTSC_RGB_OUT( 0, line_out[offset++] );
     if ((offset % 4) == 0) offset += 12;
-    SMS_NTSC_RGB_OUT( 1, line_out[offset++], SMS_NTSC_OUT_DEPTH );
+    SMS_NTSC_RGB_OUT( 1, line_out[offset++] );
     if ((offset % 4) == 0) offset += 12;
 #else
-    SMS_NTSC_RGB_OUT( 0, *line_out++, SMS_NTSC_OUT_DEPTH );
-    SMS_NTSC_RGB_OUT( 1, *line_out++, SMS_NTSC_OUT_DEPTH );
+    SMS_NTSC_RGB_OUT( 0, *line_out++ );
+    SMS_NTSC_RGB_OUT( 1, *line_out++ );
 #endif
     
     SMS_NTSC_COLOR_IN( 1, ntsc, SMS_NTSC_ADJ_IN( table[*input++] ) );
 #ifdef NGC
-    SMS_NTSC_RGB_OUT( 2, line_out[offset++], SMS_NTSC_OUT_DEPTH );
+    SMS_NTSC_RGB_OUT( 2, line_out[offset++] );
     if ((offset % 4) == 0) offset += 12;
-    SMS_NTSC_RGB_OUT( 3, line_out[offset++], SMS_NTSC_OUT_DEPTH );
+    SMS_NTSC_RGB_OUT( 3, line_out[offset++] );
     if ((offset % 4) == 0) offset += 12;
 #else
-    SMS_NTSC_RGB_OUT( 2, *line_out++, SMS_NTSC_OUT_DEPTH );
-    SMS_NTSC_RGB_OUT( 3, *line_out++, SMS_NTSC_OUT_DEPTH );
+    SMS_NTSC_RGB_OUT( 2, *line_out++ );
+    SMS_NTSC_RGB_OUT( 3, *line_out++ );
 #endif
       
     SMS_NTSC_COLOR_IN( 2, ntsc, SMS_NTSC_ADJ_IN( table[*input++] ) );
 #ifdef NGC
-    SMS_NTSC_RGB_OUT( 4, line_out[offset++], SMS_NTSC_OUT_DEPTH );
+    SMS_NTSC_RGB_OUT( 4, line_out[offset++] );
     if ((offset % 4) == 0) offset += 12;
-    SMS_NTSC_RGB_OUT( 5, line_out[offset++], SMS_NTSC_OUT_DEPTH );
+    SMS_NTSC_RGB_OUT( 5, line_out[offset++] );
     if ((offset % 4) == 0) offset += 12;
-    SMS_NTSC_RGB_OUT( 6, line_out[offset++], SMS_NTSC_OUT_DEPTH );
+    SMS_NTSC_RGB_OUT( 6, line_out[offset++] );
     if ((offset % 4) == 0) offset += 12;
 #else
-    SMS_NTSC_RGB_OUT( 4, *line_out++, SMS_NTSC_OUT_DEPTH );
-    SMS_NTSC_RGB_OUT( 5, *line_out++, SMS_NTSC_OUT_DEPTH );
-    SMS_NTSC_RGB_OUT( 6, *line_out++, SMS_NTSC_OUT_DEPTH );
+    SMS_NTSC_RGB_OUT( 4, *line_out++ );
+    SMS_NTSC_RGB_OUT( 5, *line_out++ );
+    SMS_NTSC_RGB_OUT( 6, *line_out++ );
 #endif
   }
 
   /* finish final pixels */
   SMS_NTSC_COLOR_IN( 0, ntsc, border );
 #ifdef NGC
-  SMS_NTSC_RGB_OUT( 0, line_out[offset++], SMS_NTSC_OUT_DEPTH );
+  SMS_NTSC_RGB_OUT( 0, line_out[offset++] );
   if ((offset % 4) == 0) offset += 12;
-  SMS_NTSC_RGB_OUT( 1, line_out[offset++], SMS_NTSC_OUT_DEPTH );
+  SMS_NTSC_RGB_OUT( 1, line_out[offset++] );
   if ((offset % 4) == 0) offset += 12;
 #else
-  SMS_NTSC_RGB_OUT( 0, *line_out++, SMS_NTSC_OUT_DEPTH );
-  SMS_NTSC_RGB_OUT( 1, *line_out++, SMS_NTSC_OUT_DEPTH );
+  SMS_NTSC_RGB_OUT( 0, *line_out++ );
+  SMS_NTSC_RGB_OUT( 1, *line_out++ );
 #endif
 
   SMS_NTSC_COLOR_IN( 1, ntsc, border );
 #ifdef NGC
-  SMS_NTSC_RGB_OUT( 2, line_out[offset++], SMS_NTSC_OUT_DEPTH );
+  SMS_NTSC_RGB_OUT( 2, line_out[offset++] );
   if ((offset % 4) == 0) offset += 12;
-  SMS_NTSC_RGB_OUT( 3, line_out[offset++], SMS_NTSC_OUT_DEPTH );
+  SMS_NTSC_RGB_OUT( 3, line_out[offset++] );
   if ((offset % 4) == 0) offset += 12;
 #else
-  SMS_NTSC_RGB_OUT( 2, *line_out++, SMS_NTSC_OUT_DEPTH );
-  SMS_NTSC_RGB_OUT( 3, *line_out++, SMS_NTSC_OUT_DEPTH );
+  SMS_NTSC_RGB_OUT( 2, *line_out++ );
+  SMS_NTSC_RGB_OUT( 3, *line_out++ );
 #endif
 
   SMS_NTSC_COLOR_IN( 2, ntsc, border );
 #ifdef NGC
-  SMS_NTSC_RGB_OUT( 4, line_out[offset++], SMS_NTSC_OUT_DEPTH );
+  SMS_NTSC_RGB_OUT( 4, line_out[offset++] );
   if ((offset % 4) == 0) offset += 12;
-  SMS_NTSC_RGB_OUT( 5, line_out[offset++], SMS_NTSC_OUT_DEPTH );
+  SMS_NTSC_RGB_OUT( 5, line_out[offset++] );
   if ((offset % 4) == 0) offset += 12;
-  SMS_NTSC_RGB_OUT( 6, line_out[offset++], SMS_NTSC_OUT_DEPTH );
+  SMS_NTSC_RGB_OUT( 6, line_out[offset++] );
   if ((offset % 4) == 0) offset += 12;
 #else
-  SMS_NTSC_RGB_OUT( 4, *line_out++, SMS_NTSC_OUT_DEPTH );
-  SMS_NTSC_RGB_OUT( 5, *line_out++, SMS_NTSC_OUT_DEPTH );
-  SMS_NTSC_RGB_OUT( 6, *line_out++, SMS_NTSC_OUT_DEPTH );
+  SMS_NTSC_RGB_OUT( 4, *line_out++ );
+  SMS_NTSC_RGB_OUT( 5, *line_out++ );
+  SMS_NTSC_RGB_OUT( 6, *line_out++ );
 #endif
 }
-#endif

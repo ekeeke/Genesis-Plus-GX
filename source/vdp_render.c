@@ -4128,8 +4128,8 @@ void remap_line(int line)
     line = (line * 2) + odd_frame;
   }
 
-  /* NTSC Filter (only supported for 16-bit pixels rendering) */
-#ifdef USE_16BPP_RENDERING
+  /* NTSC Filter (only supported for 15 or 16-bit pixels rendering) */
+#if defined(USE_15BPP_RENDERING) || defined(USE_16BPP_RENDERING)
   if (config.ntsc)
   {
     if (reg[12] & 0x01)
