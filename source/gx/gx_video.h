@@ -48,6 +48,22 @@
 #define LIGHT_GREEN {0xa9,0xc7,0xc6,0xff}
 #define WHITE       {0xff,0xff,0xff,0xff}
 
+/* Directly fill a RGB565 texture */
+/* One tile is 32 byte = 4x4 pixels */
+/* Tiles are stored continuously in texture memory */
+#define CUSTOM_BLITTER(line, width, table, in)  \
+  width >>= 2;  \
+  u16 *out = (u16 *) (texturemem + (((width << 5) * (line >> 2)) + ((line & 3) << 3))); \
+  do  \
+  { \
+    *out++ = table[*in++];  \
+    *out++ = table[*in++];  \
+    *out++ = table[*in++];  \
+    *out++ = table[*in++];  \
+    out += 12;  \
+    } \
+    while (--width);
+
 /* image texture */
 typedef struct
 {

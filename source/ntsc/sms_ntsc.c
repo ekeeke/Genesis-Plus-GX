@@ -1,5 +1,7 @@
 /* sms_ntsc 0.2.3. http://www.slack.net/~ant/ */
 
+/* Modified for use with Genesis Plus GX -- EkeEke */
+
 #include "shared.h"
 #include "sms_ntsc.h"
 
@@ -13,8 +15,6 @@ FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
 details. You should have received a copy of the GNU Lesser General Public
 License along with this module; if not, write to the Free Software Foundation,
 Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA */
-
-/* Modified to work with Genesis Plus GX -- EkeEke */
 
 sms_ntsc_setup_t const sms_ntsc_monochrome = { 0,-1, 0, 0,.2,  0, .2,-.2,-.2,-1, 0,  0 };
 sms_ntsc_setup_t const sms_ntsc_composite  = { 0, 0, 0, 0, 0,  0,.25,  0,  0, 0, 0,  0 };
@@ -84,6 +84,7 @@ void sms_ntsc_init( sms_ntsc_t* ntsc, sms_ntsc_setup_t const* setup )
   }
 }
 
+#ifndef CUSTOM_BLITTER
 void sms_ntsc_blit( sms_ntsc_t const* ntsc, SMS_NTSC_IN_T const* table, unsigned char* input,
                     int in_width, int vline)
 {
@@ -101,17 +102,8 @@ void sms_ntsc_blit( sms_ntsc_t const* ntsc, SMS_NTSC_IN_T const* table, unsigned
       (SMS_NTSC_ADJ_IN( table[input[0]] )) & extra2,
       (SMS_NTSC_ADJ_IN( table[input[extra2 & 1]] )) & extra1 );
 
-#ifdef NGC
-  /* directly fill the RGB565 texture */
-  /* one tile is 32 byte = 4x4 pixels */
-  /* tiles are stored continuously in texture memory */
-  in_width = SMS_NTSC_OUT_WIDTH(in_width) / 4;
-  int offset = ((in_width * 32) * (vline / 4)) + ((vline & 3) * 8);
-  sms_ntsc_out_t* restrict line_out  = (sms_ntsc_out_t*)(texturemem + offset);
-  offset = 0;
-#else
   sms_ntsc_out_t* restrict line_out  = (sms_ntsc_out_t*)(&bitmap.data[(vline * bitmap.pitch)]);
-#endif
+
   int n;
   input += in_extra;
 
@@ -119,76 +111,31 @@ void sms_ntsc_blit( sms_ntsc_t const* ntsc, SMS_NTSC_IN_T const* table, unsigned
   {
     /* order of input and output pixels must not be altered */
     SMS_NTSC_COLOR_IN( 0, ntsc, SMS_NTSC_ADJ_IN( table[*input++] ) );
-#ifdef NGC
-    SMS_NTSC_RGB_OUT( 0, line_out[offset++] );
-    if ((offset % 4) == 0) offset += 12;
-    SMS_NTSC_RGB_OUT( 1, line_out[offset++] );
-    if ((offset % 4) == 0) offset += 12;
-#else
     SMS_NTSC_RGB_OUT( 0, *line_out++ );
     SMS_NTSC_RGB_OUT( 1, *line_out++ );
-#endif
     
     SMS_NTSC_COLOR_IN( 1, ntsc, SMS_NTSC_ADJ_IN( table[*input++] ) );
-#ifdef NGC
-    SMS_NTSC_RGB_OUT( 2, line_out[offset++] );
-    if ((offset % 4) == 0) offset += 12;
-    SMS_NTSC_RGB_OUT( 3, line_out[offset++] );
-    if ((offset % 4) == 0) offset += 12;
-#else
     SMS_NTSC_RGB_OUT( 2, *line_out++ );
     SMS_NTSC_RGB_OUT( 3, *line_out++ );
-#endif
       
     SMS_NTSC_COLOR_IN( 2, ntsc, SMS_NTSC_ADJ_IN( table[*input++] ) );
-#ifdef NGC
-    SMS_NTSC_RGB_OUT( 4, line_out[offset++] );
-    if ((offset % 4) == 0) offset += 12;
-    SMS_NTSC_RGB_OUT( 5, line_out[offset++] );
-    if ((offset % 4) == 0) offset += 12;
-    SMS_NTSC_RGB_OUT( 6, line_out[offset++] );
-    if ((offset % 4) == 0) offset += 12;
-#else
     SMS_NTSC_RGB_OUT( 4, *line_out++ );
     SMS_NTSC_RGB_OUT( 5, *line_out++ );
     SMS_NTSC_RGB_OUT( 6, *line_out++ );
-#endif
   }
 
   /* finish final pixels */
   SMS_NTSC_COLOR_IN( 0, ntsc, border );
-#ifdef NGC
-  SMS_NTSC_RGB_OUT( 0, line_out[offset++] );
-  if ((offset % 4) == 0) offset += 12;
-  SMS_NTSC_RGB_OUT( 1, line_out[offset++] );
-  if ((offset % 4) == 0) offset += 12;
-#else
   SMS_NTSC_RGB_OUT( 0, *line_out++ );
   SMS_NTSC_RGB_OUT( 1, *line_out++ );
-#endif
 
   SMS_NTSC_COLOR_IN( 1, ntsc, border );
-#ifdef NGC
-  SMS_NTSC_RGB_OUT( 2, line_out[offset++] );
-  if ((offset % 4) == 0) offset += 12;
-  SMS_NTSC_RGB_OUT( 3, line_out[offset++] );
-  if ((offset % 4) == 0) offset += 12;
-#else
   SMS_NTSC_RGB_OUT( 2, *line_out++ );
   SMS_NTSC_RGB_OUT( 3, *line_out++ );
-#endif
 
   SMS_NTSC_COLOR_IN( 2, ntsc, border );
-#ifdef NGC
-  SMS_NTSC_RGB_OUT( 4, line_out[offset++] );
-  if ((offset % 4) == 0) offset += 12;
-  SMS_NTSC_RGB_OUT( 5, line_out[offset++] );
-  if ((offset % 4) == 0) offset += 12;
-  SMS_NTSC_RGB_OUT( 6, line_out[offset++] );
-  if ((offset % 4) == 0) offset += 12;
-#else
   SMS_NTSC_RGB_OUT( 4, *line_out++ );
   SMS_NTSC_RGB_OUT( 5, *line_out++ );
   SMS_NTSC_RGB_OUT( 6, *line_out++ );
-#endif
 }
+#endif

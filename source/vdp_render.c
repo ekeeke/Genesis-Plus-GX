@@ -47,13 +47,23 @@
 extern md_ntsc_t *md_ntsc;
 extern sms_ntsc_t *sms_ntsc;
 
+
+/* Output pixels type*/
+#if defined(USE_8BPP_RENDERING)
+#define PIXEL_OUT_T uint8
+#elif defined(USE_32BPP_RENDERING)
+#define PIXEL_OUT_T uint32
+#else
+#define PIXEL_OUT_T uint16
+#endif
+
+
 /* Pixel priority look-up tables information */
 #define LUT_MAX     (6)
 #define LUT_SIZE    (0x10000)
 
 
 #ifdef ALIGN_LONG
-/* Or change the names if you depend on these from elsewhere.. */
 #undef READ_LONG
 #undef WRITE_LONG
 
@@ -452,7 +462,7 @@ INLINE void WRITE_LONG(void *address, uint32 data)
   }
 
 
-/* Pixel conversion macros */
+/* Pixels conversion macro */
 /* 4-bit color channels are either compressed to 2/3-bit or dithered to 5/6/8-bit equivalents */
 /* 3:3:2 RGB */
 #if defined(USE_8BPP_RENDERING)
@@ -551,30 +561,10 @@ static uint32 bp_lut[0x10000];
 /* Layer priority pixel look-up tables */
 static uint8 lut[LUT_MAX][LUT_SIZE];
 
-/* 8-bit pixel color mapping */
-#if defined(USE_8BPP_RENDERING)
-static uint8 pixel[0x100];
-static uint8 pixel_lut[3][0x200];
-static uint8 pixel_lut_m4[0x40];
-
-/* 15-bit pixel color mapping */
-#elif defined(USE_15BPP_RENDERING)
-static uint16 pixel[0x100];
-static uint16 pixel_lut[3][0x200];
-static uint16 pixel_lut_m4[0x40];
-
-/* 16-bit pixel color mapping */
-#elif defined(USE_16BPP_RENDERING)
-static uint16 pixel[0x100];
-static uint16 pixel_lut[3][0x200];
-static uint16 pixel_lut_m4[0x40];
-
-/* 32-bit pixel color mapping */
-#elif defined(USE_32BPP_RENDERING)
-static uint32 pixel[0x100];
-static uint32 pixel_lut[3][0x200];
-static uint32 pixel_lut_m4[0x40];
-#endif
+/* Output pixel data look-up tables*/
+static PIXEL_OUT_T pixel[0x100];
+static PIXEL_OUT_T pixel_lut[3][0x200];
+static PIXEL_OUT_T pixel_lut_m4[0x40];
 
 /* Background & Sprite line buffers */
 static uint8 linebuf[2][0x200];
@@ -4145,31 +4135,10 @@ void remap_line(int line)
 #endif
   {
     /* Convert VDP pixel data to output pixel format */
-#ifdef NGC
-    /* Directly fill a RGB565 texture */
-    /* One tile is 32 byte = 4x4 pixels */
-    /* Tiles are stored continuously in texture memory */
-    width >>= 2;
-    uint16 *dst = (uint16 *) (texturemem + (((width << 5) * (line >> 2)) + ((line & 3) << 3)));
-    do
-    {
-      *dst++ = pixel[*src++];
-      *dst++ = pixel[*src++];
-      *dst++ = pixel[*src++];
-      *dst++ = pixel[*src++];
-
-      /* next tile */
-      dst += 12;
-    }
-    while (--width);
+#ifdef CUSTOM_BLITTER
+    CUSTOM_BLITTER(line, width, pixel, src)
 #else
-#if defined(USE_8BPP_RENDERING)
-    uint8 *dst =((uint8 *)&bitmap.data[(line * bitmap.pitch)]);
-#elif defined(USE_32BPP_RENDERING)
-    uint32 *dst =((uint32 *)&bitmap.data[(line * bitmap.pitch)]);
-#else
-    uint16 *dst =((uint16 *)&bitmap.data[(line * bitmap.pitch)]);
-#endif
+    PIXEL_OUT_T *dst =((PIXEL_OUT_T *)&bitmap.data[(line * bitmap.pitch)]);
     do
     {
       *dst++ = pixel[*src++];

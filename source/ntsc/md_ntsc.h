@@ -46,7 +46,7 @@ typedef struct md_ntsc_t md_ntsc_t;
 void md_ntsc_init( md_ntsc_t* ntsc, md_ntsc_setup_t const* setup );
 
 /* Filters one row of pixels. Input pixel format is set by MD_NTSC_IN_FORMAT
-and output RGB depth is defined by MD_NTSC_RGB_OUT_. Both default to 16-bit RGB.
+and output RGB depth is set by MD_NTSC_OUT_DEPTH. Both default to 16-bit RGB.
 In_row_width is the number of pixels to get to the next input row. */
 void md_ntsc_blit( md_ntsc_t const* ntsc, MD_NTSC_IN_T const* table, unsigned char* input,
     int in_width, int vline);

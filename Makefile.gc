@@ -27,7 +27,7 @@ INCLUDES	:=	source source/m68k source/z80 source/sound source/ntsc source/input_
 # options for code generation
 #---------------------------------------------------------------------------------
 
-CFLAGS  = -O3 -fomit-frame-pointer --param large-function-growth=800 --param inline-unit-growth=200 -Wall -Winline -Wno-strict-aliasing $(MACHDEP) $(INCLUDE) -DUSE_16BPP_RENDERING -DALT_RENDERER -DNGC
+CFLAGS  = -O3 -fomit-frame-pointer --param large-function-growth=800 --param inline-unit-growth=200 -Wall -Winline -Wno-strict-aliasing $(MACHDEP) $(INCLUDE) -DUSE_16BPP_RENDERING -DALT_RENDERER
 CXXFLAGS	=	$(CFLAGS)
 
 LDFLAGS	=	$(MACHDEP) -Wl,-Map,$(notdir $@).map

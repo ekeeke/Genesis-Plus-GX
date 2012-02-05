@@ -46,7 +46,7 @@ typedef struct sms_ntsc_t sms_ntsc_t;
 void sms_ntsc_init( sms_ntsc_t* ntsc, sms_ntsc_setup_t const* setup );
 
 /* Filters one row of pixels. Input pixel format is set by SMS_NTSC_IN_FORMAT
-and output RGB depth is defined by SMS_NTSC_RGB_OUT_. Both default to 16-bit RGB.
+and output RGB depth is set by SMS_NTSC_OUT_DEPTH. Both default to 16-bit RGB.
 In_row_width is the number of pixels to get to the next input row. */
 void sms_ntsc_blit( sms_ntsc_t const* ntsc, SMS_NTSC_IN_T const* table, unsigned char* input,
     int in_width, int vline);
