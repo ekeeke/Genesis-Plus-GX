@@ -38,9 +38,6 @@
 
 #include "shared.h"
 #include "terebi_oekaki.h"
-#ifdef NGC
-#include "cheats.h"
-#endif
 
 #define MAPPER_NONE   (0)
 #define MAPPER_TEREBI (1)
@@ -52,7 +49,7 @@
 #define MAPPER_93C46  (7)
 #define MAPPER_MULTI  (8)
 
-#define GAME_DATABASE_CNT (188)
+#define GAME_DATABASE_CNT (190)
 
 typedef struct
 {
@@ -132,6 +129,10 @@ static const rominfo_t game_list[GAME_DATABASE_CNT] =
   /* games requiring Mark-III hardware (no Memory Control port) */
   {0xBD1CC7DF, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA,   SYSTEM_MARKIII, REGION_JAPAN_NTSC}, /* Super Tetris (K) */
   {0x6D309AC5, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA,   SYSTEM_MARKIII, REGION_JAPAN_NTSC}, /* Power Boggle Boggle (K) */
+
+  /* games requiring random RAM pattern initialization */
+  {0x08BF3DE3, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_NONE,   SYSTEM_MARKIII, REGION_JAPAN_NTSC}, /* Alibaba and 40 Thieves (KR) */
+  {0x643B6B76, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_NONE,   SYSTEM_MARKIII, REGION_JAPAN_NTSC}, /* Block Hole (KR) */
 
   /* games requiring PAL timings */
   {0x72420F38, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA,   SYSTEM_SMS2,     REGION_EUROPE}, /* Addams Familly */
@@ -932,9 +933,9 @@ static void mapper_8k_w(int offset, unsigned int data)
     }
   }
 
-#ifdef NGC
-  /* update ROM patches */
-  ROMCheatUpdate();
+#ifdef CHEATS_UPDATE
+  /* update ROM patches when banking has changed */
+  CHEATS_UPDATE();
 #endif
 }
     
@@ -1076,9 +1077,9 @@ static void mapper_16k_w(int offset, unsigned int data)
     }
   }
 
-#ifdef NGC
-  /* update ROM patches */
-  ROMCheatUpdate();
+#ifdef CHEATS_UPDATE
+  /* update ROM patches when banking has changed */
+  CHEATS_UPDATE();
 #endif
 }
 

@@ -218,7 +218,7 @@ void gen_reset(int hard_reset)
   /* System Reset */
   if (hard_reset)
   {
-    /* clear RAM (TODO: use random bit patterns as on real hardware) */
+    /* clear RAM (TODO: use random bit patterns for all systems, like on real hardware) */
     memset(work_ram, 0x00, sizeof (work_ram));
     memset(zram, 0x00, sizeof (zram));
   }
@@ -286,6 +286,13 @@ void gen_reset(int hard_reset)
   }
   else
   {
+    /* RAM state at power-on is undefined on some systems */
+    if ((system_hw == SYSTEM_MARKIII) || ((system_hw & SYSTEM_SMS) && (region_code == REGION_JAPAN_NTSC)))
+    {
+      /* some korean games rely on RAM to be initialized with values different from $00 or $ff */
+      memset(work_ram, 0xf0, sizeof(work_ram));
+    }
+
     /* Z80 cycles should be a multiple of 15 to avoid rounding errors */
     mcycles_z80 = (mcycles_z80 / 15) * 15;
 
