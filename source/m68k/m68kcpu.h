@@ -35,6 +35,7 @@
 #define M68KCPU__HEADER
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <limits.h>
 #include "m68k.h"
 
