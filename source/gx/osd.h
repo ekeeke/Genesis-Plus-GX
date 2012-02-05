@@ -24,6 +24,7 @@
 #include "gx_video.h"
 #include "config.h"
 #include "fileio.h"
+#include "cheats.h"
 
 #define DEFAULT_PATH  "/genplus"
 #define GG_ROM        "/genplus/ggenie.bin"
@@ -39,8 +40,6 @@
 #else
 #define VERSION "Genesis Plus GX 1.6.1 (GCN)"
 #endif
-
-#define osd_input_Update() gx_input_UpdateEmu()
 
 /* globals */
 extern void legal(void);

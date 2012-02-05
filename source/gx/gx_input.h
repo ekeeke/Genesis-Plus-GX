@@ -40,6 +40,8 @@
 #ifndef _GC_INPUT_H_
 #define _GC_INPUT_H_
 
+#define osd_input_update() gx_input_UpdateEmu()
+
 /* max. supported inputs */
 #ifdef HW_RVL
 #define MAX_INPUTS 8
@@ -49,6 +51,7 @@
 
 /* Configurable keys */
 #define MAX_KEYS 8
+
 
 /* Key configuration structure */
 typedef struct 

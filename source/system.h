@@ -84,11 +84,10 @@ typedef struct
 
 typedef struct
 {
-  int sample_rate;  /* Output Sample rate (8000-48000) */
-  double frame_rate; /* Output Frame rate (usually 50 or 60 frames per second) */
-  int enabled;      /* 1= sound emulation is enabled */
-  int buffer_size;  /* Size of sound buffer (in bytes) */
-  int16 *buffer[2]; /* Signed 16-bit stereo sound data */
+  int sample_rate;    /* Output Sample rate (8000-48000) */
+  double frame_rate;  /* Output Frame rate (usually 50 or 60 frames per second) */
+  int enabled;        /* 1= sound emulation is enabled */
+  int buffer_size;    /* Size of sound buffer (in bytes) */
   struct
   {
     int32 *pos;
@@ -116,7 +115,7 @@ extern uint32 system_clock;
 extern int audio_init(int samplerate, double framerate);
 extern void audio_reset(void);
 extern void audio_shutdown(void);
-extern int audio_update(void);
+extern int audio_update(int16 *buffer);
 extern void audio_set_equalizer(void);
 extern void system_init(void);
 extern void system_reset(void);

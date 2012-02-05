@@ -40,6 +40,8 @@
 #ifndef _CHEATS_H
 #define _CHEATS_H
 
+#define CHEATS_UPDATE() ROMCheatUpdate()
+
 extern void CheatMenu(void);
 extern void CheatLoad(void);
 extern void RAMCheatUpdate(void);

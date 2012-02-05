@@ -124,8 +124,12 @@ void gx_audio_Shutdown(void)
  ***/
 void gx_audio_Update(void)
 {
-  /* retrieve audio samples (size must be multiple of 32 bytes) */
-  int size = audio_update() * 4;
+  /* Current available soundbuffer */
+  s16 *sb = (s16 *)(soundbuffer[mixbuffer]);
+
+  /* Retrieve audio samples (size must be multiple of 32 bytes) */
+  int size = audio_update(sb) * 4;
+
 #ifdef LOG_TIMING
   if (prevtime && (frame_cnt < LOGSIZE - 1))
   {
@@ -137,8 +141,7 @@ void gx_audio_Update(void)
   }
 #endif
 
-  /* set next DMA soundbuffer */
-  s16 *sb = (s16 *)(soundbuffer[mixbuffer]);
+  /* Update DMA settings */
   DCFlushRange((void *)sb, size);
   AUDIO_InitDMA((u32) sb, size);
   mixbuffer ^= 1;

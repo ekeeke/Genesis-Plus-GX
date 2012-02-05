@@ -29,6 +29,9 @@ struct {
   int current_emulated_samples;
 } sdl_sound;
 
+
+static short soundframe[SOUND_SAMPLES_SIZE];
+
 static void sdl_sound_callback(void *userdata, Uint8 *stream, int len)
 {
   if(sdl_sound.current_emulated_samples < len) {
@@ -85,25 +88,23 @@ static int sdl_sound_init()
   return 1;
 }
 
-static void sdl_sound_update()
+static void sdl_sound_update(enabled)
 {
-  int i;
-  short* p;
-
-  int size = audio_update();
-
-  if (use_sound)
+  int size = audio_update(soundframe) * 2;
+  
+  if (enabled)
   {
+    int i;
+    short *out;
+
     SDL_LockAudio();
-    p = (short*)sdl_sound.current_pos;
-    for(i = 0; i < size; ++i) {
-        *p = snd.buffer[0][i];
-        ++p;
-        *p = snd.buffer[1][i];
-        ++p;
+    out = (short*)sdl_sound.current_pos;
+    for(i = 0; i < size; i++)
+    {
+      *out++ = soundframe[i];
     }
-    sdl_sound.current_pos = (char*)p;
-    sdl_sound.current_emulated_samples += size * 2 * sizeof(short);
+    sdl_sound.current_pos = (char*)out;
+    sdl_sound.current_emulated_samples += size * sizeof(short);
     SDL_UnlockAudio();
   }
 }
@@ -768,7 +769,7 @@ int main (int argc, char **argv)
     }
 
     sdl_video_update();
-    sdl_sound_update();
+    sdl_sound_update(use_sound);
 
     if(!turbo_mode && sdl_sync.sem_sync && sdl_video.frames_rendered % 3 == 0)
     {

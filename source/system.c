@@ -101,13 +101,6 @@ int audio_init(int samplerate, double framerate)
   snd.fm.buffer = (int32 *) malloc(snd.buffer_size * sizeof(int32) * 2);
   if (!snd.fm.buffer) return (-1);
 
-#ifndef NGC
-  /* Output buffers */
-  snd.buffer[0] = (int16 *) malloc(snd.buffer_size * sizeof(int16));
-  snd.buffer[1] = (int16 *) malloc(snd.buffer_size * sizeof(int16));
-  if (!snd.buffer[0] || !snd.buffer[1]) return (-1);
-#endif
-
   /* Resampling buffer */
   if (config.hq_fm && !Fir_Resampler_initialize(4096)) return (-1);
 
@@ -137,10 +130,6 @@ void audio_reset(void)
   snd.fm.pos  = snd.fm.buffer;
   if (snd.psg.buffer) memset (snd.psg.buffer, 0, snd.buffer_size * sizeof(int16));
   if (snd.fm.buffer) memset (snd.fm.buffer, 0, snd.buffer_size * sizeof(int32) * 2);
-#ifndef NGC
-  if (snd.buffer[0]) memset (snd.buffer[0], 0, snd.buffer_size * sizeof(int16));
-  if (snd.buffer[1]) memset (snd.buffer[1], 0, snd.buffer_size * sizeof(int16));
-#endif
 }
 
 void audio_set_equalizer(void)
@@ -156,16 +145,12 @@ void audio_shutdown(void)
   /* Sound buffers */
   if (snd.fm.buffer) free(snd.fm.buffer);
   if (snd.psg.buffer) free(snd.psg.buffer);
-#ifndef NGC
-  if (snd.buffer[0]) free(snd.buffer[0]);
-  if (snd.buffer[1]) free(snd.buffer[1]);
-#endif
 
   /* Resampling buffer */
   Fir_Resampler_shutdown();
 }
 
-int audio_update(void)
+int audio_update(int16 *buffer)
 {
   int32 i, l, r;
   int32 ll = llp;
@@ -179,10 +164,6 @@ int audio_update(void)
 
   int32 *fm       = snd.fm.buffer;
   int16 *psg      = snd.psg.buffer;
-
-#ifdef NGC
-  int16 *sb = (int16 *) soundbuffer[mixbuffer];
-#endif
 
   /* get number of available samples */
   int size = sound_update(mcycles_vdp);
@@ -249,12 +230,12 @@ int audio_update(void)
     else if (r < -32768) r = -32768;
 
     /* update sound buffer */
-#ifndef NGC
-    snd.buffer[0][i] = l;
-    snd.buffer[1][i] = r;
+#ifdef LSB_FIRST
+    *buffer++ = l;
+    *buffer++ = r;
 #else
-    *sb++ = r;
-    *sb++ = l;
+    *buffer++ = r;
+    *buffer++ = l;
 #endif
   }
 
@@ -539,7 +520,7 @@ void system_frame_gen(int do_skip)
   }
 
   /* update inputs before VINT (Warriors of Eternal Sun) */
-  osd_input_Update();
+  osd_input_update();
 
   /* delay between VINT flag & V Interrupt (Ex-Mutants, Tyrant) */
   m68k_run(mcycles_vdp + 588);
@@ -945,7 +926,7 @@ void system_frame_sms(int do_skip)
   }
 
   /* update inputs before VINT */
-  osd_input_Update();
+  osd_input_update();
 
   /* run Z80 until end of line */
   z80_run(mcycles_vdp + MCYCLES_PER_LINE);
