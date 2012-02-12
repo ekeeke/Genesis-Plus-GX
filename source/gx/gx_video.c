@@ -590,7 +590,7 @@ static void gxResetScaler(u32 width)
   /* no filtering, disable GX horizontal scaling */
   if (!config.bilinear && !config.ntsc)
   {
-    if ((width * 2) <= 640)
+    if ((width <= 320) && (width <= xscale))
       rmode->fbWidth = width * 2;
     else if (width <= 640)
       rmode->fbWidth = width;

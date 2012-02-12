@@ -3256,8 +3256,8 @@ static void showcredits(void)
     FONT_writeCenter("improved emulation code, fixes & extra features by Eke-Eke", 18, 0, 640, 516 - offset, (GXColor)WHITE);
     FONT_writeCenter("original 1.3 version by Charles MacDonald", 18, 0, 640, 534 - offset, (GXColor)WHITE);
     FONT_writeCenter("original Z80 core by Juergen Buchmueller", 18, 0, 640, 552 - offset, (GXColor)WHITE);
-    FONT_writeCenter("original 68k Musashi core by Karl Stenerud", 18, 0, 640, 570 - offset, (GXColor)WHITE);
-    FONT_writeCenter("original YM2612/YM2413 cores by Jarek Burczynski & Tatsuyuki Satoh", 18, 0, 640, 588 - offset, (GXColor)WHITE);
+    FONT_writeCenter("original 68k core (Musashi) by Karl Stenerud", 18, 0, 640, 570 - offset, (GXColor)WHITE);
+    FONT_writeCenter("original YM2612/2413 cores by Jarek Burczynski, Tatsuyuki Satoh", 18, 0, 640, 588 - offset, (GXColor)WHITE);
     FONT_writeCenter("SN76489 core by Maxim", 18, 0, 640, 606 - offset, (GXColor)WHITE);
     FONT_writeCenter("SVP core by Gravydas Ignotas (Notaz)", 18, 0, 640, 624 - offset, (GXColor)WHITE);
     FONT_writeCenter("FIR Resampler & NTSC Video Filter by Shay Green (Blargg)", 18, 0, 640, 642 - offset, (GXColor)WHITE);

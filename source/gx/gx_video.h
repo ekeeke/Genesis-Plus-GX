@@ -61,8 +61,8 @@
     *out++ = table[*in++];  \
     *out++ = table[*in++];  \
     out += 12;  \
-    } \
-    while (--width);
+  } \
+  while (--width);
 
 /* image texture */
 typedef struct
