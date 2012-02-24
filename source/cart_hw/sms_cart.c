@@ -39,17 +39,19 @@
 #include "shared.h"
 #include "terebi_oekaki.h"
 
-#define MAPPER_NONE   (0)
-#define MAPPER_TEREBI (1)
-#define MAPPER_SEGA   (2)
-#define MAPPER_SEGA_X (3)
-#define MAPPER_CODIES (4)
-#define MAPPER_KOREA  (5)
-#define MAPPER_MSX    (6)
-#define MAPPER_93C46  (7)
-#define MAPPER_MULTI  (8)
+#define MAPPER_NONE       (0)
+#define MAPPER_TEREBI     (1)
+#define MAPPER_SEGA       (2)
+#define MAPPER_SEGA_X     (3)
+#define MAPPER_CODIES     (4)
+#define MAPPER_KOREA      (5)
+#define MAPPER_KOREA_8K   (6)
+#define MAPPER_KOREA_16K  (7)
+#define MAPPER_MSX        (8)
+#define MAPPER_93C46      (9)
+#define MAPPER_MULTI      (10)
 
-#define GAME_DATABASE_CNT (190)
+#define GAME_DATABASE_CNT (193)
 
 typedef struct
 {
@@ -80,21 +82,24 @@ static const rominfo_t game_list[GAME_DATABASE_CNT] =
   /* games requiring Sega 315-5235 mapper without bank shifting */
   {0x23BAC434, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA_X, SYSTEM_GG,          REGION_USA}, /* Shining Force Gaiden - Final Conflict (JP) [T-Eng] */
 
-  /* games using Korean mappers */
-  {0x17AB6883, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_NONE,   SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* FA Tetris (KR) */
-  {0x61E8806F, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_NONE,   SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Flash Point (KR) */
-  {0x445525E2, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_MSX,    SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Penguin Adventure (KR) */
-  {0x83F0EEDE, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_MSX,    SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Street Master (KR) */
-  {0xA05258F5, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_MSX,    SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Won-Si-In (KR) */
-  {0x06965ED9, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_MSX,    SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* F-1 Spirit - The way to Formula-1 (KR) */
-  {0x77EFE84A, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_MSX,    SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Cyborg Z (KR) */
-  {0xF89AF3CC, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_MSX,    SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Knightmare II - The Maze of Galious (KR) */
-  {0x9195C34C, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_MSX,    SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Super Boy 3 (KR) */
-  {0x89B79E77, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_KOREA,  SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Dodgeball King (KR) */
-  {0x18FB98A3, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_KOREA,  SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Jang Pung 3 (KR) */
-  {0x97D03541, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_KOREA,  SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Sangokushi 3 (KR) */
-  {0x67C2F0FF, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_KOREA,  SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Super Boy 2 (KR) */
-  {0xA67F2A5C, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_MULTI,  SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* 4-Pak All Action (KR) */
+  /* games using various Korean mappers */
+  {0x17AB6883, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_NONE,      SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* FA Tetris (KR) */
+  {0x61E8806F, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_NONE,      SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Flash Point (KR) */
+  {0x445525E2, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_MSX,       SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Penguin Adventure (KR) */
+  {0x83F0EEDE, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_MSX,       SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Street Master (KR) */
+  {0xA05258F5, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_MSX,       SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Won-Si-In (KR) */
+  {0x06965ED9, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_MSX,       SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* F-1 Spirit - The way to Formula-1 (KR) */
+  {0x77EFE84A, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_MSX,       SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Cyborg Z (KR) */
+  {0xF89AF3CC, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_MSX,       SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Knightmare II - The Maze of Galious (KR) */
+  {0x9195C34C, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_MSX,       SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Super Boy 3 (KR) */
+  {0xA67F2A5C, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_MULTI,     SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* 4-Pak All Action (KR) */
+  {0x89B79E77, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_KOREA,     SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Dodgeball King (KR) */
+  {0x18FB98A3, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_KOREA,     SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Jang Pung 3 (KR) */
+  {0x97D03541, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_KOREA,     SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Sangokushi 3 (KR) */
+  {0x67C2F0FF, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_KOREA,     SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Super Boy 2 (KR) */
+  {0x192949D5, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_KOREA_8K,  SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Janggun-ui Adeul (KR) */
+  {0x9FA727A0, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_KOREA_16K, SYSTEM_GGMS,        REGION_USA}, /* Street Hero [Proto 0] [SMS-GG] (US) */
+  {0xFB481971, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_KOREA_16K, SYSTEM_GGMS,        REGION_USA}, /* Street Hero [Proto 1] [SMS-GG] (US) */
 
   /* games using Codemaster mapper */
   {0x29822980, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_CODIES, SYSTEM_SMS2,     REGION_EUROPE}, /* Cosmic Spacehead */
@@ -318,12 +323,15 @@ static void write_mapper_none(unsigned int address, unsigned char data);
 static void write_mapper_sega(unsigned int address, unsigned char data);
 static void write_mapper_codies(unsigned int address, unsigned char data);
 static void write_mapper_korea(unsigned int address, unsigned char data);
+static void write_mapper_korea_8k(unsigned int address, unsigned char data);
+static void write_mapper_korea_16k(unsigned int address, unsigned char data);
 static void write_mapper_msx(unsigned int address, unsigned char data);
 static void write_mapper_multi(unsigned int address, unsigned char data);
 static void write_mapper_93c46(unsigned int address, unsigned char data);
 static void write_mapper_terebi(unsigned int address, unsigned char data);
 static unsigned char read_mapper_93c46(unsigned int address);
 static unsigned char read_mapper_terebi(unsigned int address);
+static unsigned char read_mapper_korea_8k(unsigned int address);
 static unsigned char read_mapper_default(unsigned int address);
 
 void sms_cart_init(void)
@@ -397,7 +405,7 @@ void sms_cart_init(void)
     /* 1k ROM banks */
     cart_rom.pages = cart.romsize >> 10;
   }
-  else if (cart_rom.mapper == MAPPER_MSX)
+  else if ((cart_rom.mapper == MAPPER_MSX) || (cart_rom.mapper == MAPPER_KOREA_8K))
   {
     /* 8k ROM banks */
     cart_rom.pages = cart.romsize >> 13;
@@ -575,6 +583,7 @@ void sms_cart_reset(void)
       break;
 
     case MAPPER_MSX:
+    case MAPPER_KOREA_8K:
       cart_rom.fcr[0] = 0;
       cart_rom.fcr[1] = 0;
       cart_rom.fcr[2] = 0;
@@ -822,7 +831,7 @@ static void mapper_reset(void)
   else
   {
     /* ROM paging */
-    if (slot.mapper == MAPPER_MSX)
+    if ((slot.mapper == MAPPER_MSX) || (slot.mapper == MAPPER_KOREA_8K))
     {
       mapper_8k_w(0,slot.fcr[0]);
       mapper_8k_w(1,slot.fcr[1]);
@@ -854,6 +863,16 @@ static void mapper_reset(void)
     case MAPPER_KOREA:
       z80_readmem = read_mapper_default;
       z80_writemem = write_mapper_korea;
+      break;
+
+    case MAPPER_KOREA_8K:
+      z80_readmem = read_mapper_korea_8k;
+      z80_writemem = write_mapper_korea_8k;
+      break;
+
+    case MAPPER_KOREA_16K:
+      z80_readmem = read_mapper_default;
+      z80_writemem = write_mapper_korea_16k;
       break;
 
     case MAPPER_MSX:
@@ -1166,6 +1185,69 @@ static void write_mapper_msx(unsigned int address, unsigned char data)
   z80_writemap[address >> 10][address & 0x03FF] = data;
 }
 
+static void write_mapper_korea_8k(unsigned int address, unsigned char data)
+{
+  if (address == 0x4000)
+  {
+    mapper_8k_w(2,data);
+    return;
+  }
+
+  if (address == 0x6000)
+  {
+    mapper_8k_w(3,data);
+    return;
+  }
+
+  if (address == 0x8000)
+  {
+    mapper_8k_w(0,data);
+    return;
+  }
+
+  if (address == 0xA000)
+  {
+    mapper_8k_w(1,data);
+    return;
+  }
+
+  if (address == 0xFFFE)
+  {
+    mapper_8k_w(2,(data << 1) & 0xFF);
+    mapper_8k_w(3,(1 + (data << 1)) & 0xFF);
+  }
+  else if (address == 0xFFFF)
+  {
+    mapper_8k_w(0,(data << 1) & 0xFF);
+    mapper_8k_w(1,(1 + (data << 1)) & 0xFF);
+  }
+
+  z80_writemap[address >> 10][address & 0x03FF] = data;
+}
+
+static void write_mapper_korea_16k(unsigned int address, unsigned char data)
+{
+  if (address == 0x4000)
+  {
+    mapper_16k_w(2,data);
+    return;
+  }
+
+  if (address == 0x8000)
+  {
+    mapper_16k_w(3,data);
+    return;
+  }
+
+  /* SEGA mapper compatibility */
+  if (address >= 0xFFFC)
+  {
+    mapper_16k_w(address & 3, data);
+  }
+
+  z80_writemap[address >> 10][address & 0x03FF] = data;
+}
+
 static void write_mapper_93c46(unsigned int address, unsigned char data)
 {
   if ((address == 0x8000) && gg_eeprom.enabled)
@@ -1221,6 +1303,26 @@ static unsigned char read_mapper_terebi(unsigned int address)
   }
 
   return z80_readmap[address >> 10][address & 0x03FF];
+}
+
+static unsigned char read_mapper_korea_8k(unsigned int address)
+{
+  unsigned char data = z80_readmap[address >> 10][address & 0x03FF];
+
+  /* 16k page */
+  unsigned char page = address >> 14;
+
+  /* $4000-$7FFFF and $8000-$BFFF area are protected */
+  if (((page == 1) && (slot.fcr[2] & 0x80)) || ((page == 2) && (slot.fcr[0] & 0x80)))
+  {
+    /* bit-swapped value */
+    data = (((data >> 7) & 0x01) | ((data >> 5) & 0x02) |
+            ((data >> 3) & 0x04) | ((data >> 1) & 0x08) |
+            ((data << 1) & 0x10) | ((data << 3) & 0x20) |
+            ((data << 5) & 0x40) | ((data << 7) & 0x80));
+  }
+
+  return data;
 }
 
 static unsigned char read_mapper_default(unsigned int address)
