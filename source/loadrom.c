@@ -469,7 +469,7 @@ int load_rom(char *filename)
   }
   else if (config.system == SYSTEM_GG)
   {
-    if (!(system_hw == SYSTEM_GG))
+    if (system_hw != SYSTEM_GG)
     {
       /* Game Gear in MS compatibility mode  */
       system_hw = SYSTEM_GGMS;
@@ -484,7 +484,7 @@ int load_rom(char *filename)
   region_autodetect();
 
   /* Genesis mode specific */
-  if (system_hw == SYSTEM_MD)
+  if ((system_hw & SYSTEM_PBC) == SYSTEM_MD)
   {
 #ifdef LSB_FIRST
     /* Byteswap ROM to optimize 16-bit access */
@@ -529,7 +529,7 @@ int load_rom(char *filename)
  ****************************************************************************/
 void region_autodetect(void)
 {
-  if (system_hw != SYSTEM_MD)
+  if ((system_hw & SYSTEM_PBC) != SYSTEM_MD)
   {
     region_code = sms_cart_region_detect();
   }
