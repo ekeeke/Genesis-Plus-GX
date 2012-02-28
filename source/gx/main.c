@@ -3,7 +3,7 @@
  *
  *  Genesis Plus GX
  *
- *  Copyright Eke-Eke (2007-2011), based on original work from Softdev (2006)
+ *  Copyright Eke-Eke (2007-2012), based on original work from Softdev (2006)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -49,10 +49,6 @@
 
 #include <fat.h>
 
-#ifdef HW_RVL
-#include <ogc/machine/processor.h>
-#endif
-
 /* audio "exact" samplerate, measured on real hardware */
 #ifdef HW_RVL
 #define SAMPLERATE_48KHZ 48000
@@ -72,46 +68,6 @@ u32 delta_samp[LOGSIZE];
 #endif
 
 #ifdef HW_RVL
-
-/****************************************************************************
- * Force AHBPROT flags when IOS is reloaded 
- * Credits to DaveBaol for the original patch
- ***************************************************************************/
-int Patch_IOS(void)
-{
-  /* full hardware access is initially required */
-  if (read32(0xd800064) == 0xffffffff)
-  {
-    /* disable MEM2 protection */
-    write16(0xd8b420a, 0);
-
-    /* IOS area (top of MEM2, above IOS Heap area) */
-    u8 *ptr_start = (u8*)*((u32*)0x80003134);
-    u8 *ptr_end = (u8*)0x94000000;
-
-    /* Make sure start pointer is valid */
-    if (((u32)ptr_start < 0x90000000) || (ptr_start >= ptr_end))
-    {
-      /* use libogc default value (longer but safer) */
-      ptr_start = (u8*) SYS_GetArena2Hi();
-    }
-   
-    /* Search specific code pattern */
-    const u8 es_set_ahbprot_pattern[] = { 0x68, 0x5B, 0x22, 0xEC, 0x00, 0x52, 0x18, 0x9B, 0x68, 0x1B, 0x46, 0x98, 0x07, 0xDB };
-    while (ptr_start < (ptr_end - sizeof(es_set_ahbprot_pattern)))
-    {
-      if (!memcmp(ptr_start, es_set_ahbprot_pattern, sizeof(es_set_ahbprot_pattern)))
-      {
-        /* patch IOS (force AHBPROT bit to be set when launching titles) */
-        ptr_start[25] = 0x01;
-        DCFlushRange(ptr_start + 25, 1);
-      }
-      ptr_start++; /* could be optimized ? not sure if pattern coincides with instruction start */
-    }
-  }
-  return 0;
-}
-
 /****************************************************************************
  * Power Button callback 
  ***************************************************************************/
@@ -477,18 +433,6 @@ void shutdown(void)
 int main (int argc, char *argv[])
 {
  #ifdef HW_RVL
-  /* Temporary fix for HBC bug when using no_ios_reload with no connected network */
-  /* Try to patch current IOS to force AHBPROT flags being set on reload */
-  if (Patch_IOS())
-  {
-    /* reload IOS (full hardware access should now be preserved after reload) */
-    IOS_ReloadIOS(IOS_GetVersion());
-
-    /* enable DVD video commands */
-    write32(0xd800180, read32(0xd800180) & ~0x00200000);
-    usleep(200000);
-  }
- 
   /* enable 64-byte fetch mode for L2 cache */
   L2Enhance();
   
