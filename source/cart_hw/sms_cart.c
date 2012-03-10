@@ -39,19 +39,22 @@
 #include "shared.h"
 #include "terebi_oekaki.h"
 
-#define MAPPER_NONE       (0)
-#define MAPPER_TEREBI     (1)
-#define MAPPER_SEGA       (2)
-#define MAPPER_SEGA_X     (3)
-#define MAPPER_CODIES     (4)
-#define MAPPER_KOREA      (5)
-#define MAPPER_KOREA_8K   (6)
-#define MAPPER_KOREA_16K  (7)
-#define MAPPER_MSX        (8)
-#define MAPPER_93C46      (9)
-#define MAPPER_MULTI      (10)
+#define MAPPER_NONE        (0)
+#define MAPPER_TEREBI      (1)
+#define MAPPER_RAM_8K      (2)
+#define MAPPER_RAM_8K_EXT1 (3)
+#define MAPPER_RAM_8K_EXT2 (4)
+#define MAPPER_SEGA        (5)
+#define MAPPER_SEGA_X      (6)
+#define MAPPER_CODIES      (7)
+#define MAPPER_KOREA       (8)
+#define MAPPER_KOREA_8K    (9)
+#define MAPPER_KOREA_16K   (10)
+#define MAPPER_MSX         (11)
+#define MAPPER_93C46       (12)
+#define MAPPER_MULTI       (13)
 
-#define GAME_DATABASE_CNT (193)
+#define GAME_DATABASE_CNT (208)
 
 typedef struct
 {
@@ -118,7 +121,7 @@ static const rominfo_t game_list[GAME_DATABASE_CNT] =
   {0xDBE8895C, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_CODIES, SYSTEM_GG,          REGION_USA}, /* Micro Machines 2 - Turbo Tournament */
   {0xC1756BEE, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_CODIES, SYSTEM_GG,          REGION_USA}, /* Pete Sampras Tennis */
 
-  /* games using Serial EEPROM */
+  /* games using serial EEPROM */
   {0x36EBCD6D, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_93C46,  SYSTEM_GG,          REGION_USA}, /* Majors Pro Baseball */
   {0x3D8D0DD6, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_93C46,  SYSTEM_GG,          REGION_USA}, /* World Series Baseball [v0] */
   {0xBB38CFD7, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_93C46,  SYSTEM_GG,          REGION_USA}, /* World Series Baseball [v1] */
@@ -127,13 +130,32 @@ static const rominfo_t game_list[GAME_DATABASE_CNT] =
   /* games using Terebi Oekaki graphic board */
   {0xDD4A661B, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_TEREBI, SYSTEM_SG,   REGION_JAPAN_NTSC}, /* Terebi Oekaki */
 
-  /* games requiring JAPANESE region setting */
+  /* games using 8K embedded RAM */
+  {0x092F29D6, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_RAM_8K, SYSTEM_SG, REGION_JAPAN_NTSC}, /* The Castle (JP) */
+
+  /* games requiring 8K RAM extension adapter */
+  {0xCE5648C3, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_RAM_8K_EXT1, SYSTEM_SG, REGION_JAPAN_NTSC}, /* Bomberman Special [DahJee] (TW) */
+  {0x223397A1, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_RAM_8K_EXT1, SYSTEM_SG, REGION_JAPAN_NTSC}, /* King's Valley (TW) */
+  {0x281D2888, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_RAM_8K_EXT1, SYSTEM_SG, REGION_JAPAN_NTSC}, /* Knightmare (TW) */
+  {0x306D5F78, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_RAM_8K_EXT1, SYSTEM_SG, REGION_JAPAN_NTSC}, /* Rally-X [DahJee] (TW) */
+  {0x29E047CC, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_RAM_8K_EXT1, SYSTEM_SG, REGION_JAPAN_NTSC}, /* Road Fighter (TW) */
+  {0x5CBD1163, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_RAM_8K_EXT1, SYSTEM_SG, REGION_JAPAN_NTSC}, /* Tank Battalion (TW) */
+  {0x2E7166D5, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_RAM_8K_EXT1, SYSTEM_SG, REGION_JAPAN_NTSC}, /* The Legend of Kage (TW) */
+  {0xC550B4F0, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_RAM_8K_EXT1, SYSTEM_SG, REGION_JAPAN_NTSC}, /* TwinBee (TW) */
+  {0xFC87463C, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_RAM_8K_EXT1, SYSTEM_SG, REGION_JAPAN_NTSC}, /* Yie Ar Kung-Fu II (TW) */
+  {0x69FC1494, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_RAM_8K_EXT2, SYSTEM_SG, REGION_JAPAN_NTSC}, /* Bomberman Special (TW) */
+  {0xFFC4EE3F, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_RAM_8K_EXT2, SYSTEM_SG, REGION_JAPAN_NTSC}, /* Magical Kid Wiz (TW) */
+  {0x2E366CCF, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_RAM_8K_EXT2, SYSTEM_SG, REGION_JAPAN_NTSC}, /* The Castle (TW) */
+  {0xAAAC12CF, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_RAM_8K_EXT2, SYSTEM_SG, REGION_JAPAN_NTSC}, /* Rally-X (TW) */
+  {0xD2EDD329, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_RAM_8K_EXT2, SYSTEM_SG, REGION_JAPAN_NTSC}, /* Road Fighter (TW) */
+
+  /* games requiring Japanese region setting */
   {0x71DEBA5A, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA,   SYSTEM_GG,   REGION_JAPAN_NTSC}, /* Pop Breaker */
   {0xC9DD4E5F, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA,   SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Woody Pop (Super Arkanoid) */
 
   /* games requiring Mark-III hardware (no Memory Control port) */
-  {0xBD1CC7DF, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA,   SYSTEM_MARKIII, REGION_JAPAN_NTSC}, /* Super Tetris (K) */
-  {0x6D309AC5, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA,   SYSTEM_MARKIII, REGION_JAPAN_NTSC}, /* Power Boggle Boggle (K) */
+  {0xBD1CC7DF, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA,   SYSTEM_MARKIII, REGION_JAPAN_NTSC}, /* Super Tetris (KR) */
+  {0x6D309AC5, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA,   SYSTEM_MARKIII, REGION_JAPAN_NTSC}, /* Power Boggle Boggle (KR) */
 
   /* games requiring random RAM pattern initialization */
   {0x08BF3DE3, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_NONE,   SYSTEM_MARKIII, REGION_JAPAN_NTSC}, /* Alibaba and 40 Thieves (KR) */
@@ -761,15 +783,27 @@ static void mapper_reset(void)
   /* reset internal RAM mapping */
   if (system_hw == SYSTEM_SG)
   {
-    /* $C000-$FFFF mapped to 2k mirrored RAM */
-    for (i = 0x30; i < 0x40; i++)
+    /* 8k RAM extension adapter (type B) */
+    if (cart_rom.mapper == MAPPER_RAM_8K_EXT2)
     {
-      z80_readmap[i] = z80_writemap[i] = &work_ram[(i & 0x01) << 10];
+      /* $C000-$FFFF mapped to 8k extra RAM (mirrored) */
+      for (i = 0x30; i < 0x40; i++)
+      {
+        z80_readmap[i] = z80_writemap[i] = &work_ram[(i & 0x07) << 10];
+      }
+    }
+    else
+    {
+      /* $C000-$FFFF mapped to 2k mirrored RAM */
+      for (i = 0x30; i < 0x40; i++)
+      {
+        z80_readmap[i] = z80_writemap[i] = &work_ram[(i & 0x01) << 10];
+      }
     }
   }
   else
   {
-    /* $C000-$FFFF mapped to 8k mirrored RAM */
+    /* $C000-$FFFF mapped to 8k internal RAM (mirrored) */
     for (i = 0x30; i < 0x40; i++)
     {
       z80_readmap[i] = z80_writemap[i] = &work_ram[(i & 0x07) << 10];
@@ -792,44 +826,43 @@ static void mapper_reset(void)
     return;
   }
 
-  /* $0000-$3FFF mapped to ROM (first 16k) by default */
-  for (i = 0x00; i < 0x20; i++)
+  /* reset default $0000-$BFFF mapping */
+  if (slot.mapper < MAPPER_SEGA)
   {
-    z80_readmap[i] = &slot.rom[i << 10];
-    z80_writemap[i] = cart.rom + 0x510000; /* unused area */
-  }
-
-  /* reset default $4000-$BFFF mapping (32k) */
-  if ((slot.mapper == MAPPER_NONE) || (slot.mapper == MAPPER_TEREBI))
-  {
-    /* $4000-$7FFF mapped to ROM (16k) */
-    for (i = 0x00; i < 0x20; i++)
+    /* $0000-$BFFF mapped to ROM (48k) */
+    for (i = 0x00; i < 0x30; i++)
     {
       z80_readmap[i] = &slot.rom[i << 10];
       z80_writemap[i] = cart.rom + 0x510000; /* unused area */
     }
 
-    /* enable 16k external RAM by default with 32k ROM (The Castle) */
-    if (slot.pages > 0x20)
+    /* 8k external RAM extension (SG-1000) */
+    if (slot.mapper == MAPPER_RAM_8K)
     {
-      /* $8000-$BFFF mapped to ROM (16k) */
+      /* $8000-$BFFF mapped to cartridge extra RAM (8k mirrored) */
       for (i = 0x20; i < 0x30; i++)
       {
-        z80_readmap[i] = &slot.rom[i << 10];
-        z80_writemap[i] = cart.rom + 0x510000; /* unused area */
+        z80_readmap[i] = z80_writemap[i] = &work_ram[0x2000 + ((i & 0x07) << 10)];
       }
     }
-    else
+    else if (slot.mapper == MAPPER_RAM_8K_EXT1)
     {
-      /* $8000-$BFFF mapped to external RAM (16k) */
-      for (i = 0x20; i < 0x30; i++)
+      /* $2000-$3FFF mapped to RAM extension adapter (8k) */
+      for (i = 0x08; i < 0x10; i++)
       {
-        z80_readmap[i] = z80_writemap[i] = &sram.sram[(i & 0x0F) << 10];
+        z80_readmap[i] = z80_writemap[i] = &work_ram[0x2000 + ((i & 0x07) << 10)];
       }
     }
   }
   else
   {
+    /* $0000-$3FFF mapped to ROM (first 16k) by default */
+    for (i = 0x00; i < 0x10; i++)
+    {
+      z80_readmap[i] = &slot.rom[i << 10];
+      z80_writemap[i] = cart.rom + 0x510000; /* unused area */
+    }
+
     /* ROM paging */
     if ((slot.mapper == MAPPER_MSX) || (slot.mapper == MAPPER_KOREA_8K))
     {
@@ -851,6 +884,9 @@ static void mapper_reset(void)
   switch (slot.mapper)
   {
     case MAPPER_NONE:
+    case MAPPER_RAM_8K:
+    case MAPPER_RAM_8K_EXT1:
+    case MAPPER_RAM_8K_EXT2:
       z80_readmem = read_mapper_default;
       z80_writemem = write_mapper_none;
       break;

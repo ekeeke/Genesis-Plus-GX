@@ -342,6 +342,9 @@ void vdp_reset(void)
 
   if (system_hw == SYSTEM_SG)
   {
+    /* 16k address decoding by default (Magical Kid Wiz) */
+    vdp_reg_w(1, 0x80, 0);
+
     /* no H-INT on TMS9918 */
     vdp_reg_w(10, 0xFF, 0);
   }
