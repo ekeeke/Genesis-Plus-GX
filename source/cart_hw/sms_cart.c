@@ -41,20 +41,19 @@
 
 #define MAPPER_NONE        (0)
 #define MAPPER_TEREBI      (1)
-#define MAPPER_RAM_8K      (2)
-#define MAPPER_RAM_8K_EXT1 (3)
-#define MAPPER_RAM_8K_EXT2 (4)
-#define MAPPER_SEGA        (5)
-#define MAPPER_SEGA_X      (6)
-#define MAPPER_CODIES      (7)
-#define MAPPER_KOREA       (8)
-#define MAPPER_KOREA_8K    (9)
-#define MAPPER_KOREA_16K   (10)
-#define MAPPER_MSX         (11)
-#define MAPPER_93C46       (12)
-#define MAPPER_MULTI       (13)
+#define MAPPER_RAM_8K_EXT1 (2)
+#define MAPPER_RAM_8K_EXT2 (3)
+#define MAPPER_SEGA        (4)
+#define MAPPER_SEGA_X      (5)
+#define MAPPER_CODIES      (6)
+#define MAPPER_KOREA       (7)
+#define MAPPER_KOREA_8K    (8)
+#define MAPPER_KOREA_16K   (9)
+#define MAPPER_MSX         (10)
+#define MAPPER_93C46       (11)
+#define MAPPER_MULTI       (12)
 
-#define GAME_DATABASE_CNT (208)
+#define GAME_DATABASE_CNT (209)
 
 typedef struct
 {
@@ -95,6 +94,8 @@ static const rominfo_t game_list[GAME_DATABASE_CNT] =
   {0x77EFE84A, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_MSX,       SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Cyborg Z (KR) */
   {0xF89AF3CC, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_MSX,       SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Knightmare II - The Maze of Galious (KR) */
   {0x9195C34C, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_MSX,       SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Super Boy 3 (KR) */
+  {0xE316C06D, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_MSX,       SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Nemesis (KR) */
+  {0x0A77FA5E, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_MSX,       SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Nemesis 2 (KR) */
   {0xA67F2A5C, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_MULTI,     SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* 4-Pak All Action (KR) */
   {0x89B79E77, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_KOREA,     SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Dodgeball King (KR) */
   {0x18FB98A3, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_KOREA,     SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Jang Pung 3 (KR) */
@@ -129,9 +130,6 @@ static const rominfo_t game_list[GAME_DATABASE_CNT] =
 
   /* games using Terebi Oekaki graphic board */
   {0xDD4A661B, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_TEREBI, SYSTEM_SG,   REGION_JAPAN_NTSC}, /* Terebi Oekaki */
-
-  /* games using 8K embedded RAM */
-  {0x092F29D6, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_RAM_8K, SYSTEM_SG, REGION_JAPAN_NTSC}, /* The Castle (JP) */
 
   /* games requiring 8K RAM extension adapter */
   {0xCE5648C3, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_RAM_8K_EXT1, SYSTEM_SG, REGION_JAPAN_NTSC}, /* Bomberman Special [DahJee] (TW) */
@@ -786,7 +784,7 @@ static void mapper_reset(void)
     /* 8k RAM extension adapter (type B) */
     if (cart_rom.mapper == MAPPER_RAM_8K_EXT2)
     {
-      /* $C000-$FFFF mapped to 8k extra RAM (mirrored) */
+      /* $C000-$FFFF mapped to 8k external RAM (mirrored) */
       for (i = 0x30; i < 0x40; i++)
       {
         z80_readmap[i] = z80_writemap[i] = &work_ram[(i & 0x07) << 10];
@@ -836,18 +834,20 @@ static void mapper_reset(void)
       z80_writemap[i] = cart.rom + 0x510000; /* unused area */
     }
 
-    /* 8k external RAM extension (SG-1000) */
-    if (slot.mapper == MAPPER_RAM_8K)
+    /* cartridge extra RAM enabled by default with 32K ROM */
+    if (slot.pages <= 0x20)
     {
-      /* $8000-$BFFF mapped to cartridge extra RAM (8k mirrored) */
+      /* $8000-$BFFF mapped to 8k external RAM (mirrored) */
       for (i = 0x20; i < 0x30; i++)
       {
         z80_readmap[i] = z80_writemap[i] = &work_ram[0x2000 + ((i & 0x07) << 10)];
       }
     }
-    else if (slot.mapper == MAPPER_RAM_8K_EXT1)
+
+    /* 8k RAM extension adapter (type A) */
+    if (slot.mapper == MAPPER_RAM_8K_EXT1)
     {
-      /* $2000-$3FFF mapped to RAM extension adapter (8k) */
+      /* $2000-$3FFF mapped to 8k external RAM */
       for (i = 0x08; i < 0x10; i++)
       {
         z80_readmap[i] = z80_writemap[i] = &work_ram[0x2000 + ((i & 0x07) << 10)];
@@ -884,7 +884,6 @@ static void mapper_reset(void)
   switch (slot.mapper)
   {
     case MAPPER_NONE:
-    case MAPPER_RAM_8K:
     case MAPPER_RAM_8K_EXT1:
     case MAPPER_RAM_8K_EXT2:
       z80_readmem = read_mapper_default;
