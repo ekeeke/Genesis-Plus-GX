@@ -39,21 +39,22 @@
 #include "shared.h"
 #include "terebi_oekaki.h"
 
-#define MAPPER_NONE        (0)
-#define MAPPER_TEREBI      (1)
-#define MAPPER_RAM_8K_EXT1 (2)
-#define MAPPER_RAM_8K_EXT2 (3)
-#define MAPPER_SEGA        (4)
-#define MAPPER_SEGA_X      (5)
-#define MAPPER_CODIES      (6)
-#define MAPPER_KOREA       (7)
-#define MAPPER_KOREA_8K    (8)
-#define MAPPER_KOREA_16K   (9)
-#define MAPPER_MSX         (10)
-#define MAPPER_93C46       (11)
-#define MAPPER_MULTI       (12)
+#define MAPPER_NONE        (0x00)
+#define MAPPER_TEREBI      (0x01)
+#define MAPPER_RAM_8K_EXT1 (0x02)
+#define MAPPER_RAM_8K_EXT2 (0x03)
+#define MAPPER_SEGA        (0x10)
+#define MAPPER_SEGA_X      (0x11)
+#define MAPPER_93C46       (0x12)
+#define MAPPER_CODIES      (0x13)
+#define MAPPER_MULTI       (0x14)
+#define MAPPER_KOREA       (0x15)
+#define MAPPER_KOREA_16K   (0x16)
+#define MAPPER_KOREA_8K    (0x20)
+#define MAPPER_MSX         (0x21)
+#define MAPPER_MSX_NEMESIS (0x22)
 
-#define GAME_DATABASE_CNT (209)
+#define GAME_DATABASE_CNT (210)
 
 typedef struct
 {
@@ -75,58 +76,61 @@ typedef struct
 
 static const rominfo_t game_list[GAME_DATABASE_CNT] =
 {
-  /* games requiring Mega Drive VDP (Mode 5) */
-  {0x47FA618D, 0, 1, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA,   SYSTEM_PBC,         REGION_USA}, /* Charles MacDonald's Mode 5 Demo Program */
+  /* program requiring Mega Drive VDP (Mode 5) */
+  {0x47FA618D, 0, 1, SYSTEM_MS_GAMEPAD, MAPPER_SEGA, SYSTEM_PBC,  REGION_USA}, /* Charles MacDonald's Mode 5 Demo Program */
+
+  /* game requiring SEGA mapper */
+  {0xFF67359B, 0, 0, SYSTEM_MS_GAMEPAD, MAPPER_SEGA, SYSTEM_SMS2, REGION_USA}, /* DataStorm (homebrew) */
 
   /* games requiring 315-5124 VDP (Mark-III, Master System I) */
-  {0x32759751, 0, 1, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA,   SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Y's (J) */
+  {0x32759751, 0, 1, SYSTEM_MS_GAMEPAD, MAPPER_SEGA, SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Y's (J) */
 
   /* games requiring Sega 315-5235 mapper without bank shifting */
-  {0x23BAC434, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA_X, SYSTEM_GG,          REGION_USA}, /* Shining Force Gaiden - Final Conflict (JP) [T-Eng] */
+  {0x23BAC434, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA_X, SYSTEM_GG, REGION_USA}, /* Shining Force Gaiden - Final Conflict (JP) [T-Eng] */
 
   /* games using various Korean mappers */
-  {0x17AB6883, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_NONE,      SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* FA Tetris (KR) */
-  {0x61E8806F, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_NONE,      SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Flash Point (KR) */
-  {0x445525E2, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_MSX,       SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Penguin Adventure (KR) */
-  {0x83F0EEDE, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_MSX,       SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Street Master (KR) */
-  {0xA05258F5, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_MSX,       SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Won-Si-In (KR) */
-  {0x06965ED9, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_MSX,       SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* F-1 Spirit - The way to Formula-1 (KR) */
-  {0x77EFE84A, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_MSX,       SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Cyborg Z (KR) */
-  {0xF89AF3CC, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_MSX,       SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Knightmare II - The Maze of Galious (KR) */
-  {0x9195C34C, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_MSX,       SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Super Boy 3 (KR) */
-  {0xE316C06D, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_MSX,       SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Nemesis (KR) */
-  {0x0A77FA5E, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_MSX,       SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Nemesis 2 (KR) */
-  {0xA67F2A5C, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_MULTI,     SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* 4-Pak All Action (KR) */
-  {0x89B79E77, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_KOREA,     SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Dodgeball King (KR) */
-  {0x18FB98A3, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_KOREA,     SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Jang Pung 3 (KR) */
-  {0x97D03541, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_KOREA,     SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Sangokushi 3 (KR) */
-  {0x67C2F0FF, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_KOREA,     SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Super Boy 2 (KR) */
-  {0x192949D5, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_KOREA_8K,  SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Janggun-ui Adeul (KR) */
-  {0x9FA727A0, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_KOREA_16K, SYSTEM_GGMS,        REGION_USA}, /* Street Hero [Proto 0] [SMS-GG] (US) */
-  {0xFB481971, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_KOREA_16K, SYSTEM_GGMS,        REGION_USA}, /* Street Hero [Proto 1] [SMS-GG] (US) */
+  {0x17AB6883, 0, 0, SYSTEM_MS_GAMEPAD, MAPPER_NONE,        SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* FA Tetris (KR) */
+  {0x61E8806F, 0, 0, SYSTEM_MS_GAMEPAD, MAPPER_NONE,        SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Flash Point (KR) */
+  {0x445525E2, 0, 0, SYSTEM_MS_GAMEPAD, MAPPER_MSX,         SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Penguin Adventure (KR) */
+  {0x83F0EEDE, 0, 0, SYSTEM_MS_GAMEPAD, MAPPER_MSX,         SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Street Master (KR) */
+  {0xA05258F5, 0, 0, SYSTEM_MS_GAMEPAD, MAPPER_MSX,         SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Won-Si-In (KR) */
+  {0x06965ED9, 0, 0, SYSTEM_MS_GAMEPAD, MAPPER_MSX,          SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* F-1 Spirit - The way to Formula-1 (KR) */
+  {0x77EFE84A, 0, 0, SYSTEM_MS_GAMEPAD, MAPPER_MSX,         SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Cyborg Z (KR) */
+  {0xF89AF3CC, 0, 0, SYSTEM_MS_GAMEPAD, MAPPER_MSX,         SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Knightmare II - The Maze of Galious (KR) */
+  {0x9195C34C, 0, 0, SYSTEM_MS_GAMEPAD, MAPPER_MSX,         SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Super Boy 3 (KR) */
+  {0xE316C06D, 0, 0, SYSTEM_MS_GAMEPAD, MAPPER_MSX_NEMESIS, SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Nemesis (KR) */
+  {0x0A77FA5E, 0, 0, SYSTEM_MS_GAMEPAD, MAPPER_MSX,         SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Nemesis 2 (KR) */
+  {0xA67F2A5C, 0, 0, SYSTEM_MS_GAMEPAD, MAPPER_MULTI,       SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* 4-Pak All Action (KR) */
+  {0x89B79E77, 0, 0, SYSTEM_MS_GAMEPAD, MAPPER_KOREA,       SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Dodgeball King (KR) */
+  {0x18FB98A3, 0, 0, SYSTEM_MS_GAMEPAD, MAPPER_KOREA,       SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Jang Pung 3 (KR) */
+  {0x97D03541, 0, 0, SYSTEM_MS_GAMEPAD, MAPPER_KOREA,       SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Sangokushi 3 (KR) */
+  {0x67C2F0FF, 0, 0, SYSTEM_MS_GAMEPAD, MAPPER_KOREA,       SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Super Boy 2 (KR) */
+  {0x192949D5, 0, 0, SYSTEM_MS_GAMEPAD, MAPPER_KOREA_8K,    SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Janggun-ui Adeul (KR) */
+  {0x9FA727A0, 0, 0, SYSTEM_MS_GAMEPAD, MAPPER_KOREA_16K,   SYSTEM_GGMS,        REGION_USA}, /* Street Hero [Proto 0] [SMS-GG] (US) */
+  {0xFB481971, 0, 0, SYSTEM_MS_GAMEPAD, MAPPER_KOREA_16K,   SYSTEM_GGMS,        REGION_USA}, /* Street Hero [Proto 1] [SMS-GG] (US) */
 
   /* games using Codemaster mapper */
-  {0x29822980, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_CODIES, SYSTEM_SMS2,     REGION_EUROPE}, /* Cosmic Spacehead */
-  {0x8813514B, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_CODIES, SYSTEM_SMS2,     REGION_EUROPE}, /* Excellent Dizzy Collection, The [Proto] */
-  {0xB9664AE1, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_CODIES, SYSTEM_SMS2,     REGION_EUROPE}, /* Fantastic Dizzy */
-  {0xA577CE46, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_CODIES, SYSTEM_SMS2,     REGION_EUROPE}, /* Micro Machines */
-  {0xEA5C3A6F, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_CODIES, SYSTEM_SMS2,        REGION_USA}, /* Dinobasher - Starring Bignose the Caveman [Proto] */
-  {0xAA140C9C, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_CODIES, SYSTEM_GGMS,        REGION_USA}, /* Excellent Dizzy Collection, The [SMS-GG] */
-  {0xC888222B, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_CODIES, SYSTEM_GGMS,        REGION_USA}, /* Fantastic Dizzy [SMS-GG] */
-  {0x76C5BDFB, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_CODIES, SYSTEM_GGMS,        REGION_USA}, /* Jang Pung 2 [SMS-GG] */
-  {0x6CAA625B, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_CODIES, SYSTEM_GG,          REGION_USA}, /* Cosmic Spacehead [GG]*/
-  {0x152F0DCC, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_CODIES, SYSTEM_GG,          REGION_USA}, /* Drop Zone" */
-  {0x5E53C7F7, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_CODIES, SYSTEM_GG,          REGION_USA}, /* Ernie Els Golf */
-  {0xD9A7F170, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_CODIES, SYSTEM_GG,          REGION_USA}, /* Man Overboard! */
-  {0xF7C524F6, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_CODIES, SYSTEM_GG,          REGION_USA}, /* Micro Machines [GG] */
-  {0xDBE8895C, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_CODIES, SYSTEM_GG,          REGION_USA}, /* Micro Machines 2 - Turbo Tournament */
-  {0xC1756BEE, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_CODIES, SYSTEM_GG,          REGION_USA}, /* Pete Sampras Tennis */
+  {0x29822980, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_CODIES, SYSTEM_SMS2, REGION_EUROPE}, /* Cosmic Spacehead */
+  {0x8813514B, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_CODIES, SYSTEM_SMS2, REGION_EUROPE}, /* Excellent Dizzy Collection, The [Proto] */
+  {0xB9664AE1, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_CODIES, SYSTEM_SMS2, REGION_EUROPE}, /* Fantastic Dizzy */
+  {0xA577CE46, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_CODIES, SYSTEM_SMS2, REGION_EUROPE}, /* Micro Machines */
+  {0xEA5C3A6F, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_CODIES, SYSTEM_SMS2, REGION_USA}, /* Dinobasher - Starring Bignose the Caveman [Proto] */
+  {0xAA140C9C, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_CODIES, SYSTEM_GGMS, REGION_USA}, /* Excellent Dizzy Collection, The [SMS-GG] */
+  {0xC888222B, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_CODIES, SYSTEM_GGMS, REGION_USA}, /* Fantastic Dizzy [SMS-GG] */
+  {0x76C5BDFB, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_CODIES, SYSTEM_GGMS, REGION_USA}, /* Jang Pung 2 [SMS-GG] */
+  {0x6CAA625B, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_CODIES, SYSTEM_GG,   REGION_USA}, /* Cosmic Spacehead [GG]*/
+  {0x152F0DCC, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_CODIES, SYSTEM_GG,   REGION_USA}, /* Drop Zone" */
+  {0x5E53C7F7, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_CODIES, SYSTEM_GG,   REGION_USA}, /* Ernie Els Golf */
+  {0xD9A7F170, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_CODIES, SYSTEM_GG,   REGION_USA}, /* Man Overboard! */
+  {0xF7C524F6, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_CODIES, SYSTEM_GG,   REGION_USA}, /* Micro Machines [GG] */
+  {0xDBE8895C, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_CODIES, SYSTEM_GG,   REGION_USA}, /* Micro Machines 2 - Turbo Tournament */
+  {0xC1756BEE, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_CODIES, SYSTEM_GG,   REGION_USA}, /* Pete Sampras Tennis */
 
   /* games using serial EEPROM */
-  {0x36EBCD6D, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_93C46,  SYSTEM_GG,          REGION_USA}, /* Majors Pro Baseball */
-  {0x3D8D0DD6, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_93C46,  SYSTEM_GG,          REGION_USA}, /* World Series Baseball [v0] */
-  {0xBB38CFD7, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_93C46,  SYSTEM_GG,          REGION_USA}, /* World Series Baseball [v1] */
-  {0x578A8A38, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_93C46,  SYSTEM_GG,          REGION_USA}, /* World Series Baseball '95 */
+  {0x36EBCD6D, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_93C46,  SYSTEM_GG,   REGION_USA}, /* Majors Pro Baseball */
+  {0x3D8D0DD6, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_93C46,  SYSTEM_GG,   REGION_USA}, /* World Series Baseball [v0] */
+  {0xBB38CFD7, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_93C46,  SYSTEM_GG,   REGION_USA}, /* World Series Baseball [v1] */
+  {0x578A8A38, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_93C46,  SYSTEM_GG,   REGION_USA}, /* World Series Baseball '95 */
 
   /* games using Terebi Oekaki graphic board */
   {0xDD4A661B, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_TEREBI, SYSTEM_SG,   REGION_JAPAN_NTSC}, /* Terebi Oekaki */
@@ -420,12 +424,12 @@ void sms_cart_init(void)
   }
 
   /* ROM paging */
-  if (cart_rom.mapper == MAPPER_NONE)
+  if (cart_rom.mapper < MAPPER_SEGA)
   {
     /* 1k ROM banks */
     cart_rom.pages = cart.romsize >> 10;
   }
-  else if ((cart_rom.mapper == MAPPER_MSX) || (cart_rom.mapper == MAPPER_KOREA_8K))
+  else if (cart_rom.mapper & MAPPER_KOREA_8K)
   {
     /* 8k ROM banks */
     cart_rom.pages = cart.romsize >> 13;
@@ -602,8 +606,9 @@ void sms_cart_reset(void)
       cart_rom.fcr[3] = 2;
       break;
 
-    case MAPPER_MSX:
     case MAPPER_KOREA_8K:
+    case MAPPER_MSX:
+    case MAPPER_MSX_NEMESIS:
       cart_rom.fcr[0] = 0;
       cart_rom.fcr[1] = 0;
       cart_rom.fcr[2] = 0;
@@ -864,12 +869,22 @@ static void mapper_reset(void)
     }
 
     /* ROM paging */
-    if ((slot.mapper == MAPPER_MSX) || (slot.mapper == MAPPER_KOREA_8K))
+    if (slot.mapper & MAPPER_KOREA_8K)
     {
       mapper_8k_w(0,slot.fcr[0]);
       mapper_8k_w(1,slot.fcr[1]);
       mapper_8k_w(2,slot.fcr[2]);
       mapper_8k_w(3,slot.fcr[3]);
+
+      /* Nemesis special case */
+      if (slot.mapper == MAPPER_MSX_NEMESIS)
+      {
+        /* first 8k page is mapped to last 8k ROM bank */
+        for (i = 0x00; i < 0x08; i++)
+        {
+          z80_readmap[i] = &slot.rom[(0x0f << 13) | ((i & 0x07) << 10)];
+        }
+      }
     }
     else
     {
@@ -911,6 +926,7 @@ static void mapper_reset(void)
       break;
 
     case MAPPER_MSX:
+    case MAPPER_MSX_NEMESIS:
       z80_readmem = read_mapper_default;
       z80_writemem = write_mapper_msx;
       break;
@@ -1296,6 +1312,7 @@ static void write_mapper_93c46(unsigned int address, unsigned char data)
     gg_eeprom_ctrl(data);
   }
 
+  /* SEGA mapper compatibility */
   if (address > 0xFFFC)
   {
     mapper_16k_w(address & 3, data);
