@@ -2697,10 +2697,6 @@ static void vdp_z80_data_w_ms(unsigned int data)
     /* VRAM address */
     index = addr & 0x3FFF;
 
-#ifdef LOGVDP
-    error("[%d(%d)][%d(%d)] VRAM 0x%x write -> 0x%x (%x)\n", v_counter, mcycles_z80/MCYCLES_PER_LINE-1, mcycles_z80, mcycles_z80%MCYCLES_PER_LINE, index, data, Z80.pc.w.l);
-#endif
-
     /* VRAM write */
     if (data != vram[index])
     {
@@ -2767,10 +2763,6 @@ static void vdp_z80_data_w_gg(unsigned int data)
 
     /* VRAM address */
     index = addr & 0x3FFF;
-
-#ifdef LOGVDP
-      error("[%d(%d)][%d(%d)] VRAM 0x%x write -> 0x%x (%x)\n", v_counter, mcycles_z80/MCYCLES_PER_LINE-1, mcycles_z80, mcycles_z80%MCYCLES_PER_LINE, index, data, Z80.pc.w.l);
-#endif
 
     /* VRAM write */
     if (data != vram[index])

@@ -669,7 +669,7 @@ int main (int argc, char **argv)
   }
 
   /* mark all BIOS as unloaded */
-  config.bios &= 0x01;
+  config.bios &= 0x03;
 
   /* Genesis BOOT ROM support (2KB max) */
   memset(boot_rom, 0xFF, 0x800);
