@@ -427,17 +427,17 @@ void sms_cart_init(void)
   if (cart_rom.mapper < MAPPER_SEGA)
   {
     /* 1k ROM banks */
-    cart_rom.pages = cart.romsize >> 10;
+    cart_rom.pages = (cart.romsize + (1 << 10) - 1) >> 10;
   }
   else if (cart_rom.mapper & MAPPER_KOREA_8K)
   {
     /* 8k ROM banks */
-    cart_rom.pages = cart.romsize >> 13;
+    cart_rom.pages = (cart.romsize + (1 << 13) - 1) >> 13;
   }
   else
   {
     /* 16k ROM banks */
-    cart_rom.pages = cart.romsize >> 14;
+    cart_rom.pages = (cart.romsize + (1 << 14) - 1) >> 14;
   }
 
   /* initialize extra hardware */
