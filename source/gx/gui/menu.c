@@ -2431,6 +2431,7 @@ static void ctrlmenu(void)
             exp = 0;
             while ((config.input[player].port < 4) && !exp)
             {
+              VIDEO_WaitVSync ();
               exp = PAD_ScanPads() & (1<<config.input[player].port);
               if (!exp) config.input[player].port ++;
             }
@@ -3644,9 +3645,17 @@ void mainmenu(void)
   }
 
   /*** Remove any still held buttons ***/
-  while (PAD_ButtonsHeld(0)) PAD_ScanPads();
+  while (PAD_ButtonsHeld(0))
+  {
+    VIDEO_WaitVSync();
+    PAD_ScanPads();
+  }
 #ifdef HW_RVL
-  while (WPAD_ButtonsHeld(0)) WPAD_ScanPads();
+  while (WPAD_ButtonsHeld(0)) 
+  {
+    VIDEO_WaitVSync();
+    WPAD_ScanPads();
+  }
   gxTextureClose(&w_pointer);
 
   /* USB Mouse support */

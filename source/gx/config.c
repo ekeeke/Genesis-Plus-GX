@@ -50,21 +50,29 @@ static int config_load(void)
   FILE *fp = fopen(fname, "rb");
   if (fp)
   {
-    /* read version */
-    char version[16];
-    fread(version, 16, 1, fp); 
-    fclose(fp);
-    if (strncmp(version,CONFIG_VERSION,16))
+    /* check file size */
+    fseek(fp, 0, SEEK_END);
+    if (ftell(fp) != sizeof(config))
+    {
+      fclose(fp);
       return 0;
+    }
+
+    /* check version */
+    char version[16];
+    fseek(fp, 0, SEEK_SET);
+    fread(version, 16, 1, fp);
+    if (strncmp(version,CONFIG_VERSION,16))
+    {
+      fclose(fp);
+      return 0;
+    }
 
     /* read file */
-    fp = fopen(fname, "rb");
-    if (fp)
-    {
-      fread(&config, sizeof(config), 1, fp);
-      fclose(fp);
-      return 1;
-    }
+    fseek(fp, 0, SEEK_SET);
+    fread(&config, sizeof(config), 1, fp);
+    fclose(fp);
+    return 1;
   }
   return 0;
 }
@@ -169,6 +177,7 @@ void config_default(void)
   config.s_auto       = 1;
 #else
   config.s_auto       = 0;
+  config.v_prog       = 1;
 #endif
   config.s_default    = 1;
   config.s_device     = 0;

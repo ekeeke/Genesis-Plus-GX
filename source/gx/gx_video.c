@@ -1686,8 +1686,8 @@ void gx_video_Init(void)
       TV60hz_480i.viTVMode = VI_TVMODE(vmode->viTVMode >> 2, VI_INTERLACE);
 
 #ifndef HW_RVL
-      /* force 480p on GameCube if Component Cable is detected */
-      if (VIDEO_HaveComponentCable()) vmode = &TVNtsc480Prog;
+      /* force 480p on GameCube if Component Cable is detected & progressiev mode is selected */
+      if (VIDEO_HaveComponentCable() && config.v_prog) vmode = &TVNtsc480Prog;
 #endif
       break;
   }

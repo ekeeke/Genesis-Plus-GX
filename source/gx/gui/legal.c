@@ -102,7 +102,7 @@ void legal ()
   gxSetScreen();
   sleep(1);
 
-  while (!(m_input.keys & PAD_BUTTON_A) && (count > 0))
+  while (!m_input.keys && count)
   {
     gxClearScreen((GXColor)BLACK);
     show_disclaimer(56);
@@ -120,15 +120,37 @@ void legal ()
   gxTextureClose(&button);
   gxTextureClose(&logo);
 
+
+#ifndef HW_RVL
+  /* detect video mode switch user request */
+  if (PAD_ButtonsHeld(0) & PAD_BUTTON_B)
+  {
+    /* switch user progressive mode configuration  */
+    config.v_prog ^= 1;
+
+    if (VIDEO_HaveComponentCable())
+    {
+      /* switch video mode only if component cable has been detected */
+      vmode = config.v_prog ? &TVNtsc480Prog : &TVNtsc480IntDf;
+    }
+
+      /* play sound to inform user then enter main menu */
+      ASND_Pause(0);
+      int voice = ASND_GetFirstUnusedVoice();
+      ASND_SetVoice(voice,VOICE_MONO_16BIT,44100,0,(u8 *)intro_pcm,intro_pcm_size,200,200,NULL);
+      sleep (2);
+      ASND_Pause(1);
+      return;
+  }
+#endif
+
   if (count > 0)
   {
-    ASND_Init();
     ASND_Pause(0);
     int voice = ASND_GetFirstUnusedVoice();
     ASND_SetVoice(voice,VOICE_MONO_16BIT,44100,0,(u8 *)button_select_pcm,button_select_pcm_size,200,200,NULL);
     GUI_FadeOut();
     ASND_Pause(1);
-    ASND_End();
     return;
   }
 

@@ -89,9 +89,11 @@ typedef struct
 #ifdef HW_RVL
   uint32 trap;
   float gamma;
+#else
+  uint8 v_prog;
 #endif
   t_input_config input[MAX_INPUTS];
-  uint16 pad_keymap[4][MAX_KEYS];
+  uint16 pad_keymap[4][MAX_KEYS+1];
 #ifdef HW_RVL
   uint32 wpad_keymap[4*3][MAX_KEYS];
 #endif

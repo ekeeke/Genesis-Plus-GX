@@ -179,9 +179,9 @@ void gx_audio_Start(void)
   
   /* shutdown menu audio processing */
   ASND_Pause(1);
+  ASND_End();
   AUDIO_StopDMA();
   AUDIO_RegisterDMACallback(NULL);
-  DSP_Halt();
 
   /* when VSYNC is forced OFF or AUTO with TV mode not matching emulated video mode, emulation is synchronized with Audio Hardware */
   if (!config.vsync || (config.tv_mode == !vdp_pal))
@@ -206,7 +206,6 @@ void gx_audio_Start(void)
 void gx_audio_Stop(void)
 {
   /* restart menu audio processing */
-  DSP_Unhalt();
   ASND_Init();
   ASND_Pause(0);
 	
