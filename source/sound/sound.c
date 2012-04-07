@@ -86,15 +86,14 @@ INLINE void psg_update(unsigned int cycles)
 {
   if (cycles > psg_cycles_count)
   {
-    /* samples to run */
-    unsigned int samples = (cycles - psg_cycles_count + psg_cycles_ratio - 1) / psg_cycles_ratio;
+    /* clocks to run */
+    unsigned int clocks = (cycles - psg_cycles_count + psg_cycles_ratio - 1) / psg_cycles_ratio;
 
     /* update cycle count */
-    psg_cycles_count += samples * psg_cycles_ratio;
+    psg_cycles_count += clocks * psg_cycles_ratio;
 
     /* run PSG chip & get samples */
-    SN76489_Update(snd.psg.pos, samples);
-    snd.psg.pos += samples;
+    snd.psg.pos += SN76489_Update(snd.psg.pos, clocks);
   }
 }
 
@@ -124,18 +123,20 @@ void sound_init(void)
   /*                                                                                      */
   double mclk = snd.frame_rate ? (MCYCLES_PER_LINE * lines_per_frame * snd.frame_rate) : system_clock;
 
-  /* For better accuracy, sound chips run in synchronization with 68k and Z80 cpus        */
-  /* These values give the exact number of M-cycles executed per rendered samples.        */
-  /* we use 21.11 fixed point precision (max. mcycle value is 3420*313 i.e 21 bits max)   */
-  psg_cycles_ratio  = (unsigned int)(mclk / (double) snd.sample_rate * 2048.0);
-  fm_cycles_ratio   = psg_cycles_ratio;
-  fm_cycles_count   = 0;
+  /* For maximal accuracy, sound chips run in synchronization with 68k and Z80 cpus       */
+  /* These values give the exact number of M-cycles executed per internal sample clock:   */
+  /* . PSG chip runs at original rate and audio is resampled internally after each update */
+  /* . FM chips run by default (if HQ mode disabled) at the output rate directly          */
+  /* We use 21.11 fixed point precision (max. mcycle value is 3420*313 i.e 21 bits max)   */
+  psg_cycles_ratio  = 16 * 15 * (1 << 11);
+  fm_cycles_ratio   = (unsigned int)(mclk / (double) snd.sample_rate * 2048.0);
   psg_cycles_count  = 0;
+  fm_cycles_count   = 0;
 
-  /* Initialize core emulation (input clock based on input frequency for 100% accuracy)   */
-  /* By default, both PSG & FM chips are running at the output frequency.                 */
+  /* Initialize PSG core (input clock should be based on emulated system clock) */
   SN76489_Init(mclk/15.0,snd.sample_rate);
 
+  /* Initialize FM cores (input clock and samplerate are only used when HQ mode is disabled) */
   if ((system_hw & SYSTEM_PBC) == SYSTEM_MD)
   {
     /* YM2612 */
@@ -144,8 +145,8 @@ void sound_init(void)
     YM_Update = YM2612Update;
     YM_Write = YM2612Write;
 
-    /* In HQ mode, YM2612 is running at its original rate (one sample each 144*7 M-cycles)  */
-    /* FM stream is resampled to the output frequency at the end of a frame.                */
+    /* In HQ mode, YM2612 is running at original rate (one sample each 144*7 M-cycles) */
+    /* Audio is resampled externally at the end of a frame. */
     if (config.hq_fm)
     {
       fm_cycles_ratio = 144 * 7 * (1 << 11);
@@ -160,8 +161,8 @@ void sound_init(void)
     YM_Update = YM2413Update;
     YM_Write = YM2413Write;
 
-    /* In HQ mode, YM2413 is running at its original rate (one sample each 72*15 M-cycles)  */
-    /* FM stream is resampled to the output frequency at the end of a frame.                */
+    /* In HQ mode, YM2413 is running at original rate (one sample each 72*15 M-cycles)  */
+    /* Audio is resampled externally at the end of a frame. */
     if (config.hq_fm)
     {
       fm_cycles_ratio = 72 * 15 * (1 << 11);
@@ -270,50 +271,43 @@ int sound_context_load(uint8 *state)
 /* End of frame update, return the number of samples run so far.  */
 int sound_update(unsigned int cycles)
 {
-  int size;
+  int size, delta;
 
   /* run PSG & FM chips until end of frame */
   cycles <<= 11;
   psg_update(cycles);
   fm_update(cycles);
 
-  /* available PSG samples */
-  size = snd.psg.pos - snd.psg.buffer;
-#ifdef LOGSOUND
-  error("%d PSG samples available\n",size);
-#endif
-
-  /* FM resampling */
+  /* return available FM samples */
   if (config.hq_fm)
   {
-    /* get available FM samples */
-    int avail = Fir_Resampler_avail();
-
-    /* resynchronize FM & PSG chips */
-    if (avail < size)
-    {
-      /* FM chip is late for one (or two) samples */
-      do
-      {
-        YM_Update(Fir_Resampler_buffer(), 1);
-        Fir_Resampler_write(2);
-        avail = Fir_Resampler_avail();
-      }
-      while (avail < size);
-    }
-    else
-    {
-      /* FM chip is ahead */
-      fm_cycles_count += (avail - size) * psg_cycles_ratio;
-    }
+    size = Fir_Resampler_avail();
   }
-
-#ifdef LOGSOUND
-  if (config.hq_fm)
-    error("%d FM samples (%d) available\n",Fir_Resampler_avail(), Fir_Resampler_written() >> 1);
   else
-    error("%d FM samples available\n",(snd.fm.pos - snd.fm.buffer)>>1);
+  {
+    size = (snd.fm.pos - snd.fm.buffer) >> 1;
+  }
+#ifdef LOGSOUND
+  error("%d FM samples available\n",size);
 #endif
+
+  /* compare with number of PSG samples available */
+  delta = size - (snd.psg.pos - snd.psg.buffer);
+#ifdef LOGSOUND
+  error("%d PSG samples available\n", snd.psg.pos - snd.psg.buffer);
+#endif
+
+  /* resynchronize FM & PSG chips */
+  if (delta > 0)
+  {
+    /* PSG chip is late, get needed samples */
+    snd.psg.pos += SN76489_Update(snd.psg.pos, SN76489_Sync(delta));
+  }
+  else
+  {
+    /* PSG chip is ahead, adjust clocks count */
+    psg_cycles_count += (SN76489_Sync(-delta) * psg_cycles_ratio);
+  }
 
 #ifdef LOGSOUND
   error("%lu PSG cycles run\n",psg_cycles_count);

@@ -309,12 +309,9 @@ static void RunNoise(int clock_length)
   SN76489.ToneFreqVals[3] = time - clock_length;
 }
 
-void SN76489_Update(INT16 *buffer, int length)
+int SN76489_Update(INT16 *buffer, int clock_length)
 {
   int i;
-
-  /* Determine how many clocks we need to run until 'length' samples are available */
-  int clock_length = blip_clocks_needed(blip, length);
 
   /* Run noise first, since it might use current value of third tone frequency counter */
   RunNoise(clock_length);
@@ -325,5 +322,10 @@ void SN76489_Update(INT16 *buffer, int length)
 
   /* Read samples into output buffer */
   blip_end_frame(blip, clock_length);
-  blip_read_samples(blip, buffer, length);
+  return blip_read_samples(blip, buffer);
+}
+
+int SN76489_Sync(unsigned int samples)
+{
+  return blip_clocks_needed(blip, samples);
 }

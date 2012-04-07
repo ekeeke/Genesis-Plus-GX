@@ -40,7 +40,7 @@ int blip_samples_avail( const blip_buffer_t* );
 
 /* Reads at most n samples out of buffer into out, removing them from from
 the buffer. */
-void blip_read_samples( blip_buffer_t*, short out [], int n);
+int blip_read_samples( blip_buffer_t*, short out []);
 
 #ifdef __cplusplus
   }
