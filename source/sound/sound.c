@@ -271,14 +271,14 @@ int sound_context_load(uint8 *state)
 /* End of frame update, return the number of samples run so far.  */
 int sound_update(unsigned int cycles)
 {
-  int size, delta;
+  int size, avail;
 
   /* run PSG & FM chips until end of frame */
   cycles <<= 11;
   psg_update(cycles);
   fm_update(cycles);
 
-  /* return available FM samples */
+  /* check number of available FM samples */
   if (config.hq_fm)
   {
     size = Fir_Resampler_avail();
@@ -291,22 +291,25 @@ int sound_update(unsigned int cycles)
   error("%d FM samples available\n",size);
 #endif
 
-  /* compare with number of PSG samples available */
-  delta = size - (snd.psg.pos - snd.psg.buffer);
+  /* check number of available PSG samples */
+  avail = snd.psg.pos - snd.psg.buffer;
 #ifdef LOGSOUND
-  error("%d PSG samples available\n", snd.psg.pos - snd.psg.buffer);
+  error("%d PSG samples available\n", avail);
 #endif
 
   /* resynchronize FM & PSG chips */
-  if (delta > 0)
+  if (size > avail)
   {
-    /* PSG chip is late, get needed samples */
-    snd.psg.pos += SN76489_Update(snd.psg.pos, SN76489_Sync(delta));
+    /* FM chip is ahead */
+    fm_cycles_count += SN76489_Clocks(size - avail) * psg_cycles_ratio;
+
+    /* return number of available samples */
+    size = avail;
   }
   else
   {
-    /* PSG chip is ahead, adjust clocks count */
-    psg_cycles_count += (SN76489_Sync(-delta) * psg_cycles_ratio);
+    /* PSG chip is ahead */
+    psg_cycles_count += SN76489_Clocks(avail - size) * psg_cycles_ratio;
   }
 
 #ifdef LOGSOUND

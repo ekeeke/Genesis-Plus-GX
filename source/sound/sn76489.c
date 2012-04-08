@@ -325,7 +325,7 @@ int SN76489_Update(INT16 *buffer, int clock_length)
   return blip_read_samples(blip, buffer);
 }
 
-int SN76489_Sync(unsigned int samples)
+int SN76489_Clocks(int length)
 {
-  return blip_clocks_needed(blip, samples);
+  return blip_clocks_needed(blip, length);
 }
