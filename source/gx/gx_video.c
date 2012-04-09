@@ -1384,6 +1384,13 @@ void gx_video_Stop(void)
 #ifdef HW_RVL
   VIDEO_SetTrapFilter(1);
   VIDEO_SetGamma(VI_GM_1_0);
+#else
+  /* support for progressive mode (480p) if component cable has been detected */
+  if (VIDEO_HaveComponentCable())
+  {
+    /* switch into configured video mode */
+    vmode = config.v_prog ? &TVNtsc480Prog : &TVNtsc480IntDf;
+  }
 #endif
 
   /* adjust TV width */
@@ -1684,11 +1691,6 @@ void gx_video_Init(void)
       TV60hz_240p.viTVMode = VI_TVMODE(vmode->viTVMode >> 2, VI_NON_INTERLACE);
       TV60hz_240i.viTVMode = VI_TVMODE(vmode->viTVMode >> 2, VI_INTERLACE);
       TV60hz_480i.viTVMode = VI_TVMODE(vmode->viTVMode >> 2, VI_INTERLACE);
-
-#ifndef HW_RVL
-      /* force 480p on GameCube if Component Cable is detected & progressiev mode is selected */
-      if (VIDEO_HaveComponentCable() && config.v_prog) vmode = &TVNtsc480Prog;
-#endif
       break;
   }
 
