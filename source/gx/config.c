@@ -221,7 +221,7 @@ void config_default(void)
   /* restore inputs */
   input_init();
 
-#ifdef HW_RVL
+#ifndef HW_RVL
   /* support for progressive mode (480p) if component cable has been detected */
   if (VIDEO_HaveComponentCable())
   {
