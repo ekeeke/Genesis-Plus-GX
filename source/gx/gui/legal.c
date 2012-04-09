@@ -128,6 +128,12 @@ void legal ()
     /* switch user progressive mode configuration  */
     config.v_prog ^= 1;
 
+    if (VIDEO_HaveComponentCable())
+    {
+      /* switch video mode only if component cable has been detected */
+      vmode = config.v_prog ? &TVNtsc480Prog : &TVNtsc480IntDf;
+    }
+
     /* play sound to inform user then enter main menu */
     ASND_Pause(0);
     int voice = ASND_GetFirstUnusedVoice();

@@ -220,5 +220,17 @@ void config_default(void)
 
   /* restore inputs */
   input_init();
-}
 
+#ifdef HW_RVL
+  /* support for progressive mode (480p) if component cable has been detected */
+  if (VIDEO_HaveComponentCable())
+  {
+    /* switch into configured video mode */
+    vmode = config.v_prog ? &TVNtsc480Prog : &TVNtsc480IntDf;
+    VIDEO_Configure (vmode);
+    VIDEO_Flush();
+    VIDEO_WaitVSync();
+    VIDEO_WaitVSync();
+  }
+#endif
+}

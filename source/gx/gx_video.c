@@ -1384,13 +1384,6 @@ void gx_video_Stop(void)
 #ifdef HW_RVL
   VIDEO_SetTrapFilter(1);
   VIDEO_SetGamma(VI_GM_1_0);
-#else
-  /* support for progressive mode (480p) if component cable has been detected */
-  if (VIDEO_HaveComponentCable())
-  {
-    /* switch into configured video mode */
-    vmode = config.v_prog ? &TVNtsc480Prog : &TVNtsc480IntDf;
-  }
 #endif
 
   /* adjust TV width */

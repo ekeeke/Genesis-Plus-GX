@@ -544,7 +544,6 @@ int main (int argc, char *argv[])
   gx_audio_Init();
 
   /* initialize genesis plus core */
-  legal();
   config_default();
   history_default();
   init_machine();
@@ -565,6 +564,12 @@ int main (int argc, char *argv[])
       }
     }
     SILENT = 0;
+  }
+
+  /* show disclaimer */
+  if (ConfigRequested)
+  {
+    legal();
   }
 
 #ifdef HW_RVL
