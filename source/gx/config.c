@@ -212,25 +212,41 @@ void config_default(void)
   sprintf (config.lastdir[3][TYPE_DVD], "dvd:%s/roms/", DEFAULT_PATH);
 #endif
 
-  /* try to restore settings from config file */
-  if (!config_load()) GUI_WaitPrompt("Info","Default Settings restored");
-
-  /* hot swap requires at least a first initialization */
-  config.hot_swap &= 1;
+  /* try to restore user config */
+  int loaded = config_load();
 
   /* restore inputs */
   input_init();
 
 #ifndef HW_RVL
-  /* support for progressive mode (480p) if component cable has been detected */
-  if (VIDEO_HaveComponentCable())
+  /* detect progressive mode enable/disable requests */
+  PAD_ScanPads();
+  if (PAD_ButtonsHeld(0) & PAD_BUTTON_B)
   {
-    /* switch into configured video mode */
-    vmode = config.v_prog ? &TVNtsc480Prog : &TVNtsc480IntDf;
+    /* swap progressive mode enable flag and play some sound to inform user */
+    config.v_prog ^= 1;
+    ASND_Pause(0);
+    int voice = ASND_GetFirstUnusedVoice();
+    ASND_SetVoice(voice,VOICE_MONO_16BIT,44100,0,(u8 *)intro_pcm,intro_pcm_size,200,200,NULL);
+  }
+
+  /* switch into 480p if component cable has been detected and progressive mode is enabled */
+  if (VIDEO_HaveComponentCable() && config.v_prog)
+  {
+    vmode = &TVNtsc480Prog;
     VIDEO_Configure (vmode);
     VIDEO_Flush();
     VIDEO_WaitVSync();
     VIDEO_WaitVSync();
   }
+
+  /* stop any sound */
+  ASND_Pause(1);
 #endif
+
+  /* inform user if default config is used */
+  if (!loaded)
+  {
+    GUI_WaitPrompt("Warning","Default Settings restored");
+  }
 }

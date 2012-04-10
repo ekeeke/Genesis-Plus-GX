@@ -104,7 +104,10 @@ static void init_machine(void)
   /* allocate cartridge ROM here (10 MB) */
   cart.rom = memalign(32, MAXROMSIZE);
 
-  /* mark all BIOS as unloaded */
+  /* system is not initialized */
+  config.hot_swap &= 0x01;
+
+  /* BIOS are unloaded */
   config.bios &= 0x03;
 
   /* Genesis BOOT ROM support (2KB max) */
@@ -544,8 +547,8 @@ int main (int argc, char *argv[])
   gx_audio_Init();
 
   /* initialize genesis plus core */
-  config_default();
   history_default();
+  config_default();
   init_machine();
 
   /* auto-load last ROM file */
