@@ -228,6 +228,8 @@ void config_default(void)
     ASND_Pause(0);
     int voice = ASND_GetFirstUnusedVoice();
     ASND_SetVoice(voice,VOICE_MONO_16BIT,44100,0,(u8 *)intro_pcm,intro_pcm_size,200,200,NULL);
+    sleep (2);
+    ASND_Pause(1);
   }
 
   /* switch into 480p if component cable has been detected and progressive mode is enabled */
@@ -239,9 +241,6 @@ void config_default(void)
     VIDEO_WaitVSync();
     VIDEO_WaitVSync();
   }
-
-  /* stop any sound */
-  ASND_Pause(1);
 #endif
 
   /* inform user if default config is used */
