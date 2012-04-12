@@ -861,14 +861,14 @@ static void mapper_reset(void)
   }
   else
   {
-    /* $0000-$3FFF mapped to ROM (first 16k) by default */
-    for (i = 0x00; i < 0x10; i++)
+    /* $0000-$BFFF mapped to ROM by default */
+    for (i = 0x00; i < 0x30; i++)
     {
       z80_readmap[i] = &slot.rom[i << 10];
       z80_writemap[i] = cart.rom + 0x510000; /* unused area */
     }
 
-    /* ROM paging */
+    /* reset default ROM paging */
     if (slot.mapper & MAPPER_KOREA_8K)
     {
       mapper_8k_w(0,slot.fcr[0]);
