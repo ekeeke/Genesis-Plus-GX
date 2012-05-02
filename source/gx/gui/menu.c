@@ -3419,7 +3419,7 @@ void mainmenu(void)
   gui_menu *m = &menu_main;
 
   /* Update main menu */
-  if (!m->screenshot && cart.romsize)
+  if (!m->screenshot)
   {
     if (config.bg_overlay)
     {
@@ -3437,31 +3437,35 @@ void mainmenu(void)
       bg_list[1].state  &= ~IMAGE_VISIBLE;
       bg_saves[2].state &= ~IMAGE_VISIBLE;
     }
-    m->screenshot = 128;
-    m->bg_images[0].state &= ~IMAGE_VISIBLE;
-    m->items[0].y -= 90;
-    m->items[1].y -= 90;
-    m->items[2].y -= 90;
-    m->buttons[0].y -= 90;
-    m->buttons[1].y -= 90;
-    m->buttons[2].y -= 90;
-    m->buttons[0].shift[1] = 3;
-    m->buttons[1].shift[1] = 3;
-    m->buttons[2].shift[1] = 3;
-    m->buttons[3].state |= (BUTTON_VISIBLE | BUTTON_ACTIVE);
-    m->buttons[4].state |= (BUTTON_VISIBLE | BUTTON_ACTIVE);
-    m->buttons[5].state |= (BUTTON_VISIBLE | BUTTON_ACTIVE);
-    m->buttons[7].state |= (BUTTON_VISIBLE | BUTTON_ACTIVE);
-    m->buttons[8].state |= (BUTTON_VISIBLE | BUTTON_ACTIVE);
-    m->buttons[9].state |= (BUTTON_VISIBLE | BUTTON_ACTIVE);
-    if (areplay_get_status() >= 0)
+
+    if (cart.romsize)
     {
-      menu_main.buttons[6].state |= (BUTTON_VISIBLE | BUTTON_ACTIVE);
-      menu_main.items[6].data = Button_sm_grey_png;
-      menu_main.cb = mainmenu_cb;
-      menu_main.buttons[3].shift[1] = 3;
-      menu_main.buttons[7].shift[0] = 1;
-      menu_main.buttons[8].shift[2] = 2;
+      m->screenshot = 128;
+      m->bg_images[0].state &= ~IMAGE_VISIBLE;
+      m->items[0].y -= 90;
+      m->items[1].y -= 90;
+      m->items[2].y -= 90;
+      m->buttons[0].y -= 90;
+      m->buttons[1].y -= 90;
+      m->buttons[2].y -= 90;
+      m->buttons[0].shift[1] = 3;
+      m->buttons[1].shift[1] = 3;
+      m->buttons[2].shift[1] = 3;
+      m->buttons[3].state |= (BUTTON_VISIBLE | BUTTON_ACTIVE);
+      m->buttons[4].state |= (BUTTON_VISIBLE | BUTTON_ACTIVE);
+      m->buttons[5].state |= (BUTTON_VISIBLE | BUTTON_ACTIVE);
+      m->buttons[7].state |= (BUTTON_VISIBLE | BUTTON_ACTIVE);
+      m->buttons[8].state |= (BUTTON_VISIBLE | BUTTON_ACTIVE);
+      m->buttons[9].state |= (BUTTON_VISIBLE | BUTTON_ACTIVE);
+      if (areplay_get_status() >= 0)
+      {
+        menu_main.buttons[6].state |= (BUTTON_VISIBLE | BUTTON_ACTIVE);
+        menu_main.items[6].data = Button_sm_grey_png;
+        menu_main.cb = mainmenu_cb;
+        menu_main.buttons[3].shift[1] = 3;
+        menu_main.buttons[7].shift[0] = 1;
+        menu_main.buttons[8].shift[2] = 2;
+      }
     }
   }
 

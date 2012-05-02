@@ -494,28 +494,30 @@ int FileSelector(int type)
     }
 
     /* go back one page */
-    else if (p & PAD_TRIGGER_L)
+    else if (p & (PAD_TRIGGER_L | PAD_BUTTON_LEFT)) 
     {
       selection -= 10;
       if (selection < 0)
-      {
-        selection = maxfiles - 1;
-        offset = selection - 10 + 1;
-      }
+        selection = offset = 0;
       if (selection < offset)
         offset -= 10;
       if (offset < 0)
         offset = 0;
-    }
+   }
 
     /* go forward one page */
-    else if (p & PAD_TRIGGER_R)
+    else if (p & (PAD_TRIGGER_R | PAD_BUTTON_RIGHT))
     {
       selection += 10;
       if (selection > maxfiles - 1)
-        selection = offset = 0;
+      {
+        selection = maxfiles - 1;
+        offset = selection - 10 + 1;
+      }
       if ((selection - offset) >= 10)
         offset += 10;
+      if (offset > maxfiles - 10)
+        offset = maxfiles - 10;
     }
 
     /* quit */
