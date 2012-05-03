@@ -95,12 +95,12 @@ static GXRModeObj TV50hz_288p =
 {
   VI_TVMODE_PAL_DS,             // viDisplayMode
   640,                          // fbWidth
-  286,                          // efbHeight
-  286,                          // xfbHeight
+  VI_MAX_HEIGHT_PAL/2,          // efbHeight
+  VI_MAX_HEIGHT_PAL/2,          // xfbHeight
   0,                            // viXOrigin
-  (VI_MAX_HEIGHT_PAL - 572)/2,  // viYOrigin
+  0,                            // viYOrigin
   VI_MAX_WIDTH_PAL,             // viWidth
-  572,                          // viHeight
+  VI_MAX_HEIGHT_PAL,            // viHeight
   VI_XFBMODE_SF,                // xFBmode
   GX_FALSE,                     // field_rendering
   GX_FALSE,                     // aa
@@ -130,12 +130,12 @@ static GXRModeObj TV50hz_288i =
 {
   VI_TVMODE_PAL_INT,            // viDisplayMode
   640,                          // fbWidth
-  286,                          // efbHeight
-  286,                          // xfbHeight
+  VI_MAX_HEIGHT_PAL/2,          // efbHeight
+  VI_MAX_HEIGHT_PAL/2,          // xfbHeight
   0,                            // viXOrigin
-  (VI_MAX_HEIGHT_PAL - 572)/2,  // viYOrigin
+  0,                            // viYOrigin
   VI_MAX_WIDTH_PAL,             // viWidth
-  572,                          // viHeight
+  VI_MAX_HEIGHT_PAL,            // viHeight
   VI_XFBMODE_SF,                // xFBmode
   GX_TRUE,                      // field_rendering
   GX_FALSE,                     // aa
@@ -457,9 +457,7 @@ static void gxResetMode(GXRModeObj *tvmode)
   Mtx44 p;
   f32 yScale = GX_GetYScaleFactor(tvmode->efbHeight, tvmode->xfbHeight);
   u16 xfbHeight = GX_SetDispCopyYScale(yScale);
-  u16 xfbWidth  = tvmode->fbWidth;  
-  if (xfbWidth & 15)  // xfb width is 16 pixels aligned
-    xfbWidth = (xfbWidth & ~15) + 16;
+  u16 xfbWidth  = VIDEO_PadFramebufferWidth(tvmode->fbWidth);  
 
   GX_SetCopyClear((GXColor)BLACK,0x00ffffff);
   GX_SetViewport(0.0F, 0.0F, tvmode->fbWidth, tvmode->efbHeight, 0.0F, 1.0F);
@@ -473,7 +471,7 @@ static void gxResetMode(GXRModeObj *tvmode)
   GX_Flush();
 }
 
-/* Manage Aspect Ratio */
+/* Update Aspect Ratio */
 static void gxSetAspectRatio(int *xscale, int *yscale)
 {
   /* Vertical Scaling is disabled by default */
@@ -1661,26 +1659,21 @@ void gx_video_Init(void)
   VIDEO_Init();
 
   /* Get the current VIDEO mode then :
-      - set menu VIDEO mode (480p, 480i or 576i)
-      - set emulator rendering TV modes (PAL/MPAL/NTSC/EURGB60)
+      - set menu video mode (480p/576p/480i/576i)
+      - set emulator rendering 60hz TV modes (PAL/MPAL/NTSC/EURGB60)
    */
   vmode = VIDEO_GetPreferredMode(NULL);
 
   /* Adjust display settings */
   switch (vmode->viTVMode >> 2)
   {
-    case VI_PAL:  /* 576 lines (PAL 50Hz) */
-
+    case VI_PAL:  /* 576 lines scaled (PAL 50Hz) */
       TV60hz_240p.viTVMode = VI_TVMODE_EURGB60_DS;
       TV60hz_240i.viTVMode = VI_TVMODE_EURGB60_INT;
       TV60hz_480i.viTVMode = VI_TVMODE_EURGB60_INT;
-
-      /* force harwdare vertical scaling to fill screen */
-      vmode = &TVPal574IntDfScale;
       break;
     
     default:  /* 480 lines (NTSC, MPAL or PAL 60Hz) */
-
       TV60hz_240p.viTVMode = VI_TVMODE(vmode->viTVMode >> 2, VI_NON_INTERLACE);
       TV60hz_240i.viTVMode = VI_TVMODE(vmode->viTVMode >> 2, VI_INTERLACE);
       TV60hz_480i.viTVMode = VI_TVMODE(vmode->viTVMode >> 2, VI_INTERLACE);
