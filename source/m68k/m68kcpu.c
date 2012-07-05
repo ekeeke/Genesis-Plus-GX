@@ -1,47 +1,21 @@
 /* ======================================================================== */
-/* ========================= LICENSING & COPYRIGHT ======================== */
+/*                            MAIN 68K CORE                                 */
 /* ======================================================================== */
 
-#if 0
-static const char copyright_notice[] =
-"MUSASHI\n"
-"Version 3.32 (2007-12-15)\n"
-"A portable Motorola M680x0 processor emulation engine.\n"
-"Copyright Karl Stenerud.  All rights reserved.\n"
-"\n"
-"This code may be freely used for non-commercial purpooses as long as this\n"
-"copyright notice remains unaltered in the source code and any binary files\n"
-"containing this code in compiled form.\n"
-"\n"
-"All other licensing terms must be negotiated with the author\n"
-"(Karl Stenerud).\n"
-"\n"
-"The latest version of this code can be obtained at:\n"
-"http://kstenerud.cjb.net\n"
-;
-#endif
+extern int vdp_68k_irq_ack(int int_level);
 
-
-/* ======================================================================== */
-/* ================================= NOTES ================================ */
-/* ======================================================================== */
- 
- /* Modified by Eke-Eke for Genesis Plus GX:
-
-    - removed unused stuff to reduce memory usage / optimize execution (multiple CPU types support, NMI support, ...)
-    - moved stuff to compile statically in a single object file
-    - implemented support for global cycle count (shared by 68k & Z80 CPU)
-    - added support for interrupt latency (Sesame's Street Counting Cafe, Fatal Rewind)
-    - added proper cycle use on reset
-    - added cycle accurate timings for MUL/DIV instructions (thanks to Jorge Cwik !) 
-    - fixed undocumented flags for DIV instructions (Blood Shot)
-    
-  */
+#define m68ki_cpu m68k
+#define MUL (7)
 
 /* ======================================================================== */
 /* ================================ INCLUDES ============================== */
 /* ======================================================================== */
 
+#ifndef BUILD_TABLES
+#include "m68ki_cycles.h"
+#endif
+
+#include "m68kconf.h"
 #include "m68kcpu.h"
 #include "m68kops.h"
 
@@ -49,7 +23,14 @@ static const char copyright_notice[] =
 /* ================================= DATA ================================= */
 /* ======================================================================== */
 
+#ifdef BUILD_TABLES
+static unsigned char m68ki_cycles[0x10000];
+#endif
+
 static int irq_latency;
+
+m68ki_cpu_core m68k;
+
 
 /* ======================================================================== */
 /* =============================== CALLBACKS ============================== */
@@ -222,7 +203,7 @@ void m68k_update_irq(unsigned int mask)
   CPU_INT_LEVEL |= (mask << 8);
   
 #ifdef LOGVDP
-  error("[%d(%d)][%d(%d)] IRQ Level = %d(0x%02x) (%x)\n", v_counter, mcycles_68k/3420, mcycles_68k, mcycles_68k%3420,CPU_INT_LEVEL>>8,FLAG_INT_MASK,m68k_get_reg(M68K_REG_PC));
+  error("[%d(%d)][%d(%d)] IRQ Level = %d(0x%02x) (%x)\n", v_counter, m68k.cycles/3420, m68k.cycles, m68k.cycles%3420,CPU_INT_LEVEL>>8,FLAG_INT_MASK,m68k_get_reg(M68K_REG_PC));
 #endif
 
   /* Check interrupt mask to process IRQ  */
@@ -235,7 +216,7 @@ void m68k_set_irq(unsigned int int_level)
   CPU_INT_LEVEL = int_level << 8;
   
 #ifdef LOGVDP
-  error("[%d(%d)][%d(%d)] IRQ Level = %d(0x%02x) (%x)\n", v_counter, mcycles_68k/3420, mcycles_68k, mcycles_68k%3420,CPU_INT_LEVEL>>8,FLAG_INT_MASK,m68k_get_reg(M68K_REG_PC));
+  error("[%d(%d)][%d(%d)] IRQ Level = %d(0x%02x) (%x)\n", v_counter, m68k.cycles/3420, m68k.cycles, m68k.cycles%3420,CPU_INT_LEVEL>>8,FLAG_INT_MASK,m68k_get_reg(M68K_REG_PC));
 #endif
 
   /* Check interrupt mask to process IRQ  */
@@ -271,20 +252,19 @@ void m68k_set_irq_delay(unsigned int int_level)
   }
   
 #ifdef LOGVDP
-  error("[%d(%d)][%d(%d)] IRQ Level = %d(0x%02x) (%x)\n", v_counter, mcycles_68k/3420, mcycles_68k, mcycles_68k%3420,CPU_INT_LEVEL>>8,FLAG_INT_MASK,m68k_get_reg(M68K_REG_PC));
+  error("[%d(%d)][%d(%d)] IRQ Level = %d(0x%02x) (%x)\n", v_counter, m68k.cycles/3420, m68k.cycles, m68k.cycles%3420,CPU_INT_LEVEL>>8,FLAG_INT_MASK,m68k_get_reg(M68K_REG_PC));
 #endif
 
   /* Check interrupt mask to process IRQ  */
   m68ki_check_interrupts(); /* Level triggered (IRQ) */
 }
 
-
 void m68k_run(unsigned int cycles) 
 {
   /* Make sure we're not stopped */
   if (CPU_STOPPED)
   {
-    mcycles_68k = cycles;
+    m68k.cycles = cycles;
     return;
   }
 
@@ -292,9 +272,9 @@ void m68k_run(unsigned int cycles)
   m68ki_set_address_error_trap() /* auto-disable (see m68kcpu.h) */
 
   /* Save end cycles count for when CPU is stopped */
-  end_cycles = cycles;
+  m68k.cycle_end = cycles;
   
-  while (mcycles_68k < cycles)
+  while (m68k.cycles < cycles)
   {
     /* Set tracing accodring to T1. */
     m68ki_trace_t1() /* auto-disable (see m68kcpu.h) */
@@ -344,7 +324,7 @@ void m68k_init(void)
 /* Pulse the RESET line on the CPU */
 void m68k_pulse_reset(void)
 {
-  /* Clear all stop levels and eat up all remaining cycles */
+  /* Clear all stop levels */
   CPU_STOPPED = 0;
 #if M68K_EMULATE_ADDRESS_ERROR
   CPU_RUN_MODE = RUN_MODE_BERR_AERR_RESET;
@@ -381,12 +361,17 @@ void m68k_pulse_reset(void)
   USE_CYCLES(CYC_EXCEPTION[EXCEPTION_RESET]);
 }
 
-/* Pulse the HALT line on the CPU */
 void m68k_pulse_halt(void)
 {
+  /* Pulse the HALT line on the CPU */
   CPU_STOPPED |= STOP_LEVEL_HALT;
 }
 
+void m68k_clear_halt(void)
+{
+  /* Clear the HALT line on the CPU */
+  CPU_STOPPED &= ~STOP_LEVEL_HALT;
+}
 
 /* ======================================================================== */
 /* ============================== END OF FILE ============================= */

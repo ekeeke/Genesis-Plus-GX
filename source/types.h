@@ -11,3 +11,19 @@
 #define int8  signed char
 #define int16 signed short
 #define int32 signed int
+
+typedef union
+{
+    uint16 w;
+    struct
+    {
+#ifdef LSB_FIRST
+        uint8 l;
+        uint8 h;
+#else
+        uint8 h;
+        uint8 l;
+#endif
+    } byte;
+
+} reg16_t;

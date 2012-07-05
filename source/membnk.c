@@ -49,7 +49,7 @@ unsigned int zbank_unused_r(unsigned int address)
 #ifdef LOGERROR
   error("Z80 bank unused read %06X (%x)\n", address, Z80.pc.d);
 #endif
-  return (address & 1) ? 0x00 : 0xFF;
+  return 0xFF;
 }
 
 void zbank_unused_w(unsigned int address, unsigned int data)
@@ -66,7 +66,7 @@ unsigned int zbank_lockup_r(unsigned int address)
 #endif
   if (!config.force_dtack)
   {
-    mcycles_z80 = 0xFFFFFFFF;
+    Z80.cycles = 0xFFFFFFFF;
     zstate = 0;
   }
   return 0xFF;
@@ -79,7 +79,7 @@ void zbank_lockup_w(unsigned int address, unsigned int data)
 #endif
   if (!config.force_dtack)
   {
-    mcycles_z80 = 0xFFFFFFFF;
+    Z80.cycles = 0xFFFFFFFF;
     zstate = 0;
   }
 }
@@ -167,7 +167,7 @@ void zbank_write_ctrl_io(unsigned int address, unsigned int data)
     {
       if (!(address & 1))
       {
-        gen_zbusreq_w(data & 1, mcycles_z80);
+        gen_zbusreq_w(data & 1, Z80.cycles);
         return;
       }
       zbank_unused_w(address, data);
@@ -178,7 +178,7 @@ void zbank_write_ctrl_io(unsigned int address, unsigned int data)
     {
       if (!(address & 1))
       {
-        gen_zreset_w(data & 1, mcycles_z80);
+        gen_zreset_w(data & 1, Z80.cycles);
         return;
       }
       zbank_unused_w(address, data);
@@ -238,24 +238,24 @@ unsigned int zbank_read_vdp(unsigned int address)
       
     case 0x04:    /* CTRL */
     {
-      return (((vdp_68k_ctrl_r(mcycles_z80) >> 8) & 3) | 0xFC);
+      return (((vdp_68k_ctrl_r(Z80.cycles) >> 8) & 3) | 0xFC);
     }
 
     case 0x05:    /* CTRL */
     {
-      return (vdp_68k_ctrl_r(mcycles_z80) & 0xFF);
+      return (vdp_68k_ctrl_r(Z80.cycles) & 0xFF);
     }
       
     case 0x08:    /* HVC */
     case 0x0C:
     {
-      return (vdp_hvc_r(mcycles_z80) >> 8);
+      return (vdp_hvc_r(Z80.cycles) >> 8);
     }
 
     case 0x09:    /* HVC */
     case 0x0D:
     {
-      return (vdp_hvc_r(mcycles_z80) & 0xFF);
+      return (vdp_hvc_r(Z80.cycles) & 0xFF);
     }
 
     case 0x18:    /* Unused */
@@ -294,7 +294,7 @@ void zbank_write_vdp(unsigned int address, unsigned int data)
     {
       if (address & 1)
       {
-        psg_write(mcycles_z80, data);
+        psg_write(Z80.cycles, data);
         return;
       }
       zbank_unused_w(address, data);

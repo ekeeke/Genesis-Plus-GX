@@ -5,7 +5,7 @@
  *  Support for Master System (315-5216, 315-5237 & 315-5297), Game Gear & Mega Drive I/O chips
  *
  *  Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003  Charles Mac Donald (original code)
- *  Copyright (C) 2007-2011  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2007-2012  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -254,9 +254,9 @@ void io_init(void)
 void io_reset(void)
 {
   /* Reset I/O registers */
-  if (system_hw == SYSTEM_MD)
+  if ((system_hw & SYSTEM_PBC) == SYSTEM_MD)
   {
-    io_reg[0x00] = region_code | 0x20 | (config.bios & 1);
+    io_reg[0x00] = region_code | (config.bios & 1);
     io_reg[0x01] = 0x00;
     io_reg[0x02] = 0x00;
     io_reg[0x03] = 0x00;
@@ -272,6 +272,12 @@ void io_reset(void)
     io_reg[0x0D] = 0xFB;
     io_reg[0x0E] = 0x00;
     io_reg[0x0F] = 0x00;
+
+    /* CD unit detection */
+    if (system_hw != SYSTEM_MCD)
+    {
+      io_reg[0x00] |= 0x20;
+    }
   }
   else
   {

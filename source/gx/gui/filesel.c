@@ -3,7 +3,7 @@
  * 
  *   ROM File Browser
  *
- *  Copyright Eke-Eke (2009-2011)
+ *  Copyright Eke-Eke (2009-2012)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -43,10 +43,6 @@
 #include "gui.h"
 #include "file_load.h"
 #include "history.h"
-
-#ifdef HW_RVL
-#include <wiiuse/wpad.h>
-#endif
 
 #define BG_COLOR_1 {0x49,0x49,0x49,0xff}
 #define BG_COLOR_2 {0x66,0x66,0x66,0xff}
@@ -107,7 +103,7 @@ static gui_item action_select =
 /*****************************************************************************/
 /*  GUI Background images                                                    */
 /*****************************************************************************/
-static gui_image bg_filesel[13] =
+static gui_image bg_filesel[14] =
 {
   {NULL,Bg_layer_png,IMAGE_VISIBLE|IMAGE_REPEAT,0,0,640,480,255},
   {NULL,Bg_overlay_png,IMAGE_VISIBLE|IMAGE_REPEAT,0,0,640,480,255},
@@ -119,22 +115,25 @@ static gui_image bg_filesel[13] =
   {NULL,Snap_empty_png,IMAGE_VISIBLE,424,148,160,112,255},
   {NULL,NULL,0,424,148,160,112,255},
   {NULL,NULL,0,388,147,240,152,255},
+  {NULL,NULL,0,388,147,240,152,255},
   {NULL,NULL,0,392,118,232,148,255},
   {NULL,NULL,0,414,116,184,188,255},
   {NULL,NULL,0,416,144,180,228,255}
 };
 
-static const u8 *Cart_png[4] =
+static const u8 *Cart_png[FILETYPE_MAX] =
 {
+  Cart_md_png,
   Cart_md_png,
   Cart_ms_png,
   Cart_gg_png,
   Cart_sg_png
 };
 
-static const char *Cart_dir[4] =
+static const char *Cart_dir[FILETYPE_MAX] =
 {
   "md",
+  "cd",
   "ms",
   "gg",
   "sg"
@@ -147,7 +146,7 @@ static gui_menu menu_selector =
 {
   "Game Selection",
   -1,-1,
-  0,0,13,0,
+  0,0,14,0,
   NULL,
   NULL,
   bg_filesel,
@@ -289,27 +288,27 @@ int FileSelector(int type)
   }
 
   /* Hide all cartridge labels */
-  bg_filesel[9].state  &= ~IMAGE_VISIBLE;
-  bg_filesel[10].state &= ~IMAGE_VISIBLE;
-  bg_filesel[11].state &= ~IMAGE_VISIBLE;
-  bg_filesel[12].state &= ~IMAGE_VISIBLE;
+  for (i=0; i<FILETYPE_MAX; i++)
+  {
+    bg_filesel[9+i].state  &= ~IMAGE_VISIBLE;
+  }
 
   /* Cartridge type */
   if (type < 0)
   {
     /* Recent game list -> select all cartridge type */
-    bg_filesel[9].data = Cart_png[0];
-    bg_filesel[10].data = Cart_png[1];
-    bg_filesel[11].data = Cart_png[2];
-    bg_filesel[12].data = Cart_png[3];
+    for (i=0; i<FILETYPE_MAX; i++)
+    {
+      bg_filesel[9+i].data = Cart_png[i];
+    }
   }
   else
   {
     /* Clear all cartridges type */
-    bg_filesel[9].data  = NULL;
-    bg_filesel[10].data = NULL;
-    bg_filesel[11].data = NULL;
-    bg_filesel[12].data = NULL;
+    for (i=0; i<FILETYPE_MAX; i++)
+    {
+      bg_filesel[9+i].data = NULL;
+    }
 
     /* Select cartridge type */
     bg_filesel[9 + type].data = Cart_png[type];
@@ -338,12 +337,12 @@ int FileSelector(int type)
         if (type < 0)
         {
           /* hide all cartridge labels */
-          bg_filesel[9].state  &= ~IMAGE_VISIBLE;
-          bg_filesel[10].state &= ~IMAGE_VISIBLE;
-          bg_filesel[11].state &= ~IMAGE_VISIBLE;
-          bg_filesel[12].state &= ~IMAGE_VISIBLE;
+          for (i=0; i<FILETYPE_MAX; i++)
+          {
+            bg_filesel[9+i].state  &= ~IMAGE_VISIBLE;
+          }
 
-          /* detect cartridge type (0-3) */
+          /* detect cartridge type */
           type = history.entries[selection].filetype;
 
           /* show selected cartridge label */
@@ -397,7 +396,7 @@ int FileSelector(int type)
     else
     {
       /* this is a ROM file */
-      strcpy(action_select.comment,"Load ROM File");
+      strcpy(action_select.comment,"Load File");
     }
 
     /* Draw menu*/

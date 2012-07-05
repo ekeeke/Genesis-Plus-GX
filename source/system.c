@@ -2,10 +2,10 @@
  *  Genesis Plus
  *  Virtual System emulation
  *
- *  Support for Genesis & Master System compatibility modes
+ *  Support for "Genesis", "Genesis + CD" & "Master System" modes
  *
  *  Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003  Charles Mac Donald (original code)
- *  Copyright (C) 2007-2011  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2007-2012  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -47,9 +47,8 @@
 t_bitmap bitmap;
 t_snd snd;
 uint32 mcycles_vdp;
-uint32 mcycles_z80;
-uint32 mcycles_68k;
 uint8 system_hw;
+uint8 system_bios;
 uint32 system_clock;
 int16 SVP_cycles = 800; 
 
@@ -101,6 +100,13 @@ int audio_init(int samplerate, double framerate)
   snd.fm.buffer = (int32 *) malloc(snd.buffer_size * sizeof(int32) * 2);
   if (!snd.fm.buffer) return (-1);
 
+  /* PCM stream buffer */
+  if (system_hw == SYSTEM_MCD)
+  {
+    snd.pcm.buffer = (int16 *) malloc(snd.buffer_size * sizeof(int16) * 2);
+    if (!snd.pcm.buffer) return (-1);
+  }
+  
   /* Resampling buffer */
   if (config.hq_fm && !Fir_Resampler_initialize(4096)) return (-1);
 
@@ -128,8 +134,10 @@ void audio_reset(void)
   /* Audio buffers */
   snd.psg.pos = snd.psg.buffer;
   snd.fm.pos  = snd.fm.buffer;
+  snd.pcm.pos = snd.pcm.buffer;
   if (snd.psg.buffer) memset (snd.psg.buffer, 0, snd.buffer_size * sizeof(int16));
   if (snd.fm.buffer) memset (snd.fm.buffer, 0, snd.buffer_size * sizeof(int32) * 2);
+  if (snd.pcm.buffer) memset (snd.pcm.buffer, 0, snd.buffer_size * sizeof(int16) * 2);
 }
 
 void audio_set_equalizer(void)
@@ -145,6 +153,7 @@ void audio_shutdown(void)
   /* Sound buffers */
   if (snd.fm.buffer) free(snd.fm.buffer);
   if (snd.psg.buffer) free(snd.psg.buffer);
+  if (snd.pcm.buffer) free(snd.pcm.buffer);
 
   /* Resampling buffer */
   Fir_Resampler_shutdown();
@@ -164,6 +173,7 @@ int audio_update(int16 *buffer)
 
   int32 *fm       = snd.fm.buffer;
   int16 *psg      = snd.psg.buffer;
+  int16 *pcm      = snd.pcm.buffer;
 
   /* get number of available samples */
   int size = sound_update(mcycles_vdp);
@@ -197,6 +207,13 @@ int audio_update(int16 *buffer)
   error("%d PSG samples remaining\n",snd.psg.pos - snd.psg.buffer);
 #endif
 
+  /* PCM sound chip */
+  if (pcm)
+  {
+    /* get needed samples */
+    pcm_update(pcm, size);
+  }
+
   /* mix samples */
   for (i = 0; i < size; i ++)
   {
@@ -206,6 +223,13 @@ int audio_update(int16 *buffer)
     /* FM samples (stereo) */
     l += ((*fm++ * fm_preamp) / 100);
     r += ((*fm++ * fm_preamp) / 100);
+
+    /* PCM samples (stereo) */
+    if (pcm)
+    {
+      l += *pcm++;
+      r += *pcm++;
+    }
 
     /* filtering */
     if (filter & 1)
@@ -255,7 +279,7 @@ int audio_update(int16 *buffer)
 }
 
 /****************************************************************
- * Virtual Genesis initialization
+ * Virtual System emulation
  ****************************************************************/
 void system_init(void)
 {
@@ -266,9 +290,12 @@ void system_init(void)
   sound_init();
 }
 
-/****************************************************************
- * Virtual System emulation
- ****************************************************************/
+void system_shutdown (void)
+{
+  gen_shutdown();
+  sound_shutdown();
+}
+
 void system_reset(void)
 {
   gen_reset(1);
@@ -277,12 +304,6 @@ void system_reset(void)
   vdp_reset();
   sound_reset();
   audio_reset();
-}
-
-void system_shutdown (void)
-{
-  gen_shutdown();
-  SN76489_Shutdown();
 }
 
 void system_frame_gen(int do_skip)
@@ -296,7 +317,7 @@ void system_frame_gen(int do_skip)
   /* reload H Counter */
   int h_counter = reg[10];
 
-  /* reset line master cycle count */
+  /* reset frame cycle counter */
   mcycles_vdp = 0;
 
   /* reload V Counter */
@@ -403,7 +424,7 @@ void system_frame_gen(int do_skip)
   }
   else
   {
-    mcycles_z80 = MCYCLES_PER_LINE;
+    Z80.cycles = MCYCLES_PER_LINE;
   }
 
   /* run SVP chip */
@@ -458,7 +479,7 @@ void system_frame_gen(int do_skip)
     }
     else
     {
-      mcycles_z80 = mcycles_vdp + MCYCLES_PER_LINE;
+      Z80.cycles = mcycles_vdp + MCYCLES_PER_LINE;
     }
 
     /* run SVP chip */
@@ -534,7 +555,7 @@ void system_frame_gen(int do_skip)
   }
   else
   {
-    mcycles_z80 = mcycles_vdp + 788;
+    Z80.cycles = mcycles_vdp + 788;
   }
 
   /* V Interrupt */
@@ -555,7 +576,7 @@ void system_frame_gen(int do_skip)
   }
   else
   {
-    mcycles_z80 = mcycles_vdp + MCYCLES_PER_LINE;
+    Z80.cycles = mcycles_vdp + MCYCLES_PER_LINE;
   }
 
   /* run SVP chip */
@@ -595,7 +616,7 @@ void system_frame_gen(int do_skip)
       }
       else
       {
-        mcycles_z80 = mcycles_vdp + 788;
+        Z80.cycles = mcycles_vdp + 788;
       }
 
       /* clear Z80 interrupt */
@@ -611,7 +632,7 @@ void system_frame_gen(int do_skip)
     }
     else
     {
-      mcycles_z80 = mcycles_vdp + MCYCLES_PER_LINE;
+      Z80.cycles = mcycles_vdp + MCYCLES_PER_LINE;
     }
 
     /* run SVP chip */
@@ -625,11 +646,346 @@ void system_frame_gen(int do_skip)
   }
   while (++line < (lines_per_frame - 1));
 
-  /* adjust 68k & Z80 cycle count for next frame */
-  mcycles_68k -= mcycles_vdp;
-  mcycles_z80 -= mcycles_vdp;
+  /* adjust CPU cycle counters for next frame */
+  m68k.cycles -= mcycles_vdp;
+  Z80.cycles -= mcycles_vdp;
 }
 
+void system_frame_scd(int do_skip)
+{
+  /* line counters */
+  int start, end, line = 0;
+
+  /* Z80 interrupt flag */
+  int zirq = 1;
+
+  /* reload H Counter */
+  int h_counter = reg[10];
+
+  /* reset frame cycle counters */
+  mcycles_vdp = 0;
+  scd.cycles = 0;
+  
+  /* reload V Counter */
+  v_counter = lines_per_frame - 1;
+
+  /* reset VDP FIFO */
+  fifo_write_cnt = 0;
+  fifo_lastwrite = 0;
+
+  /* update 6-Buttons & Lightguns */
+  input_refresh();
+
+  /* display changed during VBLANK */
+  if (bitmap.viewport.changed & 2)
+  {
+    /* interlaced modes */
+    int old_interlaced = interlaced;
+    interlaced = (reg[12] & 0x02) >> 1;
+
+    if (old_interlaced != interlaced)
+    {
+      /* double resolution mode */
+      im2_flag = ((reg[12] & 0x06) == 0x06);
+
+      /* reset field status flag */
+      odd_frame = 1;
+
+      /* video mode has changed */
+      bitmap.viewport.changed = 5;
+
+      /* update rendering mode */
+      if (reg[1] & 0x04)
+      {
+        if (im2_flag)
+        {
+          render_bg = (reg[11] & 0x04) ? render_bg_m5_im2_vs : render_bg_m5_im2;
+          render_obj = (reg[12] & 0x08) ? render_obj_m5_im2_ste : render_obj_m5_im2;
+        }
+        else
+        {
+          render_bg = (reg[11] & 0x04) ? render_bg_m5_vs : render_bg_m5;
+          render_obj = (reg[12] & 0x08) ? render_obj_m5_ste : render_obj_m5;
+        }
+      }
+    }
+    else
+    {
+      /* clear flag */
+      bitmap.viewport.changed &= ~2;
+    }
+
+    /* active screen height */
+    if (reg[1] & 0x04)
+    {
+      bitmap.viewport.h = 224 + ((reg[1] & 0x08) << 1);
+      bitmap.viewport.y = (config.overscan & 1) * ((240 + 48*vdp_pal - bitmap.viewport.h) >> 1);
+    }
+    else
+    {
+      bitmap.viewport.h = 192;
+      bitmap.viewport.y = (config.overscan & 1) * 24 * (vdp_pal + 1);
+    }
+
+    /* active screen width */
+    bitmap.viewport.w = 256 + ((reg[12] & 0x01) << 6);
+  }
+
+  /* clear VBLANK, DMA, FIFO FULL & field flags */
+  status &= 0xFEE5;
+
+  /* set FIFO EMPTY flag */
+  status |= 0x0200;
+
+  /* even/odd field flag (interlaced modes only) */
+  odd_frame ^= 1;
+  if (interlaced)
+  {
+    status |= (odd_frame << 4);
+  }
+
+  /* update VDP DMA */
+  if (dma_length)
+  {
+    vdp_dma_update(0);
+  }
+
+  /* render last line of overscan */
+  if (bitmap.viewport.y > 0)
+  {
+    blank_line(v_counter, -bitmap.viewport.x, bitmap.viewport.w + 2*bitmap.viewport.x);
+  }
+
+  /* parse first line of sprites */
+  if (reg[1] & 0x40)
+  {
+    parse_satb(-1);
+  }
+
+  /* run both 68k & CD hardware */
+  scd_update(MCYCLES_PER_LINE);
+
+  /* run Z80 */
+  if (zstate == 1)
+  {
+    z80_run(MCYCLES_PER_LINE);
+  }
+  else
+  {
+    Z80.cycles = MCYCLES_PER_LINE;
+  }
+
+  /* update line cycle count */
+  mcycles_vdp += MCYCLES_PER_LINE;
+
+  /* Active Display */
+  do
+  {
+    /* update V Counter */
+    v_counter = line;
+
+    /* update 6-Buttons & Lightguns */
+    input_refresh();
+
+    /* H Interrupt */
+    if(--h_counter < 0)
+    {
+      /* reload H Counter */
+      h_counter = reg[10];
+      
+      /* interrupt level 4 */
+      hint_pending = 0x10;
+      if (reg[0] & 0x10)
+      {
+        m68k_update_irq(4);
+      }
+    }
+
+    /* update VDP DMA */
+    if (dma_length)
+    {
+      vdp_dma_update(mcycles_vdp);
+    }
+
+    /* render scanline */
+    if (!do_skip)
+    {
+      render_line(line);
+    }
+
+    /* run both 68k & CD hardware */
+    scd_update(mcycles_vdp + MCYCLES_PER_LINE);
+
+    /* run Z80 */
+    if (zstate == 1)
+    {
+      z80_run(mcycles_vdp + MCYCLES_PER_LINE);
+    }
+    else
+    {
+      Z80.cycles = mcycles_vdp + MCYCLES_PER_LINE;
+    }
+
+    /* update line cycle count */
+    mcycles_vdp += MCYCLES_PER_LINE;
+  }
+  while (++line < bitmap.viewport.h);
+
+  /* end of active display */
+  v_counter = line;
+
+  /* set VBLANK flag */
+  status |= 0x08;
+
+  /* overscan area */
+  start = lines_per_frame - bitmap.viewport.y;
+  end   = bitmap.viewport.h + bitmap.viewport.y;
+
+  /* check viewport changes */
+  if ((bitmap.viewport.w != bitmap.viewport.ow) || (bitmap.viewport.h != bitmap.viewport.oh))
+  {
+    bitmap.viewport.ow = bitmap.viewport.w;
+    bitmap.viewport.oh = bitmap.viewport.h;
+    bitmap.viewport.changed |= 1;
+  }
+
+  /* update 6-Buttons & Lightguns */
+  input_refresh();
+
+  /* H Interrupt */
+  if(--h_counter < 0)
+  {
+    /* reload H Counter */
+    h_counter = reg[10];
+
+    /* interrupt level 4 */
+    hint_pending = 0x10;
+    if (reg[0] & 0x10)
+    {
+      m68k_update_irq(4);
+    }
+  }
+
+  /* update VDP DMA */
+  if (dma_length)
+  {
+    vdp_dma_update(mcycles_vdp);
+  }
+
+  /* render overscan */
+  if (line < end)
+  {
+    blank_line(line, -bitmap.viewport.x, bitmap.viewport.w + 2*bitmap.viewport.x);
+  }
+
+  /* update inputs before VINT (Warriors of Eternal Sun) */
+  osd_input_update();
+
+  /* delay between VINT flag & V Interrupt (Ex-Mutants, Tyrant) */
+  m68k_run(mcycles_vdp + 588);
+  status |= 0x80;
+
+  /* delay between VBLANK flag & V Interrupt (Dracula, OutRunners, VR Troopers) */
+  m68k_run(mcycles_vdp + 788);
+  if (zstate == 1)
+  {
+    z80_run(mcycles_vdp + 788);
+  }
+  else
+  {
+    Z80.cycles = mcycles_vdp + 788;
+  }
+
+  /* V Interrupt */
+  vint_pending = 0x20;
+  if (reg[1] & 0x20)
+  {
+    m68k_set_irq(6);
+  }
+
+  /* assert Z80 interrupt */
+  Z80.irq_state = ASSERT_LINE;
+
+  /* run both 68k & CD hardware */
+  scd_update(mcycles_vdp + MCYCLES_PER_LINE);
+
+  /* run Z80 until end of line */
+  if (zstate == 1)
+  {
+    z80_run(mcycles_vdp + MCYCLES_PER_LINE);
+  }
+  else
+  {
+    Z80.cycles = mcycles_vdp + MCYCLES_PER_LINE;
+  }
+
+  /* update line cycle count */
+  mcycles_vdp += MCYCLES_PER_LINE;
+
+  /* increment line count */
+  line++;
+
+  /* Vertical Blanking */
+  do
+  {
+    /* update V Counter */
+    v_counter = line;
+
+    /* update 6-Buttons & Lightguns */
+    input_refresh();
+
+    /* render overscan */
+    if ((line < end) || (line >= start))
+    {
+      blank_line(line, -bitmap.viewport.x, bitmap.viewport.w + 2*bitmap.viewport.x);
+    }
+
+    if (zirq)
+    {
+      /* Z80 interrupt is asserted exactly for one line */
+      m68k_run(mcycles_vdp + 788);
+      if (zstate == 1)
+      {
+        z80_run(mcycles_vdp + 788);
+      }
+      else
+      {
+        Z80.cycles = mcycles_vdp + 788;
+      }
+
+      /* clear Z80 interrupt */
+      Z80.irq_state = CLEAR_LINE;
+      zirq = 0;
+    }
+
+    /* run both 68k & CD hardware */
+    scd_update(mcycles_vdp + MCYCLES_PER_LINE);
+
+    /* run Z80 */
+    if (zstate == 1)
+    {
+      z80_run(mcycles_vdp + MCYCLES_PER_LINE);
+    }
+    else
+    {
+      Z80.cycles = mcycles_vdp + MCYCLES_PER_LINE;
+    }
+
+    /* update line cycle count */
+    mcycles_vdp += MCYCLES_PER_LINE;
+  }
+  while (++line < (lines_per_frame - 1));
+  
+  /* reset CPU registers polling */
+  m68k.poll.cycle = 0;
+  s68k.poll.cycle = 0;
+
+  /* adjust CPU cycle counters for next frame */
+  Z80.cycles  -= mcycles_vdp;
+  m68k.cycles -= mcycles_vdp;
+  s68k.cycles -= scd.cycles;
+  gfx.cycles  -= scd.cycles;
+}
 
 void system_frame_sms(int do_skip)
 {
@@ -851,9 +1207,9 @@ void system_frame_sms(int do_skip)
         /* IRQ line is latched between instructions, during instruction last cycle.       */
         /* This means that if Z80 cycle count is exactly a multiple of MCYCLES_PER_LINE,  */
         /* interrupt should be triggered AFTER the next instruction.                      */
-        if ((mcycles_z80 % MCYCLES_PER_LINE) == 0)
+        if ((Z80.cycles % MCYCLES_PER_LINE) == 0)
         {
-          z80_run(mcycles_z80 + 1);
+          z80_run(Z80.cycles + 1);
         }
 
         Z80.irq_state = ASSERT_LINE;
@@ -904,9 +1260,9 @@ void system_frame_sms(int do_skip)
     if (reg[0] & 0x10)
     {
       /* cycle-accurate HINT */
-      if ((mcycles_z80 % MCYCLES_PER_LINE) == 0)
+      if ((Z80.cycles % MCYCLES_PER_LINE) == 0)
       {
-        z80_run(mcycles_z80 + 1);
+        z80_run(Z80.cycles + 1);
       }
 
       Z80.irq_state = ASSERT_LINE;
@@ -983,5 +1339,5 @@ void system_frame_sms(int do_skip)
   while (++line < (lines_per_frame - 1));
 
   /* adjust Z80 cycle count for next frame */
-  mcycles_z80 -= mcycles_vdp;
+  Z80.cycles -= mcycles_vdp;
 }

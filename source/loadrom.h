@@ -3,7 +3,7 @@
  *  ROM Loading Support
  *
  *  Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003  Charles Mac Donald (original code)
- *  Copyright (C) 2007-2011  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2007-2012  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -48,7 +48,7 @@ typedef struct
   char copyright[18];           /* Copyright message */
   char domestic[50];            /* Domestic name of ROM */
   char international[50];       /* International name of ROM */
-  char ROMType[4];              /* Educational or Game */
+  char ROMType[4];              /* Boot ROM (BR), Educational (AL) or Game (GM) program */
   char product[14];             /* Product serial number */
   unsigned short checksum;      /* ROM Checksum (header) */
   unsigned short realchecksum;  /* ROM Checksum (calculated) */
@@ -65,8 +65,9 @@ extern char rom_filename[256];
 extern uint8 romtype;
 
 /* Function prototypes */
+extern int load_bios(void);
 extern int load_rom(char *filename);
-extern void region_autodetect(void);
+extern void get_region(char *romheader);
 extern char *get_company(void);
 extern char *get_peripheral(int index);
 

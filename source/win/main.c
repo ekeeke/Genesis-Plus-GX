@@ -30,6 +30,15 @@ struct {
 } sdl_sound;
 
 
+static uint8 brm_format[0x40] =
+{
+  0x5f,0x5f,0x5f,0x5f,0x5f,0x5f,0x5f,0x5f,0x5f,0x5f,0x5f,0x00,0x00,0x00,0x00,0x40,
+  0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+  0x53,0x45,0x47,0x41,0x5f,0x43,0x44,0x5f,0x52,0x4f,0x4d,0x00,0x01,0x00,0x00,0x00,
+  0x52,0x41,0x4d,0x5f,0x43,0x41,0x52,0x54,0x52,0x49,0x44,0x47,0x45,0x5f,0x5f,0x5f
+};
+
+
 static short soundframe[SOUND_SAMPLES_SIZE];
 
 static void sdl_sound_callback(void *userdata, Uint8 *stream, int len)
@@ -145,7 +154,11 @@ static int sdl_video_init()
 
 static void sdl_video_update()
 {
-  if ((system_hw & SYSTEM_PBC) == SYSTEM_MD)
+  if (system_hw == SYSTEM_MCD)
+  {
+    system_frame_scd(0);
+  }
+  else if ((system_hw & SYSTEM_PBC) == SYSTEM_MD)
   {
     system_frame_gen(0);
   }
@@ -255,7 +268,7 @@ static Uint32 sdl_sync_timer_callback(Uint32 interval)
   {
     int fps = vdp_pal ? (sdl_video.frames_rendered / 3) : sdl_video.frames_rendered;
     sdl_sync.ticks = sdl_video.frames_rendered = 0;
-    sprintf(caption,"%d fps - %s", fps, rominfo.international);
+    sprintf(caption,"%d fps - %s", fps, (rominfo.international[0] != 0x20) ? rominfo.international : rominfo.domestic);
     SDL_WM_SetCaption(caption, NULL);
   }
   return interval;
@@ -310,10 +323,8 @@ static int sdl_control_update(SDLKey keystate)
 
       case SDLK_F3:
       {
-        int temp = config.bios & 3;
-        config.bios &= ~3;
-        if (temp == 0) config.bios |= 3;
-        else if (temp == 3) config.bios |= 1;
+        if (config.bios == 0) config.bios = 3;
+        else if (config.bios == 3) config.bios = 1;
         break;
       }
 
@@ -331,13 +342,17 @@ static int sdl_control_update(SDLKey keystate)
 
       case SDLK_F6:
       {
-        if (!use_sound) turbo_mode ^=1;
+        if (!use_sound)
+        {
+          turbo_mode ^=1;
+          sdl_sync.ticks = 0;
+        }
         break;
       }
 
       case SDLK_F7:
       {
-        FILE *f = fopen("game.gpz","r+b");
+        FILE *f = fopen("game.gp0","rb");
         if (f)
         {
           uint8 buf[STATE_SIZE];
@@ -350,7 +365,7 @@ static int sdl_control_update(SDLKey keystate)
 
       case SDLK_F8:
       {
-        FILE *f = fopen("game.gpz","w+b");
+        FILE *f = fopen("game.gp0","wb");
         if (f)
         {
           uint8 buf[STATE_SIZE];
@@ -364,44 +379,58 @@ static int sdl_control_update(SDLKey keystate)
       case SDLK_F9:
       {
         config.region_detect = (config.region_detect + 1) % 5;
-        region_autodetect();
-        if (system_hw == SYSTEM_MD)
+        get_region(0);
+
+        /* framerate has changed, reinitialize audio timings */
+        audio_init(snd.sample_rate, 0);
+
+        /* system with region BIOS should be reinitialized */
+        if ((system_hw == SYSTEM_MCD) || ((system_hw & SYSTEM_SMS) && (config.bios & 1)))
         {
-          io_reg[0x00] = 0x20 | region_code | (config.bios & 1);
+          system_init();
+          system_reset();
         }
         else
         {
-          io_reg[0x00] = 0x80 | (region_code >> 1);
+          /* reinitialize I/O region register */
+          if (system_hw == SYSTEM_MD)
+          {
+            io_reg[0x00] = 0x20 | region_code | (config.bios & 1);
+          }
+          else
+          {
+            io_reg[0x00] = 0x80 | (region_code >> 1);
+          }
+
+          /* reinitialize VDP */
+          if (vdp_pal)
+          {
+            status |= 1;
+            lines_per_frame = 313;
+          }
+          else
+          {
+            status &= ~1;
+            lines_per_frame = 262;
+          }
+
+          /* reinitialize VC max value */
+          switch (bitmap.viewport.h)
+          {
+            case 192:
+              vc_max = vc_table[0][vdp_pal];
+              break;
+            case 224:
+              vc_max = vc_table[1][vdp_pal];
+              break;
+            case 240:
+              vc_max = vc_table[3][vdp_pal];
+              break;
+          }
+
+          /* reinitialize sound emulation */
+          sound_restore();
         }
-
-        /* reinitialize audio timings */
-        audio_init(snd.sample_rate, snd.frame_rate);
-
-        /* reintialize VDP */
-        vdp_init();
-
-        /* reintialize VDP Status flag */
-        if (system_hw & SYSTEM_MD)
-        {
-          status = (status & ~1) | vdp_pal;
-        }
-
-        /* reinitialize VC max value */
-        switch (bitmap.viewport.h)
-        {
-          case 192:
-            vc_max = vc_table[0][vdp_pal];
-            break;
-          case 224:
-            vc_max = vc_table[1][vdp_pal];
-            break;
-          case 240:
-            vc_max = vc_table[3][vdp_pal];
-            break;
-        }
-
-        /* reinitialize sound emulation */
-        sound_restore();
         break;
       }
 
@@ -581,9 +610,9 @@ int sdl_input_update(void)
       input.analog[0][1] = 0x1fc + (y * (0x2f7-0x1fc+1)) / VIDEO_HEIGHT;
    
       /* Map mouse buttons to player #1 inputs */
-      if(state & SDL_BUTTON_MMASK) pico_current++;
-      if(state & SDL_BUTTON_RMASK) input.pad[0] |= INPUT_B;
-      if(state & SDL_BUTTON_LMASK) input.pad[0] |= INPUT_A;
+      if(state & SDL_BUTTON_MMASK) pico_current = (pico_current + 1) & 7;
+      if(state & SDL_BUTTON_RMASK) input.pad[0] |= INPUT_PICO_RED;
+      if(state & SDL_BUTTON_LMASK) input.pad[0] |= INPUT_PICO_PEN;
 
       break;
     }
@@ -623,12 +652,12 @@ int sdl_input_update(void)
       if(keystate[SDLK_c])  input.pad[joynum] |= INPUT_Z;
       if(keystate[SDLK_v])  input.pad[joynum] |= INPUT_MODE;
 
-      if(keystate[SDLK_UP])     input.pad[joynum] |= INPUT_UP;
+      if(keystate[SDLK_UP]) input.pad[joynum] |= INPUT_UP;
       else
-      if(keystate[SDLK_DOWN])   input.pad[joynum] |= INPUT_DOWN;
-      if(keystate[SDLK_LEFT])   input.pad[joynum] |= INPUT_LEFT;
+      if(keystate[SDLK_DOWN]) input.pad[joynum] |= INPUT_DOWN;
+      if(keystate[SDLK_LEFT]) input.pad[joynum] |= INPUT_LEFT;
       else
-      if(keystate[SDLK_RIGHT])  input.pad[joynum] |= INPUT_RIGHT;
+      if(keystate[SDLK_RIGHT]) input.pad[joynum] |= INPUT_RIGHT;
 
       break;
     }
@@ -657,19 +686,8 @@ int main (int argc, char **argv)
   error_init();
   set_config_defaults();
 
-  /* Load ROM file */
-  cart.rom = malloc(10*1024*1024);
-  memset(cart.rom, 0, 10*1024*1024);
-  if(!load_rom(argv[1]))
-  {
-    char caption[256];
-    sprintf(caption, "Error loading file `%s'.", argv[1]);
-    MessageBox(NULL, caption, "Error", 0);
-    exit(1);
-  }
-
   /* mark all BIOS as unloaded */
-  config.bios &= 0x03;
+  system_bios = 0;
 
   /* Genesis BOOT ROM support (2KB max) */
   memset(boot_rom, 0xFF, 0x800);
@@ -686,9 +704,9 @@ int main (int argc, char **argv)
     if (!strncmp((char *)(boot_rom + 0x120),"GENESIS OS", 10))
     {
       /* mark Genesis BIOS as loaded */
-      config.bios |= SYSTEM_MD;
+      system_bios = SYSTEM_MD;
     }
-    
+
     /* Byteswap ROM */
     for (i=0; i<0x800; i+=2)
     {
@@ -697,7 +715,6 @@ int main (int argc, char **argv)
       boot_rom[i+1] = temp;
     }
   }
-
 
   /* initialize SDL */
   if(SDL_Init(0) < 0)
@@ -729,19 +746,81 @@ int main (int argc, char **argv)
   SDL_UnlockSurface(sdl_video.surf_bitmap);
   bitmap.viewport.changed = 3;
 
-  /* initialize emulation */
+  /* Load game file */
+  if(!load_rom(argv[1]))
+  {
+    char caption[256];
+    sprintf(caption, "Error loading file `%s'.", argv[1]);
+    MessageBox(NULL, caption, "Error", 0);
+    exit(1);
+  }
+
+  /* initialize system hardware */
   audio_init(SOUND_FREQUENCY, 0);
   system_init();
 
-  /* load SRAM */
-  fp = fopen("./game.srm", "rb");
-  if (fp!=NULL)
+  /* Mega CD specific */
+  if (system_hw == SYSTEM_MCD)
   {
-    fread(sram.sram,0x10000,1, fp);
-    fclose(fp);
+    /* load internal backup RAM */
+    fp = fopen("./scd.brm", "rb");
+    if (fp!=NULL)
+    {
+      fread(scd.bram, 0x2000, 1, fp);
+      fclose(fp);
+    }
+
+    /* check if internal backup RAM is formatted */
+    if (memcmp(scd.bram + 0x2000 - 0x20, brm_format + 0x20, 0x20))
+    {
+      /* clear internal backup RAM */
+      memset(scd.bram, 0x00, 0x200);
+
+      /* Internal Backup RAM size fields */
+      brm_format[0x10] = brm_format[0x12] = brm_format[0x14] = brm_format[0x16] = 0x00;
+      brm_format[0x11] = brm_format[0x13] = brm_format[0x15] = brm_format[0x17] = (sizeof(scd.bram) / 64) - 3;
+
+      /* format internal backup RAM */
+      memcpy(scd.bram + 0x2000 - 0x40, brm_format, 0x40);
+    }
+
+    /* load cartridge backup RAM */
+    if (scd.cartridge.id)
+    {
+      fp = fopen("./cart.brm", "rb");
+      if (fp!=NULL)
+      {
+        fread(scd.cartridge.area, scd.cartridge.mask + 1, 1, fp);
+        fclose(fp);
+      }
+
+      /* check if cartridge backup RAM is formatted */
+      if (memcmp(scd.cartridge.area + scd.cartridge.mask + 1 - 0x20, brm_format + 0x20, 0x20))
+      {
+        /* clear cartridge backup RAM */
+        memset(scd.cartridge.area, 0x00, scd.cartridge.mask + 1);
+
+        /* Cartridge Backup RAM size fields */
+        brm_format[0x10] = brm_format[0x12] = brm_format[0x14] = brm_format[0x16] = (((scd.cartridge.mask + 1) / 64) - 3) >> 8;
+        brm_format[0x11] = brm_format[0x13] = brm_format[0x15] = brm_format[0x17] = (((scd.cartridge.mask + 1) / 64) - 3) & 0xff;
+
+        /* format cartridge backup RAM */
+        memcpy(scd.cartridge.area + scd.cartridge.mask + 1 - sizeof(brm_format), brm_format, sizeof(brm_format));
+      }
+    }
+  }
+  else
+  {
+    /* load SRAM */
+    fp = fopen("./game.srm", "rb");
+    if (fp!=NULL)
+    {
+      fread(sram.sram,0x10000,1, fp);
+      fclose(fp);
+    }
   }
 
-  /* reset emulation */
+  /* reset system hardware */
   system_reset();
 
   if(use_sound) SDL_PauseAudio(0);
@@ -775,21 +854,49 @@ int main (int argc, char **argv)
     {
       SDL_SemWait(sdl_sync.sem_sync);
     }
-
   }
 
-  /* save SRAM */
-  fp = fopen("./game.srm", "wb");
-  if (fp!=NULL)
+  if (system_hw == SYSTEM_MCD)
   {
-    fwrite(sram.sram,0x10000,1, fp);
-    fclose(fp);
+    /* save internal backup RAM (if formatted) */
+    if (!memcmp(scd.bram + 0x2000 - 0x20, brm_format + 0x20, 0x20))
+    {
+      fp = fopen("./scd.brm", "wb");
+      if (fp!=NULL)
+      {
+        fwrite(scd.bram, 0x2000, 1, fp);
+        fclose(fp);
+      }
+    }
+
+    /* save cartridge backup RAM (if formatted) */
+    if (scd.cartridge.id)
+    {
+      if (!memcmp(scd.cartridge.area + scd.cartridge.mask + 1 - 0x20, brm_format + 0x20, 0x20))
+      {
+        fp = fopen("./cart.brm", "wb");
+        if (fp!=NULL)
+        {
+          fwrite(scd.cartridge.area, scd.cartridge.mask + 1, 1, fp);
+          fclose(fp);
+        }
+      }
+    }
+  }
+  else
+  {
+    /* save SRAM */
+    fp = fopen("./game.srm", "wb");
+    if (fp!=NULL)
+    {
+      fwrite(sram.sram,0x10000,1, fp);
+      fclose(fp);
+    }
   }
 
   system_shutdown();
   audio_shutdown();
   error_shutdown();
-  free(cart.rom);
 
   sdl_video_close();
   sdl_sound_close();

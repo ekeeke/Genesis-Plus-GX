@@ -3,7 +3,7 @@
  *
  *  Genesis Plus GX configuration file support
  *
- *  Copyright Eke-Eke (2007-2011)
+ *  Copyright Eke-Eke (2007-2012)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -40,7 +40,7 @@
 #ifndef _CONFIG_H_
 #define _CONFIG_H_
 
-#define CONFIG_VERSION "GENPLUS-GX 1.6.1"
+#define CONFIG_VERSION "GENPLUS-GX 1.7.0"
 
 /****************************************************************************
  * Config Option 
@@ -107,11 +107,7 @@ typedef struct
   int16 screen_w;
   float bgm_volume;
   float sfx_volume;
-#ifdef HW_RVL
-  char lastdir[4][3][MAXPATHLEN];
-#else
-  char lastdir[4][2][MAXPATHLEN];
-#endif
+  char lastdir[FILETYPE_MAX][TYPE_RECENT][MAXPATHLEN];
 } t_config;
 
 /* Global data */

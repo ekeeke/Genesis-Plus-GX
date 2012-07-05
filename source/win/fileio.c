@@ -47,16 +47,10 @@
 static int check_zip(char *filename);
 static int gzsize(gzFile *gd);
 
-int load_archive(char *filename)
+int load_archive(char *filename, unsigned char *buffer, int maxsize)
 {
   int size = 0;
   
-  /* ROM buffer should be allocated first */
-  if (cart.rom == NULL)
-  {
-    return 0;
-  }
-
   if(check_zip(filename))
   {
     unz_file_info info;
@@ -92,15 +86,14 @@ int load_archive(char *filename)
 
     /* Retrieve uncompressed file size */
     size = info.uncompressed_size;
-    if(size > MAXROMSIZE)
+    if(size > maxsize)
     {
-      unzClose(fd);
-      return 0;
+      size = maxsize;
     }
 
     /* Read (decompress) the file */
-    ret = unzReadCurrentFile(fd, cart.rom, info.uncompressed_size);
-    if(ret != info.uncompressed_size)
+    ret = unzReadCurrentFile(fd, buffer, size);
+    if(ret != size)
     {
       unzCloseCurrentFile(fd);
       unzClose(fd);
@@ -125,18 +118,8 @@ int load_archive(char *filename)
     gzFile *gd = gzopen(filename, "rb");
     if (!gd) return 0;
 
-    /* Get file size */
-    size = gzsize(gd);
-
-    /* Check file size */
-    if(size > MAXROMSIZE)
-    {
-      gzclose(gd);
-      return 0;
-    }
-
     /* Read file data */
-    gzread(gd, cart.rom, size);
+    size = gzread(gd, buffer, maxsize);
 
     /* Close file */
     gzclose(gd);

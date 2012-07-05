@@ -91,6 +91,12 @@ void SN76489_Init(double PSGClockValue, int SamplingRate)
   blip = blip_alloc(PSGClockValue, SamplingRate * 16.0, SamplingRate / 4);
 }
 
+void SN76489_Shutdown(void)
+{
+  if (blip) blip_free(blip);
+  blip = NULL;
+}
+
 void SN76489_Reset()
 {
   int i;
@@ -123,12 +129,6 @@ void SN76489_Reset()
 
   /* Clear Blip delta buffer */
   if (blip) blip_clear(blip);
-}
-
-void SN76489_Shutdown(void)
-{
-  if (blip) blip_free(blip);
-  blip = NULL;
 }
 
 void SN76489_BoostNoise(int boost)
@@ -322,7 +322,7 @@ int SN76489_Update(INT16 *buffer, int clock_length)
 
   /* Read samples into output buffer */
   blip_end_frame(blip, clock_length);
-  return blip_read_samples(blip, buffer);
+  return blip_read_samples(blip, buffer, 0);
 }
 
 int SN76489_Clocks(int length)

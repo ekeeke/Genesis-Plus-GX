@@ -37,6 +37,7 @@
  ****************************************************************************************/
 
 #include "shared.h"
+#include "gg_eeprom.h"
 
 #define BIT_DATA (0)
 #define BIT_CLK  (1)

@@ -67,6 +67,7 @@ u32 delta_time[LOGSIZE];
 u32 delta_samp[LOGSIZE];
 #endif
 
+
 #ifdef HW_RVL
 /****************************************************************************
  * Power Button callback 
@@ -101,14 +102,11 @@ static void Reset_cb(void)
  ***************************************************************************/
 static void init_machine(void)
 {
-  /* allocate cartridge ROM here (10 MB) */
-  cart.rom = memalign(32, MAXROMSIZE);
-
   /* system is not initialized */
   config.hot_swap &= 0x01;
 
-  /* BIOS are unloaded */
-  config.bios &= 0x03;
+  /* mark all BIOS as unloaded */
+  system_bios = 0;
 
   /* Genesis BOOT ROM support (2KB max) */
   memset(boot_rom, 0xFF, 0x800);
@@ -123,7 +121,7 @@ static void init_machine(void)
     if (!strncmp((char *)(boot_rom + 0x120),"GENESIS OS", 10))
     {
       /* mark Genesis BIOS as loaded */
-      config.bios |= SYSTEM_MD;
+      system_bios = SYSTEM_MD;
     }
   }
 
@@ -145,9 +143,60 @@ static void run_emulation(void)
   while (1)
   {
     /* emulated system */
-    if ((system_hw & SYSTEM_PBC) == SYSTEM_MD)
+    if (system_hw == SYSTEM_MCD)
     {
-      /* Mega Drive type hardware */
+      /* 16-bit hardware + CD */
+      while (!ConfigRequested)
+      {
+        /* automatic frame skipping */
+        if (frameticker > 1)
+        {
+          /* skip frame */
+          system_frame_scd(1);
+          frameticker = 1;
+        }
+        else
+        {
+          /* render frame */
+          frameticker = 0;
+          system_frame_scd(0);
+
+          /* update video */
+          gx_video_Update();
+        }
+
+        /* update audio */
+        gx_audio_Update();
+
+        /* check interlaced mode change */
+        if (bitmap.viewport.changed & 4)
+        {
+          /* VSYNC "original" mode */
+          if (!config.render && (gc_pal == vdp_pal))
+          {
+            /* framerate has changed, reinitialize audio timings */
+            audio_init(SAMPLERATE_48KHZ, get_framerate());
+
+            /* reinitialize sound chips */
+            sound_restore();
+          }
+
+          /* clear flag */
+          bitmap.viewport.changed &= ~4;
+        }
+
+#ifdef HW_RVL
+        /* use Wii DVD light to simulate CD Drive access led */
+        *(u32*)0xcd0000c0 = (*(u32*)0xcd0000c0 & ~0x20) | ((scd.regs[0x06>>1].byte.h & 0x01) << 5);
+#endif
+
+        /* wait for next frame */
+        while (frameticker < 1) usleep(1);
+      }
+    }
+    else if ((system_hw & SYSTEM_PBC) == SYSTEM_MD)
+    {
+      /* 16-bit hardware */
       while (!ConfigRequested)
       {
         /* automatic frame skipping (only needed when running Virtua Racing on Gamecube) */
@@ -193,10 +242,10 @@ static void run_emulation(void)
     }
     else
     {
-      /* Master System type hardware */
+      /* 8-bit hardware */
       while (!ConfigRequested)
       {
-        /* render frame (no frameskipping needed) */
+        /* render frame (no frame skipping needed) */
         frameticker = 0;
         system_frame_sms(0);
 
@@ -206,7 +255,7 @@ static void run_emulation(void)
         /* update audio */
         gx_audio_Update();
 
-        /* check interlaced mode change */
+        /* check interlaced mode change (PBC mode only) */
         if (bitmap.viewport.changed & 4)
         {
           /* "original" mode */
@@ -228,12 +277,17 @@ static void run_emulation(void)
       }
     }
 
+#ifdef HW_RVL
+    /* reset Wii DVD light */
+    *(u32*)0xcd0000c0 = (*(u32*)0xcd0000c0 & ~0x20);
+#endif
+
     /* stop video & audio */
     gx_audio_Stop();
     gx_video_Stop();
 
 #ifdef LOG_TIMING
-    if (cart.romsize)
+    if (system_hw)
     {
       FILE *f;
       char filename[64];
@@ -358,8 +412,18 @@ double get_framerate(void)
 ********************************************/
 void reloadrom(void)
 {
+  /* restore previous input settings */
+  if (old_system[0] != -1)
+  {
+    input.system[0] = old_system[0];
+  }
+  if (old_system[1] != -1)
+  {
+    input.system[1] = old_system[1];
+  }
+
   /* Cartridge Hot Swap (make sure system has already been inited once) */
-  if (config.hot_swap == 3)
+  if ((config.hot_swap == 3) && (system_hw != SYSTEM_MCD))
   {
     /* Initialize cartridge hardware only */
     if ((system_hw & SYSTEM_PBC) == SYSTEM_MD)
@@ -388,13 +452,13 @@ void reloadrom(void)
     config.hot_swap |= 2;
   }
 
-  /* Auto-Load SRAM file */
-  if (config.s_auto & 1)
+  if ((config.s_auto & 1) || (system_hw == SYSTEM_MCD))
   {
+    /* Auto-Load Backup RAM */
     slot_autoload(0,config.s_device);
   }
             
-  /* Auto-Load State file */
+  /* Auto-Load State */
   if (config.s_auto & 2)
   {
     slot_autoload(config.s_default,config.s_device);
@@ -412,16 +476,15 @@ void shutdown(void)
   /* save current config */
   config_save();
 
-  /* save current game state */
   if (config.s_auto & 2)
   {
+    /* Auto-Save State file */
     slot_autosave(config.s_default,config.s_device);
   }
 
   /* shutdown emulation */
   system_shutdown();
   audio_shutdown();
-  free(cart.rom);
   gx_audio_Shutdown();
   gx_video_Shutdown();
 #ifdef HW_RVL
@@ -497,6 +560,10 @@ int main (int argc, char *argv[])
     dir = opendir(pathname);
     if (dir) closedir(dir);
     else mkdir(pathname,S_IRWXU);
+    sprintf (pathname, "%s/saves/cd",DEFAULT_PATH);
+    dir = opendir(pathname);
+    if (dir) closedir(dir);
+    else mkdir(pathname,S_IRWXU);
 
     /* default Snapshot files directories */ 
     sprintf (pathname, "%s/snaps",DEFAULT_PATH);
@@ -519,6 +586,10 @@ int main (int argc, char *argv[])
     dir = opendir(pathname);
     if (dir) closedir(dir);
     else mkdir(pathname,S_IRWXU);
+    sprintf (pathname, "%s/snaps/cd",DEFAULT_PATH);
+    dir = opendir(pathname);
+    if (dir) closedir(dir);
+    else mkdir(pathname,S_IRWXU);
 
     /* default Cheat files directories */ 
     sprintf (pathname, "%s/cheats",DEFAULT_PATH);
@@ -538,6 +609,22 @@ int main (int argc, char *argv[])
     if (dir) closedir(dir);
     else mkdir(pathname,S_IRWXU);
     sprintf (pathname, "%s/cheats/sg",DEFAULT_PATH);
+    dir = opendir(pathname);
+    if (dir) closedir(dir);
+    else mkdir(pathname,S_IRWXU);
+    sprintf (pathname, "%s/cheats/cd",DEFAULT_PATH);
+    dir = opendir(pathname);
+    if (dir) closedir(dir);
+    else mkdir(pathname,S_IRWXU);
+
+    /* default BIOS ROM files directories */ 
+    sprintf (pathname, "%s/bios",DEFAULT_PATH);
+    dir = opendir(pathname);
+    if (dir) closedir(dir);
+    else mkdir(pathname,S_IRWXU);
+
+    /* default LOCK-ON ROM files directories */ 
+    sprintf (pathname, "%s/lock-on",DEFAULT_PATH);
     dir = opendir(pathname);
     if (dir) closedir(dir);
     else mkdir(pathname,S_IRWXU);

@@ -42,7 +42,8 @@ typedef struct
   UINT8  nmi_state;      /* nmi line state */
   UINT8  nmi_pending;    /* nmi pending */
   UINT8  irq_state;      /* irq line state */
-  UINT8  after_ei;      /* are we in the EI shadow? */
+  UINT8  after_ei;       /* are we in the EI shadow? */
+  UINT32 cycles;         /* master clock cycles global counter */
   const struct z80_irq_daisy_chain *daisy;
   int    (*irq_callback)(int irqline);
 }  Z80_Regs;
@@ -60,7 +61,6 @@ extern unsigned char (*z80_readport)(unsigned int port);
 
 extern void z80_init(const void *config, int (*irqcallback)(int));
 extern void z80_reset (void);
-extern void z80_exit (void);
 extern void z80_run(unsigned int cycles);
 extern void z80_burn(unsigned int cycles);
 extern void z80_get_context (void *dst);

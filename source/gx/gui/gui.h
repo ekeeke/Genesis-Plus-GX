@@ -40,10 +40,6 @@
 #ifndef _GUI_H
 #define _GUI_H
 
-#ifdef HW_RVL
-#include <wiiuse/wpad.h>
-#endif
-
 #define BG_COLOR_MAX 15
 
 /*****************************************************************************/
@@ -245,6 +241,5 @@ extern void GUI_WaitPrompt(char *title, char *msg);
 extern void GUI_FadeOut();
 extern GXColor *GUI_GetBgColor(void);
 extern void GUI_SetBgColor(u8 color);
-extern void GUI_Initialize(void);
 
 #endif

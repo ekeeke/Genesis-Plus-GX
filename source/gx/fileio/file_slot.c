@@ -3,7 +3,7 @@
  *
  *  FAT and Memory Card SRAM/State slots managment
  *
- *  Copyright Eke-Eke (2008-2011), based on original code from Softdev (2006)
+ *  Copyright Eke-Eke (2008-2012), based on original code from Softdev (2006)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -49,6 +49,16 @@
  */
 static u8 SysArea[CARD_WORKAREA] ATTRIBUTE_ALIGN (32);
 
+/* Mega CD backup RAM stuff */
+static u32 brm_crc[2];
+static char brm_filename[3][32] = {CD_BRAM_JP, CD_BRAM_EU, CD_BRAM_US};
+static u8 brm_format[0x40] =
+{
+  0x5f,0x5f,0x5f,0x5f,0x5f,0x5f,0x5f,0x5f,0x5f,0x5f,0x5f,0x00,0x00,0x00,0x00,0x40,
+  0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+  0x53,0x45,0x47,0x41,0x5f,0x43,0x44,0x5f,0x52,0x4f,0x4d,0x00,0x01,0x00,0x00,0x00,
+  0x52,0x41,0x4d,0x5f,0x43,0x41,0x52,0x54,0x52,0x49,0x44,0x47,0x45,0x5f,0x5f,0x5f
+};
 
 /****************************************************************************
  * CardMount
@@ -83,35 +93,130 @@ static int CardMount(int slot)
  *
  *
  ****************************************************************************/
-
 void slot_autoload(int slot, int device)
 {
-  if (!strlen(rom_filename))
+  /* Mega CD backup RAM specific */
+  if (!slot && (system_hw == SYSTEM_MCD))
+  {
+    /* automatically load internal backup RAM */
+    FILE *fp = fopen(brm_filename[((region_code ^ 0x40) >> 6) - 1], "rb");
+    if (fp != NULL)
+    {
+      fread(scd.bram, 0x2000, 1, fp);
+      fclose(fp);
+
+      /* update CRC */
+      brm_crc[0] = crc32(0, scd.bram, 0x2000);
+    }
+
+    /* check if internal backup RAM is correctly formatted */
+    if (memcmp(scd.bram + 0x2000 - 0x20, brm_format + 0x20, 0x20))
+    {
+      /* clear internal backup RAM */
+      memset(scd.bram, 0x00, 0x200);
+
+      /* internal Backup RAM size fields */
+      brm_format[0x10] = brm_format[0x12] = brm_format[0x14] = brm_format[0x16] = 0x00;
+      brm_format[0x11] = brm_format[0x13] = brm_format[0x15] = brm_format[0x17] = (sizeof(scd.bram) / 64) - 3;
+
+      /* format internal backup RAM */
+      memcpy(scd.bram + 0x2000 - 0x40, brm_format, 0x40);
+    }
+
+    /* automatically load cartridge backup RAM (if enabled) */
+    if (scd.cartridge.id)
+    {
+      fp = fopen(CART_BRAM, "rb");
+      if (fp != NULL)
+      {
+        fread(scd.cartridge.area, scd.cartridge.mask + 1, 1, fp);
+        fclose(fp);
+
+        /* update CRC */
+        brm_crc[1] = crc32(0, scd.cartridge.area, scd.cartridge.mask + 1);
+      }
+
+      /* check if cartridge backup RAM is correctly formatted */
+      if (memcmp(scd.cartridge.area + scd.cartridge.mask + 1 - 0x20, brm_format + 0x20, 0x20))
+      {
+        /* clear cartridge backup RAM */
+        memset(scd.cartridge.area, 0x00, scd.cartridge.mask + 1);
+
+        /* Cartridge Backup RAM size fields */
+        brm_format[0x10] = brm_format[0x12] = brm_format[0x14] = brm_format[0x16] = (((scd.cartridge.mask + 1) / 64) - 3) >> 8;
+        brm_format[0x11] = brm_format[0x13] = brm_format[0x15] = brm_format[0x17] = (((scd.cartridge.mask + 1) / 64) - 3) & 0xff;
+
+        /* format cartridge backup RAM */
+        memcpy(scd.cartridge.area + scd.cartridge.mask + 1 - 0x40, brm_format, 0x40);
+      }
+    }
+
     return;
+  }
   
-  SILENT = 1;
-  slot_load(slot, device);
-  SILENT = 0;
+  if (strlen(rom_filename))
+  {  
+    SILENT = 1;
+    slot_load(slot, device);
+    SILENT = 0;
+  }
 }
 
 void slot_autosave(int slot, int device)
 {
-  if (!strlen(rom_filename))
-    return;
+  /* Mega CD backup RAM specific */
+  if (!slot && (system_hw == SYSTEM_MCD))
+  {
+    /* verify that internal backup RAM has been modified */
+    if (crc32(0, scd.bram, 0x2000) != brm_crc[0])
+    {
+      /* check if it is correctly formatted before saving */
+      if (!memcmp(scd.bram + 0x2000 - 0x20, brm_format + 0x20, 0x20))
+      {
+        FILE *fp = fopen(brm_filename[((region_code ^ 0x40) >> 6) - 1], "wb");
+        if (fp != NULL)
+        {
+          fwrite(scd.bram, 0x2000, 1, fp);
+          fclose(fp);
 
-  /* only save if SRAM changed */
-  if (!slot && (crc32(0, &sram.sram[0], 0x10000) == sram.crc))
-    return;
+          /* update CRC */
+          brm_crc[0] = crc32(0, scd.bram, 0x2000);
+        }
+      }
+    }
 
-  SILENT = 1;
-  slot_save(slot, device);
-  SILENT = 0;
+    /* verify that cartridge backup RAM has been modified */
+    if (scd.cartridge.id && (crc32(0, scd.cartridge.area, scd.cartridge.mask + 1) != brm_crc[1]))
+    {
+      /* check if it is correctly formatted before saving */
+      if (!memcmp(scd.cartridge.area + scd.cartridge.mask + 1 - 0x20, brm_format + 0x20, 0x20))
+      {
+        FILE *fp = fopen(CART_BRAM, "wb");
+        if (fp != NULL)
+        {
+          fwrite(scd.cartridge.area, scd.cartridge.mask + 1, 1, fp);
+          fclose(fp);
+
+          /* update CRC */
+          brm_crc[1] = crc32(0, scd.cartridge.area, scd.cartridge.mask + 1);
+        }
+      }
+    }
+
+    return;
+  }
+
+  if (strlen(rom_filename))
+  {
+    SILENT = 1;
+    slot_save(slot, device);
+    SILENT = 0;
+  }
 }
 
 void slot_autodetect(int slot, int device, t_slot *ptr)
 {
-  if (!ptr)
-    return;
+  if (!ptr) return;
   
   char filename[MAXPATHLEN];
   memset(ptr,0,sizeof(t_slot));
@@ -120,9 +225,13 @@ void slot_autodetect(int slot, int device, t_slot *ptr)
   {
     /* FAT support */
     if (slot > 0)
+    {
       sprintf (filename,"%s/saves/%s.gp%d", DEFAULT_PATH, rom_filename, slot - 1);
+    }
     else
+    {
       sprintf (filename,"%s/saves/%s.srm", DEFAULT_PATH, rom_filename);
+    }
 
     /* Open file */
     FILE *fp = fopen(filename, "rb");
@@ -236,16 +345,16 @@ int slot_load(int slot, int device)
 {
   char filename[MAXPATHLEN];
   unsigned long filesize, done = 0;
-  int offset = 0;
-  u8 *savebuffer;
+  u8 *buffer;
 
+  /* File Type */
   if (slot > 0)
   {
     GUI_MsgBoxOpen("Information","Loading State ...",1);
   }
   else
   {
-    if (!sram.on)
+    if (!sram.on || (system_hw == SYSTEM_MCD))
     {
       GUI_WaitPrompt("Error","SRAM is disabled !");
       return 0;
@@ -254,13 +363,18 @@ int slot_load(int slot, int device)
     GUI_MsgBoxOpen("Information","Loading SRAM ...",1);
   }
 
+  /* Device Type */
   if (!device)
   {
-    /* FAT support */
+    /* FAT file */
     if (slot > 0)
+    {
       sprintf (filename,"%s/saves/%s.gp%d", DEFAULT_PATH, rom_filename, slot - 1);
+    }
     else
+    {
       sprintf (filename,"%s/saves/%s.srm", DEFAULT_PATH, rom_filename);
+    }
 
     /* Open file */
     FILE *fp = fopen(filename, "rb");
@@ -270,14 +384,14 @@ int slot_load(int slot, int device)
       return 0;
     }
 
-    /* Read size */
+    /* Get file size */
     fseek(fp, 0, SEEK_END);
     filesize = ftell(fp);
     fseek(fp, 0, SEEK_SET);
 
     /* allocate buffer */
-    savebuffer = (u8 *)memalign(32,filesize);
-    if (!savebuffer)
+    buffer = (u8 *)memalign(32,filesize);
+    if (!buffer)
     {
       GUI_WaitPrompt("Error","Unable to allocate memory !");
       fclose(fp);
@@ -287,23 +401,29 @@ int slot_load(int slot, int device)
     /* Read into buffer (2k blocks) */
     while (filesize > CHUNKSIZE)
     {
-      fread(savebuffer + done, CHUNKSIZE, 1, fp);
+      fread(buffer + done, CHUNKSIZE, 1, fp);
       done += CHUNKSIZE;
       filesize -= CHUNKSIZE;
     }
 
     /* Read remaining bytes */
-    fread(savebuffer + done, filesize, 1, fp);
+    fread(buffer + done, filesize, 1, fp);
     done += filesize;
+
+    /* Close file */
     fclose(fp);
-  }  
+  }
   else
   {
-    /* Memory Card support */
+    /* Memory Card file */
     if (slot > 0)
+    {
       sprintf(filename, "MD-%04X.gp%d", rominfo.realchecksum, slot - 1);
+    }
     else
+    {
       sprintf(filename, "MD-%04X.srm", rominfo.realchecksum);
+    }
 
     /* Initialise the CARD system */
     char action[64];
@@ -342,7 +462,7 @@ int slot_load(int slot, int device)
       return 0;
     }
 
-    /* Retrieve file size */
+    /* Get file size */
     filesize = CardFile.len;
     if (filesize % SectorSize)
     {
@@ -350,8 +470,8 @@ int slot_load(int slot, int device)
     }
 
     /* Allocate buffer */
-    savebuffer = (u8 *)memalign(32,filesize);
-    if (!savebuffer)
+    u8 *in = (u8 *)memalign(32, filesize);
+    if (!in)
     {
       GUI_WaitPrompt("Error","Unable to allocate memory !");
       CARD_Close(&CardFile);
@@ -362,143 +482,164 @@ int slot_load(int slot, int device)
     /* Read file sectors */
     while (filesize > 0)
     {
-      CARD_Read(&CardFile, &savebuffer[done], SectorSize, done);
+      CARD_Read(&CardFile, &in[done], SectorSize, done);
       done += SectorSize;
       filesize -= SectorSize;
     }
 
+    /* Close file */
     CARD_Close(&CardFile);
     CARD_Unmount(device);
-    offset = 2112;
+
+    /* Uncompressed file size */
+    memcpy(&filesize, in + 2112, 4);
+    buffer = (u8 *)memalign(32, filesize);
+    if (!buffer)
+    {
+      free(in);
+      GUI_WaitPrompt("Error","Unable to allocate memory !");
+      return 0;
+    }
+
+    /* Uncompress file */
+    uncompress ((Bytef *)buffer, &filesize, (Bytef *)(in + 2112 + 4), done - 2112 - 4);
+    free(in);
   }
 
   if (slot > 0)
   {
-    /* Uncompress state buffer */
-    u8 *state = (u8 *)memalign(32, STATE_SIZE);
-    if (!state)
-    {
-      free(savebuffer);
-      GUI_WaitPrompt("Error","Unable to allocate memory !");
-      return 0;
-    }
-    done = STATE_SIZE;
-    memcpy(&filesize, savebuffer + offset, 4);
-    uncompress ((Bytef *)state, &done, (Bytef *)(savebuffer + offset + 4), filesize);
-
     /* Load state */
-    if (state_load(state) <= 0)
+    if (state_load(buffer) <= 0)
     {
-      free(state);
-      free(savebuffer);
+      free(buffer);
       GUI_WaitPrompt("Error","Invalid state file !");
       return 0;
     }
-
-    free(state);
   }
   else
   {
-    /* Load SRAM & update CRC */
-    memcpy(sram.sram, &savebuffer[offset], 0x10000);
+    /* load SRAM */
+    memcpy(sram.sram, buffer, 0x10000);
+
+    /* update CRC */
     sram.crc = crc32(0, sram.sram, 0x10000);
   }
 
-  free(savebuffer);
+  free(buffer);
   GUI_MsgBoxClose();
   return 1;
 }
-
 
 int slot_save(int slot, int device)
 {
   char filename[MAXPATHLEN];
   unsigned long filesize, done = 0;
-  int offset = device ? 2112 : 0;
-  u8 *savebuffer;
+  u8 *buffer;
 
   if (slot > 0)
   {
-    /* allocate buffers */
-    savebuffer = (u8 *)memalign(32,STATE_SIZE);
-    u8 *state = (u8 *)memalign(32,STATE_SIZE);
-    if (!savebuffer || !state)
+    GUI_MsgBoxOpen("Information","Saving State ...",1);
+
+    /* allocate buffer */
+    buffer = (u8 *)memalign(32,STATE_SIZE);
+    if (!buffer)
     {
       GUI_WaitPrompt("Error","Unable to allocate memory !");
       return 0;
     }
 
-    /* save state */
-    GUI_MsgBoxOpen("Information","Saving State ...",1);
-    done = state_save(state);
-
-    /* compress state file */
-    filesize = STATE_SIZE;
-    compress2 ((Bytef *)(savebuffer + offset + 4), &filesize, (Bytef *)state, done, 9);
-    memcpy(savebuffer + offset, &filesize, 4);
-    filesize += 4;
-    done = 0;
-    free(state);
+    filesize = state_save(buffer);
   }
   else
   {
-    if (!sram.on)
+    /* only save if SRAM is enabled */
+    if (!sram.on || (system_hw == SYSTEM_MCD))
     {
-       GUI_WaitPrompt("Error","SRAM is disabled !");
+       GUI_WaitPrompt("Error","SRAM disabled !");
        return 0;
     }
 
+    /* only save if SRAM has been modified */
+    if (crc32(0, &sram.sram[0], 0x10000) == sram.crc)
+    {
+       GUI_WaitPrompt("Warning","SRAM not modified !");
+       return 0;
+    }
+
+    GUI_MsgBoxOpen("Information","Saving SRAM ...",1);
+
     /* allocate buffer */
-    savebuffer = (u8 *)memalign(32,0x10000+offset);
-    if (!savebuffer)
+    buffer = (u8 *)memalign(32, 0x10000);
+    if (!buffer)
     {
       GUI_WaitPrompt("Error","Unable to allocate memory !");
       return 0;
     }
 
-    GUI_MsgBoxOpen("Information","Saving SRAM ...",1);
-    memcpy(&savebuffer[offset], sram.sram, 0x10000);
-    sram.crc = crc32(0, sram.sram, 0x10000);
+    /* copy SRAM data */
+    memcpy(buffer, sram.sram, 0x10000);
     filesize = 0x10000;
+
+    /* update CRC */
+    sram.crc = crc32(0, sram.sram, 0x10000);
   }
 
+  /* Device Type */
   if (!device)
   {
-    /* FAT support */
+    /* FAT filename */
     if (slot > 0)
+    {
       sprintf(filename, "%s/saves/%s.gp%d", DEFAULT_PATH, rom_filename, slot - 1);
+    }
     else
+    {
       sprintf(filename, "%s/saves/%s.srm", DEFAULT_PATH, rom_filename);
+    }
 
     /* Open file */
     FILE *fp = fopen(filename, "wb");
     if (!fp)
     {
       GUI_WaitPrompt("Error","Unable to open file !");
-      free(savebuffer);
+      free(buffer);
       return 0;
     }
 
     /* Write from buffer (2k blocks) */
     while (filesize > CHUNKSIZE)
     {
-      fwrite(savebuffer + done, CHUNKSIZE, 1, fp);
+      fwrite(buffer + done, CHUNKSIZE, 1, fp);
       done += CHUNKSIZE;
       filesize -= CHUNKSIZE;
     }
 
     /* Write remaining bytes */
-    fwrite(savebuffer + done, filesize, 1, fp);
+    fwrite(buffer + done, filesize, 1, fp);
     done += filesize;
+
+    /* Close file */
     fclose(fp);
+    free(buffer);
+
+    /* Save state screenshot */
+    if (slot > 0)
+    {
+      sprintf(filename,"%s/saves/%s__%d.png", DEFAULT_PATH, rom_filename, slot - 1);
+      gxSaveScreenshot(filename);
+    }
   }
   else
   {
-    /* Memory Card support */
+    /* Memory Card filename */
     if (slot > 0)
+    {
       sprintf(filename, "MD-%04X.gp%d", rominfo.realchecksum, slot - 1);
+    }
     else
+    {
       sprintf(filename, "MD-%04X.srm", rominfo.realchecksum);
+    }
 
     /* Initialise the CARD system */
     char action[64];
@@ -512,11 +653,11 @@ int slot_save(int slot, int device)
     if (!CardMount(device))
     {
       GUI_WaitPrompt("Error","Unable to mount memory card");
-      free(savebuffer);
+      free(buffer);
       return 0;
     }
 
-    /* Retrieve the sector size */
+    /* Retrieve sector size */
     u32 SectorSize = 0;
     int CardError = CARD_GetSectorSize(device, &SectorSize);
     if (!SectorSize)
@@ -524,18 +665,35 @@ int slot_save(int slot, int device)
       sprintf(action, "Invalid sector size (%d)", CardError);
       GUI_WaitPrompt("Error",action);
       CARD_Unmount(device);
-      free(savebuffer);
+      free(buffer);
       return 0;
     }
 
-    /* Build the output buffer */
+    /* Build output buffer */
+    u8 *out = (u8 *)memalign(32, filesize + 2112 + 4);
+    if (!out)
+    {
+      GUI_WaitPrompt("Error","Unable to allocate memory !");
+      CARD_Unmount(device);
+      free(buffer);
+      return 0;
+    }
+
+    /* Memory Card file header */
     char comment[2][32] = { {"Genesis Plus GX"}, {"SRAM Save"} };
     strcpy (comment[1], filename);
-    memcpy (&savebuffer[0], &icon, 2048);
-    memcpy (&savebuffer[2048], &comment[0], 64);
+    memcpy (&out[0], &icon, 2048);
+    memcpy (&out[2048], &comment[0], 64);
+
+    /* uncompressed size */
+    done = filesize;
+    memcpy(&out[2112], &done, 4);
+  
+    /* compress file */
+    compress2 ((Bytef *)&out[2112 + 4], &filesize, (Bytef *)buffer, done, 9);
 
     /* Adjust file size */
-    filesize += 2112;
+    filesize = filesize + 4 + 2112;
     if (filesize % SectorSize)
     {
       filesize = ((filesize / SectorSize) + 1) * SectorSize;
@@ -558,7 +716,8 @@ int slot_save(int slot, int device)
           sprintf(action, "Unable to increase file size (%d)", CardError);
           GUI_WaitPrompt("Error",action);
           CARD_Unmount(device);
-          free(savebuffer);
+          free(out);
+          free(buffer);
           return 0;
         }
 
@@ -579,7 +738,8 @@ int slot_save(int slot, int device)
       sprintf(action, "Unable to create file (%d)", CardError);
       GUI_WaitPrompt("Error",action);
       CARD_Unmount(device);
-      free(savebuffer);
+      free(out);
+      free(buffer);
       return 0;
     }
 
@@ -598,7 +758,7 @@ int slot_save(int slot, int device)
     /* Write file sectors */
     while (filesize > 0)
     {
-      CARD_Write(&CardFile, &savebuffer[done], SectorSize, done);
+      CARD_Write(&CardFile, &out[done], SectorSize, done);
       filesize -= SectorSize;
       done += SectorSize;
     }
@@ -606,17 +766,10 @@ int slot_save(int slot, int device)
     /* Close file */
     CARD_Close(&CardFile);
     CARD_Unmount(device);
+    free(out);
+    free(buffer);
   }
 
   GUI_MsgBoxClose();
-  free(savebuffer);
-
-  /* Save screenshot */
-  if (slot && !device)
-  {
-    sprintf(filename,"%s/saves/%s__%d.png", DEFAULT_PATH, rom_filename, slot - 1);
-    gxSaveScreenshot(filename);
-  }
-
   return 1;
 }

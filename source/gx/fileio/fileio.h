@@ -4,7 +4,7 @@
  *  Load a normal file, or ZIP/GZ archive into ROM buffer.
  *  Returns loaded ROM size (zero if an error occured).
  *
- *  Copyright Eke-Eke (2007-2011), based on original work from Softdev (2006)
+ *  Copyright Eke-Eke (2007-2012), based on original work from Softdev (2006)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -42,6 +42,6 @@
 #define _FILEIO_H_
 
 /* Function prototypes */
-int load_archive(char *filename);
+int load_archive(char *filename, unsigned char *buffer, int maxsize);
 
 #endif /* _FILEIO_H_ */

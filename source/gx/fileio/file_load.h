@@ -3,7 +3,7 @@
  * 
  *  ROM File loading support
  *
- *  Copyright Eke-Eke (2008-2011)
+ *  Copyright Eke-Eke (2008-2012)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -40,17 +40,29 @@
 #ifndef _FILE_FAT_H
 #define _FILE_FAT_H
 
-
-#define TYPE_SD (0)
-#ifdef HW_RVL
-#define TYPE_USB (1)
-#define TYPE_DVD (2)
-#else
-#define TYPE_DVD (1)
-#endif
-#define TYPE_RECENT (TYPE_DVD + 1)
-
 #define CHUNKSIZE (2048)
+
+/* suppported load devices */
+typedef enum
+{
+  TYPE_SD = 0,
+#ifdef HW_RVL
+  TYPE_USB,
+#endif
+  TYPE_DVD,
+  TYPE_RECENT
+}DEVTYPES;
+
+/* supported file types */
+typedef enum
+{
+  FILETYPE_MD = 0,
+  FILETYPE_CD,
+  FILETYPE_MS,
+  FILETYPE_GG,
+  FILETYPE_SG,
+  FILETYPE_MAX
+}FILETYPES;
 
 extern int OpenDirectory(int device, int type);
 extern int UpdateDirectory(bool go_up, char *filename);

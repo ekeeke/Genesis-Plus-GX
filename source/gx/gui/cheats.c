@@ -3,7 +3,7 @@
  * 
  *   Cheats menu
  *
- *  Copyright Eke-Eke (2010-2011)
+ *  Copyright Eke-Eke (2010-2012)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -41,10 +41,6 @@
 #include "cheats.h"
 #include "font.h"
 #include "gui.h"
-
-#ifdef HW_RVL
-#include <wiiuse/wpad.h>
-#endif
 
 #define BG_COLOR_1 {0x49,0x49,0x49,0xff}
 #define BG_COLOR_2 {0x66,0x66,0x66,0xff}

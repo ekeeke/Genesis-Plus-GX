@@ -3,7 +3,7 @@
  *
  *  Genesis Plus GX menu
  *
- *  Copyright Eke-Eke (2009-2011)
+ *  Copyright Eke-Eke (2009-2012)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -38,20 +38,20 @@
  ****************************************************************************************/
 
 #include "shared.h"
-#include "menu.h"
 #include "font.h"
 #include "gui.h"
 #include "filesel.h"
 #include "cheats.h"
 #include "file_load.h"
 #include "file_slot.h"
-
-#include <ogc/lwp_threads.h>
-#include <ogc/lwp_watchdog.h>
+#include "md_eeprom.h"
 
 #ifdef HW_RVL
 #include <ogc/usbmouse.h>
 #endif
+
+#include <ogc/lwp_threads.h>
+#include <ogc/lwp_watchdog.h>
 
 /* Credits */
 extern const u8 Bg_credits_png[];
@@ -84,6 +84,7 @@ extern const u8 Load_md_png[];
 extern const u8 Load_ms_png[];
 extern const u8 Load_gg_png[];
 extern const u8 Load_sg_png[];
+extern const u8 Load_cd_png[];
 
 /* Save Manager menu */
 extern const u8 Button_load_png[];
@@ -280,7 +281,7 @@ static gui_item items_main[10] =
   {NULL,Main_options_png ,"","",290,166,60,88},
   {NULL,Main_quit_png    ,"","",460,170,52,84},
   {NULL,Main_file_png    ,"","",114,216,80,92},
-  {NULL,Main_reset_png   ,"","",282,224,76,84},
+  {NULL,Main_reset_png   ,"","",294,227,52,80},
   {NULL,Main_cheats_png  ,"","",454,218,64,92},
   {NULL,NULL             ,"","", 10,334,84,32},
 #ifdef HW_RVL
@@ -311,13 +312,14 @@ static gui_item items_ctrls[13] =
 };
 
 /* Load menu */
-static gui_item items_load[5] =
+static gui_item items_load[6] =
 {
-  {NULL,Load_recent_png,"","Load recently played games",    200,144,72, 92},
-  {NULL,Load_md_png,    "","Load Mega Drive/Genesis games", 362,141,84, 92},
+  {NULL,Load_recent_png,"","Load recently played games",    119,144,72, 92},
+  {NULL,Load_md_png,    "","Load Mega Drive/Genesis games", 278,141,84, 92},
+  {NULL,Load_cd_png,    "","Load Sega/Mega CD games",       454,141,64, 92},
   {NULL,Load_ms_png,    "","Load Master System games",      114,284,84, 96},
   {NULL,Load_gg_png,    "","Load Game Gear games",          278,283,84,100},
-  {NULL,Load_sg_png,    "","Load SG-1000 games",            455,281,64, 96}
+  {NULL,Load_sg_png,    "","Load SG-1000 games",            454,281,64, 96}
 };
 
 /* Option menu */
@@ -388,15 +390,15 @@ static gui_item items_video[9] =
 /* Menu options */
 static gui_item items_prefs[9] =
 {
-  {NULL,NULL,"Auto ROM Load: OFF","Enable/Disable automatic ROM loading on startup",    56,132,276,48},
-  {NULL,NULL,"Auto Cheats: OFF",  "Enable/Disable automatic cheats activation",         56,132,276,48},
-  {NULL,NULL,"Auto Saves: OFF",   "Enable/Disable automatic saves",                     56,132,276,48},
-  {NULL,NULL,"ROM Device: SD",    "Configure default device for ROM files",             56,132,276,48},
-  {NULL,NULL,"Saves Device: FAT", "Configure default device for Save files",            56,132,276,48},
-  {NULL,NULL,"SFX Volume: 100",   "Adjust sound effects volume",                        56,132,276,48},
-  {NULL,NULL,"BGM Volume: 100",   "Adjust background music volume",                     56,132,276,48},
-  {NULL,NULL,"BG Overlay: ON",    "Enable/disable background overlay",                  56,132,276,48},
-  {NULL,NULL,"Screen Width: 658", "Adjust menu screen width in pixels",                 56,132,276,48},
+  {NULL,NULL,"Auto ROM Load: OFF",  "Enable/Disable automatic ROM loading on startup", 56,132,276,48},
+  {NULL,NULL,"Auto Cheats: OFF",    "Enable/Disable automatic cheats activation",      56,132,276,48},
+  {NULL,NULL,"Auto Saves: OFF",     "Enable/Disable automatic saves",                  56,132,276,48},
+  {NULL,NULL,"ROM Load Device: SD", "Configure default device for ROM files",          56,132,276,48},
+  {NULL,NULL,"Saves Device: FAT",   "Configure default device for Save files",         56,132,276,48},
+  {NULL,NULL,"SFX Volume: 100",     "Adjust sound effects volume",                     56,132,276,48},
+  {NULL,NULL,"BGM Volume: 100",     "Adjust background music volume",                  56,132,276,48},
+  {NULL,NULL,"BG Overlay: ON",      "Enable/disable background overlay",               56,132,276,48},
+  {NULL,NULL,"Screen Width: 658",   "Adjust menu screen width in pixels",              56,132,276,48},
 };
 
 /* Save Manager */
@@ -464,12 +466,13 @@ static gui_butn buttons_ctrls[13] =
 };
 
 /* Load Game menu */
-static gui_butn buttons_load[5] =
+static gui_butn buttons_load[6] =
 {
-  {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{0,2,0,1},162,120,148,132},
-  {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{0,2,1,0},330,120,148,132},
-  {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{2,0,0,1}, 80,264,148,132},
-  {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{2,0,1,1},246,264,148,132},
+  {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{0,3,0,1}, 80,120,148,132},
+  {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{0,3,1,1},246,120,148,132},
+  {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{0,3,1,0},412,120,148,132},
+  {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{3,0,0,1}, 80,264,148,132},
+  {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{3,0,1,1},246,264,148,132},
   {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{3,0,1,0},412,264,148,132}
 };
 
@@ -534,7 +537,7 @@ static gui_menu menu_load =
 {
   "Load Game",
   0,0,
-  5,5,5,0,
+  6,6,5,0,
   items_load,
   buttons_load,
   bg_misc,
@@ -658,12 +661,12 @@ static void prefmenu ()
   else if (config.s_auto == 1) sprintf (items[2].text, "Auto Saves: SRAM ONLY");
   else sprintf (items[2].text, "Auto Saves: NONE");
 #ifdef HW_RVL
-  if (config.l_device == 1) sprintf (items[3].text, "Default ROM Device: USB");
-  else if (config.l_device == 2) sprintf (items[3].text, "Default ROM Device: DVD");
+  if (config.l_device == 1) sprintf (items[3].text, "ROM Load Device: USB");
+  else if (config.l_device == 2) sprintf (items[3].text, "ROM Load Device: DVD");
 #else
-  if (config.l_device == 1) sprintf (items[3].text, "Default ROM Device: DVD");
+  if (config.l_device == 1) sprintf (items[3].text, "ROM Load Device: DVD");
 #endif
-  else sprintf (items[3].text, "Default ROM Device: SD");
+  else sprintf (items[3].text, "ROM Load Device: SD");
   if (config.s_device == 1) sprintf (items[4].text, "Saves Device: MCARD A");
   else if (config.s_device == 2) sprintf (items[4].text, "Saves Device: MCARD B");
   else sprintf (items[4].text, "Saves Device: FAT");
@@ -702,13 +705,13 @@ static void prefmenu ()
       case 3:   /*** Default ROM device ***/
 #ifdef HW_RVL
         config.l_device = (config.l_device + 1) % 3;
-        if (config.l_device == 1) sprintf (items[3].text, "Default ROM Device: USB");
-        else if (config.l_device == 2) sprintf (items[3].text, "Default ROM Device: DVD");
+        if (config.l_device == 1) sprintf (items[3].text, "ROM Load Device: USB");
+        else if (config.l_device == 2) sprintf (items[3].text, "ROM Load Device: DVD");
 #else
         config.l_device ^= 1;
-        if (config.l_device == 1) sprintf (items[3].text, "Default ROM Device: DVD");
+        if (config.l_device == 1) sprintf (items[3].text, "ROM Load Device: DVD");
 #endif
-        else sprintf (items[3].text, "Default ROM Device: SD");
+        else sprintf (items[3].text, "ROM Load Device: SD");
         break;
 
       case 4:   /*** Default saves device ***/
@@ -759,6 +762,27 @@ static void prefmenu ()
         quit = 1;
         break;
     }
+  }
+
+  /* stop DVD drive when not in use */
+  if (config.l_device != 2)
+  {
+#ifdef HW_RVL
+    DI_StopMotor();
+#else
+    vu32* const dvd = (u32*)0xCC006000;
+    dvd[0] = 0x2e;
+    dvd[1] = 0;
+    dvd[2] = 0xe3000000;
+    dvd[3] = 0;
+    dvd[4] = 0;
+    dvd[5] = 0;
+    dvd[6] = 0;
+    dvd[7] = 1;
+    while (dvd[7] & 1);
+    dvd[0] = 0x14;
+    dvd[1] = 0;
+#endif
   }
 
   GUI_DeleteMenu(m);
@@ -894,7 +918,7 @@ static void soundmenu ()
         else sprintf (items[0].text, "Master System FM: AUTO");
 
         /* Automatic detection */
-        if ((config.ym2413 & 2) && cart.romsize && ((system_hw & SYSTEM_PBC) != SYSTEM_MD))
+        if ((config.ym2413 & 2) && system_hw && ((system_hw & SYSTEM_PBC) != SYSTEM_MD))
         {
           /* detect if game is using YM2413 */
           sms_cart_init();
@@ -1041,7 +1065,7 @@ static void soundmenu ()
     }
   }
 
-  if (reinit && cart.romsize) 
+  if (reinit && system_hw) 
   {
     audio_init(snd.sample_rate, snd.frame_rate);
     sound_restore();
@@ -1234,12 +1258,8 @@ static void systemmenu ()
         else if (config.region_detect == 3)
           sprintf (items[1].text, "Console Region: JAPAN");
 
-        if (cart.romsize)
-        {
-          /* force system reinitialization */
-          reinit = 1;
-        }
-
+        /* force system reinitialization  + region BIOS */
+        reinit = 2;
         break;
       }
 
@@ -1253,12 +1273,8 @@ static void systemmenu ()
         else if (config.vdp_mode == 2)
           sprintf (items[2].text, "VDP Mode: PAL");
 
-        if (cart.romsize)
-        {
-          /* force system reinitialization */
-          reinit = 1;
-        }
-
+        /* force system reinitialization */
+        reinit = 1;
         break;
       }
 
@@ -1272,23 +1288,18 @@ static void systemmenu ()
         else if (config.master_clock == 2)
           sprintf (items[3].text, "System Clock: PAL");
 
-        if (cart.romsize)
-        {
-          /* force system reinitialization */
-          reinit = 1;
-        }
-
+        /* force system reinitialization */
+        reinit = 1;
         break;
       }
 
       case 4:  /*** BIOS support ***/
       {
-        uint8 temp = config.bios & 3;
-        config.bios &= ~3;
-        if (temp == 0) config.bios |= 3;
-        else if (temp == 3) config.bios |= 1;
+        if (config.bios == 0) config.bios = 3;
+        else if (config.bios == 3) config.bios = 1;
+        else config.bios = 0;
         sprintf (items[4].text, "System Boot: %s", (config.bios & 1) ? ((config.bios & 2) ? "BIOS&CART " : "BIOS ONLY") : "CART");
-        if (cart.romsize && ((system_hw == SYSTEM_MD) || (system_hw & SYSTEM_GG) || (system_hw & SYSTEM_SMS)))
+        if ((system_hw == SYSTEM_MD) || (system_hw & SYSTEM_GG) || (system_hw & SYSTEM_SMS))
         {
           /* force hard reset */
           system_init();
@@ -1313,7 +1324,7 @@ static void systemmenu ()
       case 6:  /*** 68k Address Error ***/
       {
         config.addr_error ^= 1;
-        if (cart.romsize && ((system_hw & SYSTEM_PBC) == SYSTEM_MD))
+        if (((system_hw & SYSTEM_PBC) == SYSTEM_MD) && (system_hw != SYSTEM_MCD))
         {
           /* reinitialize cartridge hardware (UMK3 hack support) */
           md_cart_init();
@@ -1340,7 +1351,7 @@ static void systemmenu ()
         else
           sprintf (items[7].text, "Lock-On: OFF");
 
-        if (cart.romsize && ((system_hw & SYSTEM_PBC) == SYSTEM_MD))
+        if ((system_hw == SYSTEM_MD) || (system_hw == SYSTEM_PICO))
         {
           /* force hard reset */
           system_init();
@@ -1397,52 +1408,65 @@ static void systemmenu ()
     }
   }
 
-  if (reinit)
+  if (reinit && system_hw)
   {
     /* reinitialize console region */
-    region_autodetect();
-
-    /* reinitialize I/O region register */
-    if (system_hw == SYSTEM_MD)
-    {
-      io_reg[0x00] = 0x20 | region_code | (config.bios & 1);
-    }
-    else
-    {
-      io_reg[0x00] = 0x80 | (region_code >> 1);
-    }
-
-    /* reinitialize VDP */
-    if (vdp_pal)
-    {
-      status |= 1;
-      lines_per_frame = 313;
-    }
-    else
-    {
-      status &= ~1;
-      lines_per_frame = 262;
-    }
-
-    /* reinitialize VC max value */
-    switch (bitmap.viewport.h)
-    {
-      case 192:
-        vc_max = vc_table[0][vdp_pal];
-        break;
-      case 224:
-        vc_max = vc_table[1][vdp_pal];
-        break;
-      case 240:
-        vc_max = vc_table[3][vdp_pal];
-        break;
-    }
+    get_region(0);
 
     /* framerate has changed, reinitialize audio timings */
     audio_init(snd.sample_rate, get_framerate());
 
-    /* reinitialize sound emulation */
-    sound_restore();
+    /* system with region BIOS should be reinitialized if region code has changed */
+    if ((reinit & 2) && ((system_hw == SYSTEM_MCD) || ((system_hw & SYSTEM_SMS) && (config.bios & 1))))
+    {
+       system_init();
+       system_reset();
+    }
+    else
+    {
+      /* reinitialize I/O region register */
+      if (system_hw == SYSTEM_MD)
+      {
+        io_reg[0x00] = 0x20 | region_code | (config.bios & 1);
+      }
+      else if (system_hw == SYSTEM_MCD)
+      {
+        io_reg[0x00] = region_code | (config.bios & 1);
+      }
+      else
+      {
+        io_reg[0x00] = 0x80 | (region_code >> 1);
+      }
+
+      /* reinitialize VDP */
+      if (vdp_pal)
+      {
+        status |= 1;
+        lines_per_frame = 313;
+      }
+      else
+      {
+        status &= ~1;
+        lines_per_frame = 262;
+      }
+
+      /* reinitialize VC max value */
+      switch (bitmap.viewport.h)
+      {
+        case 192:
+          vc_max = vc_table[0][vdp_pal];
+          break;
+        case 224:
+          vc_max = vc_table[1][vdp_pal];
+          break;
+        case 240:
+          vc_max = vc_table[3][vdp_pal];
+          break;
+      }
+
+      /* reinitialize sound emulation */
+      sound_restore();
+    }
   }
 
   GUI_DeleteMenu(m);
@@ -1609,7 +1633,7 @@ static void videomenu ()
         break;
 
       case 5: /*** VIDEO Gamma correction ***/
-        if (cart.romsize) 
+        if (system_hw) 
         {
           update_gamma();
           state[0] = m->arrows[0]->state;
@@ -1692,7 +1716,7 @@ static void videomenu ()
         break;
 
       case VI_OFFSET+3: /*** screen position ***/
-        if (cart.romsize) 
+        if (system_hw) 
         {
           state[0] = m->arrows[0]->state;
           state[1] = m->arrows[1]->state;
@@ -1720,7 +1744,7 @@ static void videomenu ()
         break;
 
       case VI_OFFSET+4: /*** screen scaling ***/
-        if (cart.romsize) 
+        if (system_hw) 
         {
           state[0] = m->arrows[0]->state;
           state[1] = m->arrows[1]->state;
@@ -1753,7 +1777,7 @@ static void videomenu ()
     }
   }
 
-  if (cart.romsize && reinit)
+  if (reinit && system_hw)
   {
     /* framerate has changed, reinitialize audio timings */
     audio_init(snd.sample_rate, get_framerate());
@@ -2047,7 +2071,7 @@ static void ctrlmenu(void)
         case 0:   /* update port 1 system */
         {
           /* fixed configurations */
-          if (cart.romsize)
+          if (system_hw)
           {
             if (cart.special & HW_TEREBI_OEKAKI)
             {
@@ -2140,7 +2164,7 @@ static void ctrlmenu(void)
         case 1:   /* update port 2 system */
         {
           /* fixed configurations */
-          if (cart.romsize)
+          if (system_hw)
           {
             if (cart.special & HW_J_CART)
             {
@@ -3397,10 +3421,10 @@ void mainmenu(void)
   char filename[MAXPATHLEN];
   int status, quit = 0;
 
-  /* Autosave SRAM */
-  if (config.s_auto & 1)
+  if ((config.s_auto & 1) || (system_hw == SYSTEM_MCD))
   {
-    slot_autosave(0,config.s_device);
+    /* Autosave Backup RAM */
+    slot_autosave(0, config.s_device);
   }
 
 #ifdef HW_RVL
@@ -3438,7 +3462,7 @@ void mainmenu(void)
       bg_saves[2].state &= ~IMAGE_VISIBLE;
     }
 
-    if (cart.romsize)
+    if (system_hw)
     {
       m->screenshot = 128;
       m->bg_images[0].state &= ~IMAGE_VISIBLE;
@@ -3553,7 +3577,7 @@ void mainmenu(void)
         break;
       }
 
-      /*** Virtual system  hard reset ***/
+      /*** Soft / Hard reset ***/
       case 4:
       {
         /* check current controller configuration */
@@ -3568,13 +3592,28 @@ void mainmenu(void)
         GUI_DeleteMenu(m);
         gxClearScreen((GXColor)BLACK);
         gxSetScreen();
-        system_init();
-        system_reset();
 
-        /* restore SRAM */
-        if (config.s_auto & 1)
+        if (system_hw & SYSTEM_MD)
         {
-          slot_autoload(0,config.s_device);
+          /* Soft Reset */
+          gen_reset(0);
+        }
+        else if (system_hw == SYSTEM_SMS)
+        {
+          /* assert RESET input (Master System model 1 only) */
+          io_reg[0x0D] &= ~IO_RESET_HI;
+        }
+        else
+        {
+          /* Hard Reset */
+          system_init();
+          system_reset();
+
+          /* restore SRAM */
+          if (config.s_auto & 1)
+          {
+            slot_autoload(0,config.s_device);
+          }
         }
 
         /* exit to game */
@@ -3611,7 +3650,7 @@ void mainmenu(void)
       case 7:
       case -1:
       {
-        if (cart.romsize)
+        if (system_hw)
         {
           /* check current controller configuration */
           if (!gx_input_FindDevices())

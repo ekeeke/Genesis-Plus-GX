@@ -2,7 +2,7 @@
  *  Genesis Plus
  *  SG-1000, Master System & Game Gear cartridge hardware support
  *
- *  Copyright (C) 2007-2011  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2007-2012  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -37,6 +37,7 @@
  ****************************************************************************************/
 
 #include "shared.h"
+#include "gg_eeprom.h"
 #include "terebi_oekaki.h"
 
 #define MAPPER_NONE        (0x00)
@@ -455,20 +456,6 @@ void sms_cart_init(void)
   /* initialize SRAM */
   sram_init();
 
-  /* restore previous input settings */
-  if (old_system[0] != -1)
-  {
-    input.system[0] = old_system[0];
-  }
-  if (old_system[1] != -1)
-  {
-    input.system[1] = old_system[1];
-  }
-
-  /* default gun offset */
-  input.x_offset = 20; 
-  input.y_offset = 0; 
-
   /* save current settings */
   if (old_system[0] == -1)
   {
@@ -483,6 +470,10 @@ void sms_cart_init(void)
   input.system[0] = device;
   input.system[1] = SYSTEM_MS_GAMEPAD;
 
+  /* default gun offset */
+  input.x_offset = 20; 
+  input.y_offset = 0; 
+
   /* SpaceGun & Gangster Town use different gun offset */
   if ((crc == 0x5359762D) || (crc == 0x5FC74D2A))
   {
@@ -490,100 +481,37 @@ void sms_cart_init(void)
   }
 
   /* BIOS support */
-  if (config.bios & 0x01)
+  if (config.bios & 1)
   {
-    /* verify that BIOS is not already loaded */
-    if (!(config.bios & (system_hw & 0xF0)))
+    /* load BIOS file */
+    int bios_size = load_bios();
+
+    if (bios_size > 0xC000)
     {
-      FILE *fp = NULL;
-      
-      /* reset BIOS size */
-      int bios_size = 0;
-
-      /* mark both BIOS as unloaded */
-      config.bios &= ~(SYSTEM_SMS | SYSTEM_GG);
-
-      /* open BIOS file */
-      switch (system_hw)
-      {
-        case SYSTEM_GG:
-        case SYSTEM_GGMS:
-          fp = fopen(GG_BIOS, "rb");
-          break;
-
-        case SYSTEM_SMS:
-        case SYSTEM_SMS2:
-          fp = fopen(MS_BIOS, "rb");
-          break;
-
-        default:
-          break;
-      }
-
-      /* try to load BIOS file */
-      if (fp != NULL)
-      {
-        /* get file size */
-        int size;
-        fseek(fp, 0, SEEK_END);
-        size = ftell(fp);
-        fseek(fp, 0, SEEK_SET);
-
-        /* BIOS ROM is stored above cartridge ROM area, into $400000-$4FFFFF (max. 1MB) */
-        if ((size <= 0x100000) && (cart.romsize <= 0x400000))
-        {
-          /* BIOS ROM size */
-          bios_size = size;
-
-          /* read bytes chunks */
-          while (size > 2048)
-          {
-            fread(cart.rom + 0x400000 + bios_size - size, 2048, 1, fp);
-            size -= 2048;
-          }
-
-          /* read remaining bytes */
-          fread(cart.rom + 0x400000 + bios_size - size, size, 1, fp);
-
-          /* mark BIOS ROM as loaded */
-          config.bios |= (system_hw & 0xF0);
-        }
-
-        /* close file */
-        fclose(fp);
-      }
-
-      /* BIOS ROM mapper */
-      if (bios_size > 0xC000)
-      {
-        /* assume SEGA mapper if BIOS ROM is larger than 48k */
-        bios_rom.mapper = MAPPER_SEGA;
-        bios_rom.pages = bios_size >> 14;
-      }
-      else
-      {
-        bios_rom.mapper = MAPPER_NONE;
-        bios_rom.pages = bios_size >> 10;
-      }
+      /* assume SEGA mapper if BIOS ROM is larger than 48k */
+      bios_rom.mapper = MAPPER_SEGA;
+      bios_rom.pages = bios_size >> 14;
+    }
+    else if (bios_size >= 0)
+    {
+      /* default BIOS ROM mapper */
+      bios_rom.mapper = MAPPER_NONE;
+      bios_rom.pages = bios_size >> 10;
     }
 
-    /* check if BIOS has been correctly loaded */
-    if (bios_rom.pages)
+    /* unload cartridge if required & BIOS ROM is loaded */
+    if (!(config.bios & 2) && bios_rom.pages)
     {
-      /* unload cartridge if required */
-      if (!(config.bios & 2))
-      {
-        cart_rom.pages = 0;
-      }
+      cart_rom.pages = 0;
     }
   }
-  else /* BIOS support disabled */
+  else 
   {
-    /* unload BIOS */
-    bios_rom.pages = 0;
+    /* mark Master System & Game Gear BIOS as unloaded */
+    system_bios &= ~(SYSTEM_SMS | SYSTEM_GG);
 
-    /* mark both BIOS as unloaded */
-    config.bios &= ~(SYSTEM_SMS | SYSTEM_GG);   
+    /* BIOS ROM is disabled */
+    bios_rom.pages = 0;
   }
 }
 
@@ -1015,7 +943,7 @@ static void mapper_16k_w(int offset, unsigned int data)
 
   /* cartridge ROM page (16k) */
   uint8 page = data % slot.pages;
-  
+
   /* page index increment (SEGA mapper only) */
   if ((slot.fcr[0] & 0x03) && (slot.mapper == MAPPER_SEGA))
   {

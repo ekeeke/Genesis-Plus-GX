@@ -3,7 +3,7 @@
  * 
  *   Cheats menu
  *
- *  Copyright Eke-Eke (2010-2011)
+ *  Copyright Eke-Eke (2010-2012)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:

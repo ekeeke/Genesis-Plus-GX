@@ -87,7 +87,7 @@ void areplay_init(void)
       action_replay.enabled = TYPE_AR;
   
       /* internal registers mapped at $010000-$01ffff */
-      m68k_memory_map[0x01].write16 = ar_write_regs;
+      m68k.memory_map[0x01].write16 = ar_write_regs;
       break;
     }
 
@@ -106,7 +106,7 @@ void areplay_init(void)
         action_replay.enabled = TYPE_PRO1;
 
         /* internal registers mapped at $010000-$01ffff */
-        m68k_memory_map[0x01].write16 = ar_write_regs;
+        m68k.memory_map[0x01].write16 = ar_write_regs;
       }
       else if (sp[1] == 0x60)
       {
@@ -114,17 +114,17 @@ void areplay_init(void)
         action_replay.enabled = TYPE_PRO2;
 
         /* internal registers mapped at $100000-$10ffff */
-        m68k_memory_map[0x10].write16 = ar_write_regs_2;
+        m68k.memory_map[0x10].write16 = ar_write_regs_2;
       }
 
       /* internal RAM (64k), mapped at $420000-$42ffff or $600000-$60ffff */
       if (action_replay.enabled)
       {
-        m68k_memory_map[sp[1]].base      = action_replay.ram;
-        m68k_memory_map[sp[1]].read8     = NULL;
-        m68k_memory_map[sp[1]].read16    = NULL;
-        m68k_memory_map[sp[1]].write8    = ar_write_ram_8;
-        m68k_memory_map[sp[1]].write16   = NULL;
+        m68k.memory_map[sp[1]].base      = action_replay.ram;
+        m68k.memory_map[sp[1]].read8     = NULL;
+        m68k.memory_map[sp[1]].read16    = NULL;
+        m68k.memory_map[sp[1]].write8    = ar_write_ram_8;
+        m68k.memory_map[sp[1]].write16   = NULL;
       }
       break;
     }
@@ -181,7 +181,7 @@ void areplay_reset(int hard)
       memset(action_replay.addr, 0, sizeof(action_replay.addr));
 
       /* by default, internal ROM is mapped at $000000-$00FFFF */
-      m68k_memory_map[0].base = action_replay.rom;
+      m68k.memory_map[0].base = action_replay.rom;
 
       /* reset internal RAM on power-on */
       if (hard)
@@ -298,7 +298,7 @@ static void ar_write_regs(uint32 address, uint32 data)
     }
 
     /* enable Cartridge ROM */
-    m68k_memory_map[0].base = cart.rom;
+    m68k.memory_map[0].base = cart.rom;
   }
 }
 
@@ -307,7 +307,7 @@ static void ar_write_regs_2(uint32 address, uint32 data)
   /* enable Cartridge ROM */
   if (((address & 0xff) == 0x78) && (data == 0xffff))
   {
-    m68k_memory_map[0].base = cart.rom;
+    m68k.memory_map[0].base = cart.rom;
   }
 }
 

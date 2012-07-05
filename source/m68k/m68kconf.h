@@ -1,40 +1,9 @@
-/* ======================================================================== */
-/* ========================= LICENSING & COPYRIGHT ======================== */
-/* ======================================================================== */
-/*
- *                                  MUSASHI
- *                                Version 3.32
- *
- * A portable Motorola M680x0 processor emulation engine.
- * Copyright Karl Stenerud.  All rights reserved.
- *
- * This code may be freely used for non-commercial purposes as long as this
- * copyright notice remains unaltered in the source code and any binary files
- * containing this code in compiled form.
- *
- * All other licensing terms must be negotiated with the author
- * (Karl Stenerud).
- *
- * The latest version of this code can be obtained at:
- * http://kstenerud.cjb.net
- */
-
- /* Modified by Eke-Eke for Genesis Plus GX:
-
-    - removed unused stuff to reduce memory usage / optimize execution (multiple CPU types support, NMI support, ...)
-    - moved stuff to compile statically in a single object file
-    - implemented support for global cycle count (shared by 68k & Z80 CPU)
-    - added support for interrupt latency (Sesame's Street Counting Cafe, Fatal Rewind)
-    - added proper cycle use on reset
-    - added cycle accurate timings for MUL/DIV instructions (thanks to Jorge Cwik !) 
-    - fixed undocumented flags for DIV instructions (Blood Shot)
-    
-  */
-
-
 #ifndef M68KCONF__HEADER
 #define M68KCONF__HEADER
 
+/* ======================================================================== */
+/* ======================== MAIN 68K CONFIGURATION ======================== */
+/* ======================================================================== */
 
 /* Configuration switches.
  * Use OPT_SPECIFY_HANDLER for configuration options that allow callbacks.
@@ -45,10 +14,6 @@
 #define OPT_OFF             0
 #define OPT_ON              1
 #define OPT_SPECIFY_HANDLER 2
-
-/* ======================================================================== */
-/* ============================= CONFIGURATION ============================ */
-/* ======================================================================== */
 
 /* If ON, the CPU will call m68k_write_32_pd() when it executes move.l with a
  * predecrement destination EA mode instead of m68k_write_32().

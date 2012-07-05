@@ -51,7 +51,7 @@ typedef struct
 } T_SRAM;
 
 /* Function prototypes */
-extern void sram_init ();
+extern void sram_init();
 
 /* global variables */
 extern T_SRAM sram;

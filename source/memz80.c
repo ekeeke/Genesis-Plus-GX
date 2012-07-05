@@ -69,7 +69,7 @@ INLINE void z80_lockup_w(unsigned int address, unsigned char data)
 #endif
   if (!config.force_dtack)
   {
-    mcycles_z80 = 0xFFFFFFFF;
+    Z80.cycles = 0xFFFFFFFF;
     zstate = 0;
   }
 }
@@ -81,7 +81,7 @@ INLINE unsigned char z80_lockup_r(unsigned int address)
 #endif
   if (!config.force_dtack)
   {
-    mcycles_z80 = 0xFFFFFFFF;
+    Z80.cycles = 0xFFFFFFFF;
     zstate = 0;
   }
   return 0xFF;
@@ -104,7 +104,7 @@ unsigned char z80_memory_r(unsigned int address)
 
     case 2: /* $4000-$5FFF: YM2612 */
     {
-      return fm_read(mcycles_z80, address & 3);
+      return fm_read(Z80.cycles, address & 3);
     }
 
     case 3: /* $7F00-$7FFF: VDP */
@@ -123,7 +123,7 @@ unsigned char z80_memory_r(unsigned int address)
       {
         return (*zbank_memory_map[address >> 16].read)(address);
       }
-      return READ_BYTE(m68k_memory_map[address >> 16].base, address & 0xFFFF);
+      return READ_BYTE(m68k.memory_map[address >> 16].base, address & 0xFFFF);
     }
   }
 }
@@ -142,7 +142,7 @@ void z80_memory_w(unsigned int address, unsigned char data)
 
     case 2: /* $4000-$5FFF: YM2612 */
     {
-      fm_write(mcycles_z80, address & 3, data);
+      fm_write(Z80.cycles, address & 3, data);
       return;
     }
 
@@ -178,7 +178,7 @@ void z80_memory_w(unsigned int address, unsigned char data)
         (*zbank_memory_map[address >> 16].write)(address, data);
         return;
       }
-      WRITE_BYTE(m68k_memory_map[address >> 16].base, address & 0xFFFF, data);
+      WRITE_BYTE(m68k.memory_map[address >> 16].base, address & 0xFFFF, data);
       return;
     }
   }
@@ -224,14 +224,14 @@ void z80_md_port_w(unsigned int port, unsigned char data)
   {
     case 0x01:
     {
-      io_z80_write(1, data, mcycles_z80 + PBC_CYCLE_OFFSET);
+      io_z80_write(1, data, Z80.cycles + PBC_CYCLE_OFFSET);
       return;
     }
 
     case 0x40:
     case 0x41:
     {
-      psg_write(mcycles_z80, data);
+      psg_write(Z80.cycles, data);
       return;
     }
 
@@ -253,7 +253,7 @@ void z80_md_port_w(unsigned int port, unsigned char data)
 
       if ((port >= 0xF0) && (config.ym2413 & 1))
       {
-        fm_write(mcycles_z80, port&3, data);
+        fm_write(Z80.cycles, port&3, data);
         return;
       }
 
@@ -269,12 +269,12 @@ unsigned char z80_md_port_r(unsigned int port)
   {
     case 0x40:
     {
-      return ((vdp_hvc_r(mcycles_z80 - 15) >> 8) & 0xFF);
+      return ((vdp_hvc_r(Z80.cycles - 15) >> 8) & 0xFF);
     }
 
     case 0x41:
     {
-      return (vdp_hvc_r(mcycles_z80 - 15) & 0xFF);
+      return (vdp_hvc_r(Z80.cycles - 15) & 0xFF);
     }
 
     case 0x80:
@@ -284,7 +284,7 @@ unsigned char z80_md_port_r(unsigned int port)
 
     case 0x81:
     {
-      return vdp_z80_ctrl_r(mcycles_z80);
+      return vdp_z80_ctrl_r(Z80.cycles);
     }
 
     default:
@@ -333,14 +333,14 @@ void z80_gg_port_w(unsigned int port, unsigned char data)
         return;
       }
 
-      io_z80_write(port & 1, data, mcycles_z80 + SMS_CYCLE_OFFSET);
+      io_z80_write(port & 1, data, Z80.cycles + SMS_CYCLE_OFFSET);
       return;
     }
 
     case 0x40:
     case 0x41:
     {
-      psg_write(mcycles_z80, data);
+      psg_write(Z80.cycles, data);
       return;
     }
 
@@ -386,12 +386,12 @@ unsigned char z80_gg_port_r(unsigned int port)
 
     case 0x40:
     {
-      return ((vdp_hvc_r(mcycles_z80) >> 8) & 0xFF);
+      return ((vdp_hvc_r(Z80.cycles) >> 8) & 0xFF);
     }
 
     case 0x41:
     {
-      return (vdp_hvc_r(mcycles_z80) & 0xFF);
+      return (vdp_hvc_r(Z80.cycles) & 0xFF);
     }
 
     case 0x80:
@@ -401,7 +401,7 @@ unsigned char z80_gg_port_r(unsigned int port)
 
     case 0x81:
     {
-      return vdp_z80_ctrl_r(mcycles_z80);
+      return vdp_z80_ctrl_r(Z80.cycles);
     }
 
     default:
@@ -430,14 +430,14 @@ void z80_ms_port_w(unsigned int port, unsigned char data)
     case 0x00:
     case 0x01:
     {
-      io_z80_write(port & 1, data, mcycles_z80 + SMS_CYCLE_OFFSET);
+      io_z80_write(port & 1, data, Z80.cycles + SMS_CYCLE_OFFSET);
       return;
     }
 
     case 0x40:
     case 0x41:
     {
-      psg_write(mcycles_z80, data);
+      psg_write(Z80.cycles, data);
       return;
     }
 
@@ -457,7 +457,7 @@ void z80_ms_port_w(unsigned int port, unsigned char data)
     {
       if (!(port & 4) && (config.ym2413 & 1))
       {
-        fm_write(mcycles_z80, port & 3, data);
+        fm_write(Z80.cycles, port & 3, data);
         return;
       }
 
@@ -479,12 +479,12 @@ unsigned char z80_ms_port_r(unsigned int port)
 
     case 0x40:
     {
-      return ((vdp_hvc_r(mcycles_z80) >> 8) & 0xFF);
+      return ((vdp_hvc_r(Z80.cycles) >> 8) & 0xFF);
     }
 
     case 0x41:
     {
-      return (vdp_hvc_r(mcycles_z80) & 0xFF);
+      return (vdp_hvc_r(Z80.cycles) & 0xFF);
     }
 
     case 0x80:
@@ -494,7 +494,7 @@ unsigned char z80_ms_port_r(unsigned int port)
 
     case 0x81:
     {
-      return vdp_z80_ctrl_r(mcycles_z80);
+      return vdp_z80_ctrl_r(Z80.cycles);
     }
 
     default:
@@ -543,7 +543,7 @@ void z80_m3_port_w(unsigned int port, unsigned char data)
     case 0x40:
     case 0x41:
     {
-      psg_write(mcycles_z80, data);
+      psg_write(Z80.cycles, data);
       return;
     }
 
@@ -563,7 +563,7 @@ void z80_m3_port_w(unsigned int port, unsigned char data)
     {
       if (!(port & 4) && (config.ym2413 & 1))
       {
-        fm_write(mcycles_z80, port & 3, data);
+        fm_write(Z80.cycles, port & 3, data);
         return;
       }
 
@@ -585,12 +585,12 @@ unsigned char z80_m3_port_r(unsigned int port)
 
     case 0x40:
     {
-      return ((vdp_hvc_r(mcycles_z80) >> 8) & 0xFF);
+      return ((vdp_hvc_r(Z80.cycles) >> 8) & 0xFF);
     }
 
     case 0x41:
     {
-      return (vdp_hvc_r(mcycles_z80) & 0xFF);
+      return (vdp_hvc_r(Z80.cycles) & 0xFF);
     }
 
     case 0x80:
@@ -600,7 +600,7 @@ unsigned char z80_m3_port_r(unsigned int port)
 
     case 0x81:
     {
-      return vdp_z80_ctrl_r(mcycles_z80);
+      return vdp_z80_ctrl_r(Z80.cycles);
     }
 
     default:
@@ -630,7 +630,7 @@ void z80_sg_port_w(unsigned int port, unsigned char data)
     case 0x40:
     case 0x41:
     {
-      psg_write(mcycles_z80, data);
+      psg_write(Z80.cycles, data);
       return;
     }
 
@@ -665,7 +665,7 @@ unsigned char z80_sg_port_r(unsigned int port)
 
     case 0x81:
     {
-      return vdp_z80_ctrl_r(mcycles_z80);
+      return vdp_z80_ctrl_r(Z80.cycles);
     }
 
     case 0xC0:

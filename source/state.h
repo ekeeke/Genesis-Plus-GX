@@ -2,7 +2,7 @@
  *  Genesis Plus
  *  Savestate support
  *
- *  Copyright (C) 2007-2011  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2007-2012  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -39,8 +39,8 @@
 #ifndef _STATE_H_
 #define _STATE_H_
 
-#define STATE_SIZE    0x48100
-#define STATE_VERSION "GENPLUS-GX 1.6.1"
+#define STATE_SIZE    0xfc080
+#define STATE_VERSION "GENPLUS-GX 1.7.0"
 
 #define load_param(param, size) \
   memcpy(param, &state[bufferptr], size); \

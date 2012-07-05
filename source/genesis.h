@@ -2,10 +2,10 @@
  *  Genesis Plus
  *  Internal hardware & Bus controllers
  *
- *  Support for SG-1000, Mark-III, Master System, Game Gear & Mega Drive hardware
+ *  Support for SG-1000, Mark-III, Master System, Game Gear, Mega Drive & Mega CD hardware
  *
  *  Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003  Charles Mac Donald (original code)
- *  Copyright (C) 2007-2011  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2007-2012  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -42,14 +42,25 @@
 #ifndef _GENESIS_H_
 #define _GENESIS_H_
 
+#include "md_cart.h"
+#include "sms_cart.h"
+#include "scd.h"
+
+/* External Hardware */
+typedef union
+{
+  md_cart_t md_cart;
+  cd_hw_t cd_hw;
+} external_t;
+
 /* Global variables */
+extern external_t ext;
 extern uint8 boot_rom[0x800];
 extern uint8 work_ram[0x10000];
 extern uint8 zram[0x2000];
 extern uint32 zbank;
 extern uint8 zstate;
 extern uint8 pico_current;
-extern uint8 pico_regs[7];
 
 /* Function prototypes */
 extern void gen_init(void);

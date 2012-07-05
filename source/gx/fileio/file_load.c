@@ -3,7 +3,7 @@
  * 
  *  ROM File loading support
  *
- *  Copyright Eke-Eke (2008-2011)
+ *  Copyright Eke-Eke (2008-2012)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -262,7 +262,7 @@ int LoadFile(int selection)
     }
   }
 
-  /* try to load ROM file */
+  /* try to load file */
   int size = load_rom(filename);
 
   if (size > 0)
@@ -273,24 +273,30 @@ int LoadFile(int selection)
       slot_autosave(config.s_default,config.s_device);
     }
 
-    /* update ROM pathname for screenshot, save & cheat files */
-    if (!strnicmp(".sms", &filename[strlen(filename) - 4], 4))
+    /* update pathname for screenshot, save & cheat files */
+    if (romtype & SYSTEM_SMS)
     {
       /* Master System ROM file */
-      filetype = 1;
+      filetype = 2;
       sprintf(rom_filename,"ms/%s",filelist[selection].filename);
     }
-    else if (!strnicmp(".gg", &filename[strlen(filename) - 3], 3))
+    else if (romtype & SYSTEM_GG)
     {
       /* Game Gear ROM file */
-      filetype = 2;
+      filetype = 3;
       sprintf(rom_filename,"gg/%s",filelist[selection].filename);
     }
-    else if (!strnicmp(".sg", &filename[strlen(filename) - 3], 3))
+    else if (romtype == SYSTEM_SG)
     {
       /* SG-1000 ROM file */
-      filetype = 3;
+      filetype = 4;
       sprintf(rom_filename,"sg/%s",filelist[selection].filename);
+    }
+    else if (romtype == SYSTEM_MCD)
+    {
+      /* CD image file */
+      filetype = 1;
+      sprintf(rom_filename,"cd/%s",filelist[selection].filename);
     }
     else
     {
@@ -310,7 +316,7 @@ int LoadFile(int selection)
     /* recent file list may have changed */
     if (deviceType == TYPE_RECENT) deviceType = -1;
 
-    /* valid ROM has been loaded */
+    /* valid image has been loaded */
     return 1;
   }
 

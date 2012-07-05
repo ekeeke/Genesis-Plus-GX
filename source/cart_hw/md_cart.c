@@ -42,6 +42,7 @@
  ****************************************************************************************/
 
 #include "shared.h"
+#include "md_eeprom.h"
 #include "gamepad.h"
 
 #define CART_CNT (48)
@@ -53,13 +54,8 @@ typedef struct
   uint16 chk_2;       /* real checksum */
   uint8 bank_start;   /* first mapped bank in $400000-$7fffff region */
   uint8 bank_end;     /* last mapped bank in $400000-$7fffff region */
-  T_CART_HW cart_hw;  /* hardware description */
-} T_CART_ENTRY;
-
-extern int emulate_address_error;
-
-/* Cartridge Hardware structure */
-T_CART cart;
+  cart_hw_t cart_hw;  /* hardware description */
+} md_entry_t;
 
 /* Function prototypes */
 static void mapper_sega_w(uint32 data);
@@ -79,14 +75,12 @@ static void custom_regs_w(uint32 address, uint32 data);
 static void custom_alt_regs_w(uint32 address, uint32 data);
 static uint32 topshooter_r(uint32 address);
 static void topshooter_w(uint32 address, uint32 data);
-static uint32 sega_channel_r(uint32 address);
-static void sega_channel_w(uint32 address, uint32 data);
 
 /* Games that need extra hardware emulation:
   - copy protection device
   - custom ROM banking device
 */
-static const T_CART_ENTRY rom_database[CART_CNT] =
+static const md_entry_t rom_database[CART_CNT] =
 {
 /* Funny World & Balloon Boy */
   {0x0000,0x06ab,0x40,0x40,{{0x00,0x00,0x00,0x00},{0xffffff,0xffffff,0xffffff,0xffffff},{0x000000,0x000000,0x000000,0x000000},1,0,NULL,NULL,NULL,mapper_realtec_w}},
@@ -265,11 +259,11 @@ void md_cart_init(void)
   for (i=0; i<0x40; i++)
   {
     /* cartridge ROM */
-    m68k_memory_map[i].base     = cart.rom + ((i<<16) & cart.mask);
-    m68k_memory_map[i].read8    = NULL;
-    m68k_memory_map[i].read16   = NULL;
-    m68k_memory_map[i].write8   = m68k_unused_8_w;
-    m68k_memory_map[i].write16  = m68k_unused_16_w;
+    m68k.memory_map[i].base     = cart.rom + ((i<<16) & cart.mask);
+    m68k.memory_map[i].read8    = NULL;
+    m68k.memory_map[i].read16   = NULL;
+    m68k.memory_map[i].write8   = m68k_unused_8_w;
+    m68k.memory_map[i].write16  = m68k_unused_16_w;
     zbank_memory_map[i].read    = NULL;
     zbank_memory_map[i].write   = zbank_unused_w;
   }
@@ -277,11 +271,11 @@ void md_cart_init(void)
   for (i=0x40; i<0x80; i++)
   {
     /* unused area */
-    m68k_memory_map[i].base     = cart.rom + (i<<16);
-    m68k_memory_map[i].read8    = m68k_read_bus_8;
-    m68k_memory_map[i].read16   = m68k_read_bus_16;
-    m68k_memory_map[i].write8   = m68k_unused_8_w;
-    m68k_memory_map[i].write16  = m68k_unused_16_w;
+    m68k.memory_map[i].base     = cart.rom + (i<<16);
+    m68k.memory_map[i].read8    = m68k_read_bus_8;
+    m68k.memory_map[i].read16   = m68k_read_bus_16;
+    m68k.memory_map[i].write8   = m68k_unused_8_w;
+    m68k.memory_map[i].write16  = m68k_unused_16_w;
     zbank_memory_map[i].read    = zbank_unused_r;
     zbank_memory_map[i].write   = zbank_unused_w;
   }
@@ -296,26 +290,26 @@ void md_cart_init(void)
     if (sram.custom)
     {
       /* Serial EEPROM */
-      m68k_memory_map[md_eeprom.type.sda_out_adr >> 16].read8  = md_eeprom_read_byte;
-      m68k_memory_map[md_eeprom.type.sda_out_adr >> 16].read16 = md_eeprom_read_word;
-      m68k_memory_map[md_eeprom.type.sda_in_adr >> 16].read8   = md_eeprom_read_byte;
-      m68k_memory_map[md_eeprom.type.sda_in_adr >> 16].read16  = md_eeprom_read_word;
-      m68k_memory_map[md_eeprom.type.scl_adr >> 16].write8     = md_eeprom_write_byte;
-      m68k_memory_map[md_eeprom.type.scl_adr >> 16].write16    = md_eeprom_write_word;
-      zbank_memory_map[md_eeprom.type.sda_out_adr >> 16].read  = md_eeprom_read_byte;
-      zbank_memory_map[md_eeprom.type.sda_in_adr >> 16].read   = md_eeprom_read_byte;
-      zbank_memory_map[md_eeprom.type.scl_adr >> 16].write     = md_eeprom_write_byte;
+      m68k.memory_map[md_eeprom.type.sda_out_adr >> 16].read8   = md_eeprom_read_byte;
+      m68k.memory_map[md_eeprom.type.sda_out_adr >> 16].read16  = md_eeprom_read_word;
+      m68k.memory_map[md_eeprom.type.sda_in_adr >> 16].read8    = md_eeprom_read_byte;
+      m68k.memory_map[md_eeprom.type.sda_in_adr >> 16].read16   = md_eeprom_read_word;
+      m68k.memory_map[md_eeprom.type.scl_adr >> 16].write8      = md_eeprom_write_byte;
+      m68k.memory_map[md_eeprom.type.scl_adr >> 16].write16     = md_eeprom_write_word;
+      zbank_memory_map[md_eeprom.type.sda_out_adr >> 16].read   = md_eeprom_read_byte;
+      zbank_memory_map[md_eeprom.type.sda_in_adr >> 16].read    = md_eeprom_read_byte;
+      zbank_memory_map[md_eeprom.type.scl_adr >> 16].write      = md_eeprom_write_byte;
     }
     else
     {
       /* Static RAM (64k max.) - disabled on reset if ROM is mapped in same area */
       if (cart.romsize <= sram.start)
       {
-        m68k_memory_map[sram.start >> 16].base    = sram.sram;
-        m68k_memory_map[sram.start >> 16].read8   = NULL;
-        m68k_memory_map[sram.start >> 16].read16  = NULL;
-        m68k_memory_map[sram.start >> 16].write8  = NULL;
-        m68k_memory_map[sram.start >> 16].write16 = NULL;
+        m68k.memory_map[sram.start >> 16].base    = sram.sram;
+        m68k.memory_map[sram.start >> 16].read8   = NULL;
+        m68k.memory_map[sram.start >> 16].read16  = NULL;
+        m68k.memory_map[sram.start >> 16].write8  = NULL;
+        m68k.memory_map[sram.start >> 16].write16 = NULL;
         zbank_memory_map[sram.start >> 16].read   = NULL;
         zbank_memory_map[sram.start >> 16].write  = NULL;
       }
@@ -330,31 +324,21 @@ void md_cart_init(void)
   {
     svp_init();
 
-    m68k_memory_map[0x30].base    = svp->dram;
-    m68k_memory_map[0x30].read16  = NULL;
-    m68k_memory_map[0x30].write16 = svp_write_dram;
+    m68k.memory_map[0x30].base    = svp->dram;
+    m68k.memory_map[0x30].read16  = NULL;
+    m68k.memory_map[0x30].write16 = svp_write_dram;
 
-    m68k_memory_map[0x31].base    = svp->dram + 0x10000;
-    m68k_memory_map[0x31].read16  = NULL;
-    m68k_memory_map[0x31].write16 = svp_write_dram;
+    m68k.memory_map[0x31].base    = svp->dram + 0x10000;
+    m68k.memory_map[0x31].read16  = NULL;
+    m68k.memory_map[0x31].write16 = svp_write_dram;
 
-    m68k_memory_map[0x39].read16  = svp_read_cell_1;
-    m68k_memory_map[0x3a].read16  = svp_read_cell_2;
+    m68k.memory_map[0x39].read16  = svp_read_cell_1;
+    m68k.memory_map[0x3a].read16  = svp_read_cell_2;
   }
 
   /**********************************************
           SPECIFIC PERIPHERAL SUPPORT 
   ***********************************************/
-
-  /* restore previous input settings */
-  if (old_system[0] != -1)
-  {
-    input.system[0] = old_system[0];
-  }
-  if (old_system[1] != -1)
-  {
-    input.system[1] = old_system[1];
-  }
 
   /* default GUN settings */
   input.x_offset = 0x00;
@@ -475,10 +459,10 @@ void md_cart_init(void)
       }
 
       /* extra connectors mapped at $38xxxx or $3Fxxxx */
-      m68k_memory_map[0x38].read16  = jcart_read;
-      m68k_memory_map[0x38].write16 = jcart_write;
-      m68k_memory_map[0x3f].read16  = jcart_read;
-      m68k_memory_map[0x3f].write16 = jcart_write;
+      m68k.memory_map[0x38].read16  = jcart_read;
+      m68k.memory_map[0x38].write16 = jcart_write;
+      m68k.memory_map[0x3f].read16  = jcart_read;
+      m68k.memory_map[0x3f].write16 = jcart_write;
     }
   }
 
@@ -543,7 +527,7 @@ void md_cart_init(void)
       /* $000000-$1FFFFF is mapped to S&K ROM */
       for (i=0x00; i<0x20; i++)
       {
-        m68k_memory_map[i].base = cart.rom + 0x600000 + (i << 16);
+        m68k.memory_map[i].base = cart.rom + 0x600000 + (i << 16);
       }
 
       cart.special |= HW_LOCK_ON;
@@ -559,7 +543,7 @@ void md_cart_init(void)
   /**********************************************
         Cartridge Extra Hardware
   ***********************************************/
-  memset(&cart.hw, 0, sizeof(T_CART_HW));
+  memset(&cart.hw, 0, sizeof(cart.hw));
 
   /* search for game into database */
   for (i=0; i < CART_CNT + 1; i++)
@@ -571,21 +555,21 @@ void md_cart_init(void)
       int j = rom_database[i].bank_start;
 
       /* retrieve hardware information */
-      memcpy(&cart.hw, &(rom_database[i].cart_hw), sizeof(T_CART_HW));
+      memcpy(&cart.hw, &(rom_database[i].cart_hw), sizeof(cart.hw));
 
       /* initialize memory handlers for $400000-$7FFFFF region */
       while (j <= rom_database[i].bank_end)
       {
         if (cart.hw.regs_r)
         {
-          m68k_memory_map[j].read8    = cart.hw.regs_r;
-          m68k_memory_map[j].read16   = cart.hw.regs_r;
+          m68k.memory_map[j].read8    = cart.hw.regs_r;
+          m68k.memory_map[j].read16   = cart.hw.regs_r;
           zbank_memory_map[j].read    = cart.hw.regs_r;
         }
         if (cart.hw.regs_w)
         {
-          m68k_memory_map[j].write8   = cart.hw.regs_w;
-          m68k_memory_map[j].write16  = cart.hw.regs_w;
+          m68k.memory_map[j].write8   = cart.hw.regs_w;
+          m68k.memory_map[j].write16  = cart.hw.regs_w;
           zbank_memory_map[j].write   = cart.hw.regs_w;
         }
         j++;
@@ -608,13 +592,13 @@ void md_cart_init(void)
     /* BOOT ROM is mapped to $000000-$3FFFFF */
     for (i=0x00; i<0x40; i++)
     {
-      m68k_memory_map[i].base = cart.rom + 0x900000;
+      m68k.memory_map[i].base = cart.rom + 0x900000;
     }
   }
 
 #if M68K_EMULATE_ADDRESS_ERROR
   /* default behavior */
-  emulate_address_error = config.addr_error; 
+  m68k.aerr_enabled = config.addr_error; 
 #endif
 
   /* detect special cartridges */
@@ -623,15 +607,15 @@ void md_cart_init(void)
     /* Ultimate MK3 (hack) */
     for (i=0x40; i<0xA0; i++)
     {
-      m68k_memory_map[i].base     = cart.rom + (i<<16);
-      m68k_memory_map[i].read8    = NULL;
-      m68k_memory_map[i].read16   = NULL;
-      zbank_memory_map[i].read    = NULL;
+      m68k.memory_map[i].base   = cart.rom + (i<<16);
+      m68k.memory_map[i].read8  = NULL;
+      m68k.memory_map[i].read16 = NULL;
+      zbank_memory_map[i].read  = NULL;
     }
 
 #if M68K_EMULATE_ADDRESS_ERROR
     /* this game does not work properly on real hardware */
-    emulate_address_error = 0;  
+    m68k.aerr_enabled = 0;  
 #endif
   }
   else if (cart.romsize > 0x400000)
@@ -641,26 +625,19 @@ void md_cart_init(void)
     cart.hw.time_w = mapper_ssf2_w;
   }
 
-  /* Sega Channel mapped hardware (?) */
-  if (strstr(rominfo.international,"Sega Channel") != NULL)
-  {
-    cart.hw.time_r = sega_channel_r;
-    cart.hw.time_w = sega_channel_w;
-  }
-
   /* Legend of Wukong mapper */
   if (strstr(rominfo.international,"LEGEND OF WUKONG") != NULL)
   {
     /* 128K ROM Bankswitch */
-    m68k_memory_map[0].write8   = mapper_wukong_w;
-    zbank_memory_map[0].write   = mapper_wukong_w;
+    m68k.memory_map[0].write8 = mapper_wukong_w;
+    zbank_memory_map[0].write = mapper_wukong_w;
 
     /* 8K SRAM */
-    m68k_memory_map[0x3C].base    = sram.sram;
-    m68k_memory_map[0x3C].read8   = NULL;
-    m68k_memory_map[0x3C].read16  = NULL;
-    m68k_memory_map[0x3C].write8  = NULL;
-    m68k_memory_map[0x3C].write16 = NULL;
+    m68k.memory_map[0x3C].base    = sram.sram;
+    m68k.memory_map[0x3C].read8   = NULL;
+    m68k.memory_map[0x3C].read16  = NULL;
+    m68k.memory_map[0x3C].write8  = NULL;
+    m68k.memory_map[0x3C].write16 = NULL;
     zbank_memory_map[0x3C].read   = NULL;
     zbank_memory_map[0x3C].write  = NULL;
   }
@@ -682,7 +659,7 @@ void md_cart_reset(int hard_reset)
   {
     for (i=0x00; i<0x40; i++)
     {
-      m68k_memory_map[i].base = cart.rom + ((i<<16) & cart.mask);
+      m68k.memory_map[i].base = cart.rom + ((i<<16) & cart.mask);
     }
   }
   
@@ -711,7 +688,7 @@ void md_cart_reset(int hard_reset)
         /* disable UPMEM chip at $300000-$3fffff */
         for (i=0x30; i<0x40; i++)
         {
-          m68k_memory_map[i].base = cart.rom + ((i<<16) & cart.mask);
+          m68k.memory_map[i].base = cart.rom + ((i<<16) & cart.mask);
         }
       }
       break;
@@ -734,7 +711,7 @@ int md_cart_context_save(uint8 *state)
   for (i=0; i<0x40; i++)
   {
     /* get base address */
-    base = m68k_memory_map[i].base;
+    base = m68k.memory_map[i].base;
       
     if (base == sram.sram)
     {
@@ -777,12 +754,12 @@ int md_cart_context_load(uint8 *state)
     if (offset == 0xff)
     {
       /* SRAM */
-      m68k_memory_map[i].base = sram.sram;
+      m68k.memory_map[i].base = sram.sram;
     }
     else
     {
       /* ROM */
-      m68k_memory_map[i].base = cart.rom + (offset << 16);
+      m68k.memory_map[i].base = cart.rom + (offset << 16);
     }
   }
 
@@ -816,16 +793,16 @@ static void mapper_sega_w(uint32 data)
     if (sram.on)
     {
       /* Backup RAM mapped to $200000-$20ffff (normally mirrored up to $3fffff but this breaks Sonic Megamix and no game need it) */
-      m68k_memory_map[0x20].base = sram.sram;
-      m68k_memory_map[0x20].write8  = NULL;
-      m68k_memory_map[0x20].write16 = NULL;
+      m68k.memory_map[0x20].base    = sram.sram;
+      m68k.memory_map[0x20].write8  = NULL;
+      m68k.memory_map[0x20].write16 = NULL;
       zbank_memory_map[0x20].write  = NULL;
 
       /* Backup RAM write protection */
       if (data & 2)
       {
-        m68k_memory_map[0x20].write8  = m68k_unused_8_w;
-        m68k_memory_map[0x20].write16 = m68k_unused_16_w;
+        m68k.memory_map[0x20].write8  = m68k_unused_8_w;
+        m68k.memory_map[0x20].write16 = m68k_unused_16_w;
         zbank_memory_map[0x20].write  = zbank_unused_w;
       }
     }
@@ -836,7 +813,7 @@ static void mapper_sega_w(uint32 data)
       /* S2K upmem chip mapped to $300000-$3fffff (256K mirrored) */
       for (i=0x30; i<0x40; i++)
       {
-        m68k_memory_map[i].base = (cart.rom + 0x800000) + ((i & 3) << 16);
+        m68k.memory_map[i].base = (cart.rom + 0x800000) + ((i & 3) << 16);
       }
     }
   }
@@ -845,9 +822,9 @@ static void mapper_sega_w(uint32 data)
     /* cartridge ROM mapped to $200000-$3fffff */
     for (i=0x20; i<0x40; i++)
     {
-      m68k_memory_map[i].base = cart.rom + ((i<<16) & cart.mask);
-      m68k_memory_map[i].write8 = m68k_unused_8_w;
-      m68k_memory_map[i].write16 = m68k_unused_16_w;
+      m68k.memory_map[i].base = cart.rom + ((i<<16) & cart.mask);
+      m68k.memory_map[i].write8 = m68k_unused_8_w;
+      m68k.memory_map[i].write16 = m68k_unused_16_w;
       zbank_memory_map[i].write = zbank_unused_w;
     }
   }
@@ -870,7 +847,7 @@ static void mapper_ssf2_w(uint32 address, uint32 data)
 
     for (i=0; i<8; i++)
     {
-      m68k_memory_map[address++].base = src + (i<<16);
+      m68k.memory_map[address++].base = src + (i<<16);
     }
   }
 }
@@ -886,7 +863,7 @@ static void mapper_wukong_w(uint32 address, uint32 data)
     /* $200000-$3BFFFF mapped to $000000-$1BFFFF */
     for (i=0x20; i<0x3C; i++)
     {
-      m68k_memory_map[i].base = cart.rom + (((i&0x1F)<<16) & cart.mask);
+      m68k.memory_map[i].base = cart.rom + (((i&0x1F)<<16) & cart.mask);
     }
   }
   else
@@ -894,7 +871,7 @@ static void mapper_wukong_w(uint32 address, uint32 data)
     /* $200000-$3BFFFF mapped to $200000-$3BFFFF */
     for (i=0x20; i<0x3C; i++)
     {
-      m68k_memory_map[i].base = cart.rom + ((i<<16) & cart.mask);
+      m68k.memory_map[i].base = cart.rom + ((i<<16) & cart.mask);
     }
   }
 }
@@ -936,7 +913,7 @@ static void mapper_realtec_w(uint32 address, uint32 data)
         int i;
         for (i=0x00; i<0x40; i++)
         {
-          m68k_memory_map[i].base = &cart.rom[(base + (i % cart.hw.regs[2])) << 16];
+          m68k.memory_map[i].base = &cart.rom[(base + (i % cart.hw.regs[2])) << 16];
         }
       }
       return;
@@ -955,8 +932,8 @@ static void mapper_seganet_w(uint32 address, uint32 data)
       /* ROM Write protected */
       for (i=0; i<0x40; i++)
       {
-        m68k_memory_map[i].write8   = m68k_unused_8_w;
-        m68k_memory_map[i].write16  = m68k_unused_16_w;
+        m68k.memory_map[i].write8   = m68k_unused_8_w;
+        m68k.memory_map[i].write16  = m68k_unused_16_w;
         zbank_memory_map[i].write   = zbank_unused_w;
       }
     }
@@ -965,8 +942,8 @@ static void mapper_seganet_w(uint32 address, uint32 data)
       /* ROM Write enabled */
       for (i=0; i<0x40; i++)
       {
-        m68k_memory_map[i].write8   = NULL;
-        m68k_memory_map[i].write16  = NULL;
+        m68k.memory_map[i].write8   = NULL;
+        m68k.memory_map[i].write16  = NULL;
         zbank_memory_map[i].write   = NULL;
       }
     }
@@ -986,11 +963,11 @@ static void mapper_32k_w(uint32 data)
     for (i=0; i<0x10; i++)
     {
       /* Remap to unused ROM area  */
-      m68k_memory_map[i].base = &cart.rom[0x400000 + (i << 16)];
+      m68k.memory_map[i].base = &cart.rom[0x400000 + (i << 16)];
 
       /* address = address OR (value << 15) */
-      memcpy(m68k_memory_map[i].base, cart.rom + ((i << 16) | (data & 0x3f) << 15), 0x8000);
-      memcpy(m68k_memory_map[i].base + 0x8000, cart.rom + ((i << 16) | ((data | 1) & 0x3f) << 15), 0x8000);
+      memcpy(m68k.memory_map[i].base, cart.rom + ((i << 16) | (data & 0x3f) << 15), 0x8000);
+      memcpy(m68k.memory_map[i].base + 0x8000, cart.rom + ((i << 16) | ((data | 1) & 0x3f) << 15), 0x8000);
     }
   }
   else
@@ -998,7 +975,7 @@ static void mapper_32k_w(uint32 data)
     /* reset default $000000-$0FFFFF mapping */
     for (i=0; i<16; i++)
     {
-      m68k_memory_map[i].base = &cart.rom[i << 16];
+      m68k.memory_map[i].base = &cart.rom[i << 16];
     }
   }
 }
@@ -1016,7 +993,7 @@ static void mapper_64k_w(uint32 data)
     /* bank is mapped at $000000-$0FFFFF */
     for (i=0; i<16; i++)
     {
-      m68k_memory_map[i].base = &cart.rom[(data & 0xf) << 16];
+      m68k.memory_map[i].base = &cart.rom[(data & 0xf) << 16];
     }
   }
   else
@@ -1024,7 +1001,7 @@ static void mapper_64k_w(uint32 data)
     /* reset default $000000-$0FFFFF mapping */
     for (i=0; i<16; i++)
     {
-      m68k_memory_map[i].base = &cart.rom[(i & 0xf) << 16];
+      m68k.memory_map[i].base = &cart.rom[(i & 0xf) << 16];
     }
   }
 }
@@ -1039,7 +1016,7 @@ static void mapper_64k_multi_w(uint32 address)
   /* 64 x 64k banks */
   for (i=0; i<64; i++)
   {
-    m68k_memory_map[i].base = &cart.rom[((address++) & 0x3f) << 16];
+    m68k.memory_map[i].base = &cart.rom[((address++) & 0x3f) << 16];
   }
 }
 
@@ -1054,7 +1031,7 @@ static uint32 mapper_radica_r(uint32 address)
   /* 64 x 64k banks */
   for (i = 0; i < 64; i++)
   {
-    m68k_memory_map[i].base = &cart.rom[((address++)& 0x3f)<< 16];
+    m68k.memory_map[i].base = &cart.rom[((address++)& 0x3f)<< 16];
   }
 
   return 0xffff;
@@ -1278,7 +1255,6 @@ Unused write16 00300000 = ACDC (000057B2)
 Unused write16 00380000 = 0000 (000057BC)
 Unused read16 00300000 (000057C6)
 
-*/
 static uint32 sega_channel_r(uint32 address)
 {
   return m68k_read_bus_16(address);;
@@ -1288,3 +1264,4 @@ static void sega_channel_w(uint32 address, uint32 data)
 {
   m68k_unused_16_w(address, data);
 }
+*/

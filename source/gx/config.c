@@ -3,7 +3,7 @@
  *
  *  Genesis Plus GX configuration file support
  *
- *  Copyright Eke-Eke (2007-2011)
+ *  Copyright Eke-Eke (2007-2012)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -39,7 +39,6 @@
 
 #include "shared.h"
 #include "gui.h"
-#include "menu.h"
 #include "file_load.h"
 
 static int config_load(void)
@@ -193,23 +192,28 @@ void config_default(void)
   sprintf (config.lastdir[1][TYPE_SD],  "sd:%s/roms/",  DEFAULT_PATH);
   sprintf (config.lastdir[2][TYPE_SD],  "sd:%s/roms/",  DEFAULT_PATH);
   sprintf (config.lastdir[3][TYPE_SD],  "sd:%s/roms/",  DEFAULT_PATH);
+  sprintf (config.lastdir[4][TYPE_SD],  "sd:%s/roms/",  DEFAULT_PATH);
   sprintf (config.lastdir[0][TYPE_USB], "usb:%s/roms/", DEFAULT_PATH);
   sprintf (config.lastdir[1][TYPE_USB], "usb:%s/roms/", DEFAULT_PATH);
   sprintf (config.lastdir[2][TYPE_USB], "usb:%s/roms/", DEFAULT_PATH);
   sprintf (config.lastdir[3][TYPE_USB], "usb:%s/roms/", DEFAULT_PATH);
+  sprintf (config.lastdir[4][TYPE_USB], "usb:%s/roms/", DEFAULT_PATH);
   sprintf (config.lastdir[0][TYPE_DVD], "dvd:%s/roms/", DEFAULT_PATH);
   sprintf (config.lastdir[1][TYPE_DVD], "dvd:%s/roms/", DEFAULT_PATH);
   sprintf (config.lastdir[2][TYPE_DVD], "dvd:%s/roms/", DEFAULT_PATH);
   sprintf (config.lastdir[3][TYPE_DVD], "dvd:%s/roms/", DEFAULT_PATH);
+  sprintf (config.lastdir[4][TYPE_DVD], "dvd:%s/roms/", DEFAULT_PATH);
 #else
   sprintf (config.lastdir[0][TYPE_SD],  "%s/roms/",  DEFAULT_PATH);
   sprintf (config.lastdir[1][TYPE_SD],  "%s/roms/",  DEFAULT_PATH);
   sprintf (config.lastdir[2][TYPE_SD],  "%s/roms/",  DEFAULT_PATH);
   sprintf (config.lastdir[3][TYPE_SD],  "%s/roms/",  DEFAULT_PATH);
+  sprintf (config.lastdir[4][TYPE_SD],  "%s/roms/",  DEFAULT_PATH);
   sprintf (config.lastdir[0][TYPE_DVD], "dvd:%s/roms/", DEFAULT_PATH);
   sprintf (config.lastdir[1][TYPE_DVD], "dvd:%s/roms/", DEFAULT_PATH);
   sprintf (config.lastdir[2][TYPE_DVD], "dvd:%s/roms/", DEFAULT_PATH);
   sprintf (config.lastdir[3][TYPE_DVD], "dvd:%s/roms/", DEFAULT_PATH);
+  sprintf (config.lastdir[4][TYPE_DVD], "dvd:%s/roms/", DEFAULT_PATH);
 #endif
 
   /* try to restore user config */

@@ -8,7 +8,7 @@ INLINE void UseDivuCycles(uint32 dst, uint32 src)
   int i;
 
   /* minimum cycle time */
-  uint mcycles = 38 * 7;
+  uint mcycles = 38 * MUL;
 
   /* 16-bit divisor */
   src <<= 16;
@@ -27,13 +27,13 @@ INLINE void UseDivuCycles(uint32 dst, uint32 src)
     {
       /* shift dividend and add two cycles */
       dst <<= 1;
-      mcycles += (2 * 7);
+      mcycles += (2 * MUL);
 
       if (dst >= src)
       {
         /* apply divisor and remove one cycle */
         dst -= src;
-        mcycles -= 7;
+        mcycles -= 1 * MUL;
       }
     }
   }
@@ -44,10 +44,10 @@ INLINE void UseDivuCycles(uint32 dst, uint32 src)
 INLINE void UseDivsCycles(sint32 dst, sint16 src)
 {
   /* minimum cycle time */
-  uint mcycles = 6 * 7;
+  uint mcycles = 6 * MUL;
 
   /* negative dividend */
-  if (dst < 0) mcycles += 7;
+  if (dst < 0) mcycles += 1 * MUL;
 
   if ((abs(dst) >> 16) < abs(src))
   {
@@ -57,27 +57,27 @@ INLINE void UseDivsCycles(sint32 dst, sint16 src)
     uint32 quotient = abs(dst) / abs(src);
 
     /* add default cycle time */
-    mcycles += (55 * 7);
+    mcycles += (55 * MUL);
 
     /* positive divisor */
     if (src >= 0)
     {
       /* check dividend sign */
-      if (dst >= 0) mcycles -= 7;
-      else mcycles += 7;
+      if (dst >= 0) mcycles -= 1 * MUL;
+      else mcycles += 1 * MUL;
     }
 
     /* check higher 15-bits of quotient */
     for (i=0; i<15; i++)
     {
       quotient >>= 1;
-      if (!(quotient & 1)) mcycles += 7;
+      if (!(quotient & 1)) mcycles += 1 * MUL;
     }
   }
   else
   {
     /* absolute overflow */
-    mcycles += (2 * 7);
+    mcycles += (2 * MUL);
   }
 
   USE_CYCLES(mcycles << 1);
@@ -86,12 +86,12 @@ INLINE void UseDivsCycles(sint32 dst, sint16 src)
 INLINE void UseMuluCycles(uint16 src)
 {
   /* minimum cycle time */
-  uint mcycles = 38 * 7;
+  uint mcycles = 38 * MUL;
 
   /* count number of bits set to 1 */
   while (src)
   {
-    if (src & 1) mcycles += (7 * 2);
+    if (src & 1) mcycles += (2 * MUL);
     src >>= 1;
   }
 
@@ -102,7 +102,7 @@ INLINE void UseMuluCycles(uint16 src)
 INLINE void UseMulsCycles(sint16 src)
 {
   /* minimum cycle time */
-  uint mcycles = 38 * 7;
+  uint mcycles = 38 * MUL;
 
   /* detect 01 or 10 patterns */
   sint32 tmp = src << 1;
@@ -111,7 +111,7 @@ INLINE void UseMulsCycles(sint16 src)
   /* count number of bits set to 1 */
   while (tmp)
   {
-    if (tmp & 1) mcycles += (7 * 2);
+    if (tmp & 1) mcycles += (2 * MUL);
     tmp >>= 1;
   }
 
@@ -7218,8 +7218,11 @@ static void m68k_op_dbf_16(void)
 {
   uint* r_dst = &DY;
   uint res = MASK_OUT_ABOVE_16(*r_dst - 1);
-
   *r_dst = MASK_OUT_BELOW_16(*r_dst) | res;
+
+  /* reset idle loop detection */
+  m68ki_cpu.poll.detected = 0;
+
   if(res != 0xffff)
   {
     uint offset = OPER_I_16();
@@ -20896,7 +20899,7 @@ static void m68k_op_stop(void)
     uint new_sr = OPER_I_16();
     CPU_STOPPED |= STOP_LEVEL_STOP;
     m68ki_set_sr(new_sr);
-    END_CYCLES(end_cycles - 4*7); 
+    SET_CYCLES(m68ki_cpu.cycle_end - 4*MUL); 
     return;
   }
   m68ki_exception_privilege_violation();
@@ -25345,7 +25348,7 @@ static void m68ki_build_opcode_table(void)
       if((i & ostruct->mask) == ostruct->match)
       {
         m68ki_instruction_jump_table[i] = ostruct->opcode_handler;
-        m68ki_cycles[i] = ostruct->cycles * 7;
+        m68ki_cycles[i] = ostruct->cycles * MUL;
       }
     }
     ostruct++;
@@ -25355,7 +25358,7 @@ static void m68ki_build_opcode_table(void)
     for(i = 0;i <= 0xff;i++)
     {
       m68ki_instruction_jump_table[ostruct->match | i] = ostruct->opcode_handler;
-      m68ki_cycles[ostruct->match | i] = ostruct->cycles * 7;
+      m68ki_cycles[ostruct->match | i] = ostruct->cycles * MUL;
     }
     ostruct++;
   }
@@ -25367,7 +25370,7 @@ static void m68ki_build_opcode_table(void)
       {
         instr = ostruct->match | (i << 9) | j;
         m68ki_instruction_jump_table[instr] = ostruct->opcode_handler;
-        m68ki_cycles[instr] = ostruct->cycles * 7;
+        m68ki_cycles[instr] = ostruct->cycles * MUL;
       }
     }
     ostruct++;
@@ -25377,7 +25380,7 @@ static void m68ki_build_opcode_table(void)
     for(i = 0;i <= 0x0f;i++)
     {
       m68ki_instruction_jump_table[ostruct->match | i] = ostruct->opcode_handler;
-      m68ki_cycles[ostruct->match | i] = ostruct->cycles * 7;
+      m68ki_cycles[ostruct->match | i] = ostruct->cycles * MUL;
     }
     ostruct++;
   }
@@ -25386,7 +25389,7 @@ static void m68ki_build_opcode_table(void)
     for(i = 0;i <= 0x07;i++)
     {
       m68ki_instruction_jump_table[ostruct->match | (i << 9)] = ostruct->opcode_handler;
-      m68ki_cycles[ostruct->match | (i << 9)] = ostruct->cycles * 7;
+      m68ki_cycles[ostruct->match | (i << 9)] = ostruct->cycles * MUL;
     }
     ostruct++;
   }
@@ -25395,14 +25398,14 @@ static void m68ki_build_opcode_table(void)
     for(i = 0;i <= 0x07;i++)
     {
       m68ki_instruction_jump_table[ostruct->match | i] = ostruct->opcode_handler;
-      m68ki_cycles[ostruct->match | i] = ostruct->cycles * 7;
+      m68ki_cycles[ostruct->match | i] = ostruct->cycles * MUL;
     }
     ostruct++;
   }
   while(ostruct->mask == 0xffff)
   {
     m68ki_instruction_jump_table[ostruct->match] = ostruct->opcode_handler;
-    m68ki_cycles[ostruct->match] = ostruct->cycles * 7;
+    m68ki_cycles[ostruct->match] = ostruct->cycles * MUL;
     ostruct++;
   }
 }

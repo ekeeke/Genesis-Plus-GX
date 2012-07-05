@@ -3,7 +3,7 @@
  *
  *   Generic ROM history list managment
  *
- *  Copyright Eke-Eke (2008-2011), based on original code from Martin Disibio (2008)
+ *  Copyright Eke-Eke (2008-2012), based on original code from Martin Disibio (2008)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:

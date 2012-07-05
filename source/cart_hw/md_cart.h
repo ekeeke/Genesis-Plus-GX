@@ -44,6 +44,8 @@
 #ifndef _MD_CART_H_
 #define _MD_CART_H_
 
+#define cart ext.md_cart
+
 /* Lock-On cartridge type */
 #define TYPE_GG 0x01  /* Game Genie */
 #define TYPE_AR 0x02  /* (Pro) Action Replay */
@@ -65,21 +67,19 @@ typedef struct
   void (*time_w)(unsigned int address, unsigned int data);  /* !TIME signal ($a130xx) write handler */
   unsigned int (*regs_r)(unsigned int address);             /* cart hardware registers read handler  */
   void (*regs_w)(unsigned int address, unsigned int data);  /* cart hardware registers write handler */
-} T_CART_HW;
+} cart_hw_t;
 
 /* Cartridge type */
 typedef struct
 {
-  uint8 *rom;     /* ROM area */
+  uint8 rom[MAXROMSIZE];  /* ROM area */
   uint8 *base;    /* ROM base (saved for OS/Cartridge ROM swap) */
   uint32 romsize; /* ROM size */
   uint32 mask;    /* ROM mask */
   uint8 special;  /* Lock-On, J-Cart or SMS 3-D glasses hardware */
-  T_CART_HW hw;   /* Extra mapping hardware */
-} T_CART;
+  cart_hw_t hw;   /* Extra mapping hardware */
+} md_cart_t;
 
-/* global variables */
-extern T_CART cart;
 
 /* Function prototypes */
 extern void md_cart_init(void);
@@ -88,5 +88,3 @@ extern int md_cart_context_save(uint8 *state);
 extern int md_cart_context_load(uint8 *state);
 
 #endif
-
-

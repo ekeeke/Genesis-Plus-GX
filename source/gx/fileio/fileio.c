@@ -4,7 +4,7 @@
  *  Load a normal file, or ZIP/GZ archive into ROM buffer.
  *  Returns loaded ROM size (zero if an error occured).
  *  
- *  Copyright Eke-Eke (2007-2011), based on original work from Softdev (2006)
+ *  Copyright Eke-Eke (2007-2012), based on original work from Softdev (2006)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -113,26 +113,34 @@ void get_zipfilename(char *filename)
   fclose(fd);
 }
 
-int load_archive(char *filename)
+int load_archive(char *filename, unsigned char *buffer, int maxsize)
 {
   int size = 0;
   char in[CHUNKSIZE];
-  char msg[64];
-
-  /* ROM buffer should be allocated first ! */
-  unsigned char *buf = cart.rom;
+  char msg[64] = "Unable to open file";
 
   /* Open file */
   FILE *fd = fopen(filename, "rb");
-  if (!fd)
+
+  /* Master System & Game Gear BIOS are optional files */
+  if (!strcmp(filename,MS_BIOS_US) || !strcmp(filename,MS_BIOS_EU) || !strcmp(filename,MS_BIOS_JP) || !strcmp(filename,GG_BIOS))
   {
-    GUI_WaitPrompt("Error","Unable to open file !");
-    return 0;
+    /* disable all messages */
+    SILENT = 1;
+  }
+  
+  /* Mega CD BIOS are required files */
+  if (!strcmp(filename,CD_BIOS_US) || !strcmp(filename,CD_BIOS_EU) || !strcmp(filename,CD_BIOS_JP)) 
+  {
+    sprintf(msg,"Unable to open CD BIOS");
   }
 
-  /* clear existing patches before loading new ROM file */
-  ggenie_shutdown();
-  areplay_shutdown();
+  if (!fd)
+  {
+    GUI_WaitPrompt("Error", msg);
+    SILENT = 0;
+    return 0;
+  }
 
   /* Read first chunk */
   fread(in, CHUNKSIZE, 1, fd);
@@ -150,10 +158,11 @@ int load_archive(char *filename)
     size = FLIP32(pkzip->uncompressedSize);
 
     /* Check ROM size */
-    if (size > MAXROMSIZE)
+    if (size > maxsize)
     {
       fclose(fd);
-      GUI_WaitPrompt("Error","File is too large !");
+      GUI_WaitPrompt("Error","File is too large");
+      SILENT = 0;
       return 0;
     }
 
@@ -173,7 +182,8 @@ int load_archive(char *filename)
     if (res != Z_OK)
     {
       fclose(fd);
-      GUI_WaitPrompt("Error","Unable to unzip file !");
+      GUI_WaitPrompt("Error","Unable to unzip file");
+      SILENT = 0;
       return 0;
     }
 
@@ -184,7 +194,7 @@ int load_archive(char *filename)
     /* Initial Zip remaining chunk size */
     zs.avail_in = CHUNKSIZE - offset;
 
-    /* Get compressed file name */
+    /* Overwrite input filename with compressed filename */
     offset = FLIP16(pkzip->filenameLength);
     if (offset >= MAXPATHLEN) offset = MAXPATHLEN - 1;
     strncpy(filename, &in[sizeof(PKZIPHEADER)], offset);
@@ -204,15 +214,16 @@ int load_archive(char *filename)
         {
           inflateEnd(&zs);
           fclose(fd);
-          GUI_WaitPrompt("Error","Unable to unzip file !");
+          GUI_WaitPrompt("Error","Unable to unzip file");
+          SILENT = 0;
           return 0;
         }
 
         offset = CHUNKSIZE - zs.avail_out;
         if (offset)
         {
-          memcpy(buf, out, offset);
-          buf += offset;
+          memcpy(buffer, out, offset);
+          buffer += offset;
         }
       }
       while (zs.avail_out == 0);
@@ -232,11 +243,12 @@ int load_archive(char *filename)
     size = ftell(fd);
     fseek(fd, 0, SEEK_SET);
 
-    /* Check file size */
-    if(size > MAXROMSIZE)
+    /* size limit */
+    if(size > maxsize)
     {
       fclose(fd);
-      GUI_WaitPrompt("Error","File is too large !");
+      GUI_WaitPrompt("Error","File is too large");
+      SILENT = 0;
       return 0;
     }
 
@@ -247,13 +259,13 @@ int load_archive(char *filename)
     int left = size;
     while (left > CHUNKSIZE)
     {
-      fread(buf, CHUNKSIZE, 1, fd);
-      buf += CHUNKSIZE;
+      fread(buffer, CHUNKSIZE, 1, fd);
+      buffer += CHUNKSIZE;
       left -= CHUNKSIZE;
     }
 
     /* Read remaining bytes */
-    fread(buf, left, 1, fd);
+    fread(buffer, left, 1, fd);
   }
 
   /* Close file */
@@ -261,5 +273,6 @@ int load_archive(char *filename)
 
   /* Return loaded ROM size */
   GUI_MsgBoxClose();
+  SILENT = 0;
   return size;
 }

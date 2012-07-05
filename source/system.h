@@ -2,10 +2,10 @@
  *  Genesis Plus
  *  Virtual System emulation
  *
- *  Support for Genesis & Master System compatibility modes
+ *  Support for "Genesis", "Genesis + CD" & "Master System" modes
  *
  *  Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003  Charles Mac Donald (original code)
- *  Copyright (C) 2007-2011  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2007-2012  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -52,6 +52,7 @@
 #define SYSTEM_MD         0x80
 #define SYSTEM_PBC        0x81
 #define SYSTEM_PICO       0x82
+#define SYSTEM_MCD        0x84
 
 /* NTSC & PAL Master Clock frequencies */
 #define MCLOCK_NTSC 53693175
@@ -98,17 +99,21 @@ typedef struct
     int16 *pos;
     int16 *buffer;
   } psg;
+  struct
+  {
+    int16 *pos;
+    int16 *buffer;
+  } pcm;
 } t_snd;
 
 
 /* Global variables */
 extern t_bitmap bitmap;
 extern t_snd snd;
-extern uint32 mcycles_z80;
-extern uint32 mcycles_68k;
 extern uint32 mcycles_vdp;
 extern int16 SVP_cycles; 
 extern uint8 system_hw;
+extern uint8 system_bios;
 extern uint32 system_clock;
 
 /* Function prototypes */
@@ -121,6 +126,7 @@ extern void system_init(void);
 extern void system_reset(void);
 extern void system_shutdown(void);
 extern void system_frame_gen(int do_skip);
+extern void system_frame_scd(int do_skip);
 extern void system_frame_sms(int do_skip);
 
 #endif /* _SYSTEM_H_ */

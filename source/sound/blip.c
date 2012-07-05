@@ -84,10 +84,6 @@ void blip_add( blip_buffer_t* s, int clocks, int delta )
 
 int blip_clocks_needed( const blip_buffer_t* s, int samples )
 {
-  /*int fixed_needed;
-  if ( samples > s->size )
-    samples = s->size;*/
-  
   /* Fixed-point number of samples needed in addition to those in buffer */
   int fixed_needed = samples * time_unit - s->offset;
   
@@ -105,7 +101,7 @@ int blip_samples_avail( const blip_buffer_t* s )
   return s->offset >> time_bits;
 }
 
-int blip_read_samples( blip_buffer_t* s, short out[])
+int blip_read_samples( blip_buffer_t* s, short out[], int stereo)
 {
   int count = s->offset >> time_bits;
   
@@ -128,7 +124,7 @@ int blip_read_samples( blip_buffer_t* s, short out[])
       if ( sample < -32768 ) sample = -32768;
       if ( sample > +32767 ) sample = +32767;
       
-      out [i] = sample;
+      out [i << stereo] = sample;
     }
   
     /* Copy remaining samples to beginning of buffer and clear the rest */

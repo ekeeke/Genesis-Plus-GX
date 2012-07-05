@@ -149,7 +149,7 @@ INLINE unsigned char phaser_read(int port)
   if (io_reg[0x0F] & (0x02 << (port >> 1)))
   {
     /* Get current X position (phaser is only used in MS compatiblity mode) */
-    int hcounter = hctab[(mcycles_z80 + SMS_CYCLE_OFFSET) % MCYCLES_PER_LINE];
+    int hcounter = hctab[(Z80.cycles + SMS_CYCLE_OFFSET) % MCYCLES_PER_LINE];
 
     /* Compare with gun position */
     int dx = input.analog[port][0] - (hcounter << 1);

@@ -3,7 +3,7 @@
  *  Input peripherals support
  *
  *  Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003  Charles Mac Donald (original code)
- *  Copyright (C) 2007-2011  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2007-2012  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -90,10 +90,14 @@
 #define INPUT_BUTTON2      (0x0020)
 #define INPUT_BUTTON1      (0x0010)
 
-/* Mouse specific bitmask */
+/* Mega Mouse specific bitmask */
 #define INPUT_MOUSE_CENTER (0x0040)
 #define INPUT_MOUSE_RIGHT  (0x0020)
 #define INPUT_MOUSE_LEFT   (0x0010)
+
+/* Pico hardware specific bitmask */
+#define INPUT_PICO_PEN     (0x0080)
+#define INPUT_PICO_RED     (0x0010)
 
 /* XE-1AP specific bitmask */
 #define INPUT_XE_E1        (0x0800)

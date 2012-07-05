@@ -5,7 +5,7 @@
  *  Support for SG-1000, Master System (315-5124 & 315-5246), Game Gear & Mega Drive VDP
  *
  *  Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003  Charles Mac Donald (original code)
- *  Copyright (C) 2007-2011  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2007-2012  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -89,7 +89,7 @@ extern unsigned int (*vdp_z80_data_r)(void);
 extern void vdp_init(void);
 extern void vdp_reset(void);
 extern int vdp_context_save(uint8 *state);
-extern int vdp_context_load(uint8 *state);
+extern int vdp_context_load(uint8 *state, char *version);
 extern void vdp_dma_update(unsigned int cycles);
 extern void vdp_68k_ctrl_w(unsigned int data);
 extern void vdp_z80_ctrl_w(unsigned int data);

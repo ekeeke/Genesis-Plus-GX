@@ -2,7 +2,7 @@
  *  Genesis Plus
  *  Savestate support
  *
- *  Copyright (C) 2007-2011  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2007-2012  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -51,8 +51,8 @@ int state_load(unsigned char *state)
     return -1;
   }
 
-  /* version check (1.6.0 and above) */
-  if ((version[11] < 0x31) || ((version[11] == 0x31) && (version[13] < 0x36)))
+  /* version check (support from previous 1.6.x state format) */
+  if ((version[11] < 0x31) || (version[13] < 0x36))
   {
     return -1;
   }
@@ -63,10 +63,10 @@ int state_load(unsigned char *state)
   /* enable VDP access for TMSS systems */
   for (i=0xc0; i<0xe0; i+=8)
   {
-    m68k_memory_map[i].read8    = vdp_read_byte;
-    m68k_memory_map[i].read16   = vdp_read_word;
-    m68k_memory_map[i].write8   = vdp_write_byte;
-    m68k_memory_map[i].write16  = vdp_write_word;
+    m68k.memory_map[i].read8    = vdp_read_byte;
+    m68k.memory_map[i].read16   = vdp_read_word;
+    m68k.memory_map[i].write8   = vdp_write_byte;
+    m68k.memory_map[i].write16  = vdp_write_word;
     zbank_memory_map[i].read    = zbank_read_vdp;
     zbank_memory_map[i].write   = zbank_write_vdp;
   }
@@ -80,17 +80,17 @@ int state_load(unsigned char *state)
     load_param(&zbank, sizeof(zbank));
     if (zstate == 3)
     {
-      m68k_memory_map[0xa0].read8   = z80_read_byte;
-      m68k_memory_map[0xa0].read16  = z80_read_word;
-      m68k_memory_map[0xa0].write8  = z80_write_byte;
-      m68k_memory_map[0xa0].write16 = z80_write_word;
+      m68k.memory_map[0xa0].read8   = z80_read_byte;
+      m68k.memory_map[0xa0].read16  = z80_read_word;
+      m68k.memory_map[0xa0].write8  = z80_write_byte;
+      m68k.memory_map[0xa0].write16 = z80_write_word;
     }
     else
     {
-      m68k_memory_map[0xa0].read8   = m68k_read_bus_8;
-      m68k_memory_map[0xa0].read16  = m68k_read_bus_16;
-      m68k_memory_map[0xa0].write8  = m68k_unused_8_w;
-      m68k_memory_map[0xa0].write16 = m68k_unused_16_w;
+      m68k.memory_map[0xa0].read8   = m68k_read_bus_8;
+      m68k.memory_map[0xa0].read16  = m68k_read_bus_16;
+      m68k.memory_map[0xa0].write8  = m68k_unused_8_w;
+      m68k.memory_map[0xa0].write16 = m68k_unused_16_w;
     }
   }
   else
@@ -99,8 +99,8 @@ int state_load(unsigned char *state)
   }
 
   /* CPU cycles */
-  load_param(&mcycles_68k, sizeof(mcycles_68k));
-  load_param(&mcycles_z80, sizeof(mcycles_z80));
+  load_param(&m68k.cycles, sizeof(m68k.cycles));
+  load_param(&Z80.cycles, sizeof(Z80.cycles));
 
   /* IO */
   if ((system_hw & SYSTEM_PBC) == SYSTEM_MD)
@@ -110,8 +110,8 @@ int state_load(unsigned char *state)
   }
   else
   {
-    /* 1.6.1 specific (keep support for previous state format) */
-    if ((version[11] == 0x31) && (version[13] == 0x36) && (version[15] == 0x31))
+    /* 1.6.1 or 1.7.x specific */
+    if ((version[15] == 0x31) || (version[13] == 0x37))
     {
       load_param(&io_reg[0x0E], 1);
     }
@@ -120,7 +120,7 @@ int state_load(unsigned char *state)
   }
 
   /* VDP */
-  bufferptr += vdp_context_load(&state[bufferptr]);
+  bufferptr += vdp_context_load(&state[bufferptr], version);
 
   /* SOUND */
   bufferptr += sound_context_load(&state[bufferptr]);
@@ -150,10 +150,17 @@ int state_load(unsigned char *state)
     load_param(&tmp16, 2); m68k_set_reg(M68K_REG_SR, tmp16);
     load_param(&tmp32, 4); m68k_set_reg(M68K_REG_USP,tmp32);
 
-    /* 1.6.1 specific (keep support for previous state format) */
-    if ((version[11] == 0x31) && (version[13] == 0x36) && (version[15] == 0x31))
+    /* 1.6.1 or 1.7.x specific */
+    if ((version[15] == 0x31) || (version[13] == 0x37))
     {
       load_param(&tmp32, 4); m68k_set_reg(M68K_REG_ISP,tmp32);
+
+      /* 1.7.x specific */
+      if (version[13] == 0x37)
+      {
+        load_param(&m68k.int_level, sizeof(m68k.int_level));
+        load_param(&m68k.stopped, sizeof(m68k.stopped));
+      }
     }
   }
 
@@ -161,17 +168,24 @@ int state_load(unsigned char *state)
   load_param(&Z80, sizeof(Z80_Regs));
   Z80.irq_callback = z80_irq_callback;
 
-  /* Cartridge HW */
-  if ((system_hw & SYSTEM_PBC) == SYSTEM_MD)
+  /* Extra HW */
+  if (system_hw == SYSTEM_MCD)
+  {
+    /* CD hardware */
+    bufferptr += scd_context_load(&state[bufferptr]);
+  }
+  else if ((system_hw & SYSTEM_PBC) == SYSTEM_MD)
   {  
+    /* MD cartridge hardware */
     bufferptr += md_cart_context_load(&state[bufferptr]);
   }
   else
   {
+    /* MS cartridge hardware */
     bufferptr += sms_cart_context_load(&state[bufferptr]);
 
-    /* 1.6.1 specific (keep support for previous state format) */
-    if ((version[11] == 0x31) && (version[13] == 0x36) && (version[15] == 0x31))
+    /* 1.6.1 or 1.7.x specific */
+    if ((version[15] == 0x31) || (version[13] == 0x37))
     {
       sms_cart_switch(~io_reg[0x0E]);
     }
@@ -204,8 +218,8 @@ int state_save(unsigned char *state)
   }
 
   /* CPU cycles */
-  save_param(&mcycles_68k, sizeof(mcycles_68k));
-  save_param(&mcycles_z80, sizeof(mcycles_z80));
+  save_param(&m68k.cycles, sizeof(m68k.cycles));
+  save_param(&Z80.cycles, sizeof(Z80.cycles));
 
   /* IO */
   if ((system_hw & SYSTEM_PBC) == SYSTEM_MD)
@@ -249,18 +263,28 @@ int state_save(unsigned char *state)
     tmp16 = m68k_get_reg(M68K_REG_SR);  save_param(&tmp16, 2); 
     tmp32 = m68k_get_reg(M68K_REG_USP); save_param(&tmp32, 4);
     tmp32 = m68k_get_reg(M68K_REG_ISP); save_param(&tmp32, 4);
+
+    save_param(&m68k.int_level, sizeof(m68k.int_level));
+    save_param(&m68k.stopped, sizeof(m68k.stopped));
   }
 
   /* Z80 */ 
   save_param(&Z80, sizeof(Z80_Regs));
 
-  /* Cartridge HW */
-  if ((system_hw & SYSTEM_PBC) == SYSTEM_MD)
+  /* Extra HW */
+  if (system_hw == SYSTEM_MCD)
   {
+    /* CD hardware */
+    bufferptr += scd_context_save(&state[bufferptr]);
+  }
+  else if ((system_hw & SYSTEM_PBC) == SYSTEM_MD)
+  {
+    /* MD cartridge hardware */
     bufferptr += md_cart_context_save(&state[bufferptr]);
   }
   else
   {
+    /* MS cartridge hardware */
     bufferptr += sms_cart_context_save(&state[bufferptr]);
   }
 

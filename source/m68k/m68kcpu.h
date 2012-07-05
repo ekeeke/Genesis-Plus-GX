@@ -1,138 +1,19 @@
-/* ======================================================================== */
-/* ========================= LICENSING & COPYRIGHT ======================== */
-/* ======================================================================== */
-/*
- *                                  MUSASHI
- *                                Version 3.32
- *
- * A portable Motorola M680x0 processor emulation engine.
- * Copyright Karl Stenerud.  All rights reserved.
- *
- * This code may be freely used for non-commercial purposes as long as this
- * copyright notice remains unaltered in the source code and any binary files
- * containing this code in compiled form.
- *
- * All other licensing terms must be negotiated with the author
- * (Karl Stenerud).
- *
- * The latest version of this code can be obtained at:
- * http://kstenerud.cjb.net
- */
-
- /* Modified by Eke-Eke for Genesis Plus GX:
-
-    - removed unused stuff to reduce memory usage / optimize execution (multiple CPU types support, NMI support, ...)
-    - moved stuff to compile statically in a single object file
-    - implemented support for global cycle count (shared by 68k & Z80 CPU)
-    - added support for interrupt latency (Sesame's Street Counting Cafe, Fatal Rewind)
-    - added proper cycle use on reset
-    - added cycle accurate timings for MUL/DIV instructions (thanks to Jorge Cwik !) 
-    - fixed undocumented flags for DIV instructions (Blood Shot)
-    
-  */
-
 #ifndef M68KCPU__HEADER
 #define M68KCPU__HEADER
+
+/* ======================================================================== */
+/*                         GENERIC 68K CORE                                 */
+/* ======================================================================== */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <limits.h>
-#include "m68k.h"
 
 #if M68K_EMULATE_ADDRESS_ERROR
 #include <setjmp.h>
 #endif /* M68K_EMULATE_ADDRESS_ERROR */
 
-/* ======================================================================== */
-/* ==================== ARCHITECTURE-DEPENDANT DEFINES ==================== */
-/* ======================================================================== */
-
-/* Check for > 32bit sizes */
-#if UINT_MAX > 0xffffffff
-  #define M68K_INT_GT_32_BIT  1
-#else
-  #define M68K_INT_GT_32_BIT  0
-#endif
-
-/* Data types used in this emulation core */
-#undef sint8
-#undef sint16
-#undef sint32
-#undef sint64
-#undef uint8
-#undef uint16
-#undef uint32
-#undef uint64
-#undef sint
-#undef uint
-
-#define sint8  signed   char      /* ASG: changed from char to signed char */
-#define sint16 signed   short
-#define sint32 signed   int      /* AWJ: changed from long to int */
-#define uint8  unsigned char
-#define uint16 unsigned short
-#define uint32 unsigned int      /* AWJ: changed from long to int */
-
-/* signed and unsigned int must be at least 32 bits wide */
-#define sint   signed   int
-#define uint   unsigned int
-
-
-#if M68K_USE_64_BIT
-#define sint64 signed   long long
-#define uint64 unsigned long long
-#else
-#define sint64 sint32
-#define uint64 uint32
-#endif /* M68K_USE_64_BIT */
-
-
-
-/* Allow for architectures that don't have 8-bit sizes */
-#if UCHAR_MAX == 0xff
-  #define MAKE_INT_8(A) (sint8)(A)
-#else
-  #undef  sint8
-  #define sint8  signed   int
-  #undef  uint8
-  #define uint8  unsigned int
-  INLINE sint MAKE_INT_8(uint value)
-  {
-    return (value & 0x80) ? value | ~0xff : value & 0xff;
-  }
-#endif /* UCHAR_MAX == 0xff */
-
-
-/* Allow for architectures that don't have 16-bit sizes */
-#if USHRT_MAX == 0xffff
-  #define MAKE_INT_16(A) (sint16)(A)
-#else
-  #undef  sint16
-  #define sint16 signed   int
-  #undef  uint16
-  #define uint16 unsigned int
-  INLINE sint MAKE_INT_16(uint value)
-  {
-    return (value & 0x8000) ? value | ~0xffff : value & 0xffff;
-  }
-#endif /* USHRT_MAX == 0xffff */
-
-
-/* Allow for architectures that don't have 32-bit sizes */
-#if UINT_MAX == 0xffffffff
-  #define MAKE_INT_32(A) (sint32)(A)
-#else
-  #undef  sint32
-  #define sint32  signed   int
-  #undef  uint32
-  #define uint32  unsigned int
-  INLINE sint MAKE_INT_32(uint value)
-  {
-    return (value & 0x80000000) ? value | ~0xffffffff : value & 0xffffffff;
-  }
-#endif /* UINT_MAX == 0xffffffff */
-
-
+#include "m68k.h"
 
 
 /* ======================================================================== */
@@ -335,15 +216,15 @@
 
 #define CYC_INSTRUCTION   m68ki_cycles
 #define CYC_EXCEPTION     m68ki_exception_cycle_table
-#define CYC_BCC_NOTAKE_B  ( -2 * 7)
-#define CYC_BCC_NOTAKE_W  (  2 * 7)
-#define CYC_DBCC_F_NOEXP  ( -2 * 7)
-#define CYC_DBCC_F_EXP    (  2 * 7)
-#define CYC_SCC_R_TRUE    (  2 * 7)
-#define CYC_MOVEM_W       (  4 * 7)
-#define CYC_MOVEM_L       (  8 * 7)
-#define CYC_SHIFT         (  2 * 7)
-#define CYC_RESET         (132 * 7)
+#define CYC_BCC_NOTAKE_B  ( -2 * MUL)
+#define CYC_BCC_NOTAKE_W  (  2 * MUL)
+#define CYC_DBCC_F_NOEXP  ( -2 * MUL)
+#define CYC_DBCC_F_EXP    (  2 * MUL)
+#define CYC_SCC_R_TRUE    (  2 * MUL)
+#define CYC_MOVEM_W       (  4 * MUL)
+#define CYC_MOVEM_L       (  8 * MUL)
+#define CYC_SHIFT         (  2 * MUL)
+#define CYC_RESET         (132 * MUL)
 
 #if M68K_EMULATE_INT_ACK == OPT_ON
 #define CALLBACK_INT_ACK      m68ki_cpu.int_ack_callback
@@ -403,9 +284,9 @@
   #else
     #define m68ki_set_fc(A) CALLBACK_SET_FC(A);
   #endif
-  #define m68ki_use_data_space() m68ki_address_space = FUNCTION_CODE_USER_DATA;
-  #define m68ki_use_program_space() m68ki_address_space = FUNCTION_CODE_USER_PROGRAM;
-  #define m68ki_get_address_space() m68ki_address_space
+  #define m68ki_use_data_space() m68ki_cpu.address_space = FUNCTION_CODE_USER_DATA;
+  #define m68ki_use_program_space() m68ki_cpu.address_space = FUNCTION_CODE_USER_PROGRAM;
+  #define m68ki_get_address_space() m68ki_cpu.address_space
 #else
   #define m68ki_set_fc(A)
   #define m68ki_use_data_space()
@@ -417,11 +298,11 @@
 /* Enable or disable trace emulation */
 #if M68K_EMULATE_TRACE
   /* Initiates trace checking before each instruction (t1) */
-  #define m68ki_trace_t1() m68ki_tracing = FLAG_T1;
+  #define m68ki_trace_t1() m68ki_cpu.tracing = FLAG_T1;
   /* Clear all tracing */
-  #define m68ki_clear_trace() m68ki_tracing = 0;
+  #define m68ki_clear_trace() m68ki_cpu.tracing = 0;
   /* Cause a trace exception if we are tracing */
-  #define m68ki_exception_if_trace() if(m68ki_tracing) m68ki_exception_trace();
+  #define m68ki_exception_if_trace() if(m68ki_cpu.tracing) m68ki_exception_trace();
 #else
   #define m68ki_trace_t1()
   #define m68ki_clear_trace()
@@ -432,7 +313,7 @@
 /* Enable or disable Address error emulation */
 #if M68K_EMULATE_ADDRESS_ERROR
   #define m68ki_set_address_error_trap() \
-    if(setjmp(m68ki_aerr_trap) != 0) \
+    if(setjmp(m68ki_cpu.aerr_trap) != 0) \
     { \
       m68ki_exception_address_error(); \
     }
@@ -440,12 +321,12 @@
   #define m68ki_check_address_error(ADDR, WRITE_MODE, FC) \
     if((ADDR)&1) \
     { \
-      if (emulate_address_error) \
+      if (m68ki_cpu.aerr_enabled) \
       { \
-        m68ki_aerr_address = ADDR; \
-        m68ki_aerr_write_mode = WRITE_MODE; \
-        m68ki_aerr_fc = FC; \
-        longjmp(m68ki_aerr_trap, 1); \
+        m68ki_cpu.aerr_address = ADDR; \
+        m68ki_cpu.aerr_write_mode = WRITE_MODE; \
+        m68ki_cpu.aerr_fc = FC; \
+        longjmp(m68ki_cpu.aerr_trap, 1); \
       } \
     }
 #else
@@ -633,11 +514,20 @@
 
 /* ---------------------------- Cycle Counting ---------------------------- */
 
-#define USE_CYCLES(A)    mcycles_68k += (A)
-#define END_CYCLES(A)    mcycles_68k = (A)
+#define USE_CYCLES(A) m68ki_cpu.cycles += (A)
+#define SET_CYCLES(A) m68ki_cpu.cycles  = (A)
 
 
 /* ----------------------------- Read / Write ----------------------------- */
+
+/* Read data immediately following the PC */
+#define m68k_read_immediate_16(address) *(uint16 *)(m68ki_cpu.memory_map[((address)>>16)&0xff].base + ((address) & 0xffff))
+#define m68k_read_immediate_32(address) (m68k_read_immediate_16(address) << 16) | (m68k_read_immediate_16(address+2))
+
+/* Read data relative to the PC */
+#define m68k_read_pcrelative_8(address)  READ_BYTE(m68ki_cpu.memory_map[((address)>>16)&0xff].base, (address) & 0xffff)
+#define m68k_read_pcrelative_16(address) m68k_read_immediate_16(address)
+#define m68k_read_pcrelative_32(address) m68k_read_immediate_32(address)
 
 /* Read from the current address space */
 #define m68ki_read_8(A)  m68ki_read_8_fc (A, FLAG_S | m68ki_get_address_space())
@@ -672,78 +562,6 @@
 /* ======================================================================== */
 /* =============================== PROTOTYPES ============================= */
 /* ======================================================================== */
-
-typedef struct
-{
-  uint dar[16];      /* Data and Address Registers */
-  uint pc;           /* Program Counter */
-  uint sp[5];        /* User and Interrupt Stack Pointers */
-  uint ir;           /* Instruction Register */
-  uint t1_flag;      /* Trace 1 */
-  uint s_flag;       /* Supervisor */
-  uint x_flag;       /* Extend */
-  uint n_flag;       /* Negative */
-  uint not_z_flag;   /* Zero, inverted for speedups */
-  uint v_flag;       /* Overflow */
-  uint c_flag;       /* Carry */
-  uint int_mask;     /* I0-I2 */
-  uint int_level;    /* State of interrupt pins IPL0-IPL2 -- ASG: changed from ints_pending */
-  uint stopped;      /* Stopped state */
-#if M68K_EMULATE_PREFETCH
-  uint pref_addr;    /* Last prefetch address */
-  uint pref_data;    /* Data in the prefetch queue */
-#endif
-#if M68K_EMULATE_ADDRESS_ERROR
-  uint instr_mode;   /* Stores whether we are in instruction mode or group 0/1 exception mode */
-  uint run_mode;     /* Stores whether we are processing a reset, bus error, address error, or something else */
-#endif
-
-  /* Callbacks to host */
-#if M68K_EMULATE_INT_ACK == OPT_ON
-  int  (*int_ack_callback)(int int_line);           /* Interrupt Acknowledge */
-#endif
-#if M68K_EMULATE_RESET == OPT_ON
-  void (*reset_instr_callback)(void);               /* Called when a RESET instruction is encountered */
-#endif
-#if M68K_TAS_HAS_CALLBACK == OPT_ON
-  int  (*tas_instr_callback)(void);                 /* Called when a TAS instruction is encountered, allows / disallows writeback */
-#endif
-#if M68K_EMULATE_FC == OPT_ON
-  void (*set_fc_callback)(unsigned int new_fc);     /* Called when the CPU function code changes */
-#endif
-} m68ki_cpu_core;
-
-/* The CPU core */
-m68ki_cpu_core m68ki_cpu;
-
-/* Prevent static data from being redefined when this file is included */
-#ifndef _MEM68K_H_
-
-#if M68K_EMULATE_TRACE
-static uint m68ki_tracing;
-#endif /* M68K_EMULATE_TRACE */
-
-#if M68K_EMULATE_FC
-static uint m68ki_address_space;
-#endif /* M68K_EMULATE_FC */
-
-#if M68K_EMULATE_ADDRESS_ERROR
-static jmp_buf m68ki_aerr_trap;
-static uint m68ki_aerr_address;
-static uint m68ki_aerr_write_mode;
-static uint m68ki_aerr_fc;
-int emulate_address_error;
-#endif /* M68K_EMULATE_ADDRESS_ERROR */
-
-/* Current end cycle */
-static unsigned int end_cycles;
-
-/* Cycles used by CPU instructions */
-#ifdef BUILD_TABLES
-static unsigned char m68ki_cycles[0x10000];
-#else
-#include "m68ki_cycles.h"
-#endif
 
 /* Used by shift & rotate instructions */
 static const uint8 m68ki_shift_8_table[65] =
@@ -789,77 +607,77 @@ static const uint m68ki_shift_32_table[65] =
  */
 static const uint16 m68ki_exception_cycle_table[256] =
 {
-     40*7, /*  0: Reset - Initial Stack Pointer                      */
-      4*7, /*  1: Reset - Initial Program Counter                    */
-     50*7, /*  2: Bus Error                             (unemulated) */
-     50*7, /*  3: Address Error                         (unemulated) */
-     34*7, /*  4: Illegal Instruction                                */
-     38*7, /*  5: Divide by Zero -- ASG: changed from 42             */
-     40*7, /*  6: CHK -- ASG: chanaged from 44                       */
-     34*7, /*  7: TRAPV                                              */
-     34*7, /*  8: Privilege Violation                                */
-     34*7, /*  9: Trace                                              */
-      4*7, /* 10: 1010                                               */
-      4*7, /* 11: 1111                                               */
-      4*7, /* 12: RESERVED                                           */
-      4*7, /* 13: Coprocessor Protocol Violation        (unemulated) */
-      4*7, /* 14: Format Error                                       */
-     44*7, /* 15: Uninitialized Interrupt                            */
-      4*7, /* 16: RESERVED                                           */
-      4*7, /* 17: RESERVED                                           */
-      4*7, /* 18: RESERVED                                           */
-      4*7, /* 19: RESERVED                                           */
-      4*7, /* 20: RESERVED                                           */
-      4*7, /* 21: RESERVED                                           */
-      4*7, /* 22: RESERVED                                           */
-      4*7, /* 23: RESERVED                                           */
-     44*7, /* 24: Spurious Interrupt                                 */
-     44*7, /* 25: Level 1 Interrupt Autovector                       */
-     44*7, /* 26: Level 2 Interrupt Autovector                       */
-     44*7, /* 27: Level 3 Interrupt Autovector                       */
-     44*7, /* 28: Level 4 Interrupt Autovector                       */
-     44*7, /* 29: Level 5 Interrupt Autovector                       */
-     44*7, /* 30: Level 6 Interrupt Autovector                       */
-     44*7, /* 31: Level 7 Interrupt Autovector                       */
-     34*7, /* 32: TRAP #0 -- ASG: chanaged from 38                   */
-     34*7, /* 33: TRAP #1                                            */
-     34*7, /* 34: TRAP #2                                            */
-     34*7, /* 35: TRAP #3                                            */
-     34*7, /* 36: TRAP #4                                            */
-     34*7, /* 37: TRAP #5                                            */
-     34*7, /* 38: TRAP #6                                            */
-     34*7, /* 39: TRAP #7                                            */
-     34*7, /* 40: TRAP #8                                            */
-     34*7, /* 41: TRAP #9                                            */
-     34*7, /* 42: TRAP #10                                           */
-     34*7, /* 43: TRAP #11                                           */
-     34*7, /* 44: TRAP #12                                           */
-     34*7, /* 45: TRAP #13                                           */
-     34*7, /* 46: TRAP #14                                           */
-     34*7, /* 47: TRAP #15                                           */
-      4*7, /* 48: FP Branch or Set on Unknown Condition (unemulated) */
-      4*7, /* 49: FP Inexact Result                     (unemulated) */
-      4*7, /* 50: FP Divide by Zero                     (unemulated) */
-      4*7, /* 51: FP Underflow                          (unemulated) */
-      4*7, /* 52: FP Operand Error                      (unemulated) */
-      4*7, /* 53: FP Overflow                           (unemulated) */
-      4*7, /* 54: FP Signaling NAN                      (unemulated) */
-      4*7, /* 55: FP Unimplemented Data Type            (unemulated) */
-      4*7, /* 56: MMU Configuration Error               (unemulated) */
-      4*7, /* 57: MMU Illegal Operation Error           (unemulated) */
-      4*7, /* 58: MMU Access Level Violation Error      (unemulated) */
-      4*7, /* 59: RESERVED                                           */
-      4*7, /* 60: RESERVED                                           */
-      4*7, /* 61: RESERVED                                           */
-      4*7, /* 62: RESERVED                                           */
-      4*7, /* 63: RESERVED                                           */
+     40*MUL, /*  0: Reset - Initial Stack Pointer                      */
+      4*MUL, /*  1: Reset - Initial Program Counter                    */
+     50*MUL, /*  2: Bus Error                             (unemulated) */
+     50*MUL, /*  3: Address Error                         (unemulated) */
+     34*MUL, /*  4: Illegal Instruction                                */
+     38*MUL, /*  5: Divide by Zero -- ASG: changed from 42             */
+     40*MUL, /*  6: CHK -- ASG: chanaged from 44                       */
+     34*MUL, /*  7: TRAPV                                              */
+     34*MUL, /*  8: Privilege Violation                                */
+     34*MUL, /*  9: Trace                                              */
+      4*MUL, /* 10: 1010                                               */
+      4*MUL, /* 11: 1111                                               */
+      4*MUL, /* 12: RESERVED                                           */
+      4*MUL, /* 13: Coprocessor Protocol Violation        (unemulated) */
+      4*MUL, /* 14: Format Error                                       */
+     44*MUL, /* 15: Uninitialized Interrupt                            */
+      4*MUL, /* 16: RESERVED                                           */
+      4*MUL, /* 17: RESERVED                                           */
+      4*MUL, /* 18: RESERVED                                           */
+      4*MUL, /* 19: RESERVED                                           */
+      4*MUL, /* 20: RESERVED                                           */
+      4*MUL, /* 21: RESERVED                                           */
+      4*MUL, /* 22: RESERVED                                           */
+      4*MUL, /* 23: RESERVED                                           */
+     44*MUL, /* 24: Spurious Interrupt                                 */
+     44*MUL, /* 25: Level 1 Interrupt Autovector                       */
+     44*MUL, /* 26: Level 2 Interrupt Autovector                       */
+     44*MUL, /* 27: Level 3 Interrupt Autovector                       */
+     44*MUL, /* 28: Level 4 Interrupt Autovector                       */
+     44*MUL, /* 29: Level 5 Interrupt Autovector                       */
+     44*MUL, /* 30: Level 6 Interrupt Autovector                       */
+     44*MUL, /* 31: Level 7 Interrupt Autovector                       */
+     34*MUL, /* 32: TRAP #0 -- ASG: chanaged from 38                   */
+     34*MUL, /* 33: TRAP #1                                            */
+     34*MUL, /* 34: TRAP #2                                            */
+     34*MUL, /* 35: TRAP #3                                            */
+     34*MUL, /* 36: TRAP #4                                            */
+     34*MUL, /* 37: TRAP #5                                            */
+     34*MUL, /* 38: TRAP #6                                            */
+     34*MUL, /* 39: TRAP #7                                            */
+     34*MUL, /* 40: TRAP #8                                            */
+     34*MUL, /* 41: TRAP #9                                            */
+     34*MUL, /* 42: TRAP #10                                           */
+     34*MUL, /* 43: TRAP #11                                           */
+     34*MUL, /* 44: TRAP #12                                           */
+     34*MUL, /* 45: TRAP #13                                           */
+     34*MUL, /* 46: TRAP #14                                           */
+     34*MUL, /* 47: TRAP #15                                           */
+      4*MUL, /* 48: FP Branch or Set on Unknown Condition (unemulated) */
+      4*MUL, /* 49: FP Inexact Result                     (unemulated) */
+      4*MUL, /* 50: FP Divide by Zero                     (unemulated) */
+      4*MUL, /* 51: FP Underflow                          (unemulated) */
+      4*MUL, /* 52: FP Operand Error                      (unemulated) */
+      4*MUL, /* 53: FP Overflow                           (unemulated) */
+      4*MUL, /* 54: FP Signaling NAN                      (unemulated) */
+      4*MUL, /* 55: FP Unimplemented Data Type            (unemulated) */
+      4*MUL, /* 56: MMU Configuration Error               (unemulated) */
+      4*MUL, /* 57: MMU Illegal Operation Error           (unemulated) */
+      4*MUL, /* 58: MMU Access Level Violation Error      (unemulated) */
+      4*MUL, /* 59: RESERVED                                           */
+      4*MUL, /* 60: RESERVED                                           */
+      4*MUL, /* 61: RESERVED                                           */
+      4*MUL, /* 62: RESERVED                                           */
+      4*MUL, /* 63: RESERVED                                           */
          /* 64-255: User Defined                                   */
-      4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,
-      4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,
-      4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,
-      4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,
-      4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,
-      4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7,4*7
+      4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,
+      4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,
+      4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,
+      4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,
+      4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,
+      4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL,4*MUL
 };
 
 /* Read data immediately after the program counter */
@@ -969,10 +787,6 @@ INLINE void m68ki_exception_address_error(void);
 INLINE void m68ki_exception_interrupt(uint int_level);
 INLINE void m68ki_check_interrupts(void);            /* ASG: check for interrupts */
 
-/* External ressources (specific to Genesis Plus GX core) */
-extern int vdp_68k_irq_ack(int int_level);
-extern uint32 mcycles_68k;
-
 /* ======================================================================== */
 /* =========================== UTILITY FUNCTIONS ========================== */
 /* ======================================================================== */
@@ -1052,74 +866,73 @@ INLINE uint m68ki_read_imm_32(void)
  */
 INLINE uint m68ki_read_8_fc(uint address, uint fc)
 {
-  _m68k_memory_map *temp;
+  cpu_memory_map *temp = &m68ki_cpu.memory_map[((address)>>16)&0xff];;
 
   m68ki_set_fc(fc) /* auto-disable (see m68kcpu.h) */
 
-  temp = &m68k_memory_map[((address)>>16)&0xff];
   if (temp->read8) return (*temp->read8)(ADDRESS_68K(address));
   else return READ_BYTE(temp->base, (address) & 0xffff);
 }
 
 INLINE uint m68ki_read_16_fc(uint address, uint fc)
 {
-  _m68k_memory_map *temp;
+  cpu_memory_map *temp;
 
   m68ki_set_fc(fc) /* auto-disable (see m68kcpu.h) */
   m68ki_check_address_error(address, MODE_READ, fc) /* auto-disable (see m68kcpu.h) */
   
-  temp = &m68k_memory_map[((address)>>16)&0xff];
+  temp = &m68ki_cpu.memory_map[((address)>>16)&0xff];
   if (temp->read16) return (*temp->read16)(ADDRESS_68K(address));
   else return *(uint16 *)(temp->base + ((address) & 0xffff));
 }
 
 INLINE uint m68ki_read_32_fc(uint address, uint fc)
 {
-  _m68k_memory_map *temp;
+  cpu_memory_map *temp;
 
   m68ki_set_fc(fc) /* auto-disable (see m68kcpu.h) */
   m68ki_check_address_error(address, MODE_READ, fc) /* auto-disable (see m68kcpu.h) */
 
-  temp = &m68k_memory_map[((address)>>16)&0xff];
+  temp = &m68ki_cpu.memory_map[((address)>>16)&0xff];
   if (temp->read16) return ((*temp->read16)(ADDRESS_68K(address)) << 16) | ((*temp->read16)(ADDRESS_68K(address + 2)));
   else return m68k_read_immediate_32(address);
 }
 
 INLINE void m68ki_write_8_fc(uint address, uint fc, uint value)
 {
-  _m68k_memory_map *temp;
+  cpu_memory_map *temp;
 
   m68ki_set_fc(fc) /* auto-disable (see m68kcpu.h) */
 
-  temp = &m68k_memory_map[((address)>>16)&0xff];
+  temp = &m68ki_cpu.memory_map[((address)>>16)&0xff];
   if (temp->write8) (*temp->write8)(ADDRESS_68K(address),value);
   else WRITE_BYTE(temp->base, (address) & 0xffff, value);
 }
 
 INLINE void m68ki_write_16_fc(uint address, uint fc, uint value)
 {
-  _m68k_memory_map *temp;
+  cpu_memory_map *temp;
 
   m68ki_set_fc(fc) /* auto-disable (see m68kcpu.h) */
   m68ki_check_address_error(address, MODE_WRITE, fc); /* auto-disable (see m68kcpu.h) */
 
-  temp = &m68k_memory_map[((address)>>16)&0xff];
+  temp = &m68ki_cpu.memory_map[((address)>>16)&0xff];
   if (temp->write16) (*temp->write16)(ADDRESS_68K(address),value);
   else *(uint16 *)(temp->base + ((address) & 0xffff)) = value;
 }
 
 INLINE void m68ki_write_32_fc(uint address, uint fc, uint value)
 {
-  _m68k_memory_map *temp;
+  cpu_memory_map *temp;
 
   m68ki_set_fc(fc) /* auto-disable (see m68kcpu.h) */
   m68ki_check_address_error(address, MODE_WRITE, fc) /* auto-disable (see m68kcpu.h) */
 
-  temp = &m68k_memory_map[((address)>>16)&0xff];
+  temp = &m68ki_cpu.memory_map[((address)>>16)&0xff];
   if (temp->write16) (*temp->write16)(ADDRESS_68K(address),value>>16);
   else *(uint16 *)(temp->base + ((address) & 0xffff)) = value >> 16;
 
-  temp = &m68k_memory_map[((address + 2)>>16)&0xff];
+  temp = &m68ki_cpu.memory_map[((address + 2)>>16)&0xff];
   if (temp->write16) (*temp->write16)(ADDRESS_68K(address+2),value&0xffff);
   else *(uint16 *)(temp->base + ((address + 2) & 0xffff)) = value;
 }
@@ -1396,13 +1209,13 @@ INLINE void m68ki_stack_frame_buserr(uint sr)
   m68ki_push_32(REG_PC);
   m68ki_push_16(sr);
   m68ki_push_16(REG_IR);
-  m68ki_push_32(m68ki_aerr_address);  /* access address */
+  m68ki_push_32(m68ki_cpu.aerr_address);  /* access address */
   /* 0 0 0 0 0 0 0 0 0 0 0 R/W I/N FC
      * R/W  0 = write, 1 = read
      * I/N  0 = instruction, 1 = not
      * FC   3-bit function code
      */
-  m68ki_push_16(m68ki_aerr_write_mode | CPU_INSTR_MODE | m68ki_aerr_fc);
+  m68ki_push_16(m68ki_cpu.aerr_write_mode | CPU_INSTR_MODE | m68ki_cpu.aerr_fc);
 }
 #endif
 
@@ -1520,7 +1333,7 @@ INLINE void m68ki_exception_address_error(void)
   if(CPU_RUN_MODE == RUN_MODE_BERR_AERR_RESET)
   {
     CPU_STOPPED = STOP_LEVEL_HALT;
-    END_CYCLES(end_cycles);
+    SET_CYCLES(m68ki_cpu.cycle_end - CYC_INSTRUCTION[REG_IR]);
     return;
   }
   CPU_RUN_MODE = RUN_MODE_BERR_AERR_RESET;
@@ -1545,7 +1358,7 @@ INLINE void m68ki_exception_interrupt(uint int_level)
   #endif /* M68K_EMULATE_ADDRESS_ERROR */
 
   /* Turn off the stopped state */
-  CPU_STOPPED &= ~STOP_LEVEL_STOP;
+  CPU_STOPPED &= STOP_LEVEL_HALT;
 
   /* If we are halted, don't do anything */
   if(CPU_STOPPED)
@@ -1561,7 +1374,7 @@ INLINE void m68ki_exception_interrupt(uint int_level)
   FLAG_INT_MASK = int_level<<8;
 
   /* Acknowledge the interrupt */
-  m68ki_int_ack(int_level)
+  m68ki_int_ack(int_level);
 
   /* Get the new PC */
   new_pc = m68ki_read_data_32(vector<<2);
@@ -1585,8 +1398,6 @@ INLINE void m68ki_check_interrupts(void)
   if(CPU_INT_LEVEL > FLAG_INT_MASK)
     m68ki_exception_interrupt(CPU_INT_LEVEL>>8);
 }
-
-#endif /* _MEM68K_H_ */
 
 
 /* ======================================================================== */

@@ -3,7 +3,7 @@
  *
  *  Genesis Plus GX input support
  *
- *  Copyright Eke-Eke (2007-2011)
+ *  Copyright Eke-Eke (2007-2012)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -413,10 +413,10 @@ static void pad_update(s8 chan, u8 i)
       }
 
       /* D-PAD */
-      if (p & PAD_BUTTON_UP) input.pad[i] |= INPUT_UP;
-      else if (p & PAD_BUTTON_DOWN) input.pad[i] |= INPUT_DOWN;
-      if (p & PAD_BUTTON_LEFT) input.pad[i] |= INPUT_LEFT;
-      else if (p & PAD_BUTTON_RIGHT) input.pad[i] |= INPUT_RIGHT;
+      if (p & PAD_BUTTON_UP) input.pad[0] |= INPUT_UP;
+      else if (p & PAD_BUTTON_DOWN) input.pad[0] |= INPUT_DOWN;
+      if (p & PAD_BUTTON_LEFT) input.pad[0] |= INPUT_LEFT;
+      else if (p & PAD_BUTTON_RIGHT) input.pad[0] |= INPUT_RIGHT;
 
       /* PEN screen position (x,y) */
       input.analog[0][0] += x / ANALOG_SENSITIVITY;
@@ -428,9 +428,14 @@ static void pad_update(s8 chan, u8 i)
       if (input.analog[0][1] < 0x1fc) input.analog[0][1] = 0x1fc;
       else if (input.analog[0][1] > 0x3f3) input.analog[0][1] = 0x3f3;
 
-      /* PEN & RED buttons */
-      if (p & pad_keymap[KEY_BUTTONA]) input.pad[i] |= INPUT_A;
-      if (p & pad_keymap[KEY_BUTTONB]) input.pad[i] |= INPUT_B;
+      /* PEN button */
+      if (p & pad_keymap[KEY_BUTTONA]) input.pad[0] |= INPUT_PICO_RED;
+
+      /* RED button */
+      if (p & pad_keymap[KEY_BUTTONB]) input.pad[0] |= INPUT_PICO_PEN;
+
+      /* PAGE index increment */
+      if (p & pad_keymap[KEY_BUTTONC]) pico_current = (pico_current + 1) & 7;
 
       break;
     }
@@ -455,7 +460,7 @@ static void pad_update(s8 chan, u8 i)
       else if (input.analog[0][1] > 250) input.analog[0][1] = 250;
 
       /* PEN button */
-      if (p & pad_keymap[KEY_BUTTONA]) input.pad[i] |= INPUT_B;
+      if (p & pad_keymap[KEY_BUTTONA]) input.pad[0] |= INPUT_BUTTON1;
 
       break;
     }
@@ -1016,9 +1021,14 @@ static void wpad_update(s8 chan, u8 i, u32 exp)
         }
       }
 
-      /* PEN & RED buttons */
-      if (p & wpad_keymap[KEY_BUTTONA]) input.pad[i] |= INPUT_A;
-      if (p & wpad_keymap[KEY_BUTTONB]) input.pad[i] |= INPUT_B;
+      /* PEN button */
+      if (p & wpad_keymap[KEY_BUTTONA]) input.pad[0] |= INPUT_PICO_PEN;
+
+      /* RED button */
+      if (p & wpad_keymap[KEY_BUTTONB]) input.pad[0] |= INPUT_PICO_RED;
+
+      /* PAGE index increment */
+      if (p & wpad_keymap[KEY_BUTTONC]) pico_current = (pico_current + 1) & 7;
 
       break;
     }
@@ -1048,7 +1058,7 @@ static void wpad_update(s8 chan, u8 i, u32 exp)
       }
 
       /* PEN button */
-      if (p & wpad_keymap[KEY_BUTTONA]) input.pad[i] |= INPUT_B;
+      if (p & wpad_keymap[KEY_BUTTONA]) input.pad[0] |= INPUT_BUTTON1;
 
       break;
     }
