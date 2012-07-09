@@ -30,321 +30,157 @@
     <Filter Include="Source Files\libretro">
       <UniqueIdentifier>{2f0a4c83-ad74-4742-baef-35fafdca0e67}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\libretro">
-      <UniqueIdentifier>{c9414edf-4224-4099-8f74-b0e568024aaf}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\cart_hw">
-      <UniqueIdentifier>{a4dfea3d-749a-49ef-8da0-83b11b257674}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\input_hw">
-      <UniqueIdentifier>{31cd36b8-e005-4711-b914-e959f77f84c2}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\sound">
-      <UniqueIdentifier>{72abffc5-b66c-49dd-85e9-534022a36bc6}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\z80">
-      <UniqueIdentifier>{4756672f-68e1-40c7-b78f-2a962c9bbe9e}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\m68k">
-      <UniqueIdentifier>{48e868f1-3e80-4888-9273-2b6676beb9f7}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\cart_hw\svp">
-      <UniqueIdentifier>{7ce7e0de-8fc7-48bd-8fda-8afa919ee775}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\ntsc">
-      <UniqueIdentifier>{53739b7c-d154-46d2-8a8d-28cc67c675aa}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source Files\ntsc">
       <UniqueIdentifier>{c90aed8d-25e3-439e-acec-f66acc8b4c0d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\cd_hw">
+      <UniqueIdentifier>{d8d4356b-c678-422e-aa12-9f52ba60fdbc}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\src\genesis.c">
+    <ClCompile Include="..\..\..\source\vdp_render.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\io_ctrl.c">
+    <ClCompile Include="..\..\..\source\genesis.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\loadrom.c">
+    <ClCompile Include="..\..\..\source\io_ctrl.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\mem68k.c">
+    <ClCompile Include="..\..\..\source\loadrom.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\membnk.c">
+    <ClCompile Include="..\..\..\source\mem68k.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\memz80.c">
+    <ClCompile Include="..\..\..\source\membnk.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\state.c">
+    <ClCompile Include="..\..\..\source\memz80.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\system.c">
+    <ClCompile Include="..\..\..\source\state.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\vdp_ctrl.c">
+    <ClCompile Include="..\..\..\source\system.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\vdp_render.c">
+    <ClCompile Include="..\..\..\source\vdp_ctrl.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\m68k\m68kcpu.c">
-      <Filter>Source Files\m68k</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\sound\ym2612.c">
-      <Filter>Source Files\sound</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\sound\blip.c">
-      <Filter>Source Files\sound</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\sound\eq.c">
-      <Filter>Source Files\sound</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\sound\Fir_Resampler.c">
-      <Filter>Source Files\sound</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\sound\sn76489.c">
-      <Filter>Source Files\sound</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\sound\sound.c">
-      <Filter>Source Files\sound</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\sound\ym2413.c">
-      <Filter>Source Files\sound</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\cart_hw\sram.c">
-      <Filter>Source Files\cart_hw</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\cart_hw\areplay.c">
-      <Filter>Source Files\cart_hw</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\cart_hw\gg_eeprom.c">
-      <Filter>Source Files\cart_hw</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\cart_hw\ggenie.c">
-      <Filter>Source Files\cart_hw</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\cart_hw\md_cart.c">
-      <Filter>Source Files\cart_hw</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\cart_hw\md_eeprom.c">
-      <Filter>Source Files\cart_hw</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\cart_hw\sms_cart.c">
-      <Filter>Source Files\cart_hw</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\input_hw\xe_a1p.c">
-      <Filter>Source Files\input_hw</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\input_hw\activator.c">
-      <Filter>Source Files\input_hw</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\input_hw\gamepad.c">
-      <Filter>Source Files\input_hw</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\input_hw\input.c">
-      <Filter>Source Files\input_hw</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\input_hw\lightgun.c">
-      <Filter>Source Files\input_hw</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\input_hw\mouse.c">
-      <Filter>Source Files\input_hw</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\input_hw\paddle.c">
-      <Filter>Source Files\input_hw</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\input_hw\sportspad.c">
-      <Filter>Source Files\input_hw</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\input_hw\teamplayer.c">
-      <Filter>Source Files\input_hw</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\input_hw\terebi_oekaki.c">
-      <Filter>Source Files\input_hw</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\z80\z80.c">
+    <ClCompile Include="..\..\..\source\z80\z80.c">
       <Filter>Source Files\z80</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\cart_hw\svp\svp.c">
-      <Filter>Source Files\cart_hw\svp</Filter>
+    <ClCompile Include="..\..\..\source\sound\ym2612.c">
+      <Filter>Source Files\sound</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\cart_hw\svp\ssp16.c">
-      <Filter>Source Files\cart_hw\svp</Filter>
+    <ClCompile Include="..\..\..\source\sound\blip.c">
+      <Filter>Source Files\sound</Filter>
     </ClCompile>
-    <ClCompile Include="..\libretro\libretro.c">
+    <ClCompile Include="..\..\..\source\sound\eq.c">
+      <Filter>Source Files\sound</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\sound\Fir_Resampler.c">
+      <Filter>Source Files\sound</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\sound\sn76489.c">
+      <Filter>Source Files\sound</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\sound\sound.c">
+      <Filter>Source Files\sound</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\sound\ym2413.c">
+      <Filter>Source Files\sound</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\ntsc\sms_ntsc.c">
+      <Filter>Source Files\ntsc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\ntsc\md_ntsc.c">
+      <Filter>Source Files\ntsc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\m68k\s68kcpu.c">
+      <Filter>Source Files\m68k</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\m68k\m68kcpu.c">
+      <Filter>Source Files\m68k</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\libretro.c">
       <Filter>Source Files\libretro</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\ntsc\sms_ntsc.c">
-      <Filter>Source Files\ntsc</Filter>
+    <ClCompile Include="..\..\..\source\input_hw\xe_a1p.c">
+      <Filter>Source Files\input_hw</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\ntsc\md_ntsc.c">
-      <Filter>Source Files\ntsc</Filter>
+    <ClCompile Include="..\..\..\source\input_hw\activator.c">
+      <Filter>Source Files\input_hw</Filter>
     </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="..\libretro\osd.h">
-      <Filter>Header Files\libretro</Filter>
-    </ClInclude>
-    <ClInclude Include="..\libretro\libretro.h">
-      <Filter>Header Files\libretro</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\vdp_render.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\genesis.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\hvc.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\io_ctrl.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\loadrom.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\macros.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\mem68k.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\membnk.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\memz80.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\shared.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\state.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\system.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\types.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\vdp_ctrl.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\cart_hw\sram.h">
-      <Filter>Header Files\cart_hw</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\cart_hw\areplay.h">
-      <Filter>Header Files\cart_hw</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\cart_hw\gg_eeprom.h">
-      <Filter>Header Files\cart_hw</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\cart_hw\ggenie.h">
-      <Filter>Header Files\cart_hw</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\cart_hw\md_cart.h">
-      <Filter>Header Files\cart_hw</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\cart_hw\md_eeprom.h">
-      <Filter>Header Files\cart_hw</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\cart_hw\sms_cart.h">
-      <Filter>Header Files\cart_hw</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\input_hw\xe_a1p.h">
-      <Filter>Header Files\input_hw</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\input_hw\activator.h">
-      <Filter>Header Files\input_hw</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\input_hw\gamepad.h">
-      <Filter>Header Files\input_hw</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\input_hw\input.h">
-      <Filter>Header Files\input_hw</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\input_hw\lightgun.h">
-      <Filter>Header Files\input_hw</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\input_hw\mouse.h">
-      <Filter>Header Files\input_hw</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\input_hw\paddle.h">
-      <Filter>Header Files\input_hw</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\input_hw\sportspad.h">
-      <Filter>Header Files\input_hw</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\input_hw\teamplayer.h">
-      <Filter>Header Files\input_hw</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\input_hw\terebi_oekaki.h">
-      <Filter>Header Files\input_hw</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\sound\ym2612.h">
-      <Filter>Header Files\sound</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\sound\blip.h">
-      <Filter>Header Files\sound</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\sound\eq.h">
-      <Filter>Header Files\sound</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\sound\Fir_Resampler.h">
-      <Filter>Header Files\sound</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\sound\sn76489.h">
-      <Filter>Header Files\sound</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\sound\sound.h">
-      <Filter>Header Files\sound</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\sound\ym2413.h">
-      <Filter>Header Files\sound</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\z80\z80.h">
-      <Filter>Header Files\z80</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\z80\osd_cpu.h">
-      <Filter>Header Files\z80</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\m68k\m68kops.h">
-      <Filter>Header Files\m68k</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\m68k\m68k.h">
-      <Filter>Header Files\m68k</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\m68k\m68kconf.h">
-      <Filter>Header Files\m68k</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\m68k\m68kcpu.h">
-      <Filter>Header Files\m68k</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\cart_hw\svp\svp.h">
-      <Filter>Header Files\cart_hw\svp</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\cart_hw\svp\ssp16.h">
-      <Filter>Header Files\cart_hw\svp</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\ntsc\sms_ntsc_impl.h">
-      <Filter>Header Files\ntsc</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\ntsc\md_ntsc.h">
-      <Filter>Header Files\ntsc</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\ntsc\md_ntsc_config.h">
-      <Filter>Header Files\ntsc</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\ntsc\md_ntsc_impl.h">
-      <Filter>Header Files\ntsc</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\ntsc\sms_ntsc.h">
-      <Filter>Header Files\ntsc</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\ntsc\sms_ntsc_config.h">
-      <Filter>Header Files\ntsc</Filter>
-    </ClInclude>
+    <ClCompile Include="..\..\..\source\input_hw\gamepad.c">
+      <Filter>Source Files\input_hw</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\input_hw\input.c">
+      <Filter>Source Files\input_hw</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\input_hw\lightgun.c">
+      <Filter>Source Files\input_hw</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\input_hw\mouse.c">
+      <Filter>Source Files\input_hw</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\input_hw\paddle.c">
+      <Filter>Source Files\input_hw</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\input_hw\sportspad.c">
+      <Filter>Source Files\input_hw</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\input_hw\teamplayer.c">
+      <Filter>Source Files\input_hw</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\input_hw\terebi_oekaki.c">
+      <Filter>Source Files\input_hw</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\cart_hw\sram.c">
+      <Filter>Source Files\cart_hw</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\cart_hw\areplay.c">
+      <Filter>Source Files\cart_hw</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\cart_hw\gg_eeprom.c">
+      <Filter>Source Files\cart_hw</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\cart_hw\ggenie.c">
+      <Filter>Source Files\cart_hw</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\cart_hw\md_cart.c">
+      <Filter>Source Files\cart_hw</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\cart_hw\md_eeprom.c">
+      <Filter>Source Files\cart_hw</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\cart_hw\sms_cart.c">
+      <Filter>Source Files\cart_hw</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\cart_hw\svp\svp.c">
+      <Filter>Source Files\cart_hw\svp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\cart_hw\svp\ssp16.c">
+      <Filter>Source Files\cart_hw\svp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\cd_hw\cd_cart.c">
+      <Filter>Source Files\cd_hw</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\cd_hw\cdc.c">
+      <Filter>Source Files\cd_hw</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\cd_hw\cdd.c">
+      <Filter>Source Files\cd_hw</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\cd_hw\gfx.c">
+      <Filter>Source Files\cd_hw</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\cd_hw\pcm.c">
+      <Filter>Source Files\cd_hw</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\cd_hw\scd.c">
+      <Filter>Source Files\cd_hw</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

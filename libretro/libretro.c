@@ -124,6 +124,7 @@ int load_archive(char *filename, unsigned char *buffer, int maxsize)
   fread(in, CHUNKSIZE, 1, fd);
 
   {
+	int left;
     /* Get file size */
     fseek(fd, 0, SEEK_END);
     size = ftell(fd);
@@ -141,7 +142,7 @@ int load_archive(char *filename, unsigned char *buffer, int maxsize)
     fprintf(stderr, "INFORMATION - %s\n", msg);
 
     /* Read into buffer */
-    int left = size;
+    left = size;
     while (left > CHUNKSIZE)
     {
       fread(buffer, CHUNKSIZE, 1, fd);
@@ -280,6 +281,7 @@ static void configure_controls(void)
 
 static int slot_load(int slot)
 {
+  FILE *fp;
   char filename[MAXPATHLEN];
   unsigned long filesize, done = 0;
   uint8_t *buffer;
@@ -306,7 +308,7 @@ static int slot_load(int slot)
       sprintf (filename,"%s/saves/%s.srm", DEFAULT_PATH, rom_filename);
 
     /* Open file */
-    FILE *fp = fopen(filename, "rb");
+    fp = fopen(filename, "rb");
     if (!fp)
     {
       fprintf(stderr, "ERROR - Unable to open file.\n");
@@ -319,7 +321,7 @@ static int slot_load(int slot)
     fseek(fp, 0, SEEK_SET);
 
     /* allocate buffer */
-    buffer = (uint8_t *)memalign(32,filesize);
+    buffer = (uint8_t *)malloc(filesize);
     if (!buffer)
     {
       fprintf(stderr, "ERROR - Unable to allocate memory.\n");
@@ -367,6 +369,7 @@ static int slot_load(int slot)
 
 static int slot_save(int slot)
 {
+  FILE *fp;
   char filename[MAXPATHLEN];
   unsigned long filesize, done = 0;
   uint8_t *buffer;
@@ -376,7 +379,7 @@ static int slot_save(int slot)
     fprintf(stderr, "INFORMATION - Saving State ...\n");
 
     /* allocate buffer */
-    buffer = (uint8_t *)memalign(32,STATE_SIZE);
+    buffer = (uint8_t *)malloc(STATE_SIZE);
     if (!buffer)
     {
       fprintf(stderr, "ERROR - Unable to allocate memory.\n");
@@ -404,7 +407,7 @@ static int slot_save(int slot)
     fprintf(stderr, "INFORMATION - Saving SRAM ...\n");
 
     /* allocate buffer */
-    buffer = (uint8_t *)memalign(32, 0x10000);
+    buffer = (uint8_t *)malloc(0x10000);
     if (!buffer)
     {
       fprintf(stderr, "ERROR - Unable to allocate memory.\n");
@@ -432,7 +435,7 @@ static int slot_save(int slot)
     }
 
     /* Open file */
-    FILE *fp = fopen(filename, "wb");
+    fp = fopen(filename, "wb");
     if (!fp)
     {
       fprintf(stderr, "ERROR - Unable to open file.\n");
@@ -463,6 +466,7 @@ static int slot_save(int slot)
 
 static void slot_autoload(int slot)
 {
+  FILE *fp;
   /* Mega CD backup RAM specific */
   if (!slot && (system_hw == SYSTEM_MCD))
   {
@@ -485,7 +489,7 @@ static void slot_autoload(int slot)
           return;
     }
 
-    FILE *fp = fopen(path, "rb");
+    fp = fopen(path, "rb");
     if (fp != NULL)
     {
       fread(scd.bram, 0x2000, 1, fp);
@@ -548,6 +552,7 @@ static void slot_autoload(int slot)
 
 static void slot_autosave(int slot)
 {
+  FILE *fp;
   /* Mega CD backup RAM specific */
   if (!slot && (system_hw == SYSTEM_MCD))
   {
@@ -574,7 +579,7 @@ static void slot_autosave(int slot)
 		default:
 		        return;
 	}
-        FILE *fp = fopen(path, "wb");
+        fp = fopen(path, "wb");
         if (fp != NULL)
         {
           fwrite(scd.bram, 0x2000, 1, fp);
@@ -669,10 +674,11 @@ void retro_cheat_set(unsigned index, bool enabled, const char *code)
 
 static void extract_directory(char *buf, const char *path, size_t size)
 {
+   char *base;
    strncpy(buf, path, size - 1);
    buf[size - 1] = '\0';
 
-   char *base = strrchr(buf, '/');
+   base = strrchr(buf, '/');
    if (!base)
       base = strrchr(buf, '\\');
 
@@ -729,7 +735,6 @@ static void retro_set_viewport_dimensions(void)
 
 bool retro_load_game(const struct retro_game_info *info)
 {
-   int i;
    const char *full_path;
    extract_directory(g_rom_dir, info->path, sizeof(g_rom_dir));
 
@@ -778,6 +783,7 @@ bool retro_load_game_special(unsigned game_type, const struct retro_game_info *i
    (void)game_type;
    (void)info;
    (void)num_info;
+   return FALSE;
 }
 
 void retro_unload_game(void) 
@@ -821,6 +827,7 @@ size_t retro_get_memory_size(unsigned id)
 void retro_init(void)
 {
    const char *dir = NULL;
+   unsigned level;
 #if defined(USE_NTSC)
    sms_ntsc = calloc(1, sizeof(sms_ntsc_t));
    md_ntsc  = calloc(1, sizeof(md_ntsc_t));
@@ -865,7 +872,7 @@ void retro_init(void)
       failed_init = true;
    }
 
-   unsigned level = 1;
+   level = 1;
    environ_cb(RETRO_ENVIRONMENT_SET_PERFORMANCE_LEVEL, &level);
 }
 

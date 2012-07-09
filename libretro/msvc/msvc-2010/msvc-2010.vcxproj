@@ -10,6 +10,57 @@
       <Platform>Win32</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\..\source\cart_hw\areplay.c" />
+    <ClCompile Include="..\..\..\source\cart_hw\ggenie.c" />
+    <ClCompile Include="..\..\..\source\cart_hw\gg_eeprom.c" />
+    <ClCompile Include="..\..\..\source\cart_hw\md_cart.c" />
+    <ClCompile Include="..\..\..\source\cart_hw\md_eeprom.c" />
+    <ClCompile Include="..\..\..\source\cart_hw\sms_cart.c" />
+    <ClCompile Include="..\..\..\source\cart_hw\sram.c" />
+    <ClCompile Include="..\..\..\source\cart_hw\svp\ssp16.c" />
+    <ClCompile Include="..\..\..\source\cart_hw\svp\svp.c" />
+    <ClCompile Include="..\..\..\source\cd_hw\cdc.c" />
+    <ClCompile Include="..\..\..\source\cd_hw\cdd.c" />
+    <ClCompile Include="..\..\..\source\cd_hw\cd_cart.c" />
+    <ClCompile Include="..\..\..\source\cd_hw\gfx.c" />
+    <ClCompile Include="..\..\..\source\cd_hw\pcm.c" />
+    <ClCompile Include="..\..\..\source\cd_hw\scd.c" />
+    <ClCompile Include="..\..\..\source\genesis.c" />
+    <ClCompile Include="..\..\..\source\input_hw\activator.c" />
+    <ClCompile Include="..\..\..\source\input_hw\gamepad.c" />
+    <ClCompile Include="..\..\..\source\input_hw\input.c" />
+    <ClCompile Include="..\..\..\source\input_hw\lightgun.c" />
+    <ClCompile Include="..\..\..\source\input_hw\mouse.c" />
+    <ClCompile Include="..\..\..\source\input_hw\paddle.c" />
+    <ClCompile Include="..\..\..\source\input_hw\sportspad.c" />
+    <ClCompile Include="..\..\..\source\input_hw\teamplayer.c" />
+    <ClCompile Include="..\..\..\source\input_hw\terebi_oekaki.c" />
+    <ClCompile Include="..\..\..\source\input_hw\xe_a1p.c" />
+    <ClCompile Include="..\..\..\source\io_ctrl.c" />
+    <ClCompile Include="..\..\..\source\loadrom.c" />
+    <ClCompile Include="..\..\..\source\m68k\m68kcpu.c" />
+    <ClCompile Include="..\..\..\source\m68k\s68kcpu.c" />
+    <ClCompile Include="..\..\..\source\mem68k.c" />
+    <ClCompile Include="..\..\..\source\membnk.c" />
+    <ClCompile Include="..\..\..\source\memz80.c" />
+    <ClCompile Include="..\..\..\source\ntsc\md_ntsc.c" />
+    <ClCompile Include="..\..\..\source\ntsc\sms_ntsc.c" />
+    <ClCompile Include="..\..\..\source\sound\blip.c" />
+    <ClCompile Include="..\..\..\source\sound\eq.c" />
+    <ClCompile Include="..\..\..\source\sound\Fir_Resampler.c" />
+    <ClCompile Include="..\..\..\source\sound\sn76489.c" />
+    <ClCompile Include="..\..\..\source\sound\sound.c" />
+    <ClCompile Include="..\..\..\source\sound\ym2413.c" />
+    <ClCompile Include="..\..\..\source\sound\ym2612.c" />
+    <ClCompile Include="..\..\..\source\state.c" />
+    <ClCompile Include="..\..\..\source\system.c" />
+    <ClCompile Include="..\..\..\source\vdp_ctrl.c" />
+    <ClCompile Include="..\..\..\source\vdp_render.c" />
+    <ClCompile Include="..\..\..\source\z80\z80.c" />
+    <ClCompile Include="..\..\libretro.c" />
+    <ClCompile Include="..\..\scrc32.c" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{29DF2EE7-2930-4BD3-8AC5-81A2534ACC99}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
@@ -53,7 +104,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;MSVC2010_EXPORTS;_CRT_SECURE_NO_WARNINGS;INLINE=static _inline;__inline__=_inline;__extension__=;LSB_FIRST;__LIBRETRO__;USE_15BPP_RENDERING;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(SolutionDir)/../src;$(SolutionDir)/../utils/zlib;$(SolutionDir)/../src/cart_hw/svp;$(SolutionDir)/../libretro;$(SolutionDir)/../src/m68k;$(SolutionDir)/../src/z80;$(SolutionDir)/../src/input_hw;$(SolutionDir)/../src/cart_hw;$(SolutionDir)/../src/sound;$(SolutionDir)/../src/ntsc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)/../../source;$(SolutionDir)/../../utils/zlib;$(SolutionDir)/../../source/cart_hw/svp;$(SolutionDir)/../../libretro;$(SolutionDir)/../../source/m68k;$(SolutionDir)/../../source/z80;$(SolutionDir)/../../source/input_hw;$(SolutionDir)/../../source/cart_hw;$(SolutionDir)/../../source/sound;$(SolutionDir)/../../source/ntsc;$(SolutionDir)/../../source/cd_hw;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -70,7 +121,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;MSVC2010_EXPORTS;_CRT_SECURE_NO_WARNINGS;INLINE=static _inline;__inline__=_inline;__extension__=;LSB_FIRST;__LIBRETRO__;USE_15BPP_RENDERING;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(SolutionDir)/../src;$(SolutionDir)/../utils/zlib;$(SolutionDir)/../src/cart_hw/svp;$(SolutionDir)/../libretro;$(SolutionDir)/../src/m68k;$(SolutionDir)/../src/z80;$(SolutionDir)/../src/input_hw;$(SolutionDir)/../src/cart_hw;$(SolutionDir)/../src/sound;$(SolutionDir)/../src/ntsc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)/../../source;$(SolutionDir)/../../utils/zlib;$(SolutionDir)/../../source/cart_hw/svp;$(SolutionDir)/../../libretro;$(SolutionDir)/../../source/m68k;$(SolutionDir)/../../source/z80;$(SolutionDir)/../../source/input_hw;$(SolutionDir)/../../source/cart_hw;$(SolutionDir)/../../source/sound;$(SolutionDir)/../../source/ntsc;$(SolutionDir)/../../source/cd_hw;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -80,239 +131,6 @@
       <ModuleDefinitionFile>libretro.def</ModuleDefinitionFile>
     </Link>
   </ItemDefinitionGroup>
-  <ItemGroup>
-    <ClCompile Include="..\libretro\libretro.c">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsC</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsC</CompileAs>
-    </ClCompile>
-    <ClCompile Include="..\src\cart_hw\areplay.c">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsC</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsC</CompileAs>
-    </ClCompile>
-    <ClCompile Include="..\src\cart_hw\ggenie.c">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsC</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsC</CompileAs>
-    </ClCompile>
-    <ClCompile Include="..\src\cart_hw\gg_eeprom.c">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsC</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsC</CompileAs>
-    </ClCompile>
-    <ClCompile Include="..\src\cart_hw\md_cart.c">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsC</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsC</CompileAs>
-    </ClCompile>
-    <ClCompile Include="..\src\cart_hw\md_eeprom.c">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsC</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsC</CompileAs>
-    </ClCompile>
-    <ClCompile Include="..\src\cart_hw\sms_cart.c">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsC</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsC</CompileAs>
-    </ClCompile>
-    <ClCompile Include="..\src\cart_hw\sram.c">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsC</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsC</CompileAs>
-    </ClCompile>
-    <ClCompile Include="..\src\cart_hw\svp\ssp16.c">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsC</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsC</CompileAs>
-    </ClCompile>
-    <ClCompile Include="..\src\cart_hw\svp\svp.c">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsC</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsC</CompileAs>
-    </ClCompile>
-    <ClCompile Include="..\src\genesis.c">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsC</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsC</CompileAs>
-    </ClCompile>
-    <ClCompile Include="..\src\input_hw\activator.c">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsC</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsC</CompileAs>
-    </ClCompile>
-    <ClCompile Include="..\src\input_hw\gamepad.c">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsC</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsC</CompileAs>
-    </ClCompile>
-    <ClCompile Include="..\src\input_hw\input.c">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsC</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsC</CompileAs>
-    </ClCompile>
-    <ClCompile Include="..\src\input_hw\lightgun.c">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsC</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsC</CompileAs>
-    </ClCompile>
-    <ClCompile Include="..\src\input_hw\mouse.c">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsC</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsC</CompileAs>
-    </ClCompile>
-    <ClCompile Include="..\src\input_hw\paddle.c">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsC</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsC</CompileAs>
-    </ClCompile>
-    <ClCompile Include="..\src\input_hw\sportspad.c">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsC</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsC</CompileAs>
-    </ClCompile>
-    <ClCompile Include="..\src\input_hw\teamplayer.c">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsC</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsC</CompileAs>
-    </ClCompile>
-    <ClCompile Include="..\src\input_hw\terebi_oekaki.c">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsC</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsC</CompileAs>
-    </ClCompile>
-    <ClCompile Include="..\src\input_hw\xe_a1p.c">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsC</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsC</CompileAs>
-    </ClCompile>
-    <ClCompile Include="..\src\io_ctrl.c">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsC</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsC</CompileAs>
-    </ClCompile>
-    <ClCompile Include="..\src\loadrom.c">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsC</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsC</CompileAs>
-    </ClCompile>
-    <ClCompile Include="..\src\m68k\m68kcpu.c">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsC</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsC</CompileAs>
-    </ClCompile>
-    <ClCompile Include="..\src\mem68k.c">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsC</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsC</CompileAs>
-    </ClCompile>
-    <ClCompile Include="..\src\membnk.c">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsC</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsC</CompileAs>
-    </ClCompile>
-    <ClCompile Include="..\src\memz80.c">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsC</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsC</CompileAs>
-    </ClCompile>
-    <ClCompile Include="..\src\ntsc\md_ntsc.c">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsC</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsC</CompileAs>
-    </ClCompile>
-    <ClCompile Include="..\src\ntsc\sms_ntsc.c">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsC</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsC</CompileAs>
-    </ClCompile>
-    <ClCompile Include="..\src\sound\blip.c">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsC</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsC</CompileAs>
-    </ClCompile>
-    <ClCompile Include="..\src\sound\eq.c">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsC</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsC</CompileAs>
-    </ClCompile>
-    <ClCompile Include="..\src\sound\Fir_Resampler.c">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsC</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsC</CompileAs>
-    </ClCompile>
-    <ClCompile Include="..\src\sound\sn76489.c">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsC</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsC</CompileAs>
-    </ClCompile>
-    <ClCompile Include="..\src\sound\sound.c">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsC</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsC</CompileAs>
-    </ClCompile>
-    <ClCompile Include="..\src\sound\ym2413.c">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsC</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsC</CompileAs>
-    </ClCompile>
-    <ClCompile Include="..\src\sound\ym2612.c">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsC</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsC</CompileAs>
-    </ClCompile>
-    <ClCompile Include="..\src\state.c">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsC</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsC</CompileAs>
-    </ClCompile>
-    <ClCompile Include="..\src\system.c">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsC</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsC</CompileAs>
-    </ClCompile>
-    <ClCompile Include="..\src\vdp_ctrl.c">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsC</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsC</CompileAs>
-    </ClCompile>
-    <ClCompile Include="..\src\vdp_render.c">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsC</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsC</CompileAs>
-    </ClCompile>
-    <ClCompile Include="..\src\z80\z80.c">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsC</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsC</CompileAs>
-    </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="..\libretro\libretro.h" />
-    <ClInclude Include="..\libretro\osd.h" />
-    <ClInclude Include="..\src\cart_hw\areplay.h" />
-    <ClInclude Include="..\src\cart_hw\ggenie.h" />
-    <ClInclude Include="..\src\cart_hw\gg_eeprom.h" />
-    <ClInclude Include="..\src\cart_hw\md_cart.h" />
-    <ClInclude Include="..\src\cart_hw\md_eeprom.h" />
-    <ClInclude Include="..\src\cart_hw\sms_cart.h" />
-    <ClInclude Include="..\src\cart_hw\sram.h" />
-    <ClInclude Include="..\src\cart_hw\svp\ssp16.h" />
-    <ClInclude Include="..\src\cart_hw\svp\svp.h" />
-    <ClInclude Include="..\src\genesis.h" />
-    <ClInclude Include="..\src\hvc.h" />
-    <ClInclude Include="..\src\input_hw\activator.h" />
-    <ClInclude Include="..\src\input_hw\gamepad.h" />
-    <ClInclude Include="..\src\input_hw\input.h" />
-    <ClInclude Include="..\src\input_hw\lightgun.h" />
-    <ClInclude Include="..\src\input_hw\mouse.h" />
-    <ClInclude Include="..\src\input_hw\paddle.h" />
-    <ClInclude Include="..\src\input_hw\sportspad.h" />
-    <ClInclude Include="..\src\input_hw\teamplayer.h" />
-    <ClInclude Include="..\src\input_hw\terebi_oekaki.h" />
-    <ClInclude Include="..\src\input_hw\xe_a1p.h" />
-    <ClInclude Include="..\src\io_ctrl.h" />
-    <ClInclude Include="..\src\loadrom.h" />
-    <ClInclude Include="..\src\m68k\m68k.h" />
-    <ClInclude Include="..\src\m68k\m68kconf.h" />
-    <ClInclude Include="..\src\m68k\m68kcpu.h" />
-    <ClInclude Include="..\src\m68k\m68kops.h" />
-    <ClInclude Include="..\src\macros.h" />
-    <ClInclude Include="..\src\mem68k.h" />
-    <ClInclude Include="..\src\membnk.h" />
-    <ClInclude Include="..\src\memz80.h" />
-    <ClInclude Include="..\src\ntsc\md_ntsc.h" />
-    <ClInclude Include="..\src\ntsc\md_ntsc_config.h" />
-    <ClInclude Include="..\src\ntsc\md_ntsc_impl.h" />
-    <ClInclude Include="..\src\ntsc\sms_ntsc.h" />
-    <ClInclude Include="..\src\ntsc\sms_ntsc_config.h" />
-    <ClInclude Include="..\src\ntsc\sms_ntsc_impl.h" />
-    <ClInclude Include="..\src\shared.h" />
-    <ClInclude Include="..\src\sound\blip.h" />
-    <ClInclude Include="..\src\sound\eq.h" />
-    <ClInclude Include="..\src\sound\Fir_Resampler.h" />
-    <ClInclude Include="..\src\sound\sn76489.h" />
-    <ClInclude Include="..\src\sound\sound.h" />
-    <ClInclude Include="..\src\sound\ym2413.h" />
-    <ClInclude Include="..\src\sound\ym2612.h" />
-    <ClInclude Include="..\src\state.h" />
-    <ClInclude Include="..\src\system.h" />
-    <ClInclude Include="..\src\types.h" />
-    <ClInclude Include="..\src\vdp_ctrl.h" />
-    <ClInclude Include="..\src\vdp_render.h" />
-    <ClInclude Include="..\src\z80\osd_cpu.h" />
-    <ClInclude Include="..\src\z80\z80.h" />
-    <ClInclude Include="..\utils\zlib\deflate.h" />
-    <ClInclude Include="..\utils\zlib\infblock.h" />
-    <ClInclude Include="..\utils\zlib\infcodes.h" />
-    <ClInclude Include="..\utils\zlib\inffast.h" />
-    <ClInclude Include="..\utils\zlib\inffixed.h" />
-    <ClInclude Include="..\utils\zlib\inftrees.h" />
-    <ClInclude Include="..\utils\zlib\infutil.h" />
-    <ClInclude Include="..\utils\zlib\trees.h" />
-    <ClInclude Include="..\utils\zlib\zconf.h" />
-    <ClInclude Include="..\utils\zlib\zlib.h" />
-    <ClInclude Include="..\utils\zlib\zutil.h" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
