@@ -104,7 +104,7 @@ extern char MS_BIOS_US[256];
 extern char MS_BIOS_EU[256];
 extern char MS_BIOS_JP[256];
 
-extern int16 soundbuffer[1920];
+extern int16 *soundbuffer;
 
 #define VERSION "Genesis Plus GX 1.7.0 (libretro)"
 

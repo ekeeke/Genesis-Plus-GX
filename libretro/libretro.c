@@ -267,6 +267,7 @@ static const double ntsc_fps = 53693175.0 / (3420.0 * 262.0);
 static void init_audio(void)
 {
    audio_init(32000, vdp_pal ? pal_fps : ntsc_fps);
+   soundbuffer = malloc(snd.buffer_size * 2 * 2);
 }
 
 static void configure_controls(void)
@@ -804,6 +805,9 @@ void retro_unload_game(void)
 {
    if (system_hw == SYSTEM_MCD)
       slot_autosave(0);
+
+   if (soundbuffer)
+      free(soundbuffer);
 }
 
 unsigned retro_get_region(void) { return vdp_pal ? RETRO_REGION_PAL : RETRO_REGION_NTSC; }
@@ -907,7 +911,7 @@ void retro_deinit(void)
 
 void retro_reset(void) { gen_reset(0); }
 
-int16 soundbuffer[1920];
+int16 *soundbuffer;
 
 void osd_input_update(void)
 {
