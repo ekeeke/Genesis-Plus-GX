@@ -3,9 +3,6 @@
 #endif
 #include <stddef.h>
 #include <stdio.h>
-#ifndef __CELLOS_LV2__
-#include <malloc.h>
-#endif
 
 #ifdef _MSC_VER
 #define snprintf _snprintf
