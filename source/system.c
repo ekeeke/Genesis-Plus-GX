@@ -178,8 +178,10 @@ int audio_update(int16 *buffer)
   /* get number of available samples */
   int size = sound_update(mcycles_vdp);
 
+#ifndef __LIBRETRO__
   /* return an aligned number of samples */
   size &= ~7;
+#endif
 
   if (config.hq_fm)
   {
