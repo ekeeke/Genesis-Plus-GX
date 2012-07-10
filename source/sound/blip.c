@@ -84,11 +84,6 @@ void blip_add( blip_buffer_t* s, int clocks, int delta )
 
 int blip_clocks_needed( const blip_buffer_t* s, int samples )
 {
-#ifdef __LIBRETRO__
-  /* int fixed_needed */
-  if (samples > s->size)
-    samples = s->size;
-#endif
 
   /* Fixed-point number of samples needed in addition to those in buffer */
   int fixed_needed = samples * time_unit - s->offset;
