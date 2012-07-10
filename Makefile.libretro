@@ -1,5 +1,6 @@
 NTSC = 0
 DEBUG = 0
+LOGSOUND = 0
 
 GENPLUS_SRC_DIR := source
 LIBRETRO_DIR	:= libretro
@@ -124,6 +125,10 @@ LIBRETRO_SRC := $(GENPLUS_SRC_DIR)/genesis.c \
 
 LIBRETRO_OBJ := $(LIBRETRO_SRC:.c=.o)
 
+ifeq ($(LOGSOUND), 1)
+LIBRETRO_CFLAGS := -DLOGSOUND
+endif
+
 ifeq ($(platform), sncps3)
 CODE_DEFINES =
 else
@@ -133,7 +138,7 @@ endif
 DEFINES := 
 CFLAGS += $(fpic) $(DEFINES) $(CODE_DEFINES)
 
-LIBRETRO_CFLAGS := -I$(GENPLUS_SRC_DIR) \
+LIBRETRO_CFLAGS += -I$(GENPLUS_SRC_DIR) \
 		-I$(GENPLUS_SRC_DIR)/sound \
 		-I$(GENPLUS_SRC_DIR)/input_hw \
 		-I$(GENPLUS_SRC_DIR)/cart_hw \

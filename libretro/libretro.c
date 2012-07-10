@@ -2,6 +2,7 @@
 #include <stdbool.h>
 #endif
 #include <stddef.h>
+#include <stdarg.h>
 #include <stdio.h>
 
 #ifdef _MSC_VER
@@ -95,6 +96,22 @@ static uint8_t brm_format[0x40] =
  * Genesis Plus implementation
  ************************************/
 #define CHUNKSIZE   (0x10000)
+
+void error(char * msg, ...)
+{
+#ifdef _XBOX1
+   char buffer[1024];
+#endif
+   va_list ap;
+   va_start(ap, msg);
+#ifdef _XBOX1
+   vsnprintf(buffer, sizeof(buffer), msg, ap);
+   OutputDebugStringA(buffer);
+#else
+   vfprintf(stderr, msg, ap);
+#endif
+   va_end(ap);
+}
 
 int load_archive(char *filename, unsigned char *buffer, int maxsize)
 {
