@@ -266,7 +266,7 @@ static const double ntsc_fps = 53693175.0 / (3420.0 * 262.0);
 
 static void init_audio(void)
 {
-   audio_init(32000, vdp_pal ? pal_fps : ntsc_fps);
+   audio_init(44100, vdp_pal ? pal_fps : ntsc_fps);
    soundbuffer = malloc(snd.buffer_size * 2 * 2);
 }
 
@@ -737,7 +737,7 @@ static void retro_set_viewport_dimensions(void)
    geom.max_width = 1024;
    geom.max_height = 512;
 
-   timing.sample_rate = 32000;
+   timing.sample_rate = 44100;
 
    if (vdp_pal)
       timing.fps = pal_fps;
