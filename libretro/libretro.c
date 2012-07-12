@@ -7,7 +7,6 @@
 
 #ifdef _MSC_VER
 #define snprintf _snprintf
-#pragma pack(1)
 #endif
 
 #include "shared.h"
