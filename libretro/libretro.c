@@ -852,7 +852,7 @@ void retro_init(void)
    if (environ_cb(RETRO_ENVIRONMENT_GET_SYSTEM_DIRECTORY, &dir) && dir)
    {
 #ifdef _XBOX
-      snprintf(slash, sizeof(slash), "\\");
+      snprintf(slash, sizeof(slash), "\0");
 #else
       snprintf(slash, sizeof(slash), "/");
 #endif
