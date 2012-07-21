@@ -147,9 +147,10 @@ void cdd_load(char *filename, int type_bin)
       if (strstr(rominfo.product,"T-95035") != NULL)
       {
         /* Snatcher */
+        cdd.toc.tracks[0].start = cdd.toc.last = cdd.toc.end = 0;
         do
         {
-          cdd.toc.tracks[cdd.toc.last].start = cdd.toc.end + 2*75;
+          cdd.toc.tracks[cdd.toc.last].start = cdd.toc.end;
           cdd.toc.tracks[cdd.toc.last].end = cdd.toc.tracks[cdd.toc.last].start + toc_snatcher[cdd.toc.last];
           cdd.toc.end = cdd.toc.tracks[cdd.toc.last].end;
           cdd.toc.last++;
