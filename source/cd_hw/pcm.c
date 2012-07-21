@@ -239,7 +239,7 @@ void pcm_write(unsigned int address, unsigned char data)
       pcm.chan[pcm.index].st = data << (8 + 11);
 
       /* reload WAVE RAM address if channel is OFF */
-      if (~(pcm.status & (1 << pcm.index)))
+      if (!(pcm.status & (1 << pcm.index)))
       {
         pcm.chan[pcm.index].addr = pcm.chan[pcm.index].st;
       }
