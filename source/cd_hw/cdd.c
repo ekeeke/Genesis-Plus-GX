@@ -77,7 +77,7 @@ static const uint16 lut_BCD_16[100] =
 
 static const uint16 toc_snatcher[21] =
 {
-  56014, 495, 10120, 20555, 1580, 5417, 12502, 16090, 6553, 9681,
+  56164, 495, 10120, 20555, 1580, 5417, 12502, 16090, 6553, 9681,
   8148, 20228, 8622, 6142, 5858, 1287, 7424, 3535, 31697, 2485,
   31380
 };
@@ -147,7 +147,7 @@ void cdd_load(char *filename, int type_bin)
       if (strstr(rominfo.product,"T-95035") != NULL)
       {
         /* Snatcher */
-        cdd.toc.tracks[0].start = cdd.toc.last = cdd.toc.end = 0;
+        cdd.toc.last = cdd.toc.end = 0;
         do
         {
           cdd.toc.tracks[cdd.toc.last].start = cdd.toc.end;
