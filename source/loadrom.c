@@ -403,13 +403,13 @@ int load_bios(void)
         switch (region_code)
         {
           case REGION_USA:
-            size = load_archive(CD_BIOS_US, scd.bootrom, sizeof(scd.bootrom));
+            size = load_archive(CD_BIOS_US, scd.bootrom, sizeof(scd.bootrom), 0);
             break;
           case REGION_EUROPE:
-            size = load_archive(CD_BIOS_EU, scd.bootrom, sizeof(scd.bootrom));
+            size = load_archive(CD_BIOS_EU, scd.bootrom, sizeof(scd.bootrom), 0);
             break;
           default:
-            size = load_archive(CD_BIOS_JP, scd.bootrom, sizeof(scd.bootrom));
+            size = load_archive(CD_BIOS_JP, scd.bootrom, sizeof(scd.bootrom), 0);
             break;
         }
 
@@ -431,12 +431,6 @@ int load_bios(void)
 
           /* loaded BIOS region */
           system_bios = (system_bios & 0xf0) | (region_code >> 4);
-
-        }
-        else
-        {
-          /* CD BOOT ROM disabled (SYSTEM ERROR) */
-          memset(scd.bootrom, 0xff, sizeof(scd.bootrom));
         }
 
         return size;
@@ -458,7 +452,7 @@ int load_bios(void)
         if (cart.romsize <= 0x400000)
         {
           /* load Game Gear "BIOS" file */
-          size = load_archive(GG_BIOS, cart.rom + 0x400000, 0x100000);
+          size = load_archive(GG_BIOS, cart.rom + 0x400000, 0x100000, 0);
 
           if (size > 0)
           {
@@ -489,13 +483,13 @@ int load_bios(void)
           switch (region_code)
           {
             case REGION_USA:
-              size = load_archive(MS_BIOS_US, cart.rom + 0x400000, 0x100000);
+              size = load_archive(MS_BIOS_US, cart.rom + 0x400000, 0x100000, 0);
               break;
             case REGION_EUROPE:
-              size = load_archive(MS_BIOS_EU, cart.rom + 0x400000, 0x100000);
+              size = load_archive(MS_BIOS_EU, cart.rom + 0x400000, 0x100000, 0);
               break;
             default:
-              size = load_archive(MS_BIOS_JP, cart.rom + 0x400000, 0x100000);
+              size = load_archive(MS_BIOS_JP, cart.rom + 0x400000, 0x100000, 0);
               break;
           }
 
@@ -543,14 +537,19 @@ int load_rom(char *filename)
   ggenie_shutdown();
   areplay_shutdown();
 
-  /* unload any existing disc */
   if (romtype == SYSTEM_MCD)
   {
+    /* unload CD image */
     cdd_unload();
+  }
+  else
+  {
+    /* no CD image loaded */
+    cdd.loaded = 0;
   }
 
   /* .cue file support */
-  if (!strncmp(".cue", &filename[strlen(filename) - 4], 4))
+  if (!memcmp(".cue", &filename[strlen(filename) - 4], 4))
   {
     /* open associated .bin file */
     strncpy(&filename[strlen(filename) - 4], ".bin", 4);
@@ -565,7 +564,7 @@ int load_rom(char *filename)
   }
 
   /* auto-detect CD image file */
-  if (!strncmp("SEGADISCSYSTEM", buf + 0x10, 14))
+  if (!memcmp("SEGADISCSYSTEM", buf + 0x10, 14))
   {
     /* file header pointer (BIN format) */
     header = buf + 0x10;
@@ -573,7 +572,7 @@ int load_rom(char *filename)
     /* enable CD hardware */
     system_hw = SYSTEM_MCD;
   }
-  else if (!strncmp("SEGADISCSYSTEM", buf, 14))
+  else if (!memcmp("SEGADISCSYSTEM", buf, 14))
   {    
     /* file header pointer (ISO format) */
     header = buf;
@@ -583,25 +582,30 @@ int load_rom(char *filename)
   }
   else
   {
-    /* load file into ROM buffer (input filename is overwritten by uncompressed filename) */
-    int size = load_archive(filename, cart.rom, sizeof(cart.rom));
-    if (!size) return(0);
+    /* load file into ROM buffer */
+    char extension[4];
+    int size = load_archive(filename, cart.rom, sizeof(cart.rom), extension);
 
     /* mark CD BIOS as unloaded */
     system_bios &= ~0x10;
 
+    if (!size) return(0);
+
+    /* convert lower case to upper case */
+    *(uint32 *)(extension) &= 0xdfdfdfdf;
+
     /* Auto-detect system hardware from ROM file extension */
-    if (!strncmp(".sms", &filename[strlen(filename) - 4], 4))
+    if (!memcmp("SMS", &extension[0], 3))
     {
       /* Master System II hardware */
       system_hw = SYSTEM_SMS2;
     }
-    else if (!strncmp(".gg", &filename[strlen(filename) - 3], 3))
+    else if (!memcmp("GG", &extension[1], 2))
     {
       /* Game Gear hardware (GG mode) */
       system_hw = SYSTEM_GG;
     }
-    else if (!strncmp(".sg", &filename[strlen(filename) - 3], 3))
+    else if (!memcmp("SG", &extension[1], 2))
     {
       /* SG-1000 hardware */
       system_hw = SYSTEM_SG;
@@ -612,7 +616,7 @@ int load_rom(char *filename)
       system_hw = SYSTEM_MD;
 
       /* Decode .MDX format */
-      if (!strncmp(".mdx", &filename[strlen(filename) - 4], 4))
+      if (!memcmp("MDX", &extension[0], 3))
       {
         for (i = 4; i < size - 1; i++)
         {
@@ -623,7 +627,7 @@ int load_rom(char *filename)
     }
 
     /* auto-detect 512 byte extra header */
-    if (strncmp((char *)(cart.rom + 0x100),"SEGA", 4) && ((size / 512) & 1))
+    if (memcmp((char *)(cart.rom + 0x100), "SEGA", 4) && ((size / 512) & 1))
     {
       /* remove header */
       size -= 512;
@@ -713,8 +717,11 @@ int load_rom(char *filename)
     /* boot from CD */
     scd.cartridge.boot = 0x00;
 
-    /* CD unloaded */
+    /* no CD image loaded */
     cdd.loaded = 0;
+
+    /* clear CD TOC */
+    cdd_unload();
   }
 
   /* special ROM cartridges that use CD hardware */
@@ -729,8 +736,11 @@ int load_rom(char *filename)
     /* load CD BOOT ROM */
     if (load_bios())
     {
-      /* CD unloaded */
+      /* no CD image loaded */
       cdd.loaded = 0;
+
+      /* clear CD TOC */
+      cdd_unload();
 
       /* boot from cartridge */
       scd.cartridge.boot = 0x40;
@@ -739,6 +749,9 @@ int load_rom(char *filename)
     {
       /* assume Mega Drive hardware */
       system_hw = SYSTEM_MD;
+
+      /* copy back to cartridge ROM area */
+      memcpy(cart.rom, scd.cartridge.area, sizeof(scd.cartridge.area));
     }
   }
 
@@ -817,12 +830,12 @@ void get_region(char *romheader)
       int country = 0;
 
       /* from Gens */
-      if (!strncmp(rominfo.country, "eur", 3)) country |= 8;
-      else if (!strncmp(rominfo.country, "EUR", 3)) country |= 8;
-      else if (!strncmp(rominfo.country, "jap", 3)) country |= 1;
-      else if (!strncmp(rominfo.country, "JAP", 3)) country |= 1;
-      else if (!strncmp(rominfo.country, "usa", 3)) country |= 4;
-      else if (!strncmp(rominfo.country, "USA", 3)) country |= 4;
+      if (!memcmp(rominfo.country, "eur", 3)) country |= 8;
+      else if (!memcmp(rominfo.country, "EUR", 3)) country |= 8;
+      else if (!memcmp(rominfo.country, "jap", 3)) country |= 1;
+      else if (!memcmp(rominfo.country, "JAP", 3)) country |= 1;
+      else if (!memcmp(rominfo.country, "usa", 3)) country |= 4;
+      else if (!memcmp(rominfo.country, "USA", 3)) country |= 4;
       else
       {
         int i;

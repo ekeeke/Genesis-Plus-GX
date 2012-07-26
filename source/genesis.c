@@ -258,8 +258,21 @@ void gen_reset(int hard_reset)
   /* 8-bit / 16-bit modes */
   if ((system_hw & SYSTEM_PBC) == SYSTEM_MD)
   {
-    /* reset cartridge hardware & mapping */
-    md_cart_reset(hard_reset);
+    if (system_hw == SYSTEM_MCD)
+    {
+      /* reset CD hardware */
+      scd_reset(1);
+
+      /* reset & halt SUB-CPU */
+      s68k.cycles = 0;
+      s68k_pulse_reset();
+      s68k_pulse_halt();
+    }
+    else
+    {
+      /* reset MD cartridge hardware */
+      md_cart_reset(hard_reset);
+    }
 
     /* Z80 bus is released & Z80 is reseted */
     m68k.memory_map[0xa0].read8   = m68k_read_bus_8;
@@ -301,17 +314,6 @@ void gen_reset(int hard_reset)
       }
     }
 
-    if (system_hw == SYSTEM_MCD)
-    {
-      /* reset CD hardware */
-      scd_reset(1);
-
-      /* reset & halt SUB-CPU */
-      s68k.cycles = 0;
-      s68k_pulse_reset();
-      s68k_pulse_halt();
-    }
-
     /* reset MAIN-CPU */
     m68k_pulse_reset();
   }
@@ -348,7 +350,7 @@ void gen_tmss_w(unsigned int offset, unsigned int data)
   WRITE_WORD(tmss, offset, data);
 
   /* VDP requires "SEGA" value to be written in TMSS register */
-  if (strncmp((char *)tmss, "SEGA", 4) == 0)
+  if (memcmp((char *)tmss, "SEGA", 4) == 0)
   {
     for (i=0xc0; i<0xe0; i+=8)
     {
@@ -376,21 +378,29 @@ void gen_tmss_w(unsigned int offset, unsigned int data)
 
 void gen_bankswitch_w(unsigned int data)
 {
-  if (data & 1)
+  if (system_hw == SYSTEM_MD)
   {
-    /* enable cartridge ROM */
-    m68k.memory_map[0].base = cart.base;
-  }
-  else
-  {
-    /* enable internal BOOT ROM */
-    m68k.memory_map[0].base = boot_rom;
+    if (data & 1)
+    {
+      /* enable cartridge ROM */
+      m68k.memory_map[0].base = cart.base;
+    }
+    else
+    {
+      /* enable internal BOOT ROM */
+      m68k.memory_map[0].base = boot_rom;
+    }
   }
 }
 
 unsigned int gen_bankswitch_r(void)
 {
-  return (m68k.memory_map[0].base == cart.base);
+  if (system_hw == SYSTEM_MD)
+  {
+    return (m68k.memory_map[0].base == cart.base);
+  }
+  
+  return 0xff;
 }
 
 
