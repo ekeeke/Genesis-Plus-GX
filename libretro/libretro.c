@@ -112,7 +112,7 @@ void error(char * msg, ...)
    va_end(ap);
 }
 
-int load_archive(char *filename, unsigned char *buffer, int maxsize)
+int load_archive(char *filename, unsigned char *buffer, int maxsize, char *extension)
 {
   int size = 0;
   char in[CHUNKSIZE];
@@ -121,6 +121,12 @@ int load_archive(char *filename, unsigned char *buffer, int maxsize)
   /* Open file */
   FILE *fd = fopen(filename, "rb");
 
+  /* Master System & Game Gear BIOS are optional files */
+  if (!strcmp(filename,MS_BIOS_US) || !strcmp(filename,MS_BIOS_EU) || !strcmp(filename,MS_BIOS_JP) || !strcmp(filename,GG_BIOS))
+  {
+    /* disable all messages */
+  }
+  
   /* Mega CD BIOS are required files */
   if (!strcmp(filename,CD_BIOS_US) || !strcmp(filename,CD_BIOS_EU) || !strcmp(filename,CD_BIOS_JP)) 
   {
@@ -137,7 +143,6 @@ int load_archive(char *filename, unsigned char *buffer, int maxsize)
   fread(in, CHUNKSIZE, 1, fd);
 
   {
-	int left;
     /* Get file size */
     fseek(fd, 0, SEEK_END);
     size = ftell(fd);
@@ -154,8 +159,15 @@ int load_archive(char *filename, unsigned char *buffer, int maxsize)
     sprintf((char *)msg,"Loading %d bytes ...", size);
     fprintf(stderr, "INFORMATION - %s\n", msg);
 
+    /* filename extension */
+    if (extension)
+    {
+      memcpy(extension, &filename[strlen(filename) - 3], 3);
+      extension[3] = 0;
+    }
+
     /* Read into buffer */
-    left = size;
+    int left = size;
     while (left > CHUNKSIZE)
     {
       fread(buffer, CHUNKSIZE, 1, fd);
@@ -173,7 +185,6 @@ int load_archive(char *filename, unsigned char *buffer, int maxsize)
   /* Return loaded ROM size */
   return size;
 }
-
 
 static uint16_t bitmap_data_[1024 * 512];
 
@@ -294,14 +305,15 @@ static void configure_controls(void)
 
 static int slot_load(int slot)
 {
-  FILE *fp;
   char filename[MAXPATHLEN];
   unsigned long filesize, done = 0;
   uint8_t *buffer;
 
   /* File Type */
   if (slot > 0)
+  {
     fprintf(stderr, "INFORMATION - Loading State ...\n");
+  }
   else
   {
     if (!sram.on || (system_hw == SYSTEM_MCD))
@@ -314,14 +326,19 @@ static int slot_load(int slot)
   }
 
   /* Device Type */
+  {
     /* FAT file */
     if (slot > 0)
+    {
       sprintf (filename,"%s/saves/%s.gp%d", DEFAULT_PATH, rom_filename, slot - 1);
+    }
     else
+    {
       sprintf (filename,"%s/saves/%s.srm", DEFAULT_PATH, rom_filename);
+    }
 
     /* Open file */
-    fp = fopen(filename, "rb");
+    FILE *fp = fopen(filename, "rb");
     if (!fp)
     {
       fprintf(stderr, "ERROR - Unable to open file.\n");
@@ -356,6 +373,7 @@ static int slot_load(int slot)
 
     /* Close file */
     fclose(fp);
+  }
 
   if (slot > 0)
   {
@@ -511,12 +529,17 @@ static void slot_autoload(int slot)
       /* update CRC */
       brm_crc[0] = crc32(0, scd.bram, 0x2000);
     }
+    else
+    {
+      /* force internal backup RAM format (does not use previous region backup RAM) */
+      scd.bram[0x1fff] = 0;
+    }
 
     /* check if internal backup RAM is correctly formatted */
     if (memcmp(scd.bram + 0x2000 - 0x20, brm_format + 0x20, 0x20))
     {
       /* clear internal backup RAM */
-      memset(scd.bram, 0x00, 0x200);
+      memset(scd.bram, 0x00, 0x2000 - 0x40);
 
       /* internal Backup RAM size fields */
       brm_format[0x10] = brm_format[0x12] = brm_format[0x14] = brm_format[0x16] = 0x00;
@@ -524,6 +547,9 @@ static void slot_autoload(int slot)
 
       /* format internal backup RAM */
       memcpy(scd.bram + 0x2000 - 0x40, brm_format, 0x40);
+
+      /* clear CRC to force file saving (in case previous region backup RAM was also formatted) */
+      brm_crc[0] = 0;
     }
 
     /* automatically load cartridge backup RAM (if enabled) */
@@ -532,7 +558,24 @@ static void slot_autoload(int slot)
       fp = fopen(CART_BRAM, "rb");
       if (fp != NULL)
       {
-        fread(scd.cartridge.area, scd.cartridge.mask + 1, 1, fp);
+        int filesize = scd.cartridge.mask + 1;
+        int done = 0;
+        
+        /* Read into buffer (2k blocks) */
+        while (filesize > CHUNKSIZE)
+        {
+          fread(scd.cartridge.area + done, CHUNKSIZE, 1, fp);
+          done += CHUNKSIZE;
+          filesize -= CHUNKSIZE;
+        }
+
+        /* Read remaining bytes */
+        if (filesize)
+        {
+          fread(scd.cartridge.area + done, filesize, 1, fp);
+        }
+
+        /* close file */
         fclose(fp);
 
         /* update CRC */
@@ -613,7 +656,24 @@ static void slot_autosave(int slot)
         FILE *fp = fopen(CART_BRAM, "wb");
         if (fp != NULL)
         {
-          fwrite(scd.cartridge.area, scd.cartridge.mask + 1, 1, fp);
+          int filesize = scd.cartridge.mask + 1;
+          int done = 0;
+        
+          /* Write to file (2k blocks) */
+          while (filesize > CHUNKSIZE)
+          {
+            fwrite(scd.cartridge.area + done, CHUNKSIZE, 1, fp);
+            done += CHUNKSIZE;
+            filesize -= CHUNKSIZE;
+          }
+
+          /* Write remaining bytes */
+          if (filesize)
+          {
+            fwrite(scd.cartridge.area + done, filesize, 1, fp);
+          }
+
+          /* Close file */
           fclose(fp);
 
           /* update CRC */
@@ -1007,21 +1067,12 @@ void retro_run(void)
 {
    int aud;
 
-   switch(system_hw)
-   {
-      case SYSTEM_MCD:
-         system_frame_scd(0);
-         break;
-      case SYSTEM_MD:
-      case SYSTEM_PBC:
-         system_frame_gen(0);
-         break;
-      case SYSTEM_SMS:
-         system_frame_sms(0);
-         break;
-      default:
-         break;
-   }
+   if (system_hw == SYSTEM_MCD)
+      system_frame_scd(0);
+   else if ((system_hw & SYSTEM_PBC) == SYSTEM_MD)
+      system_frame_gen(0);
+   else
+      system_frame_sms(0);
 
 #if defined(USE_NTSC)
    video_cb(bitmap_data_ + bitmap.viewport.y * 1024, config.ntsc ? vwidth : bitmap.viewport.w, bitmap.viewport.h, 2048);

@@ -109,6 +109,6 @@ extern int16 soundbuffer[3068];
 #define VERSION "Genesis Plus GX 1.7.0 (libretro)"
 
 void osd_input_update(void);
-int load_archive(char *filename, unsigned char *buffer, int maxsize);
+int load_archive(char *filename, unsigned char *buffer, int maxsize, char *extension);
 
 #endif /* _OSD_H */
