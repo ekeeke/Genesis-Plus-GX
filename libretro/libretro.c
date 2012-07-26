@@ -143,6 +143,7 @@ int load_archive(char *filename, unsigned char *buffer, int maxsize, char *exten
   fread(in, CHUNKSIZE, 1, fd);
 
   {
+    int left;
     /* Get file size */
     fseek(fd, 0, SEEK_END);
     size = ftell(fd);
@@ -167,7 +168,7 @@ int load_archive(char *filename, unsigned char *buffer, int maxsize, char *exten
     }
 
     /* Read into buffer */
-    int left = size;
+    left = size;
     while (left > CHUNKSIZE)
     {
       fread(buffer, CHUNKSIZE, 1, fd);
@@ -327,6 +328,7 @@ static int slot_load(int slot)
 
   /* Device Type */
   {
+    FILE *fp;
     /* FAT file */
     if (slot > 0)
     {
@@ -338,7 +340,7 @@ static int slot_load(int slot)
     }
 
     /* Open file */
-    FILE *fp = fopen(filename, "rb");
+    fp = fopen(filename, "rb");
     if (!fp)
     {
       fprintf(stderr, "ERROR - Unable to open file.\n");
