@@ -811,10 +811,51 @@ static void retro_set_viewport_dimensions(void)
 bool retro_load_game(const struct retro_game_info *info)
 {
    const char *full_path;
+   const char *dir;
    extract_directory(g_rom_dir, info->path, sizeof(g_rom_dir));
 
-   if(failed_init)
-      return false;
+   if (environ_cb(RETRO_ENVIRONMENT_GET_SYSTEM_DIRECTORY, &dir) && dir)
+   {
+#ifdef _WIN32
+      const char slash[] = "\\";
+#else
+      const char slash[] = "/";
+#endif
+
+      snprintf(CD_BRAM_EU, sizeof(CD_BRAM_EU), "%s%sscd_E.brm", dir, slash);
+      snprintf(CD_BRAM_US, sizeof(CD_BRAM_US), "%s%sscd_U.brm", dir, slash);
+      snprintf(CD_BRAM_JP, sizeof(CD_BRAM_JP), "%s%sscd_J.brm", dir, slash);
+      snprintf(CD_BIOS_EU, sizeof(CD_BIOS_EU), "%s%sbios_CD_E.bin", dir, slash);
+      snprintf(CD_BIOS_US, sizeof(CD_BIOS_US), "%s%sbios_CD_U.bin", dir, slash);
+      snprintf(CD_BIOS_JP, sizeof(CD_BIOS_JP), "%s%sbios_CD_J.bin", dir, slash);
+      snprintf(MS_BIOS_EU, sizeof(MS_BIOS_EU), "%s%sbios_E.sms", dir, slash);
+      snprintf(MS_BIOS_US, sizeof(MS_BIOS_US), "%s%sbios_U.sms", dir, slash);
+      snprintf(MS_BIOS_JP, sizeof(MS_BIOS_JP), "%s%sbios_J.sms", dir, slash);
+      snprintf(GG_BIOS, sizeof(GG_BIOS), "%s%sbios.gg", dir, slash);
+      snprintf(SK_ROM, sizeof(SK_ROM), "%s%ssk.bin", dir, slash);
+      snprintf(SK_UPMEM, sizeof(SK_UPMEM), "%s%ssk2chip.bin", dir, slash);
+      snprintf(GG_ROM, sizeof(GG_ROM), "%s%sggenie.bin", dir, slash);
+      snprintf(AR_ROM, sizeof(AR_ROM), "%s%sareplay.bin", dir, slash);
+      fprintf(stderr, "Sega CD EU BRAM should be located at: %s\n", CD_BRAM_EU);
+      fprintf(stderr, "Sega CD US BRAM should be located at: %s\n", CD_BRAM_US);
+      fprintf(stderr, "Sega CD JP BRAM should be located at: %s\n", CD_BRAM_JP);
+      fprintf(stderr, "Sega CD EU BIOS should be located at: %s\n", CD_BIOS_EU);
+      fprintf(stderr, "Sega CD US BIOS should be located at: %s\n", CD_BIOS_US);
+      fprintf(stderr, "Sega CD JP BIOS should be located at: %s\n", CD_BIOS_JP);
+      fprintf(stderr, "Master System EU BIOS should be located at: %s\n", MS_BIOS_EU);
+      fprintf(stderr, "Master System US BIOS should be located at: %s\n", MS_BIOS_US);
+      fprintf(stderr, "Master System JP BIOS should be located at: %s\n", MS_BIOS_JP);
+      fprintf(stderr, "Game Gear BIOS should be located at: %s\n", GG_BIOS);
+      fprintf(stderr, "S&K upmem ROM should be located at: %s\n", SK_UPMEM);
+      fprintf(stderr, "S&K ROM should be located at: %s\n", SK_ROM);
+      fprintf(stderr, "Game Genie ROM should be located at: %s\n", GG_ROM);
+      fprintf(stderr, "Action Replay ROM should be located at: %s\n", AR_ROM);
+   }
+   else
+   {
+      fprintf(stderr, "[genplus]: Defaulting system directory to %s.\n", g_rom_dir);
+      dir = g_rom_dir;
+   }
 
    snprintf(DEFAULT_PATH, sizeof(DEFAULT_PATH), g_rom_dir);
 #ifdef _XBOX
@@ -830,12 +871,7 @@ bool retro_load_game(const struct retro_game_info *info)
 
    full_path = info->path;
 
-   failed_init = true;
-
-   if (full_path)
-      failed_init = !(load_rom((char*)full_path));
-
-   if(failed_init)
+   if (!load_rom((char*)full_path))
       return false;
 
    configure_controls();
@@ -901,8 +937,6 @@ size_t retro_get_memory_size(unsigned id)
 
 void retro_init(void)
 {
-   const char *dir = NULL;
-   char slash[6];
    unsigned level;
 #if defined(USE_NTSC)
    sms_ntsc = calloc(1, sizeof(sms_ntsc_t));
@@ -910,48 +944,6 @@ void retro_init(void)
    sms_ntsc_init(sms_ntsc, &sms_ntsc_composite);
    md_ntsc_init(md_ntsc,   &md_ntsc_composite);
 #endif
-
-   if (environ_cb(RETRO_ENVIRONMENT_GET_SYSTEM_DIRECTORY, &dir) && dir)
-   {
-#ifdef _XBOX
-      snprintf(slash, sizeof(slash), "\0");
-#else
-      snprintf(slash, sizeof(slash), "/");
-#endif
-      snprintf(CD_BRAM_EU, sizeof(CD_BRAM_EU), "%s%sscd_E.brm", dir, slash);
-      snprintf(CD_BRAM_US, sizeof(CD_BRAM_US), "%s%sscd_U.brm", dir, slash);
-      snprintf(CD_BRAM_JP, sizeof(CD_BRAM_JP), "%s%sscd_J.brm", dir, slash);
-      snprintf(CD_BIOS_EU, sizeof(CD_BIOS_EU), "%s%sbios_CD_E.bin", dir, slash);
-      snprintf(CD_BIOS_US, sizeof(CD_BIOS_US), "%s%sbios_CD_U.bin", dir, slash);
-      snprintf(CD_BIOS_JP, sizeof(CD_BIOS_JP), "%s%sbios_CD_J.bin", dir, slash);
-      snprintf(MS_BIOS_EU, sizeof(MS_BIOS_EU), "%s%sbios_E.sms", dir, slash);
-      snprintf(MS_BIOS_US, sizeof(MS_BIOS_US), "%s%sbios_U.sms", dir, slash);
-      snprintf(MS_BIOS_JP, sizeof(MS_BIOS_JP), "%s%sbios_J.sms", dir, slash);
-      snprintf(GG_BIOS, sizeof(GG_BIOS), "%s%sbios.gg", dir, slash);
-      snprintf(SK_ROM, sizeof(SK_ROM), "%s%ssk.bin", dir, slash);
-      snprintf(SK_UPMEM, sizeof(SK_UPMEM), "%s%ssk2chip.bin", dir, slash);
-      snprintf(GG_ROM, sizeof(GG_ROM), "%s%sggenie.bin", dir, slash);
-      snprintf(AR_ROM, sizeof(AR_ROM), "%s%sareplay.bin", dir, slash);
-      fprintf(stderr, "Sega CD EU BRAM should be located at: %s\n", CD_BRAM_EU);
-      fprintf(stderr, "Sega CD US BRAM should be located at: %s\n", CD_BRAM_US);
-      fprintf(stderr, "Sega CD JP BRAM should be located at: %s\n", CD_BRAM_JP);
-      fprintf(stderr, "Sega CD EU BIOS should be located at: %s\n", CD_BIOS_EU);
-      fprintf(stderr, "Sega CD US BIOS should be located at: %s\n", CD_BIOS_US);
-      fprintf(stderr, "Sega CD JP BIOS should be located at: %s\n", CD_BIOS_JP);
-      fprintf(stderr, "Master System EU BIOS should be located at: %s\n", MS_BIOS_EU);
-      fprintf(stderr, "Master System US BIOS should be located at: %s\n", MS_BIOS_US);
-      fprintf(stderr, "Master System JP BIOS should be located at: %s\n", MS_BIOS_JP);
-      fprintf(stderr, "Game Gear BIOS should be located at: %s\n", GG_BIOS);
-      fprintf(stderr, "S&K upmem ROM should be located at: %s\n", SK_UPMEM);
-      fprintf(stderr, "S&K ROM should be located at: %s\n", SK_ROM);
-      fprintf(stderr, "Game Genie ROM should be located at: %s\n", GG_ROM);
-      fprintf(stderr, "Action Replay ROM should be located at: %s\n", AR_ROM);
-   }
-   else
-   {
-      fprintf(stderr, "System directory is not defined. Cannot continue ...\n");
-      failed_init = true;
-   }
 
    level = 1;
    environ_cb(RETRO_ENVIRONMENT_SET_PERFORMANCE_LEVEL, &level);
