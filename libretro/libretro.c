@@ -9,6 +9,10 @@
 #define snprintf _snprintf
 #endif
 
+#ifdef _XBOX1
+#include <xtl.h>
+#endif
+
 #include "shared.h"
 #include "libretro.h"
 #include "state.h"
@@ -98,18 +102,12 @@ static uint8_t brm_format[0x40] =
 
 void error(char * msg, ...)
 {
-#ifdef _XBOX1
-   char buffer[1024];
-#endif
+#ifndef _XBOX1
    va_list ap;
    va_start(ap, msg);
-#ifdef _XBOX1
-   vsnprintf(buffer, sizeof(buffer), msg, ap);
-   OutputDebugStringA(buffer);
-#else
    vfprintf(stderr, msg, ap);
-#endif
    va_end(ap);
+#endif
 }
 
 int load_archive(char *filename, unsigned char *buffer, int maxsize, char *extension)
