@@ -200,6 +200,39 @@
 				<File
 					RelativePath="..\..\libretro.c">
 				</File>
+				<File
+					RelativePath="..\..\scrc32.c">
+					<FileConfiguration
+						Name="Debug|Xbox">
+						<Tool
+							Name="VCCLCompilerTool"
+							CompileAs="1"/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Profile|Xbox">
+						<Tool
+							Name="VCCLCompilerTool"
+							CompileAs="1"/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Profile_FastCap|Xbox">
+						<Tool
+							Name="VCCLCompilerTool"
+							CompileAs="1"/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|Xbox">
+						<Tool
+							Name="VCCLCompilerTool"
+							CompileAs="1"/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release_LTCG|Xbox">
+						<Tool
+							Name="VCCLCompilerTool"
+							CompileAs="1"/>
+					</FileConfiguration>
+				</File>
 			</Filter>
 			<Filter
 				Name="source"
@@ -311,9 +344,69 @@
 					</File>
 					<File
 						RelativePath="..\..\..\source\sound\ym2413.c">
+						<FileConfiguration
+							Name="Debug|Xbox">
+							<Tool
+								Name="VCCLCompilerTool"
+								Optimization="0"/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Profile|Xbox">
+							<Tool
+								Name="VCCLCompilerTool"
+								Optimization="0"/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Profile_FastCap|Xbox">
+							<Tool
+								Name="VCCLCompilerTool"
+								Optimization="0"/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Release|Xbox">
+							<Tool
+								Name="VCCLCompilerTool"
+								Optimization="0"/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Release_LTCG|Xbox">
+							<Tool
+								Name="VCCLCompilerTool"
+								Optimization="0"/>
+						</FileConfiguration>
 					</File>
 					<File
 						RelativePath="..\..\..\source\sound\ym2612.c">
+						<FileConfiguration
+							Name="Debug|Xbox">
+							<Tool
+								Name="VCCLCompilerTool"
+								Optimization="0"/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Profile|Xbox">
+							<Tool
+								Name="VCCLCompilerTool"
+								Optimization="0"/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Profile_FastCap|Xbox">
+							<Tool
+								Name="VCCLCompilerTool"
+								Optimization="0"/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Release|Xbox">
+							<Tool
+								Name="VCCLCompilerTool"
+								Optimization="0"/>
+						</FileConfiguration>
+						<FileConfiguration
+							Name="Release_LTCG|Xbox">
+							<Tool
+								Name="VCCLCompilerTool"
+								Optimization="0"/>
+						</FileConfiguration>
 					</File>
 				</Filter>
 				<Filter

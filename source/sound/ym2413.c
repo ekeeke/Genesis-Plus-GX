@@ -1245,13 +1245,11 @@ INLINE void set_ar_dr(int slot,int v)
 }
 
 /* set sustain level & release rate */
-INLINE void set_sl_rr(int slot,int v)
+INLINE void set_sl_rr_ym2413(int slot,int v)
 {
   YM2413_OPLL_CH   *CH   = &ym2413.P_CH[slot/2];
   YM2413_OPLL_SLOT *SLOT = &CH->SLOT[slot&1];
-
   SLOT->sl  = sl_tab[ v>>4 ];
-
   SLOT->rr  = (v&0x0f)? 16 + ((v&0x0f)<<2) : 0;
   SLOT->eg_sh_rr  = eg_rate_shift [SLOT->rr + SLOT->ksr ];
   SLOT->eg_sel_rr = eg_rate_select[SLOT->rr + SLOT->ksr ];
@@ -1265,8 +1263,8 @@ static void load_instrument(UINT32 chan, UINT32 slot, UINT8* inst )
   set_ksl_wave_fb(chan, inst[3]);
   set_ar_dr(slot,   inst[4]);
   set_ar_dr(slot+1, inst[5]);
-  set_sl_rr(slot,   inst[6]);
-  set_sl_rr(slot+1, inst[7]);
+  set_sl_rr_ym2413(slot,   inst[6]);
+  set_sl_rr_ym2413(slot+1, inst[7]);
 }
 
 static void update_instrument_zero(UINT8 r)
@@ -1345,7 +1343,7 @@ static void update_instrument_zero(UINT8 r)
       {
         if ((ym2413.instvol_r[chan]&0xf0)==0)
         {
-          set_sl_rr(chan*2, inst[6]);
+          set_sl_rr_ym2413(chan*2, inst[6]);
         }
       }
       break;
@@ -1355,7 +1353,7 @@ static void update_instrument_zero(UINT8 r)
       {
         if ((ym2413.instvol_r[chan]&0xf0)==0)
         {
-          set_sl_rr(chan*2+1, inst[7]);
+          set_sl_rr_ym2413(chan*2+1, inst[7]);
         }
       }
       break;
