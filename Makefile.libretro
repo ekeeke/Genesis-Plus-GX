@@ -18,6 +18,17 @@ else ifneq ($(findstring win,$(shell uname -a)),)
 endif
 endif
 
+# system platform
+system_platform = unix
+ifeq ($(shell uname -a),)
+EXE_EXT = .exe
+   system_platform = win
+else ifneq ($(findstring Darwin,$(shell uname -a)),)
+   system_platform = osx
+else ifneq ($(findstring MINGW,$(shell uname -a)),)
+   system_platform = win
+endif
+
 ifeq ($(platform), unix)
    TARGET := libretro.so
    fpic := -fPIC
@@ -41,19 +52,19 @@ else ifeq ($(platform), ps3)
    AR = $(CELL_SDK)/host-win32/ppu/bin/ppu-lv2-ar.exe
    PLATFORM_DEFINES := -D__CELLOS_LV2 -DALT_RENDER
 else ifeq ($(platform), psl1ght)
-   TARGET := libretro_psl1ght.a
-   CC = $(PS3DEV)/ppu/bin/ppu-gcc
-   AR = $(PS3DEV)/ppu/bin/ppu-ar
+   TARGET := libretro_psl1ght.a$(EXE_EXT)
+   CC = $(PS3DEV)/ppu/bin/ppu-gcc$(EXE_EXT)
+   AR = $(PS3DEV)/ppu/bin/ppu-ar$(EXE_EXT)
    PLATFORM_DEFINES := -D__CELLOS_LV2 -DALT_RENDER
 else ifeq ($(platform), xenon)
    TARGET := libretro_xenon360.a
-   CC = xenon-gcc
-   AR = xenon-ar
+   CC = xenon-gcc$(EXE_EXT)
+   AR = xenon-ar$(EXE_EXT)
    PLATFORM_DEFINES := -D__LIBXENON__ -DALT_RENDER
 else ifeq ($(platform), wii)
    TARGET := libretro_wii.a
-   CC = $(DEVKITPPC)/bin/powerpc-eabi-gcc
-   AR = $(DEVKITPPC)/bin/powerpc-eabi-ar
+   CC = $(DEVKITPPC)/bin/powerpc-eabi-gcc$(EXE_EXT)
+   AR = $(DEVKITPPC)/bin/powerpc-eabi-ar$(EXE_EXT)
    PLATFORM_DEFINES := -DGEKKO -mrvl -mcpu=750 -meabi -mhard-float -DALT_RENDER
 else
    TARGET := retro.dll
