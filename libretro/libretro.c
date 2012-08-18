@@ -892,7 +892,7 @@ size_t retro_get_memory_size(unsigned id)
    switch (id)
    {
       case RETRO_MEMORY_SAVE_RAM:
-         return sram.end - sram.start;
+         return 0x10000;
 
       default:
          return 0;
