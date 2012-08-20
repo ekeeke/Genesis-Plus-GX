@@ -1026,7 +1026,7 @@ INLINE void set_sl_rr_ym2612(FM_SLOT *SLOT,int v)
 }
 
 /* advance LFO to next sample */
-INLINE void advance_lfo_ym2612()
+INLINE void advance_lfo()
 {
   if (ym2612.OPN.lfo_timer_overflow)   /* LFO enabled ? */
   {
@@ -1407,7 +1407,7 @@ INLINE void refresh_fc_eg_chan(FM_CH *CH )
 
 #define volume_calc(OP) ((OP)->vol_out + (AM & (OP)->AMmask))
 
-INLINE signed int op_calc_ym2612(UINT32 phase, unsigned int env, signed int pm)
+INLINE signed int op_calc(UINT32 phase, unsigned int env, signed int pm)
 {
   UINT32 p = (env<<3) + sin_tab[ ( ((signed int)((phase & ~FREQ_MASK) + (pm<<15))) >> FREQ_SH ) & SIN_MASK ];
 
@@ -1416,7 +1416,7 @@ INLINE signed int op_calc_ym2612(UINT32 phase, unsigned int env, signed int pm)
   return tl_tab[p];
 }
 
-INLINE signed int op_calc1_ym2612(UINT32 phase, unsigned int env, signed int pm)
+INLINE signed int op_calc1(UINT32 phase, unsigned int env, signed int pm)
 {
   UINT32 p = (env<<3) + sin_tab[ ( ((signed int)((phase & ~FREQ_MASK) + pm      )) >> FREQ_SH ) & SIN_MASK ];
 
@@ -1425,7 +1425,7 @@ INLINE signed int op_calc1_ym2612(UINT32 phase, unsigned int env, signed int pm)
   return tl_tab[p];
 }
 
-INLINE void chan_calc_ym2612(FM_CH *CH)
+INLINE void chan_calc(FM_CH *CH)
 {
   UINT32 AM = ym2612.OPN.LFO_AM >> CH->ams;
   unsigned int eg_out = volume_calc(&CH->SLOT[SLOT1]);
@@ -1451,21 +1451,21 @@ INLINE void chan_calc_ym2612(FM_CH *CH)
       if (!CH->FB)
         out=0;
 
-      CH->op1_out[1] = op_calc1_ym2612(CH->SLOT[SLOT1].phase, eg_out, (out<<CH->FB) );
+      CH->op1_out[1] = op_calc1(CH->SLOT[SLOT1].phase, eg_out, (out<<CH->FB) );
     }
   }
 
   eg_out = volume_calc(&CH->SLOT[SLOT3]);
   if( eg_out < ENV_QUIET )    /* SLOT 3 */
-    *CH->connect3 += op_calc_ym2612(CH->SLOT[SLOT3].phase, eg_out, m2);
+    *CH->connect3 += op_calc(CH->SLOT[SLOT3].phase, eg_out, m2);
 
   eg_out = volume_calc(&CH->SLOT[SLOT2]);
   if( eg_out < ENV_QUIET )    /* SLOT 2 */
-    *CH->connect2 += op_calc_ym2612(CH->SLOT[SLOT2].phase, eg_out, c1);
+    *CH->connect2 += op_calc(CH->SLOT[SLOT2].phase, eg_out, c1);
 
   eg_out = volume_calc(&CH->SLOT[SLOT4]);
   if( eg_out < ENV_QUIET )    /* SLOT 4 */
-    *CH->connect4 += op_calc_ym2612(CH->SLOT[SLOT4].phase, eg_out, c2);
+    *CH->connect4 += op_calc(CH->SLOT[SLOT4].phase, eg_out, c2);
 
 
   /* store current MEM */
@@ -1826,7 +1826,7 @@ static void reset_channels(FM_CH *CH , int num )
 }
 
 /* initialize generic tables */
-static void init_tables_ym2612(void)
+static void init_tables(void)
 {
   signed int i,x;
   signed int n;
@@ -1932,7 +1932,7 @@ static void init_tables_ym2612(void)
 void YM2612Init(double clock, int rate)
 {
   memset(&ym2612,0,sizeof(YM2612));
-  init_tables_ym2612();
+  init_tables();
   ym2612.OPN.ST.clock = clock;
   ym2612.OPN.ST.rate = rate;
   OPNSetPres(6*24); /* YM2612 prescaler is fixed to 1/6, one sample (6 mixed channels) is output for each 24 FM clocks */
@@ -2082,14 +2082,14 @@ void YM2612Update(int *buffer, int length)
     update_ssg_eg_channel(&ym2612.CH[5].SLOT[SLOT1]);
 
     /* calculate FM */
-    chan_calc_ym2612(&ym2612.CH[0]);
-    chan_calc_ym2612(&ym2612.CH[1]);
-    chan_calc_ym2612(&ym2612.CH[2]);
-    chan_calc_ym2612(&ym2612.CH[3]);
-    chan_calc_ym2612(&ym2612.CH[4]);
+    chan_calc(&ym2612.CH[0]);
+    chan_calc(&ym2612.CH[1]);
+    chan_calc(&ym2612.CH[2]);
+    chan_calc(&ym2612.CH[3]);
+    chan_calc(&ym2612.CH[4]);
     if (!ym2612.dacen)
     {
-      chan_calc_ym2612(&ym2612.CH[5]);
+      chan_calc(&ym2612.CH[5]);
     }
     else
     {
@@ -2098,7 +2098,7 @@ void YM2612Update(int *buffer, int length)
     }
 
     /* advance LFO */
-    advance_lfo_ym2612();
+    advance_lfo();
 
     /* advance envelope generator */
     ym2612.OPN.eg_timer += ym2612.OPN.eg_timer_add;
@@ -2197,7 +2197,7 @@ void YM2612Restore(unsigned char *buffer)
   setup_connection(&ym2612.CH[5],5);
 
   /* restore TL table (DAC resolution might have been modified) */
-  init_tables_ym2612();
+  init_tables();
 }
 
 int YM2612LoadContext(unsigned char *state)

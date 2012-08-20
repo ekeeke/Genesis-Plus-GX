@@ -505,7 +505,7 @@ static INT32  LFO_PM;
 static YM2413 ym2413;
 
 /* advance LFO to next sample */
-INLINE void advance_lfo_ym2413(void)
+INLINE void advance_lfo(void)
 {
   /* LFO */
   ym2413.lfo_am_cnt += ym2413.lfo_am_inc;
@@ -748,7 +748,7 @@ INLINE void advance(void)
 }
 
 
-INLINE signed int op_calc_ym2413(UINT32 phase, unsigned int env, signed int pm, unsigned int wave_tab)
+INLINE signed int op_calc(UINT32 phase, unsigned int env, signed int pm, unsigned int wave_tab)
 {
   UINT32 p = (env<<5) + sin_tab[wave_tab + ((((signed int)((phase & ~FREQ_MASK) + (pm<<17))) >> FREQ_SH ) & SIN_MASK) ];
 
@@ -757,7 +757,7 @@ INLINE signed int op_calc_ym2413(UINT32 phase, unsigned int env, signed int pm, 
   return tl_tab[p];
 }
 
-INLINE signed int op_calc1_ym2413(UINT32 phase, unsigned int env, signed int pm, unsigned int wave_tab)
+INLINE signed int op_calc1(UINT32 phase, unsigned int env, signed int pm, unsigned int wave_tab)
 {
   UINT32 p = (env<<5) + sin_tab[wave_tab + ((((signed int)((phase & ~FREQ_MASK) + pm)) >> FREQ_SH ) & SIN_MASK) ];
 
@@ -769,7 +769,7 @@ INLINE signed int op_calc1_ym2413(UINT32 phase, unsigned int env, signed int pm,
 #define volume_calc(OP) ((OP)->TLL + ((UINT32)(OP)->volume) + (LFO_AM & (OP)->AMmask))
 
 /* calculate output */
-INLINE void chan_calc_ym2413( YM2413_OPLL_CH *CH )
+INLINE void chan_calc( YM2413_OPLL_CH *CH )
 {
   YM2413_OPLL_SLOT *SLOT;
   unsigned int env;
@@ -790,7 +790,7 @@ INLINE void chan_calc_ym2413( YM2413_OPLL_CH *CH )
   {
     if (!SLOT->fb_shift)
       out = 0;
-    SLOT->op1_out[1] = op_calc1_ym2413(SLOT->phase, env, (out<<SLOT->fb_shift), SLOT->wavetable );
+    SLOT->op1_out[1] = op_calc1(SLOT->phase, env, (out<<SLOT->fb_shift), SLOT->wavetable );
   }
 
   /* SLOT 2 */
@@ -799,7 +799,7 @@ INLINE void chan_calc_ym2413( YM2413_OPLL_CH *CH )
   env = volume_calc(SLOT);
   if( env < ENV_QUIET )
   {
-    output[0] += op_calc_ym2413(SLOT->phase, env, phase_modulation, SLOT->wavetable);
+    output[0] += op_calc(SLOT->phase, env, phase_modulation, SLOT->wavetable);
   }
 }
 
@@ -870,14 +870,14 @@ INLINE void rhythm_calc( YM2413_OPLL_CH *CH, unsigned int noise )
   {
     if (!SLOT->fb_shift)
       out = 0;
-    SLOT->op1_out[1] = op_calc1_ym2413(SLOT->phase, env, (out<<SLOT->fb_shift), SLOT->wavetable );
+    SLOT->op1_out[1] = op_calc1(SLOT->phase, env, (out<<SLOT->fb_shift), SLOT->wavetable );
   }
 
   /* SLOT 2 */
   SLOT++;
   env = volume_calc(SLOT);
   if( env < ENV_QUIET )
-    output[1] += op_calc_ym2413(SLOT->phase, env, phase_modulation, SLOT->wavetable);
+    output[1] += op_calc(SLOT->phase, env, phase_modulation, SLOT->wavetable);
 
 
   /* Phase generation is based on: */
@@ -945,7 +945,7 @@ INLINE void rhythm_calc( YM2413_OPLL_CH *CH, unsigned int noise )
         phase = 0xd0>>2;
     }
 
-    output[1] += op_calc_ym2413(phase<<FREQ_SH, env, 0, CH[7].SLOT[SLOT1].wavetable);
+    output[1] += op_calc(phase<<FREQ_SH, env, 0, CH[7].SLOT[SLOT1].wavetable);
   }
 
   /* Snare Drum (verified on real YM3812) */
@@ -966,13 +966,13 @@ INLINE void rhythm_calc( YM2413_OPLL_CH *CH, unsigned int noise )
     if (noise)
       phase ^= 0x100;
 
-    output[1] += op_calc_ym2413(phase<<FREQ_SH, env, 0, CH[7].SLOT[SLOT2].wavetable);
+    output[1] += op_calc(phase<<FREQ_SH, env, 0, CH[7].SLOT[SLOT2].wavetable);
   }
 
   /* Tom Tom (verified on real YM3812) */
   env = volume_calc(&CH[8].SLOT[SLOT1]);
   if( env < ENV_QUIET )
-    output[1] += op_calc_ym2413(CH[8].SLOT[SLOT1].phase, env, 0, CH[8].SLOT[SLOT1].wavetable);
+    output[1] += op_calc(CH[8].SLOT[SLOT1].phase, env, 0, CH[8].SLOT[SLOT1].wavetable);
 
   /* Top Cymbal (verified on real YM2413) */
   env = volume_calc(&CH[8].SLOT[SLOT2]);
@@ -999,13 +999,13 @@ INLINE void rhythm_calc( YM2413_OPLL_CH *CH, unsigned int noise )
     if (res2)
       phase = 0x300;
 
-    output[1] += op_calc_ym2413(phase<<FREQ_SH, env, 0, CH[8].SLOT[SLOT2].wavetable);
+    output[1] += op_calc(phase<<FREQ_SH, env, 0, CH[8].SLOT[SLOT2].wavetable);
   }
 }
 
 
 /* generic table initialize */
-static int init_tables_ym2413(void)
+static int init_tables(void)
 {
   signed int i,x;
   signed int n;
@@ -1592,7 +1592,7 @@ static void OPLLWriteReg(int r, int v)
 
 void YM2413Init(double clock, int rate)
 {
-  init_tables_ym2413();
+  init_tables();
 
   /* clear */
   memset(&ym2413,0,sizeof(YM2413));
@@ -1682,21 +1682,21 @@ void YM2413Update(int *buffer, int length)
     output[0] = 0;
     output[1] = 0;
 
-    advance_lfo_ym2413();
+    advance_lfo();
 
     /* FM part */
-    chan_calc_ym2413(&ym2413.P_CH[0]);
-    chan_calc_ym2413(&ym2413.P_CH[1]);
-    chan_calc_ym2413(&ym2413.P_CH[2]);
-    chan_calc_ym2413(&ym2413.P_CH[3]);
-    chan_calc_ym2413(&ym2413.P_CH[4]);
-    chan_calc_ym2413(&ym2413.P_CH[5]);
+    chan_calc(&ym2413.P_CH[0]);
+    chan_calc(&ym2413.P_CH[1]);
+    chan_calc(&ym2413.P_CH[2]);
+    chan_calc(&ym2413.P_CH[3]);
+    chan_calc(&ym2413.P_CH[4]);
+    chan_calc(&ym2413.P_CH[5]);
 
     if(!(ym2413.rhythm&0x20))
     {
-      chan_calc_ym2413(&ym2413.P_CH[6]);
-      chan_calc_ym2413(&ym2413.P_CH[7]);
-      chan_calc_ym2413(&ym2413.P_CH[8]);
+      chan_calc(&ym2413.P_CH[6]);
+      chan_calc(&ym2413.P_CH[7]);
+      chan_calc(&ym2413.P_CH[8]);
     }
     else    /* Rhythm part */
     {
