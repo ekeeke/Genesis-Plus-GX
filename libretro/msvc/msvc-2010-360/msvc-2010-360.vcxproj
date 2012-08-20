@@ -208,7 +208,7 @@
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <PrecompiledHeaderOutputFile>$(OutDir)$(ProjectName).pch</PrecompiledHeaderOutputFile>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <PreprocessorDefinitions>NDEBUG;_XBOX;PROFILE;_LIB;__LIBRETRO__;USE_15BPP_RENDERING;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;_XBOX;PROFILE;_LIB;__LIBRETRO__;USE_15BPP_RENDERING;INLINE=static _inline;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <CallAttributedProfiling>Callcap</CallAttributedProfiling>
       <AdditionalIncludeDirectories>$(SolutionDir)\..\..\libretro;$(SolutionDir)\..\..\source;$(SolutionDir)\..\..\source\m68k;$(SolutionDir)\..\..\source\sound;$(SolutionDir)\..\..\source\cart_hw;$(SolutionDir)\..\..\source\cart_hw\svp;$(SolutionDir)\..\..\source\input_hw;$(SolutionDir)\..\..\source\ntsc;$(SolutionDir)\..\..\source\z80;$(SolutionDir)\..\..\source\cd_hw;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <CompileAs>CompileAsC</CompileAs>
@@ -234,7 +234,7 @@
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <PrecompiledHeaderOutputFile>$(OutDir)$(ProjectName).pch</PrecompiledHeaderOutputFile>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <PreprocessorDefinitions>NDEBUG;_XBOX;PROFILE;FASTCAP;_LIB;__LIBRETRO__;USE_15BPP_RENDERING;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;_XBOX;PROFILE;FASTCAP;_LIB;__LIBRETRO__;USE_15BPP_RENDERING;INLINE=static _inline;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(SolutionDir)\..\..\libretro;$(SolutionDir)\..\..\source;$(SolutionDir)\..\..\source\m68k;$(SolutionDir)\..\..\source\sound;$(SolutionDir)\..\..\source\cart_hw;$(SolutionDir)\..\..\source\cart_hw\svp;$(SolutionDir)\..\..\source\input_hw;$(SolutionDir)\..\..\source\ntsc;$(SolutionDir)\..\..\source\z80;$(SolutionDir)\..\..\source\cd_hw;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <CompileAs>CompileAsC</CompileAs>
     </ClCompile>
