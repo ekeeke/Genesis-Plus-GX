@@ -1011,7 +1011,7 @@ INLINE void set_sr(FM_SLOT *SLOT,int v)
 }
 
 /* set release rate */
-INLINE void set_sl_rr_ym2612(FM_SLOT *SLOT,int v)
+INLINE void set_sl_rr(FM_SLOT *SLOT,int v)
 {
   SLOT->sl = sl_table[ v>>4 ];
   
@@ -1586,7 +1586,7 @@ INLINE void OPNWriteReg(int r, int v)
       break;
 
     case 0x80:  /* SL, RR */
-      set_sl_rr_ym2612(SLOT,v);
+      set_sl_rr(SLOT,v);
       break;
 
     case 0x90:  /* SSG-EG */
