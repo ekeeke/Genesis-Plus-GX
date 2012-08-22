@@ -1,0 +1,196 @@
+NTSC = 0
+DEBUG = 0
+LOGSOUND = 0
+
+GENPLUS_SRC_DIR := source
+LIBRETRO_DIR	:= libretro
+
+ifeq ($(platform),)
+platform = unix
+ifeq ($(shell uname -a),)
+   platform = win
+else ifneq ($(findstring MINGW,$(shell uname -a)),)
+   platform = win
+else ifneq ($(findstring Darwin,$(shell uname -a)),)
+   platform = osx
+else ifneq ($(findstring win,$(shell uname -a)),)
+   platform = win
+endif
+endif
+
+# system platform
+system_platform = unix
+ifeq ($(shell uname -a),)
+EXE_EXT = .exe
+   system_platform = win
+else ifneq ($(findstring Darwin,$(shell uname -a)),)
+   system_platform = osx
+else ifneq ($(findstring MINGW,$(shell uname -a)),)
+   system_platform = win
+endif
+
+ifeq ($(platform), unix)
+   TARGET := libretro.so
+   fpic := -fPIC
+   SHARED := -shared -Wl,--version-script=libretro/link.T -Wl,--no-undefined -lz
+   ENDIANNESS_DEFINES := -DLSB_FIRST
+   PLATFORM_DEFINES := -DHAVE_ZLIB
+else ifeq ($(platform), osx)
+   TARGET := libretro.dylib
+   fpic := -fPIC
+   SHARED := -dynamiclib -lz
+   ENDIANNESS_DEFINES := -DLSB_FIRST
+   PLATFORM_DEFINES := -DHAVE_ZLIB
+else ifeq ($(platform), sncps3)
+   TARGET := libretro_ps3.a
+   CC = $(CELL_SDK)/host-win32/sn/bin/ps3ppusnc.exe
+   AR = $(CELL_SDK)/host-win32/sn/bin/ps3snarl.exe
+   PLATFORM_DEFINES := -D__CELLOS_LV2 -DALT_RENDER
+else ifeq ($(platform), ps3)
+   TARGET := libretro_ps3.a
+   CC = $(CELL_SDK)/host-win32/ppu/bin/ppu-lv2-gcc.exe
+   AR = $(CELL_SDK)/host-win32/ppu/bin/ppu-lv2-ar.exe
+   PLATFORM_DEFINES := -D__CELLOS_LV2 -DALT_RENDER
+else ifeq ($(platform), psl1ght)
+   TARGET := libretro_psl1ght.a$(EXE_EXT)
+   CC = $(PS3DEV)/ppu/bin/ppu-gcc$(EXE_EXT)
+   AR = $(PS3DEV)/ppu/bin/ppu-ar$(EXE_EXT)
+   PLATFORM_DEFINES := -D__CELLOS_LV2 -DALT_RENDER
+else ifeq ($(platform), xenon)
+   TARGET := libretro_xenon360.a
+   CC = xenon-gcc$(EXE_EXT)
+   AR = xenon-ar$(EXE_EXT)
+   PLATFORM_DEFINES := -D__LIBXENON__ -DALT_RENDER
+else ifeq ($(platform), wii)
+   TARGET := libretro_wii.a
+   CC = $(DEVKITPPC)/bin/powerpc-eabi-gcc$(EXE_EXT)
+   AR = $(DEVKITPPC)/bin/powerpc-eabi-ar$(EXE_EXT)
+   PLATFORM_DEFINES := -DGEKKO -mrvl -mcpu=750 -meabi -mhard-float -DALT_RENDER
+else
+   TARGET := retro.dll
+   CC = gcc
+   SHARED := -shared -static-libgcc -static-libstdc++ -Wl,--version-script=libretro/link.T -Wl,--no-undefined -lz
+
+   ENDIANNESS_DEFINES := -DLSB_FIRST
+   PLATFORM_DEFINES := -DHAVE_ZLIB
+endif
+
+ifeq ($(NTSC), 1)
+    CFLAGS += -DUSE_NTSC
+endif
+
+ifeq ($(DEBUG), 1)
+   CFLAGS += -O0 -g
+else
+   CFLAGS += -O3 -DNDEBUG
+endif
+	
+LIBRETRO_SRC := $(GENPLUS_SRC_DIR)/genesis.c \
+			$(GENPLUS_SRC_DIR)/vdp_ctrl.c \
+			$(GENPLUS_SRC_DIR)/vdp_render.c \
+			$(GENPLUS_SRC_DIR)/system.c \
+			$(GENPLUS_SRC_DIR)/io_ctrl.c \
+			$(GENPLUS_SRC_DIR)/loadrom.c \
+			$(GENPLUS_SRC_DIR)/mem68k.c \
+			$(GENPLUS_SRC_DIR)/state.c \
+			$(GENPLUS_SRC_DIR)/memz80.c \
+			$(GENPLUS_SRC_DIR)/membnk.c \
+			$(GENPLUS_SRC_DIR)/input_hw/activator.c \
+			$(GENPLUS_SRC_DIR)/input_hw/gamepad.c \
+			$(GENPLUS_SRC_DIR)/input_hw/input.c \
+			$(GENPLUS_SRC_DIR)/input_hw/lightgun.c \
+			$(GENPLUS_SRC_DIR)/input_hw/mouse.c \
+			$(GENPLUS_SRC_DIR)/input_hw/paddle.c \
+			$(GENPLUS_SRC_DIR)/input_hw/sportspad.c \
+			$(GENPLUS_SRC_DIR)/input_hw/teamplayer.c \
+			$(GENPLUS_SRC_DIR)/input_hw/xe_a1p.c \
+			$(GENPLUS_SRC_DIR)/input_hw/terebi_oekaki.c \
+			$(GENPLUS_SRC_DIR)/cd_hw/cd_cart.c \
+			$(GENPLUS_SRC_DIR)/cd_hw/cdc.c \
+			$(GENPLUS_SRC_DIR)/cd_hw/cdd.c \
+			$(GENPLUS_SRC_DIR)/cd_hw/gfx.c \
+			$(GENPLUS_SRC_DIR)/cd_hw/pcm.c \
+			$(GENPLUS_SRC_DIR)/cd_hw/scd.c \
+			$(GENPLUS_SRC_DIR)/cart_hw/areplay.c \
+			$(GENPLUS_SRC_DIR)/cart_hw/md_cart.c \
+			$(GENPLUS_SRC_DIR)/cart_hw/sms_cart.c \
+			$(GENPLUS_SRC_DIR)/cart_hw/gg_eeprom.c \
+			$(GENPLUS_SRC_DIR)/cart_hw/md_eeprom.c \
+			$(GENPLUS_SRC_DIR)/cart_hw/ggenie.c \
+			$(GENPLUS_SRC_DIR)/cart_hw/sram.c \
+			$(GENPLUS_SRC_DIR)/cart_hw/svp/ssp16.c \
+			$(GENPLUS_SRC_DIR)/cart_hw/svp/svp.c \
+			$(GENPLUS_SRC_DIR)/ntsc/md_ntsc.c \
+			$(GENPLUS_SRC_DIR)/ntsc/sms_ntsc.c \
+			$(GENPLUS_SRC_DIR)/sound/Fir_Resampler.c \
+			$(GENPLUS_SRC_DIR)/sound/eq.c \
+			$(GENPLUS_SRC_DIR)/sound/sound.c \
+			$(GENPLUS_SRC_DIR)/sound/ym2612.c \
+			$(GENPLUS_SRC_DIR)/sound/ym2413.c \
+			$(GENPLUS_SRC_DIR)/sound/sn76489.c \
+			$(GENPLUS_SRC_DIR)/sound/blip.c \
+			$(GENPLUS_SRC_DIR)/z80/z80.c \
+			$(GENPLUS_SRC_DIR)/m68k/m68kcpu.c \
+			$(GENPLUS_SRC_DIR)/m68k/s68kcpu.c \
+			$(LIBRETRO_DIR)/libretro.c
+
+LIBRETRO_OBJ := $(LIBRETRO_SRC:.c=.o)
+
+ifeq ($(LOGSOUND), 1)
+LIBRETRO_CFLAGS := -DLOGSOUND
+endif
+
+ifeq ($(platform), sncps3)
+CODE_DEFINES =
+else
+CODE_DEFINES = -std=gnu99
+endif
+
+DEFINES := 
+CFLAGS += $(fpic) $(DEFINES) $(CODE_DEFINES)
+
+LIBRETRO_CFLAGS += -I$(GENPLUS_SRC_DIR) \
+		-I$(GENPLUS_SRC_DIR)/sound \
+		-I$(GENPLUS_SRC_DIR)/input_hw \
+		-I$(GENPLUS_SRC_DIR)/cart_hw \
+		-I$(GENPLUS_SRC_DIR)/cd_hw \
+		-I$(GENPLUS_SRC_DIR)/cart_hw/svp \
+		-I$(GENPLUS_SRC_DIR)/m68k \
+		-I$(GENPLUS_SRC_DIR)/z80 \
+		-I$(GENPLUS_SRC_DIR)/ntsc \
+		-I$(LIBRETRO_DIR) \
+		-DUSE_15BPP_RENDERING \
+		$(ENDIANNESS_DEFINES) \
+		$(PLATFORM_DEFINES) \
+		-DINLINE="static inline" \
+		-D__LIBRETRO__
+
+LIBRETRO_LIBS := -lm
+
+
+all: $(TARGET)
+
+%.o: %.c
+	$(CC) -o $@ -c $< $(CFLAGS) $(LIBRETRO_CFLAGS)
+
+$(TARGET): $(LIBRETRO_OBJ)
+ifeq ($(platform), sncps3)
+	$(AR) rcs $@ $(LIBRETRO_OBJ)
+else ifeq ($(platform), ps3)
+	$(AR) rcs $@ $(LIBRETRO_OBJ)
+else ifeq ($(platform), psl1ght)
+	$(AR) rcs $@ $(LIBRETRO_OBJ)
+else ifeq ($(platform), xenon)
+	$(AR) rcs $@ $(LIBRETRO_OBJ)
+else ifeq ($(platform), wii)
+	$(AR) rcs $@ $(LIBRETRO_OBJ)
+else
+	$(CC) -o $(TARGET) $(fpic) $(LIBRETRO_OBJ) $(LIBRETRO_LIBS) $(SHARED) 
+endif
+
+clean:
+	rm -f $(LIBRETRO_OBJ)
+	rm -f $(TARGET)
+
+.PHONY: clean
+

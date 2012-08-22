@@ -1,0 +1,137 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\..\source\cart_hw\areplay.c" />
+    <ClCompile Include="..\..\..\source\cart_hw\ggenie.c" />
+    <ClCompile Include="..\..\..\source\cart_hw\gg_eeprom.c" />
+    <ClCompile Include="..\..\..\source\cart_hw\md_cart.c" />
+    <ClCompile Include="..\..\..\source\cart_hw\md_eeprom.c" />
+    <ClCompile Include="..\..\..\source\cart_hw\sms_cart.c" />
+    <ClCompile Include="..\..\..\source\cart_hw\sram.c" />
+    <ClCompile Include="..\..\..\source\cart_hw\svp\ssp16.c" />
+    <ClCompile Include="..\..\..\source\cart_hw\svp\svp.c" />
+    <ClCompile Include="..\..\..\source\cd_hw\cdc.c" />
+    <ClCompile Include="..\..\..\source\cd_hw\cdd.c" />
+    <ClCompile Include="..\..\..\source\cd_hw\cd_cart.c" />
+    <ClCompile Include="..\..\..\source\cd_hw\gfx.c" />
+    <ClCompile Include="..\..\..\source\cd_hw\pcm.c" />
+    <ClCompile Include="..\..\..\source\cd_hw\scd.c" />
+    <ClCompile Include="..\..\..\source\genesis.c" />
+    <ClCompile Include="..\..\..\source\input_hw\activator.c" />
+    <ClCompile Include="..\..\..\source\input_hw\gamepad.c" />
+    <ClCompile Include="..\..\..\source\input_hw\input.c" />
+    <ClCompile Include="..\..\..\source\input_hw\lightgun.c" />
+    <ClCompile Include="..\..\..\source\input_hw\mouse.c" />
+    <ClCompile Include="..\..\..\source\input_hw\paddle.c" />
+    <ClCompile Include="..\..\..\source\input_hw\sportspad.c" />
+    <ClCompile Include="..\..\..\source\input_hw\teamplayer.c" />
+    <ClCompile Include="..\..\..\source\input_hw\terebi_oekaki.c" />
+    <ClCompile Include="..\..\..\source\input_hw\xe_a1p.c" />
+    <ClCompile Include="..\..\..\source\io_ctrl.c" />
+    <ClCompile Include="..\..\..\source\loadrom.c" />
+    <ClCompile Include="..\..\..\source\m68k\m68kcpu.c" />
+    <ClCompile Include="..\..\..\source\m68k\s68kcpu.c" />
+    <ClCompile Include="..\..\..\source\mem68k.c" />
+    <ClCompile Include="..\..\..\source\membnk.c" />
+    <ClCompile Include="..\..\..\source\memz80.c" />
+    <ClCompile Include="..\..\..\source\ntsc\md_ntsc.c" />
+    <ClCompile Include="..\..\..\source\ntsc\sms_ntsc.c" />
+    <ClCompile Include="..\..\..\source\sound\blip.c" />
+    <ClCompile Include="..\..\..\source\sound\eq.c" />
+    <ClCompile Include="..\..\..\source\sound\Fir_Resampler.c" />
+    <ClCompile Include="..\..\..\source\sound\sn76489.c" />
+    <ClCompile Include="..\..\..\source\sound\sound.c" />
+    <ClCompile Include="..\..\..\source\sound\ym2413.c" />
+    <ClCompile Include="..\..\..\source\sound\ym2612.c" />
+    <ClCompile Include="..\..\..\source\state.c" />
+    <ClCompile Include="..\..\..\source\system.c" />
+    <ClCompile Include="..\..\..\source\vdp_ctrl.c" />
+    <ClCompile Include="..\..\..\source\vdp_render.c" />
+    <ClCompile Include="..\..\..\source\z80\z80.c" />
+    <ClCompile Include="..\..\libretro.c" />
+    <ClCompile Include="..\..\scrc32.c" />
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{29DF2EE7-2930-4BD3-8AC5-81A2534ACC99}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>msvc2010</RootNamespace>
+    <ProjectName>genesis-next-msvc-2010</ProjectName>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+    <TargetName>libretro</TargetName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LinkIncremental>false</LinkIncremental>
+    <TargetName>libretro</TargetName>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;MSVC2010_EXPORTS;_CRT_SECURE_NO_WARNINGS;INLINE=static _inline;__inline__=_inline;__extension__=;LSB_FIRST;__LIBRETRO__;USE_15BPP_RENDERING;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(SolutionDir)/../../source;$(SolutionDir)/../../utils/zlib;$(SolutionDir)/../../source/cart_hw/svp;$(SolutionDir)/../../libretro;$(SolutionDir)/../../source/m68k;$(SolutionDir)/../../source/z80;$(SolutionDir)/../../source/input_hw;$(SolutionDir)/../../source/cart_hw;$(SolutionDir)/../../source/sound;$(SolutionDir)/../../source/ntsc;$(SolutionDir)/../../source/cd_hw;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <ModuleDefinitionFile>libretro.def</ModuleDefinitionFile>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;MSVC2010_EXPORTS;_CRT_SECURE_NO_WARNINGS;INLINE=static _inline;__inline__=_inline;__extension__=;LSB_FIRST;__LIBRETRO__;USE_15BPP_RENDERING;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(SolutionDir)/../../source;$(SolutionDir)/../../utils/zlib;$(SolutionDir)/../../source/cart_hw/svp;$(SolutionDir)/../../libretro;$(SolutionDir)/../../source/m68k;$(SolutionDir)/../../source/z80;$(SolutionDir)/../../source/input_hw;$(SolutionDir)/../../source/cart_hw;$(SolutionDir)/../../source/sound;$(SolutionDir)/../../source/ntsc;$(SolutionDir)/../../source/cd_hw;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <ModuleDefinitionFile>libretro.def</ModuleDefinitionFile>
+    </Link>
+  </ItemDefinitionGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
