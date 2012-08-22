@@ -188,9 +188,12 @@ else
 	$(CC) -o $(TARGET) $(fpic) $(LIBRETRO_OBJ) $(LIBRETRO_LIBS) $(SHARED) 
 endif
 
+clean-objs:
+	rm -f $(LIBRETRO_OBJ)
+
 clean:
 	rm -f $(LIBRETRO_OBJ)
 	rm -f $(TARGET)
 
-.PHONY: clean
+.PHONY: clean clean-objs
 
