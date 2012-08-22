@@ -55,8 +55,22 @@
     <ClCompile Include="..\..\..\source\input_hw\xe_a1p.c" />
     <ClCompile Include="..\..\..\source\io_ctrl.c" />
     <ClCompile Include="..\..\..\source\loadrom.c" />
-    <ClCompile Include="..\..\..\source\m68k\m68kcpu.c" />
-    <ClCompile Include="..\..\..\source\m68k\s68kcpu.c" />
+    <ClCompile Include="..\..\..\source\m68k\m68kcpu.c">
+      <CompileAs Condition="'$(Configuration)|$(Platform)'=='CodeAnalysis|Xbox 360'">CompileAsC</CompileAs>
+      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Xbox 360'">CompileAsC</CompileAs>
+      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Profile|Xbox 360'">CompileAsC</CompileAs>
+      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Profile_FastCap|Xbox 360'">CompileAsC</CompileAs>
+      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Xbox 360'">CompileAsC</CompileAs>
+      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release_LTCG|Xbox 360'">CompileAsC</CompileAs>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\m68k\s68kcpu.c">
+      <CompileAs Condition="'$(Configuration)|$(Platform)'=='CodeAnalysis|Xbox 360'">CompileAsC</CompileAs>
+      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Xbox 360'">CompileAsC</CompileAs>
+      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Profile|Xbox 360'">CompileAsC</CompileAs>
+      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Profile_FastCap|Xbox 360'">CompileAsC</CompileAs>
+      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Xbox 360'">CompileAsC</CompileAs>
+      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release_LTCG|Xbox 360'">CompileAsC</CompileAs>
+    </ClCompile>
     <ClCompile Include="..\..\..\source\mem68k.c" />
     <ClCompile Include="..\..\..\source\membnk.c" />
     <ClCompile Include="..\..\..\source\memz80.c" />
@@ -165,7 +179,7 @@
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <PrecompiledHeaderOutputFile>$(OutDir)$(ProjectName).pch</PrecompiledHeaderOutputFile>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
-      <PreprocessorDefinitions>_DEBUG;_XBOX;_LIB;INLINE=static _inline;__attribute__=;__inline__=_inline;__extension__=;USE_15BPP_RENDERING;__LIBRETRO__;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_XBOX;_XBOX360;_LIB;INLINE=static _inline;__attribute__=;__inline__=_inline;__extension__=;USE_15BPP_RENDERING;__LIBRETRO__;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <CallAttributedProfiling>Callcap</CallAttributedProfiling>
       <AdditionalIncludeDirectories>$(SolutionDir)\..\..\libretro;$(SolutionDir)\..\..\source;$(SolutionDir)\..\..\source\m68k;$(SolutionDir)\..\..\source\sound;$(SolutionDir)\..\..\source\cart_hw;$(SolutionDir)\..\..\source\cart_hw\svp;$(SolutionDir)\..\..\source\input_hw;$(SolutionDir)\..\..\source\ntsc;$(SolutionDir)\..\..\source\z80;$(SolutionDir)\..\..\source\cd_hw;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <CompileAs>CompileAsC</CompileAs>
@@ -186,7 +200,7 @@
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <PrecompiledHeaderOutputFile>$(OutDir)$(ProjectName).pch</PrecompiledHeaderOutputFile>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
-      <PreprocessorDefinitions>_DEBUG;_XBOX;_LIB;%(PreprocessorDefinitions);__LIBRETRO__USE_ZLIB__</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_XBOX;_XBOX360;_LIB;%(PreprocessorDefinitions);INLINE=static _inline;__attribute__=;__inline__=_inline;__extension__=;USE_15BPP_RENDERING;__LIBRETRO__</PreprocessorDefinitions>
       <CallAttributedProfiling>Callcap</CallAttributedProfiling>
       <AdditionalIncludeDirectories>$(SolutionDir)\..\..\libretro;$(SolutionDir)\..\..\source;$(SolutionDir)\..\..\source\m68k;$(SolutionDir)\..\..\source\sound;$(SolutionDir)\..\..\source\cart_hw;$(SolutionDir)\..\..\source\cart_hw\svp;$(SolutionDir)\..\..\source\input_hw;$(SolutionDir)\..\..\source\ntsc;$(SolutionDir)\..\..\source\z80;$(SolutionDir)\..\..\source\cd_hw;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <CompileAs>CompileAsC</CompileAs>
@@ -208,7 +222,7 @@
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <PrecompiledHeaderOutputFile>$(OutDir)$(ProjectName).pch</PrecompiledHeaderOutputFile>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <PreprocessorDefinitions>NDEBUG;_XBOX;PROFILE;_LIB;__LIBRETRO__;USE_15BPP_RENDERING;INLINE=static _inline;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;_XBOX;_XBOX360;PROFILE;_LIB;__LIBRETRO__;USE_15BPP_RENDERING;INLINE=static _inline;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <CallAttributedProfiling>Callcap</CallAttributedProfiling>
       <AdditionalIncludeDirectories>$(SolutionDir)\..\..\libretro;$(SolutionDir)\..\..\source;$(SolutionDir)\..\..\source\m68k;$(SolutionDir)\..\..\source\sound;$(SolutionDir)\..\..\source\cart_hw;$(SolutionDir)\..\..\source\cart_hw\svp;$(SolutionDir)\..\..\source\input_hw;$(SolutionDir)\..\..\source\ntsc;$(SolutionDir)\..\..\source\z80;$(SolutionDir)\..\..\source\cd_hw;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <CompileAs>CompileAsC</CompileAs>
@@ -234,7 +248,7 @@
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <PrecompiledHeaderOutputFile>$(OutDir)$(ProjectName).pch</PrecompiledHeaderOutputFile>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <PreprocessorDefinitions>NDEBUG;_XBOX;PROFILE;FASTCAP;_LIB;__LIBRETRO__;USE_15BPP_RENDERING;INLINE=static _inline;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;_XBOX;_XBOX360;PROFILE;FASTCAP;_LIB;__LIBRETRO__;USE_15BPP_RENDERING;INLINE=static _inline;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(SolutionDir)\..\..\libretro;$(SolutionDir)\..\..\source;$(SolutionDir)\..\..\source\m68k;$(SolutionDir)\..\..\source\sound;$(SolutionDir)\..\..\source\cart_hw;$(SolutionDir)\..\..\source\cart_hw\svp;$(SolutionDir)\..\..\source\input_hw;$(SolutionDir)\..\..\source\ntsc;$(SolutionDir)\..\..\source\z80;$(SolutionDir)\..\..\source\cd_hw;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <CompileAs>CompileAsC</CompileAs>
     </ClCompile>
@@ -257,7 +271,7 @@
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <PrecompiledHeaderOutputFile>$(OutDir)$(ProjectName).pch</PrecompiledHeaderOutputFile>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <PreprocessorDefinitions>NDEBUG;_XBOX;_LIB;INLINE=static _inline;__inline__=_inline;__extension__=;USE_15BPP_RENDERING;__LIBRETRO__;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;_XBOX;_XBOX360;_LIB;INLINE=static _inline;__inline__=_inline;__extension__=;USE_15BPP_RENDERING;__LIBRETRO__;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(SolutionDir)\..\..\libretro;$(SolutionDir)\..\..\source;$(SolutionDir)\..\..\source\m68k;$(SolutionDir)\..\..\source\sound;$(SolutionDir)\..\..\source\cart_hw;$(SolutionDir)\..\..\source\cart_hw\svp;$(SolutionDir)\..\..\source\input_hw;$(SolutionDir)\..\..\source\ntsc;$(SolutionDir)\..\..\source\z80;$(SolutionDir)\..\..\source\cd_hw;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <CompileAs>CompileAsC</CompileAs>
     </ClCompile>
@@ -280,7 +294,7 @@
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <PrecompiledHeaderOutputFile>$(OutDir)$(ProjectName).pch</PrecompiledHeaderOutputFile>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <PreprocessorDefinitions>NDEBUG;_XBOX;LTCG;_LIB;INLINE=static _inline;__inline__=_inline;__extension__=;USE_15BPP_RENDERING;__LIBRETRO__;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;_XBOX;_XBOX360;LTCG;_LIB;INLINE=static _inline;__inline__=_inline;__extension__=;USE_15BPP_RENDERING;__LIBRETRO__;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(SolutionDir)\..\..\libretro;$(SolutionDir)\..\..\source;$(SolutionDir)\..\..\source\m68k;$(SolutionDir)\..\..\source\sound;$(SolutionDir)\..\..\source\cart_hw;$(SolutionDir)\..\..\source\cart_hw\svp;$(SolutionDir)\..\..\source\input_hw;$(SolutionDir)\..\..\source\ntsc;$(SolutionDir)\..\..\source\z80;$(SolutionDir)\..\..\source\cd_hw;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <CompileAs>CompileAsC</CompileAs>
     </ClCompile>

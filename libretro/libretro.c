@@ -128,12 +128,12 @@ int load_archive(char *filename, unsigned char *buffer, int maxsize, char *exten
   /* Mega CD BIOS are required files */
   if (!strcmp(filename,CD_BIOS_US) || !strcmp(filename,CD_BIOS_EU) || !strcmp(filename,CD_BIOS_JP)) 
   {
-    sprintf(msg,"Unable to open CD BIOS");
+    sprintf(msg,"Unable to open CD BIOS: %s", filename);
   }
 
   if (!fd)
   {
-    fprintf(stderr, "ERROR - %s.\n");
+    fprintf(stderr, "ERROR - %s.\n", msg);
     return 0;
   }
 
@@ -814,8 +814,10 @@ bool retro_load_game(const struct retro_game_info *info)
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_SYSTEM_DIRECTORY, &dir) && dir)
    {
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(_XBOX360)
       const char slash[] = "\\";
+#elif defined(_WIN32) && defined(_XBOX360)
+	  const char slash[] = "\0";
 #else
       const char slash[] = "/";
 #endif
