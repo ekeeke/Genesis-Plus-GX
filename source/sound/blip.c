@@ -84,7 +84,6 @@ void blip_add( blip_buffer_t* s, int clocks, int delta )
 
 int blip_clocks_needed( const blip_buffer_t* s, int samples )
 {
-
   /* Fixed-point number of samples needed in addition to those in buffer */
   int fixed_needed = samples * time_unit - s->offset;
   
