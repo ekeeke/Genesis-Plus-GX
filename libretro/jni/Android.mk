@@ -2,10 +2,10 @@ LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
 
-GENPLUS_SRC_DIR := ../src
-LIBRETRO_DIR	:= ../libretro
+GENPLUS_SRC_DIR := ../../source
+LIBRETRO_DIR	:= ../
 
-LOCAL_MODULE    := libretro
+LOCAL_MODULE    := retro
 LOCAL_SRC_FILES := $(GENPLUS_SRC_DIR)/genesis.c \
 			$(GENPLUS_SRC_DIR)/vdp_ctrl.c \
 			$(GENPLUS_SRC_DIR)/vdp_render.c \
@@ -26,6 +26,12 @@ LOCAL_SRC_FILES := $(GENPLUS_SRC_DIR)/genesis.c \
 			$(GENPLUS_SRC_DIR)/input_hw/teamplayer.c \
 			$(GENPLUS_SRC_DIR)/input_hw/xe_a1p.c \
 			$(GENPLUS_SRC_DIR)/input_hw/terebi_oekaki.c \
+			$(GENPLUS_SRC_DIR)/cd_hw/cd_cart.c \
+			$(GENPLUS_SRC_DIR)/cd_hw/cdc.c \
+			$(GENPLUS_SRC_DIR)/cd_hw/cdd.c \
+			$(GENPLUS_SRC_DIR)/cd_hw/gfx.c \
+			$(GENPLUS_SRC_DIR)/cd_hw/pcm.c \
+			$(GENPLUS_SRC_DIR)/cd_hw/scd.c \
 			$(GENPLUS_SRC_DIR)/cart_hw/areplay.c \
 			$(GENPLUS_SRC_DIR)/cart_hw/md_cart.c \
 			$(GENPLUS_SRC_DIR)/cart_hw/sms_cart.c \
@@ -46,11 +52,14 @@ LOCAL_SRC_FILES := $(GENPLUS_SRC_DIR)/genesis.c \
 			$(GENPLUS_SRC_DIR)/sound/blip.c \
 			$(GENPLUS_SRC_DIR)/z80/z80.c \
 			$(GENPLUS_SRC_DIR)/m68k/m68kcpu.c \
-			$(LIBRETRO_DIR)/libretro.c
+			$(GENPLUS_SRC_DIR)/m68k/s68kcpu.c \
+			$(LIBRETRO_DIR)/libretro.c \
+			$(LIBRETRO_DIR)/scrc32.c
 
 LOCAL_C_INCLUDES = $(LOCAL_PATH)/$(GENPLUS_SRC_DIR) \
 			$(LOCAL_PATH)/$(GENPLUS_SRC_DIR)/sound \
 			$(LOCAL_PATH)/$(GENPLUS_SRC_DIR)/input_hw \
+			$(LOCAL_PATH)/$(GENPLUS_SRC_DIR)/cd_hw \
 			$(LOCAL_PATH)/$(GENPLUS_SRC_DIR)/cart_hw \
 			$(LOCAL_PATH)/$(GENPLUS_SRC_DIR)/cart_hw/svp \
 			$(LOCAL_PATH)/$(GENPLUS_SRC_DIR)/m68k \
@@ -58,5 +67,6 @@ LOCAL_C_INCLUDES = $(LOCAL_PATH)/$(GENPLUS_SRC_DIR) \
 			$(LOCAL_PATH)/$(GENPLUS_SRC_DIR)/ntsc \
 			$(LOCAL_PATH)/$(LIBRETRO_DIR)
 
-LOCAL_CFLAGS = -DINLINE=inline -DUSE_15BPP_RENDERING -DLSB_FIRST -D__LIBRETRO__ 
+LOCAL_CFLAGS = -DINLINE="static inline" -DUSE_15BPP_RENDERING -DLSB_FIRST -D__LIBRETRO__
+
 include $(BUILD_SHARED_LIBRARY)
