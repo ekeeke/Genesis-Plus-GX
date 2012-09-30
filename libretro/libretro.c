@@ -128,7 +128,7 @@ int load_archive(char *filename, unsigned char *buffer, int maxsize, char *exten
   /* Mega CD BIOS are required files */
   if (!strcmp(filename,CD_BIOS_US) || !strcmp(filename,CD_BIOS_EU) || !strcmp(filename,CD_BIOS_JP)) 
   {
-    sprintf(msg,"Unable to open CD BIOS: %s", filename);
+    snprintf(msg, sizeof(msg), "Unable to open CD BIOS: %s", filename);
   }
 
   if (!fd)
