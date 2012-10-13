@@ -114,21 +114,21 @@ LIBRETRO_SRC := $(GENPLUS_SRC_DIR)/genesis.c \
 			$(GENPLUS_SRC_DIR)/cart_hw/areplay.c \
 			$(GENPLUS_SRC_DIR)/cart_hw/md_cart.c \
 			$(GENPLUS_SRC_DIR)/cart_hw/sms_cart.c \
-			$(GENPLUS_SRC_DIR)/cart_hw/gg_eeprom.c \
-			$(GENPLUS_SRC_DIR)/cart_hw/md_eeprom.c \
+			$(GENPLUS_SRC_DIR)/cart_hw/eeprom_93c.c \
+			$(GENPLUS_SRC_DIR)/cart_hw/eeprom_i2c.c \
+			$(GENPLUS_SRC_DIR)/cart_hw/eeprom_spi.c \
 			$(GENPLUS_SRC_DIR)/cart_hw/ggenie.c \
 			$(GENPLUS_SRC_DIR)/cart_hw/sram.c \
 			$(GENPLUS_SRC_DIR)/cart_hw/svp/ssp16.c \
 			$(GENPLUS_SRC_DIR)/cart_hw/svp/svp.c \
 			$(GENPLUS_SRC_DIR)/ntsc/md_ntsc.c \
 			$(GENPLUS_SRC_DIR)/ntsc/sms_ntsc.c \
-			$(GENPLUS_SRC_DIR)/sound/Fir_Resampler.c \
-			$(GENPLUS_SRC_DIR)/sound/eq.c \
+=			$(GENPLUS_SRC_DIR)/sound/eq.c \
 			$(GENPLUS_SRC_DIR)/sound/sound.c \
 			$(GENPLUS_SRC_DIR)/sound/ym2612.c \
 			$(GENPLUS_SRC_DIR)/sound/ym2413.c \
 			$(GENPLUS_SRC_DIR)/sound/sn76489.c \
-			$(GENPLUS_SRC_DIR)/sound/blip.c \
+			$(GENPLUS_SRC_DIR)/sound/blip_buf.c \
 			$(GENPLUS_SRC_DIR)/z80/z80.c \
 			$(GENPLUS_SRC_DIR)/m68k/m68kcpu.c \
 			$(GENPLUS_SRC_DIR)/m68k/s68kcpu.c \
