@@ -808,6 +808,34 @@ static void retro_set_viewport_dimensions(void)
    g_av_info.timing   = timing;
 }
 
+static bool LoadFile(char * filename)
+{
+   int size = 0;
+
+   /* check if virtual CD tray was open */
+   if ((system_hw == SYSTEM_MCD) && (cdd.status == CD_OPEN))
+   {
+      /* swap CD image file */
+      size = cdd_load(filename, (char *)(cdc.ram));
+
+      /* update CD header information */
+      if (!scd.cartridge.boot)
+         getrominfo((char *)(cdc.ram));
+   }
+
+   /* no CD image file loaded */
+   if (!size)
+   {
+      /* close CD tray to force system reset */
+      cdd.status = CD_STOP;
+      
+      /* load game file */
+      size = load_rom(filename);
+   }
+
+   return size > 0;
+}
+
 bool retro_load_game(const struct retro_game_info *info)
 {
    const char *full_path;
@@ -870,7 +898,7 @@ bool retro_load_game(const struct retro_game_info *info)
 
    full_path = info->path;
 
-   if (!load_rom((char*)full_path))
+   if (!LoadFile((char *)full_path))
       return false;
 
    configure_controls();
