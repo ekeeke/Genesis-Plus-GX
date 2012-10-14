@@ -128,7 +128,7 @@ LIBRETRO_SRC := $(GENPLUS_SRC_DIR)/genesis.c \
 			$(GENPLUS_SRC_DIR)/cart_hw/svp/svp.c \
 			$(GENPLUS_SRC_DIR)/ntsc/md_ntsc.c \
 			$(GENPLUS_SRC_DIR)/ntsc/sms_ntsc.c \
-=			$(GENPLUS_SRC_DIR)/sound/eq.c \
+			$(GENPLUS_SRC_DIR)/sound/eq.c \
 			$(GENPLUS_SRC_DIR)/sound/sound.c \
 			$(GENPLUS_SRC_DIR)/sound/ym2612.c \
 			$(GENPLUS_SRC_DIR)/sound/ym2413.c \

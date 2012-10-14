@@ -27,6 +27,8 @@ static int vwidth;
 static int vheight;
 static bool failed_init;
 
+char rom_filename[256];
+
 unsigned retro_api_version(void) { return RETRO_API_VERSION; }
 
 static retro_video_refresh_t video_cb;
@@ -698,7 +700,7 @@ static struct retro_system_av_info g_av_info;
 void retro_get_system_info(struct retro_system_info *info)
 {
    info->library_name = "Genesis Plus GX";
-   info->library_version = "v1.7.0";
+   info->library_version = "v1.7.1";
    info->valid_extensions = "md|smd|bin|cue|gen|zip|MD|SMD|bin|iso|ISO|CUE|GEN|ZIP|sms|SMS|gg|GG|sg|SG";
    info->block_extract = false;
    info->need_fullpath = true;
@@ -948,7 +950,6 @@ void retro_init(void)
 
 void retro_deinit(void)
 {
-   system_shutdown();
 #if defined(USE_NTSC)
    free(md_ntsc);
    free(sms_ntsc);

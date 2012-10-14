@@ -87,6 +87,7 @@ typedef struct
   float bgm_volume;
   float sfx_volume;
   char lastdir[4][2][MAXPATHLEN];
+  uint8 gg_extra;
 } t_config;
 
 /* Global data */
@@ -106,7 +107,7 @@ extern char MS_BIOS_JP[256];
 
 extern int16 soundbuffer[3068];
 
-#define VERSION "Genesis Plus GX 1.7.0 (libretro)"
+#define VERSION "Genesis Plus GX 1.7.1 (libretro)"
 
 void osd_input_update(void);
 int load_archive(char *filename, unsigned char *buffer, int maxsize, char *extension);
