@@ -27,7 +27,7 @@ CFLAGS    = `sdl-config --cflags` -march=i686 -O6 -fomit-frame-pointer -Wall -Wn
 #-g -ggdb -pg
 #-fomit-frame-pointer
 LDFLAGS   = 
-DEFINES   = -DLSB_FIRST -DUSE_16BPP_RENDERING -DLOGERROR -DLOG_CDC -DLOG_CDD -DLOG_SCD -DLOGVDP -DLOG_PCM
+DEFINES   = -DLSB_FIRST -DUSE_16BPP_RENDERING
   
 INCLUDES  = -I. -I.. -I../z80 -I../m68k -I../sound -I../input_hw -I../cart_hw -I../cd_hw -I../cart_hw/svp -I../ntsc
 LIBS	  = `sdl-config --libs` -lz -lm
@@ -61,22 +61,22 @@ OBJECTS	+=      obj/input.o	 \
 
 OBJECTS	+=      obj/sound.o	 \
 		obj/sn76489.o    \
-		obj/ym2413.o    \
+		obj/ym2413.o     \
 		obj/ym2612.o    
 
-OBJECTS	+=	obj/Fir_Resampler.o
-OBJECTS	+=	obj/blip.o 
+OBJECTS	+=	obj/blip_buf.o 
 
 OBJECTS	+=	obj/eq.o \
 
-OBJECTS	+=      obj/sram.o      \
-		obj/svp.o	\
-		obj/ssp16.o	\
-		obj/ggenie.o	\
-		obj/areplay.o	\
-		obj/gg_eeprom.o \
-		obj/md_eeprom.o \
-		obj/md_cart.o	\
+OBJECTS	+=      obj/sram.o       \
+		obj/svp.o	 \
+		obj/ssp16.o	 \
+		obj/ggenie.o	 \
+		obj/areplay.o	 \
+		obj/eeprom_93c.o \
+		obj/eeprom_i2c.o \
+		obj/eeprom_spi.o \
+		obj/md_cart.o	 \
 		obj/sms_cart.o	
 
 OBJECTS	+=      obj/scd.o	\
