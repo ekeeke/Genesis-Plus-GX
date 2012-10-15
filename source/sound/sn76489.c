@@ -325,8 +325,8 @@ void SN76489_Config(unsigned int clocks, int preAmp, int boostNoise, int stereo)
   for (i=0; i<4; i++)
   {
     /* stereo channel pre-amplification */
-    SN76489.PreAmp[i][0] = preAmp * ((stereo >> (i*2)) & 1);
-    SN76489.PreAmp[i][1] = preAmp * ((stereo >> (i*2 + 1)) & 1);
+    SN76489.PreAmp[i][0] = preAmp * ((stereo >> (i + 4)) & 1);
+    SN76489.PreAmp[i][1] = preAmp * ((stereo >> (i + 0)) & 1);
 
     /* noise channel boost */
     if (i == 3)
