@@ -272,6 +272,10 @@ static void config_default(void)
    config.hot_swap &= 1;
 }
 
+/* these values are used for libretro reporting too */
+static const double pal_fps = 53203424.0 / (3420.0 * 313.0);
+static const double ntsc_fps = 53693175.0 / (3420.0 * 262.0);
+
 static void init_audio(void)
 {
    audio_init(44100, 0);
