@@ -213,7 +213,7 @@ static void config_default(void)
    config.psg_preamp     = 150;
    config.fm_preamp      = 100;
    config.hq_fm          = 1;
-   config.psgBoostNoise  = 0;
+   config.psgBoostNoise  = 1;
    config.filter         = 0;
    config.lp_range       = 50;
    config.low_freq       = 880;
@@ -221,8 +221,7 @@ static void config_default(void)
    config.lg             = 1.0;
    config.mg             = 1.0;
    config.hg             = 1.0;
-   config.rolloff        = 0.990;
-   config.dac_bits 		  = 14;
+   config.dac_bits 	 = 14;
    config.ym2413         = 2; /* AUTO */
 
    /* system options */
@@ -243,6 +242,7 @@ static void config_default(void)
    config.yscale   = 0;
    config.aspect   = 0;
    config.overscan = 0; /* 3 == FULL */
+   config.gg_extra = 0; /* 1 = show extended Game Gear screen (256x192) */
 #if defined(USE_NTSC)
    config.ntsc     = 1;
 #endif
@@ -272,12 +272,9 @@ static void config_default(void)
    config.hot_swap &= 1;
 }
 
-static const double pal_fps = 53203424.0 / (3420.0 * 313.0);
-static const double ntsc_fps = 53693175.0 / (3420.0 * 262.0);
-
 static void init_audio(void)
 {
-   audio_init(44100, vdp_pal ? pal_fps : ntsc_fps);
+   audio_init(44100, 0);
 }
 
 static void configure_controls(void)
@@ -978,6 +975,7 @@ void retro_init(void)
 
 void retro_deinit(void)
 {
+   audio_shutdown();
 #if defined(USE_NTSC)
    free(md_ntsc);
    free(sms_ntsc);

@@ -892,7 +892,6 @@ int main (int argc, char **argv)
     }
   }
 
-  system_shutdown();
   audio_shutdown();
   error_shutdown();
 
