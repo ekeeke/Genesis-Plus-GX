@@ -25,7 +25,6 @@ md_ntsc_t  *md_ntsc;
 
 static int vwidth;
 static int vheight;
-static bool failed_init;
 
 char rom_filename[256];
 
@@ -975,6 +974,12 @@ void retro_init(void)
 
    level = 1;
    environ_cb(RETRO_ENVIRONMENT_SET_PERFORMANCE_LEVEL, &level);
+
+   unsigned rgb565 = RETRO_PIXEL_FORMAT_RGB565;
+   environ_cb(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &rgb565);
+
+   if (rgb565)
+      fprintf(stderr, "Frontend supports RGB565 - will use that instead of XRGB1555.");
 }
 
 void retro_deinit(void)
