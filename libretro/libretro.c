@@ -975,11 +975,13 @@ void retro_init(void)
    level = 1;
    environ_cb(RETRO_ENVIRONMENT_SET_PERFORMANCE_LEVEL, &level);
 
+#ifdef FRONTEND_SUPPORTS_RGB565
    unsigned rgb565 = RETRO_PIXEL_FORMAT_RGB565;
    environ_cb(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &rgb565);
 
    if (rgb565)
       fprintf(stderr, "Frontend supports RGB565 - will use that instead of XRGB1555.");
+#endif
 }
 
 void retro_deinit(void)
