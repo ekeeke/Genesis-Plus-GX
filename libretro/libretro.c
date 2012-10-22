@@ -980,7 +980,7 @@ void retro_init(void)
    environ_cb(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &rgb565);
 
    if (rgb565)
-      fprintf(stderr, "Frontend supports RGB565 - will use that instead of XRGB1555.");
+      fprintf(stderr, "Frontend supports RGB565 - will use that instead of XRGB1555.\n");
 #endif
 }
 
