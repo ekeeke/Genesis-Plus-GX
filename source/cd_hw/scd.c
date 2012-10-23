@@ -1069,7 +1069,7 @@ void scd_init(void)
   }
 
   /* $200000-$3FFFFF (resp. $600000-$7FFFFF): Word-RAM in 2M mode (256KB mirrored) */
-  for (i=base+0x20; i<base+0x24; i++)
+  for (i=base+0x20; i<base+0x40; i++)
   {
     m68k.memory_map[i].base    = scd.word_ram_2M + ((i & 3) << 16);
     m68k.memory_map[i].read8   = NULL;
