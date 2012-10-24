@@ -246,7 +246,7 @@ int ParseDirectory(void)
  ****************************************************************************/ 
 int LoadFile(int selection) 
 {
-  int size = 0, reload, filetype;
+  int size, cd_mode1, filetype;
   char filename[MAXPATHLEN];
 
   /* file path */
@@ -270,33 +270,33 @@ int LoadFile(int selection)
   /* open message box */
   GUI_MsgBoxOpen("Information", "Loading game...", 1);
 
-  /* by default, update loaded game informations */
-  reload = 1;
+  /* no cartridge or CD game loaded */
+  size = cd_mode1 = 0;
 
   /* check if virtual CD tray was open */
   if ((system_hw == SYSTEM_MCD) && (cdd.status == CD_OPEN))
   {
-    /* swap CD image file without changing region, system,... */
+    /* swap CD image file in (without changing region, system,...) */
     size = cdd_load(filename, (char *)(cdc.ram));
 
-    /* Mode 1 cartridge loaded ? */
+    /* check if a cartridge is currently loaded  */
     if (scd.cartridge.boot)
     {
-      /* loaded ROM file infos should not be modified */
-      reload = 0;
+      /* CD Mode 1 */
+      cd_mode1 = size;
     }
     else
     {
-      /* update CD header informations */
+      /* update game informations from CD image file header */
       getrominfo((char *)(cdc.ram));
     }
   }
 
-  /* no CD image file swapped */
+  /* no CD image file loaded */
   if (!size)
   {
     /* close CD tray to force system reset */
-    cdd.status = CD_STOP;
+    cdd.status = NO_DISC;
 
     /* load game file */
     size = load_rom(filename);
@@ -304,13 +304,18 @@ int LoadFile(int selection)
 
   if (size > 0)
   {
-    /* check if loaded game has changed */
-    if (reload)
+    /* do not update game basename if a CD was loaded with a cartridge (Mode 1) */
+    if (cd_mode1)
+    {
+      /* add CD image file to history list */
+      filetype = 1;
+    }
+    else
     {
       /* auto-save previous game state */
       slot_autosave(config.s_default,config.s_device);
 
-      /* update pathname for screenshot, save & cheat files */
+      /* update game basename (for screenshot, save & cheat files) */
       if (romtype & SYSTEM_SMS)
       {
         /* Master System ROM file */
