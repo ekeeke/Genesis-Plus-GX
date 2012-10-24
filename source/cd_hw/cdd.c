@@ -974,7 +974,7 @@ void cdd_process(void)
           scd.regs[0x3a>>1].w = lut_BCD_16[(lba/75)/60];
           scd.regs[0x3c>>1].w = lut_BCD_16[(lba/75)%60];
           scd.regs[0x3e>>1].w = lut_BCD_16[(lba%75)];
-          scd.regs[0x40>>1].byte.h = cdd.index ? 0x01 : 0x04; /* Current block flags (bit0 = mute status, bit1: pre-emphasis status, bit2: track type) */
+          scd.regs[0x40>>1].byte.h = cdd.index ? 0x00 : 0x04; /* Current block flags (bit0 = mute status, bit1: pre-emphasis status, bit2: track type) */
           break;
         }
 
