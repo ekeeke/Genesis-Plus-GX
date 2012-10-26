@@ -53,7 +53,7 @@
 #define CD_END   0x0C
 
 /* CD blocks scanning speed */
-#define CD_SCAN_SPEED 10
+#define CD_SCAN_SPEED 30
 
 #define CD_MAX_TRACKS 100
 
