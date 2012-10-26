@@ -840,6 +840,8 @@ bool retro_load_game(const struct retro_game_info *info)
 {
    const char *full_path;
    const char *dir;
+   char slash;
+
    extract_directory(g_rom_dir, info->path, sizeof(g_rom_dir));
 
    if (!environ_cb(RETRO_ENVIRONMENT_GET_SYSTEM_DIRECTORY, &dir) || !dir)
@@ -848,11 +850,11 @@ bool retro_load_game(const struct retro_game_info *info)
       dir = g_rom_dir;
    }
 #if defined(_WIN32) && !defined(_XBOX360)
-   const char slash[] = "\\";
+   snprintf(slash, sizeof(slash), "\\");
 #elif defined(_WIN32) && defined(_XBOX360)
-   const char slash[] = "";
+   snprintf(slash, sizeof(slash), "");
 #else
-   const char slash[] = "/";
+   snprintf(slash, sizeof(slash), "/");
 #endif
 
    snprintf(CD_BRAM_EU, sizeof(CD_BRAM_EU), "%s%sscd_E.brm", dir, slash);
@@ -964,7 +966,7 @@ size_t retro_get_memory_size(unsigned id)
 
 void retro_init(void)
 {
-   unsigned level;
+   unsigned level, rgb565;
 #if defined(USE_NTSC)
    sms_ntsc = calloc(1, sizeof(sms_ntsc_t));
    md_ntsc  = calloc(1, sizeof(md_ntsc_t));
@@ -976,7 +978,7 @@ void retro_init(void)
    environ_cb(RETRO_ENVIRONMENT_SET_PERFORMANCE_LEVEL, &level);
 
 #ifdef FRONTEND_SUPPORTS_RGB565
-   unsigned rgb565 = RETRO_PIXEL_FORMAT_RGB565;
+   rgb565 = RETRO_PIXEL_FORMAT_RGB565;
    if(environ_cb(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &rgb565))
       fprintf(stderr, "Frontend supports RGB565 - will use that instead of XRGB1555.\n");
 #endif
