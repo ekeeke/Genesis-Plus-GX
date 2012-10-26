@@ -54,16 +54,10 @@
     <ClCompile Include="..\..\..\source\cart_hw\areplay.c">
       <Filter>Source Files\cart_hw</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\source\cart_hw\gg_eeprom.c">
-      <Filter>Source Files\cart_hw</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\..\source\cart_hw\ggenie.c">
       <Filter>Source Files\cart_hw</Filter>
     </ClCompile>
     <ClCompile Include="..\..\..\source\cart_hw\md_cart.c">
-      <Filter>Source Files\cart_hw</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\source\cart_hw\md_eeprom.c">
       <Filter>Source Files\cart_hw</Filter>
     </ClCompile>
     <ClCompile Include="..\..\..\source\cart_hw\sms_cart.c">
@@ -117,13 +111,7 @@
     <ClCompile Include="..\..\..\source\sound\ym2612.c">
       <Filter>Source Files\sound</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\source\sound\blip.c">
-      <Filter>Source Files\sound</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\..\source\sound\eq.c">
-      <Filter>Source Files\sound</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\source\sound\Fir_Resampler.c">
       <Filter>Source Files\sound</Filter>
     </ClCompile>
     <ClCompile Include="..\..\..\source\sound\sn76489.c">
@@ -188,6 +176,18 @@
     </ClCompile>
     <ClCompile Include="..\..\scrc32.c">
       <Filter>Source Files\libretro</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\cart_hw\eeprom_spi.c">
+      <Filter>Source Files\cart_hw</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\cart_hw\eeprom_93c.c">
+      <Filter>Source Files\cart_hw</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\cart_hw\eeprom_i2c.c">
+      <Filter>Source Files\cart_hw</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\source\sound\blip_buf.c">
+      <Filter>Source Files\sound</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
