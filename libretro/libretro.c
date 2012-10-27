@@ -25,7 +25,8 @@ md_ntsc_t  *md_ntsc;
 
 static int vwidth;
 static int vheight;
-static bool failed_init;
+
+char rom_filename[256];
 
 unsigned retro_api_version(void) { return RETRO_API_VERSION; }
 
@@ -128,7 +129,7 @@ int load_archive(char *filename, unsigned char *buffer, int maxsize, char *exten
   /* Mega CD BIOS are required files */
   if (!strcmp(filename,CD_BIOS_US) || !strcmp(filename,CD_BIOS_EU) || !strcmp(filename,CD_BIOS_JP)) 
   {
-    sprintf(msg,"Unable to open CD BIOS: %s", filename);
+    snprintf(msg, sizeof(msg), "Unable to open CD BIOS: %s", filename);
   }
 
   if (!fd)
@@ -269,6 +270,10 @@ static void config_default(void)
    /* hot swap requires at least a first initialization */
    config.hot_swap &= 1;
 }
+
+/* these values are used for libretro reporting too */
+static const double pal_fps = 53203424.0 / (3420.0 * 313.0);
+static const double ntsc_fps = 53693175.0 / (3420.0 * 262.0);
 
 static void init_audio(void)
 {
@@ -695,7 +700,7 @@ static struct retro_system_av_info g_av_info;
 void retro_get_system_info(struct retro_system_info *info)
 {
    info->library_name = "Genesis Plus GX";
-   info->library_version = "v1.7.0";
+   info->library_version = "v1.7.1";
    info->valid_extensions = "md|smd|bin|cue|gen|zip|MD|SMD|bin|iso|ISO|CUE|GEN|ZIP|sms|SMS|gg|GG|sg|SG";
    info->block_extract = false;
    info->need_fullpath = true;
@@ -803,56 +808,83 @@ static void retro_set_viewport_dimensions(void)
    g_av_info.timing   = timing;
 }
 
+static bool LoadFile(char * filename)
+{
+   int size = 0;
+
+   /* check if virtual CD tray was open */
+   if ((system_hw == SYSTEM_MCD) && (cdd.status == CD_OPEN))
+   {
+      /* swap CD image file */
+      size = cdd_load(filename, (char *)(cdc.ram));
+
+      /* update CD header information */
+      if (!scd.cartridge.boot)
+         getrominfo((char *)(cdc.ram));
+   }
+
+   /* no CD image file loaded */
+   if (!size)
+   {
+      /* close CD tray to force system reset */
+      cdd.status = CD_STOP;
+      
+      /* load game file */
+      size = load_rom(filename);
+   }
+
+   return size > 0;
+}
+
 bool retro_load_game(const struct retro_game_info *info)
 {
    const char *full_path;
    const char *dir;
+   char slash;
+
    extract_directory(g_rom_dir, info->path, sizeof(g_rom_dir));
 
-   if (environ_cb(RETRO_ENVIRONMENT_GET_SYSTEM_DIRECTORY, &dir) && dir)
-   {
-#if defined(_WIN32) && !defined(_XBOX360)
-      const char slash[] = "\\";
-#elif defined(_WIN32) && defined(_XBOX360)
-	  const char slash[] = "\0";
-#else
-      const char slash[] = "/";
-#endif
-
-      snprintf(CD_BRAM_EU, sizeof(CD_BRAM_EU), "%s%sscd_E.brm", dir, slash);
-      snprintf(CD_BRAM_US, sizeof(CD_BRAM_US), "%s%sscd_U.brm", dir, slash);
-      snprintf(CD_BRAM_JP, sizeof(CD_BRAM_JP), "%s%sscd_J.brm", dir, slash);
-      snprintf(CD_BIOS_EU, sizeof(CD_BIOS_EU), "%s%sbios_CD_E.bin", dir, slash);
-      snprintf(CD_BIOS_US, sizeof(CD_BIOS_US), "%s%sbios_CD_U.bin", dir, slash);
-      snprintf(CD_BIOS_JP, sizeof(CD_BIOS_JP), "%s%sbios_CD_J.bin", dir, slash);
-      snprintf(MS_BIOS_EU, sizeof(MS_BIOS_EU), "%s%sbios_E.sms", dir, slash);
-      snprintf(MS_BIOS_US, sizeof(MS_BIOS_US), "%s%sbios_U.sms", dir, slash);
-      snprintf(MS_BIOS_JP, sizeof(MS_BIOS_JP), "%s%sbios_J.sms", dir, slash);
-      snprintf(GG_BIOS, sizeof(GG_BIOS), "%s%sbios.gg", dir, slash);
-      snprintf(SK_ROM, sizeof(SK_ROM), "%s%ssk.bin", dir, slash);
-      snprintf(SK_UPMEM, sizeof(SK_UPMEM), "%s%ssk2chip.bin", dir, slash);
-      snprintf(GG_ROM, sizeof(GG_ROM), "%s%sggenie.bin", dir, slash);
-      snprintf(AR_ROM, sizeof(AR_ROM), "%s%sareplay.bin", dir, slash);
-      fprintf(stderr, "Sega CD EU BRAM should be located at: %s\n", CD_BRAM_EU);
-      fprintf(stderr, "Sega CD US BRAM should be located at: %s\n", CD_BRAM_US);
-      fprintf(stderr, "Sega CD JP BRAM should be located at: %s\n", CD_BRAM_JP);
-      fprintf(stderr, "Sega CD EU BIOS should be located at: %s\n", CD_BIOS_EU);
-      fprintf(stderr, "Sega CD US BIOS should be located at: %s\n", CD_BIOS_US);
-      fprintf(stderr, "Sega CD JP BIOS should be located at: %s\n", CD_BIOS_JP);
-      fprintf(stderr, "Master System EU BIOS should be located at: %s\n", MS_BIOS_EU);
-      fprintf(stderr, "Master System US BIOS should be located at: %s\n", MS_BIOS_US);
-      fprintf(stderr, "Master System JP BIOS should be located at: %s\n", MS_BIOS_JP);
-      fprintf(stderr, "Game Gear BIOS should be located at: %s\n", GG_BIOS);
-      fprintf(stderr, "S&K upmem ROM should be located at: %s\n", SK_UPMEM);
-      fprintf(stderr, "S&K ROM should be located at: %s\n", SK_ROM);
-      fprintf(stderr, "Game Genie ROM should be located at: %s\n", GG_ROM);
-      fprintf(stderr, "Action Replay ROM should be located at: %s\n", AR_ROM);
-   }
-   else
+   if (!environ_cb(RETRO_ENVIRONMENT_GET_SYSTEM_DIRECTORY, &dir) || !dir)
    {
       fprintf(stderr, "[genplus]: Defaulting system directory to %s.\n", g_rom_dir);
       dir = g_rom_dir;
    }
+#if defined(_WIN32) && !defined(_XBOX360)
+   snprintf(slash, sizeof(slash), "\\");
+#elif defined(_WIN32) && defined(_XBOX360)
+   snprintf(slash, sizeof(slash), "");
+#else
+   snprintf(slash, sizeof(slash), "/");
+#endif
+
+   snprintf(CD_BRAM_EU, sizeof(CD_BRAM_EU), "%s%sscd_E.brm", dir, slash);
+   snprintf(CD_BRAM_US, sizeof(CD_BRAM_US), "%s%sscd_U.brm", dir, slash);
+   snprintf(CD_BRAM_JP, sizeof(CD_BRAM_JP), "%s%sscd_J.brm", dir, slash);
+   snprintf(CD_BIOS_EU, sizeof(CD_BIOS_EU), "%s%sbios_CD_E.bin", dir, slash);
+   snprintf(CD_BIOS_US, sizeof(CD_BIOS_US), "%s%sbios_CD_U.bin", dir, slash);
+   snprintf(CD_BIOS_JP, sizeof(CD_BIOS_JP), "%s%sbios_CD_J.bin", dir, slash);
+   snprintf(MS_BIOS_EU, sizeof(MS_BIOS_EU), "%s%sbios_E.sms", dir, slash);
+   snprintf(MS_BIOS_US, sizeof(MS_BIOS_US), "%s%sbios_U.sms", dir, slash);
+   snprintf(MS_BIOS_JP, sizeof(MS_BIOS_JP), "%s%sbios_J.sms", dir, slash);
+   snprintf(GG_BIOS, sizeof(GG_BIOS), "%s%sbios.gg", dir, slash);
+   snprintf(SK_ROM, sizeof(SK_ROM), "%s%ssk.bin", dir, slash);
+   snprintf(SK_UPMEM, sizeof(SK_UPMEM), "%s%ssk2chip.bin", dir, slash);
+   snprintf(GG_ROM, sizeof(GG_ROM), "%s%sggenie.bin", dir, slash);
+   snprintf(AR_ROM, sizeof(AR_ROM), "%s%sareplay.bin", dir, slash);
+   fprintf(stderr, "Sega CD EU BRAM should be located at: %s\n", CD_BRAM_EU);
+   fprintf(stderr, "Sega CD US BRAM should be located at: %s\n", CD_BRAM_US);
+   fprintf(stderr, "Sega CD JP BRAM should be located at: %s\n", CD_BRAM_JP);
+   fprintf(stderr, "Sega CD EU BIOS should be located at: %s\n", CD_BIOS_EU);
+   fprintf(stderr, "Sega CD US BIOS should be located at: %s\n", CD_BIOS_US);
+   fprintf(stderr, "Sega CD JP BIOS should be located at: %s\n", CD_BIOS_JP);
+   fprintf(stderr, "Master System EU BIOS should be located at: %s\n", MS_BIOS_EU);
+   fprintf(stderr, "Master System US BIOS should be located at: %s\n", MS_BIOS_US);
+   fprintf(stderr, "Master System JP BIOS should be located at: %s\n", MS_BIOS_JP);
+   fprintf(stderr, "Game Gear BIOS should be located at: %s\n", GG_BIOS);
+   fprintf(stderr, "S&K upmem ROM should be located at: %s\n", SK_UPMEM);
+   fprintf(stderr, "S&K ROM should be located at: %s\n", SK_ROM);
+   fprintf(stderr, "Game Genie ROM should be located at: %s\n", GG_ROM);
+   fprintf(stderr, "Action Replay ROM should be located at: %s\n", AR_ROM);
 
    snprintf(DEFAULT_PATH, sizeof(DEFAULT_PATH), g_rom_dir);
 #ifdef _XBOX
@@ -868,7 +900,7 @@ bool retro_load_game(const struct retro_game_info *info)
 
    full_path = info->path;
 
-   if (!load_rom((char*)full_path))
+   if (!LoadFile((char *)full_path))
       return false;
 
    configure_controls();
@@ -934,7 +966,7 @@ size_t retro_get_memory_size(unsigned id)
 
 void retro_init(void)
 {
-   unsigned level;
+   unsigned level, rgb565;
 #if defined(USE_NTSC)
    sms_ntsc = calloc(1, sizeof(sms_ntsc_t));
    md_ntsc  = calloc(1, sizeof(md_ntsc_t));
@@ -944,6 +976,12 @@ void retro_init(void)
 
    level = 1;
    environ_cb(RETRO_ENVIRONMENT_SET_PERFORMANCE_LEVEL, &level);
+
+#ifdef FRONTEND_SUPPORTS_RGB565
+   rgb565 = RETRO_PIXEL_FORMAT_RGB565;
+   if(environ_cb(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &rgb565))
+      fprintf(stderr, "Frontend supports RGB565 - will use that instead of XRGB1555.\n");
+#endif
 }
 
 void retro_deinit(void)
