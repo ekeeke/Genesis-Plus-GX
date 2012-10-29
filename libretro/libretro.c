@@ -850,27 +850,27 @@ bool retro_load_game(const struct retro_game_info *info)
       dir = g_rom_dir;
    }
 #if defined(_WIN32) && !defined(_XBOX360)
-   snprintf(slash, sizeof(slash), "\\");
+   snprintf(&slash, sizeof(slash), "\\");
 #elif defined(_WIN32) && defined(_XBOX360)
-   snprintf(slash, sizeof(slash), "");
+   snprintf(&slash, sizeof(slash), "");
 #else
-   snprintf(slash, sizeof(slash), "/");
+   snprintf(&slash, sizeof(slash), "/");
 #endif
 
-   snprintf(CD_BRAM_EU, sizeof(CD_BRAM_EU), "%s%sscd_E.brm", dir, &slash);
-   snprintf(CD_BRAM_US, sizeof(CD_BRAM_US), "%s%sscd_U.brm", dir, &slash);
-   snprintf(CD_BRAM_JP, sizeof(CD_BRAM_JP), "%s%sscd_J.brm", dir, &slash);
-   snprintf(CD_BIOS_EU, sizeof(CD_BIOS_EU), "%s%sbios_CD_E.bin", dir, &slash);
-   snprintf(CD_BIOS_US, sizeof(CD_BIOS_US), "%s%sbios_CD_U.bin", dir, &slash);
-   snprintf(CD_BIOS_JP, sizeof(CD_BIOS_JP), "%s%sbios_CD_J.bin", dir, &slash);
-   snprintf(MS_BIOS_EU, sizeof(MS_BIOS_EU), "%s%sbios_E.sms", dir, &slash);
-   snprintf(MS_BIOS_US, sizeof(MS_BIOS_US), "%s%sbios_U.sms", dir, &slash);
-   snprintf(MS_BIOS_JP, sizeof(MS_BIOS_JP), "%s%sbios_J.sms", dir, &slash);
-   snprintf(GG_BIOS, sizeof(GG_BIOS), "%s%sbios.gg", dir, &slash);
-   snprintf(SK_ROM, sizeof(SK_ROM), "%s%ssk.bin", dir, &slash);
-   snprintf(SK_UPMEM, sizeof(SK_UPMEM), "%s%ssk2chip.bin", dir, &slash);
-   snprintf(GG_ROM, sizeof(GG_ROM), "%s%sggenie.bin", dir, &slash);
-   snprintf(AR_ROM, sizeof(AR_ROM), "%s%sareplay.bin", dir, &slash);
+   snprintf(CD_BRAM_EU, sizeof(CD_BRAM_EU), "%s%sscd_E.brm", dir, slash);
+   snprintf(CD_BRAM_US, sizeof(CD_BRAM_US), "%s%sscd_U.brm", dir, slash);
+   snprintf(CD_BRAM_JP, sizeof(CD_BRAM_JP), "%s%sscd_J.brm", dir, slash);
+   snprintf(CD_BIOS_EU, sizeof(CD_BIOS_EU), "%s%sbios_CD_E.bin", dir, slash);
+   snprintf(CD_BIOS_US, sizeof(CD_BIOS_US), "%s%sbios_CD_U.bin", dir, slash);
+   snprintf(CD_BIOS_JP, sizeof(CD_BIOS_JP), "%s%sbios_CD_J.bin", dir, slash);
+   snprintf(MS_BIOS_EU, sizeof(MS_BIOS_EU), "%s%sbios_E.sms", dir, slash);
+   snprintf(MS_BIOS_US, sizeof(MS_BIOS_US), "%s%sbios_U.sms", dir, slash);
+   snprintf(MS_BIOS_JP, sizeof(MS_BIOS_JP), "%s%sbios_J.sms", dir, slash);
+   snprintf(GG_BIOS, sizeof(GG_BIOS), "%s%sbios.gg", dir, slash);
+   snprintf(SK_ROM, sizeof(SK_ROM), "%s%ssk.bin", dir, slash);
+   snprintf(SK_UPMEM, sizeof(SK_UPMEM), "%s%ssk2chip.bin", dir, slash);
+   snprintf(GG_ROM, sizeof(GG_ROM), "%s%sggenie.bin", dir, slash);
+   snprintf(AR_ROM, sizeof(AR_ROM), "%s%sareplay.bin", dir, slash);
    fprintf(stderr, "Sega CD EU BRAM should be located at: %s\n", CD_BRAM_EU);
    fprintf(stderr, "Sega CD US BRAM should be located at: %s\n", CD_BRAM_US);
    fprintf(stderr, "Sega CD JP BRAM should be located at: %s\n", CD_BRAM_JP);
