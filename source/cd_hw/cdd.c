@@ -84,6 +84,12 @@ static const uint16 toc_lunar[52] =
   685, 3167
 };
 
+static const uint32 toc_shadow[15] =
+{
+  10226, 70054, 11100, 12532, 12444, 11923, 10059, 10167, 10138, 13792,
+  11637,  2547,  2521,  3856, 900
+};
+
 /* supported WAVE file header (16-bit stereo samples @44.1kHz) */
 static const unsigned char waveHeader[32] =
 {
@@ -595,7 +601,7 @@ int cdd_load(char *filename, char *header)
   /* Simulate audio tracks if none found */
   if (cdd.toc.last == 1)
   {
-    /* Some games require specific TOC infos */
+    /* Some games require exact TOC infos */
     if (strstr(header + 0x180,"T-95035") != NULL)
     {
       /* Snatcher */
@@ -621,6 +627,19 @@ int cdd_load(char *filename, char *header)
         cdd.toc.last++;
       }
       while (cdd.toc.last < 52);
+    }
+    else if (strstr(header + 0x180,"T-113045") != NULL)
+    {
+      /* Shadow of the Beast II */
+      cdd.toc.last = cdd.toc.end = 0;
+      do
+      {
+        cdd.toc.tracks[cdd.toc.last].start = cdd.toc.end;
+        cdd.toc.tracks[cdd.toc.last].end = cdd.toc.tracks[cdd.toc.last].start + toc_shadow[cdd.toc.last];
+        cdd.toc.end = cdd.toc.tracks[cdd.toc.last].end;
+        cdd.toc.last++;
+      }
+      while (cdd.toc.last < 15);
     }
     else
     {
