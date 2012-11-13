@@ -12,18 +12,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\source\cart_hw\areplay.c" />
-    <ClCompile Include="..\..\..\source\cart_hw\eeprom_93c.c">
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">FRONTEND_SUPPORTS_RGB565;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">FRONTEND_SUPPORTS_RGB565;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-    </ClCompile>
-    <ClCompile Include="..\..\..\source\cart_hw\eeprom_i2c.c">
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">FRONTEND_SUPPORTS_RGB565;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">FRONTEND_SUPPORTS_RGB565;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-    </ClCompile>
-    <ClCompile Include="..\..\..\source\cart_hw\eeprom_spi.c">
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">FRONTEND_SUPPORTS_RGB565;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">FRONTEND_SUPPORTS_RGB565;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-    </ClCompile>
+    <ClCompile Include="..\..\..\source\cart_hw\eeprom_93c.c" />
+    <ClCompile Include="..\..\..\source\cart_hw\eeprom_i2c.c" />
+    <ClCompile Include="..\..\..\source\cart_hw\eeprom_spi.c" />
     <ClCompile Include="..\..\..\source\cart_hw\ggenie.c" />
     <ClCompile Include="..\..\..\source\cart_hw\md_cart.c" />
     <ClCompile Include="..\..\..\source\cart_hw\sms_cart.c" />
@@ -112,7 +103,7 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;MSVC2010_EXPORTS;_CRT_SECURE_NO_WARNINGS;INLINE=static _inline;__inline__=_inline;__extension__=;LSB_FIRST;__LIBRETRO__;USE_16BPP_RENDERING;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;MSVC2010_EXPORTS;_CRT_SECURE_NO_WARNINGS;INLINE=static _inline;__inline__=_inline;__extension__=;LSB_FIRST;__LIBRETRO__;USE_16BPP_RENDERING;FRONTEND_SUPPORTS_RGB565;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(SolutionDir)/../../source;$(SolutionDir)/../../utils/zlib;$(SolutionDir)/../../source/cart_hw/svp;$(SolutionDir)/../../libretro;$(SolutionDir)/../../source/m68k;$(SolutionDir)/../../source/z80;$(SolutionDir)/../../source/input_hw;$(SolutionDir)/../../source/cart_hw;$(SolutionDir)/../../source/sound;$(SolutionDir)/../../source/ntsc;$(SolutionDir)/../../source/cd_hw;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
@@ -129,7 +120,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;MSVC2010_EXPORTS;_CRT_SECURE_NO_WARNINGS;INLINE=static _inline;__inline__=_inline;__extension__=;LSB_FIRST;__LIBRETRO__;USE_16BPP_RENDERING;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;MSVC2010_EXPORTS;_CRT_SECURE_NO_WARNINGS;INLINE=static _inline;__inline__=_inline;__extension__=;LSB_FIRST;__LIBRETRO__;USE_16BPP_RENDERING;FRONTEND_SUPPORTS_RGB565;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(SolutionDir)/../../source;$(SolutionDir)/../../utils/zlib;$(SolutionDir)/../../source/cart_hw/svp;$(SolutionDir)/../../libretro;$(SolutionDir)/../../source/m68k;$(SolutionDir)/../../source/z80;$(SolutionDir)/../../source/input_hw;$(SolutionDir)/../../source/cart_hw;$(SolutionDir)/../../source/sound;$(SolutionDir)/../../source/ntsc;$(SolutionDir)/../../source/cd_hw;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
