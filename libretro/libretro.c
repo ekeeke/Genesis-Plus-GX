@@ -291,8 +291,9 @@ static void configure_controls(void)
          for(i = 0; i < MAX_INPUTS; i++)
          {
             config.input[i].padtype = DEVICE_PAD6B;
-            input.system[i] = SYSTEM_MD_GAMEPAD;
          }	
+         input.system[0] = SYSTEM_MD_GAMEPAD;
+         input.system[1] = SYSTEM_MD_GAMEPAD;
          break;
       case SYSTEM_GG:
       case SYSTEM_SMS:
@@ -779,8 +780,8 @@ static void retro_set_viewport_dimensions(void)
 
    retro_reset();
 
-   vwidth  = bitmap.viewport.w;
-   vheight = bitmap.viewport.h;
+   vwidth  = bitmap.viewport.w + (bitmap.viewport.x * 2);
+   vheight = bitmap.viewport.h + (bitmap.viewport.y * 2);
 
 #if defined(USE_NTSC)
    if (config.ntsc)
@@ -1104,9 +1105,9 @@ void retro_run(void)
       system_frame_sms(0);
 
 #if defined(USE_NTSC)
-   video_cb(bitmap_data_ + bitmap.viewport.y * 1024, config.ntsc ? vwidth : bitmap.viewport.w, bitmap.viewport.h, 2048);
+   video_cb(bitmap.data, config.ntsc ? vwidth : (bitmap.viewport.w + (bitmap.viewport.x * 2)), bitmap.viewport.h + (bitmap.viewport.y * 2), bitmap.pitch);
 #else
-   video_cb(bitmap_data_ + bitmap.viewport.x + bitmap.viewport.y * 1024, bitmap.viewport.w, bitmap.viewport.h, 2048);
+   video_cb(bitmap.data, bitmap.viewport.w + (bitmap.viewport.x * 2), bitmap.viewport.h + (bitmap.viewport.y * 2), bitmap.pitch);
 #endif
 
    aud = audio_update(soundbuffer) << 1;
