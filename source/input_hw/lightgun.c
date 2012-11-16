@@ -92,6 +92,8 @@ static struct
 
 void lightgun_reset(int port)
 {
+  input.analog[port][0] = bitmap.viewport.w / 2;
+  input.analog[port][1] = bitmap.viewport.h / 2;
   lightgun.State = 0x40;
   lightgun.Port = 4;
 }
