@@ -793,6 +793,7 @@ static void retro_set_viewport_dimensions(void)
    }
 #endif
 
+   geom.aspect_ratio = 4.0 / 3.0;
    geom.base_width = vwidth;
    geom.base_height = vheight;
    geom.max_width = 1024;
