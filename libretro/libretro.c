@@ -291,8 +291,9 @@ static void configure_controls(void)
          for(i = 0; i < MAX_INPUTS; i++)
          {
             config.input[i].padtype = DEVICE_PAD6B;
-            input.system[i] = SYSTEM_MD_GAMEPAD;
          }	
+         input.system[0] = SYSTEM_MD_GAMEPAD;
+         input.system[1] = SYSTEM_MD_GAMEPAD;
          break;
       case SYSTEM_GG:
       case SYSTEM_SMS:
@@ -779,8 +780,8 @@ static void retro_set_viewport_dimensions(void)
 
    retro_reset();
 
-   vwidth  = bitmap.viewport.w;
-   vheight = bitmap.viewport.h;
+   vwidth  = bitmap.viewport.w + (bitmap.viewport.x * 2);
+   vheight = bitmap.viewport.h + (bitmap.viewport.y * 2);
 
 #if defined(USE_NTSC)
    if (config.ntsc)
@@ -792,6 +793,7 @@ static void retro_set_viewport_dimensions(void)
    }
 #endif
 
+   geom.aspect_ratio = 4.0 / 3.0;
    geom.base_width = vwidth;
    geom.base_height = vheight;
    geom.max_width = 1024;
@@ -849,28 +851,26 @@ bool retro_load_game(const struct retro_game_info *info)
       fprintf(stderr, "[genplus]: Defaulting system directory to %s.\n", g_rom_dir);
       dir = g_rom_dir;
    }
-#if defined(_WIN32) && !defined(_XBOX360)
-   snprintf(slash, sizeof(slash), "\\");
-#elif defined(_WIN32) && defined(_XBOX360)
-   snprintf(slash, sizeof(slash), "");
+#if defined(_WIN32)
+   slash = '\\';
 #else
-   snprintf(slash, sizeof(slash), "/");
+   slash = '/';
 #endif
 
-   snprintf(CD_BRAM_EU, sizeof(CD_BRAM_EU), "%s%sscd_E.brm", dir, slash);
-   snprintf(CD_BRAM_US, sizeof(CD_BRAM_US), "%s%sscd_U.brm", dir, slash);
-   snprintf(CD_BRAM_JP, sizeof(CD_BRAM_JP), "%s%sscd_J.brm", dir, slash);
-   snprintf(CD_BIOS_EU, sizeof(CD_BIOS_EU), "%s%sbios_CD_E.bin", dir, slash);
-   snprintf(CD_BIOS_US, sizeof(CD_BIOS_US), "%s%sbios_CD_U.bin", dir, slash);
-   snprintf(CD_BIOS_JP, sizeof(CD_BIOS_JP), "%s%sbios_CD_J.bin", dir, slash);
-   snprintf(MS_BIOS_EU, sizeof(MS_BIOS_EU), "%s%sbios_E.sms", dir, slash);
-   snprintf(MS_BIOS_US, sizeof(MS_BIOS_US), "%s%sbios_U.sms", dir, slash);
-   snprintf(MS_BIOS_JP, sizeof(MS_BIOS_JP), "%s%sbios_J.sms", dir, slash);
-   snprintf(GG_BIOS, sizeof(GG_BIOS), "%s%sbios.gg", dir, slash);
-   snprintf(SK_ROM, sizeof(SK_ROM), "%s%ssk.bin", dir, slash);
-   snprintf(SK_UPMEM, sizeof(SK_UPMEM), "%s%ssk2chip.bin", dir, slash);
-   snprintf(GG_ROM, sizeof(GG_ROM), "%s%sggenie.bin", dir, slash);
-   snprintf(AR_ROM, sizeof(AR_ROM), "%s%sareplay.bin", dir, slash);
+   snprintf(CD_BRAM_EU, sizeof(CD_BRAM_EU), "%s%cscd_E.brm", dir, slash);
+   snprintf(CD_BRAM_US, sizeof(CD_BRAM_US), "%s%cscd_U.brm", dir, slash);
+   snprintf(CD_BRAM_JP, sizeof(CD_BRAM_JP), "%s%cscd_J.brm", dir, slash);
+   snprintf(CD_BIOS_EU, sizeof(CD_BIOS_EU), "%s%cbios_CD_E.bin", dir, slash);
+   snprintf(CD_BIOS_US, sizeof(CD_BIOS_US), "%s%cbios_CD_U.bin", dir, slash);
+   snprintf(CD_BIOS_JP, sizeof(CD_BIOS_JP), "%s%cbios_CD_J.bin", dir, slash);
+   snprintf(MS_BIOS_EU, sizeof(MS_BIOS_EU), "%s%cbios_E.sms", dir, slash);
+   snprintf(MS_BIOS_US, sizeof(MS_BIOS_US), "%s%cbios_U.sms", dir, slash);
+   snprintf(MS_BIOS_JP, sizeof(MS_BIOS_JP), "%s%cbios_J.sms", dir, slash);
+   snprintf(GG_BIOS, sizeof(GG_BIOS), "%s%cbios.gg", dir, slash);
+   snprintf(SK_ROM, sizeof(SK_ROM), "%s%csk.bin", dir, slash);
+   snprintf(SK_UPMEM, sizeof(SK_UPMEM), "%s%csk2chip.bin", dir, slash);
+   snprintf(GG_ROM, sizeof(GG_ROM), "%s%cggenie.bin", dir, slash);
+   snprintf(AR_ROM, sizeof(AR_ROM), "%s%careplay.bin", dir, slash);
    fprintf(stderr, "Sega CD EU BRAM should be located at: %s\n", CD_BRAM_EU);
    fprintf(stderr, "Sega CD US BRAM should be located at: %s\n", CD_BRAM_US);
    fprintf(stderr, "Sega CD JP BRAM should be located at: %s\n", CD_BRAM_JP);
@@ -887,11 +887,7 @@ bool retro_load_game(const struct retro_game_info *info)
    fprintf(stderr, "Action Replay ROM should be located at: %s\n", AR_ROM);
 
    snprintf(DEFAULT_PATH, sizeof(DEFAULT_PATH), g_rom_dir);
-#ifdef _XBOX
-   snprintf(CART_BRAM, sizeof(CART_BRAM), "%s\\cart.brm", g_rom_dir);
-#else
-   snprintf(CART_BRAM, sizeof(CART_BRAM), "%s/cart.brm", g_rom_dir);
-#endif
+   snprintf(CART_BRAM, sizeof(CART_BRAM), "%s%ccart.brm", g_rom_dir, slash);
 
    fprintf(stderr, "BRAM file is located at: %s\n", CART_BRAM);
 
@@ -1104,9 +1100,9 @@ void retro_run(void)
       system_frame_sms(0);
 
 #if defined(USE_NTSC)
-   video_cb(bitmap_data_ + bitmap.viewport.y * 1024, config.ntsc ? vwidth : bitmap.viewport.w, bitmap.viewport.h, 2048);
+   video_cb(bitmap.data, config.ntsc ? vwidth : (bitmap.viewport.w + (bitmap.viewport.x * 2)), bitmap.viewport.h + (bitmap.viewport.y * 2), bitmap.pitch);
 #else
-   video_cb(bitmap_data_ + bitmap.viewport.x + bitmap.viewport.y * 1024, bitmap.viewport.w, bitmap.viewport.h, 2048);
+   video_cb(bitmap.data, bitmap.viewport.w + (bitmap.viewport.x * 2), bitmap.viewport.h + (bitmap.viewport.y * 2), bitmap.pitch);
 #endif
 
    aud = audio_update(soundbuffer) << 1;
