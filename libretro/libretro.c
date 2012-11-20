@@ -850,10 +850,8 @@ bool retro_load_game(const struct retro_game_info *info)
       fprintf(stderr, "[genplus]: Defaulting system directory to %s.\n", g_rom_dir);
       dir = g_rom_dir;
    }
-#if defined(_WIN32) && !defined(_XBOX360)
+#if defined(_WIN32)
    slash = '\\';
-#elif defined(_WIN32) && defined(_XBOX360)
-   slash = '\0';
 #else
    slash = '/';
 #endif
@@ -888,11 +886,7 @@ bool retro_load_game(const struct retro_game_info *info)
    fprintf(stderr, "Action Replay ROM should be located at: %s\n", AR_ROM);
 
    snprintf(DEFAULT_PATH, sizeof(DEFAULT_PATH), g_rom_dir);
-#ifdef _XBOX
-   snprintf(CART_BRAM, sizeof(CART_BRAM), "%s\\cart.brm", g_rom_dir);
-#else
-   snprintf(CART_BRAM, sizeof(CART_BRAM), "%s/cart.brm", g_rom_dir);
-#endif
+   snprintf(CART_BRAM, sizeof(CART_BRAM), "%s%ccart.brm", g_rom_dir, slash);
 
    fprintf(stderr, "BRAM file is located at: %s\n", CART_BRAM);
 
