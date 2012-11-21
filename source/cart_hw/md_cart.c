@@ -470,7 +470,7 @@ void md_cart_init(void)
   memset(&cart.hw, 0, sizeof(cart.hw));
 
   /* search for game into database */
-  for (i=0; i < CART_CNT + 1; i++)
+  for (i=0; i<CART_CNT; i++)
   {
     /* known cart found ! */
     if ((rominfo.checksum == rom_database[i].chk_1) &&
@@ -500,7 +500,7 @@ void md_cart_init(void)
       }
 
       /* leave loop */
-      i = CART_CNT + 1;
+      i = CART_CNT;
     }
   }
 
