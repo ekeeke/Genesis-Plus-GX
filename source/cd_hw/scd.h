@@ -67,7 +67,7 @@ typedef struct
   uint8 bram[0x2000];         /* 8K Backup RAM */
   reg16_t regs[0x100];        /* 256 x 16-bit ASIC registers */
   uint32 cycles;              /* Master clock counter */
-  int32 stopwatch;            /* Clockwatch counter */
+  int32 stopwatch;            /* Stopwatch counter */
   int32 timer;                /* Timer counter */
   uint8 pending;              /* Pending interrupts */
   uint8 dmna;                 /* Pending DMNA write status */

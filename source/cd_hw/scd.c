@@ -1198,7 +1198,7 @@ void scd_reset(int hard)
   /* RESET register always return 1 (register $06 is unused by both sides, it is used for SUB-CPU first register) */
   scd.regs[0x06>>1].byte.l = 0x01;
 
-  /* Reset TIMER & STOPWATCH counters */
+  /* Reset Timer & Stopwatch counters */
   scd.timer = 0;
   scd.stopwatch = 0;
 
