@@ -63,6 +63,7 @@ else ifeq ($(platform), psp1)
 	AR = psp-ar$(EXE_EXT)
 	ENDIANNESS_DEFINES := -DLSB_FIRST
 	PLATFORM_DEFINES := -DPSP
+	CFLAGS += -G0
 else ifeq ($(platform), xenon)
    TARGET := libretro_xenon360.a
    CC = xenon-gcc$(EXE_EXT)
