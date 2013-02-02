@@ -829,7 +829,7 @@ static bool LoadFile(char * filename)
    if (!size)
    {
       /* close CD tray to force system reset */
-      cdd.status = CD_STOP;
+      cdd.status = NO_DISC;
       
       /* load game file */
       size = load_rom(filename);
