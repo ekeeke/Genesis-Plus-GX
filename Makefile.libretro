@@ -31,56 +31,56 @@ else ifneq ($(findstring MINGW,$(shell uname -a)),)
 endif
 
 ifeq ($(platform), unix)
-   TARGET := libretro.so
+   TARGET := genesis_plus_gx_libretro.so
    fpic := -fPIC
    SHARED := -shared -Wl,--version-script=libretro/link.T -Wl,--no-undefined -lz
    ENDIANNESS_DEFINES := -DLSB_FIRST
    PLATFORM_DEFINES := -DHAVE_ZLIB
 else ifeq ($(platform), osx)
-   TARGET := libretro.dylib
+   TARGET := genesis_plus_gx_libretro.dylib
    fpic := -fPIC
    SHARED := -dynamiclib -lz
    ENDIANNESS_DEFINES := -DLSB_FIRST
    PLATFORM_DEFINES := -DHAVE_ZLIB
 else ifeq ($(platform), sncps3)
-   TARGET := libretro_ps3.a
+   TARGET := genesis_plus_gx_libretro_ps3.a
    CC = $(CELL_SDK)/host-win32/sn/bin/ps3ppusnc.exe
    AR = $(CELL_SDK)/host-win32/sn/bin/ps3snarl.exe
    PLATFORM_DEFINES := -D__CELLOS_LV2 -DALT_RENDER
 else ifeq ($(platform), ps3)
-   TARGET := libretro_ps3.a
+   TARGET := genesis_plus_gx_libretro_ps3.a
    CC = $(CELL_SDK)/host-win32/ppu/bin/ppu-lv2-gcc.exe
    AR = $(CELL_SDK)/host-win32/ppu/bin/ppu-lv2-ar.exe
    PLATFORM_DEFINES := -D__CELLOS_LV2 -DALT_RENDER
 else ifeq ($(platform), psl1ght)
-   TARGET := libretro_psl1ght.a$(EXE_EXT)
+   TARGET := genesis_plus_gx_libretro_psl1ght.a$(EXE_EXT)
    CC = $(PS3DEV)/ppu/bin/ppu-gcc$(EXE_EXT)
    AR = $(PS3DEV)/ppu/bin/ppu-ar$(EXE_EXT)
    PLATFORM_DEFINES := -D__CELLOS_LV2 -DALT_RENDER
 else ifeq ($(platform), psp1)
-	TARGET := libretro_psp1.a$(EXE_EXT)
+	TARGET := genesis_plus_gx_libretro_psp1.a$(EXE_EXT)
 	CC = psp-gcc$(EXE_EXT)
 	AR = psp-ar$(EXE_EXT)
 	ENDIANNESS_DEFINES := -DLSB_FIRST
 	PLATFORM_DEFINES := -DPSP
 	CFLAGS += -G0
 else ifeq ($(platform), xenon)
-   TARGET := libretro_xenon360.a
+   TARGET := genesis_plus_gx_libretro_xenon360.a
    CC = xenon-gcc$(EXE_EXT)
    AR = xenon-ar$(EXE_EXT)
    PLATFORM_DEFINES := -D__LIBXENON__ -DALT_RENDER
 else ifeq ($(platform), ngc)
-   TARGET := libretro_ngc.a
+   TARGET := genesis_plus_gx_libretro_ngc.a
    CC = $(DEVKITPPC)/bin/powerpc-eabi-gcc$(EXE_EXT)
    AR = $(DEVKITPPC)/bin/powerpc-eabi-ar$(EXE_EXT)
    PLATFORM_DEFINES := -DGEKKO -DHW_DOL -mrvl -mcpu=750 -meabi -mhard-float -DALT_RENDER
 else ifeq ($(platform), wii)
-   TARGET := libretro_wii.a
+   TARGET := genesis_plus_gx_libretro_wii.a
    CC = $(DEVKITPPC)/bin/powerpc-eabi-gcc$(EXE_EXT)
    AR = $(DEVKITPPC)/bin/powerpc-eabi-ar$(EXE_EXT)
    PLATFORM_DEFINES := -DGEKKO -DHW_RVL -mrvl -mcpu=750 -meabi -mhard-float -DALT_RENDER
 else
-   TARGET := retro.dll
+   TARGET := genesis_plus_gx_retro.dll
    CC = gcc
    SHARED := -shared -static-libgcc -static-libstdc++ -Wl,--version-script=libretro/link.T -Wl,--no-undefined -lz
 

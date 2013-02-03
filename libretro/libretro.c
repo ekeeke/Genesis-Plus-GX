@@ -701,7 +701,7 @@ static struct retro_system_av_info g_av_info;
 void retro_get_system_info(struct retro_system_info *info)
 {
    info->library_name = "Genesis Plus GX";
-   info->library_version = "v1.7.1";
+   info->library_version = "v1.7.3";
    info->valid_extensions = "md|smd|bin|cue|gen|zip|MD|SMD|bin|iso|ISO|CUE|GEN|ZIP|sms|SMS|gg|GG|sg|SG";
    info->block_extract = false;
    info->need_fullpath = true;
@@ -829,7 +829,7 @@ static bool LoadFile(char * filename)
    if (!size)
    {
       /* close CD tray to force system reset */
-      cdd.status = CD_STOP;
+      cdd.status = NO_DISC;
       
       /* load game file */
       size = load_rom(filename);
