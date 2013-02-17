@@ -42,5 +42,6 @@
 
 :end
 
-nant msvc-2003-xbox1.build
+devenv /clean Release_LTCG msvc-2003-xbox1.sln
+devenv /build Release_LTCG msvc-2003-xbox1.sln
 exit
