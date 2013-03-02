@@ -36,7 +36,7 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLibrarianTool"
-				OutputFile="$(OutDir)/libretro_xdk.lib"/>
+				OutputFile="$(OutDir)/genesis_plus_gx_libretro_xdk.lib"/>
 			<Tool
 				Name="VCPostBuildEventTool"/>
 			<Tool
@@ -71,7 +71,7 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLibrarianTool"
-				OutputFile="$(OutDir)/libretro_xdk.lib"/>
+				OutputFile="$(OutDir)/genesis_plus_gx_libretro_xdk.lib"/>
 			<Tool
 				Name="VCPostBuildEventTool"/>
 			<Tool
@@ -107,7 +107,7 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLibrarianTool"
-				OutputFile="$(OutDir)/libretro_xdk.lib"/>
+				OutputFile="$(OutDir)/genesis_plus_gx_libretro_xdk.lib"/>
 			<Tool
 				Name="VCPostBuildEventTool"/>
 			<Tool
@@ -142,7 +142,7 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLibrarianTool"
-				OutputFile="$(OutDir)/libretro_xdk.lib"/>
+				OutputFile="$(OutDir)/genesis_plus_gx_libretro_xdk.lib"/>
 			<Tool
 				Name="VCPostBuildEventTool"/>
 			<Tool
@@ -178,7 +178,7 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLibrarianTool"
-				OutputFile="$(OutDir)/libretro_xdk.lib"/>
+				OutputFile="$(OutDir)/genesis_plus_gx_libretro_xdk.lib"/>
 			<Tool
 				Name="VCPostBuildEventTool"/>
 			<Tool
