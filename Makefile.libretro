@@ -42,6 +42,14 @@ else ifeq ($(platform), osx)
    SHARED := -dynamiclib -lz
    ENDIANNESS_DEFINES := -DLSB_FIRST
    PLATFORM_DEFINES := -DHAVE_ZLIB
+else ifeq ($(platform), ios)
+   TARGET := genesis_plus_gx_libretro.dylib
+   fpic := -fPIC
+   SHARED := -dynamiclib -lz
+   ENDIANNESS_DEFINES := -DLSB_FIRST
+   PLATFORM_DEFINES := -DHAVE_ZLIB
+
+   CC = clang -arch armv7 -isysroot $(IOSSDK)
 else ifeq ($(platform), sncps3)
    TARGET := genesis_plus_gx_libretro_ps3.a
    CC = $(CELL_SDK)/host-win32/sn/bin/ps3ppusnc.exe
