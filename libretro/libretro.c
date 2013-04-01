@@ -778,10 +778,10 @@ static void retro_set_viewport_dimensions(void)
       for (i = 0; i < 10; i++)
          system_frame_sms(0);
 
-   retro_reset();
-
    vwidth  = bitmap.viewport.w + (bitmap.viewport.x * 2);
    vheight = bitmap.viewport.h + (bitmap.viewport.y * 2);
+
+   retro_reset();
 
 #if defined(USE_NTSC)
    if (config.ntsc)
@@ -989,7 +989,7 @@ void retro_deinit(void)
 #endif
 }
 
-void retro_reset(void) { gen_reset(0); }
+void retro_reset(void) { system_reset(); }
 
 int16 soundbuffer[3068];
 
