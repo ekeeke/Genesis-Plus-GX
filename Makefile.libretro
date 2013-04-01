@@ -42,6 +42,23 @@ else ifeq ($(platform), osx)
    SHARED := -dynamiclib -lz
    ENDIANNESS_DEFINES := -DLSB_FIRST
    PLATFORM_DEFINES := -DHAVE_ZLIB
+else ifeq ($(platform), ios)
+   TARGET := genesis_plus_gx_libretro.dylib
+   fpic := -fPIC
+   SHARED := -dynamiclib -lz
+   ENDIANNESS_DEFINES := -DLSB_FIRST
+   PLATFORM_DEFINES := -DHAVE_ZLIB
+
+   CC = clang -arch armv7 -isysroot $(IOSSDK)
+else ifeq ($(platform), qnx)
+   TARGET := genesis_plus_gx_libretro.so
+   fpic := -fPIC
+   SHARED := -shared -Wl,--version-script=libretro/link.T -Wl,--no-undefined -lz
+   ENDIANNESS_DEFINES := -DLSB_FIRST
+   PLATFORM_DEFINES := -DHAVE_ZLIB
+	CC = qcc -Vgcc_ntoarmv7le
+	AR = qcc -Vgcc_ntoarmv7le
+	PLATFORM_DEFINES := -D__BLACKBERRY_QNX__ -marm -mcpu=cortex-a9 -mfpu=neon -mfloat-abi=softfp
 else ifeq ($(platform), sncps3)
    TARGET := genesis_plus_gx_libretro_ps3.a
    CC = $(CELL_SDK)/host-win32/sn/bin/ps3ppusnc.exe
@@ -151,12 +168,6 @@ LIBRETRO_OBJ := $(LIBRETRO_SRC:.c=.o)
 
 ifeq ($(LOGSOUND), 1)
 LIBRETRO_CFLAGS := -DLOGSOUND
-endif
-
-ifeq ($(platform), sncps3)
-CODE_DEFINES =
-else
-CODE_DEFINES = -std=gnu99
 endif
 
 DEFINES := 
