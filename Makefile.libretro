@@ -190,8 +190,13 @@ LIBRETRO_CFLAGS += -I$(GENPLUS_SRC_DIR) \
 		$(BPP_DEFINES) \
 		$(ENDIANNESS_DEFINES) \
 		$(PLATFORM_DEFINES) \
-		-DINLINE="static inline" \
 		-D__LIBRETRO__
+
+ifeq ($(platform), qnx)
+	LIBRETRO_CFLAGS += -DINLINE=static
+else
+	LIBRETRO_CFLAGS += -DINLINE="static inline"
+endif
 
 LIBRETRO_LIBS := -lm
 
