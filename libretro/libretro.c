@@ -41,7 +41,9 @@ void retro_set_environment(retro_environment_t cb)
    environ_cb = cb;
 
    static const struct retro_variable vars[] = {
-      { "blargg_ntsc_filter", "Blargg NTSC filter; disabled|enabled" },
+      { "blargg_ntsc_filter", "Blargg NTSC filter; disabled|monochrome|composite|svideo|rgb" },
+      { "overscan", "Overscan mode; 0|1|2|3" },
+      { "gg_extra", "Game Gear extended screen; disabled|enabled" },
       { NULL, NULL },
    };
 
@@ -847,18 +849,85 @@ static bool LoadFile(char * filename)
 
 static void check_variables(void)
 {
+   bool update_viewports = false;
+   static bool last_ntsc_val_same;
    struct retro_variable var = {0};
+
    var.key = "blargg_ntsc_filter";
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var))
    {
+      unsigned orig_value = config.ntsc;
+
+      update_viewports = true;
+
       if (strcmp(var.value, "disabled") == 0)
          config.ntsc = 0;
-      else if (strcmp(var.value, "enabled") == 0)
+      else if (strcmp(var.value, "monochrome") == 0)
+      {
          config.ntsc = 1;
+         sms_ntsc_init(sms_ntsc, &sms_ntsc_monochrome);
+         md_ntsc_init(md_ntsc,   &md_ntsc_monochrome);
+      }
+      else if (strcmp(var.value, "composite") == 0)
+      {
+         config.ntsc = 1;
+         sms_ntsc_init(sms_ntsc, &sms_ntsc_composite);
+         md_ntsc_init(md_ntsc,   &md_ntsc_composite);
+      }
+      else if (strcmp(var.value, "svideo") == 0)
+      {
+         config.ntsc = 1;
+         sms_ntsc_init(sms_ntsc, &sms_ntsc_svideo);
+         md_ntsc_init(md_ntsc,   &md_ntsc_svideo);
+      }
+      else if (strcmp(var.value, "rgb") == 0)
+      {
+         config.ntsc = 1;
+         sms_ntsc_init(sms_ntsc, &sms_ntsc_rgb);
+         md_ntsc_init(md_ntsc,   &md_ntsc_rgb);
+      }
 
-      retro_set_viewport_dimensions();
+      if (orig_value != config.ntsc)
+         update_viewports = true;
    }
+
+   var.key = "overscan";
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var))
+   {
+      unsigned orig_value = config.overscan;
+
+      if (strcmp(var.value, "0") == 0)
+         config.overscan = 0;
+      else if (strcmp(var.value, "1") == 0)
+         config.overscan = 1;
+      else if (strcmp(var.value, "2") == 0)
+         config.overscan = 2;
+      else if (strcmp(var.value, "3") == 0)
+         config.overscan = 3;
+
+      if (orig_value != config.overscan)
+         update_viewports = true;
+   }
+
+   var.key = "gg_extra";
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var))
+   {
+      unsigned orig_value = config.gg_extra;
+
+      if (strcmp(var.value, "disabled") == 0)
+         config.gg_extra = 0;
+      else if (strcmp(var.value, "enabled") == 0)
+         config.gg_extra = 1;
+
+      if (orig_value != config.gg_extra)
+         update_viewports = true;
+   }
+
+   if (update_viewports)
+      retro_set_viewport_dimensions();
 }
 
 bool retro_load_game(const struct retro_game_info *info)
@@ -990,8 +1059,6 @@ void retro_init(void)
    unsigned level, rgb565;
    sms_ntsc = calloc(1, sizeof(sms_ntsc_t));
    md_ntsc  = calloc(1, sizeof(md_ntsc_t));
-   sms_ntsc_init(sms_ntsc, &sms_ntsc_composite);
-   md_ntsc_init(md_ntsc,   &md_ntsc_composite);
 
    level = 1;
    environ_cb(RETRO_ENVIRONMENT_SET_PERFORMANCE_LEVEL, &level);
