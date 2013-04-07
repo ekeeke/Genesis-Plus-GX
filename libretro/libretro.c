@@ -36,7 +36,18 @@ static retro_input_state_t input_state_cb;
 static retro_environment_t environ_cb;
 static retro_audio_sample_batch_t audio_batch_cb;
 
-void retro_set_environment(retro_environment_t cb) { environ_cb = cb; }
+void retro_set_environment(retro_environment_t cb)
+{
+   environ_cb = cb;
+
+   static const struct retro_variable vars[] = {
+      { "blargg_ntsc_filter", "Blargg NTSC filter; disabled|enabled" },
+      { NULL, NULL },
+   };
+
+   cb(RETRO_ENVIRONMENT_SET_VARIABLES, (void*)vars);
+}
+
 void retro_set_video_refresh(retro_video_refresh_t cb) { video_cb = cb; }
 void retro_set_audio_sample(retro_audio_sample_t cb) { (void)cb; }
 void retro_set_audio_sample_batch(retro_audio_sample_batch_t cb) { audio_batch_cb = cb; }
@@ -242,9 +253,7 @@ static void config_default(void)
    config.aspect   = 0;
    config.overscan = 0; /* 3 == FULL */
    config.gg_extra = 0; /* 1 = show extended Game Gear screen (256x192) */
-#if defined(USE_NTSC)
-   config.ntsc     = 1;
-#endif
+   config.ntsc     = 0;
    config.vsync    = 1; /* AUTO */
 
    config.render   = 0;
@@ -783,7 +792,6 @@ static void retro_set_viewport_dimensions(void)
 
    retro_reset();
 
-#if defined(USE_NTSC)
    if (config.ntsc)
    {
       if (system_hw & SYSTEM_MD)
@@ -791,7 +799,6 @@ static void retro_set_viewport_dimensions(void)
       else
          vwidth = SMS_NTSC_OUT_WIDTH(vwidth);
    }
-#endif
 
    geom.aspect_ratio = 4.0 / 3.0;
    geom.base_width = vwidth;
@@ -836,6 +843,22 @@ static bool LoadFile(char * filename)
    }
 
    return size > 0;
+}
+
+static void check_variables(void)
+{
+   struct retro_variable var = {0};
+   var.key = "blargg_ntsc_filter";
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var))
+   {
+      if (strcmp(var.value, "disabled") == 0)
+         config.ntsc = 0;
+      else if (strcmp(var.value, "enabled") == 0)
+         config.ntsc = 1;
+
+      retro_set_viewport_dimensions();
+   }
 }
 
 bool retro_load_game(const struct retro_game_info *info)
@@ -911,6 +934,8 @@ bool retro_load_game(const struct retro_game_info *info)
 
    retro_set_viewport_dimensions();
 
+   check_variables();
+
    return TRUE;
 }
 
@@ -963,12 +988,10 @@ size_t retro_get_memory_size(unsigned id)
 void retro_init(void)
 {
    unsigned level, rgb565;
-#if defined(USE_NTSC)
    sms_ntsc = calloc(1, sizeof(sms_ntsc_t));
    md_ntsc  = calloc(1, sizeof(md_ntsc_t));
    sms_ntsc_init(sms_ntsc, &sms_ntsc_composite);
    md_ntsc_init(md_ntsc,   &md_ntsc_composite);
-#endif
 
    level = 1;
    environ_cb(RETRO_ENVIRONMENT_SET_PERFORMANCE_LEVEL, &level);
@@ -983,10 +1006,8 @@ void retro_init(void)
 void retro_deinit(void)
 {
    audio_shutdown();
-#if defined(USE_NTSC)
    free(md_ntsc);
    free(sms_ntsc);
-#endif
 }
 
 void retro_reset(void) { system_reset(); }
@@ -1099,13 +1120,13 @@ void retro_run(void)
    else
       system_frame_sms(0);
 
-#if defined(USE_NTSC)
    video_cb(bitmap.data, config.ntsc ? vwidth : (bitmap.viewport.w + (bitmap.viewport.x * 2)), bitmap.viewport.h + (bitmap.viewport.y * 2), bitmap.pitch);
-#else
-   video_cb(bitmap.data, bitmap.viewport.w + (bitmap.viewport.x * 2), bitmap.viewport.h + (bitmap.viewport.y * 2), bitmap.pitch);
-#endif
 
    aud = audio_update(soundbuffer) << 1;
    audio_batch_cb(soundbuffer, aud >> 1);
+
+   bool updated = false;
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE_UPDATE, &updated) && updated)
+      check_variables();
 }
 
