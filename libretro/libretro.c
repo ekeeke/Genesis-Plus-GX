@@ -38,8 +38,6 @@ static retro_audio_sample_batch_t audio_batch_cb;
 
 void retro_set_environment(retro_environment_t cb)
 {
-   environ_cb = cb;
-
    static const struct retro_variable vars[] = {
       { "blargg_ntsc_filter", "Blargg NTSC filter; disabled|monochrome|composite|svideo|rgb" },
       { "overscan", "Overscan mode; 0|1|2|3" },
@@ -47,6 +45,7 @@ void retro_set_environment(retro_environment_t cb)
       { NULL, NULL },
    };
 
+   environ_cb = cb;
    cb(RETRO_ENVIRONMENT_SET_VARIABLES, (void*)vars);
 }
 
@@ -1179,6 +1178,7 @@ void osd_input_update(void)
 void retro_run(void) 
 {
    int aud;
+   bool updated = false;
 
    if (system_hw == SYSTEM_MCD)
       system_frame_scd(0);
@@ -1192,7 +1192,6 @@ void retro_run(void)
    aud = audio_update(soundbuffer) << 1;
    audio_batch_cb(soundbuffer, aud >> 1);
 
-   bool updated = false;
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE_UPDATE, &updated) && updated)
       check_variables();
 }
