@@ -2976,7 +2976,7 @@ static void vdp_dma_68k_io(unsigned int length)
 static void vdp_dma_copy(unsigned int length)
 {
   /* VRAM read/write operation only */
-  if ((code & 0x1F) == 0x10)
+  if ((code & 0x1E) == 0x10)
   {
     int name;
     uint8 data;
