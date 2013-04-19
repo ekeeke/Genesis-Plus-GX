@@ -212,7 +212,7 @@ static void s68k_poll_detect(reg)
   }
 
   /* restart SUB-CPU polling detection */
-  s68k.poll.cycle = s68k.cycles + 320;
+  s68k.poll.cycle = s68k.cycles + 392;
   s68k.poll.pc = s68k.pc;
 }
 
@@ -412,7 +412,7 @@ static unsigned int scd_read_word(unsigned int address)
     /* relative MAIN-CPU cycle counter */
     unsigned int cycles = (s68k.cycles * MCYCLES_PER_LINE) / SCYCLES_PER_LINE;
 
-    /* sync MAIN-CPU with SUB-CPU */
+    /* sync MAIN-CPU with SUB-CPU (Mighty Morphin Power Rangers) */
     if (!m68k.stopped && (m68k.cycles < cycles))
     {
       m68k_run(cycles);
@@ -1062,7 +1062,7 @@ void scd_init(void)
   {
     if (i & 2)
     {
-      /* PRG-RAM (first 128KB bank, mirrored) */
+      /* $020000-$03FFFF (resp. $420000-$43FFFF): PRG-RAM (first 128KB bank, mirrored each 256KB) */
       m68k.memory_map[i].base    = scd.prg_ram + ((i & 1) << 16);
       m68k.memory_map[i].read8   = NULL;
       m68k.memory_map[i].read16  = NULL;
@@ -1074,7 +1074,8 @@ void scd_init(void)
     }
     else
     {
-      /* internal ROM (128KB mirrored) (Flux expects it to be mapped at $440000-$45FFFF) */
+      /* $000000-$01FFFF (resp. $400000-$41FFFF): internal ROM (128KB, mirrored each 256KB) */
+      /* NB: Flux expects it to be mapped at $440000-$45FFFF */
       m68k.memory_map[i].base    = scd.bootrom + ((i & 1) << 16);
       m68k.memory_map[i].read8   = NULL;
       m68k.memory_map[i].read16  = NULL;
@@ -1116,7 +1117,6 @@ void scd_init(void)
   /* $080000-$0BFFFF:  Word-RAM in 2M mode (256KB)*/
   for (i=0x08; i<0x0c; i++)
   {
-    /* allow Word-RAM access from both CPU in 2M mode (fixes sync issues in Mortal Kombat) */
     s68k.memory_map[i].base    = scd.word_ram_2M + ((i & 3) << 16);
     s68k.memory_map[i].read8   = NULL;
     s68k.memory_map[i].read16  = NULL;
@@ -1167,6 +1167,8 @@ void scd_reset(int hard)
   /* TODO: figure what exactly is resetted when RESET bit is cleared by SUB-CPU */
   if (hard)
   {
+    int i;
+    
     /* Clear all ASIC registers by default */
     memset(scd.regs, 0, sizeof(scd.regs));
 
@@ -1183,6 +1185,14 @@ void scd_reset(int hard)
 
     /* 2M mode */
     word_ram_switch(0);
+
+    /* reset PRG-RAM banking on MAIN-CPU side */
+    for (i=scd.cartridge.boot+0x02; i<scd.cartridge.boot+0x20; i+=4)
+    {
+      /* MAIN-CPU: $020000-$03FFFF (resp. $420000-$43FFFF) mapped to first 128KB PRG-RAM bank (mirrored each 256KB) */
+      m68k.memory_map[i].base = scd.prg_ram;
+      m68k.memory_map[i+1].base = scd.prg_ram + 0x10000;
+    }
   }
   else
   {

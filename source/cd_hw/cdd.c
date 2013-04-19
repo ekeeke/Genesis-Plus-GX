@@ -90,6 +90,26 @@ static const uint32 toc_shadow[15] =
   11637,  2547,  2521,  3856, 900
 };
 
+static const uint32 toc_dungeon[13] =
+{
+  2250, 22950, 16350, 24900, 13875, 19950, 13800, 15375, 17400, 17100,
+  3325,  6825, 25275
+};
+
+static const uint32 toc_ffight[26] =
+{
+  11994, 9742, 10136, 9685, 9553, 14588, 9430, 8721, 9975, 9764,
+  9704, 12796, 585, 754, 951, 624, 9047, 1068, 817, 9191, 1024,
+  14562, 10320, 8627, 3795, 3047
+};
+
+static const uint32 toc_ffightj[29] =
+{
+  11994, 9752, 10119, 9690, 9567, 14575, 9431, 8731, 9965, 9763,
+  9716, 12791, 579, 751, 958, 630, 9050, 1052, 825, 9193, 1026,
+  14553, 9834, 10542, 1699, 1792, 1781, 3783, 3052
+};
+
 /* supported WAVE file header (16-bit stereo samples @44.1kHz) */
 static const unsigned char waveHeader[32] =
 {
@@ -641,6 +661,45 @@ int cdd_load(char *filename, char *header)
       }
       while (cdd.toc.last < 15);
     }
+    else if (strstr(header + 0x180,"T-143025") != NULL)
+    {
+      /* Dungeon Explorer */
+      cdd.toc.last = cdd.toc.end = 0;
+      do
+      {
+        cdd.toc.tracks[cdd.toc.last].start = cdd.toc.end;
+        cdd.toc.tracks[cdd.toc.last].end = cdd.toc.tracks[cdd.toc.last].start + toc_dungeon[cdd.toc.last];
+        cdd.toc.end = cdd.toc.tracks[cdd.toc.last].end;
+        cdd.toc.last++;
+      }
+      while (cdd.toc.last < 13);
+    }
+    else if (strstr(header + 0x180,"MK-4410") != NULL)
+    {
+      /* Final Fight CD (USA, Europe) */
+      cdd.toc.last = cdd.toc.end = 0;
+      do
+      {
+        cdd.toc.tracks[cdd.toc.last].start = cdd.toc.end;
+        cdd.toc.tracks[cdd.toc.last].end = cdd.toc.tracks[cdd.toc.last].start + toc_ffight[cdd.toc.last];
+        cdd.toc.end = cdd.toc.tracks[cdd.toc.last].end;
+        cdd.toc.last++;
+      }
+      while (cdd.toc.last < 26);
+    }
+    else if (strstr(header + 0x180,"G-6013") != NULL)
+    {
+      /* Final Fight CD (Japan) */
+      cdd.toc.last = cdd.toc.end = 0;
+      do
+      {
+        cdd.toc.tracks[cdd.toc.last].start = cdd.toc.end;
+        cdd.toc.tracks[cdd.toc.last].end = cdd.toc.tracks[cdd.toc.last].start + toc_ffightj[cdd.toc.last];
+        cdd.toc.end = cdd.toc.tracks[cdd.toc.last].end;
+        cdd.toc.last++;
+      }
+      while (cdd.toc.last < 29);
+    }
     else
     {
       /* default TOC (99 tracks & 2s per audio tracks) */
@@ -1081,11 +1140,24 @@ void cdd_process(void)
       if (!cdd.latency)
       {
         /* Fixes a few games hanging during intro because they expect data to be read with some delay */
-        /* Wolf Team games (Anet Futatabi, Cobra Command, Road Avenger & Time Gal) need at least 6 interrupts delay */
         /* Radical Rex needs at least one interrupt delay */
-        /* Jeopardy needs at least 9 interrupts delay */
-        /* Space Adventure Cobra (2nd morgue scene) needs at least 13 interrupts delay */
-        cdd.latency = 13;
+        /* Wolf Team games (Anet Futatabi, Cobra Command, Road Avenger & Time Gal) need at least 6 interrupts delay */
+        /* Space Adventure Cobra (2nd morgue scene) needs at least 13 interrupts delay (incl. seek time, so 6 here is OK) */
+        /* Jeopardy & ESPN Sunday Night NFL are picky about this as well: 7 interrupts delay (+ seek time) seems OK */
+        cdd.latency = 7;
+      }
+
+      /* CD drive seek time */
+      /* Some delay is especially needed when playing audio tracks located at the end of the disc (ex: Sonic CD intro) */
+      /* max. seek time = 1.5s = 1.5 x 75 = 112.5 CDD interrupts (rounded to 120) for 270000 sectors max on disc */
+      /* Note: this is only a rough approximation, on real hardware, drive seek time is much likely not linear */
+      if (lba < cdd.lba)
+      {
+        cdd.latency += (((cdd.lba - lba) * 120) / 270000);
+      }
+      else 
+      {
+        cdd.latency += (((lba - cdd.lba) * 120) / 270000);
       }
 
       /* update current track index */
@@ -1110,19 +1182,6 @@ void cdd_process(void)
       }
       else if (cdd.toc.tracks[index].fd)
       {
-        /* CD drive seek time */
-        /* Some delay is also needed when playing AUDIO tracks located at the end of the disc (ex: Sonic CD intro) */
-        /* max. seek time = 1.5s = 1.5 x 75 = 112.5 CDD interrupts (rounded to 120) for 270000 sectors max on disc */
-        /* Note: this is only a rough approximation, on real hardware, drive seek time is much likely not linear */
-        if (lba < cdd.lba)
-        {
-          cdd.latency += (((cdd.lba - lba) * 120) / 270000);
-        }
-        else 
-        {
-          cdd.latency += (((lba - cdd.lba) * 120) / 270000);
-        }
-
         /* seek AUDIO track */
         if (lba < cdd.toc.tracks[index].start)
         {
