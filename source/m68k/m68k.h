@@ -39,8 +39,8 @@
 /* ================================ INCLUDES ============================== */
 /* ======================================================================== */
 
+#include <setjmp.h>
 #include "macros.h"
-
 
 /* ======================================================================== */
 /* ==================== ARCHITECTURE-DEPENDANT DEFINES ==================== */
@@ -231,30 +231,29 @@ typedef struct
 {
   cpu_memory_map memory_map[256]; /* memory mapping */
 
-  cpu_idle_t poll;    /* polling detection */
+  cpu_idle_t poll;      /* polling detection */
 
-  uint cycles;        /* current master cycle count */ 
-  uint cycle_end;     /* aimed master cycle count for current execution frame */
+  uint cycles;          /* current master cycle count */ 
+  uint cycle_end;       /* aimed master cycle count for current execution frame */
 
-  uint dar[16];      /* Data and Address Registers */
-  uint pc;           /* Program Counter */
-  uint sp[5];        /* User and Interrupt Stack Pointers */
-  uint ir;           /* Instruction Register */
-  uint t1_flag;      /* Trace 1 */
-  uint s_flag;       /* Supervisor */
-  uint x_flag;       /* Extend */
-  uint n_flag;       /* Negative */
-  uint not_z_flag;   /* Zero, inverted for speedups */
-  uint v_flag;       /* Overflow */
-  uint c_flag;       /* Carry */
-  uint int_mask;     /* I0-I2 */
-  uint int_level;    /* State of interrupt pins IPL0-IPL2 -- ASG: changed from ints_pending */
-  uint stopped;      /* Stopped state */
-#if M68K_EMULATE_PREFETCH
-  uint pref_addr;    /* Last prefetch address */
-  uint pref_data;    /* Data in the prefetch queue */
-#endif
-#if M68K_EMULATE_ADDRESS_ERROR
+  uint dar[16];         /* Data and Address Registers */
+  uint pc;              /* Program Counter */
+  uint sp[5];           /* User and Interrupt Stack Pointers */
+  uint ir;              /* Instruction Register */
+  uint t1_flag;         /* Trace 1 */
+  uint s_flag;          /* Supervisor */
+  uint x_flag;          /* Extend */
+  uint n_flag;          /* Negative */
+  uint not_z_flag;      /* Zero, inverted for speedups */
+  uint v_flag;          /* Overflow */
+  uint c_flag;          /* Carry */
+  uint int_mask;        /* I0-I2 */
+  uint int_level;       /* State of interrupt pins IPL0-IPL2 -- ASG: changed from ints_pending */
+  uint stopped;         /* Stopped state */
+
+  uint pref_addr;       /* Last prefetch address */
+  uint pref_data;       /* Data in the prefetch queue */
+
   uint instr_mode;      /* Stores whether we are in instruction mode or group 0/1 exception mode */
   uint run_mode;        /* Stores whether we are processing a reset, bus error, address error, or something else */
   uint aerr_enabled;    /* Enables/deisables address error checks at runtime */
@@ -262,27 +261,16 @@ typedef struct
   uint aerr_address;    /* Address error location */
   uint aerr_write_mode; /* Address error write mode */
   uint aerr_fc;         /* Address error FC code */
-#endif
-#if M68K_EMULATE_TRACE
+
   uint tracing;         /* Tracing enable flag */
-#endif 
-#if M68K_EMULATE_FC
+
   uint address_space;   /* Current FC code */
-#endif
 
   /* Callbacks to host */
-#if M68K_EMULATE_INT_ACK == OPT_ON
   int  (*int_ack_callback)(int int_line);           /* Interrupt Acknowledge */
-#endif
-#if M68K_EMULATE_RESET == OPT_ON
   void (*reset_instr_callback)(void);               /* Called when a RESET instruction is encountered */
-#endif
-#if M68K_TAS_HAS_CALLBACK == OPT_ON
   int  (*tas_instr_callback)(void);                 /* Called when a TAS instruction is encountered, allows / disallows writeback */
-#endif
-#if M68K_EMULATE_FC == OPT_ON
   void (*set_fc_callback)(unsigned int new_fc);     /* Called when the CPU function code changes */
-#endif
 } m68ki_cpu_core;
 
 /* CPU cores */

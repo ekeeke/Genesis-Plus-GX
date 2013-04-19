@@ -520,11 +520,6 @@ void md_cart_init(void)
     }
   }
 
-#if M68K_EMULATE_ADDRESS_ERROR
-  /* default behavior */
-  m68k.aerr_enabled = config.addr_error; 
-#endif
-
   /* detect specific mappers */
   if (strstr(rominfo.domestic,"SUPER STREET FIGHTER2") != NULL)
   {
