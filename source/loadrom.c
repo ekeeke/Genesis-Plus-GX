@@ -601,7 +601,7 @@ int load_rom(char *filename)
       /* Mega Drive hardware (Genesis mode) */
       system_hw = SYSTEM_MD;
 
-      /* Decode .MDX format */
+      /* decode .MDX format */
       if (!memcmp("MDX", &extension[0], 3))
       {
         for (i = 4; i < size - 1; i++)
@@ -609,6 +609,18 @@ int load_rom(char *filename)
           cart.rom[i-4] = cart.rom[i] ^ 0x40;
         }
         size = size - 5;
+      }
+
+      /* auto-detect byte-swapped dumps */
+      if (!memcmp((char *)(cart.rom + 0x100),"ESAGM GE ARDVI E", 16) ||
+          !memcmp((char *)(cart.rom + 0x100),"ESAGG NESESI", 12))
+      {
+        for(i = 0; i < size; i += 2)
+        {
+          uint8 temp = cart.rom[i];
+          cart.rom[i] = cart.rom[i+1];
+          cart.rom[i+1] = temp;
+        }
       }
     }
 
@@ -656,10 +668,10 @@ int load_rom(char *filename)
     scd.cartridge.boot = 0x00;
   }
 
+#ifdef LSB_FIRST
   /* 16-bit ROM specific */
   else if (system_hw == SYSTEM_MD)
   {
-#ifdef LSB_FIRST
     /* Byteswap ROM to optimize 16-bit access */
     for (i = 0; i < cart.romsize; i += 2)
     {
@@ -667,20 +679,8 @@ int load_rom(char *filename)
       cart.rom[i] = cart.rom[i+1];
       cart.rom[i+1] = temp;
     }
-#endif
-
-    /* byteswapped RADICA dumps (from Haze) */
-    if (((strstr(rominfo.product,"-K0101") != NULL) && (rominfo.checksum == 0xf424)) ||
-        ((strstr(rominfo.product,"-K0109") != NULL) && (rominfo.checksum == 0x4f10)))
-    {
-      for(i = 0; i < cart.romsize; i += 2)
-      {
-        uint8 temp = cart.rom[i];
-        cart.rom[i] = cart.rom[i+1];
-        cart.rom[i+1] = temp;
-      }
-    }
   }
+#endif
 
   /* Save auto-detected system hardware  */
   romtype = system_hw;
