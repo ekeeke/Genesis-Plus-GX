@@ -215,13 +215,19 @@ void s68k_update_irq(unsigned int mask)
 #ifdef LOG_SCD
   error("[%d][%d] IRQ Level = %d(0x%02x) (%x)\n", v_counter, s68k.cycles, CPU_INT_LEVEL>>8,FLAG_INT_MASK,s68k.pc);
 #endif
-
-  /* Check interrupt mask to process IRQ  */
-  m68ki_check_interrupts();
 }
 
 void s68k_run(unsigned int cycles) 
 {
+  /* Make sure CPU is not already ahead */
+  if (s68k.cycles >= cycles)
+  {
+    return;
+  }
+
+  /* Check interrupt mask to process IRQ if needed */
+  m68ki_check_interrupts();
+
   /* Make sure we're not stopped */
   if (CPU_STOPPED)
   {
@@ -229,11 +235,12 @@ void s68k_run(unsigned int cycles)
     return;
   }
 
+  /* Save end cycles count for when CPU is stopped */
+  s68k.cycle_end = cycles;
+
   /* Return point for when we have an address error (TODO: use goto) */
   m68ki_set_address_error_trap() /* auto-disable (see m68kcpu.h) */
 
-  /* Save end cycles count for when CPU is stopped */
-  s68k.cycle_end = cycles;
 #ifdef LOG_SCD
   error("[%d][%d] s68k run to %d cycles (%x), irq mask = %x (%x)\n", v_counter, s68k.cycles, cycles, s68k.pc,FLAG_INT_MASK, CPU_INT_LEVEL);
 #endif
@@ -249,10 +256,9 @@ void s68k_run(unsigned int cycles)
     /* Decode next instruction */
     REG_IR = m68ki_read_imm_16();
 
-	
     /* Execute instruction */
-	  m68ki_instruction_jump_table[REG_IR](); /* TODO: use labels table with goto */
-    USE_CYCLES(CYC_INSTRUCTION[REG_IR]); /* TODO: move into instruction handlers */
+	m68ki_instruction_jump_table[REG_IR]();
+    USE_CYCLES(CYC_INSTRUCTION[REG_IR]);
 
     /* Trace m68k_exception, if necessary */
     m68ki_exception_if_trace(); /* auto-disable (see m68kcpu.h) */

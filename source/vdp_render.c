@@ -1521,11 +1521,11 @@ void render_bg_m5(int line, int width)
 #ifdef LSB_FIRST
   uint32 shift  = (xscroll >> 16) & 0x0F;
   uint32 index  = pf_col_mask + 1 - ((xscroll >> 20) & pf_col_mask);
-  uint32 v_line = (line + ((yscroll >> 16) & 0x3FF)) & pf_row_mask;
+  uint32 v_line = (line + (yscroll >> 16)) & pf_row_mask;
 #else
   uint32 shift  = (xscroll & 0x0F);
   uint32 index  = pf_col_mask + 1 - ((xscroll >> 4) & pf_col_mask);
-  uint32 v_line = (line + (yscroll & 0x3FF)) & pf_row_mask;
+  uint32 v_line = (line + yscroll) & pf_row_mask;
 #endif
 
   /* Plane B name table */
@@ -1578,11 +1578,11 @@ void render_bg_m5(int line, int width)
 #ifdef LSB_FIRST
     shift   = (xscroll & 0x0F);
     index   = pf_col_mask + start + 1 - ((xscroll >> 4) & pf_col_mask);
-    v_line  = (line + (yscroll & 0x3FF)) & pf_row_mask;
+    v_line  = (line + yscroll) & pf_row_mask;
 #else
     shift   = (xscroll >> 16) & 0x0F;
     index   = pf_col_mask + start + 1 - ((xscroll >> 20) & pf_col_mask);
-    v_line  = (line + ((yscroll >> 16) & 0x3FF)) & pf_row_mask;
+    v_line  = (line + (yscroll >> 16)) & pf_row_mask;
 #endif
 
     /* Plane A name table */
@@ -1683,7 +1683,6 @@ void render_bg_m5_vs(int line, int width)
   if (reg[12] & 1)
   {
     yscroll = vs[19] & (vs[19] >> 16);
-    yscroll &= 0x3FF;
   }
 
   if(shift)
@@ -1713,9 +1712,9 @@ void render_bg_m5_vs(int line, int width)
   {
     /* Plane B vertical scroll */
 #ifdef LSB_FIRST
-    v_line = (line + ((vs[column] >> 16) & 0x3FF)) & pf_row_mask;
+    v_line = (line + (vs[column] >> 16)) & pf_row_mask;
 #else
-    v_line = (line + (vs[column] & 0x3FF)) & pf_row_mask;
+    v_line = (line + vs[column]) & pf_row_mask;
 #endif
 
     /* Plane B name table */
@@ -1793,9 +1792,9 @@ void render_bg_m5_vs(int line, int width)
     {
       /* Plane A vertical scroll */
 #ifdef LSB_FIRST
-      v_line = (line + (vs[column] & 0x3FF)) & pf_row_mask;
+      v_line = (line + vs[column]) & pf_row_mask;
 #else
-      v_line = (line + ((vs[column] >> 16) & 0x3FF)) & pf_row_mask;
+      v_line = (line + (vs[column] >> 16)) & pf_row_mask;
 #endif
 
       /* Plane A name table */
@@ -1858,11 +1857,11 @@ void render_bg_m5_im2(int line, int width)
 #ifdef LSB_FIRST
   uint32 shift  = (xscroll >> 16) & 0x0F;
   uint32 index  = pf_col_mask + 1 - ((xscroll >> 20) & pf_col_mask);
-  uint32 v_line = (line + ((yscroll >> 17) & 0x3FF)) & pf_row_mask;
+  uint32 v_line = (line + (yscroll >> 17)) & pf_row_mask;
 #else
   uint32 shift  = (xscroll & 0x0F);
   uint32 index  = pf_col_mask + 1 - ((xscroll >> 4) & pf_col_mask);
-  uint32 v_line = (line + ((yscroll >> 1) & 0x3FF)) & pf_row_mask;
+  uint32 v_line = (line + (yscroll >> 1)) & pf_row_mask;
 #endif
 
   /* Plane B name table */
@@ -1915,11 +1914,11 @@ void render_bg_m5_im2(int line, int width)
 #ifdef LSB_FIRST
     shift   = (xscroll & 0x0F);
     index   = pf_col_mask + start + 1 - ((xscroll >> 4) & pf_col_mask);
-    v_line  = (line + ((yscroll >> 1) & 0x3FF)) & pf_row_mask;
+    v_line  = (line + (yscroll >> 1)) & pf_row_mask;
 #else
     shift   = (xscroll >> 16) & 0x0F;
     index   = pf_col_mask + start + 1 - ((xscroll >> 20) & pf_col_mask);
-    v_line  = (line + ((yscroll >> 17) & 0x3FF)) & pf_row_mask;
+    v_line  = (line + (yscroll >> 17)) & pf_row_mask;
 #endif
 
     /* Plane A name table */
@@ -2021,7 +2020,6 @@ void render_bg_m5_im2_vs(int line, int width)
   if (reg[12] & 1)
   {
     yscroll = (vs[19] >> 1) & (vs[19] >> 17);
-    yscroll &= 0x3FF;
   }
 
   if(shift)
@@ -2051,9 +2049,9 @@ void render_bg_m5_im2_vs(int line, int width)
   {
     /* Plane B vertical scroll */
 #ifdef LSB_FIRST
-    v_line = (line + ((vs[column] >> 17) & 0x3FF)) & pf_row_mask;
+    v_line = (line + (vs[column] >> 17)) & pf_row_mask;
 #else
-    v_line = (line + ((vs[column] >> 1) & 0x3FF)) & pf_row_mask;
+    v_line = (line + (vs[column] >> 1)) & pf_row_mask;
 #endif
 
     /* Plane B name table */
@@ -2131,9 +2129,9 @@ void render_bg_m5_im2_vs(int line, int width)
     {
       /* Plane A vertical scroll */
 #ifdef LSB_FIRST
-      v_line = (line + ((vs[column] >> 1) & 0x3FF)) & pf_row_mask;
+      v_line = (line + (vs[column] >> 1)) & pf_row_mask;
 #else
-      v_line = (line + ((vs[column] >> 17) & 0x3FF)) & pf_row_mask;
+      v_line = (line + (vs[column] >> 17)) & pf_row_mask;
 #endif
 
       /* Plane A name table */
@@ -2178,6 +2176,7 @@ void render_bg_m5(int line, int width)
   int column, start, end;
   uint32 atex, atbuf, *src, *dst;
   uint32 shift, index, v_line, *nt;
+  uint8 *lb;
 
   /* Scroll Planes common data */
   uint32 xscroll      = *(uint32 *)&vram[hscb + ((line & hscroll_mask) << 2)];
@@ -2223,11 +2222,11 @@ void render_bg_m5(int line, int width)
 #ifdef LSB_FIRST
     shift  = (xscroll & 0x0F);
     index  = pf_col_mask + start + 1 - ((xscroll >> 4) & pf_col_mask);
-    v_line = (line + (yscroll & 0x3FF)) & pf_row_mask;
+    v_line = (line + yscroll) & pf_row_mask;
 #else
     shift  = (xscroll >> 16) & 0x0F;
     index  = pf_col_mask + start + 1 - ((xscroll >> 20) & pf_col_mask);
-    v_line = (line + ((yscroll >> 16) & 0x3FF)) & pf_row_mask;
+    v_line = (line + (yscroll >> 16)) & pf_row_mask;
 #endif
 
     /* Background line buffer */
@@ -2297,11 +2296,11 @@ void render_bg_m5(int line, int width)
 #ifdef LSB_FIRST
   shift  = (xscroll >> 16) & 0x0F;
   index  = pf_col_mask + 1 - ((xscroll >> 20) & pf_col_mask);
-  v_line = (line + ((yscroll >> 16) & 0x3FF)) & pf_row_mask;
+  v_line = (line + (yscroll >> 16)) & pf_row_mask;
 #else
   shift  = (xscroll & 0x0F);
   index  = pf_col_mask + 1 - ((xscroll >> 4) & pf_col_mask);
-  v_line = (line + (yscroll & 0x3FF)) & pf_row_mask;
+  v_line = (line + yscroll) & pf_row_mask;
 #endif
 
   /* Plane B name table */
@@ -2311,7 +2310,7 @@ void render_bg_m5(int line, int width)
   v_line = (v_line & 7) << 3;
 
   /* Background line buffer */
-  uint8 *lb = &linebuf[0][0x20];
+  lb = &linebuf[0][0x20];
 
   if(shift)
   {
@@ -2334,6 +2333,7 @@ void render_bg_m5_vs(int line, int width)
   int column, start, end;
   uint32 atex, atbuf, *src, *dst;
   uint32 shift, index, v_line, *nt;
+  uint8 *lb;
 
   /* Scroll Planes common data */
   uint32 xscroll      = *(uint32 *)&vram[hscb + ((line & hscroll_mask) << 2)];
@@ -2372,7 +2372,6 @@ void render_bg_m5_vs(int line, int width)
   if (reg[12] & 1)
   {
     yscroll = vs[19] & (vs[19] >> 16);
-    yscroll &= 0x3FF;
   }
 
   /* Number of columns to draw */
@@ -2428,9 +2427,9 @@ void render_bg_m5_vs(int line, int width)
     {
       /* Plane A vertical scroll */
 #ifdef LSB_FIRST
-      v_line = (line + (vs[column] & 0x3FF)) & pf_row_mask;
+      v_line = (line + vs[column]) & pf_row_mask;
 #else
-      v_line = (line + ((vs[column] >> 16) & 0x3FF)) & pf_row_mask;
+      v_line = (line + (vs[column] >> 16)) & pf_row_mask;
 #endif
 
       /* Plane A name table */
@@ -2483,7 +2482,7 @@ void render_bg_m5_vs(int line, int width)
 #endif
 
   /* Background line buffer */
-  uint8 *lb = &linebuf[0][0x20];
+  lb = &linebuf[0][0x20];
 
   if(shift)
   {
@@ -2507,9 +2506,9 @@ void render_bg_m5_vs(int line, int width)
   {
     /* Plane B vertical scroll */
 #ifdef LSB_FIRST
-    v_line = (line + ((vs[column] >> 16) & 0x3FF)) & pf_row_mask;
+    v_line = (line + (vs[column] >> 16)) & pf_row_mask;
 #else
-    v_line = (line + (vs[column] & 0x3FF)) & pf_row_mask;
+    v_line = (line + vs[column]) & pf_row_mask;
 #endif
 
     /* Plane B name table */
@@ -2528,6 +2527,7 @@ void render_bg_m5_im2(int line, int width)
   int column, start, end;
   uint32 atex, atbuf, *src, *dst;
   uint32 shift, index, v_line, *nt;
+  uint8 *lb;
 
   /* Scroll Planes common data */
   int odd = odd_frame;
@@ -2574,11 +2574,11 @@ void render_bg_m5_im2(int line, int width)
 #ifdef LSB_FIRST
     shift  = (xscroll & 0x0F);
     index  = pf_col_mask + start + 1 - ((xscroll >> 4) & pf_col_mask);
-    v_line = (line + ((yscroll >> 1) & 0x3FF)) & pf_row_mask;
+    v_line = (line + (yscroll >> 1)) & pf_row_mask;
 #else
     shift  = (xscroll >> 16) & 0x0F;
     index  = pf_col_mask + start + 1 - ((xscroll >> 20) & pf_col_mask);
-    v_line = (line + ((yscroll >> 17) & 0x3FF)) & pf_row_mask;
+    v_line = (line + (yscroll >> 17)) & pf_row_mask;
 #endif
 
     /* Background line buffer */
@@ -2648,11 +2648,11 @@ void render_bg_m5_im2(int line, int width)
 #ifdef LSB_FIRST
   shift  = (xscroll >> 16) & 0x0F;
   index  = pf_col_mask + 1 - ((xscroll >> 20) & pf_col_mask);
-  v_line = (line + ((yscroll >> 17) & 0x3FF)) & pf_row_mask;
+  v_line = (line + (yscroll >> 17)) & pf_row_mask;
 #else
   shift  = (xscroll & 0x0F);
   index  = pf_col_mask + 1 - ((xscroll >> 4) & pf_col_mask);
-  v_line = (line + ((yscroll >> 1) & 0x3FF)) & pf_row_mask;
+  v_line = (line + (yscroll >> 1)) & pf_row_mask;
 #endif
 
   /* Plane B name table */
@@ -2662,7 +2662,7 @@ void render_bg_m5_im2(int line, int width)
   v_line = (((v_line & 7) << 1) | odd) << 3;
 
   /* Background line buffer */
-  uint8 *lb = &linebuf[0][0x20];
+  lb = &linebuf[0][0x20];
 
   if(shift)
   {
@@ -2685,6 +2685,7 @@ void render_bg_m5_im2_vs(int line, int width)
   int column, start, end;
   uint32 atex, atbuf, *src, *dst;
   uint32 shift, index, v_line, *nt;
+  uint8 *lb;
 
   /* common data */
   int odd = odd_frame;
@@ -2725,7 +2726,6 @@ void render_bg_m5_im2_vs(int line, int width)
   {
     /* only in 40-cell mode, verified on MD2 */
     yscroll = (vs[19] >> 1) & (vs[19] >> 17);
-    yscroll &= 0x3FF;
   }
 
   /* Number of columns to draw */
@@ -2781,9 +2781,9 @@ void render_bg_m5_im2_vs(int line, int width)
     {
       /* Plane A vertical scroll */
 #ifdef LSB_FIRST
-      v_line = (line + ((vs[column] >> 1) & 0x3FF)) & pf_row_mask;
+      v_line = (line + (vs[column] >> 1)) & pf_row_mask;
 #else
-      v_line = (line + ((vs[column] >> 17) & 0x3FF)) & pf_row_mask;
+      v_line = (line + (vs[column] >> 17)) & pf_row_mask;
 #endif
 
       /* Plane A name table */
@@ -2836,7 +2836,7 @@ void render_bg_m5_im2_vs(int line, int width)
 #endif
 
   /* Background line buffer */
-  uint8 *lb = &linebuf[0][0x20];
+  lb = &linebuf[0][0x20];
 
   if(shift)
   {
@@ -2860,9 +2860,9 @@ void render_bg_m5_im2_vs(int line, int width)
   {
     /* Plane B vertical scroll */
 #ifdef LSB_FIRST
-    v_line = (line + ((vs[column] >> 17) & 0x3FF)) & pf_row_mask;
+    v_line = (line + (vs[column] >> 17)) & pf_row_mask;
 #else
-    v_line = (line + ((vs[column] >> 1) & 0x3FF)) & pf_row_mask;
+    v_line = (line + (vs[column] >> 1)) & pf_row_mask;
 #endif
 
     /* Plane B name table */

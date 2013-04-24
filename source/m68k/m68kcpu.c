@@ -205,9 +205,6 @@ void m68k_update_irq(unsigned int mask)
 #ifdef LOGVDP
   error("[%d(%d)][%d(%d)] IRQ Level = %d(0x%02x) (%x)\n", v_counter, m68k.cycles/3420, m68k.cycles, m68k.cycles%3420,CPU_INT_LEVEL>>8,FLAG_INT_MASK,m68k_get_reg(M68K_REG_PC));
 #endif
-
-  /* Check interrupt mask to process IRQ  */
-  m68ki_check_interrupts();
 }
 
 void m68k_set_irq(unsigned int int_level)
@@ -218,9 +215,6 @@ void m68k_set_irq(unsigned int int_level)
 #ifdef LOGVDP
   error("[%d(%d)][%d(%d)] IRQ Level = %d(0x%02x) (%x)\n", v_counter, m68k.cycles/3420, m68k.cycles, m68k.cycles%3420,CPU_INT_LEVEL>>8,FLAG_INT_MASK,m68k_get_reg(M68K_REG_PC));
 #endif
-
-  /* Check interrupt mask to process IRQ  */
-  m68ki_check_interrupts();
 }
 
 /* IRQ latency (Fatal Rewind, Sesame's Street Counting Cafe)*/
@@ -261,6 +255,15 @@ void m68k_set_irq_delay(unsigned int int_level)
 
 void m68k_run(unsigned int cycles) 
 {
+  /* Make sure CPU is not already ahead */
+  if (m68k.cycles >= cycles)
+  {
+    return;
+  }
+
+  /* Check interrupt mask to process IRQ if needed */
+  m68ki_check_interrupts();
+
   /* Make sure we're not stopped */
   if (CPU_STOPPED)
   {
@@ -268,11 +271,11 @@ void m68k_run(unsigned int cycles)
     return;
   }
 
-  /* Return point for when we have an address error (TODO: use goto) */
-  m68ki_set_address_error_trap() /* auto-disable (see m68kcpu.h) */
-
   /* Save end cycles count for when CPU is stopped */
   m68k.cycle_end = cycles;
+
+  /* Return point for when we have an address error (TODO: use goto) */
+  m68ki_set_address_error_trap() /* auto-disable (see m68kcpu.h) */
 
 #ifdef LOGVDP
   error("[%d][%d] m68k run to %d cycles (%x)\n", v_counter, m68k.cycles, cycles, m68k.pc);
@@ -290,8 +293,8 @@ void m68k_run(unsigned int cycles)
     REG_IR = m68ki_read_imm_16();
 	
     /* Execute instruction */
-	  m68ki_instruction_jump_table[REG_IR](); /* TODO: use labels table with goto */
-    USE_CYCLES(CYC_INSTRUCTION[REG_IR]); /* TODO: move into instruction handlers */
+	m68ki_instruction_jump_table[REG_IR]();
+    USE_CYCLES(CYC_INSTRUCTION[REG_IR]);
 
     /* Trace m68k_exception, if necessary */
     m68ki_exception_if_trace(); /* auto-disable (see m68kcpu.h) */

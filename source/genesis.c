@@ -67,6 +67,7 @@ void gen_init(void)
   {
     /* initialize main 68k */
     m68k_init();
+    m68k.aerr_enabled = config.addr_error; 
 
     /* initialize main 68k memory map */
 

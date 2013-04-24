@@ -48,7 +48,7 @@ unsigned int m68k_read_bus_8(unsigned int address)
 #ifdef LOGERROR
   error("Unused read8 %08X (%08X)\n", address, m68k_get_reg(M68K_REG_PC));
 #endif
-  address =   m68k.pc | (address & 1);
+  address = m68k.pc | (address & 1);
   return READ_BYTE(m68k.memory_map[((address)>>16)&0xff].base, (address) & 0xffff);
 }
 
@@ -238,6 +238,13 @@ static void m68k_poll_detect(reg)
 #endif
         m68k.cycles = m68k.cycle_end;
         m68k.stopped = 1 << reg;
+
+        /* return to current instruction */
+        do
+        {
+          m68k.pc -= 2;
+        }
+        while (m68k.ir != *(uint16 *)(m68k.memory_map[(m68k.pc>>16)&0xff].base + (m68k.pc & 0xffff)));
       }
       return;
     }
@@ -249,7 +256,7 @@ static void m68k_poll_detect(reg)
   }
 
   /* restart MAIN-CPU polling detection */
-  m68k.poll.cycle = m68k.cycles + 280;
+  m68k.poll.cycle = m68k.cycles + 840;
   m68k.poll.pc = m68k.pc;
 }
 
@@ -335,6 +342,15 @@ unsigned int ctrl_io_read_byte(unsigned int address)
         /* SUB-CPU communication flags */
         if (index == 0x0f)
         {
+          /* relative SUB-CPU cycle counter */
+          unsigned int cycles = (m68k.cycles * SCYCLES_PER_LINE) / MCYCLES_PER_LINE;
+
+          /* sync SUB-CPU with MAIN-CPU (Dracula Unleashed w/ Sega CD Model 2 OS ROM) */
+          if (!s68k.stopped && (s68k.cycles < cycles))
+          {
+            s68k_run(cycles);
+          }
+
           m68k_poll_detect(0x0f);
           return scd.regs[0x0f>>1].byte.l;
         }
