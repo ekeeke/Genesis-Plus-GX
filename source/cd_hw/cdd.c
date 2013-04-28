@@ -879,10 +879,24 @@ void cdd_update(void)
   error("LBA = %d (track n°%d)\n", cdd.lba, cdd.index);
 #endif
   
-  /* reading disc */
-  if (cdd.status == CD_PLAY)
+  /* seeking disc */
+  if (cdd.status == CD_SEEK)
   {
-    /* drive access latency */
+    /* drive latency */
+    if (cdd.latency > 0)
+    {
+      cdd.latency--;
+      return;
+    }
+
+    /* drive is ready */
+    cdd.status = CD_READY;
+  }
+
+  /* reading disc */
+  else if (cdd.status == CD_PLAY)
+  {
+    /* drive latency */
     if (cdd.latency > 0)
     {
       cdd.latency--;
@@ -1216,7 +1230,17 @@ void cdd_process(void)
                  (scd.regs[0x46>>1].byte.h * 10 + scd.regs[0x46>>1].byte.l)) * 75 +
                  (scd.regs[0x48>>1].byte.h * 10 + scd.regs[0x48>>1].byte.l) - 150;
 
-      /* update current LBA (TODO: add some delay ?) */
+      /* CD drive seek time (required by Switch / Panic intro - see CD_PLAY command for details)*/
+      if (lba < cdd.lba)
+      {
+        cdd.latency = (((cdd.lba - lba) * 120) / 270000);
+      }
+      else 
+      {
+        cdd.latency = (((lba - cdd.lba) * 120) / 270000);
+      }
+
+      /* update current LBA */
       cdd.lba = lba;
 
       /* update current track index */
@@ -1241,7 +1265,7 @@ void cdd_process(void)
       scd.regs[0x36>>1].byte.h = 0x01;
 
       /* update status */
-      cdd.status = CD_READY;
+      cdd.status = CD_SEEK;
       scd.regs[0x38>>1].w = CD_SEEK << 8;
       scd.regs[0x3a>>1].w = 0x0000;
       scd.regs[0x3c>>1].w = 0x0000;
