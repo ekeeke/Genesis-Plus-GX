@@ -1160,8 +1160,8 @@ void cdd_process(void)
         /* Radical Rex needs at least one interrupt delay */
         /* Wolf Team games (Anet Futatabi, Cobra Command, Road Avenger & Time Gal) need at least 6 interrupts delay  */
         /* Space Adventure Cobra (2nd morgue scene) needs at least 13 interrupts delay (incl. seek time, so 6 is OK) */
-        /* Jeopardy & ESPN Sunday Night NFL are picky about this as well: 7 interrupts delay (+ seek time) seems OK  */
-        cdd.latency = 7;
+        /* Jeopardy & ESPN Sunday Night NFL are picky about this as well: 10 interrupts delay (+ seek time) seems OK  */
+        cdd.latency = 10;
       }
 
       /* CD drive seek time */
@@ -1238,7 +1238,8 @@ void cdd_process(void)
 
       /* CD drive seek time  */
       /* We are using similar linear model as above, although still not exactly accurate, */
-      /* it works fine for Switch/Panic! intro (needs at least 30 interrupts while seeking) */
+      /* it works fine for Switch/Panic! intro (Switch needs at least 30 interrupts while */
+      /* seeking from 00:05:63 to 24:03:19, Panic! when seeking from 00:05:60 to 24:06:07) */
       if (lba > cdd.lba)
       {
         cdd.latency = ((lba - cdd.lba) * 120) / 270000;
@@ -1281,7 +1282,7 @@ void cdd_process(void)
       scd.regs[0x3c>>1].w = 0x0000;
       scd.regs[0x3e>>1].w = 0x0000;
       scd.regs[0x40>>1].w = ~(CD_SEEK + 0xf) & 0x0f;
-      break;
+      return;
     }
 
     case 0x06:  /* Pause */
