@@ -48,7 +48,7 @@
 #define CD_SEEK  0x02
 #define CD_SCAN  0x03
 #define CD_READY 0x04
-#define CD_OPEN  0x05
+#define CD_OPEN  0x05 /* similar to 0x0E ? */
 #define CD_STOP  0x09
 #define CD_END   0x0C
 
