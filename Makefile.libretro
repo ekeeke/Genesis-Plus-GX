@@ -60,21 +60,24 @@ else ifeq ($(platform), qnx)
 	CC = qcc -Vgcc_ntoarmv7le
 	AR = qcc -Vgcc_ntoarmv7le
 	PLATFORM_DEFINES := -D__BLACKBERRY_QNX__ -marm -mcpu=cortex-a9 -mfpu=neon -mfloat-abi=softfp
-else ifeq ($(platform), sncps3)
-   TARGET := $(TARGET_NAME)_libretro_ps3.a
-   CC = $(CELL_SDK)/host-win32/sn/bin/ps3ppusnc.exe
-   AR = $(CELL_SDK)/host-win32/sn/bin/ps3snarl.exe
-   PLATFORM_DEFINES := -D__CELLOS_LV2 -DALT_RENDER
 else ifeq ($(platform), ps3)
    TARGET := $(TARGET_NAME)_libretro_ps3.a
    CC = $(CELL_SDK)/host-win32/ppu/bin/ppu-lv2-gcc.exe
    AR = $(CELL_SDK)/host-win32/ppu/bin/ppu-lv2-ar.exe
    PLATFORM_DEFINES := -D__CELLOS_LV2 -DALT_RENDER
+	STATIC_LINKING = 1
+else ifeq ($(platform), sncps3)
+   TARGET := $(TARGET_NAME)_libretro_ps3.a
+   CC = $(CELL_SDK)/host-win32/sn/bin/ps3ppusnc.exe
+   AR = $(CELL_SDK)/host-win32/sn/bin/ps3snarl.exe
+   PLATFORM_DEFINES := -D__CELLOS_LV2 -DALT_RENDER
+	STATIC_LINKING = 1
 else ifeq ($(platform), psl1ght)
    TARGET := $(TARGET_NAME)_libretro_psl1ght.a$(EXE_EXT)
    CC = $(PS3DEV)/ppu/bin/ppu-gcc$(EXE_EXT)
    AR = $(PS3DEV)/ppu/bin/ppu-ar$(EXE_EXT)
    PLATFORM_DEFINES := -D__CELLOS_LV2 -DALT_RENDER
+	STATIC_LINKING = 1
 else ifeq ($(platform), psp1)
 	TARGET := $(TARGET_NAME)_libretro_psp1.a$(EXE_EXT)
 	CC = psp-gcc$(EXE_EXT)
@@ -82,23 +85,27 @@ else ifeq ($(platform), psp1)
 	ENDIANNESS_DEFINES := -DLSB_FIRST
 	PLATFORM_DEFINES := -DPSP
 	CFLAGS += -G0
+	STATIC_LINKING = 1
 else ifeq ($(platform), xenon)
    TARGET := $(TARGET_NAME)_libretro_xenon360.a
    CC = xenon-gcc$(EXE_EXT)
    AR = xenon-ar$(EXE_EXT)
    PLATFORM_DEFINES := -D__LIBXENON__ -DALT_RENDER
+	STATIC_LINKING = 1
 else ifeq ($(platform), ngc)
    TARGET := $(TARGET_NAME)_libretro_ngc.a
    CC = $(DEVKITPPC)/bin/powerpc-eabi-gcc$(EXE_EXT)
    AR = $(DEVKITPPC)/bin/powerpc-eabi-ar$(EXE_EXT)
    PLATFORM_DEFINES := -DGEKKO -DHW_DOL -mrvl -mcpu=750 -meabi -mhard-float -DALT_RENDER
+	STATIC_LINKING = 1
 else ifeq ($(platform), wii)
    TARGET := $(TARGET_NAME)_libretro_wii.a
    CC = $(DEVKITPPC)/bin/powerpc-eabi-gcc$(EXE_EXT)
    AR = $(DEVKITPPC)/bin/powerpc-eabi-ar$(EXE_EXT)
    PLATFORM_DEFINES := -DGEKKO -DHW_RVL -mrvl -mcpu=750 -meabi -mhard-float -DALT_RENDER
+	STATIC_LINKING = 1
 else
-   TARGET := $(TARGET_NAME)_retro.dll
+   TARGET := $(TARGET_NAME)_libretro.dll
    CC = gcc
    SHARED := -shared -static-libgcc -static-libstdc++ -Wl,--version-script=libretro/link.T -Wl,--no-undefined -lz
 
@@ -202,19 +209,7 @@ all: $(TARGET)
 	$(CC) -o $@ -c $< $(CFLAGS) $(LIBRETRO_CFLAGS)
 
 $(TARGET): $(LIBRETRO_OBJ)
-ifeq ($(platform), sncps3)
-	$(AR) rcs $@ $(LIBRETRO_OBJ)
-else ifeq ($(platform), ps3)
-	$(AR) rcs $@ $(LIBRETRO_OBJ)
-else ifeq ($(platform), psl1ght)
-	$(AR) rcs $@ $(LIBRETRO_OBJ)
-else ifeq ($(platform), psp1)
-	$(AR) rcs $@ $(LIBRETRO_OBJ)
-else ifeq ($(platform), xenon)
-	$(AR) rcs $@ $(LIBRETRO_OBJ)
-else ifeq ($(platform), ngc)
-	$(AR) rcs $@ $(LIBRETRO_OBJ)
-else ifeq ($(platform), wii)
+ifeq ($(STATIC_LINKING), 1)
 	$(AR) rcs $@ $(LIBRETRO_OBJ)
 else
 	$(CC) -o $(TARGET) $(fpic) $(LIBRETRO_OBJ) $(LIBRETRO_LIBS) $(SHARED) 
