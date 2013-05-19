@@ -1,4 +1,3 @@
-NTSC = 0
 DEBUG = 0
 LOGSOUND = 0
 FRONTEND_SUPPORTS_RGB565 = 1
@@ -30,20 +29,22 @@ else ifneq ($(findstring MINGW,$(shell uname -a)),)
    system_platform = win
 endif
 
+TARGET_NAME := genesis_plus_gx
+
 ifeq ($(platform), unix)
-   TARGET := genesis_plus_gx_libretro.so
+   TARGET := $(TARGET_NAME)_libretro.so
    fpic := -fPIC
    SHARED := -shared -Wl,--version-script=libretro/link.T -Wl,--no-undefined -lz
    ENDIANNESS_DEFINES := -DLSB_FIRST
    PLATFORM_DEFINES := -DHAVE_ZLIB
 else ifeq ($(platform), osx)
-   TARGET := genesis_plus_gx_libretro.dylib
+   TARGET := $(TARGET_NAME)_libretro.dylib
    fpic := -fPIC
    SHARED := -dynamiclib -lz
    ENDIANNESS_DEFINES := -DLSB_FIRST
    PLATFORM_DEFINES := -DHAVE_ZLIB
 else ifeq ($(platform), ios)
-   TARGET := genesis_plus_gx_libretro.dylib
+   TARGET := $(TARGET_NAME)_libretro_ios.dylib
    fpic := -fPIC
    SHARED := -dynamiclib -lz
    ENDIANNESS_DEFINES := -DLSB_FIRST
@@ -51,53 +52,60 @@ else ifeq ($(platform), ios)
 
    CC = clang -arch armv7 -isysroot $(IOSSDK)
 else ifeq ($(platform), qnx)
-   TARGET := genesis_plus_gx_libretro.so
+   TARGET := $(TARGET_NAME)_libretro_qnx.so
    fpic := -fPIC
-   SHARED := -shared -Wl,--version-script=libretro/link.T -Wl,--no-undefined -lz
+   SHARED := -lm -shared -Wl,--version-script=libretro/link.T -Wl,--no-undefined -lz
    ENDIANNESS_DEFINES := -DLSB_FIRST
    PLATFORM_DEFINES := -DHAVE_ZLIB
 	CC = qcc -Vgcc_ntoarmv7le
 	AR = qcc -Vgcc_ntoarmv7le
 	PLATFORM_DEFINES := -D__BLACKBERRY_QNX__ -marm -mcpu=cortex-a9 -mfpu=neon -mfloat-abi=softfp
-else ifeq ($(platform), sncps3)
-   TARGET := genesis_plus_gx_libretro_ps3.a
-   CC = $(CELL_SDK)/host-win32/sn/bin/ps3ppusnc.exe
-   AR = $(CELL_SDK)/host-win32/sn/bin/ps3snarl.exe
-   PLATFORM_DEFINES := -D__CELLOS_LV2 -DALT_RENDER
 else ifeq ($(platform), ps3)
-   TARGET := genesis_plus_gx_libretro_ps3.a
+   TARGET := $(TARGET_NAME)_libretro_ps3.a
    CC = $(CELL_SDK)/host-win32/ppu/bin/ppu-lv2-gcc.exe
    AR = $(CELL_SDK)/host-win32/ppu/bin/ppu-lv2-ar.exe
    PLATFORM_DEFINES := -D__CELLOS_LV2 -DALT_RENDER
+	STATIC_LINKING = 1
+else ifeq ($(platform), sncps3)
+   TARGET := $(TARGET_NAME)_libretro_ps3.a
+   CC = $(CELL_SDK)/host-win32/sn/bin/ps3ppusnc.exe
+   AR = $(CELL_SDK)/host-win32/sn/bin/ps3snarl.exe
+   PLATFORM_DEFINES := -D__CELLOS_LV2 -DALT_RENDER
+	STATIC_LINKING = 1
 else ifeq ($(platform), psl1ght)
-   TARGET := genesis_plus_gx_libretro_psl1ght.a$(EXE_EXT)
+   TARGET := $(TARGET_NAME)_libretro_psl1ght.a$(EXE_EXT)
    CC = $(PS3DEV)/ppu/bin/ppu-gcc$(EXE_EXT)
    AR = $(PS3DEV)/ppu/bin/ppu-ar$(EXE_EXT)
    PLATFORM_DEFINES := -D__CELLOS_LV2 -DALT_RENDER
+	STATIC_LINKING = 1
 else ifeq ($(platform), psp1)
-	TARGET := genesis_plus_gx_libretro_psp1.a$(EXE_EXT)
+	TARGET := $(TARGET_NAME)_libretro_psp1.a$(EXE_EXT)
 	CC = psp-gcc$(EXE_EXT)
 	AR = psp-ar$(EXE_EXT)
 	ENDIANNESS_DEFINES := -DLSB_FIRST
 	PLATFORM_DEFINES := -DPSP
 	CFLAGS += -G0
+	STATIC_LINKING = 1
 else ifeq ($(platform), xenon)
-   TARGET := genesis_plus_gx_libretro_xenon360.a
+   TARGET := $(TARGET_NAME)_libretro_xenon360.a
    CC = xenon-gcc$(EXE_EXT)
    AR = xenon-ar$(EXE_EXT)
    PLATFORM_DEFINES := -D__LIBXENON__ -DALT_RENDER
+	STATIC_LINKING = 1
 else ifeq ($(platform), ngc)
-   TARGET := genesis_plus_gx_libretro_ngc.a
+   TARGET := $(TARGET_NAME)_libretro_ngc.a
    CC = $(DEVKITPPC)/bin/powerpc-eabi-gcc$(EXE_EXT)
    AR = $(DEVKITPPC)/bin/powerpc-eabi-ar$(EXE_EXT)
    PLATFORM_DEFINES := -DGEKKO -DHW_DOL -mrvl -mcpu=750 -meabi -mhard-float -DALT_RENDER
+	STATIC_LINKING = 1
 else ifeq ($(platform), wii)
-   TARGET := genesis_plus_gx_libretro_wii.a
+   TARGET := $(TARGET_NAME)_libretro_wii.a
    CC = $(DEVKITPPC)/bin/powerpc-eabi-gcc$(EXE_EXT)
    AR = $(DEVKITPPC)/bin/powerpc-eabi-ar$(EXE_EXT)
    PLATFORM_DEFINES := -DGEKKO -DHW_RVL -mrvl -mcpu=750 -meabi -mhard-float -DALT_RENDER
+	STATIC_LINKING = 1
 else
-   TARGET := genesis_plus_gx_retro.dll
+   TARGET := $(TARGET_NAME)_libretro.dll
    CC = gcc
    SHARED := -shared -static-libgcc -static-libstdc++ -Wl,--version-script=libretro/link.T -Wl,--no-undefined -lz
 
@@ -105,14 +113,14 @@ else
    PLATFORM_DEFINES := -DHAVE_ZLIB
 endif
 
-ifeq ($(NTSC), 1)
-    CFLAGS += -DUSE_NTSC
-endif
-
 ifeq ($(DEBUG), 1)
    CFLAGS += -O0 -g
 else
-   CFLAGS += -O3 -DNDEBUG
+ifeq ($(platform),qnx)
+	CFLAGS += -Os -DNDEBUG
+else
+	CFLAGS += -O3 -DNDEBUG
+endif
 endif
 	
 LIBRETRO_SRC := $(GENPLUS_SRC_DIR)/genesis.c \
@@ -193,8 +201,13 @@ LIBRETRO_CFLAGS += -I$(GENPLUS_SRC_DIR) \
 		$(BPP_DEFINES) \
 		$(ENDIANNESS_DEFINES) \
 		$(PLATFORM_DEFINES) \
-		-DINLINE="static inline" \
 		-D__LIBRETRO__
+
+ifeq ($(platform), qnx)
+	LIBRETRO_CFLAGS += -D__inline__=inline
+else
+	LIBRETRO_CFLAGS += -DINLINE="static inline"
+endif
 
 LIBRETRO_LIBS := -lm
 
@@ -205,19 +218,7 @@ all: $(TARGET)
 	$(CC) -o $@ -c $< $(CFLAGS) $(LIBRETRO_CFLAGS)
 
 $(TARGET): $(LIBRETRO_OBJ)
-ifeq ($(platform), sncps3)
-	$(AR) rcs $@ $(LIBRETRO_OBJ)
-else ifeq ($(platform), ps3)
-	$(AR) rcs $@ $(LIBRETRO_OBJ)
-else ifeq ($(platform), psl1ght)
-	$(AR) rcs $@ $(LIBRETRO_OBJ)
-else ifeq ($(platform), psp1)
-	$(AR) rcs $@ $(LIBRETRO_OBJ)
-else ifeq ($(platform), xenon)
-	$(AR) rcs $@ $(LIBRETRO_OBJ)
-else ifeq ($(platform), ngc)
-	$(AR) rcs $@ $(LIBRETRO_OBJ)
-else ifeq ($(platform), wii)
+ifeq ($(STATIC_LINKING), 1)
 	$(AR) rcs $@ $(LIBRETRO_OBJ)
 else
 	$(CC) -o $(TARGET) $(fpic) $(LIBRETRO_OBJ) $(LIBRETRO_LIBS) $(SHARED) 

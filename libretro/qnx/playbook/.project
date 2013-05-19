@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-	<name>genesis-plus-gx</name>
+	<name>Genesis-Plus-GX</name>
 	<comment></comment>
 	<projects>
 	</projects>
@@ -18,16 +18,20 @@
 					<value>true</value>
 				</dictionary>
 				<dictionary>
+					<key>org.eclipse.cdt.make.core.autoBuildTarget</key>
+					<value>all</value>
+				</dictionary>
+				<dictionary>
 					<key>org.eclipse.cdt.make.core.buildArguments</key>
-					<value></value>
+					<value>-C../../.. -fMakefile.libretro platform=qnx</value>
 				</dictionary>
 				<dictionary>
 					<key>org.eclipse.cdt.make.core.buildCommand</key>
 					<value>make</value>
 				</dictionary>
 				<dictionary>
-					<key>org.eclipse.cdt.make.core.buildLocation</key>
-					<value>${workspace_loc:/genesis-plus-gx/Device-Release}</value>
+					<key>org.eclipse.cdt.make.core.cleanBuildTarget</key>
+					<value>clean</value>
 				</dictionary>
 				<dictionary>
 					<key>org.eclipse.cdt.make.core.contents</key>
@@ -46,12 +50,16 @@
 					<value>true</value>
 				</dictionary>
 				<dictionary>
+					<key>org.eclipse.cdt.make.core.fullBuildTarget</key>
+					<value>all</value>
+				</dictionary>
+				<dictionary>
 					<key>org.eclipse.cdt.make.core.stopOnError</key>
 					<value>true</value>
 				</dictionary>
 				<dictionary>
 					<key>org.eclipse.cdt.make.core.useDefaultBuildCmd</key>
-					<value>true</value>
+					<value>false</value>
 				</dictionary>
 			</arguments>
 		</buildCommand>
@@ -72,252 +80,6 @@
 		<nature>org.eclipse.cdt.managedbuilder.core.managedBuildNature</nature>
 		<nature>org.eclipse.cdt.managedbuilder.core.ScannerConfigNature</nature>
 		<nature>com.qnx.tools.ide.bbt.core.bbtnature</nature>
+		<nature>org.eclipse.cdt.core.ccnature</nature>
 	</natures>
-	<linkedResources>
-		<link>
-			<name>src/activator.c</name>
-			<type>1</type>
-			<locationURI>PARENT-3-PROJECT_LOC/source/input_hw/activator.c</locationURI>
-		</link>
-		<link>
-			<name>src/areplay.c</name>
-			<type>1</type>
-			<locationURI>PARENT-3-PROJECT_LOC/source/cart_hw/areplay.c</locationURI>
-		</link>
-		<link>
-			<name>src/blip_buf.c</name>
-			<type>1</type>
-			<locationURI>PARENT-3-PROJECT_LOC/source/sound/blip_buf.c</locationURI>
-		</link>
-		<link>
-			<name>src/cd_cart.c</name>
-			<type>1</type>
-			<locationURI>PARENT-3-PROJECT_LOC/source/cd_hw/cd_cart.c</locationURI>
-		</link>
-		<link>
-			<name>src/cdc.c</name>
-			<type>1</type>
-			<locationURI>PARENT-3-PROJECT_LOC/source/cd_hw/cdc.c</locationURI>
-		</link>
-		<link>
-			<name>src/cdd.c</name>
-			<type>1</type>
-			<locationURI>PARENT-3-PROJECT_LOC/source/cd_hw/cdd.c</locationURI>
-		</link>
-		<link>
-			<name>src/eeprom_93c.c</name>
-			<type>1</type>
-			<locationURI>PARENT-3-PROJECT_LOC/source/cart_hw/eeprom_93c.c</locationURI>
-		</link>
-		<link>
-			<name>src/eeprom_i2c.c</name>
-			<type>1</type>
-			<locationURI>PARENT-3-PROJECT_LOC/source/cart_hw/eeprom_i2c.c</locationURI>
-		</link>
-		<link>
-			<name>src/eeprom_spi.c</name>
-			<type>1</type>
-			<locationURI>PARENT-3-PROJECT_LOC/source/cart_hw/eeprom_spi.c</locationURI>
-		</link>
-		<link>
-			<name>src/eq.c</name>
-			<type>1</type>
-			<locationURI>PARENT-3-PROJECT_LOC/source/sound/eq.c</locationURI>
-		</link>
-		<link>
-			<name>src/gamepad.c</name>
-			<type>1</type>
-			<locationURI>PARENT-3-PROJECT_LOC/source/input_hw/gamepad.c</locationURI>
-		</link>
-		<link>
-			<name>src/genesis.c</name>
-			<type>1</type>
-			<locationURI>PARENT-3-PROJECT_LOC/source/genesis.c</locationURI>
-		</link>
-		<link>
-			<name>src/gfx.c</name>
-			<type>1</type>
-			<locationURI>PARENT-3-PROJECT_LOC/source/cd_hw/gfx.c</locationURI>
-		</link>
-		<link>
-			<name>src/ggenie.c</name>
-			<type>1</type>
-			<locationURI>PARENT-3-PROJECT_LOC/source/cart_hw/ggenie.c</locationURI>
-		</link>
-		<link>
-			<name>src/input.c</name>
-			<type>1</type>
-			<locationURI>PARENT-3-PROJECT_LOC/source/input_hw/input.c</locationURI>
-		</link>
-		<link>
-			<name>src/io_ctrl.c</name>
-			<type>1</type>
-			<locationURI>PARENT-3-PROJECT_LOC/source/io_ctrl.c</locationURI>
-		</link>
-		<link>
-			<name>src/libretro.c</name>
-			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/libretro.c</locationURI>
-		</link>
-		<link>
-			<name>src/lightgun.c</name>
-			<type>1</type>
-			<locationURI>PARENT-3-PROJECT_LOC/source/input_hw/lightgun.c</locationURI>
-		</link>
-		<link>
-			<name>src/loadrom.c</name>
-			<type>1</type>
-			<locationURI>PARENT-3-PROJECT_LOC/source/loadrom.c</locationURI>
-		</link>
-		<link>
-			<name>src/m68kcpu.c</name>
-			<type>1</type>
-			<locationURI>PARENT-3-PROJECT_LOC/source/m68k/m68kcpu.c</locationURI>
-		</link>
-		<link>
-			<name>src/md_cart.c</name>
-			<type>1</type>
-			<locationURI>PARENT-3-PROJECT_LOC/source/cart_hw/md_cart.c</locationURI>
-		</link>
-		<link>
-			<name>src/md_ntsc.c</name>
-			<type>1</type>
-			<locationURI>PARENT-3-PROJECT_LOC/source/ntsc/md_ntsc.c</locationURI>
-		</link>
-		<link>
-			<name>src/mem68k.c</name>
-			<type>1</type>
-			<locationURI>PARENT-3-PROJECT_LOC/source/mem68k.c</locationURI>
-		</link>
-		<link>
-			<name>src/membnk.c</name>
-			<type>1</type>
-			<locationURI>PARENT-3-PROJECT_LOC/source/membnk.c</locationURI>
-		</link>
-		<link>
-			<name>src/memz80.c</name>
-			<type>1</type>
-			<locationURI>PARENT-3-PROJECT_LOC/source/memz80.c</locationURI>
-		</link>
-		<link>
-			<name>src/mouse.c</name>
-			<type>1</type>
-			<locationURI>PARENT-3-PROJECT_LOC/source/input_hw/mouse.c</locationURI>
-		</link>
-		<link>
-			<name>src/paddle.c</name>
-			<type>1</type>
-			<locationURI>PARENT-3-PROJECT_LOC/source/input_hw/paddle.c</locationURI>
-		</link>
-		<link>
-			<name>src/pcm.c</name>
-			<type>1</type>
-			<locationURI>PARENT-3-PROJECT_LOC/source/cd_hw/pcm.c</locationURI>
-		</link>
-		<link>
-			<name>src/s68kcpu.c</name>
-			<type>1</type>
-			<locationURI>PARENT-3-PROJECT_LOC/source/m68k/s68kcpu.c</locationURI>
-		</link>
-		<link>
-			<name>src/scd.c</name>
-			<type>1</type>
-			<locationURI>PARENT-3-PROJECT_LOC/source/cd_hw/scd.c</locationURI>
-		</link>
-		<link>
-			<name>src/scrc32.c</name>
-			<type>1</type>
-			<locationURI>PARENT-2-PROJECT_LOC/scrc32.c</locationURI>
-		</link>
-		<link>
-			<name>src/sms_cart.c</name>
-			<type>1</type>
-			<locationURI>PARENT-3-PROJECT_LOC/source/cart_hw/sms_cart.c</locationURI>
-		</link>
-		<link>
-			<name>src/sms_ntsc.c</name>
-			<type>1</type>
-			<locationURI>PARENT-3-PROJECT_LOC/source/ntsc/sms_ntsc.c</locationURI>
-		</link>
-		<link>
-			<name>src/sn76489.c</name>
-			<type>1</type>
-			<locationURI>PARENT-3-PROJECT_LOC/source/sound/sn76489.c</locationURI>
-		</link>
-		<link>
-			<name>src/sound.c</name>
-			<type>1</type>
-			<locationURI>PARENT-3-PROJECT_LOC/source/sound/sound.c</locationURI>
-		</link>
-		<link>
-			<name>src/sportspad.c</name>
-			<type>1</type>
-			<locationURI>PARENT-3-PROJECT_LOC/source/input_hw/sportspad.c</locationURI>
-		</link>
-		<link>
-			<name>src/sram.c</name>
-			<type>1</type>
-			<locationURI>PARENT-3-PROJECT_LOC/source/cart_hw/sram.c</locationURI>
-		</link>
-		<link>
-			<name>src/ssp16.c</name>
-			<type>1</type>
-			<locationURI>PARENT-3-PROJECT_LOC/source/cart_hw/svp/ssp16.c</locationURI>
-		</link>
-		<link>
-			<name>src/state.c</name>
-			<type>1</type>
-			<locationURI>PARENT-3-PROJECT_LOC/source/state.c</locationURI>
-		</link>
-		<link>
-			<name>src/svp.c</name>
-			<type>1</type>
-			<locationURI>PARENT-3-PROJECT_LOC/source/cart_hw/svp/svp.c</locationURI>
-		</link>
-		<link>
-			<name>src/system.c</name>
-			<type>1</type>
-			<locationURI>PARENT-3-PROJECT_LOC/source/system.c</locationURI>
-		</link>
-		<link>
-			<name>src/teamplayer.c</name>
-			<type>1</type>
-			<locationURI>PARENT-3-PROJECT_LOC/source/input_hw/teamplayer.c</locationURI>
-		</link>
-		<link>
-			<name>src/terebi_oekaki.c</name>
-			<type>1</type>
-			<locationURI>PARENT-3-PROJECT_LOC/source/input_hw/terebi_oekaki.c</locationURI>
-		</link>
-		<link>
-			<name>src/vdp_ctrl.c</name>
-			<type>1</type>
-			<locationURI>PARENT-3-PROJECT_LOC/source/vdp_ctrl.c</locationURI>
-		</link>
-		<link>
-			<name>src/vdp_render.c</name>
-			<type>1</type>
-			<locationURI>PARENT-3-PROJECT_LOC/source/vdp_render.c</locationURI>
-		</link>
-		<link>
-			<name>src/xe_a1p.c</name>
-			<type>1</type>
-			<locationURI>PARENT-3-PROJECT_LOC/source/input_hw/xe_a1p.c</locationURI>
-		</link>
-		<link>
-			<name>src/ym2413.c</name>
-			<type>1</type>
-			<locationURI>PARENT-3-PROJECT_LOC/source/sound/ym2413.c</locationURI>
-		</link>
-		<link>
-			<name>src/ym2612.c</name>
-			<type>1</type>
-			<locationURI>PARENT-3-PROJECT_LOC/source/sound/ym2612.c</locationURI>
-		</link>
-		<link>
-			<name>src/z80.c</name>
-			<type>1</type>
-			<locationURI>PARENT-3-PROJECT_LOC/source/z80/z80.c</locationURI>
-		</link>
-	</linkedResources>
 </projectDescription>
