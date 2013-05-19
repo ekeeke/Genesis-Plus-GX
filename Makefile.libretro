@@ -116,7 +116,11 @@ endif
 ifeq ($(DEBUG), 1)
    CFLAGS += -O0 -g
 else
-   CFLAGS += -O3 -DNDEBUG
+ifeq ($(platform),qnx)
+	CFLAGS += -Os -DNDEBUG
+else
+	CFLAGS += -O3 -DNDEBUG
+endif
 endif
 	
 LIBRETRO_SRC := $(GENPLUS_SRC_DIR)/genesis.c \
@@ -197,8 +201,13 @@ LIBRETRO_CFLAGS += -I$(GENPLUS_SRC_DIR) \
 		$(BPP_DEFINES) \
 		$(ENDIANNESS_DEFINES) \
 		$(PLATFORM_DEFINES) \
-		-DINLINE="static inline" \
 		-D__LIBRETRO__
+
+ifeq ($(platform), qnx)
+	LIBRETRO_CFLAGS += -D__inline__=inline
+else
+	LIBRETRO_CFLAGS += -DINLINE="static inline"
+endif
 
 LIBRETRO_LIBS := -lm
 
