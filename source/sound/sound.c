@@ -229,6 +229,7 @@ int sound_context_load(uint8 *state)
   if ((system_hw & SYSTEM_PBC) == SYSTEM_MD)
   {
     bufferptr = YM2612LoadContext(state);
+    YM2612Config(config.dac_bits);
   }
   else
   {

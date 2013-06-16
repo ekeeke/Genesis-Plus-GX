@@ -613,6 +613,8 @@ static YM2612 ym2612;
 static INT32  m2,c1,c2;   /* Phase Modulation input for operators 2,3,4 */
 static INT32  mem;        /* one sample delay memory */
 static INT32  out_fm[8];  /* outputs of working channels */
+static UINT32 bitmask;    /* working channels output bitmasking (DAC quantization) */ 
+
 
 INLINE void FM_KEYON(FM_CH *CH , int s )
 {
@@ -1729,7 +1731,7 @@ INLINE void OPNWriteReg(int r, int v)
           setup_connection( CH, c );
           break;        
         }
-        case 1:    /* 0xb4-0xb6 : L , R , AMS , PMS (ym2612/YM2610B/YM2610/YM2608) */
+        case 1:    /* 0xb4-0xb6 : L , R , AMS , PMS */
           /* b0-2 PMS */
           CH->pms = (v & 7) * 32; /* CH->pms = PM depth * 32 (index in lfo_pm_table) */
 
@@ -1737,8 +1739,8 @@ INLINE void OPNWriteReg(int r, int v)
           CH->ams = lfo_ams_depth_shift[(v>>4) & 0x03];
 
           /* PAN :  b7 = L, b6 = R */
-          ym2612.OPN.pan[ c*2   ] = (v & 0x80) ? ~0 : 0;
-          ym2612.OPN.pan[ c*2+1 ] = (v & 0x40) ? ~0 : 0;
+          ym2612.OPN.pan[ c*2   ] = (v & 0x80) ? bitmask : 0;
+          ym2612.OPN.pan[ c*2+1 ] = (v & 0x40) ? bitmask : 0;
           break;
       }
       break;
@@ -1768,14 +1770,11 @@ static void reset_channels(FM_CH *CH , int num )
 }
 
 /* initialize generic tables */
-static void init_tables(unsigned char dac_bits)
+static void init_tables(void)
 {
   signed int d,i,x;
   signed int n;
   double o,m;
-  
-  /* DAC precision */
-  unsigned int mask = ~((1 << (14 - dac_bits)) - 1);
 
   /* build Linear Power Table */
   for (x=0; x<TL_RES_LEN; x++)
@@ -1796,8 +1795,8 @@ static void init_tables(unsigned char dac_bits)
     n <<= 2;    /* 13 bits here (as in real chip) */
 
     /* 14 bits (with sign bit) */
-    tl_tab[ x*2 + 0 ] = n & mask;
-    tl_tab[ x*2 + 1 ] = -tl_tab[ x*2 + 0 ] & mask;
+    tl_tab[ x*2 + 0 ] = n;
+    tl_tab[ x*2 + 1 ] = -tl_tab[ x*2 + 0 ];
 
     /* one entry in the 'Power' table use the following format, xxxxxyyyyyyyys with:            */
     /*        s = sign bit                                                                      */
@@ -1806,8 +1805,8 @@ static void init_tables(unsigned char dac_bits)
     /*            any value above 13 (included) would be discarded.                             */
     for (i=1; i<13; i++)
     {
-      tl_tab[ x*2+0 + i*2*TL_RES_LEN ] =  (tl_tab[ x*2+0 ]>>i) & mask;
-      tl_tab[ x*2+1 + i*2*TL_RES_LEN ] = -tl_tab[ x*2+0 + i*2*TL_RES_LEN ] & mask;
+      tl_tab[ x*2+0 + i*2*TL_RES_LEN ] =  tl_tab[ x*2+0 ]>>i;
+      tl_tab[ x*2+1 + i*2*TL_RES_LEN ] = -tl_tab[ x*2+0 + i*2*TL_RES_LEN ];
     }
   }
 
@@ -1885,7 +1884,7 @@ static void init_tables(unsigned char dac_bits)
 void YM2612Init(void)
 {
   memset(&ym2612,0,sizeof(YM2612));
-  init_tables(TL_BITS);
+  init_tables();
 }
 
 /* reset OPN registers */
@@ -1957,7 +1956,7 @@ void YM2612Write(unsigned int a, unsigned int v)
           switch( addr )
           {
             case 0x2a:  /* DAC data (ym2612) */
-              ym2612.dacout = ((int)v - 0x80) << 6; /* level unknown (5 is too low, 8 is too loud) */
+              ym2612.dacout = ((int)v - 0x80) << 6; /* convert to 14-bit output */
               break;
             case 0x2b:  /* DAC Sel  (ym2612) */
               /* b7 = dac enable */
@@ -2052,7 +2051,7 @@ void YM2612Update(int *buffer, int length)
       advance_eg_channels(&ym2612.CH[0], ym2612.OPN.eg_cnt);
     }
 
-    /* 14-bit DAC inputs (range is -8192;+8192) */
+    /* 14-bit accumulator channels outputs (range is -8192;+8192) */
     if (out_fm[0] > 8192) out_fm[0] = 8192;
     else if (out_fm[0] < -8192) out_fm[0] = -8192;
     if (out_fm[1] > 8192) out_fm[1] = 8192;
@@ -2066,7 +2065,7 @@ void YM2612Update(int *buffer, int length)
     if (out_fm[5] > 8192) out_fm[5] = 8192;
     else if (out_fm[5] < -8192) out_fm[5] = -8192;
 
-    /* 6-channels stereo mixing  */
+    /* stereo DAC channels outputs mixing  */
     lt  = ((out_fm[0]) & ym2612.OPN.pan[0]);
     rt  = ((out_fm[0]) & ym2612.OPN.pan[1]);
     lt += ((out_fm[1]) & ym2612.OPN.pan[2]);
@@ -2109,8 +2108,19 @@ void YM2612Update(int *buffer, int length)
 
 void YM2612Config(unsigned char dac_bits)
 {
-  /* reinitialize TL table */
-  init_tables(dac_bits);
+  int i;
+
+  /* DAC precision (normally 9-bit on real hardware, implemented through simple 14-bit channel output bitmasking) */
+  bitmask = ~((1 << (TL_BITS - dac_bits)) - 1);
+
+  /* update L/R panning bitmasks */
+  for (i=0; i<2*6; i++)
+  {
+    if (ym2612.OPN.pan[i])
+    {
+      ym2612.OPN.pan[i] = bitmask;
+    }
+  }
 }
 
 int YM2612LoadContext(unsigned char *state)
