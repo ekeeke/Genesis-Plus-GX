@@ -40,8 +40,6 @@
 #ifndef _FILE_FAT_H
 #define _FILE_FAT_H
 
-#define CHUNKSIZE (2048)
-
 /* suppported load devices */
 typedef enum
 {

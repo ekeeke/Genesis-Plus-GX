@@ -213,6 +213,7 @@ int ParseDirectory(void)
     /* filter entries */
     if ((entry->d_name[0] != '.') 
        && strncasecmp(".wav", &entry->d_name[strlen(entry->d_name) - 4], 4) 
+       && strncasecmp(".ogg", &entry->d_name[strlen(entry->d_name) - 4], 4) 
        && strncasecmp(".mp3", &entry->d_name[strlen(entry->d_name) - 4], 4))
     {
       memset(&filelist[nbfiles], 0, sizeof (FILEENTRIES));

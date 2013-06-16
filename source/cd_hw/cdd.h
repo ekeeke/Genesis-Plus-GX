@@ -40,6 +40,10 @@
 
 #include "blip_buf.h"
 
+#ifdef USE_LIBTREMOR
+#include "tremor/ivorbisfile.h"
+#endif
+
 #define cdd scd.cdd_hw
 
 /* CDD status */
@@ -61,6 +65,9 @@
 typedef struct
 {
   FILE *fd;
+#ifdef USE_LIBTREMOR
+  OggVorbis_File vf;
+#endif
   int offset;
   int start;
   int end;
