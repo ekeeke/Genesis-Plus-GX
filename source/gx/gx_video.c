@@ -368,7 +368,7 @@ static void vi_callback(u32 cnt)
   prevtime = current;
 #endif
 
-  video_sync = 1;
+  video_sync = 0;
 }
 
 /* Vertex Rendering */
@@ -460,7 +460,7 @@ static void gxResetRendering(u8 type)
 }
 
 /* Reset GX rendering mode */
-static void gxResetMode(GXRModeObj *tvmode)
+static void gxResetMode(GXRModeObj *tvmode, int vfilter_enabled)
 {
   Mtx44 p;
   f32 yScale = GX_GetYScaleFactor(tvmode->efbHeight, tvmode->xfbHeight);
@@ -472,7 +472,7 @@ static void gxResetMode(GXRModeObj *tvmode)
   GX_SetScissor(0, 0, tvmode->fbWidth, tvmode->efbHeight);
   GX_SetDispCopySrc(0, 0, tvmode->fbWidth, tvmode->efbHeight);
   GX_SetDispCopyDst(xfbWidth, xfbHeight);
-  GX_SetCopyFilter(tvmode->aa, tvmode->sample_pattern, (tvmode->xfbMode == VI_XFBMODE_SF) ? GX_FALSE : GX_TRUE, tvmode->vfilter);
+  GX_SetCopyFilter(tvmode->aa, tvmode->sample_pattern, (tvmode->xfbMode == VI_XFBMODE_SF) ? GX_FALSE : vfilter_enabled, tvmode->vfilter);
   GX_SetFieldMode(tvmode->field_rendering, ((tvmode->viHeight == 2 * tvmode->xfbHeight) ? GX_ENABLE : GX_DISABLE));
   guOrtho(p, tvmode->efbHeight/2, -(tvmode->efbHeight/2), -(tvmode->fbWidth/2), tvmode->fbWidth/2, 100, 1000);
   GX_LoadProjectionMtx(p, GX_ORTHOGRAPHIC);
@@ -666,6 +666,9 @@ static void gxDrawCrosshair(gx_texture *texture, int x, int y)
   int w = (texture->width * rmode->fbWidth) / (rmode->viWidth);
   int h = (texture->height * rmode->efbHeight) / (rmode->viHeight);
 
+  /* Aspect correction for widescreen TV */
+  if (config.aspect & 2) w = (w * 3) / 4;
+
   /* EFB scale & shift */
   int xwidth = square[3] - square[9];
   int ywidth = square[4] - square[10];
@@ -718,15 +721,18 @@ static void gxDrawCdLeds(gx_texture *texture_l, gx_texture *texture_r)
 {
   /* adjust texture dimensions to XFB->VI scaling */
   int w = (texture_l->width * rmode->fbWidth) / (rmode->viWidth);
-  int h = (texture_r->height * rmode->efbHeight) / (rmode->viHeight);
+  int h = (texture_l->height * rmode->efbHeight) / (rmode->viHeight);
+
+  /* Aspect correction for widescreen TV */
+  if (config.aspect & 2) w = (w * 3) / 4;
 
   /* EFB scale & shift */
   int xwidth = square[3] - square[9];
   int ywidth = square[4] - square[10];
 
   /* adjust texture coordinates to EFB */
-  int xl = (((bitmap.viewport.x + 4) * xwidth) / (bitmap.viewport.w + 2*bitmap.viewport.x)) + square[9];
-  int xr = xwidth - xl + 2*square[9] - w;
+  int xl = ((bitmap.viewport.x * xwidth) / vwidth) + square[9] + 8;
+  int xr = (((bitmap.viewport.x + bitmap.viewport.w) * xwidth) / vwidth) + square[9] - 8 - w;
   int y = (((bitmap.viewport.y + bitmap.viewport.h - 4) * ywidth) / vheight) + square[10] - h;
 
   /* reset GX rendering */
@@ -1466,7 +1472,7 @@ void gx_video_Stop(void)
 
   /* GX menu rendering */
   gxResetRendering(1);
-  gxResetMode(vmode);
+  gxResetMode(vmode, GX_TRUE);
 
   /* render game snapshot */
   gxClearScreen((GXColor)BLACK);
@@ -1625,15 +1631,16 @@ void gx_video_Start(void)
   gxResetRendering(0);
 
   /* resynchronize emulation with VSYNC */
+  video_sync = 0;
   VIDEO_WaitVSync();
 }
 
 /* GX render update */
 int gx_video_Update(void)
 {
-  if (!video_sync && config.vsync && (gc_pal == vdp_pal)) return NO_SYNC;
+  if (video_sync) return NO_SYNC;
 
-  video_sync = 0;
+  video_sync = config.vsync && (gc_pal == vdp_pal);
 
   /* check if display has changed during frame */
   if (bitmap.viewport.changed & 1)
@@ -1684,7 +1691,7 @@ int gx_video_Update(void)
     gxResetScaler(vwidth);
 
     /* update GX rendering mode */
-    gxResetMode(rmode);
+    gxResetMode(rmode, config.vfilter);
 
     /* update VI mode */
     VIDEO_Configure(rmode);
@@ -1829,7 +1836,7 @@ void gx_video_Init(void)
   /* Initialize GX */
   gxStart();
   gxResetRendering(1);
-  gxResetMode(vmode);
+  gxResetMode(vmode, GX_TRUE);
 
   /* initialize FONT */
   FONT_Init();

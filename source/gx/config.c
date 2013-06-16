@@ -100,8 +100,8 @@ void config_default(void)
   config.fm_preamp      = 100;
   config.hq_fm          = 1;
   config.psgBoostNoise  = 1;
-  config.filter         = 0;
-  config.lp_range       = 60;
+  config.filter         = 1;
+  config.lp_range       = 0x9999; /* 0.6 in 16.16 fixed point */
   config.low_freq       = 880;
   config.high_freq      = 5000;
   config.lg             = 1.0;
@@ -109,6 +109,7 @@ void config_default(void)
   config.hg             = 1.0;
   config.dac_bits       = 14;
   config.ym2413         = 2; /* AUTO */
+  config.mono           = 0;
 
   /* system options */
   config.system         = 0; /* AUTO */
@@ -131,16 +132,16 @@ void config_default(void)
   config.gg_extra = 0;
   config.ntsc     = 0;
   config.vsync    = 1; /* AUTO */
+  config.bilinear = 1;
+  config.vfilter  = 1;
 
   if (VIDEO_HaveComponentCable())
   {
-    config.render   = 2;
-    config.bilinear = 1;
+    config.render = 2;
   }
   else
   {
-    config.render   = 0;
-    config.bilinear = 0;
+    config.render = 0;
   }
 
   switch (vmode->viTVMode >> 2)
@@ -159,7 +160,7 @@ void config_default(void)
   }
 
 #ifdef HW_RVL
-  config.trap     = 0;
+  config.trap = 0;
   config.gamma = VI_GM_1_0 / 10.0;
 #endif
 

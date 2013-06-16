@@ -40,7 +40,7 @@
 #ifndef _CONFIG_H_
 #define _CONFIG_H_
 
-#define CONFIG_VERSION "GENPLUS-GX 1.7.2"
+#define CONFIG_VERSION "GENPLUS-GX 1.7.4"
 
 /****************************************************************************
  * Config Option 
@@ -54,9 +54,10 @@ typedef struct
   uint8 psgBoostNoise;
   uint8 dac_bits;
   uint8 ym2413;
+  uint8 mono;
   int16 psg_preamp;
   int16 fm_preamp;
-  int16 lp_range;
+  uint32 lp_range;
   int16 low_freq;
   int16 high_freq;
   int16 lg;
@@ -68,7 +69,6 @@ typedef struct
   uint8 vdp_mode;
   uint8 force_dtack;
   uint8 addr_error;
-  uint8 tmss;
   uint8 bios;
   uint8 lock_on;
   uint8 hot_swap;
@@ -81,6 +81,7 @@ typedef struct
   uint8 render;
   uint8 tv_mode;
   uint8 bilinear;
+  uint8 vfilter;
   uint8 aspect;
   int16 xshift;
   int16 yshift;

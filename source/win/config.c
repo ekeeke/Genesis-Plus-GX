@@ -13,15 +13,16 @@ void set_config_defaults(void)
   config.fm_preamp      = 100;
   config.hq_fm          = 1;
   config.psgBoostNoise  = 1;
-  config.filter         = 0;
+  config.filter         = 1;
   config.low_freq       = 200;
   config.high_freq      = 8000;
   config.lg             = 1.0;
   config.mg             = 1.0;
   config.hg             = 1.0;
-  config.lp_range       = 60;
+  config.lp_range       = 0x9999; /* 0.6 in 16.16 fixed point */
   config.dac_bits       = 14;
   config.ym2413         = 2; /* = AUTO (0 = always OFF, 1 = always ON) */
+  config.mono           = 0;
 
   /* system options */
   config.system         = 0; /* = AUTO (or SYSTEM_SG, SYSTEM_MARKIII, SYSTEM_SMS, SYSTEM_SMS2, SYSTEM_GG, SYSTEM_MD) */

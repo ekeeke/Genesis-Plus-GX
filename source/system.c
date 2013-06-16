@@ -53,7 +53,7 @@ int16 SVP_cycles = 800;
 
 static uint8 pause_b;
 static EQSTATE eq;
-static int32 llp,rrp;
+static int16 llp,rrp;
 
 /******************************************************************************************/
 /* Audio subsystem                                                                        */
@@ -239,46 +239,47 @@ int audio_update(int16 *buffer)
   /* Audio filtering */
   if (config.filter)
   {
-    int32 i, l, r;
+    int samples = size;
+    int16 *out = buffer;
+    int32 l, r;
 
     if (config.filter & 1)
     {
       /* single-pole low-pass filter (6 dB/octave) */
-      uint32 factora  = (config.lp_range << 16) / 100;
+      uint32 factora  = config.lp_range;
       uint32 factorb  = 0x10000 - factora;
-      int32 ll = llp;
-      int32 rr = rrp;
 
-      for (i = 0; i < size; i ++)
+      /* restore previous sample */
+      l = llp;
+      r = rrp;
+
+      do
       {
         /* apply low-pass filter */
-        ll = (ll>>16)*factora + buffer[0]*factorb;
-        rr = (rr>>16)*factora + buffer[1]*factorb;
-        l = ll >> 16;
-        r = rr >> 16;
+        l = l*factora + out[0]*factorb;
+        r = r*factora + out[1]*factorb;
 
-        /* clipping (16-bit samples) */
-        if (l > 32767) l = 32767;
-        else if (l < -32768) l = -32768;
-        if (r > 32767) r = 32767;
-        else if (r < -32768) r = -32768;
+        /* 16.16 fixed point */
+        l >>= 16;
+        r >>= 16;
 
         /* update sound buffer */
-        *buffer++ = l;
-        *buffer++ = r;
+        *out++ = l;
+        *out++ = r;
       }
+      while (--samples);
 
       /* save last samples for next frame */
-      llp = ll;
-      rrp = rr;
+      llp = l;
+      rrp = r;
     }
     else if (config.filter & 2)
     {
-      for (i = 0; i < size; i ++)
+      do
       {
         /* 3 Band EQ */
-        l = do_3band(&eq,buffer[0]);
-        r = do_3band(&eq,buffer[1]);
+        l = do_3band(&eq,out[0]);
+        r = do_3band(&eq,out[1]);
 
         /* clipping (16-bit samples) */
         if (l > 32767) l = 32767;
@@ -287,10 +288,25 @@ int audio_update(int16 *buffer)
         else if (r < -32768) r = -32768;
 
         /* update sound buffer */
-        *buffer++ = l;
-        *buffer++ = r;
+        *out++ = l;
+        *out++ = r;
       }
+      while (--samples);
     }
+  }
+
+  /* Mono output mixing */
+  if (config.mono)
+  {
+    int16 out;
+    int samples = size;
+    do
+    {
+      out = (buffer[0] + buffer[1]) / 2;
+      *buffer++ = out;
+      *buffer++ = out;
+    }
+    while (--samples);
   }
 
 #ifdef LOGSOUND
