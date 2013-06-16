@@ -977,7 +977,12 @@ void vdp_sms_ctrl_w(unsigned int data)
 
           if (height != bitmap.viewport.h)
           {
-            if (v_counter < bitmap.viewport.h)
+            if (status & 8)
+            {
+              /* viewport changes should be applied on next frame */
+              bitmap.viewport.changed |= 2;
+            }
+            else
             {
               /* update active display */
               bitmap.viewport.h = height;
@@ -999,11 +1004,6 @@ void vdp_sms_ctrl_w(unsigned int data)
                   bitmap.viewport.y = 0;
                 }
               }
-            }
-            else
-            {
-              /* Changes should be applied on next frame */
-              bitmap.viewport.changed |= 2;
             }
           }
         }
@@ -1360,13 +1360,13 @@ unsigned int vdp_z80_ctrl_r(unsigned int cycles)
 unsigned int vdp_hvc_r(unsigned int cycles)
 {
   int vc;
-  unsigned int temp = hvc_latch;
+  unsigned int data = hvc_latch;
 
   /* Check if HVC is frozen */
-  if (!temp)
+  if (!data)
   {
     /* Cycle-accurate HCounter (Striker, Mickey Mania, Skitchin, Road Rash I,II,III, Sonic 3D Blast...) */
-    temp = hctab[cycles % MCYCLES_PER_LINE];
+    data = hctab[cycles % MCYCLES_PER_LINE];
   }
   else
   {
@@ -1376,12 +1376,12 @@ unsigned int vdp_hvc_r(unsigned int cycles)
 #ifdef LOGVDP
       error("[%d(%d)][%d(%d)] HVC read -> 0x%x (%x)\n", v_counter, (cycles/MCYCLES_PER_LINE-1)%lines_per_frame, cycles, cycles%MCYCLES_PER_LINE, hvc_latch & 0xffff, m68k_get_reg(M68K_REG_PC));
 #endif
-      return (temp & 0xffff);
+      return (data & 0xffff);
     }
     else
     {
       /* Mode 4: VCounter runs normally, HCounter is frozen */
-      temp &= 0xff;
+      data &= 0xff;
     }
   }
 
@@ -1404,12 +1404,12 @@ unsigned int vdp_hvc_r(unsigned int cycles)
     vc = (vc & ~1) | ((vc >> 8) & 1);
   }
 
-  temp |= ((vc & 0xff) << 8);
+  data |= ((vc & 0xff) << 8);
   
 #ifdef LOGVDP
-  error("[%d(%d)][%d(%d)] HVC read -> 0x%x (%x)\n", v_counter, (cycles/MCYCLES_PER_LINE-1)%lines_per_frame, cycles, cycles%MCYCLES_PER_LINE, temp, m68k_get_reg(M68K_REG_PC));
+  error("[%d(%d)][%d(%d)] HVC read -> 0x%x (%x)\n", v_counter, (cycles/MCYCLES_PER_LINE-1)%lines_per_frame, cycles, cycles%MCYCLES_PER_LINE, data, m68k_get_reg(M68K_REG_PC));
 #endif
-  return (temp);
+  return (data);
 }
 
 
@@ -1655,16 +1655,16 @@ static void vdp_reg_w(unsigned int r, unsigned int d, unsigned int cycles)
           /* Mode 5 only */
           if (d & 0x04)
           {
-            if (v_counter < bitmap.viewport.h)
+            if (status & 8)
+            {
+              /* Changes should be applied on next frame */
+              bitmap.viewport.changed |= 2;
+            }
+            else
             {
               /* Update active display height */
               bitmap.viewport.h = 224 + ((d & 8) << 1);
               bitmap.viewport.y = (config.overscan & 1) * (8 - (d & 8) + 24*vdp_pal);
-            }
-            else
-            {
-              /* Changes should be applied on next frame */
-              bitmap.viewport.changed |= 2;
             }
 
             /* Update vertical counter max value */
@@ -1710,16 +1710,16 @@ static void vdp_reg_w(unsigned int r, unsigned int d, unsigned int cycles)
             vdp_z80_data_r = vdp_z80_data_r_m5;
 
             /* Change display height */
-            if (v_counter < bitmap.viewport.h)
+            if (status & 8)
             {
-              /* Update active display */
-              bitmap.viewport.h = 224 + ((d & 8) << 1);
-              bitmap.viewport.y = (config.overscan & 1) * (8 - (d & 8) + 24*vdp_pal);
+              /* viewport changes should be applied on next frame */
+              bitmap.viewport.changed |= 2;
             }
             else
             {
-              /* Changes should be applied on next frame */
-              bitmap.viewport.changed |= 2;
+              /* Update current frame active display height */
+              bitmap.viewport.h = 224 + ((d & 8) << 1);
+              bitmap.viewport.y = (config.overscan & 1) * (8 - (d & 8) + 24*vdp_pal);
             }
 
             /* Clear HVC latched value */
@@ -1756,16 +1756,16 @@ static void vdp_reg_w(unsigned int r, unsigned int d, unsigned int cycles)
             vdp_68k_data_r = vdp_68k_data_r_m4;
             vdp_z80_data_r = vdp_z80_data_r_m4;
 
-            if (v_counter < bitmap.viewport.h)
+            if (status & 8)
             {
-              /* Update active display height */
-              bitmap.viewport.h = 192;
-              bitmap.viewport.y = (config.overscan & 1) * 24 * (vdp_pal + 1);
+              /* viewport changes should be applied on next frame */
+              bitmap.viewport.changed |= 2;
             }
             else
             {
-              /* Changes should be applied on next frame */
-              bitmap.viewport.changed |= 2;
+              /* Update current frame active display */
+              bitmap.viewport.h = 192;
+              bitmap.viewport.y = (config.overscan & 1) * 24 * (vdp_pal + 1);
             }
 
             /* Latch current HVC */
@@ -2012,11 +2012,18 @@ static void vdp_reg_w(unsigned int r, unsigned int d, unsigned int cycles)
           /* Redraw entire line */
           render_line(v_counter);
         }
+        else if (v_counter == (lines_per_frame - 1))
+        {
+          /* Update starting frame active display width */
+          bitmap.viewport.w = 256 + ((d & 1) << 6);
+        }
         else
         {
           /* Changes should be applied on next frame (Golden Axe III intro) */
-          /* NB: This is not 100% accurate but is required by GCN/Wii port (GX texture direct mapping) */
-          /* and isn't noticeable anyway since display is generally disabled when active width is modified */
+          /* NB: not 100% accurate but required since backend framebuffer width cannot be modified mid-frame. */
+          /* This would require a fixed framebuffer width (based on TV screen aspect ratio) and pixel scaling */
+          /* to be done during rendering (depending on active display pixel aspect ratio in H32 or H40 mode). */
+          /* Display is generally disabled when this is modified so it shouldn't be really noticeable anyway. */
           bitmap.viewport.changed |= 2;
         }
       }
@@ -3013,6 +3020,12 @@ static void vdp_dma_copy(unsigned int length)
     /* Update DMA source address */
     dma_src = source;
   }
+  else
+  {
+    /* DMA source & VRAM addresses are still incremented */
+    addr += reg[15] * length;
+    dma_src += length;
+  }
 }
 
 /* VRAM Fill (TODO: check if CRAM or VSRAM fill is possible) */
@@ -3043,5 +3056,10 @@ static void vdp_dma_fill(unsigned int length)
       addr += reg[15];
     }
     while (--length);
+  }
+  else
+  {
+    /* VRAM address is still incremented */
+    addr += reg[15] * length;
   }
 }

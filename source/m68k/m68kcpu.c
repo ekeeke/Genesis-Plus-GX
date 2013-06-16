@@ -278,7 +278,7 @@ void m68k_run(unsigned int cycles)
   m68ki_set_address_error_trap() /* auto-disable (see m68kcpu.h) */
 
 #ifdef LOGVDP
-  error("[%d][%d] m68k run to %d cycles (%x)\n", v_counter, m68k.cycles, cycles, m68k.pc);
+  error("[%d][%d] m68k run to %d cycles (%x), irq mask = %x (%x)\n", v_counter, m68k.cycles, cycles, m68k.pc,FLAG_INT_MASK, CPU_INT_LEVEL);
 #endif
    
   while (m68k.cycles < cycles)

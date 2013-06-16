@@ -825,8 +825,8 @@ int load_rom(char *filename)
       old_system[1] = input.system[1];
     }
 
-    /* force MOUSE+MENACER configuration */
-    input.system[0] = SYSTEM_MOUSE;
+    /* force MENACER configuration */
+    input.system[0] = SYSTEM_MD_GAMEPAD;
     input.system[1] = SYSTEM_MENACER;
     input.x_offset = 68;
     input.y_offset = -24;
