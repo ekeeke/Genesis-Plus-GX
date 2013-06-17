@@ -26,9 +26,10 @@ CFLAGS    = `sdl-config --cflags` -march=i686 -O6 -fomit-frame-pointer -Wall -Wn
 #-g -ggdb -pg
 #-fomit-frame-pointer
 #LDFLAGS   = -pg
-DEFINES   = -DLSB_FIRST -DUSE_16BPP_RENDERING
+DEFINES   = -DLSB_FIRST -DUSE_16BPP_RENDERING -DUSE_LIBTREMOR
 
-INCLUDES  = -Isource -Isource/z80 -Isource/m68k -Isource/sound -Isource/input_hw -Isource/cart_hw -Isource/cd_hw -Isource/cart_hw/svp -Isource/ntsc -Isource/win
+SRCDIR    = ../core
+INCLUDES  = -I$(SRCDIR) -I$(SRCDIR)/z80 -I$(SRCDIR)/m68k -I$(SRCDIR)/sound -I$(SRCDIR)/input_hw -I$(SRCDIR)/cart_hw -I$(SRCDIR)/cart_hw/svp -I$(SRCDIR)/cd_hw -I$(SRCDIR)/ntsc -I$(SRCDIR)/tremor -I$(SRCDIR)/../sdl
 LIBS	  = `sdl-config --libs` -lz -lm
 
 OBJDIR = ./build_sdl
@@ -96,6 +97,22 @@ OBJECTS	+=	$(OBJDIR)/main.o	\
 		$(OBJDIR)/unzip.o       \
 		$(OBJDIR)/fileio.o	
 
+OBJECTS	+=	$(OBJDIR)/bitwise.o	 \
+		$(OBJDIR)/block.o      \
+		$(OBJDIR)/codebook.o   \
+		$(OBJDIR)/floor0.o     \
+		$(OBJDIR)/floor1.o     \
+		$(OBJDIR)/framing.o    \
+		$(OBJDIR)/info.o       \
+		$(OBJDIR)/mapping0.o   \
+		$(OBJDIR)/mdct.o       \
+		$(OBJDIR)/registry.o   \
+		$(OBJDIR)/res012.o     \
+		$(OBJDIR)/sharedbook.o \
+		$(OBJDIR)/synthesis.o  \
+		$(OBJDIR)/vorbisfile.o \
+		$(OBJDIR)/window.o
+
 OBJECTS	+=	$(OBJDIR)/icon.o
 
 all: $(NAME)
@@ -106,41 +123,47 @@ $(NAME): $(OBJDIR) $(OBJECTS)
 $(OBJDIR) :
 		@[ -d $@ ] || mkdir -p $@
 		
-$(OBJDIR)/%.o : 	source/%.c source/%.h
+$(OBJDIR)/%.o : $(SRCDIR)/%.c $(SRCDIR)/%.h
 		$(CC) -c $(CFLAGS) $(INCLUDES) $(DEFINES) $< -o $@
 	        	        
-$(OBJDIR)/%.o :	source/sound/%.c source/sound/%.h	        
+$(OBJDIR)/%.o :	$(SRCDIR)/sound/%.c $(SRCDIR)/sound/%.h	        
 		$(CC) -c $(CFLAGS) $(INCLUDES) $(DEFINES) $< -o $@
 
-$(OBJDIR)/%.o :	source/input_hw/%.c source/input_hw/%.h	        
+$(OBJDIR)/%.o :	$(SRCDIR)/input_hw/%.c $(SRCDIR)/input_hw/%.h	        
 		$(CC) -c $(CFLAGS) $(INCLUDES) $(DEFINES) $< -o $@
 
-$(OBJDIR)/%.o :	source/cart_hw/%.c source/cart_hw/%.h	        
+$(OBJDIR)/%.o :	$(SRCDIR)/cart_hw/%.c $(SRCDIR)/cart_hw/%.h	        
 		$(CC) -c $(CFLAGS) $(INCLUDES) $(DEFINES) $< -o $@
 
-$(OBJDIR)/%.o :	source/cart_hw/svp/%.c      
+$(OBJDIR)/%.o :	$(SRCDIR)/cart_hw/svp/%.c      
 		$(CC) -c $(CFLAGS) $(INCLUDES) $(DEFINES) $< -o $@
 
-$(OBJDIR)/%.o :	source/cart_hw/svp/%.c source/cart_hw/svp/%.h	        
+$(OBJDIR)/%.o :	$(SRCDIR)/cart_hw/svp/%.c $(SRCDIR)/cart_hw/svp/%.h	        
 		$(CC) -c $(CFLAGS) $(INCLUDES) $(DEFINES) $< -o $@
 
-$(OBJDIR)/%.o :	source/cd_hw/%.c source/cd_hw/%.h	        
+$(OBJDIR)/%.o :	$(SRCDIR)/cd_hw/%.c $(SRCDIR)/cd_hw/%.h	        
 		$(CC) -c $(CFLAGS) $(INCLUDES) $(DEFINES) $< -o $@
 
-$(OBJDIR)/%.o :	source/z80/%.c source/z80/%.h	        
+$(OBJDIR)/%.o :	$(SRCDIR)/z80/%.c $(SRCDIR)/z80/%.h	        
 		$(CC) -c $(CFLAGS) $(INCLUDES) $(DEFINES) $< -o $@
 
-$(OBJDIR)/%.o :	source/m68k/%.c       
+$(OBJDIR)/%.o :	$(SRCDIR)/m68k/%.c       
 		$(CC) -c $(CFLAGS) $(INCLUDES) $(DEFINES) $< -o $@
 
-$(OBJDIR)/%.o :	source/ntsc/%.c source/ntsc/%.h	        
+$(OBJDIR)/%.o :	$(SRCDIR)/ntsc/%.c $(SRCDIR)/ntsc/%.h	        
 		$(CC) -c $(CFLAGS) $(INCLUDES) $(DEFINES) $< -o $@
 
-$(OBJDIR)/%.o :	source/win/%.c source/win/%.h	        
+$(OBJDIR)/%.o :	$(SRCDIR)/tremor/%.c $(SRCDIR)/tremor/%.h	        
+		$(CC) -c $(CFLAGS) $(INCLUDES) $(DEFINES) $< -o $@
+     
+$(OBJDIR)/%.o :	$(SRCDIR)/tremor/%.c 	        
+		$(CC) -c $(CFLAGS) $(INCLUDES) $(DEFINES) $< -o $@
+
+$(OBJDIR)/%.o :	$(SRCDIR)/../sdl/%.c $(SRCDIR)/../sdl/%.h	        
 		$(CC) -c $(CFLAGS) $(INCLUDES) $(DEFINES) $< -o $@
 
 $(OBJDIR)/icon.o :	
-		windres source/win/icon.rc $@
+		windres $(SRCDIR)/../sdl/icon.rc $@
 
 pack	:
 		strip $(NAME)

@@ -2,7 +2,7 @@ DEBUG = 0
 LOGSOUND = 0
 FRONTEND_SUPPORTS_RGB565 = 1
 
-GENPLUS_SRC_DIR := source
+GENPLUS_SRC_DIR := core
 LIBRETRO_DIR	:= libretro
 
 ifeq ($(platform),)
