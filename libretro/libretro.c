@@ -26,8 +26,6 @@ md_ntsc_t  *md_ntsc;
 static int vwidth;
 static int vheight;
 
-char rom_filename[256];
-
 unsigned retro_api_version(void) { return RETRO_API_VERSION; }
 
 static retro_video_refresh_t video_cb;
@@ -78,8 +76,6 @@ static struct bind_conv binds[] = {
 
 
 static char g_rom_dir[1024];
-
-extern uint8 system_hw;
 
 char GG_ROM[256];
 char AR_ROM[256];
@@ -213,7 +209,7 @@ static void init_bitmap(void)
    bitmap.viewport.y = 0;
 }
 
-#define CONFIG_VERSION "GENPLUS-GX 1.6.1"
+#define CONFIG_VERSION "GENPLUS-GX 1.7.4"
 
 static void config_default(void)
 {
@@ -226,7 +222,7 @@ static void config_default(void)
    config.hq_fm          = 1;
    config.psgBoostNoise  = 1;
    config.filter         = 0;
-   config.lp_range       = 50;
+   config.lp_range       = 0x9999; /* 0.6 in 16.16 fixed point */
    config.low_freq       = 880;
    config.high_freq      = 5000;
    config.lg             = 1.0;
@@ -234,6 +230,7 @@ static void config_default(void)
    config.hg             = 1.0;
    config.dac_bits 	 = 14;
    config.ym2413         = 2; /* AUTO */
+   config.mono           = 0;
 
    /* system options */
    config.system         = 0; /* AUTO */
@@ -247,38 +244,10 @@ static void config_default(void)
    config.hot_swap       = 0;
 
    /* video options */
-   config.xshift   = 0;
-   config.yshift   = 0;
-   config.xscale   = 0;
-   config.yscale   = 0;
-   config.aspect   = 0;
    config.overscan = 0; /* 3 == FULL */
    config.gg_extra = 0; /* 1 = show extended Game Gear screen (256x192) */
    config.ntsc     = 0;
-   config.vsync    = 1; /* AUTO */
-
    config.render   = 0;
-   config.bilinear = 0;
-
-   /* controllers options */
-   config.gun_cursor[0]  = 1;
-   config.gun_cursor[1]  = 1;
-   config.invert_mouse   = 0;
-
-   /* menu options */
-   config.autoload     = 0;
-   config.autocheat    = 0;
-   config.s_auto       = 0;
-   config.s_default    = 1;
-   config.s_device     = 0;
-   config.l_device     = 0;
-   config.bg_overlay   = 0;
-   config.screen_w     = 658;
-   config.bgm_volume   = 100.0;
-   config.sfx_volume   = 100.0;
-
-   /* hot swap requires at least a first initialization */
-   config.hot_swap &= 1;
 }
 
 /* these values are used for libretro reporting too */
@@ -315,225 +284,28 @@ static void configure_controls(void)
    }
 }
 
-static int slot_load(int slot)
+
+/* Mega CD backup RAM specific */
+static void bram_load(void)
 {
-  char filename[MAXPATHLEN];
-  unsigned long filesize, done = 0;
-  uint8_t *buffer;
-
-  /* File Type */
-  if (slot > 0)
-  {
-    fprintf(stderr, "INFORMATION - Loading State ...\n");
-  }
-  else
-  {
-    if (!sram.on || (system_hw == SYSTEM_MCD))
-    {
-      fprintf(stderr, "ERROR - SRAM is disabled.\n");
-      return 0;
-    }
-
-    fprintf(stderr, "INFORMATION - Loading SRAM ...\n");
-  }
-
-  /* Device Type */
-  {
     FILE *fp;
-    /* FAT file */
-    if (slot > 0)
-    {
-      sprintf (filename,"%s/saves/%s.gp%d", DEFAULT_PATH, rom_filename, slot - 1);
-    }
-    else
-    {
-      sprintf (filename,"%s/saves/%s.srm", DEFAULT_PATH, rom_filename);
-    }
 
-    /* Open file */
-    fp = fopen(filename, "rb");
-    if (!fp)
-    {
-      fprintf(stderr, "ERROR - Unable to open file.\n");
-      return 0;
-    }
-
-    /* Get file size */
-    fseek(fp, 0, SEEK_END);
-    filesize = ftell(fp);
-    fseek(fp, 0, SEEK_SET);
-
-    /* allocate buffer */
-    buffer = (uint8_t *)malloc(filesize);
-    if (!buffer)
-    {
-      fprintf(stderr, "ERROR - Unable to allocate memory.\n");
-      fclose(fp);
-      return 0;
-    }
-
-    /* Read into buffer (2k blocks) */
-    while (filesize > CHUNKSIZE)
-    {
-      fread(buffer + done, CHUNKSIZE, 1, fp);
-      done += CHUNKSIZE;
-      filesize -= CHUNKSIZE;
-    }
-
-    /* Read remaining bytes */
-    fread(buffer + done, filesize, 1, fp);
-    done += filesize;
-
-    /* Close file */
-    fclose(fp);
-  }
-
-  if (slot > 0)
-  {
-    /* Load state */
-    if (state_load(buffer) <= 0)
-    {
-      free(buffer);
-      fprintf(stderr, "Invalid state file.\n");
-      return 0;
-    }
-  }
-  else
-  {
-    /* load SRAM */
-    memcpy(sram.sram, buffer, 0x10000);
-
-    /* update CRC */
-    sram.crc = crc32(0, sram.sram, 0x10000);
-  }
-
-  free(buffer);
-  return 1;
-}
-
-static int slot_save(int slot)
-{
-  FILE *fp;
-  char filename[MAXPATHLEN];
-  unsigned long filesize, done = 0;
-  uint8_t *buffer;
-
-  if (slot > 0)
-  {
-    fprintf(stderr, "INFORMATION - Saving State ...\n");
-
-    /* allocate buffer */
-    buffer = (uint8_t *)malloc(STATE_SIZE);
-    if (!buffer)
-    {
-      fprintf(stderr, "ERROR - Unable to allocate memory.\n");
-      return 0;
-    }
-
-    filesize = state_save(buffer);
-  }
-  else
-  {
-    /* only save if SRAM is enabled */
-    if (!sram.on || (system_hw == SYSTEM_MCD))
-    {
-       fprintf(stderr, "ERROR - SRAM is disabled.\n");
-       return 0;
-    }
-
-    /* only save if SRAM has been modified */
-    if (crc32(0, &sram.sram[0], 0x10000) == sram.crc)
-    {
-       fprintf(stderr, "WARNING - SRAM not modified.\n");
-       return 0;
-    }
-
-    fprintf(stderr, "INFORMATION - Saving SRAM ...\n");
-
-    /* allocate buffer */
-    buffer = (uint8_t *)malloc(0x10000);
-    if (!buffer)
-    {
-      fprintf(stderr, "ERROR - Unable to allocate memory.\n");
-      return 0;
-    }
-
-    /* copy SRAM data */
-    memcpy(buffer, sram.sram, 0x10000);
-    filesize = 0x10000;
-
-    /* update CRC */
-    sram.crc = crc32(0, sram.sram, 0x10000);
-  }
-
-  /* Device Type */
-  {
-    /* FAT filename */
-    if (slot > 0)
-    {
-      sprintf(filename, "%s/saves/%s.gp%d", DEFAULT_PATH, rom_filename, slot - 1);
-    }
-    else
-    {
-      sprintf(filename, "%s/saves/%s.srm", DEFAULT_PATH, rom_filename);
-    }
-
-    /* Open file */
-    fp = fopen(filename, "wb");
-    if (!fp)
-    {
-      fprintf(stderr, "ERROR - Unable to open file.\n");
-      free(buffer);
-      return 0;
-    }
-
-    /* Write from buffer (2k blocks) */
-    while (filesize > CHUNKSIZE)
-    {
-      fwrite(buffer + done, CHUNKSIZE, 1, fp);
-      done += CHUNKSIZE;
-      filesize -= CHUNKSIZE;
-    }
-
-    /* Write remaining bytes */
-    fwrite(buffer + done, filesize, 1, fp);
-    done += filesize;
-
-    /* Close file */
-    fclose(fp);
-    free(buffer);
-  }
-
-  return 1;
-}
-
-
-static void slot_autoload(int slot)
-{
-  FILE *fp;
-  /* Mega CD backup RAM specific */
-  if (!slot && (system_hw == SYSTEM_MCD))
-  {
     /* automatically load internal backup RAM */
-    unsigned i = ((region_code ^ 0x40) >> 6) - 1;
-    const char *path = NULL;
-
-    switch(i)
+    switch (region_code)
     {
-       case 0:
-          path = CD_BRAM_JP;
+       case REGION_JAPAN_NTSC:
+          fp = fopen(CD_BRAM_JP, "rb");
           break;
-       case 1:
-          path = CD_BRAM_EU;
+       case REGION_EUROPE:
+          fp = fopen(CD_BRAM_EU, "rb");
           break;
-       case 2:
-          path = CD_BRAM_US;
+       case REGION_USA:
+          fp = fopen(CD_BRAM_US, "rb");
           break;
        default:
           return;
     }
 
-    fp = fopen(path, "rb");
     if (fp != NULL)
     {
       fread(scd.bram, 0x2000, 1, fp);
@@ -609,46 +381,32 @@ static void slot_autoload(int slot)
         memcpy(scd.cartridge.area + scd.cartridge.mask + 1 - 0x40, brm_format, 0x40);
       }
     }
-
-    return;
-  }
-  
-  if (strlen(rom_filename))
-  {  
-    slot_load(slot);
-  }
 }
 
-static void slot_autosave(int slot)
+static void bram_save(void)
 {
-  FILE *fp;
-  /* Mega CD backup RAM specific */
-  if (!slot && (system_hw == SYSTEM_MCD))
-  {
+    FILE *fp;
+
     /* verify that internal backup RAM has been modified */
     if (crc32(0, scd.bram, 0x2000) != brm_crc[0])
     {
       /* check if it is correctly formatted before saving */
       if (!memcmp(scd.bram + 0x2000 - 0x20, brm_format + 0x20, 0x20))
       {
-        unsigned i = ((region_code ^ 0x40) >> 6) - 1;
-        const char *path = NULL;
-
-        switch(i)
+        switch (region_code)
 	{
-		case 0:
-			path = CD_BRAM_JP;
+		case REGION_JAPAN_NTSC:
+			fp = fopen(CD_BRAM_JP, "wb");
 			break;
-		case 1:
-			path = CD_BRAM_EU;
+		case REGION_EUROPE:
+			fp = fopen(CD_BRAM_EU, "wb");
 			break;
-		case 2:
-			path = CD_BRAM_US;
+		case REGION_USA:
+			fp = fopen(CD_BRAM_US, "wb");
 			break;
 		default:
 		        return;
 	}
-        fp = fopen(path, "wb");
         if (fp != NULL)
         {
           fwrite(scd.bram, 0x2000, 1, fp);
@@ -666,7 +424,7 @@ static void slot_autosave(int slot)
       /* check if it is correctly formatted before saving */
       if (!memcmp(scd.cartridge.area + scd.cartridge.mask + 1 - 0x20, brm_format + 0x20, 0x20))
       {
-        FILE *fp = fopen(CART_BRAM, "wb");
+        fp = fopen(CART_BRAM, "wb");
         if (fp != NULL)
         {
           int filesize = scd.cartridge.mask + 1;
@@ -694,12 +452,6 @@ static void slot_autosave(int slot)
         }
       }
     }
-
-    return;
-  }
-
-  if (strlen(rom_filename))
-    slot_save(slot);
 }
 
 /************************************
@@ -948,39 +700,22 @@ bool retro_load_game(const struct retro_game_info *info)
    slash = '/';
 #endif
 
-   snprintf(CD_BRAM_EU, sizeof(CD_BRAM_EU), "%s%cscd_E.brm", dir, slash);
-   snprintf(CD_BRAM_US, sizeof(CD_BRAM_US), "%s%cscd_U.brm", dir, slash);
-   snprintf(CD_BRAM_JP, sizeof(CD_BRAM_JP), "%s%cscd_J.brm", dir, slash);
    snprintf(CD_BIOS_EU, sizeof(CD_BIOS_EU), "%s%cbios_CD_E.bin", dir, slash);
    snprintf(CD_BIOS_US, sizeof(CD_BIOS_US), "%s%cbios_CD_U.bin", dir, slash);
    snprintf(CD_BIOS_JP, sizeof(CD_BIOS_JP), "%s%cbios_CD_J.bin", dir, slash);
-   snprintf(MS_BIOS_EU, sizeof(MS_BIOS_EU), "%s%cbios_E.sms", dir, slash);
-   snprintf(MS_BIOS_US, sizeof(MS_BIOS_US), "%s%cbios_U.sms", dir, slash);
-   snprintf(MS_BIOS_JP, sizeof(MS_BIOS_JP), "%s%cbios_J.sms", dir, slash);
-   snprintf(GG_BIOS, sizeof(GG_BIOS), "%s%cbios.gg", dir, slash);
-   snprintf(SK_ROM, sizeof(SK_ROM), "%s%csk.bin", dir, slash);
-   snprintf(SK_UPMEM, sizeof(SK_UPMEM), "%s%csk2chip.bin", dir, slash);
-   snprintf(GG_ROM, sizeof(GG_ROM), "%s%cggenie.bin", dir, slash);
-   snprintf(AR_ROM, sizeof(AR_ROM), "%s%careplay.bin", dir, slash);
-   fprintf(stderr, "Sega CD EU BRAM should be located at: %s\n", CD_BRAM_EU);
-   fprintf(stderr, "Sega CD US BRAM should be located at: %s\n", CD_BRAM_US);
-   fprintf(stderr, "Sega CD JP BRAM should be located at: %s\n", CD_BRAM_JP);
+   snprintf(CD_BRAM_EU, sizeof(CD_BRAM_EU), "%s%cscd_E.brm", dir, slash);
+   snprintf(CD_BRAM_US, sizeof(CD_BRAM_US), "%s%cscd_U.brm", dir, slash);
+   snprintf(CD_BRAM_JP, sizeof(CD_BRAM_JP), "%s%cscd_J.brm", dir, slash);
+   snprintf(CART_BRAM, sizeof(CART_BRAM), "%s%ccart.brm", dir, slash);
    fprintf(stderr, "Sega CD EU BIOS should be located at: %s\n", CD_BIOS_EU);
    fprintf(stderr, "Sega CD US BIOS should be located at: %s\n", CD_BIOS_US);
    fprintf(stderr, "Sega CD JP BIOS should be located at: %s\n", CD_BIOS_JP);
-   fprintf(stderr, "Master System EU BIOS should be located at: %s\n", MS_BIOS_EU);
-   fprintf(stderr, "Master System US BIOS should be located at: %s\n", MS_BIOS_US);
-   fprintf(stderr, "Master System JP BIOS should be located at: %s\n", MS_BIOS_JP);
-   fprintf(stderr, "Game Gear BIOS should be located at: %s\n", GG_BIOS);
-   fprintf(stderr, "S&K upmem ROM should be located at: %s\n", SK_UPMEM);
-   fprintf(stderr, "S&K ROM should be located at: %s\n", SK_ROM);
-   fprintf(stderr, "Game Genie ROM should be located at: %s\n", GG_ROM);
-   fprintf(stderr, "Action Replay ROM should be located at: %s\n", AR_ROM);
+   fprintf(stderr, "Sega CD EU BRAM is located at: %s\n", CD_BRAM_EU);
+   fprintf(stderr, "Sega CD US BRAM is located at: %s\n", CD_BRAM_US);
+   fprintf(stderr, "Sega CD JP BRAM is located at: %s\n", CD_BRAM_JP);
+   fprintf(stderr, "Sega CD RAM CART is located at: %s\n", CART_BRAM);
 
    snprintf(DEFAULT_PATH, sizeof(DEFAULT_PATH), g_rom_dir);
-   snprintf(CART_BRAM, sizeof(CART_BRAM), "%s%ccart.brm", g_rom_dir, slash);
-
-   fprintf(stderr, "BRAM file is located at: %s\n", CART_BRAM);
 
    config_default();
    init_bitmap();
@@ -998,7 +733,7 @@ bool retro_load_game(const struct retro_game_info *info)
    system_reset();
 
    if (system_hw == SYSTEM_MCD)
-      slot_autoload(0);
+      bram_load();
 
    retro_set_viewport_dimensions();
 
@@ -1018,7 +753,7 @@ bool retro_load_game_special(unsigned game_type, const struct retro_game_info *i
 void retro_unload_game(void) 
 {
    if (system_hw == SYSTEM_MCD)
-      slot_autosave(0);
+      bram_save();
 }
 
 unsigned retro_get_region(void) { return vdp_pal ? RETRO_REGION_PAL : RETRO_REGION_NTSC; }
