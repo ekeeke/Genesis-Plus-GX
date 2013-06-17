@@ -56,7 +56,7 @@ void _vorbis_apply_window(ogg_int32_t *d,const void *window_p[2],
 			  long *blocksizes,
 			  int lW,int W,int nW){
   
-  LOOKUP_T *window[2]={window_p[0],window_p[1]};
+  LOOKUP_T *window[2];
   long n=blocksizes[W];
   long ln=blocksizes[lW];
   long rn=blocksizes[nW];
@@ -68,6 +68,9 @@ void _vorbis_apply_window(ogg_int32_t *d,const void *window_p[2],
   long rightend=rightbegin+rn/2;
   
   int i,p;
+
+  window[0]=window_p[0];
+  window[1]=window_p[1];
 
   for(i=0;i<leftbegin;i++)
     d[i]=0;
