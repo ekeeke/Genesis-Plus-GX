@@ -3,7 +3,7 @@
  *
  *  Genesis Plus GX menu
  *
- *  Copyright Eke-Eke (2009-2012)
+ *  Copyright Eke-Eke (2009-2013)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
