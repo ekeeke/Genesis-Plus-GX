@@ -2,7 +2,7 @@
  *  Genesis Plus
  *  I2C Serial EEPROM (24Cxx) support
  *
- *  Copyright (C) 2007-2011  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2007-2013  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -186,10 +186,10 @@ void eeprom_i2c_init()
     i++;
   }
 
-  /* Game not found in database but ROM header indicates it uses EEPROM */
+  /* Game not found in database but ROM header indicates it uses serial EEPROM */
   if (!sram.custom && sram.detected)
   {
-    if ((sram.end - sram.start) < 2)
+    if ((READ_BYTE(cart.rom,0x1b2) == 0xe8) || ((sram.end - sram.start) < 2))
     {
       /* set SEGA mapper as default */
       sram.custom = 1;

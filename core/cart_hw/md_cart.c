@@ -42,7 +42,6 @@
  ****************************************************************************************/
 
 #include "shared.h"
-#include "eeprom_i2c.h"
 #include "eeprom_spi.h"
 #include "gamepad.h"
 
@@ -357,27 +356,7 @@ void md_cart_init(void)
           BACKUP MEMORY 
   ***********************************************/
   sram_init();
-  eeprom_i2c_init();
   
-  if (sram.on)
-  {
-    /* static RAM only (64KB max.) */
-    if (!sram.custom)
-    {
-      /* disabled on startup if ROM is mapped in same area */
-      if (cart.romsize <= sram.start)
-      {
-        m68k.memory_map[sram.start >> 16].base    = sram.sram;
-        m68k.memory_map[sram.start >> 16].read8   = NULL;
-        m68k.memory_map[sram.start >> 16].read16  = NULL;
-        m68k.memory_map[sram.start >> 16].write8  = NULL;
-        m68k.memory_map[sram.start >> 16].write16 = NULL;
-        zbank_memory_map[sram.start >> 16].read   = NULL;
-        zbank_memory_map[sram.start >> 16].write  = NULL;
-      }
-    }
-  }
-
   /**********************************************
           SVP CHIP 
   ***********************************************/

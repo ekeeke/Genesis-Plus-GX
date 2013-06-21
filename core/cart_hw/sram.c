@@ -37,23 +37,33 @@
  ****************************************************************************************/
 
 #include "shared.h"
+#include "eeprom_i2c.h"
 
 T_SRAM sram;
 
+static unsigned int sram_read_byte(unsigned int address);
+static unsigned int sram_read_word(unsigned int address);
+static void sram_write_byte(unsigned int address, unsigned int data);
+static void sram_write_word(unsigned int address, unsigned int data);
+
 /****************************************************************************
- * A quick guide to SRAM on the Genesis
+ * A quick guide to external RAM on the Genesis
  *
- * The SRAM definition is held at offset 0x1b0 of the ROM header.
+ * The external RAM definition is held at offset 0x1b0 of the ROM header.
  *
- *  1B0h:   dc.b   'RA', %1x1yz000, %00100000
+ *  1B0h:   dc.b   'RA', %1x1yz000, %abc00000
  *  1B4h:   dc.l   RAM start address
  *  1B8h:   dc.l   RAM end address
- *   x 1 for BACKUP and 0 If not BACKUP
+ *   x 1 for BACKUP (not volatile), 0 for volatile RAM
  *   yz 10 if even address only 
  *      11 if odd address only 
  *      00 if both even and odd address
+ *      01 others (serial EEPROM, RAM with 4-bit data bus, etc)
+ *   abc 001 if SRAM
+ *       010 if EEPROM (serial or parallel)
+ *       other values unused
  *
- * Assuming max. 64k SRAM / Battery RAM throughout
+ * Assuming max. 64k backup RAM throughout
  ****************************************************************************/
 void sram_init()
 {
@@ -70,6 +80,10 @@ void sram_init()
   /* retrieve informations from header */
   if ((READ_BYTE(cart.rom,0x1b0) == 0x52) && (READ_BYTE(cart.rom,0x1b1) == 0x41))
   {
+    /* backup RAM detected */
+    sram.detected = 1;
+
+    /* retrieve backup RAM start & end addresses */
     sram.start = READ_WORD_LONG(cart.rom, 0x1b4);
     sram.end   = READ_WORD_LONG(cart.rom, 0x1b8);
 
@@ -86,12 +100,9 @@ void sram_init()
     {
       sram.end = sram.start + 0xffff;
     }
-    sram.start &= 0xfffffe;
-    sram.end |= 1;
 
     /* enable backup RAM */
     sram.on = 1;
-    sram.detected = 1;
   }
   else
   {
@@ -151,11 +162,10 @@ void sram_init()
     }
     else if (strstr(rominfo.international,"SONIC & KNUCKLES") != NULL)
     {
-      /* standalone Sonic & Knuckle does not use backup RAM */
+      /* Sonic 3 & Knuckles combined ROM */
       if (cart.romsize == 0x400000)
       {
-        /* Sonic 3 & Knuckles combined ROM */
-        /* it shows S&K header but should obviously use FRAM from Sonic 3 */
+        /* Sonic & Knuckle does not have backup RAM but can access FRAM from Sonic 3 cartridge */
         sram.on = 1;
         sram.start = 0x200001;
         sram.end = 0x203fff;
@@ -165,12 +175,12 @@ void sram_init()
     /* auto-detect games which need disabled backup RAM */
     else if (strstr(rominfo.product,"T-113016") != NULL)
     {
-      /* Pugsy (try writing outside ROM area as copy protection) */
+      /* Pugsy (does not have backup RAM but tries writing outside ROM area as copy protection) */
       sram.on = 0;
     }
     else if (strstr(rominfo.international,"SONIC THE HEDGEHOG 2") != NULL)
     {
-      /* Sonic the Hedgehog 2 (does not use backup RAM) */
+      /* Sonic the Hedgehog 2 (does not have backup RAM) */
       /* this prevents backup RAM from being mapped in place of mirrored ROM when using S&K LOCK-ON feature */
       sram.on = 0;
     }
@@ -178,10 +188,52 @@ void sram_init()
     /* by default, enable backup RAM for ROM smaller than 2MB */
     else if (cart.romsize <= 0x200000)
     {
-      /* SRAM mapped to $200000-$20ffff */
+      /* 64KB static RAM mapped to $200000-$20ffff */
       sram.start = 0x200000;
       sram.end = 0x20ffff;
       sram.on = 1;
     }
   }
+
+  /* autodetect games with serial EEPROM */
+  eeprom_i2c_init();
+
+  /* initialize m68k bus handlers (if not already done) */
+  if (sram.on && !sram.custom)
+  {
+    /* disabled on startup if ROM is mapped in same area */
+    if (cart.romsize <= sram.start)
+    {
+      m68k.memory_map[sram.start >> 16].base    = sram.sram;
+      m68k.memory_map[sram.start >> 16].read8   = sram_read_byte;
+      m68k.memory_map[sram.start >> 16].read16  = sram_read_word;
+      m68k.memory_map[sram.start >> 16].write8  = sram_write_byte;
+      m68k.memory_map[sram.start >> 16].write16 = sram_write_word;
+      zbank_memory_map[sram.start >> 16].read   = sram_read_byte;
+      zbank_memory_map[sram.start >> 16].write  = sram_write_byte;
+    }
+  }
+}
+
+static unsigned int sram_read_byte(unsigned int address)
+{
+  return sram.sram[address & 0xffff];
+}
+
+static unsigned int sram_read_word(unsigned int address)
+{
+  address &= 0xfffe;
+  return (sram.sram[address + 1] | (sram.sram[address] << 8));
+}
+
+static void sram_write_byte(unsigned int address, unsigned int data)
+{
+  sram.sram[address & 0xffff] = data;
+}
+
+static void sram_write_word(unsigned int address, unsigned int data)
+{
+  address &= 0xfffe;
+  sram.sram[address] = data >> 8;
+  sram.sram[address + 1] = data & 0xff;
 }
