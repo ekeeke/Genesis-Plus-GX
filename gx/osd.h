@@ -68,7 +68,7 @@
 
 /*************************************************/
 
-#define VERSION "Genesis Plus GX 1.7.3"
+#define VERSION "Genesis Plus GX 1.7.4"
 
 #define NO_SYNC    0
 #define SYNC_VIDEO 1

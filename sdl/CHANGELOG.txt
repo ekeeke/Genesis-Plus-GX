@@ -7,6 +7,208 @@ Please look at http://code.google.com/p/genplus-gx/ for more infos.
 
 
 ---------------------------------------------------------------------------------------------------------
+Genesis Plus GX 1.7.4 (21/06/2013) (Eke-Eke)
+---------------------------------------------------------------------------------------------------------
+
+[Core/SCD]
+---------------
+* fixed access to read-only registers on Main-CPU side ("Batman Returns" platform level freeze)
+* fixed & improved emulation of PRG-RAM write protection register ("Lunar Eternal Blue" japanese version freeze)
+* improved SUB & MAIN-CPU synchronization ("Dracula Unleashed" freeze when using US Model 2 BIOS)
+* improved CPU polling detection
+* improved CDD emulation & added CD drive access time for SEEK command ("Panic!/Switch" intro missing scene)
+* added missing reinitialization of MAIN-CPU PRG-RAM bank on reset
+* added .OGG audio tracks support through LIBTREMOR
+
+[Core/Sound]
+---------------
+* fixed YM2612 configurable DAC depth emulation
+* improved Low-Pass filter
+* added optional "MONO" output mode
+
+[Core/VDP]
+---------------
+* fixed FIFO access timings when using invalid write code value ("Clue" menu)
+* fixed DMA Copy with undocumented code value ("Fatal Labyrinth" end sequence)
+* minor code fixes & optimizations
+
+[Core/CPU]
+---------------
+* optimized 68k stack read/write functions
+* fixed broken 68k address error emulation
+* fixed 68k interrupt behavior (prevents interrupts from being executed multiple time when 68k is halted)
+* fixed Z80 registers initial state, added proper initialization when using PBC (verified on real hardware by Charles McDonald)
+
+[Core/MD]
+---------------
+* fixed SRAM incompatibilities between BIG ENDIAN & LITTLE ENDIAN platforms (note: this breaks old .srm files with LITTLE ENDIAN platform ports)
+* added support for a few recently dumped unlicensed games
+* added auto-detection of byte-swapped ROM files
+
+
+---------------------------------------------------------------------------------------------------------
+Genesis Plus GX 1.7.3 (26/11/2012) (Eke-Eke)
+---------------------------------------------------------------------------------------------------------
+
+no win32/SDL port changes
+
+
+---------------------------------------------------------------------------------------------------------
+Genesis Plus GX 1.7.2 (24/11/2012) (Eke-Eke)
+---------------------------------------------------------------------------------------------------------
+
+[Core/SCD]
+---------------
+* added default TOC for Shadow of the Beast II (prevent hangs when audio tracks are missing)
+* fixed CD-DA fader muting
+* fixed PCM channels panning on reset
+* fixed backup RAM file management when using disc swap with Mode 1 cartridge
+* incremented CD drive read latency: fixes Space Adventure Cobra (freeze when opening coffin at 2nd morgue scene)
+* improved CDD emulation accuracy: fixes Snatcher (freeze at the end of Act 2) & various CD player bugs
+* improved MAIN-SUB memory map mirroring in SCD mode (verified on real hardware by Charles McDonald)
+* implemented cycle-accurate "stopwatch" register emulation
+
+[Core/Sound]
+---------------
+* fixed broken PSG noise frequency
+* fixed incorrect Game Gear PSG stereo emulation
+* implemented cycle-accurate Game Gear PSG stereo
+
+[Core/VDP]
+---------------
+* fixed broken VDP DMA from SVP ROM latency (graphic errors in Virtua Racing)
+
+[Core/MD]
+---------------
+* added Super Mario World 64 (unlicensed) cartridge hardware emulation
+
+[Core/Input]
+---------------
+* added automatic detection for CD games with Justifier/Menacer support
+* improved Justifier/Menacer emulation
+
+
+---------------------------------------------------------------------------------------------------------
+Genesis Plus GX 1.7.1 (13/10/2012) (Eke-Eke)
+---------------------------------------------------------------------------------------------------------
+
+[Core/SCD]
+---------------
+* added support for CUE files
+* added CD-DA tracks emulation (needs CUE+BIN or ISO+WAV images)
+* added CD fader emulation
+* added CDD "Fast FW" & "Fast RW" commands emulation
+* improved CDD TOC emulation (random freezes in Sonic CD, Switch/Panic, Final Fight CD and probably many others)
+* improved PCM chip synchronization with SUB-CPU (missing speeches in Willy Beamish)
+* fixed PCM chip emulation (random hangs in Snatcher, missing sound effects in Switch/Panic, Final Fight CD, Wonderdog...)
+* fixed Word-RAM memory mode on soft-reset (missing logo gfx effects)
+* fixed SUB-CPU access to unused areas when using PC-relative instructions (Final Fight CD first boss random crash)
+* fixed CPU idle loop detection on memory mode register access (Pugsy CD first boss slowdown)
+* fixed Mode 1 emulation (cartridge boot mode)
+
+[Core/Sound]
+---------------
+* replaced FIR resampler by Blip Buffer for FM resampling
+* modified SN76489 core for use of Blip Buffer
+* improved PSG & FM chips synchronization using Blip Buffer
+* added Game Gear PSG stereo support
+* fixed SG-1000 specific PSG noise
+* fixed YM2612 LFO AM waveform (California Games surfing event)
+* fixed YM2612 phase precision
+* minor optimizations to YM2612 core
+
+[Core/Game Gear]
+---------------
+* added support for CJ Elephant Fugitive (recently released by SMS Power)
+* added Game Gear extended screen option
+
+[Core/Genesis]
+---------------
+* added support for a few recently dumped (but unreleased) games
+
+[Core/General]
+---------------
+* improved ROM & CD image file loading
+* various code cleanup
+
+
+---------------------------------------------------------------------------------------------------------
+Genesis Plus GX 1.7.0 (01/07/2012) (Eke-Eke)
+---------------------------------------------------------------------------------------------------------
+
+[Core/SCD]
+---------------
+* added Mega CD / Sega CD hardware emulation (incl. Sub 68K, CDD, CDC, PCM, GFX rotation/scaling, etc)
+* added .ISO & .BIN CD image file support
+* added 512K backup cartridge RAM support
+* added savestate support for CD games
+
+NOTES:
+~~~~~~
+* to play CD games, original BIOS ROM files are required in /genplus/bios/ directory: unzip & rename them to bios_CD_U.bin, bios_CD_E.bin, bios_CD_J.bin 
+* CD audio tracks (CD-DA) are not supported (yet)
+
+[Core/CPU]
+---------------
+* modified 68k core for Mega CD / Sega CD support
+* optimized 68k core using prebuild const tables
+
+[Core/VDP]
+---------------
+* improved DMA accuracy
+* improved accuracy of nametables register & VSRAM writes during HBLANK: fixes "The Adventures of Batman & Robin" (graphical issues during 2nd Boss fight).
+* added support for 8-bit VRAM writes with undocumented code value (verified on real hardware by Nemesis)
+
+[Core/Sound]
+---------------
+* improved synchronization between SN76489 & YM2162 cores.
+* improved accuracy of SN76489 core timings.
+
+[Core/MD]
+---------------
+* added support for some recently dumped unlicensed games.
+* improved emulation of 32k bankswitch hardware used by a few unlicensed games.
+* fixed behavior of Z80 banked reads from 68k RAM (verified on real hardware).
+* fixed support for 128K Pro Action Replay ROM.
+
+[Core/MS]
+---------------
+* added support for all recent korean ROM dumps by SMS Power.
+* added emulation of korean multi-game mapper (4-Pak All Action)
+* added pseudo-random RAM pattern initialization on Mark-III and Japanese Master System (fixes "Alibaba and 40 Thieves" & "Block Hole")
+* added port $3E emulation & internal BOOTROM support (Master System & Game Gear only).
+
+[Core/General]
+---------------
+* added an option to set VDP mode (PAL/NTSC) independently from console region.
+* added an option to select original system master clock frequency (PAL/NTSC/AUTO), emulation will run at selected frequency when VSYNC is disabled.
+* fixed 68k context loading/saving (Sol Deace).
+* fixed C89 incompatibilities for better portability.
+* removed use of "long int" type for portability on 64-bit platforms.
+* moved savestate zlib compression out of emulation core (for ports that don't use it).
+* various optimizations.
+
+[Gamecube/Wii]
+---------------
+* removed ROM load device selection from Load Menu: default ROM device must now be configured in menu settings.
+* added specific load buttons, browsers & saved paths for each systems, this also fixes slowdowns caused by screenshot loading when browsing from slow devices.
+* added support for left/right buttons as page up/down keys in ROM browsers
+* added right analog stick as default "return to menu" key for Gamecube controllers
+* added alternate remappable menu key combo for Gamecube controllers
+* added an option to disable VSYNC (emulator is synced with audio hardware instead of video).
+* added an option to boot system from "BIOS", with or without cartridge.
+* added Master System & Game Gear "BIOS" support (files should be named bios_U.sms, bios_J.sms, bios_E.sms & bios.gg and copied to /genplus/bios directory).
+* replaced "Hard Reset" button by a Soft Reset for systems having a Reset button (Mega Drive / Genesis & Master System)
+* State & SRAM files are now only compressed when saving to Gamecube Memory Cards
+* various fixes & cleanup.
+* compiled with devkitPPC r26 & libogc 1.8.11.
+
+[Gamecube]
+----------
+* improved progressive mode support when component cable is detected (hold B during startup to switch menu video mode configuration)
+
+
+---------------------------------------------------------------------------------------------------------
 [07/08/2011] version 1.6.0 (Eke-Eke)
 ---------------------------------------------------------------------------------------------------------
 
