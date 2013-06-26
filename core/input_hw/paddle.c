@@ -45,8 +45,8 @@ static struct
 
 void paddle_reset(int index)
 {
-  input.analog[index << 2][0] = 128;
-  paddle[index].State = 0x40;
+  input.analog[index][0] = 128;
+  paddle[index>>2].State = 0x40;
 }
 
 INLINE unsigned char paddle_read(int port)

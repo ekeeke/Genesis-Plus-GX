@@ -40,8 +40,10 @@
 #define _XE_A1PH_
 
 /* Function prototypes */
-extern void xe_a1p_reset(void);
-extern unsigned char xe_a1p_read(void);
-extern void xe_a1p_write(unsigned char data, unsigned char mask);
+extern void xe_a1p_reset(int index);
+extern unsigned char xe_a1p_1_read(void);
+extern unsigned char xe_a1p_2_read(void);
+extern void xe_a1p_1_write(unsigned char data, unsigned char mask);
+extern void xe_a1p_2_write(unsigned char data, unsigned char mask);
 
 #endif

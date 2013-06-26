@@ -2183,12 +2183,6 @@ static void ctrlmenu(void)
             input.system[1] += 2;
           }
 
-          /* XE-1AP on port A only */
-          if (input.system[1] == SYSTEM_XE_A1P)
-          {
-            input.system[1]++;
-          }
-
           /* 4-wayplay uses both ports */
           if (input.system[1] == SYSTEM_WAYPLAY)
           {
