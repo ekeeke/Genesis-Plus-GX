@@ -46,10 +46,10 @@ static struct
 
 void sportspad_reset(int index)
 {
-  input.analog[index << 2][0] = 128;
-  input.analog[index << 2][1] = 128;
-  sportspad[index].State = 0x40;
-  sportspad[index].Counter = 0;
+  input.analog[index][0] = 128;
+  input.analog[index][1] = 128;
+  sportspad[index>>2].State = 0x40;
+  sportspad[index>>2].Counter = 0;
 }
 
 INLINE unsigned char sportspad_read(int port)

@@ -198,6 +198,13 @@ void input_init(void)
       break;
     }
 
+    case SYSTEM_XE_A1P:
+    {
+      input.dev[4] = DEVICE_XE_A1P;
+      player++;
+      break;
+    }
+
     case SYSTEM_MENACER:
     {
       input.dev[4] = DEVICE_LIGHTGUN;
@@ -305,19 +312,19 @@ void input_reset(void)
 
       case DEVICE_XE_A1P:
       {
-        xe_a1p_reset();
+        xe_a1p_reset(i);
         break;
       }
 
       case DEVICE_PADDLE:
       {
-        paddle_reset(i >> 2);
+        paddle_reset(i);
         break;
       }
 
       case DEVICE_SPORTSPAD:
       {
-        sportspad_reset(i >> 2);
+        sportspad_reset(i);
         break;
       }
 

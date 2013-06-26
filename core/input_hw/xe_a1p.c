@@ -43,39 +43,41 @@ static struct
   uint8 State;
   uint8 Counter;
   uint8 Latency;
-} xe_a1p;
+} xe_a1p[2];
 
-void xe_a1p_reset(void)
+void xe_a1p_reset(int index)
 {
-  input.analog[0][0] = 128;
-  input.analog[0][1] = 128;
-  input.analog[1][0] = 128;
-  xe_a1p.State = 0x40;
-  xe_a1p.Counter = 0;
-  xe_a1p.Latency = 0;
+  input.analog[index][0] = 128;
+  input.analog[index][1] = 128;
+  input.analog[index+1][0] = 128;
+  index >>= 2;
+  xe_a1p[index].State = 0x40;
+  xe_a1p[index].Counter = 0;
+  xe_a1p[index].Latency = 0;
 }
 
-unsigned char xe_a1p_read()
+INLINE unsigned char xe_a1p_read(int index)
 {
   unsigned int temp = 0x40;
+  unsigned int port = index << 2;
 
   /* Left Stick X & Y analog values (bidirectional) */
-  int x = input.analog[0][0];
-  int y = input.analog[0][1];
+  int x = input.analog[port][0];
+  int y = input.analog[port][1];
 
   /* Right Stick X or Y value (unidirectional) */
-  int z = input.analog[1][0];
+  int z = input.analog[port+1][0];
 
   /* Buttons status (active low) */
-  uint16 pad = ~input.pad[0];
+  uint16 pad = ~input.pad[port];
 
   /* Current internal cycle (0-7) */
-  unsigned int cycle = xe_a1p.Counter & 7;
+  unsigned int cycle = xe_a1p[index].Counter & 7;
 
   /* Current 4-bit data cycle */
   /* There are eight internal data cycle for each 5 acquisition sequence */
   /* First 4 return the same 4-bit data, next 4 return next 4-bit data */
-  switch (xe_a1p.Counter >> 2)
+  switch (xe_a1p[index].Counter >> 2)
   {
     case 0:
       temp |= ((pad >> 8) & 0x0F); /* E1 E2 Start Select */
@@ -119,42 +121,62 @@ unsigned char xe_a1p_read()
   cycle = (cycle + 1) & 7;
 
   /* Update internal cycle counter */
-  xe_a1p.Counter = (xe_a1p.Counter & ~7) | cycle;
+  xe_a1p[index].Counter = (xe_a1p[index].Counter & ~7) | cycle;
 
   /* Update internal latency on each read */
-  xe_a1p.Latency++;
+  xe_a1p[index].Latency++;
 
   return temp;
 }
 
-void xe_a1p_write(unsigned char data, unsigned char mask)
+INLINE void xe_a1p_write(int index, unsigned char data, unsigned char mask)
 {
   /* update bits set as output only */
-  data = (xe_a1p.State & ~mask) | (data & mask);
+  data = (xe_a1p[index].State & ~mask) | (data & mask);
 
   /* look for TH 1->0 transitions */
-  if (!(data & 0x40) && (xe_a1p.State & 0x40))
+  if (!(data & 0x40) && (xe_a1p[index].State & 0x40))
   {
     /* reset acquisition cycle */
-    xe_a1p.Latency = xe_a1p.Counter = 0;
+    xe_a1p[index].Latency = xe_a1p[index].Counter = 0;
   }
   else
   {
     /* some games immediately write new data to TH */
     /* so we make sure first sequence has actually been handled */
-    if (xe_a1p.Latency > 2)
+    if (xe_a1p[index].Latency > 2)
     {
       /* next acquisition sequence */
-      xe_a1p.Counter = (xe_a1p.Counter & ~7) + 8;
+      xe_a1p[index].Counter = (xe_a1p[index].Counter & ~7) + 8;
 
       /* 5 sequence max with 8 cycles each */
-      if (xe_a1p.Counter > 32)
+      if (xe_a1p[index].Counter > 32)
       {
-        xe_a1p.Counter = 32;
+        xe_a1p[index].Counter = 32;
       }
     }
   }
 
   /* update internal state */
-  xe_a1p.State = data;
+  xe_a1p[index].State = data;
+}
+
+unsigned char xe_a1p_1_read(void)
+{
+  return xe_a1p_read(0);
+}
+
+unsigned char xe_a1p_2_read(void)
+{
+  return xe_a1p_read(1);
+}
+
+void xe_a1p_1_write(unsigned char data, unsigned char mask)
+{
+  xe_a1p_write(0, data, mask);
+}
+
+void xe_a1p_2_write(unsigned char data, unsigned char mask)
+{
+  xe_a1p_write(1, data, mask);
 }

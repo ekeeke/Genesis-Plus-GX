@@ -110,8 +110,8 @@ void io_init(void)
 
     case SYSTEM_XE_A1P:
     {
-      port[0].data_w = xe_a1p_write;
-      port[0].data_r = xe_a1p_read;
+      port[0].data_w = xe_a1p_1_write;
+      port[0].data_r = xe_a1p_1_read;
       break;
     }
 
@@ -178,6 +178,13 @@ void io_init(void)
     {
       port[1].data_w = mouse_write;
       port[1].data_r = mouse_read;
+      break;
+    }
+
+    case SYSTEM_XE_A1P:
+    {
+      port[1].data_w = xe_a1p_2_write;
+      port[1].data_r = xe_a1p_2_read;
       break;
     }
 
