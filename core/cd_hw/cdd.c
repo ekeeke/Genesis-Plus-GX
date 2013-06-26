@@ -1230,8 +1230,20 @@ void cdd_process(void)
   {
     case 0x00:  /* Drive Status */
     {
-      /* RS1-RS8 unchanged */
+      /* RS1-RS8 normally unchanged */
       scd.regs[0x38>>1].byte.h = cdd.status;
+
+      /* unless RS1 indicated invalid track infos */
+      if (scd.regs[0x38>>1].byte.l == 0x0f)
+      {
+        /* and SEEK has ended */
+        if (cdd.status != CD_SEEK)
+        {
+          /* then return valid track infos, e.g current track number in RS2-RS3 (fixes Lunar - The Silver Star) */
+          scd.regs[0x38>>1].byte.l = 0x02;
+          scd.regs[0x3a>>1].w = (cdd.index < cdd.toc.last) ? lut_BCD_16[cdd.index + 1] : 0x0A0A;
+        }
+      }
       break;
     }
 
@@ -1482,13 +1494,13 @@ void cdd_process(void)
       /* update status */
       cdd.status = CD_SEEK;
 
-      /* return track index in RS2-RS3 (note: returning RS1=0x0f breaks Lunar - The Silver Star) */
-      scd.regs[0x38>>1].w = (CD_SEEK << 8) | 0x02;
-      scd.regs[0x3a>>1].w = (cdd.index < cdd.toc.last) ? lut_BCD_16[index + 1] : 0x0A0A;
+      /* unknown RS1-RS8 values (returning 0xF in RS1 invalidates track infos in RS2-RS8 and fixes Final Fight CD intro when seek time is emulated) */
+      scd.regs[0x38>>1].w = (CD_SEEK << 8) | 0x0f;
+      scd.regs[0x3a>>1].w = 0x0000;
       scd.regs[0x3c>>1].w = 0x0000;
       scd.regs[0x3e>>1].w = 0x0000;
-      scd.regs[0x40>>1].byte.h = 0x00;
-      break;
+      scd.regs[0x40>>1].w = ~(CD_SEEK + 0xf) & 0x0f;
+      return;
     }
 
     case 0x06:  /* Pause */
@@ -1539,16 +1551,9 @@ void cdd_process(void)
       /* no audio track playing */
       scd.regs[0x36>>1].byte.h = 0x01;
 
-      /* update status */
-      cdd.status = CD_READY;
-
-      /* unknown RS0-RS8 values (returning 0xF in RS1 invalidates track infos usually returned in RS2-RS8, also fixes Final Fight CD intro when seek time is emulated) */
-      scd.regs[0x38>>1].w = (CD_READY << 8) | 0x0f;
-      scd.regs[0x3a>>1].w = 0x0000;
-      scd.regs[0x3c>>1].w = 0x0000;
-      scd.regs[0x3e>>1].w = 0x0000;
-      scd.regs[0x40>>1].w = ~(CD_READY + 0xf) & 0x0f;
-      return;
+      /* update status (RS1-RS8 unchanged) */
+      cdd.status = scd.regs[0x38>>1].byte.h = CD_READY;
+      break;
     }
 
     case 0x0c:  /* Close Tray */
