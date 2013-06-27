@@ -1370,17 +1370,26 @@ unsigned int vdp_hvc_r(unsigned int cycles)
   }
   else
   {
+    /* Mode 5: HV counters are frozen (cf. lightgun games & Sunset Riders) */
     if (reg[1] & 4)
     {
-      /* Mode 5: both counters are frozen (Lightgun games, Sunset Riders) */
+      /* check if HVC is really locked or is read within INT2 callback (HVC latch is forced for lightgun emulation, cf. lightgun.c) */
+      if ((reg[0] & 0x02) || (m68k.int_mask == 0x0200))
+      {
 #ifdef LOGVDP
-      error("[%d(%d)][%d(%d)] HVC read -> 0x%x (%x)\n", v_counter, (cycles/MCYCLES_PER_LINE-1)%lines_per_frame, cycles, cycles%MCYCLES_PER_LINE, hvc_latch & 0xffff, m68k_get_reg(M68K_REG_PC));
+        error("[%d(%d)][%d(%d)] HVC read -> 0x%x (%x)\n", v_counter, (cycles/MCYCLES_PER_LINE-1)%lines_per_frame, cycles, cycles%MCYCLES_PER_LINE, data & 0xffff, m68k_get_reg(M68K_REG_PC));
 #endif
-      return (data & 0xffff);
+        /* return latched HVC value */
+        return (data & 0xffff);
+      }
+
+      /* HV counters should be free-running (fixes "Gunfight - 3 in 1" randomization when Justifiers are enabled) */
+      hvc_latch = 0;
+      data = hctab[cycles % MCYCLES_PER_LINE];
     }
     else
     {
-      /* Mode 4: VCounter runs normally, HCounter is frozen */
+      /* Mode 4: V counter runs normally, H counter is frozen */
       data &= 0xff;
     }
   }

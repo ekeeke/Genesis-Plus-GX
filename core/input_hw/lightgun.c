@@ -2,7 +2,7 @@
  *  Genesis Plus
  *  Sega Light Phaser, Menacer & Konami Justifiers support
  *
- *  Copyright (C) 2007-2011  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2007-2013  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -135,7 +135,7 @@ void lightgun_refresh(int port)
           m68k_update_irq(2);
         }
 
-        /* force HV Counter Latch (some games does not lock HV Counter but instead use larger offset value) */
+        /* HACK: force HV Counter latch (some games does not lock HV Counter but instead use larger offset value) */
         hvc_latch = 0x10000 | (y << 8);
         if (reg[12] & 1) 
         {
