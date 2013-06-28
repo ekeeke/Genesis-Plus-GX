@@ -2,7 +2,7 @@ LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
 
-GENPLUS_SRC_DIR := ../../source
+GENPLUS_SRC_DIR := ../../core
 LIBRETRO_DIR	:= ../
 
 LOCAL_MODULE    := retro
