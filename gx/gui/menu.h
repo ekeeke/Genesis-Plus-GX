@@ -41,6 +41,6 @@
 #define _MENU_H
 
 extern void mainmenu(void);
+extern void (*reload)(void);
 
 #endif
-

@@ -126,6 +126,10 @@ extern const u8 Button_sm_blue_png[];
 extern const u8 Button_sm_grey_png[];
 extern const u8 Button_sm_yellow_png[];
 
+/* Exit callback */
+void (*reload)(void);
+
+
 /*****************************************************************************/
 /*  Specific Menu Callbacks                                                  */
 /*****************************************************************************/
@@ -3313,19 +3317,8 @@ static void exitmenu(void)
     "Return to Loader",
   };
 
-  /* autodetect loader stub */
-  int maxitems = 2;
-  u32 *sig = (u32*)0x80001800;
-  void (*reload)() = (void(*)())0x80001800;
-
-#ifdef HW_RVL
-  if ((sig[1] == 0x53545542) && (sig[2] == 0x48415858)) // HBC
-#else
-  if (sig[0] == 0x7c6000a6) // SDLOAD
-#endif
-  {
-    maxitems = 3;
-  }
+  /* check if loader stub exists */
+  int maxitems = reload ? 3 : 2;
 
   /* display option window */
   switch (GUI_OptionWindow(&menu_main, osd_version, items, maxitems))
@@ -3404,12 +3397,22 @@ void mainmenu(void)
   slot_autosave(0, config.s_device);
 
 #ifdef HW_RVL
-  /* Wiimote shutdown */
+  /* Detect shutdown request */
   if (Shutdown)
   {
     GUI_FadeOut();
     shutdown();
-    SYS_ResetSystem(SYS_POWEROFF, 0, 0);
+    if (reload)
+    {
+      /* exit to loader if requested */
+      SYS_ResetSystem(SYS_SHUTDOWN,0,0);
+      __lwp_thread_stopmultitasking(*reload);
+    }
+    else
+    {
+      /* shutdown system by default */
+      SYS_ResetSystem(SYS_POWEROFF, 0, 0);
+    }
   }
 
   /* Wiimote pointer */

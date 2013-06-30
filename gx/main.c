@@ -3,7 +3,7 @@
  *
  *  Genesis Plus GX
  *
- *  Copyright Eke-Eke (2007-2012), based on original work from Softdev (2006)
+ *  Copyright Eke-Eke (2007-2013), based on original work from Softdev (2006)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -66,13 +66,21 @@ u32 delta_samp[LOGSIZE];
 
 #ifdef HW_RVL
 /****************************************************************************
- * Power Button callback 
+ * Power Button callbacks
  ***************************************************************************/
 static void PowerOff_cb(void)
 {
   Shutdown = 1;
   ConfigRequested = 1;
+  reload = 0;
 }
+
+static void Reload_cb(void)
+{
+  Shutdown = 1;
+  ConfigRequested = 1;
+}
+
 #endif
 
 /****************************************************************************
@@ -396,7 +404,7 @@ void reloadrom(void)
     interlaced = 0;
     audio_init(SAMPLERATE_48KHZ, get_framerate());
      
-    /* Switch virtual system on */
+    /* System Power-On */
     system_init();
     system_reset();
 
@@ -425,12 +433,24 @@ void shutdown(void)
   /* auto-save State file */
   slot_autosave(config.s_default,config.s_device);
 
-  /* shutdown emulation */
+  /* shutdown emulation core */
   audio_shutdown();
+
+  /* shutdown audio & video engines */
   gx_audio_Shutdown();
   gx_video_Shutdown();
+
 #ifdef HW_RVL
+  /* unmount all devices */
+  ISO9660_Unmount("dvd:");
+  fatUnmount("sd");
+  fatUnmount("usb");
+
+  /* shutdown all devices */
   DI_Close();
+  sdio_Deinitialize();
+  USBStorage_Deinitialize();
+  MOUSE_Deinit();
 #endif
 }
 
@@ -447,6 +467,21 @@ int main (int argc, char *argv[])
   /* initialize DI interface */
   DI_UseCache(0);
   DI_Init();
+
+  /* autodetect loader arguments */
+  if ((argc >= 3) && (argv[1] != NULL))
+  {
+    /* check if autoloading from USB is requested */ 
+    if (!strncasecmp(argv[1], "usb:/", 5))
+    {
+      /* reload to IOS58 for USB2 support  */
+      if (IOS_GetVersion() != 58)
+      {
+        /* warning: DVD support will be disabled after IOS reloading ! */
+        IOS_ReloadIOS(58);
+      }
+    }
+  }
 
   sprintf(osd_version, "%s (IOS %d)", VERSION, IOS_GetVersion());
 #else
@@ -576,16 +611,29 @@ int main (int argc, char *argv[])
     else mkdir(pathname,S_IRWXU);
   }
 
-  /* initialize sound engine */
+  /* initialize audio engine */
   gx_audio_Init();
 
-  /* initialize genesis plus core */
+  /* initialize emulation */
   history_default();
   config_default();
   init_machine();
 
-  /* auto-load last ROM file */
-  if (config.autoload)
+  /* file autoloading */
+  int autoload = config.autoload;
+
+  /* autodetect loader arguments */
+  if ((argc >= 3) && (argv[1] != NULL) && (argv[2] != NULL))
+  {
+    /* automatically load any file passed as argument */
+    autoload = 1;
+
+    /* add the file to the top of the history. */
+    history_add_file(argv[1], argv[2], 0);
+  }
+
+  /* automatically load first file from history list if requested */
+  if (autoload)
   {
     SILENT = 1;
     if (OpenDirectory(TYPE_RECENT, -1))
@@ -601,18 +649,48 @@ int main (int argc, char *argv[])
     SILENT = 0;
   }
 
-  /* show disclaimer */
+  /* show disclaimer before entering menu */
   if (ConfigRequested)
   {
     legal();
   }
 
+  /* initialize stub loader detection */
+  reload = 0;
+
 #ifdef HW_RVL
-  /* power button callback */
-  SYS_SetPowerCallback(PowerOff_cb);
+  /* autodetect loader arguments */
+  if ((argc >= 4) && (argv[3] != NULL))
+  {
+    /* assume proper loader stub exists */
+    reload = (void(*)())0x80001800;
+
+    /* return to loader when POWER buttons are pressed */
+    SYS_SetPowerCallback(Reload_cb);
+  }
+  else
+  {
+    /* autodetect HomeBrew Channel stub */
+    u32 *sig = (u32*)0x80001800;
+    if ((sig[1] == 0x53545542) && (sig[2] == 0x48415858))
+    {
+      reload = (void(*)())0x80001800;
+    }
+
+    /* by default, shutdown system when POWER buttons are pressed */
+    SYS_SetPowerCallback(PowerOff_cb);
+
+  }
+#else
+  /* autodetect SDLoad stub */
+  u32 *sig = (u32*)0x80001800;
+  if (sig[0] == 0x7c6000a6)
+  {
+    reload = (void(*)())0x80001800;
+  }
 #endif
 
-  /* reset button callback */
+  /* RESET button callback */
   SYS_SetResetCallback(Reset_cb);
 
   /* main emulation loop */
