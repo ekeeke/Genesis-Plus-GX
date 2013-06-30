@@ -1362,42 +1362,34 @@ unsigned int vdp_hvc_r(unsigned int cycles)
   int vc;
   unsigned int data = hvc_latch;
 
-  /* Check if HVC is frozen */
-  if (!data)
+  /* Check if HVC latch is enabled */
+  if (data)
   {
-    /* Cycle-accurate HCounter (Striker, Mickey Mania, Skitchin, Road Rash I,II,III, Sonic 3D Blast...) */
-    data = hctab[cycles % MCYCLES_PER_LINE];
-  }
-  else
-  {
-    /* Mode 5: HV counters are frozen (cf. lightgun games & Sunset Riders) */
-    if (reg[1] & 4)
+    /* Mode 5: HV-counters are frozen (cf. lightgun games, Sunset Riders logo) */
+    if (reg[1] & 0x04)
     {
-      /* check if HVC is really locked or is read within INT2 callback (HVC latch is forced for lightgun emulation, cf. lightgun.c) */
-      if ((reg[0] & 0x02) || (m68k.int_mask == 0x0200))
-      {
 #ifdef LOGVDP
-        error("[%d(%d)][%d(%d)] HVC read -> 0x%x (%x)\n", v_counter, (cycles/MCYCLES_PER_LINE-1)%lines_per_frame, cycles, cycles%MCYCLES_PER_LINE, data & 0xffff, m68k_get_reg(M68K_REG_PC));
+      error("[%d(%d)][%d(%d)] HVC latch read -> 0x%x (%x)\n", v_counter, (cycles/MCYCLES_PER_LINE-1)%lines_per_frame, cycles, cycles%MCYCLES_PER_LINE, data & 0xffff, m68k_get_reg(M68K_REG_PC));
 #endif
-        /* return latched HVC value */
-        return (data & 0xffff);
-      }
-
-      /* HV counters should be free-running (fixes "Gunfight - 3 in 1" randomization when Justifiers are enabled) */
-      hvc_latch = 0;
-      data = hctab[cycles % MCYCLES_PER_LINE];
+      /* return latched HVC value */
+      return (data & 0xffff);
     }
     else
     {
-      /* Mode 4: V counter runs normally, H counter is frozen */
+      /* Mode 4: by default, V-counter runs normally & H counter is frozen */
       data &= 0xff;
     }
   }
+  else
+  {
+    /* Cycle-accurate H-Counter (Striker, Mickey Mania, Skitchin, Road Rash I,II,III, Sonic 3D Blast...) */
+    data = hctab[cycles % MCYCLES_PER_LINE];
+  }
 
-  /* Cycle-accurate VCounter (cycle counter starts from line -1) */
+  /* Cycle-accurate V-Counter (cycle counter starts from line -1) */
   vc = (cycles / MCYCLES_PER_LINE) - 1;
 
-  /* VCounter overflow */
+  /* V-Counter overflow */
   if (vc > vc_max)
   {
     vc -= lines_per_frame;
@@ -1413,6 +1405,7 @@ unsigned int vdp_hvc_r(unsigned int cycles)
     vc = (vc & ~1) | ((vc >> 8) & 1);
   }
 
+  /* return H-Counter in LSB & V-Counter in MSB */
   data |= ((vc & 0xff) << 8);
   
 #ifdef LOGVDP
