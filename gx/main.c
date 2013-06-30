@@ -49,6 +49,14 @@
 
 #include <fat.h>
 
+#ifdef HW_RVL
+#include <iso9660.h>
+#include <ogc/usbmouse.h>
+
+extern bool sdio_Deinitialize();
+extern void USBStorage_Deinitialize();
+#endif
+
 /* output samplerate, adjusted to take resampler precision in account */
 #define SAMPLERATE_48KHZ 47992
 
