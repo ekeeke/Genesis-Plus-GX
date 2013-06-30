@@ -129,14 +129,25 @@ void lightgun_refresh(int port)
           }
         }
 
-        /* External Interrupt ? */
+        /* External Interrupt enabled ? */
         if (reg[11] & 0x08) 
         {
           m68k_update_irq(2);
         }
 
-        /* HACK: force HV Counter latch (some games does not lock HV Counter but instead use larger offset value) */
-        hvc_latch = 0x10000 | (y << 8);
+        /* HVC latch enabled ? */
+        if (reg[0] & 0x02)
+        {
+          /* line accurate V-Counter value */
+          hvc_latch = 0x10000 | (y << 8);
+        }
+        else
+        {
+          /* HACK: force HVC latch even when disabled (a few games does not lock HV Counter but instead applies larger offset value) */
+          hvc_latch = 0x20000 | (y << 8);
+        }
+
+        /* pixel accurate H-Counter value */
         if (reg[12] & 1) 
         {
           hvc_latch |= hc_320[((x / 2) + input.x_offset) % 210];
@@ -146,6 +157,11 @@ void lightgun_refresh(int port)
           hvc_latch |= hc_256[((x / 2) + input.x_offset) % 171];
         }
       }
+    }
+    else if (hvc_latch & 0x20000)
+    {
+      /* HVC should be free-running on other lines when latch is disabled (fixes "Gunfight - 3 in 1" randomization) */
+      hvc_latch = 0;
     }
   }
 }
