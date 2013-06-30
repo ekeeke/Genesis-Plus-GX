@@ -1363,14 +1363,9 @@ unsigned int vdp_hvc_r(unsigned int cycles)
   unsigned int data = hvc_latch;
 
   /* Check if HVC latch is enabled */
-  if (!data)
+  if (data)
   {
-    /* Cycle-accurate HCounter (Striker, Mickey Mania, Skitchin, Road Rash I,II,III, Sonic 3D Blast...) */
-    data = hctab[cycles % MCYCLES_PER_LINE];
-  }
-  else
-  {
-    /* Mode 5: H & V counters are frozen (cf. lightgun games, Sunset Riders logo) */
+    /* Mode 5: HV-counters are frozen (cf. lightgun games, Sunset Riders logo) */
     if (reg[1] & 0x04)
     {
 #ifdef LOGVDP
@@ -1381,15 +1376,20 @@ unsigned int vdp_hvc_r(unsigned int cycles)
     }
     else
     {
-      /* Mode 4: by default, V counter runs normally & H counter is frozen */
+      /* Mode 4: by default, V-counter runs normally & H counter is frozen */
       data &= 0xff;
     }
   }
+  else
+  {
+    /* Cycle-accurate H-Counter (Striker, Mickey Mania, Skitchin, Road Rash I,II,III, Sonic 3D Blast...) */
+    data = hctab[cycles % MCYCLES_PER_LINE];
+  }
 
-  /* Cycle-accurate VCounter (cycle counter starts from line -1) */
+  /* Cycle-accurate V-Counter (cycle counter starts from line -1) */
   vc = (cycles / MCYCLES_PER_LINE) - 1;
 
-  /* VCounter overflow */
+  /* V-Counter overflow */
   if (vc > vc_max)
   {
     vc -= lines_per_frame;
@@ -1405,7 +1405,7 @@ unsigned int vdp_hvc_r(unsigned int cycles)
     vc = (vc & ~1) | ((vc >> 8) & 1);
   }
 
-  /* return HCounter in LSB & VCounter in MSB */
+  /* return H-Counter in LSB & V-Counter in MSB */
   data |= ((vc & 0xff) << 8);
   
 #ifdef LOGVDP
