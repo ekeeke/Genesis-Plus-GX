@@ -37,14 +37,8 @@
  ****************************************************************************************/
 
 #include "shared.h"
-#include "eeprom_i2c.h"
 
 T_SRAM sram;
-
-static unsigned int sram_read_byte(unsigned int address);
-static unsigned int sram_read_word(unsigned int address);
-static void sram_write_byte(unsigned int address, unsigned int data);
-static void sram_write_word(unsigned int address, unsigned int data);
 
 /****************************************************************************
  * A quick guide to external RAM on the Genesis
@@ -194,44 +188,25 @@ void sram_init()
       sram.on = 1;
     }
   }
-
-  /* autodetect games with serial EEPROM */
-  eeprom_i2c_init();
-
-  /* initialize m68k bus handlers (if not already done) */
-  if (sram.on && !sram.custom)
-  {
-    /* disabled on startup if ROM is mapped in same area */
-    if (cart.romsize <= sram.start)
-    {
-      m68k.memory_map[sram.start >> 16].base    = sram.sram;
-      m68k.memory_map[sram.start >> 16].read8   = sram_read_byte;
-      m68k.memory_map[sram.start >> 16].read16  = sram_read_word;
-      m68k.memory_map[sram.start >> 16].write8  = sram_write_byte;
-      m68k.memory_map[sram.start >> 16].write16 = sram_write_word;
-      zbank_memory_map[sram.start >> 16].read   = sram_read_byte;
-      zbank_memory_map[sram.start >> 16].write  = sram_write_byte;
-    }
-  }
 }
 
-static unsigned int sram_read_byte(unsigned int address)
+unsigned int sram_read_byte(unsigned int address)
 {
   return sram.sram[address & 0xffff];
 }
 
-static unsigned int sram_read_word(unsigned int address)
+unsigned int sram_read_word(unsigned int address)
 {
   address &= 0xfffe;
   return (sram.sram[address + 1] | (sram.sram[address] << 8));
 }
 
-static void sram_write_byte(unsigned int address, unsigned int data)
+void sram_write_byte(unsigned int address, unsigned int data)
 {
   sram.sram[address & 0xffff] = data;
 }
 
-static void sram_write_word(unsigned int address, unsigned int data)
+void sram_write_word(unsigned int address, unsigned int data)
 {
   address &= 0xfffe;
   sram.sram[address] = data >> 8;

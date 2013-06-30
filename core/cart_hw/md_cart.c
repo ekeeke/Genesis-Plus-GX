@@ -4,7 +4,7 @@
  *
  *  Copyright (C) 2007-2013  Eke-Eke (Genesis Plus GX)
  *
- *  Most cartridge protections were initially documented by Haze
+ *  Many cartridge protections were initially documented by Haze
  *  (http://haze.mameworld.info/)
  *
  *  Realtec mapper was documented by TascoDeluxe
@@ -42,6 +42,7 @@
  ****************************************************************************************/
 
 #include "shared.h"
+#include "eeprom_i2c.h"
 #include "eeprom_spi.h"
 #include "gamepad.h"
 
@@ -356,7 +357,25 @@ void md_cart_init(void)
           BACKUP MEMORY 
   ***********************************************/
   sram_init();
-  
+  eeprom_i2c_init();
+
+  /* external SRAM */
+  if (sram.on && !sram.custom)
+  {
+    /* disabled on startup if ROM is mapped in same area */
+    if (cart.romsize <= sram.start)
+    {
+      /* initialize m68k bus handlers */
+      m68k.memory_map[sram.start >> 16].base    = sram.sram;
+      m68k.memory_map[sram.start >> 16].read8   = sram_read_byte;
+      m68k.memory_map[sram.start >> 16].read16  = sram_read_word;
+      m68k.memory_map[sram.start >> 16].write8  = sram_write_byte;
+      m68k.memory_map[sram.start >> 16].write16 = sram_write_word;
+      zbank_memory_map[sram.start >> 16].read   = sram_read_byte;
+      zbank_memory_map[sram.start >> 16].write  = sram_write_byte;
+    }
+  }
+
   /**********************************************
           SVP CHIP 
   ***********************************************/
@@ -492,7 +511,7 @@ void md_cart_init(void)
   }
 
   /**********************************************
-        Cartridge Extra Hardware
+        CARTRIDGE EXTRA HARDWARE
   ***********************************************/
   memset(&cart.hw, 0, sizeof(cart.hw));
 
@@ -607,7 +626,7 @@ void md_cart_init(void)
       m68k.memory_map[i].base = cart.rom + ((i & 0x03) << 16);
     }
 
-    /* 32K SRAM is initially disabled at $200000-$2FFFFF */
+    /* 32K static RAM is mapped to $200000-$2FFFFF (disabled on startup) */
     for (i=0x20; i<0x30; i++)
     {
       m68k.memory_map[i].base    = sram.sram;
@@ -789,10 +808,28 @@ int md_cart_context_load(uint8 *state)
     if (offset == 0xff)
     {
       /* SRAM */
-      m68k.memory_map[i].base = sram.sram;
+      m68k.memory_map[i].base     = sram.sram;
+      m68k.memory_map[i].read8    = sram_read_byte;
+      m68k.memory_map[i].read16   = sram_read_word;
+      m68k.memory_map[i].write8   = sram_write_byte;
+      m68k.memory_map[i].write16  = sram_write_word;
+      zbank_memory_map[i].read    = sram_read_byte;
+      zbank_memory_map[i].write   = sram_write_byte;
+
     }
     else
     {
+      /* check if SRAM was mapped there before loading state */
+      if (m68k.memory_map[i].base == sram.sram)
+      {
+        m68k.memory_map[i].read8    = NULL;
+        m68k.memory_map[i].read16   = NULL;
+        m68k.memory_map[i].write8   = m68k_unused_8_w;
+        m68k.memory_map[i].write16  = m68k_unused_16_w;
+        zbank_memory_map[i].read    = NULL;
+        zbank_memory_map[i].write   = zbank_unused_w;
+      }
+
       /* ROM */
       m68k.memory_map[i].base = cart.rom + (offset << 16);
     }
@@ -829,9 +866,9 @@ static void mapper_sega_w(uint32 data)
     {
       /* Backup RAM mapped to $200000-$20ffff (normally mirrored up to $3fffff but this breaks Sonic Megamix and no game need it) */
       m68k.memory_map[0x20].base    = sram.sram;
-      m68k.memory_map[0x20].write8  = NULL;
-      m68k.memory_map[0x20].write16 = NULL;
-      zbank_memory_map[0x20].write  = NULL;
+      m68k.memory_map[0x20].read8   = sram_read_byte;
+      m68k.memory_map[0x20].read16  = sram_read_word;
+      zbank_memory_map[0x20].read   = sram_read_byte;
 
       /* Backup RAM write protection */
       if (data & 2)
@@ -839,6 +876,12 @@ static void mapper_sega_w(uint32 data)
         m68k.memory_map[0x20].write8  = m68k_unused_8_w;
         m68k.memory_map[0x20].write16 = m68k_unused_16_w;
         zbank_memory_map[0x20].write  = zbank_unused_w;
+      }
+      else
+      {
+        m68k.memory_map[0x20].write8  = sram_write_byte;
+        m68k.memory_map[0x20].write16 = sram_write_word;
+        zbank_memory_map[0x20].write  = sram_write_byte;
       }
     }
 
@@ -857,10 +900,13 @@ static void mapper_sega_w(uint32 data)
     /* cartridge ROM mapped to $200000-$3fffff */
     for (i=0x20; i<0x40; i++)
     {
-      m68k.memory_map[i].base = cart.rom + ((i<<16) & cart.mask);
-      m68k.memory_map[i].write8 = m68k_unused_8_w;
-      m68k.memory_map[i].write16 = m68k_unused_16_w;
-      zbank_memory_map[i].write = zbank_unused_w;
+      m68k.memory_map[i].base     = cart.rom + ((i<<16) & cart.mask);
+      m68k.memory_map[i].read8    = NULL;
+      m68k.memory_map[i].read16   = NULL;
+      zbank_memory_map[i].read    = NULL;
+      m68k.memory_map[i].write8   = m68k_unused_8_w;
+      m68k.memory_map[i].write16  = m68k_unused_16_w;
+      zbank_memory_map[i].write   = zbank_unused_w;
     }
   }
 }
@@ -907,10 +953,10 @@ static void mapper_sf001_w(uint32 address, uint32 data)
           m68k.memory_map[i].base     = cart.rom + (i << 16);
           m68k.memory_map[i].read8    = m68k_read_bus_8;
           m68k.memory_map[i].read16   = m68k_read_bus_16;
-          m68k.memory_map[i].write8   = m68k_unused_8_w;
-          m68k.memory_map[i].write16  = m68k_unused_16_w;
+          m68k.memory_map[i].write8   = (i > 0x00) ? m68k_unused_8_w : mapper_sf001_w;
+          m68k.memory_map[i].write16  = (i > 0x00) ? m68k_unused_16_w : mapper_sf001_w;
           zbank_memory_map[i].read    = zbank_unused_r;
-          zbank_memory_map[i].write   = m68k_unused_8_w;
+          zbank_memory_map[i].write   = (i > 0x00) ? m68k_unused_8_w : mapper_sf001_w;
         }
       }
 
@@ -939,12 +985,12 @@ static void mapper_sf001_w(uint32 address, uint32 data)
         while (i<0x40)
         {
           m68k.memory_map[i].base     = sram.sram;
-          m68k.memory_map[i].read8    = NULL;
-          m68k.memory_map[i].read16   = NULL;
-          m68k.memory_map[i].write8   = NULL;
-          m68k.memory_map[i].write16  = NULL;
-          zbank_memory_map[i].read    = NULL;
-          zbank_memory_map[i].write   = NULL;
+          m68k.memory_map[i].read8    = sram_read_byte;
+          m68k.memory_map[i].read16   = sram_read_word;
+          m68k.memory_map[i].write8   = sram_write_byte;
+          m68k.memory_map[i].write16  = sram_write_word;
+          zbank_memory_map[i].read    = sram_read_byte;
+          zbank_memory_map[i].write   = sram_write_byte;
           i++;
         }
       }
@@ -956,10 +1002,10 @@ static void mapper_sf001_w(uint32 address, uint32 data)
           m68k.memory_map[i].base     = cart.rom + (i << 16);
           m68k.memory_map[i].read8    = NULL;
           m68k.memory_map[i].read16   = NULL;
-          m68k.memory_map[i].write8   = m68k_unused_8_w;
-          m68k.memory_map[i].write16  = m68k_unused_16_w;
+          m68k.memory_map[i].write8   = (i > 0x00) ? m68k_unused_8_w : mapper_sf001_w;
+          m68k.memory_map[i].write16  = (i > 0x00) ? m68k_unused_16_w : mapper_sf001_w;
           zbank_memory_map[i].read    = NULL;
-          zbank_memory_map[i].write   = m68k_unused_8_w;
+          zbank_memory_map[i].write   = (i > 0x00) ? m68k_unused_8_w : mapper_sf001_w;
         }
       }
 
@@ -1023,12 +1069,12 @@ static void mapper_sf004_w(uint32 address, uint32 data)
         /* 32KB static RAM mirrored into $200000-$2FFFFF (odd bytes only) */
         for (i=0x20; i<0x30; i++)
         {
-          m68k.memory_map[i].read8   = NULL;
-          m68k.memory_map[i].read16  = NULL;
-          m68k.memory_map[i].write8  = NULL;
-          m68k.memory_map[i].write16 = NULL;
-          zbank_memory_map[i].read   = NULL;
-          zbank_memory_map[i].write  = NULL;
+          m68k.memory_map[i].read8   = sram_read_byte;
+          m68k.memory_map[i].read16  = sram_read_word;
+          m68k.memory_map[i].write8  = sram_write_byte;
+          m68k.memory_map[i].write16 = sram_write_word;
+          zbank_memory_map[i].read   = sram_read_byte;
+          zbank_memory_map[i].write  = sram_write_byte;
         }
       }
       else
