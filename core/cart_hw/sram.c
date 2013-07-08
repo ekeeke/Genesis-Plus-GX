@@ -77,6 +77,9 @@ void sram_init()
     /* backup RAM detected */
     sram.detected = 1;
 
+    /* enable backup RAM */
+    sram.on = 1;
+
     /* retrieve backup RAM start & end addresses */
     sram.start = READ_WORD_LONG(cart.rom, 0x1b4);
     sram.end   = READ_WORD_LONG(cart.rom, 0x1b8);
@@ -89,14 +92,18 @@ void sram_init()
       sram.end = 0x203fff;
     }
 
+    /* fixe games indicating internal RAM as volatile external RAM (Feng Kuang Tao Hua Yuan) */
+    else if (sram.start == 0xff0000)
+    {
+      /* backup RAM should be disabled */
+      sram.on = 0;
+    }
+
     /* fixe other bad header informations */
     else if ((sram.start > sram.end) || ((sram.end - sram.start) >= 0x10000))
     {
       sram.end = sram.start + 0xffff;
     }
-
-    /* enable backup RAM */
-    sram.on = 1;
   }
   else
   {
