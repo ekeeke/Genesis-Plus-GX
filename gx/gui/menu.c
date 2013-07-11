@@ -1548,19 +1548,12 @@ static void videomenu ()
         config.render = (config.render + 1) % 3;
         if (config.render == 2)
         {
-          if (VIDEO_HaveComponentCable())
+          /* progressive mode is only possible through component cable */
+          if (!VIDEO_HaveComponentCable())
           {
-            /* progressive mode (60hz only) */
-            config.tv_mode = 0;
-            sprintf (items[1].text, "TV Mode: 60HZ");
-          }
-          else
-          {
-            /* do nothing if component cable is not detected */
             config.render = 0;
           }
         }
-
         if (config.render == 1)
           sprintf (items[0].text,"Display: INTERLACED");
         else if (config.render == 2)
@@ -1571,21 +1564,14 @@ static void videomenu ()
         break;
 
       case 1: /*** tv mode ***/
-        if (config.render != 2)
-        {
-          config.tv_mode = (config.tv_mode + 1) % 3;
-          if (config.tv_mode == 0)
-            sprintf (items[1].text, "TV Mode: 60HZ");
-          else if (config.tv_mode == 1)
-            sprintf (items[1].text, "TV Mode: 50HZ");
-          else
-            sprintf (items[1].text, "TV Mode: 50/60HZ");
-          reinit = 1;
-        }
+        config.tv_mode = (config.tv_mode + 1) % 3;
+        if (config.tv_mode == 0)
+          sprintf (items[1].text, "TV Mode: 60HZ");
+        else if (config.tv_mode == 1)
+          sprintf (items[1].text, "TV Mode: 50HZ");
         else
-        {
-          GUI_WaitPrompt("Error","Progressive Mode is 60hz only !\n");
-        }
+          sprintf (items[1].text, "TV Mode: 50/60HZ");
+        reinit = 1;
         break;
     
       case 2: /*** VSYNC ***/

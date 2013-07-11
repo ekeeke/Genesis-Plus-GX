@@ -1522,16 +1522,26 @@ void gx_video_Start(void)
     VIDEO_Flush();
   }
 
-  /* set interlaced or progressive video mode */
+  /* Enable progressive or interlaced video mode */
   if (config.render == 2)
   {
-    tvmodes[2]->viTVMode = VI_TVMODE_NTSC_PROG;
+    /* 480p */
+    tvmodes[2]->viTVMode = (tvmodes[2]->viTVMode & ~3) | VI_PROGRESSIVE;
     tvmodes[2]->xfbMode = VI_XFBMODE_SF;
+
+    /* 576p */
+    tvmodes[5]->viTVMode = VI_TVMODE_PAL_PROG;
+    tvmodes[5]->xfbMode = VI_XFBMODE_SF;
   }
   else if (config.render == 1)
   {
-    tvmodes[2]->viTVMode = tvmodes[0]->viTVMode & ~3;
+    /* 480i */
+    tvmodes[2]->viTVMode = (tvmodes[2]->viTVMode & ~3) | VI_INTERLACE;
     tvmodes[2]->xfbMode = VI_XFBMODE_DF;
+
+    /* 576i */
+    tvmodes[5]->viTVMode = VI_TVMODE_PAL_INT;
+    tvmodes[5]->xfbMode = VI_XFBMODE_DF;
   }
 
   /* update horizontal border width */
@@ -1786,7 +1796,7 @@ void gx_video_Init(void)
 
   /* Get the current VIDEO mode then :
       - set menu video mode (480p/576p/480i/576i)
-      - set emulator rendering 60hz TV modes (PAL/MPAL/NTSC/EURGB60)
+      - set emulator rendering 60hz TV modes (MPAL/NTSC/EURGB60)
    */
   vmode = VIDEO_GetPreferredMode(NULL);
 
