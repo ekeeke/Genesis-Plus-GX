@@ -223,27 +223,37 @@ void config_default(void)
   int loaded = config_load();
 
 #ifndef HW_RVL
-  /* detect progressive mode enable/disable requests */
-  PAD_ScanPads();
-  if (PAD_ButtonsHeld(0) & PAD_BUTTON_B)
+  /* check if component cable was detected */
+  if (VIDEO_HaveComponentCable())
   {
-    /* swap progressive mode enable flag and play some sound to inform user */
-    config.v_prog ^= 1;
-    ASND_Pause(0);
-    int voice = ASND_GetFirstUnusedVoice();
-    ASND_SetVoice(voice,VOICE_MONO_16BIT,44100,0,(u8 *)intro_pcm,intro_pcm_size,200,200,NULL);
-    sleep (2);
-    ASND_Pause(1);
-  }
+    /* when component cable is detected, libogc automatically enables progressive mode  */
+    /* as preferred video mode but it could still be used on TV not supporting 480p/576p */
+    PAD_ScanPads();
 
-  /* switch into 480p if component cable has been detected and progressive mode is enabled */
-  if (VIDEO_HaveComponentCable() && config.v_prog)
-  {
-    vmode = &TVNtsc480Prog;
-    VIDEO_Configure (vmode);
-    VIDEO_Flush();
-    VIDEO_WaitVSync();
-    VIDEO_WaitVSync();
+    /* detect progressive mode switch requests */
+    if (PAD_ButtonsHeld(0) & PAD_BUTTON_B)
+    {
+      /* swap progressive mode enable flag */
+      config.v_prog ^= 1;
+
+      /* play some sound to inform user */
+      ASND_Pause(0);
+      int voice = ASND_GetFirstUnusedVoice();
+      ASND_SetVoice(voice,VOICE_MONO_16BIT,44100,0,(u8 *)intro_pcm,intro_pcm_size,200,200,NULL);
+      sleep (2);
+      ASND_Pause(1);
+    }
+
+    /* check if progressive mode should be disabled */
+    if (!config.v_prog)
+    {
+      /* switch menu video mode to interlaced */
+      vmode->viTVMode = (vmode->viTVMode & ~3) | VI_INTERLACE;
+      VIDEO_Configure (vmode);
+      VIDEO_Flush();
+      VIDEO_WaitVSync();
+      VIDEO_WaitVSync();
+    }
   }
 #endif
 
