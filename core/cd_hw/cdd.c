@@ -152,6 +152,26 @@ static const char extensions[SUPPORTED_EXT][16] =
 
 static blip_t* blip[2];
 
+
+#ifdef USE_LIBTREMOR
+#ifdef DISABLE_MANY_OGG_OPEN_FILES
+static void ogg_free(int i)
+{
+  /* clear OGG file descriptor to prevent file from being closed */
+  cdd.toc.tracks[i].vf.datasource = NULL;
+
+  /* close VORBIS file structure */
+  ov_clear(&cdd.toc.tracks[i].vf);
+
+  /* indicates that the track is a seekable VORBIS file */
+  cdd.toc.tracks[i].vf.seekable = 1;
+
+  /* reset file reading position */
+  fseek(cdd.toc.tracks[i].fd, 0, SEEK_SET);
+}
+#endif
+#endif
+
 void cdd_init(blip_t* left, blip_t* right)
 {
   /* CD-DA is running by default at 44100 Hz */
@@ -206,6 +226,16 @@ int cdd_context_load(uint8 *state)
   int lba;
   int bufferptr = 0;
 
+#ifdef USE_LIBTREMOR
+#ifdef DISABLE_MANY_OGG_OPEN_FILES
+  /* close previous track VORBIS file structure to save memory */
+  if (cdd.toc.tracks[cdd.index].vf.datasource)
+  {
+    ogg_free(cdd.index);
+  }
+#endif
+#endif
+
   load_param(&cdd.cycles, sizeof(cdd.cycles));
   load_param(&cdd.latency, sizeof(cdd.latency));
   load_param(&cdd.index, sizeof(cdd.index));
@@ -231,14 +261,19 @@ int cdd_context_load(uint8 *state)
     }
   }
 #ifdef USE_LIBTREMOR
-  else if (cdd.toc.tracks[cdd.index].vf.datasource)
+  else if (cdd.toc.tracks[cdd.index].vf.seekable)
   {
+#ifdef DISABLE_MANY_OGG_OPEN_FILES
+    /* VORBIS file need to be opened first */
+    ov_open(cdd.toc.tracks[cdd.index].fd,&cdd.toc.tracks[cdd.index].vf,0,0);
+#endif
+    /* VORBIS AUDIO track */
     ov_pcm_seek(&cdd.toc.tracks[cdd.index].vf, (lba - cdd.toc.tracks[cdd.index].start) * 588 - cdd.toc.tracks[cdd.index].offset);
   }
-#endif 
+#endif
   else if (cdd.toc.tracks[cdd.index].fd)
   {
-    /* AUDIO track */
+    /* PCM AUDIO track */
     fseek(cdd.toc.tracks[cdd.index].fd, (lba * 2352) - cdd.toc.tracks[cdd.index].offset, SEEK_SET);
   }
 
@@ -564,7 +599,12 @@ int cdd_load(char *filename, char *header)
               cdd.toc.tracks[cdd.toc.last].offset = 0;
               break;
             }
-          }
+
+#ifdef DISABLE_MANY_OGG_OPEN_FILES
+            /* close VORBIS file structure to save memory */
+            ogg_free(cdd.toc.last);
+#endif
+          } 
           else
 #endif
           {
@@ -718,6 +758,11 @@ int cdd_load(char *filename, char *header)
           cdd.toc.tracks[cdd.toc.last].end -= 150;
         }
 
+#ifdef DISABLE_MANY_OGG_OPEN_FILES
+        /* close VORBIS file structure to save memory */
+        ogg_free(cdd.toc.last);
+#endif
+
         /* update TOC end */
         cdd.toc.end = cdd.toc.tracks[cdd.toc.last].end;
 
@@ -854,23 +899,21 @@ void cdd_unload(void)
 #ifdef USE_LIBTREMOR
       if (cdd.toc.tracks[i].vf.datasource)
       {
-        /* close VORBIS file */
+        /* close VORBIS file (if still opened) */
         ov_clear(&cdd.toc.tracks[i].vf);
       }
       else
 #endif
+      if (cdd.toc.tracks[i].fd)
       {
-        if (cdd.toc.tracks[i].fd)
-        {
-          /* close file */
-          fclose(cdd.toc.tracks[i].fd);
+        /* close file */
+        fclose(cdd.toc.tracks[i].fd);
 
-          /* detect single file images */
-          if (cdd.toc.tracks[i+1].fd == cdd.toc.tracks[i].fd)
-          {
-            /* exit loop */
-            i = cdd.toc.last;
-          }
+        /* detect single file images */
+        if (cdd.toc.tracks[i+1].fd == cdd.toc.tracks[i].fd)
+        {
+          /* exit loop */
+          i = cdd.toc.last;
         }
       }
     }
@@ -1130,6 +1173,15 @@ void cdd_update(void)
     /* check end of current track */
     if (cdd.lba >= cdd.toc.tracks[cdd.index].end)
     {
+#ifdef USE_LIBTREMOR
+#ifdef DISABLE_MANY_OGG_OPEN_FILES
+      /* close previous track VORBIS file structure to save memory */
+      if (cdd.toc.tracks[cdd.index].vf.datasource)
+      {
+        ogg_free(cdd.index);
+      }
+#endif
+#endif
       /* play next track */
       cdd.index++;
 
@@ -1138,8 +1190,12 @@ void cdd_update(void)
 
       /* seek to next audio track start */
 #ifdef USE_LIBTREMOR
-      if (cdd.toc.tracks[cdd.index].vf.datasource)
+      if (cdd.toc.tracks[cdd.index].vf.seekable)
       {
+#ifdef DISABLE_MANY_OGG_OPEN_FILES
+        /* VORBIS file need to be opened first */
+        ov_open(cdd.toc.tracks[cdd.index].fd,&cdd.toc.tracks[cdd.index].vf,0,0);
+#endif
         ov_pcm_seek(&cdd.toc.tracks[cdd.index].vf, -cdd.toc.tracks[cdd.index].offset);
       }
       else
@@ -1160,6 +1216,15 @@ void cdd_update(void)
     /* check current track limits */
     if (cdd.lba >= cdd.toc.tracks[cdd.index].end)
     {
+#ifdef USE_LIBTREMOR
+#ifdef DISABLE_MANY_OGG_OPEN_FILES
+      /* close previous track VORBIS file structure to save memory */
+      if (cdd.toc.tracks[cdd.index].vf.datasource)
+      {
+        ogg_free(cdd.index);
+      }
+#endif
+#endif
       /* next track */
       cdd.index++;
 
@@ -1174,6 +1239,16 @@ void cdd_update(void)
     }
     else if (cdd.lba < cdd.toc.tracks[cdd.index].start)
     {
+#ifdef USE_LIBTREMOR
+#ifdef DISABLE_MANY_OGG_OPEN_FILES
+      /* close previous track VORBIS file structure to save memory */
+      if (cdd.toc.tracks[cdd.index].vf.datasource)
+      {
+        ogg_free(cdd.index);
+      }
+#endif
+#endif
+
       /* previous track */
       cdd.index--;
 
@@ -1209,15 +1284,23 @@ void cdd_update(void)
       fseek(cdd.toc.tracks[0].fd, cdd.lba * cdd.sectorSize, SEEK_SET);
     }
 #ifdef USE_LIBTREMOR
-    else if (cdd.toc.tracks[cdd.index].vf.datasource)
+    else if (cdd.toc.tracks[cdd.index].vf.seekable)
     {
+#ifdef DISABLE_MANY_OGG_OPEN_FILES
+      /* check if a new track is being played */
+      if (!cdd.toc.tracks[cdd.index].vf.datasource)
+      {
+        /* VORBIS file need to be opened first */
+        ov_open(cdd.toc.tracks[cdd.index].fd,&cdd.toc.tracks[cdd.index].vf,0,0);
+      }
+#endif
       /* VORBIS AUDIO track */
       ov_pcm_seek(&cdd.toc.tracks[cdd.index].vf, (cdd.lba - cdd.toc.tracks[cdd.index].start) * 588 - cdd.toc.tracks[cdd.index].offset);
     }
 #endif 
     else if (cdd.toc.tracks[cdd.index].fd)
     {
-      /* AUDIO track */
+      /* PCM AUDIO track */
       fseek(cdd.toc.tracks[cdd.index].fd, (cdd.lba * 2352) - cdd.toc.tracks[cdd.index].offset, SEEK_SET);
     }
   }
@@ -1389,11 +1472,33 @@ void cdd_process(void)
       /* update current LBA */
       cdd.lba = lba;
 
-      /* update current track index */
+      /* get track index */
       while ((cdd.toc.tracks[index].end <= lba) && (index < cdd.toc.last)) index++;
+
+#ifdef USE_LIBTREMOR
+#ifdef DISABLE_MANY_OGG_OPEN_FILES
+      /* check if track index has changed */
+      if (index != cdd.index)
+      {
+        /* close previous track VORBIS file structure to save memory */
+        if (cdd.toc.tracks[cdd.index].vf.datasource)
+        {
+          ogg_free(cdd.index);
+        }
+
+        /* open current track VORBIS file */
+        if (cdd.toc.tracks[index].vf.seekable)
+        {
+          ov_open(cdd.toc.tracks[index].fd,&cdd.toc.tracks[index].vf,0,0);
+        }
+      }
+#endif
+#endif
+
+      /* update current track index */
       cdd.index = index;
 
-      /* stay within track limits */
+      /* stay within track limits when seeking files */
       if (lba < cdd.toc.tracks[index].start) 
       {
         lba = cdd.toc.tracks[index].start;
@@ -1406,15 +1511,15 @@ void cdd_process(void)
         fseek(cdd.toc.tracks[0].fd, lba * cdd.sectorSize, SEEK_SET);
       }
 #ifdef USE_LIBTREMOR
-      else if (cdd.toc.tracks[index].vf.datasource)
+      else if (cdd.toc.tracks[index].vf.seekable)
       {
         /* VORBIS AUDIO track */
-        ov_pcm_seek(&cdd.toc.tracks[index].vf, (lba - cdd.toc.tracks[index].start) * 588 - cdd.toc.tracks[cdd.index].offset);
+        ov_pcm_seek(&cdd.toc.tracks[index].vf, (lba - cdd.toc.tracks[index].start) * 588 - cdd.toc.tracks[index].offset);
       }
 #endif 
       else if (cdd.toc.tracks[index].fd)
       {
-        /* AUDIO track */
+        /* PCM AUDIO track */
         fseek(cdd.toc.tracks[index].fd, (lba * 2352) - cdd.toc.tracks[index].offset, SEEK_SET);
       }
 
@@ -1459,8 +1564,30 @@ void cdd_process(void)
       /* update current LBA */
       cdd.lba = lba;
 
-      /* update current track index */
+      /* get current track index */
       while ((cdd.toc.tracks[index].end <= lba) && (index < cdd.toc.last)) index++;
+
+#ifdef USE_LIBTREMOR
+#ifdef DISABLE_MANY_OGG_OPEN_FILES
+      /* check if track index has changed */
+      if (index != cdd.index)
+      {
+        /* close previous track VORBIS file structure to save memory */
+        if (cdd.toc.tracks[cdd.index].vf.datasource)
+        {
+          ogg_free(cdd.index);
+        }
+
+        /* open current track VORBIS file */
+        if (cdd.toc.tracks[index].vf.seekable)
+        {
+          ov_open(cdd.toc.tracks[index].fd,&cdd.toc.tracks[index].vf,0,0);
+        }
+      }
+#endif
+#endif
+
+      /* update current track index */
       cdd.index = index;
 
       /* stay within track limits */
@@ -1476,15 +1603,15 @@ void cdd_process(void)
         fseek(cdd.toc.tracks[0].fd, lba * cdd.sectorSize, SEEK_SET);
       }
 #ifdef USE_LIBTREMOR
-      else if (cdd.toc.tracks[index].vf.datasource)
+      else if (cdd.toc.tracks[index].vf.seekable)
       {
         /* VORBIS AUDIO track */
-        ov_pcm_seek(&cdd.toc.tracks[index].vf, (lba - cdd.toc.tracks[index].start) * 588 - cdd.toc.tracks[cdd.index].offset);
+        ov_pcm_seek(&cdd.toc.tracks[index].vf, (lba - cdd.toc.tracks[index].start) * 588 - cdd.toc.tracks[index].offset);
       }
 #endif 
       else if (cdd.toc.tracks[index].fd)
       {
-        /* AUDIO track */
+        /* PCM AUDIO track */
         fseek(cdd.toc.tracks[index].fd, (lba * 2352) - cdd.toc.tracks[index].offset, SEEK_SET);
       }
 
