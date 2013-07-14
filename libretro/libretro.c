@@ -463,7 +463,7 @@ static struct retro_system_av_info g_av_info;
 void retro_get_system_info(struct retro_system_info *info)
 {
    info->library_name = "Genesis Plus GX";
-   info->library_version = "v1.7.3";
+   info->library_version = "v1.7.4";
    info->valid_extensions = "md|smd|bin|cue|gen|iso|sms|gg|sg";
    info->block_extract = false;
    info->need_fullpath = true;
