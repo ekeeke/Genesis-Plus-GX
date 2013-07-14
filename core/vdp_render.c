@@ -965,10 +965,11 @@ static void palette_init(void)
   /*    normal   : xxx0     (0-14)                */
   /*    shadow   : 0xxx     (0-7)                 */
   /*    highlight: 1xxx - 1 (7-14)                */
-  /*    mode4    : xx00 ?   (0-12)                */
-  /*    GG mode  : xxxx     (0-16)                */
+  /*    mode4    : xxxx(*)  (0-15)                */
+  /*    GG mode  : xxxx     (0-15)                */
   /*                                              */
   /* with x = original CRAM value (2, 3 or 4-bit) */
+  /*  (*) 2-bit CRAM value is expanded to 4-bit   */  
   /************************************************/
 
   /* Initialize Mode 5 pixel color look-up tables */
@@ -993,8 +994,8 @@ static void palette_init(void)
     g = (i >> 2) & 3;
     b = (i >> 4) & 3;
 
-    /* Convert to output pixel format (expand to 4-bit for brighter colors ?) */
-    pixel_lut_m4[i] = MAKE_PIXEL(r << 2,g << 2,b<< 2);
+    /* Expand to full range & convert to output pixel format */
+    pixel_lut_m4[i] = MAKE_PIXEL((r << 2) | r, (g << 2) | g, (b << 2) | b);
   }
 }
 
