@@ -844,7 +844,7 @@ static void soundmenu ()
   }
   else if (config.filter == 1)
   {
-    int lp_range = (config.lp_range * 100 + 0xffff) / 0x10000;
+    int16 lp_range = (config.lp_range * 100 + 0xffff) / 0x10000;
     sprintf (items[7].text, "Filtering: LOW-PASS");
     sprintf (items[8].text, "Low-Pass Rate: %d %%", lp_range);
     strcpy (items[9].comment, "Adjust Low Pass filter");
@@ -987,7 +987,7 @@ static void soundmenu ()
       {
         if (config.filter == 1)
         {
-          int lp_range = (config.lp_range * 100 + 0xffff) / 0x10000;
+          int16 lp_range = (config.lp_range * 100 + 0xffff) / 0x10000;
           GUI_OptionBox(m,0,"Low-Pass Rate",(void *)&lp_range,1,0,100,1);
           sprintf (items[8].text, "Low-Pass Rate: %d %%", lp_range);
           config.lp_range = (lp_range * 0x10000) / 100;
