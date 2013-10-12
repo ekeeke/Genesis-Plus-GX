@@ -715,7 +715,7 @@ bool retro_load_game(const struct retro_game_info *info)
    fprintf(stderr, "Sega CD JP BRAM is located at: %s\n", CD_BRAM_JP);
    fprintf(stderr, "Sega CD RAM CART is located at: %s\n", CART_BRAM);
 
-   snprintf(DEFAULT_PATH, sizeof(DEFAULT_PATH), g_rom_dir);
+   snprintf(DEFAULT_PATH, sizeof(DEFAULT_PATH), "%s", g_rom_dir);
 
    config_default();
    init_bitmap();
