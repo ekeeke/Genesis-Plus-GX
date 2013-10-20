@@ -1172,7 +1172,7 @@ void system_frame_sms(int do_skip)
     /* Sprites are still processed during vertical borders */
     if (reg[1] & 0x40)
     {
-      render_obj(bitmap.viewport.w);
+      render_obj(1);
     }
   }
 
@@ -1349,7 +1349,7 @@ void system_frame_sms(int do_skip)
     if ((system_hw < SYSTEM_MD) && (line > (lines_per_frame - 16)))
     {
       /* Sprites are still processed during top border */
-      render_obj(bitmap.viewport.w);
+      render_obj((line - lines_per_frame) & 1);
       parse_satb(line - lines_per_frame);
     }
 
