@@ -133,8 +133,8 @@ static uint16 addr_latch;     /* Latched A15, A14 of address */
 static uint16 sat_base_mask;  /* Base bits of SAT */
 static uint16 sat_addr_mask;  /* Index bits of SAT */
 static uint16 dma_src;        /* DMA source address */
-static uint16 dmafill;        /* DMA Fill setup */
 static uint32 dma_endCycles;  /* 68k cycles to DMA end */
+static int dmafill;           /* DMA Fill pending flag */
 static int cached_write;      /* 2nd part of 32-bit CTRL port write (Genesis mode) or LSB of CRAM data (Game Gear mode) */
 static uint16 fifo[4];        /* FIFO ring-buffer */
 static int fifo_idx;          /* FIFO write index */
@@ -649,7 +649,7 @@ void vdp_dma_update(unsigned int cycles)
     /* Check if DMA is finished */
     if (!dma_length)
     {
-      /* DMA source address registers are incremented during DMA */
+      /* DMA source address registers are incremented during DMA (even DMA Fill) */
       uint16 end = reg[21] + (reg[22] << 8) + reg[19] + (reg[20] << 8);
       reg[21] = end & 0xff;
       reg[22] = end >> 8;
@@ -730,17 +730,29 @@ void vdp_68k_ctrl_w(unsigned int data)
         {
           case 2:
           {
-            /* DMA Fill will be triggered by next DATA port write */
-            dmafill = 0x100;
+            /* DMA Fill */
+            dma_type = 2;
+
+            /* DMA is pending until next DATA port write */
+            dmafill = 1;
+
+            /* Set DMA Busy flag */
+            status |= 0x02;
+
+            /* DMA end cycle is not initialized yet (this prevents DMA Busy flag from being cleared on VDP status read) */
+            dma_endCycles = 0xffffffff;
             break;
           }
 
           case 3:
           {
+            /* DMA Copy */
+            dma_type = 3;
+
             /* DMA length */
             dma_length = (reg[20] << 8) | reg[19];
 
-            /* Zero DMA length */
+            /* Zero DMA length (pre-decrementing counter) */
             if (!dma_length)
             {
               dma_length = 0x10000;
@@ -749,18 +761,20 @@ void vdp_68k_ctrl_w(unsigned int data)
             /* DMA source address */
             dma_src = (reg[22] << 8) | reg[21];
 
-            /* trigger DMA copy */
-            dma_type = 3;
+            /* Trigger DMA */
             vdp_dma_update(m68k.cycles);
             break;
           }
 
           default:
           {
+            /* DMA from 68k bus */
+            dma_type = (code & 0x06) ? 0 : 1;
+
             /* DMA length */
             dma_length = (reg[20] << 8) | reg[19];
 
-            /* Zero DMA length */
+            /* Zero DMA length (pre-decrementing counter) */
             if (!dma_length)
             {
               dma_length = 0x10000;
@@ -779,8 +793,7 @@ void vdp_68k_ctrl_w(unsigned int data)
               dma_length--;
             }
 
-            /* trigger DMA from 68k bus */
-            dma_type = (code & 0x06) ? 0 : 1;
+            /* Trigger DMA */
             vdp_dma_update(m68k.cycles);
             break;
           }
@@ -876,16 +889,25 @@ void vdp_z80_ctrl_w(unsigned int data)
             case 2:
             {
               /* DMA Fill will be triggered by next write to DATA port */
-              dmafill = 0x100;
+              dmafill = 1;
+
+              /* Set DMA Busy flag */
+              status |= 0x02;
+
+              /* DMA end cycle is not initialized yet (this prevents DMA Busy flag from being cleared on VDP status read) */
+              dma_endCycles = 0xffffffff;
               break;
             }
 
             case 3:
             {
+              /* DMA copy */
+              dma_type = 3;
+
               /* DMA length */
               dma_length = (reg[20] << 8) | reg[19];
 
-              /* Zero DMA length */
+              /* Zero DMA length (pre-decrementing counter) */
               if (!dma_length)
               {
                 dma_length = 0x10000;
@@ -894,8 +916,7 @@ void vdp_z80_ctrl_w(unsigned int data)
               /* DMA source address */
               dma_src = (reg[22] << 8) | reg[21];
 
-              /* trigger DMA copy */
-              dma_type = 3;
+              /* Trigger DMA */
               vdp_dma_update(Z80.cycles);
               break;
             }
@@ -1242,10 +1263,15 @@ unsigned int vdp_68k_ctrl_r(unsigned int cycles)
     vdp_fifo_update(cycles);
   }
 
-  /* Update DMA Busy flag */
-  if ((status & 2) && !dma_length && (cycles >= dma_endCycles))
+  /* Check if DMA Busy flag is set */
+  if (status & 2)
   {
-    status &= 0xFFFD;
+    /* Check if DMA is finished */
+    if (!dma_length && (cycles >= dma_endCycles))
+    {
+      /* Clear DMA Busy flag */
+      status &= 0xFFFD;
+    }
   }
 
   /* Return VDP status */
@@ -1283,10 +1309,15 @@ unsigned int vdp_z80_ctrl_r(unsigned int cycles)
   /* Cycle-accurate SOVR & VINT flags */
   int line = (lines_per_frame + (cycles / MCYCLES_PER_LINE) - 1) % lines_per_frame;
 
-  /* Update DMA Busy flag (Mega Drive VDP specific) */
-  if ((system_hw & SYSTEM_MD) && (status & 2) && !dma_length && (cycles >= dma_endCycles))
+  /* Check if DMA busy flag is set (Mega Drive VDP specific) */
+  if (status & 2)
   {
-    status &= 0xFD;
+    /* Check if DMA is finished */
+    if (!dma_length && (cycles >= dma_endCycles))
+    {
+      /* Clear DMA Busy flag */
+      status &= 0xFD;
+    }
   }
 
   /* Check if we are already on next line */
@@ -1300,7 +1331,7 @@ unsigned int vdp_z80_ctrl_r(unsigned int cycles)
     }
     else if ((line >= 0) && (line < bitmap.viewport.h) && !(work_ram[0x1ffb] & cart.special))
     {
-      /* Check sprites overflow & collision */
+      /* render next line to check sprites overflow & collision */
       render_line(line);
     }
   }
@@ -2417,23 +2448,22 @@ static void vdp_68k_data_w_m5(unsigned int data)
   /* Write data */
   vdp_bus_w(data);
 
-  /* DMA Fill */
-  if (dmafill & 0x100)
+  /* Check if DMA Fill is pending */
+  if (dmafill)
   {
-    /* Fill data = MSB (DMA fill flag is cleared) */
-    dmafill = data >> 8;
+    /* Clear DMA Fill pending flag */
+    dmafill = 0;
 
     /* DMA length */
     dma_length = (reg[20] << 8) | reg[19];
 
-    /* Zero DMA length */
+    /* Zero DMA length (pre-decrementing counter) */
     if (!dma_length)
     {
       dma_length = 0x10000;
     }
 
-    /* Process DMA Fill*/
-    dma_type = 2;
+    /* Trigger DMA */
     vdp_dma_update(m68k.cycles);
   }
 }
@@ -2694,23 +2724,22 @@ static void vdp_z80_data_w_m5(unsigned int data)
   /* Increment address register  */
   addr += reg[15];
 
-  /* DMA Fill */
-  if (dmafill & 0x100)
+  /* Check if DMA Fill is pending */
+  if (dmafill)
   {
-    /* Fill data (DMA fill flag is cleared) */
-    dmafill = data;
+    /* Clear DMA Fill pending flag */
+    dmafill = 0;
 
     /* DMA length */
     dma_length = (reg[20] << 8) | reg[19];
 
-    /* Zero DMA length */
+    /* Zero DMA length (pre-decrementing counter) */
     if (!dma_length)
     {
       dma_length = 0x10000;
     }
 
-    /* Process DMA Fill */
-    dma_type = 2;
+    /* Trigger DMA */
     vdp_dma_update(Z80.cycles);
   }
 }
@@ -3074,11 +3103,11 @@ static void vdp_dma_68k_io(unsigned int length)
   dma_src = (source >> 1) & 0xffff;
 }
 
-/*  VRAM Copy (TODO: check if CRAM or VSRAM copy is possible) */
+/*  VRAM Copy */
 static void vdp_dma_copy(unsigned int length)
 {
-  /* VRAM read/write operation only */
-  if ((code & 0x1E) == 0x10)
+  /* CD4 should be set (CD0-CD3 ignored) otherwise VDP locks (hard reset needed) */
+  if (code & 0x10)
   {
     int name;
     uint8 data;
@@ -3088,52 +3117,9 @@ static void vdp_dma_copy(unsigned int length)
 
     do
     {
-      /* Read byte from source address */
-      data = READ_BYTE(vram, source);
+      /* Read byte from adjacent VRAM source address */
+      data = READ_BYTE(vram, source ^ 1);
 
-      /* Intercept writes to Sprite Attribute Table */
-      if ((addr & sat_base_mask) == satb)
-      {
-        /* Update internal SAT */
-        WRITE_BYTE(sat, addr & sat_addr_mask, data);
-      }
-
-      /* Write byte to VRAM address */
-      WRITE_BYTE(vram, addr, data);
-
-      /* Update pattern cache */
-      MARK_BG_DIRTY(addr);
-
-      /* Increment source address */
-      source++;
-
-      /* Increment VRAM address */
-      addr += reg[15];
-    }
-    while (--length);
-
-    /* Update DMA source address */
-    dma_src = source;
-  }
-  else
-  {
-    /* DMA source & VRAM addresses are still incremented */
-    addr += reg[15] * length;
-    dma_src += length;
-  }
-}
-
-/* VRAM Fill (TODO: check if CRAM or VSRAM fill is possible) */
-static void vdp_dma_fill(unsigned int length)
-{
-  /* VRAM write operation only (Williams Greatest Hits after soft reset) */
-  if ((code & 0x1F) == 0x01)
-  {
-    int name;
-    uint8 data = dmafill;
-
-    do
-    {
       /* Intercept writes to Sprite Attribute Table */
       if ((addr & sat_base_mask) == satb)
       {
@@ -3141,20 +3127,126 @@ static void vdp_dma_fill(unsigned int length)
         WRITE_BYTE(sat, (addr & sat_addr_mask) ^ 1, data);
       }
 
-      /* Write byte to adjacent VRAM address */
+      /* Write byte to adjacent VRAM destination address */
       WRITE_BYTE(vram, addr ^ 1, data);
 
       /* Update pattern cache */
-      MARK_BG_DIRTY (addr);
+      MARK_BG_DIRTY(addr);
 
-      /* Increment VRAM address */
+      /* Increment VRAM source address */
+      source++;
+
+      /* Increment VRAM destination address */
       addr += reg[15];
     }
     while (--length);
+
+    /* Update DMA source address */
+    dma_src = source;
   }
-  else
+}
+
+/* DMA Fill */
+static void vdp_dma_fill(unsigned int length)
+{
+  /* Check destination code (CD0-CD3) */
+  switch (code & 0x0F)
   {
-    /* VRAM address is still incremented */
-    addr += reg[15] * length;
+    case 0x01:  /* VRAM */
+    {
+      int name;
+
+      /* Get source data from last written FIFO  entry */
+      uint8 data = fifo[(fifo_idx+3)&3] >> 8;
+
+      do
+      {
+        /* Intercept writes to Sprite Attribute Table */
+        if ((addr & sat_base_mask) == satb)
+        {
+          /* Update internal SAT */
+          WRITE_BYTE(sat, (addr & sat_addr_mask) ^ 1, data);
+        }
+
+        /* Write byte to adjacent VRAM address */
+        WRITE_BYTE(vram, addr ^ 1, data);
+
+        /* Update pattern cache */
+        MARK_BG_DIRTY (addr);
+
+        /* Increment VRAM address */
+        addr += reg[15];
+      }
+      while (--length);
+      break;
+    }
+
+    case 0x03:  /* CRAM */
+    {
+      /* Get source data from next available FIFO entry */
+      uint16 data = fifo[fifo_idx];
+
+      /* Pack 16-bit bus data (BBB0GGG0RRR0) to 9-bit CRAM data (BBBGGGRRR) */
+      data = ((data & 0xE00) >> 3) | ((data & 0x0E0) >> 2) | ((data & 0x00E) >> 1);
+
+      do
+      {
+        /* Pointer to CRAM 9-bit word */
+        uint16 *p = (uint16 *)&cram[addr & 0x7E];
+
+        /* Check if CRAM data is being modified */
+        if (data != *p)
+        {
+          /* CRAM index (64 words) */
+          int index = (addr >> 1) & 0x3F;
+
+          /* Write CRAM data */
+          *p = data;
+
+          /* Color entry 0 of each palette is never displayed (transparent pixel) */
+          if (index & 0x0F)
+          {
+            /* Update color palette */
+            color_update_m5(index, data);
+          }
+
+          /* Update backdrop color */
+          if (index == border)
+          {
+            color_update_m5(0x00, data);
+          }
+        }
+          
+        /* Increment CRAM address */
+        addr += reg[15];
+      }
+      while (--length);
+      break;
+    }
+
+    case 0x05:  /* VSRAM */
+    {
+      /* Get source data from next available FIFO entry */
+      uint16 data = fifo[fifo_idx];
+
+      do
+      {
+        /* Write VSRAM data */
+        *(uint16 *)&vsram[addr & 0x7E] = data;
+          
+        /* Increment VSRAM address */
+        addr += reg[15];
+      }
+      while (--length);
+      break;
+    }
+
+    default:
+    {
+      /* invalid destination does nothing (Williams Greatest Hits after soft reset) */
+
+      /* address is still incremented */
+      addr += reg[15] * length;
+    }
   }
 }
