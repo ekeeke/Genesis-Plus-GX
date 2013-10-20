@@ -498,6 +498,15 @@ unsigned int ctrl_io_read_word(unsigned int address)
         /* default registers */
         if (index < 0x30)
         {
+          /* relative SUB-CPU cycle counter */
+          unsigned int cycles = (m68k.cycles * SCYCLES_PER_LINE) / MCYCLES_PER_LINE;
+
+          /* sync SUB-CPU with MAIN-CPU (Soul Star) */
+          if (!s68k.stopped && (s68k.cycles < cycles))
+          {
+            s68k_run(cycles);
+          }
+
           /* SUB-CPU communication words */
           if (index >= 0x20)
           {
