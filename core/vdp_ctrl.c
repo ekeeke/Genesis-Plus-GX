@@ -85,6 +85,7 @@ uint8 vdp_pal;                    /* 1: PAL , 0: NTSC (default) */
 uint16 v_counter;                 /* Vertical counter */
 uint16 vc_max;                    /* Vertical counter overflow value */
 uint16 lines_per_frame;           /* PAL: 313 lines, NTSC: 262 lines */
+uint16 max_sprite_pixels;         /* Max. sprites pixels per line (parsing & rendering) */
 int32 fifo_write_cnt;             /* VDP FIFO write count */
 uint32 fifo_slots;                /* VDP FIFO access slot count */
 uint32 hvc_latch;                 /* latched HV counter */
@@ -277,6 +278,9 @@ void vdp_reset(void)
   bitmap.viewport.h   = 192;
   bitmap.viewport.ow  = 256;
   bitmap.viewport.oh  = 192;
+
+  /* default sprite pixel width */
+  max_sprite_pixels = 256;
 
   /* default overscan area */
   if ((system_hw == SYSTEM_GG) && !config.gg_extra)
@@ -1575,21 +1579,28 @@ static void vdp_reg_w(unsigned int r, unsigned int d, unsigned int cycles)
       if ((r & 0x40) && (v_counter < bitmap.viewport.h))
       {
         /* Cycle offset vs HBLANK */
-        int offset = cycles - mcycles_vdp - 860;
-        if (offset <= 0)
+        int offset = cycles - mcycles_vdp;
+        if (offset <= 860)
         {
-          /* If display was disabled during HBLANK (Mickey Mania 3D level), sprite rendering is limited  */
-          if ((d & 0x40) && (object_count > 5) && (offset >= -500))
+          /* Sprite rendering is limited if display was disabled during HBLANK (Mickey Mania 3d level, Overdrive Demo) */
+          if (d & 0x40)
           {
-            object_count = 5;
+            /* NB: This is not 100% accurate. On real hardware, the maximal number of rendered sprites pixels */
+            /* for the current line (normally 256 or 320 pixels) but also the maximal number of pre-processed */
+            /* sprites for the next line (normally 64 or 80 sprites) are both reduced depending on the amount */
+            /* of cycles spent with display disabled. Here we only reduce them by a fixed amount when display */
+            /* has been reenabled after a specific point within HBLANK. */
+            if (offset > 360)
+            {
+              max_sprite_pixels = 128;
+            }
           }
 
           /* Redraw entire line (Legend of Galahad, Lemmings 2, Formula One, Kawasaki Super Bike, Deadly Moves,...) */
           render_line(v_counter);
 
-#ifdef LOGVDP
-          error("Line redrawn (%d sprites) \n",object_count);
-#endif
+          /* Restore default */
+          max_sprite_pixels = 256 + ((reg[12] & 1) << 6);
         }
         else if (system_hw & SYSTEM_MD)
         {
@@ -1597,20 +1608,17 @@ static void vdp_reg_w(unsigned int r, unsigned int d, unsigned int cycles)
           if (reg[12] & 1)
           {
             /* dot clock = MCLK / 8 */
-            offset = (offset / 8);
+            offset = ((offset - 860) / 8) + 16;
           }
           else
           {
             /* dot clock = MCLK / 10 */
-            offset = (offset / 10) + 16;
+            offset = ((offset - 860) / 10) + 16;
           }
 
           /* Line is partially blanked (Nigel Mansell's World Championship Racing , Ren & Stimpy Show, ...) */
           if (offset < bitmap.viewport.w)
           {
-#ifdef LOGVDP
-            error("Line %d redrawn from pixel %d\n",v_counter,offset);
-#endif
             if (d & 0x40)
             {
               render_line(v_counter);
@@ -1974,6 +1982,9 @@ static void vdp_reg_w(unsigned int r, unsigned int d, unsigned int cycles)
 
           /* Update clipping */
           window_clip(reg[17], 1);
+
+          /* Max. sprite pixels per line */
+          max_sprite_pixels = 320;
         }
         else
         {
@@ -1988,6 +1999,9 @@ static void vdp_reg_w(unsigned int r, unsigned int d, unsigned int cycles)
 
           /* Update clipping */
           window_clip(reg[17], 0);
+
+          /* Max. sprite pixels per line */
+          max_sprite_pixels = 256;
         }
 
         /* Active display width modified during HBLANK (Bugs Bunny Double Trouble) */

@@ -74,6 +74,7 @@ extern uint16 v_counter;
 extern uint16 vc_max;
 extern uint16 vscroll;
 extern uint16 lines_per_frame;
+extern uint16 max_sprite_pixels;
 extern int32 fifo_write_cnt;
 extern uint32 fifo_slots;
 extern uint32 hvc_latch;
