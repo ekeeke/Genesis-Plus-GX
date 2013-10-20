@@ -1659,17 +1659,8 @@ static void vdp_reg_w(unsigned int r, unsigned int d, unsigned int cycles)
           /* Mode 5 only */
           if (d & 0x04)
           {
-            if (status & 8)
-            {
-              /* Changes should be applied on next frame */
-              bitmap.viewport.changed |= 2;
-            }
-            else
-            {
-              /* Update active display height */
-              bitmap.viewport.h = 224 + ((d & 8) << 1);
-              bitmap.viewport.y = (config.overscan & 1) * (8 - (d & 8) + 24*vdp_pal);
-            }
+            /* Changes should be applied on next frame */
+            bitmap.viewport.changed |= 2;
 
             /* Update vertical counter max value */
             vc_max = vc_table[(d >> 2) & 3][vdp_pal];
