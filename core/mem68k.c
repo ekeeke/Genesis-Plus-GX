@@ -730,13 +730,8 @@ void ctrl_io_write_byte(unsigned int address, unsigned int data)
             return;
           }
 
-          case 0x0f:  /* SUB-CPU communication flags, normally read-only (Space Ace, Dragon's Lair) */
-          {
-            /* ROL8 operation */
-            data = (data << 1) | ((data >> 7) & 1);
-          }
-
-          case 0x0e:  /* MAIN-CPU communication flags */
+          case 0x0e: /* MAIN-CPU communication flags */
+          case 0x0f: /* !LWR is ignored (Space Ace, Dragon's Lair) */
           {
             m68k_poll_sync(1<<0x0e);
             scd.regs[0x0e>>1].byte.h = data;
@@ -949,12 +944,12 @@ void ctrl_io_write_word(unsigned int address, unsigned int data)
             return;
           }
 
-          case 0x0e:  /* MAIN-CPU communication flags */
+          case 0x0e:  /* CPU communication flags */
           {
             m68k_poll_sync(1<<0x0e);
 
-            /* LSB is read-only (Mortal Kombat) */
-            scd.regs[0x0e>>1].byte.h = data;
+      		/* D8-D15 ignored -> only MAIN-CPU flags are updated (Mortal Kombat) */
+            scd.regs[0x0e>>1].byte.h = data & 0xff;
             return;
           }
 
