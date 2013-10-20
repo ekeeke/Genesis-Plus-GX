@@ -404,11 +404,23 @@ void system_frame_gen(int do_skip)
     /* active screen height */
     if (reg[1] & 0x04)
     {
-      bitmap.viewport.h = 224 + ((reg[1] & 0x08) << 1);
-      bitmap.viewport.y = (config.overscan & 1) * ((240 + 48*vdp_pal - bitmap.viewport.h) >> 1);
+      /* Mode 5 */
+      if (reg[1] & 0x08)
+      {
+        /* 240 active lines */
+        bitmap.viewport.h = 240;
+        bitmap.viewport.y = (config.overscan & 1) * 24 * vdp_pal;
+      }
+      else
+      {
+        /* 224 active lines */
+        bitmap.viewport.h = 224;
+        bitmap.viewport.y = (config.overscan & 1) * (8 + (24 * vdp_pal));
+      }
     }
     else
     {
+      /* Mode 4 (192 active lines) */
       bitmap.viewport.h = 192;
       bitmap.viewport.y = (config.overscan & 1) * 24 * (vdp_pal + 1);
     }
