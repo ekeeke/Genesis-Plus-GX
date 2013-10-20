@@ -7220,15 +7220,15 @@ static void m68k_op_dbf_16(void)
   uint res = MASK_OUT_ABOVE_16(*r_dst - 1);
   *r_dst = MASK_OUT_BELOW_16(*r_dst) | res;
 
-  /* reset idle loop detection */
-  m68ki_cpu.poll.detected = 0;
-
   if(res != 0xffff)
   {
     uint offset = OPER_I_16();
     REG_PC -= 2;
     m68ki_branch_16(offset);
     USE_CYCLES(CYC_DBCC_F_NOEXP);
+
+    /* reset idle loop detection */
+    m68ki_cpu.poll.detected = 0;
     return;
   }
   REG_PC += 2;
@@ -7250,6 +7250,9 @@ static void m68k_op_dbhi_16(void)
       REG_PC -= 2;
       m68ki_branch_16(offset);
       USE_CYCLES(CYC_DBCC_F_NOEXP);
+
+      /* reset idle loop detection */
+      m68ki_cpu.poll.detected = 0;
       return;
     }
     REG_PC += 2;
@@ -7274,6 +7277,9 @@ static void m68k_op_dbls_16(void)
       REG_PC -= 2;
       m68ki_branch_16(offset);
       USE_CYCLES(CYC_DBCC_F_NOEXP);
+
+      /* reset idle loop detection */
+      m68ki_cpu.poll.detected = 0;
       return;
     }
     REG_PC += 2;
@@ -7298,6 +7304,9 @@ static void m68k_op_dbcc_16(void)
       REG_PC -= 2;
       m68ki_branch_16(offset);
       USE_CYCLES(CYC_DBCC_F_NOEXP);
+
+      /* reset idle loop detection */
+      m68ki_cpu.poll.detected = 0;
       return;
     }
     REG_PC += 2;
@@ -7322,6 +7331,9 @@ static void m68k_op_dbcs_16(void)
       REG_PC -= 2;
       m68ki_branch_16(offset);
       USE_CYCLES(CYC_DBCC_F_NOEXP);
+
+      /* reset idle loop detection */
+      m68ki_cpu.poll.detected = 0;
       return;
     }
     REG_PC += 2;
@@ -7346,6 +7358,9 @@ static void m68k_op_dbne_16(void)
       REG_PC -= 2;
       m68ki_branch_16(offset);
       USE_CYCLES(CYC_DBCC_F_NOEXP);
+
+      /* reset idle loop detection */
+      m68ki_cpu.poll.detected = 0;
       return;
     }
     REG_PC += 2;
@@ -7370,6 +7385,9 @@ static void m68k_op_dbeq_16(void)
       REG_PC -= 2;
       m68ki_branch_16(offset);
       USE_CYCLES(CYC_DBCC_F_NOEXP);
+
+      /* reset idle loop detection */
+      m68ki_cpu.poll.detected = 0;
       return;
     }
     REG_PC += 2;
@@ -7394,6 +7412,9 @@ static void m68k_op_dbvc_16(void)
       REG_PC -= 2;
       m68ki_branch_16(offset);
       USE_CYCLES(CYC_DBCC_F_NOEXP);
+
+      /* reset idle loop detection */
+      m68ki_cpu.poll.detected = 0;
       return;
     }
     REG_PC += 2;
@@ -7418,6 +7439,9 @@ static void m68k_op_dbvs_16(void)
       REG_PC -= 2;
       m68ki_branch_16(offset);
       USE_CYCLES(CYC_DBCC_F_NOEXP);
+
+      /* reset idle loop detection */
+      m68ki_cpu.poll.detected = 0;
       return;
     }
     REG_PC += 2;
@@ -7442,6 +7466,9 @@ static void m68k_op_dbpl_16(void)
       REG_PC -= 2;
       m68ki_branch_16(offset);
       USE_CYCLES(CYC_DBCC_F_NOEXP);
+
+      /* reset idle loop detection */
+      m68ki_cpu.poll.detected = 0;
       return;
     }
     REG_PC += 2;
@@ -7466,6 +7493,9 @@ static void m68k_op_dbmi_16(void)
       REG_PC -= 2;
       m68ki_branch_16(offset);
       USE_CYCLES(CYC_DBCC_F_NOEXP);
+
+      /* reset idle loop detection */
+      m68ki_cpu.poll.detected = 0;
       return;
     }
     REG_PC += 2;
@@ -7490,6 +7520,9 @@ static void m68k_op_dbge_16(void)
       REG_PC -= 2;
       m68ki_branch_16(offset);
       USE_CYCLES(CYC_DBCC_F_NOEXP);
+
+      /* reset idle loop detection */
+      m68ki_cpu.poll.detected = 0;
       return;
     }
     REG_PC += 2;
@@ -7514,6 +7547,9 @@ static void m68k_op_dblt_16(void)
       REG_PC -= 2;
       m68ki_branch_16(offset);
       USE_CYCLES(CYC_DBCC_F_NOEXP);
+
+      /* reset idle loop detection */
+      m68ki_cpu.poll.detected = 0;
       return;
     }
     REG_PC += 2;
@@ -7538,6 +7574,9 @@ static void m68k_op_dbgt_16(void)
       REG_PC -= 2;
       m68ki_branch_16(offset);
       USE_CYCLES(CYC_DBCC_F_NOEXP);
+
+      /* reset idle loop detection */
+      m68ki_cpu.poll.detected = 0;
       return;
     }
     REG_PC += 2;
@@ -7562,6 +7601,9 @@ static void m68k_op_dble_16(void)
       REG_PC -= 2;
       m68ki_branch_16(offset);
       USE_CYCLES(CYC_DBCC_F_NOEXP);
+
+      /* reset idle loop detection */
+      m68ki_cpu.poll.detected = 0;
       return;
     }
     REG_PC += 2;
