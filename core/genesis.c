@@ -253,19 +253,16 @@ void gen_reset(int hard_reset)
   {
     if (system_hw == SYSTEM_MCD)
     {
-      /* reset CD hardware */
-      scd_reset(1);
-
-      /* reset & halt SUB-CPU */
-      s68k.cycles = 0;
-      s68k_pulse_reset();
-      s68k_pulse_halt();
+      /* FRES is only asserted on Power ON */
+      if (hard_reset)
+      {
+        /* reset CD hardware */
+        scd_reset(1);
+      }
     }
-    else
-    {
-      /* reset MD cartridge hardware */
-      md_cart_reset(hard_reset);
-    }
+    
+    /* reset MD cartridge hardware */
+    md_cart_reset(hard_reset);
 
     /* Z80 bus is released & Z80 is reseted */
     m68k.memory_map[0xa0].read8   = m68k_read_bus_8;
