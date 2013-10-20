@@ -692,6 +692,19 @@ void gfx_update(int cycles)
       /* end of graphics operation */
       scd.regs[0x58>>1].byte.h = 0;
  
+      /* SUB-CPU idle on register $58 polling ? */
+      if (s68k.stopped & (1<<0x08))
+      {
+        /* sync SUB-CPU with GFX chip */
+        s68k.cycles = scd.cycles;
+
+        /* restart SUB-CPU */
+        s68k.stopped = 0;
+#ifdef LOG_SCD
+        error("s68k started from %d cycles\n", s68k.cycles);
+#endif
+      }
+
       /* level 1 interrupt enabled ? */
       if (scd.regs[0x32>>1].byte.l & 0x02)
       {

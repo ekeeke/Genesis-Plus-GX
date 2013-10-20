@@ -214,8 +214,21 @@ void cdc_dma_update(void)
       }
     }
 
-    /* clear DSR bit & set EDT bit (SCD register $04) */
+    /* clear DSR bit & set EDT bit (CD register $04) */
     scd.regs[0x04>>1].byte.h = (scd.regs[0x04>>1].byte.h & 0x07) | 0x80;
+
+    /* SUB-CPU idle on register $04 polling ? */
+    if (s68k.stopped & (1<<0x04))
+    {
+      /* sync SUB-CPU with CDC */
+      s68k.cycles = scd.cycles;
+
+      /* restart SUB-CPU */
+      s68k.stopped = 0;
+#ifdef LOG_SCD
+      error("s68k started from %d cycles\n", s68k.cycles);
+#endif
+    }
 
     /* disable DMA transfer */
     cdc.dma_w = 0;

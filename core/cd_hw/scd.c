@@ -287,6 +287,20 @@ static unsigned int scd_read_byte(unsigned int address)
     return scd.regs[0x0e>>1].byte.h;
   }
 
+  /* CDC transfer status */
+  if (address == 0xff8004)
+  {
+    s68k_poll_detect(1<<0x04);
+    return scd.regs[0x04>>1].byte.h;
+  }
+
+  /* GFX operation status */
+  if (address == 0xff8058)
+  {
+    s68k_poll_detect(1<<0x08);
+    return scd.regs[0x58>>1].byte.h;
+  }
+
   /* CDC register data (controlled by BIOS, byte access only ?) */
   if (address == 0xff8007)
   {
