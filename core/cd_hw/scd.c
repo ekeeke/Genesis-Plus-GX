@@ -703,13 +703,8 @@ static void scd_write_byte(unsigned int address, unsigned int data)
       return;
     }
 
-    case 0x0e: /* MAIN-CPU communication flags, normally read-only (Space Ace, Dragon's Lair) */
-    {
-      /* ROR8 operation */
-      data = (data >> 1) | ((data << 7) & 1);
-    }
-
-    case 0x0f:  /* SUB-CPU communication flags */
+    case 0x0e:  /* SUB-CPU communication flags */
+    case 0x0f:  /* !LWR is ignored (Space Ace, Dragon's Lair) */
     {
       s68k_poll_sync(1<<0x0f);
       scd.regs[0x0f>>1].byte.l = data;
@@ -990,12 +985,12 @@ static void scd_write_word(unsigned int address, unsigned int data)
       return;
     }
 
-    case 0x0e:  /* SUB-CPU communication flags */
+    case 0x0e:  /* CPU Communication flags */
     {
       s68k_poll_sync(1<<0x0f);
 
-      /* MSB is read-only */
-      scd.regs[0x0f>>1].byte.l = data;
+      /* D8-D15 ignored -> only SUB-CPU flags are updated */
+      scd.regs[0x0f>>1].byte.l = data & 0xff;
       return;
     }
 
