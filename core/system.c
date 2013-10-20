@@ -357,7 +357,7 @@ void system_frame_gen(int do_skip)
 
   /* reset VDP FIFO */
   fifo_write_cnt = 0;
-  fifo_lastwrite = 0;
+  fifo_slots = 0;
 
   /* update 6-Buttons & Lightguns */
   input_refresh();
@@ -703,7 +703,7 @@ void system_frame_scd(int do_skip)
 
   /* reset VDP FIFO */
   fifo_write_cnt = 0;
-  fifo_lastwrite = 0;
+  fifo_slots = 0;
 
   /* update 6-Buttons & Lightguns */
   input_refresh();
@@ -1032,7 +1032,7 @@ void system_frame_sms(int do_skip)
 
   /* reset VDP FIFO */
   fifo_write_cnt = 0;
-  fifo_lastwrite = 0;
+  fifo_slots = 0;
 
   /* update 6-Buttons & Lightguns */
   input_refresh();

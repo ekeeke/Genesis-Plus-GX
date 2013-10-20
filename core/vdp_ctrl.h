@@ -75,7 +75,7 @@ extern uint16 vc_max;
 extern uint16 vscroll;
 extern uint16 lines_per_frame;
 extern int32 fifo_write_cnt;
-extern uint32 fifo_lastwrite;
+extern uint32 fifo_slots;
 extern uint32 hvc_latch;
 extern const uint8 *hctab;
 
