@@ -64,8 +64,8 @@
 #define MCYCLES_PER_LINE  3420
 
 /* Horizontal timing offsets when running in Z80 mode */
-#define SMS_CYCLE_OFFSET  520 
-#define PBC_CYCLE_OFFSET  550 
+#define SMS_CYCLE_OFFSET  530 
+#define PBC_CYCLE_OFFSET  560 
 
 typedef struct
 {
