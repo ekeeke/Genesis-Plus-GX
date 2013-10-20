@@ -2188,7 +2188,6 @@ static void vdp_fifo_update(unsigned int cycles)
 /*--------------------------------------------------------------------------*/
 /* Internal 16-bit data bus access function (Mode 5 only)                   */
 /*--------------------------------------------------------------------------*/
-
 static void vdp_bus_w(unsigned int data)
 {
   /* write data to next FIFO entry */
@@ -2290,7 +2289,7 @@ static void vdp_bus_w(unsigned int data)
       if (reg[11] & 0x04)
       {
         /* VSRAM writes during HBLANK (Adventures of Batman & Robin) */
-        if ((v_counter < bitmap.viewport.h) && (reg[1]& 0x40) && (m68k.cycles <= (mcycles_vdp + 860)))
+        if ((v_counter < bitmap.viewport.h) && (reg[1] & 0x40) && (m68k.cycles <= (mcycles_vdp + 860)))
         {
           /* Remap current line */
           render_line(v_counter);
@@ -2304,6 +2303,8 @@ static void vdp_bus_w(unsigned int data)
 
     default:
     {
+      /* add some delay until 68k periodical wait-states (RAM refresh ?) are accurately emulated (needed by "Clue" & "Microcosm") */
+      m68k.cycles += 2;
 #ifdef LOGERROR
       error("[%d(%d)][%d(%d)] Invalid (%d) 0x%x write -> 0x%x (%x)\n", v_counter, m68k.cycles/MCYCLES_PER_LINE-1, m68k.cycles, m68k.cycles%MCYCLES_PER_LINE, code, addr, data, m68k_get_reg(M68K_REG_PC));
 #endif
