@@ -1218,6 +1218,11 @@ void scd_reset(int hard)
       m68k.memory_map[i].base = scd.prg_ram;
       m68k.memory_map[i+1].base = scd.prg_ram + 0x10000;
     }
+
+    /* reset & halt SUB-CPU */
+    s68k.cycles = 0;
+    s68k_pulse_reset();
+    s68k_pulse_halt();
   }
   else
   {
