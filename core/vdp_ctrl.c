@@ -136,7 +136,8 @@ static uint16 dma_src;        /* DMA source address */
 static uint16 dmafill;        /* DMA Fill setup */
 static uint32 dma_endCycles;  /* 68k cycles to DMA end */
 static int cached_write;      /* 2nd part of 32-bit CTRL port write (Genesis mode) or LSB of CRAM data (Game Gear mode) */
-static uint16 fifo[4];        /* FIFO buffer */
+static uint16 fifo[4];        /* FIFO ring-buffer */
+static int fifo_idx;          /* FIFO write index */
 static int fifo_byte_access;  /* FIFO byte access flag */
 static uint32 fifo_cycles;    /* FIFO next access cycle */
 
@@ -231,6 +232,7 @@ void vdp_reset(void)
   fifo_write_cnt  = 0;
   fifo_cycles     = 0;
   fifo_slots      = 0;
+  fifo_idx        = 0;
   cached_write    = -1;
   fifo_byte_access = 1;
 
@@ -312,16 +314,16 @@ void vdp_reset(void)
     parse_satb = parse_satb_m4;
   }
 
-  /* 68k bus access mode (Mode 4 by default) */
+  /* default 68k bus interface (Mega Drive VDP only) */
   vdp_68k_data_w = vdp_68k_data_w_m4;
   vdp_68k_data_r = vdp_68k_data_r_m4;
 
-  /* Z80 bus access mode */
+  /* default Z80 bus interface */
   switch (system_hw)
   {
     case SYSTEM_SG:
     {
-      /* SG-1000 port access */
+      /* SG-1000 VDP (TMS99xx) */
       vdp_z80_data_w = vdp_z80_data_w_sg;
       vdp_z80_data_r = vdp_z80_data_r_m4;
       break;
@@ -329,7 +331,7 @@ void vdp_reset(void)
 
     case SYSTEM_GG:
     {
-      /* Game Gear port access */
+      /* Game Gear VDP */
       vdp_z80_data_w = vdp_z80_data_w_gg;
       vdp_z80_data_r = vdp_z80_data_r_m4;
       break;
@@ -340,7 +342,7 @@ void vdp_reset(void)
     case SYSTEM_SMS2:
     case SYSTEM_GGMS:
     {
-      /* Master System port access */
+      /* Master System or Game Gear (in MS compatibility mode) VDP  */
       vdp_z80_data_w = vdp_z80_data_w_ms;
       vdp_z80_data_r = vdp_z80_data_r_m4;
       break;
@@ -348,7 +350,7 @@ void vdp_reset(void)
 
     default:
     {
-      /* Genesis port access */
+      /* Mega Drive VDP (in MS compatibility mode) */
       vdp_z80_data_w = vdp_z80_data_w_m4;
       vdp_z80_data_r = vdp_z80_data_r_m4;
       break;
@@ -361,7 +363,7 @@ void vdp_reset(void)
     /* 16k address decoding by default (Magical Kid Wiz) */
     vdp_reg_w(1, 0x80, 0);
 
-    /* no H-INT on TMS9918 */
+    /* no H-INT on TMS99xx */
     vdp_reg_w(10, 0xFF, 0);
   }
 
@@ -418,6 +420,8 @@ int vdp_context_save(uint8 *state)
   save_param(&pending, sizeof(pending));
   save_param(&status, sizeof(status));
   save_param(&dmafill, sizeof(dmafill));
+  save_param(&fifo_idx, sizeof(fifo_idx));
+  save_param(&fifo, sizeof(fifo));
   save_param(&hint_pending, sizeof(hint_pending));
   save_param(&vint_pending, sizeof(vint_pending));
   save_param(&dma_length, sizeof(dma_length));
@@ -427,7 +431,7 @@ int vdp_context_save(uint8 *state)
   return bufferptr;
 }
 
-int vdp_context_load(uint8 *state)
+int vdp_context_load(uint8 *state, uint8 version)
 {
   int i, bufferptr = 0;
   uint8 temp_reg[0x20];
@@ -473,13 +477,29 @@ int vdp_context_load(uint8 *state)
   load_param(&code, sizeof(code));
   load_param(&pending, sizeof(pending));
   load_param(&status, sizeof(status));
-  load_param(&dmafill, sizeof(dmafill));
+
+  /* 1.7.1 state compatibility */
+  if (version < 0x35)
+  {
+    uint16 temp;
+    load_param(&temp, 2);
+    dmafill = temp >> 8;
+    temp &= 0xff;
+    fifo_idx = 0;
+    fifo[0] = fifo[1] = fifo[2] = fifo[3] = (temp << 8) | temp;
+  }
+  else
+  {
+    load_param(&dmafill, sizeof(dmafill));
+    load_param(&fifo_idx, sizeof(fifo_idx));
+    load_param(&fifo, sizeof(fifo));
+  }
+
   load_param(&hint_pending, sizeof(hint_pending));
   load_param(&vint_pending, sizeof(vint_pending));
   load_param(&dma_length, sizeof(dma_length));
   load_param(&dma_type, sizeof(dma_type));
   load_param(&dma_src, sizeof(dma_src));
-
   load_param(&cached_write, sizeof(cached_write));
 
   /* restore FIFO byte access flag */
@@ -528,7 +548,7 @@ int vdp_context_load(uint8 *state)
 
 
 /*--------------------------------------------------------------------------*/
-/* DMA update function                                                      */
+/* DMA update function (Mega Drive VDP only)                                */
 /*--------------------------------------------------------------------------*/
 
 void vdp_dma_update(unsigned int cycles)
@@ -1097,7 +1117,7 @@ void vdp_sms_ctrl_w(unsigned int data)
   }
 }
 
-/* TMS9918 (SG-1000) VDP control port specific */
+/* SG-1000 VDP (TMS99xx) control port specific */
 void vdp_tms_ctrl_w(unsigned int data)
 {
   if(pending == 0)
@@ -2140,7 +2160,13 @@ static void vdp_fifo_update(unsigned int cycles)
 
 static void vdp_bus_w(unsigned int data)
 {
-  /* Check destination code */
+  /* write data to next FIFO entry */
+  fifo[fifo_idx] = data;
+
+  /* increment FIFO write pointer */
+  fifo_idx = (fifo_idx + 1) & 3;
+
+  /* Check destination code (CD0-CD3) */
   switch (code & 0x0F)
   {
     case 0x01:  /* VRAM */
@@ -2260,7 +2286,7 @@ static void vdp_bus_w(unsigned int data)
 
 
 /*--------------------------------------------------------------------------*/
-/* 68k data port access functions (Genesis mode)                            */
+/* 68k bus interface (Mega Drive VDP only)                                     */
 /*--------------------------------------------------------------------------*/
 
 static void vdp_68k_data_w_m4(unsigned int data)
@@ -2434,11 +2460,12 @@ static unsigned int vdp_68k_data_r_m5(void)
   /* Clear pending flag */
   pending = 0;
 
-  switch (code & 0x0F)
+  /* Check destination code (CD0-CD3) & CD4 */
+  switch (code & 0x1F)
   {
-    case 0x00: /* VRAM */
+    case 0x00:
     {
-      /* Read data */
+      /* read two bytes from VRAM */
       data = *(uint16 *)&vram[addr & 0xFFFE];
 
 #ifdef LOGVDP
@@ -2447,10 +2474,23 @@ static unsigned int vdp_68k_data_r_m5(void)
       break;
     }
 
-    case 0x04: /* VSRAM */
+    case 0x04:
     {
-      /* Read data */
-      data = *(uint16 *)&vsram[addr & 0x7E];
+      /* VSRAM index */
+      int index = addr & 0x7E;
+
+      /* Check against VSRAM max size (80 x 11-bits) */
+      if (index >= 0x50)
+      {
+        /* Wrap to address 0 (TODO: check if still true with Genesis 3 model) */
+        index = 0;
+      }
+
+      /* Read 11-bit word from VSRAM */
+      data = *(uint16 *)&vsram[index] & 0x7FF;
+
+      /* Unused bits are set using data from next available FIFO entry */
+      data |= (fifo[fifo_idx] & ~0x7FF);
 
 #ifdef LOGVDP
       error("[%d(%d)][%d(%d)] VSRAM 0x%x read -> 0x%x (%x)\n", v_counter, m68k.cycles/MCYCLES_PER_LINE-1, m68k.cycles, m68k.cycles%MCYCLES_PER_LINE, addr, data, m68k_get_reg(M68K_REG_PC));
@@ -2458,13 +2498,16 @@ static unsigned int vdp_68k_data_r_m5(void)
       break;
     }
 
-    case 0x08: /* CRAM */
+    case 0x08:
     {
-      /* Read data */
+      /* Read 9-bit word from CRAM */
       data = *(uint16 *)&cram[addr & 0x7E];
 
       /* Unpack 9-bit CRAM data (BBBGGGRRR) to 16-bit bus data (BBB0GGG0RRR0) */
       data = ((data & 0x1C0) << 3) | ((data & 0x038) << 2) | ((data & 0x007) << 1);
+
+      /* Unused bits are set using data from next available FIFO entry */
+      data |= (fifo[fifo_idx] & ~0xEEE);
 
 #ifdef LOGVDP
       error("[%d(%d)][%d(%d)] CRAM 0x%x read -> 0x%x (%x)\n", v_counter, m68k.cycles/MCYCLES_PER_LINE-1, m68k.cycles, m68k.cycles%MCYCLES_PER_LINE, addr, data, m68k_get_reg(M68K_REG_PC));
@@ -2472,10 +2515,13 @@ static unsigned int vdp_68k_data_r_m5(void)
       break;
     }
 
-    case 0x0c: /* undocumented 8-bit VRAM read (cf. http://gendev.spritesmind.net/forum/viewtopic.php?t=790) */
+    case 0x0c: /* undocumented 8-bit VRAM read */
     {
-      /* Read data (MSB forced to zero) */
-      data = *(uint16 *)&vram[addr & 0xFFFE] & 0xff;
+      /* Read one byte from VRAM adjacent address */
+      data = READ_BYTE(vram, addr ^ 1);
+
+      /* Unused bits are set using data from next available FIFO entry */
+      data |= (fifo[fifo_idx] & ~0xFF);
 
 #ifdef LOGVDP
       error("[%d(%d)][%d(%d)] 8-bit VRAM 0x%x read -> 0x%x (%x)\n", v_counter, m68k.cycles/MCYCLES_PER_LINE-1, m68k.cycles, m68k.cycles%MCYCLES_PER_LINE, addr, data, m68k_get_reg(M68K_REG_PC));
@@ -2485,7 +2531,7 @@ static unsigned int vdp_68k_data_r_m5(void)
 
     default:
     {
-      /* Invalid code value */
+      /* Invalid code value (normally locks VDP, hard reset required) */
 #ifdef LOGERROR
       error("[%d(%d)][%d(%d)] Invalid (%d) 0x%x read (%x)\n", v_counter, m68k.cycles/MCYCLES_PER_LINE-1, m68k.cycles, m68k.cycles%MCYCLES_PER_LINE, code, addr, m68k_get_reg(M68K_REG_PC));
 #endif
@@ -2502,7 +2548,7 @@ static unsigned int vdp_68k_data_r_m5(void)
 
 
 /*--------------------------------------------------------------------------*/
-/* Z80 data port access functions (Master System compatibility mode)        */
+/* Z80 bus interface (Mega Drive VDP in Master System compatibility mode)   */
 /*--------------------------------------------------------------------------*/
 
 static void vdp_z80_data_w_m4(unsigned int data)
@@ -2562,7 +2608,11 @@ static void vdp_z80_data_w_m5(unsigned int data)
   /* Clear pending flag */
   pending = 0;
 
-  /* Check destination code */
+  /* Push byte into FIFO */
+  fifo[fifo_idx] = data << 8;
+  fifo_idx = (fifo_idx + 1) & 3;
+
+  /* Check destination code (CD0-CD3) */
   switch (code & 0x0F)
   {
     case 0x01:  /* VRAM */
@@ -2690,7 +2740,8 @@ static unsigned int vdp_z80_data_r_m5(void)
   /* Clear pending flag */
   pending = 0;
 
-  switch (code & 0x0F)
+  /* Check destination code (CD0-CD3) & CD4 */
+  switch (code & 0x1F)
   {
     case 0x00: /* VRAM */
     {
@@ -2734,7 +2785,7 @@ static unsigned int vdp_z80_data_r_m5(void)
 
 
 /*-----------------------------------------------------------------------------*/
-/* VDP specific data port access functions (Master System, Game Gear, SG-1000) */
+/* Z80 bus interface (Master System, Game Gear & SG-1000 VDP)                  */
 /*-----------------------------------------------------------------------------*/
 
 static void vdp_z80_data_w_ms(unsigned int data)
@@ -2746,10 +2797,11 @@ static void vdp_z80_data_w_ms(unsigned int data)
   {
     int index;
 
-    /* check if we are already on next line */
+    /* Check if we are already on next line */
     int line = (lines_per_frame + (Z80.cycles / MCYCLES_PER_LINE) - 1) % lines_per_frame;
     if ((line > v_counter) && (line < bitmap.viewport.h) && !(work_ram[0x1ffb] & cart.special))
     {
+      /* Render next line */
       v_counter = line;
       render_line(line);
     }
@@ -2813,10 +2865,11 @@ static void vdp_z80_data_w_gg(unsigned int data)
   {
     int index;
 
-    /* check if we are already on next line*/
+    /* Check if we are already on next line*/
     int line = (lines_per_frame + (Z80.cycles / MCYCLES_PER_LINE) - 1) % lines_per_frame;
     if ((line > v_counter) && (line < bitmap.viewport.h) && !(work_ram[0x1ffb] & cart.special))
     {
+      /* Render next line */
       v_counter = line;
       render_line(line);
     }
@@ -2907,7 +2960,7 @@ static void vdp_z80_data_w_sg(unsigned int data)
 }
 
 /*--------------------------------------------------------------------------*/
-/* DMA operations                                                           */
+/* DMA operations (Mega Drive VDP only)                                     */
 /*--------------------------------------------------------------------------*/
 
 /* DMA from 68K bus: $000000-$7FFFFF (external area) */
