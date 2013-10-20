@@ -739,7 +739,10 @@ static void scd_write_byte(unsigned int address, unsigned int data)
 
       /* update IEN2 flag */
       scd.regs[0x00].byte.h = (scd.regs[0x00].byte.h & 0x7f) | ((data & 0x04) << 5);
-      
+
+      /* clear level 1 interrupt if disabled ("Batman Returns" option menu) */
+      scd.pending &= ~(data & 0x02);
+
       /* update IRQ level */
       s68k_update_irq((scd.pending & data) >> 1);
       return;
@@ -1025,6 +1028,9 @@ static void scd_write_word(unsigned int address, unsigned int data)
 
       /* update IEN2 flag */
       scd.regs[0x00].byte.h = (scd.regs[0x00].byte.h & 0x7f) | ((data & 0x04) << 5);
+
+      /* clear pending level 1 interrupt if disabled ("Batman Returns" option menu) */
+      scd.pending &= ~(data & 0x02);
       
       /* update IRQ level */
       s68k_update_irq((scd.pending & data) >> 1);
