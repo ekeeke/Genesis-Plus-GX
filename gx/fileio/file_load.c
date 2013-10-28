@@ -88,6 +88,13 @@ static int MountDVD(void)
 {
   GUI_MsgBoxOpen("Information", "Mounting DVD ...",1);
 
+  /* initialize DVD interface if needed */
+#ifdef HW_RVL
+  DI_Init();
+#else
+  DVD_Init();
+#endif
+
   /* check if DVD is already mounted */
   if (dvd_mounted)
   {
