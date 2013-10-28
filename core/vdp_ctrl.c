@@ -805,11 +805,17 @@ void vdp_68k_ctrl_w(unsigned int data)
   /* 
      FIFO emulation (Chaos Engine/Soldier of Fortune, Double Clutch, Sol Deace) 
      --------------------------------------------------------------------------
-     Each VRAM access is byte wide, so one VRAM write (word) need twice cycles.
+     Each VRAM access is byte wide, so one VRAM write (word) need two slot access.
 
-      Note: Invalid code 0x02 (register write) apparently behaves the same as VRAM
-      access, although no data is written in this case (fixes Clue menu)
-  */
+      NOTE: Invalid code 0x02 (register write) should not behave the same as VRAM
+      access, i.e data is ignored and only one access slot is used for each word, 
+      BUT a few games ("Clue", "Microcosm") which accidentally corrupt code value 
+      will have issues when emulating FIFO timings. They likely work fine on real
+      hardware because of periodical 68k wait-states which have been observed and
+      would naturaly add some delay between writes. Until those wait-states are
+      accurately measured and emulated, delay is forced when invalid code value
+      is being used.
+  */ 
   fifo_byte_access = ((code & 0x0F) <= 0x02);
 }
 
@@ -2303,7 +2309,7 @@ static void vdp_bus_w(unsigned int data)
 
     default:
     {
-      /* add some delay until 68k periodical wait-states (RAM refresh ?) are accurately emulated (needed by "Clue" & "Microcosm") */
+      /* add some delay until 68k periodical wait-states are accurately emulated ("Clue", "Microcosm") */
       m68k.cycles += 2;
 #ifdef LOGERROR
       error("[%d(%d)][%d(%d)] Invalid (%d) 0x%x write -> 0x%x (%x)\n", v_counter, m68k.cycles/MCYCLES_PER_LINE-1, m68k.cycles, m68k.cycles%MCYCLES_PER_LINE, code, addr, data, m68k_get_reg(M68K_REG_PC));
