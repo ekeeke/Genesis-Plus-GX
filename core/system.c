@@ -1137,7 +1137,7 @@ void system_frame_sms(int do_skip)
   }
 
   /* Detect pause button input (in Game Gear Mode, NMI is not generated) */
-  if ((system_hw != SYSTEM_GG) && (system_hw != SYSTEM_SG))
+  if (system_hw != SYSTEM_GG)
   {
     if (input.pad[0] & INPUT_START)
     {
