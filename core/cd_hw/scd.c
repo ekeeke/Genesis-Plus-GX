@@ -232,7 +232,7 @@ static void s68k_poll_sync(unsigned int reg_mask)
   unsigned int cycles = (s68k.cycles * MCYCLES_PER_LINE) / SCYCLES_PER_LINE;
 
   /* sync MAIN-CPU with SUB-CPU */
-  if (!m68k.stopped && (m68k.cycles < cycles))
+  if (!m68k.stopped)
   {
     m68k_run(cycles);
   }
@@ -433,12 +433,12 @@ static unsigned int scd_read_word(unsigned int address)
   /* MAIN-CPU communication words */
   if ((address & 0x1f0) == 0x10)
   {
-    /* relative MAIN-CPU cycle counter */
-    unsigned int cycles = (s68k.cycles * MCYCLES_PER_LINE) / SCYCLES_PER_LINE;
-
-    /* sync MAIN-CPU with SUB-CPU (Mighty Morphin Power Rangers) */
-    if (!m68k.stopped && (m68k.cycles < cycles))
+    if (!m68k.stopped)
     {
+      /* relative MAIN-CPU cycle counter */
+      unsigned int cycles = (s68k.cycles * MCYCLES_PER_LINE) / SCYCLES_PER_LINE;
+
+      /* sync MAIN-CPU with SUB-CPU (Mighty Morphin Power Rangers) */
       m68k_run(cycles);
     }
 
