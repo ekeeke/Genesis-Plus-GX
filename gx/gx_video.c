@@ -384,24 +384,6 @@ static void vi_callback(u32 cnt)
   video_sync = 0;
 }
 
-/* Vertex Rendering */
-static inline void draw_vert(u8 pos, f32 s, f32 t)
-{
-  GX_Position1x8(pos);
-  GX_TexCoord2f32(s, t);
-}
-
-/* textured quad rendering */
-static inline void draw_square(void)
-{
-  GX_Begin(GX_QUADS, GX_VTXFMT0, 4);
-  draw_vert(3, 0.0, 0.0);
-  draw_vert(2, 1.0, 0.0);
-  draw_vert(1, 1.0, 1.0);
-  draw_vert(0, 0.0, 1.0);
-  GX_End();
-}
-
 /* Initialize GX */
 static void gxStart(void)
 {
