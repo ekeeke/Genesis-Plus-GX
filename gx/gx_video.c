@@ -355,6 +355,19 @@ static camera cam = {
   {0.0F, 0.0F, 0.0F}
 };
 
+/*** GX Display List ***/
+static u8 d_list[32] ATTRIBUTE_ALIGN(32) =
+{
+  GX_QUADS | GX_VTXFMT0,        /* textured quad rendering (Vertex Format 0) */
+  0x00, 0x04,                   /* one quad = 4x vertex */
+  0x03, 0x00, 0x00, 0x00, 0x00, /* top left corner */
+  0x02, 0x00, 0x01, 0x00, 0x00, /* top right corner */
+  0x01, 0x00, 0x01, 0x00, 0x01, /* bottom right corner */
+  0x00, 0x00, 0x00, 0x00, 0x01, /* bottom left corner */
+  0x00, 0x00, 0x00, 0x00, 0x00, /* padding */
+  0x00, 0x00, 0x00, 0x00
+};
+
 /* VSYNC callback */
 static void vi_callback(u32 cnt)
 {
@@ -442,7 +455,7 @@ static void gxResetRendering(u8 type)
     /* uses array positionning, no alpha blending, no color channel (video emulation) */
     GX_SetBlendMode(GX_BM_NONE,GX_BL_SRCALPHA,GX_BL_INVSRCALPHA,GX_LO_CLEAR);
     GX_SetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XYZ, GX_S16, 0);
-    GX_SetVtxAttrFmt(GX_VTXFMT0, GX_VA_TEX0, GX_TEX_ST, GX_F32, 0);
+    GX_SetVtxAttrFmt(GX_VTXFMT0, GX_VA_TEX0, GX_TEX_ST, GX_S16, 0);
     GX_SetVtxDesc(GX_VA_POS, GX_INDEX8);
     GX_SetVtxDesc(GX_VA_TEX0, GX_DIRECT);
     GX_SetArray(GX_VA_POS, square, 3 * sizeof (s16));
@@ -1714,7 +1727,7 @@ int gx_video_Update(void)
   GX_InvalidateTexAll();
 
   /* render textured quad */
-  draw_square();
+  GX_CallDispList(d_list, 32);
 
   /* lightgun # 1 screen mark */
   if (crosshair[0])
