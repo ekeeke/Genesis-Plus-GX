@@ -4122,8 +4122,11 @@ void render_line(int line)
     }
 
     /* Horizontal borders */
-    memset(&linebuf[0][0x20 - bitmap.viewport.x], 0x40, bitmap.viewport.x);
-    memset(&linebuf[0][0x20 + bitmap.viewport.w], 0x40, bitmap.viewport.x);
+    if (bitmap.viewport.x > 0)
+    {
+      memset(&linebuf[0][0x20 - bitmap.viewport.x], 0x40, bitmap.viewport.x);
+      memset(&linebuf[0][0x20 + bitmap.viewport.w], 0x40, bitmap.viewport.x);
+    }
   }
   else
   {
