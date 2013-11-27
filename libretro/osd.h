@@ -34,7 +34,7 @@ typedef struct
   uint8 padtype;
 } t_input_config;
 
-typedef struct 
+struct 
 {
   char version[16];
   uint8 hq_fm;
@@ -59,16 +59,12 @@ typedef struct
   uint8 addr_error;
   uint8 bios;
   uint8 lock_on;
-  uint8 hot_swap;
   uint8 overscan;
   uint8 ntsc;
   uint8 gg_extra;
   uint8 render;
   t_input_config input[MAX_INPUTS];
-} t_config;
-
-/* Global data */
-t_config config;
+} config;
 
 extern char GG_ROM[256];
 extern char AR_ROM[256];
@@ -81,10 +77,6 @@ extern char CD_BIOS_JP[256];
 extern char MS_BIOS_US[256];
 extern char MS_BIOS_EU[256];
 extern char MS_BIOS_JP[256];
-
-extern int16 soundbuffer[3068];
-
-#define VERSION "Genesis Plus GX 1.7.1 (libretro)"
 
 void osd_input_update(void);
 int load_archive(char *filename, unsigned char *buffer, int maxsize, char *extension);
