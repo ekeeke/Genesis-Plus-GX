@@ -52,9 +52,9 @@ else ifeq ($(platform), ios)
    fpic := -fPIC
    SHARED := -dynamiclib -lz
    ENDIANNESS_DEFINES := -DLSB_FIRST
-   PLATFORM_DEFINES := -DHAVE_ZLIB
+   PLATFORM_DEFINES := -DHAVE_ZLIB -miphoneos-version-min=5.0
 
-   CC = clang -arch armv7 -isysroot $(IOSSDK)
+   CC = clang -arch armv7 -isysroot $(IOSSDK) -miphoneos-version-min=5.0
 else ifeq ($(platform), qnx)
    TARGET := $(TARGET_NAME)_libretro_qnx.so
    fpic := -fPIC
