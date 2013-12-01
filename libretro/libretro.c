@@ -600,7 +600,7 @@ static void check_variables(void)
   var.key = "dac_bits";
   environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
   {
-    if (!strcmp(var.value, "original"))
+    if (!strcmp(var.value, "enabled"))
       config.dac_bits = 9;
     else
       config.dac_bits = 14;
