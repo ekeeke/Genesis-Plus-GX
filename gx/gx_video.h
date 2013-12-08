@@ -77,6 +77,7 @@ typedef struct
 extern GXRModeObj *vmode;
 extern u8 *texturemem;
 extern u32 gc_pal;
+extern u32 videoSync;
 
 /* GX rendering */
 extern void gxDrawRectangle(s32 x, s32 y, s32 w, s32 h, u8 alpha, GXColor color);
@@ -99,6 +100,6 @@ extern void gx_video_Init(void);
 extern void gx_video_Shutdown(void);
 extern void gx_video_Start(void);
 extern void gx_video_Stop(void);
-extern int gx_video_Update(void);
+extern int gx_video_Update(u32 done);
 
 #endif

@@ -68,9 +68,9 @@
 
 /*************************************************/
 
-#define VERSION "Genesis Plus GX 1.7.4"
+#define VERSION "Genesis Plus GX 1.7.5"
 
-#define NO_SYNC    0
+#define SYNC_WAIT  0
 #define SYNC_VIDEO 1
 #define SYNC_AUDIO 2
 
@@ -82,14 +82,5 @@ extern void shutdown(void);
 extern u32 Shutdown;
 extern u32 ConfigRequested;
 extern char osd_version[32];
-
-#ifdef LOG_TIMING
-#include <ogc/lwp_watchdog.h>
-#define LOGSIZE 2000
-extern u64 prevtime;
-extern u32 frame_cnt;
-extern u32 delta_time[LOGSIZE];
-extern u32 delta_samp[LOGSIZE];
-#endif
 
 #endif /* _OSD_H_ */

@@ -132,7 +132,7 @@ void config_default(void)
   config.gg_extra = 0;
   config.ntsc     = 0;
   config.vsync    = 1; /* AUTO */
-  config.bilinear = 1;
+  config.bilinear = 0;
   config.vfilter  = 1;
 
   if (VIDEO_HaveComponentCable())
@@ -171,6 +171,7 @@ void config_default(void)
 
   /* on-screen options */
   config.cd_leds = 0;
+  config.fps     = 0;
 
   /* menu options */
   config.autoload     = 0;

@@ -41,6 +41,7 @@
 #define _GC_AUDIO_H_
 
 extern u32 audioStarted;
+extern u32 audioSync;
 
 extern void gx_audio_Init(void);
 extern void gx_audio_Shutdown(void);

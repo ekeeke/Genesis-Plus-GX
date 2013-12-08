@@ -64,14 +64,6 @@ u32 Shutdown = 0;
 u32 ConfigRequested = 1;
 char osd_version[32];
 
-#ifdef LOG_TIMING
-u64 prevtime;
-u32 frame_cnt;
-u32 delta_time[LOGSIZE];
-u32 delta_samp[LOGSIZE];
-#endif
-
-
 #ifdef HW_RVL
 /****************************************************************************
  * Power Button callbacks
@@ -151,7 +143,7 @@ static void init_machine(void)
 
 static void run_emulation(void)
 {
-  int sync;
+  u32 sync;
 
   /* main emulation loop */
   while (1)
@@ -166,11 +158,11 @@ static void run_emulation(void)
         system_frame_scd(0);
 
         /* audio/video sync */
-        sync = NO_SYNC;
+        sync = SYNC_WAIT;
         while (sync != (SYNC_VIDEO | SYNC_AUDIO))
         {
           /* update video */
-          sync |= gx_video_Update();
+          sync |= gx_video_Update(sync & SYNC_VIDEO);
 
           /* update audio */
           sync |= gx_audio_Update();
@@ -200,11 +192,11 @@ static void run_emulation(void)
         system_frame_gen(0);
 
         /* audio/video sync */
-        sync = NO_SYNC;
+        sync = SYNC_WAIT;
         while (sync != (SYNC_VIDEO | SYNC_AUDIO))
         {
           /* update video */
-          sync |= gx_video_Update();
+          sync |= gx_video_Update(sync & SYNC_VIDEO);
 
           /* update audio */
           sync |= gx_audio_Update();
@@ -234,11 +226,11 @@ static void run_emulation(void)
         system_frame_sms(0);
 
         /* audio/video sync */
-        sync = NO_SYNC;
+        sync = SYNC_WAIT;
         while (sync != (SYNC_VIDEO | SYNC_AUDIO))
         {
           /* update video */
-          sync |= gx_video_Update();
+          sync |= gx_video_Update(sync & SYNC_VIDEO);
 
           /* update audio */
           sync |= gx_audio_Update();
@@ -263,95 +255,14 @@ static void run_emulation(void)
     /* stop video & audio */
     gx_audio_Stop();
     gx_video_Stop();
-
-#ifdef LOG_TIMING
-    if (system_hw)
-    {
-      FILE *f;
-      char filename[64];
-
-      memset(filename, 0, 64);
-      strcpy(filename,"timings-");
-      if (!config.vsync || (config.tv_mode == !vdp_pal))
-      {
-        strcat(filename,"no_");
-      }
-      else
-      {
-        if (gc_pal)
-        {
-          strcat(filename,"50hz_");
-        }
-        else
-        {
-          strcat(filename,"60hz_");
-        }
-      }
-      strcat(filename,"vsync-");
-      if (vdp_pal)
-      {
-        strcat(filename,"pal-");
-      }
-      else
-      {
-        strcat(filename,"ntsc-");
-      }
-      if (config.render == 2)
-      {
-        strcat(filename,"prog.txt");
-      }
-      else
-      {
-        if (!config.render && !interlaced)
-        {
-          strcat(filename,"no_");
-        }
-        strcat(filename,"int.txt");
-      }
-
-      f = fopen(filename,"a");
-      if (f != NULL)
-      {
-        int i;
-        u32 min,max;
-        double total = 0;
-        double nsamples = 0;
-
-        if (delta_time[LOGSIZE - 1] != 0)
-        {
-          frame_cnt = LOGSIZE;
-        }
-
-        min = max = delta_time[0];
-
-        for (i=0; i<frame_cnt; i++)
-        {
-          fprintf(f,"%d ns - %d samples (%5.8f samples/sec)\n", delta_time[i], delta_samp[i], 1000000000.0*(double)delta_samp[i]/(double)delta_time[i]/4.0);
-          total += delta_time[i];
-          nsamples += delta_samp[i] / 4.0;
-          if (min > delta_time[i]) min = delta_time[i];
-          if (max < delta_time[i]) max = delta_time[i];
-        }
-        fprintf(f,"\n");
-        fprintf(f,"min = %d ns\n", min);
-        fprintf(f,"max = %d ns\n", max);
-        fprintf(f,"avg = %8.5f ns (%5.8f samples/sec, %5.8f samples/frame)\n\n\n", total/(double)i, nsamples/total*1000000000.0, nsamples/(double)i);
-        fclose(f);
-      }
-    }
-
-    memset(delta_time,0,LOGSIZE);
-    memset(delta_samp,0,LOGSIZE);
-    frame_cnt = prevtime = 0;
-#endif
     
     /* show menu */
     ConfigRequested = 0;
     mainmenu();
 
     /* restart video & audio */
-    gx_video_Start();
     gx_audio_Start();
+    gx_video_Start();
   }
 }
 

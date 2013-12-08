@@ -3,7 +3,7 @@
  *
  *   IPL font engine (using GX rendering)
  *
- *  Copyright Eke-Eke (2009-2010)
+ *  Copyright Eke-Eke (2009-2013)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -50,14 +50,11 @@ typedef struct _yay0header {
 	unsigned int chunks_offset ATTRIBUTE_PACKED;
 } yay0header;
 
-u8 font_size[256];
-int fheight;
-
 static u8 *fontImage;
 static u8 *fontTexture;
 static void *ipl_fontarea;
 static sys_fontheader *fontHeader;
-
+static u8 font_size[256];
 
 #ifndef HW_RVL
 
@@ -220,7 +217,10 @@ static void DrawChar(unsigned char c, int xpos, int ypos, int size, GXColor colo
   GX_InvalidateTexAll();
 
   /* adjust texture width */
-  s32 width = (fontHeader->cell_width * size) / fontHeader->cell_height;
+  s32 width = (fontHeader->cell_width * size * vmode->fbWidth) / (fontHeader->cell_height * vmode->viWidth);
+
+  /* adjust texture height */
+  size = (size * vmode->efbHeight) / 480;
 
   /* GX rendering */
   GX_Begin(GX_QUADS, GX_VTXFMT0, 4);
@@ -282,9 +282,6 @@ int FONT_Init(void)
     font_size[i] = ((u8*)fontHeader)[fontHeader->width_table + c];
   }
 
-  /* font height */
-  fheight = fontHeader->cell_height;
-
   /* initialize texture data */
   fontTexture = memalign(32, fontHeader->cell_width * fontHeader->cell_height / 2);
   if (!fontTexture)
@@ -306,45 +303,52 @@ void FONT_Shutdown(void)
 
 int FONT_write(char *string, int size, int x, int y, int max_width, GXColor color)
 {
+  int w, ox;
+
   x -= (vmode->fbWidth / 2);
   y -= (vmode->efbHeight / 2);
-  int w, ox = x;
 
-  while (*string && (*string != '\n'))
+  ox = x;
+
+  while (*string)
   {
-    w = (font_size[(u8)*string] * size) / fheight;
-    if ((x + w) > (ox + max_width)) return strlen(string);
-    DrawChar(*string, x, y, size,color);
-    x += w;
+    if (*string == '\n')
+    {
+      x = ox;
+      y += size;
+    }
+    else
+    {
+      w = (font_size[(u8)*string] * size * vmode->fbWidth) / (fontHeader->cell_height * vmode->viWidth);
+      if ((x + w) > (ox + max_width)) return strlen(string);
+      DrawChar(*string, x, y, size,color);
+      x += w;
+    }
     string++;
   }
  
-  if (*string == '\n')
-  {
-    string++;
-    return FONT_write(string, size, ox + (vmode->fbWidth / 2), y + size + (vmode->efbHeight / 2), max_width, color);
-  }
-
   return 0;
 }
 
 int FONT_writeCenter(char *string, int size, int x1, int x2, int y, GXColor color)
 {
-  int i=0;
+  int x;
+  int i = 0;
   int w = 0;
+
   while (string[i] && (string[i] != '\n'))
   {
-    w += (font_size[(u8)string[i++]] * size) / fheight;
+    w += (font_size[(u8)string[i++]] * size * vmode->fbWidth) / (fontHeader->cell_height * vmode->viWidth);
   }
 
   if ((x1 + w) > x2) w = x2 - x1;
-  int x = x1 + (x2 - x1 - w - vmode->fbWidth) / 2;
-  y  -= (vmode->efbHeight / 2);
+  x = x1 + (x2 - x1 - w - vmode->fbWidth) / 2;
   x2 -= (vmode->fbWidth / 2);
+  y  -= (vmode->efbHeight / 2);
 
   while (*string && (*string != '\n'))
   {
-    w = (font_size[(u8)*string] * size) / fheight;
+    w = (font_size[(u8)*string] * size * vmode->fbWidth) / (fontHeader->cell_height * vmode->viWidth);
     if ((x + w) > x2) return strlen(string);
     DrawChar(*string, x, y, size,color);
     x += w;
@@ -356,33 +360,41 @@ int FONT_writeCenter(char *string, int size, int x1, int x2, int y, GXColor colo
     string++;
     return FONT_writeCenter(string, size, x1, x2 + (vmode->fbWidth / 2), y + size + (vmode->efbHeight / 2), color);
   }
+
   return 0;
 }
 
 int FONT_alignRight(char *string, int size, int x, int y, GXColor color)
 {
-  int i;
+  int ox;
+  int i = 0;
   int w = 0;
+
+  while (string[i] && (string[i] != '\n'))
+  {
+    w += (font_size[(u8)string[i++]] * size * vmode->fbWidth) / (fontHeader->cell_height * vmode->viWidth);
+  }
 
   x -= (vmode->fbWidth / 2);
   y -= (vmode->efbHeight / 2);
 
-  int ox = x;
+  ox = x;
+  x -= w;
 
-  for (i=0; i<strlen(string); i++)
+  while (*string && (*string != '\n'))
   {
-    w += (font_size[(u8)string[i]] * size) / fheight;
-  }
-
-  x = ox - w;
-
-  while (*string)
-  {
-    w = (font_size[(u8)*string] * size) / fheight;
+    w = (font_size[(u8)*string] * size * vmode->fbWidth) / (fontHeader->cell_height * vmode->viWidth);
     if ((x + w) > ox) return strlen(string);
     DrawChar(*string, x, y, size,color);
     x += w;
     string++;
   }
+
+  if (*string == '\n')
+  {
+    string++;
+    return FONT_alignRight(string, size, ox + (vmode->fbWidth / 2), y + size + (vmode->efbHeight / 2), color);
+  }
+
   return 0;
 }

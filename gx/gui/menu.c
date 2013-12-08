@@ -393,18 +393,19 @@ static gui_item items_video[11] =
 };
 
 /* Menu options */
-static gui_item items_prefs[10] =
+static gui_item items_prefs[11] =
 {
-  {NULL,NULL,"Auto ROM Load: OFF",  "Enable/Disable automatic ROM loading on startup", 56,132,276,48},
-  {NULL,NULL,"Auto Cheats: OFF",    "Enable/Disable automatic cheats activation",      56,132,276,48},
-  {NULL,NULL,"Auto Saves: OFF",     "Enable/Disable automatic saves",                  56,132,276,48},
+  {NULL,NULL,"Auto ROM Load: OFF",  "Enable/disable automatic ROM loading on startup", 56,132,276,48},
+  {NULL,NULL,"Auto Cheats: OFF",    "Enable/disable automatic cheats activation",      56,132,276,48},
+  {NULL,NULL,"Auto Saves: OFF",     "Enable/disable automatic saves",                  56,132,276,48},
   {NULL,NULL,"ROM Load Device: SD", "Configure default device for ROM files",          56,132,276,48},
   {NULL,NULL,"Saves Device: FAT",   "Configure default device for Save files",         56,132,276,48},
   {NULL,NULL,"SFX Volume: 100",     "Adjust sound effects volume",                     56,132,276,48},
   {NULL,NULL,"BGM Volume: 100",     "Adjust background music volume",                  56,132,276,48},
   {NULL,NULL,"BG Overlay: ON",      "Enable/disable background overlay",               56,132,276,48},
   {NULL,NULL,"Screen Width: 658",   "Adjust menu screen width in pixels",              56,132,276,48},
-  {NULL,NULL,"Show CD Leds: OFF",   "Enable/Disable CD leds display",                  56,132,276,48},
+  {NULL,NULL,"Show CD Leds: OFF",   "Enable/disable CD leds display",                  56,132,276,48},
+  {NULL,NULL,"Show FPS: OFF",       "Enable/disable FPS counter",                      56,132,276,48},
 };
 
 /* Save Manager */
@@ -613,7 +614,7 @@ static gui_menu menu_prefs =
 {
   "Menu Settings",
   0,0,
-  10,4,6,0,
+  11,4,6,0,
   items_prefs,
   buttons_list,
   bg_list,
@@ -681,6 +682,7 @@ static void prefmenu ()
   sprintf (items[7].text, "BG Overlay: %s", config.bg_overlay ? "ON":"OFF");
   sprintf (items[8].text, "Screen Width: %d", config.screen_w);
   sprintf (items[9].text, "Show CD Leds: %s", config.cd_leds ? "ON":"OFF");
+  sprintf (items[10].text, "Show FPS: %s", config.fps ? "ON":"OFF");
 
   GUI_InitMenu(m);
   GUI_SlideMenuTitle(m,strlen("Menu "));
@@ -768,6 +770,11 @@ static void prefmenu ()
       case 9:   /*** CD LEDS ***/
         config.cd_leds ^= 1;
         sprintf (items[9].text, "Show CD Leds: %s", config.cd_leds ? "ON":"OFF");
+        break;
+
+      case 10:   /*** FPS counter ***/
+        config.fps ^= 1;
+        sprintf (items[10].text, "Show FPS: %s", config.fps ? "ON":"OFF");
         break;
 
       case -1:

@@ -59,7 +59,8 @@ static u8 *Bg_music_ogg = NULL;
 static u32 Bg_music_ogg_size = 0;
 
 /* Frame Sync */
-static u8 audio_sync;
+u32 audioSync;
+static u32 audioWait;
 
 /***************************************************************************************/
 /*   Audio engine                                                                      */
@@ -68,17 +69,7 @@ static u8 audio_sync;
 /* Audio DMA callback */
 static void ai_callback(void)
 {
-#ifdef LOG_TIMING
-  u64 current = gettime();
-  if (prevtime)
-  {
-    delta_time[frame_cnt] = diff_nsec(prevtime, current);
-    frame_cnt = (frame_cnt + 1) % LOGSIZE;
-  }
-  prevtime = current;
-#endif
-
-  audio_sync = 0;
+  audioWait = 0;
 }
 
 /* AUDIO engine initialization */
@@ -105,6 +96,9 @@ void gx_audio_Init(void)
     }
     fclose(f);
   }
+
+  /* emulation is synchronized with audio hardware by default */
+  audioSync = 1;
 }
 
 /* AUDIO engine shutdown */
@@ -128,7 +122,7 @@ void gx_audio_Shutdown(void)
  ***/
 int gx_audio_Update(void)
 {
-  if (!audio_sync)
+  if (!audioWait)
   {
     /* Current available soundbuffer */
     s16 *sb = (s16 *)(soundbuffer[mixbuffer]);
@@ -136,22 +130,11 @@ int gx_audio_Update(void)
     /* Retrieve audio samples (size must be multiple of 32 bytes) */
     int size = audio_update(sb) * 4;
 
-  #ifdef LOG_TIMING
-    if (prevtime && (frame_cnt < LOGSIZE - 1))
-    {
-      delta_samp[frame_cnt + 1] = size;
-    }
-    else
-    {
-      delta_samp[0] = size;
-    }
-  #endif
-
     /* Update DMA settings */
     DCFlushRange((void *)sb, size);
     AUDIO_InitDMA((u32) sb, size);
     mixbuffer = (mixbuffer + 1) % SOUND_BUFFER_NUM;
-    audio_sync = 1;
+    audioWait = audioSync;
 
     /* Start Audio DMA */
     /* this is called once to kick-off DMA from external memory to audio interface        */
@@ -171,7 +154,7 @@ int gx_audio_Update(void)
     return SYNC_AUDIO;
   }
 
-  return NO_SYNC;
+  return SYNC_WAIT;
 }
 
 /*** 
@@ -197,10 +180,10 @@ void gx_audio_Start(void)
   AUDIO_RegisterDMACallback(ai_callback);
 
   /* reset emulation audio processing */
-  memset(soundbuffer, 0, 3 * SOUND_BUFFER_LEN);
+  memset(soundbuffer, 0, sizeof(soundbuffer));
   audioStarted = 0;
-  mixbuffer = 0;
-  audio_sync = 0;
+  mixbuffer    = 0;
+  audioWait    = 0;
 }
 
 /***

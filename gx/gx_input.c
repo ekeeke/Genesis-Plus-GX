@@ -3,7 +3,7 @@
  *
  *  Genesis Plus GX input support
  *
- *  Copyright Eke-Eke (2007-2012)
+ *  Copyright Eke-Eke (2007-2013)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -217,6 +217,14 @@ static void pad_update(s8 chan, u8 i)
 
   /* Retrieve current key mapping */
   u16 *pad_keymap = config.pad_keymap[chan];
+
+  /* Default fast-forward key combo */
+  if ((p & PAD_TRIGGER_R) && (PAD_ButtonsDown(0) & PAD_BUTTON_START))
+  {
+    audioSync ^= 1;
+    videoSync = audioSync & config.vsync & !(gc_pal ^ vdp_pal);
+    return;
+  }
 
   /* User configurable menu combo */
   if ((p & pad_keymap[KEY_MENU]) == pad_keymap[KEY_MENU])
@@ -1474,10 +1482,18 @@ void gx_input_UpdateEmu(void)
   /* Update Wii controllers status */
   WPAD_ScanPads();
 
-  /* Hard-coded menu key */
-  u32 p = WPAD_ButtonsHeld(0);
-  if ((p & WPAD_BUTTON_HOME) || (p & WPAD_CLASSIC_BUTTON_HOME))
+  /* Default Wii controller menu keys */
+  if (WPAD_ButtonsDown(0) & (WPAD_BUTTON_HOME | WPAD_CLASSIC_BUTTON_HOME))
   {
+    /* Default fast-forward key combo */
+    if (WPAD_ButtonsHeld(0) & (WPAD_BUTTON_MINUS | WPAD_CLASSIC_BUTTON_MINUS))
+    {
+      audioSync ^= 1;
+      videoSync = audioSync & config.vsync & !(gc_pal ^ vdp_pal);
+      return;
+    }
+
+    /* Return to emulator settings */
     ConfigRequested = 1;
     return;
   }

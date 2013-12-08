@@ -43,6 +43,7 @@
 #include "sms_ntsc.h"
 #include "gx_input.h"
 
+#include <ogc/lwp_watchdog.h>
 #include <png.h>
 
 #define TEX_WIDTH         720
@@ -82,7 +83,7 @@ md_ntsc_t *md_ntsc;
 static u8 gp_fifo[DEFAULT_FIFO_SIZE] ATTRIBUTE_ALIGN (32);
 
 /*** GX Textures ***/
-static u32 vwidth,vheight;
+static u32 vwidth, vheight;
 static gx_texture *crosshair[2];
 static gx_texture *cd_leds[2][2];
 
@@ -91,7 +92,14 @@ static u32 *xfb[2];
 static u32 whichfb = 0;
 
 /*** Frame Sync ***/
-static u8 video_sync;
+u32 videoSync;
+static u32 videoWait;
+static u32 frameCount;
+static u64 starttime;
+
+/*** OSD ***/
+static u32 osd;
+static char msg[16];
 
 /***************************************************************************************/
 /*   Emulation video modes                                                             */
@@ -371,17 +379,7 @@ static u8 d_list[32] ATTRIBUTE_ALIGN(32) =
 /* VSYNC callback */
 static void vi_callback(u32 cnt)
 {
-#ifdef LOG_TIMING
-  u64 current = gettime();
-  if (prevtime)
-  {
-    delta_time[frame_cnt] = diff_nsec(prevtime, current);
-    frame_cnt = (frame_cnt + 1) % LOGSIZE;
-  }
-  prevtime = current;
-#endif
-
-  video_sync = 0;
+  videoWait = 0;
 }
 
 /* Initialize GX */
@@ -672,9 +670,6 @@ static void gxDrawCrosshair(gx_texture *texture, int x, int y)
   x = (((x + bitmap.viewport.x) * xwidth) / vwidth) + square[9] - w/2;
   y = (((y + bitmap.viewport.y) * ywidth) / vheight) + square[10] - h/2;
 
-  /* reset GX rendering */
-  gxResetRendering(1);
-
   /* load texture object */
   GXTexObj texObj;
   GX_InitTexObj(&texObj, texture->data, texture->width, texture->height, GX_TF_RGBA8, GX_CLAMP, GX_CLAMP, GX_FALSE);
@@ -697,19 +692,6 @@ static void gxDrawCrosshair(gx_texture *texture, int x, int y)
   GX_Color4u8(0xff,0xff,0xff,0xff);
   GX_TexCoord2f32(0.0, 0.0);
   GX_End();
-
-  /* restore GX rendering */
-  gxResetRendering(0);
-
-  /* restore texture object */
-  GXTexObj texobj;
-  GX_InitTexObj(&texobj, texturemem, vwidth, vheight, GX_TF_RGB565, GX_CLAMP, GX_CLAMP, GX_FALSE);
-  if (!config.bilinear)
-  {
-    GX_InitTexObjLOD(&texobj,GX_NEAR,GX_NEAR_MIP_NEAR,0.0,10.0,0.0,GX_FALSE,GX_FALSE,GX_ANISO_1);
-  }
-  GX_LoadTexObj(&texobj, GX_TEXMAP0);
-  GX_InvalidateTexAll();
 }
 
 static void gxDrawCdLeds(gx_texture *texture_l, gx_texture *texture_r)
@@ -729,9 +711,6 @@ static void gxDrawCdLeds(gx_texture *texture_l, gx_texture *texture_r)
   int xl = ((bitmap.viewport.x * xwidth) / vwidth) + square[9] + 8;
   int xr = (((bitmap.viewport.x + bitmap.viewport.w) * xwidth) / vwidth) + square[9] - 8 - w;
   int y = (((bitmap.viewport.y + bitmap.viewport.h - 4) * ywidth) / vheight) + square[10] - h;
-
-  /* reset GX rendering */
-  gxResetRendering(1);
 
   /* load left screen texture */
   GXTexObj texObj;
@@ -777,19 +756,18 @@ static void gxDrawCdLeds(gx_texture *texture_l, gx_texture *texture_r)
   GX_Color4u8(0xff,0xff,0xff,0xff);
   GX_TexCoord2f32(0.0, 0.0);
   GX_End();
+}
 
-  /* restore GX rendering */
-  gxResetRendering(0);
+static void gxDrawOnScreenText(char *msg)
+{
+  GXRModeObj *temp = vmode;
+  int y = (40 * rmode->efbHeight) / 480;
+  int x = (bitmap.viewport.x > 0) ? (24 + bitmap.viewport.x) : 24;
+  x = (x * rmode->fbWidth) / rmode->viWidth;
 
-  /* restore texture object */
-  GXTexObj texobj;
-  GX_InitTexObj(&texobj, texturemem, vwidth, vheight, GX_TF_RGB565, GX_CLAMP, GX_CLAMP, GX_FALSE);
-  if (!config.bilinear)
-  {
-    GX_InitTexObjLOD(&texobj,GX_NEAR,GX_NEAR_MIP_NEAR,0.0,10.0,0.0,GX_FALSE,GX_FALSE,GX_ANISO_1);
-  }
-  GX_LoadTexObj(&texobj, GX_TEXMAP0);
-  GX_InvalidateTexAll();
+  vmode = rmode;
+  FONT_write(msg, 20, x, y, rmode->fbWidth, (GXColor)WHITE);
+  vmode = temp;
 }
 
 void gxDrawRectangle(s32 x, s32 y, s32 w, s32 h, u8 alpha, GXColor color)
@@ -1515,6 +1493,11 @@ void gx_video_Start(void)
     /* VSYNC callback */
     VIDEO_SetPostRetraceCallback(vi_callback);
     VIDEO_Flush();
+    videoSync = audioSync;
+  }
+  else
+  {
+    videoSync = 0;
   }
 
   /* Enable progressive or interlaced video mode */
@@ -1583,6 +1566,12 @@ void gx_video_Start(void)
     }
   }
 
+  /* on-screen display enable flag */
+  osd = config.fps;
+
+  /* clear any on-screen text */
+  memset(msg, 0, sizeof(msg));
+
   /* lightgun textures */
   int i, player = 0;
   for (i=0; i<MAX_DEVICES; i++)
@@ -1599,6 +1588,7 @@ void gx_video_Start(void)
           if (config.gun_cursor[0])
           {
             crosshair[0] = gxTextureOpenPNG(Crosshair_p1_png,0);
+            osd = 1;
           }
         }
         else
@@ -1607,6 +1597,7 @@ void gx_video_Start(void)
           if (config.gun_cursor[1])
           {
             crosshair[1] = gxTextureOpenPNG(Crosshair_p2_png,0);
+            osd = 1;
           }
         }
       }
@@ -1629,6 +1620,7 @@ void gx_video_Start(void)
       cd_leds[0][1] = gxTextureOpenPNG(CD_access_on_png,0);
       cd_leds[1][0] = gxTextureOpenPNG(CD_ready_off_png,0);
       cd_leds[1][1] = gxTextureOpenPNG(CD_ready_on_png,0);
+      osd = 1;
     }
   }
 
@@ -1636,16 +1628,20 @@ void gx_video_Start(void)
   gxResetRendering(0);
 
   /* resynchronize emulation with VSYNC */
-  video_sync = 0;
   VIDEO_WaitVSync();
+
+  /* restart frame sync */
+  videoWait  = 0;
+  frameCount = 0;
+  starttime  = gettime();
 }
 
 /* GX render update */
-int gx_video_Update(void)
+int gx_video_Update(u32 done)
 {
-  if (video_sync) return NO_SYNC;
+  if (videoWait || done) return SYNC_WAIT;
 
-  video_sync = config.vsync && (gc_pal == vdp_pal);
+  videoWait = videoSync;
 
   /* check if display has changed during frame */
   if (bitmap.viewport.changed & 1)
@@ -1711,38 +1707,77 @@ int gx_video_Update(void)
   /* render textured quad */
   GX_CallDispList(d_list, 32);
 
-  /* lightgun # 1 screen mark */
-  if (crosshair[0])
+  /* on-screen display */
+  if (osd)
   {
-    if (input.system[0] == SYSTEM_LIGHTPHASER)
-    {
-      gxDrawCrosshair(crosshair[0], input.analog[0][0],input.analog[0][1]);
-    }
-    else
-    {
-      gxDrawCrosshair(crosshair[0], input.analog[4][0],input.analog[4][1]);
-    }
-  }
+    /* reset GX rendering */
+    gxResetRendering(1);
 
-  /* lightgun #2 screen mark */
-  if (crosshair[1])
-  {
-    if (input.system[1] == SYSTEM_LIGHTPHASER)
+    /* lightgun # 1 screen mark */
+    if (crosshair[0])
     {
-      gxDrawCrosshair(crosshair[1], input.analog[4][0],input.analog[4][1]);
+      if (input.system[0] == SYSTEM_LIGHTPHASER)
+      {
+        gxDrawCrosshair(crosshair[0], input.analog[0][0],input.analog[0][1]);
+      }
+      else
+      {
+        gxDrawCrosshair(crosshair[0], input.analog[4][0],input.analog[4][1]);
+      }
     }
-    else
-    {
-      gxDrawCrosshair(crosshair[1], input.analog[5][0],input.analog[5][1]);
-    }
-  }
 
-  /* CD LEDS */
-  if (cd_leds[1][1])
-  {
-    /* CD LEDS status */
-    u8 mode = scd.regs[0x06 >> 1].byte.h;
-    gxDrawCdLeds(cd_leds[1][(mode >> 1) & 1], cd_leds[0][mode & 1]);
+    /* lightgun #2 screen mark */
+    if (crosshair[1])
+    {
+      if (input.system[1] == SYSTEM_LIGHTPHASER)
+      {
+        gxDrawCrosshair(crosshair[1], input.analog[4][0],input.analog[4][1]);
+      }
+      else
+      {
+        gxDrawCrosshair(crosshair[1], input.analog[5][0],input.analog[5][1]);
+      }
+    }
+
+    /* CD LEDS */
+    if (cd_leds[1][1])
+    {
+      /* CD LEDS status */
+      u8 mode = scd.regs[0x06 >> 1].byte.h;
+      gxDrawCdLeds(cd_leds[1][(mode >> 1) & 1], cd_leds[0][mode & 1]);
+    }
+
+    /* FPS counter */
+    if (config.fps)
+    {
+      u32 delta = diff_usec(starttime, gettime());
+      frameCount++;
+      if (delta > 1000000)
+      {
+        sprintf(msg,"%3.2f FPS", (float)frameCount * 1000000.0 / (float)delta);
+        frameCount = 0;
+        starttime = gettime();
+      }
+
+      /* disable EFB alpha blending for text background */
+      GX_SetBlendMode(GX_BM_NONE,GX_BL_SRCALPHA,GX_BL_INVSRCALPHA,GX_LO_CLEAR);
+      GX_Flush();
+
+      gxDrawOnScreenText(msg);
+    }
+
+    /* restore GX rendering */
+    gxResetRendering(0);
+
+    /* restore texture object */
+    GXTexObj texobj;
+    GX_InitTexObj(&texobj, texturemem, vwidth, vheight, GX_TF_RGB565, GX_CLAMP, GX_CLAMP, GX_FALSE);
+    if (!config.bilinear)
+    {
+      GX_InitTexObjLOD(&texobj,GX_NEAR,GX_NEAR_MIP_NEAR,0.0,10.0,0.0,GX_FALSE,GX_FALSE,GX_ANISO_1);
+    }
+    GX_LoadTexObj(&texobj, GX_TEXMAP0);
+    GX_InvalidateTexAll();
   }
 
   /* swap XFB */ 

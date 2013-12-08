@@ -40,7 +40,7 @@
 #ifndef _CONFIG_H_
 #define _CONFIG_H_
 
-#define CONFIG_VERSION "GENPLUS-GX 1.7.4"
+#define CONFIG_VERSION "GENPLUS-GX 1.7.5"
 
 /****************************************************************************
  * Config Option 
@@ -106,6 +106,7 @@ typedef struct
   uint8 l_device;
   uint8 bg_overlay;
   uint8 cd_leds;
+  uint8 fps;
   int16 screen_w;
   float bgm_volume;
   float sfx_volume;
