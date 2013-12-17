@@ -59,6 +59,7 @@ static const double ntsc_fps = 53693175.0 / (3420.0 * 262.0);
 
 static char g_rom_dir[1024];
 
+static retro_log_printf_t log_cb;
 static retro_video_refresh_t video_cb;
 static retro_input_poll_t input_poll_cb;
 static retro_input_state_t input_state_cb;
@@ -72,12 +73,8 @@ static retro_audio_sample_batch_t audio_cb;
 
 void error(char * msg, ...)
 {
-#ifndef _XBOX1
-   va_list ap;
-   va_start(ap, msg);
-   vfprintf(stderr, msg, ap);
-   va_end(ap);
-#endif
+   if (log_cb)
+      log_cb(RETRO_LOG_ERROR, msg);
 }
 
 int load_archive(char *filename, unsigned char *buffer, int maxsize, char *extension)
@@ -98,11 +95,13 @@ int load_archive(char *filename, unsigned char *buffer, int maxsize, char *exten
     /* Mega CD BIOS are required files */
     if (!strcmp(filename,CD_BIOS_US) || !strcmp(filename,CD_BIOS_EU) || !strcmp(filename,CD_BIOS_JP)) 
     {
-      fprintf(stderr, "ERROR - Unable to open CD BIOS: %s.\n", filename);
+       if (log_cb)
+          log_cb(RETRO_LOG_ERROR, "Unable to open CD BIOS: %s.\n", filename);
       return 0;
    }
 
-    fprintf(stderr, "ERROR - Unable to open file.\n");
+    if (log_cb)
+       log_cb(RETRO_LOG_ERROR, "Unable to open file.\n");
     return 0;
   }
 
@@ -114,11 +113,13 @@ int load_archive(char *filename, unsigned char *buffer, int maxsize, char *exten
   if(size > maxsize)
   {
     fclose(fd);
-    fprintf(stderr, "ERROR - File is too large.\n");
+    if (log_cb)
+       log_cb(RETRO_LOG_ERROR, "File is too large.\n");
     return 0;
   }
 
-  fprintf(stderr, "INFORMATION - Loading %d bytes ...\n", size);
+  if (log_cb)
+     log_cb(RETRO_LOG_INFO, "INFORMATION - Loading %d bytes ...\n", size);
 
   /* filename extension */
   if (extension)
@@ -857,7 +858,8 @@ bool retro_load_game(const struct retro_game_info *info)
 
    if (!environ_cb(RETRO_ENVIRONMENT_GET_SYSTEM_DIRECTORY, &dir) || !dir)
    {
-      fprintf(stderr, "[genplus]: Defaulting system directory to %s.\n", g_rom_dir);
+      if (log_cb)
+         log_cb(RETRO_LOG_INFO, "[genplus]: Defaulting system directory to %s.\n", g_rom_dir);
       dir = g_rom_dir;
    }
 
@@ -872,17 +874,20 @@ bool retro_load_game(const struct retro_game_info *info)
    snprintf(CD_BRAM_US, sizeof(CD_BRAM_US), "%s%cscd_U.brm", dir, slash);
    snprintf(CD_BRAM_JP, sizeof(CD_BRAM_JP), "%s%cscd_J.brm", dir, slash);
    snprintf(CART_BRAM, sizeof(CART_BRAM), "%s%ccart.brm", dir, slash);
-   fprintf(stderr, "Game Genie ROM should be located at: %s\n", GG_ROM);
-   fprintf(stderr, "Action Replay (Pro) ROM should be located at: %s\n", AR_ROM);
-   fprintf(stderr, "Sonic & Knuckles (2 MB) ROM should be located at: %s\n", SK_ROM);
-   fprintf(stderr, "Sonic & Knuckles UPMEM (256 KB) ROM should be located at: %s\n", SK_UPMEM);
-   fprintf(stderr, "Mega CD PAL BIOS should be located at: %s\n", CD_BIOS_EU);
-   fprintf(stderr, "Sega CD NTSC-U BIOS should be located at: %s\n", CD_BIOS_US);
-   fprintf(stderr, "Mega CD NTSC-J BIOS should be located at: %s\n", CD_BIOS_JP);
-   fprintf(stderr, "Mega CD PAL BRAM is located at: %s\n", CD_BRAM_EU);
-   fprintf(stderr, "Sega CD NTSC-U BRAM is located at: %s\n", CD_BRAM_US);
-   fprintf(stderr, "Mega CD NTSC-J BRAM is located at: %s\n", CD_BRAM_JP);
-   fprintf(stderr, "Mega CD RAM CART is located at: %s\n", CART_BRAM);
+   if (log_cb)
+   {
+      log_cb(RETRO_LOG_INFO, "Game Genie ROM should be located at: %s\n", GG_ROM);
+      log_cb(RETRO_LOG_INFO, "Action Replay (Pro) ROM should be located at: %s\n", AR_ROM);
+      log_cb(RETRO_LOG_INFO, "Sonic & Knuckles (2 MB) ROM should be located at: %s\n", SK_ROM);
+      log_cb(RETRO_LOG_INFO, "Sonic & Knuckles UPMEM (256 KB) ROM should be located at: %s\n", SK_UPMEM);
+      log_cb(RETRO_LOG_INFO, "Mega CD PAL BIOS should be located at: %s\n", CD_BIOS_EU);
+      log_cb(RETRO_LOG_INFO, "Sega CD NTSC-U BIOS should be located at: %s\n", CD_BIOS_US);
+      log_cb(RETRO_LOG_INFO, "Mega CD NTSC-J BIOS should be located at: %s\n", CD_BIOS_JP);
+      log_cb(RETRO_LOG_INFO, "Mega CD PAL BRAM is located at: %s\n", CD_BRAM_EU);
+      log_cb(RETRO_LOG_INFO, "Sega CD NTSC-U BRAM is located at: %s\n", CD_BRAM_US);
+      log_cb(RETRO_LOG_INFO, "Mega CD NTSC-J BRAM is located at: %s\n", CD_BRAM_JP);
+      log_cb(RETRO_LOG_INFO, "Mega CD RAM CART is located at: %s\n", CART_BRAM);
+   }
 
    check_variables();
    if (!load_rom((char *)info->path))
@@ -950,6 +955,7 @@ size_t retro_get_memory_size(unsigned id)
 
 void retro_init(void)
 {
+   struct retro_log_callback log;
    unsigned level, rgb565;
    sms_ntsc = calloc(1, sizeof(sms_ntsc_t));
    md_ntsc  = calloc(1, sizeof(md_ntsc_t));
@@ -960,10 +966,15 @@ void retro_init(void)
    level = 1;
    environ_cb(RETRO_ENVIRONMENT_SET_PERFORMANCE_LEVEL, &level);
 
+   environ_cb(RETRO_ENVIRONMENT_GET_LOG_INTERFACE, &log);
+   if (log.log)
+      log_cb = log.log;
+
 #ifdef FRONTEND_SUPPORTS_RGB565
    rgb565 = RETRO_PIXEL_FORMAT_RGB565;
    if(environ_cb(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &rgb565))
-      fprintf(stderr, "Frontend supports RGB565 - will use that instead of XRGB1555.\n");
+      if (log_cb)
+         log_cb(RETRO_LOG_INFO, "Frontend supports RGB565 - will use that instead of XRGB1555.\n");
 #endif
 }
 

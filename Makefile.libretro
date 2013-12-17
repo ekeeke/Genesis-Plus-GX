@@ -5,6 +5,10 @@ FRONTEND_SUPPORTS_RGB565 = 1
 GENPLUS_SRC_DIR := core
 LIBRETRO_DIR	:= libretro
 
+ifneq ($(EMSCRIPTEN),)
+   platform = emscripten
+endif
+
 ifeq ($(platform),)
 platform = unix
 ifeq ($(shell uname -a),)
@@ -48,9 +52,9 @@ else ifeq ($(platform), ios)
    fpic := -fPIC
    SHARED := -dynamiclib -lz
    ENDIANNESS_DEFINES := -DLSB_FIRST
-   PLATFORM_DEFINES := -DHAVE_ZLIB
+   PLATFORM_DEFINES := -DHAVE_ZLIB -miphoneos-version-min=5.0
 
-   CC = clang -arch armv7 -isysroot $(IOSSDK)
+   CC = clang -arch armv7 -isysroot $(IOSSDK) -miphoneos-version-min=5.0
 else ifeq ($(platform), qnx)
    TARGET := $(TARGET_NAME)_libretro_qnx.so
    fpic := -fPIC
@@ -104,6 +108,32 @@ else ifeq ($(platform), wii)
    AR = $(DEVKITPPC)/bin/powerpc-eabi-ar$(EXE_EXT)
    PLATFORM_DEFINES := -DGEKKO -DHW_RVL -mrvl -mcpu=750 -meabi -mhard-float -DALT_RENDER
 	STATIC_LINKING = 1
+else ifneq (,$(findstring armv,$(platform)))
+   TARGET := $(TARGET_NAME)_libretro.so
+   fpic := -fPIC
+   SHARED := -shared -Wl,--version-script=libretro/link.T -Wl,--no-undefined -lz
+   ENDIANNESS_DEFINES := -DLSB_FIRST
+   PLATFORM_DEFINES := -DHAVE_ZLIB
+   CC = gcc
+ifneq (,$(findstring cortexa8,$(platform)))
+   PLATFORM_DEFINES += -marm -mcpu=cortex-a8
+else ifneq (,$(findstring cortexa9,$(platform)))
+   PLATFORM_DEFINES += -marm -mcpu=cortex-a9
+endif
+   PLATFORM_DEFINES += -marm
+ifneq (,$(findstring neon,$(platform)))
+   PLATFORM_DEFINES += -mfpu=neon
+   HAVE_NEON = 1
+endif
+ifneq (,$(findstring softfloat,$(platform)))
+   PLATFORM_DEFINES += -mfloat-abi=softfp
+else ifneq (,$(findstring hardfloat,$(platform)))
+   PLATFORM_DEFINES += -mfloat-abi=hard
+endif
+   PLATFORM_DEFINES += -DARM
+else ifeq ($(platform), emscripten)
+   TARGET := $(TARGET_NAME)_libretro_emscripten.bc
+   ENDIANNESS_DEFINES := -DLSB_FIRST
 else
    TARGET := $(TARGET_NAME)_libretro.dll
    CC = gcc
@@ -115,12 +145,12 @@ endif
 
 ifeq ($(DEBUG), 1)
    CFLAGS += -O0 -g
-else
-ifeq ($(platform),qnx)
+else ifeq ($(platform),qnx)
 	CFLAGS += -Os -DNDEBUG
+else ifeq ($(platform), emscripten)
+	CFLAGS += -O2 -DNDEBUG
 else
 	CFLAGS += -O3 -DNDEBUG
-endif
 endif
 	
 LIBRETRO_SRC := $(GENPLUS_SRC_DIR)/genesis.c \
