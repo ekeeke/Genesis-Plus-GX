@@ -482,7 +482,7 @@ unsigned int ctrl_io_read_word(unsigned int address)
         /* H-INT vector (word access only ?) */
         if (index == 0x06)
         {
-          return *(uint16 *)(m68k.memory_map[0].base + 0x72);
+          return *(uint16 *)(m68k.memory_map[scd.cartridge.boot].base + 0x72);
         }
 
         /* Stopwatch counter (word read access only ?) */
@@ -940,7 +940,7 @@ void ctrl_io_write_word(unsigned int address, unsigned int data)
 
           case 0x06:  /* H-INT vector (word access only ?) */
           {
-            *(uint16 *)(m68k.memory_map[0].base + 0x72) = data;
+            *(uint16 *)(m68k.memory_map[scd.cartridge.boot].base + 0x72) = data;
             return;
           }
 
@@ -948,7 +948,7 @@ void ctrl_io_write_word(unsigned int address, unsigned int data)
           {
             m68k_poll_sync(1<<0x0e);
 
-      		/* D8-D15 ignored -> only MAIN-CPU flags are updated (Mortal Kombat) */
+            /* D8-D15 ignored -> only MAIN-CPU flags are updated (Mortal Kombat) */
             scd.regs[0x0e>>1].byte.h = data & 0xff;
             return;
           }
