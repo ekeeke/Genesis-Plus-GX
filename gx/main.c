@@ -3,7 +3,7 @@
  *
  *  Genesis Plus GX
  *
- *  Copyright Eke-Eke (2007-2013), based on original work from Softdev (2006)
+ *  Copyright Eke-Eke (2007-2014), based on original work from Softdev (2006)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -46,13 +46,13 @@
 #include "file_load.h"
 #include "filesel.h"
 #include "cheats.h"
+#include "md_ntsc.h"
 
 #include <fat.h>
 
 #ifdef HW_RVL
 #include <iso9660.h>
 #include <ogc/usbmouse.h>
-
 extern bool sdio_Deinitialize();
 extern void USBStorage_Deinitialize();
 #endif
@@ -62,7 +62,6 @@ extern void USBStorage_Deinitialize();
 
 u32 Shutdown = 0;
 u32 ConfigRequested = 1;
-char osd_version[32];
 
 #ifdef HW_RVL
 /****************************************************************************
@@ -80,7 +79,6 @@ static void Reload_cb(void)
   Shutdown = 1;
   ConfigRequested = 1;
 }
-
 #endif
 
 /****************************************************************************
@@ -131,14 +129,16 @@ static void init_machine(void)
 
   /* allocate global work bitmap */
   memset(&bitmap, 0, sizeof (bitmap));
-  bitmap.width  = 720;
+  bitmap.width = MD_NTSC_OUT_WIDTH(320 + 2 * 14);
   bitmap.height = 576;
   bitmap.pitch = bitmap.width * 2;
-  bitmap.viewport.w = 256;
-  bitmap.viewport.h = 224;
-  bitmap.viewport.x = 0;
-  bitmap.viewport.y = 0;
-  bitmap.data = texturemem;
+  bitmap.data = memalign(32, bitmap.pitch * bitmap.height);
+
+  if (!bitmap.data)
+  {
+    GUI_WaitPrompt("Error","Unable to allocate memory");
+    exit(0);
+  }
 }
 
 static void run_emulation(void)
@@ -358,6 +358,7 @@ void shutdown(void)
   /* shutdown audio & video engines */
   gx_audio_Shutdown();
   gx_video_Shutdown();
+  if (bitmap.data) free(bitmap.data);
 
 #ifdef HW_RVL
   /* unmount all devices */
@@ -400,10 +401,6 @@ int main (int argc, char *argv[])
       }
     }
   }
-
-  sprintf(osd_version, "%s (IOS %d)", VERSION, IOS_GetVersion());
-#else
-  sprintf(osd_version, "%s (GCN)", VERSION);
 #endif
 
   /* initialize video engine */
@@ -592,7 +589,6 @@ int main (int argc, char *argv[])
 
     /* by default, shutdown system when POWER buttons are pressed */
     SYS_SetPowerCallback(PowerOff_cb);
-
   }
 #else
   /* autodetect SDLoad stub */

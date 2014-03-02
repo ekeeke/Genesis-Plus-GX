@@ -3,7 +3,7 @@
  * 
  *   ROM File Browser
  *
- *  Copyright Eke-Eke (2009-2013)
+ *  Copyright Eke-Eke (2009-2014)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -290,25 +290,13 @@ int FileSelector(int type)
   /* Hide all cartridge labels */
   for (i=0; i<FILETYPE_MAX; i++)
   {
+    bg_filesel[9+i].data = NULL;
     bg_filesel[9+i].state  &= ~IMAGE_VISIBLE;
   }
 
-  /* Cartridge type */
-  if (type < 0)
+  /* Select cartridge type */
+  if (type >= 0)
   {
-    /* Recent game list -> select all cartridge type */
-    for (i=0; i<FILETYPE_MAX; i++)
-    {
-      bg_filesel[9+i].data = Cart_png[i];
-    }
-  }
-  else
-  {
-    /* Clear all cartridges type */
-    for (i=0; i<FILETYPE_MAX; i++)
-    {
-      bg_filesel[9+i].data = NULL;
-    }
 
     /* Select cartridge type */
     bg_filesel[9 + type].data = Cart_png[type];
@@ -324,7 +312,7 @@ int FileSelector(int type)
     /* ROM file snapshot/database */
     if (old != selection)
     {
-      /* close any existing texture first */
+      /* close any screenshot texture first */
       gxTextureClose(&bg_filesel[8].texture);
       bg_filesel[8].state &= ~IMAGE_VISIBLE;
 
@@ -336,20 +324,26 @@ int FileSelector(int type)
         /* recent game list -> variable game types */
         if (type < 0)
         {
-          /* hide all cartridge labels */
-          for (i=0; i<FILETYPE_MAX; i++)
-          {
-            bg_filesel[9+i].state  &= ~IMAGE_VISIBLE;
-          }
-
-          /* detect cartridge type */
+          /* check if game type has changed */
           type = history.entries[selection].filetype;
+          if (!(bg_filesel[9 + type].state & IMAGE_VISIBLE))
+          {
+            /* hide all cartridge labels */
+            for (i=0; i<FILETYPE_MAX; i++)
+            {
+              gxTextureClose(&bg_filesel[9 + i].texture);
+              bg_filesel[9 + i].state &= ~IMAGE_VISIBLE;
+            }
 
-          /* show selected cartridge label */
-          bg_filesel[9 + type].state |= IMAGE_VISIBLE;
+            /* open cartridge label texture */
+            bg_filesel[9 + type].texture = gxTextureOpenPNG(Cart_png[type],0);
 
-          /*  default screenshot file path */
-          sprintf(fname,"%s/snaps/%s/%s", DEFAULT_PATH, Cart_dir[type], filelist[selection].filename);
+            /* show selected cartridge label */
+            bg_filesel[9 + type].state |= IMAGE_VISIBLE;
+
+            /* default screenshot file path */
+            sprintf(fname,"%s/snaps/%s/%s", DEFAULT_PATH, Cart_dir[type], filelist[selection].filename);
+          }
 
           /* restore recent type flag */
           type = -1;

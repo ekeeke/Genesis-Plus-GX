@@ -3,7 +3,7 @@
  *
  *  generic GUI Engine (using GX rendering)
  *
- *  Copyright Eke-Eke (2009-2010)
+ *  Copyright Eke-Eke (2009-2014)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -1018,7 +1018,7 @@ void GUI_TextWindow(gui_menu *parent, char *title, char items[][64], u8 nb_items
 }
 
 /* Option Window (returns selected item) */
-int GUI_OptionWindow(gui_menu *parent, char *title, char *items[], u8 nb_items)
+int GUI_OptionWindow(gui_menu *parent, char *title, char *infos, char *items[], u8 nb_items)
 {
   int i, ret, quit = 0;
   int old, selected = 0;
@@ -1075,6 +1075,9 @@ int GUI_OptionWindow(gui_menu *parent, char *title, char *items[], u8 nb_items)
       FONT_writeCenter(items[i],18,xpos,xpos+w,ypos+i*(20 + h)+(h + 18)/2- yoffset,(GXColor)DARK_GREY);
     }
 
+    /* draw infos */
+    FONT_writeCenter(infos,16,xwindow,xwindow+window->width,ywindow+window->height-16-yoffset,(GXColor)WHITE);
+
     /* update display */
     gxSetScreen();
 
@@ -1094,6 +1097,9 @@ int GUI_OptionWindow(gui_menu *parent, char *title, char *items[], u8 nb_items)
 
     /* draw title */
     FONT_writeCenter(title,20,xwindow,xwindow+window->width,ywindow+(top->height-20)/2+20,(GXColor)WHITE);
+
+    /* draw infos */
+    FONT_writeCenter(infos,16,xwindow,xwindow+window->width,ywindow+window->height-16,(GXColor)WHITE);
 
     /* draw buttons + text */
     for (i=0; i<nb_items; i++)
@@ -1207,6 +1213,9 @@ int GUI_OptionWindow(gui_menu *parent, char *title, char *items[], u8 nb_items)
 
     /* draw title */
     FONT_writeCenter(title,20,xwindow,xwindow+window->width,ywindow+(top->height-20)/2+20-yoffset,(GXColor)WHITE);
+
+    /* draw infos */
+    FONT_writeCenter(infos,16,xwindow,xwindow+window->width,ywindow+window->height-16-yoffset,(GXColor)WHITE);
 
     /* draw buttons + text */
     for (i=0; i<nb_items; i++)

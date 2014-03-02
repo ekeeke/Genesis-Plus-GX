@@ -799,8 +799,6 @@ static void prefmenu ()
     dvd[6] = 0;
     dvd[7] = 1;
     while (dvd[7] & 1);
-    dvd[0] = 0x14;
-    dvd[1] = 0;
 #endif
   }
 
@@ -854,7 +852,7 @@ static void soundmenu ()
     int16 lp_range = (config.lp_range * 100 + 0xffff) / 0x10000;
     sprintf (items[7].text, "Filtering: LOW-PASS");
     sprintf (items[8].text, "Low-Pass Rate: %d %%", lp_range);
-    strcpy (items[9].comment, "Adjust Low Pass filter");
+    strcpy (items[8].comment, "Adjust Low Pass filter");
     m->max_items = 9;
   }
   else
@@ -3139,7 +3137,6 @@ static int loadgamemenu ()
 static void showrominfo (void)
 {
   char items[15][64];
-  char msg[32];
 
   /* fill ROM infos */
   sprintf (items[0], "Console Type: %s", rominfo.consoletype);
@@ -3218,29 +3215,8 @@ static void showrominfo (void)
     sprintf (items[14], "Region Code: %s (JPN)", rominfo.country);
   else if (region_code == REGION_JAPAN_PAL)
     sprintf (items[14], "Region Code: %s (JPN-PAL)", rominfo.country);
-
-#ifdef USE_BENCHMARK
-  /* ROM benchmark */
-  if (!config.ntsc)
-  {
-    int frames = 0;
-    u64 start = gettime();
-    do
-    {
-      system_frame(0);
-      audio_update();
-    }
-    while (++frames < 300);
-    u64 end = gettime();
-    sprintf(msg,"ROM Header Info (%d fps)", (300 * 1000000) / diff_usec(start,end));
-  }
-  else
-#endif
-  {
-    strcpy(msg,"ROM Header Info");
-  }
   
-  GUI_TextWindow(&menu_main, msg, items, 15, 15);
+  GUI_TextWindow(&menu_main, "ROM Header Info", items, 15, 15);
 }
 
 /***************************************************************************
@@ -3307,6 +3283,8 @@ static void showcredits(void)
 
 static void exitmenu(void)
 {
+  char title[64];
+  char infos[64];
   char *items[3] =
   {
     "View Credits",
@@ -3318,11 +3296,23 @@ static void exitmenu(void)
     "Return to Loader",
   };
 
+#ifdef HW_RVL
+  extern u8 __Arena2Lo[];
+  sprintf(title, "%s (IOS %d)", VERSION, IOS_GetVersion());
+  if ((u32)SYS_GetArena2Lo() > (u32)__Arena2Lo)
+    sprintf(infos, "%d bytes free (MEM2)", (u32)SYS_GetArena2Size());
+  else
+    sprintf(infos, "%d bytes free (MEM1)", (u32)SYS_GetArena1Size());
+#else
+  sprintf(title, "%s (GCN)", VERSION);
+  sprintf(infos, "%d bytes free", (u32)SYS_GetArenaSize());
+#endif
+
   /* check if loader stub exists */
   int maxitems = reload ? 3 : 2;
 
   /* display option window */
-  switch (GUI_OptionWindow(&menu_main, osd_version, items, maxitems))
+  switch (GUI_OptionWindow(&menu_main, title, infos, items, maxitems))
   {
     case 0: /* credits */
       GUI_DeleteMenu(&menu_main);

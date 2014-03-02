@@ -3,7 +3,7 @@
  *
  *  Genesis Plus GX video & rendering support
  *
- *  Copyright Eke-Eke (2007-2013), based on original work from Softdev (2006)
+ *  Copyright Eke-Eke (2007-2014), based on original work from Softdev (2006)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -46,13 +46,6 @@
 #include <ogc/lwp_watchdog.h>
 #include <png.h>
 
-#define TEX_WIDTH         720
-#define TEX_HEIGHT        576
-#define TEX_SIZE          (TEX_WIDTH * TEX_HEIGHT * 2)
-#define DEFAULT_FIFO_SIZE 256 * 1024
-#define HASPECT           320
-#define VASPECT           240
-
 /* libpng wrapper */
 typedef struct
 {
@@ -67,10 +60,8 @@ extern const u8 CD_access_on_png[];
 extern const u8 CD_ready_off_png[];
 extern const u8 CD_ready_on_png[];
 
-/*** VI ***/
-GXRModeObj *vmode;  /* Default Video Mode    */
-u8 *texturemem;     /* Texture Data          */
-u8 *screenshot;     /* Texture Data          */
+/*** VI Mode ***/
+GXRModeObj *vmode;
 
 /*** 50/60hz flag ***/
 u32 gc_pal;
@@ -80,7 +71,7 @@ sms_ntsc_t *sms_ntsc;
 md_ntsc_t *md_ntsc;
 
 /*** GX FIFO ***/
-static u8 gp_fifo[DEFAULT_FIFO_SIZE] ATTRIBUTE_ALIGN (32);
+static u8 gp_fifo[GX_FIFO_MINSIZE] ATTRIBUTE_ALIGN(32);
 
 /*** GX Textures ***/
 static u32 vwidth, vheight;
@@ -88,8 +79,8 @@ static gx_texture *crosshair[2];
 static gx_texture *cd_leds[2][2];
 
 /*** Framebuffers ***/
-static u32 *xfb[2];
-static u32 whichfb = 0;
+static u32 *xfb;
+static u32 drawDone;
 
 /*** Frame Sync ***/
 u32 videoSync;
@@ -341,23 +332,10 @@ typedef struct tagcamera
   guVector view;
 } camera;
 
-/*** Square Matrix
-     This structure controls the size of the image on the screen.
-   Think of the output as a -80 x 80 by -60 x 60 graph.
-***/
-static s16 square[] ATTRIBUTE_ALIGN (32) =
-{
-  /*
-   * X,   Y,  Z
-   * Values set are for roughly 4:3 aspect
-   */
-  -HASPECT,  VASPECT, 0,  // 0
-   HASPECT,  VASPECT, 0,  // 1
-   HASPECT, -VASPECT, 0,  // 2
-  -HASPECT, -VASPECT, 0,  // 3
-};
+static s16 square[8] ATTRIBUTE_ALIGN (32);
 
-static camera cam = {
+static camera cam =
+{
   {0.0F, 0.0F, -100.0F},
   {0.0F, -1.0F, 0.0F},
   {0.0F, 0.0F, 0.0F}
@@ -379,17 +357,36 @@ static u8 d_list[32] ATTRIBUTE_ALIGN(32) =
 /* VSYNC callback */
 static void vi_callback(u32 cnt)
 {
+  /* clear VSYNC flag */
   videoWait = 0;
+
+  /* check if EFB rendering is finished */
+  if (drawDone)
+  {
+    /* clear GX draw end flag */
+    drawDone = 0;
+
+    /* copy EFB to XFB */
+    GX_CopyDisp(xfb, GX_FALSE);
+    GX_Flush();
+  }
+}
+
+/* GX draw callback */
+static void gx_callback(void)
+{
+  /* set GX draw end flag */
+  drawDone = 1;
 }
 
 /* Initialize GX */
 static void gxStart(void)
 {
   /*** Clear out FIFO area ***/
-  memset(&gp_fifo, 0, DEFAULT_FIFO_SIZE);
+  memset(&gp_fifo, 0, sizeof(gp_fifo));
 
   /*** GX default ***/
-  GX_Init(&gp_fifo, DEFAULT_FIFO_SIZE);
+  GX_Init(&gp_fifo, sizeof(gp_fifo));
   GX_SetPixelFmt(GX_PF_RGB8_Z24, GX_ZC_LINEAR);
   GX_SetCullMode(GX_CULL_NONE);
   GX_SetClipMode(GX_CLIP_DISABLE);
@@ -404,6 +401,9 @@ static void gxStart(void)
   guLookAt(view, &cam.pos, &cam.up, &cam.view);
   GX_LoadPosMtxImm(view, GX_PNMTX0);
   GX_Flush();
+
+  /* GX rendering callback */
+  GX_SetDrawDoneCallback(gx_callback);
 }
 
 /* Reset GX rendering */
@@ -434,11 +434,11 @@ static void gxResetRendering(u8 type)
   {
     /* uses array positionning, no alpha blending, no color channel (video emulation) */
     GX_SetBlendMode(GX_BM_NONE,GX_BL_SRCALPHA,GX_BL_INVSRCALPHA,GX_LO_CLEAR);
-    GX_SetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XYZ, GX_S16, 0);
+    GX_SetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XY, GX_S16, 0);
     GX_SetVtxAttrFmt(GX_VTXFMT0, GX_VA_TEX0, GX_TEX_ST, GX_S16, 0);
     GX_SetVtxDesc(GX_VA_POS, GX_INDEX8);
     GX_SetVtxDesc(GX_VA_TEX0, GX_DIRECT);
-    GX_SetArray(GX_VA_POS, square, 3 * sizeof (s16));
+    GX_SetArray(GX_VA_POS, square, 2 * sizeof (s16));
     /* 
        Color.out = Color.texture
        Alpha.out = Alpha.texture 
@@ -645,10 +645,10 @@ static void gxResetScaler(u32 width)
   }
 
   /* Set GX scaler (Vertex Position matrix) */
-  square[6] = square[3]  = xshift + xscale;
-  square[0] = square[9]  = xshift - xscale;
-  square[4] = square[1]  = yshift + yscale;
-  square[7] = square[10] = yshift - yscale;
+  square[0] = square[6] = xshift - xscale;
+  square[2] = square[4] = xshift + xscale;
+  square[1] = square[3] = yshift + yscale;
+  square[5] = square[7] = yshift - yscale;
   DCFlushRange(square, 32);
   GX_InvVtxCache();
 }
@@ -663,12 +663,12 @@ static void gxDrawCrosshair(gx_texture *texture, int x, int y)
   if (config.aspect & 2) w = (w * 3) / 4;
 
   /* EFB scale & shift */
-  int xwidth = square[3] - square[9];
-  int ywidth = square[4] - square[10];
+  int xwidth = square[2] - square[6];
+  int ywidth = square[3] - square[7];
 
   /* adjust texture coordinates to EFB */
-  x = (((x + bitmap.viewport.x) * xwidth) / vwidth) + square[9] - w/2;
-  y = (((y + bitmap.viewport.y) * ywidth) / vheight) + square[10] - h/2;
+  x = (((x + bitmap.viewport.x) * xwidth) / vwidth) + square[6] - w/2;
+  y = (((y + bitmap.viewport.y) * ywidth) / vheight) + square[7] - h/2;
 
   /* load texture object */
   GXTexObj texObj;
@@ -704,13 +704,13 @@ static void gxDrawCdLeds(gx_texture *texture_l, gx_texture *texture_r)
   if (config.aspect & 2) w = (w * 3) / 4;
 
   /* EFB scale & shift */
-  int xwidth = square[3] - square[9];
-  int ywidth = square[4] - square[10];
+  int xwidth = square[2] - square[6];
+  int ywidth = square[3] - square[7];
 
   /* adjust texture coordinates to EFB */
-  int xl = ((bitmap.viewport.x * xwidth) / vwidth) + square[9] + 8;
-  int xr = (((bitmap.viewport.x + bitmap.viewport.w) * xwidth) / vwidth) + square[9] - 8 - w;
-  int y = (((bitmap.viewport.y + bitmap.viewport.h - 4) * ywidth) / vheight) + square[10] - h;
+  int xl = ((bitmap.viewport.x * xwidth) / vwidth) + square[6] + 8;
+  int xr = (((bitmap.viewport.x + bitmap.viewport.w) * xwidth) / vwidth) + square[6] - 8 - w;
+  int y = (((bitmap.viewport.y + bitmap.viewport.h - 4) * ywidth) / vheight) + square[7] - h;
 
   /* load left screen texture */
   GXTexObj texObj;
@@ -929,7 +929,7 @@ void gxDrawScreenshot(u8 alpha)
 
   /* get current game screen texture */
   GXTexObj texobj;
-  GX_InitTexObj(&texobj, texturemem, vwidth, vheight, GX_TF_RGB565, GX_CLAMP, GX_CLAMP, GX_FALSE);
+  GX_InitTexObj(&texobj, bitmap.data, vwidth, vheight, GX_TF_RGB565, GX_CLAMP, GX_CLAMP, GX_FALSE);
   GX_LoadTexObj(&texobj, GX_TEXMAP0);
   GX_InvalidateTexAll();
 
@@ -978,7 +978,7 @@ void gxCopyScreenshot(gx_texture *texture)
 {
   /* retrieve gamescreen texture */
   GXTexObj texobj;
-  GX_InitTexObj(&texobj, texturemem, vwidth, vheight, GX_TF_RGB565, GX_CLAMP, GX_CLAMP, GX_FALSE);
+  GX_InitTexObj(&texobj, bitmap.data, vwidth, vheight, GX_TF_RGB565, GX_CLAMP, GX_CLAMP, GX_FALSE);
   GX_LoadTexObj(&texobj, GX_TEXMAP0);
   GX_InvalidateTexAll();
 
@@ -1011,10 +1011,6 @@ void gxCopyScreenshot(gx_texture *texture)
   GX_End();
 
   /* copy EFB to texture */
-  texture->format = GX_TF_RGBA8;
-  texture->width = 320;
-  texture->height = bitmap.viewport.h;
-  texture->data = screenshot;
   GX_SetTexCopySrc(0, 0, texture->width * 2, texture->height * 2);
   GX_SetTexCopyDst(texture->width, texture->height, texture->format, GX_TRUE);
   GX_DrawDone();
@@ -1036,35 +1032,39 @@ void gxSaveScreenshot(char *filename)
 {
   /* capture screenshot into a texture */
   gx_texture texture;
-  gxCopyScreenshot(&texture);
+  texture.format = GX_TF_RGBA8;
+  texture.width = 320;
+  texture.height = bitmap.viewport.h;
+  texture.data = memalign(32, texture.width*texture.height*4);
 
-  /* open PNG file */
-  FILE *f = fopen(filename,"wb");
-  if (f)
+  if (texture.data)
   {
-    /* encode screenshot into PNG file */
-    gxTextureWritePNG(&texture,f);
-    fclose(f);
+    gxCopyScreenshot(&texture);
+
+    /* open PNG file */
+    FILE *f = fopen(filename,"wb");
+    if (f)
+    {
+      /* encode screenshot into PNG file */
+      gxTextureWritePNG(&texture,f);
+      fclose(f);
+    }
+
+    free(texture.data);
   }
 }
 
 void gxSetScreen(void)
 {
-  GX_DrawDone();
-  GX_CopyDisp(xfb[whichfb], GX_FALSE);
+  VIDEO_WaitVSync();
+  GX_CopyDisp(xfb, GX_FALSE);
   GX_Flush();
-  VIDEO_SetNextFramebuffer (xfb[whichfb]);
-  VIDEO_Flush ();
-  VIDEO_WaitVSync ();
   gx_input_UpdateMenu();
 }
 
 void gxClearScreen(GXColor color)
 {
-  whichfb ^= 1;
-  GX_SetCopyClear(color,0x00ffffff);
-  GX_CopyDisp(xfb[whichfb], GX_TRUE);
-  GX_Flush();
+  gxDrawRectangle(0, 0, vmode->fbWidth, vmode->efbHeight, 255, color);
 }
 
 /***************************************************************************************/
@@ -1424,8 +1424,18 @@ void gxTextureClose(gx_texture **p_texture)
 /* Emulation mode -> Menu mode */
 void gx_video_Stop(void)
 {
-  /* wait for next VBLANK */
-  VIDEO_WaitVSync ();
+  /* disable VSYNC callback */
+  VIDEO_SetPostRetraceCallback(NULL);
+
+  /* wait for next even field */
+  /* this prevents screen artefacts when switching between interlaced & non-interlaced modes */
+  do VIDEO_WaitVSync();
+  while (!VIDEO_GetNextField());
+   
+
+  /* adjust TV width */
+  vmode->viWidth = config.screen_w;
+  vmode->viXOrigin = (VI_MAX_WIDTH_NTSC - vmode->viWidth)/2;
 
   /* unallocate NTSC filters */
   if (sms_ntsc) free(sms_ntsc);
@@ -1451,19 +1461,17 @@ void gx_video_Stop(void)
   gxClearScreen((GXColor)BLACK);
   gxDrawScreenshot(0xff);
 
-  /* default VI settings */
-  VIDEO_SetPostRetraceCallback(NULL);
 #ifdef HW_RVL
+  /* default VI settings */
   VIDEO_SetTrapFilter(1);
   VIDEO_SetGamma(VI_GM_1_0);
 #endif
 
-  /* adjust TV width */
-  vmode->viWidth    = config.screen_w;
-  vmode->viXOrigin  = (VI_MAX_WIDTH_NTSC - vmode->viWidth)/2;
+  /* reset default TV mode */
   VIDEO_Configure(vmode);
+  VIDEO_Flush();
 
-  /* wait for VSYNC */
+  /* display next frame */
   gxSetScreen();
 }
 
@@ -1490,9 +1498,6 @@ void gx_video_Start(void)
   /* When VSYNC is set to AUTO & console TV mode matches emulated video mode, emulation is synchronized with video hardware as well */
   if (config.vsync && (gc_pal == vdp_pal))
   {
-    /* VSYNC callback */
-    VIDEO_SetPostRetraceCallback(vi_callback);
-    VIDEO_Flush();
     videoSync = audioSync;
   }
   else
@@ -1628,7 +1633,11 @@ void gx_video_Start(void)
   gxResetRendering(0);
 
   /* resynchronize emulation with VSYNC */
-  VIDEO_WaitVSync();
+  do VIDEO_WaitVSync();
+  while (!VIDEO_GetNextField());
+
+  /* VSYNC callback */
+  VIDEO_SetPostRetraceCallback(vi_callback);
 
   /* restart frame sync */
   videoWait  = 0;
@@ -1667,7 +1676,7 @@ int gx_video_Update(u32 done)
 
     /* initialize texture object */
     GXTexObj texobj;
-    GX_InitTexObj(&texobj, texturemem, vwidth, vheight, GX_TF_RGB565, GX_CLAMP, GX_CLAMP, GX_FALSE);
+    GX_InitTexObj(&texobj, bitmap.data, vwidth, vheight, GX_TF_RGB565, GX_CLAMP, GX_CLAMP, GX_FALSE);
 
     /* configure texture filtering */
     if (!config.bilinear)
@@ -1696,13 +1705,17 @@ int gx_video_Update(u32 done)
 
     /* update VI mode */
     VIDEO_Configure(rmode);
+    VIDEO_Flush();
   }
 
   /* texture is now directly mapped by the line renderer */
 
   /* force texture cache update */
-  DCFlushRange(texturemem, TEX_SIZE);
+  DCFlushRange(bitmap.data, vwidth*vheight*2);
   GX_InvalidateTexAll();
+
+  /* disable EFB copy until rendering is done */
+  drawDone = 0;
 
   /* render textured quad */
   GX_CallDispList(d_list, 32);
@@ -1766,31 +1779,22 @@ int gx_video_Update(u32 done)
       gxDrawOnScreenText(msg);
     }
 
-    /* restore GX rendering */
-    gxResetRendering(0);
-
     /* restore texture object */
     GXTexObj texobj;
-    GX_InitTexObj(&texobj, texturemem, vwidth, vheight, GX_TF_RGB565, GX_CLAMP, GX_CLAMP, GX_FALSE);
+    GX_InitTexObj(&texobj, bitmap.data, vwidth, vheight, GX_TF_RGB565, GX_CLAMP, GX_CLAMP, GX_FALSE);
     if (!config.bilinear)
     {
       GX_InitTexObjLOD(&texobj,GX_NEAR,GX_NEAR_MIP_NEAR,0.0,10.0,0.0,GX_FALSE,GX_FALSE,GX_ANISO_1);
     }
     GX_LoadTexObj(&texobj, GX_TEXMAP0);
     GX_InvalidateTexAll();
+
+    /* restore GX rendering */
+    gxResetRendering(0);
   }
 
-  /* swap XFB */ 
-  whichfb ^= 1;
-
-  /* copy EFB to XFB */
-  GX_DrawDone();
-  GX_CopyDisp(xfb[whichfb], GX_TRUE);
-  GX_Flush();
-
-  /* XFB is ready to be displayed */
-  VIDEO_SetNextFramebuffer(xfb[whichfb]);
-  VIDEO_Flush();
+  /* GX draw interrupt will be triggered when EFB rendering is finished */
+  GX_SetDrawDone();
 
   if (bitmap.viewport.changed & 1)
   {
@@ -1847,21 +1851,19 @@ void gx_video_Init(void)
   }
 
   /* Configure VI */
-  VIDEO_Configure (vmode);
+  VIDEO_Configure(vmode);
 
-  /* Configure the framebuffers (double-buffering) */
-  xfb[0] = (u32 *) MEM_K0_TO_K1((u32 *) SYS_AllocateFramebuffer(&TV50hz_576i));
-  xfb[1] = (u32 *) MEM_K0_TO_K1((u32 *) SYS_AllocateFramebuffer(&TV50hz_576i));
+  /* Allocate framebuffer */
+  xfb = (u32 *) MEM_K0_TO_K1((u32 *) SYS_AllocateFramebuffer(&TV50hz_576i));
 
   /* Define a console */
-  console_init(xfb[0], 20, 64, 640, 574, 574 * 2);
+  console_init(xfb, 20, 64, 640, 574, 574 * 2);
 
-  /* Clear framebuffers to black */
-  VIDEO_ClearFrameBuffer(vmode, xfb[0], COLOR_BLACK);
-  VIDEO_ClearFrameBuffer(vmode, xfb[1], COLOR_BLACK);
+  /* Clear framebuffer to black */
+  VIDEO_ClearFrameBuffer(vmode, xfb, COLOR_BLACK);
 
   /* Set the framebuffer to be displayed at next VBlank */
-  VIDEO_SetNextFramebuffer(xfb[0]);
+  VIDEO_SetNextFramebuffer(xfb);
 
   /* Enable Video Interface */
   VIDEO_SetBlack(FALSE);
@@ -1878,20 +1880,14 @@ void gx_video_Init(void)
   gxResetRendering(1);
   gxResetMode(vmode, GX_TRUE);
 
-  /* initialize FONT */
+  /* Initialize FONT */
   FONT_Init();
-
-  /* Initialize textures */
-  texturemem = memalign(32, TEX_SIZE);
-  screenshot = memalign(32, HASPECT*VASPECT*4);
 }
 
 void gx_video_Shutdown(void)
 {
-  if (texturemem) free(texturemem);
-  if (screenshot) free(screenshot);
   FONT_Shutdown();
-  VIDEO_ClearFrameBuffer(vmode, xfb[whichfb], COLOR_BLACK);
+  VIDEO_ClearFrameBuffer(vmode, xfb, COLOR_BLACK);
   VIDEO_Flush();
   VIDEO_WaitVSync();
 }
@@ -1922,7 +1918,7 @@ void sms_ntsc_blit( sms_ntsc_t const* ntsc, SMS_NTSC_IN_T const* table, unsigned
   /* tiles are stored continuously in texture memory */
   in_width = SMS_NTSC_OUT_WIDTH(in_width) / 4;
   int offset = ((in_width * 32) * (vline / 4)) + ((vline & 3) * 8);
-  sms_ntsc_out_t* __restrict__ line_out  = (sms_ntsc_out_t*)(texturemem + offset);
+  sms_ntsc_out_t* __restrict__ line_out  = (sms_ntsc_out_t*)(bitmap.data + offset);
   offset = 0;
 
   int n;
@@ -1992,7 +1988,7 @@ void md_ntsc_blit( md_ntsc_t const* ntsc, MD_NTSC_IN_T const* table, unsigned ch
   /* tiles are stored continuously in texture memory */
   in_width = MD_NTSC_OUT_WIDTH(in_width) >> 2;
   int offset = ((in_width << 5) * (vline >> 2)) + ((vline & 3) * 8);
-  md_ntsc_out_t* __restrict__ line_out  = (md_ntsc_out_t*)(texturemem + offset);
+  md_ntsc_out_t* __restrict__ line_out  = (md_ntsc_out_t*)(bitmap.data + offset);
 
   int n;
 

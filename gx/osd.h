@@ -81,6 +81,5 @@ extern void reloadrom(void);
 extern void shutdown(void);
 extern u32 Shutdown;
 extern u32 ConfigRequested;
-extern char osd_version[32];
 
 #endif /* _OSD_H_ */

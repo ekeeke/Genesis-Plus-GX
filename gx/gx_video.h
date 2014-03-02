@@ -3,7 +3,7 @@
  *
  *  Genesis Plus GX video support
  *
- *  Copyright Eke-Eke (2007-2013), based on original work from Softdev (2006)
+ *  Copyright Eke-Eke (2007-2014), based on original work from Softdev (2006)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -53,7 +53,7 @@
 /* Tiles are stored continuously in texture memory */
 #define CUSTOM_BLITTER(line, width, table, in)  \
   width >>= 2;  \
-  u16 *out = (u16 *) (texturemem + (((width << 5) * (line >> 2)) + ((line & 3) << 3))); \
+  u16 *out = (u16 *) (bitmap.data + (((width << 5) * (line >> 2)) + ((line & 3) << 3))); \
   do  \
   { \
     *out++ = table[*in++];  \
@@ -75,7 +75,6 @@ typedef struct
 
 /* Global variables */
 extern GXRModeObj *vmode;
-extern u8 *texturemem;
 extern u32 gc_pal;
 extern u32 videoSync;
 

@@ -3,7 +3,7 @@
  *
  *  Genesis Plus GX audio support
  *
- *  Copyright Eke-Eke (2007-2013), based on original work from Softdev (2006)
+ *  Copyright Eke-Eke (2007-2014), based on original work from Softdev (2006)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -122,39 +122,41 @@ void gx_audio_Shutdown(void)
  ***/
 int gx_audio_Update(void)
 {
-  if (!audioWait)
+  if (audioWait && audioStarted)
   {
-    /* Current available soundbuffer */
-    s16 *sb = (s16 *)(soundbuffer[mixbuffer]);
-
-    /* Retrieve audio samples (size must be multiple of 32 bytes) */
-    int size = audio_update(sb) * 4;
-
-    /* Update DMA settings */
-    DCFlushRange((void *)sb, size);
-    AUDIO_InitDMA((u32) sb, size);
-    mixbuffer = (mixbuffer + 1) % SOUND_BUFFER_NUM;
-    audioWait = audioSync;
-
-    /* Start Audio DMA */
-    /* this is called once to kick-off DMA from external memory to audio interface        */
-    /* DMA operation is automatically restarted when all samples have been sent.          */
-    /* If DMA settings are not updated at that time, previous sound buffer will be used.  */
-    /* Therefore we need to make sure frame emulation is completed before current DMA is  */
-    /* completed, by synchronizing frame emulation with DMA start and also by syncing it  */
-    /* with Video Interrupt and outputing a suitable number of samples per frame.         */
-    if (!audioStarted)
-    {
-      /* restart audio DMA */
-      AUDIO_StopDMA();
-      AUDIO_StartDMA();
-      audioStarted = 1;
-    }
-
-    return SYNC_AUDIO;
+    return SYNC_WAIT;
   }
 
-  return SYNC_WAIT;
+  /* Current available soundbuffer */
+  s16 *sb = (s16 *)(soundbuffer[mixbuffer]);
+
+  /* Retrieve audio samples (size must be multiple of 32 bytes) */
+  int size = audio_update(sb) * 4;
+
+  /* Update DMA settings */
+  DCFlushRange((void *)sb, size);
+  AUDIO_InitDMA((u32) sb, size);
+
+  mixbuffer = (mixbuffer + 1) % SOUND_BUFFER_NUM;
+
+  audioWait = audioSync;
+
+  /* Start Audio DMA */
+  /* this is called once to kick-off DMA from external memory to audio interface        */
+  /* DMA operation is automatically restarted when all samples have been sent.          */
+  /* If DMA settings are not updated at that time, previous sound buffer will be used.  */
+  /* Therefore we need to make sure frame emulation is completed before current DMA is  */
+  /* completed, by synchronizing frame emulation with DMA start and also by syncing it  */
+  /* with Video Interrupt and outputing a suitable number of samples per frame.         */
+  if (!audioStarted)
+  {
+    /* restart audio DMA */
+    AUDIO_StopDMA();
+    AUDIO_StartDMA();
+    audioStarted = 1;
+  }
+
+  return SYNC_AUDIO;  
 }
 
 /*** 
