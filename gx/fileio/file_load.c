@@ -3,7 +3,7 @@
  * 
  *  ROM File loading support
  *
- *  Copyright Eke-Eke (2008-2012)
+ *  Copyright Eke-Eke (2008-2014)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -62,9 +62,9 @@ static const char rootdir[TYPE_RECENT][10] = {"/","dvd:/"};
 
 /* DVD interface */
 #ifdef HW_RVL
-static const DISC_INTERFACE* dvd = &__io_wiidvd;
+static DISC_INTERFACE* dvd = (DISC_INTERFACE*) &__io_wiidvd;
 #else
-static const DISC_INTERFACE* dvd = &__io_gcdvd;
+static DISC_INTERFACE* dvd = (DISC_INTERFACE*) &__io_gcdvd;
 #endif
 
 /* current directory */
@@ -76,8 +76,74 @@ static int deviceType = -1;
 /* current file type */
 static int fileType = -1;
 
-/* DVD status flag */
-static u8 dvd_mounted = 0;
+/* DVD interface status flags */
+static u8 dvdInited = 0;
+static u8 dvdMounted = 0;
+
+#ifndef HW_RVL
+static u8 dvdBuffer[2048] ATTRIBUTE_ALIGN(32);
+
+static bool dvdStartup()
+{
+  DVD_Mount();
+  return true;
+}
+
+static bool dvdIsInserted()
+{
+  return true;
+}
+
+static bool dvdReadSectors(u32 offset,u32 len,void *buffer)
+{
+  vu32* const dvd = (u32*)0xCC006000;
+  offset = offset << 9;
+  len = len << 11;
+
+  /* DVD transfer must be done into a 32-byte aligned buffer */
+  while (len >= 2048)
+  {
+    DCInvalidateRange((void *)dvdBuffer, 2048);
+    dvd[0] = 0x2E;
+    dvd[1] = 0;
+    dvd[2] = 0xA8000000;
+    dvd[3] = offset;
+    dvd[4] = 2048;
+    dvd[5] = (u32) dvdBuffer;
+    dvd[6] = 2048;
+    dvd[7] = 3;
+    while (dvd[7] & 1);
+    if (dvd[0] & 4) return false;
+    memcpy (buffer, dvdBuffer, 2048);
+    len -= 2048;
+    buffer += 2048;
+    offset += 512;
+  }
+
+  /* Process remaining bytes (normally not needed since libiso9960 already deals with this but you never know) */
+  if (len)
+  {
+    /* DVD transfer length should be aligned to 32 bytes */
+    u32 dmasize = (len + 0x1f) & ~0x1f;
+
+    DCInvalidateRange((void *)dvdBuffer, dmasize);
+    dvd[0] = 0x2E;
+    dvd[1] = 0;
+    dvd[2] = 0xA8000000;
+    dvd[3] = offset;
+    dvd[4] = dmasize;
+    dvd[5] = (u32) dvdBuffer;
+    dvd[6] = dmasize;
+    dvd[7] = 3;
+    while (dvd[7] & 1);
+    if (dvd[0] & 4) return false;
+
+    memcpy (buffer, dvdBuffer, len);
+  }
+
+  return true;
+}
+#endif
 
 /***************************************************************************
  * MountDVD
@@ -89,18 +155,27 @@ static int MountDVD(void)
   GUI_MsgBoxOpen("Information", "Mounting DVD ...",1);
 
   /* initialize DVD interface if needed */
+  if (!dvdInited)
+  {
 #ifdef HW_RVL
-  DI_Init();
+    DI_Init();
 #else
-  DVD_Init();
+    DVD_Init();
+
+    /* patch libogc DVD interface which appears to be broken on Gamecube */
+    dvd->startup = (FN_MEDIUM_STARTUP)dvdStartup;
+    dvd->isInserted = (FN_MEDIUM_ISINSERTED)dvdIsInserted;
+    dvd->readSectors = (FN_MEDIUM_READSECTORS)dvdReadSectors;
 #endif
+    dvdInited = 1;
+  }    
 
   /* check if DVD is already mounted */
-  if (dvd_mounted)
+  if (dvdMounted)
   {
 		/* unmount DVD */
     ISO9660_Unmount("dvd:");
-    dvd_mounted = 0;
+    dvdMounted = 0;
   }
 
   /* check if disc is found */
@@ -109,7 +184,7 @@ static int MountDVD(void)
     GUI_WaitPrompt("Error","No Disc inserted !");
     return 0;
   }
-		
+
   /* mount DVD */
   if(!ISO9660_Mount("dvd",dvd))
   {
@@ -118,7 +193,7 @@ static int MountDVD(void)
   }
 
   /* DVD is mounted */
-  dvd_mounted = 1;
+  dvdMounted = 1;
 
   GUI_MsgBoxClose();
   return 1;
