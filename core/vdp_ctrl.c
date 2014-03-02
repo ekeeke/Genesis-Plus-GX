@@ -2,10 +2,10 @@
  *  Genesis Plus
  *  Video Display Processor (68k & Z80 CPU interface)
  *
- *  Support for SG-1000, Master System (315-5124 & 315-5246), Game Gear & Mega Drive VDP
+ *  Support for SG-1000 (TMS99xx & 315-5066), Master System (315-5124 & 315-5246), Game Gear & Mega Drive VDP
  *
  *  Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003  Charles Mac Donald (original code)
- *  Copyright (C) 2007-2013  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2007-2014  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -322,8 +322,9 @@ void vdp_reset(void)
   switch (system_hw)
   {
     case SYSTEM_SG:
+    case SYSTEM_SGII:
     {
-      /* SG-1000 VDP (TMS99xx) */
+      /* SG-1000 (TMS99xx) or SG-1000 II (315-5066) VDP */
       vdp_z80_data_w = vdp_z80_data_w_sg;
       vdp_z80_data_r = vdp_z80_data_r_m4;
       break;
@@ -358,19 +359,23 @@ void vdp_reset(void)
   }
 
   /* SG-1000 specific */
-  if (system_hw == SYSTEM_SG)
+  if (system_hw & SYSTEM_SG)
   {
-    /* 16k address decoding by default (Magical Kid Wiz) */
-    vdp_reg_w(1, 0x80, 0);
-
     /* no H-INT on TMS99xx */
+    vdp_reg_w(10, 0xFF, 0);
+  }
+
+  /* Game Gear specific */
+  else if (system_hw & SYSTEM_GG)
+  {
+    /* H-INT disabled on startup (fixes Terminator 2: Judgement Day) */
     vdp_reg_w(10, 0xFF, 0);
   }
 
   /* Master System specific */
   else if ((system_hw & SYSTEM_SMS) && (!(config.bios & 1) || !(system_bios & SYSTEM_SMS)))
   {
-    /* force registers initialization (only if Master System BIOS is disabled or not loaded) */
+    /* force registers initialization (normally done by BOOT ROM on all Master System models) */
     vdp_reg_w(0 , 0x36, 0);
     vdp_reg_w(1 , 0x80, 0);
     vdp_reg_w(2 , 0xFF, 0);
@@ -389,7 +394,7 @@ void vdp_reset(void)
   /* Mega Drive specific */
   else if (((system_hw == SYSTEM_MD) || (system_hw == SYSTEM_MCD)) && (config.bios & 1) && !(system_bios & SYSTEM_MD))
   {
-    /* force registers initialization (only if TMSS model is emulated and BOOT ROM is not loaded) */
+    /* force registers initialization (normally done by BOOT ROM, only on Mega Drive model with TMSS) */
     vdp_reg_w(0 , 0x04, 0);
     vdp_reg_w(1 , 0x04, 0);
     vdp_reg_w(10, 0xFF, 0);
@@ -445,7 +450,7 @@ int vdp_context_load(uint8 *state, uint8 version)
   /* restore VDP registers */
   if (system_hw < SYSTEM_MD)
   {
-    if (system_hw > SYSTEM_SG)
+    if (system_hw >= SYSTEM_MARKIII)
     {
       for (i=0;i<0x10;i++) 
       {
@@ -1632,6 +1637,37 @@ static void vdp_reg_w(unsigned int r, unsigned int d, unsigned int cycles)
       r = d ^ reg[1];
       reg[1] = d;
 
+      /* 4K/16K address decoding */
+      if (r & 0x80)
+      {
+        /* original TMS99xx hardware only (fixes Magical Kid Wiz) */
+        if (system_hw == SYSTEM_SG)
+        {
+          int i;
+          
+          /* make temporary copy of 16KB VRAM */
+          memcpy(vram + 0x4000, vram, 0x4000);
+
+          /* re-arrange 16KB VRAM address decoding */
+          if (d & 0x80)
+          {
+            /* 4K->16K address decoding */
+            for (i=0; i<0x4000; i+=2)
+            {
+              *(uint16 *)(vram + ((i & 0x203F) | ((i << 6) & 0x1000) | ((i >> 1) & 0xFC0))) = *(uint16 *)(vram + 0x4000 + i);
+            }
+          }
+          else
+          {
+            /* 16K->4K address decoding */
+            for (i=0; i<0x4000; i+=2)
+            {
+              *(uint16 *)(vram + ((i & 0x203F) | ((i >> 6) & 0x40) | ((i << 1) & 0x1F80))) = *(uint16 *)(vram + 0x4000 + i);
+            }
+          }
+        }
+      }
+
       /* Display status (modified during active display) */
       if ((r & 0x40) && (v_counter < bitmap.viewport.h))
       {
@@ -2762,7 +2798,7 @@ static unsigned int vdp_z80_data_r_m4(void)
   /* Process next read */
   fifo[0] = vram[addr & 0x3FFF];
 
-  /* Increment address register (TODO: check how address is incremented in Mode 4) */
+  /* Increment address register (TODO: check how address is incremented with Mega Drive VDP in Mode 4) */
   addr += (reg[15] + 1);
 
   /* Return data */
@@ -2977,12 +3013,6 @@ static void vdp_z80_data_w_sg(unsigned int data)
 
   /* Clear pending flag */
   pending = 0;
-
-  /* 4K address decoding (cf. tms9918a.txt) */
-  if (!(reg[1] & 0x80))
-  {
-    index = (index & 0x203F) | ((index >> 6) & 0x40) | ((index << 1) & 0x1F80);
-  }
 
   /* VRAM write */
   vram[index] = data;

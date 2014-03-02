@@ -5,7 +5,7 @@
  *  Support for SG-1000, Mark-III, Master System, Game Gear, Mega Drive & Mega CD hardware
  *
  *  Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003  Charles Mac Donald (original code)
- *  Copyright (C) 2007-2013  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2007-2014  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -196,7 +196,7 @@ void gen_init(void)
         break;
       }
 
-      /* Master SYstem hardware */
+      /* Master System hardware */
       case SYSTEM_SMS:
       case SYSTEM_SMS2:
       {
@@ -215,6 +215,7 @@ void gen_init(void)
 
       /* SG-1000 hardware */
       case SYSTEM_SG:
+      case SYSTEM_SGII:
       {
         z80_writeport = z80_sg_port_w;
         z80_readport  = z80_sg_port_r;

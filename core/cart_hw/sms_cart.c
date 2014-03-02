@@ -2,7 +2,7 @@
  *  Genesis Plus
  *  SG-1000, Master System & Game Gear cartridge hardware support
  *
- *  Copyright (C) 2007-2013  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2007-2014  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -42,9 +42,9 @@
 
 #define MAPPER_NONE        (0x00)
 #define MAPPER_TEREBI      (0x01)
-#define MAPPER_RAM_8K_EXT1 (0x02)
-#define MAPPER_RAM_8K_EXT2 (0x03)
-#define MAPPER_OMV         (0x04)
+#define MAPPER_RAM_2K      (0x02)
+#define MAPPER_RAM_8K_EXT1 (0x03)
+#define MAPPER_RAM_8K_EXT2 (0x04)
 #define MAPPER_SEGA        (0x10)
 #define MAPPER_SEGA_X      (0x11)
 #define MAPPER_93C46       (0x12)
@@ -55,8 +55,6 @@
 #define MAPPER_KOREA_8K    (0x20)
 #define MAPPER_MSX         (0x21)
 #define MAPPER_MSX_NEMESIS (0x22)
-
-#define GAME_DATABASE_CNT (214)
 
 typedef struct
 {
@@ -76,7 +74,7 @@ typedef struct
   uint8 pages;
 } romhw_t;
 
-static const rominfo_t game_list[GAME_DATABASE_CNT] =
+static const rominfo_t game_list[] =
 {
   /* program requiring Mega Drive VDP (Mode 5) */
   {0x47FA618D, 0, 1, SYSTEM_MS_GAMEPAD, MAPPER_SEGA, SYSTEM_PBC,  REGION_USA}, /* Charles MacDonald's Mode 5 Demo Program */
@@ -91,8 +89,6 @@ static const rominfo_t game_list[GAME_DATABASE_CNT] =
   {0x23BAC434, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA_X, SYSTEM_GG, REGION_USA}, /* Shining Force Gaiden - Final Conflict (JP) [T-Eng] */
 
   /* games using various Korean mappers */
-  {0x17AB6883, 0, 0, SYSTEM_MS_GAMEPAD, MAPPER_NONE,        SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* FA Tetris (KR) */
-  {0x61E8806F, 0, 0, SYSTEM_MS_GAMEPAD, MAPPER_NONE,        SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Flash Point (KR) */
   {0x445525E2, 0, 0, SYSTEM_MS_GAMEPAD, MAPPER_MSX,         SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Penguin Adventure (KR) */
   {0x83F0EEDE, 0, 0, SYSTEM_MS_GAMEPAD, MAPPER_MSX,         SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Street Master (KR) */
   {0xA05258F5, 0, 0, SYSTEM_MS_GAMEPAD, MAPPER_MSX,         SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Won-Si-In (KR) */
@@ -106,7 +102,6 @@ static const rominfo_t game_list[GAME_DATABASE_CNT] =
   {0x89B79E77, 0, 0, SYSTEM_MS_GAMEPAD, MAPPER_KOREA,       SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Dodgeball King (KR) */
   {0x18FB98A3, 0, 0, SYSTEM_MS_GAMEPAD, MAPPER_KOREA,       SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Jang Pung 3 (KR) */
   {0x97D03541, 0, 0, SYSTEM_MS_GAMEPAD, MAPPER_KOREA,       SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Sangokushi 3 (KR) */
-  {0x67C2F0FF, 0, 0, SYSTEM_MS_GAMEPAD, MAPPER_KOREA,       SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Super Boy 2 (KR) */
   {0x192949D5, 0, 0, SYSTEM_MS_GAMEPAD, MAPPER_KOREA_8K,    SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Janggun-ui Adeul (KR) */
   {0x9FA727A0, 0, 0, SYSTEM_MS_GAMEPAD, MAPPER_KOREA_16K,   SYSTEM_GGMS,        REGION_USA}, /* Street Hero [Proto 0] [SMS-GG] (US) */
   {0xFB481971, 0, 0, SYSTEM_MS_GAMEPAD, MAPPER_KOREA_16K,   SYSTEM_GGMS,        REGION_USA}, /* Street Hero [Proto 1] [SMS-GG] (US) */
@@ -116,18 +111,18 @@ static const rominfo_t game_list[GAME_DATABASE_CNT] =
   {0x8813514B, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_CODIES, SYSTEM_SMS2, REGION_EUROPE}, /* Excellent Dizzy Collection, The [Proto] */
   {0xB9664AE1, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_CODIES, SYSTEM_SMS2, REGION_EUROPE}, /* Fantastic Dizzy */
   {0xA577CE46, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_CODIES, SYSTEM_SMS2, REGION_EUROPE}, /* Micro Machines */
-  {0xEA5C3A6F, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_CODIES, SYSTEM_SMS2, REGION_USA}, /* Dinobasher - Starring Bignose the Caveman [Proto] */
-  {0xAA140C9C, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_CODIES, SYSTEM_GGMS, REGION_USA}, /* Excellent Dizzy Collection, The [SMS-GG] */
-  {0xC888222B, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_CODIES, SYSTEM_GGMS, REGION_USA}, /* Fantastic Dizzy [SMS-GG] */
-  {0x76C5BDFB, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_CODIES, SYSTEM_GGMS, REGION_USA}, /* Jang Pung 2 [SMS-GG] */
-  {0x6CAA625B, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_CODIES, SYSTEM_GG,   REGION_USA}, /* Cosmic Spacehead [GG]*/
-  {0x152F0DCC, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_CODIES, SYSTEM_GG,   REGION_USA}, /* Drop Zone" */
-  {0x5E53C7F7, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_CODIES, SYSTEM_GG,   REGION_USA}, /* Ernie Els Golf */
-  {0xD9A7F170, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_CODIES, SYSTEM_GG,   REGION_USA}, /* Man Overboard! */
-  {0xF7C524F6, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_CODIES, SYSTEM_GG,   REGION_USA}, /* Micro Machines [GG] */
-  {0xDBE8895C, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_CODIES, SYSTEM_GG,   REGION_USA}, /* Micro Machines 2 - Turbo Tournament */
-  {0xC1756BEE, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_CODIES, SYSTEM_GG,   REGION_USA}, /* Pete Sampras Tennis */
-  {0x72981057, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_CODIES, SYSTEM_GG,   REGION_USA}, /* CJ Elephant Fugitive */
+  {0xEA5C3A6F, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_CODIES, SYSTEM_SMS2,    REGION_USA}, /* Dinobasher - Starring Bignose the Caveman [Proto] */
+  {0xAA140C9C, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_CODIES, SYSTEM_GGMS,    REGION_USA}, /* Excellent Dizzy Collection, The [SMS-GG] */
+  {0xC888222B, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_CODIES, SYSTEM_GGMS,    REGION_USA}, /* Fantastic Dizzy [SMS-GG] */
+  {0x76C5BDFB, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_CODIES, SYSTEM_GGMS,    REGION_USA}, /* Jang Pung 2 [SMS-GG] */
+  {0x6CAA625B, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_CODIES, SYSTEM_GG,      REGION_USA}, /* Cosmic Spacehead [GG]*/
+  {0x152F0DCC, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_CODIES, SYSTEM_GG,      REGION_USA}, /* Drop Zone */
+  {0x5E53C7F7, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_CODIES, SYSTEM_GG,      REGION_USA}, /* Ernie Els Golf */
+  {0xD9A7F170, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_CODIES, SYSTEM_GG,      REGION_USA}, /* Man Overboard! */
+  {0xF7C524F6, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_CODIES, SYSTEM_GG,      REGION_USA}, /* Micro Machines [GG] */
+  {0xDBE8895C, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_CODIES, SYSTEM_GG,      REGION_USA}, /* Micro Machines 2 - Turbo Tournament */
+  {0xC1756BEE, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_CODIES, SYSTEM_GG,      REGION_USA}, /* Pete Sampras Tennis */
+  {0x72981057, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_CODIES, SYSTEM_GG,      REGION_USA}, /* CJ Elephant Fugitive */
 
   /* games using serial EEPROM */
   {0x36EBCD6D, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_93C46,  SYSTEM_GG,   REGION_USA}, /* Majors Pro Baseball */
@@ -138,34 +133,39 @@ static const rominfo_t game_list[GAME_DATABASE_CNT] =
   /* games using Terebi Oekaki graphic board */
   {0xDD4A661B, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_TEREBI, SYSTEM_SG,   REGION_JAPAN_NTSC}, /* Terebi Oekaki */
 
-  /* games requiring 8K RAM extension adapter */
-  {0xCE5648C3, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_RAM_8K_EXT1, SYSTEM_SG, REGION_JAPAN_NTSC}, /* Bomberman Special [DahJee] (TW) */
-  {0x223397A1, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_RAM_8K_EXT1, SYSTEM_SG, REGION_JAPAN_NTSC}, /* King's Valley (TW) */
-  {0x281D2888, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_RAM_8K_EXT1, SYSTEM_SG, REGION_JAPAN_NTSC}, /* Knightmare (TW) */
-  {0x306D5F78, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_RAM_8K_EXT1, SYSTEM_SG, REGION_JAPAN_NTSC}, /* Rally-X [DahJee] (TW) */
-  {0x29E047CC, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_RAM_8K_EXT1, SYSTEM_SG, REGION_JAPAN_NTSC}, /* Road Fighter (TW) */
-  {0x5CBD1163, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_RAM_8K_EXT1, SYSTEM_SG, REGION_JAPAN_NTSC}, /* Tank Battalion (TW) */
-  {0x2E7166D5, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_RAM_8K_EXT1, SYSTEM_SG, REGION_JAPAN_NTSC}, /* The Legend of Kage (TW) */
-  {0xC550B4F0, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_RAM_8K_EXT1, SYSTEM_SG, REGION_JAPAN_NTSC}, /* TwinBee (TW) */
-  {0xFC87463C, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_RAM_8K_EXT1, SYSTEM_SG, REGION_JAPAN_NTSC}, /* Yie Ar Kung-Fu II (TW) */
-  {0x69FC1494, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_RAM_8K_EXT2, SYSTEM_SG, REGION_JAPAN_NTSC}, /* Bomberman Special (TW) */
-  {0xFFC4EE3F, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_RAM_8K_EXT2, SYSTEM_SG, REGION_JAPAN_NTSC}, /* Magical Kid Wiz (TW) */
-  {0x2E366CCF, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_RAM_8K_EXT2, SYSTEM_SG, REGION_JAPAN_NTSC}, /* The Castle (TW) */
-  {0xAAAC12CF, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_RAM_8K_EXT2, SYSTEM_SG, REGION_JAPAN_NTSC}, /* Rally-X (TW) */
-  {0xD2EDD329, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_RAM_8K_EXT2, SYSTEM_SG, REGION_JAPAN_NTSC}, /* Road Fighter (TW) */
+  /* games using 2KB external RAM (volatile) */
+  {0x092F29D6, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_RAM_2K, SYSTEM_SG,   REGION_JAPAN_NTSC}, /* The Castle (J) */
+  {0xAF4F14BC, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_RAM_2K, SYSTEM_SG,   REGION_JAPAN_NTSC}, /* Othello (J) */
+  {0x1D1A0CA3, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_RAM_2K, SYSTEM_SGII, REGION_JAPAN_NTSC}, /* Othello (TW) */
 
-  /* games requiring 2K internal RAM (Othello Multivision hardware) */
-  {0x7F7F009D, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_OMV, SYSTEM_SG, REGION_JAPAN_NTSC}, /* Circus Charlie (KR) */
-  {0x77DB4704, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_OMV, SYSTEM_SG, REGION_JAPAN_NTSC}, /* Q*Bert */
-  {0xC5A67B95, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_OMV, SYSTEM_SG, REGION_JAPAN_NTSC}, /* Othello Multivision BIOS */
+  /* games requiring SG-1000 II 8K RAM extension adapter */
+  {0xCE5648C3, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_RAM_8K_EXT1, SYSTEM_SGII, REGION_JAPAN_NTSC}, /* Bomberman Special [DahJee] (TW) */
+  {0x223397A1, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_RAM_8K_EXT1, SYSTEM_SGII, REGION_JAPAN_NTSC}, /* King's Valley (TW) */
+  {0x281D2888, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_RAM_8K_EXT1, SYSTEM_SGII, REGION_JAPAN_NTSC}, /* Knightmare (TW) */
+  {0x306D5F78, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_RAM_8K_EXT1, SYSTEM_SGII, REGION_JAPAN_NTSC}, /* Rally-X [DahJee] (TW) */
+  {0x29E047CC, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_RAM_8K_EXT1, SYSTEM_SGII, REGION_JAPAN_NTSC}, /* Road Fighter (TW) */
+  {0x5CBD1163, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_RAM_8K_EXT1, SYSTEM_SGII, REGION_JAPAN_NTSC}, /* Tank Battalion (TW) */
+  {0x2E7166D5, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_RAM_8K_EXT1, SYSTEM_SGII, REGION_JAPAN_NTSC}, /* The Legend of Kage (TW) */
+  {0xC550B4F0, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_RAM_8K_EXT1, SYSTEM_SGII, REGION_JAPAN_NTSC}, /* TwinBee (TW) */
+  {0xFC87463C, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_RAM_8K_EXT1, SYSTEM_SGII, REGION_JAPAN_NTSC}, /* Yie Ar Kung-Fu II (TW) */
+  {0x69FC1494, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_RAM_8K_EXT2, SYSTEM_SGII, REGION_JAPAN_NTSC}, /* Bomberman Special (TW) */
+  {0xFFC4EE3F, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_RAM_8K_EXT2, SYSTEM_SGII, REGION_JAPAN_NTSC}, /* Magical Kid Wiz (TW) */
+  {0x2E366CCF, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_RAM_8K_EXT2, SYSTEM_SGII, REGION_JAPAN_NTSC}, /* The Castle (TW) */
+  {0xAAAC12CF, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_RAM_8K_EXT2, SYSTEM_SGII, REGION_JAPAN_NTSC}, /* Rally-X (TW) */
+  {0xD2EDD329, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_RAM_8K_EXT2, SYSTEM_SGII, REGION_JAPAN_NTSC}, /* Road Fighter (TW) */
+
+  /* games requiring 2K internal RAM (SG-1000 II clone hardware) */
+  {0x7F7F009D, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_NONE, SYSTEM_SGII, REGION_JAPAN_NTSC}, /* Circus Charlie (KR) */
+  {0x77DB4704, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_NONE, SYSTEM_SGII, REGION_JAPAN_NTSC}, /* Q*Bert */
+  {0xC5A67B95, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_NONE, SYSTEM_SGII, REGION_JAPAN_NTSC}, /* Othello Multivision BIOS */
 
   /* games requiring Japanese region setting */
   {0x71DEBA5A, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA,   SYSTEM_GG,   REGION_JAPAN_NTSC}, /* Pop Breaker */
   {0xC9DD4E5F, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA,   SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Woody Pop (Super Arkanoid) */
 
-  /* games requiring Mark-III hardware (no Memory Control port) */
-  {0xBD1CC7DF, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA,   SYSTEM_MARKIII, REGION_JAPAN_NTSC}, /* Super Tetris (KR) */
-  {0x6D309AC5, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA,   SYSTEM_MARKIII, REGION_JAPAN_NTSC}, /* Power Boggle Boggle (KR) */
+  /* games requiring Japanese Master System I/O chip (315-5297) */
+  {0xBD1CC7DF, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA,   SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Super Tetris (KR) */
+  {0x6D309AC5, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_SEGA,   SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Power Boggle Boggle (KR) */
 
   /* games requiring random RAM pattern initialization */
   {0x08BF3DE3, 0, 0, SYSTEM_MS_GAMEPAD,  MAPPER_NONE,   SYSTEM_MARKIII, REGION_JAPAN_NTSC}, /* Alibaba and 40 Thieves (KR) */
@@ -368,7 +368,7 @@ static unsigned char read_mapper_default(unsigned int address);
 
 void sms_cart_init(void)
 {
-  int i;
+  int i = sizeof(game_list) / sizeof(rominfo_t) - 1;
 
   /* game CRC */
   uint32 crc = crc32(0, cart.rom, cart.romsize);
@@ -401,7 +401,7 @@ void sms_cart_init(void)
   }
 
   /* auto-detect game settings */
-  for (i=0; i<GAME_DATABASE_CNT; i++)
+  do
   {
     if (crc == game_list[i].crc)
     {
@@ -427,9 +427,10 @@ void sms_cart_init(void)
       }
 
       /* game found, leave loop */
-      i = GAME_DATABASE_CNT;
+      break;
     }
   }
+  while (i--);
 
   /* ROM paging */
   if (cart_rom.mapper < MAPPER_SEGA)
@@ -672,7 +673,7 @@ void sms_cart_switch(uint8 mode)
 
 int sms_cart_region_detect(void)
 {
-  int i;
+  int i = sizeof(game_list) / sizeof(rominfo_t) - 1;
 
   /* compute CRC */
   uint32 crc = crc32(0, cart.rom, cart.romsize);
@@ -684,13 +685,14 @@ int sms_cart_region_detect(void)
   }
 
   /* game database */
-  for (i=0; i<GAME_DATABASE_CNT; i++)
+  do
   {
     if (crc == game_list[i].crc)
     {
       return game_list[i].region;
     }
   }
+  while(i--);
 
   /* Mark-III hardware */
   if (system_hw == SYSTEM_MARKIII)
@@ -721,44 +723,40 @@ static void mapper_reset(void)
 {
   int i;
 
-  /* reset internal RAM mapping */
-  if (system_hw == SYSTEM_SG)
+  /* reset $C000-$FFFF mapping */
+  if (cart_rom.mapper == MAPPER_RAM_8K_EXT2)
   {
     /* 8k RAM extension adapter (type B) */
-    if (cart_rom.mapper == MAPPER_RAM_8K_EXT2)
+    for (i = 0x30; i < 0x40; i++)
     {
       /* $C000-$FFFF mapped to 8k external RAM (mirrored) */
-      for (i = 0x30; i < 0x40; i++)
-      {
-        z80_readmap[i] = z80_writemap[i] = &work_ram[(i & 0x07) << 10];
-      }
+      z80_readmap[i] = z80_writemap[i] = &work_ram[(i & 0x07) << 10];
     }
-
-    /* Othello Multivision hardware */
-    else if (cart_rom.mapper == MAPPER_OMV)
+  }
+  else if (system_hw == SYSTEM_SGII)
+  {
+    /* SG-1000 II clone hardware with 2KB internal RAM */
+    for (i = 0x30; i < 0x40; i++)
     {
       /* $C000-$FFFF mapped to 2k internal RAM (mirrored) */
-      for (i = 0x30; i < 0x40; i++)
-      {
-        z80_readmap[i] = z80_writemap[i] = &work_ram[(i & 0x01) << 10];
-      }
+      z80_readmap[i] = z80_writemap[i] = &work_ram[(i & 0x01) << 10];
     }
-
-    /* default SG-1000 hardware */
-    else
+  }
+  else if (system_hw == SYSTEM_SG)
+  {
+    /* default SG-1000 hardware has only 1KB internal RAM */
+    for (i = 0x30; i < 0x40; i++)
     {
       /* $C000-$FFFF mapped to 1k internal RAM (mirrored) */
-      for (i = 0x30; i < 0x40; i++)
-      {
-        z80_readmap[i] = z80_writemap[i] = &work_ram[0];
-      }
+      z80_readmap[i] = z80_writemap[i] = &work_ram[0];
     }
   }
   else
   {
-    /* Master System / Game Gear hardware: $C000-$FFFF mapped to 8k internal RAM (mirrored) */
+    /* Mark III / Master System / Game Gear hardware */
     for (i = 0x30; i < 0x40; i++)
     {
+      /* $C000-$FFFF mapped to 8k internal RAM (mirrored) */
       z80_readmap[i] = z80_writemap[i] = &work_ram[(i & 0x07) << 10];
     }
   }
@@ -779,37 +777,34 @@ static void mapper_reset(void)
     return;
   }
 
-  /* by default, $0000-$BFFF is mapped to ROM (first 48k) */
+  /* reset $0000-$BFFF mapping */
   for (i = 0x00; i < 0x30; i++)
   {
+    /* by default, $0000-$BFFF is mapped to cartridge ROM (first 48k) */
     z80_readmap[i] = &slot.rom[i << 10];
     z80_writemap[i] = cart.rom + 0x510000; /* unused area */
   }
 
   /* reset cartridge hardware mapping */
-  if (slot.mapper < MAPPER_SEGA)
+  if (slot.mapper == MAPPER_RAM_8K_EXT1)
   {
-    /* cartridge extra RAM enabled by default with 32K ROM (The Castle) */
-    if (slot.pages <= 0x20)
-    {
-      /* $8000-$BFFF mapped to 8k external RAM (mirrored) */
-      for (i = 0x20; i < 0x30; i++)
-      {
-        z80_readmap[i] = z80_writemap[i] = &work_ram[0x2000 + ((i & 0x07) << 10)];
-      }
-    }
-
     /* 8k RAM extension adapter (type A) */
-    if (slot.mapper == MAPPER_RAM_8K_EXT1)
+    for (i = 0x08; i < 0x10; i++)
     {
       /* $2000-$3FFF mapped to 8k external RAM */
-      for (i = 0x08; i < 0x10; i++)
-      {
-        z80_readmap[i] = z80_writemap[i] = &work_ram[0x2000 + ((i & 0x07) << 10)];
-      }
+      z80_readmap[i] = z80_writemap[i] = &work_ram[0x2000 + ((i & 0x07) << 10)];
     }
   }
-  else
+  else if (slot.mapper == MAPPER_RAM_2K)
+  {
+    /* 2k on-board RAM (The Castle, Othello) */
+    for (i = 0x20; i < 0x30; i++)
+    {
+      /* $8000-$BFFF mapped to 2k external RAM (mirrored) */
+      z80_readmap[i] = z80_writemap[i] = &work_ram[0x2000 + ((i & 0x07) << 10)];
+    }
+  }
+  else if (slot.mapper >= MAPPER_SEGA)
   {
     /* reset ROM paging hardware */
     if (slot.mapper & MAPPER_KOREA_8K)
@@ -844,6 +839,7 @@ static void mapper_reset(void)
   switch (slot.mapper)
   {
     case MAPPER_NONE:
+    case MAPPER_RAM_2K:
     case MAPPER_RAM_8K_EXT1:
     case MAPPER_RAM_8K_EXT2:
       z80_readmem = read_mapper_default;

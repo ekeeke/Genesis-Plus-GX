@@ -2,7 +2,7 @@
  *  Genesis Plus
  *  Savestate support
  *
- *  Copyright (C) 2007-2012  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2007-2014  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -121,7 +121,7 @@ int state_load(unsigned char *state)
   }
   else
   {
-    SN76489_Init(snd.blips[0][0], snd.blips[0][1], (system_hw < SYSTEM_MARKIII) ? SN_DISCRETE : SN_INTEGRATED);
+    SN76489_Init(snd.blips[0][0], snd.blips[0][1], (system_hw == SYSTEM_SG) ? SN_DISCRETE : SN_INTEGRATED);
     SN76489_Config(0, config.psg_preamp, config.psgBoostNoise, io_reg[6]);
   }
 

@@ -1,11 +1,11 @@
 /***************************************************************************************
  *  Genesis Plus
- *  Video Display Processor (Modes 0, 1, 2, 3, 4 & 5 rendering)
+ *  Video Display Processor (video output rendering)
  *
- *  Support for SG-1000, Master System (315-5124 & 315-5246), Game Gear & Mega Drive VDP
+ *  Support for all TMS99xx modes, Mode 4 & Mode 5 rendering
  *
  *  Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003  Charles Mac Donald (original code)
- *  Copyright (C) 2007-2013  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2007-2014  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -1023,6 +1023,7 @@ void color_update_m4(int index, unsigned int data)
     }
 
     case SYSTEM_SG:
+    case SYSTEM_SGII:
     {
       /* Fixed TMS99xx palette */
       if (index & 0x0F)
@@ -4103,7 +4104,7 @@ void render_line(int line)
     /* Left-most column blanking */
     if (reg[0] & 0x20)
     {
-      if (system_hw > SYSTEM_SG)
+      if (system_hw > SYSTEM_SGII)
       {
         memset(&linebuf[0][0x20], 0x40, 8);
       }

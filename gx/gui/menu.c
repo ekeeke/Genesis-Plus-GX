@@ -3,7 +3,7 @@
  *
  *  Genesis Plus GX menu
  *
- *  Copyright Eke-Eke (2009-2013)
+ *  Copyright Eke-Eke (2009-2014)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -1081,6 +1081,8 @@ static void systemmenu ()
     sprintf (items[0].text, "Console Type: AUTO");
   else if (config.system == SYSTEM_SG)
     sprintf (items[0].text, "Console Type: SG-1000");
+  else if (config.system == SYSTEM_SGII)
+    sprintf (items[0].text, "Console Type: SG-1000 II");
   else if (config.system == SYSTEM_MARKIII)
     sprintf (items[0].text, "Console Type: MARK-III");
   else if (config.system == SYSTEM_SMS)
@@ -1166,6 +1168,12 @@ static void systemmenu ()
           if (system_hw) system_hw = SYSTEM_SG;
         }
         else if (config.system == SYSTEM_SG)
+        {
+          config.system = SYSTEM_SGII;
+          sprintf (items[0].text, "Console Type: SG-1000 II");
+          if (system_hw) system_hw = SYSTEM_SGII;
+        }
+        else if (config.system == SYSTEM_SGII)
         {
           config.system = SYSTEM_MARKIII;
           sprintf (items[0].text, "Console Type: MARK-III");

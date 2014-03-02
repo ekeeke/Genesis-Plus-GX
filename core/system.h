@@ -5,7 +5,7 @@
  *  Support for "Genesis", "Genesis + CD" & "Master System" modes
  *
  *  Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003  Charles Mac Donald (original code)
- *  Copyright (C) 2007-2013  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2007-2014  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -46,7 +46,8 @@
 
 /* Supported hardware models */
 #define SYSTEM_SG         0x10
-#define SYSTEM_MARKIII    0x11
+#define SYSTEM_SGII       0x11
+#define SYSTEM_MARKIII    0x12
 #define SYSTEM_SMS        0x20
 #define SYSTEM_SMS2       0x21
 #define SYSTEM_GG         0x40

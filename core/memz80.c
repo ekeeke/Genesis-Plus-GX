@@ -5,7 +5,7 @@
  *  Support for SG-1000, Mark-III, Master System, Game Gear & Mega Drive ports access
  *
  *  Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003  Charles Mac Donald (original code)
- *  Copyright (C) 2007-2011  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2007-2014  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -430,6 +430,13 @@ void z80_ms_port_w(unsigned int port, unsigned char data)
     case 0x00:
     case 0x01:
     {
+      /* full address range is decoded by 315-5297 I/O chip (fixes Super Tetris / Power Boggle Boggle) */
+      if ((region_code == REGION_JAPAN_NTSC) && ((port & 0xFE) != 0x3E))
+      {
+        z80_unused_port_w(port & 0xFF, data);
+        return;
+      }
+
       io_z80_write(port & 1, data, Z80.cycles + SMS_CYCLE_OFFSET);
       return;
     }

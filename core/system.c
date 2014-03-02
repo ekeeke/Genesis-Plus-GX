@@ -5,7 +5,7 @@
  *  Support for "Genesis", "Genesis + CD" & "Master System" modes
  *
  *  Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003  Charles Mac Donald (original code)
- *  Copyright (C) 2007-2013  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2007-2014  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -111,7 +111,7 @@ int audio_init(int samplerate, double framerate)
   blip_set_rates(snd.blips[0][1], mclk, samplerate);
 
   /* Initialize PSG core */
-  SN76489_Init(snd.blips[0][0], snd.blips[0][1], (system_hw < SYSTEM_MARKIII) ? SN_DISCRETE : SN_INTEGRATED);
+  SN76489_Init(snd.blips[0][0], snd.blips[0][1], (system_hw == SYSTEM_SG) ? SN_DISCRETE : SN_INTEGRATED);
 
   /* Mega CD sound hardware */
   if (system_hw == SYSTEM_MCD)
