@@ -53,7 +53,7 @@ static uint8_t brm_format[0x40] =
 
 static uint8_t temp[0x10000];
 static int16 soundbuffer[3068];
-static uint16_t bitmap_data_[1024 * 512];
+static uint16_t bitmap_data_[720 * 576];
 static const double pal_fps = 53203424.0 / (3420.0 * 313.0);
 static const double ntsc_fps = 53693175.0 / (3420.0 * 262.0);
 
@@ -210,14 +210,10 @@ void osd_input_update(void)
 static void init_bitmap(void)
 {
    memset(&bitmap, 0, sizeof(bitmap));
-   bitmap.width      = 1024;
-   bitmap.height     = 512;
-   bitmap.pitch      = 1024 * 2;
+   bitmap.width      = 720;
+   bitmap.height     = 576;
+   bitmap.pitch      = 720 * 2;
    bitmap.data       = (uint8_t *)bitmap_data_;
-   bitmap.viewport.w = 0;
-   bitmap.viewport.h = 0;
-   bitmap.viewport.x = 0;
-   bitmap.viewport.y = 0;
 }
 
 static void config_default(void)
@@ -474,6 +470,8 @@ static void check_variables(void)
     orig_value = config.system;
     if (!strcmp(var.value, "sg-1000"))
       config.system = SYSTEM_SG;
+    else if (!strcmp(var.value, "sg-1000 II"))
+      config.system = SYSTEM_SGII;
     else if (!strcmp(var.value, "mark-III"))
       config.system = SYSTEM_MARKIII;
     else if (!strcmp(var.value, "master system"))
@@ -760,7 +758,7 @@ unsigned retro_api_version(void) { return RETRO_API_VERSION; }
 void retro_set_environment(retro_environment_t cb)
 {
    static const struct retro_variable vars[] = {
-      { "system_hw", "System hardware; auto|sg-1000|mark-III|master system|master system II|game gear|mega drive / genesis" },
+      { "system_hw", "System hardware; auto|sg-1000|sg-1000 II|mark-III|master system|master system II|game gear|mega drive / genesis" },
       { "region_detect", "System region; auto|ntsc-u|pal|ntsc-j" },
       { "force_dtack", "System lockups; enabled|disabled" },
       { "addr_error", "68k address error; enabled|disabled" },
@@ -773,7 +771,7 @@ void retro_set_environment(retro_environment_t cb)
       { "blargg_ntsc_filter", "Blargg NTSC filter; disabled|monochrome|composite|svideo|rgb" },
       { "overscan", "Borders; disabled|top/bottom|left/right|full" },
       { "gg_extra", "Game Gear extended screen; disabled|enabled" },
-      { "render", "Interlaced mode resolution; normal|double" },
+      { "render", "Interlaced mode 2 output; single field|double field" },
       { NULL, NULL },
    };
 
@@ -800,8 +798,8 @@ void retro_get_system_av_info(struct retro_system_av_info *info)
 {
    info->geometry.base_width    = vwidth;
    info->geometry.base_height   = vheight;
-   info->geometry.max_width     = 1024;
-   info->geometry.max_height    = 512;
+   info->geometry.max_width     = 720;
+   info->geometry.max_height    = 576;
    info->geometry.aspect_ratio  = 4.0 / 3.0;
    info->timing.fps             = snd.frame_rate;
    info->timing.sample_rate     = 44100;
@@ -1000,11 +998,14 @@ void retro_run(void)
 
    if (bitmap.viewport.changed & 1)
    {
+      struct retro_system_av_info info;
       bitmap.viewport.changed &= ~1;
       update_viewport();
+      retro_get_system_av_info(&info);
+      environ_cb(RETRO_ENVIRONMENT_SET_SYSTEM_AV_INFO, &info);
    }
 
-   video_cb(bitmap.data, vwidth, vheight, 1024 * 2);
+   video_cb(bitmap.data, vwidth, vheight, 720 * 2);
    audio_cb(soundbuffer, audio_update(soundbuffer));
 
    environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE_UPDATE, &updated);
