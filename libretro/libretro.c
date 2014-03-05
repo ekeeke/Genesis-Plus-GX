@@ -71,10 +71,15 @@ static retro_audio_sample_batch_t audio_cb;
  ************************************/
 #define CHUNKSIZE   (0x10000)
 
-void error(char * msg, ...)
+void error(char * fmt, ...)
 {
+   char buffer[256];
+   va_list ap;
+   va_start(ap, fmt);
+   vsprintf(buffer, fmt, ap);
    if (log_cb)
-      log_cb(RETRO_LOG_ERROR, msg);
+      log_cb(RETRO_LOG_ERROR, "%s\n", buffer);
+   va_end(ap);
 }
 
 int load_archive(char *filename, unsigned char *buffer, int maxsize, char *extension)
@@ -964,9 +969,10 @@ void retro_init(void)
    level = 1;
    environ_cb(RETRO_ENVIRONMENT_SET_PERFORMANCE_LEVEL, &level);
 
-   environ_cb(RETRO_ENVIRONMENT_GET_LOG_INTERFACE, &log);
-   if (log.log)
+   if (environ_cb(RETRO_ENVIRONMENT_GET_LOG_INTERFACE, &log))
       log_cb = log.log;
+   else
+      log_cb = NULL;
 
 #ifdef FRONTEND_SUPPORTS_RGB565
    rgb565 = RETRO_PIXEL_FORMAT_RGB565;
