@@ -214,22 +214,22 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Xbox 360'">
-    <OutputFile>$(OutDir)genesis_plus_gx_libretro_xdk360$(TargetExt)</OutputFile>
+    <OutputFile>$(OutDir)msvc-2010-360$(TargetExt)</OutputFile>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='CodeAnalysis|Xbox 360'">
-    <OutputFile>$(OutDir)genesis_plus_gx_libretro_xdk360$(TargetExt)</OutputFile>
+    <OutputFile>$(OutDir)msvc-2010-360$(TargetExt)</OutputFile>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Profile|Xbox 360'">
-    <OutputFile>$(OutDir)genesis_plus_gx_libretro_xdk360$(TargetExt)</OutputFile>
+    <OutputFile>$(OutDir)msvc-2010-360$(TargetExt)</OutputFile>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Profile_FastCap|Xbox 360'">
-    <OutputFile>$(OutDir)genesis_plus_gx_libretro_xdk360$(TargetExt)</OutputFile>
+    <OutputFile>$(OutDir)msvc-2010-360$(TargetExt)</OutputFile>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Xbox 360'">
-    <OutputFile>$(OutDir)genesis_plus_gx_libretro_xdk360$(TargetExt)</OutputFile>
+    <OutputFile>$(OutDir)msvc-2010-360$(TargetExt)</OutputFile>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release_LTCG|Xbox 360'">
-    <OutputFile>$(OutDir)genesis_plus_gx_libretro_xdk360$(TargetExt)</OutputFile>
+    <OutputFile>$(OutDir)msvc-2010-360$(TargetExt)</OutputFile>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Xbox 360'">
     <ClCompile>

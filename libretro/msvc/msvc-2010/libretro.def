@@ -1,4 +1,4 @@
-LIBRARY "libretro-prboom msvc2010"
+LIBRARY "msvc-2010"
 EXPORTS
 retro_set_environment
 retro_set_video_refresh
