@@ -712,8 +712,8 @@ static void configure_controls(void)
   int i;
   struct retro_variable var;
 
-  input.system[0] = SYSTEM_MD_GAMEPAD;
-  input.system[1] = SYSTEM_MD_GAMEPAD;
+  input.system[0] = SYSTEM_GAMEPAD;
+  input.system[1] = SYSTEM_GAMEPAD;
 
   var.key = "padtype";
   environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
@@ -726,15 +726,9 @@ static void configure_controls(void)
   else if (!strcmp(var.value, "2-buttons"))
     for(i = 0; i < MAX_INPUTS; i++)
       config.input[i].padtype = DEVICE_PAD2B;
-  else if ((system_hw & SYSTEM_PBC) != SYSTEM_MD)
-    for(i = 0; i < MAX_INPUTS; i++)
-      config.input[i].padtype = DEVICE_PAD2B;
-  else if (rominfo.peripherals & 2)
-    for(i = 0; i < MAX_INPUTS; i++)
-      config.input[i].padtype = DEVICE_PAD6B;
   else
     for(i = 0; i < MAX_INPUTS; i++)
-      config.input[i].padtype = DEVICE_PAD3B;
+      config.input[i].padtype = DEVICE_PAD2B | DEVICE_PAD3B | DEVICE_PAD6B;
 
   var.key = "multitap";
   environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);

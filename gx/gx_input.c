@@ -233,37 +233,40 @@ static void pad_update(s8 chan, u8 i)
     return;
   }
 
+  /* Default menu key (right analog stick if not needed by emulated device) */
+  if ((input.dev[i] < DEVICE_XE_A1P) && (PAD_SubStickX(chan) > ANALOG_SENSITIVITY))
+  {
+    ConfigRequested = 1;
+    return;
+  }
+
   /* Emulated device */
   switch (input.dev[i])
   {
     case DEVICE_PAD6B:
     {
-      /* Extra buttons */
+      /* X,Y,Z,MODE buttons */
       if (p & pad_keymap[KEY_BUTTONX]) input.pad[i] |= INPUT_X;
       if (p & pad_keymap[KEY_BUTTONY]) input.pad[i] |= INPUT_Y;
       if (p & pad_keymap[KEY_BUTTONZ]) input.pad[i] |= INPUT_Z;
       if (p & pad_keymap[KEY_MODE])    input.pad[i] |= INPUT_MODE;
-
-      /* default inputs are checked below */
    }
 
     case DEVICE_PAD3B:
     {
-      /* Default menu key (right analog stick) */
-      if (PAD_SubStickX(chan) > ANALOG_SENSITIVITY)
-      {
-        ConfigRequested = 1;
-        return;
-      }
+      /* A button */
+      if (p & pad_keymap[KEY_BUTTONA]) input.pad[i] |= INPUT_A;
+    }
 
+    case DEVICE_PAD2B:
+    {
       /* D-PAD */
       if ((p & PAD_BUTTON_UP) || (y > ANALOG_SENSITIVITY)) input.pad[i] |= INPUT_UP;
       else if ((p & PAD_BUTTON_DOWN) || (y < -ANALOG_SENSITIVITY)) input.pad[i] |= INPUT_DOWN;
       if ((p & PAD_BUTTON_LEFT) || (x < -ANALOG_SENSITIVITY)) input.pad[i] |= INPUT_LEFT;
       else if ((p & PAD_BUTTON_RIGHT) || (x > ANALOG_SENSITIVITY)) input.pad[i] |= INPUT_RIGHT;
 
-      /* Buttons */
-      if (p & pad_keymap[KEY_BUTTONA]) input.pad[i] |= INPUT_A;
+      /* default buttons */
       if (p & pad_keymap[KEY_BUTTONB]) input.pad[i] |= INPUT_B;
       if (p & pad_keymap[KEY_BUTTONC]) input.pad[i] |= INPUT_C;
       if (p & pad_keymap[KEY_START])   input.pad[i] |= INPUT_START;
@@ -308,19 +311,10 @@ static void pad_update(s8 chan, u8 i)
     {
       /* Y analog position [0-255] */
       input.analog[i][1] = y ? (127 - y) : (128 - y);
-
-      /* default inputs are checked below */
-   }
+    }
 
     case DEVICE_PADDLE:
     {
-      /* Default menu key (right analog stick) */
-      if (PAD_SubStickX(chan) > ANALOG_SENSITIVITY)
-      {
-        ConfigRequested = 1;
-        return;
-      }
-
       /* X analog position [0-255] */
       input.analog[i][0] = (x + 128);
 
@@ -332,38 +326,8 @@ static void pad_update(s8 chan, u8 i)
       break;
     }
 
-    case DEVICE_PAD2B:
-    {
-      /* Default menu key (right analog stick) */
-      if (PAD_SubStickX(chan) > ANALOG_SENSITIVITY)
-      {
-        ConfigRequested = 1;
-        return;
-      }
-
-      /* D-PAD */
-      if ((p & PAD_BUTTON_UP) || (y > ANALOG_SENSITIVITY)) input.pad[i] |= INPUT_UP;
-      else if ((p & PAD_BUTTON_DOWN) || (y < -ANALOG_SENSITIVITY)) input.pad[i] |= INPUT_DOWN;
-      if ((p & PAD_BUTTON_LEFT) || (x < -ANALOG_SENSITIVITY)) input.pad[i] |= INPUT_LEFT;
-      else if ((p & PAD_BUTTON_RIGHT) || (x > ANALOG_SENSITIVITY)) input.pad[i] |= INPUT_RIGHT;
-
-      /* Buttons */
-      if (p & pad_keymap[KEY_BUTTONB]) input.pad[i] |= INPUT_BUTTON1;
-      if (p & pad_keymap[KEY_BUTTONC]) input.pad[i] |= INPUT_BUTTON2;
-      if (p & pad_keymap[KEY_START])   input.pad[i] |= INPUT_START;
-
-      break;
-    }
-
     case DEVICE_LIGHTGUN:
     {
-       /* Default menu key (right analog stick) */
-      if (PAD_SubStickX(chan) > ANALOG_SENSITIVITY)
-      {
-        ConfigRequested = 1;
-        return;
-      }
-
       /* Gun screen position (x,y) */
       input.analog[i][0] += x / ANALOG_SENSITIVITY;
       input.analog[i][1] -= y / ANALOG_SENSITIVITY;
@@ -385,13 +349,6 @@ static void pad_update(s8 chan, u8 i)
 
     case DEVICE_MOUSE:
     {
-      /* Default menu key (right analog stick) */
-      if (PAD_SubStickX(chan) > ANALOG_SENSITIVITY)
-      {
-        ConfigRequested = 1;
-        return;
-      }
-
       /* Mouse relative movement (-255,255) */
       input.analog[i][0] =  (x / ANALOG_SENSITIVITY) * 2;
       input.analog[i][1] =  (y / ANALOG_SENSITIVITY) * 2;
@@ -413,13 +370,6 @@ static void pad_update(s8 chan, u8 i)
 
     case DEVICE_PICO:
     {
-      /* Default menu key (right analog stick) */
-      if (PAD_SubStickX(chan) > ANALOG_SENSITIVITY)
-      {
-        ConfigRequested = 1;
-        return;
-      }
-
       /* D-PAD */
       if (p & PAD_BUTTON_UP) input.pad[0] |= INPUT_UP;
       else if (p & PAD_BUTTON_DOWN) input.pad[0] |= INPUT_DOWN;
@@ -450,13 +400,6 @@ static void pad_update(s8 chan, u8 i)
 
     case DEVICE_TEREBI:
     {
-      /* Default menu key (right analog stick) */
-      if (PAD_SubStickX(chan) > ANALOG_SENSITIVITY)
-      {
-        ConfigRequested = 1;
-        return;
-      }
-
       /* PEN screen position (x,y) */
       input.analog[0][0] += x / ANALOG_SENSITIVITY;
       input.analog[0][1] -= y / ANALOG_SENSITIVITY;
@@ -763,7 +706,7 @@ static void wpad_update(s8 chan, u8 i, u32 exp)
   {
     case DEVICE_PAD6B:
     {
-      /* Extra buttons */
+      /* X,Y,Z,MODE buttons */
       if (p & wpad_keymap[KEY_BUTTONX]) input.pad[i] |= INPUT_X;
       if (p & wpad_keymap[KEY_BUTTONY]) input.pad[i] |= INPUT_Y;
       if (p & wpad_keymap[KEY_BUTTONZ]) input.pad[i] |= INPUT_Z;
@@ -772,14 +715,19 @@ static void wpad_update(s8 chan, u8 i, u32 exp)
 
     case DEVICE_PAD3B:
     {
-      /* D- PAD */
+      /* A button */
+      if (p & wpad_keymap[KEY_BUTTONA]) input.pad[i] |= INPUT_A;
+    }
+
+    case DEVICE_PAD2B:
+    {
+      /* D-PAD */
       if ((p & wpad_dirmap[exp][PAD_UP]) || (y > ANALOG_SENSITIVITY)) input.pad[i] |= INPUT_UP;
       else if ((p & wpad_dirmap[exp][PAD_DOWN]) || (y < -ANALOG_SENSITIVITY)) input.pad[i] |= INPUT_DOWN;
       if ((p & wpad_dirmap[exp][PAD_LEFT]) || (x < -ANALOG_SENSITIVITY)) input.pad[i] |= INPUT_LEFT;
       else if ((p & wpad_dirmap[exp][PAD_RIGHT]) || (x > ANALOG_SENSITIVITY)) input.pad[i] |= INPUT_RIGHT;
 
-      /* Buttons */
-      if (p & wpad_keymap[KEY_BUTTONA]) input.pad[i] |= INPUT_A;
+      /* default buttons */
       if (p & wpad_keymap[KEY_BUTTONB]) input.pad[i] |= INPUT_B;
       if (p & wpad_keymap[KEY_BUTTONC]) input.pad[i] |= INPUT_C;
       if (p & wpad_keymap[KEY_START])   input.pad[i] |= INPUT_START;
@@ -791,7 +739,7 @@ static void wpad_update(s8 chan, u8 i, u32 exp)
     {
       /* Left Stick analog position [0-255] */
       input.analog[i][0] = (x + 128);
-      input.analog[i][1] = y ? (127 - y) : (128 - y);
+      input.analog[i][1] = y ? (127 - y) : 128;
 
       /* Right Stick analog position [0-255] */
       if (exp == WPAD_EXP_CLASSIC)
@@ -881,22 +829,6 @@ static void wpad_update(s8 chan, u8 i, u32 exp)
 
       /* Buttons */
       if (p & wpad_keymap[KEY_BUTTONB]) input.pad[i] |= INPUT_BUTTON1;
-      if (p & wpad_keymap[KEY_START])   input.pad[i] |= INPUT_START;
-
-      break;
-    }
-
-    case DEVICE_PAD2B:
-    {
-      /* D-PAD */
-      if ((p & wpad_dirmap[exp][PAD_UP]) || (y > ANALOG_SENSITIVITY)) input.pad[i] |= INPUT_UP;
-      else if ((p & wpad_dirmap[exp][PAD_DOWN]) || (y < -ANALOG_SENSITIVITY)) input.pad[i] |= INPUT_DOWN;
-      if ((p & wpad_dirmap[exp][PAD_LEFT]) || (x < -ANALOG_SENSITIVITY)) input.pad[i] |= INPUT_LEFT;
-      else if ((p & wpad_dirmap[exp][PAD_RIGHT]) || (x > ANALOG_SENSITIVITY)) input.pad[i] |= INPUT_RIGHT;
-
-      /* Buttons */
-      if (p & wpad_keymap[KEY_BUTTONB]) input.pad[i] |= INPUT_BUTTON1;
-      if (p & wpad_keymap[KEY_BUTTONC]) input.pad[i] |= INPUT_BUTTON2;
       if (p & wpad_keymap[KEY_START])   input.pad[i] |= INPUT_START;
 
       break;
@@ -1261,7 +1193,7 @@ void gx_input_SetDefault(void)
   {
     config.input[i].device  = -1;
     config.input[i].port    = i%4;
-    config.input[i].padtype = 0;
+    config.input[i].padtype = DEVICE_PAD2B | DEVICE_PAD3B | DEVICE_PAD6B; /* autodetected */
   }
 
 #ifdef HW_RVL

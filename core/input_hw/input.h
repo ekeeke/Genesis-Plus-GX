@@ -3,7 +3,7 @@
  *  Input peripherals support
  *
  *  Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003  Charles Mac Donald (original code)
- *  Copyright (C) 2007-2013  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2007-2014  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -45,18 +45,18 @@
 
 /* Ports configuration */
 #define NO_SYSTEM           (0) /* unconnected port*/
-#define SYSTEM_MD_GAMEPAD   (1) /* single 3-buttons or 6-buttons Control Pad */
+#define SYSTEM_GAMEPAD      (1) /* 2-buttons, 3-buttons or 6-buttons Control Pad */
 #define SYSTEM_MOUSE        (2) /* Sega Mouse */
 #define SYSTEM_MENACER      (3) /* Sega Menacer (port B only) */
 #define SYSTEM_JUSTIFIER    (4) /* Konami Justifiers (port B only) */
 #define SYSTEM_XE_A1P       (5) /* XE-A1P analog controller (port A only) */
 #define SYSTEM_ACTIVATOR    (6) /* Sega Activator */
 #define SYSTEM_MS_GAMEPAD   (7) /* single 2-buttons Control Pad (Master System) */
-#define SYSTEM_LIGHTPHASER  (8) /* Sega Light Phaser (Master System) */
-#define SYSTEM_PADDLE       (9) /* Sega Paddle Control (Master System) */
-#define SYSTEM_SPORTSPAD   (10) /* Sega Sports Pad (Master System) */
-#define SYSTEM_TEAMPLAYER  (11) /* Multi Tap -- Sega TeamPlayer */
-#define SYSTEM_WAYPLAY     (12) /* Multi Tap -- EA 4-Way Play (use both ports) */
+#define SYSTEM_LIGHTPHASER  (7) /* Sega Light Phaser (Master System) */
+#define SYSTEM_PADDLE       (8) /* Sega Paddle Control (Master System) */
+#define SYSTEM_SPORTSPAD    (9) /* Sega Sports Pad (Master System) */
+#define SYSTEM_TEAMPLAYER  (10) /* Multi Tap -- Sega TeamPlayer */
+#define SYSTEM_WAYPLAY     (11) /* Multi Tap -- EA 4-Way Play (use both ports) */
 
 /* Device type */
 #define NO_DEVICE         (0xff) /* unconnected device (fixed ID for Team Player) */

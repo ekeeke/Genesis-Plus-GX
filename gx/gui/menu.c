@@ -97,8 +97,7 @@ extern const u8 Button_delete_over_png[];
 
 /* Controller Settings */
 extern const u8 Ctrl_4wayplay_png[];
-extern const u8 Ctrl_gamepad_md_png[];
-extern const u8 Ctrl_gamepad_ms_png[];
+extern const u8 Ctrl_gamepad_png[];
 extern const u8 Ctrl_justifiers_png[];
 extern const u8 Ctrl_menacer_png[];
 extern const u8 Ctrl_mouse_png[];
@@ -109,6 +108,8 @@ extern const u8 Ctrl_paddle_png[];
 extern const u8 Ctrl_sportspad_png[];
 extern const u8 Ctrl_none_png[];
 extern const u8 Ctrl_teamplayer_png[];
+extern const u8 Ctrl_pad_auto_png[];
+extern const u8 Ctrl_pad2b_png[];
 extern const u8 Ctrl_pad3b_png[];
 extern const u8 Ctrl_pad6b_png[];
 extern const u8 Ctrl_config_png[];
@@ -2024,21 +2025,19 @@ static void ctrlmenu(void)
   int update = 0;
   gui_item *items = NULL;
   u8 *special = NULL;
-  u32 exp;
-  u8 type = 0;
+  u32 exp, index = 0;
 
   /* System devices */
-  gui_item items_sys[2][13] =
+  gui_item items_sys[2][12] =
   {
     {
       {NULL,Ctrl_none_png       ,"","Select Port 1 device",110,130,48,72},
-      {NULL,Ctrl_gamepad_md_png ,"","Select Port 1 device", 85,117,96,84},
+      {NULL,Ctrl_gamepad_png    ,"","Select Port 1 device",100,109,68,92},
       {NULL,Ctrl_mouse_png      ,"","Select Port 1 device", 97,113,64,88},
       {NULL,Ctrl_menacer_png    ,"","Select Port 1 device", 94,113,80,88},
       {NULL,Ctrl_justifiers_png ,"","Select Port 1 device", 88,117,80,84},
       {NULL,Ctrl_xe_a1p_png     ,"","Select Port 1 device", 98,118,72,84},
       {NULL,Ctrl_activator_png  ,"","Select Port 1 device", 94,121,72,80},
-      {NULL,Ctrl_gamepad_ms_png ,"","Select Port 1 device", 91,125,84,76},
       {NULL,Ctrl_lightphaser_png,"","Select Port 1 device", 89,109,88,92},
       {NULL,Ctrl_paddle_png     ,"","Select Port 1 device", 86,117,96,84},
       {NULL,Ctrl_sportspad_png  ,"","Select Port 1 device", 95,117,76,84},
@@ -2047,13 +2046,12 @@ static void ctrlmenu(void)
     },
     {
       {NULL,Ctrl_none_png       ,"","Select Port 2 device",110,300,48,72},
-      {NULL,Ctrl_gamepad_md_png ,"","Select Port 2 device", 85,287,96,84},
+      {NULL,Ctrl_gamepad_png    ,"","Select Port 2 device",100,279,68,92},
       {NULL,Ctrl_mouse_png      ,"","Select Port 2 device", 97,283,64,88},
       {NULL,Ctrl_menacer_png    ,"","Select Port 2 device", 94,283,80,88},
       {NULL,Ctrl_justifiers_png ,"","Select Port 2 device", 88,287,80,84},
       {NULL,Ctrl_xe_a1p_png     ,"","Select Port 2 device", 98,288,72,84},
       {NULL,Ctrl_activator_png  ,"","Select Port 2 device", 94,291,72,80},
-      {NULL,Ctrl_gamepad_ms_png ,"","Select Port 2 device", 91,295,84,76},
       {NULL,Ctrl_lightphaser_png,"","Select Port 2 device", 89,279,88,92},
       {NULL,Ctrl_paddle_png     ,"","Select Port 2 device", 86,287,96,84},
       {NULL,Ctrl_sportspad_png  ,"","Select Port 2 device", 95,287,76,84},
@@ -2063,26 +2061,34 @@ static void ctrlmenu(void)
   };    
 
   /* Specific controller options */
-  gui_item items_special[4][2] =
+  gui_item items_special[4][4] =
   {
     {
       /* Gamepad option */
       {NULL,Ctrl_pad3b_png,"Pad\nType","Use 3-buttons Pad",528,180,44,28},
-      {NULL,Ctrl_pad6b_png,"Pad\nType","Use 6-buttons Pad",528,180,44,28}
+      {NULL,Ctrl_pad6b_png,"Pad\nType","Use 6-buttons Pad",528,180,44,28},
+      {NULL,Ctrl_pad2b_png,"Pad\nType","Use 2-buttons Pad",528,180,44,28},
+      {NULL,Ctrl_pad_auto_png,"Pad\nType","Auto-detect Pad type",528,180,44,28},
     },
     {
       /* Mouse option */
       {NULL,ctrl_option_off_png,"Invert\nMouse","Enable/Disable Y-Axis inversion",534,180,24,24},
       {NULL,ctrl_option_on_png ,"Invert\nMouse","Enable/Disable Y-Axis inversion",534,180,24,24},
+      {NULL,NULL,"","",0,0,0,0},
+      {NULL,NULL,"","",0,0,0,0},
     },
     {
       /* Gun option */
       {NULL,ctrl_option_off_png,"Show\nCursor","Enable/Disable Lightgun cursor",534,180,24,24},
       {NULL,ctrl_option_on_png ,"Show\nCursor","Enable/Disable Lightgun cursor",534,180,24,24},
+      {NULL,NULL,"","",0,0,0,0},
+      {NULL,NULL,"","",0,0,0,0},
     },
     {
       /* no option */
       {NULL,NULL,"No Option","",436,180,160,52},
+      {NULL,NULL,"","",0,0,0,0},
+      {NULL,NULL,"","",0,0,0,0},
       {NULL,NULL,"","",0,0,0,0},
     }
   };
@@ -2115,12 +2121,14 @@ static void ctrlmenu(void)
   button_player_none_data.texture[0] = gxTextureOpenPNG(button_player_none_data.image[0],0);
 
   /* initialize custom images */
-  for (i=0; i<13; i++)
+  for (i=0; i<12; i++)
   {
     items_sys[1][i].texture = items_sys[0][i].texture = gxTextureOpenPNG(items_sys[0][i].data,0);
   }
   items_special[0][0].texture = gxTextureOpenPNG(items_special[0][0].data,0);
   items_special[0][1].texture = gxTextureOpenPNG(items_special[0][1].data,0);
+  items_special[0][2].texture = gxTextureOpenPNG(items_special[0][2].data,0);
+  items_special[0][3].texture = gxTextureOpenPNG(items_special[0][3].data,0);
   items_special[2][0].texture = items_special[1][0].texture = gxTextureOpenPNG(items_special[1][0].data,0);
   items_special[2][1].texture = items_special[1][1].texture = gxTextureOpenPNG(items_special[1][1].data,0);
   items_device[0].texture = items_special[1][0].texture;
@@ -2201,7 +2209,7 @@ static void ctrlmenu(void)
           if (input.system[0] > SYSTEM_WAYPLAY)
           {
             input.system[0] = NO_SYSTEM;
-            input.system[1] = SYSTEM_MD_GAMEPAD;
+            input.system[1] = SYSTEM_GAMEPAD;
           }
 
           /* reset I/O ports */
@@ -2251,12 +2259,7 @@ static void ctrlmenu(void)
           /* fixed configurations */
           if (system_hw)
           {
-            if (cart.special & HW_J_CART)
-            {
-              GUI_WaitPrompt("Error","J-CART detected !");
-              break;
-            }
-            else if (cart.special & HW_TEREBI_OEKAKI)
+            if (cart.special & HW_TEREBI_OEKAKI)
             {
               GUI_WaitPrompt("Error","Terebi Oekaki detected !");
               break;
@@ -2280,13 +2283,13 @@ static void ctrlmenu(void)
           /* allow only one gun type */
           if ((input.system[0] == SYSTEM_LIGHTPHASER) && (input.system[1] == SYSTEM_MENACER))
           {
-            input.system[1] += 3;
+            input.system[1]++;
           }
 
           /* allow only one gun type */
           if ((input.system[0] == SYSTEM_LIGHTPHASER) && (input.system[1] == SYSTEM_JUSTIFIER))
           {
-            input.system[1] += 2;
+            input.system[1]++;
           }
 
           /* 4-wayplay uses both ports */
@@ -2299,7 +2302,7 @@ static void ctrlmenu(void)
           if (input.system[1] > SYSTEM_WAYPLAY)
           {
             input.system[1] = NO_SYSTEM;
-            input.system[0] = SYSTEM_MD_GAMEPAD;
+            input.system[0] = SYSTEM_GAMEPAD;
           }
 
           /* reset I/O ports */
@@ -2365,10 +2368,13 @@ static void ctrlmenu(void)
             }
           }
 
+          /* save device index */
+          index = m->selected - 2;
+
           /* update player index */
           old_player = player;
           player = 0;
-          for (i=0; i<(m->selected-2); i++)
+          for (i=0; i<index; i++)
           {
             if (input.dev[i] != NO_DEVICE) player ++;
           }
@@ -2402,12 +2408,10 @@ static void ctrlmenu(void)
             m->buttons[9].shift[3] = 1;
           }
 
-          /* emulated device type */
-          type = input.dev[m->selected - 2];
-
           /* retrieve current player informations */
-          switch (type)
+          switch (input.dev[index])
           {
+            case DEVICE_PAD2B:
             case DEVICE_PAD3B:
             case DEVICE_PAD6B:
             {
@@ -2426,16 +2430,15 @@ static void ctrlmenu(void)
             case DEVICE_LIGHTGUN:
             {
               items = items_special[2];
-
               if ((input.system[1] == SYSTEM_MENACER) || (input.system[1] == SYSTEM_JUSTIFIER))
               {
-                /* Menacer & Justifiers affected to devices 4 & 5 */
-                special = &config.gun_cursor[m->selected & 1];
+                /* Menacer & Justifiers affected to entries 4 & 5 */
+                special = &config.gun_cursor[index & 1];
               }
               else
               {
-                /* Lightphasers affected to devices 0 & 4 */
-                special = &config.gun_cursor[m->selected >> 2];
+                /* Lightphasers affected to entries 0 & 4 */
+                special = &config.gun_cursor[index / 4];
               }
               break;
             }
@@ -2467,11 +2470,11 @@ static void ctrlmenu(void)
           GUI_DrawMenuFX(m, 20, 0);
 
           /* some devices require analog sticks */
-          if ((type == DEVICE_XE_A1P) && ((config.input[player].device == -1) || (config.input[player].device == 1)))
+          if ((input.dev[index] == DEVICE_XE_A1P) && ((config.input[player].device == -1) || (config.input[player].device == 1)))
           {
             GUI_WaitPrompt("Warning","One Analog Stick required !");
           }
-          else if ((type == DEVICE_ACTIVATOR) && ((config.input[player].device != 0) && (config.input[player].device != 3)))
+          else if ((input.dev[index] == DEVICE_ACTIVATOR) && ((config.input[player].device != 0) && (config.input[player].device != 3)))
           {
             GUI_WaitPrompt("Warning","Two Analog Sticks required !");
           }
@@ -2492,18 +2495,20 @@ static void ctrlmenu(void)
         {
           if (special)
           {
-            /* switch option */
-            *special ^= 1;
-
             /* specific case: controller type */
-            if (type < 2)
+            if (input.dev[index] < 0x03)
             {
-              /* re-initialize emulated device */
-              input_init();
-              input_reset();
+              /* switch pad type */
+              *special = (*special + 1) & 0x03;
 
-              /* update emulated device type */
-              type = *special;
+              /* reinitialize emulated device(s) */
+              io_init();
+              input_reset();
+            }
+            else
+            {
+              /* switch option */
+              *special ^= 1;
             }
 
             /* update menu items */
@@ -2659,7 +2664,15 @@ static void ctrlmenu(void)
           if (config.input[player].device >= 0)
           {
             GUI_MsgBoxOpen("Keys Configuration", "",0);
-            gx_input_Config(config.input[player].port, config.input[player].device, type);
+            if ((*special == 3) && !system_hw)
+            {
+              /* no auto-detected pad type, use 6-buttons key mapping as default */
+              gx_input_Config(config.input[player].port, config.input[player].device, DEVICE_PAD6B);
+            }
+            else
+            {
+              gx_input_Config(config.input[player].port, config.input[player].device, input.dev[index]);
+            }
             GUI_MsgBoxClose();
           }
           break;
@@ -2790,6 +2803,8 @@ static void ctrlmenu(void)
   }
   gxTextureClose(&items_special[0][0].texture);
   gxTextureClose(&items_special[0][1].texture);
+  gxTextureClose(&items_special[0][2].texture);
+  gxTextureClose(&items_special[0][3].texture);
   gxTextureClose(&items_special[1][0].texture);
   gxTextureClose(&items_special[1][1].texture);
   gxTextureClose(&items_device[1].texture);

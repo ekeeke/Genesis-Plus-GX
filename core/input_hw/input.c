@@ -3,7 +3,7 @@
  *  Input peripherals support
  *
  *  Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003  Charles Mac Donald (original code)
- *  Copyright (C) 2007-2013  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2007-2014  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -54,7 +54,7 @@ int old_system[2] = {-1,-1};
 
 void input_init(void)
 {
-  int i;
+  int i, padtype;
   int player = 0;
 
   for (i=0; i<MAX_DEVICES; i++)
@@ -77,18 +77,31 @@ void input_init(void)
     return;
   }
 
+  /* default gamepad type */
+  if (romtype & SYSTEM_MD)
+  {
+    /* 3-buttons or 6-buttons */
+    padtype = (rominfo.peripherals & 2) ? DEVICE_PAD6B : DEVICE_PAD3B;
+  }
+  else
+  {
+    /* 2-buttons */
+    padtype = DEVICE_PAD2B;
+  }
+
   switch (input.system[0])
   {
-    case SYSTEM_MS_GAMEPAD:
+    case SYSTEM_GAMEPAD:
     {
-      input.dev[0] = DEVICE_PAD2B;
-      player++;
-      break;
-    }
-
-    case SYSTEM_MD_GAMEPAD:
-    {
-      input.dev[0] = config.input[player].padtype;
+      /* 2-buttons, 3-buttons or 6-buttons control pad */
+      if (config.input[player].padtype != (DEVICE_PAD2B | DEVICE_PAD3B | DEVICE_PAD6B))
+      {
+        input.dev[0] = config.input[player].padtype;
+      }
+      else
+      {
+        input.dev[0] = padtype;
+      }
       player++;
       break;
     }
@@ -120,7 +133,15 @@ void input_init(void)
       {
         if (player < MAX_INPUTS)
         {
-          input.dev[i] = config.input[player].padtype;
+          /* only allow 3-buttons or 6-buttons control pad */
+          if (config.input[player].padtype != (DEVICE_PAD2B | DEVICE_PAD3B | DEVICE_PAD6B))
+          {
+            input.dev[i] = config.input[player].padtype & DEVICE_PAD6B;
+          }
+          else
+          {
+            input.dev[i] = padtype & DEVICE_PAD6B;
+          }
           player++;
         }
       }
@@ -133,7 +154,15 @@ void input_init(void)
       {
         if (player < MAX_INPUTS)
         {
-          input.dev[i] = config.input[player].padtype;
+          /* only allow 3-buttons or 6-buttons control pad */
+          if (config.input[player].padtype != (DEVICE_PAD2B | DEVICE_PAD3B | DEVICE_PAD6B))
+          {
+            input.dev[i] = config.input[player].padtype & DEVICE_PAD6B;
+          }
+          else
+          {
+            input.dev[i] = padtype & DEVICE_PAD6B;
+          }
           player++;
         }
       }
@@ -170,16 +199,16 @@ void input_init(void)
 
   switch (input.system[1])
   {
-    case SYSTEM_MS_GAMEPAD:
+    case SYSTEM_GAMEPAD:
     {
-      input.dev[4] = DEVICE_PAD2B;
-      player++;
-      break;
-    }
-
-    case SYSTEM_MD_GAMEPAD:
-    {
-      input.dev[4] = config.input[player].padtype;
+      if (config.input[player].padtype != (DEVICE_PAD2B | DEVICE_PAD3B | DEVICE_PAD6B))
+      {
+        input.dev[4] = config.input[player].padtype;
+      }
+      else
+      {
+        input.dev[4] = padtype;
+      }
       player++;
       break;
     }
@@ -231,7 +260,15 @@ void input_init(void)
       {
         if (player < MAX_INPUTS)
         {
-          input.dev[i] = config.input[player].padtype;
+          /* only allow 3-buttons or 6-buttons control pad */
+          if (config.input[player].padtype != (DEVICE_PAD2B | DEVICE_PAD3B | DEVICE_PAD6B))
+          {
+            input.dev[i] = config.input[player].padtype & DEVICE_PAD6B;
+          }
+          else
+          {
+            input.dev[i] = padtype & DEVICE_PAD6B;
+          }
           player++;
         }
       }
@@ -269,7 +306,15 @@ void input_init(void)
     {
       if (player < MAX_INPUTS)
       {
-        input.dev[i] = config.input[player].padtype;
+        /* only allow 3-buttons or 6-buttons control pad */
+        if (config.input[player].padtype != (DEVICE_PAD2B | DEVICE_PAD3B | DEVICE_PAD6B))
+        {
+          input.dev[i] = config.input[player].padtype & DEVICE_PAD6B;
+        }
+        else
+        {
+          input.dev[i] = padtype & DEVICE_PAD6B;
+        }
         player ++;
       }
     }

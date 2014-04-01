@@ -257,7 +257,7 @@ void config_default(void)
     {
       /* switch menu video mode to interlaced */
       vmode->viTVMode = (vmode->viTVMode & ~3) | VI_INTERLACE;
-      VIDEO_Configure (vmode);
+      VIDEO_Configure(vmode);
       VIDEO_Flush();
       VIDEO_WaitVSync();
       VIDEO_WaitVSync();
@@ -273,7 +273,7 @@ void config_default(void)
   }
 
   /* default emulated inputs */
-  input.system[0] = SYSTEM_MD_GAMEPAD;
-  input.system[1] = (config.input[1].device != -1) ? SYSTEM_MD_GAMEPAD : NO_SYSTEM;
+  input.system[0] = SYSTEM_GAMEPAD;
+  input.system[1] = (config.input[1].device != -1) ? SYSTEM_GAMEPAD : NO_SYSTEM;
   input_init();
 }
