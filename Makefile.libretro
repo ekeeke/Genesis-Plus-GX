@@ -43,7 +43,7 @@ ifeq ($(platform), unix)
    PLATFORM_DEFINES := -DHAVE_ZLIB
 else ifeq ($(platform), osx)
    TARGET := $(TARGET_NAME)_libretro.dylib
-   fpic := -fPIC
+   fpic := -fPIC -mmacosx-version-min=10.6
    SHARED := -dynamiclib -lz
    ENDIANNESS_DEFINES := -DLSB_FIRST
    PLATFORM_DEFINES := -DHAVE_ZLIB
