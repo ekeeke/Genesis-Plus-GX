@@ -1557,17 +1557,37 @@ void gx_video_Start(void)
     switch (config.ntsc)
     {
       case 1:
+      {
         sms_ntsc_init(sms_ntsc, &sms_ntsc_composite);
         md_ntsc_init(md_ntsc, &md_ntsc_composite);
         break;
+      }
+
       case 2:
+      {
         sms_ntsc_init(sms_ntsc, &sms_ntsc_svideo);
         md_ntsc_init(md_ntsc, &md_ntsc_svideo);
         break;
+      }
+
       case 3:
+      {
         sms_ntsc_init(sms_ntsc, &sms_ntsc_rgb);
         md_ntsc_init(md_ntsc, &md_ntsc_rgb);
+      }
+
+      case 4:
+      {
+        md_ntsc_setup_t ntsc_custom = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+        ntsc_custom.sharpness  = config.ntsc_sharpness;
+        ntsc_custom.resolution = config.ntsc_resolution;
+        ntsc_custom.artifacts  = config.ntsc_artifacts;
+        ntsc_custom.fringing   = config.ntsc_fringing;
+        ntsc_custom.bleed      = config.ntsc_bleed;
+        sms_ntsc_init(sms_ntsc, (sms_ntsc_setup_t *)&ntsc_custom);
+        md_ntsc_init(md_ntsc, &ntsc_custom);
         break;
+      }
     }
   }
 

@@ -3,7 +3,7 @@
  *
  *  Genesis Plus GX configuration file support
  *
- *  Copyright Eke-Eke (2007-2013)
+ *  Copyright Eke-Eke (2007-2014)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -163,6 +163,13 @@ void config_default(void)
   config.trap = 0;
   config.gamma = VI_GM_1_0 / 10.0;
 #endif
+
+  /* NTSC filter options */
+  config.ntsc_sharpness   = 0.0;
+  config.ntsc_resolution  = 0.0;
+  config.ntsc_artifacts   = 0.0;
+  config.ntsc_fringing    = 0.0;
+  config.ntsc_bleed       = 0.0;
 
   /* controllers options */
   config.gun_cursor[0]  = 1;
