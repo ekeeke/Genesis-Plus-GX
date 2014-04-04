@@ -400,7 +400,11 @@ static gui_item items_video[16] =
 };
 
 /* Menu options */
+#ifdef HW_RVL
+static gui_item items_prefs[12] =
+#else
 static gui_item items_prefs[11] =
+#endif
 {
   {NULL,NULL,"Auto ROM Load: OFF",  "Enable/disable automatic ROM loading on startup", 56,132,276,48},
   {NULL,NULL,"Auto Cheats: OFF",    "Enable/disable automatic cheats activation",      56,132,276,48},
@@ -413,6 +417,9 @@ static gui_item items_prefs[11] =
   {NULL,NULL,"Screen Width: 658",   "Adjust menu screen width in pixels",              56,132,276,48},
   {NULL,NULL,"Show CD Leds: OFF",   "Enable/disable CD leds display",                  56,132,276,48},
   {NULL,NULL,"Show FPS: OFF",       "Enable/disable FPS counter",                      56,132,276,48},
+#ifdef HW_RVL
+  {NULL,NULL,"Wiimote Timeout: OFF","Enable/disable Wii remote automatic shutodwn",    56,132,276,48},
+#endif
 };
 
 /* Save Manager */
@@ -621,7 +628,7 @@ static gui_menu menu_prefs =
 {
   "Menu Settings",
   0,0,
-  11,4,6,0,
+  12,4,6,0,
   items_prefs,
   buttons_list,
   bg_list,
@@ -690,6 +697,12 @@ static void prefmenu ()
   sprintf (items[8].text, "Screen Width: %d", config.screen_w);
   sprintf (items[9].text, "Show CD Leds: %s", config.cd_leds ? "ON":"OFF");
   sprintf (items[10].text, "Show FPS: %s", config.fps ? "ON":"OFF");
+#ifdef HW_RVL
+  sprintf (items[11].text, "Wiimote Timeout: %s", config.autosleep ? "5min":"30min");
+  m->max_items = 12;
+#else
+  m->max_items = 11;
+#endif
 
   GUI_InitMenu(m);
   GUI_SlideMenuTitle(m,strlen("Menu "));
@@ -783,6 +796,14 @@ static void prefmenu ()
         config.fps ^= 1;
         sprintf (items[10].text, "Show FPS: %s", config.fps ? "ON":"OFF");
         break;
+
+#ifdef HW_RVL
+      case 11:   /*** Wii remote auto switch-off ***/
+        config.autosleep ^= 1;
+        sprintf (items[11].text, "Wiimote Timeout: %s", config.autosleep ? "5min":"30min");
+        WPAD_SetIdleTimeout(config.autosleep ? 300 : 1800);
+        break;
+#endif
 
       case -1:
         quit = 1;
@@ -1564,7 +1585,6 @@ static void videomenu ()
   else
   {
     sprintf (items[VI_OFFSET+3+ntsc_offset].text, "Aspect: SCALED");
-    m->max_items++;
   }
 
   sprintf (items[VI_OFFSET+4+ntsc_offset].text, "Screen Position: (%s%02d,%s%02d)",

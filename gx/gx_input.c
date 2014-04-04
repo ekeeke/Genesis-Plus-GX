@@ -1058,7 +1058,7 @@ void gx_input_Init(void)
   PAD_Init();
 #ifdef HW_RVL
   WPAD_Init();
-  WPAD_SetIdleTimeout(60);
+  WPAD_SetIdleTimeout(config.autosleep ? 300 : 1800);
   WPAD_SetDataFormat(WPAD_CHAN_ALL,WPAD_FMT_BTNS_ACC_IR);
   WPAD_SetVRes(WPAD_CHAN_ALL,640,480);
 #endif

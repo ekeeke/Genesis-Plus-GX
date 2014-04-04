@@ -97,6 +97,7 @@ typedef struct
   uint16 pad_keymap[4][MAX_KEYS+1];
 #ifdef HW_RVL
   uint32 wpad_keymap[4*3][MAX_KEYS];
+  uint8 autosleep;
 #endif
   uint8 autoload;
   uint8 autocheat;

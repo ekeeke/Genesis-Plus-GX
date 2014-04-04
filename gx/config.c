@@ -185,13 +185,13 @@ void config_default(void)
   config.autocheat    = 0;
 #ifdef HW_RVL
   config.s_auto       = 1;
+  config.autosleep    = 1;
 #else
   config.s_auto       = 0;
   config.v_prog       = 1;
 #endif
   config.s_default    = 1;
   config.s_device     = 0;
-  config.l_device     = 0;
   config.bg_overlay   = 0;
   config.screen_w     = 658;
   config.bgm_volume   = 100.0;
@@ -199,6 +199,9 @@ void config_default(void)
 
   /* default ROM directories */
 #ifdef HW_RVL
+  char dir[16];
+  getcwd(dir, 16);
+  config.l_device = strstr(dir, "sd") ? TYPE_SD : TYPE_USB;
   sprintf (config.lastdir[0][TYPE_SD],  "sd:%s/roms/",  DEFAULT_PATH);
   sprintf (config.lastdir[1][TYPE_SD],  "sd:%s/roms/",  DEFAULT_PATH);
   sprintf (config.lastdir[2][TYPE_SD],  "sd:%s/roms/",  DEFAULT_PATH);
@@ -215,6 +218,7 @@ void config_default(void)
   sprintf (config.lastdir[3][TYPE_DVD], "dvd:%s/roms/", DEFAULT_PATH);
   sprintf (config.lastdir[4][TYPE_DVD], "dvd:%s/roms/", DEFAULT_PATH);
 #else
+  config.l_device = TYPE_SD;
   sprintf (config.lastdir[0][TYPE_SD],  "%s/roms/",  DEFAULT_PATH);
   sprintf (config.lastdir[1][TYPE_SD],  "%s/roms/",  DEFAULT_PATH);
   sprintf (config.lastdir[2][TYPE_SD],  "%s/roms/",  DEFAULT_PATH);
