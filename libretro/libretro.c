@@ -443,10 +443,13 @@ static void extract_directory(char *buf, const char *path, size_t size)
       buf[0] = '\0';
 }
 
-static void update_viewport(void)
+static bool update_viewport(void)
 {
-   vwidth  = bitmap.viewport.w + (bitmap.viewport.x * 2);
-   vheight = bitmap.viewport.h + (bitmap.viewport.y * 2);
+  int ow = vwidth;
+  int oh = vheight;
+
+  vwidth  = bitmap.viewport.w + (bitmap.viewport.x * 2);
+  vheight = bitmap.viewport.h + (bitmap.viewport.y * 2);
 
    if (config.ntsc)
    {
@@ -460,6 +463,8 @@ static void update_viewport(void)
    {
       vheight = vheight * 2;
    }
+
+   return ((ow != vwidth) || (oh != vheight));
 }
 
 static void check_variables(void)
@@ -998,11 +1003,13 @@ void retro_run(void)
 
    if (bitmap.viewport.changed & 1)
    {
-      struct retro_system_av_info info;
       bitmap.viewport.changed &= ~1;
-      update_viewport();
-      retro_get_system_av_info(&info);
-      environ_cb(RETRO_ENVIRONMENT_SET_SYSTEM_AV_INFO, &info);
+      if (update_viewport())
+      {
+         struct retro_system_av_info info;
+         retro_get_system_av_info(&info);
+         environ_cb(RETRO_ENVIRONMENT_SET_SYSTEM_AV_INFO, &info);
+      }
    }
 
    video_cb(bitmap.data, vwidth, vheight, 720 * 2);
