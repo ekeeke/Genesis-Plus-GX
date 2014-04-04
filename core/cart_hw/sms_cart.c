@@ -254,6 +254,9 @@ static const rominfo_t game_list[] =
   {0xE42E4998, 0, 0, SYSTEM_SPORTSPAD,   MAPPER_SEGA,   SYSTEM_SMS2,        REGION_USA}, /* Sports Pad Football */
   {0x41C948BF, 0, 0, SYSTEM_SPORTSPAD,   MAPPER_SEGA,   SYSTEM_SMS2,        REGION_USA}, /* Sports Pad Soccer */
 
+  /* games requiring homemade multitap */
+  {0xFAB6F52F, 0, 0, SYSTEM_MS4PLAY,     MAPPER_NONE,   SYSTEM_SMS2,        REGION_USA}, /* BOom */
+
   /* games supporting YM2413 FM */
   {0x1C951F8E, 0, 1, SYSTEM_GAMEPAD,  MAPPER_SEGA,   SYSTEM_SMS2,        REGION_USA}, /* After Burner */
   {0xC13896D5, 0, 1, SYSTEM_GAMEPAD,  MAPPER_SEGA,   SYSTEM_SMS2,        REGION_USA}, /* Alex Kidd: The Lost Stars */

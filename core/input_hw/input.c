@@ -170,6 +170,19 @@ void input_init(void)
       break;
     }
 
+    case SYSTEM_MS4PLAY:
+    {
+      for (i=0; i<4; i++)
+      {
+        if (player < MAX_INPUTS)
+        {
+          input.dev[i] = DEVICE_PAD2B;
+          player++;
+        }
+      }
+      break;
+    }
+
     case SYSTEM_LIGHTPHASER:
     {
       input.dev[0] = DEVICE_LIGHTGUN;
@@ -273,6 +286,19 @@ void input_init(void)
         }
       }
       teamplayer_init(1);
+      break;
+    }
+
+    case SYSTEM_MS4PLAY:
+    {
+      for (i=4; i<8; i++)
+      {
+        if (player < MAX_INPUTS)
+        {
+          input.dev[i] = DEVICE_PAD2B;
+          player++;
+        }
+      }
       break;
     }
 

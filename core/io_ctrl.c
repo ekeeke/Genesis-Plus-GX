@@ -122,6 +122,13 @@ void io_init(void)
       break;
     }
 
+    case SYSTEM_MS4PLAY:
+    {
+      port[0].data_w = ms4play_1_write;
+      port[0].data_r = ms4play_1_read;
+      break;
+    }
+
     case SYSTEM_LIGHTPHASER:
     {
       port[0].data_w = dummy_write;
@@ -206,6 +213,13 @@ void io_init(void)
     {
       port[1].data_w = teamplayer_2_write;
       port[1].data_r = teamplayer_2_read;
+      break;
+    }
+
+    case SYSTEM_MS4PLAY:
+    {
+      port[1].data_w = ms4play_2_write;
+      port[1].data_r = ms4play_2_read;
       break;
     }
 

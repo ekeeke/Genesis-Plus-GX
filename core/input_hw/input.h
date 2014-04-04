@@ -51,12 +51,12 @@
 #define SYSTEM_JUSTIFIER    (4) /* Konami Justifiers (port B only) */
 #define SYSTEM_XE_A1P       (5) /* XE-A1P analog controller (port A only) */
 #define SYSTEM_ACTIVATOR    (6) /* Sega Activator */
-#define SYSTEM_MS_GAMEPAD   (7) /* single 2-buttons Control Pad (Master System) */
 #define SYSTEM_LIGHTPHASER  (7) /* Sega Light Phaser (Master System) */
 #define SYSTEM_PADDLE       (8) /* Sega Paddle Control (Master System) */
 #define SYSTEM_SPORTSPAD    (9) /* Sega Sports Pad (Master System) */
-#define SYSTEM_TEAMPLAYER  (10) /* Multi Tap -- Sega TeamPlayer */
-#define SYSTEM_WAYPLAY     (11) /* Multi Tap -- EA 4-Way Play (use both ports) */
+#define SYSTEM_MS4PLAY     (10) /* Multi Tap -- Master System homemade */
+#define SYSTEM_TEAMPLAYER  (11) /* Multi Tap -- Sega TeamPlayer */
+#define SYSTEM_WAYPLAY     (12) /* Multi Tap -- EA 4-Way Play (use both ports) */
 
 /* Device type */
 #define NO_DEVICE         (0xff) /* unconnected device (fixed ID for Team Player) */

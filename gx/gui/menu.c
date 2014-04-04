@@ -108,6 +108,7 @@ extern const u8 Ctrl_paddle_png[];
 extern const u8 Ctrl_sportspad_png[];
 extern const u8 Ctrl_none_png[];
 extern const u8 Ctrl_teamplayer_png[];
+extern const u8 Ctrl_ms4play_png[];
 extern const u8 Ctrl_pad_auto_png[];
 extern const u8 Ctrl_pad2b_png[];
 extern const u8 Ctrl_pad3b_png[];
@@ -2028,7 +2029,7 @@ static void ctrlmenu(void)
   u32 exp, index = 0;
 
   /* System devices */
-  gui_item items_sys[2][12] =
+  gui_item items_sys[2][13] =
   {
     {
       {NULL,Ctrl_none_png       ,"","Select Port 1 device",110,130,48,72},
@@ -2041,6 +2042,7 @@ static void ctrlmenu(void)
       {NULL,Ctrl_lightphaser_png,"","Select Port 1 device", 89,109,88,92},
       {NULL,Ctrl_paddle_png     ,"","Select Port 1 device", 86,117,96,84},
       {NULL,Ctrl_sportspad_png  ,"","Select Port 1 device", 95,117,76,84},
+      {NULL,Ctrl_ms4play_png    ,"","Select Port 1 device", 94,100,80,100},
       {NULL,Ctrl_teamplayer_png ,"","Select Port 1 device", 94,109,80,92},
       {NULL,Ctrl_4wayplay_png   ,"","Select Port 1 device", 98,110,72,92}
     },
@@ -2055,6 +2057,7 @@ static void ctrlmenu(void)
       {NULL,Ctrl_lightphaser_png,"","Select Port 2 device", 89,279,88,92},
       {NULL,Ctrl_paddle_png     ,"","Select Port 2 device", 86,287,96,84},
       {NULL,Ctrl_sportspad_png  ,"","Select Port 2 device", 95,287,76,84},
+      {NULL,Ctrl_ms4play_png    ,"","Select Port 1 device", 94,270,80,100},
       {NULL,Ctrl_teamplayer_png ,"","Select Port 2 device", 94,279,80,92},
       {NULL,Ctrl_4wayplay_png   ,"","Select Port 2 device", 98,280,72,92}
     }
@@ -2121,7 +2124,7 @@ static void ctrlmenu(void)
   button_player_none_data.texture[0] = gxTextureOpenPNG(button_player_none_data.image[0],0);
 
   /* initialize custom images */
-  for (i=0; i<12; i++)
+  for (i=0; i<13; i++)
   {
     items_sys[1][i].texture = items_sys[0][i].texture = gxTextureOpenPNG(items_sys[0][i].data,0);
   }
@@ -2415,8 +2418,17 @@ static void ctrlmenu(void)
             case DEVICE_PAD3B:
             case DEVICE_PAD6B:
             {
-              items = items_special[0];
-              special = &config.input[player].padtype;
+              if (input.system[index/4] == SYSTEM_MS4PLAY)
+              {
+                /* force 2-buttons pad */
+                items = items_special[3];
+                special = NULL;
+              }
+              else
+              {
+                items = items_special[0];
+                special = &config.input[player].padtype;
+              }
               break;
             }
 
