@@ -255,7 +255,8 @@ static const rominfo_t game_list[] =
   {0x41C948BF, 0, 0, SYSTEM_SPORTSPAD,   MAPPER_SEGA,   SYSTEM_SMS2,        REGION_USA}, /* Sports Pad Soccer */
 
   /* games requiring homemade multitap */
-  {0xFAB6F52F, 0, 0, SYSTEM_MS4PLAY,     MAPPER_NONE,   SYSTEM_SMS2,        REGION_USA}, /* BOom */
+  {0xFAB6F52F, 0, 0, SYSTEM_MS4PLAY,     MAPPER_NONE,   SYSTEM_SMS2,        REGION_USA}, /* BOom (v1.0) */
+  {0x143AB50B, 0, 0, SYSTEM_MS4PLAY,     MAPPER_NONE,   SYSTEM_SMS2,        REGION_USA}, /* BOom (v1.1) */
 
   /* games supporting YM2413 FM */
   {0x1C951F8E, 0, 1, SYSTEM_GAMEPAD,  MAPPER_SEGA,   SYSTEM_SMS2,        REGION_USA}, /* After Burner */
