@@ -1650,6 +1650,7 @@ void gx_video_Start(void)
   }
 
   /* GX emulation rendering */
+  gxClearScreen((GXColor)BLACK);
   gxResetRendering(0);
 
   /* resynchronize emulation with VSYNC */
