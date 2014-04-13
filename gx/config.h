@@ -3,7 +3,7 @@
  *
  *  Genesis Plus GX configuration file support
  *
- *  Copyright Eke-Eke (2007-2013)
+ *  Copyright Eke-Eke (2007-2014)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -97,6 +97,7 @@ typedef struct
   uint16 pad_keymap[4][MAX_KEYS+1];
 #ifdef HW_RVL
   uint32 wpad_keymap[4*3][MAX_KEYS];
+  uint8 autosleep;
 #endif
   uint8 autoload;
   uint8 autocheat;
@@ -111,6 +112,11 @@ typedef struct
   float bgm_volume;
   float sfx_volume;
   char lastdir[FILETYPE_MAX][TYPE_RECENT][MAXPATHLEN];
+  float ntsc_sharpness;
+  float ntsc_resolution;
+  float ntsc_artifacts;
+  float ntsc_fringing;
+  float ntsc_bleed;
 } t_config;
 
 /* Global data */

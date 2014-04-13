@@ -1,7 +1,7 @@
 About
 ---------
 
-Genesis Plus GX is an open-source & portable Sega Mega Drive / Genesis emulator, now also emulating SG-1000, Master System, Game Gear and Sega/Mega CD hardware.
+Genesis Plus GX is an open-source emulator focused on accuracy and portability, now emulating SG-1000, Master System, Game Gear, Mega Drive / Genesis and Sega / Mega CD hardware. Initially ported and designed to be running on Gamecube / Wii consoles through libogc / devkitPPC, it is also available for many other platforms through various frontends.
 
 The source code is based on Genesis Plus 1.3, originally developped by Charles MacDonald (http://cgfm2.emuviews.com).
 It has been heavily modified, with respect to initial goals and design, in order to improve accuracy of emulation, implementing new features and adding support for extra peripherals, cartridge & systems hardware.
@@ -21,7 +21,10 @@ see http://code.google.com/p/genplus-gx/wiki/GettingStarted
 
 (*) libretro / Retroarch (Multi Platform) port: 
 
-see http://forum.themaister.net/
+see http://www.libretro.com/forums/index.php
+
+
+Current builds are available for download from https://github.com/ekeeke/Genesis-Plus-GX/tree/master/builds
 
 
 Features

@@ -3,7 +3,7 @@
  *  ROM Loading Support
  *
  *  Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003  Charles Mac Donald (original code)
- *  Copyright (C) 2007-2013  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2007-2014  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -682,9 +682,6 @@ int load_rom(char *filename)
   }
 #endif
 
-  /* Save auto-detected system hardware  */
-  romtype = system_hw;
-
   /* PICO ROM */
   if (strstr(rominfo.consoletype, "SEGA PICO") != NULL)
   {
@@ -692,8 +689,11 @@ int load_rom(char *filename)
     system_hw = SYSTEM_PICO;
   }
 
+  /* Save auto-detected system hardware  */
+  romtype = system_hw;
+
   /* CD BOOTROM */
-  else if (strstr(rominfo.ROMType, "BR") != NULL)
+  if (strstr(rominfo.ROMType, "BR") != NULL)
   {
     /* enable CD hardware */
     system_hw = SYSTEM_MCD;
@@ -717,7 +717,7 @@ int load_rom(char *filename)
            (strstr(rominfo.product,"T-5740") != NULL))
   {
     /* check if console hardware is set to AUTO */
-    if (config.system == 0x00)
+    if (!config.system)
     {
       /* auto-enable CD hardware */
       system_hw = SYSTEM_MCD;
@@ -790,7 +790,7 @@ int load_rom(char *filename)
     }
 
     /* force MENACER configuration */
-    input.system[0] = SYSTEM_MD_GAMEPAD;
+    input.system[0] = SYSTEM_GAMEPAD;
     input.system[1] = SYSTEM_MENACER;
     input.x_offset = 82;
     input.y_offset = 0;
@@ -808,7 +808,7 @@ int load_rom(char *filename)
     }
 
     /* force MENACER configuration */
-    input.system[0] = SYSTEM_MD_GAMEPAD;
+    input.system[0] = SYSTEM_GAMEPAD;
     input.system[1] = SYSTEM_MENACER;
     input.x_offset = 133;
     input.y_offset = -8;
@@ -826,7 +826,7 @@ int load_rom(char *filename)
     }
 
     /* force MENACER configuration */
-    input.system[0] = SYSTEM_MD_GAMEPAD;
+    input.system[0] = SYSTEM_GAMEPAD;
     input.system[1] = SYSTEM_MENACER;
     input.x_offset = 68;
     input.y_offset = -24;
@@ -844,7 +844,7 @@ int load_rom(char *filename)
     }
 
     /* force MENACER configuration */
-    input.system[0] = SYSTEM_MD_GAMEPAD;
+    input.system[0] = SYSTEM_GAMEPAD;
     input.system[1] = SYSTEM_MENACER;
     input.x_offset = 64;
     input.y_offset = -8;
@@ -862,7 +862,7 @@ int load_rom(char *filename)
     }
 
     /* force MENACER configuration */
-    input.system[0] = SYSTEM_MD_GAMEPAD;
+    input.system[0] = SYSTEM_GAMEPAD;
     input.system[1] = SYSTEM_MENACER;
     input.x_offset = 61;
     input.y_offset = 0;
@@ -880,7 +880,7 @@ int load_rom(char *filename)
     }
 
     /* force MENACER configuration */
-    input.system[0] = SYSTEM_MD_GAMEPAD;
+    input.system[0] = SYSTEM_GAMEPAD;
     input.system[1] = SYSTEM_MENACER;
     input.x_offset = 70;
     input.y_offset = 18;
@@ -898,7 +898,7 @@ int load_rom(char *filename)
     }
 
     /* force MENACER configuration */
-    input.system[0] = SYSTEM_MD_GAMEPAD;
+    input.system[0] = SYSTEM_GAMEPAD;
     input.system[1] = SYSTEM_MENACER;
     input.x_offset = 49;
     input.y_offset = 0;
@@ -916,7 +916,7 @@ int load_rom(char *filename)
     }
 
     /* force MENACER configuration */
-    input.system[0] = SYSTEM_MD_GAMEPAD;
+    input.system[0] = SYSTEM_GAMEPAD;
     input.system[1] = SYSTEM_MENACER;
     input.x_offset = 60;
     input.y_offset = 30;
@@ -935,7 +935,7 @@ int load_rom(char *filename)
     }
 
     /* force JUSTIFIER configuration */
-    input.system[0] = SYSTEM_MD_GAMEPAD;
+    input.system[0] = SYSTEM_GAMEPAD;
     input.system[1] = SYSTEM_JUSTIFIER;
     input.x_offset = (strstr(rominfo.international,"GUN FIGHTERS") != NULL) ? 24 : 0;
     input.y_offset = 0;

@@ -97,8 +97,7 @@ extern const u8 Button_delete_over_png[];
 
 /* Controller Settings */
 extern const u8 Ctrl_4wayplay_png[];
-extern const u8 Ctrl_gamepad_md_png[];
-extern const u8 Ctrl_gamepad_ms_png[];
+extern const u8 Ctrl_gamepad_png[];
 extern const u8 Ctrl_justifiers_png[];
 extern const u8 Ctrl_menacer_png[];
 extern const u8 Ctrl_mouse_png[];
@@ -109,6 +108,9 @@ extern const u8 Ctrl_paddle_png[];
 extern const u8 Ctrl_sportspad_png[];
 extern const u8 Ctrl_none_png[];
 extern const u8 Ctrl_teamplayer_png[];
+extern const u8 Ctrl_ms4play_png[];
+extern const u8 Ctrl_pad_auto_png[];
+extern const u8 Ctrl_pad2b_png[];
 extern const u8 Ctrl_pad3b_png[];
 extern const u8 Ctrl_pad6b_png[];
 extern const u8 Ctrl_config_png[];
@@ -370,9 +372,9 @@ static gui_item items_system[10] =
 
 /* Video options */
 #ifdef HW_RVL
-static gui_item items_video[13] =
+static gui_item items_video[18] =
 #else
-static gui_item items_video[11] =
+static gui_item items_video[16] =
 #endif
 {
   {NULL,NULL,"Display: PROGRESSIVE",     "Select video mode",                          56,132,276,48},
@@ -385,6 +387,11 @@ static gui_item items_video[11] =
   {NULL,NULL,"VI Gamma Correction: 1.0", "Adjust video hardware gamma correction",     56,132,276,48},
 #endif
   {NULL,NULL,"NTSC Filter: COMPOSITE",   "Enable/disable NTSC software filtering",     56,132,276,48},
+  {NULL,NULL,"NTSC Sharpness: 0.0",      "Adjust edge contrast enhancement/blurring",  56,132,276,48},
+  {NULL,NULL,"NTSC Resolution: 0.0",     "Adjust image resolution",                    56,132,276,48},
+  {NULL,NULL,"NTSC Artifacts: 0.0",      "Adjust artifacts caused by color changes",   56,132,276,48},
+  {NULL,NULL,"NTSC Color Bleed: 0.0",    "Adjust color resolution reduction",          56,132,276,48},
+  {NULL,NULL,"NTSC Color Fringing: 0.0", "Adjust artifacts caused by brightness changes", 56,132,276,48},
   {NULL,NULL,"Borders: OFF",             "Enable/disable overscan emulation",          56,132,276,48},
   {NULL,NULL,"GG screen: ORIGINAL",      "Enable/disable Game Gear extended screen",   56,132,276,48},
   {NULL,NULL,"Aspect: ORIGINAL (4:3)",   "Select display aspect ratio",                56,132,276,48},
@@ -393,7 +400,11 @@ static gui_item items_video[11] =
 };
 
 /* Menu options */
+#ifdef HW_RVL
+static gui_item items_prefs[12] =
+#else
 static gui_item items_prefs[11] =
+#endif
 {
   {NULL,NULL,"Auto ROM Load: OFF",  "Enable/disable automatic ROM loading on startup", 56,132,276,48},
   {NULL,NULL,"Auto Cheats: OFF",    "Enable/disable automatic cheats activation",      56,132,276,48},
@@ -406,6 +417,9 @@ static gui_item items_prefs[11] =
   {NULL,NULL,"Screen Width: 658",   "Adjust menu screen width in pixels",              56,132,276,48},
   {NULL,NULL,"Show CD Leds: OFF",   "Enable/disable CD leds display",                  56,132,276,48},
   {NULL,NULL,"Show FPS: OFF",       "Enable/disable FPS counter",                      56,132,276,48},
+#ifdef HW_RVL
+  {NULL,NULL,"Wiimote Timeout: OFF","Enable/disable Wii remote automatic shutodwn",    56,132,276,48},
+#endif
 };
 
 /* Save Manager */
@@ -614,7 +628,7 @@ static gui_menu menu_prefs =
 {
   "Menu Settings",
   0,0,
-  11,4,6,0,
+  12,4,6,0,
   items_prefs,
   buttons_list,
   bg_list,
@@ -683,6 +697,12 @@ static void prefmenu ()
   sprintf (items[8].text, "Screen Width: %d", config.screen_w);
   sprintf (items[9].text, "Show CD Leds: %s", config.cd_leds ? "ON":"OFF");
   sprintf (items[10].text, "Show FPS: %s", config.fps ? "ON":"OFF");
+#ifdef HW_RVL
+  sprintf (items[11].text, "Wiimote Timeout: %s", config.autosleep ? "5min":"30min");
+  m->max_items = 12;
+#else
+  m->max_items = 11;
+#endif
 
   GUI_InitMenu(m);
   GUI_SlideMenuTitle(m,strlen("Menu "));
@@ -776,6 +796,14 @@ static void prefmenu ()
         config.fps ^= 1;
         sprintf (items[10].text, "Show FPS: %s", config.fps ? "ON":"OFF");
         break;
+
+#ifdef HW_RVL
+      case 11:   /*** Wii remote auto switch-off ***/
+        config.autosleep ^= 1;
+        sprintf (items[11].text, "Wiimote Timeout: %s", config.autosleep ? "5min":"30min");
+        WPAD_SetIdleTimeout(config.autosleep ? 300 : 1800);
+        break;
+#endif
 
       case -1:
         quit = 1;
@@ -1480,6 +1508,7 @@ static void videomenu ()
   int reinit = 0;
   gui_menu *m = &menu_video;
   gui_item *items = m->items;
+  int ntsc_offset = 0;
 
   if (config.render == 1)
     sprintf (items[0].text,"Display: INTERLACED");
@@ -1514,39 +1543,59 @@ static void videomenu ()
     sprintf (items[VI_OFFSET].text, "NTSC Filter: S-VIDEO");
   else if (config.ntsc == 3)
     sprintf (items[VI_OFFSET].text, "NTSC Filter: RGB");
+  else if (config.ntsc == 4)
+  {
+    sprintf (items[VI_OFFSET].text, "NTSC Filter: MANUAL");
+    sprintf(items[VI_OFFSET+1].text, "NTSC Sharpness: %1.2f", config.ntsc_sharpness);
+    sprintf(items[VI_OFFSET+2].text, "NTSC Resolution: %1.2f", config.ntsc_resolution);
+    sprintf(items[VI_OFFSET+3].text, "NTSC Artifacts: %1.2f", config.ntsc_artifacts);
+    sprintf(items[VI_OFFSET+4].text, "NTSC Color Bleed: %1.2f", config.ntsc_bleed);
+    sprintf(items[VI_OFFSET+5].text, "NTSC Color Fringing: %1.2f", config.ntsc_fringing);
+    strcpy(items[VI_OFFSET+1].comment, "Adjust edge contrast enhancement/blurring");
+    strcpy(items[VI_OFFSET+2].comment, "Adjust image resolution");
+    strcpy(items[VI_OFFSET+3].comment, "Adjust artifacts caused by color changes");
+    strcpy(items[VI_OFFSET+4].comment, "Adjust color resolution reduction");
+    strcpy(items[VI_OFFSET+5].comment, "Adjust artifacts caused by brightness changes");
+    ntsc_offset = 5;
+  }
   else
     sprintf (items[VI_OFFSET].text, "NTSC Filter: OFF");
 
-  if (config.overscan == 3)
-    sprintf (items[VI_OFFSET+1].text, "Borders: FULL");
-  else if (config.overscan == 2)
-    sprintf (items[VI_OFFSET+1].text, "Borders: H ONLY");
-  else if (config.overscan == 1)
-    sprintf (items[VI_OFFSET+1].text, "Borders: V ONLY");
-  else
-    sprintf (items[VI_OFFSET+1].text, "Borders: NONE");
+  strcpy(items[VI_OFFSET+1+ntsc_offset].comment, "Enable/disable overscan emulation");
+  strcpy(items[VI_OFFSET+2+ntsc_offset].comment, "Enable/disable Game Gear extended screen");
+  strcpy(items[VI_OFFSET+3+ntsc_offset].comment, "Select display aspect ratio");
+  strcpy(items[VI_OFFSET+4+ntsc_offset].comment, "Adjust display position");
+  strcpy(items[VI_OFFSET+5+ntsc_offset].comment, "Adjust display scaling");
 
-  sprintf(items[VI_OFFSET+2].text, "GG Screen: %s", config.gg_extra ? "EXTENDED":"ORIGINAL");
+  if (config.overscan == 3)
+    sprintf (items[VI_OFFSET+1+ntsc_offset].text, "Borders: FULL");
+  else if (config.overscan == 2)
+    sprintf (items[VI_OFFSET+1+ntsc_offset].text, "Borders: H ONLY");
+  else if (config.overscan == 1)
+    sprintf (items[VI_OFFSET+1+ntsc_offset].text, "Borders: V ONLY");
+  else
+    sprintf (items[VI_OFFSET+1+ntsc_offset].text, "Borders: NONE");
+
+  sprintf(items[VI_OFFSET+2+ntsc_offset].text, "GG Screen: %s", config.gg_extra ? "EXTENDED":"ORIGINAL");
 
   if (config.aspect == 1)
-    sprintf (items[VI_OFFSET+3].text,"Aspect: ORIGINAL (4:3)");
+    sprintf (items[VI_OFFSET+3+ntsc_offset].text,"Aspect: ORIGINAL (4:3)");
   else if (config.aspect == 2)
-    sprintf (items[VI_OFFSET+3].text, "Aspect: ORIGINAL (16:9)");
+    sprintf (items[VI_OFFSET+3+ntsc_offset].text, "Aspect: ORIGINAL (16:9)");
   else
-    sprintf (items[VI_OFFSET+3].text, "Aspect: SCALED");
+  {
+    sprintf (items[VI_OFFSET+3+ntsc_offset].text, "Aspect: SCALED");
+  }
 
-  sprintf (items[VI_OFFSET+4].text, "Screen Position: (%s%02d,%s%02d)",
+  sprintf (items[VI_OFFSET+4+ntsc_offset].text, "Screen Position: (%s%02d,%s%02d)",
     (config.xshift < 0) ? "":"+", config.xshift,
     (config.yshift < 0) ? "":"+", config.yshift);
 
-  sprintf (items[VI_OFFSET+5].text, "Screen Scaling: (%s%02d,%s%02d)",
+  sprintf (items[VI_OFFSET+5+ntsc_offset].text, "Screen Scaling: (%s%02d,%s%02d)",
     (config.xscale < 0) ? "":"+", config.xscale,
     (config.yscale < 0) ? "":"+", config.yscale);
 
-  if (config.aspect)
-    m->max_items  = VI_OFFSET+5;
-  else
-    m->max_items  = VI_OFFSET+6;
+  m->max_items  = VI_OFFSET + 5 + ntsc_offset + (config.aspect == 0);
 
   GUI_InitMenu(m);
   GUI_SlideMenuTitle(m,strlen("Video "));
@@ -1554,6 +1603,11 @@ static void videomenu ()
   while (quit == 0)
   {
     ret = GUI_RunMenu(m);
+
+    if (ret > VI_OFFSET)
+    {
+      ret += (5 - ntsc_offset);
+    }
 
     switch (ret)
     {
@@ -1643,64 +1697,135 @@ static void videomenu ()
 #endif
 
       case VI_OFFSET: /*** NTSC filter ***/
-        config.ntsc = (config.ntsc + 1) & 3;
+        config.ntsc = (config.ntsc + 1) % 5;
         if (config.ntsc == 1)
+        {
           sprintf (items[VI_OFFSET].text, "NTSC Filter: COMPOSITE");
+        }
         else if (config.ntsc == 2)
+        {
           sprintf (items[VI_OFFSET].text, "NTSC Filter: S-VIDEO");
+        }
         else if (config.ntsc == 3)
+        {
           sprintf (items[VI_OFFSET].text, "NTSC Filter: RGB");
+        }
+        else if (config.ntsc == 4)
+        {
+          sprintf (items[VI_OFFSET].text, "NTSC Filter: MANUAL");
+          strcpy(items[VI_OFFSET+5+1].text, items[VI_OFFSET+1].text);
+          strcpy(items[VI_OFFSET+5+2].text, items[VI_OFFSET+2].text);
+          strcpy(items[VI_OFFSET+5+3].text, items[VI_OFFSET+3].text);
+          strcpy(items[VI_OFFSET+5+4].text, items[VI_OFFSET+4].text);
+          strcpy(items[VI_OFFSET+5+5].text, items[VI_OFFSET+5].text);
+          strcpy(items[VI_OFFSET+5+1].comment, items[VI_OFFSET+1].comment);
+          strcpy(items[VI_OFFSET+5+2].comment, items[VI_OFFSET+2].comment);
+          strcpy(items[VI_OFFSET+5+3].comment, items[VI_OFFSET+3].comment);
+          strcpy(items[VI_OFFSET+5+4].comment, items[VI_OFFSET+4].comment);
+          strcpy(items[VI_OFFSET+5+5].comment, items[VI_OFFSET+5].comment);
+          sprintf(items[VI_OFFSET+1].text, "NTSC Sharpness: %1.1f", config.ntsc_sharpness);
+          sprintf(items[VI_OFFSET+2].text, "NTSC Resolution: %1.1f", config.ntsc_resolution);
+          sprintf(items[VI_OFFSET+3].text, "NTSC Artifacts: %1.1f", config.ntsc_artifacts);
+          sprintf(items[VI_OFFSET+4].text, "NTSC Color Bleed: %1.1f", config.ntsc_bleed);
+          sprintf(items[VI_OFFSET+5].text, "NTSC Color Fringing: %1.1f", config.ntsc_fringing);
+          strcpy(items[VI_OFFSET+1].comment, "Adjust edge contrast enhancement/blurring");
+          strcpy(items[VI_OFFSET+2].comment, "Adjust image resolution");
+          strcpy(items[VI_OFFSET+3].comment, "Adjust artifacts caused by color changes");
+          strcpy(items[VI_OFFSET+4].comment, "Adjust color resolution reduction");
+          strcpy(items[VI_OFFSET+5].comment, "Adjust artifacts caused by brightness changes");
+          ntsc_offset = 5;
+          m->max_items  = VI_OFFSET + 10 + (config.aspect == 0);
+        }
         else
+        {
           sprintf (items[VI_OFFSET].text, "NTSC Filter: OFF");
+          strcpy(items[VI_OFFSET+1].text, items[VI_OFFSET+5+1].text);
+          strcpy(items[VI_OFFSET+2].text, items[VI_OFFSET+5+2].text);
+          strcpy(items[VI_OFFSET+3].text, items[VI_OFFSET+5+3].text);
+          strcpy(items[VI_OFFSET+4].text, items[VI_OFFSET+5+4].text);
+          strcpy(items[VI_OFFSET+5].text, items[VI_OFFSET+5+5].text);
+          strcpy(items[VI_OFFSET+1].comment, items[VI_OFFSET+5+1].comment);
+          strcpy(items[VI_OFFSET+2].comment, items[VI_OFFSET+5+2].comment);
+          strcpy(items[VI_OFFSET+3].comment, items[VI_OFFSET+5+3].comment);
+          strcpy(items[VI_OFFSET+4].comment, items[VI_OFFSET+5+4].comment);
+          strcpy(items[VI_OFFSET+5].comment, items[VI_OFFSET+5+5].comment);
+          ntsc_offset = 0;
+          m->max_items  = VI_OFFSET + 5 + (config.aspect == 0);
+        }
         break;
 
-      case VI_OFFSET+1: /*** overscan emulation ***/
+      case VI_OFFSET+1: /*** NTSC Sharpness ***/
+        GUI_OptionBox(m,update_bgm,"NTSC Sharpness",(void *)&config.ntsc_sharpness,0.01,-1.0,1.0,0);
+        sprintf(items[VI_OFFSET+1].text, "NTSC Sharpness: %1.2f", config.ntsc_sharpness);
+        break;
+
+      case VI_OFFSET+2: /*** NTSC Resolution ***/
+        GUI_OptionBox(m,update_bgm,"NTSC Resolution",(void *)&config.ntsc_resolution,0.01,0.0,1.0,0);
+        sprintf(items[VI_OFFSET+2].text, "NTSC Resolution: %1.2f", config.ntsc_resolution);
+        break;
+
+      case VI_OFFSET+3: /*** NTSC Artifacts ***/
+        GUI_OptionBox(m,update_bgm,"NTSC Artifacts",(void *)&config.ntsc_artifacts,0.01,-1.0,0.0,0);
+        sprintf(items[VI_OFFSET+3].text, "NTSC Artifacts: %1.2f", config.ntsc_artifacts);
+        break;
+
+      case VI_OFFSET+4: /*** NTSC Color Bleed ***/
+        GUI_OptionBox(m,update_bgm,"NTSC Color Bleed",(void *)&config.ntsc_bleed,0.01,-1.0,1.0,0);
+        sprintf(items[VI_OFFSET+4].text, "NTSC Color Bleed: %1.2f", config.ntsc_bleed);
+        break;
+
+      case VI_OFFSET+5: /*** NTSC Color Fringing ***/
+        GUI_OptionBox(m,update_bgm,"NTSC Color Fringing",(void *)&config.ntsc_fringing,0.01,-1.0,1.0,0);
+        sprintf(items[VI_OFFSET+5].text, "NTSC Color Fringing: %1.2f", config.ntsc_fringing);
+        break;
+
+      case VI_OFFSET+6: /*** overscan emulation ***/
         config.overscan = (config.overscan + 1) & 3;
         if (config.overscan == 3)
-          sprintf (items[VI_OFFSET+1].text, "Borders: FULL");
+          sprintf (items[VI_OFFSET+ntsc_offset+1].text, "Borders: FULL");
         else if (config.overscan == 2)
-          sprintf (items[VI_OFFSET+1].text, "Borders: H ONLY");
+          sprintf (items[VI_OFFSET+ntsc_offset+1].text, "Borders: H ONLY");
         else if (config.overscan == 1)
-          sprintf (items[VI_OFFSET+1].text, "Borders: V ONLY");
+          sprintf (items[VI_OFFSET+ntsc_offset+1].text, "Borders: V ONLY");
         else
-          sprintf (items[VI_OFFSET+1].text, "Borders: NONE");
+          sprintf (items[VI_OFFSET+ntsc_offset+1].text, "Borders: NONE");
         break;
 
-      case VI_OFFSET+2: /*** Game Gear extended screen */
+      case VI_OFFSET+7: /*** Game Gear extended screen */
         config.gg_extra ^= 1;
-        sprintf(items[VI_OFFSET+2].text, "GG Screen: %s", config.gg_extra ? "EXTENDED":"ORIGINAL");
+        sprintf(items[VI_OFFSET+ntsc_offset+2].text, "GG Screen: %s", config.gg_extra ? "EXTENDED":"ORIGINAL");
         break;
 
-      case VI_OFFSET+3: /*** aspect ratio ***/
+      case VI_OFFSET+8: /*** aspect ratio ***/
         config.aspect = (config.aspect + 1) % 3;
         if (config.aspect == 1)
-          sprintf (items[VI_OFFSET+3].text,"Aspect: ORIGINAL (4:3)");
+          sprintf (items[VI_OFFSET+ntsc_offset+3].text,"Aspect: ORIGINAL (4:3)");
         else if (config.aspect == 2)
-          sprintf (items[VI_OFFSET+3].text, "Aspect: ORIGINAL (16:9)");
+          sprintf (items[VI_OFFSET+ntsc_offset+3].text, "Aspect: ORIGINAL (16:9)");
         else
-          sprintf (items[VI_OFFSET+3].text, "Aspect: SCALED");
+          sprintf (items[VI_OFFSET+ntsc_offset+3].text, "Aspect: SCALED");
 
         if (config.aspect)
         {
           /* disable items */
-          m->max_items  = VI_OFFSET+5;
+          m->max_items  = VI_OFFSET + ntsc_offset + 5;
 
           /* reset menu selection */
-          if (m->offset > VI_OFFSET)
+          if (m->selected < 2)
           {
-            m->offset  = VI_OFFSET;
-            m->selected = 3;
+            m->offset  = VI_OFFSET + ntsc_offset + 1;
+            m->selected = 2;
           }
         }
         else
         {
           /* enable items */
-          m->max_items  = VI_OFFSET+6;
+          m->max_items  = VI_OFFSET + ntsc_offset + 6;
         }
 
         break;
 
-      case VI_OFFSET+4: /*** screen position ***/
+      case VI_OFFSET+9: /*** screen position ***/
         if (system_hw) 
         {
           state[0] = m->arrows[0]->state;
@@ -1718,7 +1843,7 @@ static void videomenu ()
           m->arrows[1]->state = state[1];
           m->screenshot = 0;
           strcpy(m->title,"Video Settings");
-          sprintf (items[VI_OFFSET+4].text, "Screen Position: (%s%02d,%s%02d)",
+          sprintf (items[VI_OFFSET+ntsc_offset+4].text, "Screen Position: (%s%02d,%s%02d)",
                                             (config.xshift < 0) ? "":"+", config.xshift,
                                             (config.yshift < 0) ? "":"+", config.yshift);
         }
@@ -1728,7 +1853,7 @@ static void videomenu ()
         }
         break;
 
-      case VI_OFFSET+5: /*** screen scaling ***/
+      case VI_OFFSET+10: /*** screen scaling ***/
         if (system_hw) 
         {
           state[0] = m->arrows[0]->state;
@@ -1746,7 +1871,7 @@ static void videomenu ()
           m->arrows[1]->state = state[1];
           m->screenshot = 0;
           strcpy(m->title,"Video Settings");
-          sprintf (items[VI_OFFSET+5].text, "Screen Scaling: (%s%02d,%s%02d)",
+          sprintf (items[VI_OFFSET+ntsc_offset+5].text, "Screen Scaling: (%s%02d,%s%02d)",
                                             (config.xscale < 0) ? "":"+", config.xscale,
                                             (config.yscale < 0) ? "":"+", config.yscale);
         }
@@ -1921,65 +2046,72 @@ static void ctrlmenu(void)
   int update = 0;
   gui_item *items = NULL;
   u8 *special = NULL;
-  u32 exp;
-  u8 type = 0;
+  u32 exp, index = 0;
 
   /* System devices */
   gui_item items_sys[2][13] =
   {
     {
       {NULL,Ctrl_none_png       ,"","Select Port 1 device",110,130,48,72},
-      {NULL,Ctrl_gamepad_md_png ,"","Select Port 1 device", 85,117,96,84},
+      {NULL,Ctrl_gamepad_png    ,"","Select Port 1 device",100,109,68,92},
       {NULL,Ctrl_mouse_png      ,"","Select Port 1 device", 97,113,64,88},
       {NULL,Ctrl_menacer_png    ,"","Select Port 1 device", 94,113,80,88},
       {NULL,Ctrl_justifiers_png ,"","Select Port 1 device", 88,117,80,84},
       {NULL,Ctrl_xe_a1p_png     ,"","Select Port 1 device", 98,118,72,84},
       {NULL,Ctrl_activator_png  ,"","Select Port 1 device", 94,121,72,80},
-      {NULL,Ctrl_gamepad_ms_png ,"","Select Port 1 device", 91,125,84,76},
       {NULL,Ctrl_lightphaser_png,"","Select Port 1 device", 89,109,88,92},
       {NULL,Ctrl_paddle_png     ,"","Select Port 1 device", 86,117,96,84},
       {NULL,Ctrl_sportspad_png  ,"","Select Port 1 device", 95,117,76,84},
+      {NULL,Ctrl_ms4play_png    ,"","Select Port 1 device", 94,100,80,100},
       {NULL,Ctrl_teamplayer_png ,"","Select Port 1 device", 94,109,80,92},
       {NULL,Ctrl_4wayplay_png   ,"","Select Port 1 device", 98,110,72,92}
     },
     {
       {NULL,Ctrl_none_png       ,"","Select Port 2 device",110,300,48,72},
-      {NULL,Ctrl_gamepad_md_png ,"","Select Port 2 device", 85,287,96,84},
+      {NULL,Ctrl_gamepad_png    ,"","Select Port 2 device",100,279,68,92},
       {NULL,Ctrl_mouse_png      ,"","Select Port 2 device", 97,283,64,88},
       {NULL,Ctrl_menacer_png    ,"","Select Port 2 device", 94,283,80,88},
       {NULL,Ctrl_justifiers_png ,"","Select Port 2 device", 88,287,80,84},
       {NULL,Ctrl_xe_a1p_png     ,"","Select Port 2 device", 98,288,72,84},
       {NULL,Ctrl_activator_png  ,"","Select Port 2 device", 94,291,72,80},
-      {NULL,Ctrl_gamepad_ms_png ,"","Select Port 2 device", 91,295,84,76},
       {NULL,Ctrl_lightphaser_png,"","Select Port 2 device", 89,279,88,92},
       {NULL,Ctrl_paddle_png     ,"","Select Port 2 device", 86,287,96,84},
       {NULL,Ctrl_sportspad_png  ,"","Select Port 2 device", 95,287,76,84},
+      {NULL,Ctrl_ms4play_png    ,"","Select Port 1 device", 94,270,80,100},
       {NULL,Ctrl_teamplayer_png ,"","Select Port 2 device", 94,279,80,92},
       {NULL,Ctrl_4wayplay_png   ,"","Select Port 2 device", 98,280,72,92}
     }
   };    
 
   /* Specific controller options */
-  gui_item items_special[4][2] =
+  gui_item items_special[4][4] =
   {
     {
       /* Gamepad option */
       {NULL,Ctrl_pad3b_png,"Pad\nType","Use 3-buttons Pad",528,180,44,28},
-      {NULL,Ctrl_pad6b_png,"Pad\nType","Use 6-buttons Pad",528,180,44,28}
+      {NULL,Ctrl_pad6b_png,"Pad\nType","Use 6-buttons Pad",528,180,44,28},
+      {NULL,Ctrl_pad2b_png,"Pad\nType","Use 2-buttons Pad",528,180,44,28},
+      {NULL,Ctrl_pad_auto_png,"Pad\nType","Auto-detect Pad type",528,180,44,28},
     },
     {
       /* Mouse option */
       {NULL,ctrl_option_off_png,"Invert\nMouse","Enable/Disable Y-Axis inversion",534,180,24,24},
       {NULL,ctrl_option_on_png ,"Invert\nMouse","Enable/Disable Y-Axis inversion",534,180,24,24},
+      {NULL,NULL,"","",0,0,0,0},
+      {NULL,NULL,"","",0,0,0,0},
     },
     {
       /* Gun option */
       {NULL,ctrl_option_off_png,"Show\nCursor","Enable/Disable Lightgun cursor",534,180,24,24},
       {NULL,ctrl_option_on_png ,"Show\nCursor","Enable/Disable Lightgun cursor",534,180,24,24},
+      {NULL,NULL,"","",0,0,0,0},
+      {NULL,NULL,"","",0,0,0,0},
     },
     {
       /* no option */
       {NULL,NULL,"No Option","",436,180,160,52},
+      {NULL,NULL,"","",0,0,0,0},
+      {NULL,NULL,"","",0,0,0,0},
       {NULL,NULL,"","",0,0,0,0},
     }
   };
@@ -2018,6 +2150,8 @@ static void ctrlmenu(void)
   }
   items_special[0][0].texture = gxTextureOpenPNG(items_special[0][0].data,0);
   items_special[0][1].texture = gxTextureOpenPNG(items_special[0][1].data,0);
+  items_special[0][2].texture = gxTextureOpenPNG(items_special[0][2].data,0);
+  items_special[0][3].texture = gxTextureOpenPNG(items_special[0][3].data,0);
   items_special[2][0].texture = items_special[1][0].texture = gxTextureOpenPNG(items_special[1][0].data,0);
   items_special[2][1].texture = items_special[1][1].texture = gxTextureOpenPNG(items_special[1][1].data,0);
   items_device[0].texture = items_special[1][0].texture;
@@ -2098,7 +2232,7 @@ static void ctrlmenu(void)
           if (input.system[0] > SYSTEM_WAYPLAY)
           {
             input.system[0] = NO_SYSTEM;
-            input.system[1] = SYSTEM_MD_GAMEPAD;
+            input.system[1] = SYSTEM_GAMEPAD;
           }
 
           /* reset I/O ports */
@@ -2148,12 +2282,7 @@ static void ctrlmenu(void)
           /* fixed configurations */
           if (system_hw)
           {
-            if (cart.special & HW_J_CART)
-            {
-              GUI_WaitPrompt("Error","J-CART detected !");
-              break;
-            }
-            else if (cart.special & HW_TEREBI_OEKAKI)
+            if (cart.special & HW_TEREBI_OEKAKI)
             {
               GUI_WaitPrompt("Error","Terebi Oekaki detected !");
               break;
@@ -2177,13 +2306,13 @@ static void ctrlmenu(void)
           /* allow only one gun type */
           if ((input.system[0] == SYSTEM_LIGHTPHASER) && (input.system[1] == SYSTEM_MENACER))
           {
-            input.system[1] += 3;
+            input.system[1]++;
           }
 
           /* allow only one gun type */
           if ((input.system[0] == SYSTEM_LIGHTPHASER) && (input.system[1] == SYSTEM_JUSTIFIER))
           {
-            input.system[1] += 2;
+            input.system[1]++;
           }
 
           /* 4-wayplay uses both ports */
@@ -2196,7 +2325,7 @@ static void ctrlmenu(void)
           if (input.system[1] > SYSTEM_WAYPLAY)
           {
             input.system[1] = NO_SYSTEM;
-            input.system[0] = SYSTEM_MD_GAMEPAD;
+            input.system[0] = SYSTEM_GAMEPAD;
           }
 
           /* reset I/O ports */
@@ -2262,10 +2391,13 @@ static void ctrlmenu(void)
             }
           }
 
+          /* save device index */
+          index = m->selected - 2;
+
           /* update player index */
           old_player = player;
           player = 0;
-          for (i=0; i<(m->selected-2); i++)
+          for (i=0; i<index; i++)
           {
             if (input.dev[i] != NO_DEVICE) player ++;
           }
@@ -2299,17 +2431,24 @@ static void ctrlmenu(void)
             m->buttons[9].shift[3] = 1;
           }
 
-          /* emulated device type */
-          type = input.dev[m->selected - 2];
-
           /* retrieve current player informations */
-          switch (type)
+          switch (input.dev[index])
           {
+            case DEVICE_PAD2B:
             case DEVICE_PAD3B:
             case DEVICE_PAD6B:
             {
-              items = items_special[0];
-              special = &config.input[player].padtype;
+              if (input.system[index/4] == SYSTEM_MS4PLAY)
+              {
+                /* force 2-buttons pad */
+                items = items_special[3];
+                special = NULL;
+              }
+              else
+              {
+                items = items_special[0];
+                special = &config.input[player].padtype;
+              }
               break;
             }
 
@@ -2323,16 +2462,15 @@ static void ctrlmenu(void)
             case DEVICE_LIGHTGUN:
             {
               items = items_special[2];
-
               if ((input.system[1] == SYSTEM_MENACER) || (input.system[1] == SYSTEM_JUSTIFIER))
               {
-                /* Menacer & Justifiers affected to devices 4 & 5 */
-                special = &config.gun_cursor[m->selected & 1];
+                /* Menacer & Justifiers affected to entries 4 & 5 */
+                special = &config.gun_cursor[index & 1];
               }
               else
               {
-                /* Lightphasers affected to devices 0 & 4 */
-                special = &config.gun_cursor[m->selected >> 2];
+                /* Lightphasers affected to entries 0 & 4 */
+                special = &config.gun_cursor[index / 4];
               }
               break;
             }
@@ -2364,11 +2502,11 @@ static void ctrlmenu(void)
           GUI_DrawMenuFX(m, 20, 0);
 
           /* some devices require analog sticks */
-          if ((type == DEVICE_XE_A1P) && ((config.input[player].device == -1) || (config.input[player].device == 1)))
+          if ((input.dev[index] == DEVICE_XE_A1P) && ((config.input[player].device == -1) || (config.input[player].device == 1)))
           {
             GUI_WaitPrompt("Warning","One Analog Stick required !");
           }
-          else if ((type == DEVICE_ACTIVATOR) && ((config.input[player].device != 0) && (config.input[player].device != 3)))
+          else if ((input.dev[index] == DEVICE_ACTIVATOR) && ((config.input[player].device != 0) && (config.input[player].device != 3)))
           {
             GUI_WaitPrompt("Warning","Two Analog Sticks required !");
           }
@@ -2389,18 +2527,20 @@ static void ctrlmenu(void)
         {
           if (special)
           {
-            /* switch option */
-            *special ^= 1;
-
             /* specific case: controller type */
-            if (type < 2)
+            if (input.dev[index] < 0x03)
             {
-              /* re-initialize emulated device */
-              input_init();
-              input_reset();
+              /* switch pad type */
+              *special = (*special + 1) & 0x03;
 
-              /* update emulated device type */
-              type = *special;
+              /* reinitialize emulated device(s) */
+              io_init();
+              input_reset();
+            }
+            else
+            {
+              /* switch option */
+              *special ^= 1;
             }
 
             /* update menu items */
@@ -2556,7 +2696,15 @@ static void ctrlmenu(void)
           if (config.input[player].device >= 0)
           {
             GUI_MsgBoxOpen("Keys Configuration", "",0);
-            gx_input_Config(config.input[player].port, config.input[player].device, type);
+            if ((*special == 3) && !system_hw)
+            {
+              /* no auto-detected pad type, use 6-buttons key mapping as default */
+              gx_input_Config(config.input[player].port, config.input[player].device, DEVICE_PAD6B);
+            }
+            else
+            {
+              gx_input_Config(config.input[player].port, config.input[player].device, input.dev[index]);
+            }
             GUI_MsgBoxClose();
           }
           break;
@@ -2687,6 +2835,8 @@ static void ctrlmenu(void)
   }
   gxTextureClose(&items_special[0][0].texture);
   gxTextureClose(&items_special[0][1].texture);
+  gxTextureClose(&items_special[0][2].texture);
+  gxTextureClose(&items_special[0][3].texture);
   gxTextureClose(&items_special[1][0].texture);
   gxTextureClose(&items_special[1][1].texture);
   gxTextureClose(&items_device[1].texture);

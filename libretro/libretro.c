@@ -443,10 +443,13 @@ static void extract_directory(char *buf, const char *path, size_t size)
       buf[0] = '\0';
 }
 
-static void update_viewport(void)
+static bool update_viewport(void)
 {
-   vwidth  = bitmap.viewport.w + (bitmap.viewport.x * 2);
-   vheight = bitmap.viewport.h + (bitmap.viewport.y * 2);
+  int ow = vwidth;
+  int oh = vheight;
+
+  vwidth  = bitmap.viewport.w + (bitmap.viewport.x * 2);
+  vheight = bitmap.viewport.h + (bitmap.viewport.y * 2);
 
    if (config.ntsc)
    {
@@ -460,6 +463,8 @@ static void update_viewport(void)
    {
       vheight = vheight * 2;
    }
+
+   return ((ow != vwidth) || (oh != vheight));
 }
 
 static void check_variables(void)
@@ -712,8 +717,8 @@ static void configure_controls(void)
   int i;
   struct retro_variable var;
 
-  input.system[0] = SYSTEM_MD_GAMEPAD;
-  input.system[1] = SYSTEM_MD_GAMEPAD;
+  input.system[0] = SYSTEM_GAMEPAD;
+  input.system[1] = SYSTEM_GAMEPAD;
 
   var.key = "padtype";
   environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
@@ -726,15 +731,9 @@ static void configure_controls(void)
   else if (!strcmp(var.value, "2-buttons"))
     for(i = 0; i < MAX_INPUTS; i++)
       config.input[i].padtype = DEVICE_PAD2B;
-  else if ((system_hw & SYSTEM_PBC) != SYSTEM_MD)
-    for(i = 0; i < MAX_INPUTS; i++)
-      config.input[i].padtype = DEVICE_PAD2B;
-  else if (rominfo.peripherals & 2)
-    for(i = 0; i < MAX_INPUTS; i++)
-      config.input[i].padtype = DEVICE_PAD6B;
   else
     for(i = 0; i < MAX_INPUTS; i++)
-      config.input[i].padtype = DEVICE_PAD3B;
+      config.input[i].padtype = DEVICE_PAD2B | DEVICE_PAD3B | DEVICE_PAD6B;
 
   var.key = "multitap";
   environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
@@ -746,6 +745,8 @@ static void configure_controls(void)
     input.system[1] = SYSTEM_TEAMPLAYER;
   else if (!strcmp(var.value, "teamplayer 1&2"))
     input.system[0] = input.system[1] = SYSTEM_TEAMPLAYER;
+  else if (!strcmp(var.value, "master system 4p"))
+    input.system[0] = SYSTEM_MS4PLAY;
 
   var.key = "portb";
   environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
@@ -769,7 +770,7 @@ void retro_set_environment(retro_environment_t cb)
       { "addr_error", "68k address error; enabled|disabled" },
       { "lock_on", "Cartridge lock-on; disabled|game genie|action replay (pro)|sonic & knuckles" },
       { "padtype", "Gamepad type; auto|6-buttons|3-buttons|2-buttons" },
-      { "multitap", "Multi Tap; disabled|4-wayplay|teamplayer (port 1)|teamplayer (port 2)|teamplayer (both)" },
+      { "multitap", "Multi Tap; disabled|4-wayplay|teamplayer (port 1)|teamplayer (port 2)|teamplayer (both)|master system 4p" },
       { "portb", "Control Port 2; enabled|disabled" },
       { "ym2413", "Master System FM; auto|disabled|enabled" },
       { "dac_bits", "YM2612 DAC quantization; disabled|enabled" },
@@ -1004,11 +1005,13 @@ void retro_run(void)
 
    if (bitmap.viewport.changed & 1)
    {
-      struct retro_system_av_info info;
       bitmap.viewport.changed &= ~1;
-      update_viewport();
-      retro_get_system_av_info(&info);
-      environ_cb(RETRO_ENVIRONMENT_SET_SYSTEM_AV_INFO, &info);
+      if (update_viewport())
+      {
+         struct retro_system_av_info info;
+         retro_get_system_av_info(&info);
+         environ_cb(RETRO_ENVIRONMENT_SET_SYSTEM_AV_INFO, &info);
+      }
    }
 
    video_cb(bitmap.data, vwidth, vheight, 720 * 2);

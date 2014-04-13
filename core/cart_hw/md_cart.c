@@ -2,7 +2,7 @@
  *  Genesis Plus
  *  Mega Drive cartridge hardware support
  *
- *  Copyright (C) 2007-2013  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2007-2014  Eke-Eke (Genesis Plus GX)
  *
  *  Many cartridge protections were initially documented by Haze
  *  (http://haze.mameworld.info/)
@@ -419,7 +419,7 @@ void md_cart_init(void)
       if (input.system[1] != SYSTEM_WAYPLAY)
       {
         old_system[1] = input.system[1];
-        input.system[1] = SYSTEM_MD_GAMEPAD;
+        input.system[1] = SYSTEM_GAMEPAD;
       }
 
       /* extra connectors mapped at $38xxxx or $3Fxxxx */

@@ -3,7 +3,7 @@
  *
  *  Genesis Plus GX configuration file support
  *
- *  Copyright Eke-Eke (2007-2013)
+ *  Copyright Eke-Eke (2007-2014)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -164,6 +164,13 @@ void config_default(void)
   config.gamma = VI_GM_1_0 / 10.0;
 #endif
 
+  /* NTSC filter options */
+  config.ntsc_sharpness   = 0.0;
+  config.ntsc_resolution  = 0.0;
+  config.ntsc_artifacts   = 0.0;
+  config.ntsc_fringing    = 0.0;
+  config.ntsc_bleed       = 0.0;
+
   /* controllers options */
   config.gun_cursor[0]  = 1;
   config.gun_cursor[1]  = 1;
@@ -178,13 +185,13 @@ void config_default(void)
   config.autocheat    = 0;
 #ifdef HW_RVL
   config.s_auto       = 1;
+  config.autosleep    = 1;
 #else
   config.s_auto       = 0;
   config.v_prog       = 1;
 #endif
   config.s_default    = 1;
   config.s_device     = 0;
-  config.l_device     = 0;
   config.bg_overlay   = 0;
   config.screen_w     = 658;
   config.bgm_volume   = 100.0;
@@ -192,6 +199,9 @@ void config_default(void)
 
   /* default ROM directories */
 #ifdef HW_RVL
+  char dir[16];
+  getcwd(dir, 16);
+  config.l_device = strstr(dir, "sd") ? TYPE_SD : TYPE_USB;
   sprintf (config.lastdir[0][TYPE_SD],  "sd:%s/roms/",  DEFAULT_PATH);
   sprintf (config.lastdir[1][TYPE_SD],  "sd:%s/roms/",  DEFAULT_PATH);
   sprintf (config.lastdir[2][TYPE_SD],  "sd:%s/roms/",  DEFAULT_PATH);
@@ -208,6 +218,7 @@ void config_default(void)
   sprintf (config.lastdir[3][TYPE_DVD], "dvd:%s/roms/", DEFAULT_PATH);
   sprintf (config.lastdir[4][TYPE_DVD], "dvd:%s/roms/", DEFAULT_PATH);
 #else
+  config.l_device = TYPE_SD;
   sprintf (config.lastdir[0][TYPE_SD],  "%s/roms/",  DEFAULT_PATH);
   sprintf (config.lastdir[1][TYPE_SD],  "%s/roms/",  DEFAULT_PATH);
   sprintf (config.lastdir[2][TYPE_SD],  "%s/roms/",  DEFAULT_PATH);
@@ -250,7 +261,7 @@ void config_default(void)
     {
       /* switch menu video mode to interlaced */
       vmode->viTVMode = (vmode->viTVMode & ~3) | VI_INTERLACE;
-      VIDEO_Configure (vmode);
+      VIDEO_Configure(vmode);
       VIDEO_Flush();
       VIDEO_WaitVSync();
       VIDEO_WaitVSync();
@@ -266,7 +277,7 @@ void config_default(void)
   }
 
   /* default emulated inputs */
-  input.system[0] = SYSTEM_MD_GAMEPAD;
-  input.system[1] = (config.input[1].device != -1) ? SYSTEM_MD_GAMEPAD : NO_SYSTEM;
+  input.system[0] = SYSTEM_GAMEPAD;
+  input.system[1] = (config.input[1].device != -1) ? SYSTEM_GAMEPAD : NO_SYSTEM;
   input_init();
 }

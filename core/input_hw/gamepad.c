@@ -1,9 +1,9 @@
 /***************************************************************************************
  *  Genesis Plus
- *  3-Buttons & 6-Buttons pad support
- *  Support for J-CART & 4-Way Play adapters
+ *  2-Buttons, 3-Buttons & 6-Buttons controller support
+ *  Additional support for J-Cart, 4-Way Play & homemade Master System multitap
  *
- *  Copyright (C) 2007-2011  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2007-2014  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -47,7 +47,13 @@ static struct
   uint8 Timeout;
 } gamepad[MAX_DEVICES];
 
-static uint8 pad_index;
+static struct
+{
+  uint8 Latch;
+  uint8 Counter;
+} flipflop[2];
+
+static uint8 latch;
 
 
 void gamepad_reset(int port)
@@ -57,8 +63,12 @@ void gamepad_reset(int port)
   gamepad[port].Counter = 0;
   gamepad[port].Timeout = 0;
 
-  /* reset pad index (4-WayPlay) */
-  pad_index = 0;
+  /* reset 4-WayPlay latch */
+  latch = 0;
+
+  /* reset Master System multitap flip-flop */
+  flipflop[port>>2].Latch = 0;
+  flipflop[port>>2].Counter = 0;
 }
 
 void gamepad_refresh(int port)
@@ -192,13 +202,15 @@ void gamepad_2_write(unsigned char data, unsigned char mask)
 
 unsigned char wayplay_1_read(void)
 {
-  if (pad_index < 4)
+  /* check if TH on port B is HIGH */
+  if (latch & 0x04)
   {
-    return gamepad_read(pad_index);
+    /* 4-WayPlay detection : xxxxx00 */
+    return 0x7c;
   }
 
-  /* multitap detection */
-  return 0x70;
+  /* TR & TL on port B select controller # (0-3) */
+  return gamepad_read(latch);
 }
 
 unsigned char wayplay_2_read(void)
@@ -208,18 +220,14 @@ unsigned char wayplay_2_read(void)
 
 void wayplay_1_write(unsigned char data, unsigned char mask)
 {
-  if (pad_index < 4)
-  {
-    gamepad_write(pad_index, data, mask);
-  }
+  /* TR & TL on port B select controller # (0-3) */
+  gamepad_write(latch & 0x03, data, mask);
 }
 
 void wayplay_2_write(unsigned char data, unsigned char mask)
 {
-  if ((mask & 0x70) == 0x70)
-  {
-    pad_index = (data & 0x70) >> 4;
-  }
+  /* latch TH, TR & TL state on port B */
+  latch = ((data & mask) >> 4) & 0x07;
 }
 
 
@@ -238,4 +246,49 @@ void jcart_write(unsigned int address, unsigned int data)
   gamepad_write(5, (data & 1) << 6, 0x40);
   gamepad_write(6, (data & 1) << 6, 0x40);
   return;
+}
+
+
+/*--------------------------------------------------------------------------*/
+/*  Master System multitap ports handler (original design by Furrtek)       */
+/*  cf. http://www.smspower.org/uploads/Homebrew/BOoM-SMS-sms4p_2.png       */
+/*--------------------------------------------------------------------------*/
+unsigned char ms4play_1_read(void)
+{
+  return gamepad_read(flipflop[0].Counter);
+}
+
+unsigned char ms4play_2_read(void)
+{
+  return gamepad_read(flipflop[1].Counter + 4);
+}
+
+void ms4play_1_write(unsigned char data, unsigned char mask)
+{
+  /* update bits set as output only */
+  data = (flipflop[0].Latch & ~mask) | (data & mask);
+  
+  /* check TH 1->0 transitions */
+  if ((flipflop[0].Latch & 0x40) && !(data & 0x40))
+  {
+    flipflop[0].Counter = (flipflop[0].Counter + 1) & 0x03;
+  }
+
+  /* update internal state */
+  flipflop[0].Latch = data;
+}
+
+void ms4play_2_write(unsigned char data, unsigned char mask)
+{
+  /* update bits set as output only */
+  data = (flipflop[1].Latch & ~mask) | (data & mask);
+  
+  /* check TH=1 to TH=0 transition */
+  if ((flipflop[1].Latch & 0x40) && !(data & 0x40))
+  {
+    flipflop[1].Counter = (flipflop[1].Counter + 1) & 0x03;
+  }
+
+  /* update internal state */
+  flipflop[1].Latch = data;
 }
