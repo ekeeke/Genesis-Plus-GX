@@ -37,10 +37,7 @@
 #include <sys/types.h>
 #endif
 
-#if !defined(__LIBRETRO__) && defined(GEKKO)
-#ifndef __CELLOS_LV2__
-#ifndef _XBOX360
-#if BYTE_ORDER==LITTLE_ENDIAN
+#if defined(LSB_FIRST)
 union magic {
   struct {
     ogg_int32_t lo;
@@ -48,13 +45,7 @@ union magic {
   } halves;
   ogg_int64_t whole;
 };
-#endif
-#endif
-#endif
-#endif
-
-#ifndef ANDROID
-#if BYTE_ORDER==BIG_ENDIAN
+#elif defined(MSB_FIRST)
 union magic {
   struct {
     ogg_int32_t hi;
@@ -62,7 +53,6 @@ union magic {
   } halves;
   ogg_int64_t whole;
 };
-#endif
 #endif
 
 STIN ogg_int32_t MULT32(ogg_int32_t x, ogg_int32_t y) {
