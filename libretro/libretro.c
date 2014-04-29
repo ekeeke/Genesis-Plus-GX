@@ -69,6 +69,7 @@ static retro_audio_sample_batch_t audio_cb;
 /************************************
  * Genesis Plus GX implementation
  ************************************/
+#undef  CHUNKSIZE
 #define CHUNKSIZE   (0x10000)
 
 void error(char * fmt, ...)
@@ -1024,3 +1025,5 @@ void retro_run(void)
       configure_controls();
    }
 }
+
+#undef  CHUNKSIZE

@@ -47,6 +47,7 @@ union magic {
 };
 #endif 
 
+#ifndef ANDROID
 #if BYTE_ORDER==BIG_ENDIAN
 union magic {
   struct {
@@ -55,6 +56,7 @@ union magic {
   } halves;
   ogg_int64_t whole;
 };
+#endif
 #endif
 
 STIN ogg_int32_t MULT32(ogg_int32_t x, ogg_int32_t y) {

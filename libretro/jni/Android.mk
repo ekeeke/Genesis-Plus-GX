@@ -3,6 +3,7 @@ LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 
 GENPLUS_SRC_DIR := ../../core
+TREMOR_SRC_DIR := $(GENPLUS_SRC_DIR)/tremor
 LIBRETRO_DIR	:= ../
 
 LOCAL_MODULE    := retro
@@ -59,6 +60,21 @@ LOCAL_SRC_FILES := $(GENPLUS_SRC_DIR)/genesis.c \
 			$(GENPLUS_SRC_DIR)/z80/z80.c \
 			$(GENPLUS_SRC_DIR)/m68k/m68kcpu.c \
 			$(GENPLUS_SRC_DIR)/m68k/s68kcpu.c \
+			$(TREMOR_SRC_DIR)/bitwise.c \
+			$(TREMOR_SRC_DIR)/block.c \
+			$(TREMOR_SRC_DIR)/codebook.c \
+			$(TREMOR_SRC_DIR)/floor0.c \
+			$(TREMOR_SRC_DIR)/floor1.c \
+			$(TREMOR_SRC_DIR)/framing.c \
+			$(TREMOR_SRC_DIR)/info.c \
+			$(TREMOR_SRC_DIR)/mapping0.c \
+			$(TREMOR_SRC_DIR)/mdct.c \
+			$(TREMOR_SRC_DIR)/registry.c \
+			$(TREMOR_SRC_DIR)/res012.c \
+			$(TREMOR_SRC_DIR)/sharedbook.c \
+			$(TREMOR_SRC_DIR)/synthesis.c \
+			$(TREMOR_SRC_DIR)/vorbisfile.c \
+			$(TREMOR_SRC_DIR)/window.c \
 			$(LIBRETRO_DIR)/libretro.c \
 			$(LIBRETRO_DIR)/scrc32.c
 
@@ -73,6 +89,6 @@ LOCAL_C_INCLUDES = $(LOCAL_PATH)/$(GENPLUS_SRC_DIR) \
 			$(LOCAL_PATH)/$(GENPLUS_SRC_DIR)/ntsc \
 			$(LOCAL_PATH)/$(LIBRETRO_DIR)
 
-LOCAL_CFLAGS = -ffast-math -O2 -funroll-loops -DINLINE="static inline" -DUSE_16BPP_RENDERING -DLSB_FIRST -D__LIBRETRO__ -DFRONTEND_SUPPORTS_RGB565 -DALIGN_LONG -DALIGN_WORD
+LOCAL_CFLAGS = -ffast-math -O2 -funroll-loops -DINLINE="static inline" -DUSE_LIBTREMOR -DUSE_16BPP_RENDERING -DLSB_FIRST -DBYTE_ORDER=LITTLE_ENDIAN -D__LIBRETRO__ -DFRONTEND_SUPPORTS_RGB565 -DALIGN_LONG -DALIGN_WORD
 
 include $(BUILD_SHARED_LIBRARY)
