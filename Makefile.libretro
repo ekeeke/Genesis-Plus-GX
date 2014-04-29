@@ -103,7 +103,7 @@ else ifeq ($(platform), psl1ght)
    TARGET := $(TARGET_NAME)_libretro_psl1ght.a$(EXE_EXT)
    CC = $(PS3DEV)/ppu/bin/ppu-gcc$(EXE_EXT)
    AR = $(PS3DEV)/ppu/bin/ppu-ar$(EXE_EXT)
-   PLATFORM_DEFINES := -D__CELLOS_LV2 -DALT_RENDER
+   PLATFORM_DEFINES := -D__CELLOS_LV2 -DALT_RENDER -DMSB_FIRST -DBYTE_ORDER=BIG_ENDIAN
 	STATIC_LINKING = 1
 else ifeq ($(platform), psp1)
 	TARGET := $(TARGET_NAME)_libretro_psp1.a$(EXE_EXT)
