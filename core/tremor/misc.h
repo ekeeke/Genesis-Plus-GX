@@ -37,6 +37,7 @@
 #include <sys/types.h>
 #endif
 
+#ifndef _XBOX360
 #if BYTE_ORDER==LITTLE_ENDIAN
 union magic {
   struct {
@@ -45,7 +46,8 @@ union magic {
   } halves;
   ogg_int64_t whole;
 };
-#endif 
+#endif
+#endif
 
 #ifndef ANDROID
 #if BYTE_ORDER==BIG_ENDIAN
