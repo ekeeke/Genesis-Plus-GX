@@ -15,14 +15,13 @@
 
 #define RETRO_DEVICE_MDPAD_3B           RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 0)
 #define RETRO_DEVICE_MDPAD_6B           RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 1)
-#define RETRO_DEVICE_PAD_AUTO           RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 2)
+#define RETRO_DEVICE_SMSPAD_2B          RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 2)
 #define RETRO_DEVICE_PORT_NONE          RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 3)
-#define RETRO_DEVICE_SMSPAD_2B          RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 4)
-#define RETRO_DEVICE_MDPAD_3B_WAYPLAY   RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 5)
-#define RETRO_DEVICE_MDPAD_6B_WAYPLAY   RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 6)
-#define RETRO_DEVICE_MDPAD_3B_TEAMPLAYER   RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 7)
-#define RETRO_DEVICE_MDPAD_6B_TEAMPLAYER   RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 8)
-#define RETRO_DEVICE_SMSPAD_4P             RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 9)
+#define RETRO_DEVICE_MDPAD_3B_WAYPLAY   RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 4)
+#define RETRO_DEVICE_MDPAD_6B_WAYPLAY   RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 5)
+#define RETRO_DEVICE_MDPAD_3B_TEAMPLAYER   RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 6)
+#define RETRO_DEVICE_MDPAD_6B_TEAMPLAYER   RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 7)
+#define RETRO_DEVICE_SMSPAD_4P             RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 8)
 
 #include "shared.h"
 #include "libretro.h"
@@ -750,7 +749,7 @@ void retro_set_environment(retro_environment_t cb)
    static const struct retro_controller_description port_1[] = {
       { "MD Joypad 3 Button", RETRO_DEVICE_MDPAD_3B },
       { "MD Joypad 6 Button", RETRO_DEVICE_MDPAD_6B },
-      { "Joypad Auto", RETRO_DEVICE_PAD_AUTO },
+      { "Joypad Auto", RETRO_DEVICE_JOYPAD },
       { "Joypad Port Empty", RETRO_DEVICE_PORT_NONE },
       { "SMS Joypad 2 Button", RETRO_DEVICE_SMSPAD_2B },
       { "MD Joypad 3 Button + WayPlay", RETRO_DEVICE_MDPAD_3B_WAYPLAY },
@@ -758,25 +757,23 @@ void retro_set_environment(retro_environment_t cb)
       { "MD Joypad 3 Button + Teamplayer", RETRO_DEVICE_MDPAD_3B_TEAMPLAYER },
       { "MD Joypad 6 Button + Teamplayer", RETRO_DEVICE_MDPAD_6B_TEAMPLAYER },
       { "SMS Joypad 4 Player", RETRO_DEVICE_SMSPAD_4P },
-      { "RetroPad", RETRO_DEVICE_JOYPAD },
    };
 
    static const struct retro_controller_description port_2[] = {
       { "MD Joypad 3 Button", RETRO_DEVICE_MDPAD_3B },
       { "MD Joypad 6 Button", RETRO_DEVICE_MDPAD_6B },
-      { "Joypad Auto", RETRO_DEVICE_PAD_AUTO },
+      { "Joypad Auto", RETRO_DEVICE_JOYPAD },
       { "Joypad Port Empty", RETRO_DEVICE_PORT_NONE },
       { "SMS Joypad 2 Button", RETRO_DEVICE_SMSPAD_2B },
       { "MD Joypad 3 Button + WayPlay", RETRO_DEVICE_MDPAD_3B_WAYPLAY },
       { "MD Joypad 6 Button + WayPlay", RETRO_DEVICE_MDPAD_6B_WAYPLAY },
       { "MD Joypad 3 Button + Teamplayer", RETRO_DEVICE_MDPAD_3B_TEAMPLAYER },
       { "MD Joypad 6 Button + Teamplayer", RETRO_DEVICE_MDPAD_6B_TEAMPLAYER },
-      { "RetroPad", RETRO_DEVICE_JOYPAD },
    };
 
    static const struct retro_controller_info ports[] = {
-      { port_1, 11 },
-      { port_2, 10 },
+      { port_1, 10 },
+      { port_2, 9 },
       { 0 },
    };
 
@@ -815,9 +812,7 @@ void retro_set_controller_port_device(unsigned port, unsigned device)
 {
    switch(device)
    {
-      case RETRO_DEVICE_JOYPAD:
       case RETRO_DEVICE_MDPAD_3B:
-      default:
          config.input[port].padtype = DEVICE_PAD3B;
          input.dev[port] = DEVICE_PAD3B;
          input.system[port] = SYSTEM_GAMEPAD;
@@ -825,11 +820,6 @@ void retro_set_controller_port_device(unsigned port, unsigned device)
       case RETRO_DEVICE_MDPAD_6B:
          config.input[port].padtype = DEVICE_PAD6B;
          input.dev[port] = DEVICE_PAD6B;
-         input.system[port] = SYSTEM_GAMEPAD;
-         break;
-      case RETRO_DEVICE_PAD_AUTO:
-         config.input[port].padtype = DEVICE_PAD2B | DEVICE_PAD6B | DEVICE_PAD3B;
-         input.dev[port] = DEVICE_PAD2B | DEVICE_PAD6B | DEVICE_PAD3B;
          input.system[port] = SYSTEM_GAMEPAD;
          break;
       case RETRO_DEVICE_PORT_NONE:
@@ -866,6 +856,12 @@ void retro_set_controller_port_device(unsigned port, unsigned device)
          config.input[port].padtype = DEVICE_PAD2B;
          input.dev[port] = DEVICE_PAD2B;
          input.system[0] = SYSTEM_MS4PLAY;
+         break;
+      case RETRO_DEVICE_JOYPAD:
+      default:
+         config.input[port].padtype = DEVICE_PAD2B | DEVICE_PAD6B | DEVICE_PAD3B;
+         input.dev[port] = DEVICE_PAD2B | DEVICE_PAD6B | DEVICE_PAD3B;
+         input.system[port] = SYSTEM_GAMEPAD;
          break;
    }
 
