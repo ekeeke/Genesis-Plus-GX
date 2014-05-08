@@ -475,7 +475,7 @@ static bool update_viewport(void)
       vheight = vheight * 2;
    }
 
-   return ((ow != vwidth) || (oh != vheight));
+   return (oh != vheight);
 }
 
 static void check_variables(void)
