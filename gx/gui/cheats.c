@@ -3,7 +3,7 @@
  * 
  *   Cheats menu
  *
- *  Copyright Eke-Eke (2010-2012)
+ *  Copyright Eke-Eke (2010-2014)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -46,7 +46,7 @@
 #define BG_COLOR_1 {0x49,0x49,0x49,0xff}
 #define BG_COLOR_2 {0x66,0x66,0x66,0xff}
 
-#define MAX_CHEATS (150)
+#define MAX_CHEATS (350)
 #define MAX_DESC_LENGTH (63)
 
 #ifdef HW_RVL
@@ -853,38 +853,52 @@ void CheatMenu(void)
   while (update != -1)
   {
     /* update arrows buttons */
-    if (offset > 0) m->arrows[0]->state |= BUTTON_VISIBLE;
-    else m->arrows[0]->state &= ~BUTTON_VISIBLE;
-    if ((offset + 10) < (maxcheats + 1)) m->arrows[1]->state |= BUTTON_VISIBLE;
-    else m->arrows[1]->state &= ~BUTTON_VISIBLE;
+    if (offset > 0)
+      m->arrows[0]->state |= BUTTON_VISIBLE;
+    else
+      m->arrows[0]->state &= ~BUTTON_VISIBLE;
+    if (((offset + 10) < (maxcheats + 1)) && ((offset + 10) < MAX_CHEATS))
+      m->arrows[1]->state |= BUTTON_VISIBLE;
+    else
+      m->arrows[1]->state &= ~BUTTON_VISIBLE;
 
     /* draw menu */
     GUI_DrawMenu(m);
 
-    /* restore cheats offset */
-    if (!(menu_cheats.bg_images[6].state & IMAGE_VISIBLE))
+    /* check if browsing cheats list */
+    if (!(m->bg_images[6].state & IMAGE_VISIBLE))
     {
+      /* restore cheats list offset */
       m->offset = offset;
-      m->max_items = maxcheats + 1;
+      m->max_items = (maxcheats < MAX_CHEATS) ? (maxcheats + 1) : MAX_CHEATS;
       m->max_buttons = 10;
+      m->helpers[1] = NULL;
     }
 
     /* update menu */
     update = GUI_UpdateMenu(m);
 
-    /* update selected cheat */
-    if ((m->selected < 10) && (selection != m->selected))
-    {
-      selection = m->selected;
-      string_offset = 0;
-    }
-
-    /* save offset then restore default */
+    /* check if browsing cheats list */
     if (!(m->bg_images[6].state & IMAGE_VISIBLE))
     {
-      offset = m->offset;
+      /* update selected cheat */
+      if ((m->selected < 10) && (selection != m->selected))
+      {
+        selection = m->selected;
+        string_offset = 0;
+      }
+
+      /* save cheats list offset */
+      if (offset != m->offset)
+      {
+        offset = m->offset;
+        string_offset = 0;
+      }
+
+      /* restore default GUI settings */
       m->offset = 0;
       m->max_items = m->max_buttons = 30;
+      m->helpers[1] = &action_select;
     }
 
 
@@ -1194,35 +1208,38 @@ void CheatMenu(void)
           /* Special inputs */
           if (m_input.keys & PAD_TRIGGER_R)
           {
-            /* sort cheat list */
-            for (i = offset + selection + 1; i < maxcheats; i++)
+            if (GUI_WaitConfirm("Warning","Delete Cheat Entry ?"))
             {
-              strcpy(cheatlist[i-1].text,cheatlist[i].text);
-              strcpy(cheatlist[i-1].code,cheatlist[i].code);
-              cheatlist[i-1].address = cheatlist[i].address;
-              cheatlist[i-1].data = cheatlist[i].data;
-              cheatlist[i-1].enable = cheatlist[i].enable;
+              /* sort cheat list */
+              for (i = offset + selection + 1; i < maxcheats; i++)
+              {
+                strcpy(cheatlist[i-1].text,cheatlist[i].text);
+                strcpy(cheatlist[i-1].code,cheatlist[i].code);
+                cheatlist[i-1].address = cheatlist[i].address;
+                cheatlist[i-1].data = cheatlist[i].data;
+                cheatlist[i-1].enable = cheatlist[i].enable;
+              }
+
+              /* clear last cheat */
+              cheatlist[maxcheats-1].text[0] = 0;
+              cheatlist[maxcheats-1].code[0] = 0;
+              cheatlist[maxcheats-1].address = 0;
+              cheatlist[maxcheats-1].data = 0;
+              cheatlist[maxcheats-1].enable = 0;
+
+              /* disable last button */
+              if ((maxcheats - offset) < 10)
+              {
+                m->buttons[maxcheats - offset].state &= ~BUTTON_ACTIVE;
+                m->buttons[maxcheats - offset - 1].shift[1] = 0;
+              }
+
+              /* decrease cheat count */
+              maxcheats--;
+
+              /* reset scrolling */
+              string_offset = 0;
             }
-
-            /* clear last cheat */
-            cheatlist[maxcheats-1].text[0] = 0;
-            cheatlist[maxcheats-1].code[0] = 0;
-            cheatlist[maxcheats-1].address = 0;
-            cheatlist[maxcheats-1].data = 0;
-            cheatlist[maxcheats-1].enable = 0;
-
-            /* disable last button */
-            if ((maxcheats - offset) < 10)
-            {
-              m->buttons[maxcheats - offset].state &= ~BUTTON_ACTIVE;
-              m->buttons[maxcheats - offset - 1].shift[1] = 0;
-            }
-
-            /* decrease cheat count */
-            maxcheats--;
-
-            /* reset scrolling */
-            string_offset = 0;
           }
           else if (m_input.keys & PAD_TRIGGER_L)
           {
