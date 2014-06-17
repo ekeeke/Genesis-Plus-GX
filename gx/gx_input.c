@@ -3,7 +3,7 @@
  *
  *  Genesis Plus GX input support
  *
- *  Copyright Eke-Eke (2007-2013)
+ *  Copyright Eke-Eke (2007-2014)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -1528,44 +1528,31 @@ void gx_input_UpdateMenu(void)
   }
 
 #ifdef HW_RVL
-  /* Wiimote direction keys */
+  /* Wiimote & Classic Controller direction keys */
   WPAD_IR(0, &m_input.ir);
   if (m_input.ir.valid)
   {
     /* Wiimote is handled vertically */
-    if (pw & WPAD_BUTTON_UP)         pp |= PAD_BUTTON_UP;
-    else if (pw & WPAD_BUTTON_DOWN)  pp |= PAD_BUTTON_DOWN;
-    else if (pw & WPAD_BUTTON_LEFT)  pp |= PAD_BUTTON_LEFT;
-    else if (pw & WPAD_BUTTON_RIGHT) pp |= PAD_BUTTON_RIGHT;
+    if (pw & (WPAD_BUTTON_UP|WPAD_CLASSIC_BUTTON_UP))             pp |= PAD_BUTTON_UP;
+    else if (pw & (WPAD_BUTTON_DOWN|WPAD_CLASSIC_BUTTON_DOWN))    pp |= PAD_BUTTON_DOWN;
+    else if (pw & (WPAD_BUTTON_LEFT|WPAD_CLASSIC_BUTTON_LEFT))    pp |= PAD_BUTTON_LEFT;
+    else if (pw & (WPAD_BUTTON_RIGHT|WPAD_CLASSIC_BUTTON_RIGHT))  pp |= PAD_BUTTON_RIGHT;
   }
   else
   {
     /* Wiimote is handled horizontally */
-    if (pw & WPAD_BUTTON_UP)         pp |= PAD_BUTTON_LEFT;
-    else if (pw & WPAD_BUTTON_DOWN)  pp |= PAD_BUTTON_RIGHT;
-    else if (pw & WPAD_BUTTON_LEFT)  pp |= PAD_BUTTON_DOWN;
-    else if (pw & WPAD_BUTTON_RIGHT) pp |= PAD_BUTTON_UP;
+    if (pw & (WPAD_BUTTON_UP|WPAD_CLASSIC_BUTTON_LEFT))         pp |= PAD_BUTTON_LEFT;
+    else if (pw & (WPAD_BUTTON_DOWN|WPAD_CLASSIC_BUTTON_RIGHT)) pp |= PAD_BUTTON_RIGHT;
+    else if (pw & (WPAD_BUTTON_LEFT|WPAD_CLASSIC_BUTTON_DOWN))  pp |= PAD_BUTTON_DOWN;
+    else if (pw & (WPAD_BUTTON_RIGHT|WPAD_CLASSIC_BUTTON_UP))   pp |= PAD_BUTTON_UP;
   }
 
-  /* Classic Controller direction keys */
-  if (pw & WPAD_CLASSIC_BUTTON_UP)          pp |= PAD_BUTTON_UP;
-  else if (pw & WPAD_CLASSIC_BUTTON_DOWN)   pp |= PAD_BUTTON_DOWN;
-  else if (pw & WPAD_CLASSIC_BUTTON_LEFT)   pp |= PAD_BUTTON_LEFT;
-  else if (pw & WPAD_CLASSIC_BUTTON_RIGHT)  pp |= PAD_BUTTON_RIGHT;
-
-  /* WPAD buttons */
-  if (pw & WPAD_BUTTON_A)               pp |= PAD_BUTTON_A;
-  if (pw & WPAD_BUTTON_B)               pp |= PAD_BUTTON_B;
-  if (pw & WPAD_BUTTON_2)               pp |= PAD_BUTTON_A;
-  if (pw & WPAD_BUTTON_1)               pp |= PAD_BUTTON_B;
-  if (pw & WPAD_BUTTON_HOME)            pp |= PAD_TRIGGER_Z;
-  if (pw & WPAD_BUTTON_PLUS)            pp |= PAD_TRIGGER_L;
-  if (pw & WPAD_BUTTON_MINUS)           pp |= PAD_TRIGGER_R;
-  if (pw & WPAD_CLASSIC_BUTTON_FULL_L)  pp |= PAD_TRIGGER_L;
-  if (pw & WPAD_CLASSIC_BUTTON_FULL_R)  pp |= PAD_TRIGGER_R;
-  if (pw & WPAD_CLASSIC_BUTTON_A)       pp |= PAD_BUTTON_A;
-  if (pw & WPAD_CLASSIC_BUTTON_B)       pp |= PAD_BUTTON_B;
-  if (pw & WPAD_CLASSIC_BUTTON_HOME)    pp |= PAD_TRIGGER_Z;
+  /* WPAD button keys */
+  if (pw & (WPAD_BUTTON_2|WPAD_BUTTON_A|WPAD_CLASSIC_BUTTON_A)) pp |= PAD_BUTTON_A;
+  if (pw & (WPAD_BUTTON_1|WPAD_BUTTON_B|WPAD_CLASSIC_BUTTON_B)) pp |= PAD_BUTTON_B;
+  if (pw & (WPAD_BUTTON_HOME|WPAD_CLASSIC_BUTTON_HOME))         pp |= PAD_TRIGGER_Z;
+  if (pw & (WPAD_BUTTON_PLUS|WPAD_CLASSIC_BUTTON_PLUS|WPAD_CLASSIC_BUTTON_FULL_L))   pp |= PAD_TRIGGER_L;
+  if (pw & (WPAD_BUTTON_MINUS|WPAD_CLASSIC_BUTTON_MINUS|WPAD_CLASSIC_BUTTON_FULL_L)) pp |= PAD_TRIGGER_R;
 #endif
 
   /* Update menu inputs */
