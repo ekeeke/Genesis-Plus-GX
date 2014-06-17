@@ -253,17 +253,17 @@ void jcart_write(unsigned int address, unsigned int data)
 /*  Master System multitap ports handler (original design by Furrtek)       */
 /*  cf. http://www.smspower.org/uploads/Homebrew/BOoM-SMS-sms4p_2.png       */
 /*--------------------------------------------------------------------------*/
-unsigned char ms4play_1_read(void)
+unsigned char mastertap_1_read(void)
 {
   return gamepad_read(flipflop[0].Counter);
 }
 
-unsigned char ms4play_2_read(void)
+unsigned char mastertap_2_read(void)
 {
   return gamepad_read(flipflop[1].Counter + 4);
 }
 
-void ms4play_1_write(unsigned char data, unsigned char mask)
+void mastertap_1_write(unsigned char data, unsigned char mask)
 {
   /* update bits set as output only */
   data = (flipflop[0].Latch & ~mask) | (data & mask);
@@ -278,7 +278,7 @@ void ms4play_1_write(unsigned char data, unsigned char mask)
   flipflop[0].Latch = data;
 }
 
-void ms4play_2_write(unsigned char data, unsigned char mask)
+void mastertap_2_write(unsigned char data, unsigned char mask)
 {
   /* update bits set as output only */
   data = (flipflop[1].Latch & ~mask) | (data & mask);

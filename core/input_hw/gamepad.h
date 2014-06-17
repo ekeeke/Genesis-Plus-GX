@@ -53,9 +53,9 @@ extern void wayplay_1_write(unsigned char data, unsigned char mask);
 extern void wayplay_2_write(unsigned char data, unsigned char mask);
 extern unsigned int jcart_read(unsigned int address);
 extern void jcart_write(unsigned int address, unsigned int data);
-extern unsigned char ms4play_1_read(void);
-extern unsigned char ms4play_2_read(void);
-extern void ms4play_1_write(unsigned char data, unsigned char mask);
-extern void ms4play_2_write(unsigned char data, unsigned char mask);
+extern unsigned char mastertap_1_read(void);
+extern unsigned char mastertap_2_read(void);
+extern void mastertap_1_write(unsigned char data, unsigned char mask);
+extern void mastertap_2_write(unsigned char data, unsigned char mask);
 
 #endif

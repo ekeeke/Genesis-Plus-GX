@@ -745,8 +745,8 @@ static void configure_controls(void)
     input.system[1] = SYSTEM_TEAMPLAYER;
   else if (!strcmp(var.value, "teamplayer 1&2"))
     input.system[0] = input.system[1] = SYSTEM_TEAMPLAYER;
-  else if (!strcmp(var.value, "master system 4p"))
-    input.system[0] = SYSTEM_MS4PLAY;
+  else if (!strcmp(var.value, "mastertap"))
+    input.system[0] = SYSTEM_MASTERTAP;
 
   var.key = "portb";
   environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);

@@ -170,7 +170,7 @@ void input_init(void)
       break;
     }
 
-    case SYSTEM_MS4PLAY:
+    case SYSTEM_MASTERTAP:
     {
       for (i=0; i<4; i++)
       {
@@ -289,7 +289,7 @@ void input_init(void)
       break;
     }
 
-    case SYSTEM_MS4PLAY:
+    case SYSTEM_MASTERTAP:
     {
       for (i=4; i<8; i++)
       {
