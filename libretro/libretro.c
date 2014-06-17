@@ -770,7 +770,7 @@ void retro_set_environment(retro_environment_t cb)
       { "addr_error", "68k address error; enabled|disabled" },
       { "lock_on", "Cartridge lock-on; disabled|game genie|action replay (pro)|sonic & knuckles" },
       { "padtype", "Gamepad type; auto|6-buttons|3-buttons|2-buttons" },
-      { "multitap", "Multi Tap; disabled|4-wayplay|teamplayer (port 1)|teamplayer (port 2)|teamplayer (both)|master system 4p" },
+      { "multitap", "Multi Tap; disabled|4-wayplay|teamplayer (port 1)|teamplayer (port 2)|teamplayer (both)|mastertap" },
       { "portb", "Control Port 2; enabled|disabled" },
       { "ym2413", "Master System FM; auto|disabled|enabled" },
       { "dac_bits", "YM2612 DAC quantization; disabled|enabled" },
