@@ -1009,6 +1009,12 @@ size_t retro_get_memory_size(unsigned id)
    }
 }
 
+static void check_system_specs(void)
+{
+   unsigned level = 7;
+   environ_cb(RETRO_ENVIRONMENT_SET_PERFORMANCE_LEVEL, &level);
+}
+
 void retro_init(void)
 {
    struct retro_log_callback log;
@@ -1033,6 +1039,7 @@ void retro_init(void)
       if (log_cb)
          log_cb(RETRO_LOG_INFO, "Frontend supports RGB565 - will use that instead of XRGB1555.\n");
 #endif
+   check_system_specs();
 }
 
 void retro_deinit(void)
