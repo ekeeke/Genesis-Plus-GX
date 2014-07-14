@@ -1140,12 +1140,9 @@ int gx_input_FindDevices(void)
                   (js->max.y <= js->center.y) || (js->min.y >= js->center.y))
               {
                 /* Reset to default values */
-                js->min.x = 0;
-                js->max.x = 64;
-                js->center.x = 32;
-                js->min.y = 0;
-                js->max.y = 32;
-                js->center.y = 16 ;
+                js->min.x = js->min.y = 0;
+                js->max.x = js->max.y = 64;
+                js->center.x = js->center.y = 32;
               }
 
               /* Right analog stick */
@@ -1156,12 +1153,9 @@ int gx_input_FindDevices(void)
                   (js->max.y <= js->center.y) || (js->min.y >= js->center.y))
               {
                 /* Reset to default values */
-                js->min.x = 0;
-                js->max.x = 64;
-                js->center.x = 32;
-                js->min.y = 0;
-                js->max.y = 32;
-                js->center.y = 16 ;
+                js->min.x = js->min.y = 0;
+                js->max.x = js->max.y = 32;
+                js->center.x = js->center.y = 16;
               }
             }
           }
