@@ -490,23 +490,29 @@ static int wpad_StickX(WPADData *data, u8 right)
 
   if (js)
   {
-    /* raw X value */
-    int x = js->pos.x;
-    
-    /* value returned is sometime above calibrated limits */
-    if (x > js->max.x) return 127;
-    if (x < js->min.x) return -128;
+    /* raw X position */
+    int pos = js->pos.x;
+
+    /* X range calibration */
+    int min = js->min.x;
+    int max = js->max.x;
+    int center = js->center.x;
+ 
+    /* value returned could be above calibration limits */
+    if (pos > max) return 127;
+    if (pos < min) return -128;
     
     /* adjust against center position */
-    x -= js->center.x;
+    pos -= center;
 
 	  /* return interpolated range [-128;127] */
-    if (x > 0)
+    if (pos > 0)
     {
-      return (int)(127.0 * ((float)x / (float)(js->max.x - js->center.x)));
+      return (int)(127.0 * ((float)pos / (float)(max - center)));
     }
+    else
     {
-      return (int)(128.0 * ((float)x / (float)(js->center.x - js->min.x)));
+      return (int)(128.0 * ((float)pos / (float)(center - min)));
     }
   }
 
@@ -533,23 +539,29 @@ static int wpad_StickY(WPADData *data, u8 right)
 
   if (js)
   {
-    /* raw Y value */
-    int y = js->pos.y;
-    
-    /* value returned is sometime above calibrated limits */
-    if (y > js->max.y) return 127;
-    if (y < js->min.y) return -128;
+    /* raw Y position */
+    int pos = js->pos.y;
+
+    /* Y range calibration */
+    int min = js->min.y;
+    int max = js->max.y;
+    int center = js->center.y;
+ 
+    /* value returned could be above calibration limits */
+    if (pos > max) return 127;
+    if (pos < min) return -128;
     
     /* adjust against center position */
-    y -= js->center.y;
+    pos -= center;
 
 	  /* return interpolated range [-128;127] */
-    if (y > 0)
+    if (pos > 0)
     {
-      return (int)(127.0 * ((float)y / (float)(js->max.y - js->center.y)));
+      return (int)(127.0 * ((float)pos / (float)(max - center)));
     }
+    else
     {
-      return (int)(128.0 * ((float)y / (float)(js->center.y - js->min.y)));
+      return (int)(128.0 * ((float)pos / (float)(center - min)));
     }
   }
 
@@ -1113,6 +1125,45 @@ int gx_input_FindDevices(void)
           if (wpad == (config.input[player].device - 1))
           {
             found++;
+
+            /* some 3rd party classic controllers return invalid factory calibration data */
+            if (wpad == EXP_CLASSIC)
+            {
+              /* WPAD data */
+              WPADData *data = WPAD_Data(config.input[player].port);
+
+              /* Left analog stick */
+              struct joystick_t* js = &data->exp.classic.ljs;
+
+              /* Check acquired calibration data */
+              if ((js->max.x <= js->center.x) || (js->min.x >= js->center.x) ||
+                  (js->max.y <= js->center.y) || (js->min.y >= js->center.y))
+              {
+                /* Reset to default values */
+                js->min.x = 0;
+                js->max.x = 64;
+                js->center.x = 32;
+                js->min.y = 0;
+                js->max.y = 32;
+                js->center.y = 16 ;
+              }
+
+              /* Right analog stick */
+              js = &data->exp.classic.rjs;
+
+              /* Check acquired calibration data */
+              if ((js->max.x <= js->center.x) || (js->min.x >= js->center.x) ||
+                  (js->max.y <= js->center.y) || (js->min.y >= js->center.y))
+              {
+                /* Reset to default values */
+                js->min.x = 0;
+                js->max.x = 64;
+                js->center.x = 32;
+                js->min.y = 0;
+                js->max.y = 32;
+                js->center.y = 16 ;
+              }
+            }
           }
           break;
         }
