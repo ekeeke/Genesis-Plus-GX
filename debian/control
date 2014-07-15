@@ -1,0 +1,16 @@
+Source: libretro-genesisplusgx
+Section: otherosfs
+Priority: extra
+Maintainer: Hunter Kaller (hizzlekizzle) <hunter_kaller@yahoo.com>
+Build-Depends: debhelper (>= 9), zlib1g-dev
+Standards-Version: 3.9.5
+Homepage: https://code.google.com/p/genplus-gx/
+Vcs-Git: git://github.com/libretro/Genesis-Plus-GX.git
+Vcs-Browser: https://github.com/libretro/Genesis-Plus-GX
+
+Package: libretro-genesisplusgx
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Libretro wrapper for Genesis Plus GX.
+ This wrapper makes Genesis Plus GX API compatible with libretro,
+ thus allowing its use with libretro frontends, such as RetroArch.
