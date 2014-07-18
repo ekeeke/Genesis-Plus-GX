@@ -55,6 +55,21 @@
     <ClCompile Include="..\..\..\core\sound\ym2612.c" />
     <ClCompile Include="..\..\..\core\state.c" />
     <ClCompile Include="..\..\..\core\system.c" />
+    <ClCompile Include="..\..\..\core\tremor\bitwise.c" />
+    <ClCompile Include="..\..\..\core\tremor\block.c" />
+    <ClCompile Include="..\..\..\core\tremor\codebook.c" />
+    <ClCompile Include="..\..\..\core\tremor\floor0.c" />
+    <ClCompile Include="..\..\..\core\tremor\floor1.c" />
+    <ClCompile Include="..\..\..\core\tremor\framing.c" />
+    <ClCompile Include="..\..\..\core\tremor\info.c" />
+    <ClCompile Include="..\..\..\core\tremor\mapping0.c" />
+    <ClCompile Include="..\..\..\core\tremor\mdct.c" />
+    <ClCompile Include="..\..\..\core\tremor\registry.c" />
+    <ClCompile Include="..\..\..\core\tremor\res012.c" />
+    <ClCompile Include="..\..\..\core\tremor\sharedbook.c" />
+    <ClCompile Include="..\..\..\core\tremor\synthesis.c" />
+    <ClCompile Include="..\..\..\core\tremor\vorbisfile.c" />
+    <ClCompile Include="..\..\..\core\tremor\window.c" />
     <ClCompile Include="..\..\..\core\vdp_ctrl.c" />
     <ClCompile Include="..\..\..\core\vdp_render.c" />
     <ClCompile Include="..\..\..\core\z80\z80.c" />
@@ -65,7 +80,7 @@
     <ProjectGuid>{29DF2EE7-2930-4BD3-8AC5-81A2534ACC99}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>msvc2010</RootNamespace>
-    <ProjectName>genesis-next-msvc-2010</ProjectName>
+    <ProjectName>msvc-2010</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -90,12 +105,10 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <LinkIncremental>true</LinkIncremental>
-    <TargetName>libretro</TargetName>
+    <OutDir>$(SolutionDir)msvc-2010\$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <LinkIncremental>false</LinkIncremental>
-    <TargetName>libretro</TargetName>
+    <OutDir>$(SolutionDir)msvc-2010\$(Configuration)\</OutDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -103,7 +116,7 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;MSVC2010_EXPORTS;_CRT_SECURE_NO_WARNINGS;INLINE=static _inline;__inline__=_inline;__extension__=;LSB_FIRST;__LIBRETRO__;USE_16BPP_RENDERING;FRONTEND_SUPPORTS_RGB565;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;MSVC2010_EXPORTS;_CRT_SECURE_NO_WARNINGS;INLINE=static _inline;__inline__=_inline;__extension__=;LSB_FIRST;__LIBRETRO__;USE_16BPP_RENDERING;FRONTEND_SUPPORTS_RGB565;%(PreprocessorDefinitions);USE_LIBTREMOR;BYTE_ORDER=LITTLE_ENDIAN</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(SolutionDir)/../../core;$(SolutionDir)/../../utils/zlib;$(SolutionDir)/../../core/cart_hw/svp;$(SolutionDir)/../../libretro;$(SolutionDir)/../../core/m68k;$(SolutionDir)/../../core/z80;$(SolutionDir)/../../core/input_hw;$(SolutionDir)/../../core/cart_hw;$(SolutionDir)/../../core/sound;$(SolutionDir)/../../core/ntsc;$(SolutionDir)/../../core/cd_hw;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
@@ -120,7 +133,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;MSVC2010_EXPORTS;_CRT_SECURE_NO_WARNINGS;INLINE=static _inline;__inline__=_inline;__extension__=;LSB_FIRST;__LIBRETRO__;USE_16BPP_RENDERING;FRONTEND_SUPPORTS_RGB565;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;MSVC2010_EXPORTS;_CRT_SECURE_NO_WARNINGS;INLINE=static _inline;__inline__=_inline;__extension__=;LSB_FIRST;__LIBRETRO__;USE_16BPP_RENDERING;FRONTEND_SUPPORTS_RGB565;%(PreprocessorDefinitions);USE_LIBTREMOR;BYTE_ORDER=LITTLE_ENDIAN</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(SolutionDir)/../../core;$(SolutionDir)/../../utils/zlib;$(SolutionDir)/../../core/cart_hw/svp;$(SolutionDir)/../../libretro;$(SolutionDir)/../../core/m68k;$(SolutionDir)/../../core/z80;$(SolutionDir)/../../core/input_hw;$(SolutionDir)/../../core/cart_hw;$(SolutionDir)/../../core/sound;$(SolutionDir)/../../core/ntsc;$(SolutionDir)/../../core/cd_hw;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>

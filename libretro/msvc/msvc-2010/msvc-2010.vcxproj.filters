@@ -40,6 +40,9 @@
     <Filter Include="Source Files\cd_hw">
       <UniqueIdentifier>{eba4b43d-dbd8-4170-9853-e3234db6dfc0}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\tremor">
+      <UniqueIdentifier>{c4a5e1da-1ff3-4c81-893c-97364ed7ed4b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\core\cart_hw\svp\svp.c">
@@ -188,6 +191,51 @@
     </ClCompile>
     <ClCompile Include="..\..\..\core\sound\blip_buf.c">
       <Filter>Source Files\sound</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\core\tremor\window.c">
+      <Filter>Source Files\tremor</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\core\tremor\bitwise.c">
+      <Filter>Source Files\tremor</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\core\tremor\block.c">
+      <Filter>Source Files\tremor</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\core\tremor\codebook.c">
+      <Filter>Source Files\tremor</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\core\tremor\floor0.c">
+      <Filter>Source Files\tremor</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\core\tremor\floor1.c">
+      <Filter>Source Files\tremor</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\core\tremor\framing.c">
+      <Filter>Source Files\tremor</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\core\tremor\info.c">
+      <Filter>Source Files\tremor</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\core\tremor\mapping0.c">
+      <Filter>Source Files\tremor</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\core\tremor\mdct.c">
+      <Filter>Source Files\tremor</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\core\tremor\registry.c">
+      <Filter>Source Files\tremor</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\core\tremor\res012.c">
+      <Filter>Source Files\tremor</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\core\tremor\sharedbook.c">
+      <Filter>Source Files\tremor</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\core\tremor\synthesis.c">
+      <Filter>Source Files\tremor</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\core\tremor\vorbisfile.c">
+      <Filter>Source Files\tremor</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

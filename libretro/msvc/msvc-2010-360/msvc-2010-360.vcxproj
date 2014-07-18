@@ -148,6 +148,21 @@
     <ClCompile Include="..\..\..\core\sound\ym2612.c" />
     <ClCompile Include="..\..\..\core\state.c" />
     <ClCompile Include="..\..\..\core\system.c" />
+    <ClCompile Include="..\..\..\core\tremor\bitwise.c" />
+    <ClCompile Include="..\..\..\core\tremor\block.c" />
+    <ClCompile Include="..\..\..\core\tremor\codebook.c" />
+    <ClCompile Include="..\..\..\core\tremor\floor0.c" />
+    <ClCompile Include="..\..\..\core\tremor\floor1.c" />
+    <ClCompile Include="..\..\..\core\tremor\framing.c" />
+    <ClCompile Include="..\..\..\core\tremor\info.c" />
+    <ClCompile Include="..\..\..\core\tremor\mapping0.c" />
+    <ClCompile Include="..\..\..\core\tremor\mdct.c" />
+    <ClCompile Include="..\..\..\core\tremor\registry.c" />
+    <ClCompile Include="..\..\..\core\tremor\res012.c" />
+    <ClCompile Include="..\..\..\core\tremor\sharedbook.c" />
+    <ClCompile Include="..\..\..\core\tremor\synthesis.c" />
+    <ClCompile Include="..\..\..\core\tremor\vorbisfile.c" />
+    <ClCompile Include="..\..\..\core\tremor\window.c" />
     <ClCompile Include="..\..\..\core\vdp_ctrl.c" />
     <ClCompile Include="..\..\..\core\vdp_render.c" />
     <ClCompile Include="..\..\..\core\z80\z80.c" />
@@ -214,22 +229,22 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Xbox 360'">
-    <OutputFile>$(OutDir)genesis_plus_gx_libretro_xdk360$(TargetExt)</OutputFile>
+    <OutputFile>$(OutDir)msvc-2010-360$(TargetExt)</OutputFile>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='CodeAnalysis|Xbox 360'">
-    <OutputFile>$(OutDir)genesis_plus_gx_libretro_xdk360$(TargetExt)</OutputFile>
+    <OutputFile>$(OutDir)msvc-2010-360$(TargetExt)</OutputFile>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Profile|Xbox 360'">
-    <OutputFile>$(OutDir)genesis_plus_gx_libretro_xdk360$(TargetExt)</OutputFile>
+    <OutputFile>$(OutDir)msvc-2010-360$(TargetExt)</OutputFile>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Profile_FastCap|Xbox 360'">
-    <OutputFile>$(OutDir)genesis_plus_gx_libretro_xdk360$(TargetExt)</OutputFile>
+    <OutputFile>$(OutDir)msvc-2010-360$(TargetExt)</OutputFile>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Xbox 360'">
-    <OutputFile>$(OutDir)genesis_plus_gx_libretro_xdk360$(TargetExt)</OutputFile>
+    <OutputFile>$(OutDir)msvc-2010-360$(TargetExt)</OutputFile>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release_LTCG|Xbox 360'">
-    <OutputFile>$(OutDir)genesis_plus_gx_libretro_xdk360$(TargetExt)</OutputFile>
+    <OutputFile>$(OutDir)msvc-2010-360$(TargetExt)</OutputFile>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Xbox 360'">
     <ClCompile>
@@ -242,7 +257,7 @@
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <PrecompiledHeaderOutputFile>$(OutDir)$(ProjectName).pch</PrecompiledHeaderOutputFile>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
-      <PreprocessorDefinitions>_DEBUG;_XBOX;_XBOX360;_LIB;INLINE=static _inline;__attribute__=;__inline__=_inline;__extension__=;USE_16BPP_RENDERING;__LIBRETRO__;FRONTEND_SUPPORTS_RGB565;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_XBOX;_XBOX360;_LIB;INLINE=static _inline;__attribute__=;__inline__=_inline;__extension__=;USE_16BPP_RENDERING;__LIBRETRO__;FRONTEND_SUPPORTS_RGB565;%(PreprocessorDefinitions);USE_LIBTREMOR;BYTE_ORDER=BIG_ENDIAN</PreprocessorDefinitions>
       <CallAttributedProfiling>Callcap</CallAttributedProfiling>
       <AdditionalIncludeDirectories>$(SolutionDir)\..\..\core;$(SolutionDir)\..\..\core\cd_hw;$(SolutionDir)\..\..\core\cart_hw;$(SolutionDir)\..\..\core\sound;$(SolutionDir)\..\..\core\z80;$(SolutionDir)\..\..\core\m68k;$(SolutionDir)\..\..\core\input_hw;$(SolutionDir)\..\..\core\cart_hw\svp;$(SolutionDir)\..\..\core\ntsc;$(SolutionDir)\..\;$(SolutionDir)\..\..\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <CompileAs>CompileAsC</CompileAs>
@@ -263,7 +278,7 @@
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <PrecompiledHeaderOutputFile>$(OutDir)$(ProjectName).pch</PrecompiledHeaderOutputFile>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
-      <PreprocessorDefinitions>_DEBUG;_XBOX;_XBOX360;_LIB;%(PreprocessorDefinitions);INLINE=static _inline;__attribute__=;__inline__=_inline;__extension__=;USE_16BPP_RENDERING;__LIBRETRO__;FRONTEND_SUPPORTS_RGB565</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_XBOX;_XBOX360;_LIB;%(PreprocessorDefinitions);INLINE=static _inline;__attribute__=;__inline__=_inline;__extension__=;USE_16BPP_RENDERING;__LIBRETRO__;FRONTEND_SUPPORTS_RGB565;USE_LIBTREMOR;BYTE_ORDER=BIG_ENDIAN</PreprocessorDefinitions>
       <CallAttributedProfiling>Callcap</CallAttributedProfiling>
       <AdditionalIncludeDirectories>$(SolutionDir)\..\..\core;$(SolutionDir)\..\..\core\cd_hw;$(SolutionDir)\..\..\core\cart_hw;$(SolutionDir)\..\..\core\sound;$(SolutionDir)\..\..\core\z80;$(SolutionDir)\..\..\core\m68k;$(SolutionDir)\..\..\core\input_hw;$(SolutionDir)\..\..\core\cart_hw\svp;$(SolutionDir)\..\..\core\ntsc;$(SolutionDir)\..\;$(SolutionDir)\..\..\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <CompileAs>CompileAsC</CompileAs>
@@ -285,7 +300,7 @@
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <PrecompiledHeaderOutputFile>$(OutDir)$(ProjectName).pch</PrecompiledHeaderOutputFile>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <PreprocessorDefinitions>NDEBUG;_XBOX;_XBOX360;PROFILE;_LIB;__LIBRETRO__;USE_16BPP_RENDERING;INLINE=static _inline;FRONTEND_SUPPORTS_RGB565;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;_XBOX;_XBOX360;PROFILE;_LIB;__LIBRETRO__;USE_16BPP_RENDERING;INLINE=static _inline;FRONTEND_SUPPORTS_RGB565;%(PreprocessorDefinitions);USE_LIBTREMOR;BYTE_ORDER=BIG_ENDIAN</PreprocessorDefinitions>
       <CallAttributedProfiling>Callcap</CallAttributedProfiling>
       <AdditionalIncludeDirectories>$(SolutionDir)\..\..\core;$(SolutionDir)\..\..\core\cd_hw;$(SolutionDir)\..\..\core\cart_hw;$(SolutionDir)\..\..\core\sound;$(SolutionDir)\..\..\core\z80;$(SolutionDir)\..\..\core\m68k;$(SolutionDir)\..\..\core\input_hw;$(SolutionDir)\..\..\core\cart_hw\svp;$(SolutionDir)\..\..\core\ntsc;$(SolutionDir)\..\;$(SolutionDir)\..\..\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <CompileAs>CompileAsC</CompileAs>
@@ -311,7 +326,7 @@
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <PrecompiledHeaderOutputFile>$(OutDir)$(ProjectName).pch</PrecompiledHeaderOutputFile>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <PreprocessorDefinitions>NDEBUG;_XBOX;_XBOX360;PROFILE;FASTCAP;_LIB;__LIBRETRO__;USE_16BPP_RENDERING;INLINE=static _inline;FRONTEND_SUPPORTS_RGB565;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;_XBOX;_XBOX360;PROFILE;FASTCAP;_LIB;__LIBRETRO__;USE_16BPP_RENDERING;INLINE=static _inline;FRONTEND_SUPPORTS_RGB565;%(PreprocessorDefinitions);USE_LIBTREMOR;BYTE_ORDER=BIG_ENDIAN</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(SolutionDir)\..\..\core;$(SolutionDir)\..\..\core\cd_hw;$(SolutionDir)\..\..\core\cart_hw;$(SolutionDir)\..\..\core\sound;$(SolutionDir)\..\..\core\z80;$(SolutionDir)\..\..\core\m68k;$(SolutionDir)\..\..\core\input_hw;$(SolutionDir)\..\..\core\cart_hw\svp;$(SolutionDir)\..\..\core\ntsc;$(SolutionDir)\..\;$(SolutionDir)\..\..\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <CompileAs>CompileAsC</CompileAs>
     </ClCompile>
@@ -334,7 +349,7 @@
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <PrecompiledHeaderOutputFile>$(OutDir)$(ProjectName).pch</PrecompiledHeaderOutputFile>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <PreprocessorDefinitions>NDEBUG;_XBOX;_XBOX360;_LIB;INLINE=static _inline;__inline__=_inline;__extension__=;USE_16BPP_RENDERING;__LIBRETRO__;FRONTEND_SUPPORTS_RGB565;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;_XBOX;_XBOX360;_LIB;INLINE=static _inline;__inline__=_inline;__extension__=;USE_16BPP_RENDERING;__LIBRETRO__;FRONTEND_SUPPORTS_RGB565;%(PreprocessorDefinitions);USE_LIBTREMOR;BYTE_ORDER=BIG_ENDIAN</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(SolutionDir)\..\..\core;$(SolutionDir)\..\..\core\cd_hw;$(SolutionDir)\..\..\core\cart_hw;$(SolutionDir)\..\..\core\sound;$(SolutionDir)\..\..\core\z80;$(SolutionDir)\..\..\core\m68k;$(SolutionDir)\..\..\core\input_hw;$(SolutionDir)\..\..\core\cart_hw\svp;$(SolutionDir)\..\..\core\ntsc;$(SolutionDir)\..\;$(SolutionDir)\..\..\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <CompileAs>CompileAsC</CompileAs>
     </ClCompile>
@@ -357,7 +372,7 @@
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <PrecompiledHeaderOutputFile>$(OutDir)$(ProjectName).pch</PrecompiledHeaderOutputFile>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <PreprocessorDefinitions>NDEBUG;_XBOX;_XBOX360;LTCG;_LIB;INLINE=static _inline;__inline__=_inline;__extension__=;USE_16BPP_RENDERING;__LIBRETRO__;FRONTEND_SUPPORTS_RGB565;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;_XBOX;_XBOX360;LTCG;_LIB;INLINE=static _inline;__inline__=_inline;__extension__=;USE_16BPP_RENDERING;__LIBRETRO__;FRONTEND_SUPPORTS_RGB565;%(PreprocessorDefinitions);USE_LIBTREMOR;BYTE_ORDER=BIG_ENDIAN</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(SolutionDir)\..\..\core;$(SolutionDir)\..\..\core\cd_hw;$(SolutionDir)\..\..\core\cart_hw;$(SolutionDir)\..\..\core\sound;$(SolutionDir)\..\..\core\z80;$(SolutionDir)\..\..\core\m68k;$(SolutionDir)\..\..\core\input_hw;$(SolutionDir)\..\..\core\cart_hw\svp;$(SolutionDir)\..\..\core\ntsc;$(SolutionDir)\..\;$(SolutionDir)\..\..\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <CompileAs>CompileAsC</CompileAs>
     </ClCompile>
