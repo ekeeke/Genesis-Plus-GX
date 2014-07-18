@@ -55,7 +55,7 @@ else ifeq ($(platform), osx)
    fpic := -fPIC 
    SHARED := -dynamiclib -lz
 ifeq ($(arch),ppc)
-   ENDIANNESS_DEFINES := -DMSB_FIRST -DBYTE_ORDER=BIG_ENDIAN
+   ENDIANNESS_DEFINES := -DBYTE_ORDER=BIG_ENDIAN
 else
    ENDIANNESS_DEFINES := -DLSB_FIRST -DBYTE_ORDER=LITTLE_ENDIAN
 endif
@@ -91,13 +91,13 @@ else ifeq ($(platform), ps3)
    TARGET := $(TARGET_NAME)_libretro_ps3.a
    CC = $(CELL_SDK)/host-win32/ppu/bin/ppu-lv2-gcc.exe
    AR = $(CELL_SDK)/host-win32/ppu/bin/ppu-lv2-ar.exe
-   PLATFORM_DEFINES := -D__CELLOS_LV2 -DALT_RENDER -DMSB_FIRST -DBYTE_ORDER=BIG_ENDIAN
+   PLATFORM_DEFINES := -D__CELLOS_LV2 -DALT_RENDER -DBYTE_ORDER=BIG_ENDIAN
 	STATIC_LINKING = 1
 else ifeq ($(platform), sncps3)
    TARGET := $(TARGET_NAME)_libretro_ps3.a
    CC = $(CELL_SDK)/host-win32/sn/bin/ps3ppusnc.exe
    AR = $(CELL_SDK)/host-win32/sn/bin/ps3snarl.exe
-   PLATFORM_DEFINES := -D__CELLOS_LV2 -DALT_RENDER -DMSB_FIRST -DBYTE_ORDER=BIG_ENDIAN
+   PLATFORM_DEFINES := -D__CELLOS_LV2 -DALT_RENDER -DBYTE_ORDER=BIG_ENDIAN
 	STATIC_LINKING = 1
 else ifeq ($(platform), psl1ght)
    TARGET := $(TARGET_NAME)_libretro_psl1ght.a$(EXE_EXT)
@@ -118,13 +118,13 @@ else ifeq ($(platform), xenon)
    CC = xenon-gcc$(EXE_EXT)
    AR = xenon-ar$(EXE_EXT)
    PLATFORM_DEFINES := -D__LIBXENON__ -DALT_RENDER
-	ENDIANNESS_DEFINES := -DMSB_FIRST -DBYTE_ORDER=BIG_ENDIAN
+	ENDIANNESS_DEFINES := -DBYTE_ORDER=BIG_ENDIAN
 	STATIC_LINKING = 1
 else ifeq ($(platform), ngc)
    TARGET := $(TARGET_NAME)_libretro_ngc.a
    CC = $(DEVKITPPC)/bin/powerpc-eabi-gcc$(EXE_EXT)
    AR = $(DEVKITPPC)/bin/powerpc-eabi-ar$(EXE_EXT)
-	ENDIANNESS_DEFINES := -DMSB_FIRST -DBYTE_ORDER=BIG_ENDIAN
+	ENDIANNESS_DEFINES := -DBYTE_ORDER=BIG_ENDIAN
    PLATFORM_DEFINES := -DGEKKO -DHW_DOL -mrvl -mcpu=750 -meabi -mhard-float -DALT_RENDER
 	STATIC_LINKING = 1
 else ifeq ($(platform), wii)
@@ -132,7 +132,7 @@ else ifeq ($(platform), wii)
    CC = $(DEVKITPPC)/bin/powerpc-eabi-gcc$(EXE_EXT)
    AR = $(DEVKITPPC)/bin/powerpc-eabi-ar$(EXE_EXT)
    PLATFORM_DEFINES := -DGEKKO -DHW_RVL -mrvl -mcpu=750 -meabi -mhard-float -DALT_RENDER
-	ENDIANNESS_DEFINES := -DMSB_FIRST -DBYTE_ORDER=BIG_ENDIAN
+	ENDIANNESS_DEFINES := -DBYTE_ORDER=BIG_ENDIAN
 	STATIC_LINKING = 1
 else ifneq (,$(findstring armv,$(platform)))
    TARGET := $(TARGET_NAME)_libretro.so
