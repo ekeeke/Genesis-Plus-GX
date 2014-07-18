@@ -667,8 +667,8 @@ static void gxDrawCrosshair(gx_texture *texture, int x, int y)
   int ywidth = square[3] - square[7];
 
   /* adjust texture coordinates to EFB */
-  x = (((x + bitmap.viewport.x) * xwidth) / vwidth) + square[6] - w/2;
-  y = (((y + bitmap.viewport.y) * ywidth) / vheight) + square[7] - h/2;
+  x = (((x + bitmap.viewport.x) * xwidth) / (bitmap.viewport.w+2*bitmap.viewport.x)) + square[6] - w/2;
+  y = (((y + bitmap.viewport.y) * ywidth) / (bitmap.viewport.h+2*bitmap.viewport.y)) + square[7] - h/2;
 
   /* load texture object */
   GXTexObj texObj;

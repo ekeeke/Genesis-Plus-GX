@@ -108,7 +108,7 @@ extern const u8 Ctrl_paddle_png[];
 extern const u8 Ctrl_sportspad_png[];
 extern const u8 Ctrl_none_png[];
 extern const u8 Ctrl_teamplayer_png[];
-extern const u8 Ctrl_ms4play_png[];
+extern const u8 Ctrl_mastertap_png[];
 extern const u8 Ctrl_pad_auto_png[];
 extern const u8 Ctrl_pad2b_png[];
 extern const u8 Ctrl_pad3b_png[];
@@ -2062,7 +2062,7 @@ static void ctrlmenu(void)
       {NULL,Ctrl_lightphaser_png,"","Select Port 1 device", 89,109,88,92},
       {NULL,Ctrl_paddle_png     ,"","Select Port 1 device", 86,117,96,84},
       {NULL,Ctrl_sportspad_png  ,"","Select Port 1 device", 95,117,76,84},
-      {NULL,Ctrl_ms4play_png    ,"","Select Port 1 device", 94,100,80,100},
+      {NULL,Ctrl_mastertap_png  ,"","Select Port 1 device", 96,104,76,96},
       {NULL,Ctrl_teamplayer_png ,"","Select Port 1 device", 94,109,80,92},
       {NULL,Ctrl_4wayplay_png   ,"","Select Port 1 device", 98,110,72,92}
     },
@@ -2077,7 +2077,7 @@ static void ctrlmenu(void)
       {NULL,Ctrl_lightphaser_png,"","Select Port 2 device", 89,279,88,92},
       {NULL,Ctrl_paddle_png     ,"","Select Port 2 device", 86,287,96,84},
       {NULL,Ctrl_sportspad_png  ,"","Select Port 2 device", 95,287,76,84},
-      {NULL,Ctrl_ms4play_png    ,"","Select Port 1 device", 94,270,80,100},
+      {NULL,Ctrl_mastertap_png  ,"","Select Port 1 device", 96,274,76,96},
       {NULL,Ctrl_teamplayer_png ,"","Select Port 2 device", 94,279,80,92},
       {NULL,Ctrl_4wayplay_png   ,"","Select Port 2 device", 98,280,72,92}
     }
@@ -2438,7 +2438,7 @@ static void ctrlmenu(void)
             case DEVICE_PAD3B:
             case DEVICE_PAD6B:
             {
-              if (input.system[index/4] == SYSTEM_MS4PLAY)
+              if (input.system[index/4] == SYSTEM_MASTERTAP)
               {
                 /* force 2-buttons pad */
                 items = items_special[3];
@@ -3139,13 +3139,17 @@ static int savemenu(void)
         {
           if (slots[slot].valid)
           {
-            if (slot_delete(slot,config.s_device) >= 0)
+            if (GUI_WaitConfirm("Warning","Delete Save File ?"))
             {
-              /* hide screenshot */
-              gxTextureClose(&bg_saves[0].texture);
-              bg_saves[0].state &= ~IMAGE_VISIBLE;
-              slots[slot].valid = 0;
-              update = -1;
+              if (slot_delete(slot,config.s_device) >= 0)
+              {
+                /* hide screenshot */
+                gxTextureClose(&bg_saves[0].texture);
+                bg_saves[0].state &= ~IMAGE_VISIBLE;
+                bg_saves[1].state |= IMAGE_VISIBLE;
+                slots[slot].valid = 0;
+                update = -1;
+              }
             }
           }
           break;

@@ -120,11 +120,11 @@ typedef struct
 typedef struct
 {
   char title[64];             /* menu title                         */
-  s8 selected;                /* index of selected item             */
-  s8 offset;                  /* items list offset                  */
-  u8 max_items;               /* total number of items              */
-  u8 max_buttons;             /* total number of buttons            */
-  u8 max_images;              /* total number of background images  */
+  int selected;               /* index of selected item             */
+  int offset;                 /* items list offset                  */
+  int max_items;              /* total number of items              */
+  int max_buttons;            /* total number of buttons            */
+  int max_images;             /* total number of background images  */
   u8 screenshot;              /* game screen background             */
   gui_item *items;            /* menu items                         */
   gui_butn *buttons;          /* menu buttons                       */
@@ -144,6 +144,7 @@ typedef struct
   gx_texture *window;     /* pointer to box texture */
   gx_texture *top;        /* pointer to box title texture */
   gx_texture *buttonA;    /* pointer to button A texture */
+  gx_texture *buttonB;    /* pointer to button A texture */
   gx_texture *throbber;   /* pointer to throbber texture */
 } gui_message;
 
@@ -238,6 +239,7 @@ extern void GUI_MsgBoxOpen(char *title, char *msg, bool throbber);
 extern void GUI_MsgBoxUpdate(char *title, char *msg);
 extern void GUI_MsgBoxClose(void);
 extern void GUI_WaitPrompt(char *title, char *msg);
+extern int GUI_WaitConfirm(char *title, char *msg);
 extern void GUI_FadeOut();
 extern GXColor *GUI_GetBgColor(void);
 extern void GUI_SetBgColor(u8 color);

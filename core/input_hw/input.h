@@ -54,7 +54,7 @@
 #define SYSTEM_LIGHTPHASER  (7) /* Sega Light Phaser (Master System) */
 #define SYSTEM_PADDLE       (8) /* Sega Paddle Control (Master System) */
 #define SYSTEM_SPORTSPAD    (9) /* Sega Sports Pad (Master System) */
-#define SYSTEM_MS4PLAY     (10) /* Multi Tap -- Master System homemade */
+#define SYSTEM_MASTERTAP   (10) /* Multi Tap -- Master System homemade */
 #define SYSTEM_TEAMPLAYER  (11) /* Multi Tap -- Sega TeamPlayer */
 #define SYSTEM_WAYPLAY     (12) /* Multi Tap -- EA 4-Way Play (use both ports) */
 

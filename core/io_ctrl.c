@@ -122,10 +122,10 @@ void io_init(void)
       break;
     }
 
-    case SYSTEM_MS4PLAY:
+    case SYSTEM_MASTERTAP:
     {
-      port[0].data_w = ms4play_1_write;
-      port[0].data_r = ms4play_1_read;
+      port[0].data_w = mastertap_1_write;
+      port[0].data_r = mastertap_1_read;
       break;
     }
 
@@ -216,10 +216,10 @@ void io_init(void)
       break;
     }
 
-    case SYSTEM_MS4PLAY:
+    case SYSTEM_MASTERTAP:
     {
-      port[1].data_w = ms4play_2_write;
-      port[1].data_r = ms4play_2_read;
+      port[1].data_w = mastertap_2_write;
+      port[1].data_r = mastertap_2_read;
       break;
     }
 

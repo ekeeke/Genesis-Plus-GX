@@ -1770,8 +1770,17 @@ static void *MsgBox_Thread(gui_message *message_box)
     /* draw exit message */
     if (message_box->buttonA)
     {
-      FONT_writeCenter("Press    to continue.",18,166,166+message_box->window->width,248+22,(GXColor)WHITE);
-      gxDrawTexture(message_box->buttonA, 166+116, 248+4+(18-message_box->buttonA->height)/2,message_box->buttonA->width, message_box->buttonA->height,255);
+      if (message_box->buttonB)
+      {
+        FONT_writeCenter("        Confirm      Cancel      ",18,166,166+message_box->window->width,248+18+8,(GXColor)WHITE);
+        gxDrawTexture(message_box->buttonA, 166+56, 248+8+(18-message_box->buttonA->height)/2,message_box->buttonA->width, message_box->buttonA->height,255);
+        gxDrawTexture(message_box->buttonB, 166+166, 248+8+(18-message_box->buttonB->height)/2,message_box->buttonB->width, message_box->buttonB->height,255);
+      }
+      else
+      {
+        FONT_writeCenter("Press    to continue.",18,166,166+message_box->window->width,248+18+4,(GXColor)WHITE);
+        gxDrawTexture(message_box->buttonA, 166+116, 248+4+(18-message_box->buttonA->height)/2,message_box->buttonA->width, message_box->buttonA->height,255);
+      }
     }
 
     /* update display */
@@ -1936,6 +1945,7 @@ void GUI_MsgBoxClose(void)
     gxTextureClose(&message_box.window);
     gxTextureClose(&message_box.top);
     gxTextureClose(&message_box.buttonA);
+    gxTextureClose(&message_box.buttonB);
     gxTextureClose(&message_box.throbber);
   }
 }
@@ -1962,6 +1972,32 @@ void GUI_WaitPrompt(char *title, char *msg)
 
   /* always close message box */
   GUI_MsgBoxClose();
+}
+
+int GUI_WaitConfirm(char *title, char *msg)
+{
+  /* clear unused texture */
+  gxTextureClose(&message_box.throbber);
+
+  /* open or update message box */
+  GUI_MsgBoxOpen(title, msg, 0);
+
+  /* allocate texture */
+  message_box.buttonA = gxTextureOpenPNG(Key_A_png,0);
+  message_box.buttonB = gxTextureOpenPNG(Key_B_png,0);
+
+  /* wait for button A or Button B*/
+  while (m_input.keys & (PAD_BUTTON_A | PAD_BUTTON_B))
+    VIDEO_WaitVSync();
+  while (!(m_input.keys & (PAD_BUTTON_A | PAD_BUTTON_B)))
+    VIDEO_WaitVSync();
+
+  int ret = m_input.keys & PAD_BUTTON_A;
+
+  /* always close message box */
+  GUI_MsgBoxClose();
+
+  return ret;
 }
 
 /* Basic Fading */
