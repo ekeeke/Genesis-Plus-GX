@@ -23,7 +23,7 @@
 #include "asm_arm.h"
 #include <stdlib.h> /* for abs() */
   
-#ifdef GEKKO
+#if defined(GEKKO) && !defined(__LIBRETRO__)
 #include <gctypes.h>
 #endif
   
@@ -37,6 +37,9 @@
 #include <sys/types.h>
 #endif
 
+#if !defined(__LIBRETRO__) && defined(GEKKO)
+#ifndef __CELLOS_LV2__
+#ifndef _XBOX360
 #if BYTE_ORDER==LITTLE_ENDIAN
 union magic {
   struct {
@@ -45,8 +48,12 @@ union magic {
   } halves;
   ogg_int64_t whole;
 };
-#endif 
+#endif
+#endif
+#endif
+#endif
 
+#ifndef ANDROID
 #if BYTE_ORDER==BIG_ENDIAN
 union magic {
   struct {
@@ -55,6 +62,7 @@ union magic {
   } halves;
   ogg_int64_t whole;
 };
+#endif
 #endif
 
 STIN ogg_int32_t MULT32(ogg_int32_t x, ogg_int32_t y) {

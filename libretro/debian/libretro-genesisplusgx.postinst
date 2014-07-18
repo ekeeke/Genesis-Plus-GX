@@ -1,0 +1,9 @@
+#!/bin/sh
+
+set -e
+
+update-alternatives --install /usr/lib/libretro.so libretro /usr/lib/libretro/genesis_plus_gx_libretro.so 10
+
+#DEBHELPER#
+
+exit 0
