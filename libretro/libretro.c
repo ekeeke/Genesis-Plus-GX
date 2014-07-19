@@ -855,7 +855,7 @@ void retro_set_controller_port_device(unsigned port, unsigned device)
       case RETRO_DEVICE_SMSPAD_4P:
          config.input[port].padtype = DEVICE_PAD2B;
          input.dev[port] = DEVICE_PAD2B;
-         input.system[0] = SYSTEM_MS4PLAY;
+         input.system[0] = SYSTEM_MASTERTAP;
          break;
       case RETRO_DEVICE_JOYPAD:
       default:
