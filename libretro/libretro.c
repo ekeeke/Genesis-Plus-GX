@@ -482,7 +482,7 @@ static bool update_viewport(void)
       vheight = vheight * 2;
    }
 
-   return (oh != vheight);
+   return ((ow != vwidth) || (oh != vheight));
 }
 
 static void check_variables(void)
@@ -1099,7 +1099,7 @@ void retro_run(void)
       {
          struct retro_system_av_info info;
          retro_get_system_av_info(&info);
-         environ_cb(RETRO_ENVIRONMENT_SET_SYSTEM_AV_INFO, &info);
+         environ_cb(RETRO_ENVIRONMENT_SET_GEOMETRY, &info.geometry);
       }
    }
 
