@@ -13,15 +13,14 @@
 #include <xtl.h>
 #endif
 
-#define RETRO_DEVICE_MDPAD_3B           RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 0)
-#define RETRO_DEVICE_MDPAD_6B           RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 1)
-#define RETRO_DEVICE_SMSPAD_2B          RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 2)
-#define RETRO_DEVICE_PORT_NONE          RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 3)
-#define RETRO_DEVICE_MDPAD_3B_WAYPLAY   RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 4)
-#define RETRO_DEVICE_MDPAD_6B_WAYPLAY   RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 5)
-#define RETRO_DEVICE_MDPAD_3B_TEAMPLAYER   RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 6)
-#define RETRO_DEVICE_MDPAD_6B_TEAMPLAYER   RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 7)
-#define RETRO_DEVICE_SMSPAD_4P             RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 8)
+#define RETRO_DEVICE_MDPAD_3B             RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 0)
+#define RETRO_DEVICE_MDPAD_6B             RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 1)
+#define RETRO_DEVICE_MSPAD_2B             RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 2)
+#define RETRO_DEVICE_MDPAD_3B_WAYPLAY     RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 3)
+#define RETRO_DEVICE_MDPAD_6B_WAYPLAY     RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 4)
+#define RETRO_DEVICE_MDPAD_3B_TEAMPLAYER  RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 5)
+#define RETRO_DEVICE_MDPAD_6B_TEAMPLAYER  RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 6)
+#define RETRO_DEVICE_MSPAD_2B_MASTERTAP   RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 7)
 
 #include "shared.h"
 #include "libretro.h"
@@ -113,8 +112,8 @@ int load_archive(char *filename, unsigned char *buffer, int maxsize, char *exten
     {
        if (log_cb)
           log_cb(RETRO_LOG_ERROR, "Unable to open CD BIOS: %s.\n", filename);
-      return 0;
-   }
+       return 0;
+    }
 
     if (log_cb)
        log_cb(RETRO_LOG_ERROR, "Unable to open file.\n");
@@ -171,7 +170,7 @@ void osd_input_update(void)
 
   input_poll_cb();
 
-  for(i = 0; i < MAX_INPUTS; i++)
+  for (i = 0; i < MAX_INPUTS; i++)
   {
     temp = 0;
     switch (input.dev[i])
@@ -267,6 +266,14 @@ static void config_default(void)
    config.gg_extra = 0;
    config.ntsc     = 0;
    config.render   = 0;
+
+   /* input options */
+   input.system[0] = SYSTEM_GAMEPAD;
+   input.system[1] = SYSTEM_GAMEPAD;
+   for (i=0; i<MAX_INPUTS; i++)
+   {
+     config.input[i].padtype = DEVICE_PAD2B | DEVICE_PAD3B | DEVICE_PAD6B;
+   }
 }
 
 static void bram_load(void)
@@ -475,7 +482,7 @@ static bool update_viewport(void)
       vheight = vheight * 2;
    }
 
-   return (oh != vheight);
+   return ((ow != vwidth) || (oh != vheight));
 }
 
 static void check_variables(void)
@@ -745,41 +752,41 @@ void retro_set_environment(retro_environment_t cb)
       { NULL, NULL },
    };
 
-
    static const struct retro_controller_description port_1[] = {
+      { "Joypad Auto", RETRO_DEVICE_JOYPAD },
+      { "Joypad Port Empty", RETRO_DEVICE_NONE },
       { "MD Joypad 3 Button", RETRO_DEVICE_MDPAD_3B },
       { "MD Joypad 6 Button", RETRO_DEVICE_MDPAD_6B },
-      { "Joypad Auto", RETRO_DEVICE_JOYPAD },
-      { "Joypad Port Empty", RETRO_DEVICE_PORT_NONE },
-      { "SMS Joypad 2 Button", RETRO_DEVICE_SMSPAD_2B },
-      { "MD Joypad 3 Button + WayPlay", RETRO_DEVICE_MDPAD_3B_WAYPLAY },
-      { "MD Joypad 6 Button + WayPlay", RETRO_DEVICE_MDPAD_6B_WAYPLAY },
+      { "MS Joypad 2 Button", RETRO_DEVICE_MSPAD_2B },
+      { "MD Joypad 3 Button + 4-WayPlay", RETRO_DEVICE_MDPAD_3B_WAYPLAY },
+      { "MD Joypad 6 Button + 4-WayPlay", RETRO_DEVICE_MDPAD_6B_WAYPLAY },
       { "MD Joypad 3 Button + Teamplayer", RETRO_DEVICE_MDPAD_3B_TEAMPLAYER },
       { "MD Joypad 6 Button + Teamplayer", RETRO_DEVICE_MDPAD_6B_TEAMPLAYER },
-      { "SMS Joypad 4 Player", RETRO_DEVICE_SMSPAD_4P },
+      { "MS Joypad 2 Button + Master Tap", RETRO_DEVICE_MSPAD_2B_MASTERTAP },
    };
 
    static const struct retro_controller_description port_2[] = {
+      { "Joypad Auto", RETRO_DEVICE_JOYPAD },
+      { "Joypad Port Empty", RETRO_DEVICE_NONE },
       { "MD Joypad 3 Button", RETRO_DEVICE_MDPAD_3B },
       { "MD Joypad 6 Button", RETRO_DEVICE_MDPAD_6B },
-      { "Joypad Auto", RETRO_DEVICE_JOYPAD },
-      { "Joypad Port Empty", RETRO_DEVICE_PORT_NONE },
-      { "SMS Joypad 2 Button", RETRO_DEVICE_SMSPAD_2B },
-      { "MD Joypad 3 Button + WayPlay", RETRO_DEVICE_MDPAD_3B_WAYPLAY },
-      { "MD Joypad 6 Button + WayPlay", RETRO_DEVICE_MDPAD_6B_WAYPLAY },
+      { "MS Joypad 2 Button", RETRO_DEVICE_MSPAD_2B },
+      { "MD Joypad 3 Button + 4-WayPlay", RETRO_DEVICE_MDPAD_3B_WAYPLAY },
+      { "MD Joypad 6 Button + 4-WayPlay", RETRO_DEVICE_MDPAD_6B_WAYPLAY },
       { "MD Joypad 3 Button + Teamplayer", RETRO_DEVICE_MDPAD_3B_TEAMPLAYER },
       { "MD Joypad 6 Button + Teamplayer", RETRO_DEVICE_MDPAD_6B_TEAMPLAYER },
+      { "MS Joypad 2 Button + Master Tap", RETRO_DEVICE_MSPAD_2B_MASTERTAP },
    };
 
    static const struct retro_controller_info ports[] = {
       { port_1, 10 },
-      { port_2, 9 },
+      { port_2, 10 },
       { 0 },
    };
 
    environ_cb = cb;
    cb(RETRO_ENVIRONMENT_SET_VARIABLES, (void*)vars);
-   environ_cb(RETRO_ENVIRONMENT_SET_CONTROLLER_INFO, (void*)ports);
+   cb(RETRO_ENVIRONMENT_SET_CONTROLLER_INFO, (void*)ports);
 }
 
 void retro_set_video_refresh(retro_video_refresh_t cb) { video_cb = cb; }
@@ -812,60 +819,83 @@ void retro_set_controller_port_device(unsigned port, unsigned device)
 {
    switch(device)
    {
+      case RETRO_DEVICE_NONE:
+         input.system[port] = NO_SYSTEM;
+         break;
       case RETRO_DEVICE_MDPAD_3B:
-         config.input[port].padtype = DEVICE_PAD3B;
-         input.dev[port] = DEVICE_PAD3B;
+         config.input[port*4].padtype = DEVICE_PAD3B;
          input.system[port] = SYSTEM_GAMEPAD;
          break;
       case RETRO_DEVICE_MDPAD_6B:
-         config.input[port].padtype = DEVICE_PAD6B;
-         input.dev[port] = DEVICE_PAD6B;
+         config.input[port*4].padtype = DEVICE_PAD6B;
          input.system[port] = SYSTEM_GAMEPAD;
          break;
-      case RETRO_DEVICE_PORT_NONE:
-         config.input[port].padtype = 0; 
-         input.dev[port] = 0;
-         input.system[port] = NO_SYSTEM;
-         break;
-      case RETRO_DEVICE_SMSPAD_2B:
-         config.input[port].padtype = DEVICE_PAD2B;
-         input.dev[port] = DEVICE_PAD2B;
+      case RETRO_DEVICE_MSPAD_2B:
+         config.input[port*4].padtype = DEVICE_PAD2B;
          input.system[port] = SYSTEM_GAMEPAD;
          break;
       case RETRO_DEVICE_MDPAD_3B_WAYPLAY:
-         config.input[port].padtype = DEVICE_PAD3B;
-         input.dev[port] = DEVICE_PAD3B;
+      {
+         int i;
+         for (i=0; i<4; i++)
+         {
+            config.input[port*4 + i].padtype = DEVICE_PAD3B;
+         }
          input.system[0] = input.system[1] = SYSTEM_WAYPLAY;
          break;
+      }
       case RETRO_DEVICE_MDPAD_6B_WAYPLAY:
-         config.input[port].padtype = DEVICE_PAD6B;
-         input.dev[port] = DEVICE_PAD6B;
+      {
+         int i;
+         for (i=0; i<4; i++)
+         {
+            config.input[port*4 + i].padtype = DEVICE_PAD6B;
+         }
          input.system[0] = input.system[1] = SYSTEM_WAYPLAY;
          break;
+      }
       case RETRO_DEVICE_MDPAD_3B_TEAMPLAYER:
-         config.input[port].padtype = DEVICE_PAD3B;
-         input.dev[port] = DEVICE_PAD3B;
+      {
+         int i;
+         for (i=0; i<4; i++)
+         {
+            config.input[port*4 + i].padtype = DEVICE_PAD3B;
+         }
          input.system[port] = SYSTEM_TEAMPLAYER;
          break;
+      }
       case RETRO_DEVICE_MDPAD_6B_TEAMPLAYER:
-         config.input[port].padtype = DEVICE_PAD6B;
-         input.dev[port] = DEVICE_PAD6B;
+      {
+         int i;
+         for (i=0; i<4; i++)
+         {
+            config.input[port*4 + i].padtype = DEVICE_PAD6B;
+         }
          input.system[port] = SYSTEM_TEAMPLAYER;
          break;
-      case RETRO_DEVICE_SMSPAD_4P:
-         config.input[port].padtype = DEVICE_PAD2B;
-         input.dev[port] = DEVICE_PAD2B;
-         input.system[0] = SYSTEM_MASTERTAP;
+      }
+      case RETRO_DEVICE_MSPAD_2B_MASTERTAP:
+      {
+         int i;
+         for (i=0; i<4; i++)
+         {
+            config.input[port*4 + i].padtype = DEVICE_PAD2B;
+         }
+         input.system[port] = SYSTEM_MASTERTAP;
          break;
+      }
       case RETRO_DEVICE_JOYPAD:
       default:
-         config.input[port].padtype = DEVICE_PAD2B | DEVICE_PAD6B | DEVICE_PAD3B;
-         input.dev[port] = DEVICE_PAD2B | DEVICE_PAD6B | DEVICE_PAD3B;
+         config.input[port*4].padtype = DEVICE_PAD2B | DEVICE_PAD6B | DEVICE_PAD3B;
          input.system[port] = SYSTEM_GAMEPAD;
          break;
    }
 
-   input_init();
+   old_system[0] = input.system[0];
+   old_system[1] = input.system[1];
+   
+   io_init();
+   input_reset();
 }
 
 size_t retro_serialize_size(void) { return STATE_SIZE; }
@@ -947,9 +977,6 @@ bool retro_load_game(const struct retro_game_info *info)
    check_variables();
    if (!load_rom((char *)info->path))
       return false;
-
-   for (i = 0; i < 2; i++)
-      retro_set_controller_port_device(i, input.dev[i]);
 
    audio_init(44100, vdp_pal ? pal_fps : ntsc_fps);
    system_init();
@@ -1072,7 +1099,7 @@ void retro_run(void)
       {
          struct retro_system_av_info info;
          retro_get_system_av_info(&info);
-         environ_cb(RETRO_ENVIRONMENT_SET_SYSTEM_AV_INFO, &info);
+         environ_cb(RETRO_ENVIRONMENT_SET_GEOMETRY, &info.geometry);
       }
    }
 
