@@ -21,6 +21,7 @@
 #define RETRO_DEVICE_MDPAD_3B_TEAMPLAYER  RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 5)
 #define RETRO_DEVICE_MDPAD_6B_TEAMPLAYER  RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 6)
 #define RETRO_DEVICE_MSPAD_2B_MASTERTAP   RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 7)
+#define RETRO_DEVICE_MDPAD_6B_ALT         RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 8)
 
 #include "shared.h"
 #include "libretro.h"
@@ -50,6 +51,7 @@ char CART_BRAM[256];
 
 static int vwidth;
 static int vheight;
+static bool md6_alt = false;
 
 static uint32_t brm_crc[2];
 static uint8_t brm_format[0x40] =
@@ -173,32 +175,20 @@ void osd_input_update(void)
   for (i = 0; i < MAX_INPUTS; i++)
   {
     temp = 0;
-    switch (input.dev[i])
+    if(md6_alt)
     {
-      case DEVICE_PAD6B:
-      {
-        if (input_state_cb(padnum, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L))
+        if (input_state_cb(padnum, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B))
+          temp |= INPUT_A;
+        if (input_state_cb(padnum, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A))
+          temp |= INPUT_B;  
+        if (input_state_cb(padnum, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R))
+          temp |= INPUT_C;
+        if (input_state_cb(padnum, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y))
           temp |= INPUT_X;
         if (input_state_cb(padnum, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_X))
           temp |= INPUT_Y;
-        if (input_state_cb(padnum, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R))
+        if (input_state_cb(padnum, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L))
           temp |= INPUT_Z;
-        if (input_state_cb(padnum, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT))
-          temp |= INPUT_MODE;
-      }
-
-      case DEVICE_PAD3B:
-      {
-        if (input_state_cb(padnum, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y))
-          temp |= INPUT_A;
-      }
-
-      case DEVICE_PAD2B:
-      {
-        if (input_state_cb(padnum, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B))
-          temp |= INPUT_B;
-        if (input_state_cb(padnum, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A))
-          temp |= INPUT_C;
         if (input_state_cb(padnum, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START))
           temp |= INPUT_START;
         if (input_state_cb(padnum, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP))
@@ -209,13 +199,57 @@ void osd_input_update(void)
           temp |= INPUT_LEFT;
         if (input_state_cb(padnum, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT))
           temp |= INPUT_RIGHT;
-
+        if (input_state_cb(padnum, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT))
+          temp |= INPUT_MODE;
+        
         padnum++;
-        break;
-      }
+    }
+    else
+    {
+        switch (input.dev[i])
+        {
+          case DEVICE_PAD6B:
+          {
+            if (input_state_cb(padnum, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L))
+              temp |= INPUT_X;
+            if (input_state_cb(padnum, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_X))
+              temp |= INPUT_Y;
+            if (input_state_cb(padnum, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R))
+              temp |= INPUT_Z;
+            if (input_state_cb(padnum, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT))
+              temp |= INPUT_MODE;
+          }
 
-      default:
-        break;
+          case DEVICE_PAD3B:
+          {
+            if (input_state_cb(padnum, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y))
+              temp |= INPUT_A;
+          }
+
+          case DEVICE_PAD2B:
+          {
+            if (input_state_cb(padnum, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B))
+              temp |= INPUT_B;
+            if (input_state_cb(padnum, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A))
+              temp |= INPUT_C;
+            if (input_state_cb(padnum, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START))
+              temp |= INPUT_START;
+            if (input_state_cb(padnum, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP))
+              temp |= INPUT_UP;
+            if (input_state_cb(padnum, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN))
+              temp |= INPUT_DOWN;
+            if (input_state_cb(padnum, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT))
+              temp |= INPUT_LEFT;
+            if (input_state_cb(padnum, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT))
+              temp |= INPUT_RIGHT;
+
+            padnum++;
+            break;
+          }
+
+          default:
+            break;
+        }
     }
 
     input.pad[i] = temp;
@@ -757,6 +791,7 @@ void retro_set_environment(retro_environment_t cb)
       { "Joypad Port Empty", RETRO_DEVICE_NONE },
       { "MD Joypad 3 Button", RETRO_DEVICE_MDPAD_3B },
       { "MD Joypad 6 Button", RETRO_DEVICE_MDPAD_6B },
+      { "MD Joypad 6 Alternate", RETRO_DEVICE_MDPAD_6B_ALT },
       { "MS Joypad 2 Button", RETRO_DEVICE_MSPAD_2B },
       { "MD Joypad 3 Button + 4-WayPlay", RETRO_DEVICE_MDPAD_3B_WAYPLAY },
       { "MD Joypad 6 Button + 4-WayPlay", RETRO_DEVICE_MDPAD_6B_WAYPLAY },
@@ -770,6 +805,7 @@ void retro_set_environment(retro_environment_t cb)
       { "Joypad Port Empty", RETRO_DEVICE_NONE },
       { "MD Joypad 3 Button", RETRO_DEVICE_MDPAD_3B },
       { "MD Joypad 6 Button", RETRO_DEVICE_MDPAD_6B },
+      { "MD Joypad 6 Alternate", RETRO_DEVICE_MDPAD_6B_ALT },
       { "MS Joypad 2 Button", RETRO_DEVICE_MSPAD_2B },
       { "MD Joypad 3 Button + 4-WayPlay", RETRO_DEVICE_MDPAD_3B_WAYPLAY },
       { "MD Joypad 6 Button + 4-WayPlay", RETRO_DEVICE_MDPAD_6B_WAYPLAY },
@@ -829,6 +865,11 @@ void retro_set_controller_port_device(unsigned port, unsigned device)
       case RETRO_DEVICE_MDPAD_6B:
          config.input[port*4].padtype = DEVICE_PAD6B;
          input.system[port] = SYSTEM_GAMEPAD;
+         break;
+      case RETRO_DEVICE_MDPAD_6B_ALT:
+         config.input[port*4].padtype = DEVICE_PAD6B;
+         input.system[port] = SYSTEM_GAMEPAD;
+         md6_alt = true;
          break;
       case RETRO_DEVICE_MSPAD_2B:
          config.input[port*4].padtype = DEVICE_PAD2B;
