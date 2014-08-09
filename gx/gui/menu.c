@@ -101,7 +101,7 @@ extern const u8 Ctrl_gamepad_png[];
 extern const u8 Ctrl_justifiers_png[];
 extern const u8 Ctrl_menacer_png[];
 extern const u8 Ctrl_mouse_png[];
-extern const u8 Ctrl_xe_a1p_png[];
+extern const u8 Ctrl_xe_1ap_png[];
 extern const u8 Ctrl_activator_png[];
 extern const u8 Ctrl_lightphaser_png[];
 extern const u8 Ctrl_paddle_png[];
@@ -2057,7 +2057,7 @@ static void ctrlmenu(void)
       {NULL,Ctrl_mouse_png      ,"","Select Port 1 device", 97,113,64,88},
       {NULL,Ctrl_menacer_png    ,"","Select Port 1 device", 94,113,80,88},
       {NULL,Ctrl_justifiers_png ,"","Select Port 1 device", 88,117,80,84},
-      {NULL,Ctrl_xe_a1p_png     ,"","Select Port 1 device", 98,118,72,84},
+      {NULL,Ctrl_xe_1ap_png     ,"","Select Port 1 device", 98,118,72,84},
       {NULL,Ctrl_activator_png  ,"","Select Port 1 device", 94,121,72,80},
       {NULL,Ctrl_lightphaser_png,"","Select Port 1 device", 89,109,88,92},
       {NULL,Ctrl_paddle_png     ,"","Select Port 1 device", 86,117,96,84},
@@ -2072,7 +2072,7 @@ static void ctrlmenu(void)
       {NULL,Ctrl_mouse_png      ,"","Select Port 2 device", 97,283,64,88},
       {NULL,Ctrl_menacer_png    ,"","Select Port 2 device", 94,283,80,88},
       {NULL,Ctrl_justifiers_png ,"","Select Port 2 device", 88,287,80,84},
-      {NULL,Ctrl_xe_a1p_png     ,"","Select Port 2 device", 98,288,72,84},
+      {NULL,Ctrl_xe_1ap_png     ,"","Select Port 2 device", 98,288,72,84},
       {NULL,Ctrl_activator_png  ,"","Select Port 2 device", 94,291,72,80},
       {NULL,Ctrl_lightphaser_png,"","Select Port 2 device", 89,279,88,92},
       {NULL,Ctrl_paddle_png     ,"","Select Port 2 device", 86,287,96,84},
@@ -2502,7 +2502,7 @@ static void ctrlmenu(void)
           GUI_DrawMenuFX(m, 20, 0);
 
           /* some devices require analog sticks */
-          if ((input.dev[index] == DEVICE_XE_A1P) && ((config.input[player].device == -1) || (config.input[player].device == 1)))
+          if ((input.dev[index] == DEVICE_XE_1AP) && ((config.input[player].device == -1) || (config.input[player].device == 1)))
           {
             GUI_WaitPrompt("Warning","One Analog Stick required !");
           }

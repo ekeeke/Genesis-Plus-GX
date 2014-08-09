@@ -234,7 +234,7 @@ static void pad_update(s8 chan, u8 i)
   }
 
   /* Default menu key (right analog stick if not needed by emulated device) */
-  if ((input.dev[i] < DEVICE_XE_A1P) && (PAD_SubStickX(chan) > ANALOG_SENSITIVITY))
+  if ((input.dev[i] < DEVICE_XE_1AP) && (PAD_SubStickX(chan) > ANALOG_SENSITIVITY))
   {
     ConfigRequested = 1;
     return;
@@ -274,7 +274,7 @@ static void pad_update(s8 chan, u8 i)
       break;
     }
 
-    case DEVICE_XE_A1P:
+    case DEVICE_XE_1AP:
     {
       /* Left Stick analog position [0-255] */
       input.analog[i][0] = (x + 128);
@@ -747,7 +747,7 @@ static void wpad_update(s8 chan, u8 i, u32 exp)
       break;
     }
 
-    case DEVICE_XE_A1P:
+    case DEVICE_XE_1AP:
     {
       /* Left Stick analog position [0-255] */
       input.analog[i][0] = (x + 128);
@@ -1324,7 +1324,7 @@ void gx_input_Config(u8 chan, u8 device, u8 type)
       break;
     }
 
-    case DEVICE_XE_A1P:
+    case DEVICE_XE_1AP:
     {
       first_key = KEY_BUTTONA;
       last_key = KEY_MODE;

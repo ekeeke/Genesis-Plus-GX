@@ -1,8 +1,8 @@
 /***************************************************************************************
  *  Genesis Plus
- *  XE-A1P analog controller support
+ *  XE-1AP analog controller support
  *
- *  Copyright (C) 2011-2013  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2011-2014  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -43,20 +43,20 @@ static struct
   uint8 State;
   uint8 Counter;
   uint8 Latency;
-} xe_a1p[2];
+} xe_1ap[2];
 
-void xe_a1p_reset(int index)
+void xe_1ap_reset(int index)
 {
   input.analog[index][0] = 128;
   input.analog[index][1] = 128;
   input.analog[index+1][0] = 128;
   index >>= 2;
-  xe_a1p[index].State = 0x40;
-  xe_a1p[index].Counter = 0;
-  xe_a1p[index].Latency = 0;
+  xe_1ap[index].State = 0x40;
+  xe_1ap[index].Counter = 0;
+  xe_1ap[index].Latency = 0;
 }
 
-INLINE unsigned char xe_a1p_read(int index)
+INLINE unsigned char xe_1ap_read(int index)
 {
   unsigned int temp = 0x40;
   unsigned int port = index << 2;
@@ -72,12 +72,12 @@ INLINE unsigned char xe_a1p_read(int index)
   uint16 pad = ~input.pad[port];
 
   /* Current internal cycle (0-7) */
-  unsigned int cycle = xe_a1p[index].Counter & 7;
+  unsigned int cycle = xe_1ap[index].Counter & 7;
 
   /* Current 4-bit data cycle */
   /* There are eight internal data cycle for each 5 acquisition sequence */
   /* First 4 return the same 4-bit data, next 4 return next 4-bit data */
-  switch (xe_a1p[index].Counter >> 2)
+  switch (xe_1ap[index].Counter >> 2)
   {
     case 0:
       temp |= ((pad >> 8) & 0x0F); /* E1 E2 Start Select */
@@ -121,62 +121,62 @@ INLINE unsigned char xe_a1p_read(int index)
   cycle = (cycle + 1) & 7;
 
   /* Update internal cycle counter */
-  xe_a1p[index].Counter = (xe_a1p[index].Counter & ~7) | cycle;
+  xe_1ap[index].Counter = (xe_1ap[index].Counter & ~7) | cycle;
 
   /* Update internal latency on each read */
-  xe_a1p[index].Latency++;
+  xe_1ap[index].Latency++;
 
   return temp;
 }
 
-INLINE void xe_a1p_write(int index, unsigned char data, unsigned char mask)
+INLINE void xe_1ap_write(int index, unsigned char data, unsigned char mask)
 {
   /* update bits set as output only */
-  data = (xe_a1p[index].State & ~mask) | (data & mask);
+  data = (xe_1ap[index].State & ~mask) | (data & mask);
 
   /* look for TH 1->0 transitions */
-  if (!(data & 0x40) && (xe_a1p[index].State & 0x40))
+  if (!(data & 0x40) && (xe_1ap[index].State & 0x40))
   {
     /* reset acquisition cycle */
-    xe_a1p[index].Latency = xe_a1p[index].Counter = 0;
+    xe_1ap[index].Latency = xe_1ap[index].Counter = 0;
   }
   else
   {
     /* some games immediately write new data to TH */
     /* so we make sure first sequence has actually been handled */
-    if (xe_a1p[index].Latency > 2)
+    if (xe_1ap[index].Latency > 2)
     {
       /* next acquisition sequence */
-      xe_a1p[index].Counter = (xe_a1p[index].Counter & ~7) + 8;
+      xe_1ap[index].Counter = (xe_1ap[index].Counter & ~7) + 8;
 
       /* 5 sequence max with 8 cycles each */
-      if (xe_a1p[index].Counter > 32)
+      if (xe_1ap[index].Counter > 32)
       {
-        xe_a1p[index].Counter = 32;
+        xe_1ap[index].Counter = 32;
       }
     }
   }
 
   /* update internal state */
-  xe_a1p[index].State = data;
+  xe_1ap[index].State = data;
 }
 
-unsigned char xe_a1p_1_read(void)
+unsigned char xe_1ap_1_read(void)
 {
-  return xe_a1p_read(0);
+  return xe_1ap_read(0);
 }
 
-unsigned char xe_a1p_2_read(void)
+unsigned char xe_1ap_2_read(void)
 {
-  return xe_a1p_read(1);
+  return xe_1ap_read(1);
 }
 
-void xe_a1p_1_write(unsigned char data, unsigned char mask)
+void xe_1ap_1_write(unsigned char data, unsigned char mask)
 {
-  xe_a1p_write(0, data, mask);
+  xe_1ap_write(0, data, mask);
 }
 
-void xe_a1p_2_write(unsigned char data, unsigned char mask)
+void xe_1ap_2_write(unsigned char data, unsigned char mask)
 {
-  xe_a1p_write(1, data, mask);
+  xe_1ap_write(1, data, mask);
 }

@@ -42,7 +42,7 @@
 #include "lightgun.h"
 #include "mouse.h"
 #include "activator.h"
-#include "xe_a1p.h"
+#include "xe_1ap.h"
 #include "teamplayer.h"
 #include "paddle.h"
 #include "sportspad.h"
@@ -120,9 +120,9 @@ void input_init(void)
       break;
     }
 
-    case SYSTEM_XE_A1P:
+    case SYSTEM_XE_1AP:
     {
-      input.dev[0] = DEVICE_XE_A1P;
+      input.dev[0] = DEVICE_XE_1AP;
       player++;
       break;
     }
@@ -240,9 +240,9 @@ void input_init(void)
       break;
     }
 
-    case SYSTEM_XE_A1P:
+    case SYSTEM_XE_1AP:
     {
-      input.dev[4] = DEVICE_XE_A1P;
+      input.dev[4] = DEVICE_XE_1AP;
       player++;
       break;
     }
@@ -381,9 +381,9 @@ void input_reset(void)
         break;
       }
 
-      case DEVICE_XE_A1P:
+      case DEVICE_XE_1AP:
       {
-        xe_a1p_reset(i);
+        xe_1ap_reset(i);
         break;
       }
 

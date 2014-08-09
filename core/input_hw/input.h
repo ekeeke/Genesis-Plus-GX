@@ -46,15 +46,15 @@
 /* Ports configuration */
 #define NO_SYSTEM           (0) /* unconnected port*/
 #define SYSTEM_GAMEPAD      (1) /* 2-buttons, 3-buttons or 6-buttons Control Pad */
-#define SYSTEM_MOUSE        (2) /* Sega Mouse */
-#define SYSTEM_MENACER      (3) /* Sega Menacer (port B only) */
-#define SYSTEM_JUSTIFIER    (4) /* Konami Justifiers (port B only) */
-#define SYSTEM_XE_A1P       (5) /* XE-A1P analog controller (port A only) */
+#define SYSTEM_MOUSE        (2) /* Sega Mouse (only supported in either port A or port B) */
+#define SYSTEM_MENACER      (3) /* Sega Menacer (only supported in port B) */
+#define SYSTEM_JUSTIFIER    (4) /* Konami Justifiers (only supported in port B) */
+#define SYSTEM_XE_1AP       (5) /* XE-1AP analog controller */
 #define SYSTEM_ACTIVATOR    (6) /* Sega Activator */
-#define SYSTEM_LIGHTPHASER  (7) /* Sega Light Phaser (Master System) */
-#define SYSTEM_PADDLE       (8) /* Sega Paddle Control (Master System) */
-#define SYSTEM_SPORTSPAD    (9) /* Sega Sports Pad (Master System) */
-#define SYSTEM_MASTERTAP   (10) /* Multi Tap -- Master System homemade */
+#define SYSTEM_LIGHTPHASER  (7) /* Sega Light Phaser */
+#define SYSTEM_PADDLE       (8) /* Sega Paddle Control */
+#define SYSTEM_SPORTSPAD    (9) /* Sega Sports Pad */
+#define SYSTEM_MASTERTAP   (10) /* Multi Tap -- Furrtek's Master Tap (unofficial) */
 #define SYSTEM_TEAMPLAYER  (11) /* Multi Tap -- Sega TeamPlayer */
 #define SYSTEM_WAYPLAY     (12) /* Multi Tap -- EA 4-Way Play (use both ports) */
 
@@ -69,7 +69,7 @@
 #define DEVICE_SPORTSPAD  (0x06) /* Sega Sports Pad */
 #define DEVICE_PICO       (0x07) /* PICO tablet */
 #define DEVICE_TEREBI     (0x08) /* Terebi Oekaki tablet */
-#define DEVICE_XE_A1P     (0x09) /* XE-A1P analog controller */
+#define DEVICE_XE_1AP     (0x09) /* XE-1AP analog controller */
 #define DEVICE_ACTIVATOR  (0x0a) /* Activator */
 
 /* Default Input bitmasks */

@@ -575,7 +575,7 @@ int sdl_input_update(void)
       break;
     }
 
-    case DEVICE_XE_A1P:
+    case DEVICE_XE_1AP:
     {
       /* A,B,C,D,Select,START,E1,E2 buttons -> E1(?) E2(?) START SELECT(?) A B C D */
       if(keystate[SDLK_a])  input.pad[joynum] |= INPUT_START;
