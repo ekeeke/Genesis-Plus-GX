@@ -1,7 +1,7 @@
 /***************************************************************************************
  *  Genesis Plus
  *  2-Buttons, 3-Buttons & 6-Buttons controller support
- *  Additional support for J-Cart, 4-Way Play & homemade Master System multitap
+ *  Additional support for J-Cart, 4-Way Play & Master Tap adapters
  *
  *  Copyright (C) 2007-2014  Eke-Eke (Genesis Plus GX)
  *

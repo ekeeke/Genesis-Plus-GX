@@ -31,7 +31,7 @@ LOCAL_SRC_FILES := $(GENPLUS_SRC_DIR)/genesis.c \
 			$(GENPLUS_SRC_DIR)/input_hw/paddle.c \
 			$(GENPLUS_SRC_DIR)/input_hw/sportspad.c \
 			$(GENPLUS_SRC_DIR)/input_hw/teamplayer.c \
-			$(GENPLUS_SRC_DIR)/input_hw/xe_a1p.c \
+			$(GENPLUS_SRC_DIR)/input_hw/xe_1ap.c \
 			$(GENPLUS_SRC_DIR)/input_hw/terebi_oekaki.c \
 			$(GENPLUS_SRC_DIR)/cd_hw/cd_cart.c \
 			$(GENPLUS_SRC_DIR)/cd_hw/cdc.c \

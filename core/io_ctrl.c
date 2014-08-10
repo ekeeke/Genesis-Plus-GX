@@ -44,7 +44,7 @@
 #include "lightgun.h"
 #include "mouse.h"
 #include "activator.h"
-#include "xe_a1p.h"
+#include "xe_1ap.h"
 #include "teamplayer.h"
 #include "paddle.h"
 #include "sportspad.h"
@@ -101,10 +101,10 @@ void io_init(void)
       break;
     }
 
-    case SYSTEM_XE_A1P:
+    case SYSTEM_XE_1AP:
     {
-      port[0].data_w = xe_a1p_1_write;
-      port[0].data_r = xe_a1p_1_read;
+      port[0].data_w = xe_1ap_1_write;
+      port[0].data_r = xe_1ap_1_read;
       break;
     }
 
@@ -174,10 +174,10 @@ void io_init(void)
       break;
     }
 
-    case SYSTEM_XE_A1P:
+    case SYSTEM_XE_1AP:
     {
-      port[1].data_w = xe_a1p_2_write;
-      port[1].data_r = xe_a1p_2_read;
+      port[1].data_w = xe_1ap_2_write;
+      port[1].data_r = xe_1ap_2_read;
       break;
     }
 

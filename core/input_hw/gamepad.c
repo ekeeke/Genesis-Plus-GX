@@ -1,7 +1,7 @@
 /***************************************************************************************
  *  Genesis Plus
  *  2-Buttons, 3-Buttons & 6-Buttons controller support
- *  Additional support for J-Cart, 4-Way Play & homemade Master System multitap
+ *  Additional support for J-Cart, 4-Way Play & Master Tap adapters
  *
  *  Copyright (C) 2007-2014  Eke-Eke (Genesis Plus GX)
  *
@@ -66,7 +66,7 @@ void gamepad_reset(int port)
   /* reset 4-WayPlay latch */
   latch = 0;
 
-  /* reset Master System multitap flip-flop */
+  /* reset Master Tap flip-flop */
   flipflop[port>>2].Latch = 0;
   flipflop[port>>2].Counter = 0;
 }
@@ -250,7 +250,7 @@ void jcart_write(unsigned int address, unsigned int data)
 
 
 /*--------------------------------------------------------------------------*/
-/*  Master System multitap ports handler (original design by Furrtek)       */
+/*  Master Tap ports handler (unofficial, designed by Furrtek)              */
 /*  cf. http://www.smspower.org/uploads/Homebrew/BOoM-SMS-sms4p_2.png       */
 /*--------------------------------------------------------------------------*/
 unsigned char mastertap_1_read(void)
