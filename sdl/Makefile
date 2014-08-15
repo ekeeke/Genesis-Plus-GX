@@ -55,7 +55,7 @@ OBJECTS	+=      $(OBJDIR)/input.o	 \
 		$(OBJDIR)/lightgun.o	 \
 		$(OBJDIR)/mouse.o	 \
 		$(OBJDIR)/activator.o	 \
-		$(OBJDIR)/xe_a1p.o	 \
+		$(OBJDIR)/xe_1ap.o	 \
 		$(OBJDIR)/teamplayer.o   \
 		$(OBJDIR)/paddle.o	 \
 		$(OBJDIR)/sportspad.o    \
