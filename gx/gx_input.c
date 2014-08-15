@@ -858,8 +858,8 @@ static void wpad_update(s8 chan, u8 i, u32 exp)
         if (ir.valid)
         {
           /* screen position */
-          input.analog[i][0] = (ir.x * bitmap.viewport.w) / 640;
-          input.analog[i][1] = (ir.y * bitmap.viewport.h) / 480;
+          input.analog[i][0] = ((ir.x + config.calx) * bitmap.viewport.w) / 640;
+          input.analog[i][1] = ((ir.y + config.caly) * bitmap.viewport.h) / 480;
         }
         else
         {
@@ -968,8 +968,8 @@ static void wpad_update(s8 chan, u8 i, u32 exp)
         WPAD_IR(chan, &ir);
         if (ir.valid)
         {
-          input.analog[0][0] = 0x3c  + (ir.x * (0x17c - 0x3c  + 1)) / 640;
-          input.analog[0][1] = 0x1fc + (ir.y * (0x3f3 - 0x1fc + 1)) / 480;
+          input.analog[0][0] = 0x3c  + ((ir.x + config.calx) * (0x17c - 0x3c  + 1)) / 640;
+          input.analog[0][1] = 0x1fc + ((ir.y + config.caly) * (0x3f3 - 0x1fc + 1)) / 480;
         }
       }
 
@@ -1004,8 +1004,8 @@ static void wpad_update(s8 chan, u8 i, u32 exp)
         WPAD_IR(chan, &ir);
         if (ir.valid)
         {
-          input.analog[0][0] = (ir.x * 250) / 640;
-          input.analog[0][1] = (ir.y * 250) / 480;
+          input.analog[0][0] = ((ir.x + config.calx) * 250) / 640;
+          input.analog[0][1] = ((ir.y + config.caly) * 250) / 480;
         }
       }
 
@@ -1582,6 +1582,10 @@ void gx_input_UpdateMenu(void)
     else if (pw & (WPAD_BUTTON_DOWN|WPAD_CLASSIC_BUTTON_DOWN))    pp |= PAD_BUTTON_DOWN;
     else if (pw & (WPAD_BUTTON_LEFT|WPAD_CLASSIC_BUTTON_LEFT))    pp |= PAD_BUTTON_LEFT;
     else if (pw & (WPAD_BUTTON_RIGHT|WPAD_CLASSIC_BUTTON_RIGHT))  pp |= PAD_BUTTON_RIGHT;
+
+    /* Wiimote pointer user calibration */
+    m_input.ir.x += config.calx;
+    m_input.ir.y += config.caly;
   }
   else
   {

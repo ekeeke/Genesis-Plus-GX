@@ -401,7 +401,7 @@ static gui_item items_video[16] =
 
 /* Menu options */
 #ifdef HW_RVL
-static gui_item items_prefs[12] =
+static gui_item items_prefs[13] =
 #else
 static gui_item items_prefs[11] =
 #endif
@@ -419,6 +419,7 @@ static gui_item items_prefs[11] =
   {NULL,NULL,"Show FPS: OFF",       "Enable/disable FPS counter",                      56,132,276,48},
 #ifdef HW_RVL
   {NULL,NULL,"Wiimote Timeout: OFF","Enable/disable Wii remote automatic shutodwn",    56,132,276,48},
+  {NULL,NULL,"Wiimote Calibration: AUTO","Calibrate Wii remote pointer",               56,132,276,48},
 #endif
 };
 
@@ -698,8 +699,10 @@ static void prefmenu ()
   sprintf (items[9].text, "Show CD Leds: %s", config.cd_leds ? "ON":"OFF");
   sprintf (items[10].text, "Show FPS: %s", config.fps ? "ON":"OFF");
 #ifdef HW_RVL
-  sprintf (items[11].text, "Wiimote Timeout: %s", config.autosleep ? "5min":"30min");
-  m->max_items = 12;
+  sprintf (items[11].text, "Wiimote Timeout: %s", config.autosleep ? "5 MIN":"30 MIN");
+  sprintf (items[12].text, "Wiimote Calibration: %s", ((config.calx * config.caly) != 0) ? "MANUAL":"AUTO");
+  sprintf (items[12].comment, "%s", ((config.calx * config.caly) != 0) ? "Reset default Wii remote pointer calibration":"Calibrate Wii remote pointer");
+  m->max_items = 13;
 #else
   m->max_items = 11;
 #endif
@@ -802,6 +805,25 @@ static void prefmenu ()
         config.autosleep ^= 1;
         sprintf (items[11].text, "Wiimote Timeout: %s", config.autosleep ? "5min":"30min");
         WPAD_SetIdleTimeout(config.autosleep ? 300 : 1800);
+        break;
+
+      case 12:   /*** Wii remote pointer calibration ***/
+        if ((config.calx * config.caly) == 0)
+        {
+          sprintf (items[12].text, "Wiimote Calibration: MANUAL");
+          sprintf (items[12].comment, "Reset default Wii remote pointer calibration");
+          GUI_WaitConfirm("Pointer Calibration","Aim center of TV screen");
+          config.calx = 320 - m_input.ir.x;
+          config.caly = 240 - m_input.ir.y;
+          m_input.ir.x = 320;
+          m_input.ir.y = 240;
+        }
+        else
+        {
+          sprintf (items[12].text, "Wiimote Calibration: AUTO");
+          sprintf (items[12].comment, "Calibrate Wii remote pointer");
+          config.calx = config.caly = 0;
+        }
         break;
 #endif
 

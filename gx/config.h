@@ -98,6 +98,8 @@ typedef struct
 #ifdef HW_RVL
   uint32 wpad_keymap[4*3][MAX_KEYS];
   uint8 autosleep;
+  int32 calx;
+  int32 caly;
 #endif
   uint8 autoload;
   uint8 autocheat;
