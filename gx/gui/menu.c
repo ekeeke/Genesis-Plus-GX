@@ -810,13 +810,15 @@ static void prefmenu ()
       case 12:   /*** Wii remote pointer calibration ***/
         if ((config.calx * config.caly) == 0)
         {
-          sprintf (items[12].text, "Wiimote Calibration: MANUAL");
-          sprintf (items[12].comment, "Reset default Wii remote pointer calibration");
-          GUI_WaitConfirm("Pointer Calibration","Aim center of TV screen");
-          config.calx = 320 - m_input.ir.x;
-          config.caly = 240 - m_input.ir.y;
-          m_input.ir.x = 320;
-          m_input.ir.y = 240;
+          if (GUI_WaitConfirm("Pointer Calibration","Aim center of TV screen"))
+          {
+            sprintf (items[12].text, "Wiimote Calibration: MANUAL");
+            sprintf (items[12].comment, "Reset default Wii remote pointer calibration");
+            config.calx = 320 - m_input.ir.x;
+            config.caly = 240 - m_input.ir.y;
+            m_input.ir.x = 320;
+            m_input.ir.y = 240;
+          }
         }
         else
         {
