@@ -381,10 +381,10 @@ static void pad_update(s8 chan, u8 i)
       input.analog[0][1] -= y / ANALOG_SENSITIVITY;
 
       /* Limits */
-      if (input.analog[0][0] < 0x17c) input.analog[0][0] = 0x17c;
-      else if (input.analog[0][0] > 0x3c) input.analog[0][0] = 0x3c;
+      if (input.analog[0][0] > 0x17c) input.analog[0][0] = 0x17c;
+      else if (input.analog[0][0] < 0x3c) input.analog[0][0] = 0x3c;
       if (input.analog[0][1] < 0x1fc) input.analog[0][1] = 0x1fc;
-      else if (input.analog[0][1] > 0x3f3) input.analog[0][1] = 0x3f3;
+      else if (input.analog[0][1] > 0x2f7) input.analog[0][1] = 0x2f7;
 
       /* PEN button */
       if (p & pad_keymap[KEY_BUTTONA]) input.pad[0] |= INPUT_PICO_RED;
@@ -956,10 +956,10 @@ static void wpad_update(s8 chan, u8 i, u32 exp)
       input.analog[0][1] -= y / ANALOG_SENSITIVITY;
 
       /* Limits */
-      if (input.analog[0][0] < 0x17c) input.analog[0][0] = 0x17c;
-      else if (input.analog[0][0] > 0x3c) input.analog[0][0] = 0x3c;
+      if (input.analog[0][0] > 0x17c) input.analog[0][0] = 0x17c;
+      else if (input.analog[0][0] < 0x3c) input.analog[0][0] = 0x3c;
       if (input.analog[0][1] < 0x1fc) input.analog[0][1] = 0x1fc;
-      else if (input.analog[0][1] > 0x3f3) input.analog[0][1] = 0x3f3;
+      else if (input.analog[0][1] > 0x2f7) input.analog[0][1] = 0x2f7;
 
       /* Wiimote IR */
       if (exp != WPAD_EXP_CLASSIC)
@@ -969,7 +969,7 @@ static void wpad_update(s8 chan, u8 i, u32 exp)
         if (ir.valid)
         {
           input.analog[0][0] = 0x3c  + ((ir.x + config.calx) * (0x17c - 0x3c  + 1)) / 640;
-          input.analog[0][1] = 0x1fc + ((ir.y + config.caly) * (0x3f3 - 0x1fc + 1)) / 480;
+          input.analog[0][1] = 0x1fc + ((ir.y + config.caly) * (0x2f7 - 0x1fc + 1)) / 480;
         }
       }
 
