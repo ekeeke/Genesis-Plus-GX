@@ -64,6 +64,8 @@ struct
   uint8 gg_extra;
   uint8 render;
   t_input_config input[MAX_INPUTS];
+  uint8 invert_mouse;
+  uint8 gun_cursor;
 } config;
 
 extern char GG_ROM[256];
