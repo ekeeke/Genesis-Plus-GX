@@ -1,7 +1,7 @@
 /*
- * cheats.c
+ *  cheats.c
  * 
- *   Cheats menu
+ *  Genesis Plus GX Cheats menu
  *
  *  Copyright Eke-Eke (2010-2014)
  *
@@ -81,6 +81,12 @@ static CHEATENTRY cheatlist[MAX_CHEATS];
 static u8 cheatIndexes[MAX_CHEATS];
 
 static void cheatmenu_cb(void);
+
+static gui_image star;
+static gui_image bar_over;
+static gui_image key_switch;
+static gui_image key_enable;
+static gui_image key_delete;
 
 /*****************************************************************************/
 /*  GUI Buttons data                                                         */
@@ -649,13 +655,7 @@ static void cheatmenu_cb(void)
 {
   int i;
   int yoffset = 108;
-  gui_image bar_over;
-  gui_image star;
   char temp[MAX_DESC_LENGTH];
-
-  /* Initialize textures */
-  bar_over.texture = gxTextureOpenPNG(Overlay_bar_png,0);
-  star.texture = gxTextureOpenPNG(Star_full_png,0);
 
   /* Draw browser array */
   gxDrawRectangle(15, 108, 358, 26, 127, (GXColor)BG_COLOR_1);
@@ -761,15 +761,10 @@ static void cheatmenu_cb(void)
     }
   }
 
-  gxTextureClose(&bar_over.texture);
-  gxTextureClose(&star.texture);
-
   /* Extra helpers */
   if (maxcheats && !(menu_cheats.bg_images[6].state & IMAGE_VISIBLE))
   {
     /* switch between cheat code & description preview */
-    gui_image key_switch;
-    key_switch.texture = gxTextureOpenPNG(Key_DPAD_png,0);
 #ifdef HW_RVL
     gxDrawTexture(key_switch.texture,268,424,24,24,255);
     FONT_write(type ? "View\nCode":"View\nText",16,300,436,640,(GXColor)WHITE);
@@ -777,30 +772,21 @@ static void cheatmenu_cb(void)
     gxDrawTexture(key_switch.texture,272,424,24,24,255);
     FONT_write(type ? "View\nCode":"View\nText",16,304,436,640,(GXColor)WHITE);
 #endif
-    gxTextureClose(&key_switch.texture);
 
     /* delete & enable cheats */
     if ((offset + selection) < maxcheats)
     {
-      gui_image key_enable;
-      gui_image key_delete;
   #ifdef HW_RVL
-      key_enable.texture = gxTextureOpenPNG(Key_Plus_wii_png,0);
-      key_delete.texture = gxTextureOpenPNG(Key_Minus_wii_png,0);
       gxDrawTexture(key_enable.texture,152,424,24,24,255);
       gxDrawTexture(key_delete.texture,372,424,24,24,255);
       FONT_write(cheatlist[offset + selection].enable ? "Disable\nCheat":"Enable\nCheat",16,184,436,640,(GXColor)WHITE);
       FONT_write("Delete\nCheat",16,404,436,640,(GXColor)WHITE);
   #else
-      key_enable.texture = gxTextureOpenPNG(Key_L_gcn_png,0);
-      key_delete.texture = gxTextureOpenPNG(Key_R_gcn_png,0);
       gxDrawTexture(key_enable.texture,136,426,44,20,255);
       gxDrawTexture(key_delete.texture,368,426,44,20,255);
       FONT_write(cheatlist[offset + selection].enable ? "Disable\nCheat":"Enable\nCheat",16,188,436,640,(GXColor)WHITE);
       FONT_write("Delete\nCheat",16,420,436,640,(GXColor)WHITE);
   #endif
-      gxTextureClose(&key_enable.texture);
-      gxTextureClose(&key_delete.texture);
     }
   }
 }
@@ -836,6 +822,18 @@ void CheatMenu(void)
   {
     bg_cheats[1].state &= ~IMAGE_VISIBLE;
   }
+  
+  /* additional textures */
+  star.texture = gxTextureOpenPNG(Star_full_png,0);
+  bar_over.texture = gxTextureOpenPNG(Overlay_bar_png,0);
+  key_switch.texture = gxTextureOpenPNG(Key_DPAD_png,0);
+#ifdef HW_RVL
+  key_enable.texture = gxTextureOpenPNG(Key_Plus_wii_png,0);
+  key_delete.texture = gxTextureOpenPNG(Key_Minus_wii_png,0);
+#else
+  key_enable.texture = gxTextureOpenPNG(Key_L_gcn_png,0);
+  key_delete.texture = gxTextureOpenPNG(Key_R_gcn_png,0);
+#endif
 
   /* selected item */
   m->selected = selection;
@@ -843,7 +841,6 @@ void CheatMenu(void)
   /* slide-in menu */
   GUI_InitMenu(m);
   GUI_DrawMenuFX(m,30,0);
-  m->cb = cheatmenu_cb;
 
   /* lock background elements */
   m->bg_images[2].state &= ~IMAGE_SLIDE_TOP;
@@ -868,12 +865,28 @@ void CheatMenu(void)
     /* check if browsing cheats list */
     if (!(m->bg_images[6].state & IMAGE_VISIBLE))
     {
-      /* restore cheats list offset */
+      /* restore scrolling list settings */
       m->offset = offset;
       m->max_items = (maxcheats < MAX_CHEATS) ? (maxcheats + 1) : MAX_CHEATS;
       m->max_buttons = 10;
       m->helpers[1] = NULL;
     }
+
+#ifdef HW_RVL
+    if (Shutdown)
+    {
+      /* close additional textures */
+      gxTextureClose(&star.texture);
+      gxTextureClose(&bar_over.texture);
+      gxTextureClose(&key_switch.texture);
+      gxTextureClose(&key_enable.texture);
+      gxTextureClose(&key_delete.texture);
+
+      /* restore default GUI settings */
+      m->max_items = m->max_buttons = 30;
+      m->helpers[1] = &action_select;
+    }
+#endif
 
     /* update menu */
     update = GUI_UpdateMenu(m);
@@ -881,11 +894,19 @@ void CheatMenu(void)
     /* check if browsing cheats list */
     if (!(m->bg_images[6].state & IMAGE_VISIBLE))
     {
-      /* update selected cheat */
-      if ((m->selected < 10) && (selection != m->selected))
+      if (m->selected < 10)
       {
-        selection = m->selected;
-        string_offset = 0;
+        /* update selected cheat */
+        if (selection != m->selected)
+        {
+          selection = m->selected;
+          string_offset = 0;
+        }
+      }
+      else
+      {
+        /* arrow button is selected */
+        m->selected += 30;
       }
 
       /* save cheats list offset */
@@ -990,13 +1011,15 @@ void CheatMenu(void)
           }
 
           /* show digit buttons */
-          for (i=10; i<30; i++) m->buttons[i].state |= BUTTON_VISIBLE;
+          for (i=10; i<30; i++)
+            m->buttons[i].state |= BUTTON_VISIBLE;
 
           /* show right window */
           m->bg_images[6].state |= IMAGE_VISIBLE;
 
           /* disable left buttons */
-          for (i=0; i<10; i++) m->buttons[i].state &= ~BUTTON_ACTIVE;
+          for (i=0; i<10; i++)
+            m->buttons[i].state &= ~BUTTON_ACTIVE;
 
           /* disable arrow buttons */
           m->arrows[0]->state &= ~BUTTON_ACTIVE;
@@ -1037,7 +1060,8 @@ void CheatMenu(void)
             str[digit_cnt] = '*';
 
             /* update scroll value if necessary */
-            if (string_offset > 0) string_offset--;
+            if (string_offset > 0)
+              string_offset--;
           }
           break;
         }
@@ -1124,14 +1148,17 @@ void CheatMenu(void)
 
         case 29:  /* Validate entry */
         {
-          /* check if entry is valid */
+          /* finalize cheat description */  
           if (type && ((offset + selection) != maxcheats))
           {
             str[digit_cnt] = 0;
             update = -1;
           }
+          
+          /* finalize cheat code edition */
           else if (max && (digit_cnt > max))
           {
+            /* check if cheat code is valid */
             if (decode_cheat(cheatlist[offset + selection].code, offset + selection))
             {
               /* new cheat ? */
@@ -1161,10 +1188,12 @@ void CheatMenu(void)
         default:  /* Add Character */
         {
           /* force code separator if none has been set yet */
-          if ((max == 0) && (digit_cnt == 6)) break;
+          if ((max == 0) && (digit_cnt == 6))
+            break;
 
           /* force 8-bit Game Genie code last separator */
-          if (((system_hw & SYSTEM_PBC) != SYSTEM_MD) && (max == 10) && (digit_cnt == 7)) break;
+          if (((system_hw & SYSTEM_PBC) != SYSTEM_MD) && (max == 10) && (digit_cnt == 7))
+            break;
 
           /* add character */
           if ((digit_cnt <= max) || (max == 0))
@@ -1176,7 +1205,9 @@ void CheatMenu(void)
               str[digit_cnt] = '*';
               str[digit_cnt+1] = 0;
             }
-            if (string_offset > 0) string_offset ++;
+
+            if (string_offset > 0)
+              string_offset ++;
           }
           break;
         }
@@ -1184,6 +1215,7 @@ void CheatMenu(void)
     }
     else if (update < 0)
     {
+      /* cancel */
       if (m->bg_images[6].state & IMAGE_VISIBLE)
       {
         /* Restore old entry */
@@ -1192,6 +1224,7 @@ void CheatMenu(void)
     }
     else
     {
+      /* check other buttons pressed while browsing cheats list */
       if (maxcheats && !(m->bg_images[6].state & IMAGE_VISIBLE))
       {
         if ((m_input.keys & PAD_BUTTON_LEFT) || (m_input.keys & PAD_BUTTON_RIGHT))
@@ -1202,15 +1235,14 @@ void CheatMenu(void)
           /* reset scrolling */
           string_offset = 0;
         }
-        
-        if ((offset + selection) < maxcheats)
+        else if ((offset + selection) < maxcheats)
         {
-          /* Special inputs */
+          /* Delete selected cheat code*/
           if (m_input.keys & PAD_TRIGGER_R)
           {
             if (GUI_WaitConfirm("Warning","Delete Cheat Entry ?"))
             {
-              /* sort cheat list */
+              /* shift cheat list up to selected entry */
               for (i = offset + selection + 1; i < maxcheats; i++)
               {
                 strcpy(cheatlist[i-1].text,cheatlist[i].text);
@@ -1227,11 +1259,20 @@ void CheatMenu(void)
               cheatlist[maxcheats-1].data = 0;
               cheatlist[maxcheats-1].enable = 0;
 
-              /* disable last button */
-              if ((maxcheats - offset) < 10)
+              /* adjust scrolling list */
+              if (maxcheats < 10)
               {
-                m->buttons[maxcheats - offset].state &= ~BUTTON_ACTIVE;
-                m->buttons[maxcheats - offset - 1].shift[1] = 0;
+                /* disable next button */
+                m->buttons[maxcheats].state &= ~BUTTON_ACTIVE;
+                m->buttons[maxcheats-1].shift[1] = 0;
+              }
+              else 
+              {
+                /* scroll down cheat list if there is less than 10 visible entries */
+                if ((maxcheats < (offset + 10)) && (maxcheats < MAX_CHEATS))
+                {
+                  offset--;
+                }
               }
 
               /* decrease cheat count */
@@ -1243,7 +1284,7 @@ void CheatMenu(void)
           }
           else if (m_input.keys & PAD_TRIGGER_L)
           {
-            /* cheat ON/OFF */
+            /* Enable/Disable selected cheat code */
             cheatlist[offset + selection].enable ^= 1;
           }
         }
@@ -1258,28 +1299,29 @@ void CheatMenu(void)
         GUI_DrawMenuFX(m,20,1);
 
         /* hide digit buttons */
-        for (i=10; i<30; i++) m->buttons[i].state &= ~BUTTON_VISIBLE;
+        for (i=10; i<30; i++)
+          m->buttons[i].state &= ~BUTTON_VISIBLE;
 
         /* hide right window */
         m->bg_images[6].state &= ~IMAGE_VISIBLE;
 
-        /* update left buttons */
+        /* enable left buttons */
         for (i=0; i<10; i++)
         {
-          if ((offset + i) < maxcheats)
+          if (i < maxcheats)
           {
-            m->buttons[i].state |= BUTTON_ACTIVE;
-            m->buttons[i].shift[1] = 1;
+            menu_cheats.buttons[i].state |= BUTTON_ACTIVE;
+            menu_cheats.buttons[i].shift[1] = 1;
           }
-          else if ((offset + i) == maxcheats)
+          else if (i == maxcheats)
           {
-            m->buttons[i].state |= BUTTON_ACTIVE;
-            m->buttons[i].shift[1] = 0;
+            menu_cheats.buttons[i].state |= BUTTON_ACTIVE;
+            menu_cheats.buttons[i].shift[1] = 0;
           }
           else
           {
-            m->buttons[i].state &= ~BUTTON_ACTIVE;
-            m->buttons[i].shift[1] = 0;
+            menu_cheats.buttons[i].state &= ~BUTTON_ACTIVE;
+            menu_cheats.buttons[i].shift[1] = 0;
           }
         }
 
@@ -1326,11 +1368,17 @@ void CheatMenu(void)
   m->bg_images[2].state |= IMAGE_SLIDE_TOP;
   m->bg_images[3].state |= IMAGE_SLIDE_BOTTOM;
   m->bg_images[4].state |= IMAGE_SLIDE_TOP;
-
+  
   /* leave menu */
-  m->cb = NULL;
-  GUI_DeleteMenu(m);
   GUI_DrawMenuFX(m,30,1);
+  GUI_DeleteMenu(m);
+
+  /* close additional textures */
+  gxTextureClose(&star.texture);
+  gxTextureClose(&bar_over.texture);
+  gxTextureClose(&key_switch.texture);
+  gxTextureClose(&key_enable.texture);
+  gxTextureClose(&key_delete.texture);
 }
 
 
@@ -1365,8 +1413,10 @@ void CheatLoad(void)
     while (fgets(temp, 256, f) && (maxcheats < MAX_CHEATS) && (cnt < MAX_CHEATS))
     {
       /* remove CR & EOL chars */
-      if ((temp[strlen(temp) - 2] == 0x0d) || (temp[strlen(temp) - 2] == 0x0a)) temp[strlen(temp) - 2] = 0;
-      else temp[strlen(temp) - 1] = 0;
+      if ((temp[strlen(temp) - 2] == 0x0d) || (temp[strlen(temp) - 2] == 0x0a))
+        temp[strlen(temp) - 2] = 0;
+      else
+        temp[strlen(temp) - 1] = 0;
 
       /* check cheat validty */
       len = decode_cheat(temp, maxcheats);
@@ -1379,7 +1429,8 @@ void CheatLoad(void)
         len++;
 
         /* jump TAB and SPACE characters */
-        while ((temp[len] == 0x20) || (temp[len] == 0x09)) len++;
+        while ((temp[len] == 0x20) || (temp[len] == 0x09))
+         len++;
 
         /* copy cheat description */
         strncpy(cheatlist[maxcheats].text, &temp[len], MAX_DESC_LENGTH - 1);
@@ -1401,7 +1452,8 @@ void CheatLoad(void)
     }
 
     /* by default, disable cheats that were not flagged */
-    while (cnt < maxcheats) cheatlist[cnt++].enable = 0;
+    while (cnt < maxcheats)
+     cheatlist[cnt++].enable = 0;
 
     /* close file */
     fclose(f);
