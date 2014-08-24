@@ -463,54 +463,45 @@ void md_cart_init(void)
 
     case TYPE_SK:
     {
-      FILE *f;
-      
       /* store S&K ROM above cartridge ROM (and before backup memory) */
       if (cart.romsize > 0x600000) break;
 
-      /* load Sonic & Knuckles ROM (2 MB) */
-      f = fopen(SK_ROM,"rb");
-      if (!f) break;
-      for (i=0; i<0x200000; i+=0x1000)
+      /* try to load Sonic & Knuckles ROM file (2 MB) */
+      if (load_archive(SK_ROM, cart.rom + 0x600000, 0x200000, NULL) == 0x200000)
       {
-        fread(cart.rom + 0x600000 + i, 0x1000, 1, f);
-      }
-      fclose(f);
+        /* check ROM header */
+        if (!memcmp(cart.rom + 0x600000 + 0x120, "SONIC & KNUCKLES",16))
+        {
+          /* try to load Sonic 2 & Knuckles UPMEM ROM (256 KB) */
+          if (load_archive(SK_UPMEM, cart.rom + 0x900000, 0x40000, NULL) == 0x40000)
+          {          
+            /* $000000-$1FFFFF is mapped to S&K ROM */
+            for (i=0x00; i<0x20; i++)
+            {
+              m68k.memory_map[i].base = cart.rom + 0x600000 + (i << 16);
+            }
 
-      /* load Sonic 2 UPMEM ROM (256 KB) */
-      f = fopen(SK_UPMEM,"rb");
-      if (!f) break;
-      for (i=0; i<0x40000; i+=0x1000)
-      {
-        fread(cart.rom + 0x900000 + i, 0x1000, 1, f);
-      }
-      fclose(f);
-          
 #ifdef LSB_FIRST
-      for (i=0; i<0x200000; i+=2)
-      {
-        /* Byteswap ROM */
-        uint8 temp = cart.rom[i + 0x600000];
-        cart.rom[i + 0x600000] = cart.rom[i + 0x600000 + 1];
-        cart.rom[i + 0x600000 + 1] = temp;
-      }
-      
-      for (i=0; i<0x40000; i+=2)
-      {
-        /* Byteswap ROM */
-        uint8 temp = cart.rom[i + 0x900000];
-        cart.rom[i + 0x900000] = cart.rom[i + 0x900000 + 1];
-        cart.rom[i + 0x900000 + 1] = temp;
-      }
+            for (i=0; i<0x200000; i+=2)
+            {
+              /* Byteswap ROM */
+              uint8 temp = cart.rom[i + 0x600000];
+              cart.rom[i + 0x600000] = cart.rom[i + 0x600000 + 1];
+              cart.rom[i + 0x600000 + 1] = temp;
+            }
+            
+            for (i=0; i<0x40000; i+=2)
+            {
+              /* Byteswap ROM */
+              uint8 temp = cart.rom[i + 0x900000];
+              cart.rom[i + 0x900000] = cart.rom[i + 0x900000 + 1];
+              cart.rom[i + 0x900000 + 1] = temp;
+            }
 #endif
-
-      /* $000000-$1FFFFF is mapped to S&K ROM */
-      for (i=0x00; i<0x20; i++)
-      {
-        m68k.memory_map[i].base = cart.rom + 0x600000 + (i << 16);
+            cart.special |= HW_LOCK_ON;
+          }
+        }
       }
-
-      cart.special |= HW_LOCK_ON;
       break;
     }
 

@@ -110,16 +110,11 @@ static void init_machine(void)
   /* mark all BIOS as unloaded */
   system_bios = 0;
 
-  /* Genesis BOOT ROM support (2KB max) */
+  /* try to load Genesis BOOT ROM (2KB max) */
   memset(boot_rom, 0xFF, 0x800);
-  FILE *fp = fopen(MD_BIOS, "rb");
-  if (fp != NULL)
+  if (load_archive(MD_BIOS, boot_rom, 0x800, NULL) > 0)
   {
-    /* read BOOT ROM */
-    fread(boot_rom, 1, 0x800, fp);
-    fclose(fp);
-
-    /* check BOOT ROM */
+    /* check if BOOT ROM header is valid */
     if (!memcmp((char *)(boot_rom + 0x120),"GENESIS OS", 10))
     {
       /* mark Genesis BIOS as loaded */

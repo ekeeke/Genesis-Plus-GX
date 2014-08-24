@@ -453,7 +453,7 @@ int load_bios(void)
         if (cart.romsize <= 0x400000)
         {
           /* load Game Gear BOOTROM file */
-          size = load_archive(GG_BIOS, cart.rom + 0x400000, 0x100000, 0);
+          size = load_archive(GG_BIOS, cart.rom + 0x400000, 0x400000, 0);
 
           if (size > 0)
           {

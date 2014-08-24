@@ -1,7 +1,7 @@
 /*
  * file_load.c
  * 
- *  ROM File loading support
+ *  File loading support
  *
  *  Copyright Eke-Eke (2008-2014)
  *
@@ -62,6 +62,8 @@ typedef enum
   FILETYPE_MAX
 }FILETYPES;
 
+
+extern char *GetCurrentDirectory(void);
 extern int OpenDirectory(int device, int type);
 extern int UpdateDirectory(bool go_up, char *filename);
 extern int ParseDirectory(void);

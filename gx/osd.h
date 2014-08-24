@@ -37,18 +37,19 @@
 /*************************************************/
 /* required by Genesis Plus GX core              */
 /*************************************************/
-#define GG_ROM        "/genplus/lock-on/ggenie.bin"
-#define AR_ROM        "/genplus/lock-on/areplay.bin"
-#define SK_ROM        "/genplus/lock-on/sk.bin"
-#define SK_UPMEM      "/genplus/lock-on/sk2chip.bin"
-#define MS_BIOS_US    "/genplus/bios/bios_U.sms"
-#define MS_BIOS_EU    "/genplus/bios/bios_E.sms"
-#define MS_BIOS_JP    "/genplus/bios/bios_J.sms"
-#define GG_BIOS       "/genplus/bios/bios.gg"
-#define MD_BIOS       "/genplus/bios/bios_MD.bin"
-#define CD_BIOS_US    "/genplus/bios/bios_CD_U.bin"
-#define CD_BIOS_EU    "/genplus/bios/bios_CD_E.bin"
-#define CD_BIOS_JP    "/genplus/bios/bios_CD_J.bin"
+#define CD_BIOS_US    config.sys_rom[0]
+#define CD_BIOS_EU    config.sys_rom[1]
+#define CD_BIOS_JP    config.sys_rom[2]
+#define MD_BIOS       config.sys_rom[3]
+#define MS_BIOS_US    config.sys_rom[4]
+#define MS_BIOS_EU    config.sys_rom[5]
+#define MS_BIOS_JP    config.sys_rom[6]
+#define GG_BIOS       config.sys_rom[7]
+#define GG_ROM        config.sys_rom[8]
+#define AR_ROM        config.sys_rom[9]
+#define SK_ROM        config.sys_rom[10]
+#define SK_UPMEM      config.sys_rom[11]
+
 #define CD_BRAM_US    "/genplus/saves/cd/scd_U.brm"
 #define CD_BRAM_EU    "/genplus/saves/cd/scd_E.brm"
 #define CD_BRAM_JP    "/genplus/saves/cd/scd_J.brm"

@@ -1,7 +1,7 @@
 /*
  * file_load.c
  * 
- *  ROM File loading support
+ *  File loading support
  *
  *  Copyright Eke-Eke (2008-2014)
  *
@@ -238,12 +238,6 @@ int UpdateDirectory(bool go_up, char *dirname)
   /* go up to parent directory */
   if (go_up)
   {
-    /* special case */
-    if (deviceType == TYPE_RECENT) return 0;
-
-    /* check if we already are at root directory */
-    if (!strcmp(rootdir[deviceType], (const char *)fileDir)) return 0;
-
     int size=0;
     char temp[MAXPATHLEN];
 
@@ -253,14 +247,20 @@ int UpdateDirectory(bool go_up, char *dirname)
     while (test != NULL)
     {
       size = strlen(test);
-      strncpy(dirname,test,size);
-      dirname[size] = 0;
+      if (dirname)
+      {
+        strncpy(dirname,test,size);
+        dirname[size] = 0;
+      }
       test = strtok(NULL,"/");
     }
 
+    /* check if we already are at root directory */
+    size = strlen(fileDir) - size - 1;
+    if (!size) return 0;
+
     /* remove last folder from path */
-    size = strlen(fileDir) - size;
-    fileDir[size - 1] = 0;
+    fileDir[size] = 0;
   }
   else
   {
@@ -501,8 +501,30 @@ int OpenDirectory(int device, int type)
       }
     }
 
-    /* parse last directory */
-    fileDir = config.lastdir[type][device];
+    /* System ROM selection */
+    if (type >= FILETYPE_MAX)
+    {
+      /* allocate temporary directory */
+      fileDir = malloc(MAXPATHLEN);
+      if (!fileDir)
+      {
+        GUI_WaitPrompt("Error","Unable to allocate memory !");
+        return 0;
+      }
+
+      /* extract System ROM directory */
+      strcpy(fileDir, config.sys_rom[type-FILETYPE_MAX]);
+      int i = strlen(fileDir) - 1;
+      while (fileDir[i] != '/')
+        i--;
+      fileDir[i+1] = 0;
+    }
+    else
+    {
+      /* parse last ROM type directory on selected device */
+      fileDir = config.lastdir[type][device];
+    }
+    
     max = ParseDirectory();
     if (max <= 0)
     {
@@ -527,13 +549,24 @@ int OpenDirectory(int device, int type)
   /* check if device or file type has changed */
   if ((device != deviceType) || (type != fileType))
   {
-    /* reset current types */
+    /* reset device type */
     deviceType = device;
-    fileType = type;
 
-    /* reset File selector */
-    ClearSelector(max);
+    /* make sure we are not selecting System ROM file */
+    if (type < FILETYPE_MAX)
+    {
+      /* reset file type */
+      fileType = type;
+
+      /* reset File selector */
+      ClearSelector(max);
+    }
   }
 
-  return 1;
+  return max;
+}
+
+char *GetCurrentDirectory(void)
+{
+  return fileDir;
 }

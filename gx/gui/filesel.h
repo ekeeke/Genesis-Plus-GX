@@ -1,7 +1,7 @@
 /*
- * filesel.c
+ *  filesel.c
  * 
- *   ROM File Browser
+ *  File Browser
  *
  *  Copyright Eke-Eke (2009-2014)
  *
