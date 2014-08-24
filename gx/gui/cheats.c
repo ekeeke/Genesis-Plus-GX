@@ -870,6 +870,13 @@ void CheatMenu(void)
       m->max_items = (maxcheats < MAX_CHEATS) ? (maxcheats + 1) : MAX_CHEATS;
       m->max_buttons = 10;
       m->helpers[1] = NULL;
+
+      /* check if arrow button is high-lighted */
+      if (m->selected >= 30)
+      {
+        /* adjust selected button index */
+        m->selected -= 20;
+      }
     }
 
 #ifdef HW_RVL
@@ -906,7 +913,7 @@ void CheatMenu(void)
       else
       {
         /* arrow button is selected */
-        m->selected += 30;
+        m->selected += 20;
       }
 
       /* save cheats list offset */
