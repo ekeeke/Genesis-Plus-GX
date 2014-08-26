@@ -50,12 +50,12 @@
 #define ANALOG_SENSITIVITY 30
 
 /* Delay before held keys triggering */
-/* higher is the value, less responsive is the key update */
+/* higher is the value, longer must the key remain held */
 #define HELD_DELAY 30
 
 /* Direction & selection update speed when a key is being held */
-/* lower is the value, faster is the key update */
-#define HELD_SPEED 4
+/* lower is the value, faster is the key update (min value = 1) */
+#define HELD_SPEED 2
 
 
 /* Configurable keys */

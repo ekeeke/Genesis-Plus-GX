@@ -355,8 +355,25 @@ static gui_item items_audio[13] =
   {NULL,NULL,"High Freq: 20000 Hz",    "Adjust EQ Highest Frequency",             56,132,276,48}
 };
 
+/* System ROM paths */
+static gui_item items_rompaths[12] =
+{
+  {NULL,NULL,"CD BIOS (USA): NOT FOUND",  "Select Sega CD (USA) BIOS",            56,132,276,48},
+  {NULL,NULL,"CD BIOS (PAL): NOT FOUND",  "Select Mega CD (PAL) BIOS",            56,132,276,48},
+  {NULL,NULL,"CD BIOS (JAP): NOT FOUND",  "Select Mega CD (JAP) BIOS",            56,132,276,48},
+  {NULL,NULL,"MD BIOS (TMSS): NOT FOUND", "Select Mega Drive / Genesis BootROM",  56,132,276,48},
+  {NULL,NULL,"MS BIOS (USA): NOT FOUND",  "Select Master System (USA) BootROM",   56,132,276,48},
+  {NULL,NULL,"MS BIOS (PAL): NOT FOUND",  "Select Master System (PAL) BootROM",   56,132,276,48},
+  {NULL,NULL,"MS BIOS (JAP): NOT FOUND",  "Select Master System (JAP) BootROM",   56,132,276,48},
+  {NULL,NULL,"Game Gear BIOS: NOT FOUND", "Select Game Gear BootROM",             56,132,276,48},
+  {NULL,NULL,"Game Genie: NOT FOUND",     "Select Game Genie ROM",                56,132,276,48},
+  {NULL,NULL,"Action Replay: NOT FOUND",  "Select Action Replay (Pro) ROM",       56,132,276,48},
+  {NULL,NULL,"S&K (2MB ROM): NOT FOUND",  "Select Sonic & Knuckle main ROM",      56,132,276,48},
+  {NULL,NULL,"S2&K (256K ROM): NOT FOUND","Select Sonic 2 & Knuckle upmem ROM",   56,132,276,48},
+};
+
 /* System options */
-static gui_item items_system[10] =
+static gui_item items_system[11] =
 {
   {NULL,NULL,"Console Hardware: AUTO",  "Select system hardware model",                56,132,276,48},
   {NULL,NULL,"Console Region: AUTO",    "Select system region",                        56,132,276,48},
@@ -367,6 +384,7 @@ static gui_item items_system[10] =
   {NULL,NULL,"68k Address Error: ON",   "Enable/disable 68k address error exceptions", 56,132,276,48},
   {NULL,NULL,"Lock-on: OFF",            "Select Lock-On cartridge type",               56,132,276,48},
   {NULL,NULL,"Cartridge Swap: OFF",     "Enable/disable cartridge hot swap",           56,132,276,48},
+  {NULL,NULL,"BIOS & Lock-On ROM paths","Configure BIOS & Lock-On ROM paths",          56,132,276,48},
   {NULL,NULL,"SVP Cycles: 1500",        "Adjust SVP chip emulation speed",             56,132,276,48}
 };
 
@@ -378,7 +396,7 @@ static gui_item items_video[16] =
 #endif
 {
   {NULL,NULL,"Display: PROGRESSIVE",     "Select video mode",                          56,132,276,48},
-  {NULL,NULL,"TV mode: 50/60Hz",         "Select video refresh rate",                  56,132,276,48},
+  {NULL,NULL,"TV mode: 50/60HZ",         "Select video refresh rate",                  56,132,276,48},
   {NULL,NULL,"VSYNC: AUTO",              "Enable/disable sync with Video Hardware",    56,132,276,48},
   {NULL,NULL,"GX Bilinear Filter: OFF",  "Enable/disable texture hardware filtering",  56,132,276,48},
   {NULL,NULL,"GX Deflickering Filter: OFF","Enable/disable GX hardware filtering",     56,132,276,48},
@@ -579,6 +597,20 @@ static gui_menu menu_options =
   bg_misc,
   {&action_cancel, &action_select},
   {NULL,NULL},
+  NULL
+};
+
+/* System ROM Path submenu */
+static gui_menu menu_rompaths =
+{
+  "System ROM Paths",
+  0,0,
+  12,4,6,0,
+  items_rompaths,
+  buttons_list,
+  bg_list,
+  {&action_cancel, &action_select},
+  {&arrow_up,&arrow_down},
   NULL
 };
 
@@ -1108,6 +1140,98 @@ static void soundmenu ()
 }
 
 /****************************************************************************
+ * System ROM paths menu
+ *
+ ****************************************************************************/
+
+static void rompathmenu ()
+{
+  FILE *f;
+  int i, ret;
+  gui_menu *m = &menu_rompaths;
+  gui_item *items = m->items;
+  
+  for (i=0; i<12; i++)
+  {
+    f = fopen(config.sys_rom[i],"rb");
+    if (f)
+    {
+      strcpy(strstr(items[i].text,":") + 2, "FOUND");
+      fclose(f);
+    }
+    else
+    {
+      strcpy(strstr(items[i].text,":") + 2, "NOT FOUND");
+    }
+  }
+
+  GUI_InitMenu(m);
+
+  while (1)
+  {
+    ret = GUI_RunMenu(m);
+
+    switch (ret)
+    {
+      case -1:
+      {
+        GUI_DeleteMenu(m);
+        return;
+      }
+
+      default:
+      {
+        /* Initialize System ROM browser */
+        if (OpenDirectory(config.l_device, ret + FILETYPE_MAX))
+        {
+          /* Open System ROM browser */
+          GUI_DeleteMenu(m);
+          i = FileSelector(ret + FILETYPE_MAX);
+
+          /* Get current System ROM path */
+          char *dir = GetCurrentDirectory();
+
+          /* System ROM selected ? */
+          if (i >= 0)
+          {
+            /* full System ROM pathname */
+            sprintf(config.sys_rom[ret],"%s%s",dir,filelist[i].filename);
+
+            /* mark System ROM as found */
+            strcpy(strstr(items[ret].text,":") + 2, "FOUND");
+
+            /* Genesis BOOT ROM special case */
+            if (config.sys_rom[ret] == MD_BIOS)
+            {
+              /* Genesis BOOT ROM must be reloaded */
+              if (load_archive(MD_BIOS, boot_rom, 0x800, NULL) > 0)
+              {
+                /* check if BOOT ROM header is valid */
+                if (!memcmp((char *)(boot_rom + 0x120),"GENESIS OS", 10))
+                {
+                  /* mark Genesis BIOS as loaded */
+                  system_bios |= SYSTEM_MD;
+                }
+                else
+                {
+                  /* mark Genesis BIOS as unloaded */
+                  system_bios &= ~SYSTEM_MD;
+                }
+              }
+            }
+          }
+
+          free(dir);
+          GUI_InitMenu(m);
+        }
+      }
+    }
+  }
+
+  GUI_DeleteMenu(m);
+}
+
+/****************************************************************************
  * System Settings menu
  *
  ****************************************************************************/
@@ -1149,9 +1273,9 @@ static void systemmenu ()
   else if (config.region_detect == 1)
     sprintf (items[1].text, "Console Region: USA");
   else if (config.region_detect == 2)
-    sprintf (items[1].text, "Console Region: EUROPE");
+    sprintf (items[1].text, "Console Region: PAL");
   else if (config.region_detect == 3)
-    sprintf (items[1].text, "Console Region: JAPAN");
+    sprintf (items[1].text, "Console Region: JAP");
 
   if (config.vdp_mode == 0)
     sprintf (items[2].text, "VDP Mode: AUTO");
@@ -1184,12 +1308,12 @@ static void systemmenu ()
 
   if (svp)
   {
-    sprintf (items[9].text, "SVP Cycles: %d", SVP_cycles);
-    m->max_items = 10;
+    sprintf (items[10].text, "SVP Cycles: %d", SVP_cycles);
+    m->max_items = 11;
   }
   else
   {
-    m->max_items = 9;
+    m->max_items = 10;
   }
 
   GUI_InitMenu(m);
@@ -1308,9 +1432,9 @@ static void systemmenu ()
         else if (config.region_detect == 1)
           sprintf (items[1].text, "Console Region: USA");
         else if (config.region_detect == 2)
-          sprintf (items[1].text, "Console Region: EUR");
+          sprintf (items[1].text, "Console Region: PAL");
         else if (config.region_detect == 3)
-          sprintf (items[1].text, "Console Region: JAPAN");
+          sprintf (items[1].text, "Console Region: JAP");
 
         /* force system reinitialization + region BIOS */
         reinit = 2;
@@ -1431,10 +1555,18 @@ static void systemmenu ()
         break;
       }
 
-      case 9:  /*** SVP cycles per line ***/
+      case 9:  /*** System ROM paths ***/
+      {
+        GUI_DeleteMenu(m);
+        rompathmenu();
+        GUI_InitMenu(m);
+        break;
+      }
+
+      case 10:  /*** SVP cycles per line ***/
       {
         GUI_OptionBox(m,0,"SVP Cycles",(void *)&SVP_cycles,1,1,1500,1);
-        sprintf (items[9].text, "SVP Cycles: %d", SVP_cycles);
+        sprintf (items[10].text, "SVP Cycles: %d", SVP_cycles);
         break;
       }
 
@@ -2930,11 +3062,12 @@ static void optionmenu(void)
 *
 ****************************************************************************/
 static t_slot slots[5];
+static gx_texture *star;
+
 static void savemenu_cb(void)
 {
   int i;
   char msg[16];
-  gx_texture *star = gxTextureOpenPNG(Star_full_png,0);
   
   if (sram.on)
   {
@@ -2974,7 +3107,6 @@ static void savemenu_cb(void)
     if (i == config.s_default)
       gxDrawTexture(star,22,buttons_saves[i].y+(buttons_saves[i].h-star->height)/2,star->width,star->height,255);
   }
-  gxTextureClose(&star);
 }
 
 static int savemenu(void)
@@ -2986,6 +3118,7 @@ static int savemenu(void)
   gui_menu *m = &menu_saves;
   FILE *snap;
 
+  star = gxTextureOpenPNG(Star_full_png,0);
   GUI_InitMenu(m);
   GUI_DrawMenuFX(m,30,0);
 
@@ -3249,6 +3382,7 @@ static int savemenu(void)
   m->bg_images[5].state |= IMAGE_SLIDE_TOP;
   GUI_DrawMenuFX(m,30,1);
   GUI_DeleteMenu(m);
+  gxTextureClose(&star);
   return ret;
 }
 
@@ -3294,7 +3428,7 @@ static int loadgamemenu ()
         if (ret)
         {
           GUI_DeleteMenu(m);
-          if (FileSelector(filetype))
+          if (FileSelector(filetype) > 0)
           {
             /* directly jump to game */
             return 1;
@@ -3540,9 +3674,12 @@ static void mainmenu_cb(void)
   int status = areplay_get_status();
 
   /* Action Replay Switch current status */
-  if (status == AR_SWITCH_TRAINER) strcpy(temp,"TM");
-  else if (status == AR_SWITCH_ON) strcpy(temp,"ON");
-  else strcpy(temp,"OFF");
+  if (status == AR_SWITCH_TRAINER)
+    strcpy(temp,"TM");
+  else if (status == AR_SWITCH_ON)
+    strcpy(temp,"ON");
+  else
+    strcpy(temp,"OFF");
 
   /* Display informations */
   if (m->selected == 6)

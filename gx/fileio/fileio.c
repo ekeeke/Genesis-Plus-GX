@@ -4,7 +4,7 @@
  *  Load a normal file, or ZIP/GZ archive into ROM buffer.
  *  Returns loaded ROM size (zero if an error occured).
  *  
- *  Copyright Eke-Eke (2007-2013), based on original work from Softdev (2006)
+ *  Copyright Eke-Eke (2007-2014), based on original work from Softdev (2006)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -87,26 +87,54 @@ int load_archive(char *filename, unsigned char *buffer, int maxsize, char *exten
 {
   int size = 0;
   char in[CHUNKSIZE];
-  char msg[64] = "Unable to open file";
+  char msg[64];
+  char type[16];
 
   /* Open file */
   FILE *fd = fopen(filename, "rb");
 
-  /* Master System & Game Gear BIOS are optional files */
-  if (!strcmp(filename,MS_BIOS_US) || !strcmp(filename,MS_BIOS_EU) || !strcmp(filename,MS_BIOS_JP) || !strcmp(filename,GG_BIOS))
+  /* Autodetect needed System ROM files */
+  if (filename == CD_BIOS_US)
   {
-    /* disable all messages */
+    sprintf(type,"CD BIOS (USA)");
+  }
+  else if (filename == CD_BIOS_EU)
+  {
+    sprintf(type,"CD BIOS (PAL)");
+  }
+  else if (filename == CD_BIOS_JP)
+  {
+    sprintf(type,"CD BIOS (JAP)");
+  }
+  else if (filename == AR_ROM)
+  {
+    sprintf(type,"Action Replay");
+  }
+  else if (filename == GG_ROM)
+  {
+    sprintf(type,"Game Genie");
+  }
+  else if (filename == SK_ROM)
+  {
+    sprintf(type,"S&K (2MB ROM)");
+  }
+  else if (filename == SK_UPMEM)
+  {
+    sprintf(type,"S2&K (256K ROM)");
+  }
+  else if ((filename == MS_BIOS_US) || (filename == MS_BIOS_EU) || (filename == MS_BIOS_JP) || (filename == GG_BIOS) || (filename == MD_BIOS))
+  {
+    /* Mega Drive / Genesis, Master System & Game Gear BIOS are optional so we disable error messages */
     SILENT = 1;
   }
-  
-  /* Mega CD BIOS are required files */
-  if (!strcmp(filename,CD_BIOS_US) || !strcmp(filename,CD_BIOS_EU) || !strcmp(filename,CD_BIOS_JP)) 
+  else
   {
-    sprintf(msg,"Unable to open %s", filename + 14);
+    sprintf(type,"file");
   }
 
   if (!fd)
   {
+    sprintf(msg,"Unable to open %s", type);
     GUI_WaitPrompt("Error", msg);
     SILENT = 0;
     return 0;
@@ -128,12 +156,16 @@ int load_archive(char *filename, unsigned char *buffer, int maxsize, char *exten
     size = FLIP32(pkzip->uncompressedSize);
 
     /* Check ROM size */
-    if (size > maxsize)
+    if (size > MAXROMSIZE)
     {
       fclose(fd);
       GUI_WaitPrompt("Error","File is too large");
       SILENT = 0;
       return 0;
+    }
+    else if (size > maxsize)
+    {
+      size = maxsize;
     }
 
     sprintf (msg, "Unzipping %d bytes ...", size);
@@ -148,31 +180,32 @@ int load_archive(char *filename, unsigned char *buffer, int maxsize, char *exten
     zs.avail_in = 0;
     zs.next_in = Z_NULL;
     int res = inflateInit2(&zs, -MAX_WBITS);
-
     if (res != Z_OK)
     {
       fclose(fd);
-      GUI_WaitPrompt("Error","Unable to unzip file");
+      sprintf(msg,"Unable to unzip %s", type);
+      GUI_WaitPrompt("Error",msg);
       SILENT = 0;
       return 0;
     }
 
     /* Compressed filename offset */
     int offset = sizeof (PKZIPHEADER) + FLIP16(pkzip->filenameLength);
- 
     if (extension)
     {
       memcpy(extension, &in[offset - 3], 3);
       extension[3] = 0;
     }
 
-   
     /* Initial Zip buffer offset */
     offset += FLIP16(pkzip->extraDataLength);
     zs.next_in = (Bytef *)&in[offset];
 
     /* Initial Zip remaining chunk size */
     zs.avail_in = CHUNKSIZE - offset;
+
+    /* Initialize output size */
+    size = 0;
 
     /* Start unzipping file */
     do
@@ -188,26 +221,34 @@ int load_archive(char *filename, unsigned char *buffer, int maxsize, char *exten
         {
           inflateEnd(&zs);
           fclose(fd);
-          GUI_WaitPrompt("Error","Unable to unzip file");
+          sprintf(msg,"Unable to unzip %s", type);
+          GUI_WaitPrompt("Error",msg);
           SILENT = 0;
           return 0;
         }
 
         offset = CHUNKSIZE - zs.avail_out;
+
+        if ((size + offset) > maxsize)
+        {
+          offset = maxsize - size;
+        }
+
         if (offset)
         {
           memcpy(buffer, out, offset);
           buffer += offset;
+          size += offset;
         }
       }
-      while (zs.avail_out == 0);
+      while ((zs.avail_out == 0) && (size < maxsize));
 
       /* Read next chunk of zipped data */
       fread(in, CHUNKSIZE, 1, fd);
       zs.next_in = (Bytef *)&in[0];
       zs.avail_in = CHUNKSIZE;
     }
-    while (res != Z_STREAM_END);
+    while ((res != Z_STREAM_END) && (size < maxsize));
     inflateEnd (&zs);
   }
   else
@@ -217,13 +258,17 @@ int load_archive(char *filename, unsigned char *buffer, int maxsize, char *exten
     size = ftell(fd);
     fseek(fd, 0, SEEK_SET);
 
-    /* size limit */
-    if(size > maxsize)
+    /* Check ROM size */
+    if (size > MAXROMSIZE)
     {
       fclose(fd);
       GUI_WaitPrompt("Error","File is too large");
       SILENT = 0;
       return 0;
+    }
+    else if (size > maxsize)
+    {
+      size = maxsize;
     }
 
     sprintf((char *)msg,"Loading %d bytes ...", size);

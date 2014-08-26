@@ -1,7 +1,7 @@
 /*
- * cheats.c
+ *  cheats.c
  * 
- *   Cheats menu
+ *  Genesis Plus GX Cheats menu
  *
  *  Copyright Eke-Eke (2010-2014)
  *

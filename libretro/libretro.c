@@ -222,7 +222,10 @@ void osd_input_update(void)
       case DEVICE_MOUSE:
       {
         input.analog[i][0] = input_state_cb(player, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_X);
-        input.analog[i][1] = -input_state_cb(player, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_Y);
+        if (config.invert_mouse)
+          input.analog[i][1] = input_state_cb(player, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_Y);
+        else
+          input.analog[i][1] = -input_state_cb(player, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_Y);
 
         if (input.analog[i][0] < -255)
           input.analog[i][0] = -255;
@@ -250,6 +253,13 @@ void osd_input_update(void)
       {
         input.analog[i][0] = ((input_state_cb(player, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_X) + 0x7fff) * bitmap.viewport.w) / 0xfffe;
         input.analog[i][1] = ((input_state_cb(player, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_Y) + 0x7fff) * bitmap.viewport.h) / 0xfffe;
+
+        if (config.gun_cursor)
+        {
+          uint16_t *ptr = (uint16_t *)bitmap.data + ((bitmap.viewport.y + input.analog[i][1]) * bitmap.width) + input.analog[i][0] + bitmap.viewport.x;
+          ptr[-3*bitmap.width] = ptr[-bitmap.width] = ptr[bitmap.width] = ptr[3*bitmap.width] = ptr[-3] = ptr[-1] = ptr[1] = ptr[3] = (i & 1) ? 0xf800 : 0x001f;
+          ptr[-2*bitmap.width] = ptr[0] = ptr[2*bitmap.width] = ptr[-2] = ptr[2] = 0xffff;
+        }
 
         if (input_state_cb(player, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_TRIGGER))
           temp |= INPUT_A;
@@ -875,6 +885,24 @@ static void check_variables(void)
       update_viewports = true;
   }
 
+  var.key = "gun_cursor";
+  environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
+  {
+    if (strcmp(var.value, "off") == 0)
+      config.gun_cursor = 0;
+    else
+      config.gun_cursor = 1;
+  }
+
+  var.key = "invert_mouse";
+  environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
+  {
+    if (strcmp(var.value, "off") == 0)
+      config.invert_mouse = 0;
+    else
+      config.invert_mouse = 1;
+  }
+
   if (reinit)
   {
     audio_init(44100, snd.frame_rate);
@@ -913,6 +941,8 @@ void retro_set_environment(retro_environment_t cb)
       { "overscan", "Borders; disabled|top/bottom|left/right|full" },
       { "gg_extra", "Game Gear extended screen; disabled|enabled" },
       { "render", "Interlaced mode 2 output; single field|double field" },
+      { "gun_cursor", "Show Lightgun crosshair; no|yes" },
+      { "invert_mouse", "Invert Mouse Y-axis; no|yes" },
       { NULL, NULL },
    };
 

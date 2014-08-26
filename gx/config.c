@@ -41,6 +41,8 @@
 #include "gui.h"
 #include "file_load.h"
 
+t_config config;
+
 static int config_load(void)
 {
   /* open configuration file */
@@ -239,9 +241,23 @@ void config_default(void)
   sprintf (config.lastdir[4][TYPE_DVD], "dvd:%s/roms/", DEFAULT_PATH);
 #endif
 
+  /* system ROM paths */
+  sprintf (config.sys_rom[0],   "%s/bios/bios_CD_U.bin",  DEFAULT_PATH);
+  sprintf (config.sys_rom[1],   "%s/bios/bios_CD_E.bin",  DEFAULT_PATH);
+  sprintf (config.sys_rom[2],   "%s/bios/bios_CD_J.bin",  DEFAULT_PATH);
+  sprintf (config.sys_rom[3],   "%s/bios/bios_MD.bin",  DEFAULT_PATH);
+  sprintf (config.sys_rom[4],   "%s/bios/bios_U.sms", DEFAULT_PATH);
+  sprintf (config.sys_rom[5],   "%s/bios/bios_E.sms", DEFAULT_PATH);
+  sprintf (config.sys_rom[6],   "%s/bios/bios_J.sms", DEFAULT_PATH);
+  sprintf (config.sys_rom[7],   "%s/bios/bios.gg",  DEFAULT_PATH);
+  sprintf (config.sys_rom[8],   "%s/lock-on/ggenie.bin",  DEFAULT_PATH);
+  sprintf (config.sys_rom[9],   "%s/lock-on/areplay.bin", DEFAULT_PATH);
+  sprintf (config.sys_rom[10],  "%s/lock-on/sk.bin",  DEFAULT_PATH);
+  sprintf (config.sys_rom[11],  "%s/lock-on/sk2chip.bin", DEFAULT_PATH);
+
   /* try to restore user config */
   int loaded = config_load();
-
+  
 #ifndef HW_RVL
   /* check if component cable was detected */
   if (VIDEO_HaveComponentCable())

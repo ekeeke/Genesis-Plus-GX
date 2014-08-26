@@ -1,7 +1,7 @@
 /*
- * filesel.c
+ *  filesel.c
  * 
- *   ROM File Browser
+ *  File Browser
  *
  *  Copyright Eke-Eke (2009-2014)
  *
@@ -97,7 +97,7 @@ static gui_item action_cancel =
 
 static gui_item action_select =
 {
-  NULL,Key_A_png,"","Load ROM file",602,422,28,28
+  NULL,Key_A_png,"","Load file",602,422,28,28
 };
 
 /*****************************************************************************/
@@ -139,6 +139,9 @@ static const char *Cart_dir[FILETYPE_MAX] =
   "sg"
 };
 
+static gui_image dir_icon;
+static gui_image bar_over;
+
 /*****************************************************************************/
 /*  GUI Descriptor                                                           */
 /*****************************************************************************/
@@ -161,22 +164,6 @@ static void selector_cb(void)
   int i;
   char text[MAXPATHLEN];
   int yoffset = 108;
-
-  /* Initialize directory icon */
-  gui_image dir_icon;
-  dir_icon.texture = gxTextureOpenPNG(Browser_dir_png,0);
-  dir_icon.w = dir_icon.texture->width;
-  dir_icon.h = dir_icon.texture->height;
-  dir_icon.x = 26;
-  dir_icon.y = (26 - dir_icon.h)/2;
-
-  /* Initialize selection bar */
-  gui_image bar_over;
-  bar_over.texture = gxTextureOpenPNG(Overlay_bar_png,0);
-  bar_over.w = bar_over.texture->width;
-  bar_over.h = bar_over.texture->height;
-  bar_over.x = 16;
-  bar_over.y = (26 - bar_over.h)/2;
 
   /* Draw browser array */
   gxDrawRectangle(15, 108, 358, 26, 127, (GXColor)BG_COLOR_1);
@@ -250,9 +237,6 @@ static void selector_cb(void)
 
     yoffset += 26;
   }
-
-  gxTextureClose(&bar_over.texture);
-  gxTextureClose(&dir_icon.texture);
 }  
   
 
@@ -271,6 +255,10 @@ int FileSelector(int type)
   char fname[MAXPATHLEN];
   FILE *snap;
   gui_menu *m = &menu_selector;
+
+  int offset_ = -1;
+  int selection_ = -1;
+  int maxfiles_ = -1;
 
 #ifdef HW_RVL
   int x,y;
@@ -294,14 +282,171 @@ int FileSelector(int type)
     bg_filesel[9+i].state  &= ~IMAGE_VISIBLE;
   }
 
-  /* Select cartridge type */
+  /* System ROM selection */
+  if (type >= FILETYPE_MAX)
+  {
+    /* Save current ROM browser */
+    offset_ = offset;
+    maxfiles_ = maxfiles;
+    selection_ = selection;
+
+    /* Initialize ROM browser */
+    maxfiles = ParseDirectory();
+    selection = offset = 0;
+    while (selection < maxfiles)
+    {
+      if (strstr(config.sys_rom[type-FILETYPE_MAX], filelist[selection].filename))
+      {
+        offset = selection;
+        while ((offset > (maxfiles - 10)) && (offset > 0))
+        {
+          offset--;
+        }
+        break;
+      }
+      selection++;
+    }
+
+    /* By default, select first file in directory if ROM is not found */
+    if (selection >= maxfiles)
+    {
+      selection = 0;
+    }
+
+    /* Set menu title and cartridge label type */
+    switch (type - FILETYPE_MAX)
+    {
+      case 0:
+      {
+        strcpy(m->title,"Sega CD (USA) BIOS Selection");
+        type = FILETYPE_MD;
+        break;
+      }
+
+      case 1:
+      {
+        strcpy(m->title,"Mega CD (PAL) BIOS Selection");
+        type = FILETYPE_MD;
+        break;
+      }
+
+      case 2:
+      {
+        strcpy(m->title,"Mega CD (JAP) BIOS Selection");
+        type = FILETYPE_MD;
+        break;
+      }
+
+      case 3:
+      {
+        strcpy(m->title,"Mega Drive/Genesis BootROM Selection");
+        type = FILETYPE_MD;
+        break;
+      }
+
+      case 4:
+      {
+        strcpy(m->title,"Master System (USA) BootROM Selection");
+        type = FILETYPE_MS;
+        break;
+      }
+
+      case 5:
+      {
+        strcpy(m->title,"Master System (PAL) BootROM Selection");
+        type = FILETYPE_MS;
+        break;
+      }
+
+      case 6:
+      {
+        strcpy(m->title,"Master System (JAP) BootROM Selection");
+        type = FILETYPE_MS;
+        break;
+      }
+
+      case 7:
+      {
+        strcpy(m->title,"Game Gear BootROM Selection");
+        type = FILETYPE_GG;
+        break;
+      }
+
+      case 8:
+      {
+        strcpy(m->title,"Game Genie ROM Selection");
+        type = FILETYPE_MD;
+        break;
+      }
+
+      case 9:
+      {
+        strcpy(m->title,"Action Replay (Pro) ROM Selection");
+        type = FILETYPE_MD;
+        break;
+      }
+
+      case 10:
+      {
+        strcpy(m->title,"Sonic & Knuckles ROM Selection");
+        type = FILETYPE_MD;
+        break;
+      }
+
+      case 11:
+      {
+        strcpy(m->title,"Sonic 2 & Knuckles ROM Selection");
+        type = FILETYPE_MD;
+        break;
+      }
+    }
+  }
+  else
+  {
+    /* reset menu title */
+    strcpy(m->title, "Game Selection");
+  }
+
+  /* Set default helper for Back button */
+  strcpy(m->helpers[0]->comment, "Exit");
+
+  /* Check if we are not browsing recent file list */
   if (type >= 0)
   {
-
     /* Select cartridge type */
     bg_filesel[9 + type].data = Cart_png[type];
     bg_filesel[9 + type].state |= IMAGE_VISIBLE;
+
+    /* Get current directory */
+    char *dir = GetCurrentDirectory();
+
+    /* Get current directory name length */
+    int size = strlen(dir);
+
+    /* Check if we are not in Root directory */
+    if (size > 1)
+    {
+      if (dir[size - 2] != ':')
+      {
+        /* Update helper for Back button */
+        strcpy(m->helpers[0]->comment, "Previous Directory");
+      }
+    }
+
+    /* Initialize directory icon */
+    dir_icon.texture = gxTextureOpenPNG(Browser_dir_png,0);
+    dir_icon.w = dir_icon.texture->width;
+    dir_icon.h = dir_icon.texture->height;
+    dir_icon.x = 26;
+    dir_icon.y = (26 - dir_icon.h)/2;
   }
+
+  /* Initialize selection bar */
+  bar_over.texture = gxTextureOpenPNG(Overlay_bar_png,0);
+  bar_over.w = bar_over.texture->width;
+  bar_over.h = bar_over.texture->height;
+  bar_over.x = 16;
+  bar_over.y = (26 - bar_over.h)/2;
 
   /* Initialize Menu */
   GUI_InitMenu(m);
@@ -340,10 +485,10 @@ int FileSelector(int type)
 
             /* show selected cartridge label */
             bg_filesel[9 + type].state |= IMAGE_VISIBLE;
-
-            /* default screenshot file path */
-            sprintf(fname,"%s/snaps/%s/%s", DEFAULT_PATH, Cart_dir[type], filelist[selection].filename);
           }
+
+          /* default screenshot file path */
+          sprintf(fname,"%s/snaps/%s/%s", DEFAULT_PATH, Cart_dir[type], filelist[selection].filename);
 
           /* restore recent type flag */
           type = -1;
@@ -376,7 +521,7 @@ int FileSelector(int type)
       }
     }
 
-    /* update helper */
+    /* update Action button helper */
     if (m->selected != -1)
     {
       /* out of focus */
@@ -390,15 +535,26 @@ int FileSelector(int type)
     else
     {
       /* this is a ROM file */
-      strcpy(action_select.comment,"Load File");
+      if (offset_ != -1)
+      {
+        /* System ROM browser */
+        strcpy(action_select.comment,"Select File");
+      }
+      else
+      {
+        /* Normal ROM browser */
+        strcpy(action_select.comment,"Load File");
+      }
     }
-
+ 
     /* Draw menu*/
     GUI_DrawMenu(m);
 
 #ifdef HW_RVL
     if (Shutdown)
     {
+      gxTextureClose(&bar_over.texture);
+      gxTextureClose(&dir_icon.texture);
       gxTextureClose(&w_pointer);
       GUI_DeleteMenu(m);
       GUI_FadeOut();
@@ -465,10 +621,10 @@ int FileSelector(int type)
     if (p & PAD_BUTTON_DOWN)
     {
       selection++;
-      if (selection == maxfiles)
+      if (selection >= maxfiles)
         selection = offset = 0;
-      if ((selection - offset) >= 10)
-        offset += 10;
+      else if (selection >= (offset + 10))
+        offset++;
     }
 
     /* highlight previous item */
@@ -479,11 +635,10 @@ int FileSelector(int type)
       {
         selection = maxfiles - 1;
         offset = maxfiles - 10;
+        if (offset < 0) offset = 0;
       }
-      if (selection < offset)
-        offset -= 10;
-      if (offset < 0)
-        offset = 0;
+      else if (selection < offset)
+        offset --;
     }
 
     /* go back one page */
@@ -494,10 +649,12 @@ int FileSelector(int type)
         selection -= 10;
         if (selection < 0)
         {
+          /* first page */
           selection = offset = 0;
         }
         else if (selection < offset)
         {
+          /* previous page */
           offset -= 10;
           if (offset < 0) offset = 0;
         }
@@ -516,7 +673,7 @@ int FileSelector(int type)
           selection = maxfiles - 1;
           offset = maxfiles - 10;
         }
-        else if (selection  >= (offset + 10))
+        else if (selection >= (offset + 10))
         {
           /* next page */
           offset += 10;
@@ -528,8 +685,19 @@ int FileSelector(int type)
     /* quit */
     else if (p & PAD_TRIGGER_Z)
     {
+      /* System ROM selection */
+      if (offset_ != -1)
+      {
+        /* restore current ROM browser */
+        offset = offset_;
+        maxfiles = maxfiles_;
+        selection = selection_;
+      }
+
+      gxTextureClose(&bar_over.texture);
+      gxTextureClose(&dir_icon.texture);
       GUI_DeleteMenu(m);
-      return 0;
+      return -1;
     }
 
     /* previous directory */
@@ -537,11 +705,39 @@ int FileSelector(int type)
     {
       string_offset = 0;
 
+      /* recent ROM list */
+      if (type < 0)
+      {
+        /* exit */
+        gxTextureClose(&bar_over.texture);
+        gxTextureClose(&dir_icon.texture);
+        GUI_DeleteMenu(m);
+        return -1;
+      }
+
       /* update browser directory (and get current folder)*/
       if (UpdateDirectory(1, prev_folder))
       {
         /* get directory entries */
         maxfiles = ParseDirectory();
+
+        /* Get current directory */
+        char *dir = GetCurrentDirectory();
+
+        /* current directory name length */
+        int size = strlen(dir);
+
+        /* Adjust helper for back button */
+        if ((size > 1) && (dir[size - 2] != ':'))
+        {
+          /* Back button goes up one directory */
+          strcpy(m->helpers[0]->comment, "Previous Directory");
+        }
+        else
+        {
+          /* Back button exits from root directory */
+          strcpy(m->helpers[0]->comment, "Exit");
+        }
 
         /* clear selection by default */
         selection = offset = 0;
@@ -564,9 +760,20 @@ int FileSelector(int type)
       }
       else
       {
-        /* exit */
+        /* System ROM selection */
+        if (offset_ != -1)
+        {
+          /* restore current ROM browser */
+          offset = offset_;
+          maxfiles = maxfiles_;
+          selection = selection_;
+        }
+
+        /* Exit */
+        gxTextureClose(&bar_over.texture);
+        gxTextureClose(&dir_icon.texture);
         GUI_DeleteMenu(m);
-        return 0;
+        return -1;
       }
     }
 
@@ -591,14 +798,30 @@ int FileSelector(int type)
           old = -1;
         }
         else
-        {  
-          /* load ROM file from device */
-          int ret = LoadFile(selection);
+        {
+          int ret;
+
+          /* System ROM selection */
+          if (offset_ != -1)
+          {
+            /* return ROM file index */
+            ret = selection;
+
+            /* restore current ROM browser */
+            offset = offset_;
+            maxfiles = maxfiles_;
+            selection = selection_;
+          }
+          else
+          {
+            /* load ROM file from device then return ROM size (zero if an error occured) */
+            ret = LoadFile(selection);
+          }
 
           /* exit menu */
+          gxTextureClose(&bar_over.texture);
+          gxTextureClose(&dir_icon.texture);
           GUI_DeleteMenu(m);
-
-          /* return ROM size (or zero if an error occured) */
           return ret;
         }
       }

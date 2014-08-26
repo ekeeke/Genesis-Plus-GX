@@ -119,11 +119,10 @@ typedef struct
   float ntsc_artifacts;
   float ntsc_fringing;
   float ntsc_bleed;
+  char sys_rom[12][256];
 } t_config;
 
-/* Global data */
-t_config config;
-
+extern t_config config;
 
 extern void config_save(void);
 extern void config_default(void);
