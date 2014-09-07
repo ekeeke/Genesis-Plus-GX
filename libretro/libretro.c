@@ -57,8 +57,8 @@ char CART_BRAM[256];
 
 static int vwidth;
 static int vheight;
-static bool mdalt1;
-static bool mdalt2;
+static bool alternate_layout1[MAX_INPUTS];
+static bool alternate_layout2[MAX_INPUTS];
 
 static uint32_t brm_crc[2];
 static uint8_t brm_format[0x40] =
@@ -187,7 +187,7 @@ void osd_input_update(void)
 
       case DEVICE_PAD6B:
       {
-        if(mdalt1)
+        if(alternate_layout1[i])
         {
            if (input_state_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y))
              temp |= INPUT_X;
@@ -217,7 +217,7 @@ void osd_input_update(void)
            break;
         }
 
-        if(mdalt2)
+        if(alternate_layout2[i])
         {
            if (input_state_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y))
              temp |= INPUT_X;
@@ -1183,12 +1183,12 @@ void retro_set_controller_port_device(unsigned port, unsigned device)
       case RETRO_DEVICE_MDPAD_6B_ALT1:
          config.input[port*4].padtype = DEVICE_PAD6B;
          input.system[port] = SYSTEM_GAMEPAD;
-         mdalt1 = true;
+         alternate_layout1[port] = true;
          break;
       case RETRO_DEVICE_MDPAD_6B_ALT2:
          config.input[port*4].padtype = DEVICE_PAD6B;
          input.system[port] = SYSTEM_GAMEPAD;
-         mdalt2 = true;
+         alternate_layout2[port] = true;
          break;
       case RETRO_DEVICE_JOYPAD:
       default:
