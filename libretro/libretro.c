@@ -27,6 +27,8 @@
 #define RETRO_DEVICE_PHASER               RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_LIGHTGUN, 0)
 #define RETRO_DEVICE_MENACER              RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_LIGHTGUN, 1)
 #define RETRO_DEVICE_JUSTIFIERS           RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_LIGHTGUN, 2)
+#define RETRO_DEVICE_MDPAD_6B_ALT1        RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 8) // Laid out like a SNES controller for SSFII
+#define RETRO_DEVICE_MDPAD_6B_ALT2        RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 9) // Laid out like a Madcatz fightpad
 
 #include "shared.h"
 #include "libretro.h"
@@ -55,6 +57,8 @@ char CART_BRAM[256];
 
 static int vwidth;
 static int vheight;
+static bool alternate_layout1[MAX_INPUTS];
+static bool alternate_layout2[MAX_INPUTS];
 
 static uint32_t brm_crc[2];
 static uint8_t brm_format[0x40] =
@@ -180,8 +184,69 @@ void osd_input_update(void)
     temp = 0;
     switch (input.dev[i])
     {
+
       case DEVICE_PAD6B:
       {
+        if(alternate_layout1[i])
+        {
+           if (input_state_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y))
+             temp |= INPUT_X;
+           if (input_state_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_X))
+             temp |= INPUT_Y;
+           if (input_state_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L))
+             temp |= INPUT_Z;
+           if (input_state_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT))
+             temp |= INPUT_MODE;
+           if (input_state_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B))
+             temp |= INPUT_A;  
+           if (input_state_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A))
+             temp |= INPUT_B;
+           if (input_state_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R))
+             temp |= INPUT_C;
+           if (input_state_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START))
+             temp |= INPUT_START;
+           if (input_state_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP))
+             temp |= INPUT_UP;
+           if (input_state_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN))
+             temp |= INPUT_DOWN;
+           if (input_state_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT))
+             temp |= INPUT_LEFT;
+           if (input_state_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT))
+             temp |= INPUT_RIGHT;
+           player++;
+           break;
+        }
+
+        if(alternate_layout2[i])
+        {
+           if (input_state_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y))
+             temp |= INPUT_X;
+           if (input_state_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_X))
+             temp |= INPUT_Y;
+           if (input_state_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R))
+             temp |= INPUT_Z;
+           if (input_state_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT))
+             temp |= INPUT_MODE;
+           if (input_state_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B))
+             temp |= INPUT_A;  
+           if (input_state_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A))
+             temp |= INPUT_B;
+           if (input_state_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R2))
+             temp |= INPUT_C;
+           if (input_state_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START))
+             temp |= INPUT_START;
+           if (input_state_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP))
+             temp |= INPUT_UP;
+           if (input_state_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN))
+             temp |= INPUT_DOWN;
+           if (input_state_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT))
+             temp |= INPUT_LEFT;
+           if (input_state_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT))
+             temp |= INPUT_RIGHT;
+           player++;
+           break;
+        }
+
         if (input_state_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L))
           temp |= INPUT_X;
         if (input_state_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_X))
@@ -962,6 +1027,8 @@ void retro_set_environment(retro_environment_t cb)
       { "MS Sports Pad", RETRO_DEVICE_SPORTSPAD },
       { "MD XE-1AP", RETRO_DEVICE_XE_1AP },
       { "MD Mouse", RETRO_DEVICE_MOUSE },
+      { "Alt Joypad 6 Button YXL1/BAR1", RETRO_DEVICE_MDPAD_6B_ALT1 },
+      { "Alt Joypad 6 Button YXR1/BAR2", RETRO_DEVICE_MDPAD_6B_ALT2 }, 
    };
 
    static const struct retro_controller_description port_2[] = {
@@ -982,11 +1049,13 @@ void retro_set_environment(retro_environment_t cb)
       { "MS Sports Pad", RETRO_DEVICE_SPORTSPAD },
       { "MD XE-1AP", RETRO_DEVICE_XE_1AP },
       { "MD Mouse", RETRO_DEVICE_MOUSE },
+      { "Alt Joypad 6 Button YXL1/BAR1", RETRO_DEVICE_MDPAD_6B_ALT1 },
+      { "Alt Joypad 6 Button YXR1/BAR2", RETRO_DEVICE_MDPAD_6B_ALT2 },
   };
 
    static const struct retro_controller_info ports[] = {
-      { port_1, 15 },
-      { port_2, 17 },
+      { port_1, 17 },
+      { port_2, 19 },
       { 0 },
    };
 
@@ -1110,6 +1179,16 @@ void retro_set_controller_port_device(unsigned port, unsigned device)
          break;
       case RETRO_DEVICE_MOUSE:
          input.system[port] = SYSTEM_MOUSE;
+         break;
+      case RETRO_DEVICE_MDPAD_6B_ALT1:
+         config.input[port*4].padtype = DEVICE_PAD6B;
+         input.system[port] = SYSTEM_GAMEPAD;
+         alternate_layout1[port] = true;
+         break;
+      case RETRO_DEVICE_MDPAD_6B_ALT2:
+         config.input[port*4].padtype = DEVICE_PAD6B;
+         input.system[port] = SYSTEM_GAMEPAD;
+         alternate_layout2[port] = true;
          break;
       case RETRO_DEVICE_JOYPAD:
       default:
