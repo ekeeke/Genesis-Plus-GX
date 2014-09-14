@@ -1539,6 +1539,36 @@ void gx_input_UpdateMenu(void)
   /* WPAD held keys (direction/selection) */
   u32 hw = data->btns_h & WPAD_BUTTONS_HELD;
 
+  /* Some 3rd party classic controllers return invalid factory calibration data */
+  if (data->exp.type == EXP_CLASSIC)
+  {
+    /* Left analog stick */
+    struct joystick_t* js = &data->exp.classic.ljs;
+
+    /* Check acquired calibration data */
+    if ((js->max.x <= js->center.x) || (js->min.x >= js->center.x) ||
+        (js->max.y <= js->center.y) || (js->min.y >= js->center.y))
+    {
+      /* Reset to default values */
+      js->min.x = js->min.y = 0;
+      js->max.x = js->max.y = 64;
+      js->center.x = js->center.y = 32;
+    }
+
+    /* Right analog stick */
+    js = &data->exp.classic.rjs;
+
+    /* Check acquired calibration data */
+    if ((js->max.x <= js->center.x) || (js->min.x >= js->center.x) ||
+        (js->max.y <= js->center.y) || (js->min.y >= js->center.y))
+    {
+      /* Reset to default values */
+      js->min.x = js->min.y = 0;
+      js->max.x = js->max.y = 32;
+      js->center.x = js->center.y = 16;
+    }
+  }
+
   /* WPAD analog sticks (handled as PAD held direction keys) */
   x = wpad_StickX(data, 0);
   y = wpad_StickY(data, 0);
