@@ -60,6 +60,7 @@ typedef struct
 
 /* Function prototypes */
 static void mapper_sega_w(uint32 data);
+static void mapper_512k_w(uint32 address, uint32 data);
 static void mapper_ssf2_w(uint32 address, uint32 data);
 static void mapper_sf001_w(uint32 address, uint32 data);
 static void mapper_sf002_w(uint32 address, uint32 data);
@@ -568,7 +569,15 @@ void md_cart_init(void)
   }
 
   /* detect specific mappers */
-  if (strstr(rominfo.domestic,"SUPER STREET FIGHTER2"))
+  if (strstr(rominfo.consoletype,"SEGA SSF"))
+  {
+    /* Everdrive extended SSF mapper */
+    cart.hw.bankshift = 1;
+
+    /* specific !TIME handler */
+    cart.hw.time_w = mapper_512k_w;
+  }
+  else if (strstr(rominfo.domestic,"SUPER STREET FIGHTER2"))
   {
     /* SSF2 mapper */
     cart.hw.bankshift = 1;
@@ -913,24 +922,37 @@ static void mapper_sega_w(uint32 data)
 }
 
 /*
+   Everdrive extended SSF ROM bankswitch
+   documented by Krikzz (http://krikzz.com/pub/support/mega-ed/dev/extended_ssf.txt) 
+*/
+static void mapper_512k_w(uint32 address, uint32 data)
+{
+  uint32 i;
+
+  /* 512K ROM paging */
+  uint8 *src = cart.rom + (data << 19);
+
+
+  /* cartridge area ($000000-$3FFFFF) is divided into 8 x 512K banks */
+  address = (address << 2) & 0x38;
+  
+  /* remap selected ROM page to selected bank */
+  for (i=0; i<8; i++)
+  {
+    m68k.memory_map[address++].base = src + (i<<16);
+  }
+}
+
+/*
    Super Street Fighter 2 ROM bankswitch
-   documented by Bart Trzynadlowski (http://www.trzy.org/files/ssf2.txt) 
+   documented by Bart Trzynadlowski (http://emu-docs.org/Genesis/ssf2.txt) 
 */
 static void mapper_ssf2_w(uint32 address, uint32 data)
 {
-  /* 8 x 512k banks */
-  address = (address << 2) & 0x38;
-  
-  /* bank 0 remains unchanged */
+  /* only banks 1-7 are remappable, bank 0 remains unchanged */
   if (address)
   {
-    uint32 i;
-    uint8 *src = cart.rom + (data << 19);
-
-    for (i=0; i<8; i++)
-    {
-      m68k.memory_map[address++].base = src + (i<<16);
-    }
+    mapper_512k_w(address, data);
   }
 }
 
