@@ -231,7 +231,7 @@ static void selector_cb(void)
       }
       else
       {
-        FONT_write(filelist[i].filename,18,dir_icon.x,yoffset+22,bar_over.w-20,(GXColor)WHITE);
+        FONT_write(filelist[i].filename,18,26,yoffset+22,bar_over.w-20,(GXColor)WHITE);
       }
     }
 
