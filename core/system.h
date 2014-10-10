@@ -106,6 +106,7 @@ extern uint32 system_clock;
 
 /* Function prototypes */
 extern int audio_init(int samplerate, double framerate);
+extern void audio_set_rate(int samplerate, double framerate);
 extern void audio_reset(void);
 extern void audio_shutdown(void);
 extern int audio_update(int16 *buffer);

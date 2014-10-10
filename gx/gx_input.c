@@ -221,8 +221,8 @@ static void pad_update(s8 chan, u8 i)
   /* Default fast-forward key combo */
   if ((p & PAD_TRIGGER_R) && (PAD_ButtonsDown(0) & PAD_BUTTON_START))
   {
-    audioSync ^= 1;
-    videoSync = audioSync & config.vsync & !(gc_pal ^ vdp_pal);
+    audioSync ^= AUDIO_WAIT;
+    videoSync = (audioSync && config.vsync && (gc_pal != vdp_pal)) ? VIDEO_WAIT : 0;
     return;
   }
 
@@ -1534,8 +1534,8 @@ void gx_input_UpdateEmu(void)
     /* Default fast-forward key combo */
     if (WPAD_ButtonsHeld(0) & (WPAD_BUTTON_MINUS | WPAD_CLASSIC_BUTTON_MINUS))
     {
-      audioSync ^= 1;
-      videoSync = audioSync & config.vsync & !(gc_pal ^ vdp_pal);
+      audioSync ^= AUDIO_WAIT;
+      videoSync = (audioSync && config.vsync && (gc_pal != vdp_pal)) ? VIDEO_WAIT : 0;
       return;
     }
 

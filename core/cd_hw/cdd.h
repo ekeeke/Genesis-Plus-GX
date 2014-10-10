@@ -2,7 +2,7 @@
  *  Genesis Plus
  *  CD drive processor & CD-DA fader
  *
- *  Copyright (C) 2012-2013  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2012-2014  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -98,7 +98,7 @@ typedef struct
 } cdd_t; 
 
 /* Function prototypes */
-extern void cdd_init(blip_t* left, blip_t* right);
+extern void cdd_init(int samplerate);
 extern void cdd_reset(void);
 extern int cdd_context_save(uint8 *state);
 extern int cdd_context_load(uint8 *state);

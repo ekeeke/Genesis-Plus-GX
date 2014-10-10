@@ -45,14 +45,12 @@
 /* Number of sound buffers */
 #define SOUND_BUFFER_NUM 3
 
-/* audio DMA status */
-u32 audioStarted;
-
 /* DMA soundbuffers (required to be 32-bytes aligned) */
 static u8 soundbuffer[SOUND_BUFFER_NUM][SOUND_BUFFER_LEN] ATTRIBUTE_ALIGN(32);
 
 /* Current work soundbuffer */
-static u8 mixbuffer;
+static int bufferIndex;
+static int bufferSize;
 
 /* Background music */
 static u8 *Bg_music_ogg = NULL;
@@ -96,9 +94,6 @@ void gx_audio_Init(void)
     }
     fclose(f);
   }
-
-  /* emulation is synchronized with audio hardware by default */
-  audioSync = 1;
 }
 
 /* AUDIO engine shutdown */
@@ -119,50 +114,64 @@ void gx_audio_Shutdown(void)
 
      This function retrieves samples for the frame then set the next DMA parameters 
      Parameters will be taken in account only when current DMA operation is over
+
+     To keep audio & video synchronized, DMA from external memory to audio interface is 
+     started once by video update function when first frame is ready to be displayed, 
+     then anytime video mode is changed and emulation resynchronized to video hardware.
+
+     Once started, audio DMA restarts automatically when all samples have been played.
+     At that time:
+       - if DMA settings have not been updated, previous sound buffer will be played again
+       - if DMA settings are updated too fast, one sound buffer frame might be skipped
+     
+     Therefore, in order to maintain perfect audio playback without any sound skipping  
+     or lagging, we need to make sure frame emulation is completed and this function is 
+     called before previous DMA transfer is finished and after it has been started.
+
+     This is done by synchronizing frame emulation with audio DMA interrupt (which happens
+     anytime audio DMA restarts). When video sync is enabled, to keep emulation in sync 
+     with both video AND audio, an appropriate number of samples is rendered per frame by
+     adjusting emulator output samplerate.
  ***/
-int gx_audio_Update(void)
+int gx_audio_Update(int status)
 {
-  if (audioWait && audioStarted)
-  {
-    return SYNC_WAIT;
-  }
-
   /* Current available soundbuffer */
-  s16 *sb = (s16 *)(soundbuffer[mixbuffer]);
+  s16 *sb = (s16 *)(soundbuffer[bufferIndex]);
 
-  /* Retrieve audio samples (size must be multiple of 32 bytes) */
-  int size = audio_update(sb) * 4;
-
-  /* Update DMA settings */
-  DCFlushRange((void *)sb, size);
-  AUDIO_InitDMA((u32) sb, size);
-
-  mixbuffer = (mixbuffer + 1) % SOUND_BUFFER_NUM;
-
-  audioWait = audioSync;
-
-  /* Start Audio DMA */
-  /* this is called once to kick-off DMA from external memory to audio interface        */
-  /* DMA operation is automatically restarted when all samples have been sent.          */
-  /* If DMA settings are not updated at that time, previous sound buffer will be used.  */
-  /* Therefore we need to make sure frame emulation is completed before current DMA is  */
-  /* completed, by synchronizing frame emulation with DMA start and also by syncing it  */
-  /* with Video Interrupt and outputing a suitable number of samples per frame.         */
-  if (!audioStarted)
+  /* Make sure current audio frame has not already been updated */
+  if (status & AUDIO_UPDATE)
   {
-    /* restart audio DMA */
-    AUDIO_StopDMA();
-    AUDIO_StartDMA();
-    audioStarted = 1;
+    /* Retrieve audio samples (size must be multiple of 32 bytes) */
+    bufferSize = audio_update(sb) * 4;
+    DCFlushRange((void *)sb, bufferSize);
+
+    /* Mark current audio frame as being updated */
+    status &= ~AUDIO_UPDATE;
   }
 
-  return SYNC_AUDIO;  
+  /* Wait until previous audio frame is started before pushing current audio frame into DMA */
+  if ((status & AUDIO_WAIT) && !audioWait)
+  {
+    /* Update audio DMA settings for current frame */
+    AUDIO_InitDMA((u32)sb, bufferSize);
+
+    /* Next soundbuffer */
+    bufferIndex = (bufferIndex + 1) % SOUND_BUFFER_NUM;
+
+    /* Set audio wait flag */
+    audioWait = audioSync;
+
+    /* Current audio frame is ready for upcoming DMA */
+    status &= ~AUDIO_WAIT;
+  }
+
+  return status;  
 }
 
 /*** 
       gx_audio_Start
 
-     This function restart the audio engine
+     This function restarts the audio engine
      This is called when coming back from Main Menu
  ***/
 void gx_audio_Start(void)
@@ -181,11 +190,14 @@ void gx_audio_Start(void)
   /* DMA Interrupt callback */
   AUDIO_RegisterDMACallback(ai_callback);
 
+  /* emulation is synchronized with audio hardware by default */
+  audioSync = AUDIO_WAIT;
+
   /* reset emulation audio processing */
   memset(soundbuffer, 0, sizeof(soundbuffer));
-  audioStarted = 0;
-  mixbuffer    = 0;
-  audioWait    = 0;
+  audioWait = 0;
+  bufferSize = 0;
+  bufferIndex = 0;
 }
 
 /***
@@ -193,7 +205,6 @@ void gx_audio_Start(void)
 
      This function stops current Audio DMA process
      This is called when going back to Main Menu
-     DMA need to be restarted when going back to the game (see above)
  ***/
 void gx_audio_Stop(void)
 {

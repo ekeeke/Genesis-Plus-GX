@@ -40,13 +40,12 @@
 #ifndef _GC_AUDIO_H_
 #define _GC_AUDIO_H_
 
-extern u32 audioStarted;
 extern u32 audioSync;
 
 extern void gx_audio_Init(void);
 extern void gx_audio_Shutdown(void);
 extern void gx_audio_Start(void);
 extern void gx_audio_Stop(void);
-extern int gx_audio_Update(void);
+extern int gx_audio_Update(int status);
 
 #endif

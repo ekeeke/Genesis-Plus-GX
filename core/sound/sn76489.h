@@ -12,7 +12,7 @@
 #define SN_INTEGRATED  1
 
 /* Function prototypes */
-extern void SN76489_Init(blip_t* left, blip_t* right, int type);
+extern void SN76489_Init(int type);
 extern void SN76489_Reset(void);
 extern void SN76489_Config(unsigned int clocks, int preAmp, int boostNoise, int stereo);
 extern void SN76489_Write(unsigned int clocks, unsigned int data);

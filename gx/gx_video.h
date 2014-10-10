@@ -99,6 +99,6 @@ extern void gx_video_Init(void);
 extern void gx_video_Shutdown(void);
 extern void gx_video_Start(void);
 extern void gx_video_Stop(void);
-extern int gx_video_Update(u32 done);
+extern int gx_video_Update(int status);
 
 #endif
