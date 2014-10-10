@@ -27,6 +27,7 @@
 #define RETRO_DEVICE_PHASER               RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_LIGHTGUN, 0)
 #define RETRO_DEVICE_MENACER              RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_LIGHTGUN, 1)
 #define RETRO_DEVICE_JUSTIFIERS           RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_LIGHTGUN, 2)
+#define RETRO_DEVICE_GRAPHIC_BOARD        RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_POINTER, 0)
 
 #include "shared.h"
 #include "libretro.h"
@@ -334,19 +335,26 @@ void osd_input_update(void)
         input.analog[i][0] = ((input_state_cb(player, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_X) + 0x7fff) * 250) / 0xfffe;
         input.analog[i][1] = ((input_state_cb(player, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_Y) + 0x7fff) * 250) / 0xfffe;
 
-        if (input.analog[0][0] < 0)
-          input.analog[0][0] = 0;
-        else if (input.analog[0][0] > 250)
-          input.analog[0][0] = 250;
-        if (input.analog[0][1] < 0)
-          input.analog[0][1] = 0;
-        else if (input.analog[0][1] > 250)
-          input.analog[0][1] = 250;
-
         if (input_state_cb(player, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_LEFT))
           temp |= INPUT_BUTTON1;
         if (input_state_cb(player, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_MIDDLE))
           temp |= INPUT_START;
+
+        player++;
+        break;
+      }
+
+      case DEVICE_GRAPHIC_BOARD:
+      {
+        input.analog[i][0] = ((input_state_cb(player, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_X) + 0x7fff) * 255) / 0xfffe;
+        input.analog[i][1] = ((input_state_cb(player, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_Y) + 0x7fff) * 255) / 0xfffe;
+
+        if (input_state_cb(player, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_LEFT))
+          temp |= INPUT_GRAPHIC_PEN;
+        if (input_state_cb(player, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_MIDDLE))
+          temp |= INPUT_GRAPHIC_DO;
+        if (input_state_cb(player, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_RIGHT))
+          temp |= INPUT_GRAPHIC_MENU;
 
         player++;
         break;
@@ -960,6 +968,7 @@ void retro_set_environment(retro_environment_t cb)
       { "MS Light Phaser", RETRO_DEVICE_PHASER },
       { "MS Paddle Control", RETRO_DEVICE_PADDLE },
       { "MS Sports Pad", RETRO_DEVICE_SPORTSPAD },
+      { "MS Graphic Board", RETRO_DEVICE_GRAPHIC_BOARD },
       { "MD XE-1AP", RETRO_DEVICE_XE_1AP },
       { "MD Mouse", RETRO_DEVICE_MOUSE },
    };
@@ -980,13 +989,14 @@ void retro_set_environment(retro_environment_t cb)
       { "MS Light Phaser", RETRO_DEVICE_PHASER },
       { "MS Paddle Control", RETRO_DEVICE_PADDLE },
       { "MS Sports Pad", RETRO_DEVICE_SPORTSPAD },
+      { "MS Graphic Board", RETRO_DEVICE_GRAPHIC_BOARD },
       { "MD XE-1AP", RETRO_DEVICE_XE_1AP },
       { "MD Mouse", RETRO_DEVICE_MOUSE },
   };
 
    static const struct retro_controller_info ports[] = {
-      { port_1, 15 },
-      { port_2, 17 },
+      { port_1, 16 },
+      { port_2, 18 },
       { 0 },
    };
 
@@ -1110,6 +1120,9 @@ void retro_set_controller_port_device(unsigned port, unsigned device)
          break;
       case RETRO_DEVICE_MOUSE:
          input.system[port] = SYSTEM_MOUSE;
+         break;
+      case RETRO_DEVICE_GRAPHIC_BOARD:
+         input.system[port] = SYSTEM_GRAPHIC_BOARD;
          break;
       case RETRO_DEVICE_JOYPAD:
       default:

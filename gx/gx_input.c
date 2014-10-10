@@ -386,10 +386,8 @@ static void pad_update(s8 chan, u8 i)
       if (input.analog[0][1] < 0x1fc) input.analog[0][1] = 0x1fc;
       else if (input.analog[0][1] > 0x2f7) input.analog[0][1] = 0x2f7;
 
-      /* PEN button */
+      /* PEN & RED button */
       if (p & pad_keymap[KEY_BUTTONA]) input.pad[0] |= INPUT_PICO_RED;
-
-      /* RED button */
       if (p & pad_keymap[KEY_BUTTONB]) input.pad[0] |= INPUT_PICO_PEN;
 
       /* PAGE index increment */
@@ -412,6 +410,26 @@ static void pad_update(s8 chan, u8 i)
 
       /* PEN button */
       if (p & pad_keymap[KEY_BUTTONA]) input.pad[0] |= INPUT_BUTTON1;
+
+      break;
+    }
+
+    case DEVICE_GRAPHIC_BOARD:
+    {
+      /* PEN screen position (x,y) */
+      input.analog[0][0] += x / ANALOG_SENSITIVITY;
+      input.analog[0][1] -= y / ANALOG_SENSITIVITY;
+
+      /* Limits */
+      if (input.analog[0][0] < 0) input.analog[0][0] = 0;
+      else if (input.analog[0][0] > 255) input.analog[0][0] = 255;
+      if (input.analog[0][1] < 0) input.analog[0][1] = 0;
+      else if (input.analog[0][1] > 255) input.analog[0][1] = 255;
+
+      /* MODE buttons */
+      if (p & pad_keymap[KEY_BUTTONA]) input.pad[0] |= INPUT_GRAPHIC_PEN;
+      if (p & pad_keymap[KEY_BUTTONB]) input.pad[0] |= INPUT_GRAPHIC_DO;
+      if (p & pad_keymap[KEY_BUTTONC]) input.pad[0] |= INPUT_GRAPHIC_MENU;
 
       break;
     }
@@ -893,12 +911,25 @@ static void wpad_update(s8 chan, u8 i, u32 exp)
     case DEVICE_MOUSE:
     {
       /* Mouse relative movement (-255,255) */
-      input.analog[i][0] = (x / ANALOG_SENSITIVITY) * 2;
-      input.analog[i][1] = (y / ANALOG_SENSITIVITY) * 2;
-
-      /* Wiimote IR (buggy) */
-      if (exp != WPAD_EXP_CLASSIC)
+      if (MOUSE_IsConnected())
       {
+        /* USB mouse support */
+        mouse_event event;
+        MOUSE_GetEvent(&event);
+        MOUSE_FlushEvents();
+
+        /* USB mouse position (-127;+127) -> (-255;+255) */
+        input.analog[i][0] = event.rx * 2;
+        input.analog[i][1] = event.ry * 2;
+
+        /* USB mouse buttons */
+        if (event.button & 1) input.pad[i] |= INPUT_MOUSE_RIGHT;
+        if (event.button & 2) input.pad[i] |= INPUT_MOUSE_CENTER;
+        if (event.button & 4) input.pad[i] |= INPUT_MOUSE_LEFT;
+      }
+      else if (exp != WPAD_EXP_CLASSIC)
+      {
+        /* Wiimote IR (buggy) */
         struct ir_t ir;
         WPAD_IR(chan, &ir);
 
@@ -909,23 +940,11 @@ static void wpad_update(s8 chan, u8 i, u32 exp)
           input.analog[i][1] = (int)((ir.sy - 384) * 2 / 3 / ANALOG_SENSITIVITY);
         }
       }
-
-      /* USB mouse support */
-      if (MOUSE_IsConnected())
+      else
       {
-        /* read mouse data */
-        mouse_event event;
-        MOUSE_GetEvent(&event);
-        MOUSE_FlushEvents();
-
-        /* mouse position (-127;+127) -> (-255;+255) */
-        input.analog[i][0] = event.rx * 2;
-        input.analog[i][1] = event.ry * 2;
-
-        /* mouse buttons */
-        if (event.button & 1) input.pad[i] |= INPUT_MOUSE_RIGHT;
-        if (event.button & 2) input.pad[i] |= INPUT_MOUSE_CENTER;
-        if (event.button & 4) input.pad[i] |= INPUT_MOUSE_LEFT;
+        /* Classic Controller analog stick position (-127;+127) -> (-255;+255) */
+        input.analog[i][0] = (x / ANALOG_SENSITIVITY) * 2;
+        input.analog[i][1] = (y / ANALOG_SENSITIVITY) * 2;
       }
 
       /* Y-Axis inversion */
@@ -952,18 +971,9 @@ static void wpad_update(s8 chan, u8 i, u32 exp)
       else if (p & PAD_BUTTON_RIGHT) input.pad[i] |= INPUT_RIGHT;
 
       /* PEN screen position (x,y) */
-      input.analog[0][0] += x / ANALOG_SENSITIVITY;
-      input.analog[0][1] -= y / ANALOG_SENSITIVITY;
-
-      /* Limits */
-      if (input.analog[0][0] > 0x17c) input.analog[0][0] = 0x17c;
-      else if (input.analog[0][0] < 0x3c) input.analog[0][0] = 0x3c;
-      if (input.analog[0][1] < 0x1fc) input.analog[0][1] = 0x1fc;
-      else if (input.analog[0][1] > 0x2f7) input.analog[0][1] = 0x2f7;
-
-      /* Wiimote IR */
       if (exp != WPAD_EXP_CLASSIC)
       {
+        /* Wiimote IR */
         struct ir_t ir;
         WPAD_IR(chan, &ir);
         if (ir.valid)
@@ -972,11 +982,21 @@ static void wpad_update(s8 chan, u8 i, u32 exp)
           input.analog[0][1] = 0x1fc + ((ir.y + config.caly) * (0x2f7 - 0x1fc + 1)) / 480;
         }
       }
+      else
+      {
+        /* Classic Controller analog stick */
+        input.analog[0][0] += x / ANALOG_SENSITIVITY;
+        input.analog[0][1] -= y / ANALOG_SENSITIVITY;
 
-      /* PEN button */
+        /* Limits */
+        if (input.analog[0][0] > 0x17c) input.analog[0][0] = 0x17c;
+        else if (input.analog[0][0] < 0x3c) input.analog[0][0] = 0x3c;
+        if (input.analog[0][1] < 0x1fc) input.analog[0][1] = 0x1fc;
+        else if (input.analog[0][1] > 0x2f7) input.analog[0][1] = 0x2f7;
+      }
+
+      /* PEN & RED buttons */
       if (p & wpad_keymap[KEY_BUTTONA]) input.pad[0] |= INPUT_PICO_PEN;
-
-      /* RED button */
       if (p & wpad_keymap[KEY_BUTTONB]) input.pad[0] |= INPUT_PICO_RED;
 
       /* PAGE index increment */
@@ -988,18 +1008,9 @@ static void wpad_update(s8 chan, u8 i, u32 exp)
     case DEVICE_TEREBI:
     {
       /* PEN screen position (x,y) */
-      input.analog[0][0] += x / ANALOG_SENSITIVITY;
-      input.analog[0][1] -= y / ANALOG_SENSITIVITY;
-
-      /* Limits */
-      if (input.analog[0][0] < 0) input.analog[0][0] = 0;
-      else if (input.analog[0][0] > 250) input.analog[0][0] = 250;
-      if (input.analog[0][1] < 0) input.analog[0][1] = 0;
-      else if (input.analog[0][1] > 250) input.analog[0][1] = 250;
-
-      /* Wiimote IR */
       if (exp != WPAD_EXP_CLASSIC)
       {
+        /* Wiimote IR */
         struct ir_t ir;
         WPAD_IR(chan, &ir);
         if (ir.valid)
@@ -1008,9 +1019,56 @@ static void wpad_update(s8 chan, u8 i, u32 exp)
           input.analog[0][1] = ((ir.y + config.caly) * 250) / 480;
         }
       }
+      else
+      {
+        /* Classic Controller analog stick */
+        input.analog[0][0] += x / ANALOG_SENSITIVITY;
+        input.analog[0][1] -= y / ANALOG_SENSITIVITY;
+
+        /* Limits */
+        if (input.analog[0][0] < 0)input.analog[0][0] = 0;
+        else if (input.analog[0][0] > 250) input.analog[0][0] = 250;
+        if (input.analog[0][1] < 0) input.analog[0][1] = 0;
+        else if (input.analog[0][1] > 250) input.analog[0][1] = 250;
+      }
 
       /* PEN button */
       if (p & wpad_keymap[KEY_BUTTONA]) input.pad[0] |= INPUT_BUTTON1;
+
+      break;
+    }
+
+    case DEVICE_GRAPHIC_BOARD:
+    {
+      /* PEN screen position (x,y) */
+      if (exp != WPAD_EXP_CLASSIC)
+      {
+        /* Wiimote IR */
+        struct ir_t ir;
+        WPAD_IR(chan, &ir);
+        if (ir.valid)
+        {
+          input.analog[0][0] = ((ir.x + config.calx) * 255) / 640;
+          input.analog[0][1] = ((ir.y + config.caly) * 255) / 480;
+        }
+      }
+      else
+      {
+        /* Classic Controller analog stick */
+        input.analog[0][0] += x / ANALOG_SENSITIVITY;
+        input.analog[0][1] -= y / ANALOG_SENSITIVITY;
+
+        /* Limits */
+        if (input.analog[0][0] < 0)input.analog[0][0] = 0;
+        else if (input.analog[0][0] > 255) input.analog[0][0] = 255;
+        if (input.analog[0][1] < 0) input.analog[0][1] = 0;
+        else if (input.analog[0][1] > 255) input.analog[0][1] = 255;
+      }
+
+      /* MODE Buttons */
+      if (p & wpad_keymap[KEY_BUTTONA]) input.pad[0] |= INPUT_GRAPHIC_PEN;
+      if (p & wpad_keymap[KEY_BUTTONB]) input.pad[0] |= INPUT_GRAPHIC_DO;
+      if (p & wpad_keymap[KEY_BUTTONC]) input.pad[0] |= INPUT_GRAPHIC_MENU;
 
       break;
     }
@@ -1418,6 +1476,17 @@ void gx_input_Config(u8 chan, u8 device, u8 type)
       first_key = KEY_BUTTONA;
       last_key = KEY_BUTTONA;
       sprintf(keyname[KEY_BUTTONA],"PEN Button");
+      break;
+    }
+
+    case DEVICE_GRAPHIC_BOARD:
+    {
+      first_key = KEY_BUTTONA;
+      last_key = KEY_START;
+      sprintf(keyname[KEY_BUTTONA],"PEN Button");
+      sprintf(keyname[KEY_BUTTONB],"DO Button");
+      sprintf(keyname[KEY_BUTTONC],"MENU Button");
+      sprintf(keyname[KEY_START],"PAUSE Button");
       break;
     }
 

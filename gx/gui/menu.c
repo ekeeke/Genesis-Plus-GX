@@ -109,6 +109,7 @@ extern const u8 Ctrl_sportspad_png[];
 extern const u8 Ctrl_none_png[];
 extern const u8 Ctrl_teamplayer_png[];
 extern const u8 Ctrl_mastertap_png[];
+extern const u8 Ctrl_graphic_board_png[];
 extern const u8 Ctrl_pad_auto_png[];
 extern const u8 Ctrl_pad2b_png[];
 extern const u8 Ctrl_pad3b_png[];
@@ -2205,37 +2206,39 @@ static void ctrlmenu(void)
   u32 exp, index = 0;
 
   /* System devices */
-  gui_item items_sys[2][13] =
+  gui_item items_sys[2][14] =
   {
     {
-      {NULL,Ctrl_none_png       ,"","Select Port 1 device",110,130,48,72},
-      {NULL,Ctrl_gamepad_png    ,"","Select Port 1 device",100,109,68,92},
-      {NULL,Ctrl_mouse_png      ,"","Select Port 1 device", 97,113,64,88},
-      {NULL,Ctrl_menacer_png    ,"","Select Port 1 device", 94,113,80,88},
-      {NULL,Ctrl_justifiers_png ,"","Select Port 1 device", 88,117,80,84},
-      {NULL,Ctrl_xe_1ap_png     ,"","Select Port 1 device", 98,118,72,84},
-      {NULL,Ctrl_activator_png  ,"","Select Port 1 device", 94,121,72,80},
-      {NULL,Ctrl_lightphaser_png,"","Select Port 1 device", 89,109,88,92},
-      {NULL,Ctrl_paddle_png     ,"","Select Port 1 device", 86,117,96,84},
-      {NULL,Ctrl_sportspad_png  ,"","Select Port 1 device", 95,117,76,84},
-      {NULL,Ctrl_mastertap_png  ,"","Select Port 1 device", 96,104,76,96},
-      {NULL,Ctrl_teamplayer_png ,"","Select Port 1 device", 94,109,80,92},
-      {NULL,Ctrl_4wayplay_png   ,"","Select Port 1 device", 98,110,72,92}
+      {NULL,Ctrl_none_png           ,"","Select Port 1 device",110,130,48,72},
+      {NULL,Ctrl_gamepad_png        ,"","Select Port 1 device",100,109,68,92},
+      {NULL,Ctrl_mouse_png          ,"","Select Port 1 device", 97,113,64,88},
+      {NULL,Ctrl_menacer_png        ,"","Select Port 1 device", 94,113,80,88},
+      {NULL,Ctrl_justifiers_png     ,"","Select Port 1 device", 88,117,80,84},
+      {NULL,Ctrl_xe_1ap_png         ,"","Select Port 1 device", 98,118,72,84},
+      {NULL,Ctrl_activator_png      ,"","Select Port 1 device", 94,121,72,80},
+      {NULL,Ctrl_lightphaser_png    ,"","Select Port 1 device", 89,109,88,92},
+      {NULL,Ctrl_paddle_png         ,"","Select Port 1 device", 86,117,96,84},
+      {NULL,Ctrl_sportspad_png      ,"","Select Port 1 device", 95,117,76,84},
+      {NULL,Ctrl_graphic_board_png  ,"","Select Port 1 device", 90,105,88,96},
+      {NULL,Ctrl_mastertap_png      ,"","Select Port 1 device", 96,104,76,96},
+      {NULL,Ctrl_teamplayer_png     ,"","Select Port 1 device", 94,109,80,92},
+      {NULL,Ctrl_4wayplay_png       ,"","Select Port 1 device", 98,110,72,92}
     },
     {
-      {NULL,Ctrl_none_png       ,"","Select Port 2 device",110,300,48,72},
-      {NULL,Ctrl_gamepad_png    ,"","Select Port 2 device",100,279,68,92},
-      {NULL,Ctrl_mouse_png      ,"","Select Port 2 device", 97,283,64,88},
-      {NULL,Ctrl_menacer_png    ,"","Select Port 2 device", 94,283,80,88},
-      {NULL,Ctrl_justifiers_png ,"","Select Port 2 device", 88,287,80,84},
-      {NULL,Ctrl_xe_1ap_png     ,"","Select Port 2 device", 98,288,72,84},
-      {NULL,Ctrl_activator_png  ,"","Select Port 2 device", 94,291,72,80},
-      {NULL,Ctrl_lightphaser_png,"","Select Port 2 device", 89,279,88,92},
-      {NULL,Ctrl_paddle_png     ,"","Select Port 2 device", 86,287,96,84},
-      {NULL,Ctrl_sportspad_png  ,"","Select Port 2 device", 95,287,76,84},
-      {NULL,Ctrl_mastertap_png  ,"","Select Port 1 device", 96,274,76,96},
-      {NULL,Ctrl_teamplayer_png ,"","Select Port 2 device", 94,279,80,92},
-      {NULL,Ctrl_4wayplay_png   ,"","Select Port 2 device", 98,280,72,92}
+      {NULL,Ctrl_none_png           ,"","Select Port 2 device",110,300,48,72},
+      {NULL,Ctrl_gamepad_png        ,"","Select Port 2 device",100,279,68,92},
+      {NULL,Ctrl_mouse_png          ,"","Select Port 2 device", 97,283,64,88},
+      {NULL,Ctrl_menacer_png        ,"","Select Port 2 device", 94,283,80,88},
+      {NULL,Ctrl_justifiers_png     ,"","Select Port 2 device", 88,287,80,84},
+      {NULL,Ctrl_xe_1ap_png         ,"","Select Port 2 device", 98,288,72,84},
+      {NULL,Ctrl_activator_png      ,"","Select Port 2 device", 94,291,72,80},
+      {NULL,Ctrl_lightphaser_png    ,"","Select Port 2 device", 89,279,88,92},
+      {NULL,Ctrl_paddle_png         ,"","Select Port 2 device", 86,287,96,84},
+      {NULL,Ctrl_sportspad_png      ,"","Select Port 2 device", 95,287,76,84},
+      {NULL,Ctrl_graphic_board_png  ,"","Select Port 2 device", 90,275,88,96},
+      {NULL,Ctrl_mastertap_png      ,"","Select Port 1 device", 96,274,76,96},
+      {NULL,Ctrl_teamplayer_png     ,"","Select Port 2 device", 94,279,80,92},
+      {NULL,Ctrl_4wayplay_png       ,"","Select Port 2 device", 98,280,72,92}
     }
   };    
 
@@ -2300,7 +2303,7 @@ static void ctrlmenu(void)
   button_player_none_data.texture[0] = gxTextureOpenPNG(button_player_none_data.image[0],0);
 
   /* initialize custom images */
-  for (i=0; i<13; i++)
+  for (i=0; i<14; i++)
   {
     items_sys[1][i].texture = items_sys[0][i].texture = gxTextureOpenPNG(items_sys[0][i].data,0);
   }
@@ -2374,6 +2377,12 @@ static void ctrlmenu(void)
  
           /* allow only one gun type */
           if ((input.system[0] == SYSTEM_LIGHTPHASER) && ((input.system[1] == SYSTEM_MENACER) || (input.system[1] == SYSTEM_JUSTIFIER)))
+          {
+            input.system[0]++;
+          }
+
+          /* allow only one connected graphic board */
+          if ((input.system[0] == SYSTEM_GRAPHIC_BOARD) && (input.system[1] == SYSTEM_GRAPHIC_BOARD))
           {
             input.system[0]++;
           }
@@ -2467,6 +2476,12 @@ static void ctrlmenu(void)
 
           /* allow only one gun type */
           if ((input.system[0] == SYSTEM_LIGHTPHASER) && (input.system[1] == SYSTEM_JUSTIFIER))
+          {
+            input.system[1]++;
+          }
+
+          /* allow only one connected graphic board */
+          if ((input.system[0] == SYSTEM_GRAPHIC_BOARD) && (input.system[1] == SYSTEM_GRAPHIC_BOARD))
           {
             input.system[1]++;
           }
@@ -2852,7 +2867,7 @@ static void ctrlmenu(void)
           if (config.input[player].device >= 0)
           {
             GUI_MsgBoxOpen("Keys Configuration", "",0);
-            if ((*special == 3) && !system_hw)
+            if (!system_hw && special && (*special == 3))
             {
               /* no auto-detected pad type, use 6-buttons key mapping as default */
               gx_input_Config(config.input[player].port, config.input[player].device, DEVICE_PAD6B);
@@ -2985,7 +3000,7 @@ static void ctrlmenu(void)
   gxTextureClose(&button_player_none_data.texture[0]);
 
   /* delete custom images */
-  for (i=0; i<13; i++)
+  for (i=0; i<14; i++)
   {
     gxTextureClose(&items_sys[0][i].texture);
   }
