@@ -48,6 +48,7 @@
 #include "teamplayer.h"
 #include "paddle.h"
 #include "sportspad.h"
+#include "graphic_board.h"
 
 uint8 io_reg[0x10];
 
@@ -150,6 +151,13 @@ void io_init(void)
       break;
     }
 
+    case SYSTEM_GRAPHIC_BOARD:
+    {
+      port[0].data_w = graphic_board_write;
+      port[0].data_r = graphic_board_read;
+      break;
+    }
+
     default:
     {
       port[0].data_w = dummy_write;
@@ -241,6 +249,13 @@ void io_init(void)
     {
       port[1].data_w = sportspad_2_write;
       port[1].data_r = sportspad_2_read;
+      break;
+    }
+
+    case SYSTEM_GRAPHIC_BOARD:
+    {
+      port[1].data_w = graphic_board_write;
+      port[1].data_r = graphic_board_read;
       break;
     }
 

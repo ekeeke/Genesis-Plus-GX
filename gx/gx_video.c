@@ -357,9 +357,42 @@ static u8 d_list[32] ATTRIBUTE_ALIGN(32) =
 /* VSYNC callback */
 static void vi_callback(u32 cnt)
 {
+  /* get audio DMA remaining length */
+  vu16* const _dspReg = (u16*)0xCC005000;
+  u16 remain = _dspReg[29];
+
+  /* adjust desired output samplerate if audio playback is not perfectly in sync with video */
+  if (remain > 0)
+  {
+    int samplerate;
+
+    /* check current audio DMA position (from testing, delta keeps limited to +/- one 32-bit block i.e 8 samples) */
+    if (remain < 5)
+    {
+      /* previous frame DMA is not yet finished (real output rate is slightly slower than expected value) */
+      samplerate = 47950;
+    }
+    else
+    {
+      /* current frame DMA is already started (real output rate is slightly faster than expected value) */
+      samplerate = 48050;
+    }
+
+    /* update resampler ratios if output samplerate has changed */
+    if (samplerate != snd.sample_rate)
+    {
+      /* this will adjust the number of samples returned on next frame(s) */
+      audio_set_rate(samplerate, snd.frame_rate);
+    }
+  }
+
   /* clear VSYNC flag */
   videoWait = 0;
+}
 
+/* XFB update */
+static void xfb_update(u32 cnt)
+{
   /* check if EFB rendering is finished */
   if (drawDone)
   {
@@ -493,8 +526,8 @@ static void gxSetAspectRatio(int *xscale, int *yscale)
 
     /* Horizontal Scaling */
     /* Wii/Gamecube pixel clock = 13.5 Mhz */
-    /* "H32" pixel clock = Master Clock / 10 = 5.3693175 Mhz (NTSC) or 5.3203424 (PAL) */
-    /* "H40" pixel clock = Master Clock / 8 = 6,711646875 Mhz (NTSC) or 6,650428 Mhz (PAL) */
+    /* "H32" pixel clock = Master Clock / 10 = 5.3693175 Mhz (NTSC) or 5.3203424 Mhz (PAL) */
+    /* "H40" pixel clock = Master Clock / 8 = 6.711646875 Mhz (NTSC) or 6.650428 Mhz (PAL) */
     if (config.overscan & 2)
     {
       /* Horizontal borders are emulated */
@@ -505,7 +538,7 @@ static void gxSetAspectRatio(int *xscale, int *yscale)
       }
       else
       {
-        /* 284 "H32" pixels = 284 * Wii/GC pixel clock / "H40" pixel clock = approx. 714 (NTSC) or 721 (PAL) Wii/GC pixels */
+        /* 284 "H32" pixels = 284 * Wii/GC pixel clock / "H32" pixel clock = approx. 714 (NTSC) or 721 (PAL) Wii/GC pixels */
         *xscale = (system_clock == MCLOCK_NTSC) ? 357 : 361; 
       }
     }
@@ -1424,15 +1457,15 @@ void gxTextureClose(gx_texture **p_texture)
 /* Emulation mode -> Menu mode */
 void gx_video_Stop(void)
 {
-  /* disable VSYNC callback */
+  /* disable VSYNC callbacks */
   VIDEO_SetPostRetraceCallback(NULL);
-
+  VIDEO_SetPreRetraceCallback(NULL);
+  
   /* wait for next even field */
   /* this prevents screen artefacts when switching between interlaced & non-interlaced modes */
   do VIDEO_WaitVSync();
   while (!VIDEO_GetNextField());
    
-
   /* adjust TV width */
   vmode->viWidth = config.screen_w;
   vmode->viXOrigin = (VI_MAX_WIDTH_NTSC - vmode->viWidth)/2;
@@ -1478,11 +1511,6 @@ void gx_video_Stop(void)
 /* Menu mode -> Emulation mode */
 void gx_video_Start(void)
 {
-#ifdef HW_RVL
-  VIDEO_SetTrapFilter(config.trap);
-  VIDEO_SetGamma((int)(config.gamma * 10.0));
-#endif
-
   /* TV mode */
   if ((config.tv_mode == 1) || ((config.tv_mode == 2) && vdp_pal))
   {
@@ -1493,16 +1521,6 @@ void gx_video_Start(void)
   {
     /* 60 Hz */
     gc_pal = 0;
-  }
-
-  /* When VSYNC is set to AUTO & console TV mode matches emulated video mode, emulation is synchronized with video hardware as well */
-  if (config.vsync && (gc_pal == vdp_pal))
-  {
-    videoSync = audioSync;
-  }
-  else
-  {
-    videoSync = 0;
   }
 
   /* Enable progressive or interlaced video mode */
@@ -1657,8 +1675,24 @@ void gx_video_Start(void)
   do VIDEO_WaitVSync();
   while (!VIDEO_GetNextField());
 
-  /* VSYNC callback */
-  VIDEO_SetPostRetraceCallback(vi_callback);
+#ifdef HW_RVL
+  VIDEO_SetTrapFilter(config.trap);
+  VIDEO_SetGamma((int)(config.gamma * 10.0));
+#endif
+
+  /* XFB update is done during VBLANK */
+  VIDEO_SetPreRetraceCallback(xfb_update);
+
+  /* Emulation is synchronized with video hardware if VSYNC is set to AUTO & TV mode matches emulated video mode */
+  if (config.vsync && (gc_pal == vdp_pal))
+  {
+    VIDEO_SetPostRetraceCallback(vi_callback);
+    videoSync =  VIDEO_WAIT;
+  }
+  else
+  {
+    videoSync = 0;
+  }
 
   /* restart frame sync */
   videoWait  = 0;
@@ -1667,177 +1701,191 @@ void gx_video_Start(void)
 }
 
 /* GX render update */
-int gx_video_Update(u32 done)
+int gx_video_Update(int status)
 {
-  if (videoWait || done) return SYNC_WAIT;
-
-  videoWait = videoSync;
-
-  /* check if display has changed during frame */
-  if (bitmap.viewport.changed & 1)
+  /* make sure current video frame has not already been updated */
+  if (status & VIDEO_UPDATE)
   {
-    /* update texture size */
-    vwidth = bitmap.viewport.w + (2 * bitmap.viewport.x);
-    vheight = bitmap.viewport.h + (2 * bitmap.viewport.y);
+    /* set video wait flag if VSYNC is enabled */
+    videoWait = videoSync;
 
-    /* interlaced mode */
-    if (config.render && interlaced)
+    /* check if display has changed during frame */
+    if (bitmap.viewport.changed & 1)
     {
-      vheight = vheight << 1;
-    }
+      /* update texture size */
+      vwidth = bitmap.viewport.w + (2 * bitmap.viewport.x);
+      vheight = bitmap.viewport.h + (2 * bitmap.viewport.y);
 
-    /* ntsc filter */
-    if (config.ntsc)
-    {
-      vwidth = (reg[12] & 1) ? MD_NTSC_OUT_WIDTH(vwidth) : SMS_NTSC_OUT_WIDTH(vwidth);
-
-      /* texel width must remain multiple of 4 */
-      vwidth  = (vwidth >> 2) << 2;
-    }
-
-    /* initialize texture object */
-    GXTexObj texobj;
-    GX_InitTexObj(&texobj, bitmap.data, vwidth, vheight, GX_TF_RGB565, GX_CLAMP, GX_CLAMP, GX_FALSE);
-
-    /* configure texture filtering */
-    if (!config.bilinear)
-    {
-      GX_InitTexObjLOD(&texobj,GX_NEAR,GX_NEAR_MIP_NEAR,0.0,10.0,0.0,GX_FALSE,GX_FALSE,GX_ANISO_1);
-    }
-
-    /* load texture object */
-    GX_LoadTexObj(&texobj, GX_TEXMAP0);
-
-    /* update rendering mode */
-    if (config.render)
-    {
-      rmode = tvmodes[gc_pal*3 + 2];
-    }
-    else
-    {
-      rmode = tvmodes[gc_pal*3 + interlaced];
-    }
-
-    /* update aspect ratio */
-    gxResetScaler(vwidth);
-
-    /* update GX rendering mode */
-    gxResetMode(rmode, config.vfilter);
-
-    /* update VI mode */
-    VIDEO_Configure(rmode);
-    VIDEO_Flush();
-  }
-
-  /* texture is now directly mapped by the line renderer */
-
-  /* force texture cache update */
-  DCFlushRange(bitmap.data, vwidth*vheight*2);
-  GX_InvalidateTexAll();
-
-  /* disable EFB copy until rendering is done */
-  drawDone = 0;
-
-  /* render textured quad */
-  GX_CallDispList(d_list, 32);
-
-  /* on-screen display */
-  if (osd)
-  {
-    /* reset GX rendering */
-    gxResetRendering(1);
-
-    /* lightgun # 1 screen mark */
-    if (crosshair[0])
-    {
-      if (input.system[0] == SYSTEM_LIGHTPHASER)
+      /* interlaced mode */
+      if (config.render && interlaced)
       {
-        gxDrawCrosshair(crosshair[0], input.analog[0][0],input.analog[0][1]);
+        vheight = vheight << 1;
+      }
+
+      /* ntsc filter */
+      if (config.ntsc)
+      {
+        vwidth = (reg[12] & 1) ? MD_NTSC_OUT_WIDTH(vwidth) : SMS_NTSC_OUT_WIDTH(vwidth);
+
+        /* texel width must remain multiple of 4 */
+        vwidth  = (vwidth >> 2) << 2;
+      }
+
+      /* initialize texture object */
+      GXTexObj texobj;
+      GX_InitTexObj(&texobj, bitmap.data, vwidth, vheight, GX_TF_RGB565, GX_CLAMP, GX_CLAMP, GX_FALSE);
+
+      /* configure texture filtering */
+      if (!config.bilinear)
+      {
+        GX_InitTexObjLOD(&texobj,GX_NEAR,GX_NEAR_MIP_NEAR,0.0,10.0,0.0,GX_FALSE,GX_FALSE,GX_ANISO_1);
+      }
+
+      /* load texture object */
+      GX_LoadTexObj(&texobj, GX_TEXMAP0);
+
+      /* update rendering mode */
+      if (config.render)
+      {
+        rmode = tvmodes[gc_pal*3 + 2];
       }
       else
       {
-        gxDrawCrosshair(crosshair[0], input.analog[4][0],input.analog[4][1]);
-      }
-    }
-
-    /* lightgun #2 screen mark */
-    if (crosshair[1])
-    {
-      if (input.system[1] == SYSTEM_LIGHTPHASER)
-      {
-        gxDrawCrosshair(crosshair[1], input.analog[4][0],input.analog[4][1]);
-      }
-      else
-      {
-        gxDrawCrosshair(crosshair[1], input.analog[5][0],input.analog[5][1]);
-      }
-    }
-
-    /* CD LEDS */
-    if (cd_leds[1][1])
-    {
-      /* CD LEDS status */
-      u8 mode = scd.regs[0x06 >> 1].byte.h;
-      gxDrawCdLeds(cd_leds[1][(mode >> 1) & 1], cd_leds[0][mode & 1]);
-    }
-
-    /* FPS counter */
-    if (config.fps)
-    {
-      u32 delta = diff_usec(starttime, gettime());
-      frameCount++;
-      if (delta > 1000000)
-      {
-        sprintf(msg,"%3.2f FPS", (float)frameCount * 1000000.0 / (float)delta);
-        frameCount = 0;
-        starttime = gettime();
+        rmode = tvmodes[gc_pal*3 + interlaced];
       }
 
-      /* disable EFB alpha blending for text background */
-      GX_SetBlendMode(GX_BM_NONE,GX_BL_SRCALPHA,GX_BL_INVSRCALPHA,GX_LO_CLEAR);
-      GX_Flush();
+      /* update aspect ratio */
+      gxResetScaler(vwidth);
 
-      gxDrawOnScreenText(msg);
+      /* update GX rendering mode */
+      gxResetMode(rmode, config.vfilter);
+
+      /* update VI mode */
+      VIDEO_Configure(rmode);
+      VIDEO_Flush();
     }
 
-    /* restore texture object */
-    GXTexObj texobj;
-    GX_InitTexObj(&texobj, bitmap.data, vwidth, vheight, GX_TF_RGB565, GX_CLAMP, GX_CLAMP, GX_FALSE);
-    if (!config.bilinear)
-    {
-      GX_InitTexObjLOD(&texobj,GX_NEAR,GX_NEAR_MIP_NEAR,0.0,10.0,0.0,GX_FALSE,GX_FALSE,GX_ANISO_1);
-    }
-    GX_LoadTexObj(&texobj, GX_TEXMAP0);
+    /* texture is now directly mapped by the line renderer */
+
+    /* force texture cache update */
+    DCFlushRange(bitmap.data, vwidth*vheight*2);
     GX_InvalidateTexAll();
 
-    /* restore GX rendering */
-    gxResetRendering(0);
+    /* disable EFB copy until rendering is done */
+    drawDone = 0;
+
+    /* render textured quad */
+    GX_CallDispList(d_list, 32);
+
+    /* on-screen display */
+    if (osd)
+    {
+      /* reset GX rendering */
+      gxResetRendering(1);
+
+      /* lightgun # 1 screen mark */
+      if (crosshair[0])
+      {
+        if (input.system[0] == SYSTEM_LIGHTPHASER)
+        {
+          gxDrawCrosshair(crosshair[0], input.analog[0][0],input.analog[0][1]);
+        }
+        else
+        {
+          gxDrawCrosshair(crosshair[0], input.analog[4][0],input.analog[4][1]);
+        }
+      }
+
+      /* lightgun #2 screen mark */
+      if (crosshair[1])
+      {
+        if (input.system[1] == SYSTEM_LIGHTPHASER)
+        {
+          gxDrawCrosshair(crosshair[1], input.analog[4][0],input.analog[4][1]);
+        }
+        else
+        {
+          gxDrawCrosshair(crosshair[1], input.analog[5][0],input.analog[5][1]);
+        }
+      }
+
+      /* CD LEDS */
+      if (cd_leds[1][1])
+      {
+        /* CD LEDS status */
+        u8 mode = scd.regs[0x06 >> 1].byte.h;
+        gxDrawCdLeds(cd_leds[1][(mode >> 1) & 1], cd_leds[0][mode & 1]);
+      }
+
+      /* FPS counter */
+      if (config.fps)
+      {
+        u32 delta = diff_usec(starttime, gettime());
+        frameCount++;
+        if (delta > 1000000)
+        {
+          sprintf(msg,"%3.2f FPS", (float)frameCount * 1000000.0 / (float)delta);
+          frameCount = 0;
+          starttime = gettime();
+        }
+
+        /* disable EFB alpha blending for text background */
+        GX_SetBlendMode(GX_BM_NONE,GX_BL_SRCALPHA,GX_BL_INVSRCALPHA,GX_LO_CLEAR);
+        GX_Flush();
+
+        /* display on-screen message */
+        gxDrawOnScreenText(msg);
+      }
+
+      /* restore texture object */
+      GXTexObj texobj;
+      GX_InitTexObj(&texobj, bitmap.data, vwidth, vheight, GX_TF_RGB565, GX_CLAMP, GX_CLAMP, GX_FALSE);
+      if (!config.bilinear)
+      {
+        GX_InitTexObjLOD(&texobj,GX_NEAR,GX_NEAR_MIP_NEAR,0.0,10.0,0.0,GX_FALSE,GX_FALSE,GX_ANISO_1);
+      }
+      GX_LoadTexObj(&texobj, GX_TEXMAP0);
+      GX_InvalidateTexAll();
+
+      /* restore GX rendering */
+      gxResetRendering(0);
+    }
+
+    /* Do not wait for EFB rendering, GX draw interrupt will be triggered when it is finished */
+    GX_SetDrawDone();
+
+    /* check interlaced mode change */
+    if (bitmap.viewport.changed & 4)
+    {
+      /* "original" mode */
+      if (!config.render && config.vsync && (gc_pal == vdp_pal))
+      {
+        /* framerate has changed, reinitialize audio timings */
+        audio_init(snd.sample_rate, get_framerate());
+      }
+
+      /* clear flag */
+      bitmap.viewport.changed &= ~4;
+    }
+
+    /* Check if video mode has changed */
+    if (bitmap.viewport.changed & 1)
+    {
+      /* clear viewport update flags */
+      bitmap.viewport.changed &= ~1;
+
+      /* field synchronization */
+      do VIDEO_WaitVSync();
+      while (VIDEO_GetNextField() != odd_frame);
+
+      /* resynchronize audio playback with video */                    
+      AUDIO_StopDMA();
+      AUDIO_StartDMA();
+    }
   }
 
-  /* GX draw interrupt will be triggered when EFB rendering is finished */
-  GX_SetDrawDone();
-
-  if (bitmap.viewport.changed & 1)
-  {
-    /* clear update flags */
-    bitmap.viewport.changed &= ~1;
-
-    /* field synchronization */
-    VIDEO_WaitVSync();
-    if (rmode->viTVMode & VI_NON_INTERLACE)
-    {
-      VIDEO_WaitVSync();
-    }
-    else while (VIDEO_GetNextField() != odd_frame)
-    {
-      VIDEO_WaitVSync();
-    }
-
-    /* Audio DMA need to be resynchronized with VSYNC */                    
-    audioStarted = 0;
-  }
-
-  return SYNC_VIDEO;
+  /* wait until current video frame starts before emulating next frame */
+  return ((status & ~(VIDEO_WAIT|VIDEO_UPDATE)) | videoWait);
 }
 
 /* Initialize VIDEO subsystem */

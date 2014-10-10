@@ -61,6 +61,50 @@ static int16 llp,rrp;
 
 int audio_init(int samplerate, double framerate)
 {
+  /* Shutdown first */
+  audio_shutdown();
+
+  /* Clear the sound data context */
+  memset(&snd, 0, sizeof (snd));
+
+  /* Initialize Blip Buffers */
+  snd.blips[0][0] = blip_new(samplerate / 10);
+  snd.blips[0][1] = blip_new(samplerate / 10);
+  if (!snd.blips[0][0] || !snd.blips[0][1])
+  {
+    audio_shutdown();
+    return -1;
+  }
+
+  /* Mega CD sound hardware */
+  if (system_hw == SYSTEM_MCD)
+  {
+    /* allocate blip buffers */
+    snd.blips[1][0] = blip_new(samplerate / 10);
+    snd.blips[1][1] = blip_new(samplerate / 10);
+    snd.blips[2][0] = blip_new(samplerate / 10);
+    snd.blips[2][1] = blip_new(samplerate / 10);
+    if (!snd.blips[1][0] || !snd.blips[1][1] || !snd.blips[2][0] || !snd.blips[2][1])
+    {
+      audio_shutdown();
+      return -1;
+    }
+  }
+
+  /* Initialize resampler internal rates */
+  audio_set_rate(samplerate, framerate);
+
+  /* Set audio enable flag */
+  snd.enabled = 1;
+
+  /* Reset audio */
+  audio_reset();
+
+  return (0);
+}
+
+void audio_set_rate(int samplerate, double framerate)
+{
   /* Number of M-cycles executed per second. */
   /* All emulated chips are kept in sync by using a common oscillator (MCLOCK)            */
   /*                                                                                      */
@@ -84,25 +128,6 @@ int audio_init(int samplerate, double framerate)
   /*                                                                                      */
   double mclk = framerate ? (MCYCLES_PER_LINE * (vdp_pal ? 313 : 262) * framerate) : system_clock;
 
-  /* Shutdown first */
-  audio_shutdown();
-
-  /* Clear the sound data context */
-  memset(&snd, 0, sizeof (snd));
-
-  /* Initialize audio rates */
-  snd.sample_rate = samplerate;
-  snd.frame_rate  = framerate;
-
-  /* Initialize Blip Buffers */
-  snd.blips[0][0] = blip_new(samplerate / 10);
-  snd.blips[0][1] = blip_new(samplerate / 10);
-  if (!snd.blips[0][0] || !snd.blips[0][1])
-  {
-    audio_shutdown();
-    return -1;
-  }
-
   /* For maximal accuracy, sound chips are running at their original rate using common */
   /* master clock timebase so they remain perfectly synchronized together, while still */
   /* being synchronized with 68K and Z80 CPUs as well. Mixed sound chip output is then */
@@ -110,37 +135,22 @@ int audio_init(int samplerate, double framerate)
   blip_set_rates(snd.blips[0][0], mclk, samplerate);
   blip_set_rates(snd.blips[0][1], mclk, samplerate);
 
-  /* Initialize PSG core */
-  SN76489_Init(snd.blips[0][0], snd.blips[0][1], (system_hw == SYSTEM_SG) ? SN_DISCRETE : SN_INTEGRATED);
-
   /* Mega CD sound hardware */
   if (system_hw == SYSTEM_MCD)
   {
-    /* allocate blip buffers */
-    snd.blips[1][0] = blip_new(samplerate / 10);
-    snd.blips[1][1] = blip_new(samplerate / 10);
-    snd.blips[2][0] = blip_new(samplerate / 10);
-    snd.blips[2][1] = blip_new(samplerate / 10);
-    if (!snd.blips[1][0] || !snd.blips[1][1] || !snd.blips[2][0] || !snd.blips[2][1])
-    {
-      audio_shutdown();
-      return -1;
-    }
+    /* number of SCD master clocks run per second */
+    mclk = framerate ? (SCYCLES_PER_LINE * (vdp_pal ? 313 : 262) * framerate) : SCD_CLOCK;
 
-    /* Initialize PCM core */
-    pcm_init(snd.blips[1][0], snd.blips[1][1]);
+    /* PCM core */
+    pcm_init(mclk, samplerate);
 
-    /* Initialize CDD core */
-    cdd_init(snd.blips[2][0], snd.blips[2][1]);
+    /* CDD core */
+    cdd_init(samplerate);
   }
 
-  /* Set audio enable flag */
-  snd.enabled = 1;
-
-  /* Reset audio */
-  audio_reset();
-
-  return (0);
+  /* Reinitialize internal rates */
+  snd.sample_rate = samplerate;
+  snd.frame_rate  = framerate;
 }
 
 void audio_reset(void)

@@ -71,9 +71,10 @@
 
 #define VERSION "Genesis Plus GX 1.7.5"
 
-#define SYNC_WAIT  0
-#define SYNC_VIDEO 1
-#define SYNC_AUDIO 2
+#define VIDEO_WAIT    0x01
+#define AUDIO_WAIT    0x02
+#define VIDEO_UPDATE  0x04
+#define AUDIO_UPDATE  0x08
 
 /* globals */
 extern void legal(void);

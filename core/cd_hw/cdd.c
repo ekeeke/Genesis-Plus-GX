@@ -2,7 +2,7 @@
  *  Genesis Plus
  *  CD drive processor & CD-DA fader
  *
- *  Copyright (C) 2012-2013  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2012-2014  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -150,9 +150,6 @@ static const char extensions[SUPPORTED_EXT][16] =
   " - %d.wav"
 };
 
-static blip_t* blip[2];
-
-
 #ifdef USE_LIBTREMOR
 #ifdef DISABLE_MANY_OGG_OPEN_FILES
 static void ogg_free(int i)
@@ -172,14 +169,12 @@ static void ogg_free(int i)
 #endif
 #endif
 
-void cdd_init(blip_t* left, blip_t* right)
+void cdd_init(int samplerate)
 {
   /* CD-DA is running by default at 44100 Hz */
   /* Audio stream is resampled to desired rate using Blip Buffer */
-  blip[0] = left;
-  blip[1] = right;
-  blip_set_rates(left, 44100, snd.sample_rate);
-  blip_set_rates(right, 44100, snd.sample_rate);
+  blip_set_rates(snd.blips[2][0], 44100, samplerate);
+  blip_set_rates(snd.blips[2][1], 44100, samplerate);
 }
 
 void cdd_reset(void)
@@ -953,7 +948,7 @@ void cdd_read_audio(unsigned int samples)
   int16 r = cdd.audio[1];
 
   /* get number of internal clocks (samples) needed */
-  samples = blip_clocks_needed(blip[0], samples);
+  samples = blip_clocks_needed(snd.blips[2][0], samples);
 
   /* audio track playing ? */
   if (!scd.regs[0x36>>1].byte.h && cdd.toc.tracks[cdd.index].fd)
@@ -996,13 +991,13 @@ void cdd_read_audio(unsigned int samples)
         delta = ((ptr[0] * mul) / 1024) - l;
         ptr++;
         l += delta;
-        blip_add_delta_fast(blip[0], i, delta);
+        blip_add_delta_fast(snd.blips[2][0], i, delta);
 
         /* right channel */
         delta = ((ptr[0] * mul) / 1024) - r;
         ptr++;
         r += delta;
-        blip_add_delta_fast(blip[1], i, delta);
+        blip_add_delta_fast(snd.blips[2][1], i, delta);
 
         /* update CD-DA fader volume (one step/sample) */
         if (curVol < endVol)
@@ -1048,7 +1043,7 @@ void cdd_read_audio(unsigned int samples)
         ptr += 2;
   #endif
         l += delta;
-        blip_add_delta_fast(blip[0], i, delta);
+        blip_add_delta_fast(snd.blips[2][0], i, delta);
 
         /* right channel */
   #ifdef LSB_FIRST
@@ -1059,7 +1054,7 @@ void cdd_read_audio(unsigned int samples)
         ptr += 2;
   #endif
         r += delta;
-        blip_add_delta_fast(blip[1], i, delta);
+        blip_add_delta_fast(snd.blips[2][1], i, delta);
 
         /* update CD-DA fader volume (one step/sample) */
         if (curVol < endVol)
@@ -1090,8 +1085,8 @@ void cdd_read_audio(unsigned int samples)
   else
   {
     /* no audio output */
-    if (l) blip_add_delta_fast(blip[0], 0, -l);
-    if (r) blip_add_delta_fast(blip[1], 0, -r);
+    if (l) blip_add_delta_fast(snd.blips[2][0], 0, -l);
+    if (r) blip_add_delta_fast(snd.blips[2][1], 0, -r);
 
     /* save audio output for next frame */
     cdd.audio[0] = 0;
@@ -1099,8 +1094,8 @@ void cdd_read_audio(unsigned int samples)
   }
 
   /* end of Blip Buffer timeframe */
-  blip_end_frame(blip[0], samples);
-  blip_end_frame(blip[1], samples);
+  blip_end_frame(snd.blips[2][0], samples);
+  blip_end_frame(snd.blips[2][1], samples);
 }
 
 

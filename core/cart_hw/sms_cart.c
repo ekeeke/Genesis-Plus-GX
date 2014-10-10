@@ -258,6 +258,9 @@ static const rominfo_t game_list[] =
   {0xFAB6F52F, 0, 0, SYSTEM_MASTERTAP,   MAPPER_NONE,   SYSTEM_SMS2,        REGION_USA}, /* BOom (v1.0) */
   {0x143AB50B, 0, 0, SYSTEM_MASTERTAP,   MAPPER_NONE,   SYSTEM_SMS2,        REGION_USA}, /* BOom (v1.1) */
 
+  /* games requiring Sega Graphic Board */
+  {0x276AA542, 0, 0, SYSTEM_GRAPHIC_BOARD, MAPPER_NONE, SYSTEM_SMS, REGION_USA}, /* Sega Graphic Board v2.0 Software (Prototype) */
+
   /* games supporting YM2413 FM */
   {0x1C951F8E, 0, 1, SYSTEM_GAMEPAD,  MAPPER_SEGA,   SYSTEM_SMS2,        REGION_USA}, /* After Burner */
   {0xC13896D5, 0, 1, SYSTEM_GAMEPAD,  MAPPER_SEGA,   SYSTEM_SMS2,        REGION_USA}, /* Alex Kidd: The Lost Stars */
@@ -420,7 +423,7 @@ void sms_cart_init(void)
       }
 
       /* auto-detect required peripherals */
-      input.system[0] = input.system[1] = game_list[i].peripheral;
+      input.system[0] = game_list[i].peripheral;
 
       /* auto-detect 3D glasses support */
       cart.special = game_list[i].g_3d;

@@ -47,6 +47,7 @@
 #include "paddle.h"
 #include "sportspad.h"
 #include "terebi_oekaki.h"
+#include "graphic_board.h"
 
 t_input input;
 int old_system[2] = {-1,-1};
@@ -203,6 +204,13 @@ void input_init(void)
       player++;
       break;
     }
+
+    case SYSTEM_GRAPHIC_BOARD:
+    {
+      input.dev[0] = DEVICE_GRAPHIC_BOARD;
+      player++;
+      break;
+    }
   }
 
   if (player == MAX_INPUTS)
@@ -322,6 +330,13 @@ void input_init(void)
       player++;
       break;
     }
+
+    case SYSTEM_GRAPHIC_BOARD:
+    {
+      input.dev[4] = DEVICE_GRAPHIC_BOARD;
+      player++;
+      break;
+    }
   }
 
   /* J-CART */
@@ -402,6 +417,12 @@ void input_reset(void)
       case DEVICE_TEREBI:
       {
         terebi_oekaki_reset();
+        break;
+      }
+
+      case DEVICE_GRAPHIC_BOARD:
+      {
+        graphic_board_reset(i);
         break;
       }
 

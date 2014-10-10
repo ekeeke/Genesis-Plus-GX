@@ -649,6 +649,24 @@ int sdl_input_update(void)
       break;
     }
 
+    case DEVICE_GRAPHIC_BOARD:
+    {
+      /* get mouse (absolute values) */
+      int x,y;
+      int state = SDL_GetMouseState(&x,&y);
+
+      /* Calculate X Y axis values */
+      input.analog[0][0] = (x * 255) / VIDEO_WIDTH;
+      input.analog[0][1] = (y * 255) / VIDEO_HEIGHT;
+   
+      /* Map mouse buttons to player #1 inputs */
+      if(state & SDL_BUTTON_LMASK) input.pad[0] |= INPUT_GRAPHIC_PEN;
+      if(state & SDL_BUTTON_RMASK) input.pad[0] |= INPUT_GRAPHIC_MENU;
+      if(state & SDL_BUTTON_MMASK) input.pad[0] |= INPUT_GRAPHIC_DO;
+
+      break;
+    }
+
     case DEVICE_ACTIVATOR:
     {
       if(keystate[SDLK_g])  input.pad[joynum] |= INPUT_ACTIVATOR_7L;

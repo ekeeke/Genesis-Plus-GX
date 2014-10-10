@@ -94,14 +94,9 @@ static const uint16 PSGVolumeValues[16] =
 
 static SN76489_Context SN76489;
 
-static blip_t* blip[2];
-
-void SN76489_Init(blip_t* left, blip_t* right, int type)
+void SN76489_Init(int type)
 {
   int i;
-  
-  blip[0] = left;
-  blip[1] = right;
 
   for (i=0; i<4; i++)
   {
@@ -177,7 +172,7 @@ INLINE void UpdateToneAmplitude(int i, int time)
   if (delta != 0)
   {
     SN76489.ChanOut[i][0] += delta;
-    blip_add_delta_fast(blip[0], time, delta);
+    blip_add_delta_fast(snd.blips[0][0], time, delta);
   }
 
   /* right output */
@@ -185,7 +180,7 @@ INLINE void UpdateToneAmplitude(int i, int time)
   if (delta != 0)
   {
     SN76489.ChanOut[i][1] += delta;
-    blip_add_delta_fast(blip[1], time, delta);
+    blip_add_delta_fast(snd.blips[0][1], time, delta);
   }
 }
 
@@ -199,7 +194,7 @@ INLINE void UpdateNoiseAmplitude(int time)
   if (delta != 0)
   {
     SN76489.ChanOut[3][0] += delta;
-    blip_add_delta_fast(blip[0], time, delta);
+    blip_add_delta_fast(snd.blips[0][0], time, delta);
   }
 
   /* right output */
@@ -207,7 +202,7 @@ INLINE void UpdateNoiseAmplitude(int time)
   if (delta != 0)
   {
     SN76489.ChanOut[3][1] += delta;
-    blip_add_delta_fast(blip[1], time, delta);
+    blip_add_delta_fast(snd.blips[0][1], time, delta);
   }
 }
 

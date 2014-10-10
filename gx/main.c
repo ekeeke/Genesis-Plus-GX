@@ -57,9 +57,6 @@ extern bool sdio_Deinitialize();
 extern void USBStorage_Deinitialize();
 #endif
 
-/* output samplerate, adjusted to take resampler precision in account */
-#define SAMPLERATE_48KHZ 47992
-
 u32 Shutdown = 0;
 u32 ConfigRequested = 1;
 
@@ -153,28 +150,14 @@ static void run_emulation(void)
         system_frame_scd(0);
 
         /* audio/video sync */
-        sync = SYNC_WAIT;
-        while (sync != (SYNC_VIDEO | SYNC_AUDIO))
+        sync = VIDEO_WAIT | VIDEO_UPDATE | AUDIO_WAIT | AUDIO_UPDATE;
+        while (sync)
         {
-          /* update video */
-          sync |= gx_video_Update(sync & SYNC_VIDEO);
-
           /* update audio */
-          sync |= gx_audio_Update();
-        }
+          sync &= gx_audio_Update(sync);
 
-        /* check interlaced mode change */
-        if (bitmap.viewport.changed & 4)
-        {
-          /* VSYNC "original" mode */
-          if (!config.render && config.vsync && (gc_pal == vdp_pal))
-          {
-            /* framerate has changed, reinitialize audio timings */
-            audio_init(SAMPLERATE_48KHZ, get_framerate());
-          }
-
-          /* clear flag */
-          bitmap.viewport.changed &= ~4;
+          /* update video */
+          sync &= gx_video_Update(sync);
         }
       }
     }
@@ -187,28 +170,14 @@ static void run_emulation(void)
         system_frame_gen(0);
 
         /* audio/video sync */
-        sync = SYNC_WAIT;
-        while (sync != (SYNC_VIDEO | SYNC_AUDIO))
+        sync = VIDEO_WAIT | VIDEO_UPDATE | AUDIO_WAIT | AUDIO_UPDATE;
+        while (sync)
         {
-          /* update video */
-          sync |= gx_video_Update(sync & SYNC_VIDEO);
-
           /* update audio */
-          sync |= gx_audio_Update();
-        }
+          sync &= gx_audio_Update(sync);
 
-        /* check interlaced mode change */
-        if (bitmap.viewport.changed & 4)
-        {
-          /* VSYNC "original" mode */
-          if (!config.render && config.vsync && (gc_pal == vdp_pal))
-          {
-            /* framerate has changed, reinitialize audio timings */
-            audio_init(SAMPLERATE_48KHZ, get_framerate());
-          }
-
-          /* clear flag */
-          bitmap.viewport.changed &= ~4;
+          /* update video */
+          sync &= gx_video_Update(sync);
         }
       }
     }
@@ -221,28 +190,14 @@ static void run_emulation(void)
         system_frame_sms(0);
 
         /* audio/video sync */
-        sync = SYNC_WAIT;
-        while (sync != (SYNC_VIDEO | SYNC_AUDIO))
+        sync = VIDEO_WAIT | VIDEO_UPDATE | AUDIO_WAIT | AUDIO_UPDATE;
+        while (sync)
         {
-          /* update video */
-          sync |= gx_video_Update(sync & SYNC_VIDEO);
-
           /* update audio */
-          sync |= gx_audio_Update();
-        }
+          sync &= gx_audio_Update(sync);
 
-        /* check interlaced mode change (PBC mode only) */
-        if (bitmap.viewport.changed & 4)
-        {
-          /* "original" mode */
-          if (!config.render && config.vsync && (gc_pal == vdp_pal))
-          {
-            /* framerate has changed, reinitialize audio timings */
-            audio_init(SAMPLERATE_48KHZ, get_framerate());
-          }
-
-          /* clear flag */
-          bitmap.viewport.changed &= ~4;
+          /* update video */
+          sync &= gx_video_Update(sync);
         }
       }
     }
@@ -316,7 +271,7 @@ void reloadrom(void)
   {
     /* Initialize audio emulation */
     interlaced = 0;
-    audio_init(SAMPLERATE_48KHZ, get_framerate());
+    audio_init(48000, get_framerate());
      
     /* System Power-On */
     system_init();
