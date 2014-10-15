@@ -1861,7 +1861,7 @@ int gx_video_Update(int status)
       if (!config.render && config.vsync && (gc_pal == vdp_pal))
       {
         /* framerate has changed, reinitialize audio timings */
-        audio_init(snd.sample_rate, get_framerate());
+        audio_set_rate(snd.sample_rate, get_framerate());
       }
 
       /* clear flag */
