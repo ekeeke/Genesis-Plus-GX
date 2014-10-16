@@ -950,7 +950,7 @@ static void mapper_512k_w(uint32 address, uint32 data)
 static void mapper_ssf2_w(uint32 address, uint32 data)
 {
   /* only banks 1-7 are remappable, bank 0 remains unchanged */
-  if (address)
+  if (address & 0x0E)
   {
     mapper_512k_w(address, data);
   }
