@@ -1448,7 +1448,7 @@ int scd_context_load(uint8 *state)
 {
   int i;
   uint16 tmp16;
-  uint32 tmp32;
+  uint32 tmp32, int_level;
   int bufferptr = 0;
 
   /* internal harware */
@@ -1608,9 +1608,9 @@ int scd_context_load(uint8 *state)
   load_param(&tmp16, 2);
   *(uint16 *)(m68k.memory_map[scd.cartridge.boot].base + 0x72) = tmp16;
 
-  /* SUB-CPU internal state */
+  /* SUB-CPU internal state (NB: IRQ level should remain reseted to prevent spurious interrupt processing when SP register is restored) */
   load_param(&s68k.cycles, sizeof(s68k.cycles));
-  load_param(&s68k.int_level, sizeof(s68k.int_level));
+  load_param(&int_level, sizeof(s68k.int_level));
   load_param(&s68k.stopped, sizeof(s68k.stopped));
 
   /* SUB-CPU registers */
@@ -1634,6 +1634,9 @@ int scd_context_load(uint8 *state)
   load_param(&tmp16, 2); s68k_set_reg(M68K_REG_SR, tmp16);
   load_param(&tmp32, 4); s68k_set_reg(M68K_REG_USP,tmp32);
   load_param(&tmp32, 4); s68k_set_reg(M68K_REG_ISP,tmp32);
+
+  /* restore IRQ level */
+  s68k.int_level = int_level;
 
   /* bootable MD cartridge hardware */
   if (scd.cartridge.boot)
