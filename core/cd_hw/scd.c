@@ -2,7 +2,7 @@
  *  Genesis Plus
  *  Mega CD / Sega CD hardware
  *
- *  Copyright (C) 2012-2013  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2012-2014  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -736,7 +736,7 @@ static void scd_write_byte(unsigned int address, unsigned int data)
       scd.regs[0x00].byte.h = (scd.regs[0x00].byte.h & 0x7f) | ((data & 0x04) << 5);
 
       /* clear level 1 interrupt if disabled ("Batman Returns" option menu) */
-      scd.pending &= ~(data & 0x02);
+      scd.pending &= 0xfd | (data & 0x02);
 
       /* update IRQ level */
       s68k_update_irq((scd.pending & data) >> 1);
@@ -1025,7 +1025,7 @@ static void scd_write_word(unsigned int address, unsigned int data)
       scd.regs[0x00].byte.h = (scd.regs[0x00].byte.h & 0x7f) | ((data & 0x04) << 5);
 
       /* clear pending level 1 interrupt if disabled ("Batman Returns" option menu) */
-      scd.pending &= ~(data & 0x02);
+      scd.pending &= 0xfd | (data & 0x02);
       
       /* update IRQ level */
       s68k_update_irq((scd.pending & data) >> 1);
