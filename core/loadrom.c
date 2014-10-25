@@ -989,6 +989,7 @@ void get_region(char *romheader)
       /* from Gens */
       if (!memcmp(rominfo.country, "eur", 3)) country |= 8;
       else if (!memcmp(rominfo.country, "EUR", 3)) country |= 8;
+      else if (!memcmp(rominfo.country, "Europe", 3)) country |= 8;
       else if (!memcmp(rominfo.country, "jap", 3)) country |= 1;
       else if (!memcmp(rominfo.country, "JAP", 3)) country |= 1;
       else if (!memcmp(rominfo.country, "usa", 3)) country |= 4;
@@ -1024,6 +1025,7 @@ void get_region(char *romheader)
       if (((strstr(rominfo.product,"T-45033") != NULL) && (rominfo.checksum == 0x0F81)) || /* Alisia Dragon (Europe) */
            (strstr(rominfo.product,"T-69046-50") != NULL) ||    /* Back to the Future III (Europe) */
            (strstr(rominfo.product,"T-120106-00") != NULL) ||   /* Brian Lara Cricket (Europe) */
+           (strstr(rominfo.product,"T-97126 -50") != NULL) ||   /* Williams Arcade's Greatest Hits (Europe) */
            (strstr(rominfo.product,"T-70096 -00") != NULL))     /* Muhammad Ali Heavyweight Boxing (Europe) */
       {
         /* need PAL settings */
