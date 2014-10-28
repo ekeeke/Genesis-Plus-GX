@@ -33,6 +33,7 @@ LOCAL_SRC_FILES := $(GENPLUS_SRC_DIR)/genesis.c \
 			$(GENPLUS_SRC_DIR)/input_hw/teamplayer.c \
 			$(GENPLUS_SRC_DIR)/input_hw/xe_1ap.c \
 			$(GENPLUS_SRC_DIR)/input_hw/terebi_oekaki.c \
+			$(GENPLUS_SRC_DIR)/input_hw/graphic_board.c \
 			$(GENPLUS_SRC_DIR)/cd_hw/cd_cart.c \
 			$(GENPLUS_SRC_DIR)/cd_hw/cdc.c \
 			$(GENPLUS_SRC_DIR)/cd_hw/cdd.c \
@@ -87,6 +88,7 @@ LOCAL_C_INCLUDES = $(LOCAL_PATH)/$(GENPLUS_SRC_DIR) \
 			$(LOCAL_PATH)/$(GENPLUS_SRC_DIR)/m68k \
 			$(LOCAL_PATH)/$(GENPLUS_SRC_DIR)/z80 \
 			$(LOCAL_PATH)/$(GENPLUS_SRC_DIR)/ntsc \
+			$(LOCAL_PATH)/$(TREMOR_SRC_DIR) \
 			$(LOCAL_PATH)/$(LIBRETRO_DIR)
 
 LOCAL_CFLAGS = -ffast-math -O2 -funroll-loops -DINLINE="static inline" -DUSE_LIBTREMOR -DUSE_16BPP_RENDERING -DLSB_FIRST -DBYTE_ORDER=LITTLE_ENDIAN -D__LIBRETRO__ -DFRONTEND_SUPPORTS_RGB565 -DALIGN_LONG -DALIGN_WORD
