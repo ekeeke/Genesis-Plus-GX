@@ -1481,7 +1481,7 @@ void render_bg_m4(int line)
     src = (uint32 *)&bg_pattern_cache[((attr & 0x7FF) << 6) | (v_line)];
 
     /* Copy left & right half, adding the attribute bits in */
-#ifdef ALIGN_DWORD
+#ifdef ALIGN_LONG
     WRITE_LONG(dst, src[0] | atex);
     dst++;
     WRITE_LONG(dst, src[1] | atex);
