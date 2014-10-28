@@ -470,7 +470,7 @@ INLINE void WRITE_LONG(void *address, uint32 data)
 
 /* 5:5:5 RGB */
 #elif defined(USE_15BPP_RENDERING)
-#define MAKE_PIXEL(r,g,b) ((r) << 11 | ((r) >> 3) << 10 | (g) << 6 | ((g) >> 3) << 5 | (b) << 1 | (b) >> 3)
+#define MAKE_PIXEL(r,g,b) ((1 << 15) | (r) << 11 | ((r) >> 3) << 10 | (g) << 6 | ((g) >> 3) << 5 | (b) << 1 | (b) >> 3)
 
 /* 5:6:5 RGB */
 #elif defined(USE_16BPP_RENDERING)
@@ -478,7 +478,7 @@ INLINE void WRITE_LONG(void *address, uint32 data)
 
 /* 8:8:8 RGB */
 #elif defined(USE_32BPP_RENDERING)
-#define MAKE_PIXEL(r,g,b) ((r) << 20 | (r) << 16 | (g) << 12 | (g)  << 8 | (b) << 4 | (b))
+#define MAKE_PIXEL(r,g,b) ((0xff < 24) | (r) << 20 | (r) << 16 | (g) << 12 | (g)  << 8 | (b) << 4 | (b))
 #endif
 
 /* Window & Plane A clipping */
@@ -524,10 +524,10 @@ static const uint8 tms_palette[16] =
 #elif defined(USE_15BPP_RENDERING)
 static const uint16 tms_palette[16] =
 {
-  0x0000, 0x0000, 0x1308, 0x2F6F,
-  0x295D, 0x3DDF, 0x6949, 0x23BE,
-  0x7D4A, 0x7DEF, 0x6B0A, 0x7330,
-  0x12A7, 0x6177, 0x6739, 0x7FFF
+  0x8000, 0x8000, 0x9308, 0xAF6F,
+  0xA95D, 0xBDDF, 0xE949, 0xA3BE,
+  0xFD4A, 0xFDEF, 0xEB0A, 0xF330,
+  0x92A7, 0xE177, 0xE739, 0xFFFF
 };
 
 #elif defined(USE_16BPP_RENDERING)
@@ -542,10 +542,10 @@ static const uint16 tms_palette[16] =
 #elif defined(USE_32BPP_RENDERING)
 static const uint32 tms_palette[16] =
 {
-  0x000000, 0x000000, 0x21C842, 0x5EDC78,
-  0x5455ED, 0x7D76FC, 0xD4524D, 0x42EBF5,
-  0xFC5554, 0xFF7978, 0xD4C154, 0xE6CE80,
-  0x21B03B, 0xC95BB4, 0xCCCCCC, 0xFFFFFF
+  0xFF000000, 0xFF000000, 0xFF21C842, 0xFF5EDC78,
+  0xFF5455ED, 0xFF7D76FC, 0xFFD4524D, 0xFF42EBF5,
+  0xFFFC5554, 0xFFFF7978, 0xFFD4C154, 0xFFE6CE80,
+  0xFF21B03B, 0xFFC95BB4, 0xFFCCCCCC, 0xFFFFFFFF
 };
 #endif
 
