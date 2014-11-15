@@ -4,110 +4,125 @@ FRONTEND_SUPPORTS_RGB565 = 1
 
 
 ifneq ($(EMSCRIPTEN),)
-   platform = emscripten
+	platform = emscripten
 endif
 
 ifeq ($(platform),)
-platform = unix
-ifeq ($(shell uname -a),)
-   platform = win
-else ifneq ($(findstring MINGW,$(shell uname -a)),)
-   platform = win
-else ifneq ($(findstring Darwin,$(shell uname -a)),)
-   platform = osx
-   arch = intel
-ifeq ($(shell uname -p),powerpc)
-   arch = ppc
-endif
-else ifneq ($(findstring win,$(shell uname -a)),)
-   platform = win
-endif
+	platform = unix
+	ifeq ($(shell uname -a),)
+		platform = win
+	else ifneq ($(findstring MINGW,$(shell uname -a)),)
+		platform = win
+	else ifneq ($(findstring Darwin,$(shell uname -a)),)
+		platform = osx
+		arch = intel
+		ifeq ($(shell uname -p),powerpc)
+			arch = ppc
+		endif
+	else ifneq ($(findstring win,$(shell uname -a)),)
+		platform = win
+	endif
 endif
 
 # system platform
 system_platform = unix
 ifeq ($(shell uname -a),)
-EXE_EXT = .exe
-   system_platform = win
+	EXE_EXT = .exe
+	system_platform = win
 else ifneq ($(findstring Darwin,$(shell uname -a)),)
-   system_platform = osx
-   arch = intel
-ifeq ($(shell uname -p),powerpc)
-   arch = ppc
-endif
+	system_platform = osx
+	arch = intel
+	ifeq ($(shell uname -p),powerpc)
+		arch = ppc
+	endif
 else ifneq ($(findstring MINGW,$(shell uname -a)),)
-   system_platform = win
+	system_platform = win
 endif
 
 TARGET_NAME := genesis_plus_gx
 
+# Unix
 ifeq ($(platform), unix)
-   TARGET := $(TARGET_NAME)_libretro.so
-   fpic := -fPIC
-   SHARED := -shared -Wl,--version-script=libretro/link.T -Wl,--no-undefined -lz
-   ENDIANNESS_DEFINES := -DLSB_FIRST -DBYTE_ORDER=LITTLE_ENDIAN
-   PLATFORM_DEFINES := -DHAVE_ZLIB
+	TARGET := $(TARGET_NAME)_libretro.so
+	fpic := -fPIC
+	SHARED := -shared -Wl,--version-script=libretro/link.T -Wl,--no-undefined -lz
+	ENDIANNESS_DEFINES := -DLSB_FIRST -DBYTE_ORDER=LITTLE_ENDIAN
+	PLATFORM_DEFINES := -DHAVE_ZLIB
+
+# OS X
 else ifeq ($(platform), osx)
-   TARGET := $(TARGET_NAME)_libretro.dylib
-   fpic := -fPIC 
-   SHARED := -dynamiclib -lz
-ifeq ($(arch),ppc)
-   ENDIANNESS_DEFINES := -DBYTE_ORDER=BIG_ENDIAN
-else
-   ENDIANNESS_DEFINES := -DLSB_FIRST -DBYTE_ORDER=LITTLE_ENDIAN
-endif
-   PLATFORM_DEFINES := -DHAVE_ZLIB
+	TARGET := $(TARGET_NAME)_libretro.dylib
+	fpic := -fPIC 
+	SHARED := -dynamiclib -lz
+	ifeq ($(arch),ppc)
+		ENDIANNESS_DEFINES := -DBYTE_ORDER=BIG_ENDIAN
+	else
+		ENDIANNESS_DEFINES := -DLSB_FIRST -DBYTE_ORDER=LITTLE_ENDIAN
+	endif
+	PLATFORM_DEFINES := -DHAVE_ZLIB
 
-   OSXVER = `sw_vers -productVersion | cut -d. -f 2`
-   OSX_LT_MAVERICKS = `(( $(OSXVER) <= 9)) && echo "YES"`
-ifeq ($(OSX_LT_MAVERICKS),"YES")
-   fpic += -mmacosx-version-min=10.5
-endif
+	OSXVER = `sw_vers -productVersion | cut -d. -f 2`
+	OSX_LT_MAVERICKS = `(( $(OSXVER) <= 9)) && echo "YES"`
+	ifeq ($(OSX_LT_MAVERICKS),"YES")
+		fpic += -mmacosx-version-min=10.5
+	endif
+
+# iOS
 else ifeq ($(platform), ios)
-   TARGET := $(TARGET_NAME)_libretro_ios.dylib
-   fpic := -fPIC
-   SHARED := -dynamiclib -lz
-   ENDIANNESS_DEFINES := -DLSB_FIRST -DBYTE_ORDER=LITTLE_ENDIAN
-   PLATFORM_DEFINES := -DHAVE_ZLIB
+	TARGET := $(TARGET_NAME)_libretro_ios.dylib
+	fpic := -fPIC
+	SHARED := -dynamiclib -lz
+	ENDIANNESS_DEFINES := -DLSB_FIRST -DBYTE_ORDER=LITTLE_ENDIAN
+	PLATFORM_DEFINES := -DHAVE_ZLIB
 
-ifeq ($(IOSSDK),)
-   IOSSDK := $(shell xcrun -sdk iphoneos -show-sdk-path)
-endif
+	ifeq ($(IOSSDK),)
+		IOSSDK := $(shell xcrun -sdk iphoneos -show-sdk-path)
+	endif
 
-   CC = clang -arch armv7 -isysroot $(IOSSDK)
-   OSXVER = `sw_vers -productVersion | cut -d. -f 2`
-   OSX_LT_MAVERICKS = `(( $(OSXVER) <= 9)) && echo "YES"`
-ifeq ($(OSX_LT_MAVERICKS),"YES")
-   CC += -miphoneos-version-min=5.0
-   PLATFORM_DEFINES += -miphoneos-version-min=5.0
-endif
+	CC = clang -arch armv7 -isysroot $(IOSSDK)
+	OSXVER = `sw_vers -productVersion | cut -d. -f 2`
+	OSX_LT_MAVERICKS = `(( $(OSXVER) <= 9)) && echo "YES"`
+	ifeq ($(OSX_LT_MAVERICKS),"YES")
+		CC += -miphoneos-version-min=5.0
+		PLATFORM_DEFINES += -miphoneos-version-min=5.0
+	endif
+
+# QNX
 else ifeq ($(platform), qnx)
-   TARGET := $(TARGET_NAME)_libretro_qnx.so
-   fpic := -fPIC
-   SHARED := -lm -shared -Wl,--version-script=libretro/link.T -Wl,--no-undefined -lz
-   ENDIANNESS_DEFINES := -DLSB_FIRST -DBYTE_ORDER=LITTLE_ENDIAN
-   PLATFORM_DEFINES := -DHAVE_ZLIB
+	TARGET := $(TARGET_NAME)_libretro_qnx.so
+	fpic := -fPIC
+	SHARED := -lm -shared -Wl,--version-script=libretro/link.T -Wl,--no-undefined -lz
+	ENDIANNESS_DEFINES := -DLSB_FIRST -DBYTE_ORDER=LITTLE_ENDIAN
+	PLATFORM_DEFINES := -DHAVE_ZLIB
 	CC = qcc -Vgcc_ntoarmv7le
 	AR = qcc -Vgcc_ntoarmv7le
 	PLATFORM_DEFINES := -D__BLACKBERRY_QNX__ -marm -mcpu=cortex-a9 -mfpu=neon -mfloat-abi=softfp
+
+# PS3
 else ifeq ($(platform), ps3)
-   TARGET := $(TARGET_NAME)_libretro_ps3.a
-   CC = $(CELL_SDK)/host-win32/ppu/bin/ppu-lv2-gcc.exe
-   AR = $(CELL_SDK)/host-win32/ppu/bin/ppu-lv2-ar.exe
-   PLATFORM_DEFINES := -D__CELLOS_LV2 -DALT_RENDER -DBYTE_ORDER=BIG_ENDIAN
+	TARGET := $(TARGET_NAME)_libretro_ps3.a
+	CC = $(CELL_SDK)/host-win32/ppu/bin/ppu-lv2-gcc.exe
+	AR = $(CELL_SDK)/host-win32/ppu/bin/ppu-lv2-ar.exe
+	PLATFORM_DEFINES := -D__CELLOS_LV2 -DALT_RENDER -DBYTE_ORDER=BIG_ENDIAN
 	STATIC_LINKING = 1
+
+# sncps3
 else ifeq ($(platform), sncps3)
-   TARGET := $(TARGET_NAME)_libretro_ps3.a
-   CC = $(CELL_SDK)/host-win32/sn/bin/ps3ppusnc.exe
-   AR = $(CELL_SDK)/host-win32/sn/bin/ps3snarl.exe
-   PLATFORM_DEFINES := -D__CELLOS_LV2 -DALT_RENDER -DBYTE_ORDER=BIG_ENDIAN
+	TARGET := $(TARGET_NAME)_libretro_ps3.a
+	CC = $(CELL_SDK)/host-win32/sn/bin/ps3ppusnc.exe
+	AR = $(CELL_SDK)/host-win32/sn/bin/ps3snarl.exe
+	PLATFORM_DEFINES := -D__CELLOS_LV2 -DALT_RENDER -DBYTE_ORDER=BIG_ENDIAN
 	STATIC_LINKING = 1
+
+# Lightweight PS3 Homebrew SDK
 else ifeq ($(platform), psl1ght)
-   TARGET := $(TARGET_NAME)_libretro_psl1ght.a$(EXE_EXT)
-   CC = $(PS3DEV)/ppu/bin/ppu-gcc$(EXE_EXT)
-   AR = $(PS3DEV)/ppu/bin/ppu-ar$(EXE_EXT)
-   PLATFORM_DEFINES := -D__CELLOS_LV2 -DALT_RENDER
+	TARGET := $(TARGET_NAME)_libretro_psl1ght.a$(EXE_EXT)
+	CC = $(PS3DEV)/ppu/bin/ppu-gcc$(EXE_EXT)
+	AR = $(PS3DEV)/ppu/bin/ppu-ar$(EXE_EXT)
+	PLATFORM_DEFINES := -D__CELLOS_LV2 -DALT_RENDER
 	STATIC_LINKING = 1
+
+# PSP
 else ifeq ($(platform), psp1)
 	TARGET := $(TARGET_NAME)_libretro_psp1.a$(EXE_EXT)
 	CC = psp-gcc$(EXE_EXT)
@@ -116,64 +131,77 @@ else ifeq ($(platform), psp1)
 	PLATFORM_DEFINES := -DPSP
 	CFLAGS += -G0
 	STATIC_LINKING = 1
-else ifeq ($(platform), xenon)
-   TARGET := $(TARGET_NAME)_libretro_xenon360.a
-   CC = xenon-gcc$(EXE_EXT)
-   AR = xenon-ar$(EXE_EXT)
-   PLATFORM_DEFINES := -D__LIBXENON__ -DALT_RENDER
-	ENDIANNESS_DEFINES := -DBYTE_ORDER=BIG_ENDIAN
-	STATIC_LINKING = 1
-else ifeq ($(platform), ngc)
-   TARGET := $(TARGET_NAME)_libretro_ngc.a
-   CC = $(DEVKITPPC)/bin/powerpc-eabi-gcc$(EXE_EXT)
-   AR = $(DEVKITPPC)/bin/powerpc-eabi-ar$(EXE_EXT)
-	ENDIANNESS_DEFINES := -DBYTE_ORDER=BIG_ENDIAN
-   PLATFORM_DEFINES := -DGEKKO -DHW_DOL -mrvl -mcpu=750 -meabi -mhard-float -DALT_RENDER
-	STATIC_LINKING = 1
-else ifeq ($(platform), wii)
-   TARGET := $(TARGET_NAME)_libretro_wii.a
-   CC = $(DEVKITPPC)/bin/powerpc-eabi-gcc$(EXE_EXT)
-   AR = $(DEVKITPPC)/bin/powerpc-eabi-ar$(EXE_EXT)
-   PLATFORM_DEFINES := -DGEKKO -DHW_RVL -mrvl -mcpu=750 -meabi -mhard-float -DALT_RENDER
-	ENDIANNESS_DEFINES := -DBYTE_ORDER=BIG_ENDIAN
-	STATIC_LINKING = 1
-else ifneq (,$(findstring armv,$(platform)))
-   TARGET := $(TARGET_NAME)_libretro.so
-   fpic := -fPIC
-   SHARED := -shared -Wl,--version-script=libretro/link.T -Wl,--no-undefined -lz
-   ENDIANNESS_DEFINES := -DLSB_FIRST -DBYTE_ORDER=LITTLE_ENDIAN
-   PLATFORM_DEFINES := -DHAVE_ZLIB
-   CC = gcc
-ifneq (,$(findstring cortexa8,$(platform)))
-   PLATFORM_DEFINES += -marm -mcpu=cortex-a8
-else ifneq (,$(findstring cortexa9,$(platform)))
-   PLATFORM_DEFINES += -marm -mcpu=cortex-a9
-endif
-   PLATFORM_DEFINES += -marm
-ifneq (,$(findstring neon,$(platform)))
-   PLATFORM_DEFINES += -mfpu=neon
-   HAVE_NEON = 1
-endif
-ifneq (,$(findstring softfloat,$(platform)))
-   PLATFORM_DEFINES += -mfloat-abi=softfp
-else ifneq (,$(findstring hardfloat,$(platform)))
-   PLATFORM_DEFINES += -mfloat-abi=hard
-endif
-   PLATFORM_DEFINES += -DARM
-else ifeq ($(platform), emscripten)
-   TARGET := $(TARGET_NAME)_libretro_emscripten.bc
-   ENDIANNESS_DEFINES := -DLSB_FIRST -DBYTE_ORDER=LITTLE_ENDIAN
-else
-   TARGET := $(TARGET_NAME)_libretro.dll
-   CC = gcc
-   SHARED := -shared -static-libgcc -static-libstdc++ -Wl,--version-script=libretro/link.T -Wl,--no-undefined -lz
 
-   ENDIANNESS_DEFINES := -DLSB_FIRST -DBYTE_ORDER=LITTLE_ENDIAN
-   PLATFORM_DEFINES := -DHAVE_ZLIB
+# Xbox 360
+else ifeq ($(platform), xenon)
+	TARGET := $(TARGET_NAME)_libretro_xenon360.a
+	CC = xenon-gcc$(EXE_EXT)
+	AR = xenon-ar$(EXE_EXT)
+	PLATFORM_DEFINES := -D__LIBXENON__ -DALT_RENDER
+	ENDIANNESS_DEFINES := -DBYTE_ORDER=BIG_ENDIAN
+	STATIC_LINKING = 1
+
+# Nintendo Game Cube
+else ifeq ($(platform), ngc)
+	TARGET := $(TARGET_NAME)_libretro_ngc.a
+	CC = $(DEVKITPPC)/bin/powerpc-eabi-gcc$(EXE_EXT)
+	AR = $(DEVKITPPC)/bin/powerpc-eabi-ar$(EXE_EXT)
+	ENDIANNESS_DEFINES := -DBYTE_ORDER=BIG_ENDIAN
+	PLATFORM_DEFINES := -DGEKKO -DHW_DOL -mrvl -mcpu=750 -meabi -mhard-float -DALT_RENDER
+	STATIC_LINKING = 1
+
+# Nintendo Wii
+else ifeq ($(platform), wii)
+	TARGET := $(TARGET_NAME)_libretro_wii.a
+	CC = $(DEVKITPPC)/bin/powerpc-eabi-gcc$(EXE_EXT)
+	AR = $(DEVKITPPC)/bin/powerpc-eabi-ar$(EXE_EXT)
+	PLATFORM_DEFINES := -DGEKKO -DHW_RVL -mrvl -mcpu=750 -meabi -mhard-float -DALT_RENDER
+	ENDIANNESS_DEFINES := -DBYTE_ORDER=BIG_ENDIAN
+	STATIC_LINKING = 1
+
+# ARM
+else ifneq (,$(findstring armv,$(platform)))
+	TARGET := $(TARGET_NAME)_libretro.so
+	fpic := -fPIC
+	SHARED := -shared -Wl,--version-script=libretro/link.T -Wl,--no-undefined -lz
+	ENDIANNESS_DEFINES := -DLSB_FIRST -DBYTE_ORDER=LITTLE_ENDIAN
+	PLATFORM_DEFINES := -DHAVE_ZLIB
+	CC = gcc
+	ifneq (,$(findstring cortexa8,$(platform)))
+		PLATFORM_DEFINES += -marm -mcpu=cortex-a8
+	else ifneq (,$(findstring cortexa9,$(platform)))
+		PLATFORM_DEFINES += -marm -mcpu=cortex-a9
+	endif
+	PLATFORM_DEFINES += -marm
+	ifneq (,$(findstring neon,$(platform)))
+		PLATFORM_DEFINES += -mfpu=neon
+		HAVE_NEON = 1
+	endif
+	ifneq (,$(findstring softfloat,$(platform)))
+		PLATFORM_DEFINES += -mfloat-abi=softfp
+	else ifneq (,$(findstring hardfloat,$(platform)))
+		PLATFORM_DEFINES += -mfloat-abi=hard
+	endif
+	PLATFORM_DEFINES += -DARM
+
+# emscripten
+else ifeq ($(platform), emscripten)
+	TARGET := $(TARGET_NAME)_libretro_emscripten.bc
+	ENDIANNESS_DEFINES := -DLSB_FIRST -DBYTE_ORDER=LITTLE_ENDIAN
+
+# Windows
+else
+	TARGET := $(TARGET_NAME)_libretro.dll
+	CC = gcc
+	SHARED := -shared -static-libgcc -static-libstdc++ -Wl,--version-script=libretro/link.T -Wl,--no-undefined -lz
+
+	ENDIANNESS_DEFINES := -DLSB_FIRST -DBYTE_ORDER=LITTLE_ENDIAN
+	PLATFORM_DEFINES := -DHAVE_ZLIB
+
 endif
 
 ifeq ($(DEBUG), 1)
-   CFLAGS += -O0 -g
+	CFLAGS += -O0 -g
 else ifeq ($(platform),qnx)
 	CFLAGS += -Os -DNDEBUG
 else ifeq ($(platform), emscripten)
@@ -192,25 +220,25 @@ include Makefile.common
 OBJECTS := $(SOURCES_C:.c=.o)
 
 ifeq ($(LOGSOUND), 1)
-LIBRETRO_CFLAGS := -DLOGSOUND
+	LIBRETRO_CFLAGS := -DLOGSOUND
 endif
 
 DEFINES := -DUSE_LIBTREMOR 
 CFLAGS += $(fpic) $(DEFINES) $(CODE_DEFINES)
 
 ifeq ($(FRONTEND_SUPPORTS_RGB565), 1)
-# if you have a new frontend that supports RGB565
-BPP_DEFINES = -DUSE_16BPP_RENDERING -DFRONTEND_SUPPORTS_RGB565
+	# if you have a new frontend that supports RGB565
+	BPP_DEFINES = -DUSE_16BPP_RENDERING -DFRONTEND_SUPPORTS_RGB565
 else
-BPP_DEFINES = -DUSE_15BPP_RENDERING
+	BPP_DEFINES = -DUSE_15BPP_RENDERING
 endif
 
 
 LIBRETRO_CFLAGS += $(INCFLAGS)
 LIBRETRO_CFLAGS += $(BPP_DEFINES) \
-		$(ENDIANNESS_DEFINES) \
-		$(PLATFORM_DEFINES) \
-		-D__LIBRETRO__
+					$(ENDIANNESS_DEFINES) \
+					$(PLATFORM_DEFINES) \
+					-D__LIBRETRO__
 
 ifeq ($(platform), qnx)
 	LIBRETRO_CFLAGS += -D__inline__=inline
@@ -241,4 +269,3 @@ clean:
 	rm -f $(TARGET)
 
 .PHONY: clean clean-objs
-
