@@ -3957,9 +3957,9 @@ void mainmenu(void)
           /* Soft Reset */
           gen_reset(0);
         }
-        else if (system_hw == SYSTEM_SMS)
+        else if ((system_hw == SYSTEM_SMS) && (region_code != REGION_JAPAN_NTSC))
         {
-          /* assert RESET input (Master System model 1 only) */
+          /* assert RESET input (export Master System 1 only) */
           io_reg[0x0D] &= ~IO_RESET_HI;
         }
         else
