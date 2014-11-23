@@ -2,9 +2,6 @@ DEBUG = 0
 LOGSOUND = 0
 FRONTEND_SUPPORTS_RGB565 = 1
 
-GENPLUS_SRC_DIR := core
-TREMOR_SRC_DIR := $(GENPLUS_SRC_DIR)/tremor
-LIBRETRO_DIR	:= libretro
 
 ifneq ($(EMSCRIPTEN),)
    platform = emscripten
@@ -61,8 +58,9 @@ else
 endif
    PLATFORM_DEFINES := -DHAVE_ZLIB
 
-OSXVER = `sw_vers -productVersion | cut -c 4`
-ifneq ($(OSXVER),9)
+   OSXVER = `sw_vers -productVersion | cut -d. -f 2`
+   OSX_LT_MAVERICKS = `(( $(OSXVER) <= 9)) && echo "YES"`
+ifeq ($(OSX_LT_MAVERICKS),"YES")
    fpic += -mmacosx-version-min=10.5
 endif
 else ifeq ($(platform), ios)
@@ -72,9 +70,14 @@ else ifeq ($(platform), ios)
    ENDIANNESS_DEFINES := -DLSB_FIRST -DBYTE_ORDER=LITTLE_ENDIAN
    PLATFORM_DEFINES := -DHAVE_ZLIB
 
+ifeq ($(IOSSDK),)
+   IOSSDK := $(shell xcrun -sdk iphoneos -show-sdk-path)
+endif
+
    CC = clang -arch armv7 -isysroot $(IOSSDK)
-OSXVER = `sw_vers -productVersion | cut -c 4`
-ifneq ($(OSXVER),9)
+   OSXVER = `sw_vers -productVersion | cut -d. -f 2`
+   OSX_LT_MAVERICKS = `(( $(OSXVER) <= 9)) && echo "YES"`
+ifeq ($(OSX_LT_MAVERICKS),"YES")
    CC += -miphoneos-version-min=5.0
    PLATFORM_DEFINES += -miphoneos-version-min=5.0
 endif
@@ -178,73 +181,15 @@ else ifeq ($(platform), emscripten)
 else
 	CFLAGS += -O3 -DNDEBUG
 endif
-	
-LIBRETRO_SRC := $(GENPLUS_SRC_DIR)/genesis.c \
-			$(GENPLUS_SRC_DIR)/vdp_ctrl.c \
-			$(GENPLUS_SRC_DIR)/vdp_render.c \
-			$(GENPLUS_SRC_DIR)/system.c \
-			$(GENPLUS_SRC_DIR)/io_ctrl.c \
-			$(GENPLUS_SRC_DIR)/loadrom.c \
-			$(GENPLUS_SRC_DIR)/mem68k.c \
-			$(GENPLUS_SRC_DIR)/state.c \
-			$(GENPLUS_SRC_DIR)/memz80.c \
-			$(GENPLUS_SRC_DIR)/membnk.c \
-			$(GENPLUS_SRC_DIR)/input_hw/activator.c \
-			$(GENPLUS_SRC_DIR)/input_hw/gamepad.c \
-			$(GENPLUS_SRC_DIR)/input_hw/input.c \
-			$(GENPLUS_SRC_DIR)/input_hw/lightgun.c \
-			$(GENPLUS_SRC_DIR)/input_hw/mouse.c \
-			$(GENPLUS_SRC_DIR)/input_hw/paddle.c \
-			$(GENPLUS_SRC_DIR)/input_hw/sportspad.c \
-			$(GENPLUS_SRC_DIR)/input_hw/teamplayer.c \
-			$(GENPLUS_SRC_DIR)/input_hw/xe_1ap.c \
-			$(GENPLUS_SRC_DIR)/input_hw/terebi_oekaki.c \
-			$(GENPLUS_SRC_DIR)/input_hw/graphic_board.c \
-			$(GENPLUS_SRC_DIR)/cd_hw/cd_cart.c \
-			$(GENPLUS_SRC_DIR)/cd_hw/cdc.c \
-			$(GENPLUS_SRC_DIR)/cd_hw/cdd.c \
-			$(GENPLUS_SRC_DIR)/cd_hw/gfx.c \
-			$(GENPLUS_SRC_DIR)/cd_hw/pcm.c \
-			$(GENPLUS_SRC_DIR)/cd_hw/scd.c \
-			$(GENPLUS_SRC_DIR)/cart_hw/areplay.c \
-			$(GENPLUS_SRC_DIR)/cart_hw/md_cart.c \
-			$(GENPLUS_SRC_DIR)/cart_hw/sms_cart.c \
-			$(GENPLUS_SRC_DIR)/cart_hw/eeprom_93c.c \
-			$(GENPLUS_SRC_DIR)/cart_hw/eeprom_i2c.c \
-			$(GENPLUS_SRC_DIR)/cart_hw/eeprom_spi.c \
-			$(GENPLUS_SRC_DIR)/cart_hw/ggenie.c \
-			$(GENPLUS_SRC_DIR)/cart_hw/sram.c \
-			$(GENPLUS_SRC_DIR)/cart_hw/svp/ssp16.c \
-			$(GENPLUS_SRC_DIR)/cart_hw/svp/svp.c \
-			$(GENPLUS_SRC_DIR)/ntsc/md_ntsc.c \
-			$(GENPLUS_SRC_DIR)/ntsc/sms_ntsc.c \
-			$(GENPLUS_SRC_DIR)/sound/eq.c \
-			$(GENPLUS_SRC_DIR)/sound/sound.c \
-			$(GENPLUS_SRC_DIR)/sound/ym2612.c \
-			$(GENPLUS_SRC_DIR)/sound/ym2413.c \
-			$(GENPLUS_SRC_DIR)/sound/sn76489.c \
-			$(GENPLUS_SRC_DIR)/sound/blip_buf.c \
-			$(GENPLUS_SRC_DIR)/z80/z80.c \
-			$(GENPLUS_SRC_DIR)/m68k/m68kcpu.c \
-			$(GENPLUS_SRC_DIR)/m68k/s68kcpu.c \
-			$(TREMOR_SRC_DIR)/bitwise.c \
-			$(TREMOR_SRC_DIR)/block.c \
-			$(TREMOR_SRC_DIR)/codebook.c \
-			$(TREMOR_SRC_DIR)/floor0.c \
-			$(TREMOR_SRC_DIR)/floor1.c \
-			$(TREMOR_SRC_DIR)/framing.c \
-			$(TREMOR_SRC_DIR)/info.c \
-			$(TREMOR_SRC_DIR)/mapping0.c \
-			$(TREMOR_SRC_DIR)/mdct.c \
-			$(TREMOR_SRC_DIR)/registry.c \
-			$(TREMOR_SRC_DIR)/res012.c \
-			$(TREMOR_SRC_DIR)/sharedbook.c \
-			$(TREMOR_SRC_DIR)/synthesis.c \
-			$(TREMOR_SRC_DIR)/vorbisfile.c \
-			$(TREMOR_SRC_DIR)/window.c \
-			$(LIBRETRO_DIR)/libretro.c
 
-LIBRETRO_OBJ := $(LIBRETRO_SRC:.c=.o)
+CORE_DIR := .
+GENPLUS_SRC_DIR := $(CORE_DIR)/core
+TREMOR_SRC_DIR := $(GENPLUS_SRC_DIR)/tremor
+LIBRETRO_DIR	:= $(CORE_DIR)/libretro
+	
+include Makefile.common
+
+OBJECTS := $(SOURCES_C:.c=.o)
 
 ifeq ($(LOGSOUND), 1)
 LIBRETRO_CFLAGS := -DLOGSOUND
@@ -260,17 +205,9 @@ else
 BPP_DEFINES = -DUSE_15BPP_RENDERING
 endif
 
-LIBRETRO_CFLAGS += -I$(GENPLUS_SRC_DIR) \
-		-I$(GENPLUS_SRC_DIR)/sound \
-		-I$(GENPLUS_SRC_DIR)/input_hw \
-		-I$(GENPLUS_SRC_DIR)/cart_hw \
-		-I$(GENPLUS_SRC_DIR)/cd_hw \
-		-I$(GENPLUS_SRC_DIR)/cart_hw/svp \
-		-I$(GENPLUS_SRC_DIR)/m68k \
-		-I$(GENPLUS_SRC_DIR)/z80 \
-		-I$(GENPLUS_SRC_DIR)/ntsc \
-		-I$(LIBRETRO_DIR) \
-		$(BPP_DEFINES) \
+
+LIBRETRO_CFLAGS += $(INCFLAGS)
+LIBRETRO_CFLAGS += $(BPP_DEFINES) \
 		$(ENDIANNESS_DEFINES) \
 		$(PLATFORM_DEFINES) \
 		-D__LIBRETRO__
@@ -289,18 +226,18 @@ all: $(TARGET)
 %.o: %.c
 	$(CC) -o $@ -c $< $(CFLAGS) $(LIBRETRO_CFLAGS)
 
-$(TARGET): $(LIBRETRO_OBJ)
+$(TARGET): $(OBJECTS)
 ifeq ($(STATIC_LINKING), 1)
-	$(AR) rcs $@ $(LIBRETRO_OBJ)
+	$(AR) rcs $@ $(OBJECTS)
 else
-	$(CC) -o $(TARGET) $(fpic) $(LIBRETRO_OBJ) $(LIBRETRO_LIBS) $(SHARED) 
+	$(CC) -o $(TARGET) $(fpic) $(OBJECTS) $(LIBRETRO_LIBS) $(SHARED) 
 endif
 
 clean-objs:
-	rm -f $(LIBRETRO_OBJ)
+	rm -f $(OBJECTS)
 
 clean:
-	rm -f $(LIBRETRO_OBJ)
+	rm -f $(OBJECTS)
 	rm -f $(TARGET)
 
 .PHONY: clean clean-objs
