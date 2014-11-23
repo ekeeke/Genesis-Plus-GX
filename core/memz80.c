@@ -648,6 +648,9 @@ void z80_sg_port_w(unsigned int port, unsigned char data)
     case 0x41:
     {
       SN76489_Write(Z80.cycles, data);
+
+      /* Z80 !WAIT input is tied to SN76489AN chip READY pin (held low for 32 clocks after each write access) */
+      Z80.cycles += (32 * 15);
       return;
     }
 

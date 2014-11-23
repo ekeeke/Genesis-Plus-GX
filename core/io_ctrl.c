@@ -324,6 +324,12 @@ void io_reset(void)
     /* Control registers */
     io_reg[0x0E] = 0x00;
     io_reg[0x0F] = 0xFF;
+
+     /* on SG-1000 & Mark-III, TH is not connected (always return 1) */
+    if (system_hw < SYSTEM_SMS)
+    {
+      io_reg[0x0F] = 0xF5;
+    }
   }
 
   /* Reset connected peripherals */
