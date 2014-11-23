@@ -512,6 +512,8 @@ int load_bios(void)
 
     default:
     {
+      /* mark all BOOTROM as unloaded  */
+      system_bios &= ~(0x10 | SYSTEM_SMS | SYSTEM_GG);
       return 0;
     }
   }
