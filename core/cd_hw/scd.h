@@ -44,7 +44,11 @@
 #include "pcm.h"
 #include "cd_cart.h"
 
+#ifdef USE_DYNAMIC_ALLOC
+#define scd ext->cd_hw
+#else
 #define scd ext.cd_hw
+#endif
 
 /* 5000000 SCD clocks/s = ~3184 clocks/line with a Master Clock of 53.693175 MHz */
 /* This would be slightly (~30 clocks) more on PAL systems because of the slower */
