@@ -111,6 +111,7 @@ void sound_reset(void)
   /* reset sound chips */
   YM_Reset();
   SN76489_Reset();
+  SN76489_Config(0, config.psg_preamp, config.psgBoostNoise, 0xff);
 
   /* reset FM buffer ouput */
   fm_last[0] = fm_last[1] = 0;
