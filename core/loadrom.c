@@ -531,6 +531,14 @@ int load_rom(char *filename)
 {
   int i, size;
 
+#ifdef USE_DYNAMIC_ALLOC
+  /* allocate memory for Cartridge /CD hardware buffer if required */
+  if (ext == NULL)
+  {
+    ext = (external_t *)malloc(sizeof(external_t));
+  }
+#endif
+
   /* clear any existing patches */
   ggenie_shutdown();
   areplay_shutdown();
