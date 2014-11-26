@@ -442,6 +442,7 @@ static void config_default(void)
    config.addr_error     = 1;
    config.bios           = 0;
    config.lock_on        = 0;
+   config.lcd            = 0; /* 0.8 fixed point */
 
    /* video options */
    config.overscan = 0;
