@@ -41,7 +41,11 @@
 
 #include "shared.h"
 
-external_t ext;           /* External Hardware (Cartridge, CD unit, ...) */
+#ifdef USE_DYNAMIC_ALLOC
+external_t *ext;
+#else                     /* External Hardware (Cartridge, CD unit, ...) */
+external_t ext;
+#endif
 uint8 boot_rom[0x800];    /* Genesis BOOT ROM   */
 uint8 work_ram[0x10000];  /* 68K RAM  */
 uint8 zram[0x2000];       /* Z80 RAM  */
@@ -345,11 +349,15 @@ void gen_reset(int hard_reset)
       Z80.r = 4;
     }
 
-    /* Master System specific (when BIOS is disabled) */
-    else if ((system_hw & SYSTEM_SMS) && (!(config.bios & 1) || !(system_bios & SYSTEM_SMS)))
+    /* Master System & Game Gear specific */
+    else if (system_hw & (SYSTEM_SMS | SYSTEM_GG))
     {
-      /* usually done by BIOS & required by some SMS games that don't initialize SP */
-      Z80.sp.w.l = 0xDFFF;
+      /* check if BIOS is not being used */
+      if ((!(config.bios & 1) || !(system_bios & (SYSTEM_SMS | SYSTEM_GG))))
+      {
+        /* a few Master System (Ace of Aces, Shadow Dancer) & Game Gear (Ecco the Dolphin, Evander Holyfield Real Deal Boxing) games crash if SP is not properly initialized */
+        Z80.sp.w.l = 0xDFF0;
+      }
     }
   }
 }

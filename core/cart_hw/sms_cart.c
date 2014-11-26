@@ -84,6 +84,7 @@ static const rominfo_t game_list[] =
 
   /* games requiring 315-5124 VDP (Mark-III, Master System I) */
   {0x32759751, 0, 1, SYSTEM_GAMEPAD, MAPPER_SEGA, SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Y's (J) */
+  {0xE8B82066, 0, 1, SYSTEM_GAMEPAD, MAPPER_SEGA, SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Y's (J) [Demo] */
 
   /* games requiring Sega 315-5235 mapper without bank shifting */
   {0x23BAC434, 0, 0, SYSTEM_GAMEPAD,  MAPPER_SEGA_X, SYSTEM_GG, REGION_USA}, /* Shining Force Gaiden - Final Conflict (JP) [T-Eng] */
@@ -250,9 +251,9 @@ static const rominfo_t game_list[] =
   {0x315917D4, 0, 0, SYSTEM_PADDLE,      MAPPER_SEGA,   SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Woody Pop */
 
   /* games requiring Sega Sport Pad */
+  {0x41C948BF, 0, 0, SYSTEM_SPORTSPAD,   MAPPER_SEGA,   SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Sports Pad Soccer */
   {0x0CB7E21F, 0, 0, SYSTEM_SPORTSPAD,   MAPPER_SEGA,   SYSTEM_SMS2,        REGION_USA}, /* Great Ice Hockey */
   {0xE42E4998, 0, 0, SYSTEM_SPORTSPAD,   MAPPER_SEGA,   SYSTEM_SMS2,        REGION_USA}, /* Sports Pad Football */
-  {0x41C948BF, 0, 0, SYSTEM_SPORTSPAD,   MAPPER_SEGA,   SYSTEM_SMS2,        REGION_USA}, /* Sports Pad Soccer */
 
   /* games requiring Furrtek's Master Tap */
   {0xFAB6F52F, 0, 0, SYSTEM_MASTERTAP,   MAPPER_NONE,   SYSTEM_SMS2,        REGION_USA}, /* BOom (v1.0) */

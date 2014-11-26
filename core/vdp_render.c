@@ -4176,8 +4176,8 @@ void remap_line(int line)
     line = (line * 2) + odd_frame;
   }
 
-  /* NTSC Filter (only supported for 15 or 16-bit pixels rendering) */
 #if defined(USE_15BPP_RENDERING) || defined(USE_16BPP_RENDERING)
+  /* NTSC Filter (only supported for 15 or 16-bit pixels rendering) */
   if (config.ntsc)
   {
     if (reg[12] & 0x01)
@@ -4192,16 +4192,27 @@ void remap_line(int line)
   else
 #endif
   {
-    /* Convert VDP pixel data to output pixel format */
 #ifdef CUSTOM_BLITTER
     CUSTOM_BLITTER(line, width, pixel, src)
 #else
-    PIXEL_OUT_T *dst =((PIXEL_OUT_T *)&bitmap.data[(line * bitmap.pitch)]);
-    do
+    /* Convert VDP pixel data to output pixel format */
+    PIXEL_OUT_T *dst = ((PIXEL_OUT_T *)&bitmap.data[(line * bitmap.pitch)]);
+    if (config.lcd)
     {
-      *dst++ = pixel[*src++];
+      do
+      {
+        RENDER_PIXEL_LCD(src,dst,pixel,config.lcd);
+      }
+      while (--width);
     }
-    while (--width);
-#endif
+    else
+    {
+      do
+      {
+        *dst++ = pixel[*src++];
+      }
+      while (--width);
+    }
+ #endif
   }
 }

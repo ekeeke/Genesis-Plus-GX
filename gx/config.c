@@ -132,6 +132,7 @@ void config_default(void)
   config.aspect   = 1;
   config.overscan = 3; /* FULL */
   config.gg_extra = 0;
+  config.lcd      = 0;
   config.ntsc     = 0;
   config.vsync    = 1; /* AUTO */
   config.bilinear = 0;

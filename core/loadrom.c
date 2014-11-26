@@ -512,6 +512,8 @@ int load_bios(void)
 
     default:
     {
+      /* mark all BOOTROM as unloaded  */
+      system_bios &= ~(0x10 | SYSTEM_SMS | SYSTEM_GG);
       return 0;
     }
   }
@@ -528,6 +530,14 @@ int load_bios(void)
 int load_rom(char *filename)
 {
   int i, size;
+
+#ifdef USE_DYNAMIC_ALLOC
+  /* allocate memory for Cartridge /CD hardware buffer if required */
+  if (ext == NULL)
+  {
+    ext = (external_t *)malloc(sizeof(external_t));
+  }
+#endif
 
   /* clear any existing patches */
   ggenie_shutdown();

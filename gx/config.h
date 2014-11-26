@@ -57,12 +57,12 @@ typedef struct
   uint8 mono;
   int16 psg_preamp;
   int16 fm_preamp;
-  uint32 lp_range;
   int16 low_freq;
   int16 high_freq;
   int16 lg;
   int16 mg;
   int16 hg;
+  uint32 lp_range;
   uint8 system;
   uint8 region_detect;
   uint8 master_clock;
@@ -76,6 +76,7 @@ typedef struct
   uint8 gun_cursor[2];
   uint8 overscan;
   uint8 gg_extra;
+  uint8 lcd;
   uint8 ntsc;
   uint8 vsync;
   uint8 render;
@@ -88,7 +89,7 @@ typedef struct
   int16 xscale;
   int16 yscale;
 #ifdef HW_RVL
-  uint32 trap;
+  uint8 trap;
   float gamma;
 #else
   uint8 v_prog;

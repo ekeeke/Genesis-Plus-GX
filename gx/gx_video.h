@@ -52,17 +52,34 @@
 /* One tile is 32 byte = 4x4 pixels */
 /* Tiles are stored continuously in texture memory */
 #define CUSTOM_BLITTER(line, width, table, in)  \
+{ \
   width >>= 2;  \
   u16 *out = (u16 *) (bitmap.data + (((width << 5) * (line >> 2)) + ((line & 3) << 3))); \
-  do  \
-  { \
-    *out++ = table[*in++];  \
-    *out++ = table[*in++];  \
-    *out++ = table[*in++];  \
-    *out++ = table[*in++];  \
-    out += 12;  \
-  } \
-  while (--width);
+  if (config.lcd)  \
+  {  \
+    do  \
+    {  \
+      RENDER_PIXEL_LCD(in,out,table,config.lcd);  \
+      RENDER_PIXEL_LCD(in,out,table,config.lcd);  \
+      RENDER_PIXEL_LCD(in,out,table,config.lcd);  \
+      RENDER_PIXEL_LCD(in,out,table,config.lcd);  \
+      out += 12;  \
+    }  \
+    while (--width);  \
+  }  \
+  else  \
+  {  \
+    do  \
+    { \
+      *out++ = table[*in++];  \
+      *out++ = table[*in++];  \
+      *out++ = table[*in++];  \
+      *out++ = table[*in++];  \
+      out += 12;  \
+    } \
+    while (--width); \
+  }  \
+}
 
 /* image texture */
 typedef struct

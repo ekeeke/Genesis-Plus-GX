@@ -324,6 +324,12 @@ void io_reset(void)
     /* Control registers */
     io_reg[0x0E] = 0x00;
     io_reg[0x0F] = 0xFF;
+
+     /* on SG-1000 & Mark-III, TH is not connected (always return 1) */
+    if (system_hw < SYSTEM_SMS)
+    {
+      io_reg[0x0F] = 0xF5;
+    }
   }
 
   /* Reset connected peripherals */
@@ -412,12 +418,10 @@ unsigned int io_68k_read(unsigned int offset)
 
 void io_z80_write(unsigned int offset, unsigned int data, unsigned int cycles)
 {
+  /* I/O Control register */
   if (offset)
   {
-    /* I/O Control register */
-    if (region_code & REGION_USA)
-    {
-      /* 
+    /* 
         Bit  Function
         --------------
         D7 : Port B TH pin output level (1=high, 0=low)
@@ -428,36 +432,33 @@ void io_z80_write(unsigned int offset, unsigned int data, unsigned int cycles)
         D2 : Port B TR pin direction (1=input, 0=output)
         D1 : Port A TH pin direction (1=input, 0=output)
         D0 : Port A TR pin direction (1=input, 0=output)
-      */
+    */
 
-      /* Send TR/TH state to connected peripherals */
-      port[0].data_w((data << 1) & 0x60, (~io_reg[0x0F] << 5) & 0x60);
-      port[1].data_w((data >> 1) & 0x60, (~io_reg[0x0F] << 3) & 0x60);
+    /* Send TR/TH state to connected peripherals */
+    port[0].data_w((data << 1) & 0x60, (~data << 5) & 0x60);
+    port[1].data_w((data >> 1) & 0x60, (~data << 3) & 0x60);
 
-
-      /* Check for TH low-to-high transitions on both ports */
-      if ((!(io_reg[0x0F] & 0x80) && (data & 0x80)) ||
-          (!(io_reg[0x0F] & 0x20) && (data & 0x20)))
-      {
-        /* Latch new HVC */
-        hvc_latch = hctab[cycles % MCYCLES_PER_LINE] | 0x10000;
-     }
-
-      /* Update I/O Control register */
-      io_reg[0x0F] = data;
-    }
-    else
+    /* Japanese model specific */
+    if (region_code == REGION_JAPAN_NTSC)
     {
-      /* TH output is fixed to 0 & TR is always an input on japanese hardware */
-      io_reg[0x0F] = (data | 0x05) & 0x5F;
-
-      /* Port $DD bits D4-D5 return D0-D2 (cf. http://www2.odn.ne.jp/~haf09260/Sms/EnrSms.htm) */
-      io_reg[0x0D] = ((data & 0x01) << 4) | ((data & 0x04) << 3);
+      /* Reading TH & TR pins always return 0 when set as output */
+      data &= 0x0F;
     }
+    
+    /* Check for TH low-to-high transitions on both ports */
+    if ((!(io_reg[0x0F] & 0x80) && (data & 0x80)) ||
+        (!(io_reg[0x0F] & 0x20) && (data & 0x20)))
+    {
+      /* Latch new HVC */
+      hvc_latch = hctab[cycles % MCYCLES_PER_LINE] | 0x10000;
+    }
+
+    /* Update I/O Control register */
+    io_reg[0x0F] = data;
   }
   else
   {
-    /* Update Memory Control register */
+    /* Memory Control register */
     io_reg[0x0E] = data;
 
     /* Switch cartridge & BIOS ROM */

@@ -225,7 +225,7 @@ static gui_item action_select =
 /*****************************************************************************/
 /* GUI backgrounds images                                                    */
 /*****************************************************************************/
-static gui_image bg_main[4] =
+static gui_image bg_main[] =
 {
   {NULL,Bg_layer_png,IMAGE_VISIBLE|IMAGE_REPEAT,0,0,640,480,255},
   {NULL,Bg_overlay_png,IMAGE_VISIBLE|IMAGE_REPEAT,0,0,640,480,255},
@@ -233,7 +233,7 @@ static gui_image bg_main[4] =
   {NULL,Main_logo_png,IMAGE_VISIBLE|IMAGE_SLIDE_BOTTOM,202,362,232,56,255}
 };
 
-static gui_image bg_misc[5] =
+static gui_image bg_misc[] =
 {
   {NULL,Bg_layer_png,IMAGE_VISIBLE|IMAGE_REPEAT,0,0,640,480,255},
   {NULL,Bg_overlay_png,IMAGE_VISIBLE|IMAGE_REPEAT,0,0,640,480,255},
@@ -242,7 +242,7 @@ static gui_image bg_misc[5] =
   {NULL,Main_logo_png,IMAGE_VISIBLE|IMAGE_SLIDE_TOP,466,40,152,44,255}
 };
 
-static gui_image bg_ctrls[8] =
+static gui_image bg_ctrls[] =
 {
   {NULL,Bg_layer_png,IMAGE_VISIBLE|IMAGE_REPEAT,0,0,640,480,255},
   {NULL,Bg_overlay_png,IMAGE_VISIBLE|IMAGE_REPEAT,0,0,640,480,255},
@@ -254,7 +254,7 @@ static gui_image bg_ctrls[8] =
   {NULL,Frame_s3_png,IMAGE_SLIDE_RIGHT,400,134,292,248,128}
 };
 
-static gui_image bg_list[6] =
+static gui_image bg_list[] =
 {
   {NULL,Bg_layer_png,IMAGE_VISIBLE|IMAGE_REPEAT,0,0,640,480,255},
   {NULL,Bg_overlay_png,IMAGE_VISIBLE|IMAGE_REPEAT,0,0,640,480,255},
@@ -264,7 +264,7 @@ static gui_image bg_list[6] =
   {NULL,Frame_s1_png,IMAGE_VISIBLE,8,70,372,336,76}
 };
 
-static gui_image bg_saves[8] =
+static gui_image bg_saves[] =
 {
   {NULL,NULL,0,0,0,0,0,255},
   {NULL,Bg_layer_png,IMAGE_VISIBLE|IMAGE_REPEAT,0,0,640,480,255},
@@ -281,7 +281,7 @@ static gui_image bg_saves[8] =
 /*****************************************************************************/
 
 /* Main menu */
-static gui_item items_main[10] =
+static gui_item items_main[] =
 {
   {NULL,Main_load_png    ,"","",114,162,80,92},
   {NULL,Main_options_png ,"","",290,166,60,88},
@@ -300,7 +300,7 @@ static gui_item items_main[10] =
 };
 
 /* Controllers menu */
-static gui_item items_ctrls[13] =
+static gui_item items_ctrls[] =
 {
   {NULL,NULL,"","",  0,  0,  0,  0},
   {NULL,NULL,"","",  0,  0,  0,  0},
@@ -318,7 +318,7 @@ static gui_item items_ctrls[13] =
 };
 
 /* Load menu */
-static gui_item items_load[6] =
+static gui_item items_load[] =
 {
   {NULL,Load_recent_png,"","Load recently played games",    119,144,72, 92},
   {NULL,Load_md_png,    "","Load Mega Drive/Genesis games", 278,141,84, 92},
@@ -329,7 +329,7 @@ static gui_item items_load[6] =
 };
 
 /* Option menu */
-static gui_item items_options[5] =
+static gui_item items_options[] =
 {
   {NULL,Option_system_png,"","System settings",       114,142,80,92},
   {NULL,Option_video_png, "","Video settings",        288,150,64,84},
@@ -339,7 +339,7 @@ static gui_item items_options[5] =
 };
 
 /* Audio options */
-static gui_item items_audio[13] =
+static gui_item items_audio[] =
 {
   {NULL,NULL,"Master System FM: AUTO", "Enable/disable YM2413 chip",              56,132,276,48},
   {NULL,NULL,"High-Quality FM: ON",    "Adjust YM2612/YM2413 resampling quality", 56,132,276,48},
@@ -357,7 +357,7 @@ static gui_item items_audio[13] =
 };
 
 /* System ROM paths */
-static gui_item items_rompaths[12] =
+static gui_item items_rompaths[] =
 {
   {NULL,NULL,"CD BIOS (USA): NOT FOUND",  "Select Sega CD (USA) BIOS",            56,132,276,48},
   {NULL,NULL,"CD BIOS (PAL): NOT FOUND",  "Select Mega CD (PAL) BIOS",            56,132,276,48},
@@ -374,7 +374,7 @@ static gui_item items_rompaths[12] =
 };
 
 /* System options */
-static gui_item items_system[11] =
+static gui_item items_system[] =
 {
   {NULL,NULL,"Console Hardware: AUTO",  "Select system hardware model",                56,132,276,48},
   {NULL,NULL,"Console Region: AUTO",    "Select system region",                        56,132,276,48},
@@ -390,40 +390,33 @@ static gui_item items_system[11] =
 };
 
 /* Video options */
-#ifdef HW_RVL
-static gui_item items_video[18] =
-#else
-static gui_item items_video[16] =
-#endif
+static gui_item items_video[] =
 {
-  {NULL,NULL,"Display: PROGRESSIVE",     "Select video mode",                          56,132,276,48},
-  {NULL,NULL,"TV mode: 50/60HZ",         "Select video refresh rate",                  56,132,276,48},
-  {NULL,NULL,"VSYNC: AUTO",              "Enable/disable sync with Video Hardware",    56,132,276,48},
-  {NULL,NULL,"GX Bilinear Filter: OFF",  "Enable/disable texture hardware filtering",  56,132,276,48},
-  {NULL,NULL,"GX Deflickering Filter: OFF","Enable/disable GX hardware filtering",     56,132,276,48},
+  {NULL,NULL,"Display: PROGRESSIVE",        "Select video mode",                                 56,132,276,48},
+  {NULL,NULL,"TV mode: 50/60HZ",            "Select video refresh rate",                         56,132,276,48},
+  {NULL,NULL,"VSYNC: AUTO",                 "Enable/disable sync with video hardware",           56,132,276,48},
+  {NULL,NULL,"GX Bilinear Filter: OFF",     "Enable/disable hardware texture filtering",         56,132,276,48},
+  {NULL,NULL,"GX Deflickering Filter: OFF", "Enable/disable hardware GX filtering",              56,132,276,48},
 #ifdef HW_RVL
-  {NULL,NULL,"VI Trap Filter: ON",       "Enable/disable video hardware filtering",    56,132,276,48},
-  {NULL,NULL,"VI Gamma Correction: 1.0", "Adjust video hardware gamma correction",     56,132,276,48},
+  {NULL,NULL,"VI Trap Filter: ON",          "Enable/disable hardware composite video filtering", 56,132,276,48},
+  {NULL,NULL,"VI Gamma Correction: 1.0",    "Adjust video hardware gamma correction",            56,132,276,48},
 #endif
-  {NULL,NULL,"NTSC Filter: COMPOSITE",   "Enable/disable NTSC software filtering",     56,132,276,48},
-  {NULL,NULL,"NTSC Sharpness: 0.0",      "Adjust edge contrast enhancement/blurring",  56,132,276,48},
-  {NULL,NULL,"NTSC Resolution: 0.0",     "Adjust image resolution",                    56,132,276,48},
-  {NULL,NULL,"NTSC Artifacts: 0.0",      "Adjust artifacts caused by color changes",   56,132,276,48},
-  {NULL,NULL,"NTSC Color Bleed: 0.0",    "Adjust color resolution reduction",          56,132,276,48},
-  {NULL,NULL,"NTSC Color Fringing: 0.0", "Adjust artifacts caused by brightness changes", 56,132,276,48},
-  {NULL,NULL,"Borders: OFF",             "Enable/disable overscan emulation",          56,132,276,48},
-  {NULL,NULL,"GG screen: ORIGINAL",      "Enable/disable Game Gear extended screen",   56,132,276,48},
-  {NULL,NULL,"Aspect: ORIGINAL (4:3)",   "Select display aspect ratio",                56,132,276,48},
-  {NULL,NULL,"Screen Position (+0,+0)",  "Adjust display position",                    56,132,276,48},
-  {NULL,NULL,"Screen Scaling (+0,+0)",   "Adjust display scaling",                     56,132,276,48}
+  {NULL,NULL,"LCD Ghosting Filter: OFF",    "Enable/disable software LCD image persistence",     56,132,276,48},
+  {NULL,NULL,"NTSC Filter: COMPOSITE",      "Enable/disable software NTSC filtering",            56,132,276,48},
+  {NULL,NULL,"NTSC Sharpness: 0.0",         "Adjust edge contrast enhancement/blurring",         56,132,276,48},
+  {NULL,NULL,"NTSC Resolution: 0.0",        "Adjust image resolution",                           56,132,276,48},
+  {NULL,NULL,"NTSC Artifacts: 0.0",         "Adjust artifacts caused by color changes",          56,132,276,48},
+  {NULL,NULL,"NTSC Color Bleed: 0.0",       "Adjust color resolution reduction",                 56,132,276,48},
+  {NULL,NULL,"NTSC Color Fringing: 0.0",    "Adjust artifacts caused by brightness changes",     56,132,276,48},
+  {NULL,NULL,"Borders: OFF",                "Enable/disable overscan emulation",                 56,132,276,48},
+  {NULL,NULL,"GG screen: ORIGINAL",         "Enable/disable Game Gear extended screen",          56,132,276,48},
+  {NULL,NULL,"Aspect: ORIGINAL (4:3)",      "Select display aspect ratio",                       56,132,276,48},
+  {NULL,NULL,"Screen Position (+0,+0)",     "Adjust display position",                           56,132,276,48},
+  {NULL,NULL,"Screen Scaling (+0,+0)",      "Adjust display scaling",                            56,132,276,48}
 };
 
 /* Menu options */
-#ifdef HW_RVL
-static gui_item items_prefs[13] =
-#else
-static gui_item items_prefs[11] =
-#endif
+static gui_item items_prefs[] =
 {
   {NULL,NULL,"Auto ROM Load: OFF",  "Enable/disable automatic ROM loading on startup", 56,132,276,48},
   {NULL,NULL,"Auto Cheats: OFF",    "Enable/disable automatic cheats activation",      56,132,276,48},
@@ -443,7 +436,7 @@ static gui_item items_prefs[11] =
 };
 
 /* Save Manager */
-static gui_item items_saves[9] =
+static gui_item items_saves[] =
 {
   {NULL,NULL,"",""                   ,0,0,0,0},
   {NULL,NULL,"",""                   ,0,0,0,0},
@@ -465,7 +458,7 @@ static gui_butn arrow_up = {&arrow_up_data,BUTTON_ACTIVE|BUTTON_OVER_SFX,{0,0,0,
 static gui_butn arrow_down = {&arrow_down_data,BUTTON_ACTIVE|BUTTON_OVER_SFX,{0,0,0,0},14,368,360,32};
 
 /* Generic list menu */
-static gui_butn buttons_list[4] =
+static gui_butn buttons_list[] =
 {
   {&button_text_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX,{1,1,0,0},56,132,276,48},
   {&button_text_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX,{1,1,0,0},56,188,276,48},
@@ -474,7 +467,7 @@ static gui_butn buttons_list[4] =
 };
 
 /* Main menu */
-static gui_butn buttons_main[10] =
+static gui_butn buttons_main[] =
 {
   {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{0,0,0,1}, 80,140,148,132},
   {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{0,0,1,1},246,140,148,132},
@@ -489,7 +482,7 @@ static gui_butn buttons_main[10] =
 };
 
 /* Controllers Menu */
-static gui_butn buttons_ctrls[13] =
+static gui_butn buttons_ctrls[] =
 {
   {&button_icon_data    ,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX                  ,{0,1,0,2}, 60, 88,148,132},
   {&button_icon_data    ,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX                  ,{1,0,0,5}, 60,258,148,132},
@@ -507,7 +500,7 @@ static gui_butn buttons_ctrls[13] =
 };
 
 /* Load Game menu */
-static gui_butn buttons_load[6] =
+static gui_butn buttons_load[] =
 {
   {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{0,3,0,1}, 80,120,148,132},
   {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{0,3,1,1},246,120,148,132},
@@ -518,7 +511,7 @@ static gui_butn buttons_load[6] =
 };
 
 /* Options menu */
-static gui_butn buttons_options[5] =
+static gui_butn buttons_options[] =
 {
   {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{0,3,0,1}, 80,120,148,132},
   {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{0,3,1,1},246,120,148,132},
@@ -528,7 +521,7 @@ static gui_butn buttons_options[5] =
 };
 
 /* Save Manager Menu */
-static gui_butn buttons_saves[9] =
+static gui_butn buttons_saves[] =
 {
   {&button_text_data   ,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX,{0,1,0,0}, 56,102,276,48},
   {&button_text_data   ,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX,{1,1,0,0}, 56,158,276,48},
@@ -620,7 +613,7 @@ static gui_menu menu_system =
 {
   "System Settings",
   0,0,
-  10,4,6,0,
+  0,4,6,0,
   items_system,
   buttons_list,
   bg_list,
@@ -634,7 +627,7 @@ static gui_menu menu_video =
 {
   "Video Settings",
   0,0,
-  10,4,6,0,
+  0,4,6,0,
   items_video,
   buttons_list,
   bg_list,
@@ -648,7 +641,7 @@ static gui_menu menu_audio =
 {
   "Audio Settings",
   0,0,
-  9,4,6,0,
+  0,4,6,0,
   items_audio,
   buttons_list,
   bg_list,
@@ -662,7 +655,7 @@ static gui_menu menu_prefs =
 {
   "Menu Settings",
   0,0,
-  12,4,6,0,
+  0,4,6,0,
   items_prefs,
   buttons_list,
   bg_list,
@@ -1078,7 +1071,7 @@ static void soundmenu ()
         if (config.filter == 1)
         {
           int16 lp_range = (config.lp_range * 100 + 0xffff) / 0x10000;
-          GUI_OptionBox(m,0,"Low-Pass Rate",(void *)&lp_range,1,0,100,1);
+          GUI_OptionBox(m,0,"Low-Pass Rate (%)",(void *)&lp_range,1,0,100,1);
           sprintf (items[8].text, "Low-Pass Rate: %d %%", lp_range);
           config.lp_range = (lp_range * 0x10000) / 100;
         }
@@ -1335,7 +1328,7 @@ static void systemmenu ()
 
           /* Default system hardware (auto) */
           if (system_hw) system_hw = romtype;
-       }
+        }
         else if (config.system == 0)
         {
           config.system = SYSTEM_SG;
@@ -1694,65 +1687,75 @@ static void videomenu ()
   sprintf (items[6].text, "VI Gamma Correction: %1.1f", config.gamma);
 #endif
 
+  if (config.lcd > 0)
+  {
+    int ratio = ((config.lcd * 100) + 254) / 255;
+    sprintf (items[VI_OFFSET].text, "LCD Ghosting Filter: %d%%", ratio);
+  }
+  else
+  {
+    sprintf (items[VI_OFFSET].text, "LCD Ghosting Filter: OFF");
+  }
+  
   if (config.ntsc == 1)
-    sprintf (items[VI_OFFSET].text, "NTSC Filter: COMPOSITE");
+    sprintf (items[VI_OFFSET+1].text, "NTSC Filter: COMPOSITE");
   else if (config.ntsc == 2)
-    sprintf (items[VI_OFFSET].text, "NTSC Filter: S-VIDEO");
+    sprintf (items[VI_OFFSET+1].text, "NTSC Filter: S-VIDEO");
   else if (config.ntsc == 3)
-    sprintf (items[VI_OFFSET].text, "NTSC Filter: RGB");
+    sprintf (items[VI_OFFSET+1].text, "NTSC Filter: RGB");
   else if (config.ntsc == 4)
   {
-    sprintf (items[VI_OFFSET].text, "NTSC Filter: MANUAL");
-    sprintf(items[VI_OFFSET+1].text, "NTSC Sharpness: %1.2f", config.ntsc_sharpness);
-    sprintf(items[VI_OFFSET+2].text, "NTSC Resolution: %1.2f", config.ntsc_resolution);
-    sprintf(items[VI_OFFSET+3].text, "NTSC Artifacts: %1.2f", config.ntsc_artifacts);
-    sprintf(items[VI_OFFSET+4].text, "NTSC Color Bleed: %1.2f", config.ntsc_bleed);
-    sprintf(items[VI_OFFSET+5].text, "NTSC Color Fringing: %1.2f", config.ntsc_fringing);
-    strcpy(items[VI_OFFSET+1].comment, "Adjust edge contrast enhancement/blurring");
-    strcpy(items[VI_OFFSET+2].comment, "Adjust image resolution");
-    strcpy(items[VI_OFFSET+3].comment, "Adjust artifacts caused by color changes");
-    strcpy(items[VI_OFFSET+4].comment, "Adjust color resolution reduction");
-    strcpy(items[VI_OFFSET+5].comment, "Adjust artifacts caused by brightness changes");
+    sprintf (items[VI_OFFSET+1].text, "NTSC Filter: MANUAL");
+    sprintf(items[VI_OFFSET+2].text, "NTSC Sharpness: %1.2f", config.ntsc_sharpness);
+    sprintf(items[VI_OFFSET+3].text, "NTSC Resolution: %1.2f", config.ntsc_resolution);
+    sprintf(items[VI_OFFSET+4].text, "NTSC Artifacts: %1.2f", config.ntsc_artifacts);
+    sprintf(items[VI_OFFSET+5].text, "NTSC Color Bleed: %1.2f", config.ntsc_bleed);
+    sprintf(items[VI_OFFSET+6].text, "NTSC Color Fringing: %1.2f", config.ntsc_fringing);
+    strcpy(items[VI_OFFSET+2].comment, "Adjust edge contrast enhancement/blurring");
+    strcpy(items[VI_OFFSET+3].comment, "Adjust image resolution");
+    strcpy(items[VI_OFFSET+4].comment, "Adjust artifacts caused by color changes");
+    strcpy(items[VI_OFFSET+5].comment, "Adjust color resolution reduction");
+    strcpy(items[VI_OFFSET+6].comment, "Adjust artifacts caused by brightness changes");
     ntsc_offset = 5;
   }
   else
-    sprintf (items[VI_OFFSET].text, "NTSC Filter: OFF");
+    sprintf (items[VI_OFFSET+1].text, "NTSC Filter: OFF");
 
-  strcpy(items[VI_OFFSET+1+ntsc_offset].comment, "Enable/disable overscan emulation");
-  strcpy(items[VI_OFFSET+2+ntsc_offset].comment, "Enable/disable Game Gear extended screen");
-  strcpy(items[VI_OFFSET+3+ntsc_offset].comment, "Select display aspect ratio");
-  strcpy(items[VI_OFFSET+4+ntsc_offset].comment, "Adjust display position");
-  strcpy(items[VI_OFFSET+5+ntsc_offset].comment, "Adjust display scaling");
+  strcpy(items[VI_OFFSET+2+ntsc_offset].comment, "Enable/disable overscan emulation");
+  strcpy(items[VI_OFFSET+3+ntsc_offset].comment, "Enable/disable Game Gear extended screen");
+  strcpy(items[VI_OFFSET+4+ntsc_offset].comment, "Select display aspect ratio");
+  strcpy(items[VI_OFFSET+5+ntsc_offset].comment, "Adjust display position");
+  strcpy(items[VI_OFFSET+6+ntsc_offset].comment, "Adjust display scaling");
 
   if (config.overscan == 3)
-    sprintf (items[VI_OFFSET+1+ntsc_offset].text, "Borders: FULL");
+    sprintf (items[VI_OFFSET+2+ntsc_offset].text, "Borders: FULL");
   else if (config.overscan == 2)
-    sprintf (items[VI_OFFSET+1+ntsc_offset].text, "Borders: H ONLY");
+    sprintf (items[VI_OFFSET+2+ntsc_offset].text, "Borders: H ONLY");
   else if (config.overscan == 1)
-    sprintf (items[VI_OFFSET+1+ntsc_offset].text, "Borders: V ONLY");
+    sprintf (items[VI_OFFSET+2+ntsc_offset].text, "Borders: V ONLY");
   else
-    sprintf (items[VI_OFFSET+1+ntsc_offset].text, "Borders: NONE");
+    sprintf (items[VI_OFFSET+2+ntsc_offset].text, "Borders: NONE");
 
-  sprintf(items[VI_OFFSET+2+ntsc_offset].text, "GG Screen: %s", config.gg_extra ? "EXTENDED":"ORIGINAL");
+  sprintf(items[VI_OFFSET+3+ntsc_offset].text, "GG Screen: %s", config.gg_extra ? "EXTENDED":"ORIGINAL");
 
   if (config.aspect == 1)
-    sprintf (items[VI_OFFSET+3+ntsc_offset].text,"Aspect: ORIGINAL (4:3)");
+    sprintf (items[VI_OFFSET+4+ntsc_offset].text,"Aspect: ORIGINAL (4:3)");
   else if (config.aspect == 2)
-    sprintf (items[VI_OFFSET+3+ntsc_offset].text, "Aspect: ORIGINAL (16:9)");
+    sprintf (items[VI_OFFSET+4+ntsc_offset].text, "Aspect: ORIGINAL (16:9)");
   else
   {
-    sprintf (items[VI_OFFSET+3+ntsc_offset].text, "Aspect: SCALED");
+    sprintf (items[VI_OFFSET+4+ntsc_offset].text, "Aspect: SCALED");
   }
 
-  sprintf (items[VI_OFFSET+4+ntsc_offset].text, "Screen Position: (%s%02d,%s%02d)",
+  sprintf (items[VI_OFFSET+5+ntsc_offset].text, "Screen Position: (%s%02d,%s%02d)",
     (config.xshift < 0) ? "":"+", config.xshift,
     (config.yshift < 0) ? "":"+", config.yshift);
 
-  sprintf (items[VI_OFFSET+5+ntsc_offset].text, "Screen Scaling: (%s%02d,%s%02d)",
+  sprintf (items[VI_OFFSET+6+ntsc_offset].text, "Screen Scaling: (%s%02d,%s%02d)",
     (config.xscale < 0) ? "":"+", config.xscale,
     (config.yscale < 0) ? "":"+", config.yscale);
 
-  m->max_items  = VI_OFFSET + 5 + ntsc_offset + (config.aspect == 0);
+  m->max_items  = VI_OFFSET + 6 + ntsc_offset + (config.aspect == 0);
 
   GUI_InitMenu(m);
   GUI_SlideMenuTitle(m,strlen("Video "));
@@ -1761,7 +1764,7 @@ static void videomenu ()
   {
     ret = GUI_RunMenu(m);
 
-    if (ret > VI_OFFSET)
+    if (ret > (VI_OFFSET + 1))
     {
       ret += (5 - ntsc_offset);
     }
@@ -1769,6 +1772,7 @@ static void videomenu ()
     switch (ret)
     {
       case 0:  /*** rendering ***/
+      {
         config.render = (config.render + 1) % 3;
         if (config.render == 2)
         {
@@ -1784,10 +1788,13 @@ static void videomenu ()
           sprintf (items[0].text, "Display: PROGRESSIVE");
         else
           sprintf (items[0].text, "Display: ORIGINAL");
+
         reinit = 1;
         break;
+      }
 
       case 1: /*** tv mode ***/
+      {
         config.tv_mode = (config.tv_mode + 1) % 3;
         if (config.tv_mode == 0)
           sprintf (items[1].text, "TV Mode: 60HZ");
@@ -1797,8 +1804,10 @@ static void videomenu ()
           sprintf (items[1].text, "TV Mode: 50/60HZ");
         reinit = 1;
         break;
-    
+      }
+
       case 2: /*** VSYNC ***/
+      {
         config.vsync ^= 1;
         if (config.vsync)
           sprintf (items[2].text, "VSYNC: AUTO");
@@ -1806,24 +1815,32 @@ static void videomenu ()
           sprintf (items[2].text, "VSYNC: OFF");
         reinit = 1;
         break;
+      }
 
       case 3: /*** GX Texture filtering ***/
+      {
         config.bilinear ^= 1;
         sprintf (items[3].text, "GX Bilinear Filter: %s", config.bilinear ? " ON" : "OFF");
         break;
+      }
 
       case 4: /*** GX Copy filtering (deflickering filter) ***/
+      {
         config.vfilter ^= 1;
         sprintf (items[4].text, "GX Deflicker Filter: %s", config.vfilter ? " ON" : "OFF");
         break;
+      }
 
 #ifdef HW_RVL
       case 5: /*** VIDEO Trap filtering ***/
+      {
         config.trap ^= 1;
         sprintf (items[5].text, "VI Trap Filter: %s", config.trap ? " ON" : "OFF");
         break;
+      }
 
       case 6: /*** VIDEO Gamma correction ***/
+      {
         if (system_hw) 
         {
           update_gamma();
@@ -1851,138 +1868,175 @@ static void videomenu ()
           GUI_WaitPrompt("Error","Please load a game first !\n");
         }
         break;
+      }
 #endif
 
-      case VI_OFFSET: /*** NTSC filter ***/
+      case VI_OFFSET: /*** LCD filter (soft) ***/
+      {
+        if (config.ntsc)
+        {
+          GUI_WaitPrompt("Error","NTSC filter must be disabled\n");
+          break;
+        }
+
+        int16 ratio = ((config.lcd * 100) + 254) / 255;
+        GUI_OptionBox(m,0,"LCD Ghosting Ratio (%)",(void *)&ratio,1,0,100,1);
+        if (ratio > 0)
+        {
+          sprintf (items[VI_OFFSET].text, "LCD Ghosting Filter: %d%%", ratio);
+        }
+        else
+        {
+          sprintf (items[VI_OFFSET].text, "LCD Ghosting Filter: OFF");
+        }
+        config.lcd = (ratio * 255) / 100;
+        break;
+      }
+
+      case VI_OFFSET+1: /*** NTSC filter (soft) ***/
+      {
+        if (config.lcd)
+        {
+          GUI_WaitPrompt("Error","LCD filter must be disabled\n");
+          break;
+        }
+
         config.ntsc = (config.ntsc + 1) % 5;
         if (config.ntsc == 1)
         {
-          sprintf (items[VI_OFFSET].text, "NTSC Filter: COMPOSITE");
+          sprintf (items[VI_OFFSET+1].text, "NTSC Filter: COMPOSITE");
         }
         else if (config.ntsc == 2)
         {
-          sprintf (items[VI_OFFSET].text, "NTSC Filter: S-VIDEO");
+          sprintf (items[VI_OFFSET+1].text, "NTSC Filter: S-VIDEO");
         }
         else if (config.ntsc == 3)
         {
-          sprintf (items[VI_OFFSET].text, "NTSC Filter: RGB");
+          sprintf (items[VI_OFFSET+1].text, "NTSC Filter: RGB");
         }
         else if (config.ntsc == 4)
         {
-          sprintf (items[VI_OFFSET].text, "NTSC Filter: MANUAL");
-          strcpy(items[VI_OFFSET+5+1].text, items[VI_OFFSET+1].text);
+          sprintf (items[VI_OFFSET+1].text, "NTSC Filter: MANUAL");
           strcpy(items[VI_OFFSET+5+2].text, items[VI_OFFSET+2].text);
           strcpy(items[VI_OFFSET+5+3].text, items[VI_OFFSET+3].text);
           strcpy(items[VI_OFFSET+5+4].text, items[VI_OFFSET+4].text);
           strcpy(items[VI_OFFSET+5+5].text, items[VI_OFFSET+5].text);
-          strcpy(items[VI_OFFSET+5+1].comment, items[VI_OFFSET+1].comment);
+          strcpy(items[VI_OFFSET+5+6].text, items[VI_OFFSET+6].text);
           strcpy(items[VI_OFFSET+5+2].comment, items[VI_OFFSET+2].comment);
           strcpy(items[VI_OFFSET+5+3].comment, items[VI_OFFSET+3].comment);
           strcpy(items[VI_OFFSET+5+4].comment, items[VI_OFFSET+4].comment);
           strcpy(items[VI_OFFSET+5+5].comment, items[VI_OFFSET+5].comment);
-          sprintf(items[VI_OFFSET+1].text, "NTSC Sharpness: %1.1f", config.ntsc_sharpness);
-          sprintf(items[VI_OFFSET+2].text, "NTSC Resolution: %1.1f", config.ntsc_resolution);
-          sprintf(items[VI_OFFSET+3].text, "NTSC Artifacts: %1.1f", config.ntsc_artifacts);
-          sprintf(items[VI_OFFSET+4].text, "NTSC Color Bleed: %1.1f", config.ntsc_bleed);
-          sprintf(items[VI_OFFSET+5].text, "NTSC Color Fringing: %1.1f", config.ntsc_fringing);
-          strcpy(items[VI_OFFSET+1].comment, "Adjust edge contrast enhancement/blurring");
-          strcpy(items[VI_OFFSET+2].comment, "Adjust image resolution");
-          strcpy(items[VI_OFFSET+3].comment, "Adjust artifacts caused by color changes");
-          strcpy(items[VI_OFFSET+4].comment, "Adjust color resolution reduction");
-          strcpy(items[VI_OFFSET+5].comment, "Adjust artifacts caused by brightness changes");
+          strcpy(items[VI_OFFSET+5+6].comment, items[VI_OFFSET+6].comment);
+          sprintf(items[VI_OFFSET+2].text, "NTSC Sharpness: %1.1f", config.ntsc_sharpness);
+          sprintf(items[VI_OFFSET+3].text, "NTSC Resolution: %1.1f", config.ntsc_resolution);
+          sprintf(items[VI_OFFSET+4].text, "NTSC Artifacts: %1.1f", config.ntsc_artifacts);
+          sprintf(items[VI_OFFSET+5].text, "NTSC Color Bleed: %1.1f", config.ntsc_bleed);
+          sprintf(items[VI_OFFSET+6].text, "NTSC Color Fringing: %1.1f", config.ntsc_fringing);
+          strcpy(items[VI_OFFSET+2].comment, "Adjust edge contrast enhancement/blurring");
+          strcpy(items[VI_OFFSET+3].comment, "Adjust image resolution");
+          strcpy(items[VI_OFFSET+4].comment, "Adjust artifacts caused by color changes");
+          strcpy(items[VI_OFFSET+5].comment, "Adjust color resolution reduction");
+          strcpy(items[VI_OFFSET+6].comment, "Adjust artifacts caused by brightness changes");
           ntsc_offset = 5;
-          m->max_items  = VI_OFFSET + 10 + (config.aspect == 0);
+          m->max_items  = VI_OFFSET + 11 + (config.aspect == 0);
         }
         else
         {
-          sprintf (items[VI_OFFSET].text, "NTSC Filter: OFF");
-          strcpy(items[VI_OFFSET+1].text, items[VI_OFFSET+5+1].text);
+          sprintf (items[VI_OFFSET+1].text, "NTSC Filter: OFF");
           strcpy(items[VI_OFFSET+2].text, items[VI_OFFSET+5+2].text);
           strcpy(items[VI_OFFSET+3].text, items[VI_OFFSET+5+3].text);
           strcpy(items[VI_OFFSET+4].text, items[VI_OFFSET+5+4].text);
           strcpy(items[VI_OFFSET+5].text, items[VI_OFFSET+5+5].text);
-          strcpy(items[VI_OFFSET+1].comment, items[VI_OFFSET+5+1].comment);
+          strcpy(items[VI_OFFSET+6].text, items[VI_OFFSET+5+6].text);
           strcpy(items[VI_OFFSET+2].comment, items[VI_OFFSET+5+2].comment);
           strcpy(items[VI_OFFSET+3].comment, items[VI_OFFSET+5+3].comment);
           strcpy(items[VI_OFFSET+4].comment, items[VI_OFFSET+5+4].comment);
           strcpy(items[VI_OFFSET+5].comment, items[VI_OFFSET+5+5].comment);
+          strcpy(items[VI_OFFSET+6].comment, items[VI_OFFSET+5+6].comment);
           ntsc_offset = 0;
-          m->max_items  = VI_OFFSET + 5 + (config.aspect == 0);
+          m->max_items  = VI_OFFSET + 6 + (config.aspect == 0);
         }
         break;
+      }
 
-      case VI_OFFSET+1: /*** NTSC Sharpness ***/
+      case VI_OFFSET+2: /*** NTSC Sharpness ***/
         GUI_OptionBox(m,update_bgm,"NTSC Sharpness",(void *)&config.ntsc_sharpness,0.01,-1.0,1.0,0);
-        sprintf(items[VI_OFFSET+1].text, "NTSC Sharpness: %1.2f", config.ntsc_sharpness);
+        sprintf(items[VI_OFFSET+2].text, "NTSC Sharpness: %1.2f", config.ntsc_sharpness);
         break;
 
-      case VI_OFFSET+2: /*** NTSC Resolution ***/
+      case VI_OFFSET+3: /*** NTSC Resolution ***/
         GUI_OptionBox(m,update_bgm,"NTSC Resolution",(void *)&config.ntsc_resolution,0.01,0.0,1.0,0);
-        sprintf(items[VI_OFFSET+2].text, "NTSC Resolution: %1.2f", config.ntsc_resolution);
+        sprintf(items[VI_OFFSET+3].text, "NTSC Resolution: %1.2f", config.ntsc_resolution);
         break;
 
-      case VI_OFFSET+3: /*** NTSC Artifacts ***/
+      case VI_OFFSET+4: /*** NTSC Artifacts ***/
         GUI_OptionBox(m,update_bgm,"NTSC Artifacts",(void *)&config.ntsc_artifacts,0.01,-1.0,0.0,0);
-        sprintf(items[VI_OFFSET+3].text, "NTSC Artifacts: %1.2f", config.ntsc_artifacts);
+        sprintf(items[VI_OFFSET+4].text, "NTSC Artifacts: %1.2f", config.ntsc_artifacts);
         break;
 
-      case VI_OFFSET+4: /*** NTSC Color Bleed ***/
+      case VI_OFFSET+5: /*** NTSC Color Bleed ***/
         GUI_OptionBox(m,update_bgm,"NTSC Color Bleed",(void *)&config.ntsc_bleed,0.01,-1.0,1.0,0);
-        sprintf(items[VI_OFFSET+4].text, "NTSC Color Bleed: %1.2f", config.ntsc_bleed);
+        sprintf(items[VI_OFFSET+5].text, "NTSC Color Bleed: %1.2f", config.ntsc_bleed);
         break;
 
-      case VI_OFFSET+5: /*** NTSC Color Fringing ***/
+      case VI_OFFSET+6: /*** NTSC Color Fringing ***/
         GUI_OptionBox(m,update_bgm,"NTSC Color Fringing",(void *)&config.ntsc_fringing,0.01,-1.0,1.0,0);
-        sprintf(items[VI_OFFSET+5].text, "NTSC Color Fringing: %1.2f", config.ntsc_fringing);
+        sprintf(items[VI_OFFSET+6].text, "NTSC Color Fringing: %1.2f", config.ntsc_fringing);
         break;
 
-      case VI_OFFSET+6: /*** overscan emulation ***/
+      case VI_OFFSET+7: /*** overscan emulation ***/
+      {
         config.overscan = (config.overscan + 1) & 3;
         if (config.overscan == 3)
-          sprintf (items[VI_OFFSET+ntsc_offset+1].text, "Borders: FULL");
+          sprintf (items[VI_OFFSET+ntsc_offset+2].text, "Borders: FULL");
         else if (config.overscan == 2)
-          sprintf (items[VI_OFFSET+ntsc_offset+1].text, "Borders: H ONLY");
+          sprintf (items[VI_OFFSET+ntsc_offset+2].text, "Borders: H ONLY");
         else if (config.overscan == 1)
-          sprintf (items[VI_OFFSET+ntsc_offset+1].text, "Borders: V ONLY");
+          sprintf (items[VI_OFFSET+ntsc_offset+2].text, "Borders: V ONLY");
         else
-          sprintf (items[VI_OFFSET+ntsc_offset+1].text, "Borders: NONE");
+          sprintf (items[VI_OFFSET+ntsc_offset+2].text, "Borders: NONE");
         break;
+      }
 
-      case VI_OFFSET+7: /*** Game Gear extended screen */
+      case VI_OFFSET+8: /*** Game Gear extended screen */
+      {
         config.gg_extra ^= 1;
-        sprintf(items[VI_OFFSET+ntsc_offset+2].text, "GG Screen: %s", config.gg_extra ? "EXTENDED":"ORIGINAL");
+        sprintf(items[VI_OFFSET+ntsc_offset+3].text, "GG Screen: %s", config.gg_extra ? "EXTENDED":"ORIGINAL");
         break;
+      }
 
-      case VI_OFFSET+8: /*** aspect ratio ***/
+      case VI_OFFSET+9: /*** aspect ratio ***/
+      {
         config.aspect = (config.aspect + 1) % 3;
         if (config.aspect == 1)
-          sprintf (items[VI_OFFSET+ntsc_offset+3].text,"Aspect: ORIGINAL (4:3)");
+          sprintf (items[VI_OFFSET+ntsc_offset+4].text,"Aspect: ORIGINAL (4:3)");
         else if (config.aspect == 2)
-          sprintf (items[VI_OFFSET+ntsc_offset+3].text, "Aspect: ORIGINAL (16:9)");
+          sprintf (items[VI_OFFSET+ntsc_offset+4].text, "Aspect: ORIGINAL (16:9)");
         else
-          sprintf (items[VI_OFFSET+ntsc_offset+3].text, "Aspect: SCALED");
+          sprintf (items[VI_OFFSET+ntsc_offset+4].text, "Aspect: SCALED");
 
         if (config.aspect)
         {
           /* disable items */
-          m->max_items  = VI_OFFSET + ntsc_offset + 5;
+          m->max_items  = VI_OFFSET + ntsc_offset + 6;
 
           /* reset menu selection */
           if (m->selected < 2)
           {
-            m->offset  = VI_OFFSET + ntsc_offset + 1;
+            m->offset  = VI_OFFSET + ntsc_offset + 2;
             m->selected = 2;
           }
         }
         else
         {
           /* enable items */
-          m->max_items  = VI_OFFSET + ntsc_offset + 6;
+          m->max_items  = VI_OFFSET + ntsc_offset + 7;
         }
-
         break;
+      }
 
-      case VI_OFFSET+9: /*** screen position ***/
+      case VI_OFFSET+10: /*** screen position ***/
+      {
         if (system_hw) 
         {
           state[0] = m->arrows[0]->state;
@@ -2000,7 +2054,7 @@ static void videomenu ()
           m->arrows[1]->state = state[1];
           m->screenshot = 0;
           strcpy(m->title,"Video Settings");
-          sprintf (items[VI_OFFSET+ntsc_offset+4].text, "Screen Position: (%s%02d,%s%02d)",
+          sprintf (items[VI_OFFSET+ntsc_offset+5].text, "Screen Position: (%s%02d,%s%02d)",
                                             (config.xshift < 0) ? "":"+", config.xshift,
                                             (config.yshift < 0) ? "":"+", config.yshift);
         }
@@ -2009,8 +2063,10 @@ static void videomenu ()
           GUI_WaitPrompt("Error","Please load a game first !\n");
         }
         break;
+      }
 
-      case VI_OFFSET+10: /*** screen scaling ***/
+      case VI_OFFSET+11: /*** screen scaling ***/
+      {
         if (system_hw) 
         {
           state[0] = m->arrows[0]->state;
@@ -2028,7 +2084,7 @@ static void videomenu ()
           m->arrows[1]->state = state[1];
           m->screenshot = 0;
           strcpy(m->title,"Video Settings");
-          sprintf (items[VI_OFFSET+ntsc_offset+5].text, "Screen Scaling: (%s%02d,%s%02d)",
+          sprintf (items[VI_OFFSET+ntsc_offset+6].text, "Screen Scaling: (%s%02d,%s%02d)",
                                             (config.xscale < 0) ? "":"+", config.xscale,
                                             (config.yscale < 0) ? "":"+", config.yscale);
         }
@@ -2037,10 +2093,13 @@ static void videomenu ()
           GUI_WaitPrompt("Error","Please load a game first !\n");
         }
         break;
+      }
 
       case -1:
+      {
         quit = 1;
         break;
+      }
     }
   }
 
@@ -3898,9 +3957,9 @@ void mainmenu(void)
           /* Soft Reset */
           gen_reset(0);
         }
-        else if (system_hw == SYSTEM_SMS)
+        else if ((system_hw == SYSTEM_SMS) && (region_code != REGION_JAPAN_NTSC))
         {
-          /* assert RESET input (Master System model 1 only) */
+          /* assert RESET input (export Master System 1 only) */
           io_reg[0x0D] &= ~IO_RESET_HI;
         }
         else

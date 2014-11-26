@@ -44,7 +44,11 @@
 #ifndef _MD_CART_H_
 #define _MD_CART_H_
 
+#ifdef USE_DYNAMIC_ALLOC
+#define cart ext->md_cart
+#else
 #define cart ext.md_cart
+#endif
 
 /* Lock-On cartridge type */
 #define TYPE_GG 0x01  /* Game Genie */
