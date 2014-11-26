@@ -447,6 +447,7 @@ static void config_default(void)
    config.overscan = 0;
    config.gg_extra = 0;
    config.ntsc     = 0;
+   config.lcd      = 0;
    config.render   = 0;
 
    /* input options */
@@ -853,6 +854,15 @@ static void check_variables(void)
       update_viewports = true;
   }
 
+  var.key = "lcd_filter";
+  environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
+  {
+    if (strcmp(var.value, "disabled") == 0)
+      config.lcd = 0;
+    else if (strcmp(var.value, "enabled") == 0)
+      config.lcd = (uint8)(0.80 * 256);
+  }
+
   var.key = "overscan";
   environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
   {
@@ -946,6 +956,7 @@ void retro_set_environment(retro_environment_t cb)
       { "ym2413", "Master System FM; auto|disabled|enabled" },
       { "dac_bits", "YM2612 DAC quantization; disabled|enabled" },
       { "blargg_ntsc_filter", "Blargg NTSC filter; disabled|monochrome|composite|svideo|rgb" },
+      { "lcd_filter", "LCD Ghosting filter; disabled|enabled" },
       { "overscan", "Borders; disabled|top/bottom|left/right|full" },
       { "gg_extra", "Game Gear extended screen; disabled|enabled" },
       { "render", "Interlaced mode 2 output; single field|double field" },
