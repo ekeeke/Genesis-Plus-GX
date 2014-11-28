@@ -182,12 +182,30 @@ else
 	CFLAGS += -O3 -DNDEBUG
 endif
 
-CORE_DIR := .
-GENPLUS_SRC_DIR := $(CORE_DIR)/core
-TREMOR_SRC_DIR := $(GENPLUS_SRC_DIR)/tremor
-LIBRETRO_DIR	:= $(CORE_DIR)/libretro
-	
-include Makefile.common
+CORE_DIR	:= ./core
+GENPLUS_SRC_DIR := $(CORE_DIR) \
+					$(CORE_DIR)/sound \
+					$(CORE_DIR)/input_hw \
+					$(CORE_DIR)/cart_hw \
+					$(CORE_DIR)/cart_hw/svp \
+					$(CORE_DIR)/cd_hw \
+					$(CORE_DIR)/m68k \
+					$(CORE_DIR)/z80 \
+					$(CORE_DIR)/ntsc
+TREMOR_SRC_DIR  := $(CORE_DIR)/tremor
+LIBRETRO_DIR	:= ./libretro
+
+INCFLAGS := $(foreach dir,$(GENPLUS_SRC_DIR),-I$(dir)) \
+				-I$(TREMOR_SRC_DIR) \
+				-I$(LIBRETRO_DIR) 
+
+SOURCES_C := $(foreach dir,$(GENPLUS_SRC_DIR),$(wildcard $(dir)/*.c)) \
+				$(foreach dir,$(TREMOR_SRC_DIR),$(wildcard $(dir)/*.c)) \
+				$(LIBRETRO_DIR)/libretro.c
+
+ifeq ($(WANT_CRC32), 1)
+	SOURCES_C += $(LIBRETRO_DIR)/scrc32.c
+endif
 
 OBJECTS := $(SOURCES_C:.c=.o)
 
