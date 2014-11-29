@@ -31,7 +31,6 @@
 
 #include "shared.h"
 #include "libretro.h"
-#include "state.h"
 #include "md_ntsc.h"
 #include "sms_ntsc.h"
 
@@ -66,6 +65,7 @@ static uint8_t brm_format[0x40] =
   0x52,0x41,0x4d,0x5f,0x43,0x41,0x52,0x54,0x52,0x49,0x44,0x47,0x45,0x5f,0x5f,0x5f
 };
 
+static bool is_running = 0;
 static uint8_t temp[0x10000];
 static int16 soundbuffer[3068];
 static uint16_t bitmap_data_[720 * 576];
@@ -1232,6 +1232,7 @@ bool retro_load_game(const struct retro_game_info *info)
    audio_init(44100, vdp_pal ? pal_fps : ntsc_fps);
    system_init();
    system_reset();
+   is_running = false;
 
    if (system_hw == SYSTEM_MCD)
      bram_load();
@@ -1280,7 +1281,27 @@ size_t retro_get_memory_size(unsigned id)
    switch (id)
    {
       case RETRO_MEMORY_SAVE_RAM:
-         return 0x10000;
+      {
+        /* if emulation is not running, we assume the frontend is requesting SRAM size for loading */
+        if (!is_running)
+        {
+          /* max supported size is returned */
+          return 0x10000;
+        }
+
+        /* otherwise, we assume this is for saving and we need to check if SRAM data has been modified */
+        /* this is obviously not %100 safe since the frontend could still be trying to load SRAM while emulation is running */
+        /* a better solution would be that the frontend itself checks if data has been modified before writing it to a file */
+        int i;
+        for (i=0xffff; i>0; i--)
+        {
+          if (sram.sram[i] != 0xff)
+          {
+            /* only save modified size */
+            return (i+1);
+          }
+        }
+      }
 
       default:
          return 0;
@@ -1335,6 +1356,7 @@ void retro_reset(void) { system_reset(); }
 void retro_run(void) 
 {
    bool updated = false;
+   is_running = true;
 
    if (system_hw == SYSTEM_MCD)
       system_frame_scd(0);
