@@ -1,0 +1,19 @@
+GENPLUS_SRC_DIR := $(CORE_DIR)/core \
+                   $(CORE_DIR)/core/z80 \
+                   $(CORE_DIR)/core/m68k \
+                   $(CORE_DIR)/core/ntsc \
+                   $(CORE_DIR)/core/sound \
+                   $(CORE_DIR)/core/input_hw \
+                   $(CORE_DIR)/core/cd_hw \
+                   $(CORE_DIR)/core/cart_hw \
+                   $(CORE_DIR)/core/cart_hw/svp
+
+SOURCES_C = $(foreach dir,$(GENPLUS_SRC_DIR),$(wildcard $(dir)/*.c)) \
+            $(foreach dir,$(TREMOR_SRC_DIR),$(wildcard $(dir)/*.c)) \
+            $(LIBRETRO_DIR)/libretro.c
+
+ifeq ($(WANT_CRC32), 1)
+	SOURCES_C += $(LIBRETRO_DIR)/scrc32.c
+endif
+
+INCFLAGS += $(foreach dir,$(GENPLUS_SRC_DIR),-I$(dir)) -I$(LIBRETRO_DIR)
