@@ -1293,7 +1293,7 @@ size_t retro_get_memory_size(unsigned id)
         /* this is obviously not %100 safe since the frontend could still be trying to load SRAM while emulation is running */
         /* a better solution would be that the frontend itself checks if data has been modified before writing it to a file */
         int i;
-        for (i=0xffff; i>0; i--)
+        for (i=0xffff; i>=0; i--)
         {
           if (sram.sram[i] != 0xff)
           {
