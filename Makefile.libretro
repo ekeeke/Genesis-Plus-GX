@@ -203,19 +203,19 @@ endif
 ifeq ($(DEBUG), 1)
 	CFLAGS += -O0 -g
 else ifeq ($(platform),qnx)
-	CFLAGS += -Os -DNDEBUG
+   CFLAGS += -Os -DNDEBUG
 else ifeq ($(platform), emscripten)
-	CFLAGS += -O2 -DNDEBUG
+   CFLAGS += -O2 -DNDEBUG
 else
-	CFLAGS += -O3 -DNDEBUG
+   CFLAGS += -O3 -DNDEBUG
 endif
 
 CORE_DIR := .
-GENPLUS_SRC_DIR := $(CORE_DIR)/core
-TREMOR_SRC_DIR := $(GENPLUS_SRC_DIR)/tremor
+
+TREMOR_SRC_DIR  := $(CORE_DIR)/core/tremor
 LIBRETRO_DIR	:= $(CORE_DIR)/libretro
-	
-include Makefile.common
+
+include $(LIBRETRO_DIR)/Makefile.common
 
 OBJECTS := $(SOURCES_C:.c=.o)
 

@@ -5,8 +5,8 @@ include $(CLEAR_VARS)
 WANT_CRC32 := 1
 
 CORE_DIR := ../..
-GENPLUS_SRC_DIR := $(CORE_DIR)/core
-TREMOR_SRC_DIR := $(GENPLUS_SRC_DIR)/tremor
+
+TREMOR_SRC_DIR	:= $(CORE_DIR)/core/tremor
 LIBRETRO_DIR	:= ..
 
 LOCAL_MODULE    := retro
@@ -16,19 +16,11 @@ LOCAL_CFLAGS += -DANDROID_ARM
 LOCAL_ARM_MODE := arm
 endif
 
-include $(CORE_DIR)/Makefile.common
+include $(LIBRETRO_DIR)/Makefile.common
 
 LOCAL_SRC_FILES := $(SOURCES_C)
 
-LOCAL_C_INCLUDES = $(LOCAL_PATH)/$(GENPLUS_SRC_DIR) \
-			$(LOCAL_PATH)/$(GENPLUS_SRC_DIR)/sound \
-			$(LOCAL_PATH)/$(GENPLUS_SRC_DIR)/input_hw \
-			$(LOCAL_PATH)/$(GENPLUS_SRC_DIR)/cd_hw \
-			$(LOCAL_PATH)/$(GENPLUS_SRC_DIR)/cart_hw \
-			$(LOCAL_PATH)/$(GENPLUS_SRC_DIR)/cart_hw/svp \
-			$(LOCAL_PATH)/$(GENPLUS_SRC_DIR)/m68k \
-			$(LOCAL_PATH)/$(GENPLUS_SRC_DIR)/z80 \
-			$(LOCAL_PATH)/$(GENPLUS_SRC_DIR)/ntsc \
+LOCAL_C_INCLUDES = $(foreach dir,$(GENPLUS_SRC_DIR),$(LOCAL_PATH)/$(dir)) \
 			$(LOCAL_PATH)/$(TREMOR_SRC_DIR) \
 			$(LOCAL_PATH)/$(LIBRETRO_DIR)
 
