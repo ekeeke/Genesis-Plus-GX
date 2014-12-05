@@ -676,7 +676,7 @@ static void check_variables(void)
   bool reinit = false;
   struct retro_variable var = {0};
 
-  var.key = "system_hw";
+  var.key = "genesis_plus_gx_system_hw";
   environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
   {
     orig_value = config.system;
@@ -725,7 +725,7 @@ static void check_variables(void)
     }
   }
 
-  var.key = "region_detect";
+  var.key = "genesis_plus_gx_region_detect";
   environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
   {
     orig_value = config.region_detect;
@@ -748,7 +748,7 @@ static void check_variables(void)
     }
   }
 
-  var.key = "force_dtack";
+  var.key = "genesis_plus_gx_force_dtack";
   environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
   {
     if (!strcmp(var.value, "enabled"))
@@ -757,7 +757,7 @@ static void check_variables(void)
       config.force_dtack = 0;
   }
 
-  var.key = "addr_error";
+  var.key = "genesis_plus_gx_addr_error";
   environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
   {
     if (!strcmp(var.value, "enabled"))
@@ -766,7 +766,7 @@ static void check_variables(void)
       m68k.aerr_enabled = config.addr_error = 0;
   }
 
-  var.key = "lock_on";
+  var.key = "genesis_plus_gx_lock_on";
   environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
   {
     orig_value = config.lock_on;
@@ -786,7 +786,7 @@ static void check_variables(void)
     }
   }
 
-  var.key = "ym2413";
+  var.key = "genesis_plus_gx_ym2413";
   environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
   {
     orig_value = config.ym2413;
@@ -808,7 +808,7 @@ static void check_variables(void)
     }
   }
 
-  var.key = "dac_bits";
+  var.key = "genesis_plus_gx_dac_bits";
   environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
   {
     if (!strcmp(var.value, "enabled"))
@@ -819,7 +819,7 @@ static void check_variables(void)
     YM2612Config(config.dac_bits);
   }
 
-  var.key = "blargg_ntsc_filter";
+  var.key = "genesis_plus_gx_blargg_ntsc_filter";
   environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
   {
     orig_value = config.ntsc;
@@ -855,7 +855,7 @@ static void check_variables(void)
       update_viewports = true;
   }
 
-  var.key = "lcd_filter";
+  var.key = "genesis_plus_gx_lcd_filter";
   environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
   {
     if (strcmp(var.value, "disabled") == 0)
@@ -864,7 +864,7 @@ static void check_variables(void)
       config.lcd = (uint8)(0.80 * 256);
   }
 
-  var.key = "overscan";
+  var.key = "genesis_plus_gx_overscan";
   environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
   {
     orig_value = config.overscan;
@@ -880,7 +880,7 @@ static void check_variables(void)
       update_viewports = true;
   }
 
-  var.key = "gg_extra";
+  var.key = "genesis_plus_gx_gg_extra";
   environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
   {
     orig_value = config.gg_extra;
@@ -892,7 +892,7 @@ static void check_variables(void)
       update_viewports = true;
   }
 
-  var.key = "render";
+  var.key = "genesis_plus_gx_render";
   environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
   {
     orig_value = config.render;
@@ -904,7 +904,7 @@ static void check_variables(void)
       update_viewports = true;
   }
 
-  var.key = "gun_cursor";
+  var.key = "genesis_plus_gx_gun_cursor";
   environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
   {
     if (strcmp(var.value, "off") == 0)
@@ -913,7 +913,7 @@ static void check_variables(void)
       config.gun_cursor = 1;
   }
 
-  var.key = "invert_mouse";
+  var.key = "genesis_plus_gx_invert_mouse";
   environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
   {
     if (strcmp(var.value, "off") == 0)
@@ -949,20 +949,20 @@ unsigned retro_api_version(void) { return RETRO_API_VERSION; }
 void retro_set_environment(retro_environment_t cb)
 {
    static const struct retro_variable vars[] = {
-      { "system_hw", "System hardware; auto|sg-1000|sg-1000 II|mark-III|master system|master system II|game gear|mega drive / genesis" },
-      { "region_detect", "System region; auto|ntsc-u|pal|ntsc-j" },
-      { "force_dtack", "System lockups; enabled|disabled" },
-      { "addr_error", "68k address error; enabled|disabled" },
-      { "lock_on", "Cartridge lock-on; disabled|game genie|action replay (pro)|sonic & knuckles" },
-      { "ym2413", "Master System FM; auto|disabled|enabled" },
-      { "dac_bits", "YM2612 DAC quantization; disabled|enabled" },
-      { "blargg_ntsc_filter", "Blargg NTSC filter; disabled|monochrome|composite|svideo|rgb" },
-      { "lcd_filter", "LCD Ghosting filter; disabled|enabled" },
-      { "overscan", "Borders; disabled|top/bottom|left/right|full" },
-      { "gg_extra", "Game Gear extended screen; disabled|enabled" },
-      { "render", "Interlaced mode 2 output; single field|double field" },
-      { "gun_cursor", "Show Lightgun crosshair; no|yes" },
-      { "invert_mouse", "Invert Mouse Y-axis; no|yes" },
+      { "genesis_plus_gx_system_hw", "System hardware; auto|sg-1000|sg-1000 II|mark-III|master system|master system II|game gear|mega drive / genesis" },
+      { "genesis_plus_gx_region_detect", "System region; auto|ntsc-u|pal|ntsc-j" },
+      { "genesis_plus_gx_force_dtack", "System lockups; enabled|disabled" },
+      { "genesis_plus_gx_addr_error", "68k address error; enabled|disabled" },
+      { "genesis_plus_gx_lock_on", "Cartridge lock-on; disabled|game genie|action replay (pro)|sonic & knuckles" },
+      { "genesis_plus_gx_ym2413", "Master System FM; auto|disabled|enabled" },
+      { "genesis_plus_gx_dac_bits", "YM2612 DAC quantization; disabled|enabled" },
+      { "genesis_plus_gx_blargg_ntsc_filter", "Blargg NTSC filter; disabled|monochrome|composite|svideo|rgb" },
+      { "genesis_plus_gx_lcd_filter", "LCD Ghosting filter; disabled|enabled" },
+      { "genesis_plus_gx_overscan", "Borders; disabled|top/bottom|left/right|full" },
+      { "genesis_plus_gx_gg_extra", "Game Gear extended screen; disabled|enabled" },
+      { "genesis_plus_gx_render", "Interlaced mode 2 output; single field|double field" },
+      { "genesis_plus_gx_gun_cursor", "Show Lightgun crosshair; no|yes" },
+      { "genesis_plus_gx_invert_mouse", "Invert Mouse Y-axis; no|yes" },
       { NULL, NULL },
    };
 
