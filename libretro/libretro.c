@@ -81,6 +81,32 @@ static retro_input_state_t input_state_cb;
 static retro_environment_t environ_cb;
 static retro_audio_sample_batch_t audio_cb;
 
+/* Cheat Support */
+#define MAX_CHEATS (150)
+#define MAX_DESC_LENGTH (63)
+
+typedef struct
+{
+ char code[12];
+ char text[MAX_DESC_LENGTH];
+ uint8_t enable;
+ uint16_t data;
+ uint16_t old;
+ uint32_t address;
+ uint8_t *prev;
+} CHEATENTRY;
+
+static int maxcheats = 0;
+static int maxROMcheats = 0;
+static int maxRAMcheats = 0;
+
+static CHEATENTRY cheatlist[MAX_CHEATS];
+static uint8_t cheatIndexes[MAX_CHEATS];
+
+static char ggvalidchars[] = "ABCDEFGHJKLMNPRSTVWXYZ0123456789";
+
+static char arvalidchars[] = "0123456789ABCDEF";
+
 /************************************
  * Genesis Plus GX implementation
  ************************************/
@@ -169,12 +195,17 @@ int load_archive(char *filename, unsigned char *buffer, int maxsize, char *exten
   return size;
 }
 
+void RAMCheatUpdate(void);
+
 void osd_input_update(void)
 {
   int i, player = 0;
   unsigned int temp;
 
   input_poll_cb();
+
+  /* Update RAM patches */
+  RAMCheatUpdate();
 
   for (i = 0; i < MAX_INPUTS; i++)
   {
@@ -442,6 +473,7 @@ static void config_default(void)
    config.addr_error     = 1;
    config.bios           = 0;
    config.lock_on        = 0;
+   config.lcd            = 0; /* 0.8 fixed point */
 
    /* video options */
    config.overscan = 0;
@@ -675,7 +707,7 @@ static void check_variables(void)
   bool reinit = false;
   struct retro_variable var = {0};
 
-  var.key = "system_hw";
+  var.key = "genesis_plus_gx_system_hw";
   environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
   {
     orig_value = config.system;
@@ -724,7 +756,7 @@ static void check_variables(void)
     }
   }
 
-  var.key = "region_detect";
+  var.key = "genesis_plus_gx_region_detect";
   environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
   {
     orig_value = config.region_detect;
@@ -747,7 +779,7 @@ static void check_variables(void)
     }
   }
 
-  var.key = "force_dtack";
+  var.key = "genesis_plus_gx_force_dtack";
   environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
   {
     if (!strcmp(var.value, "enabled"))
@@ -756,7 +788,7 @@ static void check_variables(void)
       config.force_dtack = 0;
   }
 
-  var.key = "addr_error";
+  var.key = "genesis_plus_gx_addr_error";
   environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
   {
     if (!strcmp(var.value, "enabled"))
@@ -765,7 +797,7 @@ static void check_variables(void)
       m68k.aerr_enabled = config.addr_error = 0;
   }
 
-  var.key = "lock_on";
+  var.key = "genesis_plus_gx_lock_on";
   environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
   {
     orig_value = config.lock_on;
@@ -785,7 +817,7 @@ static void check_variables(void)
     }
   }
 
-  var.key = "ym2413";
+  var.key = "genesis_plus_gx_ym2413";
   environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
   {
     orig_value = config.ym2413;
@@ -807,7 +839,7 @@ static void check_variables(void)
     }
   }
 
-  var.key = "dac_bits";
+  var.key = "genesis_plus_gx_dac_bits";
   environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
   {
     if (!strcmp(var.value, "enabled"))
@@ -818,7 +850,7 @@ static void check_variables(void)
     YM2612Config(config.dac_bits);
   }
 
-  var.key = "blargg_ntsc_filter";
+  var.key = "genesis_plus_gx_blargg_ntsc_filter";
   environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
   {
     orig_value = config.ntsc;
@@ -854,7 +886,7 @@ static void check_variables(void)
       update_viewports = true;
   }
 
-  var.key = "lcd_filter";
+  var.key = "genesis_plus_gx_lcd_filter";
   environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
   {
     if (strcmp(var.value, "disabled") == 0)
@@ -863,7 +895,7 @@ static void check_variables(void)
       config.lcd = (uint8)(0.80 * 256);
   }
 
-  var.key = "overscan";
+  var.key = "genesis_plus_gx_overscan";
   environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
   {
     orig_value = config.overscan;
@@ -879,7 +911,7 @@ static void check_variables(void)
       update_viewports = true;
   }
 
-  var.key = "gg_extra";
+  var.key = "genesis_plus_gx_gg_extra";
   environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
   {
     orig_value = config.gg_extra;
@@ -891,7 +923,7 @@ static void check_variables(void)
       update_viewports = true;
   }
 
-  var.key = "render";
+  var.key = "genesis_plus_gx_render";
   environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
   {
     orig_value = config.render;
@@ -903,7 +935,7 @@ static void check_variables(void)
       update_viewports = true;
   }
 
-  var.key = "gun_cursor";
+  var.key = "genesis_plus_gx_gun_cursor";
   environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
   {
     if (strcmp(var.value, "off") == 0)
@@ -912,7 +944,7 @@ static void check_variables(void)
       config.gun_cursor = 1;
   }
 
-  var.key = "invert_mouse";
+  var.key = "genesis_plus_gx_invert_mouse";
   environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
   {
     if (strcmp(var.value, "off") == 0)
@@ -940,6 +972,314 @@ static void check_variables(void)
   }
 }
 
+/* Cheat Support */
+static uint32_t decode_cheat(char *string, int index)
+{
+   char *p;
+   int i,n;
+   uint32_t len = 0;
+   uint32_t address = 0;
+   uint16_t data = 0;
+   uint8_t ref = 0;
+   /* 16-bit Game Genie code (ABCD-EFGH) */
+   if ((strlen(string) >= 9) && (string[4] == '-'))
+   {
+      /* 16-bit system only */
+      if ((system_hw & SYSTEM_PBC) != SYSTEM_MD)
+      {
+         return 0;
+      }
+      for (i = 0; i < 8; i++)
+      {
+         if (i == 4) string++;
+         p = strchr (ggvalidchars, *string++);
+         if (p == NULL) return 0;
+         n = p - ggvalidchars;
+         switch (i)
+         {
+            case 0:
+               data |= n << 3;
+               break;
+            case 1:
+               data |= n >> 2;
+               address |= (n & 3) << 14;
+               break;
+            case 2:
+               address |= n << 9;
+               break;
+            case 3:
+               address |= (n & 0xF) << 20 | (n >> 4) << 8;
+               break;
+            case 4:
+               data |= (n & 1) << 12;
+               address |= (n >> 1) << 16;
+               break;
+            case 5:
+               data |= (n & 1) << 15 | (n >> 1) << 8;
+               break;
+            case 6:
+               data |= (n >> 3) << 13;
+               address |= (n & 7) << 5;
+               break;
+            case 7:
+               address |= n;
+               break;
+         }
+      }
+      /* code length */
+      len = 9;
+   }
+   /* 8-bit Game Genie code (DDA-AAA-XXX) */
+   else if ((strlen(string) >= 11) && (string[3] == '-') && (string[7] == '-'))
+   {
+      /* 8-bit system only */
+      if ((system_hw & SYSTEM_PBC) == SYSTEM_MD)
+      {
+         return 0;
+      }
+      /* decode 8-bit data */
+      for (i=0; i<2; i++)
+      {
+         p = strchr (arvalidchars, *string++);
+         if (p == NULL) return 0;
+         n = (p - arvalidchars) & 0xF;
+         data |= (n << ((1 - i) * 4));
+      }
+      /* decode 16-bit address (low 12-bits) */
+      for (i=0; i<3; i++)
+      {
+         if (i==1) string++; /* skip separator */
+         p = strchr (arvalidchars, *string++);
+         if (p == NULL) return 0;
+         n = (p - arvalidchars) & 0xF;
+         address |= (n << ((2 - i) * 4));
+      }
+      /* decode 16-bit address (high 4-bits) */
+      p = strchr (arvalidchars, *string++);
+      if (p == NULL) return 0;
+      n = (p - arvalidchars) & 0xF;
+      n ^= 0xF; /* bits inversion */
+      address |= (n << 12);
+      /* RAM address are also supported */
+      if (address >= 0xC000)
+      {
+         /* convert to 24-bit Work RAM address */
+         address = 0xFF0000 | (address & 0x1FFF);
+      }
+      /* decode reference 8-bit data */
+      for (i=0; i<2; i++)
+      {
+         string++; /* skip separator and 2nd digit */
+         p = strchr (arvalidchars, *string++);
+         if (p == NULL) return 0;
+         n = (p - arvalidchars) & 0xF;
+         ref |= (n << ((1 - i) * 4));
+      }
+      ref = (ref >> 2) | ((ref & 0x03) << 6); /* 2-bit right rotation */
+      ref ^= 0xBA; /* XOR */
+      /* update old data value */
+      cheatlist[index].old = ref;
+      /* code length */
+      len = 11;
+   }
+   /* Action Replay code */
+   else if (string[6] == ':')
+   {
+      if ((system_hw & SYSTEM_PBC) == SYSTEM_MD)
+      {
+         /* 16-bit code (AAAAAA:DDDD) */
+         if (strlen(string) < 11) return 0;
+         /* decode 24-bit address */
+         for (i=0; i<6; i++)
+         {
+            p = strchr (arvalidchars, *string++);
+            if (p == NULL) return 0;
+            n = (p - arvalidchars) & 0xF;
+            address |= (n << ((5 - i) * 4));
+         }
+         /* decode 16-bit data */
+         string++;
+         for (i=0; i<4; i++)
+         {
+            p = strchr (arvalidchars, *string++);
+            if (p == NULL) return 0;
+            n = (p - arvalidchars) & 0xF;
+            data |= (n << ((3 - i) * 4));
+         }
+         /* code length */
+         len = 11;
+      }
+      else
+      {
+         /* 8-bit code (xxAAAA:DD) */
+         if (strlen(string) < 9) return 0;
+         /* decode 16-bit address */
+         string+=2;
+         for (i=0; i<4; i++)
+         {
+            p = strchr (arvalidchars, *string++);
+            if (p == NULL) return 0;
+            n = (p - arvalidchars) & 0xF;
+            address |= (n << ((3 - i) * 4));
+         }
+         /* ROM addresses are not supported */
+         if (address < 0xC000) return 0;
+         /* convert to 24-bit Work RAM address */
+         address = 0xFF0000 | (address & 0x1FFF);
+         /* decode 8-bit data */
+         string++;
+         for (i=0; i<2; i++)
+         {
+            p = strchr (arvalidchars, *string++);
+            if (p == NULL) return 0;
+            n = (p - arvalidchars) & 0xF;
+            data |= (n << ((1 - i) * 4));
+         }
+         /* code length */
+         len = 9;
+      }
+   }
+   /* Valid code found ? */
+   if (len)
+   {
+      /* update cheat address & data values */
+      cheatlist[index].address = address;
+      cheatlist[index].data = data;
+      cheatlist[index].enable = 1; // Enable the cheat by default
+   }
+   /* return code length (0 = invalid) */
+   return len;
+}
+
+static void apply_cheats(void)
+{
+   uint8_t *ptr;
+   /* clear ROM&RAM patches counter */
+   maxROMcheats = maxRAMcheats = 0;
+   int i;
+   for (i = 0; i < maxcheats; i++)
+   {
+      if (cheatlist[i].enable)
+      {
+         if (cheatlist[i].address < cart.romsize)
+         {
+            if ((system_hw & SYSTEM_PBC) == SYSTEM_MD)
+            {
+               /* patch ROM data */
+               cheatlist[i].old = *(uint16_t *)(cart.rom + (cheatlist[i].address & 0xFFFFFE));
+               *(uint16_t *)(cart.rom + (cheatlist[i].address & 0xFFFFFE)) = cheatlist[i].data;
+            }
+            else
+            {
+               /* add ROM patch */
+               maxROMcheats++;
+               cheatIndexes[MAX_CHEATS - maxROMcheats] = i;
+               /* get current banked ROM address */
+               ptr = &z80_readmap[(cheatlist[i].address) >> 10][cheatlist[i].address & 0x03FF];
+               /* check if reference matches original ROM data */
+               if (((uint8_t)cheatlist[i].old) == *ptr)
+               {
+                  /* patch data */
+                  *ptr = cheatlist[i].data;
+                  /* save patched ROM address */
+                  cheatlist[i].prev = ptr;
+               }
+               else
+               {
+                  /* no patched ROM address yet */
+                  cheatlist[i].prev = NULL;
+               }
+            }
+         }
+         else if (cheatlist[i].address >= 0xFF0000)
+         {
+            /* add RAM patch */
+            cheatIndexes[maxRAMcheats++] = i;
+         }
+      }
+   }
+}
+
+static void clear_cheats(void)
+{
+   int i = maxcheats;
+   /* disable cheats in reversed order in case the same address is used by multiple patches */
+   while (i > 0)
+   {
+      if (cheatlist[i-1].enable)
+      {
+         if (cheatlist[i-1].address < cart.romsize)
+         {
+            if ((system_hw & SYSTEM_PBC) == SYSTEM_MD)
+            {
+               /* restore original ROM data */
+               *(uint16_t *)(cart.rom + (cheatlist[i-1].address & 0xFFFFFE)) = cheatlist[i-1].old;
+            }
+            else
+            {
+               /* check if previous banked ROM address has been patched */
+               if (cheatlist[i-1].prev != NULL)
+               {
+                  /* restore original data */
+                  *cheatlist[i-1].prev = cheatlist[i-1].old;
+                  /* no more patched ROM address */
+                  cheatlist[i-1].prev = NULL;
+               }
+            }
+         }
+      }
+      i--;
+   }
+}
+
+static void remove_cheats(void)
+{
+   int i = maxcheats;
+   while (i > 0)
+   {
+      if (cheatlist[i-1].enable)
+      {
+         cheatlist[i-1].text[0] = 0;
+         cheatlist[i-1].code[0] = 0;
+         cheatlist[i-1].address = 0;
+         cheatlist[i-1].data = 0;
+         cheatlist[i-1].enable = 0;
+
+         maxcheats--;
+      }
+
+      i--;
+   }
+}
+
+/****************************************************************************
+* RAMCheatUpdate
+*
+* Apply RAM patches (this should be called once per frame)
+*
+****************************************************************************/
+void RAMCheatUpdate(void)
+{
+   int index, cnt = maxRAMcheats;
+   while (cnt)
+   {
+      /* get cheat index */
+      index = cheatIndexes[--cnt];
+      /* apply RAM patch */
+      //if (cheatlist[index].data & 0xFF00)
+      if (cheatlist[index].data & 0x00FF) // For LSB?
+      {
+         /* word patch */
+         *(uint16_t *)(work_ram + (cheatlist[index].address & 0xFFFE)) = cheatlist[index].data;
+      }
+      else
+      {
+         /* byte patch */
+         work_ram[cheatlist[index].address & 0xFFFF] = cheatlist[index].data;
+      }
+   }
+}
+
 /************************************
  * libretro implementation
  ************************************/
@@ -948,20 +1288,20 @@ unsigned retro_api_version(void) { return RETRO_API_VERSION; }
 void retro_set_environment(retro_environment_t cb)
 {
    static const struct retro_variable vars[] = {
-      { "system_hw", "System hardware; auto|sg-1000|sg-1000 II|mark-III|master system|master system II|game gear|mega drive / genesis" },
-      { "region_detect", "System region; auto|ntsc-u|pal|ntsc-j" },
-      { "force_dtack", "System lockups; enabled|disabled" },
-      { "addr_error", "68k address error; enabled|disabled" },
-      { "lock_on", "Cartridge lock-on; disabled|game genie|action replay (pro)|sonic & knuckles" },
-      { "ym2413", "Master System FM; auto|disabled|enabled" },
-      { "dac_bits", "YM2612 DAC quantization; disabled|enabled" },
-      { "blargg_ntsc_filter", "Blargg NTSC filter; disabled|monochrome|composite|svideo|rgb" },
-      { "lcd_filter", "LCD Ghosting filter; disabled|enabled" },
-      { "overscan", "Borders; disabled|top/bottom|left/right|full" },
-      { "gg_extra", "Game Gear extended screen; disabled|enabled" },
-      { "render", "Interlaced mode 2 output; single field|double field" },
-      { "gun_cursor", "Show Lightgun crosshair; no|yes" },
-      { "invert_mouse", "Invert Mouse Y-axis; no|yes" },
+      { "genesis_plus_gx_system_hw", "System hardware; auto|sg-1000|sg-1000 II|mark-III|master system|master system II|game gear|mega drive / genesis" },
+      { "genesis_plus_gx_region_detect", "System region; auto|ntsc-u|pal|ntsc-j" },
+      { "genesis_plus_gx_force_dtack", "System lockups; enabled|disabled" },
+      { "genesis_plus_gx_addr_error", "68k address error; enabled|disabled" },
+      { "genesis_plus_gx_lock_on", "Cartridge lock-on; disabled|game genie|action replay (pro)|sonic & knuckles" },
+      { "genesis_plus_gx_ym2413", "Master System FM; auto|disabled|enabled" },
+      { "genesis_plus_gx_dac_bits", "YM2612 DAC quantization; disabled|enabled" },
+      { "genesis_plus_gx_blargg_ntsc_filter", "Blargg NTSC filter; disabled|monochrome|composite|svideo|rgb" },
+      { "genesis_plus_gx_lcd_filter", "LCD Ghosting filter; disabled|enabled" },
+      { "genesis_plus_gx_overscan", "Borders; disabled|top/bottom|left/right|full" },
+      { "genesis_plus_gx_gg_extra", "Game Gear extended screen; disabled|enabled" },
+      { "genesis_plus_gx_render", "Interlaced mode 2 output; single field|double field" },
+      { "genesis_plus_gx_gun_cursor", "Show Lightgun crosshair; no|yes" },
+      { "genesis_plus_gx_invert_mouse", "Invert Mouse Y-axis; no|yes" },
       { NULL, NULL },
    };
 
@@ -1172,12 +1512,24 @@ bool retro_unserialize(const void *data, size_t size)
    return TRUE;
 }
 
-void retro_cheat_reset(void) {}
+void retro_cheat_reset(void)
+{
+   /* clear existing ROM patches */
+   clear_cheats();
+   /* remove cheats from the list */
+   remove_cheats();
+}
+
 void retro_cheat_set(unsigned index, bool enabled, const char *code)
 {
-   (void)index;
-   (void)enabled;
-   (void)code;
+   /* clear existing ROM patches */
+   clear_cheats();
+   /* interpret code and give it an index */
+   decode_cheat((char *)code, maxcheats);
+   /* increment cheat count */
+   maxcheats++;
+   /* apply ROM patches */
+   apply_cheats();
 }
 
 bool retro_load_game(const struct retro_game_info *info)
@@ -1189,6 +1541,116 @@ bool retro_load_game(const struct retro_game_info *info)
 #else
    char slash = '/';
 #endif
+
+   struct retro_input_descriptor desc[] = {
+      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,  "D-Pad Left" },
+      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP,    "D-Pad Up" },
+      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN,  "D-Pad Down" },
+      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT, "D-Pad Right" },
+      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B,     "B" },
+      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A,     "C" },
+      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_X,     "Y" },
+      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y,     "A" },
+      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L,     "X" },
+      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R,     "Z" },
+      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT,    "Mode" },
+      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START,    "Start" },
+
+      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,  "D-Pad Left" },
+      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP,    "D-Pad Up" },
+      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN,  "D-Pad Down" },
+      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT, "D-Pad Right" },
+      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B,     "B" },
+      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A,     "C" },
+      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_X,     "Y" },
+      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y,     "A" },
+      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L,     "X" },
+      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R,     "Z" },
+      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT,    "Mode" },
+      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START,    "Start" },
+
+      { 2, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,  "D-Pad Left" },
+      { 2, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP,    "D-Pad Up" },
+      { 2, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN,  "D-Pad Down" },
+      { 2, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT, "D-Pad Right" },
+      { 2, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B,     "B" },
+      { 2, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A,     "C" },
+      { 2, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_X,     "Y" },
+      { 2, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y,     "A" },
+      { 2, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L,     "X" },
+      { 2, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R,     "Z" },
+      { 2, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT,    "Mode" },
+      { 2, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START,    "Start" },
+
+      { 3, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,  "D-Pad Left" },
+      { 3, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP,    "D-Pad Up" },
+      { 3, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN,  "D-Pad Down" },
+      { 3, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT, "D-Pad Right" },
+      { 3, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B,     "B" },
+      { 3, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A,     "C" },
+      { 3, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_X,     "Y" },
+      { 3, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y,     "A" },
+      { 3, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L,     "X" },
+      { 3, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R,     "Z" },
+      { 3, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT,    "Mode" },
+      { 3, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START,    "Start" },
+
+      { 4, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,  "D-Pad Left" },
+      { 4, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP,    "D-Pad Up" },
+      { 4, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN,  "D-Pad Down" },
+      { 4, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT, "D-Pad Right" },
+      { 4, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B,     "B" },
+      { 4, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A,     "C" },
+      { 4, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_X,     "Y" },
+      { 4, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y,     "A" },
+      { 4, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L,     "X" },
+      { 4, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R,     "Z" },
+      { 4, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT,    "Mode" },
+      { 4, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START,    "Start" },
+
+      { 5, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,  "D-Pad Left" },
+      { 5, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP,    "D-Pad Up" },
+      { 5, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN,  "D-Pad Down" },
+      { 5, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT, "D-Pad Right" },
+      { 5, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B,     "B" },
+      { 5, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A,     "C" },
+      { 5, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_X,     "Y" },
+      { 5, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y,     "A" },
+      { 5, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L,     "X" },
+      { 5, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R,     "Z" },
+      { 5, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT,    "Mode" },
+      { 5, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START,    "Start" },
+
+      { 6, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,  "D-Pad Left" },
+      { 6, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP,    "D-Pad Up" },
+      { 6, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN,  "D-Pad Down" },
+      { 6, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT, "D-Pad Right" },
+      { 6, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B,     "B" },
+      { 6, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A,     "C" },
+      { 6, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_X,     "Y" },
+      { 6, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y,     "A" },
+      { 6, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L,     "X" },
+      { 6, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R,     "Z" },
+      { 6, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT,    "Mode" },
+      { 6, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START,    "Start" },
+
+      { 7, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,  "D-Pad Left" },
+      { 7, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP,    "D-Pad Up" },
+      { 7, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN,  "D-Pad Down" },
+      { 7, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT, "D-Pad Right" },
+      { 7, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B,     "B" },
+      { 7, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A,     "C" },
+      { 7, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_X,     "Y" },
+      { 7, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y,     "A" },
+      { 7, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L,     "X" },
+      { 7, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R,     "Z" },
+      { 7, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT,    "Mode" },
+      { 7, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START,    "Start" },
+
+      { 0 },
+   };
+
+   environ_cb(RETRO_ENVIRONMENT_SET_INPUT_DESCRIPTORS, desc);
 
    extract_directory(g_rom_dir, info->path, sizeof(g_rom_dir));
 
