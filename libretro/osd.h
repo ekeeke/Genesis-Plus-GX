@@ -27,6 +27,8 @@ typedef unsigned char bool;
 #define M_PI 3.1415926535897932385
 #endif
 
+#define CHEATS_UPDATE() ROMCheatUpdate()
+
 typedef struct 
 {
   int8 device;
@@ -81,7 +83,8 @@ extern char MS_BIOS_US[256];
 extern char MS_BIOS_EU[256];
 extern char MS_BIOS_JP[256];
 
-void osd_input_update(void);
-int load_archive(char *filename, unsigned char *buffer, int maxsize, char *extension);
+extern void osd_input_update(void);
+extern int load_archive(char *filename, unsigned char *buffer, int maxsize, char *extension);
+extern void ROMCheatUpdate(void);
 
 #endif /* _OSD_H */

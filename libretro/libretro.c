@@ -83,13 +83,10 @@ static retro_audio_sample_batch_t audio_cb;
 
 /* Cheat Support */
 #define MAX_CHEATS (150)
-#define MAX_DESC_LENGTH (63)
 
 typedef struct
 {
- char code[12];
- char text[MAX_DESC_LENGTH];
- uint8_t enable;
+ bool enable;
  uint16_t data;
  uint16_t old;
  uint32_t address;
@@ -195,7 +192,7 @@ int load_archive(char *filename, unsigned char *buffer, int maxsize, char *exten
   return size;
 }
 
-void RAMCheatUpdate(void);
+static void RAMCheatUpdate(void);
 
 void osd_input_update(void)
 {
@@ -1145,7 +1142,6 @@ static uint32_t decode_cheat(char *string, int index)
       /* update cheat address & data values */
       cheatlist[index].address = address;
       cheatlist[index].data = data;
-      cheatlist[index].enable = 1; // Enable the cheat by default
    }
    /* return code length (0 = invalid) */
    return len;
@@ -1232,33 +1228,13 @@ static void clear_cheats(void)
    }
 }
 
-static void remove_cheats(void)
-{
-   int i = maxcheats;
-   while (i > 0)
-   {
-      if (cheatlist[i-1].enable)
-      {
-         cheatlist[i-1].text[0] = 0;
-         cheatlist[i-1].code[0] = 0;
-         cheatlist[i-1].address = 0;
-         cheatlist[i-1].data = 0;
-         cheatlist[i-1].enable = 0;
-
-         maxcheats--;
-      }
-
-      i--;
-   }
-}
-
 /****************************************************************************
 * RAMCheatUpdate
 *
 * Apply RAM patches (this should be called once per frame)
 *
 ****************************************************************************/
-void RAMCheatUpdate(void)
+static void RAMCheatUpdate(void)
 {
    int index, cnt = maxRAMcheats;
    while (cnt)
@@ -1266,18 +1242,61 @@ void RAMCheatUpdate(void)
       /* get cheat index */
       index = cheatIndexes[--cnt];
       /* apply RAM patch */
-      //if (cheatlist[index].data & 0xFF00)
-      if (cheatlist[index].data & 0x00FF) // For LSB?
+      if (cheatlist[index].data & 0xFF00)
       {
-         /* word patch */
+         /* 16-bit patch */
          *(uint16_t *)(work_ram + (cheatlist[index].address & 0xFFFE)) = cheatlist[index].data;
       }
       else
       {
-         /* byte patch */
+         /* 8-bit patch */
          work_ram[cheatlist[index].address & 0xFFFF] = cheatlist[index].data;
       }
    }
+}
+
+/****************************************************************************
+ * ROMCheatUpdate
+ *
+ * Apply ROM patches (this should be called each time banking is changed)
+ *
+ ****************************************************************************/ 
+void ROMCheatUpdate(void)
+{
+  int index, cnt = maxROMcheats;
+  uint8_t *ptr;
+  
+  while (cnt)
+  {
+    /* get cheat index */
+    index = cheatIndexes[MAX_CHEATS - cnt];
+
+    /* check if previous banked ROM address was patched */
+    if (cheatlist[index].prev != NULL)
+    {
+      /* restore original data */
+      *cheatlist[index].prev = cheatlist[index].old;
+
+      /* no more patched ROM address */
+      cheatlist[index].prev = NULL;
+    }
+
+    /* get current banked ROM address */
+    ptr = &z80_readmap[(cheatlist[index].address) >> 10][cheatlist[index].address & 0x03FF];
+
+    /* check if reference matches original ROM data */
+    if (((uint8_t)cheatlist[index].old) == *ptr)
+    {
+      /* patch data */
+      *ptr = cheatlist[index].data;
+
+      /* save patched ROM address */
+      cheatlist[index].prev = ptr;
+    }
+
+    /* next ROM patch */
+    cnt--;
+  }
 }
 
 /************************************
@@ -1516,18 +1535,39 @@ void retro_cheat_reset(void)
 {
    /* clear existing ROM patches */
    clear_cheats();
-   /* remove cheats from the list */
-   remove_cheats();
+   /* delete all cheats */
+   maxcheats = maxROMcheats = maxRAMcheats = 0;
 }
 
 void retro_cheat_set(unsigned index, bool enabled, const char *code)
 {
    /* clear existing ROM patches */
    clear_cheats();
-   /* interpret code and give it an index */
-   decode_cheat((char *)code, maxcheats);
-   /* increment cheat count */
-   maxcheats++;
+
+   /* interpret code and check if this is a valid cheat code */
+   if (decode_cheat((char *)code, maxcheats))
+   {
+      int i;
+
+      /* check if cheat code already exists */
+      for (i=0; i<maxcheats; i++)
+      {
+         if ((cheatlist[i].address == cheatlist[maxcheats].address)
+                && (cheatlist[i].data == cheatlist[maxcheats].data))
+            break;
+      }
+
+      /* cheat can be enabled or disabled */
+      cheatlist[i].enable = enabled;
+
+      /* if new cheat code, check current cheat count */
+      if ((i == maxcheats) && (i < MAX_CHEATS))
+      {
+         /* increment cheat count */
+         maxcheats++;
+      }
+   }
+
    /* apply ROM patches */
    apply_cheats();
 }
