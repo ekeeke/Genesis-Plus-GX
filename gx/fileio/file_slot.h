@@ -3,7 +3,7 @@
  *
  *  FAT and Memory Card SRAM/Savestate files managment
  *
- *  Copyright Eke-Eke (2008-2012), based on original code from Softdev (2006)
+ *  Copyright Eke-Eke (2008-2014), based on original code from Softdev (2006)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:

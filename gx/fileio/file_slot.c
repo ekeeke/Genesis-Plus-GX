@@ -3,7 +3,7 @@
  *
  *  FAT and Memory Card SRAM/State slots managment
  *
- *  Copyright Eke-Eke (2008-2012), based on original code from Softdev (2006)
+ *  Copyright Eke-Eke (2008-2014), based on original code from Softdev (2006)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -553,6 +553,7 @@ int slot_load(int slot, int device)
 
     /* Uncompress file */
     uncompress ((Bytef *)buffer, &filesize, (Bytef *)(in + 2112 + 4), done - 2112 - 4);
+    done = filesize;
     free(in);
   }
 
@@ -568,8 +569,16 @@ int slot_load(int slot, int device)
   }
   else
   {
-    /* load SRAM */
-    memcpy(sram.sram, buffer, 0x10000);
+    /* load SRAM (max. 64 KB)*/
+    if (done < 0x10000)
+    {
+      memcpy(sram.sram, buffer, done);
+      memset(sram.sram + done, 0xFF, 0x10000 - done);
+    }
+    else
+    {
+      memcpy(sram.sram, buffer, 0x10000);
+    }
 
     /* update CRC */
     sram.crc = crc32(0, sram.sram, 0x10000);
@@ -609,8 +618,19 @@ int slot_save(int slot, int device)
        return 0;
     }
 
+    /* max. supported SRAM size */
+    filesize = 0x10000;
+
+    /* only save modified SRAM size */
+    do
+    {
+      if (sram.sram[filesize-1] != 0xff)
+        break;
+    }
+    while (--filesize > 0);
+
     /* only save if SRAM has been modified */
-    if (crc32(0, &sram.sram[0], 0x10000) == sram.crc)
+    if ((filesize == 0) || (crc32(0, &sram.sram[0], 0x10000) == sram.crc))
     {
        GUI_WaitPrompt("Warning","Backup RAM not modified !");
        return 0;
@@ -619,7 +639,7 @@ int slot_save(int slot, int device)
     GUI_MsgBoxOpen("Information","Saving Backup RAM ...",1);
 
     /* allocate buffer */
-    buffer = (u8 *)memalign(32, 0x10000);
+    buffer = (u8 *)memalign(32, filesize);
     if (!buffer)
     {
       GUI_WaitPrompt("Error","Unable to allocate memory !");
@@ -627,8 +647,7 @@ int slot_save(int slot, int device)
     }
 
     /* copy SRAM data */
-    memcpy(buffer, sram.sram, 0x10000);
-    filesize = 0x10000;
+    memcpy(buffer, sram.sram, filesize);
 
     /* update CRC */
     sram.crc = crc32(0, sram.sram, 0x10000);
