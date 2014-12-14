@@ -46,7 +46,7 @@
 #define MARK_BG_DIRTY(addr)                         \
 {                                                   \
   name = (addr >> 5) & 0x7FF;                       \
-  if(bg_name_dirty[name] == 0)                      \
+  if (bg_name_dirty[name] == 0)                     \
   {                                                 \
     bg_name_list[bg_list_index++] = name;           \
   }                                                 \
@@ -82,6 +82,7 @@ uint8 odd_frame;                  /* 1: odd field, 0: even field */
 uint8 im2_flag;                   /* 1= Interlace mode 2 is being used */
 uint8 interlaced;                 /* 1: Interlaced mode 1 or 2 */
 uint8 vdp_pal;                    /* 1: PAL , 0: NTSC (default) */
+uint8 h_counter;                  /* Horizontal counter */
 uint16 v_counter;                 /* Vertical counter */
 uint16 vc_max;                    /* Vertical counter overflow value */
 uint16 lines_per_frame;           /* PAL: 313 lines, NTSC: 262 lines */
@@ -256,12 +257,6 @@ void vdp_reset(void)
   memset ((char *) bg_name_dirty, 0, sizeof (bg_name_dirty));
   memset ((char *) bg_name_list, 0, sizeof (bg_name_list));
 
-  /* default HVC */
-  hvc_latch = 0x10000;
-  hctab = cycle2hc32;
-  vc_max = vc_table[0][vdp_pal];
-  v_counter = lines_per_frame - 1;
-
   /* default Window clipping */
   window_clip(0,0);
 
@@ -280,6 +275,13 @@ void vdp_reset(void)
   bitmap.viewport.h   = 192;
   bitmap.viewport.ow  = 256;
   bitmap.viewport.oh  = 192;
+
+  /* default HVC */
+  hvc_latch = 0x10000;
+  hctab = cycle2hc32;
+  vc_max = vc_table[0][vdp_pal];
+  v_counter = bitmap.viewport.h;
+  h_counter = 0xff;
 
   /* default sprite pixel width */
   max_sprite_pixels = 256;
@@ -358,22 +360,11 @@ void vdp_reset(void)
     }
   }
 
-  /* SG-1000 specific */
-  if (system_hw & SYSTEM_SG)
-  {
-    /* no H-INT on TMS99xx */
-    vdp_reg_w(10, 0xFF, 0);
-  }
-
-  /* Game Gear specific */
-  else if (system_hw & SYSTEM_GG)
-  {
-    /* H-INT disabled on startup (fixes Terminator 2: Judgement Day) */
-    vdp_reg_w(10, 0xFF, 0);
-  }
-
+  /* H-INT should be disabled on startup (fixes GG Terminator 2: Judgement Day) */
+  vdp_reg_w(10, 0xFF, 0);
+  
   /* Master System specific */
-  else if ((system_hw & SYSTEM_SMS) && (!(config.bios & 1) || !(system_bios & SYSTEM_SMS)))
+  if ((system_hw & SYSTEM_SMS) && (!(config.bios & 1) || !(system_bios & SYSTEM_SMS)))
   {
     /* force registers initialization (normally done by BOOT ROM on all Master System models) */
     vdp_reg_w(0 , 0x36, 0);
@@ -383,7 +374,6 @@ void vdp_reset(void)
     vdp_reg_w(4 , 0xFF, 0);
     vdp_reg_w(5 , 0xFF, 0);
     vdp_reg_w(6 , 0xFF, 0);
-    vdp_reg_w(10, 0xFF, 0);
 
     /* Mode 4 */
     render_bg = render_bg_m4;
@@ -397,7 +387,6 @@ void vdp_reset(void)
     /* force registers initialization (normally done by BOOT ROM, only on Mega Drive model with TMSS) */
     vdp_reg_w(0 , 0x04, 0);
     vdp_reg_w(1 , 0x04, 0);
-    vdp_reg_w(10, 0xFF, 0);
     vdp_reg_w(12, 0x81, 0);
     vdp_reg_w(15, 0x02, 0);
   }
@@ -427,6 +416,7 @@ int vdp_context_save(uint8 *state)
   save_param(&dmafill, sizeof(dmafill));
   save_param(&fifo_idx, sizeof(fifo_idx));
   save_param(&fifo, sizeof(fifo));
+  save_param(&h_counter, sizeof(h_counter));
   save_param(&hint_pending, sizeof(hint_pending));
   save_param(&vint_pending, sizeof(vint_pending));
   save_param(&dma_length, sizeof(dma_length));
@@ -436,7 +426,7 @@ int vdp_context_save(uint8 *state)
   return bufferptr;
 }
 
-int vdp_context_load(uint8 *state, uint8 version)
+int vdp_context_load(uint8 *state)
 {
   int i, bufferptr = 0;
   uint8 temp_reg[0x20];
@@ -482,24 +472,10 @@ int vdp_context_load(uint8 *state, uint8 version)
   load_param(&code, sizeof(code));
   load_param(&pending, sizeof(pending));
   load_param(&status, sizeof(status));
-
-  /* 1.7.1 state compatibility */
-  if (version < 0x35)
-  {
-    uint16 temp;
-    load_param(&temp, 2);
-    dmafill = temp >> 8;
-    temp &= 0xff;
-    fifo_idx = 0;
-    fifo[0] = fifo[1] = fifo[2] = fifo[3] = (temp << 8) | temp;
-  }
-  else
-  {
-    load_param(&dmafill, sizeof(dmafill));
-    load_param(&fifo_idx, sizeof(fifo_idx));
-    load_param(&fifo, sizeof(fifo));
-  }
-
+  load_param(&dmafill, sizeof(dmafill));
+  load_param(&fifo_idx, sizeof(fifo_idx));
+  load_param(&fifo, sizeof(fifo));
+  load_param(&h_counter, sizeof(h_counter));
   load_param(&hint_pending, sizeof(hint_pending));
   load_param(&vint_pending, sizeof(vint_pending));
   load_param(&dma_length, sizeof(dma_length));
@@ -598,7 +574,7 @@ void vdp_dma_update(unsigned int cycles)
     /* NOTE: DMA timings can not change during VBLANK because active display width cannot be modified. */
     /* Indeed, writing VDP registers during DMA is either impossible (when doing DMA from 68k bus, CPU */
     /* is locked) or will abort DMA operation (in case of DMA Fill or Copy). */
-    dma_cycles = (lines_per_frame * MCYCLES_PER_LINE) - cycles;
+    dma_cycles = ((lines_per_frame - bitmap.viewport.h - 1) * MCYCLES_PER_LINE) - cycles;
   }
   else
   {
@@ -610,7 +586,7 @@ void vdp_dma_update(unsigned int cycles)
   dma_bytes = (dma_cycles * rate) / MCYCLES_PER_LINE;
 
 #ifdef LOGVDP
-  error("[%d(%d)][%d(%d)] DMA type %d (%d access/line)(%d cycles left)-> %d access (%d remaining) (%x)\n", v_counter, m68k.cycles/MCYCLES_PER_LINE, m68k.cycles, m68k.cycles%MCYCLES_PER_LINE,dma_type, rate, dma_cycles, dma_bytes, dma_length, m68k_get_reg(M68K_REG_PC));
+  error("[%d(%d)][%d(%d)] DMA type %d (%d access/line)(%d cycles left)-> %d access (%d remaining) (%x)\n", v_counter, (v_counter + (cycles - mcycles_vdp)/MCYCLES_PER_LINE)%lines_per_frame, cycles, cycles%MCYCLES_PER_LINE,dma_type, rate, dma_cycles, dma_bytes, dma_length, m68k_get_reg(M68K_REG_PC));
 #endif
 
   /* Check if DMA can be finished before the end of current line */
@@ -948,7 +924,7 @@ void vdp_z80_ctrl_w(unsigned int data)
 /* Master System & Game Gear VDP control port specific */
 void vdp_sms_ctrl_w(unsigned int data)
 {
-  if(pending == 0)
+  if (pending == 0)
   {
     /* Update address register LSB */
     addr = (addr & 0x3F00) | (data & 0xFF);
@@ -1022,36 +998,10 @@ void vdp_sms_ctrl_w(unsigned int data)
             vc_max = vc_table[0][vdp_pal];
           }
 
+          /* viewport changes should be applied on next frame */
           if (height != bitmap.viewport.h)
           {
-            if (status & 8)
-            {
-              /* viewport changes should be applied on next frame */
-              bitmap.viewport.changed |= 2;
-            }
-            else
-            {
-              /* update active display */
-              bitmap.viewport.h = height;
-
-              /* update vertical overscan */
-              if (config.overscan & 1)
-              {
-                bitmap.viewport.y = (240 + 48*vdp_pal - height) >> 1;
-              }
-              else
-              {
-                if ((system_hw == SYSTEM_GG) && !config.gg_extra)
-                {
-                  /* Display area reduced to 160x144 */
-                  bitmap.viewport.y = (144 - height) / 2;
-                }
-                else
-                {
-                  bitmap.viewport.y = 0;
-                }
-              }
-            }
+            bitmap.viewport.changed |= 2;
           }
         }
 
@@ -1152,7 +1102,7 @@ void vdp_sms_ctrl_w(unsigned int data)
 /* SG-1000 VDP (TMS99xx) control port specific */
 void vdp_tms_ctrl_w(unsigned int data)
 {
-  if(pending == 0)
+  if (pending == 0)
   {
     /* Latch LSB */
     addr_latch = data;
@@ -1308,7 +1258,7 @@ unsigned int vdp_68k_ctrl_r(unsigned int cycles)
   }
 
 #ifdef LOGVDP
-  error("[%d(%d)][%d(%d)] VDP 68k status read -> 0x%x (0x%x) (%x)\n", v_counter, cycles/MCYCLES_PER_LINE-1, cycles, cycles%MCYCLES_PER_LINE, temp, status, m68k_get_reg(M68K_REG_PC));
+  error("[%d(%d)][%d(%d)] VDP 68k status read -> 0x%x (0x%x) (%x)\n", v_counter, (v_counter + (cycles - mcycles_vdp)/MCYCLES_PER_LINE)%lines_per_frame, cycles, cycles%MCYCLES_PER_LINE, temp, status, m68k_get_reg(M68K_REG_PC));
 #endif
   return (temp);
 }
@@ -1316,9 +1266,6 @@ unsigned int vdp_68k_ctrl_r(unsigned int cycles)
 unsigned int vdp_z80_ctrl_r(unsigned int cycles)
 {
   unsigned int temp;
-
-  /* Cycle-accurate SOVR & VINT flags */
-  int line = (lines_per_frame + (cycles / MCYCLES_PER_LINE) - 1) % lines_per_frame;
 
   /* Check if DMA busy flag is set (Mega Drive VDP specific) */
   if (status & 2)
@@ -1332,18 +1279,31 @@ unsigned int vdp_z80_ctrl_r(unsigned int cycles)
   }
 
   /* Check if we are already on next line */
-  if (line > v_counter)
+  if ((cycles - mcycles_vdp) >= MCYCLES_PER_LINE)
   {
-    v_counter = line;
-    if (line == (bitmap.viewport.h + 1))
+    /* check vertical position */
+    if (v_counter == bitmap.viewport.h)
     {
-      /* set VINT flag (immediately cleared after) */
+      /* update VCounter to indicate VINT flag has been cleared & VINT should not be triggered */
+      v_counter++;
+
+      /* cycle-accurate VINT flag (immediately cleared after being read) */
       status |= 0x80;
     }
-    else if ((line >= 0) && (line < bitmap.viewport.h) && !(work_ram[0x1ffb] & cart.special))
+    else
     {
-      /* render next line to check sprites overflow & collision */
-      render_line(line);
+      /* update line counter */
+      int line = (v_counter + 1) % lines_per_frame;
+    
+      /* check if we are within active display range */
+      if ((line < bitmap.viewport.h) && !(work_ram[0x1ffb] & cart.special & HW_3D_GLASSES))
+      {
+        /* update VCounter to indicate next line has already been rendered */
+        v_counter = line;
+
+        /* render next line (cycle-accurate SCOL & SOVR flags) */
+        render_line(line);
+      }
     }
   }
 
@@ -1378,7 +1338,7 @@ unsigned int vdp_z80_ctrl_r(unsigned int cycles)
   }
 
   /* Cycle-accurate SCOL flag */
-  if ((temp & 0x20) && (line == (spr_col >> 8)))
+  if ((temp & 0x20) && (v_counter == (spr_col >> 8)))
   {
     if (system_hw & SYSTEM_MD)
     {
@@ -1408,7 +1368,7 @@ unsigned int vdp_z80_ctrl_r(unsigned int cycles)
   Z80.irq_state = CLEAR_LINE;
 
 #ifdef LOGVDP
-  error("[%d(%d)][%d(%d)] VDP Z80 status read -> 0x%x (0x%x) (%x)\n", v_counter, cycles/MCYCLES_PER_LINE-1, cycles, cycles%MCYCLES_PER_LINE, temp, status, Z80.pc.w.l);
+  error("[%d(%d)][%d(%d)] VDP Z80 status read -> 0x%x (0x%x) (%x)\n", v_counter, (v_counter + (cycles - mcycles_vdp)/MCYCLES_PER_LINE)%lines_per_frame, cycles, cycles%MCYCLES_PER_LINE, temp, status, Z80.pc.w.l);
 #endif
   return (temp);
 }
@@ -1425,31 +1385,35 @@ unsigned int vdp_hvc_r(unsigned int cycles)
   /* Check if HVC latch is enabled */
   if (data)
   {
-    /* Mode 5: HV-counters are frozen (cf. lightgun games, Sunset Riders logo) */
+    /* Mode 5: HV counters are frozen (cf. lightgun games, Sunset Riders logo) */
     if (reg[1] & 0x04)
     {
 #ifdef LOGVDP
-      error("[%d(%d)][%d(%d)] HVC latch read -> 0x%x (%x)\n", v_counter, (cycles/MCYCLES_PER_LINE-1)%lines_per_frame, cycles, cycles%MCYCLES_PER_LINE, data & 0xffff, m68k_get_reg(M68K_REG_PC));
+      error("[%d(%d)][%d(%d)] HVC latch read -> 0x%x (%x)\n", v_counter, (v_counter + (cycles - mcycles_vdp)/MCYCLES_PER_LINE)%lines_per_frame, cycles, cycles%MCYCLES_PER_LINE, data & 0xffff, m68k_get_reg(M68K_REG_PC));
 #endif
       /* return latched HVC value */
       return (data & 0xffff);
     }
     else
     {
-      /* Mode 4: by default, V-counter runs normally & H counter is frozen */
+      /* Mode 4: by default, VCounter runs normally & H counter is frozen */
       data &= 0xff;
     }
   }
   else
   {
-    /* Cycle-accurate H-Counter (Striker, Mickey Mania, Skitchin, Road Rash I,II,III, Sonic 3D Blast...) */
+    /* Cycle-accurate HCounter (Striker, Mickey Mania, Skitchin, Road Rash I,II,III, Sonic 3D Blast...) */
     data = hctab[cycles % MCYCLES_PER_LINE];
   }
 
-  /* Cycle-accurate V-Counter (cycle counter starts from line -1) */
-  vc = (cycles / MCYCLES_PER_LINE) - 1;
+  /* Cycle-accurate VCounter */
+  vc = v_counter;
+  if ((cycles - mcycles_vdp) >= MCYCLES_PER_LINE)
+  {
+    vc = (vc + 1) % lines_per_frame;
+  }
 
-  /* V-Counter overflow */
+  /* VCounter overflow */
   if (vc > vc_max)
   {
     vc -= lines_per_frame;
@@ -1465,11 +1429,11 @@ unsigned int vdp_hvc_r(unsigned int cycles)
     vc = (vc & ~1) | ((vc >> 8) & 1);
   }
 
-  /* return H-Counter in LSB & V-Counter in MSB */
+  /* return HCounter in LSB & VCounter in MSB */
   data |= ((vc & 0xff) << 8);
   
 #ifdef LOGVDP
-  error("[%d(%d)][%d(%d)] HVC read -> 0x%x (%x)\n", v_counter, (cycles/MCYCLES_PER_LINE-1)%lines_per_frame, cycles, cycles%MCYCLES_PER_LINE, data, m68k_get_reg(M68K_REG_PC));
+  error("[%d(%d)][%d(%d)] HVC read -> 0x%x (%x)\n", v_counter, (v_counter + (cycles - mcycles_vdp)/MCYCLES_PER_LINE)%lines_per_frame, cycles, cycles%MCYCLES_PER_LINE, data, m68k_get_reg(M68K_REG_PC));
 #endif
   return (data);
 }
@@ -1494,11 +1458,11 @@ void vdp_test_w(unsigned int data)
 int vdp_68k_irq_ack(int int_level)
 {
 #ifdef LOGVDP
-  error("[%d(%d)][%d(%d)] INT Level %d ack (%x)\n", v_counter, m68k.cycles/MCYCLES_PER_LINE-1, m68k.cycles, m68k.cycles%MCYCLES_PER_LINE,int_level, m68k_get_reg(M68K_REG_PC));
+  error("[%d(%d)][%d(%d)] INT Level %d ack (%x)\n", v_counter, (v_counter + (m68k.cycles - mcycles_vdp)/MCYCLES_PER_LINE)%lines_per_frame, m68k.cycles, m68k.cycles%MCYCLES_PER_LINE,int_level, m68k_get_reg(M68K_REG_PC));
 #endif
 
   /* VINT has higher priority (Fatal Rewind) */
-  if (vint_pending & reg[1])
+  if (reg[1] & vint_pending)
   {
 #ifdef LOGVDP
     error("---> VINT cleared\n");
@@ -1509,7 +1473,7 @@ int vdp_68k_irq_ack(int int_level)
     status &= ~0x80;
 
     /* Update IRQ status */
-    if (hint_pending & reg[0])
+    if (reg[0] & hint_pending)
     {
       m68k_set_irq(4);
     }
@@ -1542,7 +1506,7 @@ int vdp_68k_irq_ack(int int_level)
 static void vdp_reg_w(unsigned int r, unsigned int d, unsigned int cycles)
 {
 #ifdef LOGVDP
-  error("[%d(%d)][%d(%d)] VDP register %d write -> 0x%x (%x)\n", v_counter, cycles/MCYCLES_PER_LINE-1, cycles, cycles%MCYCLES_PER_LINE, r, d, m68k_get_reg(M68K_REG_PC));
+  error("[%d(%d)][%d(%d)] VDP register %d write -> 0x%x (%x)\n", v_counter, (v_counter + (cycles - mcycles_vdp)/MCYCLES_PER_LINE)%lines_per_frame, cycles, cycles%MCYCLES_PER_LINE, r, d, m68k_get_reg(M68K_REG_PC));
 #endif
 
   /* VDP registers #11 to #23 cannot be updated in Mode 4 (Captain Planet & Avengers, Bass Master Classic Pro Edition) */
@@ -1560,10 +1524,10 @@ static void vdp_reg_w(unsigned int r, unsigned int d, unsigned int cycles)
       reg[0] = d;
 
       /* Line Interrupt */
-      if ((r & 0x10) && hint_pending)
+      if (r & hint_pending)
       {
         /* Update IRQ status */
-        if (vint_pending & reg[1])
+        if (reg[1] & vint_pending)
         {
           set_irq_line(6);
         }
@@ -1726,14 +1690,14 @@ static void vdp_reg_w(unsigned int r, unsigned int d, unsigned int cycles)
       }
 
       /* Frame Interrupt */
-      if ((r & 0x20) && vint_pending)
+      if (r & vint_pending)
       {
         /* Update IRQ status */
         if (d & 0x20) 
         {
           set_irq_line_delay(6);
         }
-        else if (hint_pending & reg[0])
+        else if (reg[0] & hint_pending)
         {
           set_irq_line(4);
         }
@@ -1797,19 +1761,6 @@ static void vdp_reg_w(unsigned int r, unsigned int d, unsigned int cycles)
             vdp_68k_data_r = vdp_68k_data_r_m5;
             vdp_z80_data_r = vdp_z80_data_r_m5;
 
-            /* Change display height */
-            if (status & 8)
-            {
-              /* viewport changes should be applied on next frame */
-              bitmap.viewport.changed |= 2;
-            }
-            else
-            {
-              /* Update current frame active display height */
-              bitmap.viewport.h = 224 + ((d & 8) << 1);
-              bitmap.viewport.y = (config.overscan & 1) * (8 - (d & 8) + 24*vdp_pal);
-            }
-
             /* Clear HVC latched value */
             hvc_latch = 0;
 
@@ -1844,18 +1795,6 @@ static void vdp_reg_w(unsigned int r, unsigned int d, unsigned int cycles)
             vdp_68k_data_r = vdp_68k_data_r_m4;
             vdp_z80_data_r = vdp_z80_data_r_m4;
 
-            if (status & 8)
-            {
-              /* viewport changes should be applied on next frame */
-              bitmap.viewport.changed |= 2;
-            }
-            else
-            {
-              /* Update current frame active display */
-              bitmap.viewport.h = 192;
-              bitmap.viewport.y = (config.overscan & 1) * 24 * (vdp_pal + 1);
-            }
-
             /* Latch current HVC */
             hvc_latch = vdp_hvc_r(cycles) | 0x10000;
 
@@ -1872,6 +1811,9 @@ static void vdp_reg_w(unsigned int r, unsigned int d, unsigned int cycles)
 
           /* Update vertical counter max value */
           vc_max = vc_table[(d >> 2) & 3][vdp_pal];
+
+          /* Display height change should be applied on next frame */
+          bitmap.viewport.changed |= 2; 
         }
         else
         {
@@ -1975,21 +1917,28 @@ static void vdp_reg_w(unsigned int r, unsigned int d, unsigned int cycles)
 
     case 8:   /* Horizontal Scroll (Mode 4 only) */
     {
-      int line;
-      
-      /* Hscroll is latched at HCount 0xF3, HCount 0xF6 on MD */
+      /* H-Scroll is latched at HCount 0xF3, HCount 0xF6 on MD */
       /* Line starts at HCount 0xF4, HCount 0xF6 on MD */
       if (system_hw < SYSTEM_MD)
       {
         cycles = cycles + 15;
       }
 
-      /* Make sure Hscroll has not already been latched */
-      line = (lines_per_frame + (cycles / MCYCLES_PER_LINE) - 1) % lines_per_frame;
-      if ((line > v_counter) && (line < bitmap.viewport.h) && !(work_ram[0x1ffb] & cart.special))
+      /* Check if H-Scroll has already been latched */
+      if ((cycles - mcycles_vdp) >= MCYCLES_PER_LINE)
       {
-        v_counter = line;
-        render_line(line);
+        /* update line counter */
+        int line = (v_counter + 1) % lines_per_frame;
+
+        /* check if we are within active display range */
+        if ((line < bitmap.viewport.h) && !(work_ram[0x1ffb] & cart.special & HW_3D_GLASSES))
+        {
+          /* update VCounter to indicate next line has already been rendered */
+          v_counter = line;
+
+          /* render next line before updating H-Scroll */
+          render_line(line);
+        }
       }
 
       reg[8] = d;
@@ -2067,8 +2016,8 @@ static void vdp_reg_w(unsigned int r, unsigned int d, unsigned int cycles)
           /* Update clipping */
           window_clip(reg[17], 1);
 
-          /* Max. sprite pixels per line */
-          max_sprite_pixels = 320;
+          /* Update active display width & max sprite pixels per line*/
+          max_sprite_pixels = bitmap.viewport.w = 320;
         }
         else
         {
@@ -2084,32 +2033,15 @@ static void vdp_reg_w(unsigned int r, unsigned int d, unsigned int cycles)
           /* Update clipping */
           window_clip(reg[17], 0);
 
-          /* Max. sprite pixels per line */
-          max_sprite_pixels = 256;
+          /* Update active display width & max sprite pixels per line*/
+          max_sprite_pixels = bitmap.viewport.w = 256;
         }
 
         /* Active display width modified during HBLANK (Bugs Bunny Double Trouble) */
-        if ((v_counter < bitmap.viewport.h) && (cycles <= (mcycles_vdp + 860)))
+        if ((v_counter < bitmap.viewport.h) && (reg[1] & 0x40) && (cycles <= (mcycles_vdp + 860)))
         {
-          /* Update active display width */
-          bitmap.viewport.w = 256 + ((d & 1) << 6);
-
           /* Redraw entire line */
           render_line(v_counter);
-        }
-        else if (v_counter == (lines_per_frame - 1))
-        {
-          /* Update starting frame active display width */
-          bitmap.viewport.w = 256 + ((d & 1) << 6);
-        }
-        else
-        {
-          /* Changes should be applied on next frame (Golden Axe III intro) */
-          /* NB: not 100% accurate but required since backend framebuffer width cannot be modified mid-frame. */
-          /* This would require a fixed framebuffer width (based on TV screen aspect ratio) and pixel scaling */
-          /* to be done during rendering (depending on active display pixel aspect ratio in H32 or H40 mode). */
-          /* Display is generally disabled when this is modified so it shouldn't be really noticeable anyway. */
-          bitmap.viewport.changed |= 2;
         }
       }
       break;
@@ -2183,16 +2115,16 @@ static void vdp_fifo_update(unsigned int cycles)
   if (reg[12] & 0x01)
   {
     fifo_timing = fifo_cycles_h40;
-    slots = 18 * (cycles / MCYCLES_PER_LINE);
+    slots = 18 * ((v_counter + 1) % lines_per_frame);
   }
   else
   {
     fifo_timing = fifo_cycles_h32;
-    slots = 16 * (cycles / MCYCLES_PER_LINE);
+    slots = 16 * ((v_counter + 1) % lines_per_frame);
   }
 
   /* number of access slots within current line */
-  cycles = cycles % MCYCLES_PER_LINE;
+  cycles -= mcycles_vdp;
   while (fifo_timing[count] <= cycles)
   {
     count++;
@@ -2275,7 +2207,7 @@ static void vdp_bus_w(unsigned int data)
       }
 
 #ifdef LOGVDP
-      error("[%d(%d)][%d(%d)] VRAM 0x%x write -> 0x%x (%x)\n", v_counter, m68k.cycles/MCYCLES_PER_LINE-1, m68k.cycles, m68k.cycles%MCYCLES_PER_LINE, addr, data, m68k_get_reg(M68K_REG_PC));
+      error("[%d(%d)][%d(%d)] VRAM 0x%x write -> 0x%x (%x)\n", v_counter, (v_counter + (m68k.cycles - mcycles_vdp)/MCYCLES_PER_LINE)%lines_per_frame, m68k.cycles, m68k.cycles%MCYCLES_PER_LINE, addr, data, m68k_get_reg(M68K_REG_PC));
 #endif
       break;
     }
@@ -2311,14 +2243,14 @@ static void vdp_bus_w(unsigned int data)
         }
 
         /* CRAM modified during HBLANK (Striker, Zero the Kamikaze, etc) */
-        if ((v_counter < bitmap.viewport.h) && (reg[1]& 0x40) && (m68k.cycles <= (mcycles_vdp + 860)))
+        if ((v_counter < bitmap.viewport.h) && (reg[1] & 0x40) && (m68k.cycles <= (mcycles_vdp + 860)))
         {
           /* Remap current line */
           remap_line(v_counter);
         }
       }
 #ifdef LOGVDP
-      error("[%d(%d)][%d(%d)] CRAM 0x%x write -> 0x%x (%x)\n", v_counter, m68k.cycles/MCYCLES_PER_LINE-1, m68k.cycles, m68k.cycles%MCYCLES_PER_LINE, addr, data, m68k_get_reg(M68K_REG_PC));
+      error("[%d(%d)][%d(%d)] CRAM 0x%x write -> 0x%x (%x)\n", v_counter, (v_counter + (m68k.cycles - mcycles_vdp)/MCYCLES_PER_LINE)%lines_per_frame, m68k.cycles, m68k.cycles%MCYCLES_PER_LINE, addr, data, m68k_get_reg(M68K_REG_PC));
 #endif
       break;
     }
@@ -2333,12 +2265,12 @@ static void vdp_bus_w(unsigned int data)
         /* VSRAM writes during HBLANK (Adventures of Batman & Robin) */
         if ((v_counter < bitmap.viewport.h) && (reg[1] & 0x40) && (m68k.cycles <= (mcycles_vdp + 860)))
         {
-          /* Remap current line */
+          /* Redraw entire line */
           render_line(v_counter);
         }
       }
 #ifdef LOGVDP
-      error("[%d(%d)][%d(%d)] VSRAM 0x%x write -> 0x%x (%x)\n", v_counter, m68k.cycles/MCYCLES_PER_LINE-1, m68k.cycles, m68k.cycles%MCYCLES_PER_LINE, addr, data, m68k_get_reg(M68K_REG_PC));
+      error("[%d(%d)][%d(%d)] VSRAM 0x%x write -> 0x%x (%x)\n", v_counter, (v_counter + (m68k.cycles - mcycles_vdp)/MCYCLES_PER_LINE)%lines_per_frame, m68k.cycles, m68k.cycles%MCYCLES_PER_LINE, addr, data, m68k_get_reg(M68K_REG_PC));
 #endif
       break;
     }
@@ -2348,7 +2280,7 @@ static void vdp_bus_w(unsigned int data)
       /* add some delay until 68k periodical wait-states are accurately emulated ("Clue", "Microcosm") */
       m68k.cycles += 2;
 #ifdef LOGERROR
-      error("[%d(%d)][%d(%d)] Invalid (%d) 0x%x write -> 0x%x (%x)\n", v_counter, m68k.cycles/MCYCLES_PER_LINE-1, m68k.cycles, m68k.cycles%MCYCLES_PER_LINE, code, addr, data, m68k_get_reg(M68K_REG_PC));
+      error("[%d(%d)][%d(%d)] Invalid (%d) 0x%x write -> 0x%x (%x)\n", v_counter, (v_counter + (m68k.cycles - mcycles_vdp)/MCYCLES_PER_LINE)%lines_per_frame, m68k.cycles, m68k.cycles%MCYCLES_PER_LINE, code, addr, data, m68k_get_reg(M68K_REG_PC));
 #endif
       break;
     }
@@ -2392,7 +2324,7 @@ static void vdp_68k_data_w_m4(unsigned int data)
       m68k.cycles = fifo_cycles;
 
       /* Update FIFO access slot counter */
-      fifo_slots = fifo_slots + 1 + fifo_byte_access;
+      fifo_slots += (fifo_byte_access + 1);
     }
   }
 
@@ -2484,7 +2416,7 @@ static void vdp_68k_data_w_m5(unsigned int data)
       m68k.cycles = fifo_cycles;
 
       /* Update FIFO access slot counter */
-      fifo_slots += (1 + fifo_byte_access);
+      fifo_slots += (fifo_byte_access + 1);
     }
   }
   
@@ -2542,7 +2474,7 @@ static unsigned int vdp_68k_data_r_m5(void)
       data = *(uint16 *)&vram[addr & 0xFFFE];
 
 #ifdef LOGVDP
-      error("[%d(%d)][%d(%d)] VRAM 0x%x read -> 0x%x (%x)\n", v_counter, m68k.cycles/MCYCLES_PER_LINE-1, m68k.cycles, m68k.cycles%MCYCLES_PER_LINE, addr, data, m68k_get_reg(M68K_REG_PC));
+      error("[%d(%d)][%d(%d)] VRAM 0x%x read -> 0x%x (%x)\n", v_counter, (v_counter + (m68k.cycles - mcycles_vdp)/MCYCLES_PER_LINE)%lines_per_frame, m68k.cycles, m68k.cycles%MCYCLES_PER_LINE, addr, data, m68k_get_reg(M68K_REG_PC));
 #endif
       break;
     }
@@ -2566,7 +2498,7 @@ static unsigned int vdp_68k_data_r_m5(void)
       data |= (fifo[fifo_idx] & ~0x7FF);
 
 #ifdef LOGVDP
-      error("[%d(%d)][%d(%d)] VSRAM 0x%x read -> 0x%x (%x)\n", v_counter, m68k.cycles/MCYCLES_PER_LINE-1, m68k.cycles, m68k.cycles%MCYCLES_PER_LINE, addr, data, m68k_get_reg(M68K_REG_PC));
+      error("[%d(%d)][%d(%d)] VSRAM 0x%x read -> 0x%x (%x)\n", v_counter, (v_counter + (m68k.cycles - mcycles_vdp)/MCYCLES_PER_LINE)%lines_per_frame, m68k.cycles, m68k.cycles%MCYCLES_PER_LINE, addr, data, m68k_get_reg(M68K_REG_PC));
 #endif
       break;
     }
@@ -2583,7 +2515,7 @@ static unsigned int vdp_68k_data_r_m5(void)
       data |= (fifo[fifo_idx] & ~0xEEE);
 
 #ifdef LOGVDP
-      error("[%d(%d)][%d(%d)] CRAM 0x%x read -> 0x%x (%x)\n", v_counter, m68k.cycles/MCYCLES_PER_LINE-1, m68k.cycles, m68k.cycles%MCYCLES_PER_LINE, addr, data, m68k_get_reg(M68K_REG_PC));
+      error("[%d(%d)][%d(%d)] CRAM 0x%x read -> 0x%x (%x)\n", v_counter, (v_counter + (m68k.cycles - mcycles_vdp)/MCYCLES_PER_LINE)%lines_per_frame, m68k.cycles, m68k.cycles%MCYCLES_PER_LINE, addr, data, m68k_get_reg(M68K_REG_PC));
 #endif
       break;
     }
@@ -2597,7 +2529,7 @@ static unsigned int vdp_68k_data_r_m5(void)
       data |= (fifo[fifo_idx] & ~0xFF);
 
 #ifdef LOGVDP
-      error("[%d(%d)][%d(%d)] 8-bit VRAM 0x%x read -> 0x%x (%x)\n", v_counter, m68k.cycles/MCYCLES_PER_LINE-1, m68k.cycles, m68k.cycles%MCYCLES_PER_LINE, addr, data, m68k_get_reg(M68K_REG_PC));
+      error("[%d(%d)][%d(%d)] 8-bit VRAM 0x%x read -> 0x%x (%x)\n", v_counter, (v_counter + (m68k.cycles - mcycles_vdp)/MCYCLES_PER_LINE)%lines_per_frame, m68k.cycles, m68k.cycles%MCYCLES_PER_LINE, addr, data, m68k_get_reg(M68K_REG_PC));
 #endif
       break;
     }
@@ -2606,7 +2538,7 @@ static unsigned int vdp_68k_data_r_m5(void)
     {
       /* Invalid code value (normally locks VDP, hard reset required) */
 #ifdef LOGERROR
-      error("[%d(%d)][%d(%d)] Invalid (%d) 0x%x read (%x)\n", v_counter, m68k.cycles/MCYCLES_PER_LINE-1, m68k.cycles, m68k.cycles%MCYCLES_PER_LINE, code, addr, m68k_get_reg(M68K_REG_PC));
+      error("[%d(%d)][%d(%d)] Invalid (%d) 0x%x read (%x)\n", v_counter, (v_counter + (m68k.cycles - mcycles_vdp)/MCYCLES_PER_LINE)%lines_per_frame, m68k.cycles, m68k.cycles%MCYCLES_PER_LINE, code, addr, m68k_get_reg(M68K_REG_PC));
 #endif
       break;
     }
@@ -2870,12 +2802,20 @@ static void vdp_z80_data_w_ms(unsigned int data)
     int index;
 
     /* Check if we are already on next line */
-    int line = (lines_per_frame + (Z80.cycles / MCYCLES_PER_LINE) - 1) % lines_per_frame;
-    if ((line > v_counter) && (line < bitmap.viewport.h) && !(work_ram[0x1ffb] & cart.special))
+    if ((Z80.cycles - mcycles_vdp) >= MCYCLES_PER_LINE)
     {
-      /* Render next line */
-      v_counter = line;
-      render_line(line);
+      /* update line counter */
+      int line = (v_counter + 1) % lines_per_frame;
+
+      /* check if we are within active display range */
+      if ((line < bitmap.viewport.h) && !(work_ram[0x1ffb] & cart.special & HW_3D_GLASSES))
+      {
+        /* update VCounter to indicate next line has already been rendered */
+        v_counter = line;
+
+        /* render next line */
+        render_line(line);
+      }
     }
 
     /* VRAM address */
@@ -2890,7 +2830,7 @@ static void vdp_z80_data_w_ms(unsigned int data)
     }
 
 #ifdef LOGVDP
-    error("[%d(%d)][%d(%d)] VRAM 0x%x write -> 0x%x (%x)\n", v_counter, Z80.cycles/MCYCLES_PER_LINE-1, Z80.cycles, Z80.cycles%MCYCLES_PER_LINE, index, data, Z80.pc.w.l);
+    error("[%d(%d)][%d(%d)] VRAM 0x%x write -> 0x%x (%x)\n", v_counter, (v_counter + (Z80.cycles - mcycles_vdp)/MCYCLES_PER_LINE)%lines_per_frame, Z80.cycles, Z80.cycles%MCYCLES_PER_LINE, index, data, Z80.pc.w.l);
 #endif
   }
   else
@@ -2917,7 +2857,7 @@ static void vdp_z80_data_w_ms(unsigned int data)
       }
     }
 #ifdef LOGVDP
-    error("[%d(%d)][%d(%d)] CRAM 0x%x write -> 0x%x (%x)\n", v_counter, Z80.cycles/MCYCLES_PER_LINE-1, Z80.cycles, Z80.cycles%MCYCLES_PER_LINE, addr, data, Z80.pc.w.l);
+    error("[%d(%d)][%d(%d)] CRAM 0x%x write -> 0x%x (%x)\n", v_counter, (v_counter + (Z80.cycles - mcycles_vdp)/MCYCLES_PER_LINE)%lines_per_frame, Z80.cycles, Z80.cycles%MCYCLES_PER_LINE, addr, data, Z80.pc.w.l);
 #endif
   }
 
@@ -2937,13 +2877,21 @@ static void vdp_z80_data_w_gg(unsigned int data)
   {
     int index;
 
-    /* Check if we are already on next line*/
-    int line = (lines_per_frame + (Z80.cycles / MCYCLES_PER_LINE) - 1) % lines_per_frame;
-    if ((line > v_counter) && (line < bitmap.viewport.h) && !(work_ram[0x1ffb] & cart.special))
+    /* Check if we are already on next line */
+    if ((Z80.cycles - mcycles_vdp) >= MCYCLES_PER_LINE)
     {
-      /* Render next line */
-      v_counter = line;
-      render_line(line);
+      /* update line counter */
+      int line = (v_counter + 1) % lines_per_frame;
+
+      /* check if we are within active display range */
+      if ((line < bitmap.viewport.h) && !(work_ram[0x1ffb] & cart.special & HW_3D_GLASSES))
+      {
+        /* update VCounter to indicate next line has already been rendered */
+        v_counter = line;
+
+        /* render next line */
+        render_line(line);
+      }
     }
 
     /* VRAM address */
@@ -2957,7 +2905,7 @@ static void vdp_z80_data_w_gg(unsigned int data)
       MARK_BG_DIRTY(index);
     }
 #ifdef LOGVDP
-    error("[%d(%d)][%d(%d)] VRAM 0x%x write -> 0x%x (%x)\n", v_counter, Z80.cycles/MCYCLES_PER_LINE-1, Z80.cycles, Z80.cycles%MCYCLES_PER_LINE, index, data, Z80.pc.w.l);
+    error("[%d(%d)][%d(%d)] VRAM 0x%x write -> 0x%x (%x)\n", v_counter, (v_counter + (Z80.cycles - mcycles_vdp)/MCYCLES_PER_LINE)%lines_per_frame, Z80.cycles, Z80.cycles%MCYCLES_PER_LINE, index, data, Z80.pc.w.l);
 #endif
   }
   else
@@ -2995,7 +2943,7 @@ static void vdp_z80_data_w_gg(unsigned int data)
       cached_write = data;
     }
 #ifdef LOGVDP
-    error("[%d(%d)][%d(%d)] CRAM 0x%x write -> 0x%x (%x)\n", v_counter, Z80.cycles/MCYCLES_PER_LINE-1, Z80.cycles, Z80.cycles%MCYCLES_PER_LINE, addr, data, Z80.pc.w.l);
+    error("[%d(%d)][%d(%d)] CRAM 0x%x write -> 0x%x (%x)\n", v_counter, (v_counter + (Z80.cycles - mcycles_vdp)/MCYCLES_PER_LINE)%lines_per_frame, Z80.cycles, Z80.cycles%MCYCLES_PER_LINE, addr, data, Z80.pc.w.l);
 #endif
   }
 
@@ -3021,7 +2969,7 @@ static void vdp_z80_data_w_sg(unsigned int data)
   addr++;
 
 #ifdef LOGVDP
-  error("[%d(%d)][%d(%d)] VRAM 0x%x write -> 0x%x (%x)\n", v_counter, Z80.cycles/MCYCLES_PER_LINE-1, Z80.cycles, Z80.cycles%MCYCLES_PER_LINE, index, data, Z80.pc.w.l);
+  error("[%d(%d)][%d(%d)] VRAM 0x%x write -> 0x%x (%x)\n", v_counter, (v_counter + (Z80.cycles - mcycles_vdp)/MCYCLES_PER_LINE)%lines_per_frame, Z80.cycles, Z80.cycles%MCYCLES_PER_LINE, index, data, Z80.pc.w.l);
 #endif
 }
 

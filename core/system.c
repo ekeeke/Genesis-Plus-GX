@@ -351,28 +351,19 @@ void system_reset(void)
 void system_frame_gen(int do_skip)
 {
   /* line counters */
-  int start, end, line = 0;
+  int start, end, line;
 
   /* Z80 interrupt flag */
   int zirq = 1;
 
-  /* reload H Counter */
-  int h_counter = reg[10];
-
   /* reset frame cycle counter */
   mcycles_vdp = 0;
-
-  /* reload V Counter */
-  v_counter = lines_per_frame - 1;
 
   /* reset VDP FIFO */
   fifo_write_cnt = 0;
   fifo_slots = 0;
 
-  /* update 6-Buttons & Lightguns */
-  input_refresh();
-
-  /* display changed during VBLANK */
+  /* check if display setings have changed during previous frame */
   if (bitmap.viewport.changed & 2)
   {
     /* interlaced modes */
@@ -385,7 +376,7 @@ void system_frame_gen(int do_skip)
       im2_flag = ((reg[12] & 0x06) == 0x06);
 
       /* reset field status flag */
-      odd_frame = 1;
+      odd_frame = interlaced;
 
       /* video mode has changed */
       bitmap.viewport.changed = 5;
@@ -435,42 +426,90 @@ void system_frame_gen(int do_skip)
       bitmap.viewport.y = (config.overscan & 1) * 24 * (vdp_pal + 1);
     }
 
-    /* active screen width */
-    bitmap.viewport.w = 256 + ((reg[12] & 0x01) << 6);
+    /* check viewport changes */
+    if (bitmap.viewport.h != bitmap.viewport.oh)
+    {
+      bitmap.viewport.oh = bitmap.viewport.h;
+      bitmap.viewport.changed |= 1;
+    }
   }
 
-  /* clear VBLANK, DMA, FIFO FULL & field flags */
-  status &= 0xFEE5;
+  /* initialize VCounter */
+  v_counter = bitmap.viewport.h;
 
-  /* set FIFO EMPTY flag */
-  status |= 0x0200;
+  /* first line of overscan */
+  if (bitmap.viewport.y)
+  {
+    blank_line(v_counter, -bitmap.viewport.x, bitmap.viewport.w + 2*bitmap.viewport.x);
+  }
+  
+  /* clear DMA Busy, FIFO FULL & field flags */
+  status &= 0xFEED;
 
-  /* even/odd field flag (interlaced modes only) */
-  odd_frame ^= 1;
+  /* set VBLANK & FIFO EMPTY flags */
+  status |= 0x0208;
+
+  /* check interlaced modes */
   if (interlaced)
   {
+    /* switch even/odd field flag */
+    odd_frame ^= 1;
     status |= (odd_frame << 4);
   }
 
-  /* update VDP DMA */
+  /* run VDP DMA */
   if (dma_length)
   {
     vdp_dma_update(0);
   }
 
-  /* render last line of overscan */
-  if (bitmap.viewport.y > 0)
+  /* update 6-Buttons & Lightguns */
+  input_refresh();
+  
+  /* H-Int counter */
+  if (h_counter == 0)
   {
-    blank_line(v_counter, -bitmap.viewport.x, bitmap.viewport.w + 2*bitmap.viewport.x);
+    /* Horizontal Interrupt is pending */
+    hint_pending = 0x10;
+    if (reg[0] & 0x10)
+    {
+      /* level 4 interrupt */
+      m68k_update_irq(4);
+    }
   }
 
-  /* parse first line of sprites */
-  if (reg[1] & 0x40)
+  /* refresh inputs just before VINT (Warriors of Eternal Sun) */
+  osd_input_update();
+
+  /* delay between VINT flag & Vertical Interrupt (Ex-Mutants, Tyrant) */
+  m68k_run(588);
+  
+  /* set VINT flag */
+  status |= 0x80;
+
+  /* delay between VBLANK flag & Vertical Interrupt (Dracula, OutRunners, VR Troopers) */
+  m68k_run(788);
+  if (zstate == 1)
   {
-    parse_satb(-1);
+    z80_run(788);
+  }
+  else
+  {
+    Z80.cycles = 788;
   }
 
-  /* run 68k & Z80 */
+  /* Vertical Interrupt */
+  vint_pending = 0x20;
+  if (reg[1] & 0x20)
+  {
+    /* level 6 interrupt */
+    m68k_set_irq(6);
+  }
+
+  /* assert Z80 interrupt */
+  Z80.irq_state = ASSERT_LINE;
+
+  /* run 68k & Z80 until end of line */
   m68k_run(MCYCLES_PER_LINE);
   if (zstate == 1)
   {
@@ -487,178 +526,30 @@ void system_frame_gen(int do_skip)
     ssp1601_run(SVP_cycles);
   }
 
-  /* update line cycle count */
-  mcycles_vdp += MCYCLES_PER_LINE;
+  /* update VDP cycle count */
+  mcycles_vdp = MCYCLES_PER_LINE;
 
-  /* Active Display */
-  do
-  {
-    /* update V Counter */
-    v_counter = line;
+  /* initialize line count */
+  line = bitmap.viewport.h + 1; 
 
-    /* update 6-Buttons & Lightguns */
-    input_refresh();
-
-    /* H Interrupt */
-    if(--h_counter < 0)
-    {
-      /* reload H Counter */
-      h_counter = reg[10];
-      
-      /* interrupt level 4 */
-      hint_pending = 0x10;
-      if (reg[0] & 0x10)
-      {
-        m68k_update_irq(4);
-      }
-    }
-
-    /* update VDP DMA */
-    if (dma_length)
-    {
-      vdp_dma_update(mcycles_vdp);
-    }
-
-    /* render scanline */
-    if (!do_skip)
-    {
-      render_line(line);
-    }
-
-    /* run 68k & Z80 */
-    m68k_run(mcycles_vdp + MCYCLES_PER_LINE);
-    if (zstate == 1)
-    {
-      z80_run(mcycles_vdp + MCYCLES_PER_LINE);
-    }
-    else
-    {
-      Z80.cycles = mcycles_vdp + MCYCLES_PER_LINE;
-    }
-
-    /* run SVP chip */
-    if (svp)
-    {
-      ssp1601_run(SVP_cycles);
-    }
-
-    /* update line cycle count */
-    mcycles_vdp += MCYCLES_PER_LINE;
-  }
-  while (++line < bitmap.viewport.h);
-
-  /* end of active display */
-  v_counter = line;
-
-  /* set VBLANK flag */
-  status |= 0x08;
-
-  /* overscan area */
+  /* initialize overscan area */
   start = lines_per_frame - bitmap.viewport.y;
-  end   = bitmap.viewport.h + bitmap.viewport.y;
-
-  /* check viewport changes */
-  if ((bitmap.viewport.w != bitmap.viewport.ow) || (bitmap.viewport.h != bitmap.viewport.oh))
-  {
-    bitmap.viewport.ow = bitmap.viewport.w;
-    bitmap.viewport.oh = bitmap.viewport.h;
-    bitmap.viewport.changed |= 1;
-  }
-
-  /* update 6-Buttons & Lightguns */
-  input_refresh();
-
-  /* H Interrupt */
-  if(--h_counter < 0)
-  {
-    /* reload H Counter */
-    h_counter = reg[10];
-
-    /* interrupt level 4 */
-    hint_pending = 0x10;
-    if (reg[0] & 0x10)
-    {
-      m68k_update_irq(4);
-    }
-  }
-
-  /* update VDP DMA */
-  if (dma_length)
-  {
-    vdp_dma_update(mcycles_vdp);
-  }
-
-  /* render overscan */
-  if (line < end)
-  {
-    blank_line(line, -bitmap.viewport.x, bitmap.viewport.w + 2*bitmap.viewport.x);
-  }
-
-  /* update inputs before VINT (Warriors of Eternal Sun) */
-  osd_input_update();
-
-  /* delay between VINT flag & V Interrupt (Ex-Mutants, Tyrant) */
-  m68k_run(mcycles_vdp + 588);
-  status |= 0x80;
-
-  /* delay between VBLANK flag & V Interrupt (Dracula, OutRunners, VR Troopers) */
-  m68k_run(mcycles_vdp + 788);
-  if (zstate == 1)
-  {
-    z80_run(mcycles_vdp + 788);
-  }
-  else
-  {
-    Z80.cycles = mcycles_vdp + 788;
-  }
-
-  /* V Interrupt */
-  vint_pending = 0x20;
-  if (reg[1] & 0x20)
-  {
-    m68k_set_irq(6);
-  }
-
-  /* assert Z80 interrupt */
-  Z80.irq_state = ASSERT_LINE;
-
-  /* run 68k & Z80 until end of line */
-  m68k_run(mcycles_vdp + MCYCLES_PER_LINE);
-  if (zstate == 1)
-  {
-    z80_run(mcycles_vdp + MCYCLES_PER_LINE);
-  }
-  else
-  {
-    Z80.cycles = mcycles_vdp + MCYCLES_PER_LINE;
-  }
-
-  /* run SVP chip */
-  if (svp)
-  {
-    ssp1601_run(SVP_cycles);
-  }
-
-  /* update line cycle count */
-  mcycles_vdp += MCYCLES_PER_LINE;
-
-  /* increment line count */
-  line++;
+  end = bitmap.viewport.h + bitmap.viewport.y;
 
   /* Vertical Blanking */
   do
   {
-    /* update V Counter */
+    /* update VCounter */
     v_counter = line;
-
-    /* update 6-Buttons & Lightguns */
-    input_refresh();
 
     /* render overscan */
     if ((line < end) || (line >= start))
     {
       blank_line(line, -bitmap.viewport.x, bitmap.viewport.w + 2*bitmap.viewport.x);
     }
+
+    /* update 6-Buttons & Lightguns */
+    input_refresh();
 
     if (zirq)
     {
@@ -678,7 +569,7 @@ void system_frame_gen(int do_skip)
       zirq = 0;
     }
 
-    /* run 68k & Z80 */
+    /* run 68k & Z80 until end of line */
     m68k_run(mcycles_vdp + MCYCLES_PER_LINE);
     if (zstate == 1)
     {
@@ -695,10 +586,133 @@ void system_frame_gen(int do_skip)
       ssp1601_run(SVP_cycles);
     }
 
-    /* update line cycle count */
+    /* update VDP cycle count */
     mcycles_vdp += MCYCLES_PER_LINE;
   }
   while (++line < (lines_per_frame - 1));
+  
+  /* update VCounter */
+  v_counter = line;
+
+  /* last line of overscan */
+  if (bitmap.viewport.y)
+  {
+    blank_line(line, -bitmap.viewport.x, bitmap.viewport.w + 2*bitmap.viewport.x);
+  }
+
+  /* reload H-Int counter */
+  h_counter = reg[10];
+  
+  /* clear VBLANK flag */
+  status &= ~0x08;
+ 
+  /* run VDP DMA */
+  if (dma_length)
+  {
+    vdp_dma_update(mcycles_vdp);
+  }
+
+  /* parse first line of sprites */
+  if (reg[1] & 0x40)
+  {
+    parse_satb(-1);
+  }
+
+  /* update 6-Buttons & Lightguns */
+  input_refresh();
+
+  /* run 68k & Z80 until end of line */
+  m68k_run(mcycles_vdp + MCYCLES_PER_LINE);
+  if (zstate == 1)
+  {
+    z80_run(mcycles_vdp + MCYCLES_PER_LINE);
+  }
+  else
+  {
+    Z80.cycles = mcycles_vdp + MCYCLES_PER_LINE;
+  }
+
+  /* run SVP chip */
+  if (svp)
+  {
+    ssp1601_run(SVP_cycles);
+  }
+
+  /* update VDP cycle count */
+  mcycles_vdp += MCYCLES_PER_LINE;
+
+  /* reset line count */
+  line = 0;
+  
+  /* Active Display */
+  do
+  {
+    /* update VCounter */
+    v_counter = line;
+
+    /* run VDP DMA */
+    if (dma_length)
+    {
+      vdp_dma_update(mcycles_vdp);
+    }
+
+    /* render scanline */
+    if (!do_skip)
+    {
+      render_line(line);
+    }
+
+    /* update 6-Buttons & Lightguns */
+    input_refresh();
+
+    /* H-Int counter */
+    if (h_counter == 0)
+    {
+      /* reload H-Int counter */
+      h_counter = reg[10];
+      
+      /* Horizontal Interrupt is pending */
+      hint_pending = 0x10;
+      if (reg[0] & 0x10)
+      {
+        /* level 4 interrupt */
+        m68k_update_irq(4);
+      }
+    }
+    else
+    {
+      /* decrement H-Int counter */
+      h_counter--;
+    }
+
+    /* run 68k & Z80 until end of line */
+    m68k_run(mcycles_vdp + MCYCLES_PER_LINE);
+    if (zstate == 1)
+    {
+      z80_run(mcycles_vdp + MCYCLES_PER_LINE);
+    }
+    else
+    {
+      Z80.cycles = mcycles_vdp + MCYCLES_PER_LINE;
+    }
+
+    /* run SVP chip */
+    if (svp)
+    {
+      ssp1601_run(SVP_cycles);
+    }
+
+    /* update VDP cycle count */
+    mcycles_vdp += MCYCLES_PER_LINE;
+  }
+  while (++line < bitmap.viewport.h);
+
+  /* check viewport changes */
+  if (bitmap.viewport.w != bitmap.viewport.ow)
+  {
+    bitmap.viewport.ow = bitmap.viewport.w;
+    bitmap.viewport.changed |= 1;
+  }
 
   /* adjust CPU cycle counters for next frame */
   m68k.cycles -= mcycles_vdp;
@@ -708,29 +722,20 @@ void system_frame_gen(int do_skip)
 void system_frame_scd(int do_skip)
 {
   /* line counters */
-  int start, end, line = 0;
+  int start, end, line;
 
   /* Z80 interrupt flag */
   int zirq = 1;
 
-  /* reload H Counter */
-  int h_counter = reg[10];
-
-  /* reset frame cycle counters */
+  /* reset frame cycle counter */
   mcycles_vdp = 0;
   scd.cycles = 0;
-  
-  /* reload V Counter */
-  v_counter = lines_per_frame - 1;
 
   /* reset VDP FIFO */
   fifo_write_cnt = 0;
   fifo_slots = 0;
 
-  /* update 6-Buttons & Lightguns */
-  input_refresh();
-
-  /* display changed during VBLANK */
+  /* check if display setings have changed during previous frame */
   if (bitmap.viewport.changed & 2)
   {
     /* interlaced modes */
@@ -743,7 +748,7 @@ void system_frame_scd(int do_skip)
       im2_flag = ((reg[12] & 0x06) == 0x06);
 
       /* reset field status flag */
-      odd_frame = 1;
+      odd_frame = interlaced;
 
       /* video mode has changed */
       bitmap.viewport.changed = 5;
@@ -772,54 +777,114 @@ void system_frame_scd(int do_skip)
     /* active screen height */
     if (reg[1] & 0x04)
     {
-      bitmap.viewport.h = 224 + ((reg[1] & 0x08) << 1);
-      bitmap.viewport.y = (config.overscan & 1) * ((240 + 48*vdp_pal - bitmap.viewport.h) >> 1);
+      /* Mode 5 */
+      if (reg[1] & 0x08)
+      {
+        /* 240 active lines */
+        bitmap.viewport.h = 240;
+        bitmap.viewport.y = (config.overscan & 1) * 24 * vdp_pal;
+      }
+      else
+      {
+        /* 224 active lines */
+        bitmap.viewport.h = 224;
+        bitmap.viewport.y = (config.overscan & 1) * (8 + (24 * vdp_pal));
+      }
     }
     else
     {
+      /* Mode 4 (192 active lines) */
       bitmap.viewport.h = 192;
       bitmap.viewport.y = (config.overscan & 1) * 24 * (vdp_pal + 1);
     }
 
-    /* active screen width */
-    bitmap.viewport.w = 256 + ((reg[12] & 0x01) << 6);
+    /* check viewport changes */
+    if (bitmap.viewport.h != bitmap.viewport.oh)
+    {
+      bitmap.viewport.oh = bitmap.viewport.h;
+      bitmap.viewport.changed |= 1;
+    }
   }
 
-  /* clear VBLANK, DMA, FIFO FULL & field flags */
-  status &= 0xFEE5;
+  /* initialize VCounter */
+  v_counter = bitmap.viewport.h;
 
-  /* set FIFO EMPTY flag */
-  status |= 0x0200;
+  /* first line of overscan */
+  if (bitmap.viewport.y)
+  {
+    blank_line(v_counter, -bitmap.viewport.x, bitmap.viewport.w + 2*bitmap.viewport.x);
+  }
+  
+  /* clear DMA Busy, FIFO FULL & field flags */
+  status &= 0xFEED;
 
-  /* even/odd field flag (interlaced modes only) */
-  odd_frame ^= 1;
+  /* set VBLANK & FIFO EMPTY flags */
+  status |= 0x0208;
+
+  /* check interlaced modes */
   if (interlaced)
   {
+    /* switch even/odd field flag */
+    odd_frame ^= 1;
     status |= (odd_frame << 4);
   }
 
-  /* update VDP DMA */
+  /* run VDP DMA */
   if (dma_length)
   {
     vdp_dma_update(0);
   }
 
-  /* render last line of overscan */
-  if (bitmap.viewport.y > 0)
+  /* update 6-Buttons & Lightguns */
+  input_refresh();
+
+  /* H-Int counter */
+  if (h_counter == 0)
   {
-    blank_line(v_counter, -bitmap.viewport.x, bitmap.viewport.w + 2*bitmap.viewport.x);
+    /* Horizontal Interrupt is pending */
+    hint_pending = 0x10;
+    if (reg[0] & 0x10)
+    {
+      /* level 4 interrupt */
+      m68k_update_irq(4);
+    }
   }
 
-  /* parse first line of sprites */
-  if (reg[1] & 0x40)
+  /* refresh inputs just before VINT */
+  osd_input_update();
+
+  /* delay between VINT flag & Vertical Interrupt (Ex-Mutants, Tyrant) */
+  m68k_run(588);
+  
+  /* set VINT flag */
+  status |= 0x80;
+
+  /* delay between VBLANK flag & Vertical Interrupt (Dracula, OutRunners, VR Troopers) */
+  m68k_run(788);
+  if (zstate == 1)
   {
-    parse_satb(-1);
+    z80_run(788);
   }
+  else
+  {
+    Z80.cycles = 788;
+  }
+
+  /* Vertical Interrupt */
+  vint_pending = 0x20;
+  if (reg[1] & 0x20)
+  {
+    /* level 6 interrupt */
+    m68k_set_irq(6);
+  }
+
+  /* assert Z80 interrupt */
+  Z80.irq_state = ASSERT_LINE;
 
   /* run both 68k & CD hardware */
   scd_update(MCYCLES_PER_LINE);
 
-  /* run Z80 */
+  /* run Z80 until end of line */
   if (zstate == 1)
   {
     z80_run(MCYCLES_PER_LINE);
@@ -829,170 +894,30 @@ void system_frame_scd(int do_skip)
     Z80.cycles = MCYCLES_PER_LINE;
   }
 
-  /* update line cycle count */
-  mcycles_vdp += MCYCLES_PER_LINE;
+  /* update VDP cycle count */
+  mcycles_vdp = MCYCLES_PER_LINE;
 
-  /* Active Display */
-  do
-  {
-    /* update V Counter */
-    v_counter = line;
+  /* initialize line count */
+  line = bitmap.viewport.h + 1; 
 
-    /* update 6-Buttons & Lightguns */
-    input_refresh();
-
-    /* H Interrupt */
-    if(--h_counter < 0)
-    {
-      /* reload H Counter */
-      h_counter = reg[10];
-      
-      /* interrupt level 4 */
-      hint_pending = 0x10;
-      if (reg[0] & 0x10)
-      {
-        m68k_update_irq(4);
-      }
-    }
-
-    /* update VDP DMA */
-    if (dma_length)
-    {
-      vdp_dma_update(mcycles_vdp);
-    }
-
-    /* render scanline */
-    if (!do_skip)
-    {
-      render_line(line);
-    }
-
-    /* run both 68k & CD hardware */
-    scd_update(mcycles_vdp + MCYCLES_PER_LINE);
-
-    /* run Z80 */
-    if (zstate == 1)
-    {
-      z80_run(mcycles_vdp + MCYCLES_PER_LINE);
-    }
-    else
-    {
-      Z80.cycles = mcycles_vdp + MCYCLES_PER_LINE;
-    }
-
-    /* update line cycle count */
-    mcycles_vdp += MCYCLES_PER_LINE;
-  }
-  while (++line < bitmap.viewport.h);
-
-  /* end of active display */
-  v_counter = line;
-
-  /* set VBLANK flag */
-  status |= 0x08;
-
-  /* overscan area */
+  /* initialize overscan area */
   start = lines_per_frame - bitmap.viewport.y;
-  end   = bitmap.viewport.h + bitmap.viewport.y;
-
-  /* check viewport changes */
-  if ((bitmap.viewport.w != bitmap.viewport.ow) || (bitmap.viewport.h != bitmap.viewport.oh))
-  {
-    bitmap.viewport.ow = bitmap.viewport.w;
-    bitmap.viewport.oh = bitmap.viewport.h;
-    bitmap.viewport.changed |= 1;
-  }
-
-  /* update 6-Buttons & Lightguns */
-  input_refresh();
-
-  /* H Interrupt */
-  if(--h_counter < 0)
-  {
-    /* reload H Counter */
-    h_counter = reg[10];
-
-    /* interrupt level 4 */
-    hint_pending = 0x10;
-    if (reg[0] & 0x10)
-    {
-      m68k_update_irq(4);
-    }
-  }
-
-  /* update VDP DMA */
-  if (dma_length)
-  {
-    vdp_dma_update(mcycles_vdp);
-  }
-
-  /* render overscan */
-  if (line < end)
-  {
-    blank_line(line, -bitmap.viewport.x, bitmap.viewport.w + 2*bitmap.viewport.x);
-  }
-
-  /* update inputs before VINT (Warriors of Eternal Sun) */
-  osd_input_update();
-
-  /* delay between VINT flag & V Interrupt (Ex-Mutants, Tyrant) */
-  m68k_run(mcycles_vdp + 588);
-  status |= 0x80;
-
-  /* delay between VBLANK flag & V Interrupt (Dracula, OutRunners, VR Troopers) */
-  m68k_run(mcycles_vdp + 788);
-  if (zstate == 1)
-  {
-    z80_run(mcycles_vdp + 788);
-  }
-  else
-  {
-    Z80.cycles = mcycles_vdp + 788;
-  }
-
-  /* V Interrupt */
-  vint_pending = 0x20;
-  if (reg[1] & 0x20)
-  {
-    m68k_set_irq(6);
-  }
-
-  /* assert Z80 interrupt */
-  Z80.irq_state = ASSERT_LINE;
-
-  /* run both 68k & CD hardware */
-  scd_update(mcycles_vdp + MCYCLES_PER_LINE);
-
-  /* run Z80 until end of line */
-  if (zstate == 1)
-  {
-    z80_run(mcycles_vdp + MCYCLES_PER_LINE);
-  }
-  else
-  {
-    Z80.cycles = mcycles_vdp + MCYCLES_PER_LINE;
-  }
-
-  /* update line cycle count */
-  mcycles_vdp += MCYCLES_PER_LINE;
-
-  /* increment line count */
-  line++;
+  end = bitmap.viewport.h + bitmap.viewport.y;
 
   /* Vertical Blanking */
   do
   {
-    /* update V Counter */
+    /* update VCounter */
     v_counter = line;
-
-    /* update 6-Buttons & Lightguns */
-    input_refresh();
 
     /* render overscan */
     if ((line < end) || (line >= start))
     {
       blank_line(line, -bitmap.viewport.x, bitmap.viewport.w + 2*bitmap.viewport.x);
     }
+
+    /* update 6-Buttons & Lightguns */
+    input_refresh();
 
     if (zirq)
     {
@@ -1015,7 +940,7 @@ void system_frame_scd(int do_skip)
     /* run both 68k & CD hardware */
     scd_update(mcycles_vdp + MCYCLES_PER_LINE);
 
-    /* run Z80 */
+    /* run Z80 until end of line */
     if (zstate == 1)
     {
       z80_run(mcycles_vdp + MCYCLES_PER_LINE);
@@ -1025,54 +950,166 @@ void system_frame_scd(int do_skip)
       Z80.cycles = mcycles_vdp + MCYCLES_PER_LINE;
     }
 
-    /* update line cycle count */
+    /* update VDP cycle count */
     mcycles_vdp += MCYCLES_PER_LINE;
   }
   while (++line < (lines_per_frame - 1));
+  
+  /* update VCounter */
+  v_counter = line;
+
+  /* last line of overscan */
+  if (bitmap.viewport.y)
+  {
+    blank_line(line, -bitmap.viewport.x, bitmap.viewport.w + 2*bitmap.viewport.x);
+  }
+
+  /* reload H-Int counter */
+  h_counter = reg[10];
+  
+  /* clear VBLANK flag */
+  status &= ~0x08;
+ 
+  /* run VDP DMA */
+  if (dma_length)
+  {
+    vdp_dma_update(mcycles_vdp);
+  }
+
+  /* parse first line of sprites */
+  if (reg[1] & 0x40)
+  {
+    parse_satb(-1);
+  }
+
+  /* update 6-Buttons & Lightguns */
+  input_refresh();
+
+  /* run both 68k & CD hardware */
+  scd_update(mcycles_vdp + MCYCLES_PER_LINE);
+
+  /* run Z80 until end of line */
+  if (zstate == 1)
+  {
+    z80_run(mcycles_vdp + MCYCLES_PER_LINE);
+  }
+  else
+  {
+    Z80.cycles = mcycles_vdp + MCYCLES_PER_LINE;
+  }
+
+  /* update VDP cycle count */
+  mcycles_vdp += MCYCLES_PER_LINE;
+
+  /* reset line count */
+  line = 0;
+  
+  /* Active Display */
+  do
+  {
+    /* update VCounter */
+    v_counter = line;
+
+    /* run VDP DMA */
+    if (dma_length)
+    {
+      vdp_dma_update(mcycles_vdp);
+    }
+
+    /* render scanline */
+    if (!do_skip)
+    {
+      render_line(line);
+    }
+    
+    /* update 6-Buttons & Lightguns */
+    input_refresh();
+
+    /* H-Int counter */
+    if (h_counter == 0)
+    {
+      /* reload H-Int counter */
+      h_counter = reg[10];
+      
+      /* Horizontal Interrupt is pending */
+      hint_pending = 0x10;
+      if (reg[0] & 0x10)
+      {
+        /* level 4 interrupt */
+        m68k_update_irq(4);
+      }
+    }
+    else
+    {
+      /* decrement H-Int counter */
+      h_counter--;
+    }
+
+    /* run both 68k & CD hardware */
+    scd_update(mcycles_vdp + MCYCLES_PER_LINE);
+
+    /* run Z80 until end of line */
+    if (zstate == 1)
+    {
+      z80_run(mcycles_vdp + MCYCLES_PER_LINE);
+    }
+    else
+    {
+      Z80.cycles = mcycles_vdp + MCYCLES_PER_LINE;
+    }
+
+    /* update VDP cycle count */
+    mcycles_vdp += MCYCLES_PER_LINE;
+  }
+  while (++line < bitmap.viewport.h);
+
+  /* check viewport changes */
+  if (bitmap.viewport.w != bitmap.viewport.ow)
+  {
+    bitmap.viewport.ow = bitmap.viewport.w;
+    bitmap.viewport.changed |= 1;
+  }
   
   /* prepare for next SCD frame */
   scd_end_frame(scd.cycles);
 
   /* adjust CPU cycle counters for next frame */
-  Z80.cycles  -= mcycles_vdp;
   m68k.cycles -= mcycles_vdp;
+  Z80.cycles -= mcycles_vdp;
 }
 
 void system_frame_sms(int do_skip)
 {
   /* line counter */
-  int start, end, line = 0;
+  int start, end, line;
 
-  /* reload H Counter */
-  int h_counter = reg[10];
-
-  /* reset line master cycle count */
+  /* reset frame cycle count */
   mcycles_vdp = 0;
-
-  /* reload V Counter */
-  v_counter = lines_per_frame - 1;
 
   /* reset VDP FIFO */
   fifo_write_cnt = 0;
   fifo_slots = 0;
 
-  /* update 6-Buttons & Lightguns */
-  input_refresh();
-
-  /* display changed during VBLANK */
+  /* check if display settings has changed during previous frame */
   if (bitmap.viewport.changed & 2)
   {
     bitmap.viewport.changed &= ~2;
 
     if (system_hw & SYSTEM_MD)
     {
-      /* interlaced mode */
-      int old_interlaced  = interlaced;
+      /* interlaced modes */
+      int old_interlaced = interlaced;
       interlaced = (reg[12] & 0x02) >> 1;
+
       if (old_interlaced != interlaced)
       {
+        /* double resolution mode */
         im2_flag = ((reg[12] & 0x06) == 0x06);
-        odd_frame = 1;
+
+        /* reset field status flag */
+        odd_frame = interlaced;
+
+        /* video mode has changed */
         bitmap.viewport.changed = 5;
 
         /* update rendering mode */
@@ -1081,13 +1118,12 @@ void system_frame_sms(int do_skip)
           if (im2_flag)
           {
             render_bg = (reg[11] & 0x04) ? render_bg_m5_im2_vs : render_bg_m5_im2;
-            render_obj = render_obj_m5_im2;
-
+            render_obj = (reg[12] & 0x08) ? render_obj_m5_im2_ste : render_obj_m5_im2;
           }
           else
           {
             render_bg = (reg[11] & 0x04) ? render_bg_m5_vs : render_bg_m5;
-            render_obj = render_obj_m5;
+            render_obj = (reg[12] & 0x08) ? render_obj_m5_ste : render_obj_m5;
           }
         }
       }
@@ -1095,17 +1131,25 @@ void system_frame_sms(int do_skip)
       /* active screen height */
       if (reg[1] & 0x04)
       {
-        bitmap.viewport.h = 224 + ((reg[1] & 0x08) << 1);
-        bitmap.viewport.y = (config.overscan & 1) * ((240 + 48*vdp_pal - bitmap.viewport.h) >> 1);
+        /* Mode 5 */
+        if (reg[1] & 0x08)
+        {
+          /* 240 active lines */
+          bitmap.viewport.h = 240;
+          bitmap.viewport.y = (config.overscan & 1) * 24 * vdp_pal;
+        }
+        else
+        {
+          /* 224 active lines */
+          bitmap.viewport.h = 224;
+          bitmap.viewport.y = (config.overscan & 1) * (8 + (24 * vdp_pal));
+        }
       }
       else
       {
         bitmap.viewport.h = 192;
         bitmap.viewport.y = (config.overscan & 1) * 24 * (vdp_pal + 1);
       }
-
-      /* active screen width */
-      bitmap.viewport.w = 256 + ((reg[12] & 0x01) << 6);
     }
     else
     {
@@ -1144,7 +1188,144 @@ void system_frame_sms(int do_skip)
         }
       }
     }
+    
+    /* check viewport changes */
+    if (bitmap.viewport.h != bitmap.viewport.oh)
+    {
+      bitmap.viewport.oh = bitmap.viewport.h;
+      bitmap.viewport.changed |= 1;
+    }
   }
+
+  /* initialize VCounter */
+  v_counter = bitmap.viewport.h;
+
+  /* first line of overscan */
+  if (bitmap.viewport.y > 0)
+  {
+    blank_line(v_counter, -bitmap.viewport.x, bitmap.viewport.w + 2*bitmap.viewport.x);
+  }
+
+  /* Mega Drive VDP specific */
+  if (system_hw & SYSTEM_MD)
+  {
+    /* clear DMA Busy & field flags */
+    status &= 0xED;
+
+    /* set VBLANK flag */
+    status |= 0x08;
+
+    /* interlaced modes only */
+    if (interlaced)
+    {
+      /* switch even/odd field flag */
+      odd_frame ^= 1;
+      status |= (odd_frame << 4);
+    }
+
+    /* run VDP DMA */
+    if (dma_length)
+    {
+      vdp_dma_update(0);
+    }
+  }
+
+  /* update 6-Buttons & Lightguns */
+  input_refresh();
+
+  /* H-Int counter */
+  if (h_counter == 0)
+  {
+    /* Horizontal Interrupt is pending */
+    hint_pending = 0x10;
+    if (reg[0] & 0x10)
+    {
+      /* Cycle-accurate HINT */
+      /* IRQ line is latched between instructions, during instruction last cycle.       */
+      /* This means that if Z80 cycle count is exactly a multiple of MCYCLES_PER_LINE,  */
+      /* interrupt should be triggered AFTER the next instruction.                      */
+      if ((Z80.cycles % MCYCLES_PER_LINE) == 0)
+      {
+        z80_run(Z80.cycles + 1);
+      }
+
+      /* Z80 interrupt */
+      Z80.irq_state = ASSERT_LINE;
+    }
+  }
+
+  /* refresh inputs just before VINT */
+  osd_input_update();
+
+  /* run Z80 until end of line */
+  z80_run(MCYCLES_PER_LINE);
+
+  /* make sure VINT flag was not read (then cleared) by last instruction */
+  if (v_counter == bitmap.viewport.h)
+  {
+    /* Set VINT flag */
+    status |= 0x80;
+
+    /* Vertical Interrupt */
+    vint_pending = 0x20;
+    if (reg[1] & 0x20)
+    {
+      Z80.irq_state = ASSERT_LINE;
+    }
+  }
+
+  /* update VDP cycle count */
+  mcycles_vdp = MCYCLES_PER_LINE;
+
+  /* initialize line count */
+  line = bitmap.viewport.h + 1;
+
+  /* initialize overscan area */
+  start = lines_per_frame - bitmap.viewport.y;
+  end   = bitmap.viewport.h + bitmap.viewport.y;
+
+  /* Vertical Blanking */
+  do
+  {
+    /* update VCounter */
+    v_counter = line;
+
+    /* Master System & Game Gear VDP specific */
+    if ((system_hw < SYSTEM_MD) && (line > (lines_per_frame - 16)))
+    {
+      /* Sprites are still processed during top border */
+      render_obj((line - lines_per_frame) & 1);
+      parse_satb(line - lines_per_frame);
+    }
+
+    /* render overscan */
+    if ((line < end) || (line >= start))
+    {
+      blank_line(line, -bitmap.viewport.x, bitmap.viewport.w + 2*bitmap.viewport.x);
+    }
+
+    /* update 6-Buttons & Lightguns */
+    input_refresh();
+
+    /* run Z80 until end of line */
+    z80_run(mcycles_vdp + MCYCLES_PER_LINE);
+
+    /* update VDP cycle count */
+    mcycles_vdp += MCYCLES_PER_LINE;
+  }
+  while (++line < (lines_per_frame - 1));
+
+  /* update VCounter */
+  v_counter = line;
+
+  /* last line of overscan */
+  if (bitmap.viewport.y > 0)
+  {
+    blank_line(line, -bitmap.viewport.x, bitmap.viewport.w + 2*bitmap.viewport.x);
+  }
+
+  /* reload H-Int counter */
+  h_counter = reg[10];
 
   /* Detect pause button input (in Game Gear Mode, NMI is not generated) */
   if (system_hw != SYSTEM_GG)
@@ -1171,67 +1352,63 @@ void system_frame_sms(int do_skip)
   /* Mega Drive VDP specific */
   if (system_hw & SYSTEM_MD)
   {
-    /* clear VBLANK, DMA & field flags */
-    status &= 0xE5;
+    /* clear VBLANK flag */
+    status &= ~0x08;
 
-    /* even/odd field flag (interlaced modes only) */
-    odd_frame ^= 1;
-    if (interlaced)
-    {
-      status |= (odd_frame << 4);
-    }
-
-    /* update VDP DMA */
+    /* run VDP DMA */
     if (dma_length)
     {
-      vdp_dma_update(0);
+      vdp_dma_update(mcycles_vdp);
+    }
+    
+    /* parse first line of sprites */
+    if (reg[1] & 0x40)
+    {
+      parse_satb(-1);
     }
   }
 
   /* Master System & Game Gear VDP specific */
-  if (system_hw < SYSTEM_MD)
+  else
   {
     /* Sprites are still processed during vertical borders */
     if (reg[1] & 0x40)
     {
       render_obj(1);
     }
-  }
-
-  /* render last line of overscan */
-  if (bitmap.viewport.y > 0)
-  {
-    blank_line(v_counter, -bitmap.viewport.x, bitmap.viewport.w + 2*bitmap.viewport.x);
-  }
-
-  /* parse first line of sprites (on Master System VDP, pre-processing still occurs when display is disabled) */
-  if ((reg[1] & 0x40) || (system_hw < SYSTEM_MD))
-  {
+    
+    /* Sprites pre-processing occurs even when display is disabled */
     parse_satb(-1);
   }
 
-  /* run Z80 */
-  z80_run(MCYCLES_PER_LINE);
+  /* update 6-Buttons & Lightguns */
+  input_refresh();
 
-  /* update line cycle count */
+  /* run Z80 until end of line */
+  z80_run(mcycles_vdp + MCYCLES_PER_LINE);
+
+  /* update VDP cycle count */
   mcycles_vdp += MCYCLES_PER_LINE;
 
   /* latch Vertical Scroll register */
-  vscroll = reg[0x09];
+  vscroll = reg[9];
+  
+  /* reset line count */
+  line = 0;
 
   /* Active Display */
   do
   {
-    /* update VDP DMA (Mega Drive VDP specific) */
+    /* run VDP DMA (Mega Drive VDP specific) */
     if (dma_length)
     {
       vdp_dma_update(mcycles_vdp);
     }
 
-    /* make sure we didn't already render that line */
+    /* make sure that line has not already been rendered */
     if (v_counter != line)
     {
-      /* update V Counter */
+      /* update VCounter */
       v_counter = line;
 
       /* render scanline */
@@ -1244,17 +1421,17 @@ void system_frame_sms(int do_skip)
     /* update 6-Buttons & Lightguns */
     input_refresh();
 
-    /* H Interrupt */
-    if(--h_counter < 0)
+    /* H-Int counter */
+    if (h_counter == 0)
     {
-      /* reload H Counter */
+      /* reload H-Int counter */
       h_counter = reg[10];
       
-      /* interrupt level 4 */
+      /* Horizontal Interrupt is pending */
       hint_pending = 0x10;
       if (reg[0] & 0x10)
       {
-        /* cycle-accurate HINT */
+        /* Cycle-accurate HINT */
         /* IRQ line is latched between instructions, during instruction last cycle.       */
         /* This means that if Z80 cycle count is exactly a multiple of MCYCLES_PER_LINE,  */
         /* interrupt should be triggered AFTER the next instruction.                      */
@@ -1263,131 +1440,30 @@ void system_frame_sms(int do_skip)
           z80_run(Z80.cycles + 1);
         }
 
+        /* assert Z80 interrupt */
         Z80.irq_state = ASSERT_LINE;
       }
     }
+    else
+    {
+      /* decrement H-Int counter */
+      h_counter--;
+    }
 
-    /* run Z80 */
+    /* run Z80 until end of line */
     z80_run(mcycles_vdp + MCYCLES_PER_LINE);
 
-    /* update line cycle count */
+    /* update VDP cycle count */
     mcycles_vdp += MCYCLES_PER_LINE;
   }
   while (++line < bitmap.viewport.h);
 
-  /* end of active display */
-  v_counter = line;
-
-  /* Mega Drive VDP specific */
-  if (system_hw & SYSTEM_MD)
-  {
-    /* set VBLANK flag */
-    status |= 0x08;
-  }
-
-  /* overscan area */
-  start = lines_per_frame - bitmap.viewport.y;
-  end   = bitmap.viewport.h + bitmap.viewport.y;
-
   /* check viewport changes */
-  if ((bitmap.viewport.w != bitmap.viewport.ow) || (bitmap.viewport.h != bitmap.viewport.oh))
+  if (bitmap.viewport.w != bitmap.viewport.ow)
   {
     bitmap.viewport.ow = bitmap.viewport.w;
-    bitmap.viewport.oh = bitmap.viewport.h;
     bitmap.viewport.changed |= 1;
   }
-
-  /* update 6-Buttons & Lightguns */
-  input_refresh();
-
-  /* H Interrupt */
-  if(--h_counter < 0)
-  {
-    /* reload H Counter */
-    h_counter = reg[10];
-
-    /* interrupt level 4 */
-    hint_pending = 0x10;
-    if (reg[0] & 0x10)
-    {
-      /* cycle-accurate HINT */
-      if ((Z80.cycles % MCYCLES_PER_LINE) == 0)
-      {
-        z80_run(Z80.cycles + 1);
-      }
-
-      Z80.irq_state = ASSERT_LINE;
-    }
-  }
-
-  /* update VDP DMA (Mega Drive VDP specific) */
-  if (dma_length)
-  {
-    vdp_dma_update(mcycles_vdp);
-  }
-
-  /* render overscan */
-  if (line < end)
-  {
-    blank_line(line, -bitmap.viewport.x, bitmap.viewport.w + 2*bitmap.viewport.x);
-  }
-
-  /* update inputs before VINT */
-  osd_input_update();
-
-  /* run Z80 until end of line */
-  z80_run(mcycles_vdp + MCYCLES_PER_LINE);
-
-  /* make sure VINT flag was not cleared by last instruction */
-  if (v_counter == line)
-  {
-    /* Set VINT flag */
-    status |= 0x80;
-
-    /* V Interrupt */
-    vint_pending = 0x20;
-    if (reg[1] & 0x20)
-    {
-      Z80.irq_state = ASSERT_LINE;
-    }
-  }
-
-  /* update line cycle count */
-  mcycles_vdp += MCYCLES_PER_LINE;
-
-  /* increment line count */
-  line++;
-
-  /* Vertical Blanking */
-  do
-  {
-    /* update V Counter */
-    v_counter = line;
-
-    /* update 6-Buttons & Lightguns */
-    input_refresh();
-
-    /* Master System & Game Gear VDP specific */
-    if ((system_hw < SYSTEM_MD) && (line > (lines_per_frame - 16)))
-    {
-      /* Sprites are still processed during top border */
-      render_obj((line - lines_per_frame) & 1);
-      parse_satb(line - lines_per_frame);
-    }
-
-    /* render overscan */
-    if ((line < end) || (line >= start))
-    {
-      blank_line(line, -bitmap.viewport.x, bitmap.viewport.w + 2*bitmap.viewport.x);
-    }
-
-    /* run Z80 */
-    z80_run(mcycles_vdp + MCYCLES_PER_LINE);
-
-    /* update line cycle count */
-    mcycles_vdp += MCYCLES_PER_LINE;
-  }
-  while (++line < (lines_per_frame - 1));
 
   /* adjust Z80 cycle count for next frame */
   Z80.cycles -= mcycles_vdp;

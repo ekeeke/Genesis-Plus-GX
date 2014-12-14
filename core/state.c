@@ -51,8 +51,8 @@ int state_load(unsigned char *state)
     return 0;
   }
 
-  /* version check (keep compatibility with previous & current state version) */
-  if ((version[11] < 0x31) || (version[13] < 0x37) || (version[15] < 0x31))
+  /* version check */
+  if ((version[11] < 0x31) || (version[13] < 0x37) || (version[15] < 0x35))
   {
     return 0;
   }
@@ -110,7 +110,7 @@ int state_load(unsigned char *state)
   }
 
   /* VDP */
-  bufferptr += vdp_context_load(&state[bufferptr], version[15]);
+  bufferptr += vdp_context_load(&state[bufferptr]);
 
   /* SOUND */
   bufferptr += sound_context_load(&state[bufferptr]);
