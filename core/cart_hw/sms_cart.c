@@ -49,12 +49,13 @@
 #define MAPPER_SEGA_X      (0x11)
 #define MAPPER_93C46       (0x12)
 #define MAPPER_CODIES      (0x13)
-#define MAPPER_MULTI       (0x14)
+#define MAPPER_MULTI_16K   (0x14)
 #define MAPPER_KOREA       (0x15)
 #define MAPPER_KOREA_16K   (0x16)
 #define MAPPER_KOREA_8K    (0x20)
 #define MAPPER_MSX         (0x21)
 #define MAPPER_MSX_NEMESIS (0x22)
+#define MAPPER_MULTI_32K   (0x40)
 
 typedef struct
 {
@@ -89,7 +90,7 @@ static const rominfo_t game_list[] =
   /* games requiring Sega 315-5235 mapper without bank shifting */
   {0x23BAC434, 0, 0, SYSTEM_GAMEPAD,  MAPPER_SEGA_X, SYSTEM_GG, REGION_USA}, /* Shining Force Gaiden - Final Conflict (JP) [T-Eng] */
 
-  /* games using various Korean mappers */
+  /* games using "Korean" mappers */
   {0x445525E2, 0, 0, SYSTEM_GAMEPAD, MAPPER_MSX,         SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Penguin Adventure (KR) */
   {0x83F0EEDE, 0, 0, SYSTEM_GAMEPAD, MAPPER_MSX,         SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Street Master (KR) */
   {0xA05258F5, 0, 0, SYSTEM_GAMEPAD, MAPPER_MSX,         SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Won-Si-In (KR) */
@@ -99,13 +100,22 @@ static const rominfo_t game_list[] =
   {0x9195C34C, 0, 0, SYSTEM_GAMEPAD, MAPPER_MSX,         SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Super Boy 3 (KR) */
   {0xE316C06D, 0, 0, SYSTEM_GAMEPAD, MAPPER_MSX_NEMESIS, SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Nemesis (KR) */
   {0x0A77FA5E, 0, 0, SYSTEM_GAMEPAD, MAPPER_MSX,         SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Nemesis 2 (KR) */
-  {0xA67F2A5C, 0, 0, SYSTEM_GAMEPAD, MAPPER_MULTI,       SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* 4-Pak All Action (KR) */
   {0x89B79E77, 0, 0, SYSTEM_GAMEPAD, MAPPER_KOREA,       SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Dodgeball King (KR) */
   {0x18FB98A3, 0, 0, SYSTEM_GAMEPAD, MAPPER_KOREA,       SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Jang Pung 3 (KR) */
   {0x97D03541, 0, 0, SYSTEM_GAMEPAD, MAPPER_KOREA,       SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Sangokushi 3 (KR) */
   {0x192949D5, 0, 0, SYSTEM_GAMEPAD, MAPPER_KOREA_8K,    SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Janggun-ui Adeul (KR) */
   {0x9FA727A0, 0, 0, SYSTEM_GAMEPAD, MAPPER_KOREA_16K,   SYSTEM_GGMS,        REGION_USA}, /* Street Hero [Proto 0] [SMS-GG] (US) */
   {0xFB481971, 0, 0, SYSTEM_GAMEPAD, MAPPER_KOREA_16K,   SYSTEM_GGMS,        REGION_USA}, /* Street Hero [Proto 1] [SMS-GG] (US) */
+  {0xA67F2A5C, 0, 0, SYSTEM_GAMEPAD, MAPPER_MULTI_16K,   SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* 4-Pak All Action (KR) */
+  {0x98AF0236, 0, 0, SYSTEM_GAMEPAD, MAPPER_MULTI_32K,   SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Hi-Com 3-in-1 The Best Game Collection (Vol. 1) (KR) */
+  {0x6EBFE1C3, 0, 0, SYSTEM_GAMEPAD, MAPPER_MULTI_32K,   SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Hi-Com 3-in-1 The Best Game Collection (Vol. 2) (KR) */
+  {0x81A36A4F, 0, 0, SYSTEM_GAMEPAD, MAPPER_MULTI_32K,   SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Hi-Com 3-in-1 The Best Game Collection (Vol. 3) (KR) */
+  {0x8D2D695D, 0, 0, SYSTEM_GAMEPAD, MAPPER_MULTI_32K,   SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Hi-Com 3-in-1 The Best Game Collection (Vol. 4) (KR) */
+  {0x82C09B57, 0, 0, SYSTEM_GAMEPAD, MAPPER_MULTI_32K,   SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Hi-Com 3-in-1 The Best Game Collection (Vol. 5) (KR) */
+  {0x4088EEB4, 0, 0, SYSTEM_GAMEPAD, MAPPER_MULTI_32K,   SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Hi-Com 3-in-1 The Best Game Collection (Vol. 6) (KR) */
+  {0xFBA94148, 0, 0, SYSTEM_GAMEPAD, MAPPER_MULTI_32K,   SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Hi-Com 8-in-1 The Best Game Collection (Vol. 1) (KR) */
+  {0x8333C86E, 0, 0, SYSTEM_GAMEPAD, MAPPER_MULTI_32K,   SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Hi-Com 8-in-1 The Best Game Collection (Vol. 2) (KR) */
+  {0x00E9809F, 0, 0, SYSTEM_GAMEPAD, MAPPER_MULTI_32K,   SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Hi-Com 8-in-1 The Best Game Collection (Vol. 3) (KR) */
 
   /* games using Codemaster mapper */
   {0x29822980, 0, 0, SYSTEM_GAMEPAD,  MAPPER_CODIES, SYSTEM_SMS2, REGION_EUROPE}, /* Cosmic Spacehead */
@@ -357,8 +367,9 @@ static struct
 
 /* Function prototypes */
 static void mapper_reset(void);
-static void mapper_8k_w(int offset, unsigned int data);
-static void mapper_16k_w(int offset, unsigned int data);
+static void mapper_8k_w(int offset, unsigned char data);
+static void mapper_16k_w(int offset, unsigned char data);
+static void mapper_32k_w(unsigned char data);
 static void write_mapper_none(unsigned int address, unsigned char data);
 static void write_mapper_sega(unsigned int address, unsigned char data);
 static void write_mapper_codies(unsigned int address, unsigned char data);
@@ -366,7 +377,8 @@ static void write_mapper_korea(unsigned int address, unsigned char data);
 static void write_mapper_korea_8k(unsigned int address, unsigned char data);
 static void write_mapper_korea_16k(unsigned int address, unsigned char data);
 static void write_mapper_msx(unsigned int address, unsigned char data);
-static void write_mapper_multi(unsigned int address, unsigned char data);
+static void write_mapper_multi_16k(unsigned int address, unsigned char data);
+static void write_mapper_multi_32k(unsigned int address, unsigned char data);
 static void write_mapper_93c46(unsigned int address, unsigned char data);
 static void write_mapper_terebi(unsigned int address, unsigned char data);
 static unsigned char read_mapper_93c46(unsigned int address);
@@ -457,6 +469,11 @@ void sms_cart_init(void)
   {
     /* 8k ROM banks */
     cart_rom.pages = (cart.romsize + (1 << 13) - 1) >> 13;
+  }
+  else if (cart_rom.mapper & MAPPER_MULTI_32K)
+  {
+    /* 32k ROM banks */
+    cart_rom.pages = (cart.romsize + (1 << 15) - 1) >> 15;
   }
   else
   {
@@ -826,6 +843,11 @@ static void mapper_reset(void)
         }
       }
     }
+    else if (slot.mapper & MAPPER_MULTI_32K)
+    {
+      /* 32k pages */
+      mapper_32k_w(slot.fcr[0]);
+    }
     else
     {
       /* 16k pages */
@@ -873,9 +895,14 @@ static void mapper_reset(void)
       z80_writemem = write_mapper_msx;
       break;
 
-    case MAPPER_MULTI:
+    case MAPPER_MULTI_16K:
       z80_readmem = read_mapper_default;
-      z80_writemem = write_mapper_multi;
+      z80_writemem = write_mapper_multi_16k;
+      break;
+
+    case MAPPER_MULTI_32K:
+      z80_readmem = read_mapper_default;
+      z80_writemem = write_mapper_multi_32k;
       break;
 
     case MAPPER_93C46:
@@ -895,12 +922,12 @@ static void mapper_reset(void)
   }
 }
 
-static void mapper_8k_w(int offset, unsigned int data)
+static void mapper_8k_w(int offset, unsigned char data)
 {
   int i;
 
   /* cartridge ROM page (8k) */
-  uint8 page = data % slot.pages;
+  uint8 *page = &slot.rom[(data % slot.pages) << 13];
   
   /* Save frame control register data */
   slot.fcr[offset] = data;
@@ -912,7 +939,7 @@ static void mapper_8k_w(int offset, unsigned int data)
     {
       for (i = 0x20; i < 0x28; i++)
       {
-        z80_readmap[i] = &slot.rom[(page << 13) | ((i & 0x07) << 10)];
+        z80_readmap[i] = &page[(i & 0x07) << 10];
       }
       break;
     }
@@ -921,7 +948,7 @@ static void mapper_8k_w(int offset, unsigned int data)
     {
       for (i = 0x28; i < 0x30; i++)
       {
-        z80_readmap[i] = &slot.rom[(page << 13) | ((i & 0x07) << 10)];
+        z80_readmap[i] = &page[(i & 0x07) << 10];
       }
       break;
     }
@@ -930,7 +957,7 @@ static void mapper_8k_w(int offset, unsigned int data)
     {
       for (i = 0x10; i < 0x18; i++)
       {
-        z80_readmap[i] = &slot.rom[(page << 13) | ((i & 0x07) << 10)];
+        z80_readmap[i] = &page[(i & 0x07) << 10];
       }
       break;
     }
@@ -939,7 +966,7 @@ static void mapper_8k_w(int offset, unsigned int data)
     {
       for (i = 0x18; i < 0x20; i++)
       {
-        z80_readmap[i] = &slot.rom[(page << 13) | ((i & 0x07) << 10)];
+        z80_readmap[i] = &page[(i & 0x07) << 10];
       }
       break;
     }
@@ -951,7 +978,7 @@ static void mapper_8k_w(int offset, unsigned int data)
 #endif
 }
     
-static void mapper_16k_w(int offset, unsigned int data)
+static void mapper_16k_w(int offset, unsigned char data)
 {
   int i;
 
@@ -1020,7 +1047,7 @@ static void mapper_16k_w(int offset, unsigned int data)
     case 1: /* cartridge ROM bank (16k) at $0000-$3FFF */
     {
       /* first 1k is not fixed (CODEMASTER or MULTI mappers only) */
-      if ((slot.mapper == MAPPER_CODIES) || (slot.mapper == MAPPER_MULTI))
+      if ((slot.mapper == MAPPER_CODIES) || (slot.mapper == MAPPER_MULTI_16K))
       {
         z80_readmap[0] = &slot.rom[(page << 14)];
       }
@@ -1095,6 +1122,34 @@ static void mapper_16k_w(int offset, unsigned int data)
 #endif
 }
 
+static void mapper_32k_w(unsigned char data)
+{
+  int i;
+
+  /* cartridge ROM page (32k) */
+  uint8 *page = &slot.rom[(data % slot.pages) << 15];
+  
+  /* Save frame control register data */
+  slot.fcr[0] = data;
+
+  /* selected page (32k) is mapped at $0000-$7FFF */
+  for (i = 0x00; i < 0x20; i++)
+  {
+    z80_readmap[i] = &page[i << 10];
+  }
+
+  /* first 16K is mirrored at $8000-$BFFF */
+  for (i = 0x20; i < 0x30; i++)
+  {
+    z80_readmap[i] = z80_readmap[i & 0x0F];
+  }
+
+#ifdef CHEATS_UPDATE
+  /* update ROM patches when banking has changed */
+  CHEATS_UPDATE();
+#endif
+}
+
 static void write_mapper_none(unsigned int address, unsigned char data)
 {
   z80_writemap[address >> 10][address & 0x03FF] = data;
@@ -1133,7 +1188,7 @@ static void write_mapper_codies(unsigned int address, unsigned char data)
   z80_writemap[address >> 10][address & 0x03FF] = data;
 }
 
-static void write_mapper_multi(unsigned int address, unsigned char data)
+static void write_mapper_multi_16k(unsigned int address, unsigned char data)
 {
   if (address == 0x3FFE)
   {
@@ -1151,6 +1206,16 @@ static void write_mapper_multi(unsigned int address, unsigned char data)
   {
     mapper_16k_w(3,(slot.fcr[1] & 0x30) + data);
     return;
+  }
+
+  z80_writemap[address >> 10][address & 0x03FF] = data;
+}
+
+static void write_mapper_multi_32k(unsigned int address, unsigned char data)
+{
+  if (address == 0xFFFF)
+  {
+    mapper_32k_w(data);
   }
 
   z80_writemap[address >> 10][address & 0x03FF] = data;
