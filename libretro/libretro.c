@@ -1150,9 +1150,10 @@ static uint32_t decode_cheat(char *string, int index)
 static void apply_cheats(void)
 {
    uint8_t *ptr;
+   int i;
    /* clear ROM&RAM patches counter */
    maxROMcheats = maxRAMcheats = 0;
-   int i;
+
    for (i = 0; i < maxcheats; i++)
    {
       if (cheatlist[i].enable)
@@ -1777,6 +1778,8 @@ void *retro_get_memory_data(unsigned id)
 
 size_t retro_get_memory_size(unsigned id)
 {
+   int i;
+
    if (!sram.on)
       return 0;
 
@@ -1794,7 +1797,6 @@ size_t retro_get_memory_size(unsigned id)
         /* otherwise, we assume this is for saving and we need to check if SRAM data has been modified */
         /* this is obviously not %100 safe since the frontend could still be trying to load SRAM while emulation is running */
         /* a better solution would be that the frontend itself checks if data has been modified before writing it to a file */
-        int i;
         for (i=0xffff; i>=0; i--)
         {
           if (sram.sram[i] != 0xff)
