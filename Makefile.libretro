@@ -86,9 +86,20 @@ else ifeq ($(platform), ios)
 		CC += -miphoneos-version-min=5.0
 		PLATFORM_DEFINES += -miphoneos-version-min=5.0
 	endif
+else ifeq ($(platform), theos_ios)
+DEPLOYMENT_IOSVERSION = 5.0
+TARGET = iphone:latest:$(DEPLOYMENT_IOSVERSION)
+ARCHS = armv7 armv7s
+TARGET_IPHONEOS_DEPLOYMENT_VERSION=$(DEPLOYMENT_IOSVERSION)
+THEOS_BUILD_DIR := objs
+include $(THEOS)/makefiles/common.mk
 
-# QNX
+LIBRARY_NAME = $(TARGET_NAME)_libretro_ios
+
+	ENDIANNESS_DEFINES := -DLSB_FIRST -DBYTE_ORDER=LITTLE_ENDIAN
+	PLATFORM_DEFINES := -DHAVE_ZLIB
 else ifeq ($(platform), qnx)
+	# QNX
 	TARGET := $(TARGET_NAME)_libretro_qnx.so
 	fpic := -fPIC
 	SHARED := -lm -shared -Wl,--version-script=libretro/link.T -Wl,--no-undefined -lz
@@ -248,7 +259,13 @@ endif
 
 LIBRETRO_LIBS := -lm
 
-
+ifeq ($(platform), theos_ios)
+COMMON_FLAGS := $(COMMON_DEFINES) $(INCFLAGS) -I$(THEOS_INCLUDE_PATH) -Wno-error
+$(LIBRARY_NAME)_CFLAGS += $(CFLAGS) $(LIBRETRO_CFLAGS) $(COMMON_FLAGS)
+${LIBRARY_NAME}_FILES = $(SOURCES_C)
+${LIBRARY_NAME}_LIBRARIES = m z
+include $(THEOS_MAKE_PATH)/library.mk
+else
 all: $(TARGET)
 
 %.o: %.c
@@ -269,3 +286,4 @@ clean:
 	rm -f $(TARGET)
 
 .PHONY: clean clean-objs
+endif
