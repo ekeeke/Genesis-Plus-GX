@@ -1705,7 +1705,7 @@ bool retro_load_game(const struct retro_game_info *info)
    snprintf(GG_ROM, sizeof(GG_ROM), "%s%cggenie.bin", dir, slash);
    snprintf(AR_ROM, sizeof(AR_ROM), "%s%careplay.bin", dir, slash);
    snprintf(SK_ROM, sizeof(SK_ROM), "%s%csk.bin", dir, slash);
-   snprintf(SK_UPMEM, sizeof(SK_UPMEM), "%s%cs2k.bin", dir, slash);
+   snprintf(SK_UPMEM, sizeof(SK_UPMEM), "%s%csk2chip.bin", dir, slash);
    snprintf(CD_BIOS_EU, sizeof(CD_BIOS_EU), "%s%cbios_CD_E.bin", dir, slash);
    snprintf(CD_BIOS_US, sizeof(CD_BIOS_US), "%s%cbios_CD_U.bin", dir, slash);
    snprintf(CD_BIOS_JP, sizeof(CD_BIOS_JP), "%s%cbios_CD_J.bin", dir, slash);
