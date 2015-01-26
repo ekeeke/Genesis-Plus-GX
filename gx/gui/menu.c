@@ -3,7 +3,7 @@
  *
  *  Genesis Plus GX menu
  *
- *  Copyright Eke-Eke (2009-2014)
+ *  Copyright Eke-Eke (2009-2015)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -395,11 +395,11 @@ static gui_item items_video[] =
   {NULL,NULL,"Display: PROGRESSIVE",        "Select video mode",                                 56,132,276,48},
   {NULL,NULL,"TV mode: 50/60HZ",            "Select video refresh rate",                         56,132,276,48},
   {NULL,NULL,"VSYNC: AUTO",                 "Enable/disable sync with video hardware",           56,132,276,48},
-  {NULL,NULL,"GX Bilinear Filter: OFF",     "Enable/disable hardware texture filtering",         56,132,276,48},
-  {NULL,NULL,"GX Deflickering Filter: OFF", "Enable/disable hardware GX filtering",              56,132,276,48},
+  {NULL,NULL,"Bilinear Filter: OFF",        "Enable/disable GX hardware texture filtering",      56,132,276,48},
+  {NULL,NULL,"Deflickering Filter: AUTO",   "Enable/disable GX hardware framebuffer filtering",  56,132,276,48},
 #ifdef HW_RVL
-  {NULL,NULL,"VI Trap Filter: ON",          "Enable/disable hardware composite video filtering", 56,132,276,48},
-  {NULL,NULL,"VI Gamma Correction: 1.0",    "Adjust video hardware gamma correction",            56,132,276,48},
+  {NULL,NULL,"Trap Filter: ON",             "Enable/disable VI hardware composite out filtering",56,132,276,48},
+  {NULL,NULL,"Gamma Correction: 1.0",       "Adjust VI hardware gamma correction",               56,132,276,48},
 #endif
   {NULL,NULL,"LCD Ghosting Filter: OFF",    "Enable/disable software LCD image persistence",     56,132,276,48},
   {NULL,NULL,"NTSC Filter: COMPOSITE",      "Enable/disable software NTSC filtering",            56,132,276,48},
@@ -1679,12 +1679,12 @@ static void videomenu ()
   else
     sprintf (items[2].text, "VSYNC: OFF");
 
-  sprintf (items[3].text, "GX Bilinear Filter: %s", config.bilinear ? " ON" : "OFF");
-  sprintf (items[4].text, "GX Deflickering Filter: %s", config.vfilter ? " ON" : "OFF");
+  sprintf (items[3].text, "Bilinear Filter: %s", config.bilinear ? " ON" : "OFF");
+  sprintf (items[4].text, "Deflickering Filter: %s", config.vfilter ? "AUTO" : "OFF");
 
 #ifdef HW_RVL
-  sprintf (items[5].text, "VI Trap Filter: %s", config.trap ? " ON" : "OFF");
-  sprintf (items[6].text, "VI Gamma Correction: %1.1f", config.gamma);
+  sprintf (items[5].text, "Trap Filter: %s", config.trap ? " ON" : "OFF");
+  sprintf (items[6].text, "Gamma Correction: %1.1f", config.gamma);
 #endif
 
   if (config.lcd > 0)
@@ -1820,14 +1820,14 @@ static void videomenu ()
       case 3: /*** GX Texture filtering ***/
       {
         config.bilinear ^= 1;
-        sprintf (items[3].text, "GX Bilinear Filter: %s", config.bilinear ? " ON" : "OFF");
+        sprintf (items[3].text, "Bilinear Filter: %s", config.bilinear ? " ON" : "OFF");
         break;
       }
 
       case 4: /*** GX Copy filtering (deflickering filter) ***/
       {
         config.vfilter ^= 1;
-        sprintf (items[4].text, "GX Deflicker Filter: %s", config.vfilter ? " ON" : "OFF");
+        sprintf (items[4].text, "Deflickering Filter: %s", config.vfilter ? "AUTO" : "OFF");
         break;
       }
 
@@ -1835,7 +1835,7 @@ static void videomenu ()
       case 5: /*** VIDEO Trap filtering ***/
       {
         config.trap ^= 1;
-        sprintf (items[5].text, "VI Trap Filter: %s", config.trap ? " ON" : "OFF");
+        sprintf (items[5].text, "Trap Filter: %s", config.trap ? " ON" : "OFF");
         break;
       }
 
@@ -1852,14 +1852,14 @@ static void videomenu ()
           m->arrows[1]->state = 0;
           m->screenshot = 255;
           strcpy(m->title,"");
-          GUI_OptionBox(m,update_gamma,"VI Gamma Correction",(void *)&config.gamma,0.1,0.1,3.0,0);
+          GUI_OptionBox(m,update_gamma,"Gamma Correction",(void *)&config.gamma,0.1,0.1,3.0,0);
           m->max_buttons = 4;
           m->max_images = 6;
           m->arrows[0]->state = state[0];
           m->arrows[1]->state = state[1];
           m->screenshot = 0;
           strcpy(m->title,"Video Settings");
-          sprintf (items[6].text, "VI Gamma Correction: %1.1f", config.gamma);
+          sprintf (items[6].text, "Gamma Correction: %1.1f", config.gamma);
           VIDEO_SetGamma(VI_GM_1_0);
           VIDEO_Flush();
         }
@@ -2825,23 +2825,22 @@ static void ctrlmenu(void)
           /* autodetect connected wiimotes (without nunchuk) */
           if (config.input[player].device == 1)
           {
-            /* test current port */
-            exp = 255;
-            if (config.input[player].port < 4)
-            {
-              WPAD_Probe(config.input[player].port,&exp);
-            }
-
             /* find first connected controller */
+            exp = 255;
             while ((config.input[player].port < 4) && (exp == 255))
             {
-              /* try next port */
-              config.input[player].port ++;
-              if (config.input[player].port < 4)
+              WPAD_Probe(config.input[player].port,&exp);
+
+              /* check if this is a Wii U Pro Controller */
+              if (exp == WPAD_EXP_CLASSIC)
               {
-                exp = 255;
-                WPAD_Probe(config.input[player].port,&exp);
+                WPADData *data = WPAD_Data(config.input[player].port);
+                exp = data->exp.classic.rjs.max.x;
               }
+
+              /* try next port if no wimote available */
+              if (exp == 255)
+                config.input[player].port ++;
             }
 
             /* no more wiimote */

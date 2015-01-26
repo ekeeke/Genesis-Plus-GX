@@ -3,7 +3,7 @@
  *
  *  Genesis Plus GX input support
  *
- *  Copyright Eke-Eke (2007-2014)
+ *  Copyright Eke-Eke (2007-2015)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -1168,7 +1168,17 @@ int gx_input_FindDevices(void)
         {
           wpad = 255;
           WPAD_Probe(config.input[player].port, &wpad);
-          if (wpad != 255)
+
+          /* make sure this is not a Wii U Pro Controller */
+          if (wpad == WPAD_EXP_CLASSIC)
+          {
+            WPADData *data = WPAD_Data(config.input[player].port);
+            if (data->exp.classic.rjs.max.x != 255)
+            {
+              found++;
+            }
+          }
+          else if (wpad != 255)
           {
             found++;
           }
@@ -1183,39 +1193,6 @@ int gx_input_FindDevices(void)
           if (wpad == (config.input[player].device - 1))
           {
             found++;
-
-            /* some 3rd party classic controllers return invalid factory calibration data */
-            if (wpad == EXP_CLASSIC)
-            {
-              /* WPAD data */
-              WPADData *data = WPAD_Data(config.input[player].port);
-
-              /* Left analog stick */
-              struct joystick_t* js = &data->exp.classic.ljs;
-
-              /* Check acquired calibration data */
-              if ((js->max.x <= js->center.x) || (js->min.x >= js->center.x) ||
-                  (js->max.y <= js->center.y) || (js->min.y >= js->center.y))
-              {
-                /* Reset to default values */
-                js->min.x = js->min.y = 0;
-                js->max.x = js->max.y = 64;
-                js->center.x = js->center.y = 32;
-              }
-
-              /* Right analog stick */
-              js = &data->exp.classic.rjs;
-
-              /* Check acquired calibration data */
-              if ((js->max.x <= js->center.x) || (js->min.x >= js->center.x) ||
-                  (js->max.y <= js->center.y) || (js->min.y >= js->center.y))
-              {
-                /* Reset to default values */
-                js->min.x = js->min.y = 0;
-                js->max.x = js->max.y = 32;
-                js->center.x = js->center.y = 16;
-              }
-            }
           }
           break;
         }
@@ -1329,12 +1306,17 @@ void gx_input_SetDefault(void)
       /* look for unused Wiimotes */
       for (j=0; j<i; j++)
       {
-        /* Classic Controller is assigned, which means Wiimote is free to use */
-        if (config.input[j].device == (WPAD_EXP_CLASSIC + 1))
+        /* Wiimote could still be used when Classic Controller has been assigned */
+        if (config.input[j].device == 3)
         {
-          /* assign wiimote  */
-          config.input[i].device = 1;
-          config.input[i].port = j;
+          /* make sure this is not a Wii U Pro Controller */
+          WPADData *data = WPAD_Data(config.input[j].port);
+          if (data->exp.classic.rjs.max.x != 255)
+          {
+            /* Wiimote is available */
+            config.input[i].device = 1;
+            config.input[i].port = j;
+          }
         }
       }
     }
@@ -1607,36 +1589,6 @@ void gx_input_UpdateMenu(void)
 
   /* WPAD held keys (direction/selection) */
   u32 hw = data->btns_h & WPAD_BUTTONS_HELD;
-
-  /* Some 3rd party classic controllers return invalid factory calibration data */
-  if (data->exp.type == EXP_CLASSIC)
-  {
-    /* Left analog stick */
-    struct joystick_t* js = &data->exp.classic.ljs;
-
-    /* Check acquired calibration data */
-    if ((js->max.x <= js->center.x) || (js->min.x >= js->center.x) ||
-        (js->max.y <= js->center.y) || (js->min.y >= js->center.y))
-    {
-      /* Reset to default values */
-      js->min.x = js->min.y = 0;
-      js->max.x = js->max.y = 64;
-      js->center.x = js->center.y = 32;
-    }
-
-    /* Right analog stick */
-    js = &data->exp.classic.rjs;
-
-    /* Check acquired calibration data */
-    if ((js->max.x <= js->center.x) || (js->min.x >= js->center.x) ||
-        (js->max.y <= js->center.y) || (js->min.y >= js->center.y))
-    {
-      /* Reset to default values */
-      js->min.x = js->min.y = 0;
-      js->max.x = js->max.y = 32;
-      js->center.x = js->center.y = 16;
-    }
-  }
 
   /* WPAD analog sticks (handled as PAD held direction keys) */
   x = wpad_StickX(data, 0);

@@ -2,7 +2,7 @@
  *  Genesis Plus
  *  Mega CD / Sega CD hardware
  *
- *  Copyright (C) 2012-2014  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2012-2015  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -1094,7 +1094,7 @@ void scd_init(void)
       m68k.memory_map[i].write8  = NULL;
       m68k.memory_map[i].write16 = NULL;
       zbank_memory_map[i].read   = NULL;
-      zbank_memory_map[i].write  = NULL;
+      zbank_memory_map[i].write  = zbank_unused_w;  /* Z80 cannot write to PRG-RAM (Dungeon Explorer USA version) */
 
     }
     else

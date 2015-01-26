@@ -3,7 +3,7 @@
  *  ROM Loading Support
  *
  *  Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003  Charles Mac Donald (original code)
- *  Copyright (C) 2007-2014  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2007-2015  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -735,12 +735,20 @@ int load_rom(char *filename)
       /* try to load CD BOOTROM */
       if (load_bios())
       {
+        char *ptr;
+        char fname[256];
+
         /* boot from cartridge */
         scd.cartridge.boot = 0x40;
 
         /* automatically load associated .iso image */
-        strncpy(&filename[strlen(filename) - 4], ".iso", 4);
-        cdd_load(filename, (char *)cdc.ram);
+        strncpy(fname, filename, 256);
+        ptr = strchr(fname,'.');
+        if (ptr && (ptr < &fname[252]))
+        {
+          strcpy(ptr+1,"iso");
+        }
+        cdd_load(fname, (char *)cdc.ram);
       }
       else
       {
