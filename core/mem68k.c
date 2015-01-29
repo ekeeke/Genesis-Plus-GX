@@ -3,7 +3,7 @@
  *  Main 68k bus handlers
  *
  *  Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003  Charles Mac Donald (original code)
- *  Copyright (C) 2007-2013  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2007-2015  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -646,6 +646,8 @@ void ctrl_io_write_byte(unsigned int address, unsigned int data)
 
           case 0x01:  /* SUB-CPU control */
           {
+            unsigned int status = s68k.cpu_stopped;
+
             /* RESET bit */
             if (data & 0x01)
             {
@@ -672,6 +674,34 @@ void ctrl_io_write_byte(unsigned int address, unsigned int data)
             {
               /* SUB-CPU is halted while !RESET is asserted */
               s68k_pulse_halt();
+            }
+
+            /* check if SUB-CPU status has changed */
+            if (s68k.cpu_stopped != status)
+            {
+              unsigned int base = scd.cartridge.boot;
+
+              /* PRG-RAM can only be accessed from MAIN 68K & Z80 when SUB-CPU is halted (Dungeon Explorer USA version) */
+              if (s68k.cpu_stopped & STOP_LEVEL_HALT)
+              {
+                /* PRG-RAM (128KB bank) is mapped to $020000-$03FFFF (resp. $420000-$43FFFF) */
+                m68k.memory_map[base + 0x02].read8   = m68k.memory_map[base + 0x03].read8   = NULL;
+                m68k.memory_map[base + 0x02].read16  = m68k.memory_map[base + 0x03].read16  = NULL;
+                m68k.memory_map[base + 0x02].write8  = m68k.memory_map[base + 0x03].write8  = NULL;
+                m68k.memory_map[base + 0x02].write16 = m68k.memory_map[base + 0x03].write16 = NULL;
+                zbank_memory_map[base + 0x02].read   = zbank_memory_map[base + 0x03].read   = NULL;
+                zbank_memory_map[base + 0x02].write  = zbank_memory_map[base + 0x03].write  = NULL;
+              }
+              else
+              {
+                /* $020000-$03FFFF (resp. $420000-$43FFFF) is not mapped */
+                m68k.memory_map[base + 0x02].read8   = m68k.memory_map[base + 0x03].read8   = m68k_read_bus_8;
+                m68k.memory_map[base + 0x02].read16  = m68k.memory_map[base + 0x03].read16  = m68k_read_bus_16;
+                m68k.memory_map[base + 0x02].write8  = m68k.memory_map[base + 0x03].write8  = m68k_unused_w_8;
+                m68k.memory_map[base + 0x02].write16 = m68k.memory_map[base + 0x03].write16 = m68k_unused_w_16;
+                zbank_memory_map[base + 0x02].read   = zbank_memory_map[base + 0x03].read   = zbank_unused_r;
+                zbank_memory_map[base + 0x02].write  = zbank_memory_map[base + 0x03].write  = zbank_unused_w;
+              }
             }
 
             scd.regs[0x00].byte.l = data;
@@ -842,6 +872,8 @@ void ctrl_io_write_word(unsigned int address, unsigned int data)
         {
           case 0x00:  /* SUB-CPU interrupt & control */
           {
+            unsigned int status = s68k.cpu_stopped;
+
             /* RESET bit */
             if (data & 0x01)
             {
@@ -868,6 +900,34 @@ void ctrl_io_write_word(unsigned int address, unsigned int data)
             {
               /* SUB-CPU is halted while !RESET is asserted */
               s68k_pulse_halt();
+            }
+
+            /* check if SUB-CPU status has changed */
+            if (s68k.cpu_stopped != status)
+            {
+              unsigned int base = scd.cartridge.boot;
+
+              /* PRG-RAM can only be accessed from MAIN 68K & Z80 when SUB-CPU is halted (Dungeon Explorer USA version) */
+              if (s68k.cpu_stopped & STOP_LEVEL_HALT)
+              {
+                /* PRG-RAM (128KB bank) is mapped to $020000-$03FFFF (resp. $420000-$43FFFF) */
+                m68k.memory_map[base + 0x02].read8   = m68k.memory_map[base + 0x03].read8   = NULL;
+                m68k.memory_map[base + 0x02].read16  = m68k.memory_map[base + 0x03].read16  = NULL;
+                m68k.memory_map[base + 0x02].write8  = m68k.memory_map[base + 0x03].write8  = NULL;
+                m68k.memory_map[base + 0x02].write16 = m68k.memory_map[base + 0x03].write16 = NULL;
+                zbank_memory_map[base + 0x02].read   = zbank_memory_map[base + 0x03].read   = NULL;
+                zbank_memory_map[base + 0x02].write  = zbank_memory_map[base + 0x03].write  = NULL;
+              }
+              else
+              {
+                /* $020000-$03FFFF (resp. $420000-$43FFFF) is not mapped */
+                m68k.memory_map[base + 0x02].read8   = m68k.memory_map[base + 0x03].read8   = m68k_read_bus_8;
+                m68k.memory_map[base + 0x02].read16  = m68k.memory_map[base + 0x03].read16  = m68k_read_bus_16;
+                m68k.memory_map[base + 0x02].write8  = m68k.memory_map[base + 0x03].write8  = m68k_unused_w_8;
+                m68k.memory_map[base + 0x02].write16 = m68k.memory_map[base + 0x03].write16 = m68k_unused_w_16;
+                zbank_memory_map[base + 0x02].read   = zbank_memory_map[base + 0x03].read   = zbank_unused_r;
+                zbank_memory_map[base + 0x02].write  = zbank_memory_map[base + 0x03].write  = zbank_unused_w;
+              }
             }
 
             /* IFL2 bit */
