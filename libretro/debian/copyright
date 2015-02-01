@@ -13,7 +13,7 @@ Upstream Authors:
 Files: *
 Copyright: 1998, 1999, 2000, 2001, 2002, 2003 Charles MacDonald
            Some portions copyright Nicola Salmoria and the MAME team. All rights reserved.
-           2007-2014 Eke-Eke. All rights reserved.
+           2007-2015 Eke-Eke. All rights reserved.
 License: 
     Unless otherwise explicitly stated, all code in Genesis Plus GX is released
     under the following license:
@@ -156,11 +156,11 @@ License:
     - This entire notice must remain in the source code.
 
 Files: libretro/*
-Copyright: 2012-2014 The RetroArch Team
+Copyright: 2012-2015 The RetroArch Team
 License: GPLv3
 
 Files: libretro/libretro.h
-Copyright: 2012-2014 The RetroArch Team
+Copyright: 2012-2015 The RetroArch Team
 License: The MIT License (MIT)
     Permission is hereby granted, free of charge, to any person obtaining a copy
     of this software and associated documentation files (the "Software"), to deal
@@ -182,8 +182,8 @@ License: The MIT License (MIT)
 
 The Debian packaging is:
 
-    Copyright (C) 2011-2014 Hunter Kaller (hizzlekizzle) <hunter_kaller@yahoo.com>
-    Copyright (C) 2014 Sergio Benjamim (sergio-br2) <sergio_br2@yahoo.com.br>
+    Copyright (C) 2011-2015 Hunter Kaller (hizzlekizzle) <hunter_kaller@yahoo.com>
+    Copyright (C) 2014, 2015 Sergio Benjamim (sergio-br2) <sergio_br2@yahoo.com.br>
 
 and is licensed under the GPL version 3, 
 see `/usr/share/common-licenses/GPL-3'.
