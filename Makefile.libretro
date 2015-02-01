@@ -67,6 +67,11 @@ else ifeq ($(platform), osx)
 		fpic += -mmacosx-version-min=10.5
 	endif
 
+ifndef ($(NOUNIVERSAL))
+   CFLAGS  += $(ARCHFLAGS)
+   LDFLAGS += $(ARCHFLAGS)
+endif
+
 # iOS
 else ifeq ($(platform), ios)
 	TARGET := $(TARGET_NAME)_libretro_ios.dylib
@@ -278,7 +283,7 @@ $(TARGET): $(OBJECTS)
 ifeq ($(STATIC_LINKING), 1)
 	$(AR) rcs $@ $(OBJECTS)
 else
-	$(CC) -o $(TARGET) $(fpic) $(OBJECTS) $(LIBRETRO_LIBS) $(SHARED) 
+	$(CC) -o $(TARGET) $(fpic) $(OBJECTS) $(LDFLAGS) $(LIBRETRO_LIBS) $(SHARED) 
 endif
 
 clean-objs:
