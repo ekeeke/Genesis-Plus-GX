@@ -1475,30 +1475,34 @@ int scd_context_load(uint8 *state)
   /* PRG-RAM */
   load_param(scd.prg_ram, sizeof(scd.prg_ram));
 
-  /* PRG-RAM 128k bank mapped to $020000-$03FFFF (resp. $420000-$43FFFF) */
-  m68k.memory_map[scd.cartridge.boot + 0x02].base = scd.prg_ram + ((scd.regs[0x03>>1].byte.l & 0xc0) << 11);
-  m68k.memory_map[scd.cartridge.boot + 0x03].base = m68k.memory_map[scd.cartridge.boot + 0x02].base + 0x10000;
-
   /* PRG-RAM can only be accessed from MAIN 68K & Z80 when SUB-CPU is halted (Dungeon Explorer USA version) */
   if ((scd.regs[0x00].byte.l & 0x03) != 0x01)
   {
-    /* PRG-RAM (128KB bank) is mapped to $020000-$03FFFF (resp. $420000-$43FFFF) */
-    m68k.memory_map[scd.cartridge.boot + 0x02].read8   = m68k.memory_map[scd.cartridge.boot + 0x03].read8   = NULL;
-    m68k.memory_map[scd.cartridge.boot + 0x02].read16  = m68k.memory_map[scd.cartridge.boot + 0x03].read16  = NULL;
-    m68k.memory_map[scd.cartridge.boot + 0x02].write8  = m68k.memory_map[scd.cartridge.boot + 0x03].write8  = NULL;
-    m68k.memory_map[scd.cartridge.boot + 0x02].write16 = m68k.memory_map[scd.cartridge.boot + 0x03].write16 = NULL;
-    zbank_memory_map[scd.cartridge.boot + 0x02].read   = zbank_memory_map[scd.cartridge.boot + 0x03].read   = NULL;
-    zbank_memory_map[scd.cartridge.boot + 0x02].write  = zbank_memory_map[scd.cartridge.boot + 0x03].write  = NULL;
+    /* $020000-$03FFFF (resp. $420000-$43FFFF) is mapped to PRG-RAM 128K bank (mirrored every 256 KB) */
+    for (i=scd.cartridge.boot+0x02; i<scd.cartridge.boot+0x20; i+=4)
+    {
+      m68k.memory_map[i].base    = m68k.memory_map[i+1].base    = scd.prg_ram + ((scd.regs[0x03>>1].byte.l & 0xc0) << 11);
+      m68k.memory_map[i].read8   = m68k.memory_map[i+1].read8   = NULL;
+      m68k.memory_map[i].read16  = m68k.memory_map[i+1].read16  = NULL;
+      m68k.memory_map[i].write8  = m68k.memory_map[i+1].write8  = NULL;
+      m68k.memory_map[i].write16 = m68k.memory_map[i+1].write16 = NULL;
+      zbank_memory_map[i].read   = zbank_memory_map[i+1].read   = NULL;
+      zbank_memory_map[i].write  = zbank_memory_map[i+1].write  = NULL;
+    }
   }
   else
   {
-    /* $020000-$03FFFF (resp. $420000-$43FFFF) is not mapped */
-    m68k.memory_map[scd.cartridge.boot + 0x02].read8   = m68k.memory_map[scd.cartridge.boot + 0x03].read8   = m68k_read_bus_8;
-    m68k.memory_map[scd.cartridge.boot + 0x02].read16  = m68k.memory_map[scd.cartridge.boot + 0x03].read16  = m68k_read_bus_16;
-    m68k.memory_map[scd.cartridge.boot + 0x02].write8  = m68k.memory_map[scd.cartridge.boot + 0x03].write8  = m68k_unused_w_8;
-    m68k.memory_map[scd.cartridge.boot + 0x02].write16 = m68k.memory_map[scd.cartridge.boot + 0x03].write16 = m68k_unused_w_16;
-    zbank_memory_map[scd.cartridge.boot + 0x02].read   = zbank_memory_map[scd.cartridge.boot + 0x03].read   = zbank_unused_r;
-    zbank_memory_map[scd.cartridge.boot + 0x02].write  = zbank_memory_map[scd.cartridge.boot + 0x03].write  = zbank_unused_w;
+    /* $020000-$03FFFF (resp. $420000-$43FFFF) is not mapped (mirrored every 256 KB) */
+    for (i=scd.cartridge.boot+0x02; i<scd.cartridge.boot+0x20; i+=4)
+    {
+      m68k.memory_map[i].base    = m68k.memory_map[i+1].base    = scd.prg_ram + ((scd.regs[0x03>>1].byte.l & 0xc0) << 11);
+      m68k.memory_map[i].read8   = m68k.memory_map[i+1].read8   = m68k_read_bus_8;
+      m68k.memory_map[i].read16  = m68k.memory_map[i+1].read16  = m68k_read_bus_16;
+      m68k.memory_map[i].write8  = m68k.memory_map[i+1].write8  = m68k_unused_8_w;
+      m68k.memory_map[i].write16 = m68k.memory_map[i+1].write16 = m68k_unused_16_w;
+      zbank_memory_map[i].read   = zbank_memory_map[i+1].read   = zbank_unused_r;
+      zbank_memory_map[i].write  = zbank_memory_map[i+1].write  = zbank_unused_w;
+    }
   }
 
   /* Word-RAM */
