@@ -66,11 +66,10 @@ else ifeq ($(platform), osx)
 	ifeq ($(OSX_LT_MAVERICKS),"YES")
 		fpic += -mmacosx-version-min=10.5
 	endif
-
-ifndef ($(NOUNIVERSAL))
-   CFLAGS  += $(ARCHFLAGS)
-   LDFLAGS += $(ARCHFLAGS)
-endif
+	ifndef ($(NOUNIVERSAL))
+		CFLAGS  += $(ARCHFLAGS)
+		LDFLAGS += $(ARCHFLAGS)
+	endif
 
 # iOS
 else ifeq ($(platform), ios)
@@ -185,16 +184,16 @@ else ifneq (,$(findstring armv,$(platform)))
 	SHARED := -shared -Wl,--version-script=libretro/link.T -Wl,--no-undefined -lz
 	ENDIANNESS_DEFINES := -DLSB_FIRST -DBYTE_ORDER=LITTLE_ENDIAN
 	PLATFORM_DEFINES := -DHAVE_ZLIB
-	CC = gcc
-	ifneq (,$(findstring cortexa8,$(platform)))
+	ifneq (,$(findstring cortexa5,$(platform)))
+		PLATFORM_DEFINES += -marm -mcpu=cortex-a5
+	else ifneq (,$(findstring cortexa8,$(platform)))
 		PLATFORM_DEFINES += -marm -mcpu=cortex-a8
 	else ifneq (,$(findstring cortexa9,$(platform)))
 		PLATFORM_DEFINES += -marm -mcpu=cortex-a9
-	endif
-	PLATFORM_DEFINES += -marm
-	ifneq (,$(findstring neon,$(platform)))
-		PLATFORM_DEFINES += -mfpu=neon
-		HAVE_NEON = 1
+	else ifneq (,$(findstring cortexa15a7,$(platform)))
+		PLATFORM_DEFINES += -marm -mcpu=cortex-a15.cortex-a7
+	else
+		PLATFORM_DEFINES += -marm
 	endif
 	ifneq (,$(findstring softfloat,$(platform)))
 		PLATFORM_DEFINES += -mfloat-abi=softfp
