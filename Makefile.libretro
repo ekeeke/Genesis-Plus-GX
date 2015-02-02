@@ -66,6 +66,10 @@ else ifeq ($(platform), osx)
 	ifeq ($(OSX_LT_MAVERICKS),"YES")
 		fpic += -mmacosx-version-min=10.5
 	endif
+	ifndef ($(NOUNIVERSAL))
+		CFLAGS  += $(ARCHFLAGS)
+		LDFLAGS += $(ARCHFLAGS)
+	endif
 
 # iOS
 else ifeq ($(platform), ios)
@@ -86,6 +90,20 @@ else ifeq ($(platform), ios)
 		CC += -miphoneos-version-min=5.0
 		PLATFORM_DEFINES += -miphoneos-version-min=5.0
 	endif
+
+# Theos
+else ifeq ($(platform), theos_ios)
+	DEPLOYMENT_IOSVERSION = 5.0
+	TARGET = iphone:latest:$(DEPLOYMENT_IOSVERSION)
+	ARCHS = armv7 armv7s
+	TARGET_IPHONEOS_DEPLOYMENT_VERSION=$(DEPLOYMENT_IOSVERSION)
+	THEOS_BUILD_DIR := objs
+	include $(THEOS)/makefiles/common.mk
+
+	LIBRARY_NAME = $(TARGET_NAME)_libretro_ios
+
+	ENDIANNESS_DEFINES := -DLSB_FIRST -DBYTE_ORDER=LITTLE_ENDIAN
+	PLATFORM_DEFINES := -DHAVE_ZLIB
 
 # QNX
 else ifeq ($(platform), qnx)
@@ -166,16 +184,16 @@ else ifneq (,$(findstring armv,$(platform)))
 	SHARED := -shared -Wl,--version-script=libretro/link.T -Wl,--no-undefined -lz
 	ENDIANNESS_DEFINES := -DLSB_FIRST -DBYTE_ORDER=LITTLE_ENDIAN
 	PLATFORM_DEFINES := -DHAVE_ZLIB
-	CC = gcc
-	ifneq (,$(findstring cortexa8,$(platform)))
+	ifneq (,$(findstring cortexa5,$(platform)))
+		PLATFORM_DEFINES += -marm -mcpu=cortex-a5
+	else ifneq (,$(findstring cortexa8,$(platform)))
 		PLATFORM_DEFINES += -marm -mcpu=cortex-a8
 	else ifneq (,$(findstring cortexa9,$(platform)))
 		PLATFORM_DEFINES += -marm -mcpu=cortex-a9
-	endif
-	PLATFORM_DEFINES += -marm
-	ifneq (,$(findstring neon,$(platform)))
-		PLATFORM_DEFINES += -mfpu=neon
-		HAVE_NEON = 1
+	else ifneq (,$(findstring cortexa15a7,$(platform)))
+		PLATFORM_DEFINES += -marm -mcpu=cortex-a15.cortex-a7
+	else
+		PLATFORM_DEFINES += -marm
 	endif
 	ifneq (,$(findstring softfloat,$(platform)))
 		PLATFORM_DEFINES += -mfloat-abi=softfp
@@ -248,7 +266,13 @@ endif
 
 LIBRETRO_LIBS := -lm
 
-
+ifeq ($(platform), theos_ios)
+COMMON_FLAGS := $(COMMON_DEFINES) $(INCFLAGS) -I$(THEOS_INCLUDE_PATH) -Wno-error
+$(LIBRARY_NAME)_CFLAGS += $(CFLAGS) $(LIBRETRO_CFLAGS) $(COMMON_FLAGS)
+${LIBRARY_NAME}_FILES = $(SOURCES_C)
+${LIBRARY_NAME}_LIBRARIES = m z
+include $(THEOS_MAKE_PATH)/library.mk
+else
 all: $(TARGET)
 
 %.o: %.c
@@ -258,7 +282,7 @@ $(TARGET): $(OBJECTS)
 ifeq ($(STATIC_LINKING), 1)
 	$(AR) rcs $@ $(OBJECTS)
 else
-	$(CC) -o $(TARGET) $(fpic) $(OBJECTS) $(LIBRETRO_LIBS) $(SHARED) 
+	$(CC) -o $(TARGET) $(fpic) $(OBJECTS) $(LDFLAGS) $(LIBRETRO_LIBS) $(SHARED) 
 endif
 
 clean-objs:
@@ -269,3 +293,4 @@ clean:
 	rm -f $(TARGET)
 
 .PHONY: clean clean-objs
+endif

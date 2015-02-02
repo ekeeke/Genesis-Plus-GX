@@ -1150,9 +1150,10 @@ static uint32_t decode_cheat(char *string, int index)
 static void apply_cheats(void)
 {
    uint8_t *ptr;
+   int i;
    /* clear ROM&RAM patches counter */
    maxROMcheats = maxRAMcheats = 0;
-   int i;
+
    for (i = 0; i < maxcheats; i++)
    {
       if (cheatlist[i].enable)
@@ -1704,7 +1705,7 @@ bool retro_load_game(const struct retro_game_info *info)
    snprintf(GG_ROM, sizeof(GG_ROM), "%s%cggenie.bin", dir, slash);
    snprintf(AR_ROM, sizeof(AR_ROM), "%s%careplay.bin", dir, slash);
    snprintf(SK_ROM, sizeof(SK_ROM), "%s%csk.bin", dir, slash);
-   snprintf(SK_UPMEM, sizeof(SK_UPMEM), "%s%cs2k.bin", dir, slash);
+   snprintf(SK_UPMEM, sizeof(SK_UPMEM), "%s%csk2chip.bin", dir, slash);
    snprintf(CD_BIOS_EU, sizeof(CD_BIOS_EU), "%s%cbios_CD_E.bin", dir, slash);
    snprintf(CD_BIOS_US, sizeof(CD_BIOS_US), "%s%cbios_CD_U.bin", dir, slash);
    snprintf(CD_BIOS_JP, sizeof(CD_BIOS_JP), "%s%cbios_CD_J.bin", dir, slash);
@@ -1777,6 +1778,8 @@ void *retro_get_memory_data(unsigned id)
 
 size_t retro_get_memory_size(unsigned id)
 {
+   int i;
+
    if (!sram.on)
       return 0;
 
@@ -1794,7 +1797,6 @@ size_t retro_get_memory_size(unsigned id)
         /* otherwise, we assume this is for saving and we need to check if SRAM data has been modified */
         /* this is obviously not %100 safe since the frontend could still be trying to load SRAM while emulation is running */
         /* a better solution would be that the frontend itself checks if data has been modified before writing it to a file */
-        int i;
         for (i=0xffff; i>=0; i--)
         {
           if (sram.sram[i] != 0xff)
