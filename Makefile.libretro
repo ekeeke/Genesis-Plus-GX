@@ -45,7 +45,7 @@ TARGET_NAME := genesis_plus_gx
 ifeq ($(platform), unix)
 	TARGET := $(TARGET_NAME)_libretro.so
 	fpic := -fPIC
-	SHARED := -shared -Wl,--version-script=libretro/link.T -Wl,--no-undefined -lz
+	SHARED := -shared -Wl,--version-script=libretro/link.T -Wl,--no-undefined
 	ENDIANNESS_DEFINES := -DLSB_FIRST -DBYTE_ORDER=LITTLE_ENDIAN
 	PLATFORM_DEFINES := -DHAVE_ZLIB
 
@@ -53,7 +53,7 @@ ifeq ($(platform), unix)
 else ifeq ($(platform), osx)
 	TARGET := $(TARGET_NAME)_libretro.dylib
 	fpic := -fPIC 
-	SHARED := -dynamiclib -lz
+	SHARED := -dynamiclib 
 	ifeq ($(arch),ppc)
 		ENDIANNESS_DEFINES := -DBYTE_ORDER=BIG_ENDIAN
 	else
@@ -75,7 +75,7 @@ else ifeq ($(platform), osx)
 else ifeq ($(platform), ios)
 	TARGET := $(TARGET_NAME)_libretro_ios.dylib
 	fpic := -fPIC
-	SHARED := -dynamiclib -lz
+	SHARED := -dynamiclib 
 	ENDIANNESS_DEFINES := -DLSB_FIRST -DBYTE_ORDER=LITTLE_ENDIAN
 	PLATFORM_DEFINES := -DHAVE_ZLIB
 
@@ -109,7 +109,7 @@ else ifeq ($(platform), theos_ios)
 else ifeq ($(platform), qnx)
 	TARGET := $(TARGET_NAME)_libretro_qnx.so
 	fpic := -fPIC
-	SHARED := -lm -shared -Wl,--version-script=libretro/link.T -Wl,--no-undefined -lz
+	SHARED := -lm -shared -Wl,--version-script=libretro/link.T -Wl,--no-undefined 
 	ENDIANNESS_DEFINES := -DLSB_FIRST -DBYTE_ORDER=LITTLE_ENDIAN
 	PLATFORM_DEFINES := -DHAVE_ZLIB
 	CC = qcc -Vgcc_ntoarmv7le
@@ -181,7 +181,7 @@ else ifeq ($(platform), wii)
 else ifneq (,$(findstring armv,$(platform)))
 	TARGET := $(TARGET_NAME)_libretro.so
 	fpic := -fPIC
-	SHARED := -shared -Wl,--version-script=libretro/link.T -Wl,--no-undefined -lz
+	SHARED := -shared -Wl,--version-script=libretro/link.T -Wl,--no-undefined 
 	ENDIANNESS_DEFINES := -DLSB_FIRST -DBYTE_ORDER=LITTLE_ENDIAN
 	PLATFORM_DEFINES := -DHAVE_ZLIB
 	ifneq (,$(findstring cortexa5,$(platform)))
@@ -211,7 +211,7 @@ else ifeq ($(platform), emscripten)
 else
 	TARGET := $(TARGET_NAME)_libretro.dll
 	CC = gcc
-	SHARED := -shared -static-libgcc -static-libstdc++ -Wl,--version-script=libretro/link.T -Wl,--no-undefined -lz
+	SHARED := -shared -static-libgcc -static-libstdc++ -Wl,--version-script=libretro/link.T -Wl,--no-undefined 
 
 	ENDIANNESS_DEFINES := -DLSB_FIRST -DBYTE_ORDER=LITTLE_ENDIAN
 	PLATFORM_DEFINES := -DHAVE_ZLIB
