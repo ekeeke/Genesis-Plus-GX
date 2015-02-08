@@ -102,6 +102,7 @@
     <ClCompile Include="..\..\..\core\genesis.c" />
     <ClCompile Include="..\..\..\core\input_hw\activator.c" />
     <ClCompile Include="..\..\..\core\input_hw\gamepad.c" />
+    <ClCompile Include="..\..\..\core\input_hw\graphic_board.c" />
     <ClCompile Include="..\..\..\core\input_hw\input.c" />
     <ClCompile Include="..\..\..\core\input_hw\lightgun.c" />
     <ClCompile Include="..\..\..\core\input_hw\mouse.c" />
@@ -109,7 +110,7 @@
     <ClCompile Include="..\..\..\core\input_hw\sportspad.c" />
     <ClCompile Include="..\..\..\core\input_hw\teamplayer.c" />
     <ClCompile Include="..\..\..\core\input_hw\terebi_oekaki.c" />
-    <ClCompile Include="..\..\..\core\input_hw\xe_a1p.c" />
+    <ClCompile Include="..\..\..\core\input_hw\xe_1ap.c" />
     <ClCompile Include="..\..\..\core\io_ctrl.c" />
     <ClCompile Include="..\..\..\core\loadrom.c" />
     <ClCompile Include="..\..\..\core\m68k\m68kcpu.c">

@@ -104,9 +104,6 @@
     <ClCompile Include="..\..\libretro.c">
       <Filter>Source Files\libretro</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\core\input_hw\xe_a1p.c">
-      <Filter>Source Files\input_hw</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\..\core\input_hw\activator.c">
       <Filter>Source Files\input_hw</Filter>
     </ClCompile>
@@ -229,6 +226,12 @@
     </ClCompile>
     <ClCompile Include="..\..\..\core\tremor\vorbisfile.c">
       <Filter>Source Files\tremor</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\core\input_hw\graphic_board.c">
+      <Filter>Source Files\input_hw</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\core\input_hw\xe_1ap.c">
+      <Filter>Source Files\input_hw</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
