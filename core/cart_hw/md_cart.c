@@ -2,7 +2,7 @@
  *  Genesis Plus
  *  Mega Drive cartridge hardware support
  *
- *  Copyright (C) 2007-2014  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2007-2015  Eke-Eke (Genesis Plus GX)
  *
  *  Many cartridge protections were initially documented by Haze
  *  (http://haze.mameworld.info/)
@@ -373,18 +373,14 @@ void md_cart_init(void)
   /* external SRAM */
   if (sram.on && !sram.custom)
   {
-    /* disabled on startup if ROM is mapped in same area */
-    if (cart.romsize <= sram.start)
-    {
-      /* initialize m68k bus handlers */
-      m68k.memory_map[sram.start >> 16].base    = sram.sram;
-      m68k.memory_map[sram.start >> 16].read8   = sram_read_byte;
-      m68k.memory_map[sram.start >> 16].read16  = sram_read_word;
-      m68k.memory_map[sram.start >> 16].write8  = sram_write_byte;
-      m68k.memory_map[sram.start >> 16].write16 = sram_write_word;
-      zbank_memory_map[sram.start >> 16].read   = sram_read_byte;
-      zbank_memory_map[sram.start >> 16].write  = sram_write_byte;
-    }
+    /* initialize m68k bus handlers */
+    m68k.memory_map[sram.start >> 16].base    = sram.sram;
+    m68k.memory_map[sram.start >> 16].read8   = sram_read_byte;
+    m68k.memory_map[sram.start >> 16].read16  = sram_read_word;
+    m68k.memory_map[sram.start >> 16].write8  = sram_write_byte;
+    m68k.memory_map[sram.start >> 16].write16 = sram_write_word;
+    zbank_memory_map[sram.start >> 16].read   = sram_read_byte;
+    zbank_memory_map[sram.start >> 16].write  = sram_write_byte;
   }
 
   /**********************************************
