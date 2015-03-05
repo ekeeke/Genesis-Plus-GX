@@ -195,7 +195,7 @@ void z80_write_byte(unsigned int address, unsigned int data)
           m68k_lockup_w_8(address, data);
           return;
         }
-      
+
         default:
         {
           m68k_unused_8_w(address, data);
@@ -220,7 +220,7 @@ void z80_write_word(unsigned int address, unsigned int data)
 
 
 /*--------------------------------------------------------------------------*/
-/* I/O Control                                                              */
+/* MAIN-CPU polling detection and SUB-CPU synchronization (MEGA CD mode)    */
 /*--------------------------------------------------------------------------*/
 
 static void m68k_poll_detect(unsigned int reg_mask)
@@ -291,6 +291,10 @@ static void m68k_poll_sync(unsigned int reg_mask)
   s68k.poll.detected &= ~reg_mask;
   m68k.poll.detected &= ~reg_mask;
 }
+
+/*--------------------------------------------------------------------------*/
+/* I/O Control                                                              */
+/*--------------------------------------------------------------------------*/
 
 unsigned int ctrl_io_read_byte(unsigned int address)
 {
@@ -372,7 +376,7 @@ unsigned int ctrl_io_read_byte(unsigned int address)
           {
             return scd.regs[index >> 1].byte.l;
           }
-              
+
           /* register MSB */
           return scd.regs[index >> 1].byte.h;
         }
@@ -679,34 +683,27 @@ void ctrl_io_write_byte(unsigned int address, unsigned int data)
             /* check if SUB-CPU halt status has changed */
             if (s68k.stopped != halted)
             {
-              int i;
+              /* PRG-RAM (128KB bank) is normally mapped to $020000-$03FFFF (resp. $420000-$43FFFF) */
+              unsigned int base = scd.cartridge.boot + 0x02;
 
               /* PRG-RAM can only be accessed from MAIN 68K & Z80 when SUB-CPU is halted (Dungeon Explorer USA version) */
               if ((data & 0x03) != 0x01)
               {
-                /* $020000-$03FFFF (resp. $420000-$43FFFF) is mapped to PRG-RAM 128K bank (mirrored every 256 KB) */
-                for (i=scd.cartridge.boot+0x02; i<scd.cartridge.boot+0x20; i+=4)
-                {
-                  m68k.memory_map[i].read8   = m68k.memory_map[i+1].read8   = NULL;
-                  m68k.memory_map[i].read16  = m68k.memory_map[i+1].read16  = NULL;
-                  m68k.memory_map[i].write8  = m68k.memory_map[i+1].write8  = NULL;
-                  m68k.memory_map[i].write16 = m68k.memory_map[i+1].write16 = NULL;
-                  zbank_memory_map[i].read   = zbank_memory_map[i+1].read   = NULL;
-                  zbank_memory_map[i].write  = zbank_memory_map[i+1].write  = NULL;
-                }
+                m68k.memory_map[base].read8   = m68k.memory_map[base+1].read8   = NULL;
+                m68k.memory_map[base].read16  = m68k.memory_map[base+1].read16  = NULL;
+                m68k.memory_map[base].write8  = m68k.memory_map[base+1].write8  = NULL;
+                m68k.memory_map[base].write16 = m68k.memory_map[base+1].write16 = NULL;
+                zbank_memory_map[base].read   = zbank_memory_map[base+1].read   = NULL;
+                zbank_memory_map[base].write  = zbank_memory_map[base+1].write  = NULL;
               }
               else
               {
-                /* $020000-$03FFFF (resp. $420000-$43FFFF) is not mapped (mirrored every 256 KB) */
-                for (i=scd.cartridge.boot+0x02; i<scd.cartridge.boot+0x20; i+=4)
-                {
-                  m68k.memory_map[i].read8   = m68k.memory_map[i+1].read8   = m68k_read_bus_8;
-                  m68k.memory_map[i].read16  = m68k.memory_map[i+1].read16  = m68k_read_bus_16;
-                  m68k.memory_map[i].write8  = m68k.memory_map[i+1].write8  = m68k_unused_8_w;
-                  m68k.memory_map[i].write16 = m68k.memory_map[i+1].write16 = m68k_unused_16_w;
-                  zbank_memory_map[i].read   = zbank_memory_map[i+1].read   = zbank_unused_r;
-                  zbank_memory_map[i].write  = zbank_memory_map[i+1].write  = zbank_unused_w;
-                }
+                m68k.memory_map[base].read8   = m68k.memory_map[base+1].read8   = m68k_read_bus_8;
+                m68k.memory_map[base].read16  = m68k.memory_map[base+1].read16  = m68k_read_bus_16;
+                m68k.memory_map[base].write8  = m68k.memory_map[base+1].write8  = m68k_unused_8_w;
+                m68k.memory_map[base].write16 = m68k.memory_map[base+1].write16 = m68k_unused_16_w;
+                zbank_memory_map[base].read   = zbank_memory_map[base+1].read   = zbank_unused_r;
+                zbank_memory_map[base].write  = zbank_memory_map[base+1].write  = zbank_unused_w;
               }
             }
 
@@ -760,7 +757,7 @@ void ctrl_io_write_byte(unsigned int address, unsigned int data)
                 return;
               }
             }
-             
+
             /* update BK0-1 bits */
             scd.regs[0x03>>1].byte.l = (scd.regs[0x02>>1].byte.l & ~0xc0) | (data & 0xc0);
             return;
@@ -911,34 +908,27 @@ void ctrl_io_write_word(unsigned int address, unsigned int data)
             /* check if SUB-CPU halt status has changed */
             if (s68k.stopped != halted)
             {
-              int i;
+              /* PRG-RAM (128KB bank) is normally mapped to $020000-$03FFFF (resp. $420000-$43FFFF) */
+              unsigned int base = scd.cartridge.boot + 0x02;
 
               /* PRG-RAM can only be accessed from MAIN 68K & Z80 when SUB-CPU is halted (Dungeon Explorer USA version) */
               if ((data & 0x03) != 0x01)
               {
-                /* $020000-$03FFFF (resp. $420000-$43FFFF) is mapped to PRG-RAM 128K bank (mirrored every 256 KB) */
-                for (i=scd.cartridge.boot+0x02; i<scd.cartridge.boot+0x20; i+=4)
-                {
-                  m68k.memory_map[i].read8   = m68k.memory_map[i+1].read8   = NULL;
-                  m68k.memory_map[i].read16  = m68k.memory_map[i+1].read16  = NULL;
-                  m68k.memory_map[i].write8  = m68k.memory_map[i+1].write8  = NULL;
-                  m68k.memory_map[i].write16 = m68k.memory_map[i+1].write16 = NULL;
-                  zbank_memory_map[i].read   = zbank_memory_map[i+1].read   = NULL;
-                  zbank_memory_map[i].write  = zbank_memory_map[i+1].write  = NULL;
-                }
+                m68k.memory_map[base].read8   = m68k.memory_map[base+1].read8   = NULL;
+                m68k.memory_map[base].read16  = m68k.memory_map[base+1].read16  = NULL;
+                m68k.memory_map[base].write8  = m68k.memory_map[base+1].write8  = NULL;
+                m68k.memory_map[base].write16 = m68k.memory_map[base+1].write16 = NULL;
+                zbank_memory_map[base].read   = zbank_memory_map[base+1].read   = NULL;
+                zbank_memory_map[base].write  = zbank_memory_map[base+1].write  = NULL;
               }
               else
               {
-                /* $020000-$03FFFF (resp. $420000-$43FFFF) is not mapped (mirrored every 256 KB) */
-                for (i=scd.cartridge.boot+0x02; i<scd.cartridge.boot+0x20; i+=4)
-                {
-                  m68k.memory_map[i].read8   = m68k.memory_map[i+1].read8   = m68k_read_bus_8;
-                  m68k.memory_map[i].read16  = m68k.memory_map[i+1].read16  = m68k_read_bus_16;
-                  m68k.memory_map[i].write8  = m68k.memory_map[i+1].write8  = m68k_unused_8_w;
-                  m68k.memory_map[i].write16 = m68k.memory_map[i+1].write16 = m68k_unused_16_w;
-                  zbank_memory_map[i].read   = zbank_memory_map[i+1].read   = zbank_unused_r;
-                  zbank_memory_map[i].write  = zbank_memory_map[i+1].write  = zbank_unused_w;
-                }
+                m68k.memory_map[base].read8   = m68k.memory_map[base+1].read8   = m68k_read_bus_8;
+                m68k.memory_map[base].read16  = m68k.memory_map[base+1].read16  = m68k_read_bus_16;
+                m68k.memory_map[base].write8  = m68k.memory_map[base+1].write8  = m68k_unused_8_w;
+                m68k.memory_map[base].write16 = m68k.memory_map[base+1].write16 = m68k_unused_16_w;
+                zbank_memory_map[base].read   = zbank_memory_map[base+1].read   = zbank_unused_r;
+                zbank_memory_map[base].write  = zbank_memory_map[base+1].write  = zbank_unused_w;
               }
             }
 
@@ -1004,7 +994,7 @@ void ctrl_io_write_word(unsigned int address, unsigned int data)
                 return;
               }
             }
-             
+
             /* update WP0-7 & BK0-1 bits */
             scd.regs[0x02>>1].w = (scd.regs[0x02>>1].w & ~0xffc0) | (data & 0xffc0);
             return;
