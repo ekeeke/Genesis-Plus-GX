@@ -12,8 +12,6 @@ SOURCES_C = $(foreach dir,$(GENPLUS_SRC_DIR),$(wildcard $(dir)/*.c)) \
             $(foreach dir,$(TREMOR_SRC_DIR),$(wildcard $(dir)/*.c)) \
             $(LIBRETRO_DIR)/libretro.c
 
-ifeq ($(WANT_CRC32), 1)
-	SOURCES_C += $(LIBRETRO_DIR)/scrc32.c
-endif
+SOURCES_C += $(LIBRETRO_DIR)/scrc32.c
 
 INCFLAGS += $(foreach dir,$(GENPLUS_SRC_DIR),-I$(dir)) -I$(LIBRETRO_DIR)
