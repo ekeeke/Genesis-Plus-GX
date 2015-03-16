@@ -2098,16 +2098,16 @@ static void vdp_fifo_update(unsigned int cycles)
   
   const int *fifo_timing;
 
-  const int fifo_cycles_h32[16+2] = 
+  const int fifo_cycles_h32[16+4] = 
   {
     230, 510, 810, 970, 1130, 1450, 1610, 1770, 2090, 2250, 2410, 2730, 2890, 3050, 3350, 3370,
-    MCYCLES_PER_LINE + 230, MCYCLES_PER_LINE + 510
+    MCYCLES_PER_LINE + 230, MCYCLES_PER_LINE + 510, MCYCLES_PER_LINE + 810, MCYCLES_PER_LINE + 970, 
   };
 
-  const int fifo_cycles_h40[18+2] = 
+  const int fifo_cycles_h40[18+4] = 
   {
     352, 820, 948, 1076, 1332, 1460, 1588, 1844, 1972, 2100, 2356, 2484, 2612, 2868, 2996, 3124, 3364, 3380,
-    MCYCLES_PER_LINE + 352, MCYCLES_PER_LINE + 820
+    MCYCLES_PER_LINE + 352, MCYCLES_PER_LINE + 820, MCYCLES_PER_LINE + 948, MCYCLES_PER_LINE + 1076, 
   };
 
 
