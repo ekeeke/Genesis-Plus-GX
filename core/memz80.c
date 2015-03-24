@@ -5,7 +5,7 @@
  *  Support for SG-1000, Mark-III, Master System, Game Gear & Mega Drive ports access
  *
  *  Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003  Charles Mac Donald (original code)
- *  Copyright (C) 2007-2014  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2007-2015  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -329,12 +329,16 @@ void z80_gg_port_w(unsigned int port, unsigned char data)
           io_gg_write(port, data);
           return;
         }
+      }
 
-        z80_unused_port_w(port, data);
+      /* full address range is decoded by Game Gear I/O chip (fixes G-Loc) */
+      else if ((port == 0x3E) || (port == 0x3F))
+      {
+        io_z80_write(port & 1, data, Z80.cycles + SMS_CYCLE_OFFSET);
         return;
       }
 
-      io_z80_write(port & 1, data, Z80.cycles + SMS_CYCLE_OFFSET);
+      z80_unused_port_w(port, data);
       return;
     }
 
@@ -409,6 +413,7 @@ unsigned char z80_gg_port_r(unsigned int port)
     {
       port &= 0xFF;
 
+      /* full address range is decoded by Game Gear I/O chip */
       if ((port == 0xC0) || (port == 0xC1) || (port == 0xDC) || (port == 0xDD))
       {
         return io_z80_read(port & 1);
