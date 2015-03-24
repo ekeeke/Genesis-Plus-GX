@@ -2,7 +2,7 @@
  *  Genesis Plus
  *  SG-1000, Master System & Game Gear cartridge hardware support
  *
- *  Copyright (C) 2007-2014  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2007-2015  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -101,9 +101,11 @@ static const rominfo_t game_list[] =
   {0xE316C06D, 0, 0, SYSTEM_GAMEPAD, MAPPER_MSX_NEMESIS, SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Nemesis (KR) */
   {0x0A77FA5E, 0, 0, SYSTEM_GAMEPAD, MAPPER_MSX,         SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Nemesis 2 (KR) */
   {0x89B79E77, 0, 0, SYSTEM_GAMEPAD, MAPPER_KOREA,       SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Dodgeball King (KR) */
+  {0x929222C4, 0, 0, SYSTEM_GAMEPAD, MAPPER_KOREA,       SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Jang Pung II (KR) */
   {0x18FB98A3, 0, 0, SYSTEM_GAMEPAD, MAPPER_KOREA,       SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Jang Pung 3 (KR) */
   {0x97D03541, 0, 0, SYSTEM_GAMEPAD, MAPPER_KOREA,       SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Sangokushi 3 (KR) */
   {0x192949D5, 0, 0, SYSTEM_GAMEPAD, MAPPER_KOREA_8K,    SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* Janggun-ui Adeul (KR) */
+  {0x76C5BDFB, 0, 0, SYSTEM_GAMEPAD, MAPPER_KOREA_16K,   SYSTEM_GGMS, REGION_JAPAN_NTSC}, /* Jang Pung II [SMS-GG] (KR) */
   {0x9FA727A0, 0, 0, SYSTEM_GAMEPAD, MAPPER_KOREA_16K,   SYSTEM_GGMS,        REGION_USA}, /* Street Hero [Proto 0] [SMS-GG] (US) */
   {0xFB481971, 0, 0, SYSTEM_GAMEPAD, MAPPER_KOREA_16K,   SYSTEM_GGMS,        REGION_USA}, /* Street Hero [Proto 1] [SMS-GG] (US) */
   {0xA67F2A5C, 0, 0, SYSTEM_GAMEPAD, MAPPER_MULTI_16K,   SYSTEM_SMS,  REGION_JAPAN_NTSC}, /* 4-Pak All Action (KR) */
@@ -125,7 +127,6 @@ static const rominfo_t game_list[] =
   {0xEA5C3A6F, 0, 0, SYSTEM_GAMEPAD,  MAPPER_CODIES, SYSTEM_SMS2,    REGION_USA}, /* Dinobasher - Starring Bignose the Caveman [Proto] */
   {0xAA140C9C, 0, 0, SYSTEM_GAMEPAD,  MAPPER_CODIES, SYSTEM_GGMS,    REGION_USA}, /* Excellent Dizzy Collection, The [SMS-GG] */
   {0xC888222B, 0, 0, SYSTEM_GAMEPAD,  MAPPER_CODIES, SYSTEM_GGMS,    REGION_USA}, /* Fantastic Dizzy [SMS-GG] */
-  {0x76C5BDFB, 0, 0, SYSTEM_GAMEPAD,  MAPPER_CODIES, SYSTEM_GGMS,    REGION_USA}, /* Jang Pung 2 [SMS-GG] */
   {0x6CAA625B, 0, 0, SYSTEM_GAMEPAD,  MAPPER_CODIES, SYSTEM_GG,      REGION_USA}, /* Cosmic Spacehead [GG]*/
   {0x152F0DCC, 0, 0, SYSTEM_GAMEPAD,  MAPPER_CODIES, SYSTEM_GG,      REGION_USA}, /* Drop Zone */
   {0x5E53C7F7, 0, 0, SYSTEM_GAMEPAD,  MAPPER_CODIES, SYSTEM_GG,      REGION_USA}, /* Ernie Els Golf */
