@@ -1,40 +1,30 @@
-About
----------
+Genesis Plus GX is an open-source Sega 8/16 bit emulator focused on accuracy and portability. Initially ported and developped on Gamecube / Wii consoles through [libogc / devkitPPC](http://sourceforge.net/projects/devkitpro/), this emulator is now available on many other platforms through various frontends such as:
 
-Genesis Plus GX is an open-source emulator focused on accuracy and portability, now emulating SG-1000, Master System, Game Gear, Mega Drive / Genesis and Sega / Mega CD hardware. Initially ported and designed to be running on Gamecube / Wii consoles through libogc / devkitPPC, it is also available for many other platforms through various frontends.
+* [Retroarch (libretro)](http://www.libretro.com)
 
-The source code is based on Genesis Plus 1.3, originally developped by Charles MacDonald (http://cgfm2.emuviews.com).
-It has been heavily modified, with respect to initial goals and design, in order to improve accuracy of emulation, implementing new features and adding support for extra peripherals, cartridge & systems hardware.
+* [Bizhawk](http://tasvideos.org/Bizhawk.html)
 
-The result is that Genesis Plus GX is now more a continuation of the original project than a simple port, providing very accurate emulation and 100% compatibility with Genesis / Mega Drive, Sega / Mega CD, Master System, Game Gear & SG-1000 software (including all unlicensed or pirate known dumps), also emulating backwards compatibility modes when available.
+* [OpenEmu](http://openemu.org/)
 
-Multi-platform sourcecode is available through SVN and GIT so that other Genesis Plus ports can take advantage of it. The sourcecode is released under a specific non-commercial license, see LICENSE.txt for more informations.
+----
 
+The source code, originally based on Genesis Plus 1.2a by [Charles MacDonald](http://www.techno-junk.org/ ) has been heavily modified & enhanced, with respect to initial goals and design, in order to improve emulation accuracy as well as adding support for extra peripherals, cartridge or console hardware and many other exciting [features](https://bitbucket.org/eke/genesis-plus-gx/src/f53a4c6d6d431174503b6b922c958da6a1cff219/wiki/Features.md?at=master).
 
-Usage
----------
+The result is that Genesis Plus GX is now more a continuation of the original project than a simple port, providing very accurate emulation and [100% compatibility](https://bitbucket.org/eke/genesis-plus-gx/src/f53a4c6d6d431174503b6b922c958da6a1cff219/wiki/Compatibility.md?at=master) with Genesis / Mega Drive, Sega/Mega CD, Master System, Game Gear & SG-1000 released software (including all unlicensed or pirate known dumps), also emulating backwards compatibility modes when available. All the people who contributed (directly or indirectly) to this project are listed on the [Credits](https://bitbucket.org/eke/genesis-plus-gx/src/f53a4c6d6d431174503b6b922c958da6a1cff219/wiki/Credits.md?at=master) page.
 
-(*) standalone Gamecube / Wii port: 
+----
 
-see http://code.google.com/p/genplus-gx/wiki/GettingStarted
+Multi-platform sourcecode (core) is available for use under a specific non-commercial [license](https://bitbucket.org/eke/genesis-plus-gx/src/aa9d0889309bc8b13f140be8949415a32d0461a7/LICENSE.txt) and maintained here as well as [github](https://github.com/ekeeke/Genesis-Plus-GX) so that other Genesis Plus ports can take advantage of it, as I really hope this emulator can become a reference for _open-source_ and _accurate_ Genesis emulation. If you ported this emulator to other platforms or need help porting it, feel free to contact me.
 
+----
 
-(*) libretro / Retroarch (Multi Platform) port: 
+Latest official Gamecube / Wii standalone port (screenshots below) is available [here](https://bitbucket.org/eke/genesis-plus-gx/downloads). Be sure to check the included user manual first. A [startup guide](https://bitbucket.org/eke/genesis-plus-gx/src/f53a4c6d6d431174503b6b922c958da6a1cff219/wiki/Getting%20Started.md?at=master) and a [FAQ](https://bitbucket.org/eke/genesis-plus-gx/src/f53a4c6d6d431174503b6b922c958da6a1cff219/wiki/Frequently%20Asked%20Questions.md?at=master) are also available.
 
-see http://www.libretro.com/forums/index.php
+![MainMenu.png](https://bitbucket.org/repo/7AjE6M/images/3565283297-MainMenu.png)
+![menu_load.png](https://bitbucket.org/repo/7AjE6M/images/164055790-menu_load.png)
 
+![RomBrowser.png](https://bitbucket.org/repo/7AjE6M/images/1972035547-RomBrowser.png)
+![CtrlMenu.png](https://bitbucket.org/repo/7AjE6M/images/2283464354-CtrlMenu.png)
 
-Current builds are available for download from https://github.com/ekeeke/Genesis-Plus-GX/tree/master/builds
-
-
-Features
--------------
-
-see http://code.google.com/p/genplus-gx/wiki/Features
-
-
-Credits
-----------
-
-see http://code.google.com/p/genplus-gx/wiki/Credits
-
+----
+You can also test latest compiled builds for some platforms by downloading them from [here](https://bitbucket.org/eke/genesis-plus-gx/src/710da247684c89ff3a3ee7f9d6785a96a01f0117/builds/).
