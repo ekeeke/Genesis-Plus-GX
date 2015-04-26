@@ -331,7 +331,7 @@ void z80_gg_port_w(unsigned int port, unsigned char data)
         }
       }
 
-      /* full address range is decoded by Game Gear I/O chip (fixes G-Loc) */
+      /* full address range is decoded by Game Gear I/O chip (fixes G-LOC Air Battle) */
       else if ((port == 0x3E) || (port == 0x3F))
       {
         io_z80_write(port & 1, data, Z80.cycles + SMS_CYCLE_OFFSET);
