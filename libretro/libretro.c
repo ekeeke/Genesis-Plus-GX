@@ -283,13 +283,6 @@ void osd_input_update(void)
         input.analog[i][0] = ((input_state_cb(player, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_X) + 0x7fff) * bitmap.viewport.w) / 0xfffe;
         input.analog[i][1] = ((input_state_cb(player, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_Y) + 0x7fff) * bitmap.viewport.h) / 0xfffe;
 
-        if (config.gun_cursor)
-        {
-          uint16_t *ptr = (uint16_t *)bitmap.data + ((bitmap.viewport.y + input.analog[i][1]) * bitmap.width) + input.analog[i][0] + bitmap.viewport.x;
-          ptr[-3*bitmap.width] = ptr[-bitmap.width] = ptr[bitmap.width] = ptr[3*bitmap.width] = ptr[-3] = ptr[-1] = ptr[1] = ptr[3] = (i & 1) ? 0xf800 : 0x001f;
-          ptr[-2*bitmap.width] = ptr[0] = ptr[2*bitmap.width] = ptr[-2] = ptr[2] = 0xffff;
-        }
-
         if (input_state_cb(player, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_TRIGGER))
           temp |= INPUT_A;
         if (input_state_cb(player, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_TURBO))
@@ -430,6 +423,13 @@ void osd_input_update(void)
 
     input.pad[i] = temp;
   }
+}
+
+static void draw_cursor(int16_t x, int16_t y, uint16_t color)
+{
+  uint16_t *ptr = (uint16_t *)bitmap.data + ((bitmap.viewport.y + y) * bitmap.width) + x + bitmap.viewport.x;
+  ptr[-3*bitmap.width] = ptr[-bitmap.width] = ptr[bitmap.width] = ptr[3*bitmap.width] = ptr[-3] = ptr[-1] = ptr[1] = ptr[3] = color;
+  ptr[-2*bitmap.width] = ptr[2*bitmap.width] = ptr[-2] = ptr[2] = ptr[0] = 0xffff;
 }
 
 static void init_bitmap(void)
@@ -1877,6 +1877,27 @@ void retro_run(void)
          struct retro_system_av_info info;
          retro_get_system_av_info(&info);
          environ_cb(RETRO_ENVIRONMENT_SET_GEOMETRY, &info.geometry);
+      }
+   }
+
+   if (config.gun_cursor)
+   {
+      if (input.system[0] == SYSTEM_LIGHTPHASER)
+      {
+         draw_cursor(input.analog[0][0], input.analog[0][1], 0x001f);
+      }
+      else if (input.dev[4] == DEVICE_LIGHTGUN)
+      {
+         draw_cursor(input.analog[4][0], input.analog[4][1], 0x001f);
+      }
+
+      if (input.system[1] == SYSTEM_LIGHTPHASER)
+      {
+         draw_cursor(input.analog[4][0], input.analog[4][1], 0xf800);
+      }
+      else if (input.dev[5] == DEVICE_LIGHTGUN)
+      {
+         draw_cursor(input.analog[5][0], input.analog[5][1], 0xf800);
       }
    }
 

@@ -1519,6 +1519,20 @@ void scd_reset(int hard)
     m68k.memory_map[scd.cartridge.boot + 0x02].base = scd.prg_ram;
     m68k.memory_map[scd.cartridge.boot + 0x03].base = scd.prg_ram + 0x10000;
 
+    /* allow access to PRG-RAM from MAIN-CPU */
+    m68k.memory_map[scd.cartridge.boot + 0x02].read8   = NULL;
+    m68k.memory_map[scd.cartridge.boot + 0x03].read8   = NULL;
+    m68k.memory_map[scd.cartridge.boot + 0x02].read16  = NULL;
+    m68k.memory_map[scd.cartridge.boot + 0x03].read16  = NULL;
+    m68k.memory_map[scd.cartridge.boot + 0x02].write8  = NULL;
+    m68k.memory_map[scd.cartridge.boot + 0x03].write8  = NULL;
+    m68k.memory_map[scd.cartridge.boot + 0x02].write16 = NULL;
+    m68k.memory_map[scd.cartridge.boot + 0x03].write16 = NULL;
+    zbank_memory_map[scd.cartridge.boot + 0x02].read   = NULL;
+    zbank_memory_map[scd.cartridge.boot + 0x03].read   = NULL;
+    zbank_memory_map[scd.cartridge.boot + 0x02].write  = NULL;
+    zbank_memory_map[scd.cartridge.boot + 0x03].write  = NULL;
+
     /* reset & halt SUB-CPU */
     s68k.cycles = 0;
     s68k_pulse_reset();
