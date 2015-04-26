@@ -735,19 +735,21 @@ int load_rom(char *filename)
       /* try to load CD BOOTROM */
       if (load_bios())
       {
-        char *ptr;
         char fname[256];
+        int len = strlen(filename);
 
         /* boot from cartridge */
         scd.cartridge.boot = 0x40;
 
-        /* automatically load associated .iso image */
-        strncpy(fname, filename, 256);
-        ptr = strchr(fname,'.');
-        if (ptr && (ptr < &fname[252]))
+        /* change ROM filename extension to .iso */
+        while (len && (filename[len-1] != '.')) len--;
+        if (len < 253)
         {
-          strcpy(ptr+1,"iso");
+          strncpy(fname, filename, len);
+          strcpy(&fname[len], "iso");
         }
+
+        /* automatically load associated .iso image */
         cdd_load(fname, (char *)cdc.ram);
       }
       else
