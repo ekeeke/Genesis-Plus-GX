@@ -46,8 +46,6 @@
 #include "eeprom_spi.h"
 #include "gamepad.h"
 
-#define CART_CNT (55)
-
 /* Cart database entry */
 typedef struct
 {
@@ -92,7 +90,7 @@ static void tekken_regs_w(uint32 address, uint32 data);
   - copy protection device
   - custom ROM banking device
 */
-static const md_entry_t rom_database[CART_CNT] =
+static const md_entry_t rom_database[] =
 {
 /* Funny World & Balloon Boy */
   {0x0000,0x06ab,0x40,0x40,{{0x00,0x00,0x00,0x00},{0xffffff,0xffffff,0xffffff,0xffffff},{0x000000,0x000000,0x000000,0x000000},1,0,NULL,NULL,NULL,mapper_realtec_w}},
@@ -100,6 +98,8 @@ static const md_entry_t rom_database[CART_CNT] =
   {0xffff,0xf863,0x40,0x40,{{0x00,0x00,0x00,0x00},{0xffffff,0xffffff,0xffffff,0xffffff},{0x000000,0x000000,0x000000,0x000000},1,0,NULL,NULL,NULL,mapper_realtec_w}},
 /* Earth Defense */
   {0xffff,0x44fb,0x40,0x40,{{0x00,0x00,0x00,0x00},{0xffffff,0xffffff,0xffffff,0xffffff},{0x000000,0x000000,0x000000,0x000000},1,0,NULL,NULL,NULL,mapper_realtec_w}},
+/* Tom Clown */
+  {0x0000,0xc0cd,0x40,0x40,{{0x00,0x00,0x00,0x00},{0xffffff,0xffffff,0xffffff,0xffffff},{0x000000,0x000000,0x000000,0x000000},1,0,NULL,NULL,NULL,mapper_realtec_w}},
 
 
 /* RADICA (Volume 1) (bad dump ?) */
@@ -514,7 +514,7 @@ void md_cart_init(void)
   memset(&cart.hw, 0, sizeof(cart.hw));
 
   /* search for game into database */
-  for (i=0; i<CART_CNT; i++)
+  for (i=0; i<(sizeof(rom_database)/sizeof(md_entry_t)); i++)
   {
     /* known cart found ! */
     if ((rominfo.checksum == rom_database[i].chk_1) &&
@@ -544,7 +544,7 @@ void md_cart_init(void)
       }
 
       /* leave loop */
-      i = CART_CNT;
+      break;
     }
   }
 
