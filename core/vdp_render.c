@@ -5,7 +5,7 @@
  *  Support for all TMS99xx modes, Mode 4 & Mode 5 rendering
  *
  *  Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003  Charles Mac Donald (original code)
- *  Copyright (C) 2007-2014  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2007-2015  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -3881,14 +3881,14 @@ void update_bg_pattern_cache_m4(int index)
     /* Get modified pattern name index */
     name = bg_name_list[i];
 
+    /* Pattern cache base address */
+    dst = &bg_pattern_cache[name << 6];
+
     /* Check modified lines */
     for(y = 0; y < 8; y++)
     {
       if(bg_name_dirty[name] & (1 << y))
       {
-        /* Pattern cache base address */
-        dst = &bg_pattern_cache[name << 6];
-
         /* Byteplane data */
         bp01 = *(uint16 *)&vram[(name << 5) | (y << 2) | (0)];
         bp23 = *(uint16 *)&vram[(name << 5) | (y << 2) | (2)];
@@ -3935,14 +3935,14 @@ void update_bg_pattern_cache_m5(int index)
     /* Get modified pattern name index */
     name = bg_name_list[i];
 
+    /* Pattern cache base address */
+    dst = &bg_pattern_cache[name << 6];
+
     /* Check modified lines */
     for(y = 0; y < 8; y ++)
     {
       if(bg_name_dirty[name] & (1 << y))
       {
-        /* Pattern cache base address */
-        dst = &bg_pattern_cache[name << 6];
-
         /* Byteplane data (one pattern = 4 bytes) */
         /* LIT_ENDIAN: byte0 (lsb) p2p3 p0p1 p6p7 p4p5 (msb) byte3 */
         /* BIG_ENDIAN: byte0 (msb) p0p1 p2p3 p4p5 p6p7 (lsb) byte3 */
