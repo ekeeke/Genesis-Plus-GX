@@ -924,7 +924,7 @@ static void check_variables(void)
   environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
   {
     orig_value = config.render;
-    if (strcmp(var.value, "normal") == 0)
+    if (strcmp(var.value, "single field") == 0)
       config.render = 0;
     else
       config.render = 1;
@@ -935,7 +935,7 @@ static void check_variables(void)
   var.key = "genesis_plus_gx_gun_cursor";
   environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
   {
-    if (strcmp(var.value, "off") == 0)
+    if (strcmp(var.value, "no") == 0)
       config.gun_cursor = 0;
     else
       config.gun_cursor = 1;
@@ -944,7 +944,7 @@ static void check_variables(void)
   var.key = "genesis_plus_gx_invert_mouse";
   environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
   {
-    if (strcmp(var.value, "off") == 0)
+    if (strcmp(var.value, "no") == 0)
       config.invert_mouse = 0;
     else
       config.invert_mouse = 1;
