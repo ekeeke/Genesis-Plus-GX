@@ -76,6 +76,7 @@ extern char AR_ROM[256];
 extern char SK_ROM[256];
 extern char SK_UPMEM[256];
 extern char GG_BIOS[256];
+extern char MD_BIOS[256];
 extern char CD_BIOS_EU[256];
 extern char CD_BIOS_US[256];
 extern char CD_BIOS_JP[256];

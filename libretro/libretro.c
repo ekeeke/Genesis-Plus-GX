@@ -41,6 +41,7 @@ char GG_ROM[256];
 char AR_ROM[256];
 char SK_ROM[256];
 char SK_UPMEM[256];
+char MD_BIOS[256];
 char GG_BIOS[256];
 char MS_BIOS_EU[256];
 char MS_BIOS_JP[256];
@@ -154,16 +155,20 @@ int load_archive(char *filename, unsigned char *buffer, int maxsize, char *exten
   size = ftell(fd);
 
   /* size limit */
-  if(size > maxsize)
+  if (size > MAXROMSIZE)
   {
     fclose(fd);
     if (log_cb)
        log_cb(RETRO_LOG_ERROR, "File is too large.\n");
     return 0;
   }
+  else if (size > maxsize)
+  {
+    size = maxsize;
+  }
 
   if (log_cb)
-     log_cb(RETRO_LOG_INFO, "INFORMATION - Loading %d bytes ...\n", size);
+    log_cb(RETRO_LOG_INFO, "INFORMATION - Loading %d bytes ...\n", size);
 
   /* filename extension */
   if (extension)
@@ -776,6 +781,24 @@ static void check_variables(void)
     }
   }
 
+  var.key = "genesis_plus_gx_bios";
+  environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
+  {
+    orig_value = config.bios;
+    if (!strcmp(var.value, "enabled"))
+      config.bios = 3;
+    else
+      config.bios = 0;
+
+    if (orig_value != config.bios)
+    {
+      if (system_hw)
+      {
+        reinit = true;
+      }
+    }
+  }
+
   var.key = "genesis_plus_gx_force_dtack";
   environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
   {
@@ -1311,6 +1334,7 @@ void retro_set_environment(retro_environment_t cb)
       { "genesis_plus_gx_system_hw", "System hardware; auto|sg-1000|sg-1000 II|mark-III|master system|master system II|game gear|mega drive / genesis" },
       { "genesis_plus_gx_region_detect", "System region; auto|ntsc-u|pal|ntsc-j" },
       { "genesis_plus_gx_force_dtack", "System lockups; enabled|disabled" },
+      { "genesis_plus_gx_bios", "System bootrom; disabled|enabled" },
       { "genesis_plus_gx_addr_error", "68k address error; enabled|disabled" },
       { "genesis_plus_gx_lock_on", "Cartridge lock-on; disabled|game genie|action replay (pro)|sonic & knuckles" },
       { "genesis_plus_gx_ym2413", "Master System FM; auto|disabled|enabled" },
@@ -1706,6 +1730,11 @@ bool retro_load_game(const struct retro_game_info *info)
    snprintf(AR_ROM, sizeof(AR_ROM), "%s%careplay.bin", dir, slash);
    snprintf(SK_ROM, sizeof(SK_ROM), "%s%csk.bin", dir, slash);
    snprintf(SK_UPMEM, sizeof(SK_UPMEM), "%s%csk2chip.bin", dir, slash);
+   snprintf(MD_BIOS, sizeof(MD_BIOS), "%s%cbios_MD.bin", dir, slash);
+   snprintf(GG_BIOS, sizeof(GG_BIOS), "%s%cbios.gg", dir, slash);
+   snprintf(MS_BIOS_EU, sizeof(MS_BIOS_EU), "%s%cbios_E.sms", dir, slash);
+   snprintf(MS_BIOS_US, sizeof(MS_BIOS_US), "%s%cbios_U.sms", dir, slash);
+   snprintf(MS_BIOS_JP, sizeof(MS_BIOS_JP), "%s%cbios_J.sms", dir, slash);
    snprintf(CD_BIOS_EU, sizeof(CD_BIOS_EU), "%s%cbios_CD_E.bin", dir, slash);
    snprintf(CD_BIOS_US, sizeof(CD_BIOS_US), "%s%cbios_CD_U.bin", dir, slash);
    snprintf(CD_BIOS_JP, sizeof(CD_BIOS_JP), "%s%cbios_CD_J.bin", dir, slash);
@@ -1719,18 +1748,44 @@ bool retro_load_game(const struct retro_game_info *info)
       log_cb(RETRO_LOG_INFO, "Action Replay (Pro) ROM should be located at: %s\n", AR_ROM);
       log_cb(RETRO_LOG_INFO, "Sonic & Knuckles (2 MB) ROM should be located at: %s\n", SK_ROM);
       log_cb(RETRO_LOG_INFO, "Sonic & Knuckles UPMEM (256 KB) ROM should be located at: %s\n", SK_UPMEM);
-      log_cb(RETRO_LOG_INFO, "Mega CD PAL BIOS should be located at: %s\n", CD_BIOS_EU);
-      log_cb(RETRO_LOG_INFO, "Sega CD NTSC-U BIOS should be located at: %s\n", CD_BIOS_US);
-      log_cb(RETRO_LOG_INFO, "Mega CD NTSC-J BIOS should be located at: %s\n", CD_BIOS_JP);
-      log_cb(RETRO_LOG_INFO, "Mega CD PAL BRAM is located at: %s\n", CD_BRAM_EU);
-      log_cb(RETRO_LOG_INFO, "Sega CD NTSC-U BRAM is located at: %s\n", CD_BRAM_US);
-      log_cb(RETRO_LOG_INFO, "Mega CD NTSC-J BRAM is located at: %s\n", CD_BRAM_JP);
-      log_cb(RETRO_LOG_INFO, "Mega CD RAM CART is located at: %s\n", CART_BRAM);
+      log_cb(RETRO_LOG_INFO, "Mega Drive TMSS BOOTROM should be located at: %s\n", MD_BIOS);
+      log_cb(RETRO_LOG_INFO, "Game Gear TMSS BOOTROM should be located at: %s\n", GG_BIOS);
+      log_cb(RETRO_LOG_INFO, "Master System (PAL) BOOTROM should be located at: %s\n", MS_BIOS_EU);
+      log_cb(RETRO_LOG_INFO, "Master System (NTSC-U) BOOTROM should be located at: %s\n", MS_BIOS_US);
+      log_cb(RETRO_LOG_INFO, "Master System (NTSC-J) BOOTROM should be located at: %s\n", MS_BIOS_JP);
+      log_cb(RETRO_LOG_INFO, "Mega CD (PAL) BIOS should be located at: %s\n", CD_BIOS_EU);
+      log_cb(RETRO_LOG_INFO, "Sega CD (NTSC-U) BIOS should be located at: %s\n", CD_BIOS_US);
+      log_cb(RETRO_LOG_INFO, "Mega CD (NTSC-J) BIOS should be located at: %s\n", CD_BIOS_JP);
+      log_cb(RETRO_LOG_INFO, "Mega CD (PAL) BRAM is located at: %s\n", CD_BRAM_EU);
+      log_cb(RETRO_LOG_INFO, "Sega CD (NTSC-U) BRAM is located at: %s\n", CD_BRAM_US);
+      log_cb(RETRO_LOG_INFO, "Mega CD (NTSC-J) BRAM is located at: %s\n", CD_BRAM_JP);
+      log_cb(RETRO_LOG_INFO, "Sega/Mega CD RAM CART is located at: %s\n", CART_BRAM);
    }
 
    check_variables();
    if (!load_rom((char *)info->path))
       return false;
+
+   if ((config.bios & 1) && !(system_bios & SYSTEM_MD))
+   {
+      memset(boot_rom, 0xFF, 0x800);
+      if (load_archive(MD_BIOS, boot_rom, 0x800, NULL) > 0)
+      {
+         if (!memcmp((char *)(boot_rom + 0x120),"GENESIS OS", 10))
+         {
+            system_bios |= SYSTEM_MD;
+         }
+
+#ifdef LSB_FIRST
+         for (i=0; i<0x800; i+=2)
+         {
+            uint8 temp = boot_rom[i];
+            boot_rom[i] = boot_rom[i+1];
+            boot_rom[i+1] = temp;
+         }
+#endif
+      }
+   }
 
    audio_init(44100, vdp_pal ? pal_fps : ntsc_fps);
    system_init();
@@ -1738,7 +1793,7 @@ bool retro_load_game(const struct retro_game_info *info)
    is_running = false;
 
    if (system_hw == SYSTEM_MCD)
-     bram_load();
+      bram_load();
 
    update_viewport();
 
