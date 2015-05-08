@@ -263,7 +263,7 @@ int cdd_context_load(uint8 *state)
     ov_open(cdd.toc.tracks[cdd.index].fd,&cdd.toc.tracks[cdd.index].vf,0,0);
 #endif
     /* VORBIS AUDIO track */
-    ov_pcm_seek(&cdd.toc.tracks[cdd.index].vf, (lba - cdd.toc.tracks[cdd.index].start) * 588 - cdd.toc.tracks[cdd.index].offset);
+    ov_pcm_seek(&cdd.toc.tracks[cdd.index].vf, (lba * 588) - cdd.toc.tracks[cdd.index].offset);
   }
 #endif
   else if (cdd.toc.tracks[cdd.index].fd)
@@ -742,6 +742,9 @@ int cdd_load(char *filename, char *header)
           break;
         }
 
+        /* initialize file read offset for current track */
+        cdd.toc.tracks[cdd.toc.last].offset = cdd.toc.tracks[cdd.toc.last].start * 588;
+
         /* auto-detect PAUSE within audio files */
         ov_pcm_seek(&cdd.toc.tracks[cdd.toc.last].vf, 100 * 588);
 #if defined(USE_LIBVORBIS)
@@ -1199,7 +1202,7 @@ void cdd_update(void)
         /* VORBIS file need to be opened first */
         ov_open(cdd.toc.tracks[cdd.index].fd,&cdd.toc.tracks[cdd.index].vf,0,0);
 #endif
-        ov_pcm_seek(&cdd.toc.tracks[cdd.index].vf, -cdd.toc.tracks[cdd.index].offset);
+        ov_pcm_seek(&cdd.toc.tracks[cdd.index].vf, (cdd.toc.tracks[cdd.index].start * 588) - cdd.toc.tracks[cdd.index].offset);
       }
       else
 #endif 
@@ -1298,7 +1301,7 @@ void cdd_update(void)
       }
 #endif
       /* VORBIS AUDIO track */
-      ov_pcm_seek(&cdd.toc.tracks[cdd.index].vf, (cdd.lba - cdd.toc.tracks[cdd.index].start) * 588 - cdd.toc.tracks[cdd.index].offset);
+      ov_pcm_seek(&cdd.toc.tracks[cdd.index].vf, (cdd.lba * 588) - cdd.toc.tracks[cdd.index].offset);
     }
 #endif 
     else if (cdd.toc.tracks[cdd.index].fd)
@@ -1517,7 +1520,7 @@ void cdd_process(void)
       else if (cdd.toc.tracks[index].vf.seekable)
       {
         /* VORBIS AUDIO track */
-        ov_pcm_seek(&cdd.toc.tracks[index].vf, (lba - cdd.toc.tracks[index].start) * 588 - cdd.toc.tracks[index].offset);
+        ov_pcm_seek(&cdd.toc.tracks[index].vf, (lba * 588) - cdd.toc.tracks[index].offset);
       }
 #endif 
       else if (cdd.toc.tracks[index].fd)
@@ -1609,7 +1612,7 @@ void cdd_process(void)
       else if (cdd.toc.tracks[index].vf.seekable)
       {
         /* VORBIS AUDIO track */
-        ov_pcm_seek(&cdd.toc.tracks[index].vf, (lba - cdd.toc.tracks[index].start) * 588 - cdd.toc.tracks[index].offset);
+        ov_pcm_seek(&cdd.toc.tracks[index].vf, (lba * 588) - cdd.toc.tracks[index].offset);
       }
 #endif 
       else if (cdd.toc.tracks[index].fd)
