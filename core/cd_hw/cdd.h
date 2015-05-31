@@ -58,9 +58,6 @@
 #define CD_STOP  0x09
 #define CD_END   0x0C
 
-/* CD blocks scanning speed */
-#define CD_SCAN_SPEED 30
-
 #define CD_MAX_TRACKS 100
 
 /* CD track */
@@ -73,6 +70,7 @@ typedef struct
   int offset;
   int start;
   int end;
+  int type;
 } track_t; 
 
 /* CD TOC */
@@ -81,6 +79,7 @@ typedef struct
   int end;
   int last;
   track_t tracks[CD_MAX_TRACKS];
+  FILE *sub;
 } toc_t; 
 
 /* CDD hardware */

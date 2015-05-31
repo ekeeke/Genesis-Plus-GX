@@ -573,6 +573,13 @@ static unsigned int scd_read_byte(unsigned int address)
     s68k_poll_detect(1 << (address & 0x1f));
   }
 
+  /* Subcode buffer */
+  else if (address >= 0xff8100)
+  {
+    /* 64 x 16-bit mirrored */
+    address &= 0x17f;
+  }
+
   /* default registers */
   if (address & 1)
   {
@@ -661,6 +668,13 @@ static unsigned int scd_read_word(unsigned int address)
     }
 
     s68k_poll_detect(3 << (address & 0x1e));
+  }
+
+  /* Subcode buffer */
+  else if (address >= 0xff8100)
+  {
+    /* 64 x 16-bit mirrored */
+    address &= 0x17f;
   }
 
   /* default registers */
