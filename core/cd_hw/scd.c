@@ -475,8 +475,8 @@ static void s68k_poll_sync(unsigned int reg_mask)
 
 static unsigned int scd_read_byte(unsigned int address)
 {
-  /* PCM area (8K) is mirrored into $FF0000-$FF7FFF */
-  if (address < 0xff8000)
+  /* PCM area (8K) mirrored into $xF0000-$xF7FFF */
+  if (!(address & 0x8000))
   {
     /* get /LDS only */
     if (address & 1)
@@ -491,36 +491,39 @@ static unsigned int scd_read_byte(unsigned int address)
   error("[%d][%d]read byte CD register %X (%X)\n", v_counter, s68k.cycles, address, s68k.pc);
 #endif
 
+  /* only A1-A8 are used for decoding */
+  address &= 0x1ff;
+
   /* Memory Mode */
-  if (address == 0xff8003)
+  if (address == 0x03)
   {
     s68k_poll_detect(1<<0x03);
     return scd.regs[0x03>>1].byte.l;
   }
 
   /* MAIN-CPU communication flags */
-  if (address == 0xff800e)
+  if (address == 0x0e)
   {
     s68k_poll_detect(1<<0x0e);
     return scd.regs[0x0e>>1].byte.h;
   }
 
   /* CDC transfer status */
-  if (address == 0xff8004)
+  if (address == 0x04)
   {
     s68k_poll_detect(1<<0x04);
     return scd.regs[0x04>>1].byte.h;
   }
 
   /* GFX operation status */
-  if (address == 0xff8058)
+  if (address == 0x58)
   {
     s68k_poll_detect(1<<0x08);
     return scd.regs[0x58>>1].byte.h;
   }
 
   /* CDC register data (controlled by BIOS, byte access only ?) */
-  if (address == 0xff8007)
+  if (address == 0x07)
   {
     unsigned int data = cdc_reg_r();
 #ifdef LOG_CDC
@@ -530,21 +533,21 @@ static unsigned int scd_read_byte(unsigned int address)
   }
 
   /* LED status */
-  if (address == 0xff8000)
+  if (address == 0x00)
   {
     /* register $00 is reserved for MAIN-CPU, we use $06 instead */
     return scd.regs[0x06>>1].byte.h;
   }
 
   /* RESET status */
-  if (address == 0xff8001)
+  if (address == 0x01)
   {
     /* always return 1 */
     return 0x01;
   }
 
   /* Font data */
-  if ((address >= 0xff8050) && (address <= 0xff8056))
+  if ((address >= 0x50) && (address <= 0x56))
   {
     /* shifted 4-bit input (xxxx00) */
     uint8 bits = (scd.regs[0x4e>>1].w >> (((address & 6) ^ 6) << 1)) << 2;
@@ -574,7 +577,7 @@ static unsigned int scd_read_byte(unsigned int address)
   }
 
   /* Subcode buffer */
-  else if (address >= 0xff8100)
+  else if (address & 0x100)
   {
     /* 64 x 16-bit mirrored */
     address &= 0x17f;
@@ -584,17 +587,17 @@ static unsigned int scd_read_byte(unsigned int address)
   if (address & 1)
   {
     /* register LSB */
-    return scd.regs[(address >> 1) & 0xff].byte.l;
+    return scd.regs[address >> 1].byte.l;
   }
 
   /* register MSB */
-  return scd.regs[(address >> 1) & 0xff].byte.h;
+  return scd.regs[address >> 1].byte.h;
 }
 
 static unsigned int scd_read_word(unsigned int address)
 {
-  /* PCM area (8K) is mirrored into $FF0000-$FF7FFF */
-  if (address < 0xff8000)
+  /* PCM area (8K) mirrored into $xF0000-$xF7FFF */
+  if (!(address & 0x8000))
   {
     /* get /LDS only */
     return pcm_read((address >> 1) & 0x1fff);
@@ -604,35 +607,38 @@ static unsigned int scd_read_word(unsigned int address)
   error("[%d][%d]read word CD register %X (%X)\n", v_counter, s68k.cycles, address, s68k.pc);
 #endif
 
+  /* only A1-A8 are used for decoding */
+  address &= 0x1ff;
+
   /* Memory Mode */
-  if (address == 0xff8002)
+  if (address == 0x02)
   {
     s68k_poll_detect(1<<0x03);
     return scd.regs[0x03>>1].w;
   }
 
   /* CDC host data (word access only ?) */
-  if (address == 0xff8008)
+  if (address == 0x08)
   {
     return cdc_host_r();
   }
 
   /* LED & RESET status */
-  if (address == 0xff8000)
+  if (address == 0x00)
   {
     /* register $00 is reserved for MAIN-CPU, we use $06 instead */
     return scd.regs[0x06>>1].w;
   }
 
   /* Stopwatch counter (word access only ?) */
-  if (address == 0xff800c)
+  if (address == 0x0c)
   {
     /* cycle-accurate counter value */
     return (scd.regs[0x0c>>1].w + ((s68k.cycles - scd.stopwatch) / TIMERS_SCYCLES_RATIO)) & 0xfff;
   }
 
   /* Font data */
-  if ((address >= 0xff8050) && (address <= 0xff8056))
+  if ((address >= 0x50) && (address <= 0x56))
   {
     /* shifted 4-bit input (xxxx00) */
     uint8 bits = (scd.regs[0x4e>>1].w >> (((address & 6) ^ 6) << 1)) << 2;
@@ -671,14 +677,14 @@ static unsigned int scd_read_word(unsigned int address)
   }
 
   /* Subcode buffer */
-  else if (address >= 0xff8100)
+  else if (address & 0x100)
   {
     /* 64 x 16-bit mirrored */
     address &= 0x17f;
   }
 
   /* default registers */
-  return scd.regs[(address >> 1) & 0xff].w;
+  return scd.regs[address >> 1].w;
 }
 
 INLINE void word_ram_switch(uint8 mode)
@@ -745,8 +751,8 @@ INLINE void word_ram_switch(uint8 mode)
 
 static void scd_write_byte(unsigned int address, unsigned int data)
 {
-  /* PCM area (8K) is mirrored into $FF0000-$FF7FFF */
-  if (address < 0xff8000)
+  /* PCM area (8K) mirrored into $xF0000-$xF7FFF */
+  if (!(address & 0x8000))
   {
     /* get /LDS only */
     if (address & 1)
@@ -1026,8 +1032,8 @@ static void scd_write_byte(unsigned int address, unsigned int data)
 
 static void scd_write_word(unsigned int address, unsigned int data)
 {
-  /* PCM area (8K) is mirrored into $FF0000-$FF7FFF */
-  if (address < 0xff8000)
+  /* PCM area (8K) mirrored into $xF0000-$xF7FFF */
+  if (!(address & 0x8000))
   {
     /* get /LDS only */
     pcm_write((address >> 1) & 0x1fff, data);
