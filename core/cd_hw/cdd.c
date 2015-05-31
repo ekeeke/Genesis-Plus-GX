@@ -1561,10 +1561,9 @@ void cdd_process(void)
       {
         /* Fixes a few games hanging during intro because they expect data to be read with some delay */
         /* Radical Rex needs at least one interrupt delay */
-        /* Wolf Team games (Anet Futatabi, Cobra Command, Road Avenger & Time Gal) need at least 6 interrupts delay  */
-        /* Space Adventure Cobra (2nd morgue scene) needs at least 13 interrupts delay (incl. seek time, so 6 is OK) */
-        /* Jeopardy & ESPN Sunday Night NFL are picky about this as well: 10 interrupts delay (+ seek time) seems OK */
-        cdd.latency = 10;
+        /* Wolf Team games (Anet Futatabi, Cobra Command, Road Avenger & Time Gal) need at least 7 interrupts delay  */
+        /* Space Adventure Cobra (2nd morgue scene) needs at least 13 interrupts delay (incl. seek time, so 7 is OK) */
+        cdd.latency = 7;
       }
 
       /* CD drive seek time */
