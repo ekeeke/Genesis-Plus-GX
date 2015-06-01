@@ -2,7 +2,7 @@
  *  Genesis Plus
  *  ROM Loading Support
  *
- *  Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003  Charles Mac Donald (original code)
+ *  Copyright (C) 1998-2003  Charles Mac Donald (original code)
  *  Copyright (C) 2007-2015  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
@@ -64,7 +64,7 @@ extern ROMINFO rominfo;
 extern uint8 romtype;
 
 /* Function prototypes */
-extern int load_bios(void);
+extern int load_bios(int system);
 extern int load_rom(char *filename);
 extern void get_region(char *romheader);
 extern char *get_company(void);

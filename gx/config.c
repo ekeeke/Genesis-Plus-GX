@@ -3,7 +3,7 @@
  *
  *  Genesis Plus GX configuration file support
  *
- *  Copyright Eke-Eke (2007-2014)
+ *  Copyright Eke-Eke (2007-2015)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -259,7 +259,10 @@ void config_default(void)
   /* try to restore user config */
   int loaded = config_load();
   
-#ifndef HW_RVL
+#ifdef HW_RVL
+  /* initialize WPAD timeout */
+  WPAD_SetIdleTimeout(config.autosleep ? 300 : 1800);
+#else
   /* check if component cable was detected */
   if (VIDEO_HaveComponentCable())
   {

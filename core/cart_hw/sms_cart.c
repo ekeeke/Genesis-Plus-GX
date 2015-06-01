@@ -514,7 +514,7 @@ void sms_cart_init(void)
   if (config.bios & 1)
   {
     /* load BIOS file */
-    int bios_size = load_bios();
+    int bios_size = load_bios(system_hw);
 
     if (bios_size > 0xC000)
     {
