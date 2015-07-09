@@ -347,6 +347,12 @@ int cdd_load(char *filename, char *header)
       /* DATA track end LBA (based on DATA file length) */
       fseek(fd, 0, SEEK_END);
       cdd.toc.tracks[0].end = ftell(fd) / cdd.sectorSize;
+
+      /* DATA track length should be at least 2s (BIOS requirement) */
+      if (cdd.toc.tracks[0].end < 150)
+      {
+        cdd.toc.tracks[0].end = 150;
+      }
         
       /* DATA track start LBA (logical block 0) */
       fseek(fd, 0, SEEK_SET);
@@ -1454,7 +1460,7 @@ void cdd_process(void)
       /* no audio track playing */
       scd.regs[0x36>>1].byte.h = 0x01;
 
-      /* RS1-RS8 ignored, expects 0x0 ("no disc" ?) in RS0 once */
+      /* RS1-RS8 ignored, expects 0x0 (?) in RS0 once */
       scd.regs[0x38>>1].w = 0x0000;
       scd.regs[0x3a>>1].w = 0x0000;
       scd.regs[0x3c>>1].w = 0x0000;
@@ -1546,7 +1552,7 @@ void cdd_process(void)
       break;
     }
 
-    case 0x03:  /* Play  */
+    case 0x03:  /* Play */
     {
       /* reset track index */
       int index = 0;
@@ -1814,7 +1820,7 @@ void cdd_process(void)
       /* update status */
       cdd.status = cdd.loaded ? CD_STOP : NO_DISC;
 
-      /* RS1-RS8 ignored, expects 0x0 ("no disc" ?) in RS0 once */
+      /* RS1-RS8 ignored, expects 0x0 (?) in RS0 once */
       scd.regs[0x38>>1].w = 0x0000;
       scd.regs[0x3a>>1].w = 0x0000;
       scd.regs[0x3c>>1].w = 0x0000;
