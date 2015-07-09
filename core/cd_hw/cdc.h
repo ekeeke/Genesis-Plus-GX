@@ -63,7 +63,7 @@ extern void cdc_reset(void);
 extern int cdc_context_save(uint8 *state);
 extern int cdc_context_load(uint8 *state);
 extern void cdc_dma_update(void);
-extern int cdc_decoder_update(uint32 header);
+extern void cdc_decoder_update(uint32 header);
 extern void cdc_reg_w(unsigned char data);
 extern unsigned char cdc_reg_r(void);
 extern unsigned short cdc_host_r(void);
