@@ -1165,64 +1165,91 @@ static void rompathmenu ()
   {
     ret = GUI_RunMenu(m);
 
-    switch (ret)
+    if (ret < 0)
     {
-      case -1:
-      {
-        GUI_DeleteMenu(m);
-        return;
-      }
+      GUI_DeleteMenu(m);
+      return;
+    }
+    
+    /* Initialize System ROM browser */
+    if (OpenDirectory(config.l_device, ret + FILETYPE_MAX))
+    {
+      /* Get current System ROM path */
+      char *dir = GetCurrentDirectory();
 
-      default:
+      /* Open System ROM browser */
+      GUI_DeleteMenu(m);
+      i = FileSelector(ret + FILETYPE_MAX);
+
+      /* System ROM selected ? */
+      if (i >= 0)
       {
-        /* Initialize System ROM browser */
-        if (OpenDirectory(config.l_device, ret + FILETYPE_MAX))
+        /* full System ROM pathname */
+        sprintf(config.sys_rom[ret],"%s%s",dir,filelist[i].filename);
+
+        /* mark System ROM as found */
+        strcpy(strstr(items[ret].text,":") + 2, "FOUND");
+
+        /* BOOT ROM special cases */
+        switch (ret)
         {
-          /* Open System ROM browser */
-          GUI_DeleteMenu(m);
-          i = FileSelector(ret + FILETYPE_MAX);
-
-          /* Get current System ROM path */
-          char *dir = GetCurrentDirectory();
-
-          /* System ROM selected ? */
-          if (i >= 0)
+          case 0:
+          case 1:
+          case 2:
           {
-            /* full System ROM pathname */
-            sprintf(config.sys_rom[ret],"%s%s",dir,filelist[i].filename);
-
-            /* mark System ROM as found */
-            strcpy(strstr(items[ret].text,":") + 2, "FOUND");
-
-            /* Genesis BOOT ROM special case */
-            if (config.sys_rom[ret] == MD_BIOS)
-            {
-              /* Genesis BOOT ROM must be reloaded */
-              if (load_archive(MD_BIOS, boot_rom, 0x800, NULL) > 0)
-              {
-                /* check if BOOT ROM header is valid */
-                if (!memcmp((char *)(boot_rom + 0x120),"GENESIS OS", 10))
-                {
-                  /* mark Genesis BIOS as loaded */
-                  system_bios |= SYSTEM_MD;
-                }
-                else
-                {
-                  /* mark Genesis BIOS as unloaded */
-                  system_bios &= ~SYSTEM_MD;
-                }
-              }
-            }
+            /* force CD BOOT ROM reloading */
+            system_bios &= ~0x10;
+            break;
           }
 
-          free(dir);
-          GUI_InitMenu(m);
+          case 3:
+          {
+            /* Genesis BOOT ROM must be reloaded */
+            if (load_archive(MD_BIOS, boot_rom, 0x800, NULL) > 0)
+            {
+              /* check if BOOT ROM header is valid */
+              if (!memcmp((char *)(boot_rom + 0x120),"GENESIS OS", 10))
+              {
+                /* mark Genesis BOOT ROM as loaded */
+                system_bios |= SYSTEM_MD;
+              }
+              else
+              {
+                /* mark Genesis BOOT ROM as unloaded */
+                system_bios &= ~SYSTEM_MD;
+              }
+            }
+            break;
+          }
+
+          case 4:
+          case 5:
+          case 6:
+          {
+            /* force Master System BOOT ROM reloading */
+            system_bios &= ~SYSTEM_SMS;
+            break;
+          }
+
+          case 7:
+          {
+            /* force Game Gear BOOT ROM reloading */
+            system_bios &= ~SYSTEM_GG;
+            break;
+          }
+
+          default:
+          {
+            /* not a BOOT ROM */
+            break;
+          }
         }
       }
+
+      free(dir);
+      GUI_InitMenu(m);
     }
   }
-
-  GUI_DeleteMenu(m);
 }
 
 /****************************************************************************
