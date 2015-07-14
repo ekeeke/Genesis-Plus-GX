@@ -1,3 +1,151 @@
+
+---------------------------------------------------------------------------------------------------------
+Genesis Plus GX 1.7.5 (xx/xx/xxxx) (Eke-Eke)
+---------------------------------------------------------------------------------------------------------
+
+[Core/General]
+---------------
+* added optional dynamic allocation of cartridge/CD hardware buffer (for platforms with BSS size limitation)
+* improved frame emulation timing, now starts with vertical blanking to reduce input lag by one more frame
+  (!!!warning: this breaks compatibility with previous savestates!!!)
+* various code cleanup
+
+[Core/CD]
+---------------
+* added CD-AUDIO & CD+G support
+* added optional support for external VORBIS library
+* added CDC & GFX register polling detection / synchronization
+* improved CDC emulation (fixes random freezes during Jeopardy & ESPN Sunday Night NFL intro)
+* improved emulation of mirrored memory areas
+* improved savestate format
+* improved Sub-CPU synchronization with Main-CPU (fixes "Soul Star")
+* improved Main-CPU & Sub-CPU idle loop detection (fixes "Super League CD")
+* disabled 68k and Z80 access to PRG-RAM when SUB-CPU is running (fixes USA version of Dungeon Explorer )
+* disabled CD hardware reset on Soft-Reset (verified on real hardware)
+* fixed DATA track minimal length (fixes BIOS refusing to boot small homebrew demos)
+* fixed CDD "no disc" status code (fixes boot sequence loading time when no disc is loaded)
+* fixed OGG file seeking when using with CUE file
+* fixed PRG-RAM access from MAIN-CPU side on system reset
+* fixed state loading bug when SUB-CPU interrupt is pending 
+* fixed incorrect masking of Level 3 (GFX) interrupts (spurious freeze during Japanese BIOS intro)
+* fixed H-INT vector handling when using Mode 1
+* fixed access to "write-only" communication flags (verified on real hardware by Notaz)
+* fixed pending level 1 interrupts when GFX interrupt is disabled (fixes random freezes out of "Batman Returns" option menu)
+* fixed CDD seek command again (Final Fight CD freeze with model 2 BIOS)
+* optimized Sub-CPU / Main-CPU synchronization
+
+[Core/MD]
+---------------
+* added support for some new unlicensed games with copy protection (Thunderbolt II, Tom Clown, Chaoji Puke / Super Poker)
+* added support for Everdrive extended SSF mapper
+* improved console region auto-detection for a few PAL-only games (The Smurfs Travel the World & Williams Arcade's Greatest Hits)
+* fixed Game Genie / Pro Action Replay lock-on support when Mega CD hardware is enabled 
+* fixed SRAM support in Triple Play 96 & Triple Play - Gold Edition
+* fixed automatic CD loading with .md ROM files
+* fixed ROM padding for Sonic & Knuckles
+* fixed SRAM detection for games where it is mapped to work RAM ("Feng Kuang Tao Hua Yuan" crash)
+* fixed 1.7.4 regression with games using SRAM bank-switching
+
+[Core/MS]
+---------------
+* added support for new SMS Power dump Jang Pung II (KR)
+* added support for Hi-Com X-in-1 mapper (thanks to Bock from SMS Power)
+* improved console hardware auto-detection
+* improved emulation accuracy of SG-1000 & Mark-III hardware
+* improved emulation accuracy of Japanese Master System I/O chip (315-5297)
+* fixed Boot ROM loading when switching system hardware
+
+[Core/GG]
+---------------
+* added optional LCD ghosting software filter
+* fixed mirrored access to I/O control register (G-LOC Air Battle)
+
+[Core/SG]
+---------------
+* added support for SG-1000 II clone hardware (2KB RAM + integrated VDP/PSG chip 315-5066)
+* fixed SG-1000 internal RAM size (1KB instead of 2KB)
+* restored SG-1000 Pause button support
+
+[Core/CPU]
+---------------
+* fixed Z80 SP register initialization on power-on for Master System & Game Gear 
+ (Ace of Aces, Shadow Dancer, Ecco the Dolphin, Evander Holyfield Real Deal Boxing)
+
+[Core/IO]
+---------------
+* added Sega Graphic Board support (thanks to SMS Power)
+* added Master Tap emulation (multi-player support in Boom homebrew)
+* added gamepad type auto-detection
+* added support for XE-1AP analog controller on both ports 
+* improved HVC latch behavior for gun emulation (fixes "Gunfight - 3 in 1" randomization when using Justifier)
+* fixed TeamPlayer emulation (fixes multitap detection in Gauntlet 4)
+
+[Core/VDP]
+---------------
+* implemented proper FIFO ring-buffer & unused bits behavior on CRAM/VSRAM reads (verified on real hardware by Nemesis)
+* improved accuracy of DMA Copy/Fill & added support for CRAM/VSRAM Fill (verified on real hardware by Nemesis)
+* improved V28/V30 mode switching during active display (verified on real hardware)
+* improved Mode 5 sprites parsing accuracy (verified on real hardware)
+* improved Mode 5 sprites rendering timings (fixes "Overdrive" demo)
+* improved FIFO timings accuracy (fixes "Overdrive" Demo)
+* improved H-Counter accuracy in H32 mode
+* improved accuracy of Master System color palette brightness range (verified against real hardware)
+* fixed misaligned buffer writes in Mode 4 when -DALIGN_LONG option is used
+* fixed alpha channel for 15-bit (RGB555) and 32-bit (RGB888) color support
+* fixed register #10 state on VDP¨reset (fixes GG Terminator 2: Judgment Day)
+* fixed Mode 1 rendering (TMS99xx "text" mode)
+* fixed Game Gear display rendering regression when left/right borders were disabled
+* fixed 68k cycles delay on invalid VRAM writes (fixes "Microcosm" intro loop)
+* optimized tile caching
+
+[Gamecube/Wii]
+---------------
+* added configurable BIOS & Lock-on ROM files
+* added configurable NTSC filter
+* added configurable FPS display & toggleable fast-forward key combo
+  (HOME + MINUS with Wii controllers or R TRIGGER + START with Gamecube controller)
+* added 50hz progressive mode (576p) support for emulation
+* reduced SRAM files size
+* improved A/V Sync: when VSYNC is enabled, audio resampler output rate is now adjusted (+/-0,1 %)
+  to always keep audio & video synchronized and input lag is reduced by one frame.
+* improved GX video rendering (fixes screen tearing when VSYNC is disabled)
+* improved ROM browser scrolling speed and added support for Classic Controller +/- buttons for page scrolling
+* improved Cheats Menu 
+* fixed bug with PICO pointer
+* fixed lightgun crosshair & CD leds positionning when using NTSC filter
+* fixed low-pass filter menu setting
+* various code cleanup & optimizations
+
+[Gamecube]
+---------------
+* improved progressive mode switch request on startup when component cable is detected
+* disabled simultaneous multiple .ogg files opening (fixes crashes caused to RAM size limitation)
+* fixed broken DVD support
+
+[Wii]
+---------------
+* added support for Wii U Pro Controller
+* added Wiimote pointer calibration in Menu settings
+* added configurable Wiimote timeout
+* added game auto-load support through DOL args (compatible with "Wiiflow" plugin arguments) 
+* fixed support for 3rd-party classic controllers with invalid calibration settings
+
+[GCW0]
+---------------
+* added GCW Zero port by Shin-NiL & David Knight (based on SDL port)
+
+[libretro]
+---------------
+* added optional bootrom support for Master System, Game Gear & Mega Drive / Genesis
+* added support for all emulated devices (except Activator)
+* added support for in-game resolution changes through RETRO_ENVIRONMENT_SET_SYSTEM_AV_INFO
+* added support for .mdx ROM files
+* added missing core settings (system hardware, region, lock-on, multitap, master system FM,...)
+* fixed incorrect SRAM file saving
+* fixed framebuffer size for PAL interlaced mode
+* fixed viewport width when NTSC Filter is enabled with Mega Drive or Mega CD games using H-32 mode
+* code cleanup
+
 ---------------------------------------------------------------------------------------------------------
 Genesis Plus GX 1.7.4 (21/06/2013) (Eke-Eke)
 ---------------------------------------------------------------------------------------------------------
