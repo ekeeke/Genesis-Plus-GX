@@ -1480,7 +1480,7 @@ void scd_init(void)
 
       case 0x0e:
       {
-        /* $FE0000-$FEFFFF (mirrored every 1MB): 8KB backup RAM (Wonder Mega / X'Eye BIOS access it at $FD0000-$FD1FFF ?) */
+        /* $FE0000-$FEFFFF (mirrored every 1MB): 8KB backup RAM */
         s68k.memory_map[i].base     = NULL;
         s68k.memory_map[i].read8    = bram_read_byte;
         s68k.memory_map[i].read16   = bram_read_word;

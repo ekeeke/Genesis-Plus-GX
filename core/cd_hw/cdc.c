@@ -243,7 +243,7 @@ void cdc_dma_update(void)
   }
 }
 
-int cdc_decoder_update(uint32 header)
+void cdc_decoder_update(uint32 header)
 {
   /* data decoding enabled ? */
   if (cdc.ctrl[0] & BIT_DECEN)
@@ -274,7 +274,7 @@ int cdc_decoder_update(uint32 header)
     /* buffer RAM write enabled ? */
     if (cdc.ctrl[0] & BIT_WRRQ)
     {
-      uint16 offset;
+      int offset;
 
       /* increment block pointer  */
       cdc.pt.w += 2352;
@@ -292,19 +292,14 @@ int cdc_decoder_update(uint32 header)
       cdd_read_data(cdc.ram + 4 + offset);
 
       /* take care of buffer overrun */
-      if (offset > (0x4000 - 2048 - 4))
+      offset = offset + 2048 + 4 - 0x4000;
+      if (offset > 0)
       {
         /* data should be written at the start of buffer */
-        memcpy(cdc.ram, cdc.ram + 0x4000, offset + 2048 + 4 - 0x4000);
+        memcpy(cdc.ram, cdc.ram + 0x4000, offset);
       }
-
-      /* read next data block */
-      return 1;
     }
   }
-  
-  /* keep decoding same data block if Buffer Write is disabled */
-  return 0;
 }
 
 void cdc_reg_w(unsigned char data)
