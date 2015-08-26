@@ -20,10 +20,11 @@ Genesis Plus GX 1.7.5 (xx/xx/xxxx) (Eke-Eke)
 * improved savestate format
 * improved Sub-CPU synchronization with Main-CPU (fixes "Soul Star")
 * improved Main-CPU & Sub-CPU idle loop detection (fixes "Super League CD")
-* disabled 68k and Z80 access to PRG-RAM when SUB-CPU is running (fixes USA version of Dungeon Explorer )
+* disabled 68k and Z80 access to PRG-RAM when SUB-CPU is running (fixes "Dungeon Explorer")
 * disabled CD hardware reset on Soft-Reset (verified on real hardware)
 * fixed DATA track minimal length (fixes BIOS refusing to boot small homebrew demos)
 * fixed CDD "no disc" status code (fixes boot sequence loading time when no disc is loaded)
+* fixed AUDIO tracks length calculation when using separated files (WAV/OGG/BIN) with INDEX pause defined in CUE file
 * fixed OGG file seeking when using with CUE file
 * fixed PRG-RAM access from MAIN-CPU side on system reset
 * fixed state loading bug when SUB-CPU interrupt is pending 

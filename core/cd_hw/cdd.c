@@ -582,8 +582,8 @@ int cdd_load(char *filename, char *header)
         }
         else
         {
-          /* current track start time (based on previous track end time + current file absolute time + PREGAP length) */
-          cdd.toc.tracks[cdd.toc.last].start = cdd.toc.end + bb + ss*75 + mm*60*75 + pregap;
+          /* current file start time (based on previous track end time + PREGAP length) */
+          cdd.toc.tracks[cdd.toc.last].start = cdd.toc.end + pregap;
 
           /* adjust current track file read offset with previous track end time (only used for AUDIO track) */
           cdd.toc.tracks[cdd.toc.last].offset += cdd.toc.end * 2352;
@@ -629,6 +629,9 @@ int cdd_load(char *filename, char *header)
             }
             fseek(cdd.toc.tracks[cdd.toc.last].fd, 0, SEEK_SET);
           }
+
+          /* adjust track start time (based on current file start time + index absolute time) */
+          cdd.toc.tracks[cdd.toc.last].start += (bb + ss*75 + mm*60*75);
 
           /* update TOC end */
           cdd.toc.end = cdd.toc.tracks[cdd.toc.last].end;
