@@ -1218,7 +1218,7 @@ void cdd_update(void)
 #ifdef LOG_CDD
   error("LBA = %d (track n°%d)(latency=%d)\n", cdd.lba, cdd.index, cdd.latency);
 #endif
-  
+
   /* seeking disc */
   if (cdd.status == CD_SEEK)
   {
@@ -1230,7 +1230,7 @@ void cdd_update(void)
     }
 
     /* drive is ready */
-    cdd.status = CD_READY;
+    cdd.status = CD_PAUSE;
   }
 
   /* reading disc */
@@ -1460,12 +1460,12 @@ void cdd_process(void)
       /* no audio track playing */
       scd.regs[0x36>>1].byte.h = 0x01;
 
-      /* RS1-RS8 ignored, expects 0x0 (?) in RS0 once */
-      scd.regs[0x38>>1].w = 0x0000;
+      /* RS1-RS8 ignored, expects 0x0 (drive busy ?) in RS0 once */
+      scd.regs[0x38>>1].w = CD_BUSY << 8;
       scd.regs[0x3a>>1].w = 0x0000;
       scd.regs[0x3c>>1].w = 0x0000;
       scd.regs[0x3e>>1].w = 0x0000;
-      scd.regs[0x40>>1].w = 0x000f;
+      scd.regs[0x40>>1].w = ~CD_BUSY & 0x0f;
       return;
     }
 
@@ -1765,7 +1765,7 @@ void cdd_process(void)
       scd.regs[0x36>>1].byte.h = 0x01;
 
       /* update status (RS1-RS8 unchanged) */
-      cdd.status = scd.regs[0x38>>1].byte.h = CD_READY;
+      cdd.status = scd.regs[0x38>>1].byte.h = CD_PAUSE;
       break;
     }
 
@@ -1808,7 +1808,7 @@ void cdd_process(void)
       scd.regs[0x36>>1].byte.h = 0x01;
 
       /* update status (RS1-RS8 unchanged) */
-      cdd.status = scd.regs[0x38>>1].byte.h = CD_READY;
+      cdd.status = scd.regs[0x38>>1].byte.h = CD_PAUSE;
       break;
     }
 
@@ -1820,12 +1820,12 @@ void cdd_process(void)
       /* update status */
       cdd.status = cdd.loaded ? CD_STOP : NO_DISC;
 
-      /* RS1-RS8 ignored, expects 0x0 (?) in RS0 once */
-      scd.regs[0x38>>1].w = 0x0000;
+      /* RS1-RS8 ignored, expects 0x0 (drive busy ?) in RS0 once */
+      scd.regs[0x38>>1].w = CD_BUSY << 8;
       scd.regs[0x3a>>1].w = 0x0000;
       scd.regs[0x3c>>1].w = 0x0000;
       scd.regs[0x3e>>1].w = 0x0000;
-      scd.regs[0x40>>1].w = 0x000f;
+      scd.regs[0x40>>1].w = ~CD_BUSY & 0x0f;
 
 #ifdef CD_TRAY_CALLBACK
       CD_TRAY_CALLBACK

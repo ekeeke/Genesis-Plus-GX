@@ -49,10 +49,11 @@
 #define cdd scd.cdd_hw
 
 /* CDD status */
+#define CD_BUSY  0x00
 #define CD_PLAY  0x01
 #define CD_SEEK  0x02
 #define CD_SCAN  0x03
-#define CD_READY 0x04
+#define CD_PAUSE 0x04
 #define CD_OPEN  0x05
 #define CD_STOP  0x09
 #define NO_DISC  0x0B
