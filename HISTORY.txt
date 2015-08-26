@@ -76,7 +76,8 @@ Genesis Plus GX 1.7.5 (xx/xx/xxxx) (Eke-Eke)
 * added Sega Graphic Board support (thanks to SMS Power)
 * added Master Tap emulation (multi-player support in Boom homebrew)
 * added gamepad type auto-detection
-* added support for XE-1AP analog controller on both ports 
+* added support for XE-1AP controller on both ports 
+* improved XE-1AP controller emulation
 * improved HVC latch behavior for gun emulation (fixes "Gunfight - 3 in 1" randomization when using Justifier)
 * fixed TeamPlayer emulation (fixes multitap detection in Gauntlet 4)
 

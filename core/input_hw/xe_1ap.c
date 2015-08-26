@@ -2,7 +2,7 @@
  *  Genesis Plus
  *  XE-1AP analog controller support
  *
- *  Copyright (C) 2011-2014  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2011-2015  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -38,6 +38,8 @@
 
 #include "shared.h"
 
+#define XE_1AP_LATENCY 3
+
 static struct
 {
   uint8 State;
@@ -52,109 +54,99 @@ void xe_1ap_reset(int index)
   input.analog[index+1][0] = 128;
   index >>= 2;
   xe_1ap[index].State = 0x40;
-  xe_1ap[index].Counter = 0;
+  xe_1ap[index].Counter = 11;
   xe_1ap[index].Latency = 0;
 }
 
 INLINE unsigned char xe_1ap_read(int index)
 {
-  unsigned int temp = 0x40;
+  unsigned char data;
   unsigned int port = index << 2;
 
-  /* Left Stick X & Y analog values (bidirectional) */
-  int x = input.analog[port][0];
-  int y = input.analog[port][1];
-
-  /* Right Stick X or Y value (unidirectional) */
-  int z = input.analog[port+1][0];
-
-  /* Buttons status (active low) */
-  uint16 pad = ~input.pad[port];
-
-  /* Current internal cycle (0-7) */
-  unsigned int cycle = xe_1ap[index].Counter & 7;
-
-  /* Current 4-bit data cycle */
-  /* There are eight internal data cycle for each 5 acquisition sequence */
-  /* First 4 return the same 4-bit data, next 4 return next 4-bit data */
-  switch (xe_1ap[index].Counter >> 2)
+  /* Current data transfer cycle */
+  switch (xe_1ap[index].Counter)
   {
-    case 0:
-      temp |= ((pad >> 8) & 0x0F); /* E1 E2 Start Select */
+    case 0: /* E1 E2 Start Select buttons status (active low) */
+      data = (~input.pad[port] >> 10) & 0x0F;
       break;
-    case 1:
-      temp |= ((pad >> 4) & 0x0F); /* A B C D */
+    case 1: /* A/A' B/B' C D buttons status (active low) */
+      data = ((~input.pad[port] >> 4) & 0x0F) & ~((input.pad[port] >> 6) & 0x0C);
       break;
-    case 2:
-      temp |= ((x >> 4) & 0x0F);
+    case 2: /* CH0 high (Analog Stick Left/Right direction) */
+      data = (input.analog[port][0] >> 4) & 0x0F;
       break;
-    case 3:
-      temp |= ((y >> 4) & 0x0F);
+    case 3: /* CH1 high (Analog Stick Up/Down direction) */
+      data = (input.analog[port][1] >> 4) & 0x0F;
       break;
-    case 4:
+    case 4: /* CH2 high (N/A) */
+      data = 0x0;
       break;
-    case 5:
-      temp |= ((z >> 4) & 0x0F);
+    case 5: /* CH3 high (Throttle vertical or horizontal direction) */
+      data = (input.analog[port+1][0] >> 4) & 0x0F;
       break;
-    case 6:
-      temp |= (x & 0x0F);
+    case 6: /* CH0 low (Analog Stick Left/Right direction) */
+      data = input.analog[port][0] & 0x0F;
       break;
-    case 7:
-      temp |= (y & 0x0F);
+    case 7: /* CH1 low (Analog Stick Up/Down direction)*/
+      data = input.analog[port][1] & 0x0F;
       break;
-    case 8:
+    case 8: /* CH2 low (N/A) */
+      data = 0x0;
       break;
-    case 9:
-      temp |= (z & 0x0F);
+    case 9: /* CH3 low (Throttle vertical or horizontal direction) */
+      data = input.analog[port+1][0] & 0x0F;
+      break;
+    case 10: /* A B A' B' buttons status (active low) */
+      data = (~input.pad[port] >> 6) & 0x0F;
+      break;
+    default: /* N/A */
+      data = 0x0F;
       break;
   }
 
-  /* TL indicates which part of data is returned (0=1st part, 1=2nd part) */
-  temp |= ((cycle & 4) << 2);
+  /* TL indicates current data cycle (0=1st cycle, 1=2nd cycle, etc) */
+  data |= ((xe_1ap[index].Counter & 1) << 4);
 
-  /* TR indicates if data is ready (0=ready, 1=not ready) */
-  /* Fastest One input routine actually expects this bit to switch between 0 & 1 */
-  /* so we make the first read of a data cycle return 1 then 0 for remaining reads */
-  temp |= (!(cycle & 3) << 5);
+  /* TR indicates if data is valid (0=valid, 1=not ready) */
+  /* Some games expect this bit to switch between 0 and 1 */
+  /* so we actually keep it high for some reads after the */
+  /* data cycle has been initialized or incremented */
+  if (xe_1ap[index].Latency)
+  {
+    if (xe_1ap[index].Latency > 1)
+    {
+      /* data is not ready */
+      data |= 0x20;
+    }
 
-  /* Automatically increment data cycle on each read (within current acquisition sequence) */
-  cycle = (cycle + 1) & 7;
+    /* decrement internal latency */
+    xe_1ap[index].Latency--;
+  }
+  else if (xe_1ap[index].Counter <= 10)
+  {
+    /* next data cycle */
+    xe_1ap[index].Counter++;
 
-  /* Update internal cycle counter */
-  xe_1ap[index].Counter = (xe_1ap[index].Counter & ~7) | cycle;
+    /* reinitialize internal latency */
+    xe_1ap[index].Latency = XE_1AP_LATENCY;
+  }
 
-  /* Update internal latency on each read */
-  xe_1ap[index].Latency++;
-
-  return temp;
+  return data;
 }
 
 INLINE void xe_1ap_write(int index, unsigned char data, unsigned char mask)
 {
-  /* update bits set as output only */
+  /* only update bits set as output */
   data = (xe_1ap[index].State & ~mask) | (data & mask);
 
   /* look for TH 1->0 transitions */
   if (!(data & 0x40) && (xe_1ap[index].State & 0x40))
   {
-    /* reset acquisition cycle */
-    xe_1ap[index].Latency = xe_1ap[index].Counter = 0;
-  }
-  else
-  {
-    /* some games immediately write new data to TH */
-    /* so we make sure first sequence has actually been handled */
-    if (xe_1ap[index].Latency > 2)
-    {
-      /* next acquisition sequence */
-      xe_1ap[index].Counter = (xe_1ap[index].Counter & ~7) + 8;
+    /* reset data acquisition cycle */
+    xe_1ap[index].Counter = 0;
 
-      /* 5 sequence max with 8 cycles each */
-      if (xe_1ap[index].Counter > 32)
-      {
-        xe_1ap[index].Counter = 32;
-      }
-    }
+    /* initialize internal latency */
+    xe_1ap[index].Latency = XE_1AP_LATENCY;
   }
 
   /* update internal state */

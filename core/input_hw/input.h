@@ -2,8 +2,8 @@
  *  Genesis Plus
  *  Input peripherals support
  *
- *  Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003  Charles Mac Donald (original code)
- *  Copyright (C) 2007-2014  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 1998-2003  Charles Mac Donald (original code)
+ *  Copyright (C) 2007-2015  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -102,12 +102,14 @@
 #define INPUT_PICO_RED     (0x0010)
 
 /* XE-1AP specific bitmask */
-#define INPUT_XE_E1        (0x0800)
-#define INPUT_XE_E2        (0x0400)
-#define INPUT_XE_START     (0x0200)
-#define INPUT_XE_SELECT    (0x0100)
-#define INPUT_XE_A         (0x0080)
-#define INPUT_XE_B         (0x0040)
+#define INPUT_XE_E1        (0x2000)
+#define INPUT_XE_E2        (0x1000)
+#define INPUT_XE_START     (0x0800)
+#define INPUT_XE_SELECT    (0x0400)
+#define INPUT_XE_A         (0x0200)
+#define INPUT_XE_B         (0x0100)
+#define INPUT_XE_A2        (0x0080)
+#define INPUT_XE_B2        (0x0040)
 #define INPUT_XE_C         (0x0020)
 #define INPUT_XE_D         (0x0010)
 
