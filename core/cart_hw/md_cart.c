@@ -180,6 +180,7 @@ static const md_entry_t rom_database[] =
 /* Thunderbolt II (uses 16-bits reads) */
   {0x0000,0x1585,0x40,0x40,{{0x55,0x0f,0xaa,0xf0},{0xffffff,0xffffff,0xffffff,0xffffff},{0x400000,0x400002,0x400004,0x400006},0,0,NULL,NULL,default_regs_r_16,NULL}},
 
+
 /* Chaoji Puke - Super Poker (correct ROM dump, original release is an overdump) */
   {0xffff,0xd7b0,0x40,0x40,{{0x55,0x0f,0xaa,0xf0},{0xffffff,0xffffff,0xffffff,0xffffff},{0x400000,0x400002,0x400004,0x400006},0,0,NULL,NULL,default_regs_r,NULL}},
 /* Super Bubble Bobble */
@@ -569,18 +570,18 @@ void md_cart_init(void)
   if (strstr(rominfo.consoletype,"SEGA SSF"))
   {
     /* Everdrive extended SSF mapper */
-    cart.hw.bankshift = 1;
-
-    /* specific !TIME handler */
     cart.hw.time_w = mapper_512k_w;
+
+    /* cartridge ROM mapping is reinitialized on /VRES */
+    cart.hw.bankshift = 1;
   }
   else if (strstr(rominfo.domestic,"SUPER STREET FIGHTER2"))
   {
     /* SSF2 mapper */
-    cart.hw.bankshift = 1;
-
-    /* specific !TIME handler */
     cart.hw.time_w = mapper_ssf2_w;
+
+    /* cartridge ROM mapping is reinitialized on /VRES */
+    cart.hw.bankshift = 1;
   }
   else if (strstr(rominfo.product,"T-5740"))
   {
@@ -605,6 +606,18 @@ void md_cart_init(void)
 
     /* no !TIME handler */
     cart.hw.time_w = m68k_unused_8_w;
+
+    /* cartridge ROM is mapped to $3C0000-$3FFFFF on reset */
+    for (i=0x3c; i<0x40; i++)
+    {
+      m68k.memory_map[i].base     = cart.rom + (i << 16);
+      m68k.memory_map[i].read8    = NULL;
+      m68k.memory_map[i].read16   = NULL;
+      m68k.memory_map[i].write8   = m68k_unused_8_w;
+      m68k.memory_map[i].write16  = m68k_unused_16_w;
+      zbank_memory_map[i].read    = NULL;
+      zbank_memory_map[i].write   = m68k_unused_8_w;
+    }
   }
   else if (strstr(rominfo.ROMType,"SF") && strstr(rominfo.product,"002"))
   {
@@ -627,13 +640,13 @@ void md_cart_init(void)
     cart.hw.time_r = mapper_sf004_r;
     cart.hw.time_w = m68k_unused_8_w;
 
-    /* first 256K ROM bank is initially mirrored into $000000-$1FFFFF */
+    /* first 256K ROM bank is mirrored into $000000-$1FFFFF on reset */
     for (i=0x00; i<0x20; i++)
     {
       m68k.memory_map[i].base = cart.rom + ((i & 0x03) << 16);
     }
 
-    /* 32K static RAM is mapped to $200000-$2FFFFF (disabled on startup) */
+    /* 32K static RAM mapped to $200000-$2FFFFF is disabled on reset */
     for (i=0x20; i<0x30; i++)
     {
       m68k.memory_map[i].base    = sram.sram;
@@ -928,7 +941,6 @@ static void mapper_512k_w(uint32 address, uint32 data)
 
   /* 512K ROM paging */
   uint8 *src = cart.rom + (data << 19);
-
 
   /* cartridge area ($000000-$3FFFFF) is divided into 8 x 512K banks */
   address = (address << 2) & 0x38;

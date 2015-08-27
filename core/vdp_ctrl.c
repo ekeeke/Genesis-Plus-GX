@@ -4,8 +4,8 @@
  *
  *  Support for SG-1000 (TMS99xx & 315-5066), Master System (315-5124 & 315-5246), Game Gear & Mega Drive VDP
  *
- *  Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003  Charles Mac Donald (original code)
- *  Copyright (C) 2007-2014  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 1998-2003  Charles Mac Donald (original code)
+ *  Copyright (C) 2007-2015  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -360,8 +360,8 @@ void vdp_reset(void)
     }
   }
 
-  /* H-INT should be disabled on startup (fixes GG Terminator 2: Judgement Day) */
-  vdp_reg_w(10, 0xFF, 0);
+  /* H-INT is disabled on startup (verified on VA4 MD1 with 315-5313 VDP) */
+  reg[10] = 0xFF;
   
   /* Master System specific */
   if ((system_hw & SYSTEM_SMS) && (!(config.bios & 1) || !(system_bios & SYSTEM_SMS)))
@@ -1396,7 +1396,7 @@ unsigned int vdp_hvc_r(unsigned int cycles)
     }
     else
     {
-      /* Mode 4: by default, VCounter runs normally & H counter is frozen */
+      /* Mode 4: by default, VCounter runs normally & HCounter is frozen */
       data &= 0xff;
     }
   }
