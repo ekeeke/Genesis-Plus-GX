@@ -1,0 +1,5 @@
+psp2/*.o
+psp2/*.elf
+psp2/*.velf
+psp2/build_vita/*
+psp2/*.a
