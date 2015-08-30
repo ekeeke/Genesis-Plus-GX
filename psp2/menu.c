@@ -153,6 +153,7 @@ PL_MENU_OPTIONS_BEGIN(PspClockFreqOptions)
   PL_MENU_OPTION("266 MHz", 266)
   PL_MENU_OPTION("300 MHz", 300)
   PL_MENU_OPTION("333 MHz", 333)
+  PL_MENU_OPTION("444 MHz", 444)
 PL_MENU_OPTIONS_END
 PL_MENU_OPTIONS_BEGIN(AutofireOptions)
   PL_MENU_OPTION("Once every 3 frames", 2)
@@ -483,7 +484,7 @@ void DisplayMenu()
     ResumeEmulation = 0;
 
     /* Set normal clock frequency */
-    //pl_psp_set_clock_freq(222);
+    pl_psp_set_clock_freq(222);
     /* Set buttons to autorepeat */
     pspCtrlSetPollingMode(PSP_CTRL_AUTOREPEAT);
 
@@ -553,7 +554,7 @@ void DisplayMenu()
     if (!ExitPSP)
     {
       /* Set clock frequency during emulation */
-      //pl_psp_set_clock_freq(Options.ClockFreq);
+      pl_psp_set_clock_freq(Options.ClockFreq);
       /* Set buttons to normal mode */
       pspCtrlSetPollingMode(PSP_CTRL_NORMAL);
 
@@ -1118,7 +1119,7 @@ void LoadOptions()
   Options.UpdateFreq = pl_ini_get_int(&init, "Video", "Update Frequency", 60);
   Options.Frameskip = pl_ini_get_int(&init, "Video", "Frameskip", 0);
   Options.VSync = pl_ini_get_int(&init, "Video", "VSync", 0);
-  Options.ClockFreq = pl_ini_get_int(&init, "Video", "PSP Clock Frequency", 333);
+  Options.ClockFreq = pl_ini_get_int(&init, "Video", "PSP Clock Frequency", 444);
   Options.ShowFps = pl_ini_get_int(&init, "Video", "Show FPS", 0);
   Options.ControlMode = pl_ini_get_int(&init, "Menu", "Control Mode", 0);
   UiMetric.Animate = pl_ini_get_int(&init, "Menu", "Animate", 1);
