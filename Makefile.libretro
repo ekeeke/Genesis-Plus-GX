@@ -45,7 +45,7 @@ ifeq ($(platform), unix)
 	ENDIANNESS_DEFINES := -DLSB_FIRST -DBYTE_ORDER=LITTLE_ENDIAN
 	PLATFORM_DEFINES := -DHAVE_ZLIB
 
-# Portable Linux 
+# Portable Linux
 else ifeq ($(platform), linux-portable)
 	TARGET := $(TARGET_NAME)_libretro.so
 	fpic := -fPIC -nostdlib
@@ -56,8 +56,8 @@ else ifeq ($(platform), linux-portable)
 # OS X
 else ifeq ($(platform), osx)
 	TARGET := $(TARGET_NAME)_libretro.dylib
-	fpic := -fPIC 
-	SHARED := -dynamiclib 
+	fpic := -fPIC
+	SHARED := -dynamiclib
 	ifeq ($(arch),ppc)
 		ENDIANNESS_DEFINES := -DBYTE_ORDER=BIG_ENDIAN
 	else
@@ -77,7 +77,7 @@ else ifeq ($(platform), osx)
 else ifeq ($(platform), ios)
 	TARGET := $(TARGET_NAME)_libretro_ios.dylib
 	fpic := -fPIC
-	SHARED := -dynamiclib 
+	SHARED := -dynamiclib
 	ENDIANNESS_DEFINES := -DLSB_FIRST -DBYTE_ORDER=LITTLE_ENDIAN
 	PLATFORM_DEFINES := -DHAVE_ZLIB
 
@@ -111,7 +111,7 @@ else ifeq ($(platform), theos_ios)
 else ifeq ($(platform), qnx)
 	TARGET := $(TARGET_NAME)_libretro_qnx.so
 	fpic := -fPIC
-	SHARED := -shared -Wl,--version-script=libretro/link.T -Wl,--no-undefined 
+	SHARED := -shared -Wl,--version-script=libretro/link.T -Wl,--no-undefined
 	ENDIANNESS_DEFINES := -DLSB_FIRST -DBYTE_ORDER=LITTLE_ENDIAN
 	PLATFORM_DEFINES := -DHAVE_ZLIB
 	CC = qcc -Vgcc_ntoarmv7le
@@ -157,7 +157,8 @@ else ifeq ($(platform), vita)
 	TARGET := $(TARGET_NAME)_libretro_vita.a$(EXE_EXT)
 	CC = arm-vita-eabi-gcc$(EXE_EXT)
 	AR = arm-vita-eabi-ar$(EXE_EXT)
-	ENDIANNESS_DEFINES := -DLSB_FIRST -DBYTE_ORDER=LITTLE_ENDIAN
+	CFLAGS += -O3 -mfloat-abi=hard -ffast-math -fsingle-precision-constant
+	ENDIANNESS_DEFINES := -DLSB_FIRST -DALIGN_LONG -DALT_RENDERER -DHAVE_ALLOCA_H -DBYTE_ORDER=LITTLE_ENDIAN
 	PLATFORM_DEFINES := -DVITA
 	STATIC_LINKING = 1
 
@@ -192,7 +193,7 @@ else ifeq ($(platform), wii)
 else ifneq (,$(findstring armv,$(platform)))
 	TARGET := $(TARGET_NAME)_libretro.so
 	fpic := -fPIC
-	SHARED := -shared -Wl,--version-script=libretro/link.T -Wl,--no-undefined 
+	SHARED := -shared -Wl,--version-script=libretro/link.T -Wl,--no-undefined
 	ENDIANNESS_DEFINES := -DLSB_FIRST -DBYTE_ORDER=LITTLE_ENDIAN
 	PLATFORM_DEFINES := -DHAVE_ZLIB
 	ifneq (,$(findstring cortexa5,$(platform)))
@@ -222,7 +223,7 @@ else ifeq ($(platform), emscripten)
 else
 	TARGET := $(TARGET_NAME)_libretro.dll
 	CC = gcc
-	SHARED := -shared -static-libgcc -static-libstdc++ -Wl,--version-script=libretro/link.T -Wl,--no-undefined 
+	SHARED := -shared -static-libgcc -static-libstdc++ -Wl,--version-script=libretro/link.T -Wl,--no-undefined
 
 	ENDIANNESS_DEFINES := -DLSB_FIRST -DBYTE_ORDER=LITTLE_ENDIAN
 	PLATFORM_DEFINES := -DHAVE_ZLIB
@@ -254,7 +255,7 @@ ifeq ($(LOGSOUND), 1)
 	LIBRETRO_CFLAGS := -DLOGSOUND
 endif
 
-DEFINES := -DUSE_LIBTREMOR 
+DEFINES := -DUSE_LIBTREMOR
 CFLAGS += $(fpic) $(DEFINES) $(CODE_DEFINES)
 
 ifeq ($(FRONTEND_SUPPORTS_RGB565), 1)
@@ -293,7 +294,7 @@ $(TARGET): $(OBJECTS)
 ifeq ($(STATIC_LINKING), 1)
 	$(AR) rcs $@ $(OBJECTS)
 else
-	$(CC) -o $(TARGET) $(fpic) $(OBJECTS) $(LDFLAGS) $(SHARED) 
+	$(CC) -o $(TARGET) $(fpic) $(OBJECTS) $(LDFLAGS) $(SHARED)
 endif
 
 clean-objs:
