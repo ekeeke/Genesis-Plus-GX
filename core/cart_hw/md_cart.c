@@ -321,6 +321,9 @@ void md_cart_init(void)
   /* ROM is mirrored each 2^k bytes */
   cart.mask = size - 1;
 
+  /* no special external hardware required by default */
+  cart.special = 0;
+
   /**********************************************
           DEFAULT CARTRIDGE MAPPING 
   ***********************************************/
@@ -375,7 +378,7 @@ void md_cart_init(void)
   /* external SRAM */
   if (sram.on && !sram.custom)
   {
-    /* initialize m68k bus handlers */
+    /* initialize default memory mapping for SRAM */
     m68k.memory_map[sram.start >> 16].base    = sram.sram;
     m68k.memory_map[sram.start >> 16].read8   = sram_read_byte;
     m68k.memory_map[sram.start >> 16].read16  = sram_read_word;
@@ -403,38 +406,6 @@ void md_cart_init(void)
 
     m68k.memory_map[0x39].read16  = svp_read_cell_1;
     m68k.memory_map[0x3a].read16  = svp_read_cell_2;
-  }
-
-  /**********************************************
-          J-CART 
-  ***********************************************/
-  cart.special = 0;
-  if ((strstr(rominfo.product,"00000000") && (rominfo.checksum == 0x168b)) || /* Super Skidmarks, Micro Machines Military */
-      (strstr(rominfo.product,"00000000") && (rominfo.checksum == 0x165e)) || /* Pete Sampras Tennis (1991), Micro Machines 96 */
-      (strstr(rominfo.product,"00000000") && (rominfo.checksum == 0xcee0)) || /* Micro Machines Military (bad) */
-      (strstr(rominfo.product,"00000000") && (rominfo.checksum == 0x2c41)) || /* Micro Machines 96 (bad) */
-      (strstr(rominfo.product,"XXXXXXXX") && (rominfo.checksum == 0xdf39)) || /* Sampras Tennis 96 */
-      (strstr(rominfo.product,"T-123456") && (rominfo.checksum == 0x1eae)) || /* Sampras Tennis 96 */
-      (strstr(rominfo.product,"T-120066") && (rominfo.checksum == 0x16a4)) || /* Pete Sampras Tennis (1994)*/
-       strstr(rominfo.product,"T-120096"))                                     /* Micro Machines 2 */
-  {
-    if (cart.romsize <= 0x380000)  /* just to be sure (checksum might not be enough) */
-    {
-      cart.special |= HW_J_CART;
-
-      /* force port 1 setting */
-      if (input.system[1] != SYSTEM_WAYPLAY)
-      {
-        old_system[1] = input.system[1];
-        input.system[1] = SYSTEM_GAMEPAD;
-      }
-
-      /* extra connectors mapped at $38xxxx or $3Fxxxx */
-      m68k.memory_map[0x38].read16  = jcart_read;
-      m68k.memory_map[0x38].write16 = jcart_write;
-      m68k.memory_map[0x3f].read16  = jcart_read;
-      m68k.memory_map[0x3f].write16 = jcart_write;
-    }
   }
 
   /**********************************************
