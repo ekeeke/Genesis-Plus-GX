@@ -3,7 +3,7 @@
  *
  *   IPL font engine (using GX rendering)
  *
- *  Copyright Eke-Eke (2009-2013)
+ *  Copyright Eke-Eke (2009-2015)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:

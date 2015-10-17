@@ -3,7 +3,7 @@
  *
  *  Genesis Plus GX audio support
  *
- *  Copyright Eke-Eke (2007-2014), based on original work from Softdev (2006)
+ *  Copyright Eke-Eke (2007-2015), based on original work from Softdev (2006)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -143,7 +143,7 @@ int gx_audio_Update(int status)
   {
     /* Retrieve audio samples (size must be multiple of 32 bytes) */
     bufferSize = audio_update(sb) * 4;
-    DCFlushRange((void *)sb, bufferSize);
+    DCStoreRange((void *)sb, bufferSize);
 
     /* Mark current audio frame as being updated */
     status &= ~AUDIO_UPDATE;
