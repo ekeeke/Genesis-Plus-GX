@@ -62,6 +62,7 @@
 #define GET_G(pixel) (((pixel) & 0x03e0) >> 5)
 #define GET_B(pixel) (((pixel) & 0x001f) >> 0)
 #endif
+
 /* 5:6:5 RGB */
 #elif defined(USE_16BPP_RENDERING)
 #define PIXEL(r,g,b) (((r) << 11) | ((g) << 5) | (b))
