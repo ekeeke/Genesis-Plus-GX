@@ -3,7 +3,7 @@
  *  2-Buttons, 3-Buttons & 6-Buttons controller support
  *  Additional support for J-Cart, 4-Way Play & Master Tap adapters
  *
- *  Copyright (C) 2007-2014  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2007-2015  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:

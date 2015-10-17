@@ -3,7 +3,7 @@
  *  2-Buttons, 3-Buttons & 6-Buttons controller support
  *  Additional support for J-Cart, 4-Way Play & Master Tap adapters
  *
- *  Copyright (C) 2007-2014  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2007-2015  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -83,15 +83,16 @@ void gamepad_refresh(int port)
 
 INLINE unsigned char gamepad_read(int port)
 {
-  /* bit 7 is latched, returns current TH state */
-  unsigned int data = (gamepad[port].State & 0x40) | 0x3F;
+  /* D7 is not connected, D6 returns TH input state */
+  unsigned int data = gamepad[port].State | 0x3F;
 
   /* pad value */
   unsigned int val = input.pad[port];
 
-  /* get current step (TH state) */
-  unsigned int step = gamepad[port].Counter | ((data >> 6) & 1);
+  /* get current TH input pulse counter */
+  unsigned int step = gamepad[port].Counter | (data >> 6);
 
+  /* D-PAD & buttons status are returned on D5-D0 (active low) */
   switch (step)
   {
     case 1: /*** First High  ***/
@@ -103,8 +104,8 @@ INLINE unsigned char gamepad_read(int port)
       break;
     }
 
-    case 0: /*** First low  ***/
-    case 2: /*** Second low ***/
+    case 0: /*** First Low  ***/
+    case 2: /*** Second Low ***/
     {
       /* TH = 0 : ?0SA00DU */
       data &= ~(val & 0x03);
@@ -113,7 +114,7 @@ INLINE unsigned char gamepad_read(int port)
       break;
     }
 
-    /* 6buttons specific (taken from gen-hw.txt) */
+    /* 6-buttons specific (taken from gen-hw.txt) */
     /* A 6-button gamepad allows the extra buttons to be read based on how */
     /* many times TH is switched from 1 to 0 (and not 0 to 1). Observe the */
     /* following sequence */
@@ -121,13 +122,13 @@ INLINE unsigned char gamepad_read(int port)
        TH = 1 : ?1CBRLDU    3-button pad return value
        TH = 0 : ?0SA00DU    3-button pad return value
        TH = 1 : ?1CBRLDU    3-button pad return value
-       TH = 0 : ?0SA0000    D3-0 are forced to '0'
+       TH = 0 : ?0SA0000    D3-D0 are forced to '0'
        TH = 1 : ?1CBMXYZ    Extra buttons returned in D3-0
-       TH = 0 : ?0SA1111    D3-0 are forced to '1'
+       TH = 0 : ?0SA1111    D3-D0 are forced to '1'
     */
     case 4: /*** Third Low ***/
     {
-      /* TH = 0 : ?0SA0000    D3-0 are forced to '0'*/
+      /* TH = 0 : ?0SA0000    D3-D0 forced to '0' */
       data &= ~((val >> 2) & 0x30);
       data &= ~0x0F;
       break;
@@ -135,14 +136,14 @@ INLINE unsigned char gamepad_read(int port)
 
     case 6: /*** Fourth Low ***/
     {
-      /* TH = 0 : ?0SA1111    D3-0 are forced to '1'*/
+      /* TH = 0 : ?0SA1111    D3-D0 forced to '1' */
       data &= ~((val >> 2) & 0x30);
       break;
     }
 
     case 7: /*** Fourth High ***/
     {
-      /* TH = 1 : ?1CBMXYZ    Extra buttons returned in D3-0*/
+      /* TH = 1 : ?1CBMXYZ    Extra buttons returned in D3-D0 */
       data &= ~(val & 0x30);
       data &= ~((val >> 8) & 0x0F);
       break;
@@ -154,20 +155,21 @@ INLINE unsigned char gamepad_read(int port)
 
 INLINE void gamepad_write(int port, unsigned char data, unsigned char mask)
 {
-  /* update bits set as output only */
-  data = (gamepad[port].State & ~mask) | (data & mask);
+  /* retrieve TH input state (pulled high when not configured as output by I/O controller) */
+  data = ((data & mask) | ~mask) & 0x40;
 
+  /* 6-Buttons controller specific */
   if (input.dev[port] == DEVICE_PAD6B)
   {
     /* TH=0 to TH=1 transition */
-    if (!(gamepad[port].State & 0x40) && (data & 0x40))
+    if (!gamepad[port].State && data)
     {
       gamepad[port].Counter = (gamepad[port].Counter + 2) & 6;
       gamepad[port].Timeout = 0;
     }
   }
 
-  /* update internal state */
+  /* update TH input state */
   gamepad[port].State = data;
 }
 
@@ -206,7 +208,7 @@ unsigned char wayplay_1_read(void)
   if (latch & 0x04)
   {
     /* 4-WayPlay detection : xxxxx00 */
-    return 0x7c;
+    return 0x7C;
   }
 
   /* TR & TL on port B select controller # (0-3) */
@@ -237,15 +239,15 @@ void wayplay_2_write(unsigned char data, unsigned char mask)
 
 unsigned int jcart_read(unsigned int address)
 {
-   /* TH2 output read is fixed to zero (fixes Micro Machines 2) */
-   return ((gamepad_read(5) & 0x7F) | ((gamepad_read(6) & 0x3F) << 8));
+   /* D6 returns TH state, D14 is fixed low (fixes Micro Machines 2) */
+   return (gamepad_read(5) | ((gamepad_read(6) & 0x3F) << 8));
 }
 
 void jcart_write(unsigned int address, unsigned int data)
 {
-  gamepad_write(5, (data & 1) << 6, 0x40);
-  gamepad_write(6, (data & 1) << 6, 0x40);
-  return;
+  data = (data & 0x01) << 6;
+  gamepad_write(5, data, 0x40);
+  gamepad_write(6, data, 0x40);
 }
 
 
