@@ -27,7 +27,7 @@ INCLUDES	:=	core core/m68k core/z80 core/sound core/tremor core/ntsc core/input_
 # options for code generation
 #---------------------------------------------------------------------------------
 
-CFLAGS  = -O3 -fomit-frame-pointer --param large-function-growth=800 --param inline-unit-growth=200 -Wall -Winline -Wno-strict-aliasing $(MACHDEP) $(INCLUDE) -DUSE_LIBTREMOR -DDISABLE_MANY_OGG_OPEN_FILES -DUSE_16BPP_RENDERING -DALT_RENDERER
+CFLAGS  = -O3 -fomit-frame-pointer -Wall -Wno-strict-aliasing $(MACHDEP) $(INCLUDE) -DUSE_LIBTREMOR -DDISABLE_MANY_OGG_OPEN_FILES -DUSE_16BPP_RENDERING -DALT_RENDERER
 CXXFLAGS	=	$(CFLAGS)
 
 LDFLAGS	=	$(MACHDEP) -Wl,-Map,$(notdir $@).map
