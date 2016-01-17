@@ -2,11 +2,6 @@ DEBUG = 0
 LOGSOUND = 0
 FRONTEND_SUPPORTS_RGB565 = 1
 
-
-ifneq ($(EMSCRIPTEN),)
-	platform = emscripten
-endif
-
 ifeq ($(platform),)
 	platform = unix
 	ifeq ($(shell uname -a),)
@@ -50,7 +45,7 @@ ifeq ($(platform), unix)
 	ENDIANNESS_DEFINES := -DLSB_FIRST -DBYTE_ORDER=LITTLE_ENDIAN
 	PLATFORM_DEFINES := -DHAVE_ZLIB
 
-# Portable Linux 
+# Portable Linux
 else ifeq ($(platform), linux-portable)
 	TARGET := $(TARGET_NAME)_libretro.so
 	fpic := -fPIC -nostdlib
@@ -61,8 +56,8 @@ else ifeq ($(platform), linux-portable)
 # OS X
 else ifeq ($(platform), osx)
 	TARGET := $(TARGET_NAME)_libretro.dylib
-	fpic := -fPIC 
-	SHARED := -dynamiclib 
+	fpic := -fPIC
+	SHARED := -dynamiclib
 	ifeq ($(arch),ppc)
 		ENDIANNESS_DEFINES := -DBYTE_ORDER=BIG_ENDIAN
 	else
@@ -72,19 +67,18 @@ else ifeq ($(platform), osx)
 
 	OSXVER = `sw_vers -productVersion | cut -d. -f 2`
 	OSX_LT_MAVERICKS = `(( $(OSXVER) <= 9)) && echo "YES"`
-	ifeq ($(OSX_LT_MAVERICKS),"YES")
-		fpic += -mmacosx-version-min=10.5
-	endif
+	fpic += -mmacosx-version-min=10.1
 	ifndef ($(NOUNIVERSAL))
 		CFLAGS  += $(ARCHFLAGS)
 		LDFLAGS += $(ARCHFLAGS)
 	endif
 
 # iOS
-else ifeq ($(platform), ios)
+else ifneq (,$(findstring ios,$(platform)))
+
 	TARGET := $(TARGET_NAME)_libretro_ios.dylib
 	fpic := -fPIC
-	SHARED := -dynamiclib 
+	SHARED := -dynamiclib
 	ENDIANNESS_DEFINES := -DLSB_FIRST -DBYTE_ORDER=LITTLE_ENDIAN
 	PLATFORM_DEFINES := -DHAVE_ZLIB
 
@@ -92,13 +86,14 @@ else ifeq ($(platform), ios)
 		IOSSDK := $(shell xcrun -sdk iphoneos -show-sdk-path)
 	endif
 
-	CC = clang -arch armv7 -isysroot $(IOSSDK)
-	OSXVER = `sw_vers -productVersion | cut -d. -f 2`
-	OSX_LT_MAVERICKS = `(( $(OSXVER) <= 9)) && echo "YES"`
-	ifeq ($(OSX_LT_MAVERICKS),"YES")
-		CC += -miphoneos-version-min=5.0
-		PLATFORM_DEFINES += -miphoneos-version-min=5.0
-	endif
+	CC = cc -arch armv7 -isysroot $(IOSSDK)
+ifeq ($(platform),ios9)
+	CC += -miphoneos-version-min=8.0
+	PLATFORM_DEFINES += -miphoneos-version-min=8.0
+else
+	CC += -miphoneos-version-min=5.0
+	PLATFORM_DEFINES += -miphoneos-version-min=5.0
+endif
 
 # Theos
 else ifeq ($(platform), theos_ios)
@@ -118,7 +113,7 @@ else ifeq ($(platform), theos_ios)
 else ifeq ($(platform), qnx)
 	TARGET := $(TARGET_NAME)_libretro_qnx.so
 	fpic := -fPIC
-	SHARED := -shared -Wl,--version-script=libretro/link.T -Wl,--no-undefined 
+	SHARED := -shared -Wl,--version-script=libretro/link.T -Wl,--no-undefined
 	ENDIANNESS_DEFINES := -DLSB_FIRST -DBYTE_ORDER=LITTLE_ENDIAN
 	PLATFORM_DEFINES := -DHAVE_ZLIB
 	CC = qcc -Vgcc_ntoarmv7le
@@ -159,6 +154,29 @@ else ifeq ($(platform), psp1)
 	CFLAGS += -G0
 	STATIC_LINKING = 1
 
+# Vita
+else ifeq ($(platform), vita)
+	TARGET := $(TARGET_NAME)_libretro_vita.a$(EXE_EXT)
+	CC = arm-vita-eabi-gcc$(EXE_EXT)
+	AR = arm-vita-eabi-ar$(EXE_EXT)
+	CFLAGS += -O3 -mfloat-abi=hard -ffast-math -fsingle-precision-constant
+	ENDIANNESS_DEFINES := -DLSB_FIRST -DALIGN_LONG -DALT_RENDERER -DHAVE_ALLOCA_H -DBYTE_ORDER=LITTLE_ENDIAN
+	PLATFORM_DEFINES := -DVITA
+	STATIC_LINKING = 1
+
+# CTR (3DS)
+else ifeq ($(platform), ctr)
+	TARGET := $(TARGET_NAME)_libretro_ctr.a
+	CC = $(DEVKITARM)/bin/arm-none-eabi-gcc$(EXE_EXT)
+	AR = $(DEVKITARM)/bin/arm-none-eabi-ar$(EXE_EXT)
+	ENDIANNESS_DEFINES := -DLSB_FIRST -DALIGN_LONG -DBYTE_ORDER=LITTLE_ENDIAN -DUSE_DYNAMIC_ALLOC
+	PLATFORM_DEFINES := -DARM11 -D_3DS
+	CFLAGS += -march=armv6k -mtune=mpcore -mfloat-abi=hard -marm -mfpu=vfp
+	CFLAGS += -Wall -mword-relocations
+	CFLAGS += -fomit-frame-pointer -ffast-math
+	STATIC_LINKING = 1
+
+
 # Xbox 360
 else ifeq ($(platform), xenon)
 	TARGET := $(TARGET_NAME)_libretro_xenon360.a
@@ -190,7 +208,7 @@ else ifeq ($(platform), wii)
 else ifneq (,$(findstring armv,$(platform)))
 	TARGET := $(TARGET_NAME)_libretro.so
 	fpic := -fPIC
-	SHARED := -shared -Wl,--version-script=libretro/link.T -Wl,--no-undefined 
+	SHARED := -shared -Wl,--version-script=libretro/link.T -Wl,--no-undefined
 	ENDIANNESS_DEFINES := -DLSB_FIRST -DBYTE_ORDER=LITTLE_ENDIAN
 	PLATFORM_DEFINES := -DHAVE_ZLIB
 	ifneq (,$(findstring cortexa5,$(platform)))
@@ -220,7 +238,7 @@ else ifeq ($(platform), emscripten)
 else
 	TARGET := $(TARGET_NAME)_libretro.dll
 	CC = gcc
-	SHARED := -shared -static-libgcc -static-libstdc++ -Wl,--version-script=libretro/link.T -Wl,--no-undefined 
+	SHARED := -shared -static-libgcc -static-libstdc++ -Wl,--version-script=libretro/link.T -Wl,--no-undefined
 
 	ENDIANNESS_DEFINES := -DLSB_FIRST -DBYTE_ORDER=LITTLE_ENDIAN
 	PLATFORM_DEFINES := -DHAVE_ZLIB
@@ -252,7 +270,7 @@ ifeq ($(LOGSOUND), 1)
 	LIBRETRO_CFLAGS := -DLOGSOUND
 endif
 
-DEFINES := -DUSE_LIBTREMOR 
+DEFINES := -DUSE_LIBTREMOR
 CFLAGS += $(fpic) $(DEFINES) $(CODE_DEFINES)
 
 ifeq ($(FRONTEND_SUPPORTS_RGB565), 1)
@@ -291,7 +309,7 @@ $(TARGET): $(OBJECTS)
 ifeq ($(STATIC_LINKING), 1)
 	$(AR) rcs $@ $(OBJECTS)
 else
-	$(CC) -o $(TARGET) $(fpic) $(OBJECTS) $(LDFLAGS) $(SHARED) 
+	$(CC) -o $(TARGET) $(fpic) $(OBJECTS) $(LDFLAGS) $(SHARED)
 endif
 
 clean-objs:
