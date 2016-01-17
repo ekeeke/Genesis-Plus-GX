@@ -3,7 +3,7 @@
  *
  *   IPL font engine (using GX rendering)
  *
- *  Copyright Eke-Eke (2009-2013)
+ *  Copyright Eke-Eke (2009-2015)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -213,7 +213,7 @@ static void DrawChar(unsigned char c, int xpos, int ypos, int size, GXColor colo
   /* reinitialize font texture data */
   memset(fontTexture,0,fontHeader->cell_width * fontHeader->cell_height / 2);
   GetFontTexel(c,fontTexture,0,fontHeader->cell_width/2);
-  DCFlushRange(fontTexture, fontHeader->cell_width * fontHeader->cell_height / 2);
+  DCStoreRange(fontTexture, fontHeader->cell_width * fontHeader->cell_height / 2);
   GX_InvalidateTexAll();
 
   /* adjust texture width */

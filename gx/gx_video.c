@@ -3,7 +3,7 @@
  *
  *  Genesis Plus GX video & rendering support
  *
- *  Copyright Eke-Eke (2007-2014), based on original work from Softdev (2006)
+ *  Copyright Eke-Eke (2007-2015), based on original work from Softdev (2006)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -682,7 +682,7 @@ static void gxResetScaler(u32 width)
   square[2] = square[4] = xshift + xscale;
   square[1] = square[3] = yshift + yscale;
   square[5] = square[7] = yshift - yscale;
-  DCFlushRange(square, 32);
+  DCStoreRange(square, 32);
   GX_InvVtxCache();
 }
 
@@ -1057,7 +1057,7 @@ void gxCopyScreenshot(gx_texture *texture)
   GX_LoadTexObj(&texobj, GX_TEXMAP0);
   GX_InvalidateTexAll();
   GX_Flush();
-  DCFlushRange(texture->data, texture->width * texture->height * 4);
+  DCStoreRange(texture->data, texture->width * texture->height * 4);
 }
 
 /* Take Screenshot */
@@ -1310,8 +1310,8 @@ gx_texture *gxTextureOpenPNG(const u8 *png_data, FILE *png_file)
   /* release memory */
   free(img_data);
 
-  /* flush texture data from cache */
-  DCFlushRange(texture->data, height * stride);
+  /* force texture data update in memory */
+  DCStoreRange(texture->data, height * stride);
 
   return texture;
 }
@@ -1768,7 +1768,7 @@ int gx_video_Update(int status)
     /* texture is now directly mapped by the line renderer */
 
     /* force texture cache update */
-    DCFlushRange(bitmap.data, vwidth*vheight*2);
+    DCStoreRange(bitmap.data, vwidth*vheight*2);
     GX_InvalidateTexAll();
 
     /* disable EFB copy until rendering is done */

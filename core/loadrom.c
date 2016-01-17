@@ -725,8 +725,8 @@ int load_rom(char *filename)
     system_bios = (system_bios & 0xf0) | (region_code >> 4);
   }
 
-  /* ROM cartridge with CD loaded */
-  else if (cdd.loaded)
+  /* ROM cartridge (max. 8MB) with CD loaded */
+  else if ((cart.romsize <= 0x800000) && cdd.loaded)
   {
     /* try to load CD BOOTROM */
     if (load_bios(SYSTEM_MCD))

@@ -1,9 +1,11 @@
-/***************************************************************************************
- *  Genesis Plus
- *  2-Buttons, 3-Buttons & 6-Buttons controller support
- *  with support for J-Cart, 4-Way Play & Master Tap adapters
+/*
+ *  fileio.c
  *
- *  Copyright (C) 2007-2016  Eke-Eke (Genesis Plus GX)
+ *  Load a normal file, or ZIP/GZ archive.
+ *  Returns loaded ROM size (zero if an error occured)
+ *
+ *  Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003  Charles Mac Donald
+ *  modified by Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -37,26 +39,10 @@
  *
  ****************************************************************************************/
 
-#ifndef _GAMEPAD_H_
-#define _GAMEPAD_H_
+#ifndef _FILEIO_H_
+#define _FILEIO_H_
 
 /* Function prototypes */
-extern void gamepad_reset(int port);
-extern void gamepad_refresh(int port);
-extern void gamepad_end_frame(int port, unsigned int cycles);
-extern unsigned char gamepad_1_read(void);
-extern unsigned char gamepad_2_read(void);
-extern void gamepad_1_write(unsigned char data, unsigned char mask);
-extern void gamepad_2_write(unsigned char data, unsigned char mask);
-extern unsigned char wayplay_1_read(void);
-extern unsigned char wayplay_2_read(void);
-extern void wayplay_1_write(unsigned char data, unsigned char mask);
-extern void wayplay_2_write(unsigned char data, unsigned char mask);
-extern unsigned int jcart_read(unsigned int address);
-extern void jcart_write(unsigned int address, unsigned int data);
-extern unsigned char mastertap_1_read(void);
-extern unsigned char mastertap_2_read(void);
-extern void mastertap_1_write(unsigned char data, unsigned char mask);
-extern void mastertap_2_write(unsigned char data, unsigned char mask);
+extern int load_archive(char *filename, unsigned char *buffer, int maxsize, char *extension);
 
-#endif
+#endif /* _FILEIO_H_ */

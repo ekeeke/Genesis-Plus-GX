@@ -143,7 +143,7 @@ INLINE void WRITE_LONG(void *address, uint32 data)
   atex = atex_table[(ATTR >> 29) & 7]; \
   src = (uint32 *)&bg_pattern_cache[((ATTR & 0x03FF0000) >> 9 | (ATTR & 0x18000000) >> 10 | (LINE)) ^ ((ATTR & 0x10000000) >> 22)];
 
-/*   
+/*
    One column = 2 tiles
    Two pattern attributes are written in VRAM as two consecutives 16-bit words:
 
@@ -264,7 +264,7 @@ INLINE void WRITE_LONG(void *address, uint32 data)
 /* This might be faster or slower than original method, depending on  */
 /* architecture (x86, PowerPC), cache size, memory access speed, etc...  */
 
-#ifdef LSB_FIRST 
+#ifdef LSB_FIRST
 #define DRAW_BG_TILE(SRC_A, SRC_B) \
   *lb++ = table[((SRC_B << 8) & 0xff00) | (SRC_A & 0xff)]; \
   *lb++ = table[(SRC_B & 0xff00) | ((SRC_A >> 8) & 0xff)]; \
@@ -279,7 +279,7 @@ INLINE void WRITE_LONG(void *address, uint32 data)
 #endif
 
 #ifdef ALIGN_LONG
-#ifdef LSB_FIRST 
+#ifdef LSB_FIRST
 #define DRAW_BG_COLUMN(ATTR, LINE, SRC_A, SRC_B) \
   GET_LSB_TILE(ATTR, LINE) \
   SRC_A = READ_LONG((uint32 *)lb); \
@@ -325,7 +325,7 @@ INLINE void WRITE_LONG(void *address, uint32 data)
   DRAW_BG_TILE(SRC_A, SRC_B) \
   SRC_A = READ_LONG((uint32 *)lb); \
   SRC_B = (src[1] | atex); \
-  DRAW_BG_TILE(SRC_A, SRC_B) 
+  DRAW_BG_TILE(SRC_A, SRC_B)
 #define DRAW_BG_COLUMN_IM2(ATTR, LINE, SRC_A, SRC_B) \
   GET_MSB_TILE_IM2(ATTR, LINE) \
   SRC_A = READ_LONG((uint32 *)lb); \
@@ -343,7 +343,7 @@ INLINE void WRITE_LONG(void *address, uint32 data)
   DRAW_BG_TILE(SRC_A, SRC_B)
 #endif
 #else /* NOT ALIGNED */
-#ifdef LSB_FIRST 
+#ifdef LSB_FIRST
 #define DRAW_BG_COLUMN(ATTR, LINE, SRC_A, SRC_B) \
   GET_LSB_TILE(ATTR, LINE) \
   SRC_A = *(uint32 *)(lb); \
@@ -470,8 +470,11 @@ INLINE void WRITE_LONG(void *address, uint32 data)
 
 /* 5:5:5 RGB */
 #elif defined(USE_15BPP_RENDERING)
+#if defined(USE_ABGR)
+#define MAKE_PIXEL(r,g,b) ((1 << 15) | (b) << 11 | ((b) >> 3) << 10 | (g) << 6 | ((g) >> 3) << 5 | (r) << 1 | (r) >> 3)
+#else
 #define MAKE_PIXEL(r,g,b) ((1 << 15) | (r) << 11 | ((r) >> 3) << 10 | (g) << 6 | ((g) >> 3) << 5 | (b) << 1 | (b) >> 3)
-
+#endif
 /* 5:6:5 RGB */
 #elif defined(USE_16BPP_RENDERING)
 #define MAKE_PIXEL(r,g,b) ((r) << 12 | ((r) >> 3) << 11 | (g) << 7 | ((g) >> 2) << 5 | (b) << 1 | (b) >> 3)
@@ -573,7 +576,7 @@ static uint8 linebuf[2][0x200];
 static uint8 spr_ovr;
 
 /* Sprite parsing lists */
-typedef struct 
+typedef struct
 {
   uint16 ypos;
   uint16 xpos;
@@ -620,7 +623,7 @@ static void make_name_lut(void)
     if ((vrow > height) || vcol > width)
     {
       /* Invalid settings (unused) */
-      name_lut[i] = -1; 
+      name_lut[i] = -1;
     }
     else
     {
@@ -691,8 +694,8 @@ static uint32 make_lut_bg(uint32 bx, uint32 ax)
   int bf = (bx & 0x7F);
   int bp = (bx & 0x40);
   int b  = (bx & 0x0F);
-  
-  int af = (ax & 0x7F);   
+
+  int af = (ax & 0x7F);
   int ap = (ax & 0x40);
   int a  = (ax & 0x0F);
 
@@ -712,8 +715,8 @@ static uint32 make_lut_bg_ste(uint32 bx, uint32 ax)
   int bf = (bx & 0x7F);
   int bp = (bx & 0x40);
   int b  = (bx & 0x0F);
-  
-  int af = (ax & 0x7F);   
+
+  int af = (ax & 0x7F);
   int ap = (ax & 0x40);
   int a  = (ax & 0x0F);
 
@@ -761,7 +764,7 @@ static uint32 make_lut_bgobj(uint32 bx, uint32 sx)
   int bs = (bx & 0x80);
   int bp = (bx & 0x40);
   int b  = (bx & 0x0F);
-  
+
   int sf = (sx & 0x3F);
   int sp = (sx & 0x40);
   int s  = (sx & 0x0F);
@@ -897,7 +900,7 @@ static uint32 make_lut_bgobj_ste(uint32 bx, uint32 sx)
         }
       }
       else
-      {          
+      {
         c = (bf | bi);
       }
     }
@@ -914,7 +917,7 @@ static uint32 make_lut_bgobj_ste(uint32 bx, uint32 sx)
 static uint32 make_lut_bgobj_m4(uint32 bx, uint32 sx)
 {
   int c;
-  
+
   int bf = (bx & 0x3F);
   int bs = (bx & 0x80);
   int bp = (bx & 0x20);
@@ -971,7 +974,7 @@ static void palette_init(void)
   /*    GG mode  : xxxx     (0-15)                */
   /*                                              */
   /* with x = original CRAM value (2, 3 or 4-bit) */
-  /*  (*) 2-bit CRAM value is expanded to 4-bit   */  
+  /*  (*) 2-bit CRAM value is expanded to 4-bit   */
   /************************************************/
 
   /* Initialize Mode 5 pixel color look-up tables */
@@ -1308,7 +1311,7 @@ void render_bg_m3(int line)
   do
   {
     color = pg[*nt++ << 3];
-    
+
     *lb++ = 0x10 | ((color >> 4) & 0x0F);
     *lb++ = 0x10 | ((color >> 4) & 0x0F);
     *lb++ = 0x10 | ((color >> 4) & 0x0F);
@@ -1346,7 +1349,7 @@ void render_bg_m3x(int line)
   do
   {
     color = pg[*nt++ << 3];
-    
+
     *lb++ = 0x10 | ((color >> 4) & 0x0F);
     *lb++ = 0x10 | ((color >> 4) & 0x0F);
     *lb++ = 0x10 | ((color >> 4) & 0x0F);
@@ -1394,10 +1397,10 @@ void render_bg_m4(int line)
   int column;
   uint16 *nt;
   uint32 attr, atex, *src;
- 
+
   /* 32 x 8 pixels */
   int width = 32;
- 
+
   /* Horizontal scrolling */
   int index = ((reg[0] & 0x40) && (line < 0x10)) ? 0x100 : reg[0x08];
   int shift = index & 7;
@@ -1422,7 +1425,7 @@ void render_bg_m4(int line)
   {
     /* Vertical scroll mask */
     v_line = v_line % 256;
-    
+
     /* Pattern name Table */
     nt = (uint16 *)&vram[(0x3700 & nt_mask) + ((v_line >> 3) << 6)];
   }
@@ -1727,7 +1730,7 @@ void render_bg_m5_vs(int line)
     atbuf = nt[index & pf_col_mask];
     DRAW_COLUMN(atbuf, v_line)
   }
-  
+
   if (w == (line >= a))
   {
     /* Window takes up entire line */
@@ -1755,7 +1758,7 @@ void render_bg_m5_vs(int line)
 #else
     shift = (xscroll >> 16) & 0x0F;
     index = pf_col_mask + start + 1 - ((xscroll >> 20) & pf_col_mask);
-#endif 
+#endif
 
     if(shift)
     {
@@ -2315,7 +2318,7 @@ void render_bg_m5(int line)
 
   /* Plane B name table */
   nt = (uint32 *)&vram[ntbb + (((v_line >> 3) << pf_shift) & 0x1FC0)];
-  
+
   /* Pattern row index */
   v_line = (v_line & 7) << 3;
 
@@ -2330,7 +2333,7 @@ void render_bg_m5(int line)
     atbuf = nt[(index-1) & pf_col_mask];
     DRAW_BG_COLUMN(atbuf, v_line, xscroll, yscroll)
   }
- 
+
   for(column = 0; column < width; column++, index++)
   {
     atbuf = nt[index & pf_col_mask];
@@ -2555,7 +2558,7 @@ void render_bg_m5_im2(int line)
 
   /* Window vertical range (cell 0-31) */
   int a = (reg[18] & 0x1F) << 3;
-  
+
   /* Window position (0=top, 1=bottom) */
   int w = (reg[18] >> 7) & 1;
 
@@ -2714,7 +2717,7 @@ void render_bg_m5_im2_vs(int line)
 
   /* Window vertical range (cell 0-31) */
   uint32 a = (reg[18] & 0x1F) << 3;
-  
+
   /* Window position (0=top, 1=bottom) */
   uint32 w = (reg[18] >> 7) & 1;
 
@@ -3037,7 +3040,7 @@ void render_obj_m4(int line)
 
   /* Default sprite width */
   int width = 8;
-  
+
   /* Sprite Generator address mask (LSB is masked for 8x16 sprites) */
   uint16 sg_mask = (~0x1C0 ^ (reg[6] << 6)) & (~((reg[1] & 0x02) >> 1));
 
@@ -3099,7 +3102,7 @@ void render_obj_m4(int line)
     {
       /* Draw sprite pattern (zoomed sprites are rendered at half speed) */
       DRAW_SPRITE_TILE_ACCURATE_2X(end,0,lut[5])
-      
+
       /* 315-5124 VDP specific */
       if (system_hw < SYSTEM_SMS2)
       {
@@ -3697,7 +3700,7 @@ void parse_satb_m4(int line)
 
   /* Y position */
   int ypos;
-  
+
   /* Sprite list for next line */
   object_info_t *object_info = obj_info[(line + 1) & 1];
 
@@ -3837,11 +3840,11 @@ void parse_satb_m5(int line)
           break;
         }
 
-        /* Update sprite list (only name, attribute & xpos are parsed from VRAM) */ 
+        /* Update sprite list (only name, attribute & xpos are parsed from VRAM) */
         object_info->attr  = p[link + 2];
         object_info->xpos  = p[link + 3] & 0x1ff;
         object_info->ypos  = ypos;
-        object_info->size  = size & 0x0f; 
+        object_info->size  = size & 0x0f;
 
         /* Increment Sprite count */
         ++count;
@@ -3851,7 +3854,7 @@ void parse_satb_m5(int line)
       }
     }
 
-    /* Read link data from internal SAT cache */ 
+    /* Read link data from internal SAT cache */
     link = (q[link + 1] & 0x7F) << 2;
 
     /* Stop parsing if link data points to first entry (#0) or after the last entry (#64 in H32 mode, #80 in H40 mode) */

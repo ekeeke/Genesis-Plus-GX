@@ -3,7 +3,7 @@
 Genesis Plus GX 1.7.5 (xx/xx/xxxx) (Eke-Eke)
 ---------------------------------------------------------------------------------------------------------
 
-[Core/General]
+[Core/Misc]
 ---------------
 * added optional dynamic allocation of cartridge/CD hardware buffer (for platforms with BSS size limitation)
 * improved frame emulation timing, now starts with vertical blanking to reduce input lag by one more frame
@@ -40,6 +40,7 @@ Genesis Plus GX 1.7.5 (xx/xx/xxxx) (Eke-Eke)
 * added support for some new unlicensed games with copy protection (Thunderbolt II, Tom Clown, Chaoji Puke / Super Poker)
 * added support for Everdrive extended SSF mapper
 * improved console region auto-detection for a few PAL-only games (The Smurfs Travel the World & Williams Arcade's Greatest Hits)
+* improved I2C EEPROM boards emulation accuracy
 * fixed Game Genie / Pro Action Replay lock-on support when Mega CD hardware is enabled 
 * fixed SRAM support in Triple Play 96 & Triple Play - Gold Edition
 * fixed automatic CD loading with .md ROM files
@@ -80,6 +81,7 @@ Genesis Plus GX 1.7.5 (xx/xx/xxxx) (Eke-Eke)
 * added support for XE-1AP controller on both ports 
 * improved XE-1AP controller emulation
 * improved HVC latch behavior for gun emulation (fixes "Gunfight - 3 in 1" randomization when using Justifier)
+* improved control pad emulation accuracy (verified on real hardware)
 * fixed TeamPlayer emulation (fixes multitap detection in Gauntlet 4)
 
 [Core/VDP]
@@ -135,6 +137,10 @@ Genesis Plus GX 1.7.5 (xx/xx/xxxx) (Eke-Eke)
 [GCW0]
 ---------------
 * added GCW Zero port by Shin-NiL & David Knight (based on SDL port)
+
+[PSP2]
+---------------
+* added PS VITA port by frangarcj
 
 [libretro]
 ---------------

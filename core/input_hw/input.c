@@ -3,7 +3,7 @@
  *  Input peripherals support
  *
  *  Copyright (C) 1998-2003  Charles Mac Donald (original code)
- *  Copyright (C) 2007-2015  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2007-2016  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -459,6 +459,23 @@ void input_refresh(void)
       case DEVICE_LIGHTGUN:
       {
         lightgun_refresh(i);
+        break;
+      }
+    }
+  }
+}
+
+void input_end_frame(unsigned int cycles)
+{
+  int i;
+  for (i=0; i<MAX_DEVICES; i++)
+  {
+    switch (input.dev[i])
+    {
+      case DEVICE_PAD3B:
+      case DEVICE_PAD6B:
+      {
+        gamepad_end_frame(i, cycles);
         break;
       }
     }
