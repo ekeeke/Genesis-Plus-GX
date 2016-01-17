@@ -1,9 +1,9 @@
 /***************************************************************************************
  *  Genesis Plus
  *  2-Buttons, 3-Buttons & 6-Buttons controller support
- *  Additional support for J-Cart, 4-Way Play & Master Tap adapters
+ *  with support for J-Cart, 4-Way Play & Master Tap adapters
  *
- *  Copyright (C) 2007-2015  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2007-2016  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -45,6 +45,7 @@ static struct
   uint8 State;
   uint8 Counter;
   uint8 Timeout;
+  uint32 Latency;
 } gamepad[MAX_DEVICES];
 
 static struct
@@ -62,6 +63,7 @@ void gamepad_reset(int port)
   gamepad[port].State = 0x40;
   gamepad[port].Counter = 0;
   gamepad[port].Timeout = 0;
+  gamepad[port].Latency = 0;
 
   /* reset 4-WayPlay latch */
   latch = 0;
@@ -81,18 +83,43 @@ void gamepad_refresh(int port)
   }
 }
 
+void gamepad_end_frame(int port, unsigned int cycles)
+{
+  if (gamepad[port].Latency > cycles)
+  {
+    /* adjust TH direction switching latency for next frame */
+    gamepad[port].Latency -= cycles;
+  }
+  else
+  {
+    /* reset TH direction switching latency */
+    gamepad[port].Latency = 0;
+  }
+}
+
 INLINE unsigned char gamepad_read(int port)
 {
   /* D7 is not connected, D6 returns TH input state */
   unsigned int data = gamepad[port].State | 0x3F;
 
-  /* pad value */
-  unsigned int val = input.pad[port];
+  /* pad state */
+  unsigned int pad = input.pad[port];
 
   /* get current TH input pulse counter */
   unsigned int step = gamepad[port].Counter | (data >> 6);
 
-  /* D-PAD & buttons status are returned on D5-D0 (active low) */
+  /* get current timestamp */
+  unsigned int cycles = ((system_hw & SYSTEM_PBC) == SYSTEM_MD) ? m68k.cycles : Z80.cycles;
+
+  /* TH direction switching latency */
+  if (cycles < gamepad[port].Latency)
+  {
+    /* TH internal state switching has not occured yet (Decap Attack) */
+    step &= ~1;
+  }
+
+  /* C/B or START/A buttons status is returned on D5-D4 (active low) */
+  /* D-PAD or extra buttons status is returned on D3-D0 (active low) */
   switch (step)
   {
     case 1: /*** First High  ***/
@@ -100,25 +127,24 @@ INLINE unsigned char gamepad_read(int port)
     case 5: /*** Third High  ***/
     {
       /* TH = 1 : ?1CBRLDU */
-      data &= ~(val & 0x3F);
+      data &= ~(pad & 0x3F);
       break;
     }
 
-    case 0: /*** First Low  ***/
-    case 2: /*** Second Low ***/
+    case 0: /*** 3-button only ***/
+    case 2: /*** First Low ***/
+    case 4: /*** Second Low ***/
     {
       /* TH = 0 : ?0SA00DU */
-      data &= ~(val & 0x03);
-      data &= ~((val >> 2) & 0x30);
-      data &= ~0x0C;
+      data &= ~((pad & 0x03) | ((pad >> 2) & 0x30) | 0x0C);
       break;
     }
 
-    /* 6-buttons specific (taken from gen-hw.txt) */
     /* A 6-button gamepad allows the extra buttons to be read based on how */
-    /* many times TH is switched from 1 to 0 (and not 0 to 1). Observe the */
-    /* following sequence */
+    /* many times TH is switched from 1 to 0. Observe the following sequence */
     /*
+       TH = 1 : ?1CBRLDU    3-button pad return value
+       TH = 0 : ?0SA00DU    3-button pad return value
        TH = 1 : ?1CBRLDU    3-button pad return value
        TH = 0 : ?0SA00DU    3-button pad return value
        TH = 1 : ?1CBRLDU    3-button pad return value
@@ -126,27 +152,32 @@ INLINE unsigned char gamepad_read(int port)
        TH = 1 : ?1CBMXYZ    Extra buttons returned in D3-0
        TH = 0 : ?0SA1111    D3-D0 are forced to '1'
     */
-    case 4: /*** Third Low ***/
+    case 6: /*** Third Low ***/
     {
       /* TH = 0 : ?0SA0000    D3-D0 forced to '0' */
-      data &= ~((val >> 2) & 0x30);
-      data &= ~0x0F;
-      break;
-    }
-
-    case 6: /*** Fourth Low ***/
-    {
-      /* TH = 0 : ?0SA1111    D3-D0 forced to '1' */
-      data &= ~((val >> 2) & 0x30);
+      data &= ~(((pad >> 2) & 0x30) | 0x0F);
       break;
     }
 
     case 7: /*** Fourth High ***/
     {
       /* TH = 1 : ?1CBMXYZ    Extra buttons returned in D3-D0 */
-      data &= ~(val & 0x30);
-      data &= ~((val >> 8) & 0x0F);
+      data &= ~((pad & 0x30) | ((pad >> 8) & 0x0F));
       break;
+    }
+
+    default: /*** D3-D0 forced to '1' ***/
+    {
+      if (data & 0x40)
+      {
+        /* TH = 1 : ?0CB1111 */
+        data &= ~(pad & 0x30);
+      }
+      else
+      {
+        /* TH = 0 : ?0SA1111 */
+        data &= ~((pad >> 2) & 0x30);
+      }
     }
   }
 
@@ -155,24 +186,44 @@ INLINE unsigned char gamepad_read(int port)
 
 INLINE void gamepad_write(int port, unsigned char data, unsigned char mask)
 {
-  /* retrieve TH input state (pulled high when not configured as output by I/O controller) */
-  data = ((data & mask) | ~mask) & 0x40;
-
-  /* 6-Buttons controller specific */
-  if (input.dev[port] == DEVICE_PAD6B)
+  /* Check TH pin direction */
+  if (mask & 0x40)
   {
-    /* TH=0 to TH=1 transition */
-    if (!gamepad[port].State && data)
+    /* get TH output state */
+    data &= 0x40;
+
+    /* reset TH direction switching latency */
+    gamepad[port].Latency = 0;
+
+    /* 6-Buttons controller specific */
+    if (input.dev[port] == DEVICE_PAD6B)
     {
-      gamepad[port].Counter = (gamepad[port].Counter + 2) & 6;
-      gamepad[port].Timeout = 0;
+      /* TH 1->0 transition */
+      if (!data && gamepad[port].State)
+      {
+        gamepad[port].Counter += 2;
+        gamepad[port].Timeout = 0;
+      }
+    }
+  }
+  else
+  {
+    /* retrieve current timestamp */
+    unsigned int cycles = ((system_hw & SYSTEM_PBC) == SYSTEM_MD) ? m68k.cycles : Z80.cycles;
+
+    /* TH is pulled high when not configured as output by I/O controller output */
+    data = 0x40;
+
+    /* TH 0->1 internal switching does not occur immediately (verified on MK-1650 model) */
+    if (!gamepad[port].State)
+    {
+      gamepad[port].Latency = cycles + 172;
     }
   }
 
   /* update TH input state */
   gamepad[port].State = data;
 }
-
 
 /*--------------------------------------------------------------------------*/
 /*  Default ports handlers                                                  */
@@ -285,7 +336,7 @@ void mastertap_2_write(unsigned char data, unsigned char mask)
   /* update bits set as output only */
   data = (flipflop[1].Latch & ~mask) | (data & mask);
   
-  /* check TH=1 to TH=0 transition */
+  /* check TH 1->0 transition */
   if ((flipflop[1].Latch & 0x40) && !(data & 0x40))
   {
     flipflop[1].Counter = (flipflop[1].Counter + 1) & 0x03;
