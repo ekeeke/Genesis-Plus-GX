@@ -2,7 +2,7 @@
  *  Genesis Plus
  *  I2C serial EEPROM (24Cxx) boards
  *
- *  Copyright (C) 2007-2015  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2007-2016  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -121,39 +121,39 @@ static void mapper_i2c_jcart_init(void);
 
 static const T_I2C_GAME i2c_database[] = 
 {
-  {"T-50176"  , 0          , 0      , mapper_i2c_ea_init          , EEPROM_X24C01 }, /* Rings of Power */
-  {"T-50396"  , 0          , 0      , mapper_i2c_ea_init          , EEPROM_X24C01 }, /* NHLPA Hockey 93 */
-  {"T-50446"  , 0          , 0      , mapper_i2c_ea_init          , EEPROM_X24C01 }, /* John Madden Football 93 */
-  {"T-50516"  , 0          , 0      , mapper_i2c_ea_init          , EEPROM_X24C01 }, /* John Madden Football 93 (Championship Ed.) */
-  {"T-50606"  , 0          , 0      , mapper_i2c_ea_init          , EEPROM_X24C01 }, /* Bill Walsh College Football */
-  {"T-12046"  , 0          , 0      , mapper_i2c_sega_init        , EEPROM_X24C01 }, /* Megaman - The Wily Wars */
-  {"T-12053"  , 0          , 0xEA80 , mapper_i2c_sega_init        , EEPROM_X24C01 }, /* Rockman Mega World */
-  {"MK-1215"  , 0          , 0      , mapper_i2c_sega_init        , EEPROM_X24C01 }, /* Evander 'Real Deal' Holyfield's Boxing */
-  {"MK-1228"  , 0          , 0      , mapper_i2c_sega_init        , EEPROM_X24C01 }, /* Greatest Heavyweights of the Ring (U)(E) */
-  {"G-5538"   , 0          , 0      , mapper_i2c_sega_init        , EEPROM_X24C01 }, /* Greatest Heavyweights of the Ring (J) */
-  {"PR-1993"  , 0          , 0      , mapper_i2c_sega_init        , EEPROM_X24C01 }, /* Greatest Heavyweights of the Ring (Prototype) */
-  {"G-4060"   , 0          , 0      , mapper_i2c_sega_init        , EEPROM_X24C01 }, /* Wonderboy in Monster World */
-  {"00001211" , 0          , 0      , mapper_i2c_sega_init        , EEPROM_X24C01 }, /* Sports Talk Baseball */
-  {"00004076" , 0          , 0      , mapper_i2c_sega_init        , EEPROM_X24C01 }, /* Honoo no Toukyuuji Dodge Danpei */
-  {"G-4524"   , 0          , 0      , mapper_i2c_sega_init        , EEPROM_X24C01 }, /* Ninja Burai Densetsu */
-  {"00054503" , 0          , 0      , mapper_i2c_sega_init        , EEPROM_X24C01 }, /* Game Toshokan  */
-  {"T-81033"  , 0          , 0      , mapper_i2c_acclaim_16M_init , EEPROM_X24C02 }, /* NBA Jam (J) */
-  {"T-081326" , 0          , 0      , mapper_i2c_acclaim_16M_init , EEPROM_X24C02 }, /* NBA Jam (UE) */
-  {"T-081276" , 0          , 0      , mapper_i2c_acclaim_32M_init , EEPROM_24C02  }, /* NFL Quarterback Club */
-  {"T-81406"  , 0          , 0      , mapper_i2c_acclaim_32M_init , EEPROM_24C04  }, /* NBA Jam TE */
-  {"T-081586" , 0          , 0      , mapper_i2c_acclaim_32M_init , EEPROM_24C16  }, /* NFL Quarterback Club '96 */
-  {"T-81476"  , 0          , 0      , mapper_i2c_acclaim_32M_init , EEPROM_24C65  }, /* Frank Thomas Big Hurt Baseball */
-  {"T-81576"  , 0          , 0      , mapper_i2c_acclaim_32M_init , EEPROM_24C65  }, /* College Slam */
-  {"T-120106" , 0          , 0      , mapper_i2c_jcart_init       , EEPROM_24C08  }, /* Brian Lara Cricket */
-  {"00000000" , 0x444e4c44 , 0x168B , mapper_i2c_jcart_init       , EEPROM_24C08  }, /* Micro Machines Military */
-  {"00000000" , 0x444e4c44 , 0x165E , mapper_i2c_jcart_init       , EEPROM_24C16  }, /* Micro Machines Turbo Tournament 96 */
-  {"T-120096" , 0          , 0      , mapper_i2c_jcart_init       , EEPROM_24C16  }, /* Micro Machines 2 - Turbo Tournament */
-  {"T-120146" , 0          , 0      , mapper_i2c_jcart_init       , EEPROM_24C65  }, /* Brian Lara Cricket 96 / Shane Warne Cricket */
-  {"00000000" , 0xfffffffc , 0x168B , mapper_i2c_jcart_init       , NO_EEPROM     }, /* Super Skidmarks */
-  {"00000000" , 0xfffffffc , 0x165E , mapper_i2c_jcart_init       , NO_EEPROM     }, /* Pete Sampras Tennis (Prototype) */
-  {"T-120066" , 0          , 0      , mapper_i2c_jcart_init       , NO_EEPROM     }, /* Pete Sampras Tennis */
-  {"T-123456" , 0          , 0      , mapper_i2c_jcart_init       , NO_EEPROM     }, /* Pete Sampras Tennis 96 */
-  {"XXXXXXXX" , 0          , 0xDF39 , mapper_i2c_jcart_init       , NO_EEPROM     }, /* Pete Sampras Tennis 96 (Prototype ?) */
+  {"T-50176"    , 0          , 0      , mapper_i2c_ea_init          , EEPROM_X24C01 }, /* Rings of Power */
+  {"T-50396"    , 0          , 0      , mapper_i2c_ea_init          , EEPROM_X24C01 }, /* NHLPA Hockey 93 */
+  {"T-50446"    , 0          , 0      , mapper_i2c_ea_init          , EEPROM_X24C01 }, /* John Madden Football 93 */
+  {"T-50516"    , 0          , 0      , mapper_i2c_ea_init          , EEPROM_X24C01 }, /* John Madden Football 93 (Championship Ed.) */
+  {"T-50606"    , 0          , 0      , mapper_i2c_ea_init          , EEPROM_X24C01 }, /* Bill Walsh College Football (warning: invalid SRAM header !) */
+  {"GM T-12046" , 0          , 0      , mapper_i2c_sega_init        , EEPROM_X24C01 }, /* Megaman - The Wily Wars (warning: SRAM hack exists !) */
+  {"GM T-12053" , 0          , 0      , mapper_i2c_sega_init        , EEPROM_X24C01 }, /* Rockman Mega World (warning: SRAM hack exists !) */
+  {"MK-1215"    , 0          , 0      , mapper_i2c_sega_init        , EEPROM_X24C01 }, /* Evander 'Real Deal' Holyfield's Boxing */
+  {"MK-1228"    , 0          , 0      , mapper_i2c_sega_init        , EEPROM_X24C01 }, /* Greatest Heavyweights of the Ring (U)(E) */
+  {"G-5538"     , 0          , 0      , mapper_i2c_sega_init        , EEPROM_X24C01 }, /* Greatest Heavyweights of the Ring (J) */
+  {"PR-1993"    , 0          , 0      , mapper_i2c_sega_init        , EEPROM_X24C01 }, /* Greatest Heavyweights of the Ring (Prototype) */
+  {"GM G-4060"  , 0          , 0      , mapper_i2c_sega_init        , EEPROM_X24C01 }, /* Wonderboy in Monster World (warning: SRAM hack exists !) */
+  {"00001211"   , 0          , 0      , mapper_i2c_sega_init        , EEPROM_X24C01 }, /* Sports Talk Baseball */
+  {"00004076"   , 0          , 0      , mapper_i2c_sega_init        , EEPROM_X24C01 }, /* Honoo no Toukyuuji Dodge Danpei */
+  {"G-4524"     , 0          , 0      , mapper_i2c_sega_init        , EEPROM_X24C01 }, /* Ninja Burai Densetsu */
+  {"00054503"   , 0          , 0      , mapper_i2c_sega_init        , EEPROM_X24C01 }, /* Game Toshokan  */
+  {"T-81033"    , 0          , 0      , mapper_i2c_acclaim_16M_init , EEPROM_X24C02 }, /* NBA Jam (J) */
+  {"T-081326"   , 0          , 0      , mapper_i2c_acclaim_16M_init , EEPROM_X24C02 }, /* NBA Jam (UE) */
+  {"T-081276"   , 0          , 0      , mapper_i2c_acclaim_32M_init , EEPROM_24C02  }, /* NFL Quarterback Club */
+  {"T-81406"    , 0          , 0      , mapper_i2c_acclaim_32M_init , EEPROM_24C04  }, /* NBA Jam TE */
+  {"T-081586"   , 0          , 0      , mapper_i2c_acclaim_32M_init , EEPROM_24C16  }, /* NFL Quarterback Club '96 */
+  {"T-81476"    , 0          , 0      , mapper_i2c_acclaim_32M_init , EEPROM_24C65  }, /* Frank Thomas Big Hurt Baseball */
+  {"T-81576"    , 0          , 0      , mapper_i2c_acclaim_32M_init , EEPROM_24C65  }, /* College Slam */
+  {"T-120106"   , 0          , 0      , mapper_i2c_jcart_init       , EEPROM_24C08  }, /* Brian Lara Cricket */
+  {"00000000"   , 0x444e4c44 , 0x168B , mapper_i2c_jcart_init       , EEPROM_24C08  }, /* Micro Machines Military */
+  {"00000000"   , 0x444e4c44 , 0x165E , mapper_i2c_jcart_init       , EEPROM_24C16  }, /* Micro Machines Turbo Tournament 96 */
+  {"T-120096"   , 0          , 0      , mapper_i2c_jcart_init       , EEPROM_24C16  }, /* Micro Machines 2 - Turbo Tournament */
+  {"T-120146"   , 0          , 0      , mapper_i2c_jcart_init       , EEPROM_24C65  }, /* Brian Lara Cricket 96 / Shane Warne Cricket */
+  {"00000000"   , 0xfffffffc , 0x168B , mapper_i2c_jcart_init       , NO_EEPROM     }, /* Super Skidmarks */
+  {"00000000"   , 0xfffffffc , 0x165E , mapper_i2c_jcart_init       , NO_EEPROM     }, /* Pete Sampras Tennis (Prototype) */
+  {"T-120066"   , 0          , 0      , mapper_i2c_jcart_init       , NO_EEPROM     }, /* Pete Sampras Tennis */
+  {"T-123456"   , 0          , 0      , mapper_i2c_jcart_init       , NO_EEPROM     }, /* Pete Sampras Tennis 96 */
+  {"XXXXXXXX"   , 0          , 0xDF39 , mapper_i2c_jcart_init       , NO_EEPROM     }, /* Pete Sampras Tennis 96 (Prototype ?) */
 };
 
 static struct
@@ -198,6 +198,12 @@ void eeprom_i2c_init()
     /* check game internal id code */
     if (strstr(rominfo.product, i2c_database[i].id))
     {
+      /* additional check for known SRAM-patched hacks */
+      if ((strstr(i2c_database[i].id, "GM")) && ((sram.end - sram.start) > 2))
+      {
+        break;
+      }
+
       /* additional check for Codemasters games */
       if (((i2c_database[i].chk == 0) || (i2c_database[i].chk == rominfo.checksum)) &&
           ((i2c_database[i].sp == 0) || (i2c_database[i].sp == READ_WORD_LONG(cart.rom, 0))))
