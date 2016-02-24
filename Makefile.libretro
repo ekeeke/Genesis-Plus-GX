@@ -184,7 +184,7 @@ else ifeq ($(platform), rpi2)
         PLATFORM_DEFINES := -DHAVE_ZLIB
         PLATFORM_DEFINES += -DARM
         PLATFORM_DEFINES += -marm -mcpu=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard -funsafe-math-optimizations
-        ENDIANNESS_DEFINES := -DLSB_FIRST -DALIGN_LONG -DBYTE_ORDER=LITTLE_ENDIAN -DUSE_DYNAMIC_ALLOC
+        ENDIANNESS_DEFINES := -DLSB_FIRST -DALIGN_LONG -DBYTE_ORDER=LITTLE_ENDIAN
         CFLAGS += -fomit-frame-pointer -ffast-math
         CXXFLAGS = $(CFLAGS) -fno-rtti -fno-exceptions -std=gnu++11
 
