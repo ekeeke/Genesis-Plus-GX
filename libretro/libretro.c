@@ -1910,7 +1910,7 @@ void retro_deinit(void)
 
 }
 
-void retro_reset(void) { system_reset(); }
+void retro_reset(void) { gen_reset(0); }
 
 void retro_run(void) 
 {
