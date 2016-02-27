@@ -182,7 +182,7 @@ else ifeq ($(platform), rpi1)
 	fpic := -fPIC
 	SHARED := -shared -Wl,--version-script=libretro/link.T -Wl,--no-undefined
 	PLATFORM_DEFINES := -DHAVE_ZLIB
-	PLATFORM_DEFINES += -DARM
+	PLATFORM_DEFINES += -DARM11
 	PLATFORM_DEFINES += -marm -march=armv6j -mfloat-abi=hard -mfpu=vfp -funsafe-math-optimizations
 	ENDIANNESS_DEFINES := -DLSB_FIRST -DALIGN_LONG -DBYTE_ORDER=LITTLE_ENDIAN
 	CFLAGS += -fomit-frame-pointer -ffast-math
