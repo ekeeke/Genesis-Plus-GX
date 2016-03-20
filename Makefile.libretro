@@ -176,6 +176,29 @@ else ifeq ($(platform), ctr)
 	CFLAGS += -fomit-frame-pointer -ffast-math
 	STATIC_LINKING = 1
 
+# Raspberry Pi 1
+else ifeq ($(platform), rpi1)
+	TARGET := $(TARGET_NAME)_libretro.so
+	fpic := -fPIC
+	SHARED := -shared -Wl,--version-script=libretro/link.T -Wl,--no-undefined
+	PLATFORM_DEFINES := -DHAVE_ZLIB
+	PLATFORM_DEFINES += -DARM11
+	PLATFORM_DEFINES += -marm -march=armv6j -mfloat-abi=hard -mfpu=vfp -funsafe-math-optimizations
+	ENDIANNESS_DEFINES := -DLSB_FIRST -DALIGN_LONG -DBYTE_ORDER=LITTLE_ENDIAN
+	CFLAGS += -fomit-frame-pointer -ffast-math
+	CXXFLAGS = $(CFLAGS) -fno-rtti -fno-exceptions -std=gnu++11
+
+# Raspberry Pi 2
+else ifeq ($(platform), rpi2)
+	TARGET := $(TARGET_NAME)_libretro.so
+	fpic := -fPIC
+	SHARED := -shared -Wl,--version-script=libretro/link.T -Wl,--no-undefined
+	PLATFORM_DEFINES := -DHAVE_ZLIB
+	PLATFORM_DEFINES += -DARM
+	PLATFORM_DEFINES += -marm -mcpu=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard -funsafe-math-optimizations
+	ENDIANNESS_DEFINES := -DLSB_FIRST -DALIGN_LONG -DBYTE_ORDER=LITTLE_ENDIAN
+	CFLAGS += -fomit-frame-pointer -ffast-math
+	CXXFLAGS = $(CFLAGS) -fno-rtti -fno-exceptions -std=gnu++11
 
 # Xbox 360
 else ifeq ($(platform), xenon)
@@ -232,7 +255,19 @@ else ifneq (,$(findstring armv,$(platform)))
 # emscripten
 else ifeq ($(platform), emscripten)
 	TARGET := $(TARGET_NAME)_libretro_emscripten.bc
-	ENDIANNESS_DEFINES := -DLSB_FIRST -DBYTE_ORDER=LITTLE_ENDIAN
+	ENDIANNESS_DEFINES := -DLSB_FIRST -DALIGN_LONG -DHAVE_ALLOCA_H -DUSE_DYNAMIC_ALLOC -DUSE_MEMORY_H -DBYTE_ORDER=BIG_ENDIAN -DHAVE_ZLIB
+
+# GCW0
+else ifeq ($(platform), gcw0)
+	TARGET := $(TARGET_NAME)_libretro.so
+	CC = /opt/gcw0-toolchain/usr/bin/mipsel-linux-gcc
+	CXX = /opt/gcw0-toolchain/usr/bin/mipsel-linux-g++
+	AR = /opt/gcw0-toolchain/usr/bin/mipsel-linux-ar
+	SHARED := -shared -Wl,--version-script=libretro/link.T -Wl,--no-undefined
+	fpic := -fPIC
+	LDFLAGS += $(PTHREAD_FLAGS)
+	CFLAGS += $(PTHREAD_FLAGS) -DHAVE_MKDIR
+	CFLAGS += -ffast-math -march=mips32 -mtune=mips32r2 -mhard-float
 
 # Windows
 else
