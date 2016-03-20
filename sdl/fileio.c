@@ -121,7 +121,7 @@ int load_archive(char *filename, unsigned char *buffer, int maxsize, char *exten
   else
   {
     /* Open file */
-    gzFile *gd = gzopen(filename, "rb");
+    gzFile gd = gzopen(filename, "rb");
     if (!gd) return 0;
 
     /* Read file data */
