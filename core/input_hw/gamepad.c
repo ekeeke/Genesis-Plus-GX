@@ -65,8 +65,8 @@ void gamepad_reset(int port)
   gamepad[port].Timeout = 0;
   gamepad[port].Latency = 0;
 
-  /* reset 4-WayPlay latch */
-  latch = 0;
+  /* reset 4-WayPlay latch (controller #0 used by default) */
+  latch = 0x00;
 
   /* reset Master Tap flip-flop */
   flipflop[port>>2].Latch = 0;
@@ -211,7 +211,7 @@ INLINE void gamepad_write(int port, unsigned char data, unsigned char mask)
     /* retrieve current timestamp */
     unsigned int cycles = ((system_hw & SYSTEM_PBC) == SYSTEM_MD) ? m68k.cycles : Z80.cycles;
 
-    /* TH is pulled high when not configured as output by I/O controller output */
+    /* TH is pulled high when not configured as output by I/O controller */
     data = 0x40;
 
     /* TH 0->1 internal switching does not occur immediately (verified on MK-1650 model) */
@@ -255,14 +255,14 @@ void gamepad_2_write(unsigned char data, unsigned char mask)
 
 unsigned char wayplay_1_read(void)
 {
-  /* check if TH on port B is HIGH */
+  /* check if latched TH input on port B is HIGH */
   if (latch & 0x04)
   {
     /* 4-WayPlay detection : xxxxx00 */
     return 0x7C;
   }
 
-  /* TR & TL on port B select controller # (0-3) */
+  /* latched TR & TL input state on port B select controller # (0-3) on port A */
   return gamepad_read(latch);
 }
 
@@ -273,14 +273,21 @@ unsigned char wayplay_2_read(void)
 
 void wayplay_1_write(unsigned char data, unsigned char mask)
 {
-  /* TR & TL on port B select controller # (0-3) */
+  /* latched TR & TL input state on port B select controller # (0-3) on port A */
   gamepad_write(latch & 0x03, data, mask);
 }
 
 void wayplay_2_write(unsigned char data, unsigned char mask)
 {
-  /* latch TH, TR & TL state on port B */
-  latch = ((data & mask) >> 4) & 0x07;
+  /* pins not configured as output by I/O controller are pulled HIGH */
+  data |= ~mask;
+
+  /* check if both UP & DOWN inputs are LOW */
+  if (!(data & 0x03))
+  {
+    /* latch TH, TR & TL input state */
+    latch = (data >> 4) & 0x07;
+  }
 }
 
 
