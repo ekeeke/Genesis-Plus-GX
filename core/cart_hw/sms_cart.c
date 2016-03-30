@@ -2,7 +2,7 @@
  *  Genesis Plus
  *  SG-1000, Master System & Game Gear cartridge hardware support
  *
- *  Copyright (C) 2007-2015  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2007-2016  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -72,7 +72,7 @@ typedef struct
 {
   uint8 fcr[4];
   uint8 mapper;
-  uint8 pages;
+  uint16 pages;
 } romhw_t;
 
 static const rominfo_t game_list[] =
@@ -363,7 +363,7 @@ static struct
   uint8 *rom;
   uint8 *fcr;
   uint8 mapper;
-  uint8 pages;
+  uint16 pages;
 } slot;
 
 /* Function prototypes */

@@ -56,6 +56,7 @@ Genesis Plus GX 1.7.5 (xx/xx/xxxx) (Eke-Eke)
 * improved emulation accuracy of SG-1000 & Mark-III hardware
 * improved emulation accuracy of Japanese Master System I/O chip (315-5297)
 * fixed Boot ROM loading when switching system hardware
+* fixed 4MB ROM support
 
 [Core/GG]
 ---------------
@@ -82,6 +83,7 @@ Genesis Plus GX 1.7.5 (xx/xx/xxxx) (Eke-Eke)
 * improved XE-1AP controller emulation
 * improved HVC latch behavior for gun emulation (fixes "Gunfight - 3 in 1" randomization when using Justifier)
 * improved control pad emulation accuracy (verified on real hardware)
+* improved 4 Way-Play emulation (fixes multitap detection in CD games)
 * fixed TeamPlayer emulation (fixes multitap detection in Gauntlet 4)
 
 [Core/VDP]
