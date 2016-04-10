@@ -100,6 +100,7 @@ Genesis Plus GX 1.7.5 (xx/xx/xxxx) (Eke-Eke)
 * fixed alpha channel for 15-bit (RGB555) and 32-bit (RGB888) color support
 * fixed register #10 state on VDP¨reset (fixes GG Terminator 2: Judgment Day)
 * fixed Mode 1 rendering (TMS99xx "text" mode)
+* fixed Master System II extended video modes sprite parsing (fixes Mega Man 2 demo)
 * fixed Game Gear display rendering regression when left/right borders were disabled
 * fixed 68k cycles delay on invalid VRAM writes (fixes "Microcosm" intro loop)
 * optimized tile caching
