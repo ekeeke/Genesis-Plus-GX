@@ -1,11 +1,11 @@
 /***************************************************************************************
  *  Genesis Plus
- *  Video Display Processor (video output rendering)
+ *  Video Display Processor (pixel output rendering)
  *
  *  Support for all TMS99xx modes, Mode 4 & Mode 5 rendering
  *
  *  Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003  Charles Mac Donald (original code)
- *  Copyright (C) 2007-2015  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2007-2016  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -3725,14 +3725,14 @@ void parse_satb_m4(int line)
     /* Sprite Y position */
     ypos = st[i];
 
-    /* Check end of sprite list marker */
-    if (ypos == (bitmap.viewport.h + 16))
+    /* Check end of sprite list marker (no effect in extended modes) */
+    if ((ypos == 208) && (bitmap.viewport.h == 192))
     {
       break;
     }
 
     /* Wrap Y coordinate for sprites > 256-16 */
-    if (ypos >= 240)
+    if (ypos > 240)
     {
       ypos -= 256;
     }
