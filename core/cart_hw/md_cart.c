@@ -2,7 +2,7 @@
  *  Genesis Plus
  *  Mega Drive cartridge hardware support
  *
- *  Copyright (C) 2007-2015  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2007-2016  Eke-Eke (Genesis Plus GX)
  *
  *  Many cartridge protections were initially documented by Haze
  *  (http://haze.mameworld.info/)
@@ -44,7 +44,6 @@
 #include "shared.h"
 #include "eeprom_i2c.h"
 #include "eeprom_spi.h"
-#include "gamepad.h"
 
 /* Cart database entry */
 typedef struct
@@ -674,7 +673,7 @@ void md_cart_init(void)
   }
   else if (cart.romsize > 0x400000)
   {
-    /* assume linear ROM mapper without bankswitching (max. 10MB) */
+    /* assume linear ROM mapping by default (max. 10MB) */
     for (i=0x40; i<0xA0; i++)
     {
       m68k.memory_map[i].base   = cart.rom + (i<<16);
@@ -1614,15 +1613,22 @@ static uint32 mapper_radica_r(uint32 address)
 
 static void default_time_w(uint32 address, uint32 data)
 {
+  /* enable multi-game cartridge mapper by default */
   if (address < 0xa13040)
   {
-    /* unlicensed cartridges mapper (default) */
     mapper_64k_multi_w(address);
     return;
   }
 
-  /* official cartridges mapper (default) */
-  mapper_sega_w(data);
+  /* enable "official" cartridge mapper by default */
+  if (address > 0xa130f1)
+  {
+    mapper_512k_w(address, data);
+  }
+  else
+  {
+  	mapper_sega_w(data);
+  }
 }
 
 
