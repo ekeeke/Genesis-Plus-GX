@@ -1627,7 +1627,7 @@ static void default_time_w(uint32 address, uint32 data)
   }
   else
   {
-  	mapper_sega_w(data);
+    mapper_sega_w(data);
   }
 }
 
