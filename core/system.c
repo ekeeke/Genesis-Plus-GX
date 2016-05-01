@@ -481,12 +481,6 @@ void system_frame_gen(int do_skip)
   /* refresh inputs just before VINT (Warriors of Eternal Sun) */
   osd_input_update();
 
-  /* delay between VINT flag & Vertical Interrupt (Ex-Mutants, Tyrant) */
-  m68k_run(588);
-  
-  /* set VINT flag */
-  status |= 0x80;
-
   /* delay between VBLANK flag & Vertical Interrupt (Dracula, OutRunners, VR Troopers) */
   m68k_run(788);
   if (zstate == 1)
@@ -497,6 +491,9 @@ void system_frame_gen(int do_skip)
   {
     Z80.cycles = 788;
   }
+
+  /* set VINT flag */
+  status |= 0x80;
 
   /* Vertical Interrupt */
   vint_pending = 0x20;
@@ -853,12 +850,6 @@ void system_frame_scd(int do_skip)
   /* refresh inputs just before VINT */
   osd_input_update();
 
-  /* delay between VINT flag & Vertical Interrupt (Ex-Mutants, Tyrant) */
-  m68k_run(588);
-  
-  /* set VINT flag */
-  status |= 0x80;
-
   /* delay between VBLANK flag & Vertical Interrupt (Dracula, OutRunners, VR Troopers) */
   m68k_run(788);
   if (zstate == 1)
@@ -869,6 +860,9 @@ void system_frame_scd(int do_skip)
   {
     Z80.cycles = 788;
   }
+
+  /* set VINT flag */
+  status |= 0x80;
 
   /* Vertical Interrupt */
   vint_pending = 0x20;

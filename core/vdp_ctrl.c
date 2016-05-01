@@ -1134,6 +1134,9 @@ unsigned int vdp_68k_ctrl_r(unsigned int cycles)
 {
   unsigned int temp;
 
+  /* Cycle-accurate VDP status read (68k read cycle takes four CPU cycles i.e 28 Mcycles) */
+  cycles += 4 * 7;
+
   /* Update FIFO status flags if not empty */
   if (fifo_write_cnt)
   {
@@ -1160,14 +1163,25 @@ unsigned int vdp_68k_ctrl_r(unsigned int cycles)
   /* Clear SOVR & SCOL flags */
   status &= 0xFF9F;
 
-  /* Display OFF: VBLANK flag is set */
+  /* VBLANK flag is set when display is disabled */
   if (!(reg[1] & 0x40))
   {
     temp |= 0x08;
   }
 
-  /* HBLANK flag (Sonic 3 and Sonic 2 "VS Modes", Lemmings 2, Mega Turrican, V.R Troopers, Gouketsuji Ichizoku,...) */
-  /* NB: this is not 100% accurate and need to be verified on real hardware */
+  /* Cycle-accurate VINT flag (Ex-Mutants, Tyrant / Mega-Lo-Mania) */
+  /* this allows VINT flag to be read just before vertical interrupt is being triggered */
+  if ((v_counter == bitmap.viewport.h) && (cycles >= (mcycles_vdp + 788)))
+  {
+    /* check Z80 interrupt state to assure VINT has not already been triggered (and flag cleared) */
+    if (Z80.irq_state != ASSERT_LINE)
+    {
+      temp |= 0x80;
+    }
+  }
+
+  /* Cycle-accurate HBLANK flag (Sonic 3 & Sonic 2 "VS Modes", Bugs Bunny Double Trouble, Lemmings 2, Mega Turrican, V.R Troopers, Gouketsuji Ichizoku,...) */
+  /* NB: this is not 100% accurate (see hvc.h for horizontal events timings in H32 and H40 mode) but is close enough to make no noticeable difference for games */
   if ((cycles % MCYCLES_PER_LINE) < 588)
   {
     temp |= 0x04;
