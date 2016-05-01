@@ -1932,8 +1932,8 @@ static void vdp_reg_w(unsigned int r, unsigned int d, unsigned int cycles)
           /* Update clipping */
           window_clip(reg[17], 1);
 
-          /* Update active display width & max sprite pixels per line*/
-          max_sprite_pixels = bitmap.viewport.w = 320;
+          /* Update max sprite pixels per line*/
+          max_sprite_pixels = 320;
         }
         else
         {
@@ -1949,15 +1949,30 @@ static void vdp_reg_w(unsigned int r, unsigned int d, unsigned int cycles)
           /* Update clipping */
           window_clip(reg[17], 0);
 
-          /* Update active display width & max sprite pixels per line*/
-          max_sprite_pixels = bitmap.viewport.w = 256;
+          /* Update max sprite pixels per line*/
+          max_sprite_pixels = 256;
         }
 
-        /* Active display width modified during HBLANK (Bugs Bunny Double Trouble) */
-        if ((v_counter < bitmap.viewport.h) && (reg[1] & 0x40) && (cycles <= (mcycles_vdp + 860)))
+        if (v_counter >= bitmap.viewport.h)
         {
-          /* Redraw entire line */
-          render_line(v_counter);
+          /* Active screen width modified during VBLANK will be applied on upcoming frame */
+          bitmap.viewport.w = max_sprite_pixels;
+        }
+        else if ((v_counter == 0) && (cycles <= (mcycles_vdp + 860)))
+        {
+          /* Active screen width modified during first line HBLANK (Bugs Bunny in Double Trouble) */
+          bitmap.viewport.w = max_sprite_pixels;
+
+          /* Redraw first line */
+          render_line(0);
+        }
+        else
+        {
+          /* Screen width changes during active display (Golden Axe 3 intro, Ultraverse Prime) */
+          /* should be applied on next frame since backend rendered framebuffer width is fixed */
+          /* and can not be modified mid-frame. This is not 100% accurate but games generally  */
+          /* do this where the screen is blanked so it is likely unnoticeable. */
+          bitmap.viewport.changed |= 2;
         }
       }
       break;

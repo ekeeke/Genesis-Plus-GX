@@ -423,6 +423,9 @@ void system_frame_gen(int do_skip)
       bitmap.viewport.y = (config.overscan & 1) * 24 * (vdp_pal + 1);
     }
 
+    /* active screen width */
+    bitmap.viewport.w = 256 + ((reg[12] & 0x01) << 6);
+
     /* check viewport changes */
     if (bitmap.viewport.h != bitmap.viewport.oh)
     {
@@ -791,6 +794,9 @@ void system_frame_scd(int do_skip)
       bitmap.viewport.h = 192;
       bitmap.viewport.y = (config.overscan & 1) * 24 * (vdp_pal + 1);
     }
+
+    /* active screen width */
+    bitmap.viewport.w = 256 + ((reg[12] & 0x01) << 6);
 
     /* check viewport changes */
     if (bitmap.viewport.h != bitmap.viewport.oh)
@@ -1180,7 +1186,10 @@ void system_frame_sms(int do_skip)
         }
       }
     }
-    
+
+    /* active screen width */
+    bitmap.viewport.w = 256 + ((reg[12] & 0x01) << 6);
+
     /* check viewport changes */
     if (bitmap.viewport.h != bitmap.viewport.oh)
     {
