@@ -3,7 +3,7 @@
  *
  *   IPL font engine (using GX rendering)
  *
- *  Copyright Eke-Eke (2009-2015)
+ *  Copyright Eke-Eke (2009-2016)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -52,6 +52,7 @@ typedef struct _yay0header {
 
 static u8 *fontImage;
 static u8 *fontTexture;
+static GXTexObj fontTexObj;
 static void *ipl_fontarea;
 static sys_fontheader *fontHeader;
 static u8 font_size[256];
@@ -205,12 +206,7 @@ static void GetFontTexel(s32 c,void *image,s32 pos,s32 stride)
 
 static void DrawChar(unsigned char c, int xpos, int ypos, int size, GXColor color)
 {
-  /* reintialize texture object */
-  GXTexObj texobj;
-  GX_InitTexObj(&texobj, fontTexture, fontHeader->cell_width, fontHeader->cell_height, GX_TF_I4, GX_CLAMP, GX_CLAMP, GX_FALSE);
-  GX_LoadTexObj(&texobj, GX_TEXMAP0);
-
-  /* reinitialize font texture data */
+  /* get font texture data */
   memset(fontTexture,0,fontHeader->cell_width * fontHeader->cell_height / 2);
   GetFontTexel(c,fontTexture,0,fontHeader->cell_width/2);
   DCStoreRange(fontTexture, fontHeader->cell_width * fontHeader->cell_height / 2);
@@ -290,6 +286,9 @@ int FONT_Init(void)
     return 0;
   }
 
+  /* initialize texture object */
+  GX_InitTexObj(&fontTexObj, fontTexture, fontHeader->cell_width, fontHeader->cell_height, GX_TF_I4, GX_CLAMP, GX_CLAMP, GX_FALSE);
+
   return 1;
 }
 
@@ -304,6 +303,8 @@ void FONT_Shutdown(void)
 int FONT_write(char *string, int size, int x, int y, int max_width, GXColor color)
 {
   int w, ox;
+
+  GX_LoadTexObj(&fontTexObj, GX_TEXMAP0);
 
   x -= (vmode->fbWidth / 2);
   y -= (vmode->efbHeight / 2);
@@ -335,6 +336,8 @@ int FONT_writeCenter(char *string, int size, int x1, int x2, int y, GXColor colo
   int x;
   int i = 0;
   int w = 0;
+
+  GX_LoadTexObj(&fontTexObj, GX_TEXMAP0);
 
   while (string[i] && (string[i] != '\n'))
   {
@@ -369,6 +372,8 @@ int FONT_alignRight(char *string, int size, int x, int y, GXColor color)
   int ox;
   int i = 0;
   int w = 0;
+
+  GX_LoadTexObj(&fontTexObj, GX_TEXMAP0);
 
   while (string[i] && (string[i] != '\n'))
   {
