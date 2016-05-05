@@ -257,7 +257,7 @@ void s68k_run(unsigned int cycles)
     REG_IR = m68ki_read_imm_16();
 
     /* Execute instruction */
-	m68ki_instruction_jump_table[REG_IR]();
+    m68ki_instruction_jump_table[REG_IR]();
     USE_CYCLES(CYC_INSTRUCTION[REG_IR]);
 
     /* Trace m68k_exception, if necessary */

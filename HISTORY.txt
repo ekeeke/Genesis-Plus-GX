@@ -95,6 +95,7 @@ Genesis Plus GX 1.7.5 (xx/xx/xxxx) (Eke-Eke)
 * improved Mode 5 sprites rendering timings (fixes "Overdrive" demo)
 * improved FIFO timings accuracy (fixes "Overdrive" Demo)
 * improved H-Counter accuracy in H32 mode
+* improved VDP status timing accuracy
 * improved accuracy of Master System color palette brightness range (verified against real hardware)
 * fixed misaligned buffer writes in Mode 4 when -DALIGN_LONG option is used
 * fixed alpha channel for 15-bit (RGB555) and 32-bit (RGB888) color support

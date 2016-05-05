@@ -3,7 +3,7 @@
  *
  *  Genesis Plus GX video & rendering support
  *
- *  Copyright Eke-Eke (2007-2015), based on original work from Softdev (2006)
+ *  Copyright Eke-Eke (2007-2016), based on original work from Softdev (2006)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -77,6 +77,7 @@ static u8 gp_fifo[GX_FIFO_MINSIZE] ATTRIBUTE_ALIGN(32);
 static u32 vwidth, vheight;
 static gx_texture *crosshair[2];
 static gx_texture *cd_leds[2][2];
+static GXTexObj screenTexObj;
 
 /*** Framebuffers ***/
 static u32 *xfb;
@@ -342,7 +343,7 @@ static camera cam =
 };
 
 /*** GX Display List ***/
-static u8 d_list[32] ATTRIBUTE_ALIGN(32) =
+static u8 screenDisplayList[32] ATTRIBUTE_ALIGN(32) =
 {
   GX_QUADS | GX_VTXFMT0,        /* textured quad rendering (Vertex Format 0) */
   0x00, 0x04,                   /* one quad = 4x vertex */
@@ -434,9 +435,6 @@ static void gxStart(void)
   guLookAt(view, &cam.pos, &cam.up, &cam.view);
   GX_LoadPosMtxImm(view, GX_PNMTX0);
   GX_Flush();
-
-  /* GX rendering callback */
-  GX_SetDrawDoneCallback(gx_callback);
 }
 
 /* Reset GX rendering */
@@ -462,6 +460,9 @@ static void gxResetRendering(u8 type)
     GX_SetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP0, GX_COLOR0A0);
     GX_SetNumTexGens(1);
     GX_SetNumChans(1);
+
+    /* disable GX rendering callback */
+    GX_SetDrawDoneCallback(NULL);
   }
   else
   {
@@ -480,6 +481,9 @@ static void gxResetRendering(u8 type)
     GX_SetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP0, GX_COLORNULL);
     GX_SetNumTexGens(1);
     GX_SetNumChans(0);
+
+    /* enable GX rendering callback */
+    GX_SetDrawDoneCallback(gx_callback);
   }
 
   GX_Flush();
@@ -704,10 +708,7 @@ static void gxDrawCrosshair(gx_texture *texture, int x, int y)
   y = (((y + bitmap.viewport.y) * ywidth) / (bitmap.viewport.h+2*bitmap.viewport.y)) + square[7] - h/2;
 
   /* load texture object */
-  GXTexObj texObj;
-  GX_InitTexObj(&texObj, texture->data, texture->width, texture->height, GX_TF_RGBA8, GX_CLAMP, GX_CLAMP, GX_FALSE);
-  GX_InitTexObjLOD(&texObj,GX_LINEAR,GX_LIN_MIP_LIN,0.0,10.0,0.0,GX_FALSE,GX_TRUE,GX_ANISO_4);
-  GX_LoadTexObj(&texObj, GX_TEXMAP0);
+  GX_LoadTexObj(&texture->texObj, GX_TEXMAP0);
   GX_InvalidateTexAll();
 
   /* Draw textured quad */
@@ -746,10 +747,7 @@ static void gxDrawCdLeds(gx_texture *texture_l, gx_texture *texture_r)
   int y = (((bitmap.viewport.y + bitmap.viewport.h - 4) * ywidth) / vheight) + square[7] - h;
 
   /* load left screen texture */
-  GXTexObj texObj;
-  GX_InitTexObj(&texObj, texture_l->data, texture_l->width, texture_l->height, GX_TF_RGBA8, GX_CLAMP, GX_CLAMP, GX_FALSE);
-  GX_InitTexObjLOD(&texObj,GX_LINEAR,GX_LIN_MIP_LIN,0.0,10.0,0.0,GX_FALSE,GX_TRUE,GX_ANISO_4);
-  GX_LoadTexObj(&texObj, GX_TEXMAP0);
+  GX_LoadTexObj(&texture_l->texObj, GX_TEXMAP0);
   GX_InvalidateTexAll();
 
   /* Draw textured quad */
@@ -769,9 +767,7 @@ static void gxDrawCdLeds(gx_texture *texture_l, gx_texture *texture_r)
   GX_End();
 
   /* load right screen texture */
-  GX_InitTexObj(&texObj, texture_r->data, texture_r->width, texture_r->height, GX_TF_RGBA8, GX_CLAMP, GX_CLAMP, GX_FALSE);
-  GX_InitTexObjLOD(&texObj,GX_LINEAR,GX_LIN_MIP_LIN,0.0,10.0,0.0,GX_FALSE,GX_TRUE,GX_ANISO_4);
-  GX_LoadTexObj(&texObj, GX_TEXMAP0);
+  GX_LoadTexObj(&texture_r->texObj, GX_TEXMAP0);
   GX_InvalidateTexAll();
 
   /* Draw textured quad */
@@ -839,10 +835,7 @@ void gxDrawTexture(gx_texture *texture, s32 x, s32 y, s32 w, s32 h, u8 alpha)
   if (texture->data)
   {
     /* load texture object */
-    GXTexObj texObj;
-    GX_InitTexObj(&texObj, texture->data, texture->width, texture->height, GX_TF_RGBA8, GX_CLAMP, GX_CLAMP, GX_FALSE);
-    GX_InitTexObjLOD(&texObj,GX_LINEAR,GX_LIN_MIP_LIN,0.0,10.0,0.0,GX_FALSE,GX_TRUE,GX_ANISO_4); /* does this really change anything ? */
-    GX_LoadTexObj(&texObj, GX_TEXMAP0);
+    GX_LoadTexObj(&texture->texObj, GX_TEXMAP0);
     GX_InvalidateTexAll();
 
     /* vertex coordinate */
@@ -874,10 +867,7 @@ void gxDrawTextureRotate(gx_texture *texture, s32 x, s32 y, s32 w, s32 h, f32 an
   if (texture->data)
   {
     /* load texture object */
-    GXTexObj texObj;
-    GX_InitTexObj(&texObj, texture->data, texture->width, texture->height, GX_TF_RGBA8, GX_CLAMP, GX_CLAMP, GX_FALSE);
-    GX_InitTexObjLOD(&texObj,GX_LINEAR,GX_LIN_MIP_LIN,0.0,10.0,0.0,GX_FALSE,GX_TRUE,GX_ANISO_4);
-    GX_LoadTexObj(&texObj, GX_TEXMAP0);
+    GX_LoadTexObj(&texture->texObj, GX_TEXMAP0);
     GX_InvalidateTexAll();
 
     /* vertex coordinate */
@@ -961,9 +951,7 @@ void gxDrawScreenshot(u8 alpha)
   if (!rmode) return;
 
   /* get current game screen texture */
-  GXTexObj texobj;
-  GX_InitTexObj(&texobj, bitmap.data, vwidth, vheight, GX_TF_RGB565, GX_CLAMP, GX_CLAMP, GX_FALSE);
-  GX_LoadTexObj(&texobj, GX_TEXMAP0);
+  GX_LoadTexObj(&screenTexObj, GX_TEXMAP0);
   GX_InvalidateTexAll();
 
   /* get current aspect ratio */
@@ -1010,9 +998,7 @@ void gxDrawScreenshot(u8 alpha)
 void gxCopyScreenshot(gx_texture *texture)
 {
   /* retrieve gamescreen texture */
-  GXTexObj texobj;
-  GX_InitTexObj(&texobj, bitmap.data, vwidth, vheight, GX_TF_RGB565, GX_CLAMP, GX_CLAMP, GX_FALSE);
-  GX_LoadTexObj(&texobj, GX_TEXMAP0);
+  GX_LoadTexObj(&screenTexObj, GX_TEXMAP0);
   GX_InvalidateTexAll();
 
   /* scale texture to EFB width */
@@ -1054,7 +1040,7 @@ void gxCopyScreenshot(gx_texture *texture)
   /* GX_PixModeSync is only useful if GX_ command follows */
   /* we use dummy GX commands to stall CPU execution */
   GX_PixModeSync();
-  GX_LoadTexObj(&texobj, GX_TEXMAP0);
+  GX_LoadTexObj(&screenTexObj, GX_TEXMAP0);
   GX_InvalidateTexAll();
   GX_Flush();
   DCStoreRange(texture->data, texture->width * texture->height * 4);
@@ -1228,7 +1214,7 @@ gx_texture *gxTextureOpenPNG(const u8 *png_data, FILE *png_file)
   png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
   free(row_pointers);
 
-  /* initialize texture */
+  /* allocate texture */
   gx_texture *texture = (gx_texture *)memalign(32, sizeof(gx_texture));
   if (!texture)
   {
@@ -1236,7 +1222,7 @@ gx_texture *gxTextureOpenPNG(const u8 *png_data, FILE *png_file)
     return NULL;
   }
 
-  /* initialize texture data */
+  /* allocate texture data */
   texture->data = memalign(32, stride * height);
   if (!texture->data)
   {
@@ -1245,11 +1231,15 @@ gx_texture *gxTextureOpenPNG(const u8 *png_data, FILE *png_file)
     return NULL;
   }
 
+  /* initialize texture */
   memset(texture->data, 0, stride * height);
   texture->width  = width;
   texture->height = height;
   texture->format = GX_TF_RGBA8;
 
+  /* initialize GX texture object */
+  GX_InitTexObj(&texture->texObj, texture->data, width, height, GX_TF_RGBA8, GX_CLAMP, GX_CLAMP, GX_FALSE);
+  /*GX_InitTexObjLOD(&texture->texObj,GX_LINEAR,GX_LIN_MIP_LIN,0.0,10.0,0.0,GX_FALSE,GX_TRUE,GX_ANISO_4);*/
   /* encode to GX_TF_RGBA8 format (4x4 pixels paired titles) */
   u16 *dst_ar = (u16 *)(texture->data);
   u16 *dst_gb = (u16 *)(texture->data + 32);
@@ -1732,17 +1722,16 @@ int gx_video_Update(int status)
       }
 
       /* initialize texture object */
-      GXTexObj texobj;
-      GX_InitTexObj(&texobj, bitmap.data, vwidth, vheight, GX_TF_RGB565, GX_CLAMP, GX_CLAMP, GX_FALSE);
+      GX_InitTexObj(&screenTexObj, bitmap.data, vwidth, vheight, GX_TF_RGB565, GX_CLAMP, GX_CLAMP, GX_FALSE);
 
       /* configure texture filtering */
       if (!config.bilinear)
       {
-        GX_InitTexObjLOD(&texobj,GX_NEAR,GX_NEAR_MIP_NEAR,0.0,10.0,0.0,GX_FALSE,GX_FALSE,GX_ANISO_1);
+        GX_InitTexObjLOD(&screenTexObj,GX_NEAR,GX_NEAR_MIP_NEAR,0.0,10.0,0.0,GX_FALSE,GX_FALSE,GX_ANISO_1);
       }
 
       /* load texture object */
-      GX_LoadTexObj(&texobj, GX_TEXMAP0);
+      GX_LoadTexObj(&screenTexObj, GX_TEXMAP0);
 
       /* update rendering mode */
       if (config.render)
@@ -1775,7 +1764,7 @@ int gx_video_Update(int status)
     drawDone = 0;
 
     /* render textured quad */
-    GX_CallDispList(d_list, 32);
+    GX_CallDispList(screenDisplayList, 32);
 
     /* on-screen display */
     if (osd)
@@ -1838,14 +1827,7 @@ int gx_video_Update(int status)
       }
 
       /* restore texture object */
-      GXTexObj texobj;
-      GX_InitTexObj(&texobj, bitmap.data, vwidth, vheight, GX_TF_RGB565, GX_CLAMP, GX_CLAMP, GX_FALSE);
-      if (!config.bilinear)
-      {
-        GX_InitTexObjLOD(&texobj,GX_NEAR,GX_NEAR_MIP_NEAR,0.0,10.0,0.0,GX_FALSE,GX_FALSE,GX_ANISO_1);
-      }
-      GX_LoadTexObj(&texobj, GX_TEXMAP0);
-      GX_InvalidateTexAll();
+      GX_LoadTexObj(&screenTexObj, GX_TEXMAP0);
 
       /* restore GX rendering */
       gxResetRendering(0);

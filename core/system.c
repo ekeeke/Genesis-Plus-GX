@@ -423,6 +423,9 @@ void system_frame_gen(int do_skip)
       bitmap.viewport.y = (config.overscan & 1) * 24 * (vdp_pal + 1);
     }
 
+    /* active screen width */
+    bitmap.viewport.w = 256 + ((reg[12] & 0x01) << 6);
+
     /* check viewport changes */
     if (bitmap.viewport.h != bitmap.viewport.oh)
     {
@@ -478,12 +481,6 @@ void system_frame_gen(int do_skip)
   /* refresh inputs just before VINT (Warriors of Eternal Sun) */
   osd_input_update();
 
-  /* delay between VINT flag & Vertical Interrupt (Ex-Mutants, Tyrant) */
-  m68k_run(588);
-  
-  /* set VINT flag */
-  status |= 0x80;
-
   /* delay between VBLANK flag & Vertical Interrupt (Dracula, OutRunners, VR Troopers) */
   m68k_run(788);
   if (zstate == 1)
@@ -494,6 +491,9 @@ void system_frame_gen(int do_skip)
   {
     Z80.cycles = 788;
   }
+
+  /* set VINT flag */
+  status |= 0x80;
 
   /* Vertical Interrupt */
   vint_pending = 0x20;
@@ -792,6 +792,9 @@ void system_frame_scd(int do_skip)
       bitmap.viewport.y = (config.overscan & 1) * 24 * (vdp_pal + 1);
     }
 
+    /* active screen width */
+    bitmap.viewport.w = 256 + ((reg[12] & 0x01) << 6);
+
     /* check viewport changes */
     if (bitmap.viewport.h != bitmap.viewport.oh)
     {
@@ -847,12 +850,6 @@ void system_frame_scd(int do_skip)
   /* refresh inputs just before VINT */
   osd_input_update();
 
-  /* delay between VINT flag & Vertical Interrupt (Ex-Mutants, Tyrant) */
-  m68k_run(588);
-  
-  /* set VINT flag */
-  status |= 0x80;
-
   /* delay between VBLANK flag & Vertical Interrupt (Dracula, OutRunners, VR Troopers) */
   m68k_run(788);
   if (zstate == 1)
@@ -863,6 +860,9 @@ void system_frame_scd(int do_skip)
   {
     Z80.cycles = 788;
   }
+
+  /* set VINT flag */
+  status |= 0x80;
 
   /* Vertical Interrupt */
   vint_pending = 0x20;
@@ -1180,7 +1180,10 @@ void system_frame_sms(int do_skip)
         }
       }
     }
-    
+
+    /* active screen width */
+    bitmap.viewport.w = 256 + ((reg[12] & 0x01) << 6);
+
     /* check viewport changes */
     if (bitmap.viewport.h != bitmap.viewport.oh)
     {
