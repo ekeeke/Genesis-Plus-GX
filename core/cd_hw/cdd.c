@@ -2,7 +2,7 @@
  *  Genesis Plus
  *  CD drive processor & CD-DA fader
  *
- *  Copyright (C) 2012-2015  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2012-2016  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -1570,9 +1570,9 @@ void cdd_process(void)
       {
         /* Fixes a few games hanging during intro because they expect data to be read with some delay */
         /* Radical Rex needs at least one interrupt delay */
-        /* Wolf Team games (Anet Futatabi, Cobra Command, Road Avenger & Time Gal) need at least 7 interrupts delay  */
-        /* Space Adventure Cobra (2nd morgue scene) needs at least 13 interrupts delay (incl. seek time, so 7 is OK) */
-        cdd.latency = 7;
+        /* Wolf Team games (Anet Futatabi, Cobra Command, Earnest Evans, Road Avenger & Time Gal) need at least 10 interrupts delay  */
+        /* Space Adventure Cobra (2nd morgue scene) needs at least 13 interrupts delay (incl. seek time, so 10 is OK) */
+        cdd.latency = 10;
       }
 
       /* CD drive seek time */
