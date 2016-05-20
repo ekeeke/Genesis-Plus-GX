@@ -80,8 +80,8 @@ static gx_texture *cd_leds[2][2];
 static GXTexObj screenTexObj;
 
 /*** Framebuffers ***/
-static u32 *xfb;
-static u32 drawDone;
+static u32 *xfb[2];
+static u8 fbCurrent;
 
 /*** Frame Sync ***/
 u32 videoSync;
@@ -391,26 +391,17 @@ static void vi_callback(u32 cnt)
   videoWait = 0;
 }
 
-/* XFB update */
-static void xfb_update(u32 cnt)
-{
-  /* check if EFB rendering is finished */
-  if (drawDone)
-  {
-    /* clear GX draw end flag */
-    drawDone = 0;
-
-    /* copy EFB to XFB */
-    GX_CopyDisp(xfb, GX_FALSE);
-    GX_Flush();
-  }
-}
-
 /* GX draw callback */
 static void gx_callback(void)
 {
-  /* set GX draw end flag */
-  drawDone = 1;
+  /* swap framebuffers */
+  fbCurrent ^= 1;
+  VIDEO_SetNextFramebuffer(xfb[fbCurrent]);
+  VIDEO_Flush();
+
+  /* copy EFB to XFB */
+  GX_CopyDisp(xfb[fbCurrent], GX_FALSE);
+  GX_Flush();
 }
 
 /* Initialize GX */
@@ -1076,7 +1067,7 @@ void gxSaveScreenshot(char *filename)
 void gxSetScreen(void)
 {
   VIDEO_WaitVSync();
-  GX_CopyDisp(xfb, GX_FALSE);
+  GX_CopyDisp(xfb[fbCurrent], GX_FALSE);
   GX_Flush();
   gx_input_UpdateMenu();
 }
@@ -1239,7 +1230,7 @@ gx_texture *gxTextureOpenPNG(const u8 *png_data, FILE *png_file)
 
   /* initialize GX texture object */
   GX_InitTexObj(&texture->texObj, texture->data, width, height, GX_TF_RGBA8, GX_CLAMP, GX_CLAMP, GX_FALSE);
-  /*GX_InitTexObjLOD(&texture->texObj,GX_LINEAR,GX_LIN_MIP_LIN,0.0,10.0,0.0,GX_FALSE,GX_TRUE,GX_ANISO_4);*/
+
   /* encode to GX_TF_RGBA8 format (4x4 pixels paired titles) */
   u16 *dst_ar = (u16 *)(texture->data);
   u16 *dst_gb = (u16 *)(texture->data + 32);
@@ -1449,7 +1440,6 @@ void gx_video_Stop(void)
 {
   /* disable VSYNC callbacks */
   VIDEO_SetPostRetraceCallback(NULL);
-  VIDEO_SetPreRetraceCallback(NULL);
   
   /* wait for next even field */
   /* this prevents screen artefacts when switching between interlaced & non-interlaced modes */
@@ -1670,9 +1660,6 @@ void gx_video_Start(void)
   VIDEO_SetGamma((int)(config.gamma * 10.0));
 #endif
 
-  /* XFB update is done during VBLANK */
-  VIDEO_SetPreRetraceCallback(xfb_update);
-
   /* Emulation is synchronized with video hardware if VSYNC is set to AUTO & TV mode matches emulated video mode */
   if (config.vsync && (gc_pal == vdp_pal))
   {
@@ -1760,16 +1747,13 @@ int gx_video_Update(int status)
     DCStoreRange(bitmap.data, vwidth*vheight*2);
     GX_InvalidateTexAll();
 
-    /* disable EFB copy until rendering is done */
-    drawDone = 0;
-
     /* render textured quad */
     GX_CallDispList(screenDisplayList, 32);
 
     /* on-screen display */
     if (osd)
     {
-      /* reset GX rendering */
+      /* reset GX rendering mode */
       gxResetRendering(1);
 
       /* lightgun # 1 screen mark */
@@ -1829,7 +1813,7 @@ int gx_video_Update(int status)
       /* restore texture object */
       GX_LoadTexObj(&screenTexObj, GX_TEXMAP0);
 
-      /* restore GX rendering */
+      /* restore GX rendering mode */
       gxResetRendering(0);
     }
 
@@ -1904,17 +1888,19 @@ void gx_video_Init(void)
   /* Configure VI */
   VIDEO_Configure(vmode);
 
-  /* Allocate framebuffer */
-  xfb = (u32 *) MEM_K0_TO_K1((u32 *) SYS_AllocateFramebuffer(&TV50hz_576i));
+  /* Allocate framebuffers */
+  xfb[0] = (u32 *) MEM_K0_TO_K1((u32 *) SYS_AllocateFramebuffer(&TV50hz_576i));
+  xfb[1] = (u32 *) MEM_K0_TO_K1((u32 *) SYS_AllocateFramebuffer(&TV50hz_576i));
 
   /* Define a console */
-  console_init(xfb, 20, 64, 640, 574, 574 * 2);
+  console_init(xfb[0], 20, 64, 640, 574, 574 * 2);
 
   /* Clear framebuffer to black */
-  VIDEO_ClearFrameBuffer(vmode, xfb, COLOR_BLACK);
+  VIDEO_ClearFrameBuffer(vmode, xfb[0], COLOR_BLACK);
 
   /* Set the framebuffer to be displayed at next VBlank */
-  VIDEO_SetNextFramebuffer(xfb);
+  VIDEO_SetNextFramebuffer(xfb[0]);
+  fbCurrent = 0;
 
   /* Enable Video Interface */
   VIDEO_SetBlack(FALSE);
@@ -1938,7 +1924,7 @@ void gx_video_Init(void)
 void gx_video_Shutdown(void)
 {
   FONT_Shutdown();
-  VIDEO_ClearFrameBuffer(vmode, xfb, COLOR_BLACK);
+  VIDEO_ClearFrameBuffer(vmode, xfb[fbCurrent], COLOR_BLACK);
   VIDEO_Flush();
   VIDEO_WaitVSync();
 }

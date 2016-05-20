@@ -3731,8 +3731,8 @@ void parse_satb_m4(int line)
       break;
     }
 
-    /* Wrap Y coordinate for sprites > 256-16 */
-    if (ypos > 240)
+    /* Wrap Y coordinate (NB: this is likely not 100% accurate and needs to be verified on real hardware) */
+    if (ypos > (bitmap.viewport.h + 16))
     {
       ypos -= 256;
     }

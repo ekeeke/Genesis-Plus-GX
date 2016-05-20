@@ -1366,7 +1366,7 @@ void system_frame_sms(int do_skip)
   /* Master System & Game Gear VDP specific */
   else
   {
-    /* Sprites are still processed during vertical borders */
+    /* Sprites are still processed during top border */
     if (reg[1] & 0x40)
     {
       render_obj(1);
