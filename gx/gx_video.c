@@ -400,7 +400,7 @@ static void gx_callback(void)
   VIDEO_Flush();
 
   /* copy EFB to XFB */
-  GX_CopyDisp(xfb[fbCurrent], GX_FALSE);
+  GX_CopyDisp(xfb[fbCurrent], GX_TRUE);
   GX_Flush();
 }
 
