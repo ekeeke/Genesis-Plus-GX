@@ -3,7 +3,7 @@
  *
  *  Genesis Plus GX menu
  *
- *  Copyright Eke-Eke (2009-2015)
+ *  Copyright Eke-Eke (2009-2016)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -3991,11 +3991,7 @@ void mainmenu(void)
         else
         {
           /* Hard Reset */
-          system_init();
           system_reset();
-
-          /* restore SRAM */
-          slot_autoload(0,config.s_device);
         }
 
         /* exit to game */
