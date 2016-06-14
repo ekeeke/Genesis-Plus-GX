@@ -4,8 +4,8 @@
  *
  *  Support for SG-1000, Mark-III, Master System, Game Gear & Mega Drive ports access
  *
- *  Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003  Charles Mac Donald (original code)
- *  Copyright (C) 2007-2015  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 1998-2003  Charles Mac Donald (original code)
+ *  Copyright (C) 2007-2016  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -468,18 +468,43 @@ void z80_ms_port_w(unsigned int port, unsigned char data)
 
     default:
     {
-      /* write FM chip if enabled */
-      if (!(port & 4) && (config.ym2413 & 1))
+      /* check if YM2413 chip is enabled */
+      if (config.ym2413 & 1)
       {
-        fm_write(Z80.cycles, port, data);
-
-        /* 315-5297 I/O chip decodes bit 1 to enable/disable PSG output */
         if (region_code == REGION_JAPAN_NTSC)
         {
-          io_reg[6] = (data & 2) ? 0xFF : 0x00;
-          SN76489_Config(Z80.cycles, config.psg_preamp, config.psgBoostNoise, io_reg[6]);
+          /* 315-5297 I/O chip decodes full address range */
+          port &= 0xFF;
+
+          /* internal YM2413 chip */
+          if ((port == 0xF0) || (port == 0xF1))
+          {
+            fm_write(Z80.cycles, port, data);
+            return;
+          }
+
+          /* Audio control register (315-5297 I/O chip specific) */
+          if (port == 0xF2)
+          {
+            /*  D1 D0
+                -----
+                0  0 : enable only PSG output (power-on default)
+                0  1 : enable only FM output
+                1  0 : disable both PSG & FM output
+                1  1 : enable both PSG and FM output
+            */
+            SN76489_Config(Z80.cycles, config.psg_preamp, config.psgBoostNoise, ((data + 1) & 0x02) ? 0x00 : 0xFF);
+            fm_write(Z80.cycles, 0x02, data);
+            io_reg[6] = data;
+            return;
+          }
         }
-        return;
+        else if (!(port & 4))
+        {
+          /* external FM board */
+          fm_write(Z80.cycles, port, data);
+          return;
+        }
       }
 
       z80_unused_port_w(port & 0xFF, data);
@@ -520,31 +545,53 @@ unsigned char z80_ms_port_r(unsigned int port)
 
     default:
     {
-      uint8 data = 0xFF;
-
-      /* read FM chip if enabled */
-      if (!(port & 4) && (config.ym2413 & 1))
+      if (region_code == REGION_JAPAN_NTSC)
       {
-        data = YM2413Read();
-
         /* 315-5297 I/O chip decodes full address range */
-        if (region_code == REGION_JAPAN_NTSC)
+        port &= 0xFF;
+
+        if (port == 0xF2)
         {
-          return data;
+          /* D7-D5 : C-SYNC counter (not emulated)
+             D4-D2 : Always zero
+             D1 : Mute control bit 1
+             D0 : Mute control bit 0
+          */
+          return io_reg[0x06] & 0x03;
         }
-      }
 
-      /* read I/O ports if enabled */
-      if (!(io_reg[0x0E] & 0x04))
+        if ((port == 0xC0) || (port == 0xC1) || (port == 0xDC) || (port == 0xDD))
+        {
+          /* read I/O ports if enabled */
+          if (!(io_reg[0x0E] & 0x04))
+          {
+            return io_z80_read(port & 1);
+          }
+        }
+
+        return z80_unused_port_r(port);
+      }
+      else
       {
-        data &= io_z80_read(port & 1);
-      }
+        uint8 data = 0xFF;
 
-      return data;
+        /* read FM board if enabled */
+        if (!(port & 4) && (config.ym2413 & 1))
+        {
+          data = YM2413Read();
+        }
+
+        /* read I/O ports if enabled */
+        if (!(io_reg[0x0E] & 0x04))
+        {
+          data &= io_z80_read(port & 1);
+        }
+
+        return data;
+      }
     }
   }
 }
-
 
 /*--------------------------------------------------------------------------*/
 /* Mark III port handlers                                                   */
