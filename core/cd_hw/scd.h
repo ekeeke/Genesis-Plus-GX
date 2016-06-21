@@ -53,7 +53,7 @@
 /* CD hardware Master Clock (50 MHz) */
 #define SCD_CLOCK 50000000
 
-/* ~3184 SCD clocks/line on NTSC-U system (53.693175 MHz Master Clock) */
+/* ~3184 SCD clocks/line on NTSC system (53.693175 MHz Master Clock) */
 /* ~3214 SCD clocks/line on PAL system (53.203424 MHz Master Clock) */
 #define SCYCLES_PER_LINE scd.cycles_per_line
 
