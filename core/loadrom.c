@@ -1107,9 +1107,11 @@ void get_region(char *romheader)
   else if (config.master_clock == 2) system_clock = MCLOCK_PAL;
 
   /* reinitialize CD unit master clock count per scanline */
-  scd.cycles_per_line = (uint32) (MCYCLES_PER_LINE * ((float)SCD_CLOCK / (float)system_clock));
+  if (system_hw == SYSTEM_MCD)
+  {
+    scd.cycles_per_line = (uint32) (MCYCLES_PER_LINE * ((float)SCD_CLOCK / (float)system_clock));
+  }
 }
-
 
 /****************************************************************************
  * get_company (Softdev - 2006)
