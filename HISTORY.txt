@@ -20,6 +20,8 @@ Genesis Plus GX 1.7.5 (xx/xx/xxxx) (Eke-Eke)
 * improved savestate format
 * improved Sub-CPU synchronization with Main-CPU (fixes "Soul Star")
 * improved Main-CPU & Sub-CPU idle loop detection (fixes "Super League CD")
+* improved PAL Mega CD timing accuracy (fixes PAL "Snatcher" intro synchronization)
+* improved CDD "play" command accuracy (fixes "Snatcher" Act 2 starting cutscene)
 * disabled 68k and Z80 access to PRG-RAM when SUB-CPU is running (fixes "Dungeon Explorer")
 * disabled CD hardware reset on Soft-Reset (verified on real hardware)
 * fixed DATA track minimal length (fixes BIOS refusing to boot small homebrew demos)

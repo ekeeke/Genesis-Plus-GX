@@ -1444,8 +1444,8 @@ void cdd_process(void)
       /* unless RS1 indicated invalid track infos */
       if (scd.regs[0x38>>1].byte.l == 0x0f)
       {
-        /* and SEEK has ended */
-        if (cdd.status != CD_SEEK)
+        /* and drive is now ready */
+        if (!cdd.latency)
         {
           /* then return valid track infos, e.g current track number in RS2-RS3 (fixes Lunar - The Silver Star) */
           scd.regs[0x38>>1].byte.l = 0x02;
@@ -1568,7 +1568,7 @@ void cdd_process(void)
       /* CD drive latency */
       if (!cdd.latency)
       {
-        /* Fixes a few games hanging during intro because they expect data to be read with some delay */
+        /* Fixes a few games hanging because they expect data to be read with some delay */
         /* Radical Rex needs at least one interrupt delay */
         /* Wolf Team games (Anet Futatabi, Cobra Command, Earnest Evans, Road Avenger & Time Gal) need at least 10 interrupts delay  */
         /* Space Adventure Cobra (2nd morgue scene) needs at least 13 interrupts delay (incl. seek time, so 10 is OK) */
@@ -1655,13 +1655,13 @@ void cdd_process(void)
       /* update status */
       cdd.status = CD_PLAY;
 
-      /* return track index in RS2-RS3 */
-      scd.regs[0x38>>1].w = (CD_PLAY << 8) | 0x02;
-      scd.regs[0x3a>>1].w = (cdd.index < cdd.toc.last) ? lut_BCD_16[index + 1] : 0x0A0A;
+      /* RS1=0xf to invalidate track infos in RS2-RS8 until drive is ready (fixes Snatcher Act 2 start cutscene) */
+      scd.regs[0x38>>1].w = (CD_PLAY << 8) | 0x0f;
+      scd.regs[0x3a>>1].w = 0x0000;
       scd.regs[0x3c>>1].w = 0x0000;
       scd.regs[0x3e>>1].w = 0x0000;
-      scd.regs[0x40>>1].byte.h = 0x00;
-      break;
+      scd.regs[0x40>>1].w = ~(CD_PLAY + 0xf) & 0x0f;
+      return;
     }
 
     case 0x04:  /* Seek */
@@ -1753,7 +1753,7 @@ void cdd_process(void)
       /* update status */
       cdd.status = CD_SEEK;
 
-      /* unknown RS1-RS8 values (returning 0xF in RS1 invalidates track infos in RS2-RS8 and fixes Final Fight CD intro when seek time is emulated) */
+      /* RS1=0xf to invalidate track infos in RS2-RS8 while seeking (fixes Final Fight CD intro when seek time is emulated) */
       scd.regs[0x38>>1].w = (CD_SEEK << 8) | 0x0f;
       scd.regs[0x3a>>1].w = 0x0000;
       scd.regs[0x3c>>1].w = 0x0000;
