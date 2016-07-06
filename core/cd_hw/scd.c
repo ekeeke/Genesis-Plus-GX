@@ -1506,6 +1506,9 @@ void scd_init(void)
   cdc_init();
   gfx_init();
 
+  /* Initialize CD hardware master clock count per scanline */
+  scd.cycles_per_line = (uint32) (MCYCLES_PER_LINE * ((float)SCD_CLOCK / (float)system_clock));
+
   /* Clear RAM */
   memset(scd.prg_ram, 0x00, sizeof(scd.prg_ram));
   memset(scd.word_ram, 0x00, sizeof(scd.word_ram));

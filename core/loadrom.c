@@ -1105,12 +1105,6 @@ void get_region(char *romheader)
   /* force PAL/NTSC master clock if requested */
   if (config.master_clock == 1) system_clock = MCLOCK_NTSC;
   else if (config.master_clock == 2) system_clock = MCLOCK_PAL;
-
-  /* reinitialize CD unit master clock count per scanline */
-  if (system_hw == SYSTEM_MCD)
-  {
-    scd.cycles_per_line = (uint32) (MCYCLES_PER_LINE * ((float)SCD_CLOCK / (float)system_clock));
-  }
 }
 
 /****************************************************************************
