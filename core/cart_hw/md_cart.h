@@ -76,9 +76,9 @@ typedef struct
 /* Cartridge type */
 typedef struct
 {
-  uint8 *base;    /* ROM base (saved for OS/Cartridge ROM swap) */
-  uint32 romsize; /* ROM size */
-  uint32 mask;    /* ROM mask */
+  uint8 *base;            /* ROM base (saved for OS/Cartridge ROM swap) */
+  uint32 romsize;         /* ROM size */
+  uint32 mask;            /* ROM mask */
   uint8 special;          /* custom external hardware (Lock-On, J-Cart, 3-D glasses, Terebi Oekaki,...) */
   cart_hw_t hw;           /* cartridge internal hardware */
   uint8 rom[MAXROMSIZE];  /* ROM area */

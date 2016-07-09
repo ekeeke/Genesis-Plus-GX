@@ -43,6 +43,7 @@ Genesis Plus GX 1.7.5 (xx/xx/xxxx) (Eke-Eke)
 * added support for Everdrive extended SSF mapper
 * improved console region auto-detection for a few PAL-only games (The Smurfs Travel the World & Williams Arcade's Greatest Hits)
 * improved I2C EEPROM boards emulation accuracy
+* improved SVP memory handlers accuracy (fixes Virtua Racing debug mode)
 * fixed Game Genie / Pro Action Replay lock-on support when Mega CD hardware is enabled 
 * fixed SRAM support in Triple Play 96 & Triple Play - Gold Edition
 * fixed automatic CD loading with .md ROM files
