@@ -139,7 +139,7 @@ void audio_set_rate(int samplerate, double framerate)
   if (system_hw == SYSTEM_MCD)
   {
     /* number of SCD master clocks run per second */
-    mclk = framerate ? (SCYCLES_PER_LINE * (vdp_pal ? 313 : 262) * framerate) : SCD_CLOCK;
+    mclk = (mclk / system_clock) * SCD_CLOCK;
 
     /* PCM core */
     pcm_init(mclk, samplerate);
