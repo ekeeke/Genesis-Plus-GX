@@ -51,7 +51,7 @@ extern char *ScreenshotPath;
 static short soundbuffer[SOUND_SAMPLES*2*10];
 static int soundPosWrite = 0;
 static int soundPosRead = 0;
-static SceUID console_mtx;
+//static SceUID console_mtx;
 
 
 
@@ -148,7 +148,7 @@ void InitEmulator()
 
   // pspImageClear(Screen, 0x8000);
 
-  console_mtx = sceKernelCreateSema("sound_sema", 0, 0, 1, 0);
+//  console_mtx = sceKernelCreateSema("sound_sema", 0, 0, 1, 0);
 	/*if (console_mtx > 0) {
 		debugNetPrintf(DEBUG,"Sound Mutex UID: 0x%08X\n", console_mtx);
 	}*/
@@ -340,9 +340,9 @@ void RunEmulator()
       if(soundPosRead+size>=(SOUND_SAMPLES*2*10)){
           soundPosRead = 0;
       }
-      if((soundPosRead-soundPosWrite)>=(SOUND_SAMPLES*2)||(soundPosRead-soundPosWrite)<0){
-        sceKernelSignalSema(console_mtx, 1); //lock
-      }
+      //if((soundPosRead-soundPosWrite)>=(SOUND_SAMPLES*2)||(soundPosRead-soundPosWrite)<0){
+        //sceKernelSignalSema(console_mtx, 1); //lock
+      //}
       RenderVideo();
 
     }
@@ -426,10 +426,10 @@ static void AudioCallback(pl_snd_sample *buf,
   {
       short* ptr_s = (short*)buf;
       //debugNetPrintf(DEBUG,"wait %d %d \n",soundPosRead,soundPosWrite);
-      if((soundPosRead-soundPosWrite)<SOUND_SAMPLES*2){
-        sceKernelWaitSema(console_mtx, 1, 0); //lock
+      //if((soundPosRead-soundPosWrite)<SOUND_SAMPLES*2){
+        //sceKernelWaitSema(console_mtx, 1, 0); //lock
         //debugNetPrintf(DEBUG,"start %d %d \n",soundPosRead,soundPosWrite);
-      }
+      //}
       memcpy(ptr_s,&soundbuffer[soundPosWrite],sizeof(short)*samples*2);
       soundPosWrite +=samples*2;
       if(soundPosWrite+(samples*2)>=(SOUND_SAMPLES*2*10)){
