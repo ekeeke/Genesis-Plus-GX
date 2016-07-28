@@ -25,11 +25,11 @@ static void ExitCallback(void* arg)
 int main(int argc,char *argv[])
 {
   /* Initialize PSP */
-  pl_psp_init("cache0:/GENPlusVITA/");
+  pl_psp_init("ux0:/data/GenesisPlusGXVita/");
   pl_snd_init(SOUND_SAMPLES, 1);
   pspCtrlInit();
   pspVideoInit();
-  
+
   /* Initialize callbacks */
   pl_psp_register_callback(PSP_EXIT_CALLBACK,
                            ExitCallback,
