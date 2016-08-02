@@ -2,8 +2,8 @@
  *  Genesis Plus
  *  Main 68k bus handlers
  *
- *  Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003  Charles Mac Donald (original code)
- *  Copyright (C) 2007-2015  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 1998-2003  Charles Mac Donald (original code)
+ *  Copyright (C) 2007-2016  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -420,6 +420,19 @@ unsigned int ctrl_io_read_byte(unsigned int address)
     case 0x44:  /* RADICA */
     case 0x50:  /* SVP */
     {
+      if ((address & 0xFC) == 0x00)
+      {
+        unsigned int data = svp->ssp1601.gr[SSP_XST].byte.h;
+        return (address & 1) ? (data & 0xFF) : (data >> 8);
+      }
+
+      if ((address & 0xFE) == 0x04)
+      {
+        unsigned int data = svp->ssp1601.gr[SSP_PM0].byte.h;
+        svp->ssp1601.gr[SSP_PM0].byte.h &= ~1;
+        return (address & 1) ? (data & 0xFF) : (data >> 8);
+      }
+
       return m68k_read_bus_8(address);
     }
 
@@ -536,12 +549,12 @@ unsigned int ctrl_io_read_word(unsigned int address)
 
     case 0x50:  /* SVP */
     {
-      if ((address & 0xFD) == 0)
+      if ((address & 0xFC) == 0x00)
       {
         return svp->ssp1601.gr[SSP_XST].byte.h;
       }
 
-      if ((address & 0xFF) == 4)
+      if ((address & 0xFE) == 0x04)
       {
         unsigned int data = svp->ssp1601.gr[SSP_PM0].byte.h;
         svp->ssp1601.gr[SSP_PM0].byte.h &= ~1;

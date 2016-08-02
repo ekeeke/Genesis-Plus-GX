@@ -3,7 +3,7 @@
  *  ROM Loading Support
  *
  *  Copyright (C) 1998-2003  Charles Mac Donald (original code)
- *  Copyright (C) 2007-2015  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2007-2016  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -1106,7 +1106,6 @@ void get_region(char *romheader)
   if (config.master_clock == 1) system_clock = MCLOCK_NTSC;
   else if (config.master_clock == 2) system_clock = MCLOCK_PAL;
 }
-
 
 /****************************************************************************
  * get_company (Softdev - 2006)

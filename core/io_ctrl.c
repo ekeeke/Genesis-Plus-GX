@@ -4,8 +4,8 @@
  *
  *  Support for Master System (315-5216, 315-5237 & 315-5297), Game Gear & Mega Drive I/O chips
  *
- *  Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003  Charles Mac Donald (original code)
- *  Copyright (C) 2007-2014  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 1998-2003  Charles Mac Donald (original code)
+ *  Copyright (C) 2007-2016  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -437,13 +437,6 @@ void io_z80_write(unsigned int offset, unsigned int data, unsigned int cycles)
     /* Send TR/TH state to connected peripherals */
     port[0].data_w((data << 1) & 0x60, (~data << 5) & 0x60);
     port[1].data_w((data >> 1) & 0x60, (~data << 3) & 0x60);
-
-    /* Japanese model specific */
-    if (region_code == REGION_JAPAN_NTSC)
-    {
-      /* Reading TH & TR pins always return 0 when set as output */
-      data &= 0x0F;
-    }
     
     /* Check for TH low-to-high transitions on both ports */
     if ((!(io_reg[0x0F] & 0x80) && (data & 0x80)) ||
@@ -451,6 +444,13 @@ void io_z80_write(unsigned int offset, unsigned int data, unsigned int cycles)
     {
       /* Latch new HVC */
       hvc_latch = hctab[cycles % MCYCLES_PER_LINE] | 0x10000;
+    }
+
+    /* Japanese model specific */
+    if (region_code == REGION_JAPAN_NTSC)
+    {
+      /* Reading TH & TR pins always return 0 when set as output */
+      data &= 0x0F;
     }
 
     /* Update I/O Control register */

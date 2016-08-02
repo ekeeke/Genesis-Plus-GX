@@ -139,7 +139,7 @@ void audio_set_rate(int samplerate, double framerate)
   if (system_hw == SYSTEM_MCD)
   {
     /* number of SCD master clocks run per second */
-    mclk = framerate ? (SCYCLES_PER_LINE * (vdp_pal ? 313 : 262) * framerate) : SCD_CLOCK;
+    mclk = (mclk / system_clock) * SCD_CLOCK;
 
     /* PCM core */
     pcm_init(mclk, samplerate);
@@ -1285,17 +1285,22 @@ void system_frame_sms(int do_skip)
     /* update VCounter */
     v_counter = line;
 
-    /* Master System & Game Gear VDP specific */
-    if ((system_hw < SYSTEM_MD) && (line > (lines_per_frame - 16)))
-    {
-      /* Sprites are still processed during top border */
-      render_obj((line - lines_per_frame) & 1);
-      parse_satb(line - lines_per_frame);
-    }
-
     /* render overscan */
     if ((line < end) || (line >= start))
     {
+      /* Master System & Game Gear VDP specific */
+      if ((system_hw < SYSTEM_MD) && (line > (lines_per_frame - 16)))
+      {
+        /* Sprites are still processed during top border */
+        if (reg[1] & 0x40)
+        {
+          render_obj((line - lines_per_frame) & 1);
+        }
+        
+        /* Sprites pre-processing occurs even when display is disabled */
+        parse_satb(line - lines_per_frame);
+      }
+
       blank_line(line, -bitmap.viewport.x, bitmap.viewport.w + 2*bitmap.viewport.x);
     }
 
@@ -1316,6 +1321,16 @@ void system_frame_sms(int do_skip)
   /* last line of overscan */
   if (bitmap.viewport.y > 0)
   {
+    /* Master System & Game Gear VDP specific */
+    if (system_hw < SYSTEM_MD)
+    {
+      /* Sprites are still processed during top border */
+      if (reg[1] & 0x40)
+      {
+        render_obj(1);
+      }
+    }
+
     blank_line(line, -bitmap.viewport.x, bitmap.viewport.w + 2*bitmap.viewport.x);
   }
 
@@ -1365,13 +1380,7 @@ void system_frame_sms(int do_skip)
 
   /* Master System & Game Gear VDP specific */
   else
-  {
-    /* Sprites are still processed during top border */
-    if (reg[1] & 0x40)
-    {
-      render_obj(1);
-    }
-    
+  {    
     /* Sprites pre-processing occurs even when display is disabled */
     parse_satb(-1);
   }

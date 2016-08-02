@@ -20,6 +20,8 @@ Genesis Plus GX 1.7.5 (xx/xx/xxxx) (Eke-Eke)
 * improved savestate format
 * improved Sub-CPU synchronization with Main-CPU (fixes "Soul Star")
 * improved Main-CPU & Sub-CPU idle loop detection (fixes "Super League CD")
+* improved PAL Mega CD timing accuracy (fixes PAL "Snatcher" intro synchronization)
+* improved CDD "play" command accuracy (fixes "Snatcher" Act 2 starting cutscene)
 * disabled 68k and Z80 access to PRG-RAM when SUB-CPU is running (fixes "Dungeon Explorer")
 * disabled CD hardware reset on Soft-Reset (verified on real hardware)
 * fixed DATA track minimal length (fixes BIOS refusing to boot small homebrew demos)
@@ -41,6 +43,7 @@ Genesis Plus GX 1.7.5 (xx/xx/xxxx) (Eke-Eke)
 * added support for Everdrive extended SSF mapper
 * improved console region auto-detection for a few PAL-only games (The Smurfs Travel the World & Williams Arcade's Greatest Hits)
 * improved I2C EEPROM boards emulation accuracy
+* improved SVP memory handlers accuracy (fixes Virtua Racing debug mode)
 * fixed Game Genie / Pro Action Replay lock-on support when Mega CD hardware is enabled 
 * fixed SRAM support in Triple Play 96 & Triple Play - Gold Edition
 * fixed automatic CD loading with .md ROM files
