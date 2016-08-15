@@ -74,6 +74,8 @@ Genesis Plus GX 1.7.5 (xx/xx/xxxx) (Eke-Eke)
 
 [Core/CPU]
 ---------------
+* improved 68k auto-vectored interrupts acknowledge cycle timing accuracy (Bubsy background color corruption during cutscenes)
+* fixed Z80 interrupt duration (Bomb on Basic City music running too fast)
 * fixed Z80 SP register initialization on power-on for Master System & Game Gear 
  (Ace of Aces, Shadow Dancer, Ecco the Dolphin, Evander Holyfield Real Deal Boxing)
 
