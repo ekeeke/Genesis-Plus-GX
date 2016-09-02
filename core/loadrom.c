@@ -646,7 +646,7 @@ int load_rom(char *filename)
     {
       /* remove header */
       size -= 512;
-      memcpy (cart.rom, cart.rom + 512, size);
+      memmove (cart.rom, cart.rom + 512, size);
 
       /* assume interleaved Mega Drive / Genesis ROM format (.smd) */
       if (system_hw == SYSTEM_MD)
