@@ -70,8 +70,6 @@ static bool is_running = 0;
 static uint8_t temp[0x10000];
 static int16 soundbuffer[3068];
 static uint16_t bitmap_data_[720 * 576];
-static const double pal_fps = 53203424.0 / (3420.0 * 313.0);
-static const double ntsc_fps = 53693175.0 / (3420.0 * 262.0);
 
 static char g_rom_dir[256];
 static char g_rom_name[256];
@@ -727,6 +725,7 @@ static void check_variables(void)
   bool update_viewports = false;
   bool reinit = false;
   struct retro_variable var = {0};
+  struct retro_system_av_info info;
 
   var.key = "genesis_plus_gx_bram";
   environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
@@ -800,6 +799,24 @@ static void check_variables(void)
     }
   }
 
+  var.key = "genesis_plus_gx_bios";
+  environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
+  {
+    orig_value = config.bios;
+    if (!strcmp(var.value, "enabled"))
+      config.bios = 3;
+    else
+      config.bios = 0;
+
+    if (orig_value != config.bios)
+    {
+      if (system_hw)
+      {
+        reinit = true;
+      }
+    }
+  }
+
   var.key = "genesis_plus_gx_region_detect";
   environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
   {
@@ -818,25 +835,70 @@ static void check_variables(void)
       if (system_hw)
       {
         get_region(NULL);
-        reinit = true;
-      }
-    }
-  }
+        
+        if ((system_hw == SYSTEM_MCD) || ((system_hw & SYSTEM_SMS) && config.bios))
+        {
+          /* system with region BIOS should be reinitialized */
+          reinit = true;
+        }
+        else
+        {
+          static const uint16 vc_table[4][2] = 
+          {
+            /* NTSC, PAL */
+            {0xDA , 0xF2},  /* Mode 4 (192 lines) */
+            {0xEA , 0x102}, /* Mode 5 (224 lines) */
+            {0xDA , 0xF2},  /* Mode 4 (192 lines) */
+            {0x106, 0x10A}  /* Mode 5 (240 lines) */
+          };
 
-  var.key = "genesis_plus_gx_bios";
-  environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
-  {
-    orig_value = config.bios;
-    if (!strcmp(var.value, "enabled"))
-      config.bios = 3;
-    else
-      config.bios = 0;
+          /* framerate might have changed, reinitialize audio timings */
+          audio_set_rate(44100, 0);
+          
+          /* reinitialize I/O region register */
+          if (system_hw == SYSTEM_MD)
+          {
+            io_reg[0x00] = 0x20 | region_code | (config.bios & 1);
+          }
+          else if (system_hw == SYSTEM_MCD)
+          {
+            io_reg[0x00] = region_code | (config.bios & 1);
+          }
+          else
+          {
+            io_reg[0x00] = 0x80 | (region_code >> 1);
+          }
 
-    if (orig_value != config.bios)
-    {
-      if (system_hw)
-      {
-        reinit = true;
+          /* reinitialize VDP timings */
+          lines_per_frame = vdp_pal ? 313 : 262;
+     
+          /* reinitialize NTSC/PAL mode in VDP status */
+          if (system_hw & SYSTEM_MD)
+          {
+            status = (status & ~1) | vdp_pal;
+          }
+
+          /* reinitialize VC max value */
+          switch (bitmap.viewport.h)
+          {
+            case 192:
+              vc_max = vc_table[0][vdp_pal];
+              break;
+            case 224:
+              vc_max = vc_table[1][vdp_pal];
+              break;
+            case 240:
+              vc_max = vc_table[3][vdp_pal];
+              break;
+          }
+
+          /* force overscan change */
+          bitmap.viewport.changed = 3;
+
+          /* reinitialize libretro audio/video timings */
+          retro_get_system_av_info(&info);
+          environ_cb(RETRO_ENVIRONMENT_SET_SYSTEM_AV_INFO, &info);
+        }
       }
     }
   }
@@ -1017,7 +1079,7 @@ static void check_variables(void)
 
   if (reinit)
   {
-    audio_init(44100, snd.frame_rate);
+    audio_init(44100, 0);
     memcpy(temp, sram.sram, sizeof(temp));
     system_init();
     system_reset();
@@ -1574,7 +1636,7 @@ void retro_get_system_av_info(struct retro_system_av_info *info)
    info->geometry.max_width     = 720;
    info->geometry.max_height    = 576;
    info->geometry.aspect_ratio  = 4.0 / 3.0;
-   info->timing.fps             = snd.frame_rate;
+   info->timing.fps             = (double)(system_clock) / (double)lines_per_frame / (double)MCYCLES_PER_LINE;
    info->timing.sample_rate     = 44100;
 }
 
@@ -1836,7 +1898,7 @@ bool retro_load_game(const struct retro_game_info *info)
       }
    }
 
-   audio_init(44100, vdp_pal ? pal_fps : ntsc_fps);
+   audio_init(44100,0);
    system_init();
    system_reset();
    is_running = false;
