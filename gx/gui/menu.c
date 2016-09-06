@@ -1632,16 +1632,13 @@ static void systemmenu ()
         io_reg[0x00] = 0x80 | (region_code >> 1);
       }
 
-      /* reinitialize VDP */
-      if (vdp_pal)
+      /* reinitialize VDP timings */
+      lines_per_frame = vdp_pal ? 313 : 262;
+ 
+      /* reinitialize NTSC/PAL mode in VDP status */
+      if (system_hw & SYSTEM_MD)
       {
-        status |= 1;
-        lines_per_frame = 313;
-      }
-      else
-      {
-        status &= ~1;
-        lines_per_frame = 262;
+        status = (status & ~1) | vdp_pal;
       }
 
       /* reinitialize VC max value */

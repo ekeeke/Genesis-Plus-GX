@@ -517,6 +517,9 @@ void system_frame_gen(int do_skip)
     Z80.cycles = MCYCLES_PER_LINE;
   }
 
+  /* Z80 interrupt is cleared at the end of the line */
+  Z80.irq_state = CLEAR_LINE;
+
   /* run SVP chip */
   if (svp)
   {
@@ -547,23 +550,6 @@ void system_frame_gen(int do_skip)
 
     /* update 6-Buttons & Lightguns */
     input_refresh();
-
-    if (Z80.irq_state)
-    {
-      /* Z80 interrupt is asserted for exactly one line */
-      m68k_run(mcycles_vdp + 788);
-      if (zstate == 1)
-      {
-        z80_run(mcycles_vdp + 788);
-      }
-      else
-      {
-        Z80.cycles = mcycles_vdp + 788;
-      }
-
-      /* clear Z80 interrupt */
-      Z80.irq_state = CLEAR_LINE;
-    }
 
     /* run 68k & Z80 until end of line */
     m68k_run(mcycles_vdp + MCYCLES_PER_LINE);
@@ -888,6 +874,9 @@ void system_frame_scd(int do_skip)
     Z80.cycles = MCYCLES_PER_LINE;
   }
 
+  /* Z80 interrupt is cleared at the end of the line */
+  Z80.irq_state = CLEAR_LINE;
+
   /* update VDP cycle count */
   mcycles_vdp = MCYCLES_PER_LINE;
 
@@ -912,23 +901,6 @@ void system_frame_scd(int do_skip)
 
     /* update 6-Buttons & Lightguns */
     input_refresh();
-
-    if (Z80.irq_state)
-    {
-      /* Z80 interrupt is asserted for exactly one line */
-      m68k_run(mcycles_vdp + 788);
-      if (zstate == 1)
-      {
-        z80_run(mcycles_vdp + 788);
-      }
-      else
-      {
-        Z80.cycles = mcycles_vdp + 788;
-      }
-
-      /* clear Z80 interrupt */
-      Z80.irq_state = CLEAR_LINE;
-    }
 
     /* run both 68k & CD hardware until end of line */
     scd_update(mcycles_vdp + MCYCLES_PER_LINE);

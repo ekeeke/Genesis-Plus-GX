@@ -632,13 +632,13 @@ static const uint16 m68ki_exception_cycle_table[256] =
       4*MUL, /* 22: RESERVED                                           */
       4*MUL, /* 23: RESERVED                                           */
      44*MUL, /* 24: Spurious Interrupt                                 */
-     44*MUL, /* 25: Level 1 Interrupt Autovector                       */
-     44*MUL, /* 26: Level 2 Interrupt Autovector                       */
-     44*MUL, /* 27: Level 3 Interrupt Autovector                       */
-     44*MUL, /* 28: Level 4 Interrupt Autovector                       */
-     44*MUL, /* 29: Level 5 Interrupt Autovector                       */
-     44*MUL, /* 30: Level 6 Interrupt Autovector                       */
-     44*MUL, /* 31: Level 7 Interrupt Autovector                       */
+     54*MUL, /* 25: Level 1 Interrupt Autovector                       */
+     54*MUL, /* 26: Level 2 Interrupt Autovector                       */
+     54*MUL, /* 27: Level 3 Interrupt Autovector                       */
+     54*MUL, /* 28: Level 4 Interrupt Autovector                       */
+     54*MUL, /* 29: Level 5 Interrupt Autovector                       */
+     54*MUL, /* 30: Level 6 Interrupt Autovector                       */
+     54*MUL, /* 31: Level 7 Interrupt Autovector                       */
      34*MUL, /* 32: TRAP #0 -- ASG: chanaged from 38                   */
      34*MUL, /* 33: TRAP #1                                            */
      34*MUL, /* 34: TRAP #2                                            */
