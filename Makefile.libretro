@@ -267,7 +267,8 @@ else ifneq (,$(findstring armv,$(platform)))
 # emscripten
 else ifeq ($(platform), emscripten)
 	TARGET := $(TARGET_NAME)_libretro_$(platform).bc
-	ENDIANNESS_DEFINES := -DLSB_FIRST -DALIGN_LONG -DHAVE_ALLOCA_H -DUSE_DYNAMIC_ALLOC -DUSE_MEMORY_H -DBYTE_ORDER=LITTLE_ENDIAN -DHAVE_ZLIB
+	ENDIANNESS_DEFINES := -DLSB_FIRST -DBYTE_ORDER=LITTLE_ENDIAN -DHAVE_ZLIB
+	STATIC_LINKING = 1
 
 # GCW0
 else ifeq ($(platform), gcw0)
