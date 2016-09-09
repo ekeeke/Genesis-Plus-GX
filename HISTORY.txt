@@ -33,7 +33,8 @@ Genesis Plus GX 1.7.5 (xx/xx/xxxx) (Eke-Eke)
 * fixed incorrect masking of Level 3 (GFX) interrupts (spurious freeze during Japanese BIOS intro)
 * fixed H-INT vector handling when using Mode 1
 * fixed access to "write-only" communication flags (verified on real hardware by Notaz)
-* fixed pending level 1 interrupts when GFX interrupt is disabled (fixes random freezes out of "Batman Returns" option menu)
+* fixed access to Sub-CPU "read-only" communication registers (fixes Round 5 Boss freeze in Streets of Rage / Sega Classics Arcade Collection)
+* fixed pending level 1 interrupts when GFX interrupt is disabled (fixes random freezes when exiting "Batman Returns" option menu)
 * fixed CDD seek command again (Final Fight CD freeze with model 2 BIOS)
 * optimized Sub-CPU / Main-CPU synchronization
 
