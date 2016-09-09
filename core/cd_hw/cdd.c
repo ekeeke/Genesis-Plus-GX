@@ -123,10 +123,10 @@ static const uint32 toc_ffightj[29] =
 };
 
 /* supported WAVE file header (16-bit stereo samples @44.1kHz) */
-static const unsigned char waveHeader[32] =
+static const unsigned char waveHeader[28] =
 {
-  0x57,0x41,0x56,0x45,0x66,0x6d,0x74,0x20,0x10,0x00,0x00,0x00,0x01,0x00,0x02,0x00,
-  0x44,0xac,0x00,0x00,0x10,0xb1,0x02,0x00,0x04,0x00,0x10,0x00,0x64,0x61,0x74,0x61
+  0x57,0x41,0x56,0x45,0x66,0x6d,0x74,0x20,0x10,0x00,0x00,0x00,0x01,0x00,
+  0x02,0x00,0x44,0xac,0x00,0x00,0x10,0xb1,0x02,0x00,0x04,0x00,0x10,0x00
 };
 
 /* supported WAVE file extensions */
@@ -449,16 +449,39 @@ int cdd_load(char *filename, char *header)
         if (!strstr(lptr,"BINARY") && !strstr(lptr,"MOTOROLA"))
         {
           /* read file header */
-          unsigned char head[32];
+          unsigned char head[28];
           fseek(cdd.toc.tracks[cdd.toc.last].fd, 8, SEEK_SET);
-          fread(head, 32, 1, cdd.toc.tracks[cdd.toc.last].fd);
+          fread(head, 28, 1, cdd.toc.tracks[cdd.toc.last].fd);
           fseek(cdd.toc.tracks[cdd.toc.last].fd, 0, SEEK_SET);
       
           /* autodetect WAVE file header (44.1KHz 16-bit stereo format only) */
-          if (!memcmp(head, waveHeader, 32))
+          if (!memcmp(head, waveHeader, 28))
           {
+            /* look for 'data' chunk id */
+            int dataOffset = 0;
+            fseek(cdd.toc.tracks[cdd.toc.last].fd, 36, SEEK_SET);
+            while (fread(head, 4, 1, cdd.toc.tracks[cdd.toc.last].fd))
+            {
+              if (!memcmp(head, "data", 4))
+              {
+                dataOffset = ftell(cdd.toc.tracks[cdd.toc.last].fd) + 4;
+                fseek(cdd.toc.tracks[cdd.toc.last].fd, 0, SEEK_SET);
+                break;
+              }
+              fseek(cdd.toc.tracks[cdd.toc.last].fd, -2, SEEK_CUR);
+            }
+
+            /* check if 'data' chunk has not been found */
+            if (!dataOffset)
+            {
+              /* invalid WAVE file */
+              fclose(cdd.toc.tracks[cdd.toc.last].fd);
+              cdd.toc.tracks[cdd.toc.last].fd = 0;
+              break;
+            }
+
             /* adjust current track file read offset with WAVE header length */
-            cdd.toc.tracks[cdd.toc.last].offset -= 44;
+            cdd.toc.tracks[cdd.toc.last].offset -= dataOffset;
           }
 #if defined(USE_LIBTREMOR) || defined(USE_LIBVORBIS)
           else if (!ov_open(cdd.toc.tracks[cdd.toc.last].fd,&cdd.toc.tracks[cdd.toc.last].vf,0,0))
@@ -699,14 +722,35 @@ int cdd_load(char *filename, char *header)
     while (fd)
     {
       /* read file HEADER */
-      unsigned char head[32];
+      unsigned char head[28];
       fseek(fd, 8, SEEK_SET);
-      fread(head, 32, 1, fd);
+      fread(head, 28, 1, fd);
       fseek(fd, 0, SEEK_SET);
       
       /* check if this is a valid WAVE file (44.1KHz 16-bit stereo format only) */
-      if (!memcmp(head, waveHeader, 32))
+      if (!memcmp(head, waveHeader, 28))
       {
+        /* look for 'data' chunk id */
+        int dataOffset = 0;
+        fseek(fd, 36, SEEK_SET);
+        while (fread(head, 4, 1, fd))
+        {
+          if (!memcmp(head, "data", 4))
+          {
+            dataOffset = ftell(fd) + 4;
+            break;
+          }
+          fseek(fd, -2, SEEK_CUR);
+        }
+
+        /* check if 'data' chunk has not been found */
+        if (!dataOffset)
+        {
+          /* invalid WAVE file */
+          fclose(fd);
+          break;
+        }
+
         /* initialize current track file descriptor */
         cdd.toc.tracks[cdd.toc.last].fd = fd;
 
@@ -718,7 +762,7 @@ int cdd_load(char *filename, char *header)
 
         /* current track end time */
         fseek(fd, 0, SEEK_END);
-        cdd.toc.tracks[cdd.toc.last].end = cdd.toc.tracks[cdd.toc.last].start + ((ftell(fd) - 44 + 2351) / 2352);
+        cdd.toc.tracks[cdd.toc.last].end = cdd.toc.tracks[cdd.toc.last].start + ((ftell(fd) - dataOffset + 2351) / 2352);
 
         /* initialize file read offset for current track */
         cdd.toc.tracks[cdd.toc.last].offset = cdd.toc.tracks[cdd.toc.last].start * 2352;
@@ -738,7 +782,7 @@ int cdd_load(char *filename, char *header)
         cdd.toc.end = cdd.toc.tracks[cdd.toc.last].end;
 
         /* adjust file read offset for current track with WAVE header length */
-        cdd.toc.tracks[cdd.toc.last].offset -= 44;
+        cdd.toc.tracks[cdd.toc.last].offset -= dataOffset;
 
         /* increment track number */
         cdd.toc.last++;
