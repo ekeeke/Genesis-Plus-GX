@@ -183,7 +183,7 @@ else ifeq ($(platform), rpi1)
 	SHARED := -shared -Wl,--version-script=libretro/link.T -Wl,--no-undefined
 	PLATFORM_DEFINES := -DHAVE_ZLIB
 	PLATFORM_DEFINES += -DARM11
-	PLATFORM_DEFINES += -marm -march=armv6j -mfloat-abi=hard -mfpu=vfp -funsafe-math-optimizations
+	PLATFORM_DEFINES += -marm -march=armv6j -mfloat-abi=hard -mfpu=vfp
 	ENDIANNESS_DEFINES := -DLSB_FIRST -DALIGN_LONG -DBYTE_ORDER=LITTLE_ENDIAN
 	CFLAGS += -fomit-frame-pointer -ffast-math
 	CXXFLAGS = $(CFLAGS) -fno-rtti -fno-exceptions -std=gnu++11
@@ -195,7 +195,19 @@ else ifeq ($(platform), rpi2)
 	SHARED := -shared -Wl,--version-script=libretro/link.T -Wl,--no-undefined
 	PLATFORM_DEFINES := -DHAVE_ZLIB
 	PLATFORM_DEFINES += -DARM
-	PLATFORM_DEFINES += -marm -mcpu=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard -funsafe-math-optimizations
+	PLATFORM_DEFINES += -marm -mcpu=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard
+	ENDIANNESS_DEFINES := -DLSB_FIRST -DALIGN_LONG -DBYTE_ORDER=LITTLE_ENDIAN
+	CFLAGS += -fomit-frame-pointer -ffast-math
+	CXXFLAGS = $(CFLAGS) -fno-rtti -fno-exceptions -std=gnu++11
+	
+# Raspberry Pi 3
+else ifeq ($(platform), rpi3)
+	TARGET := $(TARGET_NAME)_libretro.so
+	fpic := -fPIC
+	SHARED := -shared -Wl,--version-script=libretro/link.T -Wl,--no-undefined
+	PLATFORM_DEFINES := -DHAVE_ZLIB
+	PLATFORM_DEFINES += -DARM
+	PLATFORM_DEFINES += -marm -mcpu=cortex-a53 -mfpu=neon-fp-armv8 -mfloat-abi=hard
 	ENDIANNESS_DEFINES := -DLSB_FIRST -DALIGN_LONG -DBYTE_ORDER=LITTLE_ENDIAN
 	CFLAGS += -fomit-frame-pointer -ffast-math
 	CXXFLAGS = $(CFLAGS) -fno-rtti -fno-exceptions -std=gnu++11
@@ -254,8 +266,9 @@ else ifneq (,$(findstring armv,$(platform)))
 
 # emscripten
 else ifeq ($(platform), emscripten)
-	TARGET := $(TARGET_NAME)_libretro_emscripten.bc
-	ENDIANNESS_DEFINES := -DLSB_FIRST -DALIGN_LONG -DHAVE_ALLOCA_H -DUSE_DYNAMIC_ALLOC -DUSE_MEMORY_H -DBYTE_ORDER=BIG_ENDIAN -DHAVE_ZLIB
+	TARGET := $(TARGET_NAME)_libretro_$(platform).bc
+	ENDIANNESS_DEFINES := -DLSB_FIRST -DBYTE_ORDER=LITTLE_ENDIAN -DHAVE_ZLIB
+	STATIC_LINKING = 1
 
 # GCW0
 else ifeq ($(platform), gcw0)
