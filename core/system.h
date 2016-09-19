@@ -82,7 +82,8 @@ typedef struct
     int h;          /* Height of viewport */
     int ow;         /* Previous width of viewport */
     int oh;         /* Previous height of viewport */
-    int changed;    /* 1= Viewport width or height have changed */
+    int changed;    /* 1= Viewport width, height or aspect_ratio have changed, and use RETRO_ENVIRONMENT_SET_GEOMETRY, 
+                       8= Identical to value 1 but use RETRO_ENVIRONMENT_SET_SYSTEM_AV_INFO */
   } viewport;
 } t_bitmap;
 

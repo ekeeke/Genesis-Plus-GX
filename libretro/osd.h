@@ -64,6 +64,7 @@ struct
   uint8 bios;
   uint8 lock_on;
   uint8 overscan;
+  uint8 aspect_ratio;
   uint8 ntsc;
   uint8 lcd;
   uint8 gg_extra;
