@@ -1478,7 +1478,7 @@ unsigned retro_api_version(void) { return RETRO_API_VERSION; }
 
 void retro_set_environment(retro_environment_t cb)
 {
-   struct retro_variable vars[] = {
+   static const struct retro_variable vars[] = {
       { "genesis_plus_gx_system_hw", "System hardware; auto|sg-1000|sg-1000 II|mark-III|master system|master system II|game gear|mega drive / genesis" },
       { "genesis_plus_gx_region_detect", "System region; auto|ntsc-u|pal|ntsc-j" },
       { "genesis_plus_gx_force_dtack", "System lockups; enabled|disabled" },
@@ -1499,7 +1499,7 @@ void retro_set_environment(retro_environment_t cb)
       { NULL, NULL },
    };
 
-   struct retro_controller_description port_1[] = {
+   static const struct retro_controller_description port_1[] = {
       { "Joypad Auto", RETRO_DEVICE_JOYPAD },
       { "Joypad Port Empty", RETRO_DEVICE_NONE },
       { "MD Joypad 3 Button", RETRO_DEVICE_MDPAD_3B },
@@ -1518,7 +1518,7 @@ void retro_set_environment(retro_environment_t cb)
       { "MD Mouse", RETRO_DEVICE_MOUSE },
    };
 
-   struct retro_controller_description port_2[] = {
+   static const struct retro_controller_description port_2[] = {
       { "Joypad Auto", RETRO_DEVICE_JOYPAD },
       { "Joypad Port Empty", RETRO_DEVICE_NONE },
       { "MD Joypad 3 Button", RETRO_DEVICE_MDPAD_3B },
@@ -1539,13 +1539,13 @@ void retro_set_environment(retro_environment_t cb)
       { "MD Mouse", RETRO_DEVICE_MOUSE },
   };
 
-   struct retro_controller_info ports[] = {
+   static const struct retro_controller_info ports[] = {
       { port_1, 16 },
       { port_2, 18 },
       { 0 },
    };
 
-   struct retro_input_descriptor desc[] = {
+   static const struct retro_input_descriptor desc[] = {
       { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,  "D-Pad Left" },
       { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP,    "D-Pad Up" },
       { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN,  "D-Pad Down" },
