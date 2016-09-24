@@ -1687,23 +1687,41 @@ void retro_get_system_av_info(struct retro_system_av_info *info)
 
 void retro_set_controller_port_device(unsigned port, unsigned device)
 {
+   if (port > 2)
+     return;
+
    switch(device)
    {
       case RETRO_DEVICE_NONE:
          input.system[port] = NO_SYSTEM;
          break;
       case RETRO_DEVICE_MDPAD_3B:
-         config.input[port*4].padtype = DEVICE_PAD3B;
+      {
+         if (port && (input.system[0] >= RETRO_DEVICE_MDPAD_3B_WAYPLAY) && (input.system[0] <= RETRO_DEVICE_MSPAD_2B_MASTERTAP))
+            config.input[4].padtype = DEVICE_PAD3B;
+         else
+            config.input[port].padtype = DEVICE_PAD3B;
          input.system[port] = SYSTEM_GAMEPAD;
          break;
+      }
       case RETRO_DEVICE_MDPAD_6B:
-         config.input[port*4].padtype = DEVICE_PAD6B;
+      {
+         if (port && (input.system[0] >= RETRO_DEVICE_MDPAD_3B_WAYPLAY) && (input.system[0] <= RETRO_DEVICE_MSPAD_2B_MASTERTAP))
+            config.input[4].padtype = DEVICE_PAD6B;
+         else
+            config.input[port].padtype = DEVICE_PAD6B;
          input.system[port] = SYSTEM_GAMEPAD;
          break;
+      }
       case RETRO_DEVICE_MSPAD_2B:
-         config.input[port*4].padtype = DEVICE_PAD2B;
+      {
+         if (port && (input.system[0] >= RETRO_DEVICE_MDPAD_3B_WAYPLAY) && (input.system[0] <= RETRO_DEVICE_MSPAD_2B_MASTERTAP))
+            config.input[4].padtype = DEVICE_PAD2B;
+         else
+            config.input[port].padtype = DEVICE_PAD2B;
          input.system[port] = SYSTEM_GAMEPAD;
          break;
+      }
       case RETRO_DEVICE_MDPAD_3B_WAYPLAY:
       {
          int i;
@@ -1780,9 +1798,14 @@ void retro_set_controller_port_device(unsigned port, unsigned device)
          break;
       case RETRO_DEVICE_JOYPAD:
       default:
-         config.input[port*4].padtype = DEVICE_PAD2B | DEVICE_PAD6B | DEVICE_PAD3B;
+      {
+         if (port && (input.system[0] >= RETRO_DEVICE_MDPAD_3B_WAYPLAY) && (input.system[0] <= RETRO_DEVICE_MSPAD_2B_MASTERTAP))
+            config.input[4].padtype = DEVICE_PAD2B | DEVICE_PAD6B | DEVICE_PAD3B;
+         else
+            config.input[port].padtype = DEVICE_PAD2B | DEVICE_PAD6B | DEVICE_PAD3B;
          input.system[port] = SYSTEM_GAMEPAD;
          break;
+      }
    }
 
    old_system[0] = input.system[0];
