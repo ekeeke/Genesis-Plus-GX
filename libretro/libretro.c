@@ -1988,6 +1988,7 @@ void retro_init(void)
 {
    struct retro_log_callback log;
    unsigned level, rgb565;
+   uint64_t serialization_quirks = RETRO_SERIALIZATION_QUIRK_PLATFORM_DEPENDENT;
    sms_ntsc = calloc(1, sizeof(sms_ntsc_t));
    md_ntsc  = calloc(1, sizeof(md_ntsc_t));
 
@@ -2009,6 +2010,8 @@ void retro_init(void)
          log_cb(RETRO_LOG_INFO, "Frontend supports RGB565 - will use that instead of XRGB1555.\n");
 #endif
    check_system_specs();
+
+   environ_cb(RETRO_ENVIRONMENT_SET_SERIALIZATION_QUIRKS, &serialization_quirks);
 }
 
 void retro_deinit(void)
