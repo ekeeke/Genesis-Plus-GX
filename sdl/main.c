@@ -101,7 +101,7 @@ static int sdl_sound_init()
   return 1;
 }
 
-static void sdl_sound_update(enabled)
+static void sdl_sound_update(int enabled)
 {
   int size = audio_update(soundframe) * 2;
   
