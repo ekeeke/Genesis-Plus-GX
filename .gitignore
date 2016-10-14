@@ -3,3 +3,6 @@ psp2/*.elf
 psp2/*.velf
 psp2/build_vita/*
 psp2/*.a
+sdl/gen_sdl
+sdl/build_sdl
+
