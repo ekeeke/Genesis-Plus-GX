@@ -19,10 +19,14 @@
 # -D16BPP_RENDERING - configure for 16-bit pixels (RGB565)
 # -D32BPP_RENDERING - configure for 32-bit pixels (RGB888)
 
+ifeq ($(OS),Windows_NT)
 NAME	  = gen_sdl.exe
+else
+NAME	  = gen_sdl
+endif
 
 CC        = gcc
-CFLAGS    = `sdl-config --cflags` -march=i686 -O6 -fomit-frame-pointer -Wall -Wno-strict-aliasing -ansi -std=c89 -pedantic-errors
+CFLAGS    = `sdl-config --cflags` -march=i686 -O6 -fomit-frame-pointer -Wall -Wno-strict-aliasing -ansi -std=c99 -pedantic-errors
 #-g -ggdb -pg
 #-fomit-frame-pointer
 #LDFLAGS   = -pg
@@ -114,7 +118,9 @@ OBJECTS	+=	$(OBJDIR)/bitwise.o	 \
 		$(OBJDIR)/vorbisfile.o \
 		$(OBJDIR)/window.o
 
+ifeq ($(OS),Windows_NT)
 OBJECTS	+=	$(OBJDIR)/icon.o
+endif
 
 all: $(NAME)
 
@@ -163,8 +169,10 @@ $(OBJDIR)/%.o :	$(SRCDIR)/tremor/%.c
 $(OBJDIR)/%.o :	$(SRCDIR)/../sdl/%.c $(SRCDIR)/../sdl/%.h	        
 		$(CC) -c $(CFLAGS) $(INCLUDES) $(DEFINES) $< -o $@
 
+ifeq ($(OS),Windows_NT)
 $(OBJDIR)/icon.o :	
 		windres $(SRCDIR)/../sdl/icon.rc $@
+endif
 
 pack	:
 		strip $(NAME)

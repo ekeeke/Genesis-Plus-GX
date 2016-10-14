@@ -101,7 +101,7 @@ static int sdl_sound_init()
   return 1;
 }
 
-static void sdl_sound_update(enabled)
+static void sdl_sound_update(int enabled)
 {
   int size = audio_update(soundframe) * 2;
   
@@ -873,7 +873,7 @@ int main (int argc, char **argv)
         case SDL_USEREVENT:
         {
           char caption[100];  
-          sprintf(caption,"Genesis Plus GX - %d fps - %s)", event.user.code, (rominfo.international[0] != 0x20) ? rominfo.international : rominfo.domestic);
+          sprintf(caption,"Genesis Plus GX - %d fps - %s", event.user.code, (rominfo.international[0] != 0x20) ? rominfo.international : rominfo.domestic);
           SDL_WM_SetCaption(caption, NULL);
           break;
         }

@@ -5,7 +5,9 @@
 
 #include "osd.h"
 
+#ifdef LOGERROR
 static FILE *error_log;
+#endif
 
 void error_init(void)
 {
