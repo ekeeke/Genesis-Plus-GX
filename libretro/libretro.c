@@ -1,5 +1,5 @@
 /****************************************************************************
- *  config.c
+ *  libretro.c
  *
  *  Genesis Plus GX configuration file support
  *
