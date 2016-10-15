@@ -434,13 +434,10 @@ void system_frame_gen(int do_skip)
     }
   }
 
-  /* initialize VCounter */
-  v_counter = bitmap.viewport.h;
-
   /* first line of overscan */
   if (bitmap.viewport.y)
   {
-    blank_line(v_counter, -bitmap.viewport.x, bitmap.viewport.w + 2*bitmap.viewport.x);
+    blank_line(bitmap.viewport.h, -bitmap.viewport.x, bitmap.viewport.w + 2*bitmap.viewport.x);
   }
   
   /* clear DMA Busy, FIFO FULL & field flags */
@@ -481,30 +478,37 @@ void system_frame_gen(int do_skip)
   /* refresh inputs just before VINT (Warriors of Eternal Sun) */
   osd_input_update();
 
-  /* delay between VBLANK flag & Vertical Interrupt (Dracula, OutRunners, VR Troopers) */
-  m68k_run(788);
-  if (zstate == 1)
+  /* VDP always starts after VBLANK so VINT cannot occur on first frame after a VDP reset (verified on real hardware) */
+  if (v_counter != bitmap.viewport.h)
   {
-    z80_run(788);
-  }
-  else
-  {
-    Z80.cycles = 788;
-  }
+    /* reinitialize VCounter */
+    v_counter = bitmap.viewport.h;
 
-  /* set VINT flag */
-  status |= 0x80;
+    /* delay between VBLANK flag & Vertical Interrupt (Dracula, OutRunners, VR Troopers) */
+    m68k_run(788);
+    if (zstate == 1)
+    {
+      z80_run(788);
+    }
+    else
+    {
+      Z80.cycles = 788;
+    }
 
-  /* Vertical Interrupt */
-  vint_pending = 0x20;
-  if (reg[1] & 0x20)
-  {
-    /* level 6 interrupt */
-    m68k_set_irq(6);
+    /* set VINT flag */
+    status |= 0x80;    
+   
+    /* Vertical Interrupt */
+    vint_pending = 0x20;
+    if (reg[1] & 0x20)
+    {
+      /* level 6 interrupt */
+      m68k_set_irq(6);
+    }
+
+    /* assert Z80 interrupt */
+    Z80.irq_state = ASSERT_LINE;
   }
-
-  /* assert Z80 interrupt */
-  Z80.irq_state = ASSERT_LINE;
 
   /* run 68k & Z80 until end of line */
   m68k_run(MCYCLES_PER_LINE);
@@ -789,13 +793,10 @@ void system_frame_scd(int do_skip)
     }
   }
 
-  /* initialize VCounter */
-  v_counter = bitmap.viewport.h;
-
   /* first line of overscan */
   if (bitmap.viewport.y)
   {
-    blank_line(v_counter, -bitmap.viewport.x, bitmap.viewport.w + 2*bitmap.viewport.x);
+    blank_line(bitmap.viewport.h, -bitmap.viewport.x, bitmap.viewport.w + 2*bitmap.viewport.x);
   }
   
   /* clear DMA Busy, FIFO FULL & field flags */
@@ -836,30 +837,37 @@ void system_frame_scd(int do_skip)
   /* refresh inputs just before VINT */
   osd_input_update();
 
-  /* delay between VBLANK flag & Vertical Interrupt (Dracula, OutRunners, VR Troopers) */
-  m68k_run(788);
-  if (zstate == 1)
+  /* VDP always starts after VBLANK so VINT cannot occur on first frame after a VDP reset (verified on real hardware) */
+  if (v_counter != bitmap.viewport.h)
   {
-    z80_run(788);
-  }
-  else
-  {
-    Z80.cycles = 788;
-  }
+    /* reinitialize VCounter */
+    v_counter = bitmap.viewport.h;
 
-  /* set VINT flag */
-  status |= 0x80;
+    /* delay between VBLANK flag & Vertical Interrupt (Dracula, OutRunners, VR Troopers) */
+    m68k_run(788);
+    if (zstate == 1)
+    {
+      z80_run(788);
+    }
+    else
+    {
+      Z80.cycles = 788;
+    }
 
-  /* Vertical Interrupt */
-  vint_pending = 0x20;
-  if (reg[1] & 0x20)
-  {
-    /* level 6 interrupt */
-    m68k_set_irq(6);
+    /* set VINT flag */
+    status |= 0x80;    
+
+    /* Vertical Interrupt */
+    vint_pending = 0x20;
+    if (reg[1] & 0x20)
+    {
+      /* level 6 interrupt */
+      m68k_set_irq(6);
+    }
+
+    /* assert Z80 interrupt */
+    Z80.irq_state = ASSERT_LINE;
   }
-
-  /* assert Z80 interrupt */
-  Z80.irq_state = ASSERT_LINE;
 
   /* run both 68k & CD hardware until end of line */
   scd_update(MCYCLES_PER_LINE);
