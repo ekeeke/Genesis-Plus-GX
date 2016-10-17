@@ -1,7 +1,7 @@
 /****************************************************************************
  *  libretro.c
  *
- *  Genesis Plus GX configuration file support
+ *  Genesis Plus GX libretro port
  *
  *  Copyright Eke-Eke (2007-2015)
  *
