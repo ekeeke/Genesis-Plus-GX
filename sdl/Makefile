@@ -30,7 +30,7 @@ CFLAGS    = `sdl-config --cflags` -march=i686 -O6 -fomit-frame-pointer -Wall -Wn
 #-g -ggdb -pg
 #-fomit-frame-pointer
 #LDFLAGS   = -pg
-DEFINES   = -DLSB_FIRST -DUSE_16BPP_RENDERING -DUSE_LIBTREMOR
+DEFINES   = -DLSB_FIRST -DUSE_16BPP_RENDERING -DUSE_LIBTREMOR -DMAXROMSIZE=33554432
 
 SRCDIR    = ../core
 INCLUDES  = -I$(SRCDIR) -I$(SRCDIR)/z80 -I$(SRCDIR)/m68k -I$(SRCDIR)/sound -I$(SRCDIR)/input_hw -I$(SRCDIR)/cart_hw -I$(SRCDIR)/cart_hw/svp -I$(SRCDIR)/cd_hw -I$(SRCDIR)/ntsc -I$(SRCDIR)/tremor -I$(SRCDIR)/../sdl
