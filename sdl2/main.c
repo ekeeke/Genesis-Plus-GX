@@ -706,7 +706,7 @@ int main (int argc, char **argv)
     char caption[256];
     sprintf(caption, "Genesis Plus GX\\SDL\nusage: %s gamename\n", argv[0]);
     SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION, "Information", caption, sdl_video.window);
-    exit(1);
+    return 1;
   }
 
   /* set default config */
@@ -747,7 +747,7 @@ int main (int argc, char **argv)
   if(SDL_Init(0) < 0)
   {
     SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", "SDL initialization failed", sdl_video.window);
-    exit(1);
+    return 1;
   }
   sdl_video_init();
   if (use_sound) sdl_sound_init();
@@ -777,7 +777,7 @@ int main (int argc, char **argv)
     char caption[256];
     sprintf(caption, "Error loading file `%s'.", argv[1]);
     SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", caption, sdl_video.window);
-    exit(1);
+    return 1;
   }
 
   /* initialize system hardware */
