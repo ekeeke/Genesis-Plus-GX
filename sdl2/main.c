@@ -1,9 +1,3 @@
-#ifdef __WIN32__
-#include <windows.h>
-#else
-#define MessageBox(owner, text, caption, type) printf("%s: %s\n", caption, text)
-#endif
-
 #include "SDL.h"
 #include "SDL_thread.h"
 
@@ -24,6 +18,15 @@ int debug_on    = 0;
 int turbo_mode  = 0;
 int use_sound   = 1;
 int fullscreen  = 0; /* SDL_FULLSCREEN */
+
+struct {
+  SDL_Window* window;
+  SDL_Surface* surf_screen;
+  SDL_Surface* surf_bitmap;
+  SDL_Rect srect;
+  SDL_Rect drect;
+  Uint32 frames_rendered;
+} sdl_video;
 
 /* sound */
 
@@ -69,7 +72,7 @@ static int sdl_sound_init()
   SDL_AudioSpec as_desired, as_obtained;
   
   if(SDL_InitSubSystem(SDL_INIT_AUDIO) < 0) {
-    MessageBox(NULL, "SDL Audio initialization failed", "Error", 0);
+    SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", "SDL Audio initialization failed", sdl_video.window);
     return 0;
   }
 
@@ -80,12 +83,12 @@ static int sdl_sound_init()
   as_desired.callback = sdl_sound_callback;
 
   if(SDL_OpenAudio(&as_desired, &as_obtained) == -1) {
-    MessageBox(NULL, "SDL Audio open failed", "Error", 0);
+    SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", "SDL Audio open failed", sdl_video.window);
     return 0;
   }
 
   if(as_desired.samples != as_obtained.samples) {
-    MessageBox(NULL, "SDL Audio wrong setup", "Error", 0);
+    SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", "SDL Audio wrong setup", sdl_video.window);
     return 0;
   }
 
@@ -93,7 +96,7 @@ static int sdl_sound_init()
   n = SOUND_SAMPLES_SIZE * 2 * sizeof(short) * 20;
   sdl_sound.buffer = (char*)malloc(n);
   if(!sdl_sound.buffer) {
-    MessageBox(NULL, "Can't allocate audio buffer", "Error", 0);
+    SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", "Can't allocate audio buffer", sdl_video.window);
     return 0;
   }
   memset(sdl_sound.buffer, 0, n);
@@ -134,19 +137,10 @@ static void sdl_sound_close()
 md_ntsc_t *md_ntsc;
 sms_ntsc_t *sms_ntsc;
 
-struct {
-  SDL_Window* window;
-  SDL_Surface* surf_screen;
-  SDL_Surface* surf_bitmap;
-  SDL_Rect srect;
-  SDL_Rect drect;
-  Uint32 frames_rendered;
-} sdl_video;
-
 static int sdl_video_init()
 {
   if(SDL_InitSubSystem(SDL_INIT_VIDEO) < 0) {
-    MessageBox(NULL, "SDL Video initialization failed", "Error", 0);
+    SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", "SDL Video initialization failed", sdl_video.window);
     return 0;
   }
   sdl_video.window = SDL_CreateWindow("Genesis Plus GX", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, VIDEO_WIDTH, VIDEO_HEIGHT, 0);
@@ -291,7 +285,7 @@ static int sdl_sync_init()
 {
   if(SDL_InitSubSystem(SDL_INIT_TIMER|SDL_INIT_EVENTS) < 0)
   {
-    MessageBox(NULL, "SDL Timer initialization failed", "Error", 0);
+    SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", "SDL Timer initialization failed", sdl_video.window);
     return 0;
   }
 
@@ -711,7 +705,7 @@ int main (int argc, char **argv)
   {
     char caption[256];
     sprintf(caption, "Genesis Plus GX\\SDL\nusage: %s gamename\n", argv[0]);
-    MessageBox(NULL, caption, "Information", 0);
+    SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION, "Information", caption, sdl_video.window);
     exit(1);
   }
 
@@ -752,9 +746,7 @@ int main (int argc, char **argv)
   /* initialize SDL */
   if(SDL_Init(0) < 0)
   {
-    char caption[256];
-    sprintf(caption, "SDL initialization failed");
-    MessageBox(NULL, caption, "Error", 0);
+    SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", "SDL initialization failed", sdl_video.window);
     exit(1);
   }
   sdl_video_init();
@@ -784,7 +776,7 @@ int main (int argc, char **argv)
   {
     char caption[256];
     sprintf(caption, "Error loading file `%s'.", argv[1]);
-    MessageBox(NULL, caption, "Error", 0);
+    SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", caption, sdl_video.window);
     exit(1);
   }
 
