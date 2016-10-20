@@ -332,8 +332,7 @@ static int sdl_control_update(SDLKey keystate)
 
       case SDLK_F2:
       {
-        if (fullscreen) fullscreen = 0;
-        else fullscreen = SDL_FULLSCREEN;
+        fullscreen = (fullscreen ? 0 : SDL_FULLSCREEN);
         sdl_video.surf_screen = SDL_SetVideoMode(VIDEO_WIDTH, VIDEO_HEIGHT, 16,  SDL_SWSURFACE | fullscreen);
         break;
       }
