@@ -15,6 +15,7 @@
 
  ********************************************************************/
 
+#include <alloca.h>
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
