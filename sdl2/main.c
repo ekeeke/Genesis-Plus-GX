@@ -8,7 +8,7 @@
 #define SOUND_FREQUENCY 48000
 #define SOUND_SAMPLES_SIZE  2048
 
-#define VIDEO_WIDTH  320 
+#define VIDEO_WIDTH  320
 #define VIDEO_HEIGHT 240
 
 int joynum = 0;
@@ -70,7 +70,7 @@ static int sdl_sound_init()
 {
   int n;
   SDL_AudioSpec as_desired, as_obtained;
-  
+
   if(SDL_InitSubSystem(SDL_INIT_AUDIO) < 0) {
     SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", "SDL Audio initialization failed", sdl_video.window);
     return 0;
@@ -107,7 +107,7 @@ static int sdl_sound_init()
 static void sdl_sound_update(int enabled)
 {
   int size = audio_update(soundframe) * 2;
-  
+
   if (enabled)
   {
     int i;
@@ -129,7 +129,7 @@ static void sdl_sound_close()
 {
   SDL_PauseAudio(1);
   SDL_CloseAudio();
-  if (sdl_sound.buffer) 
+  if (sdl_sound.buffer)
     free(sdl_sound.buffer);
 }
 
@@ -192,7 +192,7 @@ static void sdl_video_update()
     sdl_video.drect.h = sdl_video.srect.h;
     sdl_video.drect.x = (VIDEO_WIDTH - sdl_video.drect.w) / 2;
     sdl_video.drect.y = (VIDEO_HEIGHT - sdl_video.drect.h) / 2;
-    
+
     /* clear destination surface */
     SDL_FillRect(sdl_video.surf_screen, 0, 0);
 
@@ -300,7 +300,7 @@ static void sdl_sync_close()
     SDL_DestroySemaphore(sdl_sync.sem_sync);
 }
 
-static const uint16 vc_table[4][2] = 
+static const uint16 vc_table[4][2] =
 {
   /* NTSC, PAL */
   {0xDA , 0xF2},  /* Mode 4 (192 lines) */
@@ -492,7 +492,7 @@ int sdl_input_update(void)
 
   /* reset input */
   input.pad[joynum] = 0;
- 
+
   switch (input.dev[joynum])
   {
     case DEVICE_LIGHTGUN:
@@ -510,7 +510,7 @@ int sdl_input_update(void)
       /* TRIGGER, B, C (Menacer only), START (Menacer & Justifier only) */
       if(state & SDL_BUTTON_LMASK) input.pad[joynum] |= INPUT_A;
       if(state & SDL_BUTTON_RMASK) input.pad[joynum] |= INPUT_B;
-      if(state & SDL_BUTTON_MMASK) input.pad[joynum] |= INPUT_C; 
+      if(state & SDL_BUTTON_MMASK) input.pad[joynum] |= INPUT_C;
       if(keystate[SDL_SCANCODE_F])  input.pad[joynum] |= INPUT_START;
       break;
     }
@@ -581,7 +581,7 @@ int sdl_input_update(void)
       if(keystate[SDL_SCANCODE_X])  input.pad[joynum] |= INPUT_X;
       if(keystate[SDL_SCANCODE_C])  input.pad[joynum] |= INPUT_MODE;
       if(keystate[SDL_SCANCODE_V])  input.pad[joynum] |= INPUT_Z;
-      
+
       /* Left Analog Stick (bidirectional) */
       if(keystate[SDL_SCANCODE_UP])     input.analog[joynum][1]-=2;
       else if(keystate[SDL_SCANCODE_DOWN])   input.analog[joynum][1]+=2;
@@ -619,7 +619,7 @@ int sdl_input_update(void)
       /* Calculate X Y axis values */
       input.analog[0][0] = 0x3c  + (x * (0x17c-0x03c+1)) / VIDEO_WIDTH;
       input.analog[0][1] = 0x1fc + (y * (0x2f7-0x1fc+1)) / VIDEO_HEIGHT;
-   
+
       /* Map mouse buttons to player #1 inputs */
       if(state & SDL_BUTTON_MMASK) pico_current = (pico_current + 1) & 7;
       if(state & SDL_BUTTON_RMASK) input.pad[0] |= INPUT_PICO_RED;
@@ -637,7 +637,7 @@ int sdl_input_update(void)
       /* Calculate X Y axis values */
       input.analog[0][0] = (x * 250) / VIDEO_WIDTH;
       input.analog[0][1] = (y * 250) / VIDEO_HEIGHT;
-   
+
       /* Map mouse buttons to player #1 inputs */
       if(state & SDL_BUTTON_RMASK) input.pad[0] |= INPUT_B;
 
@@ -653,7 +653,7 @@ int sdl_input_update(void)
       /* Calculate X Y axis values */
       input.analog[0][0] = (x * 255) / VIDEO_WIDTH;
       input.analog[0][1] = (y * 255) / VIDEO_HEIGHT;
-   
+
       /* Map mouse buttons to player #1 inputs */
       if(state & SDL_BUTTON_LMASK) input.pad[0] |= INPUT_GRAPHIC_PEN;
       if(state & SDL_BUTTON_RMASK) input.pad[0] |= INPUT_GRAPHIC_MENU;
@@ -859,13 +859,13 @@ int main (int argc, char **argv)
   while(running)
   {
     SDL_Event event;
-    if (SDL_PollEvent(&event)) 
+    if (SDL_PollEvent(&event))
     {
-      switch(event.type) 
+      switch(event.type)
       {
         case SDL_USEREVENT:
         {
-          char caption[100];  
+          char caption[100];
           sprintf(caption,"Genesis Plus GX - %d fps - %s", event.user.code, (rominfo.international[0] != 0x20) ? rominfo.international : rominfo.domestic);
           SDL_SetWindowTitle(sdl_video.window, caption);
           break;
