@@ -5,4 +5,6 @@ psp2/build_vita/*
 psp2/*.a
 sdl/gen_sdl
 sdl/build_sdl
+sdl2/gen_sdl2
+sdl2/build_sdl2
 
