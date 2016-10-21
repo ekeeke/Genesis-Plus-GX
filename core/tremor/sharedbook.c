@@ -15,7 +15,9 @@
 
  ********************************************************************/
 
+#ifndef __MINGW32__
 #include <alloca.h>
+#endif
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
