@@ -14,7 +14,7 @@
 #define SOUND_FREQUENCY 48000
 #define SOUND_SAMPLES_SIZE  2048
 
-#define VIDEO_WIDTH  320 
+#define VIDEO_WIDTH  320
 #define VIDEO_HEIGHT 240
 
 int joynum = 0;
@@ -67,7 +67,7 @@ static int sdl_sound_init()
 {
   int n;
   SDL_AudioSpec as_desired, as_obtained;
-  
+
   if(SDL_Init(SDL_INIT_AUDIO) < 0) {
     MessageBox(NULL, "SDL Audio initialization failed", "Error", 0);
     return 0;
@@ -104,7 +104,7 @@ static int sdl_sound_init()
 static void sdl_sound_update(int enabled)
 {
   int size = audio_update(soundframe) * 2;
-  
+
   if (enabled)
   {
     int i;
@@ -126,7 +126,7 @@ static void sdl_sound_close()
 {
   SDL_PauseAudio(1);
   SDL_CloseAudio();
-  if (sdl_sound.buffer) 
+  if (sdl_sound.buffer)
     free(sdl_sound.buffer);
 }
 
@@ -196,7 +196,7 @@ static void sdl_video_update()
     sdl_video.drect.h = sdl_video.srect.h;
     sdl_video.drect.x = (VIDEO_WIDTH - sdl_video.drect.w) / 2;
     sdl_video.drect.y = (VIDEO_HEIGHT - sdl_video.drect.h) / 2;
-    
+
     /* clear destination surface */
     SDL_FillRect(sdl_video.surf_screen, 0, 0);
 
@@ -304,7 +304,7 @@ static void sdl_sync_close()
     SDL_DestroySemaphore(sdl_sync.sem_sync);
 }
 
-static const uint16 vc_table[4][2] = 
+static const uint16 vc_table[4][2] =
 {
   /* NTSC, PAL */
   {0xDA , 0xF2},  /* Mode 4 (192 lines) */
@@ -332,8 +332,7 @@ static int sdl_control_update(SDLKey keystate)
 
       case SDLK_F2:
       {
-        if (fullscreen) fullscreen = 0;
-        else fullscreen = SDL_FULLSCREEN;
+        fullscreen = (fullscreen ? 0 : SDL_FULLSCREEN);
         sdl_video.surf_screen = SDL_SetVideoMode(VIDEO_WIDTH, VIDEO_HEIGHT, 16,  SDL_SWSURFACE | fullscreen);
         break;
       }
@@ -497,7 +496,7 @@ int sdl_input_update(void)
 
   /* reset input */
   input.pad[joynum] = 0;
- 
+
   switch (input.dev[joynum])
   {
     case DEVICE_LIGHTGUN:
@@ -515,7 +514,7 @@ int sdl_input_update(void)
       /* TRIGGER, B, C (Menacer only), START (Menacer & Justifier only) */
       if(state & SDL_BUTTON_LMASK) input.pad[joynum] |= INPUT_A;
       if(state & SDL_BUTTON_RMASK) input.pad[joynum] |= INPUT_B;
-      if(state & SDL_BUTTON_MMASK) input.pad[joynum] |= INPUT_C; 
+      if(state & SDL_BUTTON_MMASK) input.pad[joynum] |= INPUT_C;
       if(keystate[SDLK_f])  input.pad[joynum] |= INPUT_START;
       break;
     }
@@ -586,7 +585,7 @@ int sdl_input_update(void)
       if(keystate[SDLK_x])  input.pad[joynum] |= INPUT_X;
       if(keystate[SDLK_c])  input.pad[joynum] |= INPUT_MODE;
       if(keystate[SDLK_v])  input.pad[joynum] |= INPUT_Z;
-      
+
       /* Left Analog Stick (bidirectional) */
       if(keystate[SDLK_UP])     input.analog[joynum][1]-=2;
       else if(keystate[SDLK_DOWN])   input.analog[joynum][1]+=2;
@@ -624,7 +623,7 @@ int sdl_input_update(void)
       /* Calculate X Y axis values */
       input.analog[0][0] = 0x3c  + (x * (0x17c-0x03c+1)) / VIDEO_WIDTH;
       input.analog[0][1] = 0x1fc + (y * (0x2f7-0x1fc+1)) / VIDEO_HEIGHT;
-   
+
       /* Map mouse buttons to player #1 inputs */
       if(state & SDL_BUTTON_MMASK) pico_current = (pico_current + 1) & 7;
       if(state & SDL_BUTTON_RMASK) input.pad[0] |= INPUT_PICO_RED;
@@ -642,7 +641,7 @@ int sdl_input_update(void)
       /* Calculate X Y axis values */
       input.analog[0][0] = (x * 250) / VIDEO_WIDTH;
       input.analog[0][1] = (y * 250) / VIDEO_HEIGHT;
-   
+
       /* Map mouse buttons to player #1 inputs */
       if(state & SDL_BUTTON_RMASK) input.pad[0] |= INPUT_B;
 
@@ -658,7 +657,7 @@ int sdl_input_update(void)
       /* Calculate X Y axis values */
       input.analog[0][0] = (x * 255) / VIDEO_WIDTH;
       input.analog[0][1] = (y * 255) / VIDEO_HEIGHT;
-   
+
       /* Map mouse buttons to player #1 inputs */
       if(state & SDL_BUTTON_LMASK) input.pad[0] |= INPUT_GRAPHIC_PEN;
       if(state & SDL_BUTTON_RMASK) input.pad[0] |= INPUT_GRAPHIC_MENU;
@@ -711,7 +710,7 @@ int main (int argc, char **argv)
     char caption[256];
     sprintf(caption, "Genesis Plus GX\\SDL\nusage: %s gamename\n", argv[0]);
     MessageBox(NULL, caption, "Information", 0);
-    exit(1);
+    return 1;
   }
 
   /* set default config */
@@ -751,10 +750,8 @@ int main (int argc, char **argv)
   /* initialize SDL */
   if(SDL_Init(0) < 0)
   {
-    char caption[256];
-    sprintf(caption, "SDL initialization failed");
-    MessageBox(NULL, caption, "Error", 0);
-    exit(1);
+    MessageBox(NULL, "SDL initialization failed", "Error", 0);
+    return 1;
   }
   sdl_video_init();
   if (use_sound) sdl_sound_init();
@@ -784,7 +781,7 @@ int main (int argc, char **argv)
     char caption[256];
     sprintf(caption, "Error loading file `%s'.", argv[1]);
     MessageBox(NULL, caption, "Error", 0);
-    exit(1);
+    return 1;
   }
 
   /* initialize system hardware */
@@ -866,13 +863,13 @@ int main (int argc, char **argv)
   while(running)
   {
     SDL_Event event;
-    if (SDL_PollEvent(&event)) 
+    if (SDL_PollEvent(&event))
     {
-      switch(event.type) 
+      switch(event.type)
       {
         case SDL_USEREVENT:
         {
-          char caption[100];  
+          char caption[100];
           sprintf(caption,"Genesis Plus GX - %d fps - %s", event.user.code, (rominfo.international[0] != 0x20) ? rominfo.international : rominfo.domestic);
           SDL_WM_SetCaption(caption, NULL);
           break;

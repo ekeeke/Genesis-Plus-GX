@@ -9,7 +9,7 @@ PLEASE DO NOT DISTRIBUTE WIN32 BINARIES WITHOUT THIS NOTICE.
 END USERS SHOULD PREFERABLY USE LIBRETRO PORT WITH RETROARCH.
 
 ----------------------------------------------------------------------------
- Genesis Plus (Windows Port) 
+ Genesis Plus (SDL Port) 
 ----------------------------------------------------------------------------
 
  based on the original version 1.3
