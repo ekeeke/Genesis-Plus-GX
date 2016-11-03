@@ -28,6 +28,10 @@ CFLAGS    = `sdl-config --cflags` -march=i686 -O6 -fomit-frame-pointer -Wall -Wn
 #LDFLAGS   = -pg
 DEFINES   = -DLSB_FIRST -DUSE_16BPP_RENDERING -DUSE_LIBTREMOR -DMAXROMSIZE=33554432
 
+ifneq ($(OS),Windows_NT)
+DEFINES += -DHAVE_ALLOCA_H
+endif
+
 SRCDIR    = ../core
 INCLUDES  = -I$(SRCDIR) -I$(SRCDIR)/z80 -I$(SRCDIR)/m68k -I$(SRCDIR)/sound -I$(SRCDIR)/input_hw -I$(SRCDIR)/cart_hw -I$(SRCDIR)/cart_hw/svp -I$(SRCDIR)/cd_hw -I$(SRCDIR)/ntsc -I$(SRCDIR)/tremor -I$(SRCDIR)/../sdl -I$(SRCDIR)/../sdl/sdl1
 LIBS	  = `sdl-config --libs` -lz -lm
