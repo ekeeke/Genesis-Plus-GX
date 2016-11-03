@@ -18,9 +18,7 @@
 /* general handling of the header and the vorbis_info structure (and
    substructures) */
 
-#ifndef __MINGW32__
 #include <alloca.h>
-#endif
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
