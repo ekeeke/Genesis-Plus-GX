@@ -1,5 +1,5 @@
 
-# Makefile for genplus SDL2
+# Makefile for genplus SDL
 #
 # (c) 1999, 2000, 2001, 2002, 2003  Charles MacDonald
 # modified by Eke-Eke <eke_eke31@yahoo.fr>
@@ -20,23 +20,23 @@
 # -D32BPP_RENDERING - configure for 32-bit pixels (RGB888)
 
 ifeq ($(OS),Windows_NT)
-NAME	  = gen_sdl2.exe
+NAME	  = gen_sdl.exe
 else
-NAME	  = gen_sdl2
+NAME	  = gen_sdl
 endif
 
 CC        = gcc
-CFLAGS    = `sdl2-config --cflags` -march=i686 -O6 -fomit-frame-pointer -Wall -Wno-strict-aliasing -ansi -std=c99 -pedantic-errors
+CFLAGS    = `sdl-config --cflags` -march=i686 -O6 -fomit-frame-pointer -Wall -Wno-strict-aliasing -ansi -std=c99 -pedantic-errors
 #-g -ggdb -pg
 #-fomit-frame-pointer
 #LDFLAGS   = -pg
 DEFINES   = -DLSB_FIRST -DUSE_16BPP_RENDERING -DUSE_LIBTREMOR -DMAXROMSIZE=33554432
 
 SRCDIR    = ../core
-INCLUDES  = -I$(SRCDIR) -I$(SRCDIR)/z80 -I$(SRCDIR)/m68k -I$(SRCDIR)/sound -I$(SRCDIR)/input_hw -I$(SRCDIR)/cart_hw -I$(SRCDIR)/cart_hw/svp -I$(SRCDIR)/cd_hw -I$(SRCDIR)/ntsc -I$(SRCDIR)/tremor -I$(SRCDIR)/../sdl2
-LIBS	  = `sdl2-config --libs` -lz -lm
+INCLUDES  = -I$(SRCDIR) -I$(SRCDIR)/z80 -I$(SRCDIR)/m68k -I$(SRCDIR)/sound -I$(SRCDIR)/input_hw -I$(SRCDIR)/cart_hw -I$(SRCDIR)/cart_hw/svp -I$(SRCDIR)/cd_hw -I$(SRCDIR)/ntsc -I$(SRCDIR)/tremor -I$(SRCDIR)/../sdl -I$(SRCDIR)/../sdl/sdl1
+LIBS	  = `sdl-config --libs` -lz -lm
 
-OBJDIR = ./build_sdl2
+OBJDIR = ./build_sdl
 
 OBJECTS	=       $(OBJDIR)/z80.o	
 
@@ -166,12 +166,15 @@ $(OBJDIR)/%.o :	$(SRCDIR)/tremor/%.c $(SRCDIR)/tremor/%.h
 $(OBJDIR)/%.o :	$(SRCDIR)/tremor/%.c 	        
 		$(CC) -c $(CFLAGS) $(INCLUDES) $(DEFINES) $< -o $@
 
-$(OBJDIR)/%.o :	$(SRCDIR)/../sdl2/%.c $(SRCDIR)/../sdl2/%.h	        
+$(OBJDIR)/%.o :	$(SRCDIR)/../sdl/%.c $(SRCDIR)/../sdl/%.h	        
+		$(CC) -c $(CFLAGS) $(INCLUDES) $(DEFINES) $< -o $@
+
+$(OBJDIR)/%.o :	$(SRCDIR)/../sdl/sdl1/%.c $(SRCDIR)/../sdl/sdl1/%.h	        
 		$(CC) -c $(CFLAGS) $(INCLUDES) $(DEFINES) $< -o $@
 
 ifeq ($(OS),Windows_NT)
 $(OBJDIR)/icon.o :	
-		windres $(SRCDIR)/../sdl2/icon.rc $@
+		windres $(SRCDIR)/../sdl/icon.rc $@
 endif
 
 pack	:
