@@ -19,11 +19,7 @@
 # -D16BPP_RENDERING - configure for 16-bit pixels (RGB565)
 # -D32BPP_RENDERING - configure for 32-bit pixels (RGB888)
 
-ifeq ($(OS),Windows_NT)
-NAME	  = gen_sdl.exe
-else
 NAME	  = gen_sdl
-endif
 
 CC        = gcc
 CFLAGS    = `sdl-config --cflags` -march=i686 -O6 -fomit-frame-pointer -Wall -Wno-strict-aliasing -ansi -std=c99 -pedantic-errors
