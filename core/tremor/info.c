@@ -18,7 +18,6 @@
 /* general handling of the header and the vorbis_info structure (and
    substructures) */
 
-#include <alloca.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
