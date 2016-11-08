@@ -244,7 +244,7 @@ else ifeq ($(platform), wiiu)
 	TARGET := $(TARGET_NAME)_libretro_$(platform).a
 	CC = $(DEVKITPPC)/bin/powerpc-eabi-gcc$(EXE_EXT)
 	AR = $(DEVKITPPC)/bin/powerpc-eabi-ar$(EXE_EXT)
-	PLATFORM_DEFINES := -DGEKKO -DWIIU -DHW_RVL -mrvl -mcpu=750 -meabi -mhard-float -DALT_RENDER
+	PLATFORM_DEFINES := -DGEKKO -DWIIU -DHW_RVL -mrvl -mcpu=750 -meabi -mhard-float -DALT_RENDER -DUSE_DYNAMIC_ALLOC
 	ENDIANNESS_DEFINES := -DBYTE_ORDER=BIG_ENDIAN
 	STATIC_LINKING = 1
 
