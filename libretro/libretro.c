@@ -1664,7 +1664,10 @@ void retro_set_input_state(retro_input_state_t cb) { input_state_cb = cb; }
 void retro_get_system_info(struct retro_system_info *info)
 {
    info->library_name = "Genesis Plus GX";
-   info->library_version = "v1.7.4";
+#ifndef GIT_VERSION
+#define GIT_VERSION ""
+#endif
+   info->library_version = "v1.7.4" GIT_VERSION;
    info->valid_extensions = "mdx|md|smd|gen|bin|cue|iso|sms|gg|sg";
    info->block_extract = false;
    info->need_fullpath = true;
