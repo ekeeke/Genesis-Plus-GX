@@ -38,6 +38,12 @@
     - Re-added stereo GG support
     - Re-added configurable Feedback and Shift Register Width
     - Rewrote core with various optimizations
+
+   04/11/16 Eke-Eke (Genesis Plus GX)
+    - improved resampling quality (removes aliasing noise when using high frequency tones)
+    - removed cut-off value (improves emulation accuracy of highest frequency tones)
+    - modified channels output to 0/1 like real chip instead of -1/+1 (fixes PCM voices when cut-off value is removed) 
+    
 */
 
 #include "shared.h"
@@ -46,10 +52,6 @@
 
 /* Initial state of shift register */
 #define NoiseInitialState 0x8000
-
-/* Value below which PSG does not output  */
-/*#define PSG_CUTOFF 0x6*/
-#define PSG_CUTOFF 0x1
 
 /* original Texas Instruments TMS SN76489AN (rev. A) used in SG-1000, SC-3000H & SF-7000 computers */
 #define FB_DISCRETE 0x0006
@@ -172,7 +174,7 @@ INLINE void UpdateToneAmplitude(int i, int time)
   if (delta != 0)
   {
     SN76489.ChanOut[i][0] += delta;
-    blip_add_delta_fast(snd.blips[0][0], time, delta);
+    blip_add_delta(snd.blips[0][0], time, delta);
   }
 
   /* right output */
@@ -180,7 +182,7 @@ INLINE void UpdateToneAmplitude(int i, int time)
   if (delta != 0)
   {
     SN76489.ChanOut[i][1] += delta;
-    blip_add_delta_fast(snd.blips[0][1], time, delta);
+    blip_add_delta(snd.blips[0][1], time, delta);
   }
 }
 
@@ -194,7 +196,7 @@ INLINE void UpdateNoiseAmplitude(int time)
   if (delta != 0)
   {
     SN76489.ChanOut[3][0] += delta;
-    blip_add_delta_fast(snd.blips[0][0], time, delta);
+    blip_add_delta(snd.blips[0][0], time, delta);
   }
 
   /* right output */
@@ -202,7 +204,7 @@ INLINE void UpdateNoiseAmplitude(int time)
   if (delta != 0)
   {
     SN76489.ChanOut[3][1] += delta;
-    blip_add_delta_fast(snd.blips[0][1], time, delta);
+    blip_add_delta(snd.blips[0][1], time, delta);
   }
 }
 
@@ -220,13 +222,8 @@ static void RunTone(int i, int clocks)
   /* Process any transitions that occur within clocks we're running */
   while (time < clocks)
   {
-    if (SN76489.Registers[i*2]>PSG_CUTOFF) {
-      /* Flip the flip-flop */
-      SN76489.ToneFreqPos[i] = -SN76489.ToneFreqPos[i];
-    } else {
-      /* stuck value */
-      SN76489.ToneFreqPos[i] = 1;
-    }
+    /* Flip the flip-flop */
+    SN76489.ToneFreqPos[i] ^= 1;
     UpdateToneAmplitude(i, time);
 
     /* Advance to time of next transition */
@@ -260,8 +257,8 @@ static void RunNoise(int clocks)
   while (time < clocks)
   {
     /* Flip the flip-flop */
-    SN76489.ToneFreqPos[3] = -SN76489.ToneFreqPos[3];
-    if (SN76489.ToneFreqPos[3] == 1)
+    SN76489.ToneFreqPos[3] ^= 1;
+    if (SN76489.ToneFreqPos[3])
     {
       /* On the positive edge of the square wave (only once per cycle) */
       int Feedback = SN76489.NoiseShiftRegister;
@@ -323,12 +320,9 @@ void SN76489_Config(unsigned int clocks, int preAmp, int boostNoise, int stereo)
     SN76489.PreAmp[i][0] = preAmp * ((stereo >> (i + 4)) & 1);
     SN76489.PreAmp[i][1] = preAmp * ((stereo >> (i + 0)) & 1);
 
-    /* noise channel boost */
-    if (i == 3)
-    {
-      SN76489.PreAmp[3][0] = SN76489.PreAmp[3][0] << boostNoise;
-      SN76489.PreAmp[3][1] = SN76489.PreAmp[3][1] << boostNoise;
-    }
+    /* noise channel boost (applied to all channels) */
+    SN76489.PreAmp[i][0] = SN76489.PreAmp[i][0] << boostNoise;
+    SN76489.PreAmp[i][1] = SN76489.PreAmp[i][1] << boostNoise;
 
     /* update stereo channel amplitude */
     SN76489.Channel[i][0]= (PSGVolumeValues[SN76489.Registers[i*2 + 1]] * SN76489.PreAmp[i][0]) / 100;
@@ -352,11 +346,11 @@ void SN76489_Update(unsigned int clocks)
   /* Adjust internal M-cycle counter for next frame */
   SN76489.clocks -= clocks;
 
-	/* Adjust channel time counters for new frame */
-	for (i=0; i<4; ++i)
-	{
-		SN76489.ToneFreqVals[i] -= clocks;
-	}
+  /* Adjust channel time counters for new frame */
+  for (i=0; i<4; ++i)
+  {
+    SN76489.ToneFreqVals[i] -= clocks;
+  }
 }
 
 void SN76489_Write(unsigned int clocks, unsigned int data)
