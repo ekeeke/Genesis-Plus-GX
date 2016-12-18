@@ -22,7 +22,7 @@
 #include "io_ctrl.h"
 #include "input.h"
 #include "sound.h"
-#include "sn76489.h"
+#include "psg.h"
 #include "ym2413.h"
 #include "ym2612.h"
 #include "sram.h"

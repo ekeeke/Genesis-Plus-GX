@@ -231,7 +231,7 @@ void z80_md_port_w(unsigned int port, unsigned char data)
     case 0x40:
     case 0x41:
     {
-      SN76489_Write(Z80.cycles, data);
+      psg_write(Z80.cycles, data);
       return;
     }
 
@@ -345,7 +345,7 @@ void z80_gg_port_w(unsigned int port, unsigned char data)
     case 0x40:
     case 0x41:
     {
-      SN76489_Write(Z80.cycles, data);
+      psg_write(Z80.cycles, data);
       return;
     }
 
@@ -450,7 +450,7 @@ void z80_ms_port_w(unsigned int port, unsigned char data)
     case 0x40:
     case 0x41:
     {
-      SN76489_Write(Z80.cycles, data);
+      psg_write(Z80.cycles, data);
       return;
     }
 
@@ -493,7 +493,7 @@ void z80_ms_port_w(unsigned int port, unsigned char data)
                 1  0 : disable both PSG & FM output
                 1  1 : enable both PSG and FM output
             */
-            SN76489_Config(Z80.cycles, config.psg_preamp, config.psgBoostNoise, ((data + 1) & 0x02) ? 0x00 : 0xFF);
+            psg_config(Z80.cycles, config.psg_preamp, ((data + 1) & 0x02) ? 0x00 : 0xFF);
             fm_write(Z80.cycles, 0x02, data);
             io_reg[6] = data;
             return;
@@ -611,7 +611,7 @@ void z80_m3_port_w(unsigned int port, unsigned char data)
     case 0x40:
     case 0x41:
     {
-      SN76489_Write(Z80.cycles, data);
+      psg_write(Z80.cycles, data);
       return;
     }
 
@@ -699,7 +699,7 @@ void z80_sg_port_w(unsigned int port, unsigned char data)
     case 0x40:
     case 0x41:
     {
-      SN76489_Write(Z80.cycles, data);
+      psg_write(Z80.cycles, data);
 
       /* Z80 !WAIT input is tied to SN76489AN chip READY pin (held low for 32 clocks after each write access) */
       Z80.cycles += (32 * 15);

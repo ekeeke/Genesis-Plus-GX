@@ -86,7 +86,7 @@ void sound_init( void )
     YM_Update = YM2612Update;
     YM_Write = YM2612Write;
 
-    /* chip is running a VCLK / 144 = MCLK / 7 / 144 */
+    /* chip is running at VCLK / 144 = MCLK / 7 / 144 */
     fm_cycles_ratio = 144 * 7;
   }
   else
@@ -97,21 +97,20 @@ void sound_init( void )
     YM_Update = YM2413Update;
     YM_Write = YM2413Write;
 
-    /* chip is running a ZCLK / 72 = MCLK / 15 / 72 */
+    /* chip is running at ZCLK / 72 = MCLK / 15 / 72 */
     fm_cycles_ratio = 72 * 15;
   }
 
   /* Initialize PSG chip */
-  SN76489_Init((system_hw == SYSTEM_SG) ? SN_DISCRETE : SN_INTEGRATED);
-  SN76489_Config(0, config.psg_preamp, config.psgBoostNoise, 0xff);
+  psg_init((system_hw == SYSTEM_SG) ? PSG_DISCRETE : PSG_INTEGRATED);
 }
 
 void sound_reset(void)
 {
   /* reset sound chips */
   YM_Reset();
-  SN76489_Reset();
-  SN76489_Config(0, config.psg_preamp, config.psgBoostNoise, 0xff);
+  psg_reset();
+  psg_config(0, config.psg_preamp, 0xff);
 
   /* reset FM buffer ouput */
   fm_last[0] = fm_last[1] = 0;
@@ -127,8 +126,10 @@ int sound_update(unsigned int cycles)
 {
   int prev_l, prev_r, preamp, time, l, r, *ptr;
 
-  /* Run PSG & FM chips until end of frame */
-  SN76489_Update(cycles);
+  /* Run PSG chip until end of frame */
+  psg_end_frame(cycles);
+
+  /* Run FM chip until end of frame */
   fm_update(cycles);
 
   /* FM output pre-amplification */
@@ -210,7 +211,7 @@ int sound_context_save(uint8 *state)
     save_param(YM2413GetContextPtr(),YM2413GetContextSize());
   }
 
-  save_param(SN76489_GetContextPtr(),SN76489_GetContextSize());
+  bufferptr += psg_context_save(&state[bufferptr]);
 
   save_param(&fm_cycles_start,sizeof(fm_cycles_start));
 
@@ -231,7 +232,7 @@ int sound_context_load(uint8 *state)
     load_param(YM2413GetContextPtr(),YM2413GetContextSize());
   }
 
-  load_param(SN76489_GetContextPtr(),SN76489_GetContextSize());
+  bufferptr += psg_context_load(&state[bufferptr]);
 
   load_param(&fm_cycles_start,sizeof(fm_cycles_start));
   fm_cycles_count = fm_cycles_start;

@@ -69,7 +69,7 @@ OBJECTS	+=      $(OBJDIR)/input.o	  \
 		$(OBJDIR)/graphic_board.o
 
 OBJECTS	+=      $(OBJDIR)/sound.o	\
-		$(OBJDIR)/sn76489.o     \
+		$(OBJDIR)/psg.o     \
 		$(OBJDIR)/ym2413.o      \
 		$(OBJDIR)/ym2612.o
 

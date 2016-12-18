@@ -3,7 +3,7 @@
  *
  *  Genesis Plus GX libretro port
  *
- *  Copyright Eke-Eke (2007-2015)
+ *  Copyright Eke-Eke (2007-2016)
  *
  *  Copyright Daniel De Matteis (2012-2016)
  *
@@ -495,8 +495,8 @@ static void config_default(void)
    /* sound options */
    config.psg_preamp     = 150;
    config.fm_preamp      = 100;
-   config.hq_fm          = 1; /* high-quality resampling */
-   config.psgBoostNoise  = 1;
+   config.hq_fm          = 1; /* high-quality FM resampling (slower) */
+   config.hq_psg         = 1; /* high-quality PSG resampling (slower) */
    config.filter         = 0; /* no filter */
    config.lp_range       = 0x9999; /* 0.6 in 16.16 fixed point */
    config.low_freq       = 880;
@@ -504,7 +504,7 @@ static void config_default(void)
    config.lg             = 1.0;
    config.mg             = 1.0;
    config.hg             = 1.0;
-   config.dac_bits 	     = 14; /* MAX DEPTH */ 
+   config.dac_bits       = 14; /* MAX DEPTH */ 
    config.ym2413         = 2; /* AUTO */
    config.mono           = 0; /* STEREO output */
 

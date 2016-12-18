@@ -1218,7 +1218,7 @@ void vdp_write_byte(unsigned int address, unsigned int data)
     {
       if (address & 1)
       {
-        SN76489_Write(m68k.cycles, data);
+        psg_write(m68k.cycles, data);
         return;
       }
       m68k_unused_8_w(address, data);
@@ -1264,7 +1264,7 @@ void vdp_write_word(unsigned int address, unsigned int data)
     case 0x10:  /* PSG */
     case 0x14:
     {
-      SN76489_Write(m68k.cycles, data & 0xFF);
+      psg_write(m68k.cycles, data & 0xFF);
       return;
     }
 
