@@ -167,45 +167,23 @@ int SN76489_GetContextSize(void)
 /* Updates tone amplitude in delta buffer. Call whenever amplitude might have changed. */
 INLINE void UpdateToneAmplitude(int i, int time)
 {
-  int delta;
-
-  /* left output */
-  delta = (SN76489.Channel[i][0] * SN76489.ToneFreqPos[i]) - SN76489.ChanOut[i][0];
-  if (delta != 0)
-  {
-    SN76489.ChanOut[i][0] += delta;
-    blip_add_delta(snd.blips[0][0], time, delta);
-  }
-
-  /* right output */
-  delta = (SN76489.Channel[i][1] * SN76489.ToneFreqPos[i]) - SN76489.ChanOut[i][1];
-  if (delta != 0)
-  {
-    SN76489.ChanOut[i][1] += delta;
-    blip_add_delta(snd.blips[0][1], time, delta);
-  }
+  /* left & right output */
+  int delta_l = (SN76489.Channel[i][0] * SN76489.ToneFreqPos[i]) - SN76489.ChanOut[i][0];
+  int delta_r = (SN76489.Channel[i][1] * SN76489.ToneFreqPos[i]) - SN76489.ChanOut[i][1];
+  blip_add_delta(snd.blips[0], time, delta_l, delta_r);
+  SN76489.ChanOut[i][0] += delta_l;
+  SN76489.ChanOut[i][1] += delta_r;
 }
 
 /* Updates noise amplitude in delta buffer. Call whenever amplitude might have changed. */
 INLINE void UpdateNoiseAmplitude(int time)
 {
-  int delta;
-
-  /* left output */
-  delta = (SN76489.Channel[3][0] * ( SN76489.NoiseShiftRegister & 0x1 )) - SN76489.ChanOut[3][0];
-  if (delta != 0)
-  {
-    SN76489.ChanOut[3][0] += delta;
-    blip_add_delta(snd.blips[0][0], time, delta);
-  }
-
-  /* right output */
-  delta = (SN76489.Channel[3][1] * ( SN76489.NoiseShiftRegister & 0x1 )) - SN76489.ChanOut[3][1];
-  if (delta != 0)
-  {
-    SN76489.ChanOut[3][1] += delta;
-    blip_add_delta(snd.blips[0][1], time, delta);
-  }
+  /* left & right output */
+  int delta_l = (SN76489.Channel[3][0] * ( SN76489.NoiseShiftRegister & 0x1 )) - SN76489.ChanOut[3][0];
+  int delta_r = (SN76489.Channel[3][1] * ( SN76489.NoiseShiftRegister & 0x1 )) - SN76489.ChanOut[3][1];
+  blip_add_delta(snd.blips[0], time, delta_l, delta_r);
+  SN76489.ChanOut[3][0] += delta_l;
+  SN76489.ChanOut[3][1] += delta_r;
 }
 
 /* Runs tone channel for clock_length clocks */
