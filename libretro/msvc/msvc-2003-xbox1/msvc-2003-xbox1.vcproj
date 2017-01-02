@@ -394,7 +394,7 @@
 						RelativePath="..\..\..\core\sound\eq.c">
 					</File>
 					<File
-						RelativePath="..\..\..\core\sound\sn76489.c">
+						RelativePath="..\..\..\core\sound\psg.c">
 					</File>
 					<File
 						RelativePath="..\..\..\core\sound\sound.c">

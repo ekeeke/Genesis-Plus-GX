@@ -91,7 +91,7 @@ typedef struct
   int sample_rate;      /* Output Sample rate (8000-48000) */
   double frame_rate;    /* Output Frame rate (usually 50 or 60 frames per second) */
   int enabled;          /* 1= sound emulation is enabled */
-  blip_t* blips[3][2];  /* Blip Buffer resampling */
+  blip_t* blips[3];     /* Blip Buffer resampling (stereo) */
 } t_snd;
 
 

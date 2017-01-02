@@ -123,10 +123,10 @@ static const uint32 toc_ffightj[29] =
 };
 
 /* supported WAVE file header (16-bit stereo samples @44.1kHz) */
-static const unsigned char waveHeader[32] =
+static const unsigned char waveHeader[28] =
 {
-  0x57,0x41,0x56,0x45,0x66,0x6d,0x74,0x20,0x10,0x00,0x00,0x00,0x01,0x00,0x02,0x00,
-  0x44,0xac,0x00,0x00,0x10,0xb1,0x02,0x00,0x04,0x00,0x10,0x00,0x64,0x61,0x74,0x61
+  0x57,0x41,0x56,0x45,0x66,0x6d,0x74,0x20,0x10,0x00,0x00,0x00,0x01,0x00,
+  0x02,0x00,0x44,0xac,0x00,0x00,0x10,0xb1,0x02,0x00,0x04,0x00,0x10,0x00
 };
 
 /* supported WAVE file extensions */
@@ -179,8 +179,7 @@ void cdd_init(int samplerate)
 {
   /* CD-DA is running by default at 44100 Hz */
   /* Audio stream is resampled to desired rate using Blip Buffer */
-  blip_set_rates(snd.blips[2][0], 44100, samplerate);
-  blip_set_rates(snd.blips[2][1], 44100, samplerate);
+  blip_set_rates(snd.blips[2], 44100, samplerate);
 }
 
 void cdd_reset(void)
@@ -449,16 +448,39 @@ int cdd_load(char *filename, char *header)
         if (!strstr(lptr,"BINARY") && !strstr(lptr,"MOTOROLA"))
         {
           /* read file header */
-          unsigned char head[32];
+          unsigned char head[28];
           fseek(cdd.toc.tracks[cdd.toc.last].fd, 8, SEEK_SET);
-          fread(head, 32, 1, cdd.toc.tracks[cdd.toc.last].fd);
+          fread(head, 28, 1, cdd.toc.tracks[cdd.toc.last].fd);
           fseek(cdd.toc.tracks[cdd.toc.last].fd, 0, SEEK_SET);
       
           /* autodetect WAVE file header (44.1KHz 16-bit stereo format only) */
-          if (!memcmp(head, waveHeader, 32))
+          if (!memcmp(head, waveHeader, 28))
           {
+            /* look for 'data' chunk id */
+            int dataOffset = 0;
+            fseek(cdd.toc.tracks[cdd.toc.last].fd, 36, SEEK_SET);
+            while (fread(head, 4, 1, cdd.toc.tracks[cdd.toc.last].fd))
+            {
+              if (!memcmp(head, "data", 4))
+              {
+                dataOffset = ftell(cdd.toc.tracks[cdd.toc.last].fd) + 4;
+                fseek(cdd.toc.tracks[cdd.toc.last].fd, 0, SEEK_SET);
+                break;
+              }
+              fseek(cdd.toc.tracks[cdd.toc.last].fd, -2, SEEK_CUR);
+            }
+
+            /* check if 'data' chunk has not been found */
+            if (!dataOffset)
+            {
+              /* invalid WAVE file */
+              fclose(cdd.toc.tracks[cdd.toc.last].fd);
+              cdd.toc.tracks[cdd.toc.last].fd = 0;
+              break;
+            }
+
             /* adjust current track file read offset with WAVE header length */
-            cdd.toc.tracks[cdd.toc.last].offset -= 44;
+            cdd.toc.tracks[cdd.toc.last].offset -= dataOffset;
           }
 #if defined(USE_LIBTREMOR) || defined(USE_LIBVORBIS)
           else if (!ov_open(cdd.toc.tracks[cdd.toc.last].fd,&cdd.toc.tracks[cdd.toc.last].vf,0,0))
@@ -699,14 +721,35 @@ int cdd_load(char *filename, char *header)
     while (fd)
     {
       /* read file HEADER */
-      unsigned char head[32];
+      unsigned char head[28];
       fseek(fd, 8, SEEK_SET);
-      fread(head, 32, 1, fd);
+      fread(head, 28, 1, fd);
       fseek(fd, 0, SEEK_SET);
       
       /* check if this is a valid WAVE file (44.1KHz 16-bit stereo format only) */
-      if (!memcmp(head, waveHeader, 32))
+      if (!memcmp(head, waveHeader, 28))
       {
+        /* look for 'data' chunk id */
+        int dataOffset = 0;
+        fseek(fd, 36, SEEK_SET);
+        while (fread(head, 4, 1, fd))
+        {
+          if (!memcmp(head, "data", 4))
+          {
+            dataOffset = ftell(fd) + 4;
+            break;
+          }
+          fseek(fd, -2, SEEK_CUR);
+        }
+
+        /* check if 'data' chunk has not been found */
+        if (!dataOffset)
+        {
+          /* invalid WAVE file */
+          fclose(fd);
+          break;
+        }
+
         /* initialize current track file descriptor */
         cdd.toc.tracks[cdd.toc.last].fd = fd;
 
@@ -718,7 +761,7 @@ int cdd_load(char *filename, char *header)
 
         /* current track end time */
         fseek(fd, 0, SEEK_END);
-        cdd.toc.tracks[cdd.toc.last].end = cdd.toc.tracks[cdd.toc.last].start + ((ftell(fd) - 44 + 2351) / 2352);
+        cdd.toc.tracks[cdd.toc.last].end = cdd.toc.tracks[cdd.toc.last].start + ((ftell(fd) - dataOffset + 2351) / 2352);
 
         /* initialize file read offset for current track */
         cdd.toc.tracks[cdd.toc.last].offset = cdd.toc.tracks[cdd.toc.last].start * 2352;
@@ -738,7 +781,7 @@ int cdd_load(char *filename, char *header)
         cdd.toc.end = cdd.toc.tracks[cdd.toc.last].end;
 
         /* adjust file read offset for current track with WAVE header length */
-        cdd.toc.tracks[cdd.toc.last].offset -= 44;
+        cdd.toc.tracks[cdd.toc.last].offset -= dataOffset;
 
         /* increment track number */
         cdd.toc.last++;
@@ -1015,16 +1058,16 @@ void cdd_read_data(uint8 *dst)
 void cdd_read_audio(unsigned int samples)
 {
   /* previous audio outputs */
-  int16 l = cdd.audio[0];
-  int16 r = cdd.audio[1];
+  int prev_l = cdd.audio[0];
+  int prev_r = cdd.audio[1];
 
   /* get number of internal clocks (samples) needed */
-  samples = blip_clocks_needed(snd.blips[2][0], samples);
+  samples = blip_clocks_needed(snd.blips[2], samples);
 
   /* audio track playing ? */
   if (!scd.regs[0x36>>1].byte.h && cdd.toc.tracks[cdd.index].fd)
   {
-    int i, mul, delta;
+    int i, mul, l, r;
 
     /* current CD-DA fader volume */
     int curVol = cdd.volume;
@@ -1062,17 +1105,13 @@ void cdd_read_audio(unsigned int samples)
         /* (MIN) 0,1,2,3,4,8,12,16,20...,1020,1024 (MAX) */
         mul = (curVol & 0x7fc) ? (curVol & 0x7fc) : (curVol & 0x03);
 
-        /* left channel */
-        delta = ((ptr[0] * mul) / 1024) - l;
-        ptr++;
-        l += delta;
-        blip_add_delta_fast(snd.blips[2][0], i, delta);
-
-        /* right channel */
-        delta = ((ptr[0] * mul) / 1024) - r;
-        ptr++;
-        r += delta;
-        blip_add_delta_fast(snd.blips[2][1], i, delta);
+        /* left & right channels */
+        l = ((ptr[0] * mul) / 1024);
+        r = ((ptr[1] * mul) / 1024);
+        blip_add_delta_fast(snd.blips[2], i, l-prev_l, r-prev_r);
+        prev_l = l;
+        prev_r = r;
+        ptr+=2;
 
         /* update CD-DA fader volume (one step/sample) */
         if (curVol < endVol)
@@ -1109,27 +1148,19 @@ void cdd_read_audio(unsigned int samples)
         /* (MIN) 0,1,2,3,4,8,12,16,20...,1020,1024 (MAX) */
         mul = (curVol & 0x7fc) ? (curVol & 0x7fc) : (curVol & 0x03);
 
-        /* left channel */
+        /* left & right channels */
 #ifdef LSB_FIRST
-        delta = ((ptr[0] * mul) / 1024) - l;
-        ptr++;
+        l = ((ptr[0] * mul) / 1024);
+        r = ((ptr[1] * mul) / 1024);
+        ptr+=2;
 #else
-        delta = (((int16)((ptr[0] + ptr[1]*256)) * mul) / 1024) - l;
-        ptr += 2;
+        l = (((int16)((ptr[0] + ptr[1]*256)) * mul) / 1024);
+        r = (((int16)((ptr[2] + ptr[3]*256)) * mul) / 1024);
+        ptr+=4;
 #endif
-        l += delta;
-        blip_add_delta_fast(snd.blips[2][0], i, delta);
-
-        /* right channel */
-#ifdef LSB_FIRST
-        delta = ((ptr[0] * mul) / 1024) - r;
-        ptr++;
-#else
-        delta = (((int16)((ptr[0] + ptr[1]*256)) * mul) / 1024) - r;
-        ptr += 2;
-#endif
-        r += delta;
-        blip_add_delta_fast(snd.blips[2][1], i, delta);
+        blip_add_delta_fast(snd.blips[2], i, l-prev_l, r-prev_r);
+        prev_l = l;
+        prev_r = r;
 
         /* update CD-DA fader volume (one step/sample) */
         if (curVol < endVol)
@@ -1154,23 +1185,24 @@ void cdd_read_audio(unsigned int samples)
     cdd.volume = curVol;
 
     /* save last audio output for next frame */
-    cdd.audio[0] = l;
-    cdd.audio[1] = r;
+    cdd.audio[0] = prev_l;
+    cdd.audio[1] = prev_r;
   }
   else
   {
     /* no audio output */
-    if (l) blip_add_delta_fast(snd.blips[2][0], 0, -l);
-    if (r) blip_add_delta_fast(snd.blips[2][1], 0, -r);
+    if (prev_l | prev_r)
+    {
+      blip_add_delta_fast(snd.blips[2], 0, -prev_l, -prev_r);
 
-    /* save audio output for next frame */
-    cdd.audio[0] = 0;
-    cdd.audio[1] = 0;
+      /* save audio output for next frame */
+      cdd.audio[0] = 0;
+      cdd.audio[1] = 0;
+    }
   }
 
   /* end of Blip Buffer timeframe */
-  blip_end_frame(snd.blips[2][0], samples);
-  blip_end_frame(snd.blips[2][1], samples);
+  blip_end_frame(snd.blips[2], samples);
 }
 
 static void cdd_read_subcode(void)

@@ -341,19 +341,19 @@ static gui_item items_options[] =
 /* Audio options */
 static gui_item items_audio[] =
 {
-  {NULL,NULL,"Master System FM: AUTO", "Enable/disable YM2413 chip",              56,132,276,48},
-  {NULL,NULL,"High-Quality FM: ON",    "Adjust YM2612/YM2413 resampling quality", 56,132,276,48},
-  {NULL,NULL,"FM Resolution: MAX",     "Adjust YM2612 DAC precision",             56,132,276,48},
-  {NULL,NULL,"FM Volume: 1.00",        "Adjust YM2612/YM2413 output level",       56,132,276,48},
-  {NULL,NULL,"PSG Volume: 2.50",       "Adjust SN76489 output level",             56,132,276,48},
-  {NULL,NULL,"PSG Noise Boost: OFF",   "Boost SN76489 Noise Channel",             56,132,276,48},
-  {NULL,NULL,"Audio Out: STEREO",      "Select audio mixing output type",         56,132,276,48},
-  {NULL,NULL,"Filtering: 3-BAND EQ",   "Setup Audio filtering",                   56,132,276,48},
-  {NULL,NULL,"Low Gain: 1.00",         "Adjust EQ Low Band Gain",                 56,132,276,48},
-  {NULL,NULL,"Mid Gain: 1.00",         "Adjust EQ Mid Band Gain",                 56,132,276,48},
-  {NULL,NULL,"High Gain: 1.00",        "Adjust EQ High Band Gain",                56,132,276,48},
-  {NULL,NULL,"Low Freq: 200 Hz",       "Adjust EQ Lowest Frequency",              56,132,276,48},
-  {NULL,NULL,"High Freq: 20000 Hz",    "Adjust EQ Highest Frequency",             56,132,276,48}
+  {NULL,NULL,"Master System FM: AUTO", "Enable/Disable YM2413 chip",                           56,132,276,48},
+  {NULL,NULL,"High-Quality FM: ON",    "Enable/Disable YM2612/YM2413 high-quality resampling", 56,132,276,48},
+  {NULL,NULL,"FM Resolution: MAX",     "Adjust YM2612 DAC precision",                          56,132,276,48},
+  {NULL,NULL,"FM Volume: 1.00",        "Adjust YM2612/YM2413 audio balance",                   56,132,276,48},
+  {NULL,NULL,"PSG Volume: 2.50",       "Adjust SN76489 audio balance",                         56,132,276,48},
+  {NULL,NULL,"High-Quality PSG: ON",   "Enable/Disable SN76489 high-quality resampling",       56,132,276,48},
+  {NULL,NULL,"Audio Output: STEREO",   "Select audio mixing output type",                      56,132,276,48},
+  {NULL,NULL,"Filtering: 3-BAND EQ",   "Select audio filtering type",                          56,132,276,48},
+  {NULL,NULL,"Low Gain: 1.00",         "Adjust EQ Low Band Gain",                              56,132,276,48},
+  {NULL,NULL,"Mid Gain: 1.00",         "Adjust EQ Mid Band Gain",                              56,132,276,48},
+  {NULL,NULL,"High Gain: 1.00",        "Adjust EQ High Band Gain",                             56,132,276,48},
+  {NULL,NULL,"Low Freq: 200 Hz",       "Adjust EQ Lowest Frequency",                           56,132,276,48},
+  {NULL,NULL,"High Freq: 20000 Hz",    "Adjust EQ Highest Frequency",                          56,132,276,48}
 };
 
 /* System ROM paths */
@@ -381,10 +381,10 @@ static gui_item items_system[] =
   {NULL,NULL,"VDP Mode: AUTO",          "Select VDP mode",                             56,132,276,48},
   {NULL,NULL,"System Clock: AUTO",      "Select system clock frequency",               56,132,276,48},
   {NULL,NULL,"System Boot: BIOS&CART",  "Select system booting method",                56,132,276,48},
-  {NULL,NULL,"System Lockups: ON",      "Enable/disable original system lock-ups",     56,132,276,48},
-  {NULL,NULL,"68k Address Error: ON",   "Enable/disable 68k address error exceptions", 56,132,276,48},
+  {NULL,NULL,"System Lockups: ON",      "Enable/Disable original system lock-ups",     56,132,276,48},
+  {NULL,NULL,"68k Address Error: ON",   "Enable/Disable 68k address error exceptions", 56,132,276,48},
   {NULL,NULL,"Lock-on: OFF",            "Select Lock-On cartridge type",               56,132,276,48},
-  {NULL,NULL,"Cartridge Swap: OFF",     "Enable/disable cartridge hot swap",           56,132,276,48},
+  {NULL,NULL,"Cartridge Swap: OFF",     "Enable/Disable cartridge hot swap",           56,132,276,48},
   {NULL,NULL,"BIOS & Lock-On ROM paths","Configure BIOS & Lock-On ROM paths",          56,132,276,48},
   {NULL,NULL,"SVP Cycles: 1500",        "Adjust SVP chip emulation speed",             56,132,276,48}
 };
@@ -394,22 +394,22 @@ static gui_item items_video[] =
 {
   {NULL,NULL,"Display: PROGRESSIVE",        "Select video mode",                                 56,132,276,48},
   {NULL,NULL,"TV mode: 50/60HZ",            "Select video refresh rate",                         56,132,276,48},
-  {NULL,NULL,"VSYNC: AUTO",                 "Enable/disable sync with video hardware",           56,132,276,48},
-  {NULL,NULL,"Bilinear Filter: OFF",        "Enable/disable GX hardware texture filtering",      56,132,276,48},
-  {NULL,NULL,"Deflickering Filter: AUTO",   "Enable/disable GX hardware framebuffer filtering",  56,132,276,48},
+  {NULL,NULL,"VSYNC: AUTO",                 "Enable/Disable sync with video hardware",           56,132,276,48},
+  {NULL,NULL,"Bilinear Filter: OFF",        "Enable/Disable GX hardware texture filtering",      56,132,276,48},
+  {NULL,NULL,"Deflickering Filter: AUTO",   "Enable/Disable GX hardware framebuffer filtering",  56,132,276,48},
 #ifdef HW_RVL
-  {NULL,NULL,"Trap Filter: ON",             "Enable/disable VI hardware composite out filtering",56,132,276,48},
+  {NULL,NULL,"Trap Filter: ON",             "Enable/Disable VI hardware composite out filtering",56,132,276,48},
   {NULL,NULL,"Gamma Correction: 1.0",       "Adjust VI hardware gamma correction",               56,132,276,48},
 #endif
-  {NULL,NULL,"LCD Ghosting Filter: OFF",    "Enable/disable software LCD image persistence",     56,132,276,48},
-  {NULL,NULL,"NTSC Filter: COMPOSITE",      "Enable/disable software NTSC filtering",            56,132,276,48},
+  {NULL,NULL,"LCD Ghosting Filter: OFF",    "Enable/Disable software LCD image persistence",     56,132,276,48},
+  {NULL,NULL,"NTSC Filter: COMPOSITE",      "Enable/Disable software NTSC filtering",            56,132,276,48},
   {NULL,NULL,"NTSC Sharpness: 0.0",         "Adjust edge contrast enhancement/blurring",         56,132,276,48},
   {NULL,NULL,"NTSC Resolution: 0.0",        "Adjust image resolution",                           56,132,276,48},
   {NULL,NULL,"NTSC Artifacts: 0.0",         "Adjust artifacts caused by color changes",          56,132,276,48},
   {NULL,NULL,"NTSC Color Bleed: 0.0",       "Adjust color resolution reduction",                 56,132,276,48},
   {NULL,NULL,"NTSC Color Fringing: 0.0",    "Adjust artifacts caused by brightness changes",     56,132,276,48},
-  {NULL,NULL,"Borders: OFF",                "Enable/disable overscan emulation",                 56,132,276,48},
-  {NULL,NULL,"GG screen: ORIGINAL",         "Enable/disable Game Gear extended screen",          56,132,276,48},
+  {NULL,NULL,"Borders: OFF",                "Enable/Disable overscan emulation",                 56,132,276,48},
+  {NULL,NULL,"GG screen: ORIGINAL",         "Enable/Disable Game Gear extended screen",          56,132,276,48},
   {NULL,NULL,"Aspect: ORIGINAL (4:3)",      "Select display aspect ratio",                       56,132,276,48},
   {NULL,NULL,"Screen Position (+0,+0)",     "Adjust display position",                           56,132,276,48},
   {NULL,NULL,"Screen Scaling (+0,+0)",      "Adjust display scaling",                            56,132,276,48}
@@ -418,19 +418,19 @@ static gui_item items_video[] =
 /* Menu options */
 static gui_item items_prefs[] =
 {
-  {NULL,NULL,"Auto ROM Load: OFF",  "Enable/disable automatic ROM loading on startup", 56,132,276,48},
-  {NULL,NULL,"Auto Cheats: OFF",    "Enable/disable automatic cheats activation",      56,132,276,48},
-  {NULL,NULL,"Auto Saves: OFF",     "Enable/disable automatic saves",                  56,132,276,48},
+  {NULL,NULL,"Auto ROM Load: OFF",  "Enable/Disable automatic ROM loading on startup", 56,132,276,48},
+  {NULL,NULL,"Auto Cheats: OFF",    "Enable/Disable automatic cheats activation",      56,132,276,48},
+  {NULL,NULL,"Auto Saves: OFF",     "Enable/Disable automatic saves",                  56,132,276,48},
   {NULL,NULL,"ROM Load Device: SD", "Configure default device for ROM files",          56,132,276,48},
   {NULL,NULL,"Saves Device: FAT",   "Configure default device for Save files",         56,132,276,48},
   {NULL,NULL,"SFX Volume: 100",     "Adjust sound effects volume",                     56,132,276,48},
   {NULL,NULL,"BGM Volume: 100",     "Adjust background music volume",                  56,132,276,48},
-  {NULL,NULL,"BG Overlay: ON",      "Enable/disable background overlay",               56,132,276,48},
+  {NULL,NULL,"BG Overlay: ON",      "Enable/Disable background overlay",               56,132,276,48},
   {NULL,NULL,"Screen Width: 658",   "Adjust menu screen width in pixels",              56,132,276,48},
-  {NULL,NULL,"Show CD Leds: OFF",   "Enable/disable CD leds display",                  56,132,276,48},
-  {NULL,NULL,"Show FPS: OFF",       "Enable/disable FPS counter",                      56,132,276,48},
+  {NULL,NULL,"Show CD Leds: OFF",   "Enable/Disable CD leds display",                  56,132,276,48},
+  {NULL,NULL,"Show FPS: OFF",       "Enable/Disable FPS counter",                      56,132,276,48},
 #ifdef HW_RVL
-  {NULL,NULL,"Wiimote Timeout: OFF","Enable/disable Wii remote automatic shutodwn",    56,132,276,48},
+  {NULL,NULL,"Wiimote Timeout: OFF","Enable/Disable Wii remote automatic shutodwn",    56,132,276,48},
   {NULL,NULL,"Wiimote Calibration: AUTO","Calibrate Wii remote pointer",               56,132,276,48},
 #endif
 };
@@ -899,16 +899,15 @@ static void soundmenu ()
   else if (config.ym2413 == 1) sprintf (items[0].text, "Master System FM: ON");
   else sprintf (items[0].text, "Master System FM: AUTO");
 
-  if (config.hq_fm) sprintf (items[1].text, "High-Quality FM: ON");
-  else sprintf (items[1].text, "High-Quality FM: OFF");
+  sprintf (items[1].text, "High-Quality FM: %s", config.hq_fm ? "ON":"OFF");
 
   if (config.dac_bits < 14) sprintf (items[2].text, "FM Resolution: %d bits", config.dac_bits);
   else  sprintf (items[2].text, "FM Resolution: MAX");
 
   sprintf (items[3].text, "FM Volume: %1.2f", fm_volume);
   sprintf (items[4].text, "PSG Volume: %1.2f", psg_volume);
-  sprintf (items[5].text, "PSG Noise Boost: %s", config.psgBoostNoise ? "ON":"OFF");
-  sprintf (items[6].text, "Audio Out: %s", config.mono ? "MONO":"STEREO");
+  sprintf (items[5].text, "High-Quality PSG: %s", config.hq_psg? "ON":"OFF");
+  sprintf (items[6].text, "Audio Output: %s", config.mono ? "MONO":"STEREO");
 
   if (config.filter == 2)
   {
@@ -971,8 +970,7 @@ static void soundmenu ()
       case 1:
       {
         config.hq_fm ^= 1;
-        if (config.hq_fm) sprintf (items[1].text, "High-Quality FM: ON");
-        else sprintf (items[1].text, "High-Quality FM: OFF");
+        sprintf (items[1].text, "High-Quality FM: %s", config.hq_fm ? "ON":"OFF");
         break;
       }
 
@@ -1001,27 +999,19 @@ static void soundmenu ()
         config.psg_preamp = (int)(psg_volume * 100.0 + 0.5);
         if ((system_hw & SYSTEM_PBC) == SYSTEM_MD)
         {
-          SN76489_Config(0, config.psg_preamp, config.psgBoostNoise, 0xff);
+          psg_config(0, config.psg_preamp, 0xff);
         }
         else
         {
-          SN76489_Config(0, config.psg_preamp, config.psgBoostNoise, io_reg[6]);
+          psg_config(0, config.psg_preamp, io_reg[6]);
         }
         break;
       }
 
       case 5:
       {
-        config.psgBoostNoise ^= 1;
-        sprintf (items[5].text, "PSG Noise Boost: %s", config.psgBoostNoise ? "ON":"OFF");
-        if ((system_hw & SYSTEM_PBC) == SYSTEM_MD)
-        {
-          SN76489_Config(0, config.psg_preamp, config.psgBoostNoise, 0xff);
-        }
-        else
-        {
-          SN76489_Config(0, config.psg_preamp, config.psgBoostNoise, io_reg[6]);
-        }
+        config.hq_psg ^= 1;
+        sprintf (items[5].text, "High-Quality PSG: %s", config.hq_psg ? "ON":"OFF");
         break;
       }
 
@@ -1745,8 +1735,8 @@ static void videomenu ()
   else
     sprintf (items[VI_OFFSET+1].text, "NTSC Filter: OFF");
 
-  strcpy(items[VI_OFFSET+2+ntsc_offset].comment, "Enable/disable overscan emulation");
-  strcpy(items[VI_OFFSET+3+ntsc_offset].comment, "Enable/disable Game Gear extended screen");
+  strcpy(items[VI_OFFSET+2+ntsc_offset].comment, "Enable/Disable overscan emulation");
+  strcpy(items[VI_OFFSET+3+ntsc_offset].comment, "Enable/Disable Game Gear extended screen");
   strcpy(items[VI_OFFSET+4+ntsc_offset].comment, "Select display aspect ratio");
   strcpy(items[VI_OFFSET+5+ntsc_offset].comment, "Adjust display position");
   strcpy(items[VI_OFFSET+6+ntsc_offset].comment, "Adjust display scaling");
@@ -3645,15 +3635,15 @@ static void showcredits(void)
       gxDrawTexture(texture, (640-texture->width)/2, (480-texture->height)/2, texture->width, texture->height,255);
 
     FONT_writeCenter("Genesis Plus Core", 24, 0, 640, 480 - offset, (GXColor)LIGHT_BLUE);
-    FONT_writeCenter("improved emulation code, fixes & extra features by Eke-Eke", 18, 0, 640, 516 - offset, (GXColor)WHITE);
+    FONT_writeCenter("improved emulation code & extra features by Eke-Eke", 18, 0, 640, 516 - offset, (GXColor)WHITE);
     FONT_writeCenter("original 1.3 version by Charles MacDonald", 18, 0, 640, 534 - offset, (GXColor)WHITE);
     FONT_writeCenter("original Z80 core by Juergen Buchmueller", 18, 0, 640, 552 - offset, (GXColor)WHITE);
     FONT_writeCenter("original 68k core (Musashi) by Karl Stenerud", 18, 0, 640, 570 - offset, (GXColor)WHITE);
     FONT_writeCenter("original YM2612/2413 cores by Jarek Burczynski, Tatsuyuki Satoh", 18, 0, 640, 588 - offset, (GXColor)WHITE);
-    FONT_writeCenter("original SN76489 core by Maxim", 18, 0, 640, 606 - offset, (GXColor)WHITE);
-    FONT_writeCenter("SVP core by Gravydas Ignotas (Notaz)", 18, 0, 640, 624 - offset, (GXColor)WHITE);
-    FONT_writeCenter("Blip Buffer Library & NTSC Video Filter by Shay Green (Blargg)", 18, 0, 640, 642 - offset, (GXColor)WHITE);
-    FONT_writeCenter("3-Band EQ implementation by Neil C", 18, 0, 640, 660 - offset, (GXColor)WHITE);
+    FONT_writeCenter("SVP core by Gravydas Ignotas (Notaz)", 18, 0, 640, 606 - offset, (GXColor)WHITE);
+    FONT_writeCenter("Blip Buffer Library & NTSC Video Filter by Shay Green (Blargg)", 18, 0, 640, 624 - offset, (GXColor)WHITE);
+    FONT_writeCenter("3-Band EQ implementation by Neil C", 18, 0, 640, 642 - offset, (GXColor)WHITE);
+    FONT_writeCenter("Ogg Vorbis 'Tremor' Library by Xiph.org Foundation", 18, 0, 640, 660 - offset, (GXColor)WHITE);
 
     FONT_writeCenter("Special thanks to ...", 20, 0, 640, 700 - offset, (GXColor)LIGHT_GREEN);
     FONT_writeCenter("Nemesis, Tasco Deluxe, Bart Trzynadlowski, Jorge Cwik, Haze,", 18, 0, 640, 736 - offset, (GXColor)WHITE);
@@ -3670,7 +3660,7 @@ static void showcredits(void)
     FONT_writeCenter("libfat by Chism", 18, 0, 640, 978 - offset, (GXColor)WHITE);
     FONT_writeCenter("wiiuse by Michael Laforest (Para)", 18, 0, 640, 996 - offset, (GXColor)WHITE);
     FONT_writeCenter("asndlib & OGG player by Francisco Muñoz (Hermes)", 18, 0, 640, 1014 - offset, (GXColor)WHITE);
-    FONT_writeCenter("zlib, libpng & libtremor by their respective authors", 18, 0, 640, 1032 - offset, (GXColor)WHITE);
+    FONT_writeCenter("zlib & libpng by their respective authors", 18, 0, 640, 1032 - offset, (GXColor)WHITE);
     FONT_writeCenter("devkitPPC by Wintermute", 18, 0, 640, 1050 - offset, (GXColor)WHITE);
 
     FONT_writeCenter("Special thanks to ...", 20, 0, 640, 1090 - offset, (GXColor)LIGHT_GREEN);

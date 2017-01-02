@@ -2,8 +2,8 @@
  *  Genesis Plus
  *  Sound Hardware
  *
- *  Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003  Charles Mac Donald (original code)
- *  Copyright (C) 2007-2013  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 1998-2003  Charles Mac Donald (original code)
+ *  Copyright (C) 2007-2016  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -86,7 +86,7 @@ void sound_init( void )
     YM_Update = YM2612Update;
     YM_Write = YM2612Write;
 
-    /* chip is running a VCLK / 144 = MCLK / 7 / 144 */
+    /* chip is running at VCLK / 144 = MCLK / 7 / 144 */
     fm_cycles_ratio = 144 * 7;
   }
   else
@@ -97,21 +97,20 @@ void sound_init( void )
     YM_Update = YM2413Update;
     YM_Write = YM2413Write;
 
-    /* chip is running a ZCLK / 72 = MCLK / 15 / 72 */
+    /* chip is running at ZCLK / 72 = MCLK / 15 / 72 */
     fm_cycles_ratio = 72 * 15;
   }
 
   /* Initialize PSG chip */
-  SN76489_Init((system_hw == SYSTEM_SG) ? SN_DISCRETE : SN_INTEGRATED);
-  SN76489_Config(0, config.psg_preamp, config.psgBoostNoise, 0xff);
+  psg_init((system_hw == SYSTEM_SG) ? PSG_DISCRETE : PSG_INTEGRATED);
 }
 
 void sound_reset(void)
 {
   /* reset sound chips */
   YM_Reset();
-  SN76489_Reset();
-  SN76489_Config(0, config.psg_preamp, config.psgBoostNoise, 0xff);
+  psg_reset();
+  psg_config(0, config.psg_preamp, 0xff);
 
   /* reset FM buffer ouput */
   fm_last[0] = fm_last[1] = 0;
@@ -125,21 +124,23 @@ void sound_reset(void)
 
 int sound_update(unsigned int cycles)
 {
-  int delta, preamp, time, l, r, *ptr;
+  int prev_l, prev_r, preamp, time, l, r, *ptr;
 
-  /* Run PSG & FM chips until end of frame */
-  SN76489_Update(cycles);
+  /* Run PSG chip until end of frame */
+  psg_end_frame(cycles);
+
+  /* Run FM chip until end of frame */
   fm_update(cycles);
 
-	/* FM output pre-amplification */
+  /* FM output pre-amplification */
   preamp = config.fm_preamp;
 
   /* FM frame initial timestamp */
   time = fm_cycles_start;
 
   /* Restore last FM outputs from previous frame */
-  l = fm_last[0];
-  r = fm_last[1];
+  prev_l = fm_last[0];
+  prev_r = fm_last[1];
 
   /* FM buffer start pointer */
   ptr = fm_buffer;
@@ -150,15 +151,12 @@ int sound_update(unsigned int cycles)
     /* high-quality Band-Limited synthesis */
     do
     {
-      /* left channel */
-      delta = ((*ptr++ * preamp) / 100) - l;
-      l += delta;
-      blip_add_delta(snd.blips[0][0], time, delta);
-      
-      /* right channel */
-      delta = ((*ptr++ * preamp) / 100) - r;
-      r += delta;
-      blip_add_delta(snd.blips[0][1], time, delta);
+      /* left & right channels */
+      l = ((*ptr++ * preamp) / 100);
+      r = ((*ptr++ * preamp) / 100);
+      blip_add_delta(snd.blips[0], time, l-prev_l, r-prev_r);
+      prev_l = l;
+      prev_r = r;
 
       /* increment time counter */
       time += fm_cycles_ratio;
@@ -170,15 +168,12 @@ int sound_update(unsigned int cycles)
     /* faster Linear Interpolation */
     do
     {
-      /* left channel */
-      delta = ((*ptr++ * preamp) / 100) - l;
-      l += delta;
-      blip_add_delta_fast(snd.blips[0][0], time, delta);
-      
-      /* right channel */
-      delta = ((*ptr++ * preamp) / 100) - r;
-      r += delta;
-      blip_add_delta_fast(snd.blips[0][1], time, delta);
+      /* left & right channels */
+      l = ((*ptr++ * preamp) / 100);
+      r = ((*ptr++ * preamp) / 100);
+      blip_add_delta_fast(snd.blips[0], time, l-prev_l, r-prev_r);
+      prev_l = l;
+      prev_r = r;
 
       /* increment time counter */
       time += fm_cycles_ratio;
@@ -190,18 +185,17 @@ int sound_update(unsigned int cycles)
   fm_ptr = fm_buffer;
 
   /* save last FM output for next frame */
-  fm_last[0] = l;
-  fm_last[1] = r;
+  fm_last[0] = prev_l;
+  fm_last[1] = prev_r;
 
   /* adjust FM cycle counters for next frame */
   fm_cycles_count = fm_cycles_start = time - cycles;
-	
-  /* end of blip buffers time frame */
-  blip_end_frame(snd.blips[0][0], cycles);
-  blip_end_frame(snd.blips[0][1], cycles);
+
+  /* end of blip buffer time frame */
+  blip_end_frame(snd.blips[0], cycles);
 
   /* return number of available samples */
-  return blip_samples_avail(snd.blips[0][0]);
+  return blip_samples_avail(snd.blips[0]);
 }
 
 int sound_context_save(uint8 *state)
@@ -217,7 +211,7 @@ int sound_context_save(uint8 *state)
     save_param(YM2413GetContextPtr(),YM2413GetContextSize());
   }
 
-  save_param(SN76489_GetContextPtr(),SN76489_GetContextSize());
+  bufferptr += psg_context_save(&state[bufferptr]);
 
   save_param(&fm_cycles_start,sizeof(fm_cycles_start));
 
@@ -238,7 +232,7 @@ int sound_context_load(uint8 *state)
     load_param(YM2413GetContextPtr(),YM2413GetContextSize());
   }
 
-  load_param(SN76489_GetContextPtr(),SN76489_GetContextSize());
+  bufferptr += psg_context_load(&state[bufferptr]);
 
   load_param(&fm_cycles_start,sizeof(fm_cycles_start));
   fm_cycles_count = fm_cycles_start;

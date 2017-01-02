@@ -4,8 +4,8 @@
  *
  *  Support for SG-1000, Mark-III, Master System, Game Gear, Mega Drive & Mega CD hardware
  *
- *  Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003  Charles Mac Donald (original code)
- *  Copyright (C) 2007-2014  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 1998-2003  Charles Mac Donald (original code)
+ *  Copyright (C) 2007-2016  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -234,24 +234,39 @@ void gen_reset(int hard_reset)
   /* System Reset */
   if (hard_reset)
   {
-    /* clear RAM (TODO: use random bit patterns for all systems, like on real hardware) */
+    /* On hard reset, 68k CPU always starts at the same point in VDP frame */
+    /* Tests performed on VA4 PAL MD1 showed that the first HVC value read */
+    /* with 'move.w #0x8104,0xC00004' , 'move.w 0xC00008,%d0' sequence was */
+    /* 0x9F21 in 60HZ mode (0x9F00 if Mode 5 is not enabled by first MOVE) */
+    /* 0x8421 in 50HZ mode (0x8400 if Mode 5 is not enabled by first MOVE) */
+    /* Same value is returned on every power ON, indicating VDP is always  */
+    /* starting at the same fixed point in frame (probably at the start of */
+    /* VSYNC and HSYNC) while 68k /VRES line remains asserted a fixed time */
+    /* after /SRES line has been released (13 msec approx). The difference */
+    /* between PAL & NTSC is caused by the top border area being 27 lines  */
+    /* larger in PAL mode than in NTSC mode. CPU cycle counter is adjusted */
+    /* to match these results (taking in account emulated frame is started */
+    /* on line 192 */
+    m68k.cycles = ((lines_per_frame - 192 + 159 - (27 * vdp_pal)) * MCYCLES_PER_LINE) + 1004;
+
+    /* clear RAM (on real hardware, RAM values are random / undetermined on Power ON) */
     memset(work_ram, 0x00, sizeof (work_ram));
     memset(zram, 0x00, sizeof (zram));
   }
   else
   {
+    /* when RESET button is pressed, 68k could be anywhere in VDP frame (Bonkers, Eternal Champions, X-Men 2) */
+    m68k.cycles = (uint32)((MCYCLES_PER_LINE * lines_per_frame) * ((double)rand() / (double)RAND_MAX));
+
     /* reset YM2612 (on hard reset, this is done by sound_reset) */
     fm_reset(0);
   }
 
-  /* 68k & Z80 could be anywhere in VDP frame (Bonkers, Eternal Champions, X-Men 2) */
-  m68k.cycles = Z80.cycles = (uint32)((MCYCLES_PER_LINE * lines_per_frame) * ((double)rand() / (double)RAND_MAX));
-
-  /* 68k cycles should be a multiple of 7 */
+  /* 68k M-cycles should be a multiple of 7 */
   m68k.cycles = (m68k.cycles / 7) * 7;
 
-  /* Z80 cycles should be a multiple of 15 */
-  Z80.cycles = (Z80.cycles / 15) * 15;
+  /* Z80 M-cycles should be a multiple of 15 */
+  Z80.cycles = (m68k.cycles / 15) * 15;
 
   /* 8-bit / 16-bit modes */
   if ((system_hw & SYSTEM_PBC) == SYSTEM_MD)

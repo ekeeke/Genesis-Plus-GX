@@ -80,7 +80,7 @@
     <ClCompile Include="..\..\..\core\sound\eq.c">
       <Filter>Source Files\sound</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\core\sound\sn76489.c">
+    <ClCompile Include="..\..\..\core\sound\psg.c">
       <Filter>Source Files\sound</Filter>
     </ClCompile>
     <ClCompile Include="..\..\..\core\sound\sound.c">

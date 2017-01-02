@@ -2,7 +2,7 @@
  *  Genesis Plus
  *  Savestate support
  *
- *  Copyright (C) 2007-2014  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2007-2016  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -116,11 +116,11 @@ int state_load(unsigned char *state)
   bufferptr += sound_context_load(&state[bufferptr]);
   if ((system_hw & SYSTEM_PBC) == SYSTEM_MD)
   {
-    SN76489_Config(0, config.psg_preamp, config.psgBoostNoise, 0xff);
+    psg_config(0, config.psg_preamp, 0xff);
   }
   else
   {
-    SN76489_Config(0, config.psg_preamp, config.psgBoostNoise, io_reg[6]);
+    psg_config(0, config.psg_preamp, io_reg[6]);
   }
 
   /* 68000 */

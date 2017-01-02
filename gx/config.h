@@ -3,7 +3,7 @@
  *
  *  Genesis Plus GX configuration file support
  *
- *  Copyright Eke-Eke (2007-2015)
+ *  Copyright Eke-Eke (2007-2016)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -51,7 +51,7 @@ typedef struct
   char version[16];
   uint8 hq_fm;
   uint8 filter;
-  uint8 psgBoostNoise;
+  uint8 hq_psg;
   uint8 dac_bits;
   uint8 ym2413;
   uint8 mono;
