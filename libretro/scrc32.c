@@ -1,7 +1,7 @@
 /****************************************************************************
  *  scrc32.c
  *
- *  Genesis Plus GX configuration file support
+ *  Genesis Plus GX libretro port
  *
  *  Copyright Eke-Eke (2007-2015)
  *
@@ -38,7 +38,6 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *
  ****************************************************************************************/
-
 #ifndef _S_CRC32_H
 #define _S_CRC32_H
 

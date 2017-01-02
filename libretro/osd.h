@@ -1,7 +1,7 @@
 /****************************************************************************
  *  osd.h
  *
- *  Genesis Plus GX configuration file support
+ *  Genesis Plus GX libretro port
  *
  *  Copyright Eke-Eke (2007-2016)
  *
@@ -38,6 +38,7 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *
  ****************************************************************************************/
+
 #ifndef _OSD_H
 #define _OSD_H
 
