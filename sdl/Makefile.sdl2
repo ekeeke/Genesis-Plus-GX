@@ -1,5 +1,5 @@
 
-# Makefile for genplus SDL
+# Makefile for genplus SDL2
 #
 # (c) 1999, 2000, 2001, 2002, 2003  Charles MacDonald
 # modified by Eke-Eke <eke_eke31@yahoo.fr>
@@ -19,20 +19,24 @@
 # -D16BPP_RENDERING - configure for 16-bit pixels (RGB565)
 # -D32BPP_RENDERING - configure for 32-bit pixels (RGB888)
 
-NAME	  = gen_sdl.exe
+NAME	  = gen_sdl2
 
 CC        = gcc
-CFLAGS    = `sdl-config --cflags` -march=i686 -O6 -fomit-frame-pointer -Wall -Wno-strict-aliasing -ansi -std=c89 -pedantic-errors
+CFLAGS    = `sdl2-config --cflags` -march=i686 -O6 -fomit-frame-pointer -Wall -Wno-strict-aliasing -ansi -std=c99 -pedantic-errors
 #-g -ggdb -pg
 #-fomit-frame-pointer
 #LDFLAGS   = -pg
-DEFINES   = -DLSB_FIRST -DUSE_16BPP_RENDERING -DUSE_LIBTREMOR
+DEFINES   = -DLSB_FIRST -DUSE_16BPP_RENDERING -DUSE_LIBTREMOR -DMAXROMSIZE=33554432
+
+ifneq ($(OS),Windows_NT)
+DEFINES += -DHAVE_ALLOCA_H
+endif
 
 SRCDIR    = ../core
-INCLUDES  = -I$(SRCDIR) -I$(SRCDIR)/z80 -I$(SRCDIR)/m68k -I$(SRCDIR)/sound -I$(SRCDIR)/input_hw -I$(SRCDIR)/cart_hw -I$(SRCDIR)/cart_hw/svp -I$(SRCDIR)/cd_hw -I$(SRCDIR)/ntsc -I$(SRCDIR)/tremor -I$(SRCDIR)/../sdl
-LIBS	  = `sdl-config --libs` -lz -lm
+INCLUDES  = -I$(SRCDIR) -I$(SRCDIR)/z80 -I$(SRCDIR)/m68k -I$(SRCDIR)/sound -I$(SRCDIR)/input_hw -I$(SRCDIR)/cart_hw -I$(SRCDIR)/cart_hw/svp -I$(SRCDIR)/cd_hw -I$(SRCDIR)/ntsc -I$(SRCDIR)/tremor -I$(SRCDIR)/../sdl -I$(SRCDIR)/../sdl/sdl2
+LIBS	  = `sdl2-config --libs` -lz -lm
 
-OBJDIR = ./build_sdl
+OBJDIR = ./build_sdl2
 
 OBJECTS	=       $(OBJDIR)/z80.o	
 
@@ -63,7 +67,7 @@ OBJECTS	+=      $(OBJDIR)/input.o	  \
 		$(OBJDIR)/graphic_board.o
 
 OBJECTS	+=      $(OBJDIR)/sound.o	\
-		$(OBJDIR)/sn76489.o     \
+		$(OBJDIR)/psg.o         \
 		$(OBJDIR)/ym2413.o      \
 		$(OBJDIR)/ym2612.o    
 
@@ -114,7 +118,9 @@ OBJECTS	+=	$(OBJDIR)/bitwise.o	 \
 		$(OBJDIR)/vorbisfile.o \
 		$(OBJDIR)/window.o
 
+ifeq ($(OS),Windows_NT)
 OBJECTS	+=	$(OBJDIR)/icon.o
+endif
 
 all: $(NAME)
 
@@ -163,8 +169,13 @@ $(OBJDIR)/%.o :	$(SRCDIR)/tremor/%.c
 $(OBJDIR)/%.o :	$(SRCDIR)/../sdl/%.c $(SRCDIR)/../sdl/%.h	        
 		$(CC) -c $(CFLAGS) $(INCLUDES) $(DEFINES) $< -o $@
 
+$(OBJDIR)/%.o :	$(SRCDIR)/../sdl/sdl2/%.c $(SRCDIR)/../sdl/sdl2/%.h	        
+		$(CC) -c $(CFLAGS) $(INCLUDES) $(DEFINES) $< -o $@
+
+ifeq ($(OS),Windows_NT)
 $(OBJDIR)/icon.o :	
 		windres $(SRCDIR)/../sdl/icon.rc $@
+endif
 
 pack	:
 		strip $(NAME)

@@ -1,4 +1,5 @@
-# Makefile for genplus SDL GCW0
+
+# Makefile for genplus SDL
 #
 # (c) 1999, 2000, 2001, 2002, 2003  Charles MacDonald
 # modified by Eke-Eke <eke_eke31@yahoo.fr>
@@ -18,29 +19,24 @@
 # -D16BPP_RENDERING - configure for 16-bit pixels (RGB565)
 # -D32BPP_RENDERING - configure for 32-bit pixels (RGB888)
 
-NAME	  = gen_gcw0
-SDL-CONFIG = /opt/gcw0-toolchain/usr/mipsel-gcw0-linux-uclibc/sysroot/usr/bin/sdl-config
+NAME	  = gen_sdl
 
-CC        = /opt/gcw0-toolchain/usr/bin/mipsel-gcw0-linux-uclibc-gcc
-#CFLAGS    = `$(SDL-CONFIG) --cflags` -03 -fomit-frame-pointer -Wall  -ansi -std=c99  
-#CFLAGS    = `sdl-config --cflags` -O6 -fomit-frame-pointer -Wall -Wno-strict-aliasing -ansi -std=c99
-CFLAGS    = `$(SDL-CONFIG) --cflags` -O3 -fomit-frame-pointer -Wall  -ansi -std=c99 -march=mips32 -mtune=mips32r2 -mhard-float
+CC        = gcc
+CFLAGS    = `sdl-config --cflags` -march=i686 -O6 -fomit-frame-pointer -Wall -Wno-strict-aliasing -ansi -std=c99 -pedantic-errors
+#-g -ggdb -pg
 #-fomit-frame-pointer
-#LDFLAGS   = -g
-DEFINES   = -DLSB_FIRST -DUSE_16BPP_RENDERING -DUSE_LIBVORBIS -DGCWZERO -DALIGN_LONG -DALT_RENDERER
+#LDFLAGS   = -pg
+DEFINES   = -DLSB_FIRST -DUSE_16BPP_RENDERING -DUSE_LIBTREMOR -DMAXROMSIZE=33554432
+
+ifneq ($(OS),Windows_NT)
+DEFINES += -DHAVE_ALLOCA_H
+endif
 
 SRCDIR    = ../core
-INCLUDES  =     -I$(SRCDIR) -I$(SRCDIR)/z80 -I$(SRCDIR)/m68k \
-		-I$(SRCDIR)/sound -I$(SRCDIR)/input_hw -I$(SRCDIR)/cart_hw -I$(SRCDIR)/cart_hw/svp \
-		-I$(SRCDIR)/cd_hw -I$(SRCDIR)/ntsc \
-		-I$(SRCDIR)/../gcw0 \
--I/opt/gcw0-toolchain/usr/mipsel-gcw0-linux-uclibc/sysroot/usr/include/
-#		-I$(SRCDIR)/tremor 
+INCLUDES  = -I$(SRCDIR) -I$(SRCDIR)/z80 -I$(SRCDIR)/m68k -I$(SRCDIR)/sound -I$(SRCDIR)/input_hw -I$(SRCDIR)/cart_hw -I$(SRCDIR)/cart_hw/svp -I$(SRCDIR)/cd_hw -I$(SRCDIR)/ntsc -I$(SRCDIR)/tremor -I$(SRCDIR)/../sdl -I$(SRCDIR)/../sdl/sdl1
+LIBS	  = `sdl-config --libs` -lz -lm
 
-LIBS	  = `$(SDL-CONFIG) --libs --libs` -lz -lm -lSDL_ttf -lSDL_image \
--L/opt/gcw0-toolchain/usr/mipsel-gcw0-linux-uclibc/sysroot/usr/lib -lvorbisfile
-
-OBJDIR = ./build_gcw0
+OBJDIR = ./build_sdl
 
 OBJECTS	=       $(OBJDIR)/z80.o	
 
@@ -71,7 +67,7 @@ OBJECTS	+=      $(OBJDIR)/input.o	  \
 		$(OBJDIR)/graphic_board.o
 
 OBJECTS	+=      $(OBJDIR)/sound.o	\
-		$(OBJDIR)/psg.o     \
+		$(OBJDIR)/psg.o         \
 		$(OBJDIR)/ym2413.o      \
 		$(OBJDIR)/ym2612.o    
 
@@ -104,26 +100,27 @@ OBJECTS	+=	$(OBJDIR)/main.o	\
 		$(OBJDIR)/config.o	\
 		$(OBJDIR)/error.o	\
 		$(OBJDIR)/unzip.o       \
-		$(OBJDIR)/fileio.o	\
-		$(OBJDIR)/utils.o       #\
-#		$(OBJDIR)/menu.o	
+		$(OBJDIR)/fileio.o	
 
-#OBJECTS	+=	$(OBJDIR)/block.o      \
-#		$(OBJDIR)/codebook.o   \
-#		$(OBJDIR)/floor0.o     \
-#		$(OBJDIR)/floor1.o     \
-#		$(OBJDIR)/framing.o    \
-#		$(OBJDIR)/info.o       \
-#		$(OBJDIR)/mapping0.o   \
-#		$(OBJDIR)/mdct.o       \
-#		$(OBJDIR)/registry.o   \
-#		$(OBJDIR)/res012.o     \
-#		$(OBJDIR)/sharedbook.o \
-#		$(OBJDIR)/synthesis.o  \
-#		$(OBJDIR)/vorbisfile.o \
-#		$(OBJDIR)/window.o
-## 1st		$(OBJDIR)/bitwise.o    \
+OBJECTS	+=	$(OBJDIR)/bitwise.o	 \
+		$(OBJDIR)/block.o      \
+		$(OBJDIR)/codebook.o   \
+		$(OBJDIR)/floor0.o     \
+		$(OBJDIR)/floor1.o     \
+		$(OBJDIR)/framing.o    \
+		$(OBJDIR)/info.o       \
+		$(OBJDIR)/mapping0.o   \
+		$(OBJDIR)/mdct.o       \
+		$(OBJDIR)/registry.o   \
+		$(OBJDIR)/res012.o     \
+		$(OBJDIR)/sharedbook.o \
+		$(OBJDIR)/synthesis.o  \
+		$(OBJDIR)/vorbisfile.o \
+		$(OBJDIR)/window.o
 
+ifeq ($(OS),Windows_NT)
+OBJECTS	+=	$(OBJDIR)/icon.o
+endif
 
 all: $(NAME)
 
@@ -163,15 +160,22 @@ $(OBJDIR)/%.o :	$(SRCDIR)/m68k/%.c
 $(OBJDIR)/%.o :	$(SRCDIR)/ntsc/%.c $(SRCDIR)/ntsc/%.h	        
 		$(CC) -c $(CFLAGS) $(INCLUDES) $(DEFINES) $< -o $@
 
-#$(OBJDIR)/%.o :	$(SRCDIR)/tremor/%.c $(SRCDIR)/tremor/%.h	        
-#		$(CC) -c $(CFLAGS) $(INCLUDES) $(DEFINES) $< -o $@
+$(OBJDIR)/%.o :	$(SRCDIR)/tremor/%.c $(SRCDIR)/tremor/%.h	        
+		$(CC) -c $(CFLAGS) $(INCLUDES) $(DEFINES) $< -o $@
      
-#$(OBJDIR)/%.o :	$(SRCDIR)/tremor/%.c 	        
-#		$(CC) -c $(CFLAGS) $(INCLUDES) $(DEFINES) $< -o $@
-
-$(OBJDIR)/%.o :	$(SRCDIR)/../gcw0/%.c $(SRCDIR)/../gcw0/%.h	        
+$(OBJDIR)/%.o :	$(SRCDIR)/tremor/%.c 	        
 		$(CC) -c $(CFLAGS) $(INCLUDES) $(DEFINES) $< -o $@
 
+$(OBJDIR)/%.o :	$(SRCDIR)/../sdl/%.c $(SRCDIR)/../sdl/%.h	        
+		$(CC) -c $(CFLAGS) $(INCLUDES) $(DEFINES) $< -o $@
+
+$(OBJDIR)/%.o :	$(SRCDIR)/../sdl/sdl1/%.c $(SRCDIR)/../sdl/sdl1/%.h	        
+		$(CC) -c $(CFLAGS) $(INCLUDES) $(DEFINES) $< -o $@
+
+ifeq ($(OS),Windows_NT)
+$(OBJDIR)/icon.o :	
+		windres $(SRCDIR)/../sdl/icon.rc $@
+endif
 
 pack	:
 		strip $(NAME)

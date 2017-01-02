@@ -49,7 +49,7 @@
     <ClCompile Include="..\..\..\core\ntsc\sms_ntsc.c" />
     <ClCompile Include="..\..\..\core\sound\blip_buf.c" />
     <ClCompile Include="..\..\..\core\sound\eq.c" />
-    <ClCompile Include="..\..\..\core\sound\sn76489.c" />
+    <ClCompile Include="..\..\..\core\sound\psg.c" />
     <ClCompile Include="..\..\..\core\sound\sound.c" />
     <ClCompile Include="..\..\..\core\sound\ym2413.c" />
     <ClCompile Include="..\..\..\core\sound\ym2612.c" />

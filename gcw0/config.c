@@ -42,7 +42,7 @@ void set_config_defaults(void)
     config.psg_preamp     = 150;
     config.fm_preamp      = 100;
     config.hq_fm          = 1;
-    config.psgBoostNoise  = 1;
+    config.hq_psg         = 1;
     config.filter         = 1;
     config.low_freq       = 200;
     config.high_freq      = 8000;

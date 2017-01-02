@@ -2,7 +2,7 @@
  *  Genesis Plus
  *  Backup RAM support
  *
- *  Copyright (C) 2007-2013  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2007-2016  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -68,7 +68,17 @@ void sram_init()
   sram.sram = cart.rom + 0x800000;
 
   /* initialize Backup RAM */
-  memset(sram.sram, 0xFF, 0x10000);
+  if (strstr(rominfo.international,"Sonic 1 Remastered"))
+  {
+    /* Sonic 1 Remastered hack crashes if backup RAM is not initialized to zero */
+    memset(sram.sram, 0x00, 0x10000);
+  }
+  else
+  {
+    /* by default, assume backup RAM is initialized to 0xFF (Micro Machines 2, Dino Dini Soccer)  */
+    memset(sram.sram, 0xFF, 0x10000);
+  }
+
   sram.crc = crc32(0, sram.sram, 0x10000);
 
   /* retrieve informations from header */

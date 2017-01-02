@@ -68,11 +68,9 @@ int audio_init(int samplerate, double framerate)
   memset(&snd, 0, sizeof (snd));
 
   /* Initialize Blip Buffers */
-  snd.blips[0][0] = blip_new(samplerate / 10);
-  snd.blips[0][1] = blip_new(samplerate / 10);
-  if (!snd.blips[0][0] || !snd.blips[0][1])
+  snd.blips[0] = blip_new(samplerate / 10);
+  if (!snd.blips[0])
   {
-    audio_shutdown();
     return -1;
   }
 
@@ -80,11 +78,9 @@ int audio_init(int samplerate, double framerate)
   if (system_hw == SYSTEM_MCD)
   {
     /* allocate blip buffers */
-    snd.blips[1][0] = blip_new(samplerate / 10);
-    snd.blips[1][1] = blip_new(samplerate / 10);
-    snd.blips[2][0] = blip_new(samplerate / 10);
-    snd.blips[2][1] = blip_new(samplerate / 10);
-    if (!snd.blips[1][0] || !snd.blips[1][1] || !snd.blips[2][0] || !snd.blips[2][1])
+    snd.blips[1] = blip_new(samplerate / 10);
+    snd.blips[2] = blip_new(samplerate / 10);
+    if (!snd.blips[1] || !snd.blips[2])
     {
       audio_shutdown();
       return -1;
@@ -132,8 +128,7 @@ void audio_set_rate(int samplerate, double framerate)
   /* master clock timebase so they remain perfectly synchronized together, while still */
   /* being synchronized with 68K and Z80 CPUs as well. Mixed sound chip output is then */
   /* resampled to desired rate at the end of each frame, using Blip Buffer.            */
-  blip_set_rates(snd.blips[0][0], mclk, samplerate);
-  blip_set_rates(snd.blips[0][1], mclk, samplerate);
+  blip_set_rates(snd.blips[0], mclk, samplerate);
 
   /* Mega CD sound hardware */
   if (system_hw == SYSTEM_MCD)
@@ -155,17 +150,14 @@ void audio_set_rate(int samplerate, double framerate)
 
 void audio_reset(void)
 {
-  int i,j;
+  int i;
   
   /* Clear blip buffers */
   for (i=0; i<3; i++)
   {
-    for (j=0; j<2; j++)
+    if (snd.blips[i])
     {
-      if (snd.blips[i][j])
-      {
-        blip_clear(snd.blips[i][j]);
-      }
+      blip_clear(snd.blips[i]);
     }
   }
 
@@ -187,16 +179,13 @@ void audio_set_equalizer(void)
 
 void audio_shutdown(void)
 {
-  int i,j;
+  int i;
   
   /* Delete blip buffers */
   for (i=0; i<3; i++)
   {
-    for (j=0; j<2; j++)
-    {
-      blip_delete(snd.blips[i][j]);
-      snd.blips[i][j] = 0;
-    }
+    blip_delete(snd.blips[i]);
+    snd.blips[i] = 0;
   }
 }
 
@@ -213,37 +202,24 @@ int audio_update(int16 *buffer)
 
     /* read CDDA samples */
     cdd_read_audio(size);
-  }
 
 #ifdef ALIGN_SND
-  /* return an aligned number of samples if required */
-  size &= ALIGN_SND;
+    /* return an aligned number of samples if required */
+    size &= ALIGN_SND;
 #endif
 
-  /* resample FM & PSG mixed stream to output buffer */
-#ifdef LSB_FIRST
-  blip_read_samples(snd.blips[0][0], buffer, size);
-  blip_read_samples(snd.blips[0][1], buffer + 1, size);
-#else
-  blip_read_samples(snd.blips[0][0], buffer + 1, size);
-  blip_read_samples(snd.blips[0][1], buffer, size);
-#endif
-
-  /* Mega CD specific */
-  if (system_hw == SYSTEM_MCD)
+    /* resample & mix FM/PSG, PCM & CD-DA streams to output buffer */
+    blip_mix_samples(snd.blips[0], snd.blips[1], snd.blips[2], buffer, size);
+  }
+  else
   {
-    /* resample PCM & CD-DA streams to output buffer */
-#ifdef LSB_FIRST
-    blip_mix_samples(snd.blips[1][0], buffer, size);
-    blip_mix_samples(snd.blips[1][1], buffer + 1, size);
-    blip_mix_samples(snd.blips[2][0], buffer, size);
-    blip_mix_samples(snd.blips[2][1], buffer + 1, size);
-#else
-    blip_mix_samples(snd.blips[1][0], buffer + 1, size);
-    blip_mix_samples(snd.blips[1][1], buffer, size);
-    blip_mix_samples(snd.blips[2][0], buffer + 1, size);
-    blip_mix_samples(snd.blips[2][1], buffer, size);
+#ifdef ALIGN_SND
+    /* return an aligned number of samples if required */
+    size &= ALIGN_SND;
 #endif
+
+    /* resample FM/PSG mixed stream to output buffer */
+    blip_read_samples(snd.blips[0], buffer, size);
   }
 
   /* Audio filtering */
@@ -434,13 +410,10 @@ void system_frame_gen(int do_skip)
     }
   }
 
-  /* initialize VCounter */
-  v_counter = bitmap.viewport.h;
-
   /* first line of overscan */
   if (bitmap.viewport.y)
   {
-    blank_line(v_counter, -bitmap.viewport.x, bitmap.viewport.w + 2*bitmap.viewport.x);
+    blank_line(bitmap.viewport.h, -bitmap.viewport.x, bitmap.viewport.w + 2*bitmap.viewport.x);
   }
   
   /* clear DMA Busy, FIFO FULL & field flags */
@@ -481,30 +454,37 @@ void system_frame_gen(int do_skip)
   /* refresh inputs just before VINT (Warriors of Eternal Sun) */
   osd_input_update();
 
-  /* delay between VBLANK flag & Vertical Interrupt (Dracula, OutRunners, VR Troopers) */
-  m68k_run(788);
-  if (zstate == 1)
+  /* VDP always starts after VBLANK so VINT cannot occur on first frame after a VDP reset (verified on real hardware) */
+  if (v_counter != bitmap.viewport.h)
   {
-    z80_run(788);
-  }
-  else
-  {
-    Z80.cycles = 788;
-  }
+    /* reinitialize VCounter */
+    v_counter = bitmap.viewport.h;
 
-  /* set VINT flag */
-  status |= 0x80;
+    /* delay between VBLANK flag & Vertical Interrupt (Dracula, OutRunners, VR Troopers) */
+    m68k_run(788);
+    if (zstate == 1)
+    {
+      z80_run(788);
+    }
+    else
+    {
+      Z80.cycles = 788;
+    }
 
-  /* Vertical Interrupt */
-  vint_pending = 0x20;
-  if (reg[1] & 0x20)
-  {
-    /* level 6 interrupt */
-    m68k_set_irq(6);
+    /* set VINT flag */
+    status |= 0x80;    
+   
+    /* Vertical Interrupt */
+    vint_pending = 0x20;
+    if (reg[1] & 0x20)
+    {
+      /* level 6 interrupt */
+      m68k_set_irq(6);
+    }
+
+    /* assert Z80 interrupt */
+    Z80.irq_state = ASSERT_LINE;
   }
-
-  /* assert Z80 interrupt */
-  Z80.irq_state = ASSERT_LINE;
 
   /* run 68k & Z80 until end of line */
   m68k_run(MCYCLES_PER_LINE);
@@ -789,13 +769,10 @@ void system_frame_scd(int do_skip)
     }
   }
 
-  /* initialize VCounter */
-  v_counter = bitmap.viewport.h;
-
   /* first line of overscan */
   if (bitmap.viewport.y)
   {
-    blank_line(v_counter, -bitmap.viewport.x, bitmap.viewport.w + 2*bitmap.viewport.x);
+    blank_line(bitmap.viewport.h, -bitmap.viewport.x, bitmap.viewport.w + 2*bitmap.viewport.x);
   }
   
   /* clear DMA Busy, FIFO FULL & field flags */
@@ -836,30 +813,37 @@ void system_frame_scd(int do_skip)
   /* refresh inputs just before VINT */
   osd_input_update();
 
-  /* delay between VBLANK flag & Vertical Interrupt (Dracula, OutRunners, VR Troopers) */
-  m68k_run(788);
-  if (zstate == 1)
+  /* VDP always starts after VBLANK so VINT cannot occur on first frame after a VDP reset (verified on real hardware) */
+  if (v_counter != bitmap.viewport.h)
   {
-    z80_run(788);
-  }
-  else
-  {
-    Z80.cycles = 788;
-  }
+    /* reinitialize VCounter */
+    v_counter = bitmap.viewport.h;
 
-  /* set VINT flag */
-  status |= 0x80;
+    /* delay between VBLANK flag & Vertical Interrupt (Dracula, OutRunners, VR Troopers) */
+    m68k_run(788);
+    if (zstate == 1)
+    {
+      z80_run(788);
+    }
+    else
+    {
+      Z80.cycles = 788;
+    }
 
-  /* Vertical Interrupt */
-  vint_pending = 0x20;
-  if (reg[1] & 0x20)
-  {
-    /* level 6 interrupt */
-    m68k_set_irq(6);
+    /* set VINT flag */
+    status |= 0x80;    
+
+    /* Vertical Interrupt */
+    vint_pending = 0x20;
+    if (reg[1] & 0x20)
+    {
+      /* level 6 interrupt */
+      m68k_set_irq(6);
+    }
+
+    /* assert Z80 interrupt */
+    Z80.irq_state = ASSERT_LINE;
   }
-
-  /* assert Z80 interrupt */
-  Z80.irq_state = ASSERT_LINE;
 
   /* run both 68k & CD hardware until end of line */
   scd_update(MCYCLES_PER_LINE);
