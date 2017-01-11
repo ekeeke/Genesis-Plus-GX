@@ -2048,8 +2048,8 @@ void *retro_get_memory_data(unsigned id)
    {
       case RETRO_MEMORY_SAVE_RAM:
          return sram.sram;
-	 case RETRO_MEMORY_SYSTEM_RAM:
-		 return work_ram;
+      case RETRO_MEMORY_SYSTEM_RAM:
+         return work_ram;
 
       default:
          return NULL;
