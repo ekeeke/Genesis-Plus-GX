@@ -1936,6 +1936,19 @@ bool retro_load_game(const struct retro_game_info *info)
    if (!info)
       return false;
 
+#ifdef FRONTEND_SUPPORTS_RGB565
+   unsigned rgb565 = RETRO_PIXEL_FORMAT_RGB565;
+   if(environ_cb(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &rgb565))
+      if (log_cb)
+         log_cb(RETRO_LOG_INFO, "Frontend supports RGB565 - will use that instead of XRGB1555.\n");
+#endif
+
+   sms_ntsc = calloc(1, sizeof(sms_ntsc_t));
+   md_ntsc  = calloc(1, sizeof(md_ntsc_t));
+
+   init_bitmap();
+   config_default();
+
    extract_directory(g_rom_dir, info->path, sizeof(g_rom_dir));
    extract_name(g_rom_name, info->path, sizeof(g_rom_name));
 
@@ -2038,6 +2051,12 @@ void retro_unload_game(void)
 {
    if (system_hw == SYSTEM_MCD)
       bram_save();
+
+   audio_shutdown();
+   if (md_ntsc)
+      free(md_ntsc);
+   if (sms_ntsc)
+      free(sms_ntsc);
 }
 
 unsigned retro_get_region(void) { return vdp_pal ? RETRO_REGION_PAL : RETRO_REGION_NTSC; }
@@ -2105,15 +2124,9 @@ static void check_system_specs(void)
 void retro_init(void)
 {
    struct retro_log_callback log;
-   unsigned level, rgb565;
+   unsigned level                = 1;
    uint64_t serialization_quirks = RETRO_SERIALIZATION_QUIRK_PLATFORM_DEPENDENT;
-   sms_ntsc = calloc(1, sizeof(sms_ntsc_t));
-   md_ntsc  = calloc(1, sizeof(md_ntsc_t));
 
-   init_bitmap();
-   config_default();
-
-   level = 1;
    environ_cb(RETRO_ENVIRONMENT_SET_PERFORMANCE_LEVEL, &level);
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_LOG_INTERFACE, &log))
@@ -2121,12 +2134,6 @@ void retro_init(void)
    else
       log_cb = NULL;
 
-#ifdef FRONTEND_SUPPORTS_RGB565
-   rgb565 = RETRO_PIXEL_FORMAT_RGB565;
-   if(environ_cb(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &rgb565))
-      if (log_cb)
-         log_cb(RETRO_LOG_INFO, "Frontend supports RGB565 - will use that instead of XRGB1555.\n");
-#endif
    check_system_specs();
 
    environ_cb(RETRO_ENVIRONMENT_SET_SERIALIZATION_QUIRKS, &serialization_quirks);
@@ -2134,15 +2141,12 @@ void retro_init(void)
 
 void retro_deinit(void)
 {
-   audio_shutdown();
-   if (md_ntsc)
-      free(md_ntsc);
-   if (sms_ntsc)
-      free(sms_ntsc);
-
 }
 
-void retro_reset(void) { gen_reset(0); }
+void retro_reset(void)
+{
+   gen_reset(0);
+}
 
 void retro_run(void) 
 {
