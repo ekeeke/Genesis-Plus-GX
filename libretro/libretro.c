@@ -1926,12 +1926,15 @@ void retro_cheat_set(unsigned index, bool enabled, const char *code)
 bool retro_load_game(const struct retro_game_info *info)
 {
    int i;
-   const char *dir;
+   const char *dir = NULL;
 #if defined(_WIN32)
-   char slash = '\\';
+   char slash      = '\\';
 #else
-   char slash = '/';
+   char slash      = '/';
 #endif
+
+   if (!info)
+      return false;
 
    extract_directory(g_rom_dir, info->path, sizeof(g_rom_dir));
    extract_name(g_rom_name, info->path, sizeof(g_rom_name));
