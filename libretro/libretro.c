@@ -1146,7 +1146,7 @@ static void check_variables(void)
   var.key = "genesis_plus_gx_gun_cursor";
   environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
   {
-    if (strcmp(var.value, "no") == 0)
+    if (strcmp(var.value, "disabled") == 0)
       config.gun_cursor = 0;
     else
       config.gun_cursor = 1;
@@ -1155,7 +1155,7 @@ static void check_variables(void)
   var.key = "genesis_plus_gx_invert_mouse";
   environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
   {
-    if (strcmp(var.value, "no") == 0)
+    if (strcmp(var.value, "disabled") == 0)
       config.invert_mouse = 0;
     else
       config.invert_mouse = 1;
@@ -1535,8 +1535,8 @@ void retro_set_environment(retro_environment_t cb)
       { "genesis_plus_gx_gg_extra", "Game Gear extended screen; disabled|enabled" },
       { "genesis_plus_gx_aspect_ratio", "Core-provided aspect ratio; auto|NTSC PAR|PAL PAR" },
       { "genesis_plus_gx_render", "Interlaced mode 2 output; single field|double field" },
-      { "genesis_plus_gx_gun_cursor", "Show Lightgun crosshair; no|yes" },
-      { "genesis_plus_gx_invert_mouse", "Invert Mouse Y-axis; no|yes" },
+      { "genesis_plus_gx_gun_cursor", "Show Lightgun crosshair; disabled|enabled" },
+      { "genesis_plus_gx_invert_mouse", "Invert Mouse Y-axis; disabled|enabled" },
       { NULL, NULL },
    };
 
