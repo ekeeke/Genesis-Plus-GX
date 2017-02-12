@@ -1146,7 +1146,7 @@ static void check_variables(void)
   var.key = "genesis_plus_gx_gun_cursor";
   environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
   {
-    if (strcmp(var.value, "no") == 0)
+    if (strcmp(var.value, "disabled") == 0)
       config.gun_cursor = 0;
     else
       config.gun_cursor = 1;
@@ -1155,7 +1155,7 @@ static void check_variables(void)
   var.key = "genesis_plus_gx_invert_mouse";
   environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
   {
-    if (strcmp(var.value, "no") == 0)
+    if (strcmp(var.value, "disabled") == 0)
       config.invert_mouse = 0;
     else
       config.invert_mouse = 1;
@@ -1535,8 +1535,8 @@ void retro_set_environment(retro_environment_t cb)
       { "genesis_plus_gx_gg_extra", "Game Gear extended screen; disabled|enabled" },
       { "genesis_plus_gx_aspect_ratio", "Core-provided aspect ratio; auto|NTSC PAR|PAL PAR" },
       { "genesis_plus_gx_render", "Interlaced mode 2 output; single field|double field" },
-      { "genesis_plus_gx_gun_cursor", "Show Lightgun crosshair; no|yes" },
-      { "genesis_plus_gx_invert_mouse", "Invert Mouse Y-axis; no|yes" },
+      { "genesis_plus_gx_gun_cursor", "Show Lightgun crosshair; disabled|enabled" },
+      { "genesis_plus_gx_invert_mouse", "Invert Mouse Y-axis; disabled|enabled" },
       { NULL, NULL },
    };
 
@@ -1709,7 +1709,10 @@ void retro_set_input_state(retro_input_state_t cb) { input_state_cb = cb; }
 void retro_get_system_info(struct retro_system_info *info)
 {
    info->library_name = "Genesis Plus GX";
-   info->library_version = "v1.7.4";
+#ifndef GIT_VERSION
+#define GIT_VERSION ""
+#endif
+   info->library_version = "v1.7.4" GIT_VERSION;
    info->valid_extensions = "mdx|md|smd|gen|bin|cue|iso|sms|gg|sg";
    info->block_extract = false;
    info->need_fullpath = true;
@@ -1923,12 +1926,28 @@ void retro_cheat_set(unsigned index, bool enabled, const char *code)
 bool retro_load_game(const struct retro_game_info *info)
 {
    int i;
-   const char *dir;
+   const char *dir = NULL;
 #if defined(_WIN32)
-   char slash = '\\';
+   char slash      = '\\';
 #else
-   char slash = '/';
+   char slash      = '/';
 #endif
+
+   if (!info)
+      return false;
+
+#ifdef FRONTEND_SUPPORTS_RGB565
+   unsigned rgb565 = RETRO_PIXEL_FORMAT_RGB565;
+   if(environ_cb(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &rgb565))
+      if (log_cb)
+         log_cb(RETRO_LOG_INFO, "Frontend supports RGB565 - will use that instead of XRGB1555.\n");
+#endif
+
+   sms_ntsc = calloc(1, sizeof(sms_ntsc_t));
+   md_ntsc  = calloc(1, sizeof(md_ntsc_t));
+
+   init_bitmap();
+   config_default();
 
    extract_directory(g_rom_dir, info->path, sizeof(g_rom_dir));
    extract_name(g_rom_name, info->path, sizeof(g_rom_name));
@@ -2032,6 +2051,12 @@ void retro_unload_game(void)
 {
    if (system_hw == SYSTEM_MCD)
       bram_save();
+
+   audio_shutdown();
+   if (md_ntsc)
+      free(md_ntsc);
+   if (sms_ntsc)
+      free(sms_ntsc);
 }
 
 unsigned retro_get_region(void) { return vdp_pal ? RETRO_REGION_PAL : RETRO_REGION_NTSC; }
@@ -2045,6 +2070,8 @@ void *retro_get_memory_data(unsigned id)
    {
       case RETRO_MEMORY_SAVE_RAM:
          return sram.sram;
+      case RETRO_MEMORY_SYSTEM_RAM:
+         return work_ram;
 
       default:
          return NULL;
@@ -2081,7 +2108,8 @@ size_t retro_get_memory_size(unsigned id)
           }
         }
       }
-
+      case RETRO_MEMORY_SYSTEM_RAM:
+         return 0x10000;
       default:
          return 0;
    }
@@ -2096,14 +2124,9 @@ static void check_system_specs(void)
 void retro_init(void)
 {
    struct retro_log_callback log;
-   unsigned level, rgb565;
-   sms_ntsc = calloc(1, sizeof(sms_ntsc_t));
-   md_ntsc  = calloc(1, sizeof(md_ntsc_t));
+   unsigned level                = 1;
+   uint64_t serialization_quirks = RETRO_SERIALIZATION_QUIRK_PLATFORM_DEPENDENT;
 
-   init_bitmap();
-   config_default();
-
-   level = 1;
    environ_cb(RETRO_ENVIRONMENT_SET_PERFORMANCE_LEVEL, &level);
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_LOG_INTERFACE, &log))
@@ -2111,26 +2134,19 @@ void retro_init(void)
    else
       log_cb = NULL;
 
-#ifdef FRONTEND_SUPPORTS_RGB565
-   rgb565 = RETRO_PIXEL_FORMAT_RGB565;
-   if(environ_cb(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &rgb565))
-      if (log_cb)
-         log_cb(RETRO_LOG_INFO, "Frontend supports RGB565 - will use that instead of XRGB1555.\n");
-#endif
    check_system_specs();
+
+   environ_cb(RETRO_ENVIRONMENT_SET_SERIALIZATION_QUIRKS, &serialization_quirks);
 }
 
 void retro_deinit(void)
 {
-   audio_shutdown();
-   if (md_ntsc)
-      free(md_ntsc);
-   if (sms_ntsc)
-      free(sms_ntsc);
-
 }
 
-void retro_reset(void) { gen_reset(0); }
+void retro_reset(void)
+{
+   gen_reset(0);
+}
 
 void retro_run(void) 
 {
