@@ -1,4 +1,4 @@
-LIBRARY "msvc-2010"
+LIBRARY "msvc-2017"
 EXPORTS
 retro_set_environment
 retro_set_video_refresh
