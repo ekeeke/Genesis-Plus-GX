@@ -58,11 +58,11 @@ uint8 ALIGNED_(4) sat[0x400];    /* Internal copy of sprite attribute table */
 uint8 ALIGNED_(4) vram[0x10000]; /* Video RAM (64K x 8-bit) */
 uint8 ALIGNED_(4) cram[0x80];    /* On-chip color RAM (64 x 9-bit) */
 uint8 ALIGNED_(4) vsram[0x80];   /* On-chip vertical scroll RAM (40 x 11-bit) */
-uint8 reg[0x20];                                 /* Internal VDP registers (23 x 8-bit) */
-uint8 hint_pending;                              /* 0= Line interrupt is pending */
-uint8 vint_pending;                              /* 1= Frame interrupt is pending */
-uint16 status;                                   /* VDP status flags */
-uint32 dma_length;                               /* DMA remaining length */
+uint8 reg[0x20];                 /* Internal VDP registers (23 x 8-bit) */
+uint8 hint_pending;              /* 0= Line interrupt is pending */
+uint8 vint_pending;              /* 1= Frame interrupt is pending */
+uint16 status;                   /* VDP status flags */
+uint32 dma_length;               /* DMA remaining length */
 
 /* Global variables */
 uint16 ntab;                      /* Name table A base address */
