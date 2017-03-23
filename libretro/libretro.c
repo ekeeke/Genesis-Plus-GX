@@ -1892,32 +1892,51 @@ void retro_cheat_reset(void)
 
 void retro_cheat_set(unsigned index, bool enabled, const char *code)
 {
+	char codeCopy[256];
+	char *buff;
+	bool multiline=0;
+   
    /* clear existing ROM patches */
    clear_cheats();
 
-   /* interpret code and check if this is a valid cheat code */
-   if (decode_cheat((char *)code, maxcheats))
-   {
-      int i;
+   /* Detect and split multiline cheats */
+	strcpy(codeCopy,code);
+	if (strstr(code,"+")){
+		multiline=1;
+		buff = strtok(codeCopy,"+");
+	} else {
+		buff=codeCopy;
+	}
 
-      /* check if cheat code already exists */
-      for (i=0; i<maxcheats; i++)
+	while (buff != NULL)
+	{
+      /* interpret code and check if this is a valid cheat code */
+      if (decode_cheat((char *)buff, maxcheats))
       {
-         if ((cheatlist[i].address == cheatlist[maxcheats].address)
-                && (cheatlist[i].data == cheatlist[maxcheats].data))
-            break;
-      }
+         int i;
 
-      /* cheat can be enabled or disabled */
-      cheatlist[i].enable = enabled;
+         /* check if cheat code already exists */
+         for (i=0; i<maxcheats; i++)
+         {
+            if ((cheatlist[i].address == cheatlist[maxcheats].address)
+                   && (cheatlist[i].data == cheatlist[maxcheats].data))
+               break;
+         }
 
-      /* if new cheat code, check current cheat count */
-      if ((i == maxcheats) && (i < MAX_CHEATS))
-      {
-         /* increment cheat count */
-         maxcheats++;
+         /* cheat can be enabled or disabled */
+         cheatlist[i].enable = enabled;
+
+         /* if new cheat code, check current cheat count */
+         if ((i == maxcheats) && (i < MAX_CHEATS))
+         {
+            /* increment cheat count */
+            maxcheats++;
+         }
       }
-   }
+		if (!multiline)
+			break;
+      buff = strtok(NULL,"+");
+	}
 
    /* apply ROM patches */
    apply_cheats();
