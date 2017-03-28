@@ -12,15 +12,22 @@
 ** Additional code & fixes by Eke-Eke for Genesis Plus GX
 **
 ** Huge thanks to Nemesis, most of those fixes came from his tests on Sega Genesis hardware
-** More informations at http://gendev.spritesmind.net/forum/viewtopic.php?t=386
+** Additional info from YM2612 die shot analysis by Sauraen
+** See http://gendev.spritesmind.net/forum/viewtopic.php?t=386
 **
 **  TODO:
 **  - better documentation
 **  - BUSY flag emulation
+**  - accurate DAC output
 */
 
 /*
 **  CHANGELOG:
+**
+** 12-03-2017 Eke-Eke (Genesis Plus GX):
+**  - fixed Op1 self-feedback regression introduced by previous modifications
+**  - removed one-sample extra delay on Op1 calculated output
+**  - refactored chan_calc() function 
 **
 ** 01-09-2012 Eke-Eke (Genesis Plus GX):
 **  - removed input clock / output samplerate frequency ratio, chip now always run at (original) internal sample frequency
@@ -1413,7 +1420,7 @@ INLINE signed int op_calc(UINT32 phase, unsigned int env, unsigned int pm)
 
 INLINE signed int op_calc1(UINT32 phase, unsigned int env, unsigned int pm)
 {
-  UINT32 p = (env<<3) + sin_tab[ ( (phase + pm ) >> SIN_BITS ) & SIN_MASK ];
+  UINT32 p = (env<<3) + sin_tab[ ( ( phase >> SIN_BITS ) + pm ) & SIN_MASK ];
 
   if (p >= TL_TAB_LEN)
     return 0;
@@ -1424,32 +1431,31 @@ INLINE void chan_calc(FM_CH *CH, int num)
 {
   do
   {
+    INT32 out = 0;
     UINT32 AM = ym2612.OPN.LFO_AM >> CH->ams;
     unsigned int eg_out = volume_calc(&CH->SLOT[SLOT1]);
 
     m2 = c1 = c2 = mem = 0;
 
     *CH->mem_connect = CH->mem_value;  /* restore delayed sample (MEM) value to m2 or c2 */
+
+    if( eg_out < ENV_QUIET )  /* SLOT 1 */
     {
-      INT32 out = CH->op1_out[0] + CH->op1_out[1];
-      CH->op1_out[0] = CH->op1_out[1];
+      if (CH->FB < SIN_BITS)
+        out = (CH->op1_out[0] + CH->op1_out[1]) >> CH->FB;
 
-      if( !CH->connect1 ){
-        /* algorithm 5  */
-        mem = c1 = c2 = CH->op1_out[0];
-      }else{
-        /* other algorithms */
-        *CH->connect1 += CH->op1_out[0];
-      }
+      out = op_calc1(CH->SLOT[SLOT1].phase, eg_out, out );
+    }
 
-      CH->op1_out[1] = 0;
-      if( eg_out < ENV_QUIET )  /* SLOT 1 */
-      {
-        if (!CH->FB)
-          out=0;
+    CH->op1_out[0] = CH->op1_out[1];
+    CH->op1_out[1] = out;
 
-        CH->op1_out[1] = op_calc1(CH->SLOT[SLOT1].phase, eg_out, (out<<CH->FB) );
-      }
+    if( !CH->connect1 ){
+      /* algorithm 5  */
+      mem = c1 = c2 = out;
+    }else{
+      /* other algorithms */
+      *CH->connect1 = out;
     }
 
     eg_out = volume_calc(&CH->SLOT[SLOT3]);
@@ -1727,7 +1733,7 @@ INLINE void OPNWriteReg(int r, int v)
         case 0:    /* 0xb0-0xb2 : FB,ALGO */
         {
           CH->ALGO = v&7;
-          CH->FB   = (v>>3)&7;
+          CH->FB   = SIN_BITS - ((v>>3)&7);
           setup_connection( CH, c );
           break;        
         }

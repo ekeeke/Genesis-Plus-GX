@@ -70,6 +70,7 @@ Genesis Plus GX 1.7.5 (xx/xx/xxxx) (Eke-Eke)
 
 [Core/SG]
 ---------------
+* added support for new SMS Power Korean dumps (Star Soldier & Pippols)
 * added support for SG-1000 II clone hardware (2KB RAM + integrated VDP/PSG chip 315-5066)
 * fixed SG-1000 internal RAM size (1KB instead of 2KB)
 * restored SG-1000 Pause button support
@@ -117,6 +118,8 @@ Genesis Plus GX 1.7.5 (xx/xx/xxxx) (Eke-Eke)
 ---------------
 * rewrote optimized & more accurate PSG core from scratch
 * removed PSG boost noise feature & added optional high-quality PSG resampling
+* fixed YM2612 self-feedback regression introduced in 1.7.1
+* fixed YM2612 one-sample extra delay on operator1 output
 
 [Gamecube/Wii]
 ---------------
