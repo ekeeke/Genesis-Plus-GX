@@ -6,7 +6,7 @@
  *
  *  Noise implementation based on http://www.smspower.org/Development/SN76489#NoiseChannel
  *
- *  Copyright (C) 2016 Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2016-2017 Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -78,6 +78,7 @@ static struct
 {
   int clocks;
   int latch;
+  int zeroFreqInc;
   int noiseShiftValue;
   int noiseShiftWidth;
   int noiseBitMask;
@@ -100,8 +101,11 @@ void psg_init(PSG_TYPE type)
   for (i=0; i<4; i++)
   {
     psg.chanAmp[i][0] = 100;
-    psg.chanAmp[i][1] = 100;
+    psg.chanAmp[i][1] = 100; 
   }
+
+  /* Initialize Tone zero frequency increment value */
+  psg.zeroFreqInc = ((type == PSG_DISCRETE) ? 0x400 : 0x1) * PSG_MCYCLES_RATIO;
 
   /* Initialize Noise LSFR type */
   psg.noiseShiftWidth = noiseShiftWidth[type];
@@ -117,7 +121,7 @@ void psg_reset()
   {
     psg.regs[i*2]       = 0;
     psg.regs[i*2+1]     = 0;
-    psg.freqInc[i]      = (i < 3) ? (1 * PSG_MCYCLES_RATIO) : (16 * PSG_MCYCLES_RATIO);
+    psg.freqInc[i]      = (i < 3) ? (psg.zeroFreqInc) : (16 * PSG_MCYCLES_RATIO);
     psg.freqCounter[i]  = 0;
     psg.polarity[i]     = -1;
     psg.chanDelta[i][0] = 0;
@@ -298,8 +302,8 @@ void psg_write(unsigned int clocks, unsigned int data)
       }
       else
       {
-        /* zero value behaves the same as a value of 1 (verified on integrated version only) */
-        psg.freqInc[index>>1] = PSG_MCYCLES_RATIO;
+        /* zero value behaves the same as a value of 1 on integrated version (0x400 on discrete version) */
+        psg.freqInc[index>>1] = psg.zeroFreqInc;
       }
 
       /* update noise channel counter increment if required */
@@ -328,7 +332,15 @@ void psg_write(unsigned int clocks, unsigned int data)
         psg.freqInc[3] = (0x10 << noiseFreq) * PSG_MCYCLES_RATIO;
       }
 
-      /* reset shift register value */
+      /* check current noise shift register output */
+      if (psg.noiseShiftValue & 1)
+      {
+        /* high to low transition will be applied at next internal cycle update */
+        psg.chanDelta[3][0] = -psg.chanOut[3][0];
+        psg.chanDelta[3][1] = -psg.chanOut[3][1];
+      }
+
+      /* reset noise shift register value (noise channel output is forced low) */
       psg.noiseShiftValue = 1 << psg.noiseShiftWidth;;
 
       break;
