@@ -2,7 +2,7 @@
  *  Genesis Plus
  *  SG-1000, Master System & Game Gear cartridge hardware support
  *
- *  Copyright (C) 2007-2016  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2007-2017  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -160,13 +160,15 @@ static const rominfo_t game_list[] =
   {0x2E7166D5, 0, 0, 0,  MAPPER_RAM_8K_EXT1, SYSTEM_SGII, REGION_JAPAN_NTSC}, /* The Legend of Kage (TW) */
   {0xC550B4F0, 0, 0, 0,  MAPPER_RAM_8K_EXT1, SYSTEM_SGII, REGION_JAPAN_NTSC}, /* TwinBee (TW) */
   {0xFC87463C, 0, 0, 0,  MAPPER_RAM_8K_EXT1, SYSTEM_SGII, REGION_JAPAN_NTSC}, /* Yie Ar Kung-Fu II (TW) */
+  {0xDF7CBFA5, 0, 0, 0,  MAPPER_RAM_8K_EXT1, SYSTEM_SGII, REGION_JAPAN_NTSC}, /* Pippols (TW) */
+  {0xE0816BB7, 0, 0, 0,  MAPPER_RAM_8K_EXT1, SYSTEM_SGII, REGION_JAPAN_NTSC}, /* Star Soldier (TW) */
   {0x69FC1494, 0, 0, 0,  MAPPER_RAM_8K_EXT2, SYSTEM_SGII, REGION_JAPAN_NTSC}, /* Bomberman Special (TW) */
   {0xFFC4EE3F, 0, 0, 0,  MAPPER_RAM_8K_EXT2, SYSTEM_SGII, REGION_JAPAN_NTSC}, /* Magical Kid Wiz (TW) */
   {0x2E366CCF, 0, 0, 0,  MAPPER_RAM_8K_EXT2, SYSTEM_SGII, REGION_JAPAN_NTSC}, /* The Castle (TW) */
   {0xAAAC12CF, 0, 0, 0,  MAPPER_RAM_8K_EXT2, SYSTEM_SGII, REGION_JAPAN_NTSC}, /* Rally-X (TW) */
   {0xD2EDD329, 0, 0, 0,  MAPPER_RAM_8K_EXT2, SYSTEM_SGII, REGION_JAPAN_NTSC}, /* Road Fighter (TW) */
 
-  /* games requiring 2K internal RAM (SG-1000 II clone hardware) */
+  /* games requiring 2KB internal RAM (SG-1000 II clone hardware) */
   {0x7F7F009D, 0, 0, 0,  MAPPER_NONE, SYSTEM_SGII, REGION_JAPAN_NTSC}, /* Circus Charlie (KR) */
   {0x77DB4704, 0, 0, 0,  MAPPER_NONE, SYSTEM_SGII, REGION_JAPAN_NTSC}, /* Q*Bert */
   {0xC5A67B95, 0, 0, 0,  MAPPER_NONE, SYSTEM_SGII, REGION_JAPAN_NTSC}, /* Othello Multivision BIOS */
