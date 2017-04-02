@@ -130,8 +130,8 @@ void psg_reset()
     psg.chanOut[i][1]   = 0;
   }
 
-  /* noise attenuation register is latched on power-on (verified on 315-5313A & 315-5660 integrated version only) */
-  psg.latch = 7;
+  /* tone #2 attenuation register is latched on power-on (verified on 315-5313A integrated version only) */
+  psg.latch = 3;
 
   /* reset noise shift register */
   psg.noiseShiftValue = 1 << psg.noiseShiftWidth;
