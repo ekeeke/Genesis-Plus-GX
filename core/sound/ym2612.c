@@ -1477,13 +1477,12 @@ INLINE void chan_calc(FM_CH *CH, int num)
       if ((ym2612.OPN.ST.mode & 0xC0) && (CH == &ym2612.CH[2]))
       {
         /* keyscale code is not modifiedby LFO */
-        UINT8 kc = CH->kcode;
-        UINT32 pm = CH->pms + ym2612.OPN.LFO_PM;
-        
-        update_phase_lfo_slot(&CH->SLOT[SLOT1], pm, kc, ym2612.OPN.SL3.block_fnum[1]);
-        update_phase_lfo_slot(&CH->SLOT[SLOT2], pm, kc, ym2612.OPN.SL3.block_fnum[2]);
-        update_phase_lfo_slot(&CH->SLOT[SLOT3], pm, kc, ym2612.OPN.SL3.block_fnum[0]);
-        update_phase_lfo_slot(&CH->SLOT[SLOT4], pm, kc, CH->block_fnum);
+        UINT8 kc = ym2612.CH[2].kcode;
+        UINT32 pm = ym2612.CH[2].pms + ym2612.OPN.LFO_PM;
+        update_phase_lfo_slot(&ym2612.CH[2].SLOT[SLOT1], pm, kc, ym2612.OPN.SL3.block_fnum[1]);
+        update_phase_lfo_slot(&ym2612.CH[2].SLOT[SLOT2], pm, kc, ym2612.OPN.SL3.block_fnum[2]);
+        update_phase_lfo_slot(&ym2612.CH[2].SLOT[SLOT3], pm, kc, ym2612.OPN.SL3.block_fnum[0]);
+        update_phase_lfo_slot(&ym2612.CH[2].SLOT[SLOT4], pm, kc, ym2612.CH[2].block_fnum);
       }
       else
       {
