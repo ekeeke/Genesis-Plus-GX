@@ -24,6 +24,9 @@
 /*
 **  CHANGELOG:
 **
+** 09-04-2017 Eke-Eke (Genesis Plus GX):
+**  - fixed LFO PM implementation: block & keyscale code should not be modified by LFO (verified on YM2612 die)
+**
 ** 12-03-2017 Eke-Eke (Genesis Plus GX):
 **  - fixed Op1 self-feedback regression introduced by previous modifications
 **  - removed one-sample extra delay on Op1 calculated output
@@ -1275,31 +1278,25 @@ INLINE void update_ssg_eg_channels(FM_CH *CH)
   } while (--i);
 }
 
-INLINE void update_phase_lfo_slot(FM_SLOT *SLOT, INT32 pms, UINT32 block_fnum)
+INLINE void update_phase_lfo_slot(FM_SLOT *SLOT, UINT32 pm, UINT8 kc, UINT32 fc)
 {
-  INT32 lfo_fn_table_index_offset = lfo_pm_table[(((block_fnum & 0x7f0) >> 4) << 8) + pms + ym2612.OPN.LFO_PM];
+  INT32 lfo_fn_offset = lfo_pm_table[(((fc & 0x7f0) >> 4) << 8) + pm];
   
-  if (lfo_fn_table_index_offset)  /* LFO phase modulation active */
+  if (lfo_fn_offset)  /* LFO phase modulation active */
   {
-    UINT8 blk;
-    unsigned int kc, fc;
+    /* block is not modified by LFO PM */
+    UINT8 blk = fc >> 11;
 
-    /* there are 2048 FNUMs that can be generated using FNUM/BLK registers
-          but LFO works with one more bit of a precision so we really need 4096 elements */
-    block_fnum = block_fnum*2 + lfo_fn_table_index_offset;
-    blk = (block_fnum&0x7000) >> 12;
-    block_fnum = block_fnum & 0xfff;
+    /* LFO works with one more bit of a precision (12-bit) */
+    fc = ((fc << 1) + lfo_fn_offset) & 0xfff;
 
-    /* keyscale code */
-    kc = (blk<<2) | opn_fktable[block_fnum >> 8];
-
-    /* (frequency) phase increment counter */
-    fc = (((block_fnum << 5) >> (7 - blk)) + SLOT->DT[kc]) & DT_MASK;
+    /* (frequency) phase increment counter (17-bit) */
+    fc = (((fc << 5) >> (7 - blk)) + SLOT->DT[kc]) & DT_MASK;
 
     /* update phase */
-    SLOT->phase += (fc * SLOT->mul) >> 1;
+    SLOT->phase += ((fc * SLOT->mul) >> 1);
   }
-  else  /* LFO phase modulation  = zero */
+  else  /* LFO phase modulation = zero */
   {
     SLOT->phase += SLOT->Incr;
   }
@@ -1307,39 +1304,36 @@ INLINE void update_phase_lfo_slot(FM_SLOT *SLOT, INT32 pms, UINT32 block_fnum)
 
 INLINE void update_phase_lfo_channel(FM_CH *CH)
 {
-  UINT32 block_fnum = CH->block_fnum;
+  UINT32 fc = CH->block_fnum;
   
-  INT32 lfo_fn_table_index_offset = lfo_pm_table[(((block_fnum & 0x7f0) >> 4) << 8) + CH->pms + ym2612.OPN.LFO_PM];
+  INT32 lfo_fn_offset = lfo_pm_table[(((fc & 0x7f0) >> 4) << 8) + CH->pms + ym2612.OPN.LFO_PM];
 
-  if (lfo_fn_table_index_offset)  /* LFO phase modulation active */
+  if (lfo_fn_offset)  /* LFO phase modulation active */
   {
-    UINT8 blk;
-    unsigned int kc, fc, finc;
-   
-    /* there are 2048 FNUMs that can be generated using FNUM/BLK registers
-          but LFO works with one more bit of a precision so we really need 4096 elements */
-    block_fnum = block_fnum*2 + lfo_fn_table_index_offset;
-    blk = (block_fnum&0x7000) >> 12;
-    block_fnum = block_fnum & 0xfff;
-    
-    /* keyscale code */
-    kc = (blk<<2) | opn_fktable[block_fnum >> 8];
+    UINT32 finc;
 
-    /* (frequency) phase increment counter */
-    fc = (block_fnum << 5) >> (7 - blk);
+    /* block & keyscale code are not modified by LFO PM */
+    UINT8 blk = fc >> 11;
+    UINT8 kc = CH->kcode;
+
+    /* LFO works with one more bit of a precision (12-bit) */
+    fc = ((fc << 1) + lfo_fn_offset) & 0xfff;
+
+    /* (frequency) phase increment counter (17-bit) */
+    fc = (fc << 5) >> (7 - blk);
 
     /* apply DETUNE & MUL operator specific values */
     finc = (fc + CH->SLOT[SLOT1].DT[kc]) & DT_MASK;
-    CH->SLOT[SLOT1].phase += (finc*CH->SLOT[SLOT1].mul) >> 1;
+    CH->SLOT[SLOT1].phase += ((finc * CH->SLOT[SLOT1].mul) >> 1);
 
     finc = (fc + CH->SLOT[SLOT2].DT[kc]) & DT_MASK;
-    CH->SLOT[SLOT2].phase += (finc*CH->SLOT[SLOT2].mul) >> 1;
+    CH->SLOT[SLOT2].phase += ((finc * CH->SLOT[SLOT2].mul) >> 1);
 
     finc = (fc + CH->SLOT[SLOT3].DT[kc]) & DT_MASK;
-    CH->SLOT[SLOT3].phase += (finc*CH->SLOT[SLOT3].mul) >> 1;
+    CH->SLOT[SLOT3].phase += ((finc * CH->SLOT[SLOT3].mul) >> 1);
 
     finc = (fc + CH->SLOT[SLOT4].DT[kc]) & DT_MASK;
-    CH->SLOT[SLOT4].phase += (finc*CH->SLOT[SLOT4].mul) >> 1;
+    CH->SLOT[SLOT4].phase += ((finc * CH->SLOT[SLOT4].mul) >> 1);
   }
   else  /* LFO phase modulation  = zero */
   {
@@ -1477,13 +1471,17 @@ INLINE void chan_calc(FM_CH *CH, int num)
     /* update phase counters AFTER output calculations */
     if(CH->pms)
     {
-      /* add support for 3 slot mode */
+      /* 3-slot mode */
       if ((ym2612.OPN.ST.mode & 0xC0) && (CH == &ym2612.CH[2]))
       {
-        update_phase_lfo_slot(&CH->SLOT[SLOT1], CH->pms, ym2612.OPN.SL3.block_fnum[1]);
-        update_phase_lfo_slot(&CH->SLOT[SLOT2], CH->pms, ym2612.OPN.SL3.block_fnum[2]);
-        update_phase_lfo_slot(&CH->SLOT[SLOT3], CH->pms, ym2612.OPN.SL3.block_fnum[0]);
-        update_phase_lfo_slot(&CH->SLOT[SLOT4], CH->pms, CH->block_fnum);
+        /* keyscale code is not modifiedby LFO */
+        UINT8 kc = CH->kcode;
+        UINT32 pm = CH->pms + ym2612.OPN.LFO_PM;
+        
+        update_phase_lfo_slot(&CH->SLOT[SLOT1], pm, kc, ym2612.OPN.SL3.block_fnum[1]);
+        update_phase_lfo_slot(&CH->SLOT[SLOT2], pm, kc, ym2612.OPN.SL3.block_fnum[2]);
+        update_phase_lfo_slot(&CH->SLOT[SLOT3], pm, kc, ym2612.OPN.SL3.block_fnum[0]);
+        update_phase_lfo_slot(&CH->SLOT[SLOT4], pm, kc, CH->block_fnum);
       }
       else
       {
