@@ -26,6 +26,7 @@
 **
 ** 09-04-2017 Eke-Eke (Genesis Plus GX):
 **  - fixed LFO PM implementation: block & keyscale code should not be modified by LFO (verified on YM2612 die)
+**  - fixed Timer B overflow handling
 **
 ** 12-03-2017 Eke-Eke (Genesis Plus GX):
 **  - fixed Op1 self-feedback regression introduced by previous modifications
@@ -801,10 +802,11 @@ INLINE void INTERNAL_TIMER_B(int step)
         ym2612.OPN.ST.status |= 0x02;
 
       /* reload the counter */
-      if (ym2612.OPN.ST.TBL)
+      do
+      {
         ym2612.OPN.ST.TBC += ym2612.OPN.ST.TBL;
-      else
-        ym2612.OPN.ST.TBC = ym2612.OPN.ST.TBL;
+      }
+      while (ym2612.OPN.ST.TBC <= 0);
     }
   }
 }
@@ -1526,11 +1528,11 @@ INLINE void OPNWriteMode(int r, int v)
         ym2612.OPN.LFO_AM = 126;
       }
       break;
-    case 0x24:  /* timer A High 8*/
+    case 0x24:  /* timer A High */
       ym2612.OPN.ST.TA = (ym2612.OPN.ST.TA & 0x03)|(((int)v)<<2);
       ym2612.OPN.ST.TAL = 1024 - ym2612.OPN.ST.TA;
       break;
-    case 0x25:  /* timer A Low 2*/
+    case 0x25:  /* timer A Low */
       ym2612.OPN.ST.TA = (ym2612.OPN.ST.TA & 0x3fc)|(v&3);
       ym2612.OPN.ST.TAL = 1024 - ym2612.OPN.ST.TA;
       break;
