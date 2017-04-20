@@ -305,7 +305,7 @@ else
 all: $(TARGET)
 
 %.o: %.c
-	$(CC) -o $@ -c $< $(CFLAGS) $(LIBRETRO_CFLAGS)
+	$(CC) -o $@ -c $< $(CPPFLAGS) $(CFLAGS) $(LIBRETRO_CFLAGS)
 
 $(TARGET): $(OBJECTS)
 ifeq ($(STATIC_LINKING), 1)
