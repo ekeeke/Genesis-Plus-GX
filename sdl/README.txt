@@ -116,8 +116,6 @@ END USERS SHOULD PREFERABLY USE LIBRETRO PORT WITH RETROARCH.
 
  Original YM2612/YM2413 cores by Jarek Burczynski & Tatsuyuki Satoh
 
- Original SN76489 core by Maxim
-
  Original SVP core by Notaz
 
  Blip Buffer & NTSC Video filter libraries by Shay Green (Blargg)

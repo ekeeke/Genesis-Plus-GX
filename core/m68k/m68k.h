@@ -31,6 +31,8 @@
     - added proper cycle use on reset
     - added cycle accurate timings for MUL/DIV instructions (thanks to Jorge Cwik !) 
     - fixed undocumented flags for DIV instructions (Blood Shot)
+    - fixed undocumented behaviors for ABCD/SBCD/NBCD instructions (thanks to flamewing for his test ROM)
+    - improved auto-vectored interrupts acknowledge cycle timing accuracy
     - added MAIN-CPU & SUB-CPU support for Mega CD emulation
     
   */

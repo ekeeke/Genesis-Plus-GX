@@ -3,7 +3,7 @@
  *  Main 68k bus handlers
  *
  *  Copyright (C) 1998-2003  Charles Mac Donald (original code)
- *  Copyright (C) 2007-2016  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2007-2017  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -413,11 +413,6 @@ unsigned int ctrl_io_read_byte(unsigned int address)
       return m68k_read_bus_8(address);
     }
 
-    case 0x10:  /* MEMORY MODE */
-    case 0x12:  /* Z80 RESET */
-    case 0x13:  /* unknown */
-    case 0x40:  /* TMSS */
-    case 0x44:  /* RADICA */
     case 0x50:  /* SVP */
     {
       if ((address & 0xFC) == 0x00)
@@ -433,6 +428,15 @@ unsigned int ctrl_io_read_byte(unsigned int address)
         return (address & 1) ? (data & 0xFF) : (data >> 8);
       }
 
+      return m68k_read_bus_8(address);
+    }
+
+    case 0x10:  /* MEMORY MODE */
+    case 0x12:  /* Z80 RESET */
+    case 0x13:  /* unknown */
+    case 0x40:  /* TMSS */
+    case 0x44:  /* RADICA */
+    {
       return m68k_read_bus_8(address);
     }
 
