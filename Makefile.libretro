@@ -248,6 +248,9 @@ else
 endif
 
 LDFLAGS += $(LIBM)
+ifeq ($(SHARED_LIBVORBIS), 1)
+	LDFLAGS += -lvorbisfile
+endif
 
 ifeq ($(DEBUG), 1)
    CFLAGS += -O0 -g
@@ -261,8 +264,10 @@ endif
 
 CORE_DIR := .
 
-TREMOR_SRC_DIR  := $(CORE_DIR)/core/tremor
-LIBRETRO_DIR	:= $(CORE_DIR)/libretro
+ifeq ($(SHARED_LIBVORBIS),)
+   TREMOR_SRC_DIR := $(CORE_DIR)/core/tremor
+endif
+LIBRETRO_DIR := $(CORE_DIR)/libretro
 
 include $(LIBRETRO_DIR)/Makefile.common
 
@@ -272,7 +277,11 @@ ifeq ($(LOGSOUND), 1)
    LIBRETRO_CFLAGS := -DLOGSOUND
 endif
 
-DEFINES := -DUSE_LIBTREMOR
+ifeq ($(SHARED_LIBVORBIS), 1)
+	DEFINES := -DUSE_LIBVORBIS
+else
+	DEFINES := -DUSE_LIBTREMOR
+endif
 CFLAGS += $(fpic) $(DEFINES) $(CODE_DEFINES)
 
 ifeq ($(FRONTEND_SUPPORTS_RGB565), 1)
