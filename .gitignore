@@ -1,3 +1,7 @@
+.vs/
+Debug/
+Release/
+
 psp2/*.o
 psp2/*.elf
 psp2/*.velf
