@@ -8,9 +8,13 @@ GENPLUS_SRC_DIR := $(CORE_DIR)/core \
                    $(CORE_DIR)/core/cart_hw \
                    $(CORE_DIR)/core/cart_hw/svp
 
-SOURCES_C = $(foreach dir,$(GENPLUS_SRC_DIR),$(wildcard $(dir)/*.c)) \
-            $(foreach dir,$(TREMOR_SRC_DIR),$(wildcard $(dir)/*.c)) \
-            $(LIBRETRO_DIR)/libretro.c
+SOURCES_C = $(foreach dir,$(GENPLUS_SRC_DIR),$(wildcard $(dir)/*.c))
+
+ifeq ($(SHARED_LIBVORBIS),)
+   SOURCES_C += $(foreach dir,$(TREMOR_SRC_DIR),$(wildcard $(dir)/*.c))
+endif
+
+SOURCES_C += $(LIBRETRO_DIR)/libretro.c
 
 SOURCES_C += $(LIBRETRO_DIR)/scrc32.c
 
