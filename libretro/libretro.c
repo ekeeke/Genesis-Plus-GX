@@ -170,7 +170,7 @@ void error(char * fmt, ...)
 int load_archive(char *filename, unsigned char *buffer, int maxsize, char *extension)
 {
   /* If trying to read from game rom, use frontend callback */
-  if (strcmp(filename, g_rom_path))
+  if (strcmp(filename, g_rom_path) == 0)
   {
     return retro_game_read_cb(buffer, maxsize);
   }
