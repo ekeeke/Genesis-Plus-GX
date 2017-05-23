@@ -113,6 +113,7 @@ static uint8_t temp[0x10000];
 static int16 soundbuffer[3068];
 static uint16_t bitmap_data_[720 * 576];
 
+static char g_rom_path[256];
 static char g_rom_dir[256];
 static char g_rom_name[256];
 static char *save_dir;
@@ -121,6 +122,8 @@ static retro_log_printf_t log_cb;
 static retro_video_refresh_t video_cb;
 static retro_input_poll_t input_poll_cb;
 static retro_input_state_t input_state_cb;
+static retro_game_read_t retro_game_read_cb;
+static retro_game_seek_t retro_game_seek_cb;
 static retro_environment_t environ_cb;
 static retro_audio_sample_batch_t audio_cb;
 
@@ -166,6 +169,12 @@ void error(char * fmt, ...)
 
 int load_archive(char *filename, unsigned char *buffer, int maxsize, char *extension)
 {
+  /* If trying to read from game rom, use frontend callback */
+  if (strcmp(filename, g_rom_path))
+  {
+    return retro_game_read_cb(buffer, maxsize);
+  }
+
   int size, left;
 
   /* Open file */
@@ -1756,6 +1765,8 @@ void retro_set_audio_sample(retro_audio_sample_t cb) { (void)cb; }
 void retro_set_audio_sample_batch(retro_audio_sample_batch_t cb) { audio_cb = cb; }
 void retro_set_input_poll(retro_input_poll_t cb) { input_poll_cb = cb; }
 void retro_set_input_state(retro_input_state_t cb) { input_state_cb = cb; }
+void retro_set_game_read(retro_game_read_t cb) { retro_game_read_cb = cb; }
+void retro_set_game_seek(retro_game_seek_t cb) { retro_game_seek_cb = cb; }
 
 void retro_get_system_info(struct retro_system_info *info)
 {
@@ -2014,6 +2025,7 @@ bool retro_load_game(const struct retro_game_info *info)
    init_bitmap();
    config_default();
 
+   strncpy(g_rom_path, info->path, sizeof(g_rom_path));
    extract_directory(g_rom_dir, info->path, sizeof(g_rom_dir));
    extract_name(g_rom_name, info->path, sizeof(g_rom_name));
 
