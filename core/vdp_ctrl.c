@@ -5,7 +5,7 @@
  *  Support for SG-1000 (TMS99xx & 315-5066), Master System (315-5124 & 315-5246), Game Gear & Mega Drive VDP
  *
  *  Copyright (C) 1998-2003  Charles Mac Donald (original code)
- *  Copyright (C) 2007-2016  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2007-2017  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -2039,7 +2039,7 @@ static void vdp_reg_w(unsigned int r, unsigned int d, unsigned int cycles)
 
 static void vdp_fifo_update(unsigned int cycles)
 {
-  int slots, count = 0;
+  int num, slots, count = 0;
   
   const int *fifo_timing;
 
@@ -2075,13 +2075,13 @@ static void vdp_fifo_update(unsigned int cycles)
     count++;
   }
 
-  /* number of processed FIFO entries since last access */
-  slots = (slots + count - fifo_slots) >> fifo_byte_access;
+  /* number of processed FIFO entries since last access (byte access needs two slots to process one FIFO word) */
+  num = (slots + count - fifo_slots) >> fifo_byte_access;
 
-  if (slots > 0)
+  if (num > 0)
   {
     /* process FIFO entries */
-    fifo_write_cnt -= slots;
+    fifo_write_cnt -= num;
 
     /* Clear FIFO full flag */
     status &= 0xFEFF;
@@ -2093,14 +2093,19 @@ static void vdp_fifo_update(unsigned int cycles)
 
       /* Set FIFO empty flag */
       status |= 0x200;
-    }
 
-    /* Update FIFO access slot counter */
-    fifo_slots += (slots << fifo_byte_access);
+      /* Reinitialize FIFO access slot counter */
+      fifo_slots = slots + count;
+    }
+    else
+    {
+      /* Update FIFO access slot counter */
+      fifo_slots += (num << fifo_byte_access);
+    }
   }
 
   /* next FIFO update cycle */
-  fifo_cycles = mcycles_vdp + fifo_timing[count | fifo_byte_access];
+  fifo_cycles = mcycles_vdp + fifo_timing[fifo_slots - slots + fifo_byte_access];
 }
 
 
