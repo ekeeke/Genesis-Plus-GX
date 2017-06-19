@@ -552,7 +552,6 @@ int load_rom(char *filename)
   }
 
   /* auto-detect CD image file */
-  //No CD support
   size = cdd_load(filename, (char *)(cart.rom));
   if (size < 0)
   {
