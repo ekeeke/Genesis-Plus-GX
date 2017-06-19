@@ -113,7 +113,6 @@ static uint8_t temp[0x10000];
 static int16 soundbuffer[3068];
 static uint16_t bitmap_data_[720 * 576];
 
-static char g_rom_path[256];
 static char g_rom_dir[256];
 static char g_rom_name[256];
 static char *save_dir;
@@ -167,12 +166,6 @@ void error(char * fmt, ...)
 
 int load_archive(char *filename, unsigned char *buffer, int maxsize, char *extension)
 {
-  /* If trying to read from game rom, use frontend callback */
-  if (strcmp(filename, g_rom_path) == 0)
-  {
-    return retro_game_read_cb(buffer, maxsize);
-  }
-
   int size, left;
 
   /* Open file */
@@ -2021,7 +2014,6 @@ bool retro_load_game(const struct retro_game_info *info)
    init_bitmap();
    config_default();
 
-   strncpy(g_rom_path, info->path, sizeof(g_rom_path));
    extract_directory(g_rom_dir, info->path, sizeof(g_rom_dir));
    extract_name(g_rom_name, info->path, sizeof(g_rom_name));
 
