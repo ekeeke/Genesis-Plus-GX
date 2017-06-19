@@ -74,6 +74,7 @@
 #include "libretro.h"
 #include "md_ntsc.h"
 #include "sms_ntsc.h"
+#include "streams/file_stream.h"
 
 sms_ntsc_t *sms_ntsc;
 md_ntsc_t  *md_ntsc;
@@ -169,7 +170,7 @@ int load_archive(char *filename, unsigned char *buffer, int maxsize, char *exten
   int size, left;
 
   /* Open file */
-  FILE *fd = fopen(filename, "rb");
+  RFILE *fd = filestream_open(filename, RFILE_MODE_READ, -1);
 
   if (!fd)
   {
@@ -193,13 +194,13 @@ int load_archive(char *filename, unsigned char *buffer, int maxsize, char *exten
   }
 
   /* Get file size */
-  fseek(fd, 0, SEEK_END);
-  size = ftell(fd);
+  filestream_seek(fd, 0, SEEK_END);
+  size = filestream_tell(fd);
 
   /* size limit */
   if (size > MAXROMSIZE)
   {
-    fclose(fd);
+    filestream_close(fd);
     if (log_cb)
        log_cb(RETRO_LOG_ERROR, "File is too large.\n");
     return 0;
@@ -221,19 +222,19 @@ int load_archive(char *filename, unsigned char *buffer, int maxsize, char *exten
 
   /* Read into buffer */
   left = size;
-  fseek(fd, 0, SEEK_SET);
+  filestream_seek(fd, 0, SEEK_SET);
   while (left > CHUNKSIZE)
   {
-    fread(buffer, CHUNKSIZE, 1, fd);
+    filestream_read(fd, buffer, CHUNKSIZE);
     buffer += CHUNKSIZE;
     left -= CHUNKSIZE;
   }
 
   /* Read remaining bytes */
-  fread(buffer, left, 1, fd);
+  filestream_read(fd, buffer, left);
 
   /* Close file */
-  fclose(fd);
+  filestream_close(fd);
 
   /* Return loaded ROM size */
   return size;
