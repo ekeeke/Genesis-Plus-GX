@@ -2064,14 +2064,6 @@ extern "C" {
 	typedef int16_t(RETRO_CALLCONV *retro_input_state_t)(unsigned port, unsigned device,
 		unsigned index, unsigned id);
 
-	/* Loads data from game rom
-	* As more platforms implement some form of sandboxing,
-	* it makes sense to have the front end manage rom file IO */
-	typedef size_t(RETRO_CALLCONV *retro_game_read_t)(void* buffer, size_t requested);
-
-	/* Seek in rom data stream */
-	typedef void(RETRO_CALLCONV *retro_game_seek_t)(unsigned long requested);
-
 	/* Sets callbacks. retro_set_environment() is guaranteed to be called
 	* before retro_init().
 	*
@@ -2083,8 +2075,6 @@ extern "C" {
 	RETRO_API void retro_set_audio_sample_batch(retro_audio_sample_batch_t);
 	RETRO_API void retro_set_input_poll(retro_input_poll_t);
 	RETRO_API void retro_set_input_state(retro_input_state_t);
-	RETRO_API void retro_set_game_read(retro_game_read_t);
-	RETRO_API void retro_set_game_seek(retro_game_seek_t);
 
 	/* Library global initialization/deinitialization. */
 	RETRO_API void retro_init(void);
