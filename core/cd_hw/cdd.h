@@ -61,10 +61,12 @@
 
 #define CD_MAX_TRACKS 100
 
+typedef struct RFILE RFILE;
+
 /* CD track */
 typedef struct
 {
-  FILE *fd;
+  RFILE *fd;
 #if defined(USE_LIBTREMOR) || defined(USE_LIBVORBIS)
   OggVorbis_File vf;
 #endif
@@ -80,7 +82,7 @@ typedef struct
   int end;
   int last;
   track_t tracks[CD_MAX_TRACKS];
-  FILE *sub;
+  RFILE *sub;
 } toc_t; 
 
 /* CDD hardware */
