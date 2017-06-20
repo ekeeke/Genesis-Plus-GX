@@ -130,6 +130,11 @@ static const unsigned char waveHeader[28] =
   0x02,0x00,0x44,0xac,0x00,0x00,0x10,0xb1,0x02,0x00,0x04,0x00,0x10,0x00
 };
 
+/* vorbis file callbacks to use RFILEs*/
+#if defined(USE_LIBTREMOR) || defined(USE_LIBVORBIS)
+
+#endif
+
 /* supported WAVE file extensions */
 static const char extensions[SUPPORTED_EXT][16] =
 {
@@ -387,7 +392,7 @@ int cdd_load(char *filename, char *header)
     if (cdd.toc.last)
     {
       /* skip first track */
-      while (fgets(line, 128, fd))
+      while (filestream_gets(fd, line, 128))
       {
         if (strstr(line, "INDEX 01") && !strstr(line, "INDEX 1"))
           break;
@@ -395,7 +400,7 @@ int cdd_load(char *filename, char *header)
     }
 
     /* read lines until end of file */
-    while (fgets(line, 128, fd))
+    while (filestream_gets(fd, line, 128))
     {
       /* skip any SPACE characters */
       lptr = line;
