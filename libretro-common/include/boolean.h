@@ -1,7 +1,7 @@
 /* Copyright  (C) 2010-2017 The RetroArch team
  *
  * ---------------------------------------------------------------------------------------
- * The following license statement only applies to this file (memalign.c).
+ * The following license statement only applies to this file (boolean.h).
  * ---------------------------------------------------------------------------------------
  *
  * Permission is hereby granted, free of charge,
@@ -20,45 +20,20 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include <stdint.h>
-#include <stdlib.h>
+#ifndef __LIBRETRO_SDK_BOOLEAN_H
+#define __LIBRETRO_SDK_BOOLEAN_H
 
-#include <memalign.h>
+#ifndef __cplusplus
 
-
-void *memalign_alloc(size_t boundary, size_t size)
-{
-   void **place   = NULL;
-   uintptr_t addr = 0;
-   void *ptr      = (void*)malloc(boundary + size + sizeof(uintptr_t));
-   if (!ptr)
-      return NULL;
-
-   addr           = ((uintptr_t)ptr + sizeof(uintptr_t) + boundary)
-      & ~(boundary - 1);
-   place          = (void**)addr;
-   place[-1]      = ptr;
-
-   return (void*)addr;
-}
-
-void memalign_free(void *ptr)
-{
-   void **p = NULL;
-   if (!ptr)
-      return;
-
-   p = (void**)ptr;
-   free(p[-1]);
-}
-
-void *memalign_alloc_aligned(size_t size)
-{
-#if defined(__x86_64__) || defined(__LP64) || defined(__IA64__) || defined(_M_X64) || defined(_WIN64)
-   return memalign_alloc(64, size);
-#elif defined(__i386__) || defined(__i486__) || defined(__i686__) || defined(GEKKO)
-   return memalign_alloc(32, size);
+#if defined(_MSC_VER) && !defined(SN_TARGET_PS3)
+/* Hack applied for MSVC when compiling in C89 mode as it isn't C99 compliant. */
+#define bool unsigned char
+#define true 1
+#define false 0
 #else
-   return memalign_alloc(32, size);
+#include <stdbool.h>
 #endif
-}
+
+#endif
+
+#endif
