@@ -132,7 +132,27 @@ static const unsigned char waveHeader[28] =
 
 /* vorbis file callbacks to use RFILEs*/
 #if defined(USE_LIBTREMOR) || defined(USE_LIBVORBIS)
+  size_t fs_vorbis_read(void *ptr, size_t size, size_t nmemb, void *datasource)
+  {
+    return filestream_read(datasource, ptr, size*nmemb);
+  }
 
+  int fs_vorbis_seek(void *datasource, ogg_int64_t offset, int whence)
+  {
+    return filestream_seek(datasource, offset, whence);
+  }
+
+  int fs_vorbis_close (void *datasource)
+  {
+    return filestream_close(datasource);
+  }
+
+  long fs_vorbis_tell(void *datasource)
+  {
+	  return filestream_tell(datasource);
+  }
+
+  ov_callbacks fs_ov_callbacks = { filestream_read, fs_vorbis_seek, fs_vorbis_close, fs_vorbis_tell };
 #endif
 
 /* supported WAVE file extensions */
@@ -275,7 +295,7 @@ int cdd_context_load(uint8 *state)
   {
 #ifdef DISABLE_MANY_OGG_OPEN_FILES
     /* VORBIS file need to be opened first */
-    ov_open(cdd.toc.tracks[cdd.index].fd,&cdd.toc.tracks[cdd.index].vf,0,0);
+    ov_open_callbacks(cdd.toc.tracks[cdd.index].fd,&cdd.toc.tracks[cdd.index].vf,0,0,fs_ov_callbacks);
 #endif
     /* VORBIS AUDIO track */
     ov_pcm_seek(&cdd.toc.tracks[cdd.index].vf, (lba * 588) - cdd.toc.tracks[cdd.index].offset);
@@ -489,7 +509,7 @@ int cdd_load(char *filename, char *header)
             cdd.toc.tracks[cdd.toc.last].offset -= dataOffset;
           }
 #if defined(USE_LIBTREMOR) || defined(USE_LIBVORBIS)
-          else if (!ov_open(cdd.toc.tracks[cdd.toc.last].fd,&cdd.toc.tracks[cdd.toc.last].vf,0,0))
+          else if (!ov_open_callbacks(cdd.toc.tracks[cdd.toc.last].fd,&cdd.toc.tracks[cdd.toc.last].vf,0,0,fs_ov_callbacks))
           {
             /* retrieve stream infos */
             vorbis_info *info = ov_info(&cdd.toc.tracks[cdd.toc.last].vf,-1);
@@ -793,7 +813,7 @@ int cdd_load(char *filename, char *header)
         cdd.toc.last++;
       }
 #if defined(USE_LIBTREMOR) || defined(USE_LIBVORBIS)
-      else if (!ov_open(fd,&cdd.toc.tracks[cdd.toc.last].vf,0,0))
+      else if (!ov_open_callbacks(fd,&cdd.toc.tracks[cdd.toc.last].vf,0,0,fs_ov_callbacks))
       {
         /* retrieve stream infos */
         vorbis_info *info = ov_info(&cdd.toc.tracks[cdd.toc.last].vf,-1);
@@ -1351,7 +1371,7 @@ void cdd_update(void)
       {
 #ifdef DISABLE_MANY_OGG_OPEN_FILES
         /* VORBIS file need to be opened first */
-        ov_open(cdd.toc.tracks[cdd.index].fd,&cdd.toc.tracks[cdd.index].vf,0,0);
+        ov_open_callbacks(cdd.toc.tracks[cdd.index].fd,&cdd.toc.tracks[cdd.index].vf,0,0,fs_ov_callbacks);
 #endif
         ov_pcm_seek(&cdd.toc.tracks[cdd.index].vf, (cdd.toc.tracks[cdd.index].start * 588) - cdd.toc.tracks[cdd.index].offset);
       }
@@ -1454,7 +1474,7 @@ void cdd_update(void)
       if (!cdd.toc.tracks[cdd.index].vf.datasource)
       {
         /* VORBIS file need to be opened first */
-        ov_open(cdd.toc.tracks[cdd.index].fd,&cdd.toc.tracks[cdd.index].vf,0,0);
+        ov_open_callbacks(cdd.toc.tracks[cdd.index].fd,&cdd.toc.tracks[cdd.index].vf,0,0,fs_ov_callbacks);
       }
 #endif
       /* VORBIS AUDIO track */
@@ -1647,7 +1667,7 @@ void cdd_process(void)
         /* open current track VORBIS file */
         if (cdd.toc.tracks[index].vf.seekable)
         {
-          ov_open(cdd.toc.tracks[index].fd,&cdd.toc.tracks[index].vf,0,0);
+          ov_open_callbacks(cdd.toc.tracks[index].fd,&cdd.toc.tracks[index].vf,0,0,fs_ov_callbacks);
         }
       }
 #endif
@@ -1745,7 +1765,7 @@ void cdd_process(void)
         /* open current track VORBIS file */
         if (cdd.toc.tracks[index].vf.seekable)
         {
-          ov_open(cdd.toc.tracks[index].fd,&cdd.toc.tracks[index].vf,0,0);
+          ov_open_callbacks(cdd.toc.tracks[index].fd,&cdd.toc.tracks[index].vf,0,0,fs_ov_callbacks);
         }
       }
 #endif
