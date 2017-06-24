@@ -161,7 +161,7 @@ static const uint8 dma_timing[2][2] =
 {
 /* H32, H40 */
   {16 , 18},  /* active display */
-  {167, 205}  /* blank display */
+  {166, 204}  /* blank display */
 };
 
 /* DMA processing functions (set by VDP register 23 high nibble) */
@@ -560,19 +560,16 @@ void vdp_dma_update(unsigned int cycles)
 
   /* DMA transfer rate (bytes per line) 
 
-     According to the manual, here's a table that describes the transfer
-   rates of each of the three DMA types:
-
       DMA Mode      Width       Display      Transfer Count
       -----------------------------------------------------
       68K > VDP     32-cell     Active       16
-                                Blanking     167
-                    40-cell     Active       18
-                                Blanking     205
-      VRAM Fill     32-cell     Active       15
                                 Blanking     166
-                    40-cell     Active       17
+                    40-cell     Active       18
                                 Blanking     204
+      VRAM Fill     32-cell     Active       15
+                                Blanking     165
+                    40-cell     Active       17
+                                Blanking     203
       VRAM Copy     32-cell     Active       8
                                 Blanking     83
                     40-cell     Active       9
@@ -897,7 +894,10 @@ void vdp_z80_ctrl_w(unsigned int data)
           {
             case 2:
             {
-              /* DMA Fill will be triggered by next write to DATA port */
+              /* DMA Fill */
+              dma_type = 2;
+
+              /* DMA is pending until next DATA port write */
               dmafill = 1;
 
               /* Set DMA Busy flag */
