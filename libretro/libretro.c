@@ -74,7 +74,7 @@
 #include "libretro.h"
 #include "md_ntsc.h"
 #include "sms_ntsc.h"
-#include "streams/file_stream.h"
+#include <streams/file_stream.h>
 
 sms_ntsc_t *sms_ntsc;
 md_ntsc_t  *md_ntsc;
