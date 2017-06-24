@@ -74,6 +74,7 @@
 #include "libretro.h"
 #include "md_ntsc.h"
 #include "sms_ntsc.h"
+#include "streams/file_stream.h"
 
 sms_ntsc_t *sms_ntsc;
 md_ntsc_t  *md_ntsc;
@@ -169,7 +170,7 @@ int load_archive(char *filename, unsigned char *buffer, int maxsize, char *exten
   int size, left;
 
   /* Open file */
-  FILE *fd = fopen(filename, "rb");
+  RFILE *fd = filestream_open(filename, RFILE_MODE_READ, -1);
 
   if (!fd)
   {
@@ -193,13 +194,13 @@ int load_archive(char *filename, unsigned char *buffer, int maxsize, char *exten
   }
 
   /* Get file size */
-  fseek(fd, 0, SEEK_END);
-  size = ftell(fd);
+  filestream_seek(fd, 0, SEEK_END);
+  size = filestream_tell(fd);
 
   /* size limit */
   if (size > MAXROMSIZE)
   {
-    fclose(fd);
+    filestream_close(fd);
     if (log_cb)
        log_cb(RETRO_LOG_ERROR, "File is too large.\n");
     return 0;
@@ -221,19 +222,19 @@ int load_archive(char *filename, unsigned char *buffer, int maxsize, char *exten
 
   /* Read into buffer */
   left = size;
-  fseek(fd, 0, SEEK_SET);
+  filestream_seek(fd, 0, SEEK_SET);
   while (left > CHUNKSIZE)
   {
-    fread(buffer, CHUNKSIZE, 1, fd);
+    filestream_read(fd, buffer, CHUNKSIZE);
     buffer += CHUNKSIZE;
     left -= CHUNKSIZE;
   }
 
   /* Read remaining bytes */
-  fread(buffer, left, 1, fd);
+  filestream_read(fd, buffer, left);
 
   /* Close file */
-  fclose(fd);
+  filestream_close(fd);
 
   /* Return loaded ROM size */
   return size;
@@ -538,19 +539,19 @@ static void config_default(void)
 
 static void bram_load(void)
 {
-    FILE *fp;
+    RFILE *fp;
 
     /* automatically load internal backup RAM */
     switch (region_code)
     {
        case REGION_JAPAN_NTSC:
-          fp = fopen(CD_BRAM_JP, "rb");
+          fp = filestream_open(CD_BRAM_JP, RFILE_MODE_READ, -1);
           break;
        case REGION_EUROPE:
-          fp = fopen(CD_BRAM_EU, "rb");
+          fp = filestream_open(CD_BRAM_EU, RFILE_MODE_READ, -1);
           break;
        case REGION_USA:
-          fp = fopen(CD_BRAM_US, "rb");
+          fp = filestream_open(CD_BRAM_US, RFILE_MODE_READ, -1);
           break;
        default:
           return;
@@ -558,8 +559,8 @@ static void bram_load(void)
 
     if (fp != NULL)
     {
-      fread(scd.bram, 0x2000, 1, fp);
-      fclose(fp);
+      filestream_read(fp, scd.bram, 0x2000);
+      filestream_close(fp);
 
       /* update CRC */
       brm_crc[0] = crc32(0, scd.bram, 0x2000);
@@ -590,7 +591,7 @@ static void bram_load(void)
     /* automatically load cartridge backup RAM (if enabled) */
     if (scd.cartridge.id)
     {
-      fp = fopen(CART_BRAM, "rb");
+      fp = filestream_open(CART_BRAM, RFILE_MODE_READ, -1);
       if (fp != NULL)
       {
         int filesize = scd.cartridge.mask + 1;
@@ -599,7 +600,7 @@ static void bram_load(void)
         /* Read into buffer (2k blocks) */
         while (filesize > CHUNKSIZE)
         {
-          fread(scd.cartridge.area + done, CHUNKSIZE, 1, fp);
+          filestream_read(fp, scd.cartridge.area + done, CHUNKSIZE);
           done += CHUNKSIZE;
           filesize -= CHUNKSIZE;
         }
@@ -607,11 +608,11 @@ static void bram_load(void)
         /* Read remaining bytes */
         if (filesize)
         {
-          fread(scd.cartridge.area + done, filesize, 1, fp);
+          filestream_read(fp, scd.cartridge.area + done, filesize);
         }
 
         /* close file */
-        fclose(fp);
+        filestream_close(fp);
 
         /* update CRC */
         brm_crc[1] = crc32(0, scd.cartridge.area, scd.cartridge.mask + 1);
@@ -635,7 +636,7 @@ static void bram_load(void)
 
 static void bram_save(void)
 {
-    FILE *fp;
+    RFILE *fp;
 
     /* verify that internal backup RAM has been modified */
     if (crc32(0, scd.bram, 0x2000) != brm_crc[0])
@@ -646,13 +647,13 @@ static void bram_save(void)
         switch (region_code)
         {
           case REGION_JAPAN_NTSC:
-            fp = fopen(CD_BRAM_JP, "wb");
+            fp = filestream_open(CD_BRAM_JP, RFILE_MODE_WRITE, -1);
             break;
           case REGION_EUROPE:
-            fp = fopen(CD_BRAM_EU, "wb");
+            fp = filestream_open(CD_BRAM_EU, RFILE_MODE_WRITE, -1);
             break;
           case REGION_USA:
-            fp = fopen(CD_BRAM_US, "wb");
+            fp = filestream_open(CD_BRAM_US, RFILE_MODE_WRITE, -1);
             break;
           default:
             return;
@@ -660,8 +661,8 @@ static void bram_save(void)
 
         if (fp != NULL)
         {
-          fwrite(scd.bram, 0x2000, 1, fp);
-          fclose(fp);
+          filestream_write(fp, scd.bram, 0x2000);
+          filestream_close(fp);
 
           /* update CRC */
           brm_crc[0] = crc32(0, scd.bram, 0x2000);
@@ -675,7 +676,7 @@ static void bram_save(void)
       /* check if it is correctly formatted before saving */
       if (!memcmp(scd.cartridge.area + scd.cartridge.mask + 1 - 0x20, brm_format + 0x20, 0x20))
       {
-        fp = fopen(CART_BRAM, "wb");
+        fp = filestream_open(CART_BRAM, RFILE_MODE_WRITE, -1);
         if (fp != NULL)
         {
           int filesize = scd.cartridge.mask + 1;
@@ -684,7 +685,7 @@ static void bram_save(void)
           /* Write to file (2k blocks) */
           while (filesize > CHUNKSIZE)
           {
-            fwrite(scd.cartridge.area + done, CHUNKSIZE, 1, fp);
+            filestream_write(fp, scd.cartridge.area + done, CHUNKSIZE);
             done += CHUNKSIZE;
             filesize -= CHUNKSIZE;
           }
@@ -692,11 +693,11 @@ static void bram_save(void)
           /* Write remaining bytes */
           if (filesize)
           {
-            fwrite(scd.cartridge.area + done, filesize, 1, fp);
+            filestream_write(fp, scd.cartridge.area + done, filesize);
           }
 
           /* Close file */
-          fclose(fp);
+          filestream_close(fp);
 
           /* update CRC */
           brm_crc[1] = crc32(0, scd.cartridge.area, scd.cartridge.mask + 1);

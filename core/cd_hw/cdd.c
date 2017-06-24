@@ -36,6 +36,7 @@
  *
  ****************************************************************************************/
 #include "shared.h"
+#include "streams/file_stream.h"
 
 #if defined(USE_LIBTREMOR) || defined(USE_LIBVORBIS)
 #define SUPPORTED_EXT 20
@@ -129,6 +130,31 @@ static const unsigned char waveHeader[28] =
   0x02,0x00,0x44,0xac,0x00,0x00,0x10,0xb1,0x02,0x00,0x04,0x00,0x10,0x00
 };
 
+/* vorbis file callbacks to use RFILEs*/
+#if defined(USE_LIBTREMOR) || defined(USE_LIBVORBIS)
+  size_t fs_vorbis_read(void *ptr, size_t size, size_t nmemb, void *datasource)
+  {
+    return filestream_read(datasource, ptr, size*nmemb);
+  }
+
+  int fs_vorbis_seek(void *datasource, ogg_int64_t offset, int whence)
+  {
+    return filestream_seek(datasource, offset, whence);
+  }
+
+  int fs_vorbis_close (void *datasource)
+  {
+    return filestream_close(datasource);
+  }
+
+  long fs_vorbis_tell(void *datasource)
+  {
+	  return filestream_tell(datasource);
+  }
+
+  ov_callbacks fs_ov_callbacks = { filestream_read, fs_vorbis_seek, fs_vorbis_close, fs_vorbis_tell };
+#endif
+
 /* supported WAVE file extensions */
 static const char extensions[SUPPORTED_EXT][16] =
 {
@@ -170,7 +196,7 @@ static void ogg_free(int i)
   cdd.toc.tracks[i].vf.seekable = 1;
 
   /* reset file reading position */
-  fseek(cdd.toc.tracks[i].fd, 0, SEEK_SET);
+  filestream_seek(cdd.toc.tracks[i].fd, 0, SEEK_SET);
 }
 #endif
 #endif
@@ -255,21 +281,21 @@ int cdd_context_load(uint8 *state)
   if (cdd.toc.sub)
   {
     /* 96 bytes per sector */
-    fseek(cdd.toc.sub, lba * 96, SEEK_SET);
+    filestream_seek(cdd.toc.sub, lba * 96, SEEK_SET);
   }
 
   /* seek to current track position */
   if (cdd.toc.tracks[cdd.index].type)
   {
     /* DATA track */
-    fseek(cdd.toc.tracks[cdd.index].fd, lba * cdd.sectorSize, SEEK_SET);
+    filestream_seek(cdd.toc.tracks[cdd.index].fd, lba * cdd.sectorSize, SEEK_SET);
   }
 #if defined(USE_LIBTREMOR) || defined(USE_LIBVORBIS)
   else if (cdd.toc.tracks[cdd.index].vf.seekable)
   {
 #ifdef DISABLE_MANY_OGG_OPEN_FILES
     /* VORBIS file need to be opened first */
-    ov_open(cdd.toc.tracks[cdd.index].fd,&cdd.toc.tracks[cdd.index].vf,0,0);
+    ov_open_callbacks(cdd.toc.tracks[cdd.index].fd,&cdd.toc.tracks[cdd.index].vf,0,0,fs_ov_callbacks);
 #endif
     /* VORBIS AUDIO track */
     ov_pcm_seek(&cdd.toc.tracks[cdd.index].vf, (lba * 588) - cdd.toc.tracks[cdd.index].offset);
@@ -278,7 +304,7 @@ int cdd_context_load(uint8 *state)
   else if (cdd.toc.tracks[cdd.index].fd)
   {
     /* PCM AUDIO track */
-    fseek(cdd.toc.tracks[cdd.index].fd, (lba * 2352) - cdd.toc.tracks[cdd.index].offset, SEEK_SET);
+    filestream_seek(cdd.toc.tracks[cdd.index].fd, (lba * 2352) - cdd.toc.tracks[cdd.index].offset, SEEK_SET);
   }
 
   return bufferptr;
@@ -298,7 +324,7 @@ int cdd_load(char *filename, char *header)
   cdd_unload();
 
   /* open file */
-  fd = fopen(filename, "rb");
+  fd = filestream_open(filename, RFILE_MODE_READ, -1);
   if (!fd) return (-1);
 
   /* save a copy of base filename */
@@ -310,7 +336,7 @@ int cdd_load(char *filename, char *header)
     int len;
 
     /* read first 16 bytes */
-    fread(header, 0x10, 1, fd);
+    filestream_read(fd, header, 0x10);
 
     /* look for valid CD image identifier */
     if (!memcmp("SEGADISCSYSTEM", header, 14))
@@ -321,7 +347,7 @@ int cdd_load(char *filename, char *header)
     else
     {    
       /* read next 16 bytes */
-      fread(header, 0x10, 1, fd);
+      filestream_read(fd, header, 0x10);
 
       /* look for valid CD image identifier */
       if (!memcmp("SEGADISCSYSTEM", header, 14))
@@ -335,7 +361,7 @@ int cdd_load(char *filename, char *header)
     if (cdd.sectorSize)
     {
       /* read CD image header + security code */
-      fread(header + 0x10, 0x200, 1, fd);
+      filestream_read(fd, header + 0x10, 0x200);
 
       /* initialize first track file descriptor */
       cdd.toc.tracks[0].fd = fd;
@@ -344,8 +370,8 @@ int cdd_load(char *filename, char *header)
       cdd.toc.tracks[0].type = TYPE_CDROM;
 
       /* DATA track end LBA (based on DATA file length) */
-      fseek(fd, 0, SEEK_END);
-      cdd.toc.tracks[0].end = ftell(fd) / cdd.sectorSize;
+      filestream_seek(fd, 0, SEEK_END);
+      cdd.toc.tracks[0].end = filestream_tell(fd) / cdd.sectorSize;
 
       /* DATA track length should be at least 2s (BIOS requirement) */
       if (cdd.toc.tracks[0].end < 150)
@@ -354,7 +380,7 @@ int cdd_load(char *filename, char *header)
       }
         
       /* DATA track start LBA (logical block 0) */
-      fseek(fd, 0, SEEK_SET);
+      filestream_seek(fd, 0, SEEK_SET);
       cdd.toc.tracks[0].start = 0;
 
       /* initialize TOC */
@@ -367,14 +393,14 @@ int cdd_load(char *filename, char *header)
       isCDfile = 0;
 
       /* close file */
-      fclose(fd);
+      filestream_close(fd);
     }
 
     /* automatically try to mount CD associated CUE file */
     len = strlen(fname);
     while ((len && (fname[len] != '.')) || (len > 251)) len--;
     strcpy(&fname[len], ".cue");
-    fd = fopen(fname, "rb");
+    fd = filestream_open(fname, RFILE_MODE_READ, -1);
   }
 
   /* parse CUE file */
@@ -386,7 +412,7 @@ int cdd_load(char *filename, char *header)
     if (cdd.toc.last)
     {
       /* skip first track */
-      while (fgets(line, 128, fd))
+      while (filestream_gets(fd, line, 128))
       {
         if (strstr(line, "INDEX 01") && !strstr(line, "INDEX 1"))
           break;
@@ -394,7 +420,7 @@ int cdd_load(char *filename, char *header)
     }
 
     /* read lines until end of file */
-    while (fgets(line, 128, fd))
+    while (filestream_gets(fd, line, 128))
     {
       /* skip any SPACE characters */
       lptr = line;
@@ -431,7 +457,7 @@ int cdd_load(char *filename, char *header)
         *ptr = 0;
 
         /* open current track file descriptor */
-        cdd.toc.tracks[cdd.toc.last].fd = fopen(fname, "rb");
+        cdd.toc.tracks[cdd.toc.last].fd = filestream_open(fname, RFILE_MODE_READ, -1);
         if (!cdd.toc.tracks[cdd.toc.last].fd)
         {
           /* error opening file */
@@ -449,32 +475,32 @@ int cdd_load(char *filename, char *header)
         {
           /* read file header */
           unsigned char head[28];
-          fseek(cdd.toc.tracks[cdd.toc.last].fd, 8, SEEK_SET);
-          fread(head, 28, 1, cdd.toc.tracks[cdd.toc.last].fd);
-          fseek(cdd.toc.tracks[cdd.toc.last].fd, 0, SEEK_SET);
+          filestream_seek(cdd.toc.tracks[cdd.toc.last].fd, 8, SEEK_SET);
+          filestream_read(cdd.toc.tracks[cdd.toc.last].fd, head, 28);
+          filestream_seek(cdd.toc.tracks[cdd.toc.last].fd, 0, SEEK_SET);
       
           /* autodetect WAVE file header (44.1KHz 16-bit stereo format only) */
           if (!memcmp(head, waveHeader, 28))
           {
             /* look for 'data' chunk id */
             int dataOffset = 0;
-            fseek(cdd.toc.tracks[cdd.toc.last].fd, 36, SEEK_SET);
-            while (fread(head, 4, 1, cdd.toc.tracks[cdd.toc.last].fd))
+            filestream_seek(cdd.toc.tracks[cdd.toc.last].fd, 36, SEEK_SET);
+            while (filestream_read(cdd.toc.tracks[cdd.toc.last].fd, head, 4))
             {
               if (!memcmp(head, "data", 4))
               {
-                dataOffset = ftell(cdd.toc.tracks[cdd.toc.last].fd) + 4;
-                fseek(cdd.toc.tracks[cdd.toc.last].fd, 0, SEEK_SET);
+                dataOffset = filestream_tell(cdd.toc.tracks[cdd.toc.last].fd) + 4;
+                filestream_seek(cdd.toc.tracks[cdd.toc.last].fd, 0, SEEK_SET);
                 break;
               }
-              fseek(cdd.toc.tracks[cdd.toc.last].fd, -2, SEEK_CUR);
+              filestream_seek(cdd.toc.tracks[cdd.toc.last].fd, -2, SEEK_CUR);
             }
 
             /* check if 'data' chunk has not been found */
             if (!dataOffset)
             {
               /* invalid WAVE file */
-              fclose(cdd.toc.tracks[cdd.toc.last].fd);
+              filestream_close(cdd.toc.tracks[cdd.toc.last].fd);
               cdd.toc.tracks[cdd.toc.last].fd = 0;
               break;
             }
@@ -483,7 +509,7 @@ int cdd_load(char *filename, char *header)
             cdd.toc.tracks[cdd.toc.last].offset -= dataOffset;
           }
 #if defined(USE_LIBTREMOR) || defined(USE_LIBVORBIS)
-          else if (!ov_open(cdd.toc.tracks[cdd.toc.last].fd,&cdd.toc.tracks[cdd.toc.last].vf,0,0))
+          else if (!ov_open_callbacks(cdd.toc.tracks[cdd.toc.last].fd,&cdd.toc.tracks[cdd.toc.last].vf,0,0,fs_ov_callbacks))
           {
             /* retrieve stream infos */
             vorbis_info *info = ov_info(&cdd.toc.tracks[cdd.toc.last].vf,-1);
@@ -499,7 +525,7 @@ int cdd_load(char *filename, char *header)
           else
           {
             /* unsupported audio file */
-            fclose(cdd.toc.tracks[cdd.toc.last].fd);
+            filestream_close(cdd.toc.tracks[cdd.toc.last].fd);
             cdd.toc.tracks[cdd.toc.last].fd = 0;
             break;
           }
@@ -515,7 +541,7 @@ int cdd_load(char *filename, char *header)
           /* close any opened file */
           if (cdd.toc.tracks[cdd.toc.last].fd)
           {
-            fclose(cdd.toc.tracks[cdd.toc.last].fd);
+            filestream_close(cdd.toc.tracks[cdd.toc.last].fd);
             cdd.toc.tracks[cdd.toc.last].fd = 0;
           }
 
@@ -538,7 +564,7 @@ int cdd_load(char *filename, char *header)
             cdd.sectorSize = 2352;
 
             /* skip 16-byte header */
-            fseek(cdd.toc.tracks[0].fd, 0x10, SEEK_SET);
+            filestream_seek(cdd.toc.tracks[0].fd, 0x10, SEEK_SET);
           }
 
           if (cdd.sectorSize)
@@ -547,8 +573,8 @@ int cdd_load(char *filename, char *header)
             cdd.toc.tracks[0].type = TYPE_CDROM;
 
             /* read CD image header + security code */
-            fread(header, 0x210, 1, cdd.toc.tracks[0].fd);
-            fseek(cdd.toc.tracks[0].fd, 0, SEEK_SET);
+            filestream_read(cdd.toc.tracks[0].fd, header, 0x210);
+            filestream_seek(cdd.toc.tracks[0].fd, 0, SEEK_SET);
           }
         }
         else
@@ -638,18 +664,18 @@ int cdd_load(char *filename, char *header)
 #endif
           {
             /* current track end time */
-            fseek(cdd.toc.tracks[cdd.toc.last].fd, 0, SEEK_END);
+            filestream_seek(cdd.toc.tracks[cdd.toc.last].fd, 0, SEEK_END);
             if (cdd.toc.tracks[cdd.toc.last].type)
             {
               /* DATA track length */
-              cdd.toc.tracks[cdd.toc.last].end = cdd.toc.tracks[cdd.toc.last].start + ((ftell(cdd.toc.tracks[cdd.toc.last].fd) + cdd.sectorSize - 1) / cdd.sectorSize);
+              cdd.toc.tracks[cdd.toc.last].end = cdd.toc.tracks[cdd.toc.last].start + ((filestream_tell(cdd.toc.tracks[cdd.toc.last].fd) + cdd.sectorSize - 1) / cdd.sectorSize);
             }
             else
             {
               /* AUDIO track length */
-              cdd.toc.tracks[cdd.toc.last].end = cdd.toc.tracks[cdd.toc.last].start + ((ftell(cdd.toc.tracks[cdd.toc.last].fd) + 2351) / 2352);
+              cdd.toc.tracks[cdd.toc.last].end = cdd.toc.tracks[cdd.toc.last].start + ((filestream_tell(cdd.toc.tracks[cdd.toc.last].fd) + 2351) / 2352);
             }
-            fseek(cdd.toc.tracks[cdd.toc.last].fd, 0, SEEK_SET);
+            filestream_seek(cdd.toc.tracks[cdd.toc.last].fd, 0, SEEK_SET);
           }
 
           /* adjust track start time (based on current file start time + index absolute time) */
@@ -687,11 +713,11 @@ int cdd_load(char *filename, char *header)
 #endif
     if (cdd.toc.tracks[cdd.toc.last].fd)
     {
-      fclose(cdd.toc.tracks[cdd.toc.last].fd);
+      filestream_close(cdd.toc.tracks[cdd.toc.last].fd);
     }
 
     /* close CUE file */
-    fclose(fd);
+    filestream_close(fd);
   }
   else
   {
@@ -705,7 +731,7 @@ int cdd_load(char *filename, char *header)
     {
       /* auto-detect wrong initial track index */
       sprintf(ptr, extensions[i], cdd.toc.last);
-      fd = fopen(fname, "rb");
+      fd = filestream_open(fname, RFILE_MODE_READ, -1);
       if (fd)
       {
         offset = 0;
@@ -713,7 +739,7 @@ int cdd_load(char *filename, char *header)
       }
 
       sprintf(ptr, extensions[i], cdd.toc.last + 1);
-      fd = fopen(fname, "rb");
+      fd = filestream_open(fname, RFILE_MODE_READ, -1);
       if (fd) break;
     }
 
@@ -722,31 +748,31 @@ int cdd_load(char *filename, char *header)
     {
       /* read file HEADER */
       unsigned char head[28];
-      fseek(fd, 8, SEEK_SET);
-      fread(head, 28, 1, fd);
-      fseek(fd, 0, SEEK_SET);
+      filestream_seek(fd, 8, SEEK_SET);
+      filestream_read(fd, head, 28);
+      filestream_seek(fd, 0, SEEK_SET);
       
       /* check if this is a valid WAVE file (44.1KHz 16-bit stereo format only) */
       if (!memcmp(head, waveHeader, 28))
       {
         /* look for 'data' chunk id */
         int dataOffset = 0;
-        fseek(fd, 36, SEEK_SET);
-        while (fread(head, 4, 1, fd))
+        filestream_seek(fd, 36, SEEK_SET);
+        while (filestream_read(fd, head, 4))
         {
           if (!memcmp(head, "data", 4))
           {
-            dataOffset = ftell(fd) + 4;
+            dataOffset = filestream_tell(fd) + 4;
             break;
           }
-          fseek(fd, -2, SEEK_CUR);
+          filestream_seek(fd, -2, SEEK_CUR);
         }
 
         /* check if 'data' chunk has not been found */
         if (!dataOffset)
         {
           /* invalid WAVE file */
-          fclose(fd);
+          filestream_close(fd);
           break;
         }
 
@@ -760,16 +786,16 @@ int cdd_load(char *filename, char *header)
         cdd.toc.tracks[cdd.toc.last].start += 150;
 
         /* current track end time */
-        fseek(fd, 0, SEEK_END);
-        cdd.toc.tracks[cdd.toc.last].end = cdd.toc.tracks[cdd.toc.last].start + ((ftell(fd) - dataOffset + 2351) / 2352);
+        filestream_seek(fd, 0, SEEK_END);
+        cdd.toc.tracks[cdd.toc.last].end = cdd.toc.tracks[cdd.toc.last].start + ((filestream_tell(fd) - dataOffset + 2351) / 2352);
 
         /* initialize file read offset for current track */
         cdd.toc.tracks[cdd.toc.last].offset = cdd.toc.tracks[cdd.toc.last].start * 2352;
 
         /* auto-detect PAUSE within audio files */
-        fseek(fd, 100 * 2352, SEEK_SET);
-        fread(head, 4, 1, fd);
-        fseek(fd, 0, SEEK_SET);
+        filestream_seek(fd, 100 * 2352, SEEK_SET);
+        filestream_read(fd, head, 4);
+        filestream_seek(fd, 0, SEEK_SET);
         if (*(int32 *)head == 0)
         {
           /* assume 2s PAUSE is included at the beginning of the file */
@@ -787,7 +813,7 @@ int cdd_load(char *filename, char *header)
         cdd.toc.last++;
       }
 #if defined(USE_LIBTREMOR) || defined(USE_LIBVORBIS)
-      else if (!ov_open(fd,&cdd.toc.tracks[cdd.toc.last].vf,0,0))
+      else if (!ov_open_callbacks(fd,&cdd.toc.tracks[cdd.toc.last].vf,0,0,fs_ov_callbacks))
       {
         /* retrieve stream infos */
         vorbis_info *info = ov_info(&cdd.toc.tracks[cdd.toc.last].vf,-1);
@@ -852,7 +878,7 @@ int cdd_load(char *filename, char *header)
       else
       {
         /* unsupported audio file format */
-        fclose(fd);
+        filestream_close(fd);
         break;
       }
 
@@ -861,7 +887,7 @@ int cdd_load(char *filename, char *header)
 
       /* try to open next audio track file */
       sprintf(ptr, extensions[i], cdd.toc.last + offset);
-      fd = fopen(fname, "rb");
+      fd = filestream_open(fname, RFILE_MODE_READ, -1);
     }
   }
 
@@ -976,7 +1002,7 @@ int cdd_load(char *filename, char *header)
 
     /* Automatically try to open associated subcode data file */
     strncpy(&fname[strlen(fname) - 4], ".sub", 4);
-    cdd.toc.sub = fopen(fname, "rb");
+    cdd.toc.sub = filestream_open(fname, RFILE_MODE_READ, -1);
 
     /* return 1 if loaded file is CD image file */
     return (isCDfile);
@@ -1014,13 +1040,13 @@ void cdd_unload(void)
         else
         {
           /* close file */
-          fclose(cdd.toc.tracks[i].fd);
+          filestream_close(cdd.toc.tracks[i].fd);
         }
       }
     }
 
     /* close any opened subcode file */
-    if (cdd.toc.sub) fclose(cdd.toc.sub);
+    if (cdd.toc.sub) filestream_close(cdd.toc.sub);
 
     /* CD unloaded */
     cdd.loaded = 0;
@@ -1042,16 +1068,16 @@ void cdd_read_data(uint8 *dst)
     if (cdd.sectorSize == 2048)
     {
       /* Mode 1 COOKED data (ISO) */
-      fseek(cdd.toc.tracks[0].fd, cdd.lba * 2048, SEEK_SET);
+      filestream_seek(cdd.toc.tracks[0].fd, cdd.lba * 2048, SEEK_SET);
     }
     else
     {
       /* Mode 1 RAW data (skip 16-byte header) */
-      fseek(cdd.toc.tracks[0].fd, cdd.lba * 2352 + 16, SEEK_SET);
+      filestream_seek(cdd.toc.tracks[0].fd, cdd.lba * 2352 + 16, SEEK_SET);
     }
 
     /* read sector data (Mode 1 = 2048 bytes) */
-    fread(dst, 2048, 1, cdd.toc.tracks[0].fd);
+    filestream_read(cdd.toc.tracks[0].fd, dst, 2048);
   }
 }
 
@@ -1139,7 +1165,7 @@ void cdd_read_audio(unsigned int samples)
 #else
       uint8 *ptr = cdc.ram;
 #endif
-      fread(cdc.ram, 1, samples * 4, cdd.toc.tracks[cdd.index].fd);
+      filestream_read(cdd.toc.tracks[cdd.index].fd, cdc.ram, samples * 4);
 
       /* process 16-bit (little-endian) stereo samples */
       for (i=0; i<samples; i++)
@@ -1217,7 +1243,7 @@ static void cdd_read_subcode(void)
   index = (scd.regs[0x68>>1].byte.l + 0x100) >> 1;
 
   /* read interleaved subcode data from .sub file (12 x 8-bit of P subchannel first, then Q subchannel, etc) */
-  fread(subc, 1, 96, cdd.toc.sub);
+  filestream_read(cdd.toc.sub, subc, 96);
 
   /* convert back to raw subcode format (96 bytes with 8 x P-W subchannel bits per byte) */
   for (i=0; i<96; i+=2)
@@ -1345,7 +1371,7 @@ void cdd_update(void)
       {
 #ifdef DISABLE_MANY_OGG_OPEN_FILES
         /* VORBIS file need to be opened first */
-        ov_open(cdd.toc.tracks[cdd.index].fd,&cdd.toc.tracks[cdd.index].vf,0,0);
+        ov_open_callbacks(cdd.toc.tracks[cdd.index].fd,&cdd.toc.tracks[cdd.index].vf,0,0,fs_ov_callbacks);
 #endif
         ov_pcm_seek(&cdd.toc.tracks[cdd.index].vf, (cdd.toc.tracks[cdd.index].start * 588) - cdd.toc.tracks[cdd.index].offset);
       }
@@ -1353,7 +1379,7 @@ void cdd_update(void)
 #endif 
       if (cdd.toc.tracks[cdd.index].fd)
       {
-        fseek(cdd.toc.tracks[cdd.index].fd, (cdd.toc.tracks[cdd.index].start * 2352) - cdd.toc.tracks[cdd.index].offset, SEEK_SET);
+        filestream_seek(cdd.toc.tracks[cdd.index].fd, (cdd.toc.tracks[cdd.index].start * 2352) - cdd.toc.tracks[cdd.index].offset, SEEK_SET);
       }
     }
   }
@@ -1431,14 +1457,14 @@ void cdd_update(void)
     /* seek to current subcode position */
     if (cdd.toc.sub)
     {
-      fseek(cdd.toc.sub, cdd.lba * 96, SEEK_SET);
+      filestream_seek(cdd.toc.sub, cdd.lba * 96, SEEK_SET);
     }
 
     /* seek to current track position */
     if (cdd.toc.tracks[cdd.index].type)
     {
       /* DATA track */
-      fseek(cdd.toc.tracks[0].fd, cdd.lba * cdd.sectorSize, SEEK_SET);
+      filestream_seek(cdd.toc.tracks[0].fd, cdd.lba * cdd.sectorSize, SEEK_SET);
     }
 #if defined(USE_LIBTREMOR) || defined(USE_LIBVORBIS)
     else if (cdd.toc.tracks[cdd.index].vf.seekable)
@@ -1448,7 +1474,7 @@ void cdd_update(void)
       if (!cdd.toc.tracks[cdd.index].vf.datasource)
       {
         /* VORBIS file need to be opened first */
-        ov_open(cdd.toc.tracks[cdd.index].fd,&cdd.toc.tracks[cdd.index].vf,0,0);
+        ov_open_callbacks(cdd.toc.tracks[cdd.index].fd,&cdd.toc.tracks[cdd.index].vf,0,0,fs_ov_callbacks);
       }
 #endif
       /* VORBIS AUDIO track */
@@ -1458,7 +1484,7 @@ void cdd_update(void)
     else if (cdd.toc.tracks[cdd.index].fd)
     {
       /* PCM AUDIO track */
-      fseek(cdd.toc.tracks[cdd.index].fd, (cdd.lba * 2352) - cdd.toc.tracks[cdd.index].offset, SEEK_SET);
+      filestream_seek(cdd.toc.tracks[cdd.index].fd, (cdd.lba * 2352) - cdd.toc.tracks[cdd.index].offset, SEEK_SET);
     }
   }
 }
@@ -1641,7 +1667,7 @@ void cdd_process(void)
         /* open current track VORBIS file */
         if (cdd.toc.tracks[index].vf.seekable)
         {
-          ov_open(cdd.toc.tracks[index].fd,&cdd.toc.tracks[index].vf,0,0);
+          ov_open_callbacks(cdd.toc.tracks[index].fd,&cdd.toc.tracks[index].vf,0,0,fs_ov_callbacks);
         }
       }
 #endif
@@ -1659,14 +1685,14 @@ void cdd_process(void)
       /* seek to current subcode position */
       if (cdd.toc.sub)
       {
-        fseek(cdd.toc.sub, lba * 96, SEEK_SET);
+        filestream_seek(cdd.toc.sub, lba * 96, SEEK_SET);
       }
       
       /* seek to current track position */
       if (cdd.toc.tracks[index].type)
       {
         /* DATA track */
-        fseek(cdd.toc.tracks[0].fd, lba * cdd.sectorSize, SEEK_SET);
+        filestream_seek(cdd.toc.tracks[0].fd, lba * cdd.sectorSize, SEEK_SET);
       }
 #if defined(USE_LIBTREMOR) || defined(USE_LIBVORBIS)
       else if (cdd.toc.tracks[index].vf.seekable)
@@ -1678,7 +1704,7 @@ void cdd_process(void)
       else if (cdd.toc.tracks[index].fd)
       {
         /* PCM AUDIO track */
-        fseek(cdd.toc.tracks[index].fd, (lba * 2352) - cdd.toc.tracks[index].offset, SEEK_SET);
+        filestream_seek(cdd.toc.tracks[index].fd, (lba * 2352) - cdd.toc.tracks[index].offset, SEEK_SET);
       }
 
       /* no audio track playing (yet) */
@@ -1739,7 +1765,7 @@ void cdd_process(void)
         /* open current track VORBIS file */
         if (cdd.toc.tracks[index].vf.seekable)
         {
-          ov_open(cdd.toc.tracks[index].fd,&cdd.toc.tracks[index].vf,0,0);
+          ov_open_callbacks(cdd.toc.tracks[index].fd,&cdd.toc.tracks[index].vf,0,0,fs_ov_callbacks);
         }
       }
 #endif
@@ -1758,7 +1784,7 @@ void cdd_process(void)
       if (cdd.toc.tracks[index].type)
       {
         /* DATA track */
-        fseek(cdd.toc.tracks[0].fd, lba * cdd.sectorSize, SEEK_SET);
+        filestream_seek(cdd.toc.tracks[0].fd, lba * cdd.sectorSize, SEEK_SET);
       }
 #if defined(USE_LIBTREMOR) || defined(USE_LIBVORBIS)
       else if (cdd.toc.tracks[index].vf.seekable)
@@ -1770,13 +1796,13 @@ void cdd_process(void)
       else if (cdd.toc.tracks[index].fd)
       {
         /* PCM AUDIO track */
-        fseek(cdd.toc.tracks[index].fd, (lba * 2352) - cdd.toc.tracks[index].offset, SEEK_SET);
+        filestream_seek(cdd.toc.tracks[index].fd, (lba * 2352) - cdd.toc.tracks[index].offset, SEEK_SET);
       }
 
       /* seek to current subcode position */
       if (cdd.toc.sub)
       {
-        fseek(cdd.toc.sub, lba * 96, SEEK_SET);
+        filestream_seek(cdd.toc.sub, lba * 96, SEEK_SET);
       }
 
       /* no audio track playing */
