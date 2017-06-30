@@ -7,8 +7,8 @@
 #include <math.h>
 
 #include "types.h"
-#include "macros.h"
 #include "osd.h"
+#include "macros.h"
 #include "loadrom.h"
 #include "m68k.h"
 #include "z80.h"
