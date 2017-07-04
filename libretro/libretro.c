@@ -1995,10 +1995,12 @@ bool retro_load_game(const struct retro_game_info *info)
       return false;
 
 #ifdef FRONTEND_SUPPORTS_RGB565
-   unsigned rgb565 = RETRO_PIXEL_FORMAT_RGB565;
-   if(environ_cb(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &rgb565))
-      if (log_cb)
-         log_cb(RETRO_LOG_INFO, "Frontend supports RGB565 - will use that instead of XRGB1555.\n");
+   {
+      unsigned rgb565 = RETRO_PIXEL_FORMAT_RGB565;
+      if(environ_cb(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &rgb565))
+         if (log_cb)
+            log_cb(RETRO_LOG_INFO, "Frontend supports RGB565 - will use that instead of XRGB1555.\n");
+   }
 #endif
 
    sms_ntsc = calloc(1, sizeof(sms_ntsc_t));
