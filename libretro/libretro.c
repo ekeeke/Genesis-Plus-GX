@@ -741,33 +741,25 @@ static void extract_directory(char *buf, const char *path, size_t size)
 
 static double calculate_display_aspect_ratio(void)
 {
-  if (config.aspect_ratio == 0)
-  {
-    if ((system_hw == SYSTEM_GG || system_hw == SYSTEM_GGMS) && config.overscan == 0 && config.gg_extra == 0)
-    {
-      return (6.0 / 5.0) * ((double)vwidth / (double)vheight);
-    }
-  }
+   double videosamplerate, dotrate;
+   bool is_h40 = false;
+   if (config.aspect_ratio == 0)
+   {
+      if ((system_hw == SYSTEM_GG || system_hw == SYSTEM_GGMS) && config.overscan == 0 && config.gg_extra == 0)
+         return (6.0 / 5.0) * ((double)vwidth / (double)vheight);
+   }
 
-  bool is_h40 = bitmap.viewport.w == 320; /* Could be read directly from the register as well. */
+   is_h40  = bitmap.viewport.w == 320; /* Could be read directly from the register as well. */
+   dotrate = system_clock / (is_h40 ? 8.0 : 10.0);
 
-  double dotrate = system_clock / (is_h40 ? 8.0 : 10.0);
-  double videosamplerate;
+   if (config.aspect_ratio == 1) /* Force NTSC PAR */
+      videosamplerate = 135000000.0 / 11.0;
+   else if (config.aspect_ratio == 2) /* Force PAL PAR */
+      videosamplerate = 14750000.0;
+   else
+      videosamplerate = vdp_pal ? 14750000.0 : 135000000.0 / 11.0;
 
-  if (config.aspect_ratio == 1) /* Force NTSC PAR */
-  {
-    videosamplerate = 135000000.0 / 11.0;
-  }
-  else if (config.aspect_ratio == 2) /* Force PAL PAR */
-  {
-    videosamplerate = 14750000.0;
-  }
-  else
-  {
-    videosamplerate = vdp_pal ? 14750000.0 : 135000000.0 / 11.0;
-  }
-
-  return (videosamplerate / dotrate) * ((double)vwidth / ((double)vheight * 2.0));
+   return (videosamplerate / dotrate) * ((double)vwidth / ((double)vheight * 2.0));
 }
 
 static bool update_viewport(void)
@@ -798,10 +790,10 @@ static bool update_viewport(void)
 static void check_variables(void)
 {
   unsigned orig_value;
+  struct retro_system_av_info info;
   bool update_viewports = false;
   bool reinit = false;
   struct retro_variable var = {0};
-  struct retro_system_av_info info;
 
   var.key = "genesis_plus_gx_bram";
   environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
