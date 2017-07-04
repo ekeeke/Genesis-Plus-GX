@@ -27,7 +27,7 @@ endif
 
 TARGET_NAME := genesis_plus_gx
 
-LIBM := -lm
+LIBS := -lm
 
 GIT_VERSION ?= " $(shell git rev-parse --short HEAD || echo unknown)"
 ifneq ($(GIT_VERSION)," unknown")
@@ -62,7 +62,7 @@ else ifeq ($(platform), linux-portable)
    SHARED := -shared -Wl,--version-script=libretro/link.T
    ENDIANNESS_DEFINES := -DLSB_FIRST -DBYTE_ORDER=LITTLE_ENDIAN
    PLATFORM_DEFINES := -DHAVE_ZLIB
-   LIBM :=
+   LIBS =
 
 # OS X
 else ifeq ($(platform), osx)
@@ -235,7 +235,54 @@ else ifeq ($(platform), gcw0)
    LDFLAGS += $(PTHREAD_FLAGS)
    CFLAGS += $(PTHREAD_FLAGS) -DHAVE_MKDIR
    CFLAGS += -ffast-math -march=mips32 -mtune=mips32r2 -mhard-float
+# Windows MSVC 2010 x64
+else ifeq ($(platform), windows_msvc2010_x64)
+	CC  = cl.exe
+	CXX = cl.exe
 
+PATH := $(shell IFS=$$'\n'; cygpath "$(VS100COMNTOOLS)../../VC/bin/amd64"):$(PATH)
+PATH := $(PATH):$(shell IFS=$$'\n'; cygpath "$(VS100COMNTOOLS)../IDE")
+LIB := $(shell IFS=$$'\n'; cygpath "$(VS100COMNTOOLS)../../VC/lib/amd64")
+INCLUDE := $(shell IFS=$$'\n'; cygpath "$(VS100COMNTOOLS)../../VC/include")
+
+WindowsSdkDir := $(shell reg query "HKLM\SOFTWARE\Microsoft\Microsoft SDKs\Windows\v7.0A" -v "InstallationFolder" | grep -o '[A-Z]:\\.*')lib/x64
+WindowsSdkDir ?= $(shell reg query "HKLM\SOFTWARE\Microsoft\Microsoft SDKs\Windows\v7.1A" -v "InstallationFolder" | grep -o '[A-Z]:\\.*')lib/x64
+
+WindowsSdkDirInc := $(shell reg query "HKLM\SOFTWARE\Microsoft\Microsoft SDKs\Windows\v7.0A" -v "InstallationFolder" | grep -o '[A-Z]:\\.*')Include
+WindowsSdkDirInc ?= $(shell reg query "HKLM\SOFTWARE\Microsoft\Microsoft SDKs\Windows\v7.1A" -v "InstallationFolder" | grep -o '[A-Z]:\\.*')Include
+
+
+INCFLAGS_PLATFORM = -I"$(WindowsSdkDirInc)"
+export INCLUDE := $(INCLUDE)
+export LIB := $(LIB);$(WindowsSdkDir)
+TARGET := $(TARGET_NAME)_libretro.dll
+PSS_STYLE :=2
+LDFLAGS += -DLL
+LIBS =
+# Windows MSVC 2010 x86
+else ifeq ($(platform), windows_msvc2010_x86)
+	CC  = cl.exe
+	CXX = cl.exe
+
+PATH := $(shell IFS=$$'\n'; cygpath "$(VS100COMNTOOLS)../../VC/bin"):$(PATH)
+PATH := $(PATH):$(shell IFS=$$'\n'; cygpath "$(VS100COMNTOOLS)../IDE")
+LIB := $(shell IFS=$$'\n'; cygpath -w "$(VS100COMNTOOLS)../../VC/lib")
+INCLUDE := $(shell IFS=$$'\n'; cygpath "$(VS100COMNTOOLS)../../VC/include")
+
+WindowsSdkDir := $(shell reg query "HKLM\SOFTWARE\Microsoft\Microsoft SDKs\Windows\v7.0A" -v "InstallationFolder" | grep -o '[A-Z]:\\.*')lib
+WindowsSdkDir ?= $(shell reg query "HKLM\SOFTWARE\Microsoft\Microsoft SDKs\Windows\v7.1A" -v "InstallationFolder" | grep -o '[A-Z]:\\.*')lib
+
+WindowsSdkDirInc := $(shell reg query "HKLM\SOFTWARE\Microsoft\Microsoft SDKs\Windows\v7.0A" -v "InstallationFolder" | grep -o '[A-Z]:\\.*')Include
+WindowsSdkDirInc ?= $(shell reg query "HKLM\SOFTWARE\Microsoft\Microsoft SDKs\Windows\v7.1A" -v "InstallationFolder" | grep -o '[A-Z]:\\.*')Include
+
+
+INCFLAGS_PLATFORM = -I"$(WindowsSdkDirInc)"
+export INCLUDE := $(INCLUDE)
+export LIB := $(LIB);$(WindowsSdkDir)
+TARGET := $(TARGET_NAME)_libretro.dll
+PSS_STYLE :=2
+LDFLAGS += -DLL
+LIBS =
 # Windows
 else
    TARGET := $(TARGET_NAME)_libretro.dll
@@ -247,7 +294,7 @@ else
 
 endif
 
-LDFLAGS += $(LIBM)
+LDFLAGS += $(LIBS)
 ifeq ($(SHARED_LIBVORBIS), 1)
 	LDFLAGS += -lvorbisfile
 endif
@@ -294,10 +341,21 @@ LIBRETRO_CFLAGS += $(BPP_DEFINES) \
 					$(PLATFORM_DEFINES) \
 					-D__LIBRETRO__
 
-ifeq ($(platform), qnx)
-   LIBRETRO_CFLAGS += -D__inline__=inline
+ifneq (,$(findstring msvc,$(platform)))
+   LIBRETRO_CFLAGS += -DINLINE="static _inline"
 else
    LIBRETRO_CFLAGS += -DINLINE="static inline"
+endif
+
+OBJOUT   = -o
+LINKOUT  = -o 
+
+ifneq (,$(findstring msvc,$(platform)))
+	OBJOUT = -Fo
+	LINKOUT = -out:
+	LD = link.exe
+else
+	LD = $(CC)
 endif
 
 ifeq ($(platform), theos_ios)
@@ -310,13 +368,13 @@ else
 all: $(TARGET)
 
 %.o: %.c
-	$(CC) -o $@ -c $< $(CPPFLAGS) $(CFLAGS) $(LIBRETRO_CFLAGS)
+	$(CC) $(OBJOUT)$@ -c $< $(CPPFLAGS) $(CFLAGS) $(LIBRETRO_CFLAGS)
 
 $(TARGET): $(OBJECTS)
 ifeq ($(STATIC_LINKING), 1)
 	$(AR) rcs $@ $(OBJECTS)
 else
-	$(CC) -o $(TARGET) $(fpic) $(OBJECTS) $(LDFLAGS) $(SHARED)
+	$(LD) $(LINKOUT)$(TARGET) $(fpic) $(OBJECTS) $(LDFLAGS) $(SHARED) $(LIBS)
 endif
 
 clean-objs:
