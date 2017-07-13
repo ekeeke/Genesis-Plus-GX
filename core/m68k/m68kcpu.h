@@ -529,16 +529,6 @@
 #define m68k_read_pcrelative_16(address) m68k_read_immediate_16(address)
 #define m68k_read_pcrelative_32(address) m68k_read_immediate_32(address)
 
-/* Read from the current address space */
-#define m68ki_read_8(A)  m68ki_read_8_fc (A, FLAG_S | m68ki_get_address_space())
-#define m68ki_read_16(A) m68ki_read_16_fc(A, FLAG_S | m68ki_get_address_space())
-#define m68ki_read_32(A) m68ki_read_32_fc(A, FLAG_S | m68ki_get_address_space())
-
-/* Write to the current data space */
-#define m68ki_write_8(A, V)  m68ki_write_8_fc (A, FLAG_S | FUNCTION_CODE_USER_DATA, V)
-#define m68ki_write_16(A, V) m68ki_write_16_fc(A, FLAG_S | FUNCTION_CODE_USER_DATA, V)
-#define m68ki_write_32(A, V) m68ki_write_32_fc(A, FLAG_S | FUNCTION_CODE_USER_DATA, V)
-
 /* map read immediate 8 to read immediate 16 */
 #define m68ki_read_imm_8() MASK_OUT_ABOVE_8(m68ki_read_imm_16())
 
@@ -546,17 +536,6 @@
 #define m68ki_read_pcrel_8(A) m68k_read_pcrelative_8(A)
 #define m68ki_read_pcrel_16(A) m68k_read_pcrelative_16(A)
 #define m68ki_read_pcrel_32(A) m68k_read_pcrelative_32(A)
-
-/* Read from the program space */
-#define m68ki_read_program_8(A)   m68ki_read_8_fc(A, FLAG_S | FUNCTION_CODE_USER_PROGRAM)
-#define m68ki_read_program_16(A)   m68ki_read_16_fc(A, FLAG_S | FUNCTION_CODE_USER_PROGRAM)
-#define m68ki_read_program_32(A)   m68ki_read_32_fc(A, FLAG_S | FUNCTION_CODE_USER_PROGRAM)
-
-/* Read from the data space */
-#define m68ki_read_data_8(A)   m68ki_read_8_fc(A, FLAG_S | FUNCTION_CODE_USER_DATA)
-#define m68ki_read_data_16(A)   m68ki_read_16_fc(A, FLAG_S | FUNCTION_CODE_USER_DATA)
-#define m68ki_read_data_32(A)   m68ki_read_32_fc(A, FLAG_S | FUNCTION_CODE_USER_DATA)
-
 
 
 /* ======================================================================== */
@@ -684,15 +663,15 @@ static const uint16 m68ki_exception_cycle_table[256] =
 INLINE uint m68ki_read_imm_16(void);
 INLINE uint m68ki_read_imm_32(void);
 
-/* Read data with specific function code */
-INLINE uint m68ki_read_8_fc  (uint address, uint fc);
-INLINE uint m68ki_read_16_fc (uint address, uint fc);
-INLINE uint m68ki_read_32_fc (uint address, uint fc);
+/* Read from the current address space */
+INLINE uint m68ki_read_8(uint address);
+INLINE uint m68ki_read_16(uint address);
+INLINE uint m68ki_read_32(uint address);
 
-/* Write data with specific function code */
-INLINE void m68ki_write_8_fc (uint address, uint fc, uint value);
-INLINE void m68ki_write_16_fc(uint address, uint fc, uint value);
-INLINE void m68ki_write_32_fc(uint address, uint fc, uint value);
+/* Write to the current data space */
+INLINE void m68ki_write_8(uint address, uint value);
+INLINE void m68ki_write_16(uint address, uint value);
+INLINE void m68ki_write_32(uint address, uint value);
 
 /* Indexed and PC-relative ea fetching */
 INLINE uint m68ki_get_ea_pcdi(void);
@@ -864,69 +843,69 @@ INLINE uint m68ki_read_imm_32(void)
  * These functions will also check for address error and set the function
  * code if they are enabled in m68kconf.h.
  */
-INLINE uint m68ki_read_8_fc(uint address, uint fc)
+INLINE uint m68ki_read_8(uint address)
 {
   cpu_memory_map *temp = &m68ki_cpu.memory_map[((address)>>16)&0xff];;
 
-  m68ki_set_fc(fc) /* auto-disable (see m68kcpu.h) */
+  m68ki_set_fc(FLAG_S | m68ki_get_address_space()) /* auto-disable (see m68kcpu.h) */
 
   if (temp->read8) return (*temp->read8)(ADDRESS_68K(address));
   else return READ_BYTE(temp->base, (address) & 0xffff);
 }
 
-INLINE uint m68ki_read_16_fc(uint address, uint fc)
+INLINE uint m68ki_read_16(uint address)
 {
   cpu_memory_map *temp;
 
-  m68ki_set_fc(fc) /* auto-disable (see m68kcpu.h) */
-  m68ki_check_address_error(address, MODE_READ, fc) /* auto-disable (see m68kcpu.h) */
+  m68ki_set_fc(FLAG_S | m68ki_get_address_space()) /* auto-disable (see m68kcpu.h) */
+  m68ki_check_address_error(address, MODE_READ, FLAG_S | m68ki_get_address_space()) /* auto-disable (see m68kcpu.h) */
   
   temp = &m68ki_cpu.memory_map[((address)>>16)&0xff];
   if (temp->read16) return (*temp->read16)(ADDRESS_68K(address));
   else return *(uint16 *)(temp->base + ((address) & 0xffff));
 }
 
-INLINE uint m68ki_read_32_fc(uint address, uint fc)
+INLINE uint m68ki_read_32(uint address)
 {
   cpu_memory_map *temp;
 
-  m68ki_set_fc(fc) /* auto-disable (see m68kcpu.h) */
-  m68ki_check_address_error(address, MODE_READ, fc) /* auto-disable (see m68kcpu.h) */
+  m68ki_set_fc(FLAG_S | m68ki_get_address_space()) /* auto-disable (see m68kcpu.h) */
+  m68ki_check_address_error(address, MODE_READ, FLAG_S | m68ki_get_address_space()) /* auto-disable (see m68kcpu.h) */
 
   temp = &m68ki_cpu.memory_map[((address)>>16)&0xff];
   if (temp->read16) return ((*temp->read16)(ADDRESS_68K(address)) << 16) | ((*temp->read16)(ADDRESS_68K(address + 2)));
   else return m68k_read_immediate_32(address);
 }
 
-INLINE void m68ki_write_8_fc(uint address, uint fc, uint value)
+INLINE void m68ki_write_8(uint address, uint value)
 {
   cpu_memory_map *temp;
 
-  m68ki_set_fc(fc) /* auto-disable (see m68kcpu.h) */
+  m68ki_set_fc(FLAG_S | FUNCTION_CODE_USER_DATA) /* auto-disable (see m68kcpu.h) */
 
   temp = &m68ki_cpu.memory_map[((address)>>16)&0xff];
   if (temp->write8) (*temp->write8)(ADDRESS_68K(address),value);
   else WRITE_BYTE(temp->base, (address) & 0xffff, value);
 }
 
-INLINE void m68ki_write_16_fc(uint address, uint fc, uint value)
+INLINE void m68ki_write_16(uint address, uint value)
 {
   cpu_memory_map *temp;
 
-  m68ki_set_fc(fc) /* auto-disable (see m68kcpu.h) */
-  m68ki_check_address_error(address, MODE_WRITE, fc); /* auto-disable (see m68kcpu.h) */
+  m68ki_set_fc(FLAG_S | FUNCTION_CODE_USER_DATA) /* auto-disable (see m68kcpu.h) */
+  m68ki_check_address_error(address, MODE_WRITE, FLAG_S | FUNCTION_CODE_USER_DATA); /* auto-disable (see m68kcpu.h) */
 
   temp = &m68ki_cpu.memory_map[((address)>>16)&0xff];
   if (temp->write16) (*temp->write16)(ADDRESS_68K(address),value);
   else *(uint16 *)(temp->base + ((address) & 0xffff)) = value;
 }
 
-INLINE void m68ki_write_32_fc(uint address, uint fc, uint value)
+INLINE void m68ki_write_32(uint address, uint value)
 {
   cpu_memory_map *temp;
 
-  m68ki_set_fc(fc) /* auto-disable (see m68kcpu.h) */
-  m68ki_check_address_error(address, MODE_WRITE, fc) /* auto-disable (see m68kcpu.h) */
+  m68ki_set_fc(FLAG_S | FUNCTION_CODE_USER_DATA) /* auto-disable (see m68kcpu.h) */
+  m68ki_check_address_error(address, MODE_WRITE, FLAG_S | FUNCTION_CODE_USER_DATA) /* auto-disable (see m68kcpu.h) */
 
   temp = &m68ki_cpu.memory_map[((address)>>16)&0xff];
   if (temp->write16) (*temp->write16)(ADDRESS_68K(address),value>>16);
@@ -1070,36 +1049,30 @@ INLINE uint OPER_PCIX_32(void)  {uint ea = EA_PCIX_32();  return m68ki_read_pcre
 /* ---------------------------- Stack Functions --------------------------- */
 
 /* Push/pull data from the stack */
-/* Optimized access assuming stack is always located in ROM/RAM [EkeEke] */  
 INLINE void m68ki_push_16(uint value)
 {
   REG_SP = MASK_OUT_ABOVE_32(REG_SP - 2);
-  /*m68ki_write_16(REG_SP, value);*/
-  *(uint16 *)(m68ki_cpu.memory_map[(REG_SP>>16)&0xff].base + (REG_SP & 0xffff)) = value;
+  m68ki_write_16(REG_SP, value);
 }
 
 INLINE void m68ki_push_32(uint value)
 {
   REG_SP = MASK_OUT_ABOVE_32(REG_SP - 4);
-  /*m68ki_write_32(REG_SP, value);*/
-  *(uint16 *)(m68ki_cpu.memory_map[(REG_SP>>16)&0xff].base + (REG_SP & 0xffff)) = value >> 16;
-  *(uint16 *)(m68ki_cpu.memory_map[((REG_SP + 2)>>16)&0xff].base + ((REG_SP + 2) & 0xffff)) = value & 0xffff;
+  m68ki_write_32(REG_SP, value);
 }
 
 INLINE uint m68ki_pull_16(void)
 {
   uint sp = REG_SP;
   REG_SP = MASK_OUT_ABOVE_32(REG_SP + 2);
-  return m68k_read_immediate_16(sp);
-  /*return m68ki_read_16(sp);*/
+  return m68ki_read_16(sp);
 }
 
 INLINE uint m68ki_pull_32(void)
 {
   uint sp = REG_SP;
   REG_SP = MASK_OUT_ABOVE_32(REG_SP + 4);
-  return m68k_read_immediate_32(sp);
-  /*return m68ki_read_32(sp);*/
+  return m68ki_read_32(sp);
 }
 
 
@@ -1117,7 +1090,8 @@ INLINE void m68ki_jump(uint new_pc)
 
 INLINE void m68ki_jump_vector(uint vector)
 {
-  REG_PC = m68ki_read_data_32(vector<<2);
+  m68ki_use_data_space() /* auto-disable (see m68kcpu.h) */
+  REG_PC = m68ki_read_32(vector<<2);
 }
 
 
@@ -1385,11 +1359,12 @@ INLINE void m68ki_exception_interrupt(uint int_level)
   m68ki_int_ack(int_level);
 
   /* Get the new PC */
-  new_pc = m68ki_read_data_32(vector<<2);
+  m68ki_use_data_space() /* auto-disable (see m68kcpu.h) */
+  new_pc = m68ki_read_32(vector<<2);
 
   /* If vector is uninitialized, call the uninitialized interrupt vector */
   if(new_pc == 0)
-    new_pc = m68ki_read_data_32((EXCEPTION_UNINITIALIZED_INTERRUPT<<2));
+    new_pc = m68ki_read_32((EXCEPTION_UNINITIALIZED_INTERRUPT<<2));
 
   /* Generate a stack frame */
   m68ki_stack_frame_3word(REG_PC, sr);

@@ -5,7 +5,7 @@
  *  Support for SG-1000 (TMS99xx & 315-5066), Master System (315-5124 & 315-5246), Game Gear & Mega Drive VDP
  *
  *  Copyright (C) 1998-2003  Charles Mac Donald (original code)
- *  Copyright (C) 2007-2016  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2007-2017  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -161,7 +161,7 @@ static const uint8 dma_timing[2][2] =
 {
 /* H32, H40 */
   {16 , 18},  /* active display */
-  {167, 205}  /* blank display */
+  {166, 204}  /* blank display */
 };
 
 /* DMA processing functions (set by VDP register 23 high nibble) */
@@ -560,19 +560,16 @@ void vdp_dma_update(unsigned int cycles)
 
   /* DMA transfer rate (bytes per line) 
 
-     According to the manual, here's a table that describes the transfer
-   rates of each of the three DMA types:
-
       DMA Mode      Width       Display      Transfer Count
       -----------------------------------------------------
       68K > VDP     32-cell     Active       16
-                                Blanking     167
-                    40-cell     Active       18
-                                Blanking     205
-      VRAM Fill     32-cell     Active       15
                                 Blanking     166
-                    40-cell     Active       17
+                    40-cell     Active       18
                                 Blanking     204
+      VRAM Fill     32-cell     Active       15
+                                Blanking     165
+                    40-cell     Active       17
+                                Blanking     203
       VRAM Copy     32-cell     Active       8
                                 Blanking     83
                     40-cell     Active       9
@@ -897,7 +894,10 @@ void vdp_z80_ctrl_w(unsigned int data)
           {
             case 2:
             {
-              /* DMA Fill will be triggered by next write to DATA port */
+              /* DMA Fill */
+              dma_type = 2;
+
+              /* DMA is pending until next DATA port write */
               dmafill = 1;
 
               /* Set DMA Busy flag */
@@ -2039,7 +2039,7 @@ static void vdp_reg_w(unsigned int r, unsigned int d, unsigned int cycles)
 
 static void vdp_fifo_update(unsigned int cycles)
 {
-  int slots, count = 0;
+  int num, slots, count = 0;
   
   const int *fifo_timing;
 
@@ -2075,13 +2075,13 @@ static void vdp_fifo_update(unsigned int cycles)
     count++;
   }
 
-  /* number of processed FIFO entries since last access */
-  slots = (slots + count - fifo_slots) >> fifo_byte_access;
+  /* number of processed FIFO entries since last access (byte access needs two slots to process one FIFO word) */
+  num = (slots + count - fifo_slots) >> fifo_byte_access;
 
-  if (slots > 0)
+  if (num > 0)
   {
     /* process FIFO entries */
-    fifo_write_cnt -= slots;
+    fifo_write_cnt -= num;
 
     /* Clear FIFO full flag */
     status &= 0xFEFF;
@@ -2093,14 +2093,19 @@ static void vdp_fifo_update(unsigned int cycles)
 
       /* Set FIFO empty flag */
       status |= 0x200;
-    }
 
-    /* Update FIFO access slot counter */
-    fifo_slots += (slots << fifo_byte_access);
+      /* Reinitialize FIFO access slot counter */
+      fifo_slots = slots + count;
+    }
+    else
+    {
+      /* Update FIFO access slot counter */
+      fifo_slots += (num << fifo_byte_access);
+    }
   }
 
   /* next FIFO update cycle */
-  fifo_cycles = mcycles_vdp + fifo_timing[count | fifo_byte_access];
+  fifo_cycles = mcycles_vdp + fifo_timing[fifo_slots - slots + fifo_byte_access];
 }
 
 

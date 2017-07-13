@@ -2,7 +2,7 @@
  *  Genesis Plus
  *  Mega Drive cartridge hardware support
  *
- *  Copyright (C) 2007-2016  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2007-2017  Eke-Eke (Genesis Plus GX)
  *
  *  Many cartridge protections were initially documented by Haze
  *  (http://haze.mameworld.info/)
@@ -65,6 +65,8 @@ static void mapper_sf004_w(uint32 address, uint32 data);
 static uint32 mapper_sf004_r(uint32 address);
 static void mapper_t5740_w(uint32 address, uint32 data);
 static uint32 mapper_t5740_r(uint32 address);
+static void mapper_flashkit_w(uint32 address, uint32 data);
+static uint32 mapper_flashkit_r(uint32 address);
 static uint32 mapper_smw_64_r(uint32 address);
 static void mapper_smw_64_w(uint32 address, uint32 data);
 static void mapper_realtec_w(uint32 address, uint32 data);
@@ -627,6 +629,13 @@ void md_cart_init(void)
       zbank_memory_map[i].read   = m68k_read_bus_8;
       zbank_memory_map[i].write  = zbank_unused_w;
     }
+  }
+  else if (strstr(rominfo.ROMType,"GM") && strstr(rominfo.product,"00000000-42"))
+  {
+    /* Flashkit MD mapper */
+    m68k.memory_map[0x00].write8 = mapper_flashkit_w;
+    m68k.memory_map[0x00].write16 = mapper_flashkit_w;
+    zbank_memory_map[0x00].write = mapper_flashkit_w;
   }
   else if ((*(uint16 *)(cart.rom + 0x08) == 0x6000) && (*(uint16 *)(cart.rom + 0x0a) == 0x01f6) && (rominfo.realchecksum == 0xf894))
   {
@@ -1265,6 +1274,44 @@ static uint32 mapper_t5740_r(uint32 address)
   }
 
   return READ_BYTE(cart.rom, address);
+}
+
+/* 
+  FlashKit MD mapper (very limited M29W320xx Flash memory support -- enough for unlicensed games using device signature as protection) 
+*/
+static void mapper_flashkit_w(uint32 address, uint32 data)
+{
+  /* Increment Bus Write counter */
+  cart.hw.regs[0]++;
+
+  /* Wait for 3 consecutive bus writes */
+  if (cart.hw.regs[0] == 3)
+  {
+    /* assume 'Auto Select' command */
+    m68k.memory_map[0x0].read16 = mapper_flashkit_r;
+  }
+  else if (cart.hw.regs[0] == 4)
+  {
+    /* assume 'Read/Reset' command */
+    m68k.memory_map[0x0].read16 = NULL;
+
+    /* reset Bus Write counter */
+    cart.hw.regs[0] = 0;
+  }
+}
+
+static uint32 mapper_flashkit_r(uint32 address)
+{
+  /* hard-coded device signature */
+  switch (address & 0x06)
+  {
+    case 0x00:  /* Manufacturer Code (STMicroelectronics) */
+      return 0x0020;
+    case 0x02:  /* Device Code (M29W320EB) */
+      return 0x2257;
+    default:    /* not supported */
+      return 0xffff;
+  }
 }
 
 /* 
