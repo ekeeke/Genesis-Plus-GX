@@ -190,7 +190,7 @@
  */
 
 #include "shared.h"
-
+#include "streams/file_stream.h"
 
 #define u32 unsigned int
 
@@ -1016,13 +1016,13 @@ static void debug_dump_mem(void)
 
 static void debug_dump2file(const char *fname, void *mem, int len)
 {
-  FILE *f = fopen(fname, "wb");
+  RFILE *f = filestream_open(fname, RFILE_MODE_WRITE, -1);
   unsigned short *p = mem;
   int i;
   if (f) {
     for (i = 0; i < len/2; i++) p[i] = (p[i]<<8) | (p[i]>>8);
-    fwrite(mem, 1, len, f);
-    fclose(f);
+    filestream_write(f, mem, len);
+    filestream_close(f);
     for (i = 0; i < len/2; i++) p[i] = (p[i]<<8) | (p[i]>>8);
     printf("dumped to %s\n", fname);
   }

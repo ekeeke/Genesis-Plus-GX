@@ -304,7 +304,7 @@ void m68k_run(unsigned int cycles)
 void m68k_init(void)
 {
 #ifdef BUILD_TABLES
-  static uint emulation_initialized = 0;
+  static uint32_t emulation_initialized = 0;
 
   /* The first call to this function initializes the opcode handler jump table */
   if(!emulation_initialized)

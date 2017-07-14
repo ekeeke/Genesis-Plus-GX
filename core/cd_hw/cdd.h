@@ -61,6 +61,8 @@
 
 #define CD_MAX_TRACKS 100
 
+typedef struct RFILE RFILE;
+
 /* CD track */
 typedef struct
 {

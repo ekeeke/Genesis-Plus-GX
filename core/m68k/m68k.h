@@ -41,6 +41,7 @@
 /* ================================ INCLUDES ============================== */
 /* ======================================================================== */
 
+#include <stdint.h>
 #include <setjmp.h>
 #include "macros.h"
 
@@ -65,7 +66,6 @@
 #undef uint32
 #undef uint64
 #undef sint
-#undef uint
 
 #define sint8  signed   char      /* ASG: changed from char to signed char */
 #define sint16 signed   short
@@ -76,7 +76,6 @@
 
 /* signed and unsigned int must be at least 32 bits wide */
 #define sint   signed   int
-#define uint   unsigned int
 
 
 #if M68K_USE_64_BIT
@@ -224,9 +223,9 @@ typedef struct
 /* 68k idle loop detection */
 typedef struct
 {
-  uint pc;
-  uint cycle;
-  uint detected;
+  uint32_t pc;
+  uint32_t cycle;
+  uint32_t detected;
 } cpu_idle_t;
 
 typedef struct
@@ -235,38 +234,38 @@ typedef struct
 
   cpu_idle_t poll;      /* polling detection */
 
-  uint cycles;          /* current master cycle count */ 
-  uint cycle_end;       /* aimed master cycle count for current execution frame */
+  uint32_t cycles;          /* current master cycle count */ 
+  uint32_t cycle_end;       /* aimed master cycle count for current execution frame */
 
-  uint dar[16];         /* Data and Address Registers */
-  uint pc;              /* Program Counter */
-  uint sp[5];           /* User and Interrupt Stack Pointers */
-  uint ir;              /* Instruction Register */
-  uint t1_flag;         /* Trace 1 */
-  uint s_flag;          /* Supervisor */
-  uint x_flag;          /* Extend */
-  uint n_flag;          /* Negative */
-  uint not_z_flag;      /* Zero, inverted for speedups */
-  uint v_flag;          /* Overflow */
-  uint c_flag;          /* Carry */
-  uint int_mask;        /* I0-I2 */
-  uint int_level;       /* State of interrupt pins IPL0-IPL2 -- ASG: changed from ints_pending */
-  uint stopped;         /* Stopped state */
+  uint32_t dar[16];         /* Data and Address Registers */
+  uint32_t pc;              /* Program Counter */
+  uint32_t sp[5];           /* User and Interrupt Stack Pointers */
+  uint32_t ir;              /* Instruction Register */
+  uint32_t t1_flag;         /* Trace 1 */
+  uint32_t s_flag;          /* Supervisor */
+  uint32_t x_flag;          /* Extend */
+  uint32_t n_flag;          /* Negative */
+  uint32_t not_z_flag;      /* Zero, inverted for speedups */
+  uint32_t v_flag;          /* Overflow */
+  uint32_t c_flag;          /* Carry */
+  uint32_t int_mask;        /* I0-I2 */
+  uint32_t int_level;       /* State of interrupt pins IPL0-IPL2 -- ASG: changed from ints_pending */
+  uint32_t stopped;         /* Stopped state */
 
-  uint pref_addr;       /* Last prefetch address */
-  uint pref_data;       /* Data in the prefetch queue */
+  uint32_t pref_addr;       /* Last prefetch address */
+  uint32_t pref_data;       /* Data in the prefetch queue */
 
-  uint instr_mode;      /* Stores whether we are in instruction mode or group 0/1 exception mode */
-  uint run_mode;        /* Stores whether we are processing a reset, bus error, address error, or something else */
-  uint aerr_enabled;    /* Enables/deisables address error checks at runtime */
+  uint32_t instr_mode;      /* Stores whether we are in instruction mode or group 0/1 exception mode */
+  uint32_t run_mode;        /* Stores whether we are processing a reset, bus error, address error, or something else */
+  uint32_t aerr_enabled;    /* Enables/deisables address error checks at runtime */
   jmp_buf aerr_trap;    /* Address error jump */
-  uint aerr_address;    /* Address error location */
-  uint aerr_write_mode; /* Address error write mode */
-  uint aerr_fc;         /* Address error FC code */
+  uint32_t aerr_address;    /* Address error location */
+  uint32_t aerr_write_mode; /* Address error write mode */
+  uint32_t aerr_fc;         /* Address error FC code */
 
-  uint tracing;         /* Tracing enable flag */
+  uint32_t tracing;         /* Tracing enable flag */
 
-  uint address_space;   /* Current FC code */
+  uint32_t address_space;   /* Current FC code */
 
   /* Callbacks to host */
   int  (*int_ack_callback)(int int_line);           /* Interrupt Acknowledge */
