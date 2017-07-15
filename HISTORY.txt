@@ -94,6 +94,7 @@ Genesis Plus GX 1.7.5 (xx/xx/xxxx) (Eke-Eke)
 * improved HVC latch behavior for gun emulation (fixes "Gunfight - 3 in 1" randomization when using Justifier)
 * improved control pad emulation accuracy (verified on real hardware)
 * improved 4 Way-Play emulation (fixes multitap detection in CD games)
+* increased Sega Mouse latency (fixes mouse support in Star Blade)
 * fixed TeamPlayer emulation (fixes multitap detection in Gauntlet 4)
 
 [Core/VDP]
