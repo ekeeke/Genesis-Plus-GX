@@ -76,7 +76,7 @@
 
 /* signed and unsigned int must be at least 32 bits wide */
 #define sint   signed   int
-
+#define uint   unsigned int
 
 #if M68K_USE_64_BIT
 #define sint64 signed   long long
