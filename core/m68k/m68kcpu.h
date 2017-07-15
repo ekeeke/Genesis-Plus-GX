@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <limits.h>
 #include <stdint.h>
+#include <sys/types.h>
 
 #if M68K_EMULATE_ADDRESS_ERROR
 #include <setjmp.h>
