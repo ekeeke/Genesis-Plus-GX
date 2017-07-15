@@ -141,6 +141,7 @@ static uint16 fifo[4];        /* FIFO ring-buffer */
 static int fifo_idx;          /* FIFO write index */
 static int fifo_byte_access;  /* FIFO byte access flag */
 static uint32 fifo_cycles;    /* FIFO next access cycle */
+static int *fifo_timing;      /* FIFO slots timing table */
 
  /* set Z80 or 68k interrupt lines */
 static void (*set_irq_line)(unsigned int level);
@@ -154,6 +155,19 @@ static const uint16 vc_table[4][2] =
   {0xEA , 0x102}, /* Mode 5 (224 lines) */
   {0xDA , 0xF2},  /* Mode 4 (192 lines) */
   {0x106, 0x10A}  /* Mode 5 (240 lines) */
+};
+
+/* FIFO access slots timings */
+static const int fifo_timing_h32[16+4] = 
+{
+  230, 510, 810, 970, 1130, 1450, 1610, 1770, 2090, 2250, 2410, 2730, 2890, 3050, 3350, 3370,
+  MCYCLES_PER_LINE + 230, MCYCLES_PER_LINE + 510, MCYCLES_PER_LINE + 810, MCYCLES_PER_LINE + 970, 
+};
+
+static const int fifo_timing_h40[18+4] = 
+{
+  352, 820, 948, 1076, 1332, 1460, 1588, 1844, 1972, 2100, 2356, 2484, 2612, 2868, 2996, 3124, 3364, 3380,
+  MCYCLES_PER_LINE + 352, MCYCLES_PER_LINE + 820, MCYCLES_PER_LINE + 948, MCYCLES_PER_LINE + 1076, 
 };
 
 /* DMA Timings (number of access slots per line) */
@@ -305,6 +319,9 @@ void vdp_reset(void)
 
   /* default sprite pixel width */
   max_sprite_pixels = 256;
+
+  /* default FIFO access slots timings */
+  fifo_timing = (int *)fifo_timing_h32;
 
   /* default overscan area */
   if ((system_hw == SYSTEM_GG) && !config.gg_extra)
@@ -1932,6 +1949,13 @@ static void vdp_reg_w(unsigned int r, unsigned int d, unsigned int cycles)
       /* Active display width */
       if (r & 0x01)
       {
+        /* FIFO access slots timings depend on active width */
+        if (fifo_slots)
+        {
+          /* Synchronize VDP FIFO */
+          vdp_fifo_update(cycles);
+        }
+
         if (d & 0x01)
         {
           /* Update display-dependant registers */
@@ -1948,6 +1972,9 @@ static void vdp_reg_w(unsigned int r, unsigned int d, unsigned int cycles)
 
           /* Update max sprite pixels per line*/
           max_sprite_pixels = 320;
+
+          /* FIFO access slots timings */
+          fifo_timing = (int *)fifo_timing_h40;
         }
         else
         {
@@ -1965,8 +1992,12 @@ static void vdp_reg_w(unsigned int r, unsigned int d, unsigned int cycles)
 
           /* Update max sprite pixels per line*/
           max_sprite_pixels = 256;
+
+          /* FIFO access slots timings */
+          fifo_timing = (int *)fifo_timing_h32;
         }
 
+        /* Update active screen width */
         if (v_counter >= bitmap.viewport.h)
         {
           /* Active screen width modified during VBLANK will be applied on upcoming frame */
@@ -2039,49 +2070,25 @@ static void vdp_reg_w(unsigned int r, unsigned int d, unsigned int cycles)
 
 static void vdp_fifo_update(unsigned int cycles)
 {
-  int num, slots, count = 0;
-  
-  const int *fifo_timing;
-
-  const int fifo_cycles_h32[16+4] = 
-  {
-    230, 510, 810, 970, 1130, 1450, 1610, 1770, 2090, 2250, 2410, 2730, 2890, 3050, 3350, 3370,
-    MCYCLES_PER_LINE + 230, MCYCLES_PER_LINE + 510, MCYCLES_PER_LINE + 810, MCYCLES_PER_LINE + 970, 
-  };
-
-  const int fifo_cycles_h40[18+4] = 
-  {
-    352, 820, 948, 1076, 1332, 1460, 1588, 1844, 1972, 2100, 2356, 2484, 2612, 2868, 2996, 3124, 3364, 3380,
-    MCYCLES_PER_LINE + 352, MCYCLES_PER_LINE + 820, MCYCLES_PER_LINE + 948, MCYCLES_PER_LINE + 1076, 
-  };
-
+  int fifo_read_cnt, line_slots = 0;
 
   /* number of access slots up to current line */
-  if (reg[12] & 0x01)
-  {
-    fifo_timing = fifo_cycles_h40;
-    slots = 18 * ((v_counter + 1) % lines_per_frame);
-  }
-  else
-  {
-    fifo_timing = fifo_cycles_h32;
-    slots = 16 * ((v_counter + 1) % lines_per_frame);
-  }
+  int total_slots = dma_timing[0][reg[12] & 1] * ((v_counter + 1) % lines_per_frame);
 
   /* number of access slots within current line */
   cycles -= mcycles_vdp;
-  while (fifo_timing[count] <= cycles)
+  while (fifo_timing[line_slots] <= cycles)
   {
-    count++;
+    line_slots++;
   }
 
   /* number of processed FIFO entries since last access (byte access needs two slots to process one FIFO word) */
-  num = (slots + count - fifo_slots) >> fifo_byte_access;
+  fifo_read_cnt = (total_slots + line_slots - fifo_slots) >> fifo_byte_access;
 
-  if (num > 0)
+  if (fifo_read_cnt > 0)
   {
     /* process FIFO entries */
-    fifo_write_cnt -= num;
+    fifo_write_cnt -= fifo_read_cnt;
 
     /* Clear FIFO full flag */
     status &= 0xFEFF;
@@ -2095,17 +2102,17 @@ static void vdp_fifo_update(unsigned int cycles)
       status |= 0x200;
 
       /* Reinitialize FIFO access slot counter */
-      fifo_slots = slots + count;
+      fifo_slots = total_slots + line_slots;
     }
     else
     {
       /* Update FIFO access slot counter */
-      fifo_slots += (num << fifo_byte_access);
+      fifo_slots += (fifo_read_cnt << fifo_byte_access);
     }
   }
 
   /* next FIFO update cycle */
-  fifo_cycles = mcycles_vdp + fifo_timing[fifo_slots - slots + fifo_byte_access];
+  fifo_cycles = mcycles_vdp + fifo_timing[fifo_slots - total_slots + fifo_byte_access];
 }
 
 
