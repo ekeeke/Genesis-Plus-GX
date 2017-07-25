@@ -26,7 +26,7 @@ include $(LIBRETRO_DIR)/Makefile.common
 LOCAL_SRC_FILES := $(SOURCES_C)
 
 LOCAL_C_INCLUDES = $(foreach dir,$(GENPLUS_SRC_DIR),$(LOCAL_PATH)/$(dir)) \
-			$(CORE_DIR)/libretro-common/include \
+			$(CORE_DIR)/libretro/libretro-common/include \
 			$(LOCAL_PATH)/$(TREMOR_SRC_DIR) \
 			$(LOCAL_PATH)/$(LIBRETRO_DIR)
 
