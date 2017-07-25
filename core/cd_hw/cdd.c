@@ -1265,7 +1265,7 @@ static void cdd_read_subcode(void)
 void cdd_update(void)
 {  
 #ifdef LOG_CDD
-  error("LBA = %d (track n?%d)(latency=%d)\n", cdd.lba, cdd.index, cdd.latency);
+  error("LBA = %d (track n°%d)(latency=%d)\n", cdd.lba, cdd.index, cdd.latency);
 #endif
 
   /* seeking disc */
