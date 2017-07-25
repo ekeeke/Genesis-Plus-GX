@@ -36,7 +36,6 @@
  *
  ****************************************************************************************/
 #include "shared.h"
-#include "streams/file_stream.h"
 
 #if defined(USE_LIBTREMOR) || defined(USE_LIBVORBIS)
 #define SUPPORTED_EXT 20
