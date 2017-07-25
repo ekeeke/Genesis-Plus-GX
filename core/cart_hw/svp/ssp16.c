@@ -191,6 +191,7 @@
 
 #include "shared.h"
 
+
 #define u32 unsigned int
 
 /*#define USE_DEBUGGER*/
@@ -1015,13 +1016,13 @@ static void debug_dump_mem(void)
 
 static void debug_dump2file(const char *fname, void *mem, int len)
 {
-  RFILE *f = filestream_open(fname, RFILE_MODE_WRITE, -1);
+  FILE *f = fopen(fname, "wb");
   unsigned short *p = mem;
   int i;
   if (f) {
     for (i = 0; i < len/2; i++) p[i] = (p[i]<<8) | (p[i]>>8);
-    filestream_write(f, mem, len);
-    filestream_close(f);
+    fwrite(mem, 1, len, f);
+    fclose(f);
     for (i = 0; i < len/2; i++) p[i] = (p[i]<<8) | (p[i]>>8);
     printf("dumped to %s\n", fname);
   }

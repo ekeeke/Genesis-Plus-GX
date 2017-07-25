@@ -129,31 +129,6 @@ static const unsigned char waveHeader[28] =
   0x02,0x00,0x44,0xac,0x00,0x00,0x10,0xb1,0x02,0x00,0x04,0x00,0x10,0x00
 };
 
-/* vorbis file callbacks to use RFILEs*/
-#if defined(USE_LIBTREMOR) || defined(USE_LIBVORBIS)
-  size_t fs_vorbis_read(void *ptr, size_t size, size_t nmemb, void *datasource)
-  {
-    return filestream_read(datasource, ptr, size*nmemb);
-  }
-
-  int fs_vorbis_seek(void *datasource, ogg_int64_t offset, int whence)
-  {
-    return filestream_seek(datasource, offset, whence);
-  }
-
-  int fs_vorbis_close (void *datasource)
-  {
-    return filestream_close(datasource);
-  }
-
-  long fs_vorbis_tell(void *datasource)
-  {
-	  return filestream_tell(datasource);
-  }
-
-  ov_callbacks fs_ov_callbacks = { filestream_read, fs_vorbis_seek, fs_vorbis_close, fs_vorbis_tell };
-#endif
-
 /* supported WAVE file extensions */
 static const char extensions[SUPPORTED_EXT][16] =
 {
@@ -1290,7 +1265,7 @@ static void cdd_read_subcode(void)
 void cdd_update(void)
 {  
 #ifdef LOG_CDD
-  error("LBA = %d (track n°%d)(latency=%d)\n", cdd.lba, cdd.index, cdd.latency);
+  error("LBA = %d (track n?%d)(latency=%d)\n", cdd.lba, cdd.index, cdd.latency);
 #endif
 
   /* seeking disc */
