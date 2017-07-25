@@ -11,7 +11,7 @@ GENPLUS_SRC_DIR := $(CORE_DIR)/core \
 SOURCES_C = $(foreach dir,$(GENPLUS_SRC_DIR),$(wildcard $(dir)/*.c))
 
 ifneq ($(STATIC_LINKING), 1)
-SOURCES_C += $(CORE_DIR)/libretro-common/streams/file_stream.c
+SOURCES_C += $(CORE_DIR)/libretro/libretro-common/streams/file_stream.c
 endif
 
 ifeq ($(SHARED_LIBVORBIS),)
@@ -22,4 +22,4 @@ SOURCES_C += $(LIBRETRO_DIR)/libretro.c
 
 SOURCES_C += $(LIBRETRO_DIR)/scrc32.c
 
-INCFLAGS += $(foreach dir,$(GENPLUS_SRC_DIR),-I$(dir)) -I$(LIBRETRO_DIR) -I$(CORE_DIR)/libretro-common/include
+INCFLAGS += $(foreach dir,$(GENPLUS_SRC_DIR),-I$(dir)) -I$(LIBRETRO_DIR) -I$(CORE_DIR)/libretro/libretro-common/include
