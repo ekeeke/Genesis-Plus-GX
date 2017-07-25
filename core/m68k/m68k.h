@@ -78,6 +78,7 @@
 #define sint   signed   int
 #define uint   unsigned int
 
+
 #if M68K_USE_64_BIT
 #define sint64 signed   long long
 #define uint64 unsigned long long
