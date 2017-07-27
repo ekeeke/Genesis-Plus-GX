@@ -28,6 +28,8 @@
 
 RETRO_BEGIN_DECLS
 
+typedef struct RFILE RFILE;
+
 #define FILE RFILE
 
 #define fopen rfopen
