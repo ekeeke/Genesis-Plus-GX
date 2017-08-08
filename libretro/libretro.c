@@ -3,7 +3,7 @@
  *
  *  Genesis Plus GX libretro port
  *
- *  Copyright Eke-Eke (2007-2016)
+ *  Copyright Eke-Eke (2007-2017)
  *
  *  Copyright Daniel De Matteis (2012-2016)
  *
@@ -1792,7 +1792,7 @@ void retro_set_controller_port_device(unsigned port, unsigned device)
          break;
       case RETRO_DEVICE_MDPAD_3B:
       {
-         if (port && (input.system[0] >= RETRO_DEVICE_MDPAD_3B_WAYPLAY) && (input.system[0] <= RETRO_DEVICE_MSPAD_2B_MASTERTAP))
+         if (port && (input.system[0] >= SYSTEM_MASTERTAP) && (input.system[0] <= SYSTEM_WAYPLAY))
             config.input[4].padtype = DEVICE_PAD3B;
          else
             config.input[port].padtype = DEVICE_PAD3B;
@@ -1801,7 +1801,7 @@ void retro_set_controller_port_device(unsigned port, unsigned device)
       }
       case RETRO_DEVICE_MDPAD_6B:
       {
-         if (port && (input.system[0] >= RETRO_DEVICE_MDPAD_3B_WAYPLAY) && (input.system[0] <= RETRO_DEVICE_MSPAD_2B_MASTERTAP))
+         if (port && (input.system[0] >= SYSTEM_MASTERTAP) && (input.system[0] <= SYSTEM_WAYPLAY))
             config.input[4].padtype = DEVICE_PAD6B;
          else
             config.input[port].padtype = DEVICE_PAD6B;
@@ -1810,7 +1810,7 @@ void retro_set_controller_port_device(unsigned port, unsigned device)
       }
       case RETRO_DEVICE_MSPAD_2B:
       {
-         if (port && (input.system[0] >= RETRO_DEVICE_MDPAD_3B_WAYPLAY) && (input.system[0] <= RETRO_DEVICE_MSPAD_2B_MASTERTAP))
+         if (port && (input.system[0] >= SYSTEM_MASTERTAP) && (input.system[0] <= SYSTEM_WAYPLAY))
             config.input[4].padtype = DEVICE_PAD2B;
          else
             config.input[port].padtype = DEVICE_PAD2B;
@@ -1894,7 +1894,7 @@ void retro_set_controller_port_device(unsigned port, unsigned device)
       case RETRO_DEVICE_JOYPAD:
       default:
       {
-         if (port && (input.system[0] >= RETRO_DEVICE_MDPAD_3B_WAYPLAY) && (input.system[0] <= RETRO_DEVICE_MSPAD_2B_MASTERTAP))
+         if (port && (input.system[0] >= SYSTEM_MASTERTAP) && (input.system[0] <= SYSTEM_WAYPLAY))
             config.input[4].padtype = DEVICE_PAD2B | DEVICE_PAD6B | DEVICE_PAD3B;
          else
             config.input[port].padtype = DEVICE_PAD2B | DEVICE_PAD6B | DEVICE_PAD3B;
@@ -1945,16 +1945,17 @@ void retro_cheat_set(unsigned index, bool enabled, const char *code)
 {
 	char codeCopy[256];
 	char *buff;
-   
-   /* Avoid crashing when giving empty input */
-   if (code=='\0') return;
 
-   /* clear existing ROM patches */
-   clear_cheats();
+	/* Avoid crashing when giving no input */
+	if (code==NULL) return;
 
-   /* Detect and split multiline cheats */
-	strcpy(codeCopy,code);
-   buff = strtok(codeCopy,"+");
+	/* clear existing ROM patches */
+	clear_cheats();
+
+	/* Detect and split multiline cheats */
+	strncpy(codeCopy,code,255);
+	codeCopy[255] = '\0';
+	buff = strtok(codeCopy,"+");
 
 	while (buff != NULL)
 	{
@@ -1984,8 +1985,8 @@ void retro_cheat_set(unsigned index, bool enabled, const char *code)
       buff = strtok(NULL,"+");
 	}
 
-   /* apply ROM patches */
-   apply_cheats();
+	/* apply ROM patches */
+	apply_cheats();
 }
 
 bool retro_load_game(const struct retro_game_info *info)
