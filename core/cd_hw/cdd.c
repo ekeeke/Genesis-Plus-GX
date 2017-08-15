@@ -1537,7 +1537,7 @@ void cdd_process(void)
 
         case 0x01:  /* Current Track Relative Time (MM:SS:FF) */
         {
-          int lba = cdd.lba - cdd.toc.tracks[cdd.index].start;
+          int lba = abs(cdd.lba - cdd.toc.tracks[cdd.index].start);
           scd.regs[0x38>>1].w = (cdd.status << 8) | 0x01;
           scd.regs[0x3a>>1].w = lut_BCD_16[(lba/75)/60];
           scd.regs[0x3c>>1].w = lut_BCD_16[(lba/75)%60];
