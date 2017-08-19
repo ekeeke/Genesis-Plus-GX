@@ -2137,12 +2137,7 @@ void *retro_get_memory_data(unsigned id)
       case RETRO_MEMORY_SAVE_RAM:
          return sram.sram;
       case RETRO_MEMORY_SYSTEM_RAM:
-
-      if (system_hw == SYSTEM_SMS)
-	return zram; // 0x2000 = 8kb z80 ram
-      else
-	return work_ram; //0x10000 = 64kb 68000 ram
-	
+         return work_ram;
       default:
          return NULL;
    }
