@@ -8,6 +8,14 @@ GENPLUS_SRC_DIR := $(CORE_DIR)/core \
                    $(CORE_DIR)/core/cart_hw \
                    $(CORE_DIR)/core/cart_hw/svp
 
+ifeq ($(HAVE_CHD), 1)
+   INCFLAGS += -I$(CHDLIBDIR)/src -I$(CHDLIBDIR)/deps/libFLAC/include -I$(CHDLIBDIR)/deps/lzma -I$(CHDLIBDIR)/deps/zlib
+   GENPLUS_SRC_DIR += $(CHDLIBDIR)/src
+   GENPLUS_SRC_DIR += $(CHDLIBDIR)/deps/libFLAC
+   GENPLUS_SRC_DIR += $(CHDLIBDIR)/deps/lzma
+   GENPLUS_SRC_DIR += $(CHDLIBDIR)/deps/zlib
+endif
+
 SOURCES_C = $(foreach dir,$(GENPLUS_SRC_DIR),$(wildcard $(dir)/*.c))
 
 ifeq ($(SHARED_LIBVORBIS),)

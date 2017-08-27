@@ -3,7 +3,7 @@
  *
  *  Genesis Plus GX menu
  *
- *  Copyright Eke-Eke (2009-2016)
+ *  Copyright Eke-Eke (2009-2017)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -3634,9 +3634,9 @@ static void showcredits(void)
     if (texture)
       gxDrawTexture(texture, (640-texture->width)/2, (480-texture->height)/2, texture->width, texture->height,255);
 
-    FONT_writeCenter("Genesis Plus Core", 24, 0, 640, 480 - offset, (GXColor)LIGHT_BLUE);
-    FONT_writeCenter("improved emulation code & extra features by Eke-Eke", 18, 0, 640, 516 - offset, (GXColor)WHITE);
-    FONT_writeCenter("original 1.3 version by Charles MacDonald", 18, 0, 640, 534 - offset, (GXColor)WHITE);
+    FONT_writeCenter("Genesis Plus GX Core", 24, 0, 640, 480 - offset, (GXColor)LIGHT_BLUE);
+    FONT_writeCenter("improved emulation code & additional features by Eke-Eke", 18, 0, 640, 516 - offset, (GXColor)WHITE);
+    FONT_writeCenter("original Genesis Plus (1.3) version by Charles MacDonald", 18, 0, 640, 534 - offset, (GXColor)WHITE);
     FONT_writeCenter("original Z80 core by Juergen Buchmueller", 18, 0, 640, 552 - offset, (GXColor)WHITE);
     FONT_writeCenter("original 68k core (Musashi) by Karl Stenerud", 18, 0, 640, 570 - offset, (GXColor)WHITE);
     FONT_writeCenter("original YM2612/2413 cores by Jarek Burczynski, Tatsuyuki Satoh", 18, 0, 640, 588 - offset, (GXColor)WHITE);
@@ -3644,36 +3644,40 @@ static void showcredits(void)
     FONT_writeCenter("Blip Buffer Library & NTSC Video Filter by Shay Green (Blargg)", 18, 0, 640, 624 - offset, (GXColor)WHITE);
     FONT_writeCenter("3-Band EQ implementation by Neil C", 18, 0, 640, 642 - offset, (GXColor)WHITE);
     FONT_writeCenter("Ogg Vorbis 'Tremor' Library by Xiph.org Foundation", 18, 0, 640, 660 - offset, (GXColor)WHITE);
+    FONT_writeCenter("CHD Library by Aaron Giles, Romain Tisserand", 18, 0, 640, 678 - offset, (GXColor)WHITE);
+    FONT_writeCenter("FLAC Library by Josh Coalson & Xiph.org Foundation", 18, 0, 640, 696 - offset, (GXColor)WHITE);
+    FONT_writeCenter("ZLIB Library by Jean-loup Gailly & Mark Adler", 18, 0, 640, 714 - offset, (GXColor)WHITE);
+    FONT_writeCenter("LZMA Library by Igor Pavlov", 18, 0, 640, 732 - offset, (GXColor)WHITE);
 
-    FONT_writeCenter("Special thanks to ...", 20, 0, 640, 700 - offset, (GXColor)LIGHT_GREEN);
-    FONT_writeCenter("Nemesis, Tasco Deluxe, Bart Trzynadlowski, Jorge Cwik, Haze,", 18, 0, 640, 736 - offset, (GXColor)WHITE);
-    FONT_writeCenter("Stef Dallongeville, Notaz, AamirM, Steve Snake, Charles MacDonald", 18, 0, 640, 754 - offset, (GXColor)WHITE);
-    FONT_writeCenter("Spritesmind & SMS Power forums members for their technical help", 18, 0, 640, 772 - offset, (GXColor)WHITE);
+    FONT_writeCenter("Special thanks to ...", 20, 0, 640, 772 - offset, (GXColor)LIGHT_GREEN);
+    FONT_writeCenter("Nemesis, Tasco Deluxe, Mask of Destiny, Bart Trzynadlowski, Haze,", 18, 0, 640, 808 - offset, (GXColor)WHITE);
+    FONT_writeCenter("Jorge Cwik, Stef, Notaz, AamirM, Steve Snake, Charles MacDonald", 18, 0, 640, 826 - offset, (GXColor)WHITE);
+    FONT_writeCenter("Spritesmind & SMS Power forums members for their technical help", 18, 0, 640, 844 - offset, (GXColor)WHITE);
 
-    FONT_writeCenter("Gamecube & Wii port", 24, 0, 640, 830 - offset, (GXColor)LIGHT_BLUE);
-    FONT_writeCenter("porting code, GUI engine & design by Eke-Eke", 18, 0, 640, 866 - offset, (GXColor)WHITE);
-    FONT_writeCenter("original Gamecube port by Softdev, Honkeykong & Markcube", 18, 0, 640, 884 - offset, (GXColor)WHITE);
-    FONT_writeCenter("original icons, logo & button design by Low Lines", 18, 0, 640, 906 - offset, (GXColor)WHITE);
-    FONT_writeCenter("credit illustration by Orioto (Deviant Art)", 18, 0, 640, 924 - offset, (GXColor)WHITE);
-    FONT_writeCenter("memory card icon design by Brakken", 18, 0, 640, 942 - offset, (GXColor)WHITE);
-    FONT_writeCenter("libogc by Shagkur & various other contibutors", 18, 0, 640, 960 - offset, (GXColor)WHITE);
-    FONT_writeCenter("libfat by Chism", 18, 0, 640, 978 - offset, (GXColor)WHITE);
-    FONT_writeCenter("wiiuse by Michael Laforest (Para)", 18, 0, 640, 996 - offset, (GXColor)WHITE);
-    FONT_writeCenter("asndlib & OGG player by Francisco Muñoz (Hermes)", 18, 0, 640, 1014 - offset, (GXColor)WHITE);
-    FONT_writeCenter("zlib & libpng by their respective authors", 18, 0, 640, 1032 - offset, (GXColor)WHITE);
-    FONT_writeCenter("devkitPPC by Wintermute", 18, 0, 640, 1050 - offset, (GXColor)WHITE);
+    FONT_writeCenter("Gamecube & Wii port", 24, 0, 640, 902 - offset, (GXColor)LIGHT_BLUE);
+    FONT_writeCenter("porting code, GUI engine & design by Eke-Eke", 18, 0, 640, 938 - offset, (GXColor)WHITE);
+    FONT_writeCenter("original Gamecube port by Softdev, Honkeykong & Markcube", 18, 0, 640, 956 - offset, (GXColor)WHITE);
+    FONT_writeCenter("original icons, logo & button design by Low Lines", 18, 0, 640, 974 - offset, (GXColor)WHITE);
+    FONT_writeCenter("credit illustration by Orioto (Deviant Art)", 18, 0, 640, 992 - offset, (GXColor)WHITE);
+    FONT_writeCenter("memory card icon design by Brakken", 18, 0, 640, 1010 - offset, (GXColor)WHITE);
+    FONT_writeCenter("libogc by Shagkur & various other contibutors", 18, 0, 640, 1028 - offset, (GXColor)WHITE);
+    FONT_writeCenter("libfat by Chism", 18, 0, 640, 1046 - offset, (GXColor)WHITE);
+    FONT_writeCenter("wiiuse by Michael Laforest (Para)", 18, 0, 640, 1064 - offset, (GXColor)WHITE);
+    FONT_writeCenter("asndlib & OGG player by Francisco Muñoz (Hermes)", 18, 0, 640, 1082 - offset, (GXColor)WHITE);
+    FONT_writeCenter("libpng by their respective authors", 18, 0, 640, 1100 - offset, (GXColor)WHITE);
+    FONT_writeCenter("devkitPPC by Wintermute", 18, 0, 640, 1118 - offset, (GXColor)WHITE);
 
-    FONT_writeCenter("Special thanks to ...", 20, 0, 640, 1090 - offset, (GXColor)LIGHT_GREEN);
-    FONT_writeCenter("Softdev, Tmbinc, Costis, Emukiddid, Team Twiizer", 18, 0, 640, 1126 - offset, (GXColor)WHITE);
-    FONT_writeCenter("Brakken & former Tehskeen members for their support", 18, 0, 640, 1144 - offset, (GXColor)WHITE);
-    FONT_writeCenter("Anca, my wife, for her patience & various ideas", 18, 0, 640, 1162 - offset, (GXColor)WHITE);
+    FONT_writeCenter("Special thanks to ...", 20, 0, 640, 1158 - offset, (GXColor)LIGHT_GREEN);
+    FONT_writeCenter("Softdev, Tmbinc, Costis, Emukiddid, Team Twiizer", 18, 0, 640, 1194 - offset, (GXColor)WHITE);
+    FONT_writeCenter("Brakken & former Tehskeen members for their support", 18, 0, 640, 1212 - offset, (GXColor)WHITE);
+    FONT_writeCenter("Anca, my wife, for her patience & various ideas", 18, 0, 640, 1230 - offset, (GXColor)WHITE);
 
     gxSetScreen();
     p = m_input.keys;
     gxSetScreen();
     p |= m_input.keys;
     offset ++;
-    if (offset > 1144)
+    if (offset > 1222)
       offset = 0;
   }
 

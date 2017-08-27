@@ -1,6 +1,7 @@
 DEBUG = 0
 LOGSOUND = 0
 FRONTEND_SUPPORTS_RGB565 = 1
+HAVE_CHD = 1
 
 # system platform
 ifeq ($(platform),)
@@ -70,7 +71,7 @@ else ifeq ($(platform), osx)
    fpic := -fPIC
    SHARED := -dynamiclib
    ifeq ($(arch),ppc)
-      ENDIANNESS_DEFINES := -DBYTE_ORDER=BIG_ENDIAN
+		ENDIANNESS_DEFINES := -DBYTE_ORDER=BIG_ENDIAN -DCPU_IS_BIG_ENDIAN=1 -DWORDS_BIGENDIAN=1
    else
       ENDIANNESS_DEFINES := -DLSB_FIRST -DBYTE_ORDER=LITTLE_ENDIAN
    endif
@@ -134,19 +135,18 @@ else ifeq ($(platform), qnx)
 else ifneq (,$(filter $(platform), ps3 sncps3 psl1ght))
    TARGET := $(TARGET_NAME)_libretro_ps3.a
    PLATFORM_DEFINES := -D__CELLOS_LV2 -DALT_RENDER
+	ENDIANNESS_DEFINES := -DBYTE_ORDER=BIG_ENDIAN -DBYTE_ORDER=BIG_ENDIAN -DCPU_IS_BIG_ENDIAN=1 -DWORDS_BIGENDIAN=1
    STATIC_LINKING = 1
 
    # sncps3
    ifneq (,$(findstring sncps3,$(platform)))
       CC = $(CELL_SDK)/host-win32/sn/bin/ps3ppusnc.exe
       AR = $(CELL_SDK)/host-win32/sn/bin/ps3snarl.exe
-      PLATFORM_DEFINES += -DBYTE_ORDER=BIG_ENDIAN
 
    # PS3
    else ifneq (,$(findstring ps3,$(platform)))
       CC = $(CELL_SDK)/host-win32/ppu/bin/ppu-lv2-gcc.exe
       AR = $(CELL_SDK)/host-win32/ppu/bin/ppu-lv2-ar.exe
-      PLATFORM_DEFINES += -DBYTE_ORDER=BIG_ENDIAN
 
    # Lightweight PS3 Homebrew SDK
    else ifneq (,$(findstring psl1ght,$(platform)))
@@ -193,7 +193,7 @@ else ifeq ($(platform), xenon)
    CC = xenon-gcc$(EXE_EXT)
    AR = xenon-ar$(EXE_EXT)
    PLATFORM_DEFINES := -D__LIBXENON__ -DALT_RENDER
-   ENDIANNESS_DEFINES := -DBYTE_ORDER=BIG_ENDIAN
+	ENDIANNESS_DEFINES := -DBYTE_ORDER=BIG_ENDIAN -DBYTE_ORDER=BIG_ENDIAN -DCPU_IS_BIG_ENDIAN=1 -DWORDS_BIGENDIAN=1
    STATIC_LINKING = 1
 
 # Nintendo GameCube / Wii / WiiU
@@ -201,7 +201,7 @@ else ifneq (,$(filter $(platform), ngc wii wiiu))
    TARGET := $(TARGET_NAME)_libretro_$(platform).a
    CC = $(DEVKITPPC)/bin/powerpc-eabi-gcc$(EXE_EXT)
    AR = $(DEVKITPPC)/bin/powerpc-eabi-ar$(EXE_EXT)
-   ENDIANNESS_DEFINES := -DBYTE_ORDER=BIG_ENDIAN
+	ENDIANNESS_DEFINES := -DBYTE_ORDER=BIG_ENDIAN -DCPU_IS_BIG_ENDIAN=1 -DWORDS_BIGENDIAN=1
    PLATFORM_DEFINES := -DGEKKO -mcpu=750 -meabi -mhard-float -DALT_RENDER
    PLATFORM_DEFINES += -U__INT32_TYPE__ -U __UINT32_TYPE__ -D__INT32_TYPE__=int
    STATIC_LINKING = 1
@@ -241,7 +241,6 @@ else
    TARGET := $(TARGET_NAME)_libretro.dll
    CC = gcc
    SHARED := -shared -static-libgcc -static-libstdc++ -Wl,--version-script=libretro/link.T -Wl,--no-undefined
-
    ENDIANNESS_DEFINES := -DLSB_FIRST -DBYTE_ORDER=LITTLE_ENDIAN
    PLATFORM_DEFINES := -DHAVE_ZLIB
 
@@ -267,6 +266,9 @@ CORE_DIR := .
 ifeq ($(SHARED_LIBVORBIS),)
    TREMOR_SRC_DIR := $(CORE_DIR)/core/tremor
 endif
+ifeq ($(HAVE_CHD), 1)
+   CHDLIBDIR = $(CORE_DIR)/core/cd_hw/libchdr
+endif
 LIBRETRO_DIR := $(CORE_DIR)/libretro
 
 include $(LIBRETRO_DIR)/Makefile.common
@@ -282,6 +284,11 @@ ifeq ($(SHARED_LIBVORBIS), 1)
 else
 	DEFINES := -DUSE_LIBTREMOR
 endif
+
+ifeq ($(HAVE_CHD), 1)
+	DEFINES += -DUSE_LIBCHDR -DPACKAGE_VERSION=\"1.3.2\" -DFLAC_API_EXPORTS -DFLAC__HAS_OGG=0 -DHAVE_LROUND -DHAVE_STDINT_H -DHAVE_SYS_PARAM_H -D_7ZIP_ST
+endif
+
 CFLAGS += $(fpic) $(DEFINES) $(CODE_DEFINES)
 
 ifeq ($(FRONTEND_SUPPORTS_RGB565), 1)
