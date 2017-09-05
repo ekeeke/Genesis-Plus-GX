@@ -3,6 +3,8 @@ LOGSOUND = 0
 FRONTEND_SUPPORTS_RGB565 = 1
 HAVE_CHD = 1
 
+CORE_DIR := .
+
 # system platform
 ifeq ($(platform),)
    platform = unix
@@ -39,7 +41,7 @@ endif
 ifneq (,$(findstring unix,$(platform)))
    TARGET := $(TARGET_NAME)_libretro.so
    fpic := -fPIC
-   SHARED := -shared -Wl,--version-script=libretro/link.T -Wl,--no-undefined
+   SHARED := -shared -Wl,--version-script=$(CORE_DIR)/libretro/link.T -Wl,--no-undefined
    ENDIANNESS_DEFINES := -DLSB_FIRST -DBYTE_ORDER=LITTLE_ENDIAN
    PLATFORM_DEFINES := -DHAVE_ZLIB
 
@@ -60,7 +62,7 @@ ifneq (,$(findstring unix,$(platform)))
 else ifeq ($(platform), linux-portable)
    TARGET := $(TARGET_NAME)_libretro.so
    fpic := -fPIC -nostdlib
-   SHARED := -shared -Wl,--version-script=libretro/link.T
+   SHARED := -shared -Wl,--version-script=$(CORE_DIR)/libretro/link.T
    ENDIANNESS_DEFINES := -DLSB_FIRST -DBYTE_ORDER=LITTLE_ENDIAN
    PLATFORM_DEFINES := -DHAVE_ZLIB
    LIBS =
@@ -124,7 +126,7 @@ else ifeq ($(platform), theos_ios)
 else ifeq ($(platform), qnx)
    TARGET := $(TARGET_NAME)_libretro_qnx.so
    fpic := -fPIC
-   SHARED := -shared -Wl,--version-script=libretro/link.T -Wl,--no-undefined
+   SHARED := -shared -Wl,--version-script=$(CORE_DIR)/libretro/link.T -Wl,--no-undefined
    ENDIANNESS_DEFINES := -DLSB_FIRST -DBYTE_ORDER=LITTLE_ENDIAN
    PLATFORM_DEFINES := -DHAVE_ZLIB
    CC = qcc -Vgcc_ntoarmv7le
@@ -230,7 +232,7 @@ else ifeq ($(platform), gcw0)
    TARGET := $(TARGET_NAME)_libretro.so
    CC = /opt/gcw0-toolchain/usr/bin/mipsel-linux-gcc
    AR = /opt/gcw0-toolchain/usr/bin/mipsel-linux-ar
-   SHARED := -shared -Wl,--version-script=libretro/link.T -Wl,--no-undefined
+   SHARED := -shared -Wl,--version-script=$(CORE_DIR)/libretro/link.T -Wl,--no-undefined
    fpic := -fPIC
    LDFLAGS += $(PTHREAD_FLAGS)
    CFLAGS += $(PTHREAD_FLAGS) -DHAVE_MKDIR
@@ -307,7 +309,7 @@ LIBS =
 else
    TARGET := $(TARGET_NAME)_libretro.dll
    CC = gcc
-   SHARED := -shared -static-libgcc -static-libstdc++ -Wl,--version-script=libretro/link.T -Wl,--no-undefined
+   SHARED := -shared -static-libgcc -static-libstdc++ -Wl,--version-script=$(CORE_DIR)/libretro/link.T -Wl,--no-undefined
    ENDIANNESS_DEFINES := -DLSB_FIRST -DBYTE_ORDER=LITTLE_ENDIAN
    PLATFORM_DEFINES := -DHAVE_ZLIB
 
@@ -324,17 +326,11 @@ else
    CFLAGS += -O2 -DNDEBUG
 endif
 
-CORE_DIR := .
-
 ifeq ($(SHARED_LIBVORBIS),)
    TREMOR_SRC_DIR := $(CORE_DIR)/core/tremor
 endif
-ifeq ($(HAVE_CHD), 1)
-   CHDLIBDIR = $(CORE_DIR)/core/cd_hw/libchdr
-endif
-LIBRETRO_DIR := $(CORE_DIR)/libretro
 
-include $(LIBRETRO_DIR)/Makefile.common
+include $(CORE_DIR)/libretro/Makefile.common
 
 OBJECTS := $(SOURCES_C:.c=.o)
 
@@ -352,7 +348,7 @@ ifeq ($(HAVE_CHD), 1)
 	DEFINES += -DUSE_LIBCHDR -DPACKAGE_VERSION=\"1.3.2\" -DFLAC_API_EXPORTS -DFLAC__HAS_OGG=0 -DHAVE_LROUND -DHAVE_STDINT_H -DHAVE_SYS_PARAM_H -D_7ZIP_ST
 endif
 
-CFLAGS += $(fpic) $(DEFINES) $(CODE_DEFINES)
+CFLAGS += $(fpic) $(DEFINES) $(CODE_DEFINES) $(FLAGS)
 
 ifeq ($(FRONTEND_SUPPORTS_RGB565), 1)
    # if you have a new frontend that supports RGB565
