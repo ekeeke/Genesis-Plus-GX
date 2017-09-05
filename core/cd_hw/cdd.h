@@ -46,6 +46,11 @@
 #include "tremor/ivorbisfile.h"
 #endif
 
+#if defined(USE_LIBCHDR)
+#include "libchdr/src/chd.h"
+#include "libchdr/src/cdrom.h"
+#endif
+
 #define cdd scd.cdd_hw
 
 /* CDD status */
@@ -58,8 +63,6 @@
 #define CD_STOP  0x09
 #define NO_DISC  0x0B
 #define CD_END   0x0C
-
-#define CD_MAX_TRACKS 100
 
 /* CD track */
 typedef struct
@@ -79,9 +82,21 @@ typedef struct
 {
   int end;
   int last;
-  track_t tracks[CD_MAX_TRACKS];
+  track_t tracks[100];
   cdStream *sub;
 } toc_t; 
+
+#if defined(USE_LIBCHDR)
+/* CHD file */
+typedef struct
+{
+  chd_file *file;
+  uint8 *hunk;
+  int hunkbytes;
+  int hunknum;
+  int hunkofs;
+} chd_t;
+#endif
 
 /* CDD hardware */
 typedef struct
@@ -96,6 +111,9 @@ typedef struct
   uint8 status;
   uint16 sectorSize;
   toc_t toc;
+#if defined(USE_LIBCHDR)
+  chd_t chd;
+#endif
   int16 audio[2];
 } cdd_t; 
 
