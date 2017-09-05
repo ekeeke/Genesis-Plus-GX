@@ -41,9 +41,6 @@ ifeq ($(HAVE_CHD), 1)
 					 $(CHDLIBDIR)/deps/libFLAC/memory.c \
 					 $(CHDLIBDIR)/deps/libFLAC/metadata_iterators.c \
 					 $(CHDLIBDIR)/deps/libFLAC/metadata_object.c \
-					 $(CHDLIBDIR)/deps/libFLAC/ogg_decoder_aspect.c \
-					 $(CHDLIBDIR)/deps/libFLAC/ogg_encoder_aspect.c \
-					 $(CHDLIBDIR)/deps/libFLAC/ogg_helper.c \
 					 $(CHDLIBDIR)/deps/libFLAC/ogg_mapping.c \
 					 $(CHDLIBDIR)/deps/libFLAC/stream_decoder.c \
 					 $(CHDLIBDIR)/deps/libFLAC/stream_encoder.c \
@@ -62,7 +59,7 @@ ifeq ($(HAVE_CHD), 1)
    endif
 endif
 
-SOURCES_C = $(foreach dir,$(GENPLUS_SRC_DIR),$(wildcard $(dir)/*.c))
+SOURCES_C += $(foreach dir,$(GENPLUS_SRC_DIR),$(wildcard $(dir)/*.c))
 
 ifneq ($(STATIC_LINKING), 1)
 SOURCES_C += \
@@ -80,8 +77,7 @@ ifeq ($(SHARED_LIBVORBIS),)
    SOURCES_C += $(foreach dir,$(TREMOR_SRC_DIR),$(wildcard $(dir)/*.c))
 endif
 
-SOURCES_C += $(LIBRETRO_DIR)/libretro.c
-
-SOURCES_C += $(LIBRETRO_DIR)/scrc32.c
+SOURCES_C += $(LIBRETRO_DIR)/libretro.c \
+				 $(LIBRETRO_DIR)/scrc32.c
 
 INCFLAGS += $(foreach dir,$(GENPLUS_SRC_DIR),-I$(dir)) -I$(LIBRETRO_DIR) -I$(LIBRETRO_COMM_DIR)/include
