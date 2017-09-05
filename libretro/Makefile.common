@@ -24,12 +24,9 @@ ifeq ($(HAVE_CHD), 1)
 					 $(CHDLIBDIR)/src/huffman.c \
 					 $(CHDLIBDIR)/deps/libFLAC/bitmath.c \
 					 $(CHDLIBDIR)/deps/libFLAC/bitreader.c \
-					 $(CHDLIBDIR)/deps/libFLAC/bitwriter.c \
 					 $(CHDLIBDIR)/deps/libFLAC/cpu.c \
 					 $(CHDLIBDIR)/deps/libFLAC/crc.c \
 					 $(CHDLIBDIR)/deps/libFLAC/fixed.c \
-					 $(CHDLIBDIR)/deps/libFLAC/fixed_intrin_sse2.c \
-					 $(CHDLIBDIR)/deps/libFLAC/fixed_intrin_ssse3.c \
 					 $(CHDLIBDIR)/deps/libFLAC/float.c \
 					 $(CHDLIBDIR)/deps/libFLAC/format.c \
 					 $(CHDLIBDIR)/deps/libFLAC/lpc.c \
@@ -39,17 +36,7 @@ ifeq ($(HAVE_CHD), 1)
 					 $(CHDLIBDIR)/deps/libFLAC/lpc_intrin_sse41.c \
 					 $(CHDLIBDIR)/deps/libFLAC/md5.c \
 					 $(CHDLIBDIR)/deps/libFLAC/memory.c \
-					 $(CHDLIBDIR)/deps/libFLAC/metadata_iterators.c \
-					 $(CHDLIBDIR)/deps/libFLAC/metadata_object.c \
-					 $(CHDLIBDIR)/deps/libFLAC/ogg_mapping.c \
 					 $(CHDLIBDIR)/deps/libFLAC/stream_decoder.c \
-					 $(CHDLIBDIR)/deps/libFLAC/stream_encoder.c \
-					 $(CHDLIBDIR)/deps/libFLAC/stream_encoder_framing.c \
-					 $(CHDLIBDIR)/deps/libFLAC/stream_encoder_intrin_avx2.c \
-					 $(CHDLIBDIR)/deps/libFLAC/stream_encoder_intrin_sse2.c \
-					 $(CHDLIBDIR)/deps/libFLAC/stream_encoder_intrin_ssse3.c \
-					 $(CHDLIBDIR)/deps/libFLAC/window.c \
-					 $(CHDLIBDIR)/deps/libFLAC/windows_unicode_filenames.c \
 					 $(CHDLIBDIR)/deps/lzma/LzFind.c \
 					 $(CHDLIBDIR)/deps/lzma/LzmaDec.c \
 					 $(CHDLIBDIR)/deps/lzma/LzmaEnc.c
