@@ -348,6 +348,13 @@ ifeq ($(HAVE_CHD), 1)
 	DEFINES += -DUSE_LIBCHDR -DPACKAGE_VERSION=\"1.3.2\" -DFLAC_API_EXPORTS -DFLAC__HAS_OGG=0 -DHAVE_LROUND -DHAVE_STDINT_H -D_7ZIP_ST
 endif
 
+
+ifeq (,$(filter $(platform), ps3 sncps3 psl1ght))
+DEFINES += -DHAVE_SYS_PARAM_H
+else
+DEFINES += -Dflac_max=MAX -Dflac_min=MIN -Dfseeko=fseek -Dftello=ftell
+endif
+
 CFLAGS += $(fpic) $(DEFINES) $(CODE_DEFINES) $(FLAGS)
 
 ifeq ($(FRONTEND_SUPPORTS_RGB565), 1)
