@@ -390,10 +390,11 @@ void lzma_allocator_free(void* p )
 	}
 }
 
-//-------------------------------------------------
-//  lzma_fast_alloc - fast malloc for lzma, which
-//  allocates and frees memory frequently
-//-------------------------------------------------
+/*-------------------------------------------------
+ *  lzma_fast_alloc - fast malloc for lzma, which
+ *  allocates and frees memory frequently
+ *-------------------------------------------------
+ */
 
 void *lzma_fast_alloc(void *p, size_t size)
 {
@@ -401,22 +402,22 @@ void *lzma_fast_alloc(void *p, size_t size)
    uint32_t *addr;
 	lzma_allocator *codec = (lzma_allocator *)(p);
 
-	// compute the size, rounding to the nearest 1k
+	/* compute the size, rounding to the nearest 1k */
 	size = (size + 0x3ff) & ~0x3ff;
 
-	// reuse a hunk if we can
+	/* reuse a hunk if we can */
 	for (scan = 0; scan < MAX_LZMA_ALLOCS; scan++)
 	{
 		uint32_t *ptr = codec->allocptr[scan];
 		if (ptr != NULL && size == *ptr)
 		{
-			// set the low bit of the size so we don't match next time
+			/* set the low bit of the size so we don't match next time */
 			*ptr |= 1;
 			return ptr + 1;
 		}
 	}
 
-	// alloc a new one and put it into the list
+	/* alloc a new one and put it into the list */
 	addr = (uint32_t *)malloc(sizeof(uint8_t) * (size + sizeof(uint32_t)));
 	if (addr==NULL)
 		return NULL;
@@ -429,16 +430,17 @@ void *lzma_fast_alloc(void *p, size_t size)
 		}
 	}
 
-	// set the low bit of the size so we don't match next time
+	/* set the low bit of the size so we don't match next time */
 	*addr = size | 1;
 	return addr + 1;
 }
 
 
-//-------------------------------------------------
-//  lzma_fast_free - fast free for lzma, which
-//  allocates and frees memory frequently
-//-------------------------------------------------
+/*-------------------------------------------------
+ *  lzma_fast_free - fast free for lzma, which
+ *  allocates and frees memory frequently
+ *-------------------------------------------------
+ */
 
 void lzma_fast_free(void *p, void *address)
 {
@@ -525,36 +527,38 @@ chd_error lzma_codec_init(void* codec, uint32_t hunkbytes)
 }
 
 
-//-------------------------------------------------
-//  lzma_codec_free
-//-------------------------------------------------
+/*-------------------------------------------------
+ *  lzma_codec_free
+ *-------------------------------------------------
+ */
 
 void lzma_codec_free(void* codec)
 {
 	lzma_codec_data* lzma_codec = (lzma_codec_data*) codec;
 	lzma_allocator* alloc = &lzma_codec->allocator;
 
-	// free memory
+	/* free memory */
 	lzma_allocator_free(alloc);
 	LzmaDec_Free(&lzma_codec->decoder, (ISzAlloc*)&lzma_codec->allocator);
 }
 
 
-//-------------------------------------------------
-//  decompress - decompress data using the LZMA
-//  codec
-//-------------------------------------------------
+/*-------------------------------------------------
+ *  decompress - decompress data using the LZMA
+ *  codec
+ *-------------------------------------------------
+ */
 
 chd_error lzma_codec_decompress(void* codec, const uint8_t *src, uint32_t complen, uint8_t *dest, uint32_t destlen)
 {
 	ELzmaStatus status;
    SRes res;
    SizeT consumedlen, decodedlen;
-	// initialize
+	/* initialize */
 	lzma_codec_data* lzma_codec = (lzma_codec_data*) codec;
 	LzmaDec_Init(&lzma_codec->decoder);
 
-	// decode
+	/* decode */
 	consumedlen = complen;
 	decodedlen = destlen;
 	res = LzmaDec_DecodeToBuf(&lzma_codec->decoder, dest, &decodedlen, src, &consumedlen, LZMA_FINISH_END, &status);
@@ -563,13 +567,13 @@ chd_error lzma_codec_decompress(void* codec, const uint8_t *src, uint32_t comple
 	return CHDERR_NONE;
 }
 
-// cdlz
+/* cdlz */
 chd_error cdlz_codec_init(void* codec, uint32_t hunkbytes)
 {
 	chd_error ret;
 	cdlz_codec_data* cdlz = (cdlz_codec_data*) codec;
 
-	// allocate buffer
+	/* allocate buffer */
 	cdlz->buffer = (uint8_t*)malloc(sizeof(uint8_t) * hunkbytes);
 	if (cdlz->buffer == NULL)
 		return CHDERR_OUT_OF_MEMORY;
@@ -604,24 +608,24 @@ chd_error cdlz_codec_decompress(void *codec, const uint8_t *src, uint32_t comple
 	uint32_t framenum;
 	cdlz_codec_data* cdlz = (cdlz_codec_data*)codec;
 
-	// determine header bytes
+	/* determine header bytes */
 	uint32_t frames = destlen / CD_FRAME_SIZE;
 	uint32_t complen_bytes = (destlen < 65536) ? 2 : 3;
 	uint32_t ecc_bytes = (frames + 7) / 8;
 	uint32_t header_bytes = ecc_bytes + complen_bytes;
 
-	// extract compressed length of base
+	/* extract compressed length of base */
 	uint32_t complen_base = (src[ecc_bytes + 0] << 8) | src[ecc_bytes + 1];
 	if (complen_bytes > 2)
 		complen_base = (complen_base << 8) | src[ecc_bytes + 2];
 
-	// reset and decode
+	/* reset and decode */
 	lzma_codec_decompress(&cdlz->base_decompressor, &src[header_bytes], complen_base, &cdlz->buffer[0], frames * CD_MAX_SECTOR_DATA);
 #ifdef WANT_SUBCODE
 	zlib_codec_decompress(&cdlz->subcode_decompressor, &src[header_bytes + complen_base], complen - complen_base - header_bytes, &cdlz->buffer[frames * CD_MAX_SECTOR_DATA], frames * CD_MAX_SUBCODE_DATA);
 #endif
 
-	// reassemble the data
+	/* reassemble the data */
 	for (framenum = 0; framenum < frames; framenum++)
 	{
 		memcpy(&dest[framenum * CD_FRAME_SIZE], &cdlz->buffer[framenum * CD_MAX_SECTOR_DATA], CD_MAX_SECTOR_DATA);
@@ -630,7 +634,7 @@ chd_error cdlz_codec_decompress(void *codec, const uint8_t *src, uint32_t comple
 #endif
 
 #ifdef WANT_RAW_DATA_SECTOR
-		// reconstitute the ECC data and sync header
+		/* reconstitute the ECC data and sync header */
 		uint8_t *sector = &dest[framenum * CD_FRAME_SIZE];
 		if ((src[framenum / 8] & (1 << (framenum % 8))) != 0)
 		{
@@ -643,14 +647,14 @@ chd_error cdlz_codec_decompress(void *codec, const uint8_t *src, uint32_t comple
 }
 
 
-// cdzl
+/* cdzl */
 
 chd_error cdzl_codec_init(void *codec, uint32_t hunkbytes)
 {
 	chd_error ret;
 	cdzl_codec_data* cdzl = (cdzl_codec_data*)codec;
 
-	// make sure the CHD's hunk size is an even multiple of the frame size
+	/* make sure the CHD's hunk size is an even multiple of the frame size */
 	if (hunkbytes % CD_FRAME_SIZE != 0)
 		return CHDERR_CODEC_ERROR;
 
@@ -688,24 +692,24 @@ chd_error cdzl_codec_decompress(void *codec, const uint8_t *src, uint32_t comple
 	uint32_t framenum;
 	cdzl_codec_data* cdzl = (cdzl_codec_data*)codec;
 
-	// determine header bytes
+	/* determine header bytes */
 	uint32_t frames = destlen / CD_FRAME_SIZE;
 	uint32_t complen_bytes = (destlen < 65536) ? 2 : 3;
 	uint32_t ecc_bytes = (frames + 7) / 8;
 	uint32_t header_bytes = ecc_bytes + complen_bytes;
 
-	// extract compressed length of base
+	/* extract compressed length of base */
 	uint32_t complen_base = (src[ecc_bytes + 0] << 8) | src[ecc_bytes + 1];
 	if (complen_bytes > 2)
 		complen_base = (complen_base << 8) | src[ecc_bytes + 2];
 
-	// reset and decode
+	/* reset and decode */
 	zlib_codec_decompress(&cdzl->base_decompressor, &src[header_bytes], complen_base, &cdzl->buffer[0], frames * CD_MAX_SECTOR_DATA);
 #ifdef WANT_SUBCODE
 	zlib_codec_decompress(&cdzl->subcode_decompressor, &src[header_bytes + complen_base], complen - complen_base - header_bytes, &cdzl->buffer[frames * CD_MAX_SECTOR_DATA], frames * CD_MAX_SUBCODE_DATA);
 #endif
 
-	// reassemble the data
+	/* reassemble the data */
 	for (framenum = 0; framenum < frames; framenum++)
 	{
 		memcpy(&dest[framenum * CD_FRAME_SIZE], &cdzl->buffer[framenum * CD_MAX_SECTOR_DATA], CD_MAX_SECTOR_DATA);
@@ -714,7 +718,7 @@ chd_error cdzl_codec_decompress(void *codec, const uint8_t *src, uint32_t comple
 #endif
 
 #ifdef WANT_RAW_DATA_SECTOR
-		// reconstitute the ECC data and sync header
+		/* reconstitute the ECC data and sync header */
 		uint8_t *sector = &dest[framenum * CD_FRAME_SIZE];
 		if ((src[framenum / 8] & (1 << (framenum % 8))) != 0)
 		{
@@ -726,20 +730,22 @@ chd_error cdzl_codec_decompress(void *codec, const uint8_t *src, uint32_t comple
 	return CHDERR_NONE;
 }
 
-//**************************************************************************
-//  CD FLAC DECOMPRESSOR
-//**************************************************************************
+/***************************************************************************
+ *  CD FLAC DECOMPRESSOR
+ ***************************************************************************
+ */
 
 
 
-//------------------------------------------------------
-//  cdfl_codec_blocksize - return the optimal block size
-//------------------------------------------------------
+/*------------------------------------------------------
+ *  cdfl_codec_blocksize - return the optimal block size
+ *------------------------------------------------------
+ */
 
 static uint32_t cdfl_codec_blocksize(uint32_t bytes)
 {
-	// determine FLAC block size, which must be 16-65535
-	// clamp to 2k since that's supposed to be the sweet spot
+	/* determine FLAC block size, which must be 16-65535
+	 * clamp to 2k since that's supposed to be the sweet spot */
 	uint32_t hunkbytes = bytes / 4;
 	while (hunkbytes > 2048)
 		hunkbytes /= 2;
@@ -802,7 +808,7 @@ chd_error cdfl_codec_decompress(void *codec, const uint8_t *src, uint32_t comple
 #endif
 	cdfl_codec_data *cdfl = (cdfl_codec_data*)codec;
 
-	// reset and decode
+	/* reset and decode */
 	uint32_t frames = destlen / CD_FRAME_SIZE;
 
 	if (!flac_decoder_reset(&cdfl->decoder, 44100, 2, cdfl_codec_blocksize(frames * CD_MAX_SECTOR_DATA), src, complen))
@@ -838,7 +844,7 @@ chd_error cdfl_codec_decompress(void *codec, const uint8_t *src, uint32_t comple
 
 #define CHD_MAKE_TAG(a,b,c,d)       (((a) << 24) | ((b) << 16) | ((c) << 8) | (d))
 
-// general codecs with CD frontend
+/* general codecs with CD frontend */
 #define CHD_CODEC_CD_ZLIB CHD_MAKE_TAG('c','d','z','l')
 #define CHD_CODEC_CD_LZMA CHD_MAKE_TAG('c','d','l','z')
 #define CHD_CODEC_CD_FLAC CHD_MAKE_TAG('c','d','f','l')
@@ -1124,7 +1130,7 @@ uint16_t crc16(const void *data, uint32_t length)
 
 	const uint8_t *src = (uint8_t*)data;
 
-	// fetch the current value into a local and rip through the source data
+	/* fetch the current value into a local and rip through the source data */
 	while (length-- != 0)
 		crc = (crc << 8) ^ s_table[(crc >> 8) ^ *src++];
 	return crc;
@@ -1235,7 +1241,7 @@ static chd_error decompress_v5_map(chd_file* chd, chd_header* header)
 		uint16_t crc = 0;
 		switch (rawmap[0])
 		{
-			// base types
+			/* base types */
 			case COMPRESSION_TYPE_0:
 			case COMPRESSION_TYPE_1:
 			case COMPRESSION_TYPE_2:
@@ -1258,7 +1264,7 @@ static chd_error decompress_v5_map(chd_file* chd, chd_header* header)
 				last_parent = offset;
 				break;
 
-			// pseudo-types; convert into base types
+			/* pseudo-types; convert into base types */
 			case COMPRESSION_SELF_1:
 				last_self++;
 			case COMPRESSION_SELF_0:
