@@ -50,7 +50,6 @@
 
 /* Whatever other unix that has sys/param.h */
 #elif defined(HAVE_SYS_PARAM_H)
-#include <sys/param.h>
 #define flac_max(a,b) MAX(a,b)
 #define flac_min(a,b) MIN(a,b)
 

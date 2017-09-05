@@ -144,7 +144,7 @@
 #  endif
 #endif /* defined _MSC_VER */
 
-#if defined(_WIN32) && defined(NEED_UTF8_SUPPORT)
+#ifdef _WIN32
 /* All char* strings are in UTF-8 format. Added to support Unicode files on Windows */
 
 #include "share/win_utf8_io.h"
@@ -175,7 +175,7 @@
 
 #endif
 
-#if defined _MSC_VER
+#ifdef _WIN32
 #define flac_stat_s __stat64 /* stat struct */
 #define flac_fstat _fstat64
 #else
