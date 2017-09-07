@@ -2,6 +2,7 @@ DEBUG = 0
 LOGSOUND = 0
 FRONTEND_SUPPORTS_RGB565 = 1
 HAVE_CHD = 1
+HAVE_SYS_PARAM = 1
 
 CORE_DIR := .
 
@@ -139,6 +140,7 @@ else ifneq (,$(filter $(platform), ps3 sncps3 psl1ght))
    PLATFORM_DEFINES := -D__CELLOS_LV2 -DALT_RENDER
 	ENDIANNESS_DEFINES := -DBYTE_ORDER=BIG_ENDIAN -DBYTE_ORDER=BIG_ENDIAN -DCPU_IS_BIG_ENDIAN=1 -DWORDS_BIGENDIAN=1
    STATIC_LINKING = 1
+   HAVE_SYS_PARAM = 0
 
    # sncps3
    ifneq (,$(findstring sncps3,$(platform)))
@@ -242,6 +244,8 @@ else ifeq ($(platform), windows_msvc2010_x64)
 	CC  = cl.exe
 	CXX = cl.exe
 
+HAVE_SYS_PARAM = 0
+
 PATH := $(shell IFS=$$'\n'; cygpath "$(VS100COMNTOOLS)../../VC/bin/amd64"):$(PATH)
 PATH := $(PATH):$(shell IFS=$$'\n'; cygpath "$(VS100COMNTOOLS)../IDE")
 LIB := $(shell IFS=$$'\n'; cygpath "$(VS100COMNTOOLS)../../VC/lib/amd64")
@@ -266,6 +270,8 @@ else ifeq ($(platform), windows_msvc2010_x86)
 	CC  = cl.exe
 	CXX = cl.exe
 
+   HAVE_SYS_PARAM = 0
+
 PATH := $(shell IFS=$$'\n'; cygpath "$(VS100COMNTOOLS)../../VC/bin"):$(PATH)
 PATH := $(PATH):$(shell IFS=$$'\n'; cygpath "$(VS100COMNTOOLS)../IDE")
 LIB := $(shell IFS=$$'\n'; cygpath -w "$(VS100COMNTOOLS)../../VC/lib")
@@ -289,6 +295,8 @@ LIBS =
 else ifeq ($(platform), windows_msvc2005_x86)
 	CC  = cl.exe
 	CXX = cl.exe
+
+   HAVE_SYS_PARAM = 0
 
 PATH := $(shell IFS=$$'\n'; cygpath "$(VS80COMNTOOLS)../../VC/bin"):$(PATH)
 PATH := $(PATH):$(shell IFS=$$'\n'; cygpath "$(VS80COMNTOOLS)../IDE")
@@ -349,7 +357,7 @@ ifeq ($(HAVE_CHD), 1)
 endif
 
 
-ifeq (,$(filter $(platform), ps3 sncps3 psl1ght))
+ifeq ($(HAVE_SYS_PARAM), 1)
 DEFINES += -DHAVE_SYS_PARAM_H
 else
 DEFINES += -Dflac_max=MAX -Dflac_min=MIN -Dfseeko=fseek -Dftello=ftell
