@@ -114,6 +114,8 @@ static uint8_t temp[0x10000];
 static int16 soundbuffer[3068];
 static uint16_t bitmap_data_[720 * 576];
 
+static bool restart_eq = false;
+
 static char g_rom_dir[256];
 static char g_rom_name[256];
 static char *save_dir;
@@ -147,6 +149,11 @@ static uint8_t cheatIndexes[MAX_CHEATS];
 static char ggvalidchars[] = "ABCDEFGHJKLMNPRSTVWXYZ0123456789";
 
 static char arvalidchars[] = "0123456789ABCDEF";
+
+#define SOUND_FREQUENCY 44100
+
+/* Hide the EQ settings for now */
+//#define HAVE_EQ
 
 /************************************
  * Genesis Plus GX implementation
@@ -502,9 +509,9 @@ static void config_default(void)
    config.lp_range       = 0x9999; /* 0.6 in 16.16 fixed point */
    config.low_freq       = 880;
    config.high_freq      = 5000;
-   config.lg             = 1.0;
-   config.mg             = 1.0;
-   config.hg             = 1.0;
+   config.lg             = 100.0;
+   config.mg             = 100.0;
+   config.hg             = 100.0;
    config.dac_bits       = 14; /* MAX DEPTH */ 
    config.ym2413         = 2; /* AUTO */
    config.mono           = 0; /* STEREO output */
@@ -1025,6 +1032,54 @@ static void check_variables(void)
       }
     }
   }
+	
+  var.key = "genesis_plus_gx_audio_filter";
+  environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
+  {
+    if (!strcmp(var.value, "Lowpass"))
+      config.filter = 1;
+
+    #if HAVE_EQ 
+    else if (!strcmp(var.value, "EQ"))
+      config.filter = 2;
+    #endif
+
+    else
+      config.filter = 0;
+  }
+
+  var.key = "genesis_plus_gx_lowpass_range";
+  environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
+  {
+    config.lp_range = (atoi(var.value) * 65536) / 100;
+  } 
+	
+  #if HAVE_EQ
+  var.key = "genesis_plus_gx_audio_eq_low";
+  environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
+  {
+    uint8_t new_lg = atoi(var.value);
+    if (new_lg != config.lg) restart_eq = true;
+    config.lg = new_lg;
+  }
+	
+  var.key = "genesis_plus_gx_audio_eq_mid";
+  environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
+  {
+    uint8_t new_mg = atoi(var.value);
+    if (new_mg != config.mg) restart_eq = true;
+    config.mg = new_mg;
+  }
+	
+  var.key = "genesis_plus_gx_audio_eq_high";
+  environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
+  {
+    uint8_t new_hg = atoi(var.value);
+    if (new_hg != config.hg) restart_eq = true;
+    config.hg = new_hg;
+
+  }
+  #endif
 
   var.key = "genesis_plus_gx_dac_bits";
   environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
@@ -1156,7 +1211,7 @@ static void check_variables(void)
 
   if (reinit)
   {
-    audio_init(44100, 0);
+    audio_init(SOUND_FREQUENCY, 0);
     memcpy(temp, sram.sram, sizeof(temp));
     system_init();
     system_reset();
@@ -1573,6 +1628,15 @@ void retro_set_environment(retro_environment_t cb)
       { "genesis_plus_gx_lock_on", "Cartridge lock-on; disabled|game genie|action replay (pro)|sonic & knuckles" },
       { "genesis_plus_gx_ym2413", "Master System FM; auto|disabled|enabled" },
       { "genesis_plus_gx_dac_bits", "YM2612 DAC quantization; disabled|enabled" },
+      { "genesis_plus_gx_audio_filter", "Audio filter; disabled|Lowpass" },
+      { "genesis_plus_gx_lowpass_range", "Low-pass filter %; 60|65|70|75|80|85|90|95|5|10|15|20|25|30|35|40|45|50|55"},
+      
+      #if HAVE_EQ     
+      { "genesis_plus_gx_audio_eq_low",  "EQ Low;  100|0|5|10|15|20|25|30|35|40|45|50|55|60|65|70|75|80|85|90|95" },
+      { "genesis_plus_gx_audio_eq_mid",  "EQ Mid;  100|0|5|10|15|20|25|30|35|40|45|50|55|60|65|70|75|80|85|90|95" },
+      { "genesis_plus_gx_audio_eq_high", "EQ High; 100|0|5|10|15|20|25|30|35|40|45|50|55|60|65|70|75|80|85|90|95" },
+      #endif
+      
       { "genesis_plus_gx_blargg_ntsc_filter", "Blargg NTSC filter; disabled|monochrome|composite|svideo|rgb" },
       { "genesis_plus_gx_lcd_filter", "LCD Ghosting filter; disabled|enabled" },
       { "genesis_plus_gx_overscan", "Borders; disabled|top/bottom|left/right|full" },
@@ -1750,6 +1814,7 @@ void retro_set_audio_sample_batch(retro_audio_sample_batch_t cb) { audio_cb = cb
 void retro_set_input_poll(retro_input_poll_t cb) { input_poll_cb = cb; }
 void retro_set_input_state(retro_input_state_t cb) { input_state_cb = cb; }
 
+
 void retro_get_system_info(struct retro_system_info *info)
 {
    info->library_name = "Genesis Plus GX";
@@ -1770,7 +1835,7 @@ void retro_get_system_av_info(struct retro_system_av_info *info)
    info->geometry.max_height    = 576;
    info->geometry.aspect_ratio  = vaspect_ratio;
    info->timing.fps             = (double)(system_clock) / (double)lines_per_frame / (double)MCYCLES_PER_LINE;
-   info->timing.sample_rate     = 44100;
+   info->timing.sample_rate     = SOUND_FREQUENCY;
 }
 
 void retro_set_controller_port_device(unsigned port, unsigned device)
@@ -2087,7 +2152,7 @@ bool retro_load_game(const struct retro_game_info *info)
       }
    }
 
-   audio_init(44100,0);
+   audio_init(SOUND_FREQUENCY, 0);
    system_init();
    system_reset();
    is_running = false;
@@ -2265,7 +2330,14 @@ void retro_run(void)
 
    environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE_UPDATE, &updated);
    if (updated)
+   {
       check_variables();
+      if (restart_eq)
+      {
+         audio_set_equalizer();
+         restart_eq = false;
+      }
+   }
 }
 
 #undef  CHUNKSIZE
