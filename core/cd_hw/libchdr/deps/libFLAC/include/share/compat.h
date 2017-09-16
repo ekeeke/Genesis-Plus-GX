@@ -197,6 +197,7 @@
  * This function wraps the MS version to behave more like the ISO version.
  */
 #include <stdarg.h>
+#include <stddef.h>
 #ifdef __cplusplus
 extern "C" {
 #endif
