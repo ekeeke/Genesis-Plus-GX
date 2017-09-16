@@ -1,6 +1,7 @@
 LIBRETRO_COMM_DIR := $(CORE_DIR)/libretro/libretro-common
 LIBRETRO_DIR      := $(CORE_DIR)/libretro
 CHDLIBDIR         := $(CORE_DIR)/core/cd_hw/libchdr
+INCFLAGS          :=
 GENPLUS_SRC_DIR   := $(CORE_DIR)/core \
                    $(CORE_DIR)/core/z80 \
                    $(CORE_DIR)/core/m68k \
@@ -10,6 +11,10 @@ GENPLUS_SRC_DIR   := $(CORE_DIR)/core \
                    $(CORE_DIR)/core/cd_hw \
                    $(CORE_DIR)/core/cart_hw \
                    $(CORE_DIR)/core/cart_hw/svp
+
+ifneq (,$(findstring msvc2003,$(platform)))
+INCFLAGS += -I$(LIBRETRO_COMM_DIR)/include/compat/msvc
+endif
 
 ifeq ($(HAVE_CHD), 1)
    INCFLAGS += -I$(CHDLIBDIR)/src \
