@@ -39,7 +39,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#if defined(_MSC_VER)
+#if defined(_MSC_VER) && !defined(_XBOX)
 #  include <intrin.h> /* for __cpuid() and _xgetbv() */
 #endif
 

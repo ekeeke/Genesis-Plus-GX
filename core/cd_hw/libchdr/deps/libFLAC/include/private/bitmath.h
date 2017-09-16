@@ -38,7 +38,7 @@
 
 #include "share/compat.h"
 
-#if defined(_MSC_VER)
+#if defined(_MSC_VER) && !defined(_XBOX)
 #include <intrin.h> /* for _BitScanReverse* */
 #endif
 
