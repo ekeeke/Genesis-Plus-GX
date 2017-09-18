@@ -2189,13 +2189,10 @@ unsigned retro_get_region(void) { return vdp_pal ? RETRO_REGION_PAL : RETRO_REGI
 
 void *retro_get_memory_data(unsigned id)
 {
-   if (!sram.on)
-      return NULL;
-
    switch (id)
    {
       case RETRO_MEMORY_SAVE_RAM:
-         return sram.sram;
+         return sram.on ? sram.sram : NULL;
       case RETRO_MEMORY_SYSTEM_RAM:
          return work_ram;
       default:
@@ -2207,13 +2204,13 @@ size_t retro_get_memory_size(unsigned id)
 {
    int i;
 
-   if (!sram.on)
-      return 0;
-
    switch (id)
    {
       case RETRO_MEMORY_SAVE_RAM:
       {
+        if (!sram.on)
+          return 0;
+
         /* if emulation is not running, we assume the frontend is requesting SRAM size for loading */
         if (!is_running)
         {
