@@ -20,11 +20,11 @@ typedef int16_t INT16;
 typedef int8_t INT8;
 #endif
 
-#define core_file FILE
-#define core_fopen(file) fopen(file, "rb")
-#define core_fseek fseek
-#define core_fread(fc, buff, len) fread(buff, 1, len, fc)
-#define core_fclose fclose
-#define core_ftell ftell
+#define core_file                 cdStream
+#define core_fopen                cdStreamOpen
+#define core_fseek                cdStreamSeek
+#define core_fread(fc, buff, len) cdStreamRead(buff, 1, len, fc)
+#define core_fclose               cdStreamClose
+#define core_ftell                cdStreamTell
 
 #endif
