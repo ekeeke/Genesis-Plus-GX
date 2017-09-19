@@ -153,7 +153,7 @@ static char arvalidchars[] = "0123456789ABCDEF";
 #define SOUND_FREQUENCY 44100
 
 /* Hide the EQ settings for now */
-//#define HAVE_EQ
+/*#define HAVE_EQ*/
 
 /************************************
  * Genesis Plus GX implementation
@@ -509,9 +509,9 @@ static void config_default(void)
    config.lp_range       = 0x9999; /* 0.6 in 16.16 fixed point */
    config.low_freq       = 880;
    config.high_freq      = 5000;
-   config.lg             = 100.0;
-   config.mg             = 100.0;
-   config.hg             = 100.0;
+   config.lg             = 100;
+   config.mg             = 100;
+   config.hg             = 100;
    config.dac_bits       = 14; /* MAX DEPTH */ 
    config.ym2413         = 2; /* AUTO */
    config.mono           = 0; /* STEREO output */
@@ -1240,9 +1240,9 @@ static uint32_t decode_cheat(char *string, int index)
    uint8_t ref = 0;
 
    if ((system_hw & SYSTEM_PBC) == SYSTEM_MD){
-      //If system is Genesis-based
+      /*If system is Genesis-based*/
 
-      //Game-Genie
+      /*Game-Genie*/
       if ((strlen(string) >= 9) && (string[4] == '-'))
       {
          for (i = 0; i < 8; i++)
@@ -1286,7 +1286,7 @@ static uint32_t decode_cheat(char *string, int index)
          len = 9;
       }
 
-      //Patch and PAR
+      /*Patch and PAR*/
       else if ((strlen(string) >=9) && (string[6] == ':'))
       {
          /* decode 24-bit address */
@@ -1310,9 +1310,9 @@ static uint32_t decode_cheat(char *string, int index)
          len = 11;
       }
    } else {
-      //If System is Master-based
+      /*If System is Master-based*/
 
-      //Game Genie
+      /*Game Genie*/
       if ((strlen(string) >=7) && (string[3] == '-'))
       {
          /* decode 8-bit data */
@@ -1361,7 +1361,7 @@ static uint32_t decode_cheat(char *string, int index)
          }
       }
 
-      //Action Replay
+      /*Action Replay*/
       else if ((strlen(string) >=9) && (string[4] == '-')){
          string+=2;
          /* decode 16-bit address */
@@ -1385,7 +1385,7 @@ static uint32_t decode_cheat(char *string, int index)
          len = 9;
       }
 
-      //Fusion RAM
+      /*Fusion RAM*/
       else if ((strlen(string) >=7) && (string[4] == ':'))
       {
          /* decode 16-bit address */
@@ -1409,7 +1409,7 @@ static uint32_t decode_cheat(char *string, int index)
          len = 7;
       }
 
-      //Fusion ROM
+      /*Fusion ROM*/
       else if ((strlen(string) >=9) && (string[6] == ':'))
       {
          /* decode reference 8-bit data */
@@ -1628,7 +1628,7 @@ void retro_set_environment(retro_environment_t cb)
       { "genesis_plus_gx_lock_on", "Cartridge lock-on; disabled|game genie|action replay (pro)|sonic & knuckles" },
       { "genesis_plus_gx_ym2413", "Master System FM; auto|disabled|enabled" },
       { "genesis_plus_gx_dac_bits", "YM2612 DAC quantization; disabled|enabled" },
-      { "genesis_plus_gx_audio_filter", "Audio filter; disabled|Lowpass" },
+      { "genesis_plus_gx_audio_filter", "Audio filter; disabled|low-pass" },
       { "genesis_plus_gx_lowpass_range", "Low-pass filter %; 60|65|70|75|80|85|90|95|5|10|15|20|25|30|35|40|45|50|55"},
       
       #if HAVE_EQ     
