@@ -43,6 +43,7 @@
 #include <string.h>
 #include "types.h"
 #include "osd.h"
+#include "macros.h"
 #include "chd.h"
 #include "cdrom.h"
 #include "flac.h"
@@ -51,9 +52,13 @@
 #include "LzmaEnc.h"
 #include "LzmaDec.h"
 
+#undef TRUE
+#undef FALSE
 #define TRUE 1
 #define FALSE 0
 
+#undef MAX
+#undef MIN
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
 
