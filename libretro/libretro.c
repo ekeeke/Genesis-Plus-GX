@@ -514,7 +514,7 @@ static void config_default(void)
    config.hg             = 100.0;
    config.dac_bits       = 14; /* MAX DEPTH */ 
    config.ym2413         = 2; /* AUTO */
-   config.mono           = 0; /* STEREO output */
+   config.mono           = 1; /* MONO output */
 
    /* system options */
    config.system         = 0; /* AUTO */
@@ -1032,7 +1032,16 @@ static void check_variables(void)
       }
     }
   }
-	
+
+  var.key = "genesis_plus_gx_sound_output";
+  environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
+  {
+    if (!strcmp(var.value, "mono"))
+      config.mono = 1;
+    else if (!strcmp(var.value, "stereo"))
+      config.mono = 0; 
+  }
+
   var.key = "genesis_plus_gx_audio_filter";
   environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
   {
@@ -1628,6 +1637,7 @@ void retro_set_environment(retro_environment_t cb)
       { "genesis_plus_gx_lock_on", "Cartridge lock-on; disabled|game genie|action replay (pro)|sonic & knuckles" },
       { "genesis_plus_gx_ym2413", "Master System FM; auto|disabled|enabled" },
       { "genesis_plus_gx_dac_bits", "YM2612 DAC quantization; disabled|enabled" },
+      { "genesis_plus_gx_sound_output", "Sound output; mono|stereo" }, 
       { "genesis_plus_gx_audio_filter", "Audio filter; disabled|Lowpass" },
       { "genesis_plus_gx_lowpass_range", "Low-pass filter %; 60|65|70|75|80|85|90|95|5|10|15|20|25|30|35|40|45|50|55"},
       
