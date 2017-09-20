@@ -1151,8 +1151,8 @@ unsigned int vdp_68k_ctrl_r(unsigned int cycles)
 {
   unsigned int temp;
 
-  /* Cycle-accurate VDP status read (68k read cycle takes four CPU cycles i.e 28 Mcycles) */
-  cycles += 4 * 7;
+  /* Cycle-accurate VDP status read (adjust CPU time with current instruction execution time) */
+  cycles += m68k_cycles();
 
   /* Update FIFO status flags if not empty */
   if (fifo_write_cnt)
@@ -1186,7 +1186,7 @@ unsigned int vdp_68k_ctrl_r(unsigned int cycles)
     temp |= 0x08;
   }
 
-  /* Cycle-accurate VINT flag (Ex-Mutants, Tyrant / Mega-Lo-Mania) */
+  /* Cycle-accurate VINT flag (Ex-Mutants, Tyrant / Mega-Lo-Mania, Marvel Land) */
   /* this allows VINT flag to be read just before vertical interrupt is being triggered */
   if ((v_counter == bitmap.viewport.h) && (cycles >= (mcycles_vdp + 788)))
   {

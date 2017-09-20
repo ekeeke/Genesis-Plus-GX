@@ -356,6 +356,10 @@ extern void s68k_pulse_reset(void);
 extern void m68k_run(unsigned int cycles);
 extern void s68k_run(unsigned int cycles);
 
+/* Get current instruction execution time */
+extern int m68k_cycles(void);
+extern int s68k_cycles(void);
+
 /* Set the IPL0-IPL2 pins on the CPU (IRQ).
  * A transition from < 7 to 7 will cause a non-maskable interrupt (NMI).
  * Setting IRQ to 0 will clear an interrupt request.

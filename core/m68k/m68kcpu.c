@@ -280,7 +280,7 @@ void m68k_run(unsigned int cycles)
 #ifdef LOGVDP
   error("[%d][%d] m68k run to %d cycles (%x), irq mask = %x (%x)\n", v_counter, m68k.cycles, cycles, m68k.pc,FLAG_INT_MASK, CPU_INT_LEVEL);
 #endif
-   
+
   while (m68k.cycles < cycles)
   {
     /* Set tracing accodring to T1. */
@@ -291,7 +291,7 @@ void m68k_run(unsigned int cycles)
 
     /* Decode next instruction */
     REG_IR = m68ki_read_imm_16();
-	
+
     /* Execute instruction */
     m68ki_instruction_jump_table[REG_IR]();
     USE_CYCLES(CYC_INSTRUCTION[REG_IR]);
@@ -299,6 +299,11 @@ void m68k_run(unsigned int cycles)
     /* Trace m68k_exception, if necessary */
     m68ki_exception_if_trace(); /* auto-disable (see m68kcpu.h) */
   }
+}
+
+int m68k_cycles(void)
+{
+  return CYC_INSTRUCTION[REG_IR];
 }
 
 void m68k_init(void)

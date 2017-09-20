@@ -265,6 +265,12 @@ void s68k_run(unsigned int cycles)
   }
 }
 
+
+int s68k_cycles(void)
+{
+  return CYC_INSTRUCTION[REG_IR];
+}
+
 void s68k_init(void)
 {
 #ifdef BUILD_TABLES
