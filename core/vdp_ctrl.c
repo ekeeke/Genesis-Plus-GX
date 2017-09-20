@@ -1997,26 +1997,30 @@ static void vdp_reg_w(unsigned int r, unsigned int d, unsigned int cycles)
           fifo_timing = (int *)fifo_timing_h32;
         }
 
-        /* Update active screen width */
+        /* Active screen width modified during VBLANK will be applied on upcoming frame */
         if (v_counter >= bitmap.viewport.h)
         {
-          /* Active screen width modified during VBLANK will be applied on upcoming frame */
           bitmap.viewport.w = max_sprite_pixels;
         }
-        else if ((v_counter == 0) && (cycles <= (mcycles_vdp + 860)))
+
+        /* Allow active screen width to be modified during first two lines (Bugs Bunny in Double Trouble) */
+        else if (v_counter <= 1)
         {
-          /* Active screen width modified during first line HBLANK (Bugs Bunny in Double Trouble) */
           bitmap.viewport.w = max_sprite_pixels;
 
-          /* Redraw first line */
+          /* Redraw lines */
           render_line(0);
+          if (v_counter)
+          {
+            render_line(1);
+          }
         }
         else
         {
           /* Screen width changes during active display (Golden Axe 3 intro, Ultraverse Prime) */
           /* should be applied on next frame since backend rendered framebuffer width is fixed */
           /* and can not be modified mid-frame. This is not 100% accurate but games generally  */
-          /* do this where the screen is blanked so it is likely unnoticeable. */
+          /* do this when the screen is blanked so it is likely unnoticeable. */
           bitmap.viewport.changed |= 2;
         }
       }
