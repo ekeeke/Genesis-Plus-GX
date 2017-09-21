@@ -219,7 +219,7 @@
 #define IJind  (((op>>6)&4)|(op&3))
 
 #define GET_PC() (PC - (unsigned short *)svp->iram_rom)
-#define GET_PPC_OFFS() ((unsigned int)PC - (unsigned int)svp->iram_rom - 2)
+#define GET_PPC_OFFS() ((unsigned char *)PC - svp->iram_rom - 2)
 #define SET_PC(d) PC = (unsigned short *)svp->iram_rom + d
 
 #define REG_READ(r) (((r) <= 4) ? ssp->gr[r].byte.h : read_handlers[r]())
