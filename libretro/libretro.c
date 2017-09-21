@@ -1045,7 +1045,7 @@ static void check_variables(void)
   var.key = "genesis_plus_gx_audio_filter";
   environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
   {
-    if (!strcmp(var.value, "Lowpass"))
+    if (!strcmp(var.value, "lowpass"))
       config.filter = 1;
 
     #if HAVE_EQ 
@@ -1638,7 +1638,7 @@ void retro_set_environment(retro_environment_t cb)
       { "genesis_plus_gx_ym2413", "Master System FM; auto|disabled|enabled" },
       { "genesis_plus_gx_dac_bits", "YM2612 DAC quantization; disabled|enabled" },
       { "genesis_plus_gx_sound_output", "Sound output; stereo|mono" }, 
-      { "genesis_plus_gx_audio_filter", "Audio filter; disabled|Lowpass" },
+      { "genesis_plus_gx_audio_filter", "Audio filter; disabled|lowpass" },
       { "genesis_plus_gx_lowpass_range", "Low-pass filter %; 60|65|70|75|80|85|90|95|5|10|15|20|25|30|35|40|45|50|55"},
       
       #if HAVE_EQ     
