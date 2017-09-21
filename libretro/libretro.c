@@ -1036,7 +1036,7 @@ static void check_variables(void)
   var.key = "genesis_plus_gx_audio_filter";
   environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
   {
-    if (!strcmp(var.value, "Lowpass"))
+    if (!strcmp(var.value, "low-pass"))
       config.filter = 1;
 
     #if HAVE_EQ 
