@@ -449,8 +449,8 @@ int cdd_load(char *filename, char *header)
       cdd.chd.hunknum = cdd.toc.tracks[0].offset / cdd.chd.hunkbytes;
       chd_read(cdd.chd.file, cdd.chd.hunknum, cdd.chd.hunk);
 
-      /* copy CD image header + security code */
-      memcpy(header, cdd.chd.hunk + (cdd.toc.tracks[0].offset % cdd.chd.hunkbytes) + 0x10, 0x210);
+      /* copy CD image header + security code (skip RAW sector 16-byte header) */
+      memcpy(header, cdd.chd.hunk + (cdd.toc.tracks[0].offset % cdd.chd.hunkbytes) + ((cdd.sectorSize == 2048) ? 0 : 16), 0x210);
 
       /* there is a valid DATA track */
       cdd.toc.tracks[0].type = TYPE_CDROM;
@@ -1235,8 +1235,18 @@ void cdd_read_data(uint8 *dst)
         cdd.chd.hunknum = hunknum;
       }
 
-      /* copy Mode 1 sector data (2048 bytes only, skipping 16-byte header) */
-      memcpy(dst, cdd.chd.hunk + (offset % cdd.chd.hunkbytes) + 16, 2048);
+      /* copy Mode 1 sector data (2048 bytes only) */
+      if (cdd.sectorSize == 2048)
+      {
+        /* Mode 1 COOKED data (ISO) */
+        memcpy(dst, cdd.chd.hunk + (offset % cdd.chd.hunkbytes), 2048);
+      }
+      else
+      {
+        /* Mode 1 RAW data (skip 16-byte header) */
+        memcpy(dst, cdd.chd.hunk + (offset % cdd.chd.hunkbytes) + 16, 2048);
+      }
+
       return;
     }
 #endif
