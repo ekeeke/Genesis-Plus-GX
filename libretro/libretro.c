@@ -1100,6 +1100,9 @@ static void check_variables(void)
       config.ym3438 = 1;
     else
       config.ym3438 = 0;
+
+    sound_init();
+    sound_reset();
   }
   #endif
 

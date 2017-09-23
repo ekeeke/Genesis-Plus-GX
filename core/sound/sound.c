@@ -272,6 +272,7 @@ int sound_context_save(uint8 *state)
   if ((system_hw & SYSTEM_PBC) == SYSTEM_MD)
   {
     #ifdef HAVE_YM3438_CORE
+    save_param(&config.ym3438, sizeof(config.ym3438));
     if (config.ym3438)
     {
       save_param(&ym3438, sizeof(ym3438));
@@ -280,10 +281,13 @@ int sound_context_save(uint8 *state)
       save_param(&ym3438_cycles, sizeof(ym3438_cycles));
     }
     else
-    #endif
     {
-      bufferptr = YM2612SaveContext(state);
+      bufferptr += YM2612SaveContext(state + sizeof(config.ym3438));
+      YM2612Config(config.dac_bits);
     }
+    #else
+    bufferptr = YM2612SaveContext(state);
+    #endif
   }
   else
   {
@@ -300,11 +304,13 @@ int sound_context_save(uint8 *state)
 int sound_context_load(uint8 *state)
 {
   int bufferptr = 0;
+  uint8 config_ym3438;
 
   if ((system_hw & SYSTEM_PBC) == SYSTEM_MD)
   {
     #ifdef HAVE_YM3438_CORE
-    if (config.ym3438)
+    load_param(&config_ym3438, sizeof(config_ym3438));
+    if (config_ym3438)
     {
       load_param(&ym3438, sizeof(ym3438));
       load_param(&ym3438_accm, sizeof(ym3438_accm));
@@ -312,11 +318,14 @@ int sound_context_load(uint8 *state)
       load_param(&ym3438_cycles, sizeof(ym3438_cycles));
     }
     else
-    #endif
     {
-      bufferptr = YM2612LoadContext(state);
-      YM2612Config(config.dac_bits);
+        bufferptr += YM2612LoadContext(state + sizeof(config_ym3438));
+        YM2612Config(config.dac_bits);
     }
+    #else
+    bufferptr = YM2612LoadContext(state);
+    YM2612Config(config.dac_bits);
+    #endif
   }
   else
   {
