@@ -25,7 +25,9 @@
 #include "psg.h"
 #include "ym2413.h"
 #include "ym2612.h"
+#ifdef HAVE_YM3438_CORE
 #include "ym3438.h"
+#endif
 #include "sram.h"
 #include "ggenie.h"
 #include "areplay.h"

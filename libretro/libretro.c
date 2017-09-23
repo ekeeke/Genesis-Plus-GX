@@ -1092,14 +1092,16 @@ static void check_variables(void)
     YM2612Config(config.dac_bits);
   }
 
-  var.key = "genesis_plus_gx_ym2612";
+  #ifdef HAVE_YM3438_CORE
+  var.key = "genesis_plus_gx_ym3438";
   environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
   {
     if (!strcmp(var.value, "nuked opn2"))
-      config.ym2612 = 1;
+      config.ym3438 = 1;
     else
-      config.ym2612 = 0;
+      config.ym3438 = 0;
   }
+  #endif
 
   var.key = "genesis_plus_gx_blargg_ntsc_filter";
   environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
@@ -1637,7 +1639,11 @@ void retro_set_environment(retro_environment_t cb)
       { "genesis_plus_gx_lock_on", "Cartridge lock-on; disabled|game genie|action replay (pro)|sonic & knuckles" },
       { "genesis_plus_gx_ym2413", "Master System FM; auto|disabled|enabled" },
       { "genesis_plus_gx_dac_bits", "YM2612 DAC quantization; disabled|enabled" },
-      { "genesis_plus_gx_ym2612", "YM2612 core; mame|nuked opn2" },
+
+      #ifdef HAVE_YM3438_CORE
+      { "genesis_plus_gx_ym3438", "YM2612/YM3438 core; mame|nuked opn2" },
+      #endif
+
       { "genesis_plus_gx_audio_filter", "Audio filter; disabled|low-pass" },
       { "genesis_plus_gx_lowpass_range", "Low-pass filter %; 60|65|70|75|80|85|90|95|5|10|15|20|25|30|35|40|45|50|55"},
       

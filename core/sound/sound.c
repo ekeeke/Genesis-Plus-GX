@@ -56,11 +56,11 @@ static void (*YM_Update)(int *buffer, int length);
 static void (*YM_Write)(unsigned int a, unsigned int v);
 static unsigned int (*YM_Read)(unsigned int a);
 
+#ifdef HAVE_YM3438_CORE
 static ym3438_t ym3438;
 static int ym3438_accm[24][2];
 static int ym3438_sample[2];
 static unsigned int ym3438_cycles;
-static int ym2612_core;
 
 void YM3438_Reset(void)
 {
@@ -96,8 +96,9 @@ void YM3438_Write(unsigned int a, unsigned int v)
 
 unsigned int YM3438_Read(unsigned int a)
 {
-  OPN2_Read(&ym3438, a);
+  return OPN2_Read(&ym3438, a);
 }
+#endif
 
 /* Run FM chip until required M-cycles */
 INLINE void fm_update(unsigned int cycles)
@@ -124,10 +125,10 @@ void sound_init( void )
   if ((system_hw & SYSTEM_PBC) == SYSTEM_MD)
   {
     /* YM2612 */
-    ym2612_core = config.ym2612;
-    if (config.ym2612)
+    #ifdef HAVE_YM3438_CORE
+    if (config.ym3438)
     {
-      // Nuked OPN2
+      /* Nuked OPN2 */
       memset(&ym3438, 0, sizeof(ym3438));
       memset(&ym3438_sample, 0, sizeof(ym3438_sample));
       memset(&ym3438_accm, 0, sizeof(ym3438_accm));
@@ -140,8 +141,9 @@ void sound_init( void )
       fm_cycles_ratio = 6 * 7;
     }
     else
+    #endif
     {
-      // MAME
+      /* MAME */
       YM2612Init();
       YM2612Config(config.dac_bits);
       YM_Reset = YM2612ResetChip;
@@ -269,7 +271,8 @@ int sound_context_save(uint8 *state)
   
   if ((system_hw & SYSTEM_PBC) == SYSTEM_MD)
   {
-    if (ym2612_core)
+    #ifdef HAVE_YM3438_CORE
+    if (config.ym3438)
     {
       save_param(&ym3438, sizeof(ym3438));
       save_param(&ym3438_accm, sizeof(ym3438_accm));
@@ -277,6 +280,7 @@ int sound_context_save(uint8 *state)
       save_param(&ym3438_cycles, sizeof(ym3438_cycles));
     }
     else
+    #endif
     {
       bufferptr = YM2612SaveContext(state);
     }
@@ -299,7 +303,8 @@ int sound_context_load(uint8 *state)
 
   if ((system_hw & SYSTEM_PBC) == SYSTEM_MD)
   {
-    if (ym2612_core)
+    #ifdef HAVE_YM3438_CORE
+    if (config.ym3438)
     {
       load_param(&ym3438, sizeof(ym3438));
       load_param(&ym3438_accm, sizeof(ym3438_accm));
@@ -307,6 +312,7 @@ int sound_context_load(uint8 *state)
       load_param(&ym3438_cycles, sizeof(ym3438_cycles));
     }
     else
+    #endif
     {
       bufferptr = YM2612LoadContext(state);
       YM2612Config(config.dac_bits);
