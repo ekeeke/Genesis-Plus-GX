@@ -89,6 +89,7 @@ struct
   uint8 hq_psg;
   uint8 dac_bits;
   uint8 ym2413;
+  uint8 ym2612;
   uint8 mono;
   int16 psg_preamp;
   int16 fm_preamp;

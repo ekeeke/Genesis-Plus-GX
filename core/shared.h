@@ -25,6 +25,7 @@
 #include "psg.h"
 #include "ym2413.h"
 #include "ym2612.h"
+#include "ym3438.h"
 #include "sram.h"
 #include "ggenie.h"
 #include "areplay.h"
