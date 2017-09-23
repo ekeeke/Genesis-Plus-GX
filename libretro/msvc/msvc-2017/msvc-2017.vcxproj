@@ -54,6 +54,7 @@
     <ClCompile Include="..\..\..\core\sound\sound.c" />
     <ClCompile Include="..\..\..\core\sound\ym2413.c" />
     <ClCompile Include="..\..\..\core\sound\ym2612.c" />
+    <ClCompile Include="..\..\..\core\sound\ym3438.c" />
     <ClCompile Include="..\..\..\core\state.c" />
     <ClCompile Include="..\..\..\core\system.c" />
     <ClCompile Include="..\..\..\core\tremor\bitwise.c" />

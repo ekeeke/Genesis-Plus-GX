@@ -1981,7 +1981,7 @@ void YM2612Write(unsigned int a, unsigned int v)
   }
 }
 
-unsigned int YM2612Read(void)
+unsigned int YM2612Read(unsigned int a)
 {
   return ym2612.OPN.ST.status & 0xff;
 }

@@ -41,7 +41,12 @@
 #include "blip_buf.h"
 
 /* FM output buffer (large enough to hold a whole frame at original chips rate) */
+#ifdef HAVE_YM3438_CORE
+static int fm_buffer[1080 * 2 * 24];
+#else
 static int fm_buffer[1080 * 2];
+#endif
+
 static int fm_last[2];
 static int *fm_ptr;
 
@@ -54,6 +59,51 @@ static uint32 fm_cycles_count;
 static void (*YM_Reset)(void);
 static void (*YM_Update)(int *buffer, int length);
 static void (*YM_Write)(unsigned int a, unsigned int v);
+static unsigned int (*YM_Read)(unsigned int a);
+
+#ifdef HAVE_YM3438_CORE
+static ym3438_t ym3438;
+static int ym3438_accm[24][2];
+static int ym3438_sample[2];
+static unsigned int ym3438_cycles;
+
+void YM3438_Reset(void)
+{
+  OPN2_Reset(&ym3438);
+}
+
+void YM3438_Update(int *buffer, int length)
+{
+  int i, j;
+  for (i = 0; i < length; i++)
+  {
+    OPN2_Clock(&ym3438, ym3438_accm[ym3438_cycles]);
+    ym3438_cycles = (ym3438_cycles + 1) % 24;
+    if (ym3438_cycles == 0)
+    {
+      ym3438_sample[0] = 0;
+      ym3438_sample[1] = 0;
+      for (j = 0; j < 24; j++)
+      {
+        ym3438_sample[0] += ym3438_accm[j][0];
+        ym3438_sample[1] += ym3438_accm[j][1];
+      }
+    }
+    *buffer++ = ym3438_sample[0] * 8;
+    *buffer++ = ym3438_sample[1] * 8;
+  }
+}
+
+void YM3438_Write(unsigned int a, unsigned int v)
+{
+  OPN2_Write(&ym3438, a, v);
+}
+
+unsigned int YM3438_Read(unsigned int a)
+{
+  return OPN2_Read(&ym3438, a);
+}
+#endif
 
 /* Run FM chip until required M-cycles */
 INLINE void fm_update(unsigned int cycles)
@@ -80,14 +130,35 @@ void sound_init( void )
   if ((system_hw & SYSTEM_PBC) == SYSTEM_MD)
   {
     /* YM2612 */
-    YM2612Init();
-    YM2612Config(config.dac_bits);
-    YM_Reset = YM2612ResetChip;
-    YM_Update = YM2612Update;
-    YM_Write = YM2612Write;
+    #ifdef HAVE_YM3438_CORE
+    if (config.ym3438)
+    {
+      /* Nuked OPN2 */
+      memset(&ym3438, 0, sizeof(ym3438));
+      memset(&ym3438_sample, 0, sizeof(ym3438_sample));
+      memset(&ym3438_accm, 0, sizeof(ym3438_accm));
+      YM_Reset = YM3438_Reset;
+      YM_Update = YM3438_Update;
+      YM_Write = YM3438_Write;
+      YM_Read = YM3438_Read;
 
-    /* chip is running at VCLK / 144 = MCLK / 7 / 144 */
-    fm_cycles_ratio = 144 * 7;
+      /* chip is running at VCLK / 6 = MCLK / 7 / 6 */
+      fm_cycles_ratio = 6 * 7;
+    }
+    else
+    #endif
+    {
+      /* MAME */
+      YM2612Init();
+      YM2612Config(config.dac_bits);
+      YM_Reset = YM2612ResetChip;
+      YM_Update = YM2612Update;
+      YM_Write = YM2612Write;
+      YM_Read = YM2612Read;
+
+      /* chip is running at VCLK / 144 = MCLK / 7 / 144 */
+      fm_cycles_ratio = 144 * 7;
+    }
   }
   else
   {
@@ -96,6 +167,7 @@ void sound_init( void )
     YM_Reset = YM2413ResetChip;
     YM_Update = YM2413Update;
     YM_Write = YM2413Write;
+    YM_Read = NULL;
 
     /* chip is running at ZCLK / 72 = MCLK / 15 / 72 */
     fm_cycles_ratio = 72 * 15;
@@ -204,7 +276,23 @@ int sound_context_save(uint8 *state)
   
   if ((system_hw & SYSTEM_PBC) == SYSTEM_MD)
   {
+    #ifdef HAVE_YM3438_CORE
+    save_param(&config.ym3438, sizeof(config.ym3438));
+    if (config.ym3438)
+    {
+      save_param(&ym3438, sizeof(ym3438));
+      save_param(&ym3438_accm, sizeof(ym3438_accm));
+      save_param(&ym3438_sample, sizeof(ym3438_sample));
+      save_param(&ym3438_cycles, sizeof(ym3438_cycles));
+    }
+    else
+    {
+      bufferptr += YM2612SaveContext(state + sizeof(config.ym3438));
+      YM2612Config(config.dac_bits);
+    }
+    #else
     bufferptr = YM2612SaveContext(state);
+    #endif
   }
   else
   {
@@ -221,11 +309,28 @@ int sound_context_save(uint8 *state)
 int sound_context_load(uint8 *state)
 {
   int bufferptr = 0;
+  uint8 config_ym3438;
 
   if ((system_hw & SYSTEM_PBC) == SYSTEM_MD)
   {
+    #ifdef HAVE_YM3438_CORE
+    load_param(&config_ym3438, sizeof(config_ym3438));
+    if (config_ym3438)
+    {
+      load_param(&ym3438, sizeof(ym3438));
+      load_param(&ym3438_accm, sizeof(ym3438_accm));
+      load_param(&ym3438_sample, sizeof(ym3438_sample));
+      load_param(&ym3438_cycles, sizeof(ym3438_cycles));
+    }
+    else
+    {
+        bufferptr += YM2612LoadContext(state + sizeof(config_ym3438));
+        YM2612Config(config.dac_bits);
+    }
+    #else
     bufferptr = YM2612LoadContext(state);
     YM2612Config(config.dac_bits);
+    #endif
   }
   else
   {
@@ -251,11 +356,8 @@ void fm_reset(unsigned int cycles)
 
 void fm_write(unsigned int cycles, unsigned int address, unsigned int data)
 {
-  /* synchronize FM chip with CPU (on data port write only) */
-  if (address & 1)
-  {
-    fm_update(cycles);
-  }
+  /* synchronize FM chip with CPU */
+  fm_update(cycles);
   
   /* write FM register */
   YM_Write(address, data);
@@ -267,5 +369,5 @@ unsigned int fm_read(unsigned int cycles, unsigned int address)
   fm_update(cycles);
 
   /* read FM status (YM2612 only) */
-  return YM2612Read();
+  return YM_Read(address);
 }
