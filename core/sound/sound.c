@@ -41,7 +41,12 @@
 #include "blip_buf.h"
 
 /* FM output buffer (large enough to hold a whole frame at original chips rate) */
+#ifdef HAVE_YM3438_CORE
 static int fm_buffer[1080 * 2 * 24];
+#else
+static int fm_buffer[1080 * 2];
+#endif
+
 static int fm_last[2];
 static int *fm_ptr;
 
