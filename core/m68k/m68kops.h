@@ -15855,7 +15855,7 @@ static void m68k_op_mulu_16_i(void)
 static void m68k_op_nbcd_8_d(void)
 {
   uint* r_dst = &DY;
-  uint dst = *r_dst;
+  uint dst = MASK_OUT_ABOVE_8(*r_dst);
   uint res = -dst - XFLAG_AS_1();
 
   if(res)
