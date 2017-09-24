@@ -1096,13 +1096,17 @@ static void check_variables(void)
   var.key = "genesis_plus_gx_ym3438";
   environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
   {
+    orig_value = config.ym3438;
     if (!strcmp(var.value, "nuked opn2"))
       config.ym3438 = 1;
     else
       config.ym3438 = 0;
 
-    sound_init();
-    sound_reset();
+    if (orig_value != config.ym3438)
+    {
+      sound_init();
+      sound_reset();
+    }
   }
   #endif
 
