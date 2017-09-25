@@ -42,6 +42,7 @@
  * version: 1.0.2
  */
 
+#include <string.h>
 #include "ym3438.h"
 
 enum {
