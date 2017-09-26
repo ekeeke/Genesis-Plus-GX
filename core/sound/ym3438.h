@@ -45,7 +45,7 @@
 #ifndef YM3438_H
 #define YM3438_H
 
-#include <inttypes.h>
+#include <stdint.h>
 
 typedef uintptr_t       Bitu;
 typedef intptr_t        Bits;
