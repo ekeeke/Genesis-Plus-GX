@@ -24,6 +24,10 @@
 /*
 **  CHANGELOG:
 **
+** 26-09-2017 Eke-Eke (Genesis Plus GX):
+**  - fixed EG counter loopback behavior (verified on YM3438 die)
+**  - reverted changes to EG rates 2-7 increment values
+**
 ** 09-04-2017 Eke-Eke (Genesis Plus GX):
 **  - fixed LFO PM implementation: block & keyscale code should not be modified by LFO (verified on YM2612 die)
 **  - fixed Timer B overflow handling
@@ -240,12 +244,11 @@ O(18),O(18),O(18),O(18),O(18),O(18),O(18),O(18),
 
 /* rates 00-11 */
 /*
-O( 0),O( 1),O( 2),O( 3),
-O( 0),O( 1),O( 2),O( 3),
+O( 0),O( 1)
 */
-O(18),O(18),O( 0),O( 0),
-O( 0),O( 0),O( 2),O( 2),   /* Nemesis's tests */
-
+O(18),O(18),               /* from Nemesis's tests on real YM2612 hardware */
+            O( 2),O( 3),
+O( 0),O( 1),O( 2),O( 3),
 O( 0),O( 1),O( 2),O( 3),
 O( 0),O( 1),O( 2),O( 3),
 O( 0),O( 1),O( 2),O( 3),
@@ -2017,7 +2020,7 @@ void YM2612Update(int *buffer, int length)
   refresh_fc_eg_chan(&ym2612.CH[5]);
 
   /* buffering */
-  for(i=0; i < length ; i++)
+  for(i=0; i<length ; i++)
   {
     /* clear outputs */
     out_fm[0] = 0;
@@ -2045,14 +2048,21 @@ void YM2612Update(int *buffer, int length)
     /* advance LFO */
     advance_lfo();
 
-    /* advance envelope generator */
-    ym2612.OPN.eg_timer ++;
-
     /* EG is updated every 3 samples */
+    ym2612.OPN.eg_timer++;
     if (ym2612.OPN.eg_timer >= 3)
     {
+      /* reset EG timer */
       ym2612.OPN.eg_timer = 0;
+
+      /* increment EG counter */
       ym2612.OPN.eg_cnt++;
+
+      /* EG counter is 12-bit only and zero value is skipped (verified on real hardware) */
+      if (ym2612.OPN.eg_cnt == 4096)
+        ym2612.OPN.eg_cnt = 1;
+
+      /* advance envelope generator */
       advance_eg_channels(&ym2612.CH[0], ym2612.OPN.eg_cnt);
     }
 
