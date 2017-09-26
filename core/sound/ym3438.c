@@ -39,7 +39,7 @@
  *      OPLx decapsulated(Matthew Gambrell, Olli Niemitalo):
  *          OPL2 ROMs.
  *
- * version: 1.0.3
+ * version: 1.0.4
  */
 
 #include <string.h>
@@ -651,7 +651,7 @@ void OPN2_EnvelopeADSR(ym3438_t *chip)
         {
             nextlevel = 0;
         }
-        else if (chip->eg_state[slot] == eg_num_attack && level != 0 && chip->eg_inc)
+        else if (chip->eg_state[slot] == eg_num_attack && level != 0 && chip->eg_inc && nkon)
         {
             inc = (~level << chip->eg_inc) >> 5;
         }
@@ -665,7 +665,7 @@ void OPN2_EnvelopeADSR(ym3438_t *chip)
             {
                 nextstate = eg_num_decay;
             }
-            else if(chip->eg_inc && !chip->eg_ratemax)
+            else if(chip->eg_inc && !chip->eg_ratemax && nkon)
             {
                 inc = (~level << chip->eg_inc) >> 5;
             }
