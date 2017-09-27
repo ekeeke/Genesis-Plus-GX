@@ -1285,7 +1285,7 @@ INLINE void update_ssg_eg_channels(FM_CH *CH)
 
 INLINE void update_phase_lfo_slot(FM_SLOT *SLOT, UINT32 pm, UINT8 kc, UINT32 fc)
 {
-  INT32 lfo_fn_offset = lfo_pm_table[(((fc & 0x7f0) >> 4) << 8) + pm];
+  INT32 lfo_fn_offset = lfo_pm_table[((fc & 0x7f0) << 4) + pm];
   
   if (lfo_fn_offset)  /* LFO phase modulation active */
   {
@@ -1296,7 +1296,7 @@ INLINE void update_phase_lfo_slot(FM_SLOT *SLOT, UINT32 pm, UINT8 kc, UINT32 fc)
     fc = ((fc << 1) + lfo_fn_offset) & 0xfff;
 
     /* (frequency) phase increment counter (17-bit) */
-    fc = (((fc << 5) >> (7 - blk)) + SLOT->DT[kc]) & DT_MASK;
+    fc = (((fc << blk) >> 2) + SLOT->DT[kc]) & DT_MASK;
 
     /* update phase */
     SLOT->phase += ((fc * SLOT->mul) >> 1);
@@ -1311,7 +1311,7 @@ INLINE void update_phase_lfo_channel(FM_CH *CH)
 {
   UINT32 fc = CH->block_fnum;
   
-  INT32 lfo_fn_offset = lfo_pm_table[(((fc & 0x7f0) >> 4) << 8) + CH->pms + ym2612.OPN.LFO_PM];
+  INT32 lfo_fn_offset = lfo_pm_table[((fc & 0x7f0) << 4) + CH->pms + ym2612.OPN.LFO_PM];
 
   if (lfo_fn_offset)  /* LFO phase modulation active */
   {
@@ -1325,7 +1325,7 @@ INLINE void update_phase_lfo_channel(FM_CH *CH)
     fc = ((fc << 1) + lfo_fn_offset) & 0xfff;
 
     /* (frequency) phase increment counter (17-bit) */
-    fc = (fc << 5) >> (7 - blk);
+    fc = (fc << blk) >> 2;
 
     /* apply DETUNE & MUL operator specific values */
     finc = (fc + CH->SLOT[SLOT1].DT[kc]) & DT_MASK;
@@ -1699,7 +1699,7 @@ INLINE void OPNWriteReg(int r, int v)
           /* keyscale code */
           CH->kcode = (blk<<2) | opn_fktable[fn >> 7];
           /* phase increment counter */
-          CH->fc = (fn << 6) >> (7 - blk);
+          CH->fc = (fn<<blk)>>1;
 
           /* store fnum in clear form for LFO PM calculations */
           CH->block_fnum = (blk<<11) | fn;
@@ -1718,7 +1718,7 @@ INLINE void OPNWriteReg(int r, int v)
             /* keyscale code */
             ym2612.OPN.SL3.kcode[c]= (blk<<2) | opn_fktable[fn >> 7];
             /* phase increment counter */
-            ym2612.OPN.SL3.fc[c] = (fn << 6) >> (7 - blk);
+            ym2612.OPN.SL3.fc[c] = (fn<<blk)>>1;
             ym2612.OPN.SL3.block_fnum[c] = (blk<<11) | fn;
             ym2612.CH[2].SLOT[SLOT1].Incr=-1;
           }
