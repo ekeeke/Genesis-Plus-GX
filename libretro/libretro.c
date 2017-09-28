@@ -1117,6 +1117,18 @@ static void check_variables(void)
       sound_reset();
     }
   }
+  var.key = "genesis_plus_gx_ym3438_type";
+  environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
+  {
+    if (!strcmp(var.value, "ym2612"))
+      config.ym3438_type = ym3438_type_ym2612;
+    else if (!strcmp(var.value, "ym3438 asic"))
+      config.ym3438_type = ym3438_type_asic;
+    else
+      config.ym3438_type = ym3438_type_discrete;
+
+    sound_ym3438_set_type(config.ym3438_type);
+  }
   #endif
 
   var.key = "genesis_plus_gx_blargg_ntsc_filter";
@@ -1657,6 +1669,7 @@ void retro_set_environment(retro_environment_t cb)
       { "genesis_plus_gx_dac_bits", "YM2612 DAC quantization; disabled|enabled" },
       #ifdef HAVE_YM3438_CORE
       { "genesis_plus_gx_ym3438", "YM2612/YM3438 core; mame|nuked opn2" },
+      { "genesis_plus_gx_ym3438_type", "YM2612/YM3438 type(Nuked OPN2); ym2612|ym3438 asic|ym3438 discrete" },
       #endif
 
       { "genesis_plus_gx_audio_filter", "Audio filter; disabled|low-pass" },

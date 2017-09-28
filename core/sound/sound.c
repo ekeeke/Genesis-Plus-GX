@@ -67,9 +67,14 @@ static int ym3438_accm[24][2];
 static int ym3438_sample[2];
 static unsigned int ym3438_cycles;
 
+void sound_ym3438_set_type(uint8 type)
+{
+  OPN2_SetChipType(&ym3438, type);
+}
+
 void YM3438_Reset(void)
 {
-  OPN2_Reset(&ym3438);
+  OPN2_Reset(&ym3438, config.ym3438_type);
 }
 
 void YM3438_Update(int *buffer, int length)
@@ -89,8 +94,8 @@ void YM3438_Update(int *buffer, int length)
         ym3438_sample[1] += ym3438_accm[j][1];
       }
     }
-    *buffer++ = ym3438_sample[0] * 8;
-    *buffer++ = ym3438_sample[1] * 8;
+    *buffer++ = ym3438_sample[0] * 11;
+    *buffer++ = ym3438_sample[1] * 11;
   }
 }
 

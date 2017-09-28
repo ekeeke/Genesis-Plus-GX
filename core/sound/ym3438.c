@@ -39,7 +39,7 @@
  *      OPLx decapsulated(Matthew Gambrell, Olli Niemitalo):
  *          OPL2 ROMs.
  *
- * version: 1.0.5
+ * version: 1.0.6
  */
 
 #include <string.h>
@@ -966,6 +966,8 @@ void OPN2_ChOutput(ym3438_t *chip)
     Bit32u channel = chip->channel;
     Bit32u test_dac = chip->mode_test_2c[5];
     Bit16s out;
+    Bit16s sign;
+    Bit32u out_en;
     chip->ch_read = chip->ch_lock;
     if (chip->slot < 12)
     {
@@ -995,13 +997,53 @@ void OPN2_ChOutput(ym3438_t *chip)
     }
     chip->mol = 0;
     chip->mor = 0;
-    if (chip->ch_lock_l)
+
+    if (chip->chip_type == ym3438_type_ym2612)
     {
-        chip->mol = out;
+        out_en = ((chip->cycles & 3) == 3) || test_dac;
+        /* YM2612 DAC emulation(not verified) */
+        sign = out >> 8;
+        if (out >= 0)
+        {
+            out++;
+            sign++;
+        }
+        if (chip->ch_lock_l && out_en)
+        {
+            chip->mol = out;
+        }
+        else
+        {
+            chip->mol = sign;
+        }
+        if (chip->ch_lock_r && out_en)
+        {
+            chip->mor = out;
+        }
+        else
+        {
+            chip->mor = sign;
+        }
+        /* Amplify signal */
+        chip->mol *= 3;
+        chip->mor *= 3;
     }
-    if (chip->ch_lock_r)
+    else
     {
-        chip->mor = out;
+        out_en = ((chip->cycles & 3) != 0) || test_dac;
+        /* Discrete YM3438 seems has the ladder effect too */
+        if (out >= 0 && chip->chip_type == ym3438_type_discrete)
+        {
+            out++;
+        }
+        if (chip->ch_lock_l && out_en)
+        {
+            chip->mol = out;
+        }
+        if (chip->ch_lock_r && out_en)
+        {
+            chip->mor = out;
+        }
     }
 }
 
@@ -1161,7 +1203,7 @@ void OPN2_KeyOn(ym3438_t*chip)
     }
 }
 
-void OPN2_Reset(ym3438_t *chip)
+void OPN2_Reset(ym3438_t *chip, Bit32u type)
 {
     Bit32u i;
     memset(chip, 0, sizeof(ym3438_t));
@@ -1177,6 +1219,12 @@ void OPN2_Reset(ym3438_t *chip)
         chip->pan_l[i] = 1;
         chip->pan_r[i] = 1;
     }
+    chip->chip_type = type;
+}
+
+void OPN2_SetChipType(ym3438_t *chip, Bit32u type)
+{
+    chip->chip_type = type;
 }
 
 void OPN2_Clock(ym3438_t *chip, Bit32u *buffer)
@@ -1350,7 +1398,7 @@ Bit32u OPN2_ReadIRQPin(ym3438_t *chip)
 
 Bit8u OPN2_Read(ym3438_t *chip, Bit32u port)
 {
-    if ((port & 3) == 0)
+    if ((port & 3) == 0 || chip->chip_type == ym3438_type_asic)
     {
         if (chip->mode_test_21[6])
         {
