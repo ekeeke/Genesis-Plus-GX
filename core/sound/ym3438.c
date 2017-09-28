@@ -39,7 +39,7 @@
  *      OPLx decapsulated(Matthew Gambrell, Olli Niemitalo):
  *          OPL2 ROMs.
  *
- * version: 1.0.4
+ * version: 1.0.5
  */
 
 #include <string.h>
@@ -671,7 +671,7 @@ void OPN2_EnvelopeADSR(ym3438_t *chip)
             }
             break;
         case eg_num_decay:
-            if (!eg_off && (level >> 5) == chip->eg_sl[1])
+            if ((level >> 5) == chip->eg_sl[1])
             {
                 nextstate = eg_num_sustain;
             }
@@ -803,11 +803,11 @@ void OPN2_EnvelopePrepare(ym3438_t *chip)
     chip->eg_ksv = chip->pg_kcode >> (chip->ks[slot] ^ 0x03);
     if (chip->am[slot])
     {
-        chip->eg_am_shift = chip->ams[chip->channel];
+        chip->eg_lfo_am = chip->lfo_am >> eg_am_shift[chip->ams[chip->channel]];
     }
     else
     {
-        chip->eg_am_shift = 0;
+        chip->eg_lfo_am = 0;
     }
     /* Delay TL & SL value */
     chip->eg_tl[1] = chip->eg_tl[0];
@@ -835,7 +835,7 @@ void OPN2_EnvelopeGenerate(ym3438_t *chip)
     level &= 0x3ff;
 
     /* Apply AM LFO */
-    level += chip->lfo_am >> eg_am_shift[chip->eg_am_shift];
+    level += chip->eg_lfo_am;
 
     /* Apply TL */
     if (!(chip->mode_csm && chip->channel == 2 + 1))
