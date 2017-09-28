@@ -39,7 +39,7 @@
  *      OPLx decapsulated(Matthew Gambrell, Olli Niemitalo):
  *          OPL2 ROMs.
  *
- * version: 1.0.4
+ * version: 1.0.5
  */
 
 #ifndef YM3438_H
@@ -111,7 +111,7 @@ typedef struct
    Bit8u eg_inc;
    Bit8u eg_ratemax;
    Bit8u eg_sl[2];
-   Bit8u eg_am_shift;
+   Bit8u eg_lfo_am;
    Bit8u eg_tl[2];
    Bit8u eg_state[24];
    Bit16u eg_level[24];
