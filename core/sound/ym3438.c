@@ -506,7 +506,7 @@ void OPN2_PhaseCalcIncrement(ym3438_t *chip)
     basefreq = (fnum << chip->pg_block) >> 2;
 
     /* Apply detune */
-    if (dt & 0x03)
+    if (dt_l)
     {
         if (kcode > 0x1c)
         {
@@ -514,7 +514,7 @@ void OPN2_PhaseCalcIncrement(ym3438_t *chip)
         }
         block = kcode >> 2;
         note = kcode & 0x03;
-        sum = block + 1 + ((dt_l == 3) | (dt_l & 0x02) | ((dt_l != 0) << 3));
+        sum = block + 9 + ((dt_l == 3) | (dt_l & 0x02));
         sum_h = sum >> 1;
         sum_l = sum & 0x01;
         detune = pg_detune[(sum_l << 2) | note] >> (9 - sum_h);
