@@ -1205,7 +1205,7 @@ void OPN2_KeyOn(ym3438_t*chip)
     }
 }
 
-void OPN2_Reset(ym3438_t *chip, Bit32u type)
+void OPN2_Reset(ym3438_t *chip)
 {
     Bit32u i;
     memset(chip, 0, sizeof(ym3438_t));
