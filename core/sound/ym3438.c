@@ -232,6 +232,8 @@ static const Bit32u fm_algorithm[4][6][8] = {
     }
 };
 
+static Bit32u chip_type = ym3438_type_discrete;
+
 void OPN2_DoIO(ym3438_t *chip)
 {
     /* Write signal check */
@@ -998,7 +1000,7 @@ void OPN2_ChOutput(ym3438_t *chip)
     chip->mol = 0;
     chip->mor = 0;
 
-    if (chip->chip_type == ym3438_type_ym2612)
+    if (chip_type == ym3438_type_ym2612)
     {
         out_en = ((chip->cycles & 3) == 3) || test_dac;
         /* YM2612 DAC emulation(not verified) */
@@ -1032,7 +1034,7 @@ void OPN2_ChOutput(ym3438_t *chip)
     {
         out_en = ((chip->cycles & 3) != 0) || test_dac;
         /* Discrete YM3438 seems has the ladder effect too */
-        if (out >= 0 && chip->chip_type == ym3438_type_discrete)
+        if (out >= 0 && chip_type == ym3438_type_discrete)
         {
             out++;
         }
@@ -1219,12 +1221,11 @@ void OPN2_Reset(ym3438_t *chip, Bit32u type)
         chip->pan_l[i] = 1;
         chip->pan_r[i] = 1;
     }
-    chip->chip_type = type;
 }
 
-void OPN2_SetChipType(ym3438_t *chip, Bit32u type)
+void OPN2_SetChipType(Bit32u type)
 {
-    chip->chip_type = type;
+    chip_type = type;
 }
 
 void OPN2_Clock(ym3438_t *chip, Bit32u *buffer)
@@ -1398,7 +1399,7 @@ Bit32u OPN2_ReadIRQPin(ym3438_t *chip)
 
 Bit8u OPN2_Read(ym3438_t *chip, Bit32u port)
 {
-    if ((port & 3) == 0 || chip->chip_type == ym3438_type_asic)
+    if ((port & 3) == 0 || chip_type == ym3438_type_asic)
     {
         if (chip->mode_test_21[6])
         {

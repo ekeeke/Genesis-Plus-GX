@@ -39,7 +39,7 @@
  *      OPLx decapsulated(Matthew Gambrell, Olli Niemitalo):
  *          OPL2 ROMs.
  *
- * version: 1.0.5
+ * version: 1.0.6
  */
 
 #ifndef YM3438_H
@@ -66,7 +66,6 @@ typedef int8_t          Bit8s;
 
 typedef struct
 {
-    Bit32u chip_type;
     Bit32u cycles;
     Bit32u slot;
     Bit32u channel;
@@ -208,8 +207,8 @@ typedef struct
     Bit8u pms[6];
 } ym3438_t;
 
-void OPN2_Reset(ym3438_t *chip, Bit32u type);
-void OPN2_SetChipType(ym3438_t *chip, Bit32u type);
+void OPN2_Reset(ym3438_t *chip);
+void OPN2_SetChipType(Bit32u type);
 void OPN2_Clock(ym3438_t *chip, Bit32u *buffer);
 void OPN2_Write(ym3438_t *chip, Bit32u port, Bit8u data);
 void OPN2_SetTestPin(ym3438_t *chip, Bit32u value);

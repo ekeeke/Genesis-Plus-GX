@@ -93,7 +93,6 @@ struct
   uint8 ym2413;
 #ifdef HAVE_YM3438_CORE
   uint8 ym3438;
-  uint8 ym3438_type;
 #endif
   uint8 mono;
   int16 psg_preamp;

@@ -41,9 +41,6 @@
 #define _SOUND_H_
 
 /* Function prototypes */
-#ifdef HAVE_YM3438_CORE
-extern void sound_ym3438_set_type(uint8 type);
-#endif
 extern void sound_init(void);
 extern void sound_reset(void);
 extern int sound_context_save(uint8 *state);
