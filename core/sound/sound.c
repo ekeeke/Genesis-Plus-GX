@@ -89,8 +89,8 @@ void YM3438_Update(int *buffer, int length)
         ym3438_sample[1] += ym3438_accm[j][1];
       }
     }
-    *buffer++ = ym3438_sample[0] * 8;
-    *buffer++ = ym3438_sample[1] * 8;
+    *buffer++ = ym3438_sample[0] * 11;
+    *buffer++ = ym3438_sample[1] * 11;
   }
 }
 
