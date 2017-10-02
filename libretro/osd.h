@@ -120,6 +120,7 @@ struct
   t_input_config input[MAX_INPUTS];
   uint8 invert_mouse;
   uint8 gun_cursor;
+  uint8 overclock;
 } config;
 
 extern char GG_ROM[256];

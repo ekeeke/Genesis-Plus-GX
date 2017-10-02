@@ -319,6 +319,10 @@ void m68k_init(void)
   }
 #endif
 
+#ifdef M68K_ALLOW_OVERCLOCK
+  m68k.overclock_ratio = 1;
+#endif
+
 #if M68K_EMULATE_INT_ACK == OPT_ON
   m68k_set_int_ack_callback(NULL);
 #endif

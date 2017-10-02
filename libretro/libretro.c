@@ -54,6 +54,12 @@
 #include <xtl.h>
 #endif
 
+#if defined(M68K_ALLOW_OVERCLOCK) || defined(Z80_ALLOW_OVERCLOCK)
+#define HAVE_OVERCLOCK
+/* Overclocking frame delay (hack) */
+#define OVERCLOCK_FRAME_DELAY 100
+#endif
+
 #define RETRO_DEVICE_MDPAD_3B             RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 0)
 #define RETRO_DEVICE_MDPAD_6B             RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 1)
 #define RETRO_DEVICE_MSPAD_2B             RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 2)
@@ -149,6 +155,14 @@ static uint8_t cheatIndexes[MAX_CHEATS];
 static char ggvalidchars[] = "ABCDEFGHJKLMNPRSTVWXYZ0123456789";
 
 static char arvalidchars[] = "0123456789ABCDEF";
+
+/* Some games appear to calibrate music playback speed for PAL/NTSC by
+   actually counting CPU cycles per frame during startup, resulting in
+   hilariously fast music.  Delay overclocking for a while as a
+   workaround */
+#ifdef HAVE_OVERCLOCK
+static uint32_t overclock_delay;
+#endif
 
 #define SOUND_FREQUENCY 44100
 
@@ -526,6 +540,9 @@ static void config_default(void)
    config.bios           = 0;
    config.lock_on        = 0;
    config.lcd            = 0; /* 0.8 fixed point */
+#ifdef HAVE_OVERCLOCK
+   config.overclock      = 0;
+#endif
 
    /* video options */
    config.overscan = 0;
@@ -1236,8 +1253,22 @@ static void check_variables(void)
       config.invert_mouse = 1;
   }
 
+#ifdef HAVE_OVERCLOCK
+  var.key = "genesis_plus_gx_overclock";
+  environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
+  {
+    if (strcmp(var.value, "1x") == 0)
+      config.overclock = 0;
+    else if (strcmp(var.value, "2x") == 0)
+      config.overclock = 1;
+  }
+#endif
+
   if (reinit)
   {
+#ifdef HAVE_OVERCLOCK
+    overclock_delay = OVERCLOCK_FRAME_DELAY;
+#endif
     audio_init(SOUND_FREQUENCY, 0);
     memcpy(temp, sram.sram, sizeof(temp));
     system_init();
@@ -1677,6 +1708,9 @@ void retro_set_environment(retro_environment_t cb)
       { "genesis_plus_gx_render", "Interlaced mode 2 output; single field|double field" },
       { "genesis_plus_gx_gun_cursor", "Show Lightgun crosshair; disabled|enabled" },
       { "genesis_plus_gx_invert_mouse", "Invert Mouse Y-axis; disabled|enabled" },
+#ifdef HAVE_OVERCLOCK
+      { "genesis_plus_gx_overclock", "Overclock CPU; 1x|2x" },
+#endif
       { NULL, NULL },
    };
 
@@ -2020,6 +2054,10 @@ bool retro_unserialize(const void *data, size_t size)
    if (!state_load((uint8_t*)data))
       return FALSE;
 
+#ifdef HAVE_OVERCLOCK
+   overclock_delay = OVERCLOCK_FRAME_DELAY;
+#endif
+
    return TRUE;
 }
 
@@ -2184,6 +2222,9 @@ bool retro_load_game(const struct retro_game_info *info)
       }
    }
 
+#ifdef HAVE_OVERCLOCK
+   overclock_delay = OVERCLOCK_FRAME_DELAY;
+#endif
    audio_init(SOUND_FREQUENCY, 0);
    system_init();
    system_reset();
@@ -2299,6 +2340,9 @@ void retro_deinit(void)
 
 void retro_reset(void)
 {
+#ifdef HAVE_OVERCLOCK
+   overclock_delay = OVERCLOCK_FRAME_DELAY;
+#endif
    gen_reset(0);
 }
 
@@ -2307,12 +2351,42 @@ void retro_run(void)
    bool updated = false;
    is_running = true;
 
+#ifdef HAVE_OVERCLOCK
+  /* update overclock delay */
+  if (overclock_delay)
+      overclock_delay--;
+#endif
+
    if (system_hw == SYSTEM_MCD)
+   {
+#ifdef M68K_ALLOW_OVERCLOCK
+      if (config.overclock && overclock_delay == 0)
+         m68k.overclock_ratio = 2;
+      else
+         m68k.overclock_ratio = 1;
+#endif
       system_frame_scd(0);
+   }
    else if ((system_hw & SYSTEM_PBC) == SYSTEM_MD)
+   {
+#ifdef M68K_ALLOW_OVERCLOCK
+      if (config.overclock && overclock_delay == 0)
+         m68k.overclock_ratio = 2;
+      else
+         m68k.overclock_ratio = 1;
+#endif
       system_frame_gen(0);
+   }
    else
+   {
+#ifdef Z80_ALLOW_OVERCLOCK
+      if (config.overclock && overclock_delay == 0)
+         z80_overclock_ratio = 2;
+      else
+         z80_overclock_ratio = 1;
+#endif
       system_frame_sms(0);
+   }
 
    if (bitmap.viewport.changed & 9)
    {
