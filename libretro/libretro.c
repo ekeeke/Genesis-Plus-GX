@@ -543,6 +543,7 @@ static void config_default(void)
 #ifdef HAVE_OVERCLOCK
    config.overclock      = 0;
 #endif
+   config.no_sprite_limit = 0;
 
    /* video options */
    config.overscan = 0;
@@ -1271,6 +1272,15 @@ static void check_variables(void)
   }
 #endif
 
+  var.key = "genesis_plus_gx_no_sprite_limit";
+  environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
+  {
+    if (strcmp(var.value, "disabled") == 0)
+      config.no_sprite_limit = 0;
+    else
+      config.no_sprite_limit = 1;
+  }
+
   if (reinit)
   {
 #ifdef HAVE_OVERCLOCK
@@ -1718,6 +1728,7 @@ void retro_set_environment(retro_environment_t cb)
 #ifdef HAVE_OVERCLOCK
       { "genesis_plus_gx_overclock", "CPU speed; 100%|125%|150%|175%|200%" },
 #endif
+      { "genesis_plus_gx_no_sprite_limit", "Remove per-line sprite limit; disabled|enabled" },
       { NULL, NULL },
    };
 
