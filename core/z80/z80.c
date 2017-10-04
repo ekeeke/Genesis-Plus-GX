@@ -201,7 +201,17 @@
 #define IFF2 Z80.iff2
 #define HALT Z80.halt
 
+#ifdef Z80_ALLOW_OVERCLOCK
+#define USE_CYCLES(A) Z80.cycles += (A) / z80_overclock_ratio
+#else
+#define USE_CYCLES(A) Z80.cycles += (A)
+#endif
+
 Z80_Regs Z80;
+
+#ifdef Z80_ALLOW_OVERCLOCK
+UINT8 z80_overclock_ratio;
+#endif
 
 unsigned char *z80_readmap[64];
 unsigned char *z80_writemap[64];
@@ -473,7 +483,7 @@ INLINE void BURNODD(int cycles, int opcodes, int cyclesum)
   if( cycles > 0 )
   {
     R += (cycles / cyclesum) * opcodes;
-    Z80.cycles += (cycles / cyclesum) * cyclesum * 15;
+    USE_CYCLES((cycles / cyclesum) * cyclesum * 15);
   }
 }
 
@@ -485,7 +495,7 @@ INLINE void BURNODD(int cycles, int opcodes, int cyclesum)
 /***************************************************************
  * adjust cycle count by n T-states
  ***************************************************************/
-#define CC(prefix,opcode) Z80.cycles += cc[Z80_TABLE_##prefix][opcode]
+#define CC(prefix,opcode) USE_CYCLES(cc[Z80_TABLE_##prefix][opcode])
 
 /***************************************************************
  * execute an opcode
@@ -3228,7 +3238,7 @@ static void take_interrupt(void)
     PUSH( pc );
     PCD = 0x0038;
     /* RST $38 + 'interrupt latency' cycles */
-    Z80.cycles += cc[Z80_TABLE_op][0xff] + cc[Z80_TABLE_ex][0xff];
+    USE_CYCLES(cc[Z80_TABLE_op][0xff] + cc[Z80_TABLE_ex][0xff]);
   }
   else
   {
@@ -3243,7 +3253,7 @@ static void take_interrupt(void)
       RM16( irq_vector, &Z80.pc );
       LOG(("Z80 #%d IM2 [$%04x] = $%04x\n",cpu_getactivecpu() , irq_vector, PCD));
         /* CALL $xxxx + 'interrupt latency' cycles */
-      Z80.cycles += cc[Z80_TABLE_op][0xcd] + cc[Z80_TABLE_ex][0xff];
+      USE_CYCLES(cc[Z80_TABLE_op][0xcd] + cc[Z80_TABLE_ex][0xff]);
     }
     else
     {
@@ -3257,18 +3267,18 @@ static void take_interrupt(void)
         PUSH( pc );
         PCD = irq_vector & 0xffff;
            /* CALL $xxxx + 'interrupt latency' cycles */
-        Z80.cycles += cc[Z80_TABLE_op][0xcd] + cc[Z80_TABLE_ex][0xff];
+        USE_CYCLES(cc[Z80_TABLE_op][0xcd] + cc[Z80_TABLE_ex][0xff]);
           break;
         case 0xc30000:  /* jump */
         PCD = irq_vector & 0xffff;
           /* JP $xxxx + 2 cycles */
-        Z80.cycles += cc[Z80_TABLE_op][0xc3] + cc[Z80_TABLE_ex][0xff];
+        USE_CYCLES(cc[Z80_TABLE_op][0xc3] + cc[Z80_TABLE_ex][0xff]);
           break;
         default:    /* rst (or other opcodes?) */
         PUSH( pc );
         PCD = irq_vector & 0x0038;
           /* RST $xx + 2 cycles */
-        Z80.cycles += cc[Z80_TABLE_op][0xff] + cc[Z80_TABLE_ex][0xff];
+        USE_CYCLES(cc[Z80_TABLE_op][0xff] + cc[Z80_TABLE_ex][0xff]);
           break;
       }
     }
@@ -3358,6 +3368,9 @@ void z80_init(const void *config, int (*irqcallback)(int))
   memset(&Z80, 0, sizeof(Z80));
   Z80.daisy = config;
   Z80.irq_callback = irqcallback;
+#ifdef Z80_ALLOW_OVERCLOCK
+  z80_overclock_ratio = 1;
+#endif
 
   /* Clear registers values (NB: should be random on real hardware ?) */
   AF = BC = DE = HL = SP = IX = IY =0;
@@ -3449,7 +3462,7 @@ void z80_set_nmi_line(unsigned int state)
     PCD = 0x0066;
     WZ=PCD;
 
-    Z80.cycles += 11*15;
+    USE_CYCLES(11*15);
   }
 
   Z80.nmi_state = state;
