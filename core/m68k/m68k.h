@@ -268,6 +268,10 @@ typedef struct
 
   uint address_space;   /* Current FC code */
 
+#ifdef M68K_ALLOW_OVERCLOCK
+  uint8 overclock_ratio;
+#endif
+
   /* Callbacks to host */
   int  (*int_ack_callback)(int int_line);           /* Interrupt Acknowledge */
   void (*reset_instr_callback)(void);               /* Called when a RESET instruction is encountered */
