@@ -1257,10 +1257,17 @@ static void check_variables(void)
   var.key = "genesis_plus_gx_overclock";
   environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
   {
-    if (strcmp(var.value, "1x") == 0)
-      config.overclock = 0;
-    else if (strcmp(var.value, "2x") == 0)
-      config.overclock = 1;
+    /* Cycle ratios multiply cycle count, so use reciprocal */
+    if (strcmp(var.value, "100%") == 0)
+      config.overclock = (100 << CYCLE_SHIFT)/100;
+    else if (strcmp(var.value, "125%") == 0)
+      config.overclock = (100 << CYCLE_SHIFT)/125;
+    else if (strcmp(var.value, "150%") == 0)
+      config.overclock = (100 << CYCLE_SHIFT)/150;
+    else if (strcmp(var.value, "175%") == 0)
+      config.overclock = (100 << CYCLE_SHIFT)/175;
+    else if (strcmp(var.value, "200%") == 0)
+      config.overclock = (100 << CYCLE_SHIFT)/200;
   }
 #endif
 
@@ -1709,7 +1716,7 @@ void retro_set_environment(retro_environment_t cb)
       { "genesis_plus_gx_gun_cursor", "Show Lightgun crosshair; disabled|enabled" },
       { "genesis_plus_gx_invert_mouse", "Invert Mouse Y-axis; disabled|enabled" },
 #ifdef HAVE_OVERCLOCK
-      { "genesis_plus_gx_overclock", "Overclock CPU; 1x|2x" },
+      { "genesis_plus_gx_overclock", "CPU speed; 100%|125%|150%|175%|200%" },
 #endif
       { NULL, NULL },
    };
@@ -2360,30 +2367,30 @@ void retro_run(void)
    if (system_hw == SYSTEM_MCD)
    {
 #ifdef M68K_ALLOW_OVERCLOCK
-      if (config.overclock && overclock_delay == 0)
-         m68k.overclock_ratio = 2;
+      if (overclock_delay == 0)
+         m68k.cycle_ratio = config.overclock;
       else
-         m68k.overclock_ratio = 1;
+         m68k.cycle_ratio = 1 << CYCLE_SHIFT;
 #endif
       system_frame_scd(0);
    }
    else if ((system_hw & SYSTEM_PBC) == SYSTEM_MD)
    {
 #ifdef M68K_ALLOW_OVERCLOCK
-      if (config.overclock && overclock_delay == 0)
-         m68k.overclock_ratio = 2;
+      if (overclock_delay == 0)
+         m68k.cycle_ratio = config.overclock;
       else
-         m68k.overclock_ratio = 1;
+         m68k.cycle_ratio = 1 << CYCLE_SHIFT;
 #endif
       system_frame_gen(0);
    }
    else
    {
 #ifdef Z80_ALLOW_OVERCLOCK
-      if (config.overclock && overclock_delay == 0)
-         z80_overclock_ratio = 2;
+      if (overclock_delay == 0)
+         z80_cycle_ratio = config.overclock;
       else
-         z80_overclock_ratio = 1;
+         z80_cycle_ratio = 1 << CYCLE_SHIFT;
 #endif
       system_frame_sms(0);
    }
