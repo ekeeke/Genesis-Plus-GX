@@ -39,7 +39,7 @@
  *      OPLx decapsulated(Matthew Gambrell, Olli Niemitalo):
  *          OPL2 ROMs.
  *
- * version: 1.0.6
+ * version: 1.0.7
  */
 
 #include <string.h>
@@ -741,28 +741,24 @@ void OPN2_EnvelopePrepare(ym3438_t *chip)
         rate = 0x3f;
     }
 
-    sum = (rate >> 2) + chip->eg_shift_lock;
+    sum = ((rate >> 2) + chip->eg_shift_lock) & 0x0f;
     if (chip->eg_rate != 0 && chip->eg_quotient == 2)
     {
         if (rate < 48)
         {
-            if ((sum & 0x0c) == 0x0c)
+            switch (sum)
             {
-                if ((sum & 0x03) == 0)
-                {
-                    inc = 1;
-                }
-                else
-                {
-                    if (sum & 0x01)
-                    {
-                        inc |= (rate >> 1) & 0x01;
-                    }
-                    if (sum & 0x02)
-                    {
-                        inc |= rate & 0x01;
-                    }
-                }
+            case 12:
+                inc = 1;
+                break;
+            case 13:
+                inc = (rate >> 1) & 0x01;
+                break;
+            case 14:
+                inc = rate & 0x01;
+                break;
+            default:
+                break;
             }
         }
         else
