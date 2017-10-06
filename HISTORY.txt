@@ -135,6 +135,7 @@ Genesis Plus GX 1.7.5 (xx/xx/xxxx) (Eke-Eke)
 * added configurable FPS display & toggleable fast-forward key combo
   (HOME + MINUS with Wii controllers or R TRIGGER + START with Gamecube controller)
 * added 50hz progressive mode (576p) support for emulation
+* added WiiU GamePad Controller support on vWii (Fix94)
 * reduced SRAM files size
 * improved A/V Sync: when VSYNC is enabled, audio resampler output rate is now adjusted (+/-0,1 %)
   to always keep audio & video synchronized and input lag is reduced by one frame.

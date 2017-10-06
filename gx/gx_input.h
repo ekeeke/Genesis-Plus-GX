@@ -3,7 +3,7 @@
  *
  *  Genesis Plus GX input support
  *
- *  Copyright Eke-Eke (2007-2015)
+ *  Copyright Eke-Eke (2007-2017)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
