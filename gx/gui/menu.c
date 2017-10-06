@@ -3687,13 +3687,14 @@ static void showcredits(void)
     FONT_writeCenter("libfat by Chism", 18, 0, 640, 1046 - offset, (GXColor)WHITE);
     FONT_writeCenter("wiiuse by Michael Laforest (Para)", 18, 0, 640, 1064 - offset, (GXColor)WHITE);
     FONT_writeCenter("asndlib & OGG player by Francisco Muñoz (Hermes)", 18, 0, 640, 1082 - offset, (GXColor)WHITE);
-    FONT_writeCenter("libpng by their respective authors", 18, 0, 640, 1100 - offset, (GXColor)WHITE);
-    FONT_writeCenter("devkitPPC by Wintermute", 18, 0, 640, 1118 - offset, (GXColor)WHITE);
+    FONT_writeCenter("libwiidrc by Fix94", 18, 0, 640, 1100 - offset, (GXColor)WHITE);
+    FONT_writeCenter("libpng by their respective authors", 18, 0, 640, 1118 - offset, (GXColor)WHITE);
+    FONT_writeCenter("devkitPPC by Wintermute", 18, 0, 640, 1136 - offset, (GXColor)WHITE);
 
-    FONT_writeCenter("Special thanks to ...", 20, 0, 640, 1158 - offset, (GXColor)LIGHT_GREEN);
-    FONT_writeCenter("Softdev, Tmbinc, Costis, Emukiddid, Team Twiizer", 18, 0, 640, 1194 - offset, (GXColor)WHITE);
-    FONT_writeCenter("Brakken & former Tehskeen members for their support", 18, 0, 640, 1212 - offset, (GXColor)WHITE);
-    FONT_writeCenter("Anca, my wife, for her patience & various ideas", 18, 0, 640, 1230 - offset, (GXColor)WHITE);
+    FONT_writeCenter("Special thanks to ...", 20, 0, 640, 1176 - offset, (GXColor)LIGHT_GREEN);
+    FONT_writeCenter("Softdev, Tmbinc, Costis, Emukiddid, Team Twiizer", 18, 0, 640, 1212 - offset, (GXColor)WHITE);
+    FONT_writeCenter("Brakken & former Tehskeen members for their support", 18, 0, 640, 1230 - offset, (GXColor)WHITE);
+    FONT_writeCenter("Anca, my wife, for her patience & various ideas", 18, 0, 640, 1248 - offset, (GXColor)WHITE);
 
     gxSetScreen();
     p = m_input.keys;
