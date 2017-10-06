@@ -1,3 +1,4 @@
+#ifdef HAVE_YM3438_CORE
 /*
  *  Copyright (C) 2017 Alexey Khokholov (Nuke.YKT)
  * 
@@ -726,7 +727,6 @@ void OPN2_EnvelopeADSR(ym3438_t *chip)
 
 void OPN2_EnvelopePrepare(ym3438_t *chip)
 {
-    Bit8u reg_rate;
     Bit8u rate;
     Bit8u sum;
     Bit8u inc = 0;
@@ -783,21 +783,20 @@ void OPN2_EnvelopePrepare(ym3438_t *chip)
     switch (rate_sel)
     {
     case eg_num_attack:
-        reg_rate = chip->ar[slot];
+        chip->eg_rate = chip->ar[slot];
         break;
     case eg_num_decay:
-        reg_rate = chip->dr[slot];
+        chip->eg_rate = chip->dr[slot];
         break;
     case eg_num_sustain:
-        reg_rate = chip->sr[slot];
+        chip->eg_rate = chip->sr[slot];
         break;
     case eg_num_release:
-        reg_rate = (chip->rr[slot] << 1) | 0x01;
+        chip->eg_rate = (chip->rr[slot] << 1) | 0x01;
         break;
     default:
         break;
     }
-    chip->eg_rate = reg_rate;
     chip->eg_ksv = chip->pg_kcode >> (chip->ks[slot] ^ 0x03);
     if (chip->am[slot])
     {
@@ -972,7 +971,7 @@ void OPN2_ChOutput(ym3438_t *chip)
         /* Ch 4,5,6 */
         channel++;
     }
-    if ((chip->cycles & 3) == 0)
+    if ((cycles & 3) == 0)
     {
         if (!test_dac)
         {
@@ -983,7 +982,7 @@ void OPN2_ChOutput(ym3438_t *chip)
         chip->ch_lock_r = chip->pan_r[channel];
     }
     /* Ch 6 */
-    if (((chip->cycles >> 2) == 1 && chip->dacen) || test_dac)
+    if (((cycles >> 2) == 1 && chip->dacen) || test_dac)
     {
         out = (Bit16s)chip->dacdata ^ 0x100;
         out <<= 7;
@@ -998,7 +997,7 @@ void OPN2_ChOutput(ym3438_t *chip)
 
     if (chip_type == ym3438_type_ym2612)
     {
-        out_en = ((chip->cycles & 3) == 3) || test_dac;
+        out_en = ((cycles & 3) == 3) || test_dac;
         /* YM2612 DAC emulation(not verified) */
         sign = out >> 8;
         if (out >= 0)
@@ -1028,7 +1027,7 @@ void OPN2_ChOutput(ym3438_t *chip)
     }
     else
     {
-        out_en = ((chip->cycles & 3) != 0) || test_dac;
+        out_en = ((cycles & 3) != 0) || test_dac;
         /* Discrete YM3438 seems has the ladder effect too */
         if (out >= 0 && chip_type == ym3438_type_discrete)
         {
@@ -1427,3 +1426,4 @@ Bit8u OPN2_Read(ym3438_t *chip, Bit32u port)
     }
     return 0;
 }
+#endif /* HAVE_YM3438_CORE */
