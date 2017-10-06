@@ -54,12 +54,6 @@
 #include <xtl.h>
 #endif
 
-#if defined(M68K_ALLOW_OVERCLOCK) || defined(Z80_ALLOW_OVERCLOCK)
-#define HAVE_OVERCLOCK
-/* Overclocking frame delay (hack) */
-#define OVERCLOCK_FRAME_DELAY 100
-#endif
-
 #define RETRO_DEVICE_MDPAD_3B             RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 0)
 #define RETRO_DEVICE_MDPAD_6B             RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 1)
 #define RETRO_DEVICE_MSPAD_2B             RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 2)
@@ -81,6 +75,25 @@
 #include "md_ntsc.h"
 #include "sms_ntsc.h"
 #include <streams/file_stream.h>
+
+#define STATIC_ASSERT(name, test) typedef struct { int assert_[(test)?1:-1]; } assert_ ## name ## _
+#define M68K_MAX_CYCLES 1107
+#define Z80_MAX_CYCLES 345
+#define OVERCLOCK_FRAME_DELAY 100
+
+#ifdef M68K_OVERCLOCK_SHIFT
+#define HAVE_OVERCLOCK
+STATIC_ASSERT(m68k_overflow,
+              M68K_MAX_CYCLES <= UINT_MAX >> (M68K_OVERCLOCK_SHIFT + 1));
+#endif
+
+#ifdef Z80_OVERCLOCK_SHIFT
+#ifndef HAVE_OVERCLOCK
+#define HAVE_OVERCLOCK
+#endif
+STATIC_ASSERT(z80_overflow,
+              Z80_MAX_CYCLES <= UINT_MAX >> (Z80_OVERCLOCK_SHIFT + 1));
+#endif
 
 sms_ntsc_t *sms_ntsc;
 md_ntsc_t  *md_ntsc;
@@ -541,7 +554,7 @@ static void config_default(void)
    config.lock_on        = 0;
    config.lcd            = 0; /* 0.8 fixed point */
 #ifdef HAVE_OVERCLOCK
-   config.overclock      = 0;
+   config.overclock      = 100;
 #endif
    config.no_sprite_limit = 0;
 
@@ -811,6 +824,31 @@ static bool update_viewport(void)
    }
    return ((ow != vwidth) || (oh != vheight) || (oar != vaspect_ratio));
 }
+
+#ifdef HAVE_OVERCLOCK
+static void update_overclock(void)
+{
+#ifdef M68K_OVERCLOCK_SHIFT
+    m68k.cycle_ratio = 1 << M68K_OVERCLOCK_SHIFT;
+#endif
+#ifdef Z80_OVERCLOCK_SHIFT
+    z80_cycle_ratio = 1 << Z80_OVERCLOCK_SHIFT;
+#endif
+    if (overclock_delay == 0)
+    {
+      /* Cycle ratios multiply per-instruction cycle counts, so use
+         reciprocals */
+#ifdef M68K_OVERCLOCK_SHIFT
+      if ((system_hw & SYSTEM_PBC) == SYSTEM_MD)
+        m68k.cycle_ratio = (100 << M68K_OVERCLOCK_SHIFT) / config.overclock;
+#endif
+#ifdef Z80_OVERCLOCK_SHIFT
+      if ((system_hw & SYSTEM_PBC) != SYSTEM_MD)
+        z80_cycle_ratio = (100 << Z80_OVERCLOCK_SHIFT) / config.overclock;
+#endif
+    }
+}
+#endif
 
 static void check_variables(void)
 {
@@ -1258,17 +1296,19 @@ static void check_variables(void)
   var.key = "genesis_plus_gx_overclock";
   environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
   {
-    /* Cycle ratios multiply cycle count, so use reciprocal */
     if (strcmp(var.value, "100%") == 0)
-      config.overclock = (100 << CYCLE_SHIFT)/100;
+      config.overclock = 100;
     else if (strcmp(var.value, "125%") == 0)
-      config.overclock = (100 << CYCLE_SHIFT)/125;
+      config.overclock = 125;
     else if (strcmp(var.value, "150%") == 0)
-      config.overclock = (100 << CYCLE_SHIFT)/150;
+      config.overclock = 150;
     else if (strcmp(var.value, "175%") == 0)
-      config.overclock = (100 << CYCLE_SHIFT)/175;
+      config.overclock = 175;
     else if (strcmp(var.value, "200%") == 0)
-      config.overclock = (100 << CYCLE_SHIFT)/200;
+      config.overclock = 200;
+
+    if (system_hw)
+      update_overclock();
   }
 #endif
 
@@ -2074,6 +2114,7 @@ bool retro_unserialize(const void *data, size_t size)
 
 #ifdef HAVE_OVERCLOCK
    overclock_delay = OVERCLOCK_FRAME_DELAY;
+   update_overclock();
 #endif
 
    return TRUE;
@@ -2240,9 +2281,6 @@ bool retro_load_game(const struct retro_game_info *info)
       }
    }
 
-#ifdef HAVE_OVERCLOCK
-   overclock_delay = OVERCLOCK_FRAME_DELAY;
-#endif
    audio_init(SOUND_FREQUENCY, 0);
    system_init();
    system_reset();
@@ -2252,6 +2290,11 @@ bool retro_load_game(const struct retro_game_info *info)
       bram_load();
 
    update_viewport();
+
+#ifdef HAVE_OVERCLOCK
+   overclock_delay = OVERCLOCK_FRAME_DELAY;
+   update_overclock();
+#endif
 
    return true;
 }
@@ -2360,6 +2403,7 @@ void retro_reset(void)
 {
 #ifdef HAVE_OVERCLOCK
    overclock_delay = OVERCLOCK_FRAME_DELAY;
+   update_overclock();
 #endif
    gen_reset(0);
 }
@@ -2371,38 +2415,20 @@ void retro_run(void)
 
 #ifdef HAVE_OVERCLOCK
   /* update overclock delay */
-  if (overclock_delay)
-      overclock_delay--;
+  if (overclock_delay && --overclock_delay == 0)
+      update_overclock();
 #endif
 
    if (system_hw == SYSTEM_MCD)
    {
-#ifdef M68K_ALLOW_OVERCLOCK
-      if (overclock_delay == 0)
-         m68k.cycle_ratio = config.overclock;
-      else
-         m68k.cycle_ratio = 1 << CYCLE_SHIFT;
-#endif
       system_frame_scd(0);
    }
    else if ((system_hw & SYSTEM_PBC) == SYSTEM_MD)
    {
-#ifdef M68K_ALLOW_OVERCLOCK
-      if (overclock_delay == 0)
-         m68k.cycle_ratio = config.overclock;
-      else
-         m68k.cycle_ratio = 1 << CYCLE_SHIFT;
-#endif
       system_frame_gen(0);
    }
    else
    {
-#ifdef Z80_ALLOW_OVERCLOCK
-      if (overclock_delay == 0)
-         z80_cycle_ratio = config.overclock;
-      else
-         z80_cycle_ratio = 1 << CYCLE_SHIFT;
-#endif
       system_frame_sms(0);
    }
 

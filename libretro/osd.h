@@ -83,7 +83,7 @@ typedef unsigned char bool;
 #define MODE5_MAX_SPRITES_PER_LINE (config.no_sprite_limit ? MAX_SPRITES_PER_LINE : (bitmap.viewport.w >> 4))
 #define MODE5_MAX_SPRITE_PIXELS (config.no_sprite_limit ? MAX_SPRITES_PER_LINE * 32 : max_sprite_pixels)
 
-typedef struct 
+typedef struct
 {
   int8 device;
   uint8 port;
