@@ -268,8 +268,8 @@ typedef struct
 
   uint address_space;   /* Current FC code */
 
-#ifdef M68K_ALLOW_OVERCLOCK
-  uint8 overclock_ratio;
+#ifdef M68K_OVERCLOCK_SHIFT
+  int cycle_ratio;
 #endif
 
   /* Callbacks to host */

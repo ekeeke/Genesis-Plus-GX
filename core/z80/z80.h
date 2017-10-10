@@ -51,8 +51,8 @@ typedef struct
 
 extern Z80_Regs Z80;
 
-#ifdef Z80_ALLOW_OVERCLOCK
-extern UINT8 z80_overclock_ratio;
+#ifdef Z80_OVERCLOCK_SHIFT
+extern UINT32 z80_cycle_ratio;
 #endif
 
 extern unsigned char *z80_readmap[64];

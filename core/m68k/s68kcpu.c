@@ -284,8 +284,8 @@ void s68k_init(void)
   }
 #endif
 
-#ifdef M68K_ALLOW_OVERCLOCK
-  s68k.overclock_ratio = 1;
+#ifdef M68K_OVERCLOCK_SHIFT
+  s68k.cycle_ratio = 1 << M68K_OVERCLOCK_SHIFT;
 #endif
 
 #if M68K_EMULATE_INT_ACK == OPT_ON
