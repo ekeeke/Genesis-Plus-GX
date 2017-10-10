@@ -74,7 +74,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ----------------------------------------------------------------------------------------
 
-LIBCHDR is distributed under following licenses:
+LIBCHDR is distributed with code under following licenses:
 
 
 MAME CHD interface 
@@ -166,11 +166,35 @@ original LZMA SDK code, either in source code form or as a compiled binary, for
 any purpose, commercial or non-commercial, and by any means.
 
 
-----------------------------------------------------------------------------------------
+NTSC FILTER LIBRARY
+-------------------
+
+Copyright (C) 2006-2007 Shay Green. This module is free software; you
+can redistribute it and/or modify it under the terms of the GNU Lesser
+General Public License as published by the Free Software Foundation; either
+version 2.1 of the License, or (at your option) any later version. This
+module is distributed in the hope that it will be useful, but WITHOUT ANY
+WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+details. You should have received a copy of the GNU Lesser General Public
+License along with this module; if not, write to the Free Software Foundation,
+Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA */
 
 
-NTSC Filter and Blip Buffer libraries are distributed under the 
-terms of the GNU Lesser General Public License (LGPL)
+BLIP BUFFER LIBRARY
+-------------------
+
+Copyright (C) 2003-2009 Shay Green. This library is free software;
+you can redistribute it and/or modify it under the terms of the GNU Lesser
+General Public License as published by the Free Software Foundation; either
+version 2.1 of the License, or (at your option) any later version. This
+library is distributed in the hope that it will be useful, but WITHOUT ANY
+WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
+details. You should have received a copy of the GNU Lesser General Public
+License along with this module; if not, write to the Free Software Foundation,
+Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA */
+
 
 
 		  GNU LESSER GENERAL PUBLIC LICENSE
@@ -679,7 +703,111 @@ That's all there is to it!
 
 ----------------------------------------------------------------------------------------
 
-Gamecube & Wii ports are linked with LIBASND library and includes code distributed under
+Gamecube & Wii ports are linked with LIBOGC library which is distributed under
+the following license:
+
+  Copyright (C) 2004 - 2009
+    Michael Wiedenbauer (shagkur)
+    Dave Murphy (WinterMute)
+
+  This software is provided 'as-is', without any express or implied
+  warranty.  In no event will the authors be held liable for any
+  damages arising from the use of this software.
+
+  Permission is granted to anyone to use this software for any
+  purpose, including commercial applications, and to alter it and
+  redistribute it freely, subject to the following restrictions:
+
+  1. The origin of this software must not be misrepresented; you
+     must not claim that you wrote the original software. If you use
+     this software in a product, an acknowledgment in the product
+     documentation would be appreciated but is not required.
+  2. Altered source versions must be plainly marked as such, and
+     must not be misrepresented as being the original software.
+  3. This notice may not be removed or altered from any source
+     distribution.
+
+----------------------------------------------------------------------------------------
+
+Gamecube & Wii ports are linked with LIBFAT library which is distributed under
+the following license:
+
+ Copyright (c) 2006 - 2012
+	Michael "Chishm" Chisholm
+	Dave "WinterMute" Murphy
+
+ Redistribution and use in source and binary forms, with or without modification,
+ are permitted provided that the following conditions are met:
+
+  1. Redistributions of source code must retain the above copyright notice,
+     this list of conditions and the following disclaimer.
+  2. Redistributions in binary form must reproduce the above copyright notice,
+     this list of conditions and the following disclaimer in the documentation and/or
+     other materials provided with the distribution.
+  3. The name of the author may not be used to endorse or promote products derived
+     from this software without specific prior written permission.
+
+ THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED
+ WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
+ AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE
+ LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+
+----------------------------------------------------------------------------------------
+
+Gamecube & Wii ports are linked with LIBPNG library which is distributed under
+the following license:
+
+  Copyright (c) 1998-2010 Glenn Randers-Pehrson
+  (Version 0.96 Copyright (c) 1996, 1997 Andreas Dilger)
+  (Version 0.88 Copyright (c) 1995, 1996 Guy Eric Schalnat, Group 42, Inc.)
+
+  The PNG Reference Library is supplied "AS IS".  The Contributing Authors
+  and Group 42, Inc. disclaim all warranties, expressed or implied,
+  including, without limitation, the warranties of merchantability and of
+  fitness for any purpose.  The Contributing Authors and Group 42, Inc.
+  assume no liability for direct, indirect, incidental, special, exemplary,
+  or consequential damages, which may result from the use of the PNG
+  Reference Library, even if advised of the possibility of such damage.
+ 
+  There is no warranty against interference with your enjoyment of the
+
+  library or against infringement.  There is no warranty that our
+
+  efforts or the library will fulfill any of your particular purposes
+
+  or needs.  This library is provided with all faults, and the entire
+
+  risk of satisfactory quality, performance, accuracy, and effort is with
+
+  the user.
+
+  Permission is hereby granted to use, copy, modify, and distribute this
+  source code, or portions hereof, for any purpose, without fee, subject
+  to the following restrictions:
+ 
+  1. The origin of this source code must not be misrepresented.
+ 
+  2. Altered versions must be plainly marked as such and
+  must not be misrepresented as being the original source.
+ 
+  3. This Copyright notice may not be removed or altered from
+     any source or altered source distribution.
+ 
+  The Contributing Authors and Group 42, Inc. specifically permit, without
+  fee, and encourage the use of this source code as a component to
+  supporting the PNG file format in commercial products.  If you use this
+  source code in a product, acknowledgment is not required but would be
+  appreciated.
+
+----------------------------------------------------------------------------------------
+
+Gamecube & Wii ports are linked with LIBASND library which is distributed under
 the following license:
 
 Copyright (c) 2008 Hermes <www.entuwii.net>
@@ -709,5 +837,25 @@ THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ----------------------------------------------------------------------------------------
 
+Wii port is linked with WiiDRC library which is distributed under
+the following license:
 
+Copyright (c) 2017 FIX94
 
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.

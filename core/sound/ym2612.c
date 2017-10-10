@@ -24,6 +24,10 @@
 /*
 **  CHANGELOG:
 **
+** 26-09-2017 Eke-Eke (Genesis Plus GX):
+**  - fixed EG counter loopback behavior (verified on YM3438 die)
+**  - reverted changes to EG rates 2-7 increment values
+**
 ** 09-04-2017 Eke-Eke (Genesis Plus GX):
 **  - fixed LFO PM implementation: block & keyscale code should not be modified by LFO (verified on YM2612 die)
 **  - fixed Timer B overflow handling
@@ -240,12 +244,11 @@ O(18),O(18),O(18),O(18),O(18),O(18),O(18),O(18),
 
 /* rates 00-11 */
 /*
-O( 0),O( 1),O( 2),O( 3),
-O( 0),O( 1),O( 2),O( 3),
+O( 0),O( 1)
 */
-O(18),O(18),O( 0),O( 0),
-O( 0),O( 0),O( 2),O( 2),   /* Nemesis's tests */
-
+O(18),O(18),               /* from Nemesis's tests on real YM2612 hardware */
+            O( 2),O( 3),
+O( 0),O( 1),O( 2),O( 3),
 O( 0),O( 1),O( 2),O( 3),
 O( 0),O( 1),O( 2),O( 3),
 O( 0),O( 1),O( 2),O( 3),
@@ -1282,7 +1285,7 @@ INLINE void update_ssg_eg_channels(FM_CH *CH)
 
 INLINE void update_phase_lfo_slot(FM_SLOT *SLOT, UINT32 pm, UINT8 kc, UINT32 fc)
 {
-  INT32 lfo_fn_offset = lfo_pm_table[(((fc & 0x7f0) >> 4) << 8) + pm];
+  INT32 lfo_fn_offset = lfo_pm_table[((fc & 0x7f0) << 4) + pm];
   
   if (lfo_fn_offset)  /* LFO phase modulation active */
   {
@@ -1293,7 +1296,7 @@ INLINE void update_phase_lfo_slot(FM_SLOT *SLOT, UINT32 pm, UINT8 kc, UINT32 fc)
     fc = ((fc << 1) + lfo_fn_offset) & 0xfff;
 
     /* (frequency) phase increment counter (17-bit) */
-    fc = (((fc << 5) >> (7 - blk)) + SLOT->DT[kc]) & DT_MASK;
+    fc = (((fc << blk) >> 2) + SLOT->DT[kc]) & DT_MASK;
 
     /* update phase */
     SLOT->phase += ((fc * SLOT->mul) >> 1);
@@ -1308,7 +1311,7 @@ INLINE void update_phase_lfo_channel(FM_CH *CH)
 {
   UINT32 fc = CH->block_fnum;
   
-  INT32 lfo_fn_offset = lfo_pm_table[(((fc & 0x7f0) >> 4) << 8) + CH->pms + ym2612.OPN.LFO_PM];
+  INT32 lfo_fn_offset = lfo_pm_table[((fc & 0x7f0) << 4) + CH->pms + ym2612.OPN.LFO_PM];
 
   if (lfo_fn_offset)  /* LFO phase modulation active */
   {
@@ -1322,7 +1325,7 @@ INLINE void update_phase_lfo_channel(FM_CH *CH)
     fc = ((fc << 1) + lfo_fn_offset) & 0xfff;
 
     /* (frequency) phase increment counter (17-bit) */
-    fc = (fc << 5) >> (7 - blk);
+    fc = (fc << blk) >> 2;
 
     /* apply DETUNE & MUL operator specific values */
     finc = (fc + CH->SLOT[SLOT1].DT[kc]) & DT_MASK;
@@ -1696,7 +1699,7 @@ INLINE void OPNWriteReg(int r, int v)
           /* keyscale code */
           CH->kcode = (blk<<2) | opn_fktable[fn >> 7];
           /* phase increment counter */
-          CH->fc = (fn << 6) >> (7 - blk);
+          CH->fc = (fn<<blk)>>1;
 
           /* store fnum in clear form for LFO PM calculations */
           CH->block_fnum = (blk<<11) | fn;
@@ -1715,7 +1718,7 @@ INLINE void OPNWriteReg(int r, int v)
             /* keyscale code */
             ym2612.OPN.SL3.kcode[c]= (blk<<2) | opn_fktable[fn >> 7];
             /* phase increment counter */
-            ym2612.OPN.SL3.fc[c] = (fn << 6) >> (7 - blk);
+            ym2612.OPN.SL3.fc[c] = (fn<<blk)>>1;
             ym2612.OPN.SL3.block_fnum[c] = (blk<<11) | fn;
             ym2612.CH[2].SLOT[SLOT1].Incr=-1;
           }
@@ -2017,7 +2020,7 @@ void YM2612Update(int *buffer, int length)
   refresh_fc_eg_chan(&ym2612.CH[5]);
 
   /* buffering */
-  for(i=0; i < length ; i++)
+  for(i=0; i<length ; i++)
   {
     /* clear outputs */
     out_fm[0] = 0;
@@ -2045,14 +2048,21 @@ void YM2612Update(int *buffer, int length)
     /* advance LFO */
     advance_lfo();
 
-    /* advance envelope generator */
-    ym2612.OPN.eg_timer ++;
-
     /* EG is updated every 3 samples */
+    ym2612.OPN.eg_timer++;
     if (ym2612.OPN.eg_timer >= 3)
     {
+      /* reset EG timer */
       ym2612.OPN.eg_timer = 0;
+
+      /* increment EG counter */
       ym2612.OPN.eg_cnt++;
+
+      /* EG counter is 12-bit only and zero value is skipped (verified on real hardware) */
+      if (ym2612.OPN.eg_cnt == 4096)
+        ym2612.OPN.eg_cnt = 1;
+
+      /* advance envelope generator */
       advance_eg_channels(&ym2612.CH[0], ym2612.OPN.eg_cnt);
     }
 

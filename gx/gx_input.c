@@ -3,7 +3,7 @@
  *
  *  Genesis Plus GX input support
  *
- *  Copyright Eke-Eke (2007-2015)
+ *  Copyright Eke-Eke (2007-2017)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -40,10 +40,12 @@
 #include "shared.h"
 #include "font.h"
 #include "gui.h"
+#include "menu.h"
 #include "cheats.h"
 
 #ifdef HW_RVL
 #include <ogc/usbmouse.h>
+#include "wiidrc.h"
 #endif
 
 /* Analog sticks sensitivity */
@@ -77,17 +79,22 @@
 #define PAD_RIGHT 3
 
 /* default directions mapping  */
-static u32 wpad_dirmap[3][4] =
+static u32 wpad_dirmap[4][4] =
 {
-  {WPAD_BUTTON_RIGHT, WPAD_BUTTON_LEFT, WPAD_BUTTON_UP, WPAD_BUTTON_DOWN},                                /* WIIMOTE */
-  {WPAD_BUTTON_UP, WPAD_BUTTON_DOWN, WPAD_BUTTON_LEFT, WPAD_BUTTON_RIGHT},                                /* WIIMOTE + NUNCHUK */
-  {WPAD_CLASSIC_BUTTON_UP, WPAD_CLASSIC_BUTTON_DOWN, WPAD_CLASSIC_BUTTON_LEFT, WPAD_CLASSIC_BUTTON_RIGHT} /* CLASSIC */
+  {WPAD_BUTTON_RIGHT, WPAD_BUTTON_LEFT, WPAD_BUTTON_UP, WPAD_BUTTON_DOWN},                                  /* WIIMOTE */
+  {WPAD_BUTTON_UP, WPAD_BUTTON_DOWN, WPAD_BUTTON_LEFT, WPAD_BUTTON_RIGHT},                                  /* WIIMOTE + NUNCHUK */
+  {WPAD_CLASSIC_BUTTON_UP, WPAD_CLASSIC_BUTTON_DOWN, WPAD_CLASSIC_BUTTON_LEFT, WPAD_CLASSIC_BUTTON_RIGHT},  /* CLASSIC */
+  {WIIDRC_BUTTON_UP, WIIDRC_BUTTON_DOWN, WIIDRC_BUTTON_LEFT, WIIDRC_BUTTON_RIGHT}                           /* WIIU GAMEPAD */
 };
 
 #define WPAD_BUTTONS_HELD (WPAD_BUTTON_UP | WPAD_BUTTON_DOWN | WPAD_BUTTON_LEFT | WPAD_BUTTON_RIGHT | \
                            WPAD_BUTTON_MINUS | WPAD_BUTTON_PLUS | WPAD_BUTTON_A | WPAD_BUTTON_2 | \
                            WPAD_CLASSIC_BUTTON_UP | WPAD_CLASSIC_BUTTON_DOWN | WPAD_CLASSIC_BUTTON_LEFT | WPAD_CLASSIC_BUTTON_RIGHT | \
                            WPAD_CLASSIC_BUTTON_FULL_L | WPAD_CLASSIC_BUTTON_FULL_R | WPAD_CLASSIC_BUTTON_A)
+
+#define WIIU_BUTTONS_HELD (WIIDRC_BUTTON_UP | WIIDRC_BUTTON_DOWN | WIIDRC_BUTTON_LEFT | WIIDRC_BUTTON_RIGHT | \
+                           WIIDRC_BUTTON_MINUS | WIIDRC_BUTTON_PLUS | WIIDRC_BUTTON_A | \
+                           WIIDRC_BUTTON_L | WIIDRC_BUTTON_ZL | WIIDRC_BUTTON_R | WIIDRC_BUTTON_ZR)
 
 #endif
 
@@ -444,7 +451,7 @@ static void pad_update(s8 chan, u8 i)
       {
         /* Calculate angle (in degree) */
         ang = 90.0 - (atan((float)y / (float)x) * 180.0 / M_PI);
-	      if (x < 0) ang += 180.0;
+        if (x < 0) ang += 180.0;
 
         /* 8 bottom sensors = 8 areas */
         if ((ang > 22.5) && (ang <= 67.5)) input.pad[i] |= INPUT_ACTIVATOR_2L;
@@ -465,7 +472,7 @@ static void pad_update(s8 chan, u8 i)
       {
         /* Calculate angle (in degree) */
         ang = 90.0 - (atan((float)y / (float)x) * 180.0 / M_PI);
-	      if (x < 0) ang += 180.0;
+        if (x < 0) ang += 180.0;
 
         /* 8 top sensors = 8 areas */
         if ((ang > 22.5) && (ang <= 67.5)) input.pad[i] |= INPUT_ACTIVATOR_2U;
@@ -523,7 +530,7 @@ static int wpad_StickX(WPADData *data, u8 right)
     /* adjust against center position */
     pos -= center;
 
-	  /* return interpolated range [-128;127] */
+    /* return interpolated range [-128;127] */
     if (pos > 0)
     {
       return (int)(127.0 * ((float)pos / (float)(max - center)));
@@ -572,7 +579,7 @@ static int wpad_StickY(WPADData *data, u8 right)
     /* adjust against center position */
     pos -= center;
 
-	  /* return interpolated range [-128;127] */
+    /* return interpolated range [-128;127] */
     if (pos > 0)
     {
       return (int)(127.0 * ((float)pos / (float)(max - center)));
@@ -595,13 +602,25 @@ static void wpad_config(u8 exp, int chan, int first_key, int last_key)
   inputs_disabled = 1;
 
   /* Check if device is connected */
-  WPAD_Probe(chan, &p);
+  if (exp <= WPAD_EXP_CLASSIC)
+  {
+    WPAD_Probe(chan, &p);
+  }
+  else
+  {
+    if (WiiDRC_Inited() && WiiDRC_Connected())
+    {
+      p = exp;
+    }
+  }
+  
+  /* Device not detected */
   if (((exp > WPAD_EXP_NONE) && (p != exp)) || (p == 255))
   {
-    /* device not detected */
-    if (exp == WPAD_EXP_NONE)     sprintf(msg, "WIIMOTE #%d is not connected !", chan+1);
-    if (exp == WPAD_EXP_NUNCHUK)  sprintf(msg, "NUNCHUK #%d is not connected !", chan+1);
-    if (exp == WPAD_EXP_CLASSIC)  sprintf(msg, "CLASSIC #%d is not connected !", chan+1);
+    if (exp == WPAD_EXP_NONE) sprintf(msg, "WIIMOTE #%d is not connected !", chan+1);
+    else if (exp == WPAD_EXP_NUNCHUK) sprintf(msg, "NUNCHUK #%d is not connected !", chan+1);
+    else if (exp == WPAD_EXP_CLASSIC) sprintf(msg, "CLASSIC #%d is not connected !", chan+1);
+    else sprintf(msg, "WIIU GAMEPAD is not connected !");
     GUI_WaitPrompt("Error",msg);
 
     /* re-enable background PAD scanning and exit */
@@ -616,10 +635,21 @@ static void wpad_config(u8 exp, int chan, int first_key, int last_key)
     if (strcmp(keyname[first_key], "N.A"))
     {
       /* remove any pending buttons */
-      while (WPAD_ButtonsHeld(chan))
+      if (exp <= WPAD_EXP_CLASSIC)
       {
-        VIDEO_WaitVSync();
-        WPAD_ScanPads();
+        while (WPAD_ButtonsHeld(chan))
+        {
+          VIDEO_WaitVSync();
+          WPAD_ScanPads();
+        }
+      }
+      else
+      {
+        while (WiiDRC_ButtonsHeld())
+        {
+          VIDEO_WaitVSync();
+          WiiDRC_ScanPads();
+        }
       }
 
       /* configurable button */
@@ -631,8 +661,16 @@ static void wpad_config(u8 exp, int chan, int first_key, int last_key)
       while (!p)
       {
         VIDEO_WaitVSync();
-        WPAD_ScanPads();
-        p = WPAD_ButtonsDown(chan);
+        if (exp <= WPAD_EXP_CLASSIC)
+        {
+          WPAD_ScanPads();
+          p = WPAD_ButtonsDown(chan);
+        }
+        else
+        {
+          WiiDRC_ScanPads();
+          p = WiiDRC_ButtonsDown();
+        }
       }
 
       /* detect pressed key */
@@ -683,9 +721,20 @@ static void wpad_config(u8 exp, int chan, int first_key, int last_key)
           break;
         }
 
+        /* WiiU GamePad Controller */
         default:
         {
-          first_key = MAX_KEYS;
+          if (p & WIIDRC_BUTTON_A) p = WIIDRC_BUTTON_A;
+          else if (p & WIIDRC_BUTTON_B) p = WIIDRC_BUTTON_B;
+          else if (p & WIIDRC_BUTTON_X) p = WIIDRC_BUTTON_X;
+          else if (p & WIIDRC_BUTTON_Y) p = WIIDRC_BUTTON_Y;
+          else if (p & WIIDRC_BUTTON_ZL) p = WIIDRC_BUTTON_ZL;
+          else if (p & WIIDRC_BUTTON_ZR) p = WIIDRC_BUTTON_ZR;
+          else if (p & WIIDRC_BUTTON_PLUS) p = WIIDRC_BUTTON_PLUS;
+          else if (p & WIIDRC_BUTTON_MINUS) p = WIIDRC_BUTTON_MINUS;
+          else if (p & WIIDRC_BUTTON_L) p = WIIDRC_BUTTON_L;
+          else if (p & WIIDRC_BUTTON_R) p = WIIDRC_BUTTON_R;
+          else first_key = MAX_KEYS;
           break;
         }
       }
@@ -693,17 +742,28 @@ static void wpad_config(u8 exp, int chan, int first_key, int last_key)
       /* update key mapping */
       if (first_key < MAX_KEYS)
       {
-        config.wpad_keymap[exp + (chan * 3)][first_key] = p;
+        config.wpad_keymap[4*exp + chan][first_key] = p;
       }
     }
   }
   while (first_key++ < last_key);
 
   /* remove any pending buttons */
-  while (WPAD_ButtonsHeld(chan))
+  if (exp <= WPAD_EXP_CLASSIC)
   {
-    VIDEO_WaitVSync();
-    WPAD_ScanPads();
+    while (WPAD_ButtonsHeld(chan))
+    {
+      VIDEO_WaitVSync();
+      WPAD_ScanPads();
+    }
+  }
+  else
+  {
+    while (WiiDRC_ButtonsHeld())
+    {
+      VIDEO_WaitVSync();
+      WiiDRC_ScanPads();
+    }
   }
 
   /* re-enable background PAD scanning and exit */
@@ -715,21 +775,59 @@ static void wpad_update(s8 chan, u8 i, u32 exp)
   /* WPAD data */
   WPADData *data = WPAD_Data(chan);
 
-  /* WPAD status */
+  /* Button status */
   u32 p = data->btns_h;
 
   /* Analog sticks */
-  s8 x = 0;
-  s8 y = 0;
+  s16 x = 0;
+  s16 y = 0;
 
-  if (exp != WPAD_EXP_NONE)
+  /* WiiU GamePad Controller support */
+  if (exp > WPAD_EXP_CLASSIC)
   {
+    WiiDRC_ScanPads();
+    if (WiiDRC_ShutdownRequested())
+    {
+      Shutdown = ConfigRequested = 1;
+      reload = 0;
+      return;
+    }
+
+    p = WiiDRC_ButtonsHeld();
+
+    /* Default Wii controller menu keys */
+    if (WiiDRC_ButtonsDown() & WIIDRC_BUTTON_HOME)
+    {
+      /* Default fast-forward key combo */
+      if (p & WIIDRC_BUTTON_MINUS)
+      {
+        audioSync ^= AUDIO_WAIT;
+        videoSync = (audioSync && config.vsync && (gc_pal != vdp_pal)) ? VIDEO_WAIT : 0;
+        return;
+      }
+
+      /* Return to emulator settings */
+      ConfigRequested = 1;
+      return;
+    }
+
+    /* Left Analog Stick */
+    x = (WiiDRC_lStickX() * 128) / 75;
+    y = (WiiDRC_lStickY() * 128) / 75;
+    if (x > 127) x = 127;
+    else if (x < -128) x = -128;
+    if (y > 127) y = 127;
+    else if (y < -128) y = -128;
+  }
+  else if (exp != WPAD_EXP_NONE)
+  {
+    /* Left Analog Stick */
     x = wpad_StickX(data,0);
     y = wpad_StickY(data,0);
   }
 
   /* Retrieve current key mapping */
-  u32 *wpad_keymap = config.wpad_keymap[exp + (chan * 3)];
+  u32 *wpad_keymap = config.wpad_keymap[4*exp + chan];
 
   /* Emulated device */
   switch (input.dev[i])
@@ -772,11 +870,24 @@ static void wpad_update(s8 chan, u8 i, u32 exp)
       input.analog[i][1] = y ? (127 - y) : 128;
 
       /* Right Stick analog position [0-255] */
-      if (exp == WPAD_EXP_CLASSIC)
+      if (exp >= WPAD_EXP_CLASSIC)
       {
-        /* Classic Controller right stick */
-        x = wpad_StickX(data,1);
-        y = wpad_StickY(data,1);
+        if (exp > WPAD_EXP_CLASSIC)
+        {
+          /* WiiU GamePad Controller right stick */
+          x = (WiiDRC_rStickX() * 128) / 75;
+          y = (WiiDRC_rStickY() * 128) / 75;
+          if (x > 127) x = 127;
+          else if (x < -128) x = -128;
+          if (y > 127) y = 127;
+          else if (y < -128) y = -128;
+        }
+        else
+        {
+          /* Classic Controller right stick */
+          x = wpad_StickX(data,1);
+          y = wpad_StickY(data,1);
+        }
 
         /* Emulated stick is unidirectional but can be rotated */
         if (abs(x) > abs(y))
@@ -867,7 +978,7 @@ static void wpad_update(s8 chan, u8 i, u32 exp)
     case DEVICE_LIGHTGUN:
     {
       /* Gun screen position (x,y) */
-      if (exp != WPAD_EXP_CLASSIC)
+      if (exp < WPAD_EXP_CLASSIC)
       {
         /* Wiimote IR */
         struct ir_t ir;
@@ -888,7 +999,7 @@ static void wpad_update(s8 chan, u8 i, u32 exp)
       }
       else
       {
-        /* Classic Controller analog stick */
+        /* Left analog stick */
         input.analog[i][0] += x / ANALOG_SENSITIVITY;
         input.analog[i][1] -= y / ANALOG_SENSITIVITY;
 
@@ -927,7 +1038,7 @@ static void wpad_update(s8 chan, u8 i, u32 exp)
         if (event.button & 2) input.pad[i] |= INPUT_MOUSE_CENTER;
         if (event.button & 4) input.pad[i] |= INPUT_MOUSE_LEFT;
       }
-      else if (exp != WPAD_EXP_CLASSIC)
+      else if (exp == WPAD_EXP_NONE)
       {
         /* Wiimote IR (buggy) */
         struct ir_t ir;
@@ -942,7 +1053,7 @@ static void wpad_update(s8 chan, u8 i, u32 exp)
       }
       else
       {
-        /* Classic Controller analog stick position (-127;+127) -> (-255;+255) */
+        /* Left analog stick position (-127;+127) -> (-255;+255) */
         input.analog[i][0] = (x / ANALOG_SENSITIVITY) * 2;
         input.analog[i][1] = (y / ANALOG_SENSITIVITY) * 2;
       }
@@ -971,7 +1082,7 @@ static void wpad_update(s8 chan, u8 i, u32 exp)
       else if (p & PAD_BUTTON_RIGHT) input.pad[i] |= INPUT_RIGHT;
 
       /* PEN screen position (x,y) */
-      if (exp != WPAD_EXP_CLASSIC)
+      if (exp < WPAD_EXP_CLASSIC)
       {
         /* Wiimote IR */
         struct ir_t ir;
@@ -984,7 +1095,7 @@ static void wpad_update(s8 chan, u8 i, u32 exp)
       }
       else
       {
-        /* Classic Controller analog stick */
+        /* Left analog stick */
         input.analog[0][0] += x / ANALOG_SENSITIVITY;
         input.analog[0][1] -= y / ANALOG_SENSITIVITY;
 
@@ -1008,7 +1119,7 @@ static void wpad_update(s8 chan, u8 i, u32 exp)
     case DEVICE_TEREBI:
     {
       /* PEN screen position (x,y) */
-      if (exp != WPAD_EXP_CLASSIC)
+      if (exp < WPAD_EXP_CLASSIC)
       {
         /* Wiimote IR */
         struct ir_t ir;
@@ -1021,7 +1132,7 @@ static void wpad_update(s8 chan, u8 i, u32 exp)
       }
       else
       {
-        /* Classic Controller analog stick */
+        /* Left analog stick */
         input.analog[0][0] += x / ANALOG_SENSITIVITY;
         input.analog[0][1] -= y / ANALOG_SENSITIVITY;
 
@@ -1041,7 +1152,7 @@ static void wpad_update(s8 chan, u8 i, u32 exp)
     case DEVICE_GRAPHIC_BOARD:
     {
       /* PEN screen position (x,y) */
-      if (exp != WPAD_EXP_CLASSIC)
+      if (exp < WPAD_EXP_CLASSIC)
       {
         /* Wiimote IR */
         struct ir_t ir;
@@ -1054,7 +1165,7 @@ static void wpad_update(s8 chan, u8 i, u32 exp)
       }
       else
       {
-        /* Classic Controller analog stick */
+        /* Left analog stick */
         input.analog[0][0] += x / ANALOG_SENSITIVITY;
         input.analog[0][1] -= y / ANALOG_SENSITIVITY;
 
@@ -1130,6 +1241,7 @@ void gx_input_Init(void)
   WPAD_Init();
   WPAD_SetDataFormat(WPAD_CHAN_ALL,WPAD_FMT_BTNS_ACC_IR);
   WPAD_SetVRes(WPAD_CHAN_ALL,640,480);
+  WiiDRC_Init();
 #endif
 }
 
@@ -1195,6 +1307,15 @@ int gx_input_FindDevices(void)
           }
           break;
         }
+
+        case 4: /* WiiU GamePad Controller */
+        {
+          if (WiiDRC_Inited() && WiiDRC_Connected())
+          {
+            found++;
+          }
+          break;
+        }
  #endif
 
         default:
@@ -1236,34 +1357,44 @@ void gx_input_SetDefault(void)
   for (i=0; i<4; i++)
   {
     /* Wiimote (horizontal) */
-    config.wpad_keymap[i*3 + WPAD_EXP_NONE][KEY_BUTTONA] = WPAD_BUTTON_A;
-    config.wpad_keymap[i*3 + WPAD_EXP_NONE][KEY_BUTTONB] = WPAD_BUTTON_1;
-    config.wpad_keymap[i*3 + WPAD_EXP_NONE][KEY_BUTTONC] = WPAD_BUTTON_2;
-    config.wpad_keymap[i*3 + WPAD_EXP_NONE][KEY_START]   = WPAD_BUTTON_PLUS;
-    config.wpad_keymap[i*3 + WPAD_EXP_NONE][KEY_BUTTONX] = 0;
-    config.wpad_keymap[i*3 + WPAD_EXP_NONE][KEY_BUTTONY] = 0;
-    config.wpad_keymap[i*3 + WPAD_EXP_NONE][KEY_BUTTONZ] = 0;
-    config.wpad_keymap[i*3 + WPAD_EXP_NONE][KEY_MODE]    = 0;
+    config.wpad_keymap[4*WPAD_EXP_NONE + i][KEY_BUTTONA] = WPAD_BUTTON_A;
+    config.wpad_keymap[4*WPAD_EXP_NONE + i][KEY_BUTTONB] = WPAD_BUTTON_1;
+    config.wpad_keymap[4*WPAD_EXP_NONE + i][KEY_BUTTONC] = WPAD_BUTTON_2;
+    config.wpad_keymap[4*WPAD_EXP_NONE + i][KEY_START]   = WPAD_BUTTON_PLUS;
+    config.wpad_keymap[4*WPAD_EXP_NONE + i][KEY_BUTTONX] = 0;
+    config.wpad_keymap[4*WPAD_EXP_NONE + i][KEY_BUTTONY] = 0;
+    config.wpad_keymap[4*WPAD_EXP_NONE + i][KEY_BUTTONZ] = 0;
+    config.wpad_keymap[4*WPAD_EXP_NONE + i][KEY_MODE]    = 0;
 
     /* Wiimote + Nunchuk */
-    config.wpad_keymap[i*3 + WPAD_EXP_NUNCHUK][KEY_BUTTONA] = WPAD_NUNCHUK_BUTTON_Z;
-    config.wpad_keymap[i*3 + WPAD_EXP_NUNCHUK][KEY_BUTTONB] = WPAD_BUTTON_B;
-    config.wpad_keymap[i*3 + WPAD_EXP_NUNCHUK][KEY_BUTTONC] = WPAD_BUTTON_A;
-    config.wpad_keymap[i*3 + WPAD_EXP_NUNCHUK][KEY_START]   = WPAD_BUTTON_PLUS;
-    config.wpad_keymap[i*3 + WPAD_EXP_NUNCHUK][KEY_BUTTONX] = WPAD_NUNCHUK_BUTTON_C;
-    config.wpad_keymap[i*3 + WPAD_EXP_NUNCHUK][KEY_BUTTONY] = WPAD_BUTTON_1;
-    config.wpad_keymap[i*3 + WPAD_EXP_NUNCHUK][KEY_BUTTONZ] = WPAD_BUTTON_2;
-    config.wpad_keymap[i*3 + WPAD_EXP_NUNCHUK][KEY_MODE]    = WPAD_BUTTON_MINUS;
+    config.wpad_keymap[4*WPAD_EXP_NUNCHUK + i][KEY_BUTTONA] = WPAD_NUNCHUK_BUTTON_Z;
+    config.wpad_keymap[4*WPAD_EXP_NUNCHUK + i][KEY_BUTTONB] = WPAD_BUTTON_B;
+    config.wpad_keymap[4*WPAD_EXP_NUNCHUK + i][KEY_BUTTONC] = WPAD_BUTTON_A;
+    config.wpad_keymap[4*WPAD_EXP_NUNCHUK + i][KEY_START]   = WPAD_BUTTON_PLUS;
+    config.wpad_keymap[4*WPAD_EXP_NUNCHUK + i][KEY_BUTTONX] = WPAD_NUNCHUK_BUTTON_C;
+    config.wpad_keymap[4*WPAD_EXP_NUNCHUK + i][KEY_BUTTONY] = WPAD_BUTTON_1;
+    config.wpad_keymap[4*WPAD_EXP_NUNCHUK + i][KEY_BUTTONZ] = WPAD_BUTTON_2;
+    config.wpad_keymap[4*WPAD_EXP_NUNCHUK + i][KEY_MODE]    = WPAD_BUTTON_MINUS;
 
     /* Classic Controller */
-    config.wpad_keymap[i*3 + WPAD_EXP_CLASSIC][KEY_BUTTONA] = WPAD_CLASSIC_BUTTON_Y;
-    config.wpad_keymap[i*3 + WPAD_EXP_CLASSIC][KEY_BUTTONB] = WPAD_CLASSIC_BUTTON_B;
-    config.wpad_keymap[i*3 + WPAD_EXP_CLASSIC][KEY_BUTTONC] = WPAD_CLASSIC_BUTTON_A;
-    config.wpad_keymap[i*3 + WPAD_EXP_CLASSIC][KEY_START]   = WPAD_CLASSIC_BUTTON_PLUS;
-    config.wpad_keymap[i*3 + WPAD_EXP_CLASSIC][KEY_BUTTONX] = WPAD_CLASSIC_BUTTON_ZL;
-    config.wpad_keymap[i*3 + WPAD_EXP_CLASSIC][KEY_BUTTONY] = WPAD_CLASSIC_BUTTON_ZR;
-    config.wpad_keymap[i*3 + WPAD_EXP_CLASSIC][KEY_BUTTONZ] = WPAD_CLASSIC_BUTTON_X;
-    config.wpad_keymap[i*3 + WPAD_EXP_CLASSIC][KEY_MODE]    = WPAD_CLASSIC_BUTTON_MINUS;
+    config.wpad_keymap[4*WPAD_EXP_CLASSIC + i][KEY_BUTTONA] = WPAD_CLASSIC_BUTTON_Y;
+    config.wpad_keymap[4*WPAD_EXP_CLASSIC + i][KEY_BUTTONB] = WPAD_CLASSIC_BUTTON_B;
+    config.wpad_keymap[4*WPAD_EXP_CLASSIC + i][KEY_BUTTONC] = WPAD_CLASSIC_BUTTON_A;
+    config.wpad_keymap[4*WPAD_EXP_CLASSIC + i][KEY_START]   = WPAD_CLASSIC_BUTTON_PLUS;
+    config.wpad_keymap[4*WPAD_EXP_CLASSIC + i][KEY_BUTTONX] = WPAD_CLASSIC_BUTTON_ZL;
+    config.wpad_keymap[4*WPAD_EXP_CLASSIC + i][KEY_BUTTONY] = WPAD_CLASSIC_BUTTON_ZR;
+    config.wpad_keymap[4*WPAD_EXP_CLASSIC + i][KEY_BUTTONZ] = WPAD_CLASSIC_BUTTON_X;
+    config.wpad_keymap[4*WPAD_EXP_CLASSIC + i][KEY_MODE]    = WPAD_CLASSIC_BUTTON_MINUS;
+
+    /* WiiU GamePad Controller */
+    config.wpad_keymap[4*3][KEY_BUTTONA] = WIIDRC_BUTTON_Y;
+    config.wpad_keymap[4*3][KEY_BUTTONB] = WIIDRC_BUTTON_B;
+    config.wpad_keymap[4*3][KEY_BUTTONC] = WIIDRC_BUTTON_A;
+    config.wpad_keymap[4*3][KEY_START]   = WIIDRC_BUTTON_PLUS;
+    config.wpad_keymap[4*3][KEY_BUTTONX] = WIIDRC_BUTTON_L;
+    config.wpad_keymap[4*3][KEY_BUTTONY] = WIIDRC_BUTTON_R;
+    config.wpad_keymap[4*3][KEY_BUTTONZ] = WIIDRC_BUTTON_X;
+    config.wpad_keymap[4*3][KEY_MODE]    = WIIDRC_BUTTON_MINUS;
   }
 #endif
 
@@ -1276,8 +1407,20 @@ void gx_input_SetDefault(void)
   }
 
 #ifdef HW_RVL
+  /* autodetect connected WiiU Gamepad Controller */
+  if (WiiDRC_Inited() && WiiDRC_Connected())
+  {
+    config.input[0].device = 4;
+    config.input[0].port = 0;
+    i = 1;
+  }
+  else
+  {
+    i = 0;
+  }
+
   /* autodetect connected Wii Controllers */
-  for (i=0; i<4; i++)
+  while (i++ < 4)
   {
     exp = 255;
     WPAD_Probe(i, &exp);
@@ -1596,12 +1739,35 @@ void gx_input_UpdateMenu(void)
   else if (x < -ANALOG_SENSITIVITY) hp |= PAD_BUTTON_LEFT;
   else if (y > ANALOG_SENSITIVITY)  hp |= PAD_BUTTON_UP;
   else if (y < -ANALOG_SENSITIVITY) hp |= PAD_BUTTON_DOWN;
+
+  /* WiiU GamePad status */
+  u32 pwu = 0;
+  u32 hwu = 0;
+  if (WiiDRC_Inited())
+  {
+    WiiDRC_ScanPads();
+    if (WiiDRC_ShutdownRequested())
+    {
+      Shutdown = ConfigRequested = 1;
+      reload = 0;
+      return;
+    }
+    pwu = WiiDRC_ButtonsDown();
+    hwu = WiiDRC_ButtonsHeld() & WIIU_BUTTONS_HELD;
+    x = WiiDRC_lStickX();
+    y = WiiDRC_lStickY();
+    if (x > ANALOG_SENSITIVITY)       hp |= PAD_BUTTON_RIGHT;
+    else if (x < -ANALOG_SENSITIVITY) hp |= PAD_BUTTON_LEFT;
+    else if (y > ANALOG_SENSITIVITY)  hp |= PAD_BUTTON_UP;
+    else if (y < -ANALOG_SENSITIVITY) hp |= PAD_BUTTON_DOWN;
+  }
+
 #endif
 
   /* check if any direction/selection key is being held or just being pressed/released */
 #ifdef HW_RVL
-  if (pp||pw) held_cnt = 0;
-  else if (hp||hw) held_cnt++;
+  if (pp||pw||pwu) held_cnt = 0;
+  else if (hp||hw||hwu) held_cnt++;
   else held_cnt = 0;
 #else
   if (pp) held_cnt = 0;
@@ -1616,6 +1782,7 @@ void gx_input_UpdateMenu(void)
     pp |= hp;
 #ifdef HW_RVL
     pw |= hw;
+    pwu |= hwu;
 #endif
 
     /* delay until next triggering (adjusts direction/selection update speed) */
@@ -1651,7 +1818,20 @@ void gx_input_UpdateMenu(void)
   if (pw & (WPAD_BUTTON_1|WPAD_BUTTON_B|WPAD_CLASSIC_BUTTON_B)) pp |= PAD_BUTTON_B;
   if (pw & (WPAD_BUTTON_HOME|WPAD_CLASSIC_BUTTON_HOME))         pp |= PAD_TRIGGER_Z;
   if (pw & (WPAD_BUTTON_PLUS|WPAD_CLASSIC_BUTTON_PLUS|WPAD_CLASSIC_BUTTON_FULL_L))   pp |= PAD_TRIGGER_L;
-  if (pw & (WPAD_BUTTON_MINUS|WPAD_CLASSIC_BUTTON_MINUS|WPAD_CLASSIC_BUTTON_FULL_L)) pp |= PAD_TRIGGER_R;
+  if (pw & (WPAD_BUTTON_MINUS|WPAD_CLASSIC_BUTTON_MINUS|WPAD_CLASSIC_BUTTON_FULL_R)) pp |= PAD_TRIGGER_R;
+
+  /* WiiU GamePad direction keys */
+  if (pwu & WIIDRC_BUTTON_UP) pp |= PAD_BUTTON_UP;
+  else if (pwu & WIIDRC_BUTTON_DOWN) pp |= PAD_BUTTON_DOWN;
+  else if (pwu & WIIDRC_BUTTON_LEFT) pp |= PAD_BUTTON_LEFT;
+  else if (pwu & WIIDRC_BUTTON_RIGHT) pp |= PAD_BUTTON_RIGHT;
+
+  /* WiiU GamePad button keys */
+  if (pwu & WIIDRC_BUTTON_A) pp |= PAD_BUTTON_A;
+  if (pwu & WIIDRC_BUTTON_B) pp |= PAD_BUTTON_B;
+  if (pwu & WIIDRC_BUTTON_HOME) pp |= PAD_TRIGGER_Z;
+  if (pwu & (WIIDRC_BUTTON_PLUS|WIIDRC_BUTTON_L|WIIDRC_BUTTON_ZL)) pp |= PAD_TRIGGER_L;
+  if (pwu & (WIIDRC_BUTTON_MINUS|WIIDRC_BUTTON_R|WIIDRC_BUTTON_ZR)) pp |= PAD_TRIGGER_R;
 #endif
 
   /* Update menu inputs */

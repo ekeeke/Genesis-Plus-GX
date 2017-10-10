@@ -47,6 +47,7 @@
 
 #ifdef HW_RVL
 #include <ogc/usbmouse.h>
+#include "wiidrc.h"
 #endif
 
 #include <ogc/lwp_threads.h>
@@ -122,6 +123,7 @@ extern const u8 ctrl_gamecube_png[];
 extern const u8 ctrl_classic_png[];
 extern const u8 ctrl_nunchuk_png[];
 extern const u8 ctrl_wiimote_png[];
+extern const u8 ctrl_wiiu_png[];
 #endif
 
 /* Generic images */
@@ -2350,13 +2352,14 @@ static void ctrlmenu(void)
 
   /* Player Configuration device items */
 #ifdef HW_RVL
-  gui_item items_device[5] =
+  gui_item items_device[6] =
   {
     {NULL,ctrl_option_off_png ,"Input\nDevice","Select Input Controller",534,244,24,24},
     {NULL,ctrl_gamecube_png   ,"Input\nDevice","Select Input Controller",530,246,36,24},
     {NULL,ctrl_wiimote_png    ,"Input\nDevice","Select Input Controller",526,250,40,12},
     {NULL,ctrl_nunchuk_png    ,"Input\nDevice","Select Input Controller",532,242,32,32},
     {NULL,ctrl_classic_png    ,"Input\nDevice","Select Input Controller",526,242,40,32},
+    {NULL,ctrl_wiiu_png       ,"Input\nDevice","Select Input Controller",526,246,40,24},
   };
 #else
   gui_item items_device[2] =
@@ -2392,6 +2395,10 @@ static void ctrlmenu(void)
   items_device[2].texture = gxTextureOpenPNG(items_device[2].data,0);
   items_device[3].texture = gxTextureOpenPNG(items_device[3].data,0);
   items_device[4].texture = gxTextureOpenPNG(items_device[4].data,0);
+  if (WiiDRC_Inited())
+  {
+    items_device[5].texture = gxTextureOpenPNG(items_device[5].data,0);
+  }
 #endif
 
   /* restore current menu elements */
@@ -2921,6 +2928,18 @@ static void ctrlmenu(void)
 
             if (config.input[player].port >= 4)
             {
+              /* test WiiU gamepad */
+              config.input[player].device = 4;
+              config.input[player].port = 0;
+            }
+          }
+
+          /* autodetect WiiU gamepad */
+          if (config.input[player].device == 4)
+          {
+            /* support for only one gamepad */
+            if (!WiiDRC_Inited() || !WiiDRC_Connected() || (config.input[player].port >= 1))
+            {
               /* no input controller left */
               config.input[player].device = -1;
               config.input[player].port = player%4;
@@ -3087,6 +3106,10 @@ static void ctrlmenu(void)
   gxTextureClose(&items_device[2].texture);
   gxTextureClose(&items_device[3].texture);
   gxTextureClose(&items_device[4].texture);
+  if (WiiDRC_Inited())
+  {
+    gxTextureClose(&items_device[5].texture);
+  }
 #endif
 }
 
@@ -3664,13 +3687,14 @@ static void showcredits(void)
     FONT_writeCenter("libfat by Chism", 18, 0, 640, 1046 - offset, (GXColor)WHITE);
     FONT_writeCenter("wiiuse by Michael Laforest (Para)", 18, 0, 640, 1064 - offset, (GXColor)WHITE);
     FONT_writeCenter("asndlib & OGG player by Francisco Muñoz (Hermes)", 18, 0, 640, 1082 - offset, (GXColor)WHITE);
-    FONT_writeCenter("libpng by their respective authors", 18, 0, 640, 1100 - offset, (GXColor)WHITE);
-    FONT_writeCenter("devkitPPC by Wintermute", 18, 0, 640, 1118 - offset, (GXColor)WHITE);
+    FONT_writeCenter("libwiidrc by Fix94", 18, 0, 640, 1100 - offset, (GXColor)WHITE);
+    FONT_writeCenter("libpng by their respective authors", 18, 0, 640, 1118 - offset, (GXColor)WHITE);
+    FONT_writeCenter("devkitPPC by Wintermute", 18, 0, 640, 1136 - offset, (GXColor)WHITE);
 
-    FONT_writeCenter("Special thanks to ...", 20, 0, 640, 1158 - offset, (GXColor)LIGHT_GREEN);
-    FONT_writeCenter("Softdev, Tmbinc, Costis, Emukiddid, Team Twiizer", 18, 0, 640, 1194 - offset, (GXColor)WHITE);
-    FONT_writeCenter("Brakken & former Tehskeen members for their support", 18, 0, 640, 1212 - offset, (GXColor)WHITE);
-    FONT_writeCenter("Anca, my wife, for her patience & various ideas", 18, 0, 640, 1230 - offset, (GXColor)WHITE);
+    FONT_writeCenter("Special thanks to ...", 20, 0, 640, 1176 - offset, (GXColor)LIGHT_GREEN);
+    FONT_writeCenter("Softdev, Tmbinc, Costis, Emukiddid, Team Twiizer", 18, 0, 640, 1212 - offset, (GXColor)WHITE);
+    FONT_writeCenter("Brakken & former Tehskeen members for their support", 18, 0, 640, 1230 - offset, (GXColor)WHITE);
+    FONT_writeCenter("Anca, my wife, for her patience & various ideas", 18, 0, 640, 1248 - offset, (GXColor)WHITE);
 
     gxSetScreen();
     p = m_input.keys;

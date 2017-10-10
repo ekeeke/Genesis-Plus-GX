@@ -89,8 +89,8 @@ void YM3438_Update(int *buffer, int length)
         ym3438_sample[1] += ym3438_accm[j][1];
       }
     }
-    *buffer++ = ym3438_sample[0] * 8;
-    *buffer++ = ym3438_sample[1] * 8;
+    *buffer++ = ym3438_sample[0] * 11;
+    *buffer++ = ym3438_sample[1] * 11;
   }
 }
 
@@ -130,7 +130,7 @@ void sound_init( void )
   if ((system_hw & SYSTEM_PBC) == SYSTEM_MD)
   {
     /* YM2612 */
-    #ifdef HAVE_YM3438_CORE
+#ifdef HAVE_YM3438_CORE
     if (config.ym3438)
     {
       /* Nuked OPN2 */
@@ -146,7 +146,7 @@ void sound_init( void )
       fm_cycles_ratio = 6 * 7;
     }
     else
-    #endif
+#endif
     {
       /* MAME */
       YM2612Init();
@@ -276,7 +276,7 @@ int sound_context_save(uint8 *state)
   
   if ((system_hw & SYSTEM_PBC) == SYSTEM_MD)
   {
-    #ifdef HAVE_YM3438_CORE
+#ifdef HAVE_YM3438_CORE
     save_param(&config.ym3438, sizeof(config.ym3438));
     if (config.ym3438)
     {
@@ -290,9 +290,9 @@ int sound_context_save(uint8 *state)
       bufferptr += YM2612SaveContext(state + sizeof(config.ym3438));
       YM2612Config(config.dac_bits);
     }
-    #else
+#else
     bufferptr = YM2612SaveContext(state);
-    #endif
+#endif
   }
   else
   {
@@ -309,11 +309,11 @@ int sound_context_save(uint8 *state)
 int sound_context_load(uint8 *state)
 {
   int bufferptr = 0;
-  uint8 config_ym3438;
 
   if ((system_hw & SYSTEM_PBC) == SYSTEM_MD)
   {
-    #ifdef HAVE_YM3438_CORE
+#ifdef HAVE_YM3438_CORE
+    uint8 config_ym3438;
     load_param(&config_ym3438, sizeof(config_ym3438));
     if (config_ym3438)
     {
@@ -324,13 +324,13 @@ int sound_context_load(uint8 *state)
     }
     else
     {
-        bufferptr += YM2612LoadContext(state + sizeof(config_ym3438));
-        YM2612Config(config.dac_bits);
+      bufferptr += YM2612LoadContext(state + sizeof(config_ym3438));
+      YM2612Config(config.dac_bits);
     }
-    #else
+#else
     bufferptr = YM2612LoadContext(state);
     YM2612Config(config.dac_bits);
-    #endif
+#endif
   }
   else
   {

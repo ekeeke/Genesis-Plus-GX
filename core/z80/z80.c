@@ -201,17 +201,14 @@
 #define IFF2 Z80.iff2
 #define HALT Z80.halt
 
-#ifdef Z80_ALLOW_OVERCLOCK
-#define USE_CYCLES(A) Z80.cycles += ((A) * z80_cycle_ratio) >> CYCLE_SHIFT
+#ifdef Z80_OVERCLOCK_SHIFT
+#define USE_CYCLES(A) Z80.cycles += ((A) * z80_cycle_ratio) >> Z80_OVERCLOCK_SHIFT
+UINT32 z80_cycle_ratio;
 #else
 #define USE_CYCLES(A) Z80.cycles += (A)
 #endif
 
 Z80_Regs Z80;
-
-#ifdef Z80_ALLOW_OVERCLOCK
-UINT32 z80_cycle_ratio;
-#endif
 
 unsigned char *z80_readmap[64];
 unsigned char *z80_writemap[64];
@@ -3368,8 +3365,8 @@ void z80_init(const void *config, int (*irqcallback)(int))
   memset(&Z80, 0, sizeof(Z80));
   Z80.daisy = config;
   Z80.irq_callback = irqcallback;
-#ifdef Z80_ALLOW_OVERCLOCK
-  z80_cycle_ratio = 1 << CYCLE_SHIFT;
+#ifdef Z80_OVERCLOCK_SHIFT
+  z80_cycle_ratio = 1 << Z80_OVERCLOCK_SHIFT;
 #endif
 
   /* Clear registers values (NB: should be random on real hardware ?) */
