@@ -436,7 +436,7 @@ void OPN2_DoRegWrite(ym3438_t *chip)
                 break;
             case 0x2a: /* DAC data */
                 chip->dacdata &= 0x01;
-                chip->dacdata |= chip->write_data << 1;
+                chip->dacdata |= (chip->write_data ^ 0x80) << 1;
                 break;
             case 0x2b: /* DAC enable */
                 chip->dacen = chip->write_data >> 7;
@@ -984,7 +984,7 @@ void OPN2_ChOutput(ym3438_t *chip)
     /* Ch 6 */
     if (((cycles >> 2) == 1 && chip->dacen) || test_dac)
     {
-        out = (Bit16s)chip->dacdata ^ 0x100;
+        out = (Bit16s)chip->dacdata;
         out <<= 7;
         out >>= 7;
     }
