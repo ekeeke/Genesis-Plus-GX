@@ -74,8 +74,6 @@ typedef unsigned char bool;
 
 #define CHEATS_UPDATE() ROMCheatUpdate()
 
-#define HAVE_YM3438_CORE
-
 #define HAVE_NO_SPRITE_LIMIT
 #define MAX_SPRITES_PER_LINE 80
 #define TMS_MAX_SPRITES_PER_LINE (config.no_sprite_limit ? MAX_SPRITES_PER_LINE : 4)
