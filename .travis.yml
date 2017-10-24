@@ -13,6 +13,7 @@ env:
     - CORE=genesis_plus_gx
     - COMPILER_NAME=gcc CXX=g++-7 CC=gcc-7
   matrix:
+    - PLATFORM=3ds
     - PLATFORM=linux_x64
     - PLATFORM=ngc
     - PLATFORM=wii
