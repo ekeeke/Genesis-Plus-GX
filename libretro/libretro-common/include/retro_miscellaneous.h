@@ -24,27 +24,13 @@
 #define __RARCH_MISCELLANEOUS_H
 
 #include <stdint.h>
-
-#if defined(__CELLOS_LV2__) && !defined(__PSL1GHT__)
-#include <sys/timer.h>
-#elif defined(XENON)
-#include <time/time.h>
-#elif defined(GEKKO) || defined(__PSL1GHT__) || defined(__QNX__)
-#include <unistd.h>
-#elif defined(WIIU)
-#include <wiiu/os/thread.h>
-#elif defined(PSP)
-#include <pspthreadman.h>
-#elif defined(VITA)
-#include <psp2/kernel/threadmgr.h>
-#elif defined(_3DS)
-#include <3ds.h>
-#else
-#include <time.h>
-#endif
+#include <boolean.h>
+#include <retro_inline.h>
 
 #if defined(_WIN32) && !defined(_XBOX)
+#ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
+#endif
 #include <windows.h>
 #elif defined(_WIN32) && defined(_XBOX)
 #include <Xtl.h>
@@ -55,19 +41,30 @@
 #ifdef _MSC_VER
 #include <compat/msvc.h>
 #endif
-#include <retro_inline.h>
+
+static INLINE void bits_clear_bits(uint32_t *a, uint32_t *b, uint32_t count)
+{
+   uint32_t i;
+   for (i = 0; i < count;i++)
+      a[i] &= ~b[i];
+}
+
+static INLINE bool bits_any_set(uint32_t* ptr, uint32_t count)
+{
+   uint32_t i;
+   for (i = 0; i < count; i++)
+   {
+      if (ptr[i] != 0)
+         return true;
+   }
+   return false;
+}
 
 #ifndef PATH_MAX_LENGTH
 #if defined(_XBOX1) || defined(_3DS) || defined(PSP) || defined(GEKKO)|| defined(WIIU)
 #define PATH_MAX_LENGTH 512
 #else
 #define PATH_MAX_LENGTH 4096
-#endif
-#endif
-
-#ifndef M_PI
-#if !defined(_MSC_VER) && !defined(USE_MATH_DEFINES)
-#define M_PI 3.14159265358979323846264338327
 #endif
 #endif
 
@@ -79,38 +76,67 @@
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #endif
 
-#define ARRAY_SIZE(a) (sizeof(a) / sizeof((a)[0]))
+#define ARRAY_SIZE(a)              (sizeof(a) / sizeof((a)[0]))
 
-/* Helper macros and struct to keep track of many booleans.
- * To check for multiple bits, use &&, not &.
- * For OR, | can be used. */
-typedef struct
-{
-   uint32_t data[8];
-} retro_bits_t;
+#define BITS_GET_ELEM(a, i)        ((a).data[i])
+#define BITS_GET_ELEM_PTR(a, i)    ((a)->data[i])
 
 #define BIT_SET(a, bit)   ((a)[(bit) >> 3] |=  (1 << ((bit) & 7)))
 #define BIT_CLEAR(a, bit) ((a)[(bit) >> 3] &= ~(1 << ((bit) & 7)))
-#define BIT_GET(a, bit)   ((a)[(bit) >> 3] &   (1 << ((bit) & 7)))
+#define BIT_GET(a, bit)   (((a)[(bit) >> 3] >> ((bit) & 7)) & 1)
 
 #define BIT16_SET(a, bit)    ((a) |=  (1 << ((bit) & 15)))
 #define BIT16_CLEAR(a, bit)  ((a) &= ~(1 << ((bit) & 15)))
-#define BIT16_GET(a, bit) (!!((a) &   (1 << ((bit) & 15))))
+#define BIT16_GET(a, bit)    (((a) >> ((bit) & 15)) & 1)
 #define BIT16_CLEAR_ALL(a)   ((a) = 0)
 
 #define BIT32_SET(a, bit)    ((a) |=  (1 << ((bit) & 31)))
 #define BIT32_CLEAR(a, bit)  ((a) &= ~(1 << ((bit) & 31)))
-#define BIT32_GET(a, bit) (!!((a) &   (1 << ((bit) & 31))))
+#define BIT32_GET(a, bit)    (((a) >> ((bit) & 31)) & 1)
 #define BIT32_CLEAR_ALL(a)   ((a) = 0)
 
 #define BIT64_SET(a, bit)    ((a) |=  (UINT64_C(1) << ((bit) & 63)))
 #define BIT64_CLEAR(a, bit)  ((a) &= ~(UINT64_C(1) << ((bit) & 63)))
-#define BIT64_GET(a, bit) (!!((a) &   (UINT64_C(1) << ((bit) & 63))))
+#define BIT64_GET(a, bit)    (((a) >> ((bit) & 63)) & 1)
 #define BIT64_CLEAR_ALL(a)   ((a) = 0)
 
 #define BIT128_SET(a, bit)   ((a).data[(bit) >> 5] |=  (1 << ((bit) & 31)))
 #define BIT128_CLEAR(a, bit) ((a).data[(bit) >> 5] &= ~(1 << ((bit) & 31)))
-#define BIT128_GET(a, bit)   ((a).data[(bit) >> 5] &   (1 << ((bit) & 31)))
-#define BIT128_CLEAR_ALL(a)  memset(&(a), 0, sizeof(a));
+#define BIT128_GET(a, bit)   (((a).data[(bit) >> 5] >> ((bit) & 31)) & 1)
+#define BIT128_CLEAR_ALL(a)  memset(&(a), 0, sizeof(a))
+
+#define BIT128_SET_PTR(a, bit)   BIT128_SET(*a, bit)
+#define BIT128_CLEAR_PTR(a, bit) BIT128_CLEAR(*a, bit)
+#define BIT128_GET_PTR(a, bit)   BIT128_GET(*a, bit)
+#define BIT128_CLEAR_ALL_PTR(a)  BIT128_CLEAR_ALL(*a)
+
+#define BIT256_SET(a, bit)       BIT128_SET(a, bit)
+#define BIT256_CLEAR(a, bit)     BIT128_CLEAR(a, bit)
+#define BIT256_GET(a, bit)       BIT128_GET(a, bit)
+#define BIT256_CLEAR_ALL(a)      BIT128_CLEAR_ALL(a)
+
+#define BIT256_SET_PTR(a, bit)   BIT256_SET(*a, bit)
+#define BIT256_CLEAR_PTR(a, bit) BIT256_CLEAR(*a, bit)
+#define BIT256_GET_PTR(a, bit)   BIT256_GET(*a, bit)
+#define BIT256_CLEAR_ALL_PTR(a)  BIT256_CLEAR_ALL(*a)
+
+#define BITS_COPY16_PTR(a,bits) \
+{ \
+   BIT128_CLEAR_ALL_PTR(a); \
+   BITS_GET_ELEM_PTR(a, 0) = (bits) & 0xffff; \
+}
+
+#define BITS_COPY32_PTR(a,bits) \
+{ \
+   BIT128_CLEAR_ALL_PTR(a); \
+   BITS_GET_ELEM_PTR(a, 0) = (bits); \
+}
+
+/* Helper macros and struct to keep track of many booleans. */
+/* This struct has 256 bits. */
+typedef struct
+{
+   uint32_t data[8];
+} retro_bits_t;
 
 #endif
