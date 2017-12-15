@@ -20,22 +20,25 @@
 * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#include <streams/file_stream.h>
 #include <string.h>
+#include <stdarg.h>
 
-RFILE* rfopen(const char *path, char *mode)
+#include <libretro.h>
+#include <streams/file_stream.h>
+
+RFILE* rfopen(const char *path, const char *mode)
 {
-   unsigned int retro_mode = RFILE_MODE_READ_TEXT;
+   unsigned int retro_mode = 0;
    if (strstr(mode, "r"))
       if (strstr(mode, "b"))
-         retro_mode = RFILE_MODE_READ;
+         retro_mode = RETRO_VFS_FILE_ACCESS_READ;
 
    if (strstr(mode, "w"))
-      retro_mode = RFILE_MODE_WRITE;
+      retro_mode = RETRO_VFS_FILE_ACCESS_WRITE;
    if (strstr(mode, "+"))
-      retro_mode = RFILE_MODE_READ_WRITE;
+      retro_mode = RETRO_VFS_FILE_ACCESS_READ_WRITE;
 
-   return filestream_open(path, retro_mode, -1);
+   return filestream_open(path, retro_mode, RETRO_VFS_FILE_ACCESS_HINT_NONE);
 }
 
 int rfclose(RFILE* stream)
@@ -64,8 +67,38 @@ char *rfgets(char *buffer, int maxCount, RFILE* stream)
    return filestream_gets(stream, buffer, maxCount);
 }
 
+int rfgetc(RFILE* stream)
+{
+	return filestream_getc(stream);
+}
+
 size_t rfwrite(void const* buffer,
    size_t elementSize, size_t elementCount, RFILE* stream)
 {
    return filestream_write(stream, buffer, elementSize*elementCount);
+}
+
+int rfputc(int character, RFILE * stream)
+{
+    return filestream_putc(stream, character);
+}
+
+int rfprintf(RFILE * stream, const char * format, ...)
+{
+   int result;
+	va_list vl;
+	va_start(vl, format);
+	result = filestream_vprintf(stream, format, vl);
+	va_end(vl);
+	return result;
+}
+
+int rferror(RFILE* stream)
+{
+    return filestream_error(stream);
+}
+
+int rfeof(RFILE* stream)
+{
+    return filestream_eof(stream);
 }

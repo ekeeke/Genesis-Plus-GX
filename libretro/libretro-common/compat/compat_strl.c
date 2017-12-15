@@ -1,7 +1,7 @@
 /* Copyright  (C) 2010-2017 The RetroArch team
  *
  * ---------------------------------------------------------------------------------------
- * The following license statement only applies to this file (strcasestr.h).
+ * The following license statement only applies to this file (compat_strl.c).
  * ---------------------------------------------------------------------------------------
  *
  * Permission is hereby granted, free of charge,
@@ -20,30 +20,51 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef __LIBRETRO_SDK_COMPAT_STRCASESTR_H
-#define __LIBRETRO_SDK_COMPAT_STRCASESTR_H
+#include <stdlib.h>
+#include <ctype.h>
 
-#include <string.h>
+#include <compat/strl.h>
+#include <compat/posix_string.h>
 
-#if defined(RARCH_INTERNAL) && defined(HAVE_CONFIG_H)
-#include "../../../config.h"
+/* Implementation of strlcpy()/strlcat() based on OpenBSD. */
+
+#ifndef __MACH__
+
+size_t strlcpy(char *dest, const char *source, size_t size)
+{
+   size_t src_size = 0;
+   size_t        n = size;
+
+   if (n)
+      while (--n && (*dest++ = *source++)) src_size++;
+
+   if (!n)
+   {
+      if (size) *dest = '\0';
+      while (*source++) src_size++;
+   }
+
+   return src_size;
+}
+
+size_t strlcat(char *dest, const char *source, size_t size)
+{
+   size_t len = strlen(dest);
+
+   dest += len;
+
+   if (len > size)
+      size = 0;
+   else
+      size -= len;
+
+   return len + strlcpy(dest, source, size);
+}
 #endif
 
-#ifndef HAVE_STRCASESTR
-
-#include <retro_common_api.h>
-
-RETRO_BEGIN_DECLS
-
-/* Avoid possible naming collisions during link
- * since we prefer to use the actual name. */
-#define strcasestr(haystack, needle) strcasestr_retro__(haystack, needle)
-
-char *strcasestr(const char *haystack, const char *needle);
-
-RETRO_END_DECLS
-
-#endif
-
-#endif
-
+char *strldup(const char *s, size_t n)
+{
+   char *dst = (char*)malloc(sizeof(char) * (n + 1));
+   strlcpy(dst, s, n);
+   return dst;
+}
