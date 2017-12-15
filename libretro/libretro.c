@@ -205,7 +205,7 @@ int load_archive(char *filename, unsigned char *buffer, int maxsize, char *exten
   int size, left;
 
   /* Open file */
-  RFILE *fd = filestream_open(filename, RETRO_VFS_FILE_ACCESS_READ, 0);
+  RFILE *fd = filestream_open(filename, RETRO_VFS_FILE_ACCESS_READ, RETRO_VFS_FILE_ACCESS_HINT_NONE);
 
   if (!fd)
   {
@@ -584,13 +584,13 @@ static void bram_load(void)
     switch (region_code)
     {
        case REGION_JAPAN_NTSC:
-          fp = filestream_open(CD_BRAM_JP, RETRO_VFS_FILE_ACCESS_READ, 0);
+          fp = filestream_open(CD_BRAM_JP, RETRO_VFS_FILE_ACCESS_READ, RETRO_VFS_FILE_ACCESS_HINT_NONE);
           break;
        case REGION_EUROPE:
-          fp = filestream_open(CD_BRAM_EU, RETRO_VFS_FILE_ACCESS_READ, 0);
+          fp = filestream_open(CD_BRAM_EU, RETRO_VFS_FILE_ACCESS_READ, RETRO_VFS_FILE_ACCESS_HINT_NONE);
           break;
        case REGION_USA:
-          fp = filestream_open(CD_BRAM_US, RETRO_VFS_FILE_ACCESS_READ, 0);
+          fp = filestream_open(CD_BRAM_US, RETRO_VFS_FILE_ACCESS_READ, RETRO_VFS_FILE_ACCESS_HINT_NONE);
           break;
        default:
           return;
@@ -630,7 +630,7 @@ static void bram_load(void)
     /* automatically load cartridge backup RAM (if enabled) */
     if (scd.cartridge.id)
     {
-      fp = filestream_open(CART_BRAM, RETRO_VFS_FILE_ACCESS_READ, 0);
+      fp = filestream_open(CART_BRAM, RETRO_VFS_FILE_ACCESS_READ, RETRO_VFS_FILE_ACCESS_HINT_NONE);
       if (fp != NULL)
       {
         int filesize = scd.cartridge.mask + 1;
@@ -686,13 +686,13 @@ static void bram_save(void)
         switch (region_code)
         {
           case REGION_JAPAN_NTSC:
-            fp = filestream_open(CD_BRAM_JP, RETRO_VFS_FILE_ACCESS_WRITE, 0);
+            fp = filestream_open(CD_BRAM_JP, RETRO_VFS_FILE_ACCESS_WRITE, RETRO_VFS_FILE_ACCESS_HINT_NONE);
             break;
           case REGION_EUROPE:
-            fp = filestream_open(CD_BRAM_EU, RETRO_VFS_FILE_ACCESS_WRITE, 0);
+            fp = filestream_open(CD_BRAM_EU, RETRO_VFS_FILE_ACCESS_WRITE, RETRO_VFS_FILE_ACCESS_HINT_NONE);
             break;
           case REGION_USA:
-            fp = filestream_open(CD_BRAM_US, RETRO_VFS_FILE_ACCESS_WRITE, 0);
+            fp = filestream_open(CD_BRAM_US, RETRO_VFS_FILE_ACCESS_WRITE, RETRO_VFS_FILE_ACCESS_HINT_NONE);
             break;
           default:
             return;
@@ -715,7 +715,7 @@ static void bram_save(void)
       /* check if it is correctly formatted before saving */
       if (!memcmp(scd.cartridge.area + scd.cartridge.mask + 1 - 0x20, brm_format + 0x20, 0x20))
       {
-        fp = filestream_open(CART_BRAM, RETRO_VFS_FILE_ACCESS_WRITE, 0);
+        fp = filestream_open(CART_BRAM, RETRO_VFS_FILE_ACCESS_WRITE, RETRO_VFS_FILE_ACCESS_HINT_NONE);
         if (fp != NULL)
         {
           int filesize = scd.cartridge.mask + 1;
