@@ -182,6 +182,11 @@ libretro_vfs_implementation_file *retro_vfs_file_open_impl(const char *path, uns
    const char *mode_str    = NULL;
    libretro_vfs_implementation_file *stream = (libretro_vfs_implementation_file*)calloc(1, sizeof(*stream));
 
+#ifdef VFS_FRONTEND
+   const char * dumb_prefix = "vfsonly://";
+   if (!memcmp(path, dumb_prefix, strlen(dumb_prefix))) path += strlen(dumb_prefix);
+#endif
+
    if (!stream)
       return NULL;
 
@@ -429,7 +434,7 @@ int retro_vfs_file_flush_impl(libretro_vfs_implementation_file *stream)
    return fflush(stream->fp);
 }
 
-int retro_vfs_file_delete_impl(const char *path)
+int retro_vfs_file_remove_impl(const char *path)
 {
    char *path_local    = NULL;
    wchar_t *path_wide  = NULL;

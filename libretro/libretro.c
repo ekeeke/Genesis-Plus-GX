@@ -70,11 +70,12 @@
 #define RETRO_DEVICE_JUSTIFIERS           RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_LIGHTGUN, 2)
 #define RETRO_DEVICE_GRAPHIC_BOARD        RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_POINTER, 0)
 
+#include <libretro.h>
+#include <streams/file_stream.h>
+
 #include "shared.h"
-#include "libretro.h"
 #include "md_ntsc.h"
 #include "sms_ntsc.h"
-#include <streams/file_stream.h>
 
 #define STATIC_ASSERT(name, test) typedef struct { int assert_[(test)?1:-1]; } assert_ ## name ## _
 #define M68K_MAX_CYCLES 1107
