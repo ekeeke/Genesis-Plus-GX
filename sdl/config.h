@@ -16,7 +16,7 @@ typedef struct
   uint8 hq_fm;
   uint8 filter;
   uint8 hq_psg;
-  uint8 dac_bits;
+  uint8 ym2612;
   uint8 ym2413;
   uint8 ym3438;
   int16 psg_preamp;

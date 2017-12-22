@@ -3,7 +3,7 @@
  *
  *  Genesis Plus GX configuration file support
  *
- *  Copyright Eke-Eke (2007-2016)
+ *  Copyright Eke-Eke (2007-2017)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -103,13 +103,13 @@ void config_default(void)
   config.hq_fm          = 1;
   config.hq_psg         = 1;
   config.filter         = 1;
-  config.lp_range       = 0x9999; /* 0.6 in 16.16 fixed point */
+  config.lp_range       = 0x7FFF; /* 0.5 in 0.16 fixed point */
   config.low_freq       = 880;
   config.high_freq      = 5000;
   config.lg             = 100;
   config.mg             = 100;
   config.hg             = 100;
-  config.dac_bits       = 14;
+  config.ym2612         = YM2612_DISCRETE;
   config.ym2413         = 2; /* AUTO */
   config.mono           = 0;
 

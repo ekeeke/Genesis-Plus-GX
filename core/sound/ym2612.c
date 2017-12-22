@@ -18,11 +18,15 @@
 **  TODO:
 **  - better documentation
 **  - BUSY flag emulation
-**  - accurate DAC output
 */
 
 /*
 **  CHANGELOG:
+**
+** 03-12-2017 Eke-Eke (Genesis Plus GX):
+**  - improved 9-bit DAC emulation accuracy
+**  - added discrete YM2612 DAC distortion emulation ("ladder effect")
+**  - replaced configurable DAC depth with configurable chip types (discrete, integrated or enhanced)
 **
 ** 26-09-2017 Eke-Eke (Genesis Plus GX):
 **  - fixed EG counter loopback behavior (verified on YM3438 die)
@@ -626,8 +630,11 @@ static YM2612 ym2612;
 /* current chip state */
 static INT32  m2,c1,c2;   /* Phase Modulation input for operators 2,3,4 */
 static INT32  mem;        /* one sample delay memory */
-static INT32  out_fm[8];  /* outputs of working channels */
-static UINT32 bitmask;    /* working channels output bitmasking (DAC quantization) */ 
+static INT32  out_fm[6];  /* outputs of working channels */
+
+/* chip type */
+static UINT32 op_mask[8][4];  /* operator output bitmasking (DAC quantization) */
+static int chip_type = YM2612_DISCRETE;
 
 
 INLINE void FM_KEYON(FM_CH *CH , int s )
@@ -1408,22 +1415,22 @@ INLINE void refresh_fc_eg_chan(FM_CH *CH )
 
 #define volume_calc(OP) ((OP)->vol_out + (AM & (OP)->AMmask))
 
-INLINE signed int op_calc(UINT32 phase, unsigned int env, unsigned int pm)
+INLINE signed int op_calc(UINT32 phase, unsigned int env, unsigned int pm, unsigned int opmask)
 {
   UINT32 p = (env<<3) + sin_tab[ ( (phase >> SIN_BITS) + (pm >> 1) ) & SIN_MASK ];
 
   if (p >= TL_TAB_LEN)
     return 0;
-  return tl_tab[p];
+  return (tl_tab[p] & opmask);
 }
 
-INLINE signed int op_calc1(UINT32 phase, unsigned int env, unsigned int pm)
+INLINE signed int op_calc1(UINT32 phase, unsigned int env, unsigned int pm, unsigned int opmask)
 {
   UINT32 p = (env<<3) + sin_tab[ ( ( phase >> SIN_BITS ) + pm ) & SIN_MASK ];
 
   if (p >= TL_TAB_LEN)
     return 0;
-  return tl_tab[p];
+  return (tl_tab[p] & opmask);
 }
 
 INLINE void chan_calc(FM_CH *CH, int num)
@@ -1433,6 +1440,7 @@ INLINE void chan_calc(FM_CH *CH, int num)
     INT32 out = 0;
     UINT32 AM = ym2612.OPN.LFO_AM >> CH->ams;
     unsigned int eg_out = volume_calc(&CH->SLOT[SLOT1]);
+    UINT32 *mask = op_mask[CH->ALGO];
 
     m2 = c1 = c2 = mem = 0;
 
@@ -1443,7 +1451,7 @@ INLINE void chan_calc(FM_CH *CH, int num)
       if (CH->FB < SIN_BITS)
         out = (CH->op1_out[0] + CH->op1_out[1]) >> CH->FB;
 
-      out = op_calc1(CH->SLOT[SLOT1].phase, eg_out, out );
+      out = op_calc1(CH->SLOT[SLOT1].phase, eg_out, out, mask[0]);
     }
 
     CH->op1_out[0] = CH->op1_out[1];
@@ -1459,22 +1467,21 @@ INLINE void chan_calc(FM_CH *CH, int num)
 
     eg_out = volume_calc(&CH->SLOT[SLOT3]);
     if( eg_out < ENV_QUIET )    /* SLOT 3 */
-      *CH->connect3 += op_calc(CH->SLOT[SLOT3].phase, eg_out, m2);
+      *CH->connect3 += op_calc(CH->SLOT[SLOT3].phase, eg_out, m2, mask[2]);
 
     eg_out = volume_calc(&CH->SLOT[SLOT2]);
     if( eg_out < ENV_QUIET )    /* SLOT 2 */
-    *CH->connect2 += op_calc(CH->SLOT[SLOT2].phase, eg_out, c1);
+      *CH->connect2 += op_calc(CH->SLOT[SLOT2].phase, eg_out, c1, mask[1]);
 
     eg_out = volume_calc(&CH->SLOT[SLOT4]);
     if( eg_out < ENV_QUIET )    /* SLOT 4 */
-      *CH->connect4 += op_calc(CH->SLOT[SLOT4].phase, eg_out, c2);
-
+      *CH->connect4 += op_calc(CH->SLOT[SLOT4].phase, eg_out, c2, mask[3]);
 
     /* store current MEM */
     CH->mem_value = mem;
 
     /* update phase counters AFTER output calculations */
-    if(CH->pms)
+    if (CH->pms)
     {
       /* 3-slot mode */
       if ((ym2612.OPN.ST.mode & 0xC0) && (CH == &ym2612.CH[2]))
@@ -1515,7 +1522,7 @@ INLINE void OPNWriteMode(int r, int v)
     case 0x21:  /* Test */
       break;
 
-    case 0x22:  /* LFO FREQ (YM2608/YM2610/YM2610B/ym2612) */
+    case 0x22:  /* LFO FREQ */
       if (v&8) /* LFO enabled ? */
       {
         ym2612.OPN.lfo_timer_overflow = lfo_samples_per_step[v&7];
@@ -1550,7 +1557,6 @@ INLINE void OPNWriteMode(int r, int v)
       if( c == 3 ) break;
       if (v&0x04) c+=3; /* CH 4-6 */
       CH = &ym2612.CH[c];
-
       if (v&0x10) FM_KEYON(CH,SLOT1); else FM_KEYOFF(CH,SLOT1);
       if (v&0x20) FM_KEYON(CH,SLOT2); else FM_KEYOFF(CH,SLOT2);
       if (v&0x40) FM_KEYON(CH,SLOT3); else FM_KEYOFF(CH,SLOT3);
@@ -1686,8 +1692,6 @@ INLINE void OPNWriteReg(int r, int v)
       That is not necessary, but then EG will be generating Attack phase.
 
       */
-
-
       break;
 
     case 0xa0:
@@ -1722,7 +1726,7 @@ INLINE void OPNWriteReg(int r, int v)
             ym2612.OPN.SL3.block_fnum[c] = (blk<<11) | fn;
             ym2612.CH[2].SLOT[SLOT1].Incr=-1;
           }
-          break;            
+          break;
         case 3:    /* 0xac-0xae : 3CH FNUM2,BLK */
           if(r < 0x100)
             ym2612.OPN.SL3.fn_h = v&0x3f;
@@ -1737,7 +1741,7 @@ INLINE void OPNWriteReg(int r, int v)
           CH->ALGO = v&7;
           CH->FB   = SIN_BITS - ((v>>3)&7);
           setup_connection( CH, c );
-          break;        
+          break;
         }
         case 1:    /* 0xb4-0xb6 : L , R , AMS , PMS */
           /* b0-2 PMS */
@@ -1747,8 +1751,8 @@ INLINE void OPNWriteReg(int r, int v)
           CH->ams = lfo_ams_depth_shift[(v>>4) & 0x03];
 
           /* PAN :  b7 = L, b6 = R */
-          ym2612.OPN.pan[ c*2   ] = (v & 0x80) ? bitmask : 0;
-          ym2612.OPN.pan[ c*2+1 ] = (v & 0x40) ? bitmask : 0;
+          ym2612.OPN.pan[ c*2   ] = (v & 0x80) ? 0xffffffff : 0;
+          ym2612.OPN.pan[ c*2+1 ] = (v & 0x40) ? 0xffffffff : 0;
           break;
       }
       break;
@@ -1881,6 +1885,15 @@ static void init_tables(void)
     {
       ym2612.OPN.ST.dt_tab[d][i]   = (INT32) dt_tab[d*32 + i];
       ym2612.OPN.ST.dt_tab[d+4][i] = -ym2612.OPN.ST.dt_tab[d][i];
+    }
+  }
+
+  /* build default OP mask table */
+  for (i = 0;i < 8;i++)
+  {
+    for (d = 0;d < 4;d++)
+    {
+      op_mask[i][d] = 0xffffffff;
     }
   }
 
@@ -2020,7 +2033,7 @@ void YM2612Update(int *buffer, int length)
   refresh_fc_eg_chan(&ym2612.CH[5]);
 
   /* buffering */
-  for(i=0; i<length ; i++)
+  for(i=0; i<length; i++)
   {
     /* clear outputs */
     out_fm[0] = 0;
@@ -2066,21 +2079,21 @@ void YM2612Update(int *buffer, int length)
       advance_eg_channels(&ym2612.CH[0], ym2612.OPN.eg_cnt);
     }
 
-    /* 14-bit accumulator channels outputs (range is -8192;+8192) */
-    if (out_fm[0] > 8192) out_fm[0] = 8192;
+    /* channels accumulator output clipping (14-bit max) */
+    if (out_fm[0] > 8191) out_fm[0] = 8191;
     else if (out_fm[0] < -8192) out_fm[0] = -8192;
-    if (out_fm[1] > 8192) out_fm[1] = 8192;
+    if (out_fm[1] > 8191) out_fm[1] = 8191;
     else if (out_fm[1] < -8192) out_fm[1] = -8192;
-    if (out_fm[2] > 8192) out_fm[2] = 8192;
+    if (out_fm[2] > 8191) out_fm[2] = 8191;
     else if (out_fm[2] < -8192) out_fm[2] = -8192;
-    if (out_fm[3] > 8192) out_fm[3] = 8192;
+    if (out_fm[3] > 8191) out_fm[3] = 8191;
     else if (out_fm[3] < -8192) out_fm[3] = -8192;
-    if (out_fm[4] > 8192) out_fm[4] = 8192;
+    if (out_fm[4] > 8191) out_fm[4] = 8191;
     else if (out_fm[4] < -8192) out_fm[4] = -8192;
-    if (out_fm[5] > 8192) out_fm[5] = 8192;
+    if (out_fm[5] > 8191) out_fm[5] = 8191;
     else if (out_fm[5] < -8192) out_fm[5] = -8192;
 
-    /* stereo DAC channels outputs mixing  */
+    /* stereo DAC output panning & mixing  */
     lt  = ((out_fm[0]) & ym2612.OPN.pan[0]);
     rt  = ((out_fm[0]) & ym2612.OPN.pan[1]);
     lt += ((out_fm[1]) & ym2612.OPN.pan[2]);
@@ -2094,11 +2107,34 @@ void YM2612Update(int *buffer, int length)
     lt += ((out_fm[5]) & ym2612.OPN.pan[10]);
     rt += ((out_fm[5]) & ym2612.OPN.pan[11]);
 
+    /* discrete YM2612 DAC */
+    if (chip_type == YM2612_DISCRETE)
+    {
+      int i;
+
+      /* DAC 'ladder effect' */
+      for (i=0; i<6; i++)
+      {
+        if (out_fm[i] < 0)
+        {
+          /* -4 offset (-3 when not muted) on negative channel output (9-bit) */
+          lt -= ((4 - (ym2612.OPN.pan[(2*i)+0] & 1)) << 5);
+          rt -= ((4 - (ym2612.OPN.pan[(2*i)+1] & 1)) << 5);
+        }
+        else
+        {
+          /* +4 offset (when muted or not) on positive channel output (9-bit) */
+          lt += (4 << 5);
+          rt += (4 << 5);
+        }
+      }
+    }
+
     /* buffering */
     *buffer++ = lt;
     *buffer++ = rt;
 
-    /* CSM mode: if CSM Key ON has occured, CSM Key OFF need to be sent       */
+    /* CSM mode: if CSM Key ON has occurred, CSM Key OFF need to be sent      */
     /* only if Timer A does not overflow again (i.e CSM Key ON not set again) */
     ym2612.OPN.SL3.key_csm <<= 1;
 
@@ -2121,20 +2157,51 @@ void YM2612Update(int *buffer, int length)
   INTERNAL_TIMER_B(length);
 }
 
-void YM2612Config(unsigned char dac_bits)
+void YM2612Config(int type)
 {
-  int i;
+  /* YM2612 chip type */
+  chip_type = type;
 
-  /* DAC precision (normally 9-bit on real hardware, implemented through simple 14-bit channel output bitmasking) */
-  bitmask = ~((1 << (TL_BITS - dac_bits)) - 1);
-
-  /* update L/R panning bitmasks */
-  for (i=0; i<2*6; i++)
+  /* carrier operator outputs bitmask */
+  if (chip_type < YM2612_ENHANCED)
   {
-    if (ym2612.OPN.pan[i])
-    {
-      ym2612.OPN.pan[i] = bitmask;
-    }
+    /* 9-bit DAC */
+    op_mask[0][3] = 0xffffffe0;
+    op_mask[1][3] = 0xffffffe0;
+    op_mask[2][3] = 0xffffffe0;
+    op_mask[3][3] = 0xffffffe0;
+    op_mask[4][1] = 0xffffffe0;
+    op_mask[4][3] = 0xffffffe0;
+    op_mask[5][1] = 0xffffffe0;
+    op_mask[5][2] = 0xffffffe0;
+    op_mask[5][3] = 0xffffffe0;
+    op_mask[6][1] = 0xffffffe0;
+    op_mask[6][2] = 0xffffffe0;
+    op_mask[6][3] = 0xffffffe0;
+    op_mask[7][0] = 0xffffffe0;
+    op_mask[7][1] = 0xffffffe0;
+    op_mask[7][2] = 0xffffffe0;
+    op_mask[7][3] = 0xffffffe0;
+  }
+  else
+  {
+    /* 14-bit DAC */
+    op_mask[0][3] = 0xffffffff;
+    op_mask[1][3] = 0xffffffff;
+    op_mask[2][3] = 0xffffffff;
+    op_mask[3][3] = 0xffffffff;
+    op_mask[4][1] = 0xffffffff;
+    op_mask[4][3] = 0xffffffff;
+    op_mask[5][1] = 0xffffffff;
+    op_mask[5][2] = 0xffffffff;
+    op_mask[5][3] = 0xffffffff;
+    op_mask[6][1] = 0xffffffff;
+    op_mask[6][2] = 0xffffffff;
+    op_mask[6][3] = 0xffffffff;
+    op_mask[7][0] = 0xffffffff;
+    op_mask[7][1] = 0xffffffff;
+    op_mask[7][2] = 0xffffffff;
+    op_mask[7][3] = 0xffffffff;
   }
 }
 

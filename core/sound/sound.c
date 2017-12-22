@@ -150,7 +150,7 @@ void sound_init( void )
     {
       /* MAME */
       YM2612Init();
-      YM2612Config(config.dac_bits);
+      YM2612Config(config.ym2612);
       YM_Reset = YM2612ResetChip;
       YM_Update = YM2612Update;
       YM_Write = YM2612Write;
@@ -288,7 +288,6 @@ int sound_context_save(uint8 *state)
     else
     {
       bufferptr += YM2612SaveContext(state + sizeof(config.ym3438));
-      YM2612Config(config.dac_bits);
     }
 #else
     bufferptr = YM2612SaveContext(state);
@@ -325,11 +324,9 @@ int sound_context_load(uint8 *state)
     else
     {
       bufferptr += YM2612LoadContext(state + sizeof(config_ym3438));
-      YM2612Config(config.dac_bits);
     }
 #else
     bufferptr = YM2612LoadContext(state);
-    YM2612Config(config.dac_bits);
 #endif
   }
   else

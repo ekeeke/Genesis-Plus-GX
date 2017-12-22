@@ -533,15 +533,18 @@ static void config_default(void)
    config.hq_fm          = 1; /* high-quality FM resampling (slower) */
    config.hq_psg         = 1; /* high-quality PSG resampling (slower) */
    config.filter         = 0; /* no filter */
-   config.lp_range       = 0x9999; /* 0.6 in 16.16 fixed point */
+   config.lp_range       = 0x7fff; /* 0.5 in 0.16 fixed point */
    config.low_freq       = 880;
    config.high_freq      = 5000;
    config.lg             = 100;
    config.mg             = 100;
    config.hg             = 100;
-   config.dac_bits       = 14; /* MAX DEPTH */ 
+   config.ym2612         = YM2612_DISCRETE; 
    config.ym2413         = 2; /* AUTO */
    config.mono           = 0; /* STEREO output */
+#ifdef HAVE_YM3438_CORE
+   config.ym3438         = 0;
+#endif
 
    /* system options */
    config.system         = 0; /* AUTO */
@@ -1104,10 +1107,10 @@ static void check_variables(void)
     if (!strcmp(var.value, "low-pass"))
       config.filter = 1;
 
-    #if HAVE_EQ 
+#if HAVE_EQ 
     else if (!strcmp(var.value, "EQ"))
       config.filter = 2;
-    #endif
+#endif
 
     else
       config.filter = 0;
@@ -1117,9 +1120,9 @@ static void check_variables(void)
   environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
   {
     config.lp_range = (atoi(var.value) * 65536) / 100;
-  } 
-	
-  #if HAVE_EQ
+  }
+
+#if HAVE_EQ
   var.key = "genesis_plus_gx_audio_eq_low";
   environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
   {
@@ -1127,7 +1130,7 @@ static void check_variables(void)
     if (new_lg != config.lg) restart_eq = true;
     config.lg = new_lg;
   }
-	
+
   var.key = "genesis_plus_gx_audio_eq_mid";
   environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
   {
@@ -1135,7 +1138,7 @@ static void check_variables(void)
     if (new_mg != config.mg) restart_eq = true;
     config.mg = new_mg;
   }
-	
+
   var.key = "genesis_plus_gx_audio_eq_high";
   environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
   {
@@ -1144,23 +1147,12 @@ static void check_variables(void)
     config.hg = new_hg;
 
   }
-  #endif
+#endif
 
-  var.key = "genesis_plus_gx_dac_bits";
+  var.key = "genesis_plus_gx_ym2612";
   environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
   {
-    if (!strcmp(var.value, "enabled"))
-      config.dac_bits = 9;
-    else
-      config.dac_bits = 14;
-
-    YM2612Config(config.dac_bits);
-  }
-
-  #ifdef HAVE_YM3438_CORE
-  var.key = "genesis_plus_gx_ym3438";
-  environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
-  {
+#ifdef HAVE_YM3438_CORE
     orig_value = config.ym3438;
     if (!strcmp(var.value, "nuked (ym2612)"))
     {
@@ -1178,15 +1170,33 @@ static void check_variables(void)
       config.ym3438 = 3;
     }
     else
+    {
       config.ym3438 = 0;
+    }
 
-    if (orig_value == 0 && config.ym3438 > 0 || orig_value > 0 && config.ym3438 == 0)
+    if (((orig_value == 0) && (config.ym3438 > 0)) || ((orig_value > 0) && (config.ym3438 == 0)))
     {
       sound_init();
       sound_reset();
     }
+#endif
+
+    if (!strcmp(var.value, "mame (ym2612)"))
+    {
+      config.ym2612 = YM2612_DISCRETE;
+      YM2612Config(YM2612_DISCRETE);
+    }
+    else if (!strcmp(var.value, "mame (asic ym3438)"))
+    {
+      config.ym2612 = YM2612_INTEGRATED;
+      YM2612Config(YM2612_INTEGRATED);
+    }
+    else
+    {
+      config.ym2612 = YM2612_ENHANCED;
+      YM2612Config(YM2612_ENHANCED);
+    }
   }
-  #endif
 
   var.key = "genesis_plus_gx_blargg_ntsc_filter";
   environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
@@ -1754,11 +1764,12 @@ void retro_set_environment(retro_environment_t cb)
       { "genesis_plus_gx_bram", "CD System BRAM; per bios|per game" },
       { "genesis_plus_gx_addr_error", "68k address error; enabled|disabled" },
       { "genesis_plus_gx_lock_on", "Cartridge lock-on; disabled|game genie|action replay (pro)|sonic & knuckles" },
-      { "genesis_plus_gx_ym2413", "Master System FM; auto|disabled|enabled" },
-      { "genesis_plus_gx_dac_bits", "YM2612 DAC quantization; disabled|enabled" },
-      #ifdef HAVE_YM3438_CORE
-      { "genesis_plus_gx_ym3438", "YM2612/YM3438 core; mame|nuked (ym2612)|nuked (asic ym3438)|nuked (discrete ym3438)" },
-      #endif
+      { "genesis_plus_gx_ym2413", "Master System FM (YM2413); auto|disabled|enabled" },
+#ifdef HAVE_YM3438_CORE
+      { "genesis_plus_gx_ym2612", "Mega Drive / Genesis FM; mame (ym2612)|mame (asic ym3438)|mame (enhanced ym3438)|nuked (ym2612)|nuked (asic ym3438)|nuked (discrete ym3438)" },
+#else
+      { "genesis_plus_gx_ym2612", "Mega Drive / Genesis FM; mame (ym2612)|mame (asic ym3438)|mame (enhanced ym3438)" },
+#endif
 
       { "genesis_plus_gx_sound_output", "Sound output; stereo|mono" },
       { "genesis_plus_gx_audio_filter", "Audio filter; disabled|low-pass" },
