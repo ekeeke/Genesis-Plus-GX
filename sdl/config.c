@@ -22,6 +22,7 @@ void set_config_defaults(void)
   config.lp_range       = 0x9999; /* 0.6 in 16.16 fixed point */
   config.dac_bits       = 14;
   config.ym2413         = 2; /* = AUTO (0 = always OFF, 1 = always ON) */
+  config.ym3438         = 0;
   config.mono           = 0;
 
   /* system options */

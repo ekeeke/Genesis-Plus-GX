@@ -1223,7 +1223,7 @@ void OPN2_SetChipType(Bit32u type)
     chip_type = type;
 }
 
-void OPN2_Clock(ym3438_t *chip, Bit32u *buffer)
+void OPN2_Clock(ym3438_t *chip, Bit16s *buffer)
 {
     chip->lfo_inc = chip->mode_test_21[1];
     chip->pg_read >>= 1;

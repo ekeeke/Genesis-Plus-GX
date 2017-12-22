@@ -3,7 +3,7 @@
  *  Sound Hardware
  *
  *  Copyright (C) 1998-2003  Charles Mac Donald (original code)
- *  Copyright (C) 2007-2016  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2007-2017  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -63,7 +63,7 @@ static unsigned int (*YM_Read)(unsigned int a);
 
 #ifdef HAVE_YM3438_CORE
 static ym3438_t ym3438;
-static int ym3438_accm[24][2];
+static short ym3438_accm[24][2];
 static int ym3438_sample[2];
 static unsigned int ym3438_cycles;
 
