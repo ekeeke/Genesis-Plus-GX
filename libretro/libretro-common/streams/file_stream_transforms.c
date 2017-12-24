@@ -56,15 +56,15 @@ int rfseek(RFILE* stream, long offset, int origin)
    int seek_position = -1;
    switch (origin)
    {
-   case SEEK_SET:
-	   seek_position = RETRO_VFS_SEEK_POSITION_START;
-	   break;
-   case SEEK_CUR:
-      seek_position = RETRO_VFS_SEEK_POSITION_CURRENT;
-      break;
-   case SEEK_END:
-      seek_position = RETRO_VFS_SEEK_POSITION_END;
-      break;
+      case SEEK_SET:
+         seek_position = RETRO_VFS_SEEK_POSITION_START;
+         break;
+      case SEEK_CUR:
+         seek_position = RETRO_VFS_SEEK_POSITION_CURRENT;
+         break;
+      case SEEK_END:
+         seek_position = RETRO_VFS_SEEK_POSITION_END;
+         break;
    }
 
    return filestream_seek(stream, offset, seek_position);

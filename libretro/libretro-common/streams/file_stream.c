@@ -233,7 +233,7 @@ void filestream_rewind(RFILE *stream)
 {
    if (!stream)
       return;
-   filestream_seek(stream, 0L, SEEK_SET);
+   filestream_seek(stream, 0L, RETRO_VFS_SEEK_POSITION_START);
    stream->error_flag = false;
 }
 
