@@ -202,10 +202,11 @@ void error(char * fmt, ...)
 
 int load_archive(char *filename, unsigned char *buffer, int maxsize, char *extension)
 {
-  int32_t size, left;
+  int64_t left = 0;
+  int64_t size = 0;
 
   /* Open file */
-  RFILE *fd = filestream_open(filename, RETRO_VFS_FILE_ACCESS_READ, RETRO_VFS_FILE_ACCESS_HINT_NONE);
+  RFILE *fd    = filestream_open(filename, RETRO_VFS_FILE_ACCESS_READ, RETRO_VFS_FILE_ACCESS_HINT_NONE);
 
   if (!fd)
   {
@@ -230,7 +231,7 @@ int load_archive(char *filename, unsigned char *buffer, int maxsize, char *exten
 
   /* Get file size */
   filestream_seek(fd, 0, SEEK_END);
-  size = (int32_t)filestream_tell(fd);
+  size = filestream_tell(fd);
 
   /* size limit */
   if (size > MAXROMSIZE)
@@ -241,9 +242,7 @@ int load_archive(char *filename, unsigned char *buffer, int maxsize, char *exten
     return 0;
   }
   else if (size > maxsize)
-  {
     size = maxsize;
-  }
 
   if (log_cb)
     log_cb(RETRO_LOG_INFO, "INFORMATION - Loading %d bytes ...\n", size);
