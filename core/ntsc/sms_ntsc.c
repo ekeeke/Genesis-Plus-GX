@@ -88,6 +88,7 @@ void sms_ntsc_init( sms_ntsc_t* ntsc, sms_ntsc_setup_t const* setup )
 void sms_ntsc_blit( sms_ntsc_t const* ntsc, SMS_NTSC_IN_T const* table, unsigned char* input,
                     int in_width, int vline)
 {
+  int n;
   int const chunk_count = in_width / sms_ntsc_in_chunk;
 
   /* handle extra 0, 1, or 2 pixels by placing them at beginning of row */
@@ -102,9 +103,8 @@ void sms_ntsc_blit( sms_ntsc_t const* ntsc, SMS_NTSC_IN_T const* table, unsigned
       (SMS_NTSC_ADJ_IN( table[input[0]] )) & extra2,
       (SMS_NTSC_ADJ_IN( table[input[extra2 & 1]] )) & extra1 );
 
-  sms_ntsc_out_t* restrict line_out  = (sms_ntsc_out_t*)(&bitmap.data[(vline * bitmap.pitch)]);
+  sms_ntsc_out_t* line_out  = (sms_ntsc_out_t*)(&bitmap.data[(vline * bitmap.pitch)]);
 
-  int n;
   input += in_extra;
 
   for ( n = chunk_count; n; --n )

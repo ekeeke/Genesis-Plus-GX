@@ -2199,7 +2199,7 @@ void retro_cheat_set(unsigned index, bool enabled, const char *code)
 bool retro_load_game(const struct retro_game_info *info)
 {
    int i;
-   const char *dir = NULL;
+   char *dir       = NULL;
 #if defined(_WIN32)
    char slash      = '\\';
 #else
