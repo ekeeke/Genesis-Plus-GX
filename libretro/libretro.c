@@ -1978,7 +1978,7 @@ void retro_get_system_info(struct retro_system_info *info)
 void retro_get_system_av_info(struct retro_system_av_info *info)
 {
    info->geometry.base_width    = vwidth;
-   info->geometry.base_height   = bitmap.viewport.h + (2 × bitmap.viewport.y);
+   info->geometry.base_height   = bitmap.viewport.h + (2 * bitmap.viewport.y);
    info->geometry.max_width     = 720;
    info->geometry.max_height    = 576;
    info->geometry.aspect_ratio  = vaspect_ratio;
