@@ -75,11 +75,6 @@
 
 #endif
 
-#define MODE_STR_READ "r"
-#define MODE_STR_READ_UNBUF "rb"
-#define MODE_STR_WRITE_UNBUF "wb"
-#define MODE_STR_WRITE_PLUS "w+"
-
 #ifdef RARCH_INTERNAL
 #ifndef VFS_FRONTEND
 #define VFS_FRONTEND
@@ -129,7 +124,7 @@ int64_t retro_vfs_file_seek_internal(libretro_vfs_implementation_file *stream, i
    {
       /* fseek() returns error on under/overflow but 
        * allows cursor > EOF for
-         read-only file descriptors. */
+       read-only file descriptors. */
       switch (whence)
       {
          case SEEK_SET:
@@ -187,7 +182,7 @@ libretro_vfs_implementation_file *retro_vfs_file_open_impl(const char *path, uns
    const char                 *dumb_prefix  = "vfsonly://";
 
    if (!memcmp(path, dumb_prefix, strlen(dumb_prefix)))
-	   path += strlen(dumb_prefix);
+      path += strlen(dumb_prefix);
 #endif
 
    if (!stream)
@@ -208,40 +203,57 @@ libretro_vfs_implementation_file *retro_vfs_file_open_impl(const char *path, uns
    switch (mode)
    {
       case RETRO_VFS_FILE_ACCESS_READ:
-         if ((stream->hints & RFILE_HINT_UNBUFFERED) == 0)
-            mode_str = MODE_STR_READ_UNBUF;
-         /* No "else" here */
+         mode_str = "rb";
+
          flags    = O_RDONLY;
-         break;
-      case RETRO_VFS_FILE_ACCESS_WRITE:
-         if ((stream->hints & RFILE_HINT_UNBUFFERED) == 0)
-            mode_str = MODE_STR_WRITE_UNBUF;
-         else
-         {
-            flags    = O_WRONLY | O_CREAT | O_TRUNC;
-#ifndef _WIN32
-            flags   |=  S_IRUSR | S_IWUSR;
-#endif
-         }
-         break;
-      case RETRO_VFS_FILE_ACCESS_READ_WRITE:
-         if ((stream->hints & RFILE_HINT_UNBUFFERED) == 0)
-            mode_str = MODE_STR_WRITE_PLUS;
-         else
-         {
-            flags    = O_RDWR;
 #ifdef _WIN32
-            flags   |= O_BINARY;
+         flags   |= O_BINARY;
 #endif
-         }
          break;
-         /* TODO/FIXME - implement */
-      case RETRO_VFS_FILE_ACCESS_UPDATE_EXISTING:
+
+      case RETRO_VFS_FILE_ACCESS_WRITE:
+         mode_str = "wb";
+
+         flags    = O_WRONLY | O_CREAT | O_TRUNC;
+#ifndef _WIN32
+         flags   |= S_IRUSR | S_IWUSR;
+#else
+         flags   |= O_BINARY;
+#endif
          break;
+
+      case RETRO_VFS_FILE_ACCESS_READ_WRITE:
+         mode_str = "w+b";
+
+         flags    = O_RDWR | O_CREAT | O_TRUNC;
+#ifndef _WIN32
+         flags   |= S_IRUSR | S_IWUSR;
+#else
+         flags   |= O_BINARY;
+#endif
+         break;
+
+      case RETRO_VFS_FILE_ACCESS_WRITE | RETRO_VFS_FILE_ACCESS_UPDATE_EXISTING:
+      case RETRO_VFS_FILE_ACCESS_READ_WRITE | RETRO_VFS_FILE_ACCESS_UPDATE_EXISTING:
+         mode_str = "r+b";
+
+         flags    = O_RDWR;
+#ifndef _WIN32
+         flags   |= S_IRUSR | S_IWUSR;
+#else
+         flags   |= O_BINARY;
+#endif
+         break;
+         
+      default:
+         goto error;
    }
 
-   if ((stream->hints & RFILE_HINT_UNBUFFERED) == 0 && mode_str)
+   if ((stream->hints & RFILE_HINT_UNBUFFERED) == 0)
    {
+      if (!mode_str)
+         goto error;
+
       stream->fp = fopen_utf8(path, mode_str);
 
       if (!stream->fp)
@@ -382,15 +394,15 @@ int64_t retro_vfs_file_seek_impl(libretro_vfs_implementation_file *stream, int64
    int whence = -1;
    switch (seek_position)
    {
-   case RETRO_VFS_SEEK_POSITION_START:
-      whence = SEEK_SET;
-      break;
-   case RETRO_VFS_SEEK_POSITION_CURRENT:
-      whence = SEEK_CUR;
-      break;
-   case RETRO_VFS_SEEK_POSITION_END:
-      whence = SEEK_END;
-      break;
+      case RETRO_VFS_SEEK_POSITION_START:
+         whence = SEEK_SET;
+         break;
+      case RETRO_VFS_SEEK_POSITION_CURRENT:
+         whence = SEEK_CUR;
+         break;
+      case RETRO_VFS_SEEK_POSITION_END:
+         whence = SEEK_END;
+         break;
    }
 
    return retro_vfs_file_seek_internal(stream, offset, whence);
@@ -448,7 +460,7 @@ int retro_vfs_file_flush_impl(libretro_vfs_implementation_file *stream)
 {
    if (!stream)
       return -1;
-   return fflush(stream->fp);
+   return fflush(stream->fp)==0 ? 0 : -1;
 }
 
 int retro_vfs_file_remove_impl(const char *path)
@@ -457,7 +469,7 @@ int retro_vfs_file_remove_impl(const char *path)
    wchar_t *path_wide  = NULL;
 
    if (!path || !*path)
-      return false;
+      return -1;
 
    (void)path_local;
    (void)path_wide;
@@ -472,7 +484,7 @@ int retro_vfs_file_remove_impl(const char *path)
       free(path_local);
 
       if (ret == 0)
-         return true;
+         return 0;
    }
 #else
    path_wide = utf8_to_utf16_string_alloc(path);
@@ -483,14 +495,14 @@ int retro_vfs_file_remove_impl(const char *path)
       free(path_wide);
 
       if (ret == 0)
-         return true;
+         return 0;
    }
 #endif
 #else
    if (remove(path) == 0)
-      return true;
+      return 0;
 #endif
-   return false;
+   return -1;
 }
 
 int retro_vfs_file_rename_impl(const char *old_path, const char *new_path)
@@ -520,7 +532,7 @@ int retro_vfs_file_rename_impl(const char *old_path, const char *new_path)
          int ret = rename(old_path_local, new_path_local);
          free(old_path_local);
          free(new_path_local);
-         return ret;
+         return ret==0 ? 0 : -1;
       }
 
       free(old_path_local);
@@ -539,7 +551,7 @@ int retro_vfs_file_rename_impl(const char *old_path, const char *new_path)
          int ret = _wrename(old_path_wide, new_path_wide);
          free(old_path_wide);
          free(new_path_wide);
-         return ret;
+         return ret==0 ? 0 : -1;
       }
 
       free(old_path_wide);
@@ -550,7 +562,7 @@ int retro_vfs_file_rename_impl(const char *old_path, const char *new_path)
 #endif
    return -1;
 #else
-   return rename(old_path, new_path);
+   return rename(old_path, new_path)==0 ? 0 : -1;
 #endif
 }
 

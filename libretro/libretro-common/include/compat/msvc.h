@@ -92,7 +92,7 @@ typedef int ssize_t;
 #define va_copy(x, y) ((x) = (y))
 #endif
 
-#if _MSC_VER <= 1200
+#if _MSC_VER <= 1310
    #ifndef __cplusplus
       /* VC6 math.h doesn't define some functions when in C mode.
        * Trying to define a prototype gives "undefined reference".
@@ -106,6 +106,7 @@ typedef int ssize_t;
       #define ceilf(x) ((float)ceil((double)x))
       #define floorf(x) ((float)floor((double)x))
       #define sqrtf(x) ((float)sqrt((double)x))
+      #define fabsf(x)    ((float)fabs((double)(x)))
    #endif
 
    #ifndef _vscprintf

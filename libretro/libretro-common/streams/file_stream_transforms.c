@@ -28,17 +28,43 @@
 
 RFILE* rfopen(const char *path, const char *mode)
 {
-   unsigned int retro_mode = 0;
+   RFILE          *output  = NULL;
+   unsigned int retro_mode = RETRO_VFS_FILE_ACCESS_READ;
+   bool position_to_end    = false;
+
    if (strstr(mode, "r"))
-      if (strstr(mode, "b"))
-         retro_mode = RETRO_VFS_FILE_ACCESS_READ;
-
-   if (strstr(mode, "w"))
+   {
+      retro_mode = RETRO_VFS_FILE_ACCESS_READ;
+      if (strstr(mode, "+"))
+      {
+         retro_mode = RETRO_VFS_FILE_ACCESS_READ_WRITE | 
+            RETRO_VFS_FILE_ACCESS_UPDATE_EXISTING;
+      }
+   }
+   else if (strstr(mode, "w"))
+   {
       retro_mode = RETRO_VFS_FILE_ACCESS_WRITE;
-   if (strstr(mode, "+"))
-      retro_mode = RETRO_VFS_FILE_ACCESS_READ_WRITE;
+      if (strstr(mode, "+"))
+         retro_mode = RETRO_VFS_FILE_ACCESS_READ_WRITE;
+   }
+   else if (strstr(mode, "a"))
+   {
+      retro_mode = RETRO_VFS_FILE_ACCESS_WRITE | 
+         RETRO_VFS_FILE_ACCESS_UPDATE_EXISTING;
+      position_to_end = true;
+      if (strstr(mode, "+"))
+      {
+         retro_mode = RETRO_VFS_FILE_ACCESS_READ_WRITE | 
+            RETRO_VFS_FILE_ACCESS_UPDATE_EXISTING;
+      }
+   }
 
-   return filestream_open(path, retro_mode, RETRO_VFS_FILE_ACCESS_HINT_NONE);
+   output = filestream_open(path, retro_mode,
+         RETRO_VFS_FILE_ACCESS_HINT_NONE);
+   if (output && position_to_end)
+      filestream_seek(output, 0, RETRO_VFS_SEEK_POSITION_END);
+
+   return output;
 }
 
 int rfclose(RFILE* stream)
@@ -71,9 +97,9 @@ int rfseek(RFILE* stream, long offset, int origin)
 }
 
 size_t rfread(void* buffer,
-   size_t elementSize, size_t elementCount, RFILE* stream)
+   size_t elem_size, size_t elem_count, RFILE* stream)
 {
-   return filestream_read(stream, buffer, elementSize*elementCount);
+   return filestream_read(stream, buffer, elem_size * elem_count);
 }
 
 char *rfgets(char *buffer, int maxCount, RFILE* stream)
@@ -87,9 +113,9 @@ int rfgetc(RFILE* stream)
 }
 
 size_t rfwrite(void const* buffer,
-   size_t elementSize, size_t elementCount, RFILE* stream)
+   size_t elem_size, size_t elem_count, RFILE* stream)
 {
-   return filestream_write(stream, buffer, elementSize*elementCount);
+   return filestream_write(stream, buffer, elem_size * elem_count);
 }
 
 int rfputc(int character, RFILE * stream)
@@ -109,10 +135,10 @@ int rfprintf(RFILE * stream, const char * format, ...)
 
 int rferror(RFILE* stream)
 {
-    return filestream_error(stream);
+   return filestream_error(stream);
 }
 
 int rfeof(RFILE* stream)
 {
-    return filestream_eof(stream);
+   return filestream_eof(stream);
 }
