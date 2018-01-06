@@ -343,20 +343,20 @@ static gui_item items_options[] =
 /* Audio options */
 static gui_item items_audio[] =
 {
-  {NULL,NULL,"Master System FM: AUTO", "Enable/Disable YM2413 chip",                           56,132,276,48},
-  {NULL,NULL,"High-Quality FM: ON",    "Enable/Disable YM2612/YM2413 high-quality resampling", 56,132,276,48},
-  {NULL,NULL,"FM Resolution: MAX",     "Adjust YM2612 DAC precision",                          56,132,276,48},
-  {NULL,NULL,"FM Volume: 1.00",        "Adjust YM2612/YM2413 audio balance",                   56,132,276,48},
-  {NULL,NULL,"PSG Volume: 2.50",       "Adjust SN76489 audio balance",                         56,132,276,48},
-  {NULL,NULL,"High-Quality PSG: ON",   "Enable/Disable SN76489 high-quality resampling",       56,132,276,48},
-  {NULL,NULL,"Audio Output: STEREO",   "Select audio mixing output type",                      56,132,276,48},
-  {NULL,NULL,"Filtering: 3-BAND EQ",   "Select audio filtering type",                          56,132,276,48},
-  {NULL,NULL,"Low Gain: 1.00",         "Adjust EQ Low Band Gain",                              56,132,276,48},
-  {NULL,NULL,"Mid Gain: 1.00",         "Adjust EQ Mid Band Gain",                              56,132,276,48},
-  {NULL,NULL,"High Gain: 1.00",        "Adjust EQ High Band Gain",                             56,132,276,48},
-  {NULL,NULL,"Low Freq: 200 Hz",       "Adjust EQ Lowest Frequency",                           56,132,276,48},
-  {NULL,NULL,"High Freq: 20000 Hz",    "Adjust EQ Highest Frequency",                          56,132,276,48}
-};
+  {NULL,NULL,"Master System FM: AUTO",   "Enable/Disable YM2413 chip",                           56,132,276,48},
+  {NULL,NULL,"YM2612 Type: DISCRETE",    "Select YM2612 chip model",                             56,132,276,48},
+  {NULL,NULL,"High-Quality FM: ON",      "Enable/Disable YM2612/YM2413 high-quality resampling", 56,132,276,48},
+  {NULL,NULL,"High-Quality PSG: ON",     "Enable/Disable SN76489 high-quality resampling",       56,132,276,48},
+  {NULL,NULL,"FM Volume: 1.00",          "Adjust YM2612/YM2413 audio balance",                   56,132,276,48},
+  {NULL,NULL,"PSG Volume: 2.50",         "Adjust SN76489 audio balance",                         56,132,276,48},
+  {NULL,NULL,"Audio Output: STEREO",     "Select audio mixing output type",                      56,132,276,48},
+  {NULL,NULL,"Filtering: 3-BAND EQ",     "Select audio filtering type",                          56,132,276,48},
+  {NULL,NULL,"Low Gain: 1.00",           "Adjust EQ Low Band Gain",                              56,132,276,48},
+  {NULL,NULL,"Mid Gain: 1.00",           "Adjust EQ Mid Band Gain",                              56,132,276,48},
+  {NULL,NULL,"High Gain: 1.00",          "Adjust EQ High Band Gain",                             56,132,276,48},
+  {NULL,NULL,"Low Freq: 200 Hz",         "Adjust EQ Lowest Frequency",                           56,132,276,48},
+  {NULL,NULL,"High Freq: 20000 Hz",      "Adjust EQ Highest Frequency",                          56,132,276,48}
+}; 
 
 /* System ROM paths */
 static gui_item items_rompaths[] =
@@ -901,14 +901,16 @@ static void soundmenu ()
   else if (config.ym2413 == 1) sprintf (items[0].text, "Master System FM: ON");
   else sprintf (items[0].text, "Master System FM: AUTO");
 
-  sprintf (items[1].text, "High-Quality FM: %s", config.hq_fm ? "ON":"OFF");
+  if (config.ym2612 == YM2612_DISCRETE) sprintf (items[1].text, "YM2612 Type: DISCRETE");
+  else if (config.ym2612 == YM2612_INTEGRATED) sprintf (items[1].text, "YM2612 Type: ASIC");
+  else sprintf (items[1].text, "YM2612 Type: ENHANCED");
 
-  if (config.dac_bits < 14) sprintf (items[2].text, "FM Resolution: %d bits", config.dac_bits);
-  else  sprintf (items[2].text, "FM Resolution: MAX");
+  sprintf (items[2].text, "High-Quality FM: %s", config.hq_fm ? "ON":"OFF");
+  sprintf (items[3].text, "High-Quality PSG: %s", config.hq_psg? "ON":"OFF");
 
-  sprintf (items[3].text, "FM Volume: %1.2f", fm_volume);
-  sprintf (items[4].text, "PSG Volume: %1.2f", psg_volume);
-  sprintf (items[5].text, "High-Quality PSG: %s", config.hq_psg? "ON":"OFF");
+  sprintf (items[4].text, "FM Volume: %1.2f", fm_volume);
+  sprintf (items[5].text, "PSG Volume: %1.2f", psg_volume);
+
   sprintf (items[6].text, "Audio Output: %s", config.mono ? "MONO":"STEREO");
 
   if (config.filter == 2)
@@ -971,33 +973,41 @@ static void soundmenu ()
 
       case 1:
       {
-        config.hq_fm ^= 1;
-        sprintf (items[1].text, "High-Quality FM: %s", config.hq_fm ? "ON":"OFF");
+        config.ym2612++;
+        if (config.ym2612 > YM2612_ENHANCED) config.ym2612 = YM2612_DISCRETE;
+        if (config.ym2612 == YM2612_DISCRETE) sprintf (items[1].text, "YM2612 Type: DISCRETE");
+        else if (config.ym2612 == YM2612_INTEGRATED) sprintf (items[1].text, "YM2612 Type: ASIC");
+        else sprintf (items[1].text, "YM2612 Type: ENHANCED");
+        YM2612Config(config.ym2612);
         break;
       }
 
       case 2:
       {
-        config.dac_bits++;
-        if (config.dac_bits > 14) config.dac_bits = 7;
-        if (config.dac_bits < 14) sprintf (items[2].text, "FM Resolution: %d bits", config.dac_bits);
-        else sprintf (items[2].text, "FM Resolution: MAX");
-        YM2612Config(config.dac_bits);
+        config.hq_fm ^= 1;
+        sprintf (items[2].text, "High-Quality FM: %s", config.hq_fm ? "ON":"OFF");
         break;
       }
 
       case 3:
       {
-        GUI_OptionBox(m,0,"FM Volume",(void *)&fm_volume,0.01,0.0,5.0,0);
-        sprintf (items[3].text, "FM Volume: %1.2f", fm_volume);
-        config.fm_preamp = (int)(fm_volume * 100.0 + 0.5);
+        config.hq_psg ^= 1;
+        sprintf (items[3].text, "High-Quality PSG: %s", config.hq_psg ? "ON":"OFF");
         break;
       }
 
       case 4:
       {
+        GUI_OptionBox(m,0,"FM Volume",(void *)&fm_volume,0.01,0.0,5.0,0);
+        sprintf (items[4].text, "FM Volume: %1.2f", fm_volume);
+        config.fm_preamp = (int)(fm_volume * 100.0 + 0.5);
+        break;
+      }
+
+      case 5:
+      {
         GUI_OptionBox(m,0,"PSG Volume",(void *)&psg_volume,0.01,0.0,5.0,0);
-        sprintf (items[4].text, "PSG Volume: %1.2f", psg_volume);
+        sprintf (items[5].text, "PSG Volume: %1.2f", psg_volume);
         config.psg_preamp = (int)(psg_volume * 100.0 + 0.5);
         if ((system_hw & SYSTEM_PBC) == SYSTEM_MD)
         {
@@ -1007,13 +1017,6 @@ static void soundmenu ()
         {
           psg_config(0, config.psg_preamp, io_reg[6]);
         }
-        break;
-      }
-
-      case 5:
-      {
-        config.hq_psg ^= 1;
-        sprintf (items[5].text, "High-Quality PSG: %s", config.hq_psg ? "ON":"OFF");
         break;
       }
 

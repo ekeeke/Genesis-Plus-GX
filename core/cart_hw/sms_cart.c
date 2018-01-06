@@ -43,8 +43,9 @@
 #define MAPPER_NONE        (0x00)
 #define MAPPER_TEREBI      (0x01)
 #define MAPPER_RAM_2K      (0x02)
-#define MAPPER_RAM_8K_EXT1 (0x03)
-#define MAPPER_RAM_8K_EXT2 (0x04)
+#define MAPPER_RAM_8K      (0x03)
+#define MAPPER_RAM_8K_EXT1 (0x04)
+#define MAPPER_RAM_8K_EXT2 (0x05)
 #define MAPPER_SEGA        (0x10)
 #define MAPPER_SEGA_X      (0x11)
 #define MAPPER_93C46       (0x12)
@@ -146,11 +147,13 @@ static const rominfo_t game_list[] =
   {0xDD4A661B, 0, 0, 0,  MAPPER_TEREBI, SYSTEM_SG,   REGION_JAPAN_NTSC}, /* Terebi Oekaki */
 
   /* games using 2KB external RAM (volatile) */
-  {0x092F29D6, 0, 0, 0,  MAPPER_RAM_2K, SYSTEM_SG,   REGION_JAPAN_NTSC}, /* The Castle (J) */
   {0xAF4F14BC, 0, 0, 0,  MAPPER_RAM_2K, SYSTEM_SG,   REGION_JAPAN_NTSC}, /* Othello (J) */
   {0x1D1A0CA3, 0, 0, 0,  MAPPER_RAM_2K, SYSTEM_SGII, REGION_JAPAN_NTSC}, /* Othello (TW) */
 
-  /* games requiring SG-1000 II 8K RAM extension adapter */
+  /* games using 8KB external RAM (volatile) */
+  {0x092F29D6, 0, 0, 0,  MAPPER_RAM_8K, SYSTEM_SG,   REGION_JAPAN_NTSC}, /* The Castle (J) */
+
+  /* games requiring SG-1000 II 8K RAM extension adapters */
   {0xCE5648C3, 0, 0, 0,  MAPPER_RAM_8K_EXT1, SYSTEM_SGII, REGION_JAPAN_NTSC}, /* Bomberman Special [DahJee] (TW) */
   {0x223397A1, 0, 0, 0,  MAPPER_RAM_8K_EXT1, SYSTEM_SGII, REGION_JAPAN_NTSC}, /* King's Valley (TW) */
   {0x281D2888, 0, 0, 0,  MAPPER_RAM_8K_EXT1, SYSTEM_SGII, REGION_JAPAN_NTSC}, /* Knightmare (TW) */
@@ -464,22 +467,22 @@ void sms_cart_init(void)
   /* ROM paging */
   if (cart_rom.mapper < MAPPER_SEGA)
   {
-    /* 1k ROM banks */
+    /* 1KB ROM banks */
     cart_rom.pages = (cart.romsize + (1 << 10) - 1) >> 10;
   }
   else if (cart_rom.mapper & MAPPER_KOREA_8K)
   {
-    /* 8k ROM banks */
+    /* 8KB ROM banks */
     cart_rom.pages = (cart.romsize + (1 << 13) - 1) >> 13;
   }
   else if (cart_rom.mapper & MAPPER_MULTI_32K)
   {
-    /* 32k ROM banks */
+    /* 32KB ROM banks */
     cart_rom.pages = (cart.romsize + (1 << 15) - 1) >> 15;
   }
   else
   {
-    /* 16k ROM banks */
+    /* 16KB ROM banks */
     cart_rom.pages = (cart.romsize + (1 << 14) - 1) >> 14;
   }
 
@@ -519,7 +522,7 @@ void sms_cart_init(void)
 
     if (bios_size > 0xC000)
     {
-      /* assume SEGA mapper if BIOS ROM is larger than 48k */
+      /* assume SEGA mapper if BIOS ROM is larger than 48KB */
       bios_rom.mapper = MAPPER_SEGA;
       bios_rom.pages = bios_size >> 14;
     }
@@ -582,7 +585,7 @@ void sms_cart_reset(void)
       break;
   }
 
-  /* check if BIOS is larger than 1k */
+  /* check if BIOS is larger than 1KB */
   if (bios_rom.pages > 1)
   {
     /* enable BIOS ROM */
@@ -612,7 +615,7 @@ void sms_cart_reset(void)
   /* reset Z80 memory map */
   mapper_reset();
 
-  /* 1k BIOS special case (Majesco GG) */
+  /* 1KB BIOS special case (Majesco GG) */
   if (bios_rom.pages == 1)
   {
     /* BIOS ROM is mapped to $0000-$03FF */
@@ -643,7 +646,7 @@ void sms_cart_switch(uint8 mode)
     /* BIOS ROM enabled ? */
     if (mode & 0x08)
     {
-      /* check if BIOS ROM is larger than 1K */
+      /* check if BIOS ROM is larger than 1KB */
       if (bios_rom.pages > 1)
       {
         /* map BIOS ROM */
@@ -683,7 +686,7 @@ void sms_cart_switch(uint8 mode)
   /* reset Z80 memory map */
   mapper_reset();
 
-  /* 1k BIOS special case (Majesco GG) */
+  /* 1KB BIOS special case (Majesco GG) */
   if ((bios_rom.pages == 1) && ((mode & 0x48) == 0x08))
   {
     /* BIOS ROM is mapped to $0000-$03FF */
@@ -746,10 +749,10 @@ static void mapper_reset(void)
   /* reset $C000-$FFFF mapping */
   if (cart_rom.mapper == MAPPER_RAM_8K_EXT2)
   {
-    /* 8k RAM extension adapter (type B) */
+    /* 8KB RAM extension adapter (type B) */
     for (i = 0x30; i < 0x40; i++)
     {
-      /* $C000-$FFFF mapped to 8k external RAM (mirrored) */
+      /* $C000-$FFFF mapped to 8KB external RAM (mirrored) */
       z80_readmap[i] = z80_writemap[i] = &work_ram[(i & 0x07) << 10];
     }
   }
@@ -758,7 +761,7 @@ static void mapper_reset(void)
     /* SG-1000 II clone hardware with 2KB internal RAM */
     for (i = 0x30; i < 0x40; i++)
     {
-      /* $C000-$FFFF mapped to 2k internal RAM (mirrored) */
+      /* $C000-$FFFF mapped to 2KB internal RAM (mirrored) */
       z80_readmap[i] = z80_writemap[i] = &work_ram[(i & 0x01) << 10];
     }
   }
@@ -767,7 +770,7 @@ static void mapper_reset(void)
     /* default SG-1000 hardware has only 1KB internal RAM */
     for (i = 0x30; i < 0x40; i++)
     {
-      /* $C000-$FFFF mapped to 1k internal RAM (mirrored) */
+      /* $C000-$FFFF mapped to 1KB internal RAM (mirrored) */
       z80_readmap[i] = z80_writemap[i] = &work_ram[0];
     }
   }
@@ -776,7 +779,7 @@ static void mapper_reset(void)
     /* Mark III / Master System / Game Gear hardware */
     for (i = 0x30; i < 0x40; i++)
     {
-      /* $C000-$FFFF mapped to 8k internal RAM (mirrored) */
+      /* $C000-$FFFF mapped to 8KB internal RAM (mirrored) */
       z80_readmap[i] = z80_writemap[i] = &work_ram[(i & 0x07) << 10];
     }
   }
@@ -797,39 +800,81 @@ static void mapper_reset(void)
     return;
   }
 
-  /* reset $0000-$BFFF mapping */
-  for (i = 0x00; i < 0x30; i++)
-  {
-    /* by default, $0000-$BFFF is mapped to cartridge ROM (first 48k) */
-    z80_readmap[i] = &slot.rom[i << 10];
-    z80_writemap[i] = cart.rom + 0x510000; /* unused area */
-  }
-
   /* reset cartridge hardware mapping */
-  if (slot.mapper == MAPPER_RAM_8K_EXT1)
+  if (slot.mapper < MAPPER_SEGA)
   {
-    /* 8k RAM extension adapter (type A) */
-    for (i = 0x08; i < 0x10; i++)
+    /* $0000-$7FFF mapping */
+    for (i = 0x00; i < 0x20; i++)
     {
-      /* $2000-$3FFF mapped to 8k external RAM */
-      z80_readmap[i] = z80_writemap[i] = &work_ram[0x2000 + ((i & 0x07) << 10)];
+      /* by default, $0000-$7FFF mapped to cartridge ROM lower KB (mirrored if less than 32KB) */
+      z80_readmap[i] = &slot.rom[(i % slot.pages) << 10];
+      z80_writemap[i] = cart.rom + 0x510000; /* unused area */
+    }
+
+    /* 8KB RAM extension adapter (type A) */
+    if (slot.mapper == MAPPER_RAM_8K_EXT1)
+    {
+      for (i = 0x08; i < 0x10; i++)
+      {
+        /* $2000-$3FFF mapped to 8KB external RAM */
+        z80_readmap[i] = z80_writemap[i] = &work_ram[0x2000 + ((i & 0x07) << 10)];
+      }
+    }
+
+    /* $8000-$BFFF mapping */
+    if (slot.mapper == MAPPER_RAM_8K)
+    {
+      /* 8KB on-board RAM (The Castle) */
+      for (i = 0x20; i < 0x30; i++)
+      {
+        /* $8000-$BFFF mapped to 8KB external RAM (mirrored) */
+        z80_readmap[i] = z80_writemap[i] = &work_ram[0x2000 + ((i & 0x07) << 10)];
+      }
+    }
+    else if (slot.mapper == MAPPER_RAM_2K)
+    {
+      /* 2KB on-board RAM (Othello) */
+      for (i = 0x20; i < 0x30; i++)
+      {
+        /* $8000-$BFFF mapped to 2KB external RAM (mirrored) */
+        z80_readmap[i] = z80_writemap[i] = &work_ram[0x2000 + ((i & 0x01) << 10)];
+      }
+    }
+    else if (slot.pages <= 0x20)
+    {
+      /* cartridge ROM lower than 32KB */
+      for (i = 0x20; i < 0x30; i++)
+      {
+        /* $8000-$BFFF mapped to unused area */
+        z80_writemap[i] = cart.rom + 0x510000;
+        z80_readmap[i]  = cart.rom + 0x510400;
+      }
+    }
+    else
+    {
+      /* cartridge ROM up to 48KB */
+      for (i = 0x20; i < 0x30; i++)
+      {
+        /* $8000-$BFFF mapped to cartridge ROM upper KB (mirrored if less than 48KB) */
+        z80_readmap[i] = &slot.rom[(0x20 + (i % (slot.pages - 0x20))) << 10];
+        z80_writemap[i] = cart.rom + 0x510000; /* unused area */
+      }
     }
   }
-  else if (slot.mapper == MAPPER_RAM_2K)
+  else
   {
-    /* 2k on-board RAM (The Castle, Othello) */
-    for (i = 0x20; i < 0x30; i++)
+    /* reset $0000-$BFFF mapping */
+    for (i = 0x00; i < 0x30; i++)
     {
-      /* $8000-$BFFF mapped to 2k external RAM (mirrored) */
-      z80_readmap[i] = z80_writemap[i] = &work_ram[0x2000 + ((i & 0x07) << 10)];
+      /* by default, $0000-$BFFF is mapped to cartridge ROM lower 48KB */
+      z80_readmap[i] = &slot.rom[i << 10];
+      z80_writemap[i] = cart.rom + 0x510000; /* unused area */
     }
-  }
-  else if (slot.mapper >= MAPPER_SEGA)
-  {
+
     /* reset ROM paging hardware */
     if (slot.mapper & MAPPER_KOREA_8K)
     {
-      /* 8k pages */
+      /* 8KB pages */
       mapper_8k_w(0,slot.fcr[0]);
       mapper_8k_w(1,slot.fcr[1]);
       mapper_8k_w(2,slot.fcr[2]);
@@ -838,7 +883,7 @@ static void mapper_reset(void)
       /* "Nemesis" mapper specific */
       if (slot.mapper == MAPPER_MSX_NEMESIS)
       {
-        /* first 8k page is mapped to last 8k ROM bank */
+        /* first 8KB page is mapped to last 8KB ROM bank */
         for (i = 0x00; i < 0x08; i++)
         {
           z80_readmap[i] = &slot.rom[(0x0f << 13) | ((i & 0x07) << 10)];
@@ -847,12 +892,12 @@ static void mapper_reset(void)
     }
     else if (slot.mapper & MAPPER_MULTI_32K)
     {
-      /* 32k pages */
+      /* 32KB pages */
       mapper_32k_w(slot.fcr[0]);
     }
     else
     {
-      /* 16k pages */
+      /* 16KB pages */
       mapper_16k_w(0,slot.fcr[0]);
       mapper_16k_w(1,slot.fcr[1]);
       mapper_16k_w(2,slot.fcr[2]);
@@ -863,12 +908,10 @@ static void mapper_reset(void)
   /* reset Z80 memory handlers */
   switch (slot.mapper)
   {
-    case MAPPER_NONE:
-    case MAPPER_RAM_2K:
-    case MAPPER_RAM_8K_EXT1:
-    case MAPPER_RAM_8K_EXT2:
+    case MAPPER_SEGA:
+    case MAPPER_SEGA_X:
       z80_readmem = read_mapper_default;
-      z80_writemem = write_mapper_none;
+      z80_writemem = write_mapper_sega;
       break;
 
     case MAPPER_CODIES:
@@ -919,7 +962,7 @@ static void mapper_reset(void)
 
     default:
       z80_readmem = read_mapper_default;
-      z80_writemem = write_mapper_sega;
+      z80_writemem = write_mapper_none;
       break;
   }
 }
@@ -928,16 +971,16 @@ static void mapper_8k_w(int offset, unsigned char data)
 {
   int i;
 
-  /* cartridge ROM page (8k) */
+  /* cartridge ROM page (8KB) */
   uint8 *page = &slot.rom[(data % slot.pages) << 13];
   
   /* Save frame control register data */
   slot.fcr[offset] = data;
 
-  /* 4 x 8k banks */
+  /* 4 x 8KB banks */
   switch (offset & 3)
   {
-    case 0: /* cartridge ROM bank (8k) at $8000-$9FFF */
+    case 0: /* cartridge ROM bank (8KB) at $8000-$9FFF */
     {
       for (i = 0x20; i < 0x28; i++)
       {
@@ -946,7 +989,7 @@ static void mapper_8k_w(int offset, unsigned char data)
       break;
     }
     
-    case 1: /* cartridge ROM bank (8k) at $A000-$BFFF */
+    case 1: /* cartridge ROM bank (8KB) at $A000-$BFFF */
     {
       for (i = 0x28; i < 0x30; i++)
       {
@@ -955,7 +998,7 @@ static void mapper_8k_w(int offset, unsigned char data)
       break;
     }
     
-    case 2: /* cartridge ROM bank (8k) at $4000-$5FFF */
+    case 2: /* cartridge ROM bank (8KB) at $4000-$5FFF */
     {
       for (i = 0x10; i < 0x18; i++)
       {
@@ -964,7 +1007,7 @@ static void mapper_8k_w(int offset, unsigned char data)
       break;
     }
     
-    case 3: /* cartridge ROM bank (8k) at $6000-$7FFF */
+    case 3: /* cartridge ROM bank (8KB) at $6000-$7FFF */
     {
       for (i = 0x18; i < 0x20; i++)
       {
@@ -984,7 +1027,7 @@ static void mapper_16k_w(int offset, unsigned char data)
 {
   int i;
 
-  /* cartridge ROM page (16k) */
+  /* cartridge ROM page (16KB) */
   uint8 page = data % slot.pages;
 
   /* page index increment (SEGA mapper only) */
@@ -1002,7 +1045,7 @@ static void mapper_16k_w(int offset, unsigned char data)
     {
       if (data & 0x08)
       {
-        /* external RAM (upper or lower 16K) mapped at $8000-$BFFF */
+        /* external RAM (upper or lower 16KB) mapped at $8000-$BFFF */
         for (i = 0x20; i < 0x30; i++)
         {
           z80_readmap[i] = z80_writemap[i] = &sram.sram[((data & 0x04) << 12) + ((i & 0x0F) << 10)];
@@ -1010,7 +1053,7 @@ static void mapper_16k_w(int offset, unsigned char data)
       }
       else
       {
-        /* cartridge ROM page (16k) */
+        /* cartridge ROM page (16KB) */
         page = slot.fcr[3] % slot.pages;
         
         /* page index increment (SEGA mapper) */
@@ -1029,7 +1072,7 @@ static void mapper_16k_w(int offset, unsigned char data)
 
       if (data & 0x10)
       {
-        /* external RAM (lower 16K) mapped at $C000-$FFFF */
+        /* external RAM (lower 16KB) mapped at $C000-$FFFF */
         for (i = 0x30; i < 0x40; i++)
         {
           z80_readmap[i] = z80_writemap[i] = &sram.sram[(i & 0x0F) << 10];
@@ -1037,7 +1080,7 @@ static void mapper_16k_w(int offset, unsigned char data)
       }
       else
       {
-        /* internal RAM (8K mirrorred) mapped at $C000-$FFFF */
+        /* internal RAM (8KB mirrored) mapped at $C000-$FFFF */
         for (i = 0x30; i < 0x40; i++)
         {
           z80_readmap[i] = z80_writemap[i] = &work_ram[(i & 0x07) << 10];
@@ -1046,9 +1089,9 @@ static void mapper_16k_w(int offset, unsigned char data)
       break;
     }
 
-    case 1: /* cartridge ROM bank (16k) at $0000-$3FFF */
+    case 1: /* cartridge ROM bank (16KB) at $0000-$3FFF */
     {
-      /* first 1k is not fixed (CODEMASTER or MULTI mappers only) */
+      /* first 1KB is not fixed (CODEMASTER or MULTI mappers only) */
       if ((slot.mapper == MAPPER_CODIES) || (slot.mapper == MAPPER_MULTI_16K))
       {
         z80_readmap[0] = &slot.rom[(page << 14)];
@@ -1061,7 +1104,7 @@ static void mapper_16k_w(int offset, unsigned char data)
       break;
     }
 
-    case 2: /* cartridge ROM bank (16k) at $4000-$7FFF */
+    case 2: /* cartridge ROM bank (16KB) at $4000-$7FFF */
     {
       for (i = 0x10; i < 0x20; i++)
       {
@@ -1073,7 +1116,7 @@ static void mapper_16k_w(int offset, unsigned char data)
       {
         if (data & 0x80)
         {
-          /* external RAM (8k) mapped at $A000-$BFFF */
+          /* external RAM (8KB) mapped at $A000-$BFFF */
           for (i = 0x28; i < 0x30; i++)
           {
             z80_readmap[i] = z80_writemap[i] = &sram.sram[(i & 0x0F) << 10];
@@ -1081,7 +1124,7 @@ static void mapper_16k_w(int offset, unsigned char data)
         }
         else
         {
-          /* cartridge ROM page (16k) */
+          /* cartridge ROM page (16KB) */
           page = slot.fcr[3] % slot.pages;
 
           /* cartridge ROM mapped at $A000-$BFFF */
@@ -1095,21 +1138,21 @@ static void mapper_16k_w(int offset, unsigned char data)
       break;
     }
 
-    case 3: /* cartridge ROM bank (16k) at $8000-$BFFF */
+    case 3: /* cartridge ROM bank (16KB) at $8000-$BFFF */
     {
-      /* check that external RAM (16k) is not mapped at $8000-$BFFF (SEGA mapper only) */
+      /* check that external RAM (16KB) is not mapped at $8000-$BFFF (SEGA mapper only) */
       if ((slot.fcr[0] & 0x08)) break;
 
-      /* first 8k */
+      /* first 8KB */
       for (i = 0x20; i < 0x28; i++)
       {
         z80_readmap[i] = &slot.rom[(page << 14) | ((i & 0x0F) << 10)];
       }
 
-      /* check that cartridge RAM (8k) is not mapped at $A000-$BFFF (CODEMASTER mapper only) */
+      /* check that cartridge RAM (8KB) is not mapped at $A000-$BFFF (CODEMASTER mapper only) */
       if ((slot.mapper == MAPPER_CODIES) && (slot.fcr[2] & 0x80)) break;
 
-      /* last 8k */
+      /* last 8KB */
       for (i = 0x28; i < 0x30; i++)
       {
         z80_readmap[i] = &slot.rom[(page << 14) | ((i & 0x0F) << 10)];
@@ -1128,19 +1171,19 @@ static void mapper_32k_w(unsigned char data)
 {
   int i;
 
-  /* cartridge ROM page (32k) */
+  /* cartridge ROM page (32KB) */
   uint8 *page = &slot.rom[(data % slot.pages) << 15];
   
   /* Save frame control register data */
   slot.fcr[0] = data;
 
-  /* selected page (32k) is mapped at $0000-$7FFF */
+  /* selected page (32KB) is mapped at $0000-$7FFF */
   for (i = 0x00; i < 0x20; i++)
   {
     z80_readmap[i] = &page[i << 10];
   }
 
-  /* first 16K is mirrored at $8000-$BFFF */
+  /* first 16KB is mirrored at $8000-$BFFF */
   for (i = 0x20; i < 0x30; i++)
   {
     z80_readmap[i] = z80_readmap[i & 0x0F];
@@ -1379,10 +1422,10 @@ static unsigned char read_mapper_korea_8k(unsigned int address)
 {
   unsigned char data = z80_readmap[address >> 10][address & 0x03FF];
 
-  /* 16k page */
+  /* 16KB page */
   unsigned char page = address >> 14;
 
-  /* $4000-$7FFFF and $8000-$BFFF area are protected */
+  /* $4000-$7FFF and $8000-$BFFF area are protected */
   if (((page == 1) && (slot.fcr[2] & 0x80)) || ((page == 2) && (slot.fcr[0] & 0x80)))
   {
     /* bit-swapped value */

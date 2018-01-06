@@ -3,7 +3,7 @@
  *  Sound Hardware
  *
  *  Copyright (C) 1998-2003  Charles Mac Donald (original code)
- *  Copyright (C) 2007-2016  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2007-2017  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -63,7 +63,7 @@ static unsigned int (*YM_Read)(unsigned int a);
 
 #ifdef HAVE_YM3438_CORE
 static ym3438_t ym3438;
-static int ym3438_accm[24][2];
+static short ym3438_accm[24][2];
 static int ym3438_sample[2];
 static unsigned int ym3438_cycles;
 
@@ -150,7 +150,7 @@ void sound_init( void )
     {
       /* MAME */
       YM2612Init();
-      YM2612Config(config.dac_bits);
+      YM2612Config(config.ym2612);
       YM_Reset = YM2612ResetChip;
       YM_Update = YM2612Update;
       YM_Write = YM2612Write;
@@ -288,7 +288,6 @@ int sound_context_save(uint8 *state)
     else
     {
       bufferptr += YM2612SaveContext(state + sizeof(config.ym3438));
-      YM2612Config(config.dac_bits);
     }
 #else
     bufferptr = YM2612SaveContext(state);
@@ -325,11 +324,9 @@ int sound_context_load(uint8 *state)
     else
     {
       bufferptr += YM2612LoadContext(state + sizeof(config_ym3438));
-      YM2612Config(config.dac_bits);
     }
 #else
     bufferptr = YM2612LoadContext(state);
-    YM2612Config(config.dac_bits);
 #endif
   }
   else

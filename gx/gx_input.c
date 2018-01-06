@@ -1420,7 +1420,7 @@ void gx_input_SetDefault(void)
   }
 
   /* autodetect connected Wii Controllers */
-  while (i++ < 4)
+  do
   {
     exp = 255;
     WPAD_Probe(i, &exp);
@@ -1462,7 +1462,9 @@ void gx_input_SetDefault(void)
         }
       }
     }
+    i++;
   }
+  while (i < 4);
 #endif
 
   /* Autodetect Gamecube Controllers */

@@ -18,6 +18,12 @@
 # -D15BPP_RENDERING - configure for 15-bit pixels (RGB555)
 # -D16BPP_RENDERING - configure for 16-bit pixels (RGB565)
 # -D32BPP_RENDERING - configure for 32-bit pixels (RGB888)
+# -DUSE_LIBCHDR   : enable CHD file support
+# -DUSE_LIBTREMOR : enable OGG file support for CD emulation using provided TREMOR library
+# -DUSE_LIBVORBIS : enable OGG file support for CD emulation using external VORBIS library
+# -DISABLE_MANY_OGG_OPEN_FILES : only have one OGG file opened at once to save RAM
+# -DMAXROMSIZE: defines maximal size of ROM/SRAM buffer (also shared with CD hardware) */
+# -DHAVE_YM3438_CORE: enable (configurable) support for Nuked cycle-accurate YM3438 core */
 
 NAME	  = gen_sdl
 
@@ -26,7 +32,7 @@ CFLAGS    = `sdl-config --cflags` -march=i686 -O6 -fomit-frame-pointer -Wall -Wn
 #-g -ggdb -pg
 #-fomit-frame-pointer
 #LDFLAGS   = -pg
-DEFINES   = -DLSB_FIRST -DUSE_16BPP_RENDERING -DUSE_LIBTREMOR -DMAXROMSIZE=33554432
+DEFINES   = -DLSB_FIRST -DUSE_16BPP_RENDERING -DUSE_LIBTREMOR -DUSE_LIBCHDR -DMAXROMSIZE=33554432 -DHAVE_YM3438_CORE
 
 ifneq ($(OS),Windows_NT)
 DEFINES += -DHAVE_ALLOCA_H
@@ -69,6 +75,7 @@ OBJECTS	+=      $(OBJDIR)/input.o	  \
 OBJECTS	+=      $(OBJDIR)/sound.o	\
 		$(OBJDIR)/psg.o         \
 		$(OBJDIR)/ym2413.o      \
+		$(OBJDIR)/ym3438.o      \
 		$(OBJDIR)/ym2612.o    
 
 OBJECTS	+=	$(OBJDIR)/blip_buf.o 
