@@ -3,7 +3,7 @@
  *  Sound Hardware
  *
  *  Copyright (C) 1998-2003  Charles Mac Donald (original code)
- *  Copyright (C) 2007-2017  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2007-2018  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -40,6 +40,9 @@
 #include "shared.h"
 #include "blip_buf.h"
 
+/* YM2612 internal clock = input clock / 6 = (master clock / 7) / 6 */
+#define YM2612_CLOCK_RATIO (7*6)
+
 /* FM output buffer (large enough to hold a whole frame at original chips rate) */
 #ifdef HAVE_YM3438_CORE
 static int fm_buffer[1080 * 2 * 24];
@@ -51,28 +54,121 @@ static int fm_last[2];
 static int *fm_ptr;
 
 /* Cycle-accurate FM samples */
-static uint32 fm_cycles_ratio;
-static uint32 fm_cycles_start;
-static uint32 fm_cycles_count;
+static int fm_cycles_ratio;
+static int fm_cycles_start;
+static int fm_cycles_count;
+static int fm_cycles_busy;
 
 /* YM chip function pointers */
-static void (*YM_Reset)(void);
 static void (*YM_Update)(int *buffer, int length);
-static void (*YM_Write)(unsigned int a, unsigned int v);
-static unsigned int (*YM_Read)(unsigned int a);
+void (*fm_reset)(unsigned int cycles);
+void (*fm_write)(unsigned int cycles, unsigned int address, unsigned int data);
+unsigned int (*fm_read)(unsigned int cycles, unsigned int address);
 
 #ifdef HAVE_YM3438_CORE
 static ym3438_t ym3438;
 static short ym3438_accm[24][2];
 static int ym3438_sample[2];
-static unsigned int ym3438_cycles;
+static int ym3438_cycles;
+#endif
 
-void YM3438_Reset(void)
+/* Run FM chip until required M-cycles */
+INLINE void fm_update(int cycles)
 {
-  OPN2_Reset(&ym3438);
+  if (cycles > fm_cycles_count)
+  {
+    /* number of samples to run */
+    int samples = (cycles - fm_cycles_count + fm_cycles_ratio - 1) / fm_cycles_ratio;
+
+    /* run FM chip to sample buffer */
+    YM_Update(fm_ptr, samples);
+
+    /* update FM buffer pointer */
+    fm_ptr += (samples * 2);
+
+    /* update FM cycle counter */
+    fm_cycles_count += (samples * fm_cycles_ratio);
+  }
 }
 
-void YM3438_Update(int *buffer, int length)
+static void YM2612_Reset(unsigned int cycles)
+{
+  /* synchronize FM chip with CPU */
+  fm_update(cycles);
+
+  /* reset FM chip */
+  YM2612ResetChip();
+  fm_cycles_busy = 0;
+}
+
+static void YM2612_Write(unsigned int cycles, unsigned int a, unsigned int v)
+{
+  /* detect DATA port write */
+  if (a & 1)
+  {
+    /* synchronize FM chip with CPU */
+    fm_update(cycles);
+
+    /* set FM BUSY end cycle (discrete or ASIC-integrated YM2612 chip only) */
+    if (config.ym2612 < YM2612_ENHANCED)
+    {
+      fm_cycles_busy = (((cycles + YM2612_CLOCK_RATIO - 1) / YM2612_CLOCK_RATIO) + 32) * YM2612_CLOCK_RATIO;
+    }
+  }
+
+  /* write FM register */
+  YM2612Write(a, v);
+}
+
+static unsigned int YM2612_Read(unsigned int cycles, unsigned int a)
+{
+  /* FM status can only be read from (A0,A1)=(0,0) on discrete YM2612 */
+  if ((a == 0) || (config.ym2612 > YM2612_DISCRETE))
+  {
+    /* synchronize FM chip with CPU */
+    fm_update(cycles - fm_cycles_ratio + 1);
+
+    /* read FM status */
+    if (cycles >= fm_cycles_busy)
+    {
+      /* BUSY flag cleared */
+      return YM2612Read();
+    }
+    else
+    {
+      /* BUSY flag set */
+      return YM2612Read() | 0x80;
+    }
+  }
+
+  /* invalid FM status address */
+  return 0x00;
+}
+
+static void YM2413_Reset(unsigned int cycles)
+{
+  /* synchronize FM chip with CPU */
+  fm_update(cycles);
+
+  /* reset FM chip */
+  YM2413ResetChip();
+}
+
+static void YM2413_Write(unsigned int cycles, unsigned int a, unsigned int v)
+{
+  /* detect DATA port write */
+  if (a & 1)
+  {
+    /* synchronize FM chip with CPU */
+    fm_update(cycles);
+  }
+
+  /* write FM register */
+  YM2413Write(a, v);
+}
+
+#ifdef HAVE_YM3438_CORE
+static void YM3438_Update(int *buffer, int length)
 {
   int i, j;
   for (i = 0; i < length; i++)
@@ -94,35 +190,33 @@ void YM3438_Update(int *buffer, int length)
   }
 }
 
-void YM3438_Write(unsigned int a, unsigned int v)
+static void YM3438_Reset(unsigned int cycles)
 {
+  /* synchronize FM chip with CPU */
+  fm_update(cycles);
+
+  /* reset FM chip */
+  OPN2_Reset(&ym3438);
+}
+
+static void YM3438_Write(unsigned int cycles, unsigned int a, unsigned int v)
+{
+  /* synchronize FM chip with CPU */
+  fm_update(cycles);
+
+  /* write FM register */
   OPN2_Write(&ym3438, a, v);
 }
 
-unsigned int YM3438_Read(unsigned int a)
+static unsigned int YM3438_Read(unsigned int cycles, unsigned int a)
 {
+  /* synchronize FM chip with CPU */
+  fm_update(cycles - fm_cycles_ratio + 1);
+
+  /* read FM status */
   return OPN2_Read(&ym3438, a);
 }
 #endif
-
-/* Run FM chip until required M-cycles */
-INLINE void fm_update(unsigned int cycles)
-{
-  if (cycles > fm_cycles_count)
-  {
-    /* number of samples to run */
-    unsigned int samples = (cycles - fm_cycles_count + fm_cycles_ratio - 1) / fm_cycles_ratio;
-
-    /* run FM chip to sample buffer */
-    YM_Update(fm_ptr, samples);
-
-    /* update FM buffer pointer */
-    fm_ptr += (samples << 1);
-
-    /* update FM cycle counter */
-    fm_cycles_count += samples * fm_cycles_ratio;
-  }
-}
 
 void sound_init( void )
 {
@@ -137,37 +231,37 @@ void sound_init( void )
       memset(&ym3438, 0, sizeof(ym3438));
       memset(&ym3438_sample, 0, sizeof(ym3438_sample));
       memset(&ym3438_accm, 0, sizeof(ym3438_accm));
-      YM_Reset = YM3438_Reset;
       YM_Update = YM3438_Update;
-      YM_Write = YM3438_Write;
-      YM_Read = YM3438_Read;
+      fm_reset = YM3438_Reset;
+      fm_write = YM3438_Write;
+      fm_read = YM3438_Read;
 
-      /* chip is running at VCLK / 6 = MCLK / 7 / 6 */
-      fm_cycles_ratio = 6 * 7;
+      /* chip is running at internal clock */
+      fm_cycles_ratio = YM2612_CLOCK_RATIO;
     }
     else
 #endif
     {
-      /* MAME */
+      /* MAME OPN2*/
       YM2612Init();
       YM2612Config(config.ym2612);
-      YM_Reset = YM2612ResetChip;
       YM_Update = YM2612Update;
-      YM_Write = YM2612Write;
-      YM_Read = YM2612Read;
+      fm_reset = YM2612_Reset;
+      fm_write = YM2612_Write;
+      fm_read = YM2612_Read;
 
-      /* chip is running at VCLK / 144 = MCLK / 7 / 144 */
-      fm_cycles_ratio = 144 * 7;
+      /* chip is running at sample clock */
+      fm_cycles_ratio = YM2612_CLOCK_RATIO * 24;
     }
   }
   else
   {
     /* YM2413 */
     YM2413Init();
-    YM_Reset = YM2413ResetChip;
-    YM_Update = YM2413Update;
-    YM_Write = YM2413Write;
-    YM_Read = NULL;
+    YM_Update = (config.ym2413 & 1) ? YM2413Update : NULL;
+    fm_reset = YM2413_Reset;
+    fm_write = YM2413_Write;
+    fm_read = NULL;
 
     /* chip is running at ZCLK / 72 = MCLK / 15 / 72 */
     fm_cycles_ratio = 72 * 15;
@@ -180,7 +274,7 @@ void sound_init( void )
 void sound_reset(void)
 {
   /* reset sound chips */
-  YM_Reset();
+  fm_reset(0);
   psg_reset();
   psg_config(0, config.psg_preamp, 0xff);
 
@@ -196,72 +290,84 @@ void sound_reset(void)
 
 int sound_update(unsigned int cycles)
 {
-  int prev_l, prev_r, preamp, time, l, r, *ptr;
-
   /* Run PSG chip until end of frame */
   psg_end_frame(cycles);
 
-  /* Run FM chip until end of frame */
-  fm_update(cycles);
-
-  /* FM output pre-amplification */
-  preamp = config.fm_preamp;
-
-  /* FM frame initial timestamp */
-  time = fm_cycles_start;
-
-  /* Restore last FM outputs from previous frame */
-  prev_l = fm_last[0];
-  prev_r = fm_last[1];
-
-  /* FM buffer start pointer */
-  ptr = fm_buffer;
-
-  /* flush FM samples */
-  if (config.hq_fm)
+  /* FM chip is enabled ? */
+  if (YM_Update)
   {
-    /* high-quality Band-Limited synthesis */
-    do
+    int prev_l, prev_r, preamp, time, l, r, *ptr;
+
+    /* Run FM chip until end of frame */
+    fm_update(cycles);
+
+    /* FM output pre-amplification */
+    preamp = config.fm_preamp;
+
+    /* FM frame initial timestamp */
+    time = fm_cycles_start;
+
+    /* Restore last FM outputs from previous frame */
+    prev_l = fm_last[0];
+    prev_r = fm_last[1];
+
+    /* FM buffer start pointer */
+    ptr = fm_buffer;
+
+    /* flush FM samples */
+    if (config.hq_fm)
     {
-      /* left & right channels */
-      l = ((*ptr++ * preamp) / 100);
-      r = ((*ptr++ * preamp) / 100);
-      blip_add_delta(snd.blips[0], time, l-prev_l, r-prev_r);
-      prev_l = l;
-      prev_r = r;
+      /* high-quality Band-Limited synthesis */
+      do
+      {
+        /* left & right channels */
+        l = ((*ptr++ * preamp) / 100);
+        r = ((*ptr++ * preamp) / 100);
+        blip_add_delta(snd.blips[0], time, l-prev_l, r-prev_r);
+        prev_l = l;
+        prev_r = r;
 
-      /* increment time counter */
-      time += fm_cycles_ratio;
+        /* increment time counter */
+        time += fm_cycles_ratio;
+      }
+      while (time < cycles);
     }
-    while (time < cycles);
-  }
-  else
-  {
-    /* faster Linear Interpolation */
-    do
+    else
     {
-      /* left & right channels */
-      l = ((*ptr++ * preamp) / 100);
-      r = ((*ptr++ * preamp) / 100);
-      blip_add_delta_fast(snd.blips[0], time, l-prev_l, r-prev_r);
-      prev_l = l;
-      prev_r = r;
+      /* faster Linear Interpolation */
+      do
+      {
+        /* left & right channels */
+        l = ((*ptr++ * preamp) / 100);
+        r = ((*ptr++ * preamp) / 100);
+        blip_add_delta_fast(snd.blips[0], time, l-prev_l, r-prev_r);
+        prev_l = l;
+        prev_r = r;
 
-      /* increment time counter */
-      time += fm_cycles_ratio;
+        /* increment time counter */
+        time += fm_cycles_ratio;
+      }
+      while (time < cycles);
     }
-    while (time < cycles);
+
+    /* reset FM buffer pointer */
+    fm_ptr = fm_buffer;
+
+    /* save last FM output for next frame */
+    fm_last[0] = prev_l;
+    fm_last[1] = prev_r;
+
+    /* adjust FM cycle counters for next frame */
+    fm_cycles_count = fm_cycles_start = time - cycles;
+    if (fm_cycles_busy > cycles)
+    {
+      fm_cycles_busy -= cycles;
+    }
+    else
+    {
+      fm_cycles_busy = 0;
+    }
   }
-
-  /* reset FM buffer pointer */
-  fm_ptr = fm_buffer;
-
-  /* save last FM output for next frame */
-  fm_last[0] = prev_l;
-  fm_last[1] = prev_r;
-
-  /* adjust FM cycle counters for next frame */
-  fm_cycles_count = fm_cycles_start = time - cycles;
 
   /* end of blip buffer time frame */
   blip_end_frame(snd.blips[0], cycles);
@@ -340,31 +446,4 @@ int sound_context_load(uint8 *state)
   fm_cycles_count = fm_cycles_start;
 
   return bufferptr;
-}
-
-void fm_reset(unsigned int cycles)
-{
-  /* synchronize FM chip with CPU */
-  fm_update(cycles);
-
-  /* reset FM chip */
-  YM_Reset();
-}
-
-void fm_write(unsigned int cycles, unsigned int address, unsigned int data)
-{
-  /* synchronize FM chip with CPU */
-  fm_update(cycles);
-  
-  /* write FM register */
-  YM_Write(address, data);
-}
-
-unsigned int fm_read(unsigned int cycles, unsigned int address)
-{
-  /* synchronize FM chip with CPU */
-  fm_update(cycles);
-
-  /* read FM status (YM2612 only) */
-  return YM_Read(address);
 }

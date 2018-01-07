@@ -15,9 +15,6 @@
 ** Additional info from YM2612 die shot analysis by Sauraen
 ** See http://gendev.spritesmind.net/forum/viewtopic.php?t=386
 **
-**  TODO:
-**  - better documentation
-**  - BUSY flag emulation
 */
 
 /*
@@ -1997,9 +1994,9 @@ void YM2612Write(unsigned int a, unsigned int v)
   }
 }
 
-unsigned int YM2612Read(unsigned int a)
+unsigned int YM2612Read(void)
 {
-  return ym2612.OPN.ST.status & 0xff;
+  return ym2612.OPN.ST.status;
 }
 
 /* Generate samples for ym2612 */
