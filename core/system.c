@@ -5,7 +5,7 @@
  *  Support for 16-bit & 8-bit hardware modes
  *
  *  Copyright (C) 1998-2003  Charles Mac Donald (original code)
- *  Copyright (C) 2007-2017  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2007-2018  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -467,10 +467,6 @@ void system_frame_gen(int do_skip)
     {
       z80_run(788);
     }
-    else
-    {
-      Z80.cycles = 788;
-    }
 
     /* set VINT flag */
     status |= 0x80;    
@@ -492,10 +488,6 @@ void system_frame_gen(int do_skip)
   if (zstate == 1)
   {
     z80_run(MCYCLES_PER_LINE);
-  }
-  else
-  {
-    Z80.cycles = MCYCLES_PER_LINE;
   }
 
   /* Z80 interrupt is cleared at the end of the line */
@@ -537,10 +529,6 @@ void system_frame_gen(int do_skip)
     if (zstate == 1)
     {
       z80_run(mcycles_vdp + MCYCLES_PER_LINE);
-    }
-    else
-    {
-      Z80.cycles = mcycles_vdp + MCYCLES_PER_LINE;
     }
 
     /* run SVP chip */
@@ -589,10 +577,6 @@ void system_frame_gen(int do_skip)
   if (zstate == 1)
   {
     z80_run(mcycles_vdp + MCYCLES_PER_LINE);
-  }
-  else
-  {
-    Z80.cycles = mcycles_vdp + MCYCLES_PER_LINE;
   }
 
   /* run SVP chip */
@@ -653,10 +637,6 @@ void system_frame_gen(int do_skip)
     if (zstate == 1)
     {
       z80_run(mcycles_vdp + MCYCLES_PER_LINE);
-    }
-    else
-    {
-      Z80.cycles = mcycles_vdp + MCYCLES_PER_LINE;
     }
 
     /* run SVP chip */
@@ -826,10 +806,6 @@ void system_frame_scd(int do_skip)
     {
       z80_run(788);
     }
-    else
-    {
-      Z80.cycles = 788;
-    }
 
     /* set VINT flag */
     status |= 0x80;    
@@ -853,10 +829,6 @@ void system_frame_scd(int do_skip)
   if (zstate == 1)
   {
     z80_run(MCYCLES_PER_LINE);
-  }
-  else
-  {
-    Z80.cycles = MCYCLES_PER_LINE;
   }
 
   /* Z80 interrupt is cleared at the end of the line */
@@ -894,10 +866,6 @@ void system_frame_scd(int do_skip)
     if (zstate == 1)
     {
       z80_run(mcycles_vdp + MCYCLES_PER_LINE);
-    }
-    else
-    {
-      Z80.cycles = mcycles_vdp + MCYCLES_PER_LINE;
     }
 
     /* update VDP cycle count */
@@ -942,10 +910,6 @@ void system_frame_scd(int do_skip)
   if (zstate == 1)
   {
     z80_run(mcycles_vdp + MCYCLES_PER_LINE);
-  }
-  else
-  {
-    Z80.cycles = mcycles_vdp + MCYCLES_PER_LINE;
   }
 
   /* update VDP cycle count */
@@ -1002,10 +966,6 @@ void system_frame_scd(int do_skip)
     if (zstate == 1)
     {
       z80_run(mcycles_vdp + MCYCLES_PER_LINE);
-    }
-    else
-    {
-      Z80.cycles = mcycles_vdp + MCYCLES_PER_LINE;
     }
 
     /* update VDP cycle count */

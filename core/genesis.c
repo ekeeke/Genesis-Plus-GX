@@ -5,7 +5,7 @@
  *  Support for SG-1000, Mark-III, Master System, Game Gear, Mega Drive & Mega CD hardware
  *
  *  Copyright (C) 1998-2003  Charles Mac Donald (original code)
- *  Copyright (C) 2007-2016  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2007-2018  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -474,8 +474,8 @@ void gen_zbusreq_w(unsigned int data, unsigned int cycles)
     /* check if Z80 is going to be restarted */
     if (zstate == 3)
     {
-      /* resynchronize with 68k */
-      Z80.cycles = cycles;
+      /* resynchronize with 68k (Z80 cycles should remain a multiple of 15 MClocks) */
+      Z80.cycles = ((cycles + 14) / 15) * 15;
 
       /* disable 68k access to Z80 bus */
       m68k.memory_map[0xa0].read8   = m68k_read_bus_8;
@@ -496,8 +496,8 @@ void gen_zreset_w(unsigned int data, unsigned int cycles)
     /* check if Z80 is going to be restarted */
     if (zstate == 0)
     {
-      /* resynchronize with 68k */
-      Z80.cycles = cycles;
+      /* resynchronize with 68k (Z80 cycles should remain a multiple of 15 MClocks) */
+      Z80.cycles = ((cycles + 14) / 15) * 15;
 
       /* reset Z80 & YM2612 */
       z80_reset();
