@@ -2396,7 +2396,10 @@ size_t retro_get_memory_size(unsigned id)
         }
       }
       case RETRO_MEMORY_SYSTEM_RAM:
-         return 0x10000;
+         if (system_hw == SYSTEM_SMS || system_hw == SYSTEM_SMS2)
+            return 0x02000;
+         else
+            return 0x10000;
       default:
          return 0;
    }
