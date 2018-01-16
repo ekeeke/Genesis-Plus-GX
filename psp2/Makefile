@@ -34,7 +34,7 @@ DEFINES   = -DPSP_APP_NAME=\"$(PSP_APP_NAME)\" -DPSP_APP_VER=\"$(PSP_APP_VER)\" 
 						-DLSB_FIRST -DUSE_15BPP_RENDERING -DUSE_LIBTREMOR -DALT_RENDERER -DALIGN_LONG -DHAVE_ALLOCA_H -DUSE_ABGR
 SRCDIR    = ../core
 INCLUDES  = -I$(SRCDIR) -I$(SRCDIR)/z80 -I$(SRCDIR)/m68k -I$(SRCDIR)/sound -I$(SRCDIR)/input_hw -I$(SRCDIR)/cart_hw -I$(SRCDIR)/cart_hw/svp -I$(SRCDIR)/cd_hw -I$(SRCDIR)/ntsc -I$(SRCDIR)/tremor -I$(SRCDIR)/../psp2
-LIBS	  = -lpsplib -lvita2d  -lfreetype -lpng -lz -lm -lSceDisplay_stub -lSceGxm_stub 	\
+LIBS	  = -lpsplib -lvita2d  -lfreetype -lpng -lz -lm -lSceDisplay_stub -lSceGxm_stub -lSceSysmodule_stub -lSceCommonDialog_stub 	\
 	-lSceCtrl_stub -lSceAudio_stub -lSceRtc_stub -lScePower_stub -lSceAppUtil_stub
 #-ldebugnet -lSceNet_stub -lSceNetCtl_stub
 
@@ -123,13 +123,16 @@ OBJECTS	+=	$(OBJDIR)/bitwise.o	 \
 		$(OBJDIR)/window.o
 
 
-all: $(NAME).velf
+all: eboot.bin
 
+eboot.bin: $(NAME).velf
+	vita-make-fself $(NAME).velf $@
+	vita-mksfoex -s TITLE_ID=FRAN00003 "GenesisPlusGXVITA" param.sfo
 $(NAME).velf: $(NAME).elf
 	#advice from xyzz strip before create elf
 		arm-vita-eabi-strip -g $<
 	#i put db.json there use your location
-		vita-elf-create  $< $@ db.json
+		vita-elf-create  $< $@ 
 
 $(NAME).elf: $(OBJDIR) $(OBJECTS)
 		$(CC) $(LDFLAGS) $(OBJECTS) $(LIBS) -o $@
@@ -177,4 +180,7 @@ $(OBJDIR)/%.o :	$(SRCDIR)/../psp2/%.c $(SRCDIR)/../psp2/%.h
 		$(CC) -c $(CFLAGS) $(INCLUDES) $(DEFINES) $< -o $@
 
 clean:
-	rm -f $(OBJECTS) $(NAME).velf $(NAME).elf
+	rm -f $(OBJECTS) $(NAME).velf $(NAME).elf eboot.bin
+
+copy:	eboot.bin
+	@cp eboot.bin param.sfo /mnt/shared/GenesisPlusGXVITA

@@ -412,8 +412,8 @@ void InitMenu()
 
   /* Load the background image */
   pl_file_path background;
-  snprintf(background, sizeof(background) - 1, "%sbackground.png",
-           pl_psp_get_app_directory());
+  snprintf(background, sizeof(background) - 1, "%sbackground.png", "app0:/"
+           /*pl_psp_get_app_directory()*/);
   Background = pspImageLoadPng(background);
   //Background = pspImageLoadPng("background.png");
 
