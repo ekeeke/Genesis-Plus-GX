@@ -1,5 +1,5 @@
 
-#include "osd.h"
+#include "shared.h"
 
 t_config config;
 
