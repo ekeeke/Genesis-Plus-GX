@@ -10,7 +10,6 @@
 #include <SDL.h>
 #include <stdlib.h>
 
-#include "shared.h"
 #include "main.h"
 #include "config.h"
 #include "error.h"
