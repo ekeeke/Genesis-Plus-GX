@@ -509,9 +509,28 @@ void osd_input_update(void)
 
 static void draw_cursor(int16_t x, int16_t y, uint16_t color)
 {
-  uint16_t *ptr = (uint16_t *)bitmap.data + ((bitmap.viewport.y + y) * bitmap.width) + x + bitmap.viewport.x;
-  ptr[-3*bitmap.width] = ptr[-bitmap.width] = ptr[bitmap.width] = ptr[3*bitmap.width] = ptr[-3] = ptr[-1] = ptr[1] = ptr[3] = color;
-  ptr[-2*bitmap.width] = ptr[2*bitmap.width] = ptr[-2] = ptr[2] = ptr[0] = 0xffff;
+   int i;
+
+   /* crosshair center position */   
+   uint16_t *ptr = (uint16_t *)bitmap.data + ((bitmap.viewport.y + y) * bitmap.width) + x + bitmap.viewport.x;
+
+   /* default crosshair dimension */
+   int x_start = x - 3;
+   int x_end  = x + 3;
+   int y_start = y - 3;
+   int y_end = y + 3;
+
+   /* framebuffer limits */
+   if (x_start < -bitmap.viewport.x) x_start = -bitmap.viewport.x;
+   if (x_end >= (bitmap.viewport.w + bitmap.viewport.x)) x_end = bitmap.viewport.w + bitmap.viewport.x - 1;
+   if (y_start < -bitmap.viewport.y) y_start = -bitmap.viewport.y;
+   if (y_end >= (bitmap.viewport.h + bitmap.viewport.y)) y_end = bitmap.viewport.h + bitmap.viewport.y - 1;
+
+   /* draw crosshair */
+   for (i = (x_start - x); i <= (x_end - x); i++)
+      ptr[i] = (i & 1) ? color : 0xffff;
+   for (i = (y_start - y); i <= (y_end - y); i++)
+      ptr[i * bitmap.width] = (i & 1) ? color : 0xffff;
 }
 
 static void init_bitmap(void)
