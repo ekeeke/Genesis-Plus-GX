@@ -1355,6 +1355,9 @@ void OPN2_Clock(ym3438_t *chip, Bit16s *buffer)
 
     buffer[0] = chip->mol;
     buffer[1] = chip->mor;
+
+    if (chip->status_time)
+        chip->status_time--;
 }
 
 void OPN2_Write(ym3438_t *chip, Bit32u port, Bit8u data)
@@ -1411,18 +1414,30 @@ Bit8u OPN2_Read(ym3438_t *chip, Bit32u port)
             }
             if (chip->mode_test_21[7])
             {
-                return testdata & 0xff;
+                chip->status = testdata & 0xff;
             }
             else
             {
-                return testdata >> 8;
+                chip->status = testdata >> 8;
             }
         }
         else
         {
-            return (chip->busy << 7) | (chip->timer_b_overflow_flag << 1)
+            chip->status = (chip->busy << 7) | (chip->timer_b_overflow_flag << 1)
                  | chip->timer_a_overflow_flag;
         }
+        if (chip_type == ym3438_type_ym2612)
+        {
+            chip->status_time = 300000;
+        }
+        else
+        {
+            chip->status_time = 40000000;
+        }
+    }
+    if (chip->status_time)
+    {
+        return chip->status;
     }
     return 0;
 }
