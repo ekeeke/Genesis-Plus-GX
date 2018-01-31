@@ -205,6 +205,8 @@ typedef struct
     Bit8u pan_l[6], pan_r[6];
     Bit8u ams[6];
     Bit8u pms[6];
+    Bit8u status;
+    Bit32u status_time;
 } ym3438_t;
 
 void OPN2_Reset(ym3438_t *chip);
