@@ -1156,18 +1156,13 @@ static void check_variables(void)
     orig_value = config.ym3438;
     if (!strcmp(var.value, "nuked (ym2612)"))
     {
-      OPN2_SetChipType(ym3438_type_ym2612);
+      OPN2_SetChipType(ym3438_mode_ym2612);
       config.ym3438 = 1;
     }
-    else if (!strcmp(var.value, "nuked (asic ym3438)"))
+    else if (!strcmp(var.value, "nuked (ym3438)"))
     {
-      OPN2_SetChipType(ym3438_type_asic);
+      OPN2_SetChipType(ym3438_mode_readmode);
       config.ym3438 = 2;
-    }
-    else if (!strcmp(var.value, "nuked (discrete ym3438)"))
-    {
-      OPN2_SetChipType(ym3438_type_discrete);
-      config.ym3438 = 3;
     }
     else
     {
@@ -1766,7 +1761,7 @@ void retro_set_environment(retro_environment_t cb)
       { "genesis_plus_gx_lock_on", "Cartridge lock-on; disabled|game genie|action replay (pro)|sonic & knuckles" },
       { "genesis_plus_gx_ym2413", "Master System FM (YM2413); auto|disabled|enabled" },
 #ifdef HAVE_YM3438_CORE
-      { "genesis_plus_gx_ym2612", "Mega Drive / Genesis FM; mame (ym2612)|mame (asic ym3438)|mame (enhanced ym3438)|nuked (ym2612)|nuked (asic ym3438)|nuked (discrete ym3438)" },
+      { "genesis_plus_gx_ym2612", "Mega Drive / Genesis FM; mame (ym2612)|mame (asic ym3438)|mame (enhanced ym3438)|nuked (ym2612)|nuked (ym3438)" },
 #else
       { "genesis_plus_gx_ym2612", "Mega Drive / Genesis FM; mame (ym2612)|mame (asic ym3438)|mame (enhanced ym3438)" },
 #endif

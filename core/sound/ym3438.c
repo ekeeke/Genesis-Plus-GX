@@ -40,7 +40,7 @@
  *      OPLx decapsulated(Matthew Gambrell, Olli Niemitalo):
  *          OPL2 ROMs.
  *
- * version: 1.0.7
+ * version: 1.0.8
  */
 
 #include <string.h>
@@ -233,7 +233,7 @@ static const Bit32u fm_algorithm[4][6][8] = {
     }
 };
 
-static Bit32u chip_type = ym3438_type_discrete;
+static Bit32u chip_type = ym3438_mode_readmode;
 
 void OPN2_DoIO(ym3438_t *chip)
 {
@@ -995,7 +995,7 @@ void OPN2_ChOutput(ym3438_t *chip)
     chip->mol = 0;
     chip->mor = 0;
 
-    if (chip_type == ym3438_type_ym2612)
+    if (chip_type & ym3438_mode_ym2612)
     {
         out_en = ((cycles & 3) == 3) || test_dac;
         /* YM2612 DAC emulation(not verified) */
@@ -1028,11 +1028,6 @@ void OPN2_ChOutput(ym3438_t *chip)
     else
     {
         out_en = ((cycles & 3) != 0) || test_dac;
-        /* Discrete YM3438 seems has the ladder effect too */
-        if (out >= 0 && chip_type == ym3438_type_discrete)
-        {
-            out++;
-        }
         if (chip->ch_lock_l && out_en)
         {
             chip->mol = out;
@@ -1397,7 +1392,7 @@ Bit32u OPN2_ReadIRQPin(ym3438_t *chip)
 
 Bit8u OPN2_Read(ym3438_t *chip, Bit32u port)
 {
-    if ((port & 3) == 0 || chip_type == ym3438_type_asic)
+    if ((port & 3) == 0 || (chip_type & ym3438_mode_readmode))
     {
         if (chip->mode_test_21[6])
         {
@@ -1426,7 +1421,7 @@ Bit8u OPN2_Read(ym3438_t *chip, Bit32u port)
             chip->status = (chip->busy << 7) | (chip->timer_b_overflow_flag << 1)
                  | chip->timer_a_overflow_flag;
         }
-        if (chip_type == ym3438_type_ym2612)
+        if (chip_type & ym3438_mode_ym2612)
         {
             chip->status_time = 300000;
         }
