@@ -2004,9 +2004,9 @@ unsigned int YM2612Read(void)
 /* Generate samples for ym2612 */
 void YM2612Update(int *buffer, int length)
 {
-  if (audio_hard_disable) return;
   int i;
   int lt,rt;
+  if (audio_hard_disable) return;
 
   /* refresh PG increments and EG rates if required */
   refresh_fc_eg_chan(&ym2612.CH[0]);
