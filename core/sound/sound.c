@@ -40,6 +40,8 @@
 #include "shared.h"
 #include "blip_buf.h"
 
+int8 audio_hard_disable = 0;
+
 /* YM2612 internal clock = input clock / 6 = (master clock / 7) / 6 */
 #define YM2612_CLOCK_RATIO (7*6)
 

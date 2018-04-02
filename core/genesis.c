@@ -55,6 +55,8 @@ uint8 pico_current;       /* PICO current page */
 
 static uint8 tmss[4];     /* TMSS security register */
 
+extern uint8 reset_do_not_clear_buffers;
+
 /*--------------------------------------------------------------------------*/
 /* Init, reset, shutdown functions                                          */
 /*--------------------------------------------------------------------------*/
@@ -250,8 +252,11 @@ void gen_reset(int hard_reset)
     m68k.cycles = ((lines_per_frame - 192 + 159 - (27 * vdp_pal)) * MCYCLES_PER_LINE) + 1004;
 
     /* clear RAM (on real hardware, RAM values are random / undetermined on Power ON) */
-    memset(work_ram, 0x00, sizeof (work_ram));
-    memset(zram, 0x00, sizeof (zram));
+    if (!reset_do_not_clear_buffers)
+    {
+      memset(work_ram, 0x00, sizeof(work_ram));
+      memset(zram, 0x00, sizeof(zram));
+    }
   }
   else
   {
@@ -333,7 +338,10 @@ void gen_reset(int hard_reset)
     if ((system_hw == SYSTEM_MARKIII) || ((system_hw & SYSTEM_SMS) && (region_code == REGION_JAPAN_NTSC)))
     {
       /* some korean games rely on RAM to be initialized with values different from $00 or $ff */
-      memset(work_ram, 0xf0, sizeof(work_ram));
+      if (!reset_do_not_clear_buffers)
+      {
+        memset(work_ram, 0xf0, sizeof(work_ram));
+      }
     }
 
     /* reset cartridge hardware */
