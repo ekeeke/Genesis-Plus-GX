@@ -316,40 +316,41 @@ int sound_update(unsigned int cycles)
     /* FM buffer start pointer */
     ptr = fm_buffer;
 
-    /* flush FM samples */
-    if (config.hq_fm)
+    if (!audio_hard_disable)
     {
-      /* high-quality Band-Limited synthesis */
-      do
+      /* flush FM samples */
+      if (config.hq_fm)
       {
-        /* left & right channels */
-        l = ((*ptr++ * preamp) / 100);
-        r = ((*ptr++ * preamp) / 100);
-        blip_add_delta(snd.blips[0], time, l-prev_l, r-prev_r);
-        prev_l = l;
-        prev_r = r;
+        /* high-quality Band-Limited synthesis */
+        do
+        {
+          /* left & right channels */
+          l = ((*ptr++ * preamp) / 100);
+          r = ((*ptr++ * preamp) / 100);
+          blip_add_delta(snd.blips[0], time, l - prev_l, r - prev_r);
+          prev_l = l;
+          prev_r = r;
 
-        /* increment time counter */
-        time += fm_cycles_ratio;
+          /* increment time counter */
+          time += fm_cycles_ratio;
+        } while (time < cycles);
       }
-      while (time < cycles);
-    }
-    else
-    {
-      /* faster Linear Interpolation */
-      do
+      else
       {
-        /* left & right channels */
-        l = ((*ptr++ * preamp) / 100);
-        r = ((*ptr++ * preamp) / 100);
-        blip_add_delta_fast(snd.blips[0], time, l-prev_l, r-prev_r);
-        prev_l = l;
-        prev_r = r;
+        /* faster Linear Interpolation */
+        do
+        {
+          /* left & right channels */
+          l = ((*ptr++ * preamp) / 100);
+          r = ((*ptr++ * preamp) / 100);
+          blip_add_delta_fast(snd.blips[0], time, l - prev_l, r - prev_r);
+          prev_l = l;
+          prev_r = r;
 
-        /* increment time counter */
-        time += fm_cycles_ratio;
+          /* increment time counter */
+          time += fm_cycles_ratio;
+        } while (time < cycles);
       }
-      while (time < cycles);
     }
 
     /* reset FM buffer pointer */
@@ -370,6 +371,8 @@ int sound_update(unsigned int cycles)
       fm_cycles_busy = 0;
     }
   }
+
+  if (audio_hard_disable) return 0;
 
   /* end of blip buffer time frame */
   blip_end_frame(snd.blips[0], cycles);
