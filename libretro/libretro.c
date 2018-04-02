@@ -2144,8 +2144,26 @@ void retro_set_controller_port_device(unsigned port, unsigned device)
 
 size_t retro_serialize_size(void) { return STATE_SIZE; }
 
+extern int8 fast_savestates;
+
+bool get_fast_savestates(void)
+{
+   int result = -1;
+   bool okay = false;
+   okay = environ_cb(RETRO_ENVIRONMENT_GET_AUDIO_VIDEO_ENABLE, &result);
+   if (okay)
+   {
+      return 0 != (result & 4);
+   }
+   else
+   {
+      return 0;
+   }
+}
+
 bool retro_serialize(void *data, size_t size)
 { 
+   fast_savestates = get_fast_savestates();
    if (size != STATE_SIZE)
       return FALSE;
 
@@ -2156,6 +2174,7 @@ bool retro_serialize(void *data, size_t size)
 
 bool retro_unserialize(const void *data, size_t size)
 {
+   fast_savestates = get_fast_savestates();
    if (size != STATE_SIZE)
       return FALSE;
 
@@ -2461,8 +2480,13 @@ void retro_reset(void)
    gen_reset(0);
 }
 
+extern int8 audio_hard_disable;
+
 void retro_run(void) 
 {
+   bool okay = false;
+   int result = -1;
+   int do_skip = 0;
    bool updated = false;
    is_running = true;
 
@@ -2472,17 +2496,32 @@ void retro_run(void)
       update_overclock();
 #endif
 
-   if (system_hw == SYSTEM_MCD)
+   okay = environ_cb(RETRO_ENVIRONMENT_GET_AUDIO_VIDEO_ENABLE, &result);
+   if (okay)
    {
-      system_frame_scd(0);
-   }
-   else if ((system_hw & SYSTEM_PBC) == SYSTEM_MD)
-   {
-      system_frame_gen(0);
+      bool audioEnabled = 0 != (result & 2);
+      bool videoEnabled = 0 != (result & 1);
+      bool hardDisableAudio = 0 != (result & 8);
+      do_skip = !videoEnabled;
+      audio_hard_disable = hardDisableAudio;
    }
    else
    {
-      system_frame_sms(0);
+      do_skip = false;
+      audio_hard_disable = false;
+   }
+
+   if (system_hw == SYSTEM_MCD)
+   {
+      system_frame_scd(do_skip);
+   }
+   else if ((system_hw & SYSTEM_PBC) == SYSTEM_MD)
+   {
+      system_frame_gen(do_skip);
+   }
+   else
+   {
+      system_frame_sms(do_skip);
    }
 
    if (bitmap.viewport.changed & 9)

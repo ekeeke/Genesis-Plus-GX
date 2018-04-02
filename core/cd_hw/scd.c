@@ -38,6 +38,8 @@
 
 #include "shared.h"
 
+extern int8 reset_do_not_clear_buffers;
+
 /*--------------------------------------------------------------------------*/
 /* Unused area (return open bus data, i.e prefetched instruction word)      */
 /*--------------------------------------------------------------------------*/
@@ -1524,10 +1526,13 @@ void scd_init(void)
   scd.cycles_per_line = (uint32) (MCYCLES_PER_LINE * ((float)SCD_CLOCK / (float)system_clock));
 
   /* Clear RAM */
-  memset(scd.prg_ram, 0x00, sizeof(scd.prg_ram));
-  memset(scd.word_ram, 0x00, sizeof(scd.word_ram));
-  memset(scd.word_ram_2M, 0x00, sizeof(scd.word_ram_2M));
-  memset(scd.bram, 0x00, sizeof(scd.bram));
+  if (!reset_do_not_clear_buffers)
+  {
+    memset(scd.prg_ram, 0x00, sizeof(scd.prg_ram));
+    memset(scd.word_ram, 0x00, sizeof(scd.word_ram));
+    memset(scd.word_ram_2M, 0x00, sizeof(scd.word_ram_2M));
+    memset(scd.bram, 0x00, sizeof(scd.bram));
+  }
 }
 
 void scd_reset(int hard)

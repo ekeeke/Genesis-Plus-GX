@@ -146,6 +146,8 @@
 
 #include "shared.h"
 
+extern int8 audio_hard_disable;
+
 /* envelope generator */
 #define ENV_BITS    10
 #define ENV_LEN      (1<<ENV_BITS)
@@ -2002,6 +2004,7 @@ unsigned int YM2612Read(void)
 /* Generate samples for ym2612 */
 void YM2612Update(int *buffer, int length)
 {
+  if (audio_hard_disable) return;
   int i;
   int lt,rt;
 

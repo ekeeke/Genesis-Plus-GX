@@ -38,6 +38,9 @@
 
 #include "shared.h"
 
+int8 fast_savestates = false;
+int8 reset_do_not_clear_buffers = false;
+
 int state_load(unsigned char *state)
 {
   int i, bufferptr = 0;
@@ -58,7 +61,9 @@ int state_load(unsigned char *state)
   }
 
   /* reset system */
+  reset_do_not_clear_buffers = fast_savestates;
   system_reset();
+  reset_do_not_clear_buffers = false;
 
   /* enable VDP access for TMSS systems */
   for (i=0xc0; i<0xe0; i+=8)

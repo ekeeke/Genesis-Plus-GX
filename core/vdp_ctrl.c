@@ -42,6 +42,8 @@
 #include "shared.h"
 #include "hvc.h"
 
+extern int8 reset_do_not_clear_buffers;
+
 /* Mark a pattern as modified */
 #define MARK_BG_DIRTY(addr)                         \
 {                                                   \
@@ -242,12 +244,14 @@ void vdp_init(void)
 void vdp_reset(void)
 {
   int i;
-
-  memset ((char *) sat, 0, sizeof (sat));
-  memset ((char *) vram, 0, sizeof (vram));
-  memset ((char *) cram, 0, sizeof (cram));
-  memset ((char *) vsram, 0, sizeof (vsram));
-  memset ((char *) reg, 0, sizeof (reg));
+  if (!reset_do_not_clear_buffers)
+  {
+    memset((char *)sat, 0, sizeof(sat));
+    memset((char *)vram, 0, sizeof(vram));
+    memset((char *)cram, 0, sizeof(cram));
+    memset((char *)vsram, 0, sizeof(vsram));
+  }
+  memset((char *)reg, 0, sizeof(reg));
 
   addr            = 0;
   addr_latch      = 0;

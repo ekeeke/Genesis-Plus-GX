@@ -37,6 +37,9 @@
  ****************************************************************************************/
 #include "shared.h"
 
+extern int8 reset_do_not_clear_buffers;
+extern int8 audio_hard_disable;
+
 #define PCM_SCYCLES_RATIO (384 * 4)
 
 #define pcm scd.pcm_hw
@@ -51,7 +54,10 @@ void pcm_init(double clock, int samplerate)
 void pcm_reset(void)
 {
   /* reset chip & clear external RAM */
-  memset(&pcm, 0, sizeof(pcm_t));
+  if (!reset_do_not_clear_buffers)
+  {
+    memset(&pcm, 0, sizeof(pcm_t));
+  }
 
   /* reset default bank */
   pcm.bank = pcm.ram;
@@ -119,6 +125,8 @@ void pcm_run(unsigned int length)
   /* previous audio outputs */
   int prev_l = pcm.out[0];
   int prev_r = pcm.out[1];
+
+  if (audio_hard_disable) return;
 
   /* check if PCM chip is running */
   if (pcm.enabled)

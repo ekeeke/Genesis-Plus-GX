@@ -42,6 +42,8 @@
 #include "shared.h"
 #include "eq.h"
 
+extern int8 audio_hard_disable;
+
 /* Global variables */
 t_bitmap bitmap;
 t_snd snd;
@@ -192,6 +194,7 @@ void audio_shutdown(void)
 
 int audio_update(int16 *buffer)
 {
+  if (audio_hard_disable) return 0;
   /* run sound chips until end of frame */
   int size = sound_update(mcycles_vdp);
 
