@@ -194,9 +194,10 @@ void audio_shutdown(void)
 
 int audio_update(int16 *buffer)
 {
+  int size;
   if (audio_hard_disable) return 0;
   /* run sound chips until end of frame */
-  int size = sound_update(mcycles_vdp);
+  size = sound_update(mcycles_vdp);
 
   /* Mega CD specific */
   if (system_hw == SYSTEM_MCD)
