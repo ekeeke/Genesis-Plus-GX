@@ -292,9 +292,12 @@ void vdp_reset(void)
 
   /* reset pattern cache changes */
   bg_list_index = 0;
-  memset ((char *) bg_name_dirty, 0, sizeof (bg_name_dirty));
-  memset ((char *) bg_name_list, 0, sizeof (bg_name_list));
-
+  if (!reset_do_not_clear_buffers)
+  {
+    /* Loadstate clears these */
+    memset((char *)bg_name_dirty, 0, sizeof(bg_name_dirty));
+    memset((char *)bg_name_list, 0, sizeof(bg_name_list));
+  }
   /* default Window clipping */
   window_clip(0,0);
 

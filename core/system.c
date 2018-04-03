@@ -42,8 +42,6 @@
 #include "shared.h"
 #include "eq.h"
 
-extern int8 audio_hard_disable;
-
 /* Global variables */
 t_bitmap bitmap;
 t_snd snd;
@@ -196,8 +194,6 @@ int audio_update(int16 *buffer)
 {
   /* run sound chips until end of frame */
   int size = sound_update(mcycles_vdp);
-
-  if (audio_hard_disable) return 0;
 
   /* Mega CD specific */
   if (system_hw == SYSTEM_MCD)

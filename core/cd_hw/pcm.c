@@ -38,7 +38,6 @@
 #include "shared.h"
 
 extern int8 reset_do_not_clear_buffers;
-extern int8 audio_hard_disable;
 
 #define PCM_SCYCLES_RATIO (384 * 4)
 
@@ -125,8 +124,6 @@ void pcm_run(unsigned int length)
   /* previous audio outputs */
   int prev_l = pcm.out[0];
   int prev_r = pcm.out[1];
-
-  if (audio_hard_disable) return;
 
   /* check if PCM chip is running */
   if (pcm.enabled)
