@@ -4087,10 +4087,8 @@ void render_reset(void)
 {
   if (!reset_do_not_clear_buffers)
   {
-#if 0
     /* Clear display bitmap */
     memset(bitmap.data, 0, bitmap.pitch * bitmap.height);
-#endif
 
     /* Clear line buffers */
     memset(linebuf, 0, sizeof(linebuf));

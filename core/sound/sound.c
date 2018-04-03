@@ -40,8 +40,6 @@
 #include "shared.h"
 #include "blip_buf.h"
 
-int8 audio_hard_disable = 0;
-
 /* YM2612 internal clock = input clock / 6 = (master clock / 7) / 6 */
 #define YM2612_CLOCK_RATIO (7*6)
 
@@ -316,41 +314,40 @@ int sound_update(unsigned int cycles)
     /* FM buffer start pointer */
     ptr = fm_buffer;
 
-    if (!audio_hard_disable)
+    /* flush FM samples */
+    if (config.hq_fm)
     {
-      /* flush FM samples */
-      if (config.hq_fm)
+      /* high-quality Band-Limited synthesis */
+      do
       {
-        /* high-quality Band-Limited synthesis */
-        do
-        {
-          /* left & right channels */
-          l = ((*ptr++ * preamp) / 100);
-          r = ((*ptr++ * preamp) / 100);
-          blip_add_delta(snd.blips[0], time, l - prev_l, r - prev_r);
-          prev_l = l;
-          prev_r = r;
+        /* left & right channels */
+        l = ((*ptr++ * preamp) / 100);
+        r = ((*ptr++ * preamp) / 100);
+        blip_add_delta(snd.blips[0], time, l-prev_l, r-prev_r);
+        prev_l = l;
+        prev_r = r;
 
-          /* increment time counter */
-          time += fm_cycles_ratio;
-        } while (time < cycles);
+        /* increment time counter */
+        time += fm_cycles_ratio;
       }
-      else
+      while (time < cycles);
+    }
+    else
+    {
+      /* faster Linear Interpolation */
+      do
       {
-        /* faster Linear Interpolation */
-        do
-        {
-          /* left & right channels */
-          l = ((*ptr++ * preamp) / 100);
-          r = ((*ptr++ * preamp) / 100);
-          blip_add_delta_fast(snd.blips[0], time, l - prev_l, r - prev_r);
-          prev_l = l;
-          prev_r = r;
+        /* left & right channels */
+        l = ((*ptr++ * preamp) / 100);
+        r = ((*ptr++ * preamp) / 100);
+        blip_add_delta_fast(snd.blips[0], time, l-prev_l, r-prev_r);
+        prev_l = l;
+        prev_r = r;
 
-          /* increment time counter */
-          time += fm_cycles_ratio;
-        } while (time < cycles);
+        /* increment time counter */
+        time += fm_cycles_ratio;
       }
+      while (time < cycles);
     }
 
     /* reset FM buffer pointer */
@@ -371,8 +368,6 @@ int sound_update(unsigned int cycles)
       fm_cycles_busy = 0;
     }
   }
-
-  if (audio_hard_disable) return 0;
 
   /* end of blip buffer time frame */
   blip_end_frame(snd.blips[0], cycles);
