@@ -7,6 +7,7 @@ ifneq ($(GIT_VERSION)," unknown")
 	LOCAL_CFLAGS += -DGIT_VERSION=\"$(GIT_VERSION)\"
 endif
 
+SOURCES_C :=
 WANT_CRC32 := 1
 HAVE_CHD := 1
 
