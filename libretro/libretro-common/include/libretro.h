@@ -32,7 +32,7 @@ extern "C" {
 #endif
 
 #ifndef __cplusplus
-#if defined(_MSC_VER) && !defined(SN_TARGET_PS3)
+#if defined(_MSC_VER) && _MSC_VER < 1800 && !defined(SN_TARGET_PS3)
 /* Hack applied for MSVC when compiling in C89 mode
  * as it isn't C99-compliant. */
 #define bool unsigned char
@@ -270,6 +270,7 @@ enum retro_language
    RETRO_LANGUAGE_ESPERANTO           = 13,
    RETRO_LANGUAGE_POLISH              = 14,
    RETRO_LANGUAGE_VIETNAMESE          = 15,
+   RETRO_LANGUAGE_ARABIC              = 16,
    RETRO_LANGUAGE_LAST,
 
    /* Ensure sizeof(enum) == sizeof(int) */
@@ -375,6 +376,10 @@ enum retro_key
    RETROK_x              = 120,
    RETROK_y              = 121,
    RETROK_z              = 122,
+   RETROK_LEFTBRACE      = 123,
+   RETROK_BAR            = 124,
+   RETROK_RIGHTBRACE     = 125,
+   RETROK_TILDE          = 126,
    RETROK_DELETE         = 127,
 
    RETROK_KP0            = 256,
@@ -1083,8 +1088,12 @@ struct retro_vfs_interface_info
 
 enum retro_hw_render_interface_type
 {
-   RETRO_HW_RENDER_INTERFACE_VULKAN = 0,
-   RETRO_HW_RENDER_INTERFACE_DUMMY = INT_MAX
+	RETRO_HW_RENDER_INTERFACE_VULKAN = 0,
+	RETRO_HW_RENDER_INTERFACE_D3D9   = 1,
+	RETRO_HW_RENDER_INTERFACE_D3D10  = 2,
+	RETRO_HW_RENDER_INTERFACE_D3D11  = 3,
+	RETRO_HW_RENDER_INTERFACE_D3D12  = 4,
+   RETRO_HW_RENDER_INTERFACE_DUMMY  = INT_MAX
 };
 
 /* Base struct. All retro_hw_render_interface_* types
@@ -1877,6 +1886,10 @@ enum retro_hw_context_type
 
    /* Vulkan, see RETRO_ENVIRONMENT_GET_HW_RENDER_INTERFACE. */
    RETRO_HW_CONTEXT_VULKAN           = 6,
+
+   /* Direct3D, set version_major to select the type of interface
+    * returned by RETRO_ENVIRONMENT_GET_HW_RENDER_INTERFACE */
+   RETRO_HW_CONTEXT_DIRECT3D         = 7,
 
    RETRO_HW_CONTEXT_DUMMY = INT_MAX
 };

@@ -31,6 +31,7 @@
 #endif
 
 #include <streams/file_stream.h>
+#define VFS_FRONTEND
 #include <vfs/vfs_implementation.h>
 
 static const int64_t vfs_error_return_value      = -1;
@@ -190,7 +191,7 @@ int filestream_getc(RFILE *stream)
    return EOF;
 }
 
-ssize_t filestream_seek(RFILE *stream, ssize_t offset, int seek_position)
+int64_t filestream_seek(RFILE *stream, int64_t offset, int seek_position)
 {
    int64_t output;
 
@@ -212,9 +213,9 @@ int filestream_eof(RFILE *stream)
 }
 
 
-ssize_t filestream_tell(RFILE *stream)
+int64_t filestream_tell(RFILE *stream)
 {
-   ssize_t output;
+   int64_t output;
 
    if (filestream_size_cb != NULL)
       output = filestream_tell_cb(stream->hfile);
@@ -236,7 +237,7 @@ void filestream_rewind(RFILE *stream)
    stream->eof_flag = false;
 }
 
-ssize_t filestream_read(RFILE *stream, void *s, int64_t len)
+int64_t filestream_read(RFILE *stream, void *s, int64_t len)
 {
    int64_t output;
 
@@ -293,7 +294,7 @@ const char *filestream_get_path(RFILE *stream)
    return retro_vfs_file_get_path_impl((libretro_vfs_implementation_file*)stream->hfile);
 }
 
-ssize_t filestream_write(RFILE *stream, const void *s, int64_t len)
+int64_t filestream_write(RFILE *stream, const void *s, int64_t len)
 {
    int64_t output;
 
@@ -319,14 +320,14 @@ int filestream_putc(RFILE *stream, int c)
 int filestream_vprintf(RFILE *stream, const char* format, va_list args)
 {
    static char buffer[8 * 1024];
-   int num_chars = vsprintf(buffer, format, args);
+   int64_t num_chars = vsprintf(buffer, format, args);
 
    if (num_chars < 0)
       return -1;
    else if (num_chars == 0)
       return 0;
 
-   return filestream_write(stream, buffer, num_chars);
+   return (int)filestream_write(stream, buffer, num_chars);
 }
 
 int filestream_printf(RFILE *stream, const char* format, ...)
@@ -372,9 +373,9 @@ int filestream_close(RFILE *stream)
  *
  * Returns: number of items read, -1 on error.
  */
-int filestream_read_file(const char *path, void **buf, ssize_t *len)
+int64_t filestream_read_file(const char *path, void **buf, int64_t *len)
 {
-   ssize_t ret              = 0;
+   int64_t ret              = 0;
    int64_t content_buf_size = 0;
    void *content_buf        = NULL;
    RFILE *file              = filestream_open(path,
@@ -396,7 +397,7 @@ int filestream_read_file(const char *path, void **buf, ssize_t *len)
 
    if (!content_buf)
       goto error;
-   if ((int64_t)(size_t)(content_buf_size + 1) != (content_buf_size + 1))
+   if ((int64_t)(uint64_t)(content_buf_size + 1) != (content_buf_size + 1))
       goto error;
 
    ret = filestream_read(file, content_buf, (int64_t)content_buf_size);
@@ -440,9 +441,9 @@ error:
  *
  * Returns: true (1) on success, false (0) otherwise.
  */
-bool filestream_write_file(const char *path, const void *data, ssize_t size)
+bool filestream_write_file(const char *path, const void *data, int64_t size)
 {
-   ssize_t ret   = 0;
+   int64_t ret   = 0;
    RFILE *file   = filestream_open(path,
          RETRO_VFS_FILE_ACCESS_WRITE,
          RETRO_VFS_FILE_ACCESS_HINT_NONE);
@@ -460,21 +461,27 @@ bool filestream_write_file(const char *path, const void *data, ssize_t size)
 
 char *filestream_getline(RFILE *stream)
 {
-   char* newline     = (char*)malloc(9);
-   char* newline_tmp = NULL;
-   size_t cur_size   = 8;
-   size_t idx        = 0;
-   int in            = filestream_getc(stream);
+   char* newline_tmp  = NULL;
+   size_t cur_size    = 8;
+   size_t idx         = 0;
+   int in             = 0;
+   char* newline      = (char*)malloc(9);
 
-   if (!newline)
+   if (!stream || !newline)
+   {
+      if (newline)
+         free(newline);
       return NULL;
+   }
+
+   in                 = filestream_getc(stream);
 
    while (in != EOF && in != '\n')
    {
       if (idx == cur_size)
       {
-         cur_size *= 2;
-         newline_tmp = (char*)realloc(newline, cur_size + 1);
+         cur_size    *= 2;
+         newline_tmp  = (char*)realloc(newline, cur_size + 1);
 
          if (!newline_tmp)
          {
@@ -482,13 +489,13 @@ char *filestream_getline(RFILE *stream)
             return NULL;
          }
 
-         newline = newline_tmp;
+         newline     = newline_tmp;
       }
 
       newline[idx++] = in;
       in             = filestream_getc(stream);
    }
 
-   newline[idx] = '\0';
+   newline[idx]      = '\0';
    return newline;
 }
