@@ -37,6 +37,11 @@
  ****************************************************************************************/
 #include "shared.h"
 
+static int cdd_get_audio_sample_difference(void);
+static int cdd_get_audio_sample_offset_lba(void);
+
+extern int8 audio_hard_disable;
+
 #if defined(USE_LIBTREMOR) || defined(USE_LIBVORBIS)
 #define SUPPORTED_EXT 20
 #else
@@ -223,10 +228,22 @@ void cdd_reset(void)
 int cdd_context_save(uint8 *state)
 {
   int bufferptr = 0;
+  int audioSampleDifference = 0;
+  int indexValue = 0;
 
   save_param(&cdd.cycles, sizeof(cdd.cycles));
   save_param(&cdd.latency, sizeof(cdd.latency));
-  save_param(&cdd.index, sizeof(cdd.index));
+
+  /* If we are in an audio track, record the difference between LBA audio position and actual audio position */
+  if (cdd.toc.tracks[cdd.index].type == 0)
+  {
+    audioSampleDifference = cdd_get_audio_sample_difference();
+  }
+
+  /* Pack index (CD track number 0-99, now lower 8 bits) and difference between audioSampleOffset and LBA audio position (24-bit signed) into the 32-bit Index Value */
+  indexValue = (cdd.index & 0xFF) | (audioSampleDifference << 8);
+  save_param(&indexValue, sizeof(indexValue));
+
   save_param(&cdd.lba, sizeof(cdd.lba));
   save_param(&cdd.scanOffset, sizeof(cdd.scanOffset));
   save_param(&cdd.volume, sizeof(cdd.volume));
@@ -239,6 +256,8 @@ int cdd_context_load(uint8 *state)
 {
   int lba;
   int bufferptr = 0;
+  int audioSampleDifference = 0;
+  int indexValue = 0;
 
 #if defined(USE_LIBTREMOR) || defined(USE_LIBVORBIS)
 #ifdef DISABLE_MANY_OGG_OPEN_FILES
@@ -252,7 +271,15 @@ int cdd_context_load(uint8 *state)
 
   load_param(&cdd.cycles, sizeof(cdd.cycles));
   load_param(&cdd.latency, sizeof(cdd.latency));
-  load_param(&cdd.index, sizeof(cdd.index));
+  load_param(&indexValue, sizeof(indexValue));
+  /* unpack 32-bit Index value into Index (track number, lower 8 bits) and difference between actual sample position and LBA sample position (higher 24 bits) */
+  cdd.index = indexValue & 0xFF;
+  audioSampleDifference = indexValue >> 8;
+  /* force sign extension */
+  if (indexValue < 0)
+  {
+    audioSampleDifference |= 0xFF000000;
+  }
   load_param(&cdd.lba, sizeof(cdd.lba));
   load_param(&cdd.scanOffset, sizeof(cdd.scanOffset));
   load_param(&cdd.volume, sizeof(cdd.volume));
@@ -278,6 +305,16 @@ int cdd_context_load(uint8 *state)
   {
     /* CHD file offset */
     cdd.chd.hunkofs = cdd.toc.tracks[cdd.index].offset + (lba * CD_FRAME_SIZE);
+    /* For a CD audio track, seek to the saved audio sample position */
+    if (cdd.toc.tracks[cdd.index].type == 0)
+    {
+      int sectorNumber;
+      int offsetWithinSector;
+      cdd.audioSampleOffset = cdd_get_audio_sample_offset_lba() + audioSampleDifference;
+      sectorNumber = (cdd.audioSampleOffset * 4) / CD_MAX_SECTOR_DATA;
+      offsetWithinSector = (cdd.audioSampleOffset * 4) - sectorNumber * CD_MAX_SECTOR_DATA;
+      cdd.chd.hunkofs = cdd.toc.tracks[cdd.index].offset + ((cdd.toc.tracks[cdd.index].start + sectorNumber) * CD_FRAME_SIZE) + offsetWithinSector;
+    }
   }
   else
 #endif
@@ -289,18 +326,26 @@ int cdd_context_load(uint8 *state)
 #if defined(USE_LIBTREMOR) || defined(USE_LIBVORBIS)
   else if (cdd.toc.tracks[cdd.index].vf.seekable)
   {
+    int trackOffset = cdd.toc.tracks[cdd.index].offset;
+    cdd.audioSampleOffset = cdd_get_audio_sample_offset_lba() + audioSampleDifference;
 #ifdef DISABLE_MANY_OGG_OPEN_FILES
     /* VORBIS file need to be opened first */
     ov_open_callbacks(cdd.toc.tracks[cdd.index].fd,&cdd.toc.tracks[cdd.index].vf,0,0,cb);
 #endif
     /* VORBIS AUDIO track */
-    ov_pcm_seek(&cdd.toc.tracks[cdd.index].vf, (lba * 588) - cdd.toc.tracks[cdd.index].offset);
+    ov_pcm_seek(&cdd.toc.tracks[cdd.index].vf, (lba * 588) - trackOffset + audioSampleDifference);
   }
 #endif
   else if (cdd.toc.tracks[cdd.index].fd)
   {
     /* PCM AUDIO track */
-    cdStreamSeek(cdd.toc.tracks[cdd.index].fd, (lba * 2352) - cdd.toc.tracks[cdd.index].offset, SEEK_SET);
+    const int SECTOR_SIZE = 2352;
+    int trackStart = cdd.toc.tracks[cdd.index].start;
+    int trackOffset = cdd.toc.tracks[cdd.index].offset;
+    int seekAddress;
+    cdd.audioSampleOffset = cdd_get_audio_sample_offset_lba() + audioSampleDifference;
+    seekAddress = trackStart * SECTOR_SIZE + cdd.audioSampleOffset * 4 - trackOffset;
+    cdStreamSeek(cdd.toc.tracks[cdd.index].fd, seekAddress, SEEK_SET);
   }
 
   return bufferptr;
@@ -1288,6 +1333,13 @@ void cdd_read_audio(unsigned int samples)
     /* CD-DA fader volume setup (0-1024) */
     int endVol = scd.regs[0x34>>1].w >> 4;
 
+    cdd.audioSampleOffset += samples;
+
+    if (audio_hard_disable)
+    {
+      return;
+    }
+    
     /* read samples from current block */
 #if defined(USE_LIBCHDR)
     if (cdd.chd.file)
@@ -1635,6 +1687,7 @@ void cdd_update(void)
       {
         /* CHD file offset */
         cdd.chd.hunkofs = cdd.toc.tracks[cdd.index].offset + (cdd.toc.tracks[cdd.index].start * CD_FRAME_SIZE);
+        cdd.audioSampleOffset = 0;
       }
       else
 #endif
@@ -1646,12 +1699,14 @@ void cdd_update(void)
         ov_open_callbacks(cdd.toc.tracks[cdd.index].fd,&cdd.toc.tracks[cdd.index].vf,0,0,cb);
 #endif
         ov_pcm_seek(&cdd.toc.tracks[cdd.index].vf, (cdd.toc.tracks[cdd.index].start * 588) - cdd.toc.tracks[cdd.index].offset);
+        cdd.audioSampleOffset = 0;
       }
       else
 #endif 
       if (cdd.toc.tracks[cdd.index].fd)
       {
         cdStreamSeek(cdd.toc.tracks[cdd.index].fd, (cdd.toc.tracks[cdd.index].start * 2352) - cdd.toc.tracks[cdd.index].offset, SEEK_SET);
+        cdd.audioSampleOffset = 0;
       }
     }
   }
@@ -1738,6 +1793,7 @@ void cdd_update(void)
     {
       /* CHD file offset */
       cdd.chd.hunkofs = cdd.toc.tracks[cdd.index].offset + (cdd.lba * CD_FRAME_SIZE);
+      if (cdd.toc.tracks[cdd.index].type == 0) cdd.audioSampleOffset = cdd_get_audio_sample_offset_lba();
     }
     else
 #endif
@@ -1759,12 +1815,14 @@ void cdd_update(void)
 #endif
       /* VORBIS AUDIO track */
       ov_pcm_seek(&cdd.toc.tracks[cdd.index].vf, (cdd.lba * 588) - cdd.toc.tracks[cdd.index].offset);
+      cdd.audioSampleOffset = cdd_get_audio_sample_offset_lba();
     }
 #endif 
     else if (cdd.toc.tracks[cdd.index].fd)
     {
       /* PCM AUDIO track */
       cdStreamSeek(cdd.toc.tracks[cdd.index].fd, (cdd.lba * 2352) - cdd.toc.tracks[cdd.index].offset, SEEK_SET);
+      cdd.audioSampleOffset = cdd_get_audio_sample_offset_lba();
     }
   }
 }
@@ -1968,6 +2026,7 @@ void cdd_process(void)
       {
         /* CHD file offset */
         cdd.chd.hunkofs = cdd.toc.tracks[cdd.index].offset + (lba * CD_FRAME_SIZE);
+        if (cdd.toc.tracks[cdd.index].type == 0) cdd.audioSampleOffset = cdd_get_audio_sample_offset_lba();
       }
       else
 #endif
@@ -1981,12 +2040,14 @@ void cdd_process(void)
       {
         /* VORBIS AUDIO track */
         ov_pcm_seek(&cdd.toc.tracks[index].vf, (lba * 588) - cdd.toc.tracks[index].offset);
+        cdd.audioSampleOffset = cdd_get_audio_sample_offset_lba();
       }
 #endif 
       else if (cdd.toc.tracks[index].fd)
       {
         /* PCM AUDIO track */
         cdStreamSeek(cdd.toc.tracks[index].fd, (lba * 2352) - cdd.toc.tracks[index].offset, SEEK_SET);
+        cdd.audioSampleOffset = cdd_get_audio_sample_offset_lba();
       }
 
       /* seek to current subcode position */
@@ -2074,6 +2135,7 @@ void cdd_process(void)
       {
         /* CHD file offset */
         cdd.chd.hunkofs = cdd.toc.tracks[cdd.index].offset + (lba * CD_FRAME_SIZE);
+        if (cdd.toc.tracks[cdd.index].type == 0) cdd.audioSampleOffset = cdd_get_audio_sample_offset_lba();
       }
       else
 #endif
@@ -2087,12 +2149,14 @@ void cdd_process(void)
       {
         /* VORBIS AUDIO track */
         ov_pcm_seek(&cdd.toc.tracks[index].vf, (lba * 588) - cdd.toc.tracks[index].offset);
+        cdd.audioSampleOffset = cdd_get_audio_sample_offset_lba();
       }
 #endif 
       else if (cdd.toc.tracks[index].fd)
       {
         /* PCM AUDIO track */
         cdStreamSeek(cdd.toc.tracks[index].fd, (lba * 2352) - cdd.toc.tracks[index].offset, SEEK_SET);
+        cdd.audioSampleOffset = cdd_get_audio_sample_offset_lba();
       }
 
       /* seek to current subcode position */
@@ -2223,4 +2287,16 @@ void cdd_process(void)
                                scd.regs[0x3c>>1].byte.h + scd.regs[0x3c>>1].byte.l +
                                scd.regs[0x3e>>1].byte.h + scd.regs[0x3e>>1].byte.l +
                                scd.regs[0x40>>1].byte.h) & 0x0f;
+}
+
+static int cdd_get_audio_sample_offset_lba(void)
+{
+  const int SECTOR_SIZE = 2352;
+  int trackStart = cdd.toc.tracks[cdd.index].start;
+  return (cdd.lba - trackStart) * SECTOR_SIZE / 4;
+}
+
+static int cdd_get_audio_sample_difference(void)
+{
+  return cdd.audioSampleOffset - cdd_get_audio_sample_offset_lba();
 }

@@ -323,6 +323,7 @@ void gen_reset(int hard_reset)
       {
         /* save default cartridge slot mapping */
         cart.base = m68k.memory_map[0].base;
+        if (cart.base == boot_rom) cart.base = &cart.rom[0];
 
         /* BOOT ROM is mapped at $000000-$0007FF */
         m68k.memory_map[0].base = boot_rom;
