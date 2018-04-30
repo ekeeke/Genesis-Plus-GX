@@ -92,6 +92,9 @@ typedef struct
   double frame_rate;    /* Output Frame rate (usually 50 or 60 frames per second) */
   int enabled;          /* 1= sound emulation is enabled */
   blip_t* blips[3];     /* Blip Buffer resampling (stereo) */
+  blip_buffer_state_t *blip_states[3]; /* states for suspending and restoring the sound buffer */
+  int fm_last_save[2];  /* For saving and restoring the sound buffer */
+  int16 cd_last_save[2];  /* For saving and restoring the sound buffer */
 } t_snd;
 
 

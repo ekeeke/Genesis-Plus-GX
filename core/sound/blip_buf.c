@@ -84,6 +84,20 @@ struct blip_t
 #endif
 };
 
+#define BLIP_BUFFER_STATE_BUFFER_SIZE 16
+
+typedef struct blip_buffer_state_t
+{
+	fixed_t offset;
+#ifdef BLIP_MONO
+	int integrator;
+	buf_t buffer[BLIP_BUFFER_STATE_BUFFER_SIZE];
+#else
+	int integrator[2];
+	buf_t buffer[2][BLIP_BUFFER_STATE_BUFFER_SIZE];
+#endif
+};
+
 #ifdef BLIP_MONO
 /* probably not totally portable */
 #define SAMPLES( blip ) ((buf_t*) ((blip) + 1))
@@ -263,6 +277,14 @@ static void remove_samples( blip_t* m, int count )
 	memmove( &buf [0], &buf [count], remain * sizeof (buf_t) );
 	memset( &buf [remain], 0, count * sizeof (buf_t) );
 #endif
+}
+
+int blip_discard_samples_dirty(blip_t* m, int count)
+{
+	if (count > (m->offset >> time_bits))
+		count = m->offset >> time_bits;
+
+	m->offset -= count * time_unit;
 }
 
 int blip_read_samples( blip_t* m, short out [], int count)
@@ -684,3 +706,59 @@ void blip_add_delta_fast( blip_t* m, unsigned time, int delta )
 	out [8] += delta2;
 }
 #endif
+
+void blip_save_buffer_state(const blip_t *buf, blip_buffer_state_t *state)
+{
+#ifdef BLIP_MONO
+	state->integrator = buf->integrator;
+	if (buf->buffer && buf->size >= BLIPSTATE_BUFFER_SIZE)
+	{
+		memcpy(state->buffer, buf->buffer, sizeof(state->buffer));
+	}
+#else
+	int c;
+	for (c = 0; c < 2; c++)
+	{
+		state->integrator[c] = buf->integrator[c];
+		if (buf->buffer[c] && buf->size >= BLIP_BUFFER_STATE_BUFFER_SIZE)
+		{
+			memcpy(state->buffer[c], buf->buffer[c], sizeof(state->buffer[c]));
+		}
+	}
+#endif
+	state->offset = buf->offset;
+}
+
+void blip_load_buffer_state(blip_t *buf, const blip_buffer_state_t *state)
+{
+#ifdef BLIP_MONO
+	state->integrator = buf->integrator;
+	if (buf->buffer && buf->size >= BLIPSTATE_BUFFER_SIZE)
+	{
+		memcpy(state->buffer, buf->buffer, sizeof(state->buffer));
+	}
+#else
+	int c;
+	for (c = 0; c < 2; c++)
+	{
+		buf->integrator[c] = state->integrator[c];
+		if (buf->buffer[c] && buf->size >= BLIP_BUFFER_STATE_BUFFER_SIZE)
+		{
+			memcpy(buf->buffer[c], state->buffer[c], sizeof(state->buffer[c]));
+		}
+	}
+#endif
+	buf->offset = (fixed_t)state->offset;
+}
+
+blip_buffer_state_t* blip_new_buffer_state()
+{
+	return (blip_buffer_state_t*)calloc(1, sizeof(blip_buffer_state_t));
+}
+
+void blip_delete_buffer_state(blip_buffer_state_t *state)
+{
+	if (state == NULL) return;
+	memset(state, 0, sizeof(blip_buffer_state_t));
+	free(state);
+}

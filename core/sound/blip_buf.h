@@ -11,6 +11,7 @@
 /** First parameter of most functions is blip_t*, or const blip_t* if nothing
 is changed. */
 typedef struct blip_t blip_t;
+typedef struct blip_buffer_state_t blip_buffer_state_t;
 
 /** Creates new buffer that can hold at most sample_count samples. Sets rates
 so that there are blip_max_ratio clocks per sample. Returns pointer to new
@@ -34,15 +35,15 @@ void blip_clear( blip_t* );
 void blip_add_delta( blip_t*, unsigned time, int delta_l, int delta_r );
 
 /** Same as blip_add_delta(), but uses faster, lower-quality synthesis. */
-void blip_add_delta_fast( blip_t*, unsigned int clock_time, int delta_l, int delta_r );
+void blip_add_delta_fast( blip_t*, unsigned time, int delta_l, int delta_r );
 
 #else
 
 /** Adds positive/negative delta into buffer at specified clock time. */
-void blip_add_delta( blip_t*, unsigned int clock_time, int delta );
+void blip_add_delta( blip_t*, unsigned clock_time, int delta );
 
 /** Same as blip_add_delta(), but uses faster, lower-quality synthesis. */
-void blip_add_delta_fast( blip_t*, unsigned int clock_time, int delta );
+void blip_add_delta_fast( blip_t*, unsigned clock_time, int delta );
 
 #endif
 
@@ -58,10 +59,14 @@ samples. Also begins new time frame at clock_duration, so that clock time 0 in
 the new time frame specifies the same clock as clock_duration in the old time
 frame specified. Deltas can have been added slightly past clock_duration (up to
 however many clocks there are in two output samples). */
-void blip_end_frame( blip_t*, unsigned int clock_duration );
+void blip_end_frame( blip_t*, unsigned clock_duration );
 
 /** Number of buffered samples available for reading. */
 int blip_samples_avail( const blip_t* );
+
+/** Discards samples by moving the write pointer backwards directly,
+leaving the audio buffer dirty. */
+int blip_discard_samples_dirty(blip_t*, int count);
 
 /** Reads and removes at most 'count' samples and writes them to to every other 
 element of 'out', allowing easy interleaving of two buffers into a stereo sample
@@ -74,6 +79,18 @@ int blip_mix_samples( blip_t* m1, blip_t* m2, blip_t* m3, short out [], int coun
 /** Frees buffer. No effect if NULL is passed. */
 void blip_delete( blip_t* );
 
+/** Saves buffer state (samples, accumulators, and offset) to a blip_buffer_state structure */
+void blip_save_buffer_state(const blip_t *buf, blip_buffer_state_t *state);
+
+/** Restores buffer state (samples, accumulators, and offset) from a blip_buffer_state structure */
+void blip_load_buffer_state(blip_t *buf, const blip_buffer_state_t *state);
+
+/** Creates new blip_buffer_state. Returns pointer to new buffer,
+or NULL if insufficient memory. */
+blip_buffer_state_t* blip_new_buffer_state();
+
+/** Frees blip_buffer_state. No effect if NULL is passed. */
+void blip_delete_buffer_state(blip_buffer_state_t *state);
 
 /* Deprecated */
 typedef blip_t blip_buffer_t;

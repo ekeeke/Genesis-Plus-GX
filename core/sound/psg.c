@@ -43,6 +43,8 @@
 #include "shared.h"
 #include "blip_buf.h"
 
+extern int8 audio_hard_disable;
+
 /* internal clock = input clock : 16 = (master clock : 15) : 16 */
 #define PSG_MCYCLES_RATIO (15*16)
 
@@ -455,6 +457,7 @@ void psg_end_frame(unsigned int clocks)
 static void psg_update(unsigned int clocks)
 {
   int i, timestamp, polarity;
+  if (audio_hard_disable) return;
 
   for (i=0; i<4; i++)
   {

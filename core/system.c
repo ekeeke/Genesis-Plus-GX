@@ -42,6 +42,8 @@
 #include "shared.h"
 #include "eq.h"
 
+extern int8 audio_hard_disable;
+
 /* Global variables */
 t_bitmap bitmap;
 t_snd snd;
@@ -187,6 +189,8 @@ void audio_shutdown(void)
   {
     blip_delete(snd.blips[i]);
     snd.blips[i] = 0;
+    blip_delete_buffer_state(snd.blip_states[i]);
+    snd.blip_states[i] = 0;
   }
 }
 
@@ -209,6 +213,14 @@ int audio_update(int16 *buffer)
     size &= ALIGN_SND;
 #endif
 
+    if (audio_hard_disable)
+    {
+      blip_discard_samples_dirty(snd.blips[0], size);
+      blip_discard_samples_dirty(snd.blips[1], size);
+      blip_discard_samples_dirty(snd.blips[2], size);
+      return 0;
+    }
+
     /* resample & mix FM/PSG, PCM & CD-DA streams to output buffer */
     blip_mix_samples(snd.blips[0], snd.blips[1], snd.blips[2], buffer, size);
   }
@@ -218,6 +230,12 @@ int audio_update(int16 *buffer)
     /* return an aligned number of samples if required */
     size &= ALIGN_SND;
 #endif
+
+    if (audio_hard_disable)
+    {
+      blip_discard_samples_dirty(snd.blips[0], size);
+      return 0;
+    }
 
     /* resample FM/PSG mixed stream to output buffer */
     blip_read_samples(snd.blips[0], buffer, size);

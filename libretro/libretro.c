@@ -2168,6 +2168,7 @@ bool retro_serialize(void *data, size_t size)
       return FALSE;
 
    state_save(data);
+   if (fast_savestates) save_sound_buffer();
 
    return TRUE;
 }
@@ -2180,6 +2181,8 @@ bool retro_unserialize(const void *data, size_t size)
 
    if (!state_load((uint8_t*)data))
       return FALSE;
+
+   if (fast_savestates) restore_sound_buffer();
 
 #ifdef HAVE_OVERCLOCK
    overclock_delay = OVERCLOCK_FRAME_DELAY;
@@ -2480,6 +2483,10 @@ void retro_reset(void)
    gen_reset(0);
 }
 
+extern int8 audio_hard_disable;
+
+extern void sound_update_fm_function_pointers(void);
+
 void retro_run(void) 
 {
    bool okay = false;
@@ -2494,6 +2501,17 @@ void retro_run(void)
       update_overclock();
 #endif
 
+   environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE_UPDATE, &updated);
+   if (updated)
+   {
+      check_variables();
+      if (restart_eq)
+      {
+         audio_set_equalizer();
+         restart_eq = false;
+      }
+   }
+
    okay = environ_cb(RETRO_ENVIRONMENT_GET_AUDIO_VIDEO_ENABLE, &result);
    if (okay)
    {
@@ -2501,10 +2519,16 @@ void retro_run(void)
       bool videoEnabled = 0 != (result & 1);
       bool hardDisableAudio = 0 != (result & 8);
       do_skip = !videoEnabled;
+      if (audio_hard_disable != hardDisableAudio)
+      {
+        audio_hard_disable = hardDisableAudio;
+        sound_update_fm_function_pointers();
+      }
    }
    else
    {
       do_skip = false;
+      audio_hard_disable = false;
    }
 
    if (system_hw == SYSTEM_MCD)
@@ -2562,17 +2586,6 @@ void retro_run(void)
 
    video_cb(bitmap.data, vwidth, vheight, 720 * 2);
    audio_cb(soundbuffer, audio_update(soundbuffer));
-
-   environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE_UPDATE, &updated);
-   if (updated)
-   {
-      check_variables();
-      if (restart_eq)
-      {
-         audio_set_equalizer();
-         restart_eq = false;
-      }
-   }
 }
 
 #undef  CHUNKSIZE
