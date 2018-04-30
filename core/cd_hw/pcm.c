@@ -153,6 +153,9 @@ static void pcm_run_silent(unsigned int length)
     }
   }
 #endif
+  /* end of blip buffer frame */
+  blip_end_frame(snd.blips[1], length);
+
   pcm.cycles += length * PCM_SCYCLES_RATIO;
 }
 

@@ -1337,6 +1337,33 @@ void cdd_read_audio(unsigned int samples)
 
     if (audio_hard_disable)
     {
+      if (endVol > curVol)
+      {
+        if (endVol - curVol < samples)
+        {
+          curVol = endVol;
+        }
+        else
+        {
+          curVol += samples;
+        }
+      }
+      else if (curVol > endVol)
+      {
+        if (curVol - endVol < samples)
+        {
+          curVol = endVol;
+        }
+        else
+        {
+          curVol -= samples;
+        }
+      }
+
+      /* save current CD-DA fader volume */
+      cdd.volume = curVol;
+
+      blip_end_frame(snd.blips[2], samples);
       return;
     }
     
