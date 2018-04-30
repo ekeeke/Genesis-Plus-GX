@@ -64,6 +64,10 @@ void blip_end_frame( blip_t*, unsigned clock_duration );
 /** Number of buffered samples available for reading. */
 int blip_samples_avail( const blip_t* );
 
+/** Discards samples by moving the write pointer backwards directly,
+leaving the audio buffer dirty. */
+int blip_discard_samples_dirty(blip_t*, int count);
+
 /** Reads and removes at most 'count' samples and writes them to to every other 
 element of 'out', allowing easy interleaving of two buffers into a stereo sample
 stream. Outputs 16-bit signed samples. Returns number of samples actually read.  */

@@ -279,6 +279,14 @@ static void remove_samples( blip_t* m, int count )
 #endif
 }
 
+int blip_discard_samples_dirty(blip_t* m, int count)
+{
+	if (count > (m->offset >> time_bits))
+		count = m->offset >> time_bits;
+
+	m->offset -= count * time_unit;
+}
+
 int blip_read_samples( blip_t* m, short out [], int count)
 {
 #ifdef BLIP_ASSERT
