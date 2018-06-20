@@ -2,7 +2,7 @@
  *  Genesis Plus
  *  SG-1000, Master System & Game Gear cartridge hardware support
  *
- *  Copyright (C) 2007-2017  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2007-2018  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -718,10 +718,21 @@ int sms_cart_region_detect(void)
   while(i--);
 
   /* Mark-III hardware */
-  if (system_hw == SYSTEM_MARKIII)
+  if (config.system == SYSTEM_MARKIII)
   {
-    /* Japan */
-    return REGION_JAPAN_NTSC;
+    /* Japan only */
+    region_code = REGION_JAPAN_NTSC;
+  }
+
+  /* Master System / Game Gear ROM file */
+  if (system_hw >= SYSTEM_SMS)
+  {
+    /* missing header or valid header with Japan region code */
+    if (!rominfo.country[0] || !memcmp(rominfo.country,"SMS Japan",9) || !memcmp(rominfo.country,"GG Japan",8))
+    {
+      /* assume Japan region (fixes BIOS support) */
+      return REGION_JAPAN_NTSC;
+    }
   }
 
   /* default region */
