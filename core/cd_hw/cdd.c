@@ -2,7 +2,7 @@
  *  Genesis Plus
  *  CD drive processor & CD-DA fader
  *
- *  Copyright (C) 2012-2017  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2012-2018  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -1169,7 +1169,6 @@ void cdd_unload(void)
     chd_close(cdd.chd.file);
     if (cdd.chd.hunk)
       free(cdd.chd.hunk);
-    memset(&cdd.chd, 0x00, sizeof(cdd.chd));
 #endif
 
     /* close CD tracks */
@@ -1209,7 +1208,12 @@ void cdd_unload(void)
 
   /* reset TOC */
   memset(&cdd.toc, 0x00, sizeof(cdd.toc));
-    
+
+#if defined(USE_LIBCHDR)
+  /* reset CHD data */
+  memset(&cdd.chd, 0x00, sizeof(cdd.chd));
+#endif
+
   /* no CD-ROM track */
   cdd.sectorSize = 0;
 }
