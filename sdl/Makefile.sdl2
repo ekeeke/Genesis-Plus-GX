@@ -169,7 +169,7 @@ $(OBJDIR)/%.o :	$(SRCDIR)/ntsc/%.c $(SRCDIR)/ntsc/%.h
 
 $(OBJDIR)/%.o :	$(SRCDIR)/tremor/%.c $(SRCDIR)/tremor/%.h	        
 		$(CC) -c $(CFLAGS) $(INCLUDES) $(DEFINES) $< -o $@
-     
+
 $(OBJDIR)/%.o :	$(SRCDIR)/tremor/%.c 	        
 		$(CC) -c $(CFLAGS) $(INCLUDES) $(DEFINES) $< -o $@
 
