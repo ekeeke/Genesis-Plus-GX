@@ -69,7 +69,7 @@ static void sdl_sound_callback(void *userdata, Uint8 *stream, int len)
 static int sdl_sound_init()
 {
   int n;
-  SDL_AudioSpec as_desired, as_obtained;
+  SDL_AudioSpec as_desired;
 
   if(SDL_InitSubSystem(SDL_INIT_AUDIO) < 0) {
     SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", "SDL Audio initialization failed", sdl_video.window);
@@ -82,13 +82,8 @@ static int sdl_sound_init()
   as_desired.samples  = SOUND_SAMPLES_SIZE;
   as_desired.callback = sdl_sound_callback;
 
-  if(SDL_OpenAudio(&as_desired, &as_obtained) == -1) {
+  if(SDL_OpenAudio(&as_desired, NULL) == -1) {
     SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", "SDL Audio open failed", sdl_video.window);
-    return 0;
-  }
-
-  if(as_desired.samples != as_obtained.samples) {
-    SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", "SDL Audio wrong setup", sdl_video.window);
     return 0;
   }
 
