@@ -82,7 +82,7 @@ static int sdl_sound_init()
   as_desired.samples  = SOUND_SAMPLES_SIZE;
   as_desired.callback = sdl_sound_callback;
 
-  if(SDL_OpenAudio(&as_desired, NULL) == -1) {
+  if(SDL_OpenAudio(&as_desired, NULL) < 0) {
     SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", "SDL Audio open failed", sdl_video.window);
     return 0;
   }
