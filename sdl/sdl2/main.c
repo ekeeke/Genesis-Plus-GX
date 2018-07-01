@@ -134,13 +134,23 @@ sms_ntsc_t *sms_ntsc;
 
 static int sdl_video_init()
 {
+#if defined(USE_8BPP_RENDERING)
+  const unsigned long surface_format = SDL_PIXELFORMAT_RGB332;
+#elif defined(USE_15BPP_RENDERING)
+  const unsigned long surface_format = SDL_PIXELFORMAT_RGB555;
+#elif defined(USE_16BPP_RENDERING)
+  const unsigned long surface_format = SDL_PIXELFORMAT_RGB565;
+#elif defined(USE_32BPP_RENDERING)
+  const unsigned long surface_format = SDL_PIXELFORMAT_RGB888;
+#endif
+
   if(SDL_InitSubSystem(SDL_INIT_VIDEO) < 0) {
     SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", "SDL Video initialization failed", sdl_video.window);
     return 0;
   }
   sdl_video.window = SDL_CreateWindow("Genesis Plus GX", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, VIDEO_WIDTH, VIDEO_HEIGHT, 0);
   sdl_video.surf_screen  = SDL_GetWindowSurface(sdl_video.window);
-  sdl_video.surf_bitmap = SDL_CreateRGBSurface(SDL_SWSURFACE, 720, 576, 16, 0, 0, 0, 0);
+  sdl_video.surf_bitmap = SDL_CreateRGBSurfaceWithFormat(SDL_SWSURFACE, 720, 576, SDL_BITSPERPIXEL(surface_format), surface_format);
   sdl_video.frames_rendered = 0;
   SDL_ShowCursor(0);
   return 1;
