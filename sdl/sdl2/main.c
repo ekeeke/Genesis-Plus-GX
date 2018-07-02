@@ -250,10 +250,8 @@ static void sdl_video_update()
 
 static void sdl_video_close()
 {
-  if (sdl_video.surf_bitmap)
-    SDL_FreeSurface(sdl_video.surf_bitmap);
-  if (sdl_video.surf_screen)
-    SDL_FreeSurface(sdl_video.surf_screen);
+  SDL_FreeSurface(sdl_video.surf_bitmap);
+  SDL_DestroyWindow(sdl_video.window);
 }
 
 /* Timer Sync */
