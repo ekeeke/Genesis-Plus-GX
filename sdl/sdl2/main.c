@@ -150,7 +150,7 @@ static int sdl_video_init()
   }
   sdl_video.window = SDL_CreateWindow("Genesis Plus GX", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, VIDEO_WIDTH, VIDEO_HEIGHT, fullscreen);
   sdl_video.surf_screen  = SDL_GetWindowSurface(sdl_video.window);
-  sdl_video.surf_bitmap = SDL_CreateRGBSurfaceWithFormat(SDL_SWSURFACE, 720, 576, SDL_BITSPERPIXEL(surface_format), surface_format);
+  sdl_video.surf_bitmap = SDL_CreateRGBSurfaceWithFormat(0, 720, 576, SDL_BITSPERPIXEL(surface_format), surface_format);
   sdl_video.frames_rendered = 0;
   SDL_ShowCursor(0);
   return 1;
@@ -250,10 +250,8 @@ static void sdl_video_update()
 
 static void sdl_video_close()
 {
-  if (sdl_video.surf_bitmap)
-    SDL_FreeSurface(sdl_video.surf_bitmap);
-  if (sdl_video.surf_screen)
-    SDL_FreeSurface(sdl_video.surf_screen);
+  SDL_FreeSurface(sdl_video.surf_bitmap);
+  SDL_DestroyWindow(sdl_video.window);
 }
 
 /* Timer Sync */

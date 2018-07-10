@@ -53,7 +53,7 @@
 #define fseeko _fseeki64
 #define ftello _ftelli64
 #else /* MinGW */
-#if !defined(HAVE_FSEEKO)
+#if !defined(HAVE_FSEEKO) && !defined(__MINGW64_VERSION_MAJOR)
 #define fseeko fseeko64
 #define ftello ftello64
 #endif
