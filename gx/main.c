@@ -488,8 +488,21 @@ int main (int argc, char *argv[])
     /* automatically load any file passed as argument */
     autoload = 1;
 
+    /* Guess rom type */
+    u8 romtype = 0;
+    const char* extension = strrchr(argv[2], '.');
+    if (extension == NULL) {
+      extension = ".gen";
+    }
+
+    if (strcasecmp(extension, ".iso") == 0) romtype = 1;
+    else if (strcasecmp(extension, ".cue") == 0) romtype = 1;
+    else if (strcasecmp(extension, ".sms") == 0) romtype = 2;
+    else if (strcasecmp(extension, ".gg") == 0) romtype = 3;
+    else if (strcasecmp(extension, ".sg") == 0) romtype = 4;
+
     /* add the file to the top of the history. */
-    history_add_file(argv[1], argv[2], 0);
+    history_add_file(argv[1], argv[2], romtype);
   }
 
   /* automatically load first file from history list if requested */
