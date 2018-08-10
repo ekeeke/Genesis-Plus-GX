@@ -3,7 +3,7 @@
  *
  *  Genesis Plus GX menu
  *
- *  Copyright Eke-Eke (2009-2017)
+ *  Copyright Eke-Eke (2009-2018)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -2859,7 +2859,8 @@ static void ctrlmenu(void)
               if (exp == WPAD_EXP_CLASSIC)
               {
                 WPADData *data = WPAD_Data(config.input[player].port);
-                exp = data->exp.classic.rjs.max.x;
+                if (data->exp.classic.type == 2)
+                  exp = 255;
               }
 
               /* try next port if no wimote available */

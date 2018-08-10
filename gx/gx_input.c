@@ -3,7 +3,7 @@
  *
  *  Genesis Plus GX input support
  *
- *  Copyright Eke-Eke (2007-2017)
+ *  Copyright Eke-Eke (2007-2018)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -1284,7 +1284,7 @@ int gx_input_FindDevices(void)
           if (wpad == WPAD_EXP_CLASSIC)
           {
             WPADData *data = WPAD_Data(config.input[player].port);
-            if (data->exp.classic.rjs.max.x != 255)
+            if (data->exp.classic.type != 2)
             {
               found++;
             }
@@ -1453,11 +1453,12 @@ void gx_input_SetDefault(void)
         {
           /* make sure this is not a Wii U Pro Controller */
           WPADData *data = WPAD_Data(config.input[j].port);
-          if (data->exp.classic.rjs.max.x != 255)
+          if (data->exp.classic.type != 2)
           {
             /* Wiimote is available */
             config.input[i].device = 1;
             config.input[i].port = j;
+            break;
           }
         }
       }
