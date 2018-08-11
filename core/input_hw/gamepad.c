@@ -3,7 +3,7 @@
  *  2-Buttons, 3-Buttons & 6-Buttons controller support
  *  with support for J-Cart, 4-Way Play & Master Tap adapters
  *
- *  Copyright (C) 2007-2016  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2007-2018  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -122,35 +122,24 @@ INLINE unsigned char gamepad_read(int port)
   /* D-PAD or extra buttons status is returned on D3-D0 (active low) */
   switch (step)
   {
-    case 1: /*** First High  ***/
-    case 3: /*** Second High ***/
-    case 5: /*** Third High  ***/
-    {
-      /* TH = 1 : ?1CBRLDU */
-      data &= ~(pad & 0x3F);
-      break;
-    }
+    /* From gen_hw.txt (*):
 
-    case 0: /*** 3-button only ***/
-    case 2: /*** First Low ***/
-    case 4: /*** Second Low ***/
-    {
-      /* TH = 0 : ?0SA00DU */
-      data &= ~((pad & 0x03) | ((pad >> 2) & 0x30) | 0x0C);
-      break;
-    }
+       A 6-button gamepad allows the extra buttons to be read based on how
+       many times TH is switched from (and not 0 to 1). Observe the
+       following sequence:
 
-    /* A 6-button gamepad allows the extra buttons to be read based on how */
-    /* many times TH is switched from 1 to 0. Observe the following sequence */
-    /*
        TH = 1 : ?1CBRLDU    3-button pad return value
        TH = 0 : ?0SA00DU    3-button pad return value
-       TH = 1 : ?1CBRLDU    3-button pad return value
-       TH = 0 : ?0SA00DU    3-button pad return value
+       TH = 1 : ?1CBRLDU    3-button pad return value (*)
+       TH = 0 : ?0SA00DU    3-button pad return value (*)
        TH = 1 : ?1CBRLDU    3-button pad return value
        TH = 0 : ?0SA0000    D3-D0 are forced to '0'
        TH = 1 : ?1CBMXYZ    Extra buttons returned in D3-0
        TH = 0 : ?0SA1111    D3-D0 are forced to '1'
+
+       From this point on, the standard 3-button pad values will be returned if any further TH transitions are done.
+
+       (*) additional High-to-Low transition is necessary to access extra buttons according to official MK-1653-50 specification 
     */
     case 6: /*** Third Low ***/
     {
@@ -166,18 +155,26 @@ INLINE unsigned char gamepad_read(int port)
       break;
     }
 
-    default: /*** D3-D0 forced to '1' ***/
+    case 8: /*** Fourth Low ***/
     {
-      if (data & 0x40)
+      /* TH = 0 : ?0SA1111    D3-D0 forced to '1' */
+      data &= ~((pad >> 2) & 0x30);
+      break;
+    }
+
+    default: /*** 3-button mode ***/
+    {
+      if (step & 1)
       {
-        /* TH = 1 : ?0CB1111 */
-        data &= ~(pad & 0x30);
+        /* TH = 1 : ?1CBRLDU */
+        data &= ~(pad & 0x3F);
       }
       else
       {
-        /* TH = 0 : ?0SA1111 */
-        data &= ~((pad >> 2) & 0x30);
+        /* TH = 0 : ?0SA00DU */
+        data &= ~((pad & 0x03) | ((pad >> 2) & 0x30) | 0x0C);
       }
+      break;
     }
   }
 
@@ -196,7 +193,7 @@ INLINE void gamepad_write(int port, unsigned char data, unsigned char mask)
     gamepad[port].Latency = 0;
 
     /* 6-Buttons controller specific */
-    if (input.dev[port] == DEVICE_PAD6B)
+    if ((input.dev[port] == DEVICE_PAD6B) && (gamepad[port].Counter < 10))
     {
       /* TH 1->0 transition */
       if (!data && gamepad[port].State)
