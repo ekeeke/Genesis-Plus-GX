@@ -1,4 +1,4 @@
-LIBRARY "msvc-2017"
+LIBRARY "genesis_plus_gx_libretro"
 EXPORTS
 retro_set_environment
 retro_set_video_refresh
