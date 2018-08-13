@@ -1131,7 +1131,7 @@ char *get_company(void)
   /** OK, first look for a hyphen
    *  Capcom use T-12 for example
    */
-  s = strstr (company, "-");
+  s = strchr(company, '-');
   if (s != NULL)
   {
     s++;
@@ -1143,12 +1143,13 @@ char *get_company(void)
     if (company[i] == 32)
       company[i] = 0;
 
-  if (strlen (company) == 0)
+  size_t companyStrLength = strlen(company);
+  if (companyStrLength == 0)
     return (char *)companyinfo[MAXCOMPANY - 1].company;
 
   for (i = 0; i < MAXCOMPANY - 1; i++)
   {
-    if (!(strncmp (company, companyinfo[i].companyid, strlen (company))))
+    if (!(strncmp (company, companyinfo[i].companyid, companyStrLength)))
       return (char *)companyinfo[i].company;
   }
 

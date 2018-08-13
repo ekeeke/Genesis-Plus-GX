@@ -211,7 +211,7 @@ static const UINT32 ksl_tab[8*16]=
 
 /* sustain level table (3dB per step) */
 /* 0 - 15: 0, 3, 6, 9,12,15,18,21,24,27,30,33,36,39,42,45 (dB)*/
-#define SC(db) (UINT32) ( db * (1.0/ENV_STEP) )
+#define SC(db) (UINT32) ( (db) * (1.0/ENV_STEP) )
 static const UINT32 sl_tab[16]={
  SC( 0),SC( 1),SC( 2),SC(3 ),SC(4 ),SC(5 ),SC(6 ),SC( 7),
  SC( 8),SC( 9),SC(10),SC(11),SC(12),SC(13),SC(14),SC(15)
@@ -245,7 +245,7 @@ static const unsigned char eg_inc[15*RATE_STEPS]={
 };
 
 
-#define O(a) (a*RATE_STEPS)
+#define O(a) ((a)*RATE_STEPS)
 
 /*note that there is no O(13) in this table - it's directly in the code */
 static const unsigned char eg_rate_select[16+64+16]={  /* Envelope Generator rates (16 + 64 rates + 16 RKS) */
@@ -288,7 +288,7 @@ O(12),O(12),O(12),O(12),O(12),O(12),O(12),O(12),
 /*shift 13,   12,   11,   10,   9,   8,   7,   6,  5,  4,  3,  2,  1,  0,  0,  0 */
 /*mask  8191, 4095, 2047, 1023, 511, 255, 127, 63, 31, 15, 7,  3,  1,  0,  0,  0 */
 
-#define O(a) (a*1)
+#define O(a) ((a)*1)
 static const unsigned char eg_rate_shift[16+64+16]={  /* Envelope Generator counter shifts (16 + 64 rates + 16 RKS) */
 /* 16 infinite time rates */
 O(0),O(0),O(0),O(0),O(0),O(0),O(0),O(0),

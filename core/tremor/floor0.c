@@ -297,8 +297,8 @@ static void floor0_free_look(vorbis_look_floor *i){
   vorbis_look_floor0 *look=(vorbis_look_floor0 *)i;
   if(look){
 
-    if(look->linearmap)_ogg_free(look->linearmap);
-    if(look->lsp_look)_ogg_free(look->lsp_look);
+    _ogg_free(look->linearmap);
+    _ogg_free(look->lsp_look);
     memset(look,0,sizeof(*look));
     _ogg_free(look);
   }
