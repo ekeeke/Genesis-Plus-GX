@@ -165,10 +165,8 @@ void blip_delete( blip_t* m )
 	if ( m != NULL )
 	{
 #ifndef BLIP_MONO
-    if (m->buffer[0] != NULL)
-      free(m->buffer[0]);
-    if (m->buffer[1] != NULL)
-      free(m->buffer[1]);
+    free(m->buffer[0]);
+    free(m->buffer[1]);
 #endif
     /* Clear fields in case user tries to use after freeing */
 		memset( m, 0, sizeof *m );

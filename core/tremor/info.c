@@ -92,10 +92,10 @@ void vorbis_comment_clear(vorbis_comment *vc){
   if(vc){
     long i;
     for(i=0;i<vc->comments;i++)
-      if(vc->user_comments[i])_ogg_free(vc->user_comments[i]);
-    if(vc->user_comments)_ogg_free(vc->user_comments);
-	if(vc->comment_lengths)_ogg_free(vc->comment_lengths);
-    if(vc->vendor)_ogg_free(vc->vendor);
+      _ogg_free(vc->user_comments[i]);
+    _ogg_free(vc->user_comments);
+	_ogg_free(vc->comment_lengths);
+    _ogg_free(vc->vendor);
     memset(vc,0,sizeof(*vc));
   }
 }
@@ -120,7 +120,7 @@ void vorbis_info_clear(vorbis_info *vi){
   if(ci){
 
     for(i=0;i<ci->modes;i++)
-      if(ci->mode_param[i])_ogg_free(ci->mode_param[i]);
+      _ogg_free(ci->mode_param[i]);
 
     for(i=0;i<ci->maps;i++) /* unpack does the range checking */
       if(ci->map_param[i])
@@ -142,9 +142,7 @@ void vorbis_info_clear(vorbis_info *vi){
       if(ci->fullbooks)
 	vorbis_book_clear(ci->fullbooks+i);
     }
-    if(ci->fullbooks)
 	_ogg_free(ci->fullbooks);
-    
     _ogg_free(ci);
   }
 
@@ -311,7 +309,7 @@ int vorbis_synthesis_headerin(vorbis_info *vi,vorbis_comment *vc,ogg_packet *op)
       int packtype=oggpack_read(&opb,8);
       memset(buffer,0,6);
       _v_readstring(&opb,buffer,6);
-      if(memcmp(buffer,"vorbis",6)){
+      if(memcmp(buffer,"vorbis",6) != 0){
 	/* not a vorbis header */
 	return(OV_ENOTVORBIS);
       }

@@ -395,7 +395,7 @@ int cdd_load(char *filename, char *header)
       if (cdd.toc.last)
       {
         /* CD-ROM track supported only for first track */
-        if (strcmp(type, "AUDIO"))
+        if (strcmp(type, "AUDIO") != 0)
           break;
 
         /* Audio track start LBA (adjusted with pregap length) */
@@ -412,7 +412,7 @@ int cdd_load(char *filename, char *header)
           cdd.sectorSize = 2352;
 
         /* unsupported track format */
-        else if (strcmp(type, "AUDIO"))
+        else if (strcmp(type, "AUDIO") != 0)
           break;
         
         /* Data track start LBA (2s pause assumed by default) */
@@ -1167,8 +1167,7 @@ void cdd_unload(void)
 
 #if defined(USE_LIBCHDR)
     chd_close(cdd.chd.file);
-    if (cdd.chd.hunk)
-      free(cdd.chd.hunk);
+    free(cdd.chd.hunk);
 #endif
 
     /* close CD tracks */

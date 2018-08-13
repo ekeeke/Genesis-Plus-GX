@@ -220,7 +220,7 @@
 
 #define GET_PC() (PC - (unsigned short *)svp->iram_rom)
 #define GET_PPC_OFFS() ((unsigned char *)PC - svp->iram_rom - 2)
-#define SET_PC(d) PC = (unsigned short *)svp->iram_rom + d
+#define SET_PC(d) PC = (unsigned short *)svp->iram_rom + (d)
 
 #define REG_READ(r) (((r) <= 4) ? ssp->gr[r].byte.h : read_handlers[r]())
 #define REG_WRITE(r,d) { \
@@ -830,7 +830,7 @@ static write_func_t write_handlers[16] =
 /* ----------------------------------------------------- */
 /* pointer register handlers */
 
-#define ptr1_read(op) ptr1_read_(op&3,(op>>6)&4,(op<<1)&0x18)
+#define ptr1_read(op) ptr1_read_((op)&3,((op)>>6)&4,((op)<<1)&0x18)
 
 static u32 ptr1_read_(int ri, int isj2, int modi3)
 {

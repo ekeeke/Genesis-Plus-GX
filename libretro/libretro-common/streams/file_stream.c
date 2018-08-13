@@ -534,8 +534,7 @@ int filestream_close(RFILE *stream)
    if (!stream)
       goto error;
 
-   if (stream->ext)
-      free(stream->ext);
+   free(stream->ext);
 
 #if  defined(PSP)
    if (stream->fd > 0)
@@ -625,8 +624,7 @@ int filestream_read_file(const char *path, void **buf, ssize_t *len)
 error:
    if (file)
       filestream_close(file);
-   if (content_buf)
-      free(content_buf);
+   free(content_buf);
    if (len)
       *len = -1;
    *buf = NULL;

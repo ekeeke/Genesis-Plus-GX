@@ -137,7 +137,7 @@ void _vorbis_block_ripcord(vorbis_block *vb){
 
 int vorbis_block_clear(vorbis_block *vb){
   _vorbis_block_ripcord(vb);
-  if(vb->localstore)_ogg_free(vb->localstore);
+  _ogg_free(vb->localstore);
 
   memset(vb,0,sizeof(*vb));
   return(0);
@@ -227,9 +227,9 @@ void vorbis_dsp_clear(vorbis_dsp_state *v){
 
     if(v->pcm){
       for(i=0;i<vi->channels;i++)
-	if(v->pcm[i])_ogg_free(v->pcm[i]);
+	  _ogg_free(v->pcm[i]);
       _ogg_free(v->pcm);
-      if(v->pcmret)_ogg_free(v->pcmret);
+      _ogg_free(v->pcmret);
     }
 
     /* free mode lookups; these are actually vorbis_look_mapping structs */

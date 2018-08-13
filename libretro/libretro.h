@@ -99,7 +99,7 @@ extern "C" {
 
 #define RETRO_DEVICE_TYPE_SHIFT         8
 #define RETRO_DEVICE_MASK               ((1 << RETRO_DEVICE_TYPE_SHIFT) - 1)
-#define RETRO_DEVICE_SUBCLASS(base, id) (((id + 1) << RETRO_DEVICE_TYPE_SHIFT) | base)
+#define RETRO_DEVICE_SUBCLASS(base, id) ((((id) + 1) << RETRO_DEVICE_TYPE_SHIFT) | (base))
 
 /* Input disabled. */
 #define RETRO_DEVICE_NONE         0
