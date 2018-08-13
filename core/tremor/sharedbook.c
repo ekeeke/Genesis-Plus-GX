@@ -282,8 +282,8 @@ ogg_int32_t *_book_unquantize(const static_codebook *b,int n,int *sparsemap,
 }
 
 void vorbis_staticbook_clear(static_codebook *b){
-  if(b->quantlist)_ogg_free(b->quantlist);
-  if(b->lengthlist)_ogg_free(b->lengthlist);
+  _ogg_free(b->quantlist);
+  _ogg_free(b->lengthlist);
   memset(b,0,sizeof(*b));
 
 }
@@ -296,12 +296,12 @@ void vorbis_staticbook_destroy(static_codebook *b){
 void vorbis_book_clear(codebook *b){
   /* static book is not cleared; we're likely called on the lookup and
      the static codebook belongs to the info struct */
-  if(b->valuelist)_ogg_free(b->valuelist);
-  if(b->codelist)_ogg_free(b->codelist);
+  _ogg_free(b->valuelist);
+  _ogg_free(b->codelist);
 
-  if(b->dec_index)_ogg_free(b->dec_index);
-  if(b->dec_codelengths)_ogg_free(b->dec_codelengths);
-  if(b->dec_firsttable)_ogg_free(b->dec_firsttable);
+  _ogg_free(b->dec_index);
+  _ogg_free(b->dec_codelengths);
+  _ogg_free(b->dec_firsttable);
 
   memset(b,0,sizeof(*b));
 }

@@ -613,7 +613,7 @@ static void bram_load(void)
     }
 
     /* check if internal backup RAM is correctly formatted */
-    if (memcmp(scd.bram + 0x2000 - 0x20, brm_format + 0x20, 0x20))
+    if (memcmp(scd.bram + 0x2000 - 0x20, brm_format + 0x20, 0x20) != 0)
     {
       /* clear internal backup RAM */
       memset(scd.bram, 0x00, 0x2000 - 0x40);
@@ -660,7 +660,7 @@ static void bram_load(void)
       }
 
       /* check if cartridge backup RAM is correctly formatted */
-      if (memcmp(scd.cartridge.area + scd.cartridge.mask + 1 - 0x20, brm_format + 0x20, 0x20))
+      if (memcmp(scd.cartridge.area + scd.cartridge.mask + 1 - 0x20, brm_format + 0x20, 0x20) != 0)
       {
         /* clear cartridge backup RAM */
         memset(scd.cartridge.area, 0x00, scd.cartridge.mask + 1);
@@ -1983,7 +1983,7 @@ void retro_get_system_av_info(struct retro_system_av_info *info)
 
 void retro_set_controller_port_device(unsigned port, unsigned device)
 {
-   if (port > 2)
+   if (port >= 2)
      return;
 
    switch(device)
@@ -2332,10 +2332,8 @@ void retro_unload_game(void)
       bram_save();
 
    audio_shutdown();
-   if (md_ntsc)
-      free(md_ntsc);
-   if (sms_ntsc)
-      free(sms_ntsc);
+   free(md_ntsc);
+   free(sms_ntsc);
 }
 
 unsigned retro_get_region(void) { return vdp_pal ? RETRO_REGION_PAL : RETRO_REGION_NTSC; }

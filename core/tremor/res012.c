@@ -57,7 +57,7 @@ void res0_free_look(vorbis_look_residue *i){
     vorbis_look_residue0 *look=(vorbis_look_residue0 *)i;
 
     for(j=0;j<look->parts;j++)
-      if(look->partbooks[j])_ogg_free(look->partbooks[j]);
+      _ogg_free(look->partbooks[j]);
     _ogg_free(look->partbooks);
     for(j=0;j<look->partvals;j++)
       _ogg_free(look->decodemap[j]);

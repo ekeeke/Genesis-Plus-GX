@@ -744,10 +744,10 @@ int ov_clear(OggVorbis_File *vf){
       _ogg_free(vf->vi);
       _ogg_free(vf->vc);
     }
-    if(vf->dataoffsets)_ogg_free(vf->dataoffsets);
-    if(vf->pcmlengths)_ogg_free(vf->pcmlengths);
-    if(vf->serialnos)_ogg_free(vf->serialnos);
-    if(vf->offsets)_ogg_free(vf->offsets);
+    _ogg_free(vf->dataoffsets);
+    _ogg_free(vf->pcmlengths);
+    _ogg_free(vf->serialnos);
+    _ogg_free(vf->offsets);
     ogg_sync_destroy(vf->oy);
 
     if(vf->datasource)(vf->callbacks.close_func)(vf->datasource);

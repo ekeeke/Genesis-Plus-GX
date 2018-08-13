@@ -56,7 +56,7 @@ static void _ogg_buffer_destroy(ogg_buffer_state *bs){
     while(bt){
       ogg_buffer *b=bt;
       bt=b->ptr.next;
-      if(b->data)_ogg_free(b->data);
+      _ogg_free(b->data);
       _ogg_free(b);
     }
     bs->unused_buffers=0;

@@ -26,13 +26,13 @@
 RFILE* rfopen(const char *path, char *mode)
 {
    unsigned int retro_mode = RFILE_MODE_READ_TEXT;
-   if (strstr(mode, "r"))
-      if (strstr(mode, "b"))
+   if (strchr(mode, 'r'))
+      if (strchr(mode, 'b'))
          retro_mode = RFILE_MODE_READ;
 
-   if (strstr(mode, "w"))
+   if (strchr(mode, 'w'))
       retro_mode = RFILE_MODE_WRITE;
-   if (strstr(mode, "+"))
+   if (strchr(mode, '+'))
       retro_mode = RFILE_MODE_READ_WRITE;
 
    return filestream_open(path, retro_mode, -1);

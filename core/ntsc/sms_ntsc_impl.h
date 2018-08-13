@@ -277,9 +277,9 @@ static void init( init_t* impl, sms_ntsc_setup_t const* setup )
 )
 
 #define YIQ_TO_RGB( y, i, q, to_rgb, type, r, g ) (\
-  r = (type) (y + to_rgb [0] * i + to_rgb [1] * q),\
-  g = (type) (y + to_rgb [2] * i + to_rgb [3] * q),\
-  (type) (y + to_rgb [4] * i + to_rgb [5] * q)\
+  r = (type) ((y) + to_rgb [0] * (i) + to_rgb [1] * (q)),\
+  g = (type) ((y) + to_rgb [2] * (i) + to_rgb [3] * (q)),\
+  (type) ((y) + to_rgb [4] * (i) + to_rgb [5] * (q))\
 )
 
 #define PACK_RGB( r, g, b ) ((r) << 21 | (g) << 11 | (b) << 1)
@@ -296,8 +296,8 @@ typedef struct pixel_info_t
 
 #if rescale_in > 1
   #define PIXEL_OFFSET_( ntsc, scaled ) \
-    (kernel_size / 2 + ntsc + (scaled != 0) + (rescale_out - scaled) % rescale_out + \
-        (kernel_size * 2 * scaled))
+    (kernel_size / 2 + (ntsc) + ((scaled) != 0) + (rescale_out - (scaled)) % rescale_out + \
+        (kernel_size * 2 * (scaled)))
 
   #define PIXEL_OFFSET( ntsc, scaled ) \
     PIXEL_OFFSET_( ((ntsc) - (scaled) / rescale_out * rescale_in),\
