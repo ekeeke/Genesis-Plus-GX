@@ -3,7 +3,7 @@
  *
  *  Genesis Plus GX libretro port
  *
- *  Copyright Eke-Eke (2007-2017)
+ *  Copyright Eke-Eke (2007-2018)
  *
  *  Copyright Daniel De Matteis (2012-2016)
  *
@@ -1983,7 +1983,7 @@ void retro_get_system_av_info(struct retro_system_av_info *info)
 
 void retro_set_controller_port_device(unsigned port, unsigned device)
 {
-   if (port > 2)
+   if (port > 1)
      return;
 
    switch(device)
