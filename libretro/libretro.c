@@ -3,7 +3,7 @@
  *
  *  Genesis Plus GX libretro port
  *
- *  Copyright Eke-Eke (2007-2017)
+ *  Copyright Eke-Eke (2007-2018)
  *
  *  Copyright Daniel De Matteis (2012-2016)
  *
@@ -889,7 +889,7 @@ static void check_variables(void)
     char slash = '/';
 #endif
 
-   if (!strcmp(var.value, "per bios"))
+   if (!var.value || !strcmp(var.value, "per bios"))
    {
      snprintf(CD_BRAM_EU, sizeof(CD_BRAM_EU), "%s%cscd_E.brm", save_dir, slash);
      snprintf(CD_BRAM_US, sizeof(CD_BRAM_US), "%s%cscd_U.brm", save_dir, slash);
@@ -907,19 +907,19 @@ static void check_variables(void)
   environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
   {
     orig_value = config.system;
-    if (!strcmp(var.value, "sg-1000"))
+    if (var.value && !strcmp(var.value, "sg-1000"))
       config.system = SYSTEM_SG;
-    else if (!strcmp(var.value, "sg-1000 II"))
+    else if (var.value && !strcmp(var.value, "sg-1000 II"))
       config.system = SYSTEM_SGII;
-    else if (!strcmp(var.value, "mark-III"))
+    else if (var.value && !strcmp(var.value, "mark-III"))
       config.system = SYSTEM_MARKIII;
-    else if (!strcmp(var.value, "master system"))
+    else if (var.value && !strcmp(var.value, "master system"))
       config.system = SYSTEM_SMS;
-    else if (!strcmp(var.value, "master system II"))
+    else if (var.value && !strcmp(var.value, "master system II"))
       config.system = SYSTEM_SMS2;
-    else if (!strcmp(var.value, "game gear"))
+    else if (var.value && !strcmp(var.value, "game gear"))
       config.system = SYSTEM_GG;
-    else if (!strcmp(var.value, "mega drive / genesis"))
+    else if (var.value && !strcmp(var.value, "mega drive / genesis"))
       config.system = SYSTEM_MD;
     else
       config.system = 0;
@@ -956,7 +956,7 @@ static void check_variables(void)
   environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
   {
     orig_value = config.bios;
-    if (!strcmp(var.value, "enabled"))
+    if (var.value && !strcmp(var.value, "enabled"))
       config.bios = 3;
     else
       config.bios = 0;
@@ -974,11 +974,11 @@ static void check_variables(void)
   environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
   {
     orig_value = config.region_detect;
-    if (!strcmp(var.value, "ntsc-u"))
+    if (var.value && !strcmp(var.value, "ntsc-u"))
       config.region_detect = 1;
-    else if (!strcmp(var.value, "pal"))
+    else if (var.value && !strcmp(var.value, "pal"))
       config.region_detect = 2;
-    else if (!strcmp(var.value, "ntsc-j"))
+    else if (var.value && !strcmp(var.value, "ntsc-j"))
       config.region_detect = 3;
     else
       config.region_detect = 0;
@@ -1054,7 +1054,7 @@ static void check_variables(void)
   var.key = "genesis_plus_gx_force_dtack";
   environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
   {
-    if (!strcmp(var.value, "enabled"))
+    if (!var.value || !strcmp(var.value, "enabled"))
       config.force_dtack = 1;
     else
       config.force_dtack = 0;
@@ -1063,7 +1063,7 @@ static void check_variables(void)
   var.key = "genesis_plus_gx_addr_error";
   environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
   {
-    if (!strcmp(var.value, "enabled"))
+    if (!var.value || !strcmp(var.value, "enabled"))
       m68k.aerr_enabled = config.addr_error = 1;
     else
       m68k.aerr_enabled = config.addr_error = 0;
@@ -1073,11 +1073,11 @@ static void check_variables(void)
   environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
   {
     orig_value = config.lock_on;
-    if (!strcmp(var.value, "game genie"))
+    if (var.value && !strcmp(var.value, "game genie"))
       config.lock_on = TYPE_GG;
-    else if (!strcmp(var.value, "action replay (pro)"))
+    else if (var.value && !strcmp(var.value, "action replay (pro)"))
       config.lock_on = TYPE_AR;
-    else if (!strcmp(var.value, "sonic & knuckles"))
+    else if (var.value && !strcmp(var.value, "sonic & knuckles"))
       config.lock_on = TYPE_SK;
     else
       config.lock_on = 0;
@@ -1093,9 +1093,9 @@ static void check_variables(void)
   environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
   {
     orig_value = config.ym2413;
-    if (!strcmp(var.value, "enabled"))
+    if (var.value && !strcmp(var.value, "enabled"))
       config.ym2413 = 1;
-    else if (!strcmp(var.value, "disabled"))
+    else if (var.value && !strcmp(var.value, "disabled"))
       config.ym2413 = 0;
     else
       config.ym2413 = 2;
@@ -1114,20 +1114,20 @@ static void check_variables(void)
   var.key = "genesis_plus_gx_sound_output";
   environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
   {
-    if (!strcmp(var.value, "mono"))
+    if (var.value && !strcmp(var.value, "mono"))
       config.mono = 1;
-    else if (!strcmp(var.value, "stereo"))
+    else if (!var.value || !strcmp(var.value, "stereo"))
       config.mono = 0; 
   }
 
   var.key = "genesis_plus_gx_audio_filter";
   environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
   {
-    if (!strcmp(var.value, "low-pass"))
+    if (var.value && !strcmp(var.value, "low-pass"))
       config.filter = 1;
 
 #if HAVE_EQ 
-    else if (!strcmp(var.value, "EQ"))
+    else if (var.value && !strcmp(var.value, "EQ"))
       config.filter = 2;
 #endif
 
@@ -1138,14 +1138,14 @@ static void check_variables(void)
   var.key = "genesis_plus_gx_lowpass_range";
   environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
   {
-    config.lp_range = (atoi(var.value) * 65536) / 100;
+    config.lp_range = (!var.value) ? 60 : ((atoi(var.value) * 65536) / 100);
   }
 
 #if HAVE_EQ
   var.key = "genesis_plus_gx_audio_eq_low";
   environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
   {
-    uint8_t new_lg = atoi(var.value);
+    uint8_t new_lg = (!var.value) ? 100 : atoi(var.value);
     if (new_lg != config.lg) restart_eq = true;
     config.lg = new_lg;
   }
@@ -1153,7 +1153,7 @@ static void check_variables(void)
   var.key = "genesis_plus_gx_audio_eq_mid";
   environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
   {
-    uint8_t new_mg = atoi(var.value);
+    uint8_t new_mg = (!var.value) ? 100 : atoi(var.value);
     if (new_mg != config.mg) restart_eq = true;
     config.mg = new_mg;
   }
@@ -1161,7 +1161,7 @@ static void check_variables(void)
   var.key = "genesis_plus_gx_audio_eq_high";
   environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
   {
-    uint8_t new_hg = atoi(var.value);
+    uint8_t new_hg = (!var.value) ? 100 : atoi(var.value);
     if (new_hg != config.hg) restart_eq = true;
     config.hg = new_hg;
 
@@ -1173,20 +1173,15 @@ static void check_variables(void)
   {
 #ifdef HAVE_YM3438_CORE
     orig_value = config.ym3438;
-    if (!strcmp(var.value, "nuked (ym2612)"))
+    if (var.value && !strcmp(var.value, "nuked (ym2612)"))
     {
-      OPN2_SetChipType(ym3438_type_ym2612);
+      OPN2_SetChipType(ym3438_mode_ym2612);
       config.ym3438 = 1;
     }
-    else if (!strcmp(var.value, "nuked (asic ym3438)"))
+    else if (var.value && !strcmp(var.value, "nuked (ym3438)"))
     {
-      OPN2_SetChipType(ym3438_type_asic);
+      OPN2_SetChipType(ym3438_mode_readmode);
       config.ym3438 = 2;
-    }
-    else if (!strcmp(var.value, "nuked (discrete ym3438)"))
-    {
-      OPN2_SetChipType(ym3438_type_discrete);
-      config.ym3438 = 3;
     }
     else
     {
@@ -1200,12 +1195,12 @@ static void check_variables(void)
     }
 #endif
 
-    if (!strcmp(var.value, "mame (ym2612)"))
+    if (!var.value || !strcmp(var.value, "mame (ym2612)"))
     {
       config.ym2612 = YM2612_DISCRETE;
       YM2612Config(YM2612_DISCRETE);
     }
-    else if (!strcmp(var.value, "mame (asic ym3438)"))
+    else if (var.value && !strcmp(var.value, "mame (asic ym3438)"))
     {
       config.ym2612 = YM2612_INTEGRATED;
       YM2612Config(YM2612_INTEGRATED);
@@ -1222,27 +1217,27 @@ static void check_variables(void)
   {
     orig_value = config.ntsc;
 
-    if (strcmp(var.value, "disabled") == 0)
+    if (!var.value || !strcmp(var.value, "disabled"))
       config.ntsc = 0;
-    else if (strcmp(var.value, "monochrome") == 0)
+    else if (var.value && !strcmp(var.value, "monochrome"))
     {
       config.ntsc = 1;
       sms_ntsc_init(sms_ntsc, &sms_ntsc_monochrome);
       md_ntsc_init(md_ntsc,   &md_ntsc_monochrome);
     }
-    else if (strcmp(var.value, "composite") == 0)
+    else if (var.value && !strcmp(var.value, "composite"))
     {
       config.ntsc = 1;
       sms_ntsc_init(sms_ntsc, &sms_ntsc_composite);
       md_ntsc_init(md_ntsc,   &md_ntsc_composite);
     }
-    else if (strcmp(var.value, "svideo") == 0)
+    else if (var.value && !strcmp(var.value, "svideo"))
     {
       config.ntsc = 1;
       sms_ntsc_init(sms_ntsc, &sms_ntsc_svideo);
       md_ntsc_init(md_ntsc,   &md_ntsc_svideo);
     }
-    else if (strcmp(var.value, "rgb") == 0)
+    else if (var.value && !strcmp(var.value, "rgb"))
     {
       config.ntsc = 1;
       sms_ntsc_init(sms_ntsc, &sms_ntsc_rgb);
@@ -1256,9 +1251,9 @@ static void check_variables(void)
   var.key = "genesis_plus_gx_lcd_filter";
   environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
   {
-    if (strcmp(var.value, "disabled") == 0)
+    if (!var.value || !strcmp(var.value, "disabled"))
       config.lcd = 0;
-    else if (strcmp(var.value, "enabled") == 0)
+    else if (var.value && !strcmp(var.value, "enabled"))
       config.lcd = (uint8)(0.80 * 256);
   }
 
@@ -1266,13 +1261,13 @@ static void check_variables(void)
   environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
   {
     orig_value = config.overscan;
-    if (strcmp(var.value, "disabled") == 0)
+    if (!var.value || !strcmp(var.value, "disabled"))
       config.overscan = 0;
-    else if (strcmp(var.value, "top/bottom") == 0)
+    else if (var.value && !strcmp(var.value, "top/bottom"))
       config.overscan = 1;
-    else if (strcmp(var.value, "left/right") == 0)
+    else if (var.value && !strcmp(var.value, "left/right"))
       config.overscan = 2;
-    else if (strcmp(var.value, "full") == 0)
+    else if (var.value && !strcmp(var.value, "full"))
       config.overscan = 3;
     if (orig_value != config.overscan)
       update_viewports = true;
@@ -1282,9 +1277,9 @@ static void check_variables(void)
   environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
   {
     orig_value = config.gg_extra;
-    if (strcmp(var.value, "disabled") == 0)
+    if (!var.value || !strcmp(var.value, "disabled"))
       config.gg_extra = 0;
-    else if (strcmp(var.value, "enabled") == 0)
+    else if (var.value && !strcmp(var.value, "enabled"))
       config.gg_extra = 1;
     if (orig_value != config.gg_extra)
       update_viewports = true;
@@ -1294,9 +1289,9 @@ static void check_variables(void)
   environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
   {
     orig_value = config.aspect_ratio;
-    if (strcmp(var.value, "NTSC PAR") == 0)
+    if (var.value && !strcmp(var.value, "NTSC PAR"))
       config.aspect_ratio = 1;
-    else if (strcmp(var.value, "PAL PAR") == 0)
+    else if (var.value && !strcmp(var.value, "PAL PAR"))
       config.aspect_ratio = 2;
     else
       config.aspect_ratio = 0;
@@ -1308,7 +1303,7 @@ static void check_variables(void)
   environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
   {
     orig_value = config.render;
-    if (strcmp(var.value, "single field") == 0)
+    if (!var.value || !strcmp(var.value, "single field"))
       config.render = 0;
     else
       config.render = 1;
@@ -1319,7 +1314,7 @@ static void check_variables(void)
   var.key = "genesis_plus_gx_gun_cursor";
   environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
   {
-    if (strcmp(var.value, "disabled") == 0)
+    if (!var.value || !strcmp(var.value, "disabled"))
       config.gun_cursor = 0;
     else
       config.gun_cursor = 1;
@@ -1328,7 +1323,7 @@ static void check_variables(void)
   var.key = "genesis_plus_gx_invert_mouse";
   environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
   {
-    if (strcmp(var.value, "disabled") == 0)
+    if (!var.value || !strcmp(var.value, "disabled"))
       config.invert_mouse = 0;
     else
       config.invert_mouse = 1;
@@ -1338,15 +1333,15 @@ static void check_variables(void)
   var.key = "genesis_plus_gx_overclock";
   environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
   {
-    if (strcmp(var.value, "100%") == 0)
+    if (!var.value || !strcmp(var.value, "100%"))
       config.overclock = 100;
-    else if (strcmp(var.value, "125%") == 0)
+    else if (var.value && !strcmp(var.value, "125%"))
       config.overclock = 125;
-    else if (strcmp(var.value, "150%") == 0)
+    else if (var.value && !strcmp(var.value, "150%"))
       config.overclock = 150;
-    else if (strcmp(var.value, "175%") == 0)
+    else if (var.value && !strcmp(var.value, "175%"))
       config.overclock = 175;
-    else if (strcmp(var.value, "200%") == 0)
+    else if (var.value && !strcmp(var.value, "200%"))
       config.overclock = 200;
 
     if (system_hw)
@@ -1357,7 +1352,7 @@ static void check_variables(void)
   var.key = "genesis_plus_gx_no_sprite_limit";
   environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
   {
-    if (strcmp(var.value, "disabled") == 0)
+    if (!var.value || !strcmp(var.value, "disabled"))
       config.no_sprite_limit = 0;
     else
       config.no_sprite_limit = 1;
@@ -1786,7 +1781,7 @@ void retro_set_environment(retro_environment_t cb)
       { "genesis_plus_gx_lock_on", "Cartridge lock-on; disabled|game genie|action replay (pro)|sonic & knuckles" },
       { "genesis_plus_gx_ym2413", "Master System FM (YM2413); auto|disabled|enabled" },
 #ifdef HAVE_YM3438_CORE
-      { "genesis_plus_gx_ym2612", "Mega Drive / Genesis FM; mame (ym2612)|mame (asic ym3438)|mame (enhanced ym3438)|nuked (ym2612)|nuked (asic ym3438)|nuked (discrete ym3438)" },
+      { "genesis_plus_gx_ym2612", "Mega Drive / Genesis FM; mame (ym2612)|mame (asic ym3438)|mame (enhanced ym3438)|nuked (ym2612)|nuked (ym3438)" },
 #else
       { "genesis_plus_gx_ym2612", "Mega Drive / Genesis FM; mame (ym2612)|mame (asic ym3438)|mame (enhanced ym3438)" },
 #endif
@@ -2014,7 +2009,7 @@ void retro_get_system_av_info(struct retro_system_av_info *info)
 
 void retro_set_controller_port_device(unsigned port, unsigned device)
 {
-   if (port > 2)
+   if (port > 1)
      return;
 
    switch(device)

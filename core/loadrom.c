@@ -3,7 +3,7 @@
  *  ROM Loading Support
  *
  *  Copyright (C) 1998-2003  Charles Mac Donald (original code)
- *  Copyright (C) 2007-2017  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2007-2018  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -311,7 +311,7 @@ void getrominfo(char *romheader)
     }
 
     /* if found, get infos from header */
-    if (offset)
+    if ((offset > 0) && (offset < cart.romsize))
     {
       /* checksum */
       rominfo.checksum = romheader[offset + 0x0a] | (romheader[offset + 0x0b] << 8);

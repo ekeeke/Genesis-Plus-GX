@@ -69,7 +69,7 @@ static void sdl_sound_callback(void *userdata, Uint8 *stream, int len)
 static int sdl_sound_init()
 {
   int n;
-  SDL_AudioSpec as_desired, as_obtained;
+  SDL_AudioSpec as_desired;
 
   if(SDL_InitSubSystem(SDL_INIT_AUDIO) < 0) {
     SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", "SDL Audio initialization failed", sdl_video.window);
@@ -82,13 +82,8 @@ static int sdl_sound_init()
   as_desired.samples  = SOUND_SAMPLES_SIZE;
   as_desired.callback = sdl_sound_callback;
 
-  if(SDL_OpenAudio(&as_desired, &as_obtained) == -1) {
+  if(SDL_OpenAudio(&as_desired, NULL) < 0) {
     SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", "SDL Audio open failed", sdl_video.window);
-    return 0;
-  }
-
-  if(as_desired.samples != as_obtained.samples) {
-    SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", "SDL Audio wrong setup", sdl_video.window);
     return 0;
   }
 
@@ -139,13 +134,23 @@ sms_ntsc_t *sms_ntsc;
 
 static int sdl_video_init()
 {
+#if defined(USE_8BPP_RENDERING)
+  const unsigned long surface_format = SDL_PIXELFORMAT_RGB332;
+#elif defined(USE_15BPP_RENDERING)
+  const unsigned long surface_format = SDL_PIXELFORMAT_RGB555;
+#elif defined(USE_16BPP_RENDERING)
+  const unsigned long surface_format = SDL_PIXELFORMAT_RGB565;
+#elif defined(USE_32BPP_RENDERING)
+  const unsigned long surface_format = SDL_PIXELFORMAT_RGB888;
+#endif
+
   if(SDL_InitSubSystem(SDL_INIT_VIDEO) < 0) {
     SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", "SDL Video initialization failed", sdl_video.window);
     return 0;
   }
-  sdl_video.window = SDL_CreateWindow("Genesis Plus GX", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, VIDEO_WIDTH, VIDEO_HEIGHT, 0);
+  sdl_video.window = SDL_CreateWindow("Genesis Plus GX", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, VIDEO_WIDTH, VIDEO_HEIGHT, fullscreen);
   sdl_video.surf_screen  = SDL_GetWindowSurface(sdl_video.window);
-  sdl_video.surf_bitmap = SDL_CreateRGBSurface(SDL_SWSURFACE, 720, 576, 16, 0, 0, 0, 0);
+  sdl_video.surf_bitmap = SDL_CreateRGBSurfaceWithFormat(0, 720, 576, SDL_BITSPERPIXEL(surface_format), surface_format);
   sdl_video.frames_rendered = 0;
   SDL_ShowCursor(0);
   return 1;
@@ -176,22 +181,22 @@ static void sdl_video_update()
     sdl_video.srect.h = bitmap.viewport.h+2*bitmap.viewport.y;
     sdl_video.srect.x = 0;
     sdl_video.srect.y = 0;
-    if (sdl_video.srect.w > VIDEO_WIDTH)
+    if (sdl_video.srect.w > sdl_video.surf_screen->w)
     {
-      sdl_video.srect.x = (sdl_video.srect.w - VIDEO_WIDTH) / 2;
-      sdl_video.srect.w = VIDEO_WIDTH;
+      sdl_video.srect.x = (sdl_video.srect.w - sdl_video.surf_screen->w) / 2;
+      sdl_video.srect.w = sdl_video.surf_screen->w;
     }
-    if (sdl_video.srect.h > VIDEO_HEIGHT)
+    if (sdl_video.srect.h > sdl_video.surf_screen->h)
     {
-      sdl_video.srect.y = (sdl_video.srect.h - VIDEO_HEIGHT) / 2;
-      sdl_video.srect.h = VIDEO_HEIGHT;
+      sdl_video.srect.y = (sdl_video.srect.h - sdl_video.surf_screen->h) / 2;
+      sdl_video.srect.h = sdl_video.surf_screen->h;
     }
 
     /* destination bitmap */
     sdl_video.drect.w = sdl_video.srect.w;
     sdl_video.drect.h = sdl_video.srect.h;
-    sdl_video.drect.x = (VIDEO_WIDTH - sdl_video.drect.w) / 2;
-    sdl_video.drect.y = (VIDEO_HEIGHT - sdl_video.drect.h) / 2;
+    sdl_video.drect.x = (sdl_video.surf_screen->w - sdl_video.drect.w) / 2;
+    sdl_video.drect.y = (sdl_video.surf_screen->h - sdl_video.drect.h) / 2;
 
     /* clear destination surface */
     SDL_FillRect(sdl_video.surf_screen, 0, 0);
@@ -245,10 +250,8 @@ static void sdl_video_update()
 
 static void sdl_video_close()
 {
-  if (sdl_video.surf_bitmap)
-    SDL_FreeSurface(sdl_video.surf_bitmap);
-  if (sdl_video.surf_screen)
-    SDL_FreeSurface(sdl_video.surf_screen);
+  SDL_FreeSurface(sdl_video.surf_bitmap);
+  SDL_DestroyWindow(sdl_video.window);
 }
 
 /* Timer Sync */
@@ -329,7 +332,9 @@ static int sdl_control_update(SDL_Keycode keystate)
       case SDLK_F2:
       {
         fullscreen = (fullscreen ? 0 : SDL_WINDOW_FULLSCREEN);
-	SDL_SetWindowFullscreen(sdl_video.window, fullscreen);
+        SDL_SetWindowFullscreen(sdl_video.window, fullscreen);
+        sdl_video.surf_screen  = SDL_GetWindowSurface(sdl_video.window);
+        bitmap.viewport.changed = 1;
         break;
       }
 
@@ -502,10 +507,10 @@ int sdl_input_update(void)
       int state = SDL_GetMouseState(&x,&y);
 
       /* X axis */
-      input.analog[joynum][0] =  x - (VIDEO_WIDTH-bitmap.viewport.w)/2;
+      input.analog[joynum][0] =  x - (sdl_video.surf_screen->w-bitmap.viewport.w)/2;
 
       /* Y axis */
-      input.analog[joynum][1] =  y - (VIDEO_HEIGHT-bitmap.viewport.h)/2;
+      input.analog[joynum][1] =  y - (sdl_video.surf_screen->h-bitmap.viewport.h)/2;
 
       /* TRIGGER, B, C (Menacer only), START (Menacer & Justifier only) */
       if(state & SDL_BUTTON_LMASK) input.pad[joynum] |= INPUT_A;
@@ -522,7 +527,7 @@ int sdl_input_update(void)
       int state = SDL_GetMouseState(&x, NULL);
 
       /* Range is [0;256], 128 being middle position */
-      input.analog[joynum][0] = x * 256 /VIDEO_WIDTH;
+      input.analog[joynum][0] = x * 256 /sdl_video.surf_screen->w;
 
       /* Button I -> 0 0 0 0 0 0 0 I*/
       if(state & SDL_BUTTON_LMASK) input.pad[joynum] |= INPUT_B;
@@ -617,8 +622,8 @@ int sdl_input_update(void)
       int state = SDL_GetMouseState(&x,&y);
 
       /* Calculate X Y axis values */
-      input.analog[0][0] = 0x3c  + (x * (0x17c-0x03c+1)) / VIDEO_WIDTH;
-      input.analog[0][1] = 0x1fc + (y * (0x2f7-0x1fc+1)) / VIDEO_HEIGHT;
+      input.analog[0][0] = 0x3c  + (x * (0x17c-0x03c+1)) / sdl_video.surf_screen->w;
+      input.analog[0][1] = 0x1fc + (y * (0x2f7-0x1fc+1)) / sdl_video.surf_screen->h;
 
       /* Map mouse buttons to player #1 inputs */
       if(state & SDL_BUTTON_MMASK) pico_current = (pico_current + 1) & 7;
@@ -635,8 +640,8 @@ int sdl_input_update(void)
       int state = SDL_GetMouseState(&x,&y);
 
       /* Calculate X Y axis values */
-      input.analog[0][0] = (x * 250) / VIDEO_WIDTH;
-      input.analog[0][1] = (y * 250) / VIDEO_HEIGHT;
+      input.analog[0][0] = (x * 250) / sdl_video.surf_screen->w;
+      input.analog[0][1] = (y * 250) / sdl_video.surf_screen->h;
 
       /* Map mouse buttons to player #1 inputs */
       if(state & SDL_BUTTON_RMASK) input.pad[0] |= INPUT_B;
@@ -651,8 +656,8 @@ int sdl_input_update(void)
       int state = SDL_GetMouseState(&x,&y);
 
       /* Calculate X Y axis values */
-      input.analog[0][0] = (x * 255) / VIDEO_WIDTH;
-      input.analog[0][1] = (y * 255) / VIDEO_HEIGHT;
+      input.analog[0][0] = (x * 255) / sdl_video.surf_screen->w;
+      input.analog[0][1] = (y * 255) / sdl_video.surf_screen->h;
 
       /* Map mouse buttons to player #1 inputs */
       if(state & SDL_BUTTON_LMASK) input.pad[0] |= INPUT_GRAPHIC_PEN;

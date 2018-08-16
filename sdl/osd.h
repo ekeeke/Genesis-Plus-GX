@@ -7,7 +7,6 @@
 #include <stdarg.h>
 #include <time.h>
 
-#include <SDL.h>
 #include <stdlib.h>
 
 #include "main.h"
