@@ -58,7 +58,6 @@
 #define ftello ftello64
 #endif
 #endif
-#endif
 #else
 #define FLAC__off_t off_t
 #endif
