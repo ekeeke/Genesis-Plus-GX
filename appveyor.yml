@@ -1,31 +1,33 @@
 version: 0.1.{build}
 
+shallow_clone: true
+
 image: Visual Studio 2017
 
 environment:
-  matrix:
-  - generator: "Visual Studio 15"
-    config: Release
-    platform: x86
-    arch: win32
-    output: win32\genesis_plus_gx_libretro.dll
-    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+  makefile_location: "."
+  makefile_name: makefile.libretro
+  target_name: genesis_plus_gx
 
-  - generator: "Visual Studio 15"
-    config: Release
-    platform: x64
-    arch: win32-x64
-    output: win32\genesis_plus_gx_libretro.dll
-    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+configuration:
+  - release
+
+platform:
+  - windows_msvc2017_uwp_x64
+  - windows_msvc2017_uwp_x86
+  - windows_msvc2017_uwp_arm
+  - windows_msvc2017_desktop_x64
+  - windows_msvc2017_desktop_x86
 
 init:
-  - git config --global core.autocrlf input
-
-before_build:
-  - git submodule update --init --recursive
+  - set Path=C:\msys64\usr\bin;%Path%
 
 build_script:
-  - msbuild libretro\msvc\msvc-2017.sln /t:build /p:Configuration="%config%";Platform="%platform%" /m /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
+  - cd %makefile_location%
+  - make -f %makefile_name% platform=%platform%
 
 artifacts:
-  - path: 'libretro\**\*.dll'
+  - path: '**\%target_name%*.dll'
+  - path: '**\%target_name%*.lib'
+  - path: '**\%target_name%*.pdb'
+  - path: '**\libretro.h'
