@@ -70,11 +70,12 @@
 #define RETRO_DEVICE_JUSTIFIERS           RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_LIGHTGUN, 2)
 #define RETRO_DEVICE_GRAPHIC_BOARD        RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_POINTER, 0)
 
+#include <libretro.h>
+#include <streams/file_stream.h>
+
 #include "shared.h"
-#include "libretro.h"
 #include "md_ntsc.h"
 #include "sms_ntsc.h"
-#include <streams/file_stream.h>
 
 #define STATIC_ASSERT(name, test) typedef struct { int assert_[(test)?1:-1]; } assert_ ## name ## _
 #define M68K_MAX_CYCLES 1107
@@ -201,10 +202,11 @@ void error(char * fmt, ...)
 
 int load_archive(char *filename, unsigned char *buffer, int maxsize, char *extension)
 {
-  int size, left;
+  int64_t left = 0;
+  int64_t size = 0;
 
   /* Open file */
-  RFILE *fd = filestream_open(filename, RFILE_MODE_READ, -1);
+  RFILE *fd = filestream_open(filename, RETRO_VFS_FILE_ACCESS_READ, RETRO_VFS_FILE_ACCESS_HINT_NONE);
 
   if (!fd)
   {
@@ -240,9 +242,7 @@ int load_archive(char *filename, unsigned char *buffer, int maxsize, char *exten
     return 0;
   }
   else if (size > maxsize)
-  {
     size = maxsize;
-  }
 
   if (log_cb)
     log_cb(RETRO_LOG_INFO, "INFORMATION - Loading %d bytes ...\n", size);
@@ -509,9 +509,28 @@ void osd_input_update(void)
 
 static void draw_cursor(int16_t x, int16_t y, uint16_t color)
 {
-  uint16_t *ptr = (uint16_t *)bitmap.data + ((bitmap.viewport.y + y) * bitmap.width) + x + bitmap.viewport.x;
-  ptr[-3*bitmap.width] = ptr[-bitmap.width] = ptr[bitmap.width] = ptr[3*bitmap.width] = ptr[-3] = ptr[-1] = ptr[1] = ptr[3] = color;
-  ptr[-2*bitmap.width] = ptr[2*bitmap.width] = ptr[-2] = ptr[2] = ptr[0] = 0xffff;
+   int i;
+
+   /* crosshair center position */   
+   uint16_t *ptr = (uint16_t *)bitmap.data + ((bitmap.viewport.y + y) * bitmap.width) + x + bitmap.viewport.x;
+
+   /* default crosshair dimension */
+   int x_start = x - 3;
+   int x_end  = x + 3;
+   int y_start = y - 3;
+   int y_end = y + 3;
+
+   /* framebuffer limits */
+   if (x_start < -bitmap.viewport.x) x_start = -bitmap.viewport.x;
+   if (x_end >= (bitmap.viewport.w + bitmap.viewport.x)) x_end = bitmap.viewport.w + bitmap.viewport.x - 1;
+   if (y_start < -bitmap.viewport.y) y_start = -bitmap.viewport.y;
+   if (y_end >= (bitmap.viewport.h + bitmap.viewport.y)) y_end = bitmap.viewport.h + bitmap.viewport.y - 1;
+
+   /* draw crosshair */
+   for (i = (x_start - x); i <= (x_end - x); i++)
+      ptr[i] = (i & 1) ? color : 0xffff;
+   for (i = (y_start - y); i <= (y_end - y); i++)
+      ptr[i * bitmap.width] = (i & 1) ? color : 0xffff;
 }
 
 static void init_bitmap(void)
@@ -586,13 +605,13 @@ static void bram_load(void)
     switch (region_code)
     {
        case REGION_JAPAN_NTSC:
-          fp = filestream_open(CD_BRAM_JP, RFILE_MODE_READ, -1);
+          fp = filestream_open(CD_BRAM_JP, RETRO_VFS_FILE_ACCESS_READ, RETRO_VFS_FILE_ACCESS_HINT_NONE);
           break;
        case REGION_EUROPE:
-          fp = filestream_open(CD_BRAM_EU, RFILE_MODE_READ, -1);
+          fp = filestream_open(CD_BRAM_EU, RETRO_VFS_FILE_ACCESS_READ, RETRO_VFS_FILE_ACCESS_HINT_NONE);
           break;
        case REGION_USA:
-          fp = filestream_open(CD_BRAM_US, RFILE_MODE_READ, -1);
+          fp = filestream_open(CD_BRAM_US, RETRO_VFS_FILE_ACCESS_READ, RETRO_VFS_FILE_ACCESS_HINT_NONE);
           break;
        default:
           return;
@@ -632,7 +651,7 @@ static void bram_load(void)
     /* automatically load cartridge backup RAM (if enabled) */
     if (scd.cartridge.id)
     {
-      fp = filestream_open(CART_BRAM, RFILE_MODE_READ, -1);
+      fp = filestream_open(CART_BRAM, RETRO_VFS_FILE_ACCESS_READ, RETRO_VFS_FILE_ACCESS_HINT_NONE);
       if (fp != NULL)
       {
         int filesize = scd.cartridge.mask + 1;
@@ -688,13 +707,13 @@ static void bram_save(void)
         switch (region_code)
         {
           case REGION_JAPAN_NTSC:
-            fp = filestream_open(CD_BRAM_JP, RFILE_MODE_WRITE, -1);
+            fp = filestream_open(CD_BRAM_JP, RETRO_VFS_FILE_ACCESS_WRITE, RETRO_VFS_FILE_ACCESS_HINT_NONE);
             break;
           case REGION_EUROPE:
-            fp = filestream_open(CD_BRAM_EU, RFILE_MODE_WRITE, -1);
+            fp = filestream_open(CD_BRAM_EU, RETRO_VFS_FILE_ACCESS_WRITE, RETRO_VFS_FILE_ACCESS_HINT_NONE);
             break;
           case REGION_USA:
-            fp = filestream_open(CD_BRAM_US, RFILE_MODE_WRITE, -1);
+            fp = filestream_open(CD_BRAM_US, RETRO_VFS_FILE_ACCESS_WRITE, RETRO_VFS_FILE_ACCESS_HINT_NONE);
             break;
           default:
             return;
@@ -717,7 +736,7 @@ static void bram_save(void)
       /* check if it is correctly formatted before saving */
       if (!memcmp(scd.cartridge.area + scd.cartridge.mask + 1 - 0x20, brm_format + 0x20, 0x20))
       {
-        fp = filestream_open(CART_BRAM, RFILE_MODE_WRITE, -1);
+        fp = filestream_open(CART_BRAM, RETRO_VFS_FILE_ACCESS_WRITE, RETRO_VFS_FILE_ACCESS_HINT_NONE);
         if (fp != NULL)
         {
           int filesize = scd.cartridge.mask + 1;
@@ -1751,6 +1770,7 @@ unsigned retro_api_version(void) { return RETRO_API_VERSION; }
 
 void retro_set_environment(retro_environment_t cb)
 {
+   struct retro_vfs_interface_info vfs_iface_info;
    static const struct retro_variable vars[] = {
       { "genesis_plus_gx_system_hw", "System hardware; auto|sg-1000|sg-1000 II|mark-III|master system|master system II|game gear|mega drive / genesis" },
       { "genesis_plus_gx_region_detect", "System region; auto|ntsc-u|pal|ntsc-j" },
@@ -1949,6 +1969,12 @@ void retro_set_environment(retro_environment_t cb)
    cb(RETRO_ENVIRONMENT_SET_VARIABLES, (void*)vars);
    cb(RETRO_ENVIRONMENT_SET_CONTROLLER_INFO, (void*)ports);
    cb(RETRO_ENVIRONMENT_SET_INPUT_DESCRIPTORS, (void*)desc);
+
+   vfs_iface_info.required_interface_version = 1;
+   vfs_iface_info.iface                      = NULL;
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VFS_INTERFACE, &vfs_iface_info))
+	   filestream_vfs_init(&vfs_iface_info);
+
 }
 
 void retro_set_video_refresh(retro_video_refresh_t cb) { video_cb = cb; }
@@ -2198,7 +2224,7 @@ void retro_cheat_set(unsigned index, bool enabled, const char *code)
 bool retro_load_game(const struct retro_game_info *info)
 {
    int i;
-   const char *dir = NULL;
+   char *dir = NULL;
 #if defined(_WIN32)
    char slash      = '\\';
 #else
@@ -2384,7 +2410,10 @@ size_t retro_get_memory_size(unsigned id)
         }
       }
       case RETRO_MEMORY_SYSTEM_RAM:
-         return 0x10000;
+         if (system_hw == SYSTEM_SMS || system_hw == SYSTEM_SMS2 || system_hw == SYSTEM_GG || system_hw == SYSTEM_GGMS)
+            return 0x02000;
+         else
+            return 0x10000;
       default:
          return 0;
    }

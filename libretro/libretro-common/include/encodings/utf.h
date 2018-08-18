@@ -1,7 +1,7 @@
 /* Copyright  (C) 2010-2018 The RetroArch team
  *
  * ---------------------------------------------------------------------------------------
- * The following license statement only applies to this file (strl.h).
+ * The following license statement only applies to this file (utf.h).
  * ---------------------------------------------------------------------------------------
  *
  * Permission is hereby granted, free of charge,
@@ -20,41 +20,48 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef __LIBRETRO_SDK_COMPAT_STRL_H
-#define __LIBRETRO_SDK_COMPAT_STRL_H
+#ifndef _LIBRETRO_ENCODINGS_UTF_H
+#define _LIBRETRO_ENCODINGS_UTF_H
 
-#include <string.h>
+#include <stdint.h>
 #include <stddef.h>
 
-#if defined(RARCH_INTERNAL) && defined(HAVE_CONFIG_H)
-#include "../../../config.h"
-#endif
+#include <boolean.h>
 
 #include <retro_common_api.h>
 
 RETRO_BEGIN_DECLS
 
-#ifdef __MACH__
-#ifndef HAVE_STRL
-#define HAVE_STRL
-#endif
-#endif
+enum CodePage
+{
+   CODEPAGE_LOCAL = 0, /* CP_ACP */
+   CODEPAGE_UTF8 = 65001 /* CP_UTF8 */
+};
 
-#ifndef HAVE_STRL
-/* Avoid possible naming collisions during link since
- * we prefer to use the actual name. */
-#define strlcpy(dst, src, size) strlcpy_retro__(dst, src, size)
+size_t utf8_conv_utf32(uint32_t *out, size_t out_chars,
+      const char *in, size_t in_size);
 
-#define strlcat(dst, src, size) strlcat_retro__(dst, src, size)
+bool utf16_conv_utf8(uint8_t *out, size_t *out_chars,
+      const uint16_t *in, size_t in_size);
 
-size_t strlcpy(char *dest, const char *source, size_t size);
-size_t strlcat(char *dest, const char *source, size_t size);
+size_t utf8len(const char *string);
 
-#endif
+size_t utf8cpy(char *d, size_t d_len, const char *s, size_t chars);
 
-char *strldup(const char *s, size_t n);
+const char *utf8skip(const char *str, size_t chars);
+
+uint32_t utf8_walk(const char **string);
+
+bool utf16_to_char_string(const uint16_t *in, char *s, size_t len);
+
+char* utf8_to_local_string_alloc(const char *str);
+
+char* local_to_utf8_string_alloc(const char *str);
+
+wchar_t* utf8_to_utf16_string_alloc(const char *str);
+
+char* utf16_to_utf8_string_alloc(const wchar_t *str);
 
 RETRO_END_DECLS
 
 #endif
-

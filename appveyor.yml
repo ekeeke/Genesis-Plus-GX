@@ -1,0 +1,31 @@
+version: 0.1.{build}
+
+image: Visual Studio 2017
+
+environment:
+  matrix:
+  - generator: "Visual Studio 15"
+    config: Release
+    platform: x86
+    arch: win32
+    output: win32\genesis_plus_gx_libretro.dll
+    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+
+  - generator: "Visual Studio 15"
+    config: Release
+    platform: x64
+    arch: win32-x64
+    output: win32\genesis_plus_gx_libretro.dll
+    APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+
+init:
+  - git config --global core.autocrlf input
+
+before_build:
+  - git submodule update --init --recursive
+
+build_script:
+  - msbuild libretro\msvc\msvc-2017.sln /t:build /p:Configuration="%config%";Platform="%platform%" /m /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
+
+artifacts:
+  - path: 'libretro\**\*.dll'

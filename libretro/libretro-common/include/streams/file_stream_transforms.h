@@ -1,4 +1,4 @@
-/* Copyright  (C) 2010-2017 The RetroArch team
+/* Copyright  (C) 2010-2018 The RetroArch team
 *
 * ---------------------------------------------------------------------------------------
 * The following license statement only applies to this file (file_stream_transforms.h).
@@ -23,14 +23,27 @@
 #ifndef __LIBRETRO_SDK_FILE_STREAM_TRANSFORMS_H
 #define __LIBRETRO_SDK_FILE_STREAM_TRANSFORMS_H
 
-#include <retro_common_api.h>
-
-#include <streams/file_stream.h>
+#include <stdint.h>
 #include <string.h>
+#include <retro_common_api.h>
+#include <streams/file_stream.h>
 
 RETRO_BEGIN_DECLS
 
 #define FILE RFILE
+
+#undef fopen
+#undef fclose
+#undef ftell
+#undef fseek
+#undef fread
+#undef fgets
+#undef fgetc
+#undef fwrite
+#undef fputc
+#undef fprintf
+#undef ferror
+#undef feof
 
 #define fopen rfopen
 #define fclose rfclose
@@ -38,23 +51,38 @@ RETRO_BEGIN_DECLS
 #define fseek rfseek
 #define fread rfread
 #define fgets rfgets
+#define fgetc rfgetc
 #define fwrite rfwrite
+#define fputc rfputc
+#define fprintf rfprintf
+#define ferror rferror
+#define feof rfeof
 
-RFILE* rfopen(const char *path, char *mode);
+RFILE* rfopen(const char *path, const char *mode);
 
 int rfclose(RFILE* stream);
 
-long rftell(RFILE* stream);
+int64_t rftell(RFILE* stream);
 
-int rfseek(RFILE* stream, long offset, int origin);
+int64_t rfseek(RFILE* stream, int64_t offset, int origin);
 
-size_t rfread(void* buffer,
-   size_t elementSize, size_t elementCount, RFILE* stream);
+int64_t rfread(void* buffer,
+   size_t elem_size, size_t elem_count, RFILE* stream);
 
 char *rfgets(char *buffer, int maxCount, RFILE* stream);
 
-size_t rfwrite(void const* buffer,
-   size_t elementSize, size_t elementCount, RFILE* stream);
+int rfgetc(RFILE* stream);
+
+int64_t rfwrite(void const* buffer,
+   size_t elem_size, size_t elem_count, RFILE* stream);
+
+int rfputc(int character, RFILE * stream);
+
+int rfprintf(RFILE * stream, const char * format, ...);
+
+int rferror(RFILE* stream);
+
+int rfeof(RFILE* stream);
 
 RETRO_END_DECLS
 
