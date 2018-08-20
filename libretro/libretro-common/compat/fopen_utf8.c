@@ -1,7 +1,7 @@
 /* Copyright  (C) 2010-2018 The RetroArch team
  *
  * ---------------------------------------------------------------------------------------
- * The following license statement only applies to this file (strl.h).
+ * The following license statement only applies to this file (fopen_utf8.c).
  * ---------------------------------------------------------------------------------------
  *
  * Permission is hereby granted, free of charge,
@@ -20,41 +20,41 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef __LIBRETRO_SDK_COMPAT_STRL_H
-#define __LIBRETRO_SDK_COMPAT_STRL_H
+#include <compat/fopen_utf8.h>
+#include <encodings/utf.h>
+#include <stdio.h>
+#include <stdlib.h>
 
-#include <string.h>
-#include <stddef.h>
-
-#if defined(RARCH_INTERNAL) && defined(HAVE_CONFIG_H)
-#include "../../../config.h"
-#endif
-
-#include <retro_common_api.h>
-
-RETRO_BEGIN_DECLS
-
-#ifdef __MACH__
-#ifndef HAVE_STRL
-#define HAVE_STRL
+#if defined(_WIN32_WINNT) && _WIN32_WINNT < 0x0500 || defined(_XBOX)
+#ifndef LEGACY_WIN32
+#define LEGACY_WIN32
 #endif
 #endif
 
-#ifndef HAVE_STRL
-/* Avoid possible naming collisions during link since
- * we prefer to use the actual name. */
-#define strlcpy(dst, src, size) strlcpy_retro__(dst, src, size)
+#ifdef _WIN32
+#undef fopen
 
-#define strlcat(dst, src, size) strlcat_retro__(dst, src, size)
+void *fopen_utf8(const char * filename, const char * mode)
+{
+#if defined(_XBOX)
+   return fopen(filename, mode);
+#elif defined(LEGACY_WIN32)
+   FILE             *ret = NULL;
+   char * filename_local = utf8_to_local_string_alloc(filename);
 
-size_t strlcpy(char *dest, const char *source, size_t size);
-size_t strlcat(char *dest, const char *source, size_t size);
-
+   if (!filename_local)
+      return NULL;
+   ret = fopen(filename_local, mode);
+   if (filename_local)
+      free(filename_local);
+   return ret;
+#else
+   wchar_t * filename_w = utf8_to_utf16_string_alloc(filename);
+   wchar_t * mode_w = utf8_to_utf16_string_alloc(mode);
+   FILE* ret = _wfopen(filename_w, mode_w);
+   free(filename_w);
+   free(mode_w);
+   return ret;
 #endif
-
-char *strldup(const char *s, size_t n);
-
-RETRO_END_DECLS
-
+}
 #endif
-

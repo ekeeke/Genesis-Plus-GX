@@ -1,4 +1,4 @@
-/* Copyright  (C) 2010-2017 The RetroArch team
+/* Copyright  (C) 2010-2018 The RetroArch team
  *
  * ---------------------------------------------------------------------------------------
  * The following license statement only applies to this file (strcasestr.h).
@@ -35,7 +35,7 @@
 
 RETRO_BEGIN_DECLS
 
-/* Avoid possible naming collisions during link 
+/* Avoid possible naming collisions during link
  * since we prefer to use the actual name. */
 #define strcasestr(haystack, needle) strcasestr_retro__(haystack, needle)
 

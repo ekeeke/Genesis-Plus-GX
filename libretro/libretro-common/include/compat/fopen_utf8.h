@@ -1,7 +1,7 @@
 /* Copyright  (C) 2010-2018 The RetroArch team
  *
  * ---------------------------------------------------------------------------------------
- * The following license statement only applies to this file (strl.h).
+ * The following license statement only applies to this file (fopen_utf8.h).
  * ---------------------------------------------------------------------------------------
  *
  * Permission is hereby granted, free of charge,
@@ -20,41 +20,15 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef __LIBRETRO_SDK_COMPAT_STRL_H
-#define __LIBRETRO_SDK_COMPAT_STRL_H
+#ifndef __LIBRETRO_SDK_COMPAT_FOPEN_UTF8_H
+#define __LIBRETRO_SDK_COMPAT_FOPEN_UTF8_H
 
-#include <string.h>
-#include <stddef.h>
-
-#if defined(RARCH_INTERNAL) && defined(HAVE_CONFIG_H)
-#include "../../../config.h"
-#endif
-
-#include <retro_common_api.h>
-
-RETRO_BEGIN_DECLS
-
-#ifdef __MACH__
-#ifndef HAVE_STRL
-#define HAVE_STRL
+#ifdef _WIN32
+/* Defined to error rather than fopen_utf8, to make it clear to everyone reading the code that not worrying about utf16 is fine */
+/* TODO: enable */
+/* #define fopen (use fopen_utf8 instead) */
+void *fopen_utf8(const char * filename, const char * mode);
+#else
+#define fopen_utf8 fopen
 #endif
 #endif
-
-#ifndef HAVE_STRL
-/* Avoid possible naming collisions during link since
- * we prefer to use the actual name. */
-#define strlcpy(dst, src, size) strlcpy_retro__(dst, src, size)
-
-#define strlcat(dst, src, size) strlcat_retro__(dst, src, size)
-
-size_t strlcpy(char *dest, const char *source, size_t size);
-size_t strlcat(char *dest, const char *source, size_t size);
-
-#endif
-
-char *strldup(const char *s, size_t n);
-
-RETRO_END_DECLS
-
-#endif
-
