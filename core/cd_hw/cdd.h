@@ -64,6 +64,11 @@
 #define NO_DISC  0x0B
 #define CD_END   0x0C
 
+/* CD-DA digital filter types */
+#define CD_TYPE_DEFAULT       0x00
+#define CD_TYPE_WONDERMEGA    0x01
+#define CD_TYPE_WONDERMEGA_M2 0x02
+
 /* CD track */
 typedef struct
 {
@@ -103,11 +108,12 @@ typedef struct
 {
   uint32 cycles;
   uint32 latency;
+  int type;
   int loaded;
   int index;
   int lba;
   int scanOffset;
-  int volume;
+  uint16 fader[2];
   uint8 status;
   uint16 sectorSize;
   toc_t toc;

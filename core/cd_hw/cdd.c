@@ -214,7 +214,7 @@ void cdd_reset(void)
   cdd.status = cdd.loaded ? CD_STOP : NO_DISC;
   
   /* reset CD-DA fader (full volume) */
-  cdd.volume = 0x400;
+  cdd.fader[0] = cdd.fader[1] = 0x400;
 
   /* clear CD-DA output */
   cdd.audio[0] = cdd.audio[1] = 0;
@@ -229,7 +229,7 @@ int cdd_context_save(uint8 *state)
   save_param(&cdd.index, sizeof(cdd.index));
   save_param(&cdd.lba, sizeof(cdd.lba));
   save_param(&cdd.scanOffset, sizeof(cdd.scanOffset));
-  save_param(&cdd.volume, sizeof(cdd.volume));
+  save_param(&cdd.fader, sizeof(cdd.fader));
   save_param(&cdd.status, sizeof(cdd.status));
 
   return bufferptr;
@@ -255,7 +255,7 @@ int cdd_context_load(uint8 *state)
   load_param(&cdd.index, sizeof(cdd.index));
   load_param(&cdd.lba, sizeof(cdd.lba));
   load_param(&cdd.scanOffset, sizeof(cdd.scanOffset));
-  load_param(&cdd.volume, sizeof(cdd.volume));
+  load_param(&cdd.fader, sizeof(cdd.fader));
   load_param(&cdd.status, sizeof(cdd.status));
 
   /* adjust current LBA within track limit */
@@ -1287,10 +1287,10 @@ void cdd_read_audio(unsigned int samples)
     int i, mul, l, r;
 
     /* current CD-DA fader volume */
-    int curVol = cdd.volume;
+    int curVol = cdd.fader[0];
 
     /* CD-DA fader volume setup (0-1024) */
-    int endVol = scd.regs[0x34>>1].w >> 4;
+    int endVol = cdd.fader[1];
 
     /* read samples from current block */
 #if defined(USE_LIBCHDR)
@@ -1476,7 +1476,7 @@ void cdd_read_audio(unsigned int samples)
     }
 
     /* save current CD-DA fader volume */
-    cdd.volume = curVol;
+    cdd.fader[0] = curVol;
 
     /* save last audio output for next frame */
     cdd.audio[0] = prev_l;

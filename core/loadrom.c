@@ -417,6 +417,23 @@ int load_bios(int system)
         /* CD BOOTROM loaded ? */
         if (size > 0)
         {
+          /* auto-detect CD hardware model */
+          if (!memcmp (&scd.bootrom[0x120], "WONDER-MEGA BOOT", 16))
+          {
+            /* Wondermega CD hardware */
+            cdd.type = CD_TYPE_WONDERMEGA;
+          }
+          else if (!memcmp (&scd.bootrom[0x120], "WONDERMEGA2 BOOT", 16))
+          {
+            /* Wondermega M2 / X'Eye CD hardware */
+            cdd.type = CD_TYPE_WONDERMEGA_M2;
+          }
+          else
+          {
+            /* default CD hardware */
+            cdd.type = CD_TYPE_DEFAULT;
+          }
+         
 #ifdef LSB_FIRST
           /* Byteswap ROM to optimize 16-bit access */
           int i;

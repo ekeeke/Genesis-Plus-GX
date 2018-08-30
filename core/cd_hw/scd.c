@@ -2,7 +2,7 @@
  *  Genesis Plus
  *  Mega CD / Sega CD hardware
  *
- *  Copyright (C) 2012-2016  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2012-2018  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -1278,6 +1278,46 @@ static void scd_write_word(unsigned int address, unsigned int data)
 
       /* update IRQ level */
       s68k_update_irq((scd.pending & data) >> 1);
+      return;
+    }
+
+    case 0x34: /* CD Fader */
+    {
+      /* Wondermega hardware (CXD2554M digital filter) */
+      if (cdd.type == CD_TYPE_WONDERMEGA)
+      {
+        /* only MSB is latched by CXD2554M chip, LSB is ignored (8-bit digital filter) */
+        /* attenuator data is 7-bit only (bits 0-7) */
+        data = (data >> 8) & 0x7f;
+
+        /* scale CXD2554M volume (0-127) to full (LC7883KM compatible) volume range (0-1024) */
+        cdd.fader[1] = (1024 * data) / 127 ;
+      }
+
+      /* Wondermega M2 / X'Eye hardware (SM5841A digital filter) */
+      else if (cdd.type == CD_TYPE_WONDERMEGA_M2)
+      {
+        /* only MSB is latched by SM5841A chip, LSB is ignored (8-bit digital filter) */
+        data = data >> 8;
+
+        /* attenuator data is set only when command bit (bit 0) is cleared (other commands are ignored) */
+        if (data & 0x01) return;
+
+        /* attenuator data is 7-bit only (bits 8-1) and reverted (bit 1 = msb) */
+        /* bit reversing formula taken from http://graphics.stanford.edu/~seander/bithacks.html#ReverseByteWith32Bits */
+        data = (((((data * 0x0802) & 0x22110) | ((data * 0x8020) & 0x88440)) * 0x10101) >> 16) & 0x7f;
+
+        /* convert & scale SM5841A attenuation (127-0) to full (LC7883KM compatible) volume range (0-1024) */
+        cdd.fader[1] = (1024 * (127 - data)) / 127 ;
+      }
+
+      /* default CD hardware (LC7883KM digital filter) */
+      else
+      {
+        /* get LC7883KM volume data (12-bit) */
+        cdd.fader[1] = data >> 4 ;
+      }
+
       return;
     }
 
