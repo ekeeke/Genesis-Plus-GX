@@ -211,7 +211,7 @@ void cdd_reset(void)
   cdd.lba = 0;
 
   /* reset status */
-  cdd.status = cdd.loaded ? CD_STOP : NO_DISC;
+  cdd.status = cdd.loaded ? CD_TOC : NO_DISC;
   
   /* reset CD-DA fader (full volume) */
   cdd.fader[0] = cdd.fader[1] = 0x400;
@@ -1778,7 +1778,7 @@ void cdd_process(void)
   /* Process CDD command */
   switch (scd.regs[0x42>>1].byte.h & 0x0f)
   {
-    case 0x00:  /* Drive Status */
+    case 0x00:  /* Report Drive Status */
     {
       /* RS1-RS8 normally unchanged */
       scd.regs[0x38>>1].byte.h = cdd.status;
@@ -1800,21 +1800,21 @@ void cdd_process(void)
     case 0x01:  /* Stop Drive */
     {
       /* update status */
-      cdd.status = cdd.loaded ? CD_STOP : NO_DISC;
+      cdd.status = cdd.loaded ? CD_TOC : NO_DISC;
 
       /* no audio track playing */
       scd.regs[0x36>>1].byte.h = 0x01;
 
-      /* RS1-RS8 ignored, expects 0x0 (drive busy ?) in RS0 once */
-      scd.regs[0x38>>1].w = CD_BUSY << 8;
+      /* RS1-RS8 ignored, expects 0x0 (CD_STOP) in RS0 once */
+      scd.regs[0x38>>1].w = CD_STOP << 8;
       scd.regs[0x3a>>1].w = 0x0000;
       scd.regs[0x3c>>1].w = 0x0000;
       scd.regs[0x3e>>1].w = 0x0000;
-      scd.regs[0x40>>1].w = ~CD_BUSY & 0x0f;
+      scd.regs[0x40>>1].w = ~CD_STOP & 0x0f;
       return;
     }
 
-    case 0x02:  /* Read TOC */
+    case 0x02:  /* Report TOC infos */
     {
       /* Infos automatically retrieved by CDD processor from Q-Channel */
       /* commands 0x00-0x02 (current block) and 0x03-0x05 (Lead-In) */
@@ -1886,10 +1886,20 @@ void cdd_process(void)
           break;
         }
 
+        case 0x06:  /* Latest Error Information */
+        {
+          scd.regs[0x38>>1].w = (cdd.status << 8) | 0x06;
+          scd.regs[0x3a>>1].w = 0x0000; /* no error */
+          scd.regs[0x3c>>1].w = 0x0000;
+          scd.regs[0x3e>>1].w = 0x0000;
+          scd.regs[0x40>>1].byte.h = 0x00;
+          break;
+        }
+
         default:
         {
 #ifdef LOG_ERROR
-          error("Unknown CDD Command %02X (%X)\n", scd.regs[0x44>>1].byte.l, s68k.pc);
+          error("Invalid CDD request code %02X (%X)\n", scd.regs[0x44>>1].byte.l, s68k.pc);
 #endif
           return;
         }
@@ -2157,7 +2167,6 @@ void cdd_process(void)
       break;
     }
 
-
     case 0x0a:  /* N-Track Jump Control ? (usually sent before CD_SEEK or CD_PLAY commands) */
     {
       /* TC3 corresponds to seek direction (00=forward, FF=reverse) */
@@ -2179,14 +2188,14 @@ void cdd_process(void)
       scd.regs[0x36>>1].byte.h = 0x01;
 
       /* update status */
-      cdd.status = cdd.loaded ? CD_STOP : NO_DISC;
+      cdd.status = cdd.loaded ? CD_TOC : NO_DISC;
 
-      /* RS1-RS8 ignored, expects 0x0 (drive busy ?) in RS0 once */
-      scd.regs[0x38>>1].w = CD_BUSY << 8;
+      /* RS1-RS8 ignored, expects CD_STOP in RS0 once */
+      scd.regs[0x38>>1].w = CD_STOP << 8;
       scd.regs[0x3a>>1].w = 0x0000;
       scd.regs[0x3c>>1].w = 0x0000;
       scd.regs[0x3e>>1].w = 0x0000;
-      scd.regs[0x40>>1].w = ~CD_BUSY & 0x0f;
+      scd.regs[0x40>>1].w = ~CD_STOP & 0x0f;
 
 #ifdef CD_TRAY_CALLBACK
       CD_TRAY_CALLBACK
@@ -2214,8 +2223,8 @@ void cdd_process(void)
     }
 
     default:  /* Unknown command */
-#ifdef LOG_CDD
-      error("Unknown CDD Command !!!\n");
+#ifdef LOG_ERROR
+      error("Unsupported CDD command %02X (%X)\n", scd.regs[0x42>>1].byte.h & 0x0f, s68k.pc);
 #endif
       scd.regs[0x38>>1].byte.h = cdd.status;
       break;
