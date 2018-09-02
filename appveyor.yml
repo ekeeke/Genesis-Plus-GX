@@ -1,33 +1,29 @@
-version: 0.1.{build}
-
-shallow_clone: true
-
 image: Visual Studio 2017
 
 environment:
-  makefile_location: "."
-  makefile_name: makefile.libretro
-  target_name: genesis_plus_gx
+  matrix:
+  - Build: mingw32   
+    Arch: i686
 
-configuration:
-  - release
+  - Build: mingw64
+    Arch: x86_64
+  
+  GCC_version: 8.1.0
+  
 
-platform:
-  - windows_msvc2017_uwp_x64
-  - windows_msvc2017_uwp_x86
-  - windows_msvc2017_uwp_arm
-  - windows_msvc2017_desktop_x64
-  - windows_msvc2017_desktop_x86
-
-init:
-  - set Path=C:\msys64\usr\bin;%Path%
+install:
+  # https://sourceforge.net/projects/mingw-w64/files/Toolchains%20targetting%20Win32/
+  - appveyor-retry appveyor DownloadFile "https://downloads.sourceforge.net/mingw-w64/%arch%-%GCC_version%-release-win32-sjlj-rt_v6-rev0.7z" -FileName "C:\mingw.7z"
+  - set Path=c:\%Build%\bin;%Path%
+  - set Path=c:\%Build%\%arch%-w64-mingw32\include;%Path%
+  - set Path=c:\%Build%\%arch%-w64-mingw32\lib;%Path%
+  - set Path=c:\%Build%\lib\gcc\%arch%-w64-mingw32\%GCC_version%;%Path%
+  - set Path=c:\%Build%\libexec\gcc\%arch%-w64-mingw32\%GCC_version%;%Path%
+  - 7z x c:\mingw.7z -oc:\
 
 build_script:
-  - cd %makefile_location%
-  - make -f %makefile_name% platform=%platform%
+  - g++ -v
+  - mingw32-make -f Makefile.libretro platform=%Build%
 
 artifacts:
-  - path: '**\%target_name%*.dll'
-  - path: '**\%target_name%*.lib'
-  - path: '**\%target_name%*.pdb'
-  - path: '**\libretro.h'
+  - path: genesis_plus_gx_libretro.dll
