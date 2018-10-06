@@ -450,6 +450,7 @@ enum retro_key
    RETROK_POWER          = 320,
    RETROK_EURO           = 321,
    RETROK_UNDO           = 322,
+   RETROK_OEM_102        = 323,
 
    RETROK_LAST,
 
@@ -599,9 +600,12 @@ enum retro_mod
                                             * GET_VARIABLE.
                                             * This allows the frontend to present these variables to
                                             * a user dynamically.
-                                            * This should be called as early as possible (ideally in
-                                            * retro_set_environment).
-                                            *
+                                            * This should be called the first time as early as
+                                            * possible (ideally in retro_set_environment).
+                                            * Afterward it may be called again for the core to communicate
+                                            * updated options to the frontend, but the number of core
+                                            * options must not change from the number in the initial call.
+					    *
                                             * 'data' points to an array of retro_variable structs
                                             * terminated by a { NULL, NULL } element.
                                             * retro_variable::key should be namespaced to not collide
@@ -654,6 +658,15 @@ enum retro_mod
                                            /* Environment 20 was an obsolete version of SET_AUDIO_CALLBACK.
                                             * It was not used by any known core at the time,
                                             * and was removed from the API. */
+#define RETRO_ENVIRONMENT_SET_FRAME_TIME_CALLBACK 21
+                                           /* const struct retro_frame_time_callback * --
+                                            * Lets the core know how much time has passed since last
+                                            * invocation of retro_run().
+                                            * The frontend can tamper with the timing to fake fast-forward,
+                                            * slow-motion, frame stepping, etc.
+                                            * In this case the delta time will use the reference value
+                                            * in frame_time_callback..
+                                            */
 #define RETRO_ENVIRONMENT_SET_AUDIO_CALLBACK 22
                                            /* const struct retro_audio_callback * --
                                             * Sets an interface which is used to notify a libretro core about audio
@@ -679,15 +692,6 @@ enum retro_mod
                                             *
                                             * A libretro core using SET_AUDIO_CALLBACK should also make use of
                                             * SET_FRAME_TIME_CALLBACK.
-                                            */
-#define RETRO_ENVIRONMENT_SET_FRAME_TIME_CALLBACK 21
-                                           /* const struct retro_frame_time_callback * --
-                                            * Lets the core know how much time has passed since last
-                                            * invocation of retro_run().
-                                            * The frontend can tamper with the timing to fake fast-forward,
-                                            * slow-motion, frame stepping, etc.
-                                            * In this case the delta time will use the reference value
-                                            * in frame_time_callback..
                                             */
 #define RETRO_ENVIRONMENT_GET_RUMBLE_INTERFACE 23
                                            /* struct retro_rumble_interface * --
@@ -775,17 +779,18 @@ enum retro_mod
                                             */
 #define RETRO_ENVIRONMENT_GET_SAVE_DIRECTORY 31
                                            /* const char ** --
-                                            * Returns the "save" directory of the frontend.
-                                            * This directory can be used to store SRAM, memory cards,
-                                            * high scores, etc, if the libretro core
+                                            * Returns the "save" directory of the frontend, unless there is no
+                                            * save directory available. The save directory should be used to
+                                            * store SRAM, memory cards, high scores, etc, if the libretro core
                                             * cannot use the regular memory interface (retro_get_memory_data()).
                                             *
-                                            * NOTE: libretro cores used to check GET_SYSTEM_DIRECTORY for
-                                            * similar things before.
-                                            * They should still check GET_SYSTEM_DIRECTORY if they want to
-                                            * be backwards compatible.
-                                            * The path here can be NULL. It should only be non-NULL if the
-                                            * frontend user has set a specific save path.
+                                            * If the frontend cannot designate a save directory, it will return
+                                            * NULL to indicate that the core should attempt to operate without a
+                                            * save directory set.
+                                            *
+                                            * NOTE: early libretro cores used the system directory for save
+                                            * files. Cores that need to be backwards-compatible can still check
+                                            * GET_SYSTEM_DIRECTORY.
                                             */
 #define RETRO_ENVIRONMENT_SET_SYSTEM_AV_INFO 32
                                            /* const struct retro_system_av_info * --
@@ -853,26 +858,39 @@ enum retro_mod
 #define RETRO_ENVIRONMENT_SET_CONTROLLER_INFO 35
                                            /* const struct retro_controller_info * --
                                             * This environment call lets a libretro core tell the frontend
-                                            * which controller types are recognized in calls to
+                                            * which controller subclasses are recognized in calls to
                                             * retro_set_controller_port_device().
                                             *
-                                            * Some emulators such as Super Nintendo
-                                            * support multiple lightgun types which must be specifically
-                                            * selected from.
-                                            * It is therefore sometimes necessary for a frontend to be able
-                                            * to tell the core about a special kind of input device which is
-                                            * not covered by the libretro input API.
+                                            * Some emulators such as Super Nintendo support multiple lightgun
+                                            * types which must be specifically selected from. It is therefore
+                                            * sometimes necessary for a frontend to be able to tell the core
+                                            * about a special kind of input device which is not specifcally
+                                            * provided by the Libretro API.
                                             *
-                                            * In order for a frontend to understand the workings of an input device,
-                                            * it must be a specialized type
-                                            * of the generic device types already defined in the libretro API.
+                                            * In order for a frontend to understand the workings of those devices,
+                                            * they must be defined as a specialized subclass of the generic device
+                                            * types already defined in the libretro API.
                                             *
-                                            * Which devices are supported can vary per input port.
                                             * The core must pass an array of const struct retro_controller_info which
-                                            * is terminated with a blanked out struct. Each element of the struct
-                                            * corresponds to an ascending port index to
-                                            * retro_set_controller_port_device().
-                                            * Even if special device types are set in the libretro core,
+                                            * is terminated with a blanked out struct. Each element of the 
+                                            * retro_controller_info struct corresponds to the ascending port index
+                                            * that is passed to retro_set_controller_port_device() when that function
+                                            * is called to indicate to the core that the frontend has changed the
+                                            * active device subclass. SEE ALSO: retro_set_controller_port_device()
+                                            * 
+                                            * The ascending input port indexes provided by the core in the struct
+                                            * are generally presented by frontends as ascending User # or Player #,
+                                            * such as Player 1, Player 2, Player 3, etc. Which device subclasses are
+                                            * supported can vary per input port.
+                                            *
+                                            * The first inner element of each entry in the retro_controller_info array
+                                            * is a retro_controller_description struct that specifies the names and
+                                            * codes of all device subclasses that are available for the corresponding
+                                            * User or Player, beginning with the generic Libretro device that the
+                                            * subclasses are derived from. The second inner element of each entry is the
+                                            * total number of subclasses that are listed in the retro_controller_description.
+                                            * 
+                                            * NOTE: Even if special device types are set in the libretro core,
                                             * libretro should only poll input based on the base input device types.
                                             */
 #define RETRO_ENVIRONMENT_SET_MEMORY_MAPS (36 | RETRO_ENVIRONMENT_EXPERIMENTAL)
@@ -951,7 +969,37 @@ enum retro_mod
                                             * A frontend must make sure that the pointer obtained from this function is
                                             * writeable (and readable).
                                             */
-
+#define RETRO_ENVIRONMENT_GET_HW_RENDER_INTERFACE (41 | RETRO_ENVIRONMENT_EXPERIMENTAL)
+                                           /* const struct retro_hw_render_interface ** --
+                                            * Returns an API specific rendering interface for accessing API specific data.
+                                            * Not all HW rendering APIs support or need this.
+                                            * The contents of the returned pointer is specific to the rendering API
+                                            * being used. See the various headers like libretro_vulkan.h, etc.
+                                            *
+                                            * GET_HW_RENDER_INTERFACE cannot be called before context_reset has been called.
+                                            * Similarly, after context_destroyed callback returns,
+                                            * the contents of the HW_RENDER_INTERFACE are invalidated.
+                                            */
+#define RETRO_ENVIRONMENT_SET_SUPPORT_ACHIEVEMENTS (42 | RETRO_ENVIRONMENT_EXPERIMENTAL)
+                                           /* const bool * --
+                                            * If true, the libretro implementation supports achievements
+                                            * either via memory descriptors set with RETRO_ENVIRONMENT_SET_MEMORY_MAPS
+                                            * or via retro_get_memory_data/retro_get_memory_size.
+                                            *
+                                            * This must be called before the first call to retro_run.
+                                            */
+#define RETRO_ENVIRONMENT_SET_HW_RENDER_CONTEXT_NEGOTIATION_INTERFACE (43 | RETRO_ENVIRONMENT_EXPERIMENTAL)
+                                           /* const struct retro_hw_render_context_negotiation_interface * --
+                                            * Sets an interface which lets the libretro core negotiate with frontend how a context is created.
+                                            * The semantics of this interface depends on which API is used in SET_HW_RENDER earlier.
+                                            * This interface will be used when the frontend is trying to create a HW rendering context,
+                                            * so it will be used after SET_HW_RENDER, but before the context_reset callback.
+                                            */
+#define RETRO_ENVIRONMENT_SET_SERIALIZATION_QUIRKS 44
+                                           /* uint64_t * --
+                                            * Sets quirk flags associated with serialization. The frontend will zero any flags it doesn't
+                                            * recognize or support. Should be set in either retro_init or retro_load_game, but not both.
+                                            */
 #define RETRO_ENVIRONMENT_SET_HW_SHARED_CONTEXT (44 | RETRO_ENVIRONMENT_EXPERIMENTAL)
                                            /* N/A (null) * --
                                             * The frontend will try to use a 'shared' hardware context (mostly applicable
@@ -963,14 +1011,70 @@ enum retro_mod
                                             * This will do nothing on its own until SET_HW_RENDER env callbacks are
                                             * being used.
                                             */
-
 #define RETRO_ENVIRONMENT_GET_VFS_INTERFACE (45 | RETRO_ENVIRONMENT_EXPERIMENTAL)
                                            /* struct retro_vfs_interface_info * --
                                             * Gets access to the VFS interface.
                                             * VFS presence needs to be queried prior to load_game or any
                                             * get_system/save/other_directory being called to let front end know
                                             * core supports VFS before it starts handing out paths.
-                                            * It is recomended to do so in retro_set_environment */
+                                            * It is recomended to do so in retro_set_environment
+                                            */
+#define RETRO_ENVIRONMENT_GET_LED_INTERFACE (46 | RETRO_ENVIRONMENT_EXPERIMENTAL)
+                                           /* struct retro_led_interface * --
+                                            * Gets an interface which is used by a libretro core to set
+                                            * state of LEDs.
+                                            */
+#define RETRO_ENVIRONMENT_GET_AUDIO_VIDEO_ENABLE (47 | RETRO_ENVIRONMENT_EXPERIMENTAL)
+                                           /* int * --
+                                            * Tells the core if the frontend wants audio or video.
+                                            * If disabled, the frontend will discard the audio or video,
+                                            * so the core may decide to skip generating a frame or generating audio.
+                                            * This is mainly used for increasing performance.
+                                            * Bit 0 (value 1): Enable Video
+                                            * Bit 1 (value 2): Enable Audio
+                                            * Bit 2 (value 4): Use Fast Savestates.
+                                            * Bit 3 (value 8): Hard Disable Audio
+                                            * Other bits are reserved for future use and will default to zero.
+                                            * If video is disabled:
+                                            * * The frontend wants the core to not generate any video,
+                                            *   including presenting frames via hardware acceleration.
+                                            * * The frontend's video frame callback will do nothing.
+                                            * * After running the frame, the video output of the next frame should be
+                                            *   no different than if video was enabled, and saving and loading state
+                                            *   should have no issues.
+                                            * If audio is disabled:
+                                            * * The frontend wants the core to not generate any audio.
+                                            * * The frontend's audio callbacks will do nothing.
+                                            * * After running the frame, the audio output of the next frame should be
+                                            *   no different than if audio was enabled, and saving and loading state
+                                            *   should have no issues.
+                                            * Fast Savestates:
+                                            * * Guaranteed to be created by the same binary that will load them.
+                                            * * Will not be written to or read from the disk.
+                                            * * Suggest that the core assumes loading state will succeed.
+                                            * * Suggest that the core updates its memory buffers in-place if possible.
+                                            * * Suggest that the core skips clearing memory.
+                                            * * Suggest that the core skips resetting the system.
+                                            * * Suggest that the core may skip validation steps.
+                                            * Hard Disable Audio:
+                                            * * Used for a secondary core when running ahead.
+                                            * * Indicates that the frontend will never need audio from the core.
+                                            * * Suggests that the core may stop synthesizing audio, but this should not
+                                            *   compromise emulation accuracy.
+                                            * * Audio output for the next frame does not matter, and the frontend will
+                                            *   never need an accurate audio state in the future.
+                                            * * State will never be saved when using Hard Disable Audio.
+                                            */
+#define RETRO_ENVIRONMENT_GET_MIDI_INTERFACE (48 | RETRO_ENVIRONMENT_EXPERIMENTAL)
+                                           /* struct retro_midi_interface ** --
+                                            * Returns a MIDI interface that can be used for raw data I/O.
+                                            */
+
+#define RETRO_ENVIRONMENT_GET_FASTFORWARDING (49 | RETRO_ENVIRONMENT_EXPERIMENTAL)
+                                            /* bool * --
+                                            * Boolean value that indicates whether or not the frontend is in
+                                            * fastforwarding mode.
+                                            */
 
 /* VFS functionality */
 
@@ -1030,6 +1134,10 @@ typedef int (RETRO_CALLCONV *retro_vfs_close_t)(struct retro_vfs_file_handle *st
  * Introduced in VFS API v1 */
 typedef int64_t (RETRO_CALLCONV *retro_vfs_size_t)(struct retro_vfs_file_handle *stream);
 
+/* Truncate file to specified size. Returns 0 on success or -1 on error
+ * Introduced in VFS API v2 */
+typedef int64_t (RETRO_CALLCONV *retro_vfs_truncate_t)(struct retro_vfs_file_handle *stream, int64_t length);
+
 /* Get the current read / write position for the file. Returns - 1 for error.
  * Introduced in VFS API v1 */
 typedef int64_t (RETRO_CALLCONV *retro_vfs_tell_t)(struct retro_vfs_file_handle *stream);
@@ -1060,6 +1168,7 @@ typedef int (RETRO_CALLCONV *retro_vfs_rename_t)(const char *old_path, const cha
 
 struct retro_vfs_interface
 {
+   /* VFS API v1 */
 	retro_vfs_get_path_t get_path;
 	retro_vfs_open_t open;
 	retro_vfs_close_t close;
@@ -1071,6 +1180,8 @@ struct retro_vfs_interface
 	retro_vfs_flush_t flush;
 	retro_vfs_remove_t remove;
 	retro_vfs_rename_t rename;
+   /* VFS API v2 */
+   retro_vfs_truncate_t truncate;
 };
 
 struct retro_vfs_interface_info
@@ -1104,81 +1215,41 @@ struct retro_hw_render_interface
    unsigned interface_version;
 };
 
-
-#define RETRO_ENVIRONMENT_GET_LED_INTERFACE (46 | RETRO_ENVIRONMENT_EXPERIMENTAL)
-                                           /* struct retro_led_interface * --
-                                            * Gets an interface which is used by a libretro core to set
-                                            * state of LEDs.
-                                            */
-
 typedef void (RETRO_CALLCONV *retro_set_led_state_t)(int led, int state);
 struct retro_led_interface
 {
     retro_set_led_state_t set_led_state;
 };
 
-#define RETRO_ENVIRONMENT_GET_AUDIO_VIDEO_ENABLE (47 | RETRO_ENVIRONMENT_EXPERIMENTAL)
-                                           /* int * --
-                                            * Tells the core if the frontend wants audio or video.
-                                            * If disabled, the frontend will discard the audio or video,
-                                            * so the core may decide to skip generating a frame or generating audio.
-                                            * This is mainly used for increasing performance.
-                                            * Bit 0 (value 1): Enable Video
-                                            * Bit 1 (value 2): Enable Audio
-                                            * Bit 2 (value 4): Use Fast Savestates.
-                                            * Bit 3 (value 8): Hard Disable Audio
-                                            * Other bits are reserved for future use and will default to zero.
-                                            * If video is disabled:
-                                            * * The frontend wants the core to not generate any video,
-                                            *   including presenting frames via hardware acceleration.
-                                            * * The frontend's video frame callback will do nothing.
-                                            * * After running the frame, the video output of the next frame should be
-                                            *   no different than if video was enabled, and saving and loading state
-                                            *   should have no issues.
-                                            * If audio is disabled:
-                                            * * The frontend wants the core to not generate any audio.
-                                            * * The frontend's audio callbacks will do nothing.
-                                            * * After running the frame, the audio output of the next frame should be
-                                            *   no different than if audio was enabled, and saving and loading state
-                                            *   should have no issues.
-                                            * Fast Savestates:
-                                            * * Guaranteed to be created by the same binary that will load them.
-                                            * * Will not be written to or read from the disk.
-                                            * * Suggest that the core assumes loading state will succeed.
-                                            * * Suggest that the core updates its memory buffers in-place if possible.
-                                            * * Suggest that the core skips clearing memory.
-                                            * * Suggest that the core skips resetting the system.
-                                            * * Suggest that the core may skip validation steps.
-                                            * Hard Disable Audio:
-                                            * * Used for a secondary core when running ahead.
-                                            * * Indicates that the frontend will never need audio from the core.
-                                            * * Suggests that the core may stop synthesizing audio, but this should not
-                                            *   compromise emulation accuracy.
-                                            * * Audio output for the next frame does not matter, and the frontend will
-                                            *   never need an accurate audio state in the future.
-                                            * * State will never be saved when using Hard Disable Audio.
-                                            */
+/* Retrieves the current state of the MIDI input.
+ * Returns true if it's enabled, false otherwise. */
+typedef bool (RETRO_CALLCONV *retro_midi_input_enabled_t)(void);
 
-#define RETRO_ENVIRONMENT_GET_HW_RENDER_INTERFACE (41 | RETRO_ENVIRONMENT_EXPERIMENTAL)
-                                           /* const struct retro_hw_render_interface ** --
-                                            * Returns an API specific rendering interface for accessing API specific data.
-                                            * Not all HW rendering APIs support or need this.
-                                            * The contents of the returned pointer is specific to the rendering API
-                                            * being used. See the various headers like libretro_vulkan.h, etc.
-                                            *
-                                            * GET_HW_RENDER_INTERFACE cannot be called before context_reset has been called.
-                                            * Similarly, after context_destroyed callback returns,
-                                            * the contents of the HW_RENDER_INTERFACE are invalidated.
-                                            */
+/* Retrieves the current state of the MIDI output.
+ * Returns true if it's enabled, false otherwise */
+typedef bool (RETRO_CALLCONV *retro_midi_output_enabled_t)(void);
 
-#define RETRO_ENVIRONMENT_SET_SUPPORT_ACHIEVEMENTS (42 | RETRO_ENVIRONMENT_EXPERIMENTAL)
-                                           /* const bool * --
-                                            * If true, the libretro implementation supports achievements
-                                            * either via memory descriptors set with RETRO_ENVIRONMENT_SET_MEMORY_MAPS
-                                            * or via retro_get_memory_data/retro_get_memory_size.
-                                            *
-                                            * This must be called before the first call to retro_run.
-                                            */
+/* Reads next byte from the input stream.
+ * Returns true if byte is read, false otherwise. */
+typedef bool (RETRO_CALLCONV *retro_midi_read_t)(uint8_t *byte);
+
+/* Writes byte to the output stream.
+ * 'delta_time' is in microseconds and represent time elapsed since previous write.
+ * Returns true if byte is written, false otherwise. */
+typedef bool (RETRO_CALLCONV *retro_midi_write_t)(uint8_t byte, uint32_t delta_time);
+
+/* Flushes previously written data.
+ * Returns true if successful, false otherwise. */
+typedef bool (RETRO_CALLCONV *retro_midi_flush_t)(void);
+
+struct retro_midi_interface
+{
+   retro_midi_input_enabled_t input_enabled;
+   retro_midi_output_enabled_t output_enabled;
+   retro_midi_read_t read;
+   retro_midi_write_t write;
+   retro_midi_flush_t flush;
+};
 
 enum retro_hw_render_context_negotiation_interface_type
 {
@@ -1193,13 +1264,6 @@ struct retro_hw_render_context_negotiation_interface
    enum retro_hw_render_context_negotiation_interface_type interface_type;
    unsigned interface_version;
 };
-#define RETRO_ENVIRONMENT_SET_HW_RENDER_CONTEXT_NEGOTIATION_INTERFACE (43 | RETRO_ENVIRONMENT_EXPERIMENTAL)
-                                           /* const struct retro_hw_render_context_negotiation_interface * --
-                                            * Sets an interface which lets the libretro core negotiate with frontend how a context is created.
-                                            * The semantics of this interface depends on which API is used in SET_HW_RENDER earlier.
-                                            * This interface will be used when the frontend is trying to create a HW rendering context,
-                                            * so it will be used after SET_HW_RENDER, but before the context_reset callback.
-                                            */
 
 /* Serialized state is incomplete in some way. Set if serialization is
  * usable in typical end-user cases but should not be relied upon to
@@ -1224,12 +1288,6 @@ struct retro_hw_render_context_negotiation_interface
  * was saved on for reasons other than endianness, such as word size
  * dependence */
 #define RETRO_SERIALIZATION_QUIRK_PLATFORM_DEPENDENT (1 << 6)
-
-#define RETRO_ENVIRONMENT_SET_SERIALIZATION_QUIRKS 44
-                                           /* uint64_t * --
-                                            * Sets quirk flags associated with serialization. The frontend will zero any flags it doesn't
-                                            * recognize or support. Should be set in either retro_init or retro_load_game, but not both.
-                                            */
 
 #define RETRO_MEMDESC_CONST     (1 << 0)   /* The frontend will never change this memory area once retro_load_game has returned. */
 #define RETRO_MEMDESC_BIGENDIAN (1 << 1)   /* The memory area contains big endian data. Default is little endian. */
@@ -2138,17 +2196,26 @@ struct retro_system_info
                                    * Typically used for a GUI to filter
                                    * out extensions. */
 
-   /* If true, retro_load_game() is guaranteed to provide a valid pathname
-    * in retro_game_info::path.
-    * ::data and ::size are both invalid.
+   /* Libretro cores that need to have direct access to their content
+    * files, including cores which use the path of the content files to
+    * determine the paths of other files, should set need_fullpath to true.
     *
-    * If false, ::data and ::size are guaranteed to be valid, but ::path
-    * might not be valid.
+    * Cores should strive for setting need_fullpath to false,
+    * as it allows the frontend to perform patching, etc.
     *
-    * This is typically set to true for libretro implementations that must
-    * load from file.
-    * Implementations should strive for setting this to false, as it allows
-    * the frontend to perform patching, etc. */
+    * If need_fullpath is true and retro_load_game() is called:
+    *    - retro_game_info::path is guaranteed to have a valid path
+    *    - retro_game_info::data and retro_game_info::size are invalid
+    *
+    * If need_fullpath is false and retro_load_game() is called:
+    *    - retro_game_info::path may be NULL
+    *    - retro_game_info::data and retro_game_info::size are guaranteed
+    *      to be valid
+    *
+    * See also:
+    *    - RETRO_ENVIRONMENT_GET_SYSTEM_DIRECTORY
+    *    - RETRO_ENVIRONMENT_GET_SAVE_DIRECTORY
+    */
    bool        need_fullpath;
 
    /* If true, the frontend is not allowed to extract any archives before
@@ -2333,7 +2400,13 @@ RETRO_API void retro_get_system_av_info(struct retro_system_av_info *info);
  * will only poll input based on that particular device type. It is only a
  * hint to the libretro core when a core cannot automatically detect the
  * appropriate input device type on its own. It is also relevant when a
- * core can change its behavior depending on device type. */
+ * core can change its behavior depending on device type.
+ *
+ * As part of the core's implementation of retro_set_controller_port_device,
+ * the core should call RETRO_ENVIRONMENT_SET_INPUT_DESCRIPTORS to notify the
+ * frontend if the descriptions for any controls have changed as a
+ * result of changing the device type.
+ */
 RETRO_API void retro_set_controller_port_device(unsigned port, unsigned device);
 
 /* Resets the current game. */
@@ -2365,7 +2438,9 @@ RETRO_API bool retro_unserialize(const void *data, size_t size);
 RETRO_API void retro_cheat_reset(void);
 RETRO_API void retro_cheat_set(unsigned index, bool enabled, const char *code);
 
-/* Loads a game. */
+/* Loads a game.
+ * Return true to indicate successful loading and false to indicate load failure.
+ */
 RETRO_API bool retro_load_game(const struct retro_game_info *game);
 
 /* Loads a "special" kind of game. Should not be used,
@@ -2375,7 +2450,7 @@ RETRO_API bool retro_load_game_special(
   const struct retro_game_info *info, size_t num_info
 );
 
-/* Unloads a currently loaded game. */
+/* Unloads the currently loaded game. Called before retro_deinit(void). */
 RETRO_API void retro_unload_game(void);
 
 /* Gets region of game. */
