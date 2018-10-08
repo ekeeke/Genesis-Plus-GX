@@ -362,14 +362,22 @@ void osd_input_update(void)
 
       case DEVICE_LIGHTGUN:
       {
-        input.analog[i][0] = ((input_state_cb(player, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_X) + 0x7fff) * bitmap.viewport.w) / 0xfffe;
-        input.analog[i][1] = ((input_state_cb(player, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_Y) + 0x7fff) * bitmap.viewport.h) / 0xfffe;
+        if ( input_state_cb(player, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_IS_OFFSCREEN) )
+        {
+           input.analog[i][0] = -1000;
+           input.analog[i][1] = -1000;
+        }
+        else
+        {
+           input.analog[i][0] = ((input_state_cb(player, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_SCREEN_X) + 0x7fff) * bitmap.viewport.w) / 0xfffe;
+           input.analog[i][1] = ((input_state_cb(player, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_SCREEN_Y) + 0x7fff) * bitmap.viewport.h) / 0xfffe;
+        }
 
         if (input_state_cb(player, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_TRIGGER))
           temp |= INPUT_A;
-        if (input_state_cb(player, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_TURBO))
+        if (input_state_cb(player, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_AUX_A))
           temp |= INPUT_B;
-        if (input_state_cb(player, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_PAUSE))
+        if (input_state_cb(player, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_AUX_B))
           temp |= INPUT_C;
         if (input_state_cb(player, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_START))
           temp |= INPUT_START;
@@ -519,6 +527,10 @@ static void draw_cursor(int16_t x, int16_t y, uint16_t color)
    int x_end  = x + 3;
    int y_start = y - 3;
    int y_end = y + 3;
+
+   /* off-screen? */
+   if ( x < 0 && y < 0 )
+      return;
 
    /* framebuffer limits */
    if (x_start < -bitmap.viewport.x) x_start = -bitmap.viewport.x;
