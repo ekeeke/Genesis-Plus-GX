@@ -2012,8 +2012,18 @@ void retro_get_system_av_info(struct retro_system_av_info *info)
 {
    info->geometry.base_width    = vwidth;
    info->geometry.base_height   = bitmap.viewport.h + (2 * bitmap.viewport.y);
+#ifdef _3DS
+   if (system_hw == SYSTEM_GG) {
+      info->geometry.max_width  = info->geometry.base_width;
+      info->geometry.max_height = info->geometry.base_height;
+   } else {
+      info->geometry.max_width  = 720;
+      info->geometry.max_height = 576;
+   }
+#else
    info->geometry.max_width     = 720;
    info->geometry.max_height    = 576;
+#endif
    info->geometry.aspect_ratio  = vaspect_ratio;
    info->timing.fps             = (double)(system_clock) / (double)lines_per_frame / (double)MCYCLES_PER_LINE;
    info->timing.sample_rate     = SOUND_FREQUENCY;
