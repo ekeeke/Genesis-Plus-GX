@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.28307.136
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "genesis_plus_gx_libretro", "genesis_plus_gx_libretro.vcxproj", "{6E5A2D82-D5E3-4AE2-9253-733BAC8A924C}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{6E5A2D82-D5E3-4AE2-9253-733BAC8A924C}.Debug|x64.ActiveCfg = Debug|x64
+		{6E5A2D82-D5E3-4AE2-9253-733BAC8A924C}.Debug|x64.Build.0 = Debug|x64
+		{6E5A2D82-D5E3-4AE2-9253-733BAC8A924C}.Debug|x86.ActiveCfg = Debug|Win32
+		{6E5A2D82-D5E3-4AE2-9253-733BAC8A924C}.Debug|x86.Build.0 = Debug|Win32
+		{6E5A2D82-D5E3-4AE2-9253-733BAC8A924C}.Release|x64.ActiveCfg = Release|x64
+		{6E5A2D82-D5E3-4AE2-9253-733BAC8A924C}.Release|x64.Build.0 = Release|x64
+		{6E5A2D82-D5E3-4AE2-9253-733BAC8A924C}.Release|x86.ActiveCfg = Release|Win32
+		{6E5A2D82-D5E3-4AE2-9253-733BAC8A924C}.Release|x86.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {3D50B6EB-2DBD-4200-BDCA-478C602B6F32}
+	EndGlobalSection
+EndGlobal
