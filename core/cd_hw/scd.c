@@ -2,7 +2,7 @@
  *  Genesis Plus
  *  Mega CD / Sega CD hardware
  *
- *  Copyright (C) 2012-2016  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2012-2019  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -257,7 +257,7 @@ static void word_ram_z80_write_byte(unsigned int address, unsigned int data)
   }
   else
   {
-    WRITE_BYTE(m68k.memory_map[offset].base, address & 0xffff, data);
+    *(uint16 *)(m68k.memory_map[offset].base + (address & 0xfffe)) = data | (data << 8);
   }
 }
 
@@ -295,7 +295,7 @@ static void word_ram_m68k_write_byte(unsigned int address, unsigned int data)
   }
   else
   {
-    WRITE_BYTE(m68k.memory_map[offset].base, address & 0xffff, data);
+    *(uint16 *)(m68k.memory_map[offset].base + (address & 0xfffe)) = data | (data << 8);
   }
 }
 
@@ -347,7 +347,7 @@ static void word_ram_s68k_write_byte(unsigned int address, unsigned int data)
   }
   else
   {
-    WRITE_BYTE(s68k.memory_map[offset].base, address & 0xffff, data);
+    *(uint16 *)(s68k.memory_map[offset].base + (address & 0xfffe)) = data | (data << 8);
   }
 }
 
