@@ -5,7 +5,7 @@
  *  Support for Master System (315-5216, 315-5237 & 315-5297), Game Gear & Mega Drive I/O chips
  *
  *  Copyright (C) 1998-2003  Charles Mac Donald (original code)
- *  Copyright (C) 2007-2016  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2007-2019  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -350,6 +350,16 @@ void io_68k_write(unsigned int offset, unsigned int data)
     case 0x02:  /* Port B Data */
     case 0x03:  /* Port C Data */
     {
+      /*
+        D7 : Unused. This bit will return any value written to it
+        D6 : TH pin output level (1=high, 0=low)
+        D5 : TR pin output level (1=high, 0=low)
+        D4 : TL pin output level (1=high, 0=low)
+        D3 : D3 pin output level (1=high, 0=low)
+        D2 : D2 pin output level (1=high, 0=low)
+        D1 : D1 pin output level (1=high, 0=low)
+        D0 : D0 pin output level (1=high, 0=low)
+      */
       io_reg[offset] = data;
       port[offset-1].data_w(data, io_reg[offset + 3]);
       return;
@@ -359,6 +369,16 @@ void io_68k_write(unsigned int offset, unsigned int data)
     case 0x05:  /* Port B Ctrl */
     case 0x06:  /* Port C Ctrl */
     {
+      /*
+        D7 : /HL output control (1=TH input level, 0=forced high)
+        D6 : TH pin is 1=output, 0=input
+        D5 : TR pin is 1=output, 0=input
+        D4 : TL pin is 1=output, 0=input
+        D3 : D3 pin is 1=output, 0=input
+        D2 : D2 pin is 1=output, 0=input
+        D1 : D1 pin is 1=output, 0=input
+        D0 : D0 pin is 1=output, 0=input
+      */
       if (data != io_reg[offset])
       {
         io_reg[offset] = data;
@@ -379,6 +399,15 @@ void io_68k_write(unsigned int offset, unsigned int data)
     case 0x0C:  /* Port B S-Ctrl */
     case 0x0F:  /* Port C S-Ctrl */
     {
+      /*
+        D7-D6 : Serial baud rate (00= 4800 bps, 01= 2400 bps, 10= 1200 bps, 11= 300 bps)
+        D5 : TR pin functions as 1= serial input pin, 0= normal
+        D4 : TL pin functions as 1= serial output pin, 0= normal
+        D3 : 1= Make I/O chip strobe /HL low when a byte has been received, 0= Do nothing
+        D2 : read-only (on read, 1= Error receiving current byte, 0= No error)
+        D1 : read-only (on read, 1= Rxd buffer is ready to read, 0= Rxd buffer isn't ready)
+        D0 : read-only (on read, 1= Txd buffer is full, 0= Can write to Txd buffer)
+      */
       io_reg[offset] = data & 0xF8;
       return;
     }
@@ -398,6 +427,16 @@ unsigned int io_68k_read(unsigned int offset)
     case 0x02:  /* Port B Data */
     case 0x03:  /* Port C Data */
     {
+      /*
+        D7 : Unused. This bit will return any value written to it
+        D6 : TH pin input level (1=high, 0=low)
+        D5 : TR pin input level (1=high, 0=low)
+        D4 : TL pin input level (1=high, 0=low)
+        D3 : D3 pin input level (1=high, 0=low)
+        D2 : D2 pin input level (1=high, 0=low)
+        D1 : D1 pin input level (1=high, 0=low)
+        D0 : D0 pin input level (1=high, 0=low)
+      */
       unsigned int mask = 0x80 | io_reg[offset + 3];
       unsigned int data = port[offset-1].data_r();
       return (io_reg[offset] & mask) | (data & ~mask);
