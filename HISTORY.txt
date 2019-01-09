@@ -23,6 +23,7 @@ Genesis Plus GX 1.7.5 (xx/xx/xxxx) (Eke-Eke)
 * improved Main-CPU & Sub-CPU idle loop detection (fixes "Super League CD")
 * improved PAL Mega CD timing accuracy (fixes PAL "Snatcher" intro synchronization)
 * improved CDD "play" command accuracy (fixes "Snatcher" Act 2 starting cutscene)
+* improved Word-RAM byte access accuracy (verified on schematics)
 * disabled 68k and Z80 access to PRG-RAM when SUB-CPU is running (fixes "Dungeon Explorer")
 * disabled CD hardware reset on Soft-Reset (verified on real hardware)
 * fixed DATA track minimal length (fixes BIOS refusing to boot small homebrew demos)
@@ -57,6 +58,7 @@ Genesis Plus GX 1.7.5 (xx/xx/xxxx) (Eke-Eke)
 
 [Core/MS]
 ---------------
+* added new SMS Power dumps in internal database
 * added support for new SMS Power dump Jang Pung II (KR)
 * added support for Hi-Com X-in-1 mapper (thanks to Bock from SMS Power)
 * improved console hardware auto-detection
@@ -80,7 +82,8 @@ Genesis Plus GX 1.7.5 (xx/xx/xxxx) (Eke-Eke)
 [Core/CPU]
 ---------------
 * improved 68k auto-vectored interrupts acknowledge cycle timing accuracy (Bubsy background color corruption during cutscenes)
-* fixed 68k undocumented behaviors for ABCD/SBCD/NBCD instructions (thanks to flamewing for his test ROM)
+* fixed 68k undocumented behaviors for ABCD/SBCD/NBCD instructions (thanks to Flamewing for his test ROM)
+* fixed 68k timing of BTST Dn,#Imm instruction (verified by Flamewing in original microcode)
 * fixed Z80 interrupt duration (Bomb on Basic City music running too fast)
 * fixed Z80 SP register initialization on power-on for Master System & Game Gear 
  (Ace of Aces, Shadow Dancer, Ecco the Dolphin, Evander Holyfield Real Deal Boxing)
