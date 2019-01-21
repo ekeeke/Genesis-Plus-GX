@@ -3,7 +3,7 @@
  *  2-Buttons, 3-Buttons & 6-Buttons controller support
  *  with support for J-Cart, 4-Way Play & Master Tap adapters
  *
- *  Copyright (C) 2007-2018  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2007-2019  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -125,8 +125,7 @@ INLINE unsigned char gamepad_read(int port)
     /* From gen_hw.txt (*):
 
        A 6-button gamepad allows the extra buttons to be read based on how
-       many times TH is switched from (and not 0 to 1). Observe the
-       following sequence:
+       many times TH is switched from 0 to 1. Observe the following sequence:
 
        TH = 1 : ?1CBRLDU    3-button pad return value
        TH = 0 : ?0SA00DU    3-button pad return value
@@ -141,7 +140,7 @@ INLINE unsigned char gamepad_read(int port)
 
        (*) additional High-to-Low transition is necessary to access extra buttons according to official MK-1653-50 specification 
     */
-    case 6: /*** Third Low ***/
+    case 4: /*** Third Low ***/
     {
       /* TH = 0 : ?0SA0000    D3-D0 forced to '0' */
       data &= ~(((pad >> 2) & 0x30) | 0x0F);
@@ -155,7 +154,7 @@ INLINE unsigned char gamepad_read(int port)
       break;
     }
 
-    case 8: /*** Fourth Low ***/
+    case 6: /*** Fourth Low ***/
     {
       /* TH = 0 : ?0SA1111    D3-D0 forced to '1' */
       data &= ~((pad >> 2) & 0x30);
@@ -193,10 +192,10 @@ INLINE void gamepad_write(int port, unsigned char data, unsigned char mask)
     gamepad[port].Latency = 0;
 
     /* 6-Buttons controller specific */
-    if ((input.dev[port] == DEVICE_PAD6B) && (gamepad[port].Counter < 10))
+    if ((input.dev[port] == DEVICE_PAD6B) && (gamepad[port].Counter < 8))
     {
-      /* TH 1->0 transition */
-      if (!data && gamepad[port].State)
+      /* TH 0->1 transition */
+      if (data && !gamepad[port].State)
       {
         gamepad[port].Counter += 2;
         gamepad[port].Timeout = 0;
