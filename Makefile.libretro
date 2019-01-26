@@ -662,13 +662,11 @@ all: $(TARGET)
 	$(CC) $(OBJOUT)$@ -c $< $(CPPFLAGS) $(CFLAGS) $(LIBRETRO_CFLAGS)
 
 $(TARGET): $(OBJECTS)
-	@echo "** BUILDING $(TARGET) FOR PLATFORM $(platform) **"
 ifeq ($(STATIC_LINKING), 1)
 	$(AR) rcs $@ $(OBJECTS)
 else
 	$(LD) $(LINKOUT)$(TARGET) $(fpic) $(OBJECTS) $(LDFLAGS) $(SHARED) $(LIBS)
 endif
-	@echo "** BUILD SUCCESSFUL! GG NO RE **"
   
 clean-objs:
 	rm -f $(OBJECTS)
