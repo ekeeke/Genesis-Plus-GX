@@ -38,6 +38,7 @@
  *    - Implemented cycle-accurate INI/IND (needed by SMS emulation)
  *    - Fixed Z80 reset
  *    - Made SZHVC_add & SZHVC_sub tables statically allocated
+ *    - Fixed compiler warning when BIG_SWITCH is defined
  *   Changes in 3.9:
  *    - Fixed cycle counts for LD IYL/IXL/IYH/IXH,n [Marshmellow]
  *    - Fixed X/Y flags in CCF/SCF/BIT, ZEXALL is happy now [hap]
@@ -428,7 +429,9 @@ typedef void (*funcptr)(void);
   INLINE void prefix##_f0(void); INLINE void prefix##_f1(void); INLINE void prefix##_f2(void); INLINE void prefix##_f3(void); \
   INLINE void prefix##_f4(void); INLINE void prefix##_f5(void); INLINE void prefix##_f6(void); INLINE void prefix##_f7(void); \
   INLINE void prefix##_f8(void); INLINE void prefix##_f9(void); INLINE void prefix##_fa(void); INLINE void prefix##_fb(void); \
-  INLINE void prefix##_fc(void); INLINE void prefix##_fd(void); INLINE void prefix##_fe(void); INLINE void prefix##_ff(void); \
+  INLINE void prefix##_fc(void); INLINE void prefix##_fd(void); INLINE void prefix##_fe(void); INLINE void prefix##_ff(void);
+
+#define FUNCTABLE(tablename,prefix) \
 static const funcptr tablename[0x100] = {  \
   prefix##_00,prefix##_01,prefix##_02,prefix##_03,prefix##_04,prefix##_05,prefix##_06,prefix##_07, \
   prefix##_08,prefix##_09,prefix##_0a,prefix##_0b,prefix##_0c,prefix##_0d,prefix##_0e,prefix##_0f, \
@@ -470,6 +473,15 @@ PROTOTYPES(Z80dd,dd);
 PROTOTYPES(Z80ed,ed);
 PROTOTYPES(Z80fd,fd);
 PROTOTYPES(Z80xycb,xycb);
+
+#ifndef BIG_SWITCH
+FUNCTABLE(Z80op,op);
+#endif
+FUNCTABLE(Z80cb,cb);
+FUNCTABLE(Z80dd,dd);
+FUNCTABLE(Z80ed,ed);
+FUNCTABLE(Z80fd,fd);
+FUNCTABLE(Z80xycb,xycb);
 
 /****************************************************************************/
 /* Burn an odd amount of cycles, that is instructions taking something    */

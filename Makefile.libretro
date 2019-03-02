@@ -454,6 +454,12 @@ else ifneq (,$(findstring windows_msvc2017,$(platform)))
 	PSS_STYLE :=2
 	LDFLAGS += -DLL
 
+  ENDIANNESS_DEFINES := -DLSB_FIRST -DBYTE_ORDER=LITTLE_ENDIAN -DALIGN_LONG
+
+ifneq (,$(findstring windows_msvc2017_uwp_arm,$(platform)))
+  #ENDIANNESS_DEFINES += -DALIGN_LONG
+endif
+
 # Windows MSVC 2010 x86
 else ifeq ($(platform), windows_msvc2010_x86)
 	CC  = cl.exe
@@ -656,13 +662,11 @@ all: $(TARGET)
 	$(CC) $(OBJOUT)$@ -c $< $(CPPFLAGS) $(CFLAGS) $(LIBRETRO_CFLAGS)
 
 $(TARGET): $(OBJECTS)
-	@echo "** BUILDING $(TARGET) FOR PLATFORM $(platform) **"
 ifeq ($(STATIC_LINKING), 1)
 	$(AR) rcs $@ $(OBJECTS)
 else
 	$(LD) $(LINKOUT)$(TARGET) $(fpic) $(OBJECTS) $(LDFLAGS) $(SHARED) $(LIBS)
 endif
-	@echo "** BUILD SUCCESSFUL! GG NO RE **"
   
 clean-objs:
 	rm -f $(OBJECTS)

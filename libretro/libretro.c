@@ -2012,8 +2012,31 @@ void retro_get_system_av_info(struct retro_system_av_info *info)
 {
    info->geometry.base_width    = vwidth;
    info->geometry.base_height   = bitmap.viewport.h + (2 * bitmap.viewport.y);
-   info->geometry.max_width     = 720;
-   info->geometry.max_height    = 576;
+   /* Set maximum dimensions based upon emulated system/config */
+   if ((system_hw & SYSTEM_PBC) == SYSTEM_MD)
+   {
+      /* 16 bit system */
+      if (config.ntsc) {
+         info->geometry.max_width = MD_NTSC_OUT_WIDTH(320 + (bitmap.viewport.x * 2));
+      } else {
+         info->geometry.max_width = 320 + (bitmap.viewport.x * 2);
+      }
+      if (config.render) {
+         info->geometry.max_height = 480 + (vdp_pal * 96 * (config.overscan & 1));
+      } else {
+         info->geometry.max_height = 240 + (vdp_pal * 48 * (config.overscan & 1));
+      }
+   }
+   else
+   {
+      /* 8 bit system */
+      if (config.ntsc) {
+         info->geometry.max_width = SMS_NTSC_OUT_WIDTH(256 + (bitmap.viewport.x * 2));
+      } else {
+         info->geometry.max_width = 256 + (bitmap.viewport.x * 2);
+      }
+      info->geometry.max_height = 240 + (vdp_pal * 48 * (config.overscan & 1));
+   }
    info->geometry.aspect_ratio  = vaspect_ratio;
    info->timing.fps             = (double)(system_clock) / (double)lines_per_frame / (double)MCYCLES_PER_LINE;
    info->timing.sample_rate     = SOUND_FREQUENCY;
