@@ -780,9 +780,14 @@ int md_cart_context_save(uint8 *state)
       /* SRAM */
       state[bufferptr++] = 0xff;
     }
+    else if (base == boot_rom)
+    {
+      /* Boot ROM */
+      state[bufferptr++] = 0xfe;
+    }
     else
     {
-      /* ROM */
+      /* Cartridge ROM */
       state[bufferptr++] = ((base - cart.rom) >> 16) & 0xff;
     }
   }
@@ -839,7 +844,7 @@ int md_cart_context_load(uint8 *state)
       }
 
       /* ROM */
-      m68k.memory_map[i].base = cart.rom + (offset << 16);
+      m68k.memory_map[i].base = (offset == 0xfe) ? boot_rom : (cart.rom + (offset << 16));
     }
   }
 
