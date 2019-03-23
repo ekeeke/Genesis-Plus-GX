@@ -445,10 +445,16 @@ static void s68k_poll_sync(unsigned int reg_mask)
   /* relative MAIN-CPU cycle counter */
   unsigned int cycles = (s68k.cycles * MCYCLES_PER_LINE) / SCYCLES_PER_LINE;
 
-  /* sync MAIN-CPU with SUB-CPU */
   if (!m68k.stopped)
   {
+    /* save current MAIN-CPU end cycle count (recursive execution is possible) */
+    int end_cycle = m68k.cycle_end;
+
+    /* sync MAIN-CPU with SUB-CPU */
     m68k_run(cycles);
+
+    /* restore MAIN-CPU end cycle count */
+    m68k.cycle_end = end_cycle;
   }
 
   /* MAIN-CPU idle on register polling ? */
@@ -669,8 +675,14 @@ static unsigned int scd_read_word(unsigned int address)
       /* relative MAIN-CPU cycle counter */
       unsigned int cycles = (s68k.cycles * MCYCLES_PER_LINE) / SCYCLES_PER_LINE;
 
+      /* save current MAIN-CPU end cycle count (recursive execution is possible) */
+      int end_cycle = m68k.cycle_end;
+
       /* sync MAIN-CPU with SUB-CPU (Mighty Morphin Power Rangers) */
       m68k_run(cycles);
+
+      /* restore MAIN-CPU end cycle count */
+      m68k.cycle_end = end_cycle;
     }
 
     s68k_poll_detect(3 << (address & 0x1e));
