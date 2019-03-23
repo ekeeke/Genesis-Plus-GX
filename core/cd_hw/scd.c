@@ -793,7 +793,7 @@ static void scd_write_byte(unsigned int address, unsigned int data)
 
     case 0x01: /* RESET status */
     {
-      /* RESET bit cleared ? */      
+      /* RESET bit cleared ? */
       if (!(data & 0x01))
       {
         /* reset CD hardware */
@@ -1071,7 +1071,7 @@ static void scd_write_word(unsigned int address, unsigned int data)
       /* only update LED status (register $00 is reserved for MAIN-CPU, use $06 instead) */
       scd.regs[0x06>>1].byte.h = data >> 8;
 
-      /* RESET bit cleared ? */      
+      /* RESET bit cleared ? */
       if (!(data & 0x01))
       {
         /* reset CD hardware */
@@ -1626,6 +1626,9 @@ void scd_reset(int hard)
     s68k.cycles = 0;
     s68k_pulse_reset();
     s68k_pulse_halt();
+
+    /* Reset frame cycle counter */
+    scd.cycles = 0;
   }
   else
   {
@@ -1649,10 +1652,7 @@ void scd_reset(int hard)
 
   /* Reset Timer & Stopwatch counters */
   scd.timer = 0;
-  scd.stopwatch = 0;
-
-  /* Reset frame cycle counter */
-  scd.cycles = 0;
+  scd.stopwatch = s68k.cycles;
 
   /* Clear pending interrupts */
   scd.pending = 0;
@@ -1660,6 +1660,9 @@ void scd_reset(int hard)
   /* Clear CPU polling detection */
   memset(&m68k.poll, 0, sizeof(m68k.poll));
   memset(&s68k.poll, 0, sizeof(s68k.poll));
+
+  /* reset CDD cycle counter */
+  cdd.cycles = (scd.cycles - s68k.cycles) * 3;
 
   /* Reset CD hardware */
   cdd_reset();

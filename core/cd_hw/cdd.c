@@ -198,15 +198,12 @@ void cdd_init(int samplerate)
 
 void cdd_reset(void)
 {
-  /* reset cycle counter */
-  cdd.cycles = 0;
-  
   /* reset drive access latency */
   cdd.latency = 0;
-  
+
   /* reset track index */
   cdd.index = 0;
-  
+
   /* reset logical block address */
   cdd.lba = 0;
 
