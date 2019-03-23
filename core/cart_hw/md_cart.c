@@ -933,7 +933,7 @@ static void mapper_512k_w(uint32 address, uint32 data)
   uint32 i;
 
   /* 512K ROM paging */
-  uint8 *src = cart.rom + (data << 19);
+  uint8 *src = cart.rom + ((data << 19) & cart.mask);
 
   /* cartridge area ($000000-$3FFFFF) is divided into 8 x 512K banks */
   address = (address << 2) & 0x38;
