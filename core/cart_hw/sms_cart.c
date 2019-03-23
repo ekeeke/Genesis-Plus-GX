@@ -610,9 +610,6 @@ void sms_cart_reset(void)
     }
   }
 
-  /* reset Memory Control register (RAM & I/O are enabled, either BIOS or Cartridge ROM are enabled) */
-  io_reg[0x0E] = bios_rom.pages ? 0xE0 : 0xA8;
-
   /* reset Z80 memory map */
   mapper_reset();
 
@@ -743,14 +740,32 @@ int sms_cart_region_detect(void)
 int sms_cart_context_save(uint8 *state)
 {
   int bufferptr = 0;
-  save_param(slot.fcr, 4);
+
+  if (io_reg[0x0E] & 0x40)
+  {
+    save_param(bios_rom.fcr, 4);
+  }
+  else
+  {
+    save_param(cart_rom.fcr, 4);
+  }
+
   return bufferptr;
 }
 
 int sms_cart_context_load(uint8 *state)
 {
   int bufferptr = 0;
-  load_param(slot.fcr, 4);
+
+  if (io_reg[0x0E] & 0x40)
+  {
+    load_param(bios_rom.fcr, 4);
+  }
+  else
+  {
+    load_param(cart_rom.fcr, 4);
+  }
+
   return bufferptr;
 }
 

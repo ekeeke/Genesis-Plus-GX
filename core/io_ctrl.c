@@ -321,13 +321,27 @@ void io_reset(void)
       io_reg[0x0D] |= IO_CONT1_HI;
     }
 
-    /* Control registers */
-    io_reg[0x0E] = 0x00;
-    io_reg[0x0F] = 0xFF;
-
-     /* on SG-1000 & Mark-III, TH is not connected (always return 1) */
-    if (system_hw < SYSTEM_SMS)
+    /* Memory Control register (Master System and Game Gear hardware only) */
+    if ((system_hw & SYSTEM_SMS) || (system_hw & SYSTEM_GG))
     {
+      /* RAM, I/O and either BIOS or Cartridge ROM are enabled */
+      io_reg[0x0E] = (z80_readmap[0] == cart.rom + 0x400000) ? 0xE0 : 0xA8;
+    }
+    else
+    {
+      /* default value (no Memory Control register) */
+      io_reg[0x0E] = 0x00;
+    }
+
+    /* I/O control register (Master System, Mega Drive and Game Gear hardware only) */
+    if (system_hw >= SYSTEM_SMS)
+    {
+      /* on power-on, TR and TH are configured as inputs */
+      io_reg[0x0F] = 0xFF;
+    }
+    else
+    {
+      /* on SG-1000 & Mark-III, TR is always an input and TH is not connected (always return 1) */
       io_reg[0x0F] = 0xF5;
     }
   }
