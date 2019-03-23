@@ -3,7 +3,7 @@
  *
  *  Genesis Plus GX video & rendering support
  *
- *  Copyright Eke-Eke (2007-2016), based on original work from Softdev (2006)
+ *  Copyright Eke-Eke (2007-2019), based on original work from Softdev (2006)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -51,7 +51,7 @@ typedef struct
 {
   u8 *buffer;
   u32 offset;
-} png_image;
+} png_image_desc;
 
 extern const u8 Crosshair_p1_png[];
 extern const u8 Crosshair_p2_png[];
@@ -1084,7 +1084,7 @@ void gxClearScreen(GXColor color)
 /* libpng read callback function */
 static void png_read_from_mem (png_structp png_ptr, png_bytep data, png_size_t length)
 {
-  png_image *image = (png_image *)png_get_io_ptr(png_ptr);
+  png_image_desc *image = (png_image_desc *)png_get_io_ptr(png_ptr);
 
   /* copy data from image buffer */
   memcpy (data, image->buffer + image->offset, length);
@@ -1113,7 +1113,7 @@ gx_texture *gxTextureOpenPNG(const u8 *png_data, FILE *png_file)
   if (png_data)
   {
     /* init PNG image structure */
-    png_image image;
+    png_image_desc image;
     image.buffer = (u8 *) png_data;
     image.offset = 0;
 
