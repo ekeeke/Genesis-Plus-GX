@@ -3,7 +3,7 @@
  *
  *  generic GUI Engine (using GX rendering)
  *
- *  Copyright Eke-Eke (2009-2014)
+ *  Copyright Eke-Eke (2009-2019)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -1800,9 +1800,9 @@ static void *MsgBox_Thread(gui_message *message_box)
 void GUI_MsgBoxUpdate(char *title, char *msg)
 {
   if (title)
-    strncpy(message_box.title,title,64);
+    strncpy(message_box.title,title,63);
   if (msg)
-    strncpy(message_box.msg,msg,64);
+    strncpy(message_box.msg,msg,63);
 }
 
 /* setup current Message Box */

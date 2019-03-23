@@ -3,7 +3,7 @@
  * 
  *  Genesis Plus GX Cheats menu
  *
- *  Copyright Eke-Eke (2010-2014)
+ *  Copyright Eke-Eke (2010-2019)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:

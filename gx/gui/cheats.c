@@ -3,7 +3,7 @@
  * 
  *  Genesis Plus GX Cheats menu
  *
- *  Copyright Eke-Eke (2010-2014)
+ *  Copyright Eke-Eke (2010-2019)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -803,7 +803,7 @@ void CheatMenu(void)
   int i, update = 0;
   int digit_cnt = 0;
   int max = 0;
-  char temp[256];
+  char temp[MAXPATHLEN];
   char *str = NULL;
   gui_menu *m = &menu_cheats;
 
@@ -1352,7 +1352,7 @@ void CheatMenu(void)
   apply_cheats();
 
   /* save cheats to file */
-  sprintf(temp, "%s/cheats/%s.pat", DEFAULT_PATH, rom_filename);
+  snprintf(temp, MAXPATHLEN, "%s/cheats/%s.pat", DEFAULT_PATH, rom_filename);
 
   if (maxcheats)
   {
@@ -1401,13 +1401,13 @@ void CheatLoad(void)
 {
   int len;
   int cnt = 0;
-  char temp[256];
+  char temp[MAXPATHLEN];
 
   /* reset cheat count */
   maxcheats = 0;
   
   /* make cheat filename */
-  sprintf(temp, "%s/cheats/%s.pat", DEFAULT_PATH, rom_filename);
+  snprintf(temp, MAXPATHLEN, "%s/cheats/%s.pat", DEFAULT_PATH, rom_filename);
 
   /* open file */
   FILE *f = fopen(temp, "r");

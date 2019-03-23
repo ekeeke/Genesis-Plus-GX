@@ -3,7 +3,7 @@
  * 
  *  File loading support
  *
- *  Copyright Eke-Eke (2008-2014)
+ *  Copyright Eke-Eke (2008-2019)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -223,7 +223,7 @@ static int FileSortCallback(const void *f1, const void *f2)
   if(((FILEENTRIES *)f1)->flags && !((FILEENTRIES *)f2)->flags) return -1;
   if(!((FILEENTRIES *)f1)->flags  && ((FILEENTRIES *)f2)->flags) return 1;
   
-  return stricmp(((FILEENTRIES *)f1)->filename, ((FILEENTRIES *)f2)->filename);
+  return strcasecmp(((FILEENTRIES *)f1)->filename, ((FILEENTRIES *)f2)->filename);
 }
 
 /***************************************************************************
@@ -247,11 +247,7 @@ int UpdateDirectory(bool go_up, char *dirname)
     while (test != NULL)
     {
       size = strlen(test);
-      if (dirname)
-      {
-        strncpy(dirname,test,size);
-        dirname[size] = 0;
-      }
+      strcpy(dirname,test);
       test = strtok(NULL,"/");
     }
 
@@ -265,7 +261,8 @@ int UpdateDirectory(bool go_up, char *dirname)
   else
   {
     /* by default, simply append folder name */
-    sprintf(fileDir, "%s%s/",fileDir, dirname);
+    const char *path = (const char *)fileDir;
+    snprintf(fileDir, MAXPATHLEN, "%s%s/", path, (const char *)dirname);
   }
 
   return 1;

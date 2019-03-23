@@ -1145,7 +1145,7 @@ int cdd_load(char *filename, char *header)
     }
 
     /* Automatically try to open associated subcode data file */
-    strncpy(&fname[strlen(fname) - 4], ".sub", 4);
+    memcpy(&fname[strlen(fname) - 4], ".sub", 4);
     cdd.toc.sub = cdStreamOpen(fname);
 
     /* return 1 if loaded file is CD image file */
