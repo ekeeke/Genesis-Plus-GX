@@ -380,7 +380,7 @@ void md_cart_init(void)
   if (sram.on && !sram.custom)
   {
     /* SRAM is mapped by default unless it overlaps with ROM area (Phantasy Star 4, Beyond Oasis/Legend of Thor, World Series Baseball 9x, Duke Nukem 3D,...) */
-    if (sram.start >= size)
+    if (sram.start >= cart.romsize)
     {
       m68k.memory_map[sram.start >> 16].base    = sram.sram;
       m68k.memory_map[sram.start >> 16].read8   = sram_read_byte;
