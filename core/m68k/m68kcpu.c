@@ -72,6 +72,19 @@ static void default_set_fc_callback(unsigned int new_fc)
 #endif
 
 
+/* CPU hook is called on read, write, and execute, if HOOK_CPU is defined in
+ * a makefile or an MSVC project. Use set_cpu_hook() to assign a callback
+ * that can process the data provided by cpu_hook().
+ */
+
+void (*cpu_hook)(hook_type_t type, int width, unsigned int address, unsigned int value) = NULL;
+
+void set_cpu_hook(void (*hook)(hook_type_t type, int width, unsigned int address, unsigned int value))
+{
+	cpu_hook = hook;
+}
+
+
 /* ======================================================================== */
 /* ================================= API ================================== */
 /* ======================================================================== */
@@ -288,6 +301,12 @@ void m68k_run(unsigned int cycles)
 
     /* Set the address space for reads */
     m68ki_use_data_space() /* auto-disable (see m68kcpu.h) */
+
+#ifdef HOOK_CPU
+    /* Trigger execution hook */
+    if (cpu_hook)
+      cpu_hook(HOOK_M68K_E, 0, REG_PC, 0);
+#endif
 
     /* Decode next instruction */
     REG_IR = m68ki_read_imm_16();

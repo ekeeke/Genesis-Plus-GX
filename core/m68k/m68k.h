@@ -43,6 +43,7 @@
 
 #include <setjmp.h>
 #include "macros.h"
+#include "cpuhook.h"
 
 /* ======================================================================== */
 /* ==================== ARCHITECTURE-DEPENDANT DEFINES ==================== */

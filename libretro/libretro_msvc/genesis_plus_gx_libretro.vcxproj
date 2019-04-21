@@ -308,6 +308,7 @@
     <ClInclude Include="..\..\core\cd_hw\libchdr\src\huffman.h" />
     <ClInclude Include="..\..\core\cd_hw\pcm.h" />
     <ClInclude Include="..\..\core\cd_hw\scd.h" />
+    <ClInclude Include="..\..\core\cpuhook.h" />
     <ClInclude Include="..\..\core\genesis.h" />
     <ClInclude Include="..\..\core\input_hw\activator.h" />
     <ClInclude Include="..\..\core\input_hw\gamepad.h" />
