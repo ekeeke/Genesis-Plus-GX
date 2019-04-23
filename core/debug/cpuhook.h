@@ -3,7 +3,7 @@
  *  CPU hooking support
  *
  *  Copyright DrMefistO (2018-2019)
-
+ *
  *  Copyright feos (2019)
  *
  *  Redistribution and use of this code or any derivative works are permitted
@@ -41,6 +41,7 @@
 #ifndef _CPUHOOK_H_
 #define _CPUHOOK_H_
 
+
 typedef enum {
   HOOK_ANY      = (0 << 0),
   
@@ -74,7 +75,15 @@ typedef enum {
   HOOK_M68K_REG = (1 << 13),
 } hook_type_t;
 
+
+/* CPU hook is called on read, write, and execute.
+ */
 void (*cpu_hook)(hook_type_t type, int width, unsigned int address, unsigned int value);
+
+/* Use set_cpu_hook() to assign a callback that can process the data provided
+ * by cpu_hook().
+ */
 void set_cpu_hook(void(*hook)(hook_type_t type, int width, unsigned int address, unsigned int value));
+
 
 #endif /* _CPUHOOK_H_ */

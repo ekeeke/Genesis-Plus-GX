@@ -82,6 +82,9 @@
     <Filter Include="core\ntsc">
       <UniqueIdentifier>{08366101-bc7b-4009-8f09-65804bdab6ea}</UniqueIdentifier>
     </Filter>
+    <Filter Include="core\debug">
+      <UniqueIdentifier>{674da1b3-d904-4490-bb73-a63eb5ea9ced}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\core\cd_hw\libchdr\src\bitstream.c">
@@ -383,6 +386,9 @@
     </ClCompile>
     <ClCompile Include="..\scrc32.c">
       <Filter>libretro</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\core\debug\cpuhook.c">
+      <Filter>core\debug</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -749,8 +755,8 @@
     <ClInclude Include="..\..\core\shared.h">
       <Filter>core</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\core\cpuhook.h">
-      <Filter>core</Filter>
+    <ClInclude Include="..\..\core\debug\cpuhook.h">
+      <Filter>core\debug</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
