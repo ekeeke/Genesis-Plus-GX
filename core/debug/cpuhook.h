@@ -2,6 +2,8 @@
  *  Genesis Plus GX
  *  CPU hooking support
  *
+ *  HOOK_CPU should be defined in a makefile or MSVC project to enable this functionality
+ *
  *  Copyright DrMefistO (2018-2019)
  *
  *  Copyright feos (2019)

@@ -2,6 +2,8 @@
  *  Genesis Plus GX
  *  CPU hooking support
  *
+ *  HOOK_CPU should be defined in a makefile or MSVC project to enable this functionality
+ *
  *  Copyright feos (2019)
  *
  *  Redistribution and use of this code or any derivative works are permitted
@@ -36,6 +38,8 @@
  *
  ****************************************************************************************/
 
+#ifdef HOOK_CPU
+
 #include <stdio.h>
 #include "cpuhook.h"
 
@@ -45,3 +49,5 @@ void set_cpu_hook(void(*hook)(hook_type_t type, int width, unsigned int address,
 {
 	cpu_hook = hook;
 }
+
+#endif /* HOOK_CPU */
