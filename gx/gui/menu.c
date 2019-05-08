@@ -3,7 +3,7 @@
  *
  *  Genesis Plus GX menu
  *
- *  Copyright Eke-Eke (2009-2018)
+ *  Copyright Eke-Eke (2009-2019)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -432,7 +432,7 @@ static gui_item items_prefs[] =
   {NULL,NULL,"Show CD Leds: OFF",   "Enable/Disable CD leds display",                  56,132,276,48},
   {NULL,NULL,"Show FPS: OFF",       "Enable/Disable FPS counter",                      56,132,276,48},
 #ifdef HW_RVL
-  {NULL,NULL,"Wiimote Timeout: OFF","Enable/Disable Wii remote automatic shutodwn",    56,132,276,48},
+  {NULL,NULL,"Wiimote Timeout: OFF","Enable/Disable Wii remote automatic shutdown",    56,132,276,48},
   {NULL,NULL,"Wiimote Calibration: AUTO","Calibrate Wii remote pointer",               56,132,276,48},
 #endif
 };
