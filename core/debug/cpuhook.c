@@ -43,9 +43,9 @@
 #include <stdio.h>
 #include "cpuhook.h"
 
-void(*cpu_hook)(hook_type_t type, int width, unsigned int address, unsigned int value) = NULL;
+cpu_hook_t cpu_hook = NULL;
 
-void set_cpu_hook(void(*hook)(hook_type_t type, int width, unsigned int address, unsigned int value))
+__declspec(dllexport) void __cdecl set_cpu_hook(cpu_hook_t hook)
 {
 	cpu_hook = hook;
 }
