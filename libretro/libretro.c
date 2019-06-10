@@ -147,6 +147,9 @@ static retro_input_state_t input_state_cb;
 static retro_environment_t environ_cb;
 static retro_audio_sample_batch_t audio_cb;
 
+enum RetroLightgunInputModes{RetroLightgun, RetroPointer};
+static enum RetroLightgunInputModes retro_gun_mode = RetroLightgun;
+
 /* Cheat Support */
 #define MAX_CHEATS (150)
 
@@ -362,25 +365,33 @@ void osd_input_update(void)
 
       case DEVICE_LIGHTGUN:
       {
-        if ( input_state_cb(player, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_IS_OFFSCREEN) )
-        {
-           input.analog[i][0] = -1000;
-           input.analog[i][1] = -1000;
-        }
-        else
-        {
-           input.analog[i][0] = ((input_state_cb(player, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_SCREEN_X) + 0x7fff) * bitmap.viewport.w) / 0xfffe;
-           input.analog[i][1] = ((input_state_cb(player, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_SCREEN_Y) + 0x7fff) * bitmap.viewport.h) / 0xfffe;
-        }
+        if ( retro_gun_mode == RetroPointer ) {
+          input.analog[i][0] = ((input_state_cb(player, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_X) + 0x7fff) * bitmap.viewport.w) / 0xfffe;
+          input.analog[i][1] = ((input_state_cb(player, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_Y) + 0x7fff) * bitmap.viewport.h) / 0xfffe;
+          if (input_state_cb(player, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_PRESSED)) {
+            temp |= INPUT_A;
+          } 
+        } else {  // RetroLightgun is default
+          if ( input_state_cb(player, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_IS_OFFSCREEN) )
+          {
+            input.analog[i][0] = -1000;
+            input.analog[i][1] = -1000;
+          }
+          else
+          {
+            input.analog[i][0] = ((input_state_cb(player, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_SCREEN_X) + 0x7fff) * bitmap.viewport.w) / 0xfffe;
+            input.analog[i][1] = ((input_state_cb(player, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_SCREEN_Y) + 0x7fff) * bitmap.viewport.h) / 0xfffe;
+          }
 
-        if (input_state_cb(player, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_TRIGGER))
-          temp |= INPUT_A;
-        if (input_state_cb(player, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_AUX_A))
-          temp |= INPUT_B;
-        if (input_state_cb(player, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_AUX_B))
-          temp |= INPUT_C;
-        if (input_state_cb(player, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_START))
-          temp |= INPUT_START;
+          if (input_state_cb(player, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_TRIGGER))
+            temp |= INPUT_A;
+          if (input_state_cb(player, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_AUX_A))
+            temp |= INPUT_B;
+          if (input_state_cb(player, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_AUX_B))
+            temp |= INPUT_C;
+          if (input_state_cb(player, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_START))
+            temp |= INPUT_START;
+        }     
 
         player++;
         break;
@@ -1332,6 +1343,15 @@ static void check_variables(void)
       config.gun_cursor = 1;
   }
 
+  var.key = "genesis_plus_gx_gun_input";
+  environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
+  {
+    if (!var.value || !strcmp(var.value, "touchscreen"))
+      retro_gun_mode = RetroPointer;
+    else
+      retro_gun_mode = RetroLightgun;
+  }
+
   var.key = "genesis_plus_gx_invert_mouse";
   environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
   {
@@ -1815,6 +1835,7 @@ void retro_set_environment(retro_environment_t cb)
       { "genesis_plus_gx_aspect_ratio", "Core-provided aspect ratio; auto|NTSC PAR|PAL PAR" },
       { "genesis_plus_gx_render", "Interlaced mode 2 output; single field|double field" },
       { "genesis_plus_gx_gun_cursor", "Show Lightgun crosshair; disabled|enabled" },
+      { "genesis_plus_gx_gun_input", "Lightgun input; lightgun|touchscreen" },
       { "genesis_plus_gx_invert_mouse", "Invert Mouse Y-axis; disabled|enabled" },
 #ifdef HAVE_OVERCLOCK
       { "genesis_plus_gx_overclock", "CPU speed; 100%|125%|150%|175%|200%" },
