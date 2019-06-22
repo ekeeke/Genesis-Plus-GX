@@ -181,6 +181,8 @@ static char arvalidchars[] = "0123456789ABCDEF";
 static uint32_t overclock_delay;
 #endif
 
+static bool libretro_supports_bitmasks = false;
+
 #define SOUND_FREQUENCY 44100
 
 /* Hide the EQ settings for now */
@@ -279,251 +281,507 @@ int load_archive(char *filename, unsigned char *buffer, int maxsize, char *exten
 
 static void RAMCheatUpdate(void);
 
+static void osd_input_update_internal_bitmasks(void)
+{
+   int i, player = 0;
+   unsigned int temp;
+   int16_t ret = input_state_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_MASK);
+
+   for (i = 0; i < MAX_INPUTS; i++)
+   {
+      temp = 0;
+      switch (input.dev[i])
+      {
+         case DEVICE_PAD6B:
+            {
+               if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_L))
+                  temp |= INPUT_X;
+               if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_X))
+                  temp |= INPUT_Y;
+               if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_R))
+                  temp |= INPUT_Z;
+               if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_SELECT))
+                  temp |= INPUT_MODE;
+            }
+
+         case DEVICE_PAD3B:
+            {
+               if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_Y))
+                  temp |= INPUT_A;
+            }
+
+         case DEVICE_PAD2B:
+            {
+               if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_B))
+                  temp |= INPUT_B;
+               if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_A))
+                  temp |= INPUT_C;
+               if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_START))
+                  temp |= INPUT_START;
+               if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_UP))
+                  temp |= INPUT_UP;
+               if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_DOWN))
+                  temp |= INPUT_DOWN;
+               if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_LEFT))
+                  temp |= INPUT_LEFT;
+               if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_RIGHT))
+                  temp |= INPUT_RIGHT;
+
+               player++;
+               ret = input_state_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_MASK);
+               break;
+            }
+
+         case DEVICE_MOUSE:
+            {
+               input.analog[i][0] = input_state_cb(player, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_X);
+               if (config.invert_mouse)
+                  input.analog[i][1] = input_state_cb(player, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_Y);
+               else
+                  input.analog[i][1] = -input_state_cb(player, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_Y);
+
+               if (input.analog[i][0] < -255)
+                  input.analog[i][0] = -255;
+               else if (input.analog[i][0] > 255)
+                  input.analog[i][0] = 255;
+               if (input.analog[i][1] < -255)
+                  input.analog[i][1] = -255;
+               else if (input.analog[i][1] > 255)
+                  input.analog[i][1] = 255;
+
+               if (input_state_cb(player, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_LEFT))
+                  temp |= INPUT_MOUSE_LEFT;
+               if (input_state_cb(player, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_RIGHT))
+                  temp |= INPUT_MOUSE_RIGHT;
+               if (input_state_cb(player, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_WHEELDOWN))
+                  temp |= INPUT_MOUSE_CENTER;
+               if (input_state_cb(player, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_MIDDLE))
+                  temp |= INPUT_START;
+
+               player++;
+               ret = input_state_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_MASK);
+               break;
+            }
+
+         case DEVICE_LIGHTGUN:
+            {
+               if ( retro_gun_mode == RetroPointer )
+               {
+                  input.analog[i][0] = ((input_state_cb(player, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_X) + 0x7fff) * bitmap.viewport.w) / 0xfffe;
+                  input.analog[i][1] = ((input_state_cb(player, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_Y) + 0x7fff) * bitmap.viewport.h) / 0xfffe;
+                  if (input_state_cb(player, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_PRESSED))
+                     temp |= INPUT_A;
+               }
+               else
+               {  // RetroLightgun is default
+                  if ( input_state_cb(player, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_IS_OFFSCREEN) )
+                  {
+                     input.analog[i][0] = -1000;
+                     input.analog[i][1] = -1000;
+                  }
+                  else
+                  {
+                     input.analog[i][0] = ((input_state_cb(player, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_SCREEN_X) + 0x7fff) * bitmap.viewport.w) / 0xfffe;
+                     input.analog[i][1] = ((input_state_cb(player, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_SCREEN_Y) + 0x7fff) * bitmap.viewport.h) / 0xfffe;
+                  }
+
+                  if (input_state_cb(player, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_TRIGGER))
+                     temp |= INPUT_A;
+                  if (input_state_cb(player, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_AUX_A))
+                     temp |= INPUT_B;
+                  if (input_state_cb(player, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_AUX_B))
+                     temp |= INPUT_C;
+                  if (input_state_cb(player, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_START))
+                     temp |= INPUT_START;
+               }     
+
+               player++;
+               ret = input_state_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_MASK);
+               break;
+            }
+
+         case DEVICE_PADDLE:
+            {
+               input.analog[i][0] = (input_state_cb(player, RETRO_DEVICE_ANALOG, 0, RETRO_DEVICE_ID_ANALOG_X) + 0x8000) >> 8;
+
+               if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_B))
+                  temp |= INPUT_BUTTON1;
+               if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_START))
+                  temp |= INPUT_START;
+
+               player++;
+               ret = input_state_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_MASK);
+               break;
+            }
+
+         case DEVICE_SPORTSPAD:
+            {
+               input.analog[i][0] = (input_state_cb(player, RETRO_DEVICE_ANALOG, 0, RETRO_DEVICE_ID_ANALOG_X) + 0x8000) >> 8;
+               input.analog[i][1] = (input_state_cb(player, RETRO_DEVICE_ANALOG, 0, RETRO_DEVICE_ID_ANALOG_Y) + 0x8000) >> 8;
+
+               if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_B))
+                  temp |= INPUT_BUTTON1;
+               if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_A))
+                  temp |= INPUT_BUTTON2;
+               if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_START))
+                  temp |= INPUT_START;
+
+               player++;
+               ret = input_state_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_MASK);
+               break;
+            }
+
+         case DEVICE_PICO:
+            {
+               input.analog[i][0] = 0x03c + ((input_state_cb(player, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_X) + 0x7fff) * (0x17c-0x03c)) / 0xfffe;
+               input.analog[i][1] = 0x1fc + ((input_state_cb(player, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_Y) + 0x7fff) * (0x2f7-0x1fc)) / 0xfffe;
+
+               if (input_state_cb(player, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_LEFT))
+                  temp |= INPUT_PICO_PEN;
+               if (input_state_cb(player, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_RIGHT))
+                  temp |= INPUT_PICO_RED;
+               if (input_state_cb(player, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_WHEELUP))
+                  pico_current = (pico_current - 1) & 7;
+               if (input_state_cb(player, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_WHEELDOWN))
+                  pico_current = (pico_current + 1) & 7;
+               if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_UP))
+                  temp |= INPUT_UP;
+               if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_DOWN))
+                  temp |= INPUT_DOWN;
+               if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_LEFT))
+                  temp |= INPUT_LEFT;
+               if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_RIGHT))
+                  temp |= INPUT_RIGHT;
+
+               player++;
+               ret = input_state_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_MASK);
+               break;
+            }
+
+         case DEVICE_TEREBI:
+            {
+               input.analog[i][0] = ((input_state_cb(player, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_X) + 0x7fff) * 250) / 0xfffe;
+               input.analog[i][1] = ((input_state_cb(player, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_Y) + 0x7fff) * 250) / 0xfffe;
+
+               if (input_state_cb(player, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_LEFT))
+                  temp |= INPUT_BUTTON1;
+               if (input_state_cb(player, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_MIDDLE))
+                  temp |= INPUT_START;
+
+               player++;
+               ret = input_state_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_MASK);
+               break;
+            }
+
+         case DEVICE_GRAPHIC_BOARD:
+            {
+               input.analog[i][0] = ((input_state_cb(player, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_X) + 0x7fff) * 255) / 0xfffe;
+               input.analog[i][1] = ((input_state_cb(player, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_Y) + 0x7fff) * 255) / 0xfffe;
+
+               if (input_state_cb(player, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_LEFT))
+                  temp |= INPUT_GRAPHIC_PEN;
+               if (input_state_cb(player, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_MIDDLE))
+                  temp |= INPUT_GRAPHIC_DO;
+               if (input_state_cb(player, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_RIGHT))
+                  temp |= INPUT_GRAPHIC_MENU;
+
+               player++;
+               ret = input_state_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_MASK);
+               break;
+            }
+
+         case DEVICE_XE_1AP:
+            {
+               int rx = input.analog[i][0] = input_state_cb(player, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_X);
+               int ry = input.analog[i][1] = input_state_cb(player, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_Y);
+               if (abs(rx) > abs(ry))
+                  input.analog[i+1][0] = (rx + 0x8000) >> 8;
+               else 
+                  input.analog[i+1][0] = (0x7fff - ry) >> 8;
+               input.analog[i][0] = (input_state_cb(player, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_X) + 0x8000) >> 8;
+               input.analog[i][1] = (input_state_cb(player, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_Y) + 0x8000) >> 8;
+
+               if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_R))
+                  temp |= INPUT_XE_A;
+               if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_R2))
+                  temp |= INPUT_XE_B;
+               if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_L))
+                  temp |= INPUT_XE_C;
+               if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_L2))
+                  temp |= INPUT_XE_D;
+               if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_Y))
+                  temp |= INPUT_XE_E1;
+               if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_B))
+                  temp |= INPUT_XE_E2;
+               if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_SELECT))
+                  temp |= INPUT_XE_SELECT;
+               if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_START))
+                  temp |= INPUT_XE_START;
+
+               player++;
+               ret = input_state_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_MASK);
+               break;
+            }
+
+         default:
+            break;
+      }
+
+      input.pad[i] = temp;
+   }
+}
+
+static void osd_input_update_internal(void)
+{
+   int i, player = 0;
+   unsigned int temp;
+
+   for (i = 0; i < MAX_INPUTS; i++)
+   {
+      temp = 0;
+      switch (input.dev[i])
+      {
+         case DEVICE_PAD6B:
+            {
+               if (input_state_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L))
+                  temp |= INPUT_X;
+               if (input_state_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_X))
+                  temp |= INPUT_Y;
+               if (input_state_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R))
+                  temp |= INPUT_Z;
+               if (input_state_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT))
+                  temp |= INPUT_MODE;
+            }
+
+         case DEVICE_PAD3B:
+            {
+               if (input_state_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y))
+                  temp |= INPUT_A;
+            }
+
+         case DEVICE_PAD2B:
+            {
+               if (input_state_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B))
+                  temp |= INPUT_B;
+               if (input_state_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A))
+                  temp |= INPUT_C;
+               if (input_state_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START))
+                  temp |= INPUT_START;
+               if (input_state_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP))
+                  temp |= INPUT_UP;
+               if (input_state_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN))
+                  temp |= INPUT_DOWN;
+               if (input_state_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT))
+                  temp |= INPUT_LEFT;
+               if (input_state_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT))
+                  temp |= INPUT_RIGHT;
+
+               player++;
+               break;
+            }
+
+         case DEVICE_MOUSE:
+            {
+               input.analog[i][0] = input_state_cb(player, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_X);
+               if (config.invert_mouse)
+                  input.analog[i][1] = input_state_cb(player, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_Y);
+               else
+                  input.analog[i][1] = -input_state_cb(player, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_Y);
+
+               if (input.analog[i][0] < -255)
+                  input.analog[i][0] = -255;
+               else if (input.analog[i][0] > 255)
+                  input.analog[i][0] = 255;
+               if (input.analog[i][1] < -255)
+                  input.analog[i][1] = -255;
+               else if (input.analog[i][1] > 255)
+                  input.analog[i][1] = 255;
+
+               if (input_state_cb(player, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_LEFT))
+                  temp |= INPUT_MOUSE_LEFT;
+               if (input_state_cb(player, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_RIGHT))
+                  temp |= INPUT_MOUSE_RIGHT;
+               if (input_state_cb(player, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_WHEELDOWN))
+                  temp |= INPUT_MOUSE_CENTER;
+               if (input_state_cb(player, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_MIDDLE))
+                  temp |= INPUT_START;
+
+               player++;
+               break;
+            }
+
+         case DEVICE_LIGHTGUN:
+            {
+               if ( retro_gun_mode == RetroPointer )
+               {
+                  input.analog[i][0] = ((input_state_cb(player, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_X) + 0x7fff) * bitmap.viewport.w) / 0xfffe;
+                  input.analog[i][1] = ((input_state_cb(player, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_Y) + 0x7fff) * bitmap.viewport.h) / 0xfffe;
+                  if (input_state_cb(player, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_PRESSED))
+                     temp |= INPUT_A;
+               }
+               else
+               {  // RetroLightgun is default
+                  if ( input_state_cb(player, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_IS_OFFSCREEN) )
+                  {
+                     input.analog[i][0] = -1000;
+                     input.analog[i][1] = -1000;
+                  }
+                  else
+                  {
+                     input.analog[i][0] = ((input_state_cb(player, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_SCREEN_X) + 0x7fff) * bitmap.viewport.w) / 0xfffe;
+                     input.analog[i][1] = ((input_state_cb(player, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_SCREEN_Y) + 0x7fff) * bitmap.viewport.h) / 0xfffe;
+                  }
+
+                  if (input_state_cb(player, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_TRIGGER))
+                     temp |= INPUT_A;
+                  if (input_state_cb(player, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_AUX_A))
+                     temp |= INPUT_B;
+                  if (input_state_cb(player, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_AUX_B))
+                     temp |= INPUT_C;
+                  if (input_state_cb(player, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_START))
+                     temp |= INPUT_START;
+               }     
+
+               player++;
+               break;
+            }
+
+         case DEVICE_PADDLE:
+            {
+               input.analog[i][0] = (input_state_cb(player, RETRO_DEVICE_ANALOG, 0, RETRO_DEVICE_ID_ANALOG_X) + 0x8000) >> 8;
+
+               if (input_state_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B))
+                  temp |= INPUT_BUTTON1;
+               if (input_state_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START))
+                  temp |= INPUT_START;
+
+               player++;
+               break;
+            }
+
+         case DEVICE_SPORTSPAD:
+            {
+               input.analog[i][0] = (input_state_cb(player, RETRO_DEVICE_ANALOG, 0, RETRO_DEVICE_ID_ANALOG_X) + 0x8000) >> 8;
+               input.analog[i][1] = (input_state_cb(player, RETRO_DEVICE_ANALOG, 0, RETRO_DEVICE_ID_ANALOG_Y) + 0x8000) >> 8;
+
+               if (input_state_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B))
+                  temp |= INPUT_BUTTON1;
+               if (input_state_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A))
+                  temp |= INPUT_BUTTON2;
+               if (input_state_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START))
+                  temp |= INPUT_START;
+
+               player++;
+               break;
+            }
+
+         case DEVICE_PICO:
+            {
+               input.analog[i][0] = 0x03c + ((input_state_cb(player, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_X) + 0x7fff) * (0x17c-0x03c)) / 0xfffe;
+               input.analog[i][1] = 0x1fc + ((input_state_cb(player, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_Y) + 0x7fff) * (0x2f7-0x1fc)) / 0xfffe;
+
+               if (input_state_cb(player, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_LEFT))
+                  temp |= INPUT_PICO_PEN;
+               if (input_state_cb(player, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_RIGHT))
+                  temp |= INPUT_PICO_RED;
+               if (input_state_cb(player, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_WHEELUP))
+                  pico_current = (pico_current - 1) & 7;
+               if (input_state_cb(player, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_WHEELDOWN))
+                  pico_current = (pico_current + 1) & 7;
+               if (input_state_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP))
+                  temp |= INPUT_UP;
+               if (input_state_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN))
+                  temp |= INPUT_DOWN;
+               if (input_state_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT))
+                  temp |= INPUT_LEFT;
+               if (input_state_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT))
+                  temp |= INPUT_RIGHT;
+
+               player++;
+               break;
+            }
+
+         case DEVICE_TEREBI:
+            {
+               input.analog[i][0] = ((input_state_cb(player, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_X) + 0x7fff) * 250) / 0xfffe;
+               input.analog[i][1] = ((input_state_cb(player, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_Y) + 0x7fff) * 250) / 0xfffe;
+
+               if (input_state_cb(player, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_LEFT))
+                  temp |= INPUT_BUTTON1;
+               if (input_state_cb(player, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_MIDDLE))
+                  temp |= INPUT_START;
+
+               player++;
+               break;
+            }
+
+         case DEVICE_GRAPHIC_BOARD:
+            {
+               input.analog[i][0] = ((input_state_cb(player, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_X) + 0x7fff) * 255) / 0xfffe;
+               input.analog[i][1] = ((input_state_cb(player, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_Y) + 0x7fff) * 255) / 0xfffe;
+
+               if (input_state_cb(player, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_LEFT))
+                  temp |= INPUT_GRAPHIC_PEN;
+               if (input_state_cb(player, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_MIDDLE))
+                  temp |= INPUT_GRAPHIC_DO;
+               if (input_state_cb(player, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_RIGHT))
+                  temp |= INPUT_GRAPHIC_MENU;
+
+               player++;
+               break;
+            }
+
+         case DEVICE_XE_1AP:
+            {
+               int rx = input.analog[i][0] = input_state_cb(player, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_X);
+               int ry = input.analog[i][1] = input_state_cb(player, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_Y);
+               if (abs(rx) > abs(ry))
+                  input.analog[i+1][0] = (rx + 0x8000) >> 8;
+               else 
+                  input.analog[i+1][0] = (0x7fff - ry) >> 8;
+               input.analog[i][0] = (input_state_cb(player, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_X) + 0x8000) >> 8;
+               input.analog[i][1] = (input_state_cb(player, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_Y) + 0x8000) >> 8;
+
+               if (input_state_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R))
+                  temp |= INPUT_XE_A;
+               if (input_state_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R2))
+                  temp |= INPUT_XE_B;
+               if (input_state_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L))
+                  temp |= INPUT_XE_C;
+               if (input_state_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L2))
+                  temp |= INPUT_XE_D;
+               if (input_state_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y))
+                  temp |= INPUT_XE_E1;
+               if (input_state_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B))
+                  temp |= INPUT_XE_E2;
+               if (input_state_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT))
+                  temp |= INPUT_XE_SELECT;
+               if (input_state_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START))
+                  temp |= INPUT_XE_START;
+
+               player++;
+               break;
+            }
+
+         default:
+            break;
+      }
+
+      input.pad[i] = temp;
+   }
+}
+
 void osd_input_update(void)
 {
-  int i, player = 0;
-  unsigned int temp;
-
   input_poll_cb();
 
   /* Update RAM patches */
   RAMCheatUpdate();
 
-  for (i = 0; i < MAX_INPUTS; i++)
-  {
-    temp = 0;
-    switch (input.dev[i])
-    {
-      case DEVICE_PAD6B:
-      {
-        if (input_state_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L))
-          temp |= INPUT_X;
-        if (input_state_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_X))
-          temp |= INPUT_Y;
-        if (input_state_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R))
-          temp |= INPUT_Z;
-        if (input_state_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT))
-          temp |= INPUT_MODE;
-      }
-
-      case DEVICE_PAD3B:
-      {
-        if (input_state_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y))
-          temp |= INPUT_A;
-      }
-
-      case DEVICE_PAD2B:
-      {
-        if (input_state_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B))
-          temp |= INPUT_B;
-        if (input_state_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A))
-          temp |= INPUT_C;
-        if (input_state_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START))
-          temp |= INPUT_START;
-        if (input_state_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP))
-          temp |= INPUT_UP;
-        if (input_state_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN))
-          temp |= INPUT_DOWN;
-        if (input_state_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT))
-          temp |= INPUT_LEFT;
-        if (input_state_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT))
-          temp |= INPUT_RIGHT;
-
-        player++;
-        break;
-      }
-
-      case DEVICE_MOUSE:
-      {
-        input.analog[i][0] = input_state_cb(player, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_X);
-        if (config.invert_mouse)
-          input.analog[i][1] = input_state_cb(player, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_Y);
-        else
-          input.analog[i][1] = -input_state_cb(player, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_Y);
-
-        if (input.analog[i][0] < -255)
-          input.analog[i][0] = -255;
-        else if (input.analog[i][0] > 255)
-          input.analog[i][0] = 255;
-        if (input.analog[i][1] < -255)
-          input.analog[i][1] = -255;
-        else if (input.analog[i][1] > 255)
-          input.analog[i][1] = 255;
-
-        if (input_state_cb(player, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_LEFT))
-          temp |= INPUT_MOUSE_LEFT;
-        if (input_state_cb(player, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_RIGHT))
-          temp |= INPUT_MOUSE_RIGHT;
-        if (input_state_cb(player, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_WHEELDOWN))
-          temp |= INPUT_MOUSE_CENTER;
-        if (input_state_cb(player, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_MIDDLE))
-          temp |= INPUT_START;
-
-        player++;
-        break;
-      }
-
-      case DEVICE_LIGHTGUN:
-      {
-        if ( retro_gun_mode == RetroPointer ) {
-          input.analog[i][0] = ((input_state_cb(player, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_X) + 0x7fff) * bitmap.viewport.w) / 0xfffe;
-          input.analog[i][1] = ((input_state_cb(player, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_Y) + 0x7fff) * bitmap.viewport.h) / 0xfffe;
-          if (input_state_cb(player, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_PRESSED)) {
-            temp |= INPUT_A;
-          } 
-        } else {  // RetroLightgun is default
-          if ( input_state_cb(player, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_IS_OFFSCREEN) )
-          {
-            input.analog[i][0] = -1000;
-            input.analog[i][1] = -1000;
-          }
-          else
-          {
-            input.analog[i][0] = ((input_state_cb(player, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_SCREEN_X) + 0x7fff) * bitmap.viewport.w) / 0xfffe;
-            input.analog[i][1] = ((input_state_cb(player, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_SCREEN_Y) + 0x7fff) * bitmap.viewport.h) / 0xfffe;
-          }
-
-          if (input_state_cb(player, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_TRIGGER))
-            temp |= INPUT_A;
-          if (input_state_cb(player, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_AUX_A))
-            temp |= INPUT_B;
-          if (input_state_cb(player, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_AUX_B))
-            temp |= INPUT_C;
-          if (input_state_cb(player, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_START))
-            temp |= INPUT_START;
-        }     
-
-        player++;
-        break;
-      }
-
-      case DEVICE_PADDLE:
-      {
-        input.analog[i][0] = (input_state_cb(player, RETRO_DEVICE_ANALOG, 0, RETRO_DEVICE_ID_ANALOG_X) + 0x8000) >> 8;
-
-        if (input_state_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B))
-          temp |= INPUT_BUTTON1;
-        if (input_state_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START))
-          temp |= INPUT_START;
-
-        player++;
-        break;
-      }
-
-      case DEVICE_SPORTSPAD:
-      {
-        input.analog[i][0] = (input_state_cb(player, RETRO_DEVICE_ANALOG, 0, RETRO_DEVICE_ID_ANALOG_X) + 0x8000) >> 8;
-        input.analog[i][1] = (input_state_cb(player, RETRO_DEVICE_ANALOG, 0, RETRO_DEVICE_ID_ANALOG_Y) + 0x8000) >> 8;
-
-        if (input_state_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B))
-          temp |= INPUT_BUTTON1;
-        if (input_state_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A))
-          temp |= INPUT_BUTTON2;
-        if (input_state_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START))
-          temp |= INPUT_START;
-
-        player++;
-        break;
-      }
-
-      case DEVICE_PICO:
-      {
-        input.analog[i][0] = 0x03c + ((input_state_cb(player, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_X) + 0x7fff) * (0x17c-0x03c)) / 0xfffe;
-        input.analog[i][1] = 0x1fc + ((input_state_cb(player, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_Y) + 0x7fff) * (0x2f7-0x1fc)) / 0xfffe;
-
-        if (input_state_cb(player, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_LEFT))
-          temp |= INPUT_PICO_PEN;
-        if (input_state_cb(player, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_RIGHT))
-          temp |= INPUT_PICO_RED;
-        if (input_state_cb(player, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_WHEELUP))
-          pico_current = (pico_current - 1) & 7;
-        if (input_state_cb(player, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_WHEELDOWN))
-          pico_current = (pico_current + 1) & 7;
-        if (input_state_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP))
-          temp |= INPUT_UP;
-        if (input_state_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN))
-          temp |= INPUT_DOWN;
-        if (input_state_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT))
-          temp |= INPUT_LEFT;
-        if (input_state_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT))
-          temp |= INPUT_RIGHT;
-
-        player++;
-        break;
-      }
-
-      case DEVICE_TEREBI:
-      {
-        input.analog[i][0] = ((input_state_cb(player, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_X) + 0x7fff) * 250) / 0xfffe;
-        input.analog[i][1] = ((input_state_cb(player, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_Y) + 0x7fff) * 250) / 0xfffe;
-
-        if (input_state_cb(player, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_LEFT))
-          temp |= INPUT_BUTTON1;
-        if (input_state_cb(player, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_MIDDLE))
-          temp |= INPUT_START;
-
-        player++;
-        break;
-      }
-
-      case DEVICE_GRAPHIC_BOARD:
-      {
-        input.analog[i][0] = ((input_state_cb(player, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_X) + 0x7fff) * 255) / 0xfffe;
-        input.analog[i][1] = ((input_state_cb(player, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_Y) + 0x7fff) * 255) / 0xfffe;
-
-        if (input_state_cb(player, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_LEFT))
-          temp |= INPUT_GRAPHIC_PEN;
-        if (input_state_cb(player, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_MIDDLE))
-          temp |= INPUT_GRAPHIC_DO;
-        if (input_state_cb(player, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_RIGHT))
-          temp |= INPUT_GRAPHIC_MENU;
-
-        player++;
-        break;
-      }
-
-      case DEVICE_XE_1AP:
-      {
-        int rx = input.analog[i][0] = input_state_cb(player, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_X);
-        int ry = input.analog[i][1] = input_state_cb(player, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_Y);
-        if (abs(rx) > abs(ry))
-        {
-         input.analog[i+1][0] = (rx + 0x8000) >> 8;
-        }
-        else 
-        {
-         input.analog[i+1][0] = (0x7fff - ry) >> 8;
-        }
-        input.analog[i][0] = (input_state_cb(player, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_X) + 0x8000) >> 8;
-        input.analog[i][1] = (input_state_cb(player, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_Y) + 0x8000) >> 8;
-
-        if (input_state_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R))
-          temp |= INPUT_XE_A;
-        if (input_state_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R2))
-          temp |= INPUT_XE_B;
-        if (input_state_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L))
-          temp |= INPUT_XE_C;
-        if (input_state_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L2))
-          temp |= INPUT_XE_D;
-        if (input_state_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y))
-          temp |= INPUT_XE_E1;
-        if (input_state_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B))
-          temp |= INPUT_XE_E2;
-        if (input_state_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT))
-          temp |= INPUT_XE_SELECT;
-        if (input_state_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START))
-          temp |= INPUT_XE_START;
-
-        player++;
-        break;
-      }
-
-      default:
-        break;
-    }
-
-    input.pad[i] = temp;
-  }
+  if (libretro_supports_bitmasks)
+     osd_input_update_internal_bitmasks();
+  else
+     osd_input_update_internal();
 }
 
 static void draw_cursor(int16_t x, int16_t y, uint16_t color)
@@ -2516,6 +2774,9 @@ void retro_init(void)
    else
       log_cb = NULL;
 
+   if (environ_cb(RETRO_ENVIRONMENT_GET_INPUT_BITMASKS, NULL))
+      libretro_supports_bitmasks = true;
+
    check_system_specs();
 
    environ_cb(RETRO_ENVIRONMENT_SET_SERIALIZATION_QUIRKS, &serialization_quirks);
@@ -2523,6 +2784,7 @@ void retro_init(void)
 
 void retro_deinit(void)
 {
+   libretro_supports_bitmasks = false;
 }
 
 void retro_reset(void)
