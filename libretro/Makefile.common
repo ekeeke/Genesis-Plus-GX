@@ -59,8 +59,17 @@ SOURCES_C += \
 				 $(LIBRETRO_COMM_DIR)/streams/file_stream_transforms.c \
 				 $(LIBRETRO_COMM_DIR)/compat/fopen_utf8.c \
 				 $(LIBRETRO_COMM_DIR)/compat/compat_strl.c \
+				 $(LIBRETRO_COMM_DIR)/compat/compat_strcasestr.c \
 				 $(LIBRETRO_COMM_DIR)/encodings/encoding_utf.c \
-				 $(LIBRETRO_COMM_DIR)/vfs/vfs_implementation.c
+				 $(LIBRETRO_COMM_DIR)/vfs/vfs_implementation.c \
+				 $(LIBRETRO_COMM_DIR)/file/file_path.c \
+				 $(LIBRETRO_COMM_DIR)/string/stdstring.c
+
+ifeq ($(HAVE_CDROM), 1)
+SOURCES_C += \
+				 $(LIBRETRO_COMM_DIR)/cdrom/cdrom.c \
+				 $(LIBRETRO_COMM_DIR)/vfs/vfs_implementation_cdrom.c
+endif
 
 SOURCES_C += $(CHDLIBDIR)/deps/zlib/adler32.c \
 				 $(CHDLIBDIR)/deps/zlib/inffast.c \

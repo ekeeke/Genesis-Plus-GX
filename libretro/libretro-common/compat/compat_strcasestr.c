@@ -1,7 +1,7 @@
 /* Copyright  (C) 2010-2018 The RetroArch team
  *
  * ---------------------------------------------------------------------------------------
- * The following license statement only applies to this file (strcasestr.h).
+ * The following license statement only applies to this file (compat_strcasestr.c).
  * ---------------------------------------------------------------------------------------
  *
  * Permission is hereby granted, free of charge,
@@ -20,33 +20,39 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef __LIBRETRO_SDK_COMPAT_STRCASESTR_H
-#define __LIBRETRO_SDK_COMPAT_STRCASESTR_H
+#include <ctype.h>
 
-#include <string.h>
+#include <compat/strcasestr.h>
 
-#if defined(PS2)
-#include <compat_ctype.h>
-#endif
+/* Pretty much strncasecmp. */
+static int casencmp(const char *a, const char *b, size_t n)
+{
+   size_t i;
 
-#if defined(RARCH_INTERNAL) && defined(HAVE_CONFIG_H)
-#include "../../../config.h"
-#endif
+   for (i = 0; i < n; i++)
+   {
+      int a_lower = tolower(a[i]);
+      int b_lower = tolower(b[i]);
+      if (a_lower != b_lower)
+         return a_lower - b_lower;
+   }
 
-#ifndef HAVE_STRCASESTR
+   return 0;
+}
 
-#include <retro_common_api.h>
+char *strcasestr_retro__(const char *haystack, const char *needle)
+{
+   size_t i, search_off;
+   size_t hay_len    = strlen(haystack);
+   size_t needle_len = strlen(needle);
 
-RETRO_BEGIN_DECLS
+   if (needle_len > hay_len)
+      return NULL;
 
-/* Avoid possible naming collisions during link
- * since we prefer to use the actual name. */
-#define strcasestr(haystack, needle) strcasestr_retro__(haystack, needle)
+   search_off = hay_len - needle_len;
+   for (i = 0; i <= search_off; i++)
+      if (!casencmp(haystack + i, needle, needle_len))
+         return (char*)haystack + i;
 
-char *strcasestr(const char *haystack, const char *needle);
-
-RETRO_END_DECLS
-
-#endif
-
-#endif
+   return NULL;
+}

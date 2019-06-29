@@ -1,7 +1,7 @@
-/* Copyright  (C) 2010-2018 The RetroArch team
+/* Copyright  (C) 2010-2019 The RetroArch team
  *
  * ---------------------------------------------------------------------------------------
- * The following license statement only applies to this file (strcasestr.h).
+ * The following license statement only applies to this file (vfs_implementation_cdrom.h).
  * ---------------------------------------------------------------------------------------
  *
  * Permission is hereby granted, free of charge,
@@ -20,33 +20,48 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef __LIBRETRO_SDK_COMPAT_STRCASESTR_H
-#define __LIBRETRO_SDK_COMPAT_STRCASESTR_H
+#ifndef __LIBRETRO_SDK_VFS_IMPLEMENTATION_CDROM_H
+#define __LIBRETRO_SDK_VFS_IMPLEMENTATION_CDROM_H
 
-#include <string.h>
-
-#if defined(PS2)
-#include <compat_ctype.h>
-#endif
-
-#if defined(RARCH_INTERNAL) && defined(HAVE_CONFIG_H)
-#include "../../../config.h"
-#endif
-
-#ifndef HAVE_STRCASESTR
-
-#include <retro_common_api.h>
+#include <cdrom/cdrom.h>
 
 RETRO_BEGIN_DECLS
 
-/* Avoid possible naming collisions during link
- * since we prefer to use the actual name. */
-#define strcasestr(haystack, needle) strcasestr_retro__(haystack, needle)
+typedef struct
+{
+   char *cue_buf;
+   size_t cue_len;
+   size_t byte_pos;
+   char drive;
+   unsigned char cur_min;
+   unsigned char cur_sec;
+   unsigned char cur_frame;
+   unsigned char cur_track;
+} vfs_cdrom_t;
 
-char *strcasestr(const char *haystack, const char *needle);
+#ifdef VFS_FRONTEND
+struct retro_vfs_file_handle;
+#else
+struct libretro_vfs_implementation_file;
+#endif
+
+int64_t retro_vfs_file_seek_cdrom(libretro_vfs_implementation_file *stream, int64_t offset, int whence);
+
+void retro_vfs_file_open_cdrom(
+      libretro_vfs_implementation_file *stream,
+      const char *path, unsigned mode, unsigned hints);
+
+int retro_vfs_file_close_cdrom(libretro_vfs_implementation_file *stream);
+
+int64_t retro_vfs_file_tell_cdrom(libretro_vfs_implementation_file *stream);
+
+int64_t retro_vfs_file_read_cdrom(libretro_vfs_implementation_file *stream,
+      void *s, uint64_t len);
+
+int retro_vfs_file_error_cdrom(libretro_vfs_implementation_file *stream);
+
+const cdrom_toc_t* retro_vfs_file_get_cdrom_toc(void);
 
 RETRO_END_DECLS
-
-#endif
 
 #endif

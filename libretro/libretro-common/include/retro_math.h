@@ -1,7 +1,7 @@
 /* Copyright  (C) 2010-2018 The RetroArch team
  *
  * ---------------------------------------------------------------------------------------
- * The following license statement only applies to this file (strcasestr.h).
+ * The following license statement only applies to this file (retro_math.h).
  * ---------------------------------------------------------------------------------------
  *
  * Permission is hereby granted, free of charge,
@@ -20,33 +20,75 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef __LIBRETRO_SDK_COMPAT_STRCASESTR_H
-#define __LIBRETRO_SDK_COMPAT_STRCASESTR_H
+#ifndef _LIBRETRO_COMMON_MATH_H
+#define _LIBRETRO_COMMON_MATH_H
 
-#include <string.h>
+#include <stdint.h>
 
-#if defined(PS2)
-#include <compat_ctype.h>
+#if defined(_WIN32) && !defined(_XBOX)
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#elif defined(_WIN32) && defined(_XBOX)
+#include <Xtl.h>
 #endif
 
-#if defined(RARCH_INTERNAL) && defined(HAVE_CONFIG_H)
-#include "../../../config.h"
+#include <limits.h>
+
+#ifdef _MSC_VER
+#include <compat/msvc.h>
+#endif
+#include <retro_inline.h>
+
+#ifndef M_PI
+#if !defined(USE_MATH_DEFINES)
+#define M_PI 3.14159265358979323846264338327
+#endif
 #endif
 
-#ifndef HAVE_STRCASESTR
-
-#include <retro_common_api.h>
-
-RETRO_BEGIN_DECLS
-
-/* Avoid possible naming collisions during link
- * since we prefer to use the actual name. */
-#define strcasestr(haystack, needle) strcasestr_retro__(haystack, needle)
-
-char *strcasestr(const char *haystack, const char *needle);
-
-RETRO_END_DECLS
-
+#ifndef MAX
+#define MAX(a, b) ((a) > (b) ? (a) : (b))
 #endif
+
+#ifndef MIN
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
+#endif
+
+/**
+ * next_pow2:
+ * @v         : initial value
+ *
+ * Get next power of 2 value based on  initial value.
+ *
+ * Returns: next power of 2 value (derived from @v).
+ **/
+INLINE uint32_t next_pow2(uint32_t v)
+{
+   v--;
+   v |= v >> 1;
+   v |= v >> 2;
+   v |= v >> 4;
+   v |= v >> 8;
+   v |= v >> 16;
+   v++;
+   return v;
+}
+
+/**
+ * prev_pow2:
+ * @v         : initial value
+ *
+ * Get previous power of 2 value based on initial value.
+ *
+ * Returns: previous power of 2 value (derived from @v).
+ **/
+INLINE uint32_t prev_pow2(uint32_t v)
+{
+   v |= v >> 1;
+   v |= v >> 2;
+   v |= v >> 4;
+   v |= v >> 8;
+   v |= v >> 16;
+   return v - (v >> 1);
+}
 
 #endif
