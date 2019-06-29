@@ -68,6 +68,8 @@ int64_t retro_vfs_file_seek_cdrom(libretro_vfs_implementation_file *stream, int6
       unsigned char frame = 0;
       const char *seek_type = "SEEK_SET";
 
+      (void)seek_type;
+
       lba_to_msf(frames, &min, &sec, &frame);
 
       switch (whence)
@@ -145,7 +147,7 @@ void retro_vfs_file_open_cdrom(
       {
          if (!memcmp(path + 6, "-track", strlen("-track")))
          {
-            if (sscanf(path + 12, "%02hhd", &stream->cdrom.cur_track))
+            if (sscanf(path + 12, "%02u", (unsigned*)&stream->cdrom.cur_track))
             {
 #ifdef CDROM_DEBUG
                printf("CDROM: Opening track %d\n", stream->cdrom.cur_track);
@@ -225,7 +227,7 @@ void retro_vfs_file_open_cdrom(
    {
       if (!memcmp(path + 1, ":/drive-track", strlen(":/drive-track")))
       {
-         if (sscanf(path + 14, "%02hhd", &stream->cdrom.cur_track))
+         if (sscanf(path + 14, "%02u", (unsigned*)&stream->cdrom.cur_track))
          {
 #ifdef CDROM_DEBUG
             printf("CDROM: Opening track %d\n", stream->cdrom.cur_track);
@@ -260,8 +262,6 @@ void retro_vfs_file_open_cdrom(
    {
       if (!cdrom_get_inquiry(stream, model, sizeof(model)))
       {
-         size_t len = 0;
-
 #ifdef CDROM_DEBUG
          printf("CDROM Model: %s\n", model);
          fflush(stdout);
