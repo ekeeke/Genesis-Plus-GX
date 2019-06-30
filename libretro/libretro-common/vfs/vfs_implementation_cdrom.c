@@ -24,6 +24,7 @@
 #include <file/file_path.h>
 #include <compat/fopen_utf8.h>
 #include <string/stdstring.h>
+#include <cdrom/cdrom.h>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -403,11 +404,6 @@ int64_t retro_vfs_file_read_cdrom(libretro_vfs_implementation_file *stream,
       stream->cdrom.byte_pos += len;
       stream->cdrom.cur_lba = vfs_cdrom_toc.track[stream->cdrom.cur_track - 1].lba + (stream->cdrom.byte_pos / 2352);
       lba_to_msf(stream->cdrom.cur_lba, &stream->cdrom.cur_min, &stream->cdrom.cur_sec, &stream->cdrom.cur_frame);
-
-      /*for (i = 0; i < frames; i++)
-      {
-         increment_msf(&stream->cdrom.cur_min, &stream->cdrom.cur_sec, &stream->cdrom.cur_frame);
-      }*/
 
 #ifdef CDROM_DEBUG
       printf("CDROM read %" PRIu64 " bytes, position is now: %" PRIu64 " (MSF %02d:%02d:%02d) (LBA %u)\n", len, stream->cdrom.byte_pos, stream->cdrom.cur_min, stream->cdrom.cur_sec, stream->cdrom.cur_frame, msf_to_lba(stream->cdrom.cur_min, stream->cdrom.cur_sec, stream->cdrom.cur_frame));
