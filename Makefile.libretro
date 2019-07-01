@@ -44,6 +44,12 @@ TARGET_NAME := genesis_plus_gx
 
 LIBS := -lm
 
+ifneq ($(SANITIZER),)
+   CFLAGS   := -fsanitize=$(SANITIZER) $(CFLAGS)
+   CXXFLAGS := -fsanitize=$(SANITIZER) $(CXXFLAGS)
+   LDFLAGS  := -fsanitize=$(SANITIZER) $(LDFLAGS)
+endif
+
 GIT_VERSION ?= " $(shell git rev-parse --short HEAD || echo unknown)"
 ifneq ($(GIT_VERSION)," unknown")
    CFLAGS += -DGIT_VERSION=\"$(GIT_VERSION)\"
@@ -621,6 +627,12 @@ else
    BPP_DEFINES = -DUSE_15BPP_RENDERING
 endif
 
+ifeq ($(HAVE_CDROM), 1)
+   LIBRETRO_CFLAGS += -DHAVE_CDROM
+ifeq ($(CDROM_DEBUG), 1)
+   LIBRETRO_CFLAGS += -DCDROM_DEBUG
+endif
+endif
 
 LIBRETRO_CFLAGS += $(INCFLAGS) $(INCFLAGS_PLATFORM)
 LIBRETRO_CFLAGS += $(BPP_DEFINES) \

@@ -1,4 +1,4 @@
-/* Copyright  (C) 2010-2018 The RetroArch team
+/* Copyright  (C) 2010-2019 The RetroArch team
 *
 * ---------------------------------------------------------------------------------------
 * The following license statement only applies to this file (vfs_implementation.h).
@@ -23,8 +23,47 @@
 #ifndef __LIBRETRO_SDK_VFS_IMPLEMENTATION_H
 #define __LIBRETRO_SDK_VFS_IMPLEMENTATION_H
 
+#include <stdio.h>
 #include <stdint.h>
 #include <libretro.h>
+
+#ifdef HAVE_CDROM
+#include <vfs/vfs_implementation_cdrom.h>
+#endif
+
+#ifdef _WIN32
+typedef void* HANDLE;
+#endif
+
+enum vfs_scheme
+{
+   VFS_SCHEME_NONE = 0,
+   VFS_SCHEME_CDROM
+};
+
+#ifdef VFS_FRONTEND
+struct retro_vfs_file_handle
+#else
+struct libretro_vfs_implementation_file
+#endif
+{
+   int fd;
+   unsigned hints;
+   int64_t size;
+   char *buf;
+   FILE *fp;
+#ifdef _WIN32
+   HANDLE fh;
+#endif
+   char* orig_path;
+   uint64_t mappos;
+   uint64_t mapsize;
+   uint8_t *mapped;
+   enum vfs_scheme scheme;
+#ifdef HAVE_CDROM
+   vfs_cdrom_t cdrom;
+#endif
+};
 
 /* Replace the following symbol with something appropriate
  * to signify the file is being compiled for a front end instead of a core.
@@ -38,6 +77,16 @@ typedef struct retro_vfs_file_handle libretro_vfs_implementation_file;
 typedef struct libretro_vfs_implementation_file libretro_vfs_implementation_file;
 #endif
 
+#ifdef VFS_FRONTEND
+typedef struct retro_vfs_dir_handle libretro_vfs_implementation_dir;
+#else
+typedef struct libretro_vfs_implementation_dir libretro_vfs_implementation_dir;
+#endif
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 libretro_vfs_implementation_file *retro_vfs_file_open_impl(const char *path, unsigned mode, unsigned hints);
 
 int retro_vfs_file_close_impl(libretro_vfs_implementation_file *stream);
@@ -45,6 +94,8 @@ int retro_vfs_file_close_impl(libretro_vfs_implementation_file *stream);
 int retro_vfs_file_error_impl(libretro_vfs_implementation_file *stream);
 
 int64_t retro_vfs_file_size_impl(libretro_vfs_implementation_file *stream);
+
+int64_t retro_vfs_file_truncate_impl(libretro_vfs_implementation_file *stream, int64_t length);
 
 int64_t retro_vfs_file_tell_impl(libretro_vfs_implementation_file *stream);
 
@@ -61,5 +112,23 @@ int retro_vfs_file_remove_impl(const char *path);
 int retro_vfs_file_rename_impl(const char *old_path, const char *new_path);
 
 const char *retro_vfs_file_get_path_impl(libretro_vfs_implementation_file *stream);
+
+int retro_vfs_stat_impl(const char *path, int32_t *size);
+
+int retro_vfs_mkdir_impl(const char *dir);
+
+libretro_vfs_implementation_dir *retro_vfs_opendir_impl(const char *dir, bool include_hidden);
+
+bool retro_vfs_readdir_impl(libretro_vfs_implementation_dir *dirstream);
+
+const char *retro_vfs_dirent_get_name_impl(libretro_vfs_implementation_dir *dirstream);
+
+bool retro_vfs_dirent_is_dir_impl(libretro_vfs_implementation_dir *dirstream);
+
+int retro_vfs_closedir_impl(libretro_vfs_implementation_dir *dirstream);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
