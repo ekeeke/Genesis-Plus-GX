@@ -41,11 +41,12 @@
 #    include <xtl.h>
 #    define INVALID_FILE_ATTRIBUTES -1
 #  else
-#    include <io.h>
+
 #    include <fcntl.h>
 #    include <direct.h>
 #    include <windows.h>
 #  endif
+#    include <io.h>
 #else
 #  if defined(PSP)
 #    include <pspiofilemgr.h>
@@ -410,7 +411,7 @@ libretro_vfs_implementation_file *retro_vfs_file_open_impl(
       if (stream->scheme == VFS_SCHEME_CDROM)
       {
          retro_vfs_file_open_cdrom(stream, path, mode, hints);
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(_XBOX)
          if (!stream->fh)
             goto error;
 #else
@@ -439,9 +440,12 @@ libretro_vfs_implementation_file *retro_vfs_file_open_impl(
        */
       /* TODO: this is only useful for a few platforms, find which and add ifdef */
 #if !defined(PS2) && !defined(PSP)
-      stream->buf = (char*)calloc(1, 0x4000);
-      if (stream->fp)
-         setvbuf(stream->fp, stream->buf, _IOFBF, 0x4000);
+      if (stream->scheme != VFS_SCHEME_CDROM)
+      {
+         stream->buf = (char*)calloc(1, 0x4000);
+         if (stream->fp)
+            setvbuf(stream->fp, stream->buf, _IOFBF, 0x4000);
+      }
 #endif
 #endif
    }

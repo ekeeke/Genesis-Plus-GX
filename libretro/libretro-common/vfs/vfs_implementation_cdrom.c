@@ -26,7 +26,7 @@
 #include <string/stdstring.h>
 #include <cdrom/cdrom.h>
 
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(_XBOX)
 #include <windows.h>
 #endif
 
@@ -127,8 +127,7 @@ void retro_vfs_file_open_cdrom(
       libretro_vfs_implementation_file *stream,
       const char *path, unsigned mode, unsigned hints)
 {
-#ifdef __linux__
-   char model[32] = {0};
+#if defined(__linux__) && !defined(ANDROID)
    char cdrom_path[] = "/dev/sg1";
    size_t path_len = strlen(path);
    const char *ext = path_get_extension(path);
@@ -174,17 +173,7 @@ void retro_vfs_file_open_cdrom(
 #endif
    stream->fp = (FILE*)fopen_utf8(cdrom_path, "r+b");
 
-   if (stream->fp)
-   {
-      if (!cdrom_get_inquiry(stream, model, sizeof(model)))
-      {
-#ifdef CDROM_DEBUG
-         printf("CDROM Model: %s\n", model);
-         fflush(stdout);
-#endif
-      }
-   }
-   else
+   if (!stream->fp)
       return;
 
    if (string_is_equal_noncase(ext, "cue"))
@@ -211,8 +200,7 @@ void retro_vfs_file_open_cdrom(
 #endif
    }
 #endif
-#ifdef _WIN32
-   char model[32] = {0};
+#if defined(_WIN32) && !defined(_XBOX)
    char cdrom_path[] = "\\\\.\\D:";
    size_t path_len = strlen(path);
    const char *ext = path_get_extension(path);
@@ -255,16 +243,6 @@ void retro_vfs_file_open_cdrom(
 
    if (stream->fh == INVALID_HANDLE_VALUE)
       return;
-   else
-   {
-      if (!cdrom_get_inquiry(stream, model, sizeof(model)))
-      {
-#ifdef CDROM_DEBUG
-         printf("CDROM Model: %s\n", model);
-         fflush(stdout);
-#endif
-      }
-   }
 
    if (string_is_equal_noncase(ext, "cue"))
    {
@@ -313,7 +291,7 @@ int retro_vfs_file_close_cdrom(libretro_vfs_implementation_file *stream)
    fflush(stdout);
 #endif
 
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(_XBOX)
    if (!stream->fh || !CloseHandle(stream->fh))
       return -1;
 #else
@@ -393,7 +371,8 @@ int64_t retro_vfs_file_read_cdrom(libretro_vfs_implementation_file *stream,
       fflush(stdout);
 #endif
 
-      rv = cdrom_read(stream, min, sec, frame, s, (size_t)len, skip);
+      //rv = cdrom_read(stream, min, sec, frame, s, (size_t)len, skip);
+      rv = cdrom_read_lba(stream, stream->cdrom.cur_lba - 150, s, (size_t)len, skip);
 
       if (rv)
       {

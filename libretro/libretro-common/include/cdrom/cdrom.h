@@ -40,6 +40,8 @@ typedef struct retro_vfs_file_handle libretro_vfs_implementation_file;
 typedef struct libretro_vfs_implementation_file libretro_vfs_implementation_file;
 #endif
 
+struct string_list;
+
 RETRO_BEGIN_DECLS
 
 typedef struct
@@ -73,11 +75,38 @@ int cdrom_read_subq(libretro_vfs_implementation_file *stream, unsigned char *buf
 int cdrom_write_cue(libretro_vfs_implementation_file *stream, char **out_buf, size_t *out_len, char cdrom_drive, unsigned char *num_tracks, cdrom_toc_t *toc);
 
 /* needs 32 bytes for full vendor, product and version */
-int cdrom_get_inquiry(libretro_vfs_implementation_file *stream, char *model, int len);
+int cdrom_get_inquiry(const libretro_vfs_implementation_file *stream, char *model, int len, bool *is_cdrom);
 
 int cdrom_read(libretro_vfs_implementation_file *stream, unsigned char min, unsigned char sec, unsigned char frame, void *s, size_t len, size_t skip);
 
+int cdrom_read_lba(libretro_vfs_implementation_file *stream, unsigned lba, void *s, size_t len, size_t skip);
+
 int cdrom_set_read_speed(libretro_vfs_implementation_file *stream, unsigned speed);
+
+int cdrom_stop(const libretro_vfs_implementation_file *stream);
+
+int cdrom_unlock(const libretro_vfs_implementation_file *stream);
+
+int cdrom_open_tray(const libretro_vfs_implementation_file *stream);
+
+int cdrom_close_tray(const libretro_vfs_implementation_file *stream);
+
+/* must be freed by the caller */
+struct string_list* cdrom_get_available_drives(void);
+
+bool cdrom_is_media_inserted(const libretro_vfs_implementation_file *stream);
+
+void cdrom_get_current_config_core(const libretro_vfs_implementation_file *stream);
+
+void cdrom_get_current_config_profiles(const libretro_vfs_implementation_file *stream);
+
+void cdrom_get_current_config_cdread(const libretro_vfs_implementation_file *stream);
+
+void cdrom_get_current_config_multiread(const libretro_vfs_implementation_file *stream);
+
+void cdrom_get_current_config_random_readable(const libretro_vfs_implementation_file *stream);
+
+int cdrom_get_sense(const libretro_vfs_implementation_file *stream, unsigned char *sense, size_t len);
 
 RETRO_END_DECLS
 
