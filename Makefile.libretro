@@ -3,6 +3,7 @@ LOGSOUND = 0
 FRONTEND_SUPPORTS_RGB565 = 1
 HAVE_CHD = 1
 HAVE_SYS_PARAM = 1
+HAVE_CDROM = 0
 
 CORE_DIR := .
 
@@ -62,6 +63,7 @@ ifneq (,$(findstring unix,$(platform)))
    SHARED := -shared -Wl,--version-script=$(CORE_DIR)/libretro/link.T -Wl,--no-undefined
    ENDIANNESS_DEFINES := -DLSB_FIRST -DBYTE_ORDER=LITTLE_ENDIAN
    PLATFORM_DEFINES := -DHAVE_ZLIB
+	HAVE_CDROM = 1
 
    # Raspberry Pi
    ifneq (,$(findstring rpi,$(platform)))
@@ -547,6 +549,7 @@ else
    SHARED := -shared -static-libgcc -static-libstdc++ -Wl,--version-script=$(CORE_DIR)/libretro/link.T -Wl,--no-undefined
    ENDIANNESS_DEFINES := -DLSB_FIRST -DBYTE_ORDER=LITTLE_ENDIAN
    PLATFORM_DEFINES := -DHAVE_ZLIB
+	HAVE_CDROM = 1
 
 endif
 
