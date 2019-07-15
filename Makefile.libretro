@@ -19,18 +19,18 @@ unixcygpath = /$(subst :,,$(call unixpath,$1))
 # system platform
 ifeq ($(platform),)
    platform = unix
-   ifeq ($(shell uname -a),)
+   ifeq ($(shell uname -s),)
       platform = win
       EXE_EXT = .exe
-   else ifneq ($(findstring MINGW,$(shell uname -a)),)
+   else ifneq ($(findstring MINGW,$(shell uname -s)),)
       platform = win
-   else ifneq ($(findstring Darwin,$(shell uname -a)),)
+   else ifneq ($(findstring Darwin,$(shell uname -s)),)
       platform = osx
       arch = intel
       ifeq ($(shell uname -p),powerpc)
          arch = ppc
       endif
-   else ifneq ($(findstring win,$(shell uname -a)),)
+   else ifneq ($(findstring win,$(shell uname -s)),)
       platform = win
    endif
 else ifneq (,$(findstring armv,$(platform)))
@@ -63,7 +63,10 @@ ifneq (,$(findstring unix,$(platform)))
    SHARED := -shared -Wl,--version-script=$(CORE_DIR)/libretro/link.T -Wl,--no-undefined
    ENDIANNESS_DEFINES := -DLSB_FIRST -DBYTE_ORDER=LITTLE_ENDIAN
    PLATFORM_DEFINES := -DHAVE_ZLIB
-	HAVE_CDROM = 1
+
+   ifneq ($(findstring Linux,$(shell uname -s)),)
+     HAVE_CDROM = 1
+   endif
 
    # Raspberry Pi
    ifneq (,$(findstring rpi,$(platform)))
@@ -549,7 +552,7 @@ else
    SHARED := -shared -static-libgcc -static-libstdc++ -Wl,--version-script=$(CORE_DIR)/libretro/link.T -Wl,--no-undefined
    ENDIANNESS_DEFINES := -DLSB_FIRST -DBYTE_ORDER=LITTLE_ENDIAN
    PLATFORM_DEFINES := -DHAVE_ZLIB
-	HAVE_CDROM = 1
+   HAVE_CDROM = 1
 
 endif
 
