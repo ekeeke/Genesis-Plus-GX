@@ -30,6 +30,7 @@
 #include <string.h>
 #include <compat/strl.h>
 #include <retro_math.h>
+#include <retro_timers.h>
 #include <streams/file_stream.h>
 #include <retro_endianness.h>
 #include <retro_miscellaneous.h>
@@ -39,7 +40,11 @@
 #include <string/stdstring.h>
 
 #include <math.h>
+#ifdef _WIN32
+#include <direct.h>
+#else
 #include <unistd.h>
+#endif
 
 #if defined(__linux__) && !defined(ANDROID)
 #include <stropts.h>
@@ -100,7 +105,7 @@ static void cdrom_print_sense_data(const unsigned char *sense, size_t len)
 
    if (len < 16)
    {
-      printf("CDROM sense data buffer length too small.\n");
+      printf("[CDROM] Sense data buffer length too small.\n");
       fflush(stdout);
       return;
    }
@@ -109,7 +114,7 @@ static void cdrom_print_sense_data(const unsigned char *sense, size_t len)
    asc = sense[12];
    ascq = sense[13];
 
-   printf("Sense Data: ");
+   printf("[CDROM] Sense Data: ");
 
    for (i = 0; i < MIN(len, 16); i++)
    {
@@ -119,9 +124,9 @@ static void cdrom_print_sense_data(const unsigned char *sense, size_t len)
    printf("\n");
 
    if (sense[0] == 0x70)
-      printf("CURRENT ERROR:\n");
+      printf("[CDROM] CURRENT ERROR:\n");
    if (sense[0] == 0x71)
-      printf("DEFERRED ERROR:\n");
+      printf("[CDROM] DEFERRED ERROR:\n");
 
    switch (key)
    {
@@ -169,9 +174,9 @@ static void cdrom_print_sense_data(const unsigned char *sense, size_t len)
          break;
    }
 
-   printf("Sense Key: %02X (%s)\n", key, sense_key_text);
-   printf("ASC: %02X\n", asc);
-   printf("ASCQ: %02X\n", ascq);
+   printf("[CDROM] Sense Key: %02X (%s)\n", key, sense_key_text);
+   printf("[CDROM] ASC: %02X\n", asc);
+   printf("[CDROM] ASCQ: %02X\n", ascq);
 
    switch (key)
    {
@@ -184,7 +189,7 @@ static void cdrom_print_sense_data(const unsigned char *sense, size_t len)
                switch (ascq)
                {
                   case 1:
-                     printf("Description: LOGICAL UNIT IS IN PROCESS OF BECOMING READY\n");
+                     printf("[CDROM] Description: LOGICAL UNIT IS IN PROCESS OF BECOMING READY\n");
                      break;
                   default:
                      break;
@@ -197,16 +202,16 @@ static void cdrom_print_sense_data(const unsigned char *sense, size_t len)
                switch (ascq)
                {
                   case 0:
-                     printf("Description: MEDIUM NOT PRESENT\n");
+                     printf("[CDROM] Description: MEDIUM NOT PRESENT\n");
                      break;
                   case 3:
-                     printf("Description: MEDIUM NOT PRESENT - LOADABLE\n");
+                     printf("[CDROM] Description: MEDIUM NOT PRESENT - LOADABLE\n");
                      break;
                   case 1:
-                     printf("Description: MEDIUM NOT PRESENT - TRAY CLOSED\n");
+                     printf("[CDROM] Description: MEDIUM NOT PRESENT - TRAY CLOSED\n");
                      break;
                   case 2:
-                     printf("Description: MEDIUM NOT PRESENT - TRAY OPEN\n");
+                     printf("[CDROM] Description: MEDIUM NOT PRESENT - TRAY OPEN\n");
                      break;
                   default:
                      break;
@@ -221,23 +226,23 @@ static void cdrom_print_sense_data(const unsigned char *sense, size_t len)
       case 3:
       {
          if (asc == 0x11 && ascq == 0x5)
-            printf("Description: L-EC UNCORRECTABLE ERROR\n");
+            printf("[CDROM] Description: L-EC UNCORRECTABLE ERROR\n");
          break;
       }
       case 5:
       {
          if (asc == 0x20 && ascq == 0)
-            printf("Description: INVALID COMMAND OPERATION CODE\n");
+            printf("[CDROM] Description: INVALID COMMAND OPERATION CODE\n");
          else if (asc == 0x24 && ascq == 0)
-            printf("Description: INVALID FIELD IN CDB\n");
+            printf("[CDROM] Description: INVALID FIELD IN CDB\n");
          else if (asc == 0x26 && ascq == 0)
-            printf("Description: INVALID FIELD IN PARAMETER LIST\n");
+            printf("[CDROM] Description: INVALID FIELD IN PARAMETER LIST\n");
          break;
       }
       case 6:
       {
          if (asc == 0x28 && ascq == 0)
-            printf("Description: NOT READY TO READY CHANGE, MEDIUM MAY HAVE CHANGED\n");
+            printf("[CDROM] Description: NOT READY TO READY CHANGE, MEDIUM MAY HAVE CHANGED\n");
          break;
       }
       default:
@@ -358,7 +363,7 @@ static int cdrom_send_command(const libretro_vfs_implementation_file *stream, CD
    {
       unsigned i;
 
-      printf("CDROM Send Command: ");
+      printf("[CDROM] Send Command: ");
 
       for (i = 0; i < cmd_len / sizeof(*cmd); i++)
       {
@@ -367,8 +372,9 @@ static int cdrom_send_command(const libretro_vfs_implementation_file *stream, CD
 
       if (len)
          printf("(buffer of size %" PRId64 " with skip bytes %" PRId64 " padded to %" PRId64 ")\n", len, skip, padded_req_bytes);
+      else
+         printf("\n");
 
-      printf("\n");
       fflush(stdout);
    }
 #endif
@@ -391,8 +397,9 @@ retry:
    {
       cdrom_print_sense_data(sense, sizeof(sense));
 
-      /* INQUIRY/TEST should never fail, don't retry */
-      if (cmd[0] != 0x0 && cmd[0] != 0x12)
+      /* INQUIRY/TEST should never fail, don't retry. */
+      /* READ ATIP seems to fail outright on some drives (BW-16D1HT) with pressed discs, skip retries. */
+      if (cmd[0] != 0x0 && cmd[0] != 0x12 && !(cmd[0] == 0x43 && cmd[2] == 0x4))
       {
          unsigned char key = sense[2] & 0xF;
 
@@ -406,18 +413,18 @@ retry:
                if (retries_left)
                {
 #ifdef CDROM_DEBUG
-                  printf("CDROM Read Retry...\n");
+                  printf("[CDROM] Read Retry...\n");
                   fflush(stdout);
 #endif
                   retries_left--;
-                  usleep(1000 * 1000);
+	              retro_sleep(1000);
                   goto retry;
                }
                else
                {
                   rv = 1;
 #ifdef CDROM_DEBUG
-                  printf("CDROM Read Retries failed, giving up.\n");
+                  printf("[CDROM] Read retries failed, giving up.\n");
                   fflush(stdout);
 #endif
                }
@@ -533,7 +540,7 @@ int cdrom_get_sense(const libretro_vfs_implementation_file *stream, unsigned cha
    int rv = cdrom_send_command(stream, DIRECTION_IN, buf, sizeof(buf), cdb, sizeof(cdb), 0);
 
 #ifdef CDROM_DEBUG
-   printf("get sense data status code %d\n", rv);
+   printf("[CDROM] get sense data status code %d\n", rv);
    fflush(stdout);
 #endif
 
@@ -552,12 +559,12 @@ void cdrom_get_current_config_random_readable(const libretro_vfs_implementation_
    int rv = cdrom_send_command(stream, DIRECTION_IN, buf, sizeof(buf), cdb, sizeof(cdb), 0);
    int i;
 
-   printf("get current config random readable status code %d\n", rv);
+   printf("[CDROM] get current config random readable status code %d\n", rv);
 
    if (rv)
       return;
 
-   printf("Feature Header: ");
+   printf("[CDROM] Feature Header: ");
 
    for (i = 0; i < 8; i++)
    {
@@ -566,7 +573,7 @@ void cdrom_get_current_config_random_readable(const libretro_vfs_implementation_
 
    printf("\n");
 
-   printf("Random Readable Feature Descriptor: ");
+   printf("[CDROM] Random Readable Feature Descriptor: ");
 
    for (i = 0; i < 12; i++)
    {
@@ -575,7 +582,7 @@ void cdrom_get_current_config_random_readable(const libretro_vfs_implementation_
 
    printf("\n");
 
-   printf("Supported commands: READ CAPACITY, READ (10)\n");
+   printf("[CDROM] Supported commands: READ CAPACITY, READ (10)\n");
 }
 
 void cdrom_get_current_config_multiread(const libretro_vfs_implementation_file *stream)
@@ -585,12 +592,12 @@ void cdrom_get_current_config_multiread(const libretro_vfs_implementation_file *
    int rv = cdrom_send_command(stream, DIRECTION_IN, buf, sizeof(buf), cdb, sizeof(cdb), 0);
    int i;
 
-   printf("get current config multi-read status code %d\n", rv);
+   printf("[CDROM] get current config multi-read status code %d\n", rv);
 
    if (rv)
       return;
 
-   printf("Feature Header: ");
+   printf("[CDROM] Feature Header: ");
 
    for (i = 0; i < 8; i++)
    {
@@ -599,7 +606,7 @@ void cdrom_get_current_config_multiread(const libretro_vfs_implementation_file *
 
    printf("\n");
 
-   printf("Multi-Read Feature Descriptor: ");
+   printf("[CDROM] Multi-Read Feature Descriptor: ");
 
    for (i = 0; i < 4; i++)
    {
@@ -608,7 +615,7 @@ void cdrom_get_current_config_multiread(const libretro_vfs_implementation_file *
 
    printf("\n");
 
-   printf("Supported commands: READ (10), READ CD, READ DISC INFORMATION, READ TRACK INFORMATION\n");
+   printf("[CDROM] Supported commands: READ (10), READ CD, READ DISC INFORMATION, READ TRACK INFORMATION\n");
 }
 
 void cdrom_get_current_config_cdread(const libretro_vfs_implementation_file *stream)
@@ -618,12 +625,12 @@ void cdrom_get_current_config_cdread(const libretro_vfs_implementation_file *str
    int rv = cdrom_send_command(stream, DIRECTION_IN, buf, sizeof(buf), cdb, sizeof(cdb), 0);
    int i;
 
-   printf("get current config cd read status code %d\n", rv);
+   printf("[CDROM] get current config cd read status code %d\n", rv);
 
    if (rv)
       return;
 
-   printf("Feature Header: ");
+   printf("[CDROM] Feature Header: ");
 
    for (i = 0; i < 8; i++)
    {
@@ -632,7 +639,7 @@ void cdrom_get_current_config_cdread(const libretro_vfs_implementation_file *str
 
    printf("\n");
 
-   printf("CD Read Feature Descriptor: ");
+   printf("[CDROM] CD Read Feature Descriptor: ");
 
    for (i = 0; i < 8; i++)
    {
@@ -642,7 +649,7 @@ void cdrom_get_current_config_cdread(const libretro_vfs_implementation_file *str
    if (buf[8 + 2] & 1)
       printf("(current)\n");
 
-   printf("Supported commands: READ CD, READ CD MSF, READ TOC/PMA/ATIP\n");
+   printf("[CDROM] Supported commands: READ CD, READ CD MSF, READ TOC/PMA/ATIP\n");
 }
 
 void cdrom_get_current_config_profiles(const libretro_vfs_implementation_file *stream)
@@ -652,12 +659,12 @@ void cdrom_get_current_config_profiles(const libretro_vfs_implementation_file *s
    int rv = cdrom_send_command(stream, DIRECTION_IN, buf, sizeof(buf), cdb, sizeof(cdb), 0);
    int i;
 
-   printf("get current config profiles status code %d\n", rv);
+   printf("[CDROM] get current config profiles status code %d\n", rv);
 
    if (rv)
       return;
 
-   printf("Feature Header: ");
+   printf("[CDROM] Feature Header: ");
 
    for (i = 0; i < 8; i++)
    {
@@ -666,7 +673,7 @@ void cdrom_get_current_config_profiles(const libretro_vfs_implementation_file *s
 
    printf("\n");
 
-   printf("Profile List Descriptor: ");
+   printf("[CDROM] Profile List Descriptor: ");
 
    for (i = 0; i < 4; i++)
    {
@@ -675,13 +682,13 @@ void cdrom_get_current_config_profiles(const libretro_vfs_implementation_file *s
 
    printf("\n");
 
-   printf("Number of profiles: %u\n", buf[8 + 3] / 4);
+   printf("[CDROM] Number of profiles: %u\n", buf[8 + 3] / 4);
 
    for (i = 0; i < buf[8 + 3] / 4; i++)
    {
       unsigned short profile = (buf[8 + (4 * (i + 1))] << 8) | buf[8 + (4 * (i + 1)) + 1];
 
-      printf("Profile Number: %04X (%s) ", profile, get_profile(profile));
+      printf("[CDROM] Profile Number: %04X (%s) ", profile, get_profile(profile));
 
       if (buf[8 + (4 * (i + 1)) + 2] & 1)
          printf("(current)\n");
@@ -699,12 +706,12 @@ void cdrom_get_current_config_core(const libretro_vfs_implementation_file *strea
    int i;
    const char *intf_std_name = "Unknown";
 
-   printf("get current config core status code %d\n", rv);
+   printf("[CDROM] get current config core status code %d\n", rv);
 
    if (rv)
       return;
 
-   printf("Feature Header: ");
+   printf("[CDROM] Feature Header: ");
 
    for (i = 0; i < 8; i++)
    {
@@ -714,11 +721,11 @@ void cdrom_get_current_config_core(const libretro_vfs_implementation_file *strea
    printf("\n");
 
    if (buf[6] == 0 && buf[7] == 8)
-      printf("Current Profile: CD-ROM\n");
+      printf("[CDROM] Current Profile: CD-ROM\n");
    else
-      printf("Current Profile: %02X%02X\n", buf[6], buf[7]);
+      printf("[CDROM] Current Profile: %02X%02X\n", buf[6], buf[7]);
 
-   printf("Core Feature Descriptor: ");
+   printf("[CDROM] Core Feature Descriptor: ");
 
    for (i = 0; i < 12; i++)
    {
@@ -750,7 +757,7 @@ void cdrom_get_current_config_core(const libretro_vfs_implementation_file *strea
          break;
    }
 
-   printf("Physical Interface Standard: %u (%s)\n", intf_std, intf_std_name);
+   printf("[CDROM] Physical Interface Standard: %u (%s)\n", intf_std, intf_std_name);
 }
 
 int cdrom_read_subq(libretro_vfs_implementation_file *stream, unsigned char *buf, size_t len)
@@ -778,9 +785,9 @@ int cdrom_read_subq(libretro_vfs_implementation_file *stream, unsigned char *buf
    first_session = buf[2];
    last_session = buf[3];
 
-   printf("Data Length: %d\n", data_len);
-   printf("First Session: %d\n", first_session);
-   printf("Last Session: %d\n", last_session);
+   printf("[CDROM] Data Length: %d\n", data_len);
+   printf("[CDROM] First Session: %d\n", first_session);
+   printf("[CDROM] Last Session: %d\n", last_session);
 
    for (i = 0; i < (data_len - 2) / 11; i++)
    {
@@ -798,24 +805,24 @@ int cdrom_read_subq(libretro_vfs_implementation_file *stream, unsigned char *buf
 
       if (/*(control == 4 || control == 6) && */adr == 1 && tno == 0 && point >= 1 && point <= 99)
       {
-         printf("- Session#: %d TNO %d POINT %d ", session_num, tno, point);
-         printf("Track start time: (MSF %02u:%02u:%02u) ", (unsigned)pmin, (unsigned)psec, (unsigned)pframe);
+         printf("[CDROM] - Session#: %d TNO %d POINT %d ", session_num, tno, point);
+         printf("[CDROM] Track start time: (MSF %02u:%02u:%02u) ", (unsigned)pmin, (unsigned)psec, (unsigned)pframe);
       }
       else if (/*(control == 4 || control == 6) && */adr == 1 && tno == 0 && point == 0xA0)
       {
-         printf("- Session#: %d TNO %d POINT %d ", session_num, tno, point);
-         printf("First Track Number: %d ", pmin);
-         printf("Disc Type: %d ", psec);
+         printf("[CDROM] - Session#: %d TNO %d POINT %d ", session_num, tno, point);
+         printf("[CDROM] First Track Number: %d ", pmin);
+         printf("[CDROM] Disc Type: %d ", psec);
       }
       else if (/*(control == 4 || control == 6) && */adr == 1 && tno == 0 && point == 0xA1)
       {
-         printf("- Session#: %d TNO %d POINT %d ", session_num, tno, point);
-         printf("Last Track Number: %d ", pmin);
+         printf("[CDROM] - Session#: %d TNO %d POINT %d ", session_num, tno, point);
+         printf("[CDROM] Last Track Number: %d ", pmin);
       }
       else if (/*(control == 4 || control == 6) && */adr == 1 && tno == 0 && point == 0xA2)
       {
-         printf("- Session#: %d TNO %d POINT %d ", session_num, tno, point);
-         printf("Lead-out runtime: (MSF %02u:%02u:%02u) ", (unsigned)pmin, (unsigned)psec, (unsigned)pframe);
+         printf("[CDROM] - Session#: %d TNO %d POINT %d ", session_num, tno, point);
+         printf("[CDROM] Lead-out runtime: (MSF %02u:%02u:%02u) ", (unsigned)pmin, (unsigned)psec, (unsigned)pframe);
       }
 
       printf("\n");
@@ -829,13 +836,17 @@ int cdrom_read_subq(libretro_vfs_implementation_file *stream, unsigned char *buf
 static int cdrom_read_track_info(libretro_vfs_implementation_file *stream, unsigned char track, cdrom_toc_t *toc)
 {
    /* MMC Command: READ TRACK INFORMATION */
-   unsigned char cdb[] = {0x52, 0x1, 0, 0, 0, track, 0, 0x1, 0x80, 0};
+   unsigned char cdb[] = {0x52, 0x1, 0, 0, 0, 0, 0, 0x1, 0x80, 0};
    unsigned char buf[384] = {0};
    unsigned char mode = 0;
    unsigned lba = 0;
    unsigned track_size = 0;
-   int rv = cdrom_send_command(stream, DIRECTION_IN, buf, sizeof(buf), cdb, sizeof(cdb), 0);
+   int rv;
    ssize_t pregap_lba_len;
+
+   cdb[5] = track;
+
+   rv = cdrom_send_command(stream, DIRECTION_IN, buf, sizeof(buf), cdb, sizeof(cdb), 0);
 
    if (rv)
      return 1;
@@ -856,11 +867,11 @@ static int cdrom_read_track_info(libretro_vfs_implementation_file *stream, unsig
    toc->track[track - 1].mode = buf[6] & 0xF;
 
 #ifdef CDROM_DEBUG
-   printf("Track %d Info: ", track);
-   printf("Copy: %d ", (buf[5] & 0x10) > 0);
-   printf("Data Mode: %d ", mode);
-   printf("LBA Start: %d (%d) ", lba, toc->track[track - 1].lba);
-   printf("Track Size: %d\n", track_size);
+   printf("[CDROM] Track %d Info: ", track);
+   printf("[CDROM] Copy: %d ", (buf[5] & 0x10) > 0);
+   printf("[CDROM] Data Mode: %d ", mode);
+   printf("[CDROM] LBA Start: %d (%d) ", lba, toc->track[track - 1].lba);
+   printf("[CDROM] Track Size: %d\n", track_size);
    fflush(stdout);
 #endif
 
@@ -870,7 +881,12 @@ static int cdrom_read_track_info(libretro_vfs_implementation_file *stream, unsig
 int cdrom_set_read_speed(libretro_vfs_implementation_file *stream, unsigned speed)
 {
    /* MMC Command: SET CD SPEED */
-   unsigned char cmd[] = {0xBB, 0, (speed >> 24) & 0xFF, (speed >> 16) & 0xFF, (speed >> 8) & 0xFF, speed & 0xFF, 0, 0, 0, 0, 0, 0 };
+   unsigned char cmd[] = {0xBB, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+
+   cmd[2] = (speed >> 24) & 0xFF;
+   cmd[3] = (speed >> 16) & 0xFF;
+   cmd[4] = (speed >> 8) & 0xFF;
+   cmd[5] = speed & 0xFF;
 
    return cdrom_send_command(stream, DIRECTION_NONE, NULL, 0, cmd, sizeof(cmd), 0);
 }
@@ -887,7 +903,7 @@ int cdrom_write_cue(libretro_vfs_implementation_file *stream, char **out_buf, si
    if (!out_buf || !out_len || !num_tracks || !toc)
    {
 #ifdef CDROM_DEBUG
-      printf("Invalid buffer/length pointer for CDROM cue sheet\n");
+      printf("[CDROM] Invalid buffer/length pointer for CDROM cue sheet\n");
       fflush(stdout);
 #endif
       return 1;
@@ -913,7 +929,7 @@ int cdrom_write_cue(libretro_vfs_implementation_file *stream, char **out_buf, si
       {
          *num_tracks = pmin;
 #ifdef CDROM_DEBUG
-         printf("Number of CDROM tracks: %d\n", *num_tracks);
+         printf("[CDROM] Number of CDROM tracks: %d\n", *num_tracks);
          fflush(stdout);
 #endif
          break;
@@ -923,7 +939,7 @@ int cdrom_write_cue(libretro_vfs_implementation_file *stream, char **out_buf, si
    if (!*num_tracks || *num_tracks > 99)
    {
 #ifdef CDROM_DEBUG
-      printf("Invalid number of CDROM tracks: %d\n", *num_tracks);
+      printf("[CDROM] Invalid number of CDROM tracks: %d\n", *num_tracks);
       fflush(stdout);
 #endif
       return 1;
@@ -960,7 +976,7 @@ int cdrom_write_cue(libretro_vfs_implementation_file *stream, char **out_buf, si
          audio = (!(control & 0x4) && !(control & 0x5));
 
 #ifdef CDROM_DEBUG
-         printf("Track %02d CONTROL %01X ADR %01X AUDIO? %d\n", point, control, adr, audio);
+         printf("[CDROM] Track %02d CONTROL %01X ADR %01X AUDIO? %d\n", point, control, adr, audio);
          fflush(stdout);
 #endif
 
@@ -1046,7 +1062,7 @@ int cdrom_get_inquiry(const libretro_vfs_implementation_file *stream, char *mode
       *is_cdrom = true;
 
 #ifdef CDROM_DEBUG
-   printf("Device Model: %s (is CD-ROM? %s)\n", model, (cdrom ? "yes" : "no"));
+   printf("[CDROM] Device Model: %s (is CD-ROM? %s)\n", model, (cdrom ? "yes" : "no"));
 #endif
    return 0;
 }
@@ -1054,8 +1070,12 @@ int cdrom_get_inquiry(const libretro_vfs_implementation_file *stream, char *mode
 int cdrom_read(libretro_vfs_implementation_file *stream, cdrom_group_timeouts_t *timeouts, unsigned char min, unsigned char sec, unsigned char frame, void *s, size_t len, size_t skip)
 {
    /* MMC Command: READ CD MSF */
-   unsigned char cdb[] = {0xB9, 0, 0, min, sec, frame, 0, 0, 0, 0xF8, 0, 0};
+   unsigned char cdb[] = {0xB9, 0, 0, 0, 0, 0, 0, 0, 0, 0xF8, 0, 0};
    int rv;
+
+   cdb[3] = min;
+   cdb[4] = sec;
+   cdb[5] = frame;
 
    if (len + skip <= 2352)
    {
@@ -1068,7 +1088,7 @@ int cdrom_read(libretro_vfs_implementation_file *stream, cdrom_group_timeouts_t 
       cdb[8] = next_frame;
 
 #ifdef CDROM_DEBUG
-      printf("single-frame read: from %d %d %d to %d %d %d skip %" PRId64 "\n", cdb[3], cdb[4], cdb[5], cdb[6], cdb[7], cdb[8], skip);
+      printf("[CDROM] single-frame read: from %d %d %d to %d %d %d skip %" PRId64 "\n", cdb[3], cdb[4], cdb[5], cdb[6], cdb[7], cdb[8], skip);
       fflush(stdout);
 #endif
    }
@@ -1079,7 +1099,7 @@ int cdrom_read(libretro_vfs_implementation_file *stream, cdrom_group_timeouts_t 
 
       if (timeouts->g1_timeout && frames > timeouts->g1_timeout)
       {
-         printf("multi-frame read of %d seconds is longer than group 1 timeout of %d seconds\n", (int)frames, timeouts->g1_timeout);
+         printf("[CDROM] multi-frame read of %d seconds is longer than group 1 timeout of %d seconds\n", (int)frames, timeouts->g1_timeout);
          fflush(stdout);
          return 1;
       }
@@ -1087,7 +1107,7 @@ int cdrom_read(libretro_vfs_implementation_file *stream, cdrom_group_timeouts_t 
       cdrom_lba_to_msf(frame_end, &cdb[6], &cdb[7], &cdb[8]);
 
 #ifdef CDROM_DEBUG
-      printf("multi-frame read: from %d %d %d to %d %d %d skip %" PRId64 "\n", cdb[3], cdb[4], cdb[5], cdb[6], cdb[7], cdb[8], skip);
+      printf("[CDROM] multi-frame read: from %d %d %d to %d %d %d skip %" PRId64 "\n", cdb[3], cdb[4], cdb[5], cdb[6], cdb[7], cdb[8], skip);
       fflush(stdout);
 #endif
    }
@@ -1095,7 +1115,7 @@ int cdrom_read(libretro_vfs_implementation_file *stream, cdrom_group_timeouts_t 
    rv = cdrom_send_command(stream, DIRECTION_IN, s, len, cdb, sizeof(cdb), skip);
 
 #ifdef CDROM_DEBUG
-   printf("read msf status code %d\n", rv);
+   printf("[CDROM] read msf status code %d\n", rv);
    fflush(stdout);
 #endif
 
@@ -1122,7 +1142,7 @@ int cdrom_read_lba(libretro_vfs_implementation_file *stream, unsigned lba, void 
       cdb[8] = 1;
 
 #ifdef CDROM_DEBUG
-      printf("single-frame read: from %d count %d skip %" PRId64 "\n", lba_orig, 1, skip);
+      printf("[CDROM] single-frame read: from %d count %d skip %" PRId64 "\n", lba_orig, 1, skip);
       fflush(stdout);
 #endif
    }
@@ -1136,7 +1156,7 @@ int cdrom_read_lba(libretro_vfs_implementation_file *stream, unsigned lba, void 
       cdb[8] = (lba_count >> 0) & 0xFF;
 
 #ifdef CDROM_DEBUG
-      printf("multi-frame read: from %d to %d len %d skip %" PRId64 "\n", lba_orig, frames, frames - lba_orig, skip);
+      printf("[CDROM] multi-frame read: from %d to %d len %d skip %" PRId64 "\n", lba_orig, frames, frames - lba_orig, skip);
       fflush(stdout);
 #endif
    }
@@ -1144,7 +1164,7 @@ int cdrom_read_lba(libretro_vfs_implementation_file *stream, unsigned lba, void 
    rv = cdrom_send_command(stream, DIRECTION_IN, s, len, cdb, sizeof(cdb), skip);
 
 #ifdef CDROM_DEBUG
-   printf("read status code %d\n", rv);
+   printf("[CDROM] read status code %d\n", rv);
    fflush(stdout);
 #endif
 
@@ -1161,7 +1181,7 @@ int cdrom_stop(const libretro_vfs_implementation_file *stream)
    int rv = cdrom_send_command(stream, DIRECTION_NONE, NULL, 0, cdb, sizeof(cdb), 0);
 
 #ifdef CDROM_DEBUG
-   printf("stop status code %d\n", rv);
+   printf("[CDROM] stop status code %d\n", rv);
    fflush(stdout);
 #endif
 
@@ -1178,7 +1198,7 @@ int cdrom_unlock(const libretro_vfs_implementation_file *stream)
    int rv = cdrom_send_command(stream, DIRECTION_NONE, NULL, 0, cdb, sizeof(cdb), 0);
 
 #ifdef CDROM_DEBUG
-   printf("persistent prevent clear status code %d\n", rv);
+   printf("[CDROM] persistent prevent clear status code %d\n", rv);
    fflush(stdout);
 #endif
 
@@ -1190,7 +1210,7 @@ int cdrom_unlock(const libretro_vfs_implementation_file *stream)
    rv = cdrom_send_command(stream, DIRECTION_NONE, NULL, 0, cdb, sizeof(cdb), 0);
 
 #ifdef CDROM_DEBUG
-   printf("prevent clear status code %d\n", rv);
+   printf("[CDROM] prevent clear status code %d\n", rv);
    fflush(stdout);
 #endif
 
@@ -1212,7 +1232,7 @@ int cdrom_open_tray(const libretro_vfs_implementation_file *stream)
    rv = cdrom_send_command(stream, DIRECTION_NONE, NULL, 0, cdb, sizeof(cdb), 0);
 
 #ifdef CDROM_DEBUG
-   printf("open tray status code %d\n", rv);
+   printf("[CDROM] open tray status code %d\n", rv);
    fflush(stdout);
 #endif
 
@@ -1229,7 +1249,7 @@ int cdrom_close_tray(const libretro_vfs_implementation_file *stream)
    int rv = cdrom_send_command(stream, DIRECTION_NONE, NULL, 0, cdb, sizeof(cdb), 0);
 
 #ifdef CDROM_DEBUG
-   printf("close tray status code %d\n", rv);
+   printf("[CDROM] close tray status code %d\n", rv);
    fflush(stdout);
 #endif
 
@@ -1249,7 +1269,7 @@ struct string_list* cdrom_get_available_drives(void)
    if (!dir_list)
       return list;
 
-   for (i = 0; i < dir_list->size; i++)
+   for (i = 0; i < (int)dir_list->size; i++)
    {
       if (strstr(dir_list->elems[i].data, "/dev/sg"))
       {
@@ -1346,7 +1366,7 @@ bool cdrom_is_media_inserted(const libretro_vfs_implementation_file *stream)
    int rv = cdrom_send_command(stream, DIRECTION_NONE, NULL, 0, cdb, sizeof(cdb), 0);
 
 #ifdef CDROM_DEBUG
-   printf("media inserted status code %d\n", rv);
+   printf("[CDROM] media inserted status code %d\n", rv);
    fflush(stdout);
 #endif
 
@@ -1356,6 +1376,32 @@ bool cdrom_is_media_inserted(const libretro_vfs_implementation_file *stream)
       return false;
 
    return true;
+}
+
+bool cdrom_drive_has_media(const char drive)
+{
+   RFILE *file;
+   char cdrom_path_bin[256];
+
+   cdrom_path_bin[0] = '\0';
+
+   cdrom_device_fillpath(cdrom_path_bin, sizeof(cdrom_path_bin), drive, 1, false);
+
+   file = filestream_open(cdrom_path_bin, RETRO_VFS_FILE_ACCESS_READ, 0);
+
+   if (file)
+   {
+      const libretro_vfs_implementation_file *stream = filestream_get_vfs_handle(file);
+      bool has_media = false;
+
+      has_media = cdrom_is_media_inserted(stream);
+
+      filestream_close(file);
+
+      return has_media;
+   }
+
+   return false;
 }
 
 bool cdrom_set_read_cache(const libretro_vfs_implementation_file *stream, bool enabled)
@@ -1370,7 +1416,7 @@ bool cdrom_set_read_cache(const libretro_vfs_implementation_file *stream, bool e
    rv = cdrom_send_command(stream, DIRECTION_IN, buf, sizeof(buf), cdb_sense_changeable, sizeof(cdb_sense_changeable), 0);
 
 #ifdef CDROM_DEBUG
-   printf("mode sense changeable status code %d\n", rv);
+   printf("[CDROM] mode sense changeable status code %d\n", rv);
    fflush(stdout);
 #endif
 
@@ -1381,7 +1427,7 @@ bool cdrom_set_read_cache(const libretro_vfs_implementation_file *stream, bool e
    {
       /* RCD (read cache disable) bit is not changeable */
 #ifdef CDROM_DEBUG
-      printf("RCD (read cache disable) bit is not changeable.\n");
+      printf("[CDROM] RCD (read cache disable) bit is not changeable.\n");
       fflush(stdout);
 #endif
       return false;
@@ -1402,7 +1448,7 @@ bool cdrom_set_read_cache(const libretro_vfs_implementation_file *stream, bool e
 #ifdef CDROM_DEBUG
    printf("Mode sense data for caching mode page: ");
 
-   for (i = 0; i < sizeof(buf); i++)
+   for (i = 0; i < (int)sizeof(buf); i++)
    {
       printf("%02X ", buf[i]);
    }
@@ -1436,11 +1482,12 @@ bool cdrom_set_read_cache(const libretro_vfs_implementation_file *stream, bool e
 bool cdrom_get_timeouts(libretro_vfs_implementation_file *stream, cdrom_group_timeouts_t *timeouts)
 {
    /* MMC Command: MODE SENSE (10) */
-   unsigned char cdb[] = {0x5A, 0, 0x1D, 0, 0, 0, 0, 0, 0x14, 0};
+   int rv, i;
+   unsigned char cdb[]   = {0x5A, 0, 0x1D, 0, 0, 0, 0, 0, 0x14, 0};
    unsigned char buf[20] = {0};
-   unsigned short g1 = 0, g2 = 0, g3 = 0;
-   int rv;
-   int i;
+   unsigned short g1     = 0;
+   unsigned short g2     = 0;
+   unsigned short g3     = 0;
 
    if (!timeouts)
       return false;
@@ -1462,7 +1509,7 @@ bool cdrom_get_timeouts(libretro_vfs_implementation_file *stream, cdrom_group_ti
 #ifdef CDROM_DEBUG
    printf("Mode sense data for timeout groups: ");
 
-   for (i = 0; i < sizeof(buf); i++)
+   for (i = 0; i < (int)sizeof(buf); i++)
    {
       printf("%02X ", buf[i]);
    }
