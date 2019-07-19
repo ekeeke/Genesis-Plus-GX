@@ -1401,6 +1401,27 @@ static void check_variables(void)
       config.mono = 0; 
   }
 
+
+  var.key = "genesis_plus_gx_psg_preamp";
+  environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
+  {
+    config.psg_preamp = (!var.value) ? 150: atoi(var.value);
+    if ((system_hw & SYSTEM_PBC) == SYSTEM_MD)
+    {
+      psg_config(0, config.psg_preamp, 0xff);
+    }
+    else
+    {
+      psg_config(0, config.psg_preamp, io_reg[6]);
+    }
+  }
+
+  var.key = "genesis_plus_gx_fm_preamp";
+  environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
+  {
+    config.fm_preamp = (!var.value) ? 100: atoi(var.value);
+  }
+
   var.key = "genesis_plus_gx_audio_filter";
   environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
   {
@@ -2077,6 +2098,8 @@ void retro_set_environment(retro_environment_t cb)
 #endif
 
       { "genesis_plus_gx_sound_output", "Sound output; stereo|mono" },
+      { "genesis_plus_gx_psg_preamp", "PSG preamp level; 150|155|160|165|170|175|180|185|190|195|200|0|5|10|15|20|25|30|35|40|45|50|55|60|65|70|75|80|85|90|95|100|105|110|115|120|125|130|135|140|145" },
+      { "genesis_plus_gx_fm_preamp", "FM preamp level; 100|105|110|115|120|125|130|135|140|145|150|155|160|165|170|175|180|185|190|195|200|0|5|10|15|20|25|30|35|40|45|50|55|60|65|70|75|80|85|90|95" },
       { "genesis_plus_gx_audio_filter", "Audio filter; disabled|low-pass" },
       { "genesis_plus_gx_lowpass_range", "Low-pass filter %; 60|65|70|75|80|85|90|95|5|10|15|20|25|30|35|40|45|50|55"},
       
