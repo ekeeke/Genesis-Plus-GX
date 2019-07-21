@@ -68,6 +68,7 @@ SOURCES_C += \
 				 $(LIBRETRO_COMM_DIR)/file/retro_dirent.c \
 				 $(LIBRETRO_COMM_DIR)/lists/string_list.c \
 				 $(LIBRETRO_COMM_DIR)/lists/dir_list.c \
+				 $(LIBRETRO_COMM_DIR)/memmap/memalign.c \
 				 $(LIBRETRO_COMM_DIR)/string/stdstring.c
 
 ifeq ($(HAVE_CDROM), 1)
