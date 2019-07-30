@@ -73,6 +73,8 @@
 #include <libretro.h>
 #include <streams/file_stream.h>
 
+#include "libretro_core_options.h"
+
 #include "shared.h"
 #include "md_ntsc.h"
 #include "sms_ntsc.h"
@@ -2082,48 +2084,6 @@ unsigned retro_api_version(void) { return RETRO_API_VERSION; }
 void retro_set_environment(retro_environment_t cb)
 {
    struct retro_vfs_interface_info vfs_iface_info;
-   static const struct retro_variable vars[] = {
-      { "genesis_plus_gx_system_hw", "System hardware; auto|sg-1000|sg-1000 II|mark-III|master system|master system II|game gear|mega drive / genesis" },
-      { "genesis_plus_gx_region_detect", "System region; auto|ntsc-u|pal|ntsc-j" },
-      { "genesis_plus_gx_force_dtack", "System lockups; enabled|disabled" },
-      { "genesis_plus_gx_bios", "System bootrom; disabled|enabled" },
-      { "genesis_plus_gx_bram", "CD System BRAM; per bios|per game" },
-      { "genesis_plus_gx_addr_error", "68k address error; enabled|disabled" },
-      { "genesis_plus_gx_lock_on", "Cartridge lock-on; disabled|game genie|action replay (pro)|sonic & knuckles" },
-      { "genesis_plus_gx_ym2413", "Master System FM (YM2413); auto|disabled|enabled" },
-#ifdef HAVE_YM3438_CORE
-      { "genesis_plus_gx_ym2612", "Mega Drive / Genesis FM; mame (ym2612)|mame (asic ym3438)|mame (enhanced ym3438)|nuked (ym2612)|nuked (ym3438)" },
-#else
-      { "genesis_plus_gx_ym2612", "Mega Drive / Genesis FM; mame (ym2612)|mame (asic ym3438)|mame (enhanced ym3438)" },
-#endif
-
-      { "genesis_plus_gx_sound_output", "Sound output; stereo|mono" },
-      { "genesis_plus_gx_psg_preamp", "PSG preamp level; 150|155|160|165|170|175|180|185|190|195|200|0|5|10|15|20|25|30|35|40|45|50|55|60|65|70|75|80|85|90|95|100|105|110|115|120|125|130|135|140|145" },
-      { "genesis_plus_gx_fm_preamp", "FM preamp level; 100|105|110|115|120|125|130|135|140|145|150|155|160|165|170|175|180|185|190|195|200|0|5|10|15|20|25|30|35|40|45|50|55|60|65|70|75|80|85|90|95" },
-      { "genesis_plus_gx_audio_filter", "Audio filter; disabled|low-pass" },
-      { "genesis_plus_gx_lowpass_range", "Low-pass filter %; 60|65|70|75|80|85|90|95|5|10|15|20|25|30|35|40|45|50|55"},
-      
-      #if HAVE_EQ     
-      { "genesis_plus_gx_audio_eq_low",  "EQ Low;  100|0|5|10|15|20|25|30|35|40|45|50|55|60|65|70|75|80|85|90|95" },
-      { "genesis_plus_gx_audio_eq_mid",  "EQ Mid;  100|0|5|10|15|20|25|30|35|40|45|50|55|60|65|70|75|80|85|90|95" },
-      { "genesis_plus_gx_audio_eq_high", "EQ High; 100|0|5|10|15|20|25|30|35|40|45|50|55|60|65|70|75|80|85|90|95" },
-      #endif
-      
-      { "genesis_plus_gx_blargg_ntsc_filter", "Blargg NTSC filter; disabled|monochrome|composite|svideo|rgb" },
-      { "genesis_plus_gx_lcd_filter", "LCD Ghosting filter; disabled|enabled" },
-      { "genesis_plus_gx_overscan", "Borders; disabled|top/bottom|left/right|full" },
-      { "genesis_plus_gx_gg_extra", "Game Gear extended screen; disabled|enabled" },
-      { "genesis_plus_gx_aspect_ratio", "Core-provided aspect ratio; auto|NTSC PAR|PAL PAR" },
-      { "genesis_plus_gx_render", "Interlaced mode 2 output; single field|double field" },
-      { "genesis_plus_gx_gun_cursor", "Show Lightgun crosshair; disabled|enabled" },
-      { "genesis_plus_gx_gun_input", "Lightgun input; lightgun|touchscreen" },
-      { "genesis_plus_gx_invert_mouse", "Invert Mouse Y-axis; disabled|enabled" },
-#ifdef HAVE_OVERCLOCK
-      { "genesis_plus_gx_overclock", "CPU speed; 100%|125%|150%|175%|200%" },
-#endif
-      { "genesis_plus_gx_no_sprite_limit", "Remove per-line sprite limit; disabled|enabled" },
-      { NULL, NULL },
-   };
 
    static const struct retro_controller_description port_1[] = {
       { "Joypad Auto", RETRO_DEVICE_JOYPAD },
@@ -2280,7 +2240,9 @@ void retro_set_environment(retro_environment_t cb)
    };
 
    environ_cb = cb;
-   cb(RETRO_ENVIRONMENT_SET_VARIABLES, (void*)vars);
+
+   libretro_set_core_options(environ_cb);
+
    cb(RETRO_ENVIRONMENT_SET_CONTROLLER_INFO, (void*)ports);
    cb(RETRO_ENVIRONMENT_SET_INPUT_DESCRIPTORS, (void*)desc);
 
