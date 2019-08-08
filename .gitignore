@@ -16,3 +16,4 @@ sdl/build_sdl2
 
 *.o
 *.a
+*.so
