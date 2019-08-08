@@ -85,7 +85,9 @@
 #define OVERCLOCK_FRAME_DELAY 100
 
 #ifdef M68K_OVERCLOCK_SHIFT
+#ifndef HAVE_OVERCLOCK
 #define HAVE_OVERCLOCK
+#endif
 STATIC_ASSERT(m68k_overflow,
               M68K_MAX_CYCLES <= UINT_MAX >> (M68K_OVERCLOCK_SHIFT + 1));
 #endif

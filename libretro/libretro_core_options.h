@@ -7,8 +7,31 @@
 #include <libretro.h>
 #include <retro_inline.h>
 
+/*
+ ********************************
+ * VERSION: 1.2
+ ********************************
+ *
+ * - 1.2: Use core options v1 interface when
+ *        RETRO_ENVIRONMENT_GET_CORE_OPTIONS_VERSION is >= 1
+ *        (previously required RETRO_ENVIRONMENT_GET_CORE_OPTIONS_VERSION == 1)
+ * - 1.1: Support generation of core options v0 retro_core_option_value
+ *        arrays containing options with a single value
+ * - 1.0: First commit
+*/
+
 #ifdef __cplusplus
 extern "C" {
+#endif
+
+/*
+ ********************************
+ * Core Definitions
+ ********************************
+*/
+
+#if defined(M68K_OVERCLOCK_SHIFT) || defined(Z80_OVERCLOCK_SHIFT)
+#define HAVE_OVERCLOCK
 #endif
 
 /*
@@ -85,8 +108,9 @@ struct retro_core_option_definition option_defs_us[] = {
       "The Sega CD's internal memory cannot hold a lot of saves. Setting this core option to per game allows each game to have its own one BRM file, thus negating any lack of available space issues.",
       {
          { "per bios", "Per-BIOS" },
-         { "per game", "Per-game" },
-         { NULL, NULL }, },
+         { "per game", "Per-Game" },
+         { NULL, NULL },
+      },
       "per bios"
    },
    {
@@ -94,8 +118,8 @@ struct retro_core_option_definition option_defs_us[] = {
       "68K address error",
       "Emulate the 68K address error that occurs on real hardware. Set this to disabled when playing ROM hacks since most emulators used to develop ROM hacks don't emulate the error.",
       {
-         { "enabled",           NULL },
-         { "disabled",          NULL },
+         { "enabled",  NULL },
+         { "disabled", NULL },
          { NULL, NULL },
       },
       "enabled"
@@ -105,7 +129,7 @@ struct retro_core_option_definition option_defs_us[] = {
       "Cartridge lock-on",
       "Select a lock-on cartridge.",
       {
-         { "disabled", NULL },
+         { "disabled",            NULL },
          { "game genie",          "Game Genie" },
          { "action replay (pro)", "Action Replay (Pro)" },
          { "sonic & knuckles",    "Sonic & Knuckles" },
@@ -146,8 +170,8 @@ struct retro_core_option_definition option_defs_us[] = {
       "Sound output",
       "Self-explanatory.",
       {
-         { "stereo",  NULL },
-         { "mono", NULL },
+         { "stereo", "Stereo" },
+         { "mono",   "Mono" },
          { NULL, NULL },
       },
       "stereo"
@@ -157,29 +181,29 @@ struct retro_core_option_definition option_defs_us[] = {
       "PSG preamp level",
       "Awaiting description.",
       {
-         { "0",  NULL },
-         { "5", NULL },
+         { "0",   NULL },
+         { "5",   NULL },
          { "10",  NULL },
-         { "15", NULL },
-         { "20", NULL },
-         { "25", NULL },
-         { "30", NULL },
-         { "35", NULL },
-         { "40", NULL },
-         { "45", NULL },
-         { "50", NULL },
-         { "55", NULL },
-         { "60", NULL },
-         { "65", NULL },
-         { "70", NULL },
-         { "75", NULL },
-         { "80", NULL },
-         { "85", NULL },
-         { "90", NULL },
-         { "95", NULL },
+         { "15",  NULL },
+         { "20",  NULL },
+         { "25",  NULL },
+         { "30",  NULL },
+         { "35",  NULL },
+         { "40",  NULL },
+         { "45",  NULL },
+         { "50",  NULL },
+         { "55",  NULL },
+         { "60",  NULL },
+         { "65",  NULL },
+         { "70",  NULL },
+         { "75",  NULL },
+         { "80",  NULL },
+         { "85",  NULL },
+         { "90",  NULL },
+         { "95",  NULL },
          { "100", NULL },
          { "105", NULL },
-         { "110",  NULL },
+         { "110", NULL },
          { "115", NULL },
          { "120", NULL },
          { "125", NULL },
@@ -207,29 +231,29 @@ struct retro_core_option_definition option_defs_us[] = {
       "FM preamp level",
       "Awaiting description.",
       {
-         { "0",  NULL },
-         { "5", NULL },
+         { "0",   NULL },
+         { "5",   NULL },
          { "10",  NULL },
-         { "15", NULL },
-         { "20", NULL },
-         { "25", NULL },
-         { "30", NULL },
-         { "35", NULL },
-         { "40", NULL },
-         { "45", NULL },
-         { "50", NULL },
-         { "55", NULL },
-         { "60", NULL },
-         { "65", NULL },
-         { "70", NULL },
-         { "75", NULL },
-         { "80", NULL },
-         { "85", NULL },
-         { "90", NULL },
-         { "95", NULL },
+         { "15",  NULL },
+         { "20",  NULL },
+         { "25",  NULL },
+         { "30",  NULL },
+         { "35",  NULL },
+         { "40",  NULL },
+         { "45",  NULL },
+         { "50",  NULL },
+         { "55",  NULL },
+         { "60",  NULL },
+         { "65",  NULL },
+         { "70",  NULL },
+         { "75",  NULL },
+         { "80",  NULL },
+         { "85",  NULL },
+         { "90",  NULL },
+         { "95",  NULL },
          { "100", NULL },
          { "105", NULL },
-         { "110",  NULL },
+         { "110", NULL },
          { "115", NULL },
          { "120", NULL },
          { "125", NULL },
@@ -257,8 +281,8 @@ struct retro_core_option_definition option_defs_us[] = {
       "Audio filter",
       "Awaiting description.",
       {
-         { "disabled",  NULL },
-         { "low-pass", NULL },
+         { "disabled", NULL },
+         { "low-pass", "Low-Pass" },
          { NULL, NULL },
       },
       "disabled"
@@ -268,8 +292,8 @@ struct retro_core_option_definition option_defs_us[] = {
       "Low-pass filter %",
       "Awaiting description.",
       {
-         { "5", NULL },
-         { "10",  NULL },
+         { "5",  NULL },
+         { "10", NULL },
          { "15", NULL },
          { "20", NULL },
          { "25", NULL },
@@ -297,26 +321,26 @@ struct retro_core_option_definition option_defs_us[] = {
       "EQ Low",
       "Awaiting description.",
       {
-         { "0", NULL },
-         { "5", NULL },
+         { "0",   NULL },
+         { "5",   NULL },
          { "10",  NULL },
-         { "15", NULL },
-         { "20", NULL },
-         { "25", NULL },
-         { "30", NULL },
-         { "35", NULL },
-         { "40", NULL },
-         { "45", NULL },
-         { "50", NULL },
-         { "55", NULL },
-         { "60", NULL },
-         { "65", NULL },
-         { "70", NULL },
-         { "75", NULL },
-         { "80", NULL },
-         { "85", NULL },
-         { "90", NULL },
-         { "95", NULL },
+         { "15",  NULL },
+         { "20",  NULL },
+         { "25",  NULL },
+         { "30",  NULL },
+         { "35",  NULL },
+         { "40",  NULL },
+         { "45",  NULL },
+         { "50",  NULL },
+         { "55",  NULL },
+         { "60",  NULL },
+         { "65",  NULL },
+         { "70",  NULL },
+         { "75",  NULL },
+         { "80",  NULL },
+         { "85",  NULL },
+         { "90",  NULL },
+         { "95",  NULL },
          { "100", NULL },
          { NULL, NULL },
       },
@@ -327,26 +351,26 @@ struct retro_core_option_definition option_defs_us[] = {
       "EQ Mid",
       "Awaiting description.",
       {
-         { "0", NULL },
-         { "5", NULL },
+         { "0",   NULL },
+         { "5",   NULL },
          { "10",  NULL },
-         { "15", NULL },
-         { "20", NULL },
-         { "25", NULL },
-         { "30", NULL },
-         { "35", NULL },
-         { "40", NULL },
-         { "45", NULL },
-         { "50", NULL },
-         { "55", NULL },
-         { "60", NULL },
-         { "65", NULL },
-         { "70", NULL },
-         { "75", NULL },
-         { "80", NULL },
-         { "85", NULL },
-         { "90", NULL },
-         { "95", NULL },
+         { "15",  NULL },
+         { "20",  NULL },
+         { "25",  NULL },
+         { "30",  NULL },
+         { "35",  NULL },
+         { "40",  NULL },
+         { "45",  NULL },
+         { "50",  NULL },
+         { "55",  NULL },
+         { "60",  NULL },
+         { "65",  NULL },
+         { "70",  NULL },
+         { "75",  NULL },
+         { "80",  NULL },
+         { "85",  NULL },
+         { "90",  NULL },
+         { "95",  NULL },
          { "100", NULL },
          { NULL, NULL },
       },
@@ -357,26 +381,26 @@ struct retro_core_option_definition option_defs_us[] = {
       "EQ High",
       "Awaiting description.",
       {
-         { "0", NULL },
-         { "5", NULL },
+         { "0",   NULL },
+         { "5",   NULL },
          { "10",  NULL },
-         { "15", NULL },
-         { "20", NULL },
-         { "25", NULL },
-         { "30", NULL },
-         { "35", NULL },
-         { "40", NULL },
-         { "45", NULL },
-         { "50", NULL },
-         { "55", NULL },
-         { "60", NULL },
-         { "65", NULL },
-         { "70", NULL },
-         { "75", NULL },
-         { "80", NULL },
-         { "85", NULL },
-         { "90", NULL },
-         { "95", NULL },
+         { "15",  NULL },
+         { "20",  NULL },
+         { "25",  NULL },
+         { "30",  NULL },
+         { "35",  NULL },
+         { "40",  NULL },
+         { "45",  NULL },
+         { "50",  NULL },
+         { "55",  NULL },
+         { "60",  NULL },
+         { "65",  NULL },
+         { "70",  NULL },
+         { "75",  NULL },
+         { "80",  NULL },
+         { "85",  NULL },
+         { "90",  NULL },
+         { "95",  NULL },
          { "100", NULL },
          { NULL, NULL },
       },
@@ -402,8 +426,8 @@ struct retro_core_option_definition option_defs_us[] = {
       "LCD Ghosting filter",
       "Self-explanatory.",
       {
-         { "disabled",   NULL },
-         { "enabled",    NULL },
+         { "disabled", NULL },
+         { "enabled",  NULL },
          { NULL, NULL },
       },
       "disabled"
@@ -426,8 +450,8 @@ struct retro_core_option_definition option_defs_us[] = {
       "Game Gear extended screen",
       "Self-explanatory.",
       {
-         { "disabled",   NULL },
-         { "enabled",    NULL },
+         { "disabled", NULL },
+         { "enabled",  NULL },
          { NULL, NULL },
       },
       "disabled"
@@ -437,7 +461,7 @@ struct retro_core_option_definition option_defs_us[] = {
       "Core-provided aspect ratio",
       "Choose the Core-provided aspect ratio. RetroArch's aspect ratio must be set to Core provided in the Video settings for this to function properly.",
       {
-         { "auto",     NULL },
+         { "auto",     "Auto" },
          { "NTSC PAR", NULL },
          { "PAL PAR",  NULL },
       },
@@ -448,8 +472,8 @@ struct retro_core_option_definition option_defs_us[] = {
       "Interlaced mode 2 output",
       "Change how interlaced mode 2 output is handled. Games like Sonic 2's multiplayer mode uses Interlaced Mode 2.",
       {
-         { "single field", NULL },
-         { "double field", NULL },
+         { "single field", "Single Field" },
+         { "double field", "Double Field" },
          { NULL, NULL },
       },
       "single field"
@@ -460,7 +484,7 @@ struct retro_core_option_definition option_defs_us[] = {
       "Shows lightgun crosshairs for the 'MD Menacer', 'MD Justifiers', and 'MS Light Phaser' Device Types.",
       {
          { "disabled", NULL },
-         { "enabled", NULL },
+         { "enabled",  NULL },
          { NULL, NULL },
       },
       "disabled"
@@ -470,8 +494,8 @@ struct retro_core_option_definition option_defs_us[] = {
       "Lightgun input",
       "Self-explanatory.",
       {
-         { "lightgun", NULL },
-         { "touchscreen", NULL },
+         { "lightgun",    "Lightgun" },
+         { "touchscreen", "Touchscreen" },
          { NULL, NULL },
       },
       "lightgun"
@@ -482,7 +506,7 @@ struct retro_core_option_definition option_defs_us[] = {
       "Inverts the Mouse Y-axis for the 'MD Mouse' Device Type.",
       {
          { "disabled", NULL },
-         { "enabled", NULL },
+         { "enabled",  NULL },
          { NULL, NULL },
       },
       "disabled"
@@ -502,18 +526,18 @@ struct retro_core_option_definition option_defs_us[] = {
       },
       "100%"
    },
+#endif
    {
       "genesis_plus_gx_no_sprite_limit",
       "Remove per-line sprite limit",
       "Reduce sprite flickering when enabled..",
       {
          { "disabled", NULL },
-         { "enabled", NULL },
+         { "enabled",  NULL },
          { NULL, NULL },
       },
       "disabled"
    },
-#endif
    { NULL, NULL, NULL, {{0}}, NULL },
 };
 
@@ -588,7 +612,8 @@ struct retro_core_option_definition *option_defs_intl[RETRO_LANGUAGE_LAST] = {
 */
 
 /* Handles configuration/setting of core options.
- * Should only be called inside retro_set_environment().
+ * Should be called as early as possible - ideally inside
+ * retro_set_environment(), and no later than retro_load_game()
  * > We place the function body in the header to avoid the
  *   necessity of adding more .c files (i.e. want this to
  *   be as painless as possible for core devs)
@@ -601,7 +626,7 @@ INLINE void libretro_set_core_options(retro_environment_t environ_cb)
    if (!environ_cb)
       return;
 
-   if (environ_cb(RETRO_ENVIRONMENT_GET_CORE_OPTIONS_VERSION, &version) && (version == 1))
+   if (environ_cb(RETRO_ENVIRONMENT_GET_CORE_OPTIONS_VERSION, &version) && (version >= 1))
    {
       struct retro_core_options_intl core_options_intl;
       unsigned language = 0;
@@ -672,7 +697,7 @@ INLINE void libretro_set_core_options(retro_environment_t environ_cb)
             }
 
             /* Build values string */
-            if (num_values > 1)
+            if (num_values > 0)
             {
                size_t j;
 
@@ -704,7 +729,7 @@ INLINE void libretro_set_core_options(retro_environment_t environ_cb)
          variables[i].key   = key;
          variables[i].value = values_buf[i];
       }
-      
+
       /* Set variables */
       environ_cb(RETRO_ENVIRONMENT_SET_VARIABLES, variables);
 
