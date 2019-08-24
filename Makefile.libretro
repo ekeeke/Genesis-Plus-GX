@@ -272,7 +272,7 @@ else ifneq (,$(filter $(platform), ngc wii wiiu))
 
    # Nintendo WiiU
    ifneq (,$(findstring wiiu,$(platform)))
-      PLATFORM_DEFINES += -DWIIU -DHW_RVL -mwup -DUSE_DYNAMIC_ALLOC
+      PLATFORM_DEFINES += -DWIIU -DHW_RVL -DUSE_DYNAMIC_ALLOC
 
    # Nintendo Wii
    else ifneq (,$(findstring wii,$(platform)))
@@ -553,7 +553,7 @@ CFLAGS += -D_CRT_SECURE_NO_DEPRECATE
 # Windows
 else
    TARGET := $(TARGET_NAME)_libretro.dll
-   CC = gcc
+   CC ?= gcc
    SHARED := -shared -static-libgcc -static-libstdc++ -Wl,--version-script=$(CORE_DIR)/libretro/link.T -Wl,--no-undefined
    ENDIANNESS_DEFINES := -DLSB_FIRST -DBYTE_ORDER=LITTLE_ENDIAN
    PLATFORM_DEFINES := -DHAVE_ZLIB
