@@ -169,6 +169,18 @@ else ifneq (,$(findstring ios,$(platform)))
       PLATFORM_DEFINES += -miphoneos-version-min=5.0
    endif
 
+# tvOS
+else ifeq ($(platform), tvos-arm64)
+   TARGET := $(TARGET_NAME)_libretro_tvos.dylib
+   fpic := -fPIC
+   SHARED := -dynamiclib
+   ENDIANNESS_DEFINES := -DLSB_FIRST -DBYTE_ORDER=LITTLE_ENDIAN
+   PLATFORM_DEFINES := -DHAVE_ZLIB
+
+   ifeq ($(IOSSDK),)
+      IOSSDK := $(shell xcrun -sdk appletvos -show-sdk-path)
+   endif
+
 # Theos
 else ifeq ($(platform), theos_ios)
    DEPLOYMENT_IOSVERSION = 5.0
