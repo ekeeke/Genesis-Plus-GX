@@ -1,7 +1,7 @@
 /* Copyright  (C) 2010-2018 The RetroArch team
  *
  * ---------------------------------------------------------------------------------------
- * The following license statement only applies to this file (posix_string.h).
+ * The following license statement only applies to this file (compat_snprintf.c).
  * ---------------------------------------------------------------------------------------
  *
  * Permission is hereby granted, free of charge,
@@ -20,45 +20,66 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef __LIBRETRO_SDK_COMPAT_POSIX_STRING_H
-#define __LIBRETRO_SDK_COMPAT_POSIX_STRING_H
-
-#include <retro_common_api.h>
-
+/* THIS FILE HAS NOT BEEN VALIDATED ON PLATFORMS BESIDES MSVC */
 #ifdef _MSC_VER
-#include <compat/msvc.h>
-#endif
 
-#if defined(PS2)
-#include <compat_ctype.h>
-#endif
+#include <stdio.h>
+#include <stdarg.h>
 
-RETRO_BEGIN_DECLS
-
-#ifdef _WIN32
-#undef strtok_r
-#define strtok_r(str, delim, saveptr) retro_strtok_r__(str, delim, saveptr)
-
-char *strtok_r(char *str, const char *delim, char **saveptr);
-#endif
-
-#ifdef _MSC_VER
-#undef strcasecmp
-#undef strdup
-#define strcasecmp(a, b) retro_strcasecmp__(a, b)
-#define strdup(orig)     retro_strdup__(orig)
-int strcasecmp(const char *a, const char *b);
-char *strdup(const char *orig);
-
-/* isblank is available since MSVC 2013 */
 #if _MSC_VER < 1800
-#undef isblank
-#define isblank(c)       retro_isblank__(c)
-int isblank(int c);
+#define va_copy(dst, src) ((dst) = (src))
 #endif
 
+#if _MSC_VER < 1300
+#define _vscprintf c89_vscprintf_retro__
+
+static int c89_vscprintf_retro__(const char *format, va_list pargs)
+{
+   int retval;
+   va_list argcopy;
+   va_copy(argcopy, pargs);
+   retval = vsnprintf(NULL, 0, format, argcopy);
+   va_end(argcopy);
+   return retval;
+}
 #endif
 
-RETRO_END_DECLS
+/* http://stackoverflow.com/questions/2915672/snprintf-and-visual-studio-2010 */
 
+int c99_vsnprintf_retro__(char *outBuf, size_t size, const char *format, va_list ap)
+{
+   int count = -1;
+
+   if (size != 0)
+   {
+#if (_MSC_VER <= 1310)
+      count = _vsnprintf(outBuf, size - 1, format, ap);
+#else
+      count = _vsnprintf_s(outBuf, size, size - 1, format, ap);
+#endif
+   }
+
+   if (count == -1)
+       count = _vscprintf(format, ap);
+
+   if (count == size)
+   {
+      /* there was no room for a NULL, so truncate the last character */
+      outBuf[size - 1] = '\0';
+   }
+
+   return count;
+}
+
+int c99_snprintf_retro__(char *outBuf, size_t size, const char *format, ...)
+{
+   int count;
+   va_list ap;
+
+   va_start(ap, format);
+   count = c99_vsnprintf_retro__(outBuf, size, format, ap);
+   va_end(ap);
+
+   return count;
+}
 #endif

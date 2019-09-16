@@ -3,6 +3,7 @@ LOGSOUND = 0
 FRONTEND_SUPPORTS_RGB565 = 1
 HAVE_CHD = 1
 HAVE_SYS_PARAM = 1
+HAVE_CDROM = 0
 
 CORE_DIR := .
 
@@ -18,18 +19,18 @@ unixcygpath = /$(subst :,,$(call unixpath,$1))
 # system platform
 ifeq ($(platform),)
    platform = unix
-   ifeq ($(shell uname -a),)
+   ifeq ($(shell uname -s),)
       platform = win
       EXE_EXT = .exe
-   else ifneq ($(findstring MINGW,$(shell uname -a)),)
+   else ifneq ($(findstring MINGW,$(shell uname -s)),)
       platform = win
-   else ifneq ($(findstring Darwin,$(shell uname -a)),)
+   else ifneq ($(findstring Darwin,$(shell uname -s)),)
       platform = osx
       arch = intel
       ifeq ($(shell uname -p),powerpc)
          arch = ppc
       endif
-   else ifneq ($(findstring win,$(shell uname -a)),)
+   else ifneq ($(findstring win,$(shell uname -s)),)
       platform = win
    endif
 else ifneq (,$(findstring armv,$(platform)))
@@ -44,6 +45,12 @@ TARGET_NAME := genesis_plus_gx
 
 LIBS := -lm
 
+ifneq ($(SANITIZER),)
+   CFLAGS   := -fsanitize=$(SANITIZER) $(CFLAGS)
+   CXXFLAGS := -fsanitize=$(SANITIZER) $(CXXFLAGS)
+   LDFLAGS  := -fsanitize=$(SANITIZER) $(LDFLAGS)
+endif
+
 GIT_VERSION ?= " $(shell git rev-parse --short HEAD || echo unknown)"
 ifneq ($(GIT_VERSION)," unknown")
    CFLAGS += -DGIT_VERSION=\"$(GIT_VERSION)\"
@@ -56,6 +63,10 @@ ifneq (,$(findstring unix,$(platform)))
    SHARED := -shared -Wl,--version-script=$(CORE_DIR)/libretro/link.T -Wl,--no-undefined
    ENDIANNESS_DEFINES := -DLSB_FIRST -DBYTE_ORDER=LITTLE_ENDIAN
    PLATFORM_DEFINES := -DHAVE_ZLIB
+
+   ifneq ($(findstring Linux,$(shell uname -s)),)
+     HAVE_CDROM = 1
+   endif
 
    # Raspberry Pi
    ifneq (,$(findstring rpi,$(platform)))
@@ -145,13 +156,29 @@ else ifneq (,$(findstring ios,$(platform)))
       IOSSDK := $(shell xcrun -sdk iphoneos -show-sdk-path)
    endif
 
-   CC = cc -arch armv7 -isysroot $(IOSSDK)
-   ifeq ($(platform),ios9)
+   ifeq ($(platform),ios-arm64)
+      CC = cc -arch arm64 -isysroot $(IOSSDK)
+   else
+      CC = cc -arch armv7 -isysroot $(IOSSDK)
+   endif
+   ifeq ($(platform),$(filter $(platform),ios9 ios-arm64))
       CC += -miphoneos-version-min=8.0
       PLATFORM_DEFINES += -miphoneos-version-min=8.0
    else
       CC += -miphoneos-version-min=5.0
       PLATFORM_DEFINES += -miphoneos-version-min=5.0
+   endif
+
+# tvOS
+else ifeq ($(platform), tvos-arm64)
+   TARGET := $(TARGET_NAME)_libretro_tvos.dylib
+   fpic := -fPIC
+   SHARED := -dynamiclib
+   ENDIANNESS_DEFINES := -DLSB_FIRST -DBYTE_ORDER=LITTLE_ENDIAN
+   PLATFORM_DEFINES := -DHAVE_ZLIB
+
+   ifeq ($(IOSSDK),)
+      IOSSDK := $(shell xcrun -sdk appletvos -show-sdk-path)
    endif
 
 # Theos
@@ -257,7 +284,7 @@ else ifneq (,$(filter $(platform), ngc wii wiiu))
 
    # Nintendo WiiU
    ifneq (,$(findstring wiiu,$(platform)))
-      PLATFORM_DEFINES += -DWIIU -DHW_RVL -mwup -DUSE_DYNAMIC_ALLOC
+      PLATFORM_DEFINES += -DWIIU -DHW_RVL -DUSE_DYNAMIC_ALLOC
 
    # Nintendo Wii
    else ifneq (,$(findstring wii,$(platform)))
@@ -308,6 +335,7 @@ TARGET := $(TARGET_NAME)_libretro_xdk1.lib
 CC  = CL.exe
 CXX  = CL.exe
 LD   = lib.exe
+HAVE_CDROM = 1
 
 export INCLUDE := $(XDK)/xbox/include
 export LIB := $(XDK)/xbox/lib
@@ -336,6 +364,7 @@ CXXFLAGS += -D_XBOX -D_XBOX360
 STATIC_LINKING=1
 HAS_GCC := 0
 HAVE_SYS_PARAM = 0
+HAVE_CDROM = 1
 # Windows MSVC 2010 x64
 else ifeq ($(platform), windows_msvc2010_x64)
 	CC  = cl.exe
@@ -371,6 +400,7 @@ else ifneq (,$(findstring windows_msvc2017,$(platform)))
 		MSVC2017CompileFlags = -DWINAPI_FAMILY=WINAPI_FAMILY_DESKTOP_APP -FS
 		LDFLAGS += -MANIFEST -LTCG:incremental -NXCOMPAT -DYNAMICBASE -DEBUG -OPT:REF -INCREMENTAL:NO -SUBSYSTEM:WINDOWS -MANIFESTUAC:"level='asInvoker' uiAccess='false'" -OPT:ICF -ERRORREPORT:PROMPT -NOLOGO -TLBID:1
 		LIBS := kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib
+		HAVE_CDROM = 1
 	else ifneq (,$(findstring uwp,$(PlatformSuffix)))
 		WinPartition = uwp
 		MSVC2017CompileFlags = -DWINAPI_FAMILY=WINAPI_FAMILY_APP -D_WINDLL -D_UNICODE -DUNICODE -D__WRL_NO_DEFAULT_LIB__ -EHsc -FS
@@ -466,6 +496,7 @@ else ifeq ($(platform), windows_msvc2010_x86)
 	CXX = cl.exe
 
    HAVE_SYS_PARAM = 0
+HAVE_CDROM = 1
 
 PATH := $(shell IFS=$$'\n'; cygpath "$(VS100COMNTOOLS)../../VC/bin"):$(PATH)
 PATH := $(PATH):$(shell IFS=$$'\n'; cygpath "$(VS100COMNTOOLS)../IDE")
@@ -491,6 +522,7 @@ else ifeq ($(platform), windows_msvc2005_x86)
 	CXX = cl.exe
 
    HAVE_SYS_PARAM = 0
+HAVE_CDROM = 1
 
 PATH := $(shell IFS=$$'\n'; cygpath "$(VS80COMNTOOLS)../../VC/bin"):$(PATH)
 PATH := $(PATH):$(shell IFS=$$'\n'; cygpath "$(VS80COMNTOOLS)../IDE")
@@ -533,10 +565,11 @@ CFLAGS += -D_CRT_SECURE_NO_DEPRECATE
 # Windows
 else
    TARGET := $(TARGET_NAME)_libretro.dll
-   CC = gcc
+   CC ?= gcc
    SHARED := -shared -static-libgcc -static-libstdc++ -Wl,--version-script=$(CORE_DIR)/libretro/link.T -Wl,--no-undefined
    ENDIANNESS_DEFINES := -DLSB_FIRST -DBYTE_ORDER=LITTLE_ENDIAN
    PLATFORM_DEFINES := -DHAVE_ZLIB
+   HAVE_CDROM = 1
 
 endif
 
@@ -617,6 +650,12 @@ else
    BPP_DEFINES = -DUSE_15BPP_RENDERING
 endif
 
+ifeq ($(HAVE_CDROM), 1)
+   LIBRETRO_CFLAGS += -DHAVE_CDROM
+ifeq ($(CDROM_DEBUG), 1)
+   LIBRETRO_CFLAGS += -DCDROM_DEBUG
+endif
+endif
 
 LIBRETRO_CFLAGS += $(INCFLAGS) $(INCFLAGS_PLATFORM)
 LIBRETRO_CFLAGS += $(BPP_DEFINES) \

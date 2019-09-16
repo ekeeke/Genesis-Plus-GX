@@ -622,9 +622,18 @@ int cdd_load(char *filename, char *header)
       if (!(memcmp(lptr, "FILE", 4)))
       {
         /* retrieve current path */
-        ptr = fname + strlen(fname) - 1;
-        while ((ptr - fname) && (*ptr != '/') && (*ptr != '\\')) ptr--;
-        if (ptr - fname) ptr++;
+        if (strstr(lptr, "://"))
+        {
+          /* URIs do not get filtered */
+          ptr = fname;
+        }
+        else
+        {
+          /* this removes all directories from the path and just leaves the filename */
+          ptr = fname + strlen(fname) - 1;
+          while ((ptr - fname) && (*ptr != '/') && (*ptr != '\\')) ptr--;
+          if (ptr - fname) ptr++;
+        }
 
         /* skip "FILE" attribute */
         lptr += 4;

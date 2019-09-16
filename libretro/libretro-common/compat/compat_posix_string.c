@@ -1,7 +1,7 @@
 /* Copyright  (C) 2010-2018 The RetroArch team
  *
  * ---------------------------------------------------------------------------------------
- * The following license statement only applies to this file (posix_string.h).
+ * The following license statement only applies to this file (compat_posix_string.c).
  * ---------------------------------------------------------------------------------------
  *
  * Permission is hereby granted, free of charge,
@@ -20,45 +20,85 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef __LIBRETRO_SDK_COMPAT_POSIX_STRING_H
-#define __LIBRETRO_SDK_COMPAT_POSIX_STRING_H
+#include <ctype.h>
 
-#include <retro_common_api.h>
-
-#ifdef _MSC_VER
-#include <compat/msvc.h>
-#endif
-
-#if defined(PS2)
-#include <compat_ctype.h>
-#endif
-
-RETRO_BEGIN_DECLS
+#include <compat/posix_string.h>
 
 #ifdef _WIN32
-#undef strtok_r
-#define strtok_r(str, delim, saveptr) retro_strtok_r__(str, delim, saveptr)
 
-char *strtok_r(char *str, const char *delim, char **saveptr);
-#endif
-
-#ifdef _MSC_VER
 #undef strcasecmp
 #undef strdup
-#define strcasecmp(a, b) retro_strcasecmp__(a, b)
-#define strdup(orig)     retro_strdup__(orig)
-int strcasecmp(const char *a, const char *b);
-char *strdup(const char *orig);
-
-/* isblank is available since MSVC 2013 */
-#if _MSC_VER < 1800
 #undef isblank
-#define isblank(c)       retro_isblank__(c)
-int isblank(int c);
-#endif
+#undef strtok_r
+#include <ctype.h>
+#include <stdlib.h>
+#include <stddef.h>
+#include <compat/strl.h>
 
-#endif
+#include <string.h>
 
-RETRO_END_DECLS
+int retro_strcasecmp__(const char *a, const char *b)
+{
+   while (*a && *b)
+   {
+      int a_ = tolower(*a);
+      int b_ = tolower(*b);
+
+      if (a_ != b_)
+         return a_ - b_;
+
+      a++;
+      b++;
+   }
+
+   return tolower(*a) - tolower(*b);
+}
+
+char *retro_strdup__(const char *orig)
+{
+   size_t len = strlen(orig) + 1;
+   char *ret  = (char*)malloc(len);
+   if (!ret)
+      return NULL;
+
+   strlcpy(ret, orig, len);
+   return ret;
+}
+
+int retro_isblank__(int c)
+{
+   return (c == ' ') || (c == '\t');
+}
+
+char *retro_strtok_r__(char *str, const char *delim, char **saveptr)
+{
+   char *first = NULL;
+   if (!saveptr || !delim)
+      return NULL;
+
+   if (str)
+      *saveptr = str;
+
+   do
+   {
+      char *ptr = NULL;
+      first = *saveptr;
+      while (*first && strchr(delim, *first))
+         *first++ = '\0';
+
+      if (*first == '\0')
+         return NULL;
+
+      ptr = first + 1;
+
+      while (*ptr && !strchr(delim, *ptr))
+         ptr++;
+
+      *saveptr = ptr + (*ptr ? 1 : 0);
+      *ptr     = '\0';
+   } while (strlen(first) == 0);
+
+   return first;
+}
 
 #endif
