@@ -102,17 +102,10 @@ else ifeq ($(platform), classic_armv8_a35)
 	ARCH = arm
 	BUILTIN_GPU = neon
 	USE_DYNAREC = 1
-  ENDIANNESS_DEFINES := -DLSB_FIRST -DBYTE_ORDER=LITTLE_ENDIAN -DALIGN_LONG
-  PLATFORM_DEFINES := -DHAVE_ZLIB
-	ifeq ($(shell echo `$(CC) -dumpversion` "< 4.9" | bc -l), 1)
+	ENDIANNESS_DEFINES := -DLSB_FIRST -DBYTE_ORDER=LITTLE_ENDIAN -DALIGN_LONG
+	PLATFORM_DEFINES := -DHAVE_ZLIB
 	CFLAGS += -march=armv8-a
-	else
-	  CFLAGS += -march=armv8-a
-	  # If gcc is 5.0 or later
-	  ifeq ($(shell echo `$(CC) -dumpversion` ">= 5" | bc -l), 1)
-	    LDFLAGS += -static-libgcc -static-libstdc++
-	  endif
-	endif
+	LDFLAGS += -static-libgcc -static-libstdc++
 #######################################
 
 # Portable Linux
