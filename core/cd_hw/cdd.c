@@ -127,14 +127,8 @@ static const uint32 toc_ffightj[29] =
   14553, 9834, 10542, 1699, 1792, 1781, 3783, 3052
 };
 
-/* supported WAVE file header (16-bit stereo samples @44.1kHz) */
-static const unsigned char waveHeader[28] =
-{
-  0x57,0x41,0x56,0x45,0x66,0x6d,0x74,0x20,0x10,0x00,0x00,0x00,0x01,0x00,
-  0x02,0x00,0x44,0xac,0x00,0x00,0x10,0xb1,0x02,0x00,0x04,0x00,0x10,0x00
-};
 
-/* supported WAVE file extensions */
+/* supported audio file extensions */
 static const char extensions[SUPPORTED_EXT][16] =
 {
 #if defined(USE_LIBTREMOR) || defined(USE_LIBVORBIS)
@@ -675,26 +669,26 @@ int cdd_load(char *filename, char *header)
         if (!strstr(lptr,"BINARY") && !strstr(lptr,"MOTOROLA"))
         {
           /* read file header */
-          unsigned char head[28];
-          cdStreamSeek(cdd.toc.tracks[cdd.toc.last].fd, 8, SEEK_SET);
-          cdStreamRead(head, 28, 1, cdd.toc.tracks[cdd.toc.last].fd);
+          unsigned char head[12];
+          cdStreamRead(head, 12, 1, cdd.toc.tracks[cdd.toc.last].fd);
           cdStreamSeek(cdd.toc.tracks[cdd.toc.last].fd, 0, SEEK_SET);
       
-          /* autodetect WAVE file header (44.1KHz 16-bit stereo format only) */
-          if (!memcmp(head, waveHeader, 28))
+          /* autodetect WAVE file */
+          if (!memcmp(head, "RIFF", 4) && !memcmp(head + 8, "WAVE", 4))
           {
-            /* look for 'data' chunk id */
-            int dataOffset = 0;
-            cdStreamSeek(cdd.toc.tracks[cdd.toc.last].fd, 36, SEEK_SET);
-            while (cdStreamRead(head, 4, 1, cdd.toc.tracks[cdd.toc.last].fd))
+            /* look for 'data' chunk */
+            int chunkSize, dataOffset = 0;
+            cdStreamSeek(cdd.toc.tracks[cdd.toc.last].fd, 12, SEEK_SET);
+            while (cdStreamRead(head, 8, 1, cdd.toc.tracks[cdd.toc.last].fd))
             {
               if (!memcmp(head, "data", 4))
               {
-                dataOffset = cdStreamTell(cdd.toc.tracks[cdd.toc.last].fd) + 4;
+                dataOffset = cdStreamTell(cdd.toc.tracks[cdd.toc.last].fd);
                 cdStreamSeek(cdd.toc.tracks[cdd.toc.last].fd, 0, SEEK_SET);
                 break;
               }
-              cdStreamSeek(cdd.toc.tracks[cdd.toc.last].fd, -2, SEEK_CUR);
+              chunkSize = head[4] + (head[5] << 8) + (head[6] << 16) + (head[7] << 24);
+              cdStreamSeek(cdd.toc.tracks[cdd.toc.last].fd, chunkSize, SEEK_CUR);
             }
 
             /* check if 'data' chunk has not been found */
@@ -920,7 +914,7 @@ int cdd_load(char *filename, char *header)
     /* close CUE file */
     cdStreamClose(fd);
   }
-  else
+  else if (cdd.toc.last)
   {
     int i, offset = 1;
 
@@ -947,26 +941,27 @@ int cdd_load(char *filename, char *header)
     /* repeat until no more valid track files can be found */
     while (fd)
     {
-      /* read file HEADER */
-      unsigned char head[28];
-      cdStreamSeek(fd, 8, SEEK_SET);
-      cdStreamRead(head, 28, 1, fd);
+      /* read file header */
+      unsigned char head[12];
+      cdStreamRead(head, 12, 1, fd);
       cdStreamSeek(fd, 0, SEEK_SET);
       
-      /* check if this is a valid WAVE file (44.1KHz 16-bit stereo format only) */
-      if (!memcmp(head, waveHeader, 28))
+      /* autodetect WAVE file */
+      if (!memcmp(head, "RIFF", 4) && !memcmp(head + 8, "WAVE", 4))
       {
-        /* look for 'data' chunk id */
-        int dataOffset = 0;
-        cdStreamSeek(fd, 36, SEEK_SET);
-        while (cdStreamRead(head, 4, 1, fd))
+        /* look for 'data' chunk */
+        int chunkSize, dataOffset = 0;
+        cdStreamSeek(cdd.toc.tracks[cdd.toc.last].fd, 12, SEEK_SET);
+        while (cdStreamRead(head, 8, 1, cdd.toc.tracks[cdd.toc.last].fd))
         {
           if (!memcmp(head, "data", 4))
           {
-            dataOffset = cdStreamTell(fd) + 4;
+            dataOffset = cdStreamTell(cdd.toc.tracks[cdd.toc.last].fd);
+            cdStreamSeek(cdd.toc.tracks[cdd.toc.last].fd, 0, SEEK_SET);
             break;
           }
-          cdStreamSeek(fd, -2, SEEK_CUR);
+          chunkSize = head[4] + (head[5] << 8) + (head[6] << 16) + (head[7] << 24);
+          cdStreamSeek(cdd.toc.tracks[cdd.toc.last].fd, chunkSize, SEEK_CUR);
         }
 
         /* check if 'data' chunk has not been found */
