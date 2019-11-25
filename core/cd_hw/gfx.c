@@ -2,7 +2,7 @@
  *  Genesis Plus
  *  CD graphics processor
  *
- *  Copyright (C) 2012  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2012-2019  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -60,13 +60,8 @@ void word_ram_0_dma_w(unsigned int words)
   /* DMA transfer */
   while (words--)
   {
-    /* read 16-bit word from CDC buffer */
-    data = *(uint16 *)(cdc.ram + src_index);
-
-#ifdef LSB_FIRST
-    /* source data is stored in big endian format */
-    data = ((data >> 8) | (data << 8)) & 0xffff;
-#endif
+    /* read 16-bit word from CDC RAM buffer (big-endian format) */
+    data = READ_WORD(cdc.ram, src_index);
 
     /* write 16-bit word to WORD-RAM */
     *(uint16 *)(scd.word_ram[0] + dst_index) = data ;
@@ -98,13 +93,8 @@ void word_ram_1_dma_w(unsigned int words)
   /* DMA transfer */
   while (words--)
   {
-    /* read 16-bit word from CDC buffer */
-    data = *(uint16 *)(cdc.ram + src_index);
-
-#ifdef LSB_FIRST
-    /* source data is stored in big endian format */
-    data = ((data >> 8) | (data << 8)) & 0xffff;
-#endif
+    /* read 16-bit word from CDC RAM buffer (big-endian format) */
+    data = READ_WORD(cdc.ram, src_index);
 
     /* write 16-bit word to WORD-RAM */
     *(uint16 *)(scd.word_ram[1] + dst_index) = data ;
@@ -136,13 +126,8 @@ void word_ram_2M_dma_w(unsigned int words)
   /* DMA transfer */
   while (words--)
   {
-    /* read 16-bit word from CDC buffer */
-    data = *(uint16 *)(cdc.ram + src_index);
-
-#ifdef LSB_FIRST
-    /* source data is stored in big endian format */
-    data = ((data >> 8) | (data << 8)) & 0xffff;
-#endif
+    /* read 16-bit word from CDC RAM buffer (big-endian format) */
+    data = READ_WORD(cdc.ram, src_index);
 
     /* write 16-bit word to WORD-RAM */
     *(uint16 *)(scd.word_ram_2M + dst_index) = data ;
