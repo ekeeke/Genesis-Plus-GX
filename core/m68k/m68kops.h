@@ -8117,7 +8117,7 @@ static void m68k_op_divu_16_d(void)
       *r_dst = MASK_OUT_ABOVE_32(MASK_OUT_ABOVE_16(quotient) | (remainder << 16));
       return;
     }
-    USE_CYCLES(7 * 10);
+    USE_CYCLES(MUL * 10);
     FLAG_V = VFLAG_SET;
     FLAG_N = NFLAG_SET; /* undocumented behavior (fixes Blood Shot on Genesis) */
     FLAG_C = CFLAG_CLEAR;
@@ -8148,7 +8148,7 @@ static void m68k_op_divu_16_ai(void)
       *r_dst = MASK_OUT_ABOVE_32(MASK_OUT_ABOVE_16(quotient) | (remainder << 16));
       return;
     }
-    USE_CYCLES(7 * 10);
+    USE_CYCLES(MUL * 10);
     FLAG_V = VFLAG_SET;
     FLAG_N = NFLAG_SET; /* undocumented behavior (fixes Blood Shot on Genesis) */
     FLAG_C = CFLAG_CLEAR;
@@ -8179,7 +8179,7 @@ static void m68k_op_divu_16_pi(void)
       *r_dst = MASK_OUT_ABOVE_32(MASK_OUT_ABOVE_16(quotient) | (remainder << 16));
       return;
     }
-    USE_CYCLES(7 *10);
+    USE_CYCLES(MUL * 10);
     FLAG_V = VFLAG_SET;
     FLAG_N = NFLAG_SET; /* undocumented behavior (fixes Blood Shot on Genesis) */
     FLAG_C = CFLAG_CLEAR;
@@ -8210,7 +8210,7 @@ static void m68k_op_divu_16_pd(void)
       *r_dst = MASK_OUT_ABOVE_32(MASK_OUT_ABOVE_16(quotient) | (remainder << 16));
       return;
     }
-    USE_CYCLES(7 * 10);
+    USE_CYCLES(MUL * 10);
     FLAG_V = VFLAG_SET;
     FLAG_N = NFLAG_SET; /* undocumented behavior (fixes Blood Shot on Genesis) */
     FLAG_C = CFLAG_CLEAR;
@@ -8241,7 +8241,7 @@ static void m68k_op_divu_16_di(void)
       *r_dst = MASK_OUT_ABOVE_32(MASK_OUT_ABOVE_16(quotient) | (remainder << 16));
       return;
     }
-    USE_CYCLES(7 * 10);
+    USE_CYCLES(MUL * 10);
     FLAG_V = VFLAG_SET;
     FLAG_N = NFLAG_SET; /* undocumented behavior (fixes Blood Shot on Genesis) */
     FLAG_C = CFLAG_CLEAR;
@@ -8272,7 +8272,7 @@ static void m68k_op_divu_16_ix(void)
       *r_dst = MASK_OUT_ABOVE_32(MASK_OUT_ABOVE_16(quotient) | (remainder << 16));
       return;
     }
-    USE_CYCLES(7 * 10);
+    USE_CYCLES(MUL * 10);
     FLAG_V = VFLAG_SET;
     FLAG_N = NFLAG_SET; /* undocumented behavior (fixes Blood Shot on Genesis) */
     FLAG_C = CFLAG_CLEAR;
@@ -8303,7 +8303,7 @@ static void m68k_op_divu_16_aw(void)
       *r_dst = MASK_OUT_ABOVE_32(MASK_OUT_ABOVE_16(quotient) | (remainder << 16));
       return;
     }
-    USE_CYCLES(7 * 10);
+    USE_CYCLES(MUL * 10);
     FLAG_V = VFLAG_SET;
     FLAG_N = NFLAG_SET; /* undocumented behavior (fixes Blood Shot on Genesis) */
     FLAG_C = CFLAG_CLEAR;
@@ -8334,7 +8334,7 @@ static void m68k_op_divu_16_al(void)
       *r_dst = MASK_OUT_ABOVE_32(MASK_OUT_ABOVE_16(quotient) | (remainder << 16));
       return;
     }
-    USE_CYCLES(7 * 10);
+    USE_CYCLES(MUL * 10);
     FLAG_V = VFLAG_SET;
     FLAG_N = NFLAG_SET; /* undocumented behavior (fixes Blood Shot on Genesis) */
     FLAG_C = CFLAG_CLEAR;
@@ -8365,7 +8365,7 @@ static void m68k_op_divu_16_pcdi(void)
       *r_dst = MASK_OUT_ABOVE_32(MASK_OUT_ABOVE_16(quotient) | (remainder << 16));
       return;
     }
-    USE_CYCLES(7 * 10);
+    USE_CYCLES(MUL * 10);
     FLAG_V = VFLAG_SET;
     FLAG_N = NFLAG_SET; /* undocumented behavior (fixes Blood Shot on Genesis) */
     FLAG_C = CFLAG_CLEAR;
@@ -8396,7 +8396,7 @@ static void m68k_op_divu_16_pcix(void)
       *r_dst = MASK_OUT_ABOVE_32(MASK_OUT_ABOVE_16(quotient) | (remainder << 16));
       return;
     }
-    USE_CYCLES(7 * 10);
+    USE_CYCLES(MUL * 10);
     FLAG_V = VFLAG_SET;
     FLAG_N = NFLAG_SET; /* undocumented behavior (fixes Blood Shot on Genesis) */
     FLAG_C = CFLAG_CLEAR;
@@ -8427,7 +8427,7 @@ static void m68k_op_divu_16_i(void)
       *r_dst = MASK_OUT_ABOVE_32(MASK_OUT_ABOVE_16(quotient) | (remainder << 16));
       return;
     }
-    USE_CYCLES(7 * 10);
+    USE_CYCLES(MUL * 10);
     FLAG_V = VFLAG_SET;
     FLAG_N = NFLAG_SET; /* undocumented behavior (fixes Blood Shot on Genesis) */
     FLAG_C = CFLAG_CLEAR;
