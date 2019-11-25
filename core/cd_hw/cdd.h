@@ -136,7 +136,7 @@ extern int cdd_context_save(uint8 *state);
 extern int cdd_context_load(uint8 *state);
 extern int cdd_load(char *filename, char *header);
 extern void cdd_unload(void);
-extern void cdd_read_data(uint8 *dst);
+extern void cdd_read_data(uint8 *dst, uint8 *subheader);
 extern void cdd_read_audio(unsigned int samples);
 extern void cdd_update(void);
 extern void cdd_process(void);
