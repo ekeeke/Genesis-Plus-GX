@@ -1,8 +1,8 @@
 /***************************************************************************************
  *  Genesis Plus
- *  CD data controller (LC89510 compatible)
+ *  CD data controller (LC8951x compatible)
  *
- *  Copyright (C) 2012-2015  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2012-2019  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -639,13 +639,8 @@ unsigned short cdc_host_r(void)
   /* check if data is available */
   if (scd.regs[0x04>>1].byte.h & 0x40)
   {
-    /* read data word from CDC RAM buffer */
-    uint16 data = *(uint16 *)(cdc.ram + (cdc.dac.w & 0x3ffe));
-
-#ifdef LSB_FIRST
-    /* source data is stored in big endian format */
-    data = ((data >> 8) | (data << 8)) & 0xffff;
-#endif
+    /* read 16-bit word from CDC RAM buffer (big-endian format) */
+    uint16 data = READ_WORD(cdc.ram, cdc.dac.w & 0x3ffe);
 
 #ifdef LOG_CDC
     error("CDC host read 0x%04x -> 0x%04x (dbc=0x%x) (%X)\n", cdc.dac.w, data, cdc.dbc.w, s68k.pc);

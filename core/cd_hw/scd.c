@@ -101,13 +101,8 @@ void prg_ram_dma_w(unsigned int words)
   /* DMA transfer */
   while (words--)
   {
-    /* read 16-bit word from CDC buffer */
-    data = *(uint16 *)(cdc.ram + src_index);
-
-#ifdef LSB_FIRST
-    /* source data is stored in big endian format */
-    data = ((data >> 8) | (data << 8)) & 0xffff;
-#endif
+    /* read 16-bit word from CDC RAM buffer (big-endian format) */
+    data = READ_WORD(cdc.ram, src_index);
 
     /* write 16-bit word to PRG-RAM */
     *(uint16 *)(scd.prg_ram + dst_index) = data ;
