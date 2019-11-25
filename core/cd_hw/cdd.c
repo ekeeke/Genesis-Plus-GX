@@ -894,17 +894,17 @@ int cdd_load(char *filename, char *header)
       {
         /* look for 'data' chunk */
         int chunkSize, dataOffset = 0;
-        cdStreamSeek(cdd.toc.tracks[cdd.toc.last].fd, 12, SEEK_SET);
-        while (cdStreamRead(head, 8, 1, cdd.toc.tracks[cdd.toc.last].fd))
+        cdStreamSeek(fd, 12, SEEK_SET);
+        while (cdStreamRead(head, 8, 1, fd))
         {
           if (!memcmp(head, "data", 4))
           {
-            dataOffset = cdStreamTell(cdd.toc.tracks[cdd.toc.last].fd);
-            cdStreamSeek(cdd.toc.tracks[cdd.toc.last].fd, 0, SEEK_SET);
+            dataOffset = cdStreamTell(fd);
+            cdStreamSeek(fd, 0, SEEK_SET);
             break;
           }
           chunkSize = head[4] + (head[5] << 8) + (head[6] << 16) + (head[7] << 24);
-          cdStreamSeek(cdd.toc.tracks[cdd.toc.last].fd, chunkSize, SEEK_CUR);
+          cdStreamSeek(fd, chunkSize, SEEK_CUR);
         }
 
         /* check if 'data' chunk has not been found */
