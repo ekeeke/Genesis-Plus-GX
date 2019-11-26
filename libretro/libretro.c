@@ -2481,7 +2481,6 @@ bool retro_unserialize(const void *data, size_t size)
    if (fast_savestates) restore_sound_buffer();
 
 #ifdef HAVE_OVERCLOCK
-   overclock_delay = OVERCLOCK_FRAME_DELAY;
    update_overclock();
 #endif
 
