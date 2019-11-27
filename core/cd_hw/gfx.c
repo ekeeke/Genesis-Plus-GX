@@ -47,10 +47,10 @@ void word_ram_0_dma_w(unsigned int words)
 
   /* CDC buffer source address */
   uint16 src_index = cdc.dac.w & 0x3ffe;
-  
+
   /* WORD-RAM destination address*/
   uint32 dst_index = (scd.regs[0x0a>>1].w << 3) & 0x1fffe;
-  
+
   /* update DMA destination address */
   scd.regs[0x0a>>1].w += (words >> 2);
 
@@ -80,10 +80,10 @@ void word_ram_1_dma_w(unsigned int words)
 
   /* CDC buffer source address */
   uint16 src_index = cdc.dac.w & 0x3ffe;
-  
+
   /* WORD-RAM destination address*/
   uint32 dst_index = ((scd.regs[0x0a>>1].w << 3) & 0x1fffe);
-  
+
   /* update DMA destination address */
   scd.regs[0x0a>>1].w += (words >> 2);
 
@@ -113,10 +113,10 @@ void word_ram_2M_dma_w(unsigned int words)
 
   /* CDC buffer source address */
   uint16 src_index = cdc.dac.w & 0x3ffe;
-  
+
   /* WORD-RAM destination address*/
   uint32 dst_index = (scd.regs[0x0a>>1].w << 3) & 0x3fffe;
-  
+
   /* update DMA destination address */
   scd.regs[0x0a>>1].w += (words >> 2);
 
