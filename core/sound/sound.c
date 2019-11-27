@@ -3,7 +3,7 @@
  *  Sound Hardware
  *
  *  Copyright (C) 1998-2003  Charles Mac Donald (original code)
- *  Copyright (C) 2007-2018  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2007-2019  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -126,7 +126,7 @@ static unsigned int YM2612_Read(unsigned int cycles, unsigned int a)
   if ((a == 0) || (config.ym2612 > YM2612_DISCRETE))
   {
     /* synchronize FM chip with CPU */
-    fm_update(cycles - fm_cycles_ratio + 1);
+    fm_update(cycles);
 
     /* read FM status */
     if (cycles >= fm_cycles_busy)
@@ -211,7 +211,7 @@ static void YM3438_Write(unsigned int cycles, unsigned int a, unsigned int v)
 static unsigned int YM3438_Read(unsigned int cycles, unsigned int a)
 {
   /* synchronize FM chip with CPU */
-  fm_update(cycles - fm_cycles_ratio + 1);
+  fm_update(cycles);
 
   /* read FM status */
   return OPN2_Read(&ym3438, a);
