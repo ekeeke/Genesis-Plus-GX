@@ -758,16 +758,16 @@ int cdd_load(char *filename, char *header)
         cdd.toc.tracks[cdd.toc.last].offset += pregap * 2352;
 
         /* check if a single file is used for consecutive tracks */
-        if (!cdd.toc.tracks[cdd.toc.last].fd)
+        if (!cdd.toc.tracks[cdd.toc.last].fd && cdd.toc.last)
         {
           /* use common file descriptor */
-          cdd.toc.tracks[cdd.toc.last].fd = cdd.toc.tracks[0].fd;
+          cdd.toc.tracks[cdd.toc.last].fd = cdd.toc.tracks[cdd.toc.last - 1].fd;
 
           /* current track start time (based on current file absolute time + PREGAP length) */
           cdd.toc.tracks[cdd.toc.last].start = bb + ss*75 + mm*60*75 + pregap;
 
           /* check if previous track end time needs to be set */
-          if (cdd.toc.last && !cdd.toc.tracks[cdd.toc.last - 1].end)
+          if (!cdd.toc.tracks[cdd.toc.last - 1].end)
           {
             /* set previous track end time (based on current track start time, ignoring any "PREGAP"-type pause if no INDEX00) */
             cdd.toc.tracks[cdd.toc.last - 1].end = cdd.toc.tracks[cdd.toc.last].start;
