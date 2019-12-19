@@ -214,8 +214,7 @@ unsigned int sram_read_byte(unsigned int address)
 
 unsigned int sram_read_word(unsigned int address)
 {
-  address &= 0xfffe;
-  return (sram.sram[address + 1] | (sram.sram[address] << 8));
+  return READ_WORD(sram.sram, address & 0xfffe);
 }
 
 void sram_write_byte(unsigned int address, unsigned int data)
@@ -225,7 +224,5 @@ void sram_write_byte(unsigned int address, unsigned int data)
 
 void sram_write_word(unsigned int address, unsigned int data)
 {
-  address &= 0xfffe;
-  sram.sram[address] = data >> 8;
-  sram.sram[address + 1] = data & 0xff;
+  WRITE_WORD(sram.sram, address & 0xfffe, data);
 }
