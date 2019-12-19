@@ -128,7 +128,7 @@ static unsigned int YM2612_Read(unsigned int cycles, unsigned int a)
   if ((a == 0) || (config.ym2612 > YM2612_DISCRETE))
   {
     /* synchronize FM chip with CPU */
-    fm_update(cycles - fm_cycles_ratio + 1);
+    fm_update(cycles);
 
     /* read FM status */
     if (cycles >= fm_cycles_busy)
@@ -213,7 +213,7 @@ static void YM3438_Write(unsigned int cycles, unsigned int a, unsigned int v)
 static unsigned int YM3438_Read(unsigned int cycles, unsigned int a)
 {
   /* synchronize FM chip with CPU */
-  fm_update(cycles - fm_cycles_ratio + 1);
+  fm_update(cycles);
 
   /* read FM status */
   return OPN2_Read(&ym3438, a);
