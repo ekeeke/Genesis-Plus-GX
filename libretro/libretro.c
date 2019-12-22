@@ -576,6 +576,9 @@ static void config_default(void)
 #ifdef HAVE_YM3438_CORE
    config.ym3438         = 0;
 #endif
+#ifdef HAVE_OPLL_CORE
+   config.opll           = 0;
+#endif
 
    /* system options */
    config.system         = 0; /* AUTO */
@@ -1122,6 +1125,28 @@ static void check_variables(void)
       }
     }
   }
+  
+#ifdef HAVE_OPLL_CORE
+  var.key = "genesis_plus_gx_ym2413_core";
+  environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
+  {
+    orig_value = config.opll;
+    if (var.value && !strcmp(var.value, "nuked"))
+    {
+      config.opll = 1;
+    }
+    else
+    {
+      config.opll = 0;
+    }
+
+    if (((orig_value == 0) && (config.opll > 0)) || ((orig_value > 0) && (config.opll == 0)))
+    {
+      sound_init();
+      sound_reset();
+    }
+  }
+#endif
 
   var.key = "genesis_plus_gx_sound_output";
   environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
@@ -1792,6 +1817,9 @@ void retro_set_environment(retro_environment_t cb)
       { "genesis_plus_gx_addr_error", "68k address error; enabled|disabled" },
       { "genesis_plus_gx_lock_on", "Cartridge lock-on; disabled|game genie|action replay (pro)|sonic & knuckles" },
       { "genesis_plus_gx_ym2413", "Master System FM (YM2413); auto|disabled|enabled" },
+#ifdef HAVE_OPLL_CORE
+      { "genesis_plus_gx_ym2413_core", "Master System FM (YM2413) core; mame|nuked" },
+#endif
 #ifdef HAVE_YM3438_CORE
       { "genesis_plus_gx_ym2612", "Mega Drive / Genesis FM; mame (ym2612)|mame (asic ym3438)|mame (enhanced ym3438)|nuked (ym2612)|nuked (ym3438)" },
 #else

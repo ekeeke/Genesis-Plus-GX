@@ -98,6 +98,9 @@ struct
 #ifdef HAVE_YM3438_CORE
   uint8 ym3438;
 #endif
+#ifdef HAVE_OPLL_CORE
+  uint8 opll;
+#endif
   uint8 mono;
   int16 psg_preamp;
   int16 fm_preamp;

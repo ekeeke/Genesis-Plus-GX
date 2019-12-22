@@ -390,6 +390,9 @@
     <ClCompile Include="..\..\core\debug\cpuhook.c">
       <Filter>core\debug</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\core\sound\opll.c">
+      <Filter>core\sound</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\core\cd_hw\libchdr\src\bitstream.h">
@@ -757,6 +760,9 @@
     </ClInclude>
     <ClInclude Include="..\..\core\debug\cpuhook.h">
       <Filter>core\debug</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\core\sound\opll.h">
+      <Filter>core\sound</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
