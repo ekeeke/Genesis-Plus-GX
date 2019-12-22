@@ -584,7 +584,8 @@ LIBRETRO_CFLAGS += $(BPP_DEFINES) \
 		-D__LIBRETRO__ \
 		-DM68K_OVERCLOCK_SHIFT=20 \
 		-DZ80_OVERCLOCK_SHIFT=20 \
-		-DHAVE_YM3438_CORE
+		-DHAVE_YM3438_CORE \
+		-DHAVE_OPLL_CORE
 
 ifneq (,$(findstring msvc,$(platform)))
    LIBRETRO_CFLAGS += -DINLINE="static _inline"

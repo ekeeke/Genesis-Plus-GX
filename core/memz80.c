@@ -300,7 +300,7 @@ unsigned char z80_md_port_r(unsigned int port)
       /* read FM chip if enabled */
       if ((port >= 0xF0) && (config.ym2413 & 1))
       {
-        return YM2413Read(); 
+        return fm_read(Z80.cycles, port);
       }
 
       return z80_unused_port_r(port);
@@ -578,7 +578,7 @@ unsigned char z80_ms_port_r(unsigned int port)
         /* read FM board if enabled */
         if (!(port & 4) && (config.ym2413 & 1))
         {
-          data = YM2413Read();
+          data = fm_read(Z80.cycles, port);
         }
 
         /* read I/O ports if enabled */
@@ -678,7 +678,7 @@ unsigned char z80_m3_port_r(unsigned int port)
       if (!(port & 4) && (config.ym2413 & 1))
       {
         /* I/O ports are automatically disabled by hardware */
-        return YM2413Read();
+        return fm_read(Z80.cycles, port);
       }
 
       /* read I/O ports   */

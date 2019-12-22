@@ -28,6 +28,9 @@
 #ifdef HAVE_YM3438_CORE
 #include "ym3438.h"
 #endif
+#ifdef HAVE_OPLL_CORE
+#include "opll.h"
+#endif
 #include "sram.h"
 #include "ggenie.h"
 #include "areplay.h"
