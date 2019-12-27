@@ -41,6 +41,21 @@ else ifneq (,$(findstring rpi,$(platform)))
    override platform += unix
 endif
 
+# system platform
+system_platform = unix
+ifeq ($(shell uname -a),)
+	EXE_EXT = .exe
+	system_platform = win
+else ifneq ($(findstring Darwin,$(shell uname -a)),)
+	system_platform = osx
+	arch = intel
+	ifeq ($(shell uname -p),powerpc)
+		arch = ppc
+	endif
+else ifneq ($(findstring MINGW,$(shell uname -a)),)
+	system_platform = win
+endif
+
 TARGET_NAME := genesis_plus_gx
 
 LIBS := -lm
@@ -122,10 +137,8 @@ else ifeq ($(platform), osx)
    TARGET := $(TARGET_NAME)_libretro.dylib
    fpic := -fPIC
    SHARED := -dynamiclib
-   ifeq ($(arch),ppc)
-		ENDIANNESS_DEFINES := -DBYTE_ORDER=BIG_ENDIAN -DCPU_IS_BIG_ENDIAN=1 -DWORDS_BIGENDIAN=1
-		CFLAGS += -DHAVE_NO_LANGEXTRA
-		CXXFLAGS += -DHAVE_NO_LANGEXTRA
+ifeq ($(arch),ppc)
+		ENDIANNESS_DEFINES := -DBYTE_ORDER=BIG_ENDIAN -DCPU_IS_BIG_ENDIAN=1 -DWORDS_BIGENDIAN=1 -DHAVE_NO_LANGEXTRA
    else
       ENDIANNESS_DEFINES := -DLSB_FIRST -DBYTE_ORDER=LITTLE_ENDIAN
    endif
