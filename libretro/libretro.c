@@ -2078,6 +2078,35 @@ void ROMCheatUpdate(void)
   }
 }
 
+static void set_memory_maps()
+{
+   const size_t SCD_BIT = 1ULL << 31ULL;
+   struct retro_memory_descriptor descs[8];
+   struct retro_memory_map        mmaps;
+   int i = 0;
+
+   memset(descs, 0, sizeof(descs));
+
+   if (system_hw == SYSTEM_MCD)
+   {
+      /* virtual address using SCD_BIT so all 512M of prg_ram can be access
+       * effectively address $ 80020000 */
+      descs[i].ptr       = (unsigned char*)scd.prg_ram;
+      descs[i].len       = 0x80000;
+      descs[i].start     = SCD_BIT | 0x020000;
+      descs[i].flags     = RETRO_MEMDESC_SYSTEM_RAM;
+      descs[i].addrspace = "PRGRAM";
+      i++;
+   }
+
+   if (!i)
+      return;
+
+   mmaps.descriptors = descs;
+   mmaps.num_descriptors = i;
+   environ_cb(RETRO_ENVIRONMENT_SET_MEMORY_MAPS, &mmaps);
+}
+
 /************************************
  * libretro implementation
  ************************************/
@@ -2662,6 +2691,8 @@ bool retro_load_game(const struct retro_game_info *info)
    overclock_delay = OVERCLOCK_FRAME_DELAY;
    update_overclock();
 #endif
+
+   set_memory_maps();
 
    return true;
 }
