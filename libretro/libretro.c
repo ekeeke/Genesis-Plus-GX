@@ -2083,31 +2083,22 @@ void ROMCheatUpdate(void)
 
 static void set_memory_maps()
 {
-   const size_t SCD_BIT = 1ULL << 31ULL;
-   struct retro_memory_descriptor descs[8];
-   struct retro_memory_map        mmaps;
-   int i = 0;
-
-   memset(descs, 0, sizeof(descs));
-
    if (system_hw == SYSTEM_MCD)
    {
-      /* virtual address using SCD_BIT so all 512M of prg_ram can be access
-       * effectively address $ 80020000 */
-      descs[i].ptr       = (unsigned char*)scd.prg_ram;
-      descs[i].len       = 0x80000;
-      descs[i].start     = SCD_BIT | 0x020000;
-      descs[i].flags     = RETRO_MEMDESC_SYSTEM_RAM;
-      descs[i].addrspace = "PRGRAM";
-      i++;
+      const size_t SCD_BIT = 1ULL << 31ULL;
+      const uint64_t mem = RETRO_MEMDESC_SYSTEM_RAM;
+      struct retro_memory_map mmaps;
+      struct retro_memory_descriptor descs[] = {
+         { mem, work_ram,     0,           0xFF0000, 0, 0, 0x10000, "68KRAM" },
+         /* virtual address using SCD_BIT so all 512M of prg_ram can be accessed */
+         /* at address $80020000 */
+         { mem, scd.prg_ram,  0, SCD_BIT | 0x020000, 0, 0, 0x80000, "PRGRAM" },
+      };
+
+      mmaps.descriptors = descs;
+      mmaps.num_descriptors = sizeof(descs) / sizeof(descs[0]);
+      environ_cb(RETRO_ENVIRONMENT_SET_MEMORY_MAPS, &mmaps);
    }
-
-   if (!i)
-      return;
-
-   mmaps.descriptors = descs;
-   mmaps.num_descriptors = i;
-   environ_cb(RETRO_ENVIRONMENT_SET_MEMORY_MAPS, &mmaps);
 }
 
 /************************************
