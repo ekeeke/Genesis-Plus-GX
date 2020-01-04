@@ -335,7 +335,7 @@ else ifeq ($(platform), gcw0)
    fpic := -fPIC
    LDFLAGS += $(PTHREAD_FLAGS)
    CFLAGS += $(PTHREAD_FLAGS) -G0
-   CFLAGS += -ffast-math -march=mips32 -mtune=mips32r2 -mhard-float
+   CFLAGS += -ffast-math -march=mips32 -mtune=mips32r2 -mhard-float -fomit-frame-pointer
    ENDIANNESS_DEFINES := -DLSB_FIRST -DBYTE_ORDER=LITTLE_ENDIAN -DALIGN_LONG
 
 # Windows MSVC 2003 Xbox 1
