@@ -334,8 +334,9 @@ else ifeq ($(platform), gcw0)
    SHARED := -shared -Wl,--version-script=$(CORE_DIR)/libretro/link.T -Wl,--no-undefined
    fpic := -fPIC
    LDFLAGS += $(PTHREAD_FLAGS)
-   CFLAGS += $(PTHREAD_FLAGS) -DHAVE_MKDIR
+   CFLAGS += $(PTHREAD_FLAGS) -G0
    CFLAGS += -ffast-math -march=mips32 -mtune=mips32r2 -mhard-float
+   ENDIANNESS_DEFINES := -DLSB_FIRST -DBYTE_ORDER=LITTLE_ENDIAN -DALIGN_LONG
 
 # Windows MSVC 2003 Xbox 1
 else ifeq ($(platform), xbox1_msvc2003)
