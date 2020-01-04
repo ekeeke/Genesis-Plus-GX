@@ -78,6 +78,7 @@
 #include "shared.h"
 #include "md_ntsc.h"
 #include "sms_ntsc.h"
+#include "osd.h"
 
 #define STATIC_ASSERT(name, test) typedef struct { int assert_[(test)?1:-1]; } assert_ ## name ## _
 #define M68K_MAX_CYCLES 1107
@@ -99,6 +100,8 @@ STATIC_ASSERT(m68k_overflow,
 STATIC_ASSERT(z80_overflow,
               Z80_MAX_CYCLES <= UINT_MAX >> (Z80_OVERCLOCK_SHIFT + 1));
 #endif
+
+t_config config;
 
 sms_ntsc_t *sms_ntsc;
 md_ntsc_t  *md_ntsc;

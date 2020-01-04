@@ -49,10 +49,12 @@ extern void zbank_write_ctrl_io(unsigned int address, unsigned int data);
 extern unsigned int zbank_read_vdp(unsigned int address);
 extern void zbank_write_vdp(unsigned int address, unsigned int data);
 
-struct _zbank_memory_map
+typedef struct
 {
   unsigned int (*read)(unsigned int address);
   void (*write)(unsigned int address, unsigned int data);
-} zbank_memory_map[256];
+} T_ZBANK_MEMORY_MAP;
+
+extern T_ZBANK_MEMORY_MAP zbank_memory_map[256];
 
 #endif /* _MEMBNK_H_ */
