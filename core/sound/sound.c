@@ -46,7 +46,7 @@ int8 audio_hard_disable = 0;
 #define YM2612_CLOCK_RATIO (7*6)
 
 /* FM output buffer (large enough to hold a whole frame at original chips rate) */
-#ifdef HAVE_YM3438_CORE || HAVE_OPLL_CORE
+#if defined(HAVE_YM3438_CORE) || defined(HAVE_OPLL_CORE)
 static int fm_buffer[1080 * 2 * 24];
 #else
 static int fm_buffer[1080 * 2];
