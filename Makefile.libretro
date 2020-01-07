@@ -111,7 +111,6 @@ else ifeq ($(platform), classic_armv8_a35)
 	-fmerge-all-constants -fno-math-errno \
 	-marm -mtune=cortex-a35 -mfpu=neon-fp-armv8 -mfloat-abi=hard
 	CXXFLAGS += $(CFLAGS)
-	CPPFLAGS += $(CFLAGS)
 	ASFLAGS += $(CFLAGS)
 	HAVE_NEON = 1
 	ARCH = arm
@@ -166,14 +165,18 @@ else ifneq (,$(findstring ios,$(platform)))
 
    ifeq ($(platform),ios-arm64)
       CC = cc -arch arm64 -isysroot $(IOSSDK)
+      CXX = c++ -arch arm64 -isysroot $(IOSSDK)
    else
       CC = cc -arch armv7 -isysroot $(IOSSDK)
+      CXX = c++ -arch arm64 -isysroot $(IOSSDK)
    endif
    ifeq ($(platform),$(filter $(platform),ios9 ios-arm64))
       CC += -miphoneos-version-min=8.0
+      CXX += -miphoneos-version-min=8.0
       PLATFORM_DEFINES += -miphoneos-version-min=8.0
    else
       CC += -miphoneos-version-min=5.0
+      CXX += -miphoneos-version-min=5.0
       PLATFORM_DEFINES += -miphoneos-version-min=5.0
    endif
 
@@ -211,6 +214,7 @@ else ifeq ($(platform), qnx)
    ENDIANNESS_DEFINES := -DLSB_FIRST -DBYTE_ORDER=LITTLE_ENDIAN
    PLATFORM_DEFINES := -DHAVE_ZLIB
    CC = qcc -Vgcc_ntoarmv7le
+   CXX = qcc -Vgcc_ntoarmv7le
    AR = qcc -Vgcc_ntoarmv7le
    PLATFORM_DEFINES := -D__BLACKBERRY_QNX__ -marm -mcpu=cortex-a9 -mfpu=neon -mfloat-abi=softfp
 
@@ -225,17 +229,20 @@ else ifneq (,$(filter $(platform), ps3 sncps3 psl1ght))
    # sncps3
    ifneq (,$(findstring sncps3,$(platform)))
       CC = $(CELL_SDK)/host-win32/sn/bin/ps3ppusnc.exe
+      CXX = $(CELL_SDK)/host-win32/sn/bin/ps3ppusnc.exe
       AR = $(CELL_SDK)/host-win32/sn/bin/ps3snarl.exe
 
    # PS3
    else ifneq (,$(findstring ps3,$(platform)))
       CC = $(CELL_SDK)/host-win32/ppu/bin/ppu-lv2-gcc.exe
+      CXX = $(CELL_SDK)/host-win32/ppu/bin/ppu-lv2-g++.exe
       AR = $(CELL_SDK)/host-win32/ppu/bin/ppu-lv2-ar.exe
 
    # Lightweight PS3 Homebrew SDK
    else ifneq (,$(findstring psl1ght,$(platform)))
       TARGET := $(TARGET_NAME)_libretro_$(platform).a
       CC = $(PS3DEV)/ppu/bin/ppu-gcc$(EXE_EXT)
+      CXX = $(PS3DEV)/ppu/bin/ppu-g++$(EXE_EXT)
       AR = $(PS3DEV)/ppu/bin/ppu-ar$(EXE_EXT)
    endif
 
@@ -243,6 +250,7 @@ else ifneq (,$(filter $(platform), ps3 sncps3 psl1ght))
 else ifeq ($(platform), psp1)
    TARGET := $(TARGET_NAME)_libretro_$(platform).a
    CC = psp-gcc$(EXE_EXT)
+   CXX = psp-g++$(EXE_EXT)
    AR = psp-ar$(EXE_EXT)
    ENDIANNESS_DEFINES := -DLSB_FIRST -DBYTE_ORDER=LITTLE_ENDIAN
    PLATFORM_DEFINES := -DPSP
@@ -253,6 +261,7 @@ else ifeq ($(platform), psp1)
 else ifeq ($(platform), vita)
    TARGET := $(TARGET_NAME)_libretro_$(platform).a
    CC = arm-vita-eabi-gcc$(EXE_EXT)
+   CXX = arm-vita-eabi-g++$(EXE_EXT)
    AR = arm-vita-eabi-ar$(EXE_EXT)
    CFLAGS += -O3 -mfloat-abi=hard -ffast-math -fsingle-precision-constant
    ENDIANNESS_DEFINES := -DLSB_FIRST -DALIGN_LONG -DALT_RENDERER -DHAVE_ALLOCA_H -DBYTE_ORDER=LITTLE_ENDIAN
@@ -263,6 +272,7 @@ else ifeq ($(platform), vita)
 else ifeq ($(platform), ctr)
    TARGET := $(TARGET_NAME)_libretro_$(platform).a
    CC = $(DEVKITARM)/bin/arm-none-eabi-gcc$(EXE_EXT)
+   CXX = $(DEVKITARM)/bin/arm-none-eabi-g++$(EXE_EXT)
    AR = $(DEVKITARM)/bin/arm-none-eabi-ar$(EXE_EXT)
    ENDIANNESS_DEFINES := -DLSB_FIRST -DALIGN_LONG -DBYTE_ORDER=LITTLE_ENDIAN -DUSE_DYNAMIC_ALLOC
    PLATFORM_DEFINES := -DARM11 -D_3DS
@@ -275,6 +285,7 @@ else ifeq ($(platform), ctr)
 else ifeq ($(platform), xenon)
    TARGET := $(TARGET_NAME)_libretro_xenon360.a
    CC = xenon-gcc$(EXE_EXT)
+   CXX = xenon-g++$(EXE_EXT)
    AR = xenon-ar$(EXE_EXT)
    PLATFORM_DEFINES := -D__LIBXENON__ -DALT_RENDER
 	ENDIANNESS_DEFINES := -DBYTE_ORDER=BIG_ENDIAN -DBYTE_ORDER=BIG_ENDIAN -DCPU_IS_BIG_ENDIAN=1 -DWORDS_BIGENDIAN=1
@@ -284,6 +295,7 @@ else ifeq ($(platform), xenon)
 else ifneq (,$(filter $(platform), ngc wii wiiu))
    TARGET := $(TARGET_NAME)_libretro_$(platform).a
    CC = $(DEVKITPPC)/bin/powerpc-eabi-gcc$(EXE_EXT)
+   CXX = $(DEVKITPPC)/bin/powerpc-eabi-g++$(EXE_EXT)
    AR = $(DEVKITPPC)/bin/powerpc-eabi-ar$(EXE_EXT)
 	ENDIANNESS_DEFINES := -DBYTE_ORDER=BIG_ENDIAN -DCPU_IS_BIG_ENDIAN=1 -DWORDS_BIGENDIAN=1
    PLATFORM_DEFINES := -DGEKKO -mcpu=750 -meabi -mhard-float -DALT_RENDER
@@ -330,6 +342,7 @@ else ifeq ($(platform), emscripten)
 else ifeq ($(platform), gcw0)
    TARGET := $(TARGET_NAME)_libretro.so
    CC = /opt/gcw0-toolchain/usr/bin/mipsel-linux-gcc
+   CXX = /opt/gcw0-toolchain/usr/bin/mipsel-linux-g++
    AR = /opt/gcw0-toolchain/usr/bin/mipsel-linux-ar
    SHARED := -shared -Wl,--version-script=$(CORE_DIR)/libretro/link.T -Wl,--no-undefined
    fpic := -fPIC
@@ -575,6 +588,7 @@ CFLAGS += -D_CRT_SECURE_NO_DEPRECATE
 else
    TARGET := $(TARGET_NAME)_libretro.dll
    CC ?= gcc
+   CXX ?= g++
    SHARED := -shared -static-libgcc -static-libstdc++ -Wl,--version-script=$(CORE_DIR)/libretro/link.T -Wl,--no-undefined
    ENDIANNESS_DEFINES := -DLSB_FIRST -DBYTE_ORDER=LITTLE_ENDIAN
    PLATFORM_DEFINES := -DHAVE_ZLIB
@@ -627,7 +641,7 @@ endif
 
 include $(CORE_DIR)/libretro/Makefile.common
 
-OBJECTS := $(SOURCES_C:.c=.o)
+OBJECTS := $(SOURCES_C:.c=.o) $(SOURCES_CXX:.cpp=.o)
 
 ifeq ($(LOGSOUND), 1)
    LIBRETRO_CFLAGS := -DLOGSOUND
@@ -651,6 +665,7 @@ DEFINES += -Dflac_max=MAX -Dflac_min=MIN -Dfseeko=fseek -Dftello=ftell
 endif
 
 CFLAGS += $(fpic) $(DEFINES) $(CODE_DEFINES) $(FLAGS)
+CXXFLAGS += $(fpic) $(DEFINES) $(CODE_DEFINES) $(FLAGS)
 
 ifeq ($(FRONTEND_SUPPORTS_RGB565), 1)
    # if you have a new frontend that supports RGB565
@@ -694,20 +709,23 @@ else
 	LD = link.exe
 endif
 else
-	LD = $(CC)
+	LD = $(CXX)
 endif
 
 ifeq ($(platform), theos_ios)
 COMMON_FLAGS := $(COMMON_DEFINES) $(INCFLAGS) -I$(THEOS_INCLUDE_PATH) -Wno-error
 $(LIBRARY_NAME)_CFLAGS += $(CFLAGS) $(LIBRETRO_CFLAGS) $(COMMON_FLAGS)
-${LIBRARY_NAME}_FILES = $(SOURCES_C)
+${LIBRARY_NAME}_FILES = $(SOURCES_C) $(SOURCES_CXX)
 ${LIBRARY_NAME}_LIBRARIES = m z
 include $(THEOS_MAKE_PATH)/library.mk
 else
 all: $(TARGET)
 
+%.o: %.cpp
+	$(CXX) $(OBJOUT)$@ -c $< $(CXXFLAGS) $(LIBRETRO_CFLAGS)
+
 %.o: %.c
-	$(CC) $(OBJOUT)$@ -c $< $(CPPFLAGS) $(CFLAGS) $(LIBRETRO_CFLAGS)
+	$(CC) $(OBJOUT)$@ -c $< $(CFLAGS) $(LIBRETRO_CFLAGS)
 
 $(TARGET): $(OBJECTS)
 ifeq ($(STATIC_LINKING), 1)
