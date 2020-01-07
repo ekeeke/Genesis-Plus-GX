@@ -425,13 +425,14 @@ else ifneq (,$(findstring windows_msvc2017,$(platform)))
 		HAVE_CDROM = 1
 	else ifneq (,$(findstring uwp,$(PlatformSuffix)))
 		WinPartition = uwp
-		MSVC2017CompileFlags = -DWINAPI_FAMILY=WINAPI_FAMILY_APP -D_WINDLL -D_UNICODE -DUNICODE -D__WRL_NO_DEFAULT_LIB__ -EHsc -FS
-		LDFLAGS += -APPCONTAINER -NXCOMPAT -DYNAMICBASE -MANIFEST:NO -LTCG -OPT:REF -SUBSYSTEM:CONSOLE -MANIFESTUAC:NO -OPT:ICF -ERRORREPORT:PROMPT -NOLOGO -TLBID:1 -DEBUG:FULL -WINMD:NO
+		MSVC2017CompileFlags = -DWINAPI_FAMILY=WINAPI_FAMILY_APP -D_WINDLL -D_UNICODE -DUNICODE -D__WRL_NO_DEFAULT_LIB__ -FS
+		MSVC2017CxxFlags = -EHsc -ZW
+		LDFLAGS += -APPCONTAINER -NXCOMPAT -DYNAMICBASE -MANIFEST:NO -LTCG -OPT:REF -SUBSYSTEM:CONSOLE -OPT:ICF -ERRORREPORT:PROMPT -NOLOGO -TLBID:1 -DEBUG:FULL -WINMD:NO /nodefaultlib:vccorlib /nodefaultlib:msvcrt vccorlib.lib msvcrt.lib
 		LIBS := WindowsApp.lib
 	endif
 
 	CFLAGS += $(MSVC2017CompileFlags)
-	CXXFLAGS += $(MSVC2017CompileFlags)
+	CXXFLAGS += $(MSVC2017CompileFlags) $(MSVC2017CxxFlags)
 
 	TargetArchMoniker = $(subst $(WinPartition)_,,$(PlatformSuffix))
 
@@ -441,7 +442,7 @@ else ifneq (,$(findstring windows_msvc2017,$(platform)))
 
     HAVE_SYS_PARAM = 0
 
-	reg_query = $(call filter_out2,$(subst $2,,$(shell reg query "$2" -v "$1" 2>nul)))
+	reg_query = $(call filter_out2,$(subst $2,,$(shell reg query "$2" -v "$1")))
 	fix_path = $(subst $(SPACE),\ ,$(subst \,/,$1))
 
 	ProgramFiles86w := $(shell cmd //c "echo %PROGRAMFILES(x86)%")
@@ -453,7 +454,7 @@ else ifneq (,$(findstring windows_msvc2017,$(platform)))
 	WindowsSdkDir ?= $(call reg_query,InstallationFolder,HKEY_CURRENT_USER\SOFTWARE\Microsoft\Microsoft SDKs\Windows\v10.0)
 	WindowsSdkDir := $(WindowsSdkDir)
 
-	WindowsSDKVersion ?= $(firstword $(foreach folder,$(subst $(subst \,/,$(WindowsSdkDir)Include/),,$(wildcard $(call fix_path,$(WindowsSdkDir)Include\*))),$(if $(wildcard $(call fix_path,$(WindowsSdkDir)Include/$(folder)/um/Windows.h)),$(folder),)))$(BACKSLASH)
+	WindowsSDKVersion ?= $(firstword $(foreach folder,$(subst $(subst \,/,$(WindowsSdkDir)Include/),,$(wildcard $(call fix_path,$(WindowsSdkDir)Include\*))),$(if $(wildcard $(call fix_path,$(WindowsSdkDir)Include/$(folder)/um/Windows.h)),$(folder),)))
 	WindowsSDKVersion := $(WindowsSDKVersion)
 
 	VsInstallBuildTools = $(ProgramFiles86)/Microsoft Visual Studio/2017/BuildTools
@@ -475,12 +476,16 @@ else ifneq (,$(findstring windows_msvc2017,$(platform)))
 
 	VcCompilerToolsVer := $(shell cat "$(VsInstallRoot)/VC/Auxiliary/Build/Microsoft.VCToolsVersion.default.txt" | grep -o '[0-9\.]*')
 	VcCompilerToolsDir := $(VsInstallRoot)/VC/Tools/MSVC/$(VcCompilerToolsVer)
+	# platform.winmd seems to be platform independent but only lives in the x86 lib directory
+	VcCompilerToolsStoreReferencesDir := $(shell IFS=$$'\n'; cygpath -w "$(VcCompilerToolsDir)/lib/x86/store/references")
 
 	WindowsSDKSharedIncludeDir := $(shell cygpath -w "$(WindowsSdkDir)\Include\$(WindowsSDKVersion)\shared")
 	WindowsSDKUCRTIncludeDir := $(shell cygpath -w "$(WindowsSdkDir)\Include\$(WindowsSDKVersion)\ucrt")
 	WindowsSDKUMIncludeDir := $(shell cygpath -w "$(WindowsSdkDir)\Include\$(WindowsSDKVersion)\um")
+	WindowsSDKWinRTIncludeDir := $(shell cygpath -w "$(WindowsSdkDir)\Include\$(WindowsSDKVersion)\winrt")
 	WindowsSDKUCRTLibDir := $(shell cygpath -w "$(WindowsSdkDir)\Lib\$(WindowsSDKVersion)\ucrt\$(TargetArchMoniker)")
 	WindowsSDKUMLibDir := $(shell cygpath -w "$(WindowsSdkDir)\Lib\$(WindowsSDKVersion)\um\$(TargetArchMoniker)")
+	WindowsSDKUnionMetadataDir := $(shell cygpath -w "$(WindowsSdkDir)\UnionMetadata\$(WindowsSDKVersion)")
 
 	# For some reason the HostX86 compiler doesn't like compiling for x64
 	# ("no such file" opening a shared library), and vice-versa.
@@ -500,8 +505,9 @@ else ifneq (,$(findstring windows_msvc2017,$(platform)))
 		LIB := $(shell IFS=$$'\n'; cygpath -w "$(LIB)/store")
 	endif
     
-	export INCLUDE := $(INCLUDE);$(WindowsSDKSharedIncludeDir);$(WindowsSDKUCRTIncludeDir);$(WindowsSDKUMIncludeDir)
+	export INCLUDE := $(INCLUDE);$(WindowsSDKSharedIncludeDir);$(WindowsSDKUCRTIncludeDir);$(WindowsSDKUMIncludeDir);$(WindowsSDKWinRTIncludeDir)
 	export LIB := $(LIB);$(WindowsSDKUCRTLibDir);$(WindowsSDKUMLibDir)
+	export LIBPATH := $(LIBPATH);$(VcCompilerToolsStoreReferencesDir);$(WindowsSDKUnionMetadataDir)
 	TARGET := $(TARGET_NAME)_libretro.dll
 	PSS_STYLE :=2
 	LDFLAGS += -DLL
@@ -596,7 +602,6 @@ else
 
 endif
 
-LDFLAGS += $(LIBS)
 ifeq ($(SHARED_LIBVORBIS), 1)
 	LDFLAGS += -lvorbisfile
 endif
