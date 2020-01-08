@@ -13,6 +13,7 @@ sdl/build_sdl
 sdl/build_sdl2
 
 /libretro/msvc/msvc-2017/msvc-2017.vcxproj.user
+genesis_plus_gx_libretro.*
 
 *.o
 *.a
