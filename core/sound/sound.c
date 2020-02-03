@@ -286,6 +286,13 @@ static unsigned int OPLL2413_Read(unsigned int cycles, unsigned int a)
 
 #endif
 
+#ifdef __LIBRETRO__
+static void NULL_YM_Update(int *buffer, int length) { }
+static void NULL_fm_reset(unsigned int cycles) { }
+static void NULL_fm_write(unsigned int cycles, unsigned int address, unsigned int data) { }
+static unsigned int NULL_fm_read(unsigned int cycles, unsigned int address) { return 0; }
+#endif
+
 void sound_init( void )
 {
   /* Initialize FM chip */
@@ -384,6 +391,51 @@ void sound_reset(void)
   
   /* reset FM cycle counters */
   fm_cycles_start = fm_cycles_count = 0;
+}
+
+void sound_update_fm_function_pointers(void)
+{
+  /* Only set function pointers for YM_Update, fm_reset, fm_write, fm_read */
+  if (audio_hard_disable)
+  {
+    /* Dummy audio callbacks for audio hard disable */
+    YM_Update = NULL_YM_Update;
+    fm_reset = NULL_fm_reset;
+    fm_write = NULL_fm_write;
+    fm_read = NULL_fm_read;
+    return;
+  }
+
+  if ((system_hw & SYSTEM_PBC) == SYSTEM_MD)
+  {
+    /* YM2612 */
+#ifdef HAVE_YM3438_CORE
+    if (config.ym3438)
+    {
+      /* Nuked OPN2 */
+      YM_Update = YM3438_Update;
+      fm_reset = YM3438_Reset;
+      fm_write = YM3438_Write;
+      fm_read = YM3438_Read;
+    }
+    else
+#endif
+    {
+      /* MAME OPN2 */
+      YM_Update = YM2612Update;
+      fm_reset = YM2612_Reset;
+      fm_write = YM2612_Write;
+      fm_read = YM2612_Read;
+    }
+  }
+  else
+  {
+    /* YM2413 */
+    YM_Update = (config.ym2413 & 1) ? YM2413Update : NULL;
+    fm_reset = YM2413_Reset;
+    fm_write = YM2413_Write;
+    fm_read = NULL;
+  }
 }
 
 int sound_update(unsigned int cycles)
