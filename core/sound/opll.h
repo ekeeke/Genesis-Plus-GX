@@ -37,7 +37,7 @@
  *      siliconpr0n.org(digshadow, John McMaster):
  *          VRC VII decap and die shot.
  *
- *  version: 0.9
+ *  version: 1.0
  */
 
 #ifndef OPLL_H
