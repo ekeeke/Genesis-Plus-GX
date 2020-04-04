@@ -2,7 +2,7 @@
  *  Genesis Plus
  *  CD drive processor & CD-DA fader
  *
- *  Copyright (C) 2012-2019  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2012-2020  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -1571,30 +1571,16 @@ void cdd_update(void)
   error("LBA = %d (track %d)(latency=%d)\n", cdd.lba, cdd.index, cdd.latency);
 #endif
 
-  /* seeking disc */
-  if (cdd.status == CD_SEEK)
+  /* drive latency */
+  if (cdd.latency > 0)
   {
-    /* drive latency */
-    if (cdd.latency > 0)
-    {
-      cdd.latency--;
-      return;
-    }
-
-    /* drive is ready */
-    cdd.status = CD_PAUSE;
+    cdd.latency--;
+    return;
   }
 
   /* reading disc */
-  else if (cdd.status == CD_PLAY)
+  if (cdd.status == CD_PLAY)
   {
-    /* drive latency */
-    if (cdd.latency > 0)
-    {
-      cdd.latency--;
-      return;
-    }
-
     /* end of disc detection */
     if (cdd.index >= cdd.toc.last)
     {
@@ -1801,18 +1787,20 @@ void cdd_process(void)
   /* Process CDD command */
   switch (scd.regs[0x42>>1].byte.h & 0x0f)
   {
-    case 0x00:  /* Report Drive Status */
+    case 0x00:  /* Get Drive Status */
     {
-      /* RS1-RS8 normally unchanged */
-      scd.regs[0x38>>1].byte.h = cdd.status;
-
-      /* unless RS1 indicated invalid track infos */
-      if (scd.regs[0x38>>1].byte.l == 0x0f)
+      /* RS0-RS8 are normally unchanged unless reported drive status needs to be updated (i.e previous drive command has been processed) */
+      /* Note: this function is called one 75hz frame ahead of CDD update so latency counter is always one step ahead of upcoming status */
+      /* Also, Radical Rex needs at least two interrupts with 'playing' status returned before sectors start getting incremented */
+      if (cdd.latency <= 2)
       {
-        /* and drive is now ready */
-        if (!cdd.latency)
+        /* update reported drive status */
+        scd.regs[0x38>>1].byte.h = cdd.status;
+
+        /* check if RS1 indicated invalid track infos (during seeking) */
+        if (scd.regs[0x38>>1].byte.l == 0x0f)
         {
-          /* then return valid track infos, e.g current track number in RS2-RS3 (fixes Lunar - The Silver Star) */
+          /* seeking has ended so we return valid track infos, e.g current track number in RS2-RS3 (fixes Lunar - The Silver Star) */
           scd.regs[0x38>>1].byte.l = 0x02;
           scd.regs[0x3a>>1].w = (cdd.index < cdd.toc.last) ? lut_BCD_16[cdd.index + 1] : 0x0A0A;
         }
@@ -1944,7 +1932,6 @@ void cdd_process(void)
       if (!cdd.latency)
       {
         /* Fixes a few games hanging because they expect data to be read with some delay */
-        /* Radical Rex needs at least one interrupt delay */
         /* Wolf Team games (Anet Futatabi, Aisle Lord, Cobra Command, Earnest Evans, Road Avenger & Time Gal) need at least 11 interrupts delay  */
         /* Space Adventure Cobra (2nd morgue scene) needs at least 13 interrupts delay (incl. seek time, so 11 is OK) */
         cdd.latency = 11;
@@ -2035,15 +2022,16 @@ void cdd_process(void)
       /* no audio track playing (yet) */
       scd.regs[0x36>>1].byte.h = 0x01;
 
-      /* update status */
+      /* update status (reported to host once seeking has ended) */
       cdd.status = CD_PLAY;
 
+      /* RS0 should indicates seeking until drive is ready (fixes audio delay in Bari Arm) */
       /* RS1=0xf to invalidate track infos in RS2-RS8 until drive is ready (fixes Snatcher Act 2 start cutscene) */
-      scd.regs[0x38>>1].w = (CD_PLAY << 8) | 0x0f;
+      scd.regs[0x38>>1].w = (CD_SEEK << 8) | 0x0f;
       scd.regs[0x3a>>1].w = 0x0000;
       scd.regs[0x3c>>1].w = 0x0000;
       scd.regs[0x3e>>1].w = 0x0000;
-      scd.regs[0x40>>1].w = ~(CD_PLAY + 0xf) & 0x0f;
+      scd.regs[0x40>>1].w = ~(CD_SEEK + 0xf) & 0x0f;
       return;
     }
 
@@ -2141,8 +2129,8 @@ void cdd_process(void)
       /* no audio track playing */
       scd.regs[0x36>>1].byte.h = 0x01;
 
-      /* update status */
-      cdd.status = CD_SEEK;
+      /* update status (reported to host once seeking has ended) */
+      cdd.status = CD_PAUSE;
 
       /* RS1=0xf to invalidate track infos in RS2-RS8 while seeking (fixes Final Fight CD intro when seek time is emulated) */
       scd.regs[0x38>>1].w = (CD_SEEK << 8) | 0x0f;
