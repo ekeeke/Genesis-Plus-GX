@@ -213,7 +213,7 @@ void s68k_update_irq(unsigned int mask)
   CPU_INT_LEVEL = mask << 8;
   
 #ifdef LOG_SCD
-  error("[%d][%d] IRQ Level = %d(0x%02x) (%x)\n", v_counter, s68k.cycles, CPU_INT_LEVEL>>8,FLAG_INT_MASK,s68k.pc);
+  error("[%d][%d] s68k IRQ Level = %d(0x%02x) (%x)\n", v_counter, s68k.cycles, CPU_INT_LEVEL>>8,FLAG_INT_MASK,s68k.pc);
 #endif
 }
 
