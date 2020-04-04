@@ -3,7 +3,7 @@
  *  Sound Hardware
  *
  *  Copyright (C) 1998-2003  Charles Mac Donald (original code)
- *  Copyright (C) 2007-2019  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2007-2020  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -487,7 +487,7 @@ int sound_context_save(uint8 *state)
   }
   else
   {
-#ifdef HAVE_YM3438_CORE
+#ifdef HAVE_OPLL_CORE
     save_param(&config.opll, sizeof(config.opll));
     if (config.opll)
     {
