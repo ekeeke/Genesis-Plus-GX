@@ -13,6 +13,7 @@ Genesis Plus GX 1.7.5 (xx/xx/xxxx) (Eke-Eke)
 [Core/CD]
 ---------------
 * added CD-AUDIO & CD+G support
+* added CD-ROM Mode 2 (Form 1 & 2) support (Wonder Library)
 * added optional support for external VORBIS library
 * added optional CHD file support
 * added CDC & GFX register polling detection / synchronization
@@ -39,6 +40,7 @@ Genesis Plus GX 1.7.5 (xx/xx/xxxx) (Eke-Eke)
 * fixed access to Sub-CPU "read-only" communication registers (fixes Round 5 Boss freeze in Streets of Rage / Sega Classics Arcade Collection)
 * fixed pending level 1 interrupts when GFX interrupt is disabled (fixes random freezes when exiting "Batman Returns" option menu)
 * fixed CDD seek command again (Final Fight CD freeze with model 2 BIOS)
+* fixed CDD status reported during seek/access time (sound effect synchronization issue in Bari Arm)
 * optimized Sub-CPU / Main-CPU synchronization
 
 [Core/MD]
@@ -66,6 +68,7 @@ Genesis Plus GX 1.7.5 (xx/xx/xxxx) (Eke-Eke)
 * improved emulation accuracy of Japanese Master System I/O chip (315-5297)
 * fixed Boot ROM loading when switching system hardware
 * fixed 4MB ROM support
+* fixed savestate support when using Boot ROM
 
 [Core/GG]
 ---------------
@@ -77,13 +80,16 @@ Genesis Plus GX 1.7.5 (xx/xx/xxxx) (Eke-Eke)
 * added support for new SMS Power Korean dumps (Star Soldier & Pippols)
 * added support for SG-1000 II clone hardware (2KB RAM + integrated VDP/PSG chip 315-5066)
 * fixed SG-1000 internal RAM size (1KB instead of 2KB)
+* fixed savestates for games using external RAM
 * restored SG-1000 Pause button support
 
 [Core/CPU]
 ---------------
+* added Z80 wait-states on 68k bus access (fixes Remute Red Eyes demo)
 * improved 68k auto-vectored interrupts acknowledge cycle timing accuracy (Bubsy background color corruption during cutscenes)
 * fixed 68k undocumented behaviors for ABCD/SBCD/NBCD instructions (thanks to Flamewing for his test ROM)
 * fixed 68k timing of BTST Dn,#Imm instruction (verified by Flamewing in original microcode)
+* fixed 68K DIVU instruction timings for SUB-CPU
 * fixed Z80 interrupt duration (Bomb on Basic City music running too fast)
 * fixed Z80 SP register initialization on power-on for Master System & Game Gear 
  (Ace of Aces, Shadow Dancer, Ecco the Dolphin, Evander Holyfield Real Deal Boxing)
@@ -127,6 +133,7 @@ Genesis Plus GX 1.7.5 (xx/xx/xxxx) (Eke-Eke)
 * replaced configurable YM2612 DAC quantization by configurable YM2612 chip model emulation (discrete, ASIC-integrated or enhanced)
 * added DAC distortion emulation for discrete YM2612 chip model
 * added accurate status & BUSY flag emulation for discrete and ASIC-integrated YM2612 chip models (verified on real hardware)
+* added optional support for cycle-accurate YM3438/YM2612 & YM2413 cores from Nuked
 * improved 9-bit DAC quantization accuracy for discrete and ASIC-integrated YM2612 chip models (verified on YM2612 die)
 * rewrote optimized & more accurate PSG core from scratch
 * removed PSG boost noise feature & added optional high-quality PSG resampling

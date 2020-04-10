@@ -1791,8 +1791,8 @@ void cdd_process(void)
     {
       /* RS0-RS8 are normally unchanged unless reported drive status needs to be updated (i.e previous drive command has been processed) */
       /* Note: this function is called one 75hz frame ahead of CDD update so latency counter is always one step ahead of upcoming status */
-      /* Also, Radical Rex needs at least two interrupts with 'playing' status returned before sectors start getting incremented */
-      if (cdd.latency <= 2)
+      /* Radical Rex and Annet Futatabi both need at least respectively 2 and 3 interrupts with 'playing' status returned before sectors start getting incremented */
+      if (cdd.latency <= 3)
       {
         /* update reported drive status */
         scd.regs[0x38>>1].byte.h = cdd.status;
@@ -1932,7 +1932,7 @@ void cdd_process(void)
       if (!cdd.latency)
       {
         /* Fixes a few games hanging because they expect data to be read with some delay */
-        /* Wolf Team games (Anet Futatabi, Aisle Lord, Cobra Command, Earnest Evans, Road Avenger & Time Gal) need at least 11 interrupts delay  */
+        /* Wolf Team games (Annet Futatabi, Aisle Lord, Cobra Command, Earnest Evans, Road Avenger & Time Gal) need at least 11 interrupts delay  */
         /* Space Adventure Cobra (2nd morgue scene) needs at least 13 interrupts delay (incl. seek time, so 11 is OK) */
         cdd.latency = 11;
       }
