@@ -2,7 +2,7 @@
  *  Genesis Plus
  *  Mega CD / Sega CD hardware
  *
- *  Copyright (C) 2012-2019  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2012-2020  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -992,28 +992,6 @@ static void scd_write_byte(unsigned int address, unsigned int data)
       return;
     }
 
-    case 0x37: /* CDD control (controlled by BIOS, byte access only ?) */
-    {
-      /* CDD communication started ? */
-      if ((data & 0x04) && !(scd.regs[0x37>>1].byte.l & 0x04))
-      {
-        /* reset CDD cycle counter */
-        cdd.cycles = (scd.cycles - s68k.cycles) * 3;
-
-        /* set pending interrupt level 4 */
-        scd.pending |= (1 << 4);
-
-        /* update IRQ level if interrupt is enabled */
-        if (scd.regs[0x32>>1].byte.l & 0x10)
-        {
-          s68k_update_irq((scd.pending & scd.regs[0x32>>1].byte.l) >> 1);
-        }
-      }
-
-      scd.regs[0x37>>1].byte.l = data;
-      return;
-    }
-
     default:
     {
       /* SUB-CPU communication words */
@@ -1668,6 +1646,10 @@ void scd_reset(int hard)
 
 void scd_update(unsigned int cycles)
 {
+  int m68k_end_cycles;
+  int s68k_run_cycles;
+  int s68k_end_cycles = scd.cycles + SCYCLES_PER_LINE;
+
   /* update CDC DMA transfer */
   if (cdc.dma_w)
   {
@@ -1677,63 +1659,77 @@ void scd_update(unsigned int cycles)
   /* run both CPU in sync until end of line */
   do
   {
-    m68k_run(cycles);
-    s68k_run(scd.cycles + SCYCLES_PER_LINE);
-  }
-  while ((m68k.cycles < cycles) || (s68k.cycles < (scd.cycles + SCYCLES_PER_LINE)));
+    /* CD hardware remaining cycles until end of line */
+    s68k_run_cycles = s68k_end_cycles - scd.cycles;
 
-  /* increment CD hardware cycle counter */
-  scd.cycles += SCYCLES_PER_LINE;
-
-  /* CDD processing at 75Hz (one clock = 12500000/75 = 500000/3 CPU clocks) */
-  cdd.cycles += (SCYCLES_PER_LINE * 3);
-  if (cdd.cycles >= (500000 * 4))
-  {
-    /* reload CDD cycle counter */
-    cdd.cycles -= (500000 * 4);
-
-    /* update CDD sector */
-    cdd_update();
-
-    /* check if a new CDD command has been processed */
-    if (!(scd.regs[0x4a>>1].byte.l & 0xf0))
+    /* check Timer interrupt occurence */
+    if ((scd.timer > 0) && (scd.timer < s68k_run_cycles))
     {
-      /* reset CDD command wait flag */
-      scd.regs[0x4a>>1].byte.l = 0xf0;
+      /* adjust Sub-CPU and Main-CPU end cycle counters up to Timer interrupt occurence */
+      s68k_run_cycles = scd.timer;
+      m68k_end_cycles = mcycles_vdp + ((s68k_run_cycles * MCYCLES_PER_LINE) / SCYCLES_PER_LINE);
+    }
+    else
+    {
+      /* default Main-CPU end cycle counter (end of line) */
+      m68k_end_cycles = cycles;
+    }
 
-      /* pending level 4 interrupt */
-      scd.pending |= (1 << 4);
+    /* run both CPU in sync until required cycle counters */
+    m68k_run(m68k_end_cycles);
+    s68k_run(scd.cycles + s68k_run_cycles);
 
-      /* level 4 interrupt enabled */
-      if (scd.regs[0x32>>1].byte.l & 0x10)
+    /* increment CD hardware cycle counter */
+    scd.cycles += s68k_run_cycles;
+
+    /* CDD processing at 75Hz (one clock = 12500000/75 = 500000/3 CPU clocks) */
+    cdd.cycles += (s68k_run_cycles * 3);
+    if (cdd.cycles >= (500000 * 4))
+    {
+      /* reload CDD cycle counter */
+      cdd.cycles -= (500000 * 4);
+
+      /* update CDD sector */
+      cdd_update();
+
+      /* check if CDD communication is enabled */
+      if (scd.regs[0x37>>1].byte.l & 0x04)
       {
-        /* update IRQ level */
-        s68k_update_irq((scd.pending & scd.regs[0x32>>1].byte.l) >> 1);
+        /* pending level 4 interrupt */
+        scd.pending |= (1 << 4);
+
+        /* level 4 interrupt enabled */
+        if (scd.regs[0x32>>1].byte.l & 0x10)
+        {
+          /* update IRQ level */
+          s68k_update_irq((scd.pending & scd.regs[0x32>>1].byte.l) >> 1);
+        }
+      }
+    }
+
+    /* Timer */
+    if (scd.timer)
+    {
+      /* decrement timer */
+      scd.timer -= s68k_run_cycles;
+      if (scd.timer <= 0)
+      {
+        /* reload timer (one timer clock = 384 CPU cycles) */
+        scd.timer += (scd.regs[0x30>>1].byte.l * TIMERS_SCYCLES_RATIO);
+
+        /* level 3 interrupt enabled ? */
+        if (scd.regs[0x32>>1].byte.l & 0x08)
+        {
+          /* trigger level 3 interrupt */
+          scd.pending |= (1 << 3);
+
+          /* update IRQ level */
+          s68k_update_irq((scd.pending & scd.regs[0x32>>1].byte.l) >> 1);
+        }
       }
     }
   }
-
-  /* Timer */
-  if (scd.timer)
-  {
-    /* decrement timer */
-    scd.timer -= SCYCLES_PER_LINE;
-    if (scd.timer <= 0)
-    {
-      /* reload timer (one timer clock = 384 CPU cycles) */
-      scd.timer += (scd.regs[0x30>>1].byte.l * TIMERS_SCYCLES_RATIO);
-
-      /* level 3 interrupt enabled ? */
-      if (scd.regs[0x32>>1].byte.l & 0x08)
-      {
-        /* trigger level 3 interrupt */
-        scd.pending |= (1 << 3);
-
-        /* update IRQ level */
-        s68k_update_irq((scd.pending & scd.regs[0x32>>1].byte.l) >> 1);
-      }
-    }
-  }
+  while ((m68k.cycles < cycles) || (s68k.cycles < s68k_end_cycles));
 
   /* GFX processing */
   if (scd.regs[0x58>>1].byte.h & 0x80)
