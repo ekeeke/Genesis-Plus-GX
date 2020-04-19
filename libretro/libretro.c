@@ -3,7 +3,7 @@
  *
  *  Genesis Plus GX libretro port
  *
- *  Copyright Eke-Eke (2007-2018)
+ *  Copyright Eke-Eke (2007-2020)
  *
  *  Copyright Daniel De Matteis (2012-2016)
  *
@@ -138,6 +138,8 @@ static bool restart_eq = false;
 
 static char g_rom_dir[256];
 static char g_rom_name[256];
+static void *g_rom_data;
+static size_t g_rom_size;
 static char *save_dir;
 
 static retro_log_printf_t log_cb;
@@ -204,9 +206,31 @@ int load_archive(char *filename, unsigned char *buffer, int maxsize, char *exten
 {
   int64_t left = 0;
   int64_t size = 0;
+  RFILE *fd;
+
+  /* Get filename extension */
+  if (extension)
+  {
+    memcpy(extension, &filename[strlen(filename) - 3], 3);
+    extension[3] = 0;
+  }
+
+  /* Check if this was called to load ROM file from the frontend (not BOOT ROM or Lock-On ROM files from the core) */
+  if (maxsize >= 0x800000)
+  {
+    /* Check if loaded game is already in memory */
+    if ((g_rom_data != NULL) && (g_rom_size > 0))
+    {
+      size = g_rom_size;
+      if (size > maxsize)
+        size = maxsize;
+      memcpy(buffer, g_rom_data, size);
+      return size;
+    }
+  }
 
   /* Open file */
-  RFILE *fd = filestream_open(filename, RETRO_VFS_FILE_ACCESS_READ, RETRO_VFS_FILE_ACCESS_HINT_NONE);
+  fd = filestream_open(filename, RETRO_VFS_FILE_ACCESS_READ, RETRO_VFS_FILE_ACCESS_HINT_NONE);
 
   if (!fd)
   {
@@ -246,13 +270,6 @@ int load_archive(char *filename, unsigned char *buffer, int maxsize, char *exten
 
   if (log_cb)
     log_cb(RETRO_LOG_INFO, "INFORMATION - Loading %d bytes ...\n", size);
-
-  /* filename extension */
-  if (extension)
-  {
-    memcpy(extension, &filename[strlen(filename) - 3], 3);
-    extension[3] = 0;
-  }
 
   /* Read into buffer */
   left = size;
@@ -2274,6 +2291,9 @@ bool retro_load_game(const struct retro_game_info *info)
    if (!info)
       return false;
 
+   if (!info->path)
+      return false;
+
 #ifdef FRONTEND_SUPPORTS_RGB565
    {
       unsigned rgb565 = RETRO_PIXEL_FORMAT_RGB565;
@@ -2341,6 +2361,9 @@ bool retro_load_game(const struct retro_game_info *info)
       log_cb(RETRO_LOG_INFO, "Mega CD (NTSC-J) BRAM is located at: %s\n", CD_BRAM_JP);
       log_cb(RETRO_LOG_INFO, "Sega/Mega CD RAM CART is located at: %s\n", CART_BRAM);
    }
+
+   g_rom_data = info->data;
+   g_rom_size = info->size;
 
    if (!load_rom((char *)info->path))
       return false;
