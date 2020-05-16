@@ -99,6 +99,8 @@ STATIC_ASSERT(z80_overflow,
 sms_ntsc_t *sms_ntsc;
 md_ntsc_t  *md_ntsc;
 
+t_config config;
+
 char GG_ROM[256];
 char AR_ROM[256];
 char SK_ROM[256];
