@@ -2567,7 +2567,7 @@ bool retro_load_game(const struct retro_game_info *info)
          if (!load_rom(disk_info[0]))
          {
             if (log_cb)
-               log_cb(RETRO_LOG_ERROR, "Could not load %s from M3U file list (%d)\n", disk_info[0], size);
+               log_cb(RETRO_LOG_ERROR, "Could not load %s from M3U file list\n", disk_info[0]);
 
             /* clear initialized disk interface before returning an error */
             for (i=0; i<disk_count; i++)
