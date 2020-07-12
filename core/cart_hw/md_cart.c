@@ -2,7 +2,7 @@
  *  Genesis Plus
  *  Mega Drive cartridge hardware support
  *
- *  Copyright (C) 2007-2019  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2007-2020  Eke-Eke (Genesis Plus GX)
  *
  *  Many cartridge protections were initially documented by Haze
  *  (http://haze.mameworld.info/)
@@ -74,7 +74,8 @@ static void mapper_seganet_w(uint32 address, uint32 data);
 static void mapper_32k_w(uint32 data);
 static void mapper_64k_w(uint32 data);
 static void mapper_64k_multi_w(uint32 address);
-static uint32 mapper_radica_r(uint32 address);
+static uint32 mapper_64k_radica_r(uint32 address);
+static uint32 mapper_128k_radica_r(uint32 address);
 static void default_time_w(uint32 address, uint32 data);
 static void default_regs_w(uint32 address, uint32 data);
 static uint32 default_regs_r(uint32 address);
@@ -104,11 +105,19 @@ static const md_entry_t rom_database[] =
 
 
 /* RADICA (Volume 1) (bad dump ?) */
-  {0x0000,0x2326,0x00,0x00,{{0x00,0x00,0x00,0x00},{0xffffff,0xffffff,0xffffff,0xffffff},{0x000000,0x000000,0x000000,0x000000},0,1,mapper_radica_r,NULL,NULL,NULL}},
+  {0x0000,0x2326,0x00,0x00,{{0x00,0x00,0x00,0x00},{0xffffff,0xffffff,0xffffff,0xffffff},{0x000000,0x000000,0x000000,0x000000},0,1,mapper_64k_radica_r,m68k_unused_8_w,NULL,NULL}},
 /* RADICA (Volume 1) */
-  {0x24f4,0xfc84,0x00,0x00,{{0x00,0x00,0x00,0x00},{0xffffff,0xffffff,0xffffff,0xffffff},{0x000000,0x000000,0x000000,0x000000},0,0,mapper_radica_r,NULL,NULL,NULL}},
+  {0x24f4,0xfc84,0x00,0x00,{{0x00,0x00,0x00,0x00},{0xffffff,0xffffff,0xffffff,0xffffff},{0x000000,0x000000,0x000000,0x000000},0,0,mapper_64k_radica_r,m68k_unused_8_w,NULL,NULL}},
 /* RADICA (Volume 2) */
-  {0x104f,0x32e9,0x00,0x00,{{0x00,0x00,0x00,0x00},{0xffffff,0xffffff,0xffffff,0xffffff},{0x000000,0x000000,0x000000,0x000000},0,0,mapper_radica_r,NULL,NULL,NULL}},
+  {0xd951,0x78d0,0x00,0x00,{{0x00,0x00,0x00,0x00},{0xffffff,0xffffff,0xffffff,0xffffff},{0x000000,0x000000,0x000000,0x000000},0,0,mapper_64k_radica_r,m68k_unused_8_w,NULL,NULL}},
+/* RADICA (Volume 3 - Super Sonic Gold edition) */
+  {0x0000,0x1f25,0x00,0x00,{{0x00,0x00,0x00,0x00},{0xffffff,0xffffff,0xffffff,0xffffff},{0x000000,0x000000,0x000000,0x000000},0,0,mapper_64k_radica_r,m68k_unused_8_w,NULL,NULL}},
+/* RADICA (Street Fighter II CE edition) */
+  {0x1add,0xa838,0x00,0x00,{{0x00,0x00,0x00,0x00},{0xffffff,0xffffff,0xffffff,0xffffff},{0x000000,0x000000,0x000000,0x000000},0,0,mapper_64k_radica_r,m68k_unused_8_w,NULL,NULL}},
+/* RADICA (Street Fighter II CE edition) (PAL) */
+  {0x104f,0x32e9,0x00,0x00,{{0x00,0x00,0x00,0x00},{0xffffff,0xffffff,0xffffff,0xffffff},{0x000000,0x000000,0x000000,0x000000},0,0,mapper_64k_radica_r,m68k_unused_8_w,NULL,NULL}},
+/* RADICA (Sensible Soccer Plus edition) (PAL) */
+  {0x0000,0x1f7f,0x00,0x00,{{0x00,0x00,0x00,0x00},{0xffffff,0xffffff,0xffffff,0xffffff},{0x000000,0x000000,0x000000,0x000000},0,0,mapper_128k_radica_r,m68k_unused_8_w,NULL,NULL}},
 
 
 /* Tenchi wo Kurau III: Sangokushi Gaiden - Chinese Fighter */
@@ -421,7 +430,7 @@ void md_cart_init(void)
   /**********************************************
           LOCK-ON 
   ***********************************************/
-  
+
   /* clear existing patches */
   ggenie_shutdown();
   areplay_shutdown();
@@ -454,7 +463,7 @@ void md_cart_init(void)
         {
           /* try to load Sonic 2 & Knuckles UPMEM ROM (256 KB) */
           if (load_archive(SK_UPMEM, cart.rom + 0x900000, 0x40000, NULL) == 0x40000)
-          {          
+          {
             /* $000000-$1FFFFF is mapped to S&K ROM */
             for (i=0x00; i<0x20; i++)
             {
@@ -469,7 +478,7 @@ void md_cart_init(void)
               cart.rom[i + 0x600000] = cart.rom[i + 0x600000 + 1];
               cart.rom[i + 0x600000 + 1] = temp;
             }
-            
+
             for (i=0; i<0x40000; i+=2)
             {
               /* Byteswap ROM */
@@ -1652,21 +1661,107 @@ static void mapper_64k_multi_w(uint32 address)
 
 /*
   Custom ROM Bankswitch used in RADICA cartridges
+  +++++++++++++++++++++++++++++++++++++++++++++++
+   Two different boards seem to exist (one with support for 64KB banks mapping and another one supporting 128KB banks + battery-RAM).
+   Radica Volume 1 requires 64KB banks mapping as the menu is located at a 64KB boundary.
+   Sensible Soccer Plus edition requires 128KB banks mapping with only VA6-VA2 being used to select bank index (VA1 is ignored).
+   Sensible Soccer Plus edition also requires 8KB backup RAM to be mapped in higher 2MB range.
+   Other games support both 64KB or 128KB mapping so it's not clear what exact board they are using but none require SRAM so we use 64KB mapper by default.
+   Note that Radica Volume 3 uses similar ROM mapping as Sensible Soccer Plus edition so it might be using same 128KB board, without any SRAM chip connected.
 */
-static uint32 mapper_radica_r(uint32 address)
+static uint32 mapper_64k_radica_r(uint32 address)
 {
   int i = 0;
-  address = (address >> 1);
-  
+
   /* 64 x 64k banks */
-  for (i = 0; i < 64; i++)
+  /*
+    Volume 1
+    --------
+    000000h-0fffffh: Kid Chameleon                   : !TIME read16 0xA13000 (00FF103A)
+    100000h-1fffffh: Dr Robotnik's Mean Bean Machine : !TIME read16 0xA13020 (00FF101E)
+    200000h-27ffffh: Sonic The Hedgehog              : !TIME read16 0xA13040 (00FF101E)
+    280000h-2fffffh: Golden Axe                      : !TIME read16 0xA13050 (00FF101E)
+    300000h-37ffffh: Altered Beast                   : !TIME read16 0xA13060 (00FF101E)
+    380000h-39ffffh: Flicky                          : !TIME read16 0xA13070 (00FF101E)
+    3a0000h-3effffh: N/A                             : N/A
+    3f0000h-3fffffh: Radica Menu (64 KB)             : !TIME read16 0xA1307E (00FF1006)
+
+    Volume 2
+    --------
+    000000h-0fffffh: Sonic The Hedgehog 2            : !TIME read16 0xA13000 (00FF103A)
+    100000h-1fffffh: The Ooze                        : !TIME read16 0xA13020 (00FF101E)
+    200000h-2fffffh: Ecco The Dolphin                : !TIME read16 0xA13040 (00FF101E)
+    300000h-37ffffh: Gain Ground                     : !TIME read16 0xA13060 (00FF101E)
+    380000h-3bffffh: Alex Kidd in Enchanted Castle   : !TIME read16 0xA13070 (00FF101E)
+    3c0000h-3dffffh: Columns                         : !TIME read16 0xA13078 (00FF101E)
+    3e0000h-3fffffh: Radica Menu (128 KB)            : !TIME read16 0xA1307C (00FF1006)
+
+    Volume 3 - Super Sonic Gold edition
+    -----------------------------------
+    000000h-01ffffh: Radica Menu (128 KB)            : N/A
+    020000h-07ffffh: N/A                             : N/A
+    080000h-0fffffh: Sonic The Hedgehog              : !TIME read16 0xA13010 (00FF1012)
+    100000h-1fffffh: Sonic The Hedgehog 2            : !TIME read16 0xA13020 (00FF1012)
+    200000h-2fffffh: Sonic Spinball                  : !TIME read16 0xA13040 (00FF1012)
+    300000h-3fffffh: Dr Robotnik's Mean Bean Machine : !TIME read16 0xA13060 (00FF1012)
+
+    Street Fighter 2 CE edition
+    ---------------------------
+    000000h-2fffffh: Street Fighter 2 CE             : !TIME read16 0xA13000 (00FF103A)
+    300000h-3bffffh: Ghouls'n Ghosts                 : !TIME read16 0xA13060 (00FF101E)
+    3c0000h-3dffffh: Radica Menu (128 KB)            : !TIME read16 0xA13078 (00FF1006)
+    3e0000h-3fffffh: N/A                             : N/A
+  */
+  int index = (address >> 1) & 0x3F;
+
+  /* $000000-$3fffff area is mapped to selected banks (OR gates between VA21-VA16 and selected index) */
+  for (i = 0x00; i < 0x40; i++)
   {
-    m68k.memory_map[i].base = &cart.rom[((address++)& 0x3f)<< 16];
+    m68k.memory_map[i].base = &cart.rom[(index | i) << 16];
   }
 
   return 0xffff;
 }
 
+static uint32 mapper_128k_radica_r(uint32 address)
+{
+  int i = 0;
+
+  /* 32 x 128k banks */
+  /*
+    Sensible Soccer Plus edition
+    ----------------------------
+    000000h-01ffffh: Radica Menu (128 KB)            : N/A
+    020000h-07ffffh: N/A                             : N/A
+    080000h-0fffffh: Sensible Soccer                 : !TIME read16 0xA13010 (00FF1012)
+    100000h-1fffffh: Mega-Lo-Mania                   : !TIME read16 0xA13022 (00FF1012)
+    200000h-37ffffh: Cannon Fodder                   : !TIME read16 0xA13042 (00FF1012)
+    380000h-3fffffh: N/A                             : N/A
+
+    Note: address bit 1 is ignored for bank selection but might be used to enable/disable SRAM mapping ? 
+  */
+  int index = (address >> 1) & 0x3E;
+
+  /* $000000-$1fffff area is mapped to selected banks (OR gates between VA20-VA17 and selected index) */
+  for (i = 0x00; i < 0x20; i++)
+  {
+    m68k.memory_map[i].base = &cart.rom[(index | i) << 16];
+  }
+
+  /* $200000-$3fffff area is mapped to 8KB SRAM (mirrored) */
+  for (i = 0x20; i < 0x40; i++)
+  {
+    m68k.memory_map[i].base    = sram.sram;
+    m68k.memory_map[i].read8   = sram_read_byte;
+    m68k.memory_map[i].read16  = sram_read_word;
+    m68k.memory_map[i].write8  = sram_write_byte;
+    m68k.memory_map[i].write16 = sram_write_word;
+    zbank_memory_map[i].read   = sram_read_byte;
+    zbank_memory_map[i].write  = sram_write_byte;
+  }
+
+  return 0xffff;
+}
 
 /************************************************************
           default !TIME signal handler 
