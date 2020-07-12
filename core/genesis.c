@@ -279,10 +279,18 @@ void gen_reset(int hard_reset)
         /* reset CD hardware */
         scd_reset(1);
       }
+
+      /* reset MD cartridge hardware (only when booting from cartridge) */
+      if (scd.cartridge.boot)
+      {
+        md_cart_reset(hard_reset);
+      }
     }
-    
-    /* reset MD cartridge hardware */
-    md_cart_reset(hard_reset);
+    else
+    {
+      /* reset MD cartridge hardware */
+      md_cart_reset(hard_reset);
+    }
 
     /* Z80 bus is released & Z80 is reseted */
     m68k.memory_map[0xa0].read8   = m68k_read_bus_8;
