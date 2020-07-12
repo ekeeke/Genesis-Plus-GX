@@ -1035,16 +1035,6 @@ int cdd_load(char *filename, char *header)
       sprintf(ptr, extensions[i], cdd.toc.last + offset);
       fd = cdStreamOpen(fname);
     }
-  }
-
-  /* CD tracks found ? */
-  if (cdd.toc.last)
-  {
-    /* Lead-out */
-    cdd.toc.tracks[cdd.toc.last].start = cdd.toc.end;
-
-    /* CD mounted */
-    cdd.loaded = 1;
 
     /* Valid CD-ROM Mode 1 track found ? */
     if (cdd.toc.tracks[0].type == TYPE_MODE1)
@@ -1131,6 +1121,11 @@ int cdd_load(char *filename, char *header)
           }
           while (cdd.toc.last < 29);
         }
+        else if (strstr(header + 0x180,"T-06201-01") != NULL)
+        {
+          /* Sewer Shark (USA) (REV1) */
+          /* no audio track */
+        }
         else
         {
           /* default TOC (99 tracks & 2s per audio tracks) */
@@ -1145,6 +1140,17 @@ int cdd_load(char *filename, char *header)
         }
       }
     }
+
+  }
+
+  /* CD tracks found ? */
+  if (cdd.toc.last)
+  {
+    /* Lead-out */
+    cdd.toc.tracks[cdd.toc.last].start = cdd.toc.end;
+
+    /* CD mounted */
+    cdd.loaded = 1;
 
     /* Automatically try to open associated subcode data file */
     memcpy(&fname[strlen(fname) - 4], ".sub", 4);
