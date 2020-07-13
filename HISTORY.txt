@@ -17,6 +17,7 @@ Genesis Plus GX 1.7.5 (xx/xx/xxxx) (Eke-Eke)
 * added optional support for external VORBIS library
 * added optional CHD file support
 * added CDC & GFX register polling detection / synchronization
+* improved Timer interrupt timings and CDD interrupt accuracy (fixes audio stutters during Popful Mail FMV)
 * improved CDC emulation (fixes random freezes during Jeopardy & ESPN Sunday Night NFL intro)
 * improved emulation of mirrored memory areas
 * improved savestate format
@@ -27,6 +28,7 @@ Genesis Plus GX 1.7.5 (xx/xx/xxxx) (Eke-Eke)
 * improved Word-RAM byte access accuracy (verified on schematics)
 * disabled 68k and Z80 access to PRG-RAM when SUB-CPU is running (fixes "Dungeon Explorer")
 * disabled CD hardware reset on Soft-Reset (verified on real hardware)
+* fixed potential load issues with non-zero backup RAM cart
 * fixed DATA track minimal length (fixes BIOS refusing to boot small homebrew demos)
 * fixed CDD "no disc" status code (fixes boot sequence loading time when no disc is loaded)
 * fixed AUDIO tracks length calculation when using separated files (WAV/OGG/BIN) with INDEX pause defined in CUE file
@@ -45,6 +47,8 @@ Genesis Plus GX 1.7.5 (xx/xx/xxxx) (Eke-Eke)
 
 [Core/MD]
 ---------------
+* added support for more Radica dumps
+* added support for more X-in-1 pirate mappers
 * added support for some new unlicensed games with copy protection (Thunderbolt II, Tom Clown, Chaoji Puke / Super Poker)
 * added support for Everdrive extended SSF mapper
 * added (very basic) emulation of Flashkit MD hardware

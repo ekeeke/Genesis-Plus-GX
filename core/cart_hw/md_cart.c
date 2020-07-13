@@ -408,11 +408,12 @@ void md_cart_init(void)
       zbank_memory_map[sram.start >> 16].write  = sram_write_byte;
     }
 
-    /* support for Triple Play 96 & Triple Play - Gold Edition (available ROM dumps include dumped SRAM data) */
+    /* support for Triple Play 96 & Triple Play - Gold Edition mapping */
     else if ((strstr(rominfo.product,"T-172026") != NULL) || (strstr(rominfo.product,"T-172116") != NULL))
     {
-      /* $000000-$1fffff and $300000-$3fffff: cartridge ROM (2MB + 1MB) */
-      /* $200000-$2fffff: SRAM (32 KB mirrored) */
+      /* $000000-$1fffff: cartridge ROM (lower 2MB) */
+      /* $200000-$2fffff: SRAM (32KB mirrored) */
+      /* NB: existing 4MB ROM dumps include SRAM data at ROM offsets 0x200000-0x2fffff */ 
       for (i=0x20; i<0x30; i++)
       {
         m68k.memory_map[i].base    = sram.sram;
@@ -422,6 +423,16 @@ void md_cart_init(void)
         m68k.memory_map[i].write16 = sram_write_word;
         zbank_memory_map[i].read   = sram_read_byte;
         zbank_memory_map[i].write  = sram_write_byte;
+      }
+
+      /* $300000-$3fffff: cartridge ROM (upper 1MB) */
+      /* NB: only real (3MB) Mask ROM dumps need ROM offsets 0x200000-0x2fffff to be remapped to this area */
+      if (READ_BYTE(cart.rom, 0x200000) != 0xFF)
+      {
+        for (i=0x30; i<0x40; i++)
+        {
+          m68k.memory_map[i].base = cart.rom + ((i - 0x10) << 16);
+        }
       }
     }
   }
