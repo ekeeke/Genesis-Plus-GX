@@ -74,6 +74,9 @@ static void mapper_seganet_w(uint32 address, uint32 data);
 static void mapper_32k_w(uint32 data);
 static void mapper_64k_w(uint32 data);
 static void mapper_64k_multi_w(uint32 address);
+static uint32 mapper_128k_multi_r(uint32 address);
+static void mapper_256k_multi_w(uint32 address, uint32 data);
+static void mapper_wd1601_w(uint32 address, uint32 data);
 static uint32 mapper_64k_radica_r(uint32 address);
 static uint32 mapper_128k_radica_r(uint32 address);
 static void default_time_w(uint32 address, uint32 data);
@@ -103,6 +106,11 @@ static const md_entry_t rom_database[] =
 /* Tom Clown */
   {0x0000,0xc0cd,0x40,0x40,{{0x00,0x00,0x00,0x00},{0xffffff,0xffffff,0xffffff,0xffffff},{0x000000,0x000000,0x000000,0x000000},1,0,NULL,NULL,NULL,mapper_realtec_w}},
 
+/* 1800-in-1 */
+  {0x3296,0x2370,0x00,0x00,{{0x00,0x00,0x00,0x00},{0xffffff,0xffffff,0xffffff,0xffffff},{0x000000,0x000000,0x000000,0x000000},0,1,mapper_128k_multi_r,m68k_unused_8_w,NULL,NULL}},
+
+/* Golden Mega 250-in-1 */
+  {0xe43c,0x886f,0x08,0x08,{{0x00,0x00,0x00,0x00},{0xffffff,0xffffff,0xffffff,0xffffff},{0x000000,0x000000,0x000000,0x000000},0,1,NULL,m68k_unused_8_w,NULL,mapper_256k_multi_w}},
 
 /* RADICA (Volume 1) (bad dump ?) */
   {0x0000,0x2326,0x00,0x00,{{0x00,0x00,0x00,0x00},{0xffffff,0xffffff,0xffffff,0xffffff},{0x000000,0x000000,0x000000,0x000000},0,1,mapper_64k_radica_r,m68k_unused_8_w,NULL,NULL}},
@@ -665,6 +673,20 @@ void md_cart_init(void)
     m68k.memory_map[0x00].write8 = mapper_flashkit_w;
     m68k.memory_map[0x00].write16 = mapper_flashkit_w;
     zbank_memory_map[0x00].write = mapper_flashkit_w;
+  }
+  else if ((cart.romsize = 0x400000) && 
+           (READ_BYTE(cart.rom, 0x200150) == 'C') &&
+           (READ_BYTE(cart.rom, 0x200151) == 'A') &&
+           (READ_BYTE(cart.rom, 0x200152) == 'N') &&
+           (READ_BYTE(cart.rom, 0x200153) == 'O') &&
+           (READ_BYTE(cart.rom, 0x200154) == 'N'))
+  {
+    /* Canon - Legend of the new Gods (4MB dump) */
+    cart.hw.time_w = mapper_wd1601_w;
+    cart.hw.bankshift = 1;
+    sram.on = 1;
+    sram.start = 0x200000;
+    sram.end = 0x201fff;
   }
   else if ((*(uint16 *)(cart.rom + 0x08) == 0x6000) && (*(uint16 *)(cart.rom + 0x0a) == 0x01f6) && (rominfo.realchecksum == 0xf894))
   {
@@ -1655,7 +1677,102 @@ static void mapper_64k_multi_w(uint32 address)
   /* 64 x 64k banks */
   for (i=0; i<64; i++)
   {
-    m68k.memory_map[i].base = &cart.rom[((address++) & 0x3f) << 16];
+    m68k.memory_map[i].base = &cart.rom[((address + i) & 0x3f) << 16];
+  }
+}
+
+/* 
+  Custom ROM Bankswitch used in pirate "1800-in-1" cartridge
+ */
+static uint32 mapper_128k_multi_r(uint32 address)
+{
+  int i;
+
+  /* 16 x 128k banks (2MB ROM) */
+  /* Bank index (B3 B2 B1 B0) is encoded in address lower byte = {0 X B0 B1 X B2 B3 0} */
+  /* Note: {0 B0 X B1 X B2 B3 0} also works, see below for the 9 unique values being used for all menu entries
+      read16 00A13000 (0002FBEE) => 0x000000-0x03ffff (2x128KB)
+      read16 00A13018 (00FF2056) => 0x040000-0x07ffff (2x128KB)
+      read16 00A13004 (00FF2120) => 0x080000-0x0bffff (2x128KB)
+      read16 00A1301C (00FF20A6) => 0x0c0000-0x0fffff (2x128KB)
+      read16 00A1300A (00FF20BA) => 0x100000-0x13ffff (2x128KB)
+      read16 00A1301A (00FF20CE) => 0x140000-0x17ffff (2x128KB)
+      read16 00A1300E (00FF20F4) => 0x180000-0x1bffff (2x128KB)
+      read16 00A1301E (00FF2136) => 0x1c0000-0x1dffff (1x128KB)
+      read16 00A1307E (00FF2142) => 0x1e0000-0x1fffff (1x128KB)
+  */
+  int bank = ((address & 0x02) << 2) | (address & 0x04) | ((address & 0x10) >> 3) | ((address & 0x20) >> 5);
+
+  /* remap cartridge area (64 x 64k banks) */
+  address = bank << 1;
+  for (i=0x00; i<0x40; i++)
+  {
+    m68k.memory_map[i].base = &cart.rom[((address + i) & 0x3f) << 16];
+  }
+
+  /* returned value changes the menu title and number of entries in the 'game' list (the number of distinct games does not change though) */
+  /* 0x00 => 9-in-1 */
+  /* 0x01 => 190-in-1 */
+  /* 0x02 => 888-in-1 */
+  /* 0x03 => 1800-in-1 */
+  /* real cartridge board has switches to select between the four different menus but here we force the largest menu selection (each other menus being a subset of the next larger menu) */
+  return 0x03;
+}
+
+/* 
+  Custom ROM Bankswitch used in pirate "Golden Mega 250-in-1" cartridge
+ */
+static void mapper_256k_multi_w(uint32 address, uint32 data)
+{
+  int i;
+
+  /* 8 x 256k banks (2MB ROM) */
+  /* Bank index (B2 B1 B0) is encoded in data lower byte = {B1 B0 X X 0 0 0 B2} */
+  /* Note: {X B0 B1 B2 0 0 0 X}, {B1 B0 X B2 0 0 0 X} or {X B0 B1 X 0 0 0 B2} also work, see below for the 4 unique values being used for all menu entries
+      write16 00089000 = 0000 (00FF0006) => 0x000000-0x03ffff (1x256KB)
+      write16 00089000 = 0040 (00FF0006) => 0x040000-0x07ffff (1x256KB)
+      write16 00089000 = 00A0 (00FF0006) => 0x080000-0x0fffff (2x256KB)
+      write16 00089000 = 0011 (00FF0006) => 0x100000-0x1fffff (4x256KB)
+  */
+  int bank = ((data & 0x01) << 2) | ((data & 0xc0) >> 6);
+
+  /* remap cartridge area (64 x 64k banks) */
+  address = bank << 2;
+  for (i=0x00; i<0x40; i++)
+  {
+    m68k.memory_map[i].base = &cart.rom[((address + i) & 0x3f) << 16];
+  }
+}
+
+/* 
+  Custom ROM Bankswitch used in "Canon - Legend of the New Gods" 
+  (uses WD1601 QFPL V1.01 board also used in chinese X-in-1 pirates sold by mindkids)
+ */
+static void mapper_wd1601_w(uint32 address, uint32 data)
+{
+  int i;
+
+  /* !TIME write16 0xA13002 = 0x3002 (00FFFE0C) */
+  /* The board probably allows up to 256MB Flash ROM remapping but this game only has 4MB ROM chip */
+  if ((address & 0xfe) == 0x02)
+  {
+    /* upper 2MB ROM mapped to $000000-$1fffff */
+    for (i=0; i<0x20; i++)
+    {
+      m68k.memory_map[i].base = &cart.rom[(0x20 + i) << 16];
+    }
+
+    /* backup RAM (8KB) mapped to $2000000-$3fffff */
+    for (i=0x20; i<0x40; i++)
+    {
+      m68k.memory_map[i].base    = sram.sram;
+      m68k.memory_map[i].read8   = sram_read_byte;
+      m68k.memory_map[i].read16  = sram_read_word;
+      m68k.memory_map[i].write8  = sram_write_byte;
+      m68k.memory_map[i].write16 = sram_write_word;
+      zbank_memory_map[i].read   = sram_read_byte;
+      zbank_memory_map[i].write  = sram_write_byte;
+    }
   }
 }
 
@@ -1770,7 +1887,7 @@ static uint32 mapper_128k_radica_r(uint32 address)
 static void default_time_w(uint32 address, uint32 data)
 {
   /* enable multi-game cartridge mapper by default */
-  if (address < 0xa13040)
+  if (address < 0xa13060)
   {
     mapper_64k_multi_w(address);
     return;
