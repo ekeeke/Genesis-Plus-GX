@@ -374,18 +374,22 @@ static void osd_input_update_internal_bitmasks(void)
             {
                if ( retro_gun_mode == RetroPointer )
                {
+                  int touch_count;
                   input.analog[i][0] = ((input_state_cb(player, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_X) + 0x7fff) * bitmap.viewport.w) / 0xfffe;
                   input.analog[i][1] = ((input_state_cb(player, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_Y) + 0x7fff) * bitmap.viewport.h) / 0xfffe;
-                  if (input_state_cb(player, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_PRESSED))
+                  if (input_state_cb(player, RETRO_DEVICE_POINTER, 0,
+                           RETRO_DEVICE_ID_POINTER_PRESSED))
                      temp |= INPUT_A;
-                  int touch_count = input_state_cb(player, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_COUNT);
-                  if (touch_count == 2) {
+                  touch_count = input_state_cb(player,
+                        RETRO_DEVICE_POINTER, 0,
+                        RETRO_DEVICE_ID_POINTER_COUNT);
+
+                  if (touch_count == 2)
                      temp |= INPUT_B;
-                  } else if (touch_count == 3) {
+                  else if (touch_count == 3)
                      temp |= INPUT_START;
-                  } else if (touch_count == 4) {
+                  else if (touch_count == 4)
                      temp |= INPUT_C;
-                  }
                }
                else
                {  // RetroLightgun is default
