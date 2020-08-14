@@ -23888,7 +23888,7 @@ static const opcode_handler_struct m68k_opcode_handler_table[] =
   {m68k_op_addq_8_di           , 0xf1f8, 0x5028, 16},
   {m68k_op_addq_8_ix           , 0xf1f8, 0x5030, 18},
   {m68k_op_addq_16_d           , 0xf1f8, 0x5040,  4},
-  {m68k_op_addq_16_a           , 0xf1f8, 0x5048,  4},
+  {m68k_op_addq_16_a           , 0xf1f8, 0x5048,  8}, /* see Yacht.txt */
   {m68k_op_addq_16_ai          , 0xf1f8, 0x5050, 12},
   {m68k_op_addq_16_pi          , 0xf1f8, 0x5058, 12},
   {m68k_op_addq_16_pd          , 0xf1f8, 0x5060, 14},
@@ -24598,7 +24598,7 @@ static const opcode_handler_struct m68k_opcode_handler_table[] =
   {m68k_op_andi_16_pd          , 0xfff8, 0x0260, 18},
   {m68k_op_andi_16_di          , 0xfff8, 0x0268, 20},
   {m68k_op_andi_16_ix          , 0xfff8, 0x0270, 22},
-  {m68k_op_andi_32_d           , 0xfff8, 0x0280, 14},
+  {m68k_op_andi_32_d           , 0xfff8, 0x0280, 16}, /* see Yacht.txt */
   {m68k_op_andi_32_ai          , 0xfff8, 0x0290, 28},
   {m68k_op_andi_32_pi          , 0xfff8, 0x0298, 28},
   {m68k_op_andi_32_pd          , 0xfff8, 0x02a0, 30},
@@ -24881,11 +24881,11 @@ static const opcode_handler_struct m68k_opcode_handler_table[] =
   {m68k_op_tst_32_di           , 0xfff8, 0x4aa8, 16},
   {m68k_op_tst_32_ix           , 0xfff8, 0x4ab0, 18},
   {m68k_op_tas_8_d             , 0xfff8, 0x4ac0,  4},
-  {m68k_op_tas_8_ai            , 0xfff8, 0x4ad0, 18},
-  {m68k_op_tas_8_pi            , 0xfff8, 0x4ad8, 18},
-  {m68k_op_tas_8_pd            , 0xfff8, 0x4ae0, 20},
-  {m68k_op_tas_8_di            , 0xfff8, 0x4ae8, 22},
-  {m68k_op_tas_8_ix            , 0xfff8, 0x4af0, 24},
+  {m68k_op_tas_8_ai            , 0xfff8, 0x4ad0, 14}, /* see Yacht.txt */
+  {m68k_op_tas_8_pi            , 0xfff8, 0x4ad8, 14}, /* see Yacht.txt */
+  {m68k_op_tas_8_pd            , 0xfff8, 0x4ae0, 16}, /* see Yacht.txt */
+  {m68k_op_tas_8_di            , 0xfff8, 0x4ae8, 18}, /* see Yacht.txt */
+  {m68k_op_tas_8_ix            , 0xfff8, 0x4af0, 20}, /* see Yacht.txt */
   {m68k_op_movem_16_er_ai      , 0xfff8, 0x4c90, 12},
   {m68k_op_movem_16_er_pi      , 0xfff8, 0x4c98, 12},
   {m68k_op_movem_16_er_di      , 0xfff8, 0x4ca8, 16},
@@ -25245,10 +25245,10 @@ static const opcode_handler_struct m68k_opcode_handler_table[] =
   {m68k_op_tst_16_al           , 0xffff, 0x4a79, 16},
   {m68k_op_tst_32_aw           , 0xffff, 0x4ab8, 16},
   {m68k_op_tst_32_al           , 0xffff, 0x4ab9, 20},
-  {m68k_op_tas_8_pi7           , 0xffff, 0x4adf, 18},
-  {m68k_op_tas_8_pd7           , 0xffff, 0x4ae7, 20},
-  {m68k_op_tas_8_aw            , 0xffff, 0x4af8, 22},
-  {m68k_op_tas_8_al            , 0xffff, 0x4af9, 26},
+  {m68k_op_tas_8_pi7           , 0xffff, 0x4adf, 14}, /* see Yacht.txt */
+  {m68k_op_tas_8_pd7           , 0xffff, 0x4ae7, 16}, /* see Yacht.txt */
+  {m68k_op_tas_8_aw            , 0xffff, 0x4af8, 18}, /* see Yacht.txt */
+  {m68k_op_tas_8_al            , 0xffff, 0x4af9, 22}, /* see Yacht.txt */
   {m68k_op_illegal             , 0xffff, 0x4afc,  4},
   {m68k_op_movem_16_er_aw      , 0xffff, 0x4cb8, 16},
   {m68k_op_movem_16_er_al      , 0xffff, 0x4cb9, 20},
