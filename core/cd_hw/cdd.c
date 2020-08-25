@@ -318,7 +318,7 @@ int cdd_load(char *filename, char *header)
     return (-1);
 
 #if defined(USE_LIBCHDR)
-  if (!memcmp(".chd", &filename[strlen(filename) - 4], 4) || !memcmp(".CHD", &filename[strlen(filename) - 4], 4))
+  if (!memcmp("chd", &filename[strlen(filename) - 3], 3) || !memcmp("CHD", &filename[strlen(filename) - 3], 3))
   {
     int sectors = 0;
     char metadata[256];
@@ -480,7 +480,7 @@ int cdd_load(char *filename, char *header)
   strncpy(fname, filename, 256);
 
   /* check loaded file extension */
-  if (memcmp(".cue", &filename[strlen(filename) - 4], 4) && memcmp(".CUE", &filename[strlen(filename) - 4], 4))
+  if (memcmp("cue", &filename[strlen(filename) - 3], 3) && memcmp("CUE", &filename[strlen(filename) - 3], 3))
   {
     int len;
 
