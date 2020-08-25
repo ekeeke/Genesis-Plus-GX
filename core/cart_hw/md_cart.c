@@ -685,7 +685,7 @@ void md_cart_init(void)
     m68k.memory_map[0x00].write16 = mapper_flashkit_w;
     zbank_memory_map[0x00].write = mapper_flashkit_w;
   }
-  else if ((cart.romsize = 0x400000) && 
+  else if ((cart.romsize == 0x400000) && 
            (READ_BYTE(cart.rom, 0x200150) == 'C') &&
            (READ_BYTE(cart.rom, 0x200151) == 'A') &&
            (READ_BYTE(cart.rom, 0x200152) == 'N') &&
