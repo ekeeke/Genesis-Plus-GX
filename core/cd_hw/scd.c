@@ -1306,6 +1306,13 @@ static void scd_write_word(unsigned int address, unsigned int data)
       return;
     }
 
+    case 0x36: /* CDD control */
+    {
+      /* only bit 2 is writable (bits [1:0] forced to 0 by default) */
+      scd.regs[0x37>>1].byte.l = data & 0x04;
+      return;
+    }
+
     case 0x4a: /* CDD command 9 (controlled by BIOS, word access only ?) */
     {
       scd.regs[0x4a>>1].w = 0;
