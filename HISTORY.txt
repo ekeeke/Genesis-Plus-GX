@@ -45,6 +45,7 @@ Genesis Plus GX 1.7.5 (xx/xx/xxxx) (Eke-Eke)
 * fixed CDD seek command again (Final Fight CD freeze with model 2 BIOS)
 * fixed CDD status reported during seek/access time (sound effect synchronization issue in Bari Arm)
 * fixed word access to CDD control register (fixes spurious audio track playback on startup with Mode 1 patched games using MSU-MD driver)
+* fixed CD communication registers state on peripheral reset (fixes SUB-CPU side initialization in MSU-MD sample demo and some Mode 1 patched games using MSU-MD driver)
 * optimized Sub-CPU / Main-CPU synchronization
 
 [Core/MD]
