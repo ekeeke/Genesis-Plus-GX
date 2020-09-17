@@ -24,8 +24,7 @@ SOURCES		:=	core core/m68k core/z80 core/sound core/tremor core/ntsc core/input_
 			gx gx/utils gx/utils/wiidrc gx/gui gx/fileio gx/images gx/sounds
 INCLUDES	:=	core core/m68k core/z80 core/sound core/tremor core/ntsc core/input_hw core/cd_hw core/cart_hw core/cart_hw/svp \
 			$(CHDLIBDIR)/src $(CHDLIBDIR)/deps/libFLAC/include $(CHDLIBDIR)/deps/lzma \
-			gx gx/utils gx/utils/wiidrc gx/gui gx/fileio gx/images gx/sounds \
-			$(BUILD) 
+			gx gx/utils gx/utils/wiidrc gx/gui gx/fileio gx/images gx/sounds
 
 #---------------------------------------------------------------------------------
 # options for code generation
@@ -131,19 +130,19 @@ $(OUTPUT).elf: $(OFILES)
 #---------------------------------------------------------------------------------
 %.jpg.o	:	%.jpg
 	@echo $(notdir $<)
-	$(bin2o)
+	bin2s -a 32 $< | $(AS) -o $(@)
 
 %.png.o	:	%.png
 	@echo $(notdir $<)
-	$(bin2o)
+	bin2s -a 32 $< | $(AS) -o $(@)
 
 %.pcm.o	:	%.pcm
 	@echo $(notdir $<)
-	$(bin2o)
+	bin2s -a 32 $< | $(AS) -o $(@)
 
 %.ogg.o	:	%.ogg
 	@echo $(notdir $<)
-	$(bin2o)
+	bin2s -a 32 $< | $(AS) -o $(@)
 
 -include $(DEPENDS)
 
