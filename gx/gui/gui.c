@@ -3,7 +3,7 @@
  *
  *  generic GUI Engine (using GX rendering)
  *
- *  Copyright Eke-Eke (2009-2019)
+ *  Copyright Eke-Eke (2009-2020)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -44,6 +44,8 @@
 #ifdef HW_RVL
 gx_texture *w_pointer;
 #endif
+
+gui_input m_input;
 
 u8 SILENT = 0;
 
