@@ -63,6 +63,8 @@ libretro-build-libnx-aarch64:
   extends:
     - .core-defs
     - .libretro-libnx-static-retroarch-master
+  variables:
+    MAKEFILE: Makefile.libretro
 
 libretro-build-vita:
   extends:
