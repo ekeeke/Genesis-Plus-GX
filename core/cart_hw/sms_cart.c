@@ -2,7 +2,7 @@
  *  Genesis Plus
  *  SG-1000, Master System & Game Gear cartridge hardware support
  *
- *  Copyright (C) 2007-2019  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2007-2020  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -133,9 +133,12 @@ static const rominfo_t game_list[] =
   {0x5E53C7F7, 0, 0, 0,  MAPPER_CODIES, SYSTEM_GG,      REGION_USA}, /* Ernie Els Golf */
   {0xD9A7F170, 0, 0, 0,  MAPPER_CODIES, SYSTEM_GG,      REGION_USA}, /* Man Overboard! */
   {0xF7C524F6, 0, 0, 0,  MAPPER_CODIES, SYSTEM_GG,      REGION_USA}, /* Micro Machines [GG] */
+  {0xC21E6CD0, 0, 0, 0,  MAPPER_CODIES, SYSTEM_GG,      REGION_USA}, /* Micro Machines [GG] [Proto] */
   {0xDBE8895C, 0, 0, 0,  MAPPER_CODIES, SYSTEM_GG,      REGION_USA}, /* Micro Machines 2 - Turbo Tournament */
   {0xC1756BEE, 0, 0, 0,  MAPPER_CODIES, SYSTEM_GG,      REGION_USA}, /* Pete Sampras Tennis */
   {0x72981057, 0, 0, 0,  MAPPER_CODIES, SYSTEM_GG,      REGION_USA}, /* CJ Elephant Fugitive */
+  {0x3ACE6335, 0, 0, 0,  MAPPER_CODIES, SYSTEM_GG,      REGION_USA}, /* CJ Elephant Fugitive [Proto] */
+  {0x2306AAF4, 0, 0, 0,  MAPPER_CODIES, SYSTEM_GG,      REGION_USA}, /* Dinobasher - Starring Bignose the Caveman [GG] [Proto] */
 
   /* games using serial EEPROM */
   {0x36EBCD6D, 0, 0, 0,  MAPPER_93C46,  SYSTEM_GG,   REGION_USA}, /* Majors Pro Baseball */
@@ -244,6 +247,7 @@ static const rominfo_t game_list[] =
   {0xFBE5CFBB, 1, 0, SYSTEM_LIGHTPHASER, MAPPER_SEGA, SYSTEM_SMS, REGION_USA}, /* Missile Defense 3D */
   {0xE79BB689, 1, 0, SYSTEM_LIGHTPHASER, MAPPER_SEGA, SYSTEM_SMS, REGION_USA}, /* Missile Defense 3D [BIOS] */
   {0x43DEF05D, 1, 0, SYSTEM_LIGHTPHASER, MAPPER_SEGA, SYSTEM_SMS, REGION_USA}, /* Missile Defense 3D [Proto] */
+  {0x56DCB2D4, 1, 0, SYSTEM_LIGHTPHASER, MAPPER_SEGA, SYSTEM_SMS, REGION_USA}, /* 3D Gunner [Proto] */
 
   /* games requiring Sega Light Phaser */
   {0x861B6E79, 0, 0, SYSTEM_LIGHTPHASER, MAPPER_SEGA, SYSTEM_SMS, REGION_USA}, /* Assault City [Light Phaser] */
@@ -338,6 +342,8 @@ static const rominfo_t game_list[] =
   {0x56BD2455, 0, 1, 0, MAPPER_SEGA, SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Doki Doki Penguin Land - Uchuu-Daibouken [Proto] */
   {0xC722FB42, 0, 1, 0, MAPPER_SEGA, SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Fantasy Zone II (J) */
   {0x7ABC70E9, 0, 1, 0, MAPPER_SEGA, SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Family Games (Party Games) */
+  {0x9AFAB511, 0, 1, 0, MAPPER_SEGA, SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Game De Check! Koutsuu Anzen [Proto] (JP) */
+  {0x9E9DEB18, 0, 1, 0, MAPPER_SEGA, SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Game De Check! Koutsuu Anzen [Proto] (JP) [T-Eng] */
   {0x6586BD1F, 0, 1, 0, MAPPER_SEGA, SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Masters Golf */
   {0x4847BC91, 0, 1, 0, MAPPER_SEGA, SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Masters Golf [Proto] */
   {0xB9FDF6D9, 0, 1, 0, MAPPER_SEGA, SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Haja no Fuuin */
@@ -350,6 +356,8 @@ static const rominfo_t game_list[] =
   {0x5B5F9106, 0, 1, 0, MAPPER_SEGA, SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Nekyuu Kousien */
   {0xBEA27D5C, 0, 1, 0, MAPPER_SEGA, SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Opa Opa */
   {0x6605D36A, 0, 1, 0, MAPPER_SEGA, SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Phantasy Star (J) */
+  {0x70E89681, 0, 1, 0, MAPPER_SEGA, SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Phantasy Star (J) [T-Eng v1.02] */
+  {0xA04CF71A, 0, 1, 0, MAPPER_SEGA, SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Phantasy Star (J) [T-Eng v2.00] */
   {0xE1FFF1BB, 0, 1, 0, MAPPER_SEGA, SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Shinobi (J) */
   {0x11645549, 0, 1, 0, MAPPER_SEGA, SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Solomon no Kagi - Oujo Rihita no Namida */
   {0x7E0EF8CB, 0, 1, 0, MAPPER_SEGA, SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Super Racing */
