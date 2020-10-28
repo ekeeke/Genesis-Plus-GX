@@ -195,6 +195,83 @@ static bool libretro_supports_bitmasks = false;
 /* Hide the EQ settings for now */
 /*#define HAVE_EQ*/
 
+/* Frameskipping Support */
+
+static unsigned frameskip_type             = 0;
+static unsigned frameskip_threshold        = 0;
+static uint16_t frameskip_counter          = 0;
+
+static bool retro_audio_buff_active        = false;
+static unsigned retro_audio_buff_occupancy = 0;
+static bool retro_audio_buff_underrun      = false;
+/* Maximum number of consecutive frames that
+ * can be skipped */
+#define FRAMESKIP_MAX 60
+
+static unsigned audio_latency              = 0;
+static bool update_audio_latency           = false;
+
+static void retro_audio_buff_status_cb(
+      bool active, unsigned occupancy, bool underrun_likely)
+{
+   retro_audio_buff_active    = active;
+   retro_audio_buff_occupancy = occupancy;
+   retro_audio_buff_underrun  = underrun_likely;
+}
+
+static void init_frameskip(void)
+{
+   if (frameskip_type > 0)
+   {
+      struct retro_audio_buffer_status_callback buf_status_cb;
+
+      buf_status_cb.callback = retro_audio_buff_status_cb;
+      if (!environ_cb(RETRO_ENVIRONMENT_SET_AUDIO_BUFFER_STATUS_CALLBACK,
+            &buf_status_cb))
+      {
+         if (log_cb)
+            log_cb(RETRO_LOG_WARN, "Frameskip disabled - frontend does not support audio buffer status monitoring.\n");
+
+         retro_audio_buff_active    = false;
+         retro_audio_buff_occupancy = 0;
+         retro_audio_buff_underrun  = false;
+         audio_latency              = 0;
+      }
+      else
+      {
+         /* Frameskip is enabled - increase frontend
+          * audio latency to minimise potential
+          * buffer underruns */
+         float frames_per_sec;
+         float frame_time_msec;
+
+         /* While system_clock and lines_per_frame will
+          * always be valid when this function is called,
+          * it is not guaranteed. Just add a fallback to
+          * prevent any possible divide-by-zero errors */
+         if ((system_clock <= 0) || (lines_per_frame <= 0))
+            frames_per_sec = 60.0f;
+         else
+            frames_per_sec = (float)system_clock / (float)lines_per_frame / (float)MCYCLES_PER_LINE;
+
+         frame_time_msec = 1000.0f / frames_per_sec;
+
+         /* Set latency to 6x current frame time... */
+         audio_latency = (unsigned)((6.0f * frame_time_msec) + 0.5f);
+
+         /* ...then round up to nearest multiple of 32 */
+         audio_latency = (audio_latency + 0x1F) & ~0x1F;
+      }
+   }
+   else
+   {
+      environ_cb(RETRO_ENVIRONMENT_SET_AUDIO_BUFFER_STATUS_CALLBACK, NULL);
+      audio_latency = 0;
+   }
+
+   update_audio_latency = true;
+}
+
 /************************************
  * Genesis Plus GX implementation
  ************************************/
@@ -1175,12 +1252,13 @@ static void update_overclock(void)
 }
 #endif
 
-static void check_variables(void)
+static void check_variables(bool first_run)
 {
   unsigned orig_value;
   struct retro_system_av_info info;
-  bool update_viewports = false;
-  bool reinit = false;
+  bool update_viewports     = false;
+  bool reinit               = false;
+  bool update_frameskip     = false;
   struct retro_variable var = {0};
 
   var.key = "genesis_plus_gx_bram";
@@ -1350,6 +1428,8 @@ static void check_variables(void)
 
           update_viewports = true;
         }
+
+        update_frameskip = true;
       }
     }
   }
@@ -1558,6 +1638,28 @@ static void check_variables(void)
     }
   }
 
+  var.key        = "genesis_plus_gx_frameskip";
+  var.value      = NULL;
+  orig_value     = frameskip_type;
+  frameskip_type = 0;
+
+  if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+  {
+    if (strcmp(var.value, "auto") == 0)
+      frameskip_type = 1;
+    else if (strcmp(var.value, "manual") == 0)
+      frameskip_type = 2;
+  }
+
+  update_frameskip = update_frameskip || (frameskip_type != orig_value);
+
+  var.key             = "genesis_plus_gx_frameskip_threshold";
+  var.value           = NULL;
+  frameskip_threshold = 33;
+
+  if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+    frameskip_threshold = strtol(var.value, NULL, 10);
+
   var.key = "genesis_plus_gx_blargg_ntsc_filter";
   environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
   {
@@ -1734,6 +1836,10 @@ static void check_variables(void)
     else
       bitmap.viewport.x = (config.overscan & 2) * 7;
   }
+
+  /* Reinitialise frameskipping, if required */
+  if ((update_frameskip || reinit) && !first_run)
+    init_frameskip();
 }
 
 /* Cheat Support */
@@ -2704,7 +2810,7 @@ bool retro_load_game(const struct retro_game_info *info)
    snprintf(CD_BIOS_JP, sizeof(CD_BIOS_JP), "%s%cbios_CD_J.bin", dir, slash);
    snprintf(CART_BRAM, sizeof(CART_BRAM), "%s%ccart.brm", save_dir, slash);
 
-   check_variables();
+   check_variables(true);
 
    if (log_cb)
    {
@@ -2766,6 +2872,8 @@ bool retro_load_game(const struct retro_game_info *info)
 #endif
 
    set_memory_maps();
+
+   init_frameskip();
 
    return true;
 }
@@ -2870,6 +2978,15 @@ void retro_init(void)
    check_system_specs();
 
    environ_cb(RETRO_ENVIRONMENT_SET_SERIALIZATION_QUIRKS, &serialization_quirks);
+
+   frameskip_type             = 0;
+   frameskip_threshold        = 0;
+   frameskip_counter          = 0;
+   retro_audio_buff_active    = false;
+   retro_audio_buff_occupancy = 0;
+   retro_audio_buff_underrun  = false;
+   audio_latency              = 0;
+   update_audio_latency       = false;
 }
 
 void retro_deinit(void)
@@ -2907,7 +3024,7 @@ void retro_run(void)
    environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE_UPDATE, &updated);
    if (updated)
    {
-      check_variables();
+      check_variables(false);
       if (restart_eq)
       {
          audio_set_equalizer();
@@ -2933,6 +3050,43 @@ void retro_run(void)
       do_skip = false;
       audio_hard_disable = false;
    }
+
+  /* Check whether current frame should
+  * be skipped */
+  if ((frameskip_type > 0) &&
+      retro_audio_buff_active &&
+      !do_skip)
+  {
+    switch (frameskip_type)
+    {
+      case 1: /* auto */
+        do_skip = retro_audio_buff_underrun ? 1 : 0;
+        break;
+      case 2: /* manual */
+        do_skip = (retro_audio_buff_occupancy < frameskip_threshold) ? 1 : 0;
+        break;
+      default:
+        do_skip = 0;
+        break;
+    }
+
+    if (!do_skip || (frameskip_counter >= FRAMESKIP_MAX))
+    {
+      do_skip           = 0;
+      frameskip_counter = 0;
+    }
+    else
+      frameskip_counter++;
+  }
+
+  /* If frameskip settings have changed, update
+  * frontend audio latency */
+  if (update_audio_latency)
+  {
+    environ_cb(RETRO_ENVIRONMENT_SET_MINIMUM_AUDIO_LATENCY,
+        &audio_latency);
+    update_audio_latency = false;
+  }
 
    if (system_hw == SYSTEM_MCD)
    {
@@ -2987,7 +3141,11 @@ void retro_run(void)
       }
    }
 
-   video_cb(bitmap.data, vwidth, vheight, 720 * 2);
+   if (!do_skip)
+     video_cb(bitmap.data, vwidth, vheight, 720 * 2);
+   else
+     video_cb(NULL, vwidth, vheight, 720 * 2);
+
    audio_cb(soundbuffer, audio_update(soundbuffer));
 }
 

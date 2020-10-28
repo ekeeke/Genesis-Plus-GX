@@ -421,6 +421,43 @@ struct retro_core_option_definition option_defs_us[] = {
    },
 #endif
    {
+      "genesis_plus_gx_frameskip",
+      "Frameskip",
+      "Skip frames to avoid audio buffer under-run (crackling). Improves performance at the expense of visual smoothness. 'Auto' skips frames when advised by the frontend. 'Manual' utilises the 'Frameskip Threshold (%)' setting.",
+      {
+         { "disabled", NULL },
+         { "auto",     "Auto" },
+         { "manual",   "Manual" },
+         { NULL, NULL },
+      },
+      "disabled"
+   },
+   {
+      "genesis_plus_gx_frameskip_threshold",
+      "Frameskip Threshold (%)",
+      "When 'Frameskip' is set to 'Manual', specifies the audio buffer occupancy threshold (percentage) below which frames will be skipped. Higher values reduce the risk of crackling by causing frames to be dropped more frequently.",
+      {
+         { "15", NULL },
+         { "18", NULL },
+         { "21", NULL },
+         { "24", NULL },
+         { "27", NULL },
+         { "30", NULL },
+         { "33", NULL },
+         { "36", NULL },
+         { "39", NULL },
+         { "42", NULL },
+         { "45", NULL },
+         { "48", NULL },
+         { "51", NULL },
+         { "54", NULL },
+         { "57", NULL },
+         { "60", NULL },
+         { NULL, NULL },
+      },
+      "33"
+   },
+   {
       "genesis_plus_gx_blargg_ntsc_filter",
       "Blargg NTSC Filter",
       "Apply a video filter to mimic various NTSC TV signals.",
