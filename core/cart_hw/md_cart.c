@@ -435,18 +435,6 @@ void md_cart_init(void)
         }
       }
     }
-
-    /* support for Landstalker expanded ROM hack */
-    else if ((strstr(rominfo.product,"MK-1353") != NULL))
-    {
-      m68k.memory_map[0x20].base    = sram.sram;
-      m68k.memory_map[0x20].read8   = sram_read_byte;
-      m68k.memory_map[0x20].read16  = sram_read_word;
-      m68k.memory_map[0x20].write8  = sram_write_byte;
-      m68k.memory_map[0x20].write16 = sram_write_word;
-      zbank_memory_map[0x20].read   = sram_read_byte;
-      zbank_memory_map[0x20].write  = sram_write_byte;
-    }
   }
 
   /**********************************************
