@@ -22,34 +22,35 @@ ifeq ($(HOOK_CPU), 1)
 endif
 
 ifeq ($(HAVE_CHD), 1)
-   INCFLAGS += -I$(CHDLIBDIR)/src \
-					-I$(CHDLIBDIR)/deps/libFLAC/include \
-					-I$(CHDLIBDIR)/deps/lzma \
-					-I$(CHDLIBDIR)/deps/zlib
+   INCFLAGS += 				-I$(CHDLIBDIR)/include \
+					-I$(CHDLIBDIR)/deps/flac-1.3.3/include \
+					-I$(CHDLIBDIR)/deps/flac-1.3.3/src/include \
+					-I$(CHDLIBDIR)/deps/lzma-19.00/include \
+					-I$(CHDLIBDIR)/deps/zlib-1.2.11
    SOURCES_C += \
-					 $(CHDLIBDIR)/src/bitstream.c \
-					 $(CHDLIBDIR)/src/cdrom.c \
-					 $(CHDLIBDIR)/src/chd.c \
-					 $(CHDLIBDIR)/src/flac.c \
-					 $(CHDLIBDIR)/src/huffman.c \
-					 $(CHDLIBDIR)/deps/libFLAC/bitmath.c \
-					 $(CHDLIBDIR)/deps/libFLAC/bitreader.c \
-					 $(CHDLIBDIR)/deps/libFLAC/cpu.c \
-					 $(CHDLIBDIR)/deps/libFLAC/crc.c \
-					 $(CHDLIBDIR)/deps/libFLAC/fixed.c \
-					 $(CHDLIBDIR)/deps/libFLAC/float.c \
-					 $(CHDLIBDIR)/deps/libFLAC/format.c \
-					 $(CHDLIBDIR)/deps/libFLAC/lpc.c \
-					 $(CHDLIBDIR)/deps/libFLAC/lpc_intrin_avx2.c \
-					 $(CHDLIBDIR)/deps/libFLAC/lpc_intrin_sse.c \
-					 $(CHDLIBDIR)/deps/libFLAC/lpc_intrin_sse2.c \
-					 $(CHDLIBDIR)/deps/libFLAC/lpc_intrin_sse41.c \
-					 $(CHDLIBDIR)/deps/libFLAC/md5.c \
-					 $(CHDLIBDIR)/deps/libFLAC/memory.c \
-					 $(CHDLIBDIR)/deps/libFLAC/stream_decoder.c \
-					 $(CHDLIBDIR)/deps/lzma/LzFind.c \
-					 $(CHDLIBDIR)/deps/lzma/LzmaDec.c \
-					 $(CHDLIBDIR)/deps/lzma/LzmaEnc.c
+					 $(CHDLIBDIR)/src/libchdr_bitstream.c \
+					 $(CHDLIBDIR)/src/libchdr_cdrom.c \
+					 $(CHDLIBDIR)/src/libchdr_chd.c \
+					 $(CHDLIBDIR)/src/libchdr_flac.c \
+					 $(CHDLIBDIR)/src/libchdr_huffman.c \
+					 $(CHDLIBDIR)/deps/flac-1.3.3/src/bitmath.c \
+					 $(CHDLIBDIR)/deps/flac-1.3.3/src/bitreader.c \
+					 $(CHDLIBDIR)/deps/flac-1.3.3/src/cpu.c \
+					 $(CHDLIBDIR)/deps/flac-1.3.3/src/crc.c \
+					 $(CHDLIBDIR)/deps/flac-1.3.3/src/fixed.c \
+					 $(CHDLIBDIR)/deps/flac-1.3.3/src/float.c \
+					 $(CHDLIBDIR)/deps/flac-1.3.3/src/format.c \
+					 $(CHDLIBDIR)/deps/flac-1.3.3/src/lpc.c \
+					 $(CHDLIBDIR)/deps/flac-1.3.3/src/lpc_intrin_avx2.c \
+					 $(CHDLIBDIR)/deps/flac-1.3.3/src/lpc_intrin_sse.c \
+					 $(CHDLIBDIR)/deps/flac-1.3.3/src/lpc_intrin_sse2.c \
+					 $(CHDLIBDIR)/deps/flac-1.3.3/src/lpc_intrin_sse41.c \
+					 $(CHDLIBDIR)/deps/flac-1.3.3/src/md5.c \
+					 $(CHDLIBDIR)/deps/flac-1.3.3/src/memory.c \
+					 $(CHDLIBDIR)/deps/flac-1.3.3/src/stream_decoder.c \
+					 $(CHDLIBDIR)/deps/lzma-19.00/src/LzFind.c \
+					 $(CHDLIBDIR)/deps/lzma-19.00/src/LzmaDec.c \
+					 $(CHDLIBDIR)/deps/lzma-19.00/src/LzmaEnc.c
 
    ifeq ($(platform), win)
        FLAGS += -DHAVE_FSEEKO
@@ -67,11 +68,12 @@ SOURCES_C += \
 				 $(LIBRETRO_COMM_DIR)/encodings/encoding_utf.c \
 				 $(LIBRETRO_COMM_DIR)/vfs/vfs_implementation.c
 
-SOURCES_C += $(CHDLIBDIR)/deps/zlib/adler32.c \
-				 $(CHDLIBDIR)/deps/zlib/inffast.c \
-				 $(CHDLIBDIR)/deps/zlib/inflate.c \
-				 $(CHDLIBDIR)/deps/zlib/inftrees.c \
-				 $(CHDLIBDIR)/deps/zlib/zutil.c
+SOURCES_C += \
+				$(CHDLIBDIR)/deps/zlib-1.2.11/adler32.c \
+				$(CHDLIBDIR)/deps/zlib-1.2.11/inffast.c \
+				$(CHDLIBDIR)/deps/zlib-1.2.11/inflate.c \
+				$(CHDLIBDIR)/deps/zlib-1.2.11/inftrees.c \
+				$(CHDLIBDIR)/deps/zlib-1.2.11/zutil.c
 endif
 
 ifeq ($(SHARED_LIBVORBIS),)
