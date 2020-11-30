@@ -211,6 +211,8 @@ static bool retro_audio_buff_underrun      = false;
 static unsigned audio_latency              = 0;
 static bool update_audio_latency           = false;
 
+static bool show_advanced_av_settings = true;
+
 static void retro_audio_buff_status_cb(
       bool active, unsigned occupancy, bool underrun_likely)
 {
@@ -938,6 +940,9 @@ static void config_default(void)
    config.ym2612         = YM2612_DISCRETE; 
    config.ym2413         = 2; /* AUTO */
    config.mono           = 0; /* STEREO output */
+   for (i = 0; i < 4; i++) config.psg_ch_volumes[i] = 100;  /* individual channel volumes */
+   for (i = 0; i < 6; i++) config.md_ch_volumes[i] = 100;  /* individual channel volumes */
+   for (i = 0; i < 9; i++) config.sms_fm_ch_volumes[i] = 100;  /* individual channel volumes */
 #ifdef HAVE_YM3438_CORE
    config.ym3438         = 0;
 #endif
@@ -1815,6 +1820,92 @@ static void check_variables(bool first_run)
       config.no_sprite_limit = 1;
   }
 
+  char psg_channel_volume_base_str[] = "genesis_plus_gx_psg_channel_0_volume";
+  var.key = psg_channel_volume_base_str;
+  for (unsigned c = 0; c < 4; c++) {
+    psg_channel_volume_base_str[28] = c+'0';
+    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var))
+    {
+      config.psg_ch_volumes[c] = atoi(var.value);
+      // need to recall config to have the settings applied
+      if ((system_hw & SYSTEM_PBC) == SYSTEM_MD)
+      {
+        psg_config(0, config.psg_preamp, 0xff);
+      }
+      else
+      {
+        psg_config(0, config.psg_preamp, io_reg[6]);
+      }
+    }
+  }
+  
+  char md_fm_channel_volume_base_str[] = "genesis_plus_gx_md_channel_0_volume";
+  var.key = md_fm_channel_volume_base_str;
+  for (unsigned c = 0; c < 6; c++) {
+    md_fm_channel_volume_base_str[27] = c+'0';
+    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var))
+    {
+      config.md_ch_volumes[c] = atoi(var.value);
+    }
+  }
+  
+  char sms_fm_channel_volume_base_str[] = "genesis_plus_gx_sms_fm_channel_0_volume";
+  var.key = sms_fm_channel_volume_base_str;
+  for (unsigned c = 0; c < 9; c++) {
+    sms_fm_channel_volume_base_str[31] = c+'0';
+    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var))
+    {
+      config.sms_fm_ch_volumes[c] = atoi(var.value);
+    }
+  }
+
+  var.key = "genesis_plus_gx_show_advanced_audio_settings";
+  var.value = NULL;
+
+  if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+  {
+    bool show_advanced_av_settings_prev = show_advanced_av_settings;
+
+    show_advanced_av_settings = true;
+    if (strcmp(var.value, "disabled") == 0)
+      show_advanced_av_settings = false;
+
+    if (show_advanced_av_settings != show_advanced_av_settings_prev)
+    {
+      size_t i;
+      struct retro_core_option_display option_display;
+      char av_keys[19][40] = {
+        "genesis_plus_gx_psg_channel_0_volume",
+        "genesis_plus_gx_psg_channel_1_volume",
+        "genesis_plus_gx_psg_channel_2_volume",
+        "genesis_plus_gx_psg_channel_3_volume",
+        "genesis_plus_gx_md_channel_0_volume",
+        "genesis_plus_gx_md_channel_1_volume",
+        "genesis_plus_gx_md_channel_2_volume",
+        "genesis_plus_gx_md_channel_3_volume",
+        "genesis_plus_gx_md_channel_4_volume",
+        "genesis_plus_gx_md_channel_5_volume",
+        "genesis_plus_gx_sms_fm_channel_0_volume",
+        "genesis_plus_gx_sms_fm_channel_1_volume",
+        "genesis_plus_gx_sms_fm_channel_2_volume",
+        "genesis_plus_gx_sms_fm_channel_3_volume",
+        "genesis_plus_gx_sms_fm_channel_4_volume",
+        "genesis_plus_gx_sms_fm_channel_5_volume",
+        "genesis_plus_gx_sms_fm_channel_6_volume",
+        "genesis_plus_gx_sms_fm_channel_7_volume",
+        "genesis_plus_gx_sms_fm_channel_8_volume"
+      };
+
+      option_display.visible = show_advanced_av_settings;
+
+      for (i = 0; i < 19; i++)
+      {
+        option_display.key = av_keys[i];
+        environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+      }
+    }
+  }
+    
   if (reinit)
   {
 #ifdef HAVE_OVERCLOCK
