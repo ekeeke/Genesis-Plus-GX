@@ -717,7 +717,11 @@ else
 	LD = link.exe
 endif
 else
+ifneq (,$(findstring uwp,$(PlatformSuffix)))
 	LD = $(CXX)
+else
+	LD = $(CC)
+endif
 endif
 
 ifeq ($(platform), theos_ios)
