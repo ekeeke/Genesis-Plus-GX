@@ -15,7 +15,7 @@ include:
   - project: 'libretro-infrastructure/ci-templates'
     file: '/windows-x64-mingw.yml'
   - project: 'libretro-infrastructure/ci-templates'
-    file: '/dingux-i386.yml'
+    file: '/dingux-mips32.yml'
   - project: 'libretro-infrastructure/ci-templates'
     file: '/android-jni.yml'
 
@@ -36,9 +36,9 @@ libretro-build-windows-x64:
     - .libretro-windows-x64-mingw-make-default
     - .core-defs
 
-libretro-build-dingux-i386:
+libretro-build-dingux-mips32:
   extends:
-    - .libretro-dingux-i386-make-default
+    - .libretro-dingux-mips32-make-default
     - .core-defs
 
 # Android
