@@ -240,6 +240,7 @@ static const rominfo_t game_list[] =
   {0xA3EF13CB, 1, 1, 0,  MAPPER_SEGA, SYSTEM_SMS,        REGION_USA}, /* Zaxxon 3-D */
   {0xBBA74147, 1, 1, 0,  MAPPER_SEGA, SYSTEM_SMS,        REGION_USA}, /* Zaxxon 3-D [Proto] */
   {0xD6F43DDA, 1, 1, 0,  MAPPER_SEGA, SYSTEM_SMS,        REGION_USA}, /* Out Run 3-D */
+  {0x4E684EC0, 1, 1, 0,  MAPPER_SEGA, SYSTEM_SMS,        REGION_USA}, /* Out Run 3-D [Proto] */
   {0x871562b0, 1, 1, 0,  MAPPER_SEGA, SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Maze Walker */
   {0x156948f9, 1, 1, 0,  MAPPER_SEGA, SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Space Harrier 3-D (J) */
 
