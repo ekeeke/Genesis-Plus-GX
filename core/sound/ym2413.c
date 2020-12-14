@@ -769,7 +769,7 @@ INLINE signed int op_calc1(UINT32 phase, unsigned int env, signed int pm, unsign
 #define volume_calc(OP) ((OP)->TLL + ((UINT32)(OP)->volume) + (LFO_AM & (OP)->AMmask))
 
 /* calculate output */
-INLINE void chan_calc( YM2413_OPLL_CH *CH )
+INLINE void chan_calc( YM2413_OPLL_CH *CH, unsigned int chan )
 {
   YM2413_OPLL_SLOT *SLOT;
   unsigned int env;
@@ -799,7 +799,13 @@ INLINE void chan_calc( YM2413_OPLL_CH *CH )
   env = volume_calc(SLOT);
   if( env < ENV_QUIET )
   {
-    output[0] += op_calc(SLOT->phase, env, phase_modulation, SLOT->wavetable);
+      output[0] += op_calc(SLOT->phase, env, phase_modulation, SLOT->wavetable)
+#ifndef USE_PER_SOUND_CHANNELS_CONFIG
+    ;
+#else
+    /* apply user-set volume scaling */
+    * config.sms_fm_ch_volumes[chan]/100;
+#endif
   }
 }
 
@@ -877,7 +883,13 @@ INLINE void rhythm_calc( YM2413_OPLL_CH *CH, unsigned int noise )
   SLOT++;
   env = volume_calc(SLOT);
   if( env < ENV_QUIET )
-    output[1] += op_calc(SLOT->phase, env, phase_modulation, SLOT->wavetable);
+    output[1] += op_calc(SLOT->phase, env, phase_modulation, SLOT->wavetable)
+#ifndef USE_PER_SOUND_CHANNELS_CONFIG
+    ;
+#else
+    /* apply user-set volume scaling */
+    * config.sms_fm_ch_volumes[6]/100;
+#endif
 
 
   /* Phase generation is based on: */
@@ -945,7 +957,13 @@ INLINE void rhythm_calc( YM2413_OPLL_CH *CH, unsigned int noise )
         phase = 0xd0>>2;
     }
 
-    output[1] += op_calc(phase<<FREQ_SH, env, 0, CH[7].SLOT[SLOT1].wavetable);
+    output[1] += op_calc(phase<<FREQ_SH, env, 0, CH[7].SLOT[SLOT1].wavetable)
+#ifndef USE_PER_SOUND_CHANNELS_CONFIG
+    ;
+#else
+    /* apply user-set volume scaling */
+    * config.sms_fm_ch_volumes[7]/100;
+#endif
   }
 
   /* Snare Drum (verified on real YM3812) */
@@ -966,13 +984,25 @@ INLINE void rhythm_calc( YM2413_OPLL_CH *CH, unsigned int noise )
     if (noise)
       phase ^= 0x100;
 
-    output[1] += op_calc(phase<<FREQ_SH, env, 0, CH[7].SLOT[SLOT2].wavetable);
+    output[1] += op_calc(phase<<FREQ_SH, env, 0, CH[7].SLOT[SLOT2].wavetable)
+#ifndef USE_PER_SOUND_CHANNELS_CONFIG
+    ;
+#else
+    /* apply user-set volume scaling */
+    * config.sms_fm_ch_volumes[7]/100;
+#endif
   }
 
   /* Tom Tom (verified on real YM3812) */
   env = volume_calc(&CH[8].SLOT[SLOT1]);
   if( env < ENV_QUIET )
-    output[1] += op_calc(CH[8].SLOT[SLOT1].phase, env, 0, CH[8].SLOT[SLOT1].wavetable);
+    output[1] += op_calc(CH[8].SLOT[SLOT1].phase, env, 0, CH[8].SLOT[SLOT1].wavetable)
+#ifndef USE_PER_SOUND_CHANNELS_CONFIG
+    ;
+#else
+    /* apply user-set volume scaling */
+    * config.sms_fm_ch_volumes[8]/100;
+#endif
 
   /* Top Cymbal (verified on real YM2413) */
   env = volume_calc(&CH[8].SLOT[SLOT2]);
@@ -999,7 +1029,13 @@ INLINE void rhythm_calc( YM2413_OPLL_CH *CH, unsigned int noise )
     if (res2)
       phase = 0x300;
 
-    output[1] += op_calc(phase<<FREQ_SH, env, 0, CH[8].SLOT[SLOT2].wavetable);
+    output[1] += op_calc(phase<<FREQ_SH, env, 0, CH[8].SLOT[SLOT2].wavetable)
+#ifndef USE_PER_SOUND_CHANNELS_CONFIG
+    ;
+#else
+    /* apply user-set volume scaling */
+    * config.sms_fm_ch_volumes[8]/100;
+#endif
   }
 }
 
@@ -1681,18 +1717,18 @@ void YM2413Update(int *buffer, int length)
     advance_lfo();
 
     /* FM part */
-    chan_calc(&ym2413.P_CH[0]);
-    chan_calc(&ym2413.P_CH[1]);
-    chan_calc(&ym2413.P_CH[2]);
-    chan_calc(&ym2413.P_CH[3]);
-    chan_calc(&ym2413.P_CH[4]);
-    chan_calc(&ym2413.P_CH[5]);
+    chan_calc(&ym2413.P_CH[0], 0);
+    chan_calc(&ym2413.P_CH[1], 1);
+    chan_calc(&ym2413.P_CH[2], 2);
+    chan_calc(&ym2413.P_CH[3], 3);
+    chan_calc(&ym2413.P_CH[4], 4);
+    chan_calc(&ym2413.P_CH[5], 5);
 
     if(!(ym2413.rhythm&0x20))
     {
-      chan_calc(&ym2413.P_CH[6]);
-      chan_calc(&ym2413.P_CH[7]);
-      chan_calc(&ym2413.P_CH[8]);
+      chan_calc(&ym2413.P_CH[6], 6);
+      chan_calc(&ym2413.P_CH[7], 7);
+      chan_calc(&ym2413.P_CH[8], 8);
     }
     else    /* Rhythm part */
     {

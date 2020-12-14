@@ -129,6 +129,9 @@ typedef struct
   uint8 gun_cursor;
   uint32 overclock;
   uint8 no_sprite_limit;
+  unsigned int psg_ch_volumes[4];
+  int32 md_ch_volumes[6];
+  signed int sms_fm_ch_volumes[9];
 } t_config;
 
 extern t_config config;

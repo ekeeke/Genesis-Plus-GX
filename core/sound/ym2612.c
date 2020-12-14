@@ -2089,6 +2089,16 @@ void YM2612Update(int *buffer, int length)
     else if (out_fm[4] < -8192) out_fm[4] = -8192;
     if (out_fm[5] > 8191) out_fm[5] = 8191;
     else if (out_fm[5] < -8192) out_fm[5] = -8192;
+    
+    #ifdef USE_PER_SOUND_CHANNELS_CONFIG
+        /* apply user volume scaling */
+        if (config.md_ch_volumes[0] < 100) out_fm[0] = (out_fm[0] * config.md_ch_volumes[0]) / 100;
+        if (config.md_ch_volumes[1] < 100) out_fm[1] = (out_fm[1] * config.md_ch_volumes[1]) / 100;
+        if (config.md_ch_volumes[2] < 100) out_fm[2] = (out_fm[2] * config.md_ch_volumes[2]) / 100;
+        if (config.md_ch_volumes[3] < 100) out_fm[3] = (out_fm[3] * config.md_ch_volumes[3]) / 100;
+        if (config.md_ch_volumes[4] < 100) out_fm[4] = (out_fm[4] * config.md_ch_volumes[4]) / 100;
+        if (config.md_ch_volumes[5] < 100) out_fm[5] = (out_fm[5] * config.md_ch_volumes[5]) / 100;
+    #endif
 
     /* stereo DAC output panning & mixing  */
     lt  = ((out_fm[0]) & ym2612.OPN.pan[0]);

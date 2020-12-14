@@ -396,10 +396,16 @@ void psg_config(unsigned int clocks, unsigned int preamp, unsigned int panning)
   {
     /* channel internal volume */
     int volume = psg.regs[i*2+1];
-
+    
     /* update channel stereo amplification */
-    psg.chanAmp[i][0] = preamp * ((panning >> (i + 4)) & 1);
-    psg.chanAmp[i][1] = preamp * ((panning >> (i + 0)) & 1);
+    #ifndef USE_PER_SOUND_CHANNELS_CONFIG
+        psg.chanAmp[i][0] = preamp * ((panning >> (i + 4)) & 1);
+        psg.chanAmp[i][1] = preamp * ((panning >> (i + 0)) & 1); 
+    #else
+        /* also apply user-set volume scaling */
+        psg.chanAmp[i][0] = ((preamp * config.psg_ch_volumes[i]) / 100) * ((panning >> (i + 4)) & 1);
+        psg.chanAmp[i][1] = ((preamp * config.psg_ch_volumes[i]) / 100) * ((panning >> (i + 0)) & 1);
+    #endif
 
     /* tone channels */
     if (i < 3)
