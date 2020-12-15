@@ -211,7 +211,9 @@ static bool retro_audio_buff_underrun      = false;
 static unsigned audio_latency              = 0;
 static bool update_audio_latency           = false;
 
-static bool show_advanced_av_settings = true;
+#ifdef USE_PER_SOUND_CHANNELS_CONFIG
+static bool show_advanced_av_settings      = true;
+#endif
 
 static void retro_audio_buff_status_cb(
       bool active, unsigned occupancy, bool underrun_likely)
@@ -902,9 +904,11 @@ static void config_default(void)
    config.ym2612         = YM2612_DISCRETE; 
    config.ym2413         = 2; /* AUTO */
    config.mono           = 0; /* STEREO output */
-   for (i = 0; i < 4; i++) config.psg_ch_volumes[i] = 100;  /* individual channel volumes */
-   for (i = 0; i < 6; i++) config.md_ch_volumes[i] = 100;  /* individual channel volumes */
+#ifdef USE_PER_SOUND_CHANNELS_CONFIG
+   for (i = 0; i < 4; i++) config.psg_ch_volumes[i]    = 100;  /* individual channel volumes */
+   for (i = 0; i < 6; i++) config.md_ch_volumes[i]     = 100;  /* individual channel volumes */
    for (i = 0; i < 9; i++) config.sms_fm_ch_volumes[i] = 100;  /* individual channel volumes */
+#endif
 #ifdef HAVE_YM3438_CORE
    config.ym3438         = 0;
 #endif
@@ -1223,10 +1227,12 @@ static void check_variables(bool first_run)
 {
   unsigned orig_value;
   struct retro_system_av_info info;
+#ifdef USE_PER_SOUND_CHANNELS_CONFIG
   unsigned c;
   char md_fm_channel_volume_base_str[]  = "genesis_plus_gx_md_channel_0_volume";
   char sms_fm_channel_volume_base_str[] = "genesis_plus_gx_sms_fm_channel_0_volume";
   char psg_channel_volume_base_str[]    = "genesis_plus_gx_psg_channel_0_volume";
+#endif
   bool update_viewports     = false;
   bool reinit               = false;
   bool update_frameskip     = false;
@@ -1786,6 +1792,7 @@ static void check_variables(bool first_run)
       config.no_sprite_limit = 1;
   }
 
+#ifdef USE_PER_SOUND_CHANNELS_CONFIG
   var.key = psg_channel_volume_base_str;
   for (c = 0; c < 4; c++)
   {
@@ -1863,7 +1870,8 @@ static void check_variables(bool first_run)
       }
     }
   }
-    
+#endif
+
   if (reinit)
   {
 #ifdef HAVE_OVERCLOCK
