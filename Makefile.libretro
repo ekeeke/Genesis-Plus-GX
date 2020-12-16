@@ -4,6 +4,7 @@ FRONTEND_SUPPORTS_RGB565 = 1
 HAVE_CHD = 1
 HAVE_SYS_PARAM = 1
 HAVE_CDROM = 0
+USE_PER_SOUND_CHANNELS_CONFIG = 1
 
 CORE_DIR := .
 
@@ -258,6 +259,7 @@ else ifeq ($(platform), psp1)
    PLATFORM_DEFINES := -DPSP
    CFLAGS += -G0
    STATIC_LINKING = 1
+   USE_PER_SOUND_CHANNELS_CONFIG = 0
 
 # Vita
 else ifeq ($(platform), vita)
@@ -269,6 +271,7 @@ else ifeq ($(platform), vita)
    ENDIANNESS_DEFINES := -DLSB_FIRST -DALIGN_LONG -DALT_RENDERER -DHAVE_ALLOCA_H -DBYTE_ORDER=LITTLE_ENDIAN
    PLATFORM_DEFINES := -DVITA
    STATIC_LINKING = 1
+   USE_PER_SOUND_CHANNELS_CONFIG = 0
 
 # CTR (3DS)
 else ifeq ($(platform), ctr)
@@ -282,6 +285,7 @@ else ifeq ($(platform), ctr)
    CFLAGS += -Wall -mword-relocations
    CFLAGS += -fomit-frame-pointer -ffast-math
    STATIC_LINKING = 1
+   USE_PER_SOUND_CHANNELS_CONFIG = 0
 
 # Xbox 360
 else ifeq ($(platform), xenon)
@@ -303,6 +307,7 @@ else ifneq (,$(filter $(platform), ngc wii wiiu))
    PLATFORM_DEFINES := -DGEKKO -mcpu=750 -meabi -mhard-float -DALT_RENDER
    PLATFORM_DEFINES += -U__INT32_TYPE__ -U __UINT32_TYPE__ -D__INT32_TYPE__=int
    STATIC_LINKING = 1
+   USE_PER_SOUND_CHANNELS_CONFIG = 0
 
    # Nintendo WiiU
    ifneq (,$(findstring wiiu,$(platform)))
@@ -352,6 +357,7 @@ else ifeq ($(platform), gcw0)
    CFLAGS += $(PTHREAD_FLAGS) -G0
    CFLAGS += -ffast-math -march=mips32 -mtune=mips32r2 -mhard-float -fomit-frame-pointer
    ENDIANNESS_DEFINES := -DLSB_FIRST -DBYTE_ORDER=LITTLE_ENDIAN -DALIGN_LONG
+   USE_PER_SOUND_CHANNELS_CONFIG = 0
 
 # Windows MSVC 2003 Xbox 1
 else ifeq ($(platform), xbox1_msvc2003)
@@ -671,6 +677,10 @@ else
 DEFINES += -Dflac_max=MAX -Dflac_min=MIN -Dfseeko=fseek -Dftello=ftell
 endif
 
+ifeq ($(USE_PER_SOUND_CHANNELS_CONFIG), 1)
+DEFINES += -DUSE_PER_SOUND_CHANNELS_CONFIG
+endif
+
 CFLAGS += $(fpic) $(DEFINES) $(CODE_DEFINES) $(FLAGS)
 CXXFLAGS += $(fpic) $(DEFINES) $(CODE_DEFINES) $(FLAGS)
 
@@ -696,8 +706,7 @@ LIBRETRO_CFLAGS += $(BPP_DEFINES) \
 		-DM68K_OVERCLOCK_SHIFT=20 \
 		-DZ80_OVERCLOCK_SHIFT=20 \
 		-DHAVE_YM3438_CORE \
-		-DHAVE_OPLL_CORE \
-		-DUSE_PER_SOUND_CHANNELS_CONFIG
+		-DHAVE_OPLL_CORE
 
 ifneq (,$(findstring msvc,$(platform)))
    LIBRETRO_CFLAGS += -DINLINE="static _inline"

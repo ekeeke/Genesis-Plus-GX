@@ -588,6 +588,7 @@ struct retro_core_option_definition option_defs_us[] = {
       },
       "disabled"
    },
+#ifdef USE_PER_SOUND_CHANNELS_CONFIG
    {
       "genesis_plus_gx_show_advanced_audio_settings",
       "Show Advanced Audio Volume Settings (Reopen menu)",
@@ -979,6 +980,7 @@ struct retro_core_option_definition option_defs_us[] = {
       },
       "100"
    },
+#endif
    { NULL, NULL, NULL, {{0}}, NULL },
 };
 
