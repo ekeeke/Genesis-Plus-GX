@@ -68,16 +68,7 @@
 #  endif
 #endif
 
-#ifdef __CELLOS_LV2__
-#include <cell/cell_fs.h>
-#define O_RDONLY CELL_FS_O_RDONLY
-#define O_WRONLY CELL_FS_O_WRONLY
-#define O_CREAT CELL_FS_O_CREAT
-#define O_TRUNC CELL_FS_O_TRUNC
-#define O_RDWR CELL_FS_O_RDWR
-#else
 #include <fcntl.h>
-#endif
 
 /* TODO: Some things are duplicated but I'm really afraid of breaking other platforms by touching this */
 #if defined(VITA)
@@ -102,7 +93,7 @@
 #  include <unistd.h>
 #endif
 
-#if (defined(__CELLOS_LV2__) && !defined(__PSL1GHT__)) || defined(__QNX__) || defined(PSP) || defined(PS2)
+#if defined(__QNX__) || defined(PSP) || defined(PS2)
 #include <unistd.h> /* stat() is defined here */
 #endif
 
@@ -151,15 +142,11 @@
 #include <fileXio.h>
 #endif
 
-#if defined(__CELLOS_LV2__)
-#include <cell/cell_fs.h>
-#endif
-
 #if defined(VITA)
 #define FIO_S_ISDIR SCE_S_ISDIR
 #endif
 
-#if (defined(__CELLOS_LV2__) && !defined(__PSL1GHT__)) || defined(__QNX__) || defined(PSP)
+#if defined(__QNX__) || defined(PSP)
 #include <unistd.h> /* stat() is defined here */
 #endif
 
@@ -205,7 +192,7 @@ int64_t retro_vfs_file_seek_internal(libretro_vfs_implementation_file *stream, i
 /* VC2005 and up have a special 64-bit fseek */
 #ifdef ATLEAST_VC2005
       return _fseeki64(stream->fp, offset, whence);
-#elif defined(__CELLOS_LV2__) || defined(_MSC_VER) && _MSC_VER <= 1310
+#elif defined(_MSC_VER) && _MSC_VER <= 1310
       return fseek(stream->fp, (long)offset, whence);
 #elif defined(PS2)
       {
@@ -945,24 +932,6 @@ int retro_vfs_stat_impl(const char *path, int32_t *size)
 
    return RETRO_VFS_STAT_IS_VALID | (is_dir ? RETRO_VFS_STAT_IS_DIRECTORY : 0) | (is_character_special ? RETRO_VFS_STAT_IS_CHARACTER_SPECIAL : 0);
 
-#elif defined(__CELLOS_LV2__)
-   /* CellOS Lv2 */
-   bool is_dir;
-   bool is_character_special = false;
-   CellFsStat buf;
-
-   if (!path || !*path)
-      return 0;
-   if (cellFsStat(path, &buf) < 0)
-      return 0;
-
-   if (size)
-      *size = (int32_t)buf.st_size;
-
-   is_dir = ((buf.st_mode & S_IFMT) == S_IFDIR);
-
-   return RETRO_VFS_STAT_IS_VALID | (is_dir ? RETRO_VFS_STAT_IS_DIRECTORY : 0) | (is_character_special ? RETRO_VFS_STAT_IS_CHARACTER_SPECIAL : 0);
-
 #elif defined(_WIN32)
    /* Windows */
    bool is_dir;
@@ -1091,10 +1060,6 @@ struct libretro_vfs_implementation_dir
 #elif defined(PS2)
    int directory;
    iox_dirent_t entry;
-#elif defined(__CELLOS_LV2__)
-   CellFsErrno error;
-   int directory;
-   CellFsDirent entry;
 #elif defined(ORBIS)
    int directory;
    struct dirent entry;
@@ -1110,8 +1075,6 @@ static bool dirent_check_error(libretro_vfs_implementation_dir *rdir)
    return (rdir->directory == INVALID_HANDLE_VALUE);
 #elif defined(VITA) || defined(PSP) || defined(PS2) || defined(ORBIS)
    return (rdir->directory < 0);
-#elif defined(__CELLOS_LV2__)
-   return (rdir->error != CELL_FS_SUCCEEDED);
 #else
    return !(rdir->directory);
 #endif
@@ -1172,8 +1135,6 @@ libretro_vfs_implementation_dir *retro_vfs_opendir_impl(const char *name, bool i
 #elif defined(_3DS)
    rdir->directory       = !string_is_empty(name) ? opendir(name) : NULL;
    rdir->entry           = NULL;
-#elif defined(__CELLOS_LV2__)
-   rdir->error           = cellFsOpendir(name, &rdir->directory);
 #elif defined(ORBIS)
    rdir->directory       = orbisDopen(name);
 #else
@@ -1214,10 +1175,6 @@ bool retro_vfs_readdir_impl(libretro_vfs_implementation_dir *rdir)
    int ret = ps2fileXioDread(rdir->directory, &record);
    rdir->entry = record;
    return ( ret > 0);
-#elif defined(__CELLOS_LV2__)
-   uint64_t nread;
-   rdir->error = cellFsReaddir(rdir->directory, &rdir->entry, &nread);
-   return (nread != 0);
 #elif defined(ORBIS)
    return (orbisDread(rdir->directory, &rdir->entry) > 0);
 #else
@@ -1244,7 +1201,7 @@ const char *retro_vfs_dirent_get_name_impl(libretro_vfs_implementation_dir *rdir
       free(name);
 #endif
    return (char*)rdir->entry.cFileName;
-#elif defined(VITA) || defined(PSP) || defined(__CELLOS_LV2__) || defined(ORBIS)
+#elif defined(VITA) || defined(PSP) || defined(ORBIS)
    return rdir->entry.d_name;
 #elif defined(PS2)
    return rdir->entry.name;
@@ -1269,9 +1226,6 @@ bool retro_vfs_dirent_is_dir_impl(libretro_vfs_implementation_dir *rdir)
 #elif defined(PS2)
    const iox_dirent_t *entry = (const iox_dirent_t*)&rdir->entry;
    return FIO_S_ISDIR(entry->stat.mode);
-#elif defined(__CELLOS_LV2__)
-   CellFsDirent *entry = (CellFsDirent*)&rdir->entry;
-   return (entry->d_type == CELL_FS_TYPE_DIRECTORY);
 #elif defined(ORBIS)
    const struct dirent *entry = &rdir->entry;
    if (entry->d_type == DT_DIR)
@@ -1310,8 +1264,6 @@ int retro_vfs_closedir_impl(libretro_vfs_implementation_dir *rdir)
    sceIoDclose(rdir->directory);
 #elif defined(PS2)
    ps2fileXioDclose(rdir->directory);
-#elif defined(__CELLOS_LV2__)
-   rdir->error = cellFsClosedir(rdir->directory);
 #elif defined(ORBIS)
    orbisDclose(rdir->directory);
 #else
