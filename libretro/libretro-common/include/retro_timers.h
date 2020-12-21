@@ -1,4 +1,4 @@
-/* Copyright  (C) 2010-2018 The RetroArch team
+/* Copyright  (C) 2010-2020 The RetroArch team
  *
  * ---------------------------------------------------------------------------------------
  * The following license statement only applies to this file (retro_timers.h).
@@ -35,8 +35,6 @@
 #include <pspthreadman.h>
 #elif defined(VITA)
 #include <psp2/kernel/threadmgr.h>
-#elif defined(PS2)
-#include <SDL/SDL_timer.h>
 #elif defined(_3DS)
 #include <3ds.h>
 #else
@@ -66,7 +64,7 @@ extern int nanosleep(const struct timespec *rqtp, struct timespec *rmtp);
 
 static int nanosleepDOS(const struct timespec *rqtp, struct timespec *rmtp)
 {
-   usleep(1000000 * rqtp->tv_sec + rqtp->tv_nsec / 1000);
+   usleep(1000000L * rqtp->tv_sec + rqtp->tv_nsec / 1000);
 
    if (rmtp)
       rmtp->tv_sec = rmtp->tv_nsec=0;
@@ -83,30 +81,28 @@ static int nanosleepDOS(const struct timespec *rqtp, struct timespec *rmtp)
  *
  * Sleeps for a specified amount of milliseconds (@msec).
  **/
-INLINE void retro_sleep(unsigned msec)
-{
-#elif defined(PSP) || defined(VITA)
-   sceKernelDelayThread(1000 * msec);
-#elif defined(PS2)
-   SDL_Delay(msec);
+#if defined(PSP) || defined(VITA)
+#define retro_sleep(msec) (sceKernelDelayThread(1000 * (msec)))
 #elif defined(_3DS)
-   svcSleepThread(1000000 * (s64)msec);
+#define retro_sleep(msec) (svcSleepThread(1000000 * (s64)(msec)))
 #elif defined(__WINRT__) || defined(WINAPI_FAMILY) && WINAPI_FAMILY == WINAPI_FAMILY_PHONE_APP
-   SleepEx(msec, FALSE);
+#define retro_sleep(msec) (SleepEx((msec), FALSE))
 #elif defined(_WIN32)
-   Sleep(msec);
+#define retro_sleep(msec) (Sleep((msec)))
 #elif defined(XENON)
-   udelay(1000 * msec);
+#define retro_sleep(msec) (udelay(1000 * (msec)))
 #elif defined(GEKKO) || defined(__PSL1GHT__) || defined(__QNX__)
-   usleep(1000 * msec);
+#define retro_sleep(msec) (usleep(1000 * (msec)))
 #elif defined(WIIU)
-   OSSleepTicks(ms_to_ticks(msec));
+#define retro_sleep(msec) (OSSleepTicks(ms_to_ticks((msec))))
 #else
+static INLINE void retro_sleep(unsigned msec)
+{
    struct timespec tv = {0};
-   tv.tv_sec = msec / 1000;
-   tv.tv_nsec = (msec % 1000) * 1000000;
+   tv.tv_sec          = msec / 1000;
+   tv.tv_nsec         = (msec % 1000) * 1000000;
    nanosleep(&tv, NULL);
-#endif
 }
+#endif
 
 #endif
