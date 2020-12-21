@@ -230,7 +230,7 @@ else ifneq (,$(filter $(platform), psl1ght))
    HAVE_SYS_PARAM = 0
 
    # Lightweight PS3 Homebrew SDK
-   else ifneq (,$(findstring psl1ght,$(platform)))
+   ifneq (,$(findstring psl1ght,$(platform)))
       TARGET := $(TARGET_NAME)_libretro_$(platform).a
       CC = $(PS3DEV)/ppu/bin/ppu-gcc$(EXE_EXT)
       CXX = $(PS3DEV)/ppu/bin/ppu-g++$(EXE_EXT)
