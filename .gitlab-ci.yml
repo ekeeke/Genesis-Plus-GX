@@ -49,6 +49,10 @@ include:
   - project: 'libretro-infrastructure/ci-templates'
     file: '/wii-static.yml'
 
+  # Nintendo WiiU
+  - project: 'libretro-infrastructure/ci-templates'
+    file: '/wiiu-static.yml'
+
   # Nintendo Switch
   - project: 'libretro-infrastructure/ci-templates'
     file: '/libnx-static.yml'
@@ -134,6 +138,12 @@ libretro-build-ngc:
 libretro-build-wii:
   extends:
     - .libretro-wii-static-retroarch-master
+    - .core-defs
+
+# Nintendo WiiU
+libretro-build-wiiu:
+  extends:
+    - .libretro-wiiu-static-retroarch-master
     - .core-defs
 
 # Nintendo Switch
