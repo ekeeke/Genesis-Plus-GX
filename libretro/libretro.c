@@ -938,6 +938,7 @@ static void config_default(void)
    config.ntsc     = 0;
    config.lcd      = 0;
    config.render   = 0;
+   config.left_border = 0;
 
    /* input options */
    input.system[0] = SYSTEM_GAMEPAD;
@@ -1763,6 +1764,18 @@ static void check_variables(bool first_run)
       config.invert_mouse = 1;
   }
 
+  var.key = "genesis_plus_gx_left_border";
+  environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
+  {
+    orig_value = config.left_border;
+    if (!var.value || !strcmp(var.value, "disabled"))
+      config.left_border = 0;
+    else if (var.value && !strcmp(var.value, "enabled"))
+      config.left_border = 1;
+    if (orig_value != config.left_border)
+      update_viewports = true;
+  }
+
 #ifdef HAVE_OVERCLOCK
   var.key = "genesis_plus_gx_overclock";
   environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
@@ -1888,12 +1901,22 @@ static void check_variables(bool first_run)
   if (update_viewports)
   {
     bitmap.viewport.changed = 11;
-    if ((system_hw == SYSTEM_GG) && !config.gg_extra)
+    if ((system_hw == SYSTEM_GGMS) && !config.gg_extra)
       bitmap.viewport.x = (config.overscan & 2) ? 14 : -48;
+    if ((system_hw == SYSTEM_SMS || system_hw == SYSTEM_SMS2) && config.left_border)
+      bitmap.viewport.x = (config.overscan & 2) ? 7 : -8;
+    else
+      bitmap.viewport.x = (config.overscan & 2) * 7 ;
+  }
+  
+    if (update_viewports)
+  {
+    bitmap.viewport.changed = 10;
+
     else
       bitmap.viewport.x = (config.overscan & 2) * 7;
   }
-
+   
   /* Reinitialise frameskipping, if required */
   if ((update_frameskip || reinit) && !first_run)
     init_frameskip();

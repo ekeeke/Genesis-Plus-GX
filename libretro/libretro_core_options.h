@@ -507,6 +507,17 @@ struct retro_core_option_definition option_defs_us[] = {
       "disabled"
    },
    {
+      "genesis_plus_gx_left_border",
+      "Hide Master System Left Border",
+      "TODO.",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled"
+   },
+   {
       "genesis_plus_gx_aspect_ratio",
       "Core-Provided Aspect Ratio",
       "Choose the preferred content aspect ratio. This will only apply when RetroArch's aspect ratio is set to 'Core provided' in the Video settings.",
