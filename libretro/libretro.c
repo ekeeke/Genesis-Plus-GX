@@ -1191,6 +1191,11 @@ static bool update_viewport(void)
       else
          vwidth = SMS_NTSC_OUT_WIDTH(vwidth);
    }
+   
+   if ((system_hw == SYSTEM_SMS || system_hw == SYSTEM_SMS2) && config.left_border)
+   {
+	   bitmap.viewport.x = (config.overscan & 2) ? 7 : -8;
+   }
 
    if (config.render && interlaced)
    {
@@ -1901,7 +1906,6 @@ static void check_variables(bool first_run)
   if (update_viewports)
   {
     bitmap.viewport.changed = 11;
-  }
     if ((system_hw == SYSTEM_GG) && !config.gg_extra)
 	{
       bitmap.viewport.x = (config.overscan & 2) ? 14 : -48;
@@ -1913,6 +1917,7 @@ static void check_variables(bool first_run)
     else
     {
       bitmap.viewport.x = (config.overscan & 2) * 7 ;
+	}
   }
 
   /* Reinitialise frameskipping, if required */
