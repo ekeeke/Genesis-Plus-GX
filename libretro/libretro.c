@@ -938,6 +938,7 @@ static void config_default(void)
    config.ntsc     = 0;
    config.lcd      = 0;
    config.render   = 0;
+   config.left_border = 0;
 
    /* input options */
    input.system[0] = SYSTEM_GAMEPAD;
@@ -1189,6 +1190,11 @@ static bool update_viewport(void)
          vwidth = MD_NTSC_OUT_WIDTH(vwidth);
       else
          vwidth = SMS_NTSC_OUT_WIDTH(vwidth);
+   }
+   
+   if ((system_hw == SYSTEM_SMS || system_hw == SYSTEM_SMS2) && config.left_border)
+   {
+	   bitmap.viewport.x = (config.overscan & 2) ? 7 : -8;
    }
 
    if (config.render && interlaced)
@@ -1763,6 +1769,18 @@ static void check_variables(bool first_run)
       config.invert_mouse = 1;
   }
 
+  var.key = "genesis_plus_gx_left_border";
+  environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
+  {
+    orig_value = config.left_border;
+    if (!var.value || !strcmp(var.value, "disabled"))
+      config.left_border = 0;
+    else if (var.value && !strcmp(var.value, "enabled"))
+      config.left_border = 1;
+    if (orig_value != config.left_border)
+      update_viewports = true;
+  }
+
 #ifdef HAVE_OVERCLOCK
   var.key = "genesis_plus_gx_overclock";
   environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
@@ -1889,9 +1907,17 @@ static void check_variables(bool first_run)
   {
     bitmap.viewport.changed = 11;
     if ((system_hw == SYSTEM_GG) && !config.gg_extra)
+	{
       bitmap.viewport.x = (config.overscan & 2) ? 14 : -48;
+	}
+    else if ((system_hw == SYSTEM_SMS || system_hw == SYSTEM_SMS2) && config.left_border)
+    {
+	   bitmap.viewport.x = (config.overscan & 2) ? 7 : -8;
+	}
     else
-      bitmap.viewport.x = (config.overscan & 2) * 7;
+    {
+      bitmap.viewport.x = (config.overscan & 2) * 7 ;
+	}
   }
 
   /* Reinitialise frameskipping, if required */
@@ -2354,6 +2380,7 @@ void retro_set_environment(retro_environment_t cb)
       { "genesis_plus_gx_lcd_filter", "LCD Ghosting filter; disabled|enabled" },
       { "genesis_plus_gx_overscan", "Borders; disabled|top/bottom|left/right|full" },
       { "genesis_plus_gx_gg_extra", "Game Gear extended screen; disabled|enabled" },
+      { "genesis_plus_gx_left_border", "Hide Master System Left Border; disabled|enabled" },
       { "genesis_plus_gx_aspect_ratio", "Core-provided aspect ratio; auto|NTSC PAR|PAL PAR" },
       { "genesis_plus_gx_render", "Interlaced mode 2 output; single field|double field" },
       { "genesis_plus_gx_gun_cursor", "Show Lightgun crosshair; disabled|enabled" },
