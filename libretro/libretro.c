@@ -1191,11 +1191,6 @@ static bool update_viewport(void)
       else
          vwidth = SMS_NTSC_OUT_WIDTH(vwidth);
    }
-   
-   if ((system_hw == SYSTEM_SMS || system_hw == SYSTEM_SMS2) && config.left_border)
-   {
-	   bitmap.viewport.x = (config.overscan & 2) ? 7 : -8;
-   }
 
    if (config.render && interlaced)
    {
@@ -1228,6 +1223,12 @@ static void update_overclock(void)
     }
 }
 #endif
+
+static void check_sms_border(void)
+{
+	if (config.left_border && (bitmap.viewport.x == 0) && ((system_hw == SYSTEM_MARKIII) || (system_hw & SYSTEM_SMS) || (system_hw == SYSTEM_PBC)))
+		bitmap.viewport.x = -8;
+}
 
 static void check_variables(bool first_run)
 {
@@ -1907,17 +1908,10 @@ static void check_variables(bool first_run)
   {
     bitmap.viewport.changed = 11;
     if ((system_hw == SYSTEM_GG) && !config.gg_extra)
-	{
       bitmap.viewport.x = (config.overscan & 2) ? 14 : -48;
-	}
-    else if ((system_hw == SYSTEM_SMS || system_hw == SYSTEM_SMS2) && config.left_border)
-    {
-	   bitmap.viewport.x = (config.overscan & 2) ? 7 : -8;
-	}
     else
-    {
       bitmap.viewport.x = (config.overscan & 2) * 7 ;
-	}
+      check_sms_border();
   }
 
   /* Reinitialise frameskipping, if required */
@@ -2789,6 +2783,7 @@ bool retro_unserialize(const void *data, size_t size)
    update_overclock();
 #endif
 
+   check_sms_border();
    return TRUE;
 }
 
@@ -2956,6 +2951,7 @@ bool retro_load_game(const struct retro_game_info *info)
    audio_init(SOUND_FREQUENCY, 0);
    system_init();
    system_reset();
+   check_sms_border();
    is_running = false;
 
    if (system_hw == SYSTEM_MCD)
