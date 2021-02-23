@@ -108,7 +108,7 @@ ifneq (,$(findstring unix,$(platform)))
    # Raspberry Pi
    ifneq (,$(findstring rpi,$(platform)))
       ENDIANNESS_DEFINES += -DALIGN_LONG
-      CFLAGS += -fomit-frame-pointer -ffast-math
+      CFLAGS += -fomit-frame-pointer
       ifneq (,$(findstring rpi1,$(platform)))
          PLATFORM_DEFINES += -DARM11 -marm -march=armv6j -mfpu=vfp -mfloat-abi=hard
       else ifneq (,$(findstring rpi2,$(platform)))
