@@ -2,7 +2,7 @@
  *  Genesis Plus
  *  Mega Drive cartridge hardware support
  *
- *  Copyright (C) 2007-2020  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2007-2021  Eke-Eke (Genesis Plus GX)
  *
  *  Many cartridge protections were initially documented by Haze
  *  (http://haze.mameworld.info/)
@@ -79,6 +79,7 @@ static void mapper_256k_multi_w(uint32 address, uint32 data);
 static void mapper_wd1601_w(uint32 address, uint32 data);
 static uint32 mapper_64k_radica_r(uint32 address);
 static uint32 mapper_128k_radica_r(uint32 address);
+static void mapper_sr16v1_w(uint32 address, uint32 data);
 static void default_time_w(uint32 address, uint32 data);
 static void default_regs_w(uint32 address, uint32 data);
 static uint32 default_regs_r(uint32 address);
@@ -736,6 +737,11 @@ void md_cart_init(void)
       zbank_memory_map[i].read  = ((i & 0x07) < 0x04) ? NULL : mapper_smw_64_r;
       zbank_memory_map[i].write = mapper_smw_64_w;
     }
+  }
+  else if ((*(uint16 *)(cart.rom + 0x04) == 0x0000) && (*(uint16 *)(cart.rom + 0x06) == 0x0104) && (rominfo.checksum == 0x31fc))
+  {
+    /* Micro Machines (USA) custom TMSS bypass logic */
+    m68k.memory_map[0xa1].write8  = mapper_sr16v1_w;
   }
   else if (cart.romsize > 0x400000)
   {
@@ -1895,6 +1901,29 @@ static uint32 mapper_128k_radica_r(uint32 address)
   }
 
   return 0xffff;
+}
+
+
+/*
+  Custom logic (ST 16S25HB1 PAL) used in Micro Machines US cartridge (SR16V1.1 board)
+  +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+   /VRES is asserted after write access to 0xA14101 (TMSS bank-shift register)
+   with D0=1 (cartridge ROM access enabled instead of TMSS Boot ROM) being detected 
+*/
+static void mapper_sr16v1_w(uint32 address, uint32 data)
+{
+  /* 0xA10000-0xA1FFFF address range is mapped to I/O and Control registers */
+  ctrl_io_write_byte(address, data);
+
+  /* cartridge uses /LWR, /AS and VA1-VA18 (only VA8-VA17 required to decode access to TMSS bank-shift register) */
+  if ((address & 0xff01) == 0x4101)
+  {
+    /* cartridge ROM is enabled when D0=1 */
+    if (data & 0x01)
+    {
+      gen_reset(0);
+    }
+  }
 }
 
 /************************************************************

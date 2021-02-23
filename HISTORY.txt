@@ -55,6 +55,7 @@ Genesis Plus GX 1.7.5 (xx/xx/xxxx) (Eke-Eke)
 * added support for some new unlicensed games with copy protection (Thunderbolt II, Tom Clown, Chaoji Puke / Super Poker, Rock Heaven, Rock World)
 * added support for Everdrive extended SSF mapper
 * added (very basic) emulation of Flashkit MD hardware
+* added emulation of Micro Machines USA on-board TMSS bypass logic hardware
 * improved console region auto-detection for a few PAL-only games (The Smurfs Travel the World & Williams Arcade's Greatest Hits)
 * improved I2C EEPROM boards emulation accuracy
 * improved SVP memory handlers accuracy (fixes Virtua Racing debug mode)
