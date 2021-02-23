@@ -448,7 +448,7 @@ void md_cart_init(void)
           SVP CHIP 
   ***********************************************/
   svp = NULL;
-  if (strstr(rominfo.international,"Virtua Racing"))
+  if ((READ_BYTE(cart.rom, 0x1c8) == 'S') && (READ_BYTE(cart.rom, 0x1c9) == 'V'))
   {
     svp_init();
   }
