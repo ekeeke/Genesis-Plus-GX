@@ -417,6 +417,23 @@ int load_bios(int system)
         /* CD BOOTROM loaded ? */
         if (size > 0)
         {
+			/* auto-detect CD hardware model */
+          if (!memcmp (&scd.bootrom[0x120], "WONDER-MEGA BOOT", 16))
+          {
+            /* Wondermega CD hardware */
+            cdd.type = CD_TYPE_WONDERMEGA;
+          }
+          else if (!memcmp (&scd.bootrom[0x120], "WONDERMEGA2 BOOT", 16))
+          {
+            /* Wondermega M2 / X'Eye CD hardware */
+            cdd.type = CD_TYPE_WONDERMEGA_M2;
+          }
+          else
+          {
+            /* default CD hardware */
+            cdd.type = CD_TYPE_DEFAULT;
+          }
+		  
 #ifdef LSB_FIRST
           /* Byteswap ROM to optimize 16-bit access */
           int i;
@@ -635,7 +652,9 @@ int load_rom(char *filename)
 
       /* auto-detect byte-swapped dumps */
       if (!memcmp((char *)(cart.rom + 0x100),"ESAGM GE ARDVI E", 16) ||
-          !memcmp((char *)(cart.rom + 0x100),"ESAGG NESESI", 12))
+          !memcmp((char *)(cart.rom + 0x100),"ESAGG NESESI", 12) ||
+          !memcmp((char *)(cart.rom + 0x80000 + 0x100),"ESAGM GE ARDVI E", 16) ||
+          !memcmp((char *)(cart.rom + 0x80000 + 0x100),"ESAGG NESESI", 12))
       {
         for(i = 0; i < size; i += 2)
         {
@@ -1064,7 +1083,8 @@ void get_region(char *romheader)
            (strstr(rominfo.product,"T-69046-50") != NULL) ||    /* Back to the Future III (Europe) */
            (strstr(rominfo.product,"T-120106-00") != NULL) ||   /* Brian Lara Cricket (Europe) */
            (strstr(rominfo.product,"T-97126 -50") != NULL) ||   /* Williams Arcade's Greatest Hits (Europe) */
-           (strstr(rominfo.product,"T-70096 -00") != NULL))     /* Muhammad Ali Heavyweight Boxing (Europe) */
+           (strstr(rominfo.product,"T-70096 -00") != NULL) ||   /* Muhammad Ali Heavyweight Boxing (Europe) */
+           ((rominfo.checksum == 0x0000) && (rominfo.realchecksum == 0x1f7f))) /* Radica - Sensible Soccer Plus edition */
       {
         /* need PAL settings */
         region_code = REGION_EUROPE;
