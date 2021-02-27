@@ -1,8 +1,10 @@
 /***************************************************************************************
- *  Genesis Plus
- *  Backup RAM support
+ *  Genesis Plus GX
+ *  CPU hooking support
  *
- *  Copyright (C) 2007-2020  Eke-Eke (Genesis Plus GX)
+ *  HOOK_CPU should be defined in a makefile or MSVC project to enable this functionality
+ *
+ *  Copyright feos (2019)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -36,28 +38,16 @@
  *
  ****************************************************************************************/
 
-#ifndef _SRAM_H_
-#define _SRAM_H_
+#ifdef HOOK_CPU
 
-typedef struct
+#include <stdio.h>
+#include "cpuhook.h"
+
+void(*cpu_hook)(hook_type_t type, int width, unsigned int address, unsigned int value) = NULL;
+
+void set_cpu_hook(void(*hook)(hook_type_t type, int width, unsigned int address, unsigned int value))
 {
-  uint8 detected;
-  uint8 on;
-  uint8 custom;
-  uint32 start;
-  uint32 end;
-  uint32 crc;
-  uint8 *sram;
-} T_SRAM;
+	cpu_hook = hook;
+}
 
-/* Function prototypes */
-extern void sram_init();
-extern unsigned int sram_read_byte(unsigned int address);
-extern unsigned int sram_read_word(unsigned int address);
-extern void sram_write_byte(unsigned int address, unsigned int data);
-extern void sram_write_word(unsigned int address, unsigned int data);
-
-/* global variables */
-extern T_SRAM sram;
-
-#endif
+#endif /* HOOK_CPU */

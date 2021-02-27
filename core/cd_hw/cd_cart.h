@@ -40,7 +40,8 @@
  /* CD compatible ROM/RAM cartridge */
 typedef struct 
 {
-  uint8 area[0x840080];  /* cartridge ROM/RAM area (max. 8MB ROM + 64KB backup memory + Pro Action Replay 128KB ROM / 64KB RAM + cartridge infos) */
+  uint8 reserved[0x80];  /* reserved for ROM cartridge infos (see md_cart.h) */
+  uint8 area[0x840000];  /* cartridge ROM/RAM area (max. 8MB ROM + 64KB backup memory + Pro Action Replay 128KB ROM / 64KB RAM) */
   uint8 boot;            /* cartridge boot mode (0x00: boot from CD with ROM/RAM cartridge enabled, 0x40: boot from ROM cartridge with CD enabled) */
   uint8 id;              /* RAM cartridge ID (related to RAM size, 0 if disabled) */
   uint8 prot;            /* RAM cartridge write protection */

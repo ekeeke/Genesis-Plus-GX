@@ -268,10 +268,16 @@ static void m68k_poll_sync(unsigned int reg_mask)
   /* relative SUB-CPU cycle counter */
   unsigned int cycles = (m68k.cycles * SCYCLES_PER_LINE) / MCYCLES_PER_LINE;
 
-  /* sync SUB-CPU with MAIN-CPU */
   if (!s68k.stopped)
   {
+    /* save current SUB-CPU end cycle count (recursive execution is possible) */
+    int end_cycle = s68k.cycle_end;
+
+    /* sync SUB-CPU with MAIN-CPU */
     s68k_run(cycles);
+	
+	/* restore SUB-CPU end cycle count */
+    s68k.cycle_end = end_cycle;
   }
 
   /* SUB-CPU idle on register polling ? */
@@ -353,9 +359,15 @@ unsigned int ctrl_io_read_byte(unsigned int address)
           {
             /* relative SUB-CPU cycle counter */
             unsigned int cycles = (m68k.cycles * SCYCLES_PER_LINE) / MCYCLES_PER_LINE;
+			
+			/* save current SUB-CPU end cycle count (recursive execution is possible) */
+            int end_cycle = s68k.cycle_end;
 
             /* sync SUB-CPU with MAIN-CPU (Dracula Unleashed w/ Sega CD Model 2 Boot ROM) */
             s68k_run(cycles);
+			
+			/* restore SUB-CPU end cycle count */
+            s68k.cycle_end = end_cycle;
           }
 
           m68k_poll_detect(1<<0x0f);
@@ -526,9 +538,15 @@ unsigned int ctrl_io_read_word(unsigned int address)
             {
               /* relative SUB-CPU cycle counter */
               unsigned int cycles = (m68k.cycles * SCYCLES_PER_LINE) / MCYCLES_PER_LINE;
+			  
+			  /* save current SUB-CPU end cycle count (recursive execution is possible) */
+              int end_cycle = s68k.cycle_end;
 
               /* sync SUB-CPU with MAIN-CPU (Soul Star) */
               s68k_run(cycles);
+			  
+			  /* restore SUB-CPU end cycle count */
+              s68k.cycle_end = end_cycle;
             }
 
             m68k_poll_detect(3 << (index - 0x10));
@@ -645,9 +663,15 @@ void ctrl_io_write_byte(unsigned int address, unsigned int data)
                 {
                   /* relative SUB-CPU cycle counter */
                   unsigned int cycles = (m68k.cycles * SCYCLES_PER_LINE) / MCYCLES_PER_LINE;
+				  
+				  /* save current SUB-CPU end cycle count (recursive execution is possible) */
+                  int end_cycle = s68k.cycle_end;
 
                   /* sync SUB-CPU with MAIN-CPU (Earnest Evans, Fhey Area) */
                   s68k_run(cycles);
+				  
+				  /* restore SUB-CPU end cycle count */
+                  s68k.cycle_end = end_cycle;
                 }
 
                 /* set IFL2 flag */

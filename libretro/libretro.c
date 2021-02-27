@@ -145,6 +145,8 @@ static bool restart_eq = false;
 
 static char g_rom_dir[256];
 static char g_rom_name[256];
+static void *g_rom_data;
+static size_t g_rom_size;
 static char *save_dir;
 
 static retro_log_printf_t log_cb;
@@ -297,9 +299,31 @@ int load_archive(char *filename, unsigned char *buffer, int maxsize, char *exten
 {
   int64_t left = 0;
   int64_t size = 0;
+  RFILE *fd;
+
+  /* Get filename extension */
+  if (extension)
+  {
+    memcpy(extension, &filename[strlen(filename) - 3], 3);
+    extension[3] = 0;
+  }
+
+  /* Check if this was called to load ROM file from the frontend (not BOOT ROM or Lock-On ROM files from the core) */
+  if (maxsize >= 0x800000)
+  {
+    /* Check if loaded game is already in memory */
+    if ((g_rom_data != NULL) && (g_rom_size > 0))
+    {
+      size = g_rom_size;
+      if (size > maxsize)
+        size = maxsize;
+      memcpy(buffer, g_rom_data, size);
+      return size;
+    }
+  }
 
   /* Open file */
-  RFILE *fd    = filestream_open(filename, RETRO_VFS_FILE_ACCESS_READ, RETRO_VFS_FILE_ACCESS_HINT_NONE);
+  fd    = filestream_open(filename, RETRO_VFS_FILE_ACCESS_READ, RETRO_VFS_FILE_ACCESS_HINT_NONE);
 
   if (!fd)
   {
@@ -339,13 +363,6 @@ int load_archive(char *filename, unsigned char *buffer, int maxsize, char *exten
 
   if (log_cb)
     log_cb(RETRO_LOG_INFO, "INFORMATION - Loading %d bytes ...\n", size);
-
-  /* filename extension */
-  if (extension)
-  {
-    memcpy(extension, &filename[strlen(filename) - 3], 3);
-    extension[3] = 0;
-  }
 
   /* Read into buffer */
   left = size;
@@ -2334,6 +2351,143 @@ static void set_memory_maps()
    }
 }
 
+/****************************************************************************
+ * Disk control interface
+ ****************************************************************************/ 
+#define MAX_DISKS 4
+static int disk_index;
+static int disk_count;
+static char *disk_info[MAX_DISKS];
+
+static bool disk_set_eject_state(bool ejected)
+{
+  if (system_hw != SYSTEM_MCD)
+    return false;
+
+  if (ejected)
+  {
+    cdd.status = CD_OPEN;
+    scd.regs[0x36>>1].byte.h = 0x01;
+  }
+  else if (cdd.status == CD_OPEN)
+  {
+    cdd.status = cdd.loaded ? CD_TOC : NO_DISC;
+  }
+
+  return true;
+}
+
+static bool disk_get_eject_state(void)
+{
+  if (system_hw != SYSTEM_MCD)
+    return false;
+
+  return (cdd.status == CD_OPEN);
+}
+
+static unsigned int disk_get_image_index(void)
+{
+  if ((system_hw != SYSTEM_MCD) || !cdd.loaded)
+    return disk_count;
+
+  return disk_index;
+}
+
+static bool disk_set_image_index(unsigned int index)
+{
+  char header[0x210];
+
+  if (system_hw != SYSTEM_MCD)
+    return false;
+
+  if (index >= disk_count)
+  {
+    cdd.loaded = 0;
+    return true;
+  }
+
+  if (disk_info[index] == NULL)
+    return false;
+
+  cdd_load(disk_info[index], header);
+
+  if (!cdd.loaded)
+    return false;
+
+  disk_index = index;
+  return true;
+}
+
+static unsigned int disk_get_num_images(void)
+{
+  return disk_count;
+}
+
+static bool disk_replace_image_index(unsigned index, const struct retro_game_info *info)
+{
+  if (system_hw != SYSTEM_MCD)
+    return false;
+
+  if (index >= disk_count)
+    return false;
+
+  if (disk_info[index] != NULL)
+    free(disk_info[index]);
+
+  disk_info[index] = NULL;
+
+  if (info != NULL)
+  {
+    if (info->path == NULL)
+      return false;
+
+    disk_info[index] = strdup(info->path);
+
+    if (index == disk_index)
+      return disk_set_image_index(index);
+  }
+  else
+  {
+    int i = index;
+
+    while (i < (disk_count-1))
+    {
+      disk_info[i]   = disk_info[i+1];
+      disk_info[i+1] = NULL;
+    }
+
+    disk_count--;
+
+    if (index < disk_index)
+      disk_index--;
+  }
+
+  return true;
+}
+
+static bool disk_add_image_index(void)
+{
+  if (system_hw != SYSTEM_MCD)
+    return false;
+
+  if (disk_count >= MAX_DISKS)
+    return false;
+
+  disk_count++;
+  return true;
+}
+
+static struct retro_disk_control_callback disk_ctrl =
+{
+  disk_set_eject_state,
+  disk_get_eject_state,
+  disk_get_image_index,
+  disk_set_image_index,
+  disk_get_num_images,
+  disk_replace_image_index,
+  disk_add_image_index
+};
+
 /************************************
  * libretro implementation
  ************************************/
@@ -2568,7 +2722,7 @@ void retro_get_system_info(struct retro_system_info *info)
 #define GIT_VERSION ""
 #endif
    info->library_version = "v1.7.4" GIT_VERSION;
-   info->valid_extensions = "mdx|md|smd|gen|bin|cue|iso|chd|bms|sms|gg|sg";
+   info->valid_extensions = "m3u|mdx|md|smd|gen|bin|cue|iso|chd|bms|sms|gg|sg";
    info->block_extract = false;
    info->need_fullpath = true;
 }
@@ -2855,6 +3009,9 @@ bool retro_load_game(const struct retro_game_info *info)
 
    if (!info)
       return false;
+  
+   if (!info->path)
+      return false;
 
 #ifdef FRONTEND_SUPPORTS_RGB565
    {
@@ -2924,8 +3081,105 @@ bool retro_load_game(const struct retro_game_info *info)
       log_cb(RETRO_LOG_INFO, "Sega/Mega CD RAM CART is located at: %s\n", CART_BRAM);
    }
 
-   if (!load_rom((char *)info->path))
-      return false;
+   g_rom_data = info->data;
+   g_rom_data = (void *)info->data;
+
+   /* Clear disk interface (already done in retro_unload_game but better be safe) */
+   disk_count = 0;
+   disk_index = 0;
+   for (i=0; i<MAX_DISKS; i++)
+   {
+      if (disk_info[i] != NULL)
+      {
+         free(disk_info[i]);
+         disk_info[i] = NULL;
+      }
+   }
+
+   /* M3U file list support */
+   if ((strlen(info->path) > 4) && !strncmp(info->path + strlen(info->path) - 4, ".m3u", 4))
+   {
+      RFILE *fd = filestream_open(info->path, RETRO_VFS_FILE_ACCESS_READ, RETRO_VFS_FILE_ACCESS_HINT_NONE);
+      if (fd)
+      {
+         int len;
+         char linebuf[512];
+         while ((filestream_gets(fd, linebuf, 512) != NULL) && (disk_count < MAX_DISKS))
+         {
+            /* skip commented lines */
+            if (linebuf[0] != '#')
+            {
+               len = strlen(linebuf);
+               if (len > 0)
+               {
+                  /* remove end-of-line character */
+                  if (linebuf[len-1] == '\n')
+                  {
+                     linebuf[len-1] = 0;
+                     len--;
+                  }
+
+                  /* remove carriage-return character */
+                  if (len && (linebuf[len-1] == '\r'))
+                  {
+                     linebuf[len-1] = 0;
+                     len--;
+                  }
+
+                  /* append file path to disk image file name */
+                  disk_info[disk_count] = malloc(strlen(g_rom_dir) + len + 2);
+                  if (disk_info[disk_count] != NULL)
+                  {
+                     /* add file to disk interface */
+                     sprintf(disk_info[disk_count], "%s%c%s", g_rom_dir, slash, linebuf);
+                     disk_count++;
+                     if (log_cb)
+                       log_cb(RETRO_LOG_INFO, "Disk #%d added from M3U file list: %s\n", disk_count, disk_info[disk_count-1]);
+                  }
+               }
+            }
+         }
+      }
+
+      /* automatically try to load first disk if at least one file was added to disk interface from M3U file list */
+      if (disk_count > 0)
+      {
+         if (!load_rom(disk_info[0]))
+         {
+            if (log_cb)
+               log_cb(RETRO_LOG_ERROR, "Could not load %s from M3U file list\n", disk_info[0]);
+
+            /* clear initialized disk interface before returning an error */
+            for (i=0; i<disk_count; i++)
+            {
+               if (disk_info[i] != NULL)
+               {
+                  free(disk_info[i]);
+                  disk_info[i] = NULL;
+               }
+            }
+            disk_count = 0;
+            return false;
+         }
+      }
+      else
+      {
+         /* error adding disks from M3U */
+         return false;
+      }
+   }
+   else
+   {
+      if (load_rom((char *)info->path) <= 0)
+         return false;
+
+      /* automatically add loaded CD to disk interface */
+      if ((system_hw == SYSTEM_MCD) && cdd.loaded)
+      {
+         disk_count = 1;
+         disk_info[0] = strdup(info->path);
+      }
+   }
 
    if ((config.bios & 1) && !(system_bios & SYSTEM_MD))
    {
@@ -2981,6 +3235,19 @@ bool retro_load_game_special(unsigned game_type, const struct retro_game_info *i
 
 void retro_unload_game(void) 
 {
+	/* Clear disk interface */
+   int i;
+   disk_count = 0;
+   disk_index = 0;
+   for (i=0; i<MAX_DISKS; i++)
+   {
+      if (disk_info[i] != NULL)
+      {
+         free(disk_info[i]);
+         disk_info[i] = NULL;
+      }
+   }
+
    if (system_hw == SYSTEM_MCD)
       bram_save();
 
@@ -3071,6 +3338,7 @@ void retro_init(void)
    check_system_specs();
 
    environ_cb(RETRO_ENVIRONMENT_SET_SERIALIZATION_QUIRKS, &serialization_quirks);
+   environ_cb(RETRO_ENVIRONMENT_SET_DISK_CONTROL_INTERFACE, &disk_ctrl);
 
    frameskip_type             = 0;
    frameskip_threshold        = 0;

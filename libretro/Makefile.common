@@ -16,6 +16,11 @@ ifneq (,$(findstring msvc2003,$(platform)))
 INCFLAGS += -I$(LIBRETRO_COMM_DIR)/include/compat/msvc
 endif
 
+ifeq ($(HOOK_CPU), 1)
+   GENPLUS_SRC_DIR += $(CORE_DIR)/core/debug
+   FLAGS += -DHOOK_CPU
+endif
+
 ifeq ($(HAVE_CHD), 1)
    INCFLAGS += -I$(CHDLIBDIR)/src \
 					-I$(CHDLIBDIR)/deps/libFLAC/include \

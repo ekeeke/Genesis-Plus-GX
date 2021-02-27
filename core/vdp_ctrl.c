@@ -2202,6 +2202,11 @@ static void vdp_bus_w(unsigned int data)
         MARK_BG_DIRTY (index);
       }
 
+#ifdef HOOK_CPU
+      if (cpu_hook)
+        cpu_hook(HOOK_VRAM_W, 2, addr, data);
+#endif
+
 #ifdef LOGVDP
       error("[%d(%d)][%d(%d)] VRAM 0x%x write -> 0x%x (%x)\n", v_counter, (v_counter + (m68k.cycles - mcycles_vdp)/MCYCLES_PER_LINE)%lines_per_frame, m68k.cycles, m68k.cycles%MCYCLES_PER_LINE, addr, data, m68k_get_reg(M68K_REG_PC));
 #endif
@@ -2245,6 +2250,12 @@ static void vdp_bus_w(unsigned int data)
           remap_line(v_counter);
         }
       }
+	  
+#ifdef HOOK_CPU
+      if (cpu_hook)
+        cpu_hook(HOOK_CRAM_W, 2, addr, data);
+#endif
+
 #ifdef LOGVDP
       error("[%d(%d)][%d(%d)] CRAM 0x%x write -> 0x%x (%x)\n", v_counter, (v_counter + (m68k.cycles - mcycles_vdp)/MCYCLES_PER_LINE)%lines_per_frame, m68k.cycles, m68k.cycles%MCYCLES_PER_LINE, addr, data, m68k_get_reg(M68K_REG_PC));
 #endif
@@ -2265,6 +2276,12 @@ static void vdp_bus_w(unsigned int data)
           render_line(v_counter);
         }
       }
+	  
+#ifdef HOOK_CPU
+      if (cpu_hook)
+        cpu_hook(HOOK_VSRAM_W, 2, addr, data);
+#endif
+
 #ifdef LOGVDP
       error("[%d(%d)][%d(%d)] VSRAM 0x%x write -> 0x%x (%x)\n", v_counter, (v_counter + (m68k.cycles - mcycles_vdp)/MCYCLES_PER_LINE)%lines_per_frame, m68k.cycles, m68k.cycles%MCYCLES_PER_LINE, addr, data, m68k_get_reg(M68K_REG_PC));
 #endif
@@ -2468,6 +2485,11 @@ static unsigned int vdp_68k_data_r_m5(void)
     {
       /* read two bytes from VRAM */
       data = *(uint16 *)&vram[addr & 0xFFFE];
+	  
+#ifdef HOOK_CPU
+      if (cpu_hook)
+        cpu_hook(HOOK_VRAM_R, 2, addr, data);
+#endif
 
 #ifdef LOGVDP
       error("[%d(%d)][%d(%d)] VRAM 0x%x read -> 0x%x (%x)\n", v_counter, (v_counter + (m68k.cycles - mcycles_vdp)/MCYCLES_PER_LINE)%lines_per_frame, m68k.cycles, m68k.cycles%MCYCLES_PER_LINE, addr, data, m68k_get_reg(M68K_REG_PC));
@@ -2493,6 +2515,11 @@ static unsigned int vdp_68k_data_r_m5(void)
       /* Unused bits are set using data from next available FIFO entry */
       data |= (fifo[fifo_idx] & ~0x7FF);
 
+#ifdef HOOK_CPU
+      if (cpu_hook)
+        cpu_hook(HOOK_VSRAM_R, 2, addr, data);
+#endif
+
 #ifdef LOGVDP
       error("[%d(%d)][%d(%d)] VSRAM 0x%x read -> 0x%x (%x)\n", v_counter, (v_counter + (m68k.cycles - mcycles_vdp)/MCYCLES_PER_LINE)%lines_per_frame, m68k.cycles, m68k.cycles%MCYCLES_PER_LINE, addr, data, m68k_get_reg(M68K_REG_PC));
 #endif
@@ -2510,6 +2537,11 @@ static unsigned int vdp_68k_data_r_m5(void)
       /* Unused bits are set using data from next available FIFO entry */
       data |= (fifo[fifo_idx] & ~0xEEE);
 
+#ifdef HOOK_CPU
+      if (cpu_hook)
+        cpu_hook(HOOK_CRAM_R, 2, addr, data);
+#endif
+
 #ifdef LOGVDP
       error("[%d(%d)][%d(%d)] CRAM 0x%x read -> 0x%x (%x)\n", v_counter, (v_counter + (m68k.cycles - mcycles_vdp)/MCYCLES_PER_LINE)%lines_per_frame, m68k.cycles, m68k.cycles%MCYCLES_PER_LINE, addr, data, m68k_get_reg(M68K_REG_PC));
 #endif
@@ -2523,6 +2555,11 @@ static unsigned int vdp_68k_data_r_m5(void)
 
       /* Unused bits are set using data from next available FIFO entry */
       data |= (fifo[fifo_idx] & ~0xFF);
+
+#ifdef HOOK_CPU
+      if (cpu_hook)
+        cpu_hook(HOOK_VRAM_R, 2, addr, data);
+#endif
 
 #ifdef LOGVDP
       error("[%d(%d)][%d(%d)] 8-bit VRAM 0x%x read -> 0x%x (%x)\n", v_counter, (v_counter + (m68k.cycles - mcycles_vdp)/MCYCLES_PER_LINE)%lines_per_frame, m68k.cycles, m68k.cycles%MCYCLES_PER_LINE, addr, data, m68k_get_reg(M68K_REG_PC));

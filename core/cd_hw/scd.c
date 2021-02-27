@@ -442,10 +442,16 @@ static void s68k_poll_sync(unsigned int reg_mask)
   /* relative MAIN-CPU cycle counter */
   unsigned int cycles = (s68k.cycles * MCYCLES_PER_LINE) / SCYCLES_PER_LINE;
 
-  /* sync MAIN-CPU with SUB-CPU */
   if (!m68k.stopped)
   {
+	/* save current MAIN-CPU end cycle count (recursive execution is possible) */
+    int end_cycle = m68k.cycle_end;
+
+    /* sync MAIN-CPU with SUB-CPU */
     m68k_run(cycles);
+	
+	/* restore MAIN-CPU end cycle count */
+    m68k.cycle_end = end_cycle;
   }
 
   /* MAIN-CPU idle on register polling ? */
@@ -665,9 +671,15 @@ static unsigned int scd_read_word(unsigned int address)
     {
       /* relative MAIN-CPU cycle counter */
       unsigned int cycles = (s68k.cycles * MCYCLES_PER_LINE) / SCYCLES_PER_LINE;
+	  
+	  /* save current MAIN-CPU end cycle count (recursive execution is possible) */
+      int end_cycle = m68k.cycle_end;
 
       /* sync MAIN-CPU with SUB-CPU (Mighty Morphin Power Rangers) */
       m68k_run(cycles);
+	  
+	  /* restore MAIN-CPU end cycle count */
+      m68k.cycle_end = end_cycle;
     }
 
     s68k_poll_detect(3 << (address & 0x1e));
@@ -778,7 +790,7 @@ static void scd_write_byte(unsigned int address, unsigned int data)
 
     case 0x01: /* RESET status */
     {
-      /* RESET bit cleared ? */      
+      /* RESET bit cleared ? */
       if (!(data & 0x01))
       {
         /* reset CD hardware */
@@ -982,28 +994,6 @@ static void scd_write_byte(unsigned int address, unsigned int data)
       return;
     }
 
-    case 0x37: /* CDD control (controlled by BIOS, byte access only ?) */
-    {
-      /* CDD communication started ? */
-      if ((data & 0x04) && !(scd.regs[0x37>>1].byte.l & 0x04))
-      {
-        /* reset CDD cycle counter */
-        cdd.cycles = (scd.cycles - s68k.cycles) * 3;
-
-        /* set pending interrupt level 4 */
-        scd.pending |= (1 << 4);
-
-        /* update IRQ level if interrupt is enabled */
-        if (scd.regs[0x32>>1].byte.l & 0x10)
-        {
-          s68k_update_irq((scd.pending & scd.regs[0x32>>1].byte.l) >> 1);
-        }
-      }
-
-      scd.regs[0x37>>1].byte.l = data;
-      return;
-    }
-
     default:
     {
       /* SUB-CPU communication words */
@@ -1056,7 +1046,7 @@ static void scd_write_word(unsigned int address, unsigned int data)
       /* only update LED status (register $00 is reserved for MAIN-CPU, use $06 instead) */
       scd.regs[0x06>>1].byte.h = data >> 8;
 
-      /* RESET bit cleared ? */      
+      /* RESET bit cleared ? */
       if (!(data & 0x01))
       {
         /* reset CD hardware */
@@ -1275,6 +1265,53 @@ static void scd_write_word(unsigned int address, unsigned int data)
 
       /* update IRQ level */
       s68k_update_irq((scd.pending & data) >> 1);
+      return;
+    }
+	
+	case 0x34: /* CD Fader */
+    {
+      /* Wondermega hardware (CXD2554M digital filter) */
+      if (cdd.type == CD_TYPE_WONDERMEGA)
+      {
+        /* only MSB is latched by CXD2554M chip, LSB is ignored (8-bit digital filter) */
+        /* attenuator data is 7-bit only (bits 0-7) */
+        data = (data >> 8) & 0x7f;
+
+        /* scale CXD2554M volume (0-127) to full (LC7883KM compatible) volume range (0-1024) */
+        cdd.fader[1] = (1024 * data) / 127 ;
+      }
+
+      /* Wondermega M2 / X'Eye hardware (SM5841A digital filter) */
+      else if (cdd.type == CD_TYPE_WONDERMEGA_M2)
+      {
+        /* only MSB is latched by SM5841A chip, LSB is ignored (8-bit digital filter) */
+        data = data >> 8;
+
+        /* attenuator data is set only when command bit (bit 0) is cleared (other commands are ignored) */
+        if (data & 0x01) return;
+
+        /* attenuator data is 7-bit only (bits 8-1) and reverted (bit 1 = msb) */
+        /* bit reversing formula taken from http://graphics.stanford.edu/~seander/bithacks.html#ReverseByteWith32Bits */
+        data = (((((data * 0x0802) & 0x22110) | ((data * 0x8020) & 0x88440)) * 0x10101) >> 16) & 0x7f;
+
+        /* convert & scale SM5841A attenuation (127-0) to full (LC7883KM compatible) volume range (0-1024) */
+        cdd.fader[1] = (1024 * (127 - data)) / 127 ;
+      }
+
+      /* default CD hardware (LC7883KM digital filter) */
+      else
+      {
+        /* get LC7883KM volume data (12-bit) */
+        cdd.fader[1] = data >> 4 ;
+      }
+
+      return;
+    }
+	
+	case 0x36: /* CDD control */
+    {
+      /* only bit 2 is writable (bits [1:0] forced to 0 by default) */
+      scd.regs[0x37>>1].byte.l = data & 0x04;
       return;
     }
 
@@ -1532,7 +1569,6 @@ void scd_init(void)
 
 void scd_reset(int hard)
 {
-  /* TODO: figure what exactly is resetted when RESET bit is cleared by SUB-CPU */
   if (hard)
   {
     /* Clear all ASIC registers by default */
@@ -1574,11 +1610,17 @@ void scd_reset(int hard)
     s68k.cycles = 0;
     s68k_pulse_reset();
     s68k_pulse_halt();
+	
+	/* Reset frame cycle counter */
+    scd.cycles = 0;
   }
   else
   {
-    /* Clear only SUB-CPU side registers */
-    memset(&scd.regs[0x04>>1], 0, sizeof(scd.regs) - 4);
+    /* TODO: figure what exactly is reset when RESET bit is cleared by SUB-CPU */
+    /* Clear only SUB-CPU side registers (communication registers are not cleared, see msu-md-sample.bin) */
+    scd.regs[0x04>>1].w = 0x0000;
+    scd.regs[0x0c>>1].w = 0x0000;
+    memset(&scd.regs[0x30>>1], 0, sizeof(scd.regs) - 0x30);
   }
 
   /* SUB-CPU side default values */
@@ -1597,10 +1639,7 @@ void scd_reset(int hard)
 
   /* Reset Timer & Stopwatch counters */
   scd.timer = 0;
-  scd.stopwatch = 0;
-
-  /* Reset frame cycle counter */
-  scd.cycles = 0;
+  scd.stopwatch = s68k.cycles;
 
   /* Clear pending interrupts */
   scd.pending = 0;
@@ -1608,6 +1647,9 @@ void scd_reset(int hard)
   /* Clear CPU polling detection */
   memset(&m68k.poll, 0, sizeof(m68k.poll));
   memset(&s68k.poll, 0, sizeof(s68k.poll));
+  
+  /* reset CDD cycle counter */
+  cdd.cycles = (scd.cycles - s68k.cycles) * 3;
 
   /* Reset CD hardware */
   cdd_reset();
@@ -1618,6 +1660,10 @@ void scd_reset(int hard)
 
 void scd_update(unsigned int cycles)
 {
+  int m68k_end_cycles;
+  int s68k_run_cycles;
+  int s68k_end_cycles = scd.cycles + SCYCLES_PER_LINE;
+  
   /* update CDC DMA transfer */
   if (cdc.dma_w)
   {
@@ -1627,63 +1673,78 @@ void scd_update(unsigned int cycles)
   /* run both CPU in sync until end of line */
   do
   {
-    m68k_run(cycles);
-    s68k_run(scd.cycles + SCYCLES_PER_LINE);
-  }
-  while ((m68k.cycles < cycles) || (s68k.cycles < (scd.cycles + SCYCLES_PER_LINE)));
+    /* CD hardware remaining cycles until end of line */
+    s68k_run_cycles = s68k_end_cycles - scd.cycles;
 
-  /* increment CD hardware cycle counter */
-  scd.cycles += SCYCLES_PER_LINE;
-
-  /* CDD processing at 75Hz (one clock = 12500000/75 = 500000/3 CPU clocks) */
-  cdd.cycles += (SCYCLES_PER_LINE * 3);
-  if (cdd.cycles >= (500000 * 4))
-  {
-    /* reload CDD cycle counter */
-    cdd.cycles -= (500000 * 4);
-
-    /* update CDD sector */
-    cdd_update();
-
-    /* check if a new CDD command has been processed */
-    if (!(scd.regs[0x4a>>1].byte.l & 0xf0))
+    /* check Timer interrupt occurence */
+    if ((scd.timer > 0) && (scd.timer < s68k_run_cycles))
     {
-      /* reset CDD command wait flag */
-      scd.regs[0x4a>>1].byte.l = 0xf0;
+      /* adjust Sub-CPU and Main-CPU end cycle counters up to Timer interrupt occurence */
+      s68k_run_cycles = scd.timer;
+      m68k_end_cycles = mcycles_vdp + ((s68k_run_cycles * MCYCLES_PER_LINE) / SCYCLES_PER_LINE);
+    }
+    else
+    {
+      /* default Main-CPU end cycle counter (end of line) */
+      m68k_end_cycles = cycles;
+    }
 
-      /* pending level 4 interrupt */
-      scd.pending |= (1 << 4);
+    /* run both CPU in sync until required cycle counters */
+    m68k_run(m68k_end_cycles);
+    s68k_run(scd.cycles + s68k_run_cycles);
 
-      /* level 4 interrupt enabled */
-      if (scd.regs[0x32>>1].byte.l & 0x10)
+    /* increment CD hardware cycle counter */
+    scd.cycles += s68k_run_cycles;
+
+    /* CDD processing at 75Hz (one clock = 12500000/75 = 500000/3 CPU clocks) */
+    cdd.cycles += (s68k_run_cycles * 3);
+    if (cdd.cycles >= (500000 * 4))
+    {
+      /* reload CDD cycle counter */
+      cdd.cycles -= (500000 * 4);
+
+      /* update CDD sector */
+      cdd_update();
+
+      /* check if CDD communication is enabled */
+      if (scd.regs[0x37>>1].byte.l & 0x04)
       {
-        /* update IRQ level */
-        s68k_update_irq((scd.pending & scd.regs[0x32>>1].byte.l) >> 1);
+        /* pending level 4 interrupt */
+        scd.pending |= (1 << 4);
+
+        /* level 4 interrupt enabled */
+        if (scd.regs[0x32>>1].byte.l & 0x10)
+        {
+          /* update IRQ level */
+          s68k_update_irq((scd.pending & scd.regs[0x32>>1].byte.l) >> 1);
+        }
+      }
+    }
+
+
+    /* Timer */
+    if (scd.timer)
+    {
+      /* decrement timer */
+      scd.timer -= s68k_run_cycles;
+      if (scd.timer <= 0)
+      {
+        /* reload timer (one timer clock = 384 CPU cycles) */
+        scd.timer += (scd.regs[0x30>>1].byte.l * TIMERS_SCYCLES_RATIO);
+
+        /* level 3 interrupt enabled ? */
+        if (scd.regs[0x32>>1].byte.l & 0x08)
+        {
+          /* trigger level 3 interrupt */
+          scd.pending |= (1 << 3);
+
+          /* update IRQ level */
+          s68k_update_irq((scd.pending & scd.regs[0x32>>1].byte.l) >> 1);
+        }
       }
     }
   }
-
-  /* Timer */
-  if (scd.timer)
-  {
-    /* decrement timer */
-    scd.timer -= SCYCLES_PER_LINE;
-    if (scd.timer <= 0)
-    {
-      /* reload timer (one timer clock = 384 CPU cycles) */
-      scd.timer += (scd.regs[0x30>>1].byte.l * TIMERS_SCYCLES_RATIO);
-
-      /* level 3 interrupt enabled ? */
-      if (scd.regs[0x32>>1].byte.l & 0x08)
-      {
-        /* trigger level 3 interrupt */
-        scd.pending |= (1 << 3);
-
-        /* update IRQ level */
-        s68k_update_irq((scd.pending & scd.regs[0x32>>1].byte.l) >> 1);
-      }
-    }
-  }
+  while ((m68k.cycles < cycles) || (s68k.cycles < s68k_end_cycles));
 
   /* GFX processing */
   if (scd.regs[0x58>>1].byte.h & 0x80)

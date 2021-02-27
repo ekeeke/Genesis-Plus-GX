@@ -199,9 +199,6 @@ void cdd_init(int samplerate)
 
 void cdd_reset(void)
 {
-  /* reset cycle counter */
-  cdd.cycles = 0;
-  
   /* reset drive access latency */
   cdd.latency = 0;
   
@@ -212,10 +209,10 @@ void cdd_reset(void)
   cdd.lba = 0;
 
   /* reset status */
-  cdd.status = cdd.loaded ? CD_STOP : NO_DISC;
+  cdd.status = cdd.loaded ? CD_TOC : NO_DISC;
   
   /* reset CD-DA fader (full volume) */
-  cdd.volume = 0x400;
+  cdd.fader[0] = cdd.fader[1] = 0x400;
 
   /* clear CD-DA output */
   cdd.audio[0] = cdd.audio[1] = 0;
@@ -242,7 +239,7 @@ int cdd_context_save(uint8 *state)
 
   save_param(&cdd.lba, sizeof(cdd.lba));
   save_param(&cdd.scanOffset, sizeof(cdd.scanOffset));
-  save_param(&cdd.volume, sizeof(cdd.volume));
+  save_param(&cdd.fader, sizeof(cdd.fader));
   save_param(&cdd.status, sizeof(cdd.status));
 
   return bufferptr;
@@ -278,7 +275,7 @@ int cdd_context_load(uint8 *state)
   }
   load_param(&cdd.lba, sizeof(cdd.lba));
   load_param(&cdd.scanOffset, sizeof(cdd.scanOffset));
-  load_param(&cdd.volume, sizeof(cdd.volume));
+  load_param(&cdd.fader, sizeof(cdd.fader));
   load_param(&cdd.status, sizeof(cdd.status));
 
   /* adjust current LBA within track limit */
@@ -366,7 +363,7 @@ int cdd_load(char *filename, char *header)
     return (-1);
 
 #if defined(USE_LIBCHDR)
-  if (!memcmp(".chd", &filename[strlen(filename) - 4], 4) || !memcmp(".CHD", &filename[strlen(filename) - 4], 4))
+  if (!memcmp("chd", &filename[strlen(filename) - 3], 3) || !memcmp("CHD", &filename[strlen(filename) - 3], 3))
   {
     int sectors = 0;
     char metadata[256];
@@ -528,7 +525,7 @@ int cdd_load(char *filename, char *header)
   strncpy(fname, filename, 256);
 
   /* check loaded file extension */
-  if (memcmp(".cue", &filename[strlen(filename) - 4], 4) && memcmp(".CUE", &filename[strlen(filename) - 4], 4))
+  if (memcmp("cue", &filename[strlen(filename) - 3], 3) && memcmp("CUE", &filename[strlen(filename) - 3], 3))
   {
     int len;
 
@@ -1092,16 +1089,7 @@ int cdd_load(char *filename, char *header)
       sprintf(ptr, extensions[i], cdd.toc.last + offset);
       fd = cdStreamOpen(fname);
     }
-  }
 
-  /* CD tracks found ? */
-  if (cdd.toc.last)
-  {
-    /* Lead-out */
-    cdd.toc.tracks[cdd.toc.last].start = cdd.toc.end;
-
-    /* CD mounted */
-    cdd.loaded = 1;
 
     /* Valid CD-ROM Mode 1 track found ? */
     if (cdd.toc.tracks[0].type == TYPE_MODE1)
@@ -1188,6 +1176,11 @@ int cdd_load(char *filename, char *header)
           }
           while (cdd.toc.last < 29);
         }
+		else if (strstr(header + 0x180,"T-06201-01") != NULL)
+        {
+          /* Sewer Shark (USA) (REV1) */
+          /* no audio track */
+        }
         else
         {
           /* default TOC (99 tracks & 2s per audio tracks) */
@@ -1202,6 +1195,17 @@ int cdd_load(char *filename, char *header)
         }
       }
     }
+
+  }
+
+  /* CD tracks found ? */
+  if (cdd.toc.last)
+  {
+    /* Lead-out */
+    cdd.toc.tracks[cdd.toc.last].start = cdd.toc.end;
+
+    /* CD mounted */
+    cdd.loaded = 1;
 
     /* Automatically try to open associated subcode data file */
     strncpy(&fname[strlen(fname) - 4], ".sub", 4);
@@ -1367,10 +1371,10 @@ void cdd_read_audio(unsigned int samples)
     int i, mul, l, r;
 
     /* current CD-DA fader volume */
-    int curVol = cdd.volume;
+    int curVol = cdd.fader[0];
 
     /* CD-DA fader volume setup (0-1024) */
-    int endVol = scd.regs[0x34>>1].w >> 4;
+    int endVol = cdd.fader[1];
 
     cdd.audioSampleOffset += samples;
 
@@ -1400,7 +1404,7 @@ void cdd_read_audio(unsigned int samples)
       }
 
       /* save current CD-DA fader volume */
-      cdd.volume = curVol;
+      cdd.fader[0] = curVol;
 
       blip_end_frame(snd.blips[2], samples);
       return;
@@ -1590,7 +1594,7 @@ void cdd_read_audio(unsigned int samples)
     }
 
     /* save current CD-DA fader volume */
-    cdd.volume = curVol;
+    cdd.fader[0] = curVol;
 
     /* save last audio output for next frame */
     cdd.audio[0] = prev_l;
@@ -1662,30 +1666,16 @@ void cdd_update(void)
   error("LBA = %d (track %d)(latency=%d)\n", cdd.lba, cdd.index, cdd.latency);
 #endif
 
-  /* seeking disc */
-  if (cdd.status == CD_SEEK)
+  /* drive latency */
+  if (cdd.latency > 0)
   {
-    /* drive latency */
-    if (cdd.latency > 0)
-    {
-      cdd.latency--;
-      return;
-    }
-
-    /* drive is ready */
-    cdd.status = CD_PAUSE;
+    cdd.latency--;
+    return;
   }
 
   /* reading disc */
-  else if (cdd.status == CD_PLAY)
+  if (cdd.status == CD_PLAY)
   {
-    /* drive latency */
-    if (cdd.latency > 0)
-    {
-      cdd.latency--;
-      return;
-    }
-
     /* end of disc detection */
     if (cdd.index >= cdd.toc.last)
     {
@@ -1900,17 +1890,48 @@ void cdd_process(void)
   {
     case 0x00:  /* Drive Status */
     {
-      /* RS1-RS8 normally unchanged */
-      scd.regs[0x38>>1].byte.h = cdd.status;
-
-      /* unless RS1 indicated invalid track infos */
-      if (scd.regs[0x38>>1].byte.l == 0x0f)
+      /* RS0-RS1 are normally unchanged unless reported drive status needs to be updated (i.e previous drive command has been processed) */
+      /* Note: this function is called one 75hz frame ahead of CDD update so latency counter is always one step ahead of upcoming status */
+      /* Radical Rex and Annet Futatabi both need at least respectively 2 and 3 interrupts with 'playing' status returned before sectors start getting incremented */
+      if (cdd.latency <= 3)
       {
-        /* and drive is now ready */
-        if (!cdd.latency)
+        /* update reported drive status */
+        scd.regs[0x38>>1].byte.h = cdd.status;
+
+        /* check if RS1 indicated invalid track infos (during seeking) */
+        if (scd.regs[0x38>>1].byte.l == 0x0f)
         {
-          /* then return valid track infos, e.g current track number in RS2-RS3 (fixes Lunar - The Silver Star) */
-          scd.regs[0x38>>1].byte.l = 0x02;
+          /* seeking has ended so we return valid track infos, e.g current absolute time by default (fixes Lunar - The Silver Star) */
+          int lba = cdd.lba + 150;
+          scd.regs[0x38>>1].byte.l = 0x00;
+          scd.regs[0x3a>>1].w = lut_BCD_16[(lba/75)/60];
+          scd.regs[0x3c>>1].w = lut_BCD_16[(lba/75)%60];
+          scd.regs[0x3e>>1].w = lut_BCD_16[(lba%75)];
+          scd.regs[0x40>>1].byte.h = cdd.toc.tracks[cdd.index].type ? 0x04 : 0x00; /* Current block flags in RS8 (bit0 = mute status, bit1: pre-emphasis status, bit2: track type) */
+        }
+
+        /* otherwise, check if RS2-RS8 need to be updated */
+        else if (scd.regs[0x38>>1].byte.l == 0x00)
+        {
+          /* current absolute time */
+          int lba = cdd.lba + 150;
+          scd.regs[0x3a>>1].w = lut_BCD_16[(lba/75)/60];
+          scd.regs[0x3c>>1].w = lut_BCD_16[(lba/75)%60];
+          scd.regs[0x3e>>1].w = lut_BCD_16[(lba%75)];
+          scd.regs[0x40>>1].byte.h = cdd.toc.tracks[cdd.index].type ? 0x04 : 0x00; /* Current block flags in RS8 (bit0 = mute status, bit1: pre-emphasis status, bit2: track type) */
+        }
+        else if (scd.regs[0x38>>1].byte.l == 0x01)
+        {
+          /* current track relative time */
+          int lba = abs(cdd.lba - cdd.toc.tracks[cdd.index].start);
+          scd.regs[0x3a>>1].w = lut_BCD_16[(lba/75)/60];
+          scd.regs[0x3c>>1].w = lut_BCD_16[(lba/75)%60];
+          scd.regs[0x3e>>1].w = lut_BCD_16[(lba%75)];
+          scd.regs[0x40>>1].byte.h = cdd.toc.tracks[cdd.index].type ? 0x04 : 0x00; /* Current block flags in RS8 (bit0 = mute status, bit1: pre-emphasis status, bit2: track type) */
+        }
+        else if (scd.regs[0x38>>1].byte.l == 0x02)
+        {
+          /* current track number */
           scd.regs[0x3a>>1].w = (cdd.index < cdd.toc.last) ? lut_BCD_16[cdd.index + 1] : 0x0A0A;
         }
       }
@@ -1920,21 +1941,21 @@ void cdd_process(void)
     case 0x01:  /* Stop Drive */
     {
       /* update status */
-      cdd.status = cdd.loaded ? CD_STOP : NO_DISC;
+      cdd.status = cdd.loaded ? CD_TOC : NO_DISC;
 
       /* no audio track playing */
       scd.regs[0x36>>1].byte.h = 0x01;
 
-      /* RS1-RS8 ignored, expects 0x0 (drive busy ?) in RS0 once */
-      scd.regs[0x38>>1].w = CD_BUSY << 8;
+      /* RS1-RS8 ignored, expects 0x0 (CD_STOP) in RS0 once */
+      scd.regs[0x38>>1].w = CD_STOP << 8;
       scd.regs[0x3a>>1].w = 0x0000;
       scd.regs[0x3c>>1].w = 0x0000;
       scd.regs[0x3e>>1].w = 0x0000;
-      scd.regs[0x40>>1].w = ~CD_BUSY & 0x0f;
+      scd.regs[0x40>>1].w = ~CD_STOP & 0x0f;
       return;
     }
 
-    case 0x02:  /* Read TOC */
+    case 0x02:  /* Report TOC infos */
     {
       /* Infos automatically retrieved by CDD processor from Q-Channel */
       /* commands 0x00-0x02 (current block) and 0x03-0x05 (Lead-In) */
@@ -2005,11 +2026,22 @@ void cdd_process(void)
           scd.regs[0x40>>1].byte.h = track % 10;  /* Track Number (low digit) */
           break;
         }
+		
+		case 0x06:  /* Latest Error Information */
+        {
+          scd.regs[0x38>>1].w = (cdd.status << 8) | 0x06;
+          scd.regs[0x3a>>1].w = 0x0000; /* no error */
+          scd.regs[0x3c>>1].w = 0x0000;
+          scd.regs[0x3e>>1].w = 0x0000;
+          scd.regs[0x40>>1].byte.h = 0x00;
+          break;
+        }
+
 
         default:
         {
 #ifdef LOG_ERROR
-          error("Unknown CDD Command %02X (%X)\n", scd.regs[0x44>>1].byte.l, s68k.pc);
+          error("Invalid CDD request code %02X (%X)\n", scd.regs[0x44>>1].byte.l, s68k.pc);
 #endif
           return;
         }
@@ -2031,10 +2063,9 @@ void cdd_process(void)
       if (!cdd.latency)
       {
         /* Fixes a few games hanging because they expect data to be read with some delay */
-        /* Radical Rex needs at least one interrupt delay */
-        /* Wolf Team games (Anet Futatabi, Cobra Command, Earnest Evans, Road Avenger & Time Gal) need at least 10 interrupts delay  */
-        /* Space Adventure Cobra (2nd morgue scene) needs at least 13 interrupts delay (incl. seek time, so 10 is OK) */
-        cdd.latency = 10;
+        /* Wolf Team games (Annet Futatabi, Aisle Lord, Cobra Command, Earnest Evans, Road Avenger & Time Gal) need at least 11 interrupts delay  */
+        /* Space Adventure Cobra (2nd morgue scene) needs at least 13 interrupts delay (incl. seek time, so 11 is OK) */
+        cdd.latency = 11;
       }
 
       /* CD drive seek time */
@@ -2124,15 +2155,16 @@ void cdd_process(void)
       /* no audio track playing (yet) */
       scd.regs[0x36>>1].byte.h = 0x01;
 
-      /* update status */
+      /* update status (reported to host once seeking has ended) */
       cdd.status = CD_PLAY;
 
+      /* RS0 should indicates seeking until drive is ready (fixes audio delay in Bari Arm) */
       /* RS1=0xf to invalidate track infos in RS2-RS8 until drive is ready (fixes Snatcher Act 2 start cutscene) */
-      scd.regs[0x38>>1].w = (CD_PLAY << 8) | 0x0f;
+      scd.regs[0x38>>1].w = (CD_SEEK << 8) | 0x0f;
       scd.regs[0x3a>>1].w = 0x0000;
       scd.regs[0x3c>>1].w = 0x0000;
       scd.regs[0x3e>>1].w = 0x0000;
-      scd.regs[0x40>>1].w = ~(CD_PLAY + 0xf) & 0x0f;
+      scd.regs[0x40>>1].w = ~(CD_SEEK + 0xf) & 0x0f;
       return;
     }
 
@@ -2232,8 +2264,8 @@ void cdd_process(void)
       /* no audio track playing */
       scd.regs[0x36>>1].byte.h = 0x01;
 
-      /* update status */
-      cdd.status = CD_SEEK;
+      /* update status (reported to host once seeking has ended) */
+      cdd.status = CD_PAUSE;
 
       /* RS1=0xf to invalidate track infos in RS2-RS8 while seeking (fixes Final Fight CD intro when seek time is emulated) */
       scd.regs[0x38>>1].w = (CD_SEEK << 8) | 0x0f;
@@ -2281,7 +2313,6 @@ void cdd_process(void)
       break;
     }
 
-
     case 0x0a:  /* N-Track Jump Control ? (usually sent before CD_SEEK or CD_PLAY commands) */
     {
       /* TC3 corresponds to seek direction (00=forward, FF=reverse) */
@@ -2303,14 +2334,14 @@ void cdd_process(void)
       scd.regs[0x36>>1].byte.h = 0x01;
 
       /* update status */
-      cdd.status = cdd.loaded ? CD_STOP : NO_DISC;
+      cdd.status = cdd.loaded ? CD_TOC : NO_DISC;
 
-      /* RS1-RS8 ignored, expects 0x0 (drive busy ?) in RS0 once */
-      scd.regs[0x38>>1].w = CD_BUSY << 8;
+      /* RS1-RS8 ignored, expects 0x0 (CD_STOP) in RS0 once */
+      scd.regs[0x38>>1].w = CD_STOP << 8;
       scd.regs[0x3a>>1].w = 0x0000;
       scd.regs[0x3c>>1].w = 0x0000;
       scd.regs[0x3e>>1].w = 0x0000;
-      scd.regs[0x40>>1].w = ~CD_BUSY & 0x0f;
+      scd.regs[0x40>>1].w = ~CD_STOP & 0x0f;
 
 #ifdef CD_TRAY_CALLBACK
       CD_TRAY_CALLBACK
@@ -2338,8 +2369,8 @@ void cdd_process(void)
     }
 
     default:  /* Unknown command */
-#ifdef LOG_CDD
-      error("Unknown CDD Command !!!\n");
+#ifdef LOG_ERROR
+      error("Unsupported CDD command %02X (%X)\n", scd.regs[0x42>>1].byte.h & 0x0f, s68k.pc);
 #endif
       scd.regs[0x38>>1].byte.h = cdd.status;
       break;

@@ -54,15 +54,26 @@
 #define cdd scd.cdd_hw
 
 /* CDD status */
-#define CD_BUSY  0x00
-#define CD_PLAY  0x01
-#define CD_SEEK  0x02
-#define CD_SCAN  0x03
-#define CD_PAUSE 0x04
-#define CD_OPEN  0x05
-#define CD_STOP  0x09
-#define NO_DISC  0x0B
-#define CD_END   0x0C
+#define CD_STOP       0x00
+#define CD_PLAY       0x01
+#define CD_SEEK       0x02
+#define CD_SCAN       0x03
+#define CD_PAUSE      0x04
+#define CD_OPEN       0x05
+#define NO_VALID_CHK  0x06  /* unused */
+#define NO_VALID_CMD  0x07  /* unused */
+#define CD_ERROR      0x08  /* unused */
+#define CD_TOC        0x09
+#define CD_TRACK_MOVE 0x0A  /* unused */
+#define NO_DISC       0x0B
+#define CD_END        0x0C
+#define CD_TRAY       0x0E  /* unused */
+#define CD_TEST       0x0F  /* unusec */
+
+/* CD-DA digital filter types */
+#define CD_TYPE_DEFAULT       0x00
+#define CD_TYPE_WONDERMEGA    0x01
+#define CD_TYPE_WONDERMEGA_M2 0x02
 
 /* CD track */
 typedef struct
@@ -103,11 +114,13 @@ typedef struct
 {
   uint32 cycles;
   uint32 latency;
+  int type;
   int loaded;
   int index;
   int lba;
   int scanOffset;
   int volume;
+  uint16 fader[2];
   uint8 status;
   uint16 sectorSize;
   toc_t toc;
