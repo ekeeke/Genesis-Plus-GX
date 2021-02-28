@@ -244,6 +244,24 @@ struct retro_core_option_definition option_defs_pt_br[] = {
    },
 #endif
    {
+      "genesis_plus_gx_frameskip",
+      "Pulo de quadro",
+      "Pula quadros para evitar subexecução do buffer de áudio (estalos). Melhora o desempenho em detrimento da suavidade visual. 'Auto' pula os quadros quando aconselhado pela interface. 'Manual' utiliza a configuração 'Limite de pulo de quadro (%).",
+      {
+         { NULL, NULL },
+      },
+      "disabled"
+   },
+   {
+      "genesis_plus_gx_frameskip_threshold",
+      "Limite de pulo de quadro (%)",
+      "Quando 'Pulo de quadro' é definido como 'Manual', especifica o limite de ocupação do buffer de áudio (porcentagem) abaixo do qual os quadros serão ignorados. Valores mais altos reduzem o risco de estalos, fazendo com que os quadros sejam suprimidos com mais frequência.",
+      {
+         { NULL, NULL },
+      },
+      "33"
+   },
+   {
       "genesis_plus_gx_blargg_ntsc_filter",
       "Filtro Blargg NTSC",
       "Aplica um filtro de vídeo para imitar vários sinais de TV NTSC.",
@@ -283,6 +301,15 @@ struct retro_core_option_definition option_defs_pt_br[] = {
       "genesis_plus_gx_gg_extra",
       "Tela estendida do Game Gear",
       "Força os títulos do Game Gear a serem executados no modo 'SMS', com uma resolução aumentada de 256x192. Pode mostrar conteúdo adicional, mas geralmente exibe uma borda de dados corrompidos/indesejados de imagem.",
+      {
+         { NULL, NULL },
+      },
+      "disabled"
+   },
+   {
+      "genesis_plus_gx_left_border",
+      "Ocultar borda esquerda do Master System",
+      "Corta 8 pixels do lado esquerdo e direito da tela ao executar os jogos do Master System, ocultando assim a borda vista no lado esquerdo da tela",
       {
          { NULL, NULL },
       },
@@ -359,6 +386,188 @@ struct retro_core_option_definition option_defs_pt_br[] = {
       },
       "disabled"
    },
+#ifdef USE_PER_SOUND_CHANNELS_CONFIG
+   {
+      "genesis_plus_gx_show_advanced_audio_settings",
+      "Mostrar configurações avançadas de volume de áudio (reabrir menu)",
+      "Ativa a configuração dos parâmetros do canal de áudio de baixo nível. NOTA: O Menu rápido deve ser alternado para que esta configuração tenha efeito.",
+      {
+         { NULL, NULL},
+      },
+      "disabled"
+   },
+   {
+      "genesis_plus_gx_psg_channel_0_volume",
+      "% do volume do tom do PSG do canal 0",
+      "Reduz o volume do tom PSG do canal 0.",
+      {
+         { NULL, NULL },
+      },
+      "100"
+   },
+   {
+      "genesis_plus_gx_psg_channel_1_volume",
+      "% do volume do tom do PSG do canal 1",
+      "Reduz o volume do tom PSG do canal 1.",
+      {
+         { NULL, NULL },
+      },
+      "100"
+   },
+   {
+      "genesis_plus_gx_psg_channel_2_volume",
+      "% do volume do tom do PSG do canal 2",
+      "Reduz o volume do tom PSG do canal 2.",
+      {
+         { NULL, NULL },
+      },
+      "100"
+   },
+   {
+      "genesis_plus_gx_psg_channel_3_volume",
+      "% do volume do canal 3 de ruído do PSG",
+      "Reduz o volume do ruído do PSG do canal 3.",
+      {
+         { NULL, NULL },
+      },
+      "100"
+   },
+   {
+      "genesis_plus_gx_md_channel_0_volume",
+      "% do volume do canal 0 do FM do Mega Drive",
+      "Reduz o volume do canal 0 do FM do Mega Drive. Só funciona com o emulador de FM do MAME.",
+      {
+         { NULL, NULL },
+      },
+      "100"
+   },
+   {
+      "genesis_plus_gx_md_channel_1_volume",
+      "% do volume do canal 1 do FM do Mega Drive",
+      "Reduz o volume do canal 1 do FM do Mega Drive. Só funciona com o emulador de FM do MAME.",
+      {
+         { NULL, NULL },
+      },
+      "100"
+   },
+   {
+      "genesis_plus_gx_md_channel_2_volume",
+      "% do volume do canal 2 do FM do Mega Drive",
+      "Reduz o volume do canal 2 do FM do Mega Drive. Só funciona com o emulador de FM do MAME.",
+      {
+         { NULL, NULL },
+      },
+      "100"
+   },
+   {
+      "genesis_plus_gx_md_channel_3_volume",
+      "% do volume do canal 3 do FM do Mega Drive",
+      "Reduz o volume do canal 3 do FM do Mega Drive. Só funciona com o emulador de FM do MAME.",
+      {
+         { NULL, NULL },
+      },
+      "100"
+   },
+   {
+      "genesis_plus_gx_md_channel_4_volume",
+      "% do volume do canal 4 do FM do Mega Drive",
+      "Reduz o volume do canal 4 do FM do Mega Drive. Só funciona com o emulador de FM do MAME.",
+      {
+         { NULL, NULL },
+      },
+      "100"
+   },
+   {
+      "genesis_plus_gx_md_channel_5_volume",
+      "M% do volume do canal 5 do FM do Mega Drive",
+      "Reduz o volume do canal 5 do FM do Mega Drive. Só funciona com o emulador de FM do MAME.",
+      {
+         { NULL, NULL },
+      },
+      "100"
+   },
+   {
+      "genesis_plus_gx_sms_fm_channel_0_volume",
+      "% do volume do canal 0 do FM (YM2413) do Master System",
+      "Reduz o volume do canal 0 do FM do Master System.",
+      {
+         { NULL, NULL },
+      },
+      "100"
+   },
+   {
+      "genesis_plus_gx_sms_fm_channel_1_volume",
+      "% do volume do canal 1 do FM (YM2413) do Master System",
+      "Reduz o volume do canal 1 do FM do Master System.",
+      {
+         { NULL, NULL },
+      },
+      "100"
+   },
+   {
+      "genesis_plus_gx_sms_fm_channel_2_volume",
+      "% do volume do canal 2 do FM (YM2413) do Master System",
+      "Reduz o volume do canal 2 do FM do Master System.",
+      {
+         { NULL, NULL },
+      },
+      "100"
+   },
+   {
+      "genesis_plus_gx_sms_fm_channel_3_volume",
+      "% do volume do canal 3 do FM (YM2413) do Master System",
+      "Reduz o volume do canal 3 do FM do Master System.",
+      {
+         { NULL, NULL },
+      },
+      "100"
+   },
+   {
+      "genesis_plus_gx_sms_fm_channel_4_volume",
+      "% do volume do canal 4 do FM (YM2413) do Master System",
+      "Reduz o volume do canal 4 do FM do Master System.",
+      {
+         { NULL, NULL },
+      },
+      "100"
+   },
+   {
+      "genesis_plus_gx_sms_fm_channel_5_volume",
+      "% do volume do canal 5 do FM (YM2413) do Master System",
+      "Reduz o volume do canal 5 do FM do Master System.",
+      {
+         { NULL, NULL },
+      },
+      "100"
+   },
+   {
+      "genesis_plus_gx_sms_fm_channel_6_volume",
+      "% do volume do canal 6 do FM (YM2413) do Master System",
+      "Reduz o volume do canal 6 do FM do Master System.",
+      {
+         { NULL, NULL },
+      },
+      "100"
+   },
+   {
+      "genesis_plus_gx_sms_fm_channel_7_volume",
+      "% do volume do canal 7 do FM (YM2413) do Master System",
+      "Reduz o volume do canal 7 do FM do Master System.",
+      {
+         { NULL, NULL },
+      },
+      "100"
+   },
+   {
+      "genesis_plus_gx_sms_fm_channel_8_volume",
+      "% do volume do canal 8 do FM (YM2413) do Master System",
+      "Reduz o volume do canal 8 do FM do Master System.",
+      {
+         { NULL, NULL },
+      },
+      "100"
+   },
+#endif
    { NULL, NULL, NULL, {{0}}, NULL },
 };
 
