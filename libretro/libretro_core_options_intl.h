@@ -425,7 +425,7 @@ struct retro_core_option_definition option_defs_pt_br[] = {
    },
    {
       "genesis_plus_gx_psg_channel_3_volume",
-      "% do volume do canal 3 de ruído do PSG",
+      "% do volume de ruído do PSG do canal 3",
       "Reduz o volume do ruído do PSG do canal 3.",
       {
          { NULL, NULL },
@@ -434,8 +434,8 @@ struct retro_core_option_definition option_defs_pt_br[] = {
    },
    {
       "genesis_plus_gx_md_channel_0_volume",
-      "% do volume do canal 0 do FM do Mega Drive",
-      "Reduz o volume do canal 0 do FM do Mega Drive. Só funciona com o emulador de FM do MAME.",
+      "% do volume do FM do Mega Drive do canal 0",
+      "Reduz o volume do FM do Mega Drive do canal 0. Só funciona com o emulador de FM do MAME.",
       {
          { NULL, NULL },
       },
@@ -443,8 +443,8 @@ struct retro_core_option_definition option_defs_pt_br[] = {
    },
    {
       "genesis_plus_gx_md_channel_1_volume",
-      "% do volume do canal 1 do FM do Mega Drive",
-      "Reduz o volume do canal 1 do FM do Mega Drive. Só funciona com o emulador de FM do MAME.",
+      "% do volume do FM do Mega Drive do canal 1",
+      "Reduz o volume do FM do Mega Drive do canal 1. Só funciona com o emulador de FM do MAME.",
       {
          { NULL, NULL },
       },
@@ -452,8 +452,8 @@ struct retro_core_option_definition option_defs_pt_br[] = {
    },
    {
       "genesis_plus_gx_md_channel_2_volume",
-      "% do volume do canal 2 do FM do Mega Drive",
-      "Reduz o volume do canal 2 do FM do Mega Drive. Só funciona com o emulador de FM do MAME.",
+      "% do volume do FM do Mega Drive do canal 2",
+      "Reduz o volume do FM do Mega Drive do canal 2. Só funciona com o emulador de FM do MAME.",
       {
          { NULL, NULL },
       },
@@ -461,8 +461,8 @@ struct retro_core_option_definition option_defs_pt_br[] = {
    },
    {
       "genesis_plus_gx_md_channel_3_volume",
-      "% do volume do canal 3 do FM do Mega Drive",
-      "Reduz o volume do canal 3 do FM do Mega Drive. Só funciona com o emulador de FM do MAME.",
+      "% do volume do FM do Mega Drive do canal 3",
+      "Reduz o volume do FM do Mega Drive do canal 3. Só funciona com o emulador de FM do MAME.",
       {
          { NULL, NULL },
       },
@@ -470,8 +470,8 @@ struct retro_core_option_definition option_defs_pt_br[] = {
    },
    {
       "genesis_plus_gx_md_channel_4_volume",
-      "% do volume do canal 4 do FM do Mega Drive",
-      "Reduz o volume do canal 4 do FM do Mega Drive. Só funciona com o emulador de FM do MAME.",
+      "% do volume do FM do Mega Drive do canal 4",
+      "Reduz o volume do FM do Mega Drive do canal 4. Só funciona com o emulador de FM do MAME.",
       {
          { NULL, NULL },
       },
@@ -479,8 +479,8 @@ struct retro_core_option_definition option_defs_pt_br[] = {
    },
    {
       "genesis_plus_gx_md_channel_5_volume",
-      "M% do volume do canal 5 do FM do Mega Drive",
-      "Reduz o volume do canal 5 do FM do Mega Drive. Só funciona com o emulador de FM do MAME.",
+      "M% do volume do FM do Mega Drive do canal 5",
+      "Reduz o volume do FM do Mega Drive do canal 5. Só funciona com o emulador de FM do MAME.",
       {
          { NULL, NULL },
       },
@@ -488,8 +488,8 @@ struct retro_core_option_definition option_defs_pt_br[] = {
    },
    {
       "genesis_plus_gx_sms_fm_channel_0_volume",
-      "% do volume do canal 0 do FM (YM2413) do Master System",
-      "Reduz o volume do canal 0 do FM do Master System.",
+      "% do volume do som FM do Master System (YM2413) do canal 0",
+      "Reduz o volume do som FM do Master System do canal 0.",
       {
          { NULL, NULL },
       },
@@ -497,8 +497,8 @@ struct retro_core_option_definition option_defs_pt_br[] = {
    },
    {
       "genesis_plus_gx_sms_fm_channel_1_volume",
-      "% do volume do canal 1 do FM (YM2413) do Master System",
-      "Reduz o volume do canal 1 do FM do Master System.",
+      "% do volume do som FM do Master System (YM2413) do canal 1",
+      "Reduz o volume do som FM do Master System do canal 1.",
       {
          { NULL, NULL },
       },
@@ -506,8 +506,8 @@ struct retro_core_option_definition option_defs_pt_br[] = {
    },
    {
       "genesis_plus_gx_sms_fm_channel_2_volume",
-      "% do volume do canal 2 do FM (YM2413) do Master System",
-      "Reduz o volume do canal 2 do FM do Master System.",
+      "% do volume do som FM do Master System (YM2413) do canal 2",
+      "Reduz o volume do som FM do Master System do canal 2.",
       {
          { NULL, NULL },
       },
@@ -515,8 +515,8 @@ struct retro_core_option_definition option_defs_pt_br[] = {
    },
    {
       "genesis_plus_gx_sms_fm_channel_3_volume",
-      "% do volume do canal 3 do FM (YM2413) do Master System",
-      "Reduz o volume do canal 3 do FM do Master System.",
+      "% do volume do som FM do Master System (YM2413) do canal 3",
+      "Reduz o volume do som FM do Master System do canal 3.",
       {
          { NULL, NULL },
       },
@@ -524,8 +524,8 @@ struct retro_core_option_definition option_defs_pt_br[] = {
    },
    {
       "genesis_plus_gx_sms_fm_channel_4_volume",
-      "% do volume do canal 4 do FM (YM2413) do Master System",
-      "Reduz o volume do canal 4 do FM do Master System.",
+      "% do volume do som FM do Master System (YM2413) do canal 4",
+      "Reduz o volume do som FM do Master System do canal 4.",
       {
          { NULL, NULL },
       },
@@ -533,8 +533,8 @@ struct retro_core_option_definition option_defs_pt_br[] = {
    },
    {
       "genesis_plus_gx_sms_fm_channel_5_volume",
-      "% do volume do canal 5 do FM (YM2413) do Master System",
-      "Reduz o volume do canal 5 do FM do Master System.",
+      "% do volume do som FM do Master System (YM2413) do canal 5",
+      "Reduz o volume do som FM do Master System do canal 5.",
       {
          { NULL, NULL },
       },
@@ -542,8 +542,8 @@ struct retro_core_option_definition option_defs_pt_br[] = {
    },
    {
       "genesis_plus_gx_sms_fm_channel_6_volume",
-      "% do volume do canal 6 do FM (YM2413) do Master System",
-      "Reduz o volume do canal 6 do FM do Master System.",
+      "% do volume do som FM do Master System (YM2413) do canal 6",
+      "Reduz o volume do som FM do Master System do canal 6.",
       {
          { NULL, NULL },
       },
@@ -551,8 +551,8 @@ struct retro_core_option_definition option_defs_pt_br[] = {
    },
    {
       "genesis_plus_gx_sms_fm_channel_7_volume",
-      "% do volume do canal 7 do FM (YM2413) do Master System",
-      "Reduz o volume do canal 7 do FM do Master System.",
+      "% do volume do som FM do Master System (YM2413) do canal 7",
+      "Reduz o volume do som FM do Master System do canal 7.",
       {
          { NULL, NULL },
       },
@@ -560,8 +560,8 @@ struct retro_core_option_definition option_defs_pt_br[] = {
    },
    {
       "genesis_plus_gx_sms_fm_channel_8_volume",
-      "% do volume do canal 8 do FM (YM2413) do Master System",
-      "Reduz o volume do canal 8 do FM do Master System.",
+      "% do volume do som FM do Master System (YM2413) do canal 8",
+      "Reduz o volume do som FM do Master System do canal 8.",
       {
          { NULL, NULL },
       },
