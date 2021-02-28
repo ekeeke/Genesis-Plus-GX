@@ -479,7 +479,7 @@ struct retro_core_option_definition option_defs_pt_br[] = {
    },
    {
       "genesis_plus_gx_md_channel_5_volume",
-      "M% do volume do FM do Mega Drive do canal 5",
+      "% do volume do FM do Mega Drive do canal 5",
       "Reduz o volume do FM do Mega Drive do canal 5. Só funciona com o emulador de FM do MAME.",
       {
          { NULL, NULL },
