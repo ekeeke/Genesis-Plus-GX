@@ -3,7 +3,7 @@
  *  Z80 bank access to 68k bus
  *
  *  Copyright (C) 1998-2003  Charles Mac Donald (original code)
- *  Copyright (C) 2007-2016  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2007-2020  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:

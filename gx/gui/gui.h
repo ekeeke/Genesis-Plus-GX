@@ -3,7 +3,7 @@
  *
  *  generic GUI Engine (using GX rendering)
  *
- *  Copyright Eke-Eke (2009-2014)
+ *  Copyright Eke-Eke (2009-2020)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -149,13 +149,15 @@ typedef struct
 } gui_message;
 
 /* Menu inputs */
-struct t_input_menu
+typedef struct
 {
   u16 keys;
 #ifdef HW_RVL
   struct ir_t ir;
 #endif
-} m_input;
+} gui_input;
+
+extern gui_input m_input;
 
 /* Optionbox callback */
 typedef void (*optioncallback)(void);

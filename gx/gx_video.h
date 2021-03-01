@@ -3,7 +3,7 @@
  *
  *  Genesis Plus GX video support
  *
- *  Copyright Eke-Eke (2007-2016), based on original work from Softdev (2006)
+ *  Copyright Eke-Eke (2007-2019), based on original work from Softdev (2006)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:

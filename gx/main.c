@@ -3,7 +3,7 @@
  *
  *  Genesis Plus GX
  *
- *  Copyright Eke-Eke (2007-2014), based on original work from Softdev (2006)
+ *  Copyright Eke-Eke (2007-2019), based on original work from Softdev (2006)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -49,11 +49,12 @@
 #include "md_ntsc.h"
 
 #include <fat.h>
+#include <sys/stat.h>
 
 #ifdef HW_RVL
 #include <iso9660.h>
+#include <sdcard/wiisd_io.h>
 #include <ogc/usbmouse.h>
-extern bool sdio_Deinitialize();
 extern void USBStorage_Deinitialize();
 #endif
 
@@ -318,9 +319,10 @@ void shutdown(void)
 
   /* shutdown all devices */
   DI_Close();
-  sdio_Deinitialize();
+  __io_wiisd.shutdown();
   USBStorage_Deinitialize();
   MOUSE_Deinit();
+  USB_Deinitialize();
 #endif
 }
 
@@ -550,7 +552,7 @@ int main (int argc, char *argv[])
 #endif
 
   /* RESET button callback */
-  SYS_SetResetCallback(Reset_cb);
+  SYS_SetResetCallback((resetcallback)Reset_cb);
 
   /* main emulation loop */
   run_emulation();

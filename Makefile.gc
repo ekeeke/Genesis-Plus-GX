@@ -20,8 +20,7 @@ BUILD		:=	build_cube
 SOURCES		:=	core core/m68k core/z80 core/sound core/tremor core/ntsc core/input_hw core/cd_hw core/cart_hw core/cart_hw/svp \
 			gx gx/utils gx/gui gx/fileio gx/images gx/sounds
 INCLUDES	:=	core core/m68k core/z80 core/sound core/tremor core/ntsc core/input_hw core/cd_hw core/cart_hw core/cart_hw/svp \
-			gx gx/utils gx/gui gx/fileio gx/images gx/sounds \
-			$(BUILD) 
+			gx gx/utils gx/gui gx/fileio gx/images gx/sounds
 
 #---------------------------------------------------------------------------------
 # options for code generation
@@ -89,13 +88,13 @@ export OFILES	:=	$(addsuffix .o,$(BINFILES)) \
 export INCLUDE	:=	$(foreach dir,$(INCLUDES),-I$(CURDIR)/$(dir)) \
 			$(foreach dir,$(LIBDIRS),-I$(dir)/include) \
 			-I$(CURDIR)/$(BUILD) \
-			-I$(LIBOGC_INC) -I$(PORTLIBS)/include
+			-I$(LIBOGC_INC)
 
 #---------------------------------------------------------------------------------
 # build a list of library paths
 #---------------------------------------------------------------------------------
 export LIBPATHS	:=	$(foreach dir,$(LIBDIRS),-L$(dir)/lib) \
-					-L$(LIBOGC_LIB)
+			-L$(LIBOGC_LIB)
 
 export OUTPUT	:=	$(CURDIR)/$(TARGET)
 .PHONY: $(BUILD) clean
@@ -127,19 +126,20 @@ $(OUTPUT).elf: $(OFILES)
 #---------------------------------------------------------------------------------
 %.jpg.o	:	%.jpg
 	@echo $(notdir $<)
-	$(bin2o)
+	bin2s -a 32 $< | $(AS) -o $(@)
+
 
 %.png.o	:	%.png
 	@echo $(notdir $<)
-	$(bin2o)
+	bin2s -a 32 $< | $(AS) -o $(@)
 
 %.pcm.o	:	%.pcm
 	@echo $(notdir $<)
-	$(bin2o)
+	bin2s -a 32 $< | $(AS) -o $(@)
 
 %.ogg.o	:	%.ogg
 	@echo $(notdir $<)
-	$(bin2o)
+	bin2s -a 32 $< | $(AS) -o $(@)
 
 -include $(DEPENDS)
 

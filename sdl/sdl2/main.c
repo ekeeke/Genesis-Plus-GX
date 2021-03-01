@@ -77,7 +77,7 @@ static int sdl_sound_init()
   }
 
   as_desired.freq     = SOUND_FREQUENCY;
-  as_desired.format   = AUDIO_S16LSB;
+  as_desired.format   = AUDIO_S16SYS;
   as_desired.channels = 2;
   as_desired.samples  = SOUND_SAMPLES_SIZE;
   as_desired.callback = sdl_sound_callback;

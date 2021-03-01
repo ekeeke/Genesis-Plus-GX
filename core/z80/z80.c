@@ -467,12 +467,12 @@ static const funcptr tablename[0x100] = {  \
   prefix##_f8,prefix##_f9,prefix##_fa,prefix##_fb,prefix##_fc,prefix##_fd,prefix##_fe,prefix##_ff  \
 }
 
-PROTOTYPES(Z80op,op);
-PROTOTYPES(Z80cb,cb);
-PROTOTYPES(Z80dd,dd);
-PROTOTYPES(Z80ed,ed);
-PROTOTYPES(Z80fd,fd);
-PROTOTYPES(Z80xycb,xycb);
+PROTOTYPES(Z80op,op)
+PROTOTYPES(Z80cb,cb)
+PROTOTYPES(Z80dd,dd)
+PROTOTYPES(Z80ed,ed)
+PROTOTYPES(Z80fd,fd)
+PROTOTYPES(Z80xycb,xycb)
 
 #ifndef BIG_SWITCH
 FUNCTABLE(Z80op,op);

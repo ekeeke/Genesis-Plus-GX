@@ -136,6 +136,9 @@
     <Filter Include="includes\sdl\main">
       <UniqueIdentifier>{1ed5ad59-ba46-4fb4-87e8-eb2c5db52af1}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\core\debug">
+      <UniqueIdentifier>{6e94b24a-541f-4e25-9942-5681d359dd21}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\core\cart_hw\svp\ssp16.h">
@@ -531,6 +534,9 @@
     <ClInclude Include="..\sdl2\main.h">
       <Filter>includes\sdl\main</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\core\debug\cpuhook.h">
+      <Filter>src\core\debug</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Text Include="..\..\core\cart_hw\svp\imageformat.txt">
@@ -861,6 +867,9 @@
     </ClCompile>
     <ClCompile Include="..\sdl2\main.c">
       <Filter>src\sdl\main</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\core\debug\cpuhook.c">
+      <Filter>src\core\debug</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

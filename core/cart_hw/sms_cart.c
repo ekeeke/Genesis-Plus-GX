@@ -839,18 +839,6 @@ int sms_cart_context_load(uint8 *state)
     load_param(work_ram + 0x2000, 0x800);
   }
 
-  /* support for SG-1000 games with extra RAM */
-  if ((cart_rom.mapper == MAPPER_RAM_8K) || (cart_rom.mapper == MAPPER_RAM_8K_EXT1))
-  {
-    /* 8KB extra RAM */
-    load_param(work_ram + 0x2000, 0x2000);
-  }
-  else if (cart_rom.mapper == MAPPER_RAM_2K)
-  {
-    /* 2KB extra RAM */
-    load_param(work_ram + 0x2000, 0x800);
-  }
-
   return bufferptr;
 }
 

@@ -2,7 +2,7 @@
  *  Genesis Plus
  *  CD drive processor & CD-DA fader
  *
- *  Copyright (C) 2012-2018  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2012-2020  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -1208,7 +1208,7 @@ int cdd_load(char *filename, char *header)
     cdd.loaded = 1;
 
     /* Automatically try to open associated subcode data file */
-    strncpy(&fname[strlen(fname) - 4], ".sub", 4);
+    memcpy(&fname[strlen(fname) - 4], ".sub", 4);
     cdd.toc.sub = cdStreamOpen(fname);
 
     /* return 1 if loaded file is CD image file */
