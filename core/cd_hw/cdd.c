@@ -201,10 +201,10 @@ void cdd_reset(void)
 {
   /* reset drive access latency */
   cdd.latency = 0;
-  
+
   /* reset track index */
   cdd.index = 0;
-  
+
   /* reset logical block address */
   cdd.lba = 0;
 
@@ -1090,7 +1090,6 @@ int cdd_load(char *filename, char *header)
       fd = cdStreamOpen(fname);
     }
 
-
     /* Valid CD-ROM Mode 1 track found ? */
     if (cdd.toc.tracks[0].type == TYPE_MODE1)
     {
@@ -1176,7 +1175,7 @@ int cdd_load(char *filename, char *header)
           }
           while (cdd.toc.last < 29);
         }
-		else if (strstr(header + 0x180,"T-06201-01") != NULL)
+        else if (strstr(header + 0x180,"T-06201-01") != NULL)
         {
           /* Sewer Shark (USA) (REV1) */
           /* no audio track */
@@ -1888,7 +1887,7 @@ void cdd_process(void)
   /* Process CDD command */
   switch (scd.regs[0x42>>1].byte.h & 0x0f)
   {
-    case 0x00:  /* Drive Status */
+    case 0x00:  /* Get Drive Status */
     {
       /* RS0-RS1 are normally unchanged unless reported drive status needs to be updated (i.e previous drive command has been processed) */
       /* Note: this function is called one 75hz frame ahead of CDD update so latency counter is always one step ahead of upcoming status */
@@ -2026,8 +2025,8 @@ void cdd_process(void)
           scd.regs[0x40>>1].byte.h = track % 10;  /* Track Number (low digit) */
           break;
         }
-		
-		case 0x06:  /* Latest Error Information */
+
+        case 0x06:  /* Latest Error Information */
         {
           scd.regs[0x38>>1].w = (cdd.status << 8) | 0x06;
           scd.regs[0x3a>>1].w = 0x0000; /* no error */
@@ -2036,7 +2035,6 @@ void cdd_process(void)
           scd.regs[0x40>>1].byte.h = 0x00;
           break;
         }
-
 
         default:
         {
@@ -2336,7 +2334,7 @@ void cdd_process(void)
       /* update status */
       cdd.status = cdd.loaded ? CD_TOC : NO_DISC;
 
-      /* RS1-RS8 ignored, expects 0x0 (CD_STOP) in RS0 once */
+      /* RS1-RS8 ignored, expects CD_STOP in RS0 once */
       scd.regs[0x38>>1].w = CD_STOP << 8;
       scd.regs[0x3a>>1].w = 0x0000;
       scd.regs[0x3c>>1].w = 0x0000;

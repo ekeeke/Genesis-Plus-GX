@@ -556,7 +556,7 @@ int sound_context_save(uint8 *state)
   }
   else
   {
-#ifdef HAVE_YM3438_CORE
+#ifdef HAVE_OPLL_CORE
     save_param(&config.opll, sizeof(config.opll));
     if (config.opll)
     {

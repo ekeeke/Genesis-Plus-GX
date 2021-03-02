@@ -444,13 +444,13 @@ static void s68k_poll_sync(unsigned int reg_mask)
 
   if (!m68k.stopped)
   {
-	/* save current MAIN-CPU end cycle count (recursive execution is possible) */
+    /* save current MAIN-CPU end cycle count (recursive execution is possible) */
     int end_cycle = m68k.cycle_end;
 
     /* sync MAIN-CPU with SUB-CPU */
     m68k_run(cycles);
-	
-	/* restore MAIN-CPU end cycle count */
+
+    /* restore MAIN-CPU end cycle count */
     m68k.cycle_end = end_cycle;
   }
 
@@ -671,14 +671,14 @@ static unsigned int scd_read_word(unsigned int address)
     {
       /* relative MAIN-CPU cycle counter */
       unsigned int cycles = (s68k.cycles * MCYCLES_PER_LINE) / SCYCLES_PER_LINE;
-	  
-	  /* save current MAIN-CPU end cycle count (recursive execution is possible) */
+
+      /* save current MAIN-CPU end cycle count (recursive execution is possible) */
       int end_cycle = m68k.cycle_end;
 
       /* sync MAIN-CPU with SUB-CPU (Mighty Morphin Power Rangers) */
       m68k_run(cycles);
-	  
-	  /* restore MAIN-CPU end cycle count */
+
+      /* restore MAIN-CPU end cycle count */
       m68k.cycle_end = end_cycle;
     }
 
@@ -1267,8 +1267,8 @@ static void scd_write_word(unsigned int address, unsigned int data)
       s68k_update_irq((scd.pending & data) >> 1);
       return;
     }
-	
-	case 0x34: /* CD Fader */
+
+    case 0x34: /* CD Fader */
     {
       /* Wondermega hardware (CXD2554M digital filter) */
       if (cdd.type == CD_TYPE_WONDERMEGA)
@@ -1307,8 +1307,8 @@ static void scd_write_word(unsigned int address, unsigned int data)
 
       return;
     }
-	
-	case 0x36: /* CDD control */
+
+    case 0x36: /* CDD control */
     {
       /* only bit 2 is writable (bits [1:0] forced to 0 by default) */
       scd.regs[0x37>>1].byte.l = data & 0x04;
@@ -1610,8 +1610,8 @@ void scd_reset(int hard)
     s68k.cycles = 0;
     s68k_pulse_reset();
     s68k_pulse_halt();
-	
-	/* Reset frame cycle counter */
+
+    /* Reset frame cycle counter */
     scd.cycles = 0;
   }
   else
@@ -1647,7 +1647,7 @@ void scd_reset(int hard)
   /* Clear CPU polling detection */
   memset(&m68k.poll, 0, sizeof(m68k.poll));
   memset(&s68k.poll, 0, sizeof(s68k.poll));
-  
+
   /* reset CDD cycle counter */
   cdd.cycles = (scd.cycles - s68k.cycles) * 3;
 
@@ -1663,7 +1663,7 @@ void scd_update(unsigned int cycles)
   int m68k_end_cycles;
   int s68k_run_cycles;
   int s68k_end_cycles = scd.cycles + SCYCLES_PER_LINE;
-  
+
   /* update CDC DMA transfer */
   if (cdc.dma_w)
   {
@@ -1720,7 +1720,6 @@ void scd_update(unsigned int cycles)
         }
       }
     }
-
 
     /* Timer */
     if (scd.timer)

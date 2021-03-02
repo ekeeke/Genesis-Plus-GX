@@ -2250,7 +2250,7 @@ static void vdp_bus_w(unsigned int data)
           remap_line(v_counter);
         }
       }
-	  
+
 #ifdef HOOK_CPU
       if (cpu_hook)
         cpu_hook(HOOK_CRAM_W, 2, addr, data);
@@ -2276,7 +2276,7 @@ static void vdp_bus_w(unsigned int data)
           render_line(v_counter);
         }
       }
-	  
+
 #ifdef HOOK_CPU
       if (cpu_hook)
         cpu_hook(HOOK_VSRAM_W, 2, addr, data);
@@ -2485,7 +2485,7 @@ static unsigned int vdp_68k_data_r_m5(void)
     {
       /* read two bytes from VRAM */
       data = *(uint16 *)&vram[addr & 0xFFFE];
-	  
+
 #ifdef HOOK_CPU
       if (cpu_hook)
         cpu_hook(HOOK_VRAM_R, 2, addr, data);
