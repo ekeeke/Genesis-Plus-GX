@@ -32,6 +32,9 @@ ifeq ($(platform),)
       ifeq ($(shell uname -p),powerpc)
          arch = ppc
       endif
+      ifeq ($(shell uname -p),arm)
+         arch = arm
+      endif
    else ifneq ($(findstring win,$(shell uname -s)),)
       platform = win
    endif
@@ -161,16 +164,29 @@ else ifeq ($(platform), osx)
    TARGET := $(TARGET_NAME)_libretro.dylib
    fpic := -fPIC
    SHARED := -dynamiclib
+   MINVERSION :=
 ifeq ($(arch),ppc)
-		ENDIANNESS_DEFINES := -DBYTE_ORDER=BIG_ENDIAN -DCPU_IS_BIG_ENDIAN=1 -DWORDS_BIGENDIAN=1 -DHAVE_NO_LANGEXTRA
-   else
-      ENDIANNESS_DEFINES := -DLSB_FIRST -DBYTE_ORDER=LITTLE_ENDIAN
-   endif
+   ENDIANNESS_DEFINES := -DBYTE_ORDER=BIG_ENDIAN -DCPU_IS_BIG_ENDIAN=1 -DWORDS_BIGENDIAN=1 -DHAVE_NO_LANGEXTRA
+else
+   ENDIANNESS_DEFINES := -DLSB_FIRST -DBYTE_ORDER=LITTLE_ENDIAN
+endif
    PLATFORM_DEFINES := -DHAVE_ZLIB
 
    OSXVER = `sw_vers -productVersion | cut -d. -f 2`
    OSX_LT_MAVERICKS = `(( $(OSXVER) <= 9)) && echo "YES"`
-   fpic += -mmacosx-version-min=10.1
+   ifeq ($(OSX_LT_MAVERICKS),YES)
+      MINVERSION = -mmacosx-version-min=10.1
+   endif
+   fpic += $(MINVERSION)
+   
+   ifeq ($(CROSS_COMPILE),1)
+        TARGET_RULE   = -target $(LIBRETRO_APPLE_PLATFORM) -isysroot $(LIBRETRO_APPLE_ISYSROOT)
+        CFLAGS   += $(TARGET_RULE)
+        CPPFLAGS += $(TARGET_RULE)
+        CXXFLAGS += $(TARGET_RULE)
+        LDFLAGS  += $(TARGET_RULE)
+   endif
+
    ifndef ($(NOUNIVERSAL))
       CFLAGS  += $(ARCHFLAGS)
       LDFLAGS += $(ARCHFLAGS)
@@ -183,6 +199,7 @@ else ifneq (,$(findstring ios,$(platform)))
    SHARED := -dynamiclib
    ENDIANNESS_DEFINES := -DLSB_FIRST -DBYTE_ORDER=LITTLE_ENDIAN
    PLATFORM_DEFINES := -DHAVE_ZLIB
+   MINVERSION :=
 
    ifeq ($(IOSSDK),)
       IOSSDK := $(shell xcrun -sdk iphoneos -show-sdk-path)
@@ -196,14 +213,11 @@ else ifneq (,$(findstring ios,$(platform)))
       CXX = c++ -arch arm64 -isysroot $(IOSSDK)
    endif
    ifeq ($(platform),$(filter $(platform),ios9 ios-arm64))
-      CC += -miphoneos-version-min=8.0
-      CXX += -miphoneos-version-min=8.0
-      PLATFORM_DEFINES += -miphoneos-version-min=8.0
+      MINVERSION = -miphoneos-version-min=8.0
    else
-      CC += -miphoneos-version-min=5.0
-      CXX += -miphoneos-version-min=5.0
-      PLATFORM_DEFINES += -miphoneos-version-min=5.0
+      MINVERSION = -miphoneos-version-min=5.0
    endif
+   PLATFORM_DEFINES += $(MINVERSION)
 
 # tvOS
 else ifeq ($(platform), tvos-arm64)
@@ -216,6 +230,9 @@ else ifeq ($(platform), tvos-arm64)
    ifeq ($(IOSSDK),)
       IOSSDK := $(shell xcrun -sdk appletvos -show-sdk-path)
    endif
+
+   CC = cc -arch arm64 -isysroot $(IOSSDK)
+   CXX = c++ -arch arm64 -isysroot $(IOSSDK)
 
 # Theos
 else ifeq ($(platform), theos_ios)
