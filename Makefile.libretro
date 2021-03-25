@@ -38,10 +38,14 @@ ifeq ($(platform),)
    else ifneq ($(findstring win,$(shell uname -s)),)
       platform = win
    endif
+else ifneq (,$(findstring AMLG,$(platform)))
+   override platform += unix
 else ifneq (,$(findstring armv,$(platform)))
 	ifeq (,$(findstring classic_,$(platform)))
     override platform += unix
   endif
+else ifneq (,$(findstring RK,$(platform)))
+   override platform += unix
 else ifneq (,$(findstring rpi,$(platform)))
    override platform += unix
 endif
@@ -95,6 +99,26 @@ ifneq (,$(findstring unix,$(platform)))
       PLATFORM_DEFINES += -DARM -marm -march=armv7ve -mcpu=cortex-a72 -mtune=cortex-a72.cortex-a53 -mfloat-abi=hard
    endif
 
+   # Rockchip RK3288 e.g. Asus Tinker Board / RK3328 e.g. PINE64 Rock64 / RK3399 e.g. PINE64 RockPro64 - 32-bit userspace
+   ifneq (,$(findstring RK,$(platform)))
+      ENDIANNESS_DEFINES += -DALIGN_LONG
+      CFLAGS += -fomit-frame-pointer -ffast-math
+      PLATFORM_DEFINES += -DARM -marm
+
+      ifneq (,$(findstring RK33,$(platform)))
+         PLATFORM_DEFINES += -march=armv8-a+crc -mfpu=neon-fp-armv8
+         ifneq (,$(findstring RK3399,$(platform)))
+            PLATFORM_DEFINES += -mtune=cortex-a72.cortex-a53
+         else ifneq (,$(findstring RK3328,$(platform)))
+            PLATFORM_DEFINES += -mtune=cortex-a53
+         endif
+      else ifneq (,$(findstring RK3288,$(platform)))
+         PLATFORM_DEFINES += -march=armv7ve -mtune=cortex-a17 -mfpu=neon-vfpv4
+      endif
+
+      PLATFORM_DEFINES += -mfloat-abi=hard
+   endif
+
    # Odroid-GOA
    ifneq (,$(findstring classic_armv8_a35,$(platform)))
       ENDIANNESS_DEFINES += -DALIGN_LONG
@@ -109,6 +133,24 @@ ifneq (,$(findstring unix,$(platform)))
       PLATFORM_DEFINES += -DARM -march=armv8-a+crc -mcpu=cortex-a73 -mtune=cortex-a73.cortex-a53
    endif
 
+   # Amlogic S905/S905X/S912 (AMLGXBB/AMLGXL/AMLGXM) e.g. Khadas VIM1/2 / S905X2 (AMLG12A) & S922X/A311D (AMLG12B) e.g. Khadas VIM3 - 32-bit userspace
+   ifneq (,$(findstring AMLG,$(platform)))
+      ENDIANNESS_DEFINES += -DALIGN_LONG
+      CFLAGS += -fomit-frame-pointer -ffast-math
+      PLATFORM_DEFINES += -DARM -marm -march=armv8-a+crc
+
+      ifneq (,$(findstring AMLG12,$(platform)))
+         ifneq (,$(findstring AMLG12B,$(platform)))
+            PLATFORM_DEFINES += -mtune=cortex-a73.cortex-a53
+         else 
+            PLATFORM_DEFINES += -mtune=cortex-a53
+         endif
+       else ifneq (,$(findstring AMLGX,$(platform)))
+          PLATFORM_DEFINES += -mtune=cortex-a53
+       endif
+      PLATFORM_DEFINES += -mfloat-abi=hard -mfpu=neon-fp-armv8
+   endif
+
    # Raspberry Pi
    ifneq (,$(findstring rpi,$(platform)))
       ENDIANNESS_DEFINES += -DALIGN_LONG
@@ -119,6 +161,8 @@ ifneq (,$(findstring unix,$(platform)))
          PLATFORM_DEFINES += -DARM -marm -mcpu=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard
       else ifneq (,$(findstring rpi3,$(platform)))
          PLATFORM_DEFINES += -DARM -marm -mcpu=cortex-a53 -mfpu=neon-fp-armv8 -mfloat-abi=hard
+      else ifneq (,$(findstring rpi4,$(platform)))
+         PLATFORM_DEFINES += -DARM -marm -mcpu=cortex-a72 -mfpu=neon-fp-armv8 -mfloat-abi=hard
       else ifneq (,$(findstring rpi4_64,$(platform)))
          PLATFORM_DEFINES += -DARM -march=armv8-a+crc+simd -mtune=cortex-a72
       endif
