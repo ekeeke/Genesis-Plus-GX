@@ -3,7 +3,7 @@
  *
  *  Genesis Plus GX
  *
- *  Copyright Eke-Eke (2007-2019), based on original work from Softdev (2006)
+ *  Copyright Eke-Eke (2007-2021), based on original work from Softdev (2006)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -332,7 +332,7 @@ void shutdown(void)
  ***************************************************************************/
 int main (int argc, char *argv[])
 {
- #ifdef HW_RVL
+#ifdef HW_RVL
   /* enable 64-byte fetch mode for L2 cache */
   L2Enhance();
   
@@ -375,6 +375,15 @@ int main (int argc, char *argv[])
 
   if (fatMounted)
   {
+#ifdef HW_RVL
+    /* workaround against regression introduced in newlib 2.5.0 (and later versions) causing crash when loaded from Wiiflow (or any apploader passing "usb1:/", "usb2:/", etc in application path) */
+    if ((argc > 0) && !strncasecmp(argv[0], "usb", 3))
+    {
+      /* set default path using exact device name mounted by libfat */
+      chdir("usb:/");
+    }
+#endif
+
     /* base directory */
     char pathname[MAXPATHLEN];
     sprintf (pathname, DEFAULT_PATH);
