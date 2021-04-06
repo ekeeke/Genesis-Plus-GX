@@ -124,22 +124,22 @@ $(OUTPUT).elf: $(OFILES)
 #---------------------------------------------------------------------------------
 # This rule links in binary data with the various extension
 #---------------------------------------------------------------------------------
-%.jpg.o	:	%.jpg
-	@echo $(notdir $<)
-	bin2s -a 32 $< | $(AS) -o $(@)
+%.jpg.o	%_jpg.h :	%.jpg
+	$(SILENTMSG) $(notdir $<)
+	$(SILENTCMD)$(bin2o)
 
 
-%.png.o	:	%.png
-	@echo $(notdir $<)
-	bin2s -a 32 $< | $(AS) -o $(@)
+%.png.o	%_png.h :	%.png
+	$(SILENTMSG) $(notdir $<)
+	$(SILENTCMD)$(bin2o)
 
-%.pcm.o	:	%.pcm
-	@echo $(notdir $<)
-	bin2s -a 32 $< | $(AS) -o $(@)
+%.pcm.o	%_pcm.h :	%.pcm
+	$(SILENTMSG) $(notdir $<)
+	$(SILENTCMD)$(bin2o)
 
-%.ogg.o	:	%.ogg
-	@echo $(notdir $<)
-	bin2s -a 32 $< | $(AS) -o $(@)
+%.ogg.o	%_ogg.h :	%.ogg
+	$(SILENTMSG) $(notdir $<)
+	$(SILENTCMD)$(bin2o)
 
 -include $(DEPENDS)
 
