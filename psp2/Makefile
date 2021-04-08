@@ -31,7 +31,7 @@ CFLAGS    = -O3 -fomit-frame-pointer -Wall -Wno-strict-aliasing -ansi -std=c11 \
 #-fomit-frame-pointer
 LDFLAGS   = -Wl,-q
 DEFINES   = -DPSP_APP_NAME=\"$(PSP_APP_NAME)\" -DPSP_APP_VER=\"$(PSP_APP_VER)\" \
-						-DLSB_FIRST -DUSE_15BPP_RENDERING -DUSE_LIBTREMOR -DALT_RENDERER -DALIGN_LONG -DHAVE_ALLOCA_H -DUSE_ABGR
+						-DLSB_FIRST -DUSE_15BPP_RENDERING -DUSE_LIBTREMOR -DALT_RENDERER -DHAVE_ALLOCA_H -DUSE_ABGR
 SRCDIR    = ../core
 INCLUDES  = -I$(SRCDIR) -I$(SRCDIR)/z80 -I$(SRCDIR)/m68k -I$(SRCDIR)/sound -I$(SRCDIR)/input_hw -I$(SRCDIR)/cart_hw -I$(SRCDIR)/cart_hw/svp -I$(SRCDIR)/cd_hw -I$(SRCDIR)/ntsc -I$(SRCDIR)/tremor -I$(SRCDIR)/../psp2
 LIBS	  = -lpsplib -lvita2d  -lfreetype -lpng -lz -lm -lSceDisplay_stub -lSceGxm_stub 	\
