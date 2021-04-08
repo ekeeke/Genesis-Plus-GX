@@ -3,7 +3,7 @@
  *
  *  FAT and Memory Card SRAM/State slots managment
  *
- *  Copyright Eke-Eke (2008-2014), based on original code from Softdev (2006)
+ *  Copyright Eke-Eke (2008-2021), based on original code from Softdev (2006)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -288,11 +288,11 @@ void slot_autodetect(int slot, int device, t_slot *ptr)
     if (fp)
     {
       /* Retrieve date & close */
-	    struct stat filestat;
-			stat(filename, &filestat);
+      struct stat filestat;
+      stat(filename, &filestat);
       struct tm *timeinfo = localtime(&filestat.st_mtime);
       ptr->year = 1900 + timeinfo->tm_year;
-      ptr->month = timeinfo->tm_mon;
+      ptr->month = timeinfo->tm_mon + 1;
       ptr->day = timeinfo->tm_mday;
       ptr->hour = timeinfo->tm_hour;
       ptr->min = timeinfo->tm_min;
@@ -326,9 +326,9 @@ void slot_autodetect(int slot, int device, t_slot *ptr)
         card_stat CardStatus;
         CARD_GetStatus(device, CardFile.filenum, &CardStatus);
         time_t rawtime = CardStatus.time;
-	      struct tm *timeinfo = localtime(&rawtime);
+        struct tm *timeinfo = localtime(&rawtime);
         ptr->year = 1900 + timeinfo->tm_year;
-        ptr->month = timeinfo->tm_mon;
+        ptr->month = timeinfo->tm_mon + 1;
         ptr->day = timeinfo->tm_mday;
         ptr->hour = timeinfo->tm_hour;
         ptr->min = timeinfo->tm_min;
