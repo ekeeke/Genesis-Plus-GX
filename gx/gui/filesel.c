@@ -49,12 +49,12 @@
 
 #define SCROLL_SPEED 10
 
-extern const u8 Browser_dir_png[];
-extern const u8 Snap_empty_png[];
-extern const u8 Cart_md_png[];
-extern const u8 Cart_ms_png[];
-extern const u8 Cart_gg_png[];
-extern const u8 Cart_sg_png[];
+#include "Browser_dir_png.h"
+#include "Snap_empty_png.h"
+#include "Cart_md_png.h"
+#include "Cart_ms_png.h"
+#include "Cart_gg_png.h"
+#include "Cart_sg_png.h"
 
 FILEENTRIES filelist[MAXFILES];
 

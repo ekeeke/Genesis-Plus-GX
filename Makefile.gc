@@ -77,10 +77,13 @@ else
 	export LD	:=	$(CXX)
 endif
 
-export OFILES	:=	$(addsuffix .o,$(BINFILES)) \
-			$(PNGFILES:.png=.png.o) $(PCMFILES:.pcm=.pcm.o) $(OGGFILES:.ogg=.ogg.o) \
-			$(CPPFILES:.cpp=.o) $(CFILES:.c=.o) \
-			$(sFILES:.s=.o) $(SFILES:.S=.o)
+export OFILES_BIN	:=	$(addsuffix .o,$(BINFILES)) \
+			$(PNGFILES:.png=.png.o) $(PCMFILES:.pcm=.pcm.o) $(OGGFILES:.ogg=.ogg.o)
+
+export OFILES_SOURCES := $(CPPFILES:.cpp=.o) $(CFILES:.c=.o) $(sFILES:.s=.o) $(SFILES:.S=.o)
+export OFILES := $(OFILES_BIN) $(OFILES_SOURCES)
+
+export HFILES := $(addsuffix .h,$(subst .,_,$(BINFILES)))
 
 #---------------------------------------------------------------------------------
 # build a list of include paths
@@ -121,25 +124,27 @@ DEPENDS	:=	$(OFILES:.o=.d)
 $(OUTPUT).dol: $(OUTPUT).elf
 $(OUTPUT).elf: $(OFILES)
 
+$(OFILES_SOURCES) : $(HFILES)
+
 #---------------------------------------------------------------------------------
 # This rule links in binary data with the various extension
 #---------------------------------------------------------------------------------
-%.jpg.o	:	%.jpg
-	@echo $(notdir $<)
-	bin2s -a 32 $< | $(AS) -o $(@)
+%.jpg.o	%_jpg.h :	%.jpg
+	$(SILENTMSG) $(notdir $<)
+	$(SILENTCMD)$(bin2o)
 
 
-%.png.o	:	%.png
-	@echo $(notdir $<)
-	bin2s -a 32 $< | $(AS) -o $(@)
+%.png.o	%_png.h :	%.png
+	$(SILENTMSG) $(notdir $<)
+	$(SILENTCMD)$(bin2o)
 
-%.pcm.o	:	%.pcm
-	@echo $(notdir $<)
-	bin2s -a 32 $< | $(AS) -o $(@)
+%.pcm.o	%_pcm.h :	%.pcm
+	$(SILENTMSG) $(notdir $<)
+	$(SILENTCMD)$(bin2o)
 
-%.ogg.o	:	%.ogg
-	@echo $(notdir $<)
-	bin2s -a 32 $< | $(AS) -o $(@)
+%.ogg.o	%_ogg.h :	%.ogg
+	$(SILENTMSG) $(notdir $<)
+	$(SILENTCMD)$(bin2o)
 
 -include $(DEPENDS)
 
