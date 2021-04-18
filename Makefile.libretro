@@ -260,21 +260,20 @@ else ifeq ($(platform), qnx)
    AR = qcc -Vgcc_ntoarmv7le
    PLATFORM_DEFINES := -D__BLACKBERRY_QNX__ -marm -mcpu=cortex-a9 -mfpu=neon -mfloat-abi=softfp
 
-# PS3
-else ifneq (,$(filter $(platform), psl1ght))
-   TARGET := $(TARGET_NAME)_libretro_ps3.a
-   PLATFORM_DEFINES := -D__PSLIGHT__ -DALT_RENDER
-	ENDIANNESS_DEFINES := -DBYTE_ORDER=BIG_ENDIAN -DBYTE_ORDER=BIG_ENDIAN -DCPU_IS_BIG_ENDIAN=1 -DWORDS_BIGENDIAN=1
-   STATIC_LINKING = 1
-   HAVE_SYS_PARAM = 0
-
-   # Lightweight PS3 Homebrew SDK
-   ifneq (,$(findstring psl1ght,$(platform)))
-      TARGET := $(TARGET_NAME)_libretro_$(platform).a
-      CC = $(PS3DEV)/ppu/bin/ppu-gcc$(EXE_EXT)
-      CXX = $(PS3DEV)/ppu/bin/ppu-g++$(EXE_EXT)
-      AR = $(PS3DEV)/ppu/bin/ppu-ar$(EXE_EXT)
+# PS3/PSL1GHT
+else ifneq (,$(filter $(platform), ps3 psl1ght))
+   ifeq ($(platform), psl1ght)
+       PLATFORM_DEFINES := -D__PS3__ -D__PSLIGHT__ -DALT_RENDER
+   else
+       PLATFORM_DEFINES := -D__PS3__ -DALT_RENDER
    endif
+   TARGET := $(TARGET_NAME)_libretro_$(platform).a
+   CC = $(PS3DEV)/ppu/bin/ppu-$(COMMONLV)gcc$(EXE_EXT)
+   CXX = $(PS3DEV)/ppu/bin/ppu-$(COMMONLV)g++$(EXE_EXT)
+   AR = $(PS3DEV)/ppu/bin/ppu-$(COMMONLV)ar$(EXE_EXT)
+   ENDIANNESS_DEFINES := -DBYTE_ORDER=BIG_ENDIAN -DBYTE_ORDER=BIG_ENDIAN -DCPU_IS_BIG_ENDIAN=1 -DWORDS_BIGENDIAN=1
+   STATIC_LINKING=1
+   HAVE_SYS_PARAM = 0
 
 # PSP
 else ifeq ($(platform), psp1)
