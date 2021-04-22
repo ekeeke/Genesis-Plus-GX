@@ -25,7 +25,8 @@ to do:
 
 */
 
-/** EkeEke (2011): removed multiple chips support, cleaned code & added FM board interface for Genesis Plus GX **/
+/** EkeEke (2011/xx/xx): removed multiple chips support, cleaned code & added FM board interface for Genesis Plus GX **/
+/** EkeEke (2021/04/23): fixed synchronization of carrier/modulator phase reset after channel Key ON (fixes Master System BIOS music) **/
 
 #include "shared.h"
 
@@ -543,10 +544,6 @@ INLINE void advance(void)
       switch(op->state)
       {
         case EG_DMP:    /* dump phase */
-        /*dump phase is performed by both operators in each channel*/
-        /*when CARRIER envelope gets down to zero level,
-        **  phases in BOTH opearators are reset (at the same time ?)
-        */
           if ( !(ym2413.eg_cnt & ((1<<op->eg_sh_dp)-1) ) )
           {
             op->volume += eg_inc[op->eg_sel_dp + ((ym2413.eg_cnt>>op->eg_sh_dp)&7)];
@@ -555,8 +552,13 @@ INLINE void advance(void)
             {
               op->volume = MAX_ATT_INDEX;
               op->state = EG_ATT;
-              /* restart Phase Generator  */
-              op->phase = 0;
+
+              /*dump phase is performed by both operators in each channel*/
+              /*when CARRIER envelope gets down to zero level,
+               *phases in BOTH operators are reset (at the same time ?)
+               */
+              if (i&1)
+                CH->SLOT[0].phase = CH->SLOT[1].phase = 0;
             }
           }
           break;
