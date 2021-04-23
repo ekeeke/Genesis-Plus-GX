@@ -32,6 +32,7 @@ to do:
 /** 2021/04/23: fixed synchronization of carrier/modulator phase reset after channel Key ON (fixes Japanese Master System BIOS music) **/
 /** 2021/04/24: fixed intruments ROM (verified on YM2413B die, cf. https://siliconpr0n.org/archive/doku.php?id=vendor:yamaha:opl2#ym2413_instrument_rom) **/
 /** 2021/04/24: fixed EG resolution bits (verified on YM2413B die, cf. https://www.smspower.org/Development/YM2413ReverseEngineeringNotes2015-03-20) **/
+/** 2021/04/24: fixed EG "dump" rate (verified on YM2413 real hardware, cf. https://www.smspower.org/Development/YM2413ReverseEngineeringNotes2015-12-31) **/
 
 #include "shared.h"
 
@@ -578,19 +579,20 @@ INLINE void advance(void)
           if ( !(ym2413.eg_cnt & ((1<<op->eg_sh_dp)-1) ) )
           {
             op->volume += eg_inc[op->eg_sel_dp + ((ym2413.eg_cnt>>op->eg_sh_dp)&7)];
+          }
 
-            if ( op->volume >= MAX_ATT_INDEX )
-            {
-              op->volume = MAX_ATT_INDEX;
-              op->state = EG_ATT;
+          /* attack phase should be started if attenuation is already maximal, without waiting for next envelope update (every 2 samples during dump phase) */
+          if ( op->volume >= MAX_ATT_INDEX )
+          {
+            op->volume = MAX_ATT_INDEX;
+            op->state = EG_ATT;
 
-              /*dump phase is performed by both operators in each channel*/
-              /*when CARRIER envelope gets down to zero level,
-               *phases in BOTH operators are reset (at the same time ?)
-               */
-              if (i&1)
-                CH->SLOT[0].phase = CH->SLOT[1].phase = 0;
-            }
+            /*dump phase is performed by both operators in each channel*/
+            /*when CARRIER envelope gets down to zero level,
+             *phases in BOTH operators are reset (at the same time ?)
+             */
+            if (i&1)
+              CH->SLOT[0].phase = CH->SLOT[1].phase = 0;
           }
           break;
 
@@ -1200,7 +1202,7 @@ INLINE void CALC_FCSLOT(YM2413_OPLL_CH *CH,YM2413_OPLL_SLOT *SLOT)
   SLOT->eg_sh_rs  = eg_rate_shift [SLOT_rs + SLOT->ksr ];
   SLOT->eg_sel_rs = eg_rate_select[SLOT_rs + SLOT->ksr ];
 
-  SLOT_dp  = 16 + (13<<2);
+  SLOT_dp  = 16 + (12<<2);
   SLOT->eg_sh_dp  = eg_rate_shift [SLOT_dp + SLOT->ksr ];
   SLOT->eg_sel_dp = eg_rate_select[SLOT_dp + SLOT->ksr ];
 }
