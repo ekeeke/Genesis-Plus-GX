@@ -31,6 +31,7 @@ to do:
 /** 2011/xx/xx: removed multiple chips support, cleaned code & added FM board interface **/
 /** 2021/04/23: fixed synchronization of carrier/modulator phase reset after channel Key ON (fixes Japanese Master System BIOS music) **/
 /** 2021/04/24: fixed intruments ROM (verified on YM2413B die, cf. https://siliconpr0n.org/archive/doku.php?id=vendor:yamaha:opl2#ym2413_instrument_rom) **/
+/** 2021/04/24: fixed EG resolution bits (verified on YM2413B die, cf. https://www.smspower.org/Development/YM2413ReverseEngineeringNotes2015-03-20) **/
 
 #include "shared.h"
 
@@ -45,7 +46,7 @@ to do:
 #define ENV_LEN      (1<<ENV_BITS)
 #define ENV_STEP    (128.0/ENV_LEN)
 
-#define MAX_ATT_INDEX  ((1<<(ENV_BITS-2))-1) /*255*/
+#define MAX_ATT_INDEX  ((1<<(ENV_BITS-3))-1) /*127*/
 #define MIN_ATT_INDEX  (0)
 
 /* sinwave entries */
