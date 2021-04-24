@@ -35,6 +35,7 @@ to do:
 /** 2021/04/24: fixed EG dump rate (verified on YM2413 real hardware, cf. https://www.smspower.org/Development/YM2413ReverseEngineeringNotes2015-12-31) **/
 /** 2021/04/25: fixed EG behavior for fastest attack rates (verified on YM2413 real hardware, cf. https://www.smspower.org/Development/YM2413ReverseEngineeringNotes2017-01-26) **/
 /** 2021/04/25: fixed EG behavior when SL = 0 (verified on YM2413 real hardware, cf. https://www.smspower.org/Development/YM2413ReverseEngineeringNotes2015-12-24) **/
+/** 2021/04/25: improved EG sustain phase transition comparator accuracy (verified on YM2413 real hardware, cf. https://www.smspower.org/Development/YM2413ReverseEngineeringNotes2015-12-31) **/
 
 #include "shared.h"
 
@@ -628,7 +629,7 @@ INLINE void advance(void)
           {
             op->volume += eg_inc[op->eg_sel_dr + ((ym2413.eg_cnt>>op->eg_sh_dr)&7)];
 
-            if ( op->volume >= op->sl )
+            if ( (op->volume & ~7) == op->sl )  /* envelope level lowest 3 bits are ignored by the comparator */
               op->state = EG_SUS;
           }
           break;
