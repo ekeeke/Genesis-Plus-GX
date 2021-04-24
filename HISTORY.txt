@@ -153,7 +153,8 @@ Genesis Plus GX 1.7.5 (xx/xx/xxxx) (Eke-Eke)
 * fixed YM2413 carrier/modulator phase reset after channel Key ON (Japanese Master System BIOS music)
 * fixed YM2413 intruments ROM (verified on YM2413B die)
 * fixed YM2413 EG resolution bits (verified on YM2413B die)
-* fixed YM2413 EG "dump" rate (verified on YM2413 hardware)
+* fixed YM2413 EG dump rate (verified on YM2413 hardware)
+* fixed YM2413 EG behavior for fastest attack rates (verified on YM2413 hardware)
 
 [Gamecube/Wii]
 ---------------

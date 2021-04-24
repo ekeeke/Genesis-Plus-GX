@@ -32,7 +32,8 @@ to do:
 /** 2021/04/23: fixed synchronization of carrier/modulator phase reset after channel Key ON (fixes Japanese Master System BIOS music) **/
 /** 2021/04/24: fixed intruments ROM (verified on YM2413B die, cf. https://siliconpr0n.org/archive/doku.php?id=vendor:yamaha:opl2#ym2413_instrument_rom) **/
 /** 2021/04/24: fixed EG resolution bits (verified on YM2413B die, cf. https://www.smspower.org/Development/YM2413ReverseEngineeringNotes2015-03-20) **/
-/** 2021/04/24: fixed EG "dump" rate (verified on YM2413 real hardware, cf. https://www.smspower.org/Development/YM2413ReverseEngineeringNotes2015-12-31) **/
+/** 2021/04/24: fixed EG dump rate (verified on YM2413 real hardware, cf. https://www.smspower.org/Development/YM2413ReverseEngineeringNotes2015-12-31) **/
+/** 2021/04/25: fixed EG behavior for fastest attack rates (verified on YM2413 real hardware, cf. https://www.smspower.org/Development/YM2413ReverseEngineeringNotes2017-01-26) **/
 
 #include "shared.h"
 
@@ -246,8 +247,8 @@ static const unsigned char eg_inc[15*RATE_STEPS]={
 /*10 */ 2,4, 2,4, 2,4, 2,4, /* rate 14 2 */
 /*11 */ 2,4, 4,4, 2,4, 4,4, /* rate 14 3 */
 
-/*12 */ 4,4, 4,4, 4,4, 4,4, /* rates 15 0, 15 1, 15 2, 15 3 (increment by 4) */
-/*13 */ 8,8, 8,8, 8,8, 8,8, /* rates 15 2, 15 3 for attack */
+/*12 */ 4,4, 4,4, 4,4, 4,4, /* rates 15 0, 15 1, 15 2, 15 3 for decay (increment by 4) */
+/*13 */ 8,8, 8,8, 8,8, 8,8, /* rates 15 0, 15 1, 15 2, 15 3 for attack (not used as attack phase is skipped in these cases) */
 /*14 */ 0,0, 0,0, 0,0, 0,0, /* infinity rates for attack and decay(s) */
 };
 
@@ -584,8 +585,18 @@ INLINE void advance(void)
           /* attack phase should be started if attenuation is already maximal, without waiting for next envelope update (every 2 samples during dump phase) */
           if ( op->volume >= MAX_ATT_INDEX )
           {
-            op->volume = MAX_ATT_INDEX;
-            op->state = EG_ATT;
+            /* attack phase is skipped and envelope is forced to 0 when attack rate is set to 15.0-15.3 */
+            /* (verified on real hardware, cf. https://www.smspower.org/Development/YM2413ReverseEngineeringNotes2017-01-26) */
+            if ((op->ar + op->ksr) < 16+60)
+            {
+              op->volume = MAX_ATT_INDEX;
+              op->state =  EG_ATT;
+            }
+            else
+            {
+              op->volume = MIN_ATT_INDEX;
+              op->state = EG_DEC;
+            }
 
             /*dump phase is performed by both operators in each channel*/
             /*when CARRIER envelope gets down to zero level,
@@ -1177,15 +1188,18 @@ INLINE void CALC_FCSLOT(YM2413_OPLL_CH *CH,YM2413_OPLL_SLOT *SLOT)
     SLOT->ksr = ksr;
 
     /* calculate envelope generator rates */
-    if ((SLOT->ar + SLOT->ksr) < 16+62)
+    if ((SLOT->ar + SLOT->ksr) < 16+60)
     {
       SLOT->eg_sh_ar  = eg_rate_shift [SLOT->ar + SLOT->ksr ];
       SLOT->eg_sel_ar = eg_rate_select[SLOT->ar + SLOT->ksr ];
     }
     else
     {
+      /* attack phase is skipped in case attack rate is set to 15.0-15.3 before it is started */
+      /* during attack phase, when attack rate is changed to 15.0-15.3, attack phase is blocked */
+      /* (verified on real hardware, cf. https://www.smspower.org/Development/YM2413ReverseEngineeringNotes2017-01-26) */
       SLOT->eg_sh_ar  = 0;
-      SLOT->eg_sel_ar = 13*RATE_STEPS;
+      SLOT->eg_sel_ar = 14*RATE_STEPS;
     }
     SLOT->eg_sh_dr  = eg_rate_shift [SLOT->dr + SLOT->ksr ];
     SLOT->eg_sel_dr = eg_rate_select[SLOT->dr + SLOT->ksr ];
@@ -1260,15 +1274,18 @@ INLINE void set_ar_dr(int slot,int v)
 
   SLOT->ar = (v>>4)  ? 16 + ((v>>4)  <<2) : 0;
 
-  if ((SLOT->ar + SLOT->ksr) < 16+62)
+  if ((SLOT->ar + SLOT->ksr) < 16+60)
   {
     SLOT->eg_sh_ar  = eg_rate_shift [SLOT->ar + SLOT->ksr ];
     SLOT->eg_sel_ar = eg_rate_select[SLOT->ar + SLOT->ksr ];
   }
   else
   {
+    /* attack phase is skipped in case attack rate is set to 15.0-15.3 before it is started */
+    /* during attack phase, when attack rate is changed to 15.0-15.3, attack phase is blocked */
+    /* (verified on real hardware, cf. https://www.smspower.org/Development/YM2413ReverseEngineeringNotes2017-01-26) */
     SLOT->eg_sh_ar  = 0;
-    SLOT->eg_sel_ar = 13*RATE_STEPS;
+    SLOT->eg_sel_ar = 14*RATE_STEPS;
   }
 
   SLOT->dr    = (v&0x0f)? 16 + ((v&0x0f)<<2) : 0;
