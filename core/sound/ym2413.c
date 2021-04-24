@@ -34,6 +34,7 @@ to do:
 /** 2021/04/24: fixed EG resolution bits (verified on YM2413B die, cf. https://www.smspower.org/Development/YM2413ReverseEngineeringNotes2015-03-20) **/
 /** 2021/04/24: fixed EG dump rate (verified on YM2413 real hardware, cf. https://www.smspower.org/Development/YM2413ReverseEngineeringNotes2015-12-31) **/
 /** 2021/04/25: fixed EG behavior for fastest attack rates (verified on YM2413 real hardware, cf. https://www.smspower.org/Development/YM2413ReverseEngineeringNotes2017-01-26) **/
+/** 2021/04/25: fixed EG behavior when SL = 0 (verified on YM2413 real hardware, cf. https://www.smspower.org/Development/YM2413ReverseEngineeringNotes2015-12-24) **/
 
 #include "shared.h"
 
@@ -595,7 +596,7 @@ INLINE void advance(void)
             else
             {
               op->volume = MIN_ATT_INDEX;
-              op->state = EG_DEC;
+              op->state = (op->sl == MIN_ATT_INDEX) ? EG_SUS : EG_DEC; /* decay phase should not occur in case SL = 0 */ 
             }
 
             /*dump phase is performed by both operators in each channel*/
@@ -617,7 +618,7 @@ INLINE void advance(void)
             if (op->volume <= MIN_ATT_INDEX)
             {
               op->volume = MIN_ATT_INDEX;
-              op->state = EG_DEC;
+              op->state = (op->sl == MIN_ATT_INDEX) ? EG_SUS : EG_DEC; /* decay phase should not occur in case SL = 0 */
             }
           }
           break;
