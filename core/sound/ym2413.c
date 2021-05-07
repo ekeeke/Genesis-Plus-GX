@@ -36,6 +36,8 @@ to do:
 /** 2021/04/25: fixed EG behavior for fastest attack rates (verified on YM2413 real hardware, cf. https://www.smspower.org/Development/YM2413ReverseEngineeringNotes2017-01-26) **/
 /** 2021/04/25: fixed EG behavior when SL = 0 (verified on YM2413 real hardware, cf. https://www.smspower.org/Development/YM2413ReverseEngineeringNotes2015-12-24) **/
 /** 2021/04/25: improved EG sustain phase transition comparator accuracy (verified on YM2413 real hardware, cf. https://www.smspower.org/Development/YM2413ReverseEngineeringNotes2015-12-31) **/
+/** 2021/05/04: improved EG increment steps accuracy (verified on YM2413 real hardware, cf. https://www.smspower.org/Development/YM2413ReverseEngineeringNotes2015-03-20) **/
+/************************************************/
 
 #include "shared.h"
 
@@ -229,29 +231,29 @@ static const UINT32 sl_tab[16]={
 #undef SC
 
 
-#define RATE_STEPS (8)
+#define RATE_STEPS (16)
 static const unsigned char eg_inc[15*RATE_STEPS]={
 
-/*cycle:0 1  2 3  4 5  6 7*/
+/*cycle:0 1  2 3  4 5  6 7  8 9  10 11  12 13  14 15*/
 
-/* 0 */ 0,1, 0,1, 0,1, 0,1, /* rates 00..12 0 (increment by 0 or 1) */
-/* 1 */ 0,1, 0,1, 1,1, 0,1, /* rates 00..12 1 */
-/* 2 */ 0,1, 1,1, 0,1, 1,1, /* rates 00..12 2 */
-/* 3 */ 0,1, 1,1, 1,1, 1,1, /* rates 00..12 3 */
+/* 0 */ 0,1, 0,1, 0,1, 0,1, 0,1, 0,1, 0,1, 0,1, /* rates 00..12 0 (increment by 0 or 1) */
+/* 1 */ 0,1, 0,1, 1,1, 0,1, 0,1, 0,1, 1,1, 0,1, /* rates 00..12 1 */
+/* 2 */ 0,1, 1,1, 0,1, 1,1, 0,1, 1,1, 0,1, 1,1, /* rates 00..12 2 */
+/* 3 */ 0,1, 1,1, 1,1, 1,1, 0,1, 1,1, 1,1, 1,1, /* rates 00..12 3 */
 
-/* 4 */ 1,1, 1,1, 1,1, 1,1, /* rate 13 0 (increment by 1) */
-/* 5 */ 1,1, 1,2, 1,1, 1,2, /* rate 13 1 */
-/* 6 */ 1,2, 1,2, 1,2, 1,2, /* rate 13 2 */
-/* 7 */ 1,2, 2,2, 1,2, 2,2, /* rate 13 3 */
+/* 4 */ 0,1, 0,1, 0,1, 0,1, 0,1, 0,1, 0,1, 0,1, /* rate 13 0 (increment by 0 or 1) */
+/* 5 */ 0,1, 0,1, 1,1, 1,1, 0,1, 0,1, 0,1, 0,1, /* rate 13 1 */
+/* 6 */ 0,1, 0,1, 1,1, 1,1, 0,1, 0,1, 1,1, 1,1, /* rate 13 2 */
+/* 7 */ 0,1, 0,1, 1,1, 1,1, 1,1, 1,1, 1,1, 1,1, /* rate 13 3 */
 
-/* 8 */ 2,2, 2,2, 2,2, 2,2, /* rate 14 0 (increment by 2) */
-/* 9 */ 2,2, 2,4, 2,2, 2,4, /* rate 14 1 */
-/*10 */ 2,4, 2,4, 2,4, 2,4, /* rate 14 2 */
-/*11 */ 2,4, 4,4, 2,4, 4,4, /* rate 14 3 */
+/* 8 */ 1,1, 1,1, 1,1, 1,1, 1,1, 1,1, 1,1, 1,1, /* rate 14 0 (increment by 1) */
+/* 9 */ 1,1, 1,1, 2,2, 2,2, 1,1, 1,1, 1,1, 1,1, /* rate 14 1 */
+/*10 */ 1,1, 1,1, 2,2, 2,2, 1,1, 1,1, 2,2, 2,2, /* rate 14 2 */
+/*11 */ 1,1, 1,1, 2,2, 2,2, 2,2, 2,2, 2,2, 2,2, /* rate 14 3 */
 
-/*12 */ 4,4, 4,4, 4,4, 4,4, /* rates 15 0, 15 1, 15 2, 15 3 for decay (increment by 4) */
-/*13 */ 8,8, 8,8, 8,8, 8,8, /* rates 15 0, 15 1, 15 2, 15 3 for attack (not used as attack phase is skipped in these cases) */
-/*14 */ 0,0, 0,0, 0,0, 0,0, /* infinity rates for attack and decay(s) */
+/*12 */ 2,2, 2,2, 2,2, 2,2, 2,2, 2,2, 2,2, 2,2, /* rates 15 0, 15 1, 15 2, 15 3 for decay (increment by 2) */
+/*13 */ 4,4, 4,4, 4,4, 4,4, 4,4, 4,4, 4,4, 4,4, /* rates 15 0, 15 1, 15 2, 15 3 for attack (not used as attack phase is skipped in these cases) */
+/*14 */ 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, /* infinity rates for attack and decay(s) */
 };
 
 
@@ -581,7 +583,7 @@ INLINE void advance(void)
         case EG_DMP:    /* dump phase */
           if ( !(ym2413.eg_cnt & ((1<<op->eg_sh_dp)-1) ) )
           {
-            op->volume += eg_inc[op->eg_sel_dp + ((ym2413.eg_cnt>>op->eg_sh_dp)&7)];
+            op->volume += eg_inc[op->eg_sel_dp + ((ym2413.eg_cnt>>op->eg_sh_dp)&15)];
           }
 
           /* attack phase should be started if attenuation is already maximal, without waiting for next envelope update (every 2 samples during dump phase) */
@@ -613,7 +615,7 @@ INLINE void advance(void)
           if ( !(ym2413.eg_cnt & ((1<<op->eg_sh_ar)-1) ) )
           {
             op->volume += (~op->volume *
-                                           (eg_inc[op->eg_sel_ar + ((ym2413.eg_cnt>>op->eg_sh_ar)&7)])
+                                           (eg_inc[op->eg_sel_ar + ((ym2413.eg_cnt>>op->eg_sh_ar)&15)])
                                           ) >>2;
 
             if (op->volume <= MIN_ATT_INDEX)
@@ -627,7 +629,7 @@ INLINE void advance(void)
         case EG_DEC:  /* decay phase */
           if ( !(ym2413.eg_cnt & ((1<<op->eg_sh_dr)-1) ) )
           {
-            op->volume += eg_inc[op->eg_sel_dr + ((ym2413.eg_cnt>>op->eg_sh_dr)&7)];
+            op->volume += eg_inc[op->eg_sel_dr + ((ym2413.eg_cnt>>op->eg_sh_dr)&15)];
 
             if ( (op->volume & ~7) == op->sl )  /* envelope level lowest 3 bits are ignored by the comparator */
               op->state = EG_SUS;
@@ -648,7 +650,7 @@ INLINE void advance(void)
             /* during sustain phase chip adds Release Rate (in percussive mode) */
             if ( !(ym2413.eg_cnt & ((1<<op->eg_sh_rr)-1) ) )
             {
-              op->volume += eg_inc[op->eg_sel_rr + ((ym2413.eg_cnt>>op->eg_sh_rr)&7)];
+              op->volume += eg_inc[op->eg_sel_rr + ((ym2413.eg_cnt>>op->eg_sh_rr)&15)];
 
               if ( op->volume >= MAX_ATT_INDEX )
                 op->volume = MAX_ATT_INDEX;
@@ -685,7 +687,7 @@ INLINE void advance(void)
               {
                 if ( !(ym2413.eg_cnt & ((1<<op->eg_sh_rs)-1) ) )
                 {
-                  op->volume += eg_inc[op->eg_sel_rs + ((ym2413.eg_cnt>>op->eg_sh_rs)&7)];
+                  op->volume += eg_inc[op->eg_sel_rs + ((ym2413.eg_cnt>>op->eg_sh_rs)&15)];
                   if ( op->volume >= MAX_ATT_INDEX )
                   {
                     op->volume = MAX_ATT_INDEX;
@@ -697,7 +699,7 @@ INLINE void advance(void)
               {
                 if ( !(ym2413.eg_cnt & ((1<<op->eg_sh_rr)-1) ) )
                 {
-                  op->volume += eg_inc[op->eg_sel_rr + ((ym2413.eg_cnt>>op->eg_sh_rr)&7)];
+                  op->volume += eg_inc[op->eg_sel_rr + ((ym2413.eg_cnt>>op->eg_sh_rr)&15)];
                   if ( op->volume >= MAX_ATT_INDEX )
                   {
                     op->volume = MAX_ATT_INDEX;
@@ -710,7 +712,7 @@ INLINE void advance(void)
             {
               if ( !(ym2413.eg_cnt & ((1<<op->eg_sh_rs)-1) ) )
               {
-                op->volume += eg_inc[op->eg_sel_rs + ((ym2413.eg_cnt>>op->eg_sh_rs)&7)];
+                op->volume += eg_inc[op->eg_sel_rs + ((ym2413.eg_cnt>>op->eg_sh_rs)&15)];
                 if ( op->volume >= MAX_ATT_INDEX )
                 {
                   op->volume = MAX_ATT_INDEX;
