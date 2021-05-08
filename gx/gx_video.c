@@ -53,12 +53,12 @@ typedef struct
   u32 offset;
 } png_image_desc;
 
-extern const u8 Crosshair_p1_png[];
-extern const u8 Crosshair_p2_png[];
-extern const u8 CD_access_off_png[];
-extern const u8 CD_access_on_png[];
-extern const u8 CD_ready_off_png[];
-extern const u8 CD_ready_on_png[];
+#include "Crosshair_p1_png.h"
+#include "Crosshair_p2_png.h"
+#include "CD_access_off_png.h"
+#include "CD_access_on_png.h"
+#include "CD_ready_off_png.h"
+#include "CD_ready_on_png.h"
 
 /*** VI Mode ***/
 GXRModeObj *vmode;

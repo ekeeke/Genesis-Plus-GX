@@ -168,61 +168,60 @@ extern gx_texture *w_pointer;
 #endif
 
 /* Generic backgrounds */
-extern const u8 Bg_layer_png[];
-extern const u8 Bg_overlay_png[];
-extern const u8 Banner_main_png[];
-extern const u8 Banner_bottom_png[];
-extern const u8 Banner_top_png[];
-extern const u8 Main_logo_png[];
+#include "Bg_layer_png.h"
+#include "Bg_overlay_png.h"
+#include "Banner_main_png.h"
+#include "Banner_bottom_png.h"
+#include "Banner_top_png.h"
+#include "Main_logo_png.h"
 
 /* Generic frames */
-extern const u8 Frame_s1_png[];
-extern const u8 Frame_s2_png[];
-extern const u8 Frame_s3_png[];
-extern const u8 Frame_s1_title_png[];
-extern const u8 Frame_s2_title_png[];
-extern const u8 Frame_throbber_png[];
+#include "Frame_s1_png.h"
+#include "Frame_s2_png.h"
+#include "Frame_s3_png.h"
+#include "Frame_s1_title_png.h"
+#include "Frame_s2_title_png.h"
+#include "Frame_throbber_png.h"
 
 /* Generic Buttons */
-extern const u8 Button_text_png[];
-extern const u8 Button_text_over_png[];
-extern const u8 Button_icon_png[];
-extern const u8 Button_icon_over_png[];
-extern const u8 Button_icon_sm_png[];
-extern const u8 Button_icon_sm_over_png[];
-extern const u8 Button_up_png[];
-extern const u8 Button_up_over_png[];
-extern const u8 Button_down_png[];
-extern const u8 Button_down_over_png[];
-extern const u8 Button_arrow_png[];
-extern const u8 Button_arrow_over_png[];
-extern const u8 Button_digit_png[];
-extern const u8 Button_digit_over_png[];
+#include "Button_text_png.h"
+#include "Button_text_over_png.h"
+#include "Button_icon_png.h"
+#include "Button_icon_over_png.h"
+#include "Button_icon_sm_png.h"
+#include "Button_icon_sm_over_png.h"
+#include "Button_up_png.h"
+#include "Button_up_over_png.h"
+#include "Button_down_png.h"
+#include "Button_down_over_png.h"
+#include "Button_arrow_png.h"
+#include "Button_arrow_over_png.h"
+#include "Button_digit_png.h"
+#include "Button_digit_over_png.h"
 
 /* Generic images*/
 #ifdef HW_RVL
 #define Key_A_png Key_A_wii_png
 #define Key_B_png Key_B_wii_png
-extern const u8 generic_point_png[];
-extern const u8 Key_A_wii_png[];
-extern const u8 Key_B_wii_png[];
+#include "generic_point_png.h"
+#include "Key_A_wii_png.h"
+#include "Key_B_wii_png.h"
 #else
 #define Key_A_png Key_A_gcn_png
 #define Key_B_png Key_B_gcn_png
-extern const u8 Key_A_gcn_png[];
-extern const u8 Key_B_gcn_png[];
+#include "Key_A_gcn_png.h"
+#include "Key_B_gcn_png.h"
 #endif
-extern const u8 Star_full_png[];
-extern const u8 Star_empty_png[];
-extern const u8 Overlay_bar_png[];
+#include "Star_full_png.h"
+#include "Star_empty_png.h"
+#include "Overlay_bar_png.h"
 
 /* Generic Sounds */
-extern const u8 button_over_pcm[];
-extern const u8 button_select_pcm[];
-extern const u8 intro_pcm[];
-extern const u32 button_select_pcm_size;
-extern const u32 button_over_pcm_size;
-extern const u32 intro_pcm_size;
+
+#include "button_over_pcm.h"
+#include "button_select_pcm.h"
+#include "intro_pcm.h"
+
 
 extern u8 SILENT;
 

@@ -54,82 +54,82 @@
 #include <ogc/lwp_watchdog.h>
 
 /* Credits */
-extern const u8 Bg_credits_png[];
+#include "Bg_credits_png.h"
 
 /* Main menu */
-extern const u8 Main_load_png[];
-extern const u8 Main_options_png[];
-extern const u8 Main_quit_png[];
-extern const u8 Main_file_png[];
-extern const u8 Main_reset_png[];
-extern const u8 Main_cheats_png[];
-extern const u8 Main_showinfo_png[];
-extern const u8 Main_takeshot_png[];
+#include "Main_load_png.h"
+#include "Main_options_png.h"
+#include "Main_quit_png.h"
+#include "Main_file_png.h"
+#include "Main_reset_png.h"
+#include "Main_cheats_png.h"
+#include "Main_showinfo_png.h"
+#include "Main_takeshot_png.h"
 #ifdef HW_RVL
-extern const u8 Main_play_wii_png[];
+#include "Main_play_wii_png.h"
 #else
-extern const u8 Main_play_gcn_png[];
+#include "Main_play_gcn_png.h"
 #endif
 
 /* Options menu */
-extern const u8 Option_menu_png[];
-extern const u8 Option_ctrl_png[];
-extern const u8 Option_sound_png[];
-extern const u8 Option_video_png[];
-extern const u8 Option_system_png[];
+#include "Option_menu_png.h"
+#include "Option_ctrl_png.h"
+#include "Option_sound_png.h"
+#include "Option_video_png.h"
+#include "Option_system_png.h"
 
 /* Load ROM menu */
-extern const u8 Load_recent_png[];
-extern const u8 Load_md_png[];
-extern const u8 Load_ms_png[];
-extern const u8 Load_gg_png[];
-extern const u8 Load_sg_png[];
-extern const u8 Load_cd_png[];
+#include "Load_recent_png.h"
+#include "Load_md_png.h"
+#include "Load_ms_png.h"
+#include "Load_gg_png.h"
+#include "Load_sg_png.h"
+#include "Load_cd_png.h"
 
 /* Save Manager menu */
-extern const u8 Button_load_png[];
-extern const u8 Button_load_over_png[];
-extern const u8 Button_save_png[];
-extern const u8 Button_save_over_png[];
-extern const u8 Button_special_png[];
-extern const u8 Button_special_over_png[];
-extern const u8 Button_delete_png[];
-extern const u8 Button_delete_over_png[];
+#include "Button_load_png.h"
+#include "Button_load_over_png.h"
+#include "Button_save_png.h"
+#include "Button_save_over_png.h"
+#include "Button_special_png.h"
+#include "Button_special_over_png.h"
+#include "Button_delete_png.h"
+#include "Button_delete_over_png.h"
 
 /* Controller Settings */
-extern const u8 Ctrl_4wayplay_png[];
-extern const u8 Ctrl_gamepad_png[];
-extern const u8 Ctrl_justifiers_png[];
-extern const u8 Ctrl_menacer_png[];
-extern const u8 Ctrl_mouse_png[];
-extern const u8 Ctrl_xe_1ap_png[];
-extern const u8 Ctrl_activator_png[];
-extern const u8 Ctrl_lightphaser_png[];
-extern const u8 Ctrl_paddle_png[];
-extern const u8 Ctrl_sportspad_png[];
-extern const u8 Ctrl_none_png[];
-extern const u8 Ctrl_teamplayer_png[];
-extern const u8 Ctrl_mastertap_png[];
-extern const u8 Ctrl_graphic_board_png[];
-extern const u8 Ctrl_pad_auto_png[];
-extern const u8 Ctrl_pad2b_png[];
-extern const u8 Ctrl_pad3b_png[];
-extern const u8 Ctrl_pad6b_png[];
-extern const u8 Ctrl_config_png[];
-extern const u8 ctrl_option_off_png[];
-extern const u8 ctrl_option_on_png[];
-extern const u8 ctrl_gamecube_png[];
+#include "Ctrl_4wayplay_png.h"
+#include "Ctrl_gamepad_png.h"
+#include "Ctrl_justifiers_png.h"
+#include "Ctrl_menacer_png.h"
+#include "Ctrl_mouse_png.h"
+#include "Ctrl_xe_1ap_png.h"
+#include "Ctrl_activator_png.h"
+#include "Ctrl_lightphaser_png.h"
+#include "Ctrl_paddle_png.h"
+#include "Ctrl_sportspad_png.h"
+#include "Ctrl_none_png.h"
+#include "Ctrl_teamplayer_png.h"
+#include "Ctrl_mastertap_png.h"
+#include "Ctrl_graphic_board_png.h"
+#include "Ctrl_pad_auto_png.h"
+#include "Ctrl_pad2b_png.h"
+#include "Ctrl_pad3b_png.h"
+#include "Ctrl_pad6b_png.h"
+#include "Ctrl_config_png.h"
+#include "ctrl_option_off_png.h"
+#include "ctrl_option_on_png.h"
+#include "ctrl_gamecube_png.h"
 #ifdef HW_RVL
-extern const u8 ctrl_classic_png[];
-extern const u8 ctrl_nunchuk_png[];
-extern const u8 ctrl_wiimote_png[];
-extern const u8 ctrl_wiiu_png[];
+#include "ctrl_classic_png.h"
+#include "ctrl_nunchuk_png.h"
+#include "ctrl_wiimote_png.h"
+#include "ctrl_wiiu_png.h"
 #endif
 
 /* Generic images */
-extern const u8 Button_sm_blue_png[];
-extern const u8 Button_sm_grey_png[];
-extern const u8 Button_sm_yellow_png[];
+#include "Button_sm_blue_png.h"
+#include "Button_sm_grey_png.h"
+#include "Button_sm_yellow_png.h"
 
 /* Exit callback */
 void (*reload)(void);

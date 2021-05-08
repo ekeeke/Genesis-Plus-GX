@@ -50,13 +50,13 @@
 #define MAX_DESC_LENGTH (63)
 
 #ifdef HW_RVL
-extern const u8 Key_Minus_wii_png[];
-extern const u8 Key_Plus_wii_png[];
+#include "Key_Minus_wii_png.h"
+#include "Key_Plus_wii_png.h"
 #else
-extern const u8 Key_R_gcn_png[];
-extern const u8 Key_L_gcn_png[];
+#include "Key_R_gcn_png.h"
+#include "Key_L_gcn_png.h"
 #endif
-extern const u8 Key_DPAD_png[];
+#include "Key_DPAD_png.h"
 
 typedef struct 
 {

@@ -3,7 +3,7 @@
  *
  *  Genesis Plus GX configuration file support
  *
- *  Copyright Eke-Eke (2007-2019)
+ *  Copyright Eke-Eke (2007-2021)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -289,6 +289,7 @@ void config_default(void)
     {
       /* switch menu video mode to interlaced */
       vmode->viTVMode = (vmode->viTVMode & ~3) | VI_INTERLACE;
+	  vmode->xfbMode = VI_XFBMODE_DF;
       VIDEO_Configure(vmode);
       VIDEO_Flush();
       VIDEO_WaitVSync();

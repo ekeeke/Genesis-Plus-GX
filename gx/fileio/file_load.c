@@ -3,7 +3,7 @@
  * 
  *  File loading support
  *
- *  Copyright Eke-Eke (2008-2019)
+ *  Copyright Eke-Eke (2008-2021)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -261,8 +261,8 @@ int UpdateDirectory(bool go_up, char *dirname)
   else
   {
     /* by default, simply append folder name */
-    const char *path = (const char *)fileDir;
-    snprintf(fileDir, MAXPATHLEN, "%s%s/", path, (const char *)dirname);
+    strncat(fileDir, (const char *)dirname, MAXPATHLEN - strlen(fileDir) - 2);
+    strcat(fileDir, "/");
   }
 
   return 1;
