@@ -37,6 +37,7 @@ to do:
 /** 2021/04/25: fixed EG behavior when SL = 0 (verified on YM2413 real hardware, cf. https://www.smspower.org/Development/YM2413ReverseEngineeringNotes2015-12-24) **/
 /** 2021/04/25: improved EG sustain phase transition comparator accuracy (verified on YM2413 real hardware, cf. https://www.smspower.org/Development/YM2413ReverseEngineeringNotes2015-12-31) **/
 /** 2021/05/04: improved EG increment steps accuracy (verified on YM2413 real hardware, cf. https://www.smspower.org/Development/YM2413ReverseEngineeringNotes2015-03-20) **/
+/** 2021/05/08: improved EG transitions accuracy (verified against https://github.com/nukeykt/Nuked-OPLL/blob/master/opll.c) **/
 /************************************************/
 
 #include "shared.h"
@@ -580,26 +581,15 @@ INLINE void advance(void)
 
       switch(op->state)
       {
-        case EG_DMP:    /* dump phase */
-          if ( !(ym2413.eg_cnt & ((1<<op->eg_sh_dp)-1) ) )
+        case EG_DMP:  /* dump phase */
+          if ( (op->volume & ~3) == (MAX_ATT_INDEX & ~3) )  /* envelope level lowest 2 bits are ignored by the comparator */
           {
-            op->volume += eg_inc[op->eg_sel_dp + ((ym2413.eg_cnt>>op->eg_sh_dp)&15)];
-          }
+            op->state =  EG_ATT;
 
-          /* attack phase should be started if attenuation is already maximal, without waiting for next envelope update (every 2 samples during dump phase) */
-          if ( op->volume >= MAX_ATT_INDEX )
-          {
-            /* attack phase is skipped and envelope is forced to 0 when attack rate is set to 15.0-15.3 */
-            /* (verified on real hardware, cf. https://www.smspower.org/Development/YM2413ReverseEngineeringNotes2017-01-26) */
-            if ((op->ar + op->ksr) < 16+60)
-            {
-              op->volume = MAX_ATT_INDEX;
-              op->state =  EG_ATT;
-            }
-            else
+            /* force envelope to zero when attack rate is set to 15.0-15.3 */
+            if ((op->ar + op->ksr) >= 16+60)
             {
               op->volume = MIN_ATT_INDEX;
-              op->state = (op->sl == MIN_ATT_INDEX) ? EG_SUS : EG_DEC; /* decay phase should not occur in case SL = 0 */ 
             }
 
             /*dump phase is performed by both operators in each channel*/
@@ -607,32 +597,39 @@ INLINE void advance(void)
              *phases in BOTH operators are reset (at the same time ?)
              */
             if (i&1)
+            {
               CH->SLOT[0].phase = CH->SLOT[1].phase = 0;
+            }
+          }
+          else if ( !(ym2413.eg_cnt & ((1<<op->eg_sh_dp)-1) ) )
+          {
+            op->volume += eg_inc[op->eg_sel_dp + ((ym2413.eg_cnt>>op->eg_sh_dp)&15)];
           }
           break;
 
-        case EG_ATT:    /* attack phase */
-          if ( !(ym2413.eg_cnt & ((1<<op->eg_sh_ar)-1) ) )
+        case EG_ATT:  /* attack phase */
+          if (op->volume == MIN_ATT_INDEX)
           {
-            op->volume += (~op->volume *
-                                           (eg_inc[op->eg_sel_ar + ((ym2413.eg_cnt>>op->eg_sh_ar)&15)])
-                                          ) >>2;
-
-            if (op->volume <= MIN_ATT_INDEX)
-            {
-              op->volume = MIN_ATT_INDEX;
-              op->state = (op->sl == MIN_ATT_INDEX) ? EG_SUS : EG_DEC; /* decay phase should not occur in case SL = 0 */
-            }
+            op->state = EG_DEC;
+          }
+          else if ( !(ym2413.eg_cnt & ((1<<op->eg_sh_ar)-1) ) )
+          {
+            op->volume += (~op->volume * (eg_inc[op->eg_sel_ar + ((ym2413.eg_cnt>>op->eg_sh_ar)&15)])) >>2;
           }
           break;
 
         case EG_DEC:  /* decay phase */
-          if ( !(ym2413.eg_cnt & ((1<<op->eg_sh_dr)-1) ) )
+          if ( (op->volume & ~7) == op->sl )  /* envelope level lowest 3 bits are ignored by the comparator */
+          {
+            op->state = EG_SUS;
+          }
+          else if ( !(ym2413.eg_cnt & ((1<<op->eg_sh_dr)-1) ) )
           {
             op->volume += eg_inc[op->eg_sel_dr + ((ym2413.eg_cnt>>op->eg_sh_dr)&15)];
-
-            if ( (op->volume & ~7) == op->sl )  /* envelope level lowest 3 bits are ignored by the comparator */
-              op->state = EG_SUS;
+            if ( (op->volume & ~3) == (MAX_ATT_INDEX & ~3) )  /* envelope level lowest 2 bits are ignored by the comparator */
+            {
+              op->state = EG_OFF;
+            }
           }
           break;
 
@@ -641,19 +638,20 @@ INLINE void advance(void)
           one can change percusive/non-percussive modes on the fly and
           the chip will remain in sustain phase - verified on real YM3812 */
 
-          if(op->eg_type)    /* non-percussive mode (sustained tone) */
+          if (op->eg_type)  /* non-percussive mode (sustained tone) */
           {
                     /* do nothing */
           }
-          else        /* percussive mode */
+          else  /* percussive mode */
           {
             /* during sustain phase chip adds Release Rate (in percussive mode) */
             if ( !(ym2413.eg_cnt & ((1<<op->eg_sh_rr)-1) ) )
             {
               op->volume += eg_inc[op->eg_sel_rr + ((ym2413.eg_cnt>>op->eg_sh_rr)&15)];
-
-              if ( op->volume >= MAX_ATT_INDEX )
-                op->volume = MAX_ATT_INDEX;
+              if ( (op->volume & ~3) == (MAX_ATT_INDEX & ~3) )  /* envelope level lowest 2 bits are ignored by the comparator */
+              {
+                op->state = EG_OFF;
+              }
             }
             /* else do nothing in sustain phase */
           }
@@ -679,7 +677,7 @@ INLINE void advance(void)
         */
           if ( (i&1) || ((ym2413.rhythm&0x20) && (i>=12)) )/* exclude modulators */
           {
-            if(op->eg_type)    /* non-percussive mode (sustained tone) */
+            if (op->eg_type)  /* non-percussive mode (sustained tone) */
             /*this is correct: use RR when SUS = OFF*/
             /*and use RS when SUS = ON*/
             {
@@ -688,9 +686,8 @@ INLINE void advance(void)
                 if ( !(ym2413.eg_cnt & ((1<<op->eg_sh_rs)-1) ) )
                 {
                   op->volume += eg_inc[op->eg_sel_rs + ((ym2413.eg_cnt>>op->eg_sh_rs)&15)];
-                  if ( op->volume >= MAX_ATT_INDEX )
+                  if ( (op->volume & ~3) == (MAX_ATT_INDEX & ~3) )  /* envelope level lowest 2 bits are ignored by the comparator */
                   {
-                    op->volume = MAX_ATT_INDEX;
                     op->state = EG_OFF;
                   }
                 }
@@ -700,22 +697,20 @@ INLINE void advance(void)
                 if ( !(ym2413.eg_cnt & ((1<<op->eg_sh_rr)-1) ) )
                 {
                   op->volume += eg_inc[op->eg_sel_rr + ((ym2413.eg_cnt>>op->eg_sh_rr)&15)];
-                  if ( op->volume >= MAX_ATT_INDEX )
+                  if ( (op->volume & ~3) == (MAX_ATT_INDEX & ~3) )  /* envelope level lowest 2 bits are ignored by the comparator */
                   {
-                    op->volume = MAX_ATT_INDEX;
                     op->state = EG_OFF;
                   }
                 }
               }
             }
-            else        /* percussive mode */
+            else  /* percussive mode */
             {
               if ( !(ym2413.eg_cnt & ((1<<op->eg_sh_rs)-1) ) )
               {
                 op->volume += eg_inc[op->eg_sel_rs + ((ym2413.eg_cnt>>op->eg_sh_rs)&15)];
-                if ( op->volume >= MAX_ATT_INDEX )
+                if ( (op->volume & ~3) == (MAX_ATT_INDEX & ~3) )  /* envelope level lowest 2 bits are ignored by the comparator */
                 {
-                  op->volume = MAX_ATT_INDEX;
                   op->state = EG_OFF;
                 }
               }
@@ -723,8 +718,12 @@ INLINE void advance(void)
           }
           break;
 
-      default:
-      break;
+        case EG_OFF:  /* envelope off */
+          op->volume = MAX_ATT_INDEX;
+          break;
+
+        default:
+          break;
       }
     }
   }
