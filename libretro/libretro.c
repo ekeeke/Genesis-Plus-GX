@@ -2208,7 +2208,7 @@ void retro_get_system_info(struct retro_system_info *info)
 #define GIT_VERSION ""
 #endif
    info->library_version = "v1.7.4" GIT_VERSION;
-   info->valid_extensions = "m3u|mdx|md|smd|gen|bin|cue|iso|chd|sms|gg|sg";
+   info->valid_extensions = "m3u|mdx|md|smd|gen|bin|cue|iso|chd|sms|bms|gg|sg";
    info->block_extract = false;
    info->need_fullpath = true;
 }
