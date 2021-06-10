@@ -3,7 +3,7 @@
  *  ROM Loading Support
  *
  *  Copyright (C) 1998-2003  Charles Mac Donald (original code)
- *  Copyright (C) 2007-2020  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2007-2021  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -570,14 +570,9 @@ int load_rom(char *filename)
 
   /* auto-detect CD image file */
   size = cdd_load(filename, (char *)(cart.rom));
-  if (size < 0)
-  {
-    /* error opening file */
-    return (0);
-  }
 
   /* CD image file ? */
-  if (size)
+  if (size > 0)
   {
     /* enable CD hardware */
     system_hw = SYSTEM_MCD;
