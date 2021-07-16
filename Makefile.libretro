@@ -6,6 +6,7 @@ HAVE_SYS_PARAM = 1
 HOOK_CPU = 0
 HAVE_CDROM = 0
 USE_PER_SOUND_CHANNELS_CONFIG = 1
+LOW_MEMORY = 0
 
 CORE_DIR := .
 
@@ -426,6 +427,7 @@ else ifeq ($(platform), rs90)
    CFLAGS += -ffast-math -march=mips32 -mtune=mips32 -fomit-frame-pointer
    ENDIANNESS_DEFINES := -DLSB_FIRST -DBYTE_ORDER=LITTLE_ENDIAN -DALIGN_LONG
    USE_PER_SOUND_CHANNELS_CONFIG = 0
+   LOW_MEMORY = 1
 
 # GCW0
 else ifeq ($(platform), gcw0)
@@ -751,6 +753,10 @@ endif
 
 ifeq ($(USE_PER_SOUND_CHANNELS_CONFIG), 1)
 DEFINES += -DUSE_PER_SOUND_CHANNELS_CONFIG
+endif
+
+ifeq ($(LOW_MEMORY), 1)
+DEFINES += -DLOW_MEMORY
 endif
 
 CFLAGS += $(fpic) $(DEFINES) $(CODE_DEFINES) $(FLAGS)

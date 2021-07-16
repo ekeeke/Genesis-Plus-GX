@@ -2697,7 +2697,11 @@ void retro_set_environment(retro_environment_t cb)
    static const struct retro_system_content_info_override content_overrides[] = {
       {
          "mdx|md|smd|gen|bms|sms|gg|sg", /* extensions */
+#if defined(LOW_MEMORY)
+         true,                           /* need_fullpath */
+#else
          false,                          /* need_fullpath */
+#endif
          false                           /* persistent_data */
       },
       { NULL, false, false }
@@ -3023,12 +3027,16 @@ bool retro_load_game(const struct retro_game_info *info)
    content_path[0] = '\0';
    content_ext[0]  = '\0';
 
+   g_rom_data      = NULL;
+   g_rom_size      = 0;
+
    /* Attempt to fetch extended game info */
    if (environ_cb(RETRO_ENVIRONMENT_GET_GAME_INFO_EXT, &info_ext))
    {
+#if !defined(LOW_MEMORY)
       g_rom_data = (const void *)info_ext->data;
       g_rom_size = info_ext->size;
-
+#endif
       strncpy(g_rom_dir, info_ext->dir, sizeof(g_rom_dir));
       g_rom_dir[sizeof(g_rom_dir) - 1] = '\0';
 
@@ -3062,9 +3070,6 @@ bool retro_load_game(const struct retro_game_info *info)
 
       if (!info || !info->path)
          return false;
-
-      g_rom_data = NULL;
-      g_rom_size = 0;
 
       extract_directory(g_rom_dir, info->path, sizeof(g_rom_dir));
       extract_name(g_rom_name, info->path, sizeof(g_rom_name));
