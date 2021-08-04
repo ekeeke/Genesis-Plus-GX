@@ -41,7 +41,7 @@
 #define _LOADROM_H_
 
 #ifndef MAXROMSIZE
-#define MAXROMSIZE 10485760
+#define MAXROMSIZE 33554432
 #endif
 
 typedef struct
