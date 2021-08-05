@@ -82,6 +82,7 @@ typedef struct
   uint8 special;          /* custom external hardware (Lock-On, J-Cart, 3-D glasses, Terebi Oekaki,...) */
   cart_hw_t hw;           /* cartridge internal hardware */
   uint8 rom[MAXROMSIZE];  /* ROM area */
+  uint8 sram[0x10000];    /* SRAM area */
 } md_cart_t;
 
 
