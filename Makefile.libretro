@@ -55,6 +55,7 @@ ifneq (,$(findstring unix,$(platform)))
    SHARED := -shared -Wl,--version-script=$(CORE_DIR)/libretro/link.T -Wl,--no-undefined
    ENDIANNESS_DEFINES := -DLSB_FIRST -DBYTE_ORDER=LITTLE_ENDIAN
    PLATFORM_DEFINES := -DHAVE_ZLIB
+   CFLAGS += '-DMAXROMSIZE=(16<<20)'
 
    # RockPro64
    ifneq (,$(findstring rockpro64,$(platform)))
@@ -513,10 +514,11 @@ CFLAGS += -D_CRT_SECURE_NO_DEPRECATE
 # Windows
 else
    TARGET := $(TARGET_NAME)_libretro.dll
-   CC = gcc
+   CC ?= gcc
    SHARED := -shared -static-libgcc -static-libstdc++ -Wl,--version-script=$(CORE_DIR)/libretro/link.T -Wl,--no-undefined
    ENDIANNESS_DEFINES := -DLSB_FIRST -DBYTE_ORDER=LITTLE_ENDIAN
    PLATFORM_DEFINES := -DHAVE_ZLIB
+   CFLAGS += '-DMAXROMSIZE=(16<<20)'
 
 endif
 
