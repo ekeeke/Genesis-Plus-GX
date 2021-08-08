@@ -2,7 +2,7 @@
  *  Genesis Plus
  *  Backup RAM support
  *
- *  Copyright (C) 2007-2020  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2007-2021  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -47,7 +47,7 @@ typedef struct
   uint32 start;
   uint32 end;
   uint32 crc;
-  uint8 *sram;
+  uint8 sram[0x10000];
 } T_SRAM;
 
 /* Function prototypes */

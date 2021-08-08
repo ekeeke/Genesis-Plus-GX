@@ -2,7 +2,7 @@
  *  Genesis Plus
  *  Action Replay / Pro Action Replay emulation
  *
- *  Copyright (C) 2009-2014  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2009-2021  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -63,10 +63,10 @@ void areplay_init(void)
   
   memset(&action_replay,0,sizeof(action_replay));
 
-  /* store Action replay ROM (max. 128k) & RAM (64k) above cartridge ROM + SRAM area */
-  if (cart.romsize > 0x810000) return;
-  action_replay.rom = cart.rom + 0x810000;
-  action_replay.ram = cart.rom + 0x830000;
+  /* store Action replay ROM (max. 128KB) & RAM (64KB) above cartridge ROM (max. 8MB) */
+  if (cart.romsize > 0x800000) return;
+  action_replay.rom = cart.rom + 0x800000;
+  action_replay.ram = cart.rom + 0x820000;
 
   /* try to load Action Replay ROM file */
   size = load_archive(AR_ROM, action_replay.rom, 0x20000, NULL);

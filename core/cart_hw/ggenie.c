@@ -2,7 +2,7 @@
  *  Genesis Plus
  *  Game Genie Hardware emulation
  *
- *  Copyright (C) 2009-2014  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2009-2021  Eke-Eke (Genesis Plus GX)
  *
  *  Based on documentation from Charles McDonald
  *  (http://cgfm2.emuviews.com/txt/genie.txt)
@@ -61,9 +61,9 @@ void ggenie_init(void)
 {  
   memset(&ggenie,0,sizeof(ggenie));
 
-  /* Store Game Genie ROM (32k) above cartridge ROM + SRAM area */
-  if (cart.romsize > 0x810000) return;
-  ggenie.rom = cart.rom + 0x810000;
+  /* Store Game Genie ROM (32KB) above cartridge ROM (max. 8MB) */
+  if (cart.romsize > 0x800000) return;
+  ggenie.rom = cart.rom + 0x800000;
 
   /* Try to load Game Genie ROM file */
   if (load_archive(GG_ROM, ggenie.rom, 0x8000, NULL) > 0)
