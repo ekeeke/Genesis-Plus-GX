@@ -454,79 +454,6 @@ void md_cart_init(void)
   }
 
   /**********************************************
-          LOCK-ON 
-  ***********************************************/
-
-  /* clear existing patches */
-  ggenie_shutdown();
-  areplay_shutdown();
-
-  /* initialize extra hardware */
-  switch (config.lock_on)
-  {
-    case TYPE_GG:
-    {
-      ggenie_init();
-      break;
-    }
-
-    case TYPE_AR:
-    {
-      areplay_init();
-      break;
-    }
-
-    case TYPE_SK:
-    {
-      /* store Sonic & Knuckles ROM files after cartridge ROM area */
-      if (cart.romsize > 0x400000) break;
-
-      /* try to load Sonic & Knuckles ROM file (2MB) */
-      if (load_archive(SK_ROM, cart.rom + 0x400000, 0x200000, NULL) == 0x200000)
-      {
-        /* check ROM header */
-        if (!memcmp(cart.rom + 0x400000 + 0x120, "SONIC & KNUCKLES",16))
-        {
-          /* try to load Sonic 2 & Knuckles upmem ROM file (256KB) */
-          if (load_archive(SK_UPMEM, cart.rom + 0x600000, 0x40000, NULL) == 0x40000)
-          {
-            /* $000000-$1FFFFF is mapped to S&K ROM */
-            for (i=0x00; i<0x20; i++)
-            {
-              m68k.memory_map[i].base = cart.rom + 0x400000 + (i << 16);
-            }
-
-#ifdef LSB_FIRST
-            for (i=0; i<0x200000; i+=2)
-            {
-              /* Byteswap ROM */
-              uint8 temp = cart.rom[i + 0x400000];
-              cart.rom[i + 0x400000] = cart.rom[i + 0x400000 + 1];
-              cart.rom[i + 0x400000 + 1] = temp;
-            }
-
-            for (i=0; i<0x40000; i+=2)
-            {
-              /* Byteswap ROM */
-              uint8 temp = cart.rom[i + 0x600000];
-              cart.rom[i + 0x600000] = cart.rom[i + 0x600000 + 1];
-              cart.rom[i + 0x600000 + 1] = temp;
-            }
-#endif
-            cart.special |= HW_LOCK_ON;
-          }
-        }
-      }
-      break;
-    }
-
-    default:
-    {
-      break;
-    }
-  }
-
-  /**********************************************
         CARTRIDGE EXTRA HARDWARE
   ***********************************************/
   memset(&cart.hw, 0, sizeof(cart.hw));
@@ -759,6 +686,79 @@ void md_cart_init(void)
   if (!cart.hw.time_w)
   {
     cart.hw.time_w = default_time_w;
+  }
+
+  /**********************************************
+          LOCK-ON 
+  ***********************************************/
+
+  /* clear existing patches */
+  ggenie_shutdown();
+  areplay_shutdown();
+
+  /* initialize extra hardware */
+  switch (config.lock_on)
+  {
+    case TYPE_GG:
+    {
+      ggenie_init();
+      break;
+    }
+
+    case TYPE_AR:
+    {
+      areplay_init();
+      break;
+    }
+
+    case TYPE_SK:
+    {
+      /* store Sonic & Knuckles ROM files after cartridge ROM area */
+      if (cart.romsize > 0x400000) break;
+
+      /* try to load Sonic & Knuckles ROM file (2MB) */
+      if (load_archive(SK_ROM, cart.rom + 0x400000, 0x200000, NULL) == 0x200000)
+      {
+        /* check ROM header */
+        if (!memcmp(cart.rom + 0x400000 + 0x120, "SONIC & KNUCKLES",16))
+        {
+          /* try to load Sonic 2 & Knuckles upmem ROM file (256KB) */
+          if (load_archive(SK_UPMEM, cart.rom + 0x600000, 0x40000, NULL) == 0x40000)
+          {
+            /* $000000-$1FFFFF is mapped to S&K ROM */
+            for (i=0x00; i<0x20; i++)
+            {
+              m68k.memory_map[i].base = cart.rom + 0x400000 + (i << 16);
+            }
+
+#ifdef LSB_FIRST
+            for (i=0; i<0x200000; i+=2)
+            {
+              /* Byteswap ROM */
+              uint8 temp = cart.rom[i + 0x400000];
+              cart.rom[i + 0x400000] = cart.rom[i + 0x400000 + 1];
+              cart.rom[i + 0x400000 + 1] = temp;
+            }
+
+            for (i=0; i<0x40000; i+=2)
+            {
+              /* Byteswap ROM */
+              uint8 temp = cart.rom[i + 0x600000];
+              cart.rom[i + 0x600000] = cart.rom[i + 0x600000 + 1];
+              cart.rom[i + 0x600000 + 1] = temp;
+            }
+#endif
+            cart.special |= HW_LOCK_ON;
+          }
+        }
+      }
+      break;
+    }
+
+    default:
+    {
+      break;
+    }
   }
 }
 

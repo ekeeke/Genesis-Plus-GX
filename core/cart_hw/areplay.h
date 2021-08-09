@@ -1,6 +1,6 @@
 /****************************************************************************
  *  Genesis Plus
- *  DATEL Action Replay / Pro Action Replay emulation
+ *  Action Replay / Pro Action Replay hardware support
  *
  *  Copyright (C) 2009-2021  Eke-Eke (Genesis Plus GX)
  *
