@@ -22,7 +22,7 @@
 # -DUSE_LIBTREMOR    : enable OGG file support for CD emulation using provided TREMOR library
 # -DUSE_LIBVORBIS    : enable OGG file support for CD emulation using external VORBIS library
 # -DISABLE_MANY_OGG_OPEN_FILES : only have one OGG file opened at once to save RAM
-# -DMAXROMSIZE       : defines maximal size of ROM/SRAM buffer (also shared with CD hardware)
+# -DMAXROMSIZE       : defines maximal size of ROM buffer (also shared with CD hardware)
 # -DHAVE_YM3438_CORE : enable (configurable) support for Nuked cycle-accurate YM2612/YM3438 core
 # -DHAVE_OPLL_CORE   : enable (configurable) support for Nuked cycle-accurate YM2413 core
 # -DHOOK_CPU         : enable CPU hooks
