@@ -61,6 +61,7 @@ Genesis Plus GX 1.7.5 (xx/xx/xxxx) (Eke-Eke)
 * improved I2C EEPROM boards emulation accuracy
 * improved SVP memory handlers accuracy (fixes Virtua Racing debug mode)
 * fixed Game Genie / Pro Action Replay lock-on support when Mega CD hardware is enabled 
+* fixed Game Genie / Pro Action Replay lock-on support with games larger than 8MB
 * fixed SRAM support in Triple Play 96 & Triple Play - Gold Edition
 * fixed automatic CD loading with .md ROM files
 * fixed ROM padding for Sonic & Knuckles
@@ -188,6 +189,7 @@ Genesis Plus GX 1.7.5 (xx/xx/xxxx) (Eke-Eke)
 * added configurable Wiimote timeout
 * added game auto-load support through DOL args (compatible with "Wiiflow" plugin arguments) 
 * fixed support for 3rd-party classic controllers with invalid calibration settings
+* increased maximal ROM size to 15MB
 
 [GCW0]
 ---------------
