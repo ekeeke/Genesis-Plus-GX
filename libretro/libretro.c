@@ -190,7 +190,8 @@ static char arvalidchars[] = "0123456789ABCDEF";
 static uint32_t overclock_delay;
 #endif
 
-static bool libretro_supports_bitmasks = false;
+static bool libretro_supports_option_categories = false;
+static bool libretro_supports_bitmasks          = false;
 
 #define SOUND_FREQUENCY 44100
 
@@ -1863,7 +1864,12 @@ static void check_variables(bool first_run)
   var.key = "genesis_plus_gx_show_advanced_audio_settings";
   var.value = NULL;
 
-  if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+  /* If frontend supports core option categories,
+   * then genesis_plus_gx_show_advanced_audio_settings
+   * is ignored and no options should be hidden */
+
+  if (!libretro_supports_option_categories &&
+      environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
   {
     bool show_advanced_av_settings_prev = show_advanced_av_settings;
 
@@ -2709,7 +2715,23 @@ void retro_set_environment(retro_environment_t cb)
 
    environ_cb = cb;
 
-   libretro_set_core_options(environ_cb);
+   libretro_supports_option_categories = false;
+   libretro_set_core_options(environ_cb,
+         &libretro_supports_option_categories);
+
+   /* If frontend supports core option categories,
+    * genesis_plus_gx_show_advanced_audio_settings
+    * is unused and should be hidden */
+   if (libretro_supports_option_categories)
+   {
+      struct retro_core_option_display option_display;
+
+      option_display.visible = false;
+      option_display.key     = "genesis_plus_gx_show_advanced_audio_settings";
+
+      environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY,
+            &option_display);
+   }
 
    cb(RETRO_ENVIRONMENT_SET_CONTROLLER_INFO, (void*)ports);
    cb(RETRO_ENVIRONMENT_SET_INPUT_DESCRIPTORS, (void*)desc);
@@ -3417,7 +3439,8 @@ void retro_init(void)
 
 void retro_deinit(void)
 {
-   libretro_supports_bitmasks = false;
+   libretro_supports_option_categories = false;
+   libretro_supports_bitmasks          = false;
 
    g_rom_data = NULL;
    g_rom_size = 0;
