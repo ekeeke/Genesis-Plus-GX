@@ -443,6 +443,20 @@ else ifeq ($(platform), gcw0)
    ENDIANNESS_DEFINES := -DLSB_FIRST -DBYTE_ORDER=LITTLE_ENDIAN -DALIGN_LONG
    USE_PER_SOUND_CHANNELS_CONFIG = 0
 
+# RETROFW
+else ifeq ($(platform), retrofw)
+   TARGET := $(TARGET_NAME)_libretro.so
+   CC = /opt/retrofw-toolchain/usr/bin/mipsel-linux-gcc
+   CXX = /opt/retrofw-toolchain/usr/bin/mipsel-linux-g++
+   AR = /opt/retrofw-toolchain/usr/bin/mipsel-linux-ar
+   SHARED := -shared -Wl,--version-script=$(CORE_DIR)/libretro/link.T -Wl,--no-undefined
+   fpic := -fPIC
+   LDFLAGS += $(PTHREAD_FLAGS)
+   CFLAGS += $(PTHREAD_FLAGS) -G0
+   CFLAGS += -ffast-math -march=mips32 -mtune=mips32 -mhard-float -fomit-frame-pointer
+   ENDIANNESS_DEFINES := -DLSB_FIRST -DBYTE_ORDER=LITTLE_ENDIAN -DALIGN_LONG
+   USE_PER_SOUND_CHANNELS_CONFIG = 0
+
 # Windows MSVC 2003 Xbox 1
 else ifeq ($(platform), xbox1_msvc2003)
 TARGET := $(TARGET_NAME)_libretro_xdk1.lib
