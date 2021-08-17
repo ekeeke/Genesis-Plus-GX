@@ -112,8 +112,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
          { "mega drive / genesis", "Mega Drive/Genesis" },
          { NULL, NULL },
       },
-      "auto",
-      NULL
+      "auto"
    },
    {
       "genesis_plus_gx_region_detect",
@@ -129,8 +128,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
          { "ntsc-j",  "NTSC-J" },
          { NULL, NULL },
       },
-      "auto",
-      NULL
+      "auto"
    },
    {
       "genesis_plus_gx_bios",
@@ -144,8 +142,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
-      "bool"
+      "disabled"
    },
    {
       "genesis_plus_gx_bram",
@@ -159,8 +156,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
          { "per game", "Per-Game" },
          { NULL, NULL },
       },
-      "per bios",
-      NULL
+      "per bios"
    },
    {
       "genesis_plus_gx_lock_on",
@@ -176,8 +172,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
          { "sonic & knuckles",    "Sonic & Knuckles" },
          { NULL, NULL },
       },
-      "disabled",
-      NULL
+      "disabled"
    },
    {
       "genesis_plus_gx_aspect_ratio",
@@ -191,8 +186,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
          { "NTSC PAR", NULL },
          { "PAL PAR",  NULL },
       },
-      "auto",
-      NULL
+      "auto"
    },
    {
       "genesis_plus_gx_overscan",
@@ -208,8 +202,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
          { "full",       "Full" },
          { NULL, NULL },
       },
-      "disabled",
-      NULL
+      "disabled"
    },
    {
       "genesis_plus_gx_left_border",
@@ -223,8 +216,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
-      "bool"
+      "disabled"
    },
    {
       "genesis_plus_gx_gg_extra",
@@ -238,8 +230,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
-      "bool"
+      "disabled"
    },
    {
       "genesis_plus_gx_blargg_ntsc_filter",
@@ -256,8 +247,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
          { "rgb",        "RGB" },
          { NULL, NULL },
       },
-      "disabled",
-      NULL
+      "disabled"
    },
    {
       "genesis_plus_gx_lcd_filter",
@@ -271,8 +261,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
-      "bool"
+      "disabled"
    },
    {
       "genesis_plus_gx_render",
@@ -286,8 +275,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
          { "double field", "Double Field" },
          { NULL, NULL },
       },
-      "single field",
-      NULL
+      "single field"
    },
    {
       "genesis_plus_gx_frameskip",
@@ -302,8 +290,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
          { "manual",   "Manual" },
          { NULL, NULL },
       },
-      "disabled",
-      NULL
+      "disabled"
    },
    {
       "genesis_plus_gx_frameskip_threshold",
@@ -331,8 +318,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
          { "60", NULL },
          { NULL, NULL },
       },
-      "33",
-      "int"
+      "33"
    },
    {
       "genesis_plus_gx_ym2413",
@@ -347,8 +333,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "auto",
-      NULL
+      "auto"
    },
    {
       "genesis_plus_gx_ym2612",
@@ -371,8 +356,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
 #endif
          { NULL, NULL },
       },
-      "mame (ym2612)",
-      NULL
+      "mame (ym2612)"
    },
    {
       "genesis_plus_gx_sound_output",
@@ -386,8 +370,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
          { "mono",   "Mono" },
          { NULL, NULL },
       },
-      "stereo",
-      NULL
+      "stereo"
    },
    {
       "genesis_plus_gx_audio_filter",
@@ -401,8 +384,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
          { "low-pass", "Low-Pass" },
          { NULL, NULL },
       },
-      "disabled",
-      "bool"
+      "disabled"
    },
    {
       "genesis_plus_gx_lowpass_range",
@@ -433,8 +415,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
          { "95", NULL },
          { NULL, NULL },
       },
-      "60",
-      "int"
+      "60"
    },
    {
       "genesis_plus_gx_psg_preamp",
@@ -487,8 +468,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
          { "200", NULL },
          { NULL, NULL },
       },
-      "150",
-      "int"
+      "150"
    },
    {
       "genesis_plus_gx_fm_preamp",
@@ -541,8 +521,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
          { "200", NULL },
          { NULL, NULL },
       },
-      "100",
-      "int"
+      "100"
    },
 #ifdef HAVE_EQ
    {
@@ -576,8 +555,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
          { "100", NULL },
          { NULL, NULL },
       },
-      "100",
-      "int"
+      "100"
    },
    {
       "genesis_plus_gx_audio_eq_mid",
@@ -610,8 +588,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
          { "100", NULL },
          { NULL, NULL },
       },
-      "100",
-      "int"
+      "100"
    },
    {
       "genesis_plus_gx_audio_eq_high",
@@ -644,8 +621,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
          { "100", NULL },
          { NULL, NULL },
       },
-      "100",
-      "int"
+      "100"
    },
 #endif
    {
@@ -660,8 +636,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
          { "touchscreen", "Touchscreen" },
          { NULL, NULL },
       },
-      "lightgun",
-      NULL
+      "lightgun"
    },
    {
       "genesis_plus_gx_gun_cursor",
@@ -675,8 +650,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
-      "bool"
+      "disabled"
    },
    {
       "genesis_plus_gx_invert_mouse",
@@ -690,8 +664,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
-      "bool"
+      "disabled"
    },
    {
       "genesis_plus_gx_no_sprite_limit",
@@ -705,8 +678,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
          { "enabled",  NULL },
          { NULL, NULL },
       },
-      "disabled",
-      "bool"
+      "disabled"
    },
 #ifdef HAVE_OVERCLOCK
    {
@@ -724,8 +696,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
          { "200%", NULL },
          { NULL, NULL },
       },
-      "100%",
-      NULL
+      "100%"
    },
 #endif
    {
@@ -740,8 +711,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
          { "disabled", NULL },
          { NULL, NULL },
       },
-      "enabled",
-      "bool"
+      "enabled"
    },
    {
       "genesis_plus_gx_addr_error",
@@ -755,8 +725,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
          { "disabled", NULL },
          { NULL, NULL },
       },
-      "enabled",
-      "bool"
+      "enabled"
    },
 #ifdef USE_PER_SOUND_CHANNELS_CONFIG
    {
@@ -771,8 +740,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
          { "disabled", NULL },
          { NULL, NULL},
       },
-      "disabled",
-      "bool"
+      "disabled"
    },
    {
       "genesis_plus_gx_psg_channel_0_volume",
@@ -795,8 +763,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
          { "100", NULL },
          { NULL, NULL },
       },
-      "100",
-      "int"
+      "100"
    },
    {
       "genesis_plus_gx_psg_channel_1_volume",
@@ -819,8 +786,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
          { "100", NULL },
          { NULL, NULL },
       },
-      "100",
-      "int"
+      "100"
    },
    {
       "genesis_plus_gx_psg_channel_2_volume",
@@ -843,8 +809,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
          { "100", NULL },
          { NULL, NULL },
       },
-      "100",
-      "int"
+      "100"
    },
    {
       "genesis_plus_gx_psg_channel_3_volume",
@@ -867,8 +832,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
          { "100", NULL },
          { NULL, NULL },
       },
-      "100",
-      "int"
+      "100"
    },
    {
       "genesis_plus_gx_md_channel_0_volume",
@@ -891,8 +855,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
          { "100", NULL },
          { NULL, NULL },
       },
-      "100",
-      "int"
+      "100"
    },
    {
       "genesis_plus_gx_md_channel_1_volume",
@@ -915,8 +878,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
          { "100", NULL },
          { NULL, NULL },
       },
-      "100",
-      "int"
+      "100"
    },
    {
       "genesis_plus_gx_md_channel_2_volume",
@@ -939,8 +901,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
          { "100", NULL },
          { NULL, NULL },
       },
-      "100",
-      "int"
+      "100"
    },
    {
       "genesis_plus_gx_md_channel_3_volume",
@@ -963,8 +924,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
          { "100", NULL },
          { NULL, NULL },
       },
-      "100",
-      "int"
+      "100"
    },
    {
       "genesis_plus_gx_md_channel_4_volume",
@@ -987,8 +947,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
          { "100", NULL },
          { NULL, NULL },
       },
-      "100",
-      "int"
+      "100"
    },
    {
       "genesis_plus_gx_md_channel_5_volume",
@@ -1011,8 +970,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
          { "100", NULL },
          { NULL, NULL },
       },
-      "100",
-      "int"
+      "100"
    },
    {
       "genesis_plus_gx_sms_fm_channel_0_volume",
@@ -1035,8 +993,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
          { "100", NULL },
          { NULL, NULL },
       },
-      "100",
-      "int"
+      "100"
    },
    {
       "genesis_plus_gx_sms_fm_channel_1_volume",
@@ -1059,8 +1016,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
          { "100", NULL },
          { NULL, NULL },
       },
-      "100",
-      "int"
+      "100"
    },
    {
       "genesis_plus_gx_sms_fm_channel_2_volume",
@@ -1083,8 +1039,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
          { "100", NULL },
          { NULL, NULL },
       },
-      "100",
-      "int"
+      "100"
    },
    {
       "genesis_plus_gx_sms_fm_channel_3_volume",
@@ -1107,8 +1062,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
          { "100", NULL },
          { NULL, NULL },
       },
-      "100",
-      "int"
+      "100"
    },
    {
       "genesis_plus_gx_sms_fm_channel_4_volume",
@@ -1131,8 +1085,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
          { "100", NULL },
          { NULL, NULL },
       },
-      "100",
-      "int"
+      "100"
    },
    {
       "genesis_plus_gx_sms_fm_channel_5_volume",
@@ -1155,8 +1108,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
          { "100", NULL },
          { NULL, NULL },
       },
-      "100",
-      "int"
+      "100"
    },
    {
       "genesis_plus_gx_sms_fm_channel_6_volume",
@@ -1179,8 +1131,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
          { "100", NULL },
          { NULL, NULL },
       },
-      "100",
-      "int"
+      "100"
    },
    {
       "genesis_plus_gx_sms_fm_channel_7_volume",
@@ -1203,8 +1154,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
          { "100", NULL },
          { NULL, NULL },
       },
-      "100",
-      "int"
+      "100"
    },
    {
       "genesis_plus_gx_sms_fm_channel_8_volume",
@@ -1227,11 +1177,10 @@ struct retro_core_option_v2_definition option_defs_us[] = {
          { "100", NULL },
          { NULL, NULL },
       },
-      "100",
-      "int"
+      "100"
    },
 #endif
-   { NULL, NULL, NULL, NULL, NULL, NULL, {{0}}, NULL, NULL },
+   { NULL, NULL, NULL, NULL, NULL, NULL, {{0}}, NULL },
 };
 
 struct retro_core_options_v2 options_us = {
