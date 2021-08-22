@@ -199,6 +199,7 @@ static const rominfo_t game_list[] =
   {0xC0E25D62, 0, 0, 0,  MAPPER_SEGA, SYSTEM_SMS2, REGION_EUROPE}, /* California Games II */
   {0x45C50294, 0, 0, 0,  MAPPER_SEGA, SYSTEM_SMS2, REGION_EUROPE}, /* Jogos de Verao II (BR) */
   {0xC9DBF936, 0, 0, 0,  MAPPER_SEGA, SYSTEM_SMS2, REGION_EUROPE}, /* Home Alone */
+  {0xA109A6FE, 0, 0, 0,  MAPPER_SEGA, SYSTEM_SMS2, REGION_EUROPE}, /* Power Strike II */
   {0x0047B615, 0, 0, 0,  MAPPER_SEGA, SYSTEM_SMS2, REGION_EUROPE}, /* Predator2 */
   {0xF42E145C, 0, 0, 0,  MAPPER_SEGA, SYSTEM_SMS2, REGION_EUROPE}, /* Quest for the Shaven Yak Starring Ren Hoek & Stimpy (BR) */
   {0x9F951756, 0, 0, 0,  MAPPER_SEGA, SYSTEM_SMS2, REGION_EUROPE}, /* RoboCop 3 */
