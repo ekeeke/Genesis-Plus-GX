@@ -81,7 +81,8 @@ typedef struct
   uint32 mask;            /* ROM mask */
   uint8 special;          /* custom external hardware (Lock-On, J-Cart, 3-D glasses, Terebi Oekaki,...) */
   cart_hw_t hw;           /* cartridge internal hardware */
-  uint8 rom[MAXROMSIZE];  /* ROM area */
+  uint8 lockrom[0x10000]; /* Game Genie / (Pro) Action Replay Lock-On ROM area (max 64KB) */
+  uint8 rom[MAXROMSIZE];  /* cartridge ROM area */
 } md_cart_t;
 
 

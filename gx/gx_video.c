@@ -3,7 +3,7 @@
  *
  *  Genesis Plus GX video & rendering support
  *
- *  Copyright Eke-Eke (2007-2019), based on original work from Softdev (2006)
+ *  Copyright Eke-Eke (2007-2021), based on original work from Softdev (2006)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -1888,6 +1888,9 @@ void gx_video_Init(void)
   /* Configure VI */
   VIDEO_Configure(vmode);
 
+  /* Initialize font first (to ensure IPL font buffer is allocated in MEM1 as DMA from EXI bus to MEM2 is apparently not possible) */
+  FONT_Init();
+
   /* Allocate framebuffers */
   xfb[0] = (u32 *) MEM_K0_TO_K1((u32 *) SYS_AllocateFramebuffer(&TV50hz_576i));
   xfb[1] = (u32 *) MEM_K0_TO_K1((u32 *) SYS_AllocateFramebuffer(&TV50hz_576i));
@@ -1916,9 +1919,6 @@ void gx_video_Init(void)
   gxStart();
   gxResetRendering(1);
   gxResetMode(vmode, GX_TRUE);
-
-  /* Initialize FONT */
-  FONT_Init();
 }
 
 void gx_video_Shutdown(void)

@@ -87,7 +87,7 @@ ifneq (,$(findstring unix,$(platform)))
    fpic := -fPIC
    SHARED := -shared -Wl,--version-script=$(CORE_DIR)/libretro/link.T -Wl,--no-undefined
    ENDIANNESS_DEFINES := -DLSB_FIRST -DBYTE_ORDER=LITTLE_ENDIAN
-   PLATFORM_DEFINES := -DHAVE_ZLIB
+   PLATFORM_DEFINES := -DHAVE_ZLIB -DMAXROMSIZE=33554432
 
    ifneq ($(findstring Linux,$(shell uname -s)),)
      HAVE_CDROM = 1
@@ -213,7 +213,7 @@ ifeq ($(arch),ppc)
 else
    ENDIANNESS_DEFINES := -DLSB_FIRST -DBYTE_ORDER=LITTLE_ENDIAN
 endif
-   PLATFORM_DEFINES := -DHAVE_ZLIB
+   PLATFORM_DEFINES := -DHAVE_ZLIB -DMAXROMSIZE=33554432
 
    OSXVER = `sw_vers -productVersion | cut -d. -f 2`
    OSX_LT_MAVERICKS = `(( $(OSXVER) <= 9)) && echo "YES"`
@@ -241,7 +241,7 @@ else ifneq (,$(findstring ios,$(platform)))
    fpic := -fPIC
    SHARED := -dynamiclib
    ENDIANNESS_DEFINES := -DLSB_FIRST -DBYTE_ORDER=LITTLE_ENDIAN
-   PLATFORM_DEFINES := -DHAVE_ZLIB
+   PLATFORM_DEFINES := -DHAVE_ZLIB -DMAXROMSIZE=16777216
    MINVERSION :=
 
    ifeq ($(IOSSDK),)
@@ -713,7 +713,7 @@ else
    CXX ?= g++
    SHARED := -shared -static-libgcc -static-libstdc++ -Wl,--version-script=$(CORE_DIR)/libretro/link.T -Wl,--no-undefined
    ENDIANNESS_DEFINES := -DLSB_FIRST -DBYTE_ORDER=LITTLE_ENDIAN
-   PLATFORM_DEFINES := -DHAVE_ZLIB
+   PLATFORM_DEFINES := -DHAVE_ZLIB -DMAXROMSIZE=33554432
    HAVE_CDROM = 1
 
 endif

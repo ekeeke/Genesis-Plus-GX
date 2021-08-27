@@ -2,7 +2,7 @@
  *  Genesis Plus
  *  Backup RAM support
  *
- *  Copyright (C) 2007-2020  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2007-2021  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -61,11 +61,8 @@ T_SRAM sram;
  ****************************************************************************/
 void sram_init()
 {
-  memset(&sram, 0, sizeof (T_SRAM));
-
-  /* backup RAM data is stored above cartridge ROM area, at $800000-$80FFFF (max. 64K) */
-  if (cart.romsize > 0x800000) return;
-  sram.sram = cart.rom + 0x800000;
+  /* disable Backup RAM by default */
+  sram.detected = sram.on = sram.custom = sram.start = sram.end = 0;
 
   /* initialize Backup RAM */
   if (strstr(rominfo.international,"Sonic 1 Remastered"))
