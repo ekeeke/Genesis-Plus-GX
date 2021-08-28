@@ -526,14 +526,6 @@ void md_cart_init(void)
     /* cartridge ROM mapping is reinitialized on /VRES */
     cart.hw.bankshift = 1;
   }
-  else if (strstr(rominfo.domestic,"DEMONS OF ASTEBORG"))
-  {
-    /* Demons of Asteborg uses the SSF2 mapper */
-    cart.hw.time_w = mapper_ssf2_w;
-
-    /* cartridge ROM mapping is reinitialized on /VRES */
-    cart.hw.bankshift = 1;
-  }
   else if (strstr(rominfo.product,"T-5740"))
   {
     /* T-5740XX-XX mapper */
