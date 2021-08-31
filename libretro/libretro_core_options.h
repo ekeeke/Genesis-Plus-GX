@@ -206,14 +206,15 @@ struct retro_core_option_v2_definition option_defs_us[] = {
    },
    {
       "genesis_plus_gx_left_border",
-      "Hide Master System Left Border",
+      "Hide Master System Side Borders",
       NULL,
-      "Cuts off 8 pixels from both the left and right side of the screen when running Master System games, thereby hiding the border seen on the left side of the screen",
+      "Cuts off 8 pixels from either the left side of the screen, or both left and right sides when running Master System games.",
       NULL,
       "video",
       {
          { "disabled", NULL },
-         { "enabled",  NULL },
+		 { "left border", "Left Border Only" },
+		 { "left & right borders", "Left & Right Borders" },
          { NULL, NULL },
       },
       "disabled"
