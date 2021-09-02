@@ -3587,9 +3587,9 @@ void retro_run(void)
    }
 
    if (!do_skip)
-	   	if ((config.left_border == 1) && (bitmap.viewport.x == 0) && ((system_hw == SYSTEM_MARKIII) || (system_hw & SYSTEM_SMS) || (system_hw == SYSTEM_PBC)))
+	   	if ((config.left_border == 1) && (reg[0] & 0x20) && (bitmap.viewport.x == 0) && ((system_hw == SYSTEM_MARKIII) || (system_hw & SYSTEM_SMS) || (system_hw == SYSTEM_PBC)))
 		    video_cb(bitmap.data + 16, vwidth - 8, vheight, 720 * 2);
-			else if ((config.left_border == 2) && (bitmap.viewport.x == 0) && ((system_hw == SYSTEM_MARKIII) || (system_hw & SYSTEM_SMS) || (system_hw == SYSTEM_PBC)))
+			else if ((config.left_border == 2) && (reg[0] & 0x20) && (bitmap.viewport.x == 0) && ((system_hw == SYSTEM_MARKIII) || (system_hw & SYSTEM_SMS) || (system_hw == SYSTEM_PBC)))
 			video_cb(bitmap.data + 16, vwidth - 16, vheight, 720 * 2);
 			else
 			video_cb(bitmap.data, vwidth, vheight, 720 * 2); 
