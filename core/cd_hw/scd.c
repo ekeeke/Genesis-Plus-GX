@@ -2,7 +2,7 @@
  *  Genesis Plus
  *  Mega CD / Sega CD hardware
  *
- *  Copyright (C) 2012-2020  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2012-2021  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -1851,7 +1851,7 @@ int scd_context_save(uint8 *state)
   return bufferptr;
 }
 
-int scd_context_load(uint8 *state)
+int scd_context_load(uint8 *state, char *version)
 {
   int i;
   uint16 tmp16;
@@ -1873,7 +1873,7 @@ int scd_context_load(uint8 *state)
   bufferptr += cdc_context_load(&state[bufferptr]);
 
   /* CD Drive processor */
-  bufferptr += cdd_context_load(&state[bufferptr]);
+  bufferptr += cdd_context_load(&state[bufferptr], version);
 
   /* PCM chip */
   bufferptr += pcm_context_load(&state[bufferptr]);
