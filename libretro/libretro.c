@@ -2697,13 +2697,13 @@ void retro_set_environment(retro_environment_t cb)
 
    static const struct retro_system_content_info_override content_overrides[] = {
       {
-         "mdx|md|smd|gen|bms|sms|gg|sg", /* extensions */
+         "mdx|md|smd|gen|bms|sms|gg|sg|68k|sgd", /* extensions */
 #if defined(LOW_MEMORY)
-         true,                           /* need_fullpath */
+         true,                                   /* need_fullpath */
 #else
-         false,                          /* need_fullpath */
+         false,                                  /* need_fullpath */
 #endif
-         false                           /* persistent_data */
+         false                                   /* persistent_data */
       },
       { NULL, false, false }
    };
@@ -2753,7 +2753,7 @@ void retro_get_system_info(struct retro_system_info *info)
 #define GIT_VERSION ""
 #endif
    info->library_version = "v1.7.4" GIT_VERSION;
-   info->valid_extensions = "m3u|mdx|md|smd|gen|bin|cue|iso|chd|bms|sms|gg|sg";
+   info->valid_extensions = "m3u|mdx|md|smd|gen|bin|cue|iso|chd|bms|sms|gg|sg|68k|sgd";
    info->block_extract = false;
    info->need_fullpath = true;
 }
