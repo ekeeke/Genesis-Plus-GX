@@ -907,12 +907,6 @@ static void update_overclock(void)
 }
 #endif
 
-static void check_sms_border(void)
-{
-	if (config.left_border && (bitmap.viewport.x == 0) && ((system_hw == SYSTEM_MARKIII) || (system_hw & SYSTEM_SMS) || (system_hw == SYSTEM_PBC)))
-		bitmap.viewport.x = -8;
-}
-
 static void check_variables(void)
 {
   unsigned orig_value;
@@ -1398,8 +1392,10 @@ static void check_variables(void)
     orig_value = config.left_border;
     if (!var.value || !strcmp(var.value, "disabled"))
       config.left_border = 0;
-    else if (var.value && !strcmp(var.value, "enabled"))
+    else if (var.value && !strcmp(var.value, "left border"))
       config.left_border = 1;
+    else if (var.value && !strcmp(var.value, "left & right borders"))
+      config.left_border = 2;
     if (orig_value != config.left_border)
       update_viewports = true;
   }
@@ -1453,7 +1449,6 @@ static void check_variables(void)
       bitmap.viewport.x = (config.overscan & 2) ? 14 : -48;
     else
       bitmap.viewport.x = (config.overscan & 2) * 7;
-      check_sms_border();
   }
 }
 
@@ -2016,7 +2011,7 @@ void retro_set_environment(retro_environment_t cb)
       { "genesis_plus_gx_lcd_filter", "LCD Ghosting filter; disabled|enabled" },
       { "genesis_plus_gx_overscan", "Borders; disabled|top/bottom|left/right|full" },
       { "genesis_plus_gx_gg_extra", "Game Gear extended screen; disabled|enabled" },
-	  { "genesis_plus_gx_left_border", "Hide Master System Left Border; disabled|enabled" },
+      { "genesis_plus_gx_left_border", "Hide Master System Left Border; disabled|left border|left & right borders" },
       { "genesis_plus_gx_aspect_ratio", "Core-provided aspect ratio; auto|NTSC PAR|PAL PAR" },
       { "genesis_plus_gx_render", "Interlaced mode 2 output; single field|double field" },
       { "genesis_plus_gx_gun_cursor", "Show Lightgun crosshair; disabled|enabled" },
@@ -2378,7 +2373,6 @@ bool retro_unserialize(const void *data, size_t size)
    overclock_delay = OVERCLOCK_FRAME_DELAY;
    update_overclock();
 #endif
-   check_sms_border();
    return TRUE;
 }
 
@@ -2646,7 +2640,6 @@ bool retro_load_game(const struct retro_game_info *info)
    audio_init(SOUND_FREQUENCY, 0);
    system_init();
    system_reset();
-   check_sms_border();
    is_running = false;
 
    if (system_hw == SYSTEM_MCD)
@@ -2792,6 +2785,8 @@ void retro_run(void)
 {
    bool updated = false;
    is_running = true;
+   int vwoffset = 0;
+   int bmdoffset = 0;
 
 #ifdef HAVE_OVERCLOCK
   /* update overclock delay */
@@ -2852,7 +2847,22 @@ void retro_run(void)
       }
    }
 
-   video_cb(bitmap.data, vwidth, vheight, 720 * 2);
+   bmdoffset = 0;
+   vwoffset = 0;
+   if ((config.left_border != 0) && (reg[0] & 0x20) && ((system_hw == SYSTEM_MARKIII) || (system_hw & SYSTEM_SMS) || (system_hw == SYSTEM_PBC)))
+   {
+	   bmdoffset = 16;
+	   if (config.left_border == 1)
+	   {
+		   vwoffset = 8;
+	   }
+	   else
+	   {
+		   vwoffset = 16;
+	   }
+   }
+
+   video_cb(bitmap.data + bmdoffset, vwidth - vwoffset, vheight, 720 * 2);
    audio_cb(soundbuffer, audio_update(soundbuffer));
 
    environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE_UPDATE, &updated);
