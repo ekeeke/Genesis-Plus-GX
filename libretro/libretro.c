@@ -3459,6 +3459,8 @@ void retro_run(void)
    int do_skip = 0;
    bool updated = false;
    is_running = true;
+   int vwoffset = 0;
+   int bmdoffset = 0;
 
 #ifdef HAVE_OVERCLOCK
   /* update overclock delay */
@@ -3585,16 +3587,30 @@ void retro_run(void)
          draw_cursor(input.analog[5][0], input.analog[5][1], 0xf800);
       }
    }
+   
+   bmdoffset = 0;
+   vwoffset = 0;
+   if ((config.left_border != 0) && (reg[0] & 0x20) && ((system_hw == SYSTEM_MARKIII) || (system_hw & SYSTEM_SMS) || (system_hw == SYSTEM_PBC)))
+   {
+	   bmdoffset = 16;
+	   if (config.left_border == 1)
+	   {
+		   vwoffset = 8;
+	   }
+	   else
+	   {
+		   vwoffset = 16;
+	   }
+   }
 
    if (!do_skip)
-	   	if ((config.left_border == 1) && (reg[0] & 0x20) && (bitmap.viewport.x == 0) && ((system_hw == SYSTEM_MARKIII) || (system_hw & SYSTEM_SMS) || (system_hw == SYSTEM_PBC)))
-		    video_cb(bitmap.data + 16, vwidth - 8, vheight, 720 * 2);
-			else if ((config.left_border == 2) && (reg[0] & 0x20) && (bitmap.viewport.x == 0) && ((system_hw == SYSTEM_MARKIII) || (system_hw & SYSTEM_SMS) || (system_hw == SYSTEM_PBC)))
-			video_cb(bitmap.data + 16, vwidth - 16, vheight, 720 * 2);
-			else
-			video_cb(bitmap.data, vwidth, vheight, 720 * 2); 
+   {
+		video_cb(bitmap.data + bmdoffset, vwidth - vwoffset, vheight, 720 * 2);	
+   }		
    else
-     video_cb(NULL, vwidth, vheight, 720 * 2);
+   {
+		video_cb(NULL, vwidth - vwoffset, vheight, 720 * 2);
+   }
 
    audio_cb(soundbuffer, audio_update(soundbuffer));
 }
