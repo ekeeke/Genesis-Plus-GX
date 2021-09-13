@@ -2847,8 +2847,6 @@ void retro_run(void)
       }
    }
 
-   bmdoffset = 0;
-   vwoffset = 0;
    if ((config.left_border != 0) && (reg[0] & 0x20) && ((system_hw == SYSTEM_MARKIII) || (system_hw & SYSTEM_SMS) || (system_hw == SYSTEM_PBC)))
    {
 	   bmdoffset = 16;
