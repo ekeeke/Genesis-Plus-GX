@@ -36,6 +36,7 @@
  *
  ****************************************************************************************/
 #include "shared.h"
+#include "megasd.h"
 
 #if defined(USE_LIBTREMOR) || defined(USE_LIBVORBIS)
 #define SUPPORTED_EXT 20
@@ -363,8 +364,9 @@ int cdd_load(char *filename, char *header)
   char *ptr, *lptr;
   cdStream *fd;
   
-  /* assume CD image file by default */
+  /* assume normal CD image file by default */
   int isCDfile = 1;
+  int isMSDfile = 0;
 
   /* first unmount any loaded disc */
   cdd_unload();
@@ -395,7 +397,7 @@ int cdd_load(char *filename, char *header)
 
     /* retrieve CHD header */
     head = chd_get_header(cdd.chd.file);
- 
+
     /* detect invalid hunk size */
     if ((head->hunkbytes == 0) || (head->hunkbytes % CD_FRAME_SIZE))
     {
@@ -526,7 +528,7 @@ int cdd_load(char *filename, char *header)
       cdd.toc.tracks[cdd.toc.last].start = cdd.toc.end;
 
       /* CD mounted */
-      cdd.loaded = 1;
+      cdd.loaded = HW_ADDON_MEGACD;
       return 1;
     }
 
@@ -537,8 +539,9 @@ int cdd_load(char *filename, char *header)
   }
 #endif
 
-  /* save a copy of base filename */
-  strncpy(fname, filename, 256);
+  /* save a copy of base filename (max. 255 characters) */
+  strncpy(fname, filename, 255);
+  fname[256] = 0;
 
   /* check loaded file extension */
   if (memcmp("cue", &filename[strlen(filename) - 3], 3) && memcmp("CUE", &filename[strlen(filename) - 3], 3))
@@ -792,6 +795,28 @@ int cdd_load(char *filename, char *header)
             cdd.toc.tracks[cdd.toc.last - 1].end = 0;
           }
         }
+      }
+
+      /* decode REM LOOP xxx command (MegaSD specific command) */
+      else if (sscanf(lptr, "REM LOOP %d", &bb) == 1)
+      {
+        cdd.toc.tracks[cdd.toc.last].loopEnabled = 1;
+        cdd.toc.tracks[cdd.toc.last].loopOffset = bb;
+        isMSDfile = 1;
+      }
+
+      /* decode REM LOOP command (MegaSD specific command) */
+      else if (strstr(lptr,"REM LOOP"))
+      {
+        cdd.toc.tracks[cdd.toc.last].loopEnabled = 1;
+        isMSDfile = 1;
+      }
+
+      /* decode REM NOLOOP command (MegaSD specific command) */
+      else if (strstr(lptr,"REM NOLOOP"))
+      {
+        cdd.toc.tracks[cdd.toc.last].loopEnabled = -1;
+        isMSDfile = 1;
       }
 
       /* decode PREGAP commands */
@@ -1211,7 +1236,7 @@ int cdd_load(char *filename, char *header)
     cdd.toc.tracks[cdd.toc.last].start = cdd.toc.end;
 
     /* CD mounted */
-    cdd.loaded = 1;
+    cdd.loaded = isMSDfile ? HW_ADDON_MEGASD : HW_ADDON_MEGACD;
 
     /* Automatically try to open associated subcode data file */
     memcpy(&fname[strlen(fname) - 4], ".sub", 4);
@@ -1617,6 +1642,12 @@ void cdd_read_audio(unsigned int samples)
     /* save last audio output for next frame */
     cdd.audio[0] = prev_l;
     cdd.audio[1] = prev_r;
+
+    /* check CD-DA track end (Mega SD add-on specific)*/
+    if (cart.special & HW_MEGASD)
+    {
+      megasd_update_cdda(samples);
+    }
   }
   else
   {

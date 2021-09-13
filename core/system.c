@@ -5,7 +5,7 @@
  *  Support for 16-bit & 8-bit hardware modes
  *
  *  Copyright (C) 1998-2003  Charles Mac Donald (original code)
- *  Copyright (C) 2007-2018  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2007-2021  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -130,8 +130,8 @@ void audio_set_rate(int samplerate, double framerate)
   /* resampled to desired rate at the end of each frame, using Blip Buffer.            */
   blip_set_rates(snd.blips[0], mclk, samplerate);
 
-  /* Mega CD sound hardware */
-  if (system_hw == SYSTEM_MCD)
+  /* Mega CD sound hardware enabled ? */
+  if (snd.blips[1] && snd.blips[2])
   {
     /* number of SCD master clocks run per second */
     mclk = (mclk / system_clock) * SCD_CLOCK;
@@ -195,8 +195,8 @@ int audio_update(int16 *buffer)
   /* run sound chips until end of frame */
   int size = sound_update(mcycles_vdp);
 
-  /* Mega CD specific */
-  if (system_hw == SYSTEM_MCD)
+  /* Mega CD sound hardware enabled ? */
+  if (snd.blips[1] && snd.blips[2])
   {
     /* sync PCM chip with other sound chips */
     pcm_update(size);

@@ -86,6 +86,8 @@ typedef struct
   int start;
   int end;
   int type;
+  int loopEnabled;
+  int loopOffset;
 } track_t; 
 
 /* CD TOC */

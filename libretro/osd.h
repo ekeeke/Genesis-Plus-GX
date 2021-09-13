@@ -3,7 +3,7 @@
  *
  *  Genesis Plus GX libretro port
  *
- *  Copyright Eke-Eke (2007-2016)
+ *  Copyright Eke-Eke (2007-2021)
  *
  *  Copyright Daniel De Matteis (2012-2016)
  *
@@ -118,6 +118,7 @@ typedef struct
   uint8 addr_error;
   uint8 bios;
   uint8 lock_on;
+  uint8 add_on;
   uint8 overscan;
   uint8 aspect_ratio;
   uint8 ntsc;

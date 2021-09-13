@@ -3,7 +3,7 @@
  *
  *  Genesis Plus GX menu
  *
- *  Copyright Eke-Eke (2009-2019)
+ *  Copyright Eke-Eke (2009-2021)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -385,6 +385,7 @@ static gui_item items_system[] =
   {NULL,NULL,"System Boot: BIOS&CART",  "Select system booting method",                56,132,276,48},
   {NULL,NULL,"System Lockups: ON",      "Enable/Disable original system lock-ups",     56,132,276,48},
   {NULL,NULL,"68k Address Error: ON",   "Enable/Disable 68k address error exceptions", 56,132,276,48},
+  {NULL,NULL,"CD Add-on: MEGA/SEGA CD",    "Select cartridge mode CD hardware add-on",    56,132,276,48},
   {NULL,NULL,"Lock-on: OFF",            "Select Lock-On cartridge type",               56,132,276,48},
   {NULL,NULL,"Cartridge Swap: OFF",     "Enable/Disable cartridge hot swap",           56,132,276,48},
   {NULL,NULL,"BIOS & Lock-On ROM paths","Configure BIOS & Lock-On ROM paths",          56,132,276,48},
@@ -1311,25 +1312,34 @@ static void systemmenu ()
   sprintf (items[5].text, "System Lockups: %s", config.force_dtack ? "OFF" : "ON");
   sprintf (items[6].text, "68k Address Error: %s", config.addr_error ? "ON" : "OFF");
 
-  if (config.lock_on == TYPE_GG)
-    sprintf (items[7].text, "Lock-On: GAME GENIE");
-  else if (config.lock_on == TYPE_AR)
-    sprintf (items[7].text, "Lock-On: ACTION REPLAY");
-  else if (config.lock_on == TYPE_SK)
-    sprintf (items[7].text, "Lock-On: SONIC&KNUCKLES");
+  if (config.add_on == HW_ADDON_AUTO)
+    sprintf (items[7].text, "CD Add-on: AUTO");
+  else if (config.add_on == HW_ADDON_MEGACD)
+    sprintf (items[7].text, "CD Add-on: MEGA/SEGA CD");
+  else if (config.add_on == HW_ADDON_MEGASD)
+    sprintf (items[7].text, "CD Add-on: MEGASD");
   else
-    sprintf (items[7].text, "Lock-On: OFF");
+    sprintf (items[7].text, "CD Add-on: NONE");
 
-  sprintf (items[8].text, "Cartridge Swap: %s", (config.hot_swap & 1) ? "ON":"OFF");
+  if (config.lock_on == TYPE_GG)
+    sprintf (items[8].text, "Lock-On: GAME GENIE");
+  else if (config.lock_on == TYPE_AR)
+    sprintf (items[8].text, "Lock-On: ACTION REPLAY");
+  else if (config.lock_on == TYPE_SK)
+    sprintf (items[8].text, "Lock-On: SONIC&KNUCKLES");
+  else
+    sprintf (items[8].text, "Lock-On: OFF");
+
+  sprintf (items[9].text, "Cartridge Swap: %s", (config.hot_swap & 1) ? "ON":"OFF");
 
   if (svp)
   {
-    sprintf (items[10].text, "SVP Cycles: %d", SVP_cycles);
-    m->max_items = 11;
+    sprintf (items[11].text, "SVP Cycles: %d", SVP_cycles);
+    m->max_items = 12;
   }
   else
   {
-    m->max_items = 10;
+    m->max_items = 11;
   }
 
   GUI_InitMenu(m);
@@ -1520,17 +1530,31 @@ static void systemmenu ()
         break;
       }
 
-      case 7:  /*** Cart Lock-On ***/
+      case 7:  /*** CD add-on ***/
+      {
+        config.add_on = (config.add_on + 1) % (HW_ADDON_NONE + 1);
+        if (config.add_on == HW_ADDON_AUTO)
+          sprintf (items[7].text, "CD Add-on: AUTO");
+        else if (config.add_on == HW_ADDON_MEGACD)
+          sprintf (items[7].text, "CD Add-on: MEGA/SEGA CD");
+        else if (config.add_on == HW_ADDON_MEGASD)
+          sprintf (items[7].text, "CD Add-on: MEGASD");
+        else
+          sprintf (items[7].text, "CD Add-on: NONE");
+        break;
+      }
+
+      case 8:  /*** Cart Lock-On ***/
       {
         config.lock_on = (config.lock_on + 1) % (TYPE_SK + 1);
         if (config.lock_on == TYPE_GG)
-          sprintf (items[7].text, "Lock-On: GAME GENIE");
+          sprintf (items[8].text, "Lock-On: GAME GENIE");
         else if (config.lock_on == TYPE_AR)
-          sprintf (items[7].text, "Lock-On: ACTION REPLAY");
+          sprintf (items[8].text, "Lock-On: ACTION REPLAY");
         else if (config.lock_on == TYPE_SK)
-          sprintf (items[7].text, "Lock-On: SONIC&KNUCKLES");
+          sprintf (items[8].text, "Lock-On: SONIC&KNUCKLES");
         else
-          sprintf (items[7].text, "Lock-On: OFF");
+          sprintf (items[8].text, "Lock-On: OFF");
 
         if ((system_hw == SYSTEM_MD) || (system_hw == SYSTEM_PICO))
         {
@@ -1564,14 +1588,14 @@ static void systemmenu ()
         break;
       }
 
-      case 8:  /*** Cartridge Hot Swap ***/
+      case 9:  /*** Cartridge Hot Swap ***/
       {
         config.hot_swap ^= 1;
-        sprintf (items[8].text, "Cartridge Swap: %s", (config.hot_swap & 1) ? "ON":"OFF");
+        sprintf (items[9].text, "Cartridge Swap: %s", (config.hot_swap & 1) ? "ON":"OFF");
         break;
       }
 
-      case 9:  /*** System ROM paths ***/
+      case 10:  /*** System ROM paths ***/
       {
         GUI_DeleteMenu(m);
         rompathmenu();
@@ -1579,10 +1603,10 @@ static void systemmenu ()
         break;
       }
 
-      case 10:  /*** SVP cycles per line ***/
+      case 11:  /*** SVP cycles per line ***/
       {
         GUI_OptionBox(m,0,"SVP Cycles",(void *)&SVP_cycles,1,1,1500,1);
-        sprintf (items[10].text, "SVP Cycles: %d", SVP_cycles);
+        sprintf (items[11].text, "SVP Cycles: %d", SVP_cycles);
         break;
       }
 

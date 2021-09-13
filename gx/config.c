@@ -122,6 +122,7 @@ void config_default(void)
   config.addr_error     = 1;
   config.bios           = 0;
   config.lock_on        = 0;
+  config.add_on         = HW_ADDON_AUTO;
   config.hot_swap       = 0;
 
   /* video options */

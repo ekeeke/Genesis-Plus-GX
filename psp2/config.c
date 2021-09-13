@@ -32,6 +32,7 @@ void set_config_defaults(void)
   config.addr_error     = 1;
   config.bios           = 0;
   config.lock_on        = 0; /* = OFF (can be TYPE_SK, TYPE_GG & TYPE_AR) */
+  config.add_on         = 0; /* = HW_ADDON_AUTO (or HW_ADDON_MEGACD, HW_ADDON_MEGASD & HW_ADDON_NONE) */
   config.ntsc           = 0;
   config.lcd            = 0; /* 0.8 fixed point */
 

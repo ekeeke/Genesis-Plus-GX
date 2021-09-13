@@ -54,6 +54,7 @@ Genesis Plus GX 1.7.5 (xx/xx/xxxx) (Eke-Eke)
 * added support for more X-in-1 pirate mappers
 * added support for some new unlicensed games with copy protection (Thunderbolt II, Tom Clown, Chaoji Puke / Super Poker, Rock Heaven, Rock World)
 * added support for Everdrive extended SSF mapper
+* added support for MegaSD CD hardware overlay (MD+ hacks) and extended SSF2 / ROM write mappers
 * added (very basic) emulation of Flashkit MD hardware
 * added emulation of Micro Machines USA on-board TMSS bypass logic hardware
 * added SRAM support for games larger than 8MB

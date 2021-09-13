@@ -3,7 +3,7 @@
  *
  *  Genesis Plus GX libretro port
  *
- *  Copyright Eke-Eke (2007-2020)
+ *  Copyright Eke-Eke (2007-2021)
  *
  *  Copyright Daniel De Matteis (2012-2016)
  *
@@ -608,6 +608,7 @@ static void config_default(void)
    config.addr_error     = 1;
    config.bios           = 0;
    config.lock_on        = 0;
+   config.add_on         = HW_ADDON_AUTO;
    config.lcd            = 0; /* 0.8 fixed point */
 #ifdef HAVE_OVERCLOCK
    config.overclock      = 100;
@@ -1102,6 +1103,21 @@ static void check_variables(void)
       m68k.aerr_enabled = config.addr_error = 1;
     else
       m68k.aerr_enabled = config.addr_error = 0;
+  }
+
+  var.key = "genesis_plus_gx_add_on";
+  environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
+  {
+    orig_value = config.add_on;
+    if (var.value && !strcmp(var.value, "sega/mega cd"))
+      config.add_on = HW_ADDON_MEGACD;
+    else if (var.value && !strcmp(var.value, "megasd"))
+      config.add_on = HW_ADDON_MEGASD;
+    else if (var.value && !strcmp(var.value, "none"))
+      config.add_on = HW_ADDON_NONE;
+    else
+      config.add_on = HW_ADDON_AUTO;
+    /* note: game needs to be reloaded for change to take effect */
   }
 
   var.key = "genesis_plus_gx_lock_on";
@@ -1986,6 +2002,7 @@ void retro_set_environment(retro_environment_t cb)
       { "genesis_plus_gx_bios", "System bootrom; disabled|enabled" },
       { "genesis_plus_gx_bram", "CD System BRAM; per bios|per game" },
       { "genesis_plus_gx_addr_error", "68k address error; enabled|disabled" },
+      { "genesis_plus_gx_add_on", "CD add-on (MD mode); auto|sega/mega cd|megasd|none" },
       { "genesis_plus_gx_lock_on", "Cartridge lock-on; disabled|game genie|action replay (pro)|sonic & knuckles" },
       { "genesis_plus_gx_ym2413", "Master System FM (YM2413); auto|disabled|enabled" },
 #ifdef HAVE_OPLL_CORE

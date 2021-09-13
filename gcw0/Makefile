@@ -88,7 +88,8 @@ OBJECTS	+=      $(OBJDIR)/sram.o        \
 		$(OBJDIR)/eeprom_i2c.o  \
 		$(OBJDIR)/eeprom_spi.o  \
 		$(OBJDIR)/md_cart.o	\
-		$(OBJDIR)/sms_cart.o	
+		$(OBJDIR)/sms_cart.o	\
+		$(OBJDIR)/megasd.o
 		
 OBJECTS	+=      $(OBJDIR)/scd.o	\
 		$(OBJDIR)/cdd.o	\
