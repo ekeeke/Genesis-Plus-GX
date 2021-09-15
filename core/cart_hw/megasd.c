@@ -487,6 +487,16 @@ static void megasd_ctrl_write_word(unsigned int address, unsigned int data)
               cdd.status = CD_PLAY;
               scd.regs[0x36>>1].byte.h = 0x00;
 
+              /* check if fade out is still in progress */
+              if (megasd_hw.fadeoutSamplesCount > 0)
+              {
+                /* reset fade out */
+                megasd_hw.fadeoutSamplesCount = 0;
+
+                /* restore initial volume */
+                cdd.fader[0] = cdd.fader[1] = megasd_hw.fadeoutStartVolume;
+              }
+
               /* initialize remaining samples count */
               megasd_hw.playbackSamplesCount = (cdd.toc.tracks[index].end - cdd.toc.tracks[index].start) * 588;
 
@@ -672,6 +682,16 @@ static void megasd_ctrl_write_word(unsigned int address, unsigned int data)
               /* indicate audio track is playing */
               cdd.status = CD_PLAY;
               scd.regs[0x36>>1].byte.h = 0x00;
+
+              /* check if fade out is still in progress */
+              if (megasd_hw.fadeoutSamplesCount > 0)
+              {
+                /* reset fade out */
+                megasd_hw.fadeoutSamplesCount = 0;
+
+                /* restore initial volume */
+                cdd.fader[0] = cdd.fader[1] = megasd_hw.fadeoutStartVolume;
+              }
 
               /* get playback end sector from command buffer (32-bit value in big-endian format) */
 #ifndef LSB_FIRST 
