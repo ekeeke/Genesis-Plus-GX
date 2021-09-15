@@ -3,7 +3,7 @@
  *
  *  generic GUI Engine (using GX rendering)
  *
- *  Copyright Eke-Eke (2009-2020)
+ *  Copyright Eke-Eke (2009-2021)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -812,7 +812,7 @@ int GUI_UpdateMenu(gui_menu *menu)
   /* update helper comment */
   if (menu->helpers[1])
   {
-    if ((menu->offset + selected) < max_items)
+    if ((selected < max_buttons) && ((menu->offset + selected) < max_items))
     {
       gui_item *item = &menu->items[menu->offset + selected];
       strcpy(menu->helpers[1]->comment,item->comment);
