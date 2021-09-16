@@ -2,7 +2,7 @@
  *  Genesis Plus
  *  Mega CD / Sega CD hardware
  *
- *  Copyright (C) 2012-2020  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2012-2021  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -484,7 +484,7 @@ static unsigned int scd_read_byte(unsigned int address)
     /* get /LDS only */
     if (address & 1)
     {
-      return pcm_read((address >> 1) & 0x1fff);
+      return pcm_read((address >> 1) & 0x1fff, s68k.cycles);
     }
 
     return s68k_read_bus_8(address);
@@ -603,7 +603,7 @@ static unsigned int scd_read_word(unsigned int address)
   if (!(address & 0x8000))
   {
     /* get /LDS only */
-    return pcm_read((address >> 1) & 0x1fff);
+    return pcm_read((address >> 1) & 0x1fff, s68k.cycles);
   }
 
 #ifdef LOG_SCD
@@ -766,7 +766,7 @@ static void scd_write_byte(unsigned int address, unsigned int data)
     /* get /LDS only */
     if (address & 1)
     {
-      pcm_write((address >> 1) & 0x1fff, data);
+      pcm_write((address >> 1) & 0x1fff, data, s68k.cycles);
       return;
     }
 
@@ -1030,7 +1030,7 @@ static void scd_write_word(unsigned int address, unsigned int data)
   if (!(address & 0x8000))
   {
     /* get /LDS only */
-    pcm_write((address >> 1) & 0x1fff, data);
+    pcm_write((address >> 1) & 0x1fff, data & 0xff, s68k.cycles);
     return;
   }
 
@@ -1856,7 +1856,7 @@ int scd_context_save(uint8 *state)
   return bufferptr;
 }
 
-int scd_context_load(uint8 *state)
+int scd_context_load(uint8 *state, char *version)
 {
   int i;
   uint16 tmp16;
@@ -1878,7 +1878,7 @@ int scd_context_load(uint8 *state)
   bufferptr += cdc_context_load(&state[bufferptr]);
 
   /* CD Drive processor */
-  bufferptr += cdd_context_load(&state[bufferptr]);
+  bufferptr += cdd_context_load(&state[bufferptr], version);
 
   /* PCM chip */
   bufferptr += pcm_context_load(&state[bufferptr]);

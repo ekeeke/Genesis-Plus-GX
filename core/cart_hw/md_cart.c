@@ -44,6 +44,7 @@
 #include "shared.h"
 #include "eeprom_i2c.h"
 #include "eeprom_spi.h"
+#include "megasd.h"
 
 /* Cart database entry */
 typedef struct
@@ -518,6 +519,21 @@ void md_cart_init(void)
     /* cartridge ROM mapping is reinitialized on /VRES */
     cart.hw.bankshift = 1;
   }
+  else if ((strstr(rominfo.consoletype,"SEGA SSF2") != NULL) && (cart.romsize <= 0x800000))
+  {
+    /* MegaSD enhanced SSF2 mapper (max. 8MB ROM) */
+    cart.special |= HW_MEGASD;
+    cart.hw.time_w = megasd_enhanced_ssf2_mapper_w;
+
+    /* cartridge ROM mapping is reinitialized on /VRES */
+    cart.hw.bankshift = 1;
+  }
+  else if ((strstr(rominfo.consoletype,"SEGA MEGASD") != NULL) && (cart.romsize <= 0x400000))
+  {
+    /* MegaSD ROM write mapper (max. 4MB ROM) */
+    cart.special |= HW_MEGASD;
+    cart.hw.time_w = megasd_rom_mapper_w;
+  }
   else if (strstr(rominfo.domestic,"SUPER STREET FIGHTER2"))
   {
     /* SSF2 mapper */
@@ -760,6 +776,26 @@ void md_cart_init(void)
       break;
     }
   }
+
+  /**********************************************
+        MEGASD ADD-ON
+  ***********************************************/
+  /* enable MegaSD overlay for cartridge ROM (max. 8MB) when Mega CD hardware is disabled and either MegaSD add-on is forced enabled or automatic add-on detection is enabled and MegaSD compatible disc image is loaded */
+  if ((cart.romsize <= 0x800000) && (system_hw == SYSTEM_MD) && ((config.add_on == HW_ADDON_MEGASD) || ((config.add_on | cdd.loaded) == HW_ADDON_MEGASD)))
+  {
+    cart.special |= HW_MEGASD;
+  }
+
+  /* force Mega CD sound hardware initialization when MegaSD overlay is enabled (if not already initialized)  */
+  if ((cart.special & HW_MEGASD) && !snd.blips[1] && !snd.blips[2])
+  {
+    /* allocate blip buffers for PCM and CD-DA audio streams */
+    snd.blips[1] = blip_new(snd.sample_rate / 10);
+    snd.blips[2] = blip_new(snd.sample_rate / 10);
+
+    /* initialize PCM and CD-DA audio */
+    audio_set_rate(snd.sample_rate, snd.frame_rate);
+  }
 }
 
 /* hardware that need to be reseted on power on */
@@ -775,7 +811,13 @@ void md_cart_reset(int hard_reset)
       m68k.memory_map[i].base = cart.rom + ((i<<16) & cart.mask);
     }
   }
-  
+
+  /* MegaSD hardware */
+  if (cart.special & HW_MEGASD)
+  {
+    megasd_reset();
+  }
+
   /* SVP chip */
   if (svp)
   {
@@ -828,7 +870,7 @@ int md_cart_context_save(uint8 *state)
   {
     /* get base address */
     base = m68k.memory_map[i].base;
-      
+
     if (base == sram.sram)
     {
       /* SRAM */
@@ -855,6 +897,12 @@ int md_cart_context_save(uint8 *state)
     save_param(svp->iram_rom, 0x800);
     save_param(svp->dram,sizeof(svp->dram));
     save_param(&svp->ssp1601,sizeof(ssp1601_t));
+  }
+
+  /* MegaSD hardware */
+  if (cart.special & HW_MEGASD)
+  {
+    bufferptr += megasd_context_save(&state[bufferptr]);
   }
 
   return bufferptr;
@@ -911,6 +959,12 @@ int md_cart_context_load(uint8 *state)
     load_param(svp->iram_rom, 0x800);
     load_param(svp->dram,sizeof(svp->dram));
     load_param(&svp->ssp1601,sizeof(ssp1601_t));
+  }
+
+  /* MegaSD hardware */
+  if (cart.special & HW_MEGASD)
+  {
+    bufferptr += megasd_context_load(&state[bufferptr]);
   }
 
   return bufferptr;

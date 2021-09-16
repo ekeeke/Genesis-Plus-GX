@@ -159,6 +159,22 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "per bios"
    },
    {
+      "genesis_plus_gx_add_on",
+      "CD add-on (MD mode) (Requires Restart)",
+      NULL,
+      "Specify which add-on to use for CD audio playback.",
+      NULL,
+      "system",
+      {
+         { "auto",         "Auto" },
+         { "sega/mega cd", "Sega/Mega CD" },
+         { "megasd",       "MegaSD" },
+         { "none",         "None" },
+         { NULL, NULL },
+      },
+      "disabled"
+   },
+   {
       "genesis_plus_gx_lock_on",
       "Cartridge Lock-On",
       NULL,
@@ -213,8 +229,8 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "video",
       {
          { "disabled", NULL },
-		 { "left border", "Left Border Only" },
-		 { "left & right borders", "Left & Right Borders" },
+         { "left border", "Left Border Only" },
+         { "left & right borders", "Left & Right Borders" },
          { NULL, NULL },
       },
       "disabled"
@@ -336,6 +352,22 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       },
       "auto"
    },
+#ifdef HAVE_OPLL_CORE
+   {
+      "genesis_plus_gx_ym2413_core",
+      "Master System FM (YM2413) Core",
+      NULL,
+      "Select method used to emulate the FM Sound Unit of the Sega Mark III/Master System. 'MAME' option is fast, and runs full speed on most systems. 'Nuked' option is cycle accurate, very high quality, and has substantial CPU requirements.",
+      NULL,
+      "audio",
+      {
+         { "mame",  "MAME" },
+         { "nuked", "Nuked" },
+         { NULL, NULL },
+      },
+      "mame"
+   },
+#endif
    {
       "genesis_plus_gx_ym2612",
       "Mega Drive / Genesis FM",
@@ -383,6 +415,9 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       {
          { "disabled", NULL },
          { "low-pass", "Low-Pass" },
+#if HAVE_EQ
+         { "EQ",       NULL },
+#endif
          { NULL, NULL },
       },
       "disabled"

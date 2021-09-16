@@ -40,6 +40,7 @@ typedef struct
   uint8 addr_error;
   uint8 bios;
   uint8 lock_on;
+  uint8 add_on;
   uint8 hot_swap;
   uint8 invert_mouse;
   uint8 gun_cursor[2];

@@ -122,6 +122,7 @@ void config_default(void)
   config.addr_error     = 1;
   config.bios           = 0;
   config.lock_on        = 0;
+  config.add_on         = HW_ADDON_AUTO;
   config.hot_swap       = 0;
 
   /* video options */
@@ -289,7 +290,7 @@ void config_default(void)
     {
       /* switch menu video mode to interlaced */
       vmode->viTVMode = (vmode->viTVMode & ~3) | VI_INTERLACE;
-	  vmode->xfbMode = VI_XFBMODE_DF;
+      vmode->xfbMode = VI_XFBMODE_DF;
       VIDEO_Configure(vmode);
       VIDEO_Flush();
       VIDEO_WaitVSync();

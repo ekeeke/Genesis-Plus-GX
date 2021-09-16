@@ -3,7 +3,7 @@
  *
  *  Genesis Plus GX menu
  *
- *  Copyright Eke-Eke (2009-2019)
+ *  Copyright Eke-Eke (2009-2021)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -363,32 +363,33 @@ static gui_item items_rompaths[] =
 {
   {NULL,NULL,"CD BIOS (USA): NOT FOUND",  "Select Sega CD (USA) BIOS",            56,132,276,48},
   {NULL,NULL,"CD BIOS (PAL): NOT FOUND",  "Select Mega CD (PAL) BIOS",            56,132,276,48},
-  {NULL,NULL,"CD BIOS (JAP): NOT FOUND",  "Select Mega CD (JAP) BIOS",            56,132,276,48},
-  {NULL,NULL,"MD BIOS (TMSS): NOT FOUND", "Select Mega Drive / Genesis BootROM",  56,132,276,48},
-  {NULL,NULL,"MS BIOS (USA): NOT FOUND",  "Select Master System (USA) BootROM",   56,132,276,48},
-  {NULL,NULL,"MS BIOS (PAL): NOT FOUND",  "Select Master System (PAL) BootROM",   56,132,276,48},
-  {NULL,NULL,"MS BIOS (JAP): NOT FOUND",  "Select Master System (JAP) BootROM",   56,132,276,48},
-  {NULL,NULL,"Game Gear BIOS: NOT FOUND", "Select Game Gear BootROM",             56,132,276,48},
+  {NULL,NULL,"CD BIOS (JAPAN): NOT FOUND","Select Mega CD (JAPAN) BIOS",          56,132,276,48},
+  {NULL,NULL,"MD BIOS (TMSS): NOT FOUND", "Select Mega Drive / Genesis Boot ROM", 56,132,276,48},
+  {NULL,NULL,"MS BIOS (USA): NOT FOUND",  "Select Master System (USA) Boot ROM",  56,132,276,48},
+  {NULL,NULL,"MS BIOS (PAL): NOT FOUND",  "Select Master System (PAL) Boot ROM",  56,132,276,48},
+  {NULL,NULL,"MS BIOS (JAPAN): NOT FOUND","Select Master System (JAPAN) Boot ROM",56,132,276,48},
+  {NULL,NULL,"Game Gear BIOS: NOT FOUND", "Select Game Gear Boot ROM",            56,132,276,48},
   {NULL,NULL,"Game Genie: NOT FOUND",     "Select Game Genie ROM",                56,132,276,48},
   {NULL,NULL,"Action Replay: NOT FOUND",  "Select Action Replay (Pro) ROM",       56,132,276,48},
-  {NULL,NULL,"S&K (2MB ROM): NOT FOUND",  "Select Sonic & Knuckle main ROM",      56,132,276,48},
-  {NULL,NULL,"S2&K (256K ROM): NOT FOUND","Select Sonic 2 & Knuckle upmem ROM",   56,132,276,48},
+  {NULL,NULL,"S&K (2MB): NOT FOUND",  "Select Sonic & Knuckle main ROM",      56,132,276,48},
+  {NULL,NULL,"S2&K (256KB): NOT FOUND","Select Sonic 2 & Knuckle upmem ROM",   56,132,276,48},
 };
 
 /* System options */
 static gui_item items_system[] =
 {
-  {NULL,NULL,"Console Hardware: AUTO",  "Select system hardware model",                56,132,276,48},
-  {NULL,NULL,"Console Region: AUTO",    "Select system region",                        56,132,276,48},
-  {NULL,NULL,"VDP Mode: AUTO",          "Select VDP mode",                             56,132,276,48},
-  {NULL,NULL,"System Clock: AUTO",      "Select system clock frequency",               56,132,276,48},
-  {NULL,NULL,"System Boot: BIOS&CART",  "Select system booting method",                56,132,276,48},
-  {NULL,NULL,"System Lockups: ON",      "Enable/Disable original system lock-ups",     56,132,276,48},
-  {NULL,NULL,"68k Address Error: ON",   "Enable/Disable 68k address error exceptions", 56,132,276,48},
-  {NULL,NULL,"Lock-on: OFF",            "Select Lock-On cartridge type",               56,132,276,48},
-  {NULL,NULL,"Cartridge Swap: OFF",     "Enable/Disable cartridge hot swap",           56,132,276,48},
-  {NULL,NULL,"BIOS & Lock-On ROM paths","Configure BIOS & Lock-On ROM paths",          56,132,276,48},
-  {NULL,NULL,"SVP Cycles: 1500",        "Adjust SVP chip emulation speed",             56,132,276,48}
+  {NULL,NULL,"System: MEGA DRIVE/GENESIS", "Select system hardware model",                56,132,276,48},
+  {NULL,NULL,"Region: JAPAN",             "Select system region",                        56,132,276,48},
+  {NULL,NULL,"VDP Mode: AUTO",             "Select VDP mode",                             56,132,276,48},
+  {NULL,NULL,"System Clock: AUTO",         "Select master clock frequency",               56,132,276,48},
+  {NULL,NULL,"System Boot: BIOS->CART",    "Select system booting method",                56,132,276,48},
+  {NULL,NULL,"System Lockups: OFF",        "Enable/Disable original system lockups",      56,132,276,48},
+  {NULL,NULL,"68k Address Error: OFF",     "Enable/Disable 68k address error exceptions", 56,132,276,48},
+  {NULL,NULL,"CD Add-on: MEGA/SEGA CD",    "Select cartridge mode CD hardware add-on",    56,132,276,48},
+  {NULL,NULL,"Lock-On: SONIC&KNUCKLES",    "Select Lock-On cartridge type",               56,132,276,48},
+  {NULL,NULL,"Cartridge Swap: OFF",        "Enable/Disable cartridge hot swap",           56,132,276,48},
+  {NULL,NULL,"BIOS & Lock-On ROM paths",   "Configure Boot ROM & Lock-On ROM paths",      56,132,276,48},
+  {NULL,NULL,"SVP Cycles: 1500",           "Adjust SVP chip emulation speed",             56,132,276,48}
 };
 
 /* Video options */
@@ -1268,30 +1269,30 @@ static void systemmenu ()
   gui_item *items = m->items;
 
   if (config.system == 0)
-    sprintf (items[0].text, "Console Type: AUTO");
+    sprintf (items[0].text, "System: AUTO");
   else if (config.system == SYSTEM_SG)
-    sprintf (items[0].text, "Console Type: SG-1000");
+    sprintf (items[0].text, "System: SG-1000");
   else if (config.system == SYSTEM_SGII)
-    sprintf (items[0].text, "Console Type: SG-1000 II");
+    sprintf (items[0].text, "System: SG-1000 II");
   else if (config.system == SYSTEM_MARKIII)
-    sprintf (items[0].text, "Console Type: MARK-III");
+    sprintf (items[0].text, "System: MARK-III");
   else if (config.system == SYSTEM_SMS)
-    sprintf (items[0].text, "Console Type: SMS");
+    sprintf (items[0].text, "System: MASTER SYSTEM");
   else if (config.system == SYSTEM_SMS2)
-    sprintf (items[0].text, "Console Type: SMS II");
+    sprintf (items[0].text, "System: MASTER SYSTEM II");
   else if (config.system == SYSTEM_GG)
-    sprintf (items[0].text, "Console Type: GG");
+    sprintf (items[0].text, "System: GAME GEAR");
   else if (config.system == SYSTEM_MD)
-    sprintf (items[0].text, "Console Type: MD");
+    sprintf (items[0].text, "System: MEGA DRIVE/GENESIS");
 
   if (config.region_detect == 0)
-    sprintf (items[1].text, "Console Region: AUTO");
+    sprintf (items[1].text, "Region: AUTO");
   else if (config.region_detect == 1)
-    sprintf (items[1].text, "Console Region: USA");
+    sprintf (items[1].text, "Region: USA");
   else if (config.region_detect == 2)
-    sprintf (items[1].text, "Console Region: PAL");
+    sprintf (items[1].text, "Region: PAL");
   else if (config.region_detect == 3)
-    sprintf (items[1].text, "Console Region: JAP");
+    sprintf (items[1].text, "Region: JAPAN");
 
   if (config.vdp_mode == 0)
     sprintf (items[2].text, "VDP Mode: AUTO");
@@ -1307,29 +1308,38 @@ static void systemmenu ()
   else if (config.master_clock == 2)
     sprintf (items[3].text, "System Clock: PAL");
 
-  sprintf (items[4].text, "System Boot: %s", (config.bios & 1) ? ((config.bios & 2) ? "BIOS&CART" : "BIOS ONLY") : "CART");
+  sprintf (items[4].text, "System Boot: %s", (config.bios & 1) ? ((config.bios & 2) ? "BIOS->CART" : "BIOS ONLY") : "CART");
   sprintf (items[5].text, "System Lockups: %s", config.force_dtack ? "OFF" : "ON");
   sprintf (items[6].text, "68k Address Error: %s", config.addr_error ? "ON" : "OFF");
 
-  if (config.lock_on == TYPE_GG)
-    sprintf (items[7].text, "Lock-On: GAME GENIE");
-  else if (config.lock_on == TYPE_AR)
-    sprintf (items[7].text, "Lock-On: ACTION REPLAY");
-  else if (config.lock_on == TYPE_SK)
-    sprintf (items[7].text, "Lock-On: SONIC&KNUCKLES");
+  if (config.add_on == HW_ADDON_AUTO)
+    sprintf (items[7].text, "CD Add-on: AUTO");
+  else if (config.add_on == HW_ADDON_MEGACD)
+    sprintf (items[7].text, "CD Add-on: MEGA/SEGA CD");
+  else if (config.add_on == HW_ADDON_MEGASD)
+    sprintf (items[7].text, "CD Add-on: MEGASD");
   else
-    sprintf (items[7].text, "Lock-On: OFF");
+    sprintf (items[7].text, "CD Add-on: NONE");
 
-  sprintf (items[8].text, "Cartridge Swap: %s", (config.hot_swap & 1) ? "ON":"OFF");
+  if (config.lock_on == TYPE_GG)
+    sprintf (items[8].text, "Lock-On: GAME GENIE");
+  else if (config.lock_on == TYPE_AR)
+    sprintf (items[8].text, "Lock-On: ACTION REPLAY");
+  else if (config.lock_on == TYPE_SK)
+    sprintf (items[8].text, "Lock-On: SONIC&KNUCKLES");
+  else
+    sprintf (items[8].text, "Lock-On: OFF");
+
+  sprintf (items[9].text, "Cartridge Swap: %s", (config.hot_swap & 1) ? "ON":"OFF");
 
   if (svp)
   {
-    sprintf (items[10].text, "SVP Cycles: %d", SVP_cycles);
-    m->max_items = 11;
+    sprintf (items[11].text, "SVP Cycles: %d", SVP_cycles);
+    m->max_items = 12;
   }
   else
   {
-    m->max_items = 10;
+    m->max_items = 11;
   }
 
   GUI_InitMenu(m);
@@ -1346,7 +1356,7 @@ static void systemmenu ()
         if (config.system == SYSTEM_MD)
         {
           config.system = 0;
-          sprintf (items[0].text, "Console Type: AUTO");
+          sprintf (items[0].text, "System: AUTO");
 
           /* Default system hardware (auto) */
           if (system_hw) system_hw = romtype;
@@ -1354,37 +1364,37 @@ static void systemmenu ()
         else if (config.system == 0)
         {
           config.system = SYSTEM_SG;
-          sprintf (items[0].text, "Console Type: SG-1000");
+          sprintf (items[0].text, "System: SG-1000");
           if (system_hw) system_hw = SYSTEM_SG;
         }
         else if (config.system == SYSTEM_SG)
         {
           config.system = SYSTEM_SGII;
-          sprintf (items[0].text, "Console Type: SG-1000 II");
+          sprintf (items[0].text, "System: SG-1000 II");
           if (system_hw) system_hw = SYSTEM_SGII;
         }
         else if (config.system == SYSTEM_SGII)
         {
           config.system = SYSTEM_MARKIII;
-          sprintf (items[0].text, "Console Type: MARK-III");
+          sprintf (items[0].text, "System: MARK-III");
           if (system_hw) system_hw = SYSTEM_MARKIII;
         }
         else if (config.system == SYSTEM_MARKIII)
         {
           config.system = SYSTEM_SMS;
-          sprintf (items[0].text, "Console Type: SMS");
+          sprintf (items[0].text, "System: MASTER SYSTEM");
           if (system_hw) system_hw = SYSTEM_SMS;
         }
         else if (config.system == SYSTEM_SMS)
         {
           config.system = SYSTEM_SMS2;
-          sprintf (items[0].text, "Console Type: SMS II");
+          sprintf (items[0].text, "System: MASTER SYSTEM II");
           if (system_hw) system_hw = SYSTEM_SMS2;
         }
         else if (config.system == SYSTEM_SMS2)
         {
           config.system = SYSTEM_GG;
-          sprintf (items[0].text, "Console Type: GG");
+          sprintf (items[0].text, "System: GAME GEAR");
 
           if (romtype == SYSTEM_GG)
           {
@@ -1400,7 +1410,7 @@ static void systemmenu ()
         else if (config.system == SYSTEM_GG)
         {
           config.system = SYSTEM_MD;
-          sprintf (items[0].text, "Console Type: MD");
+          sprintf (items[0].text, "System: MEGA DRIVE/GENESIS");
 
           if (romtype & SYSTEM_MD)
           {
@@ -1444,13 +1454,13 @@ static void systemmenu ()
       {
         config.region_detect = (config.region_detect + 1) % 4;
         if (config.region_detect == 0)
-          sprintf (items[1].text, "Console Region: AUTO");
+          sprintf (items[1].text, "Region: AUTO");
         else if (config.region_detect == 1)
-          sprintf (items[1].text, "Console Region: USA");
+          sprintf (items[1].text, "Region: USA");
         else if (config.region_detect == 2)
-          sprintf (items[1].text, "Console Region: PAL");
+          sprintf (items[1].text, "Region: PAL");
         else if (config.region_detect == 3)
-          sprintf (items[1].text, "Console Region: JAP");
+          sprintf (items[1].text, "Region: JAPAN");
 
         /* force system reinitialization + region BIOS */
         reinit = 2;
@@ -1492,7 +1502,7 @@ static void systemmenu ()
         if (config.bios == 0) config.bios = 3;
         else if (config.bios == 3) config.bios = 1;
         else config.bios = 0;
-        sprintf (items[4].text, "System Boot: %s", (config.bios & 1) ? ((config.bios & 2) ? "BIOS&CART " : "BIOS ONLY") : "CART");
+        sprintf (items[4].text, "System Boot: %s", (config.bios & 1) ? ((config.bios & 2) ? "BIOS->CART " : "BIOS ONLY") : "CART");
         if ((system_hw == SYSTEM_MD) || (system_hw & SYSTEM_GG) || (system_hw & SYSTEM_SMS))
         {
           /* force hard reset */
@@ -1520,17 +1530,31 @@ static void systemmenu ()
         break;
       }
 
-      case 7:  /*** Cart Lock-On ***/
+      case 7:  /*** CD add-on ***/
+      {
+        config.add_on = (config.add_on + 1) % (HW_ADDON_NONE + 1);
+        if (config.add_on == HW_ADDON_AUTO)
+          sprintf (items[7].text, "CD Add-on: AUTO");
+        else if (config.add_on == HW_ADDON_MEGACD)
+          sprintf (items[7].text, "CD Add-on: MEGA/SEGA CD");
+        else if (config.add_on == HW_ADDON_MEGASD)
+          sprintf (items[7].text, "CD Add-on: MEGASD");
+        else
+          sprintf (items[7].text, "CD Add-on: NONE");
+        break;
+      }
+
+      case 8:  /*** Cart Lock-On ***/
       {
         config.lock_on = (config.lock_on + 1) % (TYPE_SK + 1);
         if (config.lock_on == TYPE_GG)
-          sprintf (items[7].text, "Lock-On: GAME GENIE");
+          sprintf (items[8].text, "Lock-On: GAME GENIE");
         else if (config.lock_on == TYPE_AR)
-          sprintf (items[7].text, "Lock-On: ACTION REPLAY");
+          sprintf (items[8].text, "Lock-On: ACTION REPLAY");
         else if (config.lock_on == TYPE_SK)
-          sprintf (items[7].text, "Lock-On: SONIC&KNUCKLES");
+          sprintf (items[8].text, "Lock-On: SONIC&KNUCKLES");
         else
-          sprintf (items[7].text, "Lock-On: OFF");
+          sprintf (items[8].text, "Lock-On: OFF");
 
         if ((system_hw == SYSTEM_MD) || (system_hw == SYSTEM_PICO))
         {
@@ -1564,14 +1588,14 @@ static void systemmenu ()
         break;
       }
 
-      case 8:  /*** Cartridge Hot Swap ***/
+      case 9:  /*** Cartridge Hot Swap ***/
       {
         config.hot_swap ^= 1;
-        sprintf (items[8].text, "Cartridge Swap: %s", (config.hot_swap & 1) ? "ON":"OFF");
+        sprintf (items[9].text, "Cartridge Swap: %s", (config.hot_swap & 1) ? "ON":"OFF");
         break;
       }
 
-      case 9:  /*** System ROM paths ***/
+      case 10:  /*** System ROM paths ***/
       {
         GUI_DeleteMenu(m);
         rompathmenu();
@@ -1579,10 +1603,10 @@ static void systemmenu ()
         break;
       }
 
-      case 10:  /*** SVP cycles per line ***/
+      case 11:  /*** SVP cycles per line ***/
       {
         GUI_OptionBox(m,0,"SVP Cycles",(void *)&SVP_cycles,1,1,1500,1);
-        sprintf (items[10].text, "SVP Cycles: %d", SVP_cycles);
+        sprintf (items[11].text, "SVP Cycles: %d", SVP_cycles);
         break;
       }
 
