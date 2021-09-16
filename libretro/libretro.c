@@ -2864,7 +2864,7 @@ void retro_run(void)
       }
    }
 
-   if ((config.left_border != 0) && (reg[0] & 0x20) && (bitmap.viewport.x = 0) && ((system_hw == SYSTEM_MARKIII) || (system_hw & SYSTEM_SMS) || (system_hw == SYSTEM_PBC)))
+   if ((config.left_border != 0) && (reg[0] & 0x20) && (bitmap.viewport.x == 0) && ((system_hw == SYSTEM_MARKIII) || (system_hw & SYSTEM_SMS) || (system_hw == SYSTEM_PBC)))
    {
 	   bmdoffset = 16;
 	   if (config.left_border == 1)
