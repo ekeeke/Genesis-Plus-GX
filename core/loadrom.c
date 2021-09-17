@@ -1072,6 +1072,7 @@ void get_region(char *romheader)
            (strstr(rominfo.product,"T-69046-50") != NULL) ||    /* Back to the Future III (Europe) */
            (strstr(rominfo.product,"T-120106-00") != NULL) ||   /* Brian Lara Cricket (Europe) */
            (strstr(rominfo.product,"T-97126 -50") != NULL) ||   /* Williams Arcade's Greatest Hits (Europe) */
+           (strstr(rominfo.product,"T-113026-50") != NULL) ||   /* Wiz'n'Liz - The Frantic Wabbit Wescue (Europe) */
            (strstr(rominfo.product,"T-70096 -00") != NULL) ||   /* Muhammad Ali Heavyweight Boxing (Europe) */
            ((rominfo.checksum == 0x0000) && (rominfo.realchecksum == 0x1f7f))) /* Radica - Sensible Soccer Plus edition */
       {

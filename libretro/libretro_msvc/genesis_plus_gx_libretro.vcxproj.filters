@@ -294,6 +294,9 @@
     <ClCompile Include="..\..\core\cart_hw\sms_cart.c">
       <Filter>core\cart_hw</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\core\cart_hw\megasd.c">
+      <Filter>core\cart_hw</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\core\cart_hw\sram.c">
       <Filter>core\cart_hw</Filter>
     </ClCompile>
@@ -666,6 +669,9 @@
       <Filter>core\cart_hw</Filter>
     </ClInclude>
     <ClInclude Include="..\..\core\cart_hw\sms_cart.h">
+      <Filter>core\cart_hw</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\core\cart_hw\megasd.h">
       <Filter>core\cart_hw</Filter>
     </ClInclude>
     <ClInclude Include="..\..\core\cart_hw\sram.h">

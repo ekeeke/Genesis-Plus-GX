@@ -625,6 +625,7 @@ int cdd_load(char *filename, char *header)
   if (fd)
   {
     int mm, ss, bb, pregap = 0;
+    int index = 0;
 
     /* DATA track already loaded ? */
     if (cdd.toc.last)
@@ -806,27 +807,30 @@ int cdd_load(char *filename, char *header)
             cdd.toc.tracks[cdd.toc.last - 1].end = 0;
           }
         }
+
+        /* save current track index */
+        index = cdd.toc.last;
       }
 
       /* decode REM LOOP xxx command (MegaSD specific command) */
       else if (sscanf(lptr, "REM LOOP %d", &bb) == 1)
       {
-        cdd.toc.tracks[cdd.toc.last].loopEnabled = 1;
-        cdd.toc.tracks[cdd.toc.last].loopOffset = bb;
+        cdd.toc.tracks[index].loopEnabled = 1;
+        cdd.toc.tracks[index].loopOffset = bb;
         isMSDfile = 1;
       }
 
       /* decode REM LOOP command (MegaSD specific command) */
       else if (strstr(lptr,"REM LOOP"))
       {
-        cdd.toc.tracks[cdd.toc.last].loopEnabled = 1;
+        cdd.toc.tracks[index].loopEnabled = 1;
         isMSDfile = 1;
       }
 
       /* decode REM NOLOOP command (MegaSD specific command) */
       else if (strstr(lptr,"REM NOLOOP"))
       {
-        cdd.toc.tracks[cdd.toc.last].loopEnabled = -1;
+        cdd.toc.tracks[index].loopEnabled = -1;
         isMSDfile = 1;
       }
 
