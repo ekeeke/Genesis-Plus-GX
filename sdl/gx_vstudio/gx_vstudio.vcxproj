@@ -159,6 +159,7 @@
     <ClInclude Include="..\..\core\cart_hw\ggenie.h" />
     <ClInclude Include="..\..\core\cart_hw\md_cart.h" />
     <ClInclude Include="..\..\core\cart_hw\sms_cart.h" />
+    <ClInclude Include="..\..\core\cart_hw\megasd.h" />
     <ClInclude Include="..\..\core\cart_hw\sram.h" />
     <ClInclude Include="..\..\core\cart_hw\svp\ssp16.h" />
     <ClInclude Include="..\..\core\cart_hw\svp\svp.h" />
@@ -307,6 +308,7 @@
     <ClCompile Include="..\..\core\cart_hw\ggenie.c" />
     <ClCompile Include="..\..\core\cart_hw\md_cart.c" />
     <ClCompile Include="..\..\core\cart_hw\sms_cart.c" />
+    <ClCompile Include="..\..\core\cart_hw\megasd.c" />
     <ClCompile Include="..\..\core\cart_hw\sram.c" />
     <ClCompile Include="..\..\core\cart_hw\svp\ssp16.c" />
     <ClCompile Include="..\..\core\cart_hw\svp\svp.c" />
