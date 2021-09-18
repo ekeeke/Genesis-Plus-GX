@@ -547,6 +547,13 @@ static void megasd_ctrl_write_word(unsigned int address, unsigned int data)
           /* check audio track is currently playing */
           if (scd.regs[0x36>>1].byte.h == 0x00)
           {
+            /* check if fade out is already in progress */
+            if (megasd_hw.fadeoutSamplesCount > 0)
+            {
+              /* restore initial volume */
+              cdd.fader[0] = cdd.fader[1] = megasd_hw.fadeoutStartVolume;
+            }
+
             /* get fade out samples count from command parameter */
             megasd_hw.fadeoutSamplesCount = (data & 0xff) * 588;
 
@@ -582,7 +589,17 @@ static void megasd_ctrl_write_word(unsigned int address, unsigned int data)
 
         case 0x15:  /* Set CDDA volume (0-255) */
         {
-          cdd.fader[0] = cdd.fader[1] = ((data & 0xff) * 0x400) / 255;
+          /* check if fade out is in progress */
+          if (megasd_hw.fadeoutSamplesCount > 0)
+          {
+            /* update default volume to be restored once fade out is finished */
+            megasd_hw.fadeoutStartVolume = ((data & 0xff) * 0x400) / 255;
+          }
+          else
+          {
+            /* update current volume */
+            cdd.fader[0] = cdd.fader[1] = ((data & 0xff) * 0x400) / 255;
+          }
           return;
         }
 
@@ -614,6 +631,9 @@ static void megasd_ctrl_write_word(unsigned int address, unsigned int data)
 
               /* update CDD status to allow reading data track */
               cdd.status = CD_PLAY;
+
+              /* no audio track playing */
+              scd.regs[0x36>>1].byte.h = 0x01;
             }
           }
           return;
