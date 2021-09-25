@@ -3009,7 +3009,7 @@ bool retro_load_game(const struct retro_game_info *info)
 #else
    char slash      = '/';
 #endif
-   const struct retro_game_info_ext *info_ext = NULL;
+   struct retro_game_info_ext *info_ext = NULL;
    char content_path[256];
    char content_ext[8];
 
@@ -3431,9 +3431,9 @@ void retro_run(void)
    int result = -1;
    int do_skip = 0;
    bool updated = false;
-   is_running = true;
    int vwoffset = 0;
    int bmdoffset = 0;
+   is_running = true;
 
 #ifdef HAVE_OVERCLOCK
   /* update overclock delay */
@@ -3565,13 +3565,9 @@ void retro_run(void)
    {
 	   bmdoffset = 16;
 	   if (config.left_border == 1)
-	   {
 		   vwoffset = 8;
-	   }
 	   else
-	   {
 		   vwoffset = 16;
-	   }
    }
 
    if (!do_skip)

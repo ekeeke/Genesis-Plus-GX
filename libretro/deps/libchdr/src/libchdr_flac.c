@@ -127,8 +127,13 @@ int flac_decoder_reset(flac_decoder* decoder, uint32_t sample_rate, uint8_t num_
  *-------------------------------------------------
  */
 
+#define	BUFFER	2352	/* bytes per CD audio sector */
+
 int flac_decoder_decode_interleaved(flac_decoder* decoder, int16_t *samples, uint32_t num_samples, int swap_endian)
 {
+	int16_t buffer[BUFFER];
+        uint32_t buf_samples;
+
 	/* configure the uncompressed buffer */
 	memset(decoder->uncompressed_start, 0, sizeof(decoder->uncompressed_start));
 	decoder->uncompressed_start[0] = samples;
@@ -136,9 +141,7 @@ int flac_decoder_decode_interleaved(flac_decoder* decoder, int16_t *samples, uin
 	decoder->uncompressed_length = num_samples;
 	decoder->uncompressed_swap = swap_endian;
 
-#define	BUFFER	2352	/* bytes per CD audio sector */
-	int16_t buffer[BUFFER];
-	uint32_t buf_samples = BUFFER / channels(decoder);
+	buf_samples = BUFFER / channels(decoder);
 	/* loop until we get everything we want */
 	while (decoder->uncompressed_offset < decoder->uncompressed_length) {
 		uint32_t frames = (num_samples < buf_samples ? num_samples : buf_samples);
