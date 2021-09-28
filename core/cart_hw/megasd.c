@@ -331,86 +331,112 @@ void megasd_rom_mapper_w(unsigned int address, unsigned int data)
 */
 void megasd_update_cdda(unsigned int samples)
 {
-  /* check if fade out is still in progress */
-  if (megasd_hw.fadeoutSamplesCount > 0)
+  unsigned int count;
+
+  while (samples > 0)
   {
-    /* update remaining fade out samples count */
-    megasd_hw.fadeoutSamplesCount -= samples;
+    /* attempt to read remaing needed samples by default */
+    count = samples;
 
-    /* check end of fade out */
-    if (megasd_hw.fadeoutSamplesCount <= 0)
+    /* check against fade out remaining samples */
+    if ((megasd_hw.fadeoutSamplesCount > 0) && (count > megasd_hw.fadeoutSamplesCount))
     {
-      /* pause audio playback */
-      scd.regs[0x36>>1].byte.h = 0x01;
-      cdd.status = CD_PAUSE;
-
-      /* restore initial volume */
-      cdd.fader[0] = cdd.fader[1] = megasd_hw.fadeoutStartVolume;
+      count = megasd_hw.fadeoutSamplesCount;
     }
-    else
+
+    /* check against playback remaining samples */
+    if ((megasd_hw.playbackSamplesCount > 0) && (count > megasd_hw.playbackSamplesCount))
     {
-      /* force volume for next frame */
-      cdd.fader[0] = cdd.fader[1] = (megasd_hw.fadeoutSamplesCount * megasd_hw.fadeoutStartVolume) / megasd_hw.fadeoutSamplesTotal;
+      count = megasd_hw.playbackSamplesCount;
     }
-  }
 
-  /* Playback in progress ? */
-  if (megasd_hw.playbackSamplesCount > 0)
-  {
-    /* update remaining samples count */
-    megasd_hw.playbackSamplesCount -= samples;
+    /* read required CD-DA samples */
+    cdd_read_audio(count);
 
-    /* check end of current track */
-    if (megasd_hw.playbackSamplesCount <= 0)
+    /* adjust remaing needed samples count */
+    samples -= count;
+
+    /* check if fade out is still in progress */
+    if (megasd_hw.fadeoutSamplesCount > 0)
     {
-      /* check playback end track */
-      if (cdd.index < megasd_hw.playbackEndTrack)
+      /* update remaining fade out samples count */
+      megasd_hw.fadeoutSamplesCount -= count;
+
+      /* check end of fade out */
+      if (megasd_hw.fadeoutSamplesCount <= 0)
       {
-        /* seek start of next track */
-        cdd_seek_audio(cdd.index + 1, cdd.toc.tracks[cdd.index + 1].start);
+        /* pause audio playback */
+        scd.regs[0x36>>1].byte.h = 0x01;
+        cdd.status = CD_PAUSE;
 
-        /* increment current track index */
-        cdd.index++;
-
-        /* check if last track is being played */
-        if (cdd.index == megasd_hw.playbackEndTrack)
-        {
-          /* reinitialize remaining samples count using current track start sector and playback end sectors */
-          megasd_hw.playbackSamplesCount = (megasd_hw.playbackEndSector - cdd.toc.tracks[cdd.index].start) * 588;
-        }
-        else
-        {
-          /* reinitialize remaining samples count using current track start and end sectors */
-          megasd_hw.playbackSamplesCount = (cdd.toc.tracks[cdd.index].end - cdd.toc.tracks[cdd.index].start) * 588;
-        }
-      }
-
-      /* check track loop */
-      else if (megasd_hw.playbackLoop)
-      {
-        /* seek back to start track loop sector */
-        cdd_seek_audio(megasd_hw.playbackLoopTrack, megasd_hw.playbackLoopSector);
-
-        /* update current track index */
-        cdd.index = megasd_hw.playbackLoopTrack;
-
-        /* check if single track or successive tracks are being played */
-        if (cdd.index == megasd_hw.playbackEndTrack)
-        {
-          /* reinitialize remaining samples count using playback loop and end sectors */
-          megasd_hw.playbackSamplesCount = (megasd_hw.playbackEndSector - megasd_hw.playbackLoopSector) * 588;
-        }
-        else
-        {
-          /* reinitialize remaining samples count using playback loop sector and track end sector */
-          megasd_hw.playbackSamplesCount = (cdd.toc.tracks[cdd.index].end - megasd_hw.playbackLoopSector) * 588;
-        }
+        /* restore initial volume */
+        cdd.fader[0] = cdd.fader[1] = megasd_hw.fadeoutStartVolume;
       }
       else
       {
-        /* stop audio playback */
-        cdd.status = CD_STOP;
-        scd.regs[0x36>>1].byte.h = 0x01;
+        /* force volume for next frame */
+        cdd.fader[0] = cdd.fader[1] = (megasd_hw.fadeoutSamplesCount * megasd_hw.fadeoutStartVolume) / megasd_hw.fadeoutSamplesTotal;
+      }
+    }
+
+    /* Playback in progress ? */
+    if (megasd_hw.playbackSamplesCount > 0)
+    {
+      /* update remaining samples count */
+      megasd_hw.playbackSamplesCount -= count;
+
+      /* check end of current track */
+      if (megasd_hw.playbackSamplesCount <= 0)
+      {
+        /* check playback end track */
+        if (cdd.index < megasd_hw.playbackEndTrack)
+        {
+          /* seek start of next track */
+          cdd_seek_audio(cdd.index + 1, cdd.toc.tracks[cdd.index + 1].start);
+
+          /* increment current track index */
+          cdd.index++;
+
+          /* check if last track is being played */
+          if (cdd.index == megasd_hw.playbackEndTrack)
+          {
+            /* reinitialize remaining samples count using current track start sector and playback end sectors */
+            megasd_hw.playbackSamplesCount = (megasd_hw.playbackEndSector - cdd.toc.tracks[cdd.index].start) * 588;
+          }
+          else
+          {
+            /* reinitialize remaining samples count using current track start and end sectors */
+            megasd_hw.playbackSamplesCount = (cdd.toc.tracks[cdd.index].end - cdd.toc.tracks[cdd.index].start) * 588;
+          }
+        }
+
+        /* check track loop */
+        else if (megasd_hw.playbackLoop)
+        {
+          /* seek back to start track loop sector */
+          cdd_seek_audio(megasd_hw.playbackLoopTrack, megasd_hw.playbackLoopSector);
+
+          /* update current track index */
+          cdd.index = megasd_hw.playbackLoopTrack;
+
+          /* check if single track or successive tracks are being played */
+          if (cdd.index == megasd_hw.playbackEndTrack)
+          {
+            /* reinitialize remaining samples count using playback loop and end sectors */
+            megasd_hw.playbackSamplesCount = (megasd_hw.playbackEndSector - megasd_hw.playbackLoopSector) * 588;
+          }
+          else
+          {
+            /* reinitialize remaining samples count using playback loop sector and track end sector */
+            megasd_hw.playbackSamplesCount = (cdd.toc.tracks[cdd.index].end - megasd_hw.playbackLoopSector) * 588;
+          }
+        }
+        else
+        {
+          /* stop audio playback */
+          cdd.status = CD_STOP;
+          scd.regs[0x36>>1].byte.h = 0x01;
+        }
       }
     }
   }

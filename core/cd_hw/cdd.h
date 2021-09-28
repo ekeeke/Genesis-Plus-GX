@@ -141,6 +141,7 @@ extern void cdd_unload(void);
 extern void cdd_read_data(uint8 *dst, uint8 *subheader);
 extern void cdd_seek_audio(int index, int lba);
 extern void cdd_read_audio(unsigned int samples);
+extern void cdd_update_audio(unsigned int samples);
 extern void cdd_update(void);
 extern void cdd_process(void);
 
