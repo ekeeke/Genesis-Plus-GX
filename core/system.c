@@ -205,8 +205,8 @@ int audio_update(int16 *buffer)
     /* sync PCM chip with other sound chips */
     pcm_update(size);
 
-    /* read CDDA samples */
-    cdd_read_audio(size);
+    /* read CD-DA samples */
+    cdd_update_audio(size);
 
 #ifdef ALIGN_SND
     /* return an aligned number of samples if required */

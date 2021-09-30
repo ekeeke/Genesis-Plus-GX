@@ -914,12 +914,12 @@ int cdd_load(char *filename, char *header)
             if (cdd.toc.tracks[cdd.toc.last].type)
             {
               /* DATA track length */
-              cdd.toc.tracks[cdd.toc.last].end = cdd.toc.tracks[cdd.toc.last].start + ((cdStreamTell(cdd.toc.tracks[cdd.toc.last].fd) + cdd.sectorSize - 1) / cdd.sectorSize);
+              cdd.toc.tracks[cdd.toc.last].end = cdd.toc.tracks[cdd.toc.last].start + (cdStreamTell(cdd.toc.tracks[cdd.toc.last].fd) / cdd.sectorSize);
             }
             else
             {
               /* AUDIO track length */
-              cdd.toc.tracks[cdd.toc.last].end = cdd.toc.tracks[cdd.toc.last].start + ((cdStreamTell(cdd.toc.tracks[cdd.toc.last].fd) + 2351) / 2352);
+              cdd.toc.tracks[cdd.toc.last].end = cdd.toc.tracks[cdd.toc.last].start + (cdStreamTell(cdd.toc.tracks[cdd.toc.last].fd) / 2352);
             }
             cdStreamSeek(cdd.toc.tracks[cdd.toc.last].fd, 0, SEEK_SET);
           }
@@ -1454,9 +1454,6 @@ void cdd_read_audio(unsigned int samples)
   int prev_l = cdd.audio[0];
   int prev_r = cdd.audio[1];
 
-  /* get number of internal clocks (CD-DA samples) needed */
-  samples = blip_clocks_needed(snd.blips[2], samples);
-
   /* audio track playing ? */
   if (!scd.regs[0x36>>1].byte.h && cdd.toc.tracks[cdd.index].fd)
   {
@@ -1689,12 +1686,6 @@ void cdd_read_audio(unsigned int samples)
     /* save last audio output for next frame */
     cdd.audio[0] = prev_l;
     cdd.audio[1] = prev_r;
-
-    /* check CD-DA track end (Mega SD add-on specific)*/
-    if (cart.special & HW_MEGASD)
-    {
-      megasd_update_cdda(samples);
-    }
   }
   else
   {
@@ -1711,6 +1702,23 @@ void cdd_read_audio(unsigned int samples)
 
   /* end of Blip Buffer timeframe */
   blip_end_frame(snd.blips[2], samples);
+}
+
+void cdd_update_audio(unsigned int samples)
+{
+  /* get number of internal clocks (CD-DA samples) needed */
+  samples = blip_clocks_needed(snd.blips[2], samples);
+
+  if (cart.special & HW_MEGASD)
+  {
+    /* MegaSD add-on specific CD-DA processing */
+    megasd_update_cdda(samples);
+  }
+  else
+  {
+    /* read needed CD-DA samples */
+    cdd_read_audio(samples);
+  }
 }
 
 static void cdd_read_subcode(void)
