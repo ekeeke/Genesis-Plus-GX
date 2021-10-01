@@ -748,6 +748,26 @@ int load_rom(char *filename)
   /* 16-bit ROM cartridge (max. 8MB) with optional CD hardware add-on support enabled */
   else if ((system_hw == SYSTEM_MD) && (cart.romsize <= 0x800000) && (config.add_on != HW_ADDON_NONE))
   {
+    int len;
+    char fname[256];
+
+    /* automatically try to load associated .chd file if no .cue file CD image loaded yet */
+    if (!cdd.loaded)
+    {
+      len = strlen(filename);
+      while ((len && (filename[len] != '.')) || (len > 251)) len--;
+      strncpy(fname, filename, len);
+      strcpy(&fname[len], ".chd");
+      fname[len+4] = 0;
+      cdd_load(fname, (char *)cdc.ram);
+    }
+
+    /* automatically enable CD hardware emulation (Mode 1) in case :             */
+    /*  - loaded ROM has known CD hardware support                               */
+    /*      or                                                                   */
+    /*  - CD hardware emulation is forced on                                     */
+    /*      or                                                                   */
+    /*  - MegaSD add-on emulation is disabled and normal CD image file is loaded */
     if ((rominfo.peripherals & PCDROM) || (strstr(rominfo.domestic,"FLUX") != NULL) ||
         (config.add_on == HW_ADDON_MEGACD) || ((config.add_on | cdd.loaded) == HW_ADDON_MEGACD))
     {
@@ -757,8 +777,7 @@ int load_rom(char *filename)
         /* automatically try to load associated .iso file if no CD image loaded yet */
         if (!cdd.loaded)
         {
-          char fname[256];
-          int len = strlen(filename);
+          len = strlen(filename);
           while ((len && (filename[len] != '.')) || (len > 251)) len--;
           strncpy(fname, filename, len);
           strcpy(&fname[len], ".iso");
