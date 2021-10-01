@@ -751,6 +751,7 @@ int load_rom(char *filename)
     int len;
     char fname[256];
 
+#if defined(USE_LIBCHDR)
     /* automatically try to load associated .chd file if no .cue file CD image loaded yet */
     if (!cdd.loaded)
     {
@@ -761,6 +762,7 @@ int load_rom(char *filename)
       fname[len+4] = 0;
       cdd_load(fname, (char *)cdc.ram);
     }
+#endif
 
     /* automatically enable CD hardware emulation (Mode 1) in case :             */
     /*  - loaded ROM has known CD hardware support                               */
