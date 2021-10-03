@@ -2,7 +2,7 @@
  *  Genesis Plus
  *  SG-1000, Master System & Game Gear cartridge hardware support
  *
- *  Copyright (C) 2007-2020  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2007-2021  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -107,6 +107,7 @@ static const rominfo_t game_list[] =
   {0x97D03541, 0, 0, 0, MAPPER_KOREA,       SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Sangokushi 3 (KR) */
   {0x192949D5, 0, 0, 0, MAPPER_KOREA_8K,    SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Janggun-ui Adeul (KR) */
   {0x76C5BDFB, 0, 0, 0, MAPPER_KOREA_16K,  SYSTEM_GGMS, REGION_JAPAN_NTSC}, /* Jang Pung II [SMS-GG] (KR) */
+  {0x01A2D595, 0, 0, 0, MAPPER_KOREA_16K,  SYSTEM_GGMS,        REGION_USA}, /* Street Battle [Proto] [SMS-GG] (US) */
   {0x9FA727A0, 0, 0, 0, MAPPER_KOREA_16K,  SYSTEM_GGMS,        REGION_USA}, /* Street Hero [Proto 0] [SMS-GG] (US) */
   {0xFB481971, 0, 0, 0, MAPPER_KOREA_16K,  SYSTEM_GGMS,        REGION_USA}, /* Street Hero [Proto 1] [SMS-GG] (US) */
   {0xA67F2A5C, 0, 0, 0, MAPPER_MULTI_16K,   SYSTEM_SMS, REGION_JAPAN_NTSC}, /* 4-Pak All Action (KR) */
