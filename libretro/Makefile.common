@@ -76,6 +76,7 @@ SOURCES_C += \
 endif
 SOURCES_C += \
              $(LIBRETRO_DEPS_DIR)/zlib-1.2.11/adler32.c \
+             $(LIBRETRO_DEPS_DIR)/zlib-1.2.11/crc32.c \
              $(LIBRETRO_DEPS_DIR)/zlib-1.2.11/inffast.c \
              $(LIBRETRO_DEPS_DIR)/zlib-1.2.11/inflate.c \
              $(LIBRETRO_DEPS_DIR)/zlib-1.2.11/inftrees.c \
@@ -87,7 +88,6 @@ ifeq ($(SHARED_LIBVORBIS),)
    SOURCES_C += $(foreach dir,$(TREMOR_SRC_DIR),$(wildcard $(dir)/*.c))
 endif
 
-SOURCES_C += $(LIBRETRO_DIR)/libretro.c \
-				 $(LIBRETRO_DIR)/scrc32.c
+SOURCES_C += $(LIBRETRO_DIR)/libretro.c
 
 INCFLAGS += $(foreach dir,$(GENPLUS_SRC_DIR),-I$(dir)) -I$(LIBRETRO_DIR) -I$(LIBRETRO_COMM_DIR)/include
