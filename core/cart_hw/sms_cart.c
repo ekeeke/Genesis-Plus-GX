@@ -215,9 +215,7 @@ static const rominfo_t game_list[] =
 
   /* games running in Game Gear MS compatibility mode */
   {0x59840FD6, 0, 0, 0,  MAPPER_SEGA, SYSTEM_GGMS,        REGION_USA}, /* Castle of Illusion - Starring Mickey Mouse [SMS-GG] */
-  {0x9C76FB3A, 0, 0, 0,  MAPPER_SEGA, SYSTEM_GGMS,        REGION_USA}, /* Rastan Saga [SMS-GG] */
-  {0xC8381DEF, 0, 0, 0,  MAPPER_SEGA, SYSTEM_GGMS,        REGION_USA}, /* Taito Chase H.Q [SMS-GG] */
-  {0xDA8E95A9, 0, 0, 0,  MAPPER_SEGA, SYSTEM_GGMS,        REGION_USA}, /* WWF Wrestlemania Steel Cage Challenge [SMS-GG] */
+  {0xCC521975, 0, 0, 0,  MAPPER_SEGA, SYSTEM_GGMS,        REGION_USA}, /* Cave Dude [Proto] [SMS-GG] */
   {0x1D93246E, 0, 0, 0,  MAPPER_SEGA, SYSTEM_GGMS,        REGION_USA}, /* Olympic Gold [A][SMS-GG] */
   {0xA2F9C7AF, 0, 0, 0,  MAPPER_SEGA, SYSTEM_GGMS,        REGION_USA}, /* Olympic Gold [B][SMS-GG] */
   {0x01EAB89D, 0, 0, 0,  MAPPER_SEGA, SYSTEM_GGMS,        REGION_USA}, /* Out Run Europa [SMS-GG] */
@@ -225,12 +223,37 @@ static const rominfo_t game_list[] =
   {0xE5F789B9, 0, 0, 0,  MAPPER_SEGA, SYSTEM_GGMS,        REGION_USA}, /* Predator 2 [SMS-GG] */
   {0x311D2863, 0, 0, 0,  MAPPER_SEGA, SYSTEM_GGMS,        REGION_USA}, /* Prince of Persia [A][SMS-GG] */
   {0x45F058D6, 0, 0, 0,  MAPPER_SEGA, SYSTEM_GGMS,        REGION_USA}, /* Prince of Persia [B][SMS-GG] */
+  {0x9C76FB3A, 0, 0, 0,  MAPPER_SEGA, SYSTEM_GGMS,        REGION_USA}, /* Rastan Saga [SMS-GG] */
   {0x56201996, 0, 0, 0,  MAPPER_SEGA, SYSTEM_GGMS,        REGION_USA}, /* R.C. Grand Prix [SMS-GG] */
   {0x10DBBEF4, 0, 0, 0,  MAPPER_SEGA, SYSTEM_GGMS,        REGION_USA}, /* Super Kick Off [SMS-GG] */
+  {0xC8381DEF, 0, 0, 0,  MAPPER_SEGA, SYSTEM_GGMS,        REGION_USA}, /* Taito Chase H.Q [SMS-GG] */
+  {0xDA8E95A9, 0, 0, 0,  MAPPER_SEGA, SYSTEM_GGMS,        REGION_USA}, /* WWF Wrestlemania Steel Cage Challenge [SMS-GG] */
   {0x9942B69B, 0, 0, 0,  MAPPER_SEGA, SYSTEM_GGMS, REGION_JAPAN_NTSC}, /* Castle of Illusion - Starring Mickey Mouse (J) [SMS-GG] */
   {0x7BB81E3D, 0, 0, 0,  MAPPER_SEGA, SYSTEM_GGMS, REGION_JAPAN_NTSC}, /* Taito Chase H.Q (J) [SMS-GG] */
+  {0x6630E5FD, 0, 0, 0,  MAPPER_SEGA, SYSTEM_GGMS, REGION_JAPAN_NTSC}, /* Aerial Assault (TW) [SMS-GG] */
   {0x6F8E46CF, 0, 0, 0,  MAPPER_SEGA, SYSTEM_GGMS, REGION_JAPAN_NTSC}, /* Alex Kidd in Miracle World (TW) [SMS-GG] */
+  {0x98F64975, 0, 0, 0,  MAPPER_SEGA, SYSTEM_GGMS, REGION_JAPAN_NTSC}, /* Black Belt (TW) [SMS-GG] */
+  {0x55f929ce, 0, 0, 0,  MAPPER_SEGA, SYSTEM_GGMS, REGION_JAPAN_NTSC}, /* Choplifter (TW) [SMS-GG] */
+  {0xAD9FF469, 0, 0, 0,  MAPPER_SEGA, SYSTEM_GGMS, REGION_JAPAN_NTSC}, /* Cyber Shinobi, The (TW) [SMS-GG] */
+  {0xF4F848C2, 0, 0, 0,  MAPPER_SEGA, SYSTEM_GGMS, REGION_JAPAN_NTSC}, /* Double Dragon (TW) [SMS-GG] */
+  {0x96e16fe4, 0, 0, 0,  MAPPER_SEGA, SYSTEM_GGMS, REGION_JAPAN_NTSC}, /* E-SWAT [v1] (TW) [SMS-GG] */
+  {0xB948752E, 0, 0, 0,  MAPPER_SEGA, SYSTEM_GGMS, REGION_JAPAN_NTSC}, /* Final Bubble Bobble (TW) [SMS-GG] */
+  {0x44136A72, 0, 0, 0,  MAPPER_SEGA, SYSTEM_GGMS, REGION_JAPAN_NTSC}, /* Forgotten Worlds (TW) [SMS-GG] */
+  {0x6FE448A5, 0, 0, 0,  MAPPER_SEGA, SYSTEM_GGMS, REGION_JAPAN_NTSC}, /* Great Basketball (TW) [SMS-GG] */
+  {0xB6207F0D, 0, 0, 0,  MAPPER_SEGA, SYSTEM_GGMS, REGION_JAPAN_NTSC}, /* Hokuto no Ken (TW) [SMS-GG] */
+  {0x4762E022, 0, 0, 0,  MAPPER_SEGA, SYSTEM_GGMS, REGION_JAPAN_NTSC}, /* Kung Fu Kid (TW) [SMS-GG] */
   {0x3382D73F, 0, 0, 0,  MAPPER_SEGA, SYSTEM_GGMS, REGION_JAPAN_NTSC}, /* Olympic Gold (TW) [SMS-GG] */
+  {0x354BEE78, 0, 0, 0,  MAPPER_SEGA, SYSTEM_GGMS, REGION_JAPAN_NTSC}, /* Paperboy [v1] (TW) [SMS-GG] */
+  {0xCAFD2D83, 0, 0, 0,  MAPPER_SEGA, SYSTEM_GGMS, REGION_JAPAN_NTSC}, /* Prince of Persia (TW) [SMS-GG] */
+  {0xCACDF759, 0, 0, 0,  MAPPER_SEGA, SYSTEM_GGMS, REGION_JAPAN_NTSC}, /* Quartet (TW) [SMS-GG] */
+  {0xE532716F, 0, 0, 0,  MAPPER_SEGA, SYSTEM_GGMS, REGION_JAPAN_NTSC}, /* R-Type (TW) [SMS-GG] */
+  {0x7D59283B, 0, 0, 0,  MAPPER_SEGA, SYSTEM_GGMS, REGION_JAPAN_NTSC}, /* Scramble Spirits (TW) [SMS-GG] */
+  {0x89EFCC22, 0, 0, 0,  MAPPER_SEGA, SYSTEM_GGMS, REGION_JAPAN_NTSC}, /* Secret Command (TW) [SMS-GG] */
+  {0xAB67C6BD, 0, 0, 0,  MAPPER_SEGA, SYSTEM_GGMS, REGION_JAPAN_NTSC}, /* Shadow Dancer - The Secret Of Shinobi (TW) [SMS-GG] */
+  {0xAC2EA669, 0, 0, 0,  MAPPER_SEGA, SYSTEM_GGMS, REGION_JAPAN_NTSC}, /* Shadow of the Beast (TW) [SMS-GG] */
+  {0x63A7F906, 0, 0, 0,  MAPPER_SEGA, SYSTEM_GGMS, REGION_JAPAN_NTSC}, /* Strider (TW) [SMS-GG] */
+  {0xD282EF71, 0, 0, 0,  MAPPER_SEGA, SYSTEM_GGMS, REGION_JAPAN_NTSC}, /* Submarine Attack (TW) [SMS-GG] */
+  {0x98CF1254, 0, 0, 0,  MAPPER_SEGA, SYSTEM_GGMS, REGION_JAPAN_NTSC}, /* Thunder Blade (TW) [SMS-GG] */
 
   /* games requiring 3-D Glasses */
   {0x6BD5C2BF, 1, 1, 0,  MAPPER_SEGA, SYSTEM_SMS,        REGION_USA}, /* Space Harrier 3-D */
