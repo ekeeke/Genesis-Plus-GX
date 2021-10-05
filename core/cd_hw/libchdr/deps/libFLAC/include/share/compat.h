@@ -49,7 +49,7 @@
 #if defined _MSC_VER || defined __BORLANDC__ || defined __MINGW32__
 #include <sys/types.h> /* for off_t */
 #define FLAC__off_t __int64 /* use this instead of off_t to fix the 2 GB limit */
-#if !defined __MINGW32__
+#if !defined __MINGW32__ && _MSC_VER && _MSC_VER > 1310
 #define fseeko _fseeki64
 #define ftello _ftelli64
 #else /* MinGW */
