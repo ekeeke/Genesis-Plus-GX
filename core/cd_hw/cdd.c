@@ -1491,6 +1491,12 @@ void cdd_read_audio(unsigned int samples)
         r = (((int16)((ptr[3] + ptr[2]*256)) * mul) / 1024);
         ptr+=4;
 #endif
+
+        /* CD-DA output mixing volume (0-100%) */
+        l = (l * config.cdda_volume) / 100;
+        r = (r * config.cdda_volume) / 100;
+
+        /* update blip buffer */
         blip_add_delta_fast(snd.blips[2], i, l-prev_l, r-prev_r);
         prev_l = l;
         prev_r = r;
@@ -1564,6 +1570,12 @@ void cdd_read_audio(unsigned int samples)
         /* left & right channels */
         l = ((ptr[0] * mul) / 1024);
         r = ((ptr[1] * mul) / 1024);
+
+        /* CD-DA output mixing volume (0-100%) */
+        l = (l * config.cdda_volume) / 100;
+        r = (r * config.cdda_volume) / 100;
+
+        /* update blip buffer */
         blip_add_delta_fast(snd.blips[2], i, l-prev_l, r-prev_r);
         prev_l = l;
         prev_r = r;
@@ -1614,6 +1626,12 @@ void cdd_read_audio(unsigned int samples)
         r = (((int16)((ptr[2] + ptr[3]*256)) * mul) / 1024);
         ptr+=4;
 #endif
+
+        /* CD-DA output mixing volume (0-100%) */
+        l = (l * config.cdda_volume) / 100;
+        r = (r * config.cdda_volume) / 100;
+
+        /* update blip buffer */
         blip_add_delta_fast(snd.blips[2], i, l-prev_l, r-prev_r);
         prev_l = l;
         prev_r = r;
@@ -1649,6 +1667,7 @@ void cdd_read_audio(unsigned int samples)
     /* no audio output */
     if (prev_l | prev_r)
     {
+      /* update blip buffer */
       blip_add_delta_fast(snd.blips[2], 0, -prev_l, -prev_r);
 
       /* save audio output for next frame */
@@ -1657,7 +1676,7 @@ void cdd_read_audio(unsigned int samples)
     }
   }
 
-  /* end of Blip Buffer timeframe */
+  /* end of blip buffer timeframe */
   blip_end_frame(snd.blips[2], samples);
 }
 

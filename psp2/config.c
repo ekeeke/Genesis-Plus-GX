@@ -10,6 +10,8 @@ void set_config_defaults(void)
   /* sound options */
   config.psg_preamp     = 150;
   config.fm_preamp      = 100;
+  config.cdda_volume    = 100;
+  config.pcm_volume     = 100;
   config.hq_fm          = 0;
   config.hq_psg         = 0;
   config.filter         = 1;
@@ -18,7 +20,7 @@ void set_config_defaults(void)
   config.lg             = 100;
   config.mg             = 100;
   config.hg             = 100;
-  config.lp_range       = 0x7fff; /* 0.5 in 0.16 fixed point */
+  config.lp_range       = 0x9999; /* 0.6 in 0.16 fixed point */
   config.ym2612         = YM2612_DISCRETE;
   config.ym2413         = 2; /* = AUTO (0 = always OFF, 1 = always ON) */
   config.mono           = 0;
