@@ -57,6 +57,8 @@ typedef struct
   uint8 mono;
   int16 psg_preamp;
   int16 fm_preamp;
+  int16 cdda_volume;
+  int16 pcm_volume;
   int16 low_freq;
   int16 high_freq;
   int16 lg;

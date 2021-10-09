@@ -347,8 +347,10 @@ static gui_item items_audio[] =
   {NULL,NULL,"YM2612 Type: DISCRETE",    "Select YM2612 chip model",                             56,132,276,48},
   {NULL,NULL,"High-Quality FM: ON",      "Enable/Disable YM2612/YM2413 high-quality resampling", 56,132,276,48},
   {NULL,NULL,"High-Quality PSG: ON",     "Enable/Disable SN76489 high-quality resampling",       56,132,276,48},
-  {NULL,NULL,"FM Volume: 1.00",          "Adjust YM2612/YM2413 audio balance",                   56,132,276,48},
-  {NULL,NULL,"PSG Volume: 2.50",         "Adjust SN76489 audio balance",                         56,132,276,48},
+  {NULL,NULL,"FM Volume: 1.00",          "Adjust YM2612/YM2413 output mixing level",             56,132,276,48},
+  {NULL,NULL,"PSG Volume: 2.50",         "Adjust SN76489 output mixing level",                   56,132,276,48},
+  {NULL,NULL,"CD-DA Volume: 1.00",       "Adjust CD audio output mixing level",                  56,132,276,48},
+  {NULL,NULL,"PCM Volume: 1.00",         "Adjust CD hardware RF5C164 output mixing level",       56,132,276,48},
   {NULL,NULL,"Audio Output: STEREO",     "Select audio mixing output type",                      56,132,276,48},
   {NULL,NULL,"Filtering: 3-BAND EQ",     "Select audio filtering type",                          56,132,276,48},
   {NULL,NULL,"Low Gain: 1.00",           "Adjust EQ Low Band Gain",                              56,132,276,48},
@@ -895,6 +897,8 @@ static void soundmenu ()
   int ret, quit = 0;
   float fm_volume = (float)config.fm_preamp/100.0;
   float psg_volume = (float)config.psg_preamp/100.0;
+  float cdda_volume = (float)config.cdda_volume/100.0;
+  float pcm_volume = (float)config.pcm_volume/100.0;
   gui_menu *m = &menu_audio;
   gui_item *items = m->items;
 
@@ -911,8 +915,10 @@ static void soundmenu ()
 
   sprintf (items[4].text, "FM Volume: %1.2f", fm_volume);
   sprintf (items[5].text, "PSG Volume: %1.2f", psg_volume);
+  sprintf (items[6].text, "CD-DA Volume: %1.2f", cdda_volume);
+  sprintf (items[7].text, "PCM Volume: %1.2f", pcm_volume);
 
-  sprintf (items[6].text, "Audio Output: %s", config.mono ? "MONO":"STEREO");
+  sprintf (items[8].text, "Audio Output: %s", config.mono ? "MONO":"STEREO");
 
   if (config.filter == 2)
   {
@@ -920,27 +926,27 @@ static void soundmenu ()
     float mg = (float)config.mg/100.0;
     float hg = (float)config.hg/100.0;
 
-    sprintf(items[7].text, "Filtering: 3-BAND EQ");
-    sprintf(items[8].text, "Low Gain: %1.2f", lg);
-    strcpy(items[8].comment, "Adjust EQ Low Band Gain");
-    sprintf(items[9].text, "Middle Gain: %1.2f", mg);
-    sprintf(items[10].text, "High Gain: %1.2f", hg);
-    sprintf(items[11].text, "Low Freq: %d", config.low_freq);
-    sprintf(items[12].text, "High Freq: %d", config.high_freq);
-    m->max_items = 13;
+    sprintf(items[9].text, "Filtering: 3-BAND EQ");
+    sprintf(items[10].text, "Low Gain: %1.2f", lg);
+    strcpy(items[10].comment, "Adjust EQ Low Band Gain");
+    sprintf(items[11].text, "Middle Gain: %1.2f", mg);
+    sprintf(items[12].text, "High Gain: %1.2f", hg);
+    sprintf(items[13].text, "Low Freq: %d", config.low_freq);
+    sprintf(items[14].text, "High Freq: %d", config.high_freq);
+    m->max_items = 15;
   }
   else if (config.filter == 1)
   {
     int16 lp_range = (config.lp_range * 100 + 0xffff) / 0x10000;
-    sprintf (items[7].text, "Filtering: LOW-PASS");
-    sprintf (items[8].text, "Low-Pass Rate: %d %%", lp_range);
-    strcpy (items[8].comment, "Adjust Low Pass filter");
-    m->max_items = 9;
+    sprintf (items[9].text, "Filtering: LOW-PASS");
+    sprintf (items[10].text, "Low-Pass Rate: %d %%", lp_range);
+    strcpy (items[10].comment, "Adjust Low Pass filter");
+    m->max_items = 11;
   }
   else
   {
-    sprintf (items[7].text, "Filtering: OFF");
-    m->max_items = 8;
+    sprintf (items[9].text, "Filtering: OFF");
+    m->max_items = 10;
   }
 
   GUI_InitMenu(m);
@@ -1023,35 +1029,51 @@ static void soundmenu ()
 
       case 6:
       {
-        config.mono ^= 1;
-        sprintf (items[6].text, "Audio Out: %s", config.mono ? "MONO":"STEREO");
+        GUI_OptionBox(m,0,"CD-DA Volume",(void *)&cdda_volume,0.01,0.0,1.0,0);
+        sprintf (items[6].text, "CD-DA Volume: %1.2f", cdda_volume);
+        config.cdda_volume = (int)(cdda_volume * 100.0 + 0.5);
         break;
       }
 
       case 7:
       {
+        GUI_OptionBox(m,0,"PCM Volume",(void *)&pcm_volume,0.01,0.0,1.0,0);
+        sprintf (items[7].text, "PCM Volume: %1.2f", pcm_volume);
+        config.pcm_volume = (int)(pcm_volume * 100.0 + 0.5);
+        break;
+      }
+
+      case 8:
+      {
+        config.mono ^= 1;
+        sprintf (items[8].text, "Audio Out: %s", config.mono ? "MONO":"STEREO");
+        break;
+      }
+
+      case 9:
+      {
         config.filter = (config.filter + 1) % 3;
         if (config.filter == 2)
         {
           float lg = (float)config.lg/100.0;
-          sprintf (items[7].text, "Filtering: 3-BAND EQ");
-          sprintf (items[8].text, "Low Gain: %1.2f", lg);
-          strcpy (items[8].comment, "Adjust EQ Low Band Gain");
-          m->max_items = 13;
+          sprintf (items[9].text, "Filtering: 3-BAND EQ");
+          sprintf (items[10].text, "Low Gain: %1.2f", lg);
+          strcpy (items[10].comment, "Adjust EQ Low Band Gain");
+          m->max_items = 15;
           audio_set_equalizer();
         }
         else if (config.filter == 1)
         {
           int lp_range = (config.lp_range * 100 + 0xffff) / 0x10000;
-          sprintf (items[7].text, "Filtering: LOW-PASS");
-          sprintf (items[8].text, "Low-Pass Rate: %d %%", lp_range);
-          strcpy (items[8].comment, "Adjust Low Pass filter");
-          m->max_items = 9;
+          sprintf (items[9].text, "Filtering: LOW-PASS");
+          sprintf (items[10].text, "Low-Pass Rate: %d %%", lp_range);
+          strcpy (items[10].comment, "Adjust Low Pass filter");
+          m->max_items = 11;
         }
         else
         {
-          sprintf (items[7].text, "Filtering: OFF");
-          m->max_items = 8;
+          sprintf (items[9].text, "Filtering: OFF");
+          m->max_items = 10;
         }
 
         while ((m->offset + 4) > m->max_items)
@@ -1062,58 +1084,58 @@ static void soundmenu ()
         break;
       }
 
-      case 8:
+      case 10:
       {
         if (config.filter == 1)
         {
           int16 lp_range = (config.lp_range * 100 + 0xffff) / 0x10000;
           GUI_OptionBox(m,0,"Low-Pass Rate (%)",(void *)&lp_range,1,0,100,1);
-          sprintf (items[8].text, "Low-Pass Rate: %d %%", lp_range);
+          sprintf (items[10].text, "Low-Pass Rate: %d %%", lp_range);
           config.lp_range = (lp_range * 0x10000) / 100;
         }
         else
         {
           float lg = (float)config.lg/100.0;
           GUI_OptionBox(m,0,"Low Gain",(void *)&lg,0.01,0.0,2.0,0);
-          sprintf (items[8].text, "Low Gain: %1.2f", lg);
+          sprintf (items[10].text, "Low Gain: %1.2f", lg);
           config.lg = (int)(lg * 100.0);
           audio_set_equalizer();
         }
         break;
       }
 
-      case 9:
+      case 11:
       {
         float mg = (float)config.mg/100.0;
         GUI_OptionBox(m,0,"Middle Gain",(void *)&mg,0.01,0.0,2.0,0);
-        sprintf (items[9].text, "Middle Gain: %1.2f", mg);
+        sprintf (items[11].text, "Middle Gain: %1.2f", mg);
         config.mg = (int)(mg * 100.0);
-        audio_set_equalizer();
-        break;
-      }
-
-      case 10:
-      {
-        float hg = (float)config.hg/100.0;
-        GUI_OptionBox(m,0,"High Gain",(void *)&hg,0.01,0.0,2.0,0);
-        sprintf (items[10].text, "High Gain: %1.2f", hg);
-        config.hg = (int)(hg * 100.0);
-        audio_set_equalizer();
-        break;
-      }
-
-      case 11:
-      {
-        GUI_OptionBox(m,0,"Low Frequency",(void *)&config.low_freq,10,0,config.high_freq,1);
-        sprintf (items[11].text, "Low Freq: %d", config.low_freq);
         audio_set_equalizer();
         break;
       }
 
       case 12:
       {
+        float hg = (float)config.hg/100.0;
+        GUI_OptionBox(m,0,"High Gain",(void *)&hg,0.01,0.0,2.0,0);
+        sprintf (items[12].text, "High Gain: %1.2f", hg);
+        config.hg = (int)(hg * 100.0);
+        audio_set_equalizer();
+        break;
+      }
+
+      case 13:
+      {
+        GUI_OptionBox(m,0,"Low Frequency",(void *)&config.low_freq,10,0,config.high_freq,1);
+        sprintf (items[13].text, "Low Freq: %d", config.low_freq);
+        audio_set_equalizer();
+        break;
+      }
+
+      case 14:
+      {
         GUI_OptionBox(m,0,"High Frequency",(void *)&config.high_freq,100,config.low_freq,30000,1);
-        sprintf (items[12].text, "High Freq: %d", config.high_freq);
+        sprintf (items[14].text, "High Freq: %d", config.high_freq);
         audio_set_equalizer();
         break;
       }

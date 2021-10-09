@@ -238,7 +238,11 @@ void pcm_run(unsigned int length)
       if (r < -32768) r = -32768;
       else if (r > 32767) r = 32767;
 
-      /* update Blip Buffer */
+      /* PCM output mixing level (0-100%) */
+      l = (l * config.pcm_volume) / 100;
+      r = (r * config.pcm_volume) / 100;
+
+      /* update blip buffer */
       blip_add_delta_fast(snd.blips[1], i, l-prev_l, r-prev_r);
       prev_l = l;
       prev_r = r;

@@ -910,10 +910,12 @@ static void config_default(void)
    /* sound options */
    config.psg_preamp     = 150;
    config.fm_preamp      = 100;
+   config.cdda_volume    = 100;
+   config.pcm_volume     = 100;
    config.hq_fm          = 1; /* high-quality FM resampling (slower) */
    config.hq_psg         = 1; /* high-quality PSG resampling (slower) */
-   config.filter         = 0; /* no filter */
-   config.lp_range       = 0x7fff; /* 0.5 in 0.16 fixed point */
+   config.filter         = 1; /* no filter */
+   config.lp_range       = 0x9999; /* 0.6 in 0.16 fixed point */
    config.low_freq       = 880;
    config.high_freq      = 5000;
    config.lg             = 100;
@@ -1558,6 +1560,18 @@ static void check_variables(bool first_run)
     config.fm_preamp = (!var.value) ? 100: atoi(var.value);
   }
 
+  var.key = "genesis_plus_gx_cdda_volume";
+  environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
+  {
+    config.cdda_volume = (!var.value) ? 100: atoi(var.value);
+  }
+
+  var.key = "genesis_plus_gx_pcm_volume";
+  environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
+  {
+    config.pcm_volume = (!var.value) ? 100: atoi(var.value);
+  }
+
   var.key = "genesis_plus_gx_audio_filter";
   environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
   {
@@ -1576,7 +1590,7 @@ static void check_variables(bool first_run)
   var.key = "genesis_plus_gx_lowpass_range";
   environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
   {
-    config.lp_range = (!var.value) ? 60 : ((atoi(var.value) * 65536) / 100);
+    config.lp_range = (!var.value) ? 0x9999 : ((atoi(var.value) * 65536) / 100);
   }
 
 #if HAVE_EQ
