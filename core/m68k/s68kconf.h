@@ -62,7 +62,11 @@
  * access a word or longword at an odd address.
  * NOTE: This is only emulated properly for 68000 mode.
  */
+#ifdef ENABLE_SUB_68K_ADDRESS_ERROR_EXCEPTIONS
+#define M68K_EMULATE_ADDRESS_ERROR  OPT_ON
+#else
 #define M68K_EMULATE_ADDRESS_ERROR  OPT_OFF
+#endif
 
 /* If ON and previous option is also ON, address error exceptions will
    also be checked when fetching instructions. Disabling this can help
