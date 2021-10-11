@@ -5,7 +5,7 @@
  *  Support for SG-1000, Mark-III, Master System, Game Gear, Mega Drive & Mega CD hardware
  *
  *  Copyright (C) 1998-2003  Charles Mac Donald (original code)
- *  Copyright (C) 2007-2020  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2007-2021  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -163,6 +163,7 @@ void gen_init(void)
     {
       /* initialize SUB-CPU */
       s68k_init();
+      s68k.aerr_enabled = config.addr_error; 
 
       /* initialize CD hardware */
       scd_init();

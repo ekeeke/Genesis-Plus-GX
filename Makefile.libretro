@@ -715,7 +715,7 @@ else
    CXX ?= g++
    SHARED := -shared -static-libgcc -static-libstdc++ -Wl,--version-script=$(CORE_DIR)/libretro/link.T -Wl,--no-undefined
    ENDIANNESS_DEFINES := -DLSB_FIRST -DBYTE_ORDER=LITTLE_ENDIAN
-   PLATFORM_DEFINES := -DHAVE_ZLIB -DMAXROMSIZE=33554432
+   PLATFORM_DEFINES := -DHAVE_ZLIB -DMAXROMSIZE=33554432 -DENABLE_SUB_68K_ADDRESS_ERROR_EXCEPTIONS
    HAVE_CDROM = 1
 
 endif
