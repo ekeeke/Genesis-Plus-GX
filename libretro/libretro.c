@@ -103,8 +103,8 @@ STATIC_ASSERT(z80_overflow,
 
 t_config config;
 
-sms_ntsc_t *sms_ntsc;
-md_ntsc_t  *md_ntsc;
+sms_ntsc_t *sms_ntsc = NULL;
+md_ntsc_t  *md_ntsc = NULL;
 
 char GG_ROM[256];
 char AR_ROM[256];
@@ -296,6 +296,35 @@ void error(char * fmt, ...)
    va_end(ap);
 }
 
+static void show_rom_size_error_msg(void)
+{
+   unsigned msg_interface_version = 0;
+   environ_cb(RETRO_ENVIRONMENT_GET_MESSAGE_INTERFACE_VERSION,
+         &msg_interface_version);
+
+   if (msg_interface_version >= 1)
+   {
+      struct retro_message_ext msg = {
+         "ROM size exceeds maximum permitted value",
+         3000,
+         3,
+         RETRO_LOG_ERROR,
+         RETRO_MESSAGE_TARGET_ALL,
+         RETRO_MESSAGE_TYPE_NOTIFICATION,
+         -1
+      };
+      environ_cb(RETRO_ENVIRONMENT_SET_MESSAGE_EXT, &msg);
+   }
+   else
+   {
+      struct retro_message msg = {
+         "ROM size exceeds maximum permitted value",
+         180
+      };
+      environ_cb(RETRO_ENVIRONMENT_SET_MESSAGE, &msg);
+   }
+}
+
 int load_archive(char *filename, unsigned char *buffer, int maxsize, char *extension)
 {
   int64_t left = 0;
@@ -317,7 +346,12 @@ int load_archive(char *filename, unsigned char *buffer, int maxsize, char *exten
     {
       size = g_rom_size;
       if (size > maxsize)
-        size = maxsize;
+      {
+        /* ROM exceeds maximum allowed size
+         * - Notify user and return an error */
+        show_rom_size_error_msg();
+        return 0;
+      }
       memcpy(buffer, g_rom_data, size);
       return size;
     }
@@ -354,9 +388,10 @@ int load_archive(char *filename, unsigned char *buffer, int maxsize, char *exten
   /* size limit */
   if (size > MAXROMSIZE)
   {
+    /* ROM exceeds maximum allowed size
+     * - Notify user and return an error */
     filestream_close(fd);
-    if (log_cb)
-       log_cb(RETRO_LOG_ERROR, "File is too large.\n");
+    show_rom_size_error_msg();
     return 0;
   }
   else if (size > maxsize)
@@ -3072,7 +3107,7 @@ bool retro_load_game(const struct retro_game_info *info)
       const char *ext = NULL;
 
       if (!info || !info->path)
-         return false;
+         goto error;
 
       extract_directory(g_rom_dir, info->path, sizeof(g_rom_dir));
       extract_name(g_rom_name, info->path, sizeof(g_rom_name));
@@ -3227,19 +3262,19 @@ bool retro_load_game(const struct retro_game_info *info)
                }
             }
             disk_count = 0;
-            return false;
+            goto error;
          }
       }
       else
       {
          /* error adding disks from M3U */
-         return false;
+         goto error;
       }
    }
    else
    {
       if (load_rom(content_path) <= 0)
-         return false;
+         goto error;
 
       /* automatically add loaded CD to disk interface */
       if ((system_hw == SYSTEM_MCD) && cdd.loaded)
@@ -3290,6 +3325,17 @@ bool retro_load_game(const struct retro_game_info *info)
    init_frameskip();
 
    return true;
+
+error:
+   if (sms_ntsc)
+      free(sms_ntsc);
+   sms_ntsc = NULL;
+
+   if (md_ntsc)
+      free(md_ntsc);
+   md_ntsc = NULL;
+
+   return false;
 }
 
 bool retro_load_game_special(unsigned game_type, const struct retro_game_info *info, size_t num_info)
@@ -3319,10 +3365,14 @@ void retro_unload_game(void)
       bram_save();
 
    audio_shutdown();
+
    if (md_ntsc)
       free(md_ntsc);
+   md_ntsc = NULL;
+
    if (sms_ntsc)
       free(sms_ntsc);
+   sms_ntsc = NULL;
 }
 
 unsigned retro_get_region(void) { return vdp_pal ? RETRO_REGION_PAL : RETRO_REGION_NTSC; }
