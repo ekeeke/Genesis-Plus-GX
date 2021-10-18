@@ -321,6 +321,7 @@ else ifneq (,$(filter $(platform), ps3 psl1ght))
    ENDIANNESS_DEFINES := -DBYTE_ORDER=BIG_ENDIAN -DBYTE_ORDER=BIG_ENDIAN -DCPU_IS_BIG_ENDIAN=1 -DWORDS_BIGENDIAN=1
    STATIC_LINKING=1
    HAVE_SYS_PARAM = 0
+   MAX_ROM_SIZE = 33554432
 
 # PSP
 else ifeq ($(platform), psp1)
@@ -345,6 +346,7 @@ else ifeq ($(platform), vita)
    PLATFORM_DEFINES := -DVITA
    STATIC_LINKING = 1
    USE_PER_SOUND_CHANNELS_CONFIG = 0
+   MAX_ROM_SIZE = 33554432
 
 # CTR (3DS)
 else ifeq ($(platform), ctr)
@@ -359,6 +361,7 @@ else ifeq ($(platform), ctr)
    CFLAGS += -fomit-frame-pointer -ffast-math
    STATIC_LINKING = 1
    USE_PER_SOUND_CHANNELS_CONFIG = 0
+   MAX_ROM_SIZE = 33554432
 
 # Xbox 360
 else ifeq ($(platform), xenon)
@@ -369,6 +372,7 @@ else ifeq ($(platform), xenon)
    PLATFORM_DEFINES := -D__LIBXENON__ -DALT_RENDER
 	ENDIANNESS_DEFINES := -DBYTE_ORDER=BIG_ENDIAN -DBYTE_ORDER=BIG_ENDIAN -DCPU_IS_BIG_ENDIAN=1 -DWORDS_BIGENDIAN=1
    STATIC_LINKING = 1
+   MAX_ROM_SIZE = 33554432
 
 # Nintendo GameCube / Wii / WiiU
 else ifneq (,$(filter $(platform), ngc wii wiiu))
@@ -385,10 +389,12 @@ else ifneq (,$(filter $(platform), ngc wii wiiu))
    # Nintendo WiiU
    ifneq (,$(findstring wiiu,$(platform)))
       PLATFORM_DEFINES += -DWIIU -DHW_RVL -DUSE_DYNAMIC_ALLOC
+      MAX_ROM_SIZE = 33554432
 
    # Nintendo Wii
    else ifneq (,$(findstring wii,$(platform)))
       PLATFORM_DEFINES += -DHW_RVL -mrvl
+      MAX_ROM_SIZE = 15728640
 
    # Nintendo GameCube
    else ifneq (,$(findstring ngc,$(platform)))
@@ -402,6 +408,7 @@ else ifeq ($(platform), switch)
    CFLAGS += -fomit-frame-pointer -ffast-math
    STATIC_LINKING=1
    STATIC_LINKING_LINK=1
+   MAX_ROM_SIZE = 33554432
 
 # Nintendo Switch (libnx)
 else ifeq ($(platform), libnx)
@@ -411,6 +418,7 @@ else ifeq ($(platform), libnx)
    PLATFORM_DEFINES += -DARM -march=armv8-a -mtune=cortex-a57 -mtp=soft -DLSB_FIRST -DBYTE_ORDER=LITTLE_ENDIAN -D__LIBRETRO__ -DALIGN_LONG -DALIGN_WORD -DM68K_OVERCLOCK_SHIFT=20 -DHAVE_ZLIB
    STATIC_LINKING=1
    STATIC_LINKING_LINK=1
+   MAX_ROM_SIZE = 33554432
 
 # emscripten
 else ifeq ($(platform), emscripten)
