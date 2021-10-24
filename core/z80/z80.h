@@ -50,6 +50,7 @@ typedef struct
 
 
 extern Z80_Regs Z80;
+extern UINT8 z80_last_fetch;
 
 #ifdef Z80_OVERCLOCK_SHIFT
 extern UINT32 z80_cycle_ratio;
