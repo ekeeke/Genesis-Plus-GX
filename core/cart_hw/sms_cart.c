@@ -426,6 +426,7 @@ static unsigned char read_mapper_93c46(unsigned int address);
 static unsigned char read_mapper_terebi(unsigned int address);
 static unsigned char read_mapper_korea_8k(unsigned int address);
 static unsigned char read_mapper_default(unsigned int address);
+static unsigned char read_mapper_none(unsigned int address);
 
 void sms_cart_init(void)
 {
@@ -920,7 +921,7 @@ static void mapper_reset(void)
     }
 
     /* set default Z80 memory handlers */
-    z80_readmem = read_mapper_default;
+    z80_readmem = read_mapper_none;
     z80_writemem = write_mapper_none;
     return;
   }
@@ -1566,4 +1567,15 @@ static unsigned char read_mapper_korea_8k(unsigned int address)
 static unsigned char read_mapper_default(unsigned int address)
 {
   return z80_readmap[address >> 10][address & 0x03FF];
+}
+
+static unsigned char read_mapper_none(unsigned int address)
+{
+  if (address >= 0xC000)
+  {
+    return z80_readmap[address >> 10][address & 0x03FF];
+  }
+
+  /* return last fetched z80 instruction / data */
+  return z80_last_fetch;
 }

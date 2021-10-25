@@ -210,6 +210,7 @@ UINT32 z80_cycle_ratio;
 #endif
 
 Z80_Regs Z80;
+UINT8 z80_last_fetch;
 
 unsigned char *z80_readmap[64];
 unsigned char *z80_writemap[64];
@@ -660,7 +661,8 @@ INLINE UINT8 ROP(void)
 {
   unsigned pc = PCD;
   PC++;
-  return cpu_readop(pc);
+  z80_last_fetch = cpu_readop(pc);
+  return z80_last_fetch;
 }
 
 /****************************************************************
