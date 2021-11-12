@@ -118,7 +118,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "genesis_plus_gx_region_detect",
       "System Region",
       NULL,
-      "Specify which region the system is from. For consoles other than the Game Gear, 'PAL' is 50hz while 'NTSC' is 60hz. Games may run faster or slower than normal if the incorrect region is selected.",
+      "Specify which region the system is from. For consoles other than the Game Gear, 'PAL' is 50 Hz, while 'NTSC' is 60 Hz. Games may run faster or slower than normal if the incorrect region is selected.",
       NULL,
       "system",
       {
@@ -284,7 +284,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "genesis_plus_gx_render",
       "Interlaced Mode 2 Output",
       NULL,
-      "Interlaced Mode 2 allows the Mega Drive/Genesis to output a double height (high resolution) 320x448 image by drawing alternate scanlines each frame (this is used by 'Sonic the Hedgehog 2' and 'Combat Cars' multiplayer modes). 'Double Field' mimics original hardware, producing a sharp image with flickering/interlacing artefacts. 'Single Field' apples a de-interlacing filter, which stabilises the image but causes mild blurring.",
+      "Interlaced Mode 2 allows the Mega Drive/Genesis to output a double height (high resolution) 320x448 image by drawing alternate scan lines each frame (this is used by 'Sonic the Hedgehog 2' and 'Combat Cars' multiplayer modes). 'Double Field' mimics original hardware, producing a sharp image with flickering/interlacing artifacts. 'Single Field' applies a deinterlacing filter, which stabilizes the image but causes mild blurring.",
       NULL,
       "video",
       {
@@ -298,7 +298,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "genesis_plus_gx_frameskip",
       "Frameskip",
       NULL,
-      "Skip frames to avoid audio buffer under-run (crackling). Improves performance at the expense of visual smoothness. 'Auto' skips frames when advised by the frontend. 'Manual' utilises the 'Frameskip Threshold (%)' setting.",
+      "Skip frames to avoid audio buffer under-run (crackling). Improves performance at the expense of visual smoothness. 'Auto' skips frames when advised by the frontend. 'Manual' utilizes the 'Frameskip Threshold (%)' setting.",
       NULL,
       "video",
       {
@@ -510,7 +510,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "genesis_plus_gx_fm_preamp",
       "FM Preamp Level",
       NULL,
-      "Set the audio preamplifier level of the emulated Mega Drive/Genesis FM sound synthetizer or Sega Mark III/Master System FM Sound Unit.",
+      "Set the audio preamplifier level of the emulated Mega Drive/Genesis FM sound synthesizer or Sega Mark III/Master System FM Sound Unit.",
       NULL,
       "audio",
       {
@@ -630,7 +630,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "genesis_plus_gx_audio_eq_low",
       "EQ Low",
       NULL,
-      "Adjust the low range band of the internal audio equaliser.",
+      "Adjust the low range band of the internal audio equalizer.",
       NULL,
       "audio",
       {
@@ -663,7 +663,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "genesis_plus_gx_audio_eq_mid",
       "EQ Mid",
       NULL,
-      "Adjust the middle range band of the internal audio equaliser.",
+      "Adjust the middle range band of the internal audio equalizer.",
       NULL,
       "audio",
       {
@@ -696,7 +696,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "genesis_plus_gx_audio_eq_high",
       "EQ High",
       NULL,
-      "Adjust the high range band of the internal audio equaliser.",
+      "Adjust the high range band of the internal audio equalizer.",
       NULL,
       "audio",
       {
@@ -805,7 +805,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "genesis_plus_gx_force_dtack",
       "System Lock-Ups",
       NULL,
-      "Emulate system lock-ups that occur on real hardware when performing illegal address access. This should only be disabled when playing certain demos and homebrew that rely on illegal behaviour for correct operation.",
+      "Emulate system lock-ups that occur on real hardware when performing illegal address access. This should only be disabled when playing certain demos and homebrew that rely on illegal behavior for correct operation.",
       NULL,
       "hacks",
       {
@@ -819,7 +819,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "genesis_plus_gx_addr_error",
       "68K Address Error",
       NULL,
-      "The Mega Drive/Genesis Main CPU (Motorola 68000) generates an Address Error exception (crash) when attempting to perform unaligned memory access. Enabling '68K Address Error' simulates this behaviour. It should only be disabled when playing ROM hacks, since these are typically developed using less accurate emulators and may rely on invalid RAM access for correct operation.",
+      "The Mega Drive/Genesis Main CPU (Motorola 68000) generates an Address Error exception (crash) when attempting to perform unaligned memory access. Enabling '68K Address Error' simulates this behavior. It should only be disabled when playing ROM hacks, since these are typically developed using less accurate emulators and may rely on invalid RAM access for correct operation.",
       NULL,
       "hacks",
       {
@@ -1298,30 +1298,30 @@ struct retro_core_options_v2 options_us = {
 
 #ifndef HAVE_NO_LANGEXTRA
 struct retro_core_options_v2 *options_intl[RETRO_LANGUAGE_LAST] = {
-   &options_us,    /* RETRO_LANGUAGE_ENGLISH */
-   NULL,           /* RETRO_LANGUAGE_JAPANESE */
-   NULL,           /* RETRO_LANGUAGE_FRENCH */
-   NULL,           /* RETRO_LANGUAGE_SPANISH */
-   NULL,           /* RETRO_LANGUAGE_GERMAN */
-   NULL,           /* RETRO_LANGUAGE_ITALIAN */
-   NULL,           /* RETRO_LANGUAGE_DUTCH */
-   &options_pt_br, /* RETRO_LANGUAGE_PORTUGUESE_BRAZIL */
-   NULL,           /* RETRO_LANGUAGE_PORTUGUESE_PORTUGAL */
-   NULL,           /* RETRO_LANGUAGE_RUSSIAN */
-   NULL,           /* RETRO_LANGUAGE_KOREAN */
-   NULL,           /* RETRO_LANGUAGE_CHINESE_TRADITIONAL */
-   NULL,           /* RETRO_LANGUAGE_CHINESE_SIMPLIFIED */
-   NULL,           /* RETRO_LANGUAGE_ESPERANTO */
-   NULL,           /* RETRO_LANGUAGE_POLISH */
-   NULL,           /* RETRO_LANGUAGE_VIETNAMESE */
-   NULL,           /* RETRO_LANGUAGE_ARABIC */
-   NULL,           /* RETRO_LANGUAGE_GREEK */
-   &options_tr,    /* RETRO_LANGUAGE_TURKISH */
-   NULL,           /* RETRO_LANGUAGE_SLOVAK */
-   NULL,           /* RETRO_LANGUAGE_PERSIAN */
-   NULL,           /* RETRO_LANGUAGE_HEBREW */
-   NULL,           /* RETRO_LANGUAGE_ASTURIAN */
-   NULL,           /* RETRO_LANGUAGE_FINNISH */
+   &options_us,      /* RETRO_LANGUAGE_ENGLISH */
+   &options_ja,      /* RETRO_LANGUAGE_JAPANESE */
+   &options_fr,      /* RETRO_LANGUAGE_FRENCH */
+   &options_es,      /* RETRO_LANGUAGE_SPANISH */
+   &options_de,      /* RETRO_LANGUAGE_GERMAN */
+   &options_it,      /* RETRO_LANGUAGE_ITALIAN */
+   &options_nl,      /* RETRO_LANGUAGE_DUTCH */
+   &options_pt_br,   /* RETRO_LANGUAGE_PORTUGUESE_BRAZIL */
+   &options_pt_pt,   /* RETRO_LANGUAGE_PORTUGUESE_PORTUGAL */
+   &options_ru,      /* RETRO_LANGUAGE_RUSSIAN */
+   &options_ko,      /* RETRO_LANGUAGE_KOREAN */
+   &options_cht,     /* RETRO_LANGUAGE_CHINESE_TRADITIONAL */
+   &options_chs,     /* RETRO_LANGUAGE_CHINESE_SIMPLIFIED */
+   &options_eo,      /* RETRO_LANGUAGE_ESPERANTO */
+   &options_pl,      /* RETRO_LANGUAGE_POLISH */
+   &options_vn,      /* RETRO_LANGUAGE_VIETNAMESE */
+   &options_ar,      /* RETRO_LANGUAGE_ARABIC */
+   &options_el,      /* RETRO_LANGUAGE_GREEK */
+   &options_tr,      /* RETRO_LANGUAGE_TURKISH */
+   &options_sv,      /* RETRO_LANGUAGE_SLOVAK */
+   &options_fa,      /* RETRO_LANGUAGE_PERSIAN */
+   &options_he,      /* RETRO_LANGUAGE_HEBREW */
+   &options_ast,     /* RETRO_LANGUAGE_ASTURIAN */
+   &options_fi,      /* RETRO_LANGUAGE_FINNISH */
 };
 #endif
 
