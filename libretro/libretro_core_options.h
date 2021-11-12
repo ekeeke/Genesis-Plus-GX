@@ -16,7 +16,7 @@
  * VERSION: 2.0
  ********************************
  *
- * - 2.0: Add support for core options v2 interface
+ * - 2.0: Add support for core options v2 interface 
  * - 1.3: Move translations to libretro_core_options_intl.h
  *        - libretro_core_options_intl.h includes BOM and utf-8
  *          fix for MSVC 2010-2013
