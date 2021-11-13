@@ -9,7 +9,7 @@ Both v1 and v2 structs are supported. It is, however, recommended to convert v1 
 'v1_to_v2_converter.py'.
 
 Usage:
-python3 path/to/core_option_translation.py "path/to/where/libretro_core_options.h & libretro_core_options_intl.h/are"
+python3 path/to/core_option_translation.py "path/to/where/libretro_core_options.h & libretro_core_options_intl.h/are" "core_name"
 
 This script will:
 1.) create key words for & extract the texts from libretro_core_options.h & save them into intl/_us/core_options.h
@@ -270,14 +270,14 @@ def create_msg_hash(intl_dir_path: str, core_name: str, keyword_string_dict: dic
     """Creates '<core_name>.h' files in 'intl/_<lang>/' containing the macro name & string combinations.
 
     :param intl_dir_path: Path to the intl directory.
-    :param core_name: Name of the core, used for naming the files.
+    :param core_name: Name of the core, used for the files' paths.
     :param keyword_string_dict: Dictionary of the form { '_<lang>': { 'macro': 'string', ... }, ... }.
     :return: Dictionary of the form { '_<lang>': 'path/to/file (./intl/_<lang>/<core_name>.h)', ... }.
     """
     files = {}
     for localisation in keyword_string_dict:
-        path = os.path.join(intl_dir_path, localisation)  # intl/_<lang>
-        files[localisation] = os.path.join(path, core_name + '.h')  # intl/_<lang>/<core_name>.h
+        path = os.path.join(intl_dir_path, core_name)  # intl/<core_name>/
+        files[localisation] = os.path.join(path, localisation + '.h')  # intl/<core_name>/_<lang>.h
         if not os.path.exists(path):
             os.makedirs(path)
         with open(files[localisation], 'w', encoding='utf-8') as crowdin_file:
@@ -296,6 +296,9 @@ def h2json(file_paths: dict) -> dict:
     """
     jsons = {}
     for file_lang in file_paths:
+        if not os.path.isfile(file_paths[file_lang]):
+            continue
+
         jsons[file_lang] = file_paths[file_lang][:-2] + '.json'
 
         p = cor.p_masked
@@ -319,25 +322,17 @@ def h2json(file_paths: dict) -> dict:
     return jsons
 
 
-def json2h(intl_dir_path: str, json_file_path: str, core_name: str) -> None:
+def json2h(intl_dir_path: str, file_list) -> None:
     """Converts .json file in json_file_path into an .h ready to be included in C code.
 
-    :param intl_dir_path: Path to the intl directory.
-    :param json_file_path: Base path of translation .json.
-    :param core_name: Name of the core, required for naming the files.
+    :param intl_dir_path: Path to the intl/<core_name> directory.
+    :param file_list: Iterator of os.DirEntry objects. Contains localisation files to convert.
     :return: None
     """
-    h_filename = os.path.join(json_file_path, core_name + '.h')
-    json_filename = os.path.join(json_file_path, core_name + '.json')
-    file_lang = os.path.basename(json_file_path).upper()
-
-    if os.path.basename(json_file_path).lower() == '_us':
-        print('    skipped')
-        return
 
     p = cor.p_masked
 
-    def update(s_messages, s_template, s_source_messages):
+    def update(s_messages, s_template, s_source_messages, file_name):
         translation = ''
         template_messages = p.finditer(s_template)
         for tp_msg in template_messages:
@@ -345,23 +340,33 @@ def json2h(intl_dir_path: str, json_file_path: str, core_name: str) -> None:
             if old_key in s_messages and s_messages[old_key] != s_source_messages[old_key]:
                 tl_msg_val = s_messages[old_key]
                 tl_msg_val = tl_msg_val.replace('"', '\\\"').replace('\n', '')  # escape
-                translation = ''.join((translation, '#define ', old_key, file_lang, f' "{tl_msg_val}"\n'))
+                translation = ''.join((translation, '#define ', old_key, file_name.upper(), f' "{tl_msg_val}"\n'))
 
             else:  # Remove English duplicates and non-translatable strings
-                translation = ''.join((translation, '#define ', old_key, file_lang, ' NULL\n'))
+                translation = ''.join((translation, '#define ', old_key, file_name.upper(), ' NULL\n'))
         return translation
 
-    with open(os.path.join(intl_dir_path, '_us', core_name + '.h'), 'r', encoding='utf-8') as template_file:
+    us_h = os.path.join(intl_dir_path, '_us.h')
+    us_json = os.path.join(intl_dir_path, '_us.json')
+
+    with open(us_h, 'r', encoding='utf-8') as template_file:
         template = template_file.read()
-    with open(os.path.join(intl_dir_path, '_us', core_name + '.json'), 'r+', encoding='utf-8') as source_json_file:
+    with open(us_json, 'r+', encoding='utf-8') as source_json_file:
         source_messages = json.load(source_json_file)
-    with open(json_filename, 'r+', encoding='utf-8') as json_file:
-        messages = json.load(json_file)
-        new_translation = update(messages, template, source_messages)
-    with open(h_filename, 'w', encoding='utf-8') as h_file:
-        h_file.seek(0)
-        h_file.write(new_translation)
-        h_file.truncate()
+
+    for file in file_list:
+        if file.name.lower().startswith('_us')\
+                or file.name.lower().endswith('.h')\
+                or file.is_dir():
+            continue
+
+        with open(file.path, 'r+', encoding='utf-8') as json_file:
+            messages = json.load(json_file)
+            new_translation = update(messages, template, source_messages, os.path.splitext(file.name)[0])
+        with open(os.path.splitext(file.path)[0] + '.h', 'w', encoding='utf-8') as h_file:
+            h_file.seek(0)
+            h_file.write(new_translation)
+            h_file.truncate()
     return
 
 
@@ -392,14 +397,13 @@ def get_crowdin_client(dir_path: str) -> str:
     return jar_path
 
 
-def create_intl_file(localisation_file_path: str, intl_dir_path: str, text: str, core_name: str, file_path: str) -> None:
+def create_intl_file(localisation_file_path: str, intl_dir_path: str, text: str, file_path: str) -> None:
     """Creates 'libretro_core_options_intl.h' from Crowdin translations.
 
     :param localisation_file_path: Path to 'libretro_core_options_intl.h'
-    :param intl_dir_path: Path to the intl directory.
+    :param intl_dir_path: Path to the intl/<core_name> directory.
     :param text: Content of the 'libretro_core_options.h' being translated.
-    :param core_name: Name of the core. Needed to identify the files to pull the translations from.
-    :param file_path: Path to the '<core name>.h' file, containing the original English texts.
+    :param file_path: Path to the '_us.h' file, containing the original English texts.
     :return: None
     """
     msg_dict = {}
@@ -472,11 +476,15 @@ def create_intl_file(localisation_file_path: str, intl_dir_path: str, text: str,
 
         return res
 
-    with open(file_path, 'r+', encoding='utf-8') as template:  # intl/_us/<core_name>.h
-        masked_msgs = cor.p_masked.finditer(template.read())
-        for msg in masked_msgs:
-            msg_dict[msg.group(2)] = msg.group(1)
+    # ------------------------------------------------------------------------------------
 
+    with open(file_path, 'r+', encoding='utf-8') as template:  # intl/<core_name>/_us.h
+        masked_msgs = cor.p_masked.finditer(template.read())
+
+    for msg in masked_msgs:
+        msg_dict[msg.group(2)] = msg.group(1)
+
+    # top of the file - in case there is no file to copy it from
     out_txt = "﻿#ifndef LIBRETRO_CORE_OPTIONS_INTL_H__\n" \
               "#define LIBRETRO_CORE_OPTIONS_INTL_H__\n\n" \
               "#if defined(_MSC_VER) && (_MSC_VER >= 1500 && _MSC_VER < 1900)\n" \
@@ -484,9 +492,13 @@ def create_intl_file(localisation_file_path: str, intl_dir_path: str, text: str,
               '#pragma execution_character_set("utf-8")\n' \
               "#pragma warning(disable:4566)\n" \
               "#endif\n\n" \
-              "#include <libretro.h>\n\n"
+              "#include <libretro.h>\n\n" \
+              '#ifdef __cplusplus\n' \
+              'extern "C" {\n' \
+              '#endif\n'
 
     if os.path.isfile(localisation_file_path):
+        # copy top of the file for re-use
         with open(localisation_file_path, 'r', encoding='utf-8') as intl:  # libretro_core_options_intl.h
             in_text = intl.read()
             intl_start = re.search(re.escape('/*\n'
@@ -503,20 +515,26 @@ def create_intl_file(localisation_file_path: str, intl_dir_path: str, text: str,
                 if intl_start:
                     out_txt = in_text[:intl_start.end(0)]
 
-    for folder in os.scandir(intl_dir_path):  # intl/_*
-        if folder.is_dir() and folder.name.startswith('_')\
-                and folder.name != '_us' and folder.name != '__pycache__':
-            translation_path = os.path.join(folder.path, core_name + '.h')  # <core_name>_<lang>.h
-            if not os.path.isfile(translation_path):
-                continue
+    # only write to file, if there is anything worthwhile to write!
+    overwrite = False
+
+    # iterate through localisation files
+    for file in os.scandir(intl_dir_path):  # intl/<core_name>/_*
+        if file.is_file() \
+                and file.name.startswith('_') \
+                and file.name.endswith('.h') \
+                and not file.name.startswith('_us'):
+            translation_path = file.path  # <core_name>_<lang>.h
             # all structs: group(0) full struct, group(1) beginning, group(2) content
             struct_groups = cor.p_struct.finditer(text)
-            lang_up = folder.name.upper()
-            lang_low = folder.name.lower()
+            lang_low = os.path.splitext(file.name)[0].lower()
+            lang_up = lang_low.upper()
             out_txt = out_txt + f'/* RETRO_LANGUAGE{lang_up} */\n\n'  # /* RETRO_LANGUAGE_NM */
 
+            # copy adjusted translations (makros)
             with open(translation_path, 'r+', encoding='utf-8') as f_in:  # <core name>.h
                 out_txt = out_txt + f_in.read() + '\n'
+            # replace English texts with makros
             for construct in struct_groups:
                 declaration = construct.group(1)
                 struct_type_name = get_struct_type_name(declaration)
@@ -541,18 +559,22 @@ def create_intl_file(localisation_file_path: str, intl_dir_path: str, text: str,
                 start = construct.end(2) - offset_construct
                 out_txt = out_txt + new_content + construct.group(0)[start:] + '\n'
 
+                # for v2
                 if 'retro_core_option_v2_definition' == struct_type_name[0]:
                     out_txt = out_txt + f'struct retro_core_options_v2 options{lang_low}' \
                                         ' = {\n' \
                                         f'   option_cats{lang_low},\n' \
                                         f'   option_defs{lang_low}\n' \
                                         '};\n\n'
-        #    shutil.rmtree(JOINER.join((intl_dir_path, folder)))
+            # if it got this far, we've got something to write
+            overwrite = True
 
-    with open(localisation_file_path, 'w', encoding='utf-8') as intl:
-        intl.write(out_txt + '\n#ifdef __cplusplus\n'
-                             '}\n#endif\n'
-                             '\n#endif')
+    # only write to file, if there is anything worthwhile to write!
+    if overwrite:
+        with open(localisation_file_path, 'w', encoding='utf-8') as intl:
+            intl.write(out_txt + '\n#ifdef __cplusplus\n'
+                                 '}\n#endif\n'
+                                 '\n#endif')
     return
 
 
@@ -571,7 +593,8 @@ if __name__ == '__main__':
         TARGET_DIR_PATH = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
         print("No path provided, assuming parent directory:\n" + TARGET_DIR_PATH)
 
-    NAME = 'core_options'
+    CORE_NAME = clean_file_name(sys.argv[2])
+
     DIR_PATH = os.path.dirname(os.path.realpath(__file__))
     H_FILE_PATH = os.path.join(TARGET_DIR_PATH, 'libretro_core_options.h')
     INTL_FILE_PATH = os.path.join(TARGET_DIR_PATH, 'libretro_core_options_intl.h')
@@ -580,7 +603,7 @@ if __name__ == '__main__':
     with open(H_FILE_PATH, 'r+', encoding='utf-8') as _h_file:
         _main_text = _h_file.read()
     _hash_n_str = get_texts(_main_text)
-    _files = create_msg_hash(DIR_PATH, NAME, _hash_n_str)
+    _files = create_msg_hash(DIR_PATH, CORE_NAME, _hash_n_str)
     _source_jsons = h2json(_files)
 
     print('Getting texts from libretro_core_options_intl.h')
@@ -588,7 +611,7 @@ if __name__ == '__main__':
         with open(INTL_FILE_PATH, 'r+', encoding='utf-8') as _intl_file:
             _intl_text = _intl_file.read()
             _hash_n_str_intl = get_texts(_intl_text)
-            _intl_files = create_msg_hash(DIR_PATH, NAME, _hash_n_str_intl)
+            _intl_files = create_msg_hash(DIR_PATH, CORE_NAME, _hash_n_str_intl)
             _intl_jsons = h2json(_intl_files)
 
     print('\nAll done!')

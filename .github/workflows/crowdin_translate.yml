@@ -29,7 +29,7 @@ jobs:
         env:
           CROWDIN_API_KEY: ${{ secrets.CROWDIN_API_KEY }}
         run: |
-          python3 intl/translation_workflow.py "$CROWDIN_API_KEY" "Genesis-Plus-GX" "libretro/libretro_core_options_intl.h"
+          python3 intl/download_workflow.py $CROWDIN_API_KEY "Genesis-Plus-GX" "libretro/libretro_core_options_intl.h"
 
       - name: Commit files
         run: |

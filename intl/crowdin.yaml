@@ -6,8 +6,8 @@
 "files":
   [
     {
-      "source": "/intl/_us/*.json",
-      "dest": "/_core_name_/%original_file_name%",
-      "translation": "/intl/_%two_letters_code%/%original_file_name%",
+      "source": "/intl/_core_name_/_us.json",
+      "dest": "/_core_name_/core_options.json",
+      "translation": "/intl/_core_name_/_%two_letters_code%.json",
     },
   ]
