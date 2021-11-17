@@ -519,15 +519,18 @@ def create_intl_file(localisation_file_path: str, intl_dir_path: str, text: str,
     overwrite = False
 
     # iterate through localisation files
-    for file in os.scandir(intl_dir_path):  # intl/<core_name>/_*
-        if file.is_file() \
-                and file.name.startswith('_') \
-                and file.name.endswith('.h') \
-                and not file.name.startswith('_us'):
-            translation_path = file.path  # <core_name>_<lang>.h
+    files = {}
+    for file in os.scandir(intl_dir_path):
+        files[file.name] = {'is_file': file.is_file(), 'path': file.path}
+    for file in sorted(files):  # intl/<core_name>/_*
+        if files[file]['is_file'] \
+                and file.startswith('_') \
+                and file.endswith('.h') \
+                and not file.startswith('_us'):
+            translation_path = files[file]['path']  # <core_name>_<lang>.h
             # all structs: group(0) full struct, group(1) beginning, group(2) content
             struct_groups = cor.p_struct.finditer(text)
-            lang_low = os.path.splitext(file.name)[0].lower()
+            lang_low = os.path.splitext(file)[0].lower()
             lang_up = lang_low.upper()
             out_txt = out_txt + f'/* RETRO_LANGUAGE{lang_up} */\n\n'  # /* RETRO_LANGUAGE_NM */
 
