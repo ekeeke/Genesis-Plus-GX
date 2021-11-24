@@ -63,32 +63,32 @@ struct retro_core_option_v2_category option_cats_us[] = {
    {
       "system",
       "System",
-      "Configure base hardware selection / region / BIOS / Sega CD save file parameters."
+      "Change base hardware selection, region, BIOS and Sega CD/Mega-CD save file settings."
    },
    {
       "video",
       "Video",
-      "Configure aspect ratio / display cropping / video filter / frame skipping parameters."
+      "Change aspect ratio, display cropping, video filter and frame skipping settings."
    },
    {
       "audio",
       "Audio",
-      "Configure emulated audio devices."
+      "Change audio device settings."
    },
    {
       "input",
       "Input",
-      "Configure light gun / mouse input."
+      "Change light gun and/or mouse input settings."
    },
    {
       "hacks",
       "Emulation Hacks",
-      "Configure processor overclocking and emulation accuracy parameters affecting low-level performance and compatibility."
+      "Change processor overclocking and emulation accuracy settings that affect low-level performance and compatibility."
    },
    {
       "channel_volume",
       "Advanced Channel Volume Settings",
-      "Configure the volume of individual hardware audio channels."
+      "Change the volume of individual hardware audio channels."
    },
    { NULL, NULL, NULL },
 };
@@ -148,7 +148,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "genesis_plus_gx_bram",
       "CD System BRAM",
       NULL,
-      "When running Sega CD content, specifies whether to share a single save file between all games from a specific region (Per-BIOS) or to create a separate save file for each game (Per-Game). Note that the Sega CD has limited internal storage, sufficient only for a handful of titles. To avoid running out of space, the 'Per-Game' setting is recommended.",
+      "When running Sega CD/Mega-CD content, specifies whether to share a single save file between all games from a specific region (Per-BIOS) or to create a separate save file for each game (Per-Game). Note that the Sega CD/Mega-CD has limited internal storage, sufficient only for a handful of titles. To avoid running out of space, the 'Per-Game' setting is recommended.",
       NULL,
       "system",
       {
@@ -239,7 +239,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "genesis_plus_gx_gg_extra",
       "Game Gear Extended Screen",
       NULL,
-      "Forces Game Gear titles to run in 'SMS' mode, with an increased resolution of 256x192. May show additional content, but typically displays a border of corrupt/unwanted image data.",
+      "Forces Game Gear titles to run in SMS mode, with an increased resolution of 256x192. May show additional content, but typically displays a border of corrupt/unwanted image data.",
       NULL,
       "video",
       {
@@ -270,7 +270,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "genesis_plus_gx_lcd_filter",
       "LCD Ghosting Filter",
       NULL,
-      "Apply an image 'ghosting' filter to mimic the display characteristics of the Game Gear and 'Genesis Nomad' LCD panels.",
+      "Apply an image 'ghosting' filter to mimic the display characteristics of the Game Gear and Genesis Nomad LCD panels.",
       NULL,
       "video",
       {
@@ -284,7 +284,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "genesis_plus_gx_render",
       "Interlaced Mode 2 Output",
       NULL,
-      "Interlaced Mode 2 allows the Mega Drive/Genesis to output a double height (high resolution) 320x448 image by drawing alternate scan lines each frame (this is used by 'Sonic the Hedgehog 2' and 'Combat Cars' multiplayer modes). 'Double Field' mimics original hardware, producing a sharp image with flickering/interlacing artifacts. 'Single Field' applies a deinterlacing filter, which stabilizes the image but causes mild blurring.",
+      "Interlaced Mode 2 allows the Mega Drive/Genesis to output a double height (high resolution) 320x448 image by drawing alternate scan lines each frame (this is used by Sonic the Hedgehog 2 and Combat Cars multiplayer modes). 'Double Field' mimics original hardware, producing a sharp image with flickering/interlacing artifacts. 'Single Field' applies a deinterlacing filter, which stabilizes the image but causes mild blurring.",
       NULL,
       "video",
       {
@@ -370,12 +370,12 @@ struct retro_core_option_v2_definition option_defs_us[] = {
 #endif
    {
       "genesis_plus_gx_ym2612",
-      "Mega Drive / Genesis FM",
+      "Mega Drive/Genesis FM",
       NULL,
 #ifdef HAVE_YM3438_CORE
-      "Select method used to emulate the FM synthesizer (main sound generator) of the Mega Drive/Genesis. 'MAME' options are fast, and run full speed on most systems. 'Nuked' options are cycle accurate, very high quality, and have substantial CPU requirements. The 'YM2612' chip is used by the original Model 1 Mega Drive/Genesis. The 'YM3438' is used in later Mega Drive/Genesis revisions.",
+      "Select method used to emulate the FM synthesizer (main sound generator) of the Mega Drive/Genesis. 'MAME' options are fast, and run full speed on most systems. 'Nuked' options are cycle accurate, very high quality, and have substantial CPU requirements. The YM2612 chip is used by the original Model 1 Mega Drive/Genesis. The YM3438 is used in later Mega Drive/Genesis revisions.",
 #else
-      "Select method used to emulate the FM synthesizer (main sound generator) of the Mega Drive/Genesis. The 'YM2612' chip is used by the original Model 1 Mega Drive/Genesis. The 'YM3438' is used in later Mega Drive/Genesis revisions.",
+      "Select method used to emulate the FM synthesizer (main sound generator) of the Mega Drive/Genesis. The YM2612 chip is used by the original Model 1 Mega Drive/Genesis. The YM3438 is used in later Mega Drive/Genesis revisions.",
 #endif
       NULL,
       "audio",
@@ -395,7 +395,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "genesis_plus_gx_sound_output",
       "Sound Output",
       NULL,
-      "Select stereo or mono sound reproduction.",
+      "Select stereo or mono sound playback.",
       NULL,
       "audio",
       {
@@ -596,7 +596,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "genesis_plus_gx_pcm_volume",
       "PCM Volume",
       NULL,
-      "Adjust the mixing volume of the emulated Sega CD / Mega CD RF5C164 PCM sound generator output.",
+      "Adjust the mixing volume of the emulated Sega CD/Mega-CD RF5C164 PCM sound generator output.",
       NULL,
       "audio",
       {
@@ -744,7 +744,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "genesis_plus_gx_gun_cursor",
       "Show Light Gun Crosshair",
       NULL,
-      "Display light gun crosshairs when using the 'MD Menacer', 'MD Justifiers' and 'MS Light Phaser' input device types.",
+      "Display light gun crosshairs when using the MD Menacer, MD Justifiers and MS Light Phaser input device types.",
       NULL,
       "input",
       {
@@ -758,7 +758,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "genesis_plus_gx_invert_mouse",
       "Invert Mouse Y-Axis",
       NULL,
-      "Inverts the Y-axis of the 'MD Mouse' input device type.",
+      "Inverts the Y-axis of the MD Mouse input device type.",
       NULL,
       "input",
       {
@@ -819,7 +819,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "genesis_plus_gx_addr_error",
       "68K Address Error",
       NULL,
-      "The Mega Drive/Genesis Main CPU (Motorola 68000) generates an Address Error exception (crash) when attempting to perform unaligned memory access. Enabling '68K Address Error' simulates this behavior. It should only be disabled when playing ROM hacks, since these are typically developed using less accurate emulators and may rely on invalid RAM access for correct operation.",
+      "The Mega Drive/Genesis main CPU (Motorola 68000) generates an Address Error exception (crash) when attempting to perform unaligned memory access. Enabling this will simulate this behavior. It should only be disabled when playing ROM hacks, since these are typically developed using less accurate emulators and may rely on invalid RAM access for correct operation.",
       NULL,
       "hacks",
       {
@@ -938,9 +938,9 @@ struct retro_core_option_v2_definition option_defs_us[] = {
    },
    {
       "genesis_plus_gx_md_channel_0_volume",
-      "Mega Drive / Genesis FM Channel 0 Volume %",
+      "Mega Drive/Genesis FM Channel 0 Volume %",
       NULL,
-      "Reduce the volume of the Mega Drive / Genesis FM Channel 0. Only works with MAME FM emulators.",
+      "Reduce the volume of the Mega Drive/Genesis FM Channel 0. Only works with MAME FM emulators.",
       NULL,
       "channel_volume",
       {
@@ -961,9 +961,9 @@ struct retro_core_option_v2_definition option_defs_us[] = {
    },
    {
       "genesis_plus_gx_md_channel_1_volume",
-      "Mega Drive / Genesis FM Channel 1 Volume %",
+      "Mega Drive/Genesis FM Channel 1 Volume %",
       NULL,
-      "Reduce the volume of the Mega Drive / Genesis FM Channel 1. Only works with MAME FM emulators.",
+      "Reduce the volume of the Mega Drive/Genesis FM Channel 1. Only works with MAME FM emulators.",
       NULL,
       "channel_volume",
       {
@@ -984,9 +984,9 @@ struct retro_core_option_v2_definition option_defs_us[] = {
    },
    {
       "genesis_plus_gx_md_channel_2_volume",
-      "Mega Drive / Genesis FM Channel 2 Volume %",
+      "Mega Drive/Genesis FM Channel 2 Volume %",
       NULL,
-      "Reduce the volume of the Mega Drive / Genesis FM Channel 2. Only works with MAME FM emulators.",
+      "Reduce the volume of the Mega Drive/Genesis FM Channel 2. Only works with MAME FM emulators.",
       NULL,
       "channel_volume",
       {
@@ -1007,9 +1007,9 @@ struct retro_core_option_v2_definition option_defs_us[] = {
    },
    {
       "genesis_plus_gx_md_channel_3_volume",
-      "Mega Drive / Genesis FM Channel 3 Volume %",
+      "Mega Drive/Genesis FM Channel 3 Volume %",
       NULL,
-      "Reduce the volume of the Mega Drive / Genesis FM Channel 3. Only works with MAME FM emulators.",
+      "Reduce the volume of the Mega Drive/Genesis FM Channel 3. Only works with MAME FM emulators.",
       NULL,
       "channel_volume",
       {
@@ -1030,9 +1030,9 @@ struct retro_core_option_v2_definition option_defs_us[] = {
    },
    {
       "genesis_plus_gx_md_channel_4_volume",
-      "Mega Drive / Genesis FM Channel 4 Volume %",
+      "Mega Drive/Genesis FM Channel 4 Volume %",
       NULL,
-      "Reduce the volume of the Mega Drive / Genesis FM Channel 4. Only works with MAME FM emulators.",
+      "Reduce the volume of the Mega Drive/Genesis FM Channel 4. Only works with MAME FM emulators.",
       NULL,
       "channel_volume",
       {
@@ -1053,9 +1053,9 @@ struct retro_core_option_v2_definition option_defs_us[] = {
    },
    {
       "genesis_plus_gx_md_channel_5_volume",
-      "Mega Drive / Genesis FM Channel 5 Volume %",
+      "Mega Drive/Genesis FM Channel 5 Volume %",
       NULL,
-      "Reduce the volume of the Mega Drive / Genesis FM Channel 5. Only works with MAME FM emulators.",
+      "Reduce the volume of the Mega Drive/Genesis FM Channel 5. Only works with MAME FM emulators.",
       NULL,
       "channel_volume",
       {
