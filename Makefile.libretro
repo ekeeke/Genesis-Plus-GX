@@ -440,6 +440,7 @@ else ifeq ($(platform), rs90)
    ENDIANNESS_DEFINES := -DLSB_FIRST -DBYTE_ORDER=LITTLE_ENDIAN -DALIGN_LONG
    USE_PER_SOUND_CHANNELS_CONFIG = 0
    LOW_MEMORY = 1
+   MAX_ROM_SIZE = 16777216
 
 # GCW0
 else ifeq ($(platform), gcw0)
@@ -454,6 +455,7 @@ else ifeq ($(platform), gcw0)
    CFLAGS += -ffast-math -march=mips32 -mtune=mips32r2 -mhard-float -fomit-frame-pointer
    ENDIANNESS_DEFINES := -DLSB_FIRST -DBYTE_ORDER=LITTLE_ENDIAN -DALIGN_LONG
    USE_PER_SOUND_CHANNELS_CONFIG = 0
+   MAX_ROM_SIZE = 16777216
 
 # RETROFW
 else ifeq ($(platform), retrofw)
@@ -468,6 +470,7 @@ else ifeq ($(platform), retrofw)
    CFLAGS += -ffast-math -march=mips32 -mtune=mips32 -mhard-float -fomit-frame-pointer
    ENDIANNESS_DEFINES := -DLSB_FIRST -DBYTE_ORDER=LITTLE_ENDIAN -DALIGN_LONG
    USE_PER_SOUND_CHANNELS_CONFIG = 0
+   MAX_ROM_SIZE = 16777216
    
 # MIYOO
 else ifeq ($(platform), miyoo)
@@ -482,6 +485,7 @@ else ifeq ($(platform), miyoo)
    CFLAGS += -ffast-math -march=armv5te -mtune=arm926ej-s -fomit-frame-pointer
    ENDIANNESS_DEFINES := -DLSB_FIRST -DBYTE_ORDER=LITTLE_ENDIAN -DALIGN_LONG
    USE_PER_SOUND_CHANNELS_CONFIG = 0
+   MAX_ROM_SIZE = 16777216
 
 # Windows MSVC 2003 Xbox 1
 else ifeq ($(platform), xbox1_msvc2003)
