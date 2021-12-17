@@ -28185,9 +28185,9 @@ struct retro_core_options_v2 options_it = {
 #define OPTION_VAL_NTSC_U_JA NULL
 #define OPTION_VAL_PAL_JA NULL
 #define OPTION_VAL_NTSC_J_JA NULL
-#define GENESIS_PLUS_GX_BIOS_LABEL_JA NULL
+#define GENESIS_PLUS_GX_BIOS_LABEL_JA "システムブートROM"
 #define GENESIS_PLUS_GX_BIOS_INFO_0_JA NULL
-#define GENESIS_PLUS_GX_BRAM_LABEL_JA NULL
+#define GENESIS_PLUS_GX_BRAM_LABEL_JA "CD システム BRAM"
 #define GENESIS_PLUS_GX_BRAM_INFO_0_JA NULL
 #define OPTION_VAL_PER_BIOS_JA "BIOS ごと"
 #define OPTION_VAL_PER_GAME_JA "ゲームごと"
@@ -28231,7 +28231,7 @@ struct retro_core_options_v2 options_it = {
 #define GENESIS_PLUS_GX_FRAMESKIP_LABEL_JA NULL
 #define GENESIS_PLUS_GX_FRAMESKIP_INFO_0_JA NULL
 #define OPTION_VAL_MANUAL_JA "手動"
-#define GENESIS_PLUS_GX_FRAMESKIP_THRESHOLD_LABEL_JA NULL
+#define GENESIS_PLUS_GX_FRAMESKIP_THRESHOLD_LABEL_JA "フレームスキップ閾値 (%)"
 #define GENESIS_PLUS_GX_FRAMESKIP_THRESHOLD_INFO_0_JA "'フレームスキップ' が '手動' に設定されている場合, フレームがスキップされるオーディオバッファ占有しきい値 (%) を指定します. 値を大きくすると, フレームを頻繁に落とすことでクラッキングが発生するリスクが低下します."
 #define GENESIS_PLUS_GX_YM2413_LABEL_JA NULL
 #define GENESIS_PLUS_GX_YM2413_INFO_0_JA NULL
@@ -28257,13 +28257,13 @@ struct retro_core_options_v2 options_it = {
 #define OPTION_VAL_EQ_JA NULL
 #define GENESIS_PLUS_GX_LOWPASS_RANGE_LABEL_JA NULL
 #define GENESIS_PLUS_GX_LOWPASS_RANGE_INFO_0_JA NULL
-#define GENESIS_PLUS_GX_PSG_PREAMP_LABEL_JA NULL
+#define GENESIS_PLUS_GX_PSG_PREAMP_LABEL_JA "PSG プリアンプレベル"
 #define GENESIS_PLUS_GX_PSG_PREAMP_INFO_0_JA NULL
-#define GENESIS_PLUS_GX_FM_PREAMP_LABEL_JA NULL
+#define GENESIS_PLUS_GX_FM_PREAMP_LABEL_JA "FMプリアンプレベル"
 #define GENESIS_PLUS_GX_FM_PREAMP_INFO_0_JA NULL
-#define GENESIS_PLUS_GX_CDDA_VOLUME_LABEL_JA NULL
+#define GENESIS_PLUS_GX_CDDA_VOLUME_LABEL_JA "CD-DA 音量"
 #define GENESIS_PLUS_GX_CDDA_VOLUME_INFO_0_JA NULL
-#define GENESIS_PLUS_GX_PCM_VOLUME_LABEL_JA NULL
+#define GENESIS_PLUS_GX_PCM_VOLUME_LABEL_JA "PCM音量"
 #define GENESIS_PLUS_GX_PCM_VOLUME_INFO_0_JA NULL
 #define GENESIS_PLUS_GX_AUDIO_EQ_LOW_LABEL_JA NULL
 #define GENESIS_PLUS_GX_AUDIO_EQ_LOW_INFO_0_JA NULL
@@ -36661,7 +36661,7 @@ struct retro_core_options_v2 options_pl = {
 #define GENESIS_PLUS_GX_LCD_FILTER_LABEL_PT_BR "Filtro fantasma LCD"
 #define GENESIS_PLUS_GX_LCD_FILTER_INFO_0_PT_BR "Aplica um filtro de efeito 'fantasma' na imagem para imitar as características das telas de LCD do Game Gear e do Genesis Nomad."
 #define GENESIS_PLUS_GX_RENDER_LABEL_PT_BR "Modo de entrelaçamento de vídeo 2"
-#define GENESIS_PLUS_GX_RENDER_INFO_0_PT_BR "O Modo de entrelaçamento de vídeo 2 permite que o Mega Drive gere uma imagem que duplica sua altura original para 320x448 (alta resolução) desenhando linhas de varredura alternativas em cada quadro (usado pelos modos multijogador de Sonic the Hedgehog 2 e Combat Cars). 'Campo duplo' imita o hardware original: produz uma imagem nítida com cintilação ou entrelaçamento de artefatos. 'Campo único' aplica um filtro de desentrelaçamento para estabilizar a imagem, mas irá desfocá-la um pouco."
+#define GENESIS_PLUS_GX_RENDER_INFO_0_PT_BR "O Modo de entrelaçamento de vídeo 2 permite que o Mega Drive gere uma imagem que duplica sua altura original para 320x448 (alta resolução) desenhando linhas de varredura alternativas em cada quadro (usado pelos modos multijogador de Sonic the Hedgehog 2 e Combat Cars). 'Campo duplo' imita o hardware original: produz uma imagem nítida com tremulação ou entrelaçamento de artefatos. 'Campo único' aplica um filtro de desentrelaçamento para estabilizar a imagem, mas irá desfocá-la um pouco."
 #define OPTION_VAL_SINGLE_FIELD_PT_BR "Campo único"
 #define OPTION_VAL_DOUBLE_FIELD_PT_BR "Campo duplo"
 #define GENESIS_PLUS_GX_FRAMESKIP_LABEL_PT_BR "Pulo de quadro"
