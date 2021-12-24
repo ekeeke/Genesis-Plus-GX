@@ -3627,11 +3627,11 @@ void retro_run(void)
    
    if ((config.left_border != 0) && (reg[0] & 0x20) && (bitmap.viewport.x == 0) && ((system_hw == SYSTEM_MARKIII) || (system_hw & SYSTEM_SMS) || (system_hw == SYSTEM_PBC)))
    {
-	   bmdoffset = 16;
+	   bmdoffset = (16 + (config.ntsc ? 24 : 0));
 	   if (config.left_border == 1)
-		   vwoffset = 8;
+		   vwoffset = (8 + (config.ntsc ? 12 : 0));
 	   else
-		   vwoffset = 16;
+		   vwoffset = (16 + (config.ntsc ? 24 : 0));
    }
 
    if (!do_skip)
