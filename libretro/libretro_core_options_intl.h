@@ -11329,7 +11329,7 @@ struct retro_core_options_v2 options_da = {
 #define OPTION_VAL_GAME_GENIE_DE NULL
 #define OPTION_VAL_ACTION_REPLAY_PRO_DE NULL
 #define OPTION_VAL_SONIC_KNUCKLES_DE NULL
-#define GENESIS_PLUS_GX_ASPECT_RATIO_LABEL_DE NULL
+#define GENESIS_PLUS_GX_ASPECT_RATIO_LABEL_DE "Core-Bereitgestelltes Seitenverhältnis"
 #define GENESIS_PLUS_GX_ASPECT_RATIO_INFO_0_DE NULL
 #define OPTION_VAL_NTSC_PAR_DE NULL
 #define OPTION_VAL_PAL_PAR_DE NULL
@@ -15513,7 +15513,7 @@ struct retro_core_options_v2 options_eo = {
 #define CATEGORY_INPUT_LABEL_ES "Entrada"
 #define CATEGORY_INPUT_INFO_0_ES "Cambia las opciones de las pistolas de luz o la entrada del ratón."
 #define CATEGORY_HACKS_LABEL_ES "Arreglos de emulación"
-#define CATEGORY_HACKS_INFO_0_ES "Cambia las opciones de overclockeo del procesador y de precisión de la emulación que afectan al rendimiento a bajo nivel y a la compatibilidad."
+#define CATEGORY_HACKS_INFO_0_ES "Cambia las opciones de velocidad del procesador y de precisión de la emulación que afectan al rendimiento a bajo nivel y a la compatibilidad."
 #define CATEGORY_CHANNEL_VOLUME_LABEL_ES "Ajustes avanzados del volumen de los canales"
 #define CATEGORY_CHANNEL_VOLUME_INFO_0_ES "Cambia el volumen de los canales individuales de audio del hardware."
 #define GENESIS_PLUS_GX_SYSTEM_HW_LABEL_ES "Hardware del sistema"
@@ -15571,7 +15571,7 @@ struct retro_core_options_v2 options_eo = {
 #define GENESIS_PLUS_GX_LCD_FILTER_LABEL_ES "Filtro de efecto «ghosting» de LCD"
 #define GENESIS_PLUS_GX_LCD_FILTER_INFO_0_ES "Aplica un filtro de efecto «ghosting» (fantasma) a la imagen para simular las características de los paneles LCD de Game Gear y Nomad."
 #define GENESIS_PLUS_GX_RENDER_LABEL_ES "Modo de entrelazado de vídeo 2"
-#define GENESIS_PLUS_GX_RENDER_INFO_0_ES "El modo de entrelazado de vídeo 2 permite a la Mega Drive/Genesis generar una imagen que duplica su altura original a 320x448 (alta resolución) dibujando líneas de exploración alternativas en cada fotograma (usado por los modos multijugador de Sonic the Hedgehog 2 y de Combat Cars). «Dos campos» imita el hardware original: produce una imagen nítida con artefactos de parpadeos o de entrelazado. «Un campo» aplica un filtro de desentrelazado para estabilizar la imagen, pero la hará algo borrosa."
+#define GENESIS_PLUS_GX_RENDER_INFO_0_ES "El modo de entrelazado de vídeo 2 permite a la Mega Drive/Genesis generar una imagen que duplica su altura original a 320x448 (alta resolución) dibujando líneas de barrido alternativas en cada fotograma (usado por los modos multijugador de Sonic the Hedgehog 2 y de Combat Cars). «Dos campos» imita el hardware original: produce una imagen nítida con artefactos de parpadeos o de entrelazado. «Un campo» aplica un filtro de desentrelazado para estabilizar la imagen, pero la hará algo borrosa."
 #define OPTION_VAL_SINGLE_FIELD_ES "Un campo"
 #define OPTION_VAL_DOUBLE_FIELD_ES "Dos campos"
 #define GENESIS_PLUS_GX_FRAMESKIP_LABEL_ES "Omisión de fotogramas"
@@ -15626,9 +15626,9 @@ struct retro_core_options_v2 options_eo = {
 #define GENESIS_PLUS_GX_INVERT_MOUSE_LABEL_ES "Invertir eje Y del ratón"
 #define GENESIS_PLUS_GX_INVERT_MOUSE_INFO_0_ES "Invierte el eje vertical del dispositivo de entrada MD Mouse."
 #define GENESIS_PLUS_GX_NO_SPRITE_LIMIT_LABEL_ES "Eliminar límite de sprites por línea"
-#define GENESIS_PLUS_GX_NO_SPRITE_LIMIT_INFO_0_ES "Elimina el límite de sprites por líneas de exploración que tenía el hardware original. Reduce los parpadeos, pero puede provocar fallos gráficos, ya que algunos juegos aprovechan esta limitación para generar efectos especiales."
+#define GENESIS_PLUS_GX_NO_SPRITE_LIMIT_INFO_0_ES "Elimina el límite de sprites por líneas de barrido que tenía el hardware original. Reduce los parpadeos, pero puede provocar fallos gráficos, ya que algunos juegos aprovechan esta limitación para generar efectos especiales."
 #define GENESIS_PLUS_GX_OVERCLOCK_LABEL_ES "Velocidad de la CPU"
-#define GENESIS_PLUS_GX_OVERCLOCK_INFO_0_ES "Overclockea la CPU emulada. Puede reducir las ralentizaciones, pero también podría provocar fallos gráficos."
+#define GENESIS_PLUS_GX_OVERCLOCK_INFO_0_ES "Aumenta la velocidad de la CPU emulada. Puede reducir las ralentizaciones, pero también podría provocar fallos gráficos."
 #define OPTION_VAL_100_ES "100 %"
 #define OPTION_VAL_125_ES "125 %"
 #define OPTION_VAL_150_ES "150 %"
@@ -18374,7 +18374,7 @@ struct retro_core_options_v2 options_fa = {
 #define OPTION_VAL_LEFT_RIGHT_BORDERS_FI NULL
 #define GENESIS_PLUS_GX_GG_EXTRA_LABEL_FI NULL
 #define GENESIS_PLUS_GX_GG_EXTRA_INFO_0_FI NULL
-#define GENESIS_PLUS_GX_BLARGG_NTSC_FILTER_LABEL_FI NULL
+#define GENESIS_PLUS_GX_BLARGG_NTSC_FILTER_LABEL_FI "Blargg NTSC suodatin"
 #define GENESIS_PLUS_GX_BLARGG_NTSC_FILTER_INFO_0_FI NULL
 #define OPTION_VAL_MONOCHROME_FI "Yksivärinen"
 #define OPTION_VAL_COMPOSITE_FI "Komposiitti"
@@ -19766,7 +19766,7 @@ struct retro_core_options_v2 options_fi = {
 #define OPTION_VAL_ACTION_REPLAY_PRO_FR NULL
 #define OPTION_VAL_SONIC_KNUCKLES_FR NULL
 #define GENESIS_PLUS_GX_ASPECT_RATIO_LABEL_FR "Rapport d'aspect fourni par le cœur"
-#define GENESIS_PLUS_GX_ASPECT_RATIO_INFO_0_FR "Choisir le rapport d'aspect préféré pour le contenu. Cela ne s'appliquera que lorsque le ratio d'aspect de RetroArch est réglé sur 'Fourni par le cœur' (Core provided) dans les paramètres vidéo."
+#define GENESIS_PLUS_GX_ASPECT_RATIO_INFO_0_FR "Choisir le rapport d'aspect préféré pour le contenu. Cela ne s'applique que lorsque le rapport d'aspect de RetroArch est réglé sur 'Fourni par le cœur' (Core provided) dans les paramètres vidéo."
 #define OPTION_VAL_NTSC_PAR_FR "Rapport d'aspect préféré NTSC"
 #define OPTION_VAL_PAL_PAR_FR "Rapport d'aspect préféré PAL"
 #define GENESIS_PLUS_GX_OVERSCAN_LABEL_FR "Bordures"
@@ -19851,7 +19851,7 @@ struct retro_core_options_v2 options_fi = {
 #define OPTION_VAL_125_FR NULL
 #define OPTION_VAL_150_FR NULL
 #define OPTION_VAL_175_FR NULL
-#define OPTION_VAL_200_FR "200 %"
+#define OPTION_VAL_200_FR NULL
 #define GENESIS_PLUS_GX_FORCE_DTACK_LABEL_FR "Blocages du système"
 #define GENESIS_PLUS_GX_FORCE_DTACK_INFO_0_FR "Émuler les blocages du système qui se produisent sur du vrai matériel lors d'un accès illégal aux adresses. Cela ne devrait être désactivé que lorsque vous jouez à certaines démos et homebrews qui dépendent d'un comportement illégal pour un fonctionnement correct."
 #define GENESIS_PLUS_GX_ADDR_ERROR_LABEL_FR "Erreur d'adresse 68K"
@@ -28228,8 +28228,8 @@ struct retro_core_options_v2 options_it = {
 #define GENESIS_PLUS_GX_RENDER_INFO_0_JA NULL
 #define OPTION_VAL_SINGLE_FIELD_JA NULL
 #define OPTION_VAL_DOUBLE_FIELD_JA NULL
-#define GENESIS_PLUS_GX_FRAMESKIP_LABEL_JA NULL
-#define GENESIS_PLUS_GX_FRAMESKIP_INFO_0_JA NULL
+#define GENESIS_PLUS_GX_FRAMESKIP_LABEL_JA "フレームスキップ"
+#define GENESIS_PLUS_GX_FRAMESKIP_INFO_0_JA "フレームをスキップしてオーディオバッファアンダーラン (音割れ) を回避します。視覚的な滑らかさを犠牲にしてパフォーマンスを向上させます。 「自動」は、フロントエンドにアドバイスされたときにフレームをスキップします。「マニュアル」は、「フレームスキップ閾値 (%)」設定を使用します。"
 #define OPTION_VAL_MANUAL_JA "手動"
 #define GENESIS_PLUS_GX_FRAMESKIP_THRESHOLD_LABEL_JA "フレームスキップ閾値 (%)"
 #define GENESIS_PLUS_GX_FRAMESKIP_THRESHOLD_INFO_0_JA "'フレームスキップ' が '手動' に設定されている場合, フレームがスキップされるオーディオバッファ占有しきい値 (%) を指定します. 値を大きくすると, フレームを頻繁に落とすことでクラッキングが発生するリスクが低下します."
@@ -32376,7 +32376,7 @@ struct retro_core_options_v2 options_mt = {
 
 /* RETRO_LANGUAGE_NL */
 
-#define CATEGORY_SYSTEM_LABEL_NL NULL
+#define CATEGORY_SYSTEM_LABEL_NL "Systeem"
 #define CATEGORY_SYSTEM_INFO_0_NL NULL
 #define CATEGORY_VIDEO_LABEL_NL NULL
 #define CATEGORY_VIDEO_INFO_0_NL NULL
@@ -36710,7 +36710,7 @@ struct retro_core_options_v2 options_pl = {
 #define GENESIS_PLUS_GX_GUN_INPUT_LABEL_PT_BR "Saída da Pistola de luz"
 #define GENESIS_PLUS_GX_GUN_INPUT_INFO_0_PT_BR "Usa uma entrada 'Pistola de luz' ou 'Toque na tela' controlada por mouse."
 #define OPTION_VAL_LIGHTGUN_PT_BR "Pistola de luz"
-#define OPTION_VAL_TOUCHSCREEN_PT_BR "Toque na tela"
+#define OPTION_VAL_TOUCHSCREEN_PT_BR "Tela sensível ao toque"
 #define GENESIS_PLUS_GX_GUN_CURSOR_LABEL_PT_BR "Mostrar mira da pistola"
 #define GENESIS_PLUS_GX_GUN_CURSOR_INFO_0_PT_BR "Exibe a mira da pistola de luz ao usar os tipos de dispositivo da entrada MD Menacer, MD Justifiers e MS Light Phaser."
 #define GENESIS_PLUS_GX_INVERT_MOUSE_LABEL_PT_BR "Inverter eixo Y do mouse"
@@ -40825,7 +40825,7 @@ struct retro_core_options_v2 options_ro = {
 #define CATEGORY_CHANNEL_VOLUME_LABEL_RU "Расширенные настройки громкости"
 #define CATEGORY_CHANNEL_VOLUME_INFO_0_RU "Индивидуальная настройка громкости аудиоканалов."
 #define GENESIS_PLUS_GX_SYSTEM_HW_LABEL_RU "Модель системы"
-#define GENESIS_PLUS_GX_SYSTEM_HW_INFO_0_RU "Запуск загруженного контента на указанной эмулируемой консоли. 'Авто' выберет наиболее подходящую систему для текущей игры."
+#define GENESIS_PLUS_GX_SYSTEM_HW_INFO_0_RU "Запуск загруженного контента на указанной эмулируемой консоли. В режиме 'Авто' будет выбрана наиболее подходящая система для текущей игры."
 #define OPTION_VAL_AUTO_RU "Авто"
 #define OPTION_VAL_SG_1000_RU NULL
 #define OPTION_VAL_SG_1000_II_RU NULL
@@ -40835,12 +40835,12 @@ struct retro_core_options_v2 options_ro = {
 #define OPTION_VAL_GAME_GEAR_RU NULL
 #define OPTION_VAL_MEGA_DRIVE_GENESIS_RU NULL
 #define GENESIS_PLUS_GX_REGION_DETECT_LABEL_RU "Регион системы"
-#define GENESIS_PLUS_GX_REGION_DETECT_INFO_0_RU "Выбор региона системы. Для консолей кроме Game Gear 'PAL' соответствует 50 Гц, 'NTSC' - 60 Гц. Игры могут идти быстрее или медленнее чем обычно при неправильной установке региона."
+#define GENESIS_PLUS_GX_REGION_DETECT_INFO_0_RU "Выбор региона системы. Кроме Game Gear, для всех консолей режим 'PAL' соответствует 50 Гц, 'NTSC' - 60 Гц. При неправильной установке региона игры могут идти быстрее или медленнее."
 #define OPTION_VAL_NTSC_U_RU NULL
 #define OPTION_VAL_PAL_RU NULL
 #define OPTION_VAL_NTSC_J_RU NULL
 #define GENESIS_PLUS_GX_BIOS_LABEL_RU "Загрузочный ROM системы"
-#define GENESIS_PLUS_GX_BIOS_INFO_0_RU "Использовать официальный BIOS/загрузчик для эмуляции системы, если он присутствует в системном каталоге RetroArch. Отображает начальную заставку/анимацию консоли перед запуском загруженного контента."
+#define GENESIS_PLUS_GX_BIOS_INFO_0_RU "Использовать для эмулируемой системы официальный BIOS/загрузчик, при наличии файла в системном каталоге RetroArch. Отображает перед запуском контента начальную заставку/анимацию загрузки консоли."
 #define GENESIS_PLUS_GX_BRAM_LABEL_RU "Резервная память Sega CD"
 #define GENESIS_PLUS_GX_BRAM_INFO_0_RU "Определяет, использовать для игр Sega CD/Mega-CD одного региона общий файл сохранения (значение 'Для BIOS') или создавать для каждой игры индивидуальный файл сохранения (значение 'Для игры'). Учитывайте, что Sega CD/Mega-CD имеет ограниченный объём внутренней памяти, достаточный лишь для нескольких игр. Чтобы избежать нехватки места используйте режим 'Для игры'."
 #define OPTION_VAL_PER_BIOS_RU "Для BIOS"
@@ -40851,7 +40851,7 @@ struct retro_core_options_v2 options_ro = {
 #define OPTION_VAL_MEGASD_RU NULL
 #define OPTION_VAL_NONE_RU "Нет"
 #define GENESIS_PLUS_GX_LOCK_ON_LABEL_RU "Картридж Lock-On"
-#define GENESIS_PLUS_GX_LOCK_ON_INFO_0_RU "Технология Lock-On - это дополнение Mega Drive/Genesis, которое позволяло подключать старые игры в порт спец. картриджа для расширенного или изменённого геймплея. Данная опция устанавливает тип эмулируемого картриджа 'lock-on'. Соответствующий файл bios должен присутствовать в системном каталоге RetroArch."
+#define GENESIS_PLUS_GX_LOCK_ON_INFO_0_RU "Технология Lock-On - это расширение Mega Drive/Genesis, которое позволяло подключать старые игры через специальный картридж для получения расширенного или изменённого геймплея. Данная опция устанавливает тип эмулируемого картриджа 'lock-on'. Соответствующий файл bios должен присутствовать в системном каталоге RetroArch."
 #define OPTION_VAL_GAME_GENIE_RU NULL
 #define OPTION_VAL_ACTION_REPLAY_PRO_RU NULL
 #define OPTION_VAL_SONIC_KNUCKLES_RU NULL
@@ -40860,12 +40860,12 @@ struct retro_core_options_v2 options_ro = {
 #define OPTION_VAL_NTSC_PAR_RU NULL
 #define OPTION_VAL_PAL_PAR_RU NULL
 #define GENESIS_PLUS_GX_OVERSCAN_LABEL_RU "Границы"
-#define GENESIS_PLUS_GX_OVERSCAN_INFO_0_RU "Включите для отображения вылетов развёртки сверху/снизу и/или слева/справа экрана. Как правило, в телевизорах стандартной чёткости они скрыты рамкой, расположенной по краю."
+#define GENESIS_PLUS_GX_OVERSCAN_INFO_0_RU "Включите для отображения вылетов развёртки сверху/снизу и/или слева/справа. В телевизорах стандартной чёткости эти области обычно скрыты рамкой по краю экрана."
 #define OPTION_VAL_TOP_BOTTOM_RU "Сверху/снизу"
 #define OPTION_VAL_LEFT_RIGHT_RU "Слева/справа"
 #define OPTION_VAL_FULL_RU "Все"
 #define GENESIS_PLUS_GX_LEFT_BORDER_LABEL_RU "Скрывать боковые грани Master System"
-#define GENESIS_PLUS_GX_LEFT_BORDER_INFO_0_RU "Срезать 8 пикселей с левой стороны экрана или с левой и правой сторон при запуске игр Master System."
+#define GENESIS_PLUS_GX_LEFT_BORDER_INFO_0_RU "Срезать по 8 пикселей с левой стороны или с левой и правой сторон экрана при запуске игр Master System."
 #define OPTION_VAL_LEFT_BORDER_RU "Только граница слева"
 #define OPTION_VAL_LEFT_RIGHT_BORDERS_RU "Границы слева и справа"
 #define GENESIS_PLUS_GX_GG_EXTRA_LABEL_RU "Расширение экрана Game Gear"
@@ -40886,7 +40886,7 @@ struct retro_core_options_v2 options_ro = {
 #define GENESIS_PLUS_GX_FRAMESKIP_INFO_0_RU "Пропускать кадры, чтобы избежать опустошения аудиобуфера (треск). Улучшает производительность, но снижает плавность изображения. В режиме 'Авто' пропуск кадров регулируется фронтендом. В режиме 'Вручную' используется настройка 'Граница пропуска кадров (%)'."
 #define OPTION_VAL_MANUAL_RU "Вручную"
 #define GENESIS_PLUS_GX_FRAMESKIP_THRESHOLD_LABEL_RU "Граница пропуска кадров (%)"
-#define GENESIS_PLUS_GX_FRAMESKIP_THRESHOLD_INFO_0_RU "Устанавливает порог заполнения аудиобуфера (в процентах), ниже которого будет включаться пропуск кадров, если для параметра 'Пропуск кадров' выбран режим 'Вручную'. Большие значения снижают вероятность появления треска за счёт более частого пропуска кадров."
+#define GENESIS_PLUS_GX_FRAMESKIP_THRESHOLD_INFO_0_RU "Устанавливает порог заполнения аудиобуфера (в процентах), ниже которого будет включаться пропуск кадров при установке опции 'Пропуск кадров' в режим 'Вручную'. Большие значения снижают вероятность появления треска за счёт более частого пропуска кадров."
 #define GENESIS_PLUS_GX_YM2413_LABEL_RU NULL
 #define GENESIS_PLUS_GX_YM2413_INFO_0_RU "Включает эмуляцию FM Sound Unit, используемого для улучшения звука в некоторых играх Sega Mark III/Master System."
 #define GENESIS_PLUS_GX_YM2413_CORE_LABEL_RU "Ядро Master System FM (YM2413)"
@@ -40933,8 +40933,8 @@ struct retro_core_options_v2 options_ro = {
 #define GENESIS_PLUS_GX_GUN_CURSOR_INFO_0_RU "Отображать прицел светового пистолета для устройств ввода типа MD Menacer, MD Justifier и MS Light Phaser."
 #define GENESIS_PLUS_GX_INVERT_MOUSE_LABEL_RU "Инверсия мыши по оси Y"
 #define GENESIS_PLUS_GX_INVERT_MOUSE_INFO_0_RU "Инвертирует ось Y для устройства ввода типа MD Mouse."
-#define GENESIS_PLUS_GX_NO_SPRITE_LIMIT_LABEL_RU "Убрать лимит спрайтов в линии"
-#define GENESIS_PLUS_GX_NO_SPRITE_LIMIT_INFO_0_RU "Снимает ограничение реальной консоли по числу спрайтов на линии развёртки. Уменьшает мерцание, но может вызывать баги с графикой, т.к. в ряде игр аппаратное ограничение используется для создания определённых эффектов."
+#define GENESIS_PLUS_GX_NO_SPRITE_LIMIT_LABEL_RU "Отключить лимит спрайтов в линии"
+#define GENESIS_PLUS_GX_NO_SPRITE_LIMIT_INFO_0_RU "Убирает ограничение реальной консоли по количеству спрайтов на линии развёртки. Уменьшает мерцание, но может вызывать сбои графики, т.к. в ряде игр аппаратное ограничение используется для создания определённых эффектов."
 #define GENESIS_PLUS_GX_OVERCLOCK_LABEL_RU "Скорость CPU"
 #define GENESIS_PLUS_GX_OVERCLOCK_INFO_0_RU "Разгон эмулируемого CPU. Может уменьшать подтормаживания, но вызывать ошибки."
 #define OPTION_VAL_100_RU NULL
@@ -40945,7 +40945,7 @@ struct retro_core_options_v2 options_ro = {
 #define GENESIS_PLUS_GX_FORCE_DTACK_LABEL_RU "Подвисания системы"
 #define GENESIS_PLUS_GX_FORCE_DTACK_INFO_0_RU "Эмуляция подвисаний системы на оригинальной консоли при доступе к недопустимому адресу. Следует выключать только при запуске некоторых демо или homebrew, которые используют неправильные режимы для корректной работы."
 #define GENESIS_PLUS_GX_ADDR_ERROR_LABEL_RU "Ошибка адресации 68K"
-#define GENESIS_PLUS_GX_ADDR_ERROR_INFO_0_RU "При попытке невыровненного доступа к памяти центральный процессор Mega Drive/Genesis (Motorola 68000) генерирует прерывание (сбой) по ошибке адресации. Включение опции 'Ошибка адресации 68K' имитирует данное поведение. Данную настройку требуется отключать только при запуске хаков, т.к. они обычно разрабатываются на менее точных эмуляторах и для корректной работы могут использовать неправильный доступ к памяти."
+#define GENESIS_PLUS_GX_ADDR_ERROR_INFO_0_RU "При попытке невыровненного доступа к памяти центральный процессор Mega Drive/Genesis (Motorola 68000) генерирует прерывание (сбой) по ошибке адресации. Включение опции 'Ошибка адресации 68K' имитирует данное поведение. Опцию необходимо отключать только для запуска хаков, т.к. они обычно разрабатываются на менее точных эмуляторах и могут использовать ошибки доступа к памяти для корректной работы."
 #define GENESIS_PLUS_GX_SHOW_ADVANCED_AUDIO_SETTINGS_LABEL_RU "Показывать доп. настройки громкости (перезайти в меню)"
 #define GENESIS_PLUS_GX_SHOW_ADVANCED_AUDIO_SETTINGS_INFO_0_RU "Включить настройку низкоуровневых параметров звуковых каналов. Для применения изменений необходимо переключить быстрое меню."
 #define GENESIS_PLUS_GX_PSG_CHANNEL_0_VOLUME_LABEL_RU "Громкость PSG канала тона 0 (%)"
@@ -47843,17 +47843,17 @@ struct retro_core_options_v2 options_sv = {
 /* RETRO_LANGUAGE_TR */
 
 #define CATEGORY_SYSTEM_LABEL_TR "Sistem"
-#define CATEGORY_SYSTEM_INFO_0_TR NULL
+#define CATEGORY_SYSTEM_INFO_0_TR "Temel donanım seçimini, bölgeyi, BIOS'u ve Sega CD/Mega-CD kayıt dosyası ayarlarını değiştirin."
 #define CATEGORY_VIDEO_LABEL_TR NULL
-#define CATEGORY_VIDEO_INFO_0_TR NULL
+#define CATEGORY_VIDEO_INFO_0_TR "En boy oranını, ekran kırpmayı, video filtresini ve kare atlama ayarlarını değiştirin."
 #define CATEGORY_AUDIO_LABEL_TR "Ses"
-#define CATEGORY_AUDIO_INFO_0_TR NULL
+#define CATEGORY_AUDIO_INFO_0_TR "Ses cihazı ayarlarını değiştirin."
 #define CATEGORY_INPUT_LABEL_TR "Girdi"
-#define CATEGORY_INPUT_INFO_0_TR NULL
+#define CATEGORY_INPUT_INFO_0_TR "Hafif tabanca ve/veya fare giriş ayarlarını değiştirin."
 #define CATEGORY_HACKS_LABEL_TR "Emülatör Geliştirmeleri"
-#define CATEGORY_HACKS_INFO_0_TR NULL
+#define CATEGORY_HACKS_INFO_0_TR "Düşük seviyeli performansı ve uyumluluğu etkileyen işlemci hız aşırtma ve taklit etme doğruluğu ayarlarını değiştirin."
 #define CATEGORY_CHANNEL_VOLUME_LABEL_TR "Gelişmiş Ses Kanalı Ayarları"
-#define CATEGORY_CHANNEL_VOLUME_INFO_0_TR NULL
+#define CATEGORY_CHANNEL_VOLUME_INFO_0_TR "Bireysel donanım ses kanallarının ses düzeyini değiştirin."
 #define GENESIS_PLUS_GX_SYSTEM_HW_LABEL_TR "Sistem Donanımı"
 #define GENESIS_PLUS_GX_SYSTEM_HW_INFO_0_TR "Yüklenen içeriği belirli bir öykünmüş konsolla çalıştırır. 'Otomatik' mevcut oyun için en uygun sistemi seçecektir."
 #define OPTION_VAL_AUTO_TR "Otomatik"
@@ -47872,7 +47872,7 @@ struct retro_core_options_v2 options_sv = {
 #define GENESIS_PLUS_GX_BIOS_LABEL_TR "Sistem Önyükleme ROM"
 #define GENESIS_PLUS_GX_BIOS_INFO_0_TR "RetroArch sistem dizininde varsa, öykünülmüş donanım için resmi BIOS/önyükleyici kullanın. Konsola özgü başlangıç sırası/animasyonu görüntüler, ardından yüklü içeriği çalıştırır."
 #define GENESIS_PLUS_GX_BRAM_LABEL_TR "CD Sistemi BRAM"
-#define GENESIS_PLUS_GX_BRAM_INFO_0_TR NULL
+#define GENESIS_PLUS_GX_BRAM_INFO_0_TR "Sega CD/Mega-CD içeriğini çalıştırırken, belirli bir bölgedeki tüm oyunlar arasında tek bir kayıt dosyası paylaşılacağını (BIOS Başına) veya her oyun için ayrı bir kaydetme dosyası oluşturulacağını (Oyun Başına) belirtir. Sega CD/Mega-CD'nin sınırlı dahili depolamaya sahip olduğunu ve yalnızca birkaç başlık için yeterli olduğunu unutmayın. Alanın bitmesini önlemek için 'Oyun Başına' ayarı önerilir."
 #define OPTION_VAL_PER_BIOS_TR "BIOS Başına"
 #define OPTION_VAL_PER_GAME_TR "Oyun Başına"
 #define GENESIS_PLUS_GX_ADD_ON_LABEL_TR "CD eklentisi (MD kipi) (Yeniden Başlatılmalı)"
@@ -47899,7 +47899,7 @@ struct retro_core_options_v2 options_sv = {
 #define OPTION_VAL_LEFT_BORDER_TR "Sadece Sol Kenar"
 #define OPTION_VAL_LEFT_RIGHT_BORDERS_TR "Sol & Sağ Kenarlar"
 #define GENESIS_PLUS_GX_GG_EXTRA_LABEL_TR "Game Gear Genişletilmiş Ekran"
-#define GENESIS_PLUS_GX_GG_EXTRA_INFO_0_TR NULL
+#define GENESIS_PLUS_GX_GG_EXTRA_INFO_0_TR "Game Gear oyunlarını 256x192 çözünürlüğe sahip SMS kipinde çalıştırmaya zorlar. Ek içerik gösterebilir, ancak genellikle bozuk/istenmeyen resim verilerinin kenarlığını görüntüler."
 #define GENESIS_PLUS_GX_BLARGG_NTSC_FILTER_LABEL_TR "Blargg NTSC Filtresi"
 #define GENESIS_PLUS_GX_BLARGG_NTSC_FILTER_INFO_0_TR "Çeşitli NTSC TV sinyallerini taklit etmek için bir video filtresi uygulayın."
 #define OPTION_VAL_MONOCHROME_TR "Tek Renk"
@@ -47907,12 +47907,12 @@ struct retro_core_options_v2 options_sv = {
 #define OPTION_VAL_SVIDEO_TR NULL
 #define OPTION_VAL_RGB_TR NULL
 #define GENESIS_PLUS_GX_LCD_FILTER_LABEL_TR "LCD Gölgelenme Filtresi"
-#define GENESIS_PLUS_GX_LCD_FILTER_INFO_0_TR NULL
+#define GENESIS_PLUS_GX_LCD_FILTER_INFO_0_TR "Game Gear ve Genesis Nomad LCD panellerinin ekran özelliklerini taklit etmek için bir görüntü 'gölgelenme' filtresi uygulayın."
 #define GENESIS_PLUS_GX_RENDER_LABEL_TR "Geçmeli Mod 2 Çıkışı"
-#define GENESIS_PLUS_GX_RENDER_INFO_0_TR NULL
+#define GENESIS_PLUS_GX_RENDER_INFO_0_TR "Geçmeli Mod 2, Mega Drive/Genesis'in her karede alternatif tarama çizgileri çizerek çift yükseklikte (yüksek çözünürlüklü) 320x448 görüntü çıktısı almasına olanak tanır (bu, Sonic the Hedgehog 2 ve Combat Cars çok oyunculu kipleri tarafından kullanılır). 'Çift Alan' orijinal donanımı taklit ederek titreyen/birbirine geçen eserler ile keskin bir görüntü üretir. 'Tek Alan', görüntüyü sabitleyen ancak hafif bulanıklığa neden olan bir deinterlacing filtresi uygular."
 #define OPTION_VAL_SINGLE_FIELD_TR "Tek Alan"
 #define OPTION_VAL_DOUBLE_FIELD_TR "Çift Alan"
-#define GENESIS_PLUS_GX_FRAMESKIP_LABEL_TR "Kare atlama"
+#define GENESIS_PLUS_GX_FRAMESKIP_LABEL_TR "Kare Atlama"
 #define GENESIS_PLUS_GX_FRAMESKIP_INFO_0_TR "Yetersiz çalıştırılan ses arabelleğini (çatırtı) önlemek için kareleri atlayın. Görsel pürüzsüzlük pahasına performansı iyileştirir. \"Otomatik\", ön uç tarafından önerildiğinde kareleri atlar. 'El ile', 'Kare Atlama Eşiği (%)' ayarını kullanır."
 #define OPTION_VAL_MANUAL_TR "El İle"
 #define GENESIS_PLUS_GX_FRAMESKIP_THRESHOLD_LABEL_TR "Kare Atlama Eşiği (%)"
@@ -47924,15 +47924,15 @@ struct retro_core_options_v2 options_sv = {
 #define OPTION_VAL_MAME_TR NULL
 #define OPTION_VAL_NUKED_TR NULL
 #define GENESIS_PLUS_GX_YM2612_LABEL_TR NULL
-#define GENESIS_PLUS_GX_YM2612_INFO_0_TR NULL
-#define GENESIS_PLUS_GX_YM2612_INFO_1_TR NULL
+#define GENESIS_PLUS_GX_YM2612_INFO_0_TR "Mega Drive/Genesis FM sentezleyicisini (ana ses üreteci) taklit etmek için kullanılan yöntemi seçin. 'MAME' seçenekleri hızlı ve çoğu sistemde tam hızda çalışıyor. 'Nuke' seçenekleri döngüde doğrudur, çok kalitelidir ve önemli CPU gereksinimine ihtiyaç duyar. YM2612 yongası, orijinal Model 1 Genesis tarafından kullanılır. YM3438 daha sonraki Genesis revizyonlarında kullanılır."
+#define GENESIS_PLUS_GX_YM2612_INFO_1_TR "Mega Drive/Genesis FM sentezleyicisini (ana ses üreteci) taklit etmek için kullanılan yöntemi seçin. YM2612 yongası, orijinal Model 1 Genesis tarafından kullanılır. YM3438 daha sonraki Genesis revizyonlarında kullanılır."
 #define OPTION_VAL_MAME_YM2612_TR NULL
 #define OPTION_VAL_MAME_ASIC_YM3438_TR NULL
 #define OPTION_VAL_MAME_ENHANCED_YM3438_TR NULL
 #define OPTION_VAL_NUKED_YM2612_TR NULL
 #define OPTION_VAL_NUKED_YM3438_TR NULL
 #define GENESIS_PLUS_GX_SOUND_OUTPUT_LABEL_TR "Ses Çıkışı"
-#define GENESIS_PLUS_GX_SOUND_OUTPUT_INFO_0_TR NULL
+#define GENESIS_PLUS_GX_SOUND_OUTPUT_INFO_0_TR "Stereo veya mono ses çalmayı seçin."
 #define OPTION_VAL_STEREO_TR NULL
 #define OPTION_VAL_MONO_TR NULL
 #define GENESIS_PLUS_GX_AUDIO_FILTER_LABEL_TR "Ses Filtresi"
@@ -47948,7 +47948,7 @@ struct retro_core_options_v2 options_sv = {
 #define GENESIS_PLUS_GX_CDDA_VOLUME_LABEL_TR "CD-DA Sesi"
 #define GENESIS_PLUS_GX_CDDA_VOLUME_INFO_0_TR "Taklit edilmiş CD ses oynatma çıkışının karıştırma sesini ayarlayın."
 #define GENESIS_PLUS_GX_PCM_VOLUME_LABEL_TR "PCM Sesi"
-#define GENESIS_PLUS_GX_PCM_VOLUME_INFO_0_TR NULL
+#define GENESIS_PLUS_GX_PCM_VOLUME_INFO_0_TR "Taklit edilmiş Sega CD/Mega CD RF5C164 PCM ses üreteci çıkışının karıştırma sesini ayarlayın."
 #define GENESIS_PLUS_GX_AUDIO_EQ_LOW_LABEL_TR "Düşük EQ"
 #define GENESIS_PLUS_GX_AUDIO_EQ_LOW_INFO_0_TR "Dahili ses ekolayzırının düşük aralık bandını ayarlayın."
 #define GENESIS_PLUS_GX_AUDIO_EQ_MID_LABEL_TR "Orta EQ"
@@ -47960,9 +47960,9 @@ struct retro_core_options_v2 options_sv = {
 #define OPTION_VAL_LIGHTGUN_TR NULL
 #define OPTION_VAL_TOUCHSCREEN_TR "Dokunmatik Ekran"
 #define GENESIS_PLUS_GX_GUN_CURSOR_LABEL_TR "Light Gun Göstergesini Göster"
-#define GENESIS_PLUS_GX_GUN_CURSOR_INFO_0_TR NULL
+#define GENESIS_PLUS_GX_GUN_CURSOR_INFO_0_TR "MD Menacer, MD Justifiers ve MS Light Phaser giriş cihazı tiplerini kullanırken Light Gun göstergelerini gösterin."
 #define GENESIS_PLUS_GX_INVERT_MOUSE_LABEL_TR "Fare Y Eksenini Ters Çevir"
-#define GENESIS_PLUS_GX_INVERT_MOUSE_INFO_0_TR NULL
+#define GENESIS_PLUS_GX_INVERT_MOUSE_INFO_0_TR "MD Fare giriş cihazı türünün Y eksenini ters çevirir."
 #define GENESIS_PLUS_GX_NO_SPRITE_LIMIT_LABEL_TR "Satır Başına Hareket Sınırını Kaldır"
 #define GENESIS_PLUS_GX_NO_SPRITE_LIMIT_INFO_0_TR "Orijinal tarama satırı başına hareketli grafik donanım sınırını kaldırır. Bu, titremeyi azaltır ancak bazı oyunlar özel efektler oluşturmak için donanım sınırını kullandığından görsel hatalara neden olabilir."
 #define GENESIS_PLUS_GX_OVERCLOCK_LABEL_TR "CPU Hızı"
@@ -47975,7 +47975,7 @@ struct retro_core_options_v2 options_sv = {
 #define GENESIS_PLUS_GX_FORCE_DTACK_LABEL_TR "Sistem Kilidi"
 #define GENESIS_PLUS_GX_FORCE_DTACK_INFO_0_TR "Geçersiz adres erişimi gerçekleştirirken gerçek donanımda oluşan sistem kilitlenmelerini taklit edin. Bu, yalnızca doğru işlem için uygun olmayan belirli demolar ve homebrew oynarken devre dışı bırakılmalıdır."
 #define GENESIS_PLUS_GX_ADDR_ERROR_LABEL_TR "68K Adres Hatası"
-#define GENESIS_PLUS_GX_ADDR_ERROR_INFO_0_TR NULL
+#define GENESIS_PLUS_GX_ADDR_ERROR_INFO_0_TR "Mega Drive/Genesis ana CPU'su (Motorola 68000), hizalanmamış bellek erişimi gerçekleştirmeye çalışırken bir Adres Hatası istisnası (çökme) oluşturur. Bunu etkinleştirmek, bu davranışı taklit edecektir. Yalnızca ROM geliştirmeleri oynatılırken devre dışı bırakılmalıdır, çünkü bunlar genellikle daha az doğru emülatörler kullanılarak geliştirilir ve doğru işlem için geçersiz RAM erişimine güvenebilir."
 #define GENESIS_PLUS_GX_SHOW_ADVANCED_AUDIO_SETTINGS_LABEL_TR "Gelişmiş Ses Düzeyi Ayarlarını Göster (Menüyü yeniden aç)"
 #define GENESIS_PLUS_GX_SHOW_ADVANCED_AUDIO_SETTINGS_INFO_0_TR "Düşük seviyeli ses kanalı parametrelerinin yapılandırmasını etkinleştirin. NOT: Bu ayarın geçerli olması için Hızlı Menü'nün değiştirilmesi gerekir."
 #define GENESIS_PLUS_GX_PSG_CHANNEL_0_VOLUME_LABEL_TR "PSG Ton Kanal 0 Ses Seviyesi %"
@@ -47986,18 +47986,18 @@ struct retro_core_options_v2 options_sv = {
 #define GENESIS_PLUS_GX_PSG_CHANNEL_2_VOLUME_INFO_0_TR "PSG Tonu Kanal 2 sesini azaltın."
 #define GENESIS_PLUS_GX_PSG_CHANNEL_3_VOLUME_LABEL_TR "PSG Gürültü Kanal 3 Ses Seviyesi %"
 #define GENESIS_PLUS_GX_PSG_CHANNEL_3_VOLUME_INFO_0_TR "PSG Gürültü Kanal 3 sesini azaltın."
-#define GENESIS_PLUS_GX_MD_CHANNEL_0_VOLUME_LABEL_TR NULL
-#define GENESIS_PLUS_GX_MD_CHANNEL_0_VOLUME_INFO_0_TR NULL
-#define GENESIS_PLUS_GX_MD_CHANNEL_1_VOLUME_LABEL_TR NULL
-#define GENESIS_PLUS_GX_MD_CHANNEL_1_VOLUME_INFO_0_TR NULL
-#define GENESIS_PLUS_GX_MD_CHANNEL_2_VOLUME_LABEL_TR NULL
-#define GENESIS_PLUS_GX_MD_CHANNEL_2_VOLUME_INFO_0_TR NULL
-#define GENESIS_PLUS_GX_MD_CHANNEL_3_VOLUME_LABEL_TR NULL
-#define GENESIS_PLUS_GX_MD_CHANNEL_3_VOLUME_INFO_0_TR NULL
-#define GENESIS_PLUS_GX_MD_CHANNEL_4_VOLUME_LABEL_TR NULL
-#define GENESIS_PLUS_GX_MD_CHANNEL_4_VOLUME_INFO_0_TR NULL
-#define GENESIS_PLUS_GX_MD_CHANNEL_5_VOLUME_LABEL_TR NULL
-#define GENESIS_PLUS_GX_MD_CHANNEL_5_VOLUME_INFO_0_TR NULL
+#define GENESIS_PLUS_GX_MD_CHANNEL_0_VOLUME_LABEL_TR "Mega Drive/Genesis FM Kanal 0 Ses Seviyesi %"
+#define GENESIS_PLUS_GX_MD_CHANNEL_0_VOLUME_INFO_0_TR "Mega Drive/Genesis FM Kanal 0 sesini azaltın. Yalnızca MAME FM emülatörlerle çalışır."
+#define GENESIS_PLUS_GX_MD_CHANNEL_1_VOLUME_LABEL_TR "Mega Drive/Genesis FM Kanal 1 Ses Seviyesi %"
+#define GENESIS_PLUS_GX_MD_CHANNEL_1_VOLUME_INFO_0_TR "Mega Drive/Genesis FM Kanal 1 sesini azaltın. Yalnızca MAME FM emülatörlerle çalışır."
+#define GENESIS_PLUS_GX_MD_CHANNEL_2_VOLUME_LABEL_TR "Mega Drive/Genesis FM Kanal 2 Ses Seviyesi %"
+#define GENESIS_PLUS_GX_MD_CHANNEL_2_VOLUME_INFO_0_TR "Mega Drive/Genesis FM Kanal 2 sesini azaltın. Yalnızca MAME FM emülatörlerle çalışır."
+#define GENESIS_PLUS_GX_MD_CHANNEL_3_VOLUME_LABEL_TR "Mega Drive/Genesis FM Kanal 3 Ses Seviyesi %"
+#define GENESIS_PLUS_GX_MD_CHANNEL_3_VOLUME_INFO_0_TR "Mega Drive/Genesis FM Kanal 3 sesini azaltın. Yalnızca MAME FM emülatörlerle çalışır."
+#define GENESIS_PLUS_GX_MD_CHANNEL_4_VOLUME_LABEL_TR "Mega Drive/Genesis FM Kanal 4 Ses Seviyesi %"
+#define GENESIS_PLUS_GX_MD_CHANNEL_4_VOLUME_INFO_0_TR "Mega Drive/Genesis FM Kanal 4 sesini azaltın. Yalnızca MAME FM emülatörlerle çalışır."
+#define GENESIS_PLUS_GX_MD_CHANNEL_5_VOLUME_LABEL_TR "Mega Drive/Genesis FM Kanal 5 Ses Seviyesi %"
+#define GENESIS_PLUS_GX_MD_CHANNEL_5_VOLUME_INFO_0_TR "Mega Drive/Genesis FM Kanal 5 sesini azaltın. Yalnızca MAME FM emülatörlerle çalışır."
 #define GENESIS_PLUS_GX_SMS_FM_CHANNEL_0_VOLUME_LABEL_TR "Master System FM (YM2413) Kanal 0 Ses Seviyesi %"
 #define GENESIS_PLUS_GX_SMS_FM_CHANNEL_0_VOLUME_INFO_0_TR "Master System FM Kanal 0 sesini azaltın."
 #define GENESIS_PLUS_GX_SMS_FM_CHANNEL_1_VOLUME_LABEL_TR "Master System FM (YM2413) Kanal 1 Ses Seviyesi %"
@@ -49251,7 +49251,7 @@ struct retro_core_options_v2 options_tr = {
 #define CATEGORY_SYSTEM_LABEL_UK "Система"
 #define CATEGORY_SYSTEM_INFO_0_UK NULL
 #define CATEGORY_VIDEO_LABEL_UK "Відео"
-#define CATEGORY_VIDEO_INFO_0_UK NULL
+#define CATEGORY_VIDEO_INFO_0_UK "Налаштування співвідношення сторін / кадрування / відеофільтрів / пропуску кадрів."
 #define CATEGORY_AUDIO_LABEL_UK "Аудіо"
 #define CATEGORY_AUDIO_INFO_0_UK NULL
 #define CATEGORY_INPUT_LABEL_UK "Ввід"
@@ -49318,7 +49318,7 @@ struct retro_core_options_v2 options_tr = {
 #define GENESIS_PLUS_GX_RENDER_INFO_0_UK NULL
 #define OPTION_VAL_SINGLE_FIELD_UK NULL
 #define OPTION_VAL_DOUBLE_FIELD_UK NULL
-#define GENESIS_PLUS_GX_FRAMESKIP_LABEL_UK NULL
+#define GENESIS_PLUS_GX_FRAMESKIP_LABEL_UK "Пропуск кадру"
 #define GENESIS_PLUS_GX_FRAMESKIP_INFO_0_UK "Пропускати кадри, щоб уникнути спустошення буферу (тріскіт). Покращує швидкодію, погіршуючи плавність зображення. 'Авто' пропускає кадри, керуючись командами зовнішньої оболонки. 'Ручний' використовує налаштування 'Межа пропуску кадрів (%)'."
 #define OPTION_VAL_MANUAL_UK "Ручний"
 #define GENESIS_PLUS_GX_FRAMESKIP_THRESHOLD_LABEL_UK "Межа пропуску кадрів (%)"
