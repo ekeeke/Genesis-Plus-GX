@@ -15505,7 +15505,7 @@ struct retro_core_options_v2 options_eo = {
 /* RETRO_LANGUAGE_ES */
 
 #define CATEGORY_SYSTEM_LABEL_ES "Sistema"
-#define CATEGORY_SYSTEM_INFO_0_ES "Cambia las opciones del hardware base, de la región, de la BIOS y del archivo de guardado de Sega CD/Mega-CD."
+#define CATEGORY_SYSTEM_INFO_0_ES "Cambia las opciones del hardware base, la región, su BIOS y el archivo de guardado de Sega CD/Mega-CD."
 #define CATEGORY_VIDEO_LABEL_ES "Vídeo"
 #define CATEGORY_VIDEO_INFO_0_ES "Cambia las opciones de relación de aspecto, recorte de imagen, filtros de vídeo y omisión de fotogramas."
 #define CATEGORY_AUDIO_LABEL_ES NULL
@@ -15532,18 +15532,18 @@ struct retro_core_options_v2 options_eo = {
 #define OPTION_VAL_PAL_ES NULL
 #define OPTION_VAL_NTSC_J_ES NULL
 #define GENESIS_PLUS_GX_BIOS_LABEL_ES "ROM de arranque del sistema"
-#define GENESIS_PLUS_GX_BIOS_INFO_0_ES "Utiliza un cargador de arranque o BIOS oficiales para la emulación si se encuentran en el directorio del sistema de RetroArch. Se mostrará la secuencia de inicio de la consola y luego se ejecutará el contenido cargado."
+#define GENESIS_PLUS_GX_BIOS_INFO_0_ES "Utiliza un cargador de arranque o BIOS oficiales para la emulación si se encuentran en el directorio del sistema de RetroArch. Se mostrará la secuencia específica de inicio de la consola y luego se ejecutará el contenido cargado."
 #define GENESIS_PLUS_GX_BRAM_LABEL_ES "BRAM para el sistema de CD"
 #define GENESIS_PLUS_GX_BRAM_INFO_0_ES "Al ejecutar contenidos para Mega-CD/Sega CD, especifica si se debe compartir un archivo de guardado entre todos los juegos de la misma región («Una por BIOS») o si se debe crear un archivo de guardado individual para cada juego («Una por cada juego»). Nota: la Mega-CD/Sega CD tiene un almacenamiento interno limitado en el que solo caben unos pocos títulos. Se recomienda seleccionar «Una por cada juego» para evitar quedarte sin espacio libre."
-#define OPTION_VAL_PER_BIOS_ES "Una por BIOS"
-#define OPTION_VAL_PER_GAME_ES "Una por cada juego"
+#define OPTION_VAL_PER_BIOS_ES "Uno por BIOS"
+#define OPTION_VAL_PER_GAME_ES "Uno por cada juego"
 #define GENESIS_PLUS_GX_ADD_ON_LABEL_ES "Módulo de CD (modo MD, es necesario reiniciar)"
-#define GENESIS_PLUS_GX_ADD_ON_INFO_0_ES "Especifica el módulo a utilizar para la reproducción de audio de CD en los juegos compatibles de Mega Drive/Genesis."
+#define GENESIS_PLUS_GX_ADD_ON_INFO_0_ES "Especifica el módulo que se ha de utilizar para la reproducción de audio de CD en los juegos compatibles de Mega Drive/Genesis."
 #define OPTION_VAL_SEGA_MEGA_CD_ES "Sega CD/Mega-CD"
 #define OPTION_VAL_MEGASD_ES NULL
 #define OPTION_VAL_NONE_ES "Ninguno"
 #define GENESIS_PLUS_GX_LOCK_ON_LABEL_ES "Lock-On/Ensamblaje entre cartuchos"
-#define GENESIS_PLUS_GX_LOCK_ON_INFO_0_ES "La tecnología Lock-On/de ensamblaje es una característica de Mega Drive/Genesis que permitía a un juego antiguo conectarse a un cartucho especial para alterar o ampliar su contenido. Esta opción especifica el tipo concreto de Lock-On a emular. Es necesario incluir el archivo de la BIOS correspondiente en el directorio del sistema de RetroArch."
+#define GENESIS_PLUS_GX_LOCK_ON_INFO_0_ES "La tecnología Lock-On/de ensamblaje es una característica de Mega Drive/Genesis que permitía a un juego antiguo conectarse a la ranura de un cartucho especial para alterar o ampliar su contenido. Esta opción especifica el tipo concreto de ensamblaje o «Lock-On» emulado. Es necesario incluir el archivo de la BIOS correspondiente en el directorio del sistema de RetroArch."
 #define OPTION_VAL_GAME_GENIE_ES NULL
 #define OPTION_VAL_ACTION_REPLAY_PRO_ES NULL
 #define OPTION_VAL_SONIC_KNUCKLES_ES NULL
@@ -15578,15 +15578,15 @@ struct retro_core_options_v2 options_eo = {
 #define GENESIS_PLUS_GX_FRAMESKIP_INFO_0_ES "Omite fotogramas para no saturar el búfer de audio (chasquidos en el sonido). Mejora el rendimiento a costa de perder fluidez visual. Selección automática omite fotogramas según lo aconseje el front-end. El valor Manual utiliza el ajuste Umbral de omisión de fotogramas (%)."
 #define OPTION_VAL_MANUAL_ES NULL
 #define GENESIS_PLUS_GX_FRAMESKIP_THRESHOLD_LABEL_ES "Umbral de omisión de fotogramas (%)"
-#define GENESIS_PLUS_GX_FRAMESKIP_THRESHOLD_INFO_0_ES "Cuando la omisión de fotogramas esté configurada como Manual, este ajuste especifica el umbral de ocupación del búfer de audio (en porcentaje) por el que se omitirán fotogramas si el valor es inferior. Un valor más elevado reduce el riesgo de chasquidos omitiendo fotogramas con una mayor frecuencia."
-#define GENESIS_PLUS_GX_YM2413_LABEL_ES "Sonido FM de Master System (YM2413)"
+#define GENESIS_PLUS_GX_FRAMESKIP_THRESHOLD_INFO_0_ES "Cuando la omisión de fotogramas esté configurada como Manual, este ajuste especifica el umbral de ocupación del búfer de audio (en porcentaje) por debajo del cual se omitirán fotogramas si el valor. Un valor más elevado reduce el riesgo de chasquidos omitiendo fotogramas con una mayor frecuencia."
+#define GENESIS_PLUS_GX_YM2413_LABEL_ES "Sonido por síntesis FM de Master System (YM2413)"
 #define GENESIS_PLUS_GX_YM2413_INFO_0_ES "Activa la emulación de la unidad de sonido FM que usan algunos juegos concretos de Sega Mark III/Master System para mejorar su salida de audio."
 #define GENESIS_PLUS_GX_YM2413_CORE_LABEL_ES "Núcleo del sonido FM de Master System (YM2413)"
 #define GENESIS_PLUS_GX_YM2413_CORE_INFO_0_ES "Selecciona el método con el que emular la unidad de sonido FM de la Sega Mark III/Master System. «MAME» es rápido y se ejecuta a la máxima velocidad en la mayoría de sistemas. «Nuked» ofrece una emulación precisa, con una calidad y requisitos de CPU elevados."
 #define OPTION_VAL_MAME_ES NULL
 #define OPTION_VAL_NUKED_ES NULL
-#define GENESIS_PLUS_GX_YM2612_LABEL_ES "Sonido FM de Mega Drive/Genesis"
-#define GENESIS_PLUS_GX_YM2612_INFO_0_ES "Selecciona el método con el que emular el sintetizador FM (el generador principal de sonido) de la Mega Drive/Genesis. Las opciones de MAME son rápidas y se ejecutan a la máxima velocidad en la mayoría de sistemas. Las opciones Nuked ofrecen una emulación precisa, con una calidad y requisitos de CPU elevados. El chip YM26132 es el que llevan los Model 1 originales de Mega Drive/Genesis. El chip YM3438 es el que se utilizó en las revisiones posteriores de Mega Drive/Genesis."
+#define GENESIS_PLUS_GX_YM2612_LABEL_ES "Sonido por síntesis FM de Mega Drive/Genesis"
+#define GENESIS_PLUS_GX_YM2612_INFO_0_ES "Selecciona el método con el que emular el sintetizador FM (el generador principal de sonido) de la Mega Drive/Genesis. Las opciones de MAME son rápidas y se ejecutan a la máxima velocidad en la mayoría de sistemas. Las opciones Nuked ofrecen una emulación precisa en cuanto a ciclos, con una calidad y requisitos de CPU elevados. El chip YM26132 es el que llevan los Model 1 originales de Mega Drive/Genesis. El chip YM3438 es el que se utilizó en las revisiones posteriores de Mega Drive/Genesis."
 #define GENESIS_PLUS_GX_YM2612_INFO_1_ES "Selecciona el método con el que emular el sintetizador FM (el generador principal de sonido) de la Mega Drive/Genesis. El chip YM26132 es el que llevan los Model 1 originales de Mega Drive/Genesis. El chip YM3438 es el que se utilizó en las revisiones posteriores de Mega Drive/Genesis."
 #define OPTION_VAL_MAME_YM2612_ES NULL
 #define OPTION_VAL_MAME_ASIC_YM3438_ES NULL
@@ -15603,19 +15603,19 @@ struct retro_core_options_v2 options_eo = {
 #define OPTION_VAL_EQ_ES "Ecualizador"
 #define GENESIS_PLUS_GX_LOWPASS_RANGE_LABEL_ES "Porcentaje del filtro de paso bajo"
 #define GENESIS_PLUS_GX_LOWPASS_RANGE_INFO_0_ES "Especifica el umbral de frecuencias del filtro de paso bajo de audio. Un valor más elevado aumentará la «fuerza» percibida del filtro, atenuando un mayor rango de frecuencias altas."
-#define GENESIS_PLUS_GX_PSG_PREAMP_LABEL_ES "Nivel de preamplificado del PSG"
-#define GENESIS_PLUS_GX_PSG_PREAMP_INFO_0_ES "Ajusta el nivel de preamplificado de audio del PSG (generador programable de sonidos) SN76496 de cuatro canales que utilizan las SG-1000, Sega Mark III, Master System, Game Gear y Mega Drive/Genesis."
-#define GENESIS_PLUS_GX_FM_PREAMP_LABEL_ES "Nivel de preamplificado del FM"
+#define GENESIS_PLUS_GX_PSG_PREAMP_LABEL_ES "Nivel de preamplificación del PSG"
+#define GENESIS_PLUS_GX_PSG_PREAMP_INFO_0_ES "Ajusta el nivel de preamplificación de audio del PSG (generador programable de sonidos) SN76496 de cuatro canales que utilizan las SG-1000, Sega Mark III, Master System, Game Gear y Mega Drive/Genesis."
+#define GENESIS_PLUS_GX_FM_PREAMP_LABEL_ES "Nivel de preamplificación de FM"
 #define GENESIS_PLUS_GX_FM_PREAMP_INFO_0_ES "Ajusta el nivel de preamplificado de audio del sintetizador de sonido FM de Mega Drive/Genesis o de la unidad de sonido FM de las Sega Mark III/Master System."
-#define GENESIS_PLUS_GX_CDDA_VOLUME_LABEL_ES "Volumen de CD-DA"
+#define GENESIS_PLUS_GX_CDDA_VOLUME_LABEL_ES "Volumen de CD audio (CD-DA)"
 #define GENESIS_PLUS_GX_CDDA_VOLUME_INFO_0_ES "Ajusta el volumen de mezcla de la salida de audio CD emulada."
-#define GENESIS_PLUS_GX_PCM_VOLUME_LABEL_ES "Volumen de PCM"
+#define GENESIS_PLUS_GX_PCM_VOLUME_LABEL_ES "Volumen de onda PCM"
 #define GENESIS_PLUS_GX_PCM_VOLUME_INFO_0_ES "Ajusta el volumen de mezcla de la salida de audio del generador PCM RF5C164 emulado de la Sega CD/Mega-CD."
-#define GENESIS_PLUS_GX_AUDIO_EQ_LOW_LABEL_ES "Ecualizado de graves"
+#define GENESIS_PLUS_GX_AUDIO_EQ_LOW_LABEL_ES "Ecualización de graves"
 #define GENESIS_PLUS_GX_AUDIO_EQ_LOW_INFO_0_ES "Ajusta la banda de tonos graves del ecualizador interno de audio."
-#define GENESIS_PLUS_GX_AUDIO_EQ_MID_LABEL_ES "Ecualizado de medios"
+#define GENESIS_PLUS_GX_AUDIO_EQ_MID_LABEL_ES "Ecualización de medios"
 #define GENESIS_PLUS_GX_AUDIO_EQ_MID_INFO_0_ES "Ajusta la banda de tonos medios del ecualizador interno de audio."
-#define GENESIS_PLUS_GX_AUDIO_EQ_HIGH_LABEL_ES "Ecualizado de agudos"
+#define GENESIS_PLUS_GX_AUDIO_EQ_HIGH_LABEL_ES "Ecualización de agudos"
 #define GENESIS_PLUS_GX_AUDIO_EQ_HIGH_INFO_0_ES "Ajusta la banda de tonos agudos del ecualizador interno de audio."
 #define GENESIS_PLUS_GX_GUN_INPUT_LABEL_ES "Entrada de pistola de luz"
 #define GENESIS_PLUS_GX_GUN_INPUT_INFO_0_ES "Utiliza un ratón o una pantalla táctil para controlar una pistola de luz."
@@ -18368,10 +18368,10 @@ struct retro_core_options_v2 options_fa = {
 #define OPTION_VAL_TOP_BOTTOM_FI NULL
 #define OPTION_VAL_LEFT_RIGHT_FI "Vasen/Oikea"
 #define OPTION_VAL_FULL_FI NULL
-#define GENESIS_PLUS_GX_LEFT_BORDER_LABEL_FI NULL
+#define GENESIS_PLUS_GX_LEFT_BORDER_LABEL_FI "Piilota Master Systemin sivurajat"
 #define GENESIS_PLUS_GX_LEFT_BORDER_INFO_0_FI NULL
-#define OPTION_VAL_LEFT_BORDER_FI NULL
-#define OPTION_VAL_LEFT_RIGHT_BORDERS_FI NULL
+#define OPTION_VAL_LEFT_BORDER_FI "Vain vasen reuna"
+#define OPTION_VAL_LEFT_RIGHT_BORDERS_FI "Vasen ja oikea reuna"
 #define GENESIS_PLUS_GX_GG_EXTRA_LABEL_FI NULL
 #define GENESIS_PLUS_GX_GG_EXTRA_INFO_0_FI NULL
 #define GENESIS_PLUS_GX_BLARGG_NTSC_FILTER_LABEL_FI "Blargg NTSC suodatin"
