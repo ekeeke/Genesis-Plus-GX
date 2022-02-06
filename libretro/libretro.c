@@ -3529,20 +3529,20 @@ void retro_run(void)
 
    if ((config.left_border != 0) && (reg[0] & 0x20) && (bitmap.viewport.x == 0) && ((system_hw == SYSTEM_MARKIII) || (system_hw & SYSTEM_SMS) || (system_hw == SYSTEM_PBC)))
    {
-	   bmdoffset = 16;
-	   if (config.left_border == 1)
-		   vwoffset = 8;
-	   else
-		   vwoffset = 16;
+       bmdoffset = (16 + (config.ntsc ? 24 : 0));
+       if (config.left_border == 1)
+           vwoffset = (8 + (config.ntsc ? 12 : 0));
+       else
+           vwoffset = (16 + (config.ntsc ? 24 : 0));
    }
 
    if (!do_skip)
    {
-		video_cb(bitmap.data + bmdoffset, vwidth - vwoffset, vheight, 720 * 2);	
-   }		
+        video_cb(bitmap.data + bmdoffset, vwidth - vwoffset, vheight, 720 * 2);	
+   }
    else
    {
-		video_cb(NULL, vwidth - vwoffset, vheight, 720 * 2);
+        video_cb(NULL, vwidth - vwoffset, vheight, 720 * 2);
    }
 
    audio_cb(soundbuffer, audio_update(soundbuffer));
