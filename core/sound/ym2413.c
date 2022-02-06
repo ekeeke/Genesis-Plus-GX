@@ -103,7 +103,7 @@ typedef struct
   UINT8  eg_sh_dp;  /* (dump state)                   */
   UINT8  eg_sel_dp; /* (dump state)                   */
   UINT8  eg_sh_ar;  /* (attack state)                 */
-  UINT8  eg_sel_ar; /* (attack state)                 */
+  UINT16 eg_sel_ar; /* (attack state)                 */
   UINT8  eg_sh_dr;  /* (decay state)                  */
   UINT8  eg_sel_dr; /* (decay state)                  */
   UINT8  eg_sh_rr;  /* (release state for non-perc.)  */
