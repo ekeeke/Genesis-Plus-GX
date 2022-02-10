@@ -1224,6 +1224,8 @@ static double calculate_display_aspect_ratio(void)
       videosamplerate = 135000000.0 / 11.0;
    else if (config.aspect_ratio == 2) /* Force PAL PAR */
       videosamplerate = 14750000.0;
+   else if (config.aspect_ratio == 3) /* Force 4:3 */
+      return (4.0 / 3.0);
    else
       videosamplerate = vdp_pal ? 14750000.0 : 135000000.0 / 11.0;
 
@@ -1802,6 +1804,8 @@ static void check_variables(bool first_run)
       config.aspect_ratio = 1;
     else if (var.value && !strcmp(var.value, "PAL PAR"))
       config.aspect_ratio = 2;
+    else if (var.value && !strcmp(var.value, "4:3"))
+      config.aspect_ratio = 3;
     else
       config.aspect_ratio = 0;
     if (orig_value != config.aspect_ratio)
