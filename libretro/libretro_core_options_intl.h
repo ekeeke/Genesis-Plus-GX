@@ -85,6 +85,7 @@ extern "C" {
 #define GENESIS_PLUS_GX_ASPECT_RATIO_INFO_0_AR NULL
 #define OPTION_VAL_NTSC_PAR_AR NULL
 #define OPTION_VAL_PAL_PAR_AR NULL
+#define OPTION_VAL_4_3_AR NULL
 #define GENESIS_PLUS_GX_OVERSCAN_LABEL_AR NULL
 #define GENESIS_PLUS_GX_OVERSCAN_INFO_0_AR NULL
 #define OPTION_VAL_TOP_BOTTOM_AR NULL
@@ -354,6 +355,7 @@ struct retro_core_option_v2_definition option_defs_ar[] = {
          { "auto",     OPTION_VAL_AUTO_AR },
          { "NTSC PAR", OPTION_VAL_NTSC_PAR_AR },
          { "PAL PAR",  OPTION_VAL_PAL_PAR_AR },
+         { "4:3",  OPTION_VAL_4_3_AR },
       },
       "auto"
    },
@@ -1491,6 +1493,7 @@ struct retro_core_options_v2 options_ar = {
 #define GENESIS_PLUS_GX_ASPECT_RATIO_INFO_0_AST NULL
 #define OPTION_VAL_NTSC_PAR_AST NULL
 #define OPTION_VAL_PAL_PAR_AST NULL
+#define OPTION_VAL_4_3_AST NULL
 #define GENESIS_PLUS_GX_OVERSCAN_LABEL_AST "Berbesos"
 #define GENESIS_PLUS_GX_OVERSCAN_INFO_0_AST NULL
 #define OPTION_VAL_TOP_BOTTOM_AST NULL
@@ -1760,6 +1763,7 @@ struct retro_core_option_v2_definition option_defs_ast[] = {
          { "auto",     OPTION_VAL_AUTO_AST },
          { "NTSC PAR", OPTION_VAL_NTSC_PAR_AST },
          { "PAL PAR",  OPTION_VAL_PAL_PAR_AST },
+         { "4:3",  OPTION_VAL_4_3_AST },
       },
       "auto"
    },
@@ -2897,6 +2901,7 @@ struct retro_core_options_v2 options_ast = {
 #define GENESIS_PLUS_GX_ASPECT_RATIO_INFO_0_CA NULL
 #define OPTION_VAL_NTSC_PAR_CA NULL
 #define OPTION_VAL_PAL_PAR_CA NULL
+#define OPTION_VAL_4_3_CA NULL
 #define GENESIS_PLUS_GX_OVERSCAN_LABEL_CA NULL
 #define GENESIS_PLUS_GX_OVERSCAN_INFO_0_CA NULL
 #define OPTION_VAL_TOP_BOTTOM_CA NULL
@@ -3166,6 +3171,7 @@ struct retro_core_option_v2_definition option_defs_ca[] = {
          { "auto",     OPTION_VAL_AUTO_CA },
          { "NTSC PAR", OPTION_VAL_NTSC_PAR_CA },
          { "PAL PAR",  OPTION_VAL_PAL_PAR_CA },
+         { "4:3",  OPTION_VAL_4_3_CA },
       },
       "auto"
    },
@@ -4303,6 +4309,7 @@ struct retro_core_options_v2 options_ca = {
 #define GENESIS_PLUS_GX_ASPECT_RATIO_INFO_0_CHS "选择首选内容宽高比。这只适用于RetroArch的宽高比设置为视频设置中的“核心提供”。"
 #define OPTION_VAL_NTSC_PAR_CHS NULL
 #define OPTION_VAL_PAL_PAR_CHS NULL
+#define OPTION_VAL_4_3_CHS NULL
 #define GENESIS_PLUS_GX_OVERSCAN_LABEL_CHS "边框"
 #define GENESIS_PLUS_GX_OVERSCAN_INFO_0_CHS "启用此选项以显示屏幕顶部/底部和/或左/右侧的覆盖区域。 这些通常被贝塞尔人隐藏在标准定义电视的边缘。"
 #define OPTION_VAL_TOP_BOTTOM_CHS "顶部/底部"
@@ -4572,6 +4579,7 @@ struct retro_core_option_v2_definition option_defs_chs[] = {
          { "auto",     OPTION_VAL_AUTO_CHS },
          { "NTSC PAR", OPTION_VAL_NTSC_PAR_CHS },
          { "PAL PAR",  OPTION_VAL_PAL_PAR_CHS },
+         { "4:3",  OPTION_VAL_4_3_CHS },
       },
       "auto"
    },
@@ -5709,6 +5717,7 @@ struct retro_core_options_v2 options_chs = {
 #define GENESIS_PLUS_GX_ASPECT_RATIO_INFO_0_CHT NULL
 #define OPTION_VAL_NTSC_PAR_CHT NULL
 #define OPTION_VAL_PAL_PAR_CHT NULL
+#define OPTION_VAL_4_3_CHT NULL
 #define GENESIS_PLUS_GX_OVERSCAN_LABEL_CHT "邊框"
 #define GENESIS_PLUS_GX_OVERSCAN_INFO_0_CHT NULL
 #define OPTION_VAL_TOP_BOTTOM_CHT "頂/底"
@@ -5978,6 +5987,7 @@ struct retro_core_option_v2_definition option_defs_cht[] = {
          { "auto",     OPTION_VAL_AUTO_CHT },
          { "NTSC PAR", OPTION_VAL_NTSC_PAR_CHT },
          { "PAL PAR",  OPTION_VAL_PAL_PAR_CHT },
+         { "4:3",  OPTION_VAL_4_3_CHT },
       },
       "auto"
    },
@@ -7115,6 +7125,7 @@ struct retro_core_options_v2 options_cht = {
 #define GENESIS_PLUS_GX_ASPECT_RATIO_INFO_0_CS NULL
 #define OPTION_VAL_NTSC_PAR_CS NULL
 #define OPTION_VAL_PAL_PAR_CS NULL
+#define OPTION_VAL_4_3_CS NULL
 #define GENESIS_PLUS_GX_OVERSCAN_LABEL_CS NULL
 #define GENESIS_PLUS_GX_OVERSCAN_INFO_0_CS NULL
 #define OPTION_VAL_TOP_BOTTOM_CS NULL
@@ -7384,6 +7395,7 @@ struct retro_core_option_v2_definition option_defs_cs[] = {
          { "auto",     OPTION_VAL_AUTO_CS },
          { "NTSC PAR", OPTION_VAL_NTSC_PAR_CS },
          { "PAL PAR",  OPTION_VAL_PAL_PAR_CS },
+         { "4:3",  OPTION_VAL_4_3_CS },
       },
       "auto"
    },
@@ -8521,6 +8533,7 @@ struct retro_core_options_v2 options_cs = {
 #define GENESIS_PLUS_GX_ASPECT_RATIO_INFO_0_CY NULL
 #define OPTION_VAL_NTSC_PAR_CY NULL
 #define OPTION_VAL_PAL_PAR_CY NULL
+#define OPTION_VAL_4_3_CY NULL
 #define GENESIS_PLUS_GX_OVERSCAN_LABEL_CY NULL
 #define GENESIS_PLUS_GX_OVERSCAN_INFO_0_CY NULL
 #define OPTION_VAL_TOP_BOTTOM_CY NULL
@@ -8790,6 +8803,7 @@ struct retro_core_option_v2_definition option_defs_cy[] = {
          { "auto",     OPTION_VAL_AUTO_CY },
          { "NTSC PAR", OPTION_VAL_NTSC_PAR_CY },
          { "PAL PAR",  OPTION_VAL_PAL_PAR_CY },
+         { "4:3",  OPTION_VAL_4_3_CY },
       },
       "auto"
    },
@@ -9927,6 +9941,7 @@ struct retro_core_options_v2 options_cy = {
 #define GENESIS_PLUS_GX_ASPECT_RATIO_INFO_0_DA NULL
 #define OPTION_VAL_NTSC_PAR_DA NULL
 #define OPTION_VAL_PAL_PAR_DA NULL
+#define OPTION_VAL_4_3_DA NULL
 #define GENESIS_PLUS_GX_OVERSCAN_LABEL_DA NULL
 #define GENESIS_PLUS_GX_OVERSCAN_INFO_0_DA NULL
 #define OPTION_VAL_TOP_BOTTOM_DA NULL
@@ -10196,6 +10211,7 @@ struct retro_core_option_v2_definition option_defs_da[] = {
          { "auto",     OPTION_VAL_AUTO_DA },
          { "NTSC PAR", OPTION_VAL_NTSC_PAR_DA },
          { "PAL PAR",  OPTION_VAL_PAL_PAR_DA },
+         { "4:3",  OPTION_VAL_4_3_DA },
       },
       "auto"
    },
@@ -11296,7 +11312,7 @@ struct retro_core_options_v2 options_da = {
 #define CATEGORY_INPUT_INFO_0_DE NULL
 #define CATEGORY_HACKS_LABEL_DE "Emulations-Hacks"
 #define CATEGORY_HACKS_INFO_0_DE NULL
-#define CATEGORY_CHANNEL_VOLUME_LABEL_DE NULL
+#define CATEGORY_CHANNEL_VOLUME_LABEL_DE "Erweiterte Lautstärkeeinstellungen"
 #define CATEGORY_CHANNEL_VOLUME_INFO_0_DE NULL
 #define GENESIS_PLUS_GX_SYSTEM_HW_LABEL_DE "System-Hardware"
 #define GENESIS_PLUS_GX_SYSTEM_HW_INFO_0_DE NULL
@@ -11330,9 +11346,10 @@ struct retro_core_options_v2 options_da = {
 #define OPTION_VAL_ACTION_REPLAY_PRO_DE NULL
 #define OPTION_VAL_SONIC_KNUCKLES_DE NULL
 #define GENESIS_PLUS_GX_ASPECT_RATIO_LABEL_DE "Core-Bereitgestelltes Seitenverhältnis"
-#define GENESIS_PLUS_GX_ASPECT_RATIO_INFO_0_DE NULL
+#define GENESIS_PLUS_GX_ASPECT_RATIO_INFO_0_DE "Das bevorzugte Seitenverhältnis des Inhalts auswählen. Dies wird nur angewendet, wenn das Seitenverhältnis von RetroArch in den Videoeinstellungen auf \"Core-bestimmtes Seitenverhältnis\" eingestellt ist."
 #define OPTION_VAL_NTSC_PAR_DE NULL
 #define OPTION_VAL_PAL_PAR_DE NULL
+#define OPTION_VAL_4_3_DE NULL
 #define GENESIS_PLUS_GX_OVERSCAN_LABEL_DE NULL
 #define GENESIS_PLUS_GX_OVERSCAN_INFO_0_DE NULL
 #define OPTION_VAL_TOP_BOTTOM_DE "Oben/Unten"
@@ -11602,6 +11619,7 @@ struct retro_core_option_v2_definition option_defs_de[] = {
          { "auto",     OPTION_VAL_AUTO_DE },
          { "NTSC PAR", OPTION_VAL_NTSC_PAR_DE },
          { "PAL PAR",  OPTION_VAL_PAL_PAR_DE },
+         { "4:3",  OPTION_VAL_4_3_DE },
       },
       "auto"
    },
@@ -12739,6 +12757,7 @@ struct retro_core_options_v2 options_de = {
 #define GENESIS_PLUS_GX_ASPECT_RATIO_INFO_0_EL NULL
 #define OPTION_VAL_NTSC_PAR_EL NULL
 #define OPTION_VAL_PAL_PAR_EL NULL
+#define OPTION_VAL_4_3_EL NULL
 #define GENESIS_PLUS_GX_OVERSCAN_LABEL_EL NULL
 #define GENESIS_PLUS_GX_OVERSCAN_INFO_0_EL NULL
 #define OPTION_VAL_TOP_BOTTOM_EL NULL
@@ -13008,6 +13027,7 @@ struct retro_core_option_v2_definition option_defs_el[] = {
          { "auto",     OPTION_VAL_AUTO_EL },
          { "NTSC PAR", OPTION_VAL_NTSC_PAR_EL },
          { "PAL PAR",  OPTION_VAL_PAL_PAR_EL },
+         { "4:3",  OPTION_VAL_4_3_EL },
       },
       "auto"
    },
@@ -14145,6 +14165,7 @@ struct retro_core_options_v2 options_el = {
 #define GENESIS_PLUS_GX_ASPECT_RATIO_INFO_0_EO NULL
 #define OPTION_VAL_NTSC_PAR_EO NULL
 #define OPTION_VAL_PAL_PAR_EO NULL
+#define OPTION_VAL_4_3_EO NULL
 #define GENESIS_PLUS_GX_OVERSCAN_LABEL_EO NULL
 #define GENESIS_PLUS_GX_OVERSCAN_INFO_0_EO NULL
 #define OPTION_VAL_TOP_BOTTOM_EO NULL
@@ -14414,6 +14435,7 @@ struct retro_core_option_v2_definition option_defs_eo[] = {
          { "auto",     OPTION_VAL_AUTO_EO },
          { "NTSC PAR", OPTION_VAL_NTSC_PAR_EO },
          { "PAL PAR",  OPTION_VAL_PAL_PAR_EO },
+         { "4:3",  OPTION_VAL_4_3_EO },
       },
       "auto"
    },
@@ -15551,6 +15573,7 @@ struct retro_core_options_v2 options_eo = {
 #define GENESIS_PLUS_GX_ASPECT_RATIO_INFO_0_ES "Selecciona la relación de aspecto del contenido. Esta opción solo surtirá efecto cuando la opción general de RetroArch, en el apartado de Vídeo de los ajustes, esté configurada como «Asignada por el núcleo»."
 #define OPTION_VAL_NTSC_PAR_ES "Relación de aspecto de píxeles NTSC"
 #define OPTION_VAL_PAL_PAR_ES "Relación de aspecto de píxeles PAL"
+#define OPTION_VAL_4_3_ES NULL
 #define GENESIS_PLUS_GX_OVERSCAN_LABEL_ES "Bordes"
 #define GENESIS_PLUS_GX_OVERSCAN_INFO_0_ES "Activa esta opción para mostrar las regiones de sobrebarrido en las partes superior e inferior o izquierda y derecha de la pantalla. Una televisión de definición estándar suele ocultarlas con el borde de la pantalla."
 #define OPTION_VAL_TOP_BOTTOM_ES "Superior/inferior"
@@ -15820,6 +15843,7 @@ struct retro_core_option_v2_definition option_defs_es[] = {
          { "auto",     OPTION_VAL_AUTO_ES },
          { "NTSC PAR", OPTION_VAL_NTSC_PAR_ES },
          { "PAL PAR",  OPTION_VAL_PAL_PAR_ES },
+         { "4:3",  OPTION_VAL_4_3_ES },
       },
       "auto"
    },
@@ -16957,6 +16981,7 @@ struct retro_core_options_v2 options_es = {
 #define GENESIS_PLUS_GX_ASPECT_RATIO_INFO_0_FA NULL
 #define OPTION_VAL_NTSC_PAR_FA NULL
 #define OPTION_VAL_PAL_PAR_FA NULL
+#define OPTION_VAL_4_3_FA NULL
 #define GENESIS_PLUS_GX_OVERSCAN_LABEL_FA NULL
 #define GENESIS_PLUS_GX_OVERSCAN_INFO_0_FA NULL
 #define OPTION_VAL_TOP_BOTTOM_FA NULL
@@ -17226,6 +17251,7 @@ struct retro_core_option_v2_definition option_defs_fa[] = {
          { "auto",     OPTION_VAL_AUTO_FA },
          { "NTSC PAR", OPTION_VAL_NTSC_PAR_FA },
          { "PAL PAR",  OPTION_VAL_PAL_PAR_FA },
+         { "4:3",  OPTION_VAL_4_3_FA },
       },
       "auto"
    },
@@ -18363,6 +18389,7 @@ struct retro_core_options_v2 options_fa = {
 #define GENESIS_PLUS_GX_ASPECT_RATIO_INFO_0_FI NULL
 #define OPTION_VAL_NTSC_PAR_FI NULL
 #define OPTION_VAL_PAL_PAR_FI NULL
+#define OPTION_VAL_4_3_FI NULL
 #define GENESIS_PLUS_GX_OVERSCAN_LABEL_FI "Reunukset"
 #define GENESIS_PLUS_GX_OVERSCAN_INFO_0_FI NULL
 #define OPTION_VAL_TOP_BOTTOM_FI NULL
@@ -18632,6 +18659,7 @@ struct retro_core_option_v2_definition option_defs_fi[] = {
          { "auto",     OPTION_VAL_AUTO_FI },
          { "NTSC PAR", OPTION_VAL_NTSC_PAR_FI },
          { "PAL PAR",  OPTION_VAL_PAL_PAR_FI },
+         { "4:3",  OPTION_VAL_4_3_FI },
       },
       "auto"
    },
@@ -19769,6 +19797,7 @@ struct retro_core_options_v2 options_fi = {
 #define GENESIS_PLUS_GX_ASPECT_RATIO_INFO_0_FR "Choisir le rapport d'aspect préféré pour le contenu. Cela ne s'applique que lorsque le rapport d'aspect de RetroArch est réglé sur 'Fourni par le cœur' (Core provided) dans les paramètres vidéo."
 #define OPTION_VAL_NTSC_PAR_FR "Rapport d'aspect préféré NTSC"
 #define OPTION_VAL_PAL_PAR_FR "Rapport d'aspect préféré PAL"
+#define OPTION_VAL_4_3_FR NULL
 #define GENESIS_PLUS_GX_OVERSCAN_LABEL_FR "Bordures"
 #define GENESIS_PLUS_GX_OVERSCAN_INFO_0_FR "Activer cette option pour afficher les régions de surbalayage en haut/bas et/ou à gauche/droite de l'écran. Celles-ci seraient normalement cachées par le biseau autour du bord d'une télévision définition standard."
 #define OPTION_VAL_TOP_BOTTOM_FR "Haut/bas"
@@ -20038,6 +20067,7 @@ struct retro_core_option_v2_definition option_defs_fr[] = {
          { "auto",     OPTION_VAL_AUTO_FR },
          { "NTSC PAR", OPTION_VAL_NTSC_PAR_FR },
          { "PAL PAR",  OPTION_VAL_PAL_PAR_FR },
+         { "4:3",  OPTION_VAL_4_3_FR },
       },
       "auto"
    },
@@ -21175,6 +21205,7 @@ struct retro_core_options_v2 options_fr = {
 #define GENESIS_PLUS_GX_ASPECT_RATIO_INFO_0_GL NULL
 #define OPTION_VAL_NTSC_PAR_GL NULL
 #define OPTION_VAL_PAL_PAR_GL NULL
+#define OPTION_VAL_4_3_GL NULL
 #define GENESIS_PLUS_GX_OVERSCAN_LABEL_GL NULL
 #define GENESIS_PLUS_GX_OVERSCAN_INFO_0_GL NULL
 #define OPTION_VAL_TOP_BOTTOM_GL NULL
@@ -21444,6 +21475,7 @@ struct retro_core_option_v2_definition option_defs_gl[] = {
          { "auto",     OPTION_VAL_AUTO_GL },
          { "NTSC PAR", OPTION_VAL_NTSC_PAR_GL },
          { "PAL PAR",  OPTION_VAL_PAL_PAR_GL },
+         { "4:3",  OPTION_VAL_4_3_GL },
       },
       "auto"
    },
@@ -22581,6 +22613,7 @@ struct retro_core_options_v2 options_gl = {
 #define GENESIS_PLUS_GX_ASPECT_RATIO_INFO_0_HE NULL
 #define OPTION_VAL_NTSC_PAR_HE NULL
 #define OPTION_VAL_PAL_PAR_HE NULL
+#define OPTION_VAL_4_3_HE NULL
 #define GENESIS_PLUS_GX_OVERSCAN_LABEL_HE NULL
 #define GENESIS_PLUS_GX_OVERSCAN_INFO_0_HE NULL
 #define OPTION_VAL_TOP_BOTTOM_HE NULL
@@ -22850,6 +22883,7 @@ struct retro_core_option_v2_definition option_defs_he[] = {
          { "auto",     OPTION_VAL_AUTO_HE },
          { "NTSC PAR", OPTION_VAL_NTSC_PAR_HE },
          { "PAL PAR",  OPTION_VAL_PAL_PAR_HE },
+         { "4:3",  OPTION_VAL_4_3_HE },
       },
       "auto"
    },
@@ -23987,6 +24021,7 @@ struct retro_core_options_v2 options_he = {
 #define GENESIS_PLUS_GX_ASPECT_RATIO_INFO_0_HU NULL
 #define OPTION_VAL_NTSC_PAR_HU NULL
 #define OPTION_VAL_PAL_PAR_HU NULL
+#define OPTION_VAL_4_3_HU NULL
 #define GENESIS_PLUS_GX_OVERSCAN_LABEL_HU NULL
 #define GENESIS_PLUS_GX_OVERSCAN_INFO_0_HU NULL
 #define OPTION_VAL_TOP_BOTTOM_HU NULL
@@ -24256,6 +24291,7 @@ struct retro_core_option_v2_definition option_defs_hu[] = {
          { "auto",     OPTION_VAL_AUTO_HU },
          { "NTSC PAR", OPTION_VAL_NTSC_PAR_HU },
          { "PAL PAR",  OPTION_VAL_PAL_PAR_HU },
+         { "4:3",  OPTION_VAL_4_3_HU },
       },
       "auto"
    },
@@ -25393,6 +25429,7 @@ struct retro_core_options_v2 options_hu = {
 #define GENESIS_PLUS_GX_ASPECT_RATIO_INFO_0_ID NULL
 #define OPTION_VAL_NTSC_PAR_ID NULL
 #define OPTION_VAL_PAL_PAR_ID NULL
+#define OPTION_VAL_4_3_ID NULL
 #define GENESIS_PLUS_GX_OVERSCAN_LABEL_ID NULL
 #define GENESIS_PLUS_GX_OVERSCAN_INFO_0_ID NULL
 #define OPTION_VAL_TOP_BOTTOM_ID NULL
@@ -25662,6 +25699,7 @@ struct retro_core_option_v2_definition option_defs_id[] = {
          { "auto",     OPTION_VAL_AUTO_ID },
          { "NTSC PAR", OPTION_VAL_NTSC_PAR_ID },
          { "PAL PAR",  OPTION_VAL_PAL_PAR_ID },
+         { "4:3",  OPTION_VAL_4_3_ID },
       },
       "auto"
    },
@@ -26799,6 +26837,7 @@ struct retro_core_options_v2 options_id = {
 #define GENESIS_PLUS_GX_ASPECT_RATIO_INFO_0_IT "Scegli le proporzioni preferite del contenuto. Questo si applicherà solo quando le proporzioni di RetroArch sono impostate su 'Core fornito' nelle impostazioni del video."
 #define OPTION_VAL_NTSC_PAR_IT NULL
 #define OPTION_VAL_PAL_PAR_IT NULL
+#define OPTION_VAL_4_3_IT NULL
 #define GENESIS_PLUS_GX_OVERSCAN_LABEL_IT "Bordi"
 #define GENESIS_PLUS_GX_OVERSCAN_INFO_0_IT "Abilita questa opzione per visualizzare le regioni di sovrascrittura in alto/in basso e/o a sinistra/destra dello schermo. Questi sarebbero normalmente nascosti dalla lunetta intorno al bordo di un televisore a definizione standard."
 #define OPTION_VAL_TOP_BOTTOM_IT "Alto/Basso"
@@ -27068,6 +27107,7 @@ struct retro_core_option_v2_definition option_defs_it[] = {
          { "auto",     OPTION_VAL_AUTO_IT },
          { "NTSC PAR", OPTION_VAL_NTSC_PAR_IT },
          { "PAL PAR",  OPTION_VAL_PAL_PAR_IT },
+         { "4:3",  OPTION_VAL_4_3_IT },
       },
       "auto"
    },
@@ -28205,6 +28245,7 @@ struct retro_core_options_v2 options_it = {
 #define GENESIS_PLUS_GX_ASPECT_RATIO_INFO_0_JA NULL
 #define OPTION_VAL_NTSC_PAR_JA NULL
 #define OPTION_VAL_PAL_PAR_JA NULL
+#define OPTION_VAL_4_3_JA NULL
 #define GENESIS_PLUS_GX_OVERSCAN_LABEL_JA NULL
 #define GENESIS_PLUS_GX_OVERSCAN_INFO_0_JA NULL
 #define OPTION_VAL_TOP_BOTTOM_JA "上/下"
@@ -28474,6 +28515,7 @@ struct retro_core_option_v2_definition option_defs_ja[] = {
          { "auto",     OPTION_VAL_AUTO_JA },
          { "NTSC PAR", OPTION_VAL_NTSC_PAR_JA },
          { "PAL PAR",  OPTION_VAL_PAL_PAR_JA },
+         { "4:3",  OPTION_VAL_4_3_JA },
       },
       "auto"
    },
@@ -29611,6 +29653,7 @@ struct retro_core_options_v2 options_ja = {
 #define GENESIS_PLUS_GX_ASPECT_RATIO_INFO_0_KO "선호하는 컨텐츠 화면비를 선택합니다. RetroArch의 비디오 설정에서 화면비가 'Core provided'로 설정되어 있어야 적용됩니다."
 #define OPTION_VAL_NTSC_PAR_KO NULL
 #define OPTION_VAL_PAL_PAR_KO NULL
+#define OPTION_VAL_4_3_KO NULL
 #define GENESIS_PLUS_GX_OVERSCAN_LABEL_KO "테두리"
 #define GENESIS_PLUS_GX_OVERSCAN_INFO_0_KO "이 옵션을 활성화하면 화면의 위/아래 또는 좌/우 오버스캔 지역을 표시합니다. 이 지역은 일반적으로 텔레비전의 베젤에 가려져 표시되지 않습니다."
 #define OPTION_VAL_TOP_BOTTOM_KO "위/아래"
@@ -29880,6 +29923,7 @@ struct retro_core_option_v2_definition option_defs_ko[] = {
          { "auto",     OPTION_VAL_AUTO_KO },
          { "NTSC PAR", OPTION_VAL_NTSC_PAR_KO },
          { "PAL PAR",  OPTION_VAL_PAL_PAR_KO },
+         { "4:3",  OPTION_VAL_4_3_KO },
       },
       "auto"
    },
@@ -31017,6 +31061,7 @@ struct retro_core_options_v2 options_ko = {
 #define GENESIS_PLUS_GX_ASPECT_RATIO_INFO_0_MT NULL
 #define OPTION_VAL_NTSC_PAR_MT NULL
 #define OPTION_VAL_PAL_PAR_MT NULL
+#define OPTION_VAL_4_3_MT NULL
 #define GENESIS_PLUS_GX_OVERSCAN_LABEL_MT NULL
 #define GENESIS_PLUS_GX_OVERSCAN_INFO_0_MT NULL
 #define OPTION_VAL_TOP_BOTTOM_MT NULL
@@ -31286,6 +31331,7 @@ struct retro_core_option_v2_definition option_defs_mt[] = {
          { "auto",     OPTION_VAL_AUTO_MT },
          { "NTSC PAR", OPTION_VAL_NTSC_PAR_MT },
          { "PAL PAR",  OPTION_VAL_PAL_PAR_MT },
+         { "4:3",  OPTION_VAL_4_3_MT },
       },
       "auto"
    },
@@ -32423,6 +32469,7 @@ struct retro_core_options_v2 options_mt = {
 #define GENESIS_PLUS_GX_ASPECT_RATIO_INFO_0_NL NULL
 #define OPTION_VAL_NTSC_PAR_NL NULL
 #define OPTION_VAL_PAL_PAR_NL NULL
+#define OPTION_VAL_4_3_NL NULL
 #define GENESIS_PLUS_GX_OVERSCAN_LABEL_NL NULL
 #define GENESIS_PLUS_GX_OVERSCAN_INFO_0_NL NULL
 #define OPTION_VAL_TOP_BOTTOM_NL NULL
@@ -32692,6 +32739,7 @@ struct retro_core_option_v2_definition option_defs_nl[] = {
          { "auto",     OPTION_VAL_AUTO_NL },
          { "NTSC PAR", OPTION_VAL_NTSC_PAR_NL },
          { "PAL PAR",  OPTION_VAL_PAL_PAR_NL },
+         { "4:3",  OPTION_VAL_4_3_NL },
       },
       "auto"
    },
@@ -33829,6 +33877,7 @@ struct retro_core_options_v2 options_nl = {
 #define GENESIS_PLUS_GX_ASPECT_RATIO_INFO_0_NO NULL
 #define OPTION_VAL_NTSC_PAR_NO NULL
 #define OPTION_VAL_PAL_PAR_NO NULL
+#define OPTION_VAL_4_3_NO NULL
 #define GENESIS_PLUS_GX_OVERSCAN_LABEL_NO NULL
 #define GENESIS_PLUS_GX_OVERSCAN_INFO_0_NO NULL
 #define OPTION_VAL_TOP_BOTTOM_NO NULL
@@ -34098,6 +34147,7 @@ struct retro_core_option_v2_definition option_defs_no[] = {
          { "auto",     OPTION_VAL_AUTO_NO },
          { "NTSC PAR", OPTION_VAL_NTSC_PAR_NO },
          { "PAL PAR",  OPTION_VAL_PAL_PAR_NO },
+         { "4:3",  OPTION_VAL_4_3_NO },
       },
       "auto"
    },
@@ -35235,6 +35285,7 @@ struct retro_core_options_v2 options_no = {
 #define GENESIS_PLUS_GX_ASPECT_RATIO_INFO_0_OC NULL
 #define OPTION_VAL_NTSC_PAR_OC NULL
 #define OPTION_VAL_PAL_PAR_OC NULL
+#define OPTION_VAL_4_3_OC NULL
 #define GENESIS_PLUS_GX_OVERSCAN_LABEL_OC NULL
 #define GENESIS_PLUS_GX_OVERSCAN_INFO_0_OC NULL
 #define OPTION_VAL_TOP_BOTTOM_OC NULL
@@ -35504,6 +35555,7 @@ struct retro_core_option_v2_definition option_defs_oc[] = {
          { "auto",     OPTION_VAL_AUTO_OC },
          { "NTSC PAR", OPTION_VAL_NTSC_PAR_OC },
          { "PAL PAR",  OPTION_VAL_PAL_PAR_OC },
+         { "4:3",  OPTION_VAL_4_3_OC },
       },
       "auto"
    },
@@ -36641,6 +36693,7 @@ struct retro_core_options_v2 options_oc = {
 #define GENESIS_PLUS_GX_ASPECT_RATIO_INFO_0_PL NULL
 #define OPTION_VAL_NTSC_PAR_PL NULL
 #define OPTION_VAL_PAL_PAR_PL NULL
+#define OPTION_VAL_4_3_PL NULL
 #define GENESIS_PLUS_GX_OVERSCAN_LABEL_PL "Krawędzie"
 #define GENESIS_PLUS_GX_OVERSCAN_INFO_0_PL NULL
 #define OPTION_VAL_TOP_BOTTOM_PL "Góra/Dół"
@@ -36910,6 +36963,7 @@ struct retro_core_option_v2_definition option_defs_pl[] = {
          { "auto",     OPTION_VAL_AUTO_PL },
          { "NTSC PAR", OPTION_VAL_NTSC_PAR_PL },
          { "PAL PAR",  OPTION_VAL_PAL_PAR_PL },
+         { "4:3",  OPTION_VAL_4_3_PL },
       },
       "auto"
    },
@@ -38047,6 +38101,7 @@ struct retro_core_options_v2 options_pl = {
 #define GENESIS_PLUS_GX_ASPECT_RATIO_INFO_0_PT_BR "Escolhe a proporção de tela preferida do conteúdo. Isso se aplicará somente quando a proporção de tela do RetroArch estiver configurada como 'Fornecida pelo núcleo' nas configurações de vídeo."
 #define OPTION_VAL_NTSC_PAR_PT_BR NULL
 #define OPTION_VAL_PAL_PAR_PT_BR NULL
+#define OPTION_VAL_4_3_PT_BR NULL
 #define GENESIS_PLUS_GX_OVERSCAN_LABEL_PT_BR "Bordas"
 #define GENESIS_PLUS_GX_OVERSCAN_INFO_0_PT_BR "Ative esta opção para exibir as regiões de overscan na parte superior/inferior e/ou esquerda/direita da tela. Normalmente, seriam ocultas pelo painel ao redor da borda de uma televisão de definição padrão."
 #define OPTION_VAL_TOP_BOTTOM_PT_BR "Superior/inferior"
@@ -38316,6 +38371,7 @@ struct retro_core_option_v2_definition option_defs_pt_br[] = {
          { "auto",     OPTION_VAL_AUTO_PT_BR },
          { "NTSC PAR", OPTION_VAL_NTSC_PAR_PT_BR },
          { "PAL PAR",  OPTION_VAL_PAL_PAR_PT_BR },
+         { "4:3",  OPTION_VAL_4_3_PT_BR },
       },
       "auto"
    },
@@ -39453,6 +39509,7 @@ struct retro_core_options_v2 options_pt_br = {
 #define GENESIS_PLUS_GX_ASPECT_RATIO_INFO_0_PT_PT NULL
 #define OPTION_VAL_NTSC_PAR_PT_PT NULL
 #define OPTION_VAL_PAL_PAR_PT_PT NULL
+#define OPTION_VAL_4_3_PT_PT NULL
 #define GENESIS_PLUS_GX_OVERSCAN_LABEL_PT_PT NULL
 #define GENESIS_PLUS_GX_OVERSCAN_INFO_0_PT_PT NULL
 #define OPTION_VAL_TOP_BOTTOM_PT_PT NULL
@@ -39722,6 +39779,7 @@ struct retro_core_option_v2_definition option_defs_pt_pt[] = {
          { "auto",     OPTION_VAL_AUTO_PT_PT },
          { "NTSC PAR", OPTION_VAL_NTSC_PAR_PT_PT },
          { "PAL PAR",  OPTION_VAL_PAL_PAR_PT_PT },
+         { "4:3",  OPTION_VAL_4_3_PT_PT },
       },
       "auto"
    },
@@ -40859,6 +40917,7 @@ struct retro_core_options_v2 options_pt_pt = {
 #define GENESIS_PLUS_GX_ASPECT_RATIO_INFO_0_RO NULL
 #define OPTION_VAL_NTSC_PAR_RO NULL
 #define OPTION_VAL_PAL_PAR_RO NULL
+#define OPTION_VAL_4_3_RO NULL
 #define GENESIS_PLUS_GX_OVERSCAN_LABEL_RO NULL
 #define GENESIS_PLUS_GX_OVERSCAN_INFO_0_RO NULL
 #define OPTION_VAL_TOP_BOTTOM_RO NULL
@@ -41128,6 +41187,7 @@ struct retro_core_option_v2_definition option_defs_ro[] = {
          { "auto",     OPTION_VAL_AUTO_RO },
          { "NTSC PAR", OPTION_VAL_NTSC_PAR_RO },
          { "PAL PAR",  OPTION_VAL_PAL_PAR_RO },
+         { "4:3",  OPTION_VAL_4_3_RO },
       },
       "auto"
    },
@@ -42265,6 +42325,7 @@ struct retro_core_options_v2 options_ro = {
 #define GENESIS_PLUS_GX_ASPECT_RATIO_INFO_0_RU "Выбор предпочтительного соотношения сторон контента. Учитывается только при установке соотношения сторон RetroArch на 'Core Provided' в настройках видео."
 #define OPTION_VAL_NTSC_PAR_RU NULL
 #define OPTION_VAL_PAL_PAR_RU NULL
+#define OPTION_VAL_4_3_RU NULL
 #define GENESIS_PLUS_GX_OVERSCAN_LABEL_RU "Границы"
 #define GENESIS_PLUS_GX_OVERSCAN_INFO_0_RU "Включите для отображения вылетов развёртки сверху/снизу и/или слева/справа. В телевизорах стандартной чёткости эти области обычно скрыты рамкой по краю экрана."
 #define OPTION_VAL_TOP_BOTTOM_RU "Сверху/снизу"
@@ -42534,6 +42595,7 @@ struct retro_core_option_v2_definition option_defs_ru[] = {
          { "auto",     OPTION_VAL_AUTO_RU },
          { "NTSC PAR", OPTION_VAL_NTSC_PAR_RU },
          { "PAL PAR",  OPTION_VAL_PAL_PAR_RU },
+         { "4:3",  OPTION_VAL_4_3_RU },
       },
       "auto"
    },
@@ -43671,6 +43733,7 @@ struct retro_core_options_v2 options_ru = {
 #define GENESIS_PLUS_GX_ASPECT_RATIO_INFO_0_SI NULL
 #define OPTION_VAL_NTSC_PAR_SI NULL
 #define OPTION_VAL_PAL_PAR_SI NULL
+#define OPTION_VAL_4_3_SI NULL
 #define GENESIS_PLUS_GX_OVERSCAN_LABEL_SI NULL
 #define GENESIS_PLUS_GX_OVERSCAN_INFO_0_SI NULL
 #define OPTION_VAL_TOP_BOTTOM_SI NULL
@@ -43940,6 +44003,7 @@ struct retro_core_option_v2_definition option_defs_si[] = {
          { "auto",     OPTION_VAL_AUTO_SI },
          { "NTSC PAR", OPTION_VAL_NTSC_PAR_SI },
          { "PAL PAR",  OPTION_VAL_PAL_PAR_SI },
+         { "4:3",  OPTION_VAL_4_3_SI },
       },
       "auto"
    },
@@ -45077,6 +45141,7 @@ struct retro_core_options_v2 options_si = {
 #define GENESIS_PLUS_GX_ASPECT_RATIO_INFO_0_SK NULL
 #define OPTION_VAL_NTSC_PAR_SK NULL
 #define OPTION_VAL_PAL_PAR_SK NULL
+#define OPTION_VAL_4_3_SK NULL
 #define GENESIS_PLUS_GX_OVERSCAN_LABEL_SK NULL
 #define GENESIS_PLUS_GX_OVERSCAN_INFO_0_SK NULL
 #define OPTION_VAL_TOP_BOTTOM_SK NULL
@@ -45346,6 +45411,7 @@ struct retro_core_option_v2_definition option_defs_sk[] = {
          { "auto",     OPTION_VAL_AUTO_SK },
          { "NTSC PAR", OPTION_VAL_NTSC_PAR_SK },
          { "PAL PAR",  OPTION_VAL_PAL_PAR_SK },
+         { "4:3",  OPTION_VAL_4_3_SK },
       },
       "auto"
    },
@@ -46483,6 +46549,7 @@ struct retro_core_options_v2 options_sk = {
 #define GENESIS_PLUS_GX_ASPECT_RATIO_INFO_0_SR NULL
 #define OPTION_VAL_NTSC_PAR_SR NULL
 #define OPTION_VAL_PAL_PAR_SR NULL
+#define OPTION_VAL_4_3_SR NULL
 #define GENESIS_PLUS_GX_OVERSCAN_LABEL_SR NULL
 #define GENESIS_PLUS_GX_OVERSCAN_INFO_0_SR NULL
 #define OPTION_VAL_TOP_BOTTOM_SR NULL
@@ -46752,6 +46819,7 @@ struct retro_core_option_v2_definition option_defs_sr[] = {
          { "auto",     OPTION_VAL_AUTO_SR },
          { "NTSC PAR", OPTION_VAL_NTSC_PAR_SR },
          { "PAL PAR",  OPTION_VAL_PAL_PAR_SR },
+         { "4:3",  OPTION_VAL_4_3_SR },
       },
       "auto"
    },
@@ -47889,6 +47957,7 @@ struct retro_core_options_v2 options_sr = {
 #define GENESIS_PLUS_GX_ASPECT_RATIO_INFO_0_SV NULL
 #define OPTION_VAL_NTSC_PAR_SV NULL
 #define OPTION_VAL_PAL_PAR_SV NULL
+#define OPTION_VAL_4_3_SV NULL
 #define GENESIS_PLUS_GX_OVERSCAN_LABEL_SV "Ramar"
 #define GENESIS_PLUS_GX_OVERSCAN_INFO_0_SV NULL
 #define OPTION_VAL_TOP_BOTTOM_SV NULL
@@ -48158,6 +48227,7 @@ struct retro_core_option_v2_definition option_defs_sv[] = {
          { "auto",     OPTION_VAL_AUTO_SV },
          { "NTSC PAR", OPTION_VAL_NTSC_PAR_SV },
          { "PAL PAR",  OPTION_VAL_PAL_PAR_SV },
+         { "4:3",  OPTION_VAL_4_3_SV },
       },
       "auto"
    },
@@ -49295,6 +49365,7 @@ struct retro_core_options_v2 options_sv = {
 #define GENESIS_PLUS_GX_ASPECT_RATIO_INFO_0_TR "Tercih edilen içerik en boy oranını seçin. Bu, yalnızca RetroArch en boy oranı Video ayarlarında 'Çekirdek Tarafından Sağlanan' olarak ayarlandığında uygulanacaktır."
 #define OPTION_VAL_NTSC_PAR_TR "NTSC EŞİT"
 #define OPTION_VAL_PAL_PAR_TR "PAL EŞİT"
+#define OPTION_VAL_4_3_TR NULL
 #define GENESIS_PLUS_GX_OVERSCAN_LABEL_TR "Çerçeveler"
 #define GENESIS_PLUS_GX_OVERSCAN_INFO_0_TR "Aşırı tarama bölgelerini ekranın üstünde/altında ve/veya sol/sağında görüntülemek için bunu etkinleştirin. Bunlar normalde standart tanımlı bir televizyonun kenarındaki çerçeve tarafından gizlenir."
 #define OPTION_VAL_TOP_BOTTOM_TR "Üst/Alt"
@@ -49564,6 +49635,7 @@ struct retro_core_option_v2_definition option_defs_tr[] = {
          { "auto",     OPTION_VAL_AUTO_TR },
          { "NTSC PAR", OPTION_VAL_NTSC_PAR_TR },
          { "PAL PAR",  OPTION_VAL_PAL_PAR_TR },
+         { "4:3",  OPTION_VAL_4_3_TR },
       },
       "auto"
    },
@@ -50701,6 +50773,7 @@ struct retro_core_options_v2 options_tr = {
 #define GENESIS_PLUS_GX_ASPECT_RATIO_INFO_0_UK NULL
 #define OPTION_VAL_NTSC_PAR_UK NULL
 #define OPTION_VAL_PAL_PAR_UK NULL
+#define OPTION_VAL_4_3_UK NULL
 #define GENESIS_PLUS_GX_OVERSCAN_LABEL_UK NULL
 #define GENESIS_PLUS_GX_OVERSCAN_INFO_0_UK NULL
 #define OPTION_VAL_TOP_BOTTOM_UK NULL
@@ -50970,6 +51043,7 @@ struct retro_core_option_v2_definition option_defs_uk[] = {
          { "auto",     OPTION_VAL_AUTO_UK },
          { "NTSC PAR", OPTION_VAL_NTSC_PAR_UK },
          { "PAL PAR",  OPTION_VAL_PAL_PAR_UK },
+         { "4:3",  OPTION_VAL_4_3_UK },
       },
       "auto"
    },
@@ -52097,7 +52171,7 @@ struct retro_core_options_v2 options_uk = {
 #define GENESIS_PLUS_GX_ADD_ON_INFO_0_VAL NULL
 #define OPTION_VAL_SEGA_MEGA_CD_VAL NULL
 #define OPTION_VAL_MEGASD_VAL NULL
-#define OPTION_VAL_NONE_VAL NULL
+#define OPTION_VAL_NONE_VAL "Cap"
 #define GENESIS_PLUS_GX_LOCK_ON_LABEL_VAL NULL
 #define GENESIS_PLUS_GX_LOCK_ON_INFO_0_VAL NULL
 #define OPTION_VAL_GAME_GENIE_VAL NULL
@@ -52107,6 +52181,7 @@ struct retro_core_options_v2 options_uk = {
 #define GENESIS_PLUS_GX_ASPECT_RATIO_INFO_0_VAL NULL
 #define OPTION_VAL_NTSC_PAR_VAL NULL
 #define OPTION_VAL_PAL_PAR_VAL NULL
+#define OPTION_VAL_4_3_VAL NULL
 #define GENESIS_PLUS_GX_OVERSCAN_LABEL_VAL NULL
 #define GENESIS_PLUS_GX_OVERSCAN_INFO_0_VAL NULL
 #define OPTION_VAL_TOP_BOTTOM_VAL NULL
@@ -52376,6 +52451,7 @@ struct retro_core_option_v2_definition option_defs_val[] = {
          { "auto",     OPTION_VAL_AUTO_VAL },
          { "NTSC PAR", OPTION_VAL_NTSC_PAR_VAL },
          { "PAL PAR",  OPTION_VAL_PAL_PAR_VAL },
+         { "4:3",  OPTION_VAL_4_3_VAL },
       },
       "auto"
    },
@@ -53513,6 +53589,7 @@ struct retro_core_options_v2 options_val = {
 #define GENESIS_PLUS_GX_ASPECT_RATIO_INFO_0_VN NULL
 #define OPTION_VAL_NTSC_PAR_VN NULL
 #define OPTION_VAL_PAL_PAR_VN NULL
+#define OPTION_VAL_4_3_VN NULL
 #define GENESIS_PLUS_GX_OVERSCAN_LABEL_VN NULL
 #define GENESIS_PLUS_GX_OVERSCAN_INFO_0_VN NULL
 #define OPTION_VAL_TOP_BOTTOM_VN "Trên/Dưới"
@@ -53782,6 +53859,7 @@ struct retro_core_option_v2_definition option_defs_vn[] = {
          { "auto",     OPTION_VAL_AUTO_VN },
          { "NTSC PAR", OPTION_VAL_NTSC_PAR_VN },
          { "PAL PAR",  OPTION_VAL_PAL_PAR_VN },
+         { "4:3",  OPTION_VAL_4_3_VN },
       },
       "auto"
    },
