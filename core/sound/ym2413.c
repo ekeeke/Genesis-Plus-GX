@@ -1244,9 +1244,8 @@ INLINE void KEY_OFF(YM2413_OPLL_SLOT *SLOT, UINT32 key_clr)
 
     if( !SLOT->key )
     {
-      /* phase -> Release */
-      if (SLOT->state>EG_REL)
-        SLOT->state = EG_REL;
+      /* phase -> Release (forced off if already at maximal attenuation level) */
+      SLOT->state = ( (SLOT->volume & ~3) == (MAX_ATT_INDEX & ~3) ) ? EG_OFF : EG_REL;
     }
   }
 }
