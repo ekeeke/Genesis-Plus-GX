@@ -548,7 +548,7 @@ static unsigned int scd_read_byte(unsigned int address)
   }
 
   /* Font data */
-  if ((address >= 0x50) && (address <= 0x56))
+  if ((address >= 0x50) && (address <= 0x57))
   {
     /* shifted 4-bit input (xxxx00) */
     uint8 bits = (scd.regs[0x4e>>1].w >> (((address & 6) ^ 6) << 1)) << 2;
