@@ -485,6 +485,7 @@ else ifeq ($(platform), miyoo)
    CFLAGS += -ffast-math -march=armv5te -mtune=arm926ej-s -fomit-frame-pointer
    ENDIANNESS_DEFINES := -DLSB_FIRST -DBYTE_ORDER=LITTLE_ENDIAN -DALIGN_LONG
    USE_PER_SOUND_CHANNELS_CONFIG = 0
+   LOW_MEMORY = 1
    MAX_ROM_SIZE = 16777216
 
 # Windows MSVC 2003 Xbox 1
