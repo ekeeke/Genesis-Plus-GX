@@ -229,6 +229,7 @@ static void retro_audio_buff_status_cb(
 /* LED interface */
 static retro_set_led_state_t led_state_cb = NULL;
 static unsigned int retro_led_state[2] = {0};
+
 static void retro_led_interface(void)
 {
    /* 0: Power
@@ -2800,7 +2801,7 @@ void retro_set_environment(retro_environment_t cb)
 	   filestream_vfs_init(&vfs_iface_info);
 
    environ_cb(RETRO_ENVIRONMENT_GET_LED_INTERFACE, &led_interface);
-   if (led_interface.set_led_state)
+   if (led_interface.set_led_state && !led_state_cb)
       led_state_cb = led_interface.set_led_state;
 }
 
@@ -3678,7 +3679,8 @@ void retro_run(void)
    }
 
    /* LED interface */
-   retro_led_interface();
+   if (led_state_cb)
+	   retro_led_interface();
 
    if (!do_skip)
    {
