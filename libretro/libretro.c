@@ -226,6 +226,30 @@ static void retro_audio_buff_status_cb(
    retro_audio_buff_underrun  = underrun_likely;
 }
 
+/* LED interface */
+static retro_set_led_state_t led_state_cb = NULL;
+static unsigned int retro_led_state[2] = {0};
+static void retro_led_interface(void)
+{
+   /* 0: Power
+    * 1: CD */
+
+   unsigned int led_state[2] = {0};
+   unsigned int l            = 0;
+
+   led_state[0] = (zstate) ? 1 : 0;
+   led_state[1] = (scd.regs[0x06 >> 1].byte.h & 1) ? 1 : 0;
+
+   for (l = 0; l < sizeof(led_state)/sizeof(led_state[0]); l++)
+   {
+      if (retro_led_state[l] != led_state[l])
+      {
+         retro_led_state[l] = led_state[l];
+         led_state_cb(l, led_state[l]);
+      }
+   }
+}
+
 static void init_frameskip(void)
 {
    if (frameskip_type > 0)
@@ -2571,6 +2595,7 @@ void retro_set_environment(retro_environment_t cb)
 {
    bool option_categories = false;
    struct retro_vfs_interface_info vfs_iface_info;
+   struct retro_led_interface led_interface;
 
    static const struct retro_controller_description port_1[] = {
       { "Joypad Auto", RETRO_DEVICE_JOYPAD },
@@ -2774,6 +2799,9 @@ void retro_set_environment(retro_environment_t cb)
    if (environ_cb(RETRO_ENVIRONMENT_GET_VFS_INTERFACE, &vfs_iface_info))
 	   filestream_vfs_init(&vfs_iface_info);
 
+   environ_cb(RETRO_ENVIRONMENT_GET_LED_INTERFACE, &led_interface);
+   if (led_interface.set_led_state)
+      led_state_cb = led_interface.set_led_state;
 }
 
 void retro_set_video_refresh(retro_video_refresh_t cb) { video_cb = cb; }
@@ -3648,6 +3676,9 @@ void retro_run(void)
        else
            vwoffset = (16 + (config.ntsc ? 24 : 0));
    }
+
+   /* LED interface */
+   retro_led_interface();
 
    if (!do_skip)
    {
