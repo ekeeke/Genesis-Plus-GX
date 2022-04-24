@@ -73,8 +73,7 @@ Genesis Plus GX 1.7.5 (xx/xx/xxxx) (Eke-Eke)
 [Core/MS]
 ---------------
 * added new SMS Power dumps in internal database
-* added support for new SMS Power dump Jang Pung II (KR)
-* added support for Hi-Com X-in-1 mapper (thanks to Bock from SMS Power)
+* added support for Korean XX-in-1 mappers (thanks to Bock from SMS Power)
 * improved console hardware auto-detection
 * improved emulation accuracy of SG-1000 & Mark-III hardware
 * improved emulation accuracy of Japanese Master System I/O chip (315-5297)
