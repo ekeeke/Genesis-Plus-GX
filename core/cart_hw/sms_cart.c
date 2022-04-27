@@ -2,7 +2,7 @@
  *  Genesis Plus
  *  SG-1000, Master System & Game Gear cartridge hardware support
  *
- *  Copyright (C) 2007-2021  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2007-2022  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -56,6 +56,7 @@
 #define MAPPER_KOREA_8K    (0x20)
 #define MAPPER_MSX         (0x21)
 #define MAPPER_MSX_NEMESIS (0x22)
+#define MAPPER_MULTI_4X8K  (0x23)
 #define MAPPER_MULTI_32K   (0x40)
 
 typedef struct
@@ -120,6 +121,8 @@ static const rominfo_t game_list[] =
   {0xFBA94148, 0, 0, 0, MAPPER_MULTI_32K,   SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Hi-Com 8-in-1 The Best Game Collection (Vol. 1) (KR) */
   {0x8333C86E, 0, 0, 0, MAPPER_MULTI_32K,   SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Hi-Com 8-in-1 The Best Game Collection (Vol. 2) (KR) */
   {0x00E9809F, 0, 0, 0, MAPPER_MULTI_32K,   SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Hi-Com 8-in-1 The Best Game Collection (Vol. 3) (KR) */
+  {0xBA5EC0E3, 0, 0, 0, MAPPER_MULTI_4X8K,  SYSTEM_SMS, REGION_JAPAN_NTSC}, /* 128 Hap (KR) */
+  {0x380D7400, 0, 0, 0, MAPPER_MULTI_4X8K,  SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Game Mo-eumjip 188 Hap (KR) */
 
   /* games using Codemaster mapper */
   {0x29822980, 0, 0, 0,  MAPPER_CODIES, SYSTEM_SMS2, REGION_EUROPE}, /* Cosmic Spacehead */
@@ -420,6 +423,7 @@ static void write_mapper_korea_16k(unsigned int address, unsigned char data);
 static void write_mapper_msx(unsigned int address, unsigned char data);
 static void write_mapper_multi_16k(unsigned int address, unsigned char data);
 static void write_mapper_multi_32k(unsigned int address, unsigned char data);
+static void write_mapper_multi_4x8k(unsigned int address, unsigned char data);
 static void write_mapper_93c46(unsigned int address, unsigned char data);
 static void write_mapper_terebi(unsigned int address, unsigned char data);
 static unsigned char read_mapper_93c46(unsigned int address);
@@ -607,6 +611,7 @@ void sms_cart_reset(void)
     case MAPPER_KOREA_8K:
     case MAPPER_MSX:
     case MAPPER_MSX_NEMESIS:
+    case MAPPER_MULTI_4X8K:
       cart_rom.fcr[0] = 0;
       cart_rom.fcr[1] = 0;
       cart_rom.fcr[2] = 0;
@@ -827,6 +832,7 @@ int sms_cart_context_load(uint8 *state)
       case MAPPER_KOREA_8K:
       case MAPPER_MSX:
       case MAPPER_MSX_NEMESIS:
+      case MAPPER_MULTI_4X8K:
         cart_rom.fcr[0] = 0;
         cart_rom.fcr[1] = 0;
         cart_rom.fcr[2] = 0;
@@ -1074,6 +1080,11 @@ static void mapper_reset(void)
     case MAPPER_MULTI_32K:
       z80_readmem = read_mapper_default;
       z80_writemem = write_mapper_multi_32k;
+      break;
+
+    case MAPPER_MULTI_4X8K:
+      z80_readmem = read_mapper_default;
+      z80_writemem = write_mapper_multi_4x8k;
       break;
 
     case MAPPER_93C46:
@@ -1387,6 +1398,20 @@ static void write_mapper_multi_32k(unsigned int address, unsigned char data)
   if (address == 0xFFFF)
   {
     mapper_32k_w(data);
+  }
+
+  z80_writemap[address >> 10][address & 0x03FF] = data;
+}
+
+static void write_mapper_multi_4x8k(unsigned int address, unsigned char data)
+{
+  if (address == 0x2000)
+  {
+    mapper_8k_w(2,data ^ 0x1f);
+    mapper_8k_w(3,data ^ 0x1e);
+    mapper_8k_w(0,data ^ 0x1d);
+    mapper_8k_w(1,data ^ 0x1c);
+    return;
   }
 
   z80_writemap[address >> 10][address & 0x03FF] = data;
