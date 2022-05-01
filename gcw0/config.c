@@ -66,13 +66,14 @@ void set_config_defaults(void)
     config.bios           = 0;
     config.lock_on        = 0; /* = OFF (or TYPE_SK, TYPE_GG & TYPE_AR) */
     config.add_on         = 0; /* = HW_ADDON_AUTO (or HW_ADDON_MEGACD, HW_ADDON_MEGASD & HW_ADDON_NONE) */
-    config.ntsc           = 0;
-    config.lcd            = 0; /* 0.8 fixed point */
+    config.cd_latency     = 1;
 
     /* display options */
     config.overscan         = 0; /* 3 = all borders (0 = no borders , 1 = vertical borders only, 2 = horizontal borders only) */
     config.gg_extra         = 0; /* 1 = show extended Game Gear screen (256x192) */
     config.render           = 0; /* 1 = double resolution output (only when interlaced mode 2 is enabled) */
+    config.ntsc             = 0;
+    config.lcd              = 0; /* 0.8 fixed point */
     config.gcw0_fullscreen  = 1; /* 1 = use IPU scaling */
     config.keepaspectratio  = 1; /* 1 = aspect ratio correct with black bars, 0 = fullscreen without correct aspect ratio */
     config.gg_scanlines     = 1; /* 1 = use scanlines on Game Gear */

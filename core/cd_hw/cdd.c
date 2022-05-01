@@ -2,7 +2,7 @@
  *  Genesis Plus
  *  CD drive processor & CD-DA fader
  *
- *  Copyright (C) 2012-2021  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2012-2022  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -2071,7 +2071,8 @@ void cdd_process(void)
         /* Fixes a few games hanging because they expect data to be read with some delay */
         /* Wolf Team games (Annet Futatabi, Aisle Lord, Cobra Command, Earnest Evans, Road Avenger & Time Gal) need at least 11 interrupts delay  */
         /* Space Adventure Cobra (2nd morgue scene) needs at least 13 interrupts delay (incl. seek time, so 11 is OK) */
-        cdd.latency = 11;
+        /* By default, at least one interrupt latency is required by current emulation model (BIOS hangs otherwise) */
+        cdd.latency = 1 + 10*config.cd_latency;
       }
 
       /* CD drive seek time */
@@ -2081,11 +2082,11 @@ void cdd_process(void)
       /* be enough delayed to start in sync with intro sequence, as compared with real hardware recording).        */
       if (lba > cdd.lba)
       {
-        cdd.latency += (((lba - cdd.lba) * 120) / 270000);
+        cdd.latency += (((lba - cdd.lba) * 120 * config.cd_latency) / 270000);
       }
       else 
       {
-        cdd.latency += (((cdd.lba - lba) * 120) / 270000);
+        cdd.latency += (((cdd.lba - lba) * 120 * config.cd_latency) / 270000);
       }
 
       /* update current LBA */
@@ -2148,11 +2149,11 @@ void cdd_process(void)
       /* seeking from 00:05:63 to 24:03:19, Panic! when seeking from 00:05:60 to 24:06:07) */
       if (lba > cdd.lba)
       {
-        cdd.latency = ((lba - cdd.lba) * 120) / 270000;
+        cdd.latency = ((lba - cdd.lba) * 120 * config.cd_latency) / 270000;
       }
       else
       {
-        cdd.latency = ((cdd.lba - lba) * 120) / 270000;
+        cdd.latency = ((cdd.lba - lba) * 120 * config.cd_latency) / 270000;
       }
 
       /* update current LBA */
