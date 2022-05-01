@@ -3,7 +3,7 @@
  *
  *  Genesis Plus GX libretro port
  *
- *  Copyright Eke-Eke (2007-2021)
+ *  Copyright Eke-Eke (2007-2022)
  *
  *  Copyright Daniel De Matteis (2012-2016)
  *
@@ -1513,6 +1513,15 @@ static void check_variables(bool first_run)
       m68k.aerr_enabled = config.addr_error = 1;
     else
       m68k.aerr_enabled = config.addr_error = 0;
+  }
+
+  var.key = "genesis_plus_gx_cd_latency";
+  environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
+  {
+    if (!var.value || !strcmp(var.value, "enabled"))
+      config.cd_latency = 1;
+    else
+      config.cd_latency = 0;
   }
 
   var.key = "genesis_plus_gx_add_on";

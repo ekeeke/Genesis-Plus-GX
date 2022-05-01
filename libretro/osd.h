@@ -3,7 +3,7 @@
  *
  *  Genesis Plus GX libretro port
  *
- *  Copyright Eke-Eke (2007-2021)
+ *  Copyright Eke-Eke (2007-2022)
  *
  *  Copyright Daniel De Matteis (2012-2016)
  *
@@ -133,6 +133,7 @@ typedef struct
   uint8 gun_cursor;
   uint32 overclock;
   uint8 no_sprite_limit;
+  uint8 cd_latency;
 #ifdef USE_PER_SOUND_CHANNELS_CONFIG
   unsigned int psg_ch_volumes[4];
   int32 md_ch_volumes[6];

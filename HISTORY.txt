@@ -18,6 +18,7 @@ Genesis Plus GX 1.7.5 (xx/xx/xxxx) (Eke-Eke)
 * added optional CHD file support
 * added CDC & GFX register polling detection / synchronization
 * added configurable CD-DA and PCM outputs mixing volume
+* added setting to enable/disable CD access time simulation
 * improved Timer interrupt timings and CDD interrupt accuracy (fixes audio stutters during Popful Mail FMV)
 * improved CDC emulation (fixes random freezes during Jeopardy & ESPN Sunday Night NFL intro)
 * improved emulation of mirrored memory areas
