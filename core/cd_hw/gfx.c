@@ -2,7 +2,7 @@
  *  Genesis Plus
  *  CD graphics processor
  *
- *  Copyright (C) 2012-2019  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2012-2022  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -460,6 +460,9 @@ INLINE void gfx_render(uint32 bufferIndex, uint32 width)
   uint16 stamp_data;
   uint32 stamp_index;
 
+  /* bits [1:0] of 32x32 pixels stamp index are masked (see Chuck Rock II - Son of Chuck) */
+  uint32 stamp_mask = (scd.regs[0x58>>1].byte.l & 0x02) ? 0x7fc : 0x7ff;
+
   /* pixel map start position for current line (13.3 format converted to 13.11) */
   uint32 xpos = *gfx.tracePtr++ << 8;
   uint32 ypos = *gfx.tracePtr++ << 8;
@@ -502,7 +505,7 @@ INLINE void gfx_render(uint32 bufferIndex, uint32 width)
       /*        c = cell offset  (0-3 for 16x16, 0-15 for 32x32)        */
       /*      yyy = line offset  (0-7)                                  */
       /*      xxx = pixel offset (0-7)                                  */
-      stamp_index = (stamp_data & 0x7ff) << 8;
+      stamp_index = (stamp_data & stamp_mask) << 8;
 
       if (stamp_index)
       {
