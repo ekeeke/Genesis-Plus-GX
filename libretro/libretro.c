@@ -2809,9 +2809,10 @@ void retro_set_environment(retro_environment_t cb)
    if (environ_cb(RETRO_ENVIRONMENT_GET_VFS_INTERFACE, &vfs_iface_info))
 	   filestream_vfs_init(&vfs_iface_info);
 
-   environ_cb(RETRO_ENVIRONMENT_GET_LED_INTERFACE, &led_interface);
-   if (led_interface.set_led_state && !led_state_cb)
-      led_state_cb = led_interface.set_led_state;
+   if (environ_cb(RETRO_ENVIRONMENT_GET_LED_INTERFACE, &led_interface)) {
+      if (led_interface.set_led_state && !led_state_cb)
+         led_state_cb = led_interface.set_led_state;
+   }
 }
 
 void retro_set_video_refresh(retro_video_refresh_t cb) { video_cb = cb; }
