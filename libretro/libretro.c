@@ -72,6 +72,8 @@
 
 #include <libretro.h>
 #include <streams/file_stream.h>
+#include <file/file_path.h>
+#include <compat/strl.h>
 
 #include "libretro_core_options.h"
 
@@ -1207,7 +1209,7 @@ static void extract_name(char *buf, const char *path, size_t size)
 
    if (base)
    {
-      snprintf(buf, size, "%s", base);
+      strlcpy(buf, base, size);
       base = strrchr(buf, '.');
       if (base)
          *base = '\0';
@@ -1222,8 +1224,7 @@ static void extract_directory(char *buf, const char *path, size_t size)
    strncpy(buf, path, size - 1);
    buf[size - 1] = '\0';
 
-   base = strrchr(buf, '/');
-   if (!base)
+   if (!(base = strrchr(buf, '/')))
       base = strrchr(buf, '\\');
 
    if (base)
@@ -1327,23 +1328,20 @@ static void check_variables(bool first_run)
   var.key = "genesis_plus_gx_bram";
   environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
   {
-#if defined(_WIN32)
-    char slash = '\\';
-#else
-    char slash = '/';
-#endif
-
    if (!var.value || !strcmp(var.value, "per bios"))
    {
-     snprintf(CD_BRAM_EU, sizeof(CD_BRAM_EU), "%s%cscd_E.brm", save_dir, slash);
-     snprintf(CD_BRAM_US, sizeof(CD_BRAM_US), "%s%cscd_U.brm", save_dir, slash);
-     snprintf(CD_BRAM_JP, sizeof(CD_BRAM_JP), "%s%cscd_J.brm", save_dir, slash);
+     fill_pathname_join(CD_BRAM_EU, save_dir, "scd_E.brm", sizeof(CD_BRAM_EU));
+     fill_pathname_join(CD_BRAM_US, save_dir, "scd_U.brm", sizeof(CD_BRAM_US));
+     fill_pathname_join(CD_BRAM_JP, save_dir, "scd_J.brm", sizeof(CD_BRAM_JP));
    }
    else
    {
-     snprintf(CD_BRAM_EU, sizeof(CD_BRAM_EU), "%s%c%s.brm", save_dir, slash, g_rom_name);
-     snprintf(CD_BRAM_US, sizeof(CD_BRAM_US), "%s%c%s.brm", save_dir, slash, g_rom_name);
-     snprintf(CD_BRAM_JP, sizeof(CD_BRAM_JP), "%s%c%s.brm", save_dir, slash, g_rom_name);
+     char newpath[4096];
+     fill_pathname_join(newpath, save_dir, g_rom_name, sizeof(newpath));
+     strlcat(newpath, ".brm", sizeof(newpath));
+     strlcpy(CD_BRAM_EU, newpath, sizeof(CD_BRAM_EU));
+     strlcpy(CD_BRAM_US, newpath, sizeof(CD_BRAM_US));
+     strlcpy(CD_BRAM_JP, newpath, sizeof(CD_BRAM_JP));
    }
   }
 
@@ -3205,40 +3203,40 @@ bool retro_load_game(const struct retro_game_info *info)
       save_dir = g_rom_dir;
    }
 
-   snprintf(GG_ROM, sizeof(GG_ROM), "%s%cggenie.bin", dir, slash);
-   snprintf(AR_ROM, sizeof(AR_ROM), "%s%careplay.bin", dir, slash);
-   snprintf(SK_ROM, sizeof(SK_ROM), "%s%csk.bin", dir, slash);
-   snprintf(SK_UPMEM, sizeof(SK_UPMEM), "%s%csk2chip.bin", dir, slash);
-   snprintf(MD_BIOS, sizeof(MD_BIOS), "%s%cbios_MD.bin", dir, slash);
-   snprintf(GG_BIOS, sizeof(GG_BIOS), "%s%cbios.gg", dir, slash);
-   snprintf(MS_BIOS_EU, sizeof(MS_BIOS_EU), "%s%cbios_E.sms", dir, slash);
-   snprintf(MS_BIOS_US, sizeof(MS_BIOS_US), "%s%cbios_U.sms", dir, slash);
-   snprintf(MS_BIOS_JP, sizeof(MS_BIOS_JP), "%s%cbios_J.sms", dir, slash);
-   snprintf(CD_BIOS_EU, sizeof(CD_BIOS_EU), "%s%cbios_CD_E.bin", dir, slash);
-   snprintf(CD_BIOS_US, sizeof(CD_BIOS_US), "%s%cbios_CD_U.bin", dir, slash);
-   snprintf(CD_BIOS_JP, sizeof(CD_BIOS_JP), "%s%cbios_CD_J.bin", dir, slash);
-   snprintf(CART_BRAM, sizeof(CART_BRAM), "%s%ccart.brm", save_dir, slash);
+   fill_pathname_join(GG_ROM,     dir, "ggenie.bin",    sizeof(GG_ROM));
+   fill_pathname_join(AR_ROM,     dir, "areplay.bin",   sizeof(AR_ROM));
+   fill_pathname_join(SK_ROM,     dir, "sk.bin",        sizeof(SK_ROM));
+   fill_pathname_join(SK_UPMEM,   dir, "sk2chip.bin",   sizeof(SK_UPMEM));
+   fill_pathname_join(MD_BIOS,    dir, "bios_MD.bin",   sizeof(MD_BIOS));
+   fill_pathname_join(GG_BIOS,    dir, "bios.gg",       sizeof(GG_BIOS));
+   fill_pathname_join(MS_BIOS_EU, dir, "bios_E.sms",    sizeof(MS_BIOS_EU));
+   fill_pathname_join(MS_BIOS_US, dir, "bios_U.sms",    sizeof(MS_BIOS_US));
+   fill_pathname_join(MS_BIOS_JP, dir, "bios_J.sms",    sizeof(MS_BIOS_JP));
+   fill_pathname_join(CD_BIOS_EU, dir, "bios_CD_E.bin", sizeof(CD_BIOS_EU));
+   fill_pathname_join(CD_BIOS_US, dir, "bios_CD_U.bin", sizeof(CD_BIOS_US));
+   fill_pathname_join(CD_BIOS_JP, dir, "bios_CD_J.bin", sizeof(CD_BIOS_JP));
+   fill_pathname_join(CART_BRAM,  dir, "cart.brm",      sizeof(CART_BRAM));
 
    check_variables(true);
 
    if (log_cb)
    {
-      log_cb(RETRO_LOG_INFO, "Game Genie ROM should be located at: %s\n", GG_ROM);
-      log_cb(RETRO_LOG_INFO, "Action Replay (Pro) ROM should be located at: %s\n", AR_ROM);
-      log_cb(RETRO_LOG_INFO, "Sonic & Knuckles (2 MB) ROM should be located at: %s\n", SK_ROM);
-      log_cb(RETRO_LOG_INFO, "Sonic & Knuckles UPMEM (256 KB) ROM should be located at: %s\n", SK_UPMEM);
-      log_cb(RETRO_LOG_INFO, "Mega Drive TMSS BOOTROM should be located at: %s\n", MD_BIOS);
-      log_cb(RETRO_LOG_INFO, "Game Gear TMSS BOOTROM should be located at: %s\n", GG_BIOS);
-      log_cb(RETRO_LOG_INFO, "Master System (PAL) BOOTROM should be located at: %s\n", MS_BIOS_EU);
-      log_cb(RETRO_LOG_INFO, "Master System (NTSC-U) BOOTROM should be located at: %s\n", MS_BIOS_US);
-      log_cb(RETRO_LOG_INFO, "Master System (NTSC-J) BOOTROM should be located at: %s\n", MS_BIOS_JP);
-      log_cb(RETRO_LOG_INFO, "Mega CD (PAL) BIOS should be located at: %s\n", CD_BIOS_EU);
-      log_cb(RETRO_LOG_INFO, "Sega CD (NTSC-U) BIOS should be located at: %s\n", CD_BIOS_US);
-      log_cb(RETRO_LOG_INFO, "Mega CD (NTSC-J) BIOS should be located at: %s\n", CD_BIOS_JP);
-      log_cb(RETRO_LOG_INFO, "Mega CD (PAL) BRAM is located at: %s\n", CD_BRAM_EU);
-      log_cb(RETRO_LOG_INFO, "Sega CD (NTSC-U) BRAM is located at: %s\n", CD_BRAM_US);
-      log_cb(RETRO_LOG_INFO, "Mega CD (NTSC-J) BRAM is located at: %s\n", CD_BRAM_JP);
-      log_cb(RETRO_LOG_INFO, "Sega/Mega CD RAM CART is located at: %s\n", CART_BRAM);
+      log_cb(RETRO_LOG_DEBUG, "Game Genie ROM should be located at: %s\n", GG_ROM);
+      log_cb(RETRO_LOG_DEBUG, "Action Replay (Pro) ROM should be located at: %s\n", AR_ROM);
+      log_cb(RETRO_LOG_DEBUG, "Sonic & Knuckles (2 MB) ROM should be located at: %s\n", SK_ROM);
+      log_cb(RETRO_LOG_DEBUG, "Sonic & Knuckles UPMEM (256 KB) ROM should be located at: %s\n", SK_UPMEM);
+      log_cb(RETRO_LOG_DEBUG, "Mega Drive TMSS BOOTROM should be located at: %s\n", MD_BIOS);
+      log_cb(RETRO_LOG_DEBUG, "Game Gear TMSS BOOTROM should be located at: %s\n", GG_BIOS);
+      log_cb(RETRO_LOG_DEBUG, "Master System (PAL) BOOTROM should be located at: %s\n", MS_BIOS_EU);
+      log_cb(RETRO_LOG_DEBUG, "Master System (NTSC-U) BOOTROM should be located at: %s\n", MS_BIOS_US);
+      log_cb(RETRO_LOG_DEBUG, "Master System (NTSC-J) BOOTROM should be located at: %s\n", MS_BIOS_JP);
+      log_cb(RETRO_LOG_DEBUG, "Mega CD (PAL) BIOS should be located at: %s\n", CD_BIOS_EU);
+      log_cb(RETRO_LOG_DEBUG, "Sega CD (NTSC-U) BIOS should be located at: %s\n", CD_BIOS_US);
+      log_cb(RETRO_LOG_DEBUG, "Mega CD (NTSC-J) BIOS should be located at: %s\n", CD_BIOS_JP);
+      log_cb(RETRO_LOG_DEBUG, "Mega CD (PAL) BRAM is located at: %s\n", CD_BRAM_EU);
+      log_cb(RETRO_LOG_DEBUG, "Sega CD (NTSC-U) BRAM is located at: %s\n", CD_BRAM_US);
+      log_cb(RETRO_LOG_DEBUG, "Mega CD (NTSC-J) BRAM is located at: %s\n", CD_BRAM_JP);
+      log_cb(RETRO_LOG_DEBUG, "Sega/Mega CD RAM CART is located at: %s\n", CART_BRAM);
    }
 
    /* Clear disk interface (already done in retro_unload_game but better be safe) */
