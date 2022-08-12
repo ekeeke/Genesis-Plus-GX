@@ -46,6 +46,8 @@ void set_config_defaults(void)
   config.render   = 0;  /* 1 = double resolution output (only when interlaced mode 2 is enabled) */
   config.ntsc     = 0;
   config.lcd      = 0;  /* 0.8 fixed point */
+  config.enhanced_vscroll = 0;
+  config.enhanced_vscroll_limit = 8;
 
   /* controllers options */
   input.system[0]       = SYSTEM_GAMEPAD;

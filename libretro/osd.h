@@ -133,6 +133,8 @@ typedef struct
   uint8 gun_cursor;
   uint32 overclock;
   uint8 no_sprite_limit;
+  uint8 enhanced_vscroll;
+  uint8 enhanced_vscroll_limit;
   uint8 cd_latency;
 #ifdef USE_PER_SOUND_CHANNELS_CONFIG
   unsigned int psg_ch_volumes[4];
