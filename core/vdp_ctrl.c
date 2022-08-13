@@ -1691,7 +1691,7 @@ static void vdp_reg_w(unsigned int r, unsigned int d, unsigned int cycles)
             }
             else
             {
-              render_bg = (reg[11] & 0x04) ? render_bg_m5_vs : render_bg_m5;
+              render_bg = (reg[11] & 0x04) ? (config.enhanced_vscroll ? render_bg_m5_vs_enhanced : render_bg_m5_vs) : render_bg_m5;
               render_obj = (reg[12] & 0x08) ? render_obj_m5_ste : render_obj_m5;
             }
 
@@ -1902,7 +1902,7 @@ static void vdp_reg_w(unsigned int r, unsigned int d, unsigned int cycles)
       /* Vertical Scrolling mode */
       if (d & 0x04)
       {
-        render_bg = im2_flag ? render_bg_m5_im2_vs : render_bg_m5_vs;
+        render_bg = im2_flag ? render_bg_m5_im2_vs : (config.enhanced_vscroll ? render_bg_m5_vs_enhanced : render_bg_m5_vs);
       }
       else
       {

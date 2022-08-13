@@ -6,6 +6,7 @@
  *
  *  Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003  Charles Mac Donald (original code)
  *  Copyright (C) 2007-2016  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2022  AlexKiri (enhanced vscroll mode rendering function)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -1847,6 +1848,292 @@ void render_bg_m5_vs(int line)
   merge(&linebuf[1][0x20], &linebuf[0][0x20], &linebuf[0][0x20], lut[(reg[12] & 0x08) >> 2], bitmap.viewport.w);
 }
 
+/* Enhanced function that allows each cell to be vscrolled individually, instead of being limited to 2-cell */
+void render_bg_m5_vs_enhanced(int line)
+{
+  int column, v_offset;
+  uint32 atex, atbuf, *src, *dst;
+  uint32 v_line, next_v_line, *nt;
+
+  /* Common data */
+  uint32 xscroll      = *(uint32 *)&vram[hscb + ((line & hscroll_mask) << 2)];
+  uint32 yscroll      = 0;
+  uint32 pf_col_mask  = playfield_col_mask;
+  uint32 pf_row_mask  = playfield_row_mask;
+  uint32 pf_shift     = playfield_shift;
+  uint32 *vs          = (uint32 *)&vsram[0];
+
+  /* Window & Plane A */
+  int a = (reg[18] & 0x1F) << 3;
+  int w = (reg[18] >> 7) & 1;
+
+  /* Plane B width */
+  int start = 0;
+  int end = bitmap.viewport.w >> 4;
+
+  /* Plane B horizontal scroll */
+#ifdef LSB_FIRST
+  uint32 shift  = (xscroll >> 16) & 0x0F;
+  uint32 index  = pf_col_mask + 1 - ((xscroll >> 20) & pf_col_mask);
+#else
+  uint32 shift  = (xscroll & 0x0F);
+  uint32 index  = pf_col_mask + 1 - ((xscroll >> 4) & pf_col_mask);
+#endif
+
+  /* Left-most column vertical scrolling when partially shown horizontally (verified on PAL MD2)  */
+  /* TODO: check on Genesis 3 models since it apparently behaves differently  */
+  /* In H32 mode, vertical scrolling is disabled, in H40 mode, same value is used for both planes */
+  /* See Formula One / Kawasaki Superbike Challenge (H32) & Gynoug / Cutie Suzuki no Ringside Angel (H40) */
+  if (reg[12] & 1)
+  {
+    yscroll = vs[19] & (vs[19] >> 16);
+  }
+
+  if(shift)
+  {
+    /* Plane B vertical scroll */
+    v_line = (line + yscroll) & pf_row_mask;
+
+    /* Plane B name table */
+    nt = (uint32 *)&vram[ntbb + (((v_line >> 3) << pf_shift) & 0x1FC0)];
+
+    /* Pattern row index */
+    v_line = (v_line & 7) << 3;
+
+    /* Plane B line buffer */
+    dst = (uint32 *)&linebuf[0][0x10 + shift];
+
+    atbuf = nt[(index - 1) & pf_col_mask];
+    DRAW_COLUMN(atbuf, v_line)
+  }
+  else
+  {
+    /* Plane B line buffer */
+    dst = (uint32 *)&linebuf[0][0x20];
+  }
+
+  for(column = 0; column < end; column++, index++)
+  {
+    /* Plane B vertical scroll */
+#ifdef LSB_FIRST
+    v_line = (line + (vs[column] >> 16)) & pf_row_mask;
+    next_v_line = (line + (vs[column + 1] >> 16)) & pf_row_mask;
+#else
+    v_line = (line + vs[column]) & pf_row_mask;
+    next_v_line = (line + vs[column + 1]) & pf_row_mask;
+#endif
+
+    if (column != end - 1)
+    {
+      /* The offset of the intermediary cell is an average of the offsets of the current 2-cell and the next 2-cell. */
+      /* For the last column, the previously calculated offset is used */
+      v_offset = ((int)next_v_line - (int)v_line) / 2;
+      v_offset = (abs(v_offset) >= config.enhanced_vscroll_limit) ? 0 : v_offset;
+    }
+
+    /* Plane B name table */
+    nt = (uint32 *)&vram[ntbb + (((v_line >> 3) << pf_shift) & 0x1FC0)];
+
+    /* Pattern row index */
+    v_line = (v_line & 7) << 3;
+
+    atbuf = nt[index & pf_col_mask];
+#ifdef LSB_FIRST
+    GET_LSB_TILE(atbuf, v_line)
+#else
+    GET_MSB_TILE(atbuf, v_line)
+#endif
+
+#ifdef ALIGN_LONG
+    WRITE_LONG(dst, src[0] | atex);
+    dst++;
+    WRITE_LONG(dst, src[1] | atex);
+    dst++;
+#else
+    *dst++ = (src[0] | atex);
+    *dst++ = (src[1] | atex);
+#endif
+
+#ifdef LSB_FIRST
+    v_line = (line + v_offset + (vs[column] >> 16)) & pf_row_mask;
+#else
+    v_line = (line + v_offset + vs[column]) & pf_row_mask;
+#endif
+
+    nt = (uint32 *)&vram[ntbb + (((v_line >> 3) << pf_shift) & 0x1FC0)];
+    v_line = (v_line & 7) << 3;
+    atbuf = nt[index & pf_col_mask];
+
+#ifdef LSB_FIRST
+    GET_MSB_TILE(atbuf, v_line)
+#else
+    GET_LSB_TILE(atbuf, v_line)
+#endif
+#ifdef ALIGN_LONG
+    WRITE_LONG(dst, src[0] | atex);
+    dst++;
+    WRITE_LONG(dst, src[1] | atex);
+    dst++;
+#else
+    *dst++ = (src[0] | atex);
+    *dst++ = (src[1] | atex);
+#endif
+  }
+
+  if (w == (line >= a))
+  {
+    /* Window takes up entire line */
+    a = 0;
+    w = 1;
+  }
+  else
+  {
+    /* Window and Plane A share the line */
+    a = clip[0].enable;
+    w = clip[1].enable;
+  }
+
+  /* Plane A */
+  if (a)
+  {
+    /* Plane A width */
+    start = clip[0].left;
+    end   = clip[0].right;
+
+    /* Plane A horizontal scroll */
+#ifdef LSB_FIRST
+    shift = (xscroll & 0x0F);
+    index = pf_col_mask + start + 1 - ((xscroll >> 4) & pf_col_mask);
+#else
+    shift = (xscroll >> 16) & 0x0F;
+    index = pf_col_mask + start + 1 - ((xscroll >> 20) & pf_col_mask);
+#endif
+
+    if(shift)
+    {
+      /* Plane A vertical scroll */
+      v_line = (line + yscroll) & pf_row_mask;
+
+      /* Plane A name table */
+      nt = (uint32 *)&vram[ntab + (((v_line >> 3) << pf_shift) & 0x1FC0)];
+
+      /* Pattern row index */
+      v_line = (v_line & 7) << 3;
+
+      /* Plane A line buffer */
+      dst = (uint32 *)&linebuf[1][0x10 + shift + (start << 4)];
+
+      /* Window bug */
+      if (start)
+      {
+        atbuf = nt[index & pf_col_mask];
+      }
+      else
+      {
+        atbuf = nt[(index - 1) & pf_col_mask];
+      }
+
+      DRAW_COLUMN(atbuf, v_line)
+    }
+    else
+    {
+      /* Plane A line buffer */
+      dst = (uint32 *)&linebuf[1][0x20 + (start << 4)];
+    }
+
+    for(column = start; column < end; column++, index++)
+    {
+      /* Plane A vertical scroll */
+#ifdef LSB_FIRST
+      v_line = (line + vs[column]) & pf_row_mask;
+      next_v_line = (line + vs[column + 1]) & pf_row_mask;
+#else
+      v_line = (line + (vs[column] >> 16)) & pf_row_mask;
+      next_v_line = (line + (vs[column + 1] >> 16)) & pf_row_mask;
+#endif
+
+      if (column != end - 1)
+      {
+        v_offset = ((int)next_v_line - (int)v_line) / 2;
+        v_offset = (abs(v_offset) >= config.enhanced_vscroll_limit) ? 0 : v_offset;
+      }
+
+      /* Plane A name table */
+      nt = (uint32 *)&vram[ntab + (((v_line >> 3) << pf_shift) & 0x1FC0)];
+
+      /* Pattern row index */
+      v_line = (v_line & 7) << 3;
+
+      atbuf = nt[index & pf_col_mask];
+#ifdef LSB_FIRST
+      GET_LSB_TILE(atbuf, v_line)
+#else
+      GET_MSB_TILE(atbuf, v_line)
+#endif
+#ifdef ALIGN_LONG
+      WRITE_LONG(dst, src[0] | atex);
+      dst++;
+      WRITE_LONG(dst, src[1] | atex);
+      dst++;
+#else
+      *dst++ = (src[0] | atex);
+      *dst++ = (src[1] | atex);
+#endif
+
+#ifdef LSB_FIRST
+      v_line = (line + v_offset + vs[column]) & pf_row_mask;
+#else
+      v_line = (line + v_offset + (vs[column] >> 16)) & pf_row_mask;
+#endif
+
+      nt = (uint32 *)&vram[ntab + (((v_line >> 3) << pf_shift) & 0x1FC0)];
+      v_line = (v_line & 7) << 3;
+      atbuf = nt[index & pf_col_mask];
+
+#ifdef LSB_FIRST
+      GET_MSB_TILE(atbuf, v_line)
+#else
+      GET_LSB_TILE(atbuf, v_line)
+#endif
+#ifdef ALIGN_LONG
+      WRITE_LONG(dst, src[0] | atex);
+      dst++;
+      WRITE_LONG(dst, src[1] | atex);
+      dst++;
+#else
+      *dst++ = (src[0] | atex);
+      *dst++ = (src[1] | atex);
+#endif
+    }
+
+    /* Window width */
+    start = clip[1].left;
+    end   = clip[1].right;
+  }
+
+  /* Window */
+  if (w)
+  {
+    /* Window name table */
+    nt = (uint32 *)&vram[ntwb | ((line >> 3) << (6 + (reg[12] & 1)))];
+
+    /* Pattern row index */
+    v_line = (line & 7) << 3;
+
+    /* Plane A line buffer */
+    dst = (uint32 *)&linebuf[1][0x20 + (start << 4)];
+
+    for(column = start; column < end; column++)
+    {
+      atbuf = nt[column];
+      DRAW_COLUMN(atbuf, v_line)
+    }
+  }
+
+  /* Merge background layers */
+  merge(&linebuf[1][0x20], &linebuf[0][0x20], &linebuf[0][0x20], lut[(reg[12] & 0x08) >> 2], bitmap.viewport.w);
+}
+
 void render_bg_m5_im2(int line)
 {
   int column;
@@ -2540,6 +2827,342 @@ void render_bg_m5_vs(int line)
 
     atbuf = nt[index & pf_col_mask];
     DRAW_BG_COLUMN(atbuf, v_line, xscroll, yscroll)
+  }
+}
+
+void render_bg_m5_vs_enhanced(int line)
+{
+  int column, start, end, v_offset;
+  uint32 atex, atbuf, *src, *dst;
+  uint32 shift, index, v_line, next_v_line, *nt;
+  uint8 *lb;
+
+  /* Scroll Planes common data */
+  uint32 xscroll      = *(uint32 *)&vram[hscb + ((line & hscroll_mask) << 2)];
+  uint32 yscroll      = 0;
+  uint32 pf_col_mask  = playfield_col_mask;
+  uint32 pf_row_mask  = playfield_row_mask;
+  uint32 pf_shift     = playfield_shift;
+  uint32 *vs          = (uint32 *)&vsram[0];
+
+  /* Number of columns to draw */
+  int width = bitmap.viewport.w >> 4;
+
+  /* Layer priority table */
+  uint8 *table = lut[(reg[12] & 8) >> 2];
+
+  /* Window vertical range (cell 0-31) */
+  int a = (reg[18] & 0x1F) << 3;
+
+  /* Window position (0=top, 1=bottom) */
+  int w = (reg[18] >> 7) & 1;
+
+  /* Test against current line */
+  if (w == (line >= a))
+  {
+    /* Window takes up entire line */
+    a = 0;
+    w = 1;
+  }
+  else
+  {
+    /* Window and Plane A share the line */
+    a = clip[0].enable;
+    w = clip[1].enable;
+  }
+
+  /* Left-most column vertical scrolling when partially shown horizontally */
+  /* Same value for both planes, only in 40-cell mode, verified on PAL MD2 */
+  /* See Gynoug, Cutie Suzuki no Ringside Angel, Formula One, Kawasaki Superbike Challenge */
+  if (reg[12] & 1)
+  {
+    yscroll = vs[19] & (vs[19] >> 16);
+  }
+
+  /* Plane A*/
+  if (a)
+  {
+    /* Plane A width */
+    start = clip[0].left;
+    end   = clip[0].right;
+
+    /* Plane A horizontal scroll */
+#ifdef LSB_FIRST
+    shift = (xscroll & 0x0F);
+    index = pf_col_mask + start + 1 - ((xscroll >> 4) & pf_col_mask);
+#else
+    shift = (xscroll >> 16) & 0x0F;
+    index = pf_col_mask + start + 1 - ((xscroll >> 20) & pf_col_mask);
+#endif
+
+    /* Background line buffer */
+    dst = (uint32 *)&linebuf[0][0x20 + (start << 4) + shift];
+
+    if(shift)
+    {
+      /* Left-most column is partially shown */
+      dst -= 4;
+
+      /* Plane A vertical scroll */
+      v_line = (line + yscroll) & pf_row_mask;
+
+      /* Plane A name table */
+      nt = (uint32 *)&vram[ntab + (((v_line >> 3) << pf_shift) & 0x1FC0)];
+
+      /* Pattern row index */
+      v_line = (v_line & 7) << 3;
+
+      /* Window bug */
+      if (start)
+      {
+        atbuf = nt[index & pf_col_mask];
+      }
+      else
+      {
+        atbuf = nt[(index-1) & pf_col_mask];
+      }
+
+      DRAW_COLUMN(atbuf, v_line)
+    }
+
+    for(column = start; column < end; column++, index++)
+    {
+      /* Plane A vertical scroll */
+#ifdef LSB_FIRST
+      v_line = (line + vs[column]) & pf_row_mask;
+      next_v_line = (line + vs[column + 1]) & pf_row_mask;
+#else
+      v_line = (line + (vs[column] >> 16)) & pf_row_mask;
+      next_v_line = (line + (vs[column + 1] >> 16)) & pf_row_mask;
+#endif
+
+      if (column != end - 1)
+      {
+        v_offset = ((int)next_v_line - (int)v_line) / 2;
+        v_offset = (abs(v_offset) >= config.enhanced_vscroll_limit) ? 0 : v_offset;
+      }
+
+      /* Plane A name table */
+      nt = (uint32 *)&vram[ntab + (((v_line >> 3) << pf_shift) & 0x1FC0)];
+
+      /* Pattern row index */
+      v_line = (v_line & 7) << 3;
+
+      atbuf = nt[index & pf_col_mask];
+#ifdef LSB_FIRST
+      GET_LSB_TILE(atbuf, v_line)
+#else
+      GET_MSB_TILE(atbuf, v_line)
+#endif
+#ifdef ALIGN_LONG
+      WRITE_LONG(dst, src[0] | atex);
+      dst++;
+      WRITE_LONG(dst, src[1] | atex);
+      dst++;
+#else
+      *dst++ = (src[0] | atex);
+      *dst++ = (src[1] | atex);
+#endif
+
+#ifdef LSB_FIRST
+      v_line = (line + v_offset + vs[column]) & pf_row_mask;
+#else
+      v_line = (line + v_offset + (vs[column] >> 16)) & pf_row_mask;
+#endif
+
+      nt = (uint32 *)&vram[ntab + (((v_line >> 3) << pf_shift) & 0x1FC0)];
+      v_line = (v_line & 7) << 3;
+      atbuf = nt[index & pf_col_mask];
+
+#ifdef LSB_FIRST
+      GET_MSB_TILE(atbuf, v_line)
+#else
+      GET_LSB_TILE(atbuf, v_line)
+#endif
+#ifdef ALIGN_LONG
+      WRITE_LONG(dst, src[0] | atex);
+      dst++;
+      WRITE_LONG(dst, src[1] | atex);
+      dst++;
+#else
+      *dst++ = (src[0] | atex);
+      *dst++ = (src[1] | atex);
+#endif
+    }
+
+    /* Window width */
+    start = clip[1].left;
+    end   = clip[1].right;
+  }
+  else
+  {
+    /* Window width */
+    start = 0;
+    end   = width;
+  }
+
+  /* Window Plane */
+  if (w)
+  {
+    /* Background line buffer */
+    dst = (uint32 *)&linebuf[0][0x20 + (start << 4)];
+
+    /* Window name table */
+    nt = (uint32 *)&vram[ntwb | ((line >> 3) << (6 + (reg[12] & 1)))];
+
+    /* Pattern row index */
+    v_line = (line & 7) << 3;
+
+    for(column = start; column < end; column++)
+    {
+      atbuf = nt[column];
+      DRAW_COLUMN(atbuf, v_line)
+    }
+  }
+
+  /* Plane B horizontal scroll */
+#ifdef LSB_FIRST
+  shift = (xscroll >> 16) & 0x0F;
+  index = pf_col_mask + 1 - ((xscroll >> 20) & pf_col_mask);
+#else
+  shift = (xscroll & 0x0F);
+  index = pf_col_mask + 1 - ((xscroll >> 4) & pf_col_mask);
+#endif
+
+  /* Background line buffer */
+  lb = &linebuf[0][0x20];
+
+  if(shift)
+  {
+    /* Left-most column is partially shown */
+    lb -= (0x10 - shift);
+
+    /* Plane B vertical scroll */
+    v_line = (line + yscroll) & pf_row_mask;
+
+    /* Plane B name table */
+    nt = (uint32 *)&vram[ntbb + (((v_line >> 3) << pf_shift) & 0x1FC0)];
+
+    /* Pattern row index */
+    v_line = (v_line & 7) << 3;
+
+    atbuf = nt[(index-1) & pf_col_mask];
+    DRAW_BG_COLUMN(atbuf, v_line, xscroll, yscroll)
+  }
+
+  for(column = 0; column < width; column++, index++)
+  {
+    /* Plane B vertical scroll */
+#ifdef LSB_FIRST
+    v_line = (line + (vs[column] >> 16)) & pf_row_mask;
+    next_v_line = (line + (vs[column + 1] >> 16)) & pf_row_mask;
+#else
+    v_line = (line + vs[column]) & pf_row_mask;
+    next_v_line = (line + vs[column + 1]) & pf_row_mask;
+#endif
+
+    if (column != width - 1)
+    {
+      v_offset = ((int)next_v_line - (int)v_line) / 2;
+      v_offset = (abs(v_offset) >= config.enhanced_vscroll_limit) ? 0 : v_offset;
+    }
+    
+    /* Plane B name table */
+    nt = (uint32 *)&vram[ntbb + (((v_line >> 3) << pf_shift) & 0x1FC0)];
+
+    /* Pattern row index */
+    v_line = (v_line & 7) << 3;
+
+    atbuf = nt[index & pf_col_mask];
+#ifdef ALIGN_LONG
+#ifdef LSB_FIRST
+  GET_LSB_TILE(atbuf, v_line)
+  xscroll = READ_LONG((uint32 *)lb);
+  yscroll = (src[0] | atex);
+  DRAW_BG_TILE(xscroll, yscroll)
+  xscroll = READ_LONG((uint32 *)lb);
+  yscroll = (src[1] | atex);
+  DRAW_BG_TILE(xscroll, yscroll)
+
+  v_line = (line + v_offset + (vs[column] >> 16)) & pf_row_mask;
+  nt = (uint32 *)&vram[ntbb + (((v_line >> 3) << pf_shift) & 0x1FC0)];
+  v_line = (v_line & 7) << 3;
+  atbuf = nt[index & pf_col_mask];
+  
+  GET_MSB_TILE(atbuf, v_line)
+  xscroll = READ_LONG((uint32 *)lb);
+  yscroll = (src[0] | atex);
+  DRAW_BG_TILE(xscroll, yscroll)
+  xscroll = READ_LONG((uint32 *)lb);
+  yscroll = (src[1] | atex);
+  DRAW_BG_TILE(xscroll, yscroll)
+#else
+  GET_MSB_TILE(atbuf, v_line)
+  xscroll = READ_LONG((uint32 *)lb);
+  yscroll = (src[0] | atex);
+  DRAW_BG_TILE(xscroll, yscroll)
+  xscroll = READ_LONG((uint32 *)lb);
+  yscroll = (src[1] | atex);
+  DRAW_BG_TILE(xscroll, yscroll)
+
+  v_line = (line + vs[column]) & pf_row_mask;
+  nt = (uint32 *)&vram[ntbb + (((v_line >> 3) << pf_shift) & 0x1FC0)];
+  v_line = (v_line & 7) << 3;
+  atbuf = nt[index & pf_col_mask];
+ 
+  GET_LSB_TILE(atbuf, v_line)
+  xscroll = READ_LONG((uint32 *)lb);
+  yscroll = (src[0] | atex);
+  DRAW_BG_TILE(xscroll, yscroll)
+  xscroll = READ_LONG((uint32 *)lb);
+  yscroll = (src[1] | atex);
+  DRAW_BG_TILE(xscroll, yscroll)
+#endif
+#else /* NOT ALIGNED */
+#ifdef LSB_FIRST
+  GET_LSB_TILE(atbuf, v_line)
+  xscroll = *(uint32 *)(lb);
+  yscroll = (src[0] | atex);
+  DRAW_BG_TILE(xscroll, yscroll)
+  xscroll = *(uint32 *)(lb);
+  yscroll = (src[1] | atex);
+  DRAW_BG_TILE(xscroll, yscroll)
+
+  v_line = (line + v_offset + (vs[column] >> 16)) & pf_row_mask;
+  nt = (uint32 *)&vram[ntbb + (((v_line >> 3) << pf_shift) & 0x1FC0)];
+  v_line = (v_line & 7) << 3;
+  atbuf = nt[index & pf_col_mask];
+
+  GET_MSB_TILE(atbuf, v_line)
+  xscroll = *(uint32 *)(lb);
+  yscroll = (src[0] | atex);
+  DRAW_BG_TILE(xscroll, yscroll)
+  xscroll = *(uint32 *)(lb);
+  yscroll = (src[1] | atex);
+  DRAW_BG_TILE(xscroll, yscroll)
+#else
+  GET_MSB_TILE(atbuf, v_line)
+  xscroll = *(uint32 *)(lb);
+  yscroll = (src[0] | atex);
+  DRAW_BG_TILE(xscroll, yscroll)
+  xscroll = *(uint32 *)(lb);
+  yscroll = (src[1] | atex);
+  DRAW_BG_TILE(xscroll, yscroll)
+
+  v_line = (line + vs[column]) & pf_row_mask;
+  nt = (uint32 *)&vram[ntbb + (((v_line >> 3) << pf_shift) & 0x1FC0)];
+  v_line = (v_line & 7) << 3;
+  atbuf = nt[index & pf_col_mask];
+
+  GET_LSB_TILE(atbuf, v_line)
+  xscroll = *(uint32 *)(lb);
+  yscroll = (src[0] | atex);
+  DRAW_BG_TILE(xscroll, yscroll)
+  xscroll = *(uint32 *)(lb);
+  yscroll = (src[1] | atex);
+  DRAW_BG_TILE(xscroll, yscroll)
+#endif
+#endif /* ALIGN_LONG */
   }
 }
 

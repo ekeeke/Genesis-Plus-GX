@@ -118,6 +118,7 @@ extern void render_bg_inv(int line);
 extern void render_bg_m4(int line);
 extern void render_bg_m5(int line);
 extern void render_bg_m5_vs(int line);
+extern void render_bg_m5_vs_enhanced(int line);
 extern void render_bg_m5_im2(int line);
 extern void render_bg_m5_im2_vs(int line);
 extern void render_obj_tms(int line);
