@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
+#include <stdbool.h>
 #include <time.h>
 
 #include <stdlib.h>

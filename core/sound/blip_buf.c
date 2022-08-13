@@ -14,7 +14,6 @@
 #endif
 #include <limits.h>
 #include <string.h>
-#include <stdbool.h>
 #include <stdlib.h>
 
 /* Library Copyright (C) 2003-2009 Shay Green. This library is free software;
