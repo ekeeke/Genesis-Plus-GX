@@ -365,6 +365,7 @@ void sound_init( void )
   /* Initialize PSG chip */
   psg_init((system_hw == SYSTEM_SG) ? PSG_DISCRETE : PSG_INTEGRATED);
 
+#ifdef __LIBRETRO__
   if (audio_hard_disable)
   {
     /* Dummy audio callbacks for audio hard disable */
@@ -374,6 +375,7 @@ void sound_init( void )
     fm_read = NULL_fm_read;
     return;
   }
+#endif
 }
 
 void sound_reset(void)
@@ -393,6 +395,7 @@ void sound_reset(void)
   fm_cycles_start = fm_cycles_count = 0;
 }
 
+#ifdef __LIBRETRO__
 void sound_update_fm_function_pointers(void)
 {
   /* Only set function pointers for YM_Update, fm_reset, fm_write, fm_read */
@@ -437,6 +440,7 @@ void sound_update_fm_function_pointers(void)
     fm_read = NULL;
   }
 }
+#endif
 
 int sound_update(unsigned int cycles)
 {
