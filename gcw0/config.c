@@ -82,6 +82,8 @@ void set_config_defaults(void)
     config.a_stick          = 1; /* 1 = A-Stick on */
     config.lightgun_speed   = 1; /* 1 = simple speed multiplier for lightgun */
     config.gcw0_frameskip   = 0; /* 0 = off, 1 = skip alternate frames, 2 = skip 2 in 3 frames, etc. Useful for FMV in MCD. */
+    config.enhanced_vscroll = 0;
+    config.enhanced_vscroll_limit = 8;
 
     /* controllers options */
     config.cursor         = 0;  /* different cursor designs */

@@ -52,6 +52,8 @@ typedef struct
   uint8 ntsc;
   uint8 lcd;
   uint8 render;
+  uint8 enhanced_vscroll;
+  uint8 enhanced_vscroll_limit;
   t_input_config input[MAX_INPUTS];
   uint8 gcw0_fullscreen;
   uint8 gcw0_frameskip;
