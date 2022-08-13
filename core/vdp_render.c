@@ -1925,8 +1925,8 @@ void render_bg_m5_vs_enhanced(int line)
 
     if (column != end - 1)
     {
-      // The offset of the intermediary cell is an average of the offsets of the current 2-cell and the next 2-cell.
-      // For the last column, the previously calculated offset is used
+      /* The offset of the intermediary cell is an average of the offsets of the current 2-cell and the next 2-cell. */
+      /* For the last column, the previously calculated offset is used */
       v_offset = ((int)next_v_line - (int)v_line) / 2;
       v_offset = (abs(v_offset) >= config.enhanced_vscroll_limit) ? 0 : v_offset;
     }
