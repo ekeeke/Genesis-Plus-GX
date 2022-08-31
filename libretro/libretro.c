@@ -950,6 +950,8 @@ static void config_default(void)
    config.overclock      = 100;
 #endif
    config.no_sprite_limit = 0;
+   config.enhanced_vscroll = 0;
+   config.enhanced_vscroll_limit = 8;
 
    /* video options */
    config.overscan = 0;
@@ -1862,6 +1864,19 @@ static void check_variables(bool first_run)
     else
       config.no_sprite_limit = 1;
   }
+
+  var.key = "genesis_plus_gx_enhanced_vscroll";
+  environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
+  {
+      if (!var.value || !strcmp(var.value, "disabled"))
+         config.enhanced_vscroll = 0;
+      else
+         config.enhanced_vscroll = 1;
+  }
+
+  var.key = "genesis_plus_gx_enhanced_vscroll_limit";
+  if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+    config.enhanced_vscroll_limit = strtol(var.value, NULL, 10);
 
 #ifdef USE_PER_SOUND_CHANNELS_CONFIG
   var.key = psg_channel_volume_base_str;

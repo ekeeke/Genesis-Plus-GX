@@ -83,6 +83,8 @@ typedef struct
   uint8 ntsc;
   uint8 vsync;
   uint8 render;
+  uint8 enhanced_vscroll;
+  uint8 enhanced_vscroll_limit;
   uint8 tv_mode;
   uint8 bilinear;
   uint8 vfilter;
