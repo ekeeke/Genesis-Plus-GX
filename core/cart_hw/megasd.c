@@ -327,6 +327,10 @@ void megasd_rom_mapper_w(unsigned int address, unsigned int data)
         m68k.memory_map[i].write16  = m68k_unused_16_w;
         zbank_memory_map[i].write   = zbank_unused_w;
       }
+
+      /* enable CD hardware overlay access */
+      m68k.memory_map[0x03].write8 = megasd_ctrl_write_byte;
+      m68k.memory_map[0x03].write16 = megasd_ctrl_write_word;
     }
   }
   else
