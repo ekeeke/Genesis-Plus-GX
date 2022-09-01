@@ -2,7 +2,7 @@
  *  Genesis Plus
  *  MegaSD flashcart CD hardware interface overlay & enhanced ROM mappers
  *
- *  Copyright (C) 2020-2021  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2020-2022  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
