@@ -5,7 +5,7 @@
  *  Support for SG-1000 (TMS99xx & 315-5066), Master System (315-5124 & 315-5246), Game Gear & Mega Drive VDP
  *
  *  Copyright (C) 1998-2003  Charles Mac Donald (original code)
- *  Copyright (C) 2007-2017  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2007-2022  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -2243,8 +2243,8 @@ static void vdp_bus_w(unsigned int data)
           color_update_m5(0x00, data);
         }
 
-        /* CRAM modified during HBLANK (Striker, Zero the Kamikaze, etc) */
-        if ((v_counter < bitmap.viewport.h) && (reg[1] & 0x40) && (m68k.cycles <= (mcycles_vdp + 860)))
+        /* CRAM modified during HBLANK (Striker, Zero the Kamikaze, Yuu Yuu Hakusho, etc) */
+        if ((v_counter < bitmap.viewport.h) && (m68k.cycles <= (mcycles_vdp + 860)) && ((reg[1] & 0x40) || (index == border)))
         {
           /* Remap current line */
           remap_line(v_counter);
