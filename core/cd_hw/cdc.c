@@ -648,11 +648,16 @@ unsigned char cdc_reg_r(void)
 
         return data;
       }
+      
+      default:
+      {
+        /* by default, COMIN is always empty */
+        return 0xff;
+      }
     }
   }
-
-  /* by default, COMIN is always empty */
-  return 0xff;
+  
+  return 0x00;
 }
 
 unsigned short cdc_host_r(void)
