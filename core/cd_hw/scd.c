@@ -523,7 +523,7 @@ static unsigned int scd_read_byte(unsigned int address)
     return scd.regs[0x58>>1].byte.h;
   }
 
-  /* CDC register data (controlled by BIOS, byte access only ?) */
+  /* CDC register data (controlled by BIOS) */
   if (address == 0x07)
   {
     unsigned int data = cdc_reg_r();
@@ -616,6 +616,16 @@ static unsigned int scd_read_word(unsigned int address)
   {
     s68k_poll_detect(1<<0x03);
     return scd.regs[0x03>>1].w;
+  }
+
+  /* CDC register data (controlled by BIOS) */
+  if (address == 0x06)
+  {
+    unsigned int data = cdc_reg_r();
+#ifdef LOG_CDC
+    error("CDC register %X read 0x%02X (%X)\n", scd.regs[0x04>>1].byte.l & 0x0F, data, s68k.pc);
+#endif
+    return data;
   }
 
   /* CDC host data (word access only ?) */
@@ -946,6 +956,18 @@ static void scd_write_byte(unsigned int address, unsigned int data)
       scd.regs[0x02 >> 1].byte.l = (scd.regs[0x02 >> 1].byte.l & ~0x1c) | (data & 0x1c);
       return;
     }
+    
+    case 0x04: /* CDC mode */
+    {
+      scd.regs[0x04>>1].byte.h = (scd.regs[0x04>>1].byte.h & ~0x07) | (data & 0x07);
+      return;
+    }
+    
+    case 0x05: /* CDC register select */
+    {
+      scd.regs[0x05>>1].byte.l = (scd.regs[0x05>>1].byte.l & ~0x1f) | (data & 0x1f);
+      return;
+    }
 
     case 0x07: /* CDC register write */
     {
@@ -1208,6 +1230,12 @@ static void scd_write_word(unsigned int address, unsigned int data)
 
       /* update PM0-1 & MODE bits */
       scd.regs[0x03>>1].byte.l = (scd.regs[0x03>>1].byte.l & ~0x1c) | (data & 0x1c);
+      return;
+    }
+
+    case 0x04: /* CDC mode / CDC register select */
+    {
+      scd.regs[0x04 >> 1].w = (scd.regs[0x04 >> 1].w & ~0x71f) | (data & 0x71f);
       return;
     }
 
