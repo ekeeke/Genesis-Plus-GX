@@ -79,6 +79,7 @@ Genesis Plus GX 1.7.5 (xx/xx/xxxx) (Eke-Eke)
 ---------------
 * added new SMS Power dumps in internal database
 * added support for Korean XX-in-1 mappers (thanks to Bock from SMS Power)
+* added missing GG-MS games in internal game database
 * improved console hardware auto-detection
 * improved emulation accuracy of SG-1000 & Mark-III hardware
 * improved emulation accuracy of Japanese Master System I/O chip (315-5297)
