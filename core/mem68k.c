@@ -3,7 +3,7 @@
  *  Main 68k bus handlers
  *
  *  Copyright (C) 1998-2003  Charles Mac Donald (original code)
- *  Copyright (C) 2007-2019  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2007-2022  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -777,7 +777,7 @@ void ctrl_io_write_byte(unsigned int address, unsigned int data)
               }
               else
               {
-                /* writing 0 to DMNA in 1M mode actually set DMNA bit */
+                /* writing 0 to DMNA in 1M mode actually sets DMNA bit */
                 data |= 0x02;
 
                 /* update BK0-1 & DMNA bits */
@@ -787,19 +787,32 @@ void ctrl_io_write_byte(unsigned int address, unsigned int data)
             }
             else
             {
-              /* writing 0 in 2M mode does nothing */
+              /* writing 0 to DMNA in 2M mode does nothing */
               if (data & 0x02)
               {
                 /* Word-RAM is assigned to SUB-CPU */
                 scd.dmna = 1;
 
-                /* clear RET bit */
+                /* clear RET bit and update BK0-1 & DMNA bits */
                 scd.regs[0x03>>1].byte.l = (scd.regs[0x03>>1].byte.l & ~0xc3) | (data & 0xc2);
+
+                /* check if graphics operation is running */
+                if (scd.regs[0x58>>1].byte.h & 0x80)
+                {
+                  /* relative SUB-CPU cycle counter */
+                  unsigned int cycles = (m68k.cycles * SCYCLES_PER_LINE) / MCYCLES_PER_LINE;
+
+                  /* synchronize GFX processing with SUB-CPU (only if not already ahead) */
+                  if (gfx.cycles < cycles)
+                  {
+                    gfx.cycles = cycles;
+                  }
+                }
                 return;
               }
             }
 
-            /* update BK0-1 bits */
+            /* update BK0-1 bits only */
             scd.regs[0x03>>1].byte.l = (scd.regs[0x02>>1].byte.l & ~0xc0) | (data & 0xc0);
             return;
           }
@@ -1014,7 +1027,7 @@ void ctrl_io_write_word(unsigned int address, unsigned int data)
               }
               else
               {
-                /* writing 0 to DMNA in 1M mode actually set DMNA bit */
+                /* writing 0 to DMNA in 1M mode actually sets DMNA bit */
                 data |= 0x02;
 
                 /* update WP0-7, BK0-1 & DMNA bits */
@@ -1024,19 +1037,32 @@ void ctrl_io_write_word(unsigned int address, unsigned int data)
             }
             else
             {
-              /* writing 0 in 2M mode does nothing */
+              /* writing 0 to DMNA in 2M mode does nothing */
               if (data & 0x02)
               {
                 /* Word-RAM is assigned to SUB-CPU */
                 scd.dmna = 1;
 
-                /* clear RET bit */
+                /* clear RET bit and update WP0-7 & BK0-1 bits */
                 scd.regs[0x02>>1].w = (scd.regs[0x02>>1].w & ~0xffc3) | (data & 0xffc2);
+
+                /* check if graphics operation is running */
+                if (scd.regs[0x58>>1].byte.h & 0x80)
+                {
+                  /* relative SUB-CPU cycle counter */
+                  unsigned int cycles = (m68k.cycles * SCYCLES_PER_LINE) / MCYCLES_PER_LINE;
+
+                  /* synchronize GFX processing with SUB-CPU (only if not already ahead) */
+                  if (gfx.cycles < cycles)
+                  {
+                    gfx.cycles = cycles;
+                  }
+                }
                 return;
               }
             }
 
-            /* update WP0-7 & BK0-1 bits */
+            /* update WP0-7 & BK0-1 bits only */
             scd.regs[0x02>>1].w = (scd.regs[0x02>>1].w & ~0xffc0) | (data & 0xffc0);
             return;
           }
