@@ -784,7 +784,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
    },
    {
       "genesis_plus_gx_enhanced_vscroll",
-      "Enchanced per-tile vertical scroll",
+      "Enhanced per-tile vertical scroll",
       NULL,
       "Allows each individual cell to be scrolled vertically, instead of 16px 2-cell, by averaging out with the vscroll value of the neighbouring cell. This hack only applies to few games that use 2-cell vertical scroll mode.",
       NULL,
@@ -798,7 +798,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
    },
    {
       "genesis_plus_gx_enhanced_vscroll_limit",
-      "Enchanced per-tile vertical scroll limit",
+      "Enhanced per-tile vertical scroll limit",
       NULL,
       "Only when Enchance per-tile vertical scroll is enabled. Adjusts the limit of the vertical scroll enhancement. When the vscroll difference between neighbouring tiles is bigger than this limit, the enhancement is disabled.",
       NULL,
