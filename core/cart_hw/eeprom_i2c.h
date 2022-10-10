@@ -40,6 +40,6 @@
 #define _EEPROM_I2C_H_
 
 /* Function prototypes */
-extern void eeprom_i2c_init();
+extern void eeprom_i2c_init(void);
 
 #endif

@@ -2385,7 +2385,7 @@ void ROMCheatUpdate(void)
   }
 }
 
-static void set_memory_maps()
+static void set_memory_maps(void)
 {
    if (system_hw == SYSTEM_MCD)
    {

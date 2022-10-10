@@ -348,7 +348,7 @@ void s68k_pulse_halt(void)
   CPU_STOPPED |= STOP_LEVEL_HALT;
 }
 
-void s68k_clear_halt()
+void s68k_clear_halt(void)
 {
   /* Clear the HALT line on the CPU */
   CPU_STOPPED &= ~STOP_LEVEL_HALT;
