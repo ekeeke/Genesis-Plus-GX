@@ -779,7 +779,7 @@ INLINE void CSMKeyControll(FM_CH *CH)
   ym2612.OPN.SL3.key_csm = 1;
 }
 
-INLINE void INTERNAL_TIMER_A()
+INLINE void INTERNAL_TIMER_A(void)
 {
   if (ym2612.OPN.ST.mode & 0x01)
   {
@@ -1034,7 +1034,7 @@ INLINE void set_sl_rr(FM_SLOT *SLOT,int v)
 }
 
 /* advance LFO to next sample */
-INLINE void advance_lfo()
+INLINE void advance_lfo(void)
 {
   if (ym2612.OPN.lfo_timer_overflow)   /* LFO enabled ? */
   {

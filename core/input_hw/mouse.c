@@ -56,7 +56,7 @@ void mouse_reset(int port)
   mouse.Port = port;
 }
 
-unsigned char mouse_read()
+unsigned char mouse_read(void)
 {
   unsigned int temp = 0x00;
   int x = input.analog[mouse.Port][0];

@@ -72,7 +72,7 @@ typedef struct
 
 static T_EEPROM_SPI spi_eeprom;
 
-void eeprom_spi_init()
+void eeprom_spi_init(void)
 {
   /* reset eeprom state */
   memset(&spi_eeprom, 0, sizeof(T_EEPROM_SPI));
