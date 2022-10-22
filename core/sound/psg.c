@@ -114,7 +114,7 @@ void psg_init(PSG_TYPE type)
   psg.noiseBitMask = noiseBitMask[type];
 }
 
-void psg_reset()
+void psg_reset(void)
 {
   int i;
 

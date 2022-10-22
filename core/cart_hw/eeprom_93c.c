@@ -47,7 +47,7 @@
 
 T_EEPROM_93C eeprom_93c;
 
-void eeprom_93c_init()
+void eeprom_93c_init(void)
 {
   /* default eeprom state */
   memset(&eeprom_93c, 0, sizeof(T_EEPROM_93C));

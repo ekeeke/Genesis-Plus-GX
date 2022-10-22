@@ -51,7 +51,7 @@ typedef struct
 } T_SRAM;
 
 /* Function prototypes */
-extern void sram_init();
+extern void sram_init(void);
 extern unsigned int sram_read_byte(unsigned int address);
 extern unsigned int sram_read_word(unsigned int address);
 extern void sram_write_byte(unsigned int address, unsigned int data);

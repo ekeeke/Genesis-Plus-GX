@@ -179,7 +179,7 @@ static struct
 /* I2C EEPROM mapper initialization                                 */
 /********************************************************************/
 
-void eeprom_i2c_init()
+void eeprom_i2c_init(void)
 {
   int i = sizeof(i2c_database) / sizeof(T_I2C_GAME) - 1;
 
@@ -246,7 +246,7 @@ void eeprom_i2c_init()
 /* I2C EEPROM internal                                   			*/
 /********************************************************************/
 
-INLINE void Detect_START()
+INLINE void Detect_START(void)
 {
   /* detect SDA HIGH to LOW transition while SCL is held HIGH */
   if (eeprom_i2c.old_scl && eeprom_i2c.scl)
@@ -273,7 +273,7 @@ INLINE void Detect_START()
   }
 }
 
-INLINE void Detect_STOP()
+INLINE void Detect_STOP(void)
 {
   /* detect SDA LOW to HIGH transition while SCL is held HIGH */
   if (eeprom_i2c.old_scl && eeprom_i2c.scl)

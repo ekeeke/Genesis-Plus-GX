@@ -934,6 +934,13 @@ static void scd_write_byte(unsigned int address, unsigned int data)
           /* RET bit set in 2M mode */
           if (data & 0x01)
           {
+            /* check if graphics operation is running */
+            if (scd.regs[0x58>>1].byte.h & 0x80)
+            {
+              /* synchronize GFX processing with SUB-CPU */
+              gfx_update(s68k.cycles);
+            }
+
             /* Word-RAM is returned to MAIN-CPU */
             scd.dmna = 0;
 
@@ -1198,6 +1205,13 @@ static void scd_write_word(unsigned int address, unsigned int data)
           /* RET bit set in 2M mode */
           if (data & 0x01)
           {
+            /* check if graphics operation is running */
+            if (scd.regs[0x58>>1].byte.h & 0x80)
+            {
+              /* synchronize GFX processing with SUB-CPU */
+              gfx_update(s68k.cycles);
+            }
+
             /* Word-RAM is returned to MAIN-CPU */
             scd.dmna = 0;
 
