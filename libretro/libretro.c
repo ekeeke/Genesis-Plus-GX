@@ -2243,34 +2243,40 @@ static void apply_cheats(void)
    {
       if (cheatlist[i].enable)
       {
-         if (cheatlist[i].address < cart.romsize)
+         /* detect Work RAM patch */
+         if (cheatlist[i].address >= 0xFF0000)
          {
-            /* detect Work RAM patch */
-            if (cheatlist[i].address >= 0xFF0000)
+            /* add RAM patch */
+            cheatIndexes[maxRAMcheats++] = i;
+         }
+
+         /* check if Mega-CD game is running */
+         else if ((system_hw == SYSTEM_MCD) && !scd.cartridge.boot)
+         {
+            /* detect PRG-RAM patch (Sub-CPU side) */
+            if (cheatlist[i].address < 0x80000)
             {
-              /* add RAM patch */
+               /* add RAM patch */
+               cheatIndexes[maxRAMcheats++] = i;
+            }
+
+            /* detect Word-RAM patch (Main-CPU side)*/
+            else if ((cheatlist[i].address >= 0x200000) && (cheatlist[i].address < 0x240000))
+            {
+               /* add RAM patch */
               cheatIndexes[maxRAMcheats++] = i;
             }
+         }
 
-            /* check if Mega-CD game is running */
-            else if ((system_hw == SYSTEM_MCD) && !scd.cartridge.boot)
+         /* detect cartridge ROM patch */
+         else if (cheatlist[i].address < cart.romsize)
+         {
+            if ((system_hw & SYSTEM_PBC) == SYSTEM_MD)
             {
-               /* detect PRG-RAM patch (Sub-CPU side) */
-               if (cheatlist[i].address < 0x80000)
-               {
-                  /* add RAM patch */
-                  cheatIndexes[maxRAMcheats++] = i;
-               }
-
-               /* detect Word-RAM patch (Main-CPU side)*/
-               else if ((cheatlist[i].address >= 0x200000) && (cheatlist[i].address < 0x240000))
-               {
-                  /* add RAM patch */
-                  cheatIndexes[maxRAMcheats++] = i;
-               }
+               /* patch ROM data */
+               cheatlist[i].old = *(uint16_t *)(cart.rom + (cheatlist[i].address & 0xFFFFFE));
+               *(uint16_t *)(cart.rom + (cheatlist[i].address & 0xFFFFFE)) = cheatlist[i].data;
             }
-
-            /* detect cartridge ROM patch */
             else
             {
                /* add ROM patch */
