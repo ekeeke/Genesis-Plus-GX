@@ -2312,32 +2312,12 @@ static void apply_cheats(void)
       {
          if (cheatlist[i].address < cart.romsize)
          {
-            /* detect Work RAM patch */
-            if (cheatlist[i].address >= 0xFF0000)
+            if ((system_hw & SYSTEM_PBC) == SYSTEM_MD)
             {
-              /* add RAM patch */
-              cheatIndexes[maxRAMcheats++] = i;
+               /* patch ROM data */
+               cheatlist[i].old = *(uint16_t *)(cart.rom + (cheatlist[i].address & 0xFFFFFE));
+               *(uint16_t *)(cart.rom + (cheatlist[i].address & 0xFFFFFE)) = cheatlist[i].data;
             }
-
-            /* check if Mega-CD game is running */
-            else if ((system_hw == SYSTEM_MCD) && !scd.cartridge.boot)
-            {
-               /* detect PRG-RAM patch (Sub-CPU side) */
-               if (cheatlist[i].address < 0x80000)
-               {
-                  /* add RAM patch */
-                  cheatIndexes[maxRAMcheats++] = i;
-               }
-
-               /* detect Word-RAM patch (Main-CPU side)*/
-               else if ((cheatlist[i].address >= 0x200000) && (cheatlist[i].address < 0x240000))
-               {
-                  /* add RAM patch */
-                  cheatIndexes[maxRAMcheats++] = i;
-               }
-            }
-
-            /* detect cartridge ROM patch */
             else
             {
                /* add ROM patch */
@@ -2360,20 +2340,19 @@ static void apply_cheats(void)
                }
             }
          }
+         else if (cheatlist[i].address >= 0xFF0000)
+         {
+            /* add RAM patch */
+            cheatIndexes[maxRAMcheats++] = i;
+         }
       }
    }
 }
 
 static void clear_cheats(void)
 {
-   int i;
-
-  /* no ROM patches with Mega-CD games */
-   if ((system_hw == SYSTEM_MCD) && !scd.cartridge.boot)
-      return;
-
-   /* disable cheats in reversed order in case the same address is used by multiple ROM patches */
-   i = maxcheats;
+   int i = maxcheats;
+   /* disable cheats in reversed order in case the same address is used by multiple patches */
    while (i > 0)
    {
       if (cheatlist[i-1].enable)
@@ -2410,45 +2389,21 @@ static void clear_cheats(void)
 ****************************************************************************/
 static void RAMCheatUpdate(void)
 {
-   uint8_t *base;
-   uint32_t mask;
    int index, cnt = maxRAMcheats;
-
    while (cnt)
    {
       /* get cheat index */
       index = cheatIndexes[--cnt];
-
-      /* detect destination RAM */
-      switch ((cheatlist[index].address >> 20) & 0xf)
-      {
-         case 0x0: /* Mega-CD PRG-RAM (512 KB) */
-            base = scd.prg_ram;
-            mask = 0x7fffe;
-            break;
-
-         case 0x2: /* Mega-CD 2M Word-RAM (256 KB) */
-            base = scd.word_ram_2M;
-            mask = 0x3fffe;
-            break;
-
-         default: /* Work-RAM (64 KB) */
-            base = work_ram;
-            mask = 0xfffe;
-            break;
-      }
-
       /* apply RAM patch */
       if (cheatlist[index].data & 0xFF00)
       {
-         /* word patch */
-         *(uint16_t *)(base + (cheatlist[index].address & mask)) = cheatlist[index].data;
+         /* 16-bit patch */
+         *(uint16_t *)(work_ram + (cheatlist[index].address & 0xFFFE)) = cheatlist[index].data;
       }
       else
       {
-          /* byte patch */
-          mask |= 1;
-          base[cheatlist[index].address & mask] = cheatlist[index].data;
+         /* 8-bit patch */
+         work_ram[cheatlist[index].address & 0xFFFF] = cheatlist[index].data;
       }
    }
 }
