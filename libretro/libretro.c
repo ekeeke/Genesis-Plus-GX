@@ -72,15 +72,12 @@
 
 #include <libretro.h>
 #include <streams/file_stream.h>
-#include <file/file_path.h>
-#include <compat/strl.h>
 
 #include "libretro_core_options.h"
 
 #include "shared.h"
 #include "md_ntsc.h"
 #include "sms_ntsc.h"
-#include "osd.h"
 
 #define STATIC_ASSERT(name, test) typedef struct { int assert_[(test)?1:-1]; } assert_ ## name ## _
 #define M68K_MAX_CYCLES 1107
@@ -105,8 +102,8 @@ STATIC_ASSERT(z80_overflow,
 
 t_config config;
 
-sms_ntsc_t *sms_ntsc = NULL;
-md_ntsc_t  *md_ntsc = NULL;
+sms_ntsc_t *sms_ntsc;
+md_ntsc_t  *md_ntsc;
 
 char GG_ROM[256];
 char AR_ROM[256];
@@ -228,31 +225,6 @@ static void retro_audio_buff_status_cb(
    retro_audio_buff_underrun  = underrun_likely;
 }
 
-/* LED interface */
-static retro_set_led_state_t led_state_cb = NULL;
-static unsigned int retro_led_state[2] = {0};
-
-static void retro_led_interface(void)
-{
-   /* 0: Power
-    * 1: CD */
-
-   unsigned int led_state[2] = {0};
-   unsigned int l            = 0;
-
-   led_state[0] = (zstate) ? 1 : 0;
-   led_state[1] = (scd.regs[0x06 >> 1].byte.h & 1) ? 1 : 0;
-
-   for (l = 0; l < sizeof(led_state)/sizeof(led_state[0]); l++)
-   {
-      if (retro_led_state[l] != led_state[l])
-      {
-         retro_led_state[l] = led_state[l];
-         led_state_cb(l, led_state[l]);
-      }
-   }
-}
-
 static void init_frameskip(void)
 {
    if (frameskip_type > 0)
@@ -323,35 +295,6 @@ void error(char * fmt, ...)
    va_end(ap);
 }
 
-static void show_rom_size_error_msg(void)
-{
-   unsigned msg_interface_version = 0;
-   environ_cb(RETRO_ENVIRONMENT_GET_MESSAGE_INTERFACE_VERSION,
-         &msg_interface_version);
-
-   if (msg_interface_version >= 1)
-   {
-      struct retro_message_ext msg = {
-         "ROM size exceeds maximum permitted value",
-         3000,
-         3,
-         RETRO_LOG_ERROR,
-         RETRO_MESSAGE_TARGET_ALL,
-         RETRO_MESSAGE_TYPE_NOTIFICATION,
-         -1
-      };
-      environ_cb(RETRO_ENVIRONMENT_SET_MESSAGE_EXT, &msg);
-   }
-   else
-   {
-      struct retro_message msg = {
-         "ROM size exceeds maximum permitted value",
-         180
-      };
-      environ_cb(RETRO_ENVIRONMENT_SET_MESSAGE, &msg);
-   }
-}
-
 int load_archive(char *filename, unsigned char *buffer, int maxsize, char *extension)
 {
   int64_t left = 0;
@@ -373,19 +316,14 @@ int load_archive(char *filename, unsigned char *buffer, int maxsize, char *exten
     {
       size = g_rom_size;
       if (size > maxsize)
-      {
-        /* ROM exceeds maximum allowed size
-         * - Notify user and return an error */
-        show_rom_size_error_msg();
-        return 0;
-      }
+        size = maxsize;
       memcpy(buffer, g_rom_data, size);
       return size;
     }
   }
 
   /* Open file */
-  fd    = filestream_open(filename, RETRO_VFS_FILE_ACCESS_READ, RETRO_VFS_FILE_ACCESS_HINT_NONE);
+  fd = filestream_open(filename, RETRO_VFS_FILE_ACCESS_READ, RETRO_VFS_FILE_ACCESS_HINT_NONE);
 
   if (!fd)
   {
@@ -415,10 +353,9 @@ int load_archive(char *filename, unsigned char *buffer, int maxsize, char *exten
   /* size limit */
   if (size > MAXROMSIZE)
   {
-    /* ROM exceeds maximum allowed size
-     * - Notify user and return an error */
     filestream_close(fd);
-    show_rom_size_error_msg();
+    if (log_cb)
+       log_cb(RETRO_LOG_ERROR, "File is too large.\n");
     return 0;
   }
   else if (size > maxsize)
@@ -1211,7 +1148,7 @@ static void extract_name(char *buf, const char *path, size_t size)
 
    if (base)
    {
-      strlcpy(buf, base, size);
+      snprintf(buf, size, "%s", base);
       base = strrchr(buf, '.');
       if (base)
          *base = '\0';
@@ -1226,7 +1163,8 @@ static void extract_directory(char *buf, const char *path, size_t size)
    strncpy(buf, path, size - 1);
    buf[size - 1] = '\0';
 
-   if (!(base = strrchr(buf, '/')))
+   base = strrchr(buf, '/');
+   if (!base)
       base = strrchr(buf, '\\');
 
    if (base)
@@ -1252,10 +1190,6 @@ static double calculate_display_aspect_ratio(void)
       videosamplerate = 135000000.0 / 11.0;
    else if (config.aspect_ratio == 2) /* Force PAL PAR */
       videosamplerate = 14750000.0;
-   else if (config.aspect_ratio == 3) /* Force 4:3 */
-      return (4.0 / 3.0);
-   else if (config.aspect_ratio == 4) /* Uncorrected */
-      return (0.0);
    else
       videosamplerate = vdp_pal ? 14750000.0 : 135000000.0 / 11.0;
 
@@ -1330,20 +1264,23 @@ static void check_variables(bool first_run)
   var.key = "genesis_plus_gx_bram";
   environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
   {
+#if defined(_WIN32)
+    char slash = '\\';
+#else
+    char slash = '/';
+#endif
+
    if (!var.value || !strcmp(var.value, "per bios"))
    {
-     fill_pathname_join(CD_BRAM_EU, save_dir, "scd_E.brm", sizeof(CD_BRAM_EU));
-     fill_pathname_join(CD_BRAM_US, save_dir, "scd_U.brm", sizeof(CD_BRAM_US));
-     fill_pathname_join(CD_BRAM_JP, save_dir, "scd_J.brm", sizeof(CD_BRAM_JP));
+     snprintf(CD_BRAM_EU, sizeof(CD_BRAM_EU), "%s%cscd_E.brm", save_dir, slash);
+     snprintf(CD_BRAM_US, sizeof(CD_BRAM_US), "%s%cscd_U.brm", save_dir, slash);
+     snprintf(CD_BRAM_JP, sizeof(CD_BRAM_JP), "%s%cscd_J.brm", save_dir, slash);
    }
    else
    {
-     char newpath[4096];
-     fill_pathname_join(newpath, save_dir, g_rom_name, sizeof(newpath));
-     strlcat(newpath, ".brm", sizeof(newpath));
-     strlcpy(CD_BRAM_EU, newpath, sizeof(CD_BRAM_EU));
-     strlcpy(CD_BRAM_US, newpath, sizeof(CD_BRAM_US));
-     strlcpy(CD_BRAM_JP, newpath, sizeof(CD_BRAM_JP));
+     snprintf(CD_BRAM_EU, sizeof(CD_BRAM_EU), "%s%c%s.brm", save_dir, slash, g_rom_name);
+     snprintf(CD_BRAM_US, sizeof(CD_BRAM_US), "%s%c%s.brm", save_dir, slash, g_rom_name);
+     snprintf(CD_BRAM_JP, sizeof(CD_BRAM_JP), "%s%c%s.brm", save_dir, slash, g_rom_name);
    }
   }
 
@@ -1840,10 +1777,6 @@ static void check_variables(bool first_run)
       config.aspect_ratio = 1;
     else if (var.value && !strcmp(var.value, "PAL PAR"))
       config.aspect_ratio = 2;
-    else if (var.value && !strcmp(var.value, "4:3"))
-      config.aspect_ratio = 3;
-    else if (var.value && !strcmp(var.value, "Uncorrected"))
-      config.aspect_ratio = 4;
     else
       config.aspect_ratio = 0;
     if (orig_value != config.aspect_ratio)
@@ -2049,7 +1982,7 @@ static void check_variables(bool first_run)
     if ((system_hw == SYSTEM_GG) && !config.gg_extra)
       bitmap.viewport.x = (config.overscan & 2) ? 14 : -48;
     else
-      bitmap.viewport.x = (config.overscan & 2) * 7 ;
+      bitmap.viewport.x = (config.overscan & 2) * 7;
   }
 
   /* Reinitialise frameskipping, if required */
@@ -2310,7 +2243,33 @@ static void apply_cheats(void)
    {
       if (cheatlist[i].enable)
       {
-         if (cheatlist[i].address < cart.romsize)
+         /* detect Work RAM patch */
+         if (cheatlist[i].address >= 0xFF0000)
+         {
+            /* add RAM patch */
+            cheatIndexes[maxRAMcheats++] = i;
+         }
+
+         /* check if Mega-CD game is running */
+         else if ((system_hw == SYSTEM_MCD) && !scd.cartridge.boot)
+         {
+            /* detect PRG-RAM patch (Sub-CPU side) */
+            if (cheatlist[i].address < 0x80000)
+            {
+               /* add RAM patch */
+               cheatIndexes[maxRAMcheats++] = i;
+            }
+
+            /* detect Word-RAM patch (Main-CPU side)*/
+            else if ((cheatlist[i].address >= 0x200000) && (cheatlist[i].address < 0x240000))
+            {
+               /* add RAM patch */
+              cheatIndexes[maxRAMcheats++] = i;
+            }
+         }
+
+         /* detect cartridge ROM patch */
+         else if (cheatlist[i].address < cart.romsize)
          {
             if ((system_hw & SYSTEM_PBC) == SYSTEM_MD)
             {
@@ -2340,19 +2299,20 @@ static void apply_cheats(void)
                }
             }
          }
-         else if (cheatlist[i].address >= 0xFF0000)
-         {
-            /* add RAM patch */
-            cheatIndexes[maxRAMcheats++] = i;
-         }
       }
    }
 }
 
 static void clear_cheats(void)
 {
-   int i = maxcheats;
-   /* disable cheats in reversed order in case the same address is used by multiple patches */
+   int i;
+
+  /* no ROM patches with Mega-CD games */
+   if ((system_hw == SYSTEM_MCD) && !scd.cartridge.boot)
+      return;
+
+   /* disable cheats in reversed order in case the same address is used by multiple ROM patches */
+   i = maxcheats;
    while (i > 0)
    {
       if (cheatlist[i-1].enable)
@@ -2389,21 +2349,45 @@ static void clear_cheats(void)
 ****************************************************************************/
 static void RAMCheatUpdate(void)
 {
+   uint8_t *base;
+   uint32_t mask;
    int index, cnt = maxRAMcheats;
+
    while (cnt)
    {
       /* get cheat index */
       index = cheatIndexes[--cnt];
+
+      /* detect destination RAM */
+      switch ((cheatlist[index].address >> 20) & 0xf)
+      {
+         case 0x0: /* Mega-CD PRG-RAM (512 KB) */
+            base = scd.prg_ram;
+            mask = 0x7fffe;
+            break;
+
+         case 0x2: /* Mega-CD 2M Word-RAM (256 KB) */
+            base = scd.word_ram_2M;
+            mask = 0x3fffe;
+            break;
+
+         default: /* Work-RAM (64 KB) */
+            base = work_ram;
+            mask = 0xfffe;
+            break;
+      }
+
       /* apply RAM patch */
       if (cheatlist[index].data & 0xFF00)
       {
-         /* 16-bit patch */
-         *(uint16_t *)(work_ram + (cheatlist[index].address & 0xFFFE)) = cheatlist[index].data;
+         /* word patch */
+         *(uint16_t *)(base + (cheatlist[index].address & mask)) = cheatlist[index].data;
       }
       else
       {
-         /* 8-bit patch */
-         work_ram[cheatlist[index].address & 0xFFFF] = cheatlist[index].data;
+          /* byte patch */
+          mask |= 1;
+          base[cheatlist[index].address & mask] = cheatlist[index].data;
       }
    }
 }
@@ -2616,9 +2600,7 @@ unsigned retro_api_version(void) { return RETRO_API_VERSION; }
 
 void retro_set_environment(retro_environment_t cb)
 {
-   bool option_categories = false;
    struct retro_vfs_interface_info vfs_iface_info;
-   struct retro_led_interface led_interface;
 
    static const struct retro_controller_description port_1[] = {
       { "Joypad Auto", RETRO_DEVICE_JOYPAD },
@@ -2789,15 +2771,9 @@ void retro_set_environment(retro_environment_t cb)
 
    environ_cb = cb;
 
-   /* An annoyance: retro_set_environment() can be called
-    * multiple times, and depending upon the current frontend
-    * state various environment callbacks may be disabled.
-    * This means the reported 'categories_supported' status
-    * may change on subsequent iterations. We therefore have
-    * to record whether 'categories_supported' is true on any
-    * iteration, and latch the result */
-   libretro_set_core_options(environ_cb, &option_categories);
-   libretro_supports_option_categories |= option_categories;
+   libretro_supports_option_categories = false;
+   libretro_set_core_options(environ_cb,
+         &libretro_supports_option_categories);
 
    /* If frontend supports core option categories,
     * genesis_plus_gx_show_advanced_audio_settings
@@ -2822,10 +2798,6 @@ void retro_set_environment(retro_environment_t cb)
    if (environ_cb(RETRO_ENVIRONMENT_GET_VFS_INTERFACE, &vfs_iface_info))
 	   filestream_vfs_init(&vfs_iface_info);
 
-   if (environ_cb(RETRO_ENVIRONMENT_GET_LED_INTERFACE, &led_interface)) {
-      if (led_interface.set_led_state && !led_state_cb)
-         led_state_cb = led_interface.set_led_state;
-   }
 }
 
 void retro_set_video_refresh(retro_video_refresh_t cb) { video_cb = cb; }
@@ -3013,45 +2985,23 @@ void retro_set_controller_port_device(unsigned port, unsigned device)
 
 size_t retro_serialize_size(void) { return STATE_SIZE; }
 
-extern int8 fast_savestates;
-
-bool get_fast_savestates(void)
-{
-   int result = -1;
-   bool okay = false;
-   okay = environ_cb(RETRO_ENVIRONMENT_GET_AUDIO_VIDEO_ENABLE, &result);
-   if (okay)
-   {
-      return 0 != (result & 4);
-   }
-   else
-   {
-      return 0;
-   }
-}
-
 bool retro_serialize(void *data, size_t size)
 { 
-   fast_savestates = get_fast_savestates();
    if (size != STATE_SIZE)
       return FALSE;
 
    state_save(data);
-   if (fast_savestates) save_sound_buffer();
 
    return TRUE;
 }
 
 bool retro_unserialize(const void *data, size_t size)
 {
-   fast_savestates = get_fast_savestates();
    if (size != STATE_SIZE)
       return FALSE;
 
    if (!state_load((uint8_t*)data))
       return FALSE;
-
-   if (fast_savestates) restore_sound_buffer();
 
 #ifdef HAVE_OVERCLOCK
    update_overclock();
@@ -3174,7 +3124,7 @@ bool retro_load_game(const struct retro_game_info *info)
       const char *ext = NULL;
 
       if (!info || !info->path)
-         goto error;
+         return false;
 
       extract_directory(g_rom_dir, info->path, sizeof(g_rom_dir));
       extract_name(g_rom_name, info->path, sizeof(g_rom_name));
@@ -3218,40 +3168,40 @@ bool retro_load_game(const struct retro_game_info *info)
       save_dir = g_rom_dir;
    }
 
-   fill_pathname_join(GG_ROM,     dir, "ggenie.bin",    sizeof(GG_ROM));
-   fill_pathname_join(AR_ROM,     dir, "areplay.bin",   sizeof(AR_ROM));
-   fill_pathname_join(SK_ROM,     dir, "sk.bin",        sizeof(SK_ROM));
-   fill_pathname_join(SK_UPMEM,   dir, "sk2chip.bin",   sizeof(SK_UPMEM));
-   fill_pathname_join(MD_BIOS,    dir, "bios_MD.bin",   sizeof(MD_BIOS));
-   fill_pathname_join(GG_BIOS,    dir, "bios.gg",       sizeof(GG_BIOS));
-   fill_pathname_join(MS_BIOS_EU, dir, "bios_E.sms",    sizeof(MS_BIOS_EU));
-   fill_pathname_join(MS_BIOS_US, dir, "bios_U.sms",    sizeof(MS_BIOS_US));
-   fill_pathname_join(MS_BIOS_JP, dir, "bios_J.sms",    sizeof(MS_BIOS_JP));
-   fill_pathname_join(CD_BIOS_EU, dir, "bios_CD_E.bin", sizeof(CD_BIOS_EU));
-   fill_pathname_join(CD_BIOS_US, dir, "bios_CD_U.bin", sizeof(CD_BIOS_US));
-   fill_pathname_join(CD_BIOS_JP, dir, "bios_CD_J.bin", sizeof(CD_BIOS_JP));
-   fill_pathname_join(CART_BRAM,  dir, "cart.brm",      sizeof(CART_BRAM));
+   snprintf(GG_ROM, sizeof(GG_ROM), "%s%cggenie.bin", dir, slash);
+   snprintf(AR_ROM, sizeof(AR_ROM), "%s%careplay.bin", dir, slash);
+   snprintf(SK_ROM, sizeof(SK_ROM), "%s%csk.bin", dir, slash);
+   snprintf(SK_UPMEM, sizeof(SK_UPMEM), "%s%csk2chip.bin", dir, slash);
+   snprintf(MD_BIOS, sizeof(MD_BIOS), "%s%cbios_MD.bin", dir, slash);
+   snprintf(GG_BIOS, sizeof(GG_BIOS), "%s%cbios.gg", dir, slash);
+   snprintf(MS_BIOS_EU, sizeof(MS_BIOS_EU), "%s%cbios_E.sms", dir, slash);
+   snprintf(MS_BIOS_US, sizeof(MS_BIOS_US), "%s%cbios_U.sms", dir, slash);
+   snprintf(MS_BIOS_JP, sizeof(MS_BIOS_JP), "%s%cbios_J.sms", dir, slash);
+   snprintf(CD_BIOS_EU, sizeof(CD_BIOS_EU), "%s%cbios_CD_E.bin", dir, slash);
+   snprintf(CD_BIOS_US, sizeof(CD_BIOS_US), "%s%cbios_CD_U.bin", dir, slash);
+   snprintf(CD_BIOS_JP, sizeof(CD_BIOS_JP), "%s%cbios_CD_J.bin", dir, slash);
+   snprintf(CART_BRAM, sizeof(CART_BRAM), "%s%ccart.brm", save_dir, slash);
 
    check_variables(true);
 
    if (log_cb)
    {
-      log_cb(RETRO_LOG_DEBUG, "Game Genie ROM should be located at: %s\n", GG_ROM);
-      log_cb(RETRO_LOG_DEBUG, "Action Replay (Pro) ROM should be located at: %s\n", AR_ROM);
-      log_cb(RETRO_LOG_DEBUG, "Sonic & Knuckles (2 MB) ROM should be located at: %s\n", SK_ROM);
-      log_cb(RETRO_LOG_DEBUG, "Sonic & Knuckles UPMEM (256 KB) ROM should be located at: %s\n", SK_UPMEM);
-      log_cb(RETRO_LOG_DEBUG, "Mega Drive TMSS BOOTROM should be located at: %s\n", MD_BIOS);
-      log_cb(RETRO_LOG_DEBUG, "Game Gear TMSS BOOTROM should be located at: %s\n", GG_BIOS);
-      log_cb(RETRO_LOG_DEBUG, "Master System (PAL) BOOTROM should be located at: %s\n", MS_BIOS_EU);
-      log_cb(RETRO_LOG_DEBUG, "Master System (NTSC-U) BOOTROM should be located at: %s\n", MS_BIOS_US);
-      log_cb(RETRO_LOG_DEBUG, "Master System (NTSC-J) BOOTROM should be located at: %s\n", MS_BIOS_JP);
-      log_cb(RETRO_LOG_DEBUG, "Mega CD (PAL) BIOS should be located at: %s\n", CD_BIOS_EU);
-      log_cb(RETRO_LOG_DEBUG, "Sega CD (NTSC-U) BIOS should be located at: %s\n", CD_BIOS_US);
-      log_cb(RETRO_LOG_DEBUG, "Mega CD (NTSC-J) BIOS should be located at: %s\n", CD_BIOS_JP);
-      log_cb(RETRO_LOG_DEBUG, "Mega CD (PAL) BRAM is located at: %s\n", CD_BRAM_EU);
-      log_cb(RETRO_LOG_DEBUG, "Sega CD (NTSC-U) BRAM is located at: %s\n", CD_BRAM_US);
-      log_cb(RETRO_LOG_DEBUG, "Mega CD (NTSC-J) BRAM is located at: %s\n", CD_BRAM_JP);
-      log_cb(RETRO_LOG_DEBUG, "Sega/Mega CD RAM CART is located at: %s\n", CART_BRAM);
+      log_cb(RETRO_LOG_INFO, "Game Genie ROM should be located at: %s\n", GG_ROM);
+      log_cb(RETRO_LOG_INFO, "Action Replay (Pro) ROM should be located at: %s\n", AR_ROM);
+      log_cb(RETRO_LOG_INFO, "Sonic & Knuckles (2 MB) ROM should be located at: %s\n", SK_ROM);
+      log_cb(RETRO_LOG_INFO, "Sonic & Knuckles UPMEM (256 KB) ROM should be located at: %s\n", SK_UPMEM);
+      log_cb(RETRO_LOG_INFO, "Mega Drive TMSS BOOTROM should be located at: %s\n", MD_BIOS);
+      log_cb(RETRO_LOG_INFO, "Game Gear TMSS BOOTROM should be located at: %s\n", GG_BIOS);
+      log_cb(RETRO_LOG_INFO, "Master System (PAL) BOOTROM should be located at: %s\n", MS_BIOS_EU);
+      log_cb(RETRO_LOG_INFO, "Master System (NTSC-U) BOOTROM should be located at: %s\n", MS_BIOS_US);
+      log_cb(RETRO_LOG_INFO, "Master System (NTSC-J) BOOTROM should be located at: %s\n", MS_BIOS_JP);
+      log_cb(RETRO_LOG_INFO, "Mega CD (PAL) BIOS should be located at: %s\n", CD_BIOS_EU);
+      log_cb(RETRO_LOG_INFO, "Sega CD (NTSC-U) BIOS should be located at: %s\n", CD_BIOS_US);
+      log_cb(RETRO_LOG_INFO, "Mega CD (NTSC-J) BIOS should be located at: %s\n", CD_BIOS_JP);
+      log_cb(RETRO_LOG_INFO, "Mega CD (PAL) BRAM is located at: %s\n", CD_BRAM_EU);
+      log_cb(RETRO_LOG_INFO, "Sega CD (NTSC-U) BRAM is located at: %s\n", CD_BRAM_US);
+      log_cb(RETRO_LOG_INFO, "Mega CD (NTSC-J) BRAM is located at: %s\n", CD_BRAM_JP);
+      log_cb(RETRO_LOG_INFO, "Sega/Mega CD RAM CART is located at: %s\n", CART_BRAM);
    }
 
    /* Clear disk interface (already done in retro_unload_game but better be safe) */
@@ -3329,19 +3279,19 @@ bool retro_load_game(const struct retro_game_info *info)
                }
             }
             disk_count = 0;
-            goto error;
+            return false;
          }
       }
       else
       {
          /* error adding disks from M3U */
-         goto error;
+         return false;
       }
    }
    else
    {
       if (load_rom(content_path) <= 0)
-         goto error;
+         return false;
 
       /* automatically add loaded CD to disk interface */
       if ((system_hw == SYSTEM_MCD) && cdd.loaded)
@@ -3392,17 +3342,6 @@ bool retro_load_game(const struct retro_game_info *info)
    init_frameskip();
 
    return true;
-
-error:
-   if (sms_ntsc)
-      free(sms_ntsc);
-   sms_ntsc = NULL;
-
-   if (md_ntsc)
-      free(md_ntsc);
-   md_ntsc = NULL;
-
-   return false;
 }
 
 bool retro_load_game_special(unsigned game_type, const struct retro_game_info *info, size_t num_info)
@@ -3415,7 +3354,7 @@ bool retro_load_game_special(unsigned game_type, const struct retro_game_info *i
 
 void retro_unload_game(void) 
 {
-	/* Clear disk interface */
+   /* Clear disk interface */
    int i;
    disk_count = 0;
    disk_index = 0;
@@ -3432,14 +3371,10 @@ void retro_unload_game(void)
       bram_save();
 
    audio_shutdown();
-
    if (md_ntsc)
       free(md_ntsc);
-   md_ntsc = NULL;
-
    if (sms_ntsc)
       free(sms_ntsc);
-   sms_ntsc = NULL;
 }
 
 unsigned retro_get_region(void) { return vdp_pal ? RETRO_REGION_PAL : RETRO_REGION_NTSC; }
@@ -3552,14 +3487,8 @@ void retro_reset(void)
    gen_reset(0);
 }
 
-extern int8 audio_hard_disable;
-
-extern void sound_update_fm_function_pointers(void);
-
 void retro_run(void) 
 {
-   bool okay = false;
-   int result = -1;
    int do_skip = 0;
    bool updated = false;
    int vwoffset = 0;
@@ -3581,25 +3510,6 @@ void retro_run(void)
          audio_set_equalizer();
          restart_eq = false;
       }
-   }
-
-   okay = environ_cb(RETRO_ENVIRONMENT_GET_AUDIO_VIDEO_ENABLE, &result);
-   if (okay)
-   {
-      bool audioEnabled = 0 != (result & 2);
-      bool videoEnabled = 0 != (result & 1);
-      bool hardDisableAudio = 0 != (result & 8);
-      do_skip = !videoEnabled;
-      if (audio_hard_disable != hardDisableAudio)
-      {
-        audio_hard_disable = hardDisableAudio;
-        sound_update_fm_function_pointers();
-      }
-   }
-   else
-   {
-      do_skip = false;
-      audio_hard_disable = false;
    }
 
   /* Check whether current frame should
@@ -3691,7 +3601,7 @@ void retro_run(void)
          draw_cursor(input.analog[5][0], input.analog[5][1], 0xf800);
       }
    }
-   
+
    if ((config.left_border != 0) && (reg[0] & 0x20) && (bitmap.viewport.x == 0) && ((system_hw == SYSTEM_MARKIII) || (system_hw & SYSTEM_SMS) || (system_hw == SYSTEM_PBC)))
    {
        bmdoffset = (16 + (config.ntsc ? 24 : 0));
@@ -3700,10 +3610,6 @@ void retro_run(void)
        else
            vwoffset = (16 + (config.ntsc ? 24 : 0));
    }
-
-   /* LED interface */
-   if (led_state_cb)
-	   retro_led_interface();
 
    if (!do_skip)
    {
