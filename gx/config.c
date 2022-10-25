@@ -127,6 +127,9 @@ void config_default(void)
   config.add_on         = HW_ADDON_AUTO;
   config.hot_swap       = 0;
   config.cd_latency     = 1;
+  config.m68k_overclock = 1.0;
+  config.s68k_overclock = 1.0;
+  config.z80_overclock  = 1.0;
 
   /* video options */
   config.xshift   = 0;

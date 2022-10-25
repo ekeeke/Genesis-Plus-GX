@@ -392,6 +392,9 @@ static gui_item items_system[] =
   {NULL,NULL,"Lock-On: SONIC&KNUCKLES",    "Select Lock-On cartridge type",               56,132,276,48},
   {NULL,NULL,"Cartridge Swap: OFF",        "Enable/Disable cartridge hot swap",           56,132,276,48},
   {NULL,NULL,"BIOS & Lock-On ROM paths",   "Configure Boot ROM & Lock-On ROM paths",      56,132,276,48},
+  {NULL,NULL,"Main 68k Overclock: 3.0x",   "Adjust Mega Drive /Genesis CPU clock speed",  56,132,276,48},
+  {NULL,NULL,"Sub 68k Overclock: 3.0x",    "Adjust Sega CD / Mega-CD CPU clock speed",    56,132,276,48},
+  {NULL,NULL,"Z80 Overclock: 3.0x",        "Adjust Z80 CPU clock speed",                  56,132,276,48},
   {NULL,NULL,"SVP Cycles: 1500",           "Adjust SVP chip emulation speed",             56,132,276,48}
 };
 
@@ -1356,14 +1359,29 @@ static void systemmenu ()
 
   sprintf (items[10].text, "Cartridge Swap: %s", (config.hot_swap & 1) ? "ON":"OFF");
 
+  if (config.m68k_overclock > 1.0)
+    sprintf (items[12].text, "Main 68k Overclock: %1.1fx", config.m68k_overclock);
+  else
+    sprintf (items[12].text, "Main 68k Overclock: OFF");
+
+  if (config.s68k_overclock > 1.0)
+    sprintf (items[13].text, "Sub 68k Overclock: %1.1fx", config.s68k_overclock);
+  else
+    sprintf (items[13].text, "Sub 68k Overclock: OFF");
+
+  if (config.z80_overclock > 1.0)
+    sprintf (items[14].text, "Z80 Overclock: %1.1fx", config.z80_overclock);
+  else
+    sprintf (items[14].text, "Z80 Overclock: OFF");
+
   if (svp)
   {
-    sprintf (items[12].text, "SVP Cycles: %d", SVP_cycles);
-    m->max_items = 13;
+    sprintf (items[15].text, "SVP Cycles: %d", SVP_cycles);
+    m->max_items = 16;
   }
   else
   {
-    m->max_items = 12;
+    m->max_items = 15;
   }
 
   GUI_InitMenu(m);
@@ -1634,10 +1652,40 @@ static void systemmenu ()
         break;
       }
 
-      case 12:  /*** SVP cycles per line ***/
+      case 12:  /*** Main 68k Overclock ***/
+      {
+        GUI_OptionBox(m,0,"Main 68k Overclock Ratio",(void *)&config.m68k_overclock,0.1,1.0,3.0,0);
+        if (config.m68k_overclock > 1.0)
+          sprintf (items[12].text, "Main 68k Overclock: %1.1fx", config.m68k_overclock);
+        else
+          sprintf (items[12].text, "Main 68k Overclock: OFF");
+        break;
+      }
+
+      case 13:  /*** Sub 68k Overclock ***/
+      {
+        GUI_OptionBox(m,0,"Sub 68k Overclock Ratio",(void *)&config.s68k_overclock,0.1,1.0,3.0,0);
+        if (config.s68k_overclock > 1.0)
+          sprintf (items[13].text, "Sub 68k Overclock: %1.1fx", config.s68k_overclock);
+        else
+          sprintf (items[13].text, "Sub 68k Overclock: OFF");
+        break;
+      }
+
+      case 14:  /*** Z80 Overclock ***/
+      {
+        GUI_OptionBox(m,0,"Z80 Overclock Ratio",(void *)&config.z80_overclock,0.1,1.0,3.0,0);
+        if (config.z80_overclock > 1.0)
+          sprintf (items[14].text, "Z80 Overclock: %1.1fx", config.z80_overclock);
+        else
+          sprintf (items[14].text, "Z80 Overclock: OFF");
+        break;
+      }
+
+      case 15:  /*** SVP cycles per line ***/
       {
         GUI_OptionBox(m,0,"SVP Cycles",(void *)&SVP_cycles,1,1,1500,1);
-        sprintf (items[12].text, "SVP Cycles: %d", SVP_cycles);
+        sprintf (items[15].text, "SVP Cycles: %d", SVP_cycles);
         break;
       }
 
@@ -1706,6 +1754,11 @@ static void systemmenu ()
       }
     }
   }
+
+  /* Initialize CPU overclock ratio */
+  m68k.cycle_ratio = (100 << M68K_OVERCLOCK_SHIFT) / (int)(config.m68k_overclock * 100.0);
+  s68k.cycle_ratio = (100 << M68K_OVERCLOCK_SHIFT) / (int)(config.s68k_overclock * 100.0);
+  z80_cycle_ratio  = (100 << Z80_OVERCLOCK_SHIFT) / (int)(config.z80_overclock * 100.0);
 
   GUI_DeleteMenu(m);
 }
@@ -2034,27 +2087,27 @@ static void videomenu ()
       }
 
       case VI_OFFSET+2: /*** NTSC Sharpness ***/
-        GUI_OptionBox(m,update_bgm,"NTSC Sharpness",(void *)&config.ntsc_sharpness,0.01,-1.0,1.0,0);
+        GUI_OptionBox(m,0,"NTSC Sharpness",(void *)&config.ntsc_sharpness,0.01,-1.0,1.0,0);
         sprintf(items[VI_OFFSET+2].text, "NTSC Sharpness: %1.2f", config.ntsc_sharpness);
         break;
 
       case VI_OFFSET+3: /*** NTSC Resolution ***/
-        GUI_OptionBox(m,update_bgm,"NTSC Resolution",(void *)&config.ntsc_resolution,0.01,0.0,1.0,0);
+        GUI_OptionBox(m,0,"NTSC Resolution",(void *)&config.ntsc_resolution,0.01,0.0,1.0,0);
         sprintf(items[VI_OFFSET+3].text, "NTSC Resolution: %1.2f", config.ntsc_resolution);
         break;
 
       case VI_OFFSET+4: /*** NTSC Artifacts ***/
-        GUI_OptionBox(m,update_bgm,"NTSC Artifacts",(void *)&config.ntsc_artifacts,0.01,-1.0,0.0,0);
+        GUI_OptionBox(m,0,"NTSC Artifacts",(void *)&config.ntsc_artifacts,0.01,-1.0,0.0,0);
         sprintf(items[VI_OFFSET+4].text, "NTSC Artifacts: %1.2f", config.ntsc_artifacts);
         break;
 
       case VI_OFFSET+5: /*** NTSC Color Bleed ***/
-        GUI_OptionBox(m,update_bgm,"NTSC Color Bleed",(void *)&config.ntsc_bleed,0.01,-1.0,1.0,0);
+        GUI_OptionBox(m,0,"NTSC Color Bleed",(void *)&config.ntsc_bleed,0.01,-1.0,1.0,0);
         sprintf(items[VI_OFFSET+5].text, "NTSC Color Bleed: %1.2f", config.ntsc_bleed);
         break;
 
       case VI_OFFSET+6: /*** NTSC Color Fringing ***/
-        GUI_OptionBox(m,update_bgm,"NTSC Color Fringing",(void *)&config.ntsc_fringing,0.01,-1.0,1.0,0);
+        GUI_OptionBox(m,0,"NTSC Color Fringing",(void *)&config.ntsc_fringing,0.01,-1.0,1.0,0);
         sprintf(items[VI_OFFSET+6].text, "NTSC Color Fringing: %1.2f", config.ntsc_fringing);
         break;
 

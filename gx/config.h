@@ -126,6 +126,9 @@ typedef struct
   float ntsc_artifacts;
   float ntsc_fringing;
   float ntsc_bleed;
+  float m68k_overclock;
+  float s68k_overclock;
+  float z80_overclock;
   char sys_rom[12][256];
 } t_config;
 

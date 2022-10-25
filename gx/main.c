@@ -3,7 +3,7 @@
  *
  *  Genesis Plus GX
  *
- *  Copyright Eke-Eke (2007-2021), based on original work from Softdev (2006)
+ *  Copyright Eke-Eke (2007-2022), based on original work from Softdev (2006)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -281,6 +281,11 @@ void reloadrom(void)
     /* Allow hot swap */
     config.hot_swap |= 2;
   }
+
+  /* Initialize CPU overclock ratio */
+  m68k.cycle_ratio = (100 << M68K_OVERCLOCK_SHIFT) / (int)(config.m68k_overclock * 100.0);
+  s68k.cycle_ratio = (100 << M68K_OVERCLOCK_SHIFT) / (int)(config.s68k_overclock * 100.0);
+  z80_cycle_ratio  = (100 << Z80_OVERCLOCK_SHIFT) / (int)(config.z80_overclock * 100.0);
 
   /* Auto-Load Backup RAM */
   slot_autoload(0,config.s_device);

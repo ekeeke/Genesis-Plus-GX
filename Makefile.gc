@@ -26,7 +26,7 @@ INCLUDES	:=	core core/m68k core/z80 core/sound core/tremor core/ntsc core/input_
 # options for code generation
 #---------------------------------------------------------------------------------
 
-CFLAGS  = -O3 -fomit-frame-pointer -Wall -Wno-strict-aliasing $(MACHDEP) $(INCLUDE) -DUSE_LIBTREMOR -DDISABLE_MANY_OGG_OPEN_FILES -DUSE_16BPP_RENDERING -DALT_RENDERER -DBLIP_INVERT
+CFLAGS  = -O3 -fomit-frame-pointer -Wall -Wno-strict-aliasing $(MACHDEP) $(INCLUDE) -DUSE_LIBTREMOR -DDISABLE_MANY_OGG_OPEN_FILES -DUSE_16BPP_RENDERING -DALT_RENDERER -DBLIP_INVERT -DM68K_OVERCLOCK_SHIFT=20 -DZ80_OVERCLOCK_SHIFT=20
 CXXFLAGS	=	$(CFLAGS)
 
 LDFLAGS	=	$(MACHDEP) -Wl,-Map,$(notdir $@).map
