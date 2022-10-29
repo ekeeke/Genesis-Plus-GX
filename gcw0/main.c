@@ -960,7 +960,7 @@ static int gcw0menu(void)
             SDL_FreeSurface(tempbgSurface);
             SDL_FreeSurface(bgSurface);
         }
-        else if ( (system_hw == SYSTEM_SG)      || (system_hw == SYSTEM_SGII) ) //SG-1000 I&II
+        else if ( (system_hw == SYSTEM_SG)|| (system_hw == SYSTEM_SGII) || (system_hw == SYSTEM_SGII_RAM_EXT) ) //SG-1000 I&II
         {
             SDL_Surface *tempbgSurface;
             SDL_Surface *bgSurface;

@@ -1292,6 +1292,8 @@ static void check_variables(bool first_run)
       config.system = SYSTEM_SG;
     else if (var.value && !strcmp(var.value, "sg-1000 II"))
       config.system = SYSTEM_SGII;
+    else if (var.value && !strcmp(var.value, "sg-1000 II + ram ext."))
+      config.system = SYSTEM_SGII_RAM_EXT;
     else if (var.value && !strcmp(var.value, "mark-III"))
       config.system = SYSTEM_MARKIII;
     else if (var.value && !strcmp(var.value, "master system"))
@@ -3423,7 +3425,11 @@ size_t retro_get_memory_size(unsigned id)
         }
       }
       case RETRO_MEMORY_SYSTEM_RAM:
-         if (system_hw == SYSTEM_SMS || system_hw == SYSTEM_SMS2 || system_hw == SYSTEM_GG || system_hw == SYSTEM_GGMS)
+         if (system_hw == SYSTEM_SG)
+            return 0x00400;
+         else if (system_hw == SYSTEM_SGII)
+            return 0x00800;
+         else if (system_hw == SYSTEM_SGII_RAM_EXT || system_hw == SYSTEM_SMS || system_hw == SYSTEM_SMS2 || system_hw == SYSTEM_GG || system_hw == SYSTEM_GGMS || system_hw == SYSTEM_PBC)
             return 0x02000;
          else
             return 0x10000;

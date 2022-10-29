@@ -96,6 +96,7 @@ Genesis Plus GX 1.7.5 (xx/xx/xxxx) (Eke-Eke)
 ---------------
 * added support for new SMS Power Korean dumps (Star Soldier & Pippols)
 * added support for SG-1000 II clone hardware (2KB RAM + integrated VDP/PSG chip 315-5066)
+* added support for SG-1000 II hardware with 8KB RAM extension adapter
 * fixed SG-1000 internal RAM size (1KB instead of 2KB)
 * fixed savestates for games using external RAM
 * restored SG-1000 Pause button support

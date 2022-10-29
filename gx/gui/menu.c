@@ -1300,6 +1300,8 @@ static void systemmenu ()
     sprintf (items[0].text, "System: SG-1000");
   else if (config.system == SYSTEM_SGII)
     sprintf (items[0].text, "System: SG-1000 II");
+  else if (config.system == SYSTEM_SGII_RAM_EXT)
+    sprintf (items[0].text, "System: SG-1000 + RAM EXT.");
   else if (config.system == SYSTEM_MARKIII)
     sprintf (items[0].text, "System: MARK-III");
   else if (config.system == SYSTEM_SMS)
@@ -1416,6 +1418,12 @@ static void systemmenu ()
           if (system_hw) system_hw = SYSTEM_SGII;
         }
         else if (config.system == SYSTEM_SGII)
+        {
+          config.system = SYSTEM_SGII_RAM_EXT;
+          sprintf (items[0].text, "System: SG-1000 + RAM EXT.");
+          if (system_hw) system_hw = SYSTEM_SGII_RAM_EXT;
+        }
+        else if (config.system == SYSTEM_SGII_RAM_EXT)
         {
           config.system = SYSTEM_MARKIII;
           sprintf (items[0].text, "System: MARK-III");

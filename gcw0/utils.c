@@ -119,9 +119,9 @@ char* get_save_directory(void) {
    
     char pathname[MAXPATHLEN];
     
-	if(system_hw <= SYSTEM_MARKIII){
+	if(system_hw < SYSTEM_MARKIII){
 		system_dir = "/saves/sg";
-	} else if (system_hw > SYSTEM_MARKIII && system_hw <= SYSTEM_SMS2) {
+	} else if (system_hw >= SYSTEM_MARKIII && system_hw <= SYSTEM_SMS2) {
 		system_dir = "/saves/ms";
 	} else if (system_hw > SYSTEM_SMS2 && system_hw <= SYSTEM_GGMS) {
 		system_dir = "/saves/gg";

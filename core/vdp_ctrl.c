@@ -362,6 +362,7 @@ void vdp_reset(void)
   {
     case SYSTEM_SG:
     case SYSTEM_SGII:
+    case SYSTEM_SGII_RAM_EXT:
     {
       /* SG-1000 (TMS99xx) or SG-1000 II (315-5066) VDP */
       vdp_z80_data_w = vdp_z80_data_w_sg;

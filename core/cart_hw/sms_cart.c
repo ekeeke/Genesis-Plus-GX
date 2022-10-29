@@ -45,7 +45,6 @@
 #define MAPPER_RAM_2K      (0x02)
 #define MAPPER_RAM_8K      (0x03)
 #define MAPPER_RAM_8K_EXT1 (0x04)
-#define MAPPER_RAM_8K_EXT2 (0x05)
 #define MAPPER_SEGA        (0x10)
 #define MAPPER_SEGA_X      (0x11)
 #define MAPPER_93C46       (0x12)
@@ -160,7 +159,7 @@ static const rominfo_t game_list[] =
   /* games using 8KB external RAM (volatile) */
   {0x092F29D6, 0, 0, 0,  MAPPER_RAM_8K, SYSTEM_SG,   REGION_JAPAN_NTSC}, /* The Castle (J) */
 
-  /* games requiring SG-1000 II 8K RAM extension adapters */
+  /* games requiring SG-1000 II 8K RAM extension adapter (type A) */
   {0xCE5648C3, 0, 0, 0,  MAPPER_RAM_8K_EXT1, SYSTEM_SGII, REGION_JAPAN_NTSC}, /* Bomberman Special [DahJee] (TW) */
   {0x223397A1, 0, 0, 0,  MAPPER_RAM_8K_EXT1, SYSTEM_SGII, REGION_JAPAN_NTSC}, /* King's Valley (TW) */
   {0x281D2888, 0, 0, 0,  MAPPER_RAM_8K_EXT1, SYSTEM_SGII, REGION_JAPAN_NTSC}, /* Knightmare (TW) */
@@ -172,11 +171,13 @@ static const rominfo_t game_list[] =
   {0xFC87463C, 0, 0, 0,  MAPPER_RAM_8K_EXT1, SYSTEM_SGII, REGION_JAPAN_NTSC}, /* Yie Ar Kung-Fu II (TW) */
   {0xDF7CBFA5, 0, 0, 0,  MAPPER_RAM_8K_EXT1, SYSTEM_SGII, REGION_JAPAN_NTSC}, /* Pippols (TW) */
   {0xE0816BB7, 0, 0, 0,  MAPPER_RAM_8K_EXT1, SYSTEM_SGII, REGION_JAPAN_NTSC}, /* Star Soldier (TW) */
-  {0x69FC1494, 0, 0, 0,  MAPPER_RAM_8K_EXT2, SYSTEM_SGII, REGION_JAPAN_NTSC}, /* Bomberman Special (TW) */
-  {0xFFC4EE3F, 0, 0, 0,  MAPPER_RAM_8K_EXT2, SYSTEM_SGII, REGION_JAPAN_NTSC}, /* Magical Kid Wiz (TW) */
-  {0x2E366CCF, 0, 0, 0,  MAPPER_RAM_8K_EXT2, SYSTEM_SGII, REGION_JAPAN_NTSC}, /* The Castle (TW) */
-  {0xAAAC12CF, 0, 0, 0,  MAPPER_RAM_8K_EXT2, SYSTEM_SGII, REGION_JAPAN_NTSC}, /* Rally-X (TW) */
-  {0xD2EDD329, 0, 0, 0,  MAPPER_RAM_8K_EXT2, SYSTEM_SGII, REGION_JAPAN_NTSC}, /* Road Fighter (TW) */
+
+  /* games requiring SG-1000 II 8K RAM extension adapter (type B) */
+  {0x69FC1494, 0, 0, 0,  MAPPER_NONE, SYSTEM_SGII_RAM_EXT, REGION_JAPAN_NTSC}, /* Bomberman Special (TW) */
+  {0xFFC4EE3F, 0, 0, 0,  MAPPER_NONE, SYSTEM_SGII_RAM_EXT, REGION_JAPAN_NTSC}, /* Magical Kid Wiz (TW) */
+  {0x2E366CCF, 0, 0, 0,  MAPPER_NONE, SYSTEM_SGII_RAM_EXT, REGION_JAPAN_NTSC}, /* The Castle (TW) */
+  {0xAAAC12CF, 0, 0, 0,  MAPPER_NONE, SYSTEM_SGII_RAM_EXT, REGION_JAPAN_NTSC}, /* Rally-X (TW) */
+  {0xD2EDD329, 0, 0, 0,  MAPPER_NONE, SYSTEM_SGII_RAM_EXT, REGION_JAPAN_NTSC}, /* Road Fighter (TW) */
 
   /* games requiring 2KB internal RAM (SG-1000 II clone hardware) */
   {0x7F7F009D, 0, 0, 0,  MAPPER_NONE, SYSTEM_SGII, REGION_JAPAN_NTSC}, /* Circus Charlie (KR) */
@@ -883,13 +884,13 @@ static void mapper_reset(void)
   int i;
 
   /* reset $C000-$FFFF mapping */
-  if (cart_rom.mapper == MAPPER_RAM_8K_EXT2)
+  if (system_hw == SYSTEM_SG)
   {
-    /* 8KB RAM extension adapter (type B) */
+    /* original SG-1000 hardware has only 1KB internal RAM */
     for (i = 0x30; i < 0x40; i++)
     {
-      /* $C000-$FFFF mapped to 8KB external RAM (mirrored) */
-      z80_readmap[i] = z80_writemap[i] = &work_ram[(i & 0x07) << 10];
+      /* $C000-$FFFF mapped to 1KB internal RAM (mirrored) */
+      z80_readmap[i] = z80_writemap[i] = &work_ram[0];
     }
   }
   else if (system_hw == SYSTEM_SGII)
@@ -901,18 +902,9 @@ static void mapper_reset(void)
       z80_readmap[i] = z80_writemap[i] = &work_ram[(i & 0x01) << 10];
     }
   }
-  else if (system_hw == SYSTEM_SG)
-  {
-    /* default SG-1000 hardware has only 1KB internal RAM */
-    for (i = 0x30; i < 0x40; i++)
-    {
-      /* $C000-$FFFF mapped to 1KB internal RAM (mirrored) */
-      z80_readmap[i] = z80_writemap[i] = &work_ram[0];
-    }
-  }
   else
   {
-    /* Mark III / Master System / Game Gear hardware */
+    /* Mark III / Master System / Game Gear hardware or SG-1000 II hardware with 8KB RAM extension adapter (type B) */
     for (i = 0x30; i < 0x40; i++)
     {
       /* $C000-$FFFF mapped to 8KB internal RAM (mirrored) */

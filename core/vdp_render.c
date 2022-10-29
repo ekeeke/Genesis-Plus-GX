@@ -1036,6 +1036,7 @@ void color_update_m4(int index, unsigned int data)
 
     case SYSTEM_SG:
     case SYSTEM_SGII:
+    case SYSTEM_SGII_RAM_EXT:
     {
       /* Fixed TMS99xx palette */
       if (index & 0x0F)
@@ -4748,7 +4749,7 @@ void render_line(int line)
     /* Left-most column blanking */
     if (reg[0] & 0x20)
     {
-      if (system_hw > SYSTEM_SGII)
+      if (system_hw >= SYSTEM_MARKIII)
       {
         memset(&linebuf[0][0x20], 0x40, 8);
       }
