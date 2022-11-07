@@ -3,7 +3,7 @@
  *
  *  Genesis Plus GX input support
  *
- *  Copyright Eke-Eke (2007-2019)
+ *  Copyright Eke-Eke (2007-2022)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -73,7 +73,7 @@
 
 #ifdef HW_RVL
 
-#define PAD_UP    0   
+#define PAD_UP    0
 #define PAD_DOWN  1
 #define PAD_LEFT  2
 #define PAD_RIGHT 3
@@ -522,7 +522,7 @@ static int wpad_StickX(WPADData *data, u8 right)
     int min = js->min.x;
     int max = js->max.x;
     int center = js->center.x;
- 
+
     /* some 3rd party controllers return invalid analog sticks calibration data */
     if ((min >= center) || (max <= center))
     {
@@ -580,7 +580,7 @@ static int wpad_StickY(WPADData *data, u8 right)
     int min = js->min.y;
     int max = js->max.y;
     int center = js->center.y;
- 
+
     /* some 3rd party controllers return invalid analog sticks calibration data */
     if ((min >= center) || (max <= center))
     {
@@ -593,7 +593,7 @@ static int wpad_StickY(WPADData *data, u8 right)
     /* value returned could be above calibration limits */
     if (pos > max) return 127;
     if (pos < min) return -128;
-    
+
     /* adjust against center position */
     pos -= center;
 
@@ -784,7 +784,50 @@ static void wpad_config(u8 exp, int chan, int first_key, int last_key)
     }
   }
 
-  /* re-enable background PAD scanning and exit */
+  /* Configurable menu key */
+  GUI_MsgBoxUpdate(0,"Press key(s) for MENU");
+
+  /* reset key combo */
+  config.wpad_keymap[4*exp + chan][KEY_MENU] = 0;
+
+  /* wait for user input */
+  p = 0;
+  while (!p)
+  {
+    VIDEO_WaitVSync();
+    if (exp <= WPAD_EXP_CLASSIC)
+    {
+      WPAD_ScanPads();
+      p = WPAD_ButtonsHeld(chan);
+    }
+    else
+    {
+      WiiDRC_ScanPads();
+      p = WiiDRC_ButtonsHeld();
+    }
+  }
+
+  /* register keys until none are pressed anymore */
+  while (p)
+  {
+    /* update key combo */
+    config.wpad_keymap[4*exp + chan][KEY_MENU] |= p;
+
+    /* update WPAD status */
+    VIDEO_WaitVSync();
+    if (exp <= WPAD_EXP_CLASSIC)
+    {
+      WPAD_ScanPads();
+      p = WPAD_ButtonsHeld(chan);
+    }
+    else
+    {
+      WiiDRC_ScanPads();
+      p = WiiDRC_ButtonsHeld();
+    }
+  }
+
+  /* re-enable background WPAD scanning and exit */
   inputs_disabled = 0;
 }
 
@@ -813,20 +856,15 @@ static void wpad_update(s8 chan, u8 i, u32 exp)
 
     p = WiiDRC_ButtonsHeld();
 
-    /* Default Wii controller menu keys */
+    /* Default fast-forward key combo */
     if (WiiDRC_ButtonsDown() & WIIDRC_BUTTON_HOME)
     {
-      /* Default fast-forward key combo */
       if (p & WIIDRC_BUTTON_MINUS)
       {
         audioSync ^= AUDIO_WAIT;
         videoSync = (audioSync && config.vsync && (gc_pal != vdp_pal)) ? VIDEO_WAIT : 0;
         return;
       }
-
-      /* Return to emulator settings */
-      ConfigRequested = 1;
-      return;
     }
 
     /* Left Analog Stick */
@@ -846,6 +884,13 @@ static void wpad_update(s8 chan, u8 i, u32 exp)
 
   /* Retrieve current key mapping */
   u32 *wpad_keymap = config.wpad_keymap[4*exp + chan];
+
+  /* User configurable menu combo */
+  if ((p & wpad_keymap[KEY_MENU]) == wpad_keymap[KEY_MENU])
+  {
+    ConfigRequested = 1;
+    return;
+  }
 
   /* Emulated device */
   switch (input.dev[i])
@@ -912,7 +957,7 @@ static void wpad_update(s8 chan, u8 i, u32 exp)
         {
          input.analog[i+1][0] = (x + 128);
         }
-        else 
+        else
         {
          input.analog[i+1][0] = (y + 128);
         }
@@ -1351,7 +1396,6 @@ int gx_input_FindDevices(void)
   return found;
 }
 
-
 void gx_input_SetDefault(void)
 {
   int i,j;
@@ -1383,6 +1427,7 @@ void gx_input_SetDefault(void)
     config.wpad_keymap[4*WPAD_EXP_NONE + i][KEY_BUTTONY] = 0;
     config.wpad_keymap[4*WPAD_EXP_NONE + i][KEY_BUTTONZ] = 0;
     config.wpad_keymap[4*WPAD_EXP_NONE + i][KEY_MODE]    = 0;
+    config.wpad_keymap[4*WPAD_EXP_NONE + i][KEY_MENU]    = WPAD_BUTTON_HOME;
 
     /* Wiimote + Nunchuk */
     config.wpad_keymap[4*WPAD_EXP_NUNCHUK + i][KEY_BUTTONA] = WPAD_NUNCHUK_BUTTON_Z;
@@ -1393,6 +1438,7 @@ void gx_input_SetDefault(void)
     config.wpad_keymap[4*WPAD_EXP_NUNCHUK + i][KEY_BUTTONY] = WPAD_BUTTON_1;
     config.wpad_keymap[4*WPAD_EXP_NUNCHUK + i][KEY_BUTTONZ] = WPAD_BUTTON_2;
     config.wpad_keymap[4*WPAD_EXP_NUNCHUK + i][KEY_MODE]    = WPAD_BUTTON_MINUS;
+    config.wpad_keymap[4*WPAD_EXP_NUNCHUK + i][KEY_MENU]    = WPAD_BUTTON_HOME;
 
     /* Classic Controller */
     config.wpad_keymap[4*WPAD_EXP_CLASSIC + i][KEY_BUTTONA] = WPAD_CLASSIC_BUTTON_Y;
@@ -1403,6 +1449,7 @@ void gx_input_SetDefault(void)
     config.wpad_keymap[4*WPAD_EXP_CLASSIC + i][KEY_BUTTONY] = WPAD_CLASSIC_BUTTON_ZR;
     config.wpad_keymap[4*WPAD_EXP_CLASSIC + i][KEY_BUTTONZ] = WPAD_CLASSIC_BUTTON_X;
     config.wpad_keymap[4*WPAD_EXP_CLASSIC + i][KEY_MODE]    = WPAD_CLASSIC_BUTTON_MINUS;
+    config.wpad_keymap[4*WPAD_EXP_CLASSIC + i][KEY_MENU]    = WPAD_CLASSIC_BUTTON_HOME;
 
     /* WiiU GamePad Controller */
     config.wpad_keymap[4*3][KEY_BUTTONA] = WIIDRC_BUTTON_Y;
@@ -1413,6 +1460,7 @@ void gx_input_SetDefault(void)
     config.wpad_keymap[4*3][KEY_BUTTONY] = WIIDRC_BUTTON_R;
     config.wpad_keymap[4*3][KEY_BUTTONZ] = WIIDRC_BUTTON_X;
     config.wpad_keymap[4*3][KEY_MODE]    = WIIDRC_BUTTON_MINUS;
+    config.wpad_keymap[4*3][KEY_MENU]    = WIIDRC_BUTTON_HOME;
   }
 #endif
 
@@ -1673,20 +1721,15 @@ void gx_input_UpdateEmu(void)
   /* Update Wii controllers status */
   WPAD_ScanPads();
 
-  /* Default Wii controller menu keys */
+  /* Default fast-forward key combo */
   if (WPAD_ButtonsDown(0) & (WPAD_BUTTON_HOME | WPAD_CLASSIC_BUTTON_HOME))
   {
-    /* Default fast-forward key combo */
     if (WPAD_ButtonsHeld(0) & (WPAD_BUTTON_MINUS | WPAD_CLASSIC_BUTTON_MINUS))
     {
       audioSync ^= AUDIO_WAIT;
       videoSync = (audioSync && config.vsync && (gc_pal != vdp_pal)) ? VIDEO_WAIT : 0;
       return;
     }
-
-    /* Return to emulator settings */
-    ConfigRequested = 1;
-    return;
   }
 #endif
 

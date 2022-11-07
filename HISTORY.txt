@@ -173,6 +173,7 @@ Genesis Plus GX 1.7.5 (xx/xx/xxxx) (Eke-Eke)
 * added configurable NTSC filter
 * added configurable FPS display & toggleable fast-forward key combo
   (HOME + MINUS with Wii controllers or R TRIGGER + START with Gamecube controller)
+* added configurable menu key combo
 * added 50hz progressive mode (576p) support for emulation
 * added WiiU GamePad Controller support on vWii (Fix94)
 * added support for Sega CD / Mega-CD PRG-RAM and Word-RAM cheat codes
