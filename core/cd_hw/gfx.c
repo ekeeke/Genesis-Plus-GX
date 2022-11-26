@@ -638,8 +638,17 @@ void gfx_start(unsigned int base, int cycles)
   /* reset GFX chip cycle counter */
   gfx.cycles = cycles;
 
-  /* update GFX chip timings (see AC3:Thunderhawk / Thunderstrike) */
-  gfx.cyclesPerLine = 4 * 5 * scd.regs[0x62>>1].w; 
+  /* update GFX chip timings (see AC3:Thunderhawk / Thunderstrike, Night Striker) */
+  /* number of Word-RAM accesses per image buffer rendered line:                  */
+  /*  . 4 initial read accesses (Xposition, Yposition, Xoffset and Yoffset)       */
+  /*  . 2 read accesses per rendered pixels (stamp map + stamp pixel data)        */
+  /*  . 1 read-modify-write access per group of 4 rendered pixels                 */
+  /* each access (read or read-modify-write) takes 3 SUB-CPU cycles by default    */
+  /* each access can be delayed by 1 to 3 CPU cycles in case of refresh or SUB-CPU access occuring on the same Word-RAM bank (not emulated) */
+  /* reference: https://github.com/MiSTer-devel/MegaCD_MiSTer/blob/master/docs/mcd%20logs/graphics_operations_and_68k_wordram_access.jpg */
+  /* TODO: figure what happen exactly when pixel offset is different from 0 */
+  /*       for the moment, one additional read-modify-write access is assumed at the start if pixel offset is not aligned to 4 pixels */
+  gfx.cyclesPerLine = 4 * 3 * (4 + 2 * scd.regs[0x62>>1].w + ((scd.regs[0x62>>1].w + (scd.regs[0x60>>1].byte.l & 0x03) + 3) >> 2));
 
   /* start graphics operation */
   scd.regs[0x58>>1].byte.h = 0x80;
