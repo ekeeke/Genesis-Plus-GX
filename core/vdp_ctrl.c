@@ -53,6 +53,12 @@
   bg_name_dirty[name] |= (1 << ((addr >> 2) & 7));  \
 }
 
+/* HBLANK flag timings */
+#define HBLANK_H32_START_MCYCLE (280)
+#define HBLANK_H32_END_MCYCLE   (860)
+#define HBLANK_H40_START_MCYCLE (228)
+#define HBLANK_H40_END_MCYCLE   (872)
+
 /* VDP context */
 uint8 ALIGNED_(4) sat[0x400];    /* Internal copy of sprite attribute table */
 uint8 ALIGNED_(4) vram[0x10000]; /* Video RAM (64K x 8-bit) */
@@ -142,6 +148,8 @@ static int fifo_idx;          /* FIFO write index */
 static int fifo_byte_access;  /* FIFO byte access flag */
 static uint32 fifo_cycles;    /* FIFO next access cycle */
 static int *fifo_timing;      /* FIFO slots timing table */
+static int hblank_start_cycle;  /* HBLANK flag set cycle */
+static int hblank_end_cycle;    /* HBLANK flag clear cycle */
 
  /* set Z80 or 68k interrupt lines */
 static void (*set_irq_line)(unsigned int level);
@@ -322,6 +330,10 @@ void vdp_reset(void)
 
   /* default FIFO access slots timings */
   fifo_timing = (int *)fifo_timing_h32;
+
+  /* default HBLANK flag timings */
+  hblank_start_cycle = HBLANK_H32_START_MCYCLE;
+  hblank_end_cycle = HBLANK_H32_END_MCYCLE;
 
   /* default overscan area */
   if ((system_hw == SYSTEM_GG) && !config.gg_extra)
@@ -1187,9 +1199,12 @@ unsigned int vdp_68k_ctrl_r(unsigned int cycles)
     temp |= 0x08;
   }
 
+  /* Adjust cycle count relatively to start of line */
+  cycles -= mcycles_vdp;
+
   /* Cycle-accurate VINT flag (Ex-Mutants, Tyrant / Mega-Lo-Mania, Marvel Land) */
   /* this allows VINT flag to be read just before vertical interrupt is being triggered */
-  if ((v_counter == bitmap.viewport.h) && (cycles >= (mcycles_vdp + 788)))
+  if ((v_counter == bitmap.viewport.h) && (cycles >= 788))
   {
     /* check Z80 interrupt state to assure VINT has not already been triggered (and flag cleared) */
     if (Z80.irq_state != ASSERT_LINE)
@@ -1198,15 +1213,14 @@ unsigned int vdp_68k_ctrl_r(unsigned int cycles)
     }
   }
 
-  /* Cycle-accurate HBLANK flag (Sonic 3 & Sonic 2 "VS Modes", Bugs Bunny Double Trouble, Lemmings 2, Mega Turrican, V.R Troopers, Gouketsuji Ichizoku,...) */
-  /* NB: this is not 100% accurate (see hvc.h for horizontal events timings in H32 and H40 mode) but is close enough to make no noticeable difference for games */
-  if ((cycles % MCYCLES_PER_LINE) < 588)
+  /* Cycle-accurate HBLANK flag (Sonic 3 & Sonic 2 "VS Modes", Bugs Bunny Double Trouble, Lemmings 2, Mega Turrican, V.R Troopers, Gouketsuji Ichizoku, Ultraverse Prime, ...) */
+  if ((cycles >= hblank_start_cycle) && (cycles < hblank_end_cycle))
   {
     temp |= 0x04;
   }
 
 #ifdef LOGVDP
-  error("[%d(%d)][%d(%d)] VDP 68k status read -> 0x%x (0x%x) (%x)\n", v_counter, (v_counter + (cycles - mcycles_vdp)/MCYCLES_PER_LINE)%lines_per_frame, cycles, cycles%MCYCLES_PER_LINE, temp, status, m68k_get_reg(M68K_REG_PC));
+  error("[%d(%d)][%d(%d)] VDP 68k status read -> 0x%x (0x%x) (%x)\n", v_counter, (v_counter + cycles/MCYCLES_PER_LINE)%lines_per_frame, cycles + mcycles_vdp, cycles%MCYCLES_PER_LINE, temp, status, m68k_get_reg(M68K_REG_PC));
 #endif
   return (temp);
 }
@@ -1976,6 +1990,10 @@ static void vdp_reg_w(unsigned int r, unsigned int d, unsigned int cycles)
 
           /* FIFO access slots timings */
           fifo_timing = (int *)fifo_timing_h40;
+
+          /* HBLANK flag timings */
+          hblank_start_cycle = HBLANK_H32_START_MCYCLE;
+          hblank_end_cycle = HBLANK_H32_END_MCYCLE;
         }
         else
         {
@@ -1996,6 +2014,10 @@ static void vdp_reg_w(unsigned int r, unsigned int d, unsigned int cycles)
 
           /* FIFO access slots timings */
           fifo_timing = (int *)fifo_timing_h32;
+
+          /* HBLANK flag timings */
+          hblank_start_cycle = HBLANK_H40_START_MCYCLE;
+          hblank_end_cycle = HBLANK_H40_END_MCYCLE;
         }
 
         /* Active screen width modified during VBLANK will be applied on upcoming frame */

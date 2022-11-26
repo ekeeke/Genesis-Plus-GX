@@ -139,6 +139,7 @@ Genesis Plus GX 1.7.5 (xx/xx/xxxx) (Eke-Eke)
 * improved FIFO timings accuracy (fixes "Overdrive" Demo)
 * improved H-Counter accuracy in H32 mode
 * improved VDP status timing accuracy
+* improved HBLANK flag timing accuracy (verified on real hardware by Nemesis)
 * improved DMA timing accuracy during blanking (verified on real hardware by Mask of Destiny)
 * improved accuracy of Master System color palette brightness range (verified against real hardware)
 * fixed misaligned buffer writes in Mode 4 when -DALIGN_LONG option is used
