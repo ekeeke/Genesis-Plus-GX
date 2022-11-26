@@ -1721,15 +1721,20 @@ void gx_input_UpdateEmu(void)
   /* Update Wii controllers status */
   WPAD_ScanPads();
 
-  /* Default fast-forward key combo */
+  /* Default Wii controller menu keys */
   if (WPAD_ButtonsDown(0) & (WPAD_BUTTON_HOME | WPAD_CLASSIC_BUTTON_HOME))
   {
+    /* Default fast-forward key combo */
     if (WPAD_ButtonsHeld(0) & (WPAD_BUTTON_MINUS | WPAD_CLASSIC_BUTTON_MINUS))
     {
       audioSync ^= AUDIO_WAIT;
       videoSync = (audioSync && config.vsync && (gc_pal != vdp_pal)) ? VIDEO_WAIT : 0;
       return;
     }
+
+    /* Return to main menu */
+    ConfigRequested = 1;
+    return;
   }
 #endif
 
