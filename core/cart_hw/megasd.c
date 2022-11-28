@@ -348,7 +348,15 @@ void megasd_update_cdda(unsigned int samples)
 
   while (samples > 0)
   {
-    /* attempt to read remaing needed samples by default */
+    /* check if audio playback is paused or stopped */
+    if (scd.regs[0x36>>1].byte.h == 0x01)
+    {
+      /* clear remaining needed CD-DA samples without updating counters */
+      cdd_read_audio(samples);
+      break;
+    }
+
+    /* attempt to read remaining needed samples by default */
     count = samples;
 
     /* check against fade out remaining samples */
@@ -366,7 +374,7 @@ void megasd_update_cdda(unsigned int samples)
     /* read required CD-DA samples */
     cdd_read_audio(count);
 
-    /* adjust remaing needed samples count */
+    /* adjust remaining needed samples count */
     samples -= count;
 
     /* check if fade out is still in progress */
