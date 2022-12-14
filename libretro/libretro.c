@@ -3249,8 +3249,10 @@ bool retro_load_game(const struct retro_game_info *info)
    }
 #endif
 
-   sms_ntsc = calloc(1, sizeof(sms_ntsc_t));
-   md_ntsc  = calloc(1, sizeof(md_ntsc_t));
+   system_hw = 0;
+
+   sms_ntsc  = calloc(1, sizeof(sms_ntsc_t));
+   md_ntsc   = calloc(1, sizeof(md_ntsc_t));
 
    init_bitmap();
    config_default();
@@ -3491,6 +3493,8 @@ void retro_unload_game(void)
    if (sms_ntsc)
       free(sms_ntsc);
    sms_ntsc = NULL;
+
+   system_hw = 0;
 }
 
 unsigned retro_get_region(void) { return vdp_pal ? RETRO_REGION_PAL : RETRO_REGION_NTSC; }
