@@ -5,7 +5,7 @@
  *  Support for SG-1000, Mark-III, Master System, Game Gear & Mega Drive ports access
  *
  *  Copyright (C) 1998-2003  Charles Mac Donald (original code)
- *  Copyright (C) 2007-2020  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2007-2022  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -639,10 +639,17 @@ void z80_m3_port_w(unsigned int port, unsigned char data)
 
     default:
     {
-      /* write FM chip if enabled */
+      /* write to FM sound unit (FM-70) if enabled */
       if (!(port & 4) && (config.ym2413 & 1))
       {
         fm_write(Z80.cycles, port, data);
+
+        /* FM output control "register" */
+        if (port & 2)
+        {
+          /* PSG output is automatically disabled (resp. enabled) by FM sound unit hardware if FM output is enabled (resp. disabled) */
+          psg_config(Z80.cycles, config.psg_preamp, (data & 0x01) ? 0x00 : 0xff);
+        }
         return;
       }
 
@@ -684,10 +691,10 @@ unsigned char z80_m3_port_r(unsigned int port)
 
     default:
     {
-      /* read FM chip if enabled */
+      /* read FM sound unit (FM-70) if enabled */
       if (!(port & 4) && (config.ym2413 & 1))
       {
-        /* I/O ports are automatically disabled by hardware */
+        /* I/O ports are automatically disabled by FM sound unit hardware */
         return fm_read(Z80.cycles, port);
       }
 
