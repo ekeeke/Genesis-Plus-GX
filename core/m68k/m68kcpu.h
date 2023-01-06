@@ -596,12 +596,12 @@ static const uint16 m68ki_exception_cycle_table[256] =
      50*MUL, /*  3: Address Error                         (unemulated) */
      34*MUL, /*  4: Illegal Instruction                                */
      38*MUL, /*  5: Divide by Zero -- ASG: changed from 42             */
-     40*MUL, /*  6: CHK -- ASG: chanaged from 44                       */
+     38*MUL, /*  6: CHK -- ASG: changed from 44                        */
      34*MUL, /*  7: TRAPV                                              */
      34*MUL, /*  8: Privilege Violation                                */
      34*MUL, /*  9: Trace                                              */
-      4*MUL, /* 10: 1010                                               */
-      4*MUL, /* 11: 1111                                               */
+     34*MUL, /* 10: 1010                                               */
+     34*MUL, /* 11: 1111                                               */
       4*MUL, /* 12: RESERVED                                           */
       4*MUL, /* 13: Coprocessor Protocol Violation        (unemulated) */
       4*MUL, /* 14: Format Error                                       */
