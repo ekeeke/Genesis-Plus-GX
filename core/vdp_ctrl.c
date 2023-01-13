@@ -5,7 +5,7 @@
  *  Support for SG-1000 (TMS99xx & 315-5066), Master System (315-5124 & 315-5246), Game Gear & Mega Drive VDP
  *
  *  Copyright (C) 1998-2003  Charles Mac Donald (original code)
- *  Copyright (C) 2007-2022  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2007-2023  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -721,6 +721,10 @@ void vdp_68k_ctrl_w(unsigned int data)
       }
     }
 
+    /* Update address and code registers */
+    addr = addr_latch | (data & 0x3FFF);
+    code = ((code & 0x3C) | ((data >> 14) & 0x03));
+
     /* Check CD0-CD1 bits */
     if ((data & 0xC000) == 0x8000)
     {
@@ -732,10 +736,6 @@ void vdp_68k_ctrl_w(unsigned int data)
       /* Set pending flag (Mode 5 only) */
       pending = reg[1] & 4;
     }
-
-    /* Update address and code registers */
-    addr = addr_latch | (data & 0x3FFF);
-    code = ((code & 0x3C) | ((data >> 14) & 0x03));
   }
   else
   {
