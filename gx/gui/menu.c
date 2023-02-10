@@ -48,6 +48,7 @@
 #ifdef HW_RVL
 #include <ogc/usbmouse.h>
 #include "wiidrc.h"
+#include "retrousb.h"
 #endif
 
 #include <ogc/lwp_threads.h>
@@ -124,6 +125,7 @@
 #include "ctrl_nunchuk_png.h"
 #include "ctrl_wiimote_png.h"
 #include "ctrl_wiiu_png.h"
+#include "ctrl_retrousb_png.h"
 #endif
 
 /* Generic images */
@@ -2471,7 +2473,7 @@ static void ctrlmenu(void)
 
   /* Player Configuration device items */
 #ifdef HW_RVL
-  gui_item items_device[6] =
+  gui_item items_device[7] =
   {
     {NULL,ctrl_option_off_png ,"Input\nDevice","Select Input Controller",534,244,24,24},
     {NULL,ctrl_gamecube_png   ,"Input\nDevice","Select Input Controller",530,246,36,24},
@@ -2479,6 +2481,7 @@ static void ctrlmenu(void)
     {NULL,ctrl_nunchuk_png    ,"Input\nDevice","Select Input Controller",532,242,32,32},
     {NULL,ctrl_classic_png    ,"Input\nDevice","Select Input Controller",526,242,40,32},
     {NULL,ctrl_wiiu_png       ,"Input\nDevice","Select Input Controller",526,246,40,24},
+    {NULL,ctrl_retrousb_png   ,"Input\nDevice","Select Input Controller",526,246,40,24},
   };
 #else
   gui_item items_device[2] =
@@ -2518,6 +2521,7 @@ static void ctrlmenu(void)
   {
     items_device[5].texture = gxTextureOpenPNG(items_device[5].data,0);
   }
+  items_device[6].texture = gxTextureOpenPNG(items_device[6].data, 0);
 #endif
 
   /* restore current menu elements */
@@ -3060,10 +3064,20 @@ static void ctrlmenu(void)
             /* support for only one gamepad */
             if (!WiiDRC_Inited() || !WiiDRC_Connected() || (config.input[player].port >= 1))
             {
-              /* no input controller left */
-              config.input[player].device = -1;
-              config.input[player].port = player%4;
+              /* test RetroUSB */
+              config.input[player].device = 5;
+              config.input[player].port = 0;
             }
+          }
+
+          if (config.input[player].device == 5)
+          {
+              if (!RetroUSB_OK() || config.input[player].port >= 1)
+              {
+                  /* no input controller left */
+                  config.input[player].device = -1;
+                  config.input[player].port = player % 4;
+              }
           }
 #endif
 
@@ -3230,6 +3244,7 @@ static void ctrlmenu(void)
   {
     gxTextureClose(&items_device[5].texture);
   }
+  gxTextureClose(&items_device[6].texture);
 #endif
 }
 
