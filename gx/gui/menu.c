@@ -392,8 +392,13 @@ static gui_item items_system[] =
   {NULL,NULL,"Lock-On: SONIC&KNUCKLES",    "Select Lock-On cartridge type",               56,132,276,48},
   {NULL,NULL,"Cartridge Swap: OFF",        "Enable/Disable cartridge hot swap",           56,132,276,48},
   {NULL,NULL,"BIOS & Lock-On ROM paths",   "Configure Boot ROM & Lock-On ROM paths",      56,132,276,48},
+  #ifdef HW_RVL // set the overclock range for Wii at 1.0-8.0
+  {NULL,NULL,"Main 68k Overclock: 8.0x",   "Adjust Mega Drive /Genesis CPU clock speed",  56,132,276,48},
+  {NULL,NULL,"Sub 68k Overclock: 8.0x",    "Adjust Sega CD / Mega-CD CPU clock speed",    56,132,276,48},
+  #else // set the overclock range for GC at 1.0-3.0
   {NULL,NULL,"Main 68k Overclock: 3.0x",   "Adjust Mega Drive /Genesis CPU clock speed",  56,132,276,48},
   {NULL,NULL,"Sub 68k Overclock: 3.0x",    "Adjust Sega CD / Mega-CD CPU clock speed",    56,132,276,48},
+  #endif
   {NULL,NULL,"Z80 Overclock: 3.0x",        "Adjust Z80 CPU clock speed",                  56,132,276,48},
   {NULL,NULL,"SVP Cycles: 1500",           "Adjust SVP chip emulation speed",             56,132,276,48}
 };
