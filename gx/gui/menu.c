@@ -1667,7 +1667,11 @@ static void systemmenu ()
 
       case 12:  /*** Main 68k Overclock ***/
       {
+	#ifdef HW_RVL // set the overclock range for Wii at 1.0-8.0
+        GUI_OptionBox(m,0,"Main 68k Overclock Ratio",(void *)&config.m68k_overclock,0.1,1.0,8.0,0);
+	#else // set the overclock range for GC at 1.0-3.0
         GUI_OptionBox(m,0,"Main 68k Overclock Ratio",(void *)&config.m68k_overclock,0.1,1.0,3.0,0);
+	#endif
         if (config.m68k_overclock > 1.0)
           sprintf (items[12].text, "Main 68k Overclock: %1.1fx", config.m68k_overclock);
         else
@@ -1677,7 +1681,11 @@ static void systemmenu ()
 
       case 13:  /*** Sub 68k Overclock ***/
       {
+	#ifdef HW_RVL // set the overclock range for Wii at 1.0-8.0
+        GUI_OptionBox(m,0,"Sub 68k Overclock Ratio",(void *)&config.s68k_overclock,0.1,1.0,8.0,0);
+	#else // set the overclock range for GC at 1.0-3.0
         GUI_OptionBox(m,0,"Sub 68k Overclock Ratio",(void *)&config.s68k_overclock,0.1,1.0,3.0,0);
+	#endif
         if (config.s68k_overclock > 1.0)
           sprintf (items[13].text, "Sub 68k Overclock: %1.1fx", config.s68k_overclock);
         else
