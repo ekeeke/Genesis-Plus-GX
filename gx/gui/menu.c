@@ -3,7 +3,7 @@
  *
  *  Genesis Plus GX menu
  *
- *  Copyright Eke-Eke (2009-2022)
+ *  Copyright Eke-Eke (2009-2023)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -1662,7 +1662,7 @@ static void systemmenu ()
 
       case 12:  /*** Main 68k Overclock ***/
       {
-        GUI_OptionBox(m,0,"Main 68k Overclock Ratio",(void *)&config.m68k_overclock,0.1,1.0,3.0,0);
+        GUI_OptionBox(m,0,"Main 68k Overclock Ratio",(void *)&config.m68k_overclock,0.1,1.0,7.0,0);
         if (config.m68k_overclock > 1.0)
           sprintf (items[12].text, "Main 68k Overclock: %1.1fx", config.m68k_overclock);
         else
@@ -1672,7 +1672,7 @@ static void systemmenu ()
 
       case 13:  /*** Sub 68k Overclock ***/
       {
-        GUI_OptionBox(m,0,"Sub 68k Overclock Ratio",(void *)&config.s68k_overclock,0.1,1.0,3.0,0);
+        GUI_OptionBox(m,0,"Sub 68k Overclock Ratio",(void *)&config.s68k_overclock,0.1,1.0,4.0,0);
         if (config.s68k_overclock > 1.0)
           sprintf (items[13].text, "Sub 68k Overclock: %1.1fx", config.s68k_overclock);
         else
@@ -1682,7 +1682,7 @@ static void systemmenu ()
 
       case 14:  /*** Z80 Overclock ***/
       {
-        GUI_OptionBox(m,0,"Z80 Overclock Ratio",(void *)&config.z80_overclock,0.1,1.0,3.0,0);
+        GUI_OptionBox(m,0,"Z80 Overclock Ratio",(void *)&config.z80_overclock,0.1,1.0,15.0,0);
         if (config.z80_overclock > 1.0)
           sprintf (items[14].text, "Z80 Overclock: %1.1fx", config.z80_overclock);
         else
