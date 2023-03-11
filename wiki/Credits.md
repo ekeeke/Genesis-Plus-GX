@@ -1,6 +1,6 @@
 This project would not have been possible without these people:
 
-##Genesis Plus core##
+## Genesis Plus core ##
 *  current version (improved emulation accuracy, new features, compatibility fixes & various cores modification) by [eke-eke](http://gxdev.wordpress.com/)
 *  based on the original 1.2a version by [Charles MacDonald](http://www.techno-junk.org/)
 *  original Z80 core by Juergen Buchmueller ([MAME](http://mamedev.org/release.html))
