@@ -61,4 +61,4 @@ To use DVD on a non-chipped Wii, you should load the emulator through the Homebr
 
 
 ----
-*Please report to the included User Manual for additional informations.*
+*Please report to the included [User Manual](https://github.com/ekeeke/Genesis-Plus-GX/blob/master/gx/docs/README.pdf) for additional informations.*
