@@ -2,7 +2,7 @@
  *  Genesis Plus
  *  SG-1000, Master System & Game Gear cartridge hardware support
  *
- *  Copyright (C) 2007-2022  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2007-2023  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -47,6 +47,7 @@
 extern void sms_cart_init(void);
 extern void sms_cart_reset(void);
 extern void sms_cart_switch(uint8 mode);
+extern int sms_cart_ram_size(void);
 extern int sms_cart_region_detect(void);
 extern int sms_cart_context_save(uint8 *state);
 extern int sms_cart_context_load(uint8 *state);

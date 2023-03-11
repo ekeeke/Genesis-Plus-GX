@@ -2,7 +2,7 @@
  *  Genesis Plus
  *  SG-1000, Master System & Game Gear cartridge hardware support
  *
- *  Copyright (C) 2007-2022  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2007-2023  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -735,6 +735,24 @@ void sms_cart_switch(uint8 mode)
     /* BIOS ROM is mapped to $0000-$03FF */
     z80_readmap[0] = cart.rom + 0x400000;
   }
+}
+
+int sms_cart_ram_size(void)
+{
+  if ((cart_rom.mapper == MAPPER_RAM_8K) || (cart_rom.mapper == MAPPER_RAM_8K_EXT1))
+  {
+    /* 8KB on-board RAM */
+    return 0x2000;
+  }
+
+  if (cart_rom.mapper == MAPPER_RAM_2K)
+  {
+    /* 2KB on-board RAM */
+    return 0x800;
+  }
+
+  /* no on-board RAM by default  */
+  return 0;
 }
 
 int sms_cart_region_detect(void)
