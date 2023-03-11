@@ -28,9 +28,7 @@ Latest official Gamecube / Wii standalone port (screenshots below) is available 
 
 ----
 
-You can also test latest compiled builds for Gamecube / Wii and Retroarch (Windows 32-bit version only) by downloading them from [here](https://bitbucket.org/eke/genesis-plus-gx/src/master/builds/).
-
-
+You can also test latest compiled builds for Gamecube / Wii and Retroarch (Windows 32-bit version only) by downloading them from [here](https://github.com/ekeeke/Genesis-Plus-GX/tree/master/builds).
 
 ----
 
