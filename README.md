@@ -14,7 +14,7 @@ The result is that Genesis Plus GX is now more a continuation of the original pr
 
 ----
 
-Multi-platform sourcecode (core), which is made available for use under a specific non-commercial [license](https://bitbucket.org/eke/genesis-plus-gx/src/master/LICENSE.txt), is maintained on [Bitbucket](https://bitbucket.org/eke/genesis-plus-gx/src/) / [Github](https://github.com/ekeeke/Genesis-Plus-GX) so that other Genesis Plus ports can benefit of it, as I really wish this emulator becomes a reference for _portable_ and _accurate_ Sega 8/16-bit emulation. If you ported this emulator to other platforms or need help porting it, feel free to contact me.
+Multi-platform sourcecode (core), which is made available for use under a specific non-commercial [license](https://github.com/ekeeke/Genesis-Plus-GX/blob/master/LICENSE.txt), is maintained on [Bitbucket](https://bitbucket.org/eke/genesis-plus-gx/src/) / [Github](https://github.com/ekeeke/Genesis-Plus-GX) so that other Genesis Plus ports can benefit of it, as I really wish this emulator becomes a reference for _portable_ and _accurate_ Sega 8/16-bit emulation. If you ported this emulator to other platforms or need help porting it, feel free to contact me.
 
 ----
 
