@@ -378,20 +378,20 @@ void md_cart_init(void)
     zbank_memory_map[i].write   = zbank_unused_w;
   }
 
-  /* support for Quackshot REV 01 (real) dump */
-  if (strstr(rominfo.product,"00004054-01") && (cart.romsize == 0x80000))
+  /* support for Quackshot REV A original ROM dump (512KB) */
+  if (strstr(rominfo.product,"00004054-01") && (cart.romsize == 0x80000) && (rominfo.checksum == 0xa4b3))
   {
-    /* $000000-$0fffff: first 256K mirrored (A18 not connected to ROM chip, A19 not decoded) */
+    /* $000000-$0fffff: lower 256KB mirrored (VA18 and VA19 not connected to ROM chip) */
     for (i=0x00; i<0x10; i++)
     {
-      /* $200000-$3fffff: mirror of $000000-$1fffff (A21 not decoded) */
+      /* $200000-$3fffff: mirror of $000000-$1fffff (VA21 not connected to ROM chip) */
       m68k.memory_map[i].base = m68k.memory_map[i + 0x20].base = cart.rom + ((i & 0x03) << 16);
     }
 
-    /* $100000-$1fffff: second 256K mirrored (A20 connected to ROM chip A18) */
+    /* $100000-$1fffff: upper 256KB mirrored (VA20 connected to ROM chip A19) */
     for (i=0x10; i<0x20; i++)
     {
-      /* $200000-$3fffff: mirror of $000000-$1fffff (A21 not decoded) */
+      /* $200000-$3fffff: mirror of $000000-$1fffff (VA21 not connected to ROM chip) */
       m68k.memory_map[i].base = m68k.memory_map[i + 0x20].base = cart.rom + 0x40000 + ((i & 0x03) << 16);
     }
   }
