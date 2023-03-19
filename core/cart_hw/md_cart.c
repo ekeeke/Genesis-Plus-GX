@@ -809,6 +809,11 @@ void md_cart_reset(int hard_reset)
     {
       m68k.memory_map[i].base = cart.rom + 0x400000;
     }
+
+    /* Reset mapper */
+    cart.hw.regs[0] = 0;
+    cart.hw.regs[1] = 0;
+    cart.hw.regs[2] = 0;
   }
 
   /* reset cartridge mapping */
@@ -1624,42 +1629,55 @@ static uint32 mapper_smw_64_r(uint32 address)
 
 /* 
   Realtec ROM bankswitch (Earth Defend, Balloon Boy & Funny World, Whac-A-Critter, Tom Clown)
-  (Note: register usage is inverted in TascoDlx documentation)
+  Verified with real cartridge hardware (slightly different from behavior described in TascoDlx documentation)
 */
 static void mapper_realtec_w(uint32 address, uint32 data)
 {
   switch (address)
   {
-    case 0x402000:  
+    case 0x402000: 
     {
-      /* number of mapped 64k blocks (the written value is a number of 128k blocks) */
-      cart.hw.regs[2] = data << 1;
+      /* fixed ROM bank size */
+      /* when bit 0 is set, ROM A16 pin is forced to value configured in register below (connected to VA17 otherwise) */
+      /* when bit 1 is set, ROM A17 pin is forced to value configured in register below (connected to VA18 otherwise) */
+      /* other bits have no effect */
+      cart.hw.regs[1] = (data & 3) << 1;
       return;
     }
 
-    case 0x404000:
+    case 0x404000: 
     {
-      /* 00000xxx */
-      cart.hw.regs[0] = data & 7;
+      /* fixed ROM bank selection (4 x 128KB banks) */
+      /* bit 0 corresponds to ROM A16 pin value when forced */
+      /* bit 1 corresponds to ROM A17 pin value when forced */
+      /* other bits have no effect */
+      cart.hw.regs[2] = (data & 3) << 1;
       return;
     }
 
     case 0x400000:  
     {
-      /* 00000yy1 */
-      cart.hw.regs[1] = data & 6;
-
-      /* ensure mapped size is not null */
-      if (cart.hw.regs[2])
+      /* ROM access enable */
+      /* when bit 0 is set, ROM A17/A16 pins are set according to above registers and ROM A15/A12 pins are connected to VA16-VA13 (forced to 1 on reset) */
+      /* other bits habe no effect */
+      if (data & 0x01)
       {
-        /* mapped start address is 00yy xxx0 0000 0000 0000 0000 */
-        uint32 base = (cart.hw.regs[0] << 1) | (cart.hw.regs[1] << 3);
-
-        /* selected blocks are mirrored into the whole cartridge area */
-        int i;
-        for (i=0x00; i<0x40; i++)
+        /* once ROM access is enabled, ROM mapping can not be modified until next reset */
+        if (!cart.hw.regs[0])
         {
-          m68k.memory_map[i].base = &cart.rom[(base + (i % cart.hw.regs[2])) << 16];
+          int i;
+          for (i=0x00; i<0x40; i++)
+          {
+            /* 0x000000-0x07ffff mapped area is mirrored in 4MB cartridge range (VA21-VA19 not connected) */
+            uint32 base = i & 7;
+
+            /* adjust 64k mapped area ROM base address according to fixed ROM bank configuration (see above) */
+            base = (base & ~cart.hw.regs[1]) | (cart.hw.regs[2] & cart.hw.regs[1]);
+
+            m68k.memory_map[i].base = &cart.rom[base << 16];
+          }
+
+          cart.hw.regs[0] = data;
         }
       }
       return;
