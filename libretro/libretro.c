@@ -2760,7 +2760,7 @@ void retro_set_environment(retro_environment_t cb)
 
    static const struct retro_system_content_info_override content_overrides[] = {
       {
-         "mdx|md|smd|gen|bms|sms|gg|sg|68k|sgd", /* extensions */
+         "mdx|md|bin|smd|gen|bms|sms|gg|sg|68k|sgd", /* extensions */
 #if defined(LOW_MEMORY)
          true,                                   /* need_fullpath */
 #else
