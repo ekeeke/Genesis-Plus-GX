@@ -1261,7 +1261,7 @@ static void check_variables(bool first_run)
   bool update_frameskip     = false;
   struct retro_variable var = {0};
 
-  var.key = "genesis_plus_gx_bram";
+  var.key = "genesis_plus_gx_system_bram";
   environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
   {
 #if defined(_WIN32)
@@ -1281,6 +1281,25 @@ static void check_variables(bool first_run)
      snprintf(CD_BRAM_EU, sizeof(CD_BRAM_EU), "%s%c%s.brm", save_dir, slash, g_rom_name);
      snprintf(CD_BRAM_US, sizeof(CD_BRAM_US), "%s%c%s.brm", save_dir, slash, g_rom_name);
      snprintf(CD_BRAM_JP, sizeof(CD_BRAM_JP), "%s%c%s.brm", save_dir, slash, g_rom_name);
+   }
+  }
+
+  var.key = "genesis_plus_gx_cart_bram";
+  environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
+  {
+#if defined(_WIN32)
+    char slash = '\\';
+#else
+    char slash = '/';
+#endif
+
+   if (!var.value || !strcmp(var.value, "per cart"))
+   {
+     snprintf(CART_BRAM, sizeof(CART_BRAM), "%s%ccart.brm", save_dir, slash);
+   }
+   else
+   {
+     snprintf(CART_BRAM, sizeof(CART_BRAM), "%s%c%s_cart.brm", save_dir, slash, g_rom_name);
    }
   }
 
@@ -3182,7 +3201,6 @@ bool retro_load_game(const struct retro_game_info *info)
    snprintf(CD_BIOS_EU, sizeof(CD_BIOS_EU), "%s%cbios_CD_E.bin", dir, slash);
    snprintf(CD_BIOS_US, sizeof(CD_BIOS_US), "%s%cbios_CD_U.bin", dir, slash);
    snprintf(CD_BIOS_JP, sizeof(CD_BIOS_JP), "%s%cbios_CD_J.bin", dir, slash);
-   snprintf(CART_BRAM, sizeof(CART_BRAM), "%s%ccart.brm", save_dir, slash);
 
    check_variables(true);
 
