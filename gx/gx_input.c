@@ -3,7 +3,7 @@
  *
  *  Genesis Plus GX input support
  *
- *  Copyright Eke-Eke (2007-2022)
+ *  Copyright Eke-Eke (2007-2023)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -1773,45 +1773,69 @@ void gx_input_UpdateMenu(void)
   /* Check if inputs update are disabled */
   if (inputs_disabled) return;
 
+  int i;
+  s8 x, y;
+  u16 pp, hp;
+#ifdef HW_RVL
+  u32 pw, hw, pwu, hwu;
+#endif
+
   /* PAD status update */
   PAD_ScanPads();
 
-  /* PAD pressed keys */
-  s16 pp = PAD_ButtonsDown(0);
+  /* Check all PAD ports */
+  for (i=0; i<4; i++)
+  {
+    /* PAD pressed keys */
+    pp = PAD_ButtonsDown(i);
 
-  /* PAD held keys (direction/selection) */
-  s16 hp = PAD_ButtonsHeld(0) & PAD_BUTTONS_HELD;
+    /* PAD held keys (direction/selection only) */
+    hp = PAD_ButtonsHeld(i) & PAD_BUTTONS_HELD;
 
-  /* PAD analog sticks (handled as PAD held direction keys) */
-  s8 x  = PAD_StickX(0);
-  s8 y  = PAD_StickY(0);
-  if (x > ANALOG_SENSITIVITY)       hp |= PAD_BUTTON_RIGHT;
-  else if (x < -ANALOG_SENSITIVITY) hp |= PAD_BUTTON_LEFT;
-  else if (y > ANALOG_SENSITIVITY)  hp |= PAD_BUTTON_UP;
-  else if (y < -ANALOG_SENSITIVITY) hp |= PAD_BUTTON_DOWN;
+    /* PAD analog sticks (handled as held direction keys) */
+    x = PAD_StickX(i);
+    y = PAD_StickY(i);
+    if (x > ANALOG_SENSITIVITY)       hp |= PAD_BUTTON_RIGHT;
+    else if (x < -ANALOG_SENSITIVITY) hp |= PAD_BUTTON_LEFT;
+    else if (y > ANALOG_SENSITIVITY)  hp |= PAD_BUTTON_UP;
+    else if (y < -ANALOG_SENSITIVITY) hp |= PAD_BUTTON_DOWN;
+
+    /* Ignore other ports once first used PAD controlled is found */
+    if (pp || hp) break;
+  }
 
 #ifdef HW_RVL
   /* WPAD status update */
   WPAD_ScanPads();
-  WPADData *data = WPAD_Data(0);
 
-  /* WPAD pressed keys */
-  u32 pw = data->btns_d;
+  /* Check all WPAD ports */
+  for (i=0; i<4; i++)
+  {
+    /* WPAD data */
+    WPADData *data = WPAD_Data(i);
 
-  /* WPAD held keys (direction/selection) */
-  u32 hw = data->btns_h & WPAD_BUTTONS_HELD;
+    /* WPAD pressed keys */
+    pw = data->btns_d;
 
-  /* WPAD analog sticks (handled as PAD held direction keys) */
-  x = wpad_StickX(data, 0);
-  y = wpad_StickY(data, 0);
-  if (x > ANALOG_SENSITIVITY)       hp |= PAD_BUTTON_RIGHT;
-  else if (x < -ANALOG_SENSITIVITY) hp |= PAD_BUTTON_LEFT;
-  else if (y > ANALOG_SENSITIVITY)  hp |= PAD_BUTTON_UP;
-  else if (y < -ANALOG_SENSITIVITY) hp |= PAD_BUTTON_DOWN;
+    /* WPAD held keys (direction/selection only) */
+    hw = data->btns_h & WPAD_BUTTONS_HELD;
 
-  /* WiiU GamePad status */
-  u32 pwu = 0;
-  u32 hwu = 0;
+    /* WPAD analog sticks (handled as held direction keys) */
+    x = wpad_StickX(data, i);
+    y = wpad_StickY(data, i);
+    if (x > ANALOG_SENSITIVITY)       hw |= PAD_BUTTON_RIGHT;
+    else if (x < -ANALOG_SENSITIVITY) hw |= PAD_BUTTON_LEFT;
+    else if (y > ANALOG_SENSITIVITY)  hw |= PAD_BUTTON_UP;
+    else if (y < -ANALOG_SENSITIVITY) hw |= PAD_BUTTON_DOWN;
+
+    /* Wiimote orientation */
+    WPAD_IR(i, &m_input.ir);
+
+    /* Ignore other ports once first used WPAD controller is found */
+    if (m_input.ir.valid || pw || hw) break;
+  }
+
+  /* Check WiiU GamePad status */
   if (WiiDRC_Inited())
   {
     WiiDRC_ScanPads();
@@ -1825,12 +1849,16 @@ void gx_input_UpdateMenu(void)
     hwu = WiiDRC_ButtonsHeld() & WIIU_BUTTONS_HELD;
     x = WiiDRC_lStickX();
     y = WiiDRC_lStickY();
-    if (x > ANALOG_SENSITIVITY)       hp |= PAD_BUTTON_RIGHT;
-    else if (x < -ANALOG_SENSITIVITY) hp |= PAD_BUTTON_LEFT;
-    else if (y > ANALOG_SENSITIVITY)  hp |= PAD_BUTTON_UP;
-    else if (y < -ANALOG_SENSITIVITY) hp |= PAD_BUTTON_DOWN;
+    if (x > ANALOG_SENSITIVITY)       hwu |= PAD_BUTTON_RIGHT;
+    else if (x < -ANALOG_SENSITIVITY) hwu |= PAD_BUTTON_LEFT;
+    else if (y > ANALOG_SENSITIVITY)  hwu |= PAD_BUTTON_UP;
+    else if (y < -ANALOG_SENSITIVITY) hwu |= PAD_BUTTON_DOWN;
   }
-
+  else
+  {
+    pwu = 0;
+    hwu = 0;
+  }
 #endif
 
   /* check if any direction/selection key is being held or just being pressed/released */
@@ -1860,7 +1888,6 @@ void gx_input_UpdateMenu(void)
 
 #ifdef HW_RVL
   /* Wiimote & Classic Controller direction keys */
-  WPAD_IR(0, &m_input.ir);
   if (m_input.ir.valid)
   {
     /* Wiimote is handled vertically */
