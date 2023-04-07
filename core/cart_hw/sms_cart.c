@@ -1542,31 +1542,17 @@ static void write_mapper_multi_2x16k_v1(unsigned int address, unsigned char data
     /* save mapper configuration to unused register */
     slot.fcr[0] = (data >> 5) & 0x03;
 
-    switch (slot.fcr[0])
+    if (slot.fcr[0] & 0x02)
     {
-      case 0x00:
-      {
-        data &= 0x1f;
-        mapper_16k_w(1,0x00);
-        mapper_16k_w(2,data);
-        break;
-      }
-
-      case 0x01:
-      {
-        data &= 0x1f;
-        mapper_16k_w(1,0x00);
-        mapper_16k_w(2,data);
-        break;
-      }
-
-      default:
-      {
-        data &= 0x1e;
-        mapper_16k_w(1,data);
-        mapper_16k_w(2,data+1);
-        break;
-      }
+      data &= 0x1e;
+      mapper_16k_w(1,data);
+      mapper_16k_w(2,data+1);
+    }
+    else
+    {
+      data &= 0x1f;
+      mapper_16k_w(1,0x00);
+      mapper_16k_w(2,data);
     }
   }
 
@@ -1594,14 +1580,6 @@ static void write_mapper_multi_2x16k_v2(unsigned int address, unsigned char data
       {
         data &= 0x3f;
         mapper_16k_w(1,data);
-        mapper_16k_w(2,data);
-        return;
-      }
-
-      case 0x02:
-      {
-        data &= 0x3f;
-        mapper_16k_w(1,0x20);
         mapper_16k_w(2,data);
         return;
       }
