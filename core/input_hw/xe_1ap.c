@@ -78,9 +78,6 @@ INLINE unsigned char xe_1ap_read(int index)
     case 3: /* CH1 high (Analog Stick Up/Down direction) */
       data = (input.analog[port][1] >> 4) & 0x0F;
       break;
-    case 4: /* CH2 high (N/A) */
-      data = 0x0;
-      break;
     case 5: /* CH3 high (Throttle vertical or horizontal direction) */
       data = (input.analog[port+1][0] >> 4) & 0x0F;
       break;
@@ -90,9 +87,6 @@ INLINE unsigned char xe_1ap_read(int index)
     case 7: /* CH1 low (Analog Stick Up/Down direction)*/
       data = input.analog[port][1] & 0x0F;
       break;
-    case 8: /* CH2 low (N/A) */
-      data = 0x0;
-      break;
     case 9: /* CH3 low (Throttle vertical or horizontal direction) */
       data = input.analog[port+1][0] & 0x0F;
       break;
@@ -101,6 +95,9 @@ INLINE unsigned char xe_1ap_read(int index)
       break;
     case 11: /* A B A' B' buttons status (active low) */
       data = (~input.pad[port] >> 6) & 0x0F;
+      break;
+    default: /* case 4: case 8: CH2 high/low (N/A) */
+      data = 0x0;
       break;
   }
 
