@@ -1852,7 +1852,7 @@ void render_bg_m5_vs(int line)
 /* Enhanced function that allows each cell to be vscrolled individually, instead of being limited to 2-cell */
 void render_bg_m5_vs_enhanced(int line)
 {
-  int column, v_offset;
+  int column, v_offset = 0;
   uint32 atex, atbuf, *src, *dst;
   uint32 v_line, next_v_line, *nt;
 
