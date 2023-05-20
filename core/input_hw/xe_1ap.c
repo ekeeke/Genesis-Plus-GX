@@ -2,7 +2,7 @@
  *  Genesis Plus
  *  XE-1AP analog controller support
  *
- *  Copyright (C) 2011-2022  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2011-2023  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -96,11 +96,11 @@ INLINE unsigned char xe_1ap_read(int index)
     case 9: /* CH3 low (Throttle vertical or horizontal direction) */
       data = input.analog[port+1][0] & 0x0F;
       break;
-    case 10: /* N/A */
-      data = 0x0F;
-      break;
     case 11: /* A B A' B' buttons status (active low) */
       data = (~input.pad[port] >> 6) & 0x0F;
+      break;
+    default: /* N/A */
+      data = 0x0F;
       break;
   }
 

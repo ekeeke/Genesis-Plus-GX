@@ -1852,9 +1852,12 @@ void render_bg_m5_vs(int line)
 /* Enhanced function that allows each cell to be vscrolled individually, instead of being limited to 2-cell */
 void render_bg_m5_vs_enhanced(int line)
 {
-  int column, v_offset;
+  int column;
   uint32 atex, atbuf, *src, *dst;
   uint32 v_line, next_v_line, *nt;
+
+  /* Vertical scroll offset */
+  int v_offset = 0;
 
   /* Common data */
   uint32 xscroll      = *(uint32 *)&vram[hscb + ((line & hscroll_mask) << 2)];
@@ -2833,10 +2836,13 @@ void render_bg_m5_vs(int line)
 
 void render_bg_m5_vs_enhanced(int line)
 {
-  int column, start, end, v_offset;
+  int column, start, end;
   uint32 atex, atbuf, *src, *dst;
   uint32 shift, index, v_line, next_v_line, *nt;
   uint8 *lb;
+
+  /* Vertical scroll offset */
+  int v_offset = 0;
 
   /* Scroll Planes common data */
   uint32 xscroll      = *(uint32 *)&vram[hscb + ((line & hscroll_mask) << 2)];
