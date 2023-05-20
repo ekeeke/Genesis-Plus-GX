@@ -1821,12 +1821,12 @@ void gx_input_UpdateMenu(void)
     hw = data->btns_h & WPAD_BUTTONS_HELD;
 
     /* WPAD analog sticks (handled as held direction keys) */
-    x = wpad_StickX(data, i);
-    y = wpad_StickY(data, i);
-    if (x > ANALOG_SENSITIVITY)       hw |= PAD_BUTTON_RIGHT;
-    else if (x < -ANALOG_SENSITIVITY) hw |= PAD_BUTTON_LEFT;
-    else if (y > ANALOG_SENSITIVITY)  hw |= PAD_BUTTON_UP;
-    else if (y < -ANALOG_SENSITIVITY) hw |= PAD_BUTTON_DOWN;
+    x = wpad_StickX(data, 0);
+    y = wpad_StickY(data, 0);
+    if (x > ANALOG_SENSITIVITY)       hp |= PAD_BUTTON_RIGHT;
+    else if (x < -ANALOG_SENSITIVITY) hp |= PAD_BUTTON_LEFT;
+    else if (y > ANALOG_SENSITIVITY)  hp |= PAD_BUTTON_UP;
+    else if (y < -ANALOG_SENSITIVITY) hp |= PAD_BUTTON_DOWN;
 
     /* Wiimote orientation */
     WPAD_IR(i, &m_input.ir);
@@ -1849,10 +1849,10 @@ void gx_input_UpdateMenu(void)
     hwu = WiiDRC_ButtonsHeld() & WIIU_BUTTONS_HELD;
     x = WiiDRC_lStickX();
     y = WiiDRC_lStickY();
-    if (x > ANALOG_SENSITIVITY)       hwu |= PAD_BUTTON_RIGHT;
-    else if (x < -ANALOG_SENSITIVITY) hwu |= PAD_BUTTON_LEFT;
-    else if (y > ANALOG_SENSITIVITY)  hwu |= PAD_BUTTON_UP;
-    else if (y < -ANALOG_SENSITIVITY) hwu |= PAD_BUTTON_DOWN;
+    if (x > ANALOG_SENSITIVITY)       hp |= PAD_BUTTON_RIGHT;
+    else if (x < -ANALOG_SENSITIVITY) hp |= PAD_BUTTON_LEFT;
+    else if (y > ANALOG_SENSITIVITY)  hp |= PAD_BUTTON_UP;
+    else if (y < -ANALOG_SENSITIVITY) hp |= PAD_BUTTON_DOWN;
   }
   else
   {
