@@ -77,6 +77,7 @@ Genesis Plus GX 1.7.5 (xx/xx/xxxx) (Eke-Eke)
 * fixed ROM padding for Sonic & Knuckles
 * fixed SRAM detection for games where it is mapped to work RAM ("Feng Kuang Tao Hua Yuan" crash)
 * fixed 1.7.4 regression with games using SRAM bank-switching
+* fixed soft-reset in X-in-1 pirate games
 
 [Core/MS]
 ---------------

@@ -1659,7 +1659,7 @@ static void mapper_realtec_w(uint32 address, uint32 data)
     {
       /* ROM access enable */
       /* when bit 0 is set, ROM A17/A16 pins are set according to above registers and ROM A15/A12 pins are connected to VA16-VA13 (forced to 1 on reset) */
-      /* other bits habe no effect */
+      /* other bits have no effect */
       if (data & 0x01)
       {
         /* once ROM access is enabled, ROM mapping can not be modified until next reset */
@@ -2030,6 +2030,10 @@ static void default_time_w(uint32 address, uint32 data)
   if (address < 0xa13060)
   {
     mapper_64k_multi_w(address);
+
+    /* cartridge ROM mapping is reinitialized on /VRES */
+    cart.hw.bankshift = 1;
+
     return;
   }
 
