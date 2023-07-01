@@ -509,6 +509,12 @@ void md_cart_init(void)
   }
 
   /* detect specific mappers */
+  else if (strstr(rominfo.international,"DEMONS OF ASTEBORG") ||
+           strstr(rominfo.international,"ASTEBROS"))
+  {
+    /* default SSF2+SRAM mapper (fixes Steam versions which incorrectly use Everdrive extended SSF mapper indicator in ROM header) */ 
+    cart.hw.time_w = default_time_w;
+  }
   else if (strstr(rominfo.consoletype,"SEGA SSF"))
   {
     /* Everdrive extended SSF mapper */
