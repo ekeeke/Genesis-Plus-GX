@@ -196,6 +196,7 @@ Genesis Plus GX 1.7.5 (xx/xx/xxxx) (Eke-Eke)
 * fixed bug with PICO pointer
 * fixed lightgun crosshair & CD leds positionning when using NTSC filter
 * fixed low-pass filter menu setting
+* fixed random PNG snapshots corruption
 * various code cleanup & optimizations
 * built with devkitPPC r38, libogc 2.2.1 and libfat 1.1.5 with UStealth Mod
 

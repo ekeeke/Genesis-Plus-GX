@@ -1019,22 +1019,19 @@ void gxCopyScreenshot(gx_texture *texture)
   GX_Color4u8(0xff,0xff,0xff,0xff);
   GX_TexCoord2f32(0.0, 0.0);
   GX_End();
+  GX_DrawDone();
 
   /* copy EFB to texture */
   GX_SetTexCopySrc(0, 0, texture->width * 2, texture->height * 2);
   GX_SetTexCopyDst(texture->width, texture->height, texture->format, GX_TRUE);
-  GX_DrawDone();
   GX_CopyTex(texture->data, GX_TRUE);
   GX_Flush();
 
   /* wait for copy operation to finish */
-  /* GX_PixModeSync is only useful if GX_ command follows */
-  /* we use dummy GX commands to stall CPU execution */
   GX_PixModeSync();
-  GX_LoadTexObj(&screenTexObj, GX_TEXMAP0);
-  GX_InvalidateTexAll();
-  GX_Flush();
-  DCStoreRange(texture->data, texture->width * texture->height * 4);
+
+  /* invalidate data cache area corresponding to texture RAM address */
+  DCInvalidateRange(texture->data, texture->width * texture->height * 4);
 }
 
 /* Take Screenshot */
