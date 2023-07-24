@@ -408,13 +408,17 @@ void md_cart_init(void)
     /* SRAM is mapped by default unless it overlaps with ROM area (Phantasy Star 4, Beyond Oasis/Legend of Thor, World Series Baseball 9x, Duke Nukem 3D,...) */
     if (sram.start >= cart.romsize)
     {
-      m68k.memory_map[sram.start >> 16].base    = sram.sram;
-      m68k.memory_map[sram.start >> 16].read8   = sram_read_byte;
-      m68k.memory_map[sram.start >> 16].read16  = sram_read_word;
-      m68k.memory_map[sram.start >> 16].write8  = sram_write_byte;
-      m68k.memory_map[sram.start >> 16].write16 = sram_write_word;
-      zbank_memory_map[sram.start >> 16].read   = sram_read_byte;
-      zbank_memory_map[sram.start >> 16].write  = sram_write_byte;
+      /* except for Sonic the Hedgehog 3 (cartridge ROM mirrored in upper 2MB area at power on) */
+      if (strstr(rominfo.international,"SONIC THE HEDGEHOG 3") == NULL)
+      {
+        m68k.memory_map[sram.start >> 16].base    = sram.sram;
+        m68k.memory_map[sram.start >> 16].read8   = sram_read_byte;
+        m68k.memory_map[sram.start >> 16].read16  = sram_read_word;
+        m68k.memory_map[sram.start >> 16].write8  = sram_write_byte;
+        m68k.memory_map[sram.start >> 16].write16 = sram_write_word;
+        zbank_memory_map[sram.start >> 16].read   = sram_read_byte;
+        zbank_memory_map[sram.start >> 16].write  = sram_write_byte;
+      }
     }
 
     /* support for Triple Play 96 & Triple Play - Gold Edition mapping */
@@ -1043,6 +1047,16 @@ static void mapper_sega_w(uint32 data)
     m68k.memory_map[0x20].write8  = m68k_unused_8_w;
     m68k.memory_map[0x20].write16 = m68k_unused_16_w;
     zbank_memory_map[0x20].write  = zbank_unused_w;
+
+    /* S&K lock-on chip */
+    if (cart.special & HW_LOCK_ON)
+    {
+      /* cartridge ROM mapped to $300000-$3fffff */
+      for (i=0x30; i<0x40; i++)
+      {
+        m68k.memory_map[i].base = cart.rom + ((i<<16) & cart.mask);
+      }
+    }
   }
 }
 
