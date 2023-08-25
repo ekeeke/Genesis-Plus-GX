@@ -3,7 +3,7 @@
  *  Main 68k bus handlers
  *
  *  Copyright (C) 1998-2003  Charles Mac Donald (original code)
- *  Copyright (C) 2007-2022  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2007-2023  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -696,29 +696,40 @@ void ctrl_io_write_byte(unsigned int address, unsigned int data)
             /* RESET bit */
             if (data & 0x01)
             {
-              /* trigger reset on 0->1 transition */
+              /* SUB-CPU reset is triggered on /RESET input 0->1 transition */
               if (!(scd.regs[0x00].byte.l & 0x01))
               {
-                /* reset SUB-CPU */
                 s68k_pulse_reset();
               }
 
               /* BUSREQ bit */
               if (data & 0x02)
               {
-                /* SUB-CPU bus requested */
+                /* SUB-CPU is halted (/HALT input is asserted) */
                 s68k_pulse_halt();
               }
               else
               {
-                /* SUB-CPU bus released */
+                /* SUB-CPU is running (/HALT input is released) */
                 s68k_clear_halt();
               }
+
+              /* update BUSREQ and RESET bits */
+              scd.regs[0x00].byte.l = data & 0x03;
             }
             else
             {
-              /* SUB-CPU is halted while !RESET is asserted */
+              /* SUB-CPU is halted (/HALT and /RESET inputs are asserted) */
               s68k_pulse_halt();
+
+              /* RESET bit is cleared and BUSREQ bit is set to 1 (verified on real hardware) */
+              scd.regs[0x00].byte.l = 0x02;
+            }
+
+            /* BUSREQ bit remains set to 0 if SUB-CPU is halted while stopped (verified on real hardware) */
+            if (s68k.stopped & 0x01)
+            {
+              scd.regs[0x00].byte.l &= ~0x02;
             }
 
             /* check if SUB-CPU halt status has changed */
@@ -727,8 +738,8 @@ void ctrl_io_write_byte(unsigned int address, unsigned int data)
               /* PRG-RAM (128KB bank) is normally mapped to $020000-$03FFFF (resp. $420000-$43FFFF) */
               unsigned int base = scd.cartridge.boot + 0x02;
 
-              /* PRG-RAM can only be accessed from MAIN 68K & Z80 when SUB-CPU is halted (Dungeon Explorer USA version) */
-              if ((data & 0x03) != 0x01)
+              /* PRG-RAM can only be accessed from MAIN-CPU & Z80 when BUSREQ bit is set (Dungeon Explorer USA version) */
+              if (scd.regs[0x00].byte.l & 0x02)
               {
                 m68k.memory_map[base].read8   = m68k.memory_map[base+1].read8   = NULL;
                 m68k.memory_map[base].read16  = m68k.memory_map[base+1].read16  = NULL;
@@ -748,7 +759,6 @@ void ctrl_io_write_byte(unsigned int address, unsigned int data)
               }
             }
 
-            scd.regs[0x00].byte.l = data;
             return;
           }
 
@@ -934,29 +944,40 @@ void ctrl_io_write_word(unsigned int address, unsigned int data)
             /* RESET bit */
             if (data & 0x01)
             {
-              /* trigger reset on 0->1 transition */
+              /* SUB-CPU reset is triggered on /RESET input 0->1 transition */
               if (!(scd.regs[0x00].byte.l & 0x01))
               {
-                /* reset SUB-CPU */
                 s68k_pulse_reset();
               }
 
               /* BUSREQ bit */
               if (data & 0x02)
               {
-                /* SUB-CPU bus requested */
+                /* SUB-CPU is halted (/HALT input is asserted) */
                 s68k_pulse_halt();
               }
               else
               {
-                /* SUB-CPU bus released */
+                /* SUB-CPU is running (/HALT input is released) */
                 s68k_clear_halt();
               }
+
+              /* update BUSREQ and RESET bits */
+              scd.regs[0x00].byte.l = data & 0x03;
             }
             else
             {
-              /* SUB-CPU is halted while !RESET is asserted */
+              /* SUB-CPU is halted (/HALT and /RESET inputs are asserted) */
               s68k_pulse_halt();
+
+              /* RESET bit is cleared and BUSREQ bit is set to 1 (verified on real hardware) */
+              scd.regs[0x00].byte.l = 0x02;
+            }
+
+            /* BUSREQ bit remains set to 0 if SUB-CPU is halted while stopped (verified on real hardware) */
+            if (s68k.stopped & 0x01)
+            {
+              scd.regs[0x00].byte.l &= ~0x02;
             }
 
             /* check if SUB-CPU halt status has changed */
@@ -965,8 +986,8 @@ void ctrl_io_write_word(unsigned int address, unsigned int data)
               /* PRG-RAM (128KB bank) is normally mapped to $020000-$03FFFF (resp. $420000-$43FFFF) */
               unsigned int base = scd.cartridge.boot + 0x02;
 
-              /* PRG-RAM can only be accessed from MAIN 68K & Z80 when SUB-CPU is halted (Dungeon Explorer USA version) */
-              if ((data & 0x03) != 0x01)
+              /* PRG-RAM can only be accessed from MAIN-CPU & Z80 when BUSREQ bit is set (Dungeon Explorer USA version) */
+              if (scd.regs[0x00].byte.l & 0x02)
               {
                 m68k.memory_map[base].read8   = m68k.memory_map[base+1].read8   = NULL;
                 m68k.memory_map[base].read16  = m68k.memory_map[base+1].read16  = NULL;
@@ -1002,9 +1023,6 @@ void ctrl_io_write_word(unsigned int address, unsigned int data)
                 s68k_update_irq((scd.pending & scd.regs[0x32>>1].byte.l) >> 1);
               }
             }
-
-            /* update LSB only */
-            scd.regs[0x00].byte.l = data & 0xff;
             return;
           }
 
