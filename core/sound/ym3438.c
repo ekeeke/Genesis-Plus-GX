@@ -1,37 +1,22 @@
 #ifdef HAVE_YM3438_CORE
 /*
- *  Copyright (C) 2017-2018 Alexey Khokholov (Nuke.YKT)
- * 
- *  Redistribution and use of this code or any derivative works are permitted
- *  provided that the following conditions are met:
+ * Copyright (C) 2017-2022 Alexey Khokholov (Nuke.YKT)
  *
- *   - Redistributions may not be sold, nor may they be used in a commercial
- *     product or activity.
+ * This file is part of Nuked OPN2.
  *
- *   - Redistributions that are modified from the original source must include the
- *     complete source code, including the source code for all components used by a
- *     binary built from the modified sources. However, as a special exception, the
- *     source code distributed need not include anything that is normally distributed
- *     (in either source or binary form) with the major components (compiler, kernel,
- *     and so on) of the operating system on which the executable runs, unless that
- *     component itself accompanies the executable.
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
  *
- *   - Redistributions must reproduce the above copyright notice, this list of
- *     conditions and the following disclaimer in the documentation and/or other
- *     materials provided with the distribution.
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
  *
- *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- *  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- *  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- *  ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
- *  LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- *  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- *  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- *  CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- *  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- *  POSSIBILITY OF SUCH DAMAGE.
- *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  *
  *  Nuked OPN2(Yamaha YM3438) emulator.
  *  Thanks:
@@ -40,11 +25,13 @@
  *      OPLx decapsulated(Matthew Gambrell, Olli Niemitalo):
  *          OPL2 ROMs.
  *
- * version: 1.0.10
+ * version: 1.0.12
  */
 
 #include <string.h>
 #include "ym3438.h"
+
+#define SIGN_EXTEND(bit_index, value) (((value) & ((1u << (bit_index)) - 1u)) - ((value) & (1u << (bit_index))))
 
 enum {
     eg_num_attack = 0,
@@ -563,7 +550,6 @@ static void OPN2_EnvelopeSSGEG(ym3438_t *chip)
     chip->eg_ssg_pgrst_latch[slot] = 0;
     chip->eg_ssg_repeat_latch[slot] = 0;
     chip->eg_ssg_hold_up_latch[slot] = 0;
-    chip->eg_ssg_inv[slot] = 0;
     if (chip->ssg_eg[slot] & 0x08)
     {
         direction = chip->eg_ssg_dir[slot];
@@ -596,11 +582,11 @@ static void OPN2_EnvelopeSSGEG(ym3438_t *chip)
             chip->eg_ssg_hold_up_latch[slot] = 1;
         }
         direction &= chip->eg_kon[slot];
-        chip->eg_ssg_inv[slot] = (chip->eg_ssg_dir[slot] ^ ((chip->ssg_eg[slot] >> 2) & 0x01))
-                               & chip->eg_kon[slot];
     }
     chip->eg_ssg_dir[slot] = direction;
     chip->eg_ssg_enable[slot] = (chip->ssg_eg[slot] >> 3) & 0x01;
+    chip->eg_ssg_inv[slot] = (chip->eg_ssg_dir[slot] ^ (((chip->ssg_eg[slot] >> 2) & 0x01) & ((chip->ssg_eg[slot] >> 3) & 0x01)))
+                           & chip->eg_kon[slot];
 }
 
 static void OPN2_EnvelopeADSR(ym3438_t *chip)
@@ -676,7 +662,7 @@ static void OPN2_EnvelopeADSR(ym3438_t *chip)
             }
             break;
         case eg_num_decay:
-            if ((level >> 5) == chip->eg_sl[1])
+            if ((level >> 4) == (chip->eg_sl[1] << 1))
             {
                 nextstate = eg_num_sustain;
             }
@@ -988,8 +974,7 @@ static void OPN2_ChOutput(ym3438_t *chip)
     if (((cycles >> 2) == 1 && chip->dacen) || test_dac)
     {
         out = (Bit16s)chip->dacdata;
-        out <<= 7;
-        out >>= 7;
+        out = SIGN_EXTEND(8, out);
     }
     else
     {
@@ -1075,8 +1060,7 @@ static void OPN2_FMGenerate(ym3438_t *chip)
     {
         output = output ^ (chip->mode_test_21[4] << 13);
     }
-    output <<= 2;
-    output >>= 2;
+    output = SIGN_EXTEND(13, output);
     chip->fm_out[slot] = output;
 }
 
