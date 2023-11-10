@@ -2,7 +2,7 @@
  *  Genesis Plus
  *  Sega Paddle Control support
  *
- *  Copyright (C) 2007-2013  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2007-2023  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -40,7 +40,7 @@
 #define _PADDLE_H_
 
 /* Function prototypes */
-extern void paddle_reset(int index);
+extern void paddle_reset(int port);
 extern unsigned char paddle_1_read(void);
 extern unsigned char paddle_2_read(void);
 extern void paddle_1_write(unsigned char data, unsigned char mask);

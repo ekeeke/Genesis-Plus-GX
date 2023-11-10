@@ -133,6 +133,7 @@ Genesis Plus GX 1.7.5 (xx/xx/xxxx) (Eke-Eke)
 * improved 4 Way-Play emulation (fixes multitap detection in CD games)
 * increased Sega Mouse latency (fixes mouse support in Star Blade)
 * fixed TeamPlayer emulation (fixes multitap detection in Gauntlet 4)
+* improved Japanese Paddle emulation (fixes Paddle support on control port #2)
 
 [Core/VDP]
 ---------------

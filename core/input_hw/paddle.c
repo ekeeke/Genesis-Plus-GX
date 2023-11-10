@@ -2,7 +2,7 @@
  *  Genesis Plus
  *  Sega Paddle Control support
  *
- *  Copyright (C) 2007-2013  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2007-2023  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -41,12 +41,14 @@
 static struct
 {
   uint8 State;
+  uint8 Counter;
 } paddle[2];
 
-void paddle_reset(int index)
+void paddle_reset(int port)
 {
-  input.analog[index][0] = 128;
-  paddle[index>>2].State = 0x40;
+  input.analog[port][0] = 128;
+  paddle[port>>2].State = 0x40;
+  paddle[port>>2].Counter = 0;
 }
 
 INLINE unsigned char paddle_read(int port)
@@ -63,7 +65,13 @@ INLINE unsigned char paddle_read(int port)
   /* Japanese model: automatic flip-flop */
   if (region_code < REGION_USA)
   {
-    paddle[index].State ^= 0x40;
+    /* two I/O port reads are required to fully read paddles state on control ports 1 & 2 so using two read access latency for switching should be safe */
+    /* note: real paddle switching time is approx. 62.5 us period according to https://www.raphnet.net/electronique/sms_paddle/index_en.php#4 */
+    if (++paddle[index].Counter > 2)
+    {
+      paddle[index].Counter = 0;
+      paddle[index].State ^= 0x40;
+    }
   }
 
   if (paddle[index].State & 0x40)
