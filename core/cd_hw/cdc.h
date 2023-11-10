@@ -2,7 +2,7 @@
  *  Genesis Plus
  *  CD data controller (LC8951x compatible)
  *
- *  Copyright (C) 2012-2019  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2012-2023  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -53,7 +53,7 @@ typedef struct
   uint8 head[2][4];
   uint8 stat[4];
   int cycles;
-  void (*dma_w)(unsigned int words);  /* DMA transfer callback */
+  void (*dma_w)(unsigned int length);  /* DMA transfer callback */
   uint8 ram[0x4000 + 2352]; /* 16K external RAM (with one block overhead to handle buffer overrun) */
 } cdc_t; 
 

@@ -2,7 +2,7 @@
  *  Genesis Plus
  *  PCM sound chip (315-5476A) (RF5C164 compatible)
  *
- *  Copyright (C) 2012-2021  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2012-2023  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -395,36 +395,31 @@ unsigned char pcm_read(unsigned int address, unsigned int cycles)
   return 0xff;
 }
 
-void pcm_ram_dma_w(unsigned int words)
+void pcm_ram_dma_w(unsigned int length)
 {
-  uint16 data;
-
   /* CDC buffer source address */
-  uint16 src_index = cdc.dac.w & 0x3ffe;
+  uint16 src_index = cdc.dac.w & 0x3fff;
   
   /* PCM-RAM destination address*/
-  uint16 dst_index = (scd.regs[0x0a>>1].w << 2) & 0xffe;
+  uint16 dst_index = (scd.regs[0x0a>>1].w << 2) & 0xfff;
   
   /* update DMA destination address */
-  scd.regs[0x0a>>1].w += (words >> 1);
+  scd.regs[0x0a>>1].w += (length >> 2);
 
   /* update DMA source address */
-  cdc.dac.w += (words << 1);
+  cdc.dac.w += length;
 
   /* DMA transfer */
-  while (words--)
+  while (length--)
   {
-    /* read 16-bit word from CDC buffer */
-    data = *(uint16 *)(cdc.ram + src_index);
-
-    /* write 16-bit word to PCM RAM (endianness does not matter since PCM RAM is always accessed as byte)*/
-    *(uint16 *)(pcm.bank + dst_index) = data ;
+    /* copy byte from CDC buffer to PCM RAM bank */
+    pcm.bank[dst_index] = cdc.ram[src_index];
 
     /* increment CDC buffer source address */
-    src_index = (src_index + 2) & 0x3ffe;
+    src_index = (src_index + 1) & 0x3fff;
 
     /* increment PCM-RAM destination address */
-    dst_index = (dst_index + 2) & 0xffe;
+    dst_index = (dst_index + 1) & 0xfff;
   }
 }
 

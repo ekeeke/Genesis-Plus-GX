@@ -2,7 +2,7 @@
  *  Genesis Plus
  *  Mega CD / Sega CD hardware
  *
- *  Copyright (C) 2012-2022  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2012-2023  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -76,9 +76,12 @@ static void s68k_unused_16_w(unsigned int address, unsigned int data)
 /*--------------------------------------------------------------------------*/
 /* PRG-RAM DMA access                                                       */
 /*--------------------------------------------------------------------------*/
-void prg_ram_dma_w(unsigned int words)
+void prg_ram_dma_w(unsigned int length)
 {
   uint16 data;
+
+  /* 16-bit DMA only */
+  unsigned int words = length >> 1;
 
   /* CDC buffer source address */
   uint16 src_index = cdc.dac.w & 0x3ffe;

@@ -2,7 +2,7 @@
  *  Genesis Plus
  *  PCM sound chip (315-5476A) (RF5C164 compatible)
  *
- *  Copyright (C) 2012-2021  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2012-2023  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -72,6 +72,6 @@ extern int pcm_context_load(uint8 *state);
 extern void pcm_update(unsigned int samples);
 extern void pcm_write(unsigned int address, unsigned char data, unsigned int cycles);
 extern unsigned char pcm_read(unsigned int address, unsigned int cycles);
-extern void pcm_ram_dma_w(unsigned int words);
+extern void pcm_ram_dma_w(unsigned int length);
 
 #endif

@@ -55,6 +55,7 @@ Genesis Plus GX 1.7.5 (xx/xx/xxxx) (Eke-Eke)
 * fixed word access to CDD control register (fixes spurious audio track playback on startup with Mode 1 patched games using MSU-MD driver)
 * fixed CD communication registers state on peripheral reset (fixes SUB-CPU side initialization in MSU-MD sample demo and some Mode 1 patched games using MSU-MD driver)
 * fixed 32x32 pixels stamp index masking during GFX operation (fixes graphics rotation/scaling effects in "Chuck Rock II - Son of Chuck")
+* fixed CDC DMA to PCM RAM when transfer length is not word-aligned
 * optimized Sub-CPU / Main-CPU synchronization
 
 [Core/MD]

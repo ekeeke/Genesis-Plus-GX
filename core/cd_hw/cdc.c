@@ -2,7 +2,7 @@
  *  Genesis Plus
  *  CD data controller (LC8951x compatible)
  *
- *  Copyright (C) 2012-2019  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2012-2023  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -181,17 +181,14 @@ int cdc_context_load(uint8 *state)
 
 void cdc_dma_update(void)
 {
-  /* maximal transfer length */
-  int length = DMA_BYTES_PER_LINE;
-
   /* end of DMA transfer ? */
   if (cdc.dbc.w < DMA_BYTES_PER_LINE)
   {
-    /* transfer remaining words using 16-bit DMA */
-    cdc.dma_w((cdc.dbc.w + 1) >> 1);
+    /* transfer remaining bytes using DMA */
+    cdc.dma_w(cdc.dbc.w + 1);
 
-    /* reset data byte counter (DBCH bits 4-7 should be set to 1) */
-    cdc.dbc.w = 0xf000;
+    /* reset data byte counter (DBCH bits 4-7 should also be set to 1) */
+    cdc.dbc.w = 0xffff;
 
     /* clear !DTEN and !DTBSY */
     cdc.ifstat |= (BIT_DTBSY | BIT_DTEN);
@@ -234,11 +231,11 @@ void cdc_dma_update(void)
   }
   else
   {
-    /* transfer all words using 16-bit DMA */
-    cdc.dma_w(DMA_BYTES_PER_LINE >> 1);
+    /* transfer limited amount of bytes using DMA */
+    cdc.dma_w(DMA_BYTES_PER_LINE);
 
     /* decrement data byte counter */
-    cdc.dbc.w -= length;
+    cdc.dbc.w -= DMA_BYTES_PER_LINE;
   }
 }
 

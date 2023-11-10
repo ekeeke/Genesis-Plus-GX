@@ -2,7 +2,7 @@
  *  Genesis Plus
  *  CD graphics processor
  *
- *  Copyright (C) 2012-2022  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2012-2023  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -61,9 +61,9 @@ typedef struct
 /***************************************************************/
 /*          WORD-RAM DMA interfaces (1M & 2M modes)            */
 /***************************************************************/
-extern void word_ram_0_dma_w(unsigned int words);
-extern void word_ram_1_dma_w(unsigned int words);
-extern void word_ram_2M_dma_w(unsigned int words);
+extern void word_ram_0_dma_w(unsigned int length);
+extern void word_ram_1_dma_w(unsigned int length);
+extern void word_ram_2M_dma_w(unsigned int length);
 
 /***************************************************************/
 /*          WORD-RAM 0 & 1 CPU interfaces (1M mode)            */

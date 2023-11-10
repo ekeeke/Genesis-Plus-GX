@@ -2,7 +2,7 @@
  *  Genesis Plus
  *  Mega CD / Sega CD hardware
  *
- *  Copyright (C) 2012-2022  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2012-2023  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -90,6 +90,6 @@ extern void scd_end_frame(unsigned int cycles);
 extern int scd_context_load(uint8 *state, char *version);
 extern int scd_context_save(uint8 *state);
 extern int scd_68k_irq_ack(int level);
-extern void prg_ram_dma_w(unsigned int words);
+extern void prg_ram_dma_w(unsigned int length);
 
 #endif
