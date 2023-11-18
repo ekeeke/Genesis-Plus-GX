@@ -411,11 +411,11 @@ static void s68k_poll_detect(unsigned int reg_mask)
         if (s68k.poll.detected & 1)
         {
           /* idle SUB-CPU until register is modified */
-          s68k.cycles = s68k.cycle_end;
-          s68k.stopped = reg_mask;
 #ifdef LOG_SCD
           error("s68k stopped from %d cycles\n", s68k.cycles);
 #endif
+          s68k.cycles = s68k.cycle_end;
+          s68k.stopped = reg_mask;
         }
         else
         {
@@ -471,6 +471,24 @@ static void s68k_poll_sync(unsigned int reg_mask)
   /* clear CPU register access flags */
   s68k.poll.detected &= ~reg_mask;
   m68k.poll.detected &= ~reg_mask;
+}
+
+static void m68k_sync(void)
+{
+  if (!m68k.stopped)
+  {
+    /* relative MAIN-CPU cycle counter */
+    unsigned int cycles = (s68k.cycles * MCYCLES_PER_LINE) / SCYCLES_PER_LINE;
+
+    /* save current MAIN-CPU end cycle count (recursive execution is possible) */
+    int end_cycle = m68k.cycle_end;
+
+    /* sync MAIN-CPU with SUB-CPU */
+    m68k_run(cycles);
+
+    /* restore MAIN-CPU end cycle count */
+    m68k.cycle_end = end_cycle;
+  }
 }
 
 /*--------------------------------------------------------------------------*/
@@ -668,21 +686,8 @@ static unsigned int scd_read_word(unsigned int address)
   /* MAIN-CPU communication words */
   if ((address & 0x1f0) == 0x10)
   {
-    if (!m68k.stopped)
-    {
-      /* relative MAIN-CPU cycle counter */
-      unsigned int cycles = (s68k.cycles * MCYCLES_PER_LINE) / SCYCLES_PER_LINE;
-
-      /* save current MAIN-CPU end cycle count (recursive execution is possible) */
-      int end_cycle = m68k.cycle_end;
-
-      /* sync MAIN-CPU with SUB-CPU (Mighty Morphin Power Rangers) */
-      m68k_run(cycles);
-
-      /* restore MAIN-CPU end cycle count */
-      m68k.cycle_end = end_cycle;
-    }
-
+    /* sync MAIN-CPU with SUB-CPU (fixes Mighty Morphin Power Rangers) */
+    m68k_sync();
     s68k_poll_detect(3 << (address & 0x1e));
   }
 
@@ -1411,7 +1416,7 @@ void scd_init(void)
         m68k.memory_map[i].write8  = m68k_unused_8_w;
         m68k.memory_map[i].write16 = m68k_unused_16_w;
         zbank_memory_map[i].read   = NULL;
-        zbank_memory_map[i].write  = zbank_unused_w;        
+        zbank_memory_map[i].write  = zbank_unused_w;
         break;
       }
 
