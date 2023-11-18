@@ -19,6 +19,7 @@ Genesis Plus GX 1.7.5 (xx/xx/xxxx) (Eke-Eke)
 * added CDC & GFX register polling detection / synchronization
 * added configurable CD-DA and PCM outputs mixing volume
 * added setting to enable/disable CD access time simulation
+* added emulation of Word-RAM access limitations in 2M mode (fixes graphical issues in Marko's Magic Football)
 * improved Timer interrupt timings and CDD interrupt accuracy (fixes audio stutters during Popful Mail FMV)
 * improved CDC emulation (fixes random freezes during Jeopardy & ESPN Sunday Night NFL intro)
 * improved emulation of mirrored memory areas

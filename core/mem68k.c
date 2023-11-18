@@ -88,8 +88,7 @@ void m68k_lockup_w_8 (unsigned int address, unsigned int data)
 #endif
   if (!config.force_dtack)
   {
-    m68k_pulse_halt();
-    m68k.cycles = m68k.cycle_end;
+    m68k_pulse_wait();
   }
 }
 
@@ -100,8 +99,7 @@ void m68k_lockup_w_16 (unsigned int address, unsigned int data)
 #endif
   if (!config.force_dtack)
   {
-    m68k_pulse_halt();
-    m68k.cycles = m68k.cycle_end;
+    m68k_pulse_wait();
   }
 }
 
@@ -110,12 +108,11 @@ unsigned int m68k_lockup_r_8 (unsigned int address)
 #ifdef LOGERROR
   error ("Lockup %08X.b (%08X)\n", address, m68k_get_reg(M68K_REG_PC));
 #endif
+  address = m68k.pc | (address & 1);
   if (!config.force_dtack)
   {
-    m68k_pulse_halt();
-    m68k.cycles = m68k.cycle_end;
+    m68k_pulse_wait();
   }
-  address = m68k.pc | (address & 1);
   return READ_BYTE(m68k.memory_map[((address)>>16)&0xff].base, (address) & 0xffff);
 }
 
@@ -124,12 +121,11 @@ unsigned int m68k_lockup_r_16 (unsigned int address)
 #ifdef LOGERROR
   error ("Lockup %08X.w (%08X)\n", address, m68k_get_reg(M68K_REG_PC));
 #endif
+  address = m68k.pc;
   if (!config.force_dtack)
   {
-    m68k_pulse_halt();
-    m68k.cycles = m68k.cycle_end;
+    m68k_pulse_wait();
   }
-  address = m68k.pc;
   return *(uint16 *)(m68k.memory_map[((address)>>16)&0xff].base + ((address) & 0xffff));
 }
 
@@ -780,11 +776,46 @@ void ctrl_io_write_byte(unsigned int address, unsigned int data)
               /* writing 0 to DMNA in 2M mode does nothing */
               if (data & 0x02)
               {
+                int i;
+
                 /* Word-RAM is assigned to SUB-CPU */
                 scd.dmna = 1;
 
+                /* MAIN-CPU: $200000-$23FFFF is unmapped */
+                for (i=scd.cartridge.boot+0x20; i<scd.cartridge.boot+0x24; i++)
+                {
+                  m68k.memory_map[i].read8   = m68k_read_bus_8;
+                  m68k.memory_map[i].read16  = m68k_read_bus_16;
+                  m68k.memory_map[i].write8  = m68k_unused_8_w;
+                  m68k.memory_map[i].write16 = m68k_unused_16_w;
+                  zbank_memory_map[i].read   = zbank_unused_r;
+                  zbank_memory_map[i].write  = zbank_unused_w;
+                }
+
+                /* SUB-CPU: access to Word-RAM at 0x080000-0x0BFFFF is unlocked (/DTACK asserted) */
+                for (i=0x08; i<0x0c; i++)
+                {
+                  s68k.memory_map[i].read8   = NULL;
+                  s68k.memory_map[i].read16  = NULL;
+                  s68k.memory_map[i].write8  = NULL;
+                  s68k.memory_map[i].write16 = NULL;
+                }
+
                 /* clear RET bit and update BK0-1 & DMNA bits */
                 scd.regs[0x03>>1].byte.l = (scd.regs[0x03>>1].byte.l & ~0xc3) | (data & 0xc2);
+
+                /* check if SUB-CPU is waiting for Word-RAM access */
+                if (s68k.stopped & 0x04)
+                {
+                  /* sync SUB-CPU with MAIN-CPU */
+                  s68k.cycles = (m68k.cycles * SCYCLES_PER_LINE) / MCYCLES_PER_LINE;
+
+                  /* restart SUB-CPU */
+                  s68k_clear_wait();
+#ifdef LOG_SCD
+                  error("s68k started from %d cycles\n", s68k.cycles);
+#endif
+                }
 
                 /* check if graphics operation is running */
                 if (scd.regs[0x58>>1].byte.h & 0x80)
@@ -1038,11 +1069,46 @@ void ctrl_io_write_word(unsigned int address, unsigned int data)
               /* writing 0 to DMNA in 2M mode does nothing */
               if (data & 0x02)
               {
+                int i;
+
                 /* Word-RAM is assigned to SUB-CPU */
                 scd.dmna = 1;
 
+                /* MAIN-CPU: $200000-$23FFFF is unmapped */
+                for (i=scd.cartridge.boot+0x20; i<scd.cartridge.boot+0x24; i++)
+                {
+                  m68k.memory_map[i].read8   = m68k_read_bus_8;
+                  m68k.memory_map[i].read16  = m68k_read_bus_16;
+                  m68k.memory_map[i].write8  = m68k_unused_8_w;
+                  m68k.memory_map[i].write16 = m68k_unused_16_w;
+                  zbank_memory_map[i].read   = zbank_unused_r;
+                  zbank_memory_map[i].write  = zbank_unused_w;
+                }
+
+                /* SUB-CPU: access to Word-RAM at 0x080000-0x0BFFFF is unlocked (/DTACK asserted) */
+                for (i=0x08; i<0x0c; i++)
+                {
+                  s68k.memory_map[i].read8   = NULL;
+                  s68k.memory_map[i].read16  = NULL;
+                  s68k.memory_map[i].write8  = NULL;
+                  s68k.memory_map[i].write16 = NULL;
+                }
+
                 /* clear RET bit and update WP0-7 & BK0-1 bits */
                 scd.regs[0x02>>1].w = (scd.regs[0x02>>1].w & ~0xffc3) | (data & 0xffc2);
+
+                /* check if SUB-CPU is waiting for Word-RAM access */
+                if (s68k.stopped & 0x04)
+                {
+                  /* sync SUB-CPU with MAIN-CPU */
+                  s68k.cycles = (m68k.cycles * SCYCLES_PER_LINE) / MCYCLES_PER_LINE;
+
+                  /* restart SUB-CPU */
+                  s68k_clear_wait();
+#ifdef LOG_SCD
+                  error("s68k started from %d cycles\n", s68k.cycles);
+#endif
+                }
 
                 /* check if graphics operation is running */
                 if (scd.regs[0x58>>1].byte.h & 0x80)

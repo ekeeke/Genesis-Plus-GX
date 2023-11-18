@@ -463,7 +463,7 @@ void cdc_reg_w(unsigned char data)
           default: /* invalid */
           {
     #ifdef LOG_CDC
-            error("invalid CDC tranfer destination (%d)\n", scd.regs[0x04>>1].byte.h & 0x07);
+            error("invalid CDC transfer destination (%d)\n", scd.regs[0x04>>1].byte.h & 0x07);
     #endif
             break;
           }

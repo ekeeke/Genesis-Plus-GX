@@ -253,6 +253,9 @@ void s68k_run(unsigned int cycles)
     /* Set the address space for reads */
     m68ki_use_data_space() /* auto-disable (see m68kcpu.h) */
 
+    /* Save current instruction PC */
+    s68k.prev_pc = REG_PC;
+
     /* Decode next instruction */
     REG_IR = m68ki_read_imm_16();
 
@@ -352,6 +355,24 @@ void s68k_clear_halt(void)
 {
   /* Clear the HALT line on the CPU */
   CPU_STOPPED &= ~STOP_LEVEL_HALT;
+}
+
+void s68k_pulse_wait(void)
+{
+  /* Hold the DTACK line on the CPU */
+  CPU_STOPPED |= STOP_LEVEL_WAIT;
+
+  /* End CPU execution */
+  s68k.cycles = s68k.cycle_end - s68k_cycles();
+
+  /* Rollback current instruction (memory access will be executed once /DTACK is asserted) */
+  s68k.pc = s68k.prev_pc;
+}
+
+void s68k_clear_wait(void)
+{
+  /* Assert the DTACK line on the CPU */
+  CPU_STOPPED &= ~STOP_LEVEL_WAIT;
 }
 
 /* ======================================================================== */

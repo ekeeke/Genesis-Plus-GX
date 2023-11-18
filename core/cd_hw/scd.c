@@ -74,6 +74,44 @@ static void s68k_unused_16_w(unsigned int address, unsigned int data)
 }
 
 /*--------------------------------------------------------------------------*/
+/* Locked area (cause SUB-CPU to wait for /DTACK assertion)    */
+/*--------------------------------------------------------------------------*/
+
+static void s68k_lockup_w_8 (unsigned int address, unsigned int data)
+{
+#ifdef LOGERROR
+  error ("[SUB 68k] Lockup write8 %08X = %02X (%08X)\n", address, data, s68k.pc);
+#endif
+  s68k_pulse_wait();
+}
+
+static void s68k_lockup_w_16 (unsigned int address, unsigned int data)
+{
+#ifdef LOGERROR
+  error ("[SUB 68k] Lockup write16 %08X = %04X (%08X)\n", address, data, s68k.pc);
+#endif
+  s68k_pulse_wait();
+}
+
+static unsigned int s68k_lockup_r_8 (unsigned int address)
+{ 
+#ifdef LOGERROR
+  error ("[SUB 68k] Lockup read8 %08X.b (%08X)\n", address, s68k.pc);
+#endif
+  s68k_pulse_wait();
+  return 0xff;
+}
+
+static unsigned int s68k_lockup_r_16 (unsigned int address)
+{
+#ifdef LOGERROR
+  error ("[SUB 68k] Lockup read16 %08X.w (%08X)\n", address, s68k.pc);
+#endif
+  s68k_pulse_wait();
+  return 0xffff;
+}
+
+/*--------------------------------------------------------------------------*/
 /* PRG-RAM DMA access                                                       */
 /*--------------------------------------------------------------------------*/
 void prg_ram_dma_w(unsigned int length)
@@ -718,6 +756,17 @@ INLINE void word_ram_switch(uint8 mode)
       *ptr3++=*ptr1++;
     }
 
+    /* MAIN-CPU: $200000-$21FFFF is mapped to Word-RAM 0 or 1 */
+    for (i=scd.cartridge.boot+0x20; i<scd.cartridge.boot+0x22; i++)
+    {
+      m68k.memory_map[i].read8   = NULL;
+      m68k.memory_map[i].read16  = NULL;
+      m68k.memory_map[i].write8  = NULL;
+      m68k.memory_map[i].write16 = NULL;
+      zbank_memory_map[i].read   = NULL;
+      zbank_memory_map[i].write  = NULL;
+    }
+
     /* SUB-CPU: $0C0000-$0DFFFF is mapped to Word-RAM 0 or 1 */
     for (i=0x0c; i<0x0e; i++)
     {
@@ -740,26 +789,6 @@ INLINE void word_ram_switch(uint8 mode)
     for (i=scd.cartridge.boot+0x20; i<scd.cartridge.boot+0x22; i++)
     {
       m68k.memory_map[i].base = scd.word_ram_2M + ((i & 0x03) << 16);
-    }
-
-    /* MAIN-CPU: $220000-$23FFFF is mapped to 256K Word-RAM (upper 128K) */
-    for (i=scd.cartridge.boot+0x22; i<scd.cartridge.boot+0x24; i++)
-    {
-      m68k.memory_map[i].read8   = NULL;
-      m68k.memory_map[i].read16  = NULL;
-      m68k.memory_map[i].write8  = NULL;
-      m68k.memory_map[i].write16 = NULL;
-      zbank_memory_map[i].read   = NULL;
-      zbank_memory_map[i].write  = NULL;
-    }
-
-    /* SUB-CPU: $080000-$0BFFFF is mapped to 256K Word-RAM */
-    for (i=0x08; i<0x0c; i++)
-    {
-      s68k.memory_map[i].read8   = NULL;
-      s68k.memory_map[i].read16  = NULL;
-      s68k.memory_map[i].write8  = NULL;
-      s68k.memory_map[i].write16 = NULL;
     }
 
     /* SUB-CPU: $0C0000-$0DFFFF is unmapped */
@@ -929,6 +958,26 @@ static void scd_write_byte(unsigned int address, unsigned int data)
             /* check if RET bit is cleared */
             if (!(data & 0x01))
             {
+              /* MAIN-CPU: $200000-$23FFFF is unmapped */
+              for (i=scd.cartridge.boot+0x20; i<scd.cartridge.boot+0x24; i++)
+              {
+                m68k.memory_map[i].read8   = m68k_read_bus_8;
+                m68k.memory_map[i].read16  = m68k_read_bus_16;
+                m68k.memory_map[i].write8  = m68k_unused_8_w;
+                m68k.memory_map[i].write16 = m68k_unused_16_w;
+                zbank_memory_map[i].read   = zbank_unused_r;
+                zbank_memory_map[i].write  = zbank_unused_w;
+              }
+
+              /* SUB-CPU: access to Word-RAM in $08FFFF-$0BFFFF is unlocked (/DTACK asserted) */
+              for (i=0x08; i<0x0c; i++)
+              {
+                s68k.memory_map[i].read8   = NULL;
+                s68k.memory_map[i].read16  = NULL;
+                s68k.memory_map[i].write8  = NULL;
+                s68k.memory_map[i].write16 = NULL;
+              }
+
               /* set DMNA bit */
               data |= 0x02;
 
@@ -950,6 +999,26 @@ static void scd_write_byte(unsigned int address, unsigned int data)
 
             /* Word-RAM is returned to MAIN-CPU */
             scd.dmna = 0;
+
+            /* MAIN-CPU: $200000-$23FFFF is mapped to Word-RAM */
+            for (i=scd.cartridge.boot+0x20; i<scd.cartridge.boot+0x24; i++)
+            {
+              m68k.memory_map[i].read8   = NULL;
+              m68k.memory_map[i].read16  = NULL;
+              m68k.memory_map[i].write8  = NULL;
+              m68k.memory_map[i].write16 = NULL;
+              zbank_memory_map[i].read   = NULL;
+              zbank_memory_map[i].write  = NULL;
+            }
+
+            /* SUB-CPU: access to Word-RAM in $08FFFF-$0BFFFF is locked (/DTACK not asserted) */
+            for (i=0x08; i<0x0c; i++)
+            {
+              s68k.memory_map[i].read8   = s68k_lockup_r_8;
+              s68k.memory_map[i].read16  = s68k_lockup_r_16;
+              s68k.memory_map[i].write8  = s68k_lockup_w_8;
+              s68k.memory_map[i].write16 = s68k_lockup_w_16;
+            }
 
             /* clear DMNA bit */
             scd.regs[0x02 >> 1].byte.l = (scd.regs[0x02 >> 1].byte.l & ~0x1f) | (data & 0x1d);
@@ -1192,6 +1261,26 @@ static void scd_write_word(unsigned int address, unsigned int data)
             /* check if RET bit is cleared */
             if (!(data & 0x01))
             {
+              /* MAIN-CPU: $200000-$23FFFF is unmapped */
+              for (i=scd.cartridge.boot+0x20; i<scd.cartridge.boot+0x24; i++)
+              {
+                m68k.memory_map[i].read8   = m68k_read_bus_8;
+                m68k.memory_map[i].read16  = m68k_read_bus_16;
+                m68k.memory_map[i].write8  = m68k_unused_8_w;
+                m68k.memory_map[i].write16 = m68k_unused_16_w;
+                zbank_memory_map[i].read   = zbank_unused_r;
+                zbank_memory_map[i].write  = zbank_unused_w;
+              }
+
+              /* SUB-CPU: access to Word-RAM in $08FFFF-$0BFFFF is unlocked (/DTACK asserted) */
+              for (i=0x08; i<0x0c; i++)
+              {
+                s68k.memory_map[i].read8   = NULL;
+                s68k.memory_map[i].read16  = NULL;
+                s68k.memory_map[i].write8  = NULL;
+                s68k.memory_map[i].write16 = NULL;
+              }
+
               /* set DMNA bit */
               data |= 0x02;
 
@@ -1213,6 +1302,26 @@ static void scd_write_word(unsigned int address, unsigned int data)
 
             /* Word-RAM is returned to MAIN-CPU */
             scd.dmna = 0;
+
+            /* MAIN-CPU: $200000-$23FFFF is mapped to Word-RAM */
+            for (i=scd.cartridge.boot+0x20; i<scd.cartridge.boot+0x24; i++)
+            {
+              m68k.memory_map[i].read8   = NULL;
+              m68k.memory_map[i].read16  = NULL;
+              m68k.memory_map[i].write8  = NULL;
+              m68k.memory_map[i].write16 = NULL;
+              zbank_memory_map[i].read   = NULL;
+              zbank_memory_map[i].write  = NULL;
+            }
+
+            /* SUB-CPU: access to Word-RAM in $08FFFF-$0BFFFF is locked (/DTACK not asserted) */
+            for (i=0x08; i<0x0c; i++)
+            {
+              s68k.memory_map[i].read8   = s68k_lockup_r_8;
+              s68k.memory_map[i].read16  = s68k_lockup_r_16;
+              s68k.memory_map[i].write8  = s68k_lockup_w_8;
+              s68k.memory_map[i].write16 = s68k_lockup_w_16;
+            }
 
             /* clear DMNA bit */
             scd.regs[0x03>>1].byte.l = (scd.regs[0x03>>1].byte.l & ~0x1f) | (data & 0x1d);
@@ -1516,10 +1625,11 @@ void scd_init(void)
         }
         else
         {
-          s68k.memory_map[i].read8   = NULL;
-          s68k.memory_map[i].read16  = NULL;
-          s68k.memory_map[i].write8  = NULL;
-          s68k.memory_map[i].write16 = NULL;
+          /* access to Word-RAM in $08FFFF-$0BFFFF is locked by default (/DTACK not asserted) */
+          s68k.memory_map[i].read8   = s68k_lockup_r_8;
+          s68k.memory_map[i].read16  = s68k_lockup_r_16;
+          s68k.memory_map[i].write8  = s68k_lockup_w_8;
+          s68k.memory_map[i].write16 = s68k_lockup_w_16;
         }
         break;
       }
@@ -1590,6 +1700,8 @@ void scd_reset(int hard)
 {
   if (hard)
   {
+    int i;
+
     /* Clear all ASIC registers by default */
     memset(scd.regs, 0, sizeof(scd.regs));
 
@@ -1605,6 +1717,26 @@ void scd_reset(int hard)
 
     /* 2M mode */
     word_ram_switch(0);
+
+    /* MAIN-CPU access to Word-RAM at $200000-$23FFFF is enabled on reset */
+    for (i=scd.cartridge.boot+0x20; i<scd.cartridge.boot+0x24; i++)
+    {
+      m68k.memory_map[i].read8   = NULL;
+      m68k.memory_map[i].read16  = NULL;
+      m68k.memory_map[i].write8  = NULL;
+      m68k.memory_map[i].write16 = NULL;
+      zbank_memory_map[i].read   = NULL;
+      zbank_memory_map[i].write  = NULL;
+    }
+
+    /* SUB-CPU access to Word-RAM at $08FFFF-$0BFFFF is locked on reset (/DTACK not asserted) */
+    for (i=0x08; i<0x0c; i++)
+    {
+      s68k.memory_map[i].read8   = s68k_lockup_r_8;
+      s68k.memory_map[i].read16  = s68k_lockup_r_16;
+      s68k.memory_map[i].write8  = s68k_lockup_w_8;
+      s68k.memory_map[i].write16 = s68k_lockup_w_16;
+    }
 
     /* reset PRG-RAM bank on MAIN-CPU side */
     m68k.memory_map[scd.cartridge.boot + 0x02].base = scd.prg_ram;
@@ -1685,7 +1817,11 @@ void scd_update(unsigned int cycles)
   /* update CDC DMA transfer */
   if (cdc.dma_w)
   {
-    cdc_dma_update();
+    /* check if Word-RAM is returned to SUB-CPU in 2M mode */
+    if ((cdc.dma_w != word_ram_2M_dma_w) || scd.dmna)
+    {
+      cdc_dma_update();
+    }
   }
 
   /* run both CPU in sync until end of line */
@@ -1941,6 +2077,12 @@ int scd_context_load(uint8 *state, char *version)
       {
         /* Word-RAM 1 data mapped at $200000-$21FFFF */
         m68k.memory_map[i].base = scd.word_ram[1] + ((i & 0x01) << 16);
+        m68k.memory_map[i].read8   = NULL;
+        m68k.memory_map[i].read16  = NULL;
+        m68k.memory_map[i].write8  = NULL;
+        m68k.memory_map[i].write16 = NULL;
+        zbank_memory_map[i].read   = NULL;
+        zbank_memory_map[i].write  = NULL;
       }
 
       for (i=scd.cartridge.boot+0x22; i<scd.cartridge.boot+0x24; i++)
@@ -1981,6 +2123,12 @@ int scd_context_load(uint8 *state, char *version)
       {
         /* Word-RAM 0 data mapped at $200000-$21FFFF */
         m68k.memory_map[i].base = scd.word_ram[0] + ((i & 0x01) << 16);
+        m68k.memory_map[i].read8   = NULL;
+        m68k.memory_map[i].read16  = NULL;
+        m68k.memory_map[i].write8  = NULL;
+        m68k.memory_map[i].write16 = NULL;
+        zbank_memory_map[i].read   = NULL;
+        zbank_memory_map[i].write  = NULL;
       }
 
       for (i=scd.cartridge.boot+0x22; i<scd.cartridge.boot+0x24; i++)
@@ -2020,30 +2168,52 @@ int scd_context_load(uint8 *state, char *version)
     /* 2M mode */
     load_param(scd.word_ram_2M, sizeof(scd.word_ram_2M));
 
-    /* MAIN-CPU: $200000-$21FFFF is mapped to 256K Word-RAM (upper 128K) */
-    for (i=scd.cartridge.boot+0x20; i<scd.cartridge.boot+0x22; i++)
+    /* check RET bit */
+    if (scd.regs[0x03>>1].byte.l & 0x01)
     {
-      m68k.memory_map[i].base = scd.word_ram_2M + ((i & 0x03) << 16);
-    }
+      /* MAIN-CPU: $200000-$23FFFF is mapped to 256K Word-RAM */
+      for (i=scd.cartridge.boot+0x20; i<scd.cartridge.boot+0x24; i++)
+      {
+        m68k.memory_map[i].base    = scd.word_ram_2M + ((i & 0x03) << 16);
+        m68k.memory_map[i].read8   = NULL;
+        m68k.memory_map[i].read16  = NULL;
+        m68k.memory_map[i].write8  = NULL;
+        m68k.memory_map[i].write16 = NULL;
+        zbank_memory_map[i].read   = NULL;
+        zbank_memory_map[i].write  = NULL;
+      }
 
-    /* MAIN-CPU: $220000-$23FFFF is mapped to 256K Word-RAM (lower 128K) */
-    for (i=scd.cartridge.boot+0x22; i<scd.cartridge.boot+0x24; i++)
-    {
-      m68k.memory_map[i].read8   = NULL;
-      m68k.memory_map[i].read16  = NULL;
-      m68k.memory_map[i].write8  = NULL;
-      m68k.memory_map[i].write16 = NULL;
-      zbank_memory_map[i].read   = NULL;
-      zbank_memory_map[i].write  = NULL;
+      /* SUB-CPU: access to Word-RAM at $080000-$0BFFFF is locked (/DTACK not asserted)  */
+      for (i=0x08; i<0x0c; i++)
+      {
+        s68k.memory_map[i].read8   = s68k_lockup_r_8;
+        s68k.memory_map[i].read16  = s68k_lockup_r_16;
+        s68k.memory_map[i].write8  = s68k_lockup_w_8;
+        s68k.memory_map[i].write16 = s68k_lockup_w_16;
+      }
     }
-
-    /* SUB-CPU: $080000-$0BFFFF is mapped to 256K Word-RAM */
-    for (i=0x08; i<0x0c; i++)
+    else
     {
-      s68k.memory_map[i].read8   = NULL;
-      s68k.memory_map[i].read16  = NULL;
-      s68k.memory_map[i].write8  = NULL;
-      s68k.memory_map[i].write16 = NULL;
+      /* MAIN-CPU: $200000-$23FFFF is unmapped */
+      for (i=scd.cartridge.boot+0x20; i<scd.cartridge.boot+0x24; i++)
+      {
+        m68k.memory_map[i].base    = scd.word_ram_2M + ((i & 0x03) << 16);
+        m68k.memory_map[i].read8   = m68k_read_bus_8;
+        m68k.memory_map[i].read16  = m68k_read_bus_16;
+        m68k.memory_map[i].write8  = m68k_unused_8_w;
+        m68k.memory_map[i].write16 = m68k_unused_16_w;
+        zbank_memory_map[i].read   = zbank_unused_r;
+        zbank_memory_map[i].write  = zbank_unused_w;
+      }
+
+      /* SUB-CPU: access to Word-RAM at $080000-$0BFFFF is unlocked (/DTACK asserted) */
+      for (i=0x08; i<0x0c; i++)
+      {
+        s68k.memory_map[i].read8   = NULL;
+        s68k.memory_map[i].read16  = NULL;
+        s68k.memory_map[i].write8  = NULL;
+        s68k.memory_map[i].write16 = NULL;
+      }
     }
 
     /* SUB-CPU: $0C0000-$0DFFFF is unmapped */

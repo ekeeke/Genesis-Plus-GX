@@ -48,6 +48,7 @@
 /* Different ways to stop the CPU */
 #define STOP_LEVEL_STOP 1
 #define STOP_LEVEL_HALT 2
+#define STOP_LEVEL_WAIT 4
 
 /* Used for 68000 address error processing */
 #if M68K_EMULATE_ADDRESS_ERROR
