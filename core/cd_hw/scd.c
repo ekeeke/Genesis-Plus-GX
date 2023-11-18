@@ -717,6 +717,15 @@ INLINE void word_ram_switch(uint8 mode)
       *ptr2++=*ptr1++;
       *ptr3++=*ptr1++;
     }
+
+    /* SUB-CPU: $0C0000-$0DFFFF is mapped to Word-RAM 0 or 1 */
+    for (i=0x0c; i<0x0e; i++)
+    {
+      s68k.memory_map[i].read8   = NULL;
+      s68k.memory_map[i].read16  = NULL;
+      s68k.memory_map[i].write8  = NULL;
+      s68k.memory_map[i].write16 = NULL;
+    }
   }
   else
   {
@@ -859,11 +868,7 @@ static void scd_write_byte(unsigned int address, unsigned int data)
             for (i=0x0c; i<0x0e; i++)
             {
               /* Word-RAM 0 data mapped at $0C0000-$0DFFFF */
-              s68k.memory_map[i].base    = scd.word_ram[0] + ((i & 0x01) << 16);
-              s68k.memory_map[i].read8   = NULL;
-              s68k.memory_map[i].read16  = NULL;
-              s68k.memory_map[i].write8  = NULL;
-              s68k.memory_map[i].write16 = NULL;
+              s68k.memory_map[i].base = scd.word_ram[0] + ((i & 0x01) << 16);
             }
 
             /* writing 1 to RET bit in 1M mode returns Word-RAM to MAIN-CPU in 2M mode */
@@ -902,11 +907,7 @@ static void scd_write_byte(unsigned int address, unsigned int data)
             for (i=0x0c; i<0x0e; i++)
             {
               /* Word-RAM 1 data mapped at $0C0000-$0DFFFF */
-              s68k.memory_map[i].base    = scd.word_ram[1] + ((i & 0x01) << 16);
-              s68k.memory_map[i].read8   = NULL;
-              s68k.memory_map[i].read16  = NULL;
-              s68k.memory_map[i].write8  = NULL;
-              s68k.memory_map[i].write16 = NULL;
+              s68k.memory_map[i].base = scd.word_ram[1] + ((i & 0x01) << 16);
             }
           }
 
@@ -1130,11 +1131,7 @@ static void scd_write_word(unsigned int address, unsigned int data)
             for (i=0x0c; i<0x0e; i++)
             {
               /* Word-RAM 0 data mapped at $0C0000-$0DFFFF */
-              s68k.memory_map[i].base    = scd.word_ram[0] + ((i & 0x01) << 16);
-              s68k.memory_map[i].read8   = NULL;
-              s68k.memory_map[i].read16  = NULL;
-              s68k.memory_map[i].write8  = NULL;
-              s68k.memory_map[i].write16 = NULL;
+              s68k.memory_map[i].base = scd.word_ram[0] + ((i & 0x01) << 16);
             }
 
             /* writing 1 to RET bit in 1M mode returns Word-RAM to MAIN-CPU in 2M mode */
@@ -1173,11 +1170,7 @@ static void scd_write_word(unsigned int address, unsigned int data)
             for (i=0x0c; i<0x0e; i++)
             {
               /* Word-RAM 1 data mapped at $0C0000-$0DFFFF */
-              s68k.memory_map[i].base    = scd.word_ram[1] + ((i & 0x01) << 16);
-              s68k.memory_map[i].read8   = NULL;
-              s68k.memory_map[i].read16  = NULL;
-              s68k.memory_map[i].write8  = NULL;
-              s68k.memory_map[i].write16 = NULL;
+              s68k.memory_map[i].base = scd.word_ram[1] + ((i & 0x01) << 16);
             }
           }
 
