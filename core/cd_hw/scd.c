@@ -558,7 +558,9 @@ static unsigned int scd_read_byte(unsigned int address)
   if (address == 0x03)
   {
     s68k_poll_detect(1<<0x03);
-    return scd.regs[0x03>>1].byte.l;
+
+    /* mask BK0 and BK1 bits on SUB-CPU side */
+    return scd.regs[0x03>>1].byte.l & 0x1f;
   }
 
   /* MAIN-CPU communication flags */
@@ -674,7 +676,9 @@ static unsigned int scd_read_word(unsigned int address)
   if (address == 0x02)
   {
     s68k_poll_detect(1<<0x03);
-    return scd.regs[0x03>>1].w;
+
+    /* mask BK0 and BK1 bits on SUB-CPU side */
+    return scd.regs[0x03>>1].w & 0xff1f;
   }
 
   /* CDC host data (word access only ?) */

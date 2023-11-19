@@ -363,7 +363,9 @@ unsigned int ctrl_io_read_byte(unsigned int address)
         if (index == 0x03)
         {
           m68k_poll_detect(1<<0x03);
-          return scd.regs[0x03>>1].byte.l;
+
+          /* mask PM0 and PM1 bits on MAIN-CPU side */
+          return scd.regs[0x03>>1].byte.l & 0xc7;
         }
 
         /* SUB-CPU communication flags */
@@ -504,7 +506,9 @@ unsigned int ctrl_io_read_word(unsigned int address)
         if (index == 0x02)
         {
           m68k_poll_detect(1<<0x03);
-          return scd.regs[0x03>>1].w;
+
+          /* mask PM0 and PM1 bits on MAIN-CPU side */
+          return scd.regs[0x03>>1].w & 0xffc7;
         }
 
         /* CDC host data (word access only ?) */
