@@ -368,6 +368,14 @@ unsigned int ctrl_io_read_byte(unsigned int address)
           return scd.regs[0x03>>1].byte.l & 0xc7;
         }
 
+        /* CDC Mode */
+        if (index == 0x04)
+        {
+          /* sync SUB-CPU with MAIN-CPU (fixes MCD-verificator CDC DMA3 Test #2) */
+          s68k_sync();
+          return scd.regs[0x04>>1].byte.h & 0xc7;
+        }
+
         /* SUB-CPU communication flags */
         if (index == 0x0f)
         {
@@ -514,6 +522,11 @@ unsigned int ctrl_io_read_word(unsigned int address)
         /* CDC host data (word access only ?) */
         if (index == 0x08)
         {
+          /* sync SUB-CPU with MAIN-CPU if CDC data transfer is not yet enabled (fixes MCD-verificator CDC INIT Test #4) */
+          if (!(scd.regs[0x04>>1].byte.h & 0x40))
+          {
+            s68k_sync();
+          }
           return cdc_host_r();
         }
 
