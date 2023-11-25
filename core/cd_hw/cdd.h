@@ -70,11 +70,6 @@
 #define CD_TRAY       0x0E  /* unused */
 #define CD_TEST       0x0F  /* unusec */
 
-/* CD-DA digital filter types */
-#define CD_TYPE_DEFAULT       0x00
-#define CD_TYPE_WONDERMEGA    0x01
-#define CD_TYPE_WONDERMEGA_M2 0x02
-
 /* CD track */
 typedef struct
 {
@@ -116,7 +111,6 @@ typedef struct
 {
   uint32 cycles;
   uint32 latency;
-  int type;
   int loaded;
   int index;
   int lba;

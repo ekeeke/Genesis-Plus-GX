@@ -20,8 +20,10 @@ Genesis Plus GX 1.7.5 (xx/xx/xxxx) (Eke-Eke)
 * added configurable CD-DA and PCM outputs mixing volume
 * added setting to enable/disable CD access time simulation
 * added emulation of Word-RAM access limitations in 2M mode (fixes graphical issues in Marko's Magic Football)
+* added limited support for LC89513K extended registers when Wondermega M2, X'Eye, CDX or Multi-Mega BIOS is detected (fixes Krikzz's mcd-verificator CDC REGS tests)
 * improved Timer interrupt timings and CDD interrupt accuracy (fixes audio stutters during Popful Mail FMV)
 * improved CDC emulation (fixes random freezes during Jeopardy & ESPN Sunday Night NFL intro)
+* improved accuracy of Main-CPU & Sub-CPU access to CDC registers (verified on real hardware, cf. Krikzz's mcd-verificator) 
 * improved emulation of mirrored memory areas
 * improved savestate format
 * improved Sub-CPU synchronization with Main-CPU (fixes "Soul Star")

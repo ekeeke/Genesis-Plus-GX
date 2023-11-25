@@ -376,6 +376,12 @@ unsigned int ctrl_io_read_byte(unsigned int address)
           return scd.regs[0x04>>1].byte.h & 0xc7;
         }
 
+        /* CDC register address (not accessible from MAIN-CPU) */
+        if (index == 0x05)
+        {
+          return 0x00;
+        }
+
         /* SUB-CPU communication flags */
         if (index == 0x0f)
         {
@@ -544,6 +550,12 @@ unsigned int ctrl_io_read_word(unsigned int address)
 
           /* cycle-accurate counter value */
           return (scd.regs[0x0c>>1].w + ((cycles - scd.stopwatch) / TIMERS_SCYCLES_RATIO)) & 0xfff;
+        }
+
+        /* CDC Mode (CDC register address not accessible from MAIN-CPU) */
+        if (index == 0x04)
+        {
+          return (scd.regs[index >> 1].byte.h << 8);
         }
 
         /* default registers */
