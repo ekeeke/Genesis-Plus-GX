@@ -419,17 +419,17 @@ int load_bios(int system)
         if (size > 0)
         {
           /* auto-detect CD hardware model */
-          if (!memcmp (&scd.bootrom[0x120], "WONDER-MEGA BOOT", 16))
+          if (!memcmp(&scd.bootrom[0x120], "WONDER-MEGA BOOT", 16))
           {
             /* Wondermega CD hardware */
             scd.type = CD_TYPE_WONDERMEGA;
           }
-          else if (!memcmp (&scd.bootrom[0x120], "WONDERMEGA2 BOOT", 16))
+          else if (!memcmp(&scd.bootrom[0x120], "WONDERMEGA2 BOOT", 16))
           {
             /* Wondermega M2 / X'Eye CD hardware */
             scd.type = CD_TYPE_WONDERMEGA_M2;
           }
-          else if (!memcmp (&scd.bootrom[0x120], "CDX BOOT ROM    ", 16))
+          else if (!memcmp(&scd.bootrom[0x120], "CDX BOOT ROM    ", 16))
           {
             /* CDX / Multi-Mega CD hardware */
             scd.type = CD_TYPE_CDX;
@@ -791,6 +791,28 @@ int load_rom(char *filename)
     {
       /* enable CD hardware */
       system_hw = SYSTEM_MCD;
+
+      /* auto-detect CD hardware model */
+      if (strstr(rominfo.domestic, "WONDER-MEGA BOOT"))
+      {
+        /* Wondermega CD hardware */
+        scd.type = CD_TYPE_WONDERMEGA;
+      }
+      else if (strstr(rominfo.domestic, "WONDERMEGA2 BOOT"))
+      {
+        /* Wondermega M2 / X'Eye CD hardware */
+        scd.type = CD_TYPE_WONDERMEGA_M2;
+      }
+      else if (strstr(rominfo.domestic, "CDX BOOT ROM"))
+      {
+        /* CDX / Multi-Mega CD hardware */
+        scd.type = CD_TYPE_CDX;
+      }
+      else
+      {
+        /* default CD hardware */
+        scd.type = CD_TYPE_DEFAULT;
+      }
 
       /* boot from CD hardware */
       scd.cartridge.boot = 0x00;
