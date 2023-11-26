@@ -1727,6 +1727,7 @@ void scd_reset(int hard)
     scd.dmna = 0;
 
     /* H-INT default vector */
+    *(uint16 *)(m68k.memory_map[scd.cartridge.boot].base + 0x70) = 0xFFFF;
     *(uint16 *)(m68k.memory_map[scd.cartridge.boot].base + 0x72) = 0xFFFF;
 
     /* Power ON initial values (MAIN-CPU side) */

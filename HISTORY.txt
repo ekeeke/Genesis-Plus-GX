@@ -47,7 +47,7 @@ Genesis Plus GX 1.7.5 (xx/xx/xxxx) (Eke-Eke)
 * fixed PRG-RAM access from MAIN-CPU side on system reset
 * fixed state loading bug when SUB-CPU interrupt is pending 
 * fixed H-INT vector handling when using Mode 1
-* fixed H-INT vector upper word value
+* fixed BOOT ROM level 4 interrupt vector upper word value (verified on real hardware, cf. Krikzz's mcd-verificator)
 * fixed access to "write-only" communication flags (verified on real hardware by Notaz)
 * fixed access to Sub-CPU "read-only" communication registers (fixes Round 5 Boss freeze in Streets of Rage / Sega Classics Arcade Collection)
 * fixed byte access to memory mode, timer and font color registers at even address (verified on real hardware, cf. Krikzz's mcd-verificator)
