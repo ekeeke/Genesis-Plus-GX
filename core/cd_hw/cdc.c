@@ -433,7 +433,7 @@ void cdc_reg_w(unsigned char data)
         /* set !DTBSY and !DTEN */
         cdc.ifstat &= ~(BIT_DTBSY | BIT_DTEN);
 
-        /* clear EDT & DSR bits (SCD register $04) */
+        /* clear EDT & DSR bits (gate-array register $04) */
         scd.regs[0x04>>1].byte.h &= 0x07;
 
         /* setup data transfer destination */
@@ -442,8 +442,52 @@ void cdc_reg_w(unsigned char data)
           case 2: /* MAIN-CPU host read */
           case 3: /* SUB-CPU host read */
           {
-            /* set DSR bit (SCD register $04) */
+            /* read 16-bit word from CDC RAM buffer (big-endian format) into gate-array register $08 */
+            /* Note: on real-hardware, 16-bit word is not immediately available, cf. https://github.com/MiSTer-devel/MegaCD_MiSTer/blob/master/docs/mcd%20logs/dma_sub_read.jpg for transfer timings */
+            scd.regs[0x08>>1].w = READ_WORD(cdc.ram, cdc.dac.w & 0x3ffe);
+#ifdef LOG_CDC
+            error("CDC host read 0x%04x -> 0x%04x (dbc=0x%x) (%X)\n", cdc.dac.w, scd.regs[0x08>>1].w, cdc.dbc.w, s68k.pc);
+#endif
+
+            /* set DSR bit (gate-array register $04) */
             scd.regs[0x04>>1].byte.h |= 0x40;
+
+            /* increment data address counter */
+            cdc.dac.w += 2;
+
+            /* decrement data byte counter */
+            cdc.dbc.w -= 2;
+
+            /* end of transfer ? */
+            if ((int16)cdc.dbc.w < 0)
+            {
+              /* reset data byte counter (DBCH bits 4-7 should also be set to 1) */
+              cdc.dbc.w = 0xffff;
+
+              /* clear !DTEN and !DTBSY */
+              cdc.ifstat |= (BIT_DTBSY | BIT_DTEN);
+
+              /* pending Data Transfer End interrupt */
+              cdc.ifstat &= ~BIT_DTEI;
+
+              /* Data Transfer End interrupt enabled ? */
+              if (cdc.ifctrl & BIT_DTEIEN)
+              {
+                /* pending level 5 interrupt */
+                scd.pending |= (1 << 5);
+
+                /* level 5 interrupt enabled ? */
+                if (scd.regs[0x32>>1].byte.l & 0x20)
+                {
+                  /* update IRQ level */
+                  s68k_update_irq((scd.pending & scd.regs[0x32>>1].byte.l) >> 1);
+                }
+              }
+
+              /* set EDT bit (gate-array register $04) */
+              scd.regs[0x04>>1].byte.h |= 0x80;
+            }
+
             break;
           }
 
@@ -727,57 +771,64 @@ unsigned char cdc_reg_r(void)
 
 unsigned short cdc_host_r(void)
 {
-  /* check if data is available */
+  /* read CDC buffered data (gate-array register $08) */
+  uint16 data = scd.regs[0x08>>1].w;
+
+  /* check if host data transfer is enabled */
   if (scd.regs[0x04>>1].byte.h & 0x40)
   {
-    /* read 16-bit word from CDC RAM buffer (big-endian format) */
-    uint16 data = READ_WORD(cdc.ram, cdc.dac.w & 0x3ffe);
-
-#ifdef LOG_CDC
-    error("CDC host read 0x%04x -> 0x%04x (dbc=0x%x) (%X)\n", cdc.dac.w, data, cdc.dbc.w, s68k.pc);
-#endif
- 
-    /* increment data address counter */
-    cdc.dac.w += 2;
-
-    /* decrement data byte counter */
-    cdc.dbc.w -= 2;
-
-    /* end of transfer ? */
-    if ((int16)cdc.dbc.w <= 0)
+    /* check if EDT bit (gate-array register $04) is set (host data transfer is finished) */
+    if (scd.regs[0x04>>1].byte.h & 0x80)
     {
-      /* reset data byte counter (DBCH bits 4-7 should be set to 1) */
-      cdc.dbc.w = 0xf000;
-
-      /* clear !DTEN and !DTBSY */
-      cdc.ifstat |= (BIT_DTBSY | BIT_DTEN);
-
-      /* pending Data Transfer End interrupt */
-      cdc.ifstat &= ~BIT_DTEI;
-
-      /* Data Transfer End interrupt enabled ? */
-      if (cdc.ifctrl & BIT_DTEIEN)
-      {
-        /* pending level 5 interrupt */
-        scd.pending |= (1 << 5);
-
-        /* level 5 interrupt enabled ? */
-        if (scd.regs[0x32>>1].byte.l & 0x20)
-        {
-          /* update IRQ level */
-          s68k_update_irq((scd.pending & scd.regs[0x32>>1].byte.l) >> 1);
-        }
-      }
-
-      /* clear DSR bit & set EDT bit (SCD register $04) */
-      scd.regs[0x04>>1].byte.h = (scd.regs[0x04>>1].byte.h & 0x07) | 0x80;
+      /* clear DSR bit (gate-array register $04) */
+      scd.regs[0x04>>1].byte.h &= ~0x40;
     }
+    else
+    {
+      /* read next 16-bit word from CDC RAM buffer (big-endian format) into gate-array register $08 */
+      /* Note: on real-hardware, 16-bit word is not immediately available, cf. https://github.com/MiSTer-devel/MegaCD_MiSTer/blob/master/docs/mcd%20logs/dma_sub_read.jpg for transfer timings */
+      scd.regs[0x08>>1].w = READ_WORD(cdc.ram, cdc.dac.w & 0x3ffe);
+#ifdef LOG_CDC
+      error("CDC host read 0x%04x -> 0x%04x (dbc=0x%x) (%X)\n", cdc.dac.w, scd.regs[0x08>>1].w, cdc.dbc.w, s68k.pc);
+#endif
 
-    return data;
+      /* increment data address counter */
+      cdc.dac.w += 2;
+
+      /* decrement data byte counter */
+      cdc.dbc.w -= 2;
+
+      /* end of transfer ? */
+      if ((int16)cdc.dbc.w < 0)
+      {
+        /* reset data byte counter (DBCH bits 4-7 should also be set to 1) */
+        cdc.dbc.w = 0xffff;
+
+        /* clear !DTEN and !DTBSY */
+        cdc.ifstat |= (BIT_DTBSY | BIT_DTEN);
+
+        /* pending Data Transfer End interrupt */
+        cdc.ifstat &= ~BIT_DTEI;
+
+        /* Data Transfer End interrupt enabled ? */
+        if (cdc.ifctrl & BIT_DTEIEN)
+        {
+          /* pending level 5 interrupt */
+          scd.pending |= (1 << 5);
+
+          /* level 5 interrupt enabled ? */
+          if (scd.regs[0x32>>1].byte.l & 0x20)
+          {
+            /* update IRQ level */
+            s68k_update_irq((scd.pending & scd.regs[0x32>>1].byte.l) >> 1);
+          }
+        }
+
+        /* set EDT bit (gate-array register $04) */
+        scd.regs[0x04>>1].byte.h |= 0x80;
+      }
+    }
   }
 
-#ifdef LOG_CDC
-  error("error reading CDC host (data transfer disabled)\n");
-#endif
-  return 0xffff;
+  return data;
 }
