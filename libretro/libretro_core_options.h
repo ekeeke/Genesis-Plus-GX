@@ -187,7 +187,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
          { "none",         "None" },
          { NULL, NULL },
       },
-      "disabled"
+      "auto"
    },
    {
       "genesis_plus_gx_lock_on",
