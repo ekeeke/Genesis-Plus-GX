@@ -357,22 +357,178 @@ void s68k_clear_halt(void)
   CPU_STOPPED &= ~STOP_LEVEL_HALT;
 }
 
-void s68k_pulse_wait(void)
+void s68k_pulse_wait(unsigned int address, unsigned int write_access)
 {
-  /* Hold the DTACK line on the CPU */
-  CPU_STOPPED |= STOP_LEVEL_WAIT;
+  /* Check CPU is not already waiting for /DTACK */
+  if (!(CPU_STOPPED & STOP_LEVEL_WAIT))
+  {
+    /* Hold the DTACK line on the CPU */
+    CPU_STOPPED |= STOP_LEVEL_WAIT;
 
-  /* End CPU execution */
-  s68k.cycles = s68k.cycle_end - s68k_cycles();
+    /* End CPU execution */
+    s68k.cycles = s68k.cycle_end - s68k_cycles();
 
-  /* Rollback current instruction (memory access will be executed once /DTACK is asserted) */
-  s68k.pc = s68k.prev_pc;
+    /* Save CPU address registers */
+    s68k.prev_ar[0] = s68k.dar[8+0];
+    s68k.prev_ar[1] = s68k.dar[8+1];
+    s68k.prev_ar[2] = s68k.dar[8+2];
+    s68k.prev_ar[3] = s68k.dar[8+3];
+    s68k.prev_ar[4] = s68k.dar[8+4];
+    s68k.prev_ar[5] = s68k.dar[8+5];
+    s68k.prev_ar[6] = s68k.dar[8+6];
+    s68k.prev_ar[7] = s68k.dar[8+7];
+
+    /* Detect address register(s) pre-decrement/post-increment done by MOVE/MOVEA instruction */
+    if ((s68k.ir >= 0x1000) && (s68k.ir < 0x4000))
+    {
+      /* MOVE/MOVEA instructions operand sizes */
+      static const int mov_instr_sizes[4] = {0, 1, 4, 2};
+
+      if ((s68k.ir & 0x38) == 0x18)
+      {
+        /* revert source address register post-increment */
+        s68k.prev_ar[s68k.ir&0x07] -= mov_instr_sizes[(s68k.ir>>12)&0x03];
+      }
+      else if ((s68k.ir & 0x38) == 0x20)
+      {
+        /* revert source address register pre-decrement */
+        s68k.prev_ar[s68k.ir&0x07] += mov_instr_sizes[(s68k.ir>>12)&0x03];
+      }
+
+      /* only check destination address register post-increment/pre-decrement in case of halting on write access */
+      if (write_access)
+      {
+        if ((s68k.ir & 0x01c0) == 0x00c0)
+        {
+          /* revert destination address register post-increment */
+          s68k.prev_ar[(s68k.ir>>9)&0x07] -= mov_instr_sizes[(s68k.ir>>12)&0x03];
+        }
+        else if ((s68k.ir & 0x01c0) == 0x0100)
+        {
+          /* revert destination address register pre-decrement */
+          s68k.prev_ar[(s68k.ir>>9)&0x07] += mov_instr_sizes[(s68k.ir>>12)&0x03];
+        }
+      }
+    }
+    else
+    {
+      /* Other instructions operand sizes */
+      static const int def_instr_sizes[4] = {1, 2, 4, 2};
+
+      /* Detect address register(s) pre-decrement done by ABCD/SBCD instruction */
+      if ((s68k.ir & 0xb1f8) == 0x8108)
+      {
+        /* revert source address register pre-decrement (byte operands only) */
+        s68k.prev_ar[s68k.ir&0x07] += 1;
+
+        /* only revert destination address register pre-decrement in case of halting on destination address access (byte operands only) */
+        if (address == s68k.prev_ar[(s68k.ir>>9)&0x07])
+        {
+          s68k.prev_ar[(s68k.ir>>9)&0x07] += 1;
+        }
+      }
+
+      /* Detect address register(s) pre-decrement done by ADDX/SUBX instruction */
+      else if (((s68k.ir & 0xb1f8) == 0x9108) || ((s68k.ir & 0xb1f8) == 0x9148) || ((s68k.ir & 0xb1f8) == 0x9188))
+      {
+        /* revert source address register pre-decrement */
+        s68k.prev_ar[s68k.ir&0x07] += def_instr_sizes[(s68k.ir>>6)&0x03];
+
+        /* only revert destination address register pre-decrement in case of halting on destination address access */
+        if (address == s68k.prev_ar[(s68k.ir>>9)&0x07])
+        {
+          s68k.prev_ar[(s68k.ir>>9)&0x07] += def_instr_sizes[(s68k.ir>>6)&0x03];
+        }
+      }
+
+      /* Detect address register(s) post-increment done by CMPM instruction */
+      else if ((s68k.ir & 0xf138) == 0xb108)
+      {
+        /* revert source address register post-increment */
+        s68k.prev_ar[s68k.ir&0x07] -= def_instr_sizes[(s68k.ir>>6)&0x03];
+
+        /* only revert destination address register post-increment in case of halting on destination address access */
+        if (address == s68k.prev_ar[(s68k.ir>>9)&0x07])
+        {
+          s68k.prev_ar[(s68k.ir>>9)&0x07] -= def_instr_sizes[(s68k.ir>>6)&0x03];
+        }
+      }
+
+      /* Detect address register post-increment or pre-increment done by other instruction */
+      else if (((s68k.ir & 0x38) == 0x18) || ((s68k.ir & 0x38) == 0x20))
+      {
+        int size;
+
+        /* autodetect MOVEM instruction (no address register modification needed as post-increment/pre-decrement is done after memory access) */
+        if ((s68k.ir & 0xfb80) == 0x4880)
+        {
+          size = 0;
+        }
+
+        /* autodetect instruction with fixed byte operand (and not covered by generic size field value) */
+        else if (((s68k.ir & 0xf100) == 0x0100) || /* BTST, BCHG, BCLR, BSET (dynamic) */
+                 ((s68k.ir & 0xff00) == 0x0800) || /* BTST, BCHG, BCLR, BSET (static) */
+                 ((s68k.ir & 0xffc0) == 0x4ac0) || /* TAS */
+                 ((s68k.ir & 0xf0c0) == 0x50c0))   /* Scc */
+        {
+          size = 1;
+        }
+
+        /* autodetect instruction with fixed word operand (and not covered by generic size field value) */
+        else if ((s68k.ir & 0xf1c0) == 0x4180) /* CHK */
+        {
+          size = 2;
+        }
+
+        /* autodetect instruction with either word or long operand (not covered by generic size field value) */
+        else if (((s68k.ir & 0xb0c0) == 0x90c0) || /* SUBA, ADDA*/
+                 ((s68k.ir & 0xf0c0) == 0xb0c0))   /* CMPA */
+        {
+          size = (s68k.ir & 0x100) ? 4 : 2;
+        }
+
+        /* default operand size */
+        else
+        {
+          size = def_instr_sizes[(s68k.ir>>6)&0x03];
+        }
+
+        if (s68k.ir & 0x08)
+        {
+          /* revert source address register post-increment */
+          s68k.prev_ar[s68k.ir&0x07] -= size;
+        }
+        else
+        {
+          /* revert source address register pre-decrement */
+          s68k.prev_ar[s68k.ir&0x07] += size;
+        }
+      }
+    }
+  }
 }
 
 void s68k_clear_wait(void)
 {
-  /* Assert the DTACK line on the CPU */
-  CPU_STOPPED &= ~STOP_LEVEL_WAIT;
+  /* check CPU is waiting for DTACK */
+  if (CPU_STOPPED & STOP_LEVEL_WAIT)
+  {
+    /* Assert the DTACK line on the CPU */
+    CPU_STOPPED &= ~STOP_LEVEL_WAIT;
+
+    /* Rollback to previously held instruction */
+    s68k.pc = s68k.prev_pc;
+
+    /* Restore CPU address registers */
+    s68k.dar[8+0] = s68k.prev_ar[0];
+    s68k.dar[8+1] = s68k.prev_ar[1];
+    s68k.dar[8+2] = s68k.prev_ar[2];
+    s68k.dar[8+3] = s68k.prev_ar[3];
+    s68k.dar[8+4] = s68k.prev_ar[4];
+    s68k.dar[8+5] = s68k.prev_ar[5];
+    s68k.dar[8+6] = s68k.prev_ar[6];
+    s68k.dar[8+7] = s68k.prev_ar[7];
+  }
 }
 
 /* ======================================================================== */

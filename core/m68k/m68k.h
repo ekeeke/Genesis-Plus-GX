@@ -244,6 +244,7 @@ typedef struct
   uint dar[16];         /* Data and Address Registers */
   uint pc;              /* Program Counter */
   uint prev_pc;         /* Previous Program Counter */
+  uint prev_ar[8];      /* Previous Address Registers */
   uint sp[5];           /* User and Interrupt Stack Pointers */
   uint ir;              /* Instruction Register */
   uint t1_flag;         /* Trace 1 */
@@ -383,10 +384,8 @@ extern void m68k_clear_halt(void);
 extern void s68k_pulse_halt(void);
 extern void s68k_clear_halt(void);
 
-/* Put the CPU in waiting state as if DTACK pin is not asserted during bus access */
-extern void m68k_pulse_wait(void);
-extern void m68k_clear_wait(void);
-extern void s68k_pulse_wait(void);
+/* Put the CPU in waiting state until DTACK pin is asserted during bus access */
+extern void s68k_pulse_wait(unsigned int address, unsigned int write_access);
 extern void s68k_clear_wait(void);
 
 /* Peek at the internals of a CPU context.  This can either be a context

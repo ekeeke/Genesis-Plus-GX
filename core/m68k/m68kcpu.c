@@ -296,9 +296,6 @@ void m68k_run(unsigned int cycles)
       cpu_hook(HOOK_M68K_E, 0, REG_PC, 0);
 #endif
 
-    /* Save current instruction PC */
-    m68k.prev_pc = REG_PC;
-
     /* Decode next instruction */
     REG_IR = m68ki_read_imm_16();
 
@@ -397,24 +394,6 @@ void m68k_clear_halt(void)
 {
   /* Clear the HALT line on the CPU */
   CPU_STOPPED &= ~STOP_LEVEL_HALT;
-}
-
-void m68k_pulse_wait(void)
-{
-  /* Hold the DTACK line on the CPU */
-  CPU_STOPPED |= STOP_LEVEL_WAIT;
-
-  /* End CPU execution */
-  m68k.cycles = m68k.cycle_end - m68k_cycles();
-
-  /* Rollback current instruction (memory access will be executed once /DTACK is asserted) */
-  m68k.pc = m68k.prev_pc;
-}
-
-void m68k_clear_wait(void)
-{
-  /* Assert the DTACK line on the CPU */
-  CPU_STOPPED &= ~STOP_LEVEL_WAIT;
 }
 
 /* ======================================================================== */

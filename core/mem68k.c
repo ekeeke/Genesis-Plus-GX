@@ -3,7 +3,7 @@
  *  Main 68k bus handlers
  *
  *  Copyright (C) 1998-2003  Charles Mac Donald (original code)
- *  Copyright (C) 2007-2023  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2007-2024  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -88,7 +88,8 @@ void m68k_lockup_w_8 (unsigned int address, unsigned int data)
 #endif
   if (!config.force_dtack)
   {
-    m68k_pulse_wait();
+    m68k_pulse_halt();
+    m68k.cycles = m68k.cycle_end;
   }
 }
 
@@ -99,7 +100,8 @@ void m68k_lockup_w_16 (unsigned int address, unsigned int data)
 #endif
   if (!config.force_dtack)
   {
-    m68k_pulse_wait();
+    m68k_pulse_halt();
+    m68k.cycles = m68k.cycle_end;
   }
 }
 
@@ -108,11 +110,12 @@ unsigned int m68k_lockup_r_8 (unsigned int address)
 #ifdef LOGERROR
   error ("Lockup %08X.b (%08X)\n", address, m68k_get_reg(M68K_REG_PC));
 #endif
-  address = m68k.pc | (address & 1);
   if (!config.force_dtack)
   {
-    m68k_pulse_wait();
+    m68k_pulse_halt();
+    m68k.cycles = m68k.cycle_end;
   }
+  address = m68k.pc | (address & 1);
   return READ_BYTE(m68k.memory_map[((address)>>16)&0xff].base, (address) & 0xffff);
 }
 
@@ -121,11 +124,12 @@ unsigned int m68k_lockup_r_16 (unsigned int address)
 #ifdef LOGERROR
   error ("Lockup %08X.w (%08X)\n", address, m68k_get_reg(M68K_REG_PC));
 #endif
-  address = m68k.pc;
   if (!config.force_dtack)
   {
-    m68k_pulse_wait();
+    m68k_pulse_halt();
+    m68k.cycles = m68k.cycle_end;
   }
+  address = m68k.pc;
   return *(uint16 *)(m68k.memory_map[((address)>>16)&0xff].base + ((address) & 0xffff));
 }
 

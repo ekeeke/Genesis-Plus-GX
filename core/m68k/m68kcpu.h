@@ -1384,7 +1384,7 @@ INLINE void m68ki_exception_interrupt(uint int_level)
   #endif /* M68K_EMULATE_ADDRESS_ERROR */
 
   /* Turn off the stopped state */
-  CPU_STOPPED &= STOP_LEVEL_HALT;
+  CPU_STOPPED &= (STOP_LEVEL_HALT | STOP_LEVEL_WAIT);
 
   /* If we are halted, don't do anything */
   if(CPU_STOPPED)
