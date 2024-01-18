@@ -2,7 +2,7 @@
  *  Genesis Plus
  *  CD data controller (LC8951x compatible)
  *
- *  Copyright (C) 2012-2023  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2012-2024  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -769,13 +769,13 @@ unsigned char cdc_reg_r(void)
   return data;
 }
 
-unsigned short cdc_host_r(void)
+unsigned short cdc_host_r(uint8 cpu_access)
 {
   /* read CDC buffered data (gate-array register $08) */
   uint16 data = scd.regs[0x08>>1].w;
 
-  /* check if host data transfer is enabled */
-  if (scd.regs[0x04>>1].byte.h & 0x40)
+  /* check if host data transfer is started for selected CPU */
+  if ((scd.regs[0x04>>1].byte.h & 0x47) == cpu_access)
   {
     /* check if EDT bit (gate-array register $04) is set (host data transfer is finished) */
     if (scd.regs[0x04>>1].byte.h & 0x80)

@@ -537,7 +537,7 @@ unsigned int ctrl_io_read_word(unsigned int address)
           {
             s68k_sync();
           }
-          return cdc_host_r();
+          return cdc_host_r(CDC_MAIN_CPU_ACCESS);
         }
 
         /* H-INT vector (word access only ?) */

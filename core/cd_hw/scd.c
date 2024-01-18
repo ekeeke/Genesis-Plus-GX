@@ -680,7 +680,7 @@ static unsigned int scd_read_word(unsigned int address)
   /* CDC host data (word access only ?) */
   if (address == 0x08)
   {
-    return cdc_host_r();
+    return cdc_host_r(CDC_SUB_CPU_ACCESS);
   }
 
   /* LED & RESET status */

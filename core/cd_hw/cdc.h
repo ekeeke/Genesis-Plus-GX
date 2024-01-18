@@ -2,7 +2,7 @@
  *  Genesis Plus
  *  CD data controller (LC8951x compatible)
  *
- *  Copyright (C) 2012-2023  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2012-2024  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -40,6 +40,9 @@
 
 #define cdc scd.cdc_hw
 
+#define CDC_MAIN_CPU_ACCESS 0x42
+#define CDC_SUB_CPU_ACCESS  0x43
+
 /* CDC hardware */
 typedef struct
 {
@@ -67,6 +70,6 @@ extern void cdc_dma_update(void);
 extern void cdc_decoder_update(uint32 header);
 extern void cdc_reg_w(unsigned char data);
 extern unsigned char cdc_reg_r(void);
-extern unsigned short cdc_host_r(void);
+extern unsigned short cdc_host_r(uint8 cpu_access);
 
 #endif
