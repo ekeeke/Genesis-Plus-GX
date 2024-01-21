@@ -24,7 +24,8 @@ Genesis Plus GX 1.7.5 (xx/xx/xxxx) (Eke-Eke)
 * improved Timer interrupt timings and CDD interrupt accuracy (fixes audio stutters during Popful Mail FMV)
 * improved CDC emulation (fixes random freezes during Jeopardy & ESPN Sunday Night NFL intro)
 * improved accuracy of Main-CPU & Sub-CPU access to CDC registers (verified on real hardware, cf. Krikzz's mcd-verificator) 
-* improved accuracy of CDC transfer to Main-CPU & Sub-CPU (verified on real hardware, cf. Krikzz's mcd-verificator) 
+* improved accuracy of CDC data transfer to Main-CPU & Sub-CPU (verified on real hardware, cf. Krikzz's mcd-verificator) 
+* improved accuracy of CDC DMA processing (verified on real hardware, cf. Krikzz's mcd-verificator) 
 * improved emulation of mirrored memory areas
 * improved savestate format
 * improved Sub-CPU synchronization with Main-CPU (fixes "Soul Star")

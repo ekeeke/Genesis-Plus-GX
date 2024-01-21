@@ -55,8 +55,9 @@ typedef struct
   uint8 ctrl[2];
   uint8 head[2][4];
   uint8 stat[4];
-  int cycles;
-  void (*dma_w)(unsigned int length);  /* DMA transfer callback */
+  unsigned int cycles;
+  void (*dma_w)(unsigned int length);  /* active DMA callback */
+  void (*halted_dma_w)(unsigned int length);  /* halted DMA callback */
   uint8 ram[0x4000 + 2352]; /* 16K external RAM (with one block overhead to handle buffer overrun) */
   uint8 ar_mask;
 } cdc_t; 
@@ -66,7 +67,8 @@ extern void cdc_init(void);
 extern void cdc_reset(void);
 extern int cdc_context_save(uint8 *state);
 extern int cdc_context_load(uint8 *state);
-extern void cdc_dma_update(void);
+extern void cdc_dma_init(void);
+extern void cdc_dma_update(unsigned int cycles);
 extern void cdc_decoder_update(uint32 header);
 extern void cdc_reg_w(unsigned char data);
 extern unsigned char cdc_reg_r(void);
