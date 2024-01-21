@@ -133,12 +133,6 @@ void prg_ram_dma_w(unsigned int length)
   /* update DMA source address */
   cdc.dac.w += (words << 1);
 
-  /* check PRG-RAM write protected area */
-  if (dst_index < (scd.regs[0x02>>1].byte.h << 9))
-  {
-    return;
-  }
-
   /* DMA transfer */
   while (words--)
   {
