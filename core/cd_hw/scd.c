@@ -1405,6 +1405,13 @@ static void scd_write_word(unsigned int address, unsigned int data)
       return;
     }
 
+    case 0x08: /* CDC host data */
+    {
+      /* CDC data is also read (although unused) on write access (verified on real hardware, cf. Krikzz's mcd-verificator) */
+      cdc_host_r(CDC_SUB_CPU_ACCESS);
+      return;
+    }
+
     case 0x0c: /* Stopwatch (word access only) */
     {
       /* synchronize the counter with SUB-CPU */

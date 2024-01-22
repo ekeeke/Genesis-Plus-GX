@@ -1261,6 +1261,13 @@ void ctrl_io_write_word(unsigned int address, unsigned int data)
             return;
           }
 
+          case 0x08: /* CDC host data */
+          {
+            /* CDC data is also read (although unused) on write access (verified on real hardware, cf. Krikzz's mcd-verificator) */
+            cdc_host_r(CDC_MAIN_CPU_ACCESS);
+            return;
+          }
+
           case 0x0e:  /* CPU communication flags */
           {
             m68k_poll_sync(1<<0x0e);
