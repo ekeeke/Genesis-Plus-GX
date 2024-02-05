@@ -788,9 +788,9 @@ void ctrl_io_write_byte(unsigned int address, unsigned int data)
                   cdc.halted_dma_w = 0;
 
                   /* synchronize CDC DMA with MAIN-CPU (only if not already ahead) */
-                  if (cdc.cycles < cycles)
+                  if (cdc.cycles[0] < cycles)
                   {
-                    cdc.cycles = cycles;
+                    cdc.cycles[0] = cycles;
                   }
                 }
               }
@@ -902,9 +902,9 @@ void ctrl_io_write_byte(unsigned int address, unsigned int data)
                   cdc.halted_dma_w = 0;
 
                   /* synchronize CDC DMA with MAIN-CPU (only if not already ahead) */
-                  if (cdc.cycles < cycles)
+                  if (cdc.cycles[0] < cycles)
                   {
-                    cdc.cycles = cycles;
+                    cdc.cycles[0] = cycles;
                   }
                 }
 
@@ -1117,9 +1117,9 @@ void ctrl_io_write_word(unsigned int address, unsigned int data)
                   cdc.halted_dma_w = 0;
 
                   /* synchronize CDC DMA with MAIN-CPU  (only if not already ahead) */
-                  if (cdc.cycles < cycles)
+                  if (cdc.cycles[0] < cycles)
                   {
-                    cdc.cycles = cycles;
+                    cdc.cycles[0] = cycles;
                   }
                 }
               }
@@ -1241,9 +1241,9 @@ void ctrl_io_write_word(unsigned int address, unsigned int data)
                   cdc.halted_dma_w = 0;
 
                   /* synchronize CDC DMA with MAIN-CPU (only if not already ahead) */
-                  if (cdc.cycles < cycles)
+                  if (cdc.cycles[0] < cycles)
                   {
-                    cdc.cycles = cycles;
+                    cdc.cycles[0] = cycles;
                   }
                 }
                 return;

@@ -55,7 +55,7 @@ typedef struct
   uint8 ctrl[2];
   uint8 head[2][4];
   uint8 stat[4];
-  unsigned int cycles;
+  int cycles[2];
   void (*dma_w)(unsigned int length);  /* active DMA callback */
   void (*halted_dma_w)(unsigned int length);  /* halted DMA callback */
   uint8 ram[0x4000 + 2352]; /* 16K external RAM (with one block overhead to handle buffer overrun) */

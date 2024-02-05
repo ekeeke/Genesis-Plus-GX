@@ -1983,9 +1983,11 @@ void scd_end_frame(unsigned int cycles)
   /* adjust Stopwatch counter for next frame (can be negative) */
   scd.stopwatch += (ticks * TIMERS_SCYCLES_RATIO) - cycles;
 
-  /* adjust SUB-CPU & GPU cycle counters for next frame */
-  s68k.cycles -= cycles;
-  gfx.cycles  -= cycles;
+  /* adjust SUB-CPU, GPU and CDC cycle counters for next frame */
+  s68k.cycles   -= cycles;
+  gfx.cycles    -= cycles;
+  cdc.cycles[0] -= cycles;
+  cdc.cycles[1] -= cycles;
 
   /* reset CPU registers polling */
   m68k.poll.cycle = 0;

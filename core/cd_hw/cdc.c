@@ -108,8 +108,8 @@ void cdc_reset(void)
   cdc.head[1][2] = 0x00;
   cdc.head[1][3] = 0x00;
 
-  /* reset CDC DMA cycle counter */
-  cdc.cycles = 0;
+  /* reset CDC DMA & decoder cycle counters */
+  cdc.cycles[0] = cdc.cycles[1] = 0;
 
   /* disable CDC DMA */
   cdc.dma_w = cdc.halted_dma_w = 0;
@@ -176,7 +176,6 @@ int cdc_context_save(uint8 *state)
   save_param(&cdc.head, sizeof(cdc.head));
   save_param(&cdc.stat, sizeof(cdc.stat));
   save_param(&cdc.cycles, sizeof(cdc.cycles));
-  save_param(&cdc.dma_w, sizeof(cdc.dma_w));
   save_param(&cdc.ram, sizeof(cdc.ram));
   save_param(&tmp8, 1);
 
@@ -198,7 +197,6 @@ int cdc_context_load(uint8 *state)
   load_param(&cdc.head, sizeof(cdc.head));
   load_param(&cdc.stat, sizeof(cdc.stat));
   load_param(&cdc.cycles, sizeof(cdc.cycles));
-  load_param(&cdc.dma_w, sizeof(cdc.dma_w));
   load_param(&cdc.ram, sizeof(cdc.ram));
 
   load_param(&tmp8, 1);
@@ -290,6 +288,16 @@ void cdc_dma_init(void)
         /* Data Transfer End interrupt enabled ? */
         if (cdc.ifctrl & BIT_DTEIEN)
         {
+          /* check end of CDC decoder active period */
+          if ((cdc.irq & BIT_DECI) && (cdc.cycles[0] > cdc.cycles[1]))
+          {
+            /* clear pending decoder interrupt */
+            cdc.ifstat |= BIT_DECI;
+
+            /* update CDC IRQ state */
+            cdc.irq &= ~BIT_DECI;
+          }
+
           /* level 5 interrupt triggered only on CDC /INT falling edge with interrupt enabled on gate-array side */
           if (!cdc.irq && (scd.regs[0x32>>1].byte.l & 0x20))
           {
@@ -380,7 +388,7 @@ void cdc_dma_init(void)
 void cdc_dma_update(unsigned int cycles)
 {
   /* max number of bytes that can be transfered */
-  int dma_bytes = (cycles - cdc.cycles + DMA_CYCLES_PER_BYTE - 1) / DMA_CYCLES_PER_BYTE;
+  int dma_bytes = (cycles - cdc.cycles[0] + DMA_CYCLES_PER_BYTE - 1) / DMA_CYCLES_PER_BYTE;
 
   /* always process blocks of 8 bytes */
   dma_bytes = (dma_bytes / 8) * 8;
@@ -390,6 +398,9 @@ void cdc_dma_update(unsigned int cycles)
   {
     /* transfer remaining bytes using DMA */
     cdc.dma_w(cdc.dbc.w + 1);
+
+    /* update DMA cycle counter */
+    cdc.cycles[0] += (cdc.dbc.w + 1) * DMA_CYCLES_PER_BYTE;
 
     /* reset data byte counter (DBCH bits 4-7 should also be set to 1) */
     cdc.dbc.w = 0xffff;
@@ -403,6 +414,16 @@ void cdc_dma_update(unsigned int cycles)
     /* Data Transfer End interrupt enabled ? */
     if (cdc.ifctrl & BIT_DTEIEN)
     {
+      /* check end of CDC decoder active period */
+      if ((cdc.irq & BIT_DECI) && (cdc.cycles[0] > cdc.cycles[1]))
+      {
+        /* clear pending decoder interrupt */
+        cdc.ifstat |= BIT_DECI;
+
+        /* update CDC IRQ state */
+        cdc.irq &= ~BIT_DECI;
+      }
+
       /* level 5 interrupt triggered only on CDC /INT falling edge with interrupt enabled on gate-array side*/
       if (!cdc.irq && (scd.regs[0x32>>1].byte.l & 0x20))
       {
@@ -424,7 +445,7 @@ void cdc_dma_update(unsigned int cycles)
     if (s68k.stopped & (1<<0x04))
     {
       /* sync SUB-CPU with CDC DMA */
-      s68k.cycles = cdc.cycles;
+      s68k.cycles = cdc.cycles[0];
 
       /* restart SUB-CPU */
       s68k.stopped = 0;
@@ -445,7 +466,7 @@ void cdc_dma_update(unsigned int cycles)
     cdc.dbc.w -= dma_bytes;
 
     /* update DMA cycle counter */
-    cdc.cycles += dma_bytes * DMA_CYCLES_PER_BYTE;
+    cdc.cycles[0] += dma_bytes * DMA_CYCLES_PER_BYTE;
   }
 }
 
@@ -462,6 +483,9 @@ void cdc_decoder_update(uint32 header)
 
     /* pending decoder interrupt */
     cdc.ifstat &= ~BIT_DECI;
+
+    /* update CDC decoder end cycle (value adjusted for MCD-verificator CDC FLAGS Tests #40 & #41) */
+    cdc.cycles[1] = s68k.cycles + 269000;
 
     /* decoder interrupt enabled ? */
     if (cdc.ifctrl & BIT_DECIEN)
@@ -555,6 +579,16 @@ void cdc_reg_w(unsigned char data)
     {
       /* previous CDC IRQ state */
       uint8 prev_irq = cdc.irq;
+
+      /* check end of CDC decoder active period */
+      if (s68k.cycles > cdc.cycles[1])
+      {
+        /* clear pending decoder interrupt */
+        cdc.ifstat |= BIT_DECI;
+
+        /* update previous CDC IRQ state */
+        prev_irq &= ~BIT_DECI;
+      }
       
       /* update CDC IRQ state according to DTEIEN and DECIEN bits */
       cdc.irq = ~cdc.ifstat & data & (BIT_DTEIEN | BIT_DECIEN);
@@ -614,7 +648,7 @@ void cdc_reg_w(unsigned char data)
         cdc_dma_init();
 
         /* initialize DMA cycle counter */
-        cdc.cycles = s68k.cycles;
+        cdc.cycles[0] = s68k.cycles;
       }
 
       break;
@@ -708,6 +742,16 @@ unsigned char cdc_reg_r(void)
   {
     case 0x01:  /* IFSTAT */
     {
+      /* check end of CDC decoder active period */
+      if (s68k.cycles > cdc.cycles[1])
+      {
+        /* clear pending decoder interrupt */
+        cdc.ifstat |= BIT_DECI;
+
+        /* update CDC IRQ state */
+        cdc.irq &= ~BIT_DECI;
+      }
+
       data = cdc.ifstat;
       break;
     }
@@ -869,6 +913,16 @@ unsigned short cdc_host_r(uint8 cpu_access)
         /* Data Transfer End interrupt enabled ? */
         if (cdc.ifctrl & BIT_DTEIEN)
         {
+          /* check end of CDC decoder active period */
+          if ((cdc.irq & BIT_DECI) && (cdc.cycles[0] > cdc.cycles[1]))
+          {
+            /* clear pending decoder interrupt */
+            cdc.ifstat |= BIT_DECI;
+
+            /* update CDC IRQ state */
+            cdc.irq &= ~BIT_DECI;
+          }
+
           /* level 5 interrupt triggered only on CDC /INT falling edge with interrupt enabled on gate-array side */
           if (!cdc.irq && (scd.regs[0x32>>1].byte.l & 0x20))
           {

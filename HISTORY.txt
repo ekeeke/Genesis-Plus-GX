@@ -26,6 +26,7 @@ Genesis Plus GX 1.7.5 (xx/xx/xxxx) (Eke-Eke)
 * improved accuracy of Main-CPU & Sub-CPU access to CDC registers (verified on real hardware, cf. Krikzz's mcd-verificator) 
 * improved accuracy of CDC data transfer to Main-CPU & Sub-CPU (verified on real hardware, cf. Krikzz's mcd-verificator) 
 * improved accuracy of CDC DMA processing (verified on real hardware, cf. Krikzz's mcd-verificator) 
+* improved accuracy of CDC decoder processing (verified on real hardware, cf. Krikzz's mcd-verificator) 
 * improved accuracy of CDC interrupt processing (verified on real hardware, cf. Krikzz's mcd-verificator) 
 * improved emulation of mirrored memory areas
 * improved savestate format
