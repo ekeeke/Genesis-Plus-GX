@@ -2343,24 +2343,18 @@ int scd_68k_irq_ack(int level)
   error("INT ack level %d  (%X)\n", level, s68k.pc);
 #endif
 
-#if 0
-  /* level 5 interrupt is normally acknowledged by CDC */
-  if (level != 5)
-#endif
+  /* clear pending interrupt flag */
+  scd.pending &= ~(1 << level);
+
+  /* level 2 interrupt acknowledge */
+  if (level == 2)
   {
-    /* clear pending interrupt flag */
-    scd.pending &= ~(1 << level);
-
-    /* level 2 interrupt acknowledge */
-    if (level == 2)
-    {
-      /* clear IFL2 flag */
-      scd.regs[0x00].byte.h &= ~0x01;
-    }
-
-    /* update IRQ level */
-    s68k_update_irq((scd.pending & scd.regs[0x32>>1].byte.l) >> 1);
+    /* clear IFL2 flag */
+    scd.regs[0x00].byte.h &= ~0x01;
   }
+
+  /* update IRQ level */
+  s68k_update_irq((scd.pending & scd.regs[0x32>>1].byte.l) >> 1);
 
   return M68K_INT_ACK_AUTOVECTOR;
 }

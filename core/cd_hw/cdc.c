@@ -114,6 +114,9 @@ void cdc_reset(void)
   /* disable CDC DMA */
   cdc.dma_w = cdc.halted_dma_w = 0;
 
+  /* reset CDC IRQ state */
+  cdc.irq = 0;
+
   /* clear any pending IRQ */
   if (scd.pending & (1 << 5))
   {
@@ -236,6 +239,8 @@ int cdc_context_load(uint8 *state)
       break;
   }
 
+  cdc.irq = ~cdc.ifstat & cdc.ifctrl & (BIT_DTEIEN | BIT_DECIEN);
+
   return bufferptr;
 }
 
@@ -285,15 +290,18 @@ void cdc_dma_init(void)
         /* Data Transfer End interrupt enabled ? */
         if (cdc.ifctrl & BIT_DTEIEN)
         {
-          /* pending level 5 interrupt */
-          scd.pending |= (1 << 5);
-
-          /* level 5 interrupt enabled ? */
-          if (scd.regs[0x32>>1].byte.l & 0x20)
+          /* level 5 interrupt triggered only on CDC /INT falling edge with interrupt enabled on gate-array side */
+          if (!cdc.irq && (scd.regs[0x32>>1].byte.l & 0x20))
           {
+            /* pending level 5 interrupt */
+            scd.pending |= (1 << 5);
+
             /* update IRQ level */
             s68k_update_irq((scd.pending & scd.regs[0x32>>1].byte.l) >> 1);
           }
+
+          /* update CDC IRQ state */
+          cdc.irq |= BIT_DTEI;
         }
 
         /* set EDT bit (gate-array register $04) */
@@ -395,15 +403,18 @@ void cdc_dma_update(unsigned int cycles)
     /* Data Transfer End interrupt enabled ? */
     if (cdc.ifctrl & BIT_DTEIEN)
     {
-      /* pending level 5 interrupt */
-      scd.pending |= (1 << 5);
-
-      /* level 5 interrupt enabled ? */
-      if (scd.regs[0x32>>1].byte.l & 0x20)
+      /* level 5 interrupt triggered only on CDC /INT falling edge with interrupt enabled on gate-array side*/
+      if (!cdc.irq && (scd.regs[0x32>>1].byte.l & 0x20))
       {
+        /* pending level 5 interrupt */
+        scd.pending |= (1 << 5);
+
         /* update IRQ level */
         s68k_update_irq((scd.pending & scd.regs[0x32>>1].byte.l) >> 1);
       }
+
+      /* update CDC IRQ state */
+      cdc.irq |= BIT_DTEI;
     }
 
     /* clear DSR bit & set EDT bit (CD register $04) */
@@ -455,15 +466,19 @@ void cdc_decoder_update(uint32 header)
     /* decoder interrupt enabled ? */
     if (cdc.ifctrl & BIT_DECIEN)
     {
-      /* pending level 5 interrupt */
-      scd.pending |= (1 << 5);
-
-      /* level 5 interrupt enabled ? */
-      if (scd.regs[0x32>>1].byte.l & 0x20)
+      /* level 5 interrupt triggered only on CDC /INT falling edge with interrupt enabled on gate-array side */
+      /* note: only check DTEI as DECI is cleared automatically between decoder interrupt triggering */
+      if (!(cdc.irq & BIT_DTEI) && (scd.regs[0x32>>1].byte.l & 0x20))
       {
+        /* pending level 5 interrupt */
+        scd.pending |= (1 << 5);
+
         /* update IRQ level */
         s68k_update_irq((scd.pending & scd.regs[0x32>>1].byte.l) >> 1);
       }
+
+      /* update CDC IRQ state */
+      cdc.irq |= BIT_DECI;
     }
 
     /* buffer RAM write enabled ? */
@@ -538,24 +553,17 @@ void cdc_reg_w(unsigned char data)
   {
     case 0x01:  /* IFCTRL */
     {
-      /* pending interrupts ? */
-      if (((data & BIT_DTEIEN) && !(cdc.ifstat & BIT_DTEI)) ||
-          ((data & BIT_DECIEN) && !(cdc.ifstat & BIT_DECI)))
+      /* previous CDC IRQ state */
+      uint8 prev_irq = cdc.irq;
+      
+      /* update CDC IRQ state according to DTEIEN and DECIEN bits */
+      cdc.irq = ~cdc.ifstat & data & (BIT_DTEIEN | BIT_DECIEN);
+
+      /* level 5 interrupt is triggered on CDC /INT falling edge if interrupt enabled on gate-array side */
+      if (cdc.irq && !prev_irq && (scd.regs[0x32>>1].byte.l & 0x20))
       {
         /* pending level 5 interrupt */
         scd.pending |= (1 << 5);
-
-        /* level 5 interrupt enabled ? */
-        if (scd.regs[0x32>>1].byte.l & 0x20)
-        {
-          /* update IRQ level */
-          s68k_update_irq((scd.pending & scd.regs[0x32>>1].byte.l) >> 1);
-        }
-      }
-      else if (scd.pending & (1 << 5))
-      {
-        /* clear pending level 5 interrupts */
-        scd.pending &= ~(1 << 5);
 
         /* update IRQ level */
         s68k_update_irq((scd.pending & scd.regs[0x32>>1].byte.l) >> 1);
@@ -617,17 +625,8 @@ void cdc_reg_w(unsigned char data)
       /* clear pending data transfer end interrupt */
       cdc.ifstat |= BIT_DTEI;
 
-#if 0
-      /* no pending decoder interrupt ? */
-      if ((cdc.ifstat | BIT_DECI) || !(cdc.ifctrl & BIT_DECIEN))
-      {
-        /* clear pending level 5 interrupt */
-        scd.pending &= ~(1 << 5);
-
-        /* update IRQ level */
-        s68k_update_irq((scd.pending & scd.regs[0x32>>1].byte.l) >> 1);
-      }
-#endif
+      /* update CDC IRQ state */
+      cdc.irq &= ~BIT_DTEI;
       break;
     }
 
@@ -801,18 +800,8 @@ unsigned char cdc_reg_r(void)
       /* clear pending decoder interrupt */
       cdc.ifstat |= BIT_DECI;
 
-#if 0
-      /* no pending data transfer end interrupt */
-      if ((cdc.ifstat | BIT_DTEI) || !(cdc.ifctrl & BIT_DTEIEN))
-      {
-        /* clear pending level 5 interrupt */
-        scd.pending &= ~(1 << 5);
-
-        /* update IRQ level */
-        s68k_update_irq((scd.pending & scd.regs[0x32>>1].byte.l) >> 1);
-      }
-#endif
-
+      /* update CDC IRQ state */
+      cdc.irq &= ~BIT_DECI;
       break;
     }
 
@@ -880,15 +869,18 @@ unsigned short cdc_host_r(uint8 cpu_access)
         /* Data Transfer End interrupt enabled ? */
         if (cdc.ifctrl & BIT_DTEIEN)
         {
-          /* pending level 5 interrupt */
-          scd.pending |= (1 << 5);
-
-          /* level 5 interrupt enabled ? */
-          if (scd.regs[0x32>>1].byte.l & 0x20)
+          /* level 5 interrupt triggered only on CDC /INT falling edge with interrupt enabled on gate-array side */
+          if (!cdc.irq && (scd.regs[0x32>>1].byte.l & 0x20))
           {
+            /* pending level 5 interrupt */
+            scd.pending |= (1 << 5);
+
             /* update IRQ level */
             s68k_update_irq((scd.pending & scd.regs[0x32>>1].byte.l) >> 1);
           }
+
+          /* update CDC IRQ state */
+          cdc.irq |= BIT_DTEI;
         }
 
         /* set EDT bit (gate-array register $04) */
