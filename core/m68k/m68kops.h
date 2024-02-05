@@ -1868,6 +1868,9 @@ static void m68k_op_addq_8_d(void)
   FLAG_Z = MASK_OUT_ABOVE_8(res);
 
   *r_dst = MASK_OUT_BELOW_8(*r_dst) | FLAG_Z;
+
+  /* reset idle loop detection (fixes cases where instruction is used in tight counter incrementing loop) */
+  m68ki_cpu.poll.detected = 0;
 }
 
 
@@ -2028,6 +2031,9 @@ static void m68k_op_addq_16_d(void)
   FLAG_Z = MASK_OUT_ABOVE_16(res);
 
   *r_dst = MASK_OUT_BELOW_16(*r_dst) | FLAG_Z;
+
+  /* reset idle loop detection (fixes cases where instruction is used in tight counter incrementing loop) */
+  m68ki_cpu.poll.detected = 0;
 }
 
 
@@ -2164,6 +2170,9 @@ static void m68k_op_addq_32_d(void)
   FLAG_Z = MASK_OUT_ABOVE_32(res);
 
   *r_dst = FLAG_Z;
+
+  /* reset idle loop detection (fixes cases where instruction is used in tight counter incrementing loop) */
+  m68ki_cpu.poll.detected = 0;
 }
 
 
