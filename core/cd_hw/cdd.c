@@ -2,7 +2,7 @@
  *  Genesis Plus
  *  CD drive processor & CD-DA fader
  *
- *  Copyright (C) 2012-2023  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2012-2024  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -1812,9 +1812,14 @@ void cdd_update(void)
       scd.regs[0x36>>1].byte.h = 0x01;
     }
   }
+  else
+  {
+    /* CDC decoder is still running while disc is not being read (fixes MCD-verificator CDC Flags Test #30) */
+    cdc_decoder_update(0);
+  }
 
   /* scanning disc */
-  else if (cdd.status == CD_SCAN)
+  if (cdd.status == CD_SCAN)
   {
     /* current track index */
     int index = cdd.index;
