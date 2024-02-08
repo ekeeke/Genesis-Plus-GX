@@ -702,7 +702,7 @@ static void update_screen_w(void)
 
 static void update_bgm(void)
 {
-  SetVolumeOgg(((int)config.bgm_volume * 255) / 100);
+  SetVolumeOgg(((int)config.bgm_volume * MAX_VOLUME) / 100);
 }
 
 static void prefmenu ()
@@ -876,16 +876,8 @@ static void prefmenu ()
 #ifdef HW_RVL
     DI_StopMotor();
 #else
-    vu32* const dvd = (u32*)0xCC006000;
-    dvd[0] = 0x2e;
-    dvd[1] = 0;
-    dvd[2] = 0xe3000000;
-    dvd[3] = 0;
-    dvd[4] = 0;
-    dvd[5] = 0;
-    dvd[6] = 0;
-    dvd[7] = 1;
-    while (dvd[7] & 1);
+    dvdcmdblk blk;
+    DVD_StopMotor(&blk);
 #endif
   }
 
