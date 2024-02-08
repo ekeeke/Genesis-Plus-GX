@@ -285,7 +285,7 @@ static void ogg_add_callback(int voice)
   {
     if (ASND_AddVoice(0,
         (void *) private_ogg.pcmout[private_ogg.pcmout_pos],
-        private_ogg.pcm_indx << 1) == 0)
+        private_ogg.pcm_indx << 1) == SND_OK)
     {
       private_ogg.pcmout_pos ^= 1;
       private_ogg.pcm_indx = 0;
@@ -452,7 +452,7 @@ int PlayOgg(char * buf, int buflen, int time_pos, int mode)
 
   private_ogg.mode = mode;
   private_ogg.eof = 0;
-  private_ogg.volume = 127;
+  private_ogg.volume = MID_VOLUME;
   private_ogg.flag = 0;
   private_ogg.seek_time = -1;
 
@@ -468,7 +468,7 @@ int PlayOgg(char * buf, int buflen, int time_pos, int mode)
   }
 
   if (LWP_CreateThread(&h_oggplayer, (void *) ogg_player_thread,
-      &private_ogg, oggplayer_stack, STACKSIZE, 80) == -1)
+      &private_ogg, oggplayer_stack, STACKSIZE, 80) != 0)
   {
     ogg_thread_running = 0;
     ov_clear(&private_ogg.vf);
