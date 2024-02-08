@@ -452,7 +452,7 @@ int PlayOgg(char * buf, int buflen, int time_pos, int mode)
 
   private_ogg.mode = mode;
   private_ogg.eof = 0;
-  private_ogg.volume = 127;
+  private_ogg.volume = MID_VOLUME;
   private_ogg.flag = 0;
   private_ogg.seek_time = -1;
 
