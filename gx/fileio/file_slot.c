@@ -808,7 +808,16 @@ int slot_save(int slot, int device)
     CARD_SetStatus(device, CardFile.filenum, &CardStatus);
 
     /* Write file sectors */
+#ifdef HW_RVL
+    while (filesize > 0)
+    {
+      CARD_Write(&CardFile, &out[done], SectorSize, done);
+      filesize -= SectorSize;
+      done += SectorSize;
+    }
+#else
     CARD_Write(&CardFile, &out[done], filesize, done);
+#endif
 
     /* Close file */
     CARD_Close(&CardFile);
