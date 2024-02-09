@@ -44,6 +44,7 @@
 #include "filesel.h"
 #include "file_slot.h"
 
+#include <errno.h>
 #include <iso9660.h>
 #ifdef HW_RVL
 #include <di/di.h>
@@ -235,11 +236,19 @@ int ParseDirectory(void)
     return -1;
   }
 
-  struct dirent *entry = readdir(dir);
+  struct dirent *entry = NULL;
 
   /* list entries */
-  while ((entry != NULL)&& (nbfiles < MAXFILES))
+  do
   {
+    errno = 0;
+    /* next entry */
+    entry = readdir(dir);
+    if (entry == NULL)
+    {
+      continue;
+    }
+
     /* filter entries */
     if ((entry->d_name[0] != '.') 
        && strncasecmp(".wav", &entry->d_name[strlen(entry->d_name) - 4], 4) 
@@ -254,10 +263,8 @@ int ParseDirectory(void)
       }
       nbfiles++;
     }
-
-    /* next entry */
-    entry = readdir(dir);
   }
+  while ((entry != NULL || errno == EOVERFLOW) && (nbfiles < MAXFILES));
 
   /* close directory */
   closedir(dir);
