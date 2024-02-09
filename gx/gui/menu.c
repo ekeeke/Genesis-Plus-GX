@@ -718,10 +718,10 @@ static void prefmenu ()
   else if (config.s_auto == 1) sprintf (items[2].text, "Auto Saves: SRAM ONLY");
   else sprintf (items[2].text, "Auto Saves: NONE");
 #ifdef HW_RVL
-  if (config.l_device == 1) sprintf (items[3].text, "ROM Load Device: USB");
-  else if (config.l_device == 2) sprintf (items[3].text, "ROM Load Device: DVD");
+  if (config.l_device == TYPE_USB) sprintf (items[3].text, "ROM Load Device: USB");
+  else if (config.l_device == TYPE_DVD) sprintf (items[3].text, "ROM Load Device: DVD");
 #else
-  if (config.l_device == 1) sprintf (items[3].text, "ROM Load Device: DVD");
+  if (config.l_device == TYPE_DVD) sprintf (items[3].text, "ROM Load Device: DVD");
 #endif
   else sprintf (items[3].text, "ROM Load Device: SD");
   if (config.s_device == 1) sprintf (items[4].text, "Saves Device: MCARD A");
@@ -771,12 +771,12 @@ static void prefmenu ()
 
       case 3:   /*** Default ROM device ***/
 #ifdef HW_RVL
-        config.l_device = (config.l_device + 1) % 3;
-        if (config.l_device == 1) sprintf (items[3].text, "ROM Load Device: USB");
-        else if (config.l_device == 2) sprintf (items[3].text, "ROM Load Device: DVD");
+        config.l_device = (config.l_device + 1) % (TYPE_DVD + 1);
+        if (config.l_device == TYPE_USB) sprintf (items[3].text, "ROM Load Device: USB");
+        else if (config.l_device == TYPE_DVD) sprintf (items[3].text, "ROM Load Device: DVD");
 #else
         config.l_device ^= 1;
-        if (config.l_device == 1) sprintf (items[3].text, "ROM Load Device: DVD");
+        if (config.l_device == TYPE_DVD) sprintf (items[3].text, "ROM Load Device: DVD");
 #endif
         else sprintf (items[3].text, "ROM Load Device: SD");
         break;
@@ -871,7 +871,7 @@ static void prefmenu ()
   }
 
   /* stop DVD drive when not in use */
-  if (config.l_device != 2)
+  if (config.l_device != TYPE_DVD)
   {
 #ifdef HW_RVL
     DI_StopMotor();
