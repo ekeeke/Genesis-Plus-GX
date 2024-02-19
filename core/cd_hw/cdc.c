@@ -444,8 +444,11 @@ void cdc_dma_update(unsigned int cycles)
     /* SUB-CPU idle on register $04 polling ? */
     if (s68k.stopped & (1<<0x04))
     {
-      /* sync SUB-CPU with CDC DMA */
-      s68k.cycles = cdc.cycles[0];
+      /* sync SUB-CPU with CDC DMA (only if not already ahead) */
+      if (s68k.cycles < cdc.cycles[0])
+      {
+        s68k.cycles = cdc.cycles[0];
+      }
 
       /* restart SUB-CPU */
       s68k.stopped = 0;
