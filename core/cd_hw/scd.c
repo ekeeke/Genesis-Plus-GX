@@ -1003,9 +1003,9 @@ static void scd_write_byte(unsigned int address, unsigned int data)
               /* synchronize CDC DMA with SUB-CPU */
               cdc_dma_update(s68k.cycles);
 
-              /* halt CDC DMA to 2M Word-RAM */
+              /* halt CDC DMA to 2M Word-RAM (if still running) */
+              cdc.halted_dma_w = cdc.dma_w;
               cdc.dma_w = 0;
-              cdc.halted_dma_w = word_ram_2M_dma_w;
             }
 
             /* Word-RAM is returned to MAIN-CPU */
@@ -1341,9 +1341,9 @@ static void scd_write_word(unsigned int address, unsigned int data)
               /* synchronize CDC DMA with SUB-CPU */
               cdc_dma_update(s68k.cycles);
 
-              /* halt CDC DMA to 2M Word-RAM */
+              /* halt CDC DMA to 2M Word-RAM (if still running) */
+              cdc.halted_dma_w = cdc.dma_w;
               cdc.dma_w = 0;
-              cdc.halted_dma_w = word_ram_2M_dma_w;
             }
 
             /* Word-RAM is returned to MAIN-CPU */

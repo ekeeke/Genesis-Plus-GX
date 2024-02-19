@@ -763,9 +763,9 @@ void ctrl_io_write_byte(unsigned int address, unsigned int data)
                   /* synchronize CDC DMA with MAIN-CPU */
                   cdc_dma_update((m68k.cycles * SCYCLES_PER_LINE) / MCYCLES_PER_LINE);
 
-                  /* halt CDC DMA to PRG-RAM */
+                  /* halt CDC DMA to PRG-RAM (if still running) */
+                  cdc.halted_dma_w = cdc.dma_w;
                   cdc.dma_w = 0;
-                  cdc.halted_dma_w = prg_ram_dma_w;
                 }
               }
               else
@@ -1092,9 +1092,9 @@ void ctrl_io_write_word(unsigned int address, unsigned int data)
                   /* synchronize CDC DMA with MAIN-CPU */
                   cdc_dma_update((m68k.cycles * SCYCLES_PER_LINE) / MCYCLES_PER_LINE);
 
-                  /* halt CDC DMA to PRG-RAM */
+                  /* halt CDC DMA to PRG-RAM (if still running) */
+                  cdc.halted_dma_w = cdc.dma_w;
                   cdc.dma_w = 0;
-                  cdc.halted_dma_w = prg_ram_dma_w;
                 }
               }
               else
