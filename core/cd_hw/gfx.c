@@ -2,7 +2,7 @@
  *  Genesis Plus
  *  CD graphics processor
  *
- *  Copyright (C) 2012-2023  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2012-2024  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -683,7 +683,7 @@ void gfx_update(int cycles)
         /* update Vdot remaining size */
         scd.regs[0x64>>1].byte.l -= lines;
 
-        /* increment cycle counter */
+        /* update cycle counter */
         gfx.cycles += lines * gfx.cyclesPerLine;
       }
       else
@@ -694,14 +694,20 @@ void gfx_update(int cycles)
         /* clear Vdot remaining size */
         scd.regs[0x64>>1].byte.l = 0;
 
+        /* update cycle counter */
+        gfx.cycles += lines * gfx.cyclesPerLine;
+
         /* end of graphics operation */
         scd.regs[0x58>>1].byte.h = 0;
    
         /* SUB-CPU idle on register $58 polling ? */
         if (s68k.stopped & (1<<0x08))
         {
-          /* sync SUB-CPU with GFX chip */
-          s68k.cycles = scd.cycles;
+          /* sync SUB-CPU with GFX chip (only if not already ahead) */
+          if (s68k.cycles < gfx.cycles)
+          {
+            s68k.cycles = gfx.cycles;
+          }
 
           /* restart SUB-CPU */
           s68k.stopped = 0;
