@@ -119,6 +119,7 @@ Genesis Plus GX 1.7.5 (xx/xx/xxxx) (Eke-Eke)
 ---------------
 * added Z80 wait-states on 68k bus access (fixes Remute Red Eyes demo)
 * improved 68k auto-vectored interrupts acknowledge cycle timing accuracy (Bubsy background color corruption during cutscenes)
+* improved 68k MOVEM instruction accuracy (implements extra read cycle from memory as verified on real hardware)
 * fixed 68k undocumented behaviors for ABCD/SBCD/NBCD instructions (thanks to Flamewing for his test ROM)
 * fixed 68k timing of BTST Dn,#Imm instruction (verified by Flamewing in original microcode)
 * fixed 68k timings of ANDI.L #Imm,Dn, ADDQ.W #Imm,An and TAS instructions (cf. Yacht.txt)

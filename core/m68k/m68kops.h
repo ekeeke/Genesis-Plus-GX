@@ -15231,6 +15231,9 @@ static void m68k_op_movem_16_er_pi(void)
     }
   AY = ea;
 
+  /* MOVEM extra read cycle (can have side effect if target hardware is impacted by read access) */
+  m68ki_read_16(ea);
+
   USE_CYCLES(count * CYC_MOVEM_W);
 }
 
@@ -15249,6 +15252,9 @@ static void m68k_op_movem_16_er_pcdi(void)
       ea += 2;
       count++;
     }
+
+  /* MOVEM extra read cycle (can have side effect if target hardware is impacted by read access) */
+  m68ki_read_16(ea);
 
   USE_CYCLES(count * CYC_MOVEM_W);
 }
@@ -15269,6 +15275,9 @@ static void m68k_op_movem_16_er_pcix(void)
       count++;
     }
 
+  /* MOVEM extra read cycle (can have side effect if extra address is not mapped or mapped to hardware impacted by read access) */
+  m68ki_read_16(ea);
+
   USE_CYCLES(count * CYC_MOVEM_W);
 }
 
@@ -15287,6 +15296,9 @@ static void m68k_op_movem_16_er_ai(void)
       ea += 2;
       count++;
     }
+
+  /* MOVEM extra read cycle (can have side effect if extra address is not mapped or mapped to hardware impacted by read access) */
+  m68ki_read_16(ea);
 
   USE_CYCLES(count * CYC_MOVEM_W);
 }
@@ -15307,6 +15319,9 @@ static void m68k_op_movem_16_er_di(void)
       count++;
     }
 
+  /* MOVEM extra read cycle (can have side effect if extra address is not mapped or mapped to hardware impacted by read access) */
+  m68ki_read_16(ea);
+
   USE_CYCLES(count * CYC_MOVEM_W);
 }
 
@@ -15325,6 +15340,9 @@ static void m68k_op_movem_16_er_ix(void)
       ea += 2;
       count++;
     }
+
+  /* MOVEM extra read cycle (can have side effect if extra address is not mapped or mapped to hardware impacted by read access) */
+  m68ki_read_16(ea);
 
   USE_CYCLES(count * CYC_MOVEM_W);
 }
@@ -15345,6 +15363,9 @@ static void m68k_op_movem_16_er_aw(void)
       count++;
     }
 
+  /* MOVEM extra read cycle (can have side effect if extra address is not mapped or mapped to hardware impacted by read access) */
+  m68ki_read_16(ea);
+
   USE_CYCLES(count * CYC_MOVEM_W);
 }
 
@@ -15363,6 +15384,9 @@ static void m68k_op_movem_16_er_al(void)
       ea += 2;
       count++;
     }
+
+  /* MOVEM extra read cycle (can have side effect if extra address is not mapped or mapped to hardware impacted by read access) */
+  m68ki_read_16(ea);
 
   USE_CYCLES(count * CYC_MOVEM_W);
 }
@@ -15384,6 +15408,9 @@ static void m68k_op_movem_32_er_pi(void)
     }
   AY = ea;
 
+  /* MOVEM extra read cycle (can have side effect if extra address is not mapped or mapped to hardware impacted by read access) */
+  m68ki_read_16(ea);
+
   USE_CYCLES(count * CYC_MOVEM_L);
 }
 
@@ -15402,6 +15429,9 @@ static void m68k_op_movem_32_er_pcdi(void)
       ea += 4;
       count++;
     }
+
+  /* MOVEM extra read cycle (can have side effect if extra address is not mapped or mapped to hardware impacted by read access) */
+  m68ki_read_16(ea);
 
   USE_CYCLES(count * CYC_MOVEM_L);
 }
@@ -15422,6 +15452,9 @@ static void m68k_op_movem_32_er_pcix(void)
       count++;
     }
 
+  /* MOVEM extra read cycle (can have side effect if extra address is not mapped or mapped to hardware impacted by read access) */
+  m68ki_read_16(ea);
+
   USE_CYCLES(count * CYC_MOVEM_L);
 }
 
@@ -15440,6 +15473,9 @@ static void m68k_op_movem_32_er_ai(void)
       ea += 4;
       count++;
     }
+
+  /* MOVEM extra read cycle (can have side effect if extra address is not mapped or mapped to hardware impacted by read access) */
+  m68ki_read_16(ea);
 
   USE_CYCLES(count * CYC_MOVEM_L);
 }
@@ -15460,6 +15496,9 @@ static void m68k_op_movem_32_er_di(void)
       count++;
     }
 
+  /* MOVEM extra read cycle (can have side effect if extra address is not mapped or mapped to hardware impacted by read access) */
+  m68ki_read_16(ea);
+
   USE_CYCLES(count * CYC_MOVEM_L);
 }
 
@@ -15478,6 +15517,9 @@ static void m68k_op_movem_32_er_ix(void)
       ea += 4;
       count++;
     }
+
+  /* MOVEM extra read cycle (can have side effect if extra address is not mapped or mapped to hardware impacted by read access) */
+  m68ki_read_16(ea);
 
   USE_CYCLES(count * CYC_MOVEM_L);
 }
@@ -15498,6 +15540,9 @@ static void m68k_op_movem_32_er_aw(void)
       count++;
     }
 
+  /* MOVEM extra read cycle (can have side effect if extra address is not mapped or mapped to hardware impacted by read access) */
+  m68ki_read_16(ea);
+
   USE_CYCLES(count * CYC_MOVEM_L);
 }
 
@@ -15516,6 +15561,9 @@ static void m68k_op_movem_32_er_al(void)
       ea += 4;
       count++;
     }
+
+  /* MOVEM extra read cycle (can have side effect if extra address is not mapped or mapped to hardware impacted by read access) */
+  m68ki_read_16(ea);
 
   USE_CYCLES(count * CYC_MOVEM_L);
 }
