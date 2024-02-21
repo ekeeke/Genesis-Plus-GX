@@ -5,7 +5,7 @@
  *  Support for 16-bit & 8-bit hardware modes
  *
  *  Copyright (C) 1998-2003  Charles Mac Donald (original code)
- *  Copyright (C) 2007-2021  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2007-2024  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -659,6 +659,7 @@ void system_frame_gen(int do_skip)
 
   /* adjust timings for next frame */
   input_end_frame(mcycles_vdp);
+  m68k.refresh_cycles -= mcycles_vdp;
   m68k.cycles -= mcycles_vdp;
   Z80.cycles -= mcycles_vdp;
 }
@@ -983,6 +984,7 @@ void system_frame_scd(int do_skip)
   /* adjust timings for next frame */
   scd_end_frame(scd.cycles);
   input_end_frame(mcycles_vdp);
+  m68k.refresh_cycles -= mcycles_vdp;
   m68k.cycles -= mcycles_vdp;
   Z80.cycles -= mcycles_vdp;
 }

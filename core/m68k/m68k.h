@@ -238,7 +238,8 @@ typedef struct
 
   cpu_idle_t poll;      /* polling detection */
 
-  uint cycles;          /* current master cycle count */ 
+  sint cycles;          /* current master cycle count */ 
+  sint refresh_cycles;  /* external bus refresh cycle */ 
   uint cycle_end;       /* aimed master cycle count for current execution frame */
 
   uint dar[16];         /* Data and Address Registers */

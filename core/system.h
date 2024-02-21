@@ -5,7 +5,7 @@
  *  Support for 16-bit & 8-bit hardware modes
  *
  *  Copyright (C) 1998-2003  Charles Mac Donald (original code)
- *  Copyright (C) 2007-2022  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2007-2024  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -66,8 +66,8 @@
 #define MCYCLES_PER_LINE  3420
 
 /* Horizontal timing offsets when running in Z80 mode */
-#define SMS_CYCLE_OFFSET  530 
-#define PBC_CYCLE_OFFSET  560 
+#define SMS_CYCLE_OFFSET  530
+#define PBC_CYCLE_OFFSET  560
 
 typedef struct
 {
@@ -95,7 +95,6 @@ typedef struct
   blip_t* blips[3];     /* Blip Buffer resampling (stereo) */
 } t_snd;
 
-
 /* Global variables */
 extern t_bitmap bitmap;
 extern t_snd snd;
@@ -119,4 +118,3 @@ extern void system_frame_scd(int do_skip);
 extern void system_frame_sms(int do_skip);
 
 #endif /* _SYSTEM_H_ */
-

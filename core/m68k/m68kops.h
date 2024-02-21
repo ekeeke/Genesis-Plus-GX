@@ -8,7 +8,7 @@ INLINE void UseDivuCycles(uint32 dst, uint32 src)
   int i;
 
   /* minimum cycle time */
-  uint mcycles = 38 * MUL;
+  uint mcycles = 76 * MUL;
 
   /* 16-bit divisor */
   src <<= 16;
@@ -27,27 +27,33 @@ INLINE void UseDivuCycles(uint32 dst, uint32 src)
     {
       /* shift dividend and add two cycles */
       dst <<= 1;
-      mcycles += (2 * MUL);
+      mcycles += (4 * MUL);
 
       if (dst >= src)
       {
         /* apply divisor and remove one cycle */
         dst -= src;
-        mcycles -= 1 * MUL;
+        mcycles -= 2 * MUL;
       }
     }
   }
 
-  USE_CYCLES(mcycles << 1);
+  USE_CYCLES(mcycles);
+
+  /* one 68K bus refresh cycle should be skipped if instruction processing time is longer than refresh period (128 CPU cycles on Mega Drive / Genesis) */
+  if (mcycles >= (128*MUL))
+  {
+    m68ki_cpu.refresh_cycles += (128*MUL);
+  }
 }
 
 INLINE void UseDivsCycles(sint32 dst, sint16 src)
 {
   /* minimum cycle time */
-  uint mcycles = 6 * MUL;
+  uint mcycles = 12 * MUL;
 
   /* negative dividend */
-  if (dst < 0) mcycles += 1 * MUL;
+  if (dst < 0) mcycles += 2 * MUL;
 
   if ((abs(dst) >> 16) < abs(src))
   {
@@ -57,30 +63,36 @@ INLINE void UseDivsCycles(sint32 dst, sint16 src)
     uint32 quotient = abs(dst) / abs(src);
 
     /* add default cycle time */
-    mcycles += (55 * MUL);
+    mcycles += (110 * MUL);
 
     /* positive divisor */
     if (src >= 0)
     {
       /* check dividend sign */
-      if (dst >= 0) mcycles -= 1 * MUL;
-      else mcycles += 1 * MUL;
+      if (dst >= 0) mcycles -= 2 * MUL;
+      else mcycles += 2 * MUL;
     }
 
     /* check higher 15-bits of quotient */
     for (i=0; i<15; i++)
     {
       quotient >>= 1;
-      if (!(quotient & 1)) mcycles += 1 * MUL;
+      if (!(quotient & 1)) mcycles += 2 * MUL;
     }
   }
   else
   {
     /* absolute overflow */
-    mcycles += (2 * MUL);
+    mcycles += (4 * MUL);
   }
 
-  USE_CYCLES(mcycles << 1);
+  USE_CYCLES(mcycles);
+  
+  /* one 68K bus refresh cycle should be skipped if instruction processing time is longer than refresh period (128 CPU cycles on Mega Drive / Genesis) */
+  if (mcycles >= (128*MUL))
+  {
+    m68ki_cpu.refresh_cycles += (128*MUL);
+  }
 }
 
 INLINE void UseMuluCycles(uint16 src)
@@ -18692,6 +18704,7 @@ static void m68k_op_reset(void)
   {
     m68ki_output_reset()       /* auto-disable (see m68kcpu.h) */
     USE_CYCLES(CYC_RESET);
+    m68ki_cpu.refresh_cycles += (128*MUL); /* skip one 68K bus refresh cycle as instruction processing time is longer than refresh period (128 CPU cycles on Mega Drive / Genesis) */
     return;
   }
   m68ki_exception_privilege_violation();
