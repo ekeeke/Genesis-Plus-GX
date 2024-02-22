@@ -802,6 +802,8 @@ INLINE void word_ram_switch(uint8 mode)
   }
 }
 
+static void scd_write_word(unsigned int address, unsigned int data);
+
 static void scd_write_byte(unsigned int address, unsigned int data)
 {
   /* PCM area (8K) mirrored into $xF0000-$xF7FFF */
@@ -1123,16 +1125,27 @@ static void scd_write_byte(unsigned int address, unsigned int data)
 
     default:
     {
+      uint16 reg_16 = address & 0x1fe;
+
       /* SUB-CPU communication words */
-      if ((address & 0x1f0) == 0x20)
+      if ((reg_16 >= 0x20) && (reg_16 <= 0x2f))
       {
         s68k_poll_sync(1 << ((address - 0x10) & 0x1f));
       }
 
       /* MAIN-CPU communication words */
-      else if ((address & 0x1f0) == 0x10)
+      else if ((reg_16 >= 0x10) && (reg_16 <= 0x1f))
       {
         /* read-only (Sega Classic Arcade Collection) */
+        return;
+      }
+
+      /* word-only registers */
+      else if (((reg_16 >= 0x08) && (reg_16 <= 0x0d)) ||
+               ((reg_16 >= 0x34) && (reg_16 <= 0x35)) ||
+               ((reg_16 >= 0x5a) && (reg_16 <= 0x67)))
+      {
+        scd_write_word(address, (data << 8) | (data & 0xff));
         return;
       }
 
@@ -1140,12 +1153,12 @@ static void scd_write_byte(unsigned int address, unsigned int data)
       if (address & 1)
       {
         /* register LSB */
-        scd.regs[(address >> 1) & 0xff].byte.l = data;
+        scd.regs[reg_16 >> 1].byte.l = data;
         return;
       }
 
       /* register MSB */
-      scd.regs[(address >> 1) & 0xff].byte.h = data;
+      scd.regs[reg_16 >> 1].byte.h = data;
       return;
     }
   }
@@ -1412,7 +1425,7 @@ static void scd_write_word(unsigned int address, unsigned int data)
       return;
     }
 
-    case 0x0c: /* Stopwatch (word access only) */
+    case 0x0c: /* Stopwatch */
     {
       /* synchronize the counter with SUB-CPU */
       int ticks = (s68k.cycles - scd.stopwatch) / TIMERS_SCYCLES_RATIO;
