@@ -81,6 +81,7 @@ Genesis Plus GX 1.7.5 (xx/xx/xxxx) (Eke-Eke)
 * improved console region auto-detection for a few PAL-only games (The Smurfs Travel the World & Williams Arcade's Greatest Hits)
 * improved I2C EEPROM boards emulation accuracy
 * improved SVP memory handlers accuracy (fixes Virtua Racing debug mode)
+* improved accuracy of 68k access to Z80 bus delays
 * fixed Realtec mapper behavior on soft-reset and with TMSS hardware
 * fixed Game Genie / Pro Action Replay lock-on support when Mega CD hardware is enabled 
 * fixed Game Genie / Pro Action Replay lock-on support with games larger than 8MB
@@ -167,9 +168,9 @@ Genesis Plus GX 1.7.5 (xx/xx/xxxx) (Eke-Eke)
 * fixed Mode 1 rendering (TMS99xx "text" mode)
 * fixed Master System II extended video modes sprite parsing (fixes Mega Man 2 demo)
 * fixed Game Gear display rendering regression when left/right borders were disabled
-* fixed 68k cycles delay on invalid VRAM writes (fixes "Microcosm" intro loop)
 * fixed address/code potential corruption by one-instruction execution delay after HV interrupts activation (fixes Pugsy's Pyramids stage boss) 
 * optimized tile caching
+* reverted FIFO access timings hack when using invalid write code value
 
 [Core/Sound]
 ---------------

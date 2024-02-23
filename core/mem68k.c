@@ -140,6 +140,9 @@ unsigned int m68k_lockup_r_16 (unsigned int address)
 
 unsigned int z80_read_byte(unsigned int address)
 {
+  /* Z80 bus access latency */
+  m68k.cycles += 1 * 7;
+
   switch ((address >> 13) & 3)
   {
     case 2:   /* YM2612 */
@@ -172,6 +175,9 @@ unsigned int z80_read_word(unsigned int address)
 
 void z80_write_byte(unsigned int address, unsigned int data)
 {
+  /* Z80 bus access latency (fixes Pacman 2: New Adventures sound engine crashes & Puyo Puyo 2 crash when exiting option menu) */
+  m68k.cycles += 1 * 7;
+
   switch ((address >> 13) & 3)
   {
     case 2: /* YM2612 */
@@ -207,7 +213,6 @@ void z80_write_byte(unsigned int address, unsigned int data)
     default: /* ZRAM */
     {
       zram[address & 0x1FFF] = data;
-      m68k.cycles += 2 * 7; /* ZRAM access latency (fixes Pacman 2: New Adventures & Puyo Puyo 2) */
       return;
     }
   }
