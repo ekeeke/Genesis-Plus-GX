@@ -462,14 +462,14 @@ void system_frame_gen(int do_skip)
     v_counter = bitmap.viewport.h;
 
     /* delay between VBLANK flag & Vertical Interrupt (Dracula, OutRunners, VR Troopers) */
-    m68k_run(788);
+    m68k_run(vint_cycle);
     if (zstate == 1)
     {
-      z80_run(788);
+      z80_run(vint_cycle);
     }
 
     /* set VINT flag */
-    status |= 0x80;    
+    status |= 0x80;
    
     /* Vertical Interrupt */
     vint_pending = 0x20;
@@ -802,14 +802,14 @@ void system_frame_scd(int do_skip)
     v_counter = bitmap.viewport.h;
 
     /* delay between VBLANK flag & Vertical Interrupt (Dracula, OutRunners, VR Troopers) */
-    m68k_run(788);
+    m68k_run(vint_cycle);
     if (zstate == 1)
     {
-      z80_run(788);
+      z80_run(vint_cycle);
     }
 
     /* set VINT flag */
-    status |= 0x80;    
+    status |= 0x80;
 
     /* Vertical Interrupt */
     vint_pending = 0x20;

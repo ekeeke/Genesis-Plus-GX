@@ -52,6 +52,9 @@
   }                                                 \
   bg_name_dirty[name] |= (1 << ((addr >> 2) & 7));  \
 }
+/* VINT timings */
+#define VINT_H32_MCYCLE (770)
+#define VINT_H40_MCYCLE (788)
 
 /* HBLANK flag timings */
 #define HBLANK_H32_START_MCYCLE (280)
@@ -96,6 +99,7 @@ uint16 max_sprite_pixels;         /* Max. sprites pixels per line (parsing & ren
 int32 fifo_write_cnt;             /* VDP FIFO write count */
 uint32 fifo_slots;                /* VDP FIFO access slot count */
 uint32 hvc_latch;                 /* latched HV counter */
+uint32 vint_cycle;                /* VINT occurence cycle */
 const uint8 *hctab;               /* pointer to H Counter table */
 
 /* Function pointers */
@@ -330,6 +334,9 @@ void vdp_reset(void)
 
   /* default FIFO access slots timings */
   fifo_timing = (int *)fifo_timing_h32;
+
+  /* default VINT timing */
+  vint_cycle = VINT_H32_MCYCLE;
 
   /* default HBLANK flag timings */
   hblank_start_cycle = HBLANK_H32_START_MCYCLE;
@@ -1196,9 +1203,9 @@ unsigned int vdp_68k_ctrl_r(unsigned int cycles)
   /* Adjust cycle count relatively to start of line */
   cycles -= mcycles_vdp;
 
-  /* Cycle-accurate VINT flag (Ex-Mutants, Tyrant / Mega-Lo-Mania, Marvel Land) */
+  /* Cycle-accurate VINT flag (Ex-Mutants, Tyrant / Mega-Lo-Mania, Marvel Land, Pacman 2 - New Adventures / Pac-Jr minigame) */
   /* this allows VINT flag to be read just before vertical interrupt is being triggered */
-  if ((v_counter == bitmap.viewport.h) && (cycles >= 788))
+  if ((v_counter == bitmap.viewport.h) && (cycles >= vint_cycle))
   {
     /* check Z80 interrupt state to assure VINT has not already been triggered (and flag cleared) */
     if (Z80.irq_state != ASSERT_LINE)
@@ -1985,6 +1992,9 @@ static void vdp_reg_w(unsigned int r, unsigned int d, unsigned int cycles)
           /* FIFO access slots timings */
           fifo_timing = (int *)fifo_timing_h40;
 
+          /* VINT timing */
+          vint_cycle = VINT_H40_MCYCLE;
+
           /* HBLANK flag timings */
           hblank_start_cycle = HBLANK_H40_START_MCYCLE;
           hblank_end_cycle = HBLANK_H40_END_MCYCLE;
@@ -2008,6 +2018,9 @@ static void vdp_reg_w(unsigned int r, unsigned int d, unsigned int cycles)
 
           /* FIFO access slots timings */
           fifo_timing = (int *)fifo_timing_h32;
+
+          /* VINT timing */
+          vint_cycle = VINT_H32_MCYCLE;
 
           /* HBLANK flag timings */
           hblank_start_cycle = HBLANK_H32_START_MCYCLE;

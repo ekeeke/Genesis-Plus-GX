@@ -79,6 +79,7 @@ extern uint16 max_sprite_pixels;
 extern int32 fifo_write_cnt;
 extern uint32 fifo_slots;
 extern uint32 hvc_latch;
+extern uint32 vint_cycle;
 extern const uint8 *hctab;
 
 /* Function pointers */
