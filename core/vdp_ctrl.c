@@ -5,7 +5,7 @@
  *  Support for SG-1000 (TMS99xx & 315-5066), Master System (315-5124 & 315-5246), Game Gear & Mega Drive VDP
  *
  *  Copyright (C) 1998-2003  Charles Mac Donald (original code)
- *  Copyright (C) 2007-2023  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2007-2024  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -835,18 +835,12 @@ void vdp_68k_ctrl_w(unsigned int data)
   /* 
      FIFO emulation (Chaos Engine/Soldier of Fortune, Double Clutch, Sol Deace) 
      --------------------------------------------------------------------------
-     Each VRAM access is byte wide, so one VRAM write (word) need two slot access.
+     Each VRAM access is byte wide, so one VRAM write (word) need two access slots.
 
-      NOTE: Invalid code 0x02 (register write) should not behave the same as VRAM
-      access, i.e data is ignored and only one access slot is used for each word, 
-      BUT a few games ("Clue", "Microcosm") which accidentally corrupt code value 
-      will have issues when emulating FIFO timings. They likely work fine on real
-      hardware because of periodical 68k wait-states which have been observed and
-      would naturaly add some delay between writes. Until those wait-states are
-      accurately measured and emulated, delay is forced when invalid code value
-      is being used.
+     NOTE: Invalid codes 0x00, 0x08 and 0x09 behaves the same as VRAM access (0x01) i.e,
+     although no data is written, two access slots are required to empty the FIFO entry. 
   */ 
-  fifo_byte_access = ((code & 0x0F) <= 0x02);
+  fifo_byte_access = (code & 0x06) ? 0 : 1;
 }
 
 /* Mega Drive VDP control port specific (MS compatibility mode) */
@@ -2278,8 +2272,6 @@ static void vdp_bus_w(unsigned int data)
 
     default:
     {
-      /* add some delay until 68k periodical wait-states are accurately emulated ("Clue", "Microcosm") */
-      m68k.cycles += 2;
 #ifdef LOGERROR
       error("[%d(%d)][%d(%d)] Invalid (%d) 0x%x write -> 0x%x (%x)\n", v_counter, (v_counter + (m68k.cycles - mcycles_vdp)/MCYCLES_PER_LINE)%lines_per_frame, m68k.cycles, m68k.cycles%MCYCLES_PER_LINE, code, addr, data, m68k_get_reg(M68K_REG_PC));
 #endif
