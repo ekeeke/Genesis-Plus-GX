@@ -622,6 +622,13 @@ void vdp_dma_update(unsigned int cycles)
 
   /* Adjust for 68k bus DMA to VRAM (one word = 2 access) or DMA Copy (one read + one write = 2 access) */
   rate = rate >> (dma_type & 1);
+  
+  /* Adjust for 68k bus DMA to CRAM or VSRAM when display is off (one additional access slot is lost for each refresh slot) */
+  if (dma_type == 0)
+  {
+    if (rate == 166) rate = 161;      /* 5 refresh slots per line in H32 mode when display is off */
+    else if (rate == 204) rate = 198; /* 6 refresh slots per line in H40 mode when display is off */
+  }
 
   /* Remaining DMA cycles */
   if (status & 8)
@@ -2443,6 +2450,9 @@ static void vdp_68k_data_w_m5(unsigned int data)
     {
       dma_length = 0x10000;
     }
+
+    /* Take into account initial data word processing */
+    dma_length += 2;
 
     /* Trigger DMA */
     vdp_dma_update(m68k.cycles);
