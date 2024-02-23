@@ -52,6 +52,8 @@ extern uint8 hint_pending;
 extern uint8 vint_pending;
 extern uint16 status;
 extern uint32 dma_length;
+extern uint32 dma_endCycles;
+extern uint8 dma_type;
 
 /* Global variables */
 extern uint16 ntab;

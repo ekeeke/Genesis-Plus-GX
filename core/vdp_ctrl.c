@@ -63,15 +63,17 @@
 #define HBLANK_H40_END_MCYCLE   (872)
 
 /* VDP context */
-uint8 ALIGNED_(4) sat[0x400];    /* Internal copy of sprite attribute table */
-uint8 ALIGNED_(4) vram[0x10000]; /* Video RAM (64K x 8-bit) */
-uint8 ALIGNED_(4) cram[0x80];    /* On-chip color RAM (64 x 9-bit) */
-uint8 ALIGNED_(4) vsram[0x80];   /* On-chip vertical scroll RAM (40 x 11-bit) */
-uint8 reg[0x20];                 /* Internal VDP registers (23 x 8-bit) */
-uint8 hint_pending;              /* 0= Line interrupt is pending */
-uint8 vint_pending;              /* 1= Frame interrupt is pending */
-uint16 status;                   /* VDP status flags */
-uint32 dma_length;               /* DMA remaining length */
+uint8 ALIGNED_(4) sat[0x400];     /* Internal copy of sprite attribute table */
+uint8 ALIGNED_(4) vram[0x10000];  /* Video RAM (64K x 8-bit) */
+uint8 ALIGNED_(4) cram[0x80];     /* On-chip color RAM (64 x 9-bit) */
+uint8 ALIGNED_(4) vsram[0x80];    /* On-chip vertical scroll RAM (40 x 11-bit) */
+uint8 reg[0x20];                  /* Internal VDP registers (23 x 8-bit) */
+uint8 hint_pending;               /* 0= Line interrupt is pending */
+uint8 vint_pending;               /* 1= Frame interrupt is pending */
+uint16 status;                    /* VDP status flags */
+uint32 dma_length;                /* DMA remaining length */
+uint32 dma_endCycles;             /* DMA end cycle */
+uint8 dma_type;                   /* DMA mode */
 
 /* Global variables */
 uint16 ntab;                      /* Name table A base address */
@@ -135,23 +137,21 @@ static const uint8 shift_table[]        = { 6, 7, 0, 8 };
 static const uint8 col_mask_table[]     = { 0x0F, 0x1F, 0x0F, 0x3F };
 static const uint16 row_mask_table[]    = { 0x0FF, 0x1FF, 0x2FF, 0x3FF };
 
-static uint8 border;          /* Border color index */
-static uint8 pending;         /* Pending write flag */
-static uint8 code;            /* Code register */
-static uint8 dma_type;        /* DMA mode */
-static uint16 addr;           /* Address register */
-static uint16 addr_latch;     /* Latched A15, A14 of address */
-static uint16 sat_base_mask;  /* Base bits of SAT */
-static uint16 sat_addr_mask;  /* Index bits of SAT */
-static uint16 dma_src;        /* DMA source address */
-static uint32 dma_endCycles;  /* 68k cycles to DMA end */
-static int dmafill;           /* DMA Fill pending flag */
-static int cached_write;      /* 2nd part of 32-bit CTRL port write (Genesis mode) or LSB of CRAM data (Game Gear mode) */
-static uint16 fifo[4];        /* FIFO ring-buffer */
-static int fifo_idx;          /* FIFO write index */
-static int fifo_byte_access;  /* FIFO byte access flag */
-static uint32 fifo_cycles;    /* FIFO next access cycle */
-static int *fifo_timing;      /* FIFO slots timing table */
+static uint8 border;            /* Border color index */
+static uint8 pending;           /* Pending write flag */
+static uint8 code;              /* Code register */
+static uint16 addr;             /* Address register */
+static uint16 addr_latch;       /* Latched A15, A14 of address */
+static uint16 sat_base_mask;    /* Base bits of SAT */
+static uint16 sat_addr_mask;    /* Index bits of SAT */
+static uint16 dma_src;          /* DMA source address */
+static int dmafill;             /* DMA Fill pending flag */
+static int cached_write;        /* 2nd part of 32-bit CTRL port write (Genesis mode) or LSB of CRAM data (Game Gear mode) */
+static uint16 fifo[4];          /* FIFO ring-buffer */
+static int fifo_idx;            /* FIFO write index */
+static int fifo_byte_access;    /* FIFO byte access flag */
+static uint32 fifo_cycles;      /* FIFO next access cycle */
+static int *fifo_timing;        /* FIFO slots timing table */
 static int hblank_start_cycle;  /* HBLANK flag set cycle */
 static int hblank_end_cycle;    /* HBLANK flag clear cycle */
 
@@ -630,7 +630,7 @@ void vdp_dma_update(unsigned int cycles)
     else if (rate == 204) rate = 198; /* 6 refresh slots per line in H40 mode when display is off */
   }
 
-  /* Remaining DMA cycles */
+  /* Available DMA cycles */
   if (status & 8)
   {
     /* Process DMA until the end of VBLANK */
@@ -645,14 +645,14 @@ void vdp_dma_update(unsigned int cycles)
     dma_cycles = (mcycles_vdp + MCYCLES_PER_LINE) - cycles;
   }
 
-  /* Remaining DMA bytes for that line */
+  /* Max number of DMA bytes to be processed */
   dma_bytes = (dma_cycles * rate) / MCYCLES_PER_LINE;
 
 #ifdef LOGVDP
   error("[%d(%d)][%d(%d)] DMA type %d (%d access/line)(%d cycles left)-> %d access (%d remaining) (%x)\n", v_counter, (v_counter + (cycles - mcycles_vdp)/MCYCLES_PER_LINE)%lines_per_frame, cycles, cycles%MCYCLES_PER_LINE,dma_type, rate, dma_cycles, dma_bytes, dma_length, m68k_get_reg(M68K_REG_PC));
 #endif
 
-  /* Check if DMA can be finished before the end of current line */
+  /* Check if DMA can be finished within current timeframe */
   if (dma_length < dma_bytes)
   {
     /* Adjust remaining DMA bytes */
@@ -660,25 +660,35 @@ void vdp_dma_update(unsigned int cycles)
     dma_cycles = (dma_bytes * MCYCLES_PER_LINE) / rate;
   }
 
-  /* Update DMA timings */
+  /* Set DMA end cycle */
+  dma_endCycles = cycles + dma_cycles;
+#ifdef LOGVDP
+  error("-->DMA ends at %d cycles\n", dma_endCycles);
+#endif
+
+  /* Check if 68k bus is accessed by DMA */
   if (dma_type < 2)
   {
-    /* 68K is frozen during DMA from 68k bus */
-    m68k.cycles = cycles + dma_cycles;
+    /* 68K is waiting during DMA from 68k bus */
+    m68k.cycles = dma_endCycles;
 #ifdef LOGVDP
-    error("-->CPU frozen for %d cycles\n", dma_cycles);
+    error("-->68K CPU waiting for %d cycles\n", dma_cycles);
 #endif
+
+    /* Check if Z80 is waiting for 68k bus */
+    if (zstate & 4)
+    {
+      /* force Z80 to wait until end of DMA timeframe */
+      Z80.cycles = dma_endCycles;
+#ifdef LOGVDP
+      error("-->Z80 CPU waiting for %d cycles\n", dma_cycles);
+#endif
+    }
   }
   else
   {
-    /* Set DMA Busy flag */
+    /* Set DMA Busy flag only when 68K can read it */
     status |= 0x02;
-
-    /* 68K is still running, set DMA end cycle */
-    dma_endCycles = cycles + dma_cycles;
-#ifdef LOGVDP
-    error("-->DMA ends in %d cycles\n", dma_cycles);
-#endif
   }
 
   /* Process DMA */
@@ -707,6 +717,9 @@ void vdp_dma_update(unsigned int cycles)
         vdp_68k_ctrl_w(cached_write);
         cached_write = -1;
       }
+
+      /* indicate Z80 is not waiting for 68k bus at the end of DMA timeframe */
+      zstate &= ~4;
     }
   }
 }
