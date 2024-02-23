@@ -1986,8 +1986,8 @@ static void vdp_reg_w(unsigned int r, unsigned int d, unsigned int cycles)
           fifo_timing = (int *)fifo_timing_h40;
 
           /* HBLANK flag timings */
-          hblank_start_cycle = HBLANK_H32_START_MCYCLE;
-          hblank_end_cycle = HBLANK_H32_END_MCYCLE;
+          hblank_start_cycle = HBLANK_H40_START_MCYCLE;
+          hblank_end_cycle = HBLANK_H40_END_MCYCLE;
         }
         else
         {
@@ -2010,8 +2010,8 @@ static void vdp_reg_w(unsigned int r, unsigned int d, unsigned int cycles)
           fifo_timing = (int *)fifo_timing_h32;
 
           /* HBLANK flag timings */
-          hblank_start_cycle = HBLANK_H40_START_MCYCLE;
-          hblank_end_cycle = HBLANK_H40_END_MCYCLE;
+          hblank_start_cycle = HBLANK_H32_START_MCYCLE;
+          hblank_end_cycle = HBLANK_H32_END_MCYCLE;
         }
 
         /* Active screen width modified during VBLANK will be applied on upcoming frame */
