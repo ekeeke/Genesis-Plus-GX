@@ -80,6 +80,7 @@ Genesis Plus GX 1.7.5 (xx/xx/xxxx) (Eke-Eke)
 * added emulation of Micro Machines USA on-board TMSS bypass logic hardware
 * added SRAM support for games larger than 8MB
 * improved console region auto-detection for a few PAL-only games (The Smurfs Travel the World & Williams Arcade's Greatest Hits)
+* improved invalid SRAM header info detection (fixes crashes with some unlicensed hacks/translations)
 * improved I2C EEPROM boards emulation accuracy
 * improved SVP memory handlers accuracy (fixes Virtua Racing debug mode)
 * improved accuracy of 68k access to Z80 bus delays

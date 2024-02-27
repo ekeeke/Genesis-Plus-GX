@@ -2,7 +2,7 @@
  *  Genesis Plus
  *  Backup RAM support
  *
- *  Copyright (C) 2007-2021  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2007-2024  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -99,16 +99,25 @@ void sram_init(void)
       sram.end = 0x203fff;
     }
 
-    /* fixe games indicating internal RAM as volatile external RAM (Feng Kuang Tao Hua Yuan) */
+    /* fixes games indicating internal RAM as volatile external RAM (Feng Kuang Tao Hua Yuan) */
     else if (sram.start == 0xff0000)
     {
       /* backup RAM should be disabled */
       sram.on = 0;
     }
 
-    /* fixe other bad header informations */
+    /* fixes games with invalid SRAM start address */
+    else if (sram.start >= 0x800000)
+    {
+      /* forces 64KB static RAM mapped to $200000-$20ffff (default) */
+      sram.start = 0x200000;
+      sram.end = 0x20ffff;
+    }
+
+    /* fixes games with invalid SRAM end address */
     else if ((sram.start > sram.end) || ((sram.end - sram.start) >= 0x10000))
     {
+      /* forces 64KB static RAM max */
       sram.end = sram.start + 0xffff;
     }
   }
