@@ -2464,9 +2464,6 @@ static void vdp_68k_data_w_m5(unsigned int data)
       dma_length = 0x10000;
     }
 
-    /* Take into account initial data word processing */
-    dma_length += 2;
-
     /* Trigger DMA */
     vdp_dma_update(m68k.cycles);
   }
