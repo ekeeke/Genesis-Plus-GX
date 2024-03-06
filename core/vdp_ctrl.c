@@ -52,6 +52,7 @@
   }                                                 \
   bg_name_dirty[name] |= (1 << ((addr >> 2) & 7));  \
 }
+
 /* VINT timings */
 #define VINT_H32_MCYCLE (770)
 #define VINT_H40_MCYCLE (788)
@@ -98,8 +99,7 @@ uint16 v_counter;                 /* Vertical counter */
 uint16 vc_max;                    /* Vertical counter overflow value */
 uint16 lines_per_frame;           /* PAL: 313 lines, NTSC: 262 lines */
 uint16 max_sprite_pixels;         /* Max. sprites pixels per line (parsing & rendering) */
-int32 fifo_write_cnt;             /* VDP FIFO write count */
-uint32 fifo_slots;                /* VDP FIFO access slot count */
+uint32 fifo_cycles[4];            /* VDP FIFO read-out cycles */
 uint32 hvc_latch;                 /* latched HV counter */
 uint32 vint_cycle;                /* VINT occurence cycle */
 const uint8 *hctab;               /* pointer to H Counter table */
@@ -123,7 +123,6 @@ static void vdp_z80_data_w_ms(unsigned int data);
 static void vdp_z80_data_w_gg(unsigned int data);
 static void vdp_z80_data_w_sg(unsigned int data);
 static void vdp_bus_w(unsigned int data);
-static void vdp_fifo_update(unsigned int cycles);
 static void vdp_reg_w(unsigned int r, unsigned int d, unsigned int cycles);
 static void vdp_dma_68k_ext(unsigned int length);
 static void vdp_dma_68k_ram(unsigned int length);
@@ -150,7 +149,6 @@ static int cached_write;        /* 2nd part of 32-bit CTRL port write (Genesis m
 static uint16 fifo[4];          /* FIFO ring-buffer */
 static int fifo_idx;            /* FIFO write index */
 static int fifo_byte_access;    /* FIFO byte access flag */
-static uint32 fifo_cycles;      /* FIFO next access cycle */
 static int *fifo_timing;        /* FIFO slots timing table */
 static int hblank_start_cycle;  /* HBLANK flag set cycle */
 static int hblank_end_cycle;    /* HBLANK flag clear cycle */
@@ -170,16 +168,20 @@ static const uint16 vc_table[4][2] =
 };
 
 /* FIFO access slots timings */
-static const int fifo_timing_h32[16+4] = 
+static const int fifo_timing_h32[] = 
 {
   230, 510, 810, 970, 1130, 1450, 1610, 1770, 2090, 2250, 2410, 2730, 2890, 3050, 3350, 3370,
   MCYCLES_PER_LINE + 230, MCYCLES_PER_LINE + 510, MCYCLES_PER_LINE + 810, MCYCLES_PER_LINE + 970, 
+  MCYCLES_PER_LINE + 1130, MCYCLES_PER_LINE + 1450, MCYCLES_PER_LINE + 1610, MCYCLES_PER_LINE + 1770, 
+  MCYCLES_PER_LINE + 2090, MCYCLES_PER_LINE + 2250, MCYCLES_PER_LINE + 2410, MCYCLES_PER_LINE + 2730 
 };
 
-static const int fifo_timing_h40[18+4] = 
+static const int fifo_timing_h40[] = 
 {
   352, 820, 948, 1076, 1332, 1460, 1588, 1844, 1972, 2100, 2356, 2484, 2612, 2868, 2996, 3124, 3364, 3380,
   MCYCLES_PER_LINE + 352, MCYCLES_PER_LINE + 820, MCYCLES_PER_LINE + 948, MCYCLES_PER_LINE + 1076, 
+  MCYCLES_PER_LINE + 1332, MCYCLES_PER_LINE + 1460, MCYCLES_PER_LINE + 1588, MCYCLES_PER_LINE + 1844, 
+  MCYCLES_PER_LINE + 1972, MCYCLES_PER_LINE + 2100, MCYCLES_PER_LINE + 2356, MCYCLES_PER_LINE + 2484
 };
 
 /* DMA Timings (number of access slots per line) */
@@ -276,9 +278,6 @@ void vdp_reset(void)
   odd_frame       = 0;
   im2_flag        = 0;
   interlaced      = 0;
-  fifo_write_cnt  = 0;
-  fifo_cycles     = 0;
-  fifo_slots      = 0;
   fifo_idx        = 0;
   cached_write    = -1;
   fifo_byte_access = 1;
@@ -306,10 +305,10 @@ void vdp_reset(void)
   /* default Window clipping */
   window_clip(0,0);
 
-  /* reset VDP status (FIFO empty flag is set) */
+  /* reset VDP status */
   if (system_hw & SYSTEM_MD)
   {
-    status = vdp_pal | 0x200;
+    status = vdp_pal;
   }
   else
   {
@@ -1194,12 +1193,6 @@ unsigned int vdp_68k_ctrl_r(unsigned int cycles)
   /* Cycle-accurate VDP status read (adjust CPU time with current instruction execution time) */
   cycles += m68k_cycles();
 
-  /* Update FIFO status flags if not empty */
-  if (fifo_write_cnt)
-  {
-    vdp_fifo_update(cycles);
-  }
-
   /* Check if DMA Busy flag is set */
   if (status & 2)
   {
@@ -1219,6 +1212,20 @@ unsigned int vdp_68k_ctrl_r(unsigned int cycles)
 
   /* Clear SOVR & SCOL flags */
   status &= 0xFF9F;
+
+  /* Check if FIFO last entry read-out cycle has been reached */
+  if (cycles >= fifo_cycles[(fifo_idx + 3) & 3])
+  {
+    /* FIFO is empty */
+    temp |= 0x200;
+  }
+
+  /* Check if FIFO oldest entry read-out cycle is not yet reached */
+  else if (cycles < fifo_cycles[fifo_idx])
+  {
+    /* FIFO is full */
+    temp |= 0x100;
+  }
 
   /* VBLANK flag is set when display is disabled */
   if (!(reg[1] & 0x40))
@@ -1991,13 +1998,6 @@ static void vdp_reg_w(unsigned int r, unsigned int d, unsigned int cycles)
       /* Active display width */
       if (r & 0x01)
       {
-        /* FIFO access slots timings depend on active width */
-        if (fifo_slots)
-        {
-          /* Synchronize VDP FIFO */
-          vdp_fifo_update(cycles);
-        }
-
         if (d & 0x01)
         {
           /* Update display-dependant registers */
@@ -2113,68 +2113,6 @@ static void vdp_reg_w(unsigned int r, unsigned int d, unsigned int cycles)
     }
   }
 }
-
-/*--------------------------------------------------------------------------*/
-/*  FIFO emulation (Mega Drive VDP specific)                                */
-/*  ----------------------------------------                                */
-/*                                                                          */
-/*  CPU access to VRAM, CRAM & VSRAM is limited during active display:      */
-/*    H32 mode -> 16 access per line                                        */
-/*    H40 mode -> 18 access per line                                        */
-/*                                                                          */
-/*  with fixed access slots timings detailled below.                        */
-/*                                                                          */
-/*  Each VRAM access is byte wide, so one VRAM write (word) need two slots. */
-/*                                                                          */
-/*--------------------------------------------------------------------------*/
-
-static void vdp_fifo_update(unsigned int cycles)
-{
-  int fifo_read_cnt, line_slots = 0;
-
-  /* number of access slots up to current line */
-  int total_slots = dma_timing[0][reg[12] & 1] * ((v_counter + 1) % lines_per_frame);
-
-  /* number of access slots within current line */
-  cycles -= mcycles_vdp;
-  while (fifo_timing[line_slots] <= cycles)
-  {
-    line_slots++;
-  }
-
-  /* number of processed FIFO entries since last access (byte access needs two slots to process one FIFO word) */
-  fifo_read_cnt = (total_slots + line_slots - fifo_slots) >> fifo_byte_access;
-
-  if (fifo_read_cnt > 0)
-  {
-    /* process FIFO entries */
-    fifo_write_cnt -= fifo_read_cnt;
-
-    /* Clear FIFO full flag */
-    status &= 0xFEFF;
-
-    if (fifo_write_cnt <= 0)
-    {
-      /* No more FIFO entries */
-      fifo_write_cnt = 0;
-
-      /* Set FIFO empty flag */
-      status |= 0x200;
-
-      /* Reinitialize FIFO access slot counter */
-      fifo_slots = total_slots + line_slots;
-    }
-    else
-    {
-      /* Update FIFO access slot counter */
-      fifo_slots += (fifo_read_cnt << fifo_byte_access);
-    }
-  }
-
-  /* next FIFO update cycle */
-  fifo_cycles = mcycles_vdp + fifo_timing[fifo_slots - total_slots + fifo_byte_access];
-}
-
 
 /*--------------------------------------------------------------------------*/
 /* Internal 16-bit data bus access function (Mode 5 only)                   */
@@ -2335,29 +2273,31 @@ static void vdp_68k_data_w_m4(unsigned int data)
   /* Restricted VDP writes during active display */
   if (!(status & 8) && (reg[1] & 0x40))
   {
-    /* Update VDP FIFO */
-    vdp_fifo_update(m68k.cycles);
+    int slot = 0;
 
-    /* Clear FIFO empty flag */
-    status &= 0xFDFF;
+    /* Cycle-accurate VDP data port access */
+    int cycles = m68k.cycles;
 
-    /* up to 4 words can be stored */
-    if (fifo_write_cnt < 4)
+    /* Check against last FIFO entry read-out cycle */
+    if (cycles < fifo_cycles[(fifo_idx + 3) & 3])
     {
-      /* Increment FIFO counter */
-      fifo_write_cnt++;
+      /* Check against oldest FIFO entry read-out cycle */
+      if (cycles < fifo_cycles[fifo_idx])
+      {
+        /* FIFO is full, 68k waits until oldest FIFO entry is processed (Chaos Engine / Soldiers of Fortune, Double Clutch, Titan Overdrive Demo) */
+        m68k.cycles = (((fifo_cycles[fifo_idx] + 6) / 7) * 7);
+      }
 
-      /* Set FIFO full flag if 4 words are stored */
-      status |= ((fifo_write_cnt & 4) << 6);
+      /* FIFO is not empty, next FIFO entry will be processed after last FIFO entry */
+      cycles = fifo_cycles[(fifo_idx + 3) & 3];
     }
-    else
-    {
-      /* CPU is halted until next FIFO entry processing */
-      m68k.cycles = fifo_cycles;
 
-      /* Update FIFO access slot counter */
-      fifo_slots += (fifo_byte_access + 1);
-    }
+    /* Determine next FIFO entry processing slot */
+    cycles -= mcycles_vdp;
+    while (cycles >= fifo_timing[slot]) slot++;
+
+    /* Update last FIFO entry read-out cycle */
+    fifo_cycles[fifo_idx] = mcycles_vdp + fifo_timing[slot + fifo_byte_access];
   }
 
   /* Check destination code */
@@ -2427,31 +2367,33 @@ static void vdp_68k_data_w_m5(unsigned int data)
   /* Restricted VDP writes during active display */
   if (!(status & 8) && (reg[1] & 0x40))
   {
-    /* Update VDP FIFO */
-    vdp_fifo_update(m68k.cycles);
+    int slot = 0;
 
-    /* Clear FIFO empty flag */
-    status &= 0xFDFF;
+    /* Cycle-accurate VDP data port access */
+    int cycles = m68k.cycles;
 
-    /* up to 4 words can be stored */
-    if (fifo_write_cnt < 4)
+    /* Check against last FIFO entry read-out cycle */
+    if (cycles < fifo_cycles[(fifo_idx + 3) & 3])
     {
-      /* Increment FIFO counter */
-      fifo_write_cnt++;
+      /* Check against oldest FIFO entry read-out cycle */
+      if (cycles < fifo_cycles[fifo_idx])
+      {
+        /* FIFO is full, 68k waits until oldest FIFO entry is processed (Chaos Engine / Soldiers of Fortune, Double Clutch, Titan Overdrive Demo) */
+        m68k.cycles = (((fifo_cycles[fifo_idx] + 6) / 7) * 7);
+      }
 
-      /* Set FIFO full flag if 4 words are stored */
-      status |= ((fifo_write_cnt & 4) << 6);
+      /* FIFO is not empty, next FIFO entry will be processed after last FIFO entry */
+      cycles = fifo_cycles[(fifo_idx + 3) & 3];
     }
-    else
-    {
-      /* CPU is halted until next FIFO entry processing (Chaos Engine / Soldiers of Fortune, Double Clutch, Titan Overdrive Demo) */
-      m68k.cycles = fifo_cycles;
 
-      /* Update FIFO access slot counter */
-      fifo_slots += (fifo_byte_access + 1);
-    }
+    /* Determine next FIFO entry processing slot */
+    cycles -= mcycles_vdp;
+    while (cycles >= fifo_timing[slot]) slot++;
+
+    /* Update last FIFO entry read-out cycle */
+    fifo_cycles[fifo_idx] = mcycles_vdp + fifo_timing[slot + fifo_byte_access];
   }
-  
+
   /* Write data */
   vdp_bus_w(data);
 
@@ -3193,7 +3135,7 @@ static void vdp_dma_fill(unsigned int length)
     {
       int name;
 
-      /* Get source data from last written FIFO  entry */
+      /* Get source data from last written FIFO entry */
       uint8 data = fifo[(fifo_idx+3)&3] >> 8;
 
       do

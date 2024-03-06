@@ -159,6 +159,7 @@ Genesis Plus GX 1.7.5 (xx/xx/xxxx) (Eke-Eke)
 * improved Mode 5 sprites parsing accuracy (verified on real hardware)
 * improved Mode 5 sprites rendering timings (fixes "Overdrive" demo)
 * improved FIFO timings accuracy (fixes "Overdrive" Demo)
+* improved FIFO emulation (fixes potential lockup when switching between H32 & H40 mode during active display)
 * improved H-Counter accuracy in H32 mode
 * improved VDP status timing accuracy
 * improved HBLANK flag timing accuracy (verified on real hardware by Nemesis)
