@@ -41,6 +41,14 @@ ifneq ($(OS),Windows_NT)
 DEFINES += -DHAVE_ALLOCA_H
 endif
 
+ifneq ($(findstring Darwin,$(shell uname -a)),)
+	platform = osx
+endif
+
+ifeq ($(platform), osx)
+	CFLAGS   += -Winvalid-utf8 -Wstrict-prototypes
+endif
+
 SRCDIR    = ../core
 INCLUDES  = -I$(SRCDIR) -I$(SRCDIR)/z80 -I$(SRCDIR)/m68k -I$(SRCDIR)/sound -I$(SRCDIR)/input_hw -I$(SRCDIR)/cart_hw -I$(SRCDIR)/cart_hw/svp -I$(SRCDIR)/cd_hw -I$(SRCDIR)/ntsc -I$(SRCDIR)/tremor -I$(SRCDIR)/../sdl -I$(SRCDIR)/../sdl/sdl2
 LIBS	  = `sdl2-config --libs` -lz -lm
