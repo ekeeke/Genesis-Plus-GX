@@ -2,7 +2,7 @@
 #ifndef _CONFIG_H_
 #define _CONFIG_H_
 
-#include "shared.h"
+#include "types.h"
 
 /****************************************************************************
  * Config Option 
