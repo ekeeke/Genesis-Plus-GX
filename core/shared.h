@@ -1,10 +1,6 @@
 #ifndef _SHARED_H_
 #define _SHARED_H_
 
-#include "macros.h"
-#include "loadrom.h"
-#include "m68k.h"
-#include "z80.h"
 #include "system.h"
 #include "genesis.h"
 #include "vdp_ctrl.h"

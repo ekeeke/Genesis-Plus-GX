@@ -41,6 +41,7 @@
 #include <fileio.h>
 #include <ctype.h>
 #include "shared.h"
+#include "loadrom.h"
 
 /*** ROM Information ***/
 #define ROMCONSOLE    256

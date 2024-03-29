@@ -10,20 +10,12 @@
 *                                                                              *
 *******************************************************************************/
 
-#ifndef OSD_CPU_H
-#define OSD_CPU_H
+#pragma once
 
 #undef TRUE
 #undef FALSE
 #define TRUE  1
 #define FALSE 0
-
-typedef unsigned char   UINT8;
-typedef unsigned short  UINT16;
-typedef unsigned int    UINT32;
-typedef signed char     INT8;
-typedef signed short    INT16;
-typedef signed int      INT32;
 
 /******************************************************************************
  * Union of UINT8, UINT16 and UINT32 in native endianess of the target
@@ -44,4 +36,3 @@ typedef union {
   UINT32 d;
 }  PAIR;
 
-#endif  /* defined OSD_CPU_H */

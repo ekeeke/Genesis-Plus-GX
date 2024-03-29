@@ -37,7 +37,9 @@
  ****************************************************************************************/
 
 #include "shared.h"
-#include "gamepad.h"
+#include "../input_hw/gamepad.h"
+#include "../loadrom.h"
+#include "m68k.h"
 
 /* Some notes from 8BitWizard (http://gendev.spritesmind.net/forum/viewtopic.php?t=206):
  *

@@ -38,6 +38,7 @@
  ****************************************************************************************/
 
 #include <config.h>
+#include "../loadrom.h"
 #include "shared.h"
 #include "gamepad.h"
 #include "lightgun.h"

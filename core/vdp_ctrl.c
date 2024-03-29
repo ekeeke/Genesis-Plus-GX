@@ -43,6 +43,8 @@
 #include <config.h>
 #include "shared.h"
 #include "hvc.h"
+#include "m68k.h"
+#include "z80.h"
 
 /* Mark a pattern as modified */
 #define MARK_BG_DIRTY(addr)                         \

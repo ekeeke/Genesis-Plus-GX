@@ -44,6 +44,8 @@
 #include <osd.h>
 #include "shared.h"
 #include "eq.h"
+#include "m68k.h"
+#include "z80.h"
 
 /* Global variables */
 t_bitmap bitmap;

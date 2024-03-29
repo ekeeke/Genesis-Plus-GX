@@ -40,6 +40,7 @@
 #include <stdlib.h>
 #include "shared.h"
 #include "megasd.h"
+#include "m68k.h"
 
 #if defined(USE_LIBTREMOR) || defined(USE_LIBVORBIS)
 #define SUPPORTED_EXT 20

@@ -39,6 +39,8 @@
 
 #include "shared.h"
 #include "gamepad.h"
+#include "m68k.h"
+#include "z80.h"
 
 static struct
 {

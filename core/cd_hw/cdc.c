@@ -37,6 +37,7 @@
  ****************************************************************************************/
 
 #include "shared.h"
+#include "m68k.h"
 
 /* IFSTAT register bitmasks */
 #define BIT_DTEI  0x40

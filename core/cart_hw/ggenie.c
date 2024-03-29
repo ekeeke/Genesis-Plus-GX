@@ -42,6 +42,7 @@
 #include <osd.h>
 #include <fileio.h>
 #include "shared.h"
+#include "m68k.h"
 
 static struct
 {

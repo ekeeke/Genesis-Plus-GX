@@ -50,6 +50,7 @@
 #include "paddle.h"
 #include "sportspad.h"
 #include "graphic_board.h"
+#include "z80.h"
 
 uint8 io_reg[0x10];
 

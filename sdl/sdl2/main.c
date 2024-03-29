@@ -3,6 +3,7 @@
 #include <config.h>
 #include <error.h>
 #include <osd.h>
+#include <loadrom.h>
 
 #include "shared.h"
 #include "sms_ntsc.h"

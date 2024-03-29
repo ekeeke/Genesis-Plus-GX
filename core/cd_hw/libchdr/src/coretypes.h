@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <stdio.h>
+#include "../../../macros.h"
 
 #define ARRAY_LENGTH(x) (sizeof(x)/sizeof(x[0]))
 
