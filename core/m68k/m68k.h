@@ -41,6 +41,7 @@
 #pragma once
 
 #include <setjmp.h>
+#include <stdint.h>
 #include "../macros.h"
 
 #ifdef HOOK_CPU
@@ -58,49 +59,23 @@
   #define M68K_INT_GT_32_BIT  0
 #endif
 
-/* Data types used in this emulation core */
-#undef sint8
-#undef sint16
-#undef sint32
-#undef sint64
-#undef uint8
-#undef uint16
-#undef uint32
-#undef uint64
-#undef sint
-#undef uint
-
-#define sint8  signed   char      /* ASG: changed from char to signed char */
-#define sint16 signed   short
-#define sint32 signed   int      /* AWJ: changed from long to int */
-#define uint8  unsigned char
-#define uint16 unsigned short
-#define uint32 unsigned int      /* AWJ: changed from long to int */
-
-/* signed and unsigned int must be at least 32 bits wide */
-#define sint   signed   int
-#define uint   unsigned int
-
-
 #if M68K_USE_64_BIT
-#define sint64 signed   long long
-#define uint64 unsigned long long
+#define sint64 int64_t
+#define uint64 uint64_t
 #else
-#define sint64 sint32
-#define uint64 uint32
+#define sint64 int32_t
+#define uint64 uint32_t
 #endif /* M68K_USE_64_BIT */
-
-
 
 /* Allow for architectures that don't have 8-bit sizes */
 /*#if UCHAR_MAX == 0xff*/
-  #define MAKE_INT_8(A) (sint8)(A)
+  #define MAKE_INT_8(A) (int8_t)(A)
 /*#else
-  #undef  sint8
-  #define sint8  signed   int
+  #undef  int8_t
+  #define int8_t  signed   int
   #undef  uint8
   #define uint8  unsigned int
-  INLINE sint MAKE_INT_8(uint value)
+  INLINE int32_t MAKE_INT_8(uint32_t value)
   {
     return (value & 0x80) ? value | ~0xff : value & 0xff;
   }*/
@@ -109,13 +84,13 @@
 
 /* Allow for architectures that don't have 16-bit sizes */
 /*#if USHRT_MAX == 0xffff*/
-  #define MAKE_INT_16(A) (sint16)(A)
+  #define MAKE_INT_16(A) (int16_t)(A)
 /*#else
-  #undef  sint16
-  #define sint16 signed   int
+  #undef  int16_t
+  #define int16_t signed   int
   #undef  uint16
   #define uint16 unsigned int
-  INLINE sint MAKE_INT_16(uint value)
+  INLINE int32_t MAKE_INT_16(uint32_t value)
   {
     return (value & 0x8000) ? value | ~0xffff : value & 0xffff;
   }*/
@@ -124,13 +99,13 @@
 
 /* Allow for architectures that don't have 32-bit sizes */
 /*#if UINT_MAX == 0xffffffff*/
-  #define MAKE_INT_32(A) (sint32)(A)
+  #define MAKE_INT_32(A) (int32_t)(A)
 /*#else
-  #undef  sint32
-  #define sint32  signed   int
+  #undef  int32_t
+  #define int32_t  signed   int
   #undef  uint32
   #define uint32  unsigned int
-  INLINE sint MAKE_INT_32(uint value)
+  INLINE int32_t MAKE_INT_32(uint32_t value)
   {
     return (value & 0x80000000) ? value | ~0xffffffff : value & 0xffffffff;
   }*/
@@ -227,9 +202,9 @@ typedef struct
 /* 68k idle loop detection */
 typedef struct
 {
-  uint pc;
-  uint cycle;
-  uint detected;
+  uint32_t pc;
+  uint32_t cycle;
+  uint32_t detected;
 } cpu_idle_t;
 
 typedef struct
@@ -238,41 +213,41 @@ typedef struct
 
   cpu_idle_t poll;      /* polling detection */
 
-  sint cycles;          /* current master cycle count */ 
-  sint refresh_cycles;  /* external bus refresh cycle */ 
-  uint cycle_end;       /* aimed master cycle count for current execution frame */
+  int32_t cycles;          /* current master cycle count */ 
+  int32_t refresh_cycles;  /* external bus refresh cycle */ 
+  uint32_t cycle_end;       /* aimed master cycle count for current execution frame */
 
-  uint dar[16];         /* Data and Address Registers */
-  uint pc;              /* Program Counter */
-  uint prev_pc;         /* Previous Program Counter */
-  uint prev_ar[8];      /* Previous Address Registers */
-  uint sp[5];           /* User and Interrupt Stack Pointers */
-  uint ir;              /* Instruction Register */
-  uint t1_flag;         /* Trace 1 */
-  uint s_flag;          /* Supervisor */
-  uint x_flag;          /* Extend */
-  uint n_flag;          /* Negative */
-  uint not_z_flag;      /* Zero, inverted for speedups */
-  uint v_flag;          /* Overflow */
-  uint c_flag;          /* Carry */
-  uint int_mask;        /* I0-I2 */
-  uint int_level;       /* State of interrupt pins IPL0-IPL2 -- ASG: changed from ints_pending */
-  uint stopped;         /* Stopped state */
+  uint32_t dar[16];         /* Data and Address Registers */
+  uint32_t pc;              /* Program Counter */
+  uint32_t prev_pc;         /* Previous Program Counter */
+  uint32_t prev_ar[8];      /* Previous Address Registers */
+  uint32_t sp[5];           /* User and Interrupt Stack Pointers */
+  uint32_t ir;              /* Instruction Register */
+  uint32_t t1_flag;         /* Trace 1 */
+  uint32_t s_flag;          /* Supervisor */
+  uint32_t x_flag;          /* Extend */
+  uint32_t n_flag;          /* Negative */
+  uint32_t not_z_flag;      /* Zero, inverted for speedups */
+  uint32_t v_flag;          /* Overflow */
+  uint32_t c_flag;          /* Carry */
+  uint32_t int_mask;        /* I0-I2 */
+  uint32_t int_level;       /* State of interrupt pins IPL0-IPL2 -- ASG: changed from ints_pending */
+  uint32_t stopped;         /* Stopped state */
 
-  uint pref_addr;       /* Last prefetch address */
-  uint pref_data;       /* Data in the prefetch queue */
+  uint32_t pref_addr;       /* Last prefetch address */
+  uint32_t pref_data;       /* Data in the prefetch queue */
 
-  uint instr_mode;      /* Stores whether we are in instruction mode or group 0/1 exception mode */
-  uint run_mode;        /* Stores whether we are processing a reset, bus error, address error, or something else */
-  uint aerr_enabled;    /* Enables/deisables address error checks at runtime */
+  uint32_t instr_mode;      /* Stores whether we are in instruction mode or group 0/1 exception mode */
+  uint32_t run_mode;        /* Stores whether we are processing a reset, bus error, address error, or something else */
+  uint32_t aerr_enabled;    /* Enables/deisables address error checks at runtime */
   jmp_buf aerr_trap;    /* Address error jump */
-  uint aerr_address;    /* Address error location */
-  uint aerr_write_mode; /* Address error write mode */
-  uint aerr_fc;         /* Address error FC code */
+  uint32_t aerr_address;    /* Address error location */
+  uint32_t aerr_write_mode; /* Address error write mode */
+  uint32_t aerr_fc;         /* Address error FC code */
 
-  uint tracing;         /* Tracing enable flag */
+  uint32_t tracing;         /* Tracing enable flag */
 
-  uint address_space;   /* Current FC code */
+  uint32_t address_space;   /* Current FC code */
 
 #ifdef M68K_OVERCLOCK_SHIFT
   int cycle_ratio;

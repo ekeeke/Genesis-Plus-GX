@@ -58,14 +58,14 @@ external_t *ext;
 #else                     /* External Hardware (Cartridge, CD unit, ...) */
 external_t ext;
 #endif
-uint8 boot_rom[0x800];    /* Genesis BOOT ROM   */
-uint8 work_ram[0x10000];  /* 68K RAM  */
-uint8 zram[0x2000];       /* Z80 RAM  */
-uint32 zbank;             /* Z80 bank window address */
-uint8 zstate;             /* Z80 bus state (d0 = /RESET, d1 = BUSREQ, d2 = WAIT) */
-uint8 pico_current;       /* PICO current page */
+uint8_t boot_rom[0x800];    /* Genesis BOOT ROM   */
+uint8_t work_ram[0x10000];  /* 68K RAM  */
+uint8_t zram[0x2000];       /* Z80 RAM  */
+uint32_t zbank;             /* Z80 bank window address */
+uint8_t zstate;             /* Z80 bus state (d0 = /RESET, d1 = BUSREQ, d2 = WAIT) */
+uint8_t pico_current;       /* PICO current page */
 
-static uint8 tmss[4];     /* TMSS security register */
+static uint8_t tmss[4];     /* TMSS security register */
 
 /*--------------------------------------------------------------------------*/
 /* Init, reset, shutdown functions                                          */
@@ -270,7 +270,7 @@ void gen_reset(int hard_reset)
   else
   {
     /* when RESET button is pressed, 68k could be anywhere in VDP frame (Bonkers, Eternal Champions, X-Men 2) */
-    m68k.cycles = (uint32)((MCYCLES_PER_LINE * lines_per_frame) * ((double)rand() / (double)RAND_MAX));
+    m68k.cycles = (uint32_t)((MCYCLES_PER_LINE * lines_per_frame) * ((double)rand() / (double)RAND_MAX));
 
     /* reset YM2612 (on hard reset, this is done by sound_reset) */
     fm_reset(0);

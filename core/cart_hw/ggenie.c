@@ -48,11 +48,11 @@
 
 static struct
 {
-  uint8 enabled;
-  uint16 regs[0x20];
-  uint16 old[6];
-  uint16 data[6];
-  uint32 addr[6];
+  uint8_t enabled;
+  uint16_t regs[0x20];
+  uint16_t old[6];
+  uint16_t data[6];
+  uint32_t addr[6];
 } ggenie;
 
 static unsigned int ggenie_read_byte(unsigned int address);
@@ -73,7 +73,7 @@ void ggenie_init(void)
     for (i=0; i<0x8000; i+=2)
     {
       /* Byteswap ROM */
-      uint8 temp = cart.lockrom[i];
+      uint8_t temp = cart.lockrom[i];
       cart.lockrom[i] = cart.lockrom[i+1];
       cart.lockrom[i+1] = temp;
     }
@@ -136,8 +136,8 @@ void ggenie_switch(int enable)
       if (ggenie.regs[0] & (1 << i))
       {
         /* save old value and patch ROM if enabled */
-        ggenie.old[i] = *(uint16 *)(cart.rom + ggenie.addr[i]);
-        *(uint16 *)(cart.rom + ggenie.addr[i]) = ggenie.data[i];
+        ggenie.old[i] = *(uint16_t *)(cart.rom + ggenie.addr[i]);
+        *(uint16_t *)(cart.rom + ggenie.addr[i]) = ggenie.data[i];
       }
     }
   }
@@ -150,7 +150,7 @@ void ggenie_switch(int enable)
       if (ggenie.regs[0] & (1 << i))
       {
         /* restore original ROM value */
-        *(uint16 *)(cart.rom + ggenie.addr[i]) = ggenie.old[i];
+        *(uint16_t *)(cart.rom + ggenie.addr[i]) = ggenie.old[i];
       }
     }
   }
@@ -170,7 +170,7 @@ static unsigned int ggenie_read_word(unsigned int address)
 static void ggenie_write_byte(unsigned int address, unsigned int data)
 {
   /* Register offset */
-  uint8 offset = (address >> 1) & 0x1f;
+  uint8_t offset = (address >> 1) & 0x1f;
 
   /* /LWR and /UWR are used to decode writes */
   if (address & 1)
@@ -189,7 +189,7 @@ static void ggenie_write_byte(unsigned int address, unsigned int data)
 static void ggenie_write_word(unsigned int address, unsigned int data)
 {
   /* Register offset */
-  uint8 offset = (address >> 1) & 0x1f;
+  uint8_t offset = (address >> 1) & 0x1f;
 
   /* Write internal register (full WORD) */
   ggenie_write_regs(offset,data);

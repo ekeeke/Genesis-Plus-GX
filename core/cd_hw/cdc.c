@@ -476,13 +476,13 @@ void cdc_dma_update(unsigned int cycles)
   }
 }
 
-void cdc_decoder_update(uint32 header)
+void cdc_decoder_update(uint32_t header)
 {
   /* data decoding enabled ? */
   if (cdc.ctrl[0] & BIT_DECEN)
   {
     /* update HEADx registers with current block header */
-    *(uint32 *)(cdc.head[0]) = header;
+    *(uint32_t *)(cdc.head[0]) = header;
 
     /* set !VALST */
     cdc.stat[3] = 0x00;
@@ -526,7 +526,7 @@ void cdc_decoder_update(uint32 header)
       offset = cdc.pt.w & 0x3fff;
 
       /* write current block header to RAM buffer (4 bytes) */
-      *(uint32 *)(cdc.ram + offset) = header;
+      *(uint32_t *)(cdc.ram + offset) = header;
       offset += 4;
 
       /* check decoded block mode */
@@ -545,8 +545,8 @@ void cdc_decoder_update(uint32 header)
           cdd_read_data(cdc.ram + offset + 8, cdc.head[1]);
 
           /* write current block sub-header to RAM buffer (4 bytes x 2) */
-          *(uint32 *)(cdc.ram + offset) = *(uint32 *)(cdc.head[1]);
-          *(uint32 *)(cdc.ram + offset + 4) = *(uint32 *)(cdc.head[1]);
+          *(uint32_t *)(cdc.ram + offset) = *(uint32_t *)(cdc.head[1]);
+          *(uint32_t *)(cdc.ram + offset + 4) = *(uint32_t *)(cdc.head[1]);
           offset += 2336;
         }
         else
@@ -584,7 +584,7 @@ void cdc_reg_w(unsigned char data)
     case 0x01:  /* IFCTRL */
     {
       /* previous CDC IRQ state */
-      uint8 prev_irq = cdc.irq;
+      uint8_t prev_irq = cdc.irq;
 
       /* check end of CDC decoder active period */
       if (s68k.cycles > cdc.cycles[1])
@@ -752,7 +752,7 @@ void cdc_reg_w(unsigned char data)
 
 unsigned char cdc_reg_r(void)
 {
-  uint8 data;
+  uint8_t data;
 
   switch (scd.regs[0x04>>1].byte.l)
   {
@@ -885,10 +885,10 @@ unsigned char cdc_reg_r(void)
   return data;
 }
 
-unsigned short cdc_host_r(uint8 cpu_access)
+unsigned short cdc_host_r(uint8_t cpu_access)
 {
   /* read CDC buffered data (gate-array register $08) */
-  uint16 data = scd.regs[0x08>>1].w;
+  uint16_t data = scd.regs[0x08>>1].w;
 
   /* check if host data transfer is started for selected CPU */
   if ((scd.regs[0x04>>1].byte.h & 0x47) == cpu_access)

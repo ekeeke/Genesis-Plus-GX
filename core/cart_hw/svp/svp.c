@@ -18,9 +18,9 @@
 
 svp_t *svp;
 
-static void svp_write_dram(uint32 address, uint32 data)
+static void svp_write_dram(uint32_t address, uint32_t data)
 {
-  *(uint16 *)(svp->dram + (address & 0x1fffe)) = data;
+  *(uint16_t *)(svp->dram + (address & 0x1fffe)) = data;
   if (data)
   {
     if (address == 0x30fe06) svp->ssp1601.emu_status &= ~SSP_WAIT_30FE06;
@@ -28,21 +28,21 @@ static void svp_write_dram(uint32 address, uint32 data)
   }
 }
 
-static uint32 svp_read_cell_1(uint32 address)
+static uint32_t svp_read_cell_1(uint32_t address)
 {
   address = (address & 0xe002) | ((address & 0x7c) << 6) | ((address & 0x1f80) >> 5);
-  return *(uint16 *)(svp->dram + address);
+  return *(uint16_t *)(svp->dram + address);
 }
 
-static uint32 svp_read_cell_2(uint32 address)
+static uint32_t svp_read_cell_2(uint32_t address)
 {
   address = (address & 0xf002) | ((address & 0x3c) << 6) | ((address & 0xfc0) >> 4);
-  return *(uint16 *)(svp->dram + address);
+  return *(uint16_t *)(svp->dram + address);
 }
 
-static uint32 svp_read_cell_byte(uint32 address)
+static uint32_t svp_read_cell_byte(uint32_t address)
 {
-  uint16 data = m68k.memory_map[address >> 16].read16(address);
+  uint16_t data = m68k.memory_map[address >> 16].read16(address);
 
   if (address & 0x01)
   {

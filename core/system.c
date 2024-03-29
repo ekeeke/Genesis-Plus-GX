@@ -57,13 +57,13 @@
 /* Global variables */
 t_bitmap bitmap;
 t_snd snd;
-uint32 mcycles_vdp;
-uint8 system_hw;
-uint8 system_bios;
-uint32 system_clock;
+uint32_t mcycles_vdp;
+uint8_t system_hw;
+uint8_t system_bios;
+uint32_t system_clock;
 int16_t SVP_cycles = 800; 
 
-static uint8 pause_b;
+static uint8_t pause_b;
 static EQSTATE eq[2];
 static int16_t llp,rrp;
 
@@ -245,8 +245,8 @@ int audio_update(int16_t *buffer)
     if (config.filter & 1)
     {
       /* single-pole low-pass filter (6 dB/octave) */
-      uint32 factora  = config.lp_range;
-      uint32 factorb  = 0x10000 - factora;
+      uint32_t factora  = config.lp_range;
+      uint32_t factorb  = 0x10000 - factora;
 
       /* restore previous sample */
       l = llp;

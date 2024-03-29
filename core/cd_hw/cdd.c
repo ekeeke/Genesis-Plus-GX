@@ -61,7 +61,7 @@
 #define TYPE_MODE2 0x02
 
 /* BCD conversion lookup tables */
-static const uint8 lut_BCD_8[100] =
+static const uint8_t lut_BCD_8[100] =
 {
   0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 
   0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 
@@ -75,7 +75,7 @@ static const uint8 lut_BCD_8[100] =
   0x90, 0x91, 0x92, 0x93, 0x94, 0x95, 0x96, 0x97, 0x98, 0x99, 
 };
 
-static const uint16 lut_BCD_16[100] =
+static const uint16_t lut_BCD_16[100] =
 {
   0x0000, 0x0001, 0x0002, 0x0003, 0x0004, 0x0005, 0x0006, 0x0007, 0x0008, 0x0009, 
   0x0100, 0x0101, 0x0102, 0x0103, 0x0104, 0x0105, 0x0106, 0x0107, 0x0108, 0x0109, 
@@ -90,14 +90,14 @@ static const uint16 lut_BCD_16[100] =
 };
 
 /* pre-build TOC */
-static const uint16 toc_snatcher[21] =
+static const uint16_t toc_snatcher[21] =
 {
   56014,   495, 10120, 20555, 1580, 5417, 12502, 16090,  6553, 9681,
    8148, 20228,  8622,  6142, 5858, 1287,  7424,  3535, 31697, 2485,
   31380
 };
 
-static const uint16 toc_lunar[52] =
+static const uint16_t toc_lunar[52] =
 {
   5422, 1057, 7932, 5401, 6380, 6592, 5862,  5937, 5478, 5870,
   6673, 6613, 6429, 4996, 4977, 5657, 3720,  5892, 3140, 3263,
@@ -107,26 +107,26 @@ static const uint16 toc_lunar[52] =
   685, 3167
 };
 
-static const uint32 toc_shadow[15] =
+static const uint32_t toc_shadow[15] =
 {
   10226, 70054, 11100, 12532, 12444, 11923, 10059, 10167, 10138, 13792,
   11637,  2547,  2521,  3856, 900
 };
 
-static const uint32 toc_dungeon[13] =
+static const uint32_t toc_dungeon[13] =
 {
   2250, 22950, 16350, 24900, 13875, 19950, 13800, 15375, 17400, 17100,
   3325,  6825, 25275
 };
 
-static const uint32 toc_ffight[26] =
+static const uint32_t toc_ffight[26] =
 {
   11994, 9742, 10136, 9685, 9553, 14588, 9430, 8721, 9975, 9764,
   9704, 12796, 585, 754, 951, 624, 9047, 1068, 817, 9191, 1024,
   14562, 10320, 8627, 3795, 3047
 };
 
-static const uint32 toc_ffightj[29] =
+static const uint32_t toc_ffightj[29] =
 {
   11994, 9752, 10119, 9690, 9567, 14575, 9431, 8731, 9965, 9763,
   9716, 12791, 579, 751, 958, 630, 9050, 1052, 825, 9193, 1026,
@@ -415,7 +415,7 @@ int cdd_load(char *filename, char *header)
     }
 
     /* allocate hunk buffer */
-    cdd.chd.hunk = (uint8 *)malloc(head->hunkbytes);
+    cdd.chd.hunk = (uint8_t *)malloc(head->hunkbytes);
     if (!cdd.chd.hunk)
     {
       chd_close(cdd.chd.file);
@@ -556,7 +556,7 @@ int cdd_load(char *filename, char *header)
   {
     int len;
 
-    static const uint8 sync[12] = {0x00,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0x00};
+    static const uint8_t sync[12] = {0x00,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0x00};
 
     /* read first 16 bytes */
     int status = cdStreamRead(header, 0x10, 1, fd);
@@ -1333,7 +1333,7 @@ void cdd_unload(void)
   cdd.sectorSize = 0;
 }
 
-void cdd_read_data(uint8 *dst, uint8 *subheader)
+void cdd_read_data(uint8_t *dst, uint8_t *subheader)
 {
   /* only allow reading (first) CD-ROM track sectors */
   if (cdd.toc.tracks[cdd.index].type && (cdd.lba >= 0))
@@ -1489,7 +1489,7 @@ void cdd_read_audio(unsigned int samples)
 #ifndef LSB_FIRST
       int16_t *ptr = (int16_t *) (cdd.chd.hunk + (cdd.chd.hunkofs % cdd.chd.hunkbytes));
 #else
-      uint8 *ptr = cdd.chd.hunk + (cdd.chd.hunkofs % cdd.chd.hunkbytes);
+      uint8_t *ptr = cdd.chd.hunk + (cdd.chd.hunkofs % cdd.chd.hunkbytes);
 #endif
 
       /* process 16-bit (big-endian) stereo samples */
@@ -1633,7 +1633,7 @@ void cdd_read_audio(unsigned int samples)
 #ifdef LSB_FIRST
       int16_t *ptr = (int16_t *) (cdc.ram);
 #else
-      uint8 *ptr = cdc.ram;
+      uint8_t *ptr = cdc.ram;
 #endif
      int status = cdStreamRead(cdc.ram, 1, samples * 4, cdd.toc.tracks[cdd.index].fd);
      if (status < 0) { fprintf(stderr, "Error reading from CD Stream."); exit(-1); }
@@ -1728,7 +1728,7 @@ void cdd_update_audio(unsigned int samples)
 
 static void cdd_read_subcode(void)
 {
-  uint8 subc[96];
+  uint8_t subc[96];
   int i,j,index;
 
   /* update subcode buffer pointer address */
@@ -1803,15 +1803,15 @@ void cdd_update(void)
     if (cdd.toc.tracks[cdd.index].type)
     {
       /* CD-ROM sector header */
-      uint8 header[4];
-      uint32 msf = cdd.lba + 150;
+      uint8_t header[4];
+      uint32_t msf = cdd.lba + 150;
       header[0] = lut_BCD_8[(msf / 75) / 60];
       header[1] = lut_BCD_8[(msf / 75) % 60];
       header[2] = lut_BCD_8[(msf % 75)];
       header[3] = cdd.toc.tracks[cdd.index].type;
 
       /* decode CD-ROM track sector */
-      cdc_decoder_update(*(uint32 *)(header));
+      cdc_decoder_update(*(uint32_t *)(header));
     }
     else
     {
