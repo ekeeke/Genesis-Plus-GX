@@ -44,6 +44,8 @@
 #include <osd.h>
 #include <fileio.h>
 #include <config.h>
+#include "../cart_hw/svp/svp.h"
+#include "../input_hw/input.h"
 #include "../system.h"
 #include "../loadrom.h"
 #include "../genesis.h"
@@ -54,11 +56,9 @@
 #include "md_cart.h"
 #include "mem68k.h"
 #include "membnk.h"
-#include "input.h"
 #include "sram.h"
 #include "ggenie.h"
 #include "areplay.h"
-#include "svp.h"
 #include "state.h"
 
 /* Cart database entry */

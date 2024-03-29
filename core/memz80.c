@@ -40,15 +40,15 @@
  ****************************************************************************************/
 
 #include <config.h>
-#include "m68k.h"
-#include "z80.h"
+#include "m68k/m68k.h"
+#include "z80/z80.h"
+#include "sound/sound.h"
+#include "sound/psg.h"
 #include "system.h"
 #include "genesis.h"
 #include "vdp_ctrl.h"
 #include "membnk.h"
 #include "io_ctrl.h"
-#include "sound.h"
-#include "psg.h"
 
 /*--------------------------------------------------------------------------*/
 /*  Handlers for access to unused addresses and those which make the        */

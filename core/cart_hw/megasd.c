@@ -40,8 +40,8 @@
 #include "../m68k/m68k.h"
 #include "../mem68k.h"
 #include "../membnk.h"
-#include "../sram.h"
 #include "../state.h"
+#include "sram.h"
 
 typedef struct
 {

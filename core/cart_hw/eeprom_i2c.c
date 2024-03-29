@@ -38,12 +38,12 @@
 
 #include <string.h>
 #include "../input_hw/gamepad.h"
+#include "../cart_hw/sram.h"
 #include "../loadrom.h"
 #include "../genesis.h"
 #include "../m68k/m68k.h"
 #include "../mem68k.h"
 #include "../membnk.h"
-#include "../sram.h"
 
 /* Some notes from 8BitWizard (http://gendev.spritesmind.net/forum/viewtopic.php?t=206):
  *

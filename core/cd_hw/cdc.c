@@ -39,7 +39,7 @@
 #include <string.h>
 #include "../genesis.h"
 #include "../state.h"
-#include "m68k.h"
+#include "../m68k/m68k.h"
 
 /* IFSTAT register bitmasks */
 #define BIT_DTEI  0x40

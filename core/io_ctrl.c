@@ -40,22 +40,22 @@
  ****************************************************************************************/
 
 #include <config.h>
-#include "gamepad.h"
-#include "lightgun.h"
-#include "mouse.h"
-#include "activator.h"
-#include "xe_1ap.h"
-#include "teamplayer.h"
-#include "paddle.h"
-#include "sportspad.h"
-#include "graphic_board.h"
-#include "z80.h"
+#include "input_hw/gamepad.h"
+#include "input_hw/lightgun.h"
+#include "input_hw/mouse.h"
+#include "input_hw/activator.h"
+#include "input_hw/xe_1ap.h"
+#include "input_hw/teamplayer.h"
+#include "input_hw/paddle.h"
+#include "input_hw/sportspad.h"
+#include "input_hw/graphic_board.h"
+#include "input_hw/input.h"
+#include "z80/z80.h"
+#include "sound/psg.h"
 #include "system.h"
 #include "genesis.h"
 #include "vdp_ctrl.h"
 #include "io_ctrl.h"
-#include "input.h"
-#include "psg.h"
 
 uint8_t io_reg[0x10];
 

@@ -43,8 +43,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <config.h>
-#include "md_ntsc.h"
-#include "sms_ntsc.h"
+#include "ntsc/md_ntsc.h"
+#include "ntsc/sms_ntsc.h"
 #include "system.h"
 #include "macros.h"
 #include "vdp_ctrl.h"

@@ -38,7 +38,7 @@
 #ifndef _CD_PCM_
 #define _CD_PCM_
 
-#include "blip_buf.h"
+#include "sound/blip_buf.h"
 
 /* PCM channel */
 typedef struct

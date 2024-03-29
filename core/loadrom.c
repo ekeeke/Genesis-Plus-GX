@@ -40,13 +40,13 @@
 #include <osd.h>
 #include <fileio.h>
 #include <ctype.h>
+#include "input_hw/input.h"
+#include "cart_hw/ggenie.h"
+#include "cart_hw/areplay.h"
 #include "loadrom.h"
 #include "system.h"
 #include "genesis.h"
 #include "vdp_ctrl.h"
-#include "input.h"
-#include "ggenie.h"
-#include "areplay.h"
 
 /*** ROM Information ***/
 #define ROMCONSOLE    256

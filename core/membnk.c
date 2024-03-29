@@ -38,12 +38,12 @@
  ****************************************************************************************/
 
 #include <config.h>
+#include "z80/z80.h"
+#include "sound/psg.h"
 #include "genesis.h"
-#include "z80.h"
 #include "vdp_ctrl.h"
 #include "membnk.h"
 #include "io_ctrl.h"
-#include "psg.h"
 
 t_zbank_memory_map zbank_memory_map[256];
 

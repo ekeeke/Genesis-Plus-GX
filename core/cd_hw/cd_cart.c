@@ -38,10 +38,10 @@
 
 #include <string.h>
 #include "../genesis.h"
+#include "../cart_hw/sram.h"
 #include "../m68k/m68k.h"
 #include "../mem68k.h"
 #include "../membnk.h"
-#include "../sram.h"
 
 /*--------------------------------------------------------------------------*/
 /* backup RAM cartridge (max. 512KB)                                        */

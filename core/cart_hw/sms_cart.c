@@ -42,14 +42,14 @@
 #include <config.h>
 #include <zlib.h>
 #include <string.h>
+#include "../input_hw/terebi_oekaki.h"
+#include "../input_hw/input.h"
 #include "../state.h"
 #include "../system.h"
 #include "../loadrom.h"
 #include "../z80/z80.h"
 #include "../genesis.h"
 #include "eeprom_93c.h"
-#include "terebi_oekaki.h"
-#include "input.h"
 #include "sram.h"
 
 #define MAPPER_NONE           (0x00)

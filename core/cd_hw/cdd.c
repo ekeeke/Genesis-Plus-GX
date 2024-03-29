@@ -38,11 +38,11 @@
 
 #include <config.h>
 #include <stdlib.h>
+#include "../cart_hw/megasd.h"
 #include "../system.h"
 #include "../genesis.h"
 #include "../state.h"
-#include "megasd.h"
-#include "m68k.h"
+#include "../m68k/m68k.h"
 
 #if defined(USE_LIBTREMOR) || defined(USE_LIBVORBIS)
 #include "../tremor/ogg.h"

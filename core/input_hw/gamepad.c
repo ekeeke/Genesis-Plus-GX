@@ -39,9 +39,9 @@
 
 #include "../system.h"
 #include "gamepad.h"
-#include "m68k.h"
-#include "z80.h"
-#include "input.h"
+#include "m68k/m68k.h"
+#include "z80/z80.h"
+#include "input_hw/input.h"
 
 struct
 {

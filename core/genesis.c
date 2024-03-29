@@ -42,8 +42,9 @@
 #include <config.h>
 #include <stdlib.h>
 #include <string.h>
-#include "m68k.h"
-#include "z80.h"
+#include "m68k/m68k.h"
+#include "z80/z80.h"
+#include "sound/sound.h"
 #include "system.h"
 #include "genesis.h"
 #include "vdp_ctrl.h"
@@ -51,7 +52,6 @@
 #include "memz80.h"
 #include "membnk.h"
 #include "io_ctrl.h"
-#include "sound.h"
 
 #ifdef USE_DYNAMIC_ALLOC
 external_t *ext;

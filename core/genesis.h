@@ -42,9 +42,9 @@
 #ifndef _GENESIS_H_
 #define _GENESIS_H_
 
-#include "md_cart.h"
-#include "sms_cart.h"
-#include "scd.h"
+#include "cart_hw/md_cart.h"
+#include "cart_hw/sms_cart.h"
+#include "cd_hw/scd.h"
 
 /* External Hardware */
 typedef union

@@ -42,17 +42,17 @@
 #include <string.h>
 #include <config.h>
 #include <osd.h>
-#include "eq.h"
-#include "m68k.h"
-#include "z80.h"
+#include "cart_hw/svp/svp.h"
+#include "sound/eq.h"
+#include "m68k/m68k.h"
+#include "z80/z80.h"
+#include "sound/sound.h"
+#include "input_hw/input.h"
 #include "system.h"
 #include "genesis.h"
 #include "vdp_ctrl.h"
 #include "vdp_render.h"
 #include "io_ctrl.h"
-#include "input.h"
-#include "sound.h"
-#include "svp.h"
 
 /* Global variables */
 t_bitmap bitmap;

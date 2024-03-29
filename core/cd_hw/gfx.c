@@ -39,7 +39,7 @@
 #include <string.h>
 #include "../genesis.h"
 #include "../state.h"
-#include "m68k.h"
+#include "../m68k/m68k.h"
 
 /***************************************************************/
 /*          WORD-RAM DMA interfaces (1M & 2M modes)            */
