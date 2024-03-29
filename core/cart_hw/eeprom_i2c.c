@@ -88,9 +88,9 @@ typedef enum
 
 typedef struct
 {
-  uint8 address_bits;
-  uint16 size_mask;
-  uint16 pagewrite_mask;
+  uint8_t address_bits;
+  uint16_t size_mask;
+  uint16_t pagewrite_mask;
 } T_I2C_SPEC;
 
 static const T_I2C_SPEC i2c_specs[] =
@@ -113,8 +113,8 @@ static const T_I2C_SPEC i2c_specs[] =
 typedef struct
 {
   char id[16];
-  uint32 sp;
-  uint16 chk;
+  uint32_t sp;
+  uint16_t chk;
   void (*mapper_init)(void);
   T_I2C_TYPE eeprom_type;
 } T_I2C_GAME;
@@ -164,20 +164,20 @@ static const T_I2C_GAME i2c_database[] =
 
 struct
 {
-  uint8 sda;              /* current SDA line state */
-  uint8 scl;              /* current SCL line state */
-  uint8 old_sda;          /* previous SDA line state */
-  uint8 old_scl;          /* previous SCL line state */
-  uint8 cycles;           /* operation internal cycle (0-9) */
-  uint8 rw;               /* operation type (1:READ, 0:WRITE) */
-  uint16 device_address;  /* device address */
-  uint16 word_address;    /* memory address */
-  uint8 buffer;           /* write buffer */
+  uint8_t sda;              /* current SDA line state */
+  uint8_t scl;              /* current SCL line state */
+  uint8_t old_sda;          /* previous SDA line state */
+  uint8_t old_scl;          /* previous SCL line state */
+  uint8_t cycles;           /* operation internal cycle (0-9) */
+  uint8_t rw;               /* operation type (1:READ, 0:WRITE) */
+  uint16_t device_address;  /* device address */
+  uint16_t word_address;    /* memory address */
+  uint8_t buffer;           /* write buffer */
   T_I2C_STATE state;      /* current operation state */
   T_I2C_SPEC spec;        /* EEPROM characteristics */
-  uint8 scl_in_bit;       /* SCL (write) bit position */
-  uint8 sda_in_bit;       /* SDA (write) bit position */
-  uint8 sda_out_bit;      /* SDA (read) bit position */
+  uint8_t scl_in_bit;       /* SCL (write) bit position */
+  uint8_t sda_in_bit;       /* SDA (write) bit position */
+  uint8_t sda_out_bit;      /* SDA (read) bit position */
 } eeprom_i2c;
 
 
@@ -601,7 +601,7 @@ static void eeprom_i2c_update(void)
   eeprom_i2c.old_sda = eeprom_i2c.sda;
 }
 
-static uint8 eeprom_i2c_out(void)
+static uint8_t eeprom_i2c_out(void)
 {
   /* check EEPROM state */
   if (eeprom_i2c.state == READ_DATA)
@@ -628,7 +628,7 @@ static uint8 eeprom_i2c_out(void)
 /* Common I2C board memory mapping		                            */
 /********************************************************************/
 
-static uint32 mapper_i2c_generic_read8(uint32 address)
+static uint32_t mapper_i2c_generic_read8(uint32_t address)
 {
   /* only use D0-D7 */
   if (address & 0x01)
@@ -639,12 +639,12 @@ static uint32 mapper_i2c_generic_read8(uint32 address)
   return m68k_read_bus_8(address);
 }
 
-static uint32 mapper_i2c_generic_read16(uint32 address)
+static uint32_t mapper_i2c_generic_read16(uint32_t address)
 {
   return eeprom_i2c_out() << eeprom_i2c.sda_out_bit;
 }
 
-static void mapper_i2c_generic_write8(uint32 address, uint32 data)
+static void mapper_i2c_generic_write8(uint32_t address, uint32_t data)
 {
   /* only use /LWR */
   if (address & 0x01)
@@ -659,7 +659,7 @@ static void mapper_i2c_generic_write8(uint32 address, uint32 data)
   }
 }
 
-static void mapper_i2c_generic_write16(uint32 address, uint32 data)
+static void mapper_i2c_generic_write16(uint32_t address, uint32_t data)
 {
   eeprom_i2c.sda = (data >> eeprom_i2c.sda_in_bit) & 1;
   eeprom_i2c.scl = (data >> eeprom_i2c.scl_in_bit) & 1;
@@ -753,7 +753,7 @@ static void mapper_i2c_acclaim_16M_init(void)
 /* ACCLAIM 32M mapper (P/N 670125 & 670127 boards with LZ95A53 PAL) */
 /********************************************************************/
 
-static void mapper_acclaim_32M_write8(uint32 address, uint32 data)
+static void mapper_acclaim_32M_write8(uint32_t address, uint32_t data)
 {
   if (address & 0x01)
   {
@@ -769,7 +769,7 @@ static void mapper_acclaim_32M_write8(uint32 address, uint32 data)
   eeprom_i2c_update();
 } 
 
-static void mapper_acclaim_32M_write16(uint32 address, uint32 data)
+static void mapper_acclaim_32M_write16(uint32_t address, uint32_t data)
 {
   int i;
   
@@ -822,7 +822,7 @@ static void mapper_i2c_acclaim_32M_init(void)
 /* CODEMASTERS mapper (SRJCV2-1 & SRJCV2-2 boards with 16R4 PAL)    */
 /********************************************************************/
 
-static uint32 mapper_i2c_jcart_read8(uint32 address)
+static uint32_t mapper_i2c_jcart_read8(uint32_t address)
 {
   /* only D7 used for /SDA */
   if (address & 0x01)
@@ -833,7 +833,7 @@ static uint32 mapper_i2c_jcart_read8(uint32 address)
   return (jcart_read(address) >> 8);
 }
 
-static uint32 mapper_i2c_jcart_read16(uint32 address)
+static uint32_t mapper_i2c_jcart_read16(uint32_t address)
 {
   return ((eeprom_i2c_out() << 7) | jcart_read(address));
 }

@@ -617,7 +617,7 @@ unsigned char z80_ms_port_r(unsigned int port)
       }
       else
       {
-        uint8 data = 0xFF;
+        uint8_t data = 0xFF;
 
         /* read FM board if enabled */
         if (!(port & 4) && (config.ym2413 & 1))

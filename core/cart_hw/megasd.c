@@ -45,22 +45,22 @@
 
 typedef struct
 {
-  uint8 unlock;
-  uint8 bank0;
-  uint8 special;
-  uint8 writeEnable;
-  uint8 overlayEnable;
-  uint8 playbackLoop;
-  uint8 playbackLoopTrack;
-  uint8 playbackEndTrack;
-  uint16 result;
-  uint16 fadeoutStartVolume;
+  uint8_t unlock;
+  uint8_t bank0;
+  uint8_t special;
+  uint8_t writeEnable;
+  uint8_t overlayEnable;
+  uint8_t playbackLoop;
+  uint8_t playbackLoopTrack;
+  uint8_t playbackEndTrack;
+  uint16_t result;
+  uint16_t fadeoutStartVolume;
   int fadeoutSamplesTotal;
   int fadeoutSamplesCount;
   int playbackSamplesCount;
   int playbackLoopSector;
   int playbackEndSector;
-  uint8 buffer[0x800];
+  uint8_t buffer[0x800];
 } T_MEGASD_HW;
 
 /* MegaSD mapper hardware */
@@ -196,10 +196,10 @@ void megasd_enhanced_ssf2_mapper_w(unsigned int address, unsigned int data)
       if (address & 1)
       {
         /* 512K ROM paging (max. 8MB)*/
-        uint8 *src = cart.rom + (((data  & 0x0f) << 19) & cart.mask);
+        uint8_t *src = cart.rom + (((data  & 0x0f) << 19) & cart.mask);
 
         /* cartridge area ($000000-$3FFFFF) is divided into 8 x 512K banks */
-        uint8 bank = (address << 2) & 0x38;
+        uint8_t bank = (address << 2) & 0x38;
 
         /* check selected bank is not locked */
         if ((bank != 0x00) || megasd_hw.unlock)
@@ -254,7 +254,7 @@ void megasd_enhanced_ssf2_mapper_w(unsigned int address, unsigned int data)
     else
     {
       /* 512K ROM paging (max. 8MB)*/
-      uint8 *src = cart.rom + (((megasd_hw.special & 0x0f) << 19) & cart.mask);
+      uint8_t *src = cart.rom + (((megasd_hw.special & 0x0f) << 19) & cart.mask);
 
       /* selected ROM page mapped in $380000-$3fffff */
       for (i=0x38; i<0x40; i++)
@@ -930,7 +930,7 @@ static unsigned int megasd_ctrl_read_word(unsigned int address)
   }
 
   /* default cartridge area */
-  return *(uint16 *)(m68k.memory_map[0x03].base + (address & 0xfffe));
+  return *(uint16_t *)(m68k.memory_map[0x03].base + (address & 0xfffe));
 }
 
 /* 

@@ -45,19 +45,19 @@
 
 struct
 {
-  uint8 State;
-  uint8 Counter;
-  uint8 Timeout;
-  uint32 Latency;
+  uint8_t State;
+  uint8_t Counter;
+  uint8_t Timeout;
+  uint32_t Latency;
 } gamepad[MAX_DEVICES];
 
 static struct
 {
-  uint8 Latch;
-  uint8 Counter;
+  uint8_t Latch;
+  uint8_t Counter;
 } flipflop[2];
 
-static uint8 latch;
+static uint8_t latch;
 
 
 void gamepad_reset(int port)

@@ -68,7 +68,7 @@ unsigned int m68k_read_bus_16(unsigned int address)
   error("Unused read16 %08X (%08X)\n", address, m68k_get_reg(M68K_REG_PC));
 #endif
   address = m68k.pc;
-  return *(uint16 *)(m68k.memory_map[((address)>>16)&0xff].base + ((address) & 0xffff));
+  return *(uint16_t *)(m68k.memory_map[((address)>>16)&0xff].base + ((address) & 0xffff));
 }
 
 
@@ -140,7 +140,7 @@ unsigned int m68k_lockup_r_16 (unsigned int address)
     m68k.cycles = m68k.cycle_end;
   }
   address = m68k.pc;
-  return *(uint16 *)(m68k.memory_map[((address)>>16)&0xff].base + ((address) & 0xffff));
+  return *(uint16_t *)(m68k.memory_map[((address)>>16)&0xff].base + ((address) & 0xffff));
 }
 
 
@@ -376,7 +376,7 @@ unsigned int ctrl_io_read_byte(unsigned int address)
       if (system_hw == SYSTEM_MCD)
       {
         /* register index ($A12000-A1203F mirrored up to $A120FF) */
-        uint8 index = address & 0x3f;
+        uint8_t index = address & 0x3f;
 
         /* Memory Mode */
         if (index == 0x03)
@@ -518,11 +518,11 @@ unsigned int ctrl_io_read_word(unsigned int address)
       if (zstate == 3)
       {
         /* D8 is cleared */
-        return (*(uint16 *)(m68k.memory_map[((address)>>16)&0xff].base + ((address) & 0xffff)) & 0xFEFF);
+        return (*(uint16_t *)(m68k.memory_map[((address)>>16)&0xff].base + ((address) & 0xffff)) & 0xFEFF);
       }
 
       /* D8 is set */
-      return (*(uint16 *)(m68k.memory_map[((address)>>16)&0xff].base + ((address) & 0xffff)) | 0x0100);
+      return (*(uint16_t *)(m68k.memory_map[((address)>>16)&0xff].base + ((address) & 0xffff)) | 0x0100);
     }
 
     case 0x20:  /* MEGA-CD */
@@ -533,7 +533,7 @@ unsigned int ctrl_io_read_word(unsigned int address)
       if (system_hw == SYSTEM_MCD)
       {
         /* register index ($A12000-A1203F mirrored up to $A120FF) */
-        uint8 index = address & 0x3f;
+        uint8_t index = address & 0x3f;
 
         /* Memory Mode */
         if (index == 0x02)
@@ -558,7 +558,7 @@ unsigned int ctrl_io_read_word(unsigned int address)
         /* H-INT vector (word access only ?) */
         if (index == 0x06)
         {
-          return *(uint16 *)(m68k.memory_map[scd.cartridge.boot].base + 0x72);
+          return *(uint16_t *)(m68k.memory_map[scd.cartridge.boot].base + 0x72);
         }
 
         /* Stopwatch counter (word read access only ?) */
@@ -1272,7 +1272,7 @@ void ctrl_io_write_word(unsigned int address, unsigned int data)
 
           case 0x06:  /* H-INT vector (word access only ?) */
           {
-            *(uint16 *)(m68k.memory_map[scd.cartridge.boot].base + 0x72) = data;
+            *(uint16_t *)(m68k.memory_map[scd.cartridge.boot].base + 0x72) = data;
             return;
           }
 
@@ -1437,7 +1437,7 @@ unsigned int vdp_read_word(unsigned int address)
 
       /* Unused bits return prefetched bus data */
       address = m68k.pc;
-      data |= (*(uint16 *)(m68k.memory_map[((address)>>16)&0xff].base + ((address) & 0xffff)) & 0xFC00);
+      data |= (*(uint16_t *)(m68k.memory_map[((address)>>16)&0xff].base + ((address) & 0xffff)) & 0xFC00);
 
       return data;
     }
