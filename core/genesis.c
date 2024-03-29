@@ -47,6 +47,12 @@
 #include "z80.h"
 #include "system.h"
 #include "genesis.h"
+#include "vdp_ctrl.h"
+#include "mem68k.h"
+#include "memz80.h"
+#include "membnk.h"
+#include "io_ctrl.h"
+#include "sound.h"
 
 #ifdef USE_DYNAMIC_ALLOC
 external_t *ext;

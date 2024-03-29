@@ -42,6 +42,13 @@
 #include "z80.h"
 #include "system.h"
 #include "genesis.h"
+#include "vdp_ctrl.h"
+#include "mem68k.h"
+#include "membnk.h"
+#include "io_ctrl.h"
+#include "sound.h"
+#include "psg.h"
+#include "state.h"
 
 int state_load(unsigned char *state)
 {

@@ -51,8 +51,16 @@
 #include "eeprom_i2c.h"
 #include "eeprom_spi.h"
 #include "megasd.h"
-#include "m68k.h"
+#include "m68k/m68k.h"
 #include "md_cart.h"
+#include "mem68k.h"
+#include "membnk.h"
+#include "input.h"
+#include "sram.h"
+#include "ggenie.h"
+#include "areplay.h"
+#include "svp.h"
+#include "state.h"
 
 /* Cart database entry */
 typedef struct

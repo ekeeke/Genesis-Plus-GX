@@ -37,8 +37,9 @@
  *
  ****************************************************************************************/
 
-#ifndef _SOUND_H_
-#define _SOUND_H_
+#pragma once
+
+#include <stdint.h>
 
 /* Function prototypes */
 extern void sound_init(void);
@@ -50,4 +51,3 @@ extern void (*fm_reset)(unsigned int cycles);
 extern void (*fm_write)(unsigned int cycles, unsigned int address, unsigned int data);
 extern unsigned int (*fm_read)(unsigned int cycles, unsigned int address);
 
-#endif /* _SOUND_H_ */

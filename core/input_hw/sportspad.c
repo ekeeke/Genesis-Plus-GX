@@ -38,6 +38,7 @@
 
 #include "shared.h"
 #include "../macros.h"
+#include "input.h"
 
 struct
 {

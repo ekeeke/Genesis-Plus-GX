@@ -149,8 +149,11 @@
 
 #include "shared.h"
 #include <math.h>
+#include <string.h>
 #include "../macros.h"
 #include "../genesis.h"
+#include "../state.h"
+#include "ym2612.h"
 
 /* envelope generator */
 #define ENV_BITS    10

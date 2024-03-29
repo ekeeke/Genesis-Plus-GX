@@ -39,8 +39,9 @@
  *
  ****************************************************************************************/
 
-#ifndef _IO_CTRL_H_
-#define _IO_CTRL_H_
+#pragma once
+
+#include <stdint.h>
 
 #define IO_RESET_HI 0x10
 #define IO_CONT1_HI 0x20
@@ -64,5 +65,4 @@ extern unsigned int io_z80_read(unsigned int offset);
 extern void io_gg_write(unsigned int offset, unsigned int data);
 extern unsigned int io_gg_read(unsigned int offset);
 
-#endif /* _IO_CTRL_H_ */
 

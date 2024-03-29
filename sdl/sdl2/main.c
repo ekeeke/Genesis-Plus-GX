@@ -6,6 +6,10 @@
 #include <loadrom.h>
 #include <system.h>
 #include <genesis.h>
+#include <vdp_ctrl.h>
+#include <input.h>
+#include <sram.h>
+#include <state.h>
 
 #include "shared.h"
 #include "sms_ntsc.h"

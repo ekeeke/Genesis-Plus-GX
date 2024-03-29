@@ -44,9 +44,9 @@
 #include <unzip.h>
 #include <zlib.h>
 #include <stdio.h>
+#include <string.h>
 #include "shared.h"
 #include "types.h"
-
 
 static int check_zip(char *filename);
 

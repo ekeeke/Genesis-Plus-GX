@@ -36,8 +36,9 @@
  *
  ****************************************************************************************/
 
-#ifndef _EEPROM_93C_H_
-#define _EEPROM_93C_H_
+#pragma once
+
+#include <stdint.h>
 
 typedef enum
 {
@@ -69,4 +70,3 @@ extern void eeprom_93c_init(void);
 extern void eeprom_93c_write(unsigned char data);
 extern unsigned char eeprom_93c_read(void);
 
-#endif

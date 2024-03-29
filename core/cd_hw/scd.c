@@ -37,9 +37,13 @@
  ****************************************************************************************/
 
 #include "shared.h"
+#include <string.h>
 #include "../system.h"
 #include "../genesis.h"
-#include "m68k.h"
+#include "../m68k/m68k.h"
+#include "../mem68k.h"
+#include "../membnk.h"
+#include "../state.h"
 
 /*--------------------------------------------------------------------------*/
 /* Unused area (return open bus data, i.e prefetched instruction word)      */

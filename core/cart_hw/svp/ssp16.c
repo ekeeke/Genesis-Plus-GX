@@ -191,7 +191,7 @@
 
 #include "shared.h"
 #include "../../genesis.h"
-
+#include "svp.h"
 
 #define u32 unsigned int
 

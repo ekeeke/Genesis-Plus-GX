@@ -42,6 +42,13 @@
 #include "m68k.h"
 #include "system.h"
 #include "genesis.h"
+#include "vdp_ctrl.h"
+#include "membnk.h"
+#include "io_ctrl.h"
+#include "input.h"
+#include "sound.h"
+#include "psg.h"
+#include "svp.h"
 
 /*--------------------------------------------------------------------------*/
 /* Unused areas (return open bus data, i.e prefetched instruction word)     */

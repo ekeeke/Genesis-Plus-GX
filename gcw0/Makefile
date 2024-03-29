@@ -73,7 +73,8 @@ OBJECTS	+=      $(OBJDIR)/input.o	  \
 OBJECTS	+=      $(OBJDIR)/sound.o	\
 		$(OBJDIR)/psg.o     \
 		$(OBJDIR)/ym2413.o      \
-		$(OBJDIR)/ym2612.o    
+		$(OBJDIR)/ym2612.o    \
+		$(OBJDIR)/ym3438.o    \
 
 OBJECTS	+=	$(OBJDIR)/blip_buf.o 
 

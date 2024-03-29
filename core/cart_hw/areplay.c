@@ -39,8 +39,10 @@
 #include <osd.h>
 #include <fileio.h>
 #include "shared.h"
-#include "m68k.h"
-#include "genesis.h"
+#include "../m68k/m68k.h"
+#include "../genesis.h"
+#include "../mem68k.h"
+#include "areplay.h"
 
 #define TYPE_PRO1 0x12
 #define TYPE_PRO2 0x22

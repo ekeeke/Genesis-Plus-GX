@@ -40,8 +40,9 @@
  *
  ****************************************************************************************/
 
-#ifndef _PSG_H_
-#define _PSG_H_
+#pragma once 
+
+#include <stdint.h>
 
 typedef enum {
   PSG_DISCRETE,
@@ -56,5 +57,3 @@ extern int psg_context_load(uint8_t *state);
 extern void psg_write(unsigned int clocks, unsigned int data);
 extern void psg_config(unsigned int clocks, unsigned int preamp, unsigned int panning);
 extern void psg_end_frame(unsigned int clocks);
-
-#endif /* _PSG_H_ */

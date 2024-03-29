@@ -12,6 +12,8 @@
 
 #pragma once
 
+#include <stdint.h>
+
 #undef TRUE
 #undef FALSE
 #define TRUE  1

@@ -38,7 +38,11 @@
 #include "shared.h"
 #include "../system.h"
 #include "../genesis.h"
-#include "m68k.h"
+#include "../m68k/m68k.h"
+#include "../mem68k.h"
+#include "../membnk.h"
+#include "../sram.h"
+#include "../state.h"
 
 typedef struct
 {

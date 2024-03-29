@@ -48,6 +48,8 @@
 #include "sms_ntsc.h"
 #include "system.h"
 #include "macros.h"
+#include "vdp_ctrl.h"
+#include "vdp_render.h"
 
 #ifndef HAVE_NO_SPRITE_LIMIT
 #define MAX_SPRITES_PER_LINE 20

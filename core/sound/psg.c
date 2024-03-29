@@ -42,8 +42,10 @@
 
 #include <config.h>
 #include "../system.h"
+#include "../state.h"
 #include "shared.h"
 #include "blip_buf.h"
+#include "psg.h"
 
 /* internal clock = input clock : 16 = (master clock : 15) : 16 */
 #define PSG_MCYCLES_RATIO (15*16)

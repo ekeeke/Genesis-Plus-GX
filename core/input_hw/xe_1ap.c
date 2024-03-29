@@ -38,6 +38,7 @@
 
 #include "shared.h"
 #include "../macros.h"
+#include "input.h"
 
 #define XE_1AP_LATENCY 3
 

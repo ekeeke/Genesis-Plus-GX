@@ -38,11 +38,25 @@
  ****************************************************************************************/
 
 #include <config.h>
+#include <string.h>
 #include "../system.h"
 #include "../genesis.h"
 #include "../macros.h"
+#include "../state.h"
 #include "shared.h"
 #include "blip_buf.h"
+#include "psg.h"
+#include "ym2413.h"
+#include "ym2612.h"
+#include "sound.h"
+
+#ifdef HAVE_YM3438_CORE
+#include "ym3438.h"
+#endif
+
+#ifdef HAVE_OPLL_CORE
+#include "opll.h"
+#endif
 
 /* YM2612 internal clock = input clock / 6 = (master clock / 7) / 6 */
 #define YM2612_CLOCK_RATIO (7*6)

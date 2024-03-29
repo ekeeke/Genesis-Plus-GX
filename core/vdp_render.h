@@ -40,8 +40,9 @@
  *
  ****************************************************************************************/
 
-#ifndef _RENDER_H_
-#define _RENDER_H_
+#pragma once 
+
+#include <stdint.h>
 
 /* 3:3:2 RGB */
 #if defined(USE_8BPP_RENDERING)
@@ -141,5 +142,3 @@ extern void (*render_bg)(int line);
 extern void (*render_obj)(int line);
 extern void (*parse_satb)(int line);
 extern void (*update_bg_pattern_cache)(int index);
-
-#endif /* _RENDER_H_ */

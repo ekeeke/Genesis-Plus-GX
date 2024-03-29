@@ -36,8 +36,9 @@
  *
  ****************************************************************************************/
 
-#ifndef _SRAM_H_
-#define _SRAM_H_
+#pragma once
+
+#include <stdint.h>
 
 typedef struct
 {
@@ -59,5 +60,3 @@ extern void sram_write_word(unsigned int address, unsigned int data);
 
 /* global variables */
 extern T_SRAM sram;
-
-#endif

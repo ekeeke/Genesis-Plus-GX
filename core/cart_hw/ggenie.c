@@ -43,7 +43,9 @@
 #include <fileio.h>
 #include "../genesis.h"
 #include "shared.h"
-#include "m68k.h"
+#include "../m68k/m68k.h"
+#include "../mem68k.h"
+#include "ggenie.h"
 
 static struct
 {

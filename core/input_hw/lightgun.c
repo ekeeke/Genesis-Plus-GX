@@ -42,6 +42,9 @@
 #include "shared.h"
 #include "m68k.h"
 #include "z80.h"
+#include "vdp_ctrl.h"
+#include "io_ctrl.h"
+#include "input.h"
 
 /************************************************************************************/
 /*                                                                                  */

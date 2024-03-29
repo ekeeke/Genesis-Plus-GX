@@ -37,8 +37,9 @@
  *
  ****************************************************************************************/
 
-#ifndef _INPUT_H_
-#define _INPUT_H_
+#pragma once
+
+#include "io_ctrl.h"
 
 /* Max. number of devices */
 #define MAX_DEVICES (8)
@@ -156,4 +157,3 @@ extern void input_reset(void);
 extern void input_refresh(void);
 extern void input_end_frame(unsigned int cycles);
 
-#endif

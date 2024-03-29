@@ -42,11 +42,16 @@
 #include <string.h>
 #include <config.h>
 #include "shared.h"
+#include "state.h"
 #include "hvc.h"
 #include "m68k.h"
 #include "z80.h"
 #include "system.h"
 #include "genesis.h"
+#include "vdp_ctrl.h"
+#include "vdp_render.h"
+#include "io_ctrl.h"
+#include "svp.h"
 
 /* Mark a pattern as modified */
 #define MARK_BG_DIRTY(addr)                         \

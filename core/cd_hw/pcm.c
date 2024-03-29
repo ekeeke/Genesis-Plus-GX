@@ -37,6 +37,8 @@
  ****************************************************************************************/
 
 #include <config.h>
+#include <string.h>
+#include "../state.h"
 #include "../system.h"
 #include "../genesis.h"
 #include "shared.h"

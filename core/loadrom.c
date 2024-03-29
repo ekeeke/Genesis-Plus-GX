@@ -44,6 +44,10 @@
 #include "loadrom.h"
 #include "system.h"
 #include "genesis.h"
+#include "vdp_ctrl.h"
+#include "input.h"
+#include "ggenie.h"
+#include "areplay.h"
 
 /*** ROM Information ***/
 #define ROMCONSOLE    256

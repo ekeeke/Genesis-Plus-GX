@@ -53,6 +53,10 @@
 #include "z80.h"
 #include "system.h"
 #include "genesis.h"
+#include "vdp_ctrl.h"
+#include "io_ctrl.h"
+#include "input.h"
+#include "psg.h"
 
 uint8_t io_reg[0x10];
 

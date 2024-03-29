@@ -44,6 +44,8 @@ to do:
 
 #include "shared.h"
 #include <math.h>
+#include <stdint.h>
+#include <string.h>
 #include "../macros.h"
 
 #define FREQ_SH 16  /* 16.16 fixed point (frequency calculations) */
@@ -1097,7 +1099,7 @@ INLINE void rhythm_calc( YM2413_OPLL_CH *CH, unsigned int noise )
 
 
 /* generic table initialize */
-int init_tables(void)
+int ym2413_init_tables(void)
 {
   signed int i,x;
   signed int n;
@@ -1701,7 +1703,7 @@ void OPLLWriteReg(int r, int v)
 
 void YM2413Init(void)
 {
-  init_tables();
+  ym2413_init_tables();
 
   /* clear */
   memset(&ym2413,0,sizeof(YM2413));

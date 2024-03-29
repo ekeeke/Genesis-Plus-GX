@@ -45,6 +45,11 @@
 #include "z80.h"
 #include "system.h"
 #include "genesis.h"
+#include "vdp_ctrl.h"
+#include "membnk.h"
+#include "io_ctrl.h"
+#include "sound.h"
+#include "psg.h"
 
 /*--------------------------------------------------------------------------*/
 /*  Handlers for access to unused addresses and those which make the        */

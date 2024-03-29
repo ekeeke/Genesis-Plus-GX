@@ -37,10 +37,12 @@
  ****************************************************************************************/
 
 #include <zlib.h>
+#include <string.h>
 #include "../loadrom.h"
 #include "../macros.h"
 #include "../genesis.h"
 #include "shared.h"
+#include "sram.h"
 
 T_SRAM sram;
 
