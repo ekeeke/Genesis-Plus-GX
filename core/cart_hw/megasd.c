@@ -35,7 +35,6 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *
  ****************************************************************************************/
-#include "shared.h"
 #include "../system.h"
 #include "../genesis.h"
 #include "../m68k/m68k.h"

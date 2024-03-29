@@ -1,5 +1,4 @@
 
-#include "shared.h"
 #include "config.h"
 #include "input.h"
 #include "ym2612.h"

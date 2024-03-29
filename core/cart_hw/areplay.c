@@ -38,7 +38,6 @@
 
 #include <osd.h>
 #include <fileio.h>
-#include "shared.h"
 #include "../m68k/m68k.h"
 #include "../genesis.h"
 #include "../mem68k.h"

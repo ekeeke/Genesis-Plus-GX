@@ -42,7 +42,6 @@ to do:
 /** 2022/08/07: fixed operator ouput when EG is off **/
 /************************************************/
 
-#include "shared.h"
 #include <math.h>
 #include <stdint.h>
 #include <string.h>

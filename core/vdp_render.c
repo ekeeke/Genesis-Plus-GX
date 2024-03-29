@@ -43,7 +43,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <config.h>
-#include "shared.h"
 #include "md_ntsc.h"
 #include "sms_ntsc.h"
 #include "system.h"

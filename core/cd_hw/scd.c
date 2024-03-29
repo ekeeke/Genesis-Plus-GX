@@ -36,7 +36,6 @@
  *
  ****************************************************************************************/
 
-#include "shared.h"
 #include <string.h>
 #include "../system.h"
 #include "../genesis.h"

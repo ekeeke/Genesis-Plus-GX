@@ -124,7 +124,7 @@
  *    to a detailed description by Sean Young which can be found at:
  *      http://www.msxnet.org/tech/z80-documented.pdf
  *****************************************************************************/
-#include "shared.h"
+
 #include "string.h"
 #include "z80.h"
 #include "macros.h"

@@ -13,7 +13,6 @@
 #ifndef _SVP_H_
 #define _SVP_H_
 
-#include "shared.h"
 #include "ssp16.h"
 
 typedef struct {

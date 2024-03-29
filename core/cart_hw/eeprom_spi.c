@@ -38,7 +38,6 @@
 
 #include <stdint.h>
 #include <string.h>
-#include "shared.h"
 #include "sram.h"
 
 /* max supported size 64KB (25x512/95x512) */

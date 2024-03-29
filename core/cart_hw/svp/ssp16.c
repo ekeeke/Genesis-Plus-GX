@@ -189,7 +189,6 @@
  *   'ld d, (a)' loads from program ROM
  */
 
-#include "shared.h"
 #include "../../genesis.h"
 #include "svp.h"
 

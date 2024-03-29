@@ -41,7 +41,6 @@
 #include "../system.h"
 #include "../genesis.h"
 #include "../state.h"
-#include "shared.h"
 #include "megasd.h"
 #include "m68k.h"
 

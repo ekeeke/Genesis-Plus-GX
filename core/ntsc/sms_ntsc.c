@@ -2,7 +2,6 @@
 
 /* Modified for use with Genesis Plus GX -- EkeEke */
 
-#include "shared.h"
 #include "../system.h"
 #include "sms_ntsc.h"
 

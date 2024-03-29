@@ -38,7 +38,6 @@
  ****************************************************************************************/
 
 #include <config.h>
-#include "shared.h"
 #include "genesis.h"
 #include "z80.h"
 #include "vdp_ctrl.h"

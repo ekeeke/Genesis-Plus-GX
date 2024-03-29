@@ -10,7 +10,6 @@
    Modified for Genesis Plus GX (Eke-Eke): added BIG ENDIAN support, fixed addr/code inversion
 */
 
-#include "shared.h"
 #include <string.h>
 #include "../../genesis.h"
 #include "../../m68k/m68k.h"

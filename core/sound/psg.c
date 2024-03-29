@@ -43,7 +43,6 @@
 #include <config.h>
 #include "../system.h"
 #include "../state.h"
-#include "shared.h"
 #include "blip_buf.h"
 #include "psg.h"
 

@@ -36,7 +36,6 @@
  *
  ****************************************************************************************/
 
-#include "shared.h"
 #include <string.h>
 #include "../input_hw/gamepad.h"
 #include "../loadrom.h"

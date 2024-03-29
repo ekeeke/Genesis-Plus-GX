@@ -37,7 +37,6 @@
  ****************************************************************************************/
 
 #include <string.h>
-#include "shared.h"
 #include "eeprom_93c.h"
 #include "sram.h"
 

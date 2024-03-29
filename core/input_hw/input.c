@@ -41,7 +41,6 @@
 #include "../loadrom.h"
 #include "../system.h"
 #include "../genesis.h"
-#include "shared.h"
 #include "gamepad.h"
 #include "lightgun.h"
 #include "mouse.h"

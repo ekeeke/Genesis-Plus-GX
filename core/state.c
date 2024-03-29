@@ -37,7 +37,6 @@
  ****************************************************************************************/
 
 #include <config.h>
-#include "shared.h"
 #include "m68k.h"
 #include "z80.h"
 #include "system.h"

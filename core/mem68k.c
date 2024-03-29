@@ -38,7 +38,6 @@
  ****************************************************************************************/
 
 #include <config.h>
-#include "shared.h"
 #include "m68k.h"
 #include "system.h"
 #include "genesis.h"

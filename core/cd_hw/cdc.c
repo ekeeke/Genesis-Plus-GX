@@ -37,7 +37,6 @@
  ****************************************************************************************/
 
 #include <string.h>
-#include "shared.h"
 #include "../genesis.h"
 #include "../state.h"
 #include "m68k.h"

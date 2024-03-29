@@ -11,7 +11,6 @@
 #include <sram.h>
 #include <state.h>
 
-#include "shared.h"
 #include "sms_ntsc.h"
 #include "md_ntsc.h"
 

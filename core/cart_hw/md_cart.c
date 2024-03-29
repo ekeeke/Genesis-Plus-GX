@@ -47,7 +47,6 @@
 #include "../system.h"
 #include "../loadrom.h"
 #include "../genesis.h"
-#include "shared.h"
 #include "eeprom_i2c.h"
 #include "eeprom_spi.h"
 #include "megasd.h"

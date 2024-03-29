@@ -41,7 +41,6 @@
 
 #include <string.h>
 #include <config.h>
-#include "shared.h"
 #include "state.h"
 #include "hvc.h"
 #include "m68k.h"

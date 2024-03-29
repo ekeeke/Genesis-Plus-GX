@@ -40,7 +40,6 @@
 #include <osd.h>
 #include <fileio.h>
 #include <ctype.h>
-#include "shared.h"
 #include "loadrom.h"
 #include "system.h"
 #include "genesis.h"
