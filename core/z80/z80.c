@@ -125,9 +125,10 @@
  *      http://www.msxnet.org/tech/z80-documented.pdf
  *****************************************************************************/
 
-#include "string.h"
+#include <string.h>
+#include "../macros.h"
 #include "z80.h"
-#include "macros.h"
+
 
 /* execute main opcodes inside a big switch statement */
 #define BIG_SWITCH 1

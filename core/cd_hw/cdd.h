@@ -38,7 +38,7 @@
 #ifndef _HW_CDD_
 #define _HW_CDD_
 
-#include "sound/blip_buf.h"
+#include "../sound/blip_buf.h"
 
 #if defined(USE_LIBVORBIS)
 #include <vorbis/vorbisfile.h>

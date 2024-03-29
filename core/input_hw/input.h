@@ -39,7 +39,7 @@
 
 #pragma once
 
-#include "io_ctrl.h"
+#include "../io_ctrl.h"
 
 /* Max. number of devices */
 #define MAX_DEVICES (8)

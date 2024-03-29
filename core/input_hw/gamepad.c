@@ -38,10 +38,10 @@
  ****************************************************************************************/
 
 #include "../system.h"
+#include "../m68k/m68k.h"
+#include "../z80/z80.h"
+#include "../input_hw/input.h"
 #include "gamepad.h"
-#include "m68k/m68k.h"
-#include "z80/z80.h"
-#include "input_hw/input.h"
 
 struct
 {

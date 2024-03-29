@@ -34,7 +34,7 @@
 #include <string.h>
 #include <math.h>
 #include "eq.h"
-#include "macros.h"
+#include "../macros.h"
 
 
 /* -----------

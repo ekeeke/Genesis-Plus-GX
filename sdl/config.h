@@ -2,7 +2,7 @@
 #ifndef _CONFIG_H_
 #define _CONFIG_H_
 
-#include "types.h"
+#include <types.h>
 #include <main.h>
 
 /****************************************************************************

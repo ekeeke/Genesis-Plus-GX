@@ -41,9 +41,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "types.h"
+#include "../../../macros.h"
+#include "../../../types.h"
 #include "osd.h"
-#include "macros.h"
 #include "chd.h"
 #include "cdrom.h"
 #include "flac.h"

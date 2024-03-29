@@ -46,20 +46,20 @@
 #include <config.h>
 #include "../cart_hw/svp/svp.h"
 #include "../input_hw/input.h"
+#include "../m68k/m68k.h"
 #include "../system.h"
 #include "../loadrom.h"
 #include "../genesis.h"
+#include "../mem68k.h"
+#include "../membnk.h"
+#include "../state.h"
 #include "eeprom_i2c.h"
 #include "eeprom_spi.h"
 #include "megasd.h"
-#include "m68k/m68k.h"
 #include "md_cart.h"
-#include "mem68k.h"
-#include "membnk.h"
 #include "sram.h"
 #include "ggenie.h"
 #include "areplay.h"
-#include "state.h"
 
 /* Cart database entry */
 typedef struct
