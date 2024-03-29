@@ -1,7 +1,6 @@
 #ifndef _SHARED_H_
 #define _SHARED_H_
 
-#include "system.h"
 #include "genesis.h"
 #include "vdp_ctrl.h"
 #include "vdp_render.h"

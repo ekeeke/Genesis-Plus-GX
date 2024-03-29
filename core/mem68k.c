@@ -40,6 +40,7 @@
 #include <config.h>
 #include "shared.h"
 #include "m68k.h"
+#include "system.h"
 
 /*--------------------------------------------------------------------------*/
 /* Unused areas (return open bus data, i.e prefetched instruction word)     */

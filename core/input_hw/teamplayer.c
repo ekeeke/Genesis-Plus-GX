@@ -40,9 +40,9 @@
 
 static struct
 {
-  uint8 State;
-  uint8 Counter;
-  uint8 Table[12];
+  uint8_t State;
+  uint8_t Counter;
+  uint8_t Table[12];
 } teamplayer[2];
 
 

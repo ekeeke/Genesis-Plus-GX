@@ -40,8 +40,8 @@
 
 static struct
 {
-  uint8 State;
-  uint8 Counter;
+  uint8_t State;
+  uint8_t Counter;
 } activator[2];
 
 void activator_reset(int index)
@@ -54,10 +54,10 @@ void activator_reset(int index)
 INLINE unsigned char activator_read(int index)
 {
   /* IR sensors 1-16 data (active low) */
-  uint16 data = ~input.pad[index << 2];
+  uint16_t data = ~input.pad[index << 2];
 
   /* D1 = D0 (data is ready) */
-  uint8 temp = (activator[index].State & 0x01) << 1;
+  uint8_t temp = (activator[index].State & 0x01) << 1;
 
   switch (activator[index].Counter)
   {

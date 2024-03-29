@@ -38,6 +38,7 @@
  ****************************************************************************************/
 
 #include <config.h>
+#include "../system.h"
 #include "shared.h"
 #include "blip_buf.h"
 
@@ -463,7 +464,7 @@ int sound_update(unsigned int cycles)
   return blip_samples_avail(snd.blips[0]);
 }
 
-int sound_context_save(uint8 *state)
+int sound_context_save(uint8_t *state)
 {
   int bufferptr = 0;
   
@@ -512,14 +513,14 @@ int sound_context_save(uint8 *state)
   return bufferptr;
 }
 
-int sound_context_load(uint8 *state)
+int sound_context_load(uint8_t *state)
 {
   int bufferptr = 0;
 
   if ((system_hw & SYSTEM_PBC) == SYSTEM_MD)
   {
 #ifdef HAVE_YM3438_CORE
-    uint8 config_ym3438;
+    uint8_t config_ym3438;
     load_param(&config_ym3438, sizeof(config_ym3438));
     if (config_ym3438)
     {
@@ -539,7 +540,7 @@ int sound_context_load(uint8 *state)
   else
   {
 #ifdef HAVE_OPLL_CORE
-    uint8 config_opll;
+    uint8_t config_opll;
     load_param(&config_opll, sizeof(config_opll));
     if (config_opll)
     {

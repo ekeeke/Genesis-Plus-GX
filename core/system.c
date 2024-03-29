@@ -46,6 +46,7 @@
 #include "eq.h"
 #include "m68k.h"
 #include "z80.h"
+#include "system.h"
 
 /* Global variables */
 t_bitmap bitmap;
@@ -54,11 +55,11 @@ uint32 mcycles_vdp;
 uint8 system_hw;
 uint8 system_bios;
 uint32 system_clock;
-int16 SVP_cycles = 800; 
+int16_t SVP_cycles = 800; 
 
 static uint8 pause_b;
 static EQSTATE eq[2];
-static int16 llp,rrp;
+static int16_t llp,rrp;
 
 /******************************************************************************************/
 /* Audio subsystem                                                                        */
@@ -195,7 +196,7 @@ void audio_shutdown(void)
   }
 }
 
-int audio_update(int16 *buffer)
+int audio_update(int16_t *buffer)
 {
   /* run sound chips until end of frame */
   int size = sound_update(mcycles_vdp);
@@ -232,8 +233,8 @@ int audio_update(int16 *buffer)
   if (config.filter)
   {
     int samples = size;
-    int16 *out = buffer;
-    int32 l, r;
+    int16_t *out = buffer;
+    int32_t l, r;
 
     if (config.filter & 1)
     {
@@ -290,7 +291,7 @@ int audio_update(int16 *buffer)
   /* Mono output mixing */
   if (config.mono)
   {
-    int16 out;
+    int16_t out;
     int samples = size;
     do
     {

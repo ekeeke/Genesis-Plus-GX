@@ -275,7 +275,7 @@ void cdc_dma_init(void)
       cdc.dbc.w -= 2;
 
       /* end of transfer ? */
-      if ((int16)cdc.dbc.w < 0)
+      if ((int16_t)cdc.dbc.w < 0)
       {
         /* reset data byte counter (DBCH bits 4-7 should also be set to 1) */
         cdc.dbc.w = 0xffff;
@@ -913,7 +913,7 @@ unsigned short cdc_host_r(uint8 cpu_access)
       cdc.dbc.w -= 2;
 
       /* end of transfer ? */
-      if ((int16)cdc.dbc.w < 0)
+      if ((int16_t)cdc.dbc.w < 0)
       {
         /* reset data byte counter (DBCH bits 4-7 should also be set to 1) */
         cdc.dbc.w = 0xffff;

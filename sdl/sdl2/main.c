@@ -4,6 +4,7 @@
 #include <error.h>
 #include <osd.h>
 #include <loadrom.h>
+#include <system.h>
 
 #include "shared.h"
 #include "sms_ntsc.h"
@@ -41,7 +42,7 @@ struct {
 } sdl_sound;
 
 
-static uint8 brm_format[0x40] =
+static uint8_t brm_format[0x40] =
 {
   0x5f,0x5f,0x5f,0x5f,0x5f,0x5f,0x5f,0x5f,0x5f,0x5f,0x5f,0x00,0x00,0x00,0x00,0x40,
   0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
@@ -307,7 +308,7 @@ static void sdl_sync_close()
     SDL_DestroySemaphore(sdl_sync.sem_sync);
 }
 
-static const uint16 vc_table[4][2] =
+static const uint16_t vc_table[4][2] =
 {
   /* NTSC, PAL */
   {0xDA , 0xF2},  /* Mode 4 (192 lines) */
@@ -377,7 +378,7 @@ static int sdl_control_update(SDL_Keycode keystate)
         FILE *f = fopen(fileName,"rb");
         if (f)
         {
-          uint8 buf[STATE_SIZE];
+          uint8_t buf[STATE_SIZE];
           int status = fread(&buf, STATE_SIZE, 1, f);
           if (status < 0) { fprintf(stderr, "Error loading file `%s'.", fileName); exit(-1); }
           state_load(buf);
@@ -392,7 +393,7 @@ static int sdl_control_update(SDL_Keycode keystate)
         FILE *f = fopen(fileName,"wb");
         if (f)
         {
-          uint8 buf[STATE_SIZE];
+          uint8_t buf[STATE_SIZE];
           int len = state_save(buf);
           int status = fwrite(&buf, len, 1, f);
           if (status < 0) { fprintf(stderr, "Error saving file `%s'.", fileName); exit(-1); }
@@ -501,7 +502,7 @@ static int sdl_control_update(SDL_Keycode keystate)
 
 int sdl_input_update(void)
 {
-  const uint8 *keystate = SDL_GetKeyboardState(NULL);
+  const uint8_t *keystate = SDL_GetKeyboardState(NULL);
 
   /* reset input */
   input.pad[joynum] = 0;
@@ -751,7 +752,7 @@ int main (int argc, char **argv)
     /* Byteswap ROM */
     for (i=0; i<0x800; i+=2)
     {
-      uint8 temp = boot_rom[i];
+      uint8_t temp = boot_rom[i];
       boot_rom[i] = boot_rom[i+1];
       boot_rom[i+1] = temp;
     }

@@ -43,6 +43,7 @@
 #include "shared.h"
 #include "m68k.h"
 #include "z80.h"
+#include "system.h"
 
 /*--------------------------------------------------------------------------*/
 /*  Handlers for access to unused addresses and those which make the        */

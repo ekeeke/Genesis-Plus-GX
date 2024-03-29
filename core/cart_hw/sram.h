@@ -41,13 +41,13 @@
 
 typedef struct
 {
-  uint8 detected;
-  uint8 on;
-  uint8 custom;
-  uint32 start;
-  uint32 end;
-  uint32 crc;
-  uint8 sram[0x10000];
+  uint8_t detected;
+  uint8_t on;
+  uint8_t custom;
+  uint32_t start;
+  uint32_t end;
+  uint32_t crc;
+  uint8_t sram[0x10000];
 } T_SRAM;
 
 /* Function prototypes */

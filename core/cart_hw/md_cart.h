@@ -41,8 +41,9 @@
  *
  ****************************************************************************************/
 
-#ifndef _MD_CART_H_
-#define _MD_CART_H_
+#pragma once
+
+#include "../types.h"
 
 #ifdef USE_DYNAMIC_ALLOC
 #define cart ext->md_cart
@@ -69,11 +70,11 @@
 /* Cartridge extra hardware */
 typedef struct
 {
-  uint8 regs[4];                                            /* internal registers (R/W) */
-  uint32 mask[4];                                           /* registers address mask */
-  uint32 addr[4];                                           /* registers address */
-  uint16 realtec;                                           /* realtec mapper */
-  uint16 bankshift;                                         /* cartridge with bankshift mecanism reseted on software reset */
+  uint8_t regs[4];                                            /* internal registers (R/W) */
+  uint32_t mask[4];                                           /* registers address mask */
+  uint32_t addr[4];                                           /* registers address */
+  uint16_t realtec;                                           /* realtec mapper */
+  uint16_t bankshift;                                         /* cartridge with bankshift mecanism reseted on software reset */
   unsigned int (*time_r)(unsigned int address);             /* !TIME signal ($a130xx) read handler  */
   void (*time_w)(unsigned int address, unsigned int data);  /* !TIME signal ($a130xx) write handler */
   unsigned int (*regs_r)(unsigned int address);             /* cart hardware registers read handler  */
@@ -83,19 +84,18 @@ typedef struct
 /* Cartridge type */
 typedef struct
 {
-  uint8 *base;            /* ROM base (saved for OS/Cartridge ROM swap) */
-  uint32 romsize;         /* ROM size */
-  uint32 mask;            /* ROM mask */
-  uint8 special;          /* custom external hardware (Lock-On, J-Cart, 3-D glasses, Terebi Oekaki,...) */
+  uint8_t *base;            /* ROM base (saved for OS/Cartridge ROM swap) */
+  uint32_t romsize;         /* ROM size */
+  uint32_t mask;            /* ROM mask */
+  uint8_t special;          /* custom external hardware (Lock-On, J-Cart, 3-D glasses, Terebi Oekaki,...) */
   cart_hw_t hw;           /* cartridge internal hardware */
-  uint8 lockrom[0x10000]; /* Game Genie / (Pro) Action Replay Lock-On ROM area (max 64KB) */
-  uint8 rom[MAXROMSIZE];  /* cartridge ROM area */
+  uint8_t lockrom[0x10000]; /* Game Genie / (Pro) Action Replay Lock-On ROM area (max 64KB) */
+  uint8_t rom[MAXROMSIZE];  /* cartridge ROM area */
 } md_cart_t;
 
 /* Function prototypes */
 extern void md_cart_init(void);
 extern void md_cart_reset(int hard_reset);
-extern int md_cart_context_save(uint8 *state);
-extern int md_cart_context_load(uint8 *state);
+extern int md_cart_context_save(uint8_t *state);
+extern int md_cart_context_load(uint8_t *state);
 
-#endif

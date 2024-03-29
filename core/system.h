@@ -72,7 +72,7 @@
 
 typedef struct
 {
-  uint8 *data;      /* Bitmap data */
+  uint8_t *data;      /* Bitmap data */
   int width;        /* Bitmap width */
   int height;       /* Bitmap height */
   int pitch;        /* Bitmap pitch */
@@ -99,18 +99,18 @@ typedef struct
 /* Global variables */
 extern t_bitmap bitmap;
 extern t_snd snd;
-extern uint32 mcycles_vdp;
-extern int16 SVP_cycles; 
-extern uint8 system_hw;
-extern uint8 system_bios;
-extern uint32 system_clock;
+extern uint32_t mcycles_vdp;
+extern int16_t SVP_cycles; 
+extern uint8_t system_hw;
+extern uint8_t system_bios;
+extern uint32_t system_clock;
 
 /* Function prototypes */
 extern int audio_init(int samplerate, double framerate);
 extern void audio_set_rate(int samplerate, double framerate);
 extern void audio_reset(void);
 extern void audio_shutdown(void);
-extern int audio_update(int16 *buffer);
+extern int audio_update(int16_t *buffer);
 extern void audio_set_equalizer(void);
 extern void system_init(void);
 extern void system_reset(void);

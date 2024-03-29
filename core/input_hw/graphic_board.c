@@ -40,9 +40,9 @@
 
 static struct
 {
-  uint8 State;
-  uint8 Counter;
-  uint8 Port;
+  uint8_t State;
+  uint8_t Counter;
+  uint8_t Port;
 } board;
 
 void graphic_board_reset(int port)
@@ -56,7 +56,7 @@ void graphic_board_reset(int port)
 
 unsigned char graphic_board_read(void)
 {
-  uint8 data;
+  uint8_t data;
 
   if (board.State & 0x20)
   {

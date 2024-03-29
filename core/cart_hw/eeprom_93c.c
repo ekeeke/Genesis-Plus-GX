@@ -102,7 +102,7 @@ void eeprom_93c_write(unsigned char data)
               case 2:
               {
                 /* READ */
-                eeprom_93c.buffer = *(uint16 *)(sram.sram + ((eeprom_93c.opcode & 0x3F) << 1));
+                eeprom_93c.buffer = *(uint16_t *)(sram.sram + ((eeprom_93c.opcode & 0x3F) << 1));
                 eeprom_93c.cycles = 0;
                 eeprom_93c.state = READ_WORD;
 
@@ -116,7 +116,7 @@ void eeprom_93c_write(unsigned char data)
                 /* ERASE */
                 if (eeprom_93c.we)
                 {
-                  *(uint16 *)(sram.sram + ((eeprom_93c.opcode & 0x3F) << 1)) = 0xFFFF;
+                  *(uint16_t *)(sram.sram + ((eeprom_93c.opcode & 0x3F) << 1)) = 0xFFFF;
                 }
 
                 /* wait for next command */
@@ -182,7 +182,7 @@ void eeprom_93c_write(unsigned char data)
               if (eeprom_93c.opcode & 0x40)
               {
                 /* write one word */
-                *(uint16 *)(sram.sram + ((eeprom_93c.opcode & 0x3F) << 1)) = eeprom_93c.buffer;
+                *(uint16_t *)(sram.sram + ((eeprom_93c.opcode & 0x3F) << 1)) = eeprom_93c.buffer;
               }
               else
               {
@@ -190,7 +190,7 @@ void eeprom_93c_write(unsigned char data)
                 int i;
                 for (i=0; i<64; i++)
                 {
-                  *(uint16 *)(sram.sram + (i << 1)) = eeprom_93c.buffer;
+                  *(uint16_t *)(sram.sram + (i << 1)) = eeprom_93c.buffer;
 
                 }
               }
@@ -213,7 +213,7 @@ void eeprom_93c_write(unsigned char data)
             /* read next word (93C46B) */
             eeprom_93c.opcode++;
             eeprom_93c.cycles = 0;
-            eeprom_93c.buffer = *(uint16 *)(sram.sram + ((eeprom_93c.opcode & 0x3F) << 1));
+            eeprom_93c.buffer = *(uint16_t *)(sram.sram + ((eeprom_93c.opcode & 0x3F) << 1));
           }
           break;
         }

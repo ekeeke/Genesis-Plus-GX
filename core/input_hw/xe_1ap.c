@@ -42,9 +42,9 @@
 
 static struct
 {
-  uint8 State;
-  uint8 Counter;
-  uint8 Latency;
+  uint8_t State;
+  uint8_t Counter;
+  uint8_t Latency;
 } xe_1ap[2];
 
 void xe_1ap_reset(int index)

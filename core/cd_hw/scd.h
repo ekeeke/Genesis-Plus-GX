@@ -70,19 +70,19 @@
 typedef struct 
 {
   cd_cart_t cartridge;        /* ROM/RAM Cartridge */
-  uint8 bootrom[0x20000];     /* 128K internal BOOT ROM */
-  uint8 prg_ram[0x80000];     /* 512K PRG-RAM */
-  uint8 word_ram[2][0x20000]; /* 2 x 128K Word RAM (1M mode) */
-  uint8 word_ram_2M[0x40000]; /* 256K Word RAM (2M mode) */
-  uint8 bram[0x2000];         /* 8K Backup RAM */
+  uint8_t bootrom[0x20000];     /* 128K internal BOOT ROM */
+  uint8_t prg_ram[0x80000];     /* 512K PRG-RAM */
+  uint8_t word_ram[2][0x20000]; /* 2 x 128K Word RAM (1M mode) */
+  uint8_t word_ram_2M[0x40000]; /* 256K Word RAM (2M mode) */
+  uint8_t bram[0x2000];         /* 8K Backup RAM */
   reg16_t regs[0x100];        /* 256 x 16-bit ASIC registers */
-  uint32 cycles;              /* CD Master clock counter */
-  uint32 cycles_per_line;     /* CD Master clock count per scanline */
-  int32 stopwatch;            /* Stopwatch counter */
-  int32 timer;                /* Timer counter */
-  uint8 pending;              /* Pending interrupts */
-  uint8 dmna;                 /* Pending DMNA write status */
-  uint8 type;                 /* CD hardware model */
+  uint32_t cycles;              /* CD Master clock counter */
+  uint32_t cycles_per_line;     /* CD Master clock count per scanline */
+  int32_t stopwatch;            /* Stopwatch counter */
+  int32_t timer;                /* Timer counter */
+  uint8_t pending;              /* Pending interrupts */
+  uint8_t dmna;                 /* Pending DMNA write status */
+  uint8_t type;                 /* CD hardware model */
   gfx_t gfx_hw;               /* Graphics processor */
   cdc_t cdc_hw;               /* CD data controller */
   cdd_t cdd_hw;               /* CD drive processor */
@@ -94,8 +94,8 @@ extern void scd_init(void);
 extern void scd_reset(int hard);
 extern void scd_update(unsigned int cycles);
 extern void scd_end_frame(unsigned int cycles);
-extern int scd_context_load(uint8 *state, char *version);
-extern int scd_context_save(uint8 *state);
+extern int scd_context_load(uint8_t *state, char *version);
+extern int scd_context_save(uint8_t *state);
 extern int scd_68k_irq_ack(int level);
 extern void prg_ram_dma_w(unsigned int length);
 

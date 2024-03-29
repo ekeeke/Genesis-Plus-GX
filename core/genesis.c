@@ -45,6 +45,7 @@
 #include "shared.h"
 #include "m68k.h"
 #include "z80.h"
+#include "system.h"
 
 #ifdef USE_DYNAMIC_ALLOC
 external_t *ext;

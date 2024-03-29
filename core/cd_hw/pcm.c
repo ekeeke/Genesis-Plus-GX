@@ -37,6 +37,7 @@
  ****************************************************************************************/
 
 #include <config.h>
+#include "../system.h"
 #include "shared.h"
 
 #define PCM_SCYCLES_RATIO (384 * 4)
@@ -75,9 +76,9 @@ void pcm_reset(void)
   blip_clear(snd.blips[1]);
 }
 
-int pcm_context_save(uint8 *state)
+int pcm_context_save(uint8_t *state)
 {
-  uint8 tmp8;
+  uint8_t tmp8;
   int bufferptr = 0;
 
   tmp8 = (pcm.bank - pcm.ram) >> 12;
@@ -93,9 +94,9 @@ int pcm_context_save(uint8 *state)
   return bufferptr;
 }
 
-int pcm_context_load(uint8 *state)
+int pcm_context_load(uint8_t *state)
 {
-  uint8 tmp8;
+  uint8_t tmp8;
   int bufferptr = 0;
 
   load_param(pcm.chan, sizeof(pcm.chan));
@@ -400,10 +401,10 @@ unsigned char pcm_read(unsigned int address, unsigned int cycles)
 void pcm_ram_dma_w(unsigned int length)
 {
   /* CDC buffer source address */
-  uint16 src_index = cdc.dac.w & 0x3fff;
+  uint16_t src_index = cdc.dac.w & 0x3fff;
   
   /* PCM-RAM destination address*/
-  uint16 dst_index = (scd.regs[0x0a>>1].w << 2) & 0xfff;
+  uint16_t dst_index = (scd.regs[0x0a>>1].w << 2) & 0xfff;
   
   /* update DMA destination address */
   scd.regs[0x0a>>1].w += (length >> 2);

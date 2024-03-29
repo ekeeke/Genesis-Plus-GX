@@ -11,49 +11,49 @@
  ****************************************************************************/
 typedef struct 
 {
-  uint8 padtype;
+  uint8_t padtype;
 } t_input_config;
 
 typedef struct 
 {
-  uint8 hq_fm;
-  uint8 filter;
-  uint8 hq_psg;
-  uint8 ym2612;
-  uint8 ym2413;
-  uint8 ym3438;
-  uint8 opll;
-  uint8 cd_latency;
-  int16 psg_preamp;
-  int16 fm_preamp;
-  int16 cdda_volume;
-  int16 pcm_volume;
-  uint32 lp_range;
-  int16 low_freq;
-  int16 high_freq;
-  int16 lg;
-  int16 mg;
-  int16 hg;
-  uint8 mono;
-  uint8 system;
-  uint8 region_detect;
-  uint8 vdp_mode;
-  uint8 master_clock;
-  uint8 force_dtack;
-  uint8 addr_error;
-  uint8 bios;
-  uint8 lock_on;
-  uint8 add_on;
-  uint8 hot_swap;
-  uint8 invert_mouse;
-  uint8 gun_cursor[2];
-  uint8 overscan;
-  uint8 gg_extra;
-  uint8 ntsc;
-  uint8 lcd;
-  uint8 render;
-  uint8 enhanced_vscroll;
-  uint8 enhanced_vscroll_limit;
+  uint8_t hq_fm;
+  uint8_t filter;
+  uint8_t hq_psg;
+  uint8_t ym2612;
+  uint8_t ym2413;
+  uint8_t ym3438;
+  uint8_t opll;
+  uint8_t cd_latency;
+  int16_t psg_preamp;
+  int16_t fm_preamp;
+  int16_t cdda_volume;
+  int16_t pcm_volume;
+  uint32_t lp_range;
+  int16_t low_freq;
+  int16_t high_freq;
+  int16_t lg;
+  int16_t mg;
+  int16_t hg;
+  uint8_t mono;
+  uint8_t system;
+  uint8_t region_detect;
+  uint8_t vdp_mode;
+  uint8_t master_clock;
+  uint8_t force_dtack;
+  uint8_t addr_error;
+  uint8_t bios;
+  uint8_t lock_on;
+  uint8_t add_on;
+  uint8_t hot_swap;
+  uint8_t invert_mouse;
+  uint8_t gun_cursor[2];
+  uint8_t overscan;
+  uint8_t gg_extra;
+  uint8_t ntsc;
+  uint8_t lcd;
+  uint8_t render;
+  uint8_t enhanced_vscroll;
+  uint8_t enhanced_vscroll_limit;
   t_input_config input[MAX_INPUTS];
 } t_config;
 

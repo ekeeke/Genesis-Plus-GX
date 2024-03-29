@@ -59,14 +59,14 @@ typedef enum
 
 typedef struct
 {
-  uint8 cs;           /* !CS line state */
-  uint8 clk;          /* SCLK line state */
-  uint8 out;          /* SO line state */
-  uint8 status;       /* status register */
-  uint8 opcode;       /* 8-bit opcode */
-  uint8 buffer;       /* 8-bit data buffer */
-  uint16 addr;        /* 16-bit address */
-  uint32 cycles;      /* current operation cycle */
+  uint8_t cs;           /* !CS line state */
+  uint8_t clk;          /* SCLK line state */
+  uint8_t out;          /* SO line state */
+  uint8_t status;       /* status register */
+  uint8_t opcode;       /* 8-bit opcode */
+  uint8_t buffer;       /* 8-bit data buffer */
+  uint16_t addr;        /* 16-bit address */
+  uint32_t cycles;      /* current operation cycle */
   T_STATE_SPI state;  /* current operation state */
 } T_EEPROM_SPI;
 

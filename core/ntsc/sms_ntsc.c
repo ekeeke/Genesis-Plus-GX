@@ -3,6 +3,7 @@
 /* Modified for use with Genesis Plus GX -- EkeEke */
 
 #include "shared.h"
+#include "../system.h"
 #include "sms_ntsc.h"
 
 /* Copyright (C) 2006-2007 Shay Green. This module is free software; you

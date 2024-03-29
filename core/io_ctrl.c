@@ -51,10 +51,11 @@
 #include "sportspad.h"
 #include "graphic_board.h"
 #include "z80.h"
+#include "system.h"
 
-uint8 io_reg[0x10];
+uint8_t io_reg[0x10];
 
-uint8 region_code = REGION_USA;
+uint8_t region_code = REGION_USA;
 
 static struct port_t
 {

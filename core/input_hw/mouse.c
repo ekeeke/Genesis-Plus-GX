@@ -40,10 +40,10 @@
 
 static struct
 {
-  uint8 State;
-  uint8 Counter;
-  uint8 Wait;
-  uint8 Port;
+  uint8_t State;
+  uint8_t Counter;
+  uint8_t Wait;
+  uint8_t Port;
 } mouse;
 
 void mouse_reset(int port)

@@ -40,8 +40,8 @@
 
 static struct
 {
-  uint8 State;
-  uint8 Counter;
+  uint8_t State;
+  uint8_t Counter;
 } sportspad[2];
 
 void sportspad_reset(int index)

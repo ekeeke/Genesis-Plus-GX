@@ -50,14 +50,14 @@ typedef enum
 
 typedef struct
 {
-  uint8 enabled;  /* 1: chip enabled */
-  uint8 cs;       /* CHIP SELECT line state */
-  uint8 clk;      /* CLK line state */
-  uint8 data;     /* DATA OUT line state */
-  uint8 cycles;   /* current operation cycle */
-  uint8 we;       /* 1: write enabled */
-  uint8 opcode;   /* 8-bit opcode + address */
-  uint16 buffer;  /* 16-bit data buffer */
+  uint8_t enabled;  /* 1: chip enabled */
+  uint8_t cs;       /* CHIP SELECT line state */
+  uint8_t clk;      /* CLK line state */
+  uint8_t data;     /* DATA OUT line state */
+  uint8_t cycles;   /* current operation cycle */
+  uint8_t we;       /* 1: write enabled */
+  uint8_t opcode;   /* 8-bit opcode + address */
+  uint16_t buffer;  /* 16-bit data buffer */
   T_STATE_93C state; /* current operation state */
 } T_EEPROM_93C;
 

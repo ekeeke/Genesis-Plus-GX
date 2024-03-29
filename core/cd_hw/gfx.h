@@ -42,19 +42,19 @@
 
 typedef struct
 {
-  uint32 cycles;                    /* current cycles count for graphics operation */
-  uint32 cyclesPerLine;             /* current graphics operation timings */
-  uint32 dotMask;                   /* stamp map size mask */
-  uint16 *tracePtr;                 /* trace vector pointer */
-  uint16 *mapPtr;                   /* stamp map table base address */
-  uint8 stampShift;                 /* stamp pixel shift value (related to stamp size) */
-  uint8 mapShift;                   /* stamp map table shift value (related to stamp map size) */
-  uint16 bufferOffset;              /* image buffer column offset */
-  uint32 bufferStart;               /* image buffer start index */
-  uint16 lut_offset[0x8000];        /* Cell Image -> WORD-RAM offset lookup table (1M Mode) */
-  uint8 lut_prio[4][0x100][0x100];  /* WORD-RAM data writes priority lookup table */
-  uint8 lut_pixel[0x200];           /* Graphics operation dot offset lookup table */
-  uint8 lut_cell[0x100];            /* Graphics operation stamp offset lookup table */
+  uint32_t cycles;                    /* current cycles count for graphics operation */
+  uint32_t cyclesPerLine;             /* current graphics operation timings */
+  uint32_t dotMask;                   /* stamp map size mask */
+  uint16_t *tracePtr;                 /* trace vector pointer */
+  uint16_t *mapPtr;                   /* stamp map table base address */
+  uint8_t stampShift;                 /* stamp pixel shift value (related to stamp size) */
+  uint8_t mapShift;                   /* stamp map table shift value (related to stamp map size) */
+  uint16_t bufferOffset;              /* image buffer column offset */
+  uint32_t bufferStart;               /* image buffer start index */
+  uint16_t lut_offset[0x8000];        /* Cell Image -> WORD-RAM offset lookup table (1M Mode) */
+  uint8_t lut_prio[4][0x100][0x100];  /* WORD-RAM data writes priority lookup table */
+  uint8_t lut_pixel[0x200];           /* Graphics operation dot offset lookup table */
+  uint8_t lut_cell[0x100];            /* Graphics operation stamp offset lookup table */
 } gfx_t;
 
 
@@ -108,8 +108,8 @@ extern void cell_ram_1_write8(unsigned int address, unsigned int data);
 /***************************************************************/
 extern void gfx_init(void);
 extern void gfx_reset(void);
-extern int gfx_context_save(uint8 *state);
-extern int gfx_context_load(uint8 *state);
+extern int gfx_context_save(uint8_t *state);
+extern int gfx_context_load(uint8_t *state);
 extern void gfx_start(unsigned int base, int cycles);
 extern void gfx_update(int cycles);
 

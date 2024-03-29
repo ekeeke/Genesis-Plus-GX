@@ -44,12 +44,14 @@
 #include <osd.h>
 #include <fileio.h>
 #include <config.h>
+#include "../system.h"
 #include "../loadrom.h"
 #include "shared.h"
 #include "eeprom_i2c.h"
 #include "eeprom_spi.h"
 #include "megasd.h"
 #include "m68k.h"
+#include "md_cart.h"
 
 /* Cart database entry */
 typedef struct

@@ -45,7 +45,7 @@ extern void megasd_reset(void);
 extern void megasd_rom_mapper_w(unsigned int address, unsigned int data);
 extern void megasd_enhanced_ssf2_mapper_w(unsigned int address, unsigned int data);
 extern void megasd_update_cdda(unsigned int samples);
-extern int megasd_context_save(uint8 *state);
-extern int megasd_context_load(uint8 *state);
+extern int megasd_context_save(uint8_t *state);
+extern int megasd_context_load(uint8_t *state);
 
 #endif

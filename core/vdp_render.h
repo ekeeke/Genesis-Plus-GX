@@ -87,9 +87,9 @@
 { \
   PIXEL_OUT_T pixel_out = table[*in++]; \
   PIXEL_OUT_T pixel_old  = *out; \
-  uint8 r = GET_R(pixel_out); \
-  uint8 g = GET_G(pixel_out); \
-  uint8 b = GET_B(pixel_out); \
+  uint8_t r = GET_R(pixel_out); \
+  uint8_t g = GET_G(pixel_out); \
+  uint8_t b = GET_B(pixel_out); \
   int r_decay = GET_R(pixel_old) - r; \
   int g_decay = GET_G(pixel_old) - g; \
   int b_decay = GET_B(pixel_old) - b; \
@@ -100,7 +100,7 @@
 }
 
 /* Global variables */
-extern uint16 spr_col;
+extern uint16_t spr_col;
 
 /* Function prototypes */
 extern void render_init(void);

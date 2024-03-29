@@ -80,44 +80,44 @@ to do:
 
 typedef struct 
 {
-  UINT32  ar;       /* attack rate: AR<<2           */
-  UINT32  dr;       /* decay rate:  DR<<2           */
-  UINT32  rr;       /* release rate:RR<<2           */
-  UINT8  KSR;       /* key scale rate               */
-  UINT8  ksl;       /* keyscale level               */
-  UINT8  ksr;       /* key scale rate: kcode>>KSR   */
-  UINT8  mul;       /* multiple: mul_tab[ML]        */
+  uint32_t  ar;       /* attack rate: AR<<2           */
+  uint32_t  dr;       /* decay rate:  DR<<2           */
+  uint32_t  rr;       /* release rate:RR<<2           */
+  uint8_t  KSR;       /* key scale rate               */
+  uint8_t  ksl;       /* keyscale level               */
+  uint8_t  ksr;       /* key scale rate: kcode>>KSR   */
+  uint8_t  mul;       /* multiple: mul_tab[ML]        */
 
   /* Phase Generator */
-  UINT32 phase;     /* frequency counter            */
-  UINT32 freq;      /* frequency counter step       */
-  UINT8 fb_shift;   /* feedback shift value         */
-  INT32 op1_out[2]; /* slot1 output for feedback    */
+  uint32_t phase;     /* frequency counter            */
+  uint32_t freq;      /* frequency counter step       */
+  uint8_t fb_shift;   /* feedback shift value         */
+  int32_t op1_out[2]; /* slot1 output for feedback    */
 
   /* Envelope Generator */
-  UINT8  eg_type;   /* percussive/nonpercussive mode  */
-  UINT8  state;     /* phase type                     */
-  UINT32  TL;       /* total level: TL << 2           */
-  INT32  TLL;       /* adjusted now TL                */
-  INT32  volume;    /* envelope counter               */
-  UINT32  sl;       /* sustain level: sl_tab[SL]      */
+  uint8_t  eg_type;   /* percussive/nonpercussive mode  */
+  uint8_t  state;     /* phase type                     */
+  uint32_t  TL;       /* total level: TL << 2           */
+  int32_t  TLL;       /* adjusted now TL                */
+  int32_t  volume;    /* envelope counter               */
+  uint32_t  sl;       /* sustain level: sl_tab[SL]      */
 
-  UINT8  eg_sh_dp;  /* (dump state)                   */
-  UINT8  eg_sel_dp; /* (dump state)                   */
-  UINT8  eg_sh_ar;  /* (attack state)                 */
-  UINT16 eg_sel_ar; /* (attack state)                 */
-  UINT8  eg_sh_dr;  /* (decay state)                  */
-  UINT8  eg_sel_dr; /* (decay state)                  */
-  UINT8  eg_sh_rr;  /* (release state for non-perc.)  */
-  UINT8  eg_sel_rr; /* (release state for non-perc.)  */
-  UINT8  eg_sh_rs;  /* (release state for perc.mode)  */
-  UINT8  eg_sel_rs; /* (release state for perc.mode)  */
+  uint8_t  eg_sh_dp;  /* (dump state)                   */
+  uint8_t  eg_sel_dp; /* (dump state)                   */
+  uint8_t  eg_sh_ar;  /* (attack state)                 */
+  uint16_t eg_sel_ar; /* (attack state)                 */
+  uint8_t  eg_sh_dr;  /* (decay state)                  */
+  uint8_t  eg_sel_dr; /* (decay state)                  */
+  uint8_t  eg_sh_rr;  /* (release state for non-perc.)  */
+  uint8_t  eg_sel_rr; /* (release state for non-perc.)  */
+  uint8_t  eg_sh_rs;  /* (release state for perc.mode)  */
+  uint8_t  eg_sel_rs; /* (release state for perc.mode)  */
 
-  UINT32  key;      /* 0 = KEY OFF, >0 = KEY ON */
+  uint32_t  key;      /* 0 = KEY OFF, >0 = KEY ON */
 
   /* LFO */
-  UINT32  AMmask;   /* LFO Amplitude Modulation enable mask */
-  UINT8  vib;       /* LFO Phase Modulation enable flag (active high)*/
+  uint32_t  AMmask;   /* LFO Amplitude Modulation enable mask */
+  uint8_t  vib;       /* LFO Phase Modulation enable flag (active high)*/
 
   /* waveform select */
   unsigned int wavetable;
@@ -128,34 +128,34 @@ typedef struct
   YM2413_OPLL_SLOT SLOT[2];
 
   /* phase generator state */
-  UINT32  block_fnum;   /* block+fnum */
-  UINT32  fc;           /* Freq. freqement base */
-  UINT32  ksl_base;     /* KeyScaleLevel Base step  */
-  UINT8   kcode;        /* key code (for key scaling) */
-  UINT8   sus;          /* sus on/off (release speed in percussive mode)  */
+  uint32_t  block_fnum;   /* block+fnum */
+  uint32_t  fc;           /* Freq. freqement base */
+  uint32_t  ksl_base;     /* KeyScaleLevel Base step  */
+  uint8_t   kcode;        /* key code (for key scaling) */
+  uint8_t   sus;          /* sus on/off (release speed in percussive mode)  */
 } YM2413_OPLL_CH;
 
 /* chip state */
 typedef struct {
     YM2413_OPLL_CH P_CH[9];   /* OPLL chips have 9 channels */
-  UINT8  instvol_r[9];        /* instrument/volume (or volume/volume in percussive mode)  */
+  uint8_t  instvol_r[9];        /* instrument/volume (or volume/volume in percussive mode)  */
 
-  UINT32  eg_cnt;             /* global envelope generator counter  */
-  UINT32  eg_timer;           /* global envelope generator counter works at frequency = chipclock/72 */
-  UINT32  eg_timer_add;       /* step of eg_timer */
-  UINT32  eg_timer_overflow;  /* envelope generator timer overlfows every 1 sample (on real chip) */
+  uint32_t  eg_cnt;             /* global envelope generator counter  */
+  uint32_t  eg_timer;           /* global envelope generator counter works at frequency = chipclock/72 */
+  uint32_t  eg_timer_add;       /* step of eg_timer */
+  uint32_t  eg_timer_overflow;  /* envelope generator timer overlfows every 1 sample (on real chip) */
 
-  UINT8  rhythm;              /* Rhythm mode  */
+  uint8_t  rhythm;              /* Rhythm mode  */
 
   /* LFO */
-  UINT32  lfo_am_cnt;
-  UINT32  lfo_am_inc;
-  UINT32  lfo_pm_cnt;
-  UINT32  lfo_pm_inc;
+  uint32_t  lfo_am_cnt;
+  uint32_t  lfo_am_inc;
+  uint32_t  lfo_pm_cnt;
+  uint32_t  lfo_pm_inc;
 
-  UINT32  noise_rng;      /* 23 bit noise shift register  */
-  UINT32  noise_p;        /* current noise 'phase'  */
-  UINT32  noise_f;        /* current noise period */
+  uint32_t  noise_rng;      /* 23 bit noise shift register  */
+  uint32_t  noise_p;        /* current noise 'phase'  */
+  uint32_t  noise_f;        /* current noise period */
 
 
 /* instrument settings */
@@ -165,12 +165,12 @@ typedef struct {
   16 -bass drum settings
   17,18 - other percussion instruments
 */
-  UINT8 inst_tab[19][8];
+  uint8_t inst_tab[19][8];
 
-  UINT32  fn_tab[1024];     /* fnumber->increment counter  */
+  uint32_t  fn_tab[1024];     /* fnumber->increment counter  */
 
-  UINT8 address;          /* address register */
-  UINT8 status;          /* status flag       */
+  uint8_t address;          /* address register */
+  uint8_t status;          /* status flag       */
 
   double clock;         /* master clock  (Hz) */
   int rate;            /* sampling rate (Hz)  */
@@ -180,7 +180,7 @@ typedef struct {
 /* table is 3dB/octave, DV converts this into 6dB/octave */
 /* 0.1875 is bit 0 weight of the envelope counter (volume) expressed in the 'decibel' scale */
 #define DV (0.1875/1.0)
-static const UINT32 ksl_tab[8*16]=
+static const uint32_t ksl_tab[8*16]=
 {
   /* OCT 0 */
    0.000/DV, 0.000/DV, 0.000/DV, 0.000/DV,
@@ -227,8 +227,8 @@ static const UINT32 ksl_tab[8*16]=
 
 /* sustain level table (3dB per step) */
 /* 0 - 15: 0, 3, 6, 9,12,15,18,21,24,27,30,33,36,39,42,45 (dB)*/
-#define SC(db) (UINT32) ( db * (1.0/ENV_STEP) )
-static const UINT32 sl_tab[16]={
+#define SC(db) (uint32_t) ( db * (1.0/ENV_STEP) )
+static const uint32_t sl_tab[16]={
  SC( 0),SC( 1),SC( 2),SC(3 ),SC(4 ),SC(5 ),SC(6 ),SC( 7),
  SC( 8),SC( 9),SC(10),SC(11),SC(12),SC(13),SC(14),SC(15)
 };
@@ -383,7 +383,7 @@ O( 0),O( 0),O( 0),O( 0),O( 0),O( 0),O( 0),O( 0),
 
 /* multiple table */
 #define ML 2
-static const UINT8 mul_tab[16]= {
+static const uint8_t mul_tab[16]= {
 /* 1/2, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,10,12,12,15,15 */
    0.50*ML, 1.00*ML, 2.00*ML, 3.00*ML, 4.00*ML, 5.00*ML, 6.00*ML, 7.00*ML,
    8.00*ML, 9.00*ML,10.00*ML,10.00*ML,12.00*ML,12.00*ML,15.00*ML,15.00*ML
@@ -420,7 +420,7 @@ We use data>>1, until we find what it really is on real chip...
 
 #define LFO_AM_TAB_ELEMENTS 210
 
-static const UINT8 lfo_am_table[LFO_AM_TAB_ELEMENTS] = {
+static const uint8_t lfo_am_table[LFO_AM_TAB_ELEMENTS] = {
 0,0,0,0,0,0,0,
 1,1,1,1,
 2,2,2,2,
@@ -476,7 +476,7 @@ static const UINT8 lfo_am_table[LFO_AM_TAB_ELEMENTS] = {
 };
 
 /* LFO Phase Modulation table (verified on real YM2413) */
-static const INT8 lfo_pm_table[8*8] = {
+static const int8_t lfo_pm_table[8*8] = {
 
 /* FNUM2/FNUM = 0 00xxxxxx (0x0000) */
 0, 0, 0, 0, 0, 0, 0, 0,
@@ -579,8 +579,8 @@ static unsigned char table[19][8] = {
 
 static signed int output[2];
 
-static UINT32  LFO_AM;
-static INT32  LFO_PM;
+static uint32_t  LFO_AM;
+static int32_t  LFO_PM;
 
 /* emulated chip */
 static YM2413 ym2413;
@@ -778,7 +778,7 @@ INLINE void advance(void)
     /* Phase Generator */
     if(op->vib)
     {
-      UINT8 block;
+      uint8_t block;
 
       unsigned int fnum_lfo   = 8*((CH->block_fnum&0x01c0) >> 6);
       unsigned int block_fnum = CH->block_fnum * 2;
@@ -818,7 +818,7 @@ INLINE void advance(void)
   while (i)
   {
     /*
-    UINT32 j;
+    uint32_t j;
     j = ( (chip->noise_rng) ^ (chip->noise_rng>>14) ^ (chip->noise_rng>>15) ^ (chip->noise_rng>>22) ) & 1;
     chip->noise_rng = (j<<22) | (chip->noise_rng>>1);
     */
@@ -839,25 +839,25 @@ INLINE void advance(void)
 }
 
 
-INLINE signed int op_calc(UINT32 phase, unsigned int env, signed int pm, unsigned int wave_tab)
+INLINE signed int op_calc(uint32_t phase, unsigned int env, signed int pm, unsigned int wave_tab)
 {
-  UINT32 p = (env<<5) + sin_tab[wave_tab + ((((signed int)((phase & ~FREQ_MASK) + (pm<<17))) >> FREQ_SH ) & SIN_MASK) ];
+  uint32_t p = (env<<5) + sin_tab[wave_tab + ((((signed int)((phase & ~FREQ_MASK) + (pm<<17))) >> FREQ_SH ) & SIN_MASK) ];
 
   if (p >= TL_TAB_LEN)
     return 0;
   return tl_tab[p];
 }
 
-INLINE signed int op_calc1(UINT32 phase, unsigned int env, signed int pm, unsigned int wave_tab)
+INLINE signed int op_calc1(uint32_t phase, unsigned int env, signed int pm, unsigned int wave_tab)
 {
-  UINT32 p = (env<<5) + sin_tab[wave_tab + ((((signed int)((phase & ~FREQ_MASK) + pm)) >> FREQ_SH ) & SIN_MASK) ];
+  uint32_t p = (env<<5) + sin_tab[wave_tab + ((((signed int)((phase & ~FREQ_MASK) + pm)) >> FREQ_SH ) & SIN_MASK) ];
 
   if (p >= TL_TAB_LEN)
     return 0;
   return tl_tab[p];
 }
 
-#define volume_calc(OP) (((OP)-> state != EG_OFF) ? (OP)->TLL + ((UINT32)(OP)->volume) + (LFO_AM & (OP)->AMmask) : ENV_QUIET)
+#define volume_calc(OP) (((OP)-> state != EG_OFF) ? (OP)->TLL + ((uint32_t)(OP)->volume) + (LFO_AM & (OP)->AMmask) : ENV_QUIET)
 
 /* calculate output */
 INLINE void chan_calc( YM2413_OPLL_CH *CH )
@@ -1007,7 +1007,7 @@ INLINE void rhythm_calc( YM2413_OPLL_CH *CH, unsigned int noise )
 
     /* when res1 = 0 phase = 0x000 | 0xd0; */
     /* when res1 = 1 phase = 0x200 | (0xd0>>2); */
-    UINT32 phase = res1 ? (0x200|(0xd0>>2)) : 0xd0;
+    uint32_t phase = res1 ? (0x200|(0xd0>>2)) : 0xd0;
 
     /* enable gate based on frequency of operator 2 in channel 8 */
     unsigned char bit5e= ((CH[8].SLOT[SLOT2].phase>>FREQ_SH)>>5)&1;
@@ -1048,7 +1048,7 @@ INLINE void rhythm_calc( YM2413_OPLL_CH *CH, unsigned int noise )
 
     /* when bit8 = 0 phase = 0x100; */
     /* when bit8 = 1 phase = 0x200; */
-    UINT32 phase = bit8 ? 0x200 : 0x100;
+    uint32_t phase = bit8 ? 0x200 : 0x100;
 
     /* Noise bit XOR'es phase by 0x100 */
     /* when noisebit = 0 pass the phase from calculation above */
@@ -1078,7 +1078,7 @@ INLINE void rhythm_calc( YM2413_OPLL_CH *CH, unsigned int noise )
 
     /* when res1 = 0 phase = 0x000 | 0x100; */
     /* when res1 = 1 phase = 0x200 | 0x100; */
-    UINT32 phase = res1 ? 0x300 : 0x100;
+    uint32_t phase = res1 ? 0x300 : 0x100;
 
     /* enable gate based on frequency of operator 2 in channel 8 */
     unsigned char bit5e= ((CH[8].SLOT[SLOT2].phase>>FREQ_SH)>>5)&1;
@@ -1174,7 +1174,7 @@ static void OPLL_initalize(void)
   for( i = 0 ; i < 1024; i++ )
   {
     /* OPLL (YM2413) phase increment counter = 18bit */
-    ym2413.fn_tab[i] = (UINT32)( (double)i * 64 * freqbase * (1<<(FREQ_SH-10)) ); /* -10 because chip works with 10.10 fixed point, while we use 16.16 */
+    ym2413.fn_tab[i] = (uint32_t)( (double)i * 64 * freqbase * (1<<(FREQ_SH-10)) ); /* -10 because chip works with 10.10 fixed point, while we use 16.16 */
   }
 
   /* Amplitude modulation: 27 output levels (triangle waveform); 1 level takes one of: 192, 256 or 448 samples */
@@ -1191,7 +1191,7 @@ static void OPLL_initalize(void)
   ym2413.eg_timer_overflow = ( 1 ) * (1<<EG_SH);
 }
 
-INLINE void KEY_ON(YM2413_OPLL_SLOT *SLOT, UINT32 key_set)
+INLINE void KEY_ON(YM2413_OPLL_SLOT *SLOT, uint32_t key_set)
 {
   if( !SLOT->key )
   {
@@ -1202,7 +1202,7 @@ INLINE void KEY_ON(YM2413_OPLL_SLOT *SLOT, UINT32 key_set)
   SLOT->key |= key_set;
 }
 
-INLINE void KEY_OFF(YM2413_OPLL_SLOT *SLOT, UINT32 key_clr)
+INLINE void KEY_OFF(YM2413_OPLL_SLOT *SLOT, uint32_t key_clr)
 {
   if( SLOT->key )
   {
@@ -1220,8 +1220,8 @@ INLINE void KEY_OFF(YM2413_OPLL_SLOT *SLOT, UINT32 key_clr)
 INLINE void CALC_FCSLOT(YM2413_OPLL_CH *CH,YM2413_OPLL_SLOT *SLOT)
 {
   int ksr;
-  UINT32 SLOT_rs;
-  UINT32 SLOT_dp;
+  uint32_t SLOT_rs;
+  uint32_t SLOT_dp;
 
   /* (frequency) phase increment counter */
   SLOT->freq = CH->fc * SLOT->mul;
@@ -1363,7 +1363,7 @@ INLINE void set_sl_rr(int slot,int v)
   SLOT->eg_sel_rr = eg_rate_select[SLOT->rr + SLOT->ksr ];
 }
 
-static void load_instrument(UINT32 chan, UINT32 slot, UINT8* inst )
+static void load_instrument(uint32_t chan, uint32_t slot, uint8_t* inst )
 {
   set_mul(slot, inst[0]);
   set_mul(slot+1, inst[1]);
@@ -1375,12 +1375,12 @@ static void load_instrument(UINT32 chan, UINT32 slot, UINT8* inst )
   set_sl_rr(slot+1, inst[7]);
 }
 
-static void update_instrument_zero(UINT8 r)
+static void update_instrument_zero(uint8_t r)
 {
-  UINT8* inst = &ym2413.inst_tab[0][0]; /* point to user instrument */
-  UINT32 chan;
+  uint8_t* inst = &ym2413.inst_tab[0][0]; /* point to user instrument */
+  uint32_t chan;
 
-  UINT32 chan_max = 9;
+  uint32_t chan_max = 9;
   if (ym2413.rhythm & 0x20)
     chan_max=6;
 
@@ -1632,7 +1632,7 @@ static void OPLLWriteReg(int r, int v)
       /* update */
       if(CH->block_fnum != block_fnum)
       {
-        UINT8 block;
+        uint8_t block;
         CH->block_fnum = block_fnum;
 
         /* BLK 2,1,0 bits -> bits 3,2,1 of kcode, FNUM MSB -> kcode LSB */

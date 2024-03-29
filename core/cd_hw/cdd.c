@@ -38,6 +38,7 @@
 
 #include <config.h>
 #include <stdlib.h>
+#include "../system.h"
 #include "shared.h"
 #include "megasd.h"
 #include "m68k.h"
@@ -1048,7 +1049,7 @@ int cdd_load(char *filename, char *header)
         }
 
         cdStreamSeek(fd, 0, SEEK_SET);
-        if (*(int32 *)head == 0)
+        if (*(int32_t *)head == 0)
         {
           /* assume 2s PAUSE is included at the beginning of the file */
           cdd.toc.tracks[cdd.toc.last].offset -= 150 * 2352;
@@ -1108,7 +1109,7 @@ int cdd_load(char *filename, char *header)
         ov_read(&cdd.toc.tracks[cdd.toc.last].vf, (char *)head, 32, 0);
 #endif
         ov_pcm_seek(&cdd.toc.tracks[cdd.toc.last].vf, 0);
-        if (*(int32 *)head == 0)
+        if (*(int32_t *)head == 0)
         {
           /* assume 2s PAUSE is included at the beginning of the file */
           cdd.toc.tracks[cdd.toc.last].offset -= 150 * 588;
@@ -1483,7 +1484,7 @@ void cdd_read_audio(unsigned int samples)
     if (cdd.chd.file)
     {
 #ifndef LSB_FIRST
-      int16 *ptr = (int16 *) (cdd.chd.hunk + (cdd.chd.hunkofs % cdd.chd.hunkbytes));
+      int16_t *ptr = (int16_t *) (cdd.chd.hunk + (cdd.chd.hunkofs % cdd.chd.hunkbytes));
 #else
       uint8 *ptr = cdd.chd.hunk + (cdd.chd.hunkofs % cdd.chd.hunkbytes);
 #endif
@@ -1511,8 +1512,8 @@ void cdd_read_audio(unsigned int samples)
         r = ((ptr[1] * mul) / 1024);
         ptr+=2;
 #else
-        l = (((int16)((ptr[1] + ptr[0]*256)) * mul) / 1024);
-        r = (((int16)((ptr[3] + ptr[2]*256)) * mul) / 1024);
+        l = (((int16_t)((ptr[1] + ptr[0]*256)) * mul) / 1024);
+        r = (((int16_t)((ptr[3] + ptr[2]*256)) * mul) / 1024);
         ptr+=4;
 #endif
 
@@ -1536,7 +1537,7 @@ void cdd_read_audio(unsigned int samples)
 
           /* reinitialize hunk cache pointer */
 #ifndef LSB_FIRST
-          ptr = (int16 *) (cdd.chd.hunk + (cdd.chd.hunkofs % cdd.chd.hunkbytes));
+          ptr = (int16_t *) (cdd.chd.hunk + (cdd.chd.hunkofs % cdd.chd.hunkbytes));
 #else
           ptr = cdd.chd.hunk + (cdd.chd.hunkofs % cdd.chd.hunkbytes);
 #endif
@@ -1566,7 +1567,7 @@ void cdd_read_audio(unsigned int samples)
     if (cdd.toc.tracks[cdd.index].vf.datasource)
     {
       int len, done = 0;
-      int16 *ptr = (int16 *) (cdc.ram);
+      int16_t *ptr = (int16_t *) (cdc.ram);
       samples = samples * 4;
       while (done < samples)
       {
@@ -1627,7 +1628,7 @@ void cdd_read_audio(unsigned int samples)
 #endif
     {
 #ifdef LSB_FIRST
-      int16 *ptr = (int16 *) (cdc.ram);
+      int16_t *ptr = (int16_t *) (cdc.ram);
 #else
       uint8 *ptr = cdc.ram;
 #endif
@@ -1647,8 +1648,8 @@ void cdd_read_audio(unsigned int samples)
         r = ((ptr[1] * mul) / 1024);
         ptr+=2;
 #else
-        l = (((int16)((ptr[0] + ptr[1]*256)) * mul) / 1024);
-        r = (((int16)((ptr[2] + ptr[3]*256)) * mul) / 1024);
+        l = (((int16_t)((ptr[0] + ptr[1]*256)) * mul) / 1024);
+        r = (((int16_t)((ptr[2] + ptr[3]*256)) * mul) / 1024);
         ptr+=4;
 #endif
 

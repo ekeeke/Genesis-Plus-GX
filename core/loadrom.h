@@ -59,13 +59,13 @@ typedef struct
   unsigned int romstart;        /* ROM start address */
   unsigned int romend;          /* ROM end address */
   char country[18];             /* Country flag */
-  uint16 peripherals;           /* Supported peripherals */
+  uint16_t peripherals;           /* Supported peripherals */
 } ROMINFO;
 
 
 /* Global variables */
 extern ROMINFO rominfo;
-extern uint8 romtype;
+extern uint8_t romtype;
 
 /* Function prototypes */
 extern int load_bios(int system);

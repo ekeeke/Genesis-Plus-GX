@@ -40,8 +40,8 @@
 
 static struct
 {
-  uint8 State;
-  uint8 Counter;
+  uint8_t State;
+  uint8_t Counter;
 } paddle[2];
 
 void paddle_reset(int port)
