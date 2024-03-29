@@ -35,8 +35,7 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *
  ****************************************************************************************/
-#ifndef _CD_GFX_
-#define _CD_GFX_
+#pragma once
 
 #define gfx scd.gfx_hw
 
@@ -113,4 +112,3 @@ extern int gfx_context_load(uint8_t *state);
 extern void gfx_start(unsigned int base, int cycles);
 extern void gfx_update(int cycles);
 
-#endif

@@ -40,9 +40,7 @@
  *
  ****************************************************************************************/
 
-#ifndef _CPUHOOK_H_
-#define _CPUHOOK_H_
-
+#pragma once
 
 typedef enum {
   HOOK_ANY      = (0 << 0),
@@ -87,5 +85,3 @@ void (*cpu_hook)(hook_type_t type, int width, unsigned int address, unsigned int
  */
 void set_cpu_hook(void(*hook)(hook_type_t type, int width, unsigned int address, unsigned int value));
 
-
-#endif /* _CPUHOOK_H_ */

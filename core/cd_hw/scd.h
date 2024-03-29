@@ -35,8 +35,7 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *
  ****************************************************************************************/
-#ifndef _HW_SCD_
-#define _HW_SCD_
+#pragma once
 
 #include "cdd.h"
 #include "cdc.h"
@@ -99,4 +98,3 @@ extern int scd_context_save(uint8_t *state);
 extern int scd_68k_irq_ack(int level);
 extern void prg_ram_dma_w(unsigned int length);
 
-#endif

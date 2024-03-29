@@ -36,12 +36,10 @@
  *
  ****************************************************************************************/
 
-#ifndef _MOUSE_H_
-#define _MOUSE_H_
+#pragma once
 
 /* Function prototypes */
 extern void mouse_reset(int port);
 extern unsigned char mouse_read(void);
 extern void mouse_write(unsigned char data, unsigned char mask);
 
-#endif

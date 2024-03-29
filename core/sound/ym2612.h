@@ -13,8 +13,7 @@
 **
 */
 
-#ifndef _H_YM2612_
-#define _H_YM2612_
+#pragma once
 
 enum {
   YM2612_DISCRETE = 0,
@@ -31,4 +30,3 @@ extern unsigned int YM2612Read(void);
 extern int YM2612LoadContext(unsigned char *state);
 extern int YM2612SaveContext(unsigned char *state);
 
-#endif /* _YM2612_ */

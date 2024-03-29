@@ -1,3 +1,5 @@
+#pragma once
+
 static void (* const m68ki_instruction_jump_table[0x10000])(void) =
 {
   m68k_op_ori_8_d, m68k_op_ori_8_d, m68k_op_ori_8_d, m68k_op_ori_8_d, m68k_op_ori_8_d, m68k_op_ori_8_d, m68k_op_ori_8_d, m68k_op_ori_8_d, 

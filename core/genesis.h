@@ -39,8 +39,7 @@
  *
  ****************************************************************************************/
 
-#ifndef _GENESIS_H_
-#define _GENESIS_H_
+#pragma once
 
 #include "cart_hw/md_cart.h"
 #include "cart_hw/sms_cart.h"
@@ -77,5 +76,4 @@ extern void gen_zreset_w(unsigned int state, unsigned int cycles);
 extern void gen_zbank_w(unsigned int state);
 extern int z80_irq_callback(int param);
 
-#endif /* _GEN_H_ */
 

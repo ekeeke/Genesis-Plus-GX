@@ -1,5 +1,4 @@
-#ifndef Z80_H_
-#define Z80_H_
+#pragma once
 
 #include "osd_cpu.h"
 
@@ -72,5 +71,4 @@ extern void z80_set_context (void *src);
 extern void z80_set_irq_line(unsigned int state);
 extern void z80_set_nmi_line(unsigned int state);
 
-#endif
 

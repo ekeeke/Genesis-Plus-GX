@@ -1,5 +1,7 @@
 /* sms_ntsc 0.2.3. http://www.slack.net/~ant/ */
 
+#pragma once
+
 /* Common implementation of NTSC filters */
 
 #include <assert.h>

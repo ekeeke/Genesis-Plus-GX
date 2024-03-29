@@ -1,7 +1,6 @@
 /* Configure library by modifying this file */
 
-#ifndef MD_NTSC_CONFIG_H
-#define MD_NTSC_CONFIG_H
+#pragma once
 
 /* Format of source & output pixels (RGB555 or RGB565 only)*/
 #ifdef USE_15BPP_RENDERING
@@ -28,4 +27,3 @@ the pixel index if you use the high bits as flags, etc. */
 /* For each pixel, this is the basic operation:
 output_color = MD_NTSC_ADJ_IN( MD_NTSC_IN_T ) */
 
-#endif

@@ -36,8 +36,7 @@
  *
  ****************************************************************************************/
 
-#ifndef _SMS_CART_H_
-#define _SMS_CART_H_
+#pragma once
 
 /* Special hardware */
 #define HW_3D_GLASSES     0x01
@@ -52,6 +51,5 @@ extern int sms_cart_region_detect(void);
 extern int sms_cart_context_save(uint8_t *state);
 extern int sms_cart_context_load(uint8_t *state);
 
-#endif
 
 

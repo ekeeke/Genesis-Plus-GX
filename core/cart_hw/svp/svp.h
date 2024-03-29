@@ -10,8 +10,7 @@
    Modified for Genesis Plus GX (Eke-Eke): added BIG ENDIAN support, fixed addr/code inversion
 */
 
-#ifndef _SVP_H_
-#define _SVP_H_
+#pragma once
 
 #include "ssp16.h"
 
@@ -26,4 +25,3 @@ extern svp_t *svp;
 extern void svp_init(void);
 extern void svp_reset(void);
 
-#endif

@@ -36,10 +36,8 @@
  *
  ****************************************************************************************/
 
-#ifndef _EEPROM_I2C_H_
-#define _EEPROM_I2C_H_
+#pragma once
 
 /* Function prototypes */
 extern void eeprom_i2c_init(void);
 
-#endif

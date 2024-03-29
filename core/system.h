@@ -39,8 +39,7 @@
  *
  ****************************************************************************************/
 
-#ifndef _SYSTEM_H_
-#define _SYSTEM_H_
+#pragma once
 
 #include "types.h"
 #include "sound/blip_buf.h"
@@ -118,4 +117,3 @@ extern void system_frame_gen(int do_skip);
 extern void system_frame_scd(int do_skip);
 extern void system_frame_sms(int do_skip);
 
-#endif /* _SYSTEM_H_ */

@@ -35,8 +35,7 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *
  ****************************************************************************************/
-#ifndef _HW_CDC_
-#define _HW_CDC_
+#pragma once
 
 #define cdc scd.cdc_hw
 
@@ -75,4 +74,3 @@ extern void cdc_reg_w(unsigned char data);
 extern unsigned char cdc_reg_r(void);
 extern unsigned short cdc_host_r(uint8_t cpu_access);
 
-#endif

@@ -37,8 +37,7 @@
  *
  ****************************************************************************************/
 
-#ifndef _MEMBNK_H_
-#define _MEMBNK_H_
+#pragma once
 
 extern unsigned int zbank_unused_r(unsigned int address);
 extern void zbank_unused_w(unsigned int address, unsigned int data);
@@ -57,4 +56,3 @@ typedef struct
 
 extern t_zbank_memory_map zbank_memory_map[256];
 
-#endif /* _MEMBNK_H_ */

@@ -36,12 +36,10 @@
  *
  ****************************************************************************************/
 
-#ifndef _GRAPHIC_H_
-#define _GRAPHIC_H_
+#pragma once
 
 /* Function prototypes */
 extern void graphic_board_reset(int port);
 extern unsigned char graphic_board_read(void);
 extern void graphic_board_write(unsigned char data, unsigned char mask);
 
-#endif

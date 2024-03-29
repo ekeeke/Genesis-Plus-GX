@@ -27,8 +27,7 @@
  * version: 1.0.9
  */
 
-#ifndef YM3438_H
-#define YM3438_H
+#pragma once
 
 #ifdef __cplusplus
 extern "C" {
@@ -209,4 +208,3 @@ Bit8u OPN2_Read(ym3438_t *chip, Bit32u port);
 }
 #endif
 
-#endif

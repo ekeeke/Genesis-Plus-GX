@@ -35,8 +35,7 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *
  ****************************************************************************************/
-#ifndef _HW_CDD_
-#define _HW_CDD_
+#pragma once
 
 #include "../sound/blip_buf.h"
 
@@ -139,4 +138,3 @@ extern void cdd_update_audio(unsigned int samples);
 extern void cdd_update(void);
 extern void cdd_process(void);
 
-#endif

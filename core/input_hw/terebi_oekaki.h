@@ -36,12 +36,10 @@
  *
  ****************************************************************************************/
 
-#ifndef _TEREBI_H_
-#define _TEREBI_H_
+#pragma once
 
 /* Function prototypes */
 extern void terebi_oekaki_reset(void);
 extern unsigned short terebi_oekaki_read(void);
 extern void terebi_oekaki_write(unsigned char data);
 
-#endif

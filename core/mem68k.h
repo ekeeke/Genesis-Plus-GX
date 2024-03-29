@@ -37,8 +37,7 @@
  *
  ****************************************************************************************/
 
-#ifndef _MEM68K_H_
-#define _MEM68K_H_
+#pragma once
 
 /* unused areas */
 extern unsigned int m68k_read_bus_8(unsigned int address);
@@ -74,4 +73,3 @@ extern void vdp_write_word(unsigned int address, unsigned int data);
 extern unsigned int pico_read_byte(unsigned int address);
 extern unsigned int pico_read_word(unsigned int address);
 
-#endif /* _MEM68K_H_ */

@@ -35,8 +35,7 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *
  ****************************************************************************************/
-#ifndef _CD_PCM_
-#define _CD_PCM_
+#pragma once
 
 #include "../sound/blip_buf.h"
 
@@ -74,4 +73,3 @@ extern void pcm_write(unsigned int address, unsigned char data, unsigned int cyc
 extern unsigned char pcm_read(unsigned int address, unsigned int cycles);
 extern void pcm_ram_dma_w(unsigned int length);
 
-#endif

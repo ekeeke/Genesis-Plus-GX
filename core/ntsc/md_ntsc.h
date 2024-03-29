@@ -1,8 +1,8 @@
 /* Sega Genesis/Mega Drive NTSC video filter */
 
+#pragma once
+
 /* md_ntsc 0.1.2 */
-#ifndef MD_NTSC_H
-#define MD_NTSC_H
 
 #include "md_ntsc_config.h"
 
@@ -151,4 +151,3 @@ struct md_ntsc_t {
 }
 #endif
 
-#endif

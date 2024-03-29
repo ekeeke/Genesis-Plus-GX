@@ -37,8 +37,7 @@
  *
  ****************************************************************************************/
 
-#ifndef _GAMEPAD_H_
-#define _GAMEPAD_H_
+#pragma once
 
 /* Function prototypes */
 extern void gamepad_reset(int port);
@@ -59,4 +58,3 @@ extern unsigned char mastertap_2_read(void);
 extern void mastertap_1_write(unsigned char data, unsigned char mask);
 extern void mastertap_2_write(unsigned char data, unsigned char mask);
 
-#endif

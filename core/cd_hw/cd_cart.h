@@ -35,7 +35,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *
  ****************************************************************************************/
- 
+
+ #pragma once
 
  /* CD compatible ROM/RAM cartridge */
 typedef struct 

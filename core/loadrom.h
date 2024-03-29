@@ -37,8 +37,7 @@
  *
  ****************************************************************************************/
 
-#ifndef _LOADROM_H_
-#define _LOADROM_H_
+#pragma once
 
 #include "types.h"
 
@@ -75,5 +74,4 @@ extern char *get_company(void);
 extern char *get_peripheral(int index);
 extern void getrominfo(char *romheader);
 
-#endif /* _LOADROM_H_ */
 

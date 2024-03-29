@@ -9,8 +9,7 @@
 **
 */
 
-#ifndef _H_YM2413_
-#define _H_YM2413_
+#pragma once
 
 extern void YM2413Init(void);
 extern void YM2413ResetChip(void);
@@ -20,4 +19,3 @@ extern unsigned int YM2413Read(void);
 extern unsigned char *YM2413GetContextPtr(void);
 extern unsigned int YM2413GetContextSize(void);
 
-#endif /*_H_YM2413_*/

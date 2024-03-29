@@ -36,8 +36,7 @@
  *
  ****************************************************************************************/
 
-#ifndef _LIGHTGUN_H_
-#define _LIGHTGUN_H_
+#pragma once
 
 /* Input devices port handlers */
 extern void lightgun_reset(int index);
@@ -48,4 +47,3 @@ extern unsigned char menacer_read(void);
 extern unsigned char justifier_read(void);
 extern void justifier_write(unsigned char data, unsigned char mask);
 
-#endif

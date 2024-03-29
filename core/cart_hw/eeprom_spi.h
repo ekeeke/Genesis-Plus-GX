@@ -36,12 +36,10 @@
  *
  ****************************************************************************************/
 
-#ifndef _EEPROM_SPI_H_
-#define _EEPROM_SPI_H_
+#pragma once
 
 /* Function prototypes */
 extern void eeprom_spi_init(void);
 extern void eeprom_spi_write(unsigned char data);
 extern unsigned int eeprom_spi_read(unsigned int address);
 
-#endif
