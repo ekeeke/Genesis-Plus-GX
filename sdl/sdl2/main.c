@@ -9,7 +9,6 @@
 #include <vdp_ctrl.h>
 #include <input_hw/input.h>
 #include <cart_hw/sram.h>
-#include <state.h>
 
 #include <ntsc/sms_ntsc.h>
 #include <ntsc/md_ntsc.h>
@@ -378,32 +377,32 @@ static int sdl_control_update(SDL_Keycode keystate)
 
       case SDLK_F7:
       {
-        const char fileName[] = "game.gp0";
-        FILE *f = fopen(fileName,"rb");
-        if (f)
-        {
-          uint8_t buf[STATE_SIZE];
-          int status = fread(&buf, STATE_SIZE, 1, f);
-          if (status < 0) { fprintf(stderr, "Error loading file `%s'.", fileName); exit(-1); }
-          state_load(buf);
-          fclose(f);
-        }
-        break;
+        // const char fileName[] = "game.gp0";
+        // FILE *f = fopen(fileName,"rb");
+        // if (f)
+        // {
+        //   uint8_t buf[STATE_SIZE];
+        //   int status = fread(&buf, STATE_SIZE, 1, f);
+        //   if (status < 0) { fprintf(stderr, "Error loading file `%s'.", fileName); exit(-1); }
+        //   state_load(buf);
+        //   fclose(f);
+        // }
+        // break;
       }
 
       case SDLK_F8:
       {
-        const char fileName[] = "game.gp0";
-        FILE *f = fopen(fileName,"wb");
-        if (f)
-        {
-          uint8_t buf[STATE_SIZE];
-          int len = state_save(buf);
-          int status = fwrite(&buf, len, 1, f);
-          if (status < 0) { fprintf(stderr, "Error saving file `%s'.", fileName); exit(-1); }
-          fclose(f);
-        }
-        break;
+        // const char fileName[] = "game.gp0";
+        // FILE *f = fopen(fileName,"wb");
+        // if (f)
+        // {
+        //   uint8_t buf[STATE_SIZE];
+        //   int len = state_save(buf);
+        //   int status = fwrite(&buf, len, 1, f);
+        //   if (status < 0) { fprintf(stderr, "Error saving file `%s'.", fileName); exit(-1); }
+        //   fclose(f);
+        // }
+        // break;
       }
 
       case SDLK_F9:

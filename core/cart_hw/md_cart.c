@@ -52,7 +52,6 @@
 #include "../genesis.h"
 #include "../mem68k.h"
 #include "../membnk.h"
-#include "../state.h"
 #include "eeprom_i2c.h"
 #include "eeprom_spi.h"
 #include "megasd.h"
@@ -898,117 +897,6 @@ void md_cart_reset(int hard_reset)
       break;
     }
   }
-}
-
-int md_cart_context_save(uint8 *state)
-{
-  int i;
-  int bufferptr = 0;
-  uint8 *base;
-
-  /* cartridge mapping */
-  for (i=0; i<0x40; i++)
-  {
-    /* get base address */
-    base = m68k.memory_map[i].base;
-
-    if (base == sram.sram)
-    {
-      /* SRAM */
-      state[bufferptr++] = 0xff;
-    }
-    else if (base == boot_rom)
-    {
-      /* Boot ROM */
-      state[bufferptr++] = 0xfe;
-    }
-    else
-    {
-      /* Cartridge ROM */
-      state[bufferptr++] = ((base - cart.rom) >> 16) & 0xff;
-    }
-  }
-
-  /* hardware registers */
-  save_param(cart.hw.regs, sizeof(cart.hw.regs));
-
-  /* SVP */
-  if (svp)
-  {
-    save_param(svp->iram_rom, 0x800);
-    save_param(svp->dram,sizeof(svp->dram));
-    save_param(&svp->ssp1601,sizeof(ssp1601_t));
-  }
-
-  /* MegaSD hardware */
-  if (cart.special & HW_MEGASD)
-  {
-    bufferptr += megasd_context_save(&state[bufferptr]);
-  }
-
-  return bufferptr;
-}
-
-int md_cart_context_load(uint8 *state)
-{
-  int i;
-  int bufferptr = 0;
-  uint8 offset;
-
-  /* cartridge mapping */
-  for (i=0; i<0x40; i++)
-  {
-    /* get offset */
-    offset = state[bufferptr++];
-
-    if (offset == 0xff)
-    {
-      /* SRAM */
-      m68k.memory_map[i].base     = sram.sram;
-      m68k.memory_map[i].read8    = sram_read_byte;
-      m68k.memory_map[i].read16   = sram_read_word;
-      m68k.memory_map[i].write8   = sram_write_byte;
-      m68k.memory_map[i].write16  = sram_write_word;
-      zbank_memory_map[i].read    = sram_read_byte;
-      zbank_memory_map[i].write   = sram_write_byte;
-
-    }
-    else
-    {
-      /* check if SRAM was mapped there before loading state */
-      if (m68k.memory_map[i].base == sram.sram)
-      {
-        m68k.memory_map[i].read8    = NULL;
-        m68k.memory_map[i].read16   = NULL;
-        m68k.memory_map[i].write8   = m68k_unused_8_w;
-        m68k.memory_map[i].write16  = m68k_unused_16_w;
-        zbank_memory_map[i].read    = NULL;
-        zbank_memory_map[i].write   = zbank_unused_w;
-      }
-
-      /* ROM */
-      m68k.memory_map[i].base = (offset == 0xfe) ? boot_rom : (cart.rom + (offset << 16));
-    }
-  }
-
-  /* hardware registers */
-  load_param(cart.hw.regs, sizeof(cart.hw.regs));
-
-  /* SVP */
-  if (svp)
-  {
-    load_param(svp->iram_rom, 0x800);
-    load_param(svp->dram,sizeof(svp->dram));
-    load_param(&svp->ssp1601,sizeof(ssp1601_t));
-  }
-
-  /* MegaSD hardware */
-  if (cart.special & HW_MEGASD)
-  {
-    bufferptr += megasd_context_load(&state[bufferptr]);
-  }
-
-  return bufferptr;
 }
 
 /************************************************************

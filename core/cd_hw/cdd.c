@@ -38,10 +38,10 @@
 
 #include <config.h>
 #include <stdlib.h>
+#include <string.h>
 #include "../cart_hw/megasd.h"
 #include "../system.h"
 #include "../genesis.h"
-#include "../state.h"
 #include "../m68k/m68k.h"
 
 #if defined(USE_LIBTREMOR) || defined(USE_LIBVORBIS)
@@ -220,149 +220,6 @@ void cdd_reset(void)
 
   /* clear CD-DA output */
   cdd.audio[0] = cdd.audio[1] = 0;
-}
-
-int cdd_context_save(uint8 *state)
-{
-  int bufferptr = 0;
-  unsigned int offset = 0;
-
-  save_param(&cdd.cycles, sizeof(cdd.cycles));
-  save_param(&cdd.latency, sizeof(cdd.latency));
-  save_param(&cdd.index, sizeof(cdd.index));
-  save_param(&cdd.lba, sizeof(cdd.lba));
-  save_param(&cdd.scanOffset, sizeof(cdd.scanOffset));
-  save_param(&cdd.fader, sizeof(cdd.fader));
-  save_param(&cdd.status, sizeof(cdd.status));
-
-  /* current track is an audio track ? */
-  if (cdd.toc.tracks[cdd.index].type == TYPE_AUDIO)
-  {
-    /* get file read offset */
-#if defined(USE_LIBCHDR)
-    if (cdd.chd.file)
-    {
-      /* CHD file offset */
-      offset = cdd.chd.hunkofs;
-    }
-    else
-#endif
-#if defined(USE_LIBTREMOR) || defined(USE_LIBVORBIS)
-    if (cdd.toc.tracks[cdd.index].vf.seekable)
-    {
-      /* VORBIS file sample offset */
-      offset = ov_pcm_tell(&cdd.toc.tracks[cdd.index].vf);
-    }
-    else
-#endif 
-    if (cdd.toc.tracks[cdd.index].fd)
-    {
-      /* PCM file offset */
-      offset = cdStreamTell(cdd.toc.tracks[cdd.index].fd);
-    }
-  }
-
-  save_param(&offset, sizeof(offset));
-  save_param(&cdd.audio, sizeof(cdd.audio));
-
-  return bufferptr;
-}
-
-int cdd_context_load(uint8 *state, char *version)
-{
-  unsigned int offset, lba, index;
-  int bufferptr = 0;
-
-  load_param(&cdd.cycles, sizeof(cdd.cycles));
-  load_param(&cdd.latency, sizeof(cdd.latency));
-  load_param(&index, sizeof(cdd.index));
-  load_param(&lba, sizeof(cdd.lba));
-  load_param(&cdd.scanOffset, sizeof(cdd.scanOffset));
-  load_param(&cdd.fader, sizeof(cdd.fader));
-  load_param(&cdd.status, sizeof(cdd.status));
-
-  /* update current sector */
-  cdd.lba = lba;
-
-  /* support for previous state version (1.7.5) */
-  if ((version[11] == 0x31) && (version[13] == 0x37) && (version[15] == 0x35))
-  {
-    /* current track is an audio track ? */
-    if (cdd.toc.tracks[index].type == TYPE_AUDIO)
-    {
-      /* stay within track limits when seeking files */
-      if (lba < cdd.toc.tracks[index].start)
-      {
-        lba = cdd.toc.tracks[index].start;
-      }
-
-      /* seek to current track sector */
-      cdd_seek_audio(index, lba);
-    }
-  }
-  else
-  {
-    load_param(&offset, sizeof(offset));
-    load_param(&cdd.audio, sizeof(cdd.audio));
-
-    /* current track is an audio track ? */
-    if (cdd.toc.tracks[index].type == TYPE_AUDIO)
-    {
-#if defined(USE_LIBTREMOR) || defined(USE_LIBVORBIS)
-#ifdef DISABLE_MANY_OGG_OPEN_FILES
-      /* check if track index has changed */
-      if (index != cdd.index)
-      {
-        /* close previous track VORBIS file structure to save memory */
-        if (cdd.toc.tracks[cdd.index].vf.datasource)
-        {
-          ogg_free(cdd.index);
-        }
-
-        /* open current track VORBIS file */
-        if (cdd.toc.tracks[index].vf.seekable)
-        {
-          ov_open_callbacks(cdd.toc.tracks[index].fd,&cdd.toc.tracks[index].vf,0,0,cb);
-        }
-      }
-#endif
-#endif
-      /* seek to current file read offset */
-#if defined(USE_LIBCHDR)
-      if (cdd.chd.file)
-      {
-        /* CHD file offset */
-        cdd.chd.hunkofs = offset;
-      }
-      else
-#endif
-#if defined(USE_LIBTREMOR) || defined(USE_LIBVORBIS)
-      if (cdd.toc.tracks[index].vf.seekable)
-      {
-        /* VORBIS file sample offset */
-        ov_pcm_seek(&cdd.toc.tracks[index].vf, offset);
-      }
-      else
-#endif 
-      if (cdd.toc.tracks[index].fd)
-      {
-        /* PCM file offset */
-        cdStreamSeek(cdd.toc.tracks[index].fd, offset, SEEK_SET);
-      }
-    }
-  }
-
-  /* seek to current subcode position */
-  if (cdd.toc.sub)
-  {
-    /* 96 bytes per sector */
-    cdStreamSeek(cdd.toc.sub, lba * 96, SEEK_SET);
-  }
-
-  /* update current track index */
-  cdd.index = index;
-
-  return bufferptr;
 }
 
 int cdd_load(char *filename, char *header)

@@ -38,7 +38,6 @@
 
 #include <string.h>
 #include "../genesis.h"
-#include "../state.h"
 #include "../m68k/m68k.h"
 
 /***************************************************************/
@@ -421,50 +420,6 @@ void gfx_reset(void)
 { 
   /* Reset cycle counter */
   gfx.cycles = 0;
-}
-
-int gfx_context_save(uint8_t *state)
-{
-  uint32_t tmp32;
-  int bufferptr = 0;
-
-  save_param(&gfx.cycles, sizeof(gfx.cycles));
-  save_param(&gfx.cyclesPerLine, sizeof(gfx.cyclesPerLine));
-  save_param(&gfx.dotMask, sizeof(gfx.dotMask));
-  save_param(&gfx.stampShift, sizeof(gfx.stampShift));
-  save_param(&gfx.mapShift, sizeof(gfx.mapShift));
-  save_param(&gfx.bufferOffset, sizeof(gfx.bufferOffset));
-  save_param(&gfx.bufferStart, sizeof(gfx.bufferStart));
-
-  tmp32 = (uint8_t *)(gfx.tracePtr) - scd.word_ram_2M;
-  save_param(&tmp32, 4);
-
-  tmp32 = (uint8_t *)(gfx.mapPtr) - scd.word_ram_2M;
-  save_param(&tmp32, 4);
-
-  return bufferptr;
-}
-
-int gfx_context_load(uint8_t *state)
-{
-  uint32_t tmp32;
-  int bufferptr = 0;
-
-  load_param(&gfx.cycles, sizeof(gfx.cycles));
-  load_param(&gfx.cyclesPerLine, sizeof(gfx.cyclesPerLine));
-  load_param(&gfx.dotMask, sizeof(gfx.dotMask));
-  load_param(&gfx.stampShift, sizeof(gfx.stampShift));
-  load_param(&gfx.mapShift, sizeof(gfx.mapShift));
-  load_param(&gfx.bufferOffset, sizeof(gfx.bufferOffset));
-  load_param(&gfx.bufferStart, sizeof(gfx.bufferStart));
-
-  load_param(&tmp32, 4);
-  gfx.tracePtr = (uint16_t *)(scd.word_ram_2M + tmp32);
-
-  load_param(&tmp32, 4);
-  gfx.mapPtr = (uint16_t *)(scd.word_ram_2M + tmp32);
-
-  return bufferptr;
 }
 
 INLINE void gfx_render(uint32_t bufferIndex, uint32_t width)
