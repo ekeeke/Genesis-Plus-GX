@@ -222,7 +222,7 @@ void cdd_reset(void)
   cdd.audio[0] = cdd.audio[1] = 0;
 }
 
-int cdd_context_save(uint8 *state)
+int cdd_context_save(uint8_t *state)
 {
   int bufferptr = 0;
   unsigned int offset = 0;
@@ -268,7 +268,7 @@ int cdd_context_save(uint8 *state)
   return bufferptr;
 }
 
-int cdd_context_load(uint8 *state, char *version)
+int cdd_context_load(uint8_t *state, char *version)
 {
   unsigned int offset, lba, index;
   int bufferptr = 0;

@@ -2013,10 +2013,10 @@ void scd_end_frame(unsigned int cycles)
   s68k.poll.cycle = 0;
 }
 
-int scd_context_save(uint8 *state)
+int scd_context_save(uint8_t *state)
 {
-  uint16 tmp16;
-  uint32 tmp32;
+  uint16_t tmp16;
+  uint32_t tmp32;
   int bufferptr = 0;
 
   /* internal harware */
@@ -2059,7 +2059,7 @@ int scd_context_save(uint8 *state)
   save_param(&s68k.poll, sizeof(s68k.poll));
 
   /* H-INT default vector */
-  tmp16 = *(uint16 *)(m68k.memory_map[scd.cartridge.boot].base + 0x72);
+  tmp16 = *(uint16_t *)(m68k.memory_map[scd.cartridge.boot].base + 0x72);
   save_param(&tmp16, 2);
 
   /* SUB-CPU registers */
@@ -2098,11 +2098,11 @@ int scd_context_save(uint8 *state)
   return bufferptr;
 }
 
-int scd_context_load(uint8 *state, char *version)
+int scd_context_load(uint8_t *state, char *version)
 {
   int i;
-  uint16 tmp16;
-  uint32 tmp32;
+  uint16_t tmp16;
+  uint32_t tmp32;
   int bufferptr = 0;
 
   /* internal harware */
@@ -2320,7 +2320,7 @@ int scd_context_load(uint8 *state, char *version)
 
   /* H-INT default vector */
   load_param(&tmp16, 2);
-  *(uint16 *)(m68k.memory_map[scd.cartridge.boot].base + 0x72) = tmp16;
+  *(uint16_t *)(m68k.memory_map[scd.cartridge.boot].base + 0x72) = tmp16;
 
   /* SUB-CPU registers */
   load_param(&tmp32, 4); s68k_set_reg(M68K_REG_D0, tmp32);

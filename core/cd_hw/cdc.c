@@ -131,9 +131,9 @@ void cdc_reset(void)
   }
 }
 
-int cdc_context_save(uint8 *state)
+int cdc_context_save(uint8_t *state)
 {
-  uint8 tmp8;
+  uint8_t tmp8;
   int bufferptr = 0;
 
   if (cdc.dma_w == pcm_ram_dma_w)
@@ -185,9 +185,9 @@ int cdc_context_save(uint8 *state)
   return bufferptr;
 }
 
-int cdc_context_load(uint8 *state)
+int cdc_context_load(uint8_t *state)
 {
-  uint8 tmp8;
+  uint8_t tmp8;
   int bufferptr = 0;
 
   load_param(&cdc.ifstat, sizeof(cdc.ifstat));

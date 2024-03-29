@@ -465,7 +465,7 @@ void vdp_reset(void)
   color_update_m4(0x40, 0x00);
 }
 
-int vdp_context_save(uint8 *state)
+int vdp_context_save(uint8_t *state)
 {
   int bufferptr = 0;
 
@@ -492,10 +492,10 @@ int vdp_context_save(uint8 *state)
   return bufferptr;
 }
 
-int vdp_context_load(uint8 *state)
+int vdp_context_load(uint8_t *state)
 {
   int i, bufferptr = 0;
-  uint8 temp_reg[0x20];
+  uint8_t temp_reg[0x20];
 
   load_param(sat, sizeof(sat));
   load_param(vram, sizeof(vram));
@@ -566,10 +566,10 @@ int vdp_context_load(uint8 *state)
     bg_list_index = 0x800;
 
     /* reinitialize palette */
-    color_update_m5(0, *(uint16 *)&cram[border << 1]);
+    color_update_m5(0, *(uint16_t *)&cram[border << 1]);
     for(i = 1; i < 0x40; i++)
     {
-      color_update_m5(i, *(uint16 *)&cram[i << 1]);
+      color_update_m5(i, *(uint16_t *)&cram[i << 1]);
     }
   }
   else
@@ -580,9 +580,9 @@ int vdp_context_load(uint8 *state)
     /* reinitialize palette */
     for(i = 0; i < 0x20; i ++)
     {
-      color_update_m4(i, *(uint16 *)&cram[i << 1]);
+      color_update_m4(i, *(uint16_t *)&cram[i << 1]);
     }
-    color_update_m4(0x40, *(uint16 *)&cram[(0x10 | (border & 0x0F)) << 1]);
+    color_update_m4(0x40, *(uint16_t *)&cram[(0x10 | (border & 0x0F)) << 1]);
   }
 
   /* invalidate tile cache */

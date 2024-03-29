@@ -106,7 +106,7 @@ void megasd_reset(void)
   }
 }
 
-int megasd_context_save(uint8 *state)
+int megasd_context_save(uint8_t *state)
 {
   int bufferptr = 0;
 
@@ -123,7 +123,7 @@ int megasd_context_save(uint8 *state)
   return bufferptr;
 }
 
-int megasd_context_load(uint8 *state)
+int megasd_context_load(uint8_t *state)
 {
   int bufferptr = 0;
 

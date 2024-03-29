@@ -900,11 +900,11 @@ void md_cart_reset(int hard_reset)
   }
 }
 
-int md_cart_context_save(uint8 *state)
+int md_cart_context_save(uint8_t *state)
 {
   int i;
   int bufferptr = 0;
-  uint8 *base;
+  uint8_t *base;
 
   /* cartridge mapping */
   for (i=0; i<0x40; i++)
@@ -949,11 +949,11 @@ int md_cart_context_save(uint8 *state)
   return bufferptr;
 }
 
-int md_cart_context_load(uint8 *state)
+int md_cart_context_load(uint8_t *state)
 {
   int i;
   int bufferptr = 0;
-  uint8 offset;
+  uint8_t offset;
 
   /* cartridge mapping */
   for (i=0; i<0x40; i++)
