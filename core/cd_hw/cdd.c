@@ -551,7 +551,8 @@ int cdd_load(char *filename, char *header)
     static const uint8 sync[12] = {0x00,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0x00};
 
     /* read first 16 bytes */
-    cdStreamRead(header, 0x10, 1, fd);
+    int status = cdStreamRead(header, 0x10, 1, fd);
+    if (status < 0) { fprintf(stderr, "Error reading from CD Stream.\n"); exit(-1); }
 
     /* auto-detect valid Sega CD image */
     if (!memcmp("SEGADISCSYSTEM", header, 14))
@@ -573,14 +574,16 @@ int cdd_load(char *filename, char *header)
       cdd.toc.tracks[0].type = header[15];
 
       /* read next 16 bytes (start of user data) */
-      cdStreamRead(header, 0x10, 1, fd);
+      int status = cdStreamRead(header, 0x10, 1, fd);
+      if (status < 0) { fprintf(stderr, "Error reading from CD Stream.\n"); exit(-1); }
     }
 
     /* supported CD-ROM image file ? */
     if ((cdd.toc.tracks[0].type == TYPE_MODE1) || (cdd.toc.tracks[0].type == TYPE_MODE2))
     {
       /* read Sega CD image header + security code */
-      cdStreamRead(header + 0x10, 0x200, 1, fd);
+      int status = cdStreamRead(header + 0x10, 0x200, 1, fd);
+      if (status < 0) { fprintf(stderr, "Error reading from CD Stream.\n"); exit(-1); }
 
       /* initialize first track file descriptor */
       cdd.toc.tracks[0].fd = fd;
@@ -692,7 +695,8 @@ int cdd_load(char *filename, char *header)
         {
           /* read file header */
           unsigned char head[12];
-          cdStreamRead(head, 12, 1, cdd.toc.tracks[cdd.toc.last].fd);
+          int status = cdStreamRead(head, 12, 1, cdd.toc.tracks[cdd.toc.last].fd);
+          if (status < 0) { fprintf(stderr, "Error reading from CD Stream.\n"); exit(-1); }
           cdStreamSeek(cdd.toc.tracks[cdd.toc.last].fd, 0, SEEK_SET);
 
           /* autodetect WAVE file */
@@ -701,6 +705,7 @@ int cdd_load(char *filename, char *header)
             /* look for 'data' chunk */
             int chunkSize, dataOffset = 0;
             cdStreamSeek(cdd.toc.tracks[cdd.toc.last].fd, 12, SEEK_SET);
+
             while (cdStreamRead(head, 8, 1, cdd.toc.tracks[cdd.toc.last].fd))
             {
               if (!memcmp(head, "data", 4))
@@ -783,7 +788,9 @@ int cdd_load(char *filename, char *header)
             }
 
             /* read CD image header + security code */
-            cdStreamRead(header, 0x210, 1, cdd.toc.tracks[0].fd);
+            int status = cdStreamRead(header, 0x210, 1, cdd.toc.tracks[0].fd);
+            if (status < 0) { fprintf(stderr, "Error reading from CD Stream.\n"); exit(-1); }
+            
             cdStreamSeek(cdd.toc.tracks[0].fd, 0, SEEK_SET);
           }
         }
@@ -983,7 +990,8 @@ int cdd_load(char *filename, char *header)
     {
       /* read file header */
       unsigned char head[12];
-      cdStreamRead(head, 12, 1, fd);
+      int status = cdStreamRead(head, 12, 1, fd);
+      if (status < 0) { fprintf(stderr, "Error reading from CD Stream.\n"); exit(-1); }
       cdStreamSeek(fd, 0, SEEK_SET);
 
       /* autodetect WAVE file */
@@ -1030,7 +1038,11 @@ int cdd_load(char *filename, char *header)
 
         /* auto-detect PAUSE within audio files */
         cdStreamSeek(fd, 100 * 2352, SEEK_SET);
-        cdStreamRead(head, 4, 1, fd);
+        {
+        int status = cdStreamRead(head, 4, 1, fd);
+        if (status < 0) { fprintf(stderr, "Error reading from CD Stream.\n"); exit(-1); }
+        }
+
         cdStreamSeek(fd, 0, SEEK_SET);
         if (*(int32 *)head == 0)
         {
@@ -1367,7 +1379,8 @@ void cdd_read_data(uint8 *dst, uint8 *subheader)
     {
       /* read Mode 1 user data (2048 bytes) */
       cdStreamSeek(cdd.toc.tracks[0].fd, cdd.lba * 2048, SEEK_SET);
-      cdStreamRead(dst, 2048, 1, cdd.toc.tracks[0].fd);
+      int status = cdStreamRead(dst, 2048, 1, cdd.toc.tracks[0].fd);
+      if (status < 0) { fprintf(stderr, "Error reading from CD Stream.\n"); exit(-1); }
     }
     else
     {
@@ -1376,16 +1389,23 @@ void cdd_read_data(uint8 *dst, uint8 *subheader)
       {
         /* skip block sync pattern (12 bytes) + block header (4 bytes) then read Mode 1 user data (2048 bytes) */
         cdStreamSeek(cdd.toc.tracks[0].fd, (cdd.lba * 2352) + 12 + 4, SEEK_SET);
-        cdStreamRead(dst, 2048, 1, cdd.toc.tracks[0].fd);
+        int status = cdStreamRead(dst, 2048, 1, cdd.toc.tracks[0].fd);
+        if (status < 0) { fprintf(stderr, "Error reading from CD Stream.\n"); exit(-1); }
       }
       else
       {
         /* skip block sync pattern (12 bytes) + block header (4 bytes) + Mode 2 sub-header (first 4 bytes) then read Mode 2 sub-header (last 4 bytes) */
         cdStreamSeek(cdd.toc.tracks[0].fd, (cdd.lba * 2352) + 12 + 4 + 4, SEEK_SET);
-        cdStreamRead(subheader, 4, 1, cdd.toc.tracks[0].fd);
+        {
+          int status = cdStreamRead(subheader, 4, 1, cdd.toc.tracks[0].fd);
+          if (status < 0) { fprintf(stderr, "Error reading from CD Stream.\n"); exit(-1); }
+        }
 
         /* read Mode 2 user data (max 2328 bytes) */
-        cdStreamRead(dst, 2328, 1, cdd.toc.tracks[0].fd);
+        {
+         int status = cdStreamRead(dst, 2328, 1, cdd.toc.tracks[0].fd);
+         if (status < 0) { fprintf(stderr, "Error reading from CD Stream.\n"); exit(-1); } 
+        }
       }
     }
   }
@@ -1607,7 +1627,8 @@ void cdd_read_audio(unsigned int samples)
 #else
       uint8 *ptr = cdc.ram;
 #endif
-      cdStreamRead(cdc.ram, 1, samples * 4, cdd.toc.tracks[cdd.index].fd);
+     int status = cdStreamRead(cdc.ram, 1, samples * 4, cdd.toc.tracks[cdd.index].fd);
+     if (status < 0) { fprintf(stderr, "Error reading from CD Stream."); exit(-1); }
 
       /* process 16-bit (little-endian) stereo samples */
       for (i=0; i<samples; i++)
@@ -1709,7 +1730,8 @@ static void cdd_read_subcode(void)
   index = (scd.regs[0x68>>1].byte.l + 0x100) >> 1;
 
   /* read interleaved subcode data from .sub file (12 x 8-bit of P subchannel first, then Q subchannel, etc) */
-  cdStreamRead(subc, 1, 96, cdd.toc.sub);
+  int status = cdStreamRead(subc, 1, 96, cdd.toc.sub);
+  if (status < 0) { fprintf(stderr, "Error reading from CD Stream.\n"); exit(-1); }
 
   /* convert back to raw subcode format (96 bytes with 8 x P-W subchannel bits per byte) */
   for (i=0; i<96; i+=2)

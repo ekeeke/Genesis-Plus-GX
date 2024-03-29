@@ -369,11 +369,13 @@ static int sdl_control_update(SDL_Keycode keystate)
 
       case SDLK_F7:
       {
-        FILE *f = fopen("game.gp0","rb");
+        const char fileName[] = "game.gp0";
+        FILE *f = fopen(fileName,"rb");
         if (f)
         {
           uint8 buf[STATE_SIZE];
-          fread(&buf, STATE_SIZE, 1, f);
+          int status = fread(&buf, STATE_SIZE, 1, f);
+          if (status < 0) { fprintf(stderr, "Error loading file `%s'.", fileName); exit(-1); }
           state_load(buf);
           fclose(f);
         }
@@ -382,12 +384,14 @@ static int sdl_control_update(SDL_Keycode keystate)
 
       case SDLK_F8:
       {
-        FILE *f = fopen("game.gp0","wb");
+        const char fileName[] = "game.gp0";
+        FILE *f = fopen(fileName,"wb");
         if (f)
         {
           uint8 buf[STATE_SIZE];
           int len = state_save(buf);
-          fwrite(&buf, len, 1, f);
+          int status = fwrite(&buf, len, 1, f);
+          if (status < 0) { fprintf(stderr, "Error saving file `%s'.", fileName); exit(-1); }
           fclose(f);
         }
         break;
@@ -729,7 +733,8 @@ int main (int argc, char **argv)
     int i;
 
     /* read BOOT ROM */
-    fread(boot_rom, 1, 0x800, fp);
+    int status = fread(boot_rom, 1, 0x800, fp);
+    if (status < 0) { fprintf(stderr, "Error reading from file `%s'.", MD_BIOS); exit(-1); }
     fclose(fp);
 
     /* check BOOT ROM */
@@ -793,10 +798,12 @@ int main (int argc, char **argv)
   if (system_hw == SYSTEM_MCD)
   {
     /* load internal backup RAM */
-    fp = fopen("./scd.brm", "rb");
+    const char fileName[] = "./scd.brm";
+    fp = fopen(fileName, "rb");
     if (fp!=NULL)
     {
-      fread(scd.bram, 0x2000, 1, fp);
+      int status = fread(scd.bram, 0x2000, 1, fp);
+      if (status < 0) { fprintf(stderr, "Error reading from file `%s'.", fileName); exit(-1); }
       fclose(fp);
     }
 
@@ -817,10 +824,14 @@ int main (int argc, char **argv)
     /* load cartridge backup RAM */
     if (scd.cartridge.id)
     {
-      fp = fopen("./cart.brm", "rb");
+      const char fileName[] = "./cart.brm";
+      fp = fopen(fileName, "rb");
+      if (status < 0) { fprintf(stderr, "Error opening file `%s'.", fileName); exit(-1); }
+
       if (fp!=NULL)
       {
-        fread(scd.cartridge.area, scd.cartridge.mask + 1, 1, fp);
+        int status = fread(scd.cartridge.area, scd.cartridge.mask + 1, 1, fp);
+        if (status < 0) { fprintf(stderr, "Error reading from file `%s'.", fileName); exit(-1); }
         fclose(fp);
       }
 
@@ -843,10 +854,12 @@ int main (int argc, char **argv)
   if (sram.on)
   {
     /* load SRAM */
-    fp = fopen("./game.srm", "rb");
+    const char fileName[] = "./game.srm";
+    fp = fopen(fileName, "rb");
     if (fp!=NULL)
     {
-      fread(sram.sram,0x10000,1, fp);
+      int status = fread(sram.sram,0x10000,1, fp);
+      if (status < 0) { fprintf(stderr, "Error reading from file `%s'.", fileName); exit(-1); }
       fclose(fp);
     }
   }

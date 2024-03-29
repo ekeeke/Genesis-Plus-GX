@@ -151,7 +151,8 @@ static int check_zip(char *filename)
   uint8 buf[2];
   FILE *fd = fopen(filename, "rb");
   if(!fd) return (0);
-  fread(buf, 2, 1, fd);
+  int status = fread(buf, 2, 1, fd);
+  if (status < 0) { fprintf(stderr, "Error reading from file `%s'.", filename); exit(-1); }
   fclose(fd);
   if(memcmp(buf, "PK", 2) == 0) return (1);
   return (0);
