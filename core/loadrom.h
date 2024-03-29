@@ -40,6 +40,8 @@
 #ifndef _LOADROM_H_
 #define _LOADROM_H_
 
+#include "types.h"
+
 #ifndef MAXROMSIZE
 #define MAXROMSIZE 10485760
 #endif

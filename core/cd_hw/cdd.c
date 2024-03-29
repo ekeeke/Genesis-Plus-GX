@@ -35,6 +35,9 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *
  ****************************************************************************************/
+
+#include <config.h>
+#include <stdlib.h>
 #include "shared.h"
 #include "megasd.h"
 
@@ -790,7 +793,7 @@ int cdd_load(char *filename, char *header)
             /* read CD image header + security code */
             int status = cdStreamRead(header, 0x210, 1, cdd.toc.tracks[0].fd);
             if (status < 0) { fprintf(stderr, "Error reading from CD Stream.\n"); exit(-1); }
-            
+
             cdStreamSeek(cdd.toc.tracks[0].fd, 0, SEEK_SET);
           }
         }

@@ -125,6 +125,7 @@
  *      http://www.msxnet.org/tech/z80-documented.pdf
  *****************************************************************************/
 #include "shared.h"
+#include "string.h"
 #include "z80.h"
 
 /* execute main opcodes inside a big switch statement */

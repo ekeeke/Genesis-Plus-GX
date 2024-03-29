@@ -1,8 +1,8 @@
 
 #include "shared.h"
+#include "config.h"
 
 t_config config;
-
 
 void set_config_defaults(void)
 {

@@ -36,6 +36,7 @@
  *
  ****************************************************************************************/
 
+#include <config.h>
 #include "shared.h"
 
 int state_load(unsigned char *state)

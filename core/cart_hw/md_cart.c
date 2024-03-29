@@ -41,6 +41,9 @@
  *
  ****************************************************************************************/
 
+#include <osd.h>
+#include <fileio.h>
+#include <config.h>
 #include "shared.h"
 #include "eeprom_i2c.h"
 #include "eeprom_spi.h"

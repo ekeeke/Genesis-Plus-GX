@@ -3,6 +3,7 @@
 #define _CONFIG_H_
 
 #include "types.h"
+#include <main.h>
 
 /****************************************************************************
  * Config Option 

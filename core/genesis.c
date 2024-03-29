@@ -39,6 +39,9 @@
  *
  ****************************************************************************************/
 
+#include <config.h>
+#include <stdlib.h>
+#include <string.h>
 #include "shared.h"
 
 #ifdef USE_DYNAMIC_ALLOC

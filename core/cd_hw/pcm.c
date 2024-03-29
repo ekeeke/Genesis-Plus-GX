@@ -35,6 +35,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *
  ****************************************************************************************/
+
+#include <config.h>
 #include "shared.h"
 
 #define PCM_SCYCLES_RATIO (384 * 4)

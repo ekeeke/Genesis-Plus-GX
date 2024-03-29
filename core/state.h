@@ -36,8 +36,9 @@
  *
  ****************************************************************************************/
 
-#ifndef _STATE_H_
-#define _STATE_H_
+#pragma once
+
+#include <string.h>
 
 #define STATE_SIZE    0xfd000
 #define STATE_VERSION "GENPLUS-GX 1.7.6"
@@ -53,5 +54,3 @@
 /* Function prototypes */
 extern int state_load(unsigned char *state);
 extern int state_save(unsigned char *state);
-
-#endif

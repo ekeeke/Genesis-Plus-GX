@@ -39,6 +39,8 @@
  *
  ****************************************************************************************/
 
+#include <string.h>
+#include <config.h>
 #include "shared.h"
 #include "hvc.h"
 

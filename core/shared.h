@@ -1,8 +1,6 @@
 #ifndef _SHARED_H_
 #define _SHARED_H_
 
-#include "types.h"
-#include "osd.h"
 #include "macros.h"
 #include "loadrom.h"
 #include "m68k.h"

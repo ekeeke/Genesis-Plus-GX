@@ -1,5 +1,8 @@
-#include "SDL.h"
-#include "SDL_thread.h"
+#include <SDL.h>
+#include <SDL_thread.h>
+#include <config.h>
+#include <error.h>
+#include <osd.h>
 
 #include "shared.h"
 #include "sms_ntsc.h"

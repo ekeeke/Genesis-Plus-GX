@@ -37,6 +37,7 @@
  *
  ****************************************************************************************/
 
+#include <config.h>
 #include "shared.h"
 #include "gamepad.h"
 #include "lightgun.h"

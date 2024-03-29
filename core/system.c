@@ -39,6 +39,9 @@
  *
  ****************************************************************************************/
 
+#include <string.h>
+#include <config.h>
+#include <osd.h>
 #include "shared.h"
 #include "eq.h"
 

@@ -40,8 +40,12 @@
  *
  ****************************************************************************************/
 
-#include "shared.h"
+#include <stdlib.h>
+#include <unzip.h>
 #include <zlib.h>
+#include "shared.h"
+#include "types.h"
+
 
 static int check_zip(char *filename);
 
