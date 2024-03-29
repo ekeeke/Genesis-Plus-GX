@@ -1,10 +1,6 @@
 #ifndef _SHARED_H_
 #define _SHARED_H_
 
-#include <stdlib.h>
-#include <string.h>
-#include <math.h>
-
 #include "types.h"
 #include "osd.h"
 #include "macros.h"

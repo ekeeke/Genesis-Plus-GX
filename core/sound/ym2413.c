@@ -43,6 +43,7 @@ to do:
 /************************************************/
 
 #include "shared.h"
+#include "math.h"
 
 #define FREQ_SH 16  /* 16.16 fixed point (frequency calculations) */
 #define EG_SH   16  /* 16.16 fixed point (EG timing)              */

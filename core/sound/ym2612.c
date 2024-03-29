@@ -148,6 +148,7 @@
 /************************************************************************/
 
 #include "shared.h"
+#include "math.h"
 
 /* envelope generator */
 #define ENV_BITS    10
