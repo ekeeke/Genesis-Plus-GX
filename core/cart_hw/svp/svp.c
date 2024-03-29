@@ -11,6 +11,7 @@
 */
 
 #include "shared.h"
+#include "../../genesis.h"
 #include "m68k.h"
 
 svp_t *svp;

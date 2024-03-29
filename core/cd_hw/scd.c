@@ -38,12 +38,13 @@
 
 #include "shared.h"
 #include "../system.h"
+#include "../genesis.h"
 #include "m68k.h"
 
 /*--------------------------------------------------------------------------*/
 /* Unused area (return open bus data, i.e prefetched instruction word)      */
 /*--------------------------------------------------------------------------*/
-static unsigned int s68k_read_bus_8(unsigned int address)
+unsigned int s68k_read_bus_8(unsigned int address)
 {
 #ifdef LOGERROR
   error("[SUB 68k] Unused read8 %08X (%08X)\n", address, s68k.pc);
@@ -52,7 +53,7 @@ static unsigned int s68k_read_bus_8(unsigned int address)
   return READ_BYTE(s68k.memory_map[((address)>>16)&0xff].base, (address) & 0xffff);
 }
 
-static unsigned int s68k_read_bus_16(unsigned int address)
+unsigned int s68k_read_bus_16(unsigned int address)
 {
 #ifdef LOGERROR
   error("[SUB 68k] Unused read16 %08X (%08X)\n", address, s68k.pc);
@@ -61,14 +62,14 @@ static unsigned int s68k_read_bus_16(unsigned int address)
   return *(uint16 *)(s68k.memory_map[((address)>>16)&0xff].base + ((address) & 0xffff));
 }
 
-static void s68k_unused_8_w(unsigned int address, unsigned int data)
+void s68k_unused_8_w(unsigned int address, unsigned int data)
 {
 #ifdef LOGERROR
   error("[SUB 68k] Unused write8 %08X = %02X (%08X)\n", address, data, s68k.pc);
 #endif
 }
 
-static void s68k_unused_16_w(unsigned int address, unsigned int data)
+void s68k_unused_16_w(unsigned int address, unsigned int data)
 {
 #ifdef LOGERROR
   error("[SUB 68k] Unused write16 %08X = %04X (%08X)\n", address, data, s68k.pc);
@@ -79,7 +80,7 @@ static void s68k_unused_16_w(unsigned int address, unsigned int data)
 /* Locked area (cause SUB-CPU to wait for /DTACK assertion)    */
 /*--------------------------------------------------------------------------*/
 
-static void s68k_lockup_w_8 (unsigned int address, unsigned int data)
+void s68k_lockup_w_8 (unsigned int address, unsigned int data)
 {
 #ifdef LOGERROR
   error ("[SUB 68k] Lockup write8 %08X = %02X (%08X)\n", address, data, s68k.pc);
@@ -87,7 +88,7 @@ static void s68k_lockup_w_8 (unsigned int address, unsigned int data)
   s68k_pulse_wait(address, 1);
 }
 
-static void s68k_lockup_w_16 (unsigned int address, unsigned int data)
+void s68k_lockup_w_16 (unsigned int address, unsigned int data)
 {
 #ifdef LOGERROR
   error ("[SUB 68k] Lockup write16 %08X = %04X (%08X)\n", address, data, s68k.pc);
@@ -95,7 +96,7 @@ static void s68k_lockup_w_16 (unsigned int address, unsigned int data)
   s68k_pulse_wait(address, 1);
 }
 
-static unsigned int s68k_lockup_r_8 (unsigned int address)
+unsigned int s68k_lockup_r_8 (unsigned int address)
 { 
 #ifdef LOGERROR
   error ("[SUB 68k] Lockup read8 %08X.b (%08X)\n", address, s68k.pc);
@@ -104,7 +105,7 @@ static unsigned int s68k_lockup_r_8 (unsigned int address)
   return 0xff;
 }
 
-static unsigned int s68k_lockup_r_16 (unsigned int address)
+unsigned int s68k_lockup_r_16 (unsigned int address)
 {
 #ifdef LOGERROR
   error ("[SUB 68k] Lockup read16 %08X.w (%08X)\n", address, s68k.pc);
@@ -155,7 +156,7 @@ void prg_ram_dma_w(unsigned int length)
 /*--------------------------------------------------------------------------*/
 /* PRG-RAM write protected area                                             */
 /*--------------------------------------------------------------------------*/
-static void prg_ram_write_byte(unsigned int address, unsigned int data)
+void prg_ram_write_byte(unsigned int address, unsigned int data)
 {
   address &= 0x7ffff;
   if (address >= (scd.regs[0x02>>1].byte.h << 9))
@@ -168,7 +169,7 @@ static void prg_ram_write_byte(unsigned int address, unsigned int data)
 #endif
 }
 
-static void prg_ram_write_word(unsigned int address, unsigned int data)
+void prg_ram_write_word(unsigned int address, unsigned int data)
 {
   address &= 0x7fffe;
   if (address >= (scd.regs[0x02>>1].byte.h << 9))
@@ -184,7 +185,7 @@ static void prg_ram_write_word(unsigned int address, unsigned int data)
 /*--------------------------------------------------------------------------*/
 /* PRG-RAM bank mirrored access                                             */
 /*--------------------------------------------------------------------------*/
-static unsigned int prg_ram_z80_read_byte(unsigned int address)
+unsigned int prg_ram_z80_read_byte(unsigned int address)
 {
   int offset = (address >> 16) & 0x03;
 
@@ -196,7 +197,7 @@ static unsigned int prg_ram_z80_read_byte(unsigned int address)
   return READ_BYTE(m68k.memory_map[offset].base, address & 0xffff);
 }
 
-static void prg_ram_z80_write_byte(unsigned int address, unsigned int data)
+void prg_ram_z80_write_byte(unsigned int address, unsigned int data)
 {
   int offset = (address >> 16) & 0x03;
 
@@ -210,7 +211,7 @@ static void prg_ram_z80_write_byte(unsigned int address, unsigned int data)
   }
 }
 
-static unsigned int prg_ram_m68k_read_byte(unsigned int address)
+unsigned int prg_ram_m68k_read_byte(unsigned int address)
 {
   int offset = (address >> 16) & 0x03;
 
@@ -222,7 +223,7 @@ static unsigned int prg_ram_m68k_read_byte(unsigned int address)
   return READ_BYTE(m68k.memory_map[offset].base, address & 0xffff);
 }
 
-static unsigned int prg_ram_m68k_read_word(unsigned int address)
+unsigned int prg_ram_m68k_read_word(unsigned int address)
 {
   int offset = (address >> 16) & 0x03;
 
@@ -234,7 +235,7 @@ static unsigned int prg_ram_m68k_read_word(unsigned int address)
   return *(uint16 *)(m68k.memory_map[offset].base + (address & 0xffff));
 }
 
-static void prg_ram_m68k_write_byte(unsigned int address, unsigned int data)
+void prg_ram_m68k_write_byte(unsigned int address, unsigned int data)
 {
   int offset = (address >> 16) & 0x03;
 
@@ -248,7 +249,7 @@ static void prg_ram_m68k_write_byte(unsigned int address, unsigned int data)
   }
 }
 
-static void prg_ram_m68k_write_word(unsigned int address, unsigned int data)
+void prg_ram_m68k_write_word(unsigned int address, unsigned int data)
 {
   int offset = (address >> 16) & 0x03;
 
@@ -265,7 +266,7 @@ static void prg_ram_m68k_write_word(unsigned int address, unsigned int data)
 /*--------------------------------------------------------------------------*/
 /* Word-RAM bank mirrored access                                            */
 /*--------------------------------------------------------------------------*/
-static unsigned int word_ram_z80_read_byte(unsigned int address)
+unsigned int word_ram_z80_read_byte(unsigned int address)
 {
   int offset = (address >> 16) & 0x23;
 
@@ -277,7 +278,7 @@ static unsigned int word_ram_z80_read_byte(unsigned int address)
   return READ_BYTE(m68k.memory_map[offset].base, address & 0xffff);
 }
 
-static void word_ram_z80_write_byte(unsigned int address, unsigned int data)
+void word_ram_z80_write_byte(unsigned int address, unsigned int data)
 {
   int offset = (address >> 16) & 0x23;
 
@@ -291,7 +292,7 @@ static void word_ram_z80_write_byte(unsigned int address, unsigned int data)
   }
 }
 
-static unsigned int word_ram_m68k_read_byte(unsigned int address)
+unsigned int word_ram_m68k_read_byte(unsigned int address)
 {
   int offset = (address >> 16) & 0x23;
 
@@ -303,7 +304,7 @@ static unsigned int word_ram_m68k_read_byte(unsigned int address)
   return READ_BYTE(m68k.memory_map[offset].base, address & 0xffff);
 }
 
-static unsigned int word_ram_m68k_read_word(unsigned int address)
+unsigned int word_ram_m68k_read_word(unsigned int address)
 {
   int offset = (address >> 16) & 0x23;
 
@@ -315,7 +316,7 @@ static unsigned int word_ram_m68k_read_word(unsigned int address)
   return *(uint16 *)(m68k.memory_map[offset].base + (address & 0xffff));
 }
 
-static void word_ram_m68k_write_byte(unsigned int address, unsigned int data)
+void word_ram_m68k_write_byte(unsigned int address, unsigned int data)
 {
   int offset = (address >> 16) & 0x23;
 
@@ -329,7 +330,7 @@ static void word_ram_m68k_write_byte(unsigned int address, unsigned int data)
   }
 }
 
-static void word_ram_m68k_write_word(unsigned int address, unsigned int data)
+void word_ram_m68k_write_word(unsigned int address, unsigned int data)
 {
   int offset = (address >> 16) & 0x23;
 
@@ -343,7 +344,7 @@ static void word_ram_m68k_write_word(unsigned int address, unsigned int data)
   }
 }
 
-static unsigned int word_ram_s68k_read_byte(unsigned int address)
+unsigned int word_ram_s68k_read_byte(unsigned int address)
 {
   int offset = (address >> 16) & 0x0f;
 
@@ -355,7 +356,7 @@ static unsigned int word_ram_s68k_read_byte(unsigned int address)
   return READ_BYTE(s68k.memory_map[offset].base, address & 0xffff);
 }
 
-static unsigned int word_ram_s68k_read_word(unsigned int address)
+unsigned int word_ram_s68k_read_word(unsigned int address)
 {
   int offset = (address >> 16) & 0x0f;
 
@@ -367,7 +368,7 @@ static unsigned int word_ram_s68k_read_word(unsigned int address)
   return *(uint16 *)(s68k.memory_map[offset].base + (address & 0xffff));
 }
 
-static void word_ram_s68k_write_byte(unsigned int address, unsigned int data)
+void word_ram_s68k_write_byte(unsigned int address, unsigned int data)
 {
   int offset = (address >> 16) & 0x0f;
 
@@ -381,7 +382,7 @@ static void word_ram_s68k_write_byte(unsigned int address, unsigned int data)
   }
 }
 
-static void word_ram_s68k_write_word(unsigned int address, unsigned int data)
+void word_ram_s68k_write_word(unsigned int address, unsigned int data)
 {
   int offset = (address >> 16) & 0x0f;
 
@@ -398,7 +399,7 @@ static void word_ram_s68k_write_word(unsigned int address, unsigned int data)
 /*--------------------------------------------------------------------------*/
 /* internal backup RAM (8KB)                                                */
 /*--------------------------------------------------------------------------*/
-static unsigned int bram_read_byte(unsigned int address)
+unsigned int bram_read_byte(unsigned int address)
 {
   /* LSB only */
   if (address & 0x01)
@@ -409,12 +410,12 @@ static unsigned int bram_read_byte(unsigned int address)
   return 0xff;
 }
 
-static unsigned int bram_read_word(unsigned int address)
+unsigned int bram_read_word(unsigned int address)
 {
   return (scd.bram[(address >> 1) & 0x1fff] | 0xff00);
 }
 
-static void bram_write_byte(unsigned int address, unsigned int data)
+void bram_write_byte(unsigned int address, unsigned int data)
 {
   /* LSB only */
   if (address & 0x01)
@@ -423,7 +424,7 @@ static void bram_write_byte(unsigned int address, unsigned int data)
   }
 }
 
-static void bram_write_word(unsigned int address, unsigned int data)
+void bram_write_word(unsigned int address, unsigned int data)
 {
   scd.bram[(address >> 1) & 0x1fff] = data & 0xff;
 }
@@ -432,7 +433,7 @@ static void bram_write_word(unsigned int address, unsigned int data)
 /* SUB-CPU polling detection and MAIN-CPU synchronization                   */
 /*--------------------------------------------------------------------------*/
 
-static void s68k_poll_detect(unsigned int reg_mask)
+void s68k_poll_detect(unsigned int reg_mask)
 {
   /* detect SUB-CPU register polling */
   if (s68k.poll.detected & reg_mask)
@@ -472,7 +473,7 @@ static void s68k_poll_detect(unsigned int reg_mask)
   s68k.poll.pc = s68k.pc;
 }
 
-static void s68k_poll_sync(unsigned int reg_mask)
+void s68k_poll_sync(unsigned int reg_mask)
 {
   /* relative MAIN-CPU cycle counter */
   unsigned int cycles = (s68k.cycles * MCYCLES_PER_LINE) / SCYCLES_PER_LINE;
@@ -507,7 +508,7 @@ static void s68k_poll_sync(unsigned int reg_mask)
   m68k.poll.detected &= ~reg_mask;
 }
 
-static void m68k_sync(void)
+void m68k_sync(void)
 {
   if (!m68k.stopped)
   {
@@ -529,7 +530,7 @@ static void m68k_sync(void)
 /* PCM chip & Gate-Array area                                               */
 /*--------------------------------------------------------------------------*/
 
-static unsigned int scd_read_byte(unsigned int address)
+unsigned int scd_read_byte(unsigned int address)
 {
   /* PCM area (8K) mirrored into $xF0000-$xF7FFF */
   if (!(address & 0x8000))
@@ -648,7 +649,7 @@ static unsigned int scd_read_byte(unsigned int address)
   return scd.regs[address >> 1].byte.h;
 }
 
-static unsigned int scd_read_word(unsigned int address)
+unsigned int scd_read_word(unsigned int address)
 {
   /* PCM area (8K) mirrored into $xF0000-$xF7FFF */
   if (!(address & 0x8000))
@@ -804,9 +805,9 @@ INLINE void word_ram_switch(uint8 mode)
   }
 }
 
-static void scd_write_word(unsigned int address, unsigned int data);
+void scd_write_word(unsigned int address, unsigned int data);
 
-static void scd_write_byte(unsigned int address, unsigned int data)
+void scd_write_byte(unsigned int address, unsigned int data)
 {
   /* PCM area (8K) mirrored into $xF0000-$xF7FFF */
   if (!(address & 0x8000))
@@ -1166,7 +1167,7 @@ static void scd_write_byte(unsigned int address, unsigned int data)
   }
 }
 
-static void scd_write_word(unsigned int address, unsigned int data)
+void scd_write_word(unsigned int address, unsigned int data)
 {
   /* PCM area (8K) mirrored into $xF0000-$xF7FFF */
   if (!(address & 0x8000))

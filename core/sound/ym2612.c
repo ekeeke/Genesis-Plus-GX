@@ -106,7 +106,7 @@
 **  - added SSG-EG support (verified on real YM2203)
 **
 ** 12-08-2001 Jarek Burczynski:
-**  - corrected sin_tab and tl_tab data (verified on real chip)
+**  - corrected ym2612_sin_tab and ym2612_tl_tab data (verified on real chip)
 **  - corrected feedback calculations (verified on real chip)
 **  - corrected phase generator calculations (verified on real chip)
 **  - corrected envelope generator calculations (verified on real chip)
@@ -148,7 +148,9 @@
 /************************************************************************/
 
 #include "shared.h"
-#include "math.h"
+#include <math.h>
+#include "../macros.h"
+#include "../genesis.h"
 
 /* envelope generator */
 #define ENV_BITS    10
@@ -184,12 +186,12 @@
 *   TL_RES_LEN - sinus resolution (X axis)
 */
 #define TL_TAB_LEN (13*2*TL_RES_LEN)
-static signed int tl_tab[TL_TAB_LEN];
+signed int ym2612_tl_tab[TL_TAB_LEN];
 
 #define ENV_QUIET    (TL_TAB_LEN>>3)
 
 /* sin waveform table in 'decibel' scale */
-static unsigned int sin_tab[SIN_LEN];
+unsigned int ym2612_sin_tab[SIN_LEN];
 
 /* sustain level table (3dB per step) */
 /* bit0, bit1, bit2, bit3, bit4, bit5, bit6 */
@@ -199,7 +201,7 @@ static unsigned int sin_tab[SIN_LEN];
 /* 0 - 15: 0, 3, 6, 9,12,15,18,21,24,27,30,33,36,39,42,93 (dB)*/
 /* attenuation value (10 bits) = (SL << 2) << 3 */
 #define SC(db) (uint32_t) ( db * (4.0/ENV_STEP) )
-static const uint32_t sl_table[16]={
+const uint32_t sl_table[16]={
  SC( 0),SC( 1),SC( 2),SC(3 ),SC(4 ),SC(5 ),SC(6 ),SC( 7),
  SC( 8),SC( 9),SC(10),SC(11),SC(12),SC(13),SC(14),SC(31)
 };
@@ -240,7 +242,7 @@ static const uint8_t eg_inc[19*RATE_STEPS]={
 #define O(a) (a*RATE_STEPS)
 
 /*note that there is no O(17) in this table - it's directly in the code */
-static const uint8_t eg_rate_select[32+64+32]={  /* Envelope Generator rates (32 + 64 rates + 32 RKS) */
+const uint8_t eg_rate_select[32+64+32]={  /* Envelope Generator rates (32 + 64 rates + 32 RKS) */
 /* 32 infinite time rates (same as Rate 0) */
 O(18),O(18),O(18),O(18),O(18),O(18),O(18),O(18),
 O(18),O(18),O(18),O(18),O(18),O(18),O(18),O(18),
@@ -339,7 +341,7 @@ O( 0),O( 0),O( 0),O( 0),O( 0),O( 0),O( 0),O( 0)
 };
 #undef O
 
-static const uint8_t dt_tab[4 * 32]={
+const uint8_t dt_tab[4 * 32]={
 /* this is YM2151 and YM2612 phase increment data (in 10.10 fixed point format)*/
 /* FD=0 */
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -358,12 +360,12 @@ static const uint8_t dt_tab[4 * 32]={
 
 /* OPN key frequency number -> key code follow table */
 /* fnum higher 4bit -> keycode lower 2bit */
-static const uint8_t opn_fktable[16] = {0,0,0,0,0,0,0,1,2,3,3,3,3,3,3,3};
+const uint8_t opn_fktable[16] = {0,0,0,0,0,0,0,1,2,3,3,3,3,3,3,3};
 
 
 /* 8 LFO speed parameters */
 /* each value represents number of samples that one LFO level will last for */
-static const uint32_t lfo_samples_per_step[8] = {108, 77, 71, 67, 62, 44, 8, 5};
+const uint32_t lfo_samples_per_step[8] = {108, 77, 71, 67, 62, 44, 8, 5};
 
 
 /*There are 4 different LFO AM depths available, they are:
@@ -383,7 +385,7 @@ static const uint32_t lfo_samples_per_step[8] = {108, 77, 71, 67, 62, 44, 8, 5};
     1 for 5.9 dB
     0 for 11.8 dB
 */
-static const uint8_t lfo_ams_depth_shift[4] = {8, 3, 1, 0};
+const uint8_t lfo_ams_depth_shift[4] = {8, 3, 1, 0};
 
 
 
@@ -394,7 +396,7 @@ static const uint8_t lfo_ams_depth_shift[4] = {8, 3, 1, 0};
   (bits 8,9,10 = FNUM MSB from OCT/FNUM register)
 
   Here we store only first quarter (positive one) of full waveform.
-  Full table (lfo_pm_table) containing all 128 waveforms is build
+  Full table (ym2612_lfo_pm_table) containing all 128 waveforms is build
   at run (init) time.
 
   One value in table below represents 4 (four) basic LFO steps
@@ -407,7 +409,7 @@ static const uint8_t lfo_ams_depth_shift[4] = {8, 3, 1, 0};
    samples (32*432=13824; 32 because we store only a quarter of whole
             waveform in the table below)
 */
-static const uint8_t lfo_pm_output[7*8][8]={
+const uint8_t lfo_pm_output[7*8][8]={
 /* 7 bits meaningful (of F-NUMBER), 8 LFO output levels per one depth (out of 32), 8 LFO depths */
 /* FNUM BIT 4: 000 0001xxxx */
 /* DEPTH 0 */ {0,   0,   0,   0,   0,   0,   0,   0},
@@ -482,7 +484,7 @@ static const uint8_t lfo_pm_output[7*8][8]={
 };
 
 /* all 128 LFO PM waveforms */
-static int32_t lfo_pm_table[128*8*32]; /* 128 combinations of 7 bits meaningful (of F-NUMBER), 8 LFO depths, 32 LFO output levels per one depth */
+int32_t ym2612_lfo_pm_table[128*8*32]; /* 128 combinations of 7 bits meaningful (of F-NUMBER), 8 LFO depths, 32 LFO output levels per one depth */
 
 /* register number to channel number , slot offset */
 #define OPN_CHAN(N) (N&3)
@@ -626,16 +628,16 @@ typedef struct
 } YM2612;
 
 /* emulated chip */
-static YM2612 ym2612;
+YM2612 ym2612;
 
 /* current chip state */
-static int32_t  m2,c1,c2;   /* Phase Modulation input for operators 2,3,4 */
-static int32_t  mem;        /* one sample delay memory */
-static int32_t  out_fm[6];  /* outputs of working channels */
+int32_t  m2,c1,c2;   /* Phase Modulation input for operators 2,3,4 */
+int32_t  mem;        /* one sample delay memory */
+int32_t  out_fm[6];  /* outputs of working channels */
 
 /* chip type */
-static uint32_t op_mask[8][4];  /* operator output bitmasking (DAC quantization) */
-static int chip_type = YM2612_DISCRETE;
+uint32_t op_mask[8][4];  /* operator output bitmasking (DAC quantization) */
+int chip_type = YM2612_DISCRETE;
 
 
 INLINE void FM_KEYON(FM_CH *CH , int s )
@@ -1293,7 +1295,7 @@ INLINE void update_ssg_eg_channels(FM_CH *CH)
 
 INLINE void update_phase_lfo_slot(FM_SLOT *SLOT, uint32_t pm, uint8_t kc, uint32_t fc)
 {
-  int32_t lfo_fn_offset = lfo_pm_table[((fc & 0x7f0) << 4) + pm];
+  int32_t lfo_fn_offset = ym2612_lfo_pm_table[((fc & 0x7f0) << 4) + pm];
   
   if (lfo_fn_offset)  /* LFO phase modulation active */
   {
@@ -1319,7 +1321,7 @@ INLINE void update_phase_lfo_channel(FM_CH *CH)
 {
   uint32_t fc = CH->block_fnum;
   
-  int32_t lfo_fn_offset = lfo_pm_table[((fc & 0x7f0) << 4) + CH->pms + ym2612.OPN.LFO_PM];
+  int32_t lfo_fn_offset = ym2612_lfo_pm_table[((fc & 0x7f0) << 4) + CH->pms + ym2612.OPN.LFO_PM];
 
   if (lfo_fn_offset)  /* LFO phase modulation active */
   {
@@ -1418,20 +1420,20 @@ INLINE void refresh_fc_eg_chan(FM_CH *CH )
 
 INLINE signed int op_calc(uint32_t phase, unsigned int env, unsigned int pm, unsigned int opmask)
 {
-  uint32_t p = (env<<3) + sin_tab[ ( (phase >> SIN_BITS) + (pm >> 1) ) & SIN_MASK ];
+  uint32_t p = (env<<3) + ym2612_sin_tab[ ( (phase >> SIN_BITS) + (pm >> 1) ) & SIN_MASK ];
 
   if (p >= TL_TAB_LEN)
     return 0;
-  return (tl_tab[p] & opmask);
+  return (ym2612_tl_tab[p] & opmask);
 }
 
 INLINE signed int op_calc1(uint32_t phase, unsigned int env, unsigned int pm, unsigned int opmask)
 {
-  uint32_t p = (env<<3) + sin_tab[ ( ( phase >> SIN_BITS ) + pm ) & SIN_MASK ];
+  uint32_t p = (env<<3) + ym2612_sin_tab[ ( ( phase >> SIN_BITS ) + pm ) & SIN_MASK ];
 
   if (p >= TL_TAB_LEN)
     return 0;
-  return (tl_tab[p] & opmask);
+  return (ym2612_tl_tab[p] & opmask);
 }
 
 INLINE void chan_calc(FM_CH *CH, int num)
@@ -1746,7 +1748,7 @@ INLINE void OPNWriteReg(int r, int v)
         }
         case 1:    /* 0xb4-0xb6 : L , R , AMS , PMS */
           /* b0-2 PMS */
-          CH->pms = (v & 7) * 32; /* CH->pms = PM depth * 32 (index in lfo_pm_table) */
+          CH->pms = (v & 7) * 32; /* CH->pms = PM depth * 32 (index in ym2612_lfo_pm_table) */
 
           /* b4-5 AMS */
           CH->ams = lfo_ams_depth_shift[(v>>4) & 0x03];
@@ -1760,7 +1762,7 @@ INLINE void OPNWriteReg(int r, int v)
   }
 }
 
-static void reset_channels(FM_CH *CH , int num )
+void reset_channels(FM_CH *CH , int num )
 {
   int c,s;
 
@@ -1783,7 +1785,7 @@ static void reset_channels(FM_CH *CH , int num )
 }
 
 /* initialize generic tables */
-static void init_tables(void)
+void ym2612_init_tables(void)
 {
   signed int d,i,x;
   signed int n;
@@ -1808,8 +1810,8 @@ static void init_tables(void)
     n <<= 2;    /* 13 bits here (as in real chip) */
 
     /* 14 bits (with sign bit) */
-    tl_tab[ x*2 + 0 ] = n;
-    tl_tab[ x*2 + 1 ] = -tl_tab[ x*2 + 0 ];
+    ym2612_tl_tab[ x*2 + 0 ] = n;
+    ym2612_tl_tab[ x*2 + 1 ] = -ym2612_tl_tab[ x*2 + 0 ];
 
     /* one entry in the 'Power' table use the following format, xxxxxyyyyyyyys with:            */
     /*        s = sign bit                                                                      */
@@ -1818,8 +1820,8 @@ static void init_tables(void)
     /*            any value above 13 (included) would be discarded.                             */
     for (i=1; i<13; i++)
     {
-      tl_tab[ x*2+0 + i*2*TL_RES_LEN ] =  tl_tab[ x*2+0 ]>>i;
-      tl_tab[ x*2+1 + i*2*TL_RES_LEN ] = -tl_tab[ x*2+0 + i*2*TL_RES_LEN ];
+      ym2612_tl_tab[ x*2+0 + i*2*TL_RES_LEN ] =  ym2612_tl_tab[ x*2+0 ]>>i;
+      ym2612_tl_tab[ x*2+1 + i*2*TL_RES_LEN ] = -ym2612_tl_tab[ x*2+0 + i*2*TL_RES_LEN ];
     }
   }
 
@@ -1844,7 +1846,7 @@ static void init_tables(void)
       n = n>>1;
 
     /* 13-bits (8.5) value is formatted for above 'Power' table */
-    sin_tab[ i ] = n*2 + (m>=0.0? 0: 1 );
+    ym2612_sin_tab[ i ] = n*2 + (m>=0.0? 0: 1 );
   }
 
   /* build LFO PM modulation table */
@@ -1871,10 +1873,10 @@ static void init_tables(void)
           }
         }
         /* 32 steps for LFO PM (sinus) */
-        lfo_pm_table[(fnum*32*8) + (i*32) + step   + 0] = value;
-        lfo_pm_table[(fnum*32*8) + (i*32) +(step^7)+ 8] = value;
-        lfo_pm_table[(fnum*32*8) + (i*32) + step   +16] = -value;
-        lfo_pm_table[(fnum*32*8) + (i*32) +(step^7)+24] = -value;
+        ym2612_lfo_pm_table[(fnum*32*8) + (i*32) + step   + 0] = value;
+        ym2612_lfo_pm_table[(fnum*32*8) + (i*32) +(step^7)+ 8] = value;
+        ym2612_lfo_pm_table[(fnum*32*8) + (i*32) + step   +16] = -value;
+        ym2612_lfo_pm_table[(fnum*32*8) + (i*32) +(step^7)+24] = -value;
       }
     }
   }
@@ -1906,7 +1908,7 @@ static void init_tables(void)
 void YM2612Init(void)
 {
   memset(&ym2612,0,sizeof(YM2612));
-  init_tables();
+  ym2612_init_tables();
 }
 
 /* reset OPN registers */

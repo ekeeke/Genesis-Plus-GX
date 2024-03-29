@@ -127,6 +127,7 @@
 #include "shared.h"
 #include "string.h"
 #include "z80.h"
+#include "macros.h"
 
 /* execute main opcodes inside a big switch statement */
 #define BIG_SWITCH 1
@@ -221,18 +222,18 @@ unsigned char (*z80_readmem)(unsigned int address);
 void (*z80_writeport)(unsigned int port, unsigned char data);
 unsigned char (*z80_readport)(unsigned int port);
 
-static uint32_t EA;
+uint32_t EA;
 
-static uint8_t SZ[256];       /* zero and sign flags */
-static uint8_t SZ_BIT[256];   /* zero, sign and parity/overflow (=zero) flags for BIT opcode */
-static uint8_t SZP[256];      /* zero, sign and parity flags */
-static uint8_t SZHV_inc[256]; /* zero, sign, half carry and overflow flags INC r8 */
-static uint8_t SZHV_dec[256]; /* zero, sign, half carry and overflow flags DEC r8 */
+uint8_t SZ[256];       /* zero and sign flags */
+uint8_t SZ_BIT[256];   /* zero, sign and parity/overflow (=zero) flags for BIT opcode */
+uint8_t SZP[256];      /* zero, sign and parity flags */
+uint8_t SZHV_inc[256]; /* zero, sign, half carry and overflow flags INC r8 */
+uint8_t SZHV_dec[256]; /* zero, sign, half carry and overflow flags DEC r8 */
 
-static uint8_t SZHVC_add[2*256*256]; /* flags for ADD opcode */
-static uint8_t SZHVC_sub[2*256*256]; /* flags for SUB opcode */
+uint8_t SZHVC_add[2*256*256]; /* flags for ADD opcode */
+uint8_t SZHVC_sub[2*256*256]; /* flags for SUB opcode */
 
-static const uint16_t cc_op[0x100] = {
+const uint16_t cc_op[0x100] = {
    4*15,10*15, 7*15, 6*15, 4*15, 4*15, 7*15, 4*15, 4*15,11*15, 7*15, 6*15, 4*15, 4*15, 7*15, 4*15,
    8*15,10*15, 7*15, 6*15, 4*15, 4*15, 7*15, 4*15,12*15,11*15, 7*15, 6*15, 4*15, 4*15, 7*15, 4*15,
    7*15,10*15,16*15, 6*15, 4*15, 4*15, 7*15, 4*15, 7*15,11*15,16*15, 6*15, 4*15, 4*15, 7*15, 4*15,
@@ -250,7 +251,7 @@ static const uint16_t cc_op[0x100] = {
    5*15,10*15,10*15,19*15,10*15,11*15, 7*15,11*15, 5*15, 4*15,10*15, 4*15,10*15, 0*15, 7*15,11*15,
    5*15,10*15,10*15, 4*15,10*15,11*15, 7*15,11*15, 5*15, 6*15,10*15, 4*15,10*15, 0*15, 7*15,11*15};
 
-static const uint16_t cc_cb[0x100] = {
+const uint16_t cc_cb[0x100] = {
    8*15, 8*15, 8*15, 8*15, 8*15, 8*15,15*15, 8*15, 8*15, 8*15, 8*15, 8*15, 8*15, 8*15,15*15, 8*15,
    8*15, 8*15, 8*15, 8*15, 8*15, 8*15,15*15, 8*15, 8*15, 8*15, 8*15, 8*15, 8*15, 8*15,15*15, 8*15,
    8*15, 8*15, 8*15, 8*15, 8*15, 8*15,15*15, 8*15, 8*15, 8*15, 8*15, 8*15, 8*15, 8*15,15*15, 8*15,
@@ -268,7 +269,7 @@ static const uint16_t cc_cb[0x100] = {
    8*15, 8*15, 8*15, 8*15, 8*15, 8*15,15*15, 8*15, 8*15, 8*15, 8*15, 8*15, 8*15, 8*15,15*15, 8*15,
    8*15, 8*15, 8*15, 8*15, 8*15, 8*15,15*15, 8*15, 8*15, 8*15, 8*15, 8*15, 8*15, 8*15,15*15, 8*15};
 
-static const uint16_t cc_ed[0x100] = {
+const uint16_t cc_ed[0x100] = {
    8*15, 8*15, 8*15, 8*15, 8*15, 8*15, 8*15, 8*15, 8*15, 8*15, 8*15, 8*15, 8*15, 8*15, 8*15, 8*15,
    8*15, 8*15, 8*15, 8*15, 8*15, 8*15, 8*15, 8*15, 8*15, 8*15, 8*15, 8*15, 8*15, 8*15, 8*15, 8*15,
    8*15, 8*15, 8*15, 8*15, 8*15, 8*15, 8*15, 8*15, 8*15, 8*15, 8*15, 8*15, 8*15, 8*15, 8*15, 8*15,
@@ -286,7 +287,7 @@ static const uint16_t cc_ed[0x100] = {
    8*15, 8*15, 8*15, 8*15, 8*15, 8*15, 8*15, 8*15, 8*15, 8*15, 8*15, 8*15, 8*15, 8*15, 8*15, 8*15,
    8*15, 8*15, 8*15, 8*15, 8*15, 8*15, 8*15, 8*15, 8*15, 8*15, 8*15, 8*15, 8*15, 8*15, 8*15, 8*15};
 
-/*static const uint8_t cc_xy[0x100] = {
+/*const uint8_t cc_xy[0x100] = {
  4*15, 4*15, 4*15, 4*15, 4*15, 4*15, 4*15, 4*15, 4*15,15*15, 4*15, 4*15, 4*15, 4*15, 4*15, 4*15,
  4*15, 4*15, 4*15, 4*15, 4*15, 4*15, 4*15, 4*15, 4*15,15*15, 4*15, 4*15, 4*15, 4*15, 4*15, 4*15,
  4*15,14*15,20*15,10*15, 9*15, 9*15,11*15, 4*15, 4*15,15*15,20*15,10*15, 9*15, 9*15,11*15, 4*15,
@@ -306,7 +307,7 @@ static const uint16_t cc_ed[0x100] = {
 */
 
 /* illegal combo should return 4 + cc_op[i] */
-static const uint16_t cc_xy[0x100] ={
+const uint16_t cc_xy[0x100] ={
    8*15,14*15,11*15,10*15, 8*15, 8*15,11*15, 8*15, 8*15,15*15,11*15,10*15, 8*15, 8*15,11*15, 8*15,
   12*15,14*15,11*15,10*15, 8*15, 8*15,11*15, 8*15,16*15,15*15,11*15,10*15, 8*15, 8*15,11*15, 8*15,
   11*15,14*15,20*15,10*15, 9*15, 9*15,12*15, 8*15,11*15,15*15,20*15,10*15, 9*15, 9*15,12*15, 8*15,
@@ -324,7 +325,7 @@ static const uint16_t cc_xy[0x100] ={
    9*15,14*15,14*15,23*15,14*15,15*15,11*15,15*15, 9*15, 8*15,14*15, 8*15,14*15, 4*15,11*15,15*15,
    9*15,14*15,14*15, 8*15,14*15,15*15,11*15,15*15, 9*15,10*15,14*15, 8*15,14*15, 4*15,11*15,15*15};
 
-static const uint16_t cc_xycb[0x100] = {
+const uint16_t cc_xycb[0x100] = {
   23*15,23*15,23*15,23*15,23*15,23*15,23*15,23*15,23*15,23*15,23*15,23*15,23*15,23*15,23*15,23*15,
   23*15,23*15,23*15,23*15,23*15,23*15,23*15,23*15,23*15,23*15,23*15,23*15,23*15,23*15,23*15,23*15,
   23*15,23*15,23*15,23*15,23*15,23*15,23*15,23*15,23*15,23*15,23*15,23*15,23*15,23*15,23*15,23*15,
@@ -343,7 +344,7 @@ static const uint16_t cc_xycb[0x100] = {
   23*15,23*15,23*15,23*15,23*15,23*15,23*15,23*15,23*15,23*15,23*15,23*15,23*15,23*15,23*15,23*15};
 
 /* extra cycles if jr/jp/call taken and 'interrupt latency' on rst 0-7 */
-static const uint16_t cc_ex[0x100] = {
+const uint16_t cc_ex[0x100] = {
  0*15, 0*15, 0*15, 0*15, 0*15, 0*15, 0*15, 0*15, 0*15, 0*15, 0*15, 0*15, 0*15, 0*15, 0*15, 0*15,
  5*15, 0*15, 0*15, 0*15, 0*15, 0*15, 0*15, 0*15, 0*15, 0*15, 0*15, 0*15, 0*15, 0*15, 0*15, 0*15,  /* DJNZ */
  5*15, 0*15, 0*15, 0*15, 0*15, 0*15, 0*15, 0*15, 5*15, 0*15, 0*15, 0*15, 0*15, 0*15, 0*15, 0*15,  /* JR NZ/JR Z */
@@ -361,7 +362,7 @@ static const uint16_t cc_ex[0x100] = {
  6*15, 0*15, 0*15, 0*15, 7*15, 0*15, 0*15, 2*15, 6*15, 0*15, 0*15, 0*15, 7*15, 0*15, 0*15, 2*15,
  6*15, 0*15, 0*15, 0*15, 7*15, 0*15, 0*15, 2*15, 6*15, 0*15, 0*15, 0*15, 7*15, 0*15, 0*15, 2*15};
 
-static const uint16_t *cc[6];
+const uint16_t *cc[6];
 #define Z80_TABLE_dd  Z80_TABLE_xy
 #define Z80_TABLE_fd  Z80_TABLE_xy
 
@@ -434,7 +435,7 @@ typedef void (*funcptr)(void);
   INLINE void prefix##_fc(void); INLINE void prefix##_fd(void); INLINE void prefix##_fe(void); INLINE void prefix##_ff(void);
 
 #define FUNCTABLE(tablename,prefix) \
-static const funcptr tablename[0x100] = {  \
+const funcptr tablename[0x100] = {  \
   prefix##_00,prefix##_01,prefix##_02,prefix##_03,prefix##_04,prefix##_05,prefix##_06,prefix##_07, \
   prefix##_08,prefix##_09,prefix##_0a,prefix##_0b,prefix##_0c,prefix##_0d,prefix##_0e,prefix##_0f, \
   prefix##_10,prefix##_11,prefix##_12,prefix##_13,prefix##_14,prefix##_15,prefix##_16,prefix##_17, \
@@ -3233,7 +3234,7 @@ OP(op,fe) { CP(ARG());                                                          
 OP(op,ff) { RST(0x38);                                                                                     } /* RST  7           */
 
 
-static void take_interrupt(void)
+void take_interrupt(void)
 {
   /* Check if processor was halted */
   LEAVE_HALT;

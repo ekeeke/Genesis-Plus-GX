@@ -46,6 +46,7 @@
 #include "m68k.h"
 #include "z80.h"
 #include "system.h"
+#include "genesis.h"
 
 #ifdef USE_DYNAMIC_ALLOC
 external_t *ext;

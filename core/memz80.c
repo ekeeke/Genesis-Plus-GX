@@ -44,6 +44,7 @@
 #include "m68k.h"
 #include "z80.h"
 #include "system.h"
+#include "genesis.h"
 
 /*--------------------------------------------------------------------------*/
 /*  Handlers for access to unused addresses and those which make the        */

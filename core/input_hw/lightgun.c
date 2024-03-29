@@ -38,6 +38,7 @@
 
 #include <stdlib.h>
 #include "../system.h"
+#include "../genesis.h"
 #include "shared.h"
 #include "m68k.h"
 #include "z80.h"
@@ -87,7 +88,7 @@ static const uint8 hc_320[210] =
   0xFE, 0xFF
 };
 
-static struct
+struct
 {
   uint8 State;
   uint8 Port;

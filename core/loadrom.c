@@ -43,6 +43,7 @@
 #include "shared.h"
 #include "loadrom.h"
 #include "system.h"
+#include "genesis.h"
 
 /*** ROM Information ***/
 #define ROMCONSOLE    256

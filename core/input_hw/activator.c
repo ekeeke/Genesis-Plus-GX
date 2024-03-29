@@ -37,8 +37,9 @@
  ****************************************************************************************/
 
 #include "shared.h"
+#include "../macros.h"
 
-static struct
+struct
 {
   uint8_t State;
   uint8_t Counter;

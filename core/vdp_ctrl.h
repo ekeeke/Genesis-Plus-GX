@@ -39,8 +39,9 @@
  *
  ****************************************************************************************/
 
-#ifndef _VDP_H_
-#define _VDP_H_
+#pragma once
+
+#include <stdint.h>
 
 /* VDP context */
 extern uint8_t reg[0x20];
@@ -105,4 +106,3 @@ extern unsigned int vdp_hvc_r(unsigned int cycles);
 extern void vdp_test_w(unsigned int data);
 extern int vdp_68k_irq_ack(int int_level);
 
-#endif /* _VDP_H_ */

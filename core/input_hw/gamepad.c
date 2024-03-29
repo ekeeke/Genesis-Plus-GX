@@ -43,7 +43,7 @@
 #include "m68k.h"
 #include "z80.h"
 
-static struct
+struct
 {
   uint8 State;
   uint8 Counter;

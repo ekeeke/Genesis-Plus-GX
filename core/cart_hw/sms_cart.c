@@ -44,6 +44,7 @@
 #include "../system.h"
 #include "../loadrom.h"
 #include "../z80/z80.h"
+#include "../genesis.h"
 #include "shared.h"
 #include "eeprom_93c.h"
 #include "terebi_oekaki.h"

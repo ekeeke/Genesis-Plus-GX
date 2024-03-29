@@ -46,6 +46,7 @@
 #include "m68k.h"
 #include "z80.h"
 #include "system.h"
+#include "genesis.h"
 
 /* Mark a pattern as modified */
 #define MARK_BG_DIRTY(addr)                         \

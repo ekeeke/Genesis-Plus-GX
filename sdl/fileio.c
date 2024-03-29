@@ -43,6 +43,7 @@
 #include <stdlib.h>
 #include <unzip.h>
 #include <zlib.h>
+#include <stdio.h>
 #include "shared.h"
 #include "types.h"
 

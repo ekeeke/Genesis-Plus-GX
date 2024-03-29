@@ -39,6 +39,8 @@
 
 #include <config.h>
 #include "../system.h"
+#include "../genesis.h"
+#include "../macros.h"
 #include "shared.h"
 #include "blip_buf.h"
 
@@ -47,39 +49,39 @@
 
 /* FM output buffer (large enough to hold a whole frame at original chips rate) */
 #if defined(HAVE_YM3438_CORE) || defined(HAVE_OPLL_CORE)
-static int fm_buffer[1080 * 2 * 24];
+int fm_buffer[1080 * 2 * 24];
 #else
-static int fm_buffer[1080 * 2];
+int fm_buffer[1080 * 2];
 #endif
 
-static int fm_last[2];
-static int *fm_ptr;
+int fm_last[2];
+int *fm_ptr;
 
 /* Cycle-accurate FM samples */
-static int fm_cycles_ratio;
-static int fm_cycles_start;
-static int fm_cycles_count;
-static int fm_cycles_busy;
+int fm_cycles_ratio;
+int fm_cycles_start;
+int fm_cycles_count;
+int fm_cycles_busy;
 
 /* YM chip function pointers */
-static void (*YM_Update)(int *buffer, int length);
+void (*YM_Update)(int *buffer, int length);
 void (*fm_reset)(unsigned int cycles);
 void (*fm_write)(unsigned int cycles, unsigned int address, unsigned int data);
 unsigned int (*fm_read)(unsigned int cycles, unsigned int address);
 
 #ifdef HAVE_YM3438_CORE
-static ym3438_t ym3438;
-static short ym3438_accm[24][2];
-static int ym3438_sample[2];
-static int ym3438_cycles;
+ym3438_t ym3438;
+short ym3438_accm[24][2];
+int ym3438_sample[2];
+int ym3438_cycles;
 #endif
 
 #ifdef HAVE_OPLL_CORE
-static opll_t opll;
-static int opll_accm[18][2];
-static int opll_sample;
-static int opll_cycles;
-static int opll_status;
+opll_t opll;
+int opll_accm[18][2];
+int opll_sample;
+int opll_cycles;
+int opll_status;
 #endif
 
 /* Run FM chip until required M-cycles */

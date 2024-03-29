@@ -39,6 +39,7 @@
 
 #include <config.h>
 #include "shared.h"
+#include "genesis.h"
 #include "z80.h"
 
 t_zbank_memory_map zbank_memory_map[256];

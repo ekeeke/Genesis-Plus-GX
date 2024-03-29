@@ -1377,7 +1377,7 @@ INLINE void m68ki_exception_address_error(void)
 /* See MC68000 User Manual appendix B for autovectors interrupts processing time */
 /* 44 cycles + N wait-state cycles where N depends on CPU clock alignement with internal E clock (corresponding to CPU clock  / 10) when interrupt ack cycle starts */
 /* N minimal/maximal values are 6..15 cycles according to manual but real hardware measure apparently indicate 5..14 cycles (cf https://gendev.spritesmind.net/forum/viewtopic.php?f=2&t=2202&p=27485) */
-static uint m68ki_cycle_interrupts[10] = {50*MUL, 59*MUL, 58*MUL, 57*MUL, 56*MUL, 55*MUL, 54*MUL, 53*MUL, 52*MUL, 51*MUL};
+static const uint m68ki_cycle_interrupts[10] = {50*MUL, 59*MUL, 58*MUL, 57*MUL, 56*MUL, 55*MUL, 54*MUL, 53*MUL, 52*MUL, 51*MUL};
 
 /* Service an interrupt request and start exception processing */
 INLINE void m68ki_exception_interrupt(uint int_level)

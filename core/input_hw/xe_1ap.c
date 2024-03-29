@@ -37,10 +37,11 @@
  ****************************************************************************************/
 
 #include "shared.h"
+#include "../macros.h"
 
 #define XE_1AP_LATENCY 3
 
-static struct
+struct
 {
   uint8_t State;
   uint8_t Counter;

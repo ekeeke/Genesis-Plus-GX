@@ -39,6 +39,7 @@
 #include "shared.h"
 #include "../input_hw/gamepad.h"
 #include "../loadrom.h"
+#include "../genesis.h"
 #include "m68k.h"
 
 /* Some notes from 8BitWizard (http://gendev.spritesmind.net/forum/viewtopic.php?t=206):
@@ -158,7 +159,7 @@ static const T_I2C_GAME i2c_database[] =
   {"XXXXXXXX" , 0          , 0xDF39 , mapper_i2c_jcart_init       , NO_EEPROM     }, /* Pete Sampras Tennis 96 (Prototype ?) */
 };
 
-static struct
+struct
 {
   uint8 sda;              /* current SDA line state */
   uint8 scl;              /* current SCL line state */

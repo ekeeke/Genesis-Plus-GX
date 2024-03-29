@@ -43,7 +43,8 @@ to do:
 /************************************************/
 
 #include "shared.h"
-#include "math.h"
+#include <math.h>
+#include "../macros.h"
 
 #define FREQ_SH 16  /* 16.16 fixed point (frequency calculations) */
 #define EG_SH   16  /* 16.16 fixed point (EG timing)              */
@@ -180,7 +181,7 @@ typedef struct {
 /* table is 3dB/octave, DV converts this into 6dB/octave */
 /* 0.1875 is bit 0 weight of the envelope counter (volume) expressed in the 'decibel' scale */
 #define DV (0.1875/1.0)
-static const uint32_t ksl_tab[8*16]=
+const uint32_t ksl_tab[8*16]=
 {
   /* OCT 0 */
    0.000/DV, 0.000/DV, 0.000/DV, 0.000/DV,
@@ -228,7 +229,7 @@ static const uint32_t ksl_tab[8*16]=
 /* sustain level table (3dB per step) */
 /* 0 - 15: 0, 3, 6, 9,12,15,18,21,24,27,30,33,36,39,42,45 (dB)*/
 #define SC(db) (uint32_t) ( db * (1.0/ENV_STEP) )
-static const uint32_t sl_tab[16]={
+const uint32_t sl_tab[16]={
  SC( 0),SC( 1),SC( 2),SC(3 ),SC(4 ),SC(5 ),SC(6 ),SC( 7),
  SC( 8),SC( 9),SC(10),SC(11),SC(12),SC(13),SC(14),SC(15)
 };
@@ -262,7 +263,7 @@ static const unsigned char eg_inc[14*RATE_STEPS]={
 
 };
 
-static const unsigned char eg_mul[17*RATE_STEPS]={
+const unsigned char eg_mul[17*RATE_STEPS]={
 
 /*cycle:0 1  2 3  4 5  6 7  8 9  10 11  12 13  14 15*/
 
@@ -383,7 +384,7 @@ O( 0),O( 0),O( 0),O( 0),O( 0),O( 0),O( 0),O( 0),
 
 /* multiple table */
 #define ML 2
-static const uint8_t mul_tab[16]= {
+const uint8_t mul_tab[16]= {
 /* 1/2, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,10,12,12,15,15 */
    0.50*ML, 1.00*ML, 2.00*ML, 3.00*ML, 4.00*ML, 5.00*ML, 6.00*ML, 7.00*ML,
    8.00*ML, 9.00*ML,10.00*ML,10.00*ML,12.00*ML,12.00*ML,15.00*ML,15.00*ML
@@ -396,13 +397,13 @@ static const uint8_t mul_tab[16]= {
 *  TL_RES_LEN - sinus resolution (X axis)
 */
 #define TL_TAB_LEN (11*2*TL_RES_LEN)
-static signed int tl_tab[TL_TAB_LEN];
+signed int ym2413_tl_tab[TL_TAB_LEN];
 
 #define ENV_QUIET    (TL_TAB_LEN>>5)
 
 /* sin waveform table in 'decibel' scale */
 /* two waveforms on OPLL type chips */
-static unsigned int sin_tab[SIN_LEN * 2];
+unsigned int ym2413_sin_tab[SIN_LEN * 2];
 
 
 /* LFO Amplitude Modulation table (verified on real YM3812)
@@ -420,7 +421,7 @@ We use data>>1, until we find what it really is on real chip...
 
 #define LFO_AM_TAB_ELEMENTS 210
 
-static const uint8_t lfo_am_table[LFO_AM_TAB_ELEMENTS] = {
+const uint8_t lfo_am_table[LFO_AM_TAB_ELEMENTS] = {
 0,0,0,0,0,0,0,
 1,1,1,1,
 2,2,2,2,
@@ -512,7 +513,7 @@ static const int8_t lfo_pm_table[8*8] = {
 */
 /* 2021/04/23: corrected with values extracted from YM2413 instrument ROM, cf. https://siliconpr0n.org/archive/doku.php?id=vendor:yamaha:opl2#ym2413_instrument_rom */
 
-static unsigned char table[19][8] = {
+unsigned char table[19][8] = {
 /* MULT  MULT modTL DcDmFb AR/DR AR/DR SL/RR SL/RR */
 /*   0     1     2     3     4     5     6    7    */
 /*{0x49, 0x4c, 0x4c, 0x12, 0x00, 0x00, 0x00, 0x00 }, */ /* 0 */
@@ -577,13 +578,13 @@ static unsigned char table[19][8] = {
   {0x05, 0x01, 0x00, 0x00, 0xf8, 0xaa, 0x59, 0x55 }  /* TOM, TOP CYM */
 };
 
-static signed int output[2];
+signed int output[2];
 
-static uint32_t  LFO_AM;
-static int32_t  LFO_PM;
+uint32_t  LFO_AM;
+int32_t  LFO_PM;
 
 /* emulated chip */
-static YM2413 ym2413;
+YM2413 ym2413;
 
 /* advance LFO to next sample */
 INLINE void advance_lfo(void)
@@ -841,20 +842,20 @@ INLINE void advance(void)
 
 INLINE signed int op_calc(uint32_t phase, unsigned int env, signed int pm, unsigned int wave_tab)
 {
-  uint32_t p = (env<<5) + sin_tab[wave_tab + ((((signed int)((phase & ~FREQ_MASK) + (pm<<17))) >> FREQ_SH ) & SIN_MASK) ];
+  uint32_t p = (env<<5) + ym2413_sin_tab[wave_tab + ((((signed int)((phase & ~FREQ_MASK) + (pm<<17))) >> FREQ_SH ) & SIN_MASK) ];
 
   if (p >= TL_TAB_LEN)
     return 0;
-  return tl_tab[p];
+  return ym2413_tl_tab[p];
 }
 
 INLINE signed int op_calc1(uint32_t phase, unsigned int env, signed int pm, unsigned int wave_tab)
 {
-  uint32_t p = (env<<5) + sin_tab[wave_tab + ((((signed int)((phase & ~FREQ_MASK) + pm)) >> FREQ_SH ) & SIN_MASK) ];
+  uint32_t p = (env<<5) + ym2413_sin_tab[wave_tab + ((((signed int)((phase & ~FREQ_MASK) + pm)) >> FREQ_SH ) & SIN_MASK) ];
 
   if (p >= TL_TAB_LEN)
     return 0;
-  return tl_tab[p];
+  return ym2413_tl_tab[p];
 }
 
 #define volume_calc(OP) (((OP)-> state != EG_OFF) ? (OP)->TLL + ((uint32_t)(OP)->volume) + (LFO_AM & (OP)->AMmask) : ENV_QUIET)
@@ -1096,7 +1097,7 @@ INLINE void rhythm_calc( YM2413_OPLL_CH *CH, unsigned int noise )
 
 
 /* generic table initialize */
-static int init_tables(void)
+int init_tables(void)
 {
   signed int i,x;
   signed int n;
@@ -1117,13 +1118,13 @@ static int init_tables(void)
     else
       n = n>>1;
             /* 11 bits here (rounded) */
-    tl_tab[ x*2 + 0 ] = n;
-    tl_tab[ x*2 + 1 ] = -tl_tab[ x*2 + 0 ];
+    ym2413_tl_tab[ x*2 + 0 ] = n;
+    ym2413_tl_tab[ x*2 + 1 ] = -ym2413_tl_tab[ x*2 + 0 ];
 
     for (i=1; i<11; i++)
     {
-      tl_tab[ x*2+0 + i*2*TL_RES_LEN ] =  tl_tab[ x*2+0 ]>>i;
-      tl_tab[ x*2+1 + i*2*TL_RES_LEN ] = -tl_tab[ x*2+0 + i*2*TL_RES_LEN ];
+      ym2413_tl_tab[ x*2+0 + i*2*TL_RES_LEN ] =  ym2413_tl_tab[ x*2+0 ]>>i;
+      ym2413_tl_tab[ x*2+1 + i*2*TL_RES_LEN ] = -ym2413_tl_tab[ x*2+0 + i*2*TL_RES_LEN ];
     }
   }
 
@@ -1148,22 +1149,22 @@ static int init_tables(void)
       n = n>>1;
 
     /* waveform 0: standard sinus  */
-    sin_tab[ i ] = n*2 + (m>=0.0? 0: 1 );
+    ym2413_sin_tab[ i ] = n*2 + (m>=0.0? 0: 1 );
 
     /* waveform 1:  __      __     */
     /*             /  \____/  \____*/
     /* output only first half of the sinus waveform (positive one) */
     if (i & (1<<(SIN_BITS-1)) )
-      sin_tab[1*SIN_LEN+i] = TL_TAB_LEN;
+      ym2413_sin_tab[1*SIN_LEN+i] = TL_TAB_LEN;
     else
-      sin_tab[1*SIN_LEN+i] = sin_tab[i];
+      ym2413_sin_tab[1*SIN_LEN+i] = ym2413_sin_tab[i];
   }
 
   return 1;
 }
 
 
-static void OPLL_initalize(void)
+void OPLL_initalize(void)
 {
   int i;
 
@@ -1363,7 +1364,7 @@ INLINE void set_sl_rr(int slot,int v)
   SLOT->eg_sel_rr = eg_rate_select[SLOT->rr + SLOT->ksr ];
 }
 
-static void load_instrument(uint32_t chan, uint32_t slot, uint8_t* inst )
+void load_instrument(uint32_t chan, uint32_t slot, uint8_t* inst )
 {
   set_mul(slot, inst[0]);
   set_mul(slot+1, inst[1]);
@@ -1375,7 +1376,7 @@ static void load_instrument(uint32_t chan, uint32_t slot, uint8_t* inst )
   set_sl_rr(slot+1, inst[7]);
 }
 
-static void update_instrument_zero(uint8_t r)
+void update_instrument_zero(uint8_t r)
 {
   uint8_t* inst = &ym2413.inst_tab[0][0]; /* point to user instrument */
   uint32_t chan;
@@ -1469,7 +1470,7 @@ static void update_instrument_zero(uint8_t r)
 }
 
 /* write a value v to register r on chip chip */
-static void OPLLWriteReg(int r, int v)
+void OPLLWriteReg(int r, int v)
 {
   YM2413_OPLL_CH *CH;
   YM2413_OPLL_SLOT *SLOT;

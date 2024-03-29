@@ -52,6 +52,7 @@
 #include "graphic_board.h"
 #include "z80.h"
 #include "system.h"
+#include "genesis.h"
 
 uint8_t io_reg[0x10];
 

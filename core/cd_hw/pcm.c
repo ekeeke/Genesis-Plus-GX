@@ -38,6 +38,7 @@
 
 #include <config.h>
 #include "../system.h"
+#include "../genesis.h"
 #include "shared.h"
 
 #define PCM_SCYCLES_RATIO (384 * 4)

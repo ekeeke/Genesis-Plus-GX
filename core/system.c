@@ -47,6 +47,7 @@
 #include "m68k.h"
 #include "z80.h"
 #include "system.h"
+#include "genesis.h"
 
 /* Global variables */
 t_bitmap bitmap;

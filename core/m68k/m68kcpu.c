@@ -24,7 +24,7 @@ extern int vdp_68k_irq_ack(int int_level);
 /* ======================================================================== */
 
 #ifdef BUILD_TABLES
-static unsigned char m68ki_cycles[0x10000];
+unsigned char m68ki_cycles[0x10000];
 #endif
 
 static int irq_latency;

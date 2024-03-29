@@ -37,6 +37,7 @@
  ****************************************************************************************/
 #include "shared.h"
 #include "../system.h"
+#include "../genesis.h"
 #include "m68k.h"
 
 typedef struct

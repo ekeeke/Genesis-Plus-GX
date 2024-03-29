@@ -39,11 +39,14 @@
 #include <config.h>
 #include <stdlib.h>
 #include "../system.h"
+#include "../genesis.h"
 #include "shared.h"
 #include "megasd.h"
 #include "m68k.h"
 
 #if defined(USE_LIBTREMOR) || defined(USE_LIBVORBIS)
+#include "../tremor/ogg.h"
+#include "../tremor/ivorbisfile.h"
 #define SUPPORTED_EXT 20
 #else
 #define SUPPORTED_EXT 10

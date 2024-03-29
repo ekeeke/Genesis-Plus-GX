@@ -5,6 +5,7 @@
 #include <osd.h>
 #include <loadrom.h>
 #include <system.h>
+#include <genesis.h>
 
 #include "shared.h"
 #include "sms_ntsc.h"

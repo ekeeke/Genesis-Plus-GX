@@ -190,6 +190,7 @@
  */
 
 #include "shared.h"
+#include "../../genesis.h"
 
 
 #define u32 unsigned int
