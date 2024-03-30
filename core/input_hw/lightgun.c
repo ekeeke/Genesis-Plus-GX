@@ -91,13 +91,6 @@ static const uint8_t hc_320[210] =
   0xFE, 0xFF
 };
 
-struct
-{
-  uint8_t State;
-  uint8_t Port;
-} lightgun;
-
-
 void lightgun_reset(int port)
 {
   input.analog[port][0] = bitmap.viewport.w / 2;

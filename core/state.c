@@ -47,6 +47,10 @@ struct graphic_board_t board;
 t_input input;
 int old_system[2] = {-1,-1};
 
+// input_hw/lightgun.c
+
+lightgun_t lightgun;
+
 // genesis.c
 
 uint8_t boot_rom[0x800];

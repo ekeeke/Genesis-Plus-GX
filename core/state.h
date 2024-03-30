@@ -12,6 +12,7 @@
 #include "input_hw/gamepad.h"
 #include "input_hw/input.h"
 #include "input_hw/graphic_board.h"
+#include "input_hw/lightgun.h"
 #include "sound/eq.h"
 #include "genesis.h"
 #include "io_ctrl.h"
@@ -73,6 +74,10 @@ extern struct graphic_board_t board;
 
 extern t_input input;
 extern int old_system[2];
+
+// input_hw/lightgun.h
+
+lightgun_t lightgun;
 
 // genesis.h
 

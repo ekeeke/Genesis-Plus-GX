@@ -38,6 +38,14 @@
 
 #pragma once
 
+#include <stdint.h>
+
+struct lightgun_t
+{
+  uint8_t State;
+  uint8_t Port;
+};
+
 /* Input devices port handlers */
 extern void lightgun_reset(int index);
 extern void lightgun_refresh(int port);
