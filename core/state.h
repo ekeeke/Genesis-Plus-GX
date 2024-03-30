@@ -8,6 +8,7 @@
 #include "cart_hw/ggenie.h"
 #include "cart_hw/megasd.h"
 #include "cart_hw/sram.h"
+#include "input_hw/activator.h"
 #include "sound/eq.h"
 #include "genesis.h"
 #include "io_ctrl.h"
@@ -50,6 +51,10 @@ extern T_MEGASD_HW megasd_hw;
 // cart_hw/sram.h
 
 extern T_SRAM sram;
+
+// input_hw/activator.h
+
+extern struct activator_t activator[2];
 
 // genesis.h
 

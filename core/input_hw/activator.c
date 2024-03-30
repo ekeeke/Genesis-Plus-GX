@@ -37,13 +37,9 @@
  ****************************************************************************************/
 
 #include "../macros.h"
+#include "../state.h"
 #include "input.h"
-
-struct
-{
-  uint8_t State;
-  uint8_t Counter;
-} activator[2];
+#include "activator.h"
 
 void activator_reset(int index)
 {
