@@ -73,47 +73,6 @@
 #define HBLANK_H40_START_MCYCLE (228)
 #define HBLANK_H40_END_MCYCLE   (872)
 
-/* VDP context */
-uint8_t ALIGNED_(4) sat[0x400];     /* Internal copy of sprite attribute table */
-uint8_t ALIGNED_(4) vram[0x10000];  /* Video RAM (64K x 8-bit) */
-uint8_t ALIGNED_(4) cram[0x80];     /* On-chip color RAM (64 x 9-bit) */
-uint8_t ALIGNED_(4) vsram[0x80];    /* On-chip vertical scroll RAM (40 x 11-bit) */
-uint8_t reg[0x20];                  /* Internal VDP registers (23 x 8-bit) */
-uint8_t hint_pending;               /* 0= Line interrupt is pending */
-uint8_t vint_pending;               /* 1= Frame interrupt is pending */
-uint16_t status;                    /* VDP status flags */
-uint32_t dma_length;                /* DMA remaining length */
-uint32_t dma_endCycles;             /* DMA end cycle */
-uint8_t dma_type;                   /* DMA mode */
-
-/* Global variables */
-uint16_t ntab;                      /* Name table A base address */
-uint16_t ntbb;                      /* Name table B base address */
-uint16_t ntwb;                      /* Name table W base address */
-uint16_t satb;                      /* Sprite attribute table base address */
-uint16_t hscb;                      /* Horizontal scroll table base address */
-uint8_t bg_name_dirty[0x800];       /* 1= This pattern is dirty */
-uint16_t bg_name_list[0x800];       /* List of modified pattern indices */
-uint16_t bg_list_index;             /* # of modified patterns in list */
-uint8_t hscroll_mask;               /* Horizontal Scrolling line mask */
-uint8_t playfield_shift;            /* Width of planes A, B (in bits) */
-uint8_t playfield_col_mask;         /* Playfield column mask */
-uint16_t playfield_row_mask;        /* Playfield row mask */
-uint16_t vscroll;                   /* Latched vertical scroll value */
-uint8_t odd_frame;                  /* 1: odd field, 0: even field */
-uint8_t im2_flag;                   /* 1= Interlace mode 2 is being used */
-uint8_t interlaced;                 /* 1: Interlaced mode 1 or 2 */
-uint8_t vdp_pal;                    /* 1: PAL , 0: NTSC (default) */
-uint8_t h_counter;                  /* Horizontal counter */
-uint16_t v_counter;                 /* Vertical counter */
-uint16_t vc_max;                    /* Vertical counter overflow value */
-uint16_t lines_per_frame;           /* PAL: 313 lines, NTSC: 262 lines */
-uint16_t max_sprite_pixels;         /* Max. sprites pixels per line (parsing & rendering) */
-uint32_t fifo_cycles[4];            /* VDP FIFO read-out cycles */
-uint32_t hvc_latch;                 /* latched HV counter */
-uint32_t vint_cycle;                /* VINT occurence cycle */
-const uint8_t *hctab;               /* pointer to H Counter table */
-
 /* Function pointers */
 void (*vdp_68k_data_w)(unsigned int data);
 void (*vdp_z80_data_w)(unsigned int data);
@@ -145,23 +104,6 @@ static const uint8_t hscroll_mask_table[] = { 0x00, 0x07, 0xF8, 0xFF };
 static const uint8_t shift_table[]        = { 6, 7, 0, 8 };
 static const uint8_t col_mask_table[]     = { 0x0F, 0x1F, 0x0F, 0x3F };
 static const uint16_t row_mask_table[]    = { 0x0FF, 0x1FF, 0x2FF, 0x3FF };
-
-static uint8_t border;            /* Border color index */
-static uint8_t pending;           /* Pending write flag */
-static uint8_t code;              /* Code register */
-static uint16_t addr;             /* Address register */
-static uint16_t addr_latch;       /* Latched A15, A14 of address */
-static uint16_t sat_base_mask;    /* Base bits of SAT */
-static uint16_t sat_addr_mask;    /* Index bits of SAT */
-static uint16_t dma_src;          /* DMA source address */
-static int dmafill;             /* DMA Fill pending flag */
-static int cached_write;        /* 2nd part of 32-bit CTRL port write (Genesis mode) or LSB of CRAM data (Game Gear mode) */
-static uint16_t fifo[4];          /* FIFO ring-buffer */
-static int fifo_idx;            /* FIFO write index */
-static int fifo_byte_access;    /* FIFO byte access flag */
-static int *fifo_timing;        /* FIFO slots timing table */
-static int hblank_start_cycle;  /* HBLANK flag set cycle */
-static int hblank_end_cycle;    /* HBLANK flag clear cycle */
 
  /* set Z80 or 68k interrupt lines */
 static void (*set_irq_line)(unsigned int level);

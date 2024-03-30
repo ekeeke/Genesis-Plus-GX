@@ -41,6 +41,17 @@
 
 #pragma once
 
+#include <stdint.h>
+
+struct ggenie_t
+{
+  uint8_t enabled;
+  uint16_t regs[0x20];
+  uint16_t old[6];
+  uint16_t data[6];
+  uint32_t addr[6];
+};
+
 /* Function prototypes */
 extern void ggenie_init(void);
 extern void ggenie_shutdown(void);

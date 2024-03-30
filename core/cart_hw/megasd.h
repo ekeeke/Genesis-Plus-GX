@@ -38,6 +38,29 @@
 
 #pragma once
 
+#include <stdint.h>
+
+typedef struct
+{
+  uint8_t unlock;
+  uint8_t bank0;
+  uint8_t special;
+  uint8_t writeEnable;
+  uint8_t overlayEnable;
+  uint8_t playbackLoop;
+  uint8_t playbackLoopTrack;
+  uint8_t playbackEndTrack;
+  uint16_t result;
+  uint16_t fadeoutStartVolume;
+  int fadeoutSamplesTotal;
+  int fadeoutSamplesCount;
+  int playbackSamplesCount;
+  int playbackLoopSector;
+  int playbackEndSector;
+  uint8_t buffer[0x800];
+} T_MEGASD_HW;
+
+
 extern void megasd_reset(void);
 extern void megasd_rom_mapper_w(unsigned int address, unsigned int data);
 extern void megasd_enhanced_ssf2_mapper_w(unsigned int address, unsigned int data);

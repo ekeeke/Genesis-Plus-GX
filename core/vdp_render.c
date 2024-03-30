@@ -51,79 +51,8 @@
 #include "vdp_render.h"
 #include "state.h"
 
-#ifndef HAVE_NO_SPRITE_LIMIT
-#define MAX_SPRITES_PER_LINE 20
-#define TMS_MAX_SPRITES_PER_LINE 4
-#define MODE4_MAX_SPRITES_PER_LINE 8
-#define MODE5_MAX_SPRITES_PER_LINE (bitmap.viewport.w >> 4)
-#define MODE5_MAX_SPRITE_PIXELS max_sprite_pixels
-#endif
-
-/*** NTSC Filters ***/
 extern md_ntsc_t *md_ntsc;
 extern sms_ntsc_t *sms_ntsc;
-
-
-/* Output pixels type*/
-#if defined(USE_8BPP_RENDERING)
-#define PIXEL_OUT_T uint8_t
-#elif defined(USE_32BPP_RENDERING)
-#define PIXEL_OUT_T uint32_t
-#else
-#define PIXEL_OUT_T uint16_t
-#endif
-
-
-/* Pixel priority look-up tables information */
-#define LUT_MAX     (6)
-#define LUT_SIZE    (0x10000)
-
-
-#ifdef ALIGN_LONG
-#undef READ_LONG
-#undef WRITE_LONG
-
-INLINE uint32_t READ_LONG(void *address)
-{
-  if ((uint32_t)address & 3)
-  {
-#ifdef LSB_FIRST  /* little endian version */
-    return ( *((uint8_t *)address) +
-        (*((uint8_t *)address+1) << 8)  +
-        (*((uint8_t *)address+2) << 16) +
-        (*((uint8_t *)address+3) << 24) );
-#else       /* big endian version */
-    return ( *((uint8_t *)address+3) +
-        (*((uint8_t *)address+2) << 8)  +
-        (*((uint8_t *)address+1) << 16) +
-        (*((uint8_t *)address)   << 24) );
-#endif  /* LSB_FIRST */
-  }
-  else return *(uint32_t *)address;
-}
-
-INLINE void WRITE_LONG(void *address, uint32_t data)
-{
-  if ((uint32_t)address & 3)
-  {
-#ifdef LSB_FIRST
-      *((uint8_t *)address) =  data;
-      *((uint8_t *)address+1) = (data >> 8);
-      *((uint8_t *)address+2) = (data >> 16);
-      *((uint8_t *)address+3) = (data >> 24);
-#else
-      *((uint8_t *)address+3) =  data;
-      *((uint8_t *)address+2) = (data >> 8);
-      *((uint8_t *)address+1) = (data >> 16);
-      *((uint8_t *)address)   = (data >> 24);
-#endif /* LSB_FIRST */
-    return;
-  }
-  else *(uint32_t *)address = data;
-}
-
-#endif  /* ALIGN_LONG */
-
 
 /* Draw 2-cell column (8-pixels high) */
 /*
@@ -500,14 +429,6 @@ INLINE void WRITE_LONG(void *address, uint32_t data)
 #define MAKE_PIXEL(r,g,b) ((0xff << 24) | (r) << 20 | (r) << 16 | (g) << 12 | (g)  << 8 | (b) << 4 | (b))
 #endif
 
-/* Window & Plane A clipping */
-static struct clip_t
-{
-  uint8_t left;
-  uint8_t right;
-  uint8_t enable;
-} clip[2];
-
 /* Pattern attribute (priority + palette bits) expansion table */
 static const uint32_t atex_table[] =
 {
@@ -568,52 +489,11 @@ static const uint32_t tms_palette[16] =
 };
 #endif
 
-/* Cached and flipped patterns */
-static uint8_t ALIGNED_(4) bg_pattern_cache[0x80000];
-
-/* Sprite pattern name offset look-up table (Mode 5) */
-static uint8_t name_lut[0x400];
-
-/* Bitplane to packed pixel look-up table (Mode 4) */
-static uint32_t bp_lut[0x10000];
-
-/* Layer priority pixel look-up tables */
-static uint8_t lut[LUT_MAX][LUT_SIZE];
-
-/* Output pixel data look-up tables*/
-static PIXEL_OUT_T pixel[0x100];
-static PIXEL_OUT_T pixel_lut[3][0x200];
-static PIXEL_OUT_T pixel_lut_m4[0x40];
-
-/* Background & Sprite line buffers */
-static uint8_t linebuf[2][0x200];
-
-/* Sprite limit flag */
-static uint8_t spr_ovr;
-
-/* Sprite parsing lists */
-typedef struct
-{
-  uint16_t ypos;
-  uint16_t xpos;
-  uint16_t attr;
-  uint16_t size;
-} object_info_t;
-
-static object_info_t obj_info[2][MAX_SPRITES_PER_LINE];
-
-/* Sprite Counter */
-static uint8_t object_count[2];
-
-/* Sprite Collision Info */
-uint16_t spr_col;
-
 /* Function pointers */
 void (*render_bg)(int line);
 void (*render_obj)(int line);
 void (*parse_satb)(int line);
 void (*update_bg_pattern_cache)(int index);
-
 
 /*--------------------------------------------------------------------------*/
 /* Sprite pattern name offset look-up table function (Mode 5)               */

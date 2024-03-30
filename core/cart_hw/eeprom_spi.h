@@ -38,6 +38,38 @@
 
 #pragma once
 
+/* max supported size 64KB (25x512/95x512) */
+#define SIZE_MASK 0xffff
+#define PAGE_MASK 0x7f
+
+/* hard-coded board implementation (!WP pin not used) */
+#define BIT_DATA (0)
+#define BIT_CLK  (1)
+#define BIT_HOLD (2)
+#define BIT_CS   (3)
+
+typedef enum
+{
+  _SPI_STANDBY,
+  _SPI_GET_OPCODE,
+  _SPI_GET_ADDRESS,
+  _SPI_WRITE_BYTE,
+  _SPI_READ_BYTE
+} T_STATE_SPI;
+
+typedef struct
+{
+  uint8_t cs;           /* !CS line state */
+  uint8_t clk;          /* SCLK line state */
+  uint8_t out;          /* SO line state */
+  uint8_t status;       /* status register */
+  uint8_t opcode;       /* 8-bit opcode */
+  uint8_t buffer;       /* 8-bit data buffer */
+  uint16_t addr;        /* 16-bit address */
+  uint32_t cycles;      /* current operation cycle */
+  T_STATE_SPI state;  /* current operation state */
+} T_EEPROM_SPI;
+
 /* Function prototypes */
 extern void eeprom_spi_init(void);
 extern void eeprom_spi_write(unsigned char data);

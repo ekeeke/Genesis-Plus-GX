@@ -43,47 +43,6 @@
 
 #include <stdint.h>
 
-/* VDP context */
-extern uint8_t reg[0x20];
-extern uint8_t sat[0x400];
-extern uint8_t vram[0x10000];
-extern uint8_t cram[0x80];
-extern uint8_t vsram[0x80];
-extern uint8_t hint_pending;
-extern uint8_t vint_pending;
-extern uint16_t status;
-extern uint32_t dma_length;
-extern uint32_t dma_endCycles;
-extern uint8_t dma_type;
-
-/* Global variables */
-extern uint16_t ntab;
-extern uint16_t ntbb;
-extern uint16_t ntwb;
-extern uint16_t satb;
-extern uint16_t hscb;
-extern uint8_t bg_name_dirty[0x800];
-extern uint16_t bg_name_list[0x800];
-extern uint16_t bg_list_index;
-extern uint8_t hscroll_mask;
-extern uint8_t playfield_shift;
-extern uint8_t playfield_col_mask;
-extern uint16_t playfield_row_mask;
-extern uint8_t odd_frame;
-extern uint8_t im2_flag;
-extern uint8_t interlaced;
-extern uint8_t vdp_pal;
-extern uint8_t h_counter;
-extern uint16_t v_counter;
-extern uint16_t vc_max;
-extern uint16_t vscroll;
-extern uint16_t lines_per_frame;
-extern uint16_t max_sprite_pixels;
-extern uint32_t fifo_cycles[4];
-extern uint32_t hvc_latch;
-extern uint32_t vint_cycle;
-extern const uint8_t *hctab;
-
 /* Function pointers */
 extern void (*vdp_68k_data_w)(unsigned int data);
 extern void (*vdp_z80_data_w)(unsigned int data);

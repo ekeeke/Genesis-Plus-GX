@@ -44,16 +44,8 @@
 #include "../genesis.h"
 #include "../m68k/m68k.h"
 #include "../mem68k.h"
+#include "../state.h"
 #include "ggenie.h"
-
-static struct
-{
-  uint8_t enabled;
-  uint16_t regs[0x20];
-  uint16_t old[6];
-  uint16_t data[6];
-  uint32_t addr[6];
-} ggenie;
 
 static unsigned int ggenie_read_byte(unsigned int address);
 static unsigned int ggenie_read_word(unsigned int address);

@@ -44,8 +44,6 @@
 #include "../state.h"
 #include "sram.h"
 
-T_SRAM sram;
-
 /****************************************************************************
  * A quick guide to external RAM on the Genesis
  *

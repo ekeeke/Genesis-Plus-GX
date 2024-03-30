@@ -14,7 +14,7 @@
 #include "../../genesis.h"
 #include "../../m68k/m68k.h"
 #include "../../membnk.h"
-#include "../../state.h"
+#include "state.h"
 #include "svp.h"
 
 svp_t *svp;

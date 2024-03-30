@@ -44,29 +44,6 @@
 #include "../state.h"
 #include "sram.h"
 
-typedef struct
-{
-  uint8_t unlock;
-  uint8_t bank0;
-  uint8_t special;
-  uint8_t writeEnable;
-  uint8_t overlayEnable;
-  uint8_t playbackLoop;
-  uint8_t playbackLoopTrack;
-  uint8_t playbackEndTrack;
-  uint16_t result;
-  uint16_t fadeoutStartVolume;
-  int fadeoutSamplesTotal;
-  int fadeoutSamplesCount;
-  int playbackSamplesCount;
-  int playbackLoopSector;
-  int playbackEndSector;
-  uint8_t buffer[0x800];
-} T_MEGASD_HW;
-
-/* MegaSD mapper hardware */
-static T_MEGASD_HW megasd_hw;
-
 /* Internal function prototypes */
 static void megasd_ctrl_write_byte(unsigned int address, unsigned int data);
 static void megasd_ctrl_write_word(unsigned int address, unsigned int data);

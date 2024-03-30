@@ -42,20 +42,10 @@
 #include "../genesis.h"
 #include "../mem68k.h"
 #include "areplay.h"
+#include "state.h"
 
 #define TYPE_PRO1 0x12
 #define TYPE_PRO2 0x22
-
-static struct
-{
-  uint8_t enabled;
-  uint8_t status;
-  uint8_t ram[0x10000];
-  uint16_t regs[13];
-  uint16_t old[4];
-  uint16_t data[4];
-  uint32_t addr[4];
-} action_replay;
 
 static void ar_write_regs(uint32_t address, uint32_t data);
 static void ar2_write_reg(uint32_t address, uint32_t data);
