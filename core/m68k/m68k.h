@@ -260,10 +260,6 @@ typedef struct
   void (*set_fc_callback)(unsigned int new_fc);     /* Called when the CPU function code changes */
 } m68ki_cpu_core;
 
-/* CPU cores */
-extern m68ki_cpu_core m68k;
-extern m68ki_cpu_core s68k;
-
 
 /* ======================================================================== */
 /* ============================== CALLBACKS =============================== */

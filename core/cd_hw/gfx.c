@@ -38,6 +38,7 @@
 
 #include <string.h>
 #include "../genesis.h"
+#include "../state.h"
 #include "../m68k/m68k.h"
 
 /***************************************************************/

@@ -2,6 +2,8 @@
 /*                            SUB 68K CORE                                  */
 /* ======================================================================== */
 
+#include "../state.h"
+
 extern int scd_68k_irq_ack(int level);
 
 #define m68ki_cpu s68k
@@ -26,7 +28,6 @@ extern int scd_68k_irq_ack(int level);
 #ifdef BUILD_TABLES
 static unsigned char s68ki_cycles[0x10000];
 #endif
-static int irq_latency;
 
 /* IRQ priority */
 static const uint8_t irq_level[0x40] = 
@@ -40,8 +41,6 @@ static const uint8_t irq_level[0x40] =
   6, 6, 6, 6, 6, 6, 6, 6,
   6, 6, 6, 6, 6, 6, 6, 6
 };
-
-m68ki_cpu_core s68k;
 
 
 /* ======================================================================== */
@@ -321,7 +320,7 @@ void s68k_pulse_reset(void)
   /* Interrupt mask to level 7 */
   FLAG_INT_MASK = 0x0700;
   CPU_INT_LEVEL = 0;
-  irq_latency = 0;
+  s68k_irq_latency = 0;
 
   /* Go to supervisor mode */
   m68ki_set_s_flag(SFLAG_SET);

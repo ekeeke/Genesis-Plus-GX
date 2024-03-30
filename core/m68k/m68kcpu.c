@@ -2,6 +2,8 @@
 /*                            MAIN 68K CORE                                 */
 /* ======================================================================== */
 
+#include "../state.h"
+
 extern int vdp_68k_irq_ack(int int_level);
 
 #define m68ki_cpu m68k
@@ -18,6 +20,7 @@ extern int vdp_68k_irq_ack(int int_level);
 #include "m68kconf.h"
 #include "m68kcpu.h"
 #include "m68kops.h"
+#include "../state.h"
 
 /* ======================================================================== */
 /* ================================= DATA ================================= */
@@ -26,11 +29,6 @@ extern int vdp_68k_irq_ack(int int_level);
 #ifdef BUILD_TABLES
 unsigned char m68ki_cycles[0x10000];
 #endif
-
-static int irq_latency;
-
-m68ki_cpu_core m68k;
-
 
 /* ======================================================================== */
 /* =============================== CALLBACKS ============================== */
@@ -222,7 +220,7 @@ void m68k_set_irq(unsigned int int_level)
 void m68k_set_irq_delay(unsigned int int_level)
 {
   /* Prevent reentrance */
-  if (!irq_latency)
+  if (!m68k_irq_latency)
   {
     /* This is always triggered from MOVE instructions (VDP CTRL port write) */
     /* We just make sure this is not a MOVE.L instruction as we could be in */
@@ -233,13 +231,13 @@ void m68k_set_irq_delay(unsigned int int_level)
       USE_CYCLES(CYC_INSTRUCTION[REG_IR]);
 
       /* One instruction delay before interrupt */
-      irq_latency = 1;
+      m68k_irq_latency = 1;
       m68ki_trace_t1() /* auto-disable (see m68kcpu.h) */
       m68ki_use_data_space() /* auto-disable (see m68kcpu.h) */
       REG_IR = m68ki_read_imm_16();
       m68ki_instruction_jump_table[REG_IR]();
       m68ki_exception_if_trace() /* auto-disable (see m68kcpu.h) */
-      irq_latency = 0;
+      m68k_irq_latency = 0;
     }
 
     /* Set IRQ level */
@@ -367,7 +365,7 @@ void m68k_pulse_reset(void)
   /* Interrupt mask to level 7 */
   FLAG_INT_MASK = 0x0700;
   CPU_INT_LEVEL = 0;
-  irq_latency = 0;
+  m68k_irq_latency = 0;
 
   /* Go to supervisor mode */
   m68ki_set_s_flag(SFLAG_SET);

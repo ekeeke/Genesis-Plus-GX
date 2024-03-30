@@ -67,13 +67,26 @@ struct sportspad_t sportspad[2];
 
 struct teamplayer_t teamplayer[2];
 
-// input terebi_oekaki.c
+// input_hw/terebi_oekaki.c
 
 struct tablet_t tablet;
 
-// input xe_1ap.c
+// input_hw/xe_1ap.c
 
 struct xe_1ap_t xe_1ap[2];
+
+// m68k/m68k.c
+
+m68ki_cpu_core m68k;
+m68ki_cpu_core s68k;
+
+// m68k/m68kcpu.c
+
+int m68k_irq_latency;
+
+// m68k/s68kcpu.c
+
+int s68k_irq_latency;
 
 // genesis.c
 
