@@ -122,6 +122,22 @@ int opll_cycles;
 int opll_status;
 #endif
 
+// sound/ym2413.h
+
+signed int output[2];
+uint32_t  LFO_AM;
+int32_t  LFO_PM;
+YM2413 ym2413; /* emulated chip */
+
+// sound/ym2612.c
+
+YM2612 ym2612; /* emulated chip */
+int32_t  m2,c1,c2;   /* current chip state - Phase Modulation input for operators 2,3,4 */
+int32_t  mem;        /* one sample delay memory */
+int32_t  out_fm[6];  /* outputs of working channels */
+uint32_t op_mask[8][4];  /* operator output bitmasking (DAC quantization) */
+int chip_type = YM2612_DISCRETE; /* chip type */
+
 // genesis.c
 
 uint8_t boot_rom[0x800];

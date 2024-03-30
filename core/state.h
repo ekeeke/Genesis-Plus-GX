@@ -20,8 +20,11 @@
 #include "input_hw/terebi_oekaki.h"
 #include "input_hw/xe_1ap.h"
 #include "sound/psg.h"
-#include "m68k/m68k.h"
 #include "sound/eq.h"
+#include "sound/ym2413.h"
+#include "sound/ym2612.h"
+#include "sound/ym3438.h"
+#include "m68k/m68k.h"
 #include "genesis.h"
 #include "io_ctrl.h"
 #include "loadrom.h"
@@ -165,6 +168,22 @@ extern int opll_sample;
 extern int opll_cycles;
 extern int opll_status;
 #endif
+
+// sound/ym2413.h
+
+extern signed int output[2];
+extern uint32_t  LFO_AM;
+extern int32_t  LFO_PM;
+extern YM2413 ym2413; /* emulated chip */
+
+// sound/ym2612.h
+
+extern YM2612 ym2612; /* emulated chip */
+extern int32_t  m2,c1,c2;   /* current chip state - Phase Modulation input for operators 2,3,4 */
+extern int32_t  mem;        /* one sample delay memory */
+extern int32_t  out_fm[6];  /* outputs of working channels */
+extern uint32_t op_mask[8][4];  /* operator output bitmasking (DAC quantization) */
+extern int chip_type; /* chip type */
 
 // genesis.h
 
