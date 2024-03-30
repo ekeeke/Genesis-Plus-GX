@@ -41,6 +41,7 @@
 #include "../loadrom.h"
 #include "../macros.h"
 #include "../genesis.h"
+#include "../state.h"
 #include "sram.h"
 
 T_SRAM sram;

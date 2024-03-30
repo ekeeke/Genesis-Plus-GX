@@ -95,15 +95,6 @@ typedef struct
   blip_t* blips[3];     /* Blip Buffer resampling (stereo) */
 } t_snd;
 
-/* Global variables */
-extern t_bitmap bitmap;
-extern t_snd snd;
-extern uint32_t mcycles_vdp;
-extern int16_t SVP_cycles; 
-extern uint8_t system_hw;
-extern uint8_t system_bios;
-extern uint32_t system_clock;
-
 /* Function prototypes */
 extern int audio_init(int samplerate, double framerate);
 extern void audio_set_rate(int samplerate, double framerate);

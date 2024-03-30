@@ -25,3 +25,16 @@ uint8_t rom_region;
 // membnk.c
 
 t_zbank_memory_map zbank_memory_map[256];
+
+// system.c
+
+t_bitmap bitmap;
+t_snd snd;
+uint32_t mcycles_vdp;
+uint8_t system_hw;
+uint8_t system_bios;
+uint32_t system_clock;
+int16_t SVP_cycles = 800; 
+uint8_t pause_b;
+EQSTATE eq[2];
+int16_t llp,rrp;

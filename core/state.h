@@ -3,6 +3,8 @@
 #include "io_ctrl.h"
 #include "loadrom.h"
 #include "membnk.h"
+#include "system.h"
+#include "sound/eq.h"
 
 #pragma once
 
@@ -31,3 +33,16 @@ extern uint8_t rom_region;
 // membnk.h
 
 extern t_zbank_memory_map zbank_memory_map[256];
+
+// system.h
+
+extern t_bitmap bitmap;
+extern t_snd snd;
+extern uint32_t mcycles_vdp;
+extern uint8_t system_hw;
+extern uint8_t system_bios;
+extern uint32_t system_clock;
+extern int16_t SVP_cycles; 
+extern uint8_t pause_b;
+extern EQSTATE eq[2];
+extern int16_t llp,rrp;

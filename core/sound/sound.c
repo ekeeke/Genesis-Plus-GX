@@ -42,6 +42,7 @@
 #include "../system.h"
 #include "../genesis.h"
 #include "../macros.h"
+#include "../state.h"
 #include "blip_buf.h"
 #include "psg.h"
 #include "ym2413.h"

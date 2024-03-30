@@ -43,6 +43,7 @@
 #include "../system.h"
 #include "../genesis.h"
 #include "../m68k/m68k.h"
+#include "../state.h"
 
 #if defined(USE_LIBTREMOR) || defined(USE_LIBVORBIS)
 #include "../tremor/ogg.h"

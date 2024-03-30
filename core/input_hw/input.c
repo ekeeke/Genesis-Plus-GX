@@ -52,6 +52,7 @@
 #include "terebi_oekaki.h"
 #include "graphic_board.h"
 #include "input.h"
+#include "state.h"
 
 t_input input;
 int old_system[2] = {-1,-1};

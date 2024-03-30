@@ -49,6 +49,7 @@
 #include "macros.h"
 #include "vdp_ctrl.h"
 #include "vdp_render.h"
+#include "state.h"
 
 #ifndef HAVE_NO_SPRITE_LIMIT
 #define MAX_SPRITES_PER_LINE 20

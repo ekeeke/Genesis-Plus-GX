@@ -62,10 +62,6 @@ typedef struct
 } ROMINFO;
 
 
-/* Global variables */
-extern ROMINFO rominfo;
-extern uint8_t romtype;
-
 /* Function prototypes */
 extern int load_bios(int system);
 extern int load_rom(char *filename);

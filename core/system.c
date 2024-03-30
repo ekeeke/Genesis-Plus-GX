@@ -56,17 +56,6 @@
 #include "state.h"
 
 /* Global variables */
-t_bitmap bitmap;
-t_snd snd;
-uint32_t mcycles_vdp;
-uint8_t system_hw;
-uint8_t system_bios;
-uint32_t system_clock;
-int16_t SVP_cycles = 800; 
-
-static uint8_t pause_b;
-static EQSTATE eq[2];
-static int16_t llp,rrp;
 
 /******************************************************************************************/
 /* Audio subsystem                                                                        */

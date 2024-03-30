@@ -41,6 +41,7 @@
 #include "../m68k/m68k.h"
 #include "../z80/z80.h"
 #include "../input_hw/input.h"
+#include "../state.h"
 #include "gamepad.h"
 
 struct
