@@ -49,53 +49,14 @@
 #include "ym2612.h"
 #include "sound.h"
 
-#ifdef HAVE_YM3438_CORE
-#include "ym3438.h"
-#endif
-
-#ifdef HAVE_OPLL_CORE
-#include "opll.h"
-#endif
-
 /* YM2612 internal clock = input clock / 6 = (master clock / 7) / 6 */
 #define YM2612_CLOCK_RATIO (7*6)
-
-/* FM output buffer (large enough to hold a whole frame at original chips rate) */
-#if defined(HAVE_YM3438_CORE) || defined(HAVE_OPLL_CORE)
-int fm_buffer[1080 * 2 * 24];
-#else
-int fm_buffer[1080 * 2];
-#endif
-
-int fm_last[2];
-int *fm_ptr;
-
-/* Cycle-accurate FM samples */
-int fm_cycles_ratio;
-int fm_cycles_start;
-int fm_cycles_count;
-int fm_cycles_busy;
 
 /* YM chip function pointers */
 void (*YM_Update)(int *buffer, int length);
 void (*fm_reset)(unsigned int cycles);
 void (*fm_write)(unsigned int cycles, unsigned int address, unsigned int data);
 unsigned int (*fm_read)(unsigned int cycles, unsigned int address);
-
-#ifdef HAVE_YM3438_CORE
-ym3438_t ym3438;
-short ym3438_accm[24][2];
-int ym3438_sample[2];
-int ym3438_cycles;
-#endif
-
-#ifdef HAVE_OPLL_CORE
-opll_t opll;
-int opll_accm[18][2];
-int opll_sample;
-int opll_cycles;
-int opll_status;
-#endif
 
 /* Run FM chip until required M-cycles */
 INLINE void fm_update(int cycles)

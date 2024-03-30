@@ -77,23 +77,6 @@ static const uint16_t chanVolume[16] = {
   0                             /*  OFF  */
 };
 
-static struct
-{
-  int clocks;
-  int latch;
-  int zeroFreqInc;
-  int noiseShiftValue;
-  int noiseShiftWidth;
-  int noiseBitMask;
-  int regs[8];
-  int freqInc[4];
-  int freqCounter[4];
-  int polarity[4];
-  int chanDelta[4][2];
-  int chanOut[4][2];
-  int chanAmp[4][2];
-} psg;
-
 static void psg_update(unsigned int clocks);
 
 void psg_init(PSG_TYPE type)

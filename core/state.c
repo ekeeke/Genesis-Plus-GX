@@ -88,6 +88,40 @@ int m68k_irq_latency;
 
 int s68k_irq_latency;
 
+// sound/psg.c
+
+struct psg_t psg;
+
+// sound/sound.c
+
+#if defined(HAVE_YM3438_CORE) || defined(HAVE_OPLL_CORE)
+int fm_buffer[1080 * 2 * 24]; // FM output buffer (large enough to hold a whole frame at original chips rate) 
+#else
+int fm_buffer[1080 * 2];
+#endif
+
+int fm_last[2];
+int *fm_ptr;
+int fm_cycles_ratio; // Cycle-accurate FM samples
+int fm_cycles_start;
+int fm_cycles_count;
+int fm_cycles_busy;
+
+#ifdef HAVE_YM3438_CORE
+ym3438_t ym3438;
+short ym3438_accm[24][2];
+int ym3438_sample[2];
+int ym3438_cycles;
+#endif
+
+#ifdef HAVE_OPLL_CORE
+opll_t opll;
+int opll_accm[18][2];
+int opll_sample;
+int opll_cycles;
+int opll_status;
+#endif
+
 // genesis.c
 
 uint8_t boot_rom[0x800];

@@ -19,6 +19,7 @@
 #include "input_hw/teamplayer.h"
 #include "input_hw/terebi_oekaki.h"
 #include "input_hw/xe_1ap.h"
+#include "sound/psg.h"
 #include "m68k/m68k.h"
 #include "sound/eq.h"
 #include "genesis.h"
@@ -30,6 +31,14 @@
 #include "vdp_render.h"
 #include "ntsc/md_ntsc.h"
 #include "ntsc/sms_ntsc.h"
+
+#ifdef HAVE_YM3438_CORE
+#include "sound/ym3438.h"
+#endif
+
+#ifdef HAVE_OPLL_CORE
+#include "sound/opll.h"
+#endif
 
 // cart_hw/svp.h 
 
@@ -122,6 +131,40 @@ extern int m68k_irq_latency;
 // m68k/s68kcpu.c
 
 extern int s68k_irq_latency;
+
+// sound/psg.h
+
+extern struct psg_t psg;
+
+// sound/sound.h
+
+#if defined(HAVE_YM3438_CORE) || defined(HAVE_OPLL_CORE)
+extern int fm_buffer[1080 * 2 * 24]; // FM output buffer (large enough to hold a whole frame at original chips rate) 
+#else
+extern int fm_buffer[1080 * 2];
+#endif
+
+extern int fm_last[2];
+extern int *fm_ptr;
+extern int fm_cycles_ratio; // Cycle-accurate FM samples
+extern int fm_cycles_start;
+extern int fm_cycles_count;
+extern int fm_cycles_busy;
+
+#ifdef HAVE_YM3438_CORE
+extern ym3438_t ym3438;
+extern short ym3438_accm[24][2];
+extern int ym3438_sample[2];
+extern int ym3438_cycles;
+#endif
+
+#ifdef HAVE_OPLL_CORE
+extern opll_t opll;
+extern int opll_accm[18][2];
+extern int opll_sample;
+extern int opll_cycles;
+extern int opll_status;
+#endif
 
 // genesis.h
 
