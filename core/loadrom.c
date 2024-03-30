@@ -47,6 +47,7 @@
 #include "system.h"
 #include "genesis.h"
 #include "vdp_ctrl.h"
+#include "state.h"
 
 /*** ROM Information ***/
 #define ROMCONSOLE    256

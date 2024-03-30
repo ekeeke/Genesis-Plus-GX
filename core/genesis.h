@@ -58,12 +58,6 @@ extern external_t *ext;
 #else
 extern external_t ext;
 #endif
-extern uint8_t boot_rom[0x800];
-extern uint8_t work_ram[0x10000];
-extern uint8_t zram[0x2000];
-extern uint32_t zbank;
-extern uint8_t zstate;
-extern uint8_t pico_current;
 
 /* Function prototypes */
 extern void gen_init(void);

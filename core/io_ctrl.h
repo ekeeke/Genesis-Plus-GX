@@ -51,9 +51,11 @@
 #define REGION_USA        0x80
 #define REGION_EUROPE     0xC0
 
-/* Global variables */
-extern uint8_t io_reg[0x10];
-extern uint8_t region_code;
+struct port_t
+{
+  void (*data_w)(unsigned char data, unsigned char mask);
+  unsigned char (*data_r)(void);
+}; 
 
 /* Function prototypes */
 extern void io_init(void);

@@ -53,6 +53,7 @@
 #include "vdp_ctrl.h"
 #include "vdp_render.h"
 #include "io_ctrl.h"
+#include "state.h"
 
 /* Global variables */
 t_bitmap bitmap;

@@ -48,6 +48,7 @@
 #include "vdp_ctrl.h"
 #include "membnk.h"
 #include "io_ctrl.h"
+#include "state.h"
 
 /*--------------------------------------------------------------------------*/
 /* Unused areas (return open bus data, i.e prefetched instruction word)     */

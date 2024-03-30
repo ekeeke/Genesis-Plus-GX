@@ -50,6 +50,7 @@
 #include "vdp_ctrl.h"
 #include "vdp_render.h"
 #include "io_ctrl.h"
+#include "state.h"
 
 /* Mark a pattern as modified */
 #define MARK_BG_DIRTY(addr)                         \

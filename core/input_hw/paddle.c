@@ -38,6 +38,7 @@
 
 #include "../macros.h"
 #include "input.h"
+#include "state.h"
 
 struct
 {

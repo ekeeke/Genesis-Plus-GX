@@ -44,6 +44,7 @@
 #include "vdp_ctrl.h"
 #include "membnk.h"
 #include "io_ctrl.h"
+#include "state.h"
 
 t_zbank_memory_map zbank_memory_map[256];
 

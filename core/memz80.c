@@ -49,6 +49,7 @@
 #include "vdp_ctrl.h"
 #include "membnk.h"
 #include "io_ctrl.h"
+#include "state.h"
 
 /*--------------------------------------------------------------------------*/
 /*  Handlers for access to unused addresses and those which make the        */

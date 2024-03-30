@@ -50,6 +50,7 @@
 #include "../genesis.h"
 #include "eeprom_93c.h"
 #include "sram.h"
+#include "state.h"
 
 #define MAPPER_NONE           (0x00)
 #define MAPPER_TEREBI         (0x01)

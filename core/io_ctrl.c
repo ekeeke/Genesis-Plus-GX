@@ -56,16 +56,7 @@
 #include "genesis.h"
 #include "vdp_ctrl.h"
 #include "io_ctrl.h"
-
-uint8_t io_reg[0x10];
-
-uint8_t region_code = REGION_USA;
-
-static struct port_t
-{
-  void (*data_w)(unsigned char data, unsigned char mask);
-  unsigned char (*data_r)(void);
-} port[3];
+#include "state.h"
 
 static void dummy_write(unsigned char data, unsigned char mask)
 {

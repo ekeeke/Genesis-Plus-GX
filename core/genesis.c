@@ -52,20 +52,13 @@
 #include "memz80.h"
 #include "membnk.h"
 #include "io_ctrl.h"
+#include "state.h"
 
 #ifdef USE_DYNAMIC_ALLOC
 external_t *ext;
 #else                     /* External Hardware (Cartridge, CD unit, ...) */
 external_t ext;
 #endif
-uint8_t boot_rom[0x800];    /* Genesis BOOT ROM   */
-uint8_t work_ram[0x10000];  /* 68K RAM  */
-uint8_t zram[0x2000];       /* Z80 RAM  */
-uint32_t zbank;             /* Z80 bank window address */
-uint8_t zstate;             /* Z80 bus state (d0 = /RESET, d1 = BUSREQ, d2 = WAIT) */
-uint8_t pico_current;       /* PICO current page */
-
-static uint8_t tmss[4];     /* TMSS security register */
 
 /*--------------------------------------------------------------------------*/
 /* Init, reset, shutdown functions                                          */

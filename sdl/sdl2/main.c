@@ -9,9 +9,9 @@
 #include <vdp_ctrl.h>
 #include <input_hw/input.h>
 #include <cart_hw/sram.h>
-
 #include <ntsc/sms_ntsc.h>
 #include <ntsc/md_ntsc.h>
+#include <state.h>
 
 #define SOUND_FREQUENCY 48000
 #define SOUND_SAMPLES_SIZE  2048
