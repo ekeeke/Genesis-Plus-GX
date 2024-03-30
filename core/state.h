@@ -1,6 +1,8 @@
 #include <stdint.h>
 #include "genesis.h"
 #include "io_ctrl.h"
+#include "loadrom.h"
+#include "membnk.h"
 
 #pragma once
 
@@ -19,3 +21,13 @@ extern uint8_t tmss[4];     // TMSS security register
 extern uint8_t io_reg[0x10];
 extern uint8_t region_code;
 extern struct port_t port[3];
+
+// load_rom.h
+
+extern ROMINFO rominfo;
+extern uint8_t romtype;
+extern uint8_t rom_region;
+
+// membnk.h
+
+extern t_zbank_memory_map zbank_memory_map[256];

@@ -99,11 +99,6 @@ typedef struct
 } PERIPHERALINFO;
 
 
-ROMINFO rominfo;
-uint8_t romtype;
-
-static uint8_t rom_region;
-
 /***************************************************************************
  * Genesis ROM Manufacturers
  *

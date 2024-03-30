@@ -42,6 +42,7 @@
 #include "../m68k/m68k.h"
 #include "../mem68k.h"
 #include "../membnk.h"
+#include "../state.h"
 
 /*--------------------------------------------------------------------------*/
 /* backup RAM cartridge (max. 512KB)                                        */

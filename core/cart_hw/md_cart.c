@@ -59,6 +59,7 @@
 #include "sram.h"
 #include "ggenie.h"
 #include "areplay.h"
+#include "state.h"
 
 /* Cart database entry */
 typedef struct

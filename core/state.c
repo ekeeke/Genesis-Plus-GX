@@ -16,3 +16,12 @@ uint8_t io_reg[0x10];
 uint8_t region_code = REGION_USA;
 struct port_t port[3];
 
+// load_rom.c
+
+ROMINFO rominfo;
+uint8_t romtype;
+uint8_t rom_region;
+
+// membnk.c
+
+t_zbank_memory_map zbank_memory_map[256];
