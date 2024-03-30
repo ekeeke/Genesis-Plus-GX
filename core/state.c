@@ -28,6 +28,25 @@ T_MEGASD_HW megasd_hw;
 
 T_SRAM sram;
 
+// input_hw/activator.c
+
+struct activator_t activator[2];
+
+// input_hw/gamepad.c
+
+struct gamepad_t gamepad[MAX_DEVICES];
+struct flipflop_t flipflop[2];
+uint8_t latch;
+
+// input_hw/graphic_board.c
+
+struct graphic_board_t board;
+
+// input_hw/input.c
+
+t_input input;
+int old_system[2] = {-1,-1};
+
 // genesis.c
 
 uint8_t boot_rom[0x800];

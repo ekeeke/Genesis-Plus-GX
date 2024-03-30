@@ -36,14 +36,8 @@
  *
  ****************************************************************************************/
 
+#include "../state.h"
 #include "input.h"
-
-static struct
-{
-  uint8_t State;
-  uint8_t Counter;
-  uint8_t Port;
-} board;
 
 void graphic_board_reset(int port)
 {

@@ -39,6 +39,22 @@
 
 #pragma once
 
+#include <stdint.h>
+
+struct gamepad_t
+{
+  uint8_t State;
+  uint8_t Counter;
+  uint8_t Timeout;
+  uint32_t Latency;
+};
+
+struct flipflop_t
+{
+  uint8_t Latch;
+  uint8_t Counter;
+};
+
 /* Function prototypes */
 extern void gamepad_reset(int port);
 extern void gamepad_refresh(int port);

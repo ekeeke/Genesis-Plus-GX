@@ -44,23 +44,6 @@
 #include "../state.h"
 #include "gamepad.h"
 
-struct
-{
-  uint8_t State;
-  uint8_t Counter;
-  uint8_t Timeout;
-  uint32_t Latency;
-} gamepad[MAX_DEVICES];
-
-static struct
-{
-  uint8_t Latch;
-  uint8_t Counter;
-} flipflop[2];
-
-static uint8_t latch;
-
-
 void gamepad_reset(int port)
 {
   /* default state (Gouketsuji Ichizoku / Power Instinct, Samurai Spirits / Samurai Shodown) */

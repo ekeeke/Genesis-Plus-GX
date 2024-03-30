@@ -9,6 +9,9 @@
 #include "cart_hw/megasd.h"
 #include "cart_hw/sram.h"
 #include "input_hw/activator.h"
+#include "input_hw/gamepad.h"
+#include "input_hw/input.h"
+#include "input_hw/graphic_board.h"
 #include "sound/eq.h"
 #include "genesis.h"
 #include "io_ctrl.h"
@@ -55,6 +58,21 @@ extern T_SRAM sram;
 // input_hw/activator.h
 
 extern struct activator_t activator[2];
+
+// input_hw/gamepad.h
+
+extern struct gamepad_t gamepad[MAX_DEVICES];
+extern struct flipflop_t flipflop[2];
+extern uint8_t latch;
+
+// input_hw/graphic_board.h
+
+extern struct graphic_board_t board;
+
+// input_hw/input.h
+
+extern t_input input;
+extern int old_system[2];
 
 // genesis.h
 

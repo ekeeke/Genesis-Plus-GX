@@ -1,5 +1,6 @@
 
 #include "config.h"
+#include <state.h>
 #include <input_hw/input.h>
 
 t_config config;

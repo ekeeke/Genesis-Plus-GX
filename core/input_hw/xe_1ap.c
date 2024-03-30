@@ -37,6 +37,7 @@
  ****************************************************************************************/
 
 #include "../macros.h"
+#include "../state.h"
 #include "input.h"
 
 #define XE_1AP_LATENCY 3

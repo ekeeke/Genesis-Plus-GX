@@ -54,10 +54,6 @@
 #include "input.h"
 #include "state.h"
 
-t_input input;
-int old_system[2] = {-1,-1};
-
-
 void input_init(void)
 {
   int i, padtype;

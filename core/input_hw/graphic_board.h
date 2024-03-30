@@ -38,6 +38,15 @@
 
 #pragma once
 
+#include <stdint.h>
+
+struct graphic_board_t
+{
+  uint8_t State;
+  uint8_t Counter;
+  uint8_t Port;
+};
+
 /* Function prototypes */
 extern void graphic_board_reset(int port);
 extern unsigned char graphic_board_read(void);

@@ -147,10 +147,6 @@ typedef struct
   int y_offset;                 /* gun vertical offset */
 } t_input;
 
-/* Global variables */
-extern t_input input;
-extern int old_system[2];
-
 /* Function prototypes */
 extern void input_init(void);
 extern void input_reset(void);
