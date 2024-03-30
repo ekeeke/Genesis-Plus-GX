@@ -38,6 +38,14 @@
 
 #pragma once
 
+#include <stdint.h>
+
+struct paddle_t
+{
+  uint8_t State;
+  uint8_t Counter;
+};
+
 /* Function prototypes */
 extern void paddle_reset(int port);
 extern unsigned char paddle_1_read(void);

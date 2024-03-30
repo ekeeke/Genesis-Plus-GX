@@ -40,12 +40,6 @@
 #include "input.h"
 #include "state.h"
 
-struct
-{
-  uint8_t State;
-  uint8_t Counter;
-} paddle[2];
-
 void paddle_reset(int port)
 {
   input.analog[port][0] = 128;

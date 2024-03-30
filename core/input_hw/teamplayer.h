@@ -38,6 +38,16 @@
 
 #pragma once
 
+#include <stdint.h>
+
+struct teamplayer_t
+{
+  uint8_t State;
+  uint8_t Counter;
+  uint8_t Table[12];
+};
+
+
 /* Function prototypes */
 extern void teamplayer_init(int port);
 extern void teamplayer_reset(int port);

@@ -38,6 +38,12 @@
 
 #pragma once
 
+struct tablet_t
+{
+  uint8_t axis;
+  uint8_t busy;
+};
+
 /* Function prototypes */
 extern void terebi_oekaki_reset(void);
 extern unsigned short terebi_oekaki_read(void);

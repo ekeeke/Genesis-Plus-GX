@@ -13,6 +13,12 @@
 #include "input_hw/input.h"
 #include "input_hw/graphic_board.h"
 #include "input_hw/lightgun.h"
+#include "input_hw/mouse.h"
+#include "input_hw/paddle.h"
+#include "input_hw/sportspad.h"
+#include "input_hw/teamplayer.h"
+#include "input_hw/terebi_oekaki.h"
+#include "input_hw/xe_1ap.h"
 #include "sound/eq.h"
 #include "genesis.h"
 #include "io_ctrl.h"
@@ -77,7 +83,31 @@ extern int old_system[2];
 
 // input_hw/lightgun.h
 
-lightgun_t lightgun;
+extern struct lightgun_t lightgun;
+
+// input_hw/mouse.h
+
+extern struct mouse_t mouse;
+
+// input_hw/paddle.h
+
+extern struct paddle_t paddle[2];
+
+// input_hw/sportspad.h
+
+extern struct sportspad_t sportspad[2];
+
+// input_hw/teamplayer.h
+
+extern struct teamplayer_t teamplayer[2];
+
+// input terebi_oekaki.h
+
+extern struct tablet_t tablet;
+
+// input xe_1ap.c
+
+extern struct xe_1ap_t xe_1ap[2];
 
 // genesis.h
 

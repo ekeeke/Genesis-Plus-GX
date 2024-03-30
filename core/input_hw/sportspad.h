@@ -38,6 +38,14 @@
 
 #pragma once
 
+#include <stdint.h>
+
+struct sportspad_t
+{
+  uint8_t State;
+  uint8_t Counter;
+};
+
 /* Function prototypes */
 extern void sportspad_reset(int index);
 extern unsigned char sportspad_1_read(void);

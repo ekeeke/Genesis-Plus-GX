@@ -39,12 +39,6 @@
 #include "input.h"
 #include "../state.h"
 
-static struct
-{
-  uint8_t axis;
-  uint8_t busy;
-} tablet;
-
 void terebi_oekaki_reset(void)
 {
   input.analog[0][0] = 128;

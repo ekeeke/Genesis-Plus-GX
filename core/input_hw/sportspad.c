@@ -40,12 +40,6 @@
 #include "../state.h"
 #include "input.h"
 
-struct
-{
-  uint8_t State;
-  uint8_t Counter;
-} sportspad[2];
-
 void sportspad_reset(int index)
 {
   input.analog[index][0] = 128;

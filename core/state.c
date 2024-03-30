@@ -49,7 +49,31 @@ int old_system[2] = {-1,-1};
 
 // input_hw/lightgun.c
 
-lightgun_t lightgun;
+struct lightgun_t lightgun;
+
+// input_hw/mouse.c
+
+struct mouse_t mouse;
+
+// input_hw/paddle.c
+
+struct paddle_t paddle[2];
+
+// input_hw/sportspad.c
+
+struct sportspad_t sportspad[2];
+
+// input_hw/teamplayer.c
+
+struct teamplayer_t teamplayer[2];
+
+// input terebi_oekaki.c
+
+struct tablet_t tablet;
+
+// input xe_1ap.c
+
+struct xe_1ap_t xe_1ap[2];
 
 // genesis.c
 

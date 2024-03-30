@@ -38,6 +38,15 @@
 
 #pragma once
 
+#include <stdint.h>
+
+struct xe_1ap_t
+{
+  uint8_t State;
+  uint8_t Counter;
+  uint8_t Latency;
+};
+
 /* Function prototypes */
 extern void xe_1ap_reset(int index);
 extern unsigned char xe_1ap_1_read(void);

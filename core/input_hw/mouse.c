@@ -39,14 +39,6 @@
 #include "input.h"
 #include "../state.h"
 
-static struct
-{
-  uint8_t State;
-  uint8_t Counter;
-  uint8_t Wait;
-  uint8_t Port;
-} mouse;
-
 void mouse_reset(int port)
 {
   input.analog[port][0] = 0;
