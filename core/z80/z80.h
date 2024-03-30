@@ -48,16 +48,6 @@ typedef struct
 }  Z80_Regs;
 
 
-extern Z80_Regs Z80;
-extern uint8_t z80_last_fetch;
-
-#ifdef Z80_OVERCLOCK_SHIFT
-extern uint32_t z80_cycle_ratio;
-#endif
-
-extern unsigned char *z80_readmap[64];
-extern unsigned char *z80_writemap[64];
-
 extern void (*z80_writemem)(unsigned int address, unsigned char data);
 extern unsigned char (*z80_readmem)(unsigned int address);
 extern void (*z80_writeport)(unsigned int port, unsigned char data);

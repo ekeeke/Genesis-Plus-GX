@@ -127,6 +127,7 @@
 
 #include <string.h>
 #include "../macros.h"
+#include "../state.h"
 #include "z80.h"
 
 
@@ -207,32 +208,15 @@
 
 #ifdef Z80_OVERCLOCK_SHIFT
 #define USE_CYCLES(A) Z80.cycles += ((A) * z80_cycle_ratio) >> Z80_OVERCLOCK_SHIFT
-uint32_t z80_cycle_ratio;
 #else
 #define USE_CYCLES(A) Z80.cycles += (A)
 #endif
 
-Z80_Regs Z80;
-uint8_t z80_last_fetch;
-
-unsigned char *z80_readmap[64];
-unsigned char *z80_writemap[64];
 
 void (*z80_writemem)(unsigned int address, unsigned char data);
 unsigned char (*z80_readmem)(unsigned int address);
 void (*z80_writeport)(unsigned int port, unsigned char data);
 unsigned char (*z80_readport)(unsigned int port);
-
-uint32_t EA;
-
-uint8_t SZ[256];       /* zero and sign flags */
-uint8_t SZ_BIT[256];   /* zero, sign and parity/overflow (=zero) flags for BIT opcode */
-uint8_t SZP[256];      /* zero, sign and parity flags */
-uint8_t SZHV_inc[256]; /* zero, sign, half carry and overflow flags INC r8 */
-uint8_t SZHV_dec[256]; /* zero, sign, half carry and overflow flags DEC r8 */
-
-uint8_t SZHVC_add[2*256*256]; /* flags for ADD opcode */
-uint8_t SZHVC_sub[2*256*256]; /* flags for SUB opcode */
 
 const uint16_t cc_op[0x100] = {
    4*15,10*15, 7*15, 6*15, 4*15, 4*15, 7*15, 4*15, 4*15,11*15, 7*15, 6*15, 4*15, 4*15, 7*15, 4*15,

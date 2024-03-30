@@ -138,6 +138,25 @@ int32_t  out_fm[6];  /* outputs of working channels */
 uint32_t op_mask[8][4];  /* operator output bitmasking (DAC quantization) */
 int chip_type = YM2612_DISCRETE; /* chip type */
 
+// z80/z80.c
+
+Z80_Regs Z80;
+uint8_t z80_last_fetch;
+unsigned char *z80_readmap[64];
+unsigned char *z80_writemap[64];
+uint32_t EA;
+uint8_t SZ[256];       /* zero and sign flags */
+uint8_t SZ_BIT[256];   /* zero, sign and parity/overflow (=zero) flags for BIT opcode */
+uint8_t SZP[256];      /* zero, sign and parity flags */
+uint8_t SZHV_inc[256]; /* zero, sign, half carry and overflow flags INC r8 */
+uint8_t SZHV_dec[256]; /* zero, sign, half carry and overflow flags DEC r8 */
+uint8_t SZHVC_add[2*256*256]; /* flags for ADD opcode */
+uint8_t SZHVC_sub[2*256*256]; /* flags for SUB opcode */
+
+#ifdef Z80_OVERCLOCK_SHIFT
+uint32_t z80_cycle_ratio;
+#endif
+
 // genesis.c
 
 uint8_t boot_rom[0x800];

@@ -25,6 +25,7 @@
 #include "sound/ym2612.h"
 #include "sound/ym3438.h"
 #include "m68k/m68k.h"
+#include "z80/z80.h"
 #include "genesis.h"
 #include "io_ctrl.h"
 #include "loadrom.h"
@@ -184,6 +185,25 @@ extern int32_t  mem;        /* one sample delay memory */
 extern int32_t  out_fm[6];  /* outputs of working channels */
 extern uint32_t op_mask[8][4];  /* operator output bitmasking (DAC quantization) */
 extern int chip_type; /* chip type */
+
+// z80/z80.h
+
+extern Z80_Regs Z80;
+extern uint8_t z80_last_fetch;
+extern unsigned char *z80_readmap[64];
+extern unsigned char *z80_writemap[64];
+extern uint32_t EA;
+extern uint8_t SZ[256];       /* zero and sign flags */
+extern uint8_t SZ_BIT[256];   /* zero, sign and parity/overflow (=zero) flags for BIT opcode */
+extern uint8_t SZP[256];      /* zero, sign and parity flags */
+extern uint8_t SZHV_inc[256]; /* zero, sign, half carry and overflow flags INC r8 */
+extern uint8_t SZHV_dec[256]; /* zero, sign, half carry and overflow flags DEC r8 */
+extern uint8_t SZHVC_add[2*256*256]; /* flags for ADD opcode */
+extern uint8_t SZHVC_sub[2*256*256]; /* flags for SUB opcode */
+
+#ifdef Z80_OVERCLOCK_SHIFT
+extern uint32_t z80_cycle_ratio;
+#endif
 
 // genesis.h
 
