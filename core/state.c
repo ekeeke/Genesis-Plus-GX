@@ -504,7 +504,7 @@ size_t saveState(uint8_t* buffer)
 
   // genesis.c
 
-  if (buffer != NULL) { memcpy(&buffer[pos], &boot_rom            , sizeof(boot_rom            )); } pos += sizeof(boot_rom            );
+  // if (buffer != NULL) { memcpy(&buffer[pos], &boot_rom            , sizeof(boot_rom            )); } pos += sizeof(boot_rom            );
   if (buffer != NULL) { memcpy(&buffer[pos], &work_ram            , sizeof(work_ram            )); } pos += sizeof(work_ram            );
   if (buffer != NULL) { memcpy(&buffer[pos], &zram                , sizeof(zram                )); } pos += sizeof(zram                );
   if (buffer != NULL) { memcpy(&buffer[pos], &zbank               , sizeof(zbank               )); } pos += sizeof(zbank               );
@@ -600,19 +600,19 @@ size_t saveState(uint8_t* buffer)
 
   // vdp_render.c
 
-  // if (buffer != NULL) { memcpy(&buffer[pos], &clip                , sizeof(clip                )); } pos += sizeof(clip                );
-  // if (buffer != NULL) { memcpy(&buffer[pos], &bg_pattern_cache    , sizeof(bg_pattern_cache    )); } pos += sizeof(bg_pattern_cache    );
-  // if (buffer != NULL) { memcpy(&buffer[pos], &name_lut            , sizeof(name_lut            )); } pos += sizeof(name_lut            );
-  // if (buffer != NULL) { memcpy(&buffer[pos], &bp_lut              , sizeof(bp_lut              )); } pos += sizeof(bp_lut              );
-  // if (buffer != NULL) { memcpy(&buffer[pos], &lut                 , sizeof(lut                 )); } pos += sizeof(lut                 );
-  // if (buffer != NULL) { memcpy(&buffer[pos], &pixel               , sizeof(pixel               )); } pos += sizeof(pixel               );
-  // if (buffer != NULL) { memcpy(&buffer[pos], &pixel_lut           , sizeof(pixel_lut           )); } pos += sizeof(pixel_lut           );
-  // if (buffer != NULL) { memcpy(&buffer[pos], &pixel_lut_m4        , sizeof(pixel_lut_m4        )); } pos += sizeof(pixel_lut_m4        );
-  // if (buffer != NULL) { memcpy(&buffer[pos], &linebuf             , sizeof(linebuf             )); } pos += sizeof(linebuf             );
-  // if (buffer != NULL) { memcpy(&buffer[pos], &spr_ovr             , sizeof(spr_ovr             )); } pos += sizeof(spr_ovr             );
-  // if (buffer != NULL) { memcpy(&buffer[pos], &obj_info            , sizeof(obj_info            )); } pos += sizeof(obj_info            );
-  // if (buffer != NULL) { memcpy(&buffer[pos], &object_count        , sizeof(object_count        )); } pos += sizeof(object_count        );
-  // if (buffer != NULL) { memcpy(&buffer[pos], &spr_col             , sizeof(spr_col             )); } pos += sizeof(spr_col             );
+  if (buffer != NULL) { memcpy(&buffer[pos], &clip                , sizeof(clip                )); } pos += sizeof(clip                );
+  if (buffer != NULL) { memcpy(&buffer[pos], &bg_pattern_cache    , sizeof(bg_pattern_cache    )); } pos += sizeof(bg_pattern_cache    );
+  if (buffer != NULL) { memcpy(&buffer[pos], &name_lut            , sizeof(name_lut            )); } pos += sizeof(name_lut            );
+  if (buffer != NULL) { memcpy(&buffer[pos], &bp_lut              , sizeof(bp_lut              )); } pos += sizeof(bp_lut              );
+  if (buffer != NULL) { memcpy(&buffer[pos], &lut                 , sizeof(lut                 )); } pos += sizeof(lut                 );
+  if (buffer != NULL) { memcpy(&buffer[pos], &pixel               , sizeof(pixel               )); } pos += sizeof(pixel               );
+  if (buffer != NULL) { memcpy(&buffer[pos], &pixel_lut           , sizeof(pixel_lut           )); } pos += sizeof(pixel_lut           );
+  if (buffer != NULL) { memcpy(&buffer[pos], &pixel_lut_m4        , sizeof(pixel_lut_m4        )); } pos += sizeof(pixel_lut_m4        );
+  if (buffer != NULL) { memcpy(&buffer[pos], &linebuf             , sizeof(linebuf             )); } pos += sizeof(linebuf             );
+  if (buffer != NULL) { memcpy(&buffer[pos], &spr_ovr             , sizeof(spr_ovr             )); } pos += sizeof(spr_ovr             );
+  if (buffer != NULL) { memcpy(&buffer[pos], &obj_info            , sizeof(obj_info            )); } pos += sizeof(obj_info            );
+  if (buffer != NULL) { memcpy(&buffer[pos], &object_count        , sizeof(object_count        )); } pos += sizeof(object_count        );
+  if (buffer != NULL) { memcpy(&buffer[pos], &spr_col             , sizeof(spr_col             )); } pos += sizeof(spr_col             );
 
   return pos;
 }
@@ -821,7 +821,7 @@ void loadState(const uint8_t* buffer)
 
   // genesis.c
 
-  if (buffer != NULL) { memcpy(&boot_rom            , &buffer[pos],  sizeof(boot_rom            )); } pos += sizeof(boot_rom            );
+  // if (buffer != NULL) { memcpy(&boot_rom            , &buffer[pos],  sizeof(boot_rom            )); } pos += sizeof(boot_rom            );
   if (buffer != NULL) { memcpy(&work_ram            , &buffer[pos],  sizeof(work_ram            )); } pos += sizeof(work_ram            );
   if (buffer != NULL) { memcpy(&zram                , &buffer[pos],  sizeof(zram                )); } pos += sizeof(zram                );
   if (buffer != NULL) { memcpy(&zbank               , &buffer[pos],  sizeof(zbank               )); } pos += sizeof(zbank               );
@@ -917,18 +917,18 @@ void loadState(const uint8_t* buffer)
 
   // vdp_render.c
 
-  // if (buffer != NULL) { memcpy(&clip                , &buffer[pos],  sizeof(clip                )); } pos += sizeof(clip                );
-  // if (buffer != NULL) { memcpy(&bg_pattern_cache    , &buffer[pos],  sizeof(bg_pattern_cache    )); } pos += sizeof(bg_pattern_cache    );
-  // if (buffer != NULL) { memcpy(&name_lut            , &buffer[pos],  sizeof(name_lut            )); } pos += sizeof(name_lut            );
-  // if (buffer != NULL) { memcpy(&bp_lut              , &buffer[pos],  sizeof(bp_lut              )); } pos += sizeof(bp_lut              );
-  // if (buffer != NULL) { memcpy(&lut                 , &buffer[pos],  sizeof(lut                 )); } pos += sizeof(lut                 );
-  // if (buffer != NULL) { memcpy(&pixel               , &buffer[pos],  sizeof(pixel               )); } pos += sizeof(pixel               );
-  // if (buffer != NULL) { memcpy(&pixel_lut           , &buffer[pos],  sizeof(pixel_lut           )); } pos += sizeof(pixel_lut           );
-  // if (buffer != NULL) { memcpy(&pixel_lut_m4        , &buffer[pos],  sizeof(pixel_lut_m4        )); } pos += sizeof(pixel_lut_m4        );
-  // if (buffer != NULL) { memcpy(&linebuf             , &buffer[pos],  sizeof(linebuf             )); } pos += sizeof(linebuf             );
-  // if (buffer != NULL) { memcpy(&spr_ovr             , &buffer[pos],  sizeof(spr_ovr             )); } pos += sizeof(spr_ovr             );
-  // if (buffer != NULL) { memcpy(&obj_info            , &buffer[pos],  sizeof(obj_info            )); } pos += sizeof(obj_info            );
-  // if (buffer != NULL) { memcpy(&object_count        , &buffer[pos],  sizeof(object_count        )); } pos += sizeof(object_count        );
-  // if (buffer != NULL) { memcpy(&spr_col             , &buffer[pos],  sizeof(spr_col             )); } pos += sizeof(spr_col             );
+  if (buffer != NULL) { memcpy(&clip                , &buffer[pos],  sizeof(clip                )); } pos += sizeof(clip                );
+  if (buffer != NULL) { memcpy(&bg_pattern_cache    , &buffer[pos],  sizeof(bg_pattern_cache    )); } pos += sizeof(bg_pattern_cache    );
+  if (buffer != NULL) { memcpy(&name_lut            , &buffer[pos],  sizeof(name_lut            )); } pos += sizeof(name_lut            );
+  if (buffer != NULL) { memcpy(&bp_lut              , &buffer[pos],  sizeof(bp_lut              )); } pos += sizeof(bp_lut              );
+  if (buffer != NULL) { memcpy(&lut                 , &buffer[pos],  sizeof(lut                 )); } pos += sizeof(lut                 );
+  if (buffer != NULL) { memcpy(&pixel               , &buffer[pos],  sizeof(pixel               )); } pos += sizeof(pixel               );
+  if (buffer != NULL) { memcpy(&pixel_lut           , &buffer[pos],  sizeof(pixel_lut           )); } pos += sizeof(pixel_lut           );
+  if (buffer != NULL) { memcpy(&pixel_lut_m4        , &buffer[pos],  sizeof(pixel_lut_m4        )); } pos += sizeof(pixel_lut_m4        );
+  if (buffer != NULL) { memcpy(&linebuf             , &buffer[pos],  sizeof(linebuf             )); } pos += sizeof(linebuf             );
+  if (buffer != NULL) { memcpy(&spr_ovr             , &buffer[pos],  sizeof(spr_ovr             )); } pos += sizeof(spr_ovr             );
+  if (buffer != NULL) { memcpy(&obj_info            , &buffer[pos],  sizeof(obj_info            )); } pos += sizeof(obj_info            );
+  if (buffer != NULL) { memcpy(&object_count        , &buffer[pos],  sizeof(object_count        )); } pos += sizeof(object_count        );
+  if (buffer != NULL) { memcpy(&spr_col             , &buffer[pos],  sizeof(spr_col             )); } pos += sizeof(spr_col             );
 
 }
