@@ -1,3 +1,4 @@
+#include <string.h>
 #include "state.h"
 
 // cart_hw/areplay.c
@@ -268,3 +269,357 @@ uint8_t spr_ovr; /* Sprite limit flag */
 object_info_t obj_info[2][MAX_SPRITES_PER_LINE];
 uint8_t object_count[2]; /* Sprite Counter */
 uint16_t spr_col; /* Sprite Collision Info */
+
+
+size_t saveState(uint8_t* buffer)
+{
+  size_t pos = 0;
+  
+  if (buffer != NULL) { memcpy(&buffer[pos], &action_replay       , sizeof(action_replay       )); } pos += sizeof(action_replay       );
+  if (buffer != NULL) { memcpy(&buffer[pos], &eeprom_93c          , sizeof(eeprom_93c          )); } pos += sizeof(eeprom_93c          );
+  if (buffer != NULL) { memcpy(&buffer[pos], &eeprom_i2c          , sizeof(eeprom_i2c          )); } pos += sizeof(eeprom_i2c          );
+  if (buffer != NULL) { memcpy(&buffer[pos], &spi_eeprom          , sizeof(spi_eeprom          )); } pos += sizeof(spi_eeprom          );
+  if (buffer != NULL) { memcpy(&buffer[pos], &ggenie              , sizeof(ggenie              )); } pos += sizeof(ggenie              );
+  if (buffer != NULL) { memcpy(&buffer[pos], &megasd_hw           , sizeof(megasd_hw           )); } pos += sizeof(megasd_hw           );
+  if (buffer != NULL) { memcpy(&buffer[pos], &sram                , sizeof(sram                )); } pos += sizeof(sram                );
+  if (buffer != NULL) { memcpy(&buffer[pos], &activator           , sizeof(activator           )); } pos += sizeof(activator           );
+  if (buffer != NULL) { memcpy(&buffer[pos], &gamepad             , sizeof(gamepad             )); } pos += sizeof(gamepad             );
+  if (buffer != NULL) { memcpy(&buffer[pos], &flipflop            , sizeof(flipflop            )); } pos += sizeof(flipflop            );
+  if (buffer != NULL) { memcpy(&buffer[pos], &latch               , sizeof(latch               )); } pos += sizeof(latch               );
+  if (buffer != NULL) { memcpy(&buffer[pos], &board               , sizeof(board               )); } pos += sizeof(board               );
+  if (buffer != NULL) { memcpy(&buffer[pos], &input               , sizeof(input               )); } pos += sizeof(input               );
+  if (buffer != NULL) { memcpy(&buffer[pos], &old_system          , sizeof(old_system          )); } pos += sizeof(old_system          );
+  if (buffer != NULL) { memcpy(&buffer[pos], &lightgun            , sizeof(lightgun            )); } pos += sizeof(lightgun            );
+  if (buffer != NULL) { memcpy(&buffer[pos], &mouse               , sizeof(mouse               )); } pos += sizeof(mouse               );
+  if (buffer != NULL) { memcpy(&buffer[pos], &paddle              , sizeof(paddle              )); } pos += sizeof(paddle              );
+  if (buffer != NULL) { memcpy(&buffer[pos], &sportspad           , sizeof(sportspad           )); } pos += sizeof(sportspad           );
+  if (buffer != NULL) { memcpy(&buffer[pos], &teamplayer          , sizeof(teamplayer          )); } pos += sizeof(teamplayer          );
+  if (buffer != NULL) { memcpy(&buffer[pos], &tablet              , sizeof(tablet              )); } pos += sizeof(tablet              );
+  if (buffer != NULL) { memcpy(&buffer[pos], &xe_1ap              , sizeof(xe_1ap              )); } pos += sizeof(xe_1ap              );
+  if (buffer != NULL) { memcpy(&buffer[pos], &m68k                , sizeof(m68k                )); } pos += sizeof(m68k                );
+  if (buffer != NULL) { memcpy(&buffer[pos], &s68k                , sizeof(s68k                )); } pos += sizeof(s68k                );
+  if (buffer != NULL) { memcpy(&buffer[pos], &m68k_irq_latency    , sizeof(m68k_irq_latency    )); } pos += sizeof(m68k_irq_latency    );
+  if (buffer != NULL) { memcpy(&buffer[pos], &s68k_irq_latency    , sizeof(s68k_irq_latency    )); } pos += sizeof(s68k_irq_latency    );
+  if (buffer != NULL) { memcpy(&buffer[pos], & psg                , sizeof( psg                )); } pos += sizeof( psg                );
+  if (buffer != NULL) { memcpy(&buffer[pos], &fm_buffer           , sizeof(fm_buffer           )); } pos += sizeof(fm_buffer           );
+  if (buffer != NULL) { memcpy(&buffer[pos], &fm_last             , sizeof(fm_last             )); } pos += sizeof(fm_last             );
+  //if (buffer != NULL) { memcpy(&buffer[pos], fm_ptr               , sizeof(fm_ptr             )); } pos += sizeof(*fm_ptr             );
+  if (buffer != NULL) { memcpy(&buffer[pos], &fm_cycles_ratio     , sizeof(fm_cycles_ratio     )); } pos += sizeof(fm_cycles_ratio     );
+  if (buffer != NULL) { memcpy(&buffer[pos], &fm_cycles_start     , sizeof(fm_cycles_start     )); } pos += sizeof(fm_cycles_start     );
+  if (buffer != NULL) { memcpy(&buffer[pos], &fm_cycles_count     , sizeof(fm_cycles_count     )); } pos += sizeof(fm_cycles_count     );
+  if (buffer != NULL) { memcpy(&buffer[pos], &fm_cycles_busy      , sizeof(fm_cycles_busy      )); } pos += sizeof(fm_cycles_busy      );
+
+  #ifdef HAVE_YM3438_CORE
+  if (buffer != NULL) { memcpy(&buffer[pos], &ym3438              , sizeof(ym3438              )); } pos += sizeof(ym3438              );
+  if (buffer != NULL) { memcpy(&buffer[pos], &ym3438_accm         , sizeof(ym3438_accm         )); } pos += sizeof(ym3438_accm         );
+  if (buffer != NULL) { memcpy(&buffer[pos], &ym3438_sample       , sizeof(ym3438_sample       )); } pos += sizeof(ym3438_sample       );
+  if (buffer != NULL) { memcpy(&buffer[pos], &ym3438_cycles       , sizeof(ym3438_cycles       )); } pos += sizeof(ym3438_cycles       );
+  #endif
+
+  #ifdef HAVE_OPLL_CORE
+  if (buffer != NULL) { memcpy(&buffer[pos], &opll                , sizeof(opll                )); } pos += sizeof(opll                );
+  if (buffer != NULL) { memcpy(&buffer[pos], &opll_accm           , sizeof(opll_accm           )); } pos += sizeof(opll_accm           );
+  if (buffer != NULL) { memcpy(&buffer[pos], &opll_sample         , sizeof(opll_sample         )); } pos += sizeof(opll_sample         );
+  if (buffer != NULL) { memcpy(&buffer[pos], &opll_cycles         , sizeof(opll_cycles         )); } pos += sizeof(opll_cycles         );
+  if (buffer != NULL) { memcpy(&buffer[pos], &opll_status         , sizeof(opll_status         )); } pos += sizeof(opll_status         );
+  #endif
+
+  if (buffer != NULL) { memcpy(&buffer[pos], &output              , sizeof(output              )); } pos += sizeof(output              );
+  if (buffer != NULL) { memcpy(&buffer[pos], &LFO_AM              , sizeof(LFO_AM              )); } pos += sizeof(LFO_AM              );
+  if (buffer != NULL) { memcpy(&buffer[pos], &LFO_PM              , sizeof(LFO_PM              )); } pos += sizeof(LFO_PM              );
+  if (buffer != NULL) { memcpy(&buffer[pos], &ym2413              , sizeof(ym2413              )); } pos += sizeof(ym2413              );
+  if (buffer != NULL) { memcpy(&buffer[pos], &ym2612              , sizeof(ym2612              )); } pos += sizeof(ym2612              );
+  if (buffer != NULL) { memcpy(&buffer[pos], &m2                  , sizeof(m2                  )); } pos += sizeof(m2                  );
+  if (buffer != NULL) { memcpy(&buffer[pos], &c1                  , sizeof(c1                  )); } pos += sizeof(c1                  );
+  if (buffer != NULL) { memcpy(&buffer[pos], &c2                  , sizeof(c2                  )); } pos += sizeof(c2                  );
+  if (buffer != NULL) { memcpy(&buffer[pos], &mem                 , sizeof(mem                 )); } pos += sizeof(mem                 );
+  if (buffer != NULL) { memcpy(&buffer[pos], &out_fm              , sizeof(out_fm              )); } pos += sizeof(out_fm              );
+  if (buffer != NULL) { memcpy(&buffer[pos], &op_mask             , sizeof(op_mask             )); } pos += sizeof(op_mask             );
+  if (buffer != NULL) { memcpy(&buffer[pos], &chip_type           , sizeof(chip_type           )); } pos += sizeof(chip_type           );
+  if (buffer != NULL) { memcpy(&buffer[pos], &Z80                 , sizeof(Z80                 )); } pos += sizeof(Z80                 );
+  if (buffer != NULL) { memcpy(&buffer[pos], &z80_last_fetch      , sizeof(z80_last_fetch      )); } pos += sizeof(z80_last_fetch      );
+  if (buffer != NULL) { memcpy(&buffer[pos], &z80_readmap         , sizeof(z80_readmap         )); } pos += sizeof(z80_readmap         );
+  if (buffer != NULL) { memcpy(&buffer[pos], &z80_writemap        , sizeof(z80_writemap        )); } pos += sizeof(z80_writemap        );
+  if (buffer != NULL) { memcpy(&buffer[pos], &EA                  , sizeof(EA                  )); } pos += sizeof(EA                  );
+  if (buffer != NULL) { memcpy(&buffer[pos], &SZ                  , sizeof(SZ                  )); } pos += sizeof(SZ                  );
+  if (buffer != NULL) { memcpy(&buffer[pos], &SZ_BIT              , sizeof(SZ_BIT              )); } pos += sizeof(SZ_BIT              );
+  if (buffer != NULL) { memcpy(&buffer[pos], &SZP                 , sizeof(SZP                 )); } pos += sizeof(SZP                 );
+  if (buffer != NULL) { memcpy(&buffer[pos], &SZHV_inc            , sizeof(SZHV_inc            )); } pos += sizeof(SZHV_inc            );
+  if (buffer != NULL) { memcpy(&buffer[pos], &SZHV_dec            , sizeof(SZHV_dec            )); } pos += sizeof(SZHV_dec            );
+  if (buffer != NULL) { memcpy(&buffer[pos], &SZHVC_add           , sizeof(SZHVC_add           )); } pos += sizeof(SZHVC_add           );
+  if (buffer != NULL) { memcpy(&buffer[pos], &SZHVC_sub           , sizeof(SZHVC_sub           )); } pos += sizeof(SZHVC_sub           );
+  
+  #ifdef Z80_OVERCLOCK_SHIFT
+  if (buffer != NULL) { memcpy(&buffer[pos], &z80_cycle_ratio     , sizeof(z80_cycle_ratio     )); } pos += sizeof(z80_cycle_ratio     );
+  #endif
+
+  if (buffer != NULL) { memcpy(&buffer[pos], &boot_rom            , sizeof(boot_rom            )); } pos += sizeof(boot_rom            );
+  if (buffer != NULL) { memcpy(&buffer[pos], &work_ram            , sizeof(work_ram            )); } pos += sizeof(work_ram            );
+  if (buffer != NULL) { memcpy(&buffer[pos], &zram                , sizeof(zram                )); } pos += sizeof(zram                );
+  if (buffer != NULL) { memcpy(&buffer[pos], &zbank               , sizeof(zbank               )); } pos += sizeof(zbank               );
+  if (buffer != NULL) { memcpy(&buffer[pos], &zstate              , sizeof(zstate              )); } pos += sizeof(zstate              );
+  if (buffer != NULL) { memcpy(&buffer[pos], &pico_current        , sizeof(pico_current        )); } pos += sizeof(pico_current        );
+  if (buffer != NULL) { memcpy(&buffer[pos], &tmss                , sizeof(tmss                )); } pos += sizeof(tmss                );
+  if (buffer != NULL) { memcpy(&buffer[pos], &io_reg              , sizeof(io_reg              )); } pos += sizeof(io_reg              );
+  if (buffer != NULL) { memcpy(&buffer[pos], &region_code         , sizeof(region_code         )); } pos += sizeof(region_code         );
+  if (buffer != NULL) { memcpy(&buffer[pos], &port                , sizeof(port                )); } pos += sizeof(port                );
+  if (buffer != NULL) { memcpy(&buffer[pos], &rominfo             , sizeof(rominfo             )); } pos += sizeof(rominfo             );
+  if (buffer != NULL) { memcpy(&buffer[pos], &romtype             , sizeof(romtype             )); } pos += sizeof(romtype             );
+  if (buffer != NULL) { memcpy(&buffer[pos], &rom_region          , sizeof(rom_region          )); } pos += sizeof(rom_region          );
+  if (buffer != NULL) { memcpy(&buffer[pos], &zbank_memory_map    , sizeof(zbank_memory_map    )); } pos += sizeof(zbank_memory_map    );
+  if (buffer != NULL) { memcpy(&buffer[pos], &bitmap              , sizeof(bitmap              )); } pos += sizeof(bitmap              );
+  if (buffer != NULL) { memcpy(&buffer[pos], &snd                 , sizeof(snd                 )); } pos += sizeof(snd                 );
+  if (buffer != NULL) { memcpy(&buffer[pos], &mcycles_vdp         , sizeof(mcycles_vdp         )); } pos += sizeof(mcycles_vdp         );
+  if (buffer != NULL) { memcpy(&buffer[pos], &system_hw           , sizeof(system_hw           )); } pos += sizeof(system_hw           );
+  if (buffer != NULL) { memcpy(&buffer[pos], &system_bios         , sizeof(system_bios         )); } pos += sizeof(system_bios         );
+  if (buffer != NULL) { memcpy(&buffer[pos], &system_clock        , sizeof(system_clock        )); } pos += sizeof(system_clock        );
+  if (buffer != NULL) { memcpy(&buffer[pos], &SVP_cycles          , sizeof(SVP_cycles          )); } pos += sizeof(SVP_cycles          );
+  if (buffer != NULL) { memcpy(&buffer[pos], &pause_b             , sizeof(pause_b             )); } pos += sizeof(pause_b             );
+  if (buffer != NULL) { memcpy(&buffer[pos], &eq                  , sizeof(eq                  )); } pos += sizeof(eq                  );
+  if (buffer != NULL) { memcpy(&buffer[pos], &llp                 , sizeof(llp                 )); } pos += sizeof(llp                 );
+  if (buffer != NULL) { memcpy(&buffer[pos], &rrp                 , sizeof(rrp                 )); } pos += sizeof(rrp                 );
+  if (buffer != NULL) { memcpy(&buffer[pos], &sat                 , sizeof(sat                 )); } pos += sizeof(sat                 );
+  if (buffer != NULL) { memcpy(&buffer[pos], &vram                , sizeof(vram                )); } pos += sizeof(vram                );
+  if (buffer != NULL) { memcpy(&buffer[pos], &cram                , sizeof(cram                )); } pos += sizeof(cram                );
+  if (buffer != NULL) { memcpy(&buffer[pos], &vsram               , sizeof(vsram               )); } pos += sizeof(vsram               );
+  if (buffer != NULL) { memcpy(&buffer[pos], &reg                 , sizeof(reg                 )); } pos += sizeof(reg                 );
+  if (buffer != NULL) { memcpy(&buffer[pos], &hint_pending        , sizeof(hint_pending        )); } pos += sizeof(hint_pending        );
+  if (buffer != NULL) { memcpy(&buffer[pos], &vint_pending        , sizeof(vint_pending        )); } pos += sizeof(vint_pending        );
+  if (buffer != NULL) { memcpy(&buffer[pos], &status              , sizeof(status              )); } pos += sizeof(status              );
+  if (buffer != NULL) { memcpy(&buffer[pos], &dma_length          , sizeof(dma_length          )); } pos += sizeof(dma_length          );
+  if (buffer != NULL) { memcpy(&buffer[pos], &dma_endCycles       , sizeof(dma_endCycles       )); } pos += sizeof(dma_endCycles       );
+  if (buffer != NULL) { memcpy(&buffer[pos], &dma_type            , sizeof(dma_type            )); } pos += sizeof(dma_type            );
+  if (buffer != NULL) { memcpy(&buffer[pos], &ntab                , sizeof(ntab                )); } pos += sizeof(ntab                );
+  if (buffer != NULL) { memcpy(&buffer[pos], &ntbb                , sizeof(ntbb                )); } pos += sizeof(ntbb                );
+  if (buffer != NULL) { memcpy(&buffer[pos], &ntwb                , sizeof(ntwb                )); } pos += sizeof(ntwb                );
+  if (buffer != NULL) { memcpy(&buffer[pos], &satb                , sizeof(satb                )); } pos += sizeof(satb                );
+  if (buffer != NULL) { memcpy(&buffer[pos], &hscb                , sizeof(hscb                )); } pos += sizeof(hscb                );
+  if (buffer != NULL) { memcpy(&buffer[pos], &bg_name_dirty       , sizeof(bg_name_dirty       )); } pos += sizeof(bg_name_dirty       );
+  if (buffer != NULL) { memcpy(&buffer[pos], &bg_name_list        , sizeof(bg_name_list        )); } pos += sizeof(bg_name_list        );
+  if (buffer != NULL) { memcpy(&buffer[pos], &bg_list_index       , sizeof(bg_list_index       )); } pos += sizeof(bg_list_index       );
+  if (buffer != NULL) { memcpy(&buffer[pos], &hscroll_mask        , sizeof(hscroll_mask        )); } pos += sizeof(hscroll_mask        );
+  if (buffer != NULL) { memcpy(&buffer[pos], &playfield_shift     , sizeof(playfield_shift     )); } pos += sizeof(playfield_shift     );
+  if (buffer != NULL) { memcpy(&buffer[pos], &playfield_col_mask  , sizeof(playfield_col_mask  )); } pos += sizeof(playfield_col_mask  );
+  if (buffer != NULL) { memcpy(&buffer[pos], &playfield_row_mask  , sizeof(playfield_row_mask  )); } pos += sizeof(playfield_row_mask  );
+  if (buffer != NULL) { memcpy(&buffer[pos], &vscroll             , sizeof(vscroll             )); } pos += sizeof(vscroll             );
+  if (buffer != NULL) { memcpy(&buffer[pos], &odd_frame           , sizeof(odd_frame           )); } pos += sizeof(odd_frame           );
+  if (buffer != NULL) { memcpy(&buffer[pos], &im2_flag            , sizeof(im2_flag            )); } pos += sizeof(im2_flag            );
+  if (buffer != NULL) { memcpy(&buffer[pos], &interlaced          , sizeof(interlaced          )); } pos += sizeof(interlaced          );
+  if (buffer != NULL) { memcpy(&buffer[pos], &vdp_pal             , sizeof(vdp_pal             )); } pos += sizeof(vdp_pal             );
+  if (buffer != NULL) { memcpy(&buffer[pos], &h_counter           , sizeof(h_counter           )); } pos += sizeof(h_counter           );
+  if (buffer != NULL) { memcpy(&buffer[pos], &v_counter           , sizeof(v_counter           )); } pos += sizeof(v_counter           );
+  if (buffer != NULL) { memcpy(&buffer[pos], &vc_max              , sizeof(vc_max              )); } pos += sizeof(vc_max              );
+  if (buffer != NULL) { memcpy(&buffer[pos], &lines_per_frame     , sizeof(lines_per_frame     )); } pos += sizeof(lines_per_frame     );
+  if (buffer != NULL) { memcpy(&buffer[pos], &max_sprite_pixels   , sizeof(max_sprite_pixels   )); } pos += sizeof(max_sprite_pixels   );
+  if (buffer != NULL) { memcpy(&buffer[pos], &fifo_cycles         , sizeof(fifo_cycles         )); } pos += sizeof(fifo_cycles         );
+  if (buffer != NULL) { memcpy(&buffer[pos], &hvc_latch           , sizeof(hvc_latch           )); } pos += sizeof(hvc_latch           );
+  if (buffer != NULL) { memcpy(&buffer[pos], &vint_cycle          , sizeof(vint_cycle          )); } pos += sizeof(vint_cycle          );
+  // if (buffer != NULL) { memcpy(&buffer[pos], &hctab               , sizeof(hctab               )); } pos += sizeof(hctab               );
+  if (buffer != NULL) { memcpy(&buffer[pos], &border              , sizeof(border              )); } pos += sizeof(border              );
+  if (buffer != NULL) { memcpy(&buffer[pos], &pending             , sizeof(pending             )); } pos += sizeof(pending             );
+  if (buffer != NULL) { memcpy(&buffer[pos], &code                , sizeof(code                )); } pos += sizeof(code                );
+  if (buffer != NULL) { memcpy(&buffer[pos], &addr                , sizeof(addr                )); } pos += sizeof(addr                );
+  if (buffer != NULL) { memcpy(&buffer[pos], &addr_latch          , sizeof(addr_latch          )); } pos += sizeof(addr_latch          );
+  if (buffer != NULL) { memcpy(&buffer[pos], &sat_base_mask       , sizeof(sat_base_mask       )); } pos += sizeof(sat_base_mask       );
+  if (buffer != NULL) { memcpy(&buffer[pos], &sat_addr_mask       , sizeof(sat_addr_mask       )); } pos += sizeof(sat_addr_mask       );
+  if (buffer != NULL) { memcpy(&buffer[pos], &dma_src             , sizeof(dma_src             )); } pos += sizeof(dma_src             );
+  if (buffer != NULL) { memcpy(&buffer[pos], &dmafill             , sizeof(dmafill             )); } pos += sizeof(dmafill             );
+  if (buffer != NULL) { memcpy(&buffer[pos], &cached_write        , sizeof(cached_write        )); } pos += sizeof(cached_write        );
+  if (buffer != NULL) { memcpy(&buffer[pos], &fifo                , sizeof(fifo                )); } pos += sizeof(fifo                );
+  if (buffer != NULL) { memcpy(&buffer[pos], &fifo_idx            , sizeof(fifo_idx            )); } pos += sizeof(fifo_idx            );
+  if (buffer != NULL) { memcpy(&buffer[pos], &fifo_byte_access    , sizeof(fifo_byte_access    )); } pos += sizeof(fifo_byte_access    );
+  // if (buffer != NULL) { memcpy(&buffer[pos], &fifo_timing         , sizeof(fifo_timing         )); } pos += sizeof(fifo_timing         );
+  if (buffer != NULL) { memcpy(&buffer[pos], &hblank_start_cycle  , sizeof(hblank_start_cycle  )); } pos += sizeof(hblank_start_cycle  );
+  if (buffer != NULL) { memcpy(&buffer[pos], &hblank_end_cycle    , sizeof(hblank_end_cycle    )); } pos += sizeof(hblank_end_cycle    );
+  if (buffer != NULL) { memcpy(&buffer[pos], &clip                , sizeof(clip                )); } pos += sizeof(clip                );
+  if (buffer != NULL) { memcpy(&buffer[pos], &bg_pattern_cache    , sizeof(bg_pattern_cache    )); } pos += sizeof(bg_pattern_cache    );
+  if (buffer != NULL) { memcpy(&buffer[pos], &name_lut            , sizeof(name_lut            )); } pos += sizeof(name_lut            );
+  if (buffer != NULL) { memcpy(&buffer[pos], &bp_lut              , sizeof(bp_lut              )); } pos += sizeof(bp_lut              );
+  if (buffer != NULL) { memcpy(&buffer[pos], &lut                 , sizeof(lut                 )); } pos += sizeof(lut                 );
+  if (buffer != NULL) { memcpy(&buffer[pos], &pixel               , sizeof(pixel               )); } pos += sizeof(pixel               );
+  if (buffer != NULL) { memcpy(&buffer[pos], &pixel_lut           , sizeof(pixel_lut           )); } pos += sizeof(pixel_lut           );
+  if (buffer != NULL) { memcpy(&buffer[pos], &pixel_lut_m4        , sizeof(pixel_lut_m4        )); } pos += sizeof(pixel_lut_m4        );
+  if (buffer != NULL) { memcpy(&buffer[pos], &linebuf             , sizeof(linebuf             )); } pos += sizeof(linebuf             );
+  if (buffer != NULL) { memcpy(&buffer[pos], &spr_ovr             , sizeof(spr_ovr             )); } pos += sizeof(spr_ovr             );
+  if (buffer != NULL) { memcpy(&buffer[pos], &obj_info            , sizeof(obj_info            )); } pos += sizeof(obj_info            );
+  if (buffer != NULL) { memcpy(&buffer[pos], &object_count        , sizeof(object_count        )); } pos += sizeof(object_count        );
+  if (buffer != NULL) { memcpy(&buffer[pos], &spr_col             , sizeof(spr_col             )); } pos += sizeof(spr_col             );
+
+  return pos;
+}
+
+void loadState(const uint8_t* buffer)
+{
+  size_t pos = 0;
+
+  if (buffer != NULL) { memcpy(&action_replay       , &buffer[pos],  sizeof(action_replay       )); } pos += sizeof(action_replay       );
+  if (buffer != NULL) { memcpy(&eeprom_93c          , &buffer[pos],  sizeof(eeprom_93c          )); } pos += sizeof(eeprom_93c          );
+  if (buffer != NULL) { memcpy(&eeprom_i2c          , &buffer[pos],  sizeof(eeprom_i2c          )); } pos += sizeof(eeprom_i2c          );
+  if (buffer != NULL) { memcpy(&spi_eeprom          , &buffer[pos],  sizeof(spi_eeprom          )); } pos += sizeof(spi_eeprom          );
+  if (buffer != NULL) { memcpy(&ggenie              , &buffer[pos],  sizeof(ggenie              )); } pos += sizeof(ggenie              );
+  if (buffer != NULL) { memcpy(&megasd_hw           , &buffer[pos],  sizeof(megasd_hw           )); } pos += sizeof(megasd_hw           );
+  if (buffer != NULL) { memcpy(&sram                , &buffer[pos],  sizeof(sram                )); } pos += sizeof(sram                );
+  if (buffer != NULL) { memcpy(&activator           , &buffer[pos],  sizeof(activator           )); } pos += sizeof(activator           );
+  if (buffer != NULL) { memcpy(&gamepad             , &buffer[pos],  sizeof(gamepad             )); } pos += sizeof(gamepad             );
+  if (buffer != NULL) { memcpy(&flipflop            , &buffer[pos],  sizeof(flipflop            )); } pos += sizeof(flipflop            );
+  if (buffer != NULL) { memcpy(&latch               , &buffer[pos],  sizeof(latch               )); } pos += sizeof(latch               );
+  if (buffer != NULL) { memcpy(&board               , &buffer[pos],  sizeof(board               )); } pos += sizeof(board               );
+  if (buffer != NULL) { memcpy(&input               , &buffer[pos],  sizeof(input               )); } pos += sizeof(input               );
+  if (buffer != NULL) { memcpy(&old_system          , &buffer[pos],  sizeof(old_system          )); } pos += sizeof(old_system          );
+  if (buffer != NULL) { memcpy(&lightgun            , &buffer[pos],  sizeof(lightgun            )); } pos += sizeof(lightgun            );
+  if (buffer != NULL) { memcpy(&mouse               , &buffer[pos],  sizeof(mouse               )); } pos += sizeof(mouse               );
+  if (buffer != NULL) { memcpy(&paddle              , &buffer[pos],  sizeof(paddle              )); } pos += sizeof(paddle              );
+  if (buffer != NULL) { memcpy(&sportspad           , &buffer[pos],  sizeof(sportspad           )); } pos += sizeof(sportspad           );
+  if (buffer != NULL) { memcpy(&teamplayer          , &buffer[pos],  sizeof(teamplayer          )); } pos += sizeof(teamplayer          );
+  if (buffer != NULL) { memcpy(&tablet              , &buffer[pos],  sizeof(tablet              )); } pos += sizeof(tablet              );
+  if (buffer != NULL) { memcpy(&xe_1ap              , &buffer[pos],  sizeof(xe_1ap              )); } pos += sizeof(xe_1ap              );
+  if (buffer != NULL) { memcpy(&m68k                , &buffer[pos],  sizeof(m68k                )); } pos += sizeof(m68k                );
+  if (buffer != NULL) { memcpy(&s68k                , &buffer[pos],  sizeof(s68k                )); } pos += sizeof(s68k                );
+  if (buffer != NULL) { memcpy(&m68k_irq_latency    , &buffer[pos],  sizeof(m68k_irq_latency    )); } pos += sizeof(m68k_irq_latency    );
+  if (buffer != NULL) { memcpy(&s68k_irq_latency    , &buffer[pos],  sizeof(s68k_irq_latency    )); } pos += sizeof(s68k_irq_latency    );
+  if (buffer != NULL) { memcpy(& psg                , &buffer[pos],  sizeof( psg                )); } pos += sizeof( psg                );
+  if (buffer != NULL) { memcpy(&fm_buffer           , &buffer[pos],  sizeof(fm_buffer           )); } pos += sizeof(fm_buffer           );
+  if (buffer != NULL) { memcpy(&fm_last             , &buffer[pos],  sizeof(fm_last             )); } pos += sizeof(fm_last             );
+  //if (buffer != NULL) { memcpy(&*fm_ptr             , &buffer[pos],  sizeof(*fm_ptr             )); } pos += sizeof(*fm_ptr             );
+  if (buffer != NULL) { memcpy(&fm_cycles_ratio     , &buffer[pos],  sizeof(fm_cycles_ratio     )); } pos += sizeof(fm_cycles_ratio     );
+  if (buffer != NULL) { memcpy(&fm_cycles_start     , &buffer[pos],  sizeof(fm_cycles_start     )); } pos += sizeof(fm_cycles_start     );
+  if (buffer != NULL) { memcpy(&fm_cycles_count     , &buffer[pos],  sizeof(fm_cycles_count     )); } pos += sizeof(fm_cycles_count     );
+  if (buffer != NULL) { memcpy(&fm_cycles_busy      , &buffer[pos],  sizeof(fm_cycles_busy      )); } pos += sizeof(fm_cycles_busy      );
+
+  #ifdef HAVE_YM3438_CORE
+  if (buffer != NULL) { memcpy(&ym3438              , &buffer[pos],  sizeof(ym3438              )); } pos += sizeof(ym3438              );
+  if (buffer != NULL) { memcpy(&ym3438_accm         , &buffer[pos],  sizeof(ym3438_accm         )); } pos += sizeof(ym3438_accm         );
+  if (buffer != NULL) { memcpy(&ym3438_sample       , &buffer[pos],  sizeof(ym3438_sample       )); } pos += sizeof(ym3438_sample       );
+  if (buffer != NULL) { memcpy(&ym3438_cycles       , &buffer[pos],  sizeof(ym3438_cycles       )); } pos += sizeof(ym3438_cycles       );
+  #endif
+
+  #ifdef HAVE_OPLL_CORE
+  if (buffer != NULL) { memcpy(&opll                , &buffer[pos],  sizeof(opll                )); } pos += sizeof(opll                );
+  if (buffer != NULL) { memcpy(&opll_accm           , &buffer[pos],  sizeof(opll_accm           )); } pos += sizeof(opll_accm           );
+  if (buffer != NULL) { memcpy(&opll_sample         , &buffer[pos],  sizeof(opll_sample         )); } pos += sizeof(opll_sample         );
+  if (buffer != NULL) { memcpy(&opll_cycles         , &buffer[pos],  sizeof(opll_cycles         )); } pos += sizeof(opll_cycles         );
+  if (buffer != NULL) { memcpy(&opll_status         , &buffer[pos],  sizeof(opll_status         )); } pos += sizeof(opll_status         );
+  #endif
+
+  if (buffer != NULL) { memcpy(&output              , &buffer[pos],  sizeof(output              )); } pos += sizeof(output              );
+  if (buffer != NULL) { memcpy(&LFO_AM              , &buffer[pos],  sizeof(LFO_AM              )); } pos += sizeof(LFO_AM              );
+  if (buffer != NULL) { memcpy(&LFO_PM              , &buffer[pos],  sizeof(LFO_PM              )); } pos += sizeof(LFO_PM              );
+  if (buffer != NULL) { memcpy(&ym2413              , &buffer[pos],  sizeof(ym2413              )); } pos += sizeof(ym2413              );
+  if (buffer != NULL) { memcpy(&ym2612              , &buffer[pos],  sizeof(ym2612              )); } pos += sizeof(ym2612              );
+  if (buffer != NULL) { memcpy(&m2                  , &buffer[pos],  sizeof(m2                  )); } pos += sizeof(m2                  );
+  if (buffer != NULL) { memcpy(&c1                  , &buffer[pos],  sizeof(c1                  )); } pos += sizeof(c1                  );
+  if (buffer != NULL) { memcpy(&c2                  , &buffer[pos],  sizeof(c2                  )); } pos += sizeof(c2                  );
+  if (buffer != NULL) { memcpy(&mem                 , &buffer[pos],  sizeof(mem                 )); } pos += sizeof(mem                 );
+  if (buffer != NULL) { memcpy(&out_fm              , &buffer[pos],  sizeof(out_fm              )); } pos += sizeof(out_fm              );
+  if (buffer != NULL) { memcpy(&op_mask             , &buffer[pos],  sizeof(op_mask             )); } pos += sizeof(op_mask             );
+  if (buffer != NULL) { memcpy(&chip_type           , &buffer[pos],  sizeof(chip_type           )); } pos += sizeof(chip_type           );
+  if (buffer != NULL) { memcpy(&Z80                 , &buffer[pos],  sizeof(Z80                 )); } pos += sizeof(Z80                 );
+  if (buffer != NULL) { memcpy(&z80_last_fetch      , &buffer[pos],  sizeof(z80_last_fetch      )); } pos += sizeof(z80_last_fetch      );
+  if (buffer != NULL) { memcpy(&z80_readmap         , &buffer[pos],  sizeof(z80_readmap         )); } pos += sizeof(z80_readmap         );
+  if (buffer != NULL) { memcpy(&z80_writemap        , &buffer[pos],  sizeof(z80_writemap        )); } pos += sizeof(z80_writemap        );
+  if (buffer != NULL) { memcpy(&EA                  , &buffer[pos],  sizeof(EA                  )); } pos += sizeof(EA                  );
+  if (buffer != NULL) { memcpy(&SZ                  , &buffer[pos],  sizeof(SZ                  )); } pos += sizeof(SZ                  );
+  if (buffer != NULL) { memcpy(&SZ_BIT              , &buffer[pos],  sizeof(SZ_BIT              )); } pos += sizeof(SZ_BIT              );
+  if (buffer != NULL) { memcpy(&SZP                 , &buffer[pos],  sizeof(SZP                 )); } pos += sizeof(SZP                 );
+  if (buffer != NULL) { memcpy(&SZHV_inc            , &buffer[pos],  sizeof(SZHV_inc            )); } pos += sizeof(SZHV_inc            );
+  if (buffer != NULL) { memcpy(&SZHV_dec            , &buffer[pos],  sizeof(SZHV_dec            )); } pos += sizeof(SZHV_dec            );
+  if (buffer != NULL) { memcpy(&SZHVC_add           , &buffer[pos],  sizeof(SZHVC_add           )); } pos += sizeof(SZHVC_add           );
+  if (buffer != NULL) { memcpy(&SZHVC_sub           , &buffer[pos],  sizeof(SZHVC_sub           )); } pos += sizeof(SZHVC_sub           );
+
+  #ifdef Z80_OVERCLOCK_SHIFT
+  if (buffer != NULL) { memcpy(&z80_cycle_ratio     , &buffer[pos],  sizeof(z80_cycle_ratio     )); } pos += sizeof(z80_cycle_ratio     );
+  #endif
+
+  if (buffer != NULL) { memcpy(&boot_rom            , &buffer[pos],  sizeof(boot_rom            )); } pos += sizeof(boot_rom            );
+  if (buffer != NULL) { memcpy(&work_ram            , &buffer[pos],  sizeof(work_ram            )); } pos += sizeof(work_ram            );
+  if (buffer != NULL) { memcpy(&zram                , &buffer[pos],  sizeof(zram                )); } pos += sizeof(zram                );
+  if (buffer != NULL) { memcpy(&zbank               , &buffer[pos],  sizeof(zbank               )); } pos += sizeof(zbank               );
+  if (buffer != NULL) { memcpy(&zstate              , &buffer[pos],  sizeof(zstate              )); } pos += sizeof(zstate              );
+  if (buffer != NULL) { memcpy(&pico_current        , &buffer[pos],  sizeof(pico_current        )); } pos += sizeof(pico_current        );
+  if (buffer != NULL) { memcpy(&tmss                , &buffer[pos],  sizeof(tmss                )); } pos += sizeof(tmss                );
+  if (buffer != NULL) { memcpy(&io_reg              , &buffer[pos],  sizeof(io_reg              )); } pos += sizeof(io_reg              );
+  if (buffer != NULL) { memcpy(&region_code         , &buffer[pos],  sizeof(region_code         )); } pos += sizeof(region_code         );
+  if (buffer != NULL) { memcpy(&port                , &buffer[pos],  sizeof(port                )); } pos += sizeof(port                );
+  if (buffer != NULL) { memcpy(&rominfo             , &buffer[pos],  sizeof(rominfo             )); } pos += sizeof(rominfo             );
+  if (buffer != NULL) { memcpy(&romtype             , &buffer[pos],  sizeof(romtype             )); } pos += sizeof(romtype             );
+  if (buffer != NULL) { memcpy(&rom_region          , &buffer[pos],  sizeof(rom_region          )); } pos += sizeof(rom_region          );
+  if (buffer != NULL) { memcpy(&zbank_memory_map    , &buffer[pos],  sizeof(zbank_memory_map    )); } pos += sizeof(zbank_memory_map    );
+  if (buffer != NULL) { memcpy(&bitmap              , &buffer[pos],  sizeof(bitmap              )); } pos += sizeof(bitmap              );
+  if (buffer != NULL) { memcpy(&snd                 , &buffer[pos],  sizeof(snd                 )); } pos += sizeof(snd                 );
+  if (buffer != NULL) { memcpy(&mcycles_vdp         , &buffer[pos],  sizeof(mcycles_vdp         )); } pos += sizeof(mcycles_vdp         );
+  if (buffer != NULL) { memcpy(&system_hw           , &buffer[pos],  sizeof(system_hw           )); } pos += sizeof(system_hw           );
+  if (buffer != NULL) { memcpy(&system_bios         , &buffer[pos],  sizeof(system_bios         )); } pos += sizeof(system_bios         );
+  if (buffer != NULL) { memcpy(&system_clock        , &buffer[pos],  sizeof(system_clock        )); } pos += sizeof(system_clock        );
+  if (buffer != NULL) { memcpy(&SVP_cycles          , &buffer[pos],  sizeof(SVP_cycles          )); } pos += sizeof(SVP_cycles          );
+  if (buffer != NULL) { memcpy(&pause_b             , &buffer[pos],  sizeof(pause_b             )); } pos += sizeof(pause_b             );
+  if (buffer != NULL) { memcpy(&eq                  , &buffer[pos],  sizeof(eq                  )); } pos += sizeof(eq                  );
+  if (buffer != NULL) { memcpy(&llp                 , &buffer[pos],  sizeof(llp                 )); } pos += sizeof(llp                 );
+  if (buffer != NULL) { memcpy(&rrp                 , &buffer[pos],  sizeof(rrp                 )); } pos += sizeof(rrp                 );
+  if (buffer != NULL) { memcpy(&sat                 , &buffer[pos],  sizeof(sat                 )); } pos += sizeof(sat                 );
+  if (buffer != NULL) { memcpy(&vram                , &buffer[pos],  sizeof(vram                )); } pos += sizeof(vram                );
+  if (buffer != NULL) { memcpy(&cram                , &buffer[pos],  sizeof(cram                )); } pos += sizeof(cram                );
+  if (buffer != NULL) { memcpy(&vsram               , &buffer[pos],  sizeof(vsram               )); } pos += sizeof(vsram               );
+  if (buffer != NULL) { memcpy(&reg                 , &buffer[pos],  sizeof(reg                 )); } pos += sizeof(reg                 );
+  if (buffer != NULL) { memcpy(&hint_pending        , &buffer[pos],  sizeof(hint_pending        )); } pos += sizeof(hint_pending        );
+  if (buffer != NULL) { memcpy(&vint_pending        , &buffer[pos],  sizeof(vint_pending        )); } pos += sizeof(vint_pending        );
+  if (buffer != NULL) { memcpy(&status              , &buffer[pos],  sizeof(status              )); } pos += sizeof(status              );
+  if (buffer != NULL) { memcpy(&dma_length          , &buffer[pos],  sizeof(dma_length          )); } pos += sizeof(dma_length          );
+  if (buffer != NULL) { memcpy(&dma_endCycles       , &buffer[pos],  sizeof(dma_endCycles       )); } pos += sizeof(dma_endCycles       );
+  if (buffer != NULL) { memcpy(&dma_type            , &buffer[pos],  sizeof(dma_type            )); } pos += sizeof(dma_type            );
+  if (buffer != NULL) { memcpy(&ntab                , &buffer[pos],  sizeof(ntab                )); } pos += sizeof(ntab                );
+  if (buffer != NULL) { memcpy(&ntbb                , &buffer[pos],  sizeof(ntbb                )); } pos += sizeof(ntbb                );
+  if (buffer != NULL) { memcpy(&ntwb                , &buffer[pos],  sizeof(ntwb                )); } pos += sizeof(ntwb                );
+  if (buffer != NULL) { memcpy(&satb                , &buffer[pos],  sizeof(satb                )); } pos += sizeof(satb                );
+  if (buffer != NULL) { memcpy(&hscb                , &buffer[pos],  sizeof(hscb                )); } pos += sizeof(hscb                );
+  if (buffer != NULL) { memcpy(&bg_name_dirty       , &buffer[pos],  sizeof(bg_name_dirty       )); } pos += sizeof(bg_name_dirty       );
+  if (buffer != NULL) { memcpy(&bg_name_list        , &buffer[pos],  sizeof(bg_name_list        )); } pos += sizeof(bg_name_list        );
+  if (buffer != NULL) { memcpy(&bg_list_index       , &buffer[pos],  sizeof(bg_list_index       )); } pos += sizeof(bg_list_index       );
+  if (buffer != NULL) { memcpy(&hscroll_mask        , &buffer[pos],  sizeof(hscroll_mask        )); } pos += sizeof(hscroll_mask        );
+  if (buffer != NULL) { memcpy(&playfield_shift     , &buffer[pos],  sizeof(playfield_shift     )); } pos += sizeof(playfield_shift     );
+  if (buffer != NULL) { memcpy(&playfield_col_mask  , &buffer[pos],  sizeof(playfield_col_mask  )); } pos += sizeof(playfield_col_mask  );
+  if (buffer != NULL) { memcpy(&playfield_row_mask  , &buffer[pos],  sizeof(playfield_row_mask  )); } pos += sizeof(playfield_row_mask  );
+  if (buffer != NULL) { memcpy(&vscroll             , &buffer[pos],  sizeof(vscroll             )); } pos += sizeof(vscroll             );
+  if (buffer != NULL) { memcpy(&odd_frame           , &buffer[pos],  sizeof(odd_frame           )); } pos += sizeof(odd_frame           );
+  if (buffer != NULL) { memcpy(&im2_flag            , &buffer[pos],  sizeof(im2_flag            )); } pos += sizeof(im2_flag            );
+  if (buffer != NULL) { memcpy(&interlaced          , &buffer[pos],  sizeof(interlaced          )); } pos += sizeof(interlaced          );
+  if (buffer != NULL) { memcpy(&vdp_pal             , &buffer[pos],  sizeof(vdp_pal             )); } pos += sizeof(vdp_pal             );
+  if (buffer != NULL) { memcpy(&h_counter           , &buffer[pos],  sizeof(h_counter           )); } pos += sizeof(h_counter           );
+  if (buffer != NULL) { memcpy(&v_counter           , &buffer[pos],  sizeof(v_counter           )); } pos += sizeof(v_counter           );
+  if (buffer != NULL) { memcpy(&vc_max              , &buffer[pos],  sizeof(vc_max              )); } pos += sizeof(vc_max              );
+  if (buffer != NULL) { memcpy(&lines_per_frame     , &buffer[pos],  sizeof(lines_per_frame     )); } pos += sizeof(lines_per_frame     );
+  if (buffer != NULL) { memcpy(&max_sprite_pixels   , &buffer[pos],  sizeof(max_sprite_pixels   )); } pos += sizeof(max_sprite_pixels   );
+  if (buffer != NULL) { memcpy(&fifo_cycles         , &buffer[pos],  sizeof(fifo_cycles         )); } pos += sizeof(fifo_cycles         );
+  if (buffer != NULL) { memcpy(&hvc_latch           , &buffer[pos],  sizeof(hvc_latch           )); } pos += sizeof(hvc_latch           );
+  if (buffer != NULL) { memcpy(&vint_cycle          , &buffer[pos],  sizeof(vint_cycle          )); } pos += sizeof(vint_cycle          );
+  // if (buffer != NULL) { memcpy(&hctab               , &buffer[pos],  sizeof(hctab               )); } pos += sizeof(hctab               );
+  if (buffer != NULL) { memcpy(&border              , &buffer[pos],  sizeof(border              )); } pos += sizeof(border              );
+  if (buffer != NULL) { memcpy(&pending             , &buffer[pos],  sizeof(pending             )); } pos += sizeof(pending             );
+  if (buffer != NULL) { memcpy(&code                , &buffer[pos],  sizeof(code                )); } pos += sizeof(code                );
+  if (buffer != NULL) { memcpy(&addr                , &buffer[pos],  sizeof(addr                )); } pos += sizeof(addr                );
+  if (buffer != NULL) { memcpy(&addr_latch          , &buffer[pos],  sizeof(addr_latch          )); } pos += sizeof(addr_latch          );
+  if (buffer != NULL) { memcpy(&sat_base_mask       , &buffer[pos],  sizeof(sat_base_mask       )); } pos += sizeof(sat_base_mask       );
+  if (buffer != NULL) { memcpy(&sat_addr_mask       , &buffer[pos],  sizeof(sat_addr_mask       )); } pos += sizeof(sat_addr_mask       );
+  if (buffer != NULL) { memcpy(&dma_src             , &buffer[pos],  sizeof(dma_src             )); } pos += sizeof(dma_src             );
+  if (buffer != NULL) { memcpy(&dmafill             , &buffer[pos],  sizeof(dmafill             )); } pos += sizeof(dmafill             );
+  if (buffer != NULL) { memcpy(&cached_write        , &buffer[pos],  sizeof(cached_write        )); } pos += sizeof(cached_write        );
+  if (buffer != NULL) { memcpy(&fifo                , &buffer[pos],  sizeof(fifo                )); } pos += sizeof(fifo                );
+  if (buffer != NULL) { memcpy(&fifo_idx            , &buffer[pos],  sizeof(fifo_idx            )); } pos += sizeof(fifo_idx            );
+  if (buffer != NULL) { memcpy(&fifo_byte_access    , &buffer[pos],  sizeof(fifo_byte_access    )); } pos += sizeof(fifo_byte_access    );
+  // if (buffer != NULL) { memcpy(&fifo_timing         , &buffer[pos],  sizeof(fifo_timing         )); } pos += sizeof(fifo_timing         );
+  if (buffer != NULL) { memcpy(&hblank_start_cycle  , &buffer[pos],  sizeof(hblank_start_cycle  )); } pos += sizeof(hblank_start_cycle  );
+  if (buffer != NULL) { memcpy(&hblank_end_cycle    , &buffer[pos],  sizeof(hblank_end_cycle    )); } pos += sizeof(hblank_end_cycle    );
+  if (buffer != NULL) { memcpy(&clip                , &buffer[pos],  sizeof(clip                )); } pos += sizeof(clip                );
+  if (buffer != NULL) { memcpy(&bg_pattern_cache    , &buffer[pos],  sizeof(bg_pattern_cache    )); } pos += sizeof(bg_pattern_cache    );
+  if (buffer != NULL) { memcpy(&name_lut            , &buffer[pos],  sizeof(name_lut            )); } pos += sizeof(name_lut            );
+  if (buffer != NULL) { memcpy(&bp_lut              , &buffer[pos],  sizeof(bp_lut              )); } pos += sizeof(bp_lut              );
+  if (buffer != NULL) { memcpy(&lut                 , &buffer[pos],  sizeof(lut                 )); } pos += sizeof(lut                 );
+  if (buffer != NULL) { memcpy(&pixel               , &buffer[pos],  sizeof(pixel               )); } pos += sizeof(pixel               );
+  if (buffer != NULL) { memcpy(&pixel_lut           , &buffer[pos],  sizeof(pixel_lut           )); } pos += sizeof(pixel_lut           );
+  if (buffer != NULL) { memcpy(&pixel_lut_m4        , &buffer[pos],  sizeof(pixel_lut_m4        )); } pos += sizeof(pixel_lut_m4        );
+  if (buffer != NULL) { memcpy(&linebuf             , &buffer[pos],  sizeof(linebuf             )); } pos += sizeof(linebuf             );
+  if (buffer != NULL) { memcpy(&spr_ovr             , &buffer[pos],  sizeof(spr_ovr             )); } pos += sizeof(spr_ovr             );
+  if (buffer != NULL) { memcpy(&obj_info            , &buffer[pos],  sizeof(obj_info            )); } pos += sizeof(obj_info            );
+  if (buffer != NULL) { memcpy(&object_count        , &buffer[pos],  sizeof(object_count        )); } pos += sizeof(object_count        );
+  if (buffer != NULL) { memcpy(&spr_col             , &buffer[pos],  sizeof(spr_col             )); } pos += sizeof(spr_col             );
+
+}

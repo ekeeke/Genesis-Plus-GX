@@ -44,6 +44,9 @@
 #include "sound/opll.h"
 #endif
 
+extern size_t saveState(uint8_t* buffer);
+extern void loadState(const uint8_t* buffer);
+
 // cart_hw/svp.h 
 
 // Special case, as svp is inside the cart.rom allocation
@@ -316,3 +319,4 @@ extern uint8_t spr_ovr; /* Sprite limit flag */
 extern object_info_t obj_info[2][MAX_SPRITES_PER_LINE];
 extern uint8_t object_count[2]; /* Sprite Counter */
 extern uint16_t spr_col; /* Sprite Collision Info */
+
