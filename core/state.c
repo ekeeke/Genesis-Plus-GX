@@ -39,6 +39,11 @@ T_MEGASD_HW megasd_hw;
 
 T_SRAM sram;
 
+// cd_hw/cdd.c
+
+cdStream *cdTrackStreams[100];
+cdStream *cdTocStream;
+
 // input_hw/activator.c
 
 struct activator_t activator[2];
@@ -292,6 +297,8 @@ size_t saveState(uint8_t* buffer)
 {
   size_t pos = 0;
   
+  // cart_hw/svp/svp16.h
+
   // Special treatment for SVP, since it is stored inside the ROM that we otherwise do not store
   if (svp != NULL)
   {
@@ -304,32 +311,102 @@ size_t saveState(uint8_t* buffer)
    if (buffer != NULL) { memcpy(&buffer[pos], &g_cycles            , sizeof(g_cycles            )); } pos += sizeof(g_cycles            );
   }
 
+  // cart_hw/areplay.c
+
   if (buffer != NULL) { memcpy(&buffer[pos], &action_replay       , sizeof(action_replay       )); } pos += sizeof(action_replay       );
+
+  // cart_hw/eeprom_93c.c
+
   if (buffer != NULL) { memcpy(&buffer[pos], &eeprom_93c          , sizeof(eeprom_93c          )); } pos += sizeof(eeprom_93c          );
+
+  // cart_hw/eeprom_i2c.c
+
   if (buffer != NULL) { memcpy(&buffer[pos], &eeprom_i2c          , sizeof(eeprom_i2c          )); } pos += sizeof(eeprom_i2c          );
+
+  // cart_hw/eeprom_spi.c
+
   if (buffer != NULL) { memcpy(&buffer[pos], &spi_eeprom          , sizeof(spi_eeprom          )); } pos += sizeof(spi_eeprom          );
+
+  // cart_hw/ggenie.c
+
   if (buffer != NULL) { memcpy(&buffer[pos], &ggenie              , sizeof(ggenie              )); } pos += sizeof(ggenie              );
+
+  // cart_hw/megasd.c
+
   if (buffer != NULL) { memcpy(&buffer[pos], &megasd_hw           , sizeof(megasd_hw           )); } pos += sizeof(megasd_hw           );
+
+  // cart_hw/sram.c
+
   if (buffer != NULL) { memcpy(&buffer[pos], &sram                , sizeof(sram                )); } pos += sizeof(sram                );
+
+  // cd_hw/cdd.c
+
+  // input_hw/activator.c
+
   if (buffer != NULL) { memcpy(&buffer[pos], &activator           , sizeof(activator           )); } pos += sizeof(activator           );
+
+  // input_hw/gamepad.c
+  
   if (buffer != NULL) { memcpy(&buffer[pos], &gamepad             , sizeof(gamepad             )); } pos += sizeof(gamepad             );
   if (buffer != NULL) { memcpy(&buffer[pos], &flipflop            , sizeof(flipflop            )); } pos += sizeof(flipflop            );
   if (buffer != NULL) { memcpy(&buffer[pos], &latch               , sizeof(latch               )); } pos += sizeof(latch               );
+
+  // input_hw/graphic_board.c
+
   if (buffer != NULL) { memcpy(&buffer[pos], &board               , sizeof(board               )); } pos += sizeof(board               );
+
+  // input_hw/input.c
+  
   if (buffer != NULL) { memcpy(&buffer[pos], &input               , sizeof(input               )); } pos += sizeof(input               );
   if (buffer != NULL) { memcpy(&buffer[pos], &old_system          , sizeof(old_system          )); } pos += sizeof(old_system          );
+
+  // input_hw/lightgun.c
+
   if (buffer != NULL) { memcpy(&buffer[pos], &lightgun            , sizeof(lightgun            )); } pos += sizeof(lightgun            );
+
+  // input_hw/mouse.c
+
   if (buffer != NULL) { memcpy(&buffer[pos], &mouse               , sizeof(mouse               )); } pos += sizeof(mouse               );
+
+  // input_hw/paddle.c
+
   if (buffer != NULL) { memcpy(&buffer[pos], &paddle              , sizeof(paddle              )); } pos += sizeof(paddle              );
+
+  // input_hw/sportspad.c
+
   if (buffer != NULL) { memcpy(&buffer[pos], &sportspad           , sizeof(sportspad           )); } pos += sizeof(sportspad           );
+
+  // input_hw/teamplayer.c
+
   if (buffer != NULL) { memcpy(&buffer[pos], &teamplayer          , sizeof(teamplayer          )); } pos += sizeof(teamplayer          );
+  
+  // input_hw/terebi_oekaki.c
+
   if (buffer != NULL) { memcpy(&buffer[pos], &tablet              , sizeof(tablet              )); } pos += sizeof(tablet              );
+
+  // input_hw/xe_1ap.c
+
   if (buffer != NULL) { memcpy(&buffer[pos], &xe_1ap              , sizeof(xe_1ap              )); } pos += sizeof(xe_1ap              );
+
+  // m68k/m68k.c
+
   if (buffer != NULL) { memcpy(&buffer[pos], &m68k                , sizeof(m68k                )); } pos += sizeof(m68k                );
   if (buffer != NULL) { memcpy(&buffer[pos], &s68k                , sizeof(s68k                )); } pos += sizeof(s68k                );
+
+  // m68k/m68kcpu.c
+
   if (buffer != NULL) { memcpy(&buffer[pos], &m68k_irq_latency    , sizeof(m68k_irq_latency    )); } pos += sizeof(m68k_irq_latency    );
+
+  // m68k/s68kcpu.c
+
   if (buffer != NULL) { memcpy(&buffer[pos], &s68k_irq_latency    , sizeof(s68k_irq_latency    )); } pos += sizeof(s68k_irq_latency    );
+
+  // sound/psg.c
+
   if (buffer != NULL) { memcpy(&buffer[pos], & psg                , sizeof( psg                )); } pos += sizeof( psg                );
+  
+  // sound/sound.c
+
   if (buffer != NULL) { memcpy(&buffer[pos], &fm_buffer           , sizeof(fm_buffer           )); } pos += sizeof(fm_buffer           );
   if (buffer != NULL) { memcpy(&buffer[pos], &fm_last             , sizeof(fm_last             )); } pos += sizeof(fm_last             );
   //if (buffer != NULL) { memcpy(&buffer[pos], fm_ptr               , sizeof(fm_ptr             )); } pos += sizeof(*fm_ptr             );
@@ -353,10 +430,15 @@ size_t saveState(uint8_t* buffer)
   if (buffer != NULL) { memcpy(&buffer[pos], &opll_status         , sizeof(opll_status         )); } pos += sizeof(opll_status         );
   #endif
 
+  // sound/ym2413.h
+
   if (buffer != NULL) { memcpy(&buffer[pos], &output              , sizeof(output              )); } pos += sizeof(output              );
   if (buffer != NULL) { memcpy(&buffer[pos], &LFO_AM              , sizeof(LFO_AM              )); } pos += sizeof(LFO_AM              );
   if (buffer != NULL) { memcpy(&buffer[pos], &LFO_PM              , sizeof(LFO_PM              )); } pos += sizeof(LFO_PM              );
   if (buffer != NULL) { memcpy(&buffer[pos], &ym2413              , sizeof(ym2413              )); } pos += sizeof(ym2413              );
+
+  // sound/ym2612.c
+
   if (buffer != NULL) { memcpy(&buffer[pos], &ym2612              , sizeof(ym2612              )); } pos += sizeof(ym2612              );
   if (buffer != NULL) { memcpy(&buffer[pos], &m2                  , sizeof(m2                  )); } pos += sizeof(m2                  );
   if (buffer != NULL) { memcpy(&buffer[pos], &c1                  , sizeof(c1                  )); } pos += sizeof(c1                  );
@@ -365,6 +447,9 @@ size_t saveState(uint8_t* buffer)
   if (buffer != NULL) { memcpy(&buffer[pos], &out_fm              , sizeof(out_fm              )); } pos += sizeof(out_fm              );
   if (buffer != NULL) { memcpy(&buffer[pos], &op_mask             , sizeof(op_mask             )); } pos += sizeof(op_mask             );
   if (buffer != NULL) { memcpy(&buffer[pos], &chip_type           , sizeof(chip_type           )); } pos += sizeof(chip_type           );
+
+  // z80/z80.c
+
   if (buffer != NULL) { memcpy(&buffer[pos], &Z80                 , sizeof(Z80                 )); } pos += sizeof(Z80                 );
   if (buffer != NULL) { memcpy(&buffer[pos], &z80_last_fetch      , sizeof(z80_last_fetch      )); } pos += sizeof(z80_last_fetch      );
   if (buffer != NULL) { memcpy(&buffer[pos], &z80_readmap         , sizeof(z80_readmap         )); } pos += sizeof(z80_readmap         );
@@ -382,6 +467,8 @@ size_t saveState(uint8_t* buffer)
   if (buffer != NULL) { memcpy(&buffer[pos], &z80_cycle_ratio     , sizeof(z80_cycle_ratio     )); } pos += sizeof(z80_cycle_ratio     );
   #endif
 
+  // genesis.c
+
   #ifdef USE_DYNAMIC_ALLOC
   if (buffer != NULL) { memcpy(&buffer[pos], ext                  , sizeof(external_t          )); } pos += sizeof(external_t          );
   #else
@@ -395,13 +482,25 @@ size_t saveState(uint8_t* buffer)
   if (buffer != NULL) { memcpy(&buffer[pos], &zstate              , sizeof(zstate              )); } pos += sizeof(zstate              );
   if (buffer != NULL) { memcpy(&buffer[pos], &pico_current        , sizeof(pico_current        )); } pos += sizeof(pico_current        );
   if (buffer != NULL) { memcpy(&buffer[pos], &tmss                , sizeof(tmss                )); } pos += sizeof(tmss                );
+
+  // io_ctrl.c
+
   if (buffer != NULL) { memcpy(&buffer[pos], &io_reg              , sizeof(io_reg              )); } pos += sizeof(io_reg              );
   if (buffer != NULL) { memcpy(&buffer[pos], &region_code         , sizeof(region_code         )); } pos += sizeof(region_code         );
   if (buffer != NULL) { memcpy(&buffer[pos], &port                , sizeof(port                )); } pos += sizeof(port                );
+
+  // load_rom.c
+
   if (buffer != NULL) { memcpy(&buffer[pos], &rominfo             , sizeof(rominfo             )); } pos += sizeof(rominfo             );
   if (buffer != NULL) { memcpy(&buffer[pos], &romtype             , sizeof(romtype             )); } pos += sizeof(romtype             );
   if (buffer != NULL) { memcpy(&buffer[pos], &rom_region          , sizeof(rom_region          )); } pos += sizeof(rom_region          );
+
+  // membnk.c
+
   if (buffer != NULL) { memcpy(&buffer[pos], &zbank_memory_map    , sizeof(zbank_memory_map    )); } pos += sizeof(zbank_memory_map    );
+
+  // system.c
+
   if (buffer != NULL) { memcpy(&buffer[pos], &bitmap              , sizeof(bitmap              )); } pos += sizeof(bitmap              );
   if (buffer != NULL) { memcpy(&buffer[pos], &snd                 , sizeof(snd                 )); } pos += sizeof(snd                 );
   if (buffer != NULL) { memcpy(&buffer[pos], &mcycles_vdp         , sizeof(mcycles_vdp         )); } pos += sizeof(mcycles_vdp         );
@@ -413,6 +512,9 @@ size_t saveState(uint8_t* buffer)
   if (buffer != NULL) { memcpy(&buffer[pos], &eq                  , sizeof(eq                  )); } pos += sizeof(eq                  );
   if (buffer != NULL) { memcpy(&buffer[pos], &llp                 , sizeof(llp                 )); } pos += sizeof(llp                 );
   if (buffer != NULL) { memcpy(&buffer[pos], &rrp                 , sizeof(rrp                 )); } pos += sizeof(rrp                 );
+
+  // vdp.c
+
   if (buffer != NULL) { memcpy(&buffer[pos], &sat                 , sizeof(sat                 )); } pos += sizeof(sat                 );
   if (buffer != NULL) { memcpy(&buffer[pos], &vram                , sizeof(vram                )); } pos += sizeof(vram                );
   if (buffer != NULL) { memcpy(&buffer[pos], &cram                , sizeof(cram                )); } pos += sizeof(cram                );
@@ -466,6 +568,9 @@ size_t saveState(uint8_t* buffer)
   // if (buffer != NULL) { memcpy(&buffer[pos], &fifo_timing         , sizeof(fifo_timing         )); } pos += sizeof(fifo_timing         );
   if (buffer != NULL) { memcpy(&buffer[pos], &hblank_start_cycle  , sizeof(hblank_start_cycle  )); } pos += sizeof(hblank_start_cycle  );
   if (buffer != NULL) { memcpy(&buffer[pos], &hblank_end_cycle    , sizeof(hblank_end_cycle    )); } pos += sizeof(hblank_end_cycle    );
+
+  // vdp_render.c
+
   if (buffer != NULL) { memcpy(&buffer[pos], &clip                , sizeof(clip                )); } pos += sizeof(clip                );
   if (buffer != NULL) { memcpy(&buffer[pos], &bg_pattern_cache    , sizeof(bg_pattern_cache    )); } pos += sizeof(bg_pattern_cache    );
   if (buffer != NULL) { memcpy(&buffer[pos], &name_lut            , sizeof(name_lut            )); } pos += sizeof(name_lut            );
@@ -487,6 +592,8 @@ void loadState(const uint8_t* buffer)
 {
   size_t pos = 0;
 
+  // cart_hw/svp/svp16.h
+
   if (svp != NULL)
   {
    // Special treatment for SVP, since it is stored inside the ROM that we otherwise do not store
@@ -501,32 +608,102 @@ void loadState(const uint8_t* buffer)
    if (buffer != NULL) { memcpy(&g_cycles            , &buffer[pos],  sizeof(g_cycles            )); } pos += sizeof(g_cycles            );
   }
   
+  // cart_hw/areplay.c
+
   if (buffer != NULL) { memcpy(&action_replay       , &buffer[pos],  sizeof(action_replay       )); } pos += sizeof(action_replay       );
+
+  // cart_hw/eeprom_93c.c
+
   if (buffer != NULL) { memcpy(&eeprom_93c          , &buffer[pos],  sizeof(eeprom_93c          )); } pos += sizeof(eeprom_93c          );
+
+  // cart_hw/eeprom_i2c.c
+
   if (buffer != NULL) { memcpy(&eeprom_i2c          , &buffer[pos],  sizeof(eeprom_i2c          )); } pos += sizeof(eeprom_i2c          );
+
+  // cart_hw/eeprom_spi.c
+
   if (buffer != NULL) { memcpy(&spi_eeprom          , &buffer[pos],  sizeof(spi_eeprom          )); } pos += sizeof(spi_eeprom          );
+
+  // cart_hw/ggenie.c
+
   if (buffer != NULL) { memcpy(&ggenie              , &buffer[pos],  sizeof(ggenie              )); } pos += sizeof(ggenie              );
+
+  // cart_hw/megasd.c
+
   if (buffer != NULL) { memcpy(&megasd_hw           , &buffer[pos],  sizeof(megasd_hw           )); } pos += sizeof(megasd_hw           );
+
+  // cart_hw/sram.c
+
   if (buffer != NULL) { memcpy(&sram                , &buffer[pos],  sizeof(sram                )); } pos += sizeof(sram                );
+
+  // cd_hw/cdd.c
+
+  // input_hw/activator.c
+
   if (buffer != NULL) { memcpy(&activator           , &buffer[pos],  sizeof(activator           )); } pos += sizeof(activator           );
+
+  // input_hw/gamepad.c
+
   if (buffer != NULL) { memcpy(&gamepad             , &buffer[pos],  sizeof(gamepad             )); } pos += sizeof(gamepad             );
   if (buffer != NULL) { memcpy(&flipflop            , &buffer[pos],  sizeof(flipflop            )); } pos += sizeof(flipflop            );
   if (buffer != NULL) { memcpy(&latch               , &buffer[pos],  sizeof(latch               )); } pos += sizeof(latch               );
+
+  // input_hw/graphic_board.c
+
   if (buffer != NULL) { memcpy(&board               , &buffer[pos],  sizeof(board               )); } pos += sizeof(board               );
+
+  // input_hw/input.c
+
   if (buffer != NULL) { memcpy(&input               , &buffer[pos],  sizeof(input               )); } pos += sizeof(input               );
   if (buffer != NULL) { memcpy(&old_system          , &buffer[pos],  sizeof(old_system          )); } pos += sizeof(old_system          );
+
+  // input_hw/lightgun.c
+  
   if (buffer != NULL) { memcpy(&lightgun            , &buffer[pos],  sizeof(lightgun            )); } pos += sizeof(lightgun            );
+
+  // input_hw/mouse.c
+
   if (buffer != NULL) { memcpy(&mouse               , &buffer[pos],  sizeof(mouse               )); } pos += sizeof(mouse               );
+
+  // input_hw/paddle.c
+
   if (buffer != NULL) { memcpy(&paddle              , &buffer[pos],  sizeof(paddle              )); } pos += sizeof(paddle              );
+
+  // input_hw/sportspad.c
+
   if (buffer != NULL) { memcpy(&sportspad           , &buffer[pos],  sizeof(sportspad           )); } pos += sizeof(sportspad           );
+
+  // input_hw/teamplayer.c
+
   if (buffer != NULL) { memcpy(&teamplayer          , &buffer[pos],  sizeof(teamplayer          )); } pos += sizeof(teamplayer          );
+
+  // input_hw/terebi_oekaki.c
+
   if (buffer != NULL) { memcpy(&tablet              , &buffer[pos],  sizeof(tablet              )); } pos += sizeof(tablet              );
+
+  // input_hw/xe_1ap.c
+
   if (buffer != NULL) { memcpy(&xe_1ap              , &buffer[pos],  sizeof(xe_1ap              )); } pos += sizeof(xe_1ap              );
+
+  // m68k/m68k.c
+
   if (buffer != NULL) { memcpy(&m68k                , &buffer[pos],  sizeof(m68k                )); } pos += sizeof(m68k                );
   if (buffer != NULL) { memcpy(&s68k                , &buffer[pos],  sizeof(s68k                )); } pos += sizeof(s68k                );
+
+  // m68k/m68kcpu.c
+
   if (buffer != NULL) { memcpy(&m68k_irq_latency    , &buffer[pos],  sizeof(m68k_irq_latency    )); } pos += sizeof(m68k_irq_latency    );
+
+  // m68k/s68kcpu.c
+
   if (buffer != NULL) { memcpy(&s68k_irq_latency    , &buffer[pos],  sizeof(s68k_irq_latency    )); } pos += sizeof(s68k_irq_latency    );
+
+  // sound/psg.c
+
   if (buffer != NULL) { memcpy(& psg                , &buffer[pos],  sizeof( psg                )); } pos += sizeof( psg                );
+
+  // sound/sound.c
+
   if (buffer != NULL) { memcpy(&fm_buffer           , &buffer[pos],  sizeof(fm_buffer           )); } pos += sizeof(fm_buffer           );
   if (buffer != NULL) { memcpy(&fm_last             , &buffer[pos],  sizeof(fm_last             )); } pos += sizeof(fm_last             );
   //if (buffer != NULL) { memcpy(&*fm_ptr             , &buffer[pos],  sizeof(*fm_ptr             )); } pos += sizeof(*fm_ptr             );
@@ -550,10 +727,15 @@ void loadState(const uint8_t* buffer)
   if (buffer != NULL) { memcpy(&opll_status         , &buffer[pos],  sizeof(opll_status         )); } pos += sizeof(opll_status         );
   #endif
 
+  // sound/ym2413.h
+
   if (buffer != NULL) { memcpy(&output              , &buffer[pos],  sizeof(output              )); } pos += sizeof(output              );
   if (buffer != NULL) { memcpy(&LFO_AM              , &buffer[pos],  sizeof(LFO_AM              )); } pos += sizeof(LFO_AM              );
   if (buffer != NULL) { memcpy(&LFO_PM              , &buffer[pos],  sizeof(LFO_PM              )); } pos += sizeof(LFO_PM              );
   if (buffer != NULL) { memcpy(&ym2413              , &buffer[pos],  sizeof(ym2413              )); } pos += sizeof(ym2413              );
+
+  // sound/ym2612.c
+
   if (buffer != NULL) { memcpy(&ym2612              , &buffer[pos],  sizeof(ym2612              )); } pos += sizeof(ym2612              );
   if (buffer != NULL) { memcpy(&m2                  , &buffer[pos],  sizeof(m2                  )); } pos += sizeof(m2                  );
   if (buffer != NULL) { memcpy(&c1                  , &buffer[pos],  sizeof(c1                  )); } pos += sizeof(c1                  );
@@ -562,6 +744,9 @@ void loadState(const uint8_t* buffer)
   if (buffer != NULL) { memcpy(&out_fm              , &buffer[pos],  sizeof(out_fm              )); } pos += sizeof(out_fm              );
   if (buffer != NULL) { memcpy(&op_mask             , &buffer[pos],  sizeof(op_mask             )); } pos += sizeof(op_mask             );
   if (buffer != NULL) { memcpy(&chip_type           , &buffer[pos],  sizeof(chip_type           )); } pos += sizeof(chip_type           );
+
+  // z80/z80.c
+
   if (buffer != NULL) { memcpy(&Z80                 , &buffer[pos],  sizeof(Z80                 )); } pos += sizeof(Z80                 );
   if (buffer != NULL) { memcpy(&z80_last_fetch      , &buffer[pos],  sizeof(z80_last_fetch      )); } pos += sizeof(z80_last_fetch      );
   if (buffer != NULL) { memcpy(&z80_readmap         , &buffer[pos],  sizeof(z80_readmap         )); } pos += sizeof(z80_readmap         );
@@ -579,6 +764,8 @@ void loadState(const uint8_t* buffer)
   if (buffer != NULL) { memcpy(&z80_cycle_ratio     , &buffer[pos],  sizeof(z80_cycle_ratio     )); } pos += sizeof(z80_cycle_ratio     );
   #endif
 
+  // genesis.c
+
   #ifdef USE_DYNAMIC_ALLOC
   if (buffer != NULL) { memcpy(ext                  ,  &buffer[pos], sizeof(external_t          )); } pos += sizeof(external_t          );
   #else
@@ -592,13 +779,25 @@ void loadState(const uint8_t* buffer)
   if (buffer != NULL) { memcpy(&zstate              , &buffer[pos],  sizeof(zstate              )); } pos += sizeof(zstate              );
   if (buffer != NULL) { memcpy(&pico_current        , &buffer[pos],  sizeof(pico_current        )); } pos += sizeof(pico_current        );
   if (buffer != NULL) { memcpy(&tmss                , &buffer[pos],  sizeof(tmss                )); } pos += sizeof(tmss                );
+
+  // io_ctrl.c
+
   if (buffer != NULL) { memcpy(&io_reg              , &buffer[pos],  sizeof(io_reg              )); } pos += sizeof(io_reg              );
   if (buffer != NULL) { memcpy(&region_code         , &buffer[pos],  sizeof(region_code         )); } pos += sizeof(region_code         );
   if (buffer != NULL) { memcpy(&port                , &buffer[pos],  sizeof(port                )); } pos += sizeof(port                );
+
+  // load_rom.c
+
   if (buffer != NULL) { memcpy(&rominfo             , &buffer[pos],  sizeof(rominfo             )); } pos += sizeof(rominfo             );
   if (buffer != NULL) { memcpy(&romtype             , &buffer[pos],  sizeof(romtype             )); } pos += sizeof(romtype             );
   if (buffer != NULL) { memcpy(&rom_region          , &buffer[pos],  sizeof(rom_region          )); } pos += sizeof(rom_region          );
+
+  // membnk.c
+
   if (buffer != NULL) { memcpy(&zbank_memory_map    , &buffer[pos],  sizeof(zbank_memory_map    )); } pos += sizeof(zbank_memory_map    );
+
+  // system.c
+
   if (buffer != NULL) { memcpy(&bitmap              , &buffer[pos],  sizeof(bitmap              )); } pos += sizeof(bitmap              );
   if (buffer != NULL) { memcpy(&snd                 , &buffer[pos],  sizeof(snd                 )); } pos += sizeof(snd                 );
   if (buffer != NULL) { memcpy(&mcycles_vdp         , &buffer[pos],  sizeof(mcycles_vdp         )); } pos += sizeof(mcycles_vdp         );
@@ -610,6 +809,9 @@ void loadState(const uint8_t* buffer)
   if (buffer != NULL) { memcpy(&eq                  , &buffer[pos],  sizeof(eq                  )); } pos += sizeof(eq                  );
   if (buffer != NULL) { memcpy(&llp                 , &buffer[pos],  sizeof(llp                 )); } pos += sizeof(llp                 );
   if (buffer != NULL) { memcpy(&rrp                 , &buffer[pos],  sizeof(rrp                 )); } pos += sizeof(rrp                 );
+
+  // vdp.c
+
   if (buffer != NULL) { memcpy(&sat                 , &buffer[pos],  sizeof(sat                 )); } pos += sizeof(sat                 );
   if (buffer != NULL) { memcpy(&vram                , &buffer[pos],  sizeof(vram                )); } pos += sizeof(vram                );
   if (buffer != NULL) { memcpy(&cram                , &buffer[pos],  sizeof(cram                )); } pos += sizeof(cram                );
@@ -663,6 +865,9 @@ void loadState(const uint8_t* buffer)
   // if (buffer != NULL) { memcpy(&fifo_timing         , &buffer[pos],  sizeof(fifo_timing         )); } pos += sizeof(fifo_timing         );
   if (buffer != NULL) { memcpy(&hblank_start_cycle  , &buffer[pos],  sizeof(hblank_start_cycle  )); } pos += sizeof(hblank_start_cycle  );
   if (buffer != NULL) { memcpy(&hblank_end_cycle    , &buffer[pos],  sizeof(hblank_end_cycle    )); } pos += sizeof(hblank_end_cycle    );
+
+  // vdp_render.c
+  
   if (buffer != NULL) { memcpy(&clip                , &buffer[pos],  sizeof(clip                )); } pos += sizeof(clip                );
   if (buffer != NULL) { memcpy(&bg_pattern_cache    , &buffer[pos],  sizeof(bg_pattern_cache    )); } pos += sizeof(bg_pattern_cache    );
   if (buffer != NULL) { memcpy(&name_lut            , &buffer[pos],  sizeof(name_lut            )); } pos += sizeof(name_lut            );

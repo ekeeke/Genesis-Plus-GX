@@ -87,6 +87,11 @@ extern T_MEGASD_HW megasd_hw;
 
 extern T_SRAM sram;
 
+// cd_hw/cdd.h
+
+extern cdStream *cdTrackStreams[100];
+extern cdStream *cdTocStream;
+
 // input_hw/activator.h
 
 extern struct activator_t activator[2];
