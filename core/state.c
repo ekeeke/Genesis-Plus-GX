@@ -382,6 +382,12 @@ size_t saveState(uint8_t* buffer)
   if (buffer != NULL) { memcpy(&buffer[pos], &z80_cycle_ratio     , sizeof(z80_cycle_ratio     )); } pos += sizeof(z80_cycle_ratio     );
   #endif
 
+  #ifdef USE_DYNAMIC_ALLOC
+  if (buffer != NULL) { memcpy(&buffer[pos], ext                  , sizeof(external_t          )); } pos += sizeof(external_t          );
+  #else
+  if (buffer != NULL) { memcpy(&buffer[pos], &ext                 , sizeof(external_t          )); } pos += sizeof(external_t          );
+  #endif
+
   if (buffer != NULL) { memcpy(&buffer[pos], &boot_rom            , sizeof(boot_rom            )); } pos += sizeof(boot_rom            );
   if (buffer != NULL) { memcpy(&buffer[pos], &work_ram            , sizeof(work_ram            )); } pos += sizeof(work_ram            );
   if (buffer != NULL) { memcpy(&buffer[pos], &zram                , sizeof(zram                )); } pos += sizeof(zram                );
@@ -571,6 +577,12 @@ void loadState(const uint8_t* buffer)
 
   #ifdef Z80_OVERCLOCK_SHIFT
   if (buffer != NULL) { memcpy(&z80_cycle_ratio     , &buffer[pos],  sizeof(z80_cycle_ratio     )); } pos += sizeof(z80_cycle_ratio     );
+  #endif
+
+  #ifdef USE_DYNAMIC_ALLOC
+  if (buffer != NULL) { memcpy(ext                  ,  &buffer[pos], sizeof(external_t          )); } pos += sizeof(external_t          );
+  #else
+  if (buffer != NULL) { memcpy(&ext                 ,  &buffer[pos], sizeof(external_t          )); } pos += sizeof(external_t          );
   #endif
 
   if (buffer != NULL) { memcpy(&boot_rom            , &buffer[pos],  sizeof(boot_rom            )); } pos += sizeof(boot_rom            );
