@@ -39,7 +39,16 @@ T_MEGASD_HW megasd_hw;
 
 T_SRAM sram;
 
+// cd_hw/cdc.h
+
+void (*dma_w)(unsigned int length);  /* active DMA callback */
+void (*halted_dma_w)(unsigned int length);  /* halted DMA callback */
+
 // cd_hw/cdd.c
+
+#if defined(USE_LIBCHDR)
+chd_file *libCHDRfile;
+#endif
 
 cdStream *cdTrackStreams[100];
 cdStream *cdTocStream;

@@ -92,7 +92,6 @@ typedef struct
 } toc_t; 
 
 #if defined(USE_LIBCHDR)
-extern chd_file *libCHDRfile;
 
 /* CHD file */
 typedef struct

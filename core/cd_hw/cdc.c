@@ -41,9 +41,6 @@
 #include "../state.h"
 #include "../m68k/m68k.h"
 
-void (*dma_w)(unsigned int length);  /* active DMA callback */
-void (*halted_dma_w)(unsigned int length);  /* halted DMA callback */
-
 /* IFSTAT register bitmasks */
 #define BIT_DTEI  0x40
 #define BIT_DECI  0x20

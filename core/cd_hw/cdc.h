@@ -60,9 +60,6 @@ typedef struct
   uint8_t irq; /* invert of CDC /INT output */
 } cdc_t; 
 
-extern void (*dma_w)(unsigned int length);  /* active DMA callback */
-extern void (*halted_dma_w)(unsigned int length);  /* halted DMA callback */
-
 /* Function prototypes */
 extern void cdc_init(void);
 extern void cdc_reset(void);

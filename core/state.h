@@ -87,7 +87,16 @@ extern T_MEGASD_HW megasd_hw;
 
 extern T_SRAM sram;
 
+// cd_hw/cdc.h
+
+extern void (*dma_w)(unsigned int length);  /* active DMA callback */
+extern void (*halted_dma_w)(unsigned int length);  /* halted DMA callback */
+
 // cd_hw/cdd.h
+
+#if defined(USE_LIBCHDR)
+extern chd_file *libCHDRfile;
+#endif
 
 extern cdStream *cdTrackStreams[100];
 extern cdStream *cdTocStream;

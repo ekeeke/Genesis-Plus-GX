@@ -53,10 +53,6 @@
 #define SUPPORTED_EXT 10
 #endif
 
-#if defined(USE_LIBCHDR)
-chd_file *libCHDRfile;
-#endif
-
 /* CD blocks scanning speed */
 #define CD_SCAN_SPEED 30
 
