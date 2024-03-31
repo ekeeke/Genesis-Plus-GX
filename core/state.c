@@ -341,6 +341,32 @@ size_t saveState(uint8_t* buffer)
 
   // cd_hw/cdd.c
 
+  if (system_hw == SYSTEM_MCD)
+  {
+    #ifdef USE_DYNAMIC_ALLOC
+     cd_hw_t* cdData = (cd_hw_t*)ext;
+    #else
+     cd_hw_t* cdData = (cd_hw_t*)&ext;
+    #endif
+
+    if (buffer != NULL) { memcpy(&buffer[pos], &cdData->prg_ram            , sizeof(cdData->prg_ram            )); } pos += sizeof(cdData->prg_ram           );
+    if (buffer != NULL) { memcpy(&buffer[pos], &cdData->word_ram           , sizeof(cdData->word_ram           )); } pos += sizeof(cdData->word_ram          );
+    if (buffer != NULL) { memcpy(&buffer[pos], &cdData->word_ram_2M        , sizeof(cdData->word_ram_2M        )); } pos += sizeof(cdData->word_ram_2M       );
+    if (buffer != NULL) { memcpy(&buffer[pos], &cdData->bram               , sizeof(cdData->bram               )); } pos += sizeof(cdData->bram              );
+    if (buffer != NULL) { memcpy(&buffer[pos], &cdData->regs               , sizeof(cdData->regs               )); } pos += sizeof(cdData->regs              );
+    if (buffer != NULL) { memcpy(&buffer[pos], &cdData->cycles             , sizeof(cdData->cycles             )); } pos += sizeof(cdData->cycles            );
+    if (buffer != NULL) { memcpy(&buffer[pos], &cdData->cycles_per_line    , sizeof(cdData->cycles_per_line    )); } pos += sizeof(cdData->cycles_per_line   );
+    if (buffer != NULL) { memcpy(&buffer[pos], &cdData->stopwatch          , sizeof(cdData->stopwatch          )); } pos += sizeof(cdData->stopwatch         );
+    if (buffer != NULL) { memcpy(&buffer[pos], &cdData->timer              , sizeof(cdData->timer              )); } pos += sizeof(cdData->timer             );
+    if (buffer != NULL) { memcpy(&buffer[pos], &cdData->pending            , sizeof(cdData->pending            )); } pos += sizeof(cdData->pending           );
+    if (buffer != NULL) { memcpy(&buffer[pos], &cdData->dmna               , sizeof(cdData->dmna               )); } pos += sizeof(cdData->dmna              );
+    if (buffer != NULL) { memcpy(&buffer[pos], &cdData->type               , sizeof(cdData->type               )); } pos += sizeof(cdData->type              );
+    // if (buffer != NULL) { memcpy(&buffer[pos], &cdData->gfx_hw             , sizeof(cdData->gfx_hw             )); } pos += sizeof(cdData->gfx_hw            );
+    if (buffer != NULL) { memcpy(&buffer[pos], &cdData->cdc_hw             , sizeof(cdData->cdc_hw             )); } pos += sizeof(cdData->cdc_hw            );
+    if (buffer != NULL) { memcpy(&buffer[pos], &cdData->cdd_hw             , sizeof(cdData->cdd_hw             )); } pos += sizeof(cdData->cdd_hw            );
+    // if (buffer != NULL) { memcpy(&buffer[pos], &cdData->pcm_hw             , sizeof(cdData->pcm_hw             )); } pos += sizeof(cdData->pcm_hw            );       
+  }
+
   // input_hw/activator.c
 
   if (buffer != NULL) { memcpy(&buffer[pos], &activator           , sizeof(activator           )); } pos += sizeof(activator           );
@@ -469,12 +495,6 @@ size_t saveState(uint8_t* buffer)
 
   // genesis.c
 
-  #ifdef USE_DYNAMIC_ALLOC
-  if (buffer != NULL) { memcpy(&buffer[pos], ext                  , sizeof(external_t          )); } pos += sizeof(external_t          );
-  #else
-  if (buffer != NULL) { memcpy(&buffer[pos], &ext                 , sizeof(external_t          )); } pos += sizeof(external_t          );
-  #endif
-
   if (buffer != NULL) { memcpy(&buffer[pos], &boot_rom            , sizeof(boot_rom            )); } pos += sizeof(boot_rom            );
   if (buffer != NULL) { memcpy(&buffer[pos], &work_ram            , sizeof(work_ram            )); } pos += sizeof(work_ram            );
   if (buffer != NULL) { memcpy(&buffer[pos], &zram                , sizeof(zram                )); } pos += sizeof(zram                );
@@ -601,7 +621,7 @@ void loadState(const uint8_t* buffer)
    if (buffer != NULL) { memcpy(ssp                  , &buffer[pos],  sizeof(ssp1601_t           )); } pos += sizeof(ssp1601_t           );
 
    // SSP PC, store as offset to svp->iram_rom
-   int64_t SSPPC;
+   int64_t SSPPC = 0;
    if (buffer != NULL) { memcpy(&SSPPC               , &buffer[pos],  sizeof(SSPPC              )); } pos += sizeof(SSPPC               );
    SET_PC(SSPPC);
 
@@ -637,6 +657,32 @@ void loadState(const uint8_t* buffer)
   if (buffer != NULL) { memcpy(&sram                , &buffer[pos],  sizeof(sram                )); } pos += sizeof(sram                );
 
   // cd_hw/cdd.c
+
+    if (system_hw == SYSTEM_MCD)
+  {
+    #ifdef USE_DYNAMIC_ALLOC
+     cd_hw_t* cdData = (cd_hw_t*)ext;
+    #else
+     cd_hw_t* cdData = (cd_hw_t*)&ext;
+    #endif
+
+    if (buffer != NULL) { memcpy(&cdData->prg_ram            , &buffer[pos],  sizeof(cdData->prg_ram            )); } pos += sizeof(cdData->prg_ram           );
+    if (buffer != NULL) { memcpy(&cdData->word_ram           , &buffer[pos],  sizeof(cdData->word_ram           )); } pos += sizeof(cdData->word_ram          );
+    if (buffer != NULL) { memcpy(&cdData->word_ram_2M        , &buffer[pos],  sizeof(cdData->word_ram_2M        )); } pos += sizeof(cdData->word_ram_2M       );
+    if (buffer != NULL) { memcpy(&cdData->bram               , &buffer[pos],  sizeof(cdData->bram               )); } pos += sizeof(cdData->bram              );
+    if (buffer != NULL) { memcpy(&cdData->regs               , &buffer[pos],  sizeof(cdData->regs               )); } pos += sizeof(cdData->regs              );
+    if (buffer != NULL) { memcpy(&cdData->cycles             , &buffer[pos],  sizeof(cdData->cycles             )); } pos += sizeof(cdData->cycles            );
+    if (buffer != NULL) { memcpy(&cdData->cycles_per_line    , &buffer[pos],  sizeof(cdData->cycles_per_line    )); } pos += sizeof(cdData->cycles_per_line   );
+    if (buffer != NULL) { memcpy(&cdData->stopwatch          , &buffer[pos],  sizeof(cdData->stopwatch          )); } pos += sizeof(cdData->stopwatch         );
+    if (buffer != NULL) { memcpy(&cdData->timer              , &buffer[pos],  sizeof(cdData->timer              )); } pos += sizeof(cdData->timer             );
+    if (buffer != NULL) { memcpy(&cdData->pending            , &buffer[pos],  sizeof(cdData->pending            )); } pos += sizeof(cdData->pending           );
+    if (buffer != NULL) { memcpy(&cdData->dmna               , &buffer[pos],  sizeof(cdData->dmna               )); } pos += sizeof(cdData->dmna              );
+    if (buffer != NULL) { memcpy(&cdData->type               , &buffer[pos],  sizeof(cdData->type               )); } pos += sizeof(cdData->type              );
+    // if (buffer != NULL) { memcpy(&cdData->gfx_hw             , &buffer[pos],  sizeof(cdData->gfx_hw             )); } pos += sizeof(cdData->gfx_hw            );
+    if (buffer != NULL) { memcpy(&cdData->cdc_hw             , &buffer[pos],  sizeof(cdData->cdc_hw             )); } pos += sizeof(cdData->cdc_hw            );
+    if (buffer != NULL) { memcpy(&cdData->cdd_hw             , &buffer[pos],  sizeof(cdData->cdd_hw             )); } pos += sizeof(cdData->cdd_hw            );
+    // if (buffer != NULL) { memcpy(&cdData->pcm_hw             , &buffer[pos],  sizeof(cdData->pcm_hw             )); } pos += sizeof(cdData->pcm_hw            );       
+  }
 
   // input_hw/activator.c
 
@@ -766,12 +812,6 @@ void loadState(const uint8_t* buffer)
 
   // genesis.c
 
-  #ifdef USE_DYNAMIC_ALLOC
-  if (buffer != NULL) { memcpy(ext                  ,  &buffer[pos], sizeof(external_t          )); } pos += sizeof(external_t          );
-  #else
-  if (buffer != NULL) { memcpy(&ext                 ,  &buffer[pos], sizeof(external_t          )); } pos += sizeof(external_t          );
-  #endif
-
   if (buffer != NULL) { memcpy(&boot_rom            , &buffer[pos],  sizeof(boot_rom            )); } pos += sizeof(boot_rom            );
   if (buffer != NULL) { memcpy(&work_ram            , &buffer[pos],  sizeof(work_ram            )); } pos += sizeof(work_ram            );
   if (buffer != NULL) { memcpy(&zram                , &buffer[pos],  sizeof(zram                )); } pos += sizeof(zram                );
@@ -867,7 +907,7 @@ void loadState(const uint8_t* buffer)
   if (buffer != NULL) { memcpy(&hblank_end_cycle    , &buffer[pos],  sizeof(hblank_end_cycle    )); } pos += sizeof(hblank_end_cycle    );
 
   // vdp_render.c
-  
+
   if (buffer != NULL) { memcpy(&clip                , &buffer[pos],  sizeof(clip                )); } pos += sizeof(clip                );
   if (buffer != NULL) { memcpy(&bg_pattern_cache    , &buffer[pos],  sizeof(bg_pattern_cache    )); } pos += sizeof(bg_pattern_cache    );
   if (buffer != NULL) { memcpy(&name_lut            , &buffer[pos],  sizeof(name_lut            )); } pos += sizeof(name_lut            );
