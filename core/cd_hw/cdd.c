@@ -53,6 +53,10 @@
 #define SUPPORTED_EXT 10
 #endif
 
+#if defined(USE_LIBCHDR)
+chd_file *libCHDRfile;
+#endif
+
 /* CD blocks scanning speed */
 #define CD_SCAN_SPEED 30
 
@@ -254,20 +258,20 @@ int cdd_load(char *filename, char *header)
     const chd_header *head;
 
     /* open CHD file */
-    if (chd_open_file(fd, CHD_OPEN_READ, NULL, &cdd.chd.file) != CHDERR_NONE)
+    if (chd_open_file(fd, CHD_OPEN_READ, NULL, &libCHDRfile) != CHDERR_NONE)
     {
-      chd_close(cdd.chd.file);
+      chd_close(libCHDRfile);
       cdStreamClose(fd);
       return -1;
     }
 
     /* retrieve CHD header */
-    head = chd_get_header(cdd.chd.file);
+    head = chd_get_header(libCHDRfile);
 
     /* detect invalid hunk size */
     if ((head->hunkbytes == 0) || (head->hunkbytes % CD_FRAME_SIZE))
     {
-      chd_close(cdd.chd.file);
+      chd_close(libCHDRfile);
       cdStreamClose(fd);
       return -1;
     }
@@ -276,7 +280,7 @@ int cdd_load(char *filename, char *header)
     cdd.chd.hunk = (uint8_t *)malloc(head->hunkbytes);
     if (!cdd.chd.hunk)
     {
-      chd_close(cdd.chd.file);
+      chd_close(libCHDRfile);
       cdStreamClose(fd);
       return -1;
     }
@@ -295,12 +299,12 @@ int cdd_load(char *filename, char *header)
       type[0] = subtype[0] = pgtype[0] = pgsub[0] = 0;
 
       /* attempt fetch either complete or partial metadata for current track */
-      if (chd_get_metadata(cdd.chd.file, CDROM_TRACK_METADATA2_TAG, cdd.toc.last, metadata, 256, 0, 0, 0) == CHDERR_NONE)
+      if (chd_get_metadata(libCHDRfile, CDROM_TRACK_METADATA2_TAG, cdd.toc.last, metadata, 256, 0, 0, 0) == CHDERR_NONE)
       {
         if (sscanf(metadata, CDROM_TRACK_METADATA2_FORMAT, &tracknum, &type[0], &subtype[0], &frames, &pregap, &pgtype[0], &pgsub[0], &postgap) != 8)
           break;
       }
-      else if (chd_get_metadata(cdd.chd.file, CDROM_TRACK_METADATA_TAG, cdd.toc.last, metadata, 256, 0, 0, 0) == CHDERR_NONE)
+      else if (chd_get_metadata(libCHDRfile, CDROM_TRACK_METADATA_TAG, cdd.toc.last, metadata, 256, 0, 0, 0) == CHDERR_NONE)
       {
         if (sscanf(metadata, CDROM_TRACK_METADATA_FORMAT, &tracknum, &type[0], &subtype[0], &frames) != 4)
           break;
@@ -381,7 +385,7 @@ int cdd_load(char *filename, char *header)
     {
       /* read first chunk of data */
       cdd.chd.hunknum = cdd.toc.tracks[0].offset / cdd.chd.hunkbytes;
-      chd_read(cdd.chd.file, cdd.chd.hunknum, cdd.chd.hunk);
+      chd_read(libCHDRfile, cdd.chd.hunknum, cdd.chd.hunk);
 
       /* copy CD image header + security code (skip RAW sector 16-byte header) */
       memcpy(header, cdd.chd.hunk + (cdd.toc.tracks[0].offset % cdd.chd.hunkbytes) + ((cdd.sectorSize == 2048) ? 0 : 16), 0x210);
@@ -399,7 +403,7 @@ int cdd_load(char *filename, char *header)
     }
 
     /* invalid CHD file */
-    chd_close(cdd.chd.file);
+    chd_close(libCHDRfile);
     cdStreamClose(fd);
     return -1;
   }
@@ -1139,7 +1143,7 @@ void cdd_unload(void)
     int i;
 
 #if defined(USE_LIBCHDR)
-    chd_close(cdd.chd.file);
+    chd_close(libCHDRfile);
     if (cdd.chd.hunk)
       free(cdd.chd.hunk);
 #endif
@@ -1197,7 +1201,7 @@ void cdd_read_data(uint8_t *dst, uint8_t *subheader)
   if (cdd.toc.tracks[cdd.index].type && (cdd.lba >= 0))
   {
 #if defined(USE_LIBCHDR)
-    if (cdd.chd.file)
+    if (libCHDRfile)
     {
       /* CHD file offset */
       int offset = cdd.toc.tracks[0].offset + (cdd.lba * CD_FRAME_SIZE);
@@ -1208,7 +1212,7 @@ void cdd_read_data(uint8_t *dst, uint8_t *subheader)
       /* update CHD hunk cache if necessary */
       if (hunknum != cdd.chd.hunknum)
       {
-        chd_read(cdd.chd.file, hunknum, cdd.chd.hunk);
+        chd_read(libCHDRfile, hunknum, cdd.chd.hunk);
         cdd.chd.hunknum = hunknum;
       }
 
@@ -1301,7 +1305,7 @@ void cdd_seek_audio(int index, int lba)
 
   /* seek to track position */
 #if defined(USE_LIBCHDR)
-  if (cdd.chd.file)
+  if (libCHDRfile)
   {
     /* CHD file offset */
     cdd.chd.hunkofs = cdd.toc.tracks[index].offset + (lba * CD_FRAME_SIZE);
@@ -1342,7 +1346,7 @@ void cdd_read_audio(unsigned int samples)
 
     /* read samples from current block */
 #if defined(USE_LIBCHDR)
-    if (cdd.chd.file)
+    if (libCHDRfile)
     {
 #ifndef LSB_FIRST
       int16_t *ptr = (int16_t *) (cdd.chd.hunk + (cdd.chd.hunkofs % cdd.chd.hunkbytes));
@@ -1359,7 +1363,7 @@ void cdd_read_audio(unsigned int samples)
         /* update CHD hunk cache if necessary */
         if (hunknum != cdd.chd.hunknum)
         {
-          chd_read(cdd.chd.file, hunknum, cdd.chd.hunk);
+          chd_read(libCHDRfile, hunknum, cdd.chd.hunk);
           cdd.chd.hunknum = hunknum;
         }
 

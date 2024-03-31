@@ -1006,14 +1006,14 @@ void scd_write_byte(unsigned int address, unsigned int data)
             }
 
             /* check if CDC DMA to 2M Word-RAM is running */
-            if (cdc.dma_w == word_ram_2M_dma_w)
+            if (dma_w == word_ram_2M_dma_w)
             {
               /* synchronize CDC DMA with SUB-CPU */
               cdc_dma_update(s68k.cycles);
 
               /* halt CDC DMA to 2M Word-RAM (if still running) */
-              cdc.halted_dma_w = cdc.dma_w;
-              cdc.dma_w = 0;
+              halted_dma_w = dma_w;
+              dma_w = 0;
             }
 
             /* Word-RAM is returned to MAIN-CPU */
@@ -1056,7 +1056,7 @@ void scd_write_byte(unsigned int address, unsigned int data)
       scd.regs[0x04 >> 1].byte.h = data & 0x07;
 
       /* synchronize CDC DMA (if running) with SUB-CPU */
-      if (cdc.dma_w)
+      if (dma_w)
       {
         cdc_dma_update(s68k.cycles);
       }
@@ -1355,14 +1355,14 @@ void scd_write_word(unsigned int address, unsigned int data)
             }
 
             /* check if CDC DMA to 2M Word-RAM is running */
-            if (cdc.dma_w == word_ram_2M_dma_w)
+            if (dma_w == word_ram_2M_dma_w)
             {
               /* synchronize CDC DMA with SUB-CPU */
               cdc_dma_update(s68k.cycles);
 
               /* halt CDC DMA to 2M Word-RAM (if still running) */
-              cdc.halted_dma_w = cdc.dma_w;
-              cdc.dma_w = 0;
+              halted_dma_w = dma_w;
+              dma_w = 0;
             }
 
             /* Word-RAM is returned to MAIN-CPU */
@@ -1405,7 +1405,7 @@ void scd_write_word(unsigned int address, unsigned int data)
       scd.regs[0x04 >> 1].w = data & (0x0700 | cdc.ar_mask);
 
       /* synchronize CDC DMA (if running) with SUB-CPU */
-      if (cdc.dma_w)
+      if (dma_w)
       {
         cdc_dma_update(s68k.cycles);
       }
@@ -1981,7 +1981,7 @@ void scd_update(unsigned int cycles)
   while ((m68k.cycles < cycles) || (s68k.cycles < s68k_end_cycles));
 
   /* update CDC DMA processing (if running) */
-  if (cdc.dma_w)
+  if (dma_w)
   {
     cdc_dma_update(scd.cycles);
   }

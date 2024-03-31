@@ -774,14 +774,14 @@ void ctrl_io_write_byte(unsigned int address, unsigned int data)
                 zbank_memory_map[base].write  = zbank_memory_map[base+1].write  = NULL;
 
                 /* check if CDC DMA to PRG-RAM is running */
-                if (cdc.dma_w == prg_ram_dma_w)
+                if (dma_w == prg_ram_dma_w)
                 {
                   /* synchronize CDC DMA with MAIN-CPU */
                   cdc_dma_update((m68k.cycles * SCYCLES_PER_LINE) / MCYCLES_PER_LINE);
 
                   /* halt CDC DMA to PRG-RAM (if still running) */
-                  cdc.halted_dma_w = cdc.dma_w;
-                  cdc.dma_w = 0;
+                  halted_dma_w = dma_w;
+                  dma_w = 0;
                 }
               }
               else
@@ -794,14 +794,14 @@ void ctrl_io_write_byte(unsigned int address, unsigned int data)
                 zbank_memory_map[base].write  = zbank_memory_map[base+1].write  = zbank_unused_w;
 
                 /* check if CDC DMA to PRG-RAM is halted */
-                if (cdc.halted_dma_w == prg_ram_dma_w)
+                if (halted_dma_w == prg_ram_dma_w)
                 {
                   /* relative SUB-CPU cycle counter */
                   unsigned int cycles = (m68k.cycles * SCYCLES_PER_LINE) / MCYCLES_PER_LINE;
 
                   /* enable CDC DMA to PRG-RAM */
-                  cdc.dma_w = prg_ram_dma_w;
-                  cdc.halted_dma_w = 0;
+                  dma_w = prg_ram_dma_w;
+                  halted_dma_w = 0;
 
                   /* synchronize CDC DMA with MAIN-CPU (only if not already ahead) */
                   if (cdc.cycles[0] < cycles)
@@ -908,14 +908,14 @@ void ctrl_io_write_byte(unsigned int address, unsigned int data)
                 }
 
                 /* check if CDC DMA to 2M Word-RAM is halted */
-                if (cdc.halted_dma_w == word_ram_2M_dma_w)
+                if (halted_dma_w == word_ram_2M_dma_w)
                 {
                   /* relative SUB-CPU cycle counter */
                   unsigned int cycles = (m68k.cycles * SCYCLES_PER_LINE) / MCYCLES_PER_LINE;
 
                   /* enable CDC DMA to 2M Word-RAM */
-                  cdc.dma_w = word_ram_2M_dma_w;
-                  cdc.halted_dma_w = 0;
+                  dma_w = word_ram_2M_dma_w;
+                  halted_dma_w = 0;
 
                   /* synchronize CDC DMA with MAIN-CPU (only if not already ahead) */
                   if (cdc.cycles[0] < cycles)
@@ -1103,14 +1103,14 @@ void ctrl_io_write_word(unsigned int address, unsigned int data)
                 zbank_memory_map[base].write  = zbank_memory_map[base+1].write  = NULL;
 
                 /* check if CDC DMA to PRG-RAM is running */
-                if (cdc.dma_w == prg_ram_dma_w)
+                if (dma_w == prg_ram_dma_w)
                 {
                   /* synchronize CDC DMA with MAIN-CPU */
                   cdc_dma_update((m68k.cycles * SCYCLES_PER_LINE) / MCYCLES_PER_LINE);
 
                   /* halt CDC DMA to PRG-RAM (if still running) */
-                  cdc.halted_dma_w = cdc.dma_w;
-                  cdc.dma_w = 0;
+                  halted_dma_w = dma_w;
+                  dma_w = 0;
                 }
               }
               else
@@ -1123,14 +1123,14 @@ void ctrl_io_write_word(unsigned int address, unsigned int data)
                 zbank_memory_map[base].write  = zbank_memory_map[base+1].write  = zbank_unused_w;
 
                 /* check if CDC DMA to PRG-RAM is halted */
-                if (cdc.halted_dma_w == prg_ram_dma_w)
+                if (halted_dma_w == prg_ram_dma_w)
                 {
                   /* relative SUB-CPU cycle counter */
                   unsigned int cycles = (m68k.cycles * SCYCLES_PER_LINE) / MCYCLES_PER_LINE;
 
                   /* enable CDC DMA to PRG-RAM */
-                  cdc.dma_w = prg_ram_dma_w;
-                  cdc.halted_dma_w = 0;
+                  dma_w = prg_ram_dma_w;
+                  halted_dma_w = 0;
 
                   /* synchronize CDC DMA with MAIN-CPU  (only if not already ahead) */
                   if (cdc.cycles[0] < cycles)
@@ -1247,14 +1247,14 @@ void ctrl_io_write_word(unsigned int address, unsigned int data)
                 }
 
                 /* check if CDC DMA to 2M Word-RAM is halted */
-                if (cdc.halted_dma_w == word_ram_2M_dma_w)
+                if (halted_dma_w == word_ram_2M_dma_w)
                 {
                   /* relative SUB-CPU cycle counter */
                   unsigned int cycles = (m68k.cycles * SCYCLES_PER_LINE) / MCYCLES_PER_LINE;
 
                   /* enable CDC DMA to 2M Word-RAM */
-                  cdc.dma_w = word_ram_2M_dma_w;
-                  cdc.halted_dma_w = 0;
+                  dma_w = word_ram_2M_dma_w;
+                  halted_dma_w = 0;
 
                   /* synchronize CDC DMA with MAIN-CPU (only if not already ahead) */
                   if (cdc.cycles[0] < cycles)

@@ -55,12 +55,13 @@ typedef struct
   uint8_t head[2][4];
   uint8_t stat[4];
   int cycles[2];
-  void (*dma_w)(unsigned int length);  /* active DMA callback */
-  void (*halted_dma_w)(unsigned int length);  /* halted DMA callback */
   uint8_t ram[0x4000 + 2352]; /* 16K external RAM (with one block overhead to handle buffer overrun) */
   uint8_t ar_mask;
   uint8_t irq; /* invert of CDC /INT output */
 } cdc_t; 
+
+extern void (*dma_w)(unsigned int length);  /* active DMA callback */
+extern void (*halted_dma_w)(unsigned int length);  /* halted DMA callback */
 
 /* Function prototypes */
 extern void cdc_init(void);

@@ -92,10 +92,11 @@ typedef struct
 } toc_t; 
 
 #if defined(USE_LIBCHDR)
+extern chd_file *libCHDRfile;
+
 /* CHD file */
 typedef struct
 {
-  chd_file *file;
   uint8_t *hunk;
   int hunkbytes;
   int hunknum;

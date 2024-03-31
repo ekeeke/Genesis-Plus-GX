@@ -41,6 +41,9 @@
 #include "../state.h"
 #include "../m68k/m68k.h"
 
+void (*dma_w)(unsigned int length);  /* active DMA callback */
+void (*halted_dma_w)(unsigned int length);  /* halted DMA callback */
+
 /* IFSTAT register bitmasks */
 #define BIT_DTEI  0x40
 #define BIT_DECI  0x20
@@ -115,7 +118,7 @@ void cdc_reset(void)
   cdc.cycles[0] = cdc.cycles[1] = 0;
 
   /* disable CDC DMA */
-  cdc.dma_w = cdc.halted_dma_w = 0;
+  dma_w = halted_dma_w = 0;
 
   /* reset CDC IRQ state */
   cdc.irq = 0;
@@ -138,7 +141,7 @@ void cdc_dma_init(void)
     return;
   
   /* disable DMA by default */
-  cdc.dma_w = cdc.halted_dma_w = 0;
+  dma_w = halted_dma_w = 0;
 
   /* check data transfer destination */
   switch (scd.regs[0x04>>1].byte.h & 0x07)
@@ -210,7 +213,7 @@ void cdc_dma_init(void)
 
     case 4: /* PCM RAM DMA */
     {
-      cdc.dma_w = pcm_ram_dma_w;
+      dma_w = pcm_ram_dma_w;
       break;
     }
 
@@ -220,12 +223,12 @@ void cdc_dma_init(void)
       if (scd.regs[0x00].byte.l & 0x02)
       {
         /* halt DMA to PRG-RAM */
-        cdc.halted_dma_w = prg_ram_dma_w;
+        halted_dma_w = prg_ram_dma_w;
       }
       else
       {
         /* enable DMA to PRG-RAM */
-        cdc.dma_w = prg_ram_dma_w;
+        dma_w = prg_ram_dma_w;
       }
       break;
     }
@@ -239,12 +242,12 @@ void cdc_dma_init(void)
         if (scd.regs[0x02 >> 1].byte.l & 0x01)
         {
           /* Word-RAM bank 0 is assigned to SUB-CPU */
-          cdc.dma_w = word_ram_0_dma_w;
+          dma_w = word_ram_0_dma_w;
         }
         else
         {
           /* Word-RAM bank 1 is assigned to SUB-CPU */
-          cdc.dma_w = word_ram_1_dma_w;
+          dma_w = word_ram_1_dma_w;
         }
       }
       else
@@ -253,12 +256,12 @@ void cdc_dma_init(void)
         if (scd.regs[0x02 >> 1].byte.l & 0x01)
         {
           /* halt DMA to 2M Word-RAM */
-          cdc.halted_dma_w = word_ram_2M_dma_w;
+          halted_dma_w = word_ram_2M_dma_w;
         }
         else
         {
           /* enable DMA to 2M Word-RAM */
-          cdc.dma_w = word_ram_2M_dma_w;
+          dma_w = word_ram_2M_dma_w;
         }
       }
       break;
@@ -286,7 +289,7 @@ void cdc_dma_update(unsigned int cycles)
   if (cdc.dbc.w < dma_bytes)
   {
     /* transfer remaining bytes using DMA */
-    cdc.dma_w(cdc.dbc.w + 1);
+    dma_w(cdc.dbc.w + 1);
 
     /* update DMA cycle counter */
     cdc.cycles[0] += (cdc.dbc.w + 1) * DMA_CYCLES_PER_BYTE;
@@ -347,12 +350,12 @@ void cdc_dma_update(unsigned int cycles)
     }
 
     /* disable DMA */
-    cdc.dma_w = cdc.halted_dma_w = 0;
+    dma_w = halted_dma_w = 0;
   }
   else if (dma_bytes > 0)
   {
     /* transfer limited amount of bytes using DMA */
-    cdc.dma_w(dma_bytes);
+    dma_w(dma_bytes);
 
     /* decrement data byte counter */
     cdc.dbc.w -= dma_bytes;
@@ -502,7 +505,7 @@ void cdc_reg_w(unsigned char data)
         cdc.ifstat |= (BIT_DTBSY | BIT_DTEN);
 
         /* disable DMA */
-        cdc.dma_w = cdc.halted_dma_w = 0;
+        dma_w = halted_dma_w = 0;
       }
 
       cdc.ifctrl = data;
