@@ -52,12 +52,6 @@ typedef union
   cd_hw_t cd_hw;
 } external_t;
 
-/* Global variables */
-#ifdef USE_DYNAMIC_ALLOC
-extern external_t *ext;
-#else
-extern external_t ext;
-#endif
 
 /* Function prototypes */
 extern void gen_init(void);

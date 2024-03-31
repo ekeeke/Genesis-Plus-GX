@@ -72,6 +72,10 @@ typedef struct
 } ssp1601_t;
 
 
+#define GET_PC() (PC - (unsigned short *)svp->iram_rom)
+#define GET_PPC_OFFS() ((unsigned char *)PC - svp->iram_rom - 2)
+#define SET_PC(d) PC = (unsigned short *)svp->iram_rom + d
+
 void ssp1601_reset(ssp1601_t *ssp);
 void ssp1601_run(int cycles);
 

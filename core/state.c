@@ -1,6 +1,16 @@
 #include <string.h>
 #include "state.h"
 
+// cart_hw/svp/svp.hc
+
+// Special case, as svp is inside the cart.rom allocation
+
+// cart_hw/svp/svp16.h
+
+ssp1601_t *ssp = NULL;
+unsigned short *PC;
+int g_cycles;
+
 // cart_hw/areplay.c
 
 struct action_replay_t action_replay;
@@ -160,6 +170,13 @@ uint32_t z80_cycle_ratio;
 
 // genesis.c
 
+// Cartdrigde / CD information
+#ifdef USE_DYNAMIC_ALLOC
+external_t *ext;
+#else
+external_t ext;
+#endif
+
 uint8_t boot_rom[0x800];
 uint8_t work_ram[0x10000];
 uint8_t zram[0x2000];
@@ -275,6 +292,15 @@ size_t saveState(uint8_t* buffer)
 {
   size_t pos = 0;
   
+  // Special treatment for SVP, since it is stored inside the ROM that we otherwise do not store
+  if (buffer != NULL) { memcpy(&buffer[pos], svp                  , sizeof(svp                 )); } pos += sizeof(svp_t               );
+  if (buffer != NULL) { memcpy(&buffer[pos], ssp                  , sizeof(ssp                 )); } pos += sizeof(ssp1601_t           );
+
+  // SSP PC, store as offset to svp->iram_rom
+  int64_t SSPPC = GET_PC();
+  if (buffer != NULL) { memcpy(&buffer[pos], &SSPPC               , sizeof(SSPPC               )); } pos += sizeof(SSPPC               );
+  if (buffer != NULL) { memcpy(&buffer[pos], &g_cycles            , sizeof(g_cycles            )); } pos += sizeof(g_cycles            );
+
   if (buffer != NULL) { memcpy(&buffer[pos], &action_replay       , sizeof(action_replay       )); } pos += sizeof(action_replay       );
   if (buffer != NULL) { memcpy(&buffer[pos], &eeprom_93c          , sizeof(eeprom_93c          )); } pos += sizeof(eeprom_93c          );
   if (buffer != NULL) { memcpy(&buffer[pos], &eeprom_i2c          , sizeof(eeprom_i2c          )); } pos += sizeof(eeprom_i2c          );
@@ -351,6 +377,12 @@ size_t saveState(uint8_t* buffer)
   
   #ifdef Z80_OVERCLOCK_SHIFT
   if (buffer != NULL) { memcpy(&buffer[pos], &z80_cycle_ratio     , sizeof(z80_cycle_ratio     )); } pos += sizeof(z80_cycle_ratio     );
+  #endif
+
+  #ifdef USE_DYNAMIC_ALLOC
+  if (buffer != NULL) { memcpy(&buffer[pos], ext                  , sizeof(external_t          )); } pos += sizeof(external_t          );
+  #else
+  if (buffer != NULL) { memcpy(&buffer[pos], &ext                 , sizeof(external_t          )); } pos += sizeof(external_t          );
   #endif
 
   if (buffer != NULL) { memcpy(&buffer[pos], &boot_rom            , sizeof(boot_rom            )); } pos += sizeof(boot_rom            );
@@ -452,6 +484,17 @@ void loadState(const uint8_t* buffer)
 {
   size_t pos = 0;
 
+  // Special treatment for SVP, since it is stored inside the ROM that we otherwise do not store
+  if (buffer != NULL) { memcpy(svp                  , &buffer[pos],  sizeof(svp                 )); } pos += sizeof(svp_t               );
+  if (buffer != NULL) { memcpy(ssp                  , &buffer[pos],  sizeof(ssp                 )); } pos += sizeof(ssp1601_t           );
+
+  // SSP PC, store as offset to svp->iram_rom
+  int64_t SSPPC;
+  if (buffer != NULL) { memcpy(&SSPPC               , &buffer[pos],  sizeof(SSPPC               )); } pos += sizeof(SSPPC               );
+  SET_PC(SSPPC);
+  
+  if (buffer != NULL) { memcpy(&g_cycles            , &buffer[pos],  sizeof(g_cycles       )); } pos += sizeof(g_cycles            );
+
   if (buffer != NULL) { memcpy(&action_replay       , &buffer[pos],  sizeof(action_replay       )); } pos += sizeof(action_replay       );
   if (buffer != NULL) { memcpy(&eeprom_93c          , &buffer[pos],  sizeof(eeprom_93c          )); } pos += sizeof(eeprom_93c          );
   if (buffer != NULL) { memcpy(&eeprom_i2c          , &buffer[pos],  sizeof(eeprom_i2c          )); } pos += sizeof(eeprom_i2c          );
@@ -528,6 +571,12 @@ void loadState(const uint8_t* buffer)
 
   #ifdef Z80_OVERCLOCK_SHIFT
   if (buffer != NULL) { memcpy(&z80_cycle_ratio     , &buffer[pos],  sizeof(z80_cycle_ratio     )); } pos += sizeof(z80_cycle_ratio     );
+  #endif
+
+  #ifdef USE_DYNAMIC_ALLOC
+  if (buffer != NULL) { memcpy(ext                  ,  &buffer[pos], sizeof(external_t          )); } pos += sizeof(external_t          );
+  #else
+  if (buffer != NULL) { memcpy(&ext                 ,  &buffer[pos], sizeof(external_t          )); } pos += sizeof(external_t          );
   #endif
 
   if (buffer != NULL) { memcpy(&boot_rom            , &buffer[pos],  sizeof(boot_rom            )); } pos += sizeof(boot_rom            );

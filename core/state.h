@@ -1,6 +1,8 @@
 #pragma once
 
 #include <stdint.h>
+#include "cart_hw/svp/ssp16.h"
+#include "cart_hw/svp/svp.h"
 #include "cart_hw/areplay.h"
 #include "cart_hw/eeprom_93c.h"
 #include "cart_hw/eeprom_i2c.h"
@@ -47,9 +49,15 @@
 extern size_t saveState(uint8_t* buffer);
 extern void loadState(const uint8_t* buffer);
 
-// cart_hw/svp.h 
+// cart_hw/svp/svp.h 
 
 // Special case, as svp is inside the cart.rom allocation
+
+// cart_hw/svp/svp16.h
+
+extern ssp1601_t *ssp;
+extern unsigned short *PC;
+extern int g_cycles;
 
 // cart_hw/areplay.h
 
@@ -209,6 +217,13 @@ extern uint32_t z80_cycle_ratio;
 #endif
 
 // genesis.h
+
+// Cartdrigde / CD information
+#ifdef USE_DYNAMIC_ALLOC
+extern external_t *ext;
+#else
+extern external_t ext;
+#endif
 
 extern uint8_t boot_rom[0x800];
 extern uint8_t work_ram[0x10000];

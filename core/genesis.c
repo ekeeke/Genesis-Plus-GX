@@ -54,12 +54,6 @@
 #include "io_ctrl.h"
 #include "state.h"
 
-#ifdef USE_DYNAMIC_ALLOC
-external_t *ext;
-#else                     /* External Hardware (Cartridge, CD unit, ...) */
-external_t ext;
-#endif
-
 /*--------------------------------------------------------------------------*/
 /* Init, reset, shutdown functions                                          */
 /*--------------------------------------------------------------------------*/
