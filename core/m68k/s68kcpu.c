@@ -200,7 +200,6 @@ void s68k_set_fc_callback(void  (*callback)(unsigned int new_fc))
 #endif
 
 extern void error(char *format, ...);
-extern uint16_t v_counter;
 
 /* update IRQ level according to triggered interrupts */
 void s68k_update_irq(unsigned int mask)
