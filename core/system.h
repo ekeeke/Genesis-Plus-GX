@@ -103,6 +103,7 @@ extern int16 SVP_cycles;
 extern uint8 system_hw;
 extern uint8 system_bios;
 extern uint32 system_clock;
+extern uint8 pause_b;
 
 /* Function prototypes */
 extern int audio_init(int samplerate, double framerate);

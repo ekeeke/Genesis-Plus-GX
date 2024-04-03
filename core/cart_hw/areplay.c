@@ -37,21 +37,12 @@
  ****************************************************************************************/
 
 #include "shared.h"
+#include "areplay.h"
 
 #define TYPE_PRO1 0x12
 #define TYPE_PRO2 0x22
 
-static struct
-{
-  uint8 enabled;
-  uint8 status;
-  uint8 ram[0x10000];
-  uint16 regs[13];
-  uint16 old[4];
-  uint16 data[4];
-  uint32 addr[4];
-} action_replay;
-
+struct action_replay_t action_replay;
 static void ar_write_regs(uint32 address, uint32 data);
 static void ar2_write_reg(uint32 address, uint32 data);
 static void ar_write_ram_8(uint32 address, uint32 data);
@@ -101,6 +92,7 @@ void areplay_init(void)
       /* internal RAM (64KB), mapped at $420000-$42ffff or $600000-$60ffff */
       if (action_replay.enabled)
       {
+        m68k.memory_map[sp].target    = MM_TARGET_ACTION_REPLAY_RAM;
         m68k.memory_map[sp].base      = action_replay.ram;
         m68k.memory_map[sp].read8     = NULL;
         m68k.memory_map[sp].read16    = NULL;
@@ -147,6 +139,7 @@ void areplay_reset(int hard)
       memset(action_replay.addr, 0, sizeof(action_replay.addr));
 
       /* by default, internal ROM is mapped at $000000-$00FFFF */
+      m68k.memory_map[0].target = MM_TARGET_CART_LOCK_ROM;
       m68k.memory_map[0].base = cart.lockrom;
 
       /* reset internal RAM on power-on */
@@ -264,6 +257,7 @@ static void ar_write_regs(uint32 address, uint32 data)
     }
 
     /* enable Cartridge ROM */
+    m68k.memory_map[0].target = MM_TARGET_CART_ROM;
     m68k.memory_map[0].base = cart.rom;
   }
 }
@@ -273,6 +267,7 @@ static void ar2_write_reg(uint32 address, uint32 data)
   /* enable Cartridge ROM */
   if (((address & 0xff) == 0x78) && (data == 0xffff))
   {
+    m68k.memory_map[0].target = MM_TARGET_CART_ROM;
     m68k.memory_map[0].base = cart.rom;
   }
 }

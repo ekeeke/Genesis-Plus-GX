@@ -53,6 +53,7 @@ void svp_init(void)
   svp = (void *) ((char *)cart.rom + 0x200000);
   memset(svp, 0, sizeof(*svp));
 
+  m68k.memory_map[0x30].target  = MM_TARGET_SVP_DRAM;
   m68k.memory_map[0x30].base    = svp->dram;
   m68k.memory_map[0x30].read8   = NULL;
   m68k.memory_map[0x30].read16  = NULL;
@@ -61,6 +62,7 @@ void svp_init(void)
   zbank_memory_map[0x30].read   = NULL;
   zbank_memory_map[0x30].write  = NULL;
 
+  m68k.memory_map[0x31].target  = MM_TARGET_SVP_DRAM;
   m68k.memory_map[0x31].base    = svp->dram + 0x10000;
   m68k.memory_map[0x31].read8   = NULL;
   m68k.memory_map[0x31].read16  = NULL;

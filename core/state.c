@@ -37,6 +37,7 @@
  ****************************************************************************************/
 
 #include "shared.h"
+#include "input_hw/gamepad.h"
 
 int state_load(unsigned char *state)
 {
@@ -46,7 +47,7 @@ int state_load(unsigned char *state)
   char version[17];
   load_param(version,16);
   version[16] = 0;
-  if (memcmp(version,STATE_VERSION,11))
+  if (memcmp(version,STATE_VERSION,11)) /* TO-DO: Update*/
   {
     return 0;
   }
@@ -70,6 +71,9 @@ int state_load(unsigned char *state)
     zbank_memory_map[i].read    = zbank_read_vdp;
     zbank_memory_map[i].write   = zbank_write_vdp;
   }
+
+  /* SYSTEM */
+  load_param(&pause_b, sizeof(pause_b));
 
   /* GENESIS */
   if ((system_hw & SYSTEM_PBC) == SYSTEM_MD)
@@ -108,6 +112,9 @@ int state_load(unsigned char *state)
   {
     io_reg[0] = 0x80 | (region_code >> 1);
   }
+
+  /* CONTROLLERS */
+  load_param(gamepad, sizeof(gamepad));
 
   /* VDP */
   bufferptr += vdp_context_load(&state[bufferptr]);
@@ -152,6 +159,69 @@ int state_load(unsigned char *state)
     load_param(&m68k.cycles, sizeof(m68k.cycles));
     load_param(&m68k.int_level, sizeof(m68k.int_level));
     load_param(&m68k.stopped, sizeof(m68k.stopped));
+    load_param(&m68k.poll              , sizeof(m68k.poll            ));   
+    load_param(&m68k.cycles            , sizeof(m68k.cycles          )); 
+    load_param(&m68k.refresh_cycles    , sizeof(m68k.refresh_cycles  )); 
+    load_param(&m68k.cycle_end         , sizeof(m68k.cycle_end       )); 
+    // load_param(&m68k.dar               , sizeof(m68k.dar             ));  /* These are already loaded with set reg */
+    // load_param(&m68k.pc                , sizeof(m68k.pc              ));  /* These are already loaded with set reg */
+    load_param(&m68k.prev_pc           , sizeof(m68k.prev_pc         )); 
+    load_param(&m68k.prev_ar           , sizeof(m68k.prev_ar         )); 
+    load_param(&m68k.sp                , sizeof(m68k.sp              )); 
+    load_param(&m68k.ir                , sizeof(m68k.ir              )); 
+    load_param(&m68k.t1_flag           , sizeof(m68k.t1_flag         )); 
+    load_param(&m68k.s_flag            , sizeof(m68k.s_flag          )); 
+    load_param(&m68k.x_flag            , sizeof(m68k.x_flag          )); 
+    load_param(&m68k.n_flag            , sizeof(m68k.n_flag          )); 
+    load_param(&m68k.not_z_flag        , sizeof(m68k.not_z_flag      )); 
+    load_param(&m68k.v_flag            , sizeof(m68k.v_flag          )); 
+    load_param(&m68k.c_flag            , sizeof(m68k.c_flag          )); 
+    load_param(&m68k.int_mask          , sizeof(m68k.int_mask        )); 
+    load_param(&m68k.int_level         , sizeof(m68k.int_level       )); 
+    load_param(&m68k.stopped           , sizeof(m68k.stopped         )); 
+    load_param(&m68k.pref_addr         , sizeof(m68k.pref_addr       )); 
+    load_param(&m68k.pref_data         , sizeof(m68k.pref_data       )); 
+    load_param(&m68k.instr_mode        , sizeof(m68k.instr_mode      )); 
+    load_param(&m68k.run_mode          , sizeof(m68k.run_mode        )); 
+    load_param(&m68k.aerr_enabled      , sizeof(m68k.aerr_enabled    )); 
+    load_param(&m68k.aerr_trap         , sizeof(m68k.aerr_trap       )); 
+    load_param(&m68k.aerr_address      , sizeof(m68k.aerr_address    )); 
+    load_param(&m68k.aerr_write_mode   , sizeof(m68k.aerr_write_mode )); 
+    load_param(&m68k.aerr_fc           , sizeof(m68k.aerr_fc         )); 
+    load_param(&m68k.tracing           , sizeof(m68k.tracing         )); 
+    load_param(&m68k.address_space     , sizeof(m68k.address_space   )); 
+    
+    /* Recovering proper memory map pointer base and offsets */
+    for (i = 0; i < 255; i++)
+    {
+      // Getting target base pointer
+      uint8_t* basePtr = 0;
+      size_t offset = 0;
+
+      // Loading target and offset
+      load_param(&m68k.memory_map[i].target, sizeof(m68k.memory_map[i].target));
+      load_param(&offset, sizeof(offset));
+
+      switch (m68k.memory_map[i].target)
+      {
+        case  MM_TARGET_NULL: break;
+        case  MM_TARGET_SCD_WORD_RAM_0: basePtr = scd.word_ram[0]; break;
+        case  MM_TARGET_SCD_WORD_RAM_1: basePtr = scd.word_ram[1]; break;
+        case  MM_TARGET_SCD_WORD_RAM_2M: basePtr = scd.word_ram_2M; break;
+        case  MM_TARGET_SCD_PRG_RAM: basePtr = scd.prg_ram; break;
+        case  MM_TARGET_SCD_BOOT_ROM: basePtr = scd.bootrom; break;
+        case  MM_TARGET_SRAM: basePtr = sram.sram;
+        case  MM_TARGET_BOOT_ROM: basePtr = boot_rom;
+        case  MM_TARGET_WORK_RAM: basePtr = work_ram;
+        case  MM_TARGET_CART_ROM: basePtr = cart.rom;
+        case  MM_TARGET_CART_LOCK_ROM: basePtr = cart.lockrom;
+        case  MM_TARGET_SVP_DRAM: basePtr = svp->dram;
+        case  MM_TARGET_ACTION_REPLAY_RAM: basePtr = action_replay.ram;
+      }
+      
+      // Getting offset with respect to target
+      m68k.memory_map[i].base = &basePtr[offset];
+    }
   }
 
   /* Z80 */ 
@@ -200,6 +270,9 @@ int state_save(unsigned char *state)
   memcpy(version,STATE_VERSION,16);
   save_param(version, 16);
 
+  /* SYSTEM */
+  save_param(&pause_b, sizeof(pause_b));
+
   /* GENESIS */
   if ((system_hw & SYSTEM_PBC) == SYSTEM_MD)
   {
@@ -215,6 +288,9 @@ int state_save(unsigned char *state)
 
   /* IO */
   save_param(io_reg, sizeof(io_reg));
+
+  /* CONTROLLERS */
+  save_param(gamepad, sizeof(gamepad));
 
   /* VDP */
   bufferptr += vdp_context_save(&state[bufferptr]);
@@ -251,6 +327,67 @@ int state_save(unsigned char *state)
     save_param(&m68k.cycles, sizeof(m68k.cycles));
     save_param(&m68k.int_level, sizeof(m68k.int_level));
     save_param(&m68k.stopped, sizeof(m68k.stopped));
+    save_param(&m68k.poll              , sizeof(m68k.poll            ));   
+    save_param(&m68k.cycles            , sizeof(m68k.cycles          )); 
+    save_param(&m68k.refresh_cycles    , sizeof(m68k.refresh_cycles  )); 
+    save_param(&m68k.cycle_end         , sizeof(m68k.cycle_end       )); 
+    // save_param(&m68k.dar               , sizeof(m68k.dar             ));  /* These are already saved with get reg */
+    // save_param(&m68k.pc                , sizeof(m68k.pc              ));  /* These are already saved with get reg */
+    save_param(&m68k.prev_pc           , sizeof(m68k.prev_pc         )); 
+    save_param(&m68k.prev_ar           , sizeof(m68k.prev_ar         )); 
+    save_param(&m68k.sp                , sizeof(m68k.sp              )); 
+    save_param(&m68k.ir                , sizeof(m68k.ir              )); 
+    save_param(&m68k.t1_flag           , sizeof(m68k.t1_flag         )); 
+    save_param(&m68k.s_flag            , sizeof(m68k.s_flag          )); 
+    save_param(&m68k.x_flag            , sizeof(m68k.x_flag          )); 
+    save_param(&m68k.n_flag            , sizeof(m68k.n_flag          )); 
+    save_param(&m68k.not_z_flag        , sizeof(m68k.not_z_flag      )); 
+    save_param(&m68k.v_flag            , sizeof(m68k.v_flag          )); 
+    save_param(&m68k.c_flag            , sizeof(m68k.c_flag          )); 
+    save_param(&m68k.int_mask          , sizeof(m68k.int_mask        )); 
+    save_param(&m68k.int_level         , sizeof(m68k.int_level       )); 
+    save_param(&m68k.stopped           , sizeof(m68k.stopped         )); 
+    save_param(&m68k.pref_addr         , sizeof(m68k.pref_addr       )); 
+    save_param(&m68k.pref_data         , sizeof(m68k.pref_data       )); 
+    save_param(&m68k.instr_mode        , sizeof(m68k.instr_mode      )); 
+    save_param(&m68k.run_mode          , sizeof(m68k.run_mode        )); 
+    save_param(&m68k.aerr_enabled      , sizeof(m68k.aerr_enabled    )); 
+    save_param(&m68k.aerr_trap         , sizeof(m68k.aerr_trap       )); 
+    save_param(&m68k.aerr_address      , sizeof(m68k.aerr_address    )); 
+    save_param(&m68k.aerr_write_mode   , sizeof(m68k.aerr_write_mode )); 
+    save_param(&m68k.aerr_fc           , sizeof(m68k.aerr_fc         )); 
+    save_param(&m68k.tracing           , sizeof(m68k.tracing         )); 
+    save_param(&m68k.address_space     , sizeof(m68k.address_space   )); 
+
+    /* Storing proper memory map pointer base and offsets */
+    for (int i = 0; i < 255; i++)
+    {
+      // Getting target base pointer
+      void* basePtr = 0;
+      switch (m68k.memory_map[i].target)
+      {
+        case  MM_TARGET_NULL: break;
+        case  MM_TARGET_SCD_WORD_RAM_0: basePtr = scd.word_ram[0]; break;
+        case  MM_TARGET_SCD_WORD_RAM_1: basePtr = scd.word_ram[1]; break;
+        case  MM_TARGET_SCD_WORD_RAM_2M: basePtr = scd.word_ram_2M; break;
+        case  MM_TARGET_SCD_PRG_RAM: basePtr = scd.prg_ram; break;
+        case  MM_TARGET_SCD_BOOT_ROM: basePtr = scd.bootrom; break;
+        case  MM_TARGET_SRAM: basePtr = sram.sram;
+        case  MM_TARGET_BOOT_ROM: basePtr = boot_rom;
+        case  MM_TARGET_WORK_RAM: basePtr = work_ram;
+        case  MM_TARGET_CART_ROM: basePtr = cart.rom;
+        case  MM_TARGET_CART_LOCK_ROM: basePtr = cart.lockrom;
+        case  MM_TARGET_SVP_DRAM: basePtr = svp->dram;
+        case  MM_TARGET_ACTION_REPLAY_RAM: basePtr = action_replay.ram;
+      }
+      
+      // Getting offset with respect to target
+      size_t offset = (size_t)m68k.memory_map[i].base - (size_t)basePtr;
+
+      // Storing target and offset
+      save_param(&m68k.memory_map[i].target, sizeof(m68k.memory_map[i].target));
+      save_param(&offset, sizeof(offset));
+    }
   }
 
   /* Z80 */ 

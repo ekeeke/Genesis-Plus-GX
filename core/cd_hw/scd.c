@@ -788,6 +788,7 @@ INLINE void word_ram_switch(uint8 mode)
     /* MAIN-CPU: $200000-$21FFFF is mapped to 256K Word-RAM (lower 128K) */
     for (i=scd.cartridge.boot+0x20; i<scd.cartridge.boot+0x22; i++)
     {
+      m68k.memory_map[i].base = MM_TARGET_SCD_WORD_RAM_2M;
       m68k.memory_map[i].base = scd.word_ram_2M + ((i & 0x03) << 16);
     }
 
@@ -872,6 +873,7 @@ static void scd_write_byte(unsigned int address, unsigned int data)
             for (i=scd.cartridge.boot+0x20; i<scd.cartridge.boot+0x22; i++)
             {
               /* Word-RAM 1 data mapped at $200000-$21FFFF */
+              m68k.memory_map[i].target = MM_TARGET_SCD_WORD_RAM_1;
               m68k.memory_map[i].base = scd.word_ram[1] + ((i & 0x01) << 16);
             }
 
@@ -899,6 +901,7 @@ static void scd_write_byte(unsigned int address, unsigned int data)
             for (i=0x0c; i<0x0e; i++)
             {
               /* Word-RAM 0 data mapped at $0C0000-$0DFFFF */
+              m68k.memory_map[i].target = MM_TARGET_SCD_WORD_RAM_0;
               s68k.memory_map[i].base = scd.word_ram[0] + ((i & 0x01) << 16);
             }
 
@@ -911,6 +914,7 @@ static void scd_write_byte(unsigned int address, unsigned int data)
             for (i=scd.cartridge.boot+0x20; i<scd.cartridge.boot+0x22; i++)
             {
               /* Word-RAM 0 data mapped at $200000-$21FFFF */
+              m68k.memory_map[i].target = MM_TARGET_SCD_WORD_RAM_0;
               m68k.memory_map[i].base = scd.word_ram[0] + ((i & 0x01) << 16);
             }
 
@@ -938,6 +942,7 @@ static void scd_write_byte(unsigned int address, unsigned int data)
             for (i=0x0c; i<0x0e; i++)
             {
               /* Word-RAM 1 data mapped at $0C0000-$0DFFFF */
+              m68k.memory_map[i].target = MM_TARGET_SCD_WORD_RAM_1;
               s68k.memory_map[i].base = scd.word_ram[1] + ((i & 0x01) << 16);
             }
           }
@@ -1221,6 +1226,7 @@ static void scd_write_word(unsigned int address, unsigned int data)
             for (i=scd.cartridge.boot+0x20; i<scd.cartridge.boot+0x22; i++)
             {
               /* Word-RAM 1 data mapped at $200000-$21FFFF */
+              m68k.memory_map[i].target = MM_TARGET_SCD_WORD_RAM_1;
               m68k.memory_map[i].base = scd.word_ram[1] + ((i & 0x01) << 16);
             }
 
@@ -1248,6 +1254,7 @@ static void scd_write_word(unsigned int address, unsigned int data)
             for (i=0x0c; i<0x0e; i++)
             {
               /* Word-RAM 0 data mapped at $0C0000-$0DFFFF */
+              m68k.memory_map[i].target = MM_TARGET_SCD_WORD_RAM_0;
               s68k.memory_map[i].base = scd.word_ram[0] + ((i & 0x01) << 16);
             }
 
@@ -1260,6 +1267,7 @@ static void scd_write_word(unsigned int address, unsigned int data)
             for (i=scd.cartridge.boot+0x20; i<scd.cartridge.boot+0x22; i++)
             {
               /* Word-RAM 0 data mapped at $200000-$21FFFF */
+              m68k.memory_map[i].target = MM_TARGET_SCD_WORD_RAM_0;
               m68k.memory_map[i].base = scd.word_ram[0] + ((i & 0x01) << 16);
             }
 
@@ -1287,6 +1295,7 @@ static void scd_write_word(unsigned int address, unsigned int data)
             for (i=0x0c; i<0x0e; i++)
             {
               /* Word-RAM 1 data mapped at $0C0000-$0DFFFF */
+              m68k.memory_map[i].target = MM_TARGET_SCD_WORD_RAM_1;
               s68k.memory_map[i].base = scd.word_ram[1] + ((i & 0x01) << 16);
             }
           }
@@ -1596,6 +1605,7 @@ void scd_init(void)
       case 0x00:
       {
         /* $000000-$01FFFF (resp. $400000-$41FFFF): internal ROM (128KB), mirrored every 256KB up to $1FFFFF (resp. $5FFFFF) */
+        m68k.memory_map[i].target  = MM_TARGET_SCD_BOOT_ROM;
         m68k.memory_map[i].base    = scd.bootrom + ((i & 0x01) << 16);
         m68k.memory_map[i].read8   = NULL;
         m68k.memory_map[i].read16  = NULL;
@@ -1609,6 +1619,7 @@ void scd_init(void)
       case 0x02:
       {
         /* $020000-$03FFFF (resp. $420000-$43FFFF): PRG-RAM (first 128KB bank), mirrored every 256KB up to $1FFFFF (resp. $5FFFFF) */
+        m68k.memory_map[i].target  = MM_TARGET_SCD_PRG_RAM;
         m68k.memory_map[i].base = scd.prg_ram + ((i & 0x01) << 16);
 
         /* automatic mirrored range remapping when switching PRG-RAM banks */
@@ -1639,6 +1650,7 @@ void scd_init(void)
   for (i=base+0x20; i<base+0x40; i++)
   {
     /* $200000-$23FFFF (resp. $600000-$63FFFF): Word-RAM in 2M mode (256KB), mirrored up to $3FFFFF (resp. $7FFFFF) */
+    m68k.memory_map[i].target  = MM_TARGET_SCD_WORD_RAM_2M;
     m68k.memory_map[i].base  = scd.word_ram_2M + ((i & 0x03) << 16);
 
     /* automatic mirrored range remapping when switching Word-RAM */
@@ -1681,6 +1693,7 @@ void scd_init(void)
       case 0x07:
       {
         /* $000000-$07FFFF (mirrored every 1MB): PRG-RAM (512KB) */
+        m68k.memory_map[i].target  = MM_TARGET_SCD_PRG_RAM;
         s68k.memory_map[i].base    = scd.prg_ram + ((i & 0x07) << 16);
         s68k.memory_map[i].read8   = NULL;
         s68k.memory_map[i].read16  = NULL;
@@ -1697,6 +1710,7 @@ void scd_init(void)
       case 0x0b:
       {
         /* $080000-$0BFFFF (mirrored every 1MB): Word-RAM in 2M mode (256KB)*/
+        m68k.memory_map[i].target  = MM_TARGET_SCD_WORD_RAM_2M;
         s68k.memory_map[i].base = scd.word_ram_2M + ((i & 0x03) << 16);
 
         /* automatic mirrored range remapping when switching Word-RAM */
@@ -1722,6 +1736,7 @@ void scd_init(void)
       case 0x0d:
       {
         /* $0C0000-$0DFFFF (mirrored every 1MB):  unused in 2M mode (?) */
+        m68k.memory_map[i].target  = MM_TARGET_SCD_WORD_RAM_2M;
         s68k.memory_map[i].base = scd.word_ram_2M + ((i & 0x03) << 16);
 
         /* automatic mirrored range remapping when switching Word-RAM */
@@ -1745,6 +1760,7 @@ void scd_init(void)
       case 0x0e:
       {
         /* $FE0000-$FEFFFF (mirrored every 1MB): 8KB backup RAM */
+        m68k.memory_map[i].target   = MM_TARGET_NULL;
         s68k.memory_map[i].base     = NULL;
         s68k.memory_map[i].read8    = bram_read_byte;
         s68k.memory_map[i].read16   = bram_read_word;
@@ -1756,6 +1772,7 @@ void scd_init(void)
       case 0x0f:
       {
         /* $FF0000-$FFFFFF (mirrored every 1MB): PCM hardware & SUB-CPU registers  */
+        m68k.memory_map[i].target   = MM_TARGET_NULL;
         s68k.memory_map[i].base     = NULL;
         s68k.memory_map[i].read8    = scd_read_byte;
         s68k.memory_map[i].read16   = scd_read_word;
@@ -1824,6 +1841,8 @@ void scd_reset(int hard)
     }
 
     /* reset PRG-RAM bank on MAIN-CPU side */
+    m68k.memory_map[scd.cartridge.boot + 0x02].target = MM_TARGET_SCD_PRG_RAM;
+    m68k.memory_map[scd.cartridge.boot + 0x03].target = MM_TARGET_SCD_PRG_RAM;
     m68k.memory_map[scd.cartridge.boot + 0x02].base = scd.prg_ram;
     m68k.memory_map[scd.cartridge.boot + 0x03].base = scd.prg_ram + 0x10000;
 
@@ -2123,6 +2142,8 @@ int scd_context_load(uint8 *state, char *version)
   load_param(scd.prg_ram, sizeof(scd.prg_ram));
 
   /* PRG-RAM 128K bank mapped on MAIN-CPU side */
+  m68k.memory_map[scd.cartridge.boot + 0x02].target = MM_TARGET_SCD_PRG_RAM;
+  m68k.memory_map[scd.cartridge.boot + 0x03].target = m68k.memory_map[scd.cartridge.boot + 0x02].target;
   m68k.memory_map[scd.cartridge.boot + 0x02].base = scd.prg_ram + ((scd.regs[0x03>>1].byte.l & 0xc0) << 11);
   m68k.memory_map[scd.cartridge.boot + 0x03].base = m68k.memory_map[scd.cartridge.boot + 0x02].base + 0x10000;
 
@@ -2158,6 +2179,7 @@ int scd_context_load(uint8 *state, char *version)
       for (i=scd.cartridge.boot+0x20; i<scd.cartridge.boot+0x22; i++)
       {
         /* Word-RAM 1 data mapped at $200000-$21FFFF */
+        m68k.memory_map[i].target = MM_TARGET_SCD_WORD_RAM_1;
         m68k.memory_map[i].base = scd.word_ram[1] + ((i & 0x01) << 16);
         m68k.memory_map[i].read8   = NULL;
         m68k.memory_map[i].read16  = NULL;
@@ -2191,6 +2213,7 @@ int scd_context_load(uint8 *state, char *version)
       for (i=0x0c; i<0x0e; i++)
       {
         /* Word-RAM 0 data mapped at $0C0000-$0DFFFF */
+        m68k.memory_map[i].target = MM_TARGET_SCD_WORD_RAM_0;
         s68k.memory_map[i].base    = scd.word_ram[0] + ((i & 0x01) << 16);
         s68k.memory_map[i].read8   = NULL;
         s68k.memory_map[i].read16  = NULL;
@@ -2204,6 +2227,7 @@ int scd_context_load(uint8 *state, char *version)
       for (i=scd.cartridge.boot+0x20; i<scd.cartridge.boot+0x22; i++)
       {
         /* Word-RAM 0 data mapped at $200000-$21FFFF */
+        m68k.memory_map[i].target = MM_TARGET_SCD_WORD_RAM_0;
         m68k.memory_map[i].base = scd.word_ram[0] + ((i & 0x01) << 16);
         m68k.memory_map[i].read8   = NULL;
         m68k.memory_map[i].read16  = NULL;
@@ -2237,6 +2261,7 @@ int scd_context_load(uint8 *state, char *version)
       for (i=0x0c; i<0x0e; i++)
       {
         /* Word-RAM 1 data mapped at $0C0000-$0DFFFF */
+        m68k.memory_map[i].target = MM_TARGET_SCD_WORD_RAM_1;
         s68k.memory_map[i].base    = scd.word_ram[1] + ((i & 0x01) << 16);
         s68k.memory_map[i].read8   = NULL;
         s68k.memory_map[i].read16  = NULL;
@@ -2256,6 +2281,7 @@ int scd_context_load(uint8 *state, char *version)
       /* MAIN-CPU: $200000-$23FFFF is mapped to 256K Word-RAM */
       for (i=scd.cartridge.boot+0x20; i<scd.cartridge.boot+0x24; i++)
       {
+        m68k.memory_map[i].target = MM_TARGET_SCD_WORD_RAM_2M;
         m68k.memory_map[i].base    = scd.word_ram_2M + ((i & 0x03) << 16);
         m68k.memory_map[i].read8   = NULL;
         m68k.memory_map[i].read16  = NULL;
@@ -2279,6 +2305,7 @@ int scd_context_load(uint8 *state, char *version)
       /* MAIN-CPU: $200000-$23FFFF is unmapped */
       for (i=scd.cartridge.boot+0x20; i<scd.cartridge.boot+0x24; i++)
       {
+        m68k.memory_map[i].target = MM_TARGET_SCD_WORD_RAM_2M;
         m68k.memory_map[i].base    = scd.word_ram_2M + ((i & 0x03) << 16);
         m68k.memory_map[i].read8   = m68k_read_bus_8;
         m68k.memory_map[i].read16  = m68k_read_bus_16;

@@ -108,6 +108,7 @@ void ggenie_reset(int hard)
     }
 
     /* Game Genie ROM is mapped at $000000-$007fff */
+    m68k.memory_map[0].target = MM_TARGET_CART_LOCK_ROM;
     m68k.memory_map[0].base = cart.lockrom;
 
     /* Internal registers are mapped at $000000-$00001f */
@@ -202,6 +203,7 @@ static void ggenie_write_regs(unsigned int offset, unsigned int data)
     if (data & 0x400)
     {
       /* $0000-$7ffff reads mapped to Cartridge ROM */
+      m68k.memory_map[0].target = MM_TARGET_CART_ROM;
       m68k.memory_map[0].base = cart.rom;
       m68k.memory_map[0].read8 = NULL; 
       m68k.memory_map[0].read16 = NULL; 
@@ -209,6 +211,7 @@ static void ggenie_write_regs(unsigned int offset, unsigned int data)
     else
     {
       /* $0000-$7ffff reads mapped to Game Genie ROM */
+      m68k.memory_map[0].target = MM_TARGET_CART_LOCK_ROM;
       m68k.memory_map[0].base = cart.lockrom;
       m68k.memory_map[0].read8 = NULL; 
       m68k.memory_map[0].read16 = NULL; 

@@ -213,10 +213,30 @@ typedef enum
   M68K_REG_IR    /* Instruction register */
 } m68k_register_t;
 
+/**
+ * Possible targets for memory maps
+*/
+typedef enum
+{
+  MM_TARGET_NULL,
+  MM_TARGET_SCD_WORD_RAM_0,
+  MM_TARGET_SCD_WORD_RAM_1,
+  MM_TARGET_SCD_WORD_RAM_2M,
+  MM_TARGET_SCD_PRG_RAM,
+  MM_TARGET_SCD_BOOT_ROM,
+  MM_TARGET_SRAM,
+  MM_TARGET_BOOT_ROM,
+  MM_TARGET_WORK_RAM,
+  MM_TARGET_CART_ROM,
+  MM_TARGET_CART_LOCK_ROM,
+  MM_TARGET_SVP_DRAM,
+  MM_TARGET_ACTION_REPLAY_RAM
+} memory_map_target_t;
 
 /* 68k memory map structure */
 typedef struct 
 {
+  memory_map_target_t target;                      /* Base pointer target*/
   unsigned char *base;                             /* memory-based access (ROM, RAM) */
   unsigned int (*read8)(unsigned int address);               /* I/O byte read access */
   unsigned int (*read16)(unsigned int address);              /* I/O word read access */

@@ -51,7 +51,7 @@ uint8 system_bios;
 uint32 system_clock;
 int16 SVP_cycles = 800; 
 
-static uint8 pause_b;
+uint8 pause_b;
 static EQSTATE eq[2];
 static int16 llp,rrp;
 

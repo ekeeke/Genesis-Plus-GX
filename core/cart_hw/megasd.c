@@ -157,6 +157,7 @@ void megasd_enhanced_ssf2_mapper_w(unsigned int address, unsigned int data)
         /* map bank #0 selected ROM page to $000000-$07ffff */
         for (i=0x00; i<0x08; i++)
         {
+          m68k.memory_map[i].target = MM_TARGET_CART_ROM;
           m68k.memory_map[i].base = cart.rom + (((megasd_hw.bank0 & 0x0f) << 19) & cart.mask) + (i<<16);
         }
       }
@@ -171,6 +172,7 @@ void megasd_enhanced_ssf2_mapper_w(unsigned int address, unsigned int data)
         /* reset default ROM mapping in $000000-$07ffff */
         for (i=0x00; i<0x08; i++)
         {
+          m68k.memory_map[i].target = MM_TARGET_CART_ROM;
           m68k.memory_map[i].base = cart.rom + (i<<16);
         }
       }
@@ -235,6 +237,7 @@ void megasd_enhanced_ssf2_mapper_w(unsigned int address, unsigned int data)
           /* selected ROM page is mapped to selected bank */
           for (i=0; i<8; i++)
           {
+            m68k.memory_map[i].target = MM_TARGET_CART_ROM;
             m68k.memory_map[bank + i].base = src + (i<<16);
           }
         }
@@ -256,6 +259,7 @@ void megasd_enhanced_ssf2_mapper_w(unsigned int address, unsigned int data)
       /* SRAM mapped in $380000-$3fffff (max 16KB) */
       for (i=0x38; i<0x40; i++)
       {
+        m68k.memory_map[i].target  = MM_TARGET_SRAM;
         m68k.memory_map[i].base    = sram.sram;
         m68k.memory_map[i].read8   = sram_read_byte;
         m68k.memory_map[i].read16  = sram_read_word;
@@ -270,6 +274,7 @@ void megasd_enhanced_ssf2_mapper_w(unsigned int address, unsigned int data)
       /* PCM hardware mapped in $380000-$3fffff */
       for (i=0x38; i<0x40; i++)
       {
+        m68k.memory_map[i].target  = MM_TARGET_NULL;
         m68k.memory_map[i].base    = NULL;
         m68k.memory_map[i].read8   = megasd_pcm_read_byte;
         m68k.memory_map[i].read16  = megasd_pcm_read_word;
@@ -287,6 +292,7 @@ void megasd_enhanced_ssf2_mapper_w(unsigned int address, unsigned int data)
       /* selected ROM page mapped in $380000-$3fffff */
       for (i=0x38; i<0x40; i++)
       {
+        m68k.memory_map[i].target  = MM_TARGET_CART_ROM;
         m68k.memory_map[i].base    = src + (i << 16);;
         m68k.memory_map[i].read8   = NULL;
         m68k.memory_map[i].read16  = NULL;

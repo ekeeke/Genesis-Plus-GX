@@ -357,6 +357,7 @@ void md_cart_init(void)
   for (i=0; i<0x40; i++)
   {
     /* cartridge ROM */
+    m68k.memory_map[i].target   = MM_TARGET_CART_ROM;
     m68k.memory_map[i].base     = cart.rom + ((i<<16) & cart.mask);
     m68k.memory_map[i].read8    = NULL;
     m68k.memory_map[i].read16   = NULL;
@@ -369,6 +370,7 @@ void md_cart_init(void)
   for (i=0x40; i<0x80; i++)
   {
     /* unused area */
+    m68k.memory_map[i].target   = MM_TARGET_CART_ROM;
     m68k.memory_map[i].base     = cart.rom + (i<<16);
     m68k.memory_map[i].read8    = m68k_read_bus_8;
     m68k.memory_map[i].read16   = m68k_read_bus_16;
@@ -385,6 +387,7 @@ void md_cart_init(void)
     for (i=0x00; i<0x10; i++)
     {
       /* $200000-$3fffff: mirror of $000000-$1fffff (VA21 not connected to ROM chip) */
+      m68k.memory_map[i].target = m68k.memory_map[i + 0x20].target = MM_TARGET_CART_ROM;
       m68k.memory_map[i].base = m68k.memory_map[i + 0x20].base = cart.rom + ((i & 0x03) << 16);
     }
 
@@ -392,6 +395,7 @@ void md_cart_init(void)
     for (i=0x10; i<0x20; i++)
     {
       /* $200000-$3fffff: mirror of $000000-$1fffff (VA21 not connected to ROM chip) */
+      m68k.memory_map[i].target = m68k.memory_map[i + 0x20].target = MM_TARGET_CART_ROM;
       m68k.memory_map[i].base = m68k.memory_map[i + 0x20].base = cart.rom + 0x40000 + ((i & 0x03) << 16);
     }
   }
@@ -411,6 +415,7 @@ void md_cart_init(void)
       /* except for Sonic the Hedgehog 3 (cartridge ROM mirrored in upper 2MB area at power on) */
       if (strstr(rominfo.international,"SONIC THE HEDGEHOG 3") == NULL)
       {
+        m68k.memory_map[sram.start >> 16].target  = MM_TARGET_SRAM;
         m68k.memory_map[sram.start >> 16].base    = sram.sram;
         m68k.memory_map[sram.start >> 16].read8   = sram_read_byte;
         m68k.memory_map[sram.start >> 16].read16  = sram_read_word;
@@ -429,6 +434,7 @@ void md_cart_init(void)
       /* NB: existing 4MB ROM dumps include SRAM data at ROM offsets 0x200000-0x2fffff */ 
       for (i=0x20; i<0x30; i++)
       {
+        m68k.memory_map[i].target  = MM_TARGET_SRAM;
         m68k.memory_map[i].base    = sram.sram;
         m68k.memory_map[i].read8   = sram_read_byte;
         m68k.memory_map[i].read16  = sram_read_word;
@@ -444,6 +450,7 @@ void md_cart_init(void)
       {
         for (i=0x30; i<0x40; i++)
         {
+          m68k.memory_map[i].target  = MM_TARGET_CART_ROM;
           m68k.memory_map[i].base = cart.rom + ((i - 0x10) << 16);
         }
       }
@@ -580,6 +587,7 @@ void md_cart_init(void)
     /* cartridge ROM is mapped to $3C0000-$3FFFFF on reset */
     for (i=0x3c; i<0x40; i++)
     {
+      m68k.memory_map[i].target   = MM_TARGET_CART_ROM;
       m68k.memory_map[i].base     = cart.rom + (i << 16);
       m68k.memory_map[i].read8    = NULL;
       m68k.memory_map[i].read16   = NULL;
@@ -613,12 +621,14 @@ void md_cart_init(void)
     /* first 256K ROM bank is mirrored into $000000-$1FFFFF on reset */
     for (i=0x00; i<0x20; i++)
     {
+      m68k.memory_map[i].target = MM_TARGET_CART_ROM;
       m68k.memory_map[i].base = cart.rom + ((i & 0x03) << 16);
     }
 
     /* 32K static RAM mapped to $200000-$2FFFFF is disabled on reset */
     for (i=0x20; i<0x30; i++)
     {
+      m68k.memory_map[i].target  = MM_TARGET_SRAM;
       m68k.memory_map[i].base    = sram.sram;
       m68k.memory_map[i].read8   = m68k_read_bus_8;
       m68k.memory_map[i].read16  = m68k_read_bus_16;
@@ -666,6 +676,7 @@ void md_cart_init(void)
     for (i=0x08; i<0x10; i++)
     {
       /* lower 512KB mirrored */
+      m68k.memory_map[i].target  = MM_TARGET_CART_ROM;
       m68k.memory_map[i].base = cart.rom + ((i & 7) << 16);
     }
 
@@ -683,6 +694,7 @@ void md_cart_init(void)
     for (i=0x60; i<0x70; i++)
     {
       /* custom hardware */
+      m68k.memory_map[i].target  = MM_TARGET_CART_ROM;
       m68k.memory_map[i].base   = cart.rom + 0x0f0000;
       m68k.memory_map[i].read8  = ((i & 0x07) < 0x04) ? NULL : mapper_smw_64_r;
       m68k.memory_map[i].read16  = ((i & 0x07) < 0x04) ? NULL : mapper_smw_64_r;
@@ -702,6 +714,7 @@ void md_cart_init(void)
     /* assume linear ROM mapping by default (max. 10MB) */
     for (i=0x40; i<0xA0; i++)
     {
+      m68k.memory_map[i].target  = MM_TARGET_CART_ROM;
       m68k.memory_map[i].base   = cart.rom + (i<<16);
       m68k.memory_map[i].read8  = NULL;
       m68k.memory_map[i].read16 = NULL;
@@ -755,6 +768,7 @@ void md_cart_init(void)
             /* $000000-$1FFFFF is mapped to S&K ROM */
             for (i=0x00; i<0x20; i++)
             {
+              m68k.memory_map[i].target  = MM_TARGET_CART_ROM;
               m68k.memory_map[i].base = cart.rom + 0x400000 + (i << 16);
             }
 
@@ -820,6 +834,7 @@ void md_cart_reset(int hard_reset)
     /* Boot ROM (8KB mirrored) is mapped to $000000-$3FFFFF */
     for (i=0x00; i<0x40; i++)
     {
+      m68k.memory_map[i].target  = MM_TARGET_CART_ROM;
       m68k.memory_map[i].base = cart.rom + 0x400000;
     }
 
@@ -834,6 +849,7 @@ void md_cart_reset(int hard_reset)
   {
     for (i=0x00; i<0x40; i++)
     {
+      m68k.memory_map[i].target  = MM_TARGET_CART_ROM;
       m68k.memory_map[i].base = cart.rom + ((i<<16) & cart.mask);
     }
   }
@@ -872,6 +888,7 @@ void md_cart_reset(int hard_reset)
         /* disable UPMEM chip at $300000-$3fffff */
         for (i=0x30; i<0x40; i++)
         {
+          m68k.memory_map[i].target  = MM_TARGET_CART_ROM;
           m68k.memory_map[i].base = cart.rom + ((i<<16) & cart.mask);
         }
       }
@@ -890,29 +907,6 @@ int md_cart_context_save(uint8 *state)
   int i;
   int bufferptr = 0;
   uint8 *base;
-
-  /* cartridge mapping */
-  for (i=0; i<0x40; i++)
-  {
-    /* get base address */
-    base = m68k.memory_map[i].base;
-
-    if (base == sram.sram)
-    {
-      /* SRAM */
-      state[bufferptr++] = 0xff;
-    }
-    else if (base == boot_rom)
-    {
-      /* Boot ROM */
-      state[bufferptr++] = 0xfe;
-    }
-    else
-    {
-      /* Cartridge ROM */
-      state[bufferptr++] = ((base - cart.rom) >> 16) & 0xff;
-    }
-  }
 
   /* hardware registers */
   save_param(cart.hw.regs, sizeof(cart.hw.regs));
@@ -939,42 +933,6 @@ int md_cart_context_load(uint8 *state)
   int i;
   int bufferptr = 0;
   uint8 offset;
-
-  /* cartridge mapping */
-  for (i=0; i<0x40; i++)
-  {
-    /* get offset */
-    offset = state[bufferptr++];
-
-    if (offset == 0xff)
-    {
-      /* SRAM */
-      m68k.memory_map[i].base     = sram.sram;
-      m68k.memory_map[i].read8    = sram_read_byte;
-      m68k.memory_map[i].read16   = sram_read_word;
-      m68k.memory_map[i].write8   = sram_write_byte;
-      m68k.memory_map[i].write16  = sram_write_word;
-      zbank_memory_map[i].read    = sram_read_byte;
-      zbank_memory_map[i].write   = sram_write_byte;
-
-    }
-    else
-    {
-      /* check if SRAM was mapped there before loading state */
-      if (m68k.memory_map[i].base == sram.sram)
-      {
-        m68k.memory_map[i].read8    = NULL;
-        m68k.memory_map[i].read16   = NULL;
-        m68k.memory_map[i].write8   = m68k_unused_8_w;
-        m68k.memory_map[i].write16  = m68k_unused_16_w;
-        zbank_memory_map[i].read    = NULL;
-        zbank_memory_map[i].write   = zbank_unused_w;
-      }
-
-      /* ROM */
-      m68k.memory_map[i].base = (offset == 0xfe) ? boot_rom : (cart.rom + (offset << 16));
-    }
-  }
 
   /* hardware registers */
   load_param(cart.hw.regs, sizeof(cart.hw.regs));
@@ -1019,6 +977,7 @@ static void mapper_sega_w(uint32 data)
         cart.hw.regs[0] = ((m68k.memory_map[0x20].base - cart.rom) >> 16) & 0xff;
 
         /* Backup RAM mapped to $200000-$20ffff (normally mirrored up to $3fffff but this breaks Sonic Megamix and no game need it) */
+        m68k.memory_map[0x20].target  = MM_TARGET_SRAM;
         m68k.memory_map[0x20].base    = sram.sram;
         m68k.memory_map[0x20].read8   = sram_read_byte;
         m68k.memory_map[0x20].read16  = sram_read_word;
@@ -1046,6 +1005,7 @@ static void mapper_sega_w(uint32 data)
       /* S2K upmem chip mapped to $300000-$3fffff (256KB mirrored) */
       for (i=0x30; i<0x40; i++)
       {
+        m68k.memory_map[i].target  = MM_TARGET_CART_ROM;
         m68k.memory_map[i].base = (cart.rom + 0x600000) + ((i & 3) << 16);
       }
     }
@@ -1056,6 +1016,7 @@ static void mapper_sega_w(uint32 data)
     if (m68k.memory_map[0x20].base == sram.sram)
     {
       /* current cartridge ROM bank mapped to $200000-$20ffff */
+      m68k.memory_map[0x20].target  = MM_TARGET_CART_ROM;
       m68k.memory_map[0x20].base    = cart.rom + (cart.hw.regs[0] << 16);
       m68k.memory_map[0x20].read8   = NULL;
       m68k.memory_map[0x20].read16  = NULL;
@@ -1071,6 +1032,7 @@ static void mapper_sega_w(uint32 data)
       /* cartridge ROM mapped to $300000-$3fffff */
       for (i=0x30; i<0x40; i++)
       {
+        m68k.memory_map[i].target  = MM_TARGET_CART_ROM;
         m68k.memory_map[i].base = cart.rom + ((i<<16) & cart.mask);
       }
     }
@@ -1094,7 +1056,9 @@ static void mapper_512k_w(uint32 address, uint32 data)
   /* remap selected ROM page to selected bank */
   for (i=0; i<8; i++)
   {
-    m68k.memory_map[address++].base = src + (i<<16);
+    m68k.memory_map[address].target  = MM_TARGET_CART_ROM;
+    m68k.memory_map[address].base = src + (i<<16);
+    address++;
   }
 }
 
@@ -1128,6 +1092,7 @@ static void mapper_sf001_w(uint32 address, uint32 data)
         /* $000000-$3FFFFF is not mapped */
         for (i=0x00; i<0x40; i++)
         {
+          m68k.memory_map[i].target   = MM_TARGET_CART_ROM;
           m68k.memory_map[i].base     = cart.rom + (i << 16);
           m68k.memory_map[i].read8    = m68k_read_bus_8;
           m68k.memory_map[i].read16   = m68k_read_bus_16;
@@ -1144,6 +1109,7 @@ static void mapper_sf001_w(uint32 address, uint32 data)
         /* 256K ROM bank #15 mapped to $000000-$03FFFF  */
         for (i=0x00; i<0x04; i++)
         {
+          m68k.memory_map[i].target   = MM_TARGET_CART_ROM;
           m68k.memory_map[i].base     = cart.rom + ((0x38 + i) << 16);
           m68k.memory_map[i].read8    = NULL;
           m68k.memory_map[i].read16   = NULL;
@@ -1153,6 +1119,7 @@ static void mapper_sf001_w(uint32 address, uint32 data)
         /* 256K ROM banks #2 to #15 mapped to $040000-$3BFFFF (last revision) or $040000-$3FFFFF (older revisions) */
         for (i=0x04; i<(sram.start >> 16); i++)
         {
+          m68k.memory_map[i].target   = MM_TARGET_CART_ROM;
           m68k.memory_map[i].base     = cart.rom + (i << 16);
           m68k.memory_map[i].read8    = NULL;
           m68k.memory_map[i].read16   = NULL;
@@ -1162,6 +1129,7 @@ static void mapper_sf001_w(uint32 address, uint32 data)
         /* 32K static RAM mirrored into $3C0000-$3FFFFF (odd bytes only) (last revision only) */
         while (i<0x40)
         {
+          m68k.memory_map[i].target   = MM_TARGET_SRAM;
           m68k.memory_map[i].base     = sram.sram;
           m68k.memory_map[i].read8    = sram_read_byte;
           m68k.memory_map[i].read16   = sram_read_word;
@@ -1177,6 +1145,7 @@ static void mapper_sf001_w(uint32 address, uint32 data)
         /* 256K ROM banks #1 to #16 mapped to $000000-$3FFFFF (default) */
         for (i=0x00; i<0x40; i++)
         {
+          m68k.memory_map[i].target   = MM_TARGET_CART_ROM;
           m68k.memory_map[i].base     = cart.rom + (i << 16);
           m68k.memory_map[i].read8    = NULL;
           m68k.memory_map[i].read16   = NULL;
@@ -1218,6 +1187,7 @@ static void mapper_sf002_w(uint32 address, uint32 data)
     /* $000000-$1BFFFF mapped to $200000-$3BFFFF */
     for (i=0x20; i<0x3C; i++)
     {
+      m68k.memory_map[i].target   = MM_TARGET_CART_ROM;
       m68k.memory_map[i].base = cart.rom + ((i & 0x1F) << 16);
     }
   }
@@ -1226,6 +1196,7 @@ static void mapper_sf002_w(uint32 address, uint32 data)
     /* $200000-$3BFFFF mapped to $200000-$3BFFFF */
     for (i=0x20; i<0x3C; i++)
     {
+      m68k.memory_map[i].target   = MM_TARGET_CART_ROM;
       m68k.memory_map[i].base = cart.rom + (i << 16);
     }
   }
@@ -1295,6 +1266,7 @@ static void mapper_sf004_w(uint32 address, uint32 data)
         /* 5 x 256K ROM banks mapped to $000000-$13FFFF, starting from first page ROM bank */
         for (i=0x00; i<0x14; i++)
         {
+          m68k.memory_map[i].target   = MM_TARGET_CART_ROM;
           m68k.memory_map[i].base   = cart.rom + (((base + i) & 0x1f) << 16);
           m68k.memory_map[i].read8  = NULL;
           m68k.memory_map[i].read16 = NULL;
@@ -1314,6 +1286,7 @@ static void mapper_sf004_w(uint32 address, uint32 data)
         /* first page 256K ROM bank mirrored into $000000-$1FFFFF */
         for (i=0x00; i<0x20; i++)
         {
+          m68k.memory_map[i].target   = MM_TARGET_CART_ROM;
           m68k.memory_map[i].base = m68k.memory_map[0].base + ((i & 0x03) << 16);
           m68k.memory_map[i].read8  = NULL;
           m68k.memory_map[i].read16 = NULL;
@@ -1343,6 +1316,7 @@ static void mapper_sf004_w(uint32 address, uint32 data)
         /* selected 256K ROM bank mirrored into $000000-$1FFFFF */
         for (i=0x00; i<0x20; i++)
         {
+          m68k.memory_map[i].target = MM_TARGET_CART_ROM;
           m68k.memory_map[i].base = cart.rom + ((base + (i & 0x03)) << 16);
         }
       }
@@ -1351,6 +1325,7 @@ static void mapper_sf004_w(uint32 address, uint32 data)
         /* 5 x 256K ROM banks mapped to $000000-$13FFFF, starting from selected bank */
         for (i=0x00; i<0x14; i++)
         {
+          m68k.memory_map[i].target = MM_TARGET_CART_ROM;
           m68k.memory_map[i].base = cart.rom + (((base + i) & 0x1f) << 16);
         }
       }
@@ -1398,6 +1373,7 @@ static void mapper_t5740_w(uint32 address, uint32 data)
       base = cart.rom + ((data & 0x0f) << 19);
       for (i=0x28; i<0x30; i++)
       {
+        m68k.memory_map[i].target = MM_TARGET_CART_ROM;
         m68k.memory_map[i].base = base + ((i & 0x07) << 16);
       }
       return;
@@ -1409,6 +1385,7 @@ static void mapper_t5740_w(uint32 address, uint32 data)
       base = cart.rom + ((data & 0x0f) << 19);
       for (i=0x30; i<0x38; i++)
       {
+        m68k.memory_map[i].target = MM_TARGET_CART_ROM;
         m68k.memory_map[i].base = base + ((i & 0x07) << 16);
       }
       return;
@@ -1420,6 +1397,7 @@ static void mapper_t5740_w(uint32 address, uint32 data)
       base = cart.rom + ((data & 0x0f) << 19);
       for (i=0x38; i<0x40; i++)
       {
+        m68k.memory_map[i].target = MM_TARGET_CART_ROM;
         m68k.memory_map[i].base = base + ((i & 0x07) << 16);
       }
       return;
@@ -1524,6 +1502,7 @@ static void mapper_smw_64_w(uint32 address, uint32 data)
           case 0x07:
           {
             /* update selected ROM bank (upper 512K) mapped at $610000-$61ffff */
+            m68k.memory_map[0x61].target = m68k.memory_map[0x69].target = MM_TARGET_CART_ROM;
             m68k.memory_map[0x61].base = m68k.memory_map[0x69].base = cart.rom + 0x080000 + ((data & 0x1c) << 14);
             break;
           }
@@ -1588,6 +1567,7 @@ static void mapper_smw_64_w(uint32 address, uint32 data)
         if (sram.sram[0x02] & 0x80)
         {
           /* update selected ROM bank (upper 512K) mapped at $600000-$60ffff */
+          m68k.memory_map[0x60].target = m68k.memory_map[0x68].target = MM_TARGET_CART_ROM;
           m68k.memory_map[0x60].base = m68k.memory_map[0x68].base = cart.rom + 0x080000 + ((data & 0x1c) << 14);
         }
       }
@@ -1706,6 +1686,7 @@ static void mapper_realtec_w(uint32 address, uint32 data)
             /* adjust 64k mapped area ROM base address according to fixed ROM bank configuration (see above) */
             base = (base & ~cart.hw.regs[1]) | (cart.hw.regs[2] & cart.hw.regs[1]);
 
+            m68k.memory_map[i].target = MM_TARGET_CART_ROM;
             m68k.memory_map[i].base = &cart.rom[base << 16];
           }
 
@@ -1720,11 +1701,13 @@ static void mapper_realtec_w(uint32 address, uint32 data)
 static uint32 mapper_realtec_r(uint32 address)
 {
   /* /VRES is asserted to bypass TMSS licensing screen when first read access to cartridge ROM header is detected */
-  if ((address == 0x100) && (m68k.memory_map[0].base = cart.base))
+  if (address == 0x100)
   {
-    /* asserting /VRES from cartridge should only reset 68k CPU (TODO: confirm this on real hardware) */
-    m68k_pulse_reset();
-  }
+    m68k.memory_map[0].target = cart.target;
+    m68k.memory_map[0].base = cart.base;
+    if (m68k.memory_map[0].base > 0) 
+      m68k_pulse_reset(); /* asserting /VRES from cartridge should only reset 68k CPU (TODO: confirm this on real hardware) */
+  } 
 
   /* default ROM area read handler */
   return *(uint16 *)(m68k.memory_map[0].base + (address & 0xfffe));
@@ -1772,6 +1755,7 @@ static void mapper_32k_w(uint32 data)
     for (i=0; i<0x10; i++)
     {
       /* Remap to unused ROM area  */
+      m68k.memory_map[i].target = MM_TARGET_CART_ROM;
       m68k.memory_map[i].base = &cart.rom[0x400000 + (i << 16)];
 
       /* address = address OR (value << 15) */
@@ -1784,6 +1768,7 @@ static void mapper_32k_w(uint32 data)
     /* reset default $000000-$0FFFFF mapping */
     for (i=0; i<16; i++)
     {
+      m68k.memory_map[i].target = MM_TARGET_CART_ROM;
       m68k.memory_map[i].base = &cart.rom[i << 16];
     }
   }
@@ -1802,6 +1787,7 @@ static void mapper_64k_w(uint32 data)
     /* bank is mapped at $000000-$0FFFFF */
     for (i=0; i<16; i++)
     {
+      m68k.memory_map[i].target = MM_TARGET_CART_ROM;
       m68k.memory_map[i].base = &cart.rom[(data & 0xf) << 16];
     }
   }
@@ -1810,6 +1796,7 @@ static void mapper_64k_w(uint32 data)
     /* reset default $000000-$0FFFFF mapping */
     for (i=0; i<16; i++)
     {
+      m68k.memory_map[i].target = MM_TARGET_CART_ROM;
       m68k.memory_map[i].base = &cart.rom[(i & 0xf) << 16];
     }
   }
@@ -1825,6 +1812,7 @@ static void mapper_64k_multi_w(uint32 address)
   /* 64 x 64k banks */
   for (i=0; i<64; i++)
   {
+    m68k.memory_map[i].target = MM_TARGET_CART_ROM;
     m68k.memory_map[i].base = &cart.rom[((address + i) & 0x3f) << 16];
   }
 }
@@ -1855,6 +1843,7 @@ static uint32 mapper_128k_multi_r(uint32 address)
   address = bank << 1;
   for (i=0x00; i<0x40; i++)
   {
+    m68k.memory_map[i].target = MM_TARGET_CART_ROM;
     m68k.memory_map[i].base = &cart.rom[((address + i) & 0x3f) << 16];
   }
 
@@ -1888,6 +1877,7 @@ static void mapper_256k_multi_w(uint32 address, uint32 data)
   address = bank << 2;
   for (i=0x00; i<0x40; i++)
   {
+    m68k.memory_map[i].target = MM_TARGET_CART_ROM;
     m68k.memory_map[i].base = &cart.rom[((address + i) & 0x3f) << 16];
   }
 }
@@ -1907,12 +1897,14 @@ static void mapper_wd1601_w(uint32 address, uint32 data)
     /* upper 2MB ROM mapped to $000000-$1fffff */
     for (i=0; i<0x20; i++)
     {
+      m68k.memory_map[i].target = MM_TARGET_CART_ROM;
       m68k.memory_map[i].base = &cart.rom[(0x20 + i) << 16];
     }
 
     /* backup RAM (8KB) mapped to $2000000-$3fffff */
     for (i=0x20; i<0x40; i++)
     {
+      m68k.memory_map[i].target  = MM_TARGET_SRAM;
       m68k.memory_map[i].base    = sram.sram;
       m68k.memory_map[i].read8   = sram_read_byte;
       m68k.memory_map[i].read16  = sram_read_word;
@@ -1982,6 +1974,7 @@ static uint32 mapper_64k_radica_r(uint32 address)
   /* $000000-$3fffff area is mapped to selected banks (OR gates between VA21-VA16 and selected index) */
   for (i = 0x00; i < 0x40; i++)
   {
+    m68k.memory_map[i].target  = MM_TARGET_CART_ROM;
     m68k.memory_map[i].base = &cart.rom[(index | i) << 16];
   }
 
@@ -2010,12 +2003,14 @@ static uint32 mapper_128k_radica_r(uint32 address)
   /* $000000-$1fffff area is mapped to selected banks (OR gates between VA20-VA17 and selected index) */
   for (i = 0x00; i < 0x20; i++)
   {
+    m68k.memory_map[i].target  = MM_TARGET_CART_ROM;
     m68k.memory_map[i].base = &cart.rom[(index | i) << 16];
   }
 
   /* $200000-$3fffff area is mapped to 8KB SRAM (mirrored) */
   for (i = 0x20; i < 0x40; i++)
   {
+    m68k.memory_map[i].target  = MM_TARGET_SRAM;
     m68k.memory_map[i].base    = sram.sram;
     m68k.memory_map[i].read8   = sram_read_byte;
     m68k.memory_map[i].read16  = sram_read_word;

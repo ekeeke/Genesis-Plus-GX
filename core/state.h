@@ -39,8 +39,8 @@
 #ifndef _STATE_H_
 #define _STATE_H_
 
-#define STATE_SIZE    0xfd000
-#define STATE_VERSION "GENPLUS-GX 1.7.6"
+#define STATE_SIZE    0xfd000 /* TO-DO: Update*/
+#define STATE_VERSION "GENPLUS-GX 1.7.6" /* TO-DO: Update*/
 
 #define load_param(param, size) \
   memcpy(param, &state[bufferptr], size); \

@@ -66,6 +66,9 @@ void gen_init(void)
   /* initialize Z80 */
   z80_init(0,z80_irq_callback);
 
+  /* Initialize all memory map targets to NULL */
+  for (i=0x00; i<0xFF; i++) m68k.memory_map[i].target = MM_TARGET_NULL;
+
   /* 8-bit / 16-bit modes */
   if ((system_hw & SYSTEM_PBC) == SYSTEM_MD)
   {
@@ -78,6 +81,7 @@ void gen_init(void)
     /* $800000-$DFFFFF : illegal access by default */
     for (i=0x80; i<0xe0; i++)
     {
+      m68k.memory_map[i].target   = MM_TARGET_WORK_RAM;
       m68k.memory_map[i].base     = work_ram; /* for VDP DMA */
       m68k.memory_map[i].read8    = m68k_lockup_r_8;
       m68k.memory_map[i].read16   = m68k_lockup_r_16;
@@ -101,6 +105,7 @@ void gen_init(void)
     /* $E00000-$FFFFFF : Work RAM (64k) */
     for (i=0xe0; i<0x100; i++)
     {
+      m68k.memory_map[i].target   = MM_TARGET_WORK_RAM;
       m68k.memory_map[i].base     = work_ram;
       m68k.memory_map[i].read8    = NULL;
       m68k.memory_map[i].read16   = NULL;
@@ -327,9 +332,11 @@ void gen_reset(int hard_reset)
       if (system_bios & SYSTEM_MD)
       {
         /* save default cartridge slot mapping */
+        cart.target = m68k.memory_map[0].target; 
         cart.base = m68k.memory_map[0].base;
 
         /* BOOT ROM is mapped at $000000-$0007FF */
+        m68k.memory_map[0].target = MM_TARGET_BOOT_ROM;
         m68k.memory_map[0].base = boot_rom;
       }
     }
@@ -433,6 +440,7 @@ void gen_bankswitch_w(unsigned int data)
     if (data & 1)
     {
       /* enable cartridge ROM */
+      m68k.memory_map[0].target = cart.target;
       m68k.memory_map[0].base = cart.base;
     }
     else

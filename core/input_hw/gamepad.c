@@ -40,21 +40,9 @@
 #include "shared.h"
 #include "gamepad.h"
 
-static struct
-{
-  uint8 State;
-  uint8 Counter;
-  uint8 Timeout;
-  uint32 Latency;
-} gamepad[MAX_DEVICES];
-
-static struct
-{
-  uint8 Latch;
-  uint8 Counter;
-} flipflop[2];
-
-static uint8 latch;
+struct gamepad_t gamepad[MAX_DEVICES];
+struct flipflop_t flipflop[2];
+uint8 latch;
 
 
 void gamepad_reset(int port)

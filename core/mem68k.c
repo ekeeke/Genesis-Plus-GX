@@ -815,6 +815,8 @@ void ctrl_io_write_byte(unsigned int address, unsigned int data)
             m68k_poll_sync(1<<0x03);
 
             /* PRG-RAM 128k bank mapped to $020000-$03FFFF (resp. $420000-$43FFFF) */
+            m68k.memory_map[scd.cartridge.boot + 0x02].target = MM_TARGET_SCD_PRG_RAM;
+            m68k.memory_map[scd.cartridge.boot + 0x03].target = m68k.memory_map[scd.cartridge.boot + 0x02].target;
             m68k.memory_map[scd.cartridge.boot + 0x02].base = scd.prg_ram + ((data & 0xc0) << 11);
             m68k.memory_map[scd.cartridge.boot + 0x03].base = m68k.memory_map[scd.cartridge.boot + 0x02].base + 0x10000;
 
@@ -1154,6 +1156,8 @@ void ctrl_io_write_word(unsigned int address, unsigned int data)
             m68k_poll_sync(1<<0x03);
 
             /* PRG-RAM 128k bank mapped to $020000-$03FFFF (resp. $420000-$43FFFF) */
+            m68k.memory_map[scd.cartridge.boot + 0x02].target = MM_TARGET_SCD_PRG_RAM;
+            m68k.memory_map[scd.cartridge.boot + 0x03].target = m68k.memory_map[scd.cartridge.boot + 0x02].target;
             m68k.memory_map[scd.cartridge.boot + 0x02].base = scd.prg_ram + ((data & 0xc0) << 11);
             m68k.memory_map[scd.cartridge.boot + 0x03].base = m68k.memory_map[scd.cartridge.boot + 0x02].base + 0x10000;
 

@@ -39,6 +39,21 @@
 #ifndef _AREPLAY_H_
 #define _AREPLAY_H_
 
+#include "../types.h"
+
+struct action_replay_t
+{
+  uint8 enabled;
+  uint8 status;
+  uint8 ram[0x10000];
+  uint16 regs[13];
+  uint16 old[4];
+  uint16 data[4];
+  uint32 addr[4];
+};
+
+extern struct action_replay_t action_replay;
+
 #define AR_SWITCH_OFF     (0)
 #define AR_SWITCH_ON      (1)
 #define AR_SWITCH_TRAINER (2)
