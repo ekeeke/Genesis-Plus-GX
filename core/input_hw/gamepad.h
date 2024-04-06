@@ -40,6 +40,16 @@
 #ifndef _GAMEPAD_H_
 #define _GAMEPAD_H_
 
+struct gamepad_t
+{
+  uint8 State;
+  uint8 Counter;
+  uint8 Timeout;
+  uint32 Latency;
+};
+
+extern struct gamepad_t gamepad[MAX_DEVICES];
+
 /* Function prototypes */
 extern void gamepad_reset(int port);
 extern void gamepad_refresh(int port);

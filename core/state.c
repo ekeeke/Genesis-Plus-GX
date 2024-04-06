@@ -71,6 +71,9 @@ int state_load(unsigned char *state)
     zbank_memory_map[i].write   = zbank_write_vdp;
   }
 
+  /* SYSTEM */
+  load_param(&pause_b, sizeof(pause_b));
+
   /* GENESIS */
   if ((system_hw & SYSTEM_PBC) == SYSTEM_MD)
   {
@@ -108,6 +111,9 @@ int state_load(unsigned char *state)
   {
     io_reg[0] = 0x80 | (region_code >> 1);
   }
+
+  /* CONTROLLERS */
+  load_param(gamepad, sizeof(gamepad));
 
   /* VDP */
   bufferptr += vdp_context_load(&state[bufferptr]);
@@ -152,6 +158,7 @@ int state_load(unsigned char *state)
     load_param(&m68k.cycles, sizeof(m68k.cycles));
     load_param(&m68k.int_level, sizeof(m68k.int_level));
     load_param(&m68k.stopped, sizeof(m68k.stopped));
+    load_param(&m68k.refresh_cycles, sizeof(m68k.refresh_cycles));
   }
 
   /* Z80 */ 
@@ -200,6 +207,9 @@ int state_save(unsigned char *state)
   memcpy(version,STATE_VERSION,16);
   save_param(version, 16);
 
+  /* SYSTEM */
+  save_param(&pause_b, sizeof(pause_b));
+
   /* GENESIS */
   if ((system_hw & SYSTEM_PBC) == SYSTEM_MD)
   {
@@ -215,7 +225,10 @@ int state_save(unsigned char *state)
 
   /* IO */
   save_param(io_reg, sizeof(io_reg));
-
+  
+  /* CONTROLLERS */
+  save_param(gamepad, sizeof(gamepad));
+  
   /* VDP */
   bufferptr += vdp_context_save(&state[bufferptr]);
 
@@ -251,6 +264,7 @@ int state_save(unsigned char *state)
     save_param(&m68k.cycles, sizeof(m68k.cycles));
     save_param(&m68k.int_level, sizeof(m68k.int_level));
     save_param(&m68k.stopped, sizeof(m68k.stopped));
+    save_param(&m68k.refresh_cycles, sizeof(m68k.refresh_cycles));
   }
 
   /* Z80 */ 
