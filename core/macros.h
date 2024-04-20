@@ -53,6 +53,15 @@
 #define ALIGNED_(x) __attribute__ ((aligned(x)))
 #endif
 
+/* Provide the compiler with branch prediction information */
+#if defined(__GNUC__)
+#define LIKELY(x) __builtin_expect(!!(x), 1)
+#define UNLIKELY(x) __builtin_expect(!!(x), 0)
+#else
+#define LIKELY(x) x
+#define UNLIKELY(x) x
+#endif
+
 /* Default CD image file access (read-only) functions */
 /* If you need to override default stdio.h functions with custom filesystem API,
    redefine following macros in platform specific include file (osd.h) or Makefile
