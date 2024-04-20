@@ -2,7 +2,7 @@
  *  Genesis Plus
  *  Mega Drive cartridge hardware support
  *
- *  Copyright (C) 2007-2023  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2007-2024  Eke-Eke (Genesis Plus GX)
  *
  *  Many cartridge protections were initially documented by Haze
  *  (http://haze.mameworld.info/)
@@ -465,7 +465,10 @@ void md_cart_init(void)
   memset(&cart.hw, 0, sizeof(cart.hw));
 
   /* initialize default $200000-$20ffff mapping (for games using SRAM & ROM bankswitching) */
-  cart.hw.regs[0] = (0x200000 & cart.mask) >> 16;
+  if (m68k.memory_map[0x20].base == sram.sram)
+  {
+    cart.hw.regs[0] = (0x200000 & cart.mask) >> 16;
+  }
 
   /* search for game into database */
   for (i=0; i<(sizeof(rom_database)/sizeof(md_entry_t)); i++)
