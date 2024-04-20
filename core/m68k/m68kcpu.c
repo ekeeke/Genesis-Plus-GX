@@ -292,7 +292,7 @@ void m68k_run(unsigned int cycles)
 
 #ifdef HOOK_CPU
     /* Trigger execution hook */
-    if (cpu_hook)
+    if (UNLIKELY(cpu_hook))
       cpu_hook(HOOK_M68K_E, 0, REG_PC, 0);
 #endif
 
