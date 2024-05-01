@@ -76,7 +76,8 @@ Genesis Plus GX 1.7.5 (xx/xx/xxxx) (Eke-Eke)
 * added support for Everdrive extended SSF mapper
 * added support for MegaSD CD hardware overlay (MD+ hacks) and extended SSF2 / ROM write mappers
 * added emulation of Z80 halt when accessing 68k bus during DMA from 68k bus
-* added basic emulation of 68k bus access refresh delays (fixes Super Airwolf graphical glitch during intro & some Krikzz's mcd-verificator timing tests)
+* added emulation of 68k delay during Z80 acccess to 68k bus
+* added (basic) emulation of 68k bus refresh delays (fixes Super Airwolf graphical glitch during intro & some Krikzz's mcd-verificator timing tests)
 * added (very basic) emulation of Flashkit MD hardware
 * added emulation of Micro Machines USA on-board TMSS bypass logic hardware
 * added SRAM support for games larger than 8MB
