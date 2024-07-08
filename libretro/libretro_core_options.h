@@ -132,6 +132,21 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "auto"
    },
    {
+      "genesis_plus_gx_vdp_mode",
+      "Force VDP Mode",
+      NULL,
+      "Overrides the VDP mode to force it to run at either NTSC 60Hz or PAL 50Hz, regardless of system region.",
+      NULL,
+      "system",
+      {
+         { "auto",  "Disabled" },
+         { "60hz",  "NTSC (60Hz)" },
+         { "50hz",  "PAL (50Hz)" },
+         { NULL, NULL },
+      },
+      "auto"
+   },
+   {
       "genesis_plus_gx_bios",
       "System Boot ROM",
       NULL,
