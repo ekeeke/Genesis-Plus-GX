@@ -528,12 +528,12 @@ static void gxSetAspectRatio(int *xscale, int *yscale)
       /* Horizontal borders are emulated */
       if (reg[12] & 1)
       {
-        /* 348 "H40" pixels = 348 * Wii/GC pixel clock / "H40" pixel clock = approx. 700 (NTSC) or 707 (PAL) Wii/GC pixels */
+        /* 344 "H40" pixels = 344 * Wii/GC pixel clock / "H40" pixel clock = approx. 700 (NTSC) or 707 (PAL) Wii/GC pixels */
         *xscale = (system_clock == MCLOCK_NTSC) ? 350 : 354; 
       }
       else
       {
-        /* 284 "H32" pixels = 284 * Wii/GC pixel clock / "H32" pixel clock = approx. 714 (NTSC) or 721 (PAL) Wii/GC pixels */
+        /* 280 "H32" pixels = 280 * Wii/GC pixel clock / "H32" pixel clock = approx. 714 (NTSC) or 721 (PAL) Wii/GC pixels */
         *xscale = (system_clock == MCLOCK_NTSC) ? 357 : 361; 
       }
     }
