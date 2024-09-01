@@ -207,6 +207,9 @@ void cdd_reset(void)
   /* reset status */
   cdd.status = cdd.loaded ? CD_TOC : NO_DISC;
   
+  /* reset pending flag */
+  cdd.pending = 0;
+
   /* reset CD-DA fader (full volume) */
   cdd.fader[0] = cdd.fader[1] = 0x400;
 
@@ -218,6 +221,7 @@ int cdd_context_save(uint8 *state)
 {
   int bufferptr = 0;
   unsigned int offset = 0;
+  uint8 tmp8;
 
   save_param(&cdd.cycles, sizeof(cdd.cycles));
   save_param(&cdd.latency, sizeof(cdd.latency));
@@ -225,7 +229,10 @@ int cdd_context_save(uint8 *state)
   save_param(&cdd.lba, sizeof(cdd.lba));
   save_param(&cdd.scanOffset, sizeof(cdd.scanOffset));
   save_param(&cdd.fader, sizeof(cdd.fader));
-  save_param(&cdd.status, sizeof(cdd.status));
+
+  /* 4-bit pending flag and 4-bit CDD status are saved together (to maintain backward savestate compatibility) */
+  tmp8 = cdd.status | (cdd.pending << 4);
+  save_param(&tmp8, sizeof(tmp8));
 
   /* current track is an audio track ? */
   if (cdd.toc.tracks[cdd.index].type == TYPE_AUDIO)
@@ -264,6 +271,7 @@ int cdd_context_load(uint8 *state, char *version)
 {
   unsigned int offset, lba, index;
   int bufferptr = 0;
+  uint8 tmp8;
 
   load_param(&cdd.cycles, sizeof(cdd.cycles));
   load_param(&cdd.latency, sizeof(cdd.latency));
@@ -271,7 +279,11 @@ int cdd_context_load(uint8 *state, char *version)
   load_param(&lba, sizeof(cdd.lba));
   load_param(&cdd.scanOffset, sizeof(cdd.scanOffset));
   load_param(&cdd.fader, sizeof(cdd.fader));
-  load_param(&cdd.status, sizeof(cdd.status));
+
+  /* 4-bit pending flag and 4-bit CDD status are saved together (to maintain backward savestate compatibility) */
+  load_param(&tmp8, sizeof(tmp8));
+  cdd.status = tmp8 & 0xf;
+  cdd.pending = tmp8 >> 4;
 
   /* update current sector */
   cdd.lba = lba;
@@ -1816,86 +1828,86 @@ void cdd_update(void)
   {
     /* CDC decoder is still running while disc is not being read (fixes MCD-verificator CDC Flags Test #30) */
     cdc_decoder_update(0);
-  }
 
-  /* scanning disc */
-  if (cdd.status == CD_SCAN)
-  {
-    /* current track index */
-    int index = cdd.index;
-
-    /* fast-forward or fast-rewind */
-    cdd.lba += cdd.scanOffset;
-
-    /* check current track limits */
-    if (cdd.lba >= cdd.toc.tracks[index].end)
+    /* scanning disc */
+    if (cdd.status == CD_SCAN)
     {
-      /* next track */
-      index++;
+      /* current track index */
+      int index = cdd.index;
 
-      /* check disc limits */
-      if (index < cdd.toc.last)
+      /* fast-forward or fast-rewind */
+      cdd.lba += cdd.scanOffset;
+
+      /* check current track limits */
+      if (cdd.lba >= cdd.toc.tracks[index].end)
       {
-        /* skip directly to next track start position */
-        cdd.lba = cdd.toc.tracks[index].start;
+        /* next track */
+        index++;
+
+        /* check disc limits */
+        if (index < cdd.toc.last)
+        {
+          /* skip directly to next track start position */
+          cdd.lba = cdd.toc.tracks[index].start;
+        }
+        else
+        {
+          /* end of disc */
+          cdd.lba = cdd.toc.end;
+          cdd.index = cdd.toc.last;
+          cdd.status = CD_END;
+
+          /* no audio track playing */
+          scd.regs[0x36>>1].byte.h = 0x01;
+          return;
+        }
+      }
+      else if (cdd.lba < cdd.toc.tracks[index].start)
+      {
+        /* check disc limits */
+        if (index > 0)
+        {
+          /* previous track */
+          index--;
+
+          /* skip directly to previous track end position */
+          cdd.lba = cdd.toc.tracks[index].end;
+        }
+        else
+        {
+          /* start of first track */
+          cdd.lba = 0;
+        }
+      }
+
+      /* seek to current subcode position */
+      if (cdd.toc.sub)
+      {
+        cdStreamSeek(cdd.toc.sub, cdd.lba * 96, SEEK_SET);
+      }
+
+      /* current track is an audio track ? */
+      if (cdd.toc.tracks[index].type == TYPE_AUDIO)
+      {
+        /* seek to current track sector */
+        cdd_seek_audio(index, cdd.lba);
+
+        /* audio track playing */
+        scd.regs[0x36>>1].byte.h = 0x00;
       }
       else
       {
-        /* end of disc */
-        cdd.lba = cdd.toc.end;
-        cdd.index = cdd.toc.last;
-        cdd.status = CD_END;
-
         /* no audio track playing */
         scd.regs[0x36>>1].byte.h = 0x01;
-        return;
       }
-    }
-    else if (cdd.lba < cdd.toc.tracks[index].start)
-    {
-      /* check disc limits */
-      if (index > 0)
-      {
-        /* previous track */
-        index--;
 
-        /* skip directly to previous track end position */
-        cdd.lba = cdd.toc.tracks[index].end;
-      }
-      else
-      {
-        /* start of first track */
-        cdd.lba = 0;
-      }
+      /* udpate current track index */
+      cdd.index = index;
     }
-
-    /* seek to current subcode position */
-    if (cdd.toc.sub)
-    {
-      cdStreamSeek(cdd.toc.sub, cdd.lba * 96, SEEK_SET);
-    }
-
-    /* current track is an audio track ? */
-    if (cdd.toc.tracks[index].type == TYPE_AUDIO)
-    {
-      /* seek to current track sector */
-      cdd_seek_audio(index, cdd.lba);
-
-      /* audio track playing */
-      scd.regs[0x36>>1].byte.h = 0x00;
-    }
-    else
-    {
-      /* no audio track playing */
-      scd.regs[0x36>>1].byte.h = 0x01;
-    }
-
-    /* udpate current track index */
-    cdd.index = index;
   }
 
-  /* seeking should start with at least one interrupt delay (fixes Radical Rex incorrect PRG-RAM & Word-RAM initialization, causing missing sprites during intro) */
-  if (scd.regs[0x38>>1].byte.h == CD_SEEK)
+  /* check if seeking is pending */
+  if (cdd.pending)
   {
     /* reset track index */
     int index = 0;
@@ -1963,8 +1975,11 @@ void cdd_update(void)
     /* no audio track playing (yet) */
     scd.regs[0x36>>1].byte.h = 0x01;
 
-    /* update CDD status to either PLAY or PAUSE depending on host command (will be reported to host once seeking has ended) */
-    cdd.status = scd.regs[0x42>>1].byte.h & 0x05;
+    /* update CDD status with pending end status (will be reported to host once seeking has ended) */
+    cdd.status = cdd.pending;
+
+    /* clear pending flag */
+    cdd.pending = 0;
   }
 }
 
@@ -2149,6 +2164,10 @@ void cdd_process(void)
       scd.regs[0x3c>>1].w = 0x0000;
       scd.regs[0x3e>>1].w = 0x0000;
       scd.regs[0x40>>1].w = ~(CD_SEEK + 0x0f) & 0x0f;
+
+      /* seeking should start with at least one interrupt delay (fixes Radical Rex incorrect PRG-RAM & Word-RAM initialization, causing missing sprites during intro) */
+      /* so pending flag is set (with CDD end status) to indicate seeking is pending */
+      cdd.pending = CD_PLAY;
       return;
     }
 
@@ -2160,6 +2179,10 @@ void cdd_process(void)
       scd.regs[0x3c>>1].w = 0x0000;
       scd.regs[0x3e>>1].w = 0x0000;
       scd.regs[0x40>>1].w = ~(CD_SEEK + 0x0f) & 0x0f;
+
+      /* seeking should start with at least one interrupt delay (same as 'Play' command) */
+      /* so pending flag is set (with CDD end status) to indicate seeking is pending */
+      cdd.pending = CD_PAUSE;
       return;
     }
 
