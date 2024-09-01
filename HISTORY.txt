@@ -37,7 +37,8 @@ Genesis Plus GX 1.7.5 (xx/xx/xxxx) (Eke-Eke)
 * improved CDD status report accuracy (fixes track looping with Mode 1 patched games using MSU-MD driver)
 * improved Word-RAM byte access accuracy (verified on schematics)
 * improved GFX processing accuracy to halt it while Word RAM is allocated to Main CPU in 2M mode
-* improved GFX timing accuracy (fixes "Night Striker" crashing after completing a game)
+* improved GFX processing timing accuracy (fixes "Night Striker" crashing after completing a game)
+* improved GFX processing robustness in case of word-RAM address overflow (fixes potential emulator crash in Flink level 20)
 * improved Sub-CPU BUSREQ status accuracy
 * disabled 68k and Z80 access to PRG-RAM when SUB-CPU is running (fixes "Dungeon Explorer")
 * disabled CD hardware reset on Soft-Reset (verified on real hardware)
