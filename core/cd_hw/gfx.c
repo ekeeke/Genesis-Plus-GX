@@ -483,7 +483,7 @@ INLINE void gfx_render(uint32 bufferIndex, uint32 width)
   uint32 yoffset = (int16) *gfx.tracePtr++;
 
   /* handle trace vector address overflow */
-  if (gfx.tracePtr == (uint16 *)(scd.word_ram_2M + 0x40000)
+  if (gfx.tracePtr == (uint16 *)(scd.word_ram_2M + 0x40000))
   {
     gfx.tracePtr = (uint16 *)(scd.word_ram_2M);
   }
