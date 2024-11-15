@@ -319,8 +319,8 @@ void shutdown(void)
 #ifdef HW_RVL
   /* unmount all devices */
   ISO9660_Unmount("dvd:");
-  fatUnmount("sd");
-  fatUnmount("usb");
+  fatUnmount("sd:");
+  fatUnmount("usb:");
 
   /* shutdown all devices */
   DI_Close();
