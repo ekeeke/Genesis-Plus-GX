@@ -82,13 +82,13 @@ static u8 dvdInited = 0;
 static u8 dvdMounted = 0;
 
 #ifndef HW_RVL
-static bool dvdStartup()
+static bool dvdStartup(DISC_INTERFACE *disc)
 {
   DVD_Mount();
   return true;
 }
 
-static bool dvdIsInserted()
+static bool dvdIsInserted(DISC_INTERFACE *disc)
 {
   return true;
 }
@@ -112,8 +112,8 @@ static int MountDVD(void)
     DVD_Init();
 
     /* patch libogc DVD interface which appears to be broken on Gamecube */
-    dvd->startup = (FN_MEDIUM_STARTUP)dvdStartup;
-    dvd->isInserted = (FN_MEDIUM_ISINSERTED)dvdIsInserted;
+    *(FN_MEDIUM_STARTUP *)&dvd->startup = dvdStartup;
+    *(FN_MEDIUM_ISINSERTED *)&dvd->isInserted = dvdIsInserted;
 #endif
     dvdInited = 1;
   }    
@@ -127,7 +127,11 @@ static int MountDVD(void)
   }
 
   /* check if disc is found */
+#ifdef HW_RVL
   if(!dvd->isInserted())
+#else
+  if(!dvd->isInserted(dvd))
+#endif
   {
     GUI_WaitPrompt("Error","No Disc inserted !");
     return 0;
