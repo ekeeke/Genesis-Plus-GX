@@ -1,3 +1,7 @@
+# WARNING: I AM CURRENTLY UNABLED TO CONNECT TO MY GITHUB ACCOUNT ANYMORE BECAUSE OF 2FA AUTHENTIFICATION DEVICE BEING NOT AVAILABLE ANYMORE (AND RECOVERY CODES LOST WITH IT). CURRENTLY TRYING TO FIND A SOLUTION BUT IT SEEEMS LIKE CREATING A NEW ACCOUNT IS THE ONLY SOLUTION. PLEASE CONTACT ME IF YOU NOW HOW TO TRANSFER GITHUB ISSUES/PR BETWEEN ACCOUNTS.
+
+
+
 Genesis Plus GX is an open-source Sega 8/16 bit emulator focused on accuracy and portability. Initially ported and developped on Gamecube / Wii consoles through [libogc / devkitPPC](http://sourceforge.net/projects/devkitpro/), this emulator is now available on many other platforms through various frontends such as:
 
 * [Retroarch (libretro)](http://www.libretro.com)
