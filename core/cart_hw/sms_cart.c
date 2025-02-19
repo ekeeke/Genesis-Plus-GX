@@ -2,7 +2,7 @@
  *  Genesis Plus
  *  SG-1000, Master System & Game Gear cartridge hardware support
  *
- *  Copyright (C) 2007-2023  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2007-2025  Eke-Eke (Genesis Plus GX)
  *
  *  Credits to Ben Sittler and Omar Cornut at smspower.org for Korean mappers
  *  reverse-engineering and description
@@ -205,12 +205,13 @@ static const rominfo_t game_list[] =
   {0x306D5F78, 0, 0, 0,  MAPPER_RAM_8K_EXT1, SYSTEM_SGII, REGION_JAPAN_NTSC}, /* Rally-X [DahJee] (TW) */
   {0x29E047CC, 0, 0, 0,  MAPPER_RAM_8K_EXT1, SYSTEM_SGII, REGION_JAPAN_NTSC}, /* Road Fighter (TW) */
   {0x5CBD1163, 0, 0, 0,  MAPPER_RAM_8K_EXT1, SYSTEM_SGII, REGION_JAPAN_NTSC}, /* Tank Battalion (TW) */
-  {0x40414556, 0, 0, 0,  MAPPER_RAM_8K_EXT1, SYSTEM_SGII, REGION_JAPAN_NTSC}, /* The Goonies (TW) */
+  {0x40414556, 0, 0, 0,  MAPPER_RAM_8K_EXT1, SYSTEM_SGII, REGION_JAPAN_NTSC}, /* The Goonies [DahJee (TW) */
   {0x2E7166D5, 0, 0, 0,  MAPPER_RAM_8K_EXT1, SYSTEM_SGII, REGION_JAPAN_NTSC}, /* The Legend of Kage (TW) */
   {0xC550B4F0, 0, 0, 0,  MAPPER_RAM_8K_EXT1, SYSTEM_SGII, REGION_JAPAN_NTSC}, /* TwinBee (TW) */
   {0xFC87463C, 0, 0, 0,  MAPPER_RAM_8K_EXT1, SYSTEM_SGII, REGION_JAPAN_NTSC}, /* Yie Ar Kung-Fu II (TW) */
   {0xDF7CBFA5, 0, 0, 0,  MAPPER_RAM_8K_EXT1, SYSTEM_SGII, REGION_JAPAN_NTSC}, /* Pippols (TW) */
   {0xE0816BB7, 0, 0, 0,  MAPPER_RAM_8K_EXT1, SYSTEM_SGII, REGION_JAPAN_NTSC}, /* Star Soldier [DahJee] (TW) */
+  {0x7C55057C, 0, 0, 0,  MAPPER_RAM_8K_EXT1, SYSTEM_SGII, REGION_JAPAN_NTSC}, /* Zanac [DahJee] (TW) */
 
   /* games requiring SG-1000 II 8K RAM extension adapter (type B) */
   {0x69FC1494, 0, 0, 0,  MAPPER_NONE, SYSTEM_SGII_RAM_EXT, REGION_JAPAN_NTSC}, /* Bomberman Special (TW) */
