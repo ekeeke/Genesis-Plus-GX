@@ -176,6 +176,7 @@ static const rominfo_t game_list[] =
   {0xC21E6CD0, 0, 0, 0,  MAPPER_CODIES, SYSTEM_GG,      REGION_USA}, /* Micro Machines [GG] [Proto] */
   {0xDBE8895C, 0, 0, 0,  MAPPER_CODIES, SYSTEM_GG,      REGION_USA}, /* Micro Machines 2 - Turbo Tournament */
   {0xC1756BEE, 0, 0, 0,  MAPPER_CODIES, SYSTEM_GG,      REGION_USA}, /* Pete Sampras Tennis */
+  {0xC597BA5D, 0, 0, 0,  MAPPER_CODIES, SYSTEM_GG,      REGION_USA}, /* Pete Sampras Tennis (US) */
   {0x72981057, 0, 0, 0,  MAPPER_CODIES, SYSTEM_GG,      REGION_USA}, /* CJ Elephant Fugitive */
   {0x3ACE6335, 0, 0, 0,  MAPPER_CODIES, SYSTEM_GG,      REGION_USA}, /* CJ Elephant Fugitive [Proto] */
   {0x2306AAF4, 0, 0, 0,  MAPPER_CODIES, SYSTEM_GG,      REGION_USA}, /* Dinobasher - Starring Bignose the Caveman [GG] [Proto] */
@@ -205,7 +206,7 @@ static const rominfo_t game_list[] =
   {0x306D5F78, 0, 0, 0,  MAPPER_RAM_8K_EXT1, SYSTEM_SGII, REGION_JAPAN_NTSC}, /* Rally-X [DahJee] (TW) */
   {0x29E047CC, 0, 0, 0,  MAPPER_RAM_8K_EXT1, SYSTEM_SGII, REGION_JAPAN_NTSC}, /* Road Fighter (TW) */
   {0x5CBD1163, 0, 0, 0,  MAPPER_RAM_8K_EXT1, SYSTEM_SGII, REGION_JAPAN_NTSC}, /* Tank Battalion (TW) */
-  {0x40414556, 0, 0, 0,  MAPPER_RAM_8K_EXT1, SYSTEM_SGII, REGION_JAPAN_NTSC}, /* The Goonies [DahJee (TW) */
+  {0x40414556, 0, 0, 0,  MAPPER_RAM_8K_EXT1, SYSTEM_SGII, REGION_JAPAN_NTSC}, /* The Goonies [DahJee] (TW) */
   {0x2E7166D5, 0, 0, 0,  MAPPER_RAM_8K_EXT1, SYSTEM_SGII, REGION_JAPAN_NTSC}, /* The Legend of Kage (TW) */
   {0xC550B4F0, 0, 0, 0,  MAPPER_RAM_8K_EXT1, SYSTEM_SGII, REGION_JAPAN_NTSC}, /* TwinBee (TW) */
   {0xFC87463C, 0, 0, 0,  MAPPER_RAM_8K_EXT1, SYSTEM_SGII, REGION_JAPAN_NTSC}, /* Yie Ar Kung-Fu II (TW) */

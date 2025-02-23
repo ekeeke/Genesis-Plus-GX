@@ -111,6 +111,7 @@ Genesis Plus GX 1.7.5 (xx/xx/xxxx) (Eke-Eke)
 
 [Core/GG]
 ---------------
+* added new SMS Power dumps in internal database
 * added optional LCD ghosting software filter
 * fixed mirrored access to I/O control register (G-LOC Air Battle)
 
