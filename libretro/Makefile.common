@@ -22,34 +22,32 @@ ifeq ($(HOOK_CPU), 1)
 endif
 
 ifeq ($(HAVE_CHD), 1)
+   FLAGS += -DZ7_ST -DZSTD_DISABLE_ASM
    INCFLAGS += -I$(CHDLIBDIR)/src \
-					-I$(CHDLIBDIR)/deps/libFLAC/include \
-					-I$(CHDLIBDIR)/deps/lzma \
-					-I$(CHDLIBDIR)/deps/zlib
+					-I$(CHDLIBDIR)/include \
+					-I$(CHDLIBDIR)/deps/zstd-1.5.6/include \
+					-I$(CHDLIBDIR)/deps/zstd-1.5.6/common \
+					-I$(CHDLIBDIR)/deps/lzma-24.05/include \
+					-I$(CHDLIBDIR)/deps/zlib-1.3.1
    SOURCES_C += \
-					 $(CHDLIBDIR)/src/bitstream.c \
-					 $(CHDLIBDIR)/src/cdrom.c \
-					 $(CHDLIBDIR)/src/chd.c \
-					 $(CHDLIBDIR)/src/flac.c \
-					 $(CHDLIBDIR)/src/huffman.c \
-					 $(CHDLIBDIR)/deps/libFLAC/bitmath.c \
-					 $(CHDLIBDIR)/deps/libFLAC/bitreader.c \
-					 $(CHDLIBDIR)/deps/libFLAC/cpu.c \
-					 $(CHDLIBDIR)/deps/libFLAC/crc.c \
-					 $(CHDLIBDIR)/deps/libFLAC/fixed.c \
-					 $(CHDLIBDIR)/deps/libFLAC/float.c \
-					 $(CHDLIBDIR)/deps/libFLAC/format.c \
-					 $(CHDLIBDIR)/deps/libFLAC/lpc.c \
-					 $(CHDLIBDIR)/deps/libFLAC/lpc_intrin_avx2.c \
-					 $(CHDLIBDIR)/deps/libFLAC/lpc_intrin_sse.c \
-					 $(CHDLIBDIR)/deps/libFLAC/lpc_intrin_sse2.c \
-					 $(CHDLIBDIR)/deps/libFLAC/lpc_intrin_sse41.c \
-					 $(CHDLIBDIR)/deps/libFLAC/md5.c \
-					 $(CHDLIBDIR)/deps/libFLAC/memory.c \
-					 $(CHDLIBDIR)/deps/libFLAC/stream_decoder.c \
-					 $(CHDLIBDIR)/deps/lzma/LzFind.c \
-					 $(CHDLIBDIR)/deps/lzma/LzmaDec.c \
-					 $(CHDLIBDIR)/deps/lzma/LzmaEnc.c
+					 $(CHDLIBDIR)/src/libchdr_bitstream.c \
+					 $(CHDLIBDIR)/src/libchdr_cdrom.c \
+					 $(CHDLIBDIR)/src/libchdr_chd.c \
+					 $(CHDLIBDIR)/src/libchdr_flac.c \
+					 $(CHDLIBDIR)/src/libchdr_huffman.c \
+					 $(CHDLIBDIR)/deps/lzma-24.05/src/LzFind.c \
+					 $(CHDLIBDIR)/deps/lzma-24.05/src/LzmaEnc.c \
+					 $(CHDLIBDIR)/deps/lzma-24.05/src/LzmaDec.c \
+					 $(CHDLIBDIR)/deps/lzma-24.05/src/CpuArch.c \
+					 $(CHDLIBDIR)/deps/zstd-1.5.6/lib/decompress/zstd_decompress.c \
+					 $(CHDLIBDIR)/deps/zstd-1.5.6/lib/decompress/huf_decompress.c \
+					 $(CHDLIBDIR)/deps/zstd-1.5.6/lib/decompress/zstd_decompress_block.c \
+					 $(CHDLIBDIR)/deps/zstd-1.5.6/lib/decompress/zstd_ddict.c \
+					 $(CHDLIBDIR)/deps/zstd-1.5.6/lib/common/entropy_common.c \
+					 $(CHDLIBDIR)/deps/zstd-1.5.6/lib/common/error_private.c \
+					 $(CHDLIBDIR)/deps/zstd-1.5.6/lib/common/fse_decompress.c \
+					 $(CHDLIBDIR)/deps/zstd-1.5.6/lib/common/xxhash.c \
+					 $(CHDLIBDIR)/deps/zstd-1.5.6/lib/common/zstd_common.c
 
    ifeq ($(platform), win)
        FLAGS += -DHAVE_FSEEKO
@@ -67,11 +65,11 @@ SOURCES_C += \
 				 $(LIBRETRO_COMM_DIR)/encodings/encoding_utf.c \
 				 $(LIBRETRO_COMM_DIR)/vfs/vfs_implementation.c
 
-SOURCES_C += $(CHDLIBDIR)/deps/zlib/adler32.c \
-				 $(CHDLIBDIR)/deps/zlib/inffast.c \
-				 $(CHDLIBDIR)/deps/zlib/inflate.c \
-				 $(CHDLIBDIR)/deps/zlib/inftrees.c \
-				 $(CHDLIBDIR)/deps/zlib/zutil.c
+SOURCES_C += $(CHDLIBDIR)/deps/zlib-1.3.1/adler32.c \
+				 $(CHDLIBDIR)/deps/zlib-1.3.1/inffast.c \
+				 $(CHDLIBDIR)/deps/zlib-1.3.1/inflate.c \
+				 $(CHDLIBDIR)/deps/zlib-1.3.1/inftrees.c \
+				 $(CHDLIBDIR)/deps/zlib-1.3.1/zutil.c
 endif
 
 ifeq ($(SHARED_LIBVORBIS),)

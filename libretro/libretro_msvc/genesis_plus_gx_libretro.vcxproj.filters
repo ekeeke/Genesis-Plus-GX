@@ -49,32 +49,8 @@
     <Filter Include="core\cd_hw\libchdr\deps">
       <UniqueIdentifier>{d9b1d470-fa8e-44d7-8a86-a17038911505}</UniqueIdentifier>
     </Filter>
-    <Filter Include="core\cd_hw\libchdr\deps\zlib">
-      <UniqueIdentifier>{cca2a9d1-0910-47d9-9dfd-6568c6ca43cd}</UniqueIdentifier>
-    </Filter>
     <Filter Include="core\input_hw">
       <UniqueIdentifier>{15e1fa75-1847-49fd-96d8-93b1ca567c15}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="core\cd_hw\libchdr\deps\libFLAC">
-      <UniqueIdentifier>{0220cfbc-1ffa-456e-b325-03805d2c418c}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="core\cd_hw\libchdr\deps\libFLAC\include">
-      <UniqueIdentifier>{f1abfc09-b381-4dc0-84f5-ef25694664b9}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="core\cd_hw\libchdr\deps\libFLAC\include\share">
-      <UniqueIdentifier>{2da0d031-69e0-43bc-b580-e999031a9db2}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="core\cd_hw\libchdr\deps\lzma">
-      <UniqueIdentifier>{f644abdc-7783-41d4-9bec-31840429521c}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="core\cd_hw\libchdr\deps\libFLAC\include\FLAC">
-      <UniqueIdentifier>{eb6a2018-d386-4af0-8230-97a05d41d32d}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="core\cd_hw\libchdr\deps\libFLAC\include\private">
-      <UniqueIdentifier>{0c398821-7f40-4bfb-963d-d211a210fe70}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="core\cd_hw\libchdr\deps\libFLAC\include\protected">
-      <UniqueIdentifier>{571a0407-4e64-4c31-bd25-dbc6c107c2a2}</UniqueIdentifier>
     </Filter>
     <Filter Include="core\m68k">
       <UniqueIdentifier>{e1e2aebc-602e-438e-a56d-055720719fff}</UniqueIdentifier>
@@ -85,77 +61,32 @@
     <Filter Include="core\debug">
       <UniqueIdentifier>{674da1b3-d904-4490-bb73-a63eb5ea9ced}</UniqueIdentifier>
     </Filter>
+    <Filter Include="core\cd_hw\libchdr\include">
+      <UniqueIdentifier>{83c5022a-01fc-4e8f-b0a8-f95712ec3a60}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="core\cd_hw\libchdr\include\libchdr">
+      <UniqueIdentifier>{d67447c4-984b-489a-aba1-efaa861d99fe}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="core\cd_hw\libchdr\include\dr_libs">
+      <UniqueIdentifier>{c39c9461-7807-4204-9f86-1581a7f3fe40}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="core\cd_hw\libchdr\deps\lzma-24.05">
+      <UniqueIdentifier>{15ee5ec3-0fff-4b80-876a-596a2e179bdd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="core\cd_hw\libchdr\deps\zlib-1.3.1">
+      <UniqueIdentifier>{cb0dc1e7-1a25-4547-b53b-0f50d2711d55}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="core\cd_hw\libchdr\deps\zstd-1.5.6">
+      <UniqueIdentifier>{a01f5c24-5348-4a16-b353-1e1ee9ad2ff2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="core\cd_hw\libchdr\deps\zstd-1.5.6\lib">
+      <UniqueIdentifier>{33c5b340-4313-441b-aa19-dca9b8d2582e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="core\cd_hw\libchdr\deps\zstd-1.5.6\common">
+      <UniqueIdentifier>{c27e2207-7d23-4e9c-ac19-9f563ce708a6}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\core\cd_hw\libchdr\src\bitstream.c">
-      <Filter>core\cd_hw\libchdr\src</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\core\cd_hw\libchdr\src\cdrom.c">
-      <Filter>core\cd_hw\libchdr\src</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\core\cd_hw\libchdr\src\chd.c">
-      <Filter>core\cd_hw\libchdr\src</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\core\cd_hw\libchdr\src\flac.c">
-      <Filter>core\cd_hw\libchdr\src</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\core\cd_hw\libchdr\src\huffman.c">
-      <Filter>core\cd_hw\libchdr\src</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\core\cd_hw\libchdr\deps\libFLAC\bitmath.c">
-      <Filter>core\cd_hw\libchdr\deps\libFLAC</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\core\cd_hw\libchdr\deps\libFLAC\bitreader.c">
-      <Filter>core\cd_hw\libchdr\deps\libFLAC</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\core\cd_hw\libchdr\deps\libFLAC\cpu.c">
-      <Filter>core\cd_hw\libchdr\deps\libFLAC</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\core\cd_hw\libchdr\deps\libFLAC\crc.c">
-      <Filter>core\cd_hw\libchdr\deps\libFLAC</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\core\cd_hw\libchdr\deps\libFLAC\fixed.c">
-      <Filter>core\cd_hw\libchdr\deps\libFLAC</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\core\cd_hw\libchdr\deps\libFLAC\float.c">
-      <Filter>core\cd_hw\libchdr\deps\libFLAC</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\core\cd_hw\libchdr\deps\libFLAC\format.c">
-      <Filter>core\cd_hw\libchdr\deps\libFLAC</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\core\cd_hw\libchdr\deps\libFLAC\lpc.c">
-      <Filter>core\cd_hw\libchdr\deps\libFLAC</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\core\cd_hw\libchdr\deps\libFLAC\lpc_intrin_avx2.c">
-      <Filter>core\cd_hw\libchdr\deps\libFLAC</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\core\cd_hw\libchdr\deps\libFLAC\lpc_intrin_sse.c">
-      <Filter>core\cd_hw\libchdr\deps\libFLAC</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\core\cd_hw\libchdr\deps\libFLAC\lpc_intrin_sse2.c">
-      <Filter>core\cd_hw\libchdr\deps\libFLAC</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\core\cd_hw\libchdr\deps\libFLAC\lpc_intrin_sse41.c">
-      <Filter>core\cd_hw\libchdr\deps\libFLAC</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\core\cd_hw\libchdr\deps\libFLAC\md5.c">
-      <Filter>core\cd_hw\libchdr\deps\libFLAC</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\core\cd_hw\libchdr\deps\libFLAC\memory.c">
-      <Filter>core\cd_hw\libchdr\deps\libFLAC</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\core\cd_hw\libchdr\deps\libFLAC\stream_decoder.c">
-      <Filter>core\cd_hw\libchdr\deps\libFLAC</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\core\cd_hw\libchdr\deps\lzma\LzFind.c">
-      <Filter>core\cd_hw\libchdr\deps\lzma</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\core\cd_hw\libchdr\deps\lzma\LzmaDec.c">
-      <Filter>core\cd_hw\libchdr\deps\lzma</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\core\cd_hw\libchdr\deps\lzma\LzmaEnc.c">
-      <Filter>core\cd_hw\libchdr\deps\lzma</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\core\genesis.c">
       <Filter>core</Filter>
     </ClCompile>
@@ -324,21 +255,6 @@
     <ClCompile Include="..\libretro-common\vfs\vfs_implementation.c">
       <Filter>libretro\libretro-common\vfs</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\core\cd_hw\libchdr\deps\zlib\adler32.c">
-      <Filter>core\cd_hw\libchdr\deps\zlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\core\cd_hw\libchdr\deps\zlib\inffast.c">
-      <Filter>core\cd_hw\libchdr\deps\zlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\core\cd_hw\libchdr\deps\zlib\inflate.c">
-      <Filter>core\cd_hw\libchdr\deps\zlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\core\cd_hw\libchdr\deps\zlib\inftrees.c">
-      <Filter>core\cd_hw\libchdr\deps\zlib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\core\cd_hw\libchdr\deps\zlib\zutil.c">
-      <Filter>core\cd_hw\libchdr\deps\zlib</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\core\tremor\bitwise.c">
       <Filter>core\tremor</Filter>
     </ClCompile>
@@ -396,113 +312,77 @@
     <ClCompile Include="..\..\core\sound\opll.c">
       <Filter>core\sound</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\core\cd_hw\libchdr\src\libchdr_bitstream.c">
+      <Filter>core\cd_hw\libchdr\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\core\cd_hw\libchdr\src\libchdr_cdrom.c">
+      <Filter>core\cd_hw\libchdr\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\core\cd_hw\libchdr\src\libchdr_chd.c">
+      <Filter>core\cd_hw\libchdr\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\core\cd_hw\libchdr\src\libchdr_flac.c">
+      <Filter>core\cd_hw\libchdr\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\core\cd_hw\libchdr\src\libchdr_huffman.c">
+      <Filter>core\cd_hw\libchdr\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\core\cd_hw\libchdr\deps\lzma-24.05\src\CpuArch.c">
+      <Filter>core\cd_hw\libchdr\deps\lzma-24.05</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\core\cd_hw\libchdr\deps\lzma-24.05\src\LzFind.c">
+      <Filter>core\cd_hw\libchdr\deps\lzma-24.05</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\core\cd_hw\libchdr\deps\lzma-24.05\src\LzmaDec.c">
+      <Filter>core\cd_hw\libchdr\deps\lzma-24.05</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\core\cd_hw\libchdr\deps\lzma-24.05\src\LzmaEnc.c">
+      <Filter>core\cd_hw\libchdr\deps\lzma-24.05</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\core\cd_hw\libchdr\deps\zlib-1.3.1\adler32.c">
+      <Filter>core\cd_hw\libchdr\deps\zlib-1.3.1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\core\cd_hw\libchdr\deps\zlib-1.3.1\inffast.c">
+      <Filter>core\cd_hw\libchdr\deps\zlib-1.3.1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\core\cd_hw\libchdr\deps\zlib-1.3.1\inflate.c">
+      <Filter>core\cd_hw\libchdr\deps\zlib-1.3.1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\core\cd_hw\libchdr\deps\zlib-1.3.1\inftrees.c">
+      <Filter>core\cd_hw\libchdr\deps\zlib-1.3.1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\core\cd_hw\libchdr\deps\zlib-1.3.1\zutil.c">
+      <Filter>core\cd_hw\libchdr\deps\zlib-1.3.1</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\core\cd_hw\libchdr\deps\zstd-1.5.6\lib\decompress\huf_decompress.c">
+      <Filter>core\cd_hw\libchdr\deps\zstd-1.5.6\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\core\cd_hw\libchdr\deps\zstd-1.5.6\lib\decompress\zstd_ddict.c">
+      <Filter>core\cd_hw\libchdr\deps\zstd-1.5.6\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\core\cd_hw\libchdr\deps\zstd-1.5.6\lib\decompress\zstd_decompress.c">
+      <Filter>core\cd_hw\libchdr\deps\zstd-1.5.6\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\core\cd_hw\libchdr\deps\zstd-1.5.6\lib\decompress\zstd_decompress_block.c">
+      <Filter>core\cd_hw\libchdr\deps\zstd-1.5.6\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\core\cd_hw\libchdr\deps\zstd-1.5.6\lib\common\entropy_common.c">
+      <Filter>core\cd_hw\libchdr\deps\zstd-1.5.6\common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\core\cd_hw\libchdr\deps\zstd-1.5.6\lib\common\error_private.c">
+      <Filter>core\cd_hw\libchdr\deps\zstd-1.5.6\common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\core\cd_hw\libchdr\deps\zstd-1.5.6\lib\common\fse_decompress.c">
+      <Filter>core\cd_hw\libchdr\deps\zstd-1.5.6\common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\core\cd_hw\libchdr\deps\zstd-1.5.6\lib\common\xxhash.c">
+      <Filter>core\cd_hw\libchdr\deps\zstd-1.5.6\common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\core\cd_hw\libchdr\deps\zstd-1.5.6\lib\common\zstd_common.c">
+      <Filter>core\cd_hw\libchdr\deps\zstd-1.5.6\common</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\core\cd_hw\libchdr\src\bitstream.h">
-      <Filter>core\cd_hw\libchdr\src</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\core\cd_hw\libchdr\src\cdrom.h">
-      <Filter>core\cd_hw\libchdr\src</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\core\cd_hw\libchdr\src\chd.h">
-      <Filter>core\cd_hw\libchdr\src</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\core\cd_hw\libchdr\src\coretypes.h">
-      <Filter>core\cd_hw\libchdr\src</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\core\cd_hw\libchdr\src\flac.h">
-      <Filter>core\cd_hw\libchdr\src</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\core\cd_hw\libchdr\src\huffman.h">
-      <Filter>core\cd_hw\libchdr\src</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\core\cd_hw\libchdr\deps\lzma\7zTypes.h">
-      <Filter>core\cd_hw\libchdr\deps\lzma</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\core\cd_hw\libchdr\deps\lzma\Compiler.h">
-      <Filter>core\cd_hw\libchdr\deps\lzma</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\core\cd_hw\libchdr\deps\lzma\LzFind.h">
-      <Filter>core\cd_hw\libchdr\deps\lzma</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\core\cd_hw\libchdr\deps\lzma\LzHash.h">
-      <Filter>core\cd_hw\libchdr\deps\lzma</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\core\cd_hw\libchdr\deps\lzma\LzmaDec.h">
-      <Filter>core\cd_hw\libchdr\deps\lzma</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\core\cd_hw\libchdr\deps\lzma\LzmaEnc.h">
-      <Filter>core\cd_hw\libchdr\deps\lzma</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\core\cd_hw\libchdr\deps\lzma\Precomp.h">
-      <Filter>core\cd_hw\libchdr\deps\lzma</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\core\cd_hw\libchdr\deps\libFLAC\include\FLAC\assert.h">
-      <Filter>core\cd_hw\libchdr\deps\libFLAC\include\FLAC</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\core\cd_hw\libchdr\deps\libFLAC\include\FLAC\callback.h">
-      <Filter>core\cd_hw\libchdr\deps\libFLAC\include\FLAC</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\core\cd_hw\libchdr\deps\libFLAC\include\FLAC\export.h">
-      <Filter>core\cd_hw\libchdr\deps\libFLAC\include\FLAC</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\core\cd_hw\libchdr\deps\libFLAC\include\FLAC\format.h">
-      <Filter>core\cd_hw\libchdr\deps\libFLAC\include\FLAC</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\core\cd_hw\libchdr\deps\libFLAC\include\FLAC\metadata.h">
-      <Filter>core\cd_hw\libchdr\deps\libFLAC\include\FLAC</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\core\cd_hw\libchdr\deps\libFLAC\include\FLAC\ordinals.h">
-      <Filter>core\cd_hw\libchdr\deps\libFLAC\include\FLAC</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\core\cd_hw\libchdr\deps\libFLAC\include\FLAC\stream_decoder.h">
-      <Filter>core\cd_hw\libchdr\deps\libFLAC\include\FLAC</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\core\cd_hw\libchdr\deps\libFLAC\include\private\bitmath.h">
-      <Filter>core\cd_hw\libchdr\deps\libFLAC\include\private</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\core\cd_hw\libchdr\deps\libFLAC\include\private\bitreader.h">
-      <Filter>core\cd_hw\libchdr\deps\libFLAC\include\private</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\core\cd_hw\libchdr\deps\libFLAC\include\private\cpu.h">
-      <Filter>core\cd_hw\libchdr\deps\libFLAC\include\private</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\core\cd_hw\libchdr\deps\libFLAC\include\private\crc.h">
-      <Filter>core\cd_hw\libchdr\deps\libFLAC\include\private</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\core\cd_hw\libchdr\deps\libFLAC\include\private\fixed.h">
-      <Filter>core\cd_hw\libchdr\deps\libFLAC\include\private</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\core\cd_hw\libchdr\deps\libFLAC\include\private\float.h">
-      <Filter>core\cd_hw\libchdr\deps\libFLAC\include\private</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\core\cd_hw\libchdr\deps\libFLAC\include\private\format.h">
-      <Filter>core\cd_hw\libchdr\deps\libFLAC\include\private</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\core\cd_hw\libchdr\deps\libFLAC\include\private\lpc.h">
-      <Filter>core\cd_hw\libchdr\deps\libFLAC\include\private</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\core\cd_hw\libchdr\deps\libFLAC\include\private\macros.h">
-      <Filter>core\cd_hw\libchdr\deps\libFLAC\include\private</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\core\cd_hw\libchdr\deps\libFLAC\include\private\md5.h">
-      <Filter>core\cd_hw\libchdr\deps\libFLAC\include\private</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\core\cd_hw\libchdr\deps\libFLAC\include\private\memory.h">
-      <Filter>core\cd_hw\libchdr\deps\libFLAC\include\private</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\core\cd_hw\libchdr\deps\libFLAC\include\protected\stream_decoder.h">
-      <Filter>core\cd_hw\libchdr\deps\libFLAC\include\protected</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\core\cd_hw\libchdr\deps\libFLAC\include\share\alloc.h">
-      <Filter>core\cd_hw\libchdr\deps\libFLAC\include\share</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\core\cd_hw\libchdr\deps\libFLAC\include\share\compat.h">
-      <Filter>core\cd_hw\libchdr\deps\libFLAC\include\share</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\core\cd_hw\libchdr\deps\libFLAC\include\share\endswap.h">
-      <Filter>core\cd_hw\libchdr\deps\libFLAC\include\share</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\core\genesis.h">
       <Filter>core</Filter>
     </ClInclude>
@@ -683,30 +563,6 @@
     <ClInclude Include="..\..\core\cart_hw\svp\svp.h">
       <Filter>core\cart_hw\svp</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\core\cd_hw\libchdr\deps\zlib\gzguts.h">
-      <Filter>core\cd_hw\libchdr\deps\zlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\core\cd_hw\libchdr\deps\zlib\inffast.h">
-      <Filter>core\cd_hw\libchdr\deps\zlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\core\cd_hw\libchdr\deps\zlib\inffixed.h">
-      <Filter>core\cd_hw\libchdr\deps\zlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\core\cd_hw\libchdr\deps\zlib\inflate.h">
-      <Filter>core\cd_hw\libchdr\deps\zlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\core\cd_hw\libchdr\deps\zlib\inftrees.h">
-      <Filter>core\cd_hw\libchdr\deps\zlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\core\cd_hw\libchdr\deps\zlib\zconf.h">
-      <Filter>core\cd_hw\libchdr\deps\zlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\core\cd_hw\libchdr\deps\zlib\zlib.h">
-      <Filter>core\cd_hw\libchdr\deps\zlib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\core\cd_hw\libchdr\deps\zlib\zutil.h">
-      <Filter>core\cd_hw\libchdr\deps\zlib</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\core\tremor\block.h">
       <Filter>core\tremor</Filter>
     </ClInclude>
@@ -769,6 +625,96 @@
     </ClInclude>
     <ClInclude Include="..\..\core\sound\opll.h">
       <Filter>core\sound</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\core\cd_hw\libchdr\include\libchdr\bitstream.h">
+      <Filter>core\cd_hw\libchdr\include\libchdr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\core\cd_hw\libchdr\include\libchdr\cdrom.h">
+      <Filter>core\cd_hw\libchdr\include\libchdr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\core\cd_hw\libchdr\include\libchdr\chd.h">
+      <Filter>core\cd_hw\libchdr\include\libchdr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\core\cd_hw\libchdr\include\libchdr\chdconfig.h">
+      <Filter>core\cd_hw\libchdr\include\libchdr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\core\cd_hw\libchdr\include\libchdr\coretypes.h">
+      <Filter>core\cd_hw\libchdr\include\libchdr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\core\cd_hw\libchdr\include\libchdr\flac.h">
+      <Filter>core\cd_hw\libchdr\include\libchdr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\core\cd_hw\libchdr\include\libchdr\huffman.h">
+      <Filter>core\cd_hw\libchdr\include\libchdr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\core\cd_hw\libchdr\include\dr_libs\dr_flac.h">
+      <Filter>core\cd_hw\libchdr\include\dr_libs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\core\cd_hw\libchdr\deps\lzma-24.05\include\7zTypes.h">
+      <Filter>core\cd_hw\libchdr\deps\lzma-24.05</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\core\cd_hw\libchdr\deps\lzma-24.05\include\7zWindows.h">
+      <Filter>core\cd_hw\libchdr\deps\lzma-24.05</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\core\cd_hw\libchdr\deps\lzma-24.05\include\Compiler.h">
+      <Filter>core\cd_hw\libchdr\deps\lzma-24.05</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\core\cd_hw\libchdr\deps\lzma-24.05\include\CpuArch.h">
+      <Filter>core\cd_hw\libchdr\deps\lzma-24.05</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\core\cd_hw\libchdr\deps\lzma-24.05\include\LzFind.h">
+      <Filter>core\cd_hw\libchdr\deps\lzma-24.05</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\core\cd_hw\libchdr\deps\lzma-24.05\include\LzHash.h">
+      <Filter>core\cd_hw\libchdr\deps\lzma-24.05</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\core\cd_hw\libchdr\deps\lzma-24.05\include\LzmaDec.h">
+      <Filter>core\cd_hw\libchdr\deps\lzma-24.05</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\core\cd_hw\libchdr\deps\lzma-24.05\include\LzmaEnc.h">
+      <Filter>core\cd_hw\libchdr\deps\lzma-24.05</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\core\cd_hw\libchdr\deps\lzma-24.05\include\Precomp.h">
+      <Filter>core\cd_hw\libchdr\deps\lzma-24.05</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\core\cd_hw\libchdr\deps\zlib-1.3.1\gzguts.h">
+      <Filter>core\cd_hw\libchdr\deps\zlib-1.3.1</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\core\cd_hw\libchdr\deps\zlib-1.3.1\inffast.h">
+      <Filter>core\cd_hw\libchdr\deps\zlib-1.3.1</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\core\cd_hw\libchdr\deps\zlib-1.3.1\inffixed.h">
+      <Filter>core\cd_hw\libchdr\deps\zlib-1.3.1</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\core\cd_hw\libchdr\deps\zlib-1.3.1\inflate.h">
+      <Filter>core\cd_hw\libchdr\deps\zlib-1.3.1</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\core\cd_hw\libchdr\deps\zlib-1.3.1\inftrees.h">
+      <Filter>core\cd_hw\libchdr\deps\zlib-1.3.1</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\core\cd_hw\libchdr\deps\zlib-1.3.1\zconf.h">
+      <Filter>core\cd_hw\libchdr\deps\zlib-1.3.1</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\core\cd_hw\libchdr\deps\zlib-1.3.1\zlib.h">
+      <Filter>core\cd_hw\libchdr\deps\zlib-1.3.1</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\core\cd_hw\libchdr\deps\zlib-1.3.1\zutil.h">
+      <Filter>core\cd_hw\libchdr\deps\zlib-1.3.1</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\core\cd_hw\libchdr\deps\zstd-1.5.6\lib\decompress\zstd_ddict.h">
+      <Filter>core\cd_hw\libchdr\deps\zstd-1.5.6\lib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\core\cd_hw\libchdr\deps\zstd-1.5.6\lib\decompress\zstd_decompress_block.h">
+      <Filter>core\cd_hw\libchdr\deps\zstd-1.5.6\lib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\core\cd_hw\libchdr\deps\zstd-1.5.6\lib\decompress\zstd_decompress_internal.h">
+      <Filter>core\cd_hw\libchdr\deps\zstd-1.5.6\lib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\core\cd_hw\libchdr\deps\zstd-1.5.6\lib\common\error_private.h">
+      <Filter>core\cd_hw\libchdr\deps\zstd-1.5.6\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\core\cd_hw\libchdr\deps\zstd-1.5.6\lib\zstd.h">
+      <Filter>core\cd_hw\libchdr\deps\zstd-1.5.6</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
