@@ -3047,9 +3047,11 @@ static chd_error hunk_read_into_memory(chd_file *chd, uint32_t hunknum, uint8_t 
 				return hunk_read_into_memory(chd, blockoffs, dest);
 
 			case COMPRESSION_PARENT:
+			{
+				uint8_t units_in_hunk = 0;
 				if (chd->parent == NULL)
 					return CHDERR_REQUIRES_PARENT;
-				uint8_t units_in_hunk = chd->header.hunkbytes / chd->header.unitbytes;
+				units_in_hunk = chd->header.hunkbytes / chd->header.unitbytes;
 
 				/* blockoffs is aligned to units_in_hunk */
 				if (blockoffs % units_in_hunk == 0) {
@@ -3074,6 +3076,7 @@ static chd_error hunk_read_into_memory(chd_file *chd, uint32_t hunknum, uint8_t 
 					memcpy(dest + (units_in_hunk - unit_in_hunk) * chd->header.unitbytes, buf, unit_in_hunk * chd->header.unitbytes);
 					free(buf);
 				}
+			}
 		}
 		return CHDERR_NONE;
 	}

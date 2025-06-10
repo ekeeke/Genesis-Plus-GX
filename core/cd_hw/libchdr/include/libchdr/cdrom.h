@@ -16,6 +16,12 @@
 #include <stdint.h>
 #include <libchdr/chdconfig.h>
 
+#ifndef __cplusplus
+#if defined(_MSC_VER)
+#define inline __inline
+#endif
+#endif
+
 /***************************************************************************
     CONSTANTS
 ***************************************************************************/

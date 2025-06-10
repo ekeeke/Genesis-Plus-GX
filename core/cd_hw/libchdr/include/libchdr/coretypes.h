@@ -8,6 +8,12 @@
 #include <streams/file_stream_transforms.h>
 #endif
 
+#ifndef __cplusplus
+#if defined(_MSC_VER)
+#define inline __inline
+#endif
+#endif
+
 #ifndef ARRAY_LENGTH
 #define ARRAY_LENGTH(x) (sizeof(x)/sizeof(x[0]))
 #endif
