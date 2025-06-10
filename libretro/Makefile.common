@@ -25,7 +25,7 @@ ifeq ($(HAVE_CHD), 1)
    FLAGS += -DZ7_ST -DZSTD_DISABLE_ASM
    INCFLAGS += -I$(CHDLIBDIR)/src \
 					-I$(CHDLIBDIR)/include \
-					-I$(CHDLIBDIR)/deps/zstd-1.5.6/include \
+					-I$(CHDLIBDIR)/deps/zstd-1.5.6/lib \
 					-I$(CHDLIBDIR)/deps/zstd-1.5.6/common \
 					-I$(CHDLIBDIR)/deps/lzma-24.05/include \
 					-I$(CHDLIBDIR)/deps/zlib-1.3.1
