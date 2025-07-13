@@ -2,7 +2,7 @@
  *  Genesis Plus
  *  Mega Drive cartridge hardware support
  *
- *  Copyright (C) 2007-2024  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2007-2025  Eke-Eke (Genesis Plus GX)
  *
  *  Many cartridge protections were initially documented by Haze
  *  (http://haze.mameworld.info/)
@@ -419,6 +419,21 @@ void md_cart_init(void)
         m68k.memory_map[sram.start >> 16].write16 = sram_write_word;
         zbank_memory_map[sram.start >> 16].read   = sram_read_byte;
         zbank_memory_map[sram.start >> 16].write  = sram_write_byte;
+      }
+
+      /* Barkley Shut Up and Jam 2 needs SRAM to be mapped in whole upper 2MB area */
+      if (strstr(rominfo.product,"T-119186") != NULL)
+      {
+        for (i=0x21; i<0x40; i++)
+        {
+          m68k.memory_map[i].base    = sram.sram;
+          m68k.memory_map[i].read8   = sram_read_byte;
+          m68k.memory_map[i].read16  = sram_read_word;
+          m68k.memory_map[i].write8  = sram_write_byte;
+          m68k.memory_map[i].write16 = sram_write_word;
+          zbank_memory_map[i].read   = sram_read_byte;
+          zbank_memory_map[i].write  = sram_write_byte;
+        }
       }
     }
 

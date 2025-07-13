@@ -90,7 +90,7 @@ Genesis Plus GX 1.7.5 (xx/xx/xxxx) (Eke-Eke)
 * fixed Realtec mapper behavior on soft-reset and with TMSS hardware
 * fixed Game Genie / Pro Action Replay lock-on support when Mega CD hardware is enabled 
 * fixed Game Genie / Pro Action Replay lock-on support with games larger than 8MB
-* fixed SRAM support in Triple Play 96 & Triple Play - Gold Edition
+* fixed SRAM support in Barkley Shut Up and Jam 2, Triple Play 96 & Triple Play - Gold Edition
 * fixed automatic CD loading with .md ROM files
 * fixed ROM padding for Sonic & Knuckles
 * fixed SRAM detection for games where it is mapped to work RAM ("Feng Kuang Tao Hua Yuan" crash)
