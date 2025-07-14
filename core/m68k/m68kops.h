@@ -1,3 +1,8 @@
+/* routine to skip one 68K bus refresh cycle if instruction processing time is longer than refresh period (128 CPU cycles on Mega Drive / Genesis) */
+/* this fixes instructions timing test ROM (test_inst_speed.bin) when 68K bus refresh delay is emulated */
+#define SKIP_BUS_REFRESH() \
+  if (m68k.cycles >= m68k.refresh_cycles) \
+    m68ki_cpu.refresh_cycles += (128*MUL);
 
 /* ======================================================================== */
 /* ============== CYCLE-ACCURATE DIV/MUL EXECUTION ======================== */
@@ -39,12 +44,7 @@ INLINE void UseDivuCycles(uint32 dst, uint32 src)
   }
 
   USE_CYCLES(mcycles);
-
-  /* one 68K bus refresh cycle should be skipped if instruction processing time is longer than refresh period (128 CPU cycles on Mega Drive / Genesis) */
-  if (mcycles >= (128*MUL))
-  {
-    m68ki_cpu.refresh_cycles += (128*MUL);
-  }
+  SKIP_BUS_REFRESH();
 }
 
 INLINE void UseDivsCycles(sint32 dst, sint16 src)
@@ -87,12 +87,7 @@ INLINE void UseDivsCycles(sint32 dst, sint16 src)
   }
 
   USE_CYCLES(mcycles);
-  
-  /* one 68K bus refresh cycle should be skipped if instruction processing time is longer than refresh period (128 CPU cycles on Mega Drive / Genesis) */
-  if (mcycles >= (128*MUL))
-  {
-    m68ki_cpu.refresh_cycles += (128*MUL);
-  }
+  SKIP_BUS_REFRESH();
 }
 
 INLINE void UseMuluCycles(uint16 src)
@@ -3618,6 +3613,7 @@ static void m68k_op_asr_8_r(void)
   if(shift != 0)
   {
     USE_CYCLES(shift * CYC_SHIFT);
+    SKIP_BUS_REFRESH();
 
     if(shift < 8)
     {
@@ -3670,6 +3666,7 @@ static void m68k_op_asr_16_r(void)
   if(shift != 0)
   {
     USE_CYCLES(shift * CYC_SHIFT);
+    SKIP_BUS_REFRESH();
 
     if(shift < 16)
     {
@@ -3722,6 +3719,7 @@ static void m68k_op_asr_32_r(void)
   if(shift != 0)
   {
     USE_CYCLES(shift * CYC_SHIFT);
+    SKIP_BUS_REFRESH();
 
     if(shift < 32)
     {
@@ -3960,6 +3958,7 @@ static void m68k_op_asl_8_r(void)
   if(shift != 0)
   {
     USE_CYCLES(shift * CYC_SHIFT);
+    SKIP_BUS_REFRESH();
 
     if(shift < 8)
     {
@@ -3997,6 +3996,7 @@ static void m68k_op_asl_16_r(void)
   if(shift != 0)
   {
     USE_CYCLES(shift * CYC_SHIFT);
+    SKIP_BUS_REFRESH();
 
     if(shift < 16)
     {
@@ -4034,6 +4034,7 @@ static void m68k_op_asl_32_r(void)
   if(shift != 0)
   {
     USE_CYCLES(shift * CYC_SHIFT);
+    SKIP_BUS_REFRESH();
 
     if(shift < 32)
     {
@@ -9582,6 +9583,7 @@ static void m68k_op_lsr_8_r(void)
   if(shift != 0)
   {
     USE_CYCLES(shift * CYC_SHIFT);
+    SKIP_BUS_REFRESH();
 
     if(shift <= 8)
     {
@@ -9619,6 +9621,7 @@ static void m68k_op_lsr_16_r(void)
   if(shift != 0)
   {
     USE_CYCLES(shift * CYC_SHIFT);
+    SKIP_BUS_REFRESH();
 
     if(shift <= 16)
     {
@@ -9656,6 +9659,7 @@ static void m68k_op_lsr_32_r(void)
   if(shift != 0)
   {
     USE_CYCLES(shift * CYC_SHIFT);
+    SKIP_BUS_REFRESH();
 
     if(shift < 32)
     {
@@ -9854,6 +9858,7 @@ static void m68k_op_lsl_8_r(void)
   if(shift != 0)
   {
     USE_CYCLES(shift * CYC_SHIFT);
+    SKIP_BUS_REFRESH();
 
     if(shift <= 8)
     {
@@ -9891,6 +9896,7 @@ static void m68k_op_lsl_16_r(void)
   if(shift != 0)
   {
     USE_CYCLES(shift * CYC_SHIFT);
+    SKIP_BUS_REFRESH();
 
     if(shift <= 16)
     {
@@ -9928,6 +9934,7 @@ static void m68k_op_lsl_32_r(void)
   if(shift != 0)
   {
     USE_CYCLES(shift * CYC_SHIFT);
+    SKIP_BUS_REFRESH();
 
     if(shift < 32)
     {
@@ -15129,6 +15136,7 @@ static void m68k_op_movem_32_re_pd(void)
   AY = ea;
 
   USE_CYCLES(count * CYC_MOVEM_L);
+  SKIP_BUS_REFRESH();
 }
 
 
@@ -15148,6 +15156,7 @@ static void m68k_op_movem_32_re_ai(void)
     }
 
   USE_CYCLES(count * CYC_MOVEM_L);
+  SKIP_BUS_REFRESH();
 }
 
 
@@ -15167,6 +15176,7 @@ static void m68k_op_movem_32_re_di(void)
     }
 
   USE_CYCLES(count * CYC_MOVEM_L);
+  SKIP_BUS_REFRESH();
 }
 
 
@@ -15186,6 +15196,7 @@ static void m68k_op_movem_32_re_ix(void)
     }
 
   USE_CYCLES(count * CYC_MOVEM_L);
+  SKIP_BUS_REFRESH();
 }
 
 
@@ -15205,6 +15216,7 @@ static void m68k_op_movem_32_re_aw(void)
     }
 
   USE_CYCLES(count * CYC_MOVEM_L);
+  SKIP_BUS_REFRESH();
 }
 
 
@@ -15224,6 +15236,7 @@ static void m68k_op_movem_32_re_al(void)
     }
 
   USE_CYCLES(count * CYC_MOVEM_L);
+  SKIP_BUS_REFRESH();
 }
 
 
@@ -15424,6 +15437,7 @@ static void m68k_op_movem_32_er_pi(void)
   m68ki_read_16(ea);
 
   USE_CYCLES(count * CYC_MOVEM_L);
+  SKIP_BUS_REFRESH();
 }
 
 
@@ -15446,6 +15460,7 @@ static void m68k_op_movem_32_er_pcdi(void)
   m68ki_read_16(ea);
 
   USE_CYCLES(count * CYC_MOVEM_L);
+  SKIP_BUS_REFRESH();
 }
 
 
@@ -15468,6 +15483,7 @@ static void m68k_op_movem_32_er_pcix(void)
   m68ki_read_16(ea);
 
   USE_CYCLES(count * CYC_MOVEM_L);
+  SKIP_BUS_REFRESH();
 }
 
 
@@ -15490,6 +15506,7 @@ static void m68k_op_movem_32_er_ai(void)
   m68ki_read_16(ea);
 
   USE_CYCLES(count * CYC_MOVEM_L);
+  SKIP_BUS_REFRESH();
 }
 
 
@@ -15512,6 +15529,7 @@ static void m68k_op_movem_32_er_di(void)
   m68ki_read_16(ea);
 
   USE_CYCLES(count * CYC_MOVEM_L);
+  SKIP_BUS_REFRESH();
 }
 
 
@@ -15534,6 +15552,7 @@ static void m68k_op_movem_32_er_ix(void)
   m68ki_read_16(ea);
 
   USE_CYCLES(count * CYC_MOVEM_L);
+  SKIP_BUS_REFRESH();
 }
 
 
@@ -15556,6 +15575,7 @@ static void m68k_op_movem_32_er_aw(void)
   m68ki_read_16(ea);
 
   USE_CYCLES(count * CYC_MOVEM_L);
+  SKIP_BUS_REFRESH();
 }
 
 
@@ -15578,6 +15598,7 @@ static void m68k_op_movem_32_er_al(void)
   m68ki_read_16(ea);
 
   USE_CYCLES(count * CYC_MOVEM_L);
+  SKIP_BUS_REFRESH();
 }
 
 
@@ -18780,6 +18801,7 @@ static void m68k_op_ror_8_r(void)
   if(orig_shift != 0)
   {
     USE_CYCLES(orig_shift * CYC_SHIFT);
+    SKIP_BUS_REFRESH();
 
     *r_dst = MASK_OUT_BELOW_8(*r_dst) | res;
     FLAG_C = src << (8-((shift-1)&7));
@@ -18807,6 +18829,7 @@ static void m68k_op_ror_16_r(void)
   if(orig_shift != 0)
   {
     USE_CYCLES(orig_shift * CYC_SHIFT);
+    SKIP_BUS_REFRESH();
 
     *r_dst = MASK_OUT_BELOW_16(*r_dst) | res;
     FLAG_C = (src >> ((shift - 1) & 15)) << 8;
@@ -18834,6 +18857,7 @@ static void m68k_op_ror_32_r(void)
   if(orig_shift != 0)
   {
     USE_CYCLES(orig_shift * CYC_SHIFT);
+    SKIP_BUS_REFRESH();
 
     *r_dst = res;
     FLAG_C = (src >> ((shift - 1) & 31)) << 8;
@@ -19024,6 +19048,7 @@ static void m68k_op_rol_8_r(void)
   if(orig_shift != 0)
   {
     USE_CYCLES(orig_shift * CYC_SHIFT);
+    SKIP_BUS_REFRESH();
 
     if(shift != 0)
     {
@@ -19059,6 +19084,7 @@ static void m68k_op_rol_16_r(void)
   if(orig_shift != 0)
   {
     USE_CYCLES(orig_shift * CYC_SHIFT);
+    SKIP_BUS_REFRESH();
 
     if(shift != 0)
     {
@@ -19094,6 +19120,7 @@ static void m68k_op_rol_32_r(void)
   if(orig_shift != 0)
   {
     USE_CYCLES(orig_shift * CYC_SHIFT);
+    SKIP_BUS_REFRESH();
 
     *r_dst = res;
 
@@ -19315,6 +19342,7 @@ static void m68k_op_roxr_8_r(void)
     uint res   = ROR_9(src | (XFLAG_AS_1() << 8), shift);
 
     USE_CYCLES(orig_shift * CYC_SHIFT);
+    SKIP_BUS_REFRESH();
 
     FLAG_C = FLAG_X = res;
     res = MASK_OUT_ABOVE_8(res);
@@ -19345,6 +19373,7 @@ static void m68k_op_roxr_16_r(void)
     uint res   = ROR_17(src | (XFLAG_AS_1() << 16), shift);
 
     USE_CYCLES(orig_shift * CYC_SHIFT);
+    SKIP_BUS_REFRESH();
 
     FLAG_C = FLAG_X = res >> 8;
     res = MASK_OUT_ABOVE_16(res);
@@ -19379,6 +19408,7 @@ static void m68k_op_roxr_32_r(void)
     res = ROR_33_64(res, shift);
 
     USE_CYCLES(orig_shift * CYC_SHIFT);
+    SKIP_BUS_REFRESH();
 
     FLAG_C = FLAG_X = res >> 24;
     res = MASK_OUT_ABOVE_32(res);
@@ -19405,7 +19435,10 @@ static void m68k_op_roxr_32_r(void)
   uint new_x_flag = src & (1 << (shift - 1));
 
   if(orig_shift != 0)
+  {
     USE_CYCLES(orig_shift * CYC_SHIFT);
+    SKIP_BUS_REFRESH();
+  }
 
   if(shift != 0)
   {
@@ -19642,6 +19675,7 @@ static void m68k_op_roxl_8_r(void)
     uint res   = ROL_9(src | (XFLAG_AS_1() << 8), shift);
 
     USE_CYCLES(orig_shift * CYC_SHIFT);
+    SKIP_BUS_REFRESH();
 
     FLAG_C = FLAG_X = res;
     res = MASK_OUT_ABOVE_8(res);
@@ -19672,6 +19706,7 @@ static void m68k_op_roxl_16_r(void)
     uint res   = ROL_17(src | (XFLAG_AS_1() << 16), shift);
 
     USE_CYCLES(orig_shift * CYC_SHIFT);
+    SKIP_BUS_REFRESH();
 
     FLAG_C = FLAG_X = res >> 8;
     res = MASK_OUT_ABOVE_16(res);
@@ -19706,6 +19741,7 @@ static void m68k_op_roxl_32_r(void)
     res = ROL_33_64(res, shift);
 
     USE_CYCLES(orig_shift * CYC_SHIFT);
+    SKIP_BUS_REFRESH();
 
     FLAG_C = FLAG_X = res >> 24;
     res = MASK_OUT_ABOVE_32(res);
@@ -19732,7 +19768,10 @@ static void m68k_op_roxl_32_r(void)
   uint new_x_flag = src & (1 << (32 - shift));
 
   if(orig_shift != 0)
+  {
     USE_CYCLES(orig_shift * CYC_SHIFT);
+    SKIP_BUS_REFRESH();
+  }
 
   if(shift != 0)
   {
