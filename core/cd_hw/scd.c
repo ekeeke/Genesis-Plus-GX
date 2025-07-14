@@ -2,7 +2,7 @@
  *  Genesis Plus
  *  Mega CD / Sega CD hardware
  *
- *  Copyright (C) 2012-2024  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2012-2025  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -1910,7 +1910,7 @@ void scd_update(unsigned int cycles)
     {
       /* adjust Sub-CPU and Main-CPU end cycle counters up to Timer interrupt occurence */
       s68k_run_cycles = scd.timer;
-      m68k_end_cycles = mcycles_vdp + ((s68k_run_cycles * MCYCLES_PER_LINE) / SCYCLES_PER_LINE);
+      m68k_end_cycles = ((scd.cycles + s68k_run_cycles) * MCYCLES_PER_LINE) / SCYCLES_PER_LINE;
     }
     else
     {
