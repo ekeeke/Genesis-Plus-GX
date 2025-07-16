@@ -5,7 +5,7 @@
  *  Support for SG-1000 (TMS99xx & 315-5066), Master System (315-5124 & 315-5246), Game Gear & Mega Drive VDP
  *
  *  Copyright (C) 1998-2003  Charles Mac Donald (original code)
- *  Copyright (C) 2007-2024  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2007-2025  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -423,18 +423,30 @@ void vdp_reset(void)
   if ((system_hw & SYSTEM_SMS) && (!(config.bios & 1) || !(system_bios & SYSTEM_SMS)))
   {
     /* force registers initialization (normally done by BOOT ROM on all Master System models) */
-    vdp_reg_w(0 , 0x36, 0);
-    vdp_reg_w(1 , 0x80, 0);
-    vdp_reg_w(2 , 0xFF, 0);
-    vdp_reg_w(3 , 0xFF, 0);
-    vdp_reg_w(4 , 0xFF, 0);
-    vdp_reg_w(5 , 0xFF, 0);
-    vdp_reg_w(6 , 0xFF, 0);
+    vdp_reg_w(0, 0x36, 0);
+    vdp_reg_w(1, 0x80, 0);
+    vdp_reg_w(2, 0xFF, 0);
+    vdp_reg_w(3, 0xFF, 0);
+    vdp_reg_w(4, 0xFF, 0);
+    vdp_reg_w(5, 0xFF, 0);
+    vdp_reg_w(6, 0xFF, 0);
 
     /* Mode 4 */
     render_bg = render_bg_m4;
     render_obj = render_obj_m4;
     parse_satb = parse_satb_m4;
+  }
+
+  /* Game Gear specific */
+  else if (system_hw & SYSTEM_GG)
+  {
+    /* following registers are uninitialized and should have random value */
+    /* but clearing VDP reg #2 breaks Sega logo in 'The Terminator' so we use 0xFF by default */
+    vdp_reg_w(2, 0xFF, 0);
+    vdp_reg_w(3, 0xFF, 0);
+    vdp_reg_w(4, 0xFF, 0);
+    vdp_reg_w(5, 0xFF, 0);
+    vdp_reg_w(6, 0xFF, 0);
   }
 
   /* Mega Drive specific */

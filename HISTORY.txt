@@ -172,7 +172,8 @@ Genesis Plus GX 1.7.5 (xx/xx/xxxx) (Eke-Eke)
 * improved accuracy of Master System color palette brightness range (verified against real hardware)
 * fixed misaligned buffer writes in Mode 4 when -DALIGN_LONG option is used
 * fixed alpha channel for 15-bit (RGB555) and 32-bit (RGB888) color support
-* fixed register #10 state on VDP¨reset (fixes GG Terminator 2: Judgment Day)
+* fixed register #10 state on VDP reset (fixes GG Terminator 2: Judgment Day)
+* fixed Game Gear VDP registers state on VDP reset (fixes The Terminator glitched Sega logo)
 * fixed Mode 1 rendering (TMS99xx "text" mode)
 * fixed Master System II extended video modes sprite parsing (fixes Mega Man 2 demo)
 * fixed Game Gear display rendering regression when left/right borders were disabled
