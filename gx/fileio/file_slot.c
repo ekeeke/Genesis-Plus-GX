@@ -45,6 +45,13 @@
 #include "saveicon.h"
 
 /**
+ * fix for latest devkitpro
+ */
+#ifndef CARD_WORKAREA
+#define CARD_WORKAREA CARD_WORKAREA_SIZE
+#endif
+
+/**
  * libOGC CARD System Work Area
  */
 static u8 SysArea[CARD_WORKAREA] ATTRIBUTE_ALIGN (32);
