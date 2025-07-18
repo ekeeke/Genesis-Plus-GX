@@ -243,7 +243,7 @@ else ifneq (,$(filter $(platform), ngc wii wiiu))
    CC = $(DEVKITPPC)/bin/powerpc-eabi-gcc$(EXE_EXT)
    AR = $(DEVKITPPC)/bin/powerpc-eabi-ar$(EXE_EXT)
 	ENDIANNESS_DEFINES := -DBYTE_ORDER=BIG_ENDIAN -DCPU_IS_BIG_ENDIAN=1 -DWORDS_BIGENDIAN=1
-   PLATFORM_DEFINES := -DGEKKO -mcpu=750 -meabi -mhard-float -DALT_RENDER
+   PLATFORM_DEFINES := -DGEKKO -mcpu=750 -meabi -mhard-float -DALT_RENDER -DDISABLE_MANY_OGG_OPEN_FILES
    PLATFORM_DEFINES += -U__INT32_TYPE__ -U __UINT32_TYPE__ -D__INT32_TYPE__=int
    STATIC_LINKING = 1
 
