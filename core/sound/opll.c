@@ -39,6 +39,10 @@
  *          VRC VII decap and die shot.
  *
  *  version: 1.0
+ *
+ *  additional changes (EkeEke):
+ *  - fixed attack phase rates 11.1 to 11.3
+ *  - fixed ch8&ch9 modulator wave leakage into output (backported from nukeyt core version 1.0.2)
  */
 
 #include <string.h>
@@ -952,6 +956,9 @@ void OPLL_Operator(opll_t *chip) {
             break;
         }
     }
+
+    if (!(chip->rm_enable & 0x80))
+        routput = 0;
 
     chip->ch_out = ismod1 ? routput : (output>>3);
 }
