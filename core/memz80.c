@@ -5,7 +5,7 @@
  *  Support for SG-1000, Mark-III, Master System, Game Gear & Mega Drive ports access
  *
  *  Copyright (C) 1998-2003  Charles Mac Donald (original code)
- *  Copyright (C) 2007-2024  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2007-2025  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -111,7 +111,7 @@ static void z80_request_68k_bus_access(void)
   /* approximate 68k wait-states during Z80 access to 68k bus (cf https://docs.google.com/document/d/1ST9GbFfPnIjLT5loytFCm3pB0kWQ1Oe34DCBBV8saY8) */
   /* value is adjusted to get ride of graphical glitches in Rick Dangerous 2 title screen when bus refresh delays are also emulated and still get */
   /* "M68K DELAY ON Z80 ROM READ" test "passed" in Ti_'s test ROM (misc_test.bin), although the measured delay value is still slightly too high. */
-  m68k.cycles += ((Z80.cycles % 7) + 68);
+  m68k.cycles += (((Z80.cycles % 7) + 72)/7)*7;
 
   /* average Z80 wait-states when accessing 68k bus (cf https://docs.google.com/document/d/1ST9GbFfPnIjLT5loytFCm3pB0kWQ1Oe34DCBBV8saY8) */
   Z80.cycles += (3 * 15);
