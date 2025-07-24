@@ -47,8 +47,8 @@
 #endif
 
 #if defined(USE_LIBCHDR)
-#include "libchdr/src/chd.h"
-#include "libchdr/src/cdrom.h"
+#include "libchdr/include/libchdr/chd.h"
+#include "libchdr/include/libchdr/cdrom.h"
 #endif
 
 #define cdd scd.cdd_hw
