@@ -210,7 +210,7 @@ $(OBJDIR)/%.o :	$(SRCDIR)/tremor/%.c
 		$(CC) -c $(CFLAGS) $(INCLUDES) $(DEFINES) $< -o $@
 
 $(OBJDIR)/%.o :	$(CHDLIBDIR)/src/%.c 	        
-		$(CC) -c $(CFLAGS) $(INCLUDES) -I$(CHDLIBDIR)/include -I$(CHDLIBDIR)/deps/zstd-1.5.6/lib/common -I$(CHDLIBDIR)/deps/zlib-1.31 $< -o $@
+		$(CC) -c $(CFLAGS) $(INCLUDES) -I$(CHDLIBDIR)/include -I$(CHDLIBDIR)/deps/zstd-1.5.6/lib -I$(CHDLIBDIR)/deps/zstd-1.5.6/lib/common -I$(CHDLIBDIR)/deps/zlib-1.31 $< -o $@
 
 $(OBJDIR)/%.o :	$(CHDLIBDIR)/deps/lzma-24.05/src/%.c 	        
 		$(CC) -c $(CFLAGS) $(INCLUDES) $(DEFINES) $< -o $@
