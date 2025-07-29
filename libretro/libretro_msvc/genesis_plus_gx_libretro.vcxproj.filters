@@ -216,6 +216,9 @@
     <ClCompile Include="..\..\core\cart_hw\eeprom_spi.c">
       <Filter>core\cart_hw</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\core\cart_hw\flash_cfi.c">
+      <Filter>core\cart_hw</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\core\cart_hw\ggenie.c">
       <Filter>core\cart_hw</Filter>
     </ClCompile>
@@ -540,6 +543,9 @@
       <Filter>core\cart_hw</Filter>
     </ClInclude>
     <ClInclude Include="..\..\core\cart_hw\eeprom_spi.h">
+      <Filter>core\cart_hw</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\core\cart_hw\flash_cfi.h">
       <Filter>core\cart_hw</Filter>
     </ClInclude>
     <ClInclude Include="..\..\core\cart_hw\ggenie.h">

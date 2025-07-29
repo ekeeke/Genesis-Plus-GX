@@ -44,6 +44,7 @@
 #include "shared.h"
 #include "eeprom_i2c.h"
 #include "eeprom_spi.h"
+#include "flash_cfi.h"
 #include "megasd.h"
 
 /* Cart database entry */
@@ -66,8 +67,10 @@ static void mapper_sf004_w(uint32 address, uint32 data);
 static uint32 mapper_sf004_r(uint32 address);
 static void mapper_t5740_w(uint32 address, uint32 data);
 static uint32 mapper_t5740_r(uint32 address);
-static void mapper_flashkit_w(uint32 address, uint32 data);
-static uint32 mapper_flashkit_r(uint32 address);
+static void mapper_flash_w8(uint32 address, uint32 data);
+static void mapper_flash_w16(uint32 address, uint32 data);
+static uint32 mapper_flash_r8(uint32 address);
+static uint32 mapper_flash_r16(uint32 address);
 static uint32 mapper_smw_64_r(uint32 address);
 static void mapper_smw_64_w(uint32 address, uint32 data);
 static void mapper_realtec_w(uint32 address, uint32 data);
@@ -660,10 +663,32 @@ void md_cart_init(void)
   }
   else if (strstr(rominfo.ROMType,"GM") && strstr(rominfo.product,"00000000-42"))
   {
-    /* Flashkit MD mapper */
-    m68k.memory_map[0x00].write8 = mapper_flashkit_w;
-    m68k.memory_map[0x00].write16 = mapper_flashkit_w;
-    zbank_memory_map[0x00].write = mapper_flashkit_w;
+    /* Flashkit-MD mapper (ROM only) */
+    m68k.memory_map[0x00].read8   = mapper_flash_r8;
+    m68k.memory_map[0x00].read16  = mapper_flash_r16;
+    m68k.memory_map[0x00].write8  = mapper_flash_w8;
+    m68k.memory_map[0x00].write16 = mapper_flash_w16;
+    zbank_memory_map[0x00].read   = mapper_flash_r8;
+    zbank_memory_map[0x00].write  = mapper_flash_w8;
+
+    /* initialize CFI flash memory device */
+    flash_cfi_init(M29W320EB);
+  }
+  else if (strstr(rominfo.ROMType,"GM") && strstr(rominfo.product,"00000000-00") && 
+           (((rominfo.checksum == 0xcdf5) && (rominfo.realchecksum = 0x603A)) ||  /* Life on Mars */
+            ((rominfo.checksum == 0x6bd5) && (rominfo.realchecksum = 0x1FEA))))   /* Life on Earth Reimagined */
+  {
+    /* SGDK flash-save mapper (ROM+SRAM) */
+    m68k.memory_map[0x3f].base    = sram.sram;
+    m68k.memory_map[0x00].read8   = m68k.memory_map[0x3f].read8   = mapper_flash_r8;
+    m68k.memory_map[0x00].read16  = m68k.memory_map[0x3f].read16  = mapper_flash_r16;
+    m68k.memory_map[0x00].write8  = m68k.memory_map[0x3f].write8  = mapper_flash_w8;
+    m68k.memory_map[0x00].write16 = m68k.memory_map[0x3f].write16 = mapper_flash_w16;
+    zbank_memory_map[0x00].read   = zbank_memory_map[0x3f].read   = mapper_flash_r8;
+    zbank_memory_map[0x00].write  = zbank_memory_map[0x3f].write  = mapper_flash_w8;
+
+    /* initialize CFI flash memory device */
+    flash_cfi_init(S29GL064N_04);
   }
   else if ((cart.romsize == 0x400000) && 
            (READ_BYTE(cart.rom, 0x200150) == 'C') &&
@@ -950,6 +975,12 @@ int md_cart_context_save(uint8 *state)
     bufferptr += megasd_context_save(&state[bufferptr]);
   }
 
+  /* Flash memory hardware */
+  if (m68k.memory_map[0x00].read8 == mapper_flash_r8)
+  {
+    bufferptr += flash_cfi_context_save(&state[bufferptr]);
+  }
+
   return bufferptr;
 }
 
@@ -1010,6 +1041,12 @@ int md_cart_context_load(uint8 *state)
   if (cart.special & HW_MEGASD)
   {
     bufferptr += megasd_context_load(&state[bufferptr]);
+  }
+
+  /* Flash memory hardware */
+  if (m68k.memory_map[0x00].read8 == mapper_flash_r8)
+  {
+    bufferptr += flash_cfi_context_load(&state[bufferptr]);
   }
 
   return bufferptr;
@@ -1474,41 +1511,35 @@ static uint32 mapper_t5740_r(uint32 address)
 }
 
 /* 
-  FlashKit MD mapper (very limited M29W320xx Flash memory support -- enough for unlicensed games using device signature as protection) 
+  Flash memory mappers
 */
-static void mapper_flashkit_w(uint32 address, uint32 data)
+static void mapper_flash_w8(uint32 address, uint32 data)
 {
-  /* Increment Bus Write counter */
-  cart.hw.regs[0]++;
-
-  /* Wait for 3 consecutive bus writes */
-  if (cart.hw.regs[0] == 3)
+  /* only /LWR is connected (verified on PCB hardware) */
+  if (address & 1)
   {
-    /* assume 'Auto Select' command */
-    m68k.memory_map[0x0].read16 = mapper_flashkit_r;
+    flash_cfi_write(address >> 1, (data << 8) | (data & 0xff));
   }
-  else if (cart.hw.regs[0] == 4)
+  else
   {
-    /* assume 'Read/Reset' command */
-    m68k.memory_map[0x0].read16 = NULL;
-
-    /* reset Bus Write counter */
-    cart.hw.regs[0] = 0;
+    m68k_unused_8_w(address, data);
   }
 }
 
-static uint32 mapper_flashkit_r(uint32 address)
+static void mapper_flash_w16(uint32 address, uint32 data)
 {
-  /* hard-coded device signature */
-  switch (address & 0x06)
-  {
-    case 0x00:  /* Manufacturer Code (STMicroelectronics) */
-      return 0x0020;
-    case 0x02:  /* Device Code (M29W320EB) */
-      return 0x2257;
-    default:    /* not supported */
-      return 0xffff;
-  }
+  flash_cfi_write(address >> 1, data);
+}
+
+static uint32 mapper_flash_r8(uint32 address)
+{
+  uint32 data = flash_cfi_read(address >> 1);
+  return (address & 0x01) ? (data & 0xff) : (data >> 8);;
+}
+
+static uint32 mapper_flash_r16(uint32 address)
+{
+  return flash_cfi_read(address >> 1);;
 }
 
 /* 

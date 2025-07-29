@@ -2,7 +2,7 @@
  *  Genesis Plus
  *  Backup RAM support
  *
- *  Copyright (C) 2007-2024  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2007-2025  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -97,6 +97,14 @@ void sram_init(void)
       /* Psy-O-Blade (wrong header) */
       sram.start = 0x200001;
       sram.end = 0x203fff;
+    }
+    else if (strstr(rominfo.product,"00000000-00") &&
+             (((rominfo.checksum == 0xcdf5) && (rominfo.realchecksum = 0x603A)) ||
+              ((rominfo.checksum == 0x6bd5) && (rominfo.realchecksum = 0x1FEA))))
+    {
+      /* Life on Mars / Life on Earth Reimagined (wrong addresses) */
+      sram.start = 0x3f0000;
+      sram.end = 0x3fffff;
     }
 
     /* fixes games indicating internal RAM as volatile external RAM (Feng Kuang Tao Hua Yuan) */

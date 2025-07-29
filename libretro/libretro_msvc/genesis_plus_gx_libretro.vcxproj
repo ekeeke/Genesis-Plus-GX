@@ -151,6 +151,7 @@
     <ClCompile Include="..\..\core\cart_hw\eeprom_93c.c" />
     <ClCompile Include="..\..\core\cart_hw\eeprom_i2c.c" />
     <ClCompile Include="..\..\core\cart_hw\eeprom_spi.c" />
+    <ClCompile Include="..\..\core\cart_hw\flash_cfi.c" />
     <ClCompile Include="..\..\core\cart_hw\ggenie.c" />
     <ClCompile Include="..\..\core\cart_hw\md_cart.c" />
     <ClCompile Include="..\..\core\cart_hw\sms_cart.c" />
@@ -251,6 +252,7 @@
     <ClInclude Include="..\..\core\cart_hw\eeprom_93c.h" />
     <ClInclude Include="..\..\core\cart_hw\eeprom_i2c.h" />
     <ClInclude Include="..\..\core\cart_hw\eeprom_spi.h" />
+    <ClInclude Include="..\..\core\cart_hw\flash_cfi.h" />
     <ClInclude Include="..\..\core\cart_hw\ggenie.h" />
     <ClInclude Include="..\..\core\cart_hw\md_cart.h" />
     <ClInclude Include="..\..\core\cart_hw\sms_cart.h" />
