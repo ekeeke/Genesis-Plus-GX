@@ -783,20 +783,28 @@ INLINE void m68ki_check_interrupts(void);            /* ASG: check for interrupt
  */
 INLINE uint m68ki_read_imm_16(void)
 {
+#if M68K_EMULATE_PREFETCH
+  uint temp_val;
   m68ki_set_fc(FLAG_S | FUNCTION_CODE_USER_PROGRAM) /* auto-disable (see m68kcpu.h) */
 #if M68K_CHECK_PC_ADDRESS_ERROR
   m68ki_check_address_error(REG_PC, MODE_READ, FLAG_S | FUNCTION_CODE_USER_PROGRAM) /* auto-disable (see m68kcpu.h) */
 #endif
-#if M68K_EMULATE_PREFETCH
-  if(MASK_OUT_BELOW_2(REG_PC) != CPU_PREF_ADDR)
+  if(REG_PC != CPU_PREF_ADDR)
   {
-    CPU_PREF_ADDR = MASK_OUT_BELOW_2(REG_PC);
-    CPU_PREF_DATA = m68k_read_immediate_32(CPU_PREF_ADDR);
+    CPU_PREF_ADDR = REG_PC;
+    CPU_PREF_DATA = m68k_read_immediate_16(REG_PC);
   }
+  temp_val = CPU_PREF_DATA;
   REG_PC += 2;
-  return MASK_OUT_ABOVE_16(CPU_PREF_DATA >> ((2-((REG_PC-2)&2))<<3));
+  CPU_PREF_ADDR = REG_PC;
+  CPU_PREF_DATA = m68k_read_immediate_16(REG_PC);
+  return temp_val;
 #else
   uint pc = REG_PC;
+  m68ki_set_fc(FLAG_S | FUNCTION_CODE_USER_PROGRAM) /* auto-disable (see m68kcpu.h) */
+#if M68K_CHECK_PC_ADDRESS_ERROR
+  m68ki_check_address_error(REG_PC, MODE_READ, FLAG_S | FUNCTION_CODE_USER_PROGRAM) /* auto-disable (see m68kcpu.h) */
+#endif
   REG_PC += 2;
   return m68k_read_immediate_16(pc);
 #endif /* M68K_EMULATE_PREFETCH */
@@ -806,33 +814,28 @@ INLINE uint m68ki_read_imm_32(void)
 {
 #if M68K_EMULATE_PREFETCH
   uint temp_val;
-
   m68ki_set_fc(FLAG_S | FUNCTION_CODE_USER_PROGRAM) /* auto-disable (see m68kcpu.h) */
 #if M68K_CHECK_PC_ADDRESS_ERROR
   m68ki_check_address_error(REG_PC, MODE_READ, FLAG_S | FUNCTION_CODE_USER_PROGRAM) /* auto-disable (see m68kcpu.h) */
 #endif
-  if(MASK_OUT_BELOW_2(REG_PC) != CPU_PREF_ADDR)
+  if(REG_PC != CPU_PREF_ADDR)
   {
-    CPU_PREF_ADDR = MASK_OUT_BELOW_2(REG_PC);
-    CPU_PREF_DATA = m68k_read_immediate_32(CPU_PREF_ADDR);
+    CPU_PREF_ADDR = REG_PC;
+    CPU_PREF_DATA = m68k_read_immediate_16(REG_PC);
   }
   temp_val = CPU_PREF_DATA;
   REG_PC += 2;
-  if(MASK_OUT_BELOW_2(REG_PC) != CPU_PREF_ADDR)
-  {
-    CPU_PREF_ADDR = MASK_OUT_BELOW_2(REG_PC);
-    CPU_PREF_DATA = m68k_read_immediate_32(CPU_PREF_ADDR);
-    temp_val = MASK_OUT_ABOVE_32((temp_val << 16) | (CPU_PREF_DATA >> 16));
-  }
+  temp_val = (temp_val << 16) | m68k_read_immediate_16(REG_PC);
   REG_PC += 2;
-
+  CPU_PREF_ADDR = REG_PC;
+  CPU_PREF_DATA = m68k_read_immediate_16(REG_PC);
   return temp_val;
 #else
+  uint pc = REG_PC;
   m68ki_set_fc(FLAG_S | FUNCTION_CODE_USER_PROGRAM) /* auto-disable (see m68kcpu.h) */
 #if M68K_CHECK_PC_ADDRESS_ERROR
   m68ki_check_address_error(REG_PC, MODE_READ, FLAG_S | FUNCTION_CODE_USER_PROGRAM) /* auto-disable (see m68kcpu.h) */
 #endif
-  uint pc = REG_PC;
   REG_PC += 4;
   return m68k_read_immediate_32(pc);
 #endif /* M68K_EMULATE_PREFETCH */

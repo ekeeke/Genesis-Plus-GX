@@ -135,6 +135,7 @@ Genesis Plus GX 1.7.5 (xx/xx/xxxx) (Eke-Eke)
 * fixed 68k timings of BCHG, BCLR, BTST Dn,#Imm and Dn,Dm instructions when bit number is less than 16 (cf. Yacht.txt)
 * fixed 68k timings of CHK, TRAP, TRAPV, LINEA and LINEF exceptions (cf. Yacht.txt)
 * fixed 68K DIVU instruction timings for SUB-CPU
+* fixed and enabled 68K prefetch for MAIN-CPU
 * fixed Z80 interrupt duration (Bomb on Basic City music running too fast)
 * fixed Z80 SP register initialization on power-on for Master System & Game Gear 
  (Ace of Aces, Shadow Dancer, Ecco the Dolphin, Evander Holyfield Real Deal Boxing)
