@@ -898,8 +898,12 @@ INLINE uint m68ki_read_32(uint address)
   m68ki_check_address_error(address, MODE_READ, FLAG_S | m68ki_get_address_space()) /* auto-disable (see m68kcpu.h) */
 
   temp = &m68ki_cpu.memory_map[((address)>>16)&0xff];
-  if (temp->read16) val = ((*temp->read16)(ADDRESS_68K(address)) << 16) | ((*temp->read16)(ADDRESS_68K(address + 2)));
-  else val = m68k_read_immediate_32(address);
+  if (temp->read16) val = (*temp->read16)(ADDRESS_68K(address)) << 16;
+  else val = m68k_read_immediate_16(address) << 16;
+
+  temp = &m68ki_cpu.memory_map[((address+2)>>16)&0xff];
+  if (temp->read16) val |= (*temp->read16)(ADDRESS_68K(address+2));
+  else val |= m68k_read_immediate_16(address+2);
 
 #ifdef HOOK_CPU
   if (UNLIKELY(cpu_hook))
