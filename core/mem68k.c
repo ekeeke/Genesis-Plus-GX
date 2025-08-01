@@ -3,7 +3,7 @@
  *  Main 68k bus handlers
  *
  *  Copyright (C) 1998-2003  Charles Mac Donald (original code)
- *  Copyright (C) 2007-2024  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2007-2025  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -288,8 +288,8 @@ static void m68k_poll_sync(unsigned int reg_mask)
   /* SUB-CPU idle on register polling ? */
   if (s68k.stopped & reg_mask)
   {
-    /* sync SUB-CPU with MAIN-CPU */
-    s68k.cycles = cycles;
+    /* sync SUB-CPU with MAIN-CPU (taking into account current instruction execution time) */
+    s68k.cycles = cycles + ((m68k_cycles()* SCYCLES_PER_LINE) / MCYCLES_PER_LINE);
 
     /* restart SUB-CPU */
     s68k.stopped = 0;
