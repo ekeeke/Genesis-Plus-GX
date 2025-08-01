@@ -7,7 +7,7 @@ Once you have downloaded and decompressed the archive, you should get two versio
 
  * genplus_cube.dol is the application running in Gamecube mode.
 
- This can be loaded on a Game Cube by using various methods: see http://www.gc-linux.org/wiki/Getting_Started#Booting_Code for more details.
+ This can be loaded on a Game Cube by using various methods: see [http://www.gc-linux.org/wiki/Getting_Started#Booting_Code](https://www.gc-forever.com/wiki/index.php?title=Booting_homebrew) for more details.
 
  * genplus_wii.dol is the application running in Wii mode.
 
