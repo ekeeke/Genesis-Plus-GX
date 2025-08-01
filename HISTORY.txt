@@ -230,6 +230,7 @@ Genesis Plus GX 1.7.5 (xx/xx/xxxx) (Eke-Eke)
 * improved progressive mode switch request on startup when component cable is detected
 * disabled simultaneous multiple .ogg files opening (fixes crashes caused to RAM size limitation)
 * fixed broken DVD support
+* added low-mem DOL version with dynamically allocated ROM buffer (fixes loading issues with Swiss or similar loaders using ARAM for temporary DOL storage)
 
 [Wii]
 ---------------

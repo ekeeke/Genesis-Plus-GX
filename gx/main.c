@@ -3,7 +3,7 @@
  *
  *  Genesis Plus GX
  *
- *  Copyright Eke-Eke (2007-2022), based on original work from Softdev (2006)
+ *  Copyright Eke-Eke (2007-2025), based on original work from Softdev (2006)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -491,6 +491,14 @@ int main (int argc, char *argv[])
   gx_audio_Init();
 
   /* initialize emulation */
+#ifdef USE_DYNAMIC_ALLOC
+  if (!ext)
+  {
+    /* allocate & initialize memory for Cartridge / CD hardware if required */
+    ext = (external_t *)calloc(1, sizeof(external_t));
+    if (!ext) return (0);
+  }
+#endif
   history_default();
   config_default();
   init_machine();
