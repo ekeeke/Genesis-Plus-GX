@@ -156,14 +156,32 @@ static const char extensions[SUPPORTED_EXT][16] =
 #if defined(USE_LIBTREMOR) || defined(USE_LIBVORBIS)
 
 static int ov_cdStreamSeek(void *f,ogg_int64_t off,int whence)
-	{ return cdStreamSeek(f,off,whence); }
+{
+  return cdStreamSeek(f,off,whence);
+}
+
 static size_t ov_cdStreamRead(void *buf, size_t sz, size_t n, void *f)
-	{ return cdStreamRead(buf,sz,n,f); }
+{
+  return cdStreamRead(buf,sz,n,f);
+}
+
 static int ov_cdStreamClose(void *f)
-	{ return cdStreamClose(f); }
+{
+  return cdStreamClose(f);
+}
+
 static long ov_cdStreamTell(void *f)
-	{ return cdStreamTell(f); }
-static ov_callbacks cb = { ov_cdStreamRead, ov_cdStreamSeek, ov_cdStreamClose, ov_cdStreamTell };
+{
+  return cdStreamTell(f);
+}
+
+static ov_callbacks cb =
+{
+  ov_cdStreamRead,
+  ov_cdStreamSeek,
+  ov_cdStreamClose,
+  ov_cdStreamTell
+};
 
 #ifdef DISABLE_MANY_OGG_OPEN_FILES
 static void ogg_free(int i)
@@ -1920,10 +1938,10 @@ void cdd_update(void)
     if (!cdd.latency)
     {
       /* Fixes a few games hanging because they expect data to be read with some delay */
-      /* Wolf Team games (Annet Futatabi, Aisle Lord, Cobra Command, Earnest Evans, Road Avenger & Time Gal) need at least 11 interrupts delay  */
+      /* Wolf Team games (Annet Futatabi, Aisle Lord, Cobra Command, Earnest Evans, Road Avenger, Thunder Storm FX & Time Gal) need at least 12 interrupts delay  */
       /* Space Adventure Cobra (2nd morgue scene) needs at least 13 interrupts delay (incl. seek time, so 11 is OK) */
       /* By default, at least two interrupts latency is required by current emulation model (BIOS hangs otherwise) */
-      cdd.latency = 2 + 9*config.cd_latency;
+      cdd.latency = 2 + 10*config.cd_latency;
     }
 
     /* CD drive seek time */
