@@ -77,21 +77,9 @@ static u8 brm_format[0x40] =
  *****************************************************************************/
 static int CardMount(int slot)
 {
-  int tries = 0;
-#ifdef HW_RVL
-  *(unsigned long *) (0xCD006800) |= 1 << 13; /*** Disable Encryption ***/
-#else
-  *(unsigned long *) (0xCC006800) |= 1 << 13; /*** Disable Encryption ***/
-#endif
-  while (tries < 10)
-  {
-    VIDEO_WaitVSync ();
-    if (CARD_Mount(slot, SysArea, NULL) == CARD_ERROR_READY)
-      return 1;
-    else
-      EXI_ProbeReset ();
-    tries++;
-  }
+  while (CARD_ProbeEx(slot, NULL, NULL) == CARD_ERROR_BUSY);
+  if (CARD_Mount(slot, SysArea, NULL) == CARD_ERROR_READY)
+    return 1;
   return 0;
 }
 
@@ -316,7 +304,6 @@ void slot_autodetect(int slot, int device, t_slot *ptr)
       sprintf(filename,"MD-%04X.srm", rominfo.realchecksum);
 
     /* Initialise the CARD system */
-    memset(&SysArea, 0, CARD_WORKAREA);
     CARD_Init("GENP", "00");
 
     /* CARD slot */
@@ -332,7 +319,7 @@ void slot_autodetect(int slot, int device, t_slot *ptr)
         /* Retrieve date & close */
         card_stat CardStatus;
         CARD_GetStatus(device, CardFile.filenum, &CardStatus);
-        time_t rawtime = CardStatus.time;
+        time_t rawtime = CardStatus.time + 946684800;
         struct tm *timeinfo = localtime(&rawtime);
         ptr->year = 1900 + timeinfo->tm_year;
         ptr->month = timeinfo->tm_mon + 1;
@@ -380,7 +367,6 @@ int slot_delete(int slot, int device)
       sprintf(filename,"MD-%04X.srm", rominfo.realchecksum);
 
     /* Initialise the CARD system */
-    memset(&SysArea, 0, CARD_WORKAREA);
     CARD_Init("GENP", "00");
 
     /* CARD slot */
@@ -484,7 +470,6 @@ int slot_load(int slot, int device)
 
     /* Initialise the CARD system */
     char action[64];
-    memset(&SysArea, 0, CARD_WORKAREA);
     CARD_Init("GENP", "00");
 
     /* CARD slot */
@@ -537,12 +522,7 @@ int slot_load(int slot, int device)
     }
 
     /* Read file sectors */
-    while (filesize > 0)
-    {
-      CARD_Read(&CardFile, &in[done], SectorSize, done);
-      done += SectorSize;
-      filesize -= SectorSize;
-    }
+    CARD_Read(&CardFile, &in[done], filesize, done);
 
     /* Close file */
     CARD_Close(&CardFile);
@@ -722,7 +702,6 @@ int slot_save(int slot, int device)
 
     /* Initialise the CARD system */
     char action[64];
-    memset(&SysArea, 0, CARD_WORKAREA);
     CARD_Init("GENP", "00");
 
     /* CARD slot */
@@ -770,6 +749,7 @@ int slot_save(int slot, int device)
   
     /* compress file */
     compress2 ((Bytef *)&out[2112 + 4], &filesize, (Bytef *)buffer, done, 9);
+    done = 0;
 
     /* Adjust file size */
     filesize = filesize + 4 + 2112;
@@ -827,20 +807,24 @@ int slot_save(int slot, int device)
     time(&rawtime);
     card_stat CardStatus;
     CARD_GetStatus(device, CardFile.filenum, &CardStatus);
-    CardStatus.icon_addr = 0x0;
-    CardStatus.icon_fmt = 2;
-    CardStatus.icon_speed = 1;
+    CardStatus.icon_addr = 0;
+    CardStatus.icon_fmt = CARD_ICON_RGB;
+    CardStatus.icon_speed = CARD_SPEED_FAST;
     CardStatus.comment_addr = 2048;
-    CardStatus.time = rawtime;
+    CardStatus.time = rawtime - 946684800;
     CARD_SetStatus(device, CardFile.filenum, &CardStatus);
 
     /* Write file sectors */
+#ifdef HW_RVL
     while (filesize > 0)
     {
       CARD_Write(&CardFile, &out[done], SectorSize, done);
       filesize -= SectorSize;
       done += SectorSize;
     }
+#else
+    CARD_Write(&CardFile, &out[done], filesize, done);
+#endif
 
     /* Close file */
     CARD_Close(&CardFile);
