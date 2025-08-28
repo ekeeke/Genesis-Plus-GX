@@ -320,7 +320,7 @@
     }
 
   #define m68ki_check_address_error(ADDR, WRITE_MODE, FC) \
-    if((ADDR)&1) \
+    if(UNLIKELY((ADDR)&1)) \
     { \
       if (m68ki_cpu.aerr_enabled) \
       { \
