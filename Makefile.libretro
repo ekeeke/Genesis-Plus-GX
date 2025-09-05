@@ -566,7 +566,7 @@ endif
 endif
 
 ifeq ($(SHARED_LIBVORBIS),)
-   TREMOR_SRC_DIR := $(CORE_DIR)/core/tremor
+   TREMOR_SRC_DIR := $(CORE_DIR)/core/sound/tremor
 endif
 
 include $(CORE_DIR)/libretro/Makefile.common

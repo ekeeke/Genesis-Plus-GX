@@ -19,7 +19,7 @@
 
 int joynum = 0;
 
-int log_error   = 0;
+int log_error   = 1;
 int debug_on    = 0;
 int turbo_mode  = 0;
 int use_sound   = 1;
@@ -311,6 +311,7 @@ static int sdl_control_update(SDLKey keystate)
     {
       case SDLK_TAB:
       {
+        error("*************************** SYSTEM RESET *******************************\n");
         system_reset();
         break;
       }
@@ -344,7 +345,16 @@ static int sdl_control_update(SDLKey keystate)
 
       case SDLK_F5:
       {
-        log_error ^= 1;
+        if (log_error)
+        {
+          error("*************************** END OF LOGGING *******************************\n");
+          log_error = 0;
+        }
+        else
+        {
+          log_error = 1;
+          error("********************* **** START OF LOGGING ******************************\n");
+        }
         break;
       }
 
@@ -441,6 +451,7 @@ static int sdl_control_update(SDLKey keystate)
 
       case SDLK_F10:
       {
+        error("*************************** SOFT RESET *******************************\n");
         gen_reset(0);
         break;
       }
@@ -671,7 +682,7 @@ int sdl_input_update(void)
       if(keystate[SDLK_a])  input.pad[joynum] |= INPUT_A;
       if(keystate[SDLK_s])  input.pad[joynum] |= INPUT_B;
       if(keystate[SDLK_d])  input.pad[joynum] |= INPUT_C;
-      if(keystate[SDLK_f])  input.pad[joynum] |= INPUT_START;
+      if(keystate[SDLK_f])  {input.pad[joynum] |= INPUT_START; error("************************** START PRESSED ********************************\n");}
       if(keystate[SDLK_z])  input.pad[joynum] |= INPUT_X;
       if(keystate[SDLK_x])  input.pad[joynum] |= INPUT_Y;
       if(keystate[SDLK_c])  input.pad[joynum] |= INPUT_Z;
@@ -925,6 +936,81 @@ int main (int argc, char **argv)
     if (fp!=NULL)
     {
       fwrite(sram.sram,0x10000,1, fp);
+      fclose(fp);
+    }
+  }
+
+  if (system_hw & SYSTEM_MD)
+  {
+    int i;
+
+    fp = fopen("./work_ram.bin", "wb");
+    if (fp!=NULL)
+    {
+      for (i = 0; i < 0x10000; i += 2)
+      {
+        uint8 temp = work_ram[i];
+        work_ram[i] = work_ram[i+1];
+        work_ram[i+1] = temp;
+      }
+      fwrite(work_ram, 0x10000, 1, fp);
+      fclose(fp);
+    }
+  }
+
+  if (system_hw == SYSTEM_MCD)
+  {
+    int i;
+
+    fp = fopen("./prg_ram.bin", "wb");
+    if (fp!=NULL)
+    {
+      for (i = 0; i < 0x80000; i += 2)
+      {
+        uint8 temp = scd.prg_ram[i];
+        scd.prg_ram[i] = scd.prg_ram[i+1];
+        scd.prg_ram[i+1] = temp;
+      }
+      fwrite(scd.prg_ram, 0x80000, 1, fp);
+      fclose(fp);
+    }
+
+    fp = fopen("./word_ram_2M.bin", "wb");
+    if (fp!=NULL)
+    {
+      for (i = 0; i < 0x40000; i += 2)
+      {
+        uint8 temp = scd.word_ram_2M[i];
+        scd.word_ram_2M[i] = scd.word_ram_2M[i+1];
+        scd.word_ram_2M[i+1] = temp;
+      }
+      fwrite(scd.word_ram_2M, 0x40000, 1, fp);
+      fclose(fp);
+    }
+
+    fp = fopen("./word_ram_1M_0.bin", "wb");
+    if (fp!=NULL)
+    {
+      for (i = 0; i < 0x20000; i += 2)
+      {
+        uint8 temp = scd.word_ram[0][i];
+        scd.word_ram[0][i] = scd.word_ram[0][i+1];
+        scd.word_ram[0][i+1] = temp;
+      }
+      fwrite(scd.word_ram[0], 0x20000, 1, fp);
+      fclose(fp);
+    }
+
+    fp = fopen("./word_ram_1M_1.bin", "wb");
+    if (fp!=NULL)
+    {
+      for (i = 0; i < 0x20000; i += 2)
+      {
+        uint8 temp = scd.word_ram[1][i];
+        scd.word_ram[1][i] = scd.word_ram[1][i+1];
+        scd.word_ram[1][i+1] = temp;
+      }
+      fwrite(scd.word_ram[1], 0x20000, 1, fp);
       fclose(fp);
     }
   }

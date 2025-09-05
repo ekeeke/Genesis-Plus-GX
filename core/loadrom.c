@@ -3,7 +3,7 @@
  *  ROM Loading Support
  *
  *  Copyright (C) 1998-2003  Charles Mac Donald (original code)
- *  Copyright (C) 2007-2023  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2007-2025  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -92,6 +92,7 @@ typedef struct
 
 ROMINFO rominfo;
 uint8 romtype;
+char rompath[256];
 
 static uint8 rom_region;
 
@@ -1028,6 +1029,13 @@ int load_rom(char *filename)
     input.x_offset = (strstr(rominfo.international,"GUN FIGHTERS") != NULL) ? 24 : 0;
     input.y_offset = 0;
   }
+
+  /* extract loaded game filepath */
+  strncpy(rompath, filename, sizeof(rompath));
+  rompath[sizeof(rompath) - 1] = 0;
+  i = strlen(rompath);
+  while ((i>0) && (rompath[i-1]!='/') && (rompath[i-1]!='\\')) i--;
+  rompath[i] = 0;
 
   return(1);
 }

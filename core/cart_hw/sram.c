@@ -99,9 +99,9 @@ void sram_init(void)
       sram.end = 0x203fff;
     }
     else if (strstr(rominfo.product,"00000000-00") &&
-             (((rominfo.checksum == 0xcdf5) && (rominfo.realchecksum == 0x603A)) ||
-              ((rominfo.checksum == 0x6bd5) && (rominfo.realchecksum == 0x1FEA)) ||
-              ((rominfo.checksum == 0x45c1))))
+             (((rominfo.checksum == 0xcdf5) && (rominfo.realchecksum == 0x603a)) ||
+              ((rominfo.checksum == 0x6bd5) && (rominfo.realchecksum == 0x1fea)) ||
+              ((rominfo.checksum == 0x45c1) && (rominfo.realchecksum == 0xc613))))
     {
       /* Life on Mars / Life on Earth Reimagined / The Secret Of The Four Winds (wrong addresses) */
       sram.start = 0x3f0000;

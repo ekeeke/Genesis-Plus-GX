@@ -80,6 +80,7 @@ Genesis Plus GX 1.7.5 (xx/xx/xxxx) (Eke-Eke)
 * added emulation of 68k delay during Z80 acccess to 68k bus
 * added (basic) emulation of 68k bus refresh delays (fixes Super Airwolf graphical glitch during intro & some Krikzz's mcd-verificator timing tests)
 * added emulation of CFI-compliant flash memory hardware (used by some games for copy-protection and backup RAM support)
+* added emulation of YX5200 MP3 player (used by "The Secret of the Four Wings")
 * added emulation of Micro Machines USA on-board TMSS bypass logic hardware
 * added SRAM support for games larger than 8MB
 * improved console region auto-detection for a few PAL-only games (The Smurfs Travel the World & Williams Arcade's Greatest Hits)

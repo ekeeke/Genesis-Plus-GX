@@ -328,38 +328,40 @@ int blip_read_samples( blip_t* m, short out [], int count)
 	return count;
 }
 
-int blip_mix_samples( blip_t* m1, blip_t* m2, blip_t* m3, short out [], int count)
+int blip_mix_samples( blip_t* m1, blip_t** m2, int num, short out [], int count)
 {
+  int i;
 #ifdef BLIP_ASSERT
+  assert( num <= 3 );
   assert( count >= 0 );
 
   if ( count > (m1->offset >> time_bits) )
     count = m1->offset >> time_bits;
-  if ( count > (m2->offset >> time_bits) )
-    count = m2->offset >> time_bits;
-  if ( count > (m3->offset >> time_bits) )
-    count = m3->offset >> time_bits;
+  for (i=0; i<num; i++)
+    if ( count > (m2[i]->offset >> time_bits) )
+      count = m2[i]->offset >> time_bits;
 
   if ( count )
 #endif
   {
     buf_t const* end;
-    buf_t const* in[3];
+    buf_t const* in[4];
 #ifdef BLIP_MONO
     int sum = m1->integrator;
     in[0] = SAMPLES( m1 );
-    in[1] = SAMPLES( m2 );
-    in[2] = SAMPLES( m3 );
+    for (i=0; i<num; i++)
+      in[i+1] = SAMPLES( m2[i] );
 #else
     int sum = m1->integrator[0];
     int sum2 = m1->integrator[1];
-    buf_t const* in2[3];
+    buf_t const* in2[4];
     in[0] = m1->buffer[0];
-    in[1] = m2->buffer[0];
-    in[2] = m3->buffer[0];
     in2[0] = m1->buffer[1];
-    in2[1] = m2->buffer[1];
-    in2[2] = m3->buffer[1];
+    for (i=0; i<num; i++)
+    {
+      in[i+1] = m2[i]->buffer[0];
+      in2[i+1] = m2[i]->buffer[1];
+    }
 #endif
 
     end = in[0] + count;
@@ -369,8 +371,8 @@ int blip_mix_samples( blip_t* m1, blip_t* m2, blip_t* m3, short out [], int coun
       int s = ARITH_SHIFT( sum, delta_bits );
 
       sum += *in[0]++;
-      sum += *in[1]++;
-      sum += *in[2]++;
+      for (i=1; i<num+1; i++)
+        sum += *in[i]++;
 
       CLAMP( s );
 
@@ -384,8 +386,8 @@ int blip_mix_samples( blip_t* m1, blip_t* m2, blip_t* m3, short out [], int coun
       s = ARITH_SHIFT( sum2, delta_bits );
 
       sum2 += *in2[0]++;
-      sum2 += *in2[1]++;
-      sum2 += *in2[2]++;
+      for (i=1; i<num+1; i++)
+        sum2 += *in2[i]++;
 
       CLAMP( s );
 
@@ -404,8 +406,8 @@ int blip_mix_samples( blip_t* m1, blip_t* m2, blip_t* m3, short out [], int coun
     m1->integrator[1] = sum2;
 #endif
     remove_samples( m1, count );
-    remove_samples( m2, count );
-    remove_samples( m3, count );
+    for (i=0; i<num; i++)
+      remove_samples( m2[i], count );
   }
 
   return count;

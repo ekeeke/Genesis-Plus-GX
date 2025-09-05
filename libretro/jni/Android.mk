@@ -1,7 +1,7 @@
 LOCAL_PATH := $(call my-dir)
 
 CORE_DIR       := $(LOCAL_PATH)/../..
-TREMOR_SRC_DIR := $(CORE_DIR)/core/tremor
+TREMOR_SRC_DIR := $(CORE_DIR)/core/sound/tremor
 
 SOURCES_C  :=
 WANT_CRC32 := 1

@@ -17,9 +17,9 @@ include $(DEVKITPPC)/gamecube_rules
 #---------------------------------------------------------------------------------
 TARGET		:=	genplus_cube
 BUILD		:=	build_cube
-SOURCES		:=	core core/m68k core/z80 core/sound core/tremor core/ntsc core/input_hw core/cd_hw core/cart_hw core/cart_hw/svp \
+SOURCES		:=	core core/m68k core/z80 core/sound core/sound/tremor core/ntsc core/input_hw core/cd_hw core/cart_hw core/cart_hw/svp \
 			gx gx/utils gx/gui gx/fileio gx/images gx/sounds
-INCLUDES	:=	core core/m68k core/z80 core/sound core/tremor core/ntsc core/input_hw core/cd_hw core/cart_hw core/cart_hw/svp \
+INCLUDES	:=	core core/m68k core/z80 core/sound core/sound/minimp3 core/sound/tremor core/ntsc core/input_hw core/cd_hw core/cart_hw core/cart_hw/svp \
 			gx gx/utils gx/gui gx/fileio gx/images gx/sounds
 
 #---------------------------------------------------------------------------------

@@ -31,11 +31,11 @@ DEFINES   = -DLSB_FIRST -DUSE_16BPP_RENDERING -DUSE_LIBVORBIS -DGCWZERO -DALIGN_
 
 SRCDIR    = ../core
 INCLUDES  =     -I$(SRCDIR) -I$(SRCDIR)/z80 -I$(SRCDIR)/m68k \
-		-I$(SRCDIR)/sound -I$(SRCDIR)/input_hw -I$(SRCDIR)/cart_hw -I$(SRCDIR)/cart_hw/svp \
+		-I$(SRCDIR)/sound -I$(SRCDIR)/sound/minimp3 -I$(SRCDIR)/input_hw -I$(SRCDIR)/cart_hw -I$(SRCDIR)/cart_hw/svp \
 		-I$(SRCDIR)/cd_hw -I$(SRCDIR)/ntsc \
 		-I$(SRCDIR)/../gcw0 \
 -I/opt/gcw0-toolchain/usr/mipsel-gcw0-linux-uclibc/sysroot/usr/include/
-#		-I$(SRCDIR)/tremor 
+#		-I$(SRCDIR)/sound/tremor 
 
 LIBS	  = `$(SDL-CONFIG) --libs --libs` -lz -lm -lSDL_ttf -lSDL_image \
 -L/opt/gcw0-toolchain/usr/mipsel-gcw0-linux-uclibc/sysroot/usr/lib -lvorbisfile
@@ -88,6 +88,7 @@ OBJECTS	+=      $(OBJDIR)/sram.o        \
 		$(OBJDIR)/eeprom_i2c.o  \
 		$(OBJDIR)/eeprom_spi.o  \
 		$(OBJDIR)/flash_cfi.o   \
+		$(OBJDIR)/yx5200.o	\
 		$(OBJDIR)/md_cart.o	\
 		$(OBJDIR)/sms_cart.o	\
 		$(OBJDIR)/megasd.o
@@ -165,10 +166,10 @@ $(OBJDIR)/%.o :	$(SRCDIR)/m68k/%.c
 $(OBJDIR)/%.o :	$(SRCDIR)/ntsc/%.c $(SRCDIR)/ntsc/%.h	        
 		$(CC) -c $(CFLAGS) $(INCLUDES) $(DEFINES) $< -o $@
 
-#$(OBJDIR)/%.o :	$(SRCDIR)/tremor/%.c $(SRCDIR)/tremor/%.h	        
+#$(OBJDIR)/%.o :	$(SRCDIR)/sound/tremor/%.c $(SRCDIR)/sound/tremor/%.h	        
 #		$(CC) -c $(CFLAGS) $(INCLUDES) $(DEFINES) $< -o $@
      
-#$(OBJDIR)/%.o :	$(SRCDIR)/tremor/%.c 	        
+#$(OBJDIR)/%.o :	$(SRCDIR)/sound/tremor/%.c 	        
 #		$(CC) -c $(CFLAGS) $(INCLUDES) $(DEFINES) $< -o $@
 
 $(OBJDIR)/%.o :	$(SRCDIR)/../gcw0/%.c $(SRCDIR)/../gcw0/%.h	        

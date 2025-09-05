@@ -3,7 +3,7 @@
  *  ROM Loading Support
  *
  *  Copyright (C) 1998-2003  Charles Mac Donald (original code)
- *  Copyright (C) 2007-2023 Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2007-2025 Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -64,6 +64,7 @@ typedef struct
 /* Global variables */
 extern ROMINFO rominfo;
 extern uint8 romtype;
+extern char rompath[256];
 
 /* Function prototypes */
 extern int load_bios(int system);

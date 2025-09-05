@@ -19,10 +19,10 @@ CHDLIBDIR = core/cd_hw/libchdr
 #---------------------------------------------------------------------------------
 TARGET		:=	genplus_wii
 BUILD		:=	build_wii
-SOURCES		:=	core core/m68k core/z80 core/sound core/tremor core/ntsc core/input_hw core/cd_hw core/cart_hw core/cart_hw/svp \
+SOURCES		:=	core core/m68k core/z80 core/sound core/sound/tremor core/ntsc core/input_hw core/cd_hw core/cart_hw core/cart_hw/svp \
 			$(CHDLIBDIR)/src $(CHDLIBDIR)/deps/lzma-24.05/src $(CHDLIBDIR)/deps/zstd-1.5.6/lib/common $(CHDLIBDIR)/deps/zstd-1.5.6/lib/decompress \
 			gx gx/utils gx/utils/wiidrc gx/gui gx/fileio gx/images gx/sounds
-INCLUDES	:=	core core/m68k core/z80 core/sound core/tremor core/ntsc core/input_hw core/cd_hw core/cart_hw core/cart_hw/svp \
+INCLUDES	:=	core core/m68k core/z80 core/sound core/sound/minimp3 core/sound/tremor core/ntsc core/input_hw core/cd_hw core/cart_hw core/cart_hw/svp \
 			$(CHDLIBDIR)/include $(CHDLIBDIR)/deps/lzma-24.05/include $(CHDLIBDIR)/deps/zstd-1.5.6/lib $(CHDLIBDIR)/deps/zstd-1.5.6/lib/common $(CHDLIBDIR)/deps/zstd-1.5.6/decompress \
 			gx gx/utils gx/utils/wiidrc gx/gui gx/fileio gx/images gx/sounds
 

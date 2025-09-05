@@ -51,7 +51,7 @@ ifeq ($(platform), osx)
 endif
 
 SRCDIR    = ../core
-INCLUDES  = -I$(SRCDIR) -I$(SRCDIR)/z80 -I$(SRCDIR)/m68k -I$(SRCDIR)/sound -I$(SRCDIR)/input_hw -I$(SRCDIR)/cart_hw -I$(SRCDIR)/cart_hw/svp -I$(SRCDIR)/cd_hw -I$(SRCDIR)/ntsc -I$(SRCDIR)/tremor -I$(SRCDIR)/../sdl -I$(SRCDIR)/../sdl/sdl2
+INCLUDES  = -I$(SRCDIR) -I$(SRCDIR)/z80 -I$(SRCDIR)/m68k -I$(SRCDIR)/sound -I$(SRCDIR)/sound/minimp3 -I$(SRCDIR)/sound/tremor -I$(SRCDIR)/input_hw -I$(SRCDIR)/cart_hw -I$(SRCDIR)/cart_hw/svp -I$(SRCDIR)/cd_hw -I$(SRCDIR)/ntsc -I$(SRCDIR)/../sdl -I$(SRCDIR)/../sdl/sdl2
 LIBS	  = `sdl2-config --libs` -lz -lm
 
 CHDLIBDIR = $(SRCDIR)/cd_hw/libchdr
@@ -107,6 +107,7 @@ OBJECTS	+=      $(OBJDIR)/sram.o        \
 		$(OBJDIR)/eeprom_i2c.o  \
 		$(OBJDIR)/eeprom_spi.o  \
 		$(OBJDIR)/flash_cfi.o   \
+		$(OBJDIR)/yx5200.o      \
 		$(OBJDIR)/md_cart.o	\
 		$(OBJDIR)/sms_cart.o	\
 		$(OBJDIR)/megasd.o
@@ -204,10 +205,7 @@ $(OBJDIR)/%.o :	$(SRCDIR)/m68k/%.c
 $(OBJDIR)/%.o :	$(SRCDIR)/ntsc/%.c $(SRCDIR)/ntsc/%.h	        
 		$(CC) -c $(CFLAGS) $(INCLUDES) $(DEFINES) $< -o $@
 
-$(OBJDIR)/%.o :	$(SRCDIR)/tremor/%.c $(SRCDIR)/tremor/%.h	        
-		$(CC) -c $(CFLAGS) $(INCLUDES) $(DEFINES) $< -o $@
-
-$(OBJDIR)/%.o :	$(SRCDIR)/tremor/%.c 	        
+$(OBJDIR)/%.o :	$(SRCDIR)/sound/tremor/%.c 	        
 		$(CC) -c $(CFLAGS) $(INCLUDES) $(DEFINES) $< -o $@
 
 $(OBJDIR)/%.o :	$(CHDLIBDIR)/src/%.c 	        
