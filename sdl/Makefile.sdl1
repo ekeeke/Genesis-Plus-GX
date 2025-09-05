@@ -31,11 +31,11 @@
 NAME	  = gen_sdl
 
 CC        = gcc
-CFLAGS    = `sdl-config --cflags` -march=native -O6 -fomit-frame-pointer -Wall -Wno-strict-aliasing -std=c99 -pedantic-errors -D_ftelli64=ftell -D_fseeki64=fseek
+CFLAGS    = `sdl-config --cflags` -march=native -O6 -fomit-frame-pointer -Wall -Wno-strict-aliasing -std=c99 -pedantic-errors
 #-g -ggdb -pg
 #-fomit-frame-pointer
 #LDFLAGS   = -pg
-DEFINES   = -DLSB_FIRST -DUSE_16BPP_RENDERING -DUSE_LIBTREMOR -DUSE_LIBCHDR -DMAXROMSIZE=33554432 -DHAVE_YM3438_CORE -DHAVE_OPLL_CORE -DENABLE_SUB_68K_ADDRESS_ERROR_EXCEPTIONS -DZ7_ST -DZSTD_DISABLE_ASM -DLOGERROR -DLOG_SCD -DLOG_CDC -DLOG_CDD
+DEFINES   = -DLSB_FIRST -DUSE_16BPP_RENDERING -DUSE_LIBTREMOR -DUSE_LIBCHDR -DMAXROMSIZE=33554432 -DHAVE_YM3438_CORE -DHAVE_OPLL_CORE -DENABLE_SUB_68K_ADDRESS_ERROR_EXCEPTIONS -DZ7_ST -DZSTD_DISABLE_ASM
 
 ifneq ($(OS),Windows_NT)
 DEFINES += -DHAVE_ALLOCA_H
