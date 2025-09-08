@@ -53,16 +53,17 @@
 #define MAPPER_93C46          (0x12)
 #define MAPPER_CODIES         (0x13)
 #define MAPPER_MULTI_16K      (0x14)
-#define MAPPER_KOREA          (0x15)
-#define MAPPER_KOREA_16K      (0x16)
+#define MAPPER_KOREA_16K_V1   (0x15)
+#define MAPPER_KOREA_16K_V2   (0x16)
 #define MAPPER_MULTI_2x16K_V1 (0x17)
 #define MAPPER_MULTI_2x16K_V2 (0x18)
 #define MAPPER_MULTI_16K_32K  (0x19)
 #define MAPPER_ZEMINA_16K_32K (0x1A)
 #define MAPPER_HWASUNG        (0x1B)
+#define MAPPER_MSX_16K        (0x1C)
 #define MAPPER_KOREA_8K       (0x20)
-#define MAPPER_MSX            (0x21)
-#define MAPPER_MSX_NEMESIS    (0x22)
+#define MAPPER_MSX_8K         (0x21)
+#define MAPPER_MSX_8K_NEMESIS (0x22)
 #define MAPPER_MULTI_8K       (0x23)
 #define MAPPER_MULTI_4x8K     (0x24)
 #define MAPPER_ZEMINA_4x8K    (0x25)
@@ -104,24 +105,25 @@ static const rominfo_t game_list[] =
   {0x23BAC434, 0, 0, 0,  MAPPER_SEGA_X, SYSTEM_GG, REGION_USA}, /* Shining Force Gaiden - Final Conflict (JP) [T-Eng] */
 
   /* games using "Korean" mappers */
-  {0x445525E2, 0, 0, 0, MAPPER_MSX,            SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Penguin Adventure (KR) */
-  {0x83F0EEDE, 0, 0, 0, MAPPER_MSX,            SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Street Master (KR) */
-  {0xA05258F5, 0, 0, 0, MAPPER_MSX,            SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Wonsiin (KR) */
-  {0x06965ED9, 0, 0, 0, MAPPER_MSX,            SYSTEM_SMS, REGION_JAPAN_NTSC}, /* F-1 Spirit - The way to Formula-1 (KR) */
-  {0x77EFE84A, 0, 0, 0, MAPPER_MSX,            SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Cyborg Z (KR) */
-  {0xF89AF3CC, 0, 0, 0, MAPPER_MSX,            SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Knightmare II: The Maze of Galious (KR) */
-  {0x9195C34C, 0, 0, 0, MAPPER_MSX,            SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Super Boy 3 (KR) */
-  {0xE316C06D, 0, 0, 0, MAPPER_MSX_NEMESIS,    SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Nemesis (KR) */
-  {0x0A77FA5E, 0, 0, 0, MAPPER_MSX,            SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Nemesis 2 (KR) */
-  {0x89B79E77, 0, 0, 0, MAPPER_KOREA,          SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Dodgeball King (KR) */
-  {0x929222C4, 0, 0, 0, MAPPER_KOREA,          SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Jang Pung II (KR) */
-  {0x18FB98A3, 0, 0, 0, MAPPER_KOREA,          SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Jang Pung 3 (KR) */
-  {0x97D03541, 0, 0, 0, MAPPER_KOREA,          SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Sangokushi 3 (KR) */
+  {0x445525E2, 0, 0, 0, MAPPER_MSX_8K,         SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Penguin Adventure (KR) */
+  {0x83F0EEDE, 0, 0, 0, MAPPER_MSX_8K,         SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Street Master (KR) */
+  {0xA05258F5, 0, 0, 0, MAPPER_MSX_8K,         SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Wonsiin (KR) */
+  {0x06965ED9, 0, 0, 0, MAPPER_MSX_8K,         SYSTEM_SMS, REGION_JAPAN_NTSC}, /* F-1 Spirit - The way to Formula-1 (KR) */
+  {0x77EFE84A, 0, 0, 0, MAPPER_MSX_8K,         SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Cyborg Z (KR) */
+  {0xF89AF3CC, 0, 0, 0, MAPPER_MSX_8K,         SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Knightmare II: The Maze of Galious (KR) */
+  {0x9195C34C, 0, 0, 0, MAPPER_MSX_8K,         SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Super Boy 3 (KR) */
+  {0xE316C06D, 0, 0, 0, MAPPER_MSX_8K_NEMESIS, SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Nemesis (KR) */
+  {0x0A77FA5E, 0, 0, 0, MAPPER_MSX_8K,         SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Nemesis 2 (KR) */
+  {0x5E7B18C8, 0, 0, 0, MAPPER_MSX_16K,       SYSTEM_GGMS, REGION_JAPAN_NTSC}, /* Wonder Kid [Proto] */
   {0x192949D5, 0, 0, 0, MAPPER_KOREA_8K,       SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Janggun-ui Adeul (KR) */
-  {0x76C5BDFB, 0, 0, 0, MAPPER_KOREA_16K,     SYSTEM_GGMS, REGION_JAPAN_NTSC}, /* Jang Pung II [SMS-GG] (KR) */
-  {0x01A2D595, 0, 0, 0, MAPPER_KOREA_16K,     SYSTEM_GGMS,        REGION_USA}, /* Street Battle [Proto] [SMS-GG] (US) */
-  {0x9FA727A0, 0, 0, 0, MAPPER_KOREA_16K,     SYSTEM_GGMS,        REGION_USA}, /* Street Hero [Proto 0] [SMS-GG] (US) */
-  {0xFB481971, 0, 0, 0, MAPPER_KOREA_16K,     SYSTEM_GGMS,        REGION_USA}, /* Street Hero [Proto 1] [SMS-GG] (US) */
+  {0x89B79E77, 0, 0, 0, MAPPER_KOREA_16K_V1,   SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Dodgeball King (KR) */
+  {0x929222C4, 0, 0, 0, MAPPER_KOREA_16K_V1,   SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Jang Pung II (KR) */
+  {0x18FB98A3, 0, 0, 0, MAPPER_KOREA_16K_V1,   SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Jang Pung 3 (KR) */
+  {0x97D03541, 0, 0, 0, MAPPER_KOREA_16K_V1,   SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Sangokushi 3 (KR) */
+  {0x76C5BDFB, 0, 0, 0, MAPPER_KOREA_16K_V2,  SYSTEM_GGMS, REGION_JAPAN_NTSC}, /* Jang Pung II [SMS-GG] (KR) */
+  {0x01A2D595, 0, 0, 0, MAPPER_KOREA_16K_V2,  SYSTEM_GGMS,        REGION_USA}, /* Street Battle [Proto] [SMS-GG] (US) */
+  {0x9FA727A0, 0, 0, 0, MAPPER_KOREA_16K_V2,  SYSTEM_GGMS,        REGION_USA}, /* Street Hero [Proto 0] [SMS-GG] (US) */
+  {0xFB481971, 0, 0, 0, MAPPER_KOREA_16K_V2,  SYSTEM_GGMS,        REGION_USA}, /* Street Hero [Proto 1] [SMS-GG] (US) */
   {0xA67F2A5C, 0, 0, 0, MAPPER_MULTI_16K,      SYSTEM_SMS, REGION_JAPAN_NTSC}, /* 4-Pak All Action (KR) */
   {0x98AF0236, 0, 0, 0, MAPPER_HICOM,          SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Hi-Com 3-in-1 The Best Game Collection (Vol. 1) (KR) */
   {0x6EBFE1C3, 0, 0, 0, MAPPER_HICOM,          SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Hi-Com 3-in-1 The Best Game Collection (Vol. 2) (KR) */
@@ -464,10 +466,11 @@ static void mapper_32k_w(unsigned char data);
 static void write_mapper_none(unsigned int address, unsigned char data);
 static void write_mapper_sega(unsigned int address, unsigned char data);
 static void write_mapper_codies(unsigned int address, unsigned char data);
-static void write_mapper_korea(unsigned int address, unsigned char data);
 static void write_mapper_korea_8k(unsigned int address, unsigned char data);
-static void write_mapper_korea_16k(unsigned int address, unsigned char data);
-static void write_mapper_msx(unsigned int address, unsigned char data);
+static void write_mapper_korea_16k_v1(unsigned int address, unsigned char data);
+static void write_mapper_korea_16k_v2(unsigned int address, unsigned char data);
+static void write_mapper_msx_8k(unsigned int address, unsigned char data);
+static void write_mapper_msx_16k(unsigned int address, unsigned char data);
 static void write_mapper_multi_16k(unsigned int address, unsigned char data);
 static void write_mapper_multi_2x16k_v1(unsigned int address, unsigned char data);
 static void write_mapper_multi_2x16k_v2(unsigned int address, unsigned char data);
@@ -679,8 +682,9 @@ void sms_cart_reset(void)
       break;
 
     case MAPPER_KOREA_8K:
-    case MAPPER_MSX:
-    case MAPPER_MSX_NEMESIS:
+    case MAPPER_MSX_8K:
+    case MAPPER_MSX_8K_NEMESIS:
+    case MAPPER_MSX_16K:
     case MAPPER_MULTI_4x8K:
     case MAPPER_MULTI_8K:
       cart_rom.fcr[0] = 0;
@@ -933,8 +937,9 @@ int sms_cart_context_load(uint8 *state)
         break;
 
       case MAPPER_KOREA_8K:
-      case MAPPER_MSX:
-      case MAPPER_MSX_NEMESIS:
+      case MAPPER_MSX_8K:
+      case MAPPER_MSX_8K_NEMESIS:
+      case MAPPER_MSX_16K:
       case MAPPER_MULTI_4x8K:
       case MAPPER_MULTI_8K:
         cart_rom.fcr[0] = 0;
@@ -1108,7 +1113,7 @@ static void mapper_reset(void)
       mapper_8k_w(3,slot.fcr[3]);
 
       /* "Nemesis" mapper specific */
-      if (slot.mapper == MAPPER_MSX_NEMESIS)
+      if (slot.mapper == MAPPER_MSX_8K_NEMESIS)
       {
         /* first 8KB bank ($0000-$1FFF) is mapped to last 8KB cartridge ROM page */
         for (i = 0x00; i < 0x08; i++)
@@ -1160,25 +1165,30 @@ static void mapper_reset(void)
       z80_writemem = write_mapper_codies;
       break;
 
-    case MAPPER_KOREA:
-      z80_readmem = read_mapper_default;
-      z80_writemem = write_mapper_korea;
-      break;
-
     case MAPPER_KOREA_8K:
       z80_readmem = read_mapper_korea_8k;
       z80_writemem = write_mapper_korea_8k;
       break;
 
-    case MAPPER_KOREA_16K:
+    case MAPPER_KOREA_16K_V1:
       z80_readmem = read_mapper_default;
-      z80_writemem = write_mapper_korea_16k;
+      z80_writemem = write_mapper_korea_16k_v1;
       break;
 
-    case MAPPER_MSX:
-    case MAPPER_MSX_NEMESIS:
+    case MAPPER_KOREA_16K_V2:
       z80_readmem = read_mapper_default;
-      z80_writemem = write_mapper_msx;
+      z80_writemem = write_mapper_korea_16k_v2;
+      break;
+
+    case MAPPER_MSX_8K:
+    case MAPPER_MSX_8K_NEMESIS:
+      z80_readmem = read_mapper_default;
+      z80_writemem = write_mapper_msx_8k;
+      break;
+
+    case MAPPER_MSX_16K:
+      z80_readmem = read_mapper_default;
+      z80_writemem = write_mapper_msx_16k;
       break;
 
     case MAPPER_MULTI_16K:
@@ -2132,23 +2142,22 @@ static void write_mapper_hwasung(unsigned int address, unsigned char data)
   z80_writemap[address >> 10][address & 0x03FF] = data;
 }
 
-
-static void write_mapper_korea(unsigned int address, unsigned char data)
+static void write_mapper_msx_8k(unsigned int address, unsigned char data)
 {
-  if (address == 0xA000)
+  if (address <= 0x0003)
   {
-    mapper_16k_w(3,data);
+    mapper_8k_w(address,data);
     return;
   }
 
   z80_writemap[address >> 10][address & 0x03FF] = data;
 }
 
-static void write_mapper_msx(unsigned int address, unsigned char data)
+static void write_mapper_msx_16k(unsigned int address, unsigned char data)
 {
-  if (address <= 0x0003)
+  if ((address & 0xC000) == 0x8000)
   {
-    mapper_8k_w(address,data);
+    mapper_16k_w(3,data);
     return;
   }
 
@@ -2195,7 +2204,18 @@ static void write_mapper_korea_8k(unsigned int address, unsigned char data)
   z80_writemap[address >> 10][address & 0x03FF] = data;
 }
 
-static void write_mapper_korea_16k(unsigned int address, unsigned char data)
+static void write_mapper_korea_16k_v1(unsigned int address, unsigned char data)
+{
+  if (address == 0xA000)
+  {
+    mapper_16k_w(3,data);
+    return;
+  }
+
+  z80_writemap[address >> 10][address & 0x03FF] = data;
+}
+
+static void write_mapper_korea_16k_v2(unsigned int address, unsigned char data)
 {
   if (address == 0x4000)
   {
