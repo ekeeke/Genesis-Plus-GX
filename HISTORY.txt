@@ -158,6 +158,7 @@ Genesis Plus GX 1.7.5 (xx/xx/xxxx) (Eke-Eke)
 [Core/VDP]
 ---------------
 * added support for background color changes during HBLANK when display is disabled (fixes incorrect colored line in Yuu Yuu Hakusho)
+* added support for sprites attribute table address change during HBLANK and improved Mode 4 8x16 sprites parsing accuracy (fixes graphics glitch in Madoh Monogatari I cutscreen)
 * added optional enhanced 2-cell vertical scroll rendering mode (credits to AlexKiri)
 * implemented proper FIFO ring-buffer & unused bits behavior on CRAM/VSRAM reads (verified on real hardware by Nemesis)
 * improved accuracy of DMA Copy/Fill & added support for CRAM/VSRAM Fill (verified on real hardware by Nemesis)

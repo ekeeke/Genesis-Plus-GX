@@ -1886,6 +1886,13 @@ static void vdp_reg_w(unsigned int r, unsigned int d, unsigned int cycles)
     {
       reg[5] = d;
       satb = (d << 9) & sat_base_mask;
+
+      /* Sprite Attribute Table Base changed during HBLANK (Madoh Monogatari I) */
+      if ((v_counter < bitmap.viewport.h) && (reg[1] & 0x40) && (cycles <= (mcycles_vdp + 860)))
+      {
+        /* re-parse sprites for next line */
+        parse_satb(v_counter);
+      }
       break;
     }
 

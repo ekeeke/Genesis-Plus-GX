@@ -3679,8 +3679,8 @@ void render_obj_m4(int line)
   /* Default sprite width */
   int width = 8;
 
-  /* Sprite Generator address mask (LSB is masked for 8x16 sprites) */
-  uint16 sg_mask = (~0x1C0 ^ (reg[6] << 6)) & (~((reg[1] & 0x02) >> 1));
+  /* Sprite Generator address mask */
+  uint16 sg_mask = ~0x1C0 ^ (reg[6] << 6);
 
   /* Zoomed sprites (not working on Genesis VDP) */
   if (system_hw < SYSTEM_MD)
@@ -4406,6 +4406,12 @@ void parse_satb_m4(int line)
       object_info->ypos = ypos;
       object_info->xpos = st[(0x80 + (i << 1)) & st_mask];
       object_info->attr = st[(0x81 + (i << 1)) & st_mask];
+
+      /* 8x16 sprites pattern index LSB is masked */
+      if (reg[1] & 0x02)
+      {
+        object_info->attr &= 0xfe;
+      }
 
       /* Increment Sprite count */
       ++count;
