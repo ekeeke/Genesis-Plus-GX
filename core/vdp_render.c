@@ -1408,9 +1408,6 @@ void render_bg_m4(int line)
   uint16 *nt;
   uint32 attr, atex;
 
-  /* 32 x 8 pixels */
-  int width = 32;
-
   /* Horizontal scrolling */
   int index = ((reg[0] & 0x40) && (line < 0x10)) ? 0x100 : reg[0x08];
   int shift = index & 7;
@@ -1430,7 +1427,7 @@ void render_bg_m4(int line)
     nt_mask |= 0x400;
   }
 
-  /* Test for extended modes (Master System II & Game gear VDP only) */
+  /* Check extended height modes (Master System II & Game Gear VDP only) */
   if (bitmap.viewport.h > 192)
   {
     /* Vertical scroll mask */
@@ -1461,8 +1458,8 @@ void render_bg_m4(int line)
     index++;
   }
 
-  /* Draw tiles */
-  for(column = 0; column < width; column++, index++)
+  /* Draw tiles (32 x 8 pixels) */
+  for(column = 0; column < 32; column++, index++)
   {
     /* Stop vertical scrolling for rightmost eight tiles */
     if((column == 24) && (reg[0] & 0x80))
@@ -1482,7 +1479,7 @@ void render_bg_m4(int line)
     }
 
     /* Read name table attribute word */
-    attr = nt[index % width];
+    attr = nt[index & 0x1F];
 #ifndef LSB_FIRST
     attr = (((attr & 0xFF) << 8) | ((attr & 0xFF00) >> 8));
 #endif
@@ -4291,9 +4288,6 @@ void parse_satb_tms(int line)
     /* Adjust height for 16x16 sprites */
     height <<= ((reg[1] & 0x02) >> 1);
 
-    /* Adjust height for zoomed sprites */
-    height <<= (reg[1] & 0x01);
-
     /* Parse Sprite Table (32 entries) */
     do
     {
@@ -4315,6 +4309,9 @@ void parse_satb_tms(int line)
       /* Y range */
       ypos = line - ypos;
 
+      /* Adjust Y range for zoomed sprites */
+      ypos >>= (reg[1] & 0x01);
+
       /* Sprite is visible on this line ? */
       if ((ypos >= 0) && (ypos < height))
       {
@@ -4328,9 +4325,6 @@ void parse_satb_tms(int line)
           }
           break;
         }
-
-        /* Adjust Y range back for zoomed sprites */
-        ypos >>= (reg[1] & 0x01);
 
         /* Store sprite attributes for later processing */
         object_info->ypos = ypos;
