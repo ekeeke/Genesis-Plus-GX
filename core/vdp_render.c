@@ -4,8 +4,8 @@
  *
  *  Support for all TMS99xx modes, Mode 4 & Mode 5 rendering
  *
- *  Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003  Charles Mac Donald (original code)
- *  Copyright (C) 2007-2016  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 1998-2003  Charles Mac Donald (original code)
+ *  Copyright (C) 2007-2025  Eke-Eke (Genesis Plus GX)
  *  Copyright (C) 2022  AlexKiri (enhanced vscroll mode rendering function)
  *
  *  Redistribution and use of this code or any derivative works are permitted
@@ -1406,7 +1406,7 @@ void render_bg_m4(int line)
 {
   int column;
   uint16 *nt;
-  uint32 attr, atex, *src;
+  uint32 attr, atex;
 
   /* 32 x 8 pixels */
   int width = 32;
@@ -1490,19 +1490,42 @@ void render_bg_m4(int line)
     /* Expand priority and palette bits */
     atex = atex_table[(attr >> 11) & 3];
 
-    /* Cached pattern data line (4 bytes = 4 pixels at once) */
-    src = (uint32 *)&bg_pattern_cache[((attr & 0x7FF) << 6) | (v_line)];
+    /* On 315-5124 VDP only, Color Table Base Address (resp. Pattern Generator Table Base Address) register bits 7:0 (resp. bits 2:0) */
+    /* are used as a mask on tile index upper bits when fetching bitplanes 0&1 (resp. bitplanes 2&3), which correspond to tile pixels */
+    /* data bits 0:1 (resp. bits 2:3) */
+    if (system_hw <= SYSTEM_SMS)
+    {
+      /* Cached pattern data lines (4 bytes = 4 pixels at once) for pixels data bits 0:1 and 2:3 */
+      uint32 *src01 = (uint32 *)&bg_pattern_cache[((attr & (0x601 | (reg[3] << 1))) << 6) | v_line];
+      uint32 *src23 = (uint32 *)&bg_pattern_cache[((attr & (0x63F | ((reg[4] & 0x07) << 6))) << 6) | v_line];
 
-    /* Copy left & right half, adding the attribute bits in */
+      /* Copy left & right half, retrieving each pixel data bits from appropriate source and adding the attribute bits in */
 #ifdef ALIGN_LONG
-    WRITE_LONG(dst, src[0] | atex);
-    dst++;
-    WRITE_LONG(dst, src[1] | atex);
-    dst++;
+      WRITE_LONG(dst, (src01[0] & 0x03030303) | (src23[0] & 0x0C0C0C0C) | atex);
+      dst++;
+      WRITE_LONG(dst, (src01[1] & 0x03030303) | (src23[1] & 0x0C0C0C0C) | atex);
+      dst++;
 #else
-    *dst++ = (src[0] | atex);
-    *dst++ = (src[1] | atex);
+      *dst++ = (src01[0] & 0x03030303) | (src23[0] & 0x0C0C0C0C) | atex;
+      *dst++ = (src01[1] & 0x03030303) | (src23[1] & 0x0C0C0C0C) | atex;
 #endif
+    }
+    else
+    {
+      /* Cached pattern data line (4 bytes = 4 pixels at once) */
+      uint32 *src = (uint32 *)&bg_pattern_cache[((attr & 0x7FF) << 6) | v_line];
+
+      /* Copy left & right half, adding the attribute bits in */
+#ifdef ALIGN_LONG
+      WRITE_LONG(dst, src[0] | atex);
+      dst++;
+      WRITE_LONG(dst, src[1] | atex);
+      dst++;
+#else
+      *dst++ = src[0] | atex;
+      *dst++ = src[1] | atex;
+#endif
+    }
   }
 }
 

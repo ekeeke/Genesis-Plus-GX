@@ -161,6 +161,7 @@ Genesis Plus GX 1.7.5 (xx/xx/xxxx) (Eke-Eke)
 * added support for sprites attribute table address change during HBLANK and improved Mode 4 8x16 sprites parsing accuracy (fixes graphics glitch in Madoh Monogatari I cutscreen)
 * added optional enhanced 2-cell vertical scroll rendering mode (credits to AlexKiri)
 * implemented proper FIFO ring-buffer & unused bits behavior on CRAM/VSRAM reads (verified on real hardware by Nemesis)
+* implemented 315-5124 VDP registers #3 and #4 masking behavior in Mode 4 
 * improved accuracy of DMA Copy/Fill & added support for CRAM/VSRAM Fill (verified on real hardware by Nemesis)
 * improved V28/V30 mode switching during active display (verified on real hardware)
 * improved Mode 5 sprites parsing accuracy (verified on real hardware)
