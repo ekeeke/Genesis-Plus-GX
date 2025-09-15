@@ -3726,6 +3726,17 @@ void render_obj_m4(int line)
   /* Draw sprites in front-to-back order */
   while (count--)
   {
+    /* 315-5124 VDP specific */
+    if (system_hw <= SYSTEM_SMS)
+    {
+      /* last 4 sprites can not be zoomed */
+      if (count < 4)
+      {
+        /* force default width for remaining sprites */
+        width = 8;
+      }
+    }
+
     /* Sprite pattern index */
     temp = (object_info->attr | 0x100) & sg_mask;
 
@@ -3763,17 +3774,6 @@ void render_obj_m4(int line)
     {
       /* Draw sprite pattern (zoomed sprites are rendered at half speed) */
       DRAW_SPRITE_TILE_ACCURATE_2X(end,0,lut[5])
-
-      /* 315-5124 VDP specific */
-      if (system_hw < SYSTEM_SMS2)
-      {
-        /* only 4 first sprites can be zoomed */
-        if (count == (object_count[line] - 4))
-        {
-          /* Set default width for remaining sprites */
-          width = 8;
-        }
-      }
     }
     else
     {

@@ -181,6 +181,7 @@ Genesis Plus GX 1.7.5 (xx/xx/xxxx) (Eke-Eke)
 * fixed Mode 1 rendering (TMS99xx "text" mode)
 * fixed Master System II extended video modes sprite parsing (fixes Mega Man 2 demo)
 * fixed Game Gear display rendering regression when left/right borders were disabled
+* fixed 315-5124 VDP zoomed sprites rendering (verified on real hardware)
 * fixed address/code potential corruption by one-instruction execution delay after HV interrupts activation (fixes Pugsy's Pyramids stage boss) 
 * optimized tile caching
 * reverted FIFO access timings hack when using invalid write code value
