@@ -131,6 +131,7 @@ extern void render_obj_m5_im2_ste(int line);
 extern void parse_satb_tms(int line);
 extern void parse_satb_m4(int line);
 extern void parse_satb_m5(int line);
+extern void parse_satb_m5_im2(int line);
 extern void update_bg_pattern_cache_m4(int index);
 extern void update_bg_pattern_cache_m5(int index);
 extern void color_update_m4(int index, unsigned int data);

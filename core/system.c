@@ -380,16 +380,18 @@ void system_frame_gen(int do_skip)
       /* video mode has changed */
       bitmap.viewport.changed = 5;
 
-      /* update rendering mode */
+      /* update rendering mode (Mode 5 only) */
       if (reg[1] & 0x04)
       {
         if (im2_flag)
         {
+          parse_satb = parse_satb_m5_im2;
           render_bg = (reg[11] & 0x04) ? render_bg_m5_im2_vs : render_bg_m5_im2;
           render_obj = (reg[12] & 0x08) ? render_obj_m5_im2_ste : render_obj_m5_im2;
         }
         else
         {
+          parse_satb = parse_satb_m5;
           render_bg = (reg[11] & 0x04) ? render_bg_m5_vs : render_bg_m5;
           render_obj = (reg[12] & 0x08) ? render_obj_m5_ste : render_obj_m5;
         }
@@ -723,16 +725,18 @@ void system_frame_scd(int do_skip)
       /* video mode has changed */
       bitmap.viewport.changed = 5;
 
-      /* update rendering mode */
+      /* update rendering mode (Mode 5 only) */
       if (reg[1] & 0x04)
       {
         if (im2_flag)
         {
+          parse_satb = parse_satb_m5_im2;
           render_bg = (reg[11] & 0x04) ? render_bg_m5_im2_vs : render_bg_m5_im2;
           render_obj = (reg[12] & 0x08) ? render_obj_m5_im2_ste : render_obj_m5_im2;
         }
         else
         {
+          parse_satb = parse_satb_m5;
           render_bg = (reg[11] & 0x04) ? render_bg_m5_vs : render_bg_m5;
           render_obj = (reg[12] & 0x08) ? render_obj_m5_ste : render_obj_m5;
         }
@@ -1054,16 +1058,18 @@ void system_frame_sms(int do_skip)
         /* video mode has changed */
         bitmap.viewport.changed = 5;
 
-        /* update rendering mode */
+        /* update rendering mode (Mode 5 only) */
         if (reg[1] & 0x04)
         {
           if (im2_flag)
           {
+            parse_satb = parse_satb_m5_im2;
             render_bg = (reg[11] & 0x04) ? render_bg_m5_im2_vs : render_bg_m5_im2;
             render_obj = (reg[12] & 0x08) ? render_obj_m5_im2_ste : render_obj_m5_im2;
           }
           else
           {
+            parse_satb = parse_satb_m5;
             render_bg = (reg[11] & 0x04) ? render_bg_m5_vs : render_bg_m5;
             render_obj = (reg[12] & 0x08) ? render_obj_m5_ste : render_obj_m5;
           }

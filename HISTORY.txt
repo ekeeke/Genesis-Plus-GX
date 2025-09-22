@@ -160,19 +160,20 @@ Genesis Plus GX 1.7.5 (xx/xx/xxxx) (Eke-Eke)
 * added support for background color changes during HBLANK when display is disabled (fixes incorrect colored line in Yuu Yuu Hakusho)
 * added support for sprites attribute table address change during HBLANK and improved Mode 4 8x16 sprites parsing accuracy (fixes graphics glitch in Madoh Monogatari I cutscreen)
 * added optional enhanced 2-cell vertical scroll rendering mode (credits to AlexKiri)
-* implemented proper FIFO ring-buffer & unused bits behavior on CRAM/VSRAM reads (verified on real hardware by Nemesis)
+* implemented proper FIFO ring-buffer & unused bits behavior on CRAM/VSRAM reads (verified on real hardware)
 * implemented 315-5124 VDP registers #3 and #4 masking behavior in Mode 4 
-* improved accuracy of DMA Copy/Fill & added support for CRAM/VSRAM Fill (verified on real hardware by Nemesis)
+* improved accuracy of DMA Copy/Fill & added support for CRAM/VSRAM Fill (verified on real hardware)
 * improved V28/V30 mode switching during active display (verified on real hardware)
+* improved interlaced mode 2 vertical scrolling accuracy (verified on real hardware)
 * improved Mode 5 sprites parsing accuracy (verified on real hardware)
 * improved Mode 5 sprites rendering timings (fixes "Overdrive" demo)
 * improved FIFO timings accuracy (fixes "Overdrive" Demo)
 * improved FIFO emulation (fixes potential lockup when switching between H32 & H40 mode during active display)
 * improved H-Counter accuracy in H32 mode
 * improved VDP status timing accuracy
-* improved HBLANK flag timing accuracy (verified on real hardware by Nemesis)
-* improved VINT timing accuracy in H32 mode (verified on real hardware by Nemesis)
-* improved DMA timing accuracy during blanking (verified on real hardware by Mask of Destiny)
+* improved HBLANK flag timing accuracy (verified on real hardware)
+* improved VINT timing accuracy in H32 mode (verified on real hardware)
+* improved DMA timing accuracy during blanking (verified on real hardware)
 * improved accuracy of Master System color palette brightness range (verified against real hardware)
 * fixed misaligned buffer writes in Mode 4 when -DALIGN_LONG option is used
 * fixed alpha channel for 15-bit (RGB555) and 32-bit (RGB888) color support
