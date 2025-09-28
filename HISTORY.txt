@@ -161,7 +161,8 @@ Genesis Plus GX 1.7.5 (xx/xx/xxxx) (Eke-Eke)
 * added support for sprites attribute table address change during HBLANK and improved Mode 4 8x16 sprites parsing accuracy (fixes graphics glitch in Madoh Monogatari I cutscreen)
 * added optional enhanced 2-cell vertical scroll rendering mode (credits to AlexKiri)
 * implemented proper FIFO ring-buffer & unused bits behavior on CRAM/VSRAM reads (verified on real hardware)
-* implemented 315-5124 VDP registers #3 and #4 masking behavior in Mode 4 
+* implemented 315-5124 VDP registers #3 and #4 masking behavior in Mode 4
+* implemented proper Mode 4 / Mode 5 VRAM address switching
 * improved accuracy of DMA Copy/Fill & added support for CRAM/VSRAM Fill (verified on real hardware)
 * improved V28/V30 mode switching during active display (verified on real hardware)
 * improved interlaced mode 2 vertical scrolling accuracy (verified on real hardware)
@@ -183,7 +184,7 @@ Genesis Plus GX 1.7.5 (xx/xx/xxxx) (Eke-Eke)
 * fixed Master System II extended video modes sprite parsing (fixes Mega Man 2 demo)
 * fixed Game Gear display rendering regression when left/right borders were disabled
 * fixed 315-5124 VDP zoomed sprites rendering (verified on real hardware)
-* fixed address/code potential corruption by one-instruction execution delay after HV interrupts activation (fixes Pugsy's Pyramids stage boss) 
+* fixed address/code potential corruption by one-instruction execution delay after HV interrupts activation (fixes Pugsy's Pyramids stage boss)
 * optimized tile caching
 * reverted FIFO access timings hack when using invalid write code value
 
