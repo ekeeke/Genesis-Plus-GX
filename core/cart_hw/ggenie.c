@@ -2,7 +2,7 @@
  *  Genesis Plus
  *  Game Genie hardware support
  *
- *  Copyright (C) 2009-2021  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2009-2025  Eke-Eke (Genesis Plus GX)
  *
  *  Based on documentation from Charles McDonald
  *  (http://cgfm2.emuviews.com/txt/genie.txt)
@@ -95,11 +95,11 @@ void ggenie_reset(int hard)
 {
   if (ggenie.enabled)
   {
+    /* Reset any existing patches */
+    ggenie_switch(0);
+
     if (hard)
     {
-      /* clear codes */
-      ggenie_switch(0);
-
       /* reset internal state */
       memset(ggenie.regs,0,sizeof(ggenie.regs));
       memset(ggenie.old,0,sizeof(ggenie.old));
@@ -201,14 +201,14 @@ static void ggenie_write_regs(unsigned int offset, unsigned int data)
     /* MODE bit */
     if (data & 0x400)
     {
-      /* $0000-$7ffff reads mapped to Cartridge ROM */
+      /* $0000-$7fff reads mapped to cartridge ROM */
       m68k.memory_map[0].base = cart.rom;
       m68k.memory_map[0].read8 = NULL; 
       m68k.memory_map[0].read16 = NULL; 
     }
     else
     {
-      /* $0000-$7ffff reads mapped to Game Genie ROM */
+      /* $0000-$7fff reads mapped to Game Genie ROM */
       m68k.memory_map[0].base = cart.lockrom;
       m68k.memory_map[0].read8 = NULL; 
       m68k.memory_map[0].read16 = NULL; 
@@ -216,7 +216,7 @@ static void ggenie_write_regs(unsigned int offset, unsigned int data)
       /* READ_ENABLE bit */
       if (data & 0x200)
       {
-        /* $0000-$7ffff reads mapped to Game Genie Registers */
+        /* $0000-$7fff reads mapped to Game Genie registers */
         /* code doing this should execute in RAM so we don't need to modify base address */
         m68k.memory_map[0].read8 = ggenie_read_byte; 
         m68k.memory_map[0].read16 = ggenie_read_word; 
@@ -247,7 +247,7 @@ static void ggenie_write_regs(unsigned int offset, unsigned int data)
       m68k.memory_map[0].write8   = m68k_unused_8_w;
       m68k.memory_map[0].write16  = m68k_unused_16_w;
 
-      /* patch ROM when GG program exits (LOCK bit set) */
+      /* patch ROM when Game Genie program exits (LOCK bit set) */
       /* this is done here to handle patched program reads faster & more easily */
       /* on real HW, address decoding would be done on each reads */
       ggenie_switch(1);
