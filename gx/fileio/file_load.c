@@ -44,6 +44,7 @@
 #include "filesel.h"
 #include "file_slot.h"
 
+#include <errno.h>
 #include <iso9660.h>
 #ifdef HW_RVL
 #include <di/di.h>
@@ -81,66 +82,14 @@ static u8 dvdInited = 0;
 static u8 dvdMounted = 0;
 
 #ifndef HW_RVL
-static u8 dvdBuffer[2048] ATTRIBUTE_ALIGN(32);
-
-static bool dvdStartup()
+static bool dvdStartup(DISC_INTERFACE *disc)
 {
   DVD_Mount();
   return true;
 }
 
-static bool dvdIsInserted()
+static bool dvdIsInserted(DISC_INTERFACE *disc)
 {
-  return true;
-}
-
-static bool dvdReadSectors(u32 offset,u32 len,void *buffer)
-{
-  vu32* const dvd = (u32*)0xCC006000;
-  offset = offset << 9;
-  len = len << 11;
-
-  /* DVD transfer must be done into a 32-byte aligned buffer */
-  while (len >= 2048)
-  {
-    DCInvalidateRange((void *)dvdBuffer, 2048);
-    dvd[0] = 0x2E;
-    dvd[1] = 0;
-    dvd[2] = 0xA8000000;
-    dvd[3] = offset;
-    dvd[4] = 2048;
-    dvd[5] = (u32) dvdBuffer;
-    dvd[6] = 2048;
-    dvd[7] = 3;
-    while (dvd[7] & 1);
-    if (dvd[0] & 4) return false;
-    memcpy (buffer, dvdBuffer, 2048);
-    len -= 2048;
-    buffer += 2048;
-    offset += 512;
-  }
-
-  /* Process remaining bytes (normally not needed since libiso9960 already deals with this but you never know) */
-  if (len)
-  {
-    /* DVD transfer length should be aligned to 32 bytes */
-    u32 dmasize = (len + 0x1f) & ~0x1f;
-
-    DCInvalidateRange((void *)dvdBuffer, dmasize);
-    dvd[0] = 0x2E;
-    dvd[1] = 0;
-    dvd[2] = 0xA8000000;
-    dvd[3] = offset;
-    dvd[4] = dmasize;
-    dvd[5] = (u32) dvdBuffer;
-    dvd[6] = dmasize;
-    dvd[7] = 3;
-    while (dvd[7] & 1);
-    if (dvd[0] & 4) return false;
-
-    memcpy (buffer, dvdBuffer, len);
-  }
-
   return true;
 }
 #endif
@@ -163,9 +112,8 @@ static int MountDVD(void)
     DVD_Init();
 
     /* patch libogc DVD interface which appears to be broken on Gamecube */
-    dvd->startup = (FN_MEDIUM_STARTUP)dvdStartup;
-    dvd->isInserted = (FN_MEDIUM_ISINSERTED)dvdIsInserted;
-    dvd->readSectors = (FN_MEDIUM_READSECTORS)dvdReadSectors;
+    *(FN_MEDIUM_STARTUP *)&dvd->startup = dvdStartup;
+    *(FN_MEDIUM_ISINSERTED *)&dvd->isInserted = dvdIsInserted;
 #endif
     dvdInited = 1;
   }    
@@ -179,7 +127,11 @@ static int MountDVD(void)
   }
 
   /* check if disc is found */
+#ifdef HW_RVL
   if(!dvd->isInserted())
+#else
+  if(!dvd->isInserted(dvd))
+#endif
   {
     GUI_WaitPrompt("Error","No Disc inserted !");
     return 0;
@@ -284,11 +236,19 @@ int ParseDirectory(void)
     return -1;
   }
 
-  struct dirent *entry = readdir(dir);
+  struct dirent *entry = NULL;
 
   /* list entries */
-  while ((entry != NULL)&& (nbfiles < MAXFILES))
+  do
   {
+    errno = 0;
+    /* next entry */
+    entry = readdir(dir);
+    if (entry == NULL)
+    {
+      continue;
+    }
+
     /* filter entries */
     if ((entry->d_name[0] != '.') 
        && strncasecmp(".wav", &entry->d_name[strlen(entry->d_name) - 4], 4) 
@@ -303,10 +263,8 @@ int ParseDirectory(void)
       }
       nbfiles++;
     }
-
-    /* next entry */
-    entry = readdir(dir);
   }
+  while ((entry != NULL || errno == EOVERFLOW) && (nbfiles < MAXFILES));
 
   /* close directory */
   closedir(dir);

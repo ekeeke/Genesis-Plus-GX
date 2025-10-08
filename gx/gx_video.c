@@ -359,8 +359,7 @@ static u8 screenDisplayList[32] ATTRIBUTE_ALIGN(32) =
 static void vi_callback(u32 cnt)
 {
   /* get audio DMA remaining length */
-  vu16* const _dspReg = (u16*)0xCC005000;
-  u16 remain = _dspReg[29];
+  u16 remain = AUDIO_GetDMABytesLeft() / 32;
 
   /* adjust desired output samplerate if audio playback is not perfectly in sync with video */
   if (remain > 0)
@@ -488,7 +487,7 @@ static void gxResetMode(GXRModeObj *tvmode, int vfilter_enabled)
   u16 xfbHeight = GX_SetDispCopyYScale(yScale);
   u16 xfbWidth  = VIDEO_PadFramebufferWidth(tvmode->fbWidth);  
 
-  GX_SetCopyClear((GXColor)BLACK,0x00ffffff);
+  GX_SetCopyClear((GXColor)BLACK, GX_MAX_Z24);
   GX_SetViewport(0.0F, 0.0F, tvmode->fbWidth, tvmode->efbHeight, 0.0F, 1.0F);
   GX_SetScissor(0, 0, tvmode->fbWidth, tvmode->efbHeight);
   GX_SetDispCopySrc(0, 0, tvmode->fbWidth, tvmode->efbHeight);
@@ -1711,7 +1710,7 @@ int gx_video_Update(int status)
       /* configure texture filtering */
       if (!config.bilinear)
       {
-        GX_InitTexObjLOD(&screenTexObj,GX_NEAR,GX_NEAR_MIP_NEAR,0.0,10.0,0.0,GX_FALSE,GX_FALSE,GX_ANISO_1);
+        GX_InitTexObjFilterMode(&screenTexObj, GX_NEAR, GX_NEAR);
       }
 
       /* load texture object */
@@ -1885,7 +1884,7 @@ void gx_video_Init(void)
   /* Configure VI */
   VIDEO_Configure(vmode);
 
-  /* Initialize font first (to ensure IPL font buffer is allocated in MEM1 as DMA from EXI bus to MEM2 is apparently not possible) */
+  /* Initialize font first (to ensure IPL font buffer is allocated in MEM1 as DMA from EXI bus to MEM2 is apparently not possible with libogc) */
   FONT_Init();
 
   /* Allocate framebuffers */
@@ -1893,7 +1892,7 @@ void gx_video_Init(void)
   xfb[1] = (u32 *) MEM_K0_TO_K1((u32 *) SYS_AllocateFramebuffer(&TV50hz_576i));
 
   /* Define a console */
-  console_init(xfb[0], 20, 64, 640, 574, 574 * 2);
+  console_init(xfb[0], 0, 0, vmode->fbWidth, vmode->xfbHeight, vmode->fbWidth * VI_DISPLAY_PIX_SZ);
 
   /* Clear framebuffer to black */
   VIDEO_ClearFrameBuffer(vmode, xfb[0], COLOR_BLACK);
