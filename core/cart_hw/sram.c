@@ -217,7 +217,13 @@ void sram_init(void)
       /* this prevents backup RAM from being mapped in place of mirrored ROM when using S&K LOCK-ON feature */
       sram.on = 0;
     }
-
+    else if (strstr(rominfo.international,"COLOCODX") != NULL)
+    {
+      /* ColocoDX (uses last 2 flash sectors, regardless of thier size) */
+      sram.on = 1;
+      sram.start = 0x7f0000;
+      sram.end = 0x7fffff;
+    }
     /* by default, enable backup RAM for ROM smaller than 2MB */
     else if (cart.romsize <= 0x200000)
     {

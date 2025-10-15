@@ -733,6 +733,42 @@ void md_cart_init(void)
       zbank_memory_map[i].write   = NULL;
     }
   }
+  else if (strstr(rominfo.international,"COLOCODX"))
+  {
+    static const uint16 ext_block_data[0x1c] =
+     {
+       0x2923,0xBE84,0xE16C,0xD6AE,0x5290,0x49F1,0xF1BB,0xE9EB,
+       0xB3A6,0xDB3C,0x870C,0x3E99,0x245E,0x0D1C,0x06B7,0x47DE,
+       0xB312,0x4DC8,0x43BB,0x8BA6,0x1F03,0x5A7D,0x0938,0x251F,
+       0x5DD4,0xCBFC,0x96F5,0x453B
+     };
+
+    /* initialize CFI flash memory hardware */
+    flash_cfi_init(S29GL064N_03);
+
+    /* Load flash Extended Block data */
+    flash_cfi_load_ext_data(ext_block_data, sizeof(ext_block_data));
+
+    /* SGDK flash-save mapping (8MB ROM with backup RAM mapped in last 64KB) */
+    m68k.memory_map[0x7f].base    = sram.sram;
+    m68k.memory_map[0x00].read8   = m68k.memory_map[0x7f].read8   = mapper_flash_r8;
+    m68k.memory_map[0x00].read16  = m68k.memory_map[0x7f].read16  = mapper_flash_r16;
+    m68k.memory_map[0x00].write8  = m68k.memory_map[0x7f].write8  = mapper_flash_w8;
+    m68k.memory_map[0x00].write16 = m68k.memory_map[0x7f].write16 = mapper_flash_w16;
+    zbank_memory_map[0x00].read   = zbank_memory_map[0x7f].read   = mapper_flash_r8;
+    zbank_memory_map[0x00].write  = zbank_memory_map[0x7f].write  = mapper_flash_w8;
+
+    /* 64M extension mapping */
+    for (i=0x40; i<0x7f; i++)
+    {
+      m68k.memory_map[i].read8    = NULL;
+      m68k.memory_map[i].read16   = NULL;
+      m68k.memory_map[i].write8   = NULL;
+      m68k.memory_map[i].write16  = NULL;
+      zbank_memory_map[i].read    = NULL;
+      zbank_memory_map[i].write   = NULL;
+    }
+  }
   else if ((cart.romsize == 0x400000) && 
            (READ_BYTE(cart.rom, 0x200150) == 'C') &&
            (READ_BYTE(cart.rom, 0x200151) == 'A') &&

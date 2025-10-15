@@ -3514,7 +3514,7 @@ size_t retro_get_memory_size(unsigned id)
          /* a better solution would be that the frontend itself checks if data has been modified before writing it to a file */
          for (i=0xffff; i>=0; i--)
             if (sram.sram[i] != 0xff)
-               return (i+1);
+               return 0x10000; /* if frontend doesn't fill free space with ff's upon load, we might get in trouble. */
 
          /* return 0 if SRAM is not modified */
          return 0;

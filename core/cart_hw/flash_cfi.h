@@ -43,7 +43,8 @@
 typedef enum
 {
   M29W320EB = 0,
-  S29GL064N_04,
+  S29GL064N_04, /* Bottom boot sector */
+  S29GL064N_03, /* Top boot sector */
   MAX_FLASH_CFI_SUPPORTED_TYPES
 } T_FLASH_CFI_TYPE;
 
@@ -53,5 +54,6 @@ extern void flash_cfi_write(unsigned int address, unsigned int data);
 extern unsigned int flash_cfi_read(unsigned int address);
 extern int flash_cfi_context_save(uint8 *state);
 extern int flash_cfi_context_load(uint8 *state);
+extern void flash_cfi_load_ext_data(const void *data, unsigned int len);
 
 #endif
