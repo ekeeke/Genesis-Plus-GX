@@ -89,7 +89,7 @@
       <PreprocessorDefinitions>WIN32;_DEBUG;GENESISPLUSGXLIBRETRO_EXPORTS;_CRT_SECURE_NO_WARNINGS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions);USE_LIBTREMOR;USE_LIBCHDR;HAVE_LROUND;HAVE_STDINT_H;Z7_ST;ZSTD_DISABLE_ASM;HAVE_FSEEKO;DEBUG;USE_16BPP_RENDERING;FRONTEND_SUPPORTS_RGB565;LSB_FIRST;BYTE_ORDER=LITTLE_ENDIAN;HAVE_ZLIB;__LIBRETRO__;M68K_OVERCLOCK_SHIFT=20;Z80_OVERCLOCK_SHIFT=20;HAVE_YM3438_CORE;HAVE_OPLL_CORE;INLINE=static __inline</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
-      <AdditionalIncludeDirectories>../../core/cd_hw/libchdr/include;../../core/cd_hw/libchdr/src;../../core/cd_hw/libchdr/deps/lzma-24.05/include;../../core/cd_hw/libchdr/deps/zstd-1.5.6/lib;../../core/cd_hw/libchdr/deps/zstd-1.5.6/lib/common;../../core/cd_hw/libchdr/deps/zstd-1.5.6/lib/decompress;../../core/cd_hw/libchdr/deps/zlib-1.3.1;../../core;../../core/z80;../../core/m68k;../../core/ntsc;../../core/sound;../../core/input_hw;../../core/cd_hw;../../core/cart_hw;../../core/cart_hw/svp;../../core/debug;../../libretro;../../libretro/libretro-common/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../../core/cd_hw/libchdr/include;../../core/cd_hw/libchdr/src;../../core/cd_hw/libchdr/deps/lzma-24.05/include;../../core/cd_hw/libchdr/deps/zstd-1.5.6/lib;../../core/cd_hw/libchdr/deps/zstd-1.5.6/lib/common;../../core/cd_hw/libchdr/deps/zstd-1.5.6/lib/decompress;../../core/cd_hw/libchdr/deps/zlib-1.3.1;../../core;../../core/z80;../../core/m68k;../../core/ntsc;../../core/sound;../../core/sound/tremor;../../core/sound/minimp3;../../core/input_hw;../../core/cd_hw;../../core/cart_hw;../../core/cart_hw/svp;../../core/debug;../../libretro;../../libretro/libretro-common/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -103,7 +103,7 @@
       <PreprocessorDefinitions>_DEBUG;GENESISPLUSGXLIBRETRO_EXPORTS;_CRT_SECURE_NO_WARNINGS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions);USE_LIBTREMOR;USE_LIBCHDR;HAVE_LROUND;HAVE_STDINT_H;Z7_ST;ZSTD_DISABLE_ASM;HAVE_FSEEKO;DEBUG;USE_16BPP_RENDERING;FRONTEND_SUPPORTS_RGB565;LSB_FIRST;BYTE_ORDER=LITTLE_ENDIAN;HAVE_ZLIB;__LIBRETRO__;M68K_OVERCLOCK_SHIFT=20;Z80_OVERCLOCK_SHIFT=20;HAVE_YM3438_CORE;HAVE_OPLL_CORE;INLINE=static __inline</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
-      <AdditionalIncludeDirectories>../../core/cd_hw/libchdr/include;../../core/cd_hw/libchdr/src;../../core/cd_hw/libchdr/deps/lzma-24.05/include;../../core/cd_hw/libchdr/deps/zstd-1.5.6/lib;../../core/cd_hw/libchdr/deps/zstd-1.5.6/lib/common;../../core/cd_hw/libchdr/deps/zstd-1.5.6/lib/decompress;../../core/cd_hw/libchdr/deps/zlib-1.3.1;../../core;../../core/z80;../../core/m68k;../../core/ntsc;../../core/sound;../../core/input_hw;../../core/cd_hw;../../core/cart_hw;../../core/cart_hw/svp;../../core/debug;../../libretro;../../libretro/libretro-common/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../../core/cd_hw/libchdr/include;../../core/cd_hw/libchdr/src;../../core/cd_hw/libchdr/deps/lzma-24.05/include;../../core/cd_hw/libchdr/deps/zstd-1.5.6/lib;../../core/cd_hw/libchdr/deps/zstd-1.5.6/lib/common;../../core/cd_hw/libchdr/deps/zstd-1.5.6/lib/decompress;../../core/cd_hw/libchdr/deps/zlib-1.3.1;../../core;../../core/z80;../../core/m68k;../../core/ntsc;../../core/sound;../../core/sound/tremor;../../core/sound/minimp3;../../core/input_hw;../../core/cd_hw;../../core/cart_hw;../../core/cart_hw/svp;../../core/debug;../../libretro;../../libretro/libretro-common/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -119,7 +119,7 @@
       <PreprocessorDefinitions>WIN32;NDEBUG;GENESISPLUSGXLIBRETRO_EXPORTS;_CRT_SECURE_NO_WARNINGS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions);USE_LIBTREMOR;USE_LIBCHDR;HAVE_LROUND;HAVE_STDINT_H;Z7_ST;ZSTD_DISABLE_ASM;HAVE_FSEEKO;USE_16BPP_RENDERING;FRONTEND_SUPPORTS_RGB565;LSB_FIRST;BYTE_ORDER=LITTLE_ENDIAN;HAVE_ZLIB;__LIBRETRO__;M68K_OVERCLOCK_SHIFT=20;Z80_OVERCLOCK_SHIFT=20;HAVE_YM3438_CORE;HAVE_OPLL_CORE;INLINE=static __inline</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <AdditionalIncludeDirectories>../../core/cd_hw/libchdr/include;../../core/cd_hw/libchdr/src;../../core/cd_hw/libchdr/deps/lzma-24.05/include;../../core/cd_hw/libchdr/deps/zstd-1.5.6/lib;../../core/cd_hw/libchdr/deps/zstd-1.5.6/lib/common;../../core/cd_hw/libchdr/deps/zstd-1.5.6/lib/decompress;../../core/cd_hw/libchdr/deps/zlib-1.3.1;../../core;../../core/z80;../../core/m68k;../../core/ntsc;../../core/sound;../../core/input_hw;../../core/cd_hw;../../core/cart_hw;../../core/cart_hw/svp;../../core/debug;../../libretro;../../libretro/libretro-common/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../../core/cd_hw/libchdr/include;../../core/cd_hw/libchdr/src;../../core/cd_hw/libchdr/deps/lzma-24.05/include;../../core/cd_hw/libchdr/deps/zstd-1.5.6/lib;../../core/cd_hw/libchdr/deps/zstd-1.5.6/lib/common;../../core/cd_hw/libchdr/deps/zstd-1.5.6/lib/decompress;../../core/cd_hw/libchdr/deps/zlib-1.3.1;../../core;../../core/z80;../../core/m68k;../../core/ntsc;../../core/sound;../../core/sound/tremor;../../core/sound/minimp3;../../core/input_hw;../../core/cd_hw;../../core/cart_hw;../../core/cart_hw/svp;../../core/debug;../../libretro;../../libretro/libretro-common/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -137,7 +137,7 @@
       <PreprocessorDefinitions>NDEBUG;GENESISPLUSGXLIBRETRO_EXPORTS;_CRT_SECURE_NO_WARNINGS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions);USE_LIBTREMOR;USE_LIBCHDR;HAVE_LROUND;HAVE_STDINT_H;Z7_ST;ZSTD_DISABLE_ASM;HAVE_FSEEKO;USE_16BPP_RENDERING;FRONTEND_SUPPORTS_RGB565;LSB_FIRST;BYTE_ORDER=LITTLE_ENDIAN;HAVE_ZLIB;__LIBRETRO__;M68K_OVERCLOCK_SHIFT=20;Z80_OVERCLOCK_SHIFT=20;HAVE_YM3438_CORE;HAVE_OPLL_CORE;INLINE=static __inline</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <AdditionalIncludeDirectories>../../core/cd_hw/libchdr/include;../../core/cd_hw/libchdr/src;../../core/cd_hw/libchdr/deps/lzma-24.05/include;../../core/cd_hw/libchdr/deps/zstd-1.5.6/lib;../../core/cd_hw/libchdr/deps/zstd-1.5.6/lib/common;../../core/cd_hw/libchdr/deps/zstd-1.5.6/lib/decompress;../../core/cd_hw/libchdr/deps/zlib-1.3.1;../../core;../../core/z80;../../core/m68k;../../core/ntsc;../../core/sound;../../core/input_hw;../../core/cd_hw;../../core/cart_hw;../../core/cart_hw/svp;../../core/debug;../../libretro;../../libretro/libretro-common/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../../core/cd_hw/libchdr/include;../../core/cd_hw/libchdr/src;../../core/cd_hw/libchdr/deps/lzma-24.05/include;../../core/cd_hw/libchdr/deps/zstd-1.5.6/lib;../../core/cd_hw/libchdr/deps/zstd-1.5.6/lib/common;../../core/cd_hw/libchdr/deps/zstd-1.5.6/lib/decompress;../../core/cd_hw/libchdr/deps/zlib-1.3.1;../../core;../../core/z80;../../core/m68k;../../core/ntsc;../../core/sound;../../core/sound/tremor;../../core/sound/minimp3;../../core/input_hw;../../core/cd_hw;../../core/cart_hw;../../core/cart_hw/svp;../../core/debug;../../libretro;../../libretro/libretro-common/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -259,7 +259,7 @@
     <ClInclude Include="..\..\core\cart_hw\sms_cart.h" />
     <ClInclude Include="..\..\core\cart_hw\megasd.h" />
     <ClInclude Include="..\..\core\cart_hw\sram.h" />
-    <ClCompile Include="..\..\core\cart_hw\yx5200.h" />
+    <ClInclude Include="..\..\core\cart_hw\yx5200.h" />
     <ClInclude Include="..\..\core\cart_hw\svp\ssp16.h" />
     <ClInclude Include="..\..\core\cart_hw\svp\svp.h" />
     <ClInclude Include="..\..\core\cd_hw\cdc.h" />

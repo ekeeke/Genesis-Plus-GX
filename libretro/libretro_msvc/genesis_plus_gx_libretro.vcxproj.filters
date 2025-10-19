@@ -28,7 +28,7 @@
     <Filter Include="libretro\libretro-common\vfs">
       <UniqueIdentifier>{709a945a-c951-4f3d-8beb-73318cddf8d8}</UniqueIdentifier>
     </Filter>
-    <Filter Include="core\tremor">
+    <Filter Include="core\sound\tremor">
       <UniqueIdentifier>{d70ba8a3-d68a-4d2d-b068-18b88b2e1fbe}</UniqueIdentifier>
     </Filter>
     <Filter Include="core\cart_hw">
@@ -84,6 +84,9 @@
     </Filter>
     <Filter Include="core\cd_hw\libchdr\deps\zstd-1.5.6\common">
       <UniqueIdentifier>{c27e2207-7d23-4e9c-ac19-9f563ce708a6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="core\sound\minimp3">
+      <UniqueIdentifier>{4fc931a3-79a7-4e20-8d92-771334c9b587}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -234,6 +237,9 @@
     <ClCompile Include="..\..\core\cart_hw\sram.c">
       <Filter>core\cart_hw</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\core\cart_hw\yx5200.c">
+      <Filter>core\cart_hw</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\core\cart_hw\svp\ssp16.c">
       <Filter>core\cart_hw\svp</Filter>
     </ClCompile>
@@ -258,50 +264,50 @@
     <ClCompile Include="..\libretro-common\vfs\vfs_implementation.c">
       <Filter>libretro\libretro-common\vfs</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\core\tremor\bitwise.c">
-      <Filter>core\tremor</Filter>
+    <ClCompile Include="..\..\core\sound\tremor\bitwise.c">
+      <Filter>core\sound\tremor</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\core\tremor\block.c">
-      <Filter>core\tremor</Filter>
+    <ClCompile Include="..\..\core\sound\tremor\block.c">
+      <Filter>core\sound\tremor</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\core\tremor\codebook.c">
-      <Filter>core\tremor</Filter>
+    <ClCompile Include="..\..\core\sound\tremor\codebook.c">
+      <Filter>core\sound\tremor</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\core\tremor\floor0.c">
-      <Filter>core\tremor</Filter>
+    <ClCompile Include="..\..\core\sound\tremor\floor0.c">
+      <Filter>core\sound\tremor</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\core\tremor\floor1.c">
-      <Filter>core\tremor</Filter>
+    <ClCompile Include="..\..\core\sound\tremor\floor1.c">
+      <Filter>core\sound\tremor</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\core\tremor\framing.c">
-      <Filter>core\tremor</Filter>
+    <ClCompile Include="..\..\core\sound\tremor\framing.c">
+      <Filter>core\sound\tremor</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\core\tremor\info.c">
-      <Filter>core\tremor</Filter>
+    <ClCompile Include="..\..\core\sound\tremor\info.c">
+      <Filter>core\sound\tremor</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\core\tremor\mapping0.c">
-      <Filter>core\tremor</Filter>
+    <ClCompile Include="..\..\core\sound\tremor\mapping0.c">
+      <Filter>core\sound\tremor</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\core\tremor\mdct.c">
-      <Filter>core\tremor</Filter>
+    <ClCompile Include="..\..\core\sound\tremor\mdct.c">
+      <Filter>core\sound\tremor</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\core\tremor\registry.c">
-      <Filter>core\tremor</Filter>
+    <ClCompile Include="..\..\core\sound\tremor\registry.c">
+      <Filter>core\sound\tremor</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\core\tremor\res012.c">
-      <Filter>core\tremor</Filter>
+    <ClCompile Include="..\..\core\sound\tremor\res012.c">
+      <Filter>core\sound\tremor</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\core\tremor\sharedbook.c">
-      <Filter>core\tremor</Filter>
+    <ClCompile Include="..\..\core\sound\tremor\sharedbook.c">
+      <Filter>core\sound\tremor</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\core\tremor\synthesis.c">
-      <Filter>core\tremor</Filter>
+    <ClCompile Include="..\..\core\sound\tremor\synthesis.c">
+      <Filter>core\sound\tremor</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\core\tremor\vorbisfile.c">
-      <Filter>core\tremor</Filter>
+    <ClCompile Include="..\..\core\sound\tremor\vorbisfile.c">
+      <Filter>core\sound\tremor</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\core\tremor\window.c">
-      <Filter>core\tremor</Filter>
+    <ClCompile Include="..\..\core\sound\tremor\window.c">
+      <Filter>core\sound\tremor</Filter>
     </ClCompile>
     <ClCompile Include="..\libretro.c">
       <Filter>libretro</Filter>
@@ -563,59 +569,68 @@
     <ClInclude Include="..\..\core\cart_hw\sram.h">
       <Filter>core\cart_hw</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\core\cart_hw\yx5200.h">
+      <Filter>core\cart_hw</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\core\cart_hw\svp\ssp16.h">
       <Filter>core\cart_hw\svp</Filter>
     </ClInclude>
     <ClInclude Include="..\..\core\cart_hw\svp\svp.h">
       <Filter>core\cart_hw\svp</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\core\tremor\block.h">
-      <Filter>core\tremor</Filter>
+    <ClInclude Include="..\..\core\sound\tremor\block.h">
+      <Filter>core\sound\tremor</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\core\tremor\codebook.h">
-      <Filter>core\tremor</Filter>
+    <ClInclude Include="..\..\core\sound\tremor\codebook.h">
+      <Filter>core\sound\tremor</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\core\tremor\codec_internal.h">
-      <Filter>core\tremor</Filter>
+    <ClInclude Include="..\..\core\sound\tremor\codec_internal.h">
+      <Filter>core\sound\tremor</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\core\tremor\config_types.h">
-      <Filter>core\tremor</Filter>
+    <ClInclude Include="..\..\core\sound\tremor\config_types.h">
+      <Filter>core\sound\tremor</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\core\tremor\ivorbiscodec.h">
-      <Filter>core\tremor</Filter>
+    <ClInclude Include="..\..\core\sound\tremor\ivorbiscodec.h">
+      <Filter>core\sound\tremor</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\core\tremor\ivorbisfile.h">
-      <Filter>core\tremor</Filter>
+    <ClInclude Include="..\..\core\sound\tremor\ivorbisfile.h">
+      <Filter>core\sound\tremor</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\core\tremor\lsp_lookup.h">
-      <Filter>core\tremor</Filter>
+    <ClInclude Include="..\..\core\sound\tremor\lsp_lookup.h">
+      <Filter>core\sound\tremor</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\core\tremor\mdct.h">
-      <Filter>core\tremor</Filter>
+    <ClInclude Include="..\..\core\sound\tremor\mdct.h">
+      <Filter>core\sound\tremor</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\core\tremor\mdct_lookup.h">
-      <Filter>core\tremor</Filter>
+    <ClInclude Include="..\..\core\sound\tremor\mdct_lookup.h">
+      <Filter>core\sound\tremor</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\core\tremor\misc.h">
-      <Filter>core\tremor</Filter>
+    <ClInclude Include="..\..\core\sound\tremor\misc.h">
+      <Filter>core\sound\tremor</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\core\tremor\ogg.h">
-      <Filter>core\tremor</Filter>
+    <ClInclude Include="..\..\core\sound\tremor\ogg.h">
+      <Filter>core\sound\tremor</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\core\tremor\os.h">
-      <Filter>core\tremor</Filter>
+    <ClInclude Include="..\..\core\sound\tremor\os.h">
+      <Filter>core\sound\tremor</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\core\tremor\os_types.h">
-      <Filter>core\tremor</Filter>
+    <ClInclude Include="..\..\core\sound\tremor\os_types.h">
+      <Filter>core\sound\tremor</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\core\tremor\registry.h">
-      <Filter>core\tremor</Filter>
+    <ClInclude Include="..\..\core\sound\tremor\registry.h">
+      <Filter>core\sound\tremor</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\core\tremor\window.h">
-      <Filter>core\tremor</Filter>
+    <ClInclude Include="..\..\core\sound\tremor\window.h">
+      <Filter>core\sound\tremor</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\core\tremor\window_lookup.h">
-      <Filter>core\tremor</Filter>
+    <ClInclude Include="..\..\core\sound\tremor\window_lookup.h">
+      <Filter>core\sound\tremor</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\core\sound\minimp3\minimp3.h">
+      <Filter>core\sound\minimp3</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\core\sound\minimp3\minimp3_ex.h">
+      <Filter>core\sound\minimp3</Filter>
     </ClInclude>
     <ClInclude Include="..\osd.h">
       <Filter>libretro</Filter>
