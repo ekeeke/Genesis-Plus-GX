@@ -3,7 +3,7 @@
  *
  *  generic GUI Engine (using GX rendering)
  *
- *  Copyright Eke-Eke (2009-2020)
+ *  Copyright Eke-Eke (2009-2025)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:

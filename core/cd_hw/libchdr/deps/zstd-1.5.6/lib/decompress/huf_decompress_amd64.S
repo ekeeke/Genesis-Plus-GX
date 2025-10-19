@@ -10,6 +10,8 @@
 
 #include "../common/portability_macros.h"
 
+#if ZSTD_ENABLE_ASM_X86_64_BMI2
+
 #if defined(__ELF__) && defined(__GNUC__)
 /* Stack marking
  * ref: https://wiki.gentoo.org/wiki/Hardened/GNU_stack_quickstart
@@ -37,8 +39,6 @@
 #endif
 
 #endif
-
-#if ZSTD_ENABLE_ASM_X86_64_BMI2
 
 /* Calling convention:
  *

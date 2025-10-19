@@ -3,7 +3,7 @@
  * 
  *  Genesis Plus GX Cheats menu
  *
- *  Copyright Eke-Eke (2010-2022)
+ *  Copyright Eke-Eke (2010-2025)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -1457,7 +1457,7 @@ void CheatLoad(void)
       if (len)
       {
         /* copy cheat code */
-        strncpy(cheatlist[maxcheats].code, temp, len);
+        memcpy(cheatlist[maxcheats].code, temp, len);
         cheatlist[maxcheats].code[len] = 0;
         len++;
 
