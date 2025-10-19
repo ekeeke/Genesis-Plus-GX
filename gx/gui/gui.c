@@ -791,7 +791,7 @@ int GUI_UpdateMenu(gui_menu *menu)
       if (button->state & BUTTON_OVER_SFX)
       {
         ASND_SetVoice(ASND_GetFirstUnusedVoice(),VOICE_MONO_16BIT,22050,0,(u8 *)button_over_pcm,button_over_pcm_size,
-                      ((int)config.sfx_volume * 255) / 100,((int)config.sfx_volume * 255) / 100,NULL);
+                      ((int)config.sfx_volume * MAX_VOLUME) / 100,((int)config.sfx_volume * MAX_VOLUME) / 100,NULL);
       }
     }
     else if (selected < (max_buttons + 2))
@@ -801,7 +801,7 @@ int GUI_UpdateMenu(gui_menu *menu)
       if (button->state & BUTTON_OVER_SFX)
       {
         ASND_SetVoice(ASND_GetFirstUnusedVoice(),VOICE_MONO_16BIT,22050,0,(u8 *)button_over_pcm,button_over_pcm_size,
-                      ((int)config.sfx_volume * 255) / 100,((int)config.sfx_volume * 255) / 100,NULL);
+                      ((int)config.sfx_volume * MAX_VOLUME) / 100,((int)config.sfx_volume * MAX_VOLUME) / 100,NULL);
       }
     }
 
@@ -832,7 +832,7 @@ int GUI_UpdateMenu(gui_menu *menu)
       if (button->state & BUTTON_SELECT_SFX)
       {
         ASND_SetVoice(ASND_GetFirstUnusedVoice(),VOICE_MONO_16BIT,22050,0,(u8 *)button_select_pcm,button_select_pcm_size,
-                      ((int)config.sfx_volume * 255) / 100,((int)config.sfx_volume * 255) / 100,NULL);
+                      ((int)config.sfx_volume * MAX_VOLUME) / 100,((int)config.sfx_volume * MAX_VOLUME) / 100,NULL);
       }
     }
   }
@@ -1183,7 +1183,7 @@ int GUI_OptionWindow(gui_menu *parent, char *title, char *infos, char *items[], 
       if (selected >= 0)
       {
         ASND_SetVoice(ASND_GetFirstUnusedVoice(),VOICE_MONO_16BIT,22050,0,(u8 *)button_over_pcm,button_over_pcm_size,
-                      ((int)config.sfx_volume * 255) / 100,((int)config.sfx_volume * 255) / 100,NULL);
+                      ((int)config.sfx_volume * MAX_VOLUME) / 100,((int)config.sfx_volume * MAX_VOLUME) / 100,NULL);
       }
     }
 
@@ -1455,7 +1455,7 @@ void GUI_OptionBox(gui_menu *parent, optioncallback cb, char *title, void *optio
 
       /* play sound effect */
       ASND_SetVoice(ASND_GetFirstUnusedVoice(),VOICE_MONO_16BIT,22050,0,(u8 *)button_over_pcm,button_over_pcm_size,
-                    ((int)config.sfx_volume * 255) / 100,((int)config.sfx_volume * 255) / 100,NULL);
+                    ((int)config.sfx_volume * MAX_VOLUME) / 100,((int)config.sfx_volume * MAX_VOLUME) / 100,NULL);
 
       /* option callback */
       if (cb)
@@ -1700,7 +1700,7 @@ void GUI_OptionBox2(gui_menu *parent, char *text_1, char *text_2, s16 *option_1,
       modified = 0;
       /* play sound effect */
       ASND_SetVoice(ASND_GetFirstUnusedVoice(),VOICE_MONO_16BIT,22050,0,(u8 *)button_over_pcm,button_over_pcm_size,
-                    ((int)config.sfx_volume * 255) / 100,((int)config.sfx_volume * 255) / 100,NULL);
+                    ((int)config.sfx_volume * MAX_VOLUME) / 100,((int)config.sfx_volume * MAX_VOLUME) / 100,NULL);
     }
   }
 
