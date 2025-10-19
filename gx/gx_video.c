@@ -3,7 +3,7 @@
  *
  *  Genesis Plus GX video & rendering support
  *
- *  Copyright Eke-Eke (2007-2023), based on original work from Softdev (2006)
+ *  Copyright Eke-Eke (2007-2025), based on original work from Softdev (2006)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -359,15 +359,15 @@ static u8 screenDisplayList[32] ATTRIBUTE_ALIGN(32) =
 static void vi_callback(u32 cnt)
 {
   /* get audio DMA remaining length */
-  u16 remain = AUDIO_GetDMABytesLeft() / 32;
+  u16 remain = AUDIO_GetDMABytesLeft();
 
   /* adjust desired output samplerate if audio playback is not perfectly in sync with video */
   if (remain > 0)
   {
     int samplerate;
 
-    /* check current audio DMA position (from testing, delta keeps limited to +/- one 32-bit block i.e 8 samples) */
-    if (remain < 5)
+    /* check current audio DMA position (from testing, delta keeps limited to +/- one 32-byte block i.e 8 samples so we take some margin here to determine if DMA is near finished or restarted) */
+    if (remain < (5*32))
     {
       /* previous frame DMA is not yet finished (real output rate is slightly slower than expected value) */
       samplerate = 47950;
