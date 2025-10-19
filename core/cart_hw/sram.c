@@ -204,6 +204,13 @@ void sram_init(void)
         sram.end = 0x203fff;
       }
     }
+    else if (strstr(rominfo.international,"COLOCODX") != NULL)
+    {
+      /* ColocoDX */
+      sram.on = 1;
+      sram.start = 0x7e0000;
+      sram.end = 0x7fffff;
+    }
 
     /* auto-detect games which need disabled backup RAM */
     else if (strstr(rominfo.product,"T-113016") != NULL)

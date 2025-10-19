@@ -39,6 +39,9 @@
 #ifndef _FLASH_CFI_H_
 #define _FLASH_CFI_H_
 
+/* Max. supported OTP area size */
+#define FLASH_OTP_AREA_SIZE 128
+
 /* Supported devices */
 typedef enum
 {
@@ -48,7 +51,7 @@ typedef enum
 } T_FLASH_CFI_TYPE;
 
 /* Function prototypes */
-extern void flash_cfi_init(T_FLASH_CFI_TYPE type);
+extern void flash_cfi_init(T_FLASH_CFI_TYPE type, const uint16 *otp_data);
 extern void flash_cfi_write(unsigned int address, unsigned int data);
 extern unsigned int flash_cfi_read(unsigned int address);
 extern int flash_cfi_context_save(uint8 *state);

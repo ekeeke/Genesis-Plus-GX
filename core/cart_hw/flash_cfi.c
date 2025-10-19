@@ -57,17 +57,20 @@ typedef enum
   FLASH_PROGRAM,
   FLASH_ERASE_INIT,
   FLASH_ERASE_UNLOCKED,
-  FLASH_CFI_QUERY
+  FLASH_CFI_QUERY,
+  FLASH_OTP_ENABLED,
+  FLASH_OTP_EXIT_UNLOCKED
 } T_CFI_MODE;
 
 typedef struct
 {
-  uint32 addr;            /* latched address register */
-  uint32 data;            /* latched data register */
-  T_CFI_MODE mode;        /* current operating mode */
-  const uint8 *cfi_data;  /* CFI query data array */
-  const uint16 *id;       /* Manufacturer & Device id codes */
-  uint8 readmask;         /* Autoselect mode read address mask */
+  uint32 addr;                          /* latched address register */
+  uint32 data;                          /* latched data register */
+  T_CFI_MODE mode;                      /* current operating mode */
+  const uint8 *cfi_data;                /* CFI query data array */
+  const uint16 *id;                     /* Manufacturer & Device id codes */
+  uint16 otp_area[FLASH_OTP_AREA_SIZE]; /* Secured Silicon Sector / Extended Block area */
+  uint8 readmask;                       /* Autoselect mode read address mask */
 } T_FLASH_CFI;
 
 static T_FLASH_CFI flash;
@@ -107,25 +110,58 @@ static const uint8 flash_readmask[MAX_FLASH_CFI_SUPPORTED_TYPES] =
   0x0F  /* S29GL064N (model 04) */
 };
 
-void flash_cfi_init(T_FLASH_CFI_TYPE type)
+void flash_cfi_init(T_FLASH_CFI_TYPE type, const uint16 *otp_data)
 {
   memset(&flash, 0x00, sizeof(flash));
   flash.cfi_data  = cfi_query[type];
   flash.id        = flash_id[type];
   flash.readmask  = flash_readmask[type];
+  if (otp_data)
+  {
+    memcpy(flash.otp_area, otp_data, sizeof(flash.otp_area));
+  }
 }
 
 void flash_cfi_write(unsigned int address, unsigned int data)
 {
+  /* 64KB bank index */
+  unsigned int index = (address >> 15) & 0xff;
+
   if (flash.mode == FLASH_PROGRAM)
   {
-    /* can only clear bits set to 1 in unprotected sectors (for simplicity, assume only backup RAM area is not protected) */
-    if (m68k.memory_map[(address>>15)&0xff].base == sram.sram)
+    /* assume any writable 64KB bank except first one is not write-protected */
+    if (index > 0)
     {
+      /* assume any programmed bank should be mapped to SRAM (max 64KB) */
+      if (m68k.memory_map[index].base != sram.sram)
+      {
+        /* if not, assume save data sector is switched (see https://gitlab.com/doragasu/sgdk-flash-save/-/blob/master/src/saveman.c) */
+        int i = 0x7f;
+        do
+        {
+          if (m68k.memory_map[i].base == sram.sram)
+          {
+             /* 64KB bank currently mapped to SRAM is mapped back to cartridge ROM */
+             m68k.memory_map[i].base = cart.rom + ((i<<16) & cart.mask);
+             
+             /* copy current SRAM data to cartridge ROM (should eventually be copied back to SRAM then normally erased) */
+             memcpy(m68k.memory_map[i].base, sram.sram, 0x10000);
+             break;
+          }
+        } while (--i > 0);
+
+        /* copy programmed 64KB bank content to SRAM (should normally be filled with 0xFF) */
+        memcpy(sram.sram, m68k.memory_map[index].base, 0x10000);
+
+        /* programmed 64KB bank is now mapped to SRAM */
+        m68k.memory_map[index].base = sram.sram;
+      }
+
+      /* write data to SRAM (flash programming can only clear bits set to 1) */
       WRITE_WORD(sram.sram, (address << 1) & 0xfffe, data & READ_WORD(sram.sram, (address << 1) & 0xfffe));
     }
 
-    /* reset to read mode */
+    /* reset to default read mode */
     flash.mode = FLASH_READ;
   }
   else
@@ -134,10 +170,10 @@ void flash_cfi_write(unsigned int address, unsigned int data)
     address &= 0xfff;
     data &= 0xff;
 
-    /* detect RESET command */
-    if (data == 0xf0)
+    /* detect RESET command (always valid except in OTP area read mode) */
+    if ((data == 0xf0) && (flash.mode < FLASH_OTP_ENABLED))
     {
-      /* reset to read mode */
+      /* reset to default read mode */
       flash.mode = FLASH_READ;
     }
     else
@@ -154,6 +190,11 @@ void flash_cfi_write(unsigned int address, unsigned int data)
               /* ERASE command initialization */
               flash.mode = FLASH_ERASE_INIT;
             }
+            else if (data == 0x88)
+            {
+              /* ENTER SECURED SILICON SECTOR REGION / EXTENDED BLOCK command */
+              flash.mode = FLASH_OTP_ENABLED;
+            }
             else if (data == 0x90)
             {
               /* AUTOSELECT command */
@@ -164,6 +205,27 @@ void flash_cfi_write(unsigned int address, unsigned int data)
               /* PROGRAM command */
               flash.mode = FLASH_PROGRAM;
             }
+          }
+          break;
+        }
+
+        case FLASH_OTP_ENABLED:
+        {
+          /* detect UNLOCK sequence */
+          if ((flash.addr == 0x555) && (flash.data == 0xAA) && (address == 0x2AA) && (data == 0x55))
+          {
+            flash.mode = FLASH_OTP_EXIT_UNLOCKED;
+          }
+          break;
+        }
+
+        case FLASH_OTP_EXIT_UNLOCKED:
+        {
+          /* detect EXIT SECURED SILICON SECTOR REGION / EXTENDED BLOCK command */
+          if ((flash.addr == 0x555) && (flash.data == 0x90) && (data == 0x00))
+          {
+            /* reset to default read mode */
+            flash.mode = FLASH_READ;
           }
           break;
         }
@@ -185,32 +247,32 @@ void flash_cfi_write(unsigned int address, unsigned int data)
           {
             int i;
 
-            /* max. supported Flash Memory mapped size is 8MB */
-            for (i=0x00; i<0x80; i++)
+            /* assume any writable 64KB bank except first one is not write-protected (max. 8MB flash memory) */
+            for (i=0x01; i<0x80; i++)
             {
-              /* can only erase unprotected sectors so, for simplicity, assume only backup RAM area (64KB sector) is not protected */
-              if (m68k.memory_map[i].base == sram.sram)
+              /* only unprotected sectors can be erased */
+              if (m68k.memory_map[i].write16 != m68k_unused_16_w)
               {
-                memset(sram.sram, 0xff, sizeof(sram.sram));
+                memset(m68k.memory_map[i].base, 0xff, 0x10000);
                 break;
               }
             }
 
-            /* reset to read mode */
+            /* reset to default read mode */
             flash.mode = FLASH_READ;
           }
 
           /* detect SECTOR ERASE command */
-          else if ((data == 0x30))
+          else if (data == 0x30)
           {
-            /* can only erase unprotected sectors so, for simplicity, assume only backup RAM area is not protected */
-            if (m68k.memory_map[(address>>15)&0xff].base == sram.sram)
+            /* assume any writable 64KB bank except first one is not write-protected */
+            if (index > 0)
             {
-              /* for simplicity, erase whole backup RAM area (64KB sector) */
-              memset(sram.sram, 0xff, sizeof(sram.sram));
+              /* for simplicity, erase whole 64KB bank (assume 64KB writable sectors only) */
+              memset(m68k.memory_map[index].base, 0xff, 0x10000);
             }
  
-            /* reset to read mode */
+            /* reset to default read mode */
             flash.mode = FLASH_READ;
           }
           break;
@@ -243,6 +305,12 @@ void flash_cfi_write(unsigned int address, unsigned int data)
 unsigned int flash_cfi_read(unsigned int address)
 {
   /* detect current mode */
+  if (flash.mode >= FLASH_OTP_ENABLED)
+  {
+    /* OTP area */
+    return flash.otp_area[address & (FLASH_OTP_AREA_SIZE - 1)];
+  }
+
   if (flash.mode == FLASH_AUTOSELECT)
   {
     /* Manufacturer and Device ID codes */
@@ -259,8 +327,8 @@ unsigned int flash_cfi_read(unsigned int address)
       return flash.cfi_data[index];
     }
   }
-  
-  /* default read (might be possible only in READ mode ?) */
+
+  /* default read mode */
   if (m68k.memory_map[(address>>15)&0xff].base == sram.sram)
   {
     /* backup RAM (always stored in big endian format) */

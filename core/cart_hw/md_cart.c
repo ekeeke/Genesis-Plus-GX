@@ -664,10 +664,10 @@ void md_cart_init(void)
       zbank_memory_map[i].write  = zbank_unused_w;
     }
   }
-  else if (strstr(rominfo.ROMType,"GM") && strstr(rominfo.product,"00000000-42"))
+  else if (strstr(rominfo.ROMType,"GM") && strstr(rominfo.product,"00000000-42")) /* Escape 2042 */
   {
     /* initialize CFI flash memory hardware */
-    flash_cfi_init(M29W320EB);
+    flash_cfi_init(M29W320EB, NULL);
 
     /* Flashkit-MD mapper (4MB ROM only) */
     m68k.memory_map[0x00].read8   = mapper_flash_r8;
@@ -682,10 +682,10 @@ void md_cart_init(void)
             ((rominfo.checksum == 0x6bd5) && (rominfo.realchecksum == 0x1fea))))  /* Life on Earth Reimagined */
   {
     /* initialize CFI flash memory hardware */
-    flash_cfi_init(S29GL064N_04);
+    flash_cfi_init(S29GL064N_04, NULL);
 
-    /* SGDK flash-save mapper (4MB ROM with backup RAM mapped in last 64KB bank) */
-    /* Note: upper 4MB of flash memory is apparently unused */
+    /* custom flash-save mapper (4MB ROM with backup RAM mapped in last 64KB bank) */
+    /* Note: upper 4MB of flash memory is apparently not accessible */
     m68k.memory_map[0x3f].base    = sram.sram;
     m68k.memory_map[0x00].read8   = m68k.memory_map[0x3f].read8   = mapper_flash_r8;
     m68k.memory_map[0x00].read16  = m68k.memory_map[0x3f].read16  = mapper_flash_r16;
@@ -711,9 +711,9 @@ void md_cart_init(void)
     yx5200_init(snd.sample_rate);
 
     /* initialize CFI flash memory hardware */
-    flash_cfi_init(S29GL064N_04);
+    flash_cfi_init(S29GL064N_04, NULL);
 
-    /* SGDK flash-save mapping (4MB ROM with backup RAM mapped in last 64KB bank) */
+    /* custom flash-save mapper (4MB ROM with backup RAM mapped in last 64KB bank) */
     m68k.memory_map[0x3f].base    = sram.sram;
     m68k.memory_map[0x00].read8   = m68k.memory_map[0x3f].read8   = mapper_flash_r8;
     m68k.memory_map[0x00].read16  = m68k.memory_map[0x3f].read16  = mapper_flash_r16;
@@ -722,15 +722,53 @@ void md_cart_init(void)
     zbank_memory_map[0x00].read   = zbank_memory_map[0x3f].read   = mapper_flash_r8;
     zbank_memory_map[0x00].write  = zbank_memory_map[0x3f].write  = mapper_flash_w8;
 
-    /* 64M extension mapping (upper 4MB of flash memory is apparently unused but cartridge board uses same signals as described in https://gitlab.com/doragasu/flatmap64) */
+    /* 64M extension mapping (upper 4MB of flash memory is apparently unused but still accessible as cartridge board uses same signals as described in https://gitlab.com/doragasu/flatmap64) */
     for (i=0x40; i<0x80; i++)
     {
       m68k.memory_map[i].read8    = NULL;
       m68k.memory_map[i].read16   = NULL;
-      m68k.memory_map[i].write8   = NULL;
-      m68k.memory_map[i].write16  = NULL;
-      zbank_memory_map[i].read    = NULL;
-      zbank_memory_map[i].write   = NULL;
+      m68k.memory_map[i].write8   = m68k_unused_8_w;
+      m68k.memory_map[i].write16  = m68k_unused_16_w;
+      zbank_memory_map[i].read    = zbank_unused_r;
+      zbank_memory_map[i].write   = zbank_unused_w;
+    }
+  }
+  else if (strstr(rominfo.international, "COLOCODX")) /* ColocoDX */
+  {
+    /* CFI flash memory OTP area (credit to Stargazer) */
+    const uint16 flash_otp[FLASH_OTP_AREA_SIZE] =
+    {
+      0x2923,0xBE84,0xE16C,0xD6AE,0x5290,0x49F1,0xF1BB,0xE9EB,0xB3A6,0xDB3C,0x870C,0x3E99,0x245E,0x0D1C,0x06B7,0x47DE,
+      0xB312,0x4DC8,0x43BB,0x8BA6,0x1F03,0x5A7D,0x0938,0x251F,0x5DD4,0xCBFC,0x96F5,0x453B,0xFFFF,0xFFFF,0xFFFF,0xFFFF,
+      0xFFFF,0xFFFF,0xFFFF,0xFFFF,0xFFFF,0xFFFF,0xFFFF,0xFFFF,0xFFFF,0xFFFF,0xFFFF,0xFFFF,0xFFFF,0xFFFF,0xFFFF,0xFFFF,
+      0xFFFF,0xFFFF,0xFFFF,0xFFFF,0xFFFF,0xFFFF,0xFFFF,0xFFFF,0xFFFF,0xFFFF,0xFFFF,0xFFFF,0xFFFF,0xFFFF,0xFFFF,0xFFFF,
+      0xFFFF,0xFFFF,0xFFFF,0xFFFF,0xFFFF,0xFFFF,0xFFFF,0xFFFF,0xFFFF,0xFFFF,0xFFFF,0xFFFF,0xFFFF,0xFFFF,0xFFFF,0xFFFF,
+      0xFFFF,0xFFFF,0xFFFF,0xFFFF,0xFFFF,0xFFFF,0xFFFF,0xFFFF,0xFFFF,0xFFFF,0xFFFF,0xFFFF,0xFFFF,0xFFFF,0xFFFF,0xFFFF,
+      0xFFFF,0xFFFF,0xFFFF,0xFFFF,0xFFFF,0xFFFF,0xFFFF,0xFFFF,0xFFFF,0xFFFF,0xFFFF,0xFFFF,0xFFFF,0xFFFF,0xFFFF,0xFFFF,
+      0xFFFF,0xFFFF,0xFFFF,0xFFFF,0xFFFF,0xFFFF,0xFFFF,0xFFFF,0xFFFF,0xFFFF,0xFFFF,0xFFFF,0xFFFF,0xFFFF,0xFFFF,0xFFFF
+    };
+
+    /* initialize CFI flash memory hardware */
+    flash_cfi_init(S29GL064N_04, flash_otp);
+
+    /* SGDK flash-save mapper (8MB ROM with backup RAM mapped in one of the two last 64KB banks, see https://gitlab.com/doragasu/sgdk-flash-save) */
+    m68k.memory_map[0x7e].base    = sram.sram; /* SRAM initially mapped to bank #127 */
+    m68k.memory_map[0x00].read8   = m68k.memory_map[0x7f].read8   = m68k.memory_map[0x7e].read8   = mapper_flash_r8;
+    m68k.memory_map[0x00].read16  = m68k.memory_map[0x7f].read16  = m68k.memory_map[0x7e].read16  = mapper_flash_r16;
+    m68k.memory_map[0x00].write8  = m68k.memory_map[0x7f].write8  = m68k.memory_map[0x7e].write8  = mapper_flash_w8;
+    m68k.memory_map[0x00].write16 = m68k.memory_map[0x7f].write16 = m68k.memory_map[0x7e].write16 = mapper_flash_w16;
+    zbank_memory_map[0x00].read   = zbank_memory_map[0x7f].read   = zbank_memory_map[0x7e].read   = mapper_flash_r8;
+    zbank_memory_map[0x00].write  = zbank_memory_map[0x7f].write  = zbank_memory_map[0x7e].write  = mapper_flash_w8;
+
+    /* 64M extension mapping (see https://gitlab.com/doragasu/flatmap64) */
+    for (i=0x40; i<0x7e; i++)
+    {
+      m68k.memory_map[i].read8    = NULL;
+      m68k.memory_map[i].read16   = NULL;
+      m68k.memory_map[i].write8   = m68k_unused_8_w;
+      m68k.memory_map[i].write16  = m68k_unused_16_w;
+      zbank_memory_map[i].read    = zbank_unused_r;
+      zbank_memory_map[i].write   = zbank_unused_w;
     }
   }
   else if ((cart.romsize == 0x400000) && 
