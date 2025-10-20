@@ -531,6 +531,9 @@ int vdp_context_load(uint8 *state)
   }
   else
   {
+    /* first restore VDP register #1 bit 2 value to prevent spurious Mode4->Mode5 VRAM switching */
+    reg[1] = (reg[1] & ~0x04) | (temp_reg[1] & 0x04);
+
     for (i=0;i<0x20;i++) 
     {
       vdp_reg_w(i, temp_reg[i], 0);
@@ -573,6 +576,24 @@ int vdp_context_load(uint8 *state)
     {
       color_update_m5(i, *(uint16 *)&cram[i << 1]);
     }
+
+    /* reinitialize rendering functions */
+    update_bg_pattern_cache = update_bg_pattern_cache_m5;
+    parse_satb = parse_satb_m5;
+    render_bg = (reg[11] & 0x04) ? (config.enhanced_vscroll ? render_bg_m5_vs_enhanced : render_bg_m5_vs) : render_bg_m5;
+    render_obj = (reg[12] & 0x08) ? render_obj_m5_ste : render_obj_m5;
+
+    /* reinitialize bus access functions */
+    vdp_68k_data_w = vdp_68k_data_w_m5;
+    vdp_z80_data_w = vdp_z80_data_w_m5;
+    vdp_68k_data_r = vdp_68k_data_r_m5;
+    vdp_z80_data_r = vdp_z80_data_r_m5;
+
+    /* restore vertical counter max value */
+    vc_max = vc_table[(reg[1] >> 2) & 3][vdp_pal];
+
+    /* indicate display height change should be applied on next frame */
+    bitmap.viewport.changed |= 2; 
   }
   else
   {
