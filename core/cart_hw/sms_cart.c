@@ -43,33 +43,34 @@
 #include "eeprom_93c.h"
 #include "terebi_oekaki.h"
 
-#define MAPPER_NONE           (0x00)
-#define MAPPER_TEREBI         (0x01)
-#define MAPPER_RAM_2K         (0x02)
-#define MAPPER_RAM_8K         (0x03)
-#define MAPPER_RAM_8K_EXT1    (0x04)
-#define MAPPER_SEGA           (0x10)
-#define MAPPER_SEGA_X         (0x11)
-#define MAPPER_93C46          (0x12)
-#define MAPPER_CODIES         (0x13)
-#define MAPPER_MULTI_16K      (0x14)
-#define MAPPER_KOREA_16K_V1   (0x15)
-#define MAPPER_KOREA_16K_V2   (0x16)
-#define MAPPER_MULTI_2x16K_V1 (0x17)
-#define MAPPER_MULTI_2x16K_V2 (0x18)
-#define MAPPER_MULTI_16K_32K  (0x19)
-#define MAPPER_ZEMINA_16K_32K (0x1A)
-#define MAPPER_HWASUNG        (0x1B)
-#define MAPPER_MSX_16K        (0x1C)
-#define MAPPER_KOREA_8K       (0x20)
-#define MAPPER_MSX_8K         (0x21)
-#define MAPPER_MSX_8K_NEMESIS (0x22)
-#define MAPPER_MULTI_8K       (0x23)
-#define MAPPER_MULTI_4x8K     (0x24)
-#define MAPPER_ZEMINA_4x8K    (0x25)
-#define MAPPER_MULTI_32K      (0x40)
-#define MAPPER_MULTI_32K_16K  (0x41)
-#define MAPPER_HICOM          (0x42)
+#define MAPPER_NONE             (0x00)
+#define MAPPER_TEREBI           (0x01)
+#define MAPPER_RAM_2K           (0x02)
+#define MAPPER_RAM_8K           (0x03)
+#define MAPPER_RAM_8K_EXT1      (0x04)
+#define MAPPER_SEGA             (0x10)
+#define MAPPER_SEGA_X           (0x11)
+#define MAPPER_93C46            (0x12)
+#define MAPPER_CODIES           (0x13)
+#define MAPPER_MULTI_16K        (0x14)
+#define MAPPER_KOREA_16K_V1     (0x15)
+#define MAPPER_KOREA_16K_V2     (0x16)
+#define MAPPER_MULTI_2x16K_V1   (0x17)
+#define MAPPER_MULTI_2x16K_V2   (0x18)
+#define MAPPER_MULTI_16K_32K_V1 (0x19)
+#define MAPPER_MULTI_16K_32K_V2 (0x1A)
+#define MAPPER_ZEMINA_16K_32K   (0x1B)
+#define MAPPER_HWASUNG          (0x1C)
+#define MAPPER_MSX_16K          (0x1D)
+#define MAPPER_KOREA_8K         (0x20)
+#define MAPPER_MSX_8K           (0x21)
+#define MAPPER_MSX_8K_NEMESIS   (0x22)
+#define MAPPER_MULTI_8K         (0x23)
+#define MAPPER_MULTI_4x8K       (0x24)
+#define MAPPER_ZEMINA_4x8K      (0x25)
+#define MAPPER_MULTI_32K        (0x40)
+#define MAPPER_MULTI_32K_16K    (0x41)
+#define MAPPER_HICOM            (0x42)
 
 typedef struct
 {
@@ -91,10 +92,10 @@ typedef struct
 
 static const rominfo_t game_list[] =
 {
-  /* program requiring Mega Drive VDP (Mode 5) */
+  /* demo requiring Mega Drive VDP (Mode 5) */
   {0x47FA618D, 0, 1, 0, MAPPER_SEGA, SYSTEM_PBC,  REGION_USA}, /* Charles MacDonald's Mode 5 Demo Program */
 
-  /* game requiring SEGA mapper */
+  /* 32KB game requiring SEGA mapper */
   {0xFF67359B, 0, 0, 0, MAPPER_SEGA, SYSTEM_SMS2, REGION_USA}, /* DataStorm (homebrew) */
 
   /* games requiring 315-5124 VDP (Mark-III, Master System I) */
@@ -105,64 +106,65 @@ static const rominfo_t game_list[] =
   {0x23BAC434, 0, 0, 0,  MAPPER_SEGA_X, SYSTEM_GG, REGION_USA}, /* Shining Force Gaiden - Final Conflict (JP) [T-Eng] */
 
   /* games using "Korean" mappers */
-  {0x445525E2, 0, 0, 0, MAPPER_MSX_8K,         SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Penguin Adventure (KR) */
-  {0x83F0EEDE, 0, 0, 0, MAPPER_MSX_8K,         SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Street Master (KR) */
-  {0xA05258F5, 0, 0, 0, MAPPER_MSX_8K,         SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Wonsiin (KR) */
-  {0x06965ED9, 0, 0, 0, MAPPER_MSX_8K,         SYSTEM_SMS, REGION_JAPAN_NTSC}, /* F-1 Spirit - The way to Formula-1 (KR) */
-  {0x77EFE84A, 0, 0, 0, MAPPER_MSX_8K,         SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Cyborg Z (KR) */
-  {0xF89AF3CC, 0, 0, 0, MAPPER_MSX_8K,         SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Knightmare II: The Maze of Galious (KR) */
-  {0x9195C34C, 0, 0, 0, MAPPER_MSX_8K,         SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Super Boy 3 (KR) */
-  {0xE316C06D, 0, 0, 0, MAPPER_MSX_8K_NEMESIS, SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Nemesis (KR) */
-  {0x0A77FA5E, 0, 0, 0, MAPPER_MSX_8K,         SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Nemesis 2 (KR) */
-  {0x5E7B18C8, 0, 0, 0, MAPPER_MSX_16K,       SYSTEM_GGMS, REGION_JAPAN_NTSC}, /* Wonder Kid [Proto] */
-  {0x192949D5, 0, 0, 0, MAPPER_KOREA_8K,       SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Janggun-ui Adeul (KR) */
-  {0x89B79E77, 0, 0, 0, MAPPER_KOREA_16K_V1,   SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Dodgeball King (KR) */
-  {0x929222C4, 0, 0, 0, MAPPER_KOREA_16K_V1,   SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Jang Pung II (KR) */
-  {0x18FB98A3, 0, 0, 0, MAPPER_KOREA_16K_V1,   SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Jang Pung 3 (KR) */
-  {0x97D03541, 0, 0, 0, MAPPER_KOREA_16K_V1,   SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Sangokushi 3 (KR) */
-  {0x76C5BDFB, 0, 0, 0, MAPPER_KOREA_16K_V2,  SYSTEM_GGMS, REGION_JAPAN_NTSC}, /* Jang Pung II [SMS-GG] (KR) */
-  {0x01A2D595, 0, 0, 0, MAPPER_KOREA_16K_V2,  SYSTEM_GGMS,        REGION_USA}, /* Street Battle [Proto] [SMS-GG] (US) */
-  {0x9FA727A0, 0, 0, 0, MAPPER_KOREA_16K_V2,  SYSTEM_GGMS,        REGION_USA}, /* Street Hero [Proto 0] [SMS-GG] (US) */
-  {0xFB481971, 0, 0, 0, MAPPER_KOREA_16K_V2,  SYSTEM_GGMS,        REGION_USA}, /* Street Hero [Proto 1] [SMS-GG] (US) */
-  {0xA67F2A5C, 0, 0, 0, MAPPER_MULTI_16K,      SYSTEM_SMS, REGION_JAPAN_NTSC}, /* 4-Pak All Action (KR) */
-  {0x98AF0236, 0, 0, 0, MAPPER_HICOM,          SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Hi-Com 3-in-1 The Best Game Collection (Vol. 1) (KR) */
-  {0x6EBFE1C3, 0, 0, 0, MAPPER_HICOM,          SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Hi-Com 3-in-1 The Best Game Collection (Vol. 2) (KR) */
-  {0x81A36A4F, 0, 0, 0, MAPPER_HICOM,          SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Hi-Com 3-in-1 The Best Game Collection (Vol. 3) (KR) */
-  {0x8D2D695D, 0, 0, 0, MAPPER_HICOM,          SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Hi-Com 3-in-1 The Best Game Collection (Vol. 4) (KR) */
-  {0x82C09B57, 0, 0, 0, MAPPER_HICOM,          SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Hi-Com 3-in-1 The Best Game Collection (Vol. 5) (KR) */
-  {0x4088EEB4, 0, 0, 0, MAPPER_HICOM,          SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Hi-Com 3-in-1 The Best Game Collection (Vol. 6) (KR) */
-  {0xFBA94148, 0, 0, 0, MAPPER_HICOM,          SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Hi-Com 8-in-1 The Best Game Collection (Vol. 1) (KR) */
-  {0x8333C86E, 0, 0, 0, MAPPER_HICOM,          SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Hi-Com 8-in-1 The Best Game Collection (Vol. 2) (KR) */
-  {0x00E9809F, 0, 0, 0, MAPPER_HICOM,          SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Hi-Com 8-in-1 The Best Game Collection (Vol. 3) (KR) */
-  {0xBA5EC0E3, 0, 0, 0, MAPPER_MULTI_4x8K,     SYSTEM_SMS, REGION_JAPAN_NTSC}, /* 128 Hap (KR) */
-  {0x380D7400, 0, 0, 0, MAPPER_MULTI_4x8K,     SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Game Mo-eumjip 188 Hap [v0] (KR) */
-  {0xC76601E0, 0, 0, 0, MAPPER_MULTI_4x8K,     SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Game Mo-eumjip 188 Hap [v1] (KR) */
-  {0x38B3A72F, 0, 0, 0, MAPPER_MULTI_8K,       SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Game Chongjiphap 200 (KR).sms */
-  {0xD3056492, 0, 0, 0, MAPPER_MULTI_8K,       SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Super Game 270 Hap ~ Jaemissneun-270 (KR) */
-  {0xAB07ECD4, 0, 0, 0, MAPPER_MULTI_8K,       SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Super Game World 260 Hap (KR) */
-  {0x0CDE0938, 0, 0, 0, MAPPER_MULTI_8K,       SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Super Game World 30 Hap [v0] (KR) */
-  {0xE6AD4D4B, 0, 0, 0, MAPPER_MULTI_8K,       SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Super Game World 30 Hap [v1] (KR) */
-  {0xC29BB8CD, 0, 0, 0, MAPPER_MULTI_8K,       SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Super Game World 75 Hap (KR) */
-  {0x660BF6EC, 0, 0, 0, MAPPER_MULTI_8K,       SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Super Multi Game - Super 75 in 1 (KR) */
-  {0xEB7790DE, 0, 0, 0, MAPPER_MULTI_8K,       SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Super Multi Game - Super 125 in 1 (KR) */
-  {0xEDB13847, 0, 0, 0, MAPPER_MULTI_2x16K_V1, SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Super Game 45 (KR) */
-  {0xA841C0B7, 0, 0, 0, MAPPER_MULTI_2x16K_V2, SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Super Game 52 Hap (KR) */
-  {0x4E202AA2, 0, 0, 0, MAPPER_MULTI_2x16K_V2, SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Super Game 180 (KR) */
-  {0xBA5D2776, 0, 0, 0, MAPPER_MULTI_2x16K_V2, SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Super Game 200 (KR) */
-  {0xF60E71EC, 0, 0, 0, MAPPER_MULTI_16K_32K,  SYSTEM_PBC, REGION_JAPAN_NTSC}, /* Jaemiissneun Game Mo-eumjip 42 Hap [SMS-MD] (KR) */
-  {0x53904167, 0, 0, 0, MAPPER_MULTI_16K_32K,  SYSTEM_PBC, REGION_JAPAN_NTSC}, /* Jaemiissneun Game Mo-eumjip 65 Hap [SMS-MD] (KR)/ */
-  {0x7F667485, 0, 0, 0, MAPPER_MULTI_16K_32K,  SYSTEM_PBC, REGION_JAPAN_NTSC}, /* Mega Mode Super Game 138 [SMS-MD] (KR) */
-  {0xC0AC6956, 0, 0, 0, MAPPER_MULTI_16K_32K,  SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Pigu-Wang 7 Hap - Jaemiiss-neun Game Mo-eumjip (KR) */
-  {0x4342DB9D, 0, 0, 0, MAPPER_MULTI_32K,      SYSTEM_SMS, REGION_JAPAN_NTSC}, /* 11 Hap Gam-Boy (KR) */
-  {0x1B8956D1, 0, 0, 0, MAPPER_MULTI_32K_16K,  SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Super Game 150 (KR) */
-  {0xD9EF7D69, 0, 0, 0, MAPPER_MULTI_32K_16K,  SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Super Game 270 (KR) */
-  {0xE6C9C046, 0, 0, 0, MAPPER_ZEMINA_4x8K,    SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Zemina Best 25 (KR) */
-  {0xD8169FE2, 0, 0, 0, MAPPER_ZEMINA_4x8K,    SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Zemina Best 39 (KR) */
-  {0x3C339D9E, 0, 0, 0, MAPPER_ZEMINA_4x8K,    SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Zemina Best 88 (KR) */
-  {0x7CD51467, 0, 0, 0, MAPPER_ZEMINA_16K_32K, SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Zemina 4-in-1 (Q-Bert, Sports 3, Gulkave, Pooyan) (KR) */
-  {0x1B3E032E, 0, 0, 0, MAPPER_HWASUNG,        SYSTEM_SMS, REGION_JAPAN_NTSC}, /* 2 Hap in 1 (Moai-ui bomul, David-2) (KR) */
+  {0x445525E2, 0, 0, 0, MAPPER_MSX_8K,           SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Penguin Adventure (KR) */
+  {0x83F0EEDE, 0, 0, 0, MAPPER_MSX_8K,           SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Street Master (KR) */
+  {0xA05258F5, 0, 0, 0, MAPPER_MSX_8K,           SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Wonsiin (KR) */
+  {0x06965ED9, 0, 0, 0, MAPPER_MSX_8K,           SYSTEM_SMS, REGION_JAPAN_NTSC}, /* F-1 Spirit - The way to Formula-1 (KR) */
+  {0x77EFE84A, 0, 0, 0, MAPPER_MSX_8K,           SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Cyborg Z (KR) */
+  {0xF89AF3CC, 0, 0, 0, MAPPER_MSX_8K,           SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Knightmare II: The Maze of Galious (KR) */
+  {0x9195C34C, 0, 0, 0, MAPPER_MSX_8K,           SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Super Boy 3 (KR) */
+  {0xE316C06D, 0, 0, 0, MAPPER_MSX_8K_NEMESIS,   SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Nemesis (KR) */
+  {0x0A77FA5E, 0, 0, 0, MAPPER_MSX_8K,           SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Nemesis 2 (KR) */
+  {0x5E7B18C8, 0, 0, 0, MAPPER_MSX_16K,         SYSTEM_GGMS, REGION_JAPAN_NTSC}, /* Wonder Kid [Proto] */
+  {0x192949D5, 0, 0, 0, MAPPER_KOREA_8K,         SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Janggun-ui Adeul (KR) */
+  {0x89B79E77, 0, 0, 0, MAPPER_KOREA_16K_V1,     SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Dodgeball King (KR) */
+  {0x929222C4, 0, 0, 0, MAPPER_KOREA_16K_V1,     SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Jang Pung II (KR) */
+  {0x18FB98A3, 0, 0, 0, MAPPER_KOREA_16K_V1,     SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Jang Pung 3 (KR) */
+  {0x97D03541, 0, 0, 0, MAPPER_KOREA_16K_V1,     SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Sangokushi 3 (KR) */
+  {0x76C5BDFB, 0, 0, 0, MAPPER_KOREA_16K_V2,    SYSTEM_GGMS, REGION_JAPAN_NTSC}, /* Jang Pung II [SMS-GG] (KR) */
+  {0x01A2D595, 0, 0, 0, MAPPER_KOREA_16K_V2,    SYSTEM_GGMS,        REGION_USA}, /* Street Battle [Proto] [SMS-GG] (US) */
+  {0x9FA727A0, 0, 0, 0, MAPPER_KOREA_16K_V2,    SYSTEM_GGMS,        REGION_USA}, /* Street Hero [Proto 0] [SMS-GG] (US) */
+  {0xFB481971, 0, 0, 0, MAPPER_KOREA_16K_V2,    SYSTEM_GGMS,        REGION_USA}, /* Street Hero [Proto 1] [SMS-GG] (US) */
+  {0xA67F2A5C, 0, 0, 0, MAPPER_MULTI_16K,        SYSTEM_SMS, REGION_JAPAN_NTSC}, /* 4-Pak All Action (KR) */
+  {0x98AF0236, 0, 0, 0, MAPPER_HICOM,            SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Hi-Com 3-in-1 The Best Game Collection (Vol. 1) (KR) */
+  {0x6EBFE1C3, 0, 0, 0, MAPPER_HICOM,            SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Hi-Com 3-in-1 The Best Game Collection (Vol. 2) (KR) */
+  {0x81A36A4F, 0, 0, 0, MAPPER_HICOM,            SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Hi-Com 3-in-1 The Best Game Collection (Vol. 3) (KR) */
+  {0x8D2D695D, 0, 0, 0, MAPPER_HICOM,            SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Hi-Com 3-in-1 The Best Game Collection (Vol. 4) (KR) */
+  {0x82C09B57, 0, 0, 0, MAPPER_HICOM,            SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Hi-Com 3-in-1 The Best Game Collection (Vol. 5) (KR) */
+  {0x4088EEB4, 0, 0, 0, MAPPER_HICOM,            SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Hi-Com 3-in-1 The Best Game Collection (Vol. 6) (KR) */
+  {0xFBA94148, 0, 0, 0, MAPPER_HICOM,            SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Hi-Com 8-in-1 The Best Game Collection (Vol. 1) (KR) */
+  {0x8333C86E, 0, 0, 0, MAPPER_HICOM,            SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Hi-Com 8-in-1 The Best Game Collection (Vol. 2) (KR) */
+  {0x00E9809F, 0, 0, 0, MAPPER_HICOM,            SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Hi-Com 8-in-1 The Best Game Collection (Vol. 3) (KR) */
+  {0xBA5EC0E3, 0, 0, 0, MAPPER_MULTI_4x8K,       SYSTEM_SMS, REGION_JAPAN_NTSC}, /* 128 Hap (KR) */
+  {0x380D7400, 0, 0, 0, MAPPER_MULTI_4x8K,       SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Game Mo-eumjip 188 Hap [v0] (KR) */
+  {0xC76601E0, 0, 0, 0, MAPPER_MULTI_4x8K,       SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Game Mo-eumjip 188 Hap [v1] (KR) */
+  {0x38B3A72F, 0, 0, 0, MAPPER_MULTI_8K,         SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Game Chongjiphap 200 (KR).sms */
+  {0xD3056492, 0, 0, 0, MAPPER_MULTI_8K,         SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Super Game 270 Hap ~ Jaemissneun-270 (KR) */
+  {0xAB07ECD4, 0, 0, 0, MAPPER_MULTI_8K,         SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Super Game World 260 Hap (KR) */
+  {0x0CDE0938, 0, 0, 0, MAPPER_MULTI_8K,         SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Super Game World 30 Hap [v0] (KR) */
+  {0xE6AD4D4B, 0, 0, 0, MAPPER_MULTI_8K,         SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Super Game World 30 Hap [v1] (KR) */
+  {0xC29BB8CD, 0, 0, 0, MAPPER_MULTI_8K,         SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Super Game World 75 Hap (KR) */
+  {0x660BF6EC, 0, 0, 0, MAPPER_MULTI_8K,         SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Super Multi Game - Super 75 in 1 (KR) */
+  {0xEB7790DE, 0, 0, 0, MAPPER_MULTI_8K,         SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Super Multi Game - Super 125 in 1 (KR) */
+  {0xEDB13847, 0, 0, 0, MAPPER_MULTI_2x16K_V1,   SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Super Game 45 (KR) */
+  {0xA841C0B7, 0, 0, 0, MAPPER_MULTI_2x16K_V2,   SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Super Game 52 Hap (KR) */
+  {0x4E202AA2, 0, 0, 0, MAPPER_MULTI_2x16K_V2,   SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Super Game 180 (KR) */
+  {0xBA5D2776, 0, 0, 0, MAPPER_MULTI_2x16K_V2,   SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Super Game 200 (KR) */
+  {0xF60E71EC, 0, 0, 0, MAPPER_MULTI_16K_32K_V1, SYSTEM_PBC, REGION_JAPAN_NTSC}, /* Jaemiissneun Game Mo-eumjip 42 Hap [SMS-MD] (KR) */
+  {0x53904167, 0, 0, 0, MAPPER_MULTI_16K_32K_V1, SYSTEM_PBC, REGION_JAPAN_NTSC}, /* Jaemiissneun Game Mo-eumjip 65 Hap [SMS-MD] (KR)/ */
+  {0x7F667485, 0, 0, 0, MAPPER_MULTI_16K_32K_V1, SYSTEM_PBC, REGION_JAPAN_NTSC}, /* Mega Mode Super Game 138 [SMS-MD] (KR) */
+  {0xC0AC6956, 0, 0, 0, MAPPER_MULTI_16K_32K_V1, SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Pigu-Wang 7 Hap - Jaemiiss-neun Game Mo-eumjip (KR) */
+  {0x919B4B6E, 0, 0, 0, MAPPER_MULTI_16K_32K_V2, SYSTEM_PBC, REGION_JAPAN_NTSC}, /* Mega Mode Super Game 30 [SMS-MD] (KR) */
+  {0x4342DB9D, 0, 0, 0, MAPPER_MULTI_32K,        SYSTEM_SMS, REGION_JAPAN_NTSC}, /* 11 Hap Gam-Boy (KR) */
+  {0x1B8956D1, 0, 0, 0, MAPPER_MULTI_32K_16K,    SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Super Game 150 (KR) */
+  {0xD9EF7D69, 0, 0, 0, MAPPER_MULTI_32K_16K,    SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Super Game 270 (KR) */
+  {0xE6C9C046, 0, 0, 0, MAPPER_ZEMINA_4x8K,      SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Zemina Best 25 (KR) */
+  {0xD8169FE2, 0, 0, 0, MAPPER_ZEMINA_4x8K,      SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Zemina Best 39 (KR) */
+  {0x3C339D9E, 0, 0, 0, MAPPER_ZEMINA_4x8K,      SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Zemina Best 88 (KR) */
+  {0x7CD51467, 0, 0, 0, MAPPER_ZEMINA_16K_32K,   SYSTEM_SMS, REGION_JAPAN_NTSC}, /* Zemina 4-in-1 (Q-Bert, Sports 3, Gulkave, Pooyan) (KR) */
+  {0x1B3E032E, 0, 0, 0, MAPPER_HWASUNG,          SYSTEM_SMS, REGION_JAPAN_NTSC}, /* 2 Hap in 1 (Moai-ui bomul, David-2) (KR) */
 
-  /* games using Codemaster mapper */
+  /* games using Codemasters mapper */
   {0x29822980, 0, 0, 0,  MAPPER_CODIES, SYSTEM_SMS2, REGION_EUROPE}, /* Cosmic Spacehead */
   {0x8813514B, 0, 0, 0,  MAPPER_CODIES, SYSTEM_SMS2, REGION_EUROPE}, /* Excellent Dizzy Collection, The [Proto] */
   {0xB9664AE1, 0, 0, 0,  MAPPER_CODIES, SYSTEM_SMS2, REGION_EUROPE}, /* Fantastic Dizzy */
@@ -474,7 +476,8 @@ static void write_mapper_msx_16k(unsigned int address, unsigned char data);
 static void write_mapper_multi_16k(unsigned int address, unsigned char data);
 static void write_mapper_multi_2x16k_v1(unsigned int address, unsigned char data);
 static void write_mapper_multi_2x16k_v2(unsigned int address, unsigned char data);
-static void write_mapper_multi_16k_32k(unsigned int address, unsigned char data);
+static void write_mapper_multi_16k_32k_v1(unsigned int address, unsigned char data);
+static void write_mapper_multi_16k_32k_v2(unsigned int address, unsigned char data);
 static void write_mapper_multi_32k(unsigned int address, unsigned char data);
 static void write_mapper_multi_32k_16k(unsigned int address, unsigned char data);
 static void write_mapper_hicom(unsigned int address, unsigned char data);
@@ -1135,7 +1138,7 @@ static void mapper_reset(void)
         mapper_16k_w(1,slot.fcr[1]);
         mapper_16k_w(2,slot.fcr[2]);
       }
-      else if (slot.mapper == MAPPER_MULTI_16K_32K)
+      else if ((slot.mapper == MAPPER_MULTI_16K_32K_V1) || (slot.mapper == MAPPER_MULTI_16K_32K_V2))
       {
         mapper_16k_w(1,slot.fcr[1]);
         mapper_16k_w(2,slot.fcr[2]);
@@ -1206,9 +1209,14 @@ static void mapper_reset(void)
       z80_writemem = write_mapper_multi_2x16k_v2;
       break;
 
-    case MAPPER_MULTI_16K_32K:
+    case MAPPER_MULTI_16K_32K_V1:
       z80_readmem = read_mapper_default;
-      z80_writemem = write_mapper_multi_16k_32k;
+      z80_writemem = write_mapper_multi_16k_32k_v1;
+      break;
+
+    case MAPPER_MULTI_16K_32K_V2:
+      z80_readmem = read_mapper_default;
+      z80_writemem = write_mapper_multi_16k_32k_v2;
       break;
 
     case MAPPER_MULTI_32K:
@@ -1382,8 +1390,8 @@ static void mapper_16k_w(int offset, unsigned char data)
   /* cartridge ROM page (16KB) */
   uint8 page = data % slot.pages;
 
-  /* page index increment (SEGA mapper only) */
-  if ((slot.fcr[0] & 0x03) && (slot.mapper == MAPPER_SEGA))
+  /* page index increment (official SEGA mapper only) */
+  if ((slot.mapper == MAPPER_SEGA) && (slot.fcr[0] & 0x03))
   {
     page = (page + ((4 - (slot.fcr[0] & 0x03)) << 3)) % slot.pages;
   }
@@ -1393,7 +1401,7 @@ static void mapper_16k_w(int offset, unsigned char data)
 
   switch (offset)
   {
-    case 0: /* control register (SEGA mapper only) */
+    case 0: /* control register (SEGA mappers only) */
     {
       if (data & 0x08)
       {
@@ -1408,7 +1416,7 @@ static void mapper_16k_w(int offset, unsigned char data)
         /* cartridge ROM page (16KB) */
         page = slot.fcr[3] % slot.pages;
         
-        /* page index increment (SEGA mapper) */
+        /* page index increment (official SEGA mapper only) */
         if ((data & 0x03) && (slot.mapper == MAPPER_SEGA))
         {
           page = (page + ((4 - (data & 0x03)) << 3)) % slot.pages;
@@ -1443,7 +1451,7 @@ static void mapper_16k_w(int offset, unsigned char data)
 
     case 1: /* cartridge ROM bank (16KB) at $0000-$3FFF */
     {
-      /* first 1KB is not fixed (CODEMASTER or MULTI mappers only) */
+      /* first 1KB is not fixed (CODEMASTERS or MULTI mappers only) */
       if (slot.mapper >= MAPPER_CODIES)
       {
         z80_readmap[0] = &slot.rom[(page << 14)];
@@ -1463,7 +1471,7 @@ static void mapper_16k_w(int offset, unsigned char data)
         z80_readmap[i] = &slot.rom[(page << 14) | ((i & 0x0F) << 10)];
       }
 
-      /* cartridge RAM switch (CODEMASTER mapper only, see Ernie Elf's Golf) */
+      /* cartridge RAM switch (CODEMASTERS mapper only, see Ernie Elf's Golf) */
       if (slot.mapper == MAPPER_CODIES)
       {
         if (data & 0x80)
@@ -1545,19 +1553,21 @@ static void mapper_16k_w(int offset, unsigned char data)
 
     case 3: /* cartridge ROM bank (16KB) at $8000-$BFFF */
     {
-      /* check that external RAM (16KB) is not mapped at $8000-$BFFF (SEGA mapper only) */
-      if ((slot.fcr[0] & 0x08) && (slot.mapper != MAPPER_MULTI_16K_32K)) break;
+      /* check that external RAM (16KB) is not mapped at $8000-$BFFF (SEGA mappers only) */
+      if (((slot.mapper == MAPPER_SEGA) || (slot.mapper == MAPPER_SEGA_X)) && (slot.fcr[0] & 0x08))
+        break;
 
-      /* first 8KB */
+      /* lower 8KB ($8000-$9FFF) */
       for (i = 0x20; i < 0x28; i++)
       {
         z80_readmap[i] = &slot.rom[(page << 14) | ((i & 0x0F) << 10)];
       }
 
-      /* check that cartridge RAM (8KB) is not mapped at $A000-$BFFF (CODEMASTER mapper only) */
-      if ((slot.mapper == MAPPER_CODIES) && (slot.fcr[2] & 0x80)) break;
+      /* check that cartridge RAM (8KB) is not mapped at $A000-$BFFF (CODEMASTERS mapper only) */
+      if ((slot.mapper == MAPPER_CODIES) && (slot.fcr[2] & 0x80))
+        break;
 
-      /* last 8KB */
+      /* upper 8KB ($A000-$BFFF) */
       for (i = 0x28; i < 0x30; i++)
       {
         z80_readmap[i] = &slot.rom[(page << 14) | ((i & 0x0F) << 10)];
@@ -1968,7 +1978,7 @@ static void write_mapper_multi_2x16k_v2(unsigned int address, unsigned char data
   z80_writemap[address >> 10][address & 0x03FF] = data;
 }
 
-static void write_mapper_multi_16k_32k(unsigned int address, unsigned char data)
+static void write_mapper_multi_16k_32k_v1(unsigned int address, unsigned char data)
 {
   z80_writemap[address >> 10][address & 0x03FF] = data;
 
@@ -1977,19 +1987,43 @@ static void write_mapper_multi_16k_32k(unsigned int address, unsigned char data)
   if (address == 0xBFE5)
   {
     /* save 16K bank index to unused register */
-    slot.fcr[0] = (data & 0x3f) << 1;
+    slot.fcr[0] = data << 1;
     mapper_16k_w(1,slot.fcr[0]);
     mapper_16k_w(2,slot.fcr[0]+1);
     mapper_16k_w(3,slot.fcr[0]+1);
   }
   else if (address == 0xBFEE)
   {
-    data &= 0x1f;
+    data &= (slot.fcr[0] >= 0x20) ? 0x1f : 0x0f;
     mapper_16k_w(2,slot.fcr[0]+data);
   }
   else if (address == 0xBFEF)
   {
-    data &= 0x1f;
+    data &= (slot.fcr[0] >= 0x20) ? 0x1f : 0x0f;
+    mapper_16k_w(3,slot.fcr[0]+data);
+  }
+}
+
+static void write_mapper_multi_16k_32k_v2(unsigned int address, unsigned char data)
+{
+  z80_writemap[address >> 10][address & 0x03FF] = data;
+
+  if (address == 0xFFF0)
+  {
+    /* save 16K bank index to unused register */
+    slot.fcr[0] = data << 1;
+    mapper_16k_w(1,slot.fcr[0]);
+    mapper_16k_w(2,slot.fcr[0]+1);
+    mapper_16k_w(3,slot.fcr[0]);
+  }
+  else if (address == 0xFFFE)
+  {
+    data &= 0x0f;
+    mapper_16k_w(2,slot.fcr[0]+data);
+  }
+  else if (address == 0xFFFF)
+  {
+    data &= 0x0f;
     mapper_16k_w(3,slot.fcr[0]+data);
   }
 }
