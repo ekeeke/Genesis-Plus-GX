@@ -589,6 +589,12 @@ int vdp_context_load(uint8 *state)
     vdp_68k_data_r = vdp_68k_data_r_m5;
     vdp_z80_data_r = vdp_z80_data_r_m5;
 
+    /* clear HVC latched value (unless HVC latch bit is set) */
+    if (!(reg[0] & 0x02))
+    {
+      hvc_latch = 0;
+    }
+
     /* restore vertical counter max value */
     vc_max = vc_table[(reg[1] >> 2) & 3][vdp_pal];
 
