@@ -362,21 +362,20 @@ void s68k_pulse_wait(unsigned int address, unsigned int write_access)
   /* Check CPU is not already waiting for /DTACK */
   if (!(CPU_STOPPED & STOP_LEVEL_WAIT))
   {
+    int i;
+    
     /* Hold the DTACK line on the CPU */
     CPU_STOPPED |= STOP_LEVEL_WAIT;
 
     /* End CPU execution */
     s68k.cycles = s68k.cycle_end - s68k_cycles();
 
-    /* Save CPU address registers */
-    s68k.prev_ar[0] = s68k.dar[8+0];
-    s68k.prev_ar[1] = s68k.dar[8+1];
-    s68k.prev_ar[2] = s68k.dar[8+2];
-    s68k.prev_ar[3] = s68k.dar[8+3];
-    s68k.prev_ar[4] = s68k.dar[8+4];
-    s68k.prev_ar[5] = s68k.dar[8+5];
-    s68k.prev_ar[6] = s68k.dar[8+6];
-    s68k.prev_ar[7] = s68k.dar[8+7];
+    /* Save CPU data & address registers */
+    for (i=0; i<8; i++)
+    {
+      s68k.prev_dr[i] = s68k.dar[i];
+      s68k.prev_ar[i] = s68k.dar[8+i];
+    }
 
     /* Detect address register(s) pre-decrement/post-increment done by MOVE/MOVEA instruction */
     if ((s68k.ir >= 0x1000) && (s68k.ir < 0x4000))
@@ -513,21 +512,20 @@ void s68k_clear_wait(void)
   /* check CPU is waiting for DTACK */
   if (CPU_STOPPED & STOP_LEVEL_WAIT)
   {
+    int i;
+    
     /* Assert the DTACK line on the CPU */
     CPU_STOPPED &= ~STOP_LEVEL_WAIT;
 
     /* Rollback to previously held instruction */
     s68k.pc = s68k.prev_pc;
 
-    /* Restore CPU address registers */
-    s68k.dar[8+0] = s68k.prev_ar[0];
-    s68k.dar[8+1] = s68k.prev_ar[1];
-    s68k.dar[8+2] = s68k.prev_ar[2];
-    s68k.dar[8+3] = s68k.prev_ar[3];
-    s68k.dar[8+4] = s68k.prev_ar[4];
-    s68k.dar[8+5] = s68k.prev_ar[5];
-    s68k.dar[8+6] = s68k.prev_ar[6];
-    s68k.dar[8+7] = s68k.prev_ar[7];
+    /* Restore CPU data & address registers */
+    for (i=0; i<8; i++)
+    {
+      s68k.dar[i]   = s68k.prev_dr[i];
+      s68k.dar[8+i] = s68k.prev_ar[i];
+    }
   }
 }
 

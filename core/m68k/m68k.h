@@ -254,6 +254,7 @@ typedef struct
   uint dar[16];         /* Data and Address Registers */
   uint pc;              /* Program Counter */
   uint prev_pc;         /* Previous Program Counter */
+  uint prev_dr[8];      /* Previous Data Registers */
   uint prev_ar[8];      /* Previous Address Registers */
   uint sp[5];           /* User and Interrupt Stack Pointers */
   uint ir;              /* Instruction Register */
