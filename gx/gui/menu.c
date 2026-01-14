@@ -3725,26 +3725,35 @@ static void showrominfo (void)
 
   sprintf (items[11], "ROM end: $%06X", rominfo.romend);
 
-  if (sram.custom)
+  if (sram.type == EEPROM_I2C) 
+  {
     sprintf (items[12], "Serial EEPROM");
-  else if (sram.detected)
-    sprintf (items[12], "SRAM Start: $%06X", sram.start);
-  else
-    sprintf (items[12], "No Backup Memory specified");
-
-  if (sram.custom == 1) 
     sprintf (items[13], "Type: I2C (24Cxx)");
-  else if (sram.custom == 2) 
+  }
+  else if (sram.type == EEPROM_SPI) 
+  {
+    sprintf (items[12], "Serial EEPROM");
     sprintf (items[13], "Type: SPI (25x512/95x512)");
-  else if (sram.custom == 3) 
-    sprintf (items[13], "Type: I2C (93C46)");
+  }
+  else if (sram.type == EEPROM_MICROWIRE) 
+  {
+    sprintf (items[12], "Serial EEPROM");
+    sprintf (items[13], "Type: Microwire (93C46)");
+  }
   else if (sram.detected)
+  {
+    sprintf (items[12], "SRAM Start: $%06X", sram.start);
     sprintf (items[13], "SRAM End: $%06X", sram.end);
-  else if (sram.on)
-    sprintf (items[13], "SRAM enabled by default");
+  }
   else
-    sprintf (items[13], "SRAM disabled by default");
-  
+  {
+    sprintf (items[12], "No Backup Memory specified");
+    if (sram.on)
+      sprintf (items[13], "SRAM enabled by default");
+    else
+      sprintf (items[13], "SRAM disabled by default");
+  }
+
   if (region_code == REGION_USA)
     sprintf (items[14], "Region Code: %s (USA)", rominfo.country);
   else if (region_code == REGION_EUROPE)

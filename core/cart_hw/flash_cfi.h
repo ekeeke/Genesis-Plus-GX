@@ -2,7 +2,7 @@
  *  Genesis Plus
  *  CFI-compliant flash memory (29xxx) support
  *
- *  Copyright (C) 2025 Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2025-2026 Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:

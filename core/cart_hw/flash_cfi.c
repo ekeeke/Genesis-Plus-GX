@@ -6,11 +6,12 @@
  *   - 16-bit mode only
  *   - only support commonly used commands (read/program/erase/autoselect/query)
  *   - write-protection configuration based on cartridge mapping (only backup RAM is rewritable)
+ *   - writable sectors size fixed to 64KB
  *   - instantaneous program/erase operations
  *   - only return manufacturer & device codes in autoselect mode
- *   - do not return extended table & security code area in CFI query mode
+ *   - only return identification, system interface information, device geometry definition and primary extended table in CFI query mode
  *
- *  Copyright (C) 2025 Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2025-2026 Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -47,7 +48,7 @@
 #include "shared.h"
 #include "flash_cfi.h"
 
-#define CFI_QUERY_TABLE_LEN 45
+#define CFI_QUERY_TABLE_LEN 0x41
 
 typedef enum
 {
@@ -82,14 +83,18 @@ static const uint8 cfi_query[MAX_FLASH_CFI_SUPPORTED_TYPES][CFI_QUERY_TABLE_LEN]
   {
     0x51,0x52,0x59,0x02,0x00,0x40,0x00,0x00,0x00,0x00,0x00,
     0x27,0x36,0xB5,0xC5,0x04,0x00,0x0A,0x00,0x04,0x00,0x03,0x00,
-    0x16,0x02,0x00,0x00,0x00,0x02,0x07,0x00,0x20,0x00,0x3e,0x00,0x00,0x01,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
+    0x16,0x02,0x00,0x00,0x00,0x02,0x07,0x00,0x20,0x00,0x3e,0x00,0x00,0x01,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+    0x00,0x00,0x00,
+    0x50,0x52,0x49,0x31,0x30,0x00,0x02,0x01,0x01,0x04,0x00,0x00,0x00,0xB5,0xC5,0x02,0x00
   },
 
   /* S29GL064N (model 04) */
   {
     0x51,0x52,0x59,0x02,0x00,0x40,0x00,0x00,0x00,0x00,0x00,
     0x27,0x36,0x00,0x00,0x07,0x07,0x0A,0x00,0x03,0x05,0x04,0x00,
-    0x17,0x02,0x00,0x05,0x00,0x02,0x07,0x00,0x20,0x00,0x7e,0x00,0x00,0x01,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
+    0x17,0x02,0x00,0x05,0x00,0x02,0x07,0x00,0x20,0x00,0x7e,0x00,0x00,0x01,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+    0x00,0x00,0x00,
+    0x50,0x52,0x49,0x31,0x33,0x00,0x02,0x01,0x00,0x08,0x00,0x00,0x02,0xB5,0xC5,0x02,0x01
   }
 };
 
@@ -142,7 +147,7 @@ void flash_cfi_write(unsigned int address, unsigned int data)
           if (m68k.memory_map[i].base == sram.sram)
           {
              /* 64KB bank currently mapped to SRAM is mapped back to cartridge ROM */
-             m68k.memory_map[i].base = cart.rom + ((i<<16) & cart.mask);
+             m68k.memory_map[i].base = cart.rom + (i<<16);
              
              /* copy current SRAM data to cartridge ROM (should eventually be copied back to SRAM then normally erased) */
              memcpy(m68k.memory_map[i].base, sram.sram, 0x10000);
@@ -304,40 +309,50 @@ void flash_cfi_write(unsigned int address, unsigned int data)
 
 unsigned int flash_cfi_read(unsigned int address)
 {
-  /* detect current mode */
-  if (flash.mode >= FLASH_OTP_ENABLED)
+  /* detect current read mode */
+  switch (flash.mode)
   {
-    /* OTP area */
-    return flash.otp_area[address & (FLASH_OTP_AREA_SIZE - 1)];
-  }
-
-  if (flash.mode == FLASH_AUTOSELECT)
-  {
-    /* Manufacturer and Device ID codes */
-    return flash.id[address & flash.readmask];
-  }
-
-  if (flash.mode == FLASH_CFI_QUERY)
-  {
-    /* CFI data array (identification string, system interface information and device geometry definition only) */
-    int index = address - 0x10;
-    if ((index >= 0x00) && (index < CFI_QUERY_TABLE_LEN))
+    case FLASH_OTP_ENABLED:
+    case FLASH_OTP_EXIT_UNLOCKED:
     {
-      /* D8-D15 are forced to 0 */
-      return flash.cfi_data[index];
+      /* OTP area */
+      return flash.otp_area[address & (FLASH_OTP_AREA_SIZE - 1)];
     }
-  }
 
-  /* default read mode */
-  if (m68k.memory_map[(address>>15)&0xff].base == sram.sram)
-  {
-    /* backup RAM (always stored in big endian format) */
-    return READ_WORD(sram.sram, (address << 1) & 0xfffe);
-  }
-  else
-  {
-    /* cartridge ROM */
-    return *(uint16 *)(m68k.memory_map[(address>>15)&0xff].base + ((address << 1) & 0xfffe));
+    case FLASH_AUTOSELECT:
+    {
+      /* Manufacturer and Device ID codes */
+      return flash.id[address & flash.readmask];
+    }
+
+    case FLASH_CFI_QUERY:
+    {
+      /* CFI data array (identification, system interface information, device geometry definition and primary extended query table only) */
+      int index = address - 0x10;
+      if ((index >= 0x00) && (index < CFI_QUERY_TABLE_LEN))
+      {
+        /* D8-D15 are forced to 0 */
+        return flash.cfi_data[index];
+      }
+
+      /* unsupported address */
+      return 0x00;
+    }
+
+    default:
+    {
+      /* default read mode */
+      if (m68k.memory_map[(address>>15)&0xff].base == sram.sram)
+      {
+        /* backup RAM (always stored in big endian format) */
+        return READ_WORD(sram.sram, (address << 1) & 0xfffe);
+      }
+      else
+      {
+        /* cartridge ROM */
+        return *(uint16 *)(m68k.memory_map[(address>>15)&0xff].base + ((address << 1) & 0xfffe));
+      }
+    }
   }
 }
 

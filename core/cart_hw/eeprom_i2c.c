@@ -2,7 +2,7 @@
  *  Genesis Plus
  *  I2C serial EEPROM (24Cxx) boards
  *
- *  Copyright (C) 2007-2016  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2007-2026  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -183,9 +183,6 @@ void eeprom_i2c_init(void)
 {
   int i = sizeof(i2c_database) / sizeof(T_I2C_GAME) - 1;
 
-  /* no serial EEPROM found by default */
-  sram.custom = 0;
-
   /* initialize I2C EEPROM state */
   memset(&eeprom_i2c, 0, sizeof(eeprom_i2c));
   eeprom_i2c.sda = eeprom_i2c.old_sda = 1;
@@ -215,7 +212,8 @@ void eeprom_i2c_init(void)
           memcpy(&eeprom_i2c.spec, &i2c_specs[i2c_database[i].eeprom_type], sizeof(T_I2C_SPEC));
 
           /* serial EEPROM game found */
-          sram.on = sram.custom = 1;
+          sram.on = 1;
+          sram.type = EEPROM_I2C;
         }
 
         /* initialize memory mapping */
@@ -227,12 +225,12 @@ void eeprom_i2c_init(void)
   while (i--);
 
   /* for games not present in database, check if ROM header indicates serial EEPROM is used */
-  if (!sram.custom && sram.detected)
+  if (!sram.type && sram.detected)
   {
     if ((READ_BYTE(cart.rom,0x1b2) == 0xe8) || ((sram.end - sram.start) < 2))
     {
       /* serial EEPROM game found */
-      sram.custom = 1;
+      sram.type = EEPROM_I2C;
 
       /* assume SEGA mapper as default */
       memcpy(&eeprom_i2c.spec, &i2c_specs[EEPROM_X24C01], sizeof(T_I2C_SPEC));
@@ -837,7 +835,7 @@ static void mapper_i2c_jcart_init(void)
   int i;
 
  /* check if serial EEPROM is used (support for SRJCV1-1 & SRJCV1-2 boards with only J-CART) */
-  if (sram.custom)
+  if (sram.type == EEPROM_I2C)
   {
     /* serial EEPROM (write) mapped to $300000-$37ffff */
     for (i=0x30; i<0x38; i++)

@@ -2,7 +2,7 @@
  *  Genesis Plus
  *  Microwire Serial EEPROM (93C46 only) support
  *
- *  Copyright (C) 2011  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2011-2026  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -53,7 +53,7 @@ void eeprom_93c_init(void)
   memset(&eeprom_93c, 0, sizeof(T_EEPROM_93C));
   eeprom_93c.data = 1;
   eeprom_93c.state = WAIT_START;
-  sram.custom = 3;
+  sram.type = EEPROM_MICROWIRE;
 }
 
 void eeprom_93c_write(unsigned char data)

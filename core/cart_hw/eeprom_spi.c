@@ -2,7 +2,7 @@
  *  Genesis Plus
  *  SPI Serial EEPROM (25xxx/95xxx) support
  *
- *  Copyright (C) 2012  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2012-2026  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -80,7 +80,7 @@ void eeprom_spi_init(void)
   spi_eeprom.state = GET_OPCODE;
 
   /* enable backup RAM */
-  sram.custom = 2;
+  sram.type = EEPROM_SPI;
   sram.on = 1;
 }
 

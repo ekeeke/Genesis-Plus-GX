@@ -2,7 +2,7 @@
  *  Genesis Plus
  *  Backup RAM support
  *
- *  Copyright (C) 2007-2025  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2007-2026  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -37,6 +37,7 @@
  ****************************************************************************************/
 
 #include "shared.h"
+#include "flash_cfi.h"
 
 T_SRAM sram;
 
@@ -62,7 +63,10 @@ T_SRAM sram;
 void sram_init(void)
 {
   /* disable Backup RAM by default */
-  sram.detected = sram.on = sram.custom = sram.start = sram.end = 0;
+  sram.detected = sram.on = sram.start = sram.end = 0;
+
+  /* default SRAM type */
+  sram.type = DEFAULT_SRAM;
 
   /* initialize Backup RAM */
   if (strstr(rominfo.international,"Sonic 1 Remastered"))
@@ -88,8 +92,8 @@ void sram_init(void)
     sram.on = 1;
 
     /* retrieve backup RAM start & end addresses */
-    sram.start = READ_WORD_LONG(cart.rom, 0x1b4);
-    sram.end   = READ_WORD_LONG(cart.rom, 0x1b8);
+    sram.start = READ_WORD_LONG(cart.rom, 0x1b4) & 0xffffff;
+    sram.end   = READ_WORD_LONG(cart.rom, 0x1b8) & 0xffffff;
 
     /* autodetect games with wrong header infos */
     if (strstr(rominfo.product,"T-26013") != NULL)
@@ -106,6 +110,7 @@ void sram_init(void)
       /* Life on Mars / Life on Earth Reimagined / The Secret Of The Four Winds (wrong addresses) */
       sram.start = 0x3f0000;
       sram.end = 0x3fffff;
+      sram.type = FLASH_MEMORY + S29GL064N_04;
     }
 
     /* fixes games indicating internal RAM as volatile external RAM (Feng Kuang Tao Hua Yuan) */
@@ -129,6 +134,21 @@ void sram_init(void)
       /* forces 64KB static RAM max */
       sram.end = sram.start + 0xffff;
     }
+  }
+  else if ((READ_BYTE(cart.rom,0x1b0) == 0x46) && (READ_BYTE(cart.rom,0x1b1) == 0x4C))
+  {
+    /* generic SGDK flash-save support */
+    sram.type = FLASH_MEMORY + S29GL064N_04;
+
+    /* backup RAM detected */
+    sram.detected = 1;
+
+    /* enable backup RAM */
+    sram.on = 1;
+
+    /* retrieve backup RAM start & end addresses */
+    sram.start = READ_WORD_LONG(cart.rom, 0x1b4) & 0xffffff;
+    sram.end   = READ_WORD_LONG(cart.rom, 0x1b8) & 0xffffff;
   }
   else
   {
@@ -210,6 +230,7 @@ void sram_init(void)
       sram.on = 1;
       sram.start = 0x7e0000;
       sram.end = 0x7fffff;
+      sram.type = FLASH_MEMORY + S29GL064N_04;
     }
 
     /* auto-detect games which need disabled backup RAM */
