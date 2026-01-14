@@ -5,7 +5,7 @@
  *  Support for Master System (315-5216, 315-5237 & 315-5297), Game Gear & Mega Drive I/O chips
  *
  *  Copyright (C) 1998-2003  Charles Mac Donald (original code)
- *  Copyright (C) 2007-2019  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2007-2026  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -49,6 +49,7 @@
 #include "paddle.h"
 #include "sportspad.h"
 #include "graphic_board.h"
+#include "smash.h"
 
 uint8 io_reg[0x10];
 
@@ -158,6 +159,13 @@ void io_init(void)
       break;
     }
 
+    case SYSTEM_SMASH:
+    {
+      port[0].data_w = dummy_write;
+      port[0].data_r = smash_1_read;
+      break;
+    }
+
     default:
     {
       port[0].data_w = dummy_write;
@@ -256,6 +264,13 @@ void io_init(void)
     {
       port[1].data_w = graphic_board_write;
       port[1].data_r = graphic_board_read;
+      break;
+    }
+
+    case SYSTEM_SMASH:
+    {
+      port[1].data_w = dummy_write;
+      port[1].data_r = smash_2_read;
       break;
     }
 

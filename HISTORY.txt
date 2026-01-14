@@ -144,8 +144,9 @@ Genesis Plus GX 1.7.5 (xx/xx/xxxx) (Eke-Eke)
 
 [Core/IO]
 ---------------
-* added Sega Graphic Board support (thanks to SMS Power)
+* added Sega Graphic Board emulation (thanks to Bock & Maxim at SMS Power for prototype hardware reverse-engineering)
 * added Master Tap emulation (multi-player support in Boom homebrew)
+* added Innovation's Smash Controller emulation (thanks to Stanislav Simbirtsev for original hardware reverse-engineering)
 * added gamepad type auto-detection
 * added support for XE-1AP controller on both ports 
 * improved XE-1AP controller emulation

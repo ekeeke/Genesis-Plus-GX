@@ -3,7 +3,7 @@
  *
  *  Genesis Plus GX libretro port
  *
- *  Copyright Eke-Eke (2007-2022)
+ *  Copyright Eke-Eke (2007-2026)
  *
  *  Copyright Daniel De Matteis (2012-2016)
  *
@@ -68,6 +68,7 @@
 #define RETRO_DEVICE_PHASER               RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_LIGHTGUN, 0)
 #define RETRO_DEVICE_MENACER              RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_LIGHTGUN, 1)
 #define RETRO_DEVICE_JUSTIFIERS           RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_LIGHTGUN, 2)
+#define RETRO_DEVICE_SMASH_CONTROLLER     RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_LIGHTGUN, 3)
 #define RETRO_DEVICE_GRAPHIC_BOARD        RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_POINTER, 0)
 
 #include <libretro.h>
@@ -621,6 +622,71 @@ static void osd_input_update_internal_bitmasks(void)
                break;
             }
 
+         case DEVICE_SMASH:
+         {
+            int pressed;
+            if (retro_gun_mode == RetroPointer)
+            {
+               pressed = input_state_cb(player, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_PRESSED);
+               input.analog[i][0] = ((input_state_cb(player, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_X) + 0x7fff) * bitmap.viewport.w) / 0xfffe;
+               input.analog[i][1] = ((input_state_cb(player, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_Y) + 0x7fff) * bitmap.viewport.h) / 0xfffe;
+            }
+            else
+            {
+               pressed = input_state_cb(player, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_TRIGGER);
+               if (input_state_cb(player, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_IS_OFFSCREEN))
+               {
+                  input.analog[i][0] = input.analog[i][1] = -1;
+               }
+               else
+               {
+                  input.analog[i][0] = ((input_state_cb(player, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_SCREEN_X) + 0x7fff) * bitmap.viewport.w) / 0xfffe;
+                  input.analog[i][1] = ((input_state_cb(player, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_SCREEN_Y) + 0x7fff) * bitmap.viewport.h) / 0xfffe;
+               }
+            }
+
+            /* no buttons pressed by default */
+            temp = 0;
+
+            /* check if trigger button is pressed */
+            if (pressed)
+            {
+               /* horizontal position */
+               int x = input.analog[i][0];
+
+               /* adjust vertical position with default screen offset for Whac-a-Critter / Mallet Legend */
+               /* note: this could be made configurable but no other known game supports this controller */
+               int y = input.analog[i][1] - (bitmap.viewport.h/2);
+
+               /* determine pressed button */
+               if (y < (bitmap.viewport.h/6))
+               {
+                  /* top row */
+                  if (x < (bitmap.viewport.w/3)) temp = INPUT_SMASH_UP_LEFT;
+                  else if (x < ((2*bitmap.viewport.w)/3)) temp = INPUT_SMASH_UP;
+                  else temp = INPUT_SMASH_UP_RIGHT;
+               }
+               else if (y < ((2*bitmap.viewport.h)/6))
+               {
+                  /* middle row */
+                  if (x < (bitmap.viewport.w/3)) temp = INPUT_SMASH_LEFT;
+                  else if (x < ((2*bitmap.viewport.w)/3)) temp = INPUT_SMASH_CENTER;
+                  else temp = INPUT_SMASH_RIGHT;
+               }
+               else if (y < (bitmap.viewport.h/2))
+               {
+                  /* bottom row */
+                  if (x < (bitmap.viewport.w/3)) temp = INPUT_SMASH_DOWN_LEFT;
+                  else if (x < ((2*bitmap.viewport.w)/3)) temp = INPUT_SMASH_DOWN;
+                  else temp = INPUT_SMASH_DOWN_RIGHT;
+               }
+            }
+
+            player++;
+            ret = input_state_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_MASK);
+            break;
+         }
+
          default:
             break;
       }
@@ -841,6 +907,69 @@ static void osd_input_update_internal(void)
                player++;
                break;
             }
+
+         case DEVICE_SMASH:
+         {
+            int pressed;
+            if (retro_gun_mode == RetroPointer)
+            {
+               pressed = input_state_cb(player, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_PRESSED);
+               input.analog[i][0] = ((input_state_cb(player, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_X) + 0x7fff) * bitmap.viewport.w) / 0xfffe;
+               input.analog[i][1] = ((input_state_cb(player, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_Y) + 0x7fff) * bitmap.viewport.h) / 0xfffe;
+            }
+            else
+            {
+               pressed = input_state_cb(player, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_TRIGGER);
+               if (input_state_cb(player, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_IS_OFFSCREEN))
+               {
+                  input.analog[i][0] = input.analog[i][1] = 512;
+               }
+               else
+               {
+                  input.analog[i][0] = ((input_state_cb(player, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_SCREEN_X) + 0x7fff) * bitmap.viewport.w) / 0xfffe;
+                  input.analog[i][1] = ((input_state_cb(player, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_SCREEN_Y) + 0x7fff) * bitmap.viewport.h) / 0xfffe;
+               }
+            }
+
+            /* no buttons pressed by default */
+            temp = 0;
+
+            /* check if trigger button is pressed */
+            if (pressed)
+            {
+               /* horizontal position */
+               int x = input.analog[i][0];
+
+               /* adjust vertical position with default screen offset for Whac-a-Critter / Mallet Legend */
+               /* note: this could be made configurable but no other known game supports this controller */
+               int y = input.analog[i][1] - (bitmap.viewport.h/2);
+
+               /* determine pressed button */
+               if (y < (bitmap.viewport.h/6))
+               {
+                  /* top row */
+                  if (x < (bitmap.viewport.w/3)) temp = INPUT_SMASH_UP_LEFT;
+                  else if (x < ((2*bitmap.viewport.w)/3)) temp = INPUT_SMASH_UP;
+                  else temp = INPUT_SMASH_UP_RIGHT;
+               }
+               else if (y < ((2*bitmap.viewport.h)/6))
+               {
+                  /* middle row */
+                  if (x < (bitmap.viewport.w/3)) temp = INPUT_SMASH_LEFT;
+                  else if (x < ((2*bitmap.viewport.w)/3)) temp = INPUT_SMASH_CENTER;
+                  else temp = INPUT_SMASH_RIGHT;
+               }
+               else if (y < (bitmap.viewport.h/2))
+               {
+                  /* bottom row */
+                  if (x < (bitmap.viewport.w/3)) temp = INPUT_SMASH_DOWN_LEFT;
+                  else if (x < ((2*bitmap.viewport.w)/3)) temp = INPUT_SMASH_DOWN;
+                  else temp = INPUT_SMASH_DOWN_RIGHT;
+               }
+            }
+            player++;
+            break;
+         }
 
          default:
             break;
@@ -2721,6 +2850,7 @@ void retro_set_environment(retro_environment_t cb)
       { "MS Graphic Board", RETRO_DEVICE_GRAPHIC_BOARD },
       { "MD XE-1AP", RETRO_DEVICE_XE_1AP },
       { "MD Mouse", RETRO_DEVICE_MOUSE },
+      { "MD Smash Controller", RETRO_DEVICE_SMASH_CONTROLLER }
    };
 
    static const struct retro_controller_description port_2[] = {
@@ -2742,11 +2872,12 @@ void retro_set_environment(retro_environment_t cb)
       { "MS Graphic Board", RETRO_DEVICE_GRAPHIC_BOARD },
       { "MD XE-1AP", RETRO_DEVICE_XE_1AP },
       { "MD Mouse", RETRO_DEVICE_MOUSE },
+      { "MD Smash COntroller", RETRO_DEVICE_SMASH_CONTROLLER }
   };
 
    static const struct retro_controller_info ports[] = {
-      { port_1, 16 },
-      { port_2, 18 },
+      { port_1, 17 },
+      { port_2, 19 },
       { 0 },
    };
 
@@ -3065,6 +3196,9 @@ void retro_set_controller_port_device(unsigned port, unsigned device)
          break;
       case RETRO_DEVICE_GRAPHIC_BOARD:
          input.system[port] = SYSTEM_GRAPHIC_BOARD;
+         break;
+      case RETRO_DEVICE_SMASH_CONTROLLER:
+         input.system[port] = SYSTEM_SMASH;
          break;
       case RETRO_DEVICE_JOYPAD:
       default:
@@ -3695,7 +3829,7 @@ void retro_run(void)
 
    if (config.gun_cursor)
    {
-      if (input.system[0] == SYSTEM_LIGHTPHASER)
+      if ((input.system[0] == SYSTEM_LIGHTPHASER) || (input.system[0] == SYSTEM_SMASH))
       {
          draw_cursor(input.analog[0][0], input.analog[0][1], 0x001f);
       }
@@ -3704,7 +3838,7 @@ void retro_run(void)
          draw_cursor(input.analog[4][0], input.analog[4][1], 0x001f);
       }
 
-      if (input.system[1] == SYSTEM_LIGHTPHASER)
+      if ((input.system[1] == SYSTEM_LIGHTPHASER) || (input.system[1] == SYSTEM_SMASH))
       {
          draw_cursor(input.analog[4][0], input.analog[4][1], 0xf800);
       }

@@ -658,6 +658,20 @@ int sdl_input_update(void)
       break;
     }
 
+    case DEVICE_SMASH:
+    {
+      if(keystate[SDLK_KP9])  input.pad[joynum] |= INPUT_SMASH_UP_RIGHT;
+      if(keystate[SDLK_KP8])  input.pad[joynum] |= INPUT_SMASH_UP;
+      if(keystate[SDLK_KP7])  input.pad[joynum] |= INPUT_SMASH_UP_LEFT;
+      if(keystate[SDLK_KP6])  input.pad[joynum] |= INPUT_SMASH_RIGHT;
+      if(keystate[SDLK_KP5])  input.pad[joynum] |= INPUT_SMASH_CENTER;
+      if(keystate[SDLK_KP4])  input.pad[joynum] |= INPUT_SMASH_LEFT;
+      if(keystate[SDLK_KP3])  input.pad[joynum] |= INPUT_SMASH_DOWN_RIGHT;
+      if(keystate[SDLK_KP2])  input.pad[joynum] |= INPUT_SMASH_DOWN;
+      if(keystate[SDLK_KP1])  input.pad[joynum] |= INPUT_SMASH_DOWN_LEFT;
+      break;
+    }
+
     case DEVICE_ACTIVATOR:
     {
       if(keystate[SDLK_g])  input.pad[joynum] |= INPUT_ACTIVATOR_7L;

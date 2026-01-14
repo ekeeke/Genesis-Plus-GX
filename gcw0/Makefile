@@ -66,6 +66,7 @@ OBJECTS	+=      $(OBJDIR)/input.o	  \
 		$(OBJDIR)/xe_1ap.o	  \
 		$(OBJDIR)/teamplayer.o    \
 		$(OBJDIR)/paddle.o	  \
+		$(OBJDIR)/smash.o         \
 		$(OBJDIR)/sportspad.o     \
 		$(OBJDIR)/terebi_oekaki.o \
 		$(OBJDIR)/graphic_board.o

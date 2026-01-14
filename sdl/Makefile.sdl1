@@ -76,7 +76,8 @@ OBJECTS	+=      $(OBJDIR)/input.o	  \
 		$(OBJDIR)/paddle.o	  \
 		$(OBJDIR)/sportspad.o     \
 		$(OBJDIR)/terebi_oekaki.o \
-		$(OBJDIR)/graphic_board.o
+		$(OBJDIR)/graphic_board.o \
+		$(OBJDIR)/smash.o
 
 OBJECTS	+=      $(OBJDIR)/sound.o	\
 		$(OBJDIR)/psg.o         \

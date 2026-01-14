@@ -3,7 +3,7 @@
  *  Input peripherals support
  *
  *  Copyright (C) 1998-2003  Charles Mac Donald (original code)
- *  Copyright (C) 2007-2016  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2007-2026  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -211,6 +211,13 @@ void input_init(void)
       player++;
       break;
     }
+
+    case SYSTEM_SMASH:
+    {
+      input.dev[0] = DEVICE_SMASH;
+      player++;
+      break;
+    }
   }
 
   if (player == MAX_INPUTS)
@@ -334,6 +341,13 @@ void input_init(void)
     case SYSTEM_GRAPHIC_BOARD:
     {
       input.dev[4] = DEVICE_GRAPHIC_BOARD;
+      player++;
+      break;
+    }
+
+    case SYSTEM_SMASH:
+    {
+      input.dev[4] = DEVICE_SMASH;
       player++;
       break;
     }

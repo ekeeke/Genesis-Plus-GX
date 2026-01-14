@@ -3,7 +3,7 @@
  *
  *  Genesis Plus GX video & rendering support
  *
- *  Copyright Eke-Eke (2007-2025), based on original work from Softdev (2006)
+ *  Copyright Eke-Eke (2007-2026), based on original work from Softdev (2006)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -1595,15 +1595,15 @@ void gx_video_Start(void)
   int i, player = 0;
   for (i=0; i<MAX_DEVICES; i++)
   {
-    /* Check for emulated lightguns */
-    if (input.dev[i] == DEVICE_LIGHTGUN)
+    /* Check for emulated lightguns or smash controllers */
+    if ((input.dev[i] == DEVICE_LIGHTGUN) || (input.dev[i] == DEVICE_SMASH))
     {
       /* Check if input device is affected to player */
       if (config.input[player].device >= 0)
       {
-        if ((i == 0) || ((i == 4) && (input.system[1] != SYSTEM_LIGHTPHASER)))
+        if ((i == 0) || ((i == 4) && (input.system[1] != SYSTEM_LIGHTPHASER) && (input.system[1] != SYSTEM_SMASH)))
         {
-          /* Lightgun #1 */
+          /* Player #1 cursor */
           if (config.gun_cursor[0])
           {
             crosshair[0] = gxTextureOpenPNG(Crosshair_p1_png,0);
@@ -1612,7 +1612,7 @@ void gx_video_Start(void)
         }
         else
         {
-          /* Lightgun #2 */
+          /* Player #2 cursor */
           if (config.gun_cursor[1])
           {
             crosshair[1] = gxTextureOpenPNG(Crosshair_p2_png,0);
@@ -1755,7 +1755,7 @@ int gx_video_Update(int status)
       /* lightgun # 1 screen mark */
       if (crosshair[0])
       {
-        if (input.system[0] == SYSTEM_LIGHTPHASER)
+        if ((input.system[0] == SYSTEM_LIGHTPHASER) || (input.system[0] == SYSTEM_SMASH))
         {
           gxDrawCrosshair(crosshair[0], input.analog[0][0],input.analog[0][1]);
         }
@@ -1768,7 +1768,7 @@ int gx_video_Update(int status)
       /* lightgun #2 screen mark */
       if (crosshair[1])
       {
-        if (input.system[1] == SYSTEM_LIGHTPHASER)
+        if ((input.system[1] == SYSTEM_LIGHTPHASER) || (input.system[1] == SYSTEM_SMASH))
         {
           gxDrawCrosshair(crosshair[1], input.analog[4][0],input.analog[4][1]);
         }

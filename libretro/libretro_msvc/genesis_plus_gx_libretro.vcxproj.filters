@@ -177,6 +177,9 @@
     <ClCompile Include="..\..\core\input_hw\paddle.c">
       <Filter>core\input_hw</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\core\input_hw\smash.c">
+      <Filter>core\input_hw</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\core\input_hw\sportspad.c">
       <Filter>core\input_hw</Filter>
     </ClCompile>
@@ -507,6 +510,9 @@
       <Filter>core\input_hw</Filter>
     </ClInclude>
     <ClInclude Include="..\..\core\input_hw\paddle.h">
+      <Filter>core\input_hw</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\core\input_hw\smash.h">
       <Filter>core\input_hw</Filter>
     </ClInclude>
     <ClInclude Include="..\..\core\input_hw\sportspad.h">

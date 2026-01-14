@@ -3,7 +3,7 @@
  *  Input peripherals support
  *
  *  Copyright (C) 1998-2003  Charles Mac Donald (original code)
- *  Copyright (C) 2007-2016  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2007-2026  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -55,9 +55,10 @@
 #define SYSTEM_PADDLE          (8) /* Sega Paddle Control */
 #define SYSTEM_SPORTSPAD       (9) /* Sega Sports Pad */
 #define SYSTEM_GRAPHIC_BOARD  (10) /* Sega Graphic Board */
-#define SYSTEM_MASTERTAP      (11) /* Multi Tap -- Furrtek's Master Tap (unofficial) */
-#define SYSTEM_TEAMPLAYER     (12) /* Multi Tap -- Sega TeamPlayer */
-#define SYSTEM_WAYPLAY        (13) /* Multi Tap -- EA 4-Way Play (use both ports) */
+#define SYSTEM_SMASH          (11) /* Inovation's Smash Controller */
+#define SYSTEM_MASTERTAP      (12) /* Multi Tap -- Furrtek's Master Tap (unofficial) */
+#define SYSTEM_TEAMPLAYER     (13) /* Multi Tap -- Sega TeamPlayer */
+#define SYSTEM_WAYPLAY        (14) /* Multi Tap -- EA 4-Way Play (use both ports) */
 
 /* Device type */
 #define NO_DEVICE             (0xff) /* unconnected device (fixed ID for Team Player) */
@@ -72,9 +73,10 @@
 #define DEVICE_PICO           (0x08) /* PICO tablet */
 #define DEVICE_TEREBI         (0x09) /* Terebi Oekaki tablet */
 #define DEVICE_XE_1AP         (0x0a) /* XE-1AP analog controller */
-#define DEVICE_ACTIVATOR      (0x0b) /* Activator */
+#define DEVICE_ACTIVATOR      (0x0b) /* Sega Activator */
+#define DEVICE_SMASH          (0x0c) /* Inovation's Smash Controller */
 
-/* Default Input bitmasks */
+/* Common input bitmasks */
 #define INPUT_MODE         (0x0800)
 #define INPUT_X            (0x0400)
 #define INPUT_Y            (0x0200)
@@ -135,6 +137,18 @@
 #define INPUT_GRAPHIC_PEN  (0x0004)
 #define INPUT_GRAPHIC_DO   (0x0002)
 #define INPUT_GRAPHIC_MENU (0x0001)
+
+/* Smash Controller specific bitmasks */
+#define INPUT_SMASH_DOWN_LEFT   (0x0100)
+#define INPUT_SMASH_DOWN        (0x0080)
+#define INPUT_SMASH_DOWN_RIGHT  (0x0040)
+#define INPUT_SMASH_LEFT        (0x0020)
+#define INPUT_SMASH_CENTER      (0x0010)
+#define INPUT_SMASH_RIGHT       (0x0008)
+#define INPUT_SMASH_UP_LEFT     (0x0004)
+#define INPUT_SMASH_UP          (0x0002)
+#define INPUT_SMASH_UP_RIGHT    (0x0001)
+
 
 typedef struct
 {

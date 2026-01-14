@@ -3,7 +3,7 @@
  *
  *  Genesis Plus GX input support
  *
- *  Copyright Eke-Eke (2007-2023)
+ *  Copyright Eke-Eke (2007-2026)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -483,6 +483,55 @@ static void pad_update(s8 chan, u8 i)
         else if ((ang > 247.5) && (ang <= 292.5)) input.pad[i] |= INPUT_ACTIVATOR_7U;
         else if ((ang > 292.5) && (ang <= 337.5)) input.pad[i] |= INPUT_ACTIVATOR_8U;
         else input.pad[i] |= INPUT_ACTIVATOR_1U;
+      }
+
+      break;
+    }
+
+    case DEVICE_SMASH:
+    {
+      /* on-screen aimed button position (x,y) */
+      input.analog[i][0] += x / ANALOG_SENSITIVITY;
+      input.analog[i][1] -= y / ANALOG_SENSITIVITY;
+
+      /* limits */
+      if (input.analog[i][0] < 0) input.analog[i][0] = 0;
+      else if (input.analog[i][0] > bitmap.viewport.w) input.analog[i][0] = bitmap.viewport.w;
+      if (input.analog[i][1] < 0) input.analog[i][1] = 0;
+      else if (input.analog[i][1] > bitmap.viewport.h) input.analog[i][1] = bitmap.viewport.h;
+
+      /* check if trigger button is pressed */
+      if (p & pad_keymap[KEY_BUTTONA])
+      {
+        /* horizontal position */
+        x = input.analog[i][0];
+
+        /* adjust vertical position with default screen offset for Whac-a-Critter / Mallet Legend */
+        /* note: this could be made configurable but no other known game supports this controller */
+        y = input.analog[i][1] - (bitmap.viewport.h/2);
+
+        /* determine pressed button */
+        if (y < (bitmap.viewport.h/6))
+        {
+          /* top row */
+          if (x < (bitmap.viewport.w/3)) input.pad[i] = INPUT_SMASH_UP_LEFT;
+          else if (x < ((2*bitmap.viewport.w)/3)) input.pad[i] = INPUT_SMASH_UP;
+          else input.pad[i] = INPUT_SMASH_UP_RIGHT;
+        }
+        else if (y < ((2*bitmap.viewport.h)/6))
+        {
+          /* middle row */
+          if (x < (bitmap.viewport.w/3)) input.pad[i] = INPUT_SMASH_LEFT;
+          else if (x < ((2*bitmap.viewport.w)/3)) input.pad[i] = INPUT_SMASH_CENTER;
+          else input.pad[i] = INPUT_SMASH_RIGHT;
+        }
+        else if (y < (bitmap.viewport.h/2))
+        {
+          /* bottom row */
+          if (x < (bitmap.viewport.w/3)) input.pad[i] = INPUT_SMASH_DOWN_LEFT;
+          else if (x < ((2*bitmap.viewport.w)/3)) input.pad[i] = INPUT_SMASH_DOWN;
+          else input.pad[i] = INPUT_SMASH_DOWN_RIGHT;
+        }
       }
 
       break;
@@ -1289,6 +1338,78 @@ static void wpad_update(s8 chan, u8 i, u32 exp)
 
       break;
     }
+
+    case DEVICE_SMASH:
+    {
+      /* on-screen aimed button position (x,y) */
+      if (exp < WPAD_EXP_CLASSIC)
+      {
+        /* Wiimote IR */
+        struct ir_t ir;
+        WPAD_IR(chan, &ir);
+
+        if (ir.valid)
+        {
+          /* screen position */
+          input.analog[i][0] = ((ir.x + config.calx) * bitmap.viewport.w) / 640;
+          input.analog[i][1] = ((ir.y + config.caly) * bitmap.viewport.h) / 480;
+        }
+        else
+        {
+          /* outside screen area */
+          input.analog[i][0] = 512;
+          input.analog[i][1] = 512;
+        }
+      }
+      else
+      {
+        /* Left analog stick */
+        input.analog[i][0] += x / ANALOG_SENSITIVITY;
+        input.analog[i][1] -= y / ANALOG_SENSITIVITY;
+
+        /* limits */
+        if (input.analog[i][0] < 0) input.analog[i][0] = 0;
+        else if (input.analog[i][0] > bitmap.viewport.w) input.analog[i][0] = bitmap.viewport.w;
+        if (input.analog[i][1] < 0) input.analog[i][1] = 0;
+        else if (input.analog[i][1] > bitmap.viewport.h) input.analog[i][1] = bitmap.viewport.h;
+      }
+
+      /* check if trigger button is pressed */
+      if (p & wpad_keymap[KEY_BUTTONA])
+      {
+        /* horizontal position */
+        x = input.analog[i][0];
+
+        /* adjust vertical position with default screen offset for Whac-a-Critter / Mallet Legend */
+        /* note: this could be made configurable but no other known game supports this controller */
+        y = input.analog[i][1] - (bitmap.viewport.h/2);
+
+        /* determine pressed button */
+        if (y < (bitmap.viewport.h/6))
+        {
+          /* top row */
+          if (x < (bitmap.viewport.w/3)) input.pad[i] = INPUT_SMASH_UP_LEFT;
+          else if (x < ((2*bitmap.viewport.w)/3)) input.pad[i] = INPUT_SMASH_UP;
+          else input.pad[i] = INPUT_SMASH_UP_RIGHT;
+        }
+        else if (y < ((2*bitmap.viewport.h)/6))
+        {
+          /* middle row */
+          if (x < (bitmap.viewport.w/3)) input.pad[i] = INPUT_SMASH_LEFT;
+          else if (x < ((2*bitmap.viewport.w)/3)) input.pad[i] = INPUT_SMASH_CENTER;
+          else input.pad[i] = INPUT_SMASH_RIGHT;
+        }
+        else if (y < (bitmap.viewport.h/2))
+        {
+          /* bottom row */
+          if (x < (bitmap.viewport.w/3)) input.pad[i] = INPUT_SMASH_DOWN_LEFT;
+          else if (x < ((2*bitmap.viewport.w)/3)) input.pad[i] = INPUT_SMASH_DOWN;
+          else input.pad[i] = INPUT_SMASH_DOWN_RIGHT;
+        }
+      }
+
+      break;
+    }
   }
 }
 #endif
@@ -1680,6 +1801,14 @@ void gx_input_Config(u8 chan, u8 device, u8 type)
       sprintf(keyname[KEY_BUTTONB],"DO Button");
       sprintf(keyname[KEY_BUTTONC],"MENU Button");
       sprintf(keyname[KEY_START],"PAUSE Button");
+      break;
+    }
+
+    case DEVICE_SMASH:
+    {
+      first_key = KEY_BUTTONA;
+      last_key = KEY_BUTTONA;
+      sprintf(keyname[KEY_BUTTONA],"TRIGGER Button");
       break;
     }
 

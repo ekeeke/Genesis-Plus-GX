@@ -3,7 +3,7 @@
  *
  *  Genesis Plus GX menu
  *
- *  Copyright Eke-Eke (2009-2025)
+ *  Copyright Eke-Eke (2009-2026)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -111,6 +111,7 @@
 #include "Ctrl_teamplayer_png.h"
 #include "Ctrl_mastertap_png.h"
 #include "Ctrl_graphic_board_png.h"
+#include "Ctrl_smash_controller_png.h"
 #include "Ctrl_pad_auto_png.h"
 #include "Ctrl_pad2b_png.h"
 #include "Ctrl_pad3b_png.h"
@@ -2392,39 +2393,41 @@ static void ctrlmenu(void)
   u32 exp, index = 0;
 
   /* System devices */
-  gui_item items_sys[2][14] =
+  gui_item items_sys[2][15] =
   {
     {
-      {NULL,Ctrl_none_png           ,"","Select Port 1 device",110,130,48,72},
-      {NULL,Ctrl_gamepad_png        ,"","Select Port 1 device",100,109,68,92},
-      {NULL,Ctrl_mouse_png          ,"","Select Port 1 device", 97,113,64,88},
-      {NULL,Ctrl_menacer_png        ,"","Select Port 1 device", 94,113,80,88},
-      {NULL,Ctrl_justifiers_png     ,"","Select Port 1 device", 88,117,80,84},
-      {NULL,Ctrl_xe_1ap_png         ,"","Select Port 1 device", 98,118,72,84},
-      {NULL,Ctrl_activator_png      ,"","Select Port 1 device", 94,121,72,80},
-      {NULL,Ctrl_lightphaser_png    ,"","Select Port 1 device", 89,109,88,92},
-      {NULL,Ctrl_paddle_png         ,"","Select Port 1 device", 86,117,96,84},
-      {NULL,Ctrl_sportspad_png      ,"","Select Port 1 device", 95,117,76,84},
-      {NULL,Ctrl_graphic_board_png  ,"","Select Port 1 device", 90,105,88,96},
-      {NULL,Ctrl_mastertap_png      ,"","Select Port 1 device", 96,104,76,96},
-      {NULL,Ctrl_teamplayer_png     ,"","Select Port 1 device", 94,109,80,92},
-      {NULL,Ctrl_4wayplay_png       ,"","Select Port 1 device", 98,110,72,92}
+      {NULL,Ctrl_none_png             ,"","Select Port 1 device",110,130,48, 72},
+      {NULL,Ctrl_gamepad_png          ,"","Select Port 1 device",100,109,68, 92},
+      {NULL,Ctrl_mouse_png            ,"","Select Port 1 device", 97,113,64, 88},
+      {NULL,Ctrl_menacer_png          ,"","Select Port 1 device", 94,113,80, 88},
+      {NULL,Ctrl_justifiers_png       ,"","Select Port 1 device", 88,117,80, 84},
+      {NULL,Ctrl_xe_1ap_png           ,"","Select Port 1 device", 98,118,72, 84},
+      {NULL,Ctrl_activator_png        ,"","Select Port 1 device", 94,121,72, 80},
+      {NULL,Ctrl_lightphaser_png      ,"","Select Port 1 device", 89,109,88, 92},
+      {NULL,Ctrl_paddle_png           ,"","Select Port 1 device", 86,117,96, 84},
+      {NULL,Ctrl_sportspad_png        ,"","Select Port 1 device", 95,117,76, 84},
+      {NULL,Ctrl_graphic_board_png    ,"","Select Port 1 device", 90,105,88, 96},
+      {NULL,Ctrl_smash_controller_png ,"","Select Port 1 device", 94, 99,80,108},
+      {NULL,Ctrl_mastertap_png        ,"","Select Port 1 device", 96,104,76, 96},
+      {NULL,Ctrl_teamplayer_png       ,"","Select Port 1 device", 94,109,80, 92},
+      {NULL,Ctrl_4wayplay_png         ,"","Select Port 1 device", 98,110,72, 92}
     },
     {
-      {NULL,Ctrl_none_png           ,"","Select Port 2 device",110,300,48,72},
-      {NULL,Ctrl_gamepad_png        ,"","Select Port 2 device",100,279,68,92},
-      {NULL,Ctrl_mouse_png          ,"","Select Port 2 device", 97,283,64,88},
-      {NULL,Ctrl_menacer_png        ,"","Select Port 2 device", 94,283,80,88},
-      {NULL,Ctrl_justifiers_png     ,"","Select Port 2 device", 88,287,80,84},
-      {NULL,Ctrl_xe_1ap_png         ,"","Select Port 2 device", 98,288,72,84},
-      {NULL,Ctrl_activator_png      ,"","Select Port 2 device", 94,291,72,80},
-      {NULL,Ctrl_lightphaser_png    ,"","Select Port 2 device", 89,279,88,92},
-      {NULL,Ctrl_paddle_png         ,"","Select Port 2 device", 86,287,96,84},
-      {NULL,Ctrl_sportspad_png      ,"","Select Port 2 device", 95,287,76,84},
-      {NULL,Ctrl_graphic_board_png  ,"","Select Port 2 device", 90,275,88,96},
-      {NULL,Ctrl_mastertap_png      ,"","Select Port 1 device", 96,274,76,96},
-      {NULL,Ctrl_teamplayer_png     ,"","Select Port 2 device", 94,279,80,92},
-      {NULL,Ctrl_4wayplay_png       ,"","Select Port 2 device", 98,280,72,92}
+      {NULL,Ctrl_none_png             ,"","Select Port 2 device",110,300,48, 72},
+      {NULL,Ctrl_gamepad_png          ,"","Select Port 2 device",100,279,68, 92},
+      {NULL,Ctrl_mouse_png            ,"","Select Port 2 device", 97,283,64, 88},
+      {NULL,Ctrl_menacer_png          ,"","Select Port 2 device", 94,283,80, 88},
+      {NULL,Ctrl_justifiers_png       ,"","Select Port 2 device", 88,287,80, 84},
+      {NULL,Ctrl_xe_1ap_png           ,"","Select Port 2 device", 98,288,72, 84},
+      {NULL,Ctrl_activator_png        ,"","Select Port 2 device", 94,291,72, 80},
+      {NULL,Ctrl_lightphaser_png      ,"","Select Port 2 device", 89,279,88, 92},
+      {NULL,Ctrl_paddle_png           ,"","Select Port 2 device", 86,287,96, 84},
+      {NULL,Ctrl_sportspad_png        ,"","Select Port 2 device", 95,287,76, 84},
+      {NULL,Ctrl_graphic_board_png    ,"","Select Port 2 device", 90,275,88, 96},
+      {NULL,Ctrl_smash_controller_png ,"","Select Port 1 device", 94,269,80,108},
+      {NULL,Ctrl_mastertap_png        ,"","Select Port 1 device", 96,274,76, 96},
+      {NULL,Ctrl_teamplayer_png       ,"","Select Port 2 device", 94,279,80, 92},
+      {NULL,Ctrl_4wayplay_png         ,"","Select Port 2 device", 98,280,72, 92}
     }
   };    
 
@@ -2446,9 +2449,9 @@ static void ctrlmenu(void)
       {NULL,NULL,"","",0,0,0,0},
     },
     {
-      /* Gun option */
-      {NULL,ctrl_option_off_png,"Show\nCursor","Enable/Disable Lightgun cursor",534,180,24,24},
-      {NULL,ctrl_option_on_png ,"Show\nCursor","Enable/Disable Lightgun cursor",534,180,24,24},
+      /* Lightguns and Smash Controller option */
+      {NULL,ctrl_option_off_png,"Show\nCursor","Enable/Disable on-screen cursor",534,180,24,24},
+      {NULL,ctrl_option_on_png ,"Show\nCursor","Enable/Disable on-screen cursor",534,180,24,24},
       {NULL,NULL,"","",0,0,0,0},
       {NULL,NULL,"","",0,0,0,0},
     },
@@ -2490,7 +2493,7 @@ static void ctrlmenu(void)
   button_player_none_data.texture[0] = gxTextureOpenPNG(button_player_none_data.image[0],0);
 
   /* initialize custom images */
-  for (i=0; i<14; i++)
+  for (i=0; i<15; i++)
   {
     items_sys[1][i].texture = items_sys[0][i].texture = gxTextureOpenPNG(items_sys[0][i].data,0);
   }
@@ -2822,16 +2825,17 @@ static void ctrlmenu(void)
             }
 
             case DEVICE_LIGHTGUN:
+            case DEVICE_SMASH:
             {
               items = items_special[2];
               if ((input.system[1] == SYSTEM_MENACER) || (input.system[1] == SYSTEM_JUSTIFIER))
               {
-                /* Menacer & Justifiers affected to entries 4 & 5 */
+                /* Menacer & Justifiers assigned to entries 4 & 5 */
                 special = &config.gun_cursor[index & 1];
               }
               else
               {
-                /* Lightphasers affected to entries 0 & 4 */
+                /* Lightphasers and Smash Controllers assigned to entries 0 & 4 */
                 special = &config.gun_cursor[index / 4];
               }
               break;
@@ -3203,7 +3207,7 @@ static void ctrlmenu(void)
   gxTextureClose(&button_player_none_data.texture[0]);
 
   /* delete custom images */
-  for (i=0; i<14; i++)
+  for (i=0; i<15; i++)
   {
     gxTextureClose(&items_sys[0][i].texture);
   }
