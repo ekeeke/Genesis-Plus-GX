@@ -46,6 +46,7 @@
 #ifdef HW_RVL
 #include <ogc/usbmouse.h>
 #include "wiidrc.h"
+#include "retrousb.h"
 #endif
 
 /* Analog sticks sensitivity */
@@ -79,12 +80,13 @@
 #define PAD_RIGHT 3
 
 /* default directions mapping  */
-static u32 wpad_dirmap[4][4] =
+static u32 wpad_dirmap[5][4] =
 {
   {WPAD_BUTTON_RIGHT, WPAD_BUTTON_LEFT, WPAD_BUTTON_UP, WPAD_BUTTON_DOWN},                                  /* WIIMOTE */
   {WPAD_BUTTON_UP, WPAD_BUTTON_DOWN, WPAD_BUTTON_LEFT, WPAD_BUTTON_RIGHT},                                  /* WIIMOTE + NUNCHUK */
   {WPAD_CLASSIC_BUTTON_UP, WPAD_CLASSIC_BUTTON_DOWN, WPAD_CLASSIC_BUTTON_LEFT, WPAD_CLASSIC_BUTTON_RIGHT},  /* CLASSIC */
-  {WIIDRC_BUTTON_UP, WIIDRC_BUTTON_DOWN, WIIDRC_BUTTON_LEFT, WIIDRC_BUTTON_RIGHT}                           /* WIIU GAMEPAD */
+  {WIIDRC_BUTTON_UP, WIIDRC_BUTTON_DOWN, WIIDRC_BUTTON_LEFT, WIIDRC_BUTTON_RIGHT},                           /* WIIU GAMEPAD */
+  {PAD_BUTTON_UP, PAD_BUTTON_DOWN, PAD_BUTTON_LEFT, PAD_BUTTON_RIGHT}
 };
 
 #define WPAD_BUTTONS_HELD (WPAD_BUTTON_UP | WPAD_BUTTON_DOWN | WPAD_BUTTON_LEFT | WPAD_BUTTON_RIGHT | \
@@ -664,6 +666,7 @@ static void wpad_config(u8 exp, int chan, int first_key, int last_key)
 {
   char msg[64];
   u32 p = 255;
+  bool isRetroUSB = false;
 
   /* Disable background PAD scanning */
   inputs_disabled = 1;
@@ -673,12 +676,14 @@ static void wpad_config(u8 exp, int chan, int first_key, int last_key)
   {
     WPAD_Probe(chan, &p);
   }
-  else
+  else if (WiiDRC_Inited() && WiiDRC_Connected())
   {
-    if (WiiDRC_Inited() && WiiDRC_Connected())
-    {
       p = exp;
-    }
+  }
+  else if (RetroUSB_OK())
+  {
+      p = exp;
+      isRetroUSB = true;
   }
   
   /* Device not detected */
@@ -687,7 +692,7 @@ static void wpad_config(u8 exp, int chan, int first_key, int last_key)
     if (exp == WPAD_EXP_NONE) sprintf(msg, "WIIMOTE #%d is not connected !", chan+1);
     else if (exp == WPAD_EXP_NUNCHUK) sprintf(msg, "NUNCHUK #%d is not connected !", chan+1);
     else if (exp == WPAD_EXP_CLASSIC) sprintf(msg, "CLASSIC #%d is not connected !", chan+1);
-    else sprintf(msg, "WIIU GAMEPAD is not connected !");
+    else sprintf(msg, "WIIU GAMEPAD or RETROUSB is not connected !");
     GUI_WaitPrompt("Error",msg);
 
     /* re-enable background PAD scanning and exit */
@@ -710,6 +715,14 @@ static void wpad_config(u8 exp, int chan, int first_key, int last_key)
           WPAD_ScanPads();
         }
       }
+      else if (isRetroUSB)
+      {
+          while (RetroUSB_ButtonsHeld())
+          {
+              VIDEO_WaitVSync();
+              RetroUSB_ScanPads();
+          }
+      }
       else
       {
         while (WiiDRC_ButtonsHeld())
@@ -721,7 +734,7 @@ static void wpad_config(u8 exp, int chan, int first_key, int last_key)
 
       /* configurable button */
       sprintf(msg,"Press key for %s\n(HOME to return)",keyname[first_key]);
-      GUI_MsgBoxUpdate(0,msg);
+      GUI_MsgBoxUpdate(0, msg);
 
       /* wait for user input */
       p = 0;
@@ -732,6 +745,11 @@ static void wpad_config(u8 exp, int chan, int first_key, int last_key)
         {
           WPAD_ScanPads();
           p = WPAD_ButtonsDown(chan);
+        }
+        else if (isRetroUSB)
+        {
+            RetroUSB_ScanPads();
+            p = RetroUSB_ButtonsHeld();
         }
         else
         {
@@ -791,17 +809,30 @@ static void wpad_config(u8 exp, int chan, int first_key, int last_key)
         /* WiiU GamePad Controller */
         default:
         {
-          if (p & WIIDRC_BUTTON_A) p = WIIDRC_BUTTON_A;
-          else if (p & WIIDRC_BUTTON_B) p = WIIDRC_BUTTON_B;
-          else if (p & WIIDRC_BUTTON_X) p = WIIDRC_BUTTON_X;
-          else if (p & WIIDRC_BUTTON_Y) p = WIIDRC_BUTTON_Y;
-          else if (p & WIIDRC_BUTTON_ZL) p = WIIDRC_BUTTON_ZL;
-          else if (p & WIIDRC_BUTTON_ZR) p = WIIDRC_BUTTON_ZR;
-          else if (p & WIIDRC_BUTTON_PLUS) p = WIIDRC_BUTTON_PLUS;
-          else if (p & WIIDRC_BUTTON_MINUS) p = WIIDRC_BUTTON_MINUS;
-          else if (p & WIIDRC_BUTTON_L) p = WIIDRC_BUTTON_L;
-          else if (p & WIIDRC_BUTTON_R) p = WIIDRC_BUTTON_R;
-          else first_key = MAX_KEYS;
+          if (isRetroUSB) {
+              if (p & PAD_BUTTON_A) p = PAD_BUTTON_A;
+              else if (p & PAD_BUTTON_B) p = PAD_BUTTON_B;
+              else if (p & PAD_BUTTON_X) p = PAD_BUTTON_X;
+              else if (p & PAD_BUTTON_Y) p = PAD_BUTTON_Y;
+              else if (p & PAD_TRIGGER_Z) p = PAD_TRIGGER_Z;
+              else if (p & PAD_BUTTON_START) p = PAD_BUTTON_START;
+              else if (p & PAD_TRIGGER_L) p = PAD_TRIGGER_L;
+              else if (p & PAD_TRIGGER_R) p = PAD_TRIGGER_R;
+              else first_key = MAX_KEYS;
+          }
+          else {
+              if (p & WIIDRC_BUTTON_A) p = WIIDRC_BUTTON_A;
+              else if (p & WIIDRC_BUTTON_B) p = WIIDRC_BUTTON_B;
+              else if (p & WIIDRC_BUTTON_X) p = WIIDRC_BUTTON_X;
+              else if (p & WIIDRC_BUTTON_Y) p = WIIDRC_BUTTON_Y;
+              else if (p & WIIDRC_BUTTON_ZL) p = WIIDRC_BUTTON_ZL;
+              else if (p & WIIDRC_BUTTON_ZR) p = WIIDRC_BUTTON_ZR;
+              else if (p & WIIDRC_BUTTON_PLUS) p = WIIDRC_BUTTON_PLUS;
+              else if (p & WIIDRC_BUTTON_MINUS) p = WIIDRC_BUTTON_MINUS;
+              else if (p & WIIDRC_BUTTON_L) p = WIIDRC_BUTTON_L;
+              else if (p & WIIDRC_BUTTON_R) p = WIIDRC_BUTTON_R;
+              else first_key = MAX_KEYS;
+          }
           break;
         }
       }
@@ -810,6 +841,14 @@ static void wpad_config(u8 exp, int chan, int first_key, int last_key)
       if (first_key < MAX_KEYS)
       {
         config.wpad_keymap[4*exp + chan][first_key] = p;
+      }
+
+      if (isRetroUSB)
+      {
+          while (RetroUSB_ButtonsHeld())
+          {
+              VIDEO_WaitVSync();
+          }
       }
     }
   }
@@ -824,6 +863,14 @@ static void wpad_config(u8 exp, int chan, int first_key, int last_key)
       WPAD_ScanPads();
     }
   }
+  else if (isRetroUSB)
+  {
+      while (RetroUSB_ButtonsHeld())
+      {
+          VIDEO_WaitVSync();
+          RetroUSB_ScanPads();
+      }
+  }
   else
   {
     while (WiiDRC_ButtonsHeld())
@@ -833,49 +880,55 @@ static void wpad_config(u8 exp, int chan, int first_key, int last_key)
     }
   }
 
-  /* Configurable menu key */
-  GUI_MsgBoxUpdate(0,"Press key(s) for MENU");
-
-  /* reset key combo */
-  config.wpad_keymap[4*exp + chan][KEY_MENU] = 0;
-
-  /* wait for user input */
-  p = 0;
-  while (!p)
+  if (!isRetroUSB)
   {
-    VIDEO_WaitVSync();
-    if (exp <= WPAD_EXP_CLASSIC)
-    {
-      WPAD_ScanPads();
-      p = WPAD_ButtonsHeld(chan);
-    }
-    else
-    {
-      WiiDRC_ScanPads();
-      p = WiiDRC_ButtonsHeld();
-    }
-  }
+      /* Configurable menu key */
+      GUI_MsgBoxUpdate(0, "Press key(s) for MENU");
 
-  /* register keys until none are pressed anymore */
-  while (p)
+      /* reset key combo */
+      config.wpad_keymap[4 * exp + chan][KEY_MENU] = 0;
+
+      /* wait for user input */
+      p = 0;
+      while (!p)
+      {
+          VIDEO_WaitVSync();
+          if (exp <= WPAD_EXP_CLASSIC)
+          {
+              WPAD_ScanPads();
+              p = WPAD_ButtonsHeld(chan);
+          }
+          else
+          {
+              WiiDRC_ScanPads();
+              p = WiiDRC_ButtonsHeld();
+          }
+      }
+
+      /* register keys until none are pressed anymore */
+      while (p)
+      {
+          /* update key combo */
+          config.wpad_keymap[4 * exp + chan][KEY_MENU] |= p;
+
+          /* update WPAD status */
+          VIDEO_WaitVSync();
+          if (exp <= WPAD_EXP_CLASSIC)
+          {
+              WPAD_ScanPads();
+              p = WPAD_ButtonsHeld(chan);
+          }
+          else
+          {
+              WiiDRC_ScanPads();
+              p = WiiDRC_ButtonsHeld();
+          }
+      }
+  }
+  else
   {
-    /* update key combo */
-    config.wpad_keymap[4*exp + chan][KEY_MENU] |= p;
-
-    /* update WPAD status */
-    VIDEO_WaitVSync();
-    if (exp <= WPAD_EXP_CLASSIC)
-    {
-      WPAD_ScanPads();
-      p = WPAD_ButtonsHeld(chan);
-    }
-    else
-    {
-      WiiDRC_ScanPads();
-      p = WiiDRC_ButtonsHeld();
-    }
+      config.wpad_keymap[4 * exp + chan][KEY_MENU] = 0xFFFF;
   }
-
   /* re-enable background WPAD scanning and exit */
   inputs_disabled = 0;
 }
@@ -895,34 +948,41 @@ static void wpad_update(s8 chan, u8 i, u32 exp)
   /* WiiU GamePad Controller support */
   if (exp > WPAD_EXP_CLASSIC)
   {
-    WiiDRC_ScanPads();
-    if (WiiDRC_ShutdownRequested())
-    {
-      Shutdown = ConfigRequested = 1;
-      reload = 0;
-      return;
-    }
-
-    p = WiiDRC_ButtonsHeld();
-
-    /* Default fast-forward key combo */
-    if (WiiDRC_ButtonsDown() & WIIDRC_BUTTON_HOME)
-    {
-      if (p & WIIDRC_BUTTON_MINUS)
+      if (RetroUSB_OK())
       {
-        audioSync ^= AUDIO_WAIT;
-        videoSync = (audioSync && config.vsync && (gc_pal != vdp_pal)) ? VIDEO_WAIT : 0;
-        return;
+          p = RetroUSB_ButtonsHeld();
       }
-    }
+      else
+      {
+          WiiDRC_ScanPads();
+          if (WiiDRC_ShutdownRequested())
+          {
+              Shutdown = ConfigRequested = 1;
+              reload = 0;
+              return;
+          }
 
-    /* Left Analog Stick */
-    x = (WiiDRC_lStickX() * 128) / 75;
-    y = (WiiDRC_lStickY() * 128) / 75;
-    if (x > 127) x = 127;
-    else if (x < -128) x = -128;
-    if (y > 127) y = 127;
-    else if (y < -128) y = -128;
+          p = WiiDRC_ButtonsHeld();
+
+          /* Default fast-forward key combo */
+          if (WiiDRC_ButtonsDown() & WIIDRC_BUTTON_HOME)
+          {
+              if (p & WIIDRC_BUTTON_MINUS)
+              {
+                  audioSync ^= AUDIO_WAIT;
+                  videoSync = (audioSync && config.vsync && (gc_pal != vdp_pal)) ? VIDEO_WAIT : 0;
+                  return;
+              }
+          }
+
+          /* Left Analog Stick */
+          x = (WiiDRC_lStickX() * 128) / 75;
+          y = (WiiDRC_lStickY() * 128) / 75;
+          if (x > 127) x = 127;
+          else if (x < -128) x = -128;
+          if (y > 127) y = 127;
+          else if (y < -128) y = -128;
+      }
   }
   else if (exp != WPAD_EXP_NONE)
   {
@@ -982,7 +1042,7 @@ static void wpad_update(s8 chan, u8 i, u32 exp)
       input.analog[i][1] = y ? (127 - y) : 128;
 
       /* Right Stick analog position [0-255] */
-      if (exp >= WPAD_EXP_CLASSIC)
+      if (exp >= WPAD_EXP_CLASSIC && !RetroUSB_OK())
       {
         if (exp > WPAD_EXP_CLASSIC)
         {
@@ -1109,7 +1169,7 @@ static void wpad_update(s8 chan, u8 i, u32 exp)
           input.analog[i][1] = 512;
         }
       }
-      else
+      else if(!RetroUSB_OK())
       {
         /* Left analog stick */
         input.analog[i][0] += x / ANALOG_SENSITIVITY;
@@ -1163,7 +1223,7 @@ static void wpad_update(s8 chan, u8 i, u32 exp)
           input.analog[i][1] = (int)((ir.sy - 384) * 2 / 3 / ANALOG_SENSITIVITY);
         }
       }
-      else
+      else if(!RetroUSB_OK())
       {
         /* Left analog stick position (-127;+127) -> (-255;+255) */
         input.analog[i][0] = (x / ANALOG_SENSITIVITY) * 2;
@@ -1205,7 +1265,7 @@ static void wpad_update(s8 chan, u8 i, u32 exp)
           input.analog[0][1] = 0x1fc + ((ir.y + config.caly) * (0x2f7 - 0x1fc + 1)) / 480;
         }
       }
-      else
+      else if(!RetroUSB_OK())
       {
         /* Left analog stick */
         input.analog[0][0] += x / ANALOG_SENSITIVITY;
@@ -1242,7 +1302,7 @@ static void wpad_update(s8 chan, u8 i, u32 exp)
           input.analog[0][1] = ((ir.y + config.caly) * 250) / 480;
         }
       }
-      else
+      else if(!RetroUSB_OK())
       {
         /* Left analog stick */
         input.analog[0][0] += x / ANALOG_SENSITIVITY;
@@ -1275,7 +1335,7 @@ static void wpad_update(s8 chan, u8 i, u32 exp)
           input.analog[0][1] = ((ir.y + config.caly) * 255) / 480;
         }
       }
-      else
+      else if(!RetroUSB_OK())
       {
         /* Left analog stick */
         input.analog[0][0] += x / ANALOG_SENSITIVITY;
@@ -1426,6 +1486,7 @@ void gx_input_Init(void)
   WPAD_SetDataFormat(WPAD_CHAN_ALL,WPAD_FMT_BTNS_ACC_IR);
   WPAD_SetVRes(WPAD_CHAN_ALL,640,480);
   WiiDRC_Init();
+  RetroUSB_OK();
 #endif
 }
 
@@ -1499,6 +1560,14 @@ int gx_input_FindDevices(void)
             found++;
           }
           break;
+        }
+
+        case 5: /* RetroUSB */
+        {
+            if (RetroUSB_OK())
+            {
+                found++;
+            }
         }
  #endif
 
@@ -1582,6 +1651,17 @@ void gx_input_SetDefault(void)
     config.wpad_keymap[4*3][KEY_BUTTONZ] = WIIDRC_BUTTON_X;
     config.wpad_keymap[4*3][KEY_MODE]    = WIIDRC_BUTTON_MINUS;
     config.wpad_keymap[4*3][KEY_MENU]    = WIIDRC_BUTTON_HOME;
+
+    /* RetroUSB */
+    config.wpad_keymap[4 * 3 + 1][KEY_BUTTONA] = PAD_BUTTON_Y;
+    config.wpad_keymap[4 * 3 + 1][KEY_BUTTONB] = PAD_BUTTON_B;
+    config.wpad_keymap[4 * 3 + 1][KEY_BUTTONC] = PAD_BUTTON_A;
+    config.wpad_keymap[4 * 3 + 1][KEY_START] = PAD_BUTTON_START;
+    config.wpad_keymap[4 * 3 + 1][KEY_BUTTONX] = PAD_TRIGGER_L;
+    config.wpad_keymap[4 * 3 + 1][KEY_BUTTONY] = PAD_TRIGGER_R;
+    config.wpad_keymap[4 * 3 + 1][KEY_BUTTONZ] = PAD_BUTTON_X;
+    config.wpad_keymap[4 * 3 + 1][KEY_MODE] = PAD_TRIGGER_Z;
+    config.wpad_keymap[4 * 3 + 1][KEY_MENU] = 0;
   }
 #endif
 
@@ -1594,16 +1674,21 @@ void gx_input_SetDefault(void)
   }
 
 #ifdef HW_RVL
+
+  i = 0;
   /* autodetect connected WiiU Gamepad Controller */
   if (WiiDRC_Inited() && WiiDRC_Connected())
   {
-    config.input[0].device = 4;
-    config.input[0].port = 0;
-    i = 1;
+    config.input[i].device = 4;
+    config.input[i].port = 0;
+    i++;
   }
-  else
+  /* autodetect RetroUSB */
+  if (RetroUSB_OK())
   {
-    i = 0;
+      config.input[i].device = 5;
+      config.input[i].port = 0;
+      i++;
   }
 
   /* autodetect connected Wii Controllers */
