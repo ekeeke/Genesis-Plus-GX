@@ -3,7 +3,7 @@
  *
  *  Genesis Plus GX configuration file support
  *
- *  Copyright Eke-Eke (2007-2022)
+ *  Copyright Eke-Eke (2007-2026)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -117,6 +117,7 @@ typedef struct
   uint8 bg_overlay;
   uint8 cd_leds;
   uint8 fps;
+  uint8 analog_sensitivity;
   int16 screen_w;
   float bgm_volume;
   float sfx_volume;

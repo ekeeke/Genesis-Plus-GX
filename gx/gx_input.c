@@ -49,7 +49,7 @@
 #endif
 
 /* Analog sticks sensitivity */
-#define ANALOG_SENSITIVITY 30
+#define ANALOG_SENSITIVITY config.analog_sensitivity
 
 /* Delay before held keys triggering */
 /* higher is the value, longer must the key remain held */

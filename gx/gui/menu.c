@@ -428,17 +428,18 @@ static gui_item items_video[] =
 /* Menu options */
 static gui_item items_prefs[] =
 {
-  {NULL,NULL,"Auto ROM Load: OFF",  "Enable/Disable automatic ROM loading on startup", 56,132,276,48},
-  {NULL,NULL,"Auto Cheats: OFF",    "Enable/Disable automatic cheats activation",      56,132,276,48},
-  {NULL,NULL,"Auto Saves: OFF",     "Enable/Disable automatic saves",                  56,132,276,48},
-  {NULL,NULL,"ROM Load Device: SD", "Configure default device for ROM files",          56,132,276,48},
-  {NULL,NULL,"Saves Device: FAT",   "Configure default device for Save files",         56,132,276,48},
-  {NULL,NULL,"SFX Volume: 100",     "Adjust sound effects volume",                     56,132,276,48},
-  {NULL,NULL,"BGM Volume: 100",     "Adjust background music volume",                  56,132,276,48},
-  {NULL,NULL,"BG Overlay: ON",      "Enable/Disable background overlay",               56,132,276,48},
-  {NULL,NULL,"Screen Width: 658",   "Adjust menu screen width in pixels",              56,132,276,48},
-  {NULL,NULL,"Show CD Leds: OFF",   "Enable/Disable CD leds display",                  56,132,276,48},
-  {NULL,NULL,"Show FPS: OFF",       "Enable/Disable FPS counter",                      56,132,276,48},
+  {NULL,NULL,"Auto ROM Load: OFF",      "Enable/Disable automatic ROM loading on startup", 56,132,276,48},
+  {NULL,NULL,"Auto Cheats: OFF",        "Enable/Disable automatic cheats activation",      56,132,276,48},
+  {NULL,NULL,"Auto Saves: OFF",         "Enable/Disable automatic saves",                  56,132,276,48},
+  {NULL,NULL,"ROM Load Device: SD",     "Configure default device for ROM files",          56,132,276,48},
+  {NULL,NULL,"Saves Device: FAT",       "Configure default device for Save files",         56,132,276,48},
+  {NULL,NULL,"SFX Volume: 100",         "Adjust sound effects volume",                     56,132,276,48},
+  {NULL,NULL,"BGM Volume: 100",         "Adjust background music volume",                  56,132,276,48},
+  {NULL,NULL,"BG Overlay: ON",          "Enable/Disable background overlay",               56,132,276,48},
+  {NULL,NULL,"Screen Width: 658",       "Adjust menu screen width in pixels",              56,132,276,48},
+  {NULL,NULL,"Show CD Leds: OFF",       "Enable/Disable CD leds display",                  56,132,276,48},
+  {NULL,NULL,"Show FPS: OFF",           "Enable/Disable FPS counter",                      56,132,276,48},
+  {NULL,NULL,"Analog Sensitivity: OFF", "Adjust analog sticks sensitivity (0-128)",        56,132,276,48},
 #ifdef HW_RVL
   {NULL,NULL,"Wiimote Timeout: OFF","Enable/Disable Wii remote automatic shutdown",    56,132,276,48},
   {NULL,NULL,"Wiimote Calibration: AUTO","Calibrate Wii remote pointer",               56,132,276,48},
@@ -709,6 +710,7 @@ static void update_bgm(void)
 static void prefmenu ()
 {
   int ret, quit = 0;
+  s16 analog_sensitivity = 128 - config.analog_sensitivity;
   gui_menu *m = &menu_prefs;
   gui_item *items = m->items;
   
@@ -734,13 +736,25 @@ static void prefmenu ()
   sprintf (items[8].text, "Screen Width: %d", config.screen_w);
   sprintf (items[9].text, "Show CD Leds: %s", config.cd_leds ? "ON":"OFF");
   sprintf (items[10].text, "Show FPS: %s", config.fps ? "ON":"OFF");
+  if (analog_sensitivity == 128)
+  {
+    sprintf (items[11].text, "Analog Sensitivity: MAX");
+  }
+  else if (analog_sensitivity == 0)
+  {
+    sprintf (items[11].text, "Analog Sensitivity: OFF");
+  }
+  else
+  {
+    sprintf (items[11].text, "Analog Sensitivity: %d", analog_sensitivity);
+  }
 #ifdef HW_RVL
-  sprintf (items[11].text, "Wiimote Timeout: %s", config.autosleep ? "5 MIN":"30 MIN");
-  sprintf (items[12].text, "Wiimote Calibration: %s", ((config.calx * config.caly) != 0) ? "MANUAL":"AUTO");
-  sprintf (items[12].comment, "%s", ((config.calx * config.caly) != 0) ? "Reset default Wii remote pointer calibration":"Calibrate Wii remote pointer");
-  m->max_items = 13;
+  sprintf (items[12].text, "Wiimote Timeout: %s", config.autosleep ? "5 MIN":"30 MIN");
+  sprintf (items[13].text, "Wiimote Calibration: %s", ((config.calx * config.caly) != 0) ? "MANUAL":"AUTO");
+  sprintf (items[13].comment, "%s", ((config.calx * config.caly) != 0) ? "Reset default Wii remote pointer calibration":"Calibrate Wii remote pointer");
+  m->max_items = 14;
 #else
-  m->max_items = 11;
+  m->max_items = 12;
 #endif
 
   GUI_InitMenu(m);
@@ -836,20 +850,37 @@ static void prefmenu ()
         sprintf (items[10].text, "Show FPS: %s", config.fps ? "ON":"OFF");
         break;
 
+      case 11:   /*** Analog sticks sensitivity ***/
+        GUI_OptionBox(m,0,"Analog Sensitivy",(void *)&analog_sensitivity,1,0,128,1);
+        if (analog_sensitivity == 128)
+        {
+          sprintf (items[11].text, "Analog Sensitivity: MAX");
+        }
+        else if (analog_sensitivity == 0)
+        {
+          sprintf (items[11].text, "Analog Sensitivity: OFF");
+        }
+        else
+        {
+          sprintf (items[11].text, "Analog Sensitivity: %d", analog_sensitivity);
+        }
+        config.analog_sensitivity = 128 - analog_sensitivity;
+        break;
+
 #ifdef HW_RVL
-      case 11:   /*** Wii remote auto switch-off ***/
+      case 12:   /*** Wii remote auto switch-off ***/
         config.autosleep ^= 1;
-        sprintf (items[11].text, "Wiimote Timeout: %s", config.autosleep ? "5min":"30min");
+        sprintf (items[12].text, "Wiimote Timeout: %s", config.autosleep ? "5min":"30min");
         WPAD_SetIdleTimeout(config.autosleep ? 300 : 1800);
         break;
 
-      case 12:   /*** Wii remote pointer calibration ***/
+      case 13:   /*** Wii remote pointer calibration ***/
         if ((config.calx * config.caly) == 0)
         {
           if (GUI_WaitConfirm("Pointer Calibration","Aim center of TV screen"))
           {
-            sprintf (items[12].text, "Wiimote Calibration: MANUAL");
-            sprintf (items[12].comment, "Reset default Wii remote pointer calibration");
+            sprintf (items[13].text, "Wiimote Calibration: MANUAL");
+            sprintf (items[13].comment, "Reset default Wii remote pointer calibration");
             config.calx = 320 - m_input.ir.x;
             config.caly = 240 - m_input.ir.y;
             m_input.ir.x = 320;
@@ -858,8 +889,8 @@ static void prefmenu ()
         }
         else
         {
-          sprintf (items[12].text, "Wiimote Calibration: AUTO");
-          sprintf (items[12].comment, "Calibrate Wii remote pointer");
+          sprintf (items[13].text, "Wiimote Calibration: AUTO");
+          sprintf (items[13].comment, "Calibrate Wii remote pointer");
           config.calx = config.caly = 0;
         }
         break;

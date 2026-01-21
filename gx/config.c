@@ -3,7 +3,7 @@
  *
  *  Genesis Plus GX configuration file support
  *
- *  Copyright Eke-Eke (2007-2022)
+ *  Copyright Eke-Eke (2007-2026)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -189,6 +189,7 @@ void config_default(void)
   config.gun_cursor[0]  = 1;
   config.gun_cursor[1]  = 1;
   config.invert_mouse   = 0;
+  config.analog_sensitivity = 30;
 
   /* on-screen options */
   config.cd_leds = 0;
