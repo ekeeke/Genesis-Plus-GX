@@ -51,6 +51,12 @@
 #include <fat.h>
 #include <sys/stat.h>
 
+#ifndef HW_RVL
+#include <sdcard/gcsd.h>
+#include <ogc/dvd.h>
+#include <dvm.h>
+#endif
+
 #ifdef HW_RVL
 #include <iso9660.h>
 #include <sdcard/wiisd_io.h>
@@ -369,6 +375,10 @@ int main (int argc, char *argv[])
   /* initialize FAT devices */
   int retry = 0;
   int fatMounted = 0;
+
+  #ifndef HW_RVL
+    dvmRegisterFsDriver(&g_exfatFsDriver);
+  #endif
 
   /* try to mount FAT devices during 3 seconds */
   while (!fatMounted && (retry < 12))
