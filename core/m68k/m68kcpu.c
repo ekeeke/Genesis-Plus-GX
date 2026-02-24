@@ -272,7 +272,7 @@ void m68k_run(unsigned int cycles)
     return;
   }
 
-  /* Save end cycles count for when CPU is stopped */
+  /* Set aimed cycle count for current CPU execution frame */
   m68k.cycle_end = cycles;
 
   /* Return point for when we have an address error (TODO: use goto) */
@@ -284,7 +284,7 @@ void m68k_run(unsigned int cycles)
 
   while (m68k.cycles < cycles)
   {
-    /* Set tracing accodring to T1. */
+    /* Set tracing according to T1. */
     m68ki_trace_t1() /* auto-disable (see m68kcpu.h) */
 
     /* Set the address space for reads */
@@ -313,6 +313,9 @@ void m68k_run(unsigned int cycles)
     /* Trace m68k_exception, if necessary */
     m68ki_exception_if_trace(); /* auto-disable (see m68kcpu.h) */
   }
+
+  /* Reset aimed cycle count to indicate end of CPU execution frame */
+  m68k.cycle_end = 0;
 }
 
 int m68k_cycles(void)

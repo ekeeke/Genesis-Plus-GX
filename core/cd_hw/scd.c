@@ -2,7 +2,7 @@
  *  Genesis Plus
  *  Mega CD / Sega CD hardware
  *
- *  Copyright (C) 2012-2025  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2012-2026  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -477,14 +477,11 @@ static void s68k_poll_sync(unsigned int reg_mask)
 
   if (!m68k.stopped)
   {
-    /* save current MAIN-CPU end cycle count (recursive execution is possible) */
-    int end_cycle = m68k.cycle_end;
-
-    /* sync MAIN-CPU with SUB-CPU */
-    m68k_run(cycles);
-
-    /* restore MAIN-CPU end cycle count */
-    m68k.cycle_end = end_cycle;
+    /* sync MAIN-CPU with SUB-CPU (only if MAIN-CPU execution frame is finished, to prevent recursive execution) */
+    if (!m68k.cycle_end)
+    {
+      m68k_run(cycles);
+    }
   }
 
   /* MAIN-CPU idle on register polling ? */
@@ -512,14 +509,11 @@ static void m68k_sync(void)
     /* relative MAIN-CPU cycle counter */
     unsigned int cycles = (s68k.cycles * MCYCLES_PER_LINE) / SCYCLES_PER_LINE;
 
-    /* save current MAIN-CPU end cycle count (recursive execution is possible) */
-    int end_cycle = m68k.cycle_end;
-
-    /* sync MAIN-CPU with SUB-CPU */
-    m68k_run(cycles);
-
-    /* restore MAIN-CPU end cycle count */
-    m68k.cycle_end = end_cycle;
+    /* sync MAIN-CPU with SUB-CPU (only if MAIN-CPU execution frame is finished, to prevent recursive execution) */
+    if (!m68k.cycle_end)
+    {
+      m68k_run(cycles);
+    }
   }
 }
 

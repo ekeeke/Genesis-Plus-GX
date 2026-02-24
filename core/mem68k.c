@@ -3,7 +3,7 @@
  *  Main 68k bus handlers
  *
  *  Copyright (C) 1998-2003  Charles Mac Donald (original code)
- *  Copyright (C) 2007-2025  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2007-2026  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -275,14 +275,11 @@ static void m68k_poll_sync(unsigned int reg_mask)
 
   if (!s68k.stopped)
   {
-    /* save current SUB-CPU end cycle count (recursive execution is possible) */
-    int end_cycle = s68k.cycle_end;
-
-    /* sync SUB-CPU with MAIN-CPU */
-    s68k_run(cycles);
-
-    /* restore SUB-CPU end cycle count */
-    s68k.cycle_end = end_cycle;
+    /* sync SUB-CPU with MAIN-CPU (only if SUB-CPU execution frame is finished, to prevent recursive execution) */
+    if (!s68k.cycle_end)
+    {
+      s68k_run(cycles);
+    }
   }
 
   /* SUB-CPU idle on register polling ? */
@@ -310,14 +307,11 @@ static void s68k_sync(void)
     /* relative SUB-CPU cycle counter */
     unsigned int cycles = (m68k.cycles * SCYCLES_PER_LINE) / MCYCLES_PER_LINE;
 
-    /* save current SUB-CPU end cycle count (recursive execution is possible) */
-    int end_cycle = s68k.cycle_end;
-
-    /* sync SUB-CPU with MAIN-CPU */
-    s68k_run(cycles);
-
-    /* restore SUB-CPU end cycle count */
-    s68k.cycle_end = end_cycle;
+    /* sync SUB-CPU with MAIN-CPU (only if SUB-CPU execution frame is finished, to prevent recursive execution) */
+    if (!s68k.cycle_end)
+    {
+      s68k_run(cycles);
+    }
   }
 }
 
