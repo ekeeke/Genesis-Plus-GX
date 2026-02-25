@@ -40,7 +40,7 @@
 #ifndef _CONFIG_H_
 #define _CONFIG_H_
 
-#define CONFIG_VERSION "GENPLUS-GX 1.7.6"
+#define CONFIG_VERSION "GPGX 1.7.5 CF-01"
 
 /****************************************************************************
  * Config Option 
