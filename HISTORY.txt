@@ -233,14 +233,14 @@ Genesis Plus GX 1.7.5 (xx/xx/xxxx) (Eke-Eke)
 * fixed low-pass filter menu setting
 * fixed random PNG snapshots corruption
 * various code cleanup & optimizations
-* built with devkitPPC r38, libogc 2.2.1 and libfat 1.1.5 with UStealth Mod
 
 [Gamecube]
 ---------------
 * improved progressive mode switch request on startup when component cable is detected
 * disabled simultaneous multiple .ogg files opening (fixes crashes caused to RAM size limitation)
 * fixed broken DVD support
-* added low-mem DOL version with dynamically allocated ROM buffer (fixes loading issues with Swiss or similar loaders using ARAM for temporary DOL storage)
+* added low-mem DOL version with dynamically allocated ROM buffer (fixes loading issues with loaders using ARAM for temporary DOL storage)
+* built with devkitPPC r47, libogc2 r2354.789670c and libdvm-extreme 9b3de4c (add exFAT support)
 
 [Wii]
 ---------------
@@ -250,26 +250,7 @@ Genesis Plus GX 1.7.5 (xx/xx/xxxx) (Eke-Eke)
 * added game auto-load support through DOL args (compatible with "Wiiflow" plugin arguments) 
 * fixed support for 3rd-party classic controllers with invalid calibration settings
 * increased maximal ROM size to 15MB
-
-[GCW0]
----------------
-* added GCW Zero port by Shin-NiL & David Knight (based on SDL port)
-
-[PSP2]
----------------
-* added PS VITA port by frangarcj
-
-[libretro]
----------------
-* added optional bootrom support for Master System, Game Gear & Mega Drive / Genesis
-* added support for all emulated devices (except Activator)
-* added support for in-game resolution changes through RETRO_ENVIRONMENT_SET_SYSTEM_AV_INFO
-* added support for .mdx ROM files
-* added missing core settings (system hardware, region, lock-on, multitap, master system FM,...)
-* fixed incorrect SRAM file saving
-* fixed framebuffer size for PAL interlaced mode
-* fixed viewport width when NTSC Filter is enabled with Mega Drive or Mega CD games using H-32 mode
-* code cleanup
+* built with devkitPPC r47, libogc 2.14.1 and libfat 1.2.0
 
 ---------------------------------------------------------------------------------------------------------
 Genesis Plus GX 1.7.4 (21/06/2013) (Eke-Eke)

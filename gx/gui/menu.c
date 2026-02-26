@@ -3823,29 +3823,39 @@ static void showcredits(void)
     FONT_writeCenter("Blip Buffer Library & NTSC Video Filter by Shay Green (Blargg)", 18, 0, 640, 624 - offset, (GXColor)WHITE);
     FONT_writeCenter("3-Band EQ implementation by Neil C", 18, 0, 640, 642 - offset, (GXColor)WHITE);
     FONT_writeCenter("Ogg Vorbis 'Tremor' Library by Xiph.org Foundation", 18, 0, 640, 660 - offset, (GXColor)WHITE);
-    FONT_writeCenter("MINIMP3 Library by Lieff", 18, 0, 640, 678 - offset, (GXColor)WHITE);
-    FONT_writeCenter("CHD Library by Aaron Giles, Romain Tisserand", 18, 0, 640, 696 - offset, (GXColor)WHITE);
-    FONT_writeCenter("DR_FLAC Library by David Reid", 18, 0, 640, 714 - offset, (GXColor)WHITE);
-    FONT_writeCenter("ZLIB Library by Jean-loup Gailly & Mark Adler", 18, 0, 640, 732 - offset, (GXColor)WHITE);
-    FONT_writeCenter("LZMA Library by Igor Pavlov", 18, 0, 640, 750 - offset, (GXColor)WHITE);
-    FONT_writeCenter("ZSTD Library by Meta Platforms, Inc. and affiliates", 18, 0, 640, 768 - offset, (GXColor)WHITE);
+    FONT_writeCenter("MINIMP3 library by Lieff", 18, 0, 640, 678 - offset, (GXColor)WHITE);
+    FONT_writeCenter("CHD library by Aaron Giles, Romain Tisserand", 18, 0, 640, 696 - offset, (GXColor)WHITE);
+    FONT_writeCenter("DR_FLAC library by David Reid", 18, 0, 640, 714 - offset, (GXColor)WHITE);
+    FONT_writeCenter("ZLIB library by Jean-loup Gailly & Mark Adler", 18, 0, 640, 732 - offset, (GXColor)WHITE);
+    FONT_writeCenter("LZMA library by Igor Pavlov", 18, 0, 640, 750 - offset, (GXColor)WHITE);
+    FONT_writeCenter("ZSTD library by Meta Platforms, Inc. and affiliates", 18, 0, 640, 768 - offset, (GXColor)WHITE);
 
     FONT_writeCenter("Special thanks to ...", 20, 0, 640, 808 - offset, (GXColor)LIGHT_GREEN);
     FONT_writeCenter("Nemesis, Tasco Deluxe, Mask of Destiny, Bart Trzynadlowski, Haze,", 18, 0, 640, 844 - offset, (GXColor)WHITE);
     FONT_writeCenter("Jorge Cwik, Stef, Notaz, AamirM, Steve Snake, Charles MacDonald", 18, 0, 640, 862 - offset, (GXColor)WHITE);
     FONT_writeCenter("Spritesmind & SMS Power forums members for their technical help", 18, 0, 640, 880 - offset, (GXColor)WHITE);
 
-    FONT_writeCenter("Gamecube & Wii port", 24, 0, 640, 938 - offset, (GXColor)LIGHT_BLUE);
+#ifndef HW_RVL
+    FONT_writeCenter("Gamecube port", 24, 0, 640, 938 - offset, (GXColor)LIGHT_BLUE);
+#else
+    FONT_writeCenter("Wii port", 24, 0, 640, 938 - offset, (GXColor)LIGHT_BLUE);
+#endif
     FONT_writeCenter("porting code, GUI engine & design by Eke-Eke", 18, 0, 640, 974 - offset, (GXColor)WHITE);
     FONT_writeCenter("original Gamecube port by Softdev, Honkeykong & Markcube", 18, 0, 640, 992 - offset, (GXColor)WHITE);
     FONT_writeCenter("original icons, logo & button design by Low Lines", 18, 0, 640, 1010 - offset, (GXColor)WHITE);
     FONT_writeCenter("credit illustration by Orioto (Deviant Art)", 18, 0, 640, 1028 - offset, (GXColor)WHITE);
     FONT_writeCenter("memory card icon design by Brakken", 18, 0, 640, 1046 - offset, (GXColor)WHITE);
-    FONT_writeCenter("libogc by Shagkur & various other contibutors", 18, 0, 640, 1064 - offset, (GXColor)WHITE);
-    FONT_writeCenter("libfat by Chism", 18, 0, 640, 1082 - offset, (GXColor)WHITE);
+#ifndef HW_RVL
+    FONT_writeCenter("libOGC2 by Shagkur, Wintermute, Extrems & various other contibutors", 18, 0, 640, 1064 - offset, (GXColor)WHITE);
+    FONT_writeCenter("libDVM by fink, devkitpro team and Extrems", 18, 0, 640, 1082 - offset, (GXColor)WHITE);
+    offset += 36;
+#else
+    FONT_writeCenter("libOGC by Shagkur, Wintermute & various other contibutors", 18, 0, 640, 1064 - offset, (GXColor)WHITE);
+    FONT_writeCenter("libFAT by Chism and Wintermute", 18, 0, 640, 1082 - offset, (GXColor)WHITE);
     FONT_writeCenter("wiiuse by Michael Laforest (Para)", 18, 0, 640, 1100 - offset, (GXColor)WHITE);
-    FONT_writeCenter("asndlib & OGG player by Francisco Muñoz (Hermes)", 18, 0, 640, 1118 - offset, (GXColor)WHITE);
-    FONT_writeCenter("libwiidrc by Fix94", 18, 0, 640, 1136 - offset, (GXColor)WHITE);
+    FONT_writeCenter("libWiiDRC by Fix94", 18, 0, 640, 1118 - offset, (GXColor)WHITE);
+#endif
+    FONT_writeCenter("asndlib & OGG player by Francisco Muñoz (Hermes)", 18, 0, 640, 1136 - offset, (GXColor)WHITE);
     FONT_writeCenter("libpng by their respective authors", 18, 0, 640, 1154 - offset, (GXColor)WHITE);
     FONT_writeCenter("devkitPPC by Wintermute", 18, 0, 640, 1172 - offset, (GXColor)WHITE);
 
@@ -3861,6 +3871,10 @@ static void showcredits(void)
     offset ++;
     if (offset > 1302)
       offset = 0;
+#ifndef HW_RVL
+    else
+      offset -= 36;
+#endif
   }
 
   gxTextureClose(&texture);
