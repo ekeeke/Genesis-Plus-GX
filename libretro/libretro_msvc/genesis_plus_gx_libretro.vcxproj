@@ -308,7 +308,7 @@
     <ClInclude Include="..\..\core\input_hw\lightgun.h" />
     <ClInclude Include="..\..\core\input_hw\mouse.h" />
     <ClInclude Include="..\..\core\input_hw\paddle.h" />
-    <ClCompile Include="..\..\core\input_hw\smash.h" />
+    <ClInclude Include="..\..\core\input_hw\smash.h" />
     <ClInclude Include="..\..\core\input_hw\sportspad.h" />
     <ClInclude Include="..\..\core\input_hw\teamplayer.h" />
     <ClInclude Include="..\..\core\input_hw\terebi_oekaki.h" />

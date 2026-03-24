@@ -512,9 +512,6 @@
     <ClInclude Include="..\..\core\input_hw\paddle.h">
       <Filter>core\input_hw</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\core\input_hw\smash.h">
-      <Filter>core\input_hw</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\core\input_hw\sportspad.h">
       <Filter>core\input_hw</Filter>
     </ClInclude>
@@ -742,6 +739,9 @@
     </ClInclude>
     <ClInclude Include="..\..\core\cd_hw\libchdr\deps\zstd-1.5.6\lib\zstd.h">
       <Filter>core\cd_hw\libchdr\deps\zstd-1.5.6</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\core\input_hw\smash.h">
+      <Filter>core\input_hw</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
