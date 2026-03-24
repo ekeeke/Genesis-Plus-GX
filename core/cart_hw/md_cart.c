@@ -724,7 +724,7 @@ void md_cart_init(void)
       m68k.memory_map[i].read16   = NULL;
       m68k.memory_map[i].write8   = m68k_unused_8_w;
       m68k.memory_map[i].write16  = m68k_unused_16_w;
-      zbank_memory_map[i].read    = zbank_unused_r;
+      zbank_memory_map[i].read    = NULL;
       zbank_memory_map[i].write   = zbank_unused_w;
     }
   }
@@ -744,15 +744,15 @@ void md_cart_init(void)
     /* initialize YX5200 audio */
     yx5200_init(snd.sample_rate);
 
-    /* 64M extension mapping (upper 4MB of flash memory is apparently unused but cartridge board uses same signals as described in https://gitlab.com/doragasu/flatmap64) */
+    /* 64M extension mapping (upper 4MB of flash memory is apparently unused but still accessible as cartridge board uses same signals as described in https://gitlab.com/doragasu/flatmap64) */
     for (i=0x40; i<0x80; i++)
     {
       m68k.memory_map[i].read8    = NULL;
       m68k.memory_map[i].read16   = NULL;
-      m68k.memory_map[i].write8   = NULL;
-      m68k.memory_map[i].write16  = NULL;
+      m68k.memory_map[i].write8   = m68k_unused_8_w;
+      m68k.memory_map[i].write16  = m68k_unused_16_w;
       zbank_memory_map[i].read    = NULL;
-      zbank_memory_map[i].write   = NULL;
+      zbank_memory_map[i].write   = zbank_unused_w;
     }
   }
   else if (strstr(rominfo.international, "COLOCODX")) /* ColocoDX */
