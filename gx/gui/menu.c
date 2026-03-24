@@ -908,8 +908,16 @@ static void prefmenu ()
 #ifdef HW_RVL
     DI_StopMotor();
 #else
-    dvdcmdblk blk;
-    DVD_StopMotor(&blk);
+    vu32* const dvd = (u32*)0xCC006000;
+    dvd[0] = 0x2e;
+    dvd[1] = 0;
+    dvd[2] = 0xe3000000;
+    dvd[3] = 0;
+    dvd[4] = 0;
+    dvd[5] = 0;
+    dvd[6] = 0;
+    dvd[7] = 1;
+    while (dvd[7] & 1);
 #endif
   }
 

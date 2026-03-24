@@ -81,19 +81,6 @@ static int fileType = -1;
 static u8 dvdInited = 0;
 static u8 dvdMounted = 0;
 
-#ifndef HW_RVL
-static bool dvdStartup(DISC_INTERFACE *disc)
-{
-  DVD_Mount();
-  return true;
-}
-
-static bool dvdIsInserted(DISC_INTERFACE *disc)
-{
-  return true;
-}
-#endif
-
 /***************************************************************************
  * MountDVD
  *
@@ -111,9 +98,6 @@ static int MountDVD(void)
 #else
     DVD_Init();
 
-    /* patch libogc DVD interface which appears to be broken on Gamecube */
-    *(FN_MEDIUM_STARTUP *)&dvd->startup = dvdStartup;
-    *(FN_MEDIUM_ISINSERTED *)&dvd->isInserted = dvdIsInserted;
 #endif
     dvdInited = 1;
   }    
@@ -126,20 +110,26 @@ static int MountDVD(void)
     dvdMounted = 0;
   }
 
-  /* check if disc is found */
 #ifdef HW_RVL
+  /* on Wii, disc presence can be checked before attempting to mount it */
   if(!dvd->isInserted())
-#else
-  if(!dvd->isInserted(dvd))
-#endif
   {
     GUI_WaitPrompt("Error","No Disc inserted !");
     return 0;
   }
+#endif
 
   /* mount DVD */
   if(!ISO9660_Mount("dvd",dvd))
   {
+#ifndef HW_RVL
+    /* on Gamecube, disc presence can only be checked after attempting to mount it */
+    if(!dvd->isInserted(dvd))
+    {
+      GUI_WaitPrompt("Error","No Disc inserted !");
+      return 0;
+    }
+#endif
     GUI_WaitPrompt("Error","Disc can not be read !");
     return 0;
   }
