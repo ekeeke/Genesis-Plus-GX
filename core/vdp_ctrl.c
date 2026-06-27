@@ -150,6 +150,7 @@ static uint16 fifo[4];          /* FIFO ring-buffer */
 static int fifo_idx;            /* FIFO write index */
 static int fifo_byte_access;    /* FIFO byte access flag */
 static int *fifo_timing;        /* FIFO slots timing table */
+static int fifo_timing_size;    /* number of entries in current fifo_timing table */
 static int hblank_start_cycle;  /* HBLANK flag set cycle */
 static int hblank_end_cycle;    /* HBLANK flag clear cycle */
 
@@ -333,6 +334,7 @@ void vdp_reset(void)
 
   /* default FIFO access slots timings */
   fifo_timing = (int *)fifo_timing_h32;
+  fifo_timing_size = sizeof(fifo_timing_h32) / sizeof(fifo_timing_h32[0]);
 
   /* default VINT timing */
   vint_cycle = VINT_H32_MCYCLE;
@@ -2092,6 +2094,7 @@ static void vdp_reg_w(unsigned int r, unsigned int d, unsigned int cycles)
 
           /* FIFO access slots timings */
           fifo_timing = (int *)fifo_timing_h40;
+          fifo_timing_size = sizeof(fifo_timing_h40) / sizeof(fifo_timing_h40[0]);
 
           /* VINT timing */
           vint_cycle = VINT_H40_MCYCLE;
@@ -2119,6 +2122,7 @@ static void vdp_reg_w(unsigned int r, unsigned int d, unsigned int cycles)
 
           /* FIFO access slots timings */
           fifo_timing = (int *)fifo_timing_h32;
+          fifo_timing_size = sizeof(fifo_timing_h32) / sizeof(fifo_timing_h32[0]);
 
           /* VINT timing */
           vint_cycle = VINT_H32_MCYCLE;
@@ -2369,10 +2373,14 @@ static void vdp_68k_data_w_m4(unsigned int data)
 
     /* Determine next FIFO entry processing slot */
     cycles -= mcycles_vdp;
-    while (cycles >= fifo_timing[slot]) slot++;
+    while (slot < fifo_timing_size - 1 && cycles >= fifo_timing[slot]) slot++;
 
     /* Update last FIFO entry read-out cycle */
-    fifo_cycles[fifo_idx] = mcycles_vdp + fifo_timing[slot + fifo_byte_access];
+    {
+      int idx = slot + fifo_byte_access;
+      if (idx >= fifo_timing_size) idx = fifo_timing_size - 1;
+      fifo_cycles[fifo_idx] = mcycles_vdp + fifo_timing[idx];
+    }
   }
 
   /* Check destination code */
@@ -2463,10 +2471,14 @@ static void vdp_68k_data_w_m5(unsigned int data)
 
     /* Determine next FIFO entry processing slot */
     cycles -= mcycles_vdp;
-    while (cycles >= fifo_timing[slot]) slot++;
+    while (slot < fifo_timing_size - 1 && cycles >= fifo_timing[slot]) slot++;
 
     /* Update last FIFO entry read-out cycle */
-    fifo_cycles[fifo_idx] = mcycles_vdp + fifo_timing[slot + fifo_byte_access];
+    {
+      int idx = slot + fifo_byte_access;
+      if (idx >= fifo_timing_size) idx = fifo_timing_size - 1;
+      fifo_cycles[fifo_idx] = mcycles_vdp + fifo_timing[idx];
+    }
   }
 
   /* Write data */
