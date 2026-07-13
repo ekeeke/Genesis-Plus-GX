@@ -3538,22 +3538,31 @@ bool retro_load_game(const struct retro_game_info *info)
 
    if ((config.bios & 1) && !(system_bios & SYSTEM_MD))
    {
-      memset(boot_rom, 0xFF, 0x800);
+      /* Try to load Genesis BOOT ROM (2KB max) */
+      memset(boot_rom, 0xFF, sizeof(boot_rom));
       if (load_archive(MD_BIOS, boot_rom, 0x800, NULL) > 0)
       {
+         /* Check if BOOT ROM header is valid */
          if (!memcmp((char *)(boot_rom + 0x120),"GENESIS OS", 10))
          {
+            /* Mark Genesis BIOS as loaded */
             system_bios |= SYSTEM_MD;
-         }
 
 #ifdef LSB_FIRST
-         for (i=0; i<0x800; i+=2)
-         {
-            uint8 temp = boot_rom[i];
-            boot_rom[i] = boot_rom[i+1];
-            boot_rom[i+1] = temp;
-         }
+            /* Byteswap ROM */
+            for (i=0; i<0x800; i+=2)
+            {
+               uint8 temp = boot_rom[i];
+               boot_rom[i] = boot_rom[i+1];
+               boot_rom[i+1] = temp;
+            }
 #endif
+            /* Expand 2KB BOOT ROM to 64KB bank */
+            for (i=0x800; i<0x10000; i++)
+            {
+              boot_rom[i] = boot_rom[i&0x7ff];
+            }
+         }
       }
    }
 

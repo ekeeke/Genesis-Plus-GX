@@ -1258,7 +1258,7 @@ static void rompathmenu ()
 
           case 3:
           {
-            /* Genesis BOOT ROM must be reloaded */
+            /* Genesis BOOT ROM must be reloaded (2KB max) */
             if (load_archive(MD_BIOS, boot_rom, 0x800, NULL) > 0)
             {
               /* check if BOOT ROM header is valid */
@@ -1266,6 +1266,12 @@ static void rompathmenu ()
               {
                 /* mark Genesis BOOT ROM as loaded */
                 system_bios |= SYSTEM_MD;
+
+                /* expand 2KB BOOT ROM to 64KB bank */
+                for (i=0x800; i<0x10000; i++)
+                {
+                  boot_rom[i] = boot_rom[i&0x7ff];
+                }
               }
               else
               {

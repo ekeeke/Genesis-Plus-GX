@@ -2356,30 +2356,36 @@ int main (int argc, char **argv)
     /* mark all BIOS as unloaded */
     system_bios = 0;
  
-    /* Genesis BOOT ROM support (2KB max) */
-    memset(boot_rom, 0xFF, 0x800);
+    /* Genesis BOOT ROM support */
+    memset(boot_rom, 0xFF, sizeof(boot_rom));
     fp = fopen(MD_BIOS, "rb");
     if (fp != NULL)
     {
         int i;
  
-        /* read BOOT ROM */
+        /* read BOOT ROM (2KB max) */
         fread(boot_rom, 1, 0x800, fp);
         fclose(fp);
  
-        /* check BOOT ROM */
+        /* check if BOOT ROM header is valid */
         if (!memcmp((char *)(boot_rom + 0x120),"GENESIS OS", 10))
         {
             /* mark Genesis BIOS as loaded */
             system_bios = SYSTEM_MD;
-        }
  
-        /* Byteswap ROM */
-        for (i=0; i<0x800; i+=2)
-        {
-            uint8 temp = boot_rom[i];
-            boot_rom[i] = boot_rom[i+1];
-            boot_rom[i+1] = temp;
+            /* Byteswap ROM */
+            for (i=0; i<0x800; i+=2)
+            {
+                uint8 temp = boot_rom[i];
+                boot_rom[i] = boot_rom[i+1];
+                boot_rom[i+1] = temp;
+            }
+
+            /* Expand 2KB BOOT ROM to 64KB bank */
+            for (i=0x800; i<0x10000; i++)
+            {
+              boot_rom[i] = boot_rom[i&0x7ff];
+            }
         }
     }
  

@@ -3,7 +3,7 @@
  *
  *  Genesis Plus GX
  *
- *  Copyright Eke-Eke (2007-2025), based on original work from Softdev (2006)
+ *  Copyright Eke-Eke (2007-2026), based on original work from Softdev (2006)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -109,14 +109,22 @@ static void init_machine(void)
   system_bios = 0;
 
   /* try to load Genesis BOOT ROM (2KB max) */
-  memset(boot_rom, 0xFF, 0x800);
+  memset(boot_rom, 0xFF, sizeof(boot_rom));
   if (load_archive(MD_BIOS, boot_rom, 0x800, NULL) > 0)
   {
     /* check if BOOT ROM header is valid */
     if (!memcmp((char *)(boot_rom + 0x120),"GENESIS OS", 10))
     {
+      int i;
+      
       /* mark Genesis BIOS as loaded */
       system_bios = SYSTEM_MD;
+
+      /* expand 2KB BOOT ROM to 64KB bank */
+      for (i=0x800; i<0x10000; i++)
+      {
+        boot_rom[i] = boot_rom[i&0x7ff];
+      }
     }
   }
 
