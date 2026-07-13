@@ -526,7 +526,7 @@
 /* ----------------------------- Read / Write ----------------------------- */
 
 /* Read data immediately following the PC */
-#define m68k_read_immediate_16(address) *(uint16 *)(m68ki_cpu.memory_map[((address)>>16)&0xff].base + ((address) & 0xffff))
+#define m68k_read_immediate_16(address) *(uint16 *)(m68ki_cpu.memory_map[((address)>>16)&0xff].base + ((address) & 0xfffe))
 #define m68k_read_immediate_32(address) (m68k_read_immediate_16(address) << 16) | (m68k_read_immediate_16(address+2))
 
 /* Read data relative to the PC */
@@ -879,7 +879,7 @@ INLINE uint m68ki_read_16(uint address)
   
   temp = &m68ki_cpu.memory_map[((address)>>16)&0xff];
   if (temp->read16) val = (*temp->read16)(ADDRESS_68K(address));
-  else val = *(uint16 *)(temp->base + ((address) & 0xffff));
+  else val = *(uint16 *)(temp->base + ((address) & 0xfffe));
 
 #ifdef HOOK_CPU
   if (UNLIKELY(cpu_hook))
@@ -899,11 +899,11 @@ INLINE uint m68ki_read_32(uint address)
 
   temp = &m68ki_cpu.memory_map[((address)>>16)&0xff];
   if (temp->read16) val = (*temp->read16)(ADDRESS_68K(address)) << 16;
-  else val = m68k_read_immediate_16(address) << 16;
+  else val = *(uint16 *)(temp->base + ((address) & 0xfffe)) << 16;
 
   temp = &m68ki_cpu.memory_map[((address+2)>>16)&0xff];
   if (temp->read16) val |= (*temp->read16)(ADDRESS_68K(address+2));
-  else val |= m68k_read_immediate_16(address+2);
+  else val |= *(uint16 *)(temp->base + ((address+2) & 0xfffe));
 
 #ifdef HOOK_CPU
   if (UNLIKELY(cpu_hook))
@@ -943,7 +943,7 @@ INLINE void m68ki_write_16(uint address, uint value)
 
   temp = &m68ki_cpu.memory_map[((address)>>16)&0xff];
   if (temp->write16) (*temp->write16)(ADDRESS_68K(address),value);
-  else *(uint16 *)(temp->base + ((address) & 0xffff)) = value;
+  else *(uint16 *)(temp->base + ((address) & 0xfffe)) = value;
 }
 
 INLINE void m68ki_write_32(uint address, uint value)
@@ -960,11 +960,11 @@ INLINE void m68ki_write_32(uint address, uint value)
 
   temp = &m68ki_cpu.memory_map[((address)>>16)&0xff];
   if (temp->write16) (*temp->write16)(ADDRESS_68K(address),value>>16);
-  else *(uint16 *)(temp->base + ((address) & 0xffff)) = value >> 16;
+  else *(uint16 *)(temp->base + ((address) & 0xfffe)) = value >> 16;
 
   temp = &m68ki_cpu.memory_map[((address + 2)>>16)&0xff];
   if (temp->write16) (*temp->write16)(ADDRESS_68K(address+2),value&0xffff);
-  else *(uint16 *)(temp->base + ((address + 2) & 0xffff)) = value;
+  else *(uint16 *)(temp->base + ((address + 2) & 0xfffe)) = value;
 }
 
 
