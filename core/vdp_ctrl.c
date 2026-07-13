@@ -2134,16 +2134,16 @@ static void vdp_reg_w(unsigned int r, unsigned int d, unsigned int cycles)
           bitmap.viewport.w = max_sprite_pixels;
         }
 
-        /* Allow active screen width to be modified during first two lines (Bugs Bunny in Double Trouble) */
-        else if (v_counter <= 1)
+        /* Allow active screen width to be modified during first 3 lines (Bugs Bunny in Double Trouble) */
+        else if (v_counter <= 2)
         {
+          int i;
           bitmap.viewport.w = max_sprite_pixels;
 
           /* Redraw lines */
-          render_line(0);
-          if (v_counter)
+          for (i=0; i<=v_counter; i++)
           {
-            render_line(1);
+            render_line(i);
           }
         }
         else
