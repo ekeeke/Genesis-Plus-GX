@@ -2,7 +2,7 @@
  *  Genesis Plus
  *  CD data controller (LC8951x compatible)
  *
- *  Copyright (C) 2012-2024  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2012-2026  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -488,7 +488,7 @@ void cdc_decoder_update(uint32 header)
     cdc.ifstat &= ~BIT_DECI;
 
     /* update CDC decoder end cycle (value adjusted for MCD-verificator CDC FLAGS Tests #40 & #41) */
-    cdc.cycles[1] = s68k.cycles + 269000;
+    cdc.cycles[1] = s68k.cycles + 267000;
 
     /* decoder interrupt enabled ? */
     if (cdc.ifctrl & BIT_DECIEN)
