@@ -5,7 +5,7 @@
  *  Support for SG-1000 (TMS99xx & 315-5066), Master System (315-5124 & 315-5246), Game Gear & Mega Drive VDP
  *
  *  Copyright (C) 1998-2003  Charles Mac Donald (original code)
- *  Copyright (C) 2007-2025  Eke-Eke (Genesis Plus GX)
+ *  Copyright (C) 2007-2026  Eke-Eke (Genesis Plus GX)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -2494,8 +2494,8 @@ static void vdp_68k_data_w_m5(unsigned int data)
 
 static unsigned int vdp_68k_data_r_m4(void)
 {
-  /* VRAM address (interleaved format) */
-  int index = ((addr << 1) & 0x3FC) | ((addr & 0x200) >> 8) | (addr & 0x3C00);
+  /* VRAM address */
+  int index = addr & 0x3FFE;
 
   /* Clear pending flag */
   pending = 0;
