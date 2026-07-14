@@ -58,7 +58,7 @@ unsigned int m68k_read_bus_16(unsigned int address)
   error("Unused read16 %08X (%08X)\n", address, m68k_get_reg(M68K_REG_PC));
 #endif
   address = m68k.pc;
-  return *(uint16 *)(m68k.memory_map[((address)>>16)&0xff].base + ((address) & 0xffff));
+  return *(uint16 *)(m68k.memory_map[((address)>>16)&0xff].base + ((address) & 0xfffe));
 }
 
 
@@ -130,7 +130,7 @@ unsigned int m68k_lockup_r_16 (unsigned int address)
     m68k.cycles = m68k.cycle_end;
   }
   address = m68k.pc;
-  return *(uint16 *)(m68k.memory_map[((address)>>16)&0xff].base + ((address) & 0xffff));
+  return *(uint16 *)(m68k.memory_map[((address)>>16)&0xff].base + ((address) & 0xfffe));
 }
 
 
@@ -502,11 +502,11 @@ unsigned int ctrl_io_read_word(unsigned int address)
       if (zstate == 3)
       {
         /* D8 is cleared */
-        return (*(uint16 *)(m68k.memory_map[((address)>>16)&0xff].base + ((address) & 0xffff)) & 0xFEFF);
+        return (*(uint16 *)(m68k.memory_map[((address)>>16)&0xff].base + ((address) & 0xfffe)) & 0xFEFF);
       }
 
       /* D8 is set */
-      return (*(uint16 *)(m68k.memory_map[((address)>>16)&0xff].base + ((address) & 0xffff)) | 0x0100);
+      return (*(uint16 *)(m68k.memory_map[((address)>>16)&0xff].base + ((address) & 0xfffe)) | 0x0100);
     }
 
     case 0x20:  /* MEGA-CD */
