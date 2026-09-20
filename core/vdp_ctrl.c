@@ -1136,8 +1136,13 @@ void vdp_sms_ctrl_w(unsigned int data)
             parse_satb = parse_satb_m4;
             render_obj = render_obj_m4;
 
-            /* force BG cache update*/
+            /* force BG cache update */
             bg_list_index = 0x200;
+            for (i=0;i<0x200;i++) 
+            {
+              bg_name_list[i] = i;
+              bg_name_dirty[i] = 0xFF;
+            }
           }
           else
           {
