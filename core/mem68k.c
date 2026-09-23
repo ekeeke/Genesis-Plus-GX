@@ -681,8 +681,8 @@ void ctrl_io_write_byte(unsigned int address, unsigned int data)
               /* level 2 interrupt enabled ? */
               if (scd.regs[0x32>>1].byte.l & 0x04)
               {
-                /* sync SUB-CPU with MAIN-CPU (fixes Earnest Evans, Fhey Area) */
-                s68k_sync();
+                /* sync SUB-CPU with MAIN-CPU (fixes Earnest Evans, Fhey Area) and restart it if idle on register polling (fixes MCD-verificator IRQ Test #8) */
+                m68k_poll_sync(0xfffffff8);
 
                 /* set IFL2 flag */
                 scd.regs[0x00].byte.h |= 0x01;
