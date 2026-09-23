@@ -504,14 +504,16 @@ static void s68k_poll_sync(unsigned int reg_mask)
 
 static void m68k_sync(void)
 {
+  /* check MAIN-CPU is still running */
   if (!m68k.stopped)
   {
-    /* relative MAIN-CPU cycle counter */
-    unsigned int cycles = (s68k.cycles * MCYCLES_PER_LINE) / SCYCLES_PER_LINE;
-
-    /* sync MAIN-CPU with SUB-CPU (only if MAIN-CPU execution frame is finished, to prevent recursive execution) */
+    /* check MAIN-CPU execution frame is finished (to prevent recursive execution) */
     if (!m68k.cycle_end)
     {
+      /* relative MAIN-CPU cycle counter */
+      unsigned int cycles = (s68k.cycles * MCYCLES_PER_LINE) / SCYCLES_PER_LINE;
+
+      /* sync MAIN-CPU with SUB-CPU */
       m68k_run(cycles);
     }
   }
