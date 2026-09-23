@@ -396,6 +396,14 @@ unsigned int ctrl_io_read_byte(unsigned int address)
           return scd.regs[0x0f>>1].byte.l;
         }
 
+        /* SUB-CPU interrupt */
+        if (index == 0x00)
+        {
+          /* sync SUB-CPU with MAIN-CPU (fixes MCD-verificator IRQ Test #12) */
+          s68k_sync();
+          return scd.regs[0x00>>1].byte.h;
+        }
+
         /* default registers */
         if (index < 0x30)
         {
