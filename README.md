@@ -1,7 +1,7 @@
 ![Genesis Plus GX](images/Genesis-Plus-GX-Logo.png)
 # Genesis Plus GX — Windows GUI
 
-A native Win32 frontend for [Genesis Plus GX](https://github.com/ekeeke/genesis-plus-gx),
+A native Win32 GUI for [Genesis Plus GX](https://github.com/ekeeke/genesis-plus-gx),
 built directly against the emulator core. It sits alongside the existing `sdl/`
 and `gx/` ports as a new `win32/` port.
 
