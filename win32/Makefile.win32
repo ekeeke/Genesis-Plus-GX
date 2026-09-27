@@ -1,0 +1,382 @@
+# Makefile for the Genesis Plus GX Win32 GUI frontend
+#
+# Builds a native Windows executable with MinGW-w64. No SDL: video goes
+# through GDI, sound through waveOut, gamepads through XInput.
+#
+# BUILDS AS EITHER 32-BIT OR 64-BIT -- you choose by which compiler you use.
+# The render filters (Video > Render Filter) are built into the executable
+# (filters.c), so nothing here depends on the pointer size. (An earlier
+# version loaded Kega Fusion .rpi plugins, which are 32-bit DLLs a 64-bit
+# process cannot load; that is the only reason it used to be 32-bit only.)
+#
+#   64-bit, cross-compiling from Linux:
+#       make -f Makefile.win32 CROSS=x86_64-w64-mingw32-
+#   32-bit, cross-compiling from Linux:
+#       make -f Makefile.win32 CROSS=i686-w64-mingw32-
+#
+#   On Windows under MSYS2, the shell you open picks the architecture:
+#     "MSYS2 MINGW64" shell (64-bit):
+#       pacman -S mingw-w64-x86_64-gcc mingw-w64-x86_64-zlib make
+#     "MSYS2 MINGW32" shell (32-bit):
+#       pacman -S mingw-w64-i686-gcc mingw-w64-i686-zlib make
+#     then, in that shell:
+#       make -f Makefile.win32
+#
+#   To keep both builds side by side, give each its own object directory and
+#   output name so they do not overwrite each other:
+#       make -f Makefile.win32 CROSS=x86_64-w64-mingw32- OBJDIR=./build_w64 NAME=gpgx64.exe
+#
+# Useful overrides:
+#   DEBUG=1     keep symbols, no optimisation
+#   CHD=0       drop CHD support (skips libchdr and its lzma/zstd deps)
+#   OGG=0       drop OGG CD audio support (skips the bundled Tremor decoder)
+#   XBRZ=0      leave out the xBRZ render filters (skips xbrz/ and needs no
+#               C++ compiler). xBRZ is GPLv3, unlike the rest of this port:
+#               read xbrz/README-xbrz.txt before distributing a binary that
+#               contains it. The default is XBRZ=1.
+#
+# With XBRZ=1 you also need a C++ compiler (g++ from the same MinGW-w64
+# package). It is used only for xbrz/xbrz.cpp and xbrz_glue.cpp, compiled
+# with no exceptions and no RTTI so the finished .exe needs no C++ runtime
+# library -- the link step is still plain gcc.
+
+NAME      = gpgx.exe
+
+CROSS    ?=
+CC        = $(CROSS)gcc
+CXX       = $(CROSS)g++
+WINDRES   = $(CROSS)windres
+STRIP     = $(CROSS)strip
+
+CHD      ?= 1
+OGG      ?= 1
+DEBUG    ?= 0
+XBRZ     ?= 1
+
+SRCDIR    = ../core
+SDLDIR    = ../sdl
+GUIDIR    = .
+CHDLIBDIR = $(SRCDIR)/cd_hw/libchdr
+OBJDIR    = ./build_win32
+
+# ---------------------------------------------------------------------------
+# Flags
+#
+# -I$(GUIDIR) must come before -I$(SDLDIR): both provide an osd.h, and this
+# port's version is the one the core has to see. The SDL directory is on the
+# path only for fileio.c / unzip.c / error.c, which are platform-neutral and
+# are reused rather than duplicated here.
+# ---------------------------------------------------------------------------
+
+INCLUDES  = -I$(GUIDIR) \
+            -I$(SDLDIR) \
+            -I$(SRCDIR) \
+            -I$(SRCDIR)/z80 \
+            -I$(SRCDIR)/m68k \
+            -I$(SRCDIR)/sound \
+            -I$(SRCDIR)/sound/minimp3 \
+            -I$(SRCDIR)/input_hw \
+            -I$(SRCDIR)/cart_hw \
+            -I$(SRCDIR)/cart_hw/svp \
+            -I$(SRCDIR)/cd_hw \
+            -I$(SRCDIR)/ntsc
+
+DEFINES   = -DLSB_FIRST \
+            -DUSE_16BPP_RENDERING \
+            -DMAXROMSIZE=33554432 \
+            -DHAVE_YM3438_CORE \
+            -DHAVE_OPLL_CORE \
+            -DENABLE_SUB_68K_ADDRESS_ERROR_EXCEPTIONS \
+            -DWIN32_LEAN_AND_MEAN \
+            -D_WIN32_WINNT=0x0601 \
+            -DWINVER=0x0601
+
+ifeq ($(DEBUG),1)
+  CFLAGS  = -O0 -g -Wall -Wno-strict-aliasing
+else
+  CFLAGS  = -O2 -fomit-frame-pointer -Wall -Wno-strict-aliasing
+  LDFLAGS = -s
+endif
+
+CFLAGS   += -std=gnu99
+
+# Track header dependencies (writes a .d file next to every .o), so editing a
+# header such as config.h, gui.h or resource.h rebuilds everything that
+# includes it. Without this a stale object file could disagree with the core
+# about the layout of t_config.
+DEPFLAGS  = -MMD -MP
+CFLAGS   += $(DEPFLAGS)
+
+# xBRZ is C++. No exceptions, no RTTI and no thread-safe static guards, so the
+# object code calls nothing in the C++ runtime library (checked: the linked
+# .exe imports only Windows system DLLs).
+ifeq ($(DEBUG),1)
+  CXXFLAGS = -O0 -g -Wall
+else
+  CXXFLAGS = -O2 -Wall
+endif
+CXXFLAGS += -std=gnu++11 -fno-exceptions -fno-rtti -fno-threadsafe-statics -DNDEBUG $(DEPFLAGS)
+XBRZDIR   = $(GUIDIR)/xbrz
+
+# -mwindows produces a GUI subsystem binary, so no console window appears.
+LDFLAGS  += -mwindows
+
+# zlib is linked statically so the finished .exe does not need zlib1.dll
+# sitting next to it. XInput is absent on purpose: input.c loads it at
+# runtime, so a machine without it still starts.
+LIBS      = -lgdi32 -lcomctl32 -lcomdlg32 -lwinmm -lshell32 -lshlwapi -lole32 -luuid -lmfuuid -lws2_32 -ld3d9 -luxtheme -ldwmapi \
+            -ld3d11 -ldxgi -ldxguid \
+            -Wl,-Bstatic -lz -Wl,-Bdynamic -lm
+
+LDFLAGS  += -static-libgcc
+
+# ASLR and DEP: the program parses data from the network (netplay), so let
+# Windows randomise where it loads and refuse to run code from data pages.
+LDFLAGS  += -Wl,--dynamicbase -Wl,--nxcompat
+
+# ---------------------------------------------------------------------------
+# Objects
+# ---------------------------------------------------------------------------
+
+OBJECTS   = $(OBJDIR)/z80.o \
+            $(OBJDIR)/m68kcpu.o \
+            $(OBJDIR)/s68kcpu.o
+
+OBJECTS  += $(OBJDIR)/genesis.o \
+            $(OBJDIR)/vdp_ctrl.o \
+            $(OBJDIR)/vdp_render.o \
+            $(OBJDIR)/system.o \
+            $(OBJDIR)/io_ctrl.o \
+            $(OBJDIR)/mem68k.o \
+            $(OBJDIR)/memz80.o \
+            $(OBJDIR)/membnk.o \
+            $(OBJDIR)/state.o \
+            $(OBJDIR)/loadrom.o
+
+OBJECTS  += $(OBJDIR)/input.o \
+            $(OBJDIR)/gamepad.o \
+            $(OBJDIR)/lightgun.o \
+            $(OBJDIR)/mouse.o \
+            $(OBJDIR)/activator.o \
+            $(OBJDIR)/xe_1ap.o \
+            $(OBJDIR)/teamplayer.o \
+            $(OBJDIR)/paddle.o \
+            $(OBJDIR)/smash.o \
+            $(OBJDIR)/sportspad.o \
+            $(OBJDIR)/terebi_oekaki.o \
+            $(OBJDIR)/graphic_board.o
+
+OBJECTS  += $(OBJDIR)/sound.o \
+            $(OBJDIR)/psg.o \
+            $(OBJDIR)/ym2413.o \
+            $(OBJDIR)/opll.o \
+            $(OBJDIR)/ym3438.o \
+            $(OBJDIR)/ym2612.o \
+            $(OBJDIR)/blip_buf.o \
+            $(OBJDIR)/eq.o
+
+OBJECTS  += $(OBJDIR)/sram.o \
+            $(OBJDIR)/svp.o \
+            $(OBJDIR)/ssp16.o \
+            $(OBJDIR)/ggenie.o \
+            $(OBJDIR)/areplay.o \
+            $(OBJDIR)/eeprom_93c.o \
+            $(OBJDIR)/eeprom_i2c.o \
+            $(OBJDIR)/eeprom_spi.o \
+            $(OBJDIR)/flash_cfi.o \
+            $(OBJDIR)/yx5200.o \
+            $(OBJDIR)/md_cart.o \
+            $(OBJDIR)/sms_cart.o \
+            $(OBJDIR)/megasd.o
+
+OBJECTS  += $(OBJDIR)/scd.o \
+            $(OBJDIR)/cdd.o \
+            $(OBJDIR)/cdc.o \
+            $(OBJDIR)/gfx.o \
+            $(OBJDIR)/pcm.o \
+            $(OBJDIR)/cd_cart.o
+
+OBJECTS  += $(OBJDIR)/sms_ntsc.o \
+            $(OBJDIR)/md_ntsc.o
+
+# Shared with the SDL port
+OBJECTS  += $(OBJDIR)/error.o \
+            $(OBJDIR)/unzip.o \
+            $(OBJDIR)/fileio.o
+
+# This frontend
+OBJECTS  += $(OBJDIR)/main.o \
+            $(OBJDIR)/config.o \
+            $(OBJDIR)/video.o \
+            $(OBJDIR)/recorder.o \
+            $(OBJDIR)/netplay.o \
+            $(OBJDIR)/d3d9_video.o \
+            $(OBJDIR)/d3d11_video.o \
+            $(OBJDIR)/filters.o \
+            $(OBJDIR)/audio.o \
+            $(OBJDIR)/gui_input.o \
+            $(OBJDIR)/cheats.o \
+            $(OBJDIR)/dialogs.o \
+            $(OBJDIR)/browser.o \
+            $(OBJDIR)/coverart.o \
+            $(OBJDIR)/rewind.o \
+            $(OBJDIR)/theme.o \
+            $(OBJDIR)/gpgx_res.o
+
+ifeq ($(XBRZ),1)
+  DEFINES += -DGPGX_XBRZ
+  OBJECTS += $(OBJDIR)/xbrz.o \
+             $(OBJDIR)/xbrz_glue.o
+endif
+
+ifeq ($(OGG),1)
+  DEFINES += -DUSE_LIBTREMOR -DISABLE_MANY_OGG_OPEN_FILES
+  INCLUDES += -I$(SRCDIR)/sound/tremor
+  OBJECTS += $(OBJDIR)/bitwise.o \
+             $(OBJDIR)/block.o \
+             $(OBJDIR)/codebook.o \
+             $(OBJDIR)/floor0.o \
+             $(OBJDIR)/floor1.o \
+             $(OBJDIR)/framing.o \
+             $(OBJDIR)/info.o \
+             $(OBJDIR)/mapping0.o \
+             $(OBJDIR)/mdct.o \
+             $(OBJDIR)/registry.o \
+             $(OBJDIR)/res012.o \
+             $(OBJDIR)/sharedbook.o \
+             $(OBJDIR)/synthesis.o \
+             $(OBJDIR)/vorbisfile.o \
+             $(OBJDIR)/window.o
+endif
+
+ifeq ($(CHD),1)
+  DEFINES  += -DUSE_LIBCHDR -DZ7_ST -DZSTD_DISABLE_ASM
+  INCLUDES += -I$(CHDLIBDIR)/include -I$(CHDLIBDIR)/deps/lzma-24.05/include
+  OBJECTS  += $(OBJDIR)/libchdr_bitstream.o \
+              $(OBJDIR)/libchdr_cdrom.o \
+              $(OBJDIR)/libchdr_chd.o \
+              $(OBJDIR)/libchdr_flac.o \
+              $(OBJDIR)/libchdr_huffman.o \
+              $(OBJDIR)/LzFind.o \
+              $(OBJDIR)/LzmaDec.o \
+              $(OBJDIR)/LzmaEnc.o \
+              $(OBJDIR)/CpuArch.o \
+              $(OBJDIR)/zstd_decompress.o \
+              $(OBJDIR)/huf_decompress.o \
+              $(OBJDIR)/zstd_decompress_block.o \
+              $(OBJDIR)/zstd_ddict.o \
+              $(OBJDIR)/entropy_common.o \
+              $(OBJDIR)/error_private.o \
+              $(OBJDIR)/fse_decompress.o \
+              $(OBJDIR)/xxhash.o \
+              $(OBJDIR)/zstd_common.o
+endif
+
+# ---------------------------------------------------------------------------
+# Rules
+# ---------------------------------------------------------------------------
+
+.PHONY: all clean pack
+
+all: $(NAME)
+
+$(NAME): $(OBJECTS)
+	$(CC) $(OBJECTS) $(LDFLAGS) $(LIBS) -o $@
+
+# The object directory must exist before anything is compiled into it. It is
+# an order-only prerequisite (after the |): its timestamp changes whenever a
+# file is added to it, which would otherwise force a rebuild every time.
+$(OBJECTS): | $(OBJDIR)
+
+$(OBJDIR):
+	@mkdir -p $@
+
+# Frontend sources. input.c would collide with the core's input.c in a flat
+# object directory, so it is compiled to gui_input.o explicitly.
+$(OBJDIR)/gui_input.o: $(GUIDIR)/input.c
+	$(CC) -c $(CFLAGS) $(INCLUDES) $(DEFINES) $< -o $@
+
+$(OBJDIR)/main.o:    $(GUIDIR)/main.c
+	$(CC) -c $(CFLAGS) $(INCLUDES) $(DEFINES) $< -o $@
+$(OBJDIR)/config.o:  $(GUIDIR)/config.c
+	$(CC) -c $(CFLAGS) $(INCLUDES) $(DEFINES) $< -o $@
+$(OBJDIR)/video.o:   $(GUIDIR)/video.c
+	$(CC) -c $(CFLAGS) $(INCLUDES) $(DEFINES) $< -o $@
+$(OBJDIR)/netplay.o: $(GUIDIR)/netplay.c $(GUIDIR)/netplay.h
+	$(CC) -c $(CFLAGS) $(INCLUDES) $(DEFINES) $< -o $@
+$(OBJDIR)/recorder.o: $(GUIDIR)/recorder.c $(GUIDIR)/recorder.h
+	$(CC) -c $(CFLAGS) $(INCLUDES) $(DEFINES) $< -o $@
+$(OBJDIR)/d3d9_video.o: $(GUIDIR)/d3d9_video.c
+	$(CC) -c $(CFLAGS) $(INCLUDES) $(DEFINES) $< -o $@
+$(OBJDIR)/d3d11_video.o: $(GUIDIR)/d3d11_video.c $(GUIDIR)/d3d11_video.h
+	$(CC) -c $(CFLAGS) $(INCLUDES) $(DEFINES) $< -o $@
+$(OBJDIR)/filters.o: $(GUIDIR)/filters.c $(GUIDIR)/filters.h $(GUIDIR)/xbrz_glue.h
+	$(CC) -c $(CFLAGS) $(INCLUDES) $(DEFINES) $< -o $@
+
+# xBRZ (C++, GPLv3). The C++ files see only their own directory and the glue's.
+$(OBJDIR)/xbrz.o: $(XBRZDIR)/xbrz.cpp $(XBRZDIR)/xbrz.h $(XBRZDIR)/xbrz_config.h
+	$(CXX) -c $(CXXFLAGS) -I$(XBRZDIR) $< -o $@
+$(OBJDIR)/xbrz_glue.o: $(GUIDIR)/xbrz_glue.cpp $(GUIDIR)/xbrz_glue.h $(XBRZDIR)/xbrz.h
+	$(CXX) -c $(CXXFLAGS) -I$(GUIDIR) $< -o $@
+$(OBJDIR)/audio.o:   $(GUIDIR)/audio.c
+	$(CC) -c $(CFLAGS) $(INCLUDES) $(DEFINES) $< -o $@
+$(OBJDIR)/dialogs.o: $(GUIDIR)/dialogs.c
+	$(CC) -c $(CFLAGS) $(INCLUDES) $(DEFINES) $< -o $@
+$(OBJDIR)/cheats.o:  $(GUIDIR)/cheats.c
+	$(CC) -c $(CFLAGS) $(INCLUDES) $(DEFINES) $< -o $@
+$(OBJDIR)/browser.o: $(GUIDIR)/browser.c
+	$(CC) -c $(CFLAGS) $(INCLUDES) $(DEFINES) $< -o $@
+$(OBJDIR)/coverart.o: $(GUIDIR)/coverart.c
+	$(CC) -c $(CFLAGS) $(INCLUDES) $(DEFINES) $< -o $@
+$(OBJDIR)/rewind.o: $(GUIDIR)/rewind.c
+	$(CC) -c $(CFLAGS) $(INCLUDES) $(DEFINES) $< -o $@
+$(OBJDIR)/theme.o: $(GUIDIR)/theme.c
+	$(CC) -c $(CFLAGS) $(INCLUDES) $(DEFINES) $< -o $@
+
+$(OBJDIR)/gpgx_res.o: $(GUIDIR)/gpgx.rc $(GUIDIR)/resource.h $(GUIDIR)/gpgx.manifest
+	$(WINDRES) -I$(GUIDIR) $< -O coff -o $@
+
+# Core and shared sources
+$(OBJDIR)/%.o: $(SRCDIR)/%.c
+	$(CC) -c $(CFLAGS) $(INCLUDES) $(DEFINES) $< -o $@
+$(OBJDIR)/%.o: $(SRCDIR)/sound/%.c
+	$(CC) -c $(CFLAGS) $(INCLUDES) $(DEFINES) $< -o $@
+$(OBJDIR)/%.o: $(SRCDIR)/input_hw/%.c
+	$(CC) -c $(CFLAGS) $(INCLUDES) $(DEFINES) $< -o $@
+$(OBJDIR)/%.o: $(SRCDIR)/cart_hw/%.c
+	$(CC) -c $(CFLAGS) $(INCLUDES) $(DEFINES) $< -o $@
+$(OBJDIR)/%.o: $(SRCDIR)/cart_hw/svp/%.c
+	$(CC) -c $(CFLAGS) $(INCLUDES) $(DEFINES) $< -o $@
+$(OBJDIR)/%.o: $(SRCDIR)/cd_hw/%.c
+	$(CC) -c $(CFLAGS) $(INCLUDES) $(DEFINES) $< -o $@
+$(OBJDIR)/%.o: $(SRCDIR)/z80/%.c
+	$(CC) -c $(CFLAGS) $(INCLUDES) $(DEFINES) $< -o $@
+$(OBJDIR)/%.o: $(SRCDIR)/m68k/%.c
+	$(CC) -c $(CFLAGS) $(INCLUDES) $(DEFINES) $< -o $@
+$(OBJDIR)/%.o: $(SRCDIR)/ntsc/%.c
+	$(CC) -c $(CFLAGS) $(INCLUDES) $(DEFINES) $< -o $@
+$(OBJDIR)/%.o: $(SRCDIR)/sound/tremor/%.c
+	$(CC) -c $(CFLAGS) $(INCLUDES) $(DEFINES) $< -o $@
+$(OBJDIR)/%.o: $(SDLDIR)/%.c
+	$(CC) -c $(CFLAGS) $(INCLUDES) $(DEFINES) $< -o $@
+
+$(OBJDIR)/%.o: $(CHDLIBDIR)/src/%.c
+	$(CC) -c $(CFLAGS) $(INCLUDES) $(DEFINES) \
+	  -I$(CHDLIBDIR)/deps/zstd-1.5.6/lib \
+	  -I$(CHDLIBDIR)/deps/zstd-1.5.6/lib/common \
+	  -I$(CHDLIBDIR)/deps/zlib-1.3.1 $< -o $@
+$(OBJDIR)/%.o: $(CHDLIBDIR)/deps/lzma-24.05/src/%.c
+	$(CC) -c $(CFLAGS) $(INCLUDES) $(DEFINES) $< -o $@
+$(OBJDIR)/%.o: $(CHDLIBDIR)/deps/zstd-1.5.6/lib/common/%.c
+	$(CC) -c $(CFLAGS) $(INCLUDES) $(DEFINES) $< -o $@
+$(OBJDIR)/%.o: $(CHDLIBDIR)/deps/zstd-1.5.6/lib/decompress/%.c
+	$(CC) -c $(CFLAGS) $(INCLUDES) $(DEFINES) $< -o $@
+
+pack: $(NAME)
+	$(STRIP) $(NAME)
+
+clean:
+	rm -rf $(OBJDIR) $(NAME)
+
+# Header dependencies written by -MMD (missing on a first build: that is fine).
+-include $(OBJECTS:.o=.d)

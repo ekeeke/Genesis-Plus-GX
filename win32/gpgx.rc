@@ -1,0 +1,885 @@
+/****************************************************************************
+ *  Genesis Plus GX -- Win32 GUI frontend
+ *
+ *  gpgx.rc -- menu, accelerator table, dialogs, icon and version info.
+ ****************************************************************************/
+
+#include <windows.h>
+#include "resource.h"
+
+/****************************************************************************
+ * Icon and manifest
+ ****************************************************************************/
+
+IDI_APPICON ICON "gpgx.ico"
+
+1 RT_MANIFEST "gpgx.manifest"
+
+/****************************************************************************
+ * Menu
+ ****************************************************************************/
+
+IDR_MAINMENU MENU
+BEGIN
+  POPUP "&File"
+  BEGIN
+    MENUITEM "&Open ROM...\tCtrl+O",            IDM_FILE_OPEN
+    MENUITEM "ROM &Directory...\tCtrl+B",        IDM_FILE_BROWSER
+    POPUP "&Recent Files"
+    BEGIN
+      MENUITEM "(Empty)",                       IDM_FILE_RECENT_BASE, GRAYED
+    END
+    MENUITEM "&Close ROM\tCtrl+W",              IDM_FILE_CLOSE
+    MENUITEM "ROM &Information...",             IDM_FILE_ROMINFO
+    MENUITEM SEPARATOR
+    MENUITEM "Open Genesis Plus GX &Folder", IDM_FILE_OPENDIR
+    MENUITEM SEPARATOR
+    MENUITEM "E&xit",                           IDM_FILE_EXIT
+  END
+
+  POPUP "&Emulation"
+  BEGIN
+    MENUITEM "&Pause\tF2 / Pause",              IDM_EMU_PAUSE
+    MENUITEM "&Stop\tF3",                       IDM_EMU_STOP
+    MENUITEM "&Reset\tCtrl+R",                  IDM_EMU_RESET
+    MENUITEM "&Hard Reset\tCtrl+Shift+R",       IDM_EMU_HARDRESET
+    MENUITEM SEPARATOR
+    MENUITEM "Sa&ve State\tF5",                IDM_FILE_SAVESTATE
+    MENUITEM "&Load State\tF8",                 IDM_FILE_LOADSTATE
+    MENUITEM "&Undo Load State\tF9",             IDM_EMU_UNDOLOAD
+    POPUP "Save Slo&t"
+    BEGIN
+      MENUITEM "Slot &0",                       IDM_FILE_SLOT_BASE + 0
+      MENUITEM "Slot &1",                       IDM_FILE_SLOT_BASE + 1
+      MENUITEM "Slot &2",                       IDM_FILE_SLOT_BASE + 2
+      MENUITEM "Slot &3",                       IDM_FILE_SLOT_BASE + 3
+      MENUITEM "Slot &4",                       IDM_FILE_SLOT_BASE + 4
+      MENUITEM "Slot &5",                       IDM_FILE_SLOT_BASE + 5
+      MENUITEM "Slot &6",                       IDM_FILE_SLOT_BASE + 6
+      MENUITEM "Slot &7",                       IDM_FILE_SLOT_BASE + 7
+      MENUITEM "Slot &8",                       IDM_FILE_SLOT_BASE + 8
+      MENUITEM "Slot &9",                       IDM_FILE_SLOT_BASE + 9
+    END
+    MENUITEM "&Manage States...",                IDM_FILE_STATEMGR
+    MENUITEM SEPARATOR
+    POPUP "&Run-Ahead"
+    BEGIN
+      MENUITEM "Off",                           IDM_EMU_RUNAHEAD_BASE + 0
+      MENUITEM "1 Frame",                       IDM_EMU_RUNAHEAD_BASE + 1
+      MENUITEM "2 Frames",                      IDM_EMU_RUNAHEAD_BASE + 2
+      MENUITEM "3 Frames",                      IDM_EMU_RUNAHEAD_BASE + 3
+    END
+    MENUITEM "&Enable Rewind",                  IDM_EMU_REWIND
+    MENUITEM "Pause When &Inactive",            IDM_EMU_PAUSE_UNFOCUSED
+  END
+
+  POPUP "&View"
+  BEGIN
+    MENUITEM "List View",                       IDM_VIEW_LIST
+    MENUITEM "Grid View",                       IDM_VIEW_GRID
+    MENUITEM SEPARATOR
+    POPUP "&Theme"
+    BEGIN
+      MENUITEM "Follow &Windows Setting",       IDM_VIDEO_THEME_BASE + 0
+      MENUITEM "&Light",                        IDM_VIDEO_THEME_BASE + 1
+      MENUITEM "&Dark",                         IDM_VIDEO_THEME_BASE + 2
+    END
+    MENUITEM "&Larger UI",                       IDM_VIDEO_LARGE_UI
+  END
+
+  POPUP "&Video"
+  BEGIN
+    POPUP "Window &Size"
+    BEGIN
+      MENUITEM "1x",                            IDM_VIDEO_SCALE_BASE + 0
+      MENUITEM "2x",                            IDM_VIDEO_SCALE_BASE + 1
+      MENUITEM "3x",                            IDM_VIDEO_SCALE_BASE + 2
+      MENUITEM "4x",                            IDM_VIDEO_SCALE_BASE + 3
+      MENUITEM "5x",                            IDM_VIDEO_SCALE_BASE + 4
+      MENUITEM "6x",                            IDM_VIDEO_SCALE_BASE + 5
+    END
+    MENUITEM "&Fullscreen\tAlt+Enter",          IDM_VIDEO_FULLSCREEN
+    MENUITEM "Start ROM in F&ullscreen",        IDM_VIDEO_FULLSCREEN_START
+    MENUITEM "Always on &Top",                  IDM_VIDEO_ALWAYS_ON_TOP
+    MENUITEM SEPARATOR
+    POPUP "Render &Filter"
+    BEGIN
+      MENUITEM "None",                          IDM_VIDEO_FILTER_NONE
+    END
+    POPUP "Visual &Effects"
+    BEGIN
+      MENUITEM "&Smooth Scaling",               IDM_VIDEO_SMOOTH
+      MENUITEM "&Brighten",                     IDM_VIDEO_BRIGHTEN
+      POPUP "LCD &Ghosting"
+      BEGIN
+        MENUITEM "Off",                         IDM_VIDEO_LCD_BASE + 0
+        MENUITEM "Light",                       IDM_VIDEO_LCD_BASE + 1
+        MENUITEM "Medium",                      IDM_VIDEO_LCD_BASE + 2
+        MENUITEM "Heavy",                       IDM_VIDEO_LCD_BASE + 3
+      END
+    END
+    POPUP "Sc&anlines"
+    BEGIN
+      MENUITEM "Off",                           IDM_VIDEO_SCANLINE_BASE + 0
+      MENUITEM "25%",                           IDM_VIDEO_SCANLINE_BASE + 1
+      MENUITEM "50%",                           IDM_VIDEO_SCANLINE_BASE + 2
+      MENUITEM "75%",                           IDM_VIDEO_SCANLINE_BASE + 3
+      MENUITEM "100%",                          IDM_VIDEO_SCANLINE_BASE + 4
+    END
+    POPUP "&NTSC Filter"
+    BEGIN
+      MENUITEM "Off",                           IDM_VIDEO_NTSC_BASE + 0
+      MENUITEM "Composite",                     IDM_VIDEO_NTSC_BASE + 1
+      MENUITEM "S-Video",                       IDM_VIDEO_NTSC_BASE + 2
+      MENUITEM "RGB",                           IDM_VIDEO_NTSC_BASE + 3
+    END
+    POPUP "&Aspect Ratio"
+    BEGIN
+      MENUITEM "Square Pixels",                 IDM_VIDEO_ASPECT_BASE + 0
+      MENUITEM "4:3 (As Displayed on a CRT)",   IDM_VIDEO_ASPECT_BASE + 1
+      MENUITEM "Fill the Window",               IDM_VIDEO_ASPECT_BASE + 2
+    END
+    POPUP "&Borders"
+    BEGIN
+      MENUITEM "Hide All",                      IDM_VIDEO_OVERSCAN_BASE + 0
+      MENUITEM "Top and Bottom",                IDM_VIDEO_OVERSCAN_BASE + 1
+      MENUITEM "Left and Right",                IDM_VIDEO_OVERSCAN_BASE + 2
+      MENUITEM "Show All",                      IDM_VIDEO_OVERSCAN_BASE + 3
+    END
+    POPUP "&Interlaced Mode"
+    BEGIN
+      MENUITEM "Single Field",                  IDM_VIDEO_INTERLACE_BASE + 0
+      MENUITEM "Double Field",                  IDM_VIDEO_INTERLACE_BASE + 1
+    END
+    POPUP "Frames&kip"
+    BEGIN
+      MENUITEM "Off",                           IDM_VIDEO_FRAMESKIP_BASE + 0
+      MENUITEM "Auto",                          IDM_VIDEO_FRAMESKIP_BASE + 1
+      MENUITEM "Manual (Below 25% Audio Buffer)", IDM_VIDEO_FRAMESKIP_BASE + 2
+      MENUITEM "Manual (Below 33% Audio Buffer)", IDM_VIDEO_FRAMESKIP_BASE + 3
+      MENUITEM "Manual (Below 50% Audio Buffer)", IDM_VIDEO_FRAMESKIP_BASE + 4
+      MENUITEM "Manual (Below 75% Audio Buffer)", IDM_VIDEO_FRAMESKIP_BASE + 5
+    END
+    MENUITEM SEPARATOR
+    MENUITEM "&VSync",                            IDM_VIDEO_VSYNC
+    POPUP "&Renderer"
+    BEGIN
+      MENUITEM "GDI (Software)",                  IDM_VIDEO_RENDERER_BASE + 0
+      MENUITEM "Direct3D 9",                      IDM_VIDEO_RENDERER_BASE + 1
+      MENUITEM "Direct3D 11",                     IDM_VIDEO_RENDERER_BASE + 2
+    END
+  END
+
+  POPUP "&Audio"
+  BEGIN
+    MENUITEM "&Mute",                           IDM_AUDIO_ENABLE
+    MENUITEM "&Levels and Latency...",          IDM_AUDIO_SETTINGS
+    MENUITEM "&Advanced...",                    IDM_AUDIO_ADVANCED
+    MENUITEM SEPARATOR
+    POPUP "&FM Chip"
+    BEGIN
+      MENUITEM "YM2612 (MAME, Discrete)",       IDM_AUDIO_FMCORE_BASE + 0
+      MENUITEM "YM3438 (MAME, ASIC)",           IDM_AUDIO_FMCORE_BASE + 1
+      MENUITEM "YM3438 (MAME, Enhanced)",       IDM_AUDIO_FMCORE_BASE + 2
+      MENUITEM "YM2612 (Nuked)",                IDM_AUDIO_FMCORE_BASE + 3
+      MENUITEM "YM3438 (Nuked)",                IDM_AUDIO_FMCORE_BASE + 4
+    END
+    POPUP "Sample &Rate"
+    BEGIN
+      MENUITEM "44100 Hz",                      IDM_AUDIO_RATE_BASE + 0
+      MENUITEM "48000 Hz",                      IDM_AUDIO_RATE_BASE + 1
+    END
+    MENUITEM SEPARATOR
+    MENUITEM "High-Quality &PSG Resampling",    IDM_AUDIO_HQPSG
+    MENUITEM "&Low-Pass Filter",                IDM_AUDIO_LOWPASS
+    MENUITEM "&Mono Output",                    IDM_AUDIO_MONO
+  END
+
+  POPUP "&Input"
+  BEGIN
+    MENUITEM "Configure Player &1...",          IDM_INPUT_P1
+    MENUITEM "Configure Player &2...",          IDM_INPUT_P2
+    MENUITEM SEPARATOR
+    POPUP "Port &A Device"
+    BEGIN
+      MENUITEM "Nothing Connected",             IDM_INPUT_PORTA_BASE + 0
+      MENUITEM "Control Pad",                   IDM_INPUT_PORTA_BASE + 1
+      MENUITEM "Mouse",                         IDM_INPUT_PORTA_BASE + 2
+      MENUITEM "XE-1AP",                        IDM_INPUT_PORTA_BASE + 3
+      MENUITEM "Activator",                     IDM_INPUT_PORTA_BASE + 4
+      MENUITEM "Light Phaser",                  IDM_INPUT_PORTA_BASE + 5
+      MENUITEM "Paddle Control",                IDM_INPUT_PORTA_BASE + 6
+      MENUITEM "Sports Pad",                    IDM_INPUT_PORTA_BASE + 7
+      MENUITEM "Graphic Board",                 IDM_INPUT_PORTA_BASE + 8
+      MENUITEM "Team Player",                   IDM_INPUT_PORTA_BASE + 9
+    END
+    POPUP "Port &B Device"
+    BEGIN
+      MENUITEM "Nothing Connected",             IDM_INPUT_PORTB_BASE + 0
+      MENUITEM "Control Pad",                   IDM_INPUT_PORTB_BASE + 1
+      MENUITEM "Mouse",                         IDM_INPUT_PORTB_BASE + 2
+      MENUITEM "Menacer",                       IDM_INPUT_PORTB_BASE + 3
+      MENUITEM "Justifier",                     IDM_INPUT_PORTB_BASE + 4
+      MENUITEM "XE-1AP",                        IDM_INPUT_PORTB_BASE + 5
+      MENUITEM "Activator",                     IDM_INPUT_PORTB_BASE + 6
+      MENUITEM "Light Phaser",                  IDM_INPUT_PORTB_BASE + 7
+      MENUITEM "Paddle Control",                IDM_INPUT_PORTB_BASE + 8
+      MENUITEM "Team Player",                   IDM_INPUT_PORTB_BASE + 9
+    END
+    MENUITEM SEPARATOR
+    MENUITEM "Enable Bac&kground Input",         IDM_INPUT_BACKGROUND
+  END
+
+  POPUP "&Tools"
+  BEGIN
+    MENUITEM "&Cheats...\tCtrl+C",              IDM_EMU_CHEATS
+    MENUITEM SEPARATOR
+    MENUITEM "&Netplay...",               IDM_TOOLS_NETPLAY
+    MENUITEM "Sto&p Netplay",                   IDM_TOOLS_NETPLAY_STOP
+    MENUITEM SEPARATOR
+    POPUP "&Record"
+    BEGIN
+      MENUITEM "Record &Video + Audio\tShift+F11",  IDM_FILE_REC_VIDEO
+      MENUITEM "Record &Audio Only\tCtrl+F11",      IDM_FILE_REC_AUDIO
+      MENUITEM SEPARATOR
+      MENUITEM "&Stop Recording\tAlt+F11",           IDM_FILE_REC_STOP
+    END
+    MENUITEM "&Save Screenshot\tF12",           IDM_FILE_SCREENSHOT
+    POPUP "Screenshot &Output"
+    BEGIN
+      MENUITEM "Final",                         IDM_TOOLS_SHOT_BASE + 0
+      MENUITEM "Corrected",                     IDM_TOOLS_SHOT_BASE + 1
+      MENUITEM "Raw",                           IDM_TOOLS_SHOT_BASE + 2
+    END
+  END
+
+  POPUP "&Options"
+  BEGIN
+    POPUP "Re&gion"
+    BEGIN
+      MENUITEM "Detect from ROM",               IDM_EMU_REGION_BASE + 0
+      MENUITEM "USA",                           IDM_EMU_REGION_BASE + 1
+      MENUITEM "Europe",                        IDM_EMU_REGION_BASE + 2
+      MENUITEM "Japan (NTSC)",                  IDM_EMU_REGION_BASE + 3
+      MENUITEM "Japan (PAL)",                   IDM_EMU_REGION_BASE + 4
+    END
+    POPUP "Force &VDP Mode"
+    BEGIN
+      MENUITEM "Auto",                          IDM_EMU_VDPMODE_BASE + 0
+      MENUITEM "NTSC (60 Hz)",                  IDM_EMU_VDPMODE_BASE + 1
+      MENUITEM "PAL (50 Hz)",                   IDM_EMU_VDPMODE_BASE + 2
+    END
+    POPUP "&Console"
+    BEGIN
+      MENUITEM "Detect from ROM",               IDM_EMU_SYSTEM_BASE + 0
+      MENUITEM SEPARATOR
+      MENUITEM "SG-1000",                       IDM_EMU_SYSTEM_BASE + 1
+      MENUITEM "SG-1000 II",                    IDM_EMU_SYSTEM_BASE + 2
+      MENUITEM "SG-1000 II + RAM Adapter",      IDM_EMU_SYSTEM_BASE + 3
+      MENUITEM "Mark III",                      IDM_EMU_SYSTEM_BASE + 4
+      MENUITEM "Master System",                 IDM_EMU_SYSTEM_BASE + 5
+      MENUITEM "Master System II",              IDM_EMU_SYSTEM_BASE + 6
+      MENUITEM "Game Gear",                     IDM_EMU_SYSTEM_BASE + 7
+      MENUITEM "Mega Drive / Genesis",          IDM_EMU_SYSTEM_BASE + 8
+    END
+    POPUP "&Lock-On Cartridge"
+    BEGIN
+      MENUITEM "None",                          IDM_EMU_LOCKON_BASE + 0
+      MENUITEM "Game Genie",                    IDM_EMU_LOCKON_BASE + 1
+      MENUITEM "Action Replay (Pro)",           IDM_EMU_LOCKON_BASE + 2
+      MENUITEM "Sonic && Knuckles",             IDM_EMU_LOCKON_BASE + 3
+    END
+    MENUITEM SEPARATOR
+    MENUITEM "Boot from &BIOS When Available",  IDM_EMU_BIOS
+    MENUITEM "Emulate &Address Error Exceptions", IDM_EMU_ADDRERROR
+    MENUITEM SEPARATOR
+    MENUITEM "Show E&xtended Game Gear Screen", IDM_VIDEO_GGEXTRA
+    MENUITEM "Show Master &System Side Borders", IDM_VIDEO_SMSBORDER
+    MENUITEM "Show Frame &Rate",                IDM_VIDEO_SHOWFPS
+  END
+
+  POPUP "&Help"
+  BEGIN
+    MENUITEM "&Keyboard Shortcuts\tF1",         IDM_HELP_SHORTCUTS
+    MENUITEM "&Menu Guide",                       IDM_HELP_MENUGUIDE
+    MENUITEM "&About Genesis Plus GX",          IDM_HELP_ABOUT
+  END
+END
+
+/****************************************************************************
+ * Accelerators
+ *
+ * Nothing here may collide with the default gamepad keys (arrows, A S D F,
+ * Z X C V) or the key would be swallowed before the emulator sees it.
+ ****************************************************************************/
+
+IDR_ACCELERATORS ACCELERATORS
+BEGIN
+  "O",          IDM_FILE_OPEN,              VIRTKEY, CONTROL
+  "B",          IDM_FILE_BROWSER,           VIRTKEY, CONTROL
+  "W",          IDM_FILE_CLOSE,             VIRTKEY, CONTROL
+  "R",          IDM_EMU_RESET,              VIRTKEY, CONTROL
+  "R",          IDM_EMU_HARDRESET,          VIRTKEY, CONTROL, SHIFT
+  "C",          IDM_EMU_CHEATS,             VIRTKEY, CONTROL
+  VK_F9,        IDM_EMU_UNDOLOAD,           VIRTKEY
+  VK_F1,        IDM_HELP_SHORTCUTS,         VIRTKEY
+  VK_F2,        IDM_EMU_PAUSE,              VIRTKEY
+  VK_PAUSE,     IDM_EMU_PAUSE,              VIRTKEY
+  VK_F3,        IDM_EMU_STOP,               VIRTKEY
+  VK_F5,        IDM_ACCEL_QUICKSAVE,        VIRTKEY
+  VK_F6,        IDM_ACCEL_SLOT_PREV,        VIRTKEY
+  VK_F7,        IDM_ACCEL_SLOT_NEXT,        VIRTKEY
+  VK_F8,        IDM_ACCEL_QUICKLOAD,        VIRTKEY
+  VK_F11,       IDM_FILE_REC_VIDEO,         VIRTKEY, SHIFT
+  VK_F11,       IDM_FILE_REC_AUDIO,         VIRTKEY, CONTROL
+  VK_F11,       IDM_FILE_REC_STOP,          VIRTKEY, ALT
+  VK_F12,       IDM_FILE_SCREENSHOT,        VIRTKEY
+  VK_RETURN,    IDM_VIDEO_FULLSCREEN,       VIRTKEY, ALT
+  VK_ESCAPE,    IDM_ACCEL_LEAVE_FULLSCREEN, VIRTKEY
+END
+
+/****************************************************************************
+ * Dialogs
+ ****************************************************************************/
+
+IDD_ABOUT DIALOGEX 0, 0, 260, 190
+STYLE DS_MODALFRAME | DS_SETFONT | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "About Genesis Plus GX"
+FONT 8, "MS Shell Dlg"
+BEGIN
+  ICON            IDI_APPICON, IDC_STATIC, 12, 14, 20, 20
+  LTEXT           "", IDC_ABOUT_TEXT, 48, 12, 200, 100
+  CONTROL         "", IDC_ABOUT_LINK1, "SysLink", WS_TABSTOP, 48, 118, 200, 10
+  CONTROL         "", IDC_ABOUT_LINK2, "SysLink", WS_TABSTOP, 48, 130, 200, 10
+  DEFPUSHBUTTON   "Close", IDOK, 200, 166, 48, 16
+END
+
+IDD_STATEMGR DIALOGEX 0, 0, 340, 196
+STYLE DS_MODALFRAME | DS_SETFONT | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Manage Save States"
+FONT 8, "MS Shell Dlg"
+BEGIN
+  PUSHBUTTON      "", IDC_STATEMGR_SLOT_BASE + 0, 8, 8, 60, 45, BS_BITMAP | BS_NOTIFY
+  LTEXT           "Slot 0 (Empty)", IDC_STATEMGR_LABEL_BASE + 0, 8, 54, 60, 28, SS_CENTER
+  PUSHBUTTON      "", IDC_STATEMGR_SLOT_BASE + 1, 74, 8, 60, 45, BS_BITMAP | BS_NOTIFY
+  LTEXT           "Slot 1 (Empty)", IDC_STATEMGR_LABEL_BASE + 1, 74, 54, 60, 28, SS_CENTER
+  PUSHBUTTON      "", IDC_STATEMGR_SLOT_BASE + 2, 140, 8, 60, 45, BS_BITMAP | BS_NOTIFY
+  LTEXT           "Slot 2 (Empty)", IDC_STATEMGR_LABEL_BASE + 2, 140, 54, 60, 28, SS_CENTER
+  PUSHBUTTON      "", IDC_STATEMGR_SLOT_BASE + 3, 206, 8, 60, 45, BS_BITMAP | BS_NOTIFY
+  LTEXT           "Slot 3 (Empty)", IDC_STATEMGR_LABEL_BASE + 3, 206, 54, 60, 28, SS_CENTER
+  PUSHBUTTON      "", IDC_STATEMGR_SLOT_BASE + 4, 272, 8, 60, 45, BS_BITMAP | BS_NOTIFY
+  LTEXT           "Slot 4 (Empty)", IDC_STATEMGR_LABEL_BASE + 4, 272, 54, 60, 28, SS_CENTER
+  PUSHBUTTON      "", IDC_STATEMGR_SLOT_BASE + 5, 8, 86, 60, 45, BS_BITMAP | BS_NOTIFY
+  LTEXT           "Slot 5 (Empty)", IDC_STATEMGR_LABEL_BASE + 5, 8, 132, 60, 28, SS_CENTER
+  PUSHBUTTON      "", IDC_STATEMGR_SLOT_BASE + 6, 74, 86, 60, 45, BS_BITMAP | BS_NOTIFY
+  LTEXT           "Slot 6 (Empty)", IDC_STATEMGR_LABEL_BASE + 6, 74, 132, 60, 28, SS_CENTER
+  PUSHBUTTON      "", IDC_STATEMGR_SLOT_BASE + 7, 140, 86, 60, 45, BS_BITMAP | BS_NOTIFY
+  LTEXT           "Slot 7 (Empty)", IDC_STATEMGR_LABEL_BASE + 7, 140, 132, 60, 28, SS_CENTER
+  PUSHBUTTON      "", IDC_STATEMGR_SLOT_BASE + 8, 206, 86, 60, 45, BS_BITMAP | BS_NOTIFY
+  LTEXT           "Slot 8 (Empty)", IDC_STATEMGR_LABEL_BASE + 8, 206, 132, 60, 28, SS_CENTER
+  PUSHBUTTON      "", IDC_STATEMGR_SLOT_BASE + 9, 272, 86, 60, 45, BS_BITMAP | BS_NOTIFY
+  LTEXT           "Slot 9 (Empty)", IDC_STATEMGR_LABEL_BASE + 9, 272, 132, 60, 28, SS_CENTER
+  LTEXT           "Left-click a slot to load it. Right-click for options.", IDC_STATIC, 8, 164, 324, 10
+  DEFPUSHBUTTON   "Close", IDCANCEL, 282, 176, 50, 16
+END
+
+IDD_NETPLAY DIALOGEX 0, 0, 300, 264
+STYLE DS_MODALFRAME | DS_SETFONT | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Netplay"
+FONT 8, "MS Shell Dlg"
+BEGIN
+  GROUPBOX        "Host a Game", IDC_STATIC, 8, 6, 284, 84
+  LTEXT           "Port:", IDC_STATIC, 18, 22, 22, 9
+  EDITTEXT        IDC_NP_HOST_PORT, 42, 20, 40, 12, ES_NUMBER | ES_AUTOHSCROLL
+  LTEXT           "Input Delay:", IDC_STATIC, 92, 22, 50, 9
+  COMBOBOX        IDC_NP_DELAY, 144, 20, 56, 60, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+  LTEXT           "Session Code (Optional):", IDC_STATIC, 18, 40, 84, 9
+  EDITTEXT        IDC_NP_HOST_CODE, 104, 38, 94, 12, ES_AUTOHSCROLL
+  DEFPUSHBUTTON   "&Host", IDC_NP_HOST, 214, 20, 68, 16
+  LTEXT           "", IDC_NP_MYADDR, 18, 58, 268, 9
+  LTEXT           "The host plays Player 1, the guest Player 2. Each uses their own Player 1 keys.", IDC_STATIC, 18, 70, 268, 18
+
+  GROUPBOX        "Join a Game", IDC_STATIC, 8, 96, 284, 112
+  PUSHBUTTON      "&Find Hosts", IDC_NP_FIND, 214, 110, 68, 16
+  LISTBOX         IDC_NP_LIST, 18, 110, 188, 48, LBS_NOTIFY | WS_VSCROLL | WS_BORDER | WS_TABSTOP
+  LTEXT           "Address:", IDC_STATIC, 18, 168, 30, 9
+  EDITTEXT        IDC_NP_ADDR, 50, 166, 92, 12, ES_AUTOHSCROLL
+  LTEXT           "Port:", IDC_STATIC, 150, 168, 20, 9
+  EDITTEXT        IDC_NP_PORT, 172, 166, 34, 12, ES_NUMBER | ES_AUTOHSCROLL
+  LTEXT           "Code:", IDC_STATIC, 18, 186, 30, 9
+  EDITTEXT        IDC_NP_JOIN_CODE, 50, 184, 92, 12, ES_AUTOHSCROLL
+  PUSHBUTTON      "&Join", IDC_NP_JOIN, 214, 166, 68, 16
+
+  LTEXT           "", IDC_NP_STATUS, 8, 212, 284, 32
+  PUSHBUTTON      "Close", IDCANCEL, 236, 246, 56, 16
+END
+
+IDD_AUDIO_ADV DIALOGEX 0, 0, 262, 266
+STYLE DS_MODALFRAME | DS_SETFONT | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Advanced Audio"
+FONT 8, "MS Shell Dlg"
+BEGIN
+  LTEXT           "Audio Filter:", IDC_STATIC, 12, 12, 70, 9
+  COMBOBOX        IDC_ADV_FILTER, 90, 10, 100, 60, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+
+  LTEXT           "Low-Pass Strength", IDC_ADV_LABEL_LP, 12, 30, 76, 9
+  CONTROL         "", IDC_ADV_LP, "msctls_trackbar32", TBS_HORZ | TBS_AUTOTICKS | WS_TABSTOP, 88, 27, 116, 16
+  RTEXT           "", IDC_ADV_LP_TEXT, 208, 30, 40, 9
+
+  LTEXT           "EQ Low Gain", IDC_ADV_LABEL_LG, 12, 50, 76, 9
+  CONTROL         "", IDC_ADV_LG, "msctls_trackbar32", TBS_HORZ | TBS_AUTOTICKS | WS_TABSTOP, 88, 47, 116, 16
+  RTEXT           "", IDC_ADV_LG_TEXT, 208, 50, 40, 9
+  LTEXT           "EQ Mid Gain", IDC_ADV_LABEL_MG, 12, 68, 76, 9
+  CONTROL         "", IDC_ADV_MG, "msctls_trackbar32", TBS_HORZ | TBS_AUTOTICKS | WS_TABSTOP, 88, 65, 116, 16
+  RTEXT           "", IDC_ADV_MG_TEXT, 208, 68, 40, 9
+  LTEXT           "EQ High Gain", IDC_ADV_LABEL_HG, 12, 86, 76, 9
+  CONTROL         "", IDC_ADV_HG, "msctls_trackbar32", TBS_HORZ | TBS_AUTOTICKS | WS_TABSTOP, 88, 83, 116, 16
+  RTEXT           "", IDC_ADV_HG_TEXT, 208, 86, 40, 9
+
+  LTEXT           "EQ Low Frequency (Hz):", IDC_ADV_LABEL_LOWF, 12, 106, 96, 9
+  EDITTEXT        IDC_ADV_LOWF, 112, 104, 44, 12, ES_NUMBER | ES_AUTOHSCROLL
+  LTEXT           "EQ High Frequency (Hz):", IDC_ADV_LABEL_HIGHF, 12, 122, 96, 9
+  EDITTEXT        IDC_ADV_HIGHF, 112, 120, 44, 12, ES_NUMBER | ES_AUTOHSCROLL
+
+  CONTROL         "", IDC_STATIC, "Static", SS_ETCHEDHORZ, 12, 142, 238, 1
+  AUTOCHECKBOX    "High-Quality FM Synthesis (Band-Limited)", IDC_ADV_HQFM, 12, 150, 200, 10, WS_TABSTOP
+
+  LTEXT           "Master System FM Unit:", IDC_STATIC, 12, 168, 98, 9
+  COMBOBOX        IDC_ADV_FMUNIT, 112, 166, 130, 60, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+  LTEXT           "Master System FM Chip:", IDC_STATIC, 12, 186, 98, 9
+  COMBOBOX        IDC_ADV_OPLL, 112, 184, 130, 60, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+
+  CONTROL         "", IDC_STATIC, "Static", SS_ETCHEDHORZ, 12, 206, 238, 1
+  LTEXT           "Sega CD PCM Volume", IDC_STATIC, 12, 216, 76, 9
+  CONTROL         "", IDC_ADV_PCM, "msctls_trackbar32", TBS_HORZ | TBS_AUTOTICKS | WS_TABSTOP, 88, 213, 116, 16
+  RTEXT           "", IDC_ADV_PCM_TEXT, 208, 216, 40, 9
+
+  PUSHBUTTON      "Restore Defaults", IDC_ADV_DEFAULTS, 12, 244, 68, 16
+  DEFPUSHBUTTON   "Save", IDOK, 146, 244, 50, 16
+  PUSHBUTTON      "Cancel", IDCANCEL, 200, 244, 50, 16
+END
+
+IDD_INPUT DIALOGEX 0, 0, 320, 258
+STYLE DS_MODALFRAME | DS_SETFONT | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Configure Player"
+FONT 8, "MS Shell Dlg"
+BEGIN
+  LTEXT           "Gamepad:", IDC_STATIC, 10, 12, 34, 9
+  COMBOBOX        IDC_INPUT_DEVICE, 48, 9, 100, 90,
+                  CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+  LTEXT           "Pad Type:", IDC_STATIC, 226, 12, 34, 9
+  COMBOBOX        IDC_INPUT_PADTYPE, 226, 26, 84, 90,
+                  CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+  LTEXT           "Keyboard", IDC_STATIC, 74, 28, 60, 9
+  LTEXT           "Controller", IDC_STATIC, 139, 28, 71, 9
+  LTEXT           "Up", IDC_INPUT_LABEL_BASE+0, 10, 42, 60, 9
+  LTEXT           "Down", IDC_INPUT_LABEL_BASE+1, 10, 52, 60, 9
+  LTEXT           "Left", IDC_INPUT_LABEL_BASE+2, 10, 62, 60, 9
+  LTEXT           "Right", IDC_INPUT_LABEL_BASE+3, 10, 72, 60, 9
+  LTEXT           "A", IDC_INPUT_LABEL_BASE+4, 10, 82, 60, 9
+  LTEXT           "B", IDC_INPUT_LABEL_BASE+5, 10, 92, 60, 9
+  LTEXT           "C", IDC_INPUT_LABEL_BASE+6, 10, 102, 60, 9
+  LTEXT           "X", IDC_INPUT_LABEL_BASE+7, 10, 112, 60, 9
+  LTEXT           "Y", IDC_INPUT_LABEL_BASE+8, 10, 122, 60, 9
+  LTEXT           "Z", IDC_INPUT_LABEL_BASE+9, 10, 132, 60, 9
+  LTEXT           "Start", IDC_INPUT_LABEL_BASE+10, 10, 142, 60, 9
+  LTEXT           "Mode", IDC_INPUT_LABEL_BASE+11, 10, 152, 60, 9
+  LTEXT           "Fast Forward", IDC_INPUT_LABEL_BASE+12, 10, 162, 60, 9
+  LTEXT           "Rewind", IDC_INPUT_LABEL_BASE+13, 10, 172, 60, 9
+  LISTBOX         IDC_INPUT_LIST, 74, 40, 136, 140,
+                  LBS_NOTIFY | LBS_USETABSTOPS | WS_VSCROLL | WS_TABSTOP | WS_BORDER
+  PUSHBUTTON      "Assign...", IDC_INPUT_ASSIGN, 226, 60, 84, 16
+  PUSHBUTTON      "Auto Assign...", IDC_INPUT_AUTOASSIGN, 226, 80, 84, 16
+  PUSHBUTTON      "Clear", IDC_INPUT_CLEAR, 226, 100, 84, 16
+  PUSHBUTTON      "Restore Defaults", IDC_INPUT_DEFAULTS, 226, 120, 84, 16
+  LTEXT           "Pick a button, choose Assign, then press the key you want.",
+                  IDC_INPUT_HINT, 10, 186, 300, 18
+  LTEXT           "Deadzone", IDC_INPUT_DEADZONE_LABEL, 10, 210, 60, 9
+  CONTROL         "", IDC_INPUT_DEADZONE, "msctls_trackbar32",
+                  TBS_HORZ | TBS_AUTOTICKS | WS_TABSTOP, 74, 206, 180, 20
+  RTEXT           "", IDC_INPUT_DEADZONE_TEXT, 258, 210, 34, 9
+  DEFPUSHBUTTON   "Save", IDOK, 208, 234, 50, 16
+  PUSHBUTTON      "Cancel", IDCANCEL, 262, 234, 48, 16
+END
+
+IDD_AUDIO DIALOGEX 0, 0, 244, 200
+STYLE DS_MODALFRAME | DS_SETFONT | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Audio Levels and Latency"
+FONT 8, "MS Shell Dlg"
+BEGIN
+  LTEXT           "Master Volume", IDC_STATIC, 12, 12, 60, 9
+  CONTROL         "", IDC_AUDIO_VOLUME, "msctls_trackbar32",
+                  TBS_HORZ | TBS_AUTOTICKS | WS_TABSTOP, 12, 24, 190, 20
+  RTEXT           "", IDC_AUDIO_VOLUME_TEXT, 200, 28, 34, 9
+
+  LTEXT           "FM Preamp", IDC_STATIC, 12, 50, 60, 9
+  CONTROL         "", IDC_AUDIO_FM, "msctls_trackbar32",
+                  TBS_HORZ | TBS_AUTOTICKS | WS_TABSTOP, 12, 62, 190, 20
+  RTEXT           "", IDC_AUDIO_FM_TEXT, 200, 66, 34, 9
+
+  LTEXT           "PSG Preamp", IDC_STATIC, 12, 88, 60, 9
+  CONTROL         "", IDC_AUDIO_PSG, "msctls_trackbar32",
+                  TBS_HORZ | TBS_AUTOTICKS | WS_TABSTOP, 12, 100, 190, 20
+  RTEXT           "", IDC_AUDIO_PSG_TEXT, 200, 104, 34, 9
+
+  LTEXT           "CD Audio", IDC_STATIC, 12, 126, 60, 9
+  CONTROL         "", IDC_AUDIO_CDDA, "msctls_trackbar32",
+                  TBS_HORZ | TBS_AUTOTICKS | WS_TABSTOP, 12, 138, 190, 20
+  RTEXT           "", IDC_AUDIO_CDDA_TEXT, 200, 142, 34, 9
+
+  LTEXT           "Buffered Frames", IDC_STATIC, 12, 164, 60, 9
+  CONTROL         "", IDC_AUDIO_LATENCY, "msctls_trackbar32",
+                  TBS_HORZ | TBS_AUTOTICKS | WS_TABSTOP, 76, 160, 126, 20
+  RTEXT           "", IDC_AUDIO_LATENCY_TEXT, 200, 164, 34, 9
+
+  PUSHBUTTON      "Restore Defaults", IDC_AUDIO_DEFAULTS, 12, 180, 68, 16
+  DEFPUSHBUTTON   "Save", IDOK, 132, 180, 50, 16
+  PUSHBUTTON      "Cancel", IDCANCEL, 186, 180, 48, 16
+END
+
+IDD_SHORTCUTS DIALOGEX 0, 0, 320, 190
+STYLE DS_MODALFRAME | DS_SETFONT | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Keyboard Shortcuts"
+FONT 8, "MS Shell Dlg"
+BEGIN
+  EDITTEXT        IDC_SHORTCUTS_TEXT, 8, 8, 304, 154,
+                  ES_MULTILINE | ES_READONLY | ES_AUTOVSCROLL |
+                  WS_VSCROLL | NOT WS_TABSTOP
+  DEFPUSHBUTTON   "Close", IDOK, 264, 168, 48, 16
+END
+
+IDD_MENUGUIDE DIALOGEX 0, 0, 440, 300
+STYLE DS_MODALFRAME | DS_SETFONT | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Menu Guide"
+FONT 8, "MS Shell Dlg"
+BEGIN
+  EDITTEXT        IDC_MENUGUIDE_TEXT, 8, 8, 424, 266,
+                  ES_MULTILINE | ES_READONLY | ES_AUTOVSCROLL | WS_VSCROLL | NOT WS_TABSTOP
+  DEFPUSHBUTTON   "Close", IDOK, 384, 278, 48, 16
+END
+
+IDD_ROMINFO DIALOGEX 0, 0, 240, 190
+STYLE DS_MODALFRAME | DS_SETFONT | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "ROM Information"
+FONT 8, "MS Shell Dlg"
+BEGIN
+  EDITTEXT        IDC_ROMINFO_TEXT, 8, 8, 224, 154,
+                  ES_MULTILINE | ES_READONLY | ES_AUTOVSCROLL |
+                  WS_VSCROLL | NOT WS_TABSTOP
+  DEFPUSHBUTTON   "Close", IDOK, 184, 168, 48, 16
+END
+
+IDD_CHEATS DIALOGEX 0, 0, 450, 238
+STYLE DS_MODALFRAME | DS_SETFONT | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Cheats"
+FONT 8, "MS Shell Dlg"
+BEGIN
+  CONTROL         "Enable Cheats", IDC_CHEATS_ENABLE, "Button",
+                  BS_AUTOCHECKBOX | WS_TABSTOP, 10, 8, 120, 10
+
+  CONTROL         "", IDC_CHEATS_LIST, "SysListView32",
+                  LVS_REPORT | LVS_SINGLESEL | LVS_SHOWSELALWAYS |
+                  WS_BORDER | WS_TABSTOP, 10, 22, 430, 130
+
+  LTEXT           "Name:", IDC_STATIC, 10, 164, 22, 9
+  EDITTEXT        IDC_CHEATS_DESC, 36, 162, 180, 14, ES_AUTOHSCROLL
+  LTEXT           "Code:", IDC_STATIC, 226, 164, 20, 9
+  EDITTEXT        IDC_CHEATS_CODE, 250, 162, 190, 14, ES_AUTOHSCROLL | ES_UPPERCASE
+
+  DEFPUSHBUTTON   "Add Code", IDC_CHEATS_ADD, 10, 182, 60, 16
+  PUSHBUTTON      "Save", IDC_CHEATS_SAVE, 76, 182, 60, 16
+  PUSHBUTTON      "Remove", IDC_CHEATS_REMOVE, 142, 182, 60, 16
+  PUSHBUTTON      "Remove All", IDC_CHEATS_CLEAR, 208, 182, 60, 16
+  PUSHBUTTON      "Load Cheat...", IDC_CHEATS_LOADCHT, 274, 182, 72, 16
+
+  LTEXT           "", IDC_CHEATS_HINT, 10, 204, 430, 9
+  PUSHBUTTON      "Close", IDOK, 390, 216, 50, 16
+END
+
+/****************************************************************************
+ * Same dialogs as above, ~17.5% larger (gui.large_ui) -- only the font
+ * point size differs; dialog units auto-scale every control from that.
+ ****************************************************************************/
+
+IDD_ABOUT_LARGE DIALOGEX 0, 0, 260, 190
+STYLE DS_MODALFRAME | DS_SETFONT | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "About Genesis Plus GX"
+FONT 12, "MS Shell Dlg"
+BEGIN
+  ICON            IDI_APPICON, IDC_ABOUT_ICON, 12, 14, 40, 40
+  LTEXT           "", IDC_ABOUT_TEXT, 60, 12, 188, 100
+  CONTROL         "", IDC_ABOUT_LINK1, "SysLink", WS_TABSTOP, 60, 118, 188, 10
+  CONTROL         "", IDC_ABOUT_LINK2, "SysLink", WS_TABSTOP, 60, 130, 188, 10
+  DEFPUSHBUTTON   "Close", IDOK, 200, 166, 48, 16
+END
+
+IDD_NETPLAY_LARGE DIALOGEX 0, 0, 300, 264
+STYLE DS_MODALFRAME | DS_SETFONT | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Netplay"
+FONT 12, "MS Shell Dlg"
+BEGIN
+  GROUPBOX        "Host a Game", IDC_STATIC, 8, 6, 284, 84
+  LTEXT           "Port:", IDC_STATIC, 18, 22, 22, 9
+  EDITTEXT        IDC_NP_HOST_PORT, 42, 20, 40, 12, ES_NUMBER | ES_AUTOHSCROLL
+  LTEXT           "Input Delay:", IDC_STATIC, 92, 22, 50, 9
+  COMBOBOX        IDC_NP_DELAY, 144, 20, 56, 60, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+  LTEXT           "Session Code (Optional):", IDC_STATIC, 18, 40, 84, 9
+  EDITTEXT        IDC_NP_HOST_CODE, 104, 38, 94, 12, ES_AUTOHSCROLL
+  DEFPUSHBUTTON   "&Host", IDC_NP_HOST, 214, 20, 68, 16
+  LTEXT           "", IDC_NP_MYADDR, 18, 58, 268, 9
+  LTEXT           "The host plays Player 1, the guest Player 2. Each uses their own Player 1 keys.", IDC_STATIC, 18, 70, 268, 18
+
+  GROUPBOX        "Join a Game", IDC_STATIC, 8, 96, 284, 112
+  PUSHBUTTON      "&Find Hosts", IDC_NP_FIND, 214, 110, 68, 16
+  LISTBOX         IDC_NP_LIST, 18, 110, 188, 48, LBS_NOTIFY | WS_VSCROLL | WS_BORDER | WS_TABSTOP
+  LTEXT           "Address:", IDC_STATIC, 18, 168, 30, 9
+  EDITTEXT        IDC_NP_ADDR, 50, 166, 92, 12, ES_AUTOHSCROLL
+  LTEXT           "Port:", IDC_STATIC, 150, 168, 20, 9
+  EDITTEXT        IDC_NP_PORT, 172, 166, 34, 12, ES_NUMBER | ES_AUTOHSCROLL
+  LTEXT           "Code:", IDC_STATIC, 18, 186, 30, 9
+  EDITTEXT        IDC_NP_JOIN_CODE, 50, 184, 92, 12, ES_AUTOHSCROLL
+  PUSHBUTTON      "&Join", IDC_NP_JOIN, 214, 166, 68, 16
+
+  LTEXT           "", IDC_NP_STATUS, 8, 212, 284, 32
+  PUSHBUTTON      "Close", IDCANCEL, 236, 246, 56, 16
+END
+
+IDD_AUDIO_ADV_LARGE DIALOGEX 0, 0, 262, 266
+STYLE DS_MODALFRAME | DS_SETFONT | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Advanced Audio"
+FONT 12, "MS Shell Dlg"
+BEGIN
+  LTEXT           "Audio Filter:", IDC_STATIC, 12, 12, 70, 9
+  COMBOBOX        IDC_ADV_FILTER, 90, 10, 100, 60, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+
+  LTEXT           "Low-Pass Strength", IDC_ADV_LABEL_LP, 12, 30, 76, 9
+  CONTROL         "", IDC_ADV_LP, "msctls_trackbar32", TBS_HORZ | TBS_AUTOTICKS | WS_TABSTOP, 88, 27, 116, 16
+  RTEXT           "", IDC_ADV_LP_TEXT, 208, 30, 40, 9
+
+  LTEXT           "EQ Low Gain", IDC_ADV_LABEL_LG, 12, 50, 76, 9
+  CONTROL         "", IDC_ADV_LG, "msctls_trackbar32", TBS_HORZ | TBS_AUTOTICKS | WS_TABSTOP, 88, 47, 116, 16
+  RTEXT           "", IDC_ADV_LG_TEXT, 208, 50, 40, 9
+  LTEXT           "EQ Mid Gain", IDC_ADV_LABEL_MG, 12, 68, 76, 9
+  CONTROL         "", IDC_ADV_MG, "msctls_trackbar32", TBS_HORZ | TBS_AUTOTICKS | WS_TABSTOP, 88, 65, 116, 16
+  RTEXT           "", IDC_ADV_MG_TEXT, 208, 68, 40, 9
+  LTEXT           "EQ High Gain", IDC_ADV_LABEL_HG, 12, 86, 76, 9
+  CONTROL         "", IDC_ADV_HG, "msctls_trackbar32", TBS_HORZ | TBS_AUTOTICKS | WS_TABSTOP, 88, 83, 116, 16
+  RTEXT           "", IDC_ADV_HG_TEXT, 208, 86, 40, 9
+
+  LTEXT           "EQ Low Frequency (Hz):", IDC_ADV_LABEL_LOWF, 12, 106, 96, 9
+  EDITTEXT        IDC_ADV_LOWF, 112, 104, 44, 12, ES_NUMBER | ES_AUTOHSCROLL
+  LTEXT           "EQ High Frequency (Hz):", IDC_ADV_LABEL_HIGHF, 12, 122, 96, 9
+  EDITTEXT        IDC_ADV_HIGHF, 112, 120, 44, 12, ES_NUMBER | ES_AUTOHSCROLL
+
+  CONTROL         "", IDC_STATIC, "Static", SS_ETCHEDHORZ, 12, 142, 238, 1
+  AUTOCHECKBOX    "High-Quality FM Synthesis (Band-Limited)", IDC_ADV_HQFM, 12, 150, 200, 10, WS_TABSTOP
+
+  LTEXT           "Master System FM Unit:", IDC_STATIC, 12, 168, 98, 9
+  COMBOBOX        IDC_ADV_FMUNIT, 112, 166, 130, 60, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+  LTEXT           "Master System FM Chip:", IDC_STATIC, 12, 186, 98, 9
+  COMBOBOX        IDC_ADV_OPLL, 112, 184, 130, 60, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+
+  CONTROL         "", IDC_STATIC, "Static", SS_ETCHEDHORZ, 12, 206, 238, 1
+  LTEXT           "Sega CD PCM Volume", IDC_STATIC, 12, 216, 76, 9
+  CONTROL         "", IDC_ADV_PCM, "msctls_trackbar32", TBS_HORZ | TBS_AUTOTICKS | WS_TABSTOP, 88, 213, 116, 16
+  RTEXT           "", IDC_ADV_PCM_TEXT, 208, 216, 40, 9
+
+  PUSHBUTTON      "Restore Defaults", IDC_ADV_DEFAULTS, 12, 244, 68, 16
+  DEFPUSHBUTTON   "Save", IDOK, 146, 244, 50, 16
+  PUSHBUTTON      "Cancel", IDCANCEL, 200, 244, 50, 16
+END
+
+IDD_STATEMGR_LARGE DIALOGEX 0, 0, 340, 196
+STYLE DS_MODALFRAME | DS_SETFONT | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Manage Save States"
+FONT 12, "MS Shell Dlg"
+BEGIN
+  PUSHBUTTON      "", IDC_STATEMGR_SLOT_BASE + 0, 8, 8, 60, 45, BS_BITMAP | BS_NOTIFY
+  LTEXT           "Slot 0 (Empty)", IDC_STATEMGR_LABEL_BASE + 0, 8, 54, 60, 28, SS_CENTER
+  PUSHBUTTON      "", IDC_STATEMGR_SLOT_BASE + 1, 74, 8, 60, 45, BS_BITMAP | BS_NOTIFY
+  LTEXT           "Slot 1 (Empty)", IDC_STATEMGR_LABEL_BASE + 1, 74, 54, 60, 28, SS_CENTER
+  PUSHBUTTON      "", IDC_STATEMGR_SLOT_BASE + 2, 140, 8, 60, 45, BS_BITMAP | BS_NOTIFY
+  LTEXT           "Slot 2 (Empty)", IDC_STATEMGR_LABEL_BASE + 2, 140, 54, 60, 28, SS_CENTER
+  PUSHBUTTON      "", IDC_STATEMGR_SLOT_BASE + 3, 206, 8, 60, 45, BS_BITMAP | BS_NOTIFY
+  LTEXT           "Slot 3 (Empty)", IDC_STATEMGR_LABEL_BASE + 3, 206, 54, 60, 28, SS_CENTER
+  PUSHBUTTON      "", IDC_STATEMGR_SLOT_BASE + 4, 272, 8, 60, 45, BS_BITMAP | BS_NOTIFY
+  LTEXT           "Slot 4 (Empty)", IDC_STATEMGR_LABEL_BASE + 4, 272, 54, 60, 28, SS_CENTER
+  PUSHBUTTON      "", IDC_STATEMGR_SLOT_BASE + 5, 8, 86, 60, 45, BS_BITMAP | BS_NOTIFY
+  LTEXT           "Slot 5 (Empty)", IDC_STATEMGR_LABEL_BASE + 5, 8, 132, 60, 28, SS_CENTER
+  PUSHBUTTON      "", IDC_STATEMGR_SLOT_BASE + 6, 74, 86, 60, 45, BS_BITMAP | BS_NOTIFY
+  LTEXT           "Slot 6 (Empty)", IDC_STATEMGR_LABEL_BASE + 6, 74, 132, 60, 28, SS_CENTER
+  PUSHBUTTON      "", IDC_STATEMGR_SLOT_BASE + 7, 140, 86, 60, 45, BS_BITMAP | BS_NOTIFY
+  LTEXT           "Slot 7 (Empty)", IDC_STATEMGR_LABEL_BASE + 7, 140, 132, 60, 28, SS_CENTER
+  PUSHBUTTON      "", IDC_STATEMGR_SLOT_BASE + 8, 206, 86, 60, 45, BS_BITMAP | BS_NOTIFY
+  LTEXT           "Slot 8 (Empty)", IDC_STATEMGR_LABEL_BASE + 8, 206, 132, 60, 28, SS_CENTER
+  PUSHBUTTON      "", IDC_STATEMGR_SLOT_BASE + 9, 272, 86, 60, 45, BS_BITMAP | BS_NOTIFY
+  LTEXT           "Slot 9 (Empty)", IDC_STATEMGR_LABEL_BASE + 9, 272, 132, 60, 28, SS_CENTER
+  LTEXT           "Left-click a slot to load it. Right-click for options.", IDC_STATIC, 8, 164, 324, 10
+  DEFPUSHBUTTON   "Close", IDCANCEL, 282, 176, 50, 16
+END
+
+IDD_INPUT_LARGE DIALOGEX 0, 0, 320, 258
+STYLE DS_MODALFRAME | DS_SETFONT | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Configure Player"
+FONT 12, "MS Shell Dlg"
+BEGIN
+  LTEXT           "Gamepad:", IDC_STATIC, 10, 12, 34, 9
+  COMBOBOX        IDC_INPUT_DEVICE, 48, 9, 100, 90,
+                  CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+  LTEXT           "Pad Type:", IDC_STATIC, 226, 12, 34, 9
+  COMBOBOX        IDC_INPUT_PADTYPE, 226, 26, 84, 90,
+                  CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+  LTEXT           "Keyboard", IDC_STATIC, 74, 28, 60, 9
+  LTEXT           "Controller", IDC_STATIC, 139, 28, 71, 9
+  LTEXT           "Up", IDC_INPUT_LABEL_BASE+0, 10, 42, 60, 9
+  LTEXT           "Down", IDC_INPUT_LABEL_BASE+1, 10, 52, 60, 9
+  LTEXT           "Left", IDC_INPUT_LABEL_BASE+2, 10, 62, 60, 9
+  LTEXT           "Right", IDC_INPUT_LABEL_BASE+3, 10, 72, 60, 9
+  LTEXT           "A", IDC_INPUT_LABEL_BASE+4, 10, 82, 60, 9
+  LTEXT           "B", IDC_INPUT_LABEL_BASE+5, 10, 92, 60, 9
+  LTEXT           "C", IDC_INPUT_LABEL_BASE+6, 10, 102, 60, 9
+  LTEXT           "X", IDC_INPUT_LABEL_BASE+7, 10, 112, 60, 9
+  LTEXT           "Y", IDC_INPUT_LABEL_BASE+8, 10, 122, 60, 9
+  LTEXT           "Z", IDC_INPUT_LABEL_BASE+9, 10, 132, 60, 9
+  LTEXT           "Start", IDC_INPUT_LABEL_BASE+10, 10, 142, 60, 9
+  LTEXT           "Mode", IDC_INPUT_LABEL_BASE+11, 10, 152, 60, 9
+  LTEXT           "Fast Forward", IDC_INPUT_LABEL_BASE+12, 10, 162, 60, 9
+  LTEXT           "Rewind", IDC_INPUT_LABEL_BASE+13, 10, 172, 60, 9
+  LISTBOX         IDC_INPUT_LIST, 74, 40, 136, 140,
+                  LBS_NOTIFY | LBS_USETABSTOPS | WS_VSCROLL | WS_TABSTOP | WS_BORDER
+  PUSHBUTTON      "Assign...", IDC_INPUT_ASSIGN, 226, 60, 84, 16
+  PUSHBUTTON      "Auto Assign...", IDC_INPUT_AUTOASSIGN, 226, 80, 84, 16
+  PUSHBUTTON      "Clear", IDC_INPUT_CLEAR, 226, 100, 84, 16
+  PUSHBUTTON      "Restore Defaults", IDC_INPUT_DEFAULTS, 226, 120, 84, 16
+  LTEXT           "Pick a button, choose Assign, then press the key you want.",
+                  IDC_INPUT_HINT, 10, 186, 300, 18
+  LTEXT           "Deadzone", IDC_INPUT_DEADZONE_LABEL, 10, 210, 60, 9
+  CONTROL         "", IDC_INPUT_DEADZONE, "msctls_trackbar32",
+                  TBS_HORZ | TBS_AUTOTICKS | WS_TABSTOP, 74, 206, 180, 20
+  RTEXT           "", IDC_INPUT_DEADZONE_TEXT, 258, 210, 34, 9
+  DEFPUSHBUTTON   "Save", IDOK, 208, 234, 50, 16
+  PUSHBUTTON      "Cancel", IDCANCEL, 262, 234, 48, 16
+END
+
+IDD_AUDIO_LARGE DIALOGEX 0, 0, 244, 200
+STYLE DS_MODALFRAME | DS_SETFONT | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Audio Levels and Latency"
+FONT 12, "MS Shell Dlg"
+BEGIN
+  LTEXT           "Master Volume", IDC_STATIC, 12, 12, 60, 9
+  CONTROL         "", IDC_AUDIO_VOLUME, "msctls_trackbar32",
+                  TBS_HORZ | TBS_AUTOTICKS | WS_TABSTOP, 12, 24, 190, 20
+  RTEXT           "", IDC_AUDIO_VOLUME_TEXT, 200, 28, 34, 9
+
+  LTEXT           "FM Preamp", IDC_STATIC, 12, 50, 60, 9
+  CONTROL         "", IDC_AUDIO_FM, "msctls_trackbar32",
+                  TBS_HORZ | TBS_AUTOTICKS | WS_TABSTOP, 12, 62, 190, 20
+  RTEXT           "", IDC_AUDIO_FM_TEXT, 200, 66, 34, 9
+
+  LTEXT           "PSG Preamp", IDC_STATIC, 12, 88, 60, 9
+  CONTROL         "", IDC_AUDIO_PSG, "msctls_trackbar32",
+                  TBS_HORZ | TBS_AUTOTICKS | WS_TABSTOP, 12, 100, 190, 20
+  RTEXT           "", IDC_AUDIO_PSG_TEXT, 200, 104, 34, 9
+
+  LTEXT           "CD Audio", IDC_STATIC, 12, 126, 60, 9
+  CONTROL         "", IDC_AUDIO_CDDA, "msctls_trackbar32",
+                  TBS_HORZ | TBS_AUTOTICKS | WS_TABSTOP, 12, 138, 190, 20
+  RTEXT           "", IDC_AUDIO_CDDA_TEXT, 200, 142, 34, 9
+
+  LTEXT           "Buffered Frames", IDC_STATIC, 12, 164, 60, 9
+  CONTROL         "", IDC_AUDIO_LATENCY, "msctls_trackbar32",
+                  TBS_HORZ | TBS_AUTOTICKS | WS_TABSTOP, 76, 160, 126, 20
+  RTEXT           "", IDC_AUDIO_LATENCY_TEXT, 200, 164, 34, 9
+
+  PUSHBUTTON      "Restore Defaults", IDC_AUDIO_DEFAULTS, 12, 180, 68, 16
+  DEFPUSHBUTTON   "Save", IDOK, 132, 180, 50, 16
+  PUSHBUTTON      "Cancel", IDCANCEL, 186, 180, 48, 16
+END
+
+IDD_SHORTCUTS_LARGE DIALOGEX 0, 0, 320, 190
+STYLE DS_MODALFRAME | DS_SETFONT | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Keyboard Shortcuts"
+FONT 12, "MS Shell Dlg"
+BEGIN
+  EDITTEXT        IDC_SHORTCUTS_TEXT, 8, 8, 304, 154,
+                  ES_MULTILINE | ES_READONLY | ES_AUTOVSCROLL |
+                  WS_VSCROLL | NOT WS_TABSTOP
+  DEFPUSHBUTTON   "Close", IDOK, 264, 168, 48, 16
+END
+
+IDD_MENUGUIDE_LARGE DIALOGEX 0, 0, 520, 300
+STYLE DS_MODALFRAME | DS_SETFONT | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Menu Guide"
+FONT 12, "MS Shell Dlg"
+BEGIN
+  EDITTEXT        IDC_MENUGUIDE_TEXT, 8, 8, 504, 266,
+                  ES_MULTILINE | ES_READONLY | ES_AUTOVSCROLL | WS_VSCROLL | NOT WS_TABSTOP
+  DEFPUSHBUTTON   "Close", IDOK, 464, 278, 48, 16
+END
+
+IDD_ROMINFO_LARGE DIALOGEX 0, 0, 240, 190
+STYLE DS_MODALFRAME | DS_SETFONT | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "ROM Information"
+FONT 12, "MS Shell Dlg"
+BEGIN
+  EDITTEXT        IDC_ROMINFO_TEXT, 8, 8, 224, 154,
+                  ES_MULTILINE | ES_READONLY | ES_AUTOVSCROLL |
+                  WS_VSCROLL | NOT WS_TABSTOP
+  DEFPUSHBUTTON   "Close", IDOK, 184, 168, 48, 16
+END
+
+IDD_CHEATS_LARGE DIALOGEX 0, 0, 450, 238
+STYLE DS_MODALFRAME | DS_SETFONT | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Cheats"
+FONT 12, "MS Shell Dlg"
+BEGIN
+  CONTROL         "Enable Cheats", IDC_CHEATS_ENABLE, "Button",
+                  BS_AUTOCHECKBOX | WS_TABSTOP, 10, 8, 120, 10
+
+  CONTROL         "", IDC_CHEATS_LIST, "SysListView32",
+                  LVS_REPORT | LVS_SINGLESEL | LVS_SHOWSELALWAYS |
+                  WS_BORDER | WS_TABSTOP, 10, 22, 430, 130
+
+  LTEXT           "Name:", IDC_STATIC, 10, 164, 22, 9
+  EDITTEXT        IDC_CHEATS_DESC, 36, 162, 180, 14, ES_AUTOHSCROLL
+  LTEXT           "Code:", IDC_STATIC, 226, 164, 20, 9
+  EDITTEXT        IDC_CHEATS_CODE, 250, 162, 190, 14, ES_AUTOHSCROLL | ES_UPPERCASE
+
+  DEFPUSHBUTTON   "Add Code", IDC_CHEATS_ADD, 10, 182, 60, 16
+  PUSHBUTTON      "Save", IDC_CHEATS_SAVE, 76, 182, 60, 16
+  PUSHBUTTON      "Remove", IDC_CHEATS_REMOVE, 142, 182, 60, 16
+  PUSHBUTTON      "Remove All", IDC_CHEATS_CLEAR, 208, 182, 60, 16
+  PUSHBUTTON      "Load Cheat...", IDC_CHEATS_LOADCHT, 274, 182, 72, 16
+
+  LTEXT           "", IDC_CHEATS_HINT, 10, 204, 430, 9
+  PUSHBUTTON      "Close", IDOK, 390, 216, 50, 16
+END
+
+/****************************************************************************
+ * Version info
+ ****************************************************************************/
+
+VS_VERSION_INFO VERSIONINFO
+FILEVERSION     1,7,6,0
+PRODUCTVERSION  1,7,6,0
+FILEOS          VOS_NT_WINDOWS32
+FILETYPE        VFT_APP
+BEGIN
+  BLOCK "StringFileInfo"
+  BEGIN
+    BLOCK "040904E4"
+    BEGIN
+      VALUE "FileDescription", "Genesis Plus GX"
+      VALUE "FileVersion",     "1.7.6"
+      VALUE "InternalName",    "gpgx"
+      VALUE "OriginalFilename","gpgx.exe"
+      VALUE "ProductName",     "Genesis Plus GX"
+      VALUE "ProductVersion",  "1.7.6"
+      VALUE "LegalCopyright",  "Copyright (C) 1998-2003 Charles MacDonald, 2007-2026 Eke-Eke"
+    END
+  END
+  BLOCK "VarFileInfo"
+  BEGIN
+    VALUE "Translation", 0x409, 1252
+  END
+END
