@@ -506,7 +506,7 @@ The same page is in the program under **Help → Menu Guide**.
 - **Borders** – Hide or show the overscan borders (top/bottom, left/right).
 - **Interlaced Mode** – Single Field (the default) or Double Field, for games that use the 448-line interlaced mode.
 - **Frameskip** – Skips drawing some frames on a slow PC (Off, Auto, or Manual by audio-buffer level). Not used during netplay or recording.
-- **Renderer** – GDI draws with the CPU; Direct3D 9 and Direct3D 11 use the graphics card instead (each falls back to GDI automatically if it isn't available). Direct3D 11 is what a GPU shader tool such as [librashader](https://github.com/SnowflakePowered/librashader) needs.
+- **Renderer** – GDI draws with the CPU; Direct3D 9 and Direct3D 11 use the graphics card instead (each falls back to GDI automatically if it isn't available).
 - **VSync** – Wait for the screen's refresh after each frame so motion is even. Works with any renderer; it is skipped for a frame whenever the sound buffer runs low, so it never causes crackle. Off by default.
 
 **Audio**
