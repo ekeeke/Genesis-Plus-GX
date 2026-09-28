@@ -98,13 +98,15 @@ static void input_fill_list(HWND dlg)
   for (i = 0; i < count; i++)
   {
     char line[128];
-    int key, button;
+    int key, button, dev;
 
-    if (i == EXTRA_FASTFORWARD)      { key = inp.key_fast_forward; button = inp.pad_fast_forward; }
-    else if (i == EXTRA_REWIND)      { key = inp.key_rewind; button = inp.pad_rewind; }
-    else                              { key = inp.map.key[i]; button = inp.map.button[i]; }
+    /* Fast forward/rewind are always captured against Player 1's device
+       (see input_capture_tick() below), regardless of whose dialog this is. */
+    if (i == EXTRA_FASTFORWARD)      { key = inp.key_fast_forward; button = inp.pad_fast_forward; dev = gui.pad[0].device; }
+    else if (i == EXTRA_REWIND)      { key = inp.key_rewind; button = inp.pad_rewind; dev = gui.pad[0].device; }
+    else                              { key = inp.map.key[i]; button = inp.map.button[i]; dev = inp.map.device; }
 
-    wsprintfA(line, "%s\t%s", input_key_name(key), input_pad_button_name(button));
+    wsprintfA(line, "%s\t%s", input_key_name(key), input_pad_button_name(dev, button));
     SendMessageA(list, LB_ADDSTRING, 0, (LPARAM)line);
   }
 
@@ -268,18 +270,34 @@ static void input_load_controls(HWND dlg)
   HWND dev = GetDlgItem(dlg, IDC_INPUT_DEVICE);
   HWND type = GetDlgItem(dlg, IDC_INPUT_PADTYPE);
   int tabs[1] = { 65 };
-  int i;
+  int i, joy_count;
 
   SendMessage(GetDlgItem(dlg, IDC_INPUT_LIST), LB_SETTABSTOPS, 1, (LPARAM)tabs);
 
+  /* "Keyboard Only", then one entry per XInput slot, then one per attached
+     DirectInput joystick -- contiguous with t_pad_map.device's own numbering
+     (-1, 0.., GUI_INPUT_XPAD_COUNT..), so the combo's selected index and the
+     device value it maps to are always exactly one apart, list position and
+     device range alike. */
   SendMessage(dev, CB_RESETCONTENT, 0, 0);
   SendMessageA(dev, CB_ADDSTRING, 0, (LPARAM)"Keyboard Only");
-  for (i = 0; i < 4; i++)
+  for (i = 0; i < GUI_INPUT_XPAD_COUNT; i++)
   {
     char buf[32];
     wsprintfA(buf, "Gamepad %d", i + 1);
     SendMessageA(dev, CB_ADDSTRING, 0, (LPARAM)buf);
   }
+  joy_count = gui_input_joystick_count();
+  for (i = 0; i < joy_count; i++)
+  {
+    SendMessageA(dev, CB_ADDSTRING, 0, (LPARAM)gui_input_joystick_name(i));
+  }
+
+  /* A joystick's product name easily runs longer than "Gamepad 4" ever did
+     -- widens the dropdown (not the closed combo box itself, which stays
+     whatever width the .rc template gives it) so a longer one isn't
+     truncated the moment the list opens. */
+  if (joy_count) SendMessage(dev, CB_SETDROPPEDWIDTH, 220, 0);
   SendMessage(dev, CB_SETCURSEL, (WPARAM)(inp.map.device + 1), 0);
 
   SendMessage(type, CB_RESETCONTENT, 0, 0);
@@ -305,6 +323,16 @@ static void input_read_controls(HWND dlg)
   int type = (int)SendMessage(GetDlgItem(dlg, IDC_INPUT_PADTYPE), CB_GETCURSEL, 0, 0);
 
   inp.map.device = (dev == CB_ERR) ? -1 : dev - 1;
+
+  /* Remembered so a saved mapping can find the same physical joystick again
+     even if it re-enumerates at a different index next time (see
+     gui_input_resolve_device()). Meaningless for keyboard/XInput, so cleared
+     there instead of left stale from whatever DirectInput device used to be
+     picked. */
+  if (inp.map.device >= GUI_INPUT_XPAD_COUNT)
+    lstrcpynA(inp.map.joy_name, gui_input_joystick_name(inp.map.device - GUI_INPUT_XPAD_COUNT), sizeof(inp.map.joy_name));
+  else
+    inp.map.joy_name[0] = '\0';
 
   switch (type)
   {
@@ -563,9 +591,15 @@ void dlg_input(HWND parent, int player)
 {
   if (player < 0 || player > 1) return;
 
+  /* Picks up any DirectInput joystick plugged in since the app started (or
+     since this dialog was last opened) before the device list below is
+     built from it. */
+  gui_input_refresh_joysticks();
+
   ZeroMemory(&inp, sizeof(inp));
   inp.player  = player;
   inp.map     = gui.pad[player];
+  inp.map.device = gui_input_resolve_device(inp.map.device, inp.map.joy_name);
   inp.padtype = config.input[player].padtype;
   inp.key_fast_forward = gui.key_fast_forward;
   inp.key_rewind = gui.key_rewind;

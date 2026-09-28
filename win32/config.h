@@ -95,8 +95,16 @@ enum
 typedef struct
 {
   int key[PAD_KEYS];    /* Windows virtual-key code per button */
-  int button[PAD_KEYS]; /* XInput button mask per button, 0 = unassigned */
-  int device;           /* XInput pad index, -1 = keyboard only */
+  int button[PAD_KEYS]; /* button/POV/stick mask per button (namespace depends
+                            on device: XInput below GUI_INPUT_XPAD_COUNT,
+                            DirectInput at or above it), 0 = unassigned */
+  int device;           /* -1 keyboard only, else an XInput slot or a
+                            DirectInput joystick -- see GUI_INPUT_XPAD_COUNT
+                            in gui.h */
+  char joy_name[64];     /* DirectInput product name device was last set to,
+                            empty for keyboard/XInput -- lets a saved mapping
+                            find the same physical joystick again even if it
+                            re-enumerates at a different index */
 } t_pad_map;
 
 /* video.aspect */

@@ -126,6 +126,13 @@ extern int  waveout_rate(void);
  * input.c
  ****************************************************************************/
 
+/* t_pad_map.device: -1 keyboard only, 0..GUI_INPUT_XPAD_COUNT-1 an XInput
+   pad slot, GUI_INPUT_XPAD_COUNT and up a DirectInput joystick (only those
+   the pad's own product name -- t_pad_map.joy_name -- can still be matched
+   to are actually usable; see gui_input_resolve_device()). */
+#define GUI_INPUT_XPAD_COUNT 4
+#define GUI_INPUT_DI_MAX     8
+
 extern void gui_input_init(void);
 extern void gui_input_shutdown(void);
 extern void gui_input_set_focus(int focused);
@@ -136,12 +143,29 @@ extern int  gui_input_p2_slot(void);   /* -1 unless both ports have a plain cont
 extern int  gui_input_save_slot_shortcut(void);
 extern int  gui_input_load_slot_shortcut(void);
 
+/* DirectInput joysticks currently attached (XInput-capable pads excluded --
+   those are only ever addressed as one of the fixed XInput slots above).
+   Re-scanned by gui_input_refresh_joysticks(), which the config dialog calls
+   every time it opens so newly plugged devices show up without a restart. */
+extern void        gui_input_refresh_joysticks(void);
+extern int         gui_input_joystick_count(void);
+extern const char *gui_input_joystick_name(int index);      /* 0-based DI index */
+
+/* Best current device index for a mapping saved/opened with this device
+   value and (if it was a DirectInput one) this product name: re-matches by
+   name against the devices currently enumerated so replugging a joystick
+   into a different port, or in a different order across two runs, doesn't
+   silently detach it from whichever player it was assigned to. Falls back
+   to the saved index verbatim (harmless -- just reads as disconnected) if
+   no device with that name is currently attached. */
+extern int  gui_input_resolve_device(int device, const char *joy_name);
+
 extern int  input_capture_key(void);
 extern int  input_capture_gamepad(int device);
 extern int  input_any_input_down(int device);
 
 extern const char *input_key_name(int vk);
-extern const char *input_pad_button_name(int mask);
+extern const char *input_pad_button_name(int device, int mask);
 extern const char *input_button_label(int index);
 
 /****************************************************************************

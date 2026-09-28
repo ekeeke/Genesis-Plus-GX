@@ -71,6 +71,7 @@ static void set_pad_defaults(int player)
   p->button[PAD_MODE]  = XPAD_BACK;
 
   p->device = player;
+  p->joy_name[0] = '\0';
 
   if (player == 0)
   {
@@ -501,8 +502,19 @@ void config_load(void)
     char section[16];
     wsprintfA(section, "player%d", player + 1);
 
-    gui.pad[player].device = clampi(ini_get(section, "device", gui.pad[player].device), -1, 3);
+    gui.pad[player].device = clampi(ini_get(section, "device", gui.pad[player].device),
+                                     -1, GUI_INPUT_XPAD_COUNT + GUI_INPUT_DI_MAX - 1);
     config.input[player].padtype = (uint8)ini_get(section, "pad_type", config.input[player].padtype);
+
+    ini_get_str(section, "joy_name", buf, sizeof(buf));
+    lstrcpynA(gui.pad[player].joy_name, buf, sizeof(gui.pad[player].joy_name));
+
+    /* Re-matches a DirectInput device by name against whatever is currently
+       enumerated -- gui_input_init() (which builds that list) already ran,
+       so this sees it. Keeps a saved mapping on the same physical joystick
+       even if it came up at a different index this time (a different USB
+       port, another joystick plugged in first, and so on). */
+    gui.pad[player].device = gui_input_resolve_device(gui.pad[player].device, gui.pad[player].joy_name);
 
     for (i = 0; i < PAD_KEYS; i++)
     {
@@ -653,6 +665,7 @@ void config_save(void)
     wsprintfA(section, "player%d", player + 1);
 
     ini_put(section, "device", gui.pad[player].device);
+    ini_put_str(section, "joy_name", gui.pad[player].joy_name);
     ini_put(section, "pad_type", config.input[player].padtype);
 
     for (i = 0; i < PAD_KEYS; i++)

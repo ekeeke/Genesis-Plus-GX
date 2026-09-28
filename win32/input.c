@@ -11,9 +11,30 @@
  *  XInput is resolved at runtime: linking against it directly would stop the
  *  executable from starting on systems where the DLL is missing, and a
  *  gamepad is optional.
+ *
+ *  Gamepads reach here through two independent backends, picked per pad by
+ *  t_pad_map.device (see GUI_INPUT_XPAD_COUNT in gui.h):
+ *
+ *   - XInput, for the four modern-pad slots the rest of this file already
+ *     had. Kept exactly as it was.
+ *   - DirectInput, for everything XInput doesn't cover -- older joysticks,
+ *     wheels, flight sticks, and any pad without an XInput-compatible
+ *     driver. DirectInput itself also sees XInput-capable pads (as raw HID
+ *     joysticks with none of XInput's button semantics), so those are
+ *     filtered back out of the DirectInput device list on sight; a modern
+ *     pad is only ever addressed through its XInput slot.
+ *
+ *  The two backends store completely different things in a button mask
+ *  (DI_* bits vs XPAD_* bits below), so a mask is only ever meaningful
+ *  alongside the device it was captured against -- every function that
+ *  takes or returns one also takes that device.
  ****************************************************************************/
 
 #include <windows.h>
+
+#define DIRECTINPUT_VERSION 0x0800
+#define COBJMACROS
+#include <dinput.h>
 
 #include "shared.h"
 #include "gui.h"
@@ -40,7 +61,7 @@
 
 #define XPAD_TRIGGER_THRESHOLD 30   /* out of 0-255; comfortably past resting noise */
 
-#define XPAD_MAX_DEVICES    4
+#define XPAD_MAX_DEVICES    GUI_INPUT_XPAD_COUNT   /* gui.h -- also where DirectInput's own device range starts */
 #define XPAD_DEADZONE       10000
 
 /* gui.deadzone[] is 0-100%, the units a person actually sees and adjusts on
@@ -99,6 +120,306 @@ static int  has_focus = 1;
 static int  frame_advance_armed;
 
 /****************************************************************************
+ * DirectInput, for joysticks/pads XInput doesn't cover
+ *
+ * Devices are polled through IDirectInputDevice8::GetDeviceState rather than
+ * the buffered/event-driven API: this file already re-reads everything once
+ * a frame (and, for the fast-forward/rewind hotkeys, on demand outside the
+ * frame loop too), so there is nothing to buffer between reads.
+ ****************************************************************************/
+
+/* First 24 joystick buttons as individual bits, then the D-pad/POV/stick
+   folded together the same way gamepad_buttons() already folds XInput's
+   thumbstick into its own d-pad bits below -- one set of 4 "direction" bits
+   fed from whichever of POV hat or main stick is actually deflected, rather
+   than separate, individually mappable bits for each. Distinct numeric
+   values from the XPAD_* bits above are not required (a mask is only ever
+   compared against another mask captured for the very same device, never
+   across backends), but bits 24-27 are used here anyway to leave buttons
+   25-32 of a device with that many free for the future without renumbering
+   anything already saved to gpgx.ini. */
+#define DI_MAX_BUTTONS   24
+#define DI_BTN(n)        (1u << (n))
+#define DI_DPAD_UP       (1u << 24)
+#define DI_DPAD_DOWN     (1u << 25)
+#define DI_DPAD_LEFT     (1u << 26)
+#define DI_DPAD_RIGHT    (1u << 27)
+
+static IDirectInput8A *di_iface;
+
+typedef struct
+{
+  GUID guidInstance;
+  char name[64];
+} di_joy_info;
+
+static di_joy_info          joy_info[GUI_INPUT_DI_MAX];
+static int                  joy_count;
+static IDirectInputDevice8A *joy_dev[GUI_INPUT_DI_MAX];
+static DIJOYSTATE2          joy_state[GUI_INPUT_DI_MAX];
+static int                  joy_connected[GUI_INPUT_DI_MAX];
+
+/* Same slow-reprobe idea as xpad_known[]/xpad_next_probe[] below: a device
+   that failed to Acquire (unplugged, or another app holding it exclusively)
+   is only retried about once a second rather than on every single call. */
+static int   joy_known[GUI_INPUT_DI_MAX];
+static DWORD joy_next_probe[GUI_INPUT_DI_MAX];
+
+static int is_di_device(int device)
+{
+  return device >= GUI_INPUT_XPAD_COUNT && device < GUI_INPUT_XPAD_COUNT + GUI_INPUT_DI_MAX;
+}
+
+/* DirectInput enumerates XInput-capable pads too, as plain HID joysticks
+   with none of XInput's button/trigger semantics -- this app already talks
+   to those through the XInput backend above, so they're filtered back out
+   here rather than showing up a second time as an unlabelled generic
+   joystick. Standard technique (see the DirectX SDK's XInput/DirectInput
+   sample): an XInput device's underlying HID interface name always
+   contains "IG_", and DirectInput's own product GUID happens to pack the
+   same vendor/product IDs Raw Input reports for that HID device into its
+   first 4 bytes, so matching those two together identifies it without ever
+   opening the device itself. */
+static int is_xinput_device(const GUID *guid_product)
+{
+  UINT count = 0, i;
+  RAWINPUTDEVICELIST *list;
+  int found = 0;
+
+  if (GetRawInputDeviceList(NULL, &count, sizeof(RAWINPUTDEVICELIST)) != 0 || count == 0)
+    return 0;
+
+  list = (RAWINPUTDEVICELIST *)malloc(sizeof(RAWINPUTDEVICELIST) * count);
+  if (!list) return 0;
+
+  if (GetRawInputDeviceList(list, &count, sizeof(RAWINPUTDEVICELIST)) == (UINT)-1)
+  {
+    free(list);
+    return 0;
+  }
+
+  for (i = 0; i < count && !found; i++)
+  {
+    RID_DEVICE_INFO info;
+    UINT size;
+    UINT namelen = 0;
+    char *name;
+
+    if (list[i].dwType != RIM_TYPEHID) continue;
+
+    info.cbSize = sizeof(info);
+    size = sizeof(info);
+    if ((int)GetRawInputDeviceInfoA(list[i].hDevice, RIDI_DEVICEINFO, &info, &size) <= 0)
+      continue;
+
+    if ((LONG)MAKELONG((WORD)info.hid.dwVendorId, (WORD)info.hid.dwProductId) != (LONG)guid_product->Data1)
+      continue;
+
+    GetRawInputDeviceInfoA(list[i].hDevice, RIDI_DEVICENAME, NULL, &namelen);
+    if (namelen == 0 || namelen > 4096) continue;
+
+    name = (char *)malloc(namelen);
+    if (!name) continue;
+
+    if ((int)GetRawInputDeviceInfoA(list[i].hDevice, RIDI_DEVICENAME, name, &namelen) >= 0 &&
+        strstr(name, "IG_"))
+    {
+      found = 1;
+    }
+    free(name);
+  }
+
+  free(list);
+  return found;
+}
+
+static BOOL CALLBACK di_enum_callback(const DIDEVICEINSTANCEA *inst, void *ref)
+{
+  (void)ref;
+
+  if (joy_count >= GUI_INPUT_DI_MAX) return DIENUM_STOP;
+  if (is_xinput_device(&inst->guidProduct)) return DIENUM_CONTINUE;
+
+  joy_info[joy_count].guidInstance = inst->guidInstance;
+  lstrcpynA(joy_info[joy_count].name, inst->tszProductName, sizeof(joy_info[joy_count].name));
+  joy_count++;
+  return DIENUM_CONTINUE;
+}
+
+/* Releases every currently-open device and re-enumerates from scratch, so a
+   joystick plugged in after this app started shows up too. Indices can
+   shift across a refresh (the OS enumeration order isn't a stable identity),
+   which is exactly what t_pad_map.joy_name/gui_input_resolve_device() below
+   exist to paper over. */
+void gui_input_refresh_joysticks(void)
+{
+  int i;
+
+  for (i = 0; i < GUI_INPUT_DI_MAX; i++)
+  {
+    if (joy_dev[i])
+    {
+      IDirectInputDevice8_Unacquire(joy_dev[i]);
+      IDirectInputDevice8_Release(joy_dev[i]);
+      joy_dev[i] = NULL;
+    }
+    joy_known[i] = 0;
+    joy_next_probe[i] = 0;
+    joy_connected[i] = 0;
+    ZeroMemory(&joy_state[i], sizeof(joy_state[i]));
+  }
+
+  joy_count = 0;
+  if (di_iface)
+  {
+    IDirectInput8_EnumDevices(di_iface, DI8DEVCLASS_GAMECTRL, di_enum_callback, NULL, DIEDFL_ATTACHEDONLY);
+  }
+}
+
+int gui_input_joystick_count(void)
+{
+  return joy_count;
+}
+
+const char *gui_input_joystick_name(int index)
+{
+  if (index < 0 || index >= joy_count) return "";
+  return joy_info[index].name;
+}
+
+int gui_input_resolve_device(int device, const char *joy_name)
+{
+  int i;
+
+  if (!is_di_device(device) || !joy_name || !joy_name[0]) return device;
+
+  for (i = 0; i < joy_count; i++)
+  {
+    if (lstrcmpiA(joy_info[i].name, joy_name) == 0) return GUI_INPUT_XPAD_COUNT + i;
+  }
+
+  return device;   /* not currently attached -- keeps reading as disconnected rather than losing the assignment */
+}
+
+/* Opens the device and configures it the first time something actually asks
+   for its state -- not at enumeration time, since that happens before
+   create_main_window() gives this file a window handle to hand
+   SetCooperativeLevel(), and there is no reason to open every attached
+   joystick if only one of them ends up mapped to a player. */
+static int di_ensure_acquired(int idx)
+{
+  DIPROPRANGE range;
+  HRESULT hr;
+
+  if (idx < 0 || idx >= joy_count) return 0;
+  if (joy_dev[idx]) return 1;
+  if (!di_iface || !g_hwnd) return 0;
+
+  hr = IDirectInput8_CreateDevice(di_iface, &joy_info[idx].guidInstance, &joy_dev[idx], NULL);
+  if (FAILED(hr))
+  {
+    joy_dev[idx] = NULL;
+    return 0;
+  }
+
+  IDirectInputDevice8_SetDataFormat(joy_dev[idx], &c_dfDIJoystick2);
+  /* Background: this app's own "keep controller input working while
+     unfocused" option (gui.background_input) already gates every call in
+     here on pad_input_allowed(), so the device itself doesn't need to
+     refuse input the moment focus moves elsewhere. Non-exclusive: nothing
+     here needs to stop other applications (or a second instance) from also
+     reading the same joystick. */
+  IDirectInputDevice8_SetCooperativeLevel(joy_dev[idx], g_hwnd, DISCL_NONEXCLUSIVE | DISCL_BACKGROUND);
+
+  /* Ranged to XInput's own -32768..32767 so every place downstream that
+     folds a stick into a d-pad or scales it by gui.deadzone[] treats both
+     backends identically. A device that refuses this (rare) just keeps
+     whatever narrower default range it already reports -- deadzone
+     thresholds computed for the wider range then end up too small to
+     matter for it, not too large, so the worst case is a d-pad that goes
+     digital a bit earlier than the slider says, never one that doesn't
+     respond at all. */
+  ZeroMemory(&range, sizeof(range));
+  range.diph.dwSize = sizeof(range);
+  range.diph.dwHeaderSize = sizeof(DIPROPHEADER);
+  range.diph.dwHow = DIPH_BYOFFSET;
+  range.lMin = -32768;
+  range.lMax = 32767;
+
+  range.diph.dwObj = DIJOFS_X;
+  IDirectInputDevice8_SetProperty(joy_dev[idx], DIPROP_RANGE, &range.diph);
+  range.diph.dwObj = DIJOFS_Y;
+  IDirectInputDevice8_SetProperty(joy_dev[idx], DIPROP_RANGE, &range.diph);
+
+  IDirectInputDevice8_Acquire(joy_dev[idx]);
+  return 1;
+}
+
+static int di_query(int idx, DIJOYSTATE2 *out)
+{
+  DWORD now = GetTickCount();
+  HRESULT hr;
+
+  if (idx < 0 || idx >= joy_count) return 0;
+  if (!joy_known[idx] && (int)(now - joy_next_probe[idx]) < 0) return 0;
+
+  if (!di_ensure_acquired(idx))
+  {
+    joy_known[idx] = 0;
+    joy_next_probe[idx] = now + 1000;
+    return 0;
+  }
+
+  IDirectInputDevice8_Poll(joy_dev[idx]);   /* some devices need this pumped; harmless on the rest */
+  hr = IDirectInputDevice8_GetDeviceState(joy_dev[idx], sizeof(DIJOYSTATE2), out);
+
+  if (hr == DIERR_INPUTLOST || hr == DIERR_NOTACQUIRED)
+  {
+    if (SUCCEEDED(IDirectInputDevice8_Acquire(joy_dev[idx])))
+      hr = IDirectInputDevice8_GetDeviceState(joy_dev[idx], sizeof(DIJOYSTATE2), out);
+  }
+
+  if (FAILED(hr))
+  {
+    joy_known[idx] = 0;
+    joy_next_probe[idx] = now + 1000;
+    return 0;
+  }
+
+  joy_known[idx] = 1;
+  return 1;
+}
+
+/* Every joystick button plus the POV hat, folded into the bits above -- just
+   the parts of gamepad_buttons()'s job that don't need a deadzone. Shared by
+   the once-per-frame cached poll and the on-demand fresh reads (hotkeys
+   during rewind, and the "listening" capture in the config dialog) so the
+   two never disagree about what a given raw state means. */
+static DWORD di_raw_buttons(const DIJOYSTATE2 *js)
+{
+  DWORD b = 0;
+  DWORD pov = js->rgdwPOV[0];
+  int i;
+
+  for (i = 0; i < DI_MAX_BUTTONS; i++)
+  {
+    if (js->rgbButtons[i] & 0x80) b |= DI_BTN(i);
+  }
+
+  if (LOWORD(pov) != 0xFFFF)   /* 0xFFFF (all bits of the low word set) = hat centered */
+  {
+    int deg = (int)(pov / 100);   /* hundredths of a degree, clockwise from north */
+
+    if (deg >= 315 || deg <= 45)  b |= DI_DPAD_UP;
+    if (deg >= 45  && deg <= 135) b |= DI_DPAD_RIGHT;
+    if (deg >= 135 && deg <= 225) b |= DI_DPAD_DOWN;
+    if (deg >= 225 && deg <= 315) b |= DI_DPAD_LEFT;
+  }
+
+  return b;
+}
+
+/****************************************************************************
  * Setup
  ****************************************************************************/
 
@@ -124,10 +445,39 @@ void gui_input_init(void)
     xinput_get_state =
       (xinput_get_state_fn)(void *)GetProcAddress(xinput_dll, "XInputGetState");
   }
+
+  /* Called before create_main_window(), so g_inst is already set but
+     g_hwnd isn't yet -- fine here, since enumerating devices (to populate
+     the config dialog's device list and let a saved joy_name resolve
+     against it) needs neither; only actually opening one of them, deferred
+     to di_ensure_acquired() above, needs a window handle. */
+  if (SUCCEEDED(DirectInput8Create(g_inst, DIRECTINPUT_VERSION, &IID_IDirectInput8A, (void **)&di_iface, NULL)))
+  {
+    gui_input_refresh_joysticks();
+  }
 }
 
 void gui_input_shutdown(void)
 {
+  int i;
+
+  for (i = 0; i < GUI_INPUT_DI_MAX; i++)
+  {
+    if (joy_dev[i])
+    {
+      IDirectInputDevice8_Unacquire(joy_dev[i]);
+      IDirectInputDevice8_Release(joy_dev[i]);
+      joy_dev[i] = NULL;
+    }
+  }
+  joy_count = 0;
+
+  if (di_iface)
+  {
+    IDirectInput8_Release(di_iface);
+    di_iface = NULL;
+  }
+
   if (xinput_dll)
   {
     FreeLibrary(xinput_dll);
@@ -228,41 +578,100 @@ static void poll_gamepads(void)
     xpad_connected[i] = 0;
     ZeroMemory(&xpad_state[i], sizeof(XPAD_STATE));
   }
-
-  if (!xinput_get_state || !pad_input_allowed()) return;
-
-  for (i = 0; i < XPAD_MAX_DEVICES; i++)
+  for (i = 0; i < GUI_INPUT_DI_MAX; i++)
   {
-    if (xpad_query(i, &xpad_state[i]))
+    joy_connected[i] = 0;
+    ZeroMemory(&joy_state[i], sizeof(joy_state[i]));
+  }
+
+  if (!pad_input_allowed()) return;
+
+  if (xinput_get_state)
+  {
+    for (i = 0; i < XPAD_MAX_DEVICES; i++)
     {
-      xpad_connected[i] = 1;
+      if (xpad_query(i, &xpad_state[i])) xpad_connected[i] = 1;
     }
+  }
+
+  for (i = 0; i < joy_count; i++)
+  {
+    if (di_query(i, &joy_state[i])) joy_connected[i] = 1;
   }
 }
 
-/* Buttons plus the left stick folded into the d-pad bits, and the analog
-   triggers folded in as digital past XPAD_TRIGGER_THRESHOLD -- same
-   treatment as the thumbstick-as-dpad above, just for LT/RT instead.
-   deadzone_raw is in XInput's own -32768..32767 units, already converted
-   by the caller from the 0-100% the person actually sees and adjusts (see
+/* Raw stick position, X and Y each -32768..32767, in XInput's own sign
+   convention (Y positive = up) regardless of which backend actually holds
+   the device -- DirectInput reports Y the opposite way round (down is
+   positive), so the DI branch below flips it on the way out rather than
+   leaving every caller to remember which backend it's talking to. Returns
+   0, leaving the outputs untouched, for an unmapped or disconnected
+   device. */
+static int pad_stick(int device, int *x, int *y)
+{
+  if (device >= 0 && device < XPAD_MAX_DEVICES)
+  {
+    if (!xpad_connected[device]) return 0;
+    *x = xpad_state[device].Gamepad.sThumbLX;
+    *y = xpad_state[device].Gamepad.sThumbLY;
+    return 1;
+  }
+
+  if (is_di_device(device))
+  {
+    int idx = device - XPAD_MAX_DEVICES;
+    if (!joy_connected[idx]) return 0;
+    *x = joy_state[idx].lX;
+    *y = -joy_state[idx].lY;
+    return 1;
+  }
+
+  return 0;
+}
+
+/* Buttons plus the left stick folded into the d-pad bits, and (XInput only)
+   the analog triggers folded in as digital past XPAD_TRIGGER_THRESHOLD.
+   deadzone_raw is in XInput's own -32768..32767 units, already converted by
+   the caller from the 0-100% the person actually sees and adjusts (see
    gui.deadzone[]) -- kept that way here so this function has no notion of
    percentages or which player is asking, just a threshold to compare
    against, the same as the fixed constant this replaced. */
 static DWORD gamepad_buttons(int device, int deadzone_raw)
 {
   DWORD b;
+  int x, y;
 
-  if (device < 0 || device >= XPAD_MAX_DEVICES || !xpad_connected[device]) return 0;
+  if (device >= 0 && device < XPAD_MAX_DEVICES)
+  {
+    if (!xpad_connected[device]) return 0;
 
-  b = xpad_state[device].Gamepad.wButtons;
+    b = xpad_state[device].Gamepad.wButtons;
+    if (xpad_state[device].Gamepad.bLeftTrigger  > XPAD_TRIGGER_THRESHOLD) b |= XPAD_LEFT_TRIGGER;
+    if (xpad_state[device].Gamepad.bRightTrigger > XPAD_TRIGGER_THRESHOLD) b |= XPAD_RIGHT_TRIGGER;
+  }
+  else if (is_di_device(device))
+  {
+    int idx = device - XPAD_MAX_DEVICES;
+    if (!joy_connected[idx]) return 0;
+    b = di_raw_buttons(&joy_state[idx]);
+  }
+  else
+  {
+    return 0;
+  }
 
-  if (xpad_state[device].Gamepad.sThumbLY >  deadzone_raw) b |= XPAD_DPAD_UP;
-  if (xpad_state[device].Gamepad.sThumbLY < -deadzone_raw) b |= XPAD_DPAD_DOWN;
-  if (xpad_state[device].Gamepad.sThumbLX < -deadzone_raw) b |= XPAD_DPAD_LEFT;
-  if (xpad_state[device].Gamepad.sThumbLX >  deadzone_raw) b |= XPAD_DPAD_RIGHT;
+  if (pad_stick(device, &x, &y))
+  {
+    DWORD up = is_di_device(device) ? DI_DPAD_UP : XPAD_DPAD_UP;
+    DWORD dn = is_di_device(device) ? DI_DPAD_DOWN : XPAD_DPAD_DOWN;
+    DWORD lf = is_di_device(device) ? DI_DPAD_LEFT : XPAD_DPAD_LEFT;
+    DWORD rt = is_di_device(device) ? DI_DPAD_RIGHT : XPAD_DPAD_RIGHT;
 
-  if (xpad_state[device].Gamepad.bLeftTrigger  > XPAD_TRIGGER_THRESHOLD) b |= XPAD_LEFT_TRIGGER;
-  if (xpad_state[device].Gamepad.bRightTrigger > XPAD_TRIGGER_THRESHOLD) b |= XPAD_RIGHT_TRIGGER;
+    if (y >  deadzone_raw) b |= up;
+    if (y < -deadzone_raw) b |= dn;
+    if (x < -deadzone_raw) b |= lf;
+    if (x >  deadzone_raw) b |= rt;
+  }
 
   return b;
 }
@@ -564,19 +973,27 @@ int win32_input_update(void)
         if (pad & INPUT_MODE)  input.pad[slot] |= INPUT_XE_SELECT;
 
         /* Left stick drives the analog axes, d-pad falls back to the extremes. */
-        if (map.device >= 0 && map.device < XPAD_MAX_DEVICES && xpad_connected[map.device])
         {
           int dz = deadzone_raw(slot);
-          input.analog[slot][0] = 128 + (deadzone_clamp(xpad_state[map.device].Gamepad.sThumbLX, dz) >> 9);
-          input.analog[slot][1] = 128 - (deadzone_clamp(xpad_state[map.device].Gamepad.sThumbLY, dz) >> 9);
-        }
-        else
-        {
-          input.analog[slot][0] = (pad & INPUT_LEFT) ? 0 : ((pad & INPUT_RIGHT) ? 255 : 128);
-          input.analog[slot][1] = (pad & INPUT_UP)   ? 0 : ((pad & INPUT_DOWN)  ? 255 : 128);
+          int sx, sy;
+
+          if (pad_stick(map.device, &sx, &sy))
+          {
+            input.analog[slot][0] = 128 + (deadzone_clamp(sx, dz) >> 9);
+            input.analog[slot][1] = 128 - (deadzone_clamp(sy, dz) >> 9);
+          }
+          else
+          {
+            input.analog[slot][0] = (pad & INPUT_LEFT) ? 0 : ((pad & INPUT_RIGHT) ? 255 : 128);
+            input.analog[slot][1] = (pad & INPUT_UP)   ? 0 : ((pad & INPUT_DOWN)  ? 255 : 128);
+          }
         }
 
-        input.analog[slot + 1][0] = (buttons & XPAD_LEFT_SHOULDER) ? 0 : 128;
+        /* No DirectInput equivalent of an XInput shoulder button is assumed
+           (an arbitrary joystick has no fixed button layout to guess one
+           from), so this second analog channel only ever moves off-centre
+           for an XInput pad -- same as before DirectInput support existed. */
+        input.analog[slot + 1][0] = (!is_di_device(map.device) && (buttons & XPAD_LEFT_SHOULDER)) ? 0 : 128;
         input.analog[slot + 1][1] = 128;
 
         if (input.analog[slot][0] < 0)   input.analog[slot][0] = 0;
@@ -628,34 +1045,60 @@ int win32_input_update(void)
  * Host shortcuts polled outside the core
  ****************************************************************************/
 
-/* Independent of xpad_state[]/poll_gamepads() on purpose -- that cache is
-   only refreshed once per forward emulated frame (inside
+/* Independent of xpad_state[]/joy_state[]/poll_gamepads() on purpose -- that
+   cache is only refreshed once per forward emulated frame (inside
    win32_input_update()), which the rewind path deliberately never calls.
    A hotkey checked against that cache while rewinding would read
    whatever button state happened to be true the instant rewind started,
    forever, regardless of what's actually being pressed right now. This
-   does its own fresh XInput read every single call instead, the same
-   way input_capture_gamepad() already does for the "listening" dialog. */
+   does its own fresh read every single call instead (xpad_query()/di_query()
+   already back off a device that isn't there rather than genuinely
+   re-querying it every call, so this isn't as wasteful as it looks), the
+   same way input_capture_gamepad() already does for the "listening"
+   dialog. */
 static int gamepad_button_held_now(int device, int mask, int deadzone_raw_val)
 {
-  XPAD_STATE st;
-  DWORD b;
+  if (!mask) return 0;
 
-  if (!mask || !xinput_get_state) return 0;
-  if (device < 0 || device >= XPAD_MAX_DEVICES) return 0;
+  if (device >= 0 && device < XPAD_MAX_DEVICES)
+  {
+    XPAD_STATE st;
+    DWORD b;
 
-  ZeroMemory(&st, sizeof(st));
-  if (!xpad_query(device, &st)) return 0;
+    if (!xinput_get_state) return 0;
+    ZeroMemory(&st, sizeof(st));
+    if (!xpad_query(device, &st)) return 0;
 
-  b = st.Gamepad.wButtons;
-  if (st.Gamepad.sThumbLY >  deadzone_raw_val) b |= XPAD_DPAD_UP;
-  if (st.Gamepad.sThumbLY < -deadzone_raw_val) b |= XPAD_DPAD_DOWN;
-  if (st.Gamepad.sThumbLX < -deadzone_raw_val) b |= XPAD_DPAD_LEFT;
-  if (st.Gamepad.sThumbLX >  deadzone_raw_val) b |= XPAD_DPAD_RIGHT;
-  if (st.Gamepad.bLeftTrigger  > XPAD_TRIGGER_THRESHOLD) b |= XPAD_LEFT_TRIGGER;
-  if (st.Gamepad.bRightTrigger > XPAD_TRIGGER_THRESHOLD) b |= XPAD_RIGHT_TRIGGER;
+    b = st.Gamepad.wButtons;
+    if (st.Gamepad.sThumbLY >  deadzone_raw_val) b |= XPAD_DPAD_UP;
+    if (st.Gamepad.sThumbLY < -deadzone_raw_val) b |= XPAD_DPAD_DOWN;
+    if (st.Gamepad.sThumbLX < -deadzone_raw_val) b |= XPAD_DPAD_LEFT;
+    if (st.Gamepad.sThumbLX >  deadzone_raw_val) b |= XPAD_DPAD_RIGHT;
+    if (st.Gamepad.bLeftTrigger  > XPAD_TRIGGER_THRESHOLD) b |= XPAD_LEFT_TRIGGER;
+    if (st.Gamepad.bRightTrigger > XPAD_TRIGGER_THRESHOLD) b |= XPAD_RIGHT_TRIGGER;
 
-  return (b & (DWORD)mask) != 0;
+    return (b & (DWORD)mask) != 0;
+  }
+
+  if (is_di_device(device))
+  {
+    int idx = device - XPAD_MAX_DEVICES;
+    DIJOYSTATE2 st;
+    DWORD b;
+
+    ZeroMemory(&st, sizeof(st));
+    if (!di_query(idx, &st)) return 0;
+
+    b = di_raw_buttons(&st);
+    if (st.lY >  deadzone_raw_val) b |= DI_DPAD_DOWN;
+    if (st.lY < -deadzone_raw_val) b |= DI_DPAD_UP;
+    if (st.lX < -deadzone_raw_val) b |= DI_DPAD_LEFT;
+    if (st.lX >  deadzone_raw_val) b |= DI_DPAD_RIGHT;
+
+    return (b & (DWORD)mask) != 0;
+  }
+
+  return 0;
 }
 
 int gui_input_fast_forward(void)
@@ -772,34 +1215,66 @@ int input_capture_key(void)
 
 int input_capture_gamepad(int device)
 {
-  static const int masks[] =
+  if (device >= 0 && device < XPAD_MAX_DEVICES)
   {
-    XPAD_DPAD_UP, XPAD_DPAD_DOWN, XPAD_DPAD_LEFT, XPAD_DPAD_RIGHT,
-    XPAD_START, XPAD_BACK, XPAD_LEFT_SHOULDER, XPAD_RIGHT_SHOULDER,
-    XPAD_A, XPAD_B, XPAD_X, XPAD_Y, XPAD_LEFT_TRIGGER, XPAD_RIGHT_TRIGGER
-  };
+    static const int masks[] =
+    {
+      XPAD_DPAD_UP, XPAD_DPAD_DOWN, XPAD_DPAD_LEFT, XPAD_DPAD_RIGHT,
+      XPAD_START, XPAD_BACK, XPAD_LEFT_SHOULDER, XPAD_RIGHT_SHOULDER,
+      XPAD_A, XPAD_B, XPAD_X, XPAD_Y, XPAD_LEFT_TRIGGER, XPAD_RIGHT_TRIGGER
+    };
 
-  XPAD_STATE st;
-  DWORD b;
-  int i;
+    XPAD_STATE st;
+    DWORD b;
+    int i;
 
-  if (!xinput_get_state) return 0;
-  if (device < 0 || device >= XPAD_MAX_DEVICES) return 0;
+    if (!xinput_get_state) return 0;
 
-  ZeroMemory(&st, sizeof(st));
-  if (!xpad_query(device, &st)) return 0;
+    ZeroMemory(&st, sizeof(st));
+    if (!xpad_query(device, &st)) return 0;
 
-  b = st.Gamepad.wButtons;
-  if (st.Gamepad.sThumbLY >  XPAD_DEADZONE) b |= XPAD_DPAD_UP;
-  if (st.Gamepad.sThumbLY < -XPAD_DEADZONE) b |= XPAD_DPAD_DOWN;
-  if (st.Gamepad.sThumbLX < -XPAD_DEADZONE) b |= XPAD_DPAD_LEFT;
-  if (st.Gamepad.sThumbLX >  XPAD_DEADZONE) b |= XPAD_DPAD_RIGHT;
-  if (st.Gamepad.bLeftTrigger  > XPAD_TRIGGER_THRESHOLD) b |= XPAD_LEFT_TRIGGER;
-  if (st.Gamepad.bRightTrigger > XPAD_TRIGGER_THRESHOLD) b |= XPAD_RIGHT_TRIGGER;
+    b = st.Gamepad.wButtons;
+    if (st.Gamepad.sThumbLY >  XPAD_DEADZONE) b |= XPAD_DPAD_UP;
+    if (st.Gamepad.sThumbLY < -XPAD_DEADZONE) b |= XPAD_DPAD_DOWN;
+    if (st.Gamepad.sThumbLX < -XPAD_DEADZONE) b |= XPAD_DPAD_LEFT;
+    if (st.Gamepad.sThumbLX >  XPAD_DEADZONE) b |= XPAD_DPAD_RIGHT;
+    if (st.Gamepad.bLeftTrigger  > XPAD_TRIGGER_THRESHOLD) b |= XPAD_LEFT_TRIGGER;
+    if (st.Gamepad.bRightTrigger > XPAD_TRIGGER_THRESHOLD) b |= XPAD_RIGHT_TRIGGER;
 
-  for (i = 0; i < (int)(sizeof(masks) / sizeof(masks[0])); i++)
+    for (i = 0; i < (int)(sizeof(masks) / sizeof(masks[0])); i++)
+    {
+      if (b & masks[i]) return masks[i];
+    }
+
+    return 0;
+  }
+
+  if (is_di_device(device))
   {
-    if (b & masks[i]) return masks[i];
+    int idx = device - XPAD_MAX_DEVICES;
+    DIJOYSTATE2 st;
+    DWORD b;
+    int i;
+
+    ZeroMemory(&st, sizeof(st));
+    if (!di_query(idx, &st)) return 0;
+
+    b = di_raw_buttons(&st);
+    if (st.lY >  XPAD_DEADZONE) b |= DI_DPAD_DOWN;
+    if (st.lY < -XPAD_DEADZONE) b |= DI_DPAD_UP;
+    if (st.lX < -XPAD_DEADZONE) b |= DI_DPAD_LEFT;
+    if (st.lX >  XPAD_DEADZONE) b |= DI_DPAD_RIGHT;
+
+    if (b & DI_DPAD_UP)    return DI_DPAD_UP;
+    if (b & DI_DPAD_DOWN)  return DI_DPAD_DOWN;
+    if (b & DI_DPAD_LEFT)  return DI_DPAD_LEFT;
+    if (b & DI_DPAD_RIGHT) return DI_DPAD_RIGHT;
+    for (i = 0; i < DI_MAX_BUTTONS; i++)
+    {
+      if (b & DI_BTN(i)) return (int)DI_BTN(i);
+    }
+
+    return 0;
   }
 
   return 0;
@@ -848,9 +1323,13 @@ const char *input_key_name(int vk)
   return name;
 }
 
-const char *input_pad_button_name(int mask)
+/* mask is only meaningful alongside the device it was captured against (see
+   the file banner comment) -- the two backends use overlapping numeric bit
+   values for entirely different things, so device picks which of the two
+   naming tables below applies. */
+const char *input_pad_button_name(int device, int mask)
 {
-  static const struct { int mask; const char *name; } names[] =
+  static const struct { int mask; const char *name; } xinput_names[] =
   {
     { XPAD_DPAD_UP,        "D-pad Up"    },
     { XPAD_DPAD_DOWN,      "D-pad Down"  },
@@ -872,9 +1351,29 @@ const char *input_pad_button_name(int mask)
 
   if (!mask) return "(unassigned)";
 
-  for (i = 0; i < (int)(sizeof(names) / sizeof(names[0])); i++)
+  if (is_di_device(device))
   {
-    if (names[i].mask == mask) return names[i].name;
+    if (mask == (int)DI_DPAD_UP)    return "D-pad/Stick Up";
+    if (mask == (int)DI_DPAD_DOWN)  return "D-pad/Stick Down";
+    if (mask == (int)DI_DPAD_LEFT)  return "D-pad/Stick Left";
+    if (mask == (int)DI_DPAD_RIGHT) return "D-pad/Stick Right";
+
+    for (i = 0; i < DI_MAX_BUTTONS; i++)
+    {
+      if (mask == (int)DI_BTN(i))
+      {
+        wsprintfA(name, "Button %d", i + 1);
+        return name;
+      }
+    }
+
+    wsprintfA(name, "pad 0x%06X", mask);
+    return name;
+  }
+
+  for (i = 0; i < (int)(sizeof(xinput_names) / sizeof(xinput_names[0])); i++)
+  {
+    if (xinput_names[i].mask == mask) return xinput_names[i].name;
   }
 
   /* Should not happen for anything this app itself ever assigns, but

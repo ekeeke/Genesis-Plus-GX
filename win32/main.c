@@ -3731,6 +3731,14 @@ int WINAPI WinMain(HINSTANCE inst, HINSTANCE prev, LPSTR cmdline, int show)
   InitCommonControlsEx(&icc);
 
   error_init();
+
+  /* Before config_load(): DirectInput joystick names are only known once
+     this has enumerated them, and a saved pad mapping needs that list
+     available immediately in order to re-match its device by name (see
+     gui_input_resolve_device()). Actually opening a device still waits for
+     create_main_window() below, since that needs a window handle this
+     doesn't have yet. */
+  gui_input_init();
   config_load();
   netplay_init(&np_iface);
   emu_apply_nuked_type();
@@ -3778,7 +3786,6 @@ int WINAPI WinMain(HINSTANCE inst, HINSTANCE prev, LPSTR cmdline, int show)
     video_set_filter_by_name(saved);
   }
 
-  gui_input_init();
   rewind_init();
   rewind_enable(gui.rewind);
   load_boot_rom();

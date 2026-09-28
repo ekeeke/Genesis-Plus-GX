@@ -123,9 +123,11 @@ LDFLAGS  += -mwindows
 
 # zlib is linked statically so the finished .exe does not need zlib1.dll
 # sitting next to it. XInput is absent on purpose: input.c loads it at
-# runtime, so a machine without it still starts.
+# runtime, so a machine without it still starts. DirectInput (dinput8.dll),
+# used for gamepads/joysticks XInput doesn't cover, has shipped in Windows
+# since XP, so unlike XInput it's linked normally.
 LIBS      = -lgdi32 -lcomctl32 -lcomdlg32 -lwinmm -lshell32 -lshlwapi -lole32 -luuid -lmfuuid -lws2_32 -ld3d9 -luxtheme -ldwmapi \
-            -ld3d11 -ldxgi -ldxguid \
+            -ld3d11 -ldxgi -ldxguid -ldinput8 \
             -Wl,-Bstatic -lz -Wl,-Bdynamic -lm
 
 LDFLAGS  += -static-libgcc
