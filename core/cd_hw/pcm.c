@@ -105,6 +105,7 @@ int pcm_context_load(uint8 *state)
   load_param(&pcm.enabled, sizeof(pcm.enabled));
   load_param(&pcm.status, sizeof(pcm.status));
   load_param(&pcm.index, sizeof(pcm.index));
+  pcm.index &= 7;
   load_param(pcm.ram, sizeof(pcm.ram));
 
   return bufferptr;
