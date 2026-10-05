@@ -197,6 +197,7 @@ typedef struct
 } ym3438_t;
 
 void OPN2_Reset(ym3438_t *chip);
+void OPN2_Restore(ym3438_t *chip);
 void OPN2_SetChipType(Bit32u type);
 void OPN2_Clock(ym3438_t *chip, Bit16s *buffer);
 void OPN2_Write(ym3438_t *chip, Bit32u port, Bit8u data);
