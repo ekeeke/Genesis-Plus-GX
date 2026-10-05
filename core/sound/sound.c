@@ -491,7 +491,9 @@ int sound_context_save(uint8 *state)
     save_param(&config.opll, sizeof(config.opll));
     if (config.opll)
     {
-      save_param(&opll, sizeof(opll));
+      opll_t state_opll = opll;
+      state_opll.patchrom = NULL;
+      save_param(&state_opll, sizeof(state_opll));
       save_param(&opll_accm, sizeof(opll_accm));
       save_param(&opll_sample, sizeof(opll_sample));
       save_param(&opll_cycles, sizeof(opll_cycles));
@@ -543,10 +545,16 @@ int sound_context_load(uint8 *state)
     if (config_opll)
     {
       load_param(&opll, sizeof(opll));
+      OPLL_Restore(&opll);
       load_param(&opll_accm, sizeof(opll_accm));
       load_param(&opll_sample, sizeof(opll_sample));
       load_param(&opll_cycles, sizeof(opll_cycles));
       load_param(&opll_status, sizeof(opll_status));
+      if ((unsigned int)opll_cycles >= 18)
+      {
+        opll_cycles = 0;
+      }
+      opll_status &= 1;
     }
     else
 #endif
