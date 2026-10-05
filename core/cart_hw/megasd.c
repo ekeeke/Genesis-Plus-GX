@@ -131,6 +131,25 @@ int megasd_context_load(uint8 *state)
     load_param(&scd.regs[0x36>>1].byte.h, 1);
   }
 
+  if ((megasd_hw.playbackSamplesCount > 0) &&
+      ((megasd_hw.playbackLoopTrack >= cdd.toc.last) ||
+       (megasd_hw.playbackEndTrack >= cdd.toc.last) ||
+       (megasd_hw.playbackLoopTrack > megasd_hw.playbackEndTrack) ||
+       (cdd.index < megasd_hw.playbackLoopTrack) ||
+       (cdd.index > megasd_hw.playbackEndTrack) ||
+       (megasd_hw.playbackEndSector < cdd.toc.tracks[megasd_hw.playbackEndTrack].start) ||
+       (megasd_hw.playbackEndSector > cdd.toc.tracks[megasd_hw.playbackEndTrack].end) ||
+       (megasd_hw.playbackLoop &&
+        ((megasd_hw.playbackLoopSector < cdd.toc.tracks[megasd_hw.playbackLoopTrack].start) ||
+         (megasd_hw.playbackLoopSector >= cdd.toc.tracks[megasd_hw.playbackLoopTrack].end) ||
+         (megasd_hw.playbackLoopSector >= megasd_hw.playbackEndSector)))))
+  {
+    megasd_hw.playbackLoop = 0;
+    megasd_hw.playbackSamplesCount = 0;
+    scd.regs[0x36>>1].byte.h = 0x01;
+    cdd.status = CD_STOP;
+  }
+
   return bufferptr;
 }
 
