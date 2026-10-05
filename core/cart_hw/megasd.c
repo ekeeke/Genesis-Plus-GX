@@ -662,16 +662,15 @@ static void megasd_ctrl_write_word(unsigned int address, unsigned int data)
           if (cdd.loaded && cdd.toc.tracks[0].type)
           {
             /* get LBA from command buffer (32-bit value stored in big-endian format) */
-#ifndef LSB_FIRST 
-            int lba = *(unsigned int *)(megasd_hw.buffer) - 150;
-#else
-            int lba = (megasd_hw.buffer[0] << 24) + (megasd_hw.buffer[1] << 16) + (megasd_hw.buffer[2] << 8) + megasd_hw.buffer[3] - 150;
-#endif
+            uint32 lba = ((uint32)megasd_hw.buffer[0] << 24) |
+                         (megasd_hw.buffer[1] << 16) |
+                         (megasd_hw.buffer[2] << 8) |
+                          megasd_hw.buffer[3];
             /* only allow reading within first data track */
-            if (lba < cdd.toc.tracks[0].end)
+            if ((lba >= 150) && ((lba - 150) < cdd.toc.tracks[0].end))
             {
               /* set current LBA position */
-              cdd.lba = lba;
+              cdd.lba = lba - 150;
 
               /* set current track index */
               cdd.index = 0;
