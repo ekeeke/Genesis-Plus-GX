@@ -547,6 +547,7 @@ int vdp_context_load(uint8 *state)
   load_param(&status, sizeof(status));
   load_param(&dmafill, sizeof(dmafill));
   load_param(&fifo_idx, sizeof(fifo_idx));
+  fifo_idx = (unsigned int)fifo_idx & 3;
   load_param(&fifo, sizeof(fifo));
   load_param(&h_counter, sizeof(h_counter));
   load_param(&hint_pending, sizeof(hint_pending));
