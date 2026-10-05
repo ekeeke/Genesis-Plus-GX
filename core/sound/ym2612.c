@@ -2214,6 +2214,15 @@ int YM2612LoadContext(unsigned char *state)
   /* restore YM2612 context */
   load_param(&ym2612, sizeof(ym2612));
 
+  /* validate state used as table indexes */
+  ym2612.OPN.LFO_PM &= 0x1f;
+  ym2612.OPN.ST.fn_h &= 0x3f;
+  ym2612.OPN.SL3.fn_h &= 0x3f;
+  for (s=0; s<3; s++)
+  {
+    ym2612.OPN.SL3.kcode[s] &= 0x1f;
+  }
+
   /* restore DT table address pointer for each channel slots */
   for (c=0; c<6; c++)
   {
@@ -2226,12 +2235,27 @@ int YM2612LoadContext(unsigned char *state)
   }
 
   /* restore outputs connections */
-  setup_connection(&ym2612.CH[0],0);
-  setup_connection(&ym2612.CH[1],1);
-  setup_connection(&ym2612.CH[2],2);
-  setup_connection(&ym2612.CH[3],3);
-  setup_connection(&ym2612.CH[4],4);
-  setup_connection(&ym2612.CH[5],5);
+  for (c=0; c<6; c++)
+  {
+    FM_CH *CH = &ym2612.CH[c];
+    CH->ALGO &= 7;
+    CH->pms &= 0xe0;
+    CH->kcode &= 0x1f;
+    for (s=0; s<4; s++)
+    {
+      FM_SLOT *SLOT = &CH->SLOT[s];
+      SLOT->KSR &= 3;
+      if (SLOT->d1r > 94) SLOT->d1r = 94;
+      if (SLOT->d2r > 94) SLOT->d2r = 94;
+      if (SLOT->rr > 94) SLOT->rr = 94;
+      SLOT->ksr &= 0x1f;
+      if (SLOT->eg_sel_ar > (18*RATE_STEPS)) SLOT->eg_sel_ar = 18*RATE_STEPS;
+      if (SLOT->eg_sel_d1r > (18*RATE_STEPS)) SLOT->eg_sel_d1r = 18*RATE_STEPS;
+      if (SLOT->eg_sel_d2r > (18*RATE_STEPS)) SLOT->eg_sel_d2r = 18*RATE_STEPS;
+      if (SLOT->eg_sel_rr > (18*RATE_STEPS)) SLOT->eg_sel_rr = 18*RATE_STEPS;
+    }
+    setup_connection(CH,c);
+  }
 
   return bufferptr;
 }
