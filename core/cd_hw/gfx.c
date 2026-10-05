@@ -441,9 +441,40 @@ int gfx_context_save(uint8 *state)
   return bufferptr;
 }
 
+static uint32 gfx_stamp_map_config(uint8 mode)
+{
+  switch (mode)
+  {
+    case 0:
+      gfx.dotMask = 0x07ffff;   /* 256x256 dots/map  */
+      gfx.stampShift = 11 + 4;  /* 16x16 dots/stamps */
+      gfx.mapShift = 4;         /* 16x16 stamps/map  */
+      return 0x3fe00;           /* 512 bytes/table   */
+
+    case 1:
+      gfx.dotMask = 0x07ffff;   /* 256x256 dots/map  */
+      gfx.stampShift = 11 + 5;  /* 32x32 dots/stamps */
+      gfx.mapShift = 3;         /* 8x8 stamps/map    */
+      return 0x3ff80;           /* 128 bytes/table   */
+
+    case 2:
+      gfx.dotMask = 0x7fffff;   /* 4096*4096 dots/map */
+      gfx.stampShift = 11 + 4;  /* 16x16 dots/stamps  */
+      gfx.mapShift = 8;         /* 256x256 stamps/map */
+      return 0x20000;           /* 131072 bytes/table */
+
+    default:
+      gfx.dotMask = 0x7fffff;   /* 4096*4096 dots/map */
+      gfx.stampShift = 11 + 5;  /* 32x32 dots/stamps  */
+      gfx.mapShift = 7;         /* 128x128 stamps/map */
+      return 0x38000;           /* 32768 bytes/table  */
+  }
+}
+
 int gfx_context_load(uint8 *state)
 {
-  uint32 tmp32;
+  uint32 mask, tmp32;
+  uint8 mode;
   int bufferptr = 0;
 
   load_param(&gfx.cycles, sizeof(gfx.cycles));
@@ -454,12 +485,34 @@ int gfx_context_load(uint8 *state)
   load_param(&gfx.bufferOffset, sizeof(gfx.bufferOffset));
   load_param(&gfx.bufferStart, sizeof(gfx.bufferStart));
 
+  if ((gfx.stampShift == 15) && (gfx.mapShift == 4))
+  {
+    mode = 0;
+  }
+  else if ((gfx.stampShift == 16) && (gfx.mapShift == 3))
+  {
+    mode = 1;
+  }
+  else if ((gfx.stampShift == 15) && (gfx.mapShift == 8))
+  {
+    mode = 2;
+  }
+  else if ((gfx.stampShift == 16) && (gfx.mapShift == 7))
+  {
+    mode = 3;
+  }
+  else
+  {
+    mode = (scd.regs[0x58>>1].byte.l >> 1) & 0x03;
+  }
+  mask = gfx_stamp_map_config(mode);
+
   load_param(&tmp32, 4);
   tmp32 &= 0x3fff8;
   gfx.tracePtr = (uint16 *)(scd.word_ram_2M + tmp32);
 
   load_param(&tmp32, 4);
-  tmp32 &= ~((1 << ((2*gfx.mapShift) + 1)) - 1) & 0x3ffff;
+  tmp32 &= mask;
   gfx.mapPtr = (uint16 *)(scd.word_ram_2M + tmp32);
 
   return bufferptr;
@@ -609,36 +662,7 @@ void gfx_start(unsigned int base, int cycles)
   gfx.tracePtr = (uint16 *)(scd.word_ram_2M + ((base << 2) & 0x3fff8));
 
   /* stamps & stamp map size */
-  switch ((scd.regs[0x58>>1].byte.l >> 1) & 0x03)
-  {
-    case 0:
-      gfx.dotMask = 0x07ffff;   /* 256x256 dots/map  */
-      gfx.stampShift = 11 + 4;  /* 16x16 dots/stamps */
-      gfx.mapShift = 4;         /* 16x16 stamps/map  */
-      mask = 0x3fe00;           /* 512 bytes/table   */
-      break;
-
-    case 1:
-      gfx.dotMask = 0x07ffff;   /* 256x256 dots/map  */
-      gfx.stampShift = 11 + 5;  /* 32x32 dots/stamps */
-      gfx.mapShift = 3;         /* 8x8 stamps/map    */
-      mask = 0x3ff80;           /* 128 bytes/table   */
-      break;
-
-    case 2:
-      gfx.dotMask = 0x7fffff;   /* 4096*4096 dots/map */
-      gfx.stampShift = 11 + 4;  /* 16x16 dots/stamps  */
-      gfx.mapShift = 8;         /* 256x256 stamps/map */
-      mask = 0x20000;           /* 131072 bytes/table */
-      break;
-
-    case 3:
-      gfx.dotMask = 0x7fffff;   /* 4096*4096 dots/map */
-      gfx.stampShift = 11 + 5;  /* 32x32 dots/stamps  */
-      gfx.mapShift = 7;         /* 128x128 stamps/map */
-      mask = 0x38000;           /* 32768 bytes/table  */
-      break;
-  }
+  mask = gfx_stamp_map_config((scd.regs[0x58>>1].byte.l >> 1) & 0x03);
 
   /* stamp map table base address */
   gfx.mapPtr = (uint16 *)(scd.word_ram_2M + ((scd.regs[0x5a>>1].w << 2) & mask));
