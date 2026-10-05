@@ -1827,3 +1827,32 @@ unsigned int YM2413GetContextSize(void)
 {
   return sizeof(YM2413);
 }
+
+void YM2413RestoreContext(void)
+{
+  int c, s;
+  UINT32 lfo_am_period = (UINT32)LFO_AM_TAB_ELEMENTS << LFO_SH;
+
+  ym2413.lfo_am_cnt %= lfo_am_period;
+
+  for (c=0; c<9; c++)
+  {
+    YM2413_OPLL_CH *CH = &ym2413.P_CH[c];
+    CH->kcode &= 0x0f;
+
+    for (s=0; s<2; s++)
+    {
+      YM2413_OPLL_SLOT *SLOT = &CH->SLOT[s];
+      if ((SLOT->KSR != 0) && (SLOT->KSR != 2)) SLOT->KSR = 2;
+      if (SLOT->ar > 76) SLOT->ar = 76;
+      if (SLOT->dr > 76) SLOT->dr = 76;
+      if (SLOT->rr > 76) SLOT->rr = 76;
+      if ((SLOT->wavetable != 0) && (SLOT->wavetable != SIN_LEN))
+      {
+        SLOT->wavetable = 0;
+      }
+      SLOT->ksr = 0xff;
+      CALC_FCSLOT(CH, SLOT);
+    }
+  }
+}

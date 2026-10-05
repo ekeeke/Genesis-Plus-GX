@@ -556,6 +556,7 @@ int sound_context_load(uint8 *state)
 #endif
     {
       load_param(YM2413GetContextPtr(),YM2413GetContextSize());
+      YM2413RestoreContext();
     }
   }
 
