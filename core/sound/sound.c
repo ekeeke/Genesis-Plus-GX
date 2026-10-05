@@ -523,9 +523,11 @@ int sound_context_load(uint8 *state)
     if (config_ym3438)
     {
       load_param(&ym3438, sizeof(ym3438));
+      OPN2_Restore(&ym3438);
       load_param(&ym3438_accm, sizeof(ym3438_accm));
       load_param(&ym3438_sample, sizeof(ym3438_sample));
       load_param(&ym3438_cycles, sizeof(ym3438_cycles));
+      ym3438_cycles = (unsigned int)ym3438_cycles % 24;
     }
     else
     {
