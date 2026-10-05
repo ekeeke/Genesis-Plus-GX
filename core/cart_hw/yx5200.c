@@ -268,6 +268,11 @@ int yx5200_context_load(uint8 *state)
   load_param(&yx5200, sizeof(yx5200));
   load_param(&cur_sample, sizeof(cur_sample));
 
+  if (yx5200.rxCounter >= YX5200_RX_BUFFER_SIZE)
+  {
+    yx5200.rxCounter = 0;
+  }
+
   index = yx5200.trackIndex;
   yx5200.trackIndex = 0;
   if ((index > 0) && (index <= YX5200_MAX_TRACK_INDEX))
