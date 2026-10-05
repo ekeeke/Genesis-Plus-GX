@@ -419,7 +419,13 @@ int cdd_load(char *filename, char *header)
   {
     int sectors = 0;
     char metadata[256];
+    uint32 metadata_length;
     const chd_header *head;
+    static const char track_metadata_format[] =
+      "TRACK:%d TYPE:%15s SUBTYPE:%15s FRAMES:%d";
+    static const char track_metadata2_format[] =
+      "TRACK:%d TYPE:%15s SUBTYPE:%15s FRAMES:%d PREGAP:%d "
+      "PGTYPE:%15s PGSUB:%15s POSTGAP:%d";
 
     /* open CHD file */
     if (chd_open_file(fd, CHD_OPEN_READ, NULL, &cdd.chd.file) != CHDERR_NONE)
@@ -463,14 +469,26 @@ int cdd_load(char *filename, char *header)
       type[0] = subtype[0] = pgtype[0] = pgsub[0] = 0;
 
       /* attempt fetch either complete or partial metadata for current track */
-      if (chd_get_metadata(cdd.chd.file, CDROM_TRACK_METADATA2_TAG, cdd.toc.last, metadata, 256, 0, 0, 0) == CHDERR_NONE)
+      if (chd_get_metadata(cdd.chd.file, CDROM_TRACK_METADATA2_TAG,
+          cdd.toc.last, metadata, sizeof(metadata) - 1, &metadata_length,
+          0, 0) == CHDERR_NONE)
       {
-        if (sscanf(metadata, CDROM_TRACK_METADATA2_FORMAT, &tracknum, &type[0], &subtype[0], &frames, &pregap, &pgtype[0], &pgsub[0], &postgap) != 8)
+        if (metadata_length >= sizeof(metadata))
+          break;
+        metadata[metadata_length] = 0;
+        if (sscanf(metadata, track_metadata2_format, &tracknum, &type[0],
+            &subtype[0], &frames, &pregap, &pgtype[0], &pgsub[0], &postgap) != 8)
           break;
       }
-      else if (chd_get_metadata(cdd.chd.file, CDROM_TRACK_METADATA_TAG, cdd.toc.last, metadata, 256, 0, 0, 0) == CHDERR_NONE)
+      else if (chd_get_metadata(cdd.chd.file, CDROM_TRACK_METADATA_TAG,
+          cdd.toc.last, metadata, sizeof(metadata) - 1, &metadata_length,
+          0, 0) == CHDERR_NONE)
       {
-        if (sscanf(metadata, CDROM_TRACK_METADATA_FORMAT, &tracknum, &type[0], &subtype[0], &frames) != 4)
+        if (metadata_length >= sizeof(metadata))
+          break;
+        metadata[metadata_length] = 0;
+        if (sscanf(metadata, track_metadata_format, &tracknum, &type[0],
+            &subtype[0], &frames) != 4)
           break;
       }
 
