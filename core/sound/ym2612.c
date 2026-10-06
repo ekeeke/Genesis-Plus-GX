@@ -2214,6 +2214,38 @@ int YM2612LoadContext(unsigned char *state)
   /* restore YM2612 context */
   load_param(&ym2612, sizeof(ym2612));
 
+  /* validate state used as table indexes and shift counts */
+  ym2612.OPN.LFO_PM &= 0x1f;
+  for (s=0; s<3; s++)
+  {
+    ym2612.OPN.SL3.kcode[s] &= 0x1f;
+    ym2612.OPN.SL3.block_fnum[s] &= 0x3fff;
+  }
+  for (c=0; c<6; c++)
+  {
+    FM_CH *CH = &ym2612.CH[c];
+    CH->ALGO &= 7;
+    CH->kcode &= 0x1f;
+    CH->block_fnum &= 0x3fff;
+    CH->pms &= 0xe0;
+    if ((CH->ams != 0) && (CH->ams != 1) &&
+        (CH->ams != 3) && (CH->ams != 8))
+    {
+      CH->ams = 8;
+    }
+    for (s=0; s<4; s++)
+    {
+      FM_SLOT *SLOT = &CH->SLOT[s];
+      SLOT->KSR &= 3;
+      if (SLOT->ar > 94) SLOT->ar = 0;
+      if (SLOT->d1r > 94) SLOT->d1r = 0;
+      if (SLOT->d2r > 94) SLOT->d2r = 0;
+      if (SLOT->rr > 94) SLOT->rr = 34;
+      SLOT->ksr = 0xff;
+    }
+    CH->SLOT[SLOT1].Incr = -1;
+  }
+
   /* restore DT table address pointer for each channel slots */
   for (c=0; c<6; c++)
   {
@@ -2241,9 +2273,24 @@ int YM2612SaveContext(unsigned char *state)
   int c,s;
   uint8 index;
   int bufferptr = 0;
+  YM2612 state_ym2612 = ym2612;
+
+  /* native pointers are rebuilt by YM2612LoadContext */
+  for (c=0; c<6; c++)
+  {
+    state_ym2612.CH[c].connect1 = NULL;
+    state_ym2612.CH[c].connect2 = NULL;
+    state_ym2612.CH[c].connect3 = NULL;
+    state_ym2612.CH[c].connect4 = NULL;
+    state_ym2612.CH[c].mem_connect = NULL;
+    for (s=0; s<4; s++)
+    {
+      state_ym2612.CH[c].SLOT[s].DT = NULL;
+    }
+  }
 
   /* save YM2612 context */
-  save_param(&ym2612, sizeof(ym2612));
+  save_param(&state_ym2612, sizeof(state_ym2612));
 
   /* save DT table index for each channel slots */
   for (c=0; c<6; c++)
