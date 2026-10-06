@@ -1139,9 +1139,9 @@ int cdd_load(char *filename, char *header)
         /* auto-detect PAUSE within audio files */
         ov_pcm_seek(&cdd.toc.tracks[cdd.toc.last].vf, 100 * 588);
 #if defined(USE_LIBVORBIS)
-        ov_read(&cdd.toc.tracks[cdd.toc.last].vf, (char *)head, 32, 0, 2, 1, 0);
+        ov_read(&cdd.toc.tracks[cdd.toc.last].vf, (char *)head, 4, 0, 2, 1, 0);
 #else
-        ov_read(&cdd.toc.tracks[cdd.toc.last].vf, (char *)head, 32, 0);
+        ov_read(&cdd.toc.tracks[cdd.toc.last].vf, (char *)head, 4, 0);
 #endif
         ov_pcm_seek(&cdd.toc.tracks[cdd.toc.last].vf, 0);
         if (*(int32 *)head == 0)
