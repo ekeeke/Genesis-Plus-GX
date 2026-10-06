@@ -91,10 +91,13 @@ int load_archive(char *filename, unsigned char *buffer, int maxsize, char *exten
     }
 
     /* Retrieve uncompressed file size */
-    size = info.uncompressed_size;
-    if(size > maxsize)
+    if(info.uncompressed_size > (uLong)maxsize)
     {
       size = maxsize;
+    }
+    else
+    {
+      size = info.uncompressed_size;
     }
 
     /* Read (decompress) the file */
