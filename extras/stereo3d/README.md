@@ -1,128 +1,134 @@
-# Экспериментальное Stereo 3D для Genesis Plus GX
+# Experimental Stereo 3D for Genesis Plus GX
 
-Поддержка пассивного чересстрочного 3D конкретным монитором ASUS **не подтверждена**.
-Точная модель неизвестна. Side-by-Side здесь является транспортом двух глаз;
-чередование строк выполняет последний проход шейдера RetroArch.
+Passive row-interleaved 3D support on the intended ASUS monitor is
+**unconfirmed**. Its exact model is unknown. Side-by-Side transports the two
+eye images; the final RetroArch shader pass interleaves their rows.
 
-## Сборка и запуск
+## Build and run
 
-На этой macOS проверена сборка:
+The following build was verified on macOS:
 
 ```sh
 make -f Makefile.libretro -j4 platform=osx ARCHFLAGS=
 ```
 
-Результат: `genesis_plus_gx_libretro.dylib` в корне репозитория, arm64, RGB565.
-На Linux используется `make -f Makefile.libretro -j4 platform=unix`;
-эта сборка здесь не проверена. Windows/mingw-w64 также не проверены:
-доступный локальный Ubuntu-образ не содержит компилятора/make,
-локальный mingw-w64 отсутствует. Новых постоянных regression harnesses нет.
-В этом checkout Genesis Plus GX нет `.github/workflows`;
-файлы и CI harnesses RetroArch не менялись.
+Output: `genesis_plus_gx_libretro.dylib` in the repository root, arm64, RGB565.
+On Linux, use `make -f Makefile.libretro -j4 platform=unix`; this build was not
+verified here. Windows/mingw-w64 was also not verified: the available local
+Ubuntu image contains neither a compiler nor make, and no local mingw-w64
+toolchain is installed. No permanent regression harnesses were added.
+This Genesis Plus GX checkout has no `.github/workflows` directory;
+RetroArch source files and CI harnesses were not changed.
 
-1. В RetroArch выберите **Settings → Drivers → Video → gl**, затем перезапустите
-   RetroArch. Пресет `.glslp` предназначен для OpenGL `gl`, не для Metal,
-   Vulkan или slang. GLSL поддерживает старый и современный синтаксис OpenGL.
-2. **Load Core → Install or Restore a Core**: выберите собранную библиотеку
-   (название пункта зависит от версии меню). Затем **Load Content**: откройте
-   собственный легально полученный Sonic для Mega Drive/Genesis.
-   Этот эксперимент не содержит ROM и не использует игровые хаки.
-3. **Quick Menu → Core Options → Video**: включите **Stereo 3D**.
-   Начальные смещения: **Plane B = 0**, **Plane A = 2**, **Sprite = 2**.
-   Значение — смещение **каждого глаза**, полная разница между глазами
-   вдвое больше: `2` означает разницу `4` игровых пикселя.
-   Диапазон каждого смещения: `-16…16`. Положительное значение сдвигает
-   левый глаз влево, правый вправо; отрицательное меняет направление глубины.
-   **Window** всегда остаётся на плоскости экрана.
-4. **Quick Menu → Shaders → Video Shaders = On → Load Preset**:
-   выберите `extras/stereo3d/full-sbs-interleaved.glslp` и примените его.
-   Оставьте один проход, без дополнительных проходов/FBO, масштабирования
-   или фильтров после него. Пресет намеренно не задаёт промежуточный масштаб:
-   последний проход рисует прямо в конечный framebuffer.
-5. **Settings → Video → Scaling**: отключите Integer Scale, установите
-   **Aspect Ratio = 4:3** для первого теста Sonic. Для точного сохранения
-   обычных пропорций сначала запишите соотношение изображения ядра с выключенным
-   Stereo 3D, затем задайте такое же через Custom viewport. Full SBS сообщает
-   удвоенную ширину и удвоенное соотношение сторон; для чередующихся строк
-   нужен viewport с пропорциями **одного глаза**, а не двух кадров рядом.
-   Если проверяете сырые SBS-кадры без шейдера, используйте Core Provided.
-6. **Shader Parameters**: подберите **Row parity** (`0/1`). При необходимости
-   поменяйте **Swap eyes** в шейдере или **Swap Eyes** в ядре.
-   Обе операции обмена вместе взаимно отменяются. Row parity также меняет
-   назначение глаз строкам, но служит для совмещения с поляризацией панели.
-7. Для возвращения к обычному изображению выключите Stereo 3D и шейдер,
-   восстановите прежний Aspect Ratio. Геометрия и фильтр NTSC восстанавливаются.
+1. In RetroArch, select **Settings → Drivers → Video → gl**, then restart
+   RetroArch. The `.glslp` preset targets OpenGL `gl`, not Metal, Vulkan or
+   slang. The shader supports legacy and modern OpenGL GLSL syntax.
+2. **Load Core → Install or Restore a Core**: select the built library
+   (the menu label may vary by version). Then use **Load Content** to open
+   your own legally obtained copy of Sonic for Mega Drive/Genesis.
+   This experiment includes no ROM and uses no game-specific hacks.
+3. Under **Quick Menu → Core Options → Video**, enable **Stereo 3D**.
+   Default offsets: **Plane B = 0**, **Plane A = 2**, **Sprite = 2**.
+   Each value is the displacement of **each eye**; total eye separation is
+   twice that value: `2` means a difference of `4` game pixels.
+   Each offset ranges from `-16` to `16`. Positive values move the left eye
+   image left and the right eye image right; negative values reverse the
+   direction of depth. **Window** always remains at screen depth.
+4. Under **Quick Menu → Shaders → Video Shaders = On → Load Preset**, select
+   `extras/stereo3d/full-sbs-interleaved.glslp` and apply it.
+   Keep a single pass, with no additional passes/FBOs, scaling or filters
+   after it. The preset intentionally specifies no intermediate scale:
+   its final pass draws directly into the final framebuffer.
+5. Under **Settings → Video → Scaling**, disable Integer Scale and set
+   **Aspect Ratio = 4:3** for the first Sonic test. To preserve the original
+   proportions exactly, first record the core's display aspect ratio with
+   Stereo 3D disabled, then reproduce it with a Custom viewport. Full SBS
+   reports twice the width and twice the aspect ratio; row-interleaved
+   output needs a viewport with the proportions of **one eye**, rather than
+   two images side by side. Use Core Provided when inspecting raw SBS output
+   without the shader.
+6. Under **Shader Parameters**, try **Row parity** (`0/1`). If necessary,
+   toggle **Swap eyes** in the shader or **Swap Eyes** in the core.
+   Enabling both swaps cancels them out. Row parity also exchanges the eyes
+   assigned to rows, but is intended to align them with the panel's polarization.
+7. To restore ordinary output, disable Stereo 3D and the shader, and restore
+   your previous Aspect Ratio. Normal geometry and the NTSC filter are restored.
 
-## Условия проверки монитора
+## Monitor test conditions
 
-Установите **родное физическое разрешение панели** и вывод 1:1, без масштабирования
-монитором, ОС или композитором после шейдера. На HiDPI логические размеры окна
-не равны физическим пикселям. Предпочтителен полноэкранный режим на нужном
-мониторе; отключите overscan дисплея, поворот экрана и дробное масштабирование.
-Если используете окно, его framebuffer должен соответствовать физическим
-строкам панели, а вертикальное положение окна должно быть стабильным.
-После перемещения окна по вертикали, смены дисплея/разрешения, высоты viewport
-или режима fullscreen повторно подберите Row parity.
+Use the panel's **native physical resolution** and 1:1 output, with no scaling
+by the monitor, OS or compositor after the shader. On HiDPI displays, logical
+window dimensions do not equal physical pixels. Prefer fullscreen on the
+intended monitor; disable display overscan, screen rotation and fractional
+scaling. In windowed mode, framebuffer rows must map directly to physical
+panel rows, and the window's vertical position must remain stable.
+Recalibrate Row parity after moving the window vertically, changing the
+display/resolution or viewport height, or switching fullscreen modes.
 
-Чётность вычисляется из `floor(gl_FragCoord.y)` конечного OpenGL framebuffer,
-а не из строки исходного игрового изображения. OpenGL считает строки снизу;
-Row parity компенсирует ориентацию и неизвестное назначение поляризации панели.
-Черные полосы и положение viewport учитываются его фактической координатой
-в framebuffer; смещение всего окна на экране нужно компенсировать вручную.
-Не используйте запись/стрим с последующим масштабированием для проверки 3D.
+Parity comes from `floor(gl_FragCoord.y)` in the final OpenGL framebuffer,
+not from the source game's scanline. OpenGL counts rows from the bottom;
+Row parity compensates for this orientation and the panel's unknown
+polarization assignment. Letterboxing and viewport position are accounted
+for by the actual framebuffer coordinate; moving the entire window on the
+screen requires manual compensation. Do not use a recording or stream that
+is subsequently scaled to evaluate 3D.
 
-Первый тест: Sonic, B=0/A=2/sprites=2; проверьте отдельно каждым глазом через
-подходящие пассивные очки, затем вместе. Сравните глубину фона, земли, персонажа
-и HUD. Подберите знак/величину глубины и порядок глаз. Полосы параллакса внутри
-одной плоскости имеют одинаковую назначенную глубину.
+First test: Sonic, B=0/A=2/sprites=2. View each eye separately through suitable
+passive glasses, then both together. Compare the background, ground, character
+and HUD depth. Adjust the depth sign/magnitude and eye order. Parallax bands
+within a single plane share the same assigned depth.
 
-## Реализация и ограничения
+## Implementation and limitations
 
-- Только `SYSTEM_MD`; SMS, Game Gear, SG-1000, Pico, Sega CD и PBC не меняются.
-- Обычный рендерер выполняется один раз на строку и сохраняет служебные
-  эффекты VDP. Глаза получают отдельные выборки Plane A/B из VRAM/cache,
-  Window и того же разобранного списка спрайтов до смешивания. Время машины,
-  SAT parsing, IRQ, коллизии, overflow/masking не запускаются повторно.
-- Приоритеты, прозрачность и shadow/highlight используют существующие LUT.
-  Горизонтальный scroll читается для каждой строки; обычная двухколоночная
-  вертикальная прокрутка и interlace mode 2 поддерживаются, включая исходную
-  особенность fetch на границе Window и левой частичной колонке.
-- Тайлы выбираются и за горизонтальными краями viewport; спрайтовый буфер
-  имеет запас для максимального смещения. Открытые участки показывают нижние
-  слои/цвет фона, а не копии краевых пикселей готового кадра. Window замещает
-  Plane A, как в обычном рендерере; прозрачный Window открывает Plane B.
-- **Enhanced per-tile vertical scroll** и отображение MD в режиме, отличном
-  от Mode 5: оба глаза получают обычное одинаковое изображение строки,
-  без глубины. Это явный fallback, не поддержка стерео этих режимов.
-- В Stereo 3D обходятся Blargg NTSC и LCD persistence. Настройки сохраняются
-  для обычного режима. Нарисованный frontend-обёрткой курсор lightgun в SBS
-  не выводится. Режим прежде всего предназначен для обычных игр с gamepad.
-- Full SBS: 512/640 пикселей без горизонтального overscan, до 688 с ним;
-  высоты берутся из существующего viewport, включая удвоение interlace.
-  Буфер 688×576, pitch 1376 байт RGB565. Геометрия/максимумы обновляются
-  через libretro при включении/выключении и изменении viewport.
-- При выключении используется исходный framebuffer и исходный путь рендера;
-  остаются только дешёвые условные проверки. Включённый режим заметно дороже:
-  кроме обычного прохода выполняются выборки и композиция двух глаз.
+- Only `SYSTEM_MD` is affected; SMS, Game Gear, SG-1000, Pico, Sega CD and PBC
+  retain their existing behavior.
+- The ordinary renderer runs once per scanline and preserves VDP side effects.
+  Each eye receives separate Plane A/B samples from VRAM/cache, Window and
+  the same parsed sprite list before composition. Machine time, SAT parsing,
+  IRQs, collisions and overflow/masking are not processed again for each eye.
+- Priorities, transparency and shadow/highlight use the existing LUTs.
+  Horizontal scroll is read for each scanline. Ordinary two-cell-column
+  vertical scrolling and interlace mode 2 are supported, including the
+  existing fetch behavior at the Window boundary and partial leftmost column.
+- Tiles are sampled beyond the horizontal viewport edges; the sprite buffer
+  has room for the maximum displacement. Revealed areas show lower layers
+  or the backdrop color, rather than copies of the final image's edge pixels.
+  Window replaces Plane A as in the ordinary renderer; transparent Window
+  pixels reveal Plane B.
+- **Enhanced per-tile vertical scroll** and MD display modes other than
+  Mode 5 produce identical ordinary scanline images for both eyes, without
+  depth. This is an explicit fallback, not stereo support for those modes.
+- Stereo 3D bypasses Blargg NTSC and LCD persistence. Their settings are
+  retained for ordinary output. The lightgun cursor drawn by the frontend
+  wrapper is not displayed in SBS. This mode primarily targets ordinary
+  games played with a gamepad.
+- Full SBS is 512/640 pixels wide without horizontal overscan, or up to 688
+  with it. Heights follow the existing viewport, including interlace doubling.
+  The buffer is 688×576 with a 1376-byte RGB565 pitch. Geometry and maximum
+  dimensions are updated through libretro on enable/disable and viewport changes.
+- When disabled, the original framebuffer and rendering path are used, with
+  only inexpensive conditional checks added. Enabling stereo is significantly
+  more expensive: two eye images are sampled and composed in addition to the
+  ordinary rendering pass.
 
-## Что проверено здесь
+## Validation performed
 
-- Сборка macOS libretro arm64; исходные предупреждения компилятора остаются.
-- 512 сравнений нулевой глубины с обычным рендерером на синтетических данных
-  VDP: H32/H40, Window, scroll, sprites, приоритеты, shadow/highlight,
-  interlace mode 2. Повторено с обычным и `ALT_RENDERER` путями.
-- На каждом пути ещё 256 проверок крайних смещений ±16, Swap Eyes,
-  interlace, borders и blanking с AddressSanitizer; сохранность status,
-  spr_col и spr_ovr при построении глаз.
-- Отдельные проверки открытия Plane B после сдвига Plane A/спрайта и
-  перемещения спрайтов-операторов shadow/highlight.
-- 80 синтетических проверок геометрии: включение/выключение, 256/320,
-  высоты 224…288, горизонтальные borders, interlace и настройка NTSC.
-- Проверка C89 рендерера (существующий `inline` в зависимостях отображён
-  на расширение компилятора), проверка GLSL 120/150 через glslangValidator,
-  проверка diff с учётом сохранённых CRLF.
+- macOS arm64 libretro build; existing compiler warnings remain.
+- 512 zero-depth comparisons against the ordinary renderer using synthetic
+  VDP data: H32/H40, Window, scrolling, sprites, priorities, shadow/highlight
+  and interlace mode 2. Repeated for both ordinary and `ALT_RENDERER` paths.
+- A further 256 checks per path covering extreme offsets of ±16, Swap Eyes,
+  interlace, borders and blanking with AddressSanitizer; preservation of
+  status, spr_col and spr_ovr during eye composition.
+- Explicit checks that Plane B is revealed after shifting Plane A/a sprite,
+  and that shadow/highlight operator sprites move with their assigned depth.
+- 80 synthetic geometry checks: enable/disable, 256/320 widths, heights from
+  224 to 288, horizontal borders, interlace and the NTSC setting.
+- Renderer C89 syntax check (existing dependency `inline` mapped to a compiler
+  extension), GLSL 120/150 validation with glslangValidator, and a diff check
+  accounting for preserved CRLF line endings.
 
-Проверки VDP/геометрии запускались временными harnesses, без ROM и без
-исполнения игры. RetroArch.app присутствует, но визуальный запуск игры,
-GPU-отрисовка шейдера и эффект на мониторе **не проверены**.
-Сборка и синтетические проверки не подтверждают совместимость панели с 3D.
+VDP and geometry checks used temporary harnesses without a ROM or gameplay.
+RetroArch.app is installed, but gameplay, GPU shader rendering and the effect
+on the monitor are **unverified**. Successful compilation and synthetic checks
+do not establish the panel's compatibility with 3D.
