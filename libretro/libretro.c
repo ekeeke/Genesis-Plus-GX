@@ -140,6 +140,8 @@ static bool is_running = 0;
 static uint8_t temp[0x10000];
 static int16 soundbuffer[3068];
 static uint16_t bitmap_data_[720 * 576];
+static uint16_t stereo_bitmap[688 * 576];
+static bool stereo_requested;
 
 static bool restart_eq = false;
 
@@ -1029,6 +1031,9 @@ static void init_bitmap(void)
    bitmap.height     = 576;
    bitmap.pitch      = 720 * 2;
    bitmap.data       = (uint8_t *)bitmap_data_;
+   stereo_enabled   = 0;
+   stereo_data      = (uint8_t *)stereo_bitmap;
+   memset(stereo_bitmap, 0, sizeof(stereo_bitmap));
 }
 
 static void config_default(void)
@@ -1335,7 +1340,7 @@ static bool update_viewport(void)
   vheight = bitmap.viewport.h + (bitmap.viewport.y * 2);
   vaspect_ratio = calculate_display_aspect_ratio();
 
-   if (config.ntsc)
+   if (config.ntsc && !stereo_enabled)
    {
       if (reg[12] & 1)
          vwidth = MD_NTSC_OUT_WIDTH(vwidth);
@@ -1347,6 +1352,8 @@ static bool update_viewport(void)
    {
       vheight = vheight * 2;
    }
+   if (stereo_enabled)
+      vwidth *= 2;
    return ((ow != vwidth) || (oh != vheight) || (oar != vaspect_ratio));
 }
 
@@ -2207,6 +2214,32 @@ static void check_variables(bool first_run)
     update_viewports = true;
   }
 
+  var.key = "genesis_plus_gx_stereo_3d";
+  if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+  {
+    bool requested = !strcmp(var.value, "enabled");
+    if (requested != stereo_requested) update_viewports = true;
+    stereo_requested = requested;
+  }
+  var.key = "genesis_plus_gx_stereo_plane_a";
+  if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+    stereo_plane_a = atoi(var.value);
+  var.key = "genesis_plus_gx_stereo_plane_b";
+  if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+    stereo_plane_b = atoi(var.value);
+  var.key = "genesis_plus_gx_stereo_sprites";
+  if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+    stereo_sprites = atoi(var.value);
+  var.key = "genesis_plus_gx_stereo_swap_eyes";
+  if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+    stereo_swap = !strcmp(var.value, "enabled");
+  if (stereo_plane_a < -16) stereo_plane_a = -16;
+  if (stereo_plane_a > 16) stereo_plane_a = 16;
+  if (stereo_plane_b < -16) stereo_plane_b = -16;
+  if (stereo_plane_b > 16) stereo_plane_b = 16;
+  if (stereo_sprites < -16) stereo_sprites = -16;
+  if (stereo_sprites > 16) stereo_sprites = 16;
+
   if (update_viewports)
   {
     bitmap.viewport.changed = 11;
@@ -3055,7 +3088,7 @@ void retro_get_system_info(struct retro_system_info *info)
 void retro_get_system_av_info(struct retro_system_av_info *info)
 {
    info->geometry.base_width    = vwidth;
-   info->geometry.base_height   = bitmap.viewport.h + (2 * bitmap.viewport.y);
+   info->geometry.base_height   = stereo_enabled ? vheight : bitmap.viewport.h + (2 * bitmap.viewport.y);
    /* Set maximum dimensions based upon emulated system/config */
    if ((system_hw & SYSTEM_PBC) == SYSTEM_MD)
    {
@@ -3081,7 +3114,12 @@ void retro_get_system_av_info(struct retro_system_av_info *info)
       }
       info->geometry.max_height = 240 + (vdp_pal * 48 * (config.overscan & 1));
    }
-   info->geometry.aspect_ratio  = vaspect_ratio;
+   if (stereo_enabled)
+   {
+      info->geometry.max_width = 688;
+      info->geometry.max_height = 576;
+   }
+   info->geometry.aspect_ratio  = stereo_enabled ? vaspect_ratio * 2.0 : vaspect_ratio;
    info->timing.fps             = (double)(system_clock) / (double)lines_per_frame / (double)MCYCLES_PER_LINE;
    info->timing.sample_rate     = SOUND_FREQUENCY;
 }
@@ -3767,6 +3805,16 @@ void retro_run(void)
       }
    }
 
+   {
+      int enabled = stereo_requested && (system_hw == SYSTEM_MD);
+      if (enabled != stereo_enabled)
+      {
+         stereo_enabled = enabled;
+         bitmap.viewport.changed |= 9;
+      }
+      stereo_data = (uint8 *)stereo_bitmap;
+   }
+
   /* Check whether current frame should
   * be skipped */
   if ((frameskip_type > 0) &&
@@ -3868,11 +3916,12 @@ void retro_run(void)
 
    if (!do_skip)
    {
-        video_cb(bitmap.data + bmdoffset, vwidth - vwoffset, vheight, 720 * 2);	
+        video_cb(stereo_enabled ? (uint8 *)stereo_bitmap : bitmap.data + bmdoffset,
+            vwidth - vwoffset, vheight, (stereo_enabled ? 688 : 720) * 2);
    }
    else
    {
-        video_cb(NULL, vwidth - vwoffset, vheight, 720 * 2);
+        video_cb(NULL, vwidth - vwoffset, vheight, (stereo_enabled ? 688 : 720) * 2);
    }
 
    audio_cb(soundbuffer, audio_update(soundbuffer));

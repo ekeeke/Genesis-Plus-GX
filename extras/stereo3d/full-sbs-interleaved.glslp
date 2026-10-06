@@ -1,0 +1,7 @@
+shaders = "1"
+shader0 = "full-sbs-interleaved.glsl"
+filter_linear0 = "false"
+wrap_mode0 = "clamp_to_edge"
+parameters = "RowParity;SwapEyes"
+RowParity = "0.0"
+SwapEyes = "0.0"

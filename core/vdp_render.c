@@ -4854,8 +4854,148 @@ void render_reset(void)
 /* Line rendering functions                                                 */
 /*--------------------------------------------------------------------------*/
 
+
+#ifdef __LIBRETRO__
+int stereo_enabled;
+int stereo_plane_a = 2;
+int stereo_plane_b;
+int stereo_sprites = 2;
+int stereo_swap;
+uint8 *stereo_data;
+static uint8 stereo_line[2][0x200];
+
+static uint8 stereo_pattern(uint16 attr, int x, int y)
+{
+  uint32 offset;
+  if (im2_flag)
+    offset = (((attr & 0x03ff) << 7) | ((attr & 0x1800) << 6) |
+        ((y & 15) << 3)) ^ ((attr & 0x1000) >> 6);
+  else
+    offset = ((attr & 0x1fff) << 6) | ((y & 7) << 3);
+  return bg_pattern_cache[offset | (x & 7)] | ((attr >> 9) & 0x70);
+}
+
+static int stereo_window(int x, int line)
+{
+  if (((reg[18] >> 7) & 1) == (line >= ((reg[18] & 31) << 3)))
+    return 1;
+  return clip[1].enable && x >= (clip[1].left << 4) &&
+      x < (clip[1].right << 4);
+}
+
+static uint8 stereo_plane(int plane, int x, int line)
+{
+  int scroll = *(uint16 *)&vram[hscb + ((line & hscroll_mask) << 2) + plane * 2];
+  int column = (x - (scroll & 15) + 16) / 16 - 1;
+  int ys = *(uint16 *)&vsram[plane * 2];
+  int row, sx, y, address;
+  uint16 attr;
+  if (reg[11] & 4)
+  {
+    if (column < 0 || (!plane && clip[0].enable && clip[0].left &&
+        x >= (clip[0].left << 4) && x < ((clip[0].left << 4) + (scroll & 15))))
+      ys = (reg[12] & 1) ? (*(uint16 *)&vsram[76] & *(uint16 *)&vsram[78]) : 0;
+    else
+      ys = *(uint16 *)&vsram[((column * 4) + plane * 2) & 0x7e];
+  }
+  y = (im2_flag ? line * 2 + odd_frame : line) + ys;
+  y &= im2_flag ? (playfield_row_mask << 1) | 1 : playfield_row_mask;
+  row = y >> (im2_flag ? 4 : 3);
+  sx = (x - scroll) & ((playfield_col_mask << 4) | 15);
+  /* Window boundary fetch repeats the first column. */
+  if (!plane && clip[0].enable && clip[0].left &&
+      x >= (clip[0].left << 4) && x < ((clip[0].left << 4) + (scroll & 15)))
+    sx = (sx + 16) & ((playfield_col_mask << 4) | 15);
+  address = (plane ? ntbb : ntab) + ((row << playfield_shift) & 0x1fc0) + (sx >> 3) * 2;
+  attr = *(uint16 *)&vram[address & 0xffff];
+  return stereo_pattern(attr, sx, y);
+}
+
+static void stereo_render(int line, int masking)
+{
+  uint8 sprites[0x200];
+  object_info_t *object = obj_info[line & 1];
+  int count = object_count[line & 1];
+  int pixels = 0;
+  int masked = 0;
+  int width = bitmap.viewport.w;
+  int i, x, eye, direction, source, a, b, c, s;
+  int xpos, size, n, column, address, y;
+  uint16 attr;
+  uint8 *names;
+
+  /* Enhanced column scrolling has a different fetch schedule. */
+  if (!(reg[1] & 4) || render_bg == render_bg_m5_vs_enhanced)
+  {
+    memcpy(stereo_line[0], linebuf[0], sizeof(linebuf[0]));
+    memcpy(stereo_line[1], linebuf[0], sizeof(linebuf[0]));
+    return;
+  }
+
+  memset(sprites, 0, sizeof(sprites));
+  while (count--)
+  {
+    xpos = object->xpos;
+    if (xpos) masking = 1;
+    else if (masking) masked = 1;
+    xpos -= 0x80;
+    size = 8 + ((object->size & 12) << 1);
+    pixels += size;
+    if (xpos + size > -16 && xpos < width + 16 && !masked)
+    {
+      n = size;
+      if (pixels > MODE5_MAX_SPRITE_PIXELS)
+        n -= pixels - MODE5_MAX_SPRITE_PIXELS;
+      n = (n >> 3) << 3;
+      attr = object->attr;
+      y = object->ypos;
+      names = &name_lut[((attr >> 3) & 0x300) | (object->size << 4) |
+          (im2_flag ? ((y & 0x30) >> 2) : ((y & 0x18) >> 1))];
+      for (i = 0; i < n; i++)
+      {
+        x = xpos + i;
+        if (x < -16 || x >= width + 16) continue;
+        column = names[i >> 3];
+        address = (attr & 0xf800) | (((attr & (im2_flag ? 0x3ff : 0x7ff)) + column) &
+            (im2_flag ? 0x3ff : 0x7ff));
+        s = stereo_pattern(address, i, y);
+        sprites[0x20 + x] = lut[3][(sprites[0x20 + x] << 8) | s];
+      }
+    }
+    if (pixels >= MODE5_MAX_SPRITE_PIXELS) break;
+    object++;
+  }
+
+  for (eye = 0; eye < 2; eye++)
+  {
+    direction = (eye ^ stereo_swap) ? 1 : -1;
+    memset(stereo_line[eye], 0x40, sizeof(stereo_line[eye]));
+    for (x = 0; x < width; x++)
+    {
+      b = stereo_plane(1, x - direction * stereo_plane_b, line);
+      source = x - direction * stereo_plane_a;
+      a = stereo_window(source, line) ? 0 : stereo_plane(0, source, line);
+      if (stereo_window(x, line))
+      {
+        y = im2_flag ? line * 2 + odd_frame : line;
+        address = ntwb | ((y >> (im2_flag ? 4 : 3)) << (6 + (reg[12] & 1)));
+        attr = *(uint16 *)&vram[(address + (x >> 3) * 2) & 0xffff];
+        a = stereo_pattern(attr, x, y);
+      }
+      c = lut[(reg[12] & 8) >> 2][(b << 8) | a];
+      s = sprites[0x20 + x - direction * stereo_sprites];
+      c = lut[(reg[12] & 8) ? 4 : 1][(c << 8) | s];
+      stereo_line[eye][0x20 + x] = ((reg[0] & 0x20) && x < 8) ? 0x40 : c;
+    }
+  }
+}
+#endif
+
 void render_line(int line)
 {
+#ifdef __LIBRETRO__
+  int masking = spr_ovr;
+#endif
   /* Check display status */
   if (reg[1] & 0x40)
   {
@@ -4871,6 +5011,10 @@ void render_line(int line)
 
     /* Render sprite layer */
     render_obj(line & 1);
+#ifdef __LIBRETRO__
+    if (stereo_enabled)
+      stereo_render(line, masking);
+#endif
 
     /* Left-most column blanking */
     if (reg[0] & 0x20)
@@ -4911,12 +5055,26 @@ void render_line(int line)
     memset(&linebuf[0][0x20 - bitmap.viewport.x], 0x40, bitmap.viewport.w + 2*bitmap.viewport.x);
   }
 
+#ifdef __LIBRETRO__
+  if (stereo_enabled && !(reg[1] & 0x40))
+  {
+    memcpy(stereo_line[0], linebuf[0], sizeof(linebuf[0]));
+    memcpy(stereo_line[1], linebuf[0], sizeof(linebuf[0]));
+  }
+#endif
   /* Pixel color remapping */
   remap_line(line);
 }
 
 void blank_line(int line, int offset, int width)
 {
+#ifdef __LIBRETRO__
+  if (stereo_enabled)
+  {
+    memset(&stereo_line[0][0x20 + offset], 0x40, width);
+    memset(&stereo_line[1][0x20 + offset], 0x40, width);
+  }
+#endif
   memset(&linebuf[0][0x20 + offset], 0x40, width);
   remap_line(line);
 }
@@ -4941,6 +5099,23 @@ void remap_line(int line)
     line = (line * 2) + odd_frame;
   }
 
+#ifdef __LIBRETRO__
+  if (stereo_enabled)
+  {
+    int eye, x;
+    PIXEL_OUT_T *out = (PIXEL_OUT_T *)(stereo_data + line * 688 * sizeof(PIXEL_OUT_T));
+    for (eye = 0; eye < 2; eye++)
+      for (x = 0; x < width; x++)
+      {
+        int active_x = x - bitmap.viewport.x;
+        int color = stereo_line[eye][0x20 + active_x];
+        if (active_x < 0 || active_x >= bitmap.viewport.w ||
+            ((reg[0] & 0x20) && active_x < 8)) color = 0x40;
+        *out++ = pixel[color];
+      }
+    return;
+  }
+#endif
 #if defined(USE_15BPP_RENDERING) || defined(USE_16BPP_RENDERING)
   /* NTSC Filter (only supported for 15 or 16-bit pixels rendering) */
   if (config.ntsc)
