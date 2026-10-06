@@ -508,10 +508,15 @@ int sound_context_save(uint8 *state)
 
   save_param(&fm_cycles_start,sizeof(fm_cycles_start));
 
+  if ((system_hw & SYSTEM_PBC) == SYSTEM_MD)
+  {
+    save_param(&fm_cycles_busy,sizeof(fm_cycles_busy));
+  }
+
   return bufferptr;
 }
 
-int sound_context_load(uint8 *state)
+int sound_context_load(uint8 *state, char *version)
 {
   int bufferptr = 0;
 
@@ -559,6 +564,20 @@ int sound_context_load(uint8 *state)
 
   load_param(&fm_cycles_start,sizeof(fm_cycles_start));
   fm_cycles_count = fm_cycles_start;
+
+  if ((system_hw & SYSTEM_PBC) == SYSTEM_MD)
+  {
+    /* support for previous state versions (1.7.5 & 1.7.6) */
+    if ((version[11] == 0x31) && (version[13] == 0x37) && (version[15] < 0x37))
+    {
+      /* YM2612 BUSY end cycle was not saved */
+      fm_cycles_busy = 0;
+    }
+    else
+    {
+      load_param(&fm_cycles_busy,sizeof(fm_cycles_busy));
+    }
+  }
 
   return bufferptr;
 }

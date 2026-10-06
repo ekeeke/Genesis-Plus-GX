@@ -113,7 +113,7 @@ int state_load(unsigned char *state)
   bufferptr += vdp_context_load(&state[bufferptr]);
 
   /* SOUND */
-  bufferptr += sound_context_load(&state[bufferptr]);
+  bufferptr += sound_context_load(&state[bufferptr], version);
   if ((system_hw & SYSTEM_PBC) == SYSTEM_MD)
   {
     psg_config(0, config.psg_preamp, 0xff);
@@ -152,6 +152,17 @@ int state_load(unsigned char *state)
     load_param(&m68k.cycles, sizeof(m68k.cycles));
     load_param(&m68k.int_level, sizeof(m68k.int_level));
     load_param(&m68k.stopped, sizeof(m68k.stopped));
+
+    /* support for previous state versions (1.7.5 & 1.7.6) */
+    if ((version[11] == 0x31) && (version[13] == 0x37) && (version[15] < 0x37))
+    {
+      /* 68K bus refresh cycle was not saved: synchronize it with restored 68K cycle count */
+      m68k.refresh_cycles = ((m68k.cycles / (128*7)) * (128*7)) + 128*7;
+    }
+    else
+    {
+      load_param(&m68k.refresh_cycles, sizeof(m68k.refresh_cycles));
+    }
   }
 
   /* Z80 */ 
@@ -251,6 +262,7 @@ int state_save(unsigned char *state)
     save_param(&m68k.cycles, sizeof(m68k.cycles));
     save_param(&m68k.int_level, sizeof(m68k.int_level));
     save_param(&m68k.stopped, sizeof(m68k.stopped));
+    save_param(&m68k.refresh_cycles, sizeof(m68k.refresh_cycles));
   }
 
   /* Z80 */ 
