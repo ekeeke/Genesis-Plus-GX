@@ -542,7 +542,9 @@ int sound_context_load(uint8 *state)
     load_param(&config_opll, sizeof(config_opll));
     if (config_opll)
     {
+      const opll_patch_t *patchrom = opll.patchrom;
       load_param(&opll, sizeof(opll));
+      opll.patchrom = patchrom;
       load_param(&opll_accm, sizeof(opll_accm));
       load_param(&opll_sample, sizeof(opll_sample));
       load_param(&opll_cycles, sizeof(opll_cycles));
