@@ -1,6 +1,11 @@
 name: Genesis Plus GX Wii Build
 
-on: [push, pull_request, workflow_dispatch]
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  release:
+    types: [published]
 
 jobs:
   build:
@@ -34,12 +39,13 @@ jobs:
         name: GenesisPlusGX-Wii
         path: dist/
 
-  # Pushing a tag (for example v1.7.5-usb.2) publishes a release with the
-  # notes in .github/RELEASE_NOTES.md and the build as a .zip file.
+  # Publishing a release on GitHub (for example tag v1.7.5-usb.2) builds it and
+  # attaches the build as a .zip file. If the release text is empty, it is
+  # filled from .github/RELEASE_NOTES.md.
   release:
-    name: Publish release
+    name: Attach the files to the release
     needs: build
-    if: startsWith(github.ref, 'refs/tags/')
+    if: github.event_name == 'release'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -55,10 +61,10 @@ jobs:
       env:
         GH_TOKEN: ${{ github.token }}
         GH_REPO: ${{ github.repository }}
-        TAG: ${{ github.ref_name }}
+        TAG: ${{ github.event.release.tag_name }}
       run: |
         (cd artifacts && zip -r -X "$GITHUB_WORKSPACE/GenesisPlusGX-Wii.zip" .)
-        if ! gh release view "$TAG" > /dev/null 2>&1; then
-          gh release create "$TAG" --verify-tag --title "Genesis Plus GX $TAG" --notes-file .github/RELEASE_NOTES.md
+        if [ -z "$(gh release view "$TAG" --json body --jq .body)" ]; then
+          gh release edit "$TAG" --notes-file .github/RELEASE_NOTES.md
         fi
         gh release upload "$TAG" GenesisPlusGX-Wii.zip --clobber
