@@ -6,7 +6,8 @@ jobs:
   build:
     name: Build Wii
     runs-on: ubuntu-latest
-    container: devkitpro/devkitppc:latest
+    # libogc 3 (2026) removed lwp_threads.h, which the menu still uses
+    container: devkitpro/devkitppc:20251231
 
     steps:
     - uses: actions/checkout@v4
@@ -32,11 +33,3 @@ jobs:
         name: GenesisPlusGX-Wii
         path: dist/
 
-  probe:
-    name: List devkitPPC images
-    runs-on: ubuntu-latest
-    steps:
-    - name: List tags
-      run: |
-        tags=$(curl -s "https://hub.docker.com/v2/repositories/devkitpro/devkitppc/tags?page_size=100&ordering=last_updated" | python3 -c "import sys,json; print(' '.join(t['name']+'@'+t['last_updated'][:10] for t in json.load(sys.stdin)['results']))")
-        echo "::notice title=devkitppc tags::$tags"
