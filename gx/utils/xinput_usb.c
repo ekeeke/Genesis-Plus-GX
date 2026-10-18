@@ -168,44 +168,109 @@ static const u16 xinput_vendors[] =
 /* ------------------------------------------------------------------------ */
 
 #ifdef XINPUT_USB_LOG
+/* Lines are kept in memory and written at most every few seconds, at most
+   XI_LOG_MAX_FLUSHES times per session, so the SD card sees a handful of
+   writes instead of one per line. */
+#define XI_LOG_BUF          6144
+#define XI_LOG_FLUSH_FRAMES 300     /* ~5 s */
+#define XI_LOG_MAX_FLUSHES  24
+#define XI_LOG_MAX_FILE     (64 * 1024)
+
+static char log_buf[XI_LOG_BUF];
+static int log_len = 0;
 static int log_lines = 0;
+static int log_flushes = 0;
+static u32 log_frames = 0;
+static bool log_first_flush = true;
+
+static void xi_log_flush(void)
+{
+	if (log_len == 0)
+		return;
+	if (log_flushes >= XI_LOG_MAX_FLUSHES)
+	{
+		log_len = 0;
+		return;
+	}
+
+	const char *mode = "a";
+	if (log_first_flush)
+	{
+		/* start over when an old log has grown large */
+		log_first_flush = false;
+		FILE *old = fopen(XINPUT_USB_LOG, "r");
+		if (old)
+		{
+			fseek(old, 0, SEEK_END);
+			long size = ftell(old);
+			fclose(old);
+			if (size > XI_LOG_MAX_FILE)
+				mode = "w";
+		}
+	}
+
+	FILE *f = fopen(XINPUT_USB_LOG, mode);
+	if (f)
+	{
+		fwrite(log_buf, 1, log_len, f);
+		if (++log_flushes == XI_LOG_MAX_FLUSHES)
+			fputs("(log limit for this session reached)\n", f);
+		fclose(f);
+	}
+	log_len = 0;
+}
+
+static void xi_log_line(const char *text);
 
 static void xi_log(const char *fmt, ...)
 {
 	if (log_lines >= XI_LOG_MAX_LINES)
 		return;
 
-	FILE *f = fopen(XINPUT_USB_LOG, "a");
-	if (f == NULL)
-		return;
+	char text[128];
+	va_list ap;
+	va_start(ap, fmt);
+	vsnprintf(text, sizeof(text), fmt, ap);
+	va_end(ap);
+	xi_log_line(text);
 
-	/* time since the first log line, for spotting resets and bursts */
+	if (++log_lines == XI_LOG_MAX_LINES)
+		xi_log_line("(line limit for this session reached)");
+}
+
+static void xi_log_line(const char *text)
+{
+	char line[160];
 	static u64 t0 = 0;
 	u64 now = gettime();
 	if (t0 == 0)
 		t0 = now;
 	u32 ms = (u32) ticks_to_millisecs(now - t0);
-	fprintf(f, "%5u.%03u ", ms / 1000, ms % 1000);
+	int n = snprintf(line, sizeof(line), "%5u.%03u %s", ms / 1000, ms % 1000, text);
+	if (n > (int) sizeof(line) - 2)
+		n = sizeof(line) - 2;
+	line[n++] = '\n';
 
-	va_list ap;
-	va_start(ap, fmt);
-	vfprintf(f, fmt, ap);
-	va_end(ap);
-	fputc('\n', f);
-	fclose(f);
-
-	if (++log_lines == XI_LOG_MAX_LINES)
+	if (log_len + n > XI_LOG_BUF)
+		xi_log_flush();
+	if (log_len + n <= XI_LOG_BUF)
 	{
-		f = fopen(XINPUT_USB_LOG, "a");
-		if (f)
-		{
-			fputs("(log full)\n", f);
-			fclose(f);
-		}
+		memcpy(log_buf + log_len, line, n);
+		log_len += n;
+	}
+}
+
+static void xi_log_tick(void)
+{
+	if (++log_frames >= XI_LOG_FLUSH_FRAMES)
+	{
+		log_frames = 0;
+		xi_log_flush();
 	}
 }
 #else
 #define xi_log(...) do { } while (0)
+#define xi_log_tick() do { } while (0)
 #endif
 
 /* ------------------------------------------------------------------------ */
@@ -909,6 +974,8 @@ void XInput_Update(void)
 	{
 		frames_to_scan--;
 	}
+
+	xi_log_tick();
 }
 
 u32 XInput_ButtonsHeld(int port)
