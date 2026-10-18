@@ -25,6 +25,12 @@
 #include "vi_encoder.h"
 #endif
 
+/* libogc 3 defines PowerPC register names (in tuxedo/ppc/spr.h) that the
+   emulation cores also use: the Z80 DEC() helper and the YM2612 TBL field.
+   Added 2026 by VrepliroidV to build with current devkitPPC. */
+#undef DEC
+#undef TBL
+
 #include "gx_input.h"
 #include "gx_audio.h"
 #include "gx_video.h"

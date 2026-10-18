@@ -15,8 +15,8 @@ jobs:
       shell: bash
       run: |
         set -o pipefail
-        if ! make -f Makefile.wii -j2 2>&1 | tee build.log; then
-          msg=$(grep -E -i -B2 -A2 "error|undefined reference|cannot find|no such file|not found" build.log | tail -n 80 | sed -e 's/%/%25/g' -e 's/\r//g' | awk '{printf "%s%%0A", $0}')
+        if ! make -k -f Makefile.wii -j2 2>&1 | tee build.log; then
+          msg=$(grep -E -B1 "error:|Error [0-9]|undefined reference|cannot find|No such file|not found" build.log | grep -v "^--$" | awk '!seen[$0]++' | head -n 150 | sed -e 's/%/%25/g' -e 's/\r//g' | awk '{printf "%s%%0A", $0}')
           echo "::error title=Wii build failed::$msg"
           exit 1
         fi
