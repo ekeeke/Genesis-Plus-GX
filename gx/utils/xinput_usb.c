@@ -169,11 +169,11 @@ static const u16 xinput_vendors[] =
 
 #ifdef XINPUT_USB_LOG
 /* Lines are kept in memory and written at most every few seconds, at most
-   XI_LOG_MAX_FLUSHES times per session, so the SD card sees a handful of
-   writes instead of one per line. */
+   XI_LOG_MAX_FLUSHES times per session (plus right after the device list
+   changes), so the SD card sees a handful of writes instead of one per line. */
 #define XI_LOG_BUF          6144
 #define XI_LOG_FLUSH_FRAMES 300     /* ~5 s */
-#define XI_LOG_MAX_FLUSHES  24
+#define XI_LOG_MAX_FLUSHES  40
 #define XI_LOG_MAX_FILE     (64 * 1024)
 
 static char log_buf[XI_LOG_BUF];
@@ -260,6 +260,12 @@ static void xi_log_line(const char *text)
 	}
 }
 
+static void xi_log_flush_now(void)
+{
+	log_frames = 0;
+	xi_log_flush();
+}
+
 static void xi_log_tick(void)
 {
 	if (++log_frames >= XI_LOG_FLUSH_FRAMES)
@@ -271,6 +277,7 @@ static void xi_log_tick(void)
 #else
 #define xi_log(...) do { } while (0)
 #define xi_log_tick() do { } while (0)
+#define xi_log_flush_now() do { } while (0)
 #endif
 
 /* ------------------------------------------------------------------------ */
@@ -913,6 +920,9 @@ static void scan_devices(void)
 		xi_log("device list (%u):", count);
 		for (int i = 0; i < count; i++)
 			xi_log("  %04x:%04x id=%08x", list[i].vid, list[i].pid, (u32) list[i].device_id);
+		/* Written now: a device that resets (a USB drive losing power, for
+		   example) is often what happens right before a crash. */
+		xi_log_flush_now();
 
 		/* Pads whose device left the list are gone, even if no removal
 		   callback arrived. */
