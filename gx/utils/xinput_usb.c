@@ -178,6 +178,26 @@ static const u16 xinput_vendors[] =
 
 static char log_buf[XI_LOG_BUF];
 static int log_len = 0;
+static mutex_t log_lock = LWP_MUTEX_NULL;
+
+/* The log is also written from other threads (XInput_LogNote), so every
+   access to the buffer and the file goes through one recursive mutex. */
+static void log_take(void)
+{
+	if (log_lock == LWP_MUTEX_NULL)
+	{
+		u32 level = IRQ_Disable();
+		if (log_lock == LWP_MUTEX_NULL)
+			LWP_MutexInit(&log_lock, true);
+		IRQ_Restore(level);
+	}
+	LWP_MutexLock(log_lock);
+}
+
+static void log_give(void)
+{
+	LWP_MutexUnlock(log_lock);
+}
 static int log_lines = 0;
 static int log_flushes = 0;
 static u32 log_frames = 0;
@@ -185,11 +205,16 @@ static bool log_first_flush = true;
 
 static void xi_log_flush(void)
 {
+	log_take();
 	if (log_len == 0)
+	{
+		log_give();
 		return;
+	}
 	if (log_flushes >= XI_LOG_MAX_FLUSHES)
 	{
 		log_len = 0;
+		log_give();
 		return;
 	}
 
@@ -218,24 +243,27 @@ static void xi_log_flush(void)
 		fclose(f);
 	}
 	log_len = 0;
+	log_give();
 }
 
 static void xi_log_line(const char *text);
 
 static void xi_log(const char *fmt, ...)
 {
-	if (log_lines >= XI_LOG_MAX_LINES)
-		return;
-
 	char text[128];
 	va_list ap;
 	va_start(ap, fmt);
 	vsnprintf(text, sizeof(text), fmt, ap);
 	va_end(ap);
-	xi_log_line(text);
 
-	if (++log_lines == XI_LOG_MAX_LINES)
-		xi_log_line("(line limit for this session reached)");
+	log_take();
+	if (log_lines < XI_LOG_MAX_LINES)
+	{
+		xi_log_line(text);
+		if (++log_lines == XI_LOG_MAX_LINES)
+			xi_log_line("(line limit for this session reached)");
+	}
+	log_give();
 }
 
 static void xi_log_line(const char *text)
@@ -266,6 +294,30 @@ static void xi_log_flush_now(void)
 	xi_log_flush();
 }
 
+#define XI_NOTE_MAX     60
+#define XI_NOTE_SECONDS 30
+
+void XInput_LogNote(const char *fmt, ...)
+{
+	static int notes = 0;
+	static u64 first = 0;
+	u64 now = gettime();
+	if (first == 0)
+		first = now;
+	/* only the start-up: a handful of SD writes, then nothing */
+	if (notes >= XI_NOTE_MAX || ticks_to_millisecs(now - first) > XI_NOTE_SECONDS * 1000)
+		return;
+	notes++;
+
+	char text[120];
+	va_list ap;
+	va_start(ap, fmt);
+	vsnprintf(text, sizeof(text), fmt, ap);
+	va_end(ap);
+	xi_log("note: %s", text);
+	xi_log_flush_now();
+}
+
 static void xi_log_tick(void)
 {
 	if (++log_frames >= XI_LOG_FLUSH_FRAMES)
@@ -278,6 +330,7 @@ static void xi_log_tick(void)
 #define xi_log(...) do { } while (0)
 #define xi_log_tick() do { } while (0)
 #define xi_log_flush_now() do { } while (0)
+void XInput_LogNote(const char *fmt, ...) { (void) fmt; }
 #endif
 
 /* ------------------------------------------------------------------------ */
@@ -895,6 +948,32 @@ static void scan_devices(void)
 {
 	static usb_device_entry list[XI_LIST_MAX];
 	u8 count = 0;
+
+#ifdef XINPUT_USB_LOG
+	/* HID devices are on another IOS host and never opened here, but other
+	   drivers poll them; listing them helps when a device upsets those. */
+	{
+		static usb_device_entry hid[16];
+		static bool hid_have = false;
+		static u32 hid_sig = 0;
+		u8 hc = 0;
+		if (USB_GetDeviceList(hid, 16, USB_CLASS_HID, &hc) >= 0)
+		{
+			if (hc > 16)
+				hc = 16;
+			u32 hs = signature_of(hid, hc);
+			if (!hid_have || hs != hid_sig)
+			{
+				hid_have = true;
+				hid_sig = hs;
+				xi_log("HID device list (%u):", hc);
+				for (int i = 0; i < hc; i++)
+					xi_log("  %04x:%04x id=%08x", hid[i].vid, hid[i].pid, (u32) hid[i].device_id);
+				xi_log_flush_now();
+			}
+		}
+	}
+#endif
 
 	if (USB_GetDeviceList(list, XI_LIST_MAX, XI_IF_CLASS, &count) < 0)
 	{

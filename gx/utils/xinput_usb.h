@@ -95,6 +95,11 @@ u32 XInput_ButtonsHeld(int port);
 /* Bit n is set when a controller is working on port n. */
 u32 XInput_ConnectedMask(void);
 
+/* Adds a line to the log and writes it to the SD at once; for marking
+   start-up steps while hunting a crash. Only the first 60 notes within 30
+   seconds are kept. Does nothing without XINPUT_USB_LOG. Thread safe. */
+void XInput_LogNote(const char *fmt, ...);
+
 /* Short text for a status line, under 40 characters.
    Examples: "P1 ok, P2 ok", "P1 wait", "none", "replug". */
 const char *XInput_Status(void);
