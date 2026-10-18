@@ -28,10 +28,17 @@
  * a vendor interface with endpoint 0x81) is kept, the others are closed and
  * remembered so they are not opened again until the device list changes.
  *
- * After a device is kept, everything is asynchronous: SET_CONFIGURATION,
- * the interrupt IN reads and the LED message. Callbacks run in the IPC
- * interrupt handler; they only copy data and set flags. Closing and logging
- * happen in XInput_Update() on the main thread.
+ * After a device is kept it gets the same start-up the Windows driver gives
+ * it, every step asynchronous and with a timeout:
+ *   1. GET_CONFIGURATION, and SET_CONFIGURATION only if it is not set yet
+ *      (IOS has normally configured the device already);
+ *   2. the vendor request Windows sends before reading (0xC1, 0x01, 0x0100,
+ *      20 bytes). Some third-party pads and receivers send no reports until
+ *      they get it, and some reset themselves after a second without it;
+ *   3. the player LED message;
+ *   4. interrupt IN reads.
+ * Callbacks run in the IPC interrupt handler; they only copy data and set
+ * flags. Closing and logging happen in XInput_Update() on the main thread.
  */
 
 #ifdef HW_RVL
@@ -40,6 +47,7 @@
 #include <ogc/usb.h>
 #include <ogc/cache.h>
 #include <ogc/irq.h>
+#include <ogc/lwp_watchdog.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdarg.h>
@@ -51,7 +59,8 @@
 #define XI_LIST_MAX          32     /* libogc tracks up to 32 devices per host */
 #define XI_REJECT_MAX        32
 #define XI_SCAN_INTERVAL     30     /* updates between device list checks (~0.5 s) */
-#define XI_CFG_TIMEOUT       30     /* updates to wait for SET_CONFIGURATION */
+#define XI_STEP_TIMEOUT      30     /* updates to wait for each start-up request */
+#define XI_SETTLE_FRAMES     30     /* wait after the device list changes before opening */
 #define XI_RETRY_WAIT        15     /* updates before restarting a failed read */
 #define XI_RETRY_WAIT_MAX    120    /* longest wait between restarts (~2 s) */
 #define XI_BUF_SIZE          64
@@ -64,9 +73,11 @@
 #define XI_IF_SUBCLASS       0x5D
 #define XI_IF_PROTOCOL       0x01
 
-#define CFG_NONE    0
-#define CFG_PENDING 1
-#define CFG_DONE    2
+/* start-up steps */
+#define STEP_GETCFG 0
+#define STEP_SETCFG 1
+#define STEP_MAGIC  2
+#define STEP_READY  3
 
 #ifdef XINPUT_USB_LOG
 #define XI_LOG_MAX_LINES     400
@@ -84,18 +95,19 @@ typedef struct
 	u8 config;
 	u8 port;
 	u8 led_port;            /* port shown on the LED, 0xFF before the first send */
-	u16 cfg_wait;
+	u8 step;
+	bool step_sent;
+	u16 step_wait;
 	u16 retry_wait;
 	u16 errors;
 	u32 reports_at_restart;
 	u32 prev_held;
 	bool logged_first;
-	bool logged_cfg;
 	bool logged_led;
 
 	/* written from USB callbacks */
-	volatile u8 cfg_state;
-	volatile s32 cfg_result;
+	volatile u8 ctrl_busy;
+	volatile s32 ctrl_result;
 	volatile u8 reading;
 	volatile u8 removed;
 	volatile u8 led_busy;
@@ -110,6 +122,7 @@ typedef struct
 static XiPad pads[XI_MAX_PADS];
 static u8 ATTRIBUTE_ALIGN(32) rxbuf[XI_MAX_PADS][XI_BUF_SIZE];
 static u8 ATTRIBUTE_ALIGN(32) txbuf[XI_MAX_PADS][32];
+static u8 ATTRIBUTE_ALIGN(32) ctrlbuf[XI_MAX_PADS][32];
 
 static s32 rejected[XI_REJECT_MAX];
 static int num_rejected = 0;
@@ -166,6 +179,14 @@ static void xi_log(const char *fmt, ...)
 	if (f == NULL)
 		return;
 
+	/* time since the first log line, for spotting resets and bursts */
+	static u64 t0 = 0;
+	u64 now = gettime();
+	if (t0 == 0)
+		t0 = now;
+	u32 ms = (u32) ticks_to_millisecs(now - t0);
+	fprintf(f, "%5u.%03u ", ms / 1000, ms % 1000);
+
 	va_list ap;
 	va_start(ap, fmt);
 	vfprintf(f, fmt, ap);
@@ -191,9 +212,16 @@ static void xi_log(const char *fmt, ...)
 /* Callbacks (IPC interrupt context)                                        */
 /* ------------------------------------------------------------------------ */
 
+/* token = tag << 16 | gen << 8 | slot. gen changes on every attach, tag
+   tells start-up steps apart, so a late answer to an old request is ignored. */
+static void *make_token_tag(int idx, u8 tag)
+{
+	return (void *) (uintptr_t) (((u32) tag << 16) | ((u32) pads[idx].gen << 8) | (u32) idx);
+}
+
 static void *make_token(int idx)
 {
-	return (void *) (uintptr_t) (((u32) pads[idx].gen << 8) | (u32) idx);
+	return make_token_tag(idx, 0xFF);
 }
 
 static XiPad *pad_from_token(void *token)
@@ -280,13 +308,13 @@ static s32 read_cb(s32 result, void *usrdata)
 	return 0;
 }
 
-static s32 cfg_cb(s32 result, void *usrdata)
+static s32 ctrl_cb(s32 result, void *usrdata)
 {
 	XiPad *p = pad_from_token(usrdata);
-	if (p)
+	if (p && p->step == (((u32) (uintptr_t) usrdata >> 16) & 0xFF))
 	{
-		p->cfg_result = result;
-		p->cfg_state = CFG_DONE;
+		p->ctrl_result = result;
+		p->ctrl_busy = 0;
 	}
 	return 0;
 }
@@ -534,7 +562,7 @@ static void try_attach(const usb_device_entry *e)
 	p->config = f.config;
 	p->port = (u8) free_port();
 	p->led_port = 0xFF;
-	p->cfg_state = CFG_PENDING;
+	p->step = STEP_GETCFG;
 	p->active = true;
 	replug_needed = false;
 
@@ -544,18 +572,6 @@ static void try_attach(const usb_device_entry *e)
 	ret = USB_DeviceRemovalNotifyAsync(fd, removal_cb, make_token(idx));
 	if (ret < 0)
 		xi_log("  removal notify: %d", ret);
-
-	/* SET_CONFIGURATION, asynchronous so a receiver that never answers
-	   cannot freeze the emulator. Reading starts when it completes or after
-	   XI_CFG_TIMEOUT updates. */
-	ret = USB_WriteCtrlMsgAsync(fd,
-		USB_CTRLTYPE_DIR_HOST2DEVICE | USB_CTRLTYPE_TYPE_STANDARD | USB_CTRLTYPE_REC_DEVICE,
-		USB_REQ_SETCONFIG, p->config, 0, 0, NULL, cfg_cb, make_token(idx));
-	if (ret < 0)
-	{
-		p->cfg_result = ret;
-		p->cfg_state = CFG_DONE;
-	}
 }
 
 static void close_pad(int idx, const char *why)
@@ -612,29 +628,126 @@ static void send_led(int idx)
 		p->led_busy = 0;
 }
 
+static void issue_ctrl(int idx, u8 reqtype, u8 req, u16 value, u16 index, u16 len)
+{
+	XiPad *p = &pads[idx];
+	p->step_sent = true;
+	p->step_wait = 0;
+	p->ctrl_result = 0;
+	p->ctrl_busy = 1;
+	if (len)
+		memset(ctrlbuf[idx], 0, sizeof(ctrlbuf[idx]));
+	s32 ret = USB_WriteCtrlMsgAsync(p->fd, reqtype, req, value, index, len,
+		len ? ctrlbuf[idx] : NULL, ctrl_cb, make_token_tag(idx, p->step));
+	if (ret < 0)
+	{
+		p->ctrl_result = ret;
+		p->ctrl_busy = 0;
+	}
+}
+
+/* One start-up step per call: send the request, then wait for its answer
+   or XI_STEP_TIMEOUT updates, then move on whatever the outcome. */
+static void run_startup(int idx)
+{
+	XiPad *p = &pads[idx];
+	int port = p->port + 1;
+	(void) port; /* only used by the log */
+
+	if (!p->step_sent)
+	{
+		switch (p->step)
+		{
+		case STEP_GETCFG:
+			issue_ctrl(idx, USB_CTRLTYPE_DIR_DEVICE2HOST | USB_CTRLTYPE_TYPE_STANDARD | USB_CTRLTYPE_REC_DEVICE,
+				USB_REQ_GETCONFIG, 0, 0, 1);
+			break;
+		case STEP_SETCFG:
+			issue_ctrl(idx, USB_CTRLTYPE_DIR_HOST2DEVICE | USB_CTRLTYPE_TYPE_STANDARD | USB_CTRLTYPE_REC_DEVICE,
+				USB_REQ_SETCONFIG, p->config, 0, 0);
+			break;
+		case STEP_MAGIC:
+			issue_ctrl(idx, USB_CTRLTYPE_DIR_DEVICE2HOST | USB_CTRLTYPE_TYPE_VENDOR | USB_CTRLTYPE_REC_INTERFACE,
+				0x01, 0x0100, 0, 20);
+			break;
+		}
+		return;
+	}
+
+	bool timed_out = false;
+	if (p->ctrl_busy)
+	{
+		if (++p->step_wait < XI_STEP_TIMEOUT)
+			return;
+		timed_out = true;
+	}
+	s32 r = p->ctrl_result;
+	if (!timed_out && r > 0)
+		DCInvalidateRange(ctrlbuf[idx], sizeof(ctrlbuf[idx]));
+
+	switch (p->step)
+	{
+	case STEP_GETCFG:
+		if (timed_out)
+		{
+			xi_log("port %d: GET_CONFIGURATION: no answer", port);
+			p->step = STEP_MAGIC;
+		}
+		else if (r >= 1 && ctrlbuf[idx][0] == p->config)
+		{
+			xi_log("port %d: configuration %u already set", port, ctrlbuf[idx][0]);
+			p->step = STEP_MAGIC;
+		}
+		else
+		{
+			xi_log("port %d: GET_CONFIGURATION result %d, value %u", port, r, ctrlbuf[idx][0]);
+			p->step = STEP_SETCFG;
+		}
+		break;
+
+	case STEP_SETCFG:
+		if (timed_out)
+			xi_log("port %d: SET_CONFIGURATION: no answer", port);
+		else
+			xi_log("port %d: SET_CONFIGURATION result %d", port, r);
+		p->step = STEP_MAGIC;
+		break;
+
+	case STEP_MAGIC:
+		if (timed_out)
+			xi_log("port %d: start-up request: no answer", port);
+		else if (r > 0)
+		{
+			char hex[3 * 20 + 1];
+			int n = r > 20 ? 20 : r;
+			for (int i = 0; i < n; i++)
+				sprintf(hex + 3 * i, "%02x ", ctrlbuf[idx][i]);
+			hex[3 * n] = 0;
+			xi_log("port %d: start-up request answered (%d bytes): %s", port, r, hex);
+		}
+		else
+			xi_log("port %d: start-up request result %d", port, r);
+		p->step = STEP_READY;
+		send_led(idx);
+		break;
+	}
+	p->step_sent = false;
+}
+
 static void service_pad(int idx)
 {
 	XiPad *p = &pads[idx];
 
 	if (p->removed)
 	{
-		close_pad(idx, "unplugged");
+		close_pad(idx, p->reports ? "unplugged" : "unplugged before any report");
 		return;
 	}
 
-	if (p->cfg_state == CFG_PENDING)
+	if (p->step != STEP_READY)
 	{
-		if (++p->cfg_wait < XI_CFG_TIMEOUT)
-			return;
-		xi_log("port %d: no answer to SET_CONFIGURATION, reading anyway", p->port + 1);
-		p->cfg_state = CFG_DONE;
-		p->logged_cfg = true;
-	}
-
-	if (!p->logged_cfg)
-	{
-		p->logged_cfg = true;
-		xi_log("port %d: SET_CONFIGURATION result %d", p->port + 1, p->cfg_result);
+		run_startup(idx);
+		return;
 	}
 
 	if (!p->reading)
@@ -678,17 +791,10 @@ static void service_pad(int idx)
 		xi_log("port %d: first report (%d bytes): %s", p->port + 1, n, hex);
 	}
 
-	/* Guide button moves this controller to the next port. */
 	u32 held = p->held;
 	if ((held & XI_GUIDE) && !(p->prev_held & XI_GUIDE))
-	{
-		p->port = (p->port + 1) % XI_MAX_PORTS;
-		xi_log("Guide: controller moved to port %d", p->port + 1);
-	}
+		xi_log("port %d: Guide pressed", p->port + 1);
 	p->prev_held = held;
-
-	if (p->reports > 0 && p->led_port != p->port)
-		send_led(idx);
 
 	if (!p->logged_led && p->led_port != 0xFF && !p->led_busy)
 	{
@@ -759,6 +865,11 @@ static void scan_devices(void)
 				close_pad(i, "no longer listed");
 			}
 		}
+
+		/* Let a device that just appeared finish its own start-up before
+		   it is opened. */
+		frames_to_scan = XI_SETTLE_FRAMES;
+		return;
 	}
 
 	for (int i = 0; i < count; i++)
@@ -809,7 +920,7 @@ u32 XInput_ButtonsHeld(int port)
 		if (p->active && !p->removed && p->port == port && p->reports > 0)
 			bits |= p->held;
 	}
-	return bits & ~XI_GUIDE;
+	return bits;
 }
 
 u32 XInput_ConnectedMask(void)

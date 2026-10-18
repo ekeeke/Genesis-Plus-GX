@@ -23,12 +23,16 @@
  * present themselves as one (VID:PID 045e:028e, interface FF/5D/01).
  *
  *  - Several controllers at once. The first one plugged in is port 0
- *    (player 1), the next one port 1, and so on. The Guide button, when the
- *    controller has one, moves that controller to the next port.
+ *    (player 1), the next one port 1, and so on.
  *  - Hot-plug: the device list is checked twice a second, so controllers can
  *    be plugged in or out while the emulator is running.
+ *  - The start-up requests the Windows driver sends; some third-party
+ *    receivers send nothing, or reset themselves, without them.
  *  - No blocking USB call after a device is opened. A receiver that never
  *    answers cannot freeze the emulator.
+ *  - Guide is reported as XI_GUIDE and logged with a time stamp. Some
+ *    receivers send it on their own (for Select + Start, or in bursts), so
+ *    the emulators do not map it yet.
  *  - With XINPUT_USB_LOG defined, events are appended to that file
  *    (e.g. "sd:/xinput_usb.log").
  *
