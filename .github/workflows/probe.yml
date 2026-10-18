@@ -1,0 +1,16 @@
+name: Probe toolchain versions (temporary)
+on: [push]
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        tag: ["20250102", "20250527", "20250727", "20251117", "20251231"]
+    container: devkitpro/devkitppc:${{ matrix.tag }}
+    steps:
+    - name: Versions
+      shell: bash
+      run: |
+        v=$( (dkp-pacman -Q 2>/dev/null || pacman -Q 2>/dev/null) | grep -E "devkitPPC |^libogc |libfat-ogc|gamecube-tools|ppc-libfat|wii-" | tr '\n' ';')
+        echo "::notice title=${{ matrix.tag }}::$v"
