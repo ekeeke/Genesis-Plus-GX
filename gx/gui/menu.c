@@ -5,6 +5,9 @@
  *
  *  Copyright Eke-Eke (2009-2026)
  *
+ *  Modified 2026 by VrepliroidV: USB Xbox 360 (XInput) controllers are also read
+ *  as GameCube controllers, see gx/utils/usbpad_shim.h.
+ *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
  *
@@ -48,6 +51,11 @@
 #ifdef HW_RVL
 #include <ogc/usbmouse.h>
 #include "wiidrc.h"
+#endif
+
+#ifdef HW_RVL
+/* USB Xbox 360 / XInput controllers merged into the GameCube pad calls */
+#include "usbpad_shim.h"
 #endif
 
 #include <ogc/lwp_threads.h>
