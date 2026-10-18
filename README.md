@@ -1,3 +1,5 @@
+> **This fork (VrepliroidV):** the Wii build also reads Xbox 360 (XInput) USB controllers and 2.4 GHz receivers plugged into the Wii, as GameCube controllers. Downloads and details: [Releases](https://github.com/VrepliroidV/Genesis-Plus-GX/releases). The prebuilt files in `builds/` are the original Genesis Plus GX ones and do not have this change.
+
 Genesis Plus GX is an open-source Sega 8/16 bit emulator focused on accuracy and portability. Initially ported and developped on Gamecube / Wii consoles through [libogc / devkitPPC](http://sourceforge.net/projects/devkitpro/), this emulator is now available on many other platforms through various frontends such as:
 
 * [Retroarch (libretro)](http://www.libretro.com)
