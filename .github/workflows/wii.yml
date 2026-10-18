@@ -12,8 +12,14 @@ jobs:
     - uses: actions/checkout@v4
 
     - name: Build Wii
+      shell: bash
       run: |
-        make -f Makefile.wii -j2
+        set -o pipefail
+        if ! make -f Makefile.wii -j2 2>&1 | tee build.log; then
+          msg=$(grep -E -i -B2 -A2 "error|undefined reference|cannot find|no such file|not found" build.log | tail -n 80 | sed -e 's/%/%25/g' -e 's/\r//g' | awk '{printf "%s%%0A", $0}')
+          echo "::error title=Wii build failed::$msg"
+          exit 1
+        fi
 
     - name: Package for the Homebrew Channel
       run: |
