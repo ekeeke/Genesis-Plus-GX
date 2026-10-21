@@ -15,10 +15,11 @@
 
 #include "m68k.h"
 
-/* a short branch back may be the game waiting (main 68k only, see autooc.c) */
-#ifdef AUTOOC_HOOKS
+/* a short branch back may be the game waiting (AUTOOC_CPU: the automatic
+   overclock of this 68k, see autooc.c) */
+#ifdef AUTOOC_CPU
 #include "autooc.h"
-#define AUTOOC_BRANCH(disp) if (autooc.enabled && ((uint)(-(disp) - 1) < AUTOOC_SPIN_BYTES)) autooc_spin(REG_PC)
+#define AUTOOC_BRANCH(disp) if (AUTOOC_CPU.enabled && ((uint)(-(disp) - 1) < AUTOOC_SPIN_BYTES)) autooc_spin(&AUTOOC_CPU, REG_PC)
 #else
 #define AUTOOC_BRANCH(disp)
 #endif
@@ -1412,8 +1413,8 @@ INLINE void m68ki_exception_interrupt(uint int_level)
   if(CPU_STOPPED)
     return;
 
-#ifdef AUTOOC_HOOKS
-  autooc.spin_target = 0xffffffff; /* the handler is no waiting loop */
+#ifdef AUTOOC_CPU
+  AUTOOC_CPU.spin_target = 0xffffffff; /* the handler is no waiting loop */
 #endif
 
   /* Always use the autovectors. */

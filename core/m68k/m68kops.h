@@ -21171,10 +21171,10 @@ static void m68k_op_stop(void)
 #else
       int end = m68ki_cpu.cycle_end - 4*MUL;
 #endif
-#ifdef AUTOOC_HOOKS
-      if (autooc.enabled)
+#ifdef AUTOOC_CPU
+      if (AUTOOC_CPU.enabled)
       {
-        autooc_stop(end - m68ki_cpu.cycles);
+        autooc_stopped(&AUTOOC_CPU, m68ki_cpu.cycles, end);
       }
 #endif
       SET_CYCLES(end); 

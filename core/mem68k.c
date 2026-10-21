@@ -5,8 +5,9 @@
  *  Copyright (C) 1998-2003  Charles Mac Donald (original code)
  *  Copyright (C) 2007-2026  Eke-Eke (Genesis Plus GX)
  *
- *  Modified 2026 by VrepliroidV: writes to the Z80 RAM are counted for the
- *  automatic 68k overclock (autooc.c).
+ *  Modified 2026 by VrepliroidV: writes to the Z80 RAM, and the time the
+ *  68k idles polling the sub 68k, are counted for the automatic 68k overclock
+ *  (autooc.c).
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -251,6 +252,10 @@ static void m68k_poll_detect(unsigned int reg_mask)
 #ifdef LOG_SCD
           error("m68k stopped from %d cycles\n", m68k.cycles);
 #endif
+          if (autooc.enabled)
+          {
+            autooc_stopped(&autooc, m68k.cycles, m68k.cycle_end);
+          }
           m68k.cycles = m68k.cycle_end;
           m68k.stopped = reg_mask;
         }

@@ -6,6 +6,7 @@ extern int scd_68k_irq_ack(int level);
 
 #define m68ki_cpu s68k
 #define MUL (4)
+#define AUTOOC_CPU autooc_sub /* its automatic overclock (autooc.c) */
 
 /* ======================================================================== */
 /* ================================ INCLUDES ============================== */
@@ -231,8 +232,17 @@ void s68k_run(unsigned int cycles)
   /* Make sure we're not stopped */
   if (CPU_STOPPED)
   {
+    if (autooc_sub.enabled)
+    {
+      autooc_stopped(&autooc_sub, s68k.cycles, cycles);
+    }
     s68k.cycles = cycles;
     return;
+  }
+
+  if (autooc_sub.enabled)
+  {
+    autooc_running(&autooc_sub, s68k.cycles);
   }
 
   /* Set aimed cycle count for current CPU execution frame */

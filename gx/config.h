@@ -7,7 +7,7 @@
  *
  *  Modified 2026 by VrepliroidV: Auto Crop settings (config.autocrop and
  *  config.autocrop_scale) and the automatic 68k overclock
- *  (config.m68k_auto_overclock), stored at the end of the settings file; files
+ *  (config.m68k_auto_overclock, config.s68k_auto_overclock), stored at the end of the settings file; files
  *  from before them still load.
  *
  *  Redistribution and use of this code or any derivative works are permitted
@@ -139,6 +139,7 @@ typedef struct
   uint8 autocrop;  /* AUTOCROP_OFF, AUTOCROP_FIT, AUTOCROP_STRETCH (gx/utils/autocrop.h) */
   uint8 autocrop_scale;  /* AUTOCROP_SCALE_SMOOTH, AUTOCROP_SCALE_INTEGER */
   uint8 m68k_auto_overclock;  /* 1: m68k_overclock only when the game slows down (core/autooc.c) */
+  uint8 s68k_auto_overclock;  /* same for the Mega CD sub 68k and s68k_overclock */
 } t_config;
 
 extern t_config config;

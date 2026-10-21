@@ -7,8 +7,8 @@
  *
  *  Modified 2026 by VrepliroidV: USB Xbox 360 (XInput) controllers are also read
  *  as GameCube controllers, see gx/utils/usbpad_shim.h. Auto Crop option in the
- *  video settings. Per-Game button in Settings (gx/gamesettings.h). 68k Auto
- *  Overclock option in the system settings (core/autooc.c).
+ *  video settings. Per-Game button in Settings (gx/gamesettings.h). Main and
+ *  Sub 68k Auto Overclock options in the system settings (core/autooc.c).
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -409,8 +409,9 @@ static gui_item items_system[] =
   {NULL,NULL,"Cartridge Swap: OFF",        "Enable/Disable cartridge hot swap",           56,132,276,48},
   {NULL,NULL,"BIOS & Lock-On ROM paths",   "Configure Boot ROM & Lock-On ROM paths",      56,132,276,48},
   {NULL,NULL,"Main 68k Overclock: 3.0x",   "Adjust Mega Drive /Genesis CPU clock speed",  56,132,276,48},
-  {NULL,NULL,"68k Auto Overclock: OFF",    "Overclock only when the game slows down",     56,132,276,48},
+  {NULL,NULL,"Main 68k Auto Overclock: OFF", "Overclock only when the game slows down",   56,132,276,48},
   {NULL,NULL,"Sub 68k Overclock: 3.0x",    "Adjust Sega CD / Mega-CD CPU clock speed",    56,132,276,48},
+  {NULL,NULL,"Sub 68k Auto Overclock: OFF", "Overclock only when the game slows down",    56,132,276,48},
   {NULL,NULL,"Z80 Overclock: 3.0x",        "Adjust Z80 CPU clock speed",                  56,132,276,48},
   {NULL,NULL,"SVP Cycles: 1500",           "Adjust SVP chip emulation speed",             56,132,276,48}
 };
@@ -1344,24 +1345,49 @@ static const uint16 vc_table[4][2] =
   {0x106, 0x10A}  /* Mode 5 (240 lines) */
 };
 
-/* the main 68k overclock items: ratio (the highest one when automatic) */
-static void m68k_overclock_labels(gui_item *items)
+/* the overclock items of one 68k (index: its ratio, the highest one when
+   automatic, then whether it is automatic) */
+static void overclock_labels(gui_item *items, int index, char *name, float ratio, int automatic, char *comment)
 {
-  if (config.m68k_auto_overclock)
+  if (automatic)
   {
-    sprintf (items[12].text, "Highest Overclock: %1.1fx", config.m68k_overclock);
-    sprintf (items[12].comment, "Highest CPU clock speed of the auto overclock");
+    sprintf (items[index].text, "%s Highest OC: %1.1fx", name, ratio);
+    sprintf (items[index].comment, "Highest CPU clock speed of the auto overclock");
   }
   else
   {
-    if (config.m68k_overclock > 1.0)
-      sprintf (items[12].text, "Main 68k Overclock: %1.1fx", config.m68k_overclock);
+    if (ratio > 1.0)
+      sprintf (items[index].text, "%s Overclock: %1.1fx", name, ratio);
     else
-      sprintf (items[12].text, "Main 68k Overclock: OFF");
-    sprintf (items[12].comment, "Adjust Mega Drive /Genesis CPU clock speed");
+      sprintf (items[index].text, "%s Overclock: OFF", name);
+    sprintf (items[index].comment, "%s", comment);
   }
 
-  sprintf (items[13].text, "68k Auto Overclock: %s", config.m68k_auto_overclock ? "ON" : "OFF");
+  sprintf (items[index + 1].text, "%s Auto Overclock: %s", name, automatic ? "ON" : "OFF");
+}
+
+static void m68k_overclock_labels(gui_item *items)
+{
+  overclock_labels(items, 12, "Main 68k", config.m68k_overclock, config.m68k_auto_overclock, "Adjust Mega Drive /Genesis CPU clock speed");
+  overclock_labels(items, 14, "Sub 68k", config.s68k_overclock, config.s68k_auto_overclock, "Adjust Sega CD / Mega-CD CPU clock speed");
+}
+
+/* the ratio of one 68k (the automatic overclock needs one to go up to) */
+static void overclock_ratio_box(gui_menu *m, char *name, float *ratio, int automatic, float max)
+{
+  char title[64];
+  sprintf(title, automatic ? "%s Highest Overclock" : "%s Overclock Ratio", name);
+  GUI_OptionBox(m,0,title,(void *)ratio,0.1,automatic ? 1.1 : 1.0,max,0);
+}
+
+/* turns the automatic overclock of one 68k on or off */
+static void overclock_auto_toggle(uint8 *automatic, float *ratio)
+{
+  *automatic ^= 1;
+
+  /* the highest ratio it may use */
+  if (*automatic && (*ratio <= 1.0))
+    *ratio = 3.0;
 }
 
 static void systemmenu ()
@@ -1440,24 +1466,19 @@ static void systemmenu ()
 
   m68k_overclock_labels(items);
 
-  if (config.s68k_overclock > 1.0)
-    sprintf (items[14].text, "Sub 68k Overclock: %1.1fx", config.s68k_overclock);
-  else
-    sprintf (items[14].text, "Sub 68k Overclock: OFF");
-
   if (config.z80_overclock > 1.0)
-    sprintf (items[15].text, "Z80 Overclock: %1.1fx", config.z80_overclock);
+    sprintf (items[16].text, "Z80 Overclock: %1.1fx", config.z80_overclock);
   else
-    sprintf (items[15].text, "Z80 Overclock: OFF");
+    sprintf (items[16].text, "Z80 Overclock: OFF");
 
   if (svp)
   {
-    sprintf (items[16].text, "SVP Cycles: %d", SVP_cycles);
-    m->max_items = 17;
+    sprintf (items[17].text, "SVP Cycles: %d", SVP_cycles);
+    m->max_items = 18;
   }
   else
   {
-    m->max_items = 16;
+    m->max_items = 17;
   }
 
   GUI_InitMenu(m);
@@ -1736,52 +1757,46 @@ static void systemmenu ()
 
       case 12:  /*** Main 68k Overclock ***/
       {
-        /* the automatic overclock needs a ratio to go up to */
-        if (config.m68k_auto_overclock)
-          GUI_OptionBox(m,0,"Highest Auto Overclock",(void *)&config.m68k_overclock,0.1,1.1,7.0,0);
-        else
-          GUI_OptionBox(m,0,"Main 68k Overclock Ratio",(void *)&config.m68k_overclock,0.1,1.0,7.0,0);
-
+        overclock_ratio_box(m, "Main 68k", &config.m68k_overclock, config.m68k_auto_overclock, 7.0);
         m68k_overclock_labels(items);
         break;
       }
 
       case 13:  /*** Main 68k Auto Overclock ***/
       {
-        config.m68k_auto_overclock ^= 1;
-
-        /* the highest ratio it may use */
-        if (config.m68k_auto_overclock && (config.m68k_overclock <= 1.0))
-          config.m68k_overclock = 3.0;
-
+        overclock_auto_toggle(&config.m68k_auto_overclock, &config.m68k_overclock);
         m68k_overclock_labels(items);
         break;
       }
 
       case 14:  /*** Sub 68k Overclock ***/
       {
-        GUI_OptionBox(m,0,"Sub 68k Overclock Ratio",(void *)&config.s68k_overclock,0.1,1.0,4.0,0);
-        if (config.s68k_overclock > 1.0)
-          sprintf (items[14].text, "Sub 68k Overclock: %1.1fx", config.s68k_overclock);
-        else
-          sprintf (items[14].text, "Sub 68k Overclock: OFF");
+        overclock_ratio_box(m, "Sub 68k", &config.s68k_overclock, config.s68k_auto_overclock, 4.0);
+        m68k_overclock_labels(items);
         break;
       }
 
-      case 15:  /*** Z80 Overclock ***/
+      case 15:  /*** Sub 68k Auto Overclock ***/
+      {
+        overclock_auto_toggle(&config.s68k_auto_overclock, &config.s68k_overclock);
+        m68k_overclock_labels(items);
+        break;
+      }
+
+      case 16:  /*** Z80 Overclock ***/
       {
         GUI_OptionBox(m,0,"Z80 Overclock Ratio",(void *)&config.z80_overclock,0.1,1.0,15.0,0);
         if (config.z80_overclock > 1.0)
-          sprintf (items[15].text, "Z80 Overclock: %1.1fx", config.z80_overclock);
+          sprintf (items[16].text, "Z80 Overclock: %1.1fx", config.z80_overclock);
         else
-          sprintf (items[15].text, "Z80 Overclock: OFF");
+          sprintf (items[16].text, "Z80 Overclock: OFF");
         break;
       }
 
-      case 16:  /*** SVP cycles per line ***/
+      case 17:  /*** SVP cycles per line ***/
       {
         GUI_OptionBox(m,0,"SVP Cycles",(void *)&SVP_cycles,1,1,1500,1);
-        sprintf (items[16].text, "SVP Cycles: %d", SVP_cycles);
+        sprintf (items[17].text, "SVP Cycles: %d", SVP_cycles);
         break;
       }
 
@@ -1852,8 +1867,8 @@ static void systemmenu ()
   }
 
   /* Initialize CPU overclock ratio (an automatic one turned on starts from none) */
-  autooc_apply(config.m68k_auto_overclock, config.m68k_overclock);
-  s68k.cycle_ratio = (100 << M68K_OVERCLOCK_SHIFT) / (int)(config.s68k_overclock * 100.0);
+  autooc_apply(&autooc, config.m68k_auto_overclock, config.m68k_overclock);
+  autooc_apply(&autooc_sub, config.s68k_auto_overclock, config.s68k_overclock);
   z80_cycle_ratio  = (100 << Z80_OVERCLOCK_SHIFT) / (int)(config.z80_overclock * 100.0);
 
   GUI_DeleteMenu(m);
@@ -3446,8 +3461,8 @@ static void optionmenu(void)
           gamesettings_disable();
 
           /* the global CPU overclock from now on */
-          autooc_apply(config.m68k_auto_overclock, config.m68k_overclock);
-          s68k.cycle_ratio = (100 << M68K_OVERCLOCK_SHIFT) / (int)(config.s68k_overclock * 100.0);
+          autooc_apply(&autooc, config.m68k_auto_overclock, config.m68k_overclock);
+          autooc_apply(&autooc_sub, config.s68k_auto_overclock, config.s68k_overclock);
           z80_cycle_ratio  = (100 << Z80_OVERCLOCK_SHIFT) / (int)(config.z80_overclock * 100.0);
         }
         pergame_icon(&m->items[5], 1);

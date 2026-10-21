@@ -7,8 +7,9 @@
  *  Copyright (C) 1998-2003  Charles Mac Donald (original code)
  *  Copyright (C) 2007-2025  Eke-Eke (Genesis Plus GX)
  *
- *  Modified 2026 by VrepliroidV: the frames of the main 68k systems report to
- *  the automatic 68k overclock (autooc.c), which starts again at each reset.
+ *  Modified 2026 by VrepliroidV: the frames of the 68k systems report to the
+ *  automatic overclock of the main and Mega CD sub 68k (autooc.c), which
+ *  starts again at each reset.
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -699,7 +700,7 @@ void system_frame_gen(int do_skip)
   /* automatic 68k overclock */
   if (autooc.enabled)
   {
-    autooc_end_frame(mcycles_vdp);
+    autooc_end_frame(&autooc, mcycles_vdp);
   }
 
   /* adjust timings for next frame */
@@ -976,7 +977,7 @@ void system_frame_scd(int do_skip)
     v_counter = line;
 
     /* automatic 68k overclock: is the screen on ? */
-    if ((line == AUTOOC_SAMPLE_LINE) && autooc.enabled)
+    if ((line == AUTOOC_SAMPLE_LINE) && (autooc.enabled || autooc_sub.enabled))
     {
       autooc_sample();
     }
@@ -1040,7 +1041,11 @@ void system_frame_scd(int do_skip)
   /* automatic 68k overclock */
   if (autooc.enabled)
   {
-    autooc_end_frame(mcycles_vdp);
+    autooc_end_frame(&autooc, mcycles_vdp);
+  }
+  if (autooc_sub.enabled)
+  {
+    autooc_end_frame(&autooc_sub, scd.cycles);
   }
 
   /* adjust timings for next frame */

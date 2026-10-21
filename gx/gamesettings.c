@@ -87,6 +87,7 @@ static const t_game_field fields[] =
   FIELD(m68k_overclock, T_FLOAT),
   FIELD(m68k_auto_overclock, T_U8),
   FIELD(s68k_overclock, T_FLOAT),
+  FIELD(s68k_auto_overclock, T_U8),
   FIELD(z80_overclock, T_FLOAT)
 };
 
@@ -270,6 +271,8 @@ void gamesettings_load(void)
          afterwards (its file had no say on it), up to the usual ratio */
       if (config.m68k_auto_overclock && (config.m68k_overclock <= 1.0)) config.m68k_overclock = 3.0;
       if (config.s68k_overclock < 1.0) config.s68k_overclock = 1.0;
+      if (config.s68k_auto_overclock > 1) config.s68k_auto_overclock = 0;
+      if (config.s68k_auto_overclock && (config.s68k_overclock <= 1.0)) config.s68k_overclock = 3.0;
       if (config.z80_overclock < 1.0) config.z80_overclock = 1.0;
     }
   }

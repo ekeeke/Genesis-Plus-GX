@@ -8,7 +8,8 @@
  *  Modified 2026 by VrepliroidV: auto crop of black borders (config.autocrop),
  *  see gx/utils/autocrop.h. The game quad is drawn with immediate texture
  *  coordinates so that only the visible part of the frame is shown. With the
- *  FPS counter, the automatic 68k overclock in use is shown next to it.
+ *  FPS counter, the automatic 68k overclock in use (main and Mega CD sub 68k)
+ *  is shown under it.
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -2142,11 +2143,18 @@ int gx_video_Update(int status)
         GX_Flush();
 
         /* display on-screen message, with the automatic 68k overclock in use
-           and how busy the 68k was (systems with a main 68k) */
-        if (autooc.enabled && ((system_hw & SYSTEM_PBC) == SYSTEM_MD))
+           and how busy the 68k was (systems with a main 68k, and the sub
+           68k of the Mega CD) */
+        int main_oc = autooc.enabled && ((system_hw & SYSTEM_PBC) == SYSTEM_MD);
+        int sub_oc = autooc_sub.enabled && (system_hw == SYSTEM_MCD);
+        if (main_oc || sub_oc)
         {
-          char text[48];
-          sprintf(text, "%s\nOC %1.1fx %d%%", msg, autooc.ratio[autooc.level], (autooc.busy + 5) / 10);
+          char text[80];
+          int len = sprintf(text, "%s\n", msg);
+          if (main_oc)
+            len += sprintf(text + len, "OC %1.1fx %d%%", autooc.ratio[autooc.level], (autooc.busy + 5) / 10);
+          if (sub_oc)
+            sprintf(text + len, "%sSUB %1.1fx %d%%", main_oc ? "  " : "", autooc_sub.ratio[autooc_sub.level], (autooc_sub.busy + 5) / 10);
           gxDrawOnScreenText(text);
         }
         else

@@ -7,7 +7,7 @@
  *
  *  Modified 2026 by VrepliroidV: Auto Crop settings (config.autocrop and
  *  config.autocrop_scale) and the automatic 68k overclock
- *  (config.m68k_auto_overclock), stored at the end of the settings file; files
+ *  (config.m68k_auto_overclock, config.s68k_auto_overclock), stored at the end of the settings file; files
  *  from before them still load. With per-game settings (gx/gamesettings.h), the
  *  file keeps the global values.
  *
@@ -89,6 +89,7 @@ static int config_load(void)
     config.autocrop = AUTOCROP_OFF;
     config.autocrop_scale = AUTOCROP_SCALE_SMOOTH;
     config.m68k_auto_overclock = 0;
+    config.s68k_auto_overclock = 0;
     fread(&config, size, 1, fp);
     fclose(fp);
     if ((size <= (long)offsetof(t_config, autocrop)) || (config.autocrop >= AUTOCROP_MODES))
@@ -102,6 +103,10 @@ static int config_load(void)
     if ((size <= (long)offsetof(t_config, m68k_auto_overclock)) || (config.m68k_auto_overclock > 1))
     {
       config.m68k_auto_overclock = 0;
+    }
+    if ((size <= (long)offsetof(t_config, s68k_auto_overclock)) || (config.s68k_auto_overclock > 1))
+    {
+      config.s68k_auto_overclock = 0;
     }
     return 1;
   }
@@ -166,6 +171,7 @@ void config_default(void)
   config.m68k_overclock = 1.0;
   config.m68k_auto_overclock = 0;
   config.s68k_overclock = 1.0;
+  config.s68k_auto_overclock = 0;
   config.z80_overclock  = 1.0;
 
   /* video options */

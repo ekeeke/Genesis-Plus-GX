@@ -4,6 +4,9 @@
  *
  *  Copyright (C) 2012-2026  Eke-Eke (Genesis Plus GX)
  *
+ *  Modified 2026 by VrepliroidV: the time the sub 68k idles polling the main
+ *  68k is counted for its automatic overclock (autooc.c).
+ *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
  *
@@ -446,6 +449,10 @@ static void s68k_poll_detect(unsigned int reg_mask)
 #ifdef LOG_SCD
           error("s68k stopped from %d cycles\n", s68k.cycles);
 #endif
+          if (autooc_sub.enabled)
+          {
+            autooc_stopped(&autooc_sub, s68k.cycles, s68k.cycle_end);
+          }
           s68k.cycles = s68k.cycle_end;
           s68k.stopped = reg_mask;
         }
