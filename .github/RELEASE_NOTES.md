@@ -1,6 +1,15 @@
-Versão modificada do [Genesis Plus GX 1.7.5](https://github.com/ekeeke/Genesis-Plus-GX) (Eke-Eke) para Wii, com suporte a controles USB sem fio e Auto Crop. *English below.*
+Versão modificada do [Genesis Plus GX 1.7.5](https://github.com/ekeeke/Genesis-Plus-GX) (Eke-Eke) para Wii, com suporte a controles USB sem fio, Auto Crop, overclock automático e configurações por jogo. *English below.*
 
 ## Novidades desta versão
+
+**Overclock automático** (Options > System), para a CPU principal e para a CPU do Sega CD:
+- **Main 68k Auto Overclock** e **Sub 68k Auto Overclock**: o overclock só entra quando o jogo fica lento, em três passos, e volta a descer quando a cena alivia. O emulador mede, a cada quadro, quanto tempo cada CPU passa esperando.
+- Com o automático ligado, **Main 68k Highest OC** e **Sub 68k Highest OC** definem o máximo de cada CPU. Com 3.0x, por exemplo, os passos são 1.44x, 2.08x e 3.0x.
+- Fica desligado nas transições: imagem ou interrupção de vídeo desligada, paleta toda preta e envio de dados para o chip de som. Cada jogo começa sem overclock.
+- Com **Show FPS** ligado, aparece embaixo do FPS a velocidade em uso e quanto do quadro a CPU passou trabalhando, por exemplo `OC 2.1x 72%`, e `SUB` para a CPU do Sega CD.
+- Correção: com overclock, os jogos que esperam o próximo quadro com a instrução STOP perdiam um quadro a cada espera.
+
+**Configurações por jogo** (Options > botão da engrenagem **Per-Game**): guarda as opções de vídeo, som e sistema só para o jogo aberto, no arquivo `saves/<jogo>.cfg`. Desligar o botão faz o jogo voltar às configurações gerais.
 
 **Auto Crop** (Options > Video > Auto Crop): corta as bordas pretas ao redor da imagem do jogo, com as mesmas regras do núcleo [snes9x-ntsc-lie-pal](https://github.com/VrepliroidV/snes9x-ntsc-lie-pal).
 - **OFF**, **FIT** (amplia sem deformar os pixels) ou **STRETCH** (estica até preencher o quadro).
@@ -44,9 +53,12 @@ Em outros controles, os gatilhos e o botão de ombro esquerdo dão C, o ombro di
 
 ## English
 
-Genesis Plus GX 1.7.5 for Wii with Xbox 360 (XInput) USB controllers and Auto Crop.
+Genesis Plus GX 1.7.5 for Wii with Xbox 360 (XInput) USB controllers, Auto Crop, automatic overclock and per-game settings.
 
-New in this version: **Auto Crop** (Options > Video): crops black borders, with the rules of the snes9x-ntsc-lie-pal Libretro core. OFF, FIT (keeps the pixel shape) or STRETCH (fills the frame). Layouts seen for 5 seconds are remembered per game in `saves/<system>/<game>.autocrop`; light gun crosshairs follow the crop. **Crop Scaling**: SMOOTH fills the frame and stays sharp with the bilinear filter off; INTEGER only scales by whole numbers. Settings are kept when updating (the official build would reset them).
+New in this version:
+- **Automatic 68k overclock** (Options > System > Main 68k / Sub 68k Auto Overclock), for the main CPU and the Sega CD CPU: the overclock goes up in three steps, up to the Highest OC ratio, only when the game slows down, and back down when it is not needed. It stays off while the display or the vertical interrupt is off, the palette is all black or data goes to the sound chip, and each game starts without it. With Show FPS on, the ratio in use and how busy the CPU was are shown under the FPS. Fixed: with an overclock, games waiting for the next frame with STOP lost a frame each time.
+- **Per-game settings** (Options > gear button): the video, audio and system options are kept for the loaded game only, in `saves/<game>.cfg`.
+- **Auto Crop** (Options > Video): crops black borders, with the rules of the snes9x-ntsc-lie-pal Libretro core. OFF, FIT (keeps the pixel shape) or STRETCH (fills the frame). Layouts seen for 5 seconds are remembered per game in `saves/<system>/<game>.autocrop`; light gun crosshairs follow the crop. **Crop Scaling**: SMOOTH fills the frame and stays sharp with the bilinear filter off; INTEGER only scales by whole numbers. Settings are kept when updating (the official build would reset them).
 
 Already in the previous version: USB controllers read as GameCube controllers (tested with the Retroflag Classic Controller-M wireless and a generic SNES Classic Mini wireless pad, up to 4, hot-plug). Default layout for the 6-button Retroflag: A, B, C, X, Y, Z, Mode and Start as labelled; L and R also give C. **Mode + D-pad right** opens the menu.
 
