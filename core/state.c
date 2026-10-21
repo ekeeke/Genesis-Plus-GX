@@ -4,6 +4,9 @@
  *
  *  Copyright (C) 2007-2021  Eke-Eke (Genesis Plus GX)
  *
+ *  Modified 2026 by VrepliroidV: a loaded state starts the automatic 68k
+ *  overclock again from none (autooc.c).
+ *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
  *
@@ -186,6 +189,9 @@ int state_load(unsigned char *state)
     bufferptr += sms_cart_context_load(&state[bufferptr]);
     sms_cart_switch(~io_reg[0x0E]);
   }
+
+  /* the automatic 68k overclock starts from none again */
+  autooc_reset();
 
   return bufferptr;
 }

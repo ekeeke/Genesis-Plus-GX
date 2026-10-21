@@ -6,6 +6,7 @@ extern int vdp_68k_irq_ack(int int_level);
 
 #define m68ki_cpu m68k
 #define MUL (7)
+#define AUTOOC_HOOKS /* main 68k: automatic overclock (autooc.c) */
 
 /* ======================================================================== */
 /* ================================ INCLUDES ============================== */
@@ -268,6 +269,10 @@ void m68k_run(unsigned int cycles)
   /* Make sure we're not stopped */
   if (CPU_STOPPED)
   {
+    if (autooc.enabled && (CPU_STOPPED & STOP_LEVEL_STOP))
+    {
+      autooc_stop((int)cycles - m68k.cycles);
+    }
     m68k.cycles = cycles;
     return;
   }

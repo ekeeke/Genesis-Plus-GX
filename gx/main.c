@@ -7,7 +7,8 @@
  *
  *  Modified 2026 by VrepliroidV: the auto crop layouts of the game are loaded
  *  with it and saved when the menu opens or the emulator quits; the game's own
- *  settings (gx/gamesettings.h) are applied when it is loaded.
+ *  settings (gx/gamesettings.h) are applied when it is loaded, and the main
+ *  68k overclock can be automatic (core/autooc.c).
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -304,8 +305,9 @@ void reloadrom(void)
     config.hot_swap |= 2;
   }
 
-  /* Initialize CPU overclock ratio */
-  m68k.cycle_ratio = (100 << M68K_OVERCLOCK_SHIFT) / (int)(config.m68k_overclock * 100.0);
+  /* Initialize CPU overclock ratio (the automatic one starts from none) */
+  autooc_apply(config.m68k_auto_overclock, config.m68k_overclock);
+  autooc_reset();
   s68k.cycle_ratio = (100 << M68K_OVERCLOCK_SHIFT) / (int)(config.s68k_overclock * 100.0);
   z80_cycle_ratio  = (100 << Z80_OVERCLOCK_SHIFT) / (int)(config.z80_overclock * 100.0);
 

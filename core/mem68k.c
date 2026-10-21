@@ -5,6 +5,9 @@
  *  Copyright (C) 1998-2003  Charles Mac Donald (original code)
  *  Copyright (C) 2007-2026  Eke-Eke (Genesis Plus GX)
  *
+ *  Modified 2026 by VrepliroidV: writes to the Z80 RAM are counted for the
+ *  automatic 68k overclock (autooc.c).
+ *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
  *
@@ -212,6 +215,10 @@ void z80_write_byte(unsigned int address, unsigned int data)
       
     default: /* ZRAM */
     {
+      if (autooc.enabled)
+      {
+        autooc_sound_write();
+      }
       zram[address & 0x1FFF] = data;
       return;
     }

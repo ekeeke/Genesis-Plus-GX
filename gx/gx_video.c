@@ -7,7 +7,8 @@
  *
  *  Modified 2026 by VrepliroidV: auto crop of black borders (config.autocrop),
  *  see gx/utils/autocrop.h. The game quad is drawn with immediate texture
- *  coordinates so that only the visible part of the frame is shown.
+ *  coordinates so that only the visible part of the frame is shown. With the
+ *  FPS counter, the automatic 68k overclock in use is shown next to it.
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -2140,8 +2141,18 @@ int gx_video_Update(int status)
         GX_SetBlendMode(GX_BM_NONE,GX_BL_SRCALPHA,GX_BL_INVSRCALPHA,GX_LO_CLEAR);
         GX_Flush();
 
-        /* display on-screen message */
-        gxDrawOnScreenText(msg);
+        /* display on-screen message, with the automatic 68k overclock in use
+           and how busy the 68k was */
+        if (autooc.enabled)
+        {
+          char text[48];
+          sprintf(text, "%s  OC %1.1fx %d%%", msg, autooc.ratio[autooc.level], (autooc.busy + 5) / 10);
+          gxDrawOnScreenText(text);
+        }
+        else
+        {
+          gxDrawOnScreenText(msg);
+        }
       }
 
       /* restore texture object */

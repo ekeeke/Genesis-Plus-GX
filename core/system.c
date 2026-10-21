@@ -7,6 +7,9 @@
  *  Copyright (C) 1998-2003  Charles Mac Donald (original code)
  *  Copyright (C) 2007-2025  Eke-Eke (Genesis Plus GX)
  *
+ *  Modified 2026 by VrepliroidV: the frames of the main 68k systems report to
+ *  the automatic 68k overclock (autooc.c), which starts again at each reset.
+ *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
  *
@@ -346,6 +349,9 @@ void system_reset(void)
   vdp_reset();
   sound_reset();
   audio_reset();
+
+  /* the automatic 68k overclock starts from none again */
+  autooc_reset();
 }
 
 void system_frame_gen(int do_skip)
@@ -624,6 +630,12 @@ void system_frame_gen(int do_skip)
     /* update VCounter */
     v_counter = line;
 
+    /* automatic 68k overclock: is the screen on ? */
+    if ((line == AUTOOC_SAMPLE_LINE) && autooc.enabled)
+    {
+      autooc_sample();
+    }
+
     /* run VDP DMA */
     if (dma_length)
     {
@@ -682,6 +694,12 @@ void system_frame_gen(int do_skip)
   {
     bitmap.viewport.ow = bitmap.viewport.w;
     bitmap.viewport.changed |= 1;
+  }
+
+  /* automatic 68k overclock */
+  if (autooc.enabled)
+  {
+    autooc_end_frame(mcycles_vdp);
   }
 
   /* adjust timings for next frame */
@@ -957,6 +975,12 @@ void system_frame_scd(int do_skip)
     /* update VCounter */
     v_counter = line;
 
+    /* automatic 68k overclock: is the screen on ? */
+    if ((line == AUTOOC_SAMPLE_LINE) && autooc.enabled)
+    {
+      autooc_sample();
+    }
+
     /* run VDP DMA */
     if (dma_length)
     {
@@ -1013,6 +1037,12 @@ void system_frame_scd(int do_skip)
     bitmap.viewport.changed |= 1;
   }
   
+  /* automatic 68k overclock */
+  if (autooc.enabled)
+  {
+    autooc_end_frame(mcycles_vdp);
+  }
+
   /* adjust timings for next frame */
   scd_end_frame(scd.cycles);
   input_end_frame(mcycles_vdp);

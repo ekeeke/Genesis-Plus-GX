@@ -21163,7 +21163,21 @@ static void m68k_op_stop(void)
     m68ki_set_sr(new_sr);
     if (CPU_STOPPED)
     {
-      SET_CYCLES(m68ki_cpu.cycle_end - 4*MUL); 
+      /* the run ends with this instruction once its cycles are added: with
+         them overclocked, the CPU used to go on with the next instruction
+         (VrepliroidV 2026) */
+#ifdef M68K_OVERCLOCK_SHIFT
+      int end = m68ki_cpu.cycle_end - ((4*MUL * m68ki_cpu.cycle_ratio) >> M68K_OVERCLOCK_SHIFT);
+#else
+      int end = m68ki_cpu.cycle_end - 4*MUL;
+#endif
+#ifdef AUTOOC_HOOKS
+      if (autooc.enabled)
+      {
+        autooc_stop(end - m68ki_cpu.cycles);
+      }
+#endif
+      SET_CYCLES(end); 
     }
     return;
   }
