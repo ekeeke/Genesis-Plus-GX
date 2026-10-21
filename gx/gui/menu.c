@@ -84,6 +84,8 @@
 
 /* Options menu */
 #include "Option_menu_png.h"
+#include "Option_game_off_png.h"
+#include "Option_game_on_png.h"
 #include "Option_ctrl_png.h"
 #include "Option_sound_png.h"
 #include "Option_video_png.h"
@@ -350,7 +352,7 @@ static gui_item items_options[] =
   {NULL,Option_sound_png, "","Audio settings",        464,154,44,80},
   {NULL,Option_ctrl_png,  "","Controllers settings",  110,286,88,92},
   {NULL,Option_menu_png,  "","Menu settings",         290,286,60,92},
-  {NULL,NULL,"Per-Game: OFF","Keep video, audio & system settings for this game",412,264,148,132}
+  {NULL,Option_game_off_png,"","Keep video, audio & system settings for this game",446,286,80,92}
 };
 
 /* Audio options */
@@ -3343,9 +3345,15 @@ static void ctrlmenu(void)
  * Main Option menu
  *
  ****************************************************************************/
-static void pergame_text(gui_item *item)
+/* gear icon of the Per-Game button, with ON or OFF in its label */
+static void pergame_icon(gui_item *item, int reload)
 {
-  sprintf(item->text, "Per-Game: %s", gamesettings_active() ? "ON" : "OFF");
+  item->data = gamesettings_active() ? Option_game_on_png : Option_game_off_png;
+  if (reload)
+  {
+    gxTextureClose(&item->texture);
+    item->texture = gxTextureOpenPNG(item->data, 0);
+  }
 }
 
 static void optionmenu(void)
@@ -3353,7 +3361,7 @@ static void optionmenu(void)
   int ret, quit = 0;
   gui_menu *m = &menu_options;
 
-  pergame_text(&m->items[5]);
+  pergame_icon(&m->items[5], 0);
   GUI_InitMenu(m);
   GUI_DrawMenuFX(m,30,0);
 
@@ -3397,18 +3405,14 @@ static void optionmenu(void)
         {
           if (gamesettings_enable())
           {
-            GUI_WaitPrompt("Per-Game Settings","Video, audio & system settings\nare now kept for this game only");
+            GUI_WaitPrompt("Per-Game Settings","Now kept for this game only");
           }
         }
-        else
+        else if (GUI_WaitConfirm("Per-Game Settings","Use the global settings again ?"))
         {
-          char *choices[2] = {"Use global settings", "Keep this game's"};
-          if (GUI_OptionWindow(m, "Per-Game Settings", "Settings of this game", choices, 2) == 0)
-          {
-            gamesettings_disable();
-          }
+          gamesettings_disable();
         }
-        pergame_text(&m->items[5]);
+        pergame_icon(&m->items[5], 1);
         break;
       case -1:
         quit = 1;
