@@ -6,7 +6,8 @@
  *  Copyright Eke-Eke (2007-2026), based on original work from Softdev (2006)
  *
  *  Modified 2026 by VrepliroidV: the auto crop layouts of the game are loaded
- *  with it and saved when the menu opens or the emulator quits.
+ *  with it and saved when the menu opens or the emulator quits; the game's own
+ *  settings (gx/gamesettings.h) are applied when it is loaded.
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -41,6 +42,7 @@
  ****************************************************************************************/
 
 #include "shared.h"
+#include "gamesettings.h"
 #include "font.h"
 #include "gui.h"
 #include "menu.h"
@@ -263,6 +265,9 @@ double get_framerate(void)
 ********************************************/
 void reloadrom(void)
 {
+  /* the game's own video, audio and system options, if it has them */
+  gamesettings_load();
+
   /* Cartridge "Hot Swap" support (make sure system has already been inited once and use cartridges) */
   if ((config.hot_swap == 3) && ((system_hw != SYSTEM_MCD) || scd.cartridge.boot))
   {
@@ -284,6 +289,9 @@ void reloadrom(void)
   /* Disc Swap support (automatically enabled if CD tray is open) */
   else if ((system_hw != SYSTEM_MCD) || (cdd.status != CD_OPEN))
   {
+    /* region of the game with the options just loaded */
+    get_region(NULL);
+
     /* Initialize audio emulation */
     interlaced = 0;
     audio_init(48000, get_framerate());

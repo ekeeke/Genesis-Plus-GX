@@ -7,7 +7,7 @@
  *
  *  Modified 2026 by VrepliroidV: USB Xbox 360 (XInput) controllers are also read
  *  as GameCube controllers, see gx/utils/usbpad_shim.h. Auto Crop option in the
- *  video settings.
+ *  video settings. Per-Game button in Settings (gx/gamesettings.h).
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -49,6 +49,7 @@
 #include "file_load.h"
 #include "file_slot.h"
 #include "autocrop.h"
+#include "gamesettings.h"
 
 #ifdef HW_RVL
 #include <ogc/usbmouse.h>
@@ -347,8 +348,9 @@ static gui_item items_options[] =
   {NULL,Option_system_png,"","System settings",       114,142,80,92},
   {NULL,Option_video_png, "","Video settings",        288,150,64,84},
   {NULL,Option_sound_png, "","Audio settings",        464,154,44,80},
-  {NULL,Option_ctrl_png,  "","Controllers settings",  192,286,88,92},
-  {NULL,Option_menu_png,  "","Menu settings",         370,286,60,92}
+  {NULL,Option_ctrl_png,  "","Controllers settings",  110,286,88,92},
+  {NULL,Option_menu_png,  "","Menu settings",         290,286,60,92},
+  {NULL,NULL,"Per-Game: OFF","Keep video, audio & system settings for this game",412,264,148,132}
 };
 
 /* Audio options */
@@ -538,9 +540,10 @@ static gui_butn buttons_options[] =
 {
   {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{0,3,0,1}, 80,120,148,132},
   {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{0,3,1,1},246,120,148,132},
-  {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{0,2,1,1},412,120,148,132},
-  {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{3,0,1,1},162,264,148,132},
-  {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{2,0,1,0},330,264,148,132}
+  {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{0,3,1,1},412,120,148,132},
+  {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{3,0,1,1}, 80,264,148,132},
+  {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{3,0,1,1},246,264,148,132},
+  {&button_icon_data,BUTTON_VISIBLE|BUTTON_ACTIVE|BUTTON_OVER_SFX|BUTTON_SELECT_SFX,{3,0,1,0},412,264,148,132}
 };
 
 /* Save Manager Menu */
@@ -608,7 +611,7 @@ static gui_menu menu_options =
 {
   "Settings",
   0,0,
-  5,5,5,0,
+  6,6,5,0,
   items_options,
   buttons_options,
   bg_misc,
@@ -3340,11 +3343,17 @@ static void ctrlmenu(void)
  * Main Option menu
  *
  ****************************************************************************/
+static void pergame_text(gui_item *item)
+{
+  sprintf(item->text, "Per-Game: %s", gamesettings_active() ? "ON" : "OFF");
+}
+
 static void optionmenu(void)
 {
   int ret, quit = 0;
   gui_menu *m = &menu_options;
 
+  pergame_text(&m->items[5]);
   GUI_InitMenu(m);
   GUI_DrawMenuFX(m,30,0);
 
@@ -3378,6 +3387,28 @@ static void optionmenu(void)
         GUI_DeleteMenu(m);
         prefmenu();
         GUI_InitMenu(m);
+        break;
+      case 5: /*** settings of this game ***/
+        if (!system_hw)
+        {
+          GUI_WaitPrompt("Error","Please load a game first !\n");
+        }
+        else if (!gamesettings_active())
+        {
+          if (gamesettings_enable())
+          {
+            GUI_WaitPrompt("Per-Game Settings","Video, audio & system settings\nare now kept for this game only");
+          }
+        }
+        else
+        {
+          char *choices[2] = {"Use global settings", "Keep this game's"};
+          if (GUI_OptionWindow(m, "Per-Game Settings", "Settings of this game", choices, 2) == 0)
+          {
+            gamesettings_disable();
+          }
+        }
+        pergame_text(&m->items[5]);
         break;
       case -1:
         quit = 1;

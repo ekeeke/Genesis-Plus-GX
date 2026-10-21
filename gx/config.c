@@ -7,7 +7,8 @@
  *
  *  Modified 2026 by VrepliroidV: Auto Crop settings (config.autocrop and
  *  config.autocrop_scale), stored at the end of the settings file; files from
- *  before them still load.
+ *  before them still load. With per-game settings (gx/gamesettings.h), the
+ *  file keeps the global values.
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -45,6 +46,7 @@
 #include "gui.h"
 #include "file_load.h"
 #include "autocrop.h"
+#include "gamesettings.h"
 
 #include <stddef.h>
 
@@ -108,9 +110,15 @@ void config_save(void)
   FILE *fp = fopen(fname, "wb");
   if (fp)
   {
+    /* the loaded game's own settings go to its file, config.ini keeps the global ones */
+    gamesettings_save();
+    gamesettings_begin_global_save();
+
     /* write file */
     fwrite(&config, sizeof(config), 1, fp);
     fclose(fp);
+
+    gamesettings_end_global_save();
   }
 }
 
