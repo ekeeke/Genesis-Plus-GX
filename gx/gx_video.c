@@ -348,6 +348,21 @@ static u32 autocrop_width, autocrop_height; /* texture size the crop belongs to 
 static int quad_x, quad_y, quad_xshift, quad_yshift; /* whole frame: half size and centre */
 static f32 tex_u0 = 0.0, tex_u1 = 1.0, tex_v0 = 0.0, tex_v1 = 1.0; /* visible part of the texture */
 
+/*** Sharp scaling of the auto crop (bilinear filter off) ***
+  Enlarging the crop by a fraction with nearest sampling makes some pixels and
+  lines bigger than others, which shows most in 240p. Instead the visible part
+  is first enlarged by whole numbers with nearest sampling, in a corner of the
+  EFB, then copied to a texture and smoothed to its size on screen: the picture
+  stays sharp, only the rows and columns where pixels meet are blended. */
+#define SHARP_MAX_WIDTH  640  /* EFB size */
+#define SHARP_MAX_HEIGHT 528
+static u8 sharp_tex[SHARP_MAX_WIDTH * SHARP_MAX_HEIGHT * 2] ATTRIBUTE_ALIGN(32);
+static GXTexObj sharp_tex_obj;
+static s16 sharp_square[8] ATTRIBUTE_ALIGN(32);
+static int sharp_w = 0, sharp_h = 0;         /* enlarged size, 0 = draw directly */
+static int sharp_tex_w = 0, sharp_tex_h = 0; /* texture size, multiples of 4 */
+static int sharp_tex_ready = 0;
+
 static camera cam =
 {
   {0.0F, 0.0F, -100.0F},
@@ -638,6 +653,118 @@ static void gxAutoCropView(f32 *u0, f32 *u1, f32 *v0, f32 *v1, f32 *xsize, f32 *
   autocrop_view(&autocrop, autocrop_mode, vwidth, vheight / gxAutoCropScale(), xroom, yroom, u0, u1, v0, v1, xsize, ysize);
 }
 
+/* Chooses the sharp scaling for a crop drawn at width x height EFB pixels */
+static void gxUpdateSharp(int width, int height)
+{
+  sharp_w = sharp_h = 0;
+
+  if (config.bilinear || (autocrop_mode == AUTOCROP_OFF) || !rmode || rmode->aa)
+  {
+    return;
+  }
+  if ((tex_u0 == 0.0) && (tex_u1 == 1.0) && (tex_v0 == 0.0) && (tex_v1 == 1.0))
+  {
+    /* nothing cropped: the original scaling */
+    return;
+  }
+
+  /* visible part in texels (whole texels: the crop edges are whole pixels) */
+  int cw = (int)((tex_u1 - tex_u0) * vwidth + 0.5);
+  int ch = (int)((tex_v1 - tex_v0) * vheight + 0.5);
+  if ((cw <= 0) || (ch <= 0))
+  {
+    return;
+  }
+
+  f32 sx = (f32)width / cw;
+  f32 sy = (f32)height / ch;
+  if ((fabsf(sx - (int)(sx + 0.5)) < 0.01) && (fabsf(sy - (int)(sy + 0.5)) < 0.01))
+  {
+    /* whole-number scaling is already even */
+    return;
+  }
+
+  /* enlarge by the next whole number, as long as it fits the EFB */
+  int nx = (int)ceilf(sx - 0.01);
+  int ny = (int)ceilf(sy - 0.01);
+  if (nx < 1) nx = 1;
+  if (ny < 1) ny = 1;
+  while ((nx > 1) && (cw * nx > SHARP_MAX_WIDTH)) nx--;
+  while ((ny > 1) && (ch * ny > SHARP_MAX_HEIGHT)) ny--;
+  if (((nx == 1) && (ny == 1)) || (cw * nx > SHARP_MAX_WIDTH) || (ch * ny > SHARP_MAX_HEIGHT))
+  {
+    return;
+  }
+
+  sharp_w = cw * nx;
+  sharp_h = ch * ny;
+  sharp_tex_w = (sharp_w + 3) & ~3;
+  sharp_tex_h = (sharp_h + 3) & ~3;
+
+  /* quad covering the viewport exactly (y grows downwards, see gxDrawSharp) */
+  sharp_square[0] = sharp_square[6] = -(sharp_w / 2);
+  sharp_square[2] = sharp_square[4] = sharp_w - sharp_w / 2;
+  sharp_square[1] = sharp_square[3] = sharp_h - sharp_h / 2;
+  sharp_square[5] = sharp_square[7] = -(sharp_h / 2);
+  DCStoreRange(sharp_square, 32);
+  GX_InvVtxCache();
+
+  if (!sharp_tex_ready)
+  {
+    /* nothing of it may stay in the CPU cache once the GPU writes it */
+    DCFlushRange(sharp_tex, sizeof(sharp_tex));
+    sharp_tex_ready = 1;
+  }
+  GX_InitTexObj(&sharp_tex_obj, sharp_tex, sharp_tex_w, sharp_tex_h, GX_TF_RGB565, GX_CLAMP, GX_CLAMP, GX_FALSE);
+}
+
+/* Draws the crop enlarged by whole numbers (nearest), then smoothed to the
+   quad. See gxUpdateSharp. */
+static void gxDrawSharp(void)
+{
+  Mtx44 p;
+
+  /* 1. enlarge, nearest sampling, into the top left corner of the EFB */
+  GX_SetViewport(0.0F, 0.0F, sharp_w, sharp_h, 0.0F, 1.0F);
+  GX_SetScissor(0, 0, sharp_w, sharp_h);
+  /* the view turns y upside down: top of the quad = -bottom of the projection */
+  guOrtho(p, -sharp_square[7], -sharp_square[1], sharp_square[0], sharp_square[2], 100, 1000);
+  GX_LoadProjectionMtx(p, GX_ORTHOGRAPHIC);
+  GX_SetArray(GX_VA_POS, sharp_square, 2 * sizeof (s16));
+  GX_LoadTexObj(&screenTexObj, GX_TEXMAP0);
+  gxDrawScreenQuad();
+
+  /* copy it to a texture, clearing that part of the EFB */
+  GX_SetCopyFilter(GX_FALSE, NULL, GX_FALSE, NULL);
+  GX_SetTexCopySrc(0, 0, sharp_tex_w, sharp_tex_h);
+  GX_SetTexCopyDst(sharp_tex_w, sharp_tex_h, GX_TF_RGB565, GX_FALSE);
+  GX_CopyTex(sharp_tex, GX_TRUE);
+  GX_PixModeSync();
+  GX_InvalidateTexAll();
+
+  /* 2. back to the screen: smoothed (bilinear) to the size of the quad */
+  GX_SetCopyFilter(rmode->aa, rmode->sample_pattern, (rmode->xfbMode == VI_XFBMODE_SF) ? GX_FALSE : config.vfilter, rmode->vfilter);
+  GX_SetViewport(0.0F, 0.0F, rmode->fbWidth, rmode->efbHeight, 0.0F, 1.0F);
+  GX_SetScissor(0, 0, rmode->fbWidth, rmode->efbHeight);
+  guOrtho(p, rmode->efbHeight/2, -(rmode->efbHeight/2), -(rmode->fbWidth/2), rmode->fbWidth/2, 100, 1000);
+  GX_LoadProjectionMtx(p, GX_ORTHOGRAPHIC);
+  GX_SetArray(GX_VA_POS, square, 2 * sizeof (s16));
+  GX_LoadTexObj(&sharp_tex_obj, GX_TEXMAP0);
+  GX_Begin(GX_QUADS, GX_VTXFMT0, 4);
+  GX_Position1x8(3);
+  GX_TexCoord2f32(0.0, 0.0);
+  GX_Position1x8(2);
+  GX_TexCoord2f32((f32)sharp_w / sharp_tex_w, 0.0);
+  GX_Position1x8(1);
+  GX_TexCoord2f32((f32)sharp_w / sharp_tex_w, (f32)sharp_h / sharp_tex_h);
+  GX_Position1x8(0);
+  GX_TexCoord2f32(0.0, (f32)sharp_h / sharp_tex_h);
+  GX_End();
+
+  /* the screen texture is the default one (on-screen display) */
+  GX_LoadTexObj(&screenTexObj, GX_TEXMAP0);
+}
+
 static void gxUpdateQuad(void)
 {
   f32 xsize, ysize;
@@ -652,6 +779,8 @@ static void gxUpdateQuad(void)
   DCStoreRange(square, 32);
   GX_InvVtxCache();
   autocrop_dirty = 0;
+
+  gxUpdateSharp(2 * xscale, 2 * yscale);
 }
 
 /* Measures the frame in the texture. Returns 1 when the crop changed. */
@@ -1900,7 +2029,16 @@ int gx_video_Update(int status)
     }
 
     /* render textured quad */
-    gxDrawScreenQuad();
+    if (sharp_w > 0)
+    {
+      /* auto crop, enlarged sharply */
+      gxDrawSharp();
+    }
+    else
+    {
+      GX_LoadTexObj(&screenTexObj, GX_TEXMAP0);
+      gxDrawScreenQuad();
+    }
 
     /* on-screen display */
     if (osd)
