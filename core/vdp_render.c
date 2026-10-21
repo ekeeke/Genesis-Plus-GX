@@ -8,6 +8,9 @@
  *  Copyright (C) 2007-2025  Eke-Eke (Genesis Plus GX)
  *  Copyright (C) 2022  AlexKiri (enhanced vscroll mode rendering function)
  *
+ *  Modified 2026 by VrepliroidV: framebuffer lines drawn with the display off,
+ *  or as border, are marked in line_blank_rows (used by the Wii auto crop).
+ *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
  *
@@ -4854,8 +4857,14 @@ void render_reset(void)
 /* Line rendering functions                                                 */
 /*--------------------------------------------------------------------------*/
 
+/* Non-zero for framebuffer lines drawn with the display off or as border */
+uint8 line_blank_rows[LINE_BLANK_ROWS];
+static uint8 line_blank;
+
 void render_line(int line)
 {
+  line_blank = !(reg[1] & 0x40);
+
   /* Check display status */
   if (reg[1] & 0x40)
   {
@@ -4917,6 +4926,8 @@ void render_line(int line)
 
 void blank_line(int line, int offset, int width)
 {
+  /* the whole line, or only part of it */
+  line_blank = (offset <= -bitmap.viewport.x) && (width >= bitmap.viewport.w + 2*bitmap.viewport.x);
   memset(&linebuf[0][0x20 + offset], 0x40, width);
   remap_line(line);
 }
@@ -4939,6 +4950,11 @@ void remap_line(int line)
   if (interlaced && config.render)
   {
     line = (line * 2) + odd_frame;
+  }
+
+  if (line < LINE_BLANK_ROWS)
+  {
+    line_blank_rows[line] = line_blank;
   }
 
 #if defined(USE_15BPP_RENDERING) || defined(USE_16BPP_RENDERING)

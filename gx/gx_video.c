@@ -5,6 +5,10 @@
  *
  *  Copyright Eke-Eke (2007-2026), based on original work from Softdev (2006)
  *
+ *  Modified 2026 by VrepliroidV: auto crop of black borders (config.autocrop),
+ *  see gx/utils/autocrop.h. The game quad is drawn with immediate texture
+ *  coordinates so that only the visible part of the frame is shown.
+ *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
  *
@@ -42,6 +46,7 @@
 #include "md_ntsc.h"
 #include "sms_ntsc.h"
 #include "gx_input.h"
+#include "autocrop.h"
 
 #include <ogc/lwp_watchdog.h>
 #include <png.h>
@@ -335,6 +340,14 @@ typedef struct tagcamera
 
 static s16 square[8] ATTRIBUTE_ALIGN (32);
 
+/*** Auto crop of black borders ***/
+static autocrop_state autocrop;
+static int autocrop_mode = AUTOCROP_OFF; /* mode the current crop belongs to */
+static int autocrop_dirty = 0;           /* the quad must be updated */
+static u32 autocrop_width, autocrop_height; /* texture size the crop belongs to */
+static int quad_x, quad_y, quad_xshift, quad_yshift; /* whole frame: half size and centre */
+static f32 tex_u0 = 0.0, tex_u1 = 1.0, tex_v0 = 0.0, tex_v1 = 1.0; /* visible part of the texture */
+
 static camera cam =
 {
   {0.0F, 0.0F, -100.0F},
@@ -342,18 +355,20 @@ static camera cam =
   {0.0F, 0.0F, 0.0F}
 };
 
-/*** GX Display List ***/
-static u8 screenDisplayList[32] ATTRIBUTE_ALIGN(32) =
+/*** Game screen quad: the visible part of the texture (whole frame or auto crop) ***/
+static void gxDrawScreenQuad(void)
 {
-  GX_QUADS | GX_VTXFMT0,        /* textured quad rendering (Vertex Format 0) */
-  0x00, 0x04,                   /* one quad = 4x vertex */
-  0x03, 0x00, 0x00, 0x00, 0x00, /* top left corner */
-  0x02, 0x00, 0x01, 0x00, 0x00, /* top right corner */
-  0x01, 0x00, 0x01, 0x00, 0x01, /* bottom right corner */
-  0x00, 0x00, 0x00, 0x00, 0x01, /* bottom left corner */
-  0x00, 0x00, 0x00, 0x00, 0x00, /* padding */
-  0x00, 0x00, 0x00, 0x00
-};
+  GX_Begin(GX_QUADS, GX_VTXFMT0, 4);
+  GX_Position1x8(3);                    /* top left corner */
+  GX_TexCoord2f32(tex_u0, tex_v0);
+  GX_Position1x8(2);                    /* top right corner */
+  GX_TexCoord2f32(tex_u1, tex_v0);
+  GX_Position1x8(1);                    /* bottom right corner */
+  GX_TexCoord2f32(tex_u1, tex_v1);
+  GX_Position1x8(0);                    /* bottom left corner */
+  GX_TexCoord2f32(tex_u0, tex_v1);
+  GX_End();
+}
 
 /* VSYNC callback */
 static void vi_callback(u32 cnt)
@@ -459,7 +474,7 @@ static void gxResetRendering(u8 type)
     /* uses array positionning, no alpha blending, no color channel (video emulation) */
     GX_SetBlendMode(GX_BM_NONE,GX_BL_SRCALPHA,GX_BL_INVSRCALPHA,GX_LO_CLEAR);
     GX_SetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XY, GX_S16, 0);
-    GX_SetVtxAttrFmt(GX_VTXFMT0, GX_VA_TEX0, GX_TEX_ST, GX_S16, 0);
+    GX_SetVtxAttrFmt(GX_VTXFMT0, GX_VA_TEX0, GX_TEX_ST, GX_F32, 0);
     GX_SetVtxDesc(GX_VA_POS, GX_INDEX8);
     GX_SetVtxDesc(GX_VA_TEX0, GX_DIRECT);
     GX_SetArray(GX_VA_POS, square, 2 * sizeof (s16));
@@ -600,6 +615,128 @@ static void gxSetAspectRatio(int *xscale, int *yscale)
   }
 }
 
+/****************************************************************************
+ * Auto crop
+ *
+ * Same rules as the Auto Crop Black Borders option of the snes9x-ntsc-lie-pal
+ * Libretro core, see autocrop.h. Stretch keeps the quad of the whole frame,
+ * Fit resizes it evenly; the texture coordinates show the visible part.
+ ****************************************************************************/
+static int gxAutoCropScale(void)
+{
+  return (config.render && interlaced) ? 2 : 1;
+}
+
+static void gxAutoCropView(f32 *u0, f32 *u1, f32 *v0, f32 *v1, f32 *xsize, f32 *ysize)
+{
+  f32 xroom = 1.0, yroom = 1.0;
+  if (rmode && (quad_x > 0) && (quad_y > 0))
+  {
+    xroom = (f32)rmode->fbWidth / (2 * quad_x);
+    yroom = (f32)rmode->efbHeight / (2 * quad_y);
+  }
+  autocrop_view(&autocrop, autocrop_mode, vwidth, vheight / gxAutoCropScale(), xroom, yroom, u0, u1, v0, v1, xsize, ysize);
+}
+
+static void gxUpdateQuad(void)
+{
+  f32 xsize, ysize;
+  gxAutoCropView(&tex_u0, &tex_u1, &tex_v0, &tex_v1, &xsize, &ysize);
+
+  int xscale = (int)(quad_x * xsize + 0.5);
+  int yscale = (int)(quad_y * ysize + 0.5);
+  square[0] = square[6] = quad_xshift - xscale;
+  square[2] = square[4] = quad_xshift + xscale;
+  square[1] = square[3] = quad_yshift + yscale;
+  square[5] = square[7] = quad_yshift - yscale;
+  DCStoreRange(square, 32);
+  GX_InvVtxCache();
+  autocrop_dirty = 0;
+}
+
+/* Measures the frame in the texture. Returns 1 when the crop changed. */
+static int gxAutoCropMeasure(void)
+{
+  autocrop_frame frame;
+  if ((vheight > LINE_BLANK_ROWS) || (vwidth & 3))
+  {
+    return 0;
+  }
+  frame.pixels = (const uint16_t *)bitmap.data;
+  frame.pitch = vwidth;
+  frame.tiled = 1;
+  frame.width = vwidth;
+  frame.height = vheight;
+  frame.vscale = gxAutoCropScale();
+  frame.hardware_rows = line_blank_rows;
+  return autocrop_process(&autocrop, &frame);
+}
+
+/* Frame pixel (borders included) to EFB position, following the auto crop */
+static void gxScreenPoint(int px, int py, int clamp, int *x, int *y)
+{
+  f32 u = (f32)px / (bitmap.viewport.w + 2*bitmap.viewport.x);
+  f32 v = (f32)py / (bitmap.viewport.h + 2*bitmap.viewport.y);
+  if (clamp)
+  {
+    if (u < tex_u0) u = tex_u0; else if (u > tex_u1) u = tex_u1;
+    if (v < tex_v0) v = tex_v0; else if (v > tex_v1) v = tex_v1;
+  }
+  *x = square[6] + (int)(((u - tex_u0) / (tex_u1 - tex_u0)) * (square[2] - square[6]));
+  *y = square[7] + (int)(((v - tex_v0) / (tex_v1 - tex_v0)) * (square[3] - square[7]));
+}
+
+void gx_video_MapPointer(f32 fx, f32 fy, int *x, int *y)
+{
+  if (!rmode || ((tex_u0 == 0.0) && (tex_u1 == 1.0) && (tex_v0 == 0.0) && (tex_v1 == 1.0)))
+  {
+    /* nothing cropped: the whole screen is the active area, as before */
+    *x = fx * bitmap.viewport.w;
+    *y = fy * bitmap.viewport.h;
+    return;
+  }
+
+  /* screen position on the quad as drawn, then in the visible texture */
+  f32 ex = (fx - 0.5) * rmode->fbWidth;
+  f32 ey = (fy - 0.5) * rmode->efbHeight;
+  f32 qx = (ex - square[6]) / (square[2] - square[6]);
+  f32 qy = (ey - square[7]) / (square[3] - square[7]);
+  f32 u = tex_u0 + qx * (tex_u1 - tex_u0);
+  f32 v = tex_v0 + qy * (tex_v1 - tex_v0);
+  *x = (int)(u * (bitmap.viewport.w + 2*bitmap.viewport.x)) - bitmap.viewport.x;
+  *y = (int)(v * (bitmap.viewport.h + 2*bitmap.viewport.y)) - bitmap.viewport.y;
+}
+
+void gx_video_AutoCropReset(void)
+{
+  autocrop_reset_tracking(&autocrop);
+  autocrop_dirty = 1;
+}
+
+/* The learned layouts are kept next to the game's backup RAM, as <game>.autocrop */
+void gx_video_AutoCropLoad(void)
+{
+  char filename[MAXPATHLEN];
+  autocrop_reset(&autocrop);
+  autocrop_mode = config.autocrop;
+  autocrop_dirty = 1;
+  if (!config.s_device && rom_filename[0])
+  {
+    snprintf(filename, sizeof(filename), "%s/saves/%s.autocrop", DEFAULT_PATH, rom_filename);
+    autocrop_load_layouts(&autocrop, filename);
+  }
+}
+
+void gx_video_AutoCropSave(void)
+{
+  char filename[MAXPATHLEN];
+  if (autocrop.layouts_changed && !config.s_device && rom_filename[0])
+  {
+    snprintf(filename, sizeof(filename), "%s/saves/%s.autocrop", DEFAULT_PATH, rom_filename);
+    autocrop_save_layouts(&autocrop, filename);
+  }
+}
+
 /* Reset GX/VI hardware scaler */
 static void gxResetScaler(u32 width)
 {
@@ -671,13 +808,12 @@ static void gxResetScaler(u32 width)
     yscale = yscale * 2;
   }
 
-  /* Set GX scaler (Vertex Position matrix) */
-  square[0] = square[6] = xshift - xscale;
-  square[2] = square[4] = xshift + xscale;
-  square[1] = square[3] = yshift + yscale;
-  square[5] = square[7] = yshift - yscale;
-  DCStoreRange(square, 32);
-  GX_InvVtxCache();
+  /* Set GX scaler (Vertex Position matrix): whole frame, or its auto crop */
+  quad_x = xscale;
+  quad_y = yscale;
+  quad_xshift = xshift;
+  quad_yshift = yshift;
+  gxUpdateQuad();
 }
 
 static void gxDrawCrosshair(gx_texture *texture, int x, int y)
@@ -689,13 +825,10 @@ static void gxDrawCrosshair(gx_texture *texture, int x, int y)
   /* Aspect correction for widescreen TV */
   if (config.aspect & 2) w = (w * 3) / 4;
 
-  /* EFB scale & shift */
-  int xwidth = square[2] - square[6];
-  int ywidth = square[3] - square[7];
-
-  /* adjust texture coordinates to EFB */
-  x = (((x + bitmap.viewport.x) * xwidth) / (bitmap.viewport.w+2*bitmap.viewport.x)) + square[6] - w/2;
-  y = (((y + bitmap.viewport.y) * ywidth) / (bitmap.viewport.h+2*bitmap.viewport.y)) + square[7] - h/2;
+  /* adjust texture coordinates to EFB (follows the auto crop) */
+  gxScreenPoint(x + bitmap.viewport.x, y + bitmap.viewport.y, 0, &x, &y);
+  x -= w/2;
+  y -= h/2;
 
   /* load texture object */
   GX_LoadTexObj(&texture->texObj, GX_TEXMAP0);
@@ -727,14 +860,13 @@ static void gxDrawCdLeds(gx_texture *texture_l, gx_texture *texture_r)
   /* Aspect correction for widescreen TV */
   if (config.aspect & 2) w = (w * 3) / 4;
 
-  /* EFB scale & shift */
-  int xwidth = square[2] - square[6];
-  int ywidth = square[3] - square[7];
-
-  /* adjust texture coordinates to EFB */
-  int xl = ((bitmap.viewport.x * xwidth) / vwidth) + square[6] + 8;
-  int xr = (((bitmap.viewport.x + bitmap.viewport.w) * xwidth) / vwidth) + square[6] - 8 - w;
-  int y = (((bitmap.viewport.y + bitmap.viewport.h - 4) * ywidth) / vheight) + square[7] - h;
+  /* adjust texture coordinates to EFB (inside the visible picture) */
+  int xl, xr, y;
+  gxScreenPoint(bitmap.viewport.x, bitmap.viewport.y + bitmap.viewport.h - 4, 1, &xl, &y);
+  gxScreenPoint(bitmap.viewport.x + bitmap.viewport.w, bitmap.viewport.y + bitmap.viewport.h - 4, 1, &xr, &y);
+  xl += 8;
+  xr -= 8 + w;
+  y -= h;
 
   /* load left screen texture */
   GX_LoadTexObj(&texture_l->texObj, GX_TEXMAP0);
@@ -1726,6 +1858,14 @@ int gx_video_Update(int status)
         rmode = tvmodes[gc_pal*3 + interlaced];
       }
 
+      /* new frame size: forget the current crop (learned layouts are kept) */
+      if ((vwidth != autocrop_width) || (vheight != autocrop_height))
+      {
+        autocrop_reset_tracking(&autocrop);
+        autocrop_width = vwidth;
+        autocrop_height = vheight;
+      }
+
       /* update aspect ratio */
       gxResetScaler(vwidth);
 
@@ -1743,8 +1883,24 @@ int gx_video_Update(int status)
     DCStoreRange(bitmap.data, vwidth*vheight*2);
     GX_InvalidateTexAll();
 
+    /* auto crop of black borders */
+    if (config.autocrop != autocrop_mode)
+    {
+      autocrop_mode = config.autocrop;
+      autocrop_reset_tracking(&autocrop);
+      autocrop_dirty = 1;
+    }
+    if ((autocrop_mode != AUTOCROP_OFF) && gxAutoCropMeasure())
+    {
+      autocrop_dirty = 1;
+    }
+    if (autocrop_dirty)
+    {
+      gxUpdateQuad();
+    }
+
     /* render textured quad */
-    GX_CallDispList(screenDisplayList, 32);
+    gxDrawScreenQuad();
 
     /* on-screen display */
     if (osd)

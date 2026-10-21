@@ -5,6 +5,9 @@
  *
  *  Copyright Eke-Eke (2007-2026), based on original work from Softdev (2006)
  *
+ *  Modified 2026 by VrepliroidV: the auto crop layouts of the game are loaded
+ *  with it and saved when the menu opens or the emulator quits.
+ *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
  *
@@ -214,6 +217,9 @@ static void run_emulation(void)
     /* stop video & audio */
     gx_audio_Stop();
     gx_video_Stop();
+
+    /* auto crop layouts learned while playing */
+    gx_video_AutoCropSave();
     
     /* show menu */
     ConfigRequested = 0;
@@ -303,6 +309,9 @@ void reloadrom(void)
 
   /* Load Cheat file */
   CheatLoad();
+
+  /* Auto crop layouts learned for this game */
+  gx_video_AutoCropLoad();
 }
 
 /**************************************************
@@ -315,6 +324,9 @@ void shutdown(void)
 
   /* auto-save State file */
   slot_autosave(config.s_default,config.s_device);
+
+  /* auto crop layouts */
+  gx_video_AutoCropSave();
 
   /* shutdown emulation core */
   audio_shutdown();

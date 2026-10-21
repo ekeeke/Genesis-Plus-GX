@@ -5,6 +5,9 @@
  *
  *  Copyright Eke-Eke (2007-2026)
  *
+ *  Modified 2026 by VrepliroidV: Auto Crop setting (config.autocrop), stored at
+ *  the end of the settings file; files from before it still load.
+ *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
  *
@@ -40,6 +43,12 @@
 #include "shared.h"
 #include "gui.h"
 #include "file_load.h"
+#include "autocrop.h"
+
+#include <stddef.h>
+
+/* Size of the settings file before the Auto Crop setting was added */
+#define CONFIG_SIZE_BEFORE_AUTOCROP ((offsetof(t_config, autocrop) + 3) & ~3)
 
 t_config config;
 
@@ -51,9 +60,10 @@ static int config_load(void)
   FILE *fp = fopen(fname, "rb");
   if (fp)
   {
-    /* check file size */
+    /* check file size (files from before the Auto Crop setting are shorter) */
     fseek(fp, 0, SEEK_END);
-    if (ftell(fp) != sizeof(config))
+    long size = ftell(fp);
+    if ((size != sizeof(config)) && (size != CONFIG_SIZE_BEFORE_AUTOCROP))
     {
       fclose(fp);
       return 0;
@@ -71,8 +81,13 @@ static int config_load(void)
 
     /* read file */
     fseek(fp, 0, SEEK_SET);
-    fread(&config, sizeof(config), 1, fp);
+    config.autocrop = AUTOCROP_OFF;
+    fread(&config, size, 1, fp);
     fclose(fp);
+    if (size < (long)sizeof(config) || config.autocrop >= AUTOCROP_MODES)
+    {
+      config.autocrop = AUTOCROP_OFF;
+    }
     return 1;
   }
   return 0;
@@ -194,6 +209,7 @@ void config_default(void)
   /* on-screen options */
   config.cd_leds = 0;
   config.fps     = 0;
+  config.autocrop = AUTOCROP_OFF;
 
   /* menu options */
   config.autoload     = 0;

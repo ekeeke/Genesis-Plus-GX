@@ -119,4 +119,11 @@ extern void gx_video_Start(void);
 extern void gx_video_Stop(void);
 extern int gx_video_Update(int status);
 
+/* Auto crop of black borders (config.autocrop) */
+extern void gx_video_AutoCropLoad(void);   /* after a game is loaded */
+extern void gx_video_AutoCropSave(void);   /* writes the learned layouts when they changed */
+extern void gx_video_AutoCropReset(void);  /* forgets the current crop */
+/* Screen position (0 to 1 across the screen) to active area coordinates */
+extern void gx_video_MapPointer(f32 fx, f32 fy, int *x, int *y);
+
 #endif

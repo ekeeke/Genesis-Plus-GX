@@ -6,7 +6,8 @@
  *  Copyright Eke-Eke (2009-2026)
  *
  *  Modified 2026 by VrepliroidV: USB Xbox 360 (XInput) controllers are also read
- *  as GameCube controllers, see gx/utils/usbpad_shim.h.
+ *  as GameCube controllers, see gx/utils/usbpad_shim.h. Auto Crop option in the
+ *  video settings.
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -47,6 +48,7 @@
 #include "cheats.h"
 #include "file_load.h"
 #include "file_slot.h"
+#include "autocrop.h"
 
 #ifdef HW_RVL
 #include <ogc/usbmouse.h>
@@ -419,6 +421,7 @@ static gui_item items_video[] =
   {NULL,NULL,"Trap Filter: ON",             "Enable/Disable VI hardware composite out filtering",56,132,276,48},
   {NULL,NULL,"Gamma Correction: 1.0",       "Adjust VI hardware gamma correction",               56,132,276,48},
 #endif
+  {NULL,NULL,"Auto Crop: OFF",              "Crop black borders around the game picture",        56,132,276,48},
   {NULL,NULL,"LCD Ghosting Filter: OFF",    "Enable/Disable software LCD image persistence",     56,132,276,48},
   {NULL,NULL,"NTSC Filter: COMPOSITE",      "Enable/Disable software NTSC filtering",            56,132,276,48},
   {NULL,NULL,"NTSC Sharpness: 0.0",         "Adjust edge contrast enhancement/blurring",         56,132,276,48},
@@ -1821,16 +1824,34 @@ static void systemmenu ()
  * Video Settings menu
  *
  ****************************************************************************/
+/* AUTOCROP_ITEM is the Auto Crop line, just before VI_OFFSET */
 #ifdef HW_RVL
-#define VI_OFFSET 7
+#define VI_OFFSET 8
 static void update_gamma(void)
 {
   VIDEO_SetGamma((int)(config.gamma * 10.0));
   VIDEO_Flush();
 }
 #else
-#define VI_OFFSET 5
+#define VI_OFFSET 6
 #endif
+#define AUTOCROP_ITEM (VI_OFFSET - 1)
+
+static void autocrop_text(gui_item *item)
+{
+  if (config.autocrop == AUTOCROP_FIT)
+    sprintf (item->text, "Auto Crop: FIT");
+  else if (config.autocrop == AUTOCROP_STRETCH)
+    sprintf (item->text, "Auto Crop: STRETCH");
+  else
+    sprintf (item->text, "Auto Crop: OFF");
+  if (config.autocrop == AUTOCROP_FIT)
+    strcpy (item->comment, "Crop black borders, keep the pixel proportions");
+  else if (config.autocrop == AUTOCROP_STRETCH)
+    strcpy (item->comment, "Crop black borders, fill the frame");
+  else
+    strcpy (item->comment, "Crop black borders around the game picture");
+}
 
 static void videomenu ()
 {
@@ -1867,6 +1888,8 @@ static void videomenu ()
   sprintf (items[5].text, "Trap Filter: %s", config.trap ? " ON" : "OFF");
   sprintf (items[6].text, "Gamma Correction: %1.1f", config.gamma);
 #endif
+
+  autocrop_text(&items[AUTOCROP_ITEM]);
 
   if (config.lcd > 0)
   {
@@ -2051,6 +2074,13 @@ static void videomenu ()
         break;
       }
 #endif
+
+      case AUTOCROP_ITEM: /*** Auto crop of black borders ***/
+      {
+        config.autocrop = (config.autocrop + 1) % AUTOCROP_MODES;
+        autocrop_text(&items[AUTOCROP_ITEM]);
+        break;
+      }
 
       case VI_OFFSET: /*** LCD filter (soft) ***/
       {

@@ -6,7 +6,8 @@
  *  Copyright Eke-Eke (2007-2026)
  *
  *  Modified 2026 by VrepliroidV: USB Xbox 360 (XInput) controllers are also read
- *  as GameCube controllers, see gx/utils/usbpad_shim.h.
+ *  as GameCube controllers, see gx/utils/usbpad_shim.h. Light gun pointers
+ *  follow the auto crop.
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -1106,9 +1107,11 @@ static void wpad_update(s8 chan, u8 i, u32 exp)
 
         if (ir.valid)
         {
-          /* screen position */
-          input.analog[i][0] = ((ir.x + config.calx) * bitmap.viewport.w) / 640;
-          input.analog[i][1] = ((ir.y + config.caly) * bitmap.viewport.h) / 480;
+          /* screen position (follows the auto crop) */
+          int px, py;
+          gx_video_MapPointer((ir.x + config.calx) / 640.0, (ir.y + config.caly) / 480.0, &px, &py);
+          input.analog[i][0] = px;
+          input.analog[i][1] = py;
         }
         else
         {
@@ -1358,9 +1361,11 @@ static void wpad_update(s8 chan, u8 i, u32 exp)
 
         if (ir.valid)
         {
-          /* screen position */
-          input.analog[i][0] = ((ir.x + config.calx) * bitmap.viewport.w) / 640;
-          input.analog[i][1] = ((ir.y + config.caly) * bitmap.viewport.h) / 480;
+          /* screen position (follows the auto crop) */
+          int px, py;
+          gx_video_MapPointer((ir.x + config.calx) / 640.0, (ir.y + config.caly) / 480.0, &px, &py);
+          input.analog[i][0] = px;
+          input.analog[i][1] = py;
         }
         else
         {

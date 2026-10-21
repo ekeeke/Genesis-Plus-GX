@@ -8,6 +8,8 @@
  *  Copyright (C) 2007-2025  Eke-Eke (Genesis Plus GX)
  *  Copyright (C) 2022  AlexKiri (enhanced vscroll mode rendering function)
  *
+ *  Modified 2026 by VrepliroidV: line_blank_rows (used by the Wii auto crop).
+ *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
  *
@@ -108,6 +110,10 @@ extern void render_reset(void);
 extern void render_line(int line);
 extern void blank_line(int line, int offset, int width);
 extern void remap_line(int line);
+
+/* Framebuffer lines drawn with the display off or as border (non-zero) */
+#define LINE_BLANK_ROWS 1024
+extern uint8 line_blank_rows[LINE_BLANK_ROWS];
 extern void window_clip(unsigned int data, unsigned int sw);
 extern void render_bg_m0(int line);
 extern void render_bg_m1(int line);
