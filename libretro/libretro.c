@@ -7,6 +7,10 @@
  *
  *  Copyright Daniel De Matteis (2012-2016)
  *
+ *  Modified 2026 by VrepliroidV: Auto Crop Black Borders (gx/utils/autocrop.c),
+ *  automatic CPU speed for the Mega Drive / Genesis and Sega CD CPU
+ *  (core/autooc.c), Sega CD CPU Speed and Show Auto Overclock options.
+ *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
  *
@@ -79,6 +83,8 @@
 #include "shared.h"
 #include "md_ntsc.h"
 #include "sms_ntsc.h"
+#include "osd_text.h"
+#include "../gx/utils/autocrop.h"
 
 #define STATIC_ASSERT(name, test) typedef struct { int assert_[(test)?1:-1]; } assert_ ## name ## _
 #define M68K_MAX_CYCLES 1107
@@ -188,7 +194,103 @@ static char arvalidchars[] = "0123456789ABCDEF";
    workaround */
 #ifdef HAVE_OVERCLOCK
 static uint32_t overclock_delay;
+
+/* automatic overclock (core/autooc.c): the "auto_..." CPU speeds */
+static int m68k_auto_overclock;       /* 0, or the highest speed in percent */
+static uint32_t s68k_overclock = 100; /* Sega CD CPU speed in percent */
+static int s68k_auto_overclock;       /* 0, or the highest speed in percent */
+static bool auto_overclock_indicator; /* speed in use drawn on the picture */
 #endif
+
+/* Auto Crop Black Borders (gx/utils/autocrop.c) */
+static int auto_crop_mode = AUTOCROP_OFF;
+static autocrop_state auto_crop;
+static char auto_crop_file[1024];     /* layouts learned for the game, or empty */
+static bool auto_crop_geometry;       /* the crop changed: new geometry */
+
+/* Part of the bitmap sent to the frontend: the left border hidden on 8-bit
+   systems (offset in bytes, width in pixels left out). */
+static void left_border_offsets(int *bmdoffset, int *vwoffset)
+{
+   *bmdoffset = 0;
+   *vwoffset = 0;
+   if ((config.left_border != 0) && (reg[0] & 0x20) && (bitmap.viewport.x == 0) && ((system_hw == SYSTEM_MARKIII) || (system_hw & SYSTEM_SMS) || (system_hw == SYSTEM_PBC)))
+   {
+       *bmdoffset = (16 + (config.ntsc ? 24 : 0));
+       if (config.left_border == 1)
+           *vwoffset = (8 + (config.ntsc ? 12 : 0));
+       else
+           *vwoffset = (16 + (config.ntsc ? 24 : 0));
+   }
+}
+
+/* output rows per emulated line */
+static int frame_vscale(void)
+{
+   return (config.render && interlaced) ? 2 : 1;
+}
+
+/* The part of a width x height output frame shown with the current crop. */
+static void auto_crop_rect(int width, int height, int *left, int *top, int *w, int *h)
+{
+   *left = 0;
+   *top = 0;
+   *w = width;
+   *h = height;
+   if (auto_crop_mode != AUTOCROP_OFF)
+   {
+      /* horizontal edges rounded inward (wider NTSC filtered frames) */
+      const int l = (auto_crop.applied[AUTOCROP_LEFT] * width + AUTOCROP_UNITS - 1) / AUTOCROP_UNITS;
+      const int r = (auto_crop.applied[AUTOCROP_RIGHT] * width + AUTOCROP_UNITS - 1) / AUTOCROP_UNITS;
+      const int t = auto_crop.applied[AUTOCROP_TOP] * frame_vscale();
+      const int b = auto_crop.applied[AUTOCROP_BOTTOM] * frame_vscale();
+      if ((l + r < width) && (t + b < height))
+      {
+         *left = l;
+         *top = t;
+         *w = width - l - r;
+         *h = height - t - b;
+      }
+   }
+}
+
+/* The crop of the frame sent to the frontend, in output pixels. */
+static void output_crop(int *left, int *top, int *w, int *h)
+{
+   int bmdoffset, vwoffset;
+   left_border_offsets(&bmdoffset, &vwoffset);
+   auto_crop_rect(vwidth - vwoffset, vheight, left, top, w, h);
+}
+
+/* Light gun or pointer position (-0x7fff to 0x7fff across the picture shown)
+   to a pixel of the active display (active pixels inside border pixels, out
+   output pixels across the frame, crop_lo and crop_hi of them cropped). */
+static int gun_axis(int value, int active, int border, int out, int crop_lo, int crop_hi)
+{
+   if ((crop_lo == 0) && (crop_hi == 0))
+      return ((value + 0x7fff) * active) / 0xfffe;
+   {
+      const int full = active + 2 * border;
+      const int lo = (crop_lo * full) / out;
+      const int hi = (crop_hi * full) / out;
+      return lo + ((value + 0x7fff) * (full - lo - hi)) / 0xfffe - border;
+   }
+}
+
+static int gun_x(int value)
+{
+   int bmdoffset, vwoffset, left, top, w, h;
+   left_border_offsets(&bmdoffset, &vwoffset);
+   output_crop(&left, &top, &w, &h);
+   return gun_axis(value, bitmap.viewport.w, bitmap.viewport.x, vwidth - vwoffset, left, vwidth - vwoffset - left - w);
+}
+
+static int gun_y(int value)
+{
+   int left, top, w, h;
+   output_crop(&left, &top, &w, &h);
+   return gun_axis(value, bitmap.viewport.h, bitmap.viewport.y, vheight, top, vheight - top - h);
+}
 
 static bool libretro_supports_option_categories = false;
 static bool libretro_supports_bitmasks          = false;
@@ -465,8 +567,8 @@ static void osd_input_update_internal_bitmasks(void)
             if ( retro_gun_mode == RetroPointer )
             {
                int touch_count;
-               input.analog[i][0] = ((input_state_cb(player, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_X) + 0x7fff) * bitmap.viewport.w) / 0xfffe;
-               input.analog[i][1] = ((input_state_cb(player, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_Y) + 0x7fff) * bitmap.viewport.h) / 0xfffe;
+               input.analog[i][0] = gun_x(input_state_cb(player, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_X));
+               input.analog[i][1] = gun_y(input_state_cb(player, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_Y));
                if (input_state_cb(player, RETRO_DEVICE_POINTER, 0,
                         RETRO_DEVICE_ID_POINTER_PRESSED))
                   temp |= INPUT_A;
@@ -491,8 +593,8 @@ static void osd_input_update_internal_bitmasks(void)
                }
                else
                {
-                  input.analog[i][0] = ((input_state_cb(player, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_SCREEN_X) + 0x7fff) * bitmap.viewport.w) / 0xfffe;
-                  input.analog[i][1] = ((input_state_cb(player, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_SCREEN_Y) + 0x7fff) * bitmap.viewport.h) / 0xfffe;
+                  input.analog[i][0] = gun_x(input_state_cb(player, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_SCREEN_X));
+                  input.analog[i][1] = gun_y(input_state_cb(player, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_SCREEN_Y));
                }
 
                if (input_state_cb(player, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_TRIGGER))
@@ -628,8 +730,8 @@ static void osd_input_update_internal_bitmasks(void)
             if (retro_gun_mode == RetroPointer)
             {
                pressed = input_state_cb(player, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_PRESSED);
-               input.analog[i][0] = ((input_state_cb(player, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_X) + 0x7fff) * bitmap.viewport.w) / 0xfffe;
-               input.analog[i][1] = ((input_state_cb(player, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_Y) + 0x7fff) * bitmap.viewport.h) / 0xfffe;
+               input.analog[i][0] = gun_x(input_state_cb(player, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_X));
+               input.analog[i][1] = gun_y(input_state_cb(player, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_Y));
             }
             else
             {
@@ -640,8 +742,8 @@ static void osd_input_update_internal_bitmasks(void)
                }
                else
                {
-                  input.analog[i][0] = ((input_state_cb(player, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_SCREEN_X) + 0x7fff) * bitmap.viewport.w) / 0xfffe;
-                  input.analog[i][1] = ((input_state_cb(player, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_SCREEN_Y) + 0x7fff) * bitmap.viewport.h) / 0xfffe;
+                  input.analog[i][0] = gun_x(input_state_cb(player, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_SCREEN_X));
+                  input.analog[i][1] = gun_y(input_state_cb(player, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_SCREEN_Y));
                }
             }
 
@@ -769,8 +871,8 @@ static void osd_input_update_internal(void)
          case DEVICE_LIGHTGUN:
             if ( retro_gun_mode == RetroPointer )
             {
-               input.analog[i][0] = ((input_state_cb(player, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_X) + 0x7fff) * bitmap.viewport.w) / 0xfffe;
-               input.analog[i][1] = ((input_state_cb(player, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_Y) + 0x7fff) * bitmap.viewport.h) / 0xfffe;
+               input.analog[i][0] = gun_x(input_state_cb(player, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_X));
+               input.analog[i][1] = gun_y(input_state_cb(player, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_Y));
                if (input_state_cb(player, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_PRESSED))
                   temp |= INPUT_A;
             }
@@ -784,8 +886,8 @@ static void osd_input_update_internal(void)
                }
                else
                {
-                  input.analog[i][0] = ((input_state_cb(player, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_SCREEN_X) + 0x7fff) * bitmap.viewport.w) / 0xfffe;
-                  input.analog[i][1] = ((input_state_cb(player, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_SCREEN_Y) + 0x7fff) * bitmap.viewport.h) / 0xfffe;
+                  input.analog[i][0] = gun_x(input_state_cb(player, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_SCREEN_X));
+                  input.analog[i][1] = gun_y(input_state_cb(player, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_SCREEN_Y));
                }
 
                if (input_state_cb(player, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_TRIGGER))
@@ -914,8 +1016,8 @@ static void osd_input_update_internal(void)
             if (retro_gun_mode == RetroPointer)
             {
                pressed = input_state_cb(player, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_PRESSED);
-               input.analog[i][0] = ((input_state_cb(player, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_X) + 0x7fff) * bitmap.viewport.w) / 0xfffe;
-               input.analog[i][1] = ((input_state_cb(player, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_Y) + 0x7fff) * bitmap.viewport.h) / 0xfffe;
+               input.analog[i][0] = gun_x(input_state_cb(player, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_X));
+               input.analog[i][1] = gun_y(input_state_cb(player, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_Y));
             }
             else
             {
@@ -926,8 +1028,8 @@ static void osd_input_update_internal(void)
                }
                else
                {
-                  input.analog[i][0] = ((input_state_cb(player, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_SCREEN_X) + 0x7fff) * bitmap.viewport.w) / 0xfffe;
-                  input.analog[i][1] = ((input_state_cb(player, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_SCREEN_Y) + 0x7fff) * bitmap.viewport.h) / 0xfffe;
+                  input.analog[i][0] = gun_x(input_state_cb(player, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_SCREEN_X));
+                  input.analog[i][1] = gun_y(input_state_cb(player, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_SCREEN_Y));
                }
             }
 
@@ -1353,9 +1455,8 @@ static bool update_viewport(void)
 #ifdef HAVE_OVERCLOCK
 static void update_overclock(void)
 {
-#ifdef M68K_OVERCLOCK_SHIFT
-    m68k.cycle_ratio = 1 << M68K_OVERCLOCK_SHIFT;
-#endif
+    float m68k_ratio = 1.0f, s68k_ratio = 1.0f;
+    int m68k_auto = 0, s68k_auto = 0;
 #ifdef Z80_OVERCLOCK_SHIFT
     z80_cycle_ratio = 1 << Z80_OVERCLOCK_SHIFT;
 #endif
@@ -1363,15 +1464,27 @@ static void update_overclock(void)
     {
       /* Cycle ratios multiply per-instruction cycle counts, so use
          reciprocals */
-#ifdef M68K_OVERCLOCK_SHIFT
       if ((system_hw & SYSTEM_PBC) == SYSTEM_MD)
-        m68k.cycle_ratio = (100 << M68K_OVERCLOCK_SHIFT) / config.overclock;
-#endif
+      {
+        m68k_auto = (m68k_auto_overclock != 0);
+        m68k_ratio = (m68k_auto ? m68k_auto_overclock : (int)config.overclock) / 100.0f;
+      }
+      if (system_hw == SYSTEM_MCD)
+      {
+        s68k_auto = (s68k_auto_overclock != 0);
+        s68k_ratio = (s68k_auto ? s68k_auto_overclock : (int)s68k_overclock) / 100.0f;
+      }
 #ifdef Z80_OVERCLOCK_SHIFT
       if ((system_hw & SYSTEM_PBC) != SYSTEM_MD)
         z80_cycle_ratio = (100 << Z80_OVERCLOCK_SHIFT) / config.overclock;
 #endif
     }
+#ifdef M68K_OVERCLOCK_SHIFT
+    /* fixed ratios, or the automatic overclock up to them (an automatic one
+       turned on starts from none) */
+    autooc_apply(&autooc, m68k_auto, m68k_ratio);
+    autooc_apply(&autooc_sub, s68k_auto, s68k_ratio);
+#endif
 }
 #endif
 
@@ -2071,6 +2184,7 @@ static void check_variables(bool first_run)
   var.key = "genesis_plus_gx_overclock";
   environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
   {
+    m68k_auto_overclock = 0;
     if (!var.value || !strcmp(var.value, "100%"))
       config.overclock = 100;
     else if (var.value && !strcmp(var.value, "125%"))
@@ -2081,11 +2195,61 @@ static void check_variables(bool first_run)
       config.overclock = 175;
     else if (var.value && !strcmp(var.value, "200%"))
       config.overclock = 200;
+    else if (var.value && !strcmp(var.value, "auto_200"))
+    {
+      config.overclock = 100; /* 8-bit systems: no overclock */
+      m68k_auto_overclock = 200;
+    }
+    else if (var.value && !strcmp(var.value, "auto_300"))
+    {
+      config.overclock = 100;
+      m68k_auto_overclock = 300;
+    }
+
+    var.key = "genesis_plus_gx_sub_overclock";
+    var.value = NULL;
+    environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
+    s68k_auto_overclock = 0;
+    s68k_overclock = 100;
+    if (var.value && !strcmp(var.value, "150%"))
+      s68k_overclock = 150;
+    else if (var.value && !strcmp(var.value, "200%"))
+      s68k_overclock = 200;
+    else if (var.value && !strcmp(var.value, "300%"))
+      s68k_overclock = 300;
+    else if (var.value && !strcmp(var.value, "auto_200"))
+      s68k_auto_overclock = 200;
+    else if (var.value && !strcmp(var.value, "auto_300"))
+      s68k_auto_overclock = 300;
+
+    var.key = "genesis_plus_gx_auto_overclock_indicator";
+    var.value = NULL;
+    environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
+    auto_overclock_indicator = var.value && !strcmp(var.value, "enabled");
 
     if (system_hw)
       update_overclock();
   }
 #endif
+
+  var.key = "genesis_plus_gx_auto_crop";
+  var.value = NULL;
+  {
+    int mode = AUTOCROP_OFF;
+    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+    {
+      if (!strcmp(var.value, "fit"))
+        mode = AUTOCROP_FIT;
+      else if (!strcmp(var.value, "stretch"))
+        mode = AUTOCROP_STRETCH;
+    }
+    if (mode != auto_crop_mode)
+    {
+      auto_crop_mode = mode;
+      autocrop_reset_tracking(&auto_crop);
+      auto_crop_geometry = true;
+    }
+  }
 
   var.key = "genesis_plus_gx_no_sprite_limit";
   environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var);
@@ -3082,6 +3246,23 @@ void retro_get_system_av_info(struct retro_system_av_info *info)
       info->geometry.max_height = 240 + (vdp_pal * 48 * (config.overscan & 1));
    }
    info->geometry.aspect_ratio  = vaspect_ratio;
+
+   /* Auto Crop: the picture shown; Fit keeps the pixel shape, Stretch keeps
+      the aspect of the whole frame */
+   if (auto_crop_mode != AUTOCROP_OFF)
+   {
+      int bmdoffset, vwoffset, left, top, w, h;
+      left_border_offsets(&bmdoffset, &vwoffset);
+      output_crop(&left, &top, &w, &h);
+      if ((w != vwidth - vwoffset) || (h != vheight))
+      {
+         info->geometry.base_width  = w;
+         info->geometry.base_height = h;
+         if (auto_crop_mode == AUTOCROP_FIT)
+            info->geometry.aspect_ratio *= ((double)w / (vwidth - vwoffset)) / ((double)h / vheight);
+      }
+   }
+
    info->timing.fps             = (double)(system_clock) / (double)lines_per_frame / (double)MCYCLES_PER_LINE;
    info->timing.sample_rate     = SOUND_FREQUENCY;
 }
@@ -3585,6 +3766,21 @@ bool retro_load_game(const struct retro_game_info *info)
 
    init_frameskip();
 
+   /* Auto Crop: layouts learned for the game, next to its saves */
+   autocrop_reset(&auto_crop);
+   auto_crop_file[0] = '\0';
+   if (save_dir && g_rom_name[0])
+   {
+#ifdef _WIN32
+      const char slash = '\\';
+#else
+      const char slash = '/';
+#endif
+      snprintf(auto_crop_file, sizeof(auto_crop_file), "%s%c%s.autocrop", save_dir, slash, g_rom_name);
+      autocrop_load_layouts(&auto_crop, auto_crop_file);
+   }
+   auto_crop_geometry = true;
+
    return true;
 }
 
@@ -3740,7 +3936,30 @@ void retro_reset(void)
    update_overclock();
 #endif
    gen_reset(0);
+   autocrop_reset_tracking(&auto_crop);
+   auto_crop_geometry = true;
 }
+
+#ifdef HAVE_OVERCLOCK
+/* The automatic overclock in use and how busy the CPU was, drawn at (left,
+   top) + a margin of the frame (bmdoffset bytes into the bitmap, width
+   pixels wide). */
+static void draw_auto_overclock(int bmdoffset, int width, int left, int top)
+{
+   char text[48];
+   int len = 0;
+   const int sx = (width >= 512) ? 2 : 1;
+   const int sy = frame_vscale();
+
+   text[0] = '\0';
+   if (autooc.enabled && ((system_hw & SYSTEM_PBC) == SYSTEM_MD))
+      len += snprintf(text + len, sizeof(text) - len, "OC %1.1fx %d%%", autooc.ratio[autooc.level], (autooc.busy + 5) / 10);
+   if (autooc_sub.enabled && (system_hw == SYSTEM_MCD))
+      len += snprintf(text + len, sizeof(text) - len, "%sSUB %1.1fx %d%%", len ? " " : "", autooc_sub.ratio[autooc_sub.level], (autooc_sub.busy + 5) / 10);
+   if (len > 0)
+      osd_draw_text((uint16_t *)(bitmap.data + bmdoffset), 720, width, vheight, left + 4 * sx, top + 4 * sy, sx, sy, text);
+}
+#endif
 
 void retro_run(void) 
 {
@@ -3748,6 +3967,7 @@ void retro_run(void)
    bool updated = false;
    int vwoffset = 0;
    int bmdoffset = 0;
+   int crop_left, crop_top, crop_width, crop_height;
    is_running = true;
 
 #ifdef HAVE_OVERCLOCK
@@ -3836,6 +4056,32 @@ void retro_run(void)
       }
    }
 
+   left_border_offsets(&bmdoffset, &vwoffset);
+
+   /* Auto Crop: the frame is measured before anything is drawn on it */
+   if ((auto_crop_mode != AUTOCROP_OFF) && !do_skip)
+   {
+      autocrop_frame frame;
+      frame.pixels = (const uint16_t *)(bitmap.data + bmdoffset);
+      frame.pitch = 720;
+      frame.tiled = 0;
+      frame.width = vwidth - vwoffset;
+      frame.height = vheight;
+      frame.vscale = frame_vscale();
+      frame.hardware_rows = (vheight <= LINE_BLANK_ROWS) ? line_blank_rows : NULL;
+      if (autocrop_process(&auto_crop, &frame))
+         auto_crop_geometry = true;
+      if (auto_crop.layouts_changed && auto_crop_file[0])
+         autocrop_save_layouts(&auto_crop, auto_crop_file);
+   }
+   if (auto_crop_geometry)
+   {
+      struct retro_system_av_info info;
+      auto_crop_geometry = false;
+      retro_get_system_av_info(&info);
+      environ_cb(RETRO_ENVIRONMENT_SET_GEOMETRY, &info.geometry);
+   }
+
    if (config.gun_cursor)
    {
       if ((input.system[0] == SYSTEM_LIGHTPHASER) || (input.system[0] == SYSTEM_SMASH))
@@ -3857,22 +4103,20 @@ void retro_run(void)
       }
    }
 
-   if ((config.left_border != 0) && (reg[0] & 0x20) && (bitmap.viewport.x == 0) && ((system_hw == SYSTEM_MARKIII) || (system_hw & SYSTEM_SMS) || (system_hw == SYSTEM_PBC)))
-   {
-       bmdoffset = (16 + (config.ntsc ? 24 : 0));
-       if (config.left_border == 1)
-           vwoffset = (8 + (config.ntsc ? 12 : 0));
-       else
-           vwoffset = (16 + (config.ntsc ? 24 : 0));
-   }
+   output_crop(&crop_left, &crop_top, &crop_width, &crop_height);
+
+#ifdef HAVE_OVERCLOCK
+   if (auto_overclock_indicator && !do_skip)
+      draw_auto_overclock(bmdoffset, vwidth - vwoffset, crop_left, crop_top);
+#endif
 
    if (!do_skip)
    {
-        video_cb(bitmap.data + bmdoffset, vwidth - vwoffset, vheight, 720 * 2);	
+        video_cb(bitmap.data + bmdoffset + (crop_top * 720 + crop_left) * 2, crop_width, crop_height, 720 * 2);
    }
    else
    {
-        video_cb(NULL, vwidth - vwoffset, vheight, 720 * 2);
+        video_cb(NULL, crop_width, crop_height, 720 * 2);
    }
 
    audio_cb(soundbuffer, audio_update(soundbuffer));

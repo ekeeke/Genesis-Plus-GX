@@ -78,6 +78,7 @@ ifeq ($(SHARED_LIBVORBIS),)
 endif
 
 SOURCES_C += $(LIBRETRO_DIR)/libretro.c \
-				 $(LIBRETRO_DIR)/scrc32.c
+				 $(LIBRETRO_DIR)/scrc32.c \
+				 $(CORE_DIR)/gx/utils/autocrop.c
 
 INCFLAGS += $(foreach dir,$(GENPLUS_SRC_DIR),-I$(dir)) -I$(LIBRETRO_DIR) -I$(LIBRETRO_COMM_DIR)/include

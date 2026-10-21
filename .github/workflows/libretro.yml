@@ -1,0 +1,101 @@
+name: RetroArch cores (Windows, Linux, ROCKNIX)
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+jobs:
+  windows-x64:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install MinGW
+        run: sudo apt-get update && sudo apt-get install -y gcc-mingw-w64-x86-64
+      - name: Build Windows x64 Libretro core
+        run: |
+          make -f Makefile.libretro -j2 platform=win CC=x86_64-w64-mingw32-gcc
+          mkdir -p build/windows-x64
+          cp genesis_plus_gx_libretro.dll LICENSE.txt build/windows-x64/
+          x86_64-w64-mingw32-objdump -p genesis_plus_gx_libretro.dll > build/windows-x64/pe-report.txt
+          cd build/windows-x64
+          sha256sum genesis_plus_gx_libretro.dll > SHA256SUMS
+      - uses: actions/upload-artifact@v4
+        with:
+          name: genesis-plus-gx-windows-x64-${{ github.sha }}
+          path: build/windows-x64/
+
+  linux-x64:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and test Linux x64 Libretro core
+        run: |
+          make -f Makefile.libretro -j2
+          mkdir -p build/linux-x64 build/test
+          cp genesis_plus_gx_libretro.so LICENSE.txt build/linux-x64/
+          python3 libretro/tests/make_test_programs.py build/test
+          gcc -O2 -Wall -Ilibretro/libretro-common/include libretro/tests/libretro_test.c -ldl -o build/test/libretro_test
+          (cd build/test && ./libretro_test "$GITHUB_WORKSPACE/build/linux-x64/genesis_plus_gx_libretro.so" "$PWD/test.md" "$PWD/test-cd.iso") | tee build/linux-x64/libretro-test.log
+          readelf -h -d -V build/linux-x64/genesis_plus_gx_libretro.so > build/linux-x64/elf-report.txt
+          cd build/linux-x64
+          sha256sum genesis_plus_gx_libretro.so > SHA256SUMS
+      - uses: actions/upload-artifact@v4
+        with:
+          name: genesis-plus-gx-linux-x64-${{ github.sha }}
+          path: build/linux-x64/
+
+  rocknix-arm64:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install ARM64 compiler and emulator
+        run: sudo apt-get update && sudo apt-get install -y gcc-aarch64-linux-gnu qemu-user
+      - name: Build and test ARM64 Libretro core
+        run: |
+          make -f Makefile.libretro -j2 platform=unix CC=aarch64-linux-gnu-gcc
+          mkdir -p build/rocknix-arm64 build/test
+          cp genesis_plus_gx_libretro.so LICENSE.txt build/rocknix-arm64/
+          python3 libretro/tests/make_test_programs.py build/test
+          aarch64-linux-gnu-gcc -O2 -Wall -Ilibretro/libretro-common/include libretro/tests/libretro_test.c -ldl -o build/test/libretro_test
+          (cd build/test && qemu-aarch64 -L /usr/aarch64-linux-gnu ./libretro_test "$GITHUB_WORKSPACE/build/rocknix-arm64/genesis_plus_gx_libretro.so" "$PWD/test.md" "$PWD/test-cd.iso") | tee build/rocknix-arm64/libretro-test.log
+          aarch64-linux-gnu-readelf -h -d -V build/rocknix-arm64/genesis_plus_gx_libretro.so > build/rocknix-arm64/elf-report.txt
+          cd build/rocknix-arm64
+          sha256sum genesis_plus_gx_libretro.so > SHA256SUMS
+      - uses: actions/upload-artifact@v4
+        with:
+          name: genesis-plus-gx-rocknix-arm64-${{ github.sha }}
+          path: build/rocknix-arm64/
+
+  # Publishing a release whose tag starts with "libretro" (for example
+  # libretro-v1.7.5-usb.1) attaches one ZIP for each core. If the release
+  # text is empty, it is filled from .github/RELEASE_NOTES_LIBRETRO.md.
+  release:
+    needs: [windows-x64, linux-x64, rocknix-arm64]
+    if: github.event_name == 'release' && startsWith(github.event.release.tag_name, 'libretro')
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+      - name: Zip and attach
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          for platform in windows-x64 linux-x64 rocknix-arm64; do
+            (cd "artifacts/genesis-plus-gx-$platform-${{ github.sha }}" && zip -r -X "$GITHUB_WORKSPACE/genesis-plus-gx-libretro-$platform.zip" .)
+          done
+          if [ -z "$(gh release view "$TAG" --json body --jq .body)" ]; then
+            gh release edit "$TAG" --notes-file .github/RELEASE_NOTES_LIBRETRO.md
+          fi
+          gh release upload "$TAG" genesis-plus-gx-libretro-windows-x64.zip genesis-plus-gx-libretro-linux-x64.zip genesis-plus-gx-libretro-rocknix-arm64.zip --clobber

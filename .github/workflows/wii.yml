@@ -56,7 +56,7 @@ jobs:
   release:
     name: Attach the files to the release
     needs: build
-    if: github.event_name == 'release'
+    if: github.event_name == 'release' && !startsWith(github.event.release.tag_name, 'libretro')
     runs-on: ubuntu-latest
     permissions:
       contents: write

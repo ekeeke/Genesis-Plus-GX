@@ -251,6 +251,21 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "disabled"
    },
    {
+      "genesis_plus_gx_auto_crop",
+      "Auto Crop Black Borders",
+      NULL,
+      "Detect black borders around the game picture and show only the game area. Each screen is checked separately: graphics reaching a cropped area are shown again immediately, new borders are cropped once they stay unchanged, and borders already seen in the game are cropped at once. 'Fit' keeps the pixel proportions; 'Stretch' fills the original frame. Set RetroArch's aspect ratio to 'Core provided'.",
+      NULL,
+      "video",
+      {
+         { "disabled", NULL },
+         { "fit",      "Fit (keep proportions)" },
+         { "stretch",  "Stretch (fill frame)" },
+         { NULL, NULL },
+      },
+      "disabled"
+   },
+   {
       "genesis_plus_gx_left_border",
       "Hide Master System Side Borders",
       NULL,
@@ -858,7 +873,7 @@ struct retro_core_option_v2_definition option_defs_us[] = {
       "genesis_plus_gx_overclock",
       "CPU Speed",
       NULL,
-      "Overclock the emulated CPU. Can reduce slowdown, but may cause glitches.",
+      "Overclock the emulated CPU. Can reduce slowdown, but may cause glitches. 'Auto' overclocks the Mega Drive / Genesis CPU only while the game slows down, in three steps up to the chosen speed, and not while the display is off, the palette is all black or data is sent to the sound CPU: the moments where overclocked games tend to hang.",
       NULL,
       "hacks",
       {
@@ -867,9 +882,43 @@ struct retro_core_option_v2_definition option_defs_us[] = {
          { "150%", NULL },
          { "175%", NULL },
          { "200%", NULL },
+         { "auto_200", "Auto (up to 200%)" },
+         { "auto_300", "Auto (up to 300%)" },
          { NULL, NULL },
       },
       "100%"
+   },
+   {
+      "genesis_plus_gx_sub_overclock",
+      "Sega CD CPU Speed",
+      NULL,
+      "Overclock the Sega CD / Mega-CD sub CPU. Can reduce slowdown, but may cause glitches. 'Auto' overclocks it only while the game slows down, in three steps up to the chosen speed.",
+      NULL,
+      "hacks",
+      {
+         { "100%", NULL },
+         { "150%", NULL },
+         { "200%", NULL },
+         { "300%", NULL },
+         { "auto_200", "Auto (up to 200%)" },
+         { "auto_300", "Auto (up to 300%)" },
+         { NULL, NULL },
+      },
+      "100%"
+   },
+   {
+      "genesis_plus_gx_auto_overclock_indicator",
+      "Show Auto Overclock",
+      NULL,
+      "With a CPU speed set to 'Auto', show the speed in use and how much of the frame the CPU was busy, at the top-left of the picture (OC: Mega Drive / Genesis CPU, SUB: Sega CD CPU).",
+      NULL,
+      "hacks",
+      {
+         { "disabled", NULL },
+         { "enabled",  NULL },
+         { NULL, NULL },
+      },
+      "disabled"
    },
 #endif
    {
