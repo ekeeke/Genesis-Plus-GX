@@ -1347,12 +1347,20 @@ static const uint16 vc_table[4][2] =
 /* the main 68k overclock items: ratio (the highest one when automatic) */
 static void m68k_overclock_labels(gui_item *items)
 {
-  if (config.m68k_overclock > 1.0)
-    sprintf (items[12].text, "Main 68k Overclock: %1.1fx", config.m68k_overclock);
+  if (config.m68k_auto_overclock)
+  {
+    sprintf (items[12].text, "Highest Overclock: %1.1fx", config.m68k_overclock);
+    sprintf (items[12].comment, "Highest CPU clock speed of the auto overclock");
+  }
   else
-    sprintf (items[12].text, "Main 68k Overclock: OFF");
+  {
+    if (config.m68k_overclock > 1.0)
+      sprintf (items[12].text, "Main 68k Overclock: %1.1fx", config.m68k_overclock);
+    else
+      sprintf (items[12].text, "Main 68k Overclock: OFF");
+    sprintf (items[12].comment, "Adjust Mega Drive /Genesis CPU clock speed");
+  }
 
-  sprintf (items[12].comment, "%s", config.m68k_auto_overclock ? "Highest Mega Drive /Genesis CPU clock speed" : "Adjust Mega Drive /Genesis CPU clock speed");
   sprintf (items[13].text, "68k Auto Overclock: %s", config.m68k_auto_overclock ? "ON" : "OFF");
 }
 
@@ -1728,11 +1736,11 @@ static void systemmenu ()
 
       case 12:  /*** Main 68k Overclock ***/
       {
-        GUI_OptionBox(m,0,config.m68k_auto_overclock ? "Highest Main 68k Overclock" : "Main 68k Overclock Ratio",(void *)&config.m68k_overclock,0.1,1.0,7.0,0);
-
-        /* nothing left to choose for the automatic overclock */
-        if (config.m68k_overclock <= 1.0)
-          config.m68k_auto_overclock = 0;
+        /* the automatic overclock needs a ratio to go up to */
+        if (config.m68k_auto_overclock)
+          GUI_OptionBox(m,0,"Highest Auto Overclock",(void *)&config.m68k_overclock,0.1,1.1,7.0,0);
+        else
+          GUI_OptionBox(m,0,"Main 68k Overclock Ratio",(void *)&config.m68k_overclock,0.1,1.0,7.0,0);
 
         m68k_overclock_labels(items);
         break;

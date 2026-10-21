@@ -2142,11 +2142,11 @@ int gx_video_Update(int status)
         GX_Flush();
 
         /* display on-screen message, with the automatic 68k overclock in use
-           and how busy the 68k was */
-        if (autooc.enabled)
+           and how busy the 68k was (systems with a main 68k) */
+        if (autooc.enabled && ((system_hw & SYSTEM_PBC) == SYSTEM_MD))
         {
           char text[48];
-          sprintf(text, "%s  OC %1.1fx %d%%", msg, autooc.ratio[autooc.level], (autooc.busy + 5) / 10);
+          sprintf(text, "%s\nOC %1.1fx %d%%", msg, autooc.ratio[autooc.level], (autooc.busy + 5) / 10);
           gxDrawOnScreenText(text);
         }
         else

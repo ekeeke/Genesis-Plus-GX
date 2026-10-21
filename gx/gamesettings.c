@@ -265,7 +265,10 @@ void gamesettings_load(void)
       if (config.autocrop_scale >= AUTOCROP_SCALINGS) config.autocrop_scale = AUTOCROP_SCALE_SMOOTH;
       if (config.region_detect > 4) config.region_detect = 0;
       if (config.m68k_overclock < 1.0) config.m68k_overclock = 1.0;
-      if ((config.m68k_auto_overclock > 1) || (config.m68k_overclock <= 1.0)) config.m68k_auto_overclock = 0;
+      if (config.m68k_auto_overclock > 1) config.m68k_auto_overclock = 0;
+      /* a game saved without overclock follows the automatic one turned on
+         afterwards (its file had no say on it), up to the usual ratio */
+      if (config.m68k_auto_overclock && (config.m68k_overclock <= 1.0)) config.m68k_overclock = 3.0;
       if (config.s68k_overclock < 1.0) config.s68k_overclock = 1.0;
       if (config.z80_overclock < 1.0) config.z80_overclock = 1.0;
     }
