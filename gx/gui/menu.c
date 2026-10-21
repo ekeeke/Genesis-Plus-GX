@@ -422,6 +422,7 @@ static gui_item items_video[] =
   {NULL,NULL,"Gamma Correction: 1.0",       "Adjust VI hardware gamma correction",               56,132,276,48},
 #endif
   {NULL,NULL,"Auto Crop: OFF",              "Crop black borders around the game picture",        56,132,276,48},
+  {NULL,NULL,"Crop Scaling: SMOOTH",        "How the cropped picture is enlarged",               56,132,276,48},
   {NULL,NULL,"LCD Ghosting Filter: OFF",    "Enable/Disable software LCD image persistence",     56,132,276,48},
   {NULL,NULL,"NTSC Filter: COMPOSITE",      "Enable/Disable software NTSC filtering",            56,132,276,48},
   {NULL,NULL,"NTSC Sharpness: 0.0",         "Adjust edge contrast enhancement/blurring",         56,132,276,48},
@@ -1824,18 +1825,19 @@ static void systemmenu ()
  * Video Settings menu
  *
  ****************************************************************************/
-/* AUTOCROP_ITEM is the Auto Crop line, just before VI_OFFSET */
+/* AUTOCROP_ITEM and AUTOCROP_SCALE_ITEM are the Auto Crop lines, just before VI_OFFSET */
 #ifdef HW_RVL
-#define VI_OFFSET 8
+#define VI_OFFSET 9
 static void update_gamma(void)
 {
   VIDEO_SetGamma((int)(config.gamma * 10.0));
   VIDEO_Flush();
 }
 #else
-#define VI_OFFSET 6
+#define VI_OFFSET 7
 #endif
-#define AUTOCROP_ITEM (VI_OFFSET - 1)
+#define AUTOCROP_ITEM (VI_OFFSET - 2)
+#define AUTOCROP_SCALE_ITEM (VI_OFFSET - 1)
 
 static void autocrop_text(gui_item *item)
 {
@@ -1851,6 +1853,20 @@ static void autocrop_text(gui_item *item)
     strcpy (item->comment, "Crop black borders, fill the frame");
   else
     strcpy (item->comment, "Crop black borders around the game picture");
+}
+
+static void autocrop_scale_text(gui_item *item)
+{
+  if (config.autocrop_scale == AUTOCROP_SCALE_INTEGER)
+  {
+    sprintf (item->text, "Crop Scaling: INTEGER");
+    strcpy (item->comment, "Whole-number scaling: no blended lines");
+  }
+  else
+  {
+    sprintf (item->text, "Crop Scaling: SMOOTH");
+    strcpy (item->comment, "Fills the frame, sharp when not bilinear");
+  }
 }
 
 static void videomenu ()
@@ -1890,6 +1906,7 @@ static void videomenu ()
 #endif
 
   autocrop_text(&items[AUTOCROP_ITEM]);
+  autocrop_scale_text(&items[AUTOCROP_SCALE_ITEM]);
 
   if (config.lcd > 0)
   {
@@ -2079,6 +2096,13 @@ static void videomenu ()
       {
         config.autocrop = (config.autocrop + 1) % AUTOCROP_MODES;
         autocrop_text(&items[AUTOCROP_ITEM]);
+        break;
+      }
+
+      case AUTOCROP_SCALE_ITEM: /*** Auto crop scaling ***/
+      {
+        config.autocrop_scale = (config.autocrop_scale + 1) % AUTOCROP_SCALINGS;
+        autocrop_scale_text(&items[AUTOCROP_SCALE_ITEM]);
         break;
       }
 

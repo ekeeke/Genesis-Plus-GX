@@ -5,8 +5,9 @@
  *
  *  Copyright Eke-Eke (2007-2026)
  *
- *  Modified 2026 by VrepliroidV: Auto Crop setting (config.autocrop), stored at
- *  the end of the settings file; files from before it still load.
+ *  Modified 2026 by VrepliroidV: Auto Crop settings (config.autocrop and
+ *  config.autocrop_scale), stored at the end of the settings file; files from
+ *  before them still load.
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -135,6 +136,7 @@ typedef struct
   float z80_overclock;
   char sys_rom[12][256];
   uint8 autocrop;  /* AUTOCROP_OFF, AUTOCROP_FIT, AUTOCROP_STRETCH (gx/utils/autocrop.h) */
+  uint8 autocrop_scale;  /* AUTOCROP_SCALE_SMOOTH, AUTOCROP_SCALE_INTEGER */
 } t_config;
 
 extern t_config config;

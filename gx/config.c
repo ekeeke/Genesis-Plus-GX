@@ -5,8 +5,9 @@
  *
  *  Copyright Eke-Eke (2007-2026)
  *
- *  Modified 2026 by VrepliroidV: Auto Crop setting (config.autocrop), stored at
- *  the end of the settings file; files from before it still load.
+ *  Modified 2026 by VrepliroidV: Auto Crop settings (config.autocrop and
+ *  config.autocrop_scale), stored at the end of the settings file; files from
+ *  before them still load.
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -47,8 +48,9 @@
 
 #include <stddef.h>
 
-/* Size of the settings file before the Auto Crop setting was added */
+/* Sizes of the settings file before the Auto Crop settings were added */
 #define CONFIG_SIZE_BEFORE_AUTOCROP ((offsetof(t_config, autocrop) + 3) & ~3)
+#define CONFIG_SIZE_BEFORE_AUTOCROP_SCALE ((offsetof(t_config, autocrop_scale) + 3) & ~3)
 
 t_config config;
 
@@ -63,7 +65,7 @@ static int config_load(void)
     /* check file size (files from before the Auto Crop setting are shorter) */
     fseek(fp, 0, SEEK_END);
     long size = ftell(fp);
-    if ((size != sizeof(config)) && (size != CONFIG_SIZE_BEFORE_AUTOCROP))
+    if ((size != sizeof(config)) && (size != CONFIG_SIZE_BEFORE_AUTOCROP) && (size != CONFIG_SIZE_BEFORE_AUTOCROP_SCALE))
     {
       fclose(fp);
       return 0;
@@ -82,11 +84,16 @@ static int config_load(void)
     /* read file */
     fseek(fp, 0, SEEK_SET);
     config.autocrop = AUTOCROP_OFF;
+    config.autocrop_scale = AUTOCROP_SCALE_SMOOTH;
     fread(&config, size, 1, fp);
     fclose(fp);
-    if (size < (long)sizeof(config) || config.autocrop >= AUTOCROP_MODES)
+    if ((size <= (long)offsetof(t_config, autocrop)) || (config.autocrop >= AUTOCROP_MODES))
     {
       config.autocrop = AUTOCROP_OFF;
+    }
+    if ((size <= (long)offsetof(t_config, autocrop_scale)) || (config.autocrop_scale >= AUTOCROP_SCALINGS))
+    {
+      config.autocrop_scale = AUTOCROP_SCALE_SMOOTH;
     }
     return 1;
   }
@@ -210,6 +217,7 @@ void config_default(void)
   config.cd_leds = 0;
   config.fps     = 0;
   config.autocrop = AUTOCROP_OFF;
+  config.autocrop_scale = AUTOCROP_SCALE_SMOOTH;
 
   /* menu options */
   config.autoload     = 0;

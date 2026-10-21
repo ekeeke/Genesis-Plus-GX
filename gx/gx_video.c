@@ -345,6 +345,7 @@ static autocrop_state autocrop;
 static int autocrop_mode = AUTOCROP_OFF; /* mode the current crop belongs to */
 static int autocrop_dirty = 0;           /* the quad must be updated */
 static u32 autocrop_width, autocrop_height; /* texture size the crop belongs to */
+static int autocrop_scale = AUTOCROP_SCALE_SMOOTH; /* scaling the quad was set for */
 static int quad_x, quad_y, quad_xshift, quad_yshift; /* whole frame: half size and centre */
 static f32 tex_u0 = 0.0, tex_u1 = 1.0, tex_v0 = 0.0, tex_v1 = 1.0; /* visible part of the texture */
 
@@ -772,15 +773,45 @@ static void gxUpdateQuad(void)
 
   int xscale = (int)(quad_x * xsize + 0.5);
   int yscale = (int)(quad_y * ysize + 0.5);
-  square[0] = square[6] = quad_xshift - xscale;
-  square[2] = square[4] = quad_xshift + xscale;
-  square[1] = square[3] = quad_yshift + yscale;
-  square[5] = square[7] = quad_yshift - yscale;
+  int left = -xscale, right = xscale, top = -yscale, bottom = yscale; /* y down */
+
+  int cropped = !((tex_u0 == 0.0) && (tex_u1 == 1.0) && (tex_v0 == 0.0) && (tex_v1 == 1.0));
+  autocrop_scale = config.autocrop_scale;
+  if (cropped && (autocrop_scale == AUTOCROP_SCALE_INTEGER))
+  {
+    /* whole-number scaling: every texel covers the same number of pixels */
+    int cw = (int)((tex_u1 - tex_u0) * vwidth + 0.5);
+    int ch = (int)((tex_v1 - tex_v0) * vheight + 0.5);
+    if ((cw > 0) && (ch > 0))
+    {
+      int nx = (int)((f32)(2 * xscale) / cw + 0.01);
+      int ny = (int)((f32)(2 * yscale) / ch + 0.01);
+      if (nx < 1) nx = 1;
+      if (ny < 1) ny = 1;
+      left = -((cw * nx) / 2);
+      right = left + cw * nx;
+      top = -((ch * ny) / 2);
+      bottom = top + ch * ny;
+    }
+  }
+
+  square[0] = square[6] = quad_xshift + left;
+  square[2] = square[4] = quad_xshift + right;
+  square[1] = square[3] = quad_yshift + bottom;
+  square[5] = square[7] = quad_yshift + top;
   DCStoreRange(square, 32);
   GX_InvVtxCache();
   autocrop_dirty = 0;
 
-  gxUpdateSharp(2 * xscale, 2 * yscale);
+  if (autocrop_scale == AUTOCROP_SCALE_INTEGER)
+  {
+    /* already even */
+    sharp_w = sharp_h = 0;
+  }
+  else
+  {
+    gxUpdateSharp(right - left, bottom - top);
+  }
 }
 
 /* Measures the frame in the texture. Returns 1 when the crop changed. */
@@ -2017,6 +2048,10 @@ int gx_video_Update(int status)
     {
       autocrop_mode = config.autocrop;
       autocrop_reset_tracking(&autocrop);
+      autocrop_dirty = 1;
+    }
+    if (config.autocrop_scale != autocrop_scale)
+    {
       autocrop_dirty = 1;
     }
     if ((autocrop_mode != AUTOCROP_OFF) && gxAutoCropMeasure())

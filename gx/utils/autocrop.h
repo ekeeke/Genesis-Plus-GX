@@ -60,6 +60,14 @@ enum autocrop_mode
 	AUTOCROP_MODES
 };
 
+/* How the cropped picture is enlarged (chosen by the emulator) */
+enum autocrop_scaling
+{
+	AUTOCROP_SCALE_SMOOTH = 0,  /* fills the frame; sharp scaling when not bilinear */
+	AUTOCROP_SCALE_INTEGER = 1, /* whole-number scaling only: every pixel the same size */
+	AUTOCROP_SCALINGS
+};
+
 enum
 {
 	AUTOCROP_TOP,
