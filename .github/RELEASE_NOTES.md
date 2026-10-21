@@ -1,12 +1,21 @@
-Versão modificada do [Genesis Plus GX 1.7.5](https://github.com/ekeeke/Genesis-Plus-GX) (Eke-Eke) para Wii, com suporte a controles USB sem fio. *English below.*
+Versão modificada do [Genesis Plus GX 1.7.5](https://github.com/ekeeke/Genesis-Plus-GX) (Eke-Eke) para Wii, com suporte a controles USB sem fio e Auto Crop. *English below.*
 
-## O que tem de novo
+## Novidades desta versão
+
+**Auto Crop** (Options > Video > Auto Crop): corta as bordas pretas ao redor da imagem do jogo, com as mesmas regras do núcleo [snes9x-ntsc-lie-pal](https://github.com/VrepliroidV/snes9x-ntsc-lie-pal).
+- **OFF**, **FIT** (amplia sem deformar os pixels) ou **STRETCH** (estica até preencher o quadro).
+- Linhas desenhadas com a tela desligada, e as bordas da opção **Borders** quando a cor delas é preta, são cortadas em 2 quadros. Barras de tiles pretos só são cortadas quando a tela parece gameplay, então telas de logo e texto sobre fundo preto ficam inteiras.
+- Enquadramentos que ficam 5 segundos na tela são memorizados para o jogo, no arquivo `saves/<sistema>/<jogo>.autocrop`. Apague o arquivo para o jogo aprender de novo.
+- Gráficos que aparecem na área cortada voltam a aparecer no mesmo quadro. As miras das pistolas de luz acompanham o corte.
+- **Crop Scaling**: **SMOOTH** preenche a tela e fica nítido mesmo com o filtro bilinear desligado. **INTEGER** amplia só em número inteiro, sem nenhuma linha misturada; em 240p, num jogo com faixas em cima e embaixo, a altura fica como está.
+
+Suas configurações continuam ao atualizar. Se um dia voltar para o Genesis Plus GX original, ele vai recriar as configurações do zero.
+
+## O que já vinha na versão anterior
 
 **Controles USB do tipo Xbox 360 (XInput)**, com fio ou com receptor 2.4 GHz plugado direto no USB do Wii.
-- Testado com o **Retroflag Classic Controller-M wireless** (estilo Mega Drive) e com um **controle sem fio genérico de SNES Classic Mini**. Outros controles que se apresentam como controle de Xbox 360 devem funcionar também.
-- Até 4 controles ao mesmo tempo. O primeiro receptor plugado é o jogador 1, o segundo é o jogador 2.
-- Pode plugar e tirar o receptor com o emulador aberto.
-- O emulador enxerga esses controles como **controle de GameCube**. Nas opções de controle, escolha GameCube para a porta do jogador. Todos os botões podem ser configurados.
+- Testado com o **Retroflag Classic Controller-M wireless** (estilo Mega Drive) e com um **controle sem fio genérico de SNES Classic Mini**. Até 4 controles; o primeiro receptor plugado é o jogador 1. Pode plugar e tirar com o emulador aberto.
+- O emulador vê esses controles como **controle de GameCube**. Nas opções de controle, escolha GameCube para a porta do jogador. Todos os botões podem ser configurados.
 
 Botões já configurados, pensados para o Retroflag de 6 botões:
 
@@ -20,8 +29,6 @@ Botões já configurados, pensados para o Retroflag de 6 botões:
 | **Mode + direcional para a direita** | abre o menu do emulador |
 
 Em outros controles, os gatilhos e o botão de ombro esquerdo dão C, o ombro direito dá Z e Select dá Mode.
-
-O resto do emulador não mudou.
 
 ## Instalação
 
@@ -37,11 +44,11 @@ O resto do emulador não mudou.
 
 ## English
 
-Genesis Plus GX 1.7.5 for Wii with support for **Xbox 360 (XInput) USB controllers**, wired or through a 2.4 GHz receiver plugged straight into the Wii.
+Genesis Plus GX 1.7.5 for Wii with Xbox 360 (XInput) USB controllers and Auto Crop.
 
-- Tested with the Retroflag Classic Controller-M wireless and a generic SNES Classic Mini wireless pad. Up to 4 at once; the first receiver plugged in is player 1. Hot-plug works.
-- They show up as **GameCube controllers**: pick GameCube for the player's port in the controller settings. Every button can be remapped.
-- Default layout for the 6-button Retroflag: A, B, C, X, Y, Z, Mode and Start as labelled; L and R also give C. On other pads the triggers and left shoulder give C, the right shoulder Z and Select Mode. **Mode + D-pad right** opens the menu.
+New in this version: **Auto Crop** (Options > Video): crops black borders, with the rules of the snes9x-ntsc-lie-pal Libretro core. OFF, FIT (keeps the pixel shape) or STRETCH (fills the frame). Layouts seen for 5 seconds are remembered per game in `saves/<system>/<game>.autocrop`; light gun crosshairs follow the crop. **Crop Scaling**: SMOOTH fills the frame and stays sharp with the bilinear filter off; INTEGER only scales by whole numbers. Settings are kept when updating (the official build would reset them).
+
+Already in the previous version: USB controllers read as GameCube controllers (tested with the Retroflag Classic Controller-M wireless and a generic SNES Classic Mini wireless pad, up to 4, hot-plug). Default layout for the 6-button Retroflag: A, B, C, X, Y, Z, Mode and Start as labelled; L and R also give C. **Mode + D-pad right** opens the menu.
 
 Install: extract `GenesisPlusGX-Wii.zip` to the root of the SD card or USB drive, or replace `apps/genplus/boot.dol` in an existing install.
 
