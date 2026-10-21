@@ -357,7 +357,10 @@ static f32 tex_u0 = 0.0, tex_u1 = 1.0, tex_v0 = 0.0, tex_v1 = 1.0; /* visible pa
   stays sharp, only the rows and columns where pixels meet are blended. */
 #define SHARP_MAX_WIDTH  640  /* EFB size */
 #define SHARP_MAX_HEIGHT 528
-static u8 sharp_tex[SHARP_MAX_WIDTH * SHARP_MAX_HEIGHT * 2] ATTRIBUTE_ALIGN(32);
+#define SHARP_TEX_SIZE (SHARP_MAX_WIDTH * SHARP_MAX_HEIGHT * 2)
+/* allocated the first time it is needed: MEM1 is nearly full of static data
+   (the cartridge area alone is 15 MB), the heap goes on in MEM2 */
+static u8 *sharp_tex = NULL;
 static GXTexObj sharp_tex_obj;
 static s16 sharp_square[8] ATTRIBUTE_ALIGN(32);
 static int sharp_w = 0, sharp_h = 0;         /* enlarged size, 0 = draw directly */
@@ -712,8 +715,14 @@ static void gxUpdateSharp(int width, int height)
 
   if (!sharp_tex_ready)
   {
+    sharp_tex = memalign(32, SHARP_TEX_SIZE);
+    if (!sharp_tex)
+    {
+      sharp_w = sharp_h = 0;
+      return;
+    }
     /* nothing of it may stay in the CPU cache once the GPU writes it */
-    DCFlushRange(sharp_tex, sizeof(sharp_tex));
+    DCFlushRange(sharp_tex, SHARP_TEX_SIZE);
     sharp_tex_ready = 1;
   }
   GX_InitTexObj(&sharp_tex_obj, sharp_tex, sharp_tex_w, sharp_tex_h, GX_TF_RGB565, GX_CLAMP, GX_CLAMP, GX_FALSE);

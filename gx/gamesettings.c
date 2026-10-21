@@ -91,7 +91,9 @@ static const t_game_field fields[] =
 
 #define FIELD_COUNT (sizeof(fields) / sizeof(fields[0]))
 
-static t_config globals; /* global values of the fields while a game uses its own */
+/* global values of the fields while a game uses its own, one after the
+   other (a whole t_config would take about 80 KB of the nearly full MEM1) */
+static u8 globals[256];
 static int active = 0;
 
 static size_t field_size(const t_game_field *f)
@@ -105,25 +107,36 @@ static size_t field_size(const t_game_field *f)
   }
 }
 
-static void copy_fields(t_config *dst, const t_config *src)
+/* config -> globals (store), globals -> config (restore) or both (swap) */
+enum { STORE, RESTORE, SWAP };
+static void move_globals(int how)
 {
   unsigned int i;
-  for (i = 0; i < FIELD_COUNT; i++)
-  {
-    memcpy((char *)dst + fields[i].offset, (const char *)src + fields[i].offset, field_size(&fields[i]));
-  }
-}
-
-static void swap_fields(t_config *a, t_config *b)
-{
-  unsigned int i;
+  size_t pos = 0;
   for (i = 0; i < FIELD_COUNT; i++)
   {
     char tmp[sizeof(float) > sizeof(uint32) ? sizeof(float) : sizeof(uint32)];
+    char *field = (char *)&config + fields[i].offset;
     size_t size = field_size(&fields[i]);
-    memcpy(tmp, (char *)a + fields[i].offset, size);
-    memcpy((char *)a + fields[i].offset, (char *)b + fields[i].offset, size);
-    memcpy((char *)b + fields[i].offset, tmp, size);
+    if (pos + size > sizeof(globals))
+    {
+      break;
+    }
+    if (how == STORE)
+    {
+      memcpy(&globals[pos], field, size);
+    }
+    else if (how == RESTORE)
+    {
+      memcpy(field, &globals[pos], size);
+    }
+    else
+    {
+      memcpy(tmp, field, size);
+      memcpy(field, &globals[pos], size);
+      memcpy(&globals[pos], tmp, size);
+    }
+    pos += size;
   }
 }
 
@@ -235,13 +248,13 @@ void gamesettings_load(void)
   /* back to the global options */
   if (active)
   {
-    copy_fields(&config, &globals);
+    move_globals(RESTORE);
     active = 0;
   }
 
   if (game_path(path, sizeof(path)))
   {
-    copy_fields(&globals, &config);
+    move_globals(STORE);
     if (read_game_file(path))
     {
       active = 1;
@@ -269,7 +282,7 @@ int gamesettings_enable(void)
   }
 
   /* the current values are the global ones */
-  copy_fields(&globals, &config);
+  move_globals(STORE);
   active = 1;
   gamesettings_save();
   return 1;
@@ -288,7 +301,7 @@ void gamesettings_disable(void)
   {
     remove(path);
   }
-  copy_fields(&config, &globals);
+  move_globals(RESTORE);
   active = 0;
 }
 
@@ -296,7 +309,7 @@ void gamesettings_begin_global_save(void)
 {
   if (active)
   {
-    swap_fields(&config, &globals);
+    move_globals(SWAP);
   }
 }
 
@@ -304,6 +317,6 @@ void gamesettings_end_global_save(void)
 {
   if (active)
   {
-    swap_fields(&config, &globals);
+    move_globals(SWAP);
   }
 }

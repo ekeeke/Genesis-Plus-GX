@@ -27,6 +27,16 @@ jobs:
           exit 1
         fi
 
+    # Static data must fit in MEM1 (24 MB, the cartridge area alone is 15 MB)
+    - name: Memory use
+      shell: bash
+      run: |
+        elf=$(ls *.elf | head -n 1)
+        end=$(/opt/devkitpro/devkitPPC/bin/powerpc-eabi-nm "$elf" | awk '$3 == "_end" || $3 == "__bss_end" { print $1; exit }')
+        sizes=$(/opt/devkitpro/devkitPPC/bin/powerpc-eabi-size "$elf" | tail -n 1)
+        cfg=$(/opt/devkitpro/devkitPPC/bin/powerpc-eabi-nm -S "$elf" | awk '$4 == "config" { print $2; exit }')
+        echo "::notice title=Memory use::end of static data 0x$end (MEM1 ends at 0x81800000); config 0x$cfg bytes; size: $sizes"
+
     - name: Package for the Homebrew Channel
       run: |
         mkdir -p dist/apps/genplus
