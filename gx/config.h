@@ -40,7 +40,7 @@
 #ifndef _CONFIG_H_
 #define _CONFIG_H_
 
-#define CONFIG_VERSION "GPGX 1.7.5 CF-01"
+#define CONFIG_VERSION "GPGX 1.7.5 CF-02"
 
 /****************************************************************************
  * Config Option 
@@ -88,6 +88,7 @@ typedef struct
   uint8 tv_mode;
   uint8 bilinear;
   uint8 vfilter;
+  uint8 scanlines;
   uint8 aspect;
   uint8 cd_latency;
   int16 xshift;

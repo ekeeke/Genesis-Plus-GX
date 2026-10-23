@@ -411,6 +411,7 @@ static gui_item items_video[] =
   {NULL,NULL,"Trap Filter: ON",             "Enable/Disable VI hardware composite out filtering",56,132,276,48},
   {NULL,NULL,"Gamma Correction: 1.0",       "Adjust VI hardware gamma correction",               56,132,276,48},
 #endif
+  {NULL,NULL,"Scanlines: OFF",              "Adjust scanlines intensity (480i/480p only)",       56,132,276,48},
   {NULL,NULL,"LCD Ghosting Filter: OFF",    "Enable/Disable software LCD image persistence",     56,132,276,48},
   {NULL,NULL,"NTSC Filter: COMPOSITE",      "Enable/Disable software NTSC filtering",            56,132,276,48},
   {NULL,NULL,"NTSC Sharpness: 0.0",         "Adjust edge contrast enhancement/blurring",         56,132,276,48},
@@ -1814,14 +1815,14 @@ static void systemmenu ()
  *
  ****************************************************************************/
 #ifdef HW_RVL
-#define VI_OFFSET 7
+#define VI_OFFSET 8
 static void update_gamma(void)
 {
   VIDEO_SetGamma((int)(config.gamma * 10.0));
   VIDEO_Flush();
 }
 #else
-#define VI_OFFSET 5
+#define VI_OFFSET 6
 #endif
 
 static void videomenu ()
@@ -1859,6 +1860,11 @@ static void videomenu ()
   sprintf (items[5].text, "Trap Filter: %s", config.trap ? " ON" : "OFF");
   sprintf (items[6].text, "Gamma Correction: %1.1f", config.gamma);
 #endif
+
+  if (config.scanlines > 0)
+    sprintf (items[VI_OFFSET-1].text, "Scanlines: %d%%", config.scanlines);
+  else
+    sprintf (items[VI_OFFSET-1].text, "Scanlines: OFF");
 
   if (config.lcd > 0)
   {
@@ -2043,6 +2049,24 @@ static void videomenu ()
         break;
       }
 #endif
+
+      case VI_OFFSET-1: /*** Scanlines ***/
+      {
+        if (!config.render)
+        {
+          GUI_WaitPrompt("Error","Display must be INTERLACED or PROGRESSIVE\n");
+          break;
+        }
+
+        int16 ratio = config.scanlines;
+        GUI_OptionBox(m,0,"Scanlines Intensity (%)",(void *)&ratio,10,0,100,1);
+        if (ratio > 0)
+          sprintf (items[VI_OFFSET-1].text, "Scanlines: %d%%", ratio);
+        else
+          sprintf (items[VI_OFFSET-1].text, "Scanlines: OFF");
+        config.scanlines = ratio;
+        break;
+      }
 
       case VI_OFFSET: /*** LCD filter (soft) ***/
       {
