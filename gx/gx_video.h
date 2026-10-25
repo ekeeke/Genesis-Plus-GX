@@ -126,4 +126,8 @@ extern void gx_video_AutoCropReset(void);  /* forgets the current crop */
 /* Screen position (0 to 1 across the screen) to active area coordinates */
 extern void gx_video_MapPointer(f32 fx, f32 fy, int *x, int *y);
 
+/* Bezels (config.bezel): the PNG files in /genplus/bezels, for the menu */
+#include "bezel.h"
+extern int gx_video_BezelList(char (*names)[BEZEL_NAME_MAX], int max);
+
 #endif

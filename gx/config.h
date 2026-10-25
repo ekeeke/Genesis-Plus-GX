@@ -140,6 +140,7 @@ typedef struct
   uint8 autocrop_scale;  /* AUTOCROP_SCALE_SMOOTH, AUTOCROP_SCALE_INTEGER */
   uint8 m68k_auto_overclock;  /* 1: m68k_overclock only when the game slows down (core/autooc.c) */
   uint8 s68k_auto_overclock;  /* same for the Mega CD sub 68k and s68k_overclock */
+  char bezel[128];  /* "" off, "<auto>" by the game's name, or a PNG in /genplus/bezels (gx/utils/bezel.h) */
 } t_config;
 
 extern t_config config;

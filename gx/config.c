@@ -47,6 +47,7 @@
 #include "gui.h"
 #include "file_load.h"
 #include "autocrop.h"
+#include "bezel.h"
 #include "gamesettings.h"
 
 #include <stddef.h>
@@ -54,6 +55,7 @@
 /* Sizes of the settings file before the Auto Crop settings were added */
 #define CONFIG_SIZE_BEFORE_AUTOCROP ((offsetof(t_config, autocrop) + 3) & ~3)
 #define CONFIG_SIZE_BEFORE_AUTOCROP_SCALE ((offsetof(t_config, autocrop_scale) + 3) & ~3)
+#define CONFIG_SIZE_BEFORE_BEZEL ((offsetof(t_config, bezel) + 3) & ~3)
 
 t_config config;
 
@@ -68,7 +70,8 @@ static int config_load(void)
     /* check file size (files from before the Auto Crop setting are shorter) */
     fseek(fp, 0, SEEK_END);
     long size = ftell(fp);
-    if ((size != sizeof(config)) && (size != CONFIG_SIZE_BEFORE_AUTOCROP) && (size != CONFIG_SIZE_BEFORE_AUTOCROP_SCALE))
+    if ((size != sizeof(config)) && (size != CONFIG_SIZE_BEFORE_AUTOCROP) && (size != CONFIG_SIZE_BEFORE_AUTOCROP_SCALE) &&
+        (size != CONFIG_SIZE_BEFORE_BEZEL))
     {
       fclose(fp);
       return 0;
@@ -92,6 +95,15 @@ static int config_load(void)
     config.s68k_auto_overclock = 0;
     fread(&config, size, 1, fp);
     fclose(fp);
+    if (size < (long)sizeof(config))
+    {
+      memset(config.bezel, 0, sizeof(config.bezel));
+    }
+    config.bezel[sizeof(config.bezel) - 1] = 0;
+    if (strchr(config.bezel, '/') || strchr(config.bezel, '\\'))
+    {
+      config.bezel[0] = 0; /* a file name only */
+    }
     if ((size <= (long)offsetof(t_config, autocrop)) || (config.autocrop >= AUTOCROP_MODES))
     {
       config.autocrop = AUTOCROP_OFF;
@@ -239,6 +251,7 @@ void config_default(void)
   config.fps     = 0;
   config.autocrop = AUTOCROP_OFF;
   config.autocrop_scale = AUTOCROP_SCALE_SMOOTH;
+  memset(config.bezel, 0, sizeof(config.bezel)); /* BEZEL_OFF */
 
   /* menu options */
   config.autoload     = 0;

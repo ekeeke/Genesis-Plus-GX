@@ -430,6 +430,7 @@ static gui_item items_video[] =
 #endif
   {NULL,NULL,"Auto Crop: OFF",              "Crop black borders around the game picture",        56,132,276,48},
   {NULL,NULL,"Crop Scaling: SMOOTH",        "How the cropped picture is enlarged",               56,132,276,48},
+  {NULL,NULL,"Bezel: OFF",                  "PNG frame around the game (480i/480p)",             56,132,276,48},
   {NULL,NULL,"LCD Ghosting Filter: OFF",    "Enable/Disable software LCD image persistence",     56,132,276,48},
   {NULL,NULL,"NTSC Filter: COMPOSITE",      "Enable/Disable software NTSC filtering",            56,132,276,48},
   {NULL,NULL,"NTSC Sharpness: 0.0",         "Adjust edge contrast enhancement/blurring",         56,132,276,48},
@@ -1878,19 +1879,20 @@ static void systemmenu ()
  * Video Settings menu
  *
  ****************************************************************************/
-/* AUTOCROP_ITEM and AUTOCROP_SCALE_ITEM are the Auto Crop lines, just before VI_OFFSET */
+/* AUTOCROP_ITEM, AUTOCROP_SCALE_ITEM and BEZEL_ITEM are the lines just before VI_OFFSET */
 #ifdef HW_RVL
-#define VI_OFFSET 9
+#define VI_OFFSET 10
 static void update_gamma(void)
 {
   VIDEO_SetGamma((int)(config.gamma * 10.0));
   VIDEO_Flush();
 }
 #else
-#define VI_OFFSET 7
+#define VI_OFFSET 8
 #endif
-#define AUTOCROP_ITEM (VI_OFFSET - 2)
-#define AUTOCROP_SCALE_ITEM (VI_OFFSET - 1)
+#define AUTOCROP_ITEM (VI_OFFSET - 3)
+#define AUTOCROP_SCALE_ITEM (VI_OFFSET - 2)
+#define BEZEL_ITEM (VI_OFFSET - 1)
 
 static void autocrop_text(gui_item *item)
 {
@@ -1919,6 +1921,56 @@ static void autocrop_scale_text(gui_item *item)
   {
     sprintf (item->text, "Crop Scaling: SMOOTH");
     strcpy (item->comment, "Fills the frame, sharp when not bilinear");
+  }
+}
+
+/* Bezel: OFF, AUTO (the game's name), then each file of /genplus/bezels */
+#define MAX_BEZELS 512
+
+static void bezel_text(gui_item *item)
+{
+  char name[24];
+  if (!config.bezel[0])
+  {
+    sprintf (item->text, "Bezel: OFF");
+    strcpy (item->comment, "PNG frame around the game (480i/480p)");
+  }
+  else if (!strcmp(config.bezel, BEZEL_AUTO))
+  {
+    sprintf (item->text, "Bezel: AUTO");
+    strcpy (item->comment, "<game name>.png, or else default.png");
+  }
+  else
+  {
+    bezel_display_name(config.bezel, name, 20);
+    sprintf (item->text, "Bezel: %s", name);
+    strcpy (item->comment, "From /genplus/bezels (480i/480p only)");
+  }
+}
+
+static void bezel_next(char (*names)[BEZEL_NAME_MAX], int count)
+{
+  int i = -1; /* AUTO: the first file next */
+  if (!config.bezel[0])
+  {
+    snprintf(config.bezel, sizeof(config.bezel), "%s", BEZEL_AUTO);
+    return;
+  }
+  if (strcmp(config.bezel, BEZEL_AUTO))
+  {
+    for (i = 0; (i < count) && strcasecmp(names[i], config.bezel); i++);
+    if (i == count)
+    {
+      i = count - 1; /* not there any more: OFF next */
+    }
+  }
+  if (i + 1 < count)
+  {
+    snprintf(config.bezel, sizeof(config.bezel), "%s", names[i + 1]);
+  }
+  else
+  {
+    config.bezel[0] = 0;
   }
 }
 
@@ -1960,6 +2012,11 @@ static void videomenu ()
 
   autocrop_text(&items[AUTOCROP_ITEM]);
   autocrop_scale_text(&items[AUTOCROP_SCALE_ITEM]);
+  bezel_text(&items[BEZEL_ITEM]);
+
+  /* the PNG files in /genplus/bezels */
+  char (*bezel_names)[BEZEL_NAME_MAX] = malloc(MAX_BEZELS * BEZEL_NAME_MAX);
+  int bezel_count = bezel_names ? gx_video_BezelList(bezel_names, MAX_BEZELS) : 0;
 
   if (config.lcd > 0)
   {
@@ -2156,6 +2213,13 @@ static void videomenu ()
       {
         config.autocrop_scale = (config.autocrop_scale + 1) % AUTOCROP_SCALINGS;
         autocrop_scale_text(&items[AUTOCROP_SCALE_ITEM]);
+        break;
+      }
+
+      case BEZEL_ITEM: /*** PNG bezel ***/
+      {
+        bezel_next(bezel_names, bezel_count);
+        bezel_text(&items[BEZEL_ITEM]);
         break;
       }
 
@@ -2397,6 +2461,7 @@ static void videomenu ()
     audio_init(snd.sample_rate, get_framerate());
   }
 
+  free(bezel_names);
   GUI_DeleteMenu(m);
 }
 

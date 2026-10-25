@@ -515,6 +515,12 @@ int main (int argc, char *argv[])
     dir = opendir(pathname);
     if (dir) closedir(dir);
     else mkdir(pathname,S_IRWXU);
+
+    /* PNG bezels (Video Settings > Bezel) */
+    sprintf (pathname, "%s/bezels",DEFAULT_PATH);
+    dir = opendir(pathname);
+    if (dir) closedir(dir);
+    else mkdir(pathname,S_IRWXU);
   }
 
   /* initialize audio engine */

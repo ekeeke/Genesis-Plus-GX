@@ -16,16 +16,18 @@
 
 #define GAME_FILE_HEADER "genplus-game 1"
 
-enum { T_U8, T_S16, T_U32, T_FLOAT };
+enum { T_U8, T_S16, T_U32, T_FLOAT, T_STR };
 
 typedef struct
 {
   const char *name;
   int type;
   size_t offset;
+  size_t size; /* T_STR */
 } t_game_field;
 
-#define FIELD(f, t) { #f, t, offsetof(t_config, f) }
+#define FIELD(f, t) { #f, t, offsetof(t_config, f), 0 }
+#define STR_FIELD(f) { #f, T_STR, offsetof(t_config, f), sizeof(((t_config *)0)->f) }
 
 /* The options a game can have of its own: video, audio and system.
    Controllers, buttons, menu options, paths and the options that only count
@@ -58,6 +60,7 @@ static const t_game_field fields[] =
   FIELD(yscale, T_S16),
   FIELD(autocrop, T_U8),
   FIELD(autocrop_scale, T_U8),
+  STR_FIELD(bezel),
   /* audio */
   FIELD(hq_fm, T_U8),
   FIELD(filter, T_U8),
@@ -95,7 +98,7 @@ static const t_game_field fields[] =
 
 /* global values of the fields while a game uses its own, one after the
    other (a whole t_config would take about 80 KB of the nearly full MEM1) */
-static u8 globals[256];
+static u8 globals[512];
 static int active = 0;
 
 static size_t field_size(const t_game_field *f)
@@ -105,6 +108,7 @@ static size_t field_size(const t_game_field *f)
     case T_U8:  return sizeof(uint8);
     case T_S16: return sizeof(int16);
     case T_U32: return sizeof(uint32);
+    case T_STR: return f->size;
     default:    return sizeof(float);
   }
 }
@@ -117,7 +121,6 @@ static void move_globals(int how)
   size_t pos = 0;
   for (i = 0; i < FIELD_COUNT; i++)
   {
-    char tmp[sizeof(float) > sizeof(uint32) ? sizeof(float) : sizeof(uint32)];
     char *field = (char *)&config + fields[i].offset;
     size_t size = field_size(&fields[i]);
     if (pos + size > sizeof(globals))
@@ -134,9 +137,13 @@ static void move_globals(int how)
     }
     else
     {
-      memcpy(tmp, field, size);
-      memcpy(field, &globals[pos], size);
-      memcpy(&globals[pos], tmp, size);
+      size_t j;
+      for (j = 0; j < size; j++)
+      {
+        u8 tmp = field[j];
+        field[j] = globals[pos + j];
+        globals[pos + j] = tmp;
+      }
     }
     pos += size;
   }
@@ -155,7 +162,7 @@ static int game_path(char *path, int size)
 
 static int read_game_file(const char *path)
 {
-  char line[128];
+  char line[256];
   FILE *fp = fopen(path, "r");
   if (!fp)
   {
@@ -184,7 +191,13 @@ static int read_game_file(const char *path)
       {
         continue;
       }
-      if (fields[i].type == T_FLOAT)
+      if (fields[i].type == T_STR)
+      {
+        char *value = eq + 1;
+        value[strcspn(value, "\r\n")] = 0;
+        snprintf(p, fields[i].size, "%s", value);
+      }
+      else if (fields[i].type == T_FLOAT)
       {
         float v;
         if (sscanf(eq + 1, "%f", &v) == 1) *(float *)p = v;
@@ -237,6 +250,7 @@ void gamesettings_save(void)
       case T_U8:  fprintf(fp, "%s=%d\n", fields[i].name, *(const uint8 *)p); break;
       case T_S16: fprintf(fp, "%s=%d\n", fields[i].name, *(const int16 *)p); break;
       case T_U32: fprintf(fp, "%s=%lu\n", fields[i].name, (unsigned long)*(const uint32 *)p); break;
+      case T_STR: fprintf(fp, "%s=%s\n", fields[i].name, p); break;
       default:    fprintf(fp, "%s=%f\n", fields[i].name, *(const float *)p); break;
     }
   }
@@ -274,6 +288,8 @@ void gamesettings_load(void)
       if (config.s68k_auto_overclock > 1) config.s68k_auto_overclock = 0;
       if (config.s68k_auto_overclock && (config.s68k_overclock <= 1.0)) config.s68k_overclock = 3.0;
       if (config.z80_overclock < 1.0) config.z80_overclock = 1.0;
+      config.bezel[sizeof(config.bezel) - 1] = 0;
+      if (strchr(config.bezel, '/') || strchr(config.bezel, '\\')) config.bezel[0] = 0;
     }
   }
 }
