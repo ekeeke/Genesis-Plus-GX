@@ -41,9 +41,11 @@ extern "C" {
 
 #define BEZEL_NAME_MAX 128 /* file names (with ".png") shorter than this */
 
-/* Bezel setting: off, chosen by the game's name, or a file name. */
-#define BEZEL_OFF  ""
-#define BEZEL_AUTO "<auto>" /* "<" is not allowed in FAT file names */
+/* Bezel setting: off, the one built into the emulator, chosen by the game's
+   name, or a file name ("<" is not allowed in FAT file names). */
+#define BEZEL_OFF     ""
+#define BEZEL_DEFAULT "<default>"
+#define BEZEL_AUTO    "<auto>"
 
 typedef struct
 {
@@ -58,6 +60,9 @@ typedef struct
    Returns 1 on success; on failure (no file, not a PNG, out of memory) b is
    left empty. b must be empty or loaded before (it is freed first). */
 int bezel_load(bezel_image *b, const char *path, int width, int height);
+
+/* Same, from a PNG in memory (one built into the program). */
+int bezel_load_memory(bezel_image *b, const void *data, unsigned int size, int width, int height);
 
 void bezel_free(bezel_image *b);
 

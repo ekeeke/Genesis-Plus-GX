@@ -270,7 +270,24 @@ static void png_warning_fn(png_structp png, png_const_charp msg)
 	(void) msg;
 }
 
-int bezel_load(bezel_image *b, const char *path, int width, int height)
+/* a PNG in memory */
+typedef struct
+{
+	const unsigned char *data;
+	size_t size, pos;
+} png_memory;
+
+static void png_read_memory(png_structp png, png_bytep out, png_size_t len)
+{
+	png_memory *m = (png_memory *) png_get_io_ptr(png);
+	if (len > m->size - m->pos)
+		png_error(png, "end of data");
+	memcpy(out, m->data + m->pos, len);
+	m->pos += len;
+}
+
+/* from the file path, or from mem when path is NULL */
+static int load_png(bezel_image *b, const char *path, png_memory *mem, int width, int height)
 {
 	/* everything the error path frees is volatile (kept across longjmp) */
 	FILE *volatile fp = NULL;
@@ -290,12 +307,15 @@ int bezel_load(bezel_image *b, const char *path, int width, int height)
 	if (width <= 0 || height <= 0 || width > MAX_TEXTURE || height > MAX_TEXTURE)
 		return 0;
 
-	fp = fopen(path, "rb");
-	if (!fp)
-		return 0;
-	filebuf = (char *) malloc(64 * 1024);
-	if (filebuf)
-		setvbuf(fp, filebuf, _IOFBF, 64 * 1024);
+	if (path)
+	{
+		fp = fopen(path, "rb");
+		if (!fp)
+			return 0;
+		filebuf = (char *) malloc(64 * 1024);
+		if (filebuf)
+			setvbuf(fp, filebuf, _IOFBF, 64 * 1024);
+	}
 
 	png = png_create_read_struct(PNG_LIBPNG_VER_STRING, &err, png_error_fn, png_warning_fn);
 	if (png)
@@ -309,7 +329,10 @@ int bezel_load(bezel_image *b, const char *path, int width, int height)
 		int depth, color, interlace, passes, y;
 		scaler s;
 
-		png_init_io(png, fp);
+		if (fp)
+			png_init_io(png, fp);
+		else
+			png_set_read_fn(png, mem, png_read_memory);
 		png_set_user_limits(png, MAX_PNG_SIDE, MAX_PNG_SIDE);
 		png_read_info(png, info);
 		png_get_IHDR(png, info, &sw, &sh, &depth, &color, &interlace, NULL, NULL);
@@ -403,6 +426,20 @@ done:
 	if (!ok)
 		bezel_free(b);
 	return ok;
+}
+
+int bezel_load(bezel_image *b, const char *path, int width, int height)
+{
+	return load_png(b, path, NULL, width, height);
+}
+
+int bezel_load_memory(bezel_image *b, const void *data, unsigned int size, int width, int height)
+{
+	png_memory mem;
+	mem.data = (const unsigned char *) data;
+	mem.size = size;
+	mem.pos = 0;
+	return load_png(b, NULL, &mem, width, height);
 }
 
 static int name_cmp(const void *a, const void *b)

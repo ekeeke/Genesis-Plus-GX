@@ -1924,7 +1924,8 @@ static void autocrop_scale_text(gui_item *item)
   }
 }
 
-/* Bezel: OFF, AUTO (the game's name), then each file of /genplus/bezels */
+/* Bezel: OFF, DEFAULT (built in), AUTO (the game's name), then each file of
+   /genplus/bezels */
 #define MAX_BEZELS 512
 
 static void bezel_text(gui_item *item)
@@ -1935,10 +1936,15 @@ static void bezel_text(gui_item *item)
     sprintf (item->text, "Bezel: OFF");
     strcpy (item->comment, "PNG frame around the game (480i/480p)");
   }
+  else if (!strcmp(config.bezel, BEZEL_DEFAULT))
+  {
+    sprintf (item->text, "Bezel: DEFAULT");
+    strcpy (item->comment, "Built-in TV frame (480i/480p only)");
+  }
   else if (!strcmp(config.bezel, BEZEL_AUTO))
   {
     sprintf (item->text, "Bezel: AUTO");
-    strcpy (item->comment, "<game name>.png, or else default.png");
+    strcpy (item->comment, "<game>.png, default.png or the built-in one");
   }
   else
   {
@@ -1952,6 +1958,11 @@ static void bezel_next(char (*names)[BEZEL_NAME_MAX], int count)
 {
   int i = -1; /* AUTO: the first file next */
   if (!config.bezel[0])
+  {
+    snprintf(config.bezel, sizeof(config.bezel), "%s", BEZEL_DEFAULT);
+    return;
+  }
+  if (!strcmp(config.bezel, BEZEL_DEFAULT))
   {
     snprintf(config.bezel, sizeof(config.bezel), "%s", BEZEL_AUTO);
     return;

@@ -97,7 +97,9 @@ static int config_load(void)
     fclose(fp);
     if (size < (long)sizeof(config))
     {
+      /* from before the bezels: the built-in one, as in a new config */
       memset(config.bezel, 0, sizeof(config.bezel));
+      strcpy(config.bezel, BEZEL_DEFAULT);
     }
     config.bezel[sizeof(config.bezel) - 1] = 0;
     if (strchr(config.bezel, '/') || strchr(config.bezel, '\\'))
@@ -251,7 +253,8 @@ void config_default(void)
   config.fps     = 0;
   config.autocrop = AUTOCROP_OFF;
   config.autocrop_scale = AUTOCROP_SCALE_SMOOTH;
-  memset(config.bezel, 0, sizeof(config.bezel)); /* BEZEL_OFF */
+  memset(config.bezel, 0, sizeof(config.bezel));
+  strcpy(config.bezel, BEZEL_DEFAULT); /* the bezel built into the emulator */
 
   /* menu options */
   config.autoload     = 0;

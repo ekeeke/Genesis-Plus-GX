@@ -68,6 +68,7 @@ typedef struct
 #include "CD_access_on_png.h"
 #include "CD_ready_off_png.h"
 #include "CD_ready_on_png.h"
+#include "Bezel_default_png.h"
 
 /*** VI Mode ***/
 GXRModeObj *vmode;
@@ -571,7 +572,8 @@ static int gxBezelFind(const char *name, char *path)
   return 0;
 }
 
-/* The file of the bezel setting: Auto takes <game>.png, or else default.png */
+/* The file of the bezel setting, or BEZEL_DEFAULT for the built-in one.
+   Auto takes <game>.png, or else default.png, or else the built-in one. */
 static int gxBezelFile(char *path)
 {
   char name[256 + 8];
@@ -579,6 +581,11 @@ static int gxBezelFile(char *path)
   if (!config.bezel[0])
   {
     return 0;
+  }
+  if (!strcmp(config.bezel, BEZEL_DEFAULT))
+  {
+    strcpy(path, BEZEL_DEFAULT);
+    return 1;
   }
   if (strcmp(config.bezel, BEZEL_AUTO))
   {
@@ -592,7 +599,12 @@ static int gxBezelFile(char *path)
       return 1;
     }
   }
-  return gxBezelFind("default.png", path);
+  if (gxBezelFind("default.png", path))
+  {
+    return 1;
+  }
+  strcpy(path, BEZEL_DEFAULT);
+  return 1;
 }
 
 /* Loads the bezel of the setting (none in the original 240p modes), unless
@@ -612,7 +624,9 @@ static void gxBezelUpdate(void)
   }
 
   snprintf(bezel_path, sizeof(bezel_path), "%s", path);
-  if (bezel_load(&bezel, path, BEZEL_WIDTH, tvmodes[gc_pal*3 + 2]->efbHeight))
+  if (!strcmp(path, BEZEL_DEFAULT) ?
+      bezel_load_memory(&bezel, Bezel_default_png, Bezel_default_png_size, BEZEL_WIDTH, tvmodes[gc_pal*3 + 2]->efbHeight) :
+      bezel_load(&bezel, path, BEZEL_WIDTH, tvmodes[gc_pal*3 + 2]->efbHeight))
   {
     GX_InitTexObj(&bezel_tex_obj, bezel.texture, bezel.tex_width, bezel.tex_height, GX_TF_RGBA8, GX_CLAMP, GX_CLAMP, GX_FALSE);
   }
