@@ -37,6 +37,13 @@ jobs:
         cfg=$($nm -S "$elf" | awk '$4 == "config" && !c { c = $2 } END { print c }')
         sizes=$(/opt/devkitpro/devkitPPC/bin/powerpc-eabi-size "$elf" | awk 'END { print }')
         echo "::notice title=Memory use::end of static data 0x$end (MEM1 ends at 0x81800000); config 0x$cfg bytes; size: $sizes"
+        # Some buffers must be in MEM1 (the IPL font is read there by DMA) and
+        # the loaders keep the top of MEM1: a build ending at 0x816d1520 did
+        # not start, one ending at 0x81692da0 did.
+        if [ $((16#$end)) -gt $((16#816a0000)) ]; then
+          echo "::error title=Memory use::static data ends at 0x$end, past 0x816a0000: too little MEM1 left at start-up"
+          exit 1
+        fi
 
     - name: Package for the Homebrew Channel
       run: |
