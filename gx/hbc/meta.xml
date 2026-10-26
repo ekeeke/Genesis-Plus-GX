@@ -2,10 +2,10 @@
 <app version="1">
   <name>Genesis Plus GX</name>
   <coder>Eke-Eke + VrepliroidV</coder>
-  <version>1.7.5-usb.2</version>
-  <release_date>20261021</release_date>
+  <version>1.7.5-usb.3</version>
+  <release_date>20261025</release_date>
   <short_description>Sega Mega Drive / Genesis emulator</short_description>
   <long_description>Genesis Plus GX by Eke-Eke: Mega Drive / Genesis, Mega CD, Master System, Game Gear and SG-1000 emulator.
 
-This build also reads Xbox 360 (XInput) USB controllers and 2.4 GHz receivers plugged into the Wii, as GameCube controllers. Mode + Right opens the menu. Auto Crop of black borders (Video settings), automatic 68k overclock (System settings), per-game settings.</long_description>
+This build also reads Xbox 360 (XInput) USB controllers and 2.4 GHz receivers plugged into the Wii, as GameCube controllers. Mode + Right opens the menu. PNG bezels around the game in 480i/480p and Auto Crop of black borders (Video settings), automatic 68k overclock (System settings), per-game settings.</long_description>
 </app>

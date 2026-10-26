@@ -1,26 +1,21 @@
-Versão modificada do [Genesis Plus GX 1.7.5](https://github.com/ekeeke/Genesis-Plus-GX) (Eke-Eke) para Wii, com suporte a controles USB sem fio, Auto Crop, overclock automático e configurações por jogo. *English below.*
+Versão modificada do [Genesis Plus GX 1.7.5](https://github.com/ekeeke/Genesis-Plus-GX) (Eke-Eke) para Wii, com molduras em PNG, suporte a controles USB sem fio, Auto Crop, overclock automático e configurações por jogo. *English below.*
 
 ## Novidades desta versão
 
-**Overclock automático** (Options > System), para a CPU principal e para a CPU do Sega CD:
-- **Main 68k Auto Overclock** e **Sub 68k Auto Overclock**: o overclock só entra quando o jogo fica lento, em três passos, e volta a descer quando a cena alivia. O emulador mede, a cada quadro, quanto tempo cada CPU passa esperando.
-- Com o automático ligado, **Main 68k Highest OC** e **Sub 68k Highest OC** definem o máximo de cada CPU. Com 3.0x, por exemplo, os passos são 1.44x, 2.08x e 3.0x.
-- Fica desligado nas transições: imagem ou interrupção de vídeo desligada, paleta toda preta e envio de dados para o chip de som. Cada jogo começa sem overclock.
-- Com **Show FPS** ligado, aparece embaixo do FPS a velocidade em uso e quanto do quadro a CPU passou trabalhando, por exemplo `OC 2.1x 72%`, e `SUB` para a CPU do Sega CD.
-- Correção: com overclock, os jogos que esperam o próximo quadro com a instrução STOP perdiam um quadro a cada espera.
+**Molduras em PNG** (Options > Video > **Bezel**), para preencher o espaço vazio ao redor do jogo numa TV LCD:
+- Aparecem nos modos de imagem **INTERLACED** (480i) e **PROGRESSIVE** (480p). Em **ORIGINAL** (240p) a imagem fica como sempre, sem moldura.
+- O emulador acha sozinho a área transparente no meio do PNG e encaixa a tela do jogo nela. A moldura é desenhada por cima, então cantos arredondados ficam certinhos. O Auto Crop continua funcionando dentro da moldura.
+- Um PNG sem área transparente no meio vira fundo, com o jogo na frente no tamanho de sempre.
+- PNG de qualquer tamanho, por exemplo os de 1920x1080 feitos para o RetroArch. A moldura cobre a imagem inteira da TV; com o Wii em 16:9, use molduras de 16:9.
+- Opções: **OFF**, **DEFAULT** (a moldura de TV que já vem no emulador), **AUTO** (`<nome do jogo>.png`, senão `default.png`, senão a moldura de TV) e cada PNG da pasta `genplus/bezels` (criada quando o emulador abre), no SD ou no pendrive.
+- Vem ligada na **DEFAULT**. A escolha também entra nas configurações por jogo.
+- Com uma moldura que tem área transparente, a posição e a escala da tela são ignoradas: quem define o lugar do jogo é a moldura.
 
-**Configurações por jogo** (Options > botão da engrenagem **Per-Game**): guarda as opções de vídeo, som e sistema só para o jogo aberto, no arquivo `saves/<jogo>.cfg`. Desligar o botão faz o jogo voltar às configurações gerais.
+## O que já vinha nas versões anteriores
 
-**Auto Crop** (Options > Video > Auto Crop): corta as bordas pretas ao redor da imagem do jogo, com as mesmas regras do núcleo [snes9x-ntsc-lie-pal](https://github.com/VrepliroidV/snes9x-ntsc-lie-pal).
-- **OFF**, **FIT** (amplia sem deformar os pixels) ou **STRETCH** (estica até preencher o quadro).
-- Linhas desenhadas com a tela desligada, e as bordas da opção **Borders** quando a cor delas é preta, são cortadas em 2 quadros. Barras de tiles pretos só são cortadas quando a tela parece gameplay, então telas de logo e texto sobre fundo preto ficam inteiras.
-- Enquadramentos que ficam 5 segundos na tela são memorizados para o jogo, no arquivo `saves/<sistema>/<jogo>.autocrop`. Apague o arquivo para o jogo aprender de novo.
-- Gráficos que aparecem na área cortada voltam a aparecer no mesmo quadro. As miras das pistolas de luz acompanham o corte.
-- **Crop Scaling**: **SMOOTH** preenche a tela e fica nítido mesmo com o filtro bilinear desligado. **INTEGER** amplia só em número inteiro, sem nenhuma linha misturada; em 240p, num jogo com faixas em cima e embaixo, a altura fica como está.
-
-Suas configurações continuam ao atualizar. Se um dia voltar para o Genesis Plus GX original, ele vai recriar as configurações do zero.
-
-## O que já vinha na versão anterior
+- **Overclock automático** (Options > System > **Main 68k Auto Overclock** e **Sub 68k Auto Overclock**), para a CPU principal e a do Sega CD: o overclock só entra quando o jogo fica lento e fica desligado nas transições. Com Show FPS ligado, aparece a velocidade em uso.
+- **Configurações por jogo** (botão da engrenagem **Per-Game**), no arquivo `saves/<jogo>.cfg`.
+- **Auto Crop** das bordas pretas (Video > Auto Crop: FIT ou STRETCH) e **Crop Scaling** (SMOOTH ou INTEGER).
 
 **Controles USB do tipo Xbox 360 (XInput)**, com fio ou com receptor 2.4 GHz plugado direto no USB do Wii.
 - Testado com o **Retroflag Classic Controller-M wireless** (estilo Mega Drive) e com um **controle sem fio genérico de SNES Classic Mini**. Até 4 controles; o primeiro receptor plugado é o jogador 1. Pode plugar e tirar com o emulador aberto.
@@ -53,14 +48,12 @@ Em outros controles, os gatilhos e o botão de ombro esquerdo dão C, o ombro di
 
 ## English
 
-Genesis Plus GX 1.7.5 for Wii with Xbox 360 (XInput) USB controllers, Auto Crop, automatic overclock and per-game settings.
+Genesis Plus GX 1.7.5 for Wii with PNG bezels, Xbox 360 (XInput) USB controllers, Auto Crop, automatic overclock and per-game settings.
 
 New in this version:
-- **Automatic 68k overclock** (Options > System > Main 68k / Sub 68k Auto Overclock), for the main CPU and the Sega CD CPU: the overclock goes up in three steps, up to the Highest OC ratio, only when the game slows down, and back down when it is not needed. It stays off while the display or the vertical interrupt is off, the palette is all black or data goes to the sound chip, and each game starts without it. With Show FPS on, the ratio in use and how busy the CPU was are shown under the FPS. Fixed: with an overclock, games waiting for the next frame with STOP lost a frame each time.
-- **Per-game settings** (Options > gear button): the video, audio and system options are kept for the loaded game only, in `saves/<game>.cfg`.
-- **Auto Crop** (Options > Video): crops black borders, with the rules of the snes9x-ntsc-lie-pal Libretro core. OFF, FIT (keeps the pixel shape) or STRETCH (fills the frame). Layouts seen for 5 seconds are remembered per game in `saves/<system>/<game>.autocrop`; light gun crosshairs follow the crop. **Crop Scaling**: SMOOTH fills the frame and stays sharp with the bilinear filter off; INTEGER only scales by whole numbers. Settings are kept when updating (the official build would reset them).
+- **PNG bezels** (Options > Video > Bezel), in the INTERLACED and PROGRESSIVE display modes (not in ORIGINAL 240p). The transparent window in the middle of the PNG is found by itself and the game fills it, with the bezel drawn over its edges; a PNG without a window is a background behind the game. Any PNG size works (1920x1080 RetroArch bezels included); the bezel covers the whole picture of the TV. Choices: OFF, DEFAULT (the TV frame built into the emulator, on by default), AUTO (`<game>.png`, else `default.png`, else the TV frame) and each PNG in `genplus/bezels` on the SD card or USB drive. Kept per game too. With a window, screen position and scaling are not used.
 
-Already in the previous version: USB controllers read as GameCube controllers (tested with the Retroflag Classic Controller-M wireless and a generic SNES Classic Mini wireless pad, up to 4, hot-plug). Default layout for the 6-button Retroflag: A, B, C, X, Y, Z, Mode and Start as labelled; L and R also give C. **Mode + D-pad right** opens the menu.
+Already in the previous versions: automatic 68k overclock (main and Sega CD), per-game settings, Auto Crop of black borders, and USB controllers read as GameCube controllers (tested with the Retroflag Classic Controller-M wireless and a generic SNES Classic Mini wireless pad, up to 4, hot-plug). Default layout for the 6-button Retroflag: A, B, C, X, Y, Z, Mode and Start as labelled; L and R also give C. **Mode + D-pad right** opens the menu.
 
 Install: extract `GenesisPlusGX-Wii.zip` to the root of the SD card or USB drive, or replace `apps/genplus/boot.dol` in an existing install.
 
