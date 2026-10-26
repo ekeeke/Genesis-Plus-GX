@@ -185,6 +185,7 @@ int psg_context_load(uint8 *state)
 
   load_param(&psg.clocks,sizeof(psg.clocks));
   load_param(&psg.latch,sizeof(psg.latch));
+  psg.latch &= 7;
   load_param(&psg.noiseShiftValue,sizeof(psg.noiseShiftValue));
   load_param(psg.regs,sizeof(psg.regs));
   load_param(psg.freqInc,sizeof(psg.freqInc));
