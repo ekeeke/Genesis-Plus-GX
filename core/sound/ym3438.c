@@ -1202,6 +1202,24 @@ void OPN2_Reset(ym3438_t *chip)
     }
 }
 
+void OPN2_Restore(ym3438_t *chip)
+{
+    Bit32u i;
+
+    chip->cycles %= 24;
+    chip->channel = chip->cycles % 6;
+    chip->eg_timer_low_lock &= 3;
+    chip->lfo_freq &= 7;
+    chip->mode_test_21[0] &= 1;
+
+    for (i = 0; i < 6; i++)
+    {
+        chip->connect[i] &= 7;
+        chip->ams[i] &= 3;
+        chip->pms[i] &= 7;
+    }
+}
+
 void OPN2_SetChipType(Bit32u type)
 {
     chip_type = type;
