@@ -293,6 +293,32 @@ void OPLL_Reset(opll_t *chip, uint32_t chip_type) {
     chip->rm_select = rm_num_tc + 1;
 }
 
+void OPLL_Restore(opll_t *chip) {
+    uint32_t i;
+
+    switch (chip->chip_type) {
+    case opll_type_ds1001:
+        chip->patchrom = patch_ds1001;
+        break;
+    case opll_type_ym2413:
+    case opll_type_ym2413b:
+    default:
+        chip->patchrom = patch_ym2413;
+        break;
+    }
+
+    chip->cycles %= 18;
+    chip->eg_timer_low_lock &= 3;
+    chip->c_multi &= 0x0f;
+    for (i = 0; i < 2; i++) {
+        chip->patch.multi[i] &= 0x0f;
+    }
+    for (i = 0; i < 9; i++) {
+        chip->fnum[i] &= 0x01ff;
+        chip->inst[i] &= 0x0f;
+    }
+}
+
 void OPLL_DoRegWrite(opll_t *chip) {
     uint32_t channel;
 

@@ -545,10 +545,12 @@ int sound_context_load(uint8 *state)
     if (config_opll)
     {
       load_param(&opll, sizeof(opll));
+      OPLL_Restore(&opll);
       load_param(&opll_accm, sizeof(opll_accm));
       load_param(&opll_sample, sizeof(opll_sample));
       load_param(&opll_cycles, sizeof(opll_cycles));
       load_param(&opll_status, sizeof(opll_status));
+      opll_cycles = (unsigned int)opll_cycles % 18;
     }
     else
 #endif
