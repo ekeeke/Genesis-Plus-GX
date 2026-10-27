@@ -37,6 +37,7 @@
  ****************************************************************************************/
 #include "shared.h"
 #include "megasd.h"
+#include <limits.h>
 
 #if defined(USE_LIBTREMOR) || defined(USE_LIBVORBIS)
 #define SUPPORTED_EXT 20
@@ -80,6 +81,16 @@ static const uint16 lut_BCD_16[100] =
   0x0800, 0x0801, 0x0802, 0x0803, 0x0804, 0x0805, 0x0806, 0x0807, 0x0808, 0x0809, 
   0x0900, 0x0901, 0x0902, 0x0903, 0x0904, 0x0905, 0x0906, 0x0907, 0x0908, 0x0909, 
 };
+
+static uint8 cdd_bcd8(int value)
+{
+  return ((unsigned int)value < 100) ? lut_BCD_8[value] : 0;
+}
+
+static uint16 cdd_bcd16(int value)
+{
+  return ((unsigned int)value < 100) ? lut_BCD_16[value] : 0;
+}
 
 /* pre-build TOC */
 static const uint16 toc_snatcher[21] =
@@ -285,7 +296,8 @@ int cdd_context_save(uint8 *state)
 
 int cdd_context_load(uint8 *state, char *version)
 {
-  unsigned int offset, lba, index;
+  unsigned int offset, index;
+  int lba;
   int bufferptr = 0;
   uint8 tmp8;
 
@@ -305,6 +317,16 @@ int cdd_context_load(uint8 *state, char *version)
   if (index > cdd.toc.last)
   {
     return 0;
+  }
+
+  /* keep restored sector position within valid disc limits */
+  if (lba < -150)
+  {
+    lba = -150;
+  }
+  else if (lba > cdd.toc.end)
+  {
+    lba = cdd.toc.end;
   }
 
   /* update current sector */
@@ -357,8 +379,29 @@ int cdd_context_load(uint8 *state, char *version)
 #if defined(USE_LIBCHDR)
       if (cdd.chd.file)
       {
-        /* CHD file offset */
-        cdd.chd.hunkofs = offset;
+        int64_t first = cdd.toc.tracks[index].offset +
+                        ((int64_t)cdd.toc.tracks[index].start * CD_FRAME_SIZE);
+        int64_t end = cdd.toc.tracks[index].offset +
+                      ((int64_t)cdd.toc.tracks[index].end * CD_FRAME_SIZE);
+        int64_t current = cdd.toc.tracks[index].offset +
+                          ((int64_t)lba * CD_FRAME_SIZE);
+
+        /* keep the restored CHD file offset within the current track */
+        if ((first < 0) || (end <= first) || (end > INT_MAX))
+        {
+          current = 0;
+        }
+        else if (((int64_t)offset >= first) && ((int64_t)offset < end) &&
+                 !(offset & 3) &&
+                 ((offset % CD_FRAME_SIZE) < CD_MAX_SECTOR_DATA))
+        {
+          current = offset;
+        }
+        else if ((current < first) || (current >= end))
+        {
+          current = first;
+        }
+        cdd.chd.hunkofs = current;
       }
       else
 #endif
@@ -1830,9 +1873,9 @@ void cdd_update(void)
         /* CD-ROM sector header */
         uint8 header[4];
         uint32 msf = cdd.lba + 150;
-        header[0] = lut_BCD_8[(msf / 75) / 60];
+        header[0] = cdd_bcd8((msf / 75) / 60);
         header[1] = lut_BCD_8[(msf / 75) % 60];
-        header[2] = lut_BCD_8[(msf % 75)];
+        header[2] = lut_BCD_8[msf % 75];
         header[3] = cdd.toc.tracks[cdd.index].type;
 
         /* decode CD-ROM track sector */
@@ -1961,6 +2004,12 @@ void cdd_update(void)
                (scd.regs[0x46>>1].byte.h * 10 + scd.regs[0x46>>1].byte.l)) * 75 +
                (scd.regs[0x48>>1].byte.h * 10 + scd.regs[0x48>>1].byte.l) - 150;
 
+    /* stay within the mounted disc */
+    if (lba > cdd.toc.end)
+    {
+      lba = cdd.toc.end;
+    }
+
     /* CD drive latency */
     if (!cdd.latency)
     {
@@ -2052,9 +2101,9 @@ void cdd_process(void)
           /* seeking has ended so we return valid track infos, e.g current absolute time by default (fixes Lunar - The Silver Star) */
           int lba = cdd.lba + 150;
           scd.regs[0x38>>1].byte.l = 0x00;
-          scd.regs[0x3a>>1].w = lut_BCD_16[(lba/75)/60];
+          scd.regs[0x3a>>1].w = cdd_bcd16((lba/75)/60);
           scd.regs[0x3c>>1].w = lut_BCD_16[(lba/75)%60];
-          scd.regs[0x3e>>1].w = lut_BCD_16[(lba%75)];
+          scd.regs[0x3e>>1].w = lut_BCD_16[lba%75];
           scd.regs[0x40>>1].byte.h = cdd.toc.tracks[cdd.index].type ? 0x04 : 0x00; /* Current block flags in RS8 (bit0 = mute status, bit1: pre-emphasis status, bit2: track type) */
         }
 
@@ -2063,18 +2112,18 @@ void cdd_process(void)
         {
           /* current absolute time */
           int lba = cdd.lba + 150;
-          scd.regs[0x3a>>1].w = lut_BCD_16[(lba/75)/60];
+          scd.regs[0x3a>>1].w = cdd_bcd16((lba/75)/60);
           scd.regs[0x3c>>1].w = lut_BCD_16[(lba/75)%60];
-          scd.regs[0x3e>>1].w = lut_BCD_16[(lba%75)];
+          scd.regs[0x3e>>1].w = lut_BCD_16[lba%75];
           scd.regs[0x40>>1].byte.h = cdd.toc.tracks[cdd.index].type ? 0x04 : 0x00; /* Current block flags in RS8 (bit0 = mute status, bit1: pre-emphasis status, bit2: track type) */
         }
         else if (scd.regs[0x38>>1].byte.l == 0x01)
         {
           /* current track relative time */
           int lba = abs(cdd.lba - cdd.toc.tracks[cdd.index].start);
-          scd.regs[0x3a>>1].w = lut_BCD_16[(lba/75)/60];
+          scd.regs[0x3a>>1].w = cdd_bcd16((lba/75)/60);
           scd.regs[0x3c>>1].w = lut_BCD_16[(lba/75)%60];
-          scd.regs[0x3e>>1].w = lut_BCD_16[(lba%75)];
+          scd.regs[0x3e>>1].w = lut_BCD_16[lba%75];
           scd.regs[0x40>>1].byte.h = cdd.toc.tracks[cdd.index].type ? 0x04 : 0x00; /* Current block flags in RS8 (bit0 = mute status, bit1: pre-emphasis status, bit2: track type) */
         }
         else if (scd.regs[0x38>>1].byte.l == 0x02)
@@ -2116,9 +2165,9 @@ void cdd_process(void)
         {
           int lba = cdd.lba + 150;
           scd.regs[0x38>>1].w = cdd.status << 8;
-          scd.regs[0x3a>>1].w = lut_BCD_16[(lba/75)/60];
+          scd.regs[0x3a>>1].w = cdd_bcd16((lba/75)/60);
           scd.regs[0x3c>>1].w = lut_BCD_16[(lba/75)%60];
-          scd.regs[0x3e>>1].w = lut_BCD_16[(lba%75)];
+          scd.regs[0x3e>>1].w = lut_BCD_16[lba%75];
           scd.regs[0x40>>1].byte.h = cdd.toc.tracks[cdd.index].type ? 0x04 : 0x00; /* Current block flags in RS8 (bit0 = mute status, bit1: pre-emphasis status, bit2: track type) */
           break;
         }
@@ -2127,9 +2176,9 @@ void cdd_process(void)
         {
           int lba = abs(cdd.lba - cdd.toc.tracks[cdd.index].start);
           scd.regs[0x38>>1].w = (cdd.status << 8) | 0x01;
-          scd.regs[0x3a>>1].w = lut_BCD_16[(lba/75)/60];
+          scd.regs[0x3a>>1].w = cdd_bcd16((lba/75)/60);
           scd.regs[0x3c>>1].w = lut_BCD_16[(lba/75)%60];
-          scd.regs[0x3e>>1].w = lut_BCD_16[(lba%75)];
+          scd.regs[0x3e>>1].w = lut_BCD_16[lba%75];
           scd.regs[0x40>>1].byte.h = cdd.toc.tracks[cdd.index].type ? 0x04 : 0x00; /* Current block flags in RS8 (bit0 = mute status, bit1: pre-emphasis status, bit2: track type) */
           break;
         }
@@ -2148,9 +2197,9 @@ void cdd_process(void)
         {
           int lba = cdd.toc.end + 150;
           scd.regs[0x38>>1].w = (cdd.status << 8) | 0x03;
-          scd.regs[0x3a>>1].w = lut_BCD_16[(lba/75)/60];
+          scd.regs[0x3a>>1].w = cdd_bcd16((lba/75)/60);
           scd.regs[0x3c>>1].w = lut_BCD_16[(lba/75)%60];
-          scd.regs[0x3e>>1].w = lut_BCD_16[(lba%75)];
+          scd.regs[0x3e>>1].w = lut_BCD_16[lba%75];
           scd.regs[0x40>>1].byte.h = 0x00;
           break;
         }
@@ -2168,11 +2217,23 @@ void cdd_process(void)
         case 0x05:  /* Track Start Time (MM:SS:FF) */
         {
           int track = scd.regs[0x46>>1].byte.h * 10 + scd.regs[0x46>>1].byte.l;
-          int lba = cdd.toc.tracks[track-1].start + 150;
+          int lba;
+
+          if ((track < 1) || (track > cdd.toc.last))
+          {
+            scd.regs[0x38>>1].w = (cdd.status << 8) | 0x05;
+            scd.regs[0x3a>>1].w = 0x0000;
+            scd.regs[0x3c>>1].w = 0x0000;
+            scd.regs[0x3e>>1].w = 0x0000;
+            scd.regs[0x40>>1].byte.h = 0x00;
+            break;
+          }
+
+          lba = cdd.toc.tracks[track-1].start + 150;
           scd.regs[0x38>>1].w = (cdd.status << 8) | 0x05;
-          scd.regs[0x3a>>1].w = lut_BCD_16[(lba/75)/60];
+          scd.regs[0x3a>>1].w = cdd_bcd16((lba/75)/60);
           scd.regs[0x3c>>1].w = lut_BCD_16[(lba/75)%60];
-          scd.regs[0x3e>>1].w = lut_BCD_16[(lba%75)];
+          scd.regs[0x3e>>1].w = lut_BCD_16[lba%75];
           scd.regs[0x3e>>1].byte.h |= cdd.toc.tracks[track-1].type ? 0x08 : 0x00; /* RS6 bit 3 is set for CD-ROM track */
           scd.regs[0x40>>1].byte.h = track % 10;  /* Track Number (low digit) */
           break;
