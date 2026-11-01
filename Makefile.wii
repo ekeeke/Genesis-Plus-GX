@@ -21,7 +21,7 @@ TARGET		:=	genplus_wii
 BUILD		:=	build_wii
 SOURCES		:=	core core/m68k core/z80 core/sound core/sound/tremor core/ntsc core/input_hw core/cd_hw core/cart_hw core/cart_hw/svp \
 			$(CHDLIBDIR)/src $(CHDLIBDIR)/deps/lzma-24.05/src $(CHDLIBDIR)/deps/zstd-1.5.6/lib/common $(CHDLIBDIR)/deps/zstd-1.5.6/lib/decompress \
-			gx gx/utils gx/utils/wiidrc gx/gui gx/fileio gx/images gx/sounds
+			gx gx/utils gx/utils/wiidrc gx/gui gx/fileio gx/images gx/sounds gx/libwiiinput
 INCLUDES	:=	core core/m68k core/z80 core/sound core/sound/minimp3 core/sound/tremor core/ntsc core/input_hw core/cd_hw core/cart_hw core/cart_hw/svp \
 			$(CHDLIBDIR)/include $(CHDLIBDIR)/deps/lzma-24.05/include $(CHDLIBDIR)/deps/zstd-1.5.6/lib $(CHDLIBDIR)/deps/zstd-1.5.6/lib/common $(CHDLIBDIR)/deps/zstd-1.5.6/decompress \
 			gx gx/utils gx/utils/wiidrc gx/gui gx/fileio gx/images gx/sounds
@@ -50,6 +50,22 @@ LIBDIRS	:=	$(PORTLIBS)
 # no real need to edit anything past this point unless you need to add additional
 # rules for different file extensions
 #---------------------------------------------------------------------------------
+# Extra controllers, folded onto the Wii Remote / GameCube pad calls this program already makes (see gx/libwiiinput/extrainput.h)
+export TOPDIR ?= $(CURDIR)
+EXTRA_PORTLIBS	:=	$(TOPDIR)/portlibs/ppc
+CFLAGS		+=	-DHAVE_TABLET -DHAVE_GCADAPTER -DEXTRAINPUT_NO_MOUSE -I$(TOPDIR)/gx/libwiiinput
+LDFLAGS		+=	-Wl,--wrap=classic_ctrl_handshake,--wrap=parse_event,--wrap=USB_GetDeviceList
+ifneq ($(wildcard $(EXTRA_PORTLIBS)/lib/libsicksaxis.a),)
+CFLAGS		+=	-DHAVE_SICKSAXIS
+LIBS		:=	-lsicksaxis $(LIBS)
+endif
+ifneq ($(wildcard $(EXTRA_PORTLIBS)/lib/libwupc.a),)
+CFLAGS		+=	-DHAVE_WUPC
+LIBS		:=	-lwupc $(LIBS)
+LDFLAGS		+=	-Wl,-wrap,wiiuse_accept
+endif
+LIBDIRS		+=	$(EXTRA_PORTLIBS)
+
 ifneq ($(BUILD),$(notdir $(CURDIR)))
 #---------------------------------------------------------------------------------
 

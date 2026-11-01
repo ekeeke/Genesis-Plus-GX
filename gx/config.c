@@ -40,6 +40,7 @@
 #include "shared.h"
 #include "gui.h"
 #include "file_load.h"
+#include "extrainput_compat.h"
 
 t_config config;
 

@@ -46,6 +46,7 @@
 #ifdef HW_RVL
 #include <ogc/usbmouse.h>
 #include "wiidrc.h"
+#include "extrainput_compat.h"
 #endif
 
 /* Analog sticks sensitivity */
