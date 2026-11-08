@@ -131,6 +131,16 @@ int megasd_context_load(uint8 *state)
     load_param(&scd.regs[0x36>>1].byte.h, 1);
   }
 
+  if (megasd_hw.playbackLoopTrack >= cdd.toc.last)
+  {
+    megasd_hw.playbackLoopTrack = cdd.toc.last ? (cdd.toc.last - 1) : 0;
+  }
+
+  if (megasd_hw.playbackEndTrack >= cdd.toc.last)
+  {
+    megasd_hw.playbackEndTrack = cdd.toc.last ? (cdd.toc.last - 1) : 0;
+  }
+
   return bufferptr;
 }
 
