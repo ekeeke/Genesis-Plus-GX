@@ -102,7 +102,7 @@ typedef struct
   uint8 *hunk;
   int hunkbytes;
   int hunknum;
-  int hunkofs;
+  unsigned int hunkofs;
 } chd_t;
 #endif
 
