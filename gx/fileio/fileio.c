@@ -4,7 +4,7 @@
  *  Load a normal file, or ZIP/GZ archive into ROM buffer.
  *  Returns loaded ROM size (zero if an error occured).
  *  
- *  Copyright Eke-Eke (2007-2014), based on original work from Softdev (2006)
+ *  Copyright Eke-Eke (2007-2026), based on original work from Softdev (2006)
  *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
@@ -236,14 +236,15 @@ int load_archive(char *filename, unsigned char *buffer, int maxsize, char *exten
     /* Start unzipping file */
     do
     {
-      /* Inflate data until output buffer is empty */
+      /* Inflate data until output buffer is not full */
       do
       {
         zs.avail_out = CHUNKSIZE;
         zs.next_out = (Bytef *) out;
         res = inflate(&zs, Z_NO_FLUSH);
 
-        if ((res != Z_OK) && (res != Z_STREAM_END))
+        /* Check fatal errors only (Z_BUF_ERROR can be returned if more data is needed) */
+        if ((res != Z_OK) && (res != Z_STREAM_END) && (res != Z_BUF_ERROR))
         {
           inflateEnd(&zs);
           fclose(fd);
@@ -253,13 +254,16 @@ int load_archive(char *filename, unsigned char *buffer, int maxsize, char *exten
           return 0;
         }
 
+        /* Available unzipped data size */
         offset = CHUNKSIZE - zs.avail_out;
 
+        /* Limit to maximal ROM buffer size */
         if ((size + offset) > maxsize)
         {
           offset = maxsize - size;
         }
 
+        /* Copy unzipped data to ROM buffer */
         if (offset)
         {
           memcpy(buffer, out, offset);
@@ -269,10 +273,27 @@ int load_archive(char *filename, unsigned char *buffer, int maxsize, char *exten
       }
       while ((zs.avail_out == 0) && (size < maxsize));
 
-      /* Read next chunk of zipped data */
-      input_size = fread(in, 1, CHUNKSIZE, fd);
-      zs.next_in = (Bytef *)&in[0];
-      zs.avail_in = input_size;
+      /* Read next chunk of zipped data (if needed) */
+      if ((res != Z_STREAM_END) && (size < maxsize))
+      {
+        input_size = fread(in, 1, CHUNKSIZE, fd);
+
+        if (input_size > 0)
+        {
+          zs.next_in = (Bytef *)&in[0];
+          zs.avail_in = input_size;
+        }
+        else
+        {
+          /* End of file reached before end of zip stream */
+          inflateEnd(&zs);
+          fclose(fd);
+          sprintf(msg,"Unable to unzip %s", type);
+          GUI_WaitPrompt("Error",msg);
+          SILENT = 0;
+          return 0;
+        }
+      }
     }
     while ((res != Z_STREAM_END) && (size < maxsize));
     inflateEnd (&zs);
