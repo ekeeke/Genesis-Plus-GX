@@ -79,6 +79,11 @@ static gx_texture *crosshair[2];
 static gx_texture *cd_leds[2][2];
 static GXTexObj screenTexObj;
 
+/*** Scanlines ***/
+static u8 scanlinesTex[32] ATTRIBUTE_ALIGN(32);
+static GXTexObj scanlinesTexObj;
+static u8 scanlines;
+
 /*** Framebuffers ***/
 static u32 *xfb[2];
 static u8 fbCurrent;
@@ -448,6 +453,7 @@ static void gxResetRendering(u8 type)
     */
     GX_SetTevOp (GX_TEVSTAGE0, GX_MODULATE);
     GX_SetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP0, GX_COLOR0A0);
+    GX_SetNumTevStages(1);
     GX_SetNumTexGens(1);
     GX_SetNumChans(1);
 
@@ -469,8 +475,31 @@ static void gxResetRendering(u8 type)
     */
     GX_SetTevOp (GX_TEVSTAGE0, GX_REPLACE);
     GX_SetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP0, GX_COLORNULL);
-    GX_SetNumTexGens(1);
     GX_SetNumChans(0);
+
+    if (scanlines)
+    {
+      /*
+         Color.out = Color.texture*Scanlines.texture
+         Scanlines texture coordinates are generated from vertex Y position (one texel per EFB line)
+      */
+      Mtx m = {{0.0F, 0.0F, 0.0F, 0.0F}, {0.0F, 0.25F, 0.0F, 0.0F}, {0.0F, 0.0F, 1.0F, 0.0F}};
+      GX_LoadTexMtxImm(m, GX_TEXMTX0, GX_MTX2x4);
+      GX_SetTexCoordGen(GX_TEXCOORD1, GX_TG_MTX2x4, GX_TG_POS, GX_TEXMTX0);
+      GX_LoadTexObj(&scanlinesTexObj, GX_TEXMAP1);
+      GX_SetTevOrder(GX_TEVSTAGE1, GX_TEXCOORD1, GX_TEXMAP1, GX_COLORNULL);
+      GX_SetTevColorIn(GX_TEVSTAGE1, GX_CC_ZERO, GX_CC_CPREV, GX_CC_TEXC, GX_CC_ZERO);
+      GX_SetTevColorOp(GX_TEVSTAGE1, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
+      GX_SetTevAlphaIn(GX_TEVSTAGE1, GX_CA_ZERO, GX_CA_ZERO, GX_CA_ZERO, GX_CA_APREV);
+      GX_SetTevAlphaOp(GX_TEVSTAGE1, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
+      GX_SetNumTevStages(2);
+      GX_SetNumTexGens(2);
+    }
+    else
+    {
+      GX_SetNumTevStages(1);
+      GX_SetNumTexGens(1);
+    }
 
     /* enable GX rendering callback */
     GX_SetDrawDoneCallback(gx_callback);
@@ -1585,6 +1614,18 @@ void gx_video_Start(void)
     }
   }
 
+  /* scanlines texture (8x4 I8 texture with darkened odd lines) */
+  if (config.scanlines)
+  {
+    u8 level = 255 - ((config.scanlines * 255) / 100);
+    memset(scanlinesTex, 0xff, 32);
+    memset(&scanlinesTex[8], level, 8);
+    memset(&scanlinesTex[24], level, 8);
+    DCStoreRange(scanlinesTex, 32);
+    GX_InitTexObj(&scanlinesTexObj, scanlinesTex, 8, 4, GX_TF_I8, GX_REPEAT, GX_REPEAT, GX_FALSE);
+    GX_InitTexObjFilterMode(&scanlinesTexObj, GX_NEAR, GX_NEAR);
+  }
+
   /* on-screen display enable flag */
   osd = config.fps;
 
@@ -1726,11 +1767,15 @@ int gx_video_Update(int status)
         rmode = tvmodes[gc_pal*3 + interlaced];
       }
 
+      /* scanlines are only enabled in double resolution modes (non-interlaced video, unscaled framebuffer copy) */
+      scanlines = config.scanlines && config.render && !interlaced && (rmode->efbHeight == rmode->xfbHeight);
+
       /* update aspect ratio */
       gxResetScaler(vwidth);
 
-      /* update GX rendering mode */
-      gxResetMode(rmode, config.vfilter);
+      /* update GX rendering mode (deflickering filter would blur scanlines) */
+      gxResetMode(rmode, config.vfilter && !scanlines);
+      gxResetRendering(0);
 
       /* update VI mode */
       VIDEO_Configure(rmode);

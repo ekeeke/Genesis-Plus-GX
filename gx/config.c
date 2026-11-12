@@ -144,6 +144,7 @@ void config_default(void)
   config.vsync    = 1; /* AUTO */
   config.bilinear = 0;
   config.vfilter  = 1;
+  config.scanlines = 0;
   config.enhanced_vscroll = 0;
   config.enhanced_vscroll_limit = 8;
 
